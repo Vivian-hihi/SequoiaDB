@@ -1,5 +1,6 @@
 var searchData=
 [
+  ['securesdb',['SecureSdb',['../classSecureSdb.html',1,'']]],
   ['sequoiacl',['SequoiaCL',['../classSequoiaCL.html',1,'']]],
   ['sequoiacs',['SequoiaCS',['../classSequoiaCS.html',1,'']]],
   ['sequoiacursor',['SequoiaCursor',['../classSequoiaCursor.html',1,'']]],

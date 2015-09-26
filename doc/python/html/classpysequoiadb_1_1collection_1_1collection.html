@@ -130,6 +130,10 @@ def&#160;</td><td class="memItemRight" valign="bottom"><b>__repr__</b></td></tr>
 <tr class="separator:a08431e592c6ee801dd35bdb0c1961e55"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6a128fdbc0bcbf3d5729c869b9694ddc"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpysequoiadb_1_1collection_1_1collection.html#a6a128fdbc0bcbf3d5729c869b9694ddc">query</a></td></tr>
 <tr class="separator:a6a128fdbc0bcbf3d5729c869b9694ddc"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab9a89f2ea9d941944d27acd45cce0746"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpysequoiadb_1_1collection_1_1collection.html#ab9a89f2ea9d941944d27acd45cce0746">query_and_update</a></td></tr>
+<tr class="separator:ab9a89f2ea9d941944d27acd45cce0746"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6835fae6794140222bf632201d8de56f"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpysequoiadb_1_1collection_1_1collection.html#a6835fae6794140222bf632201d8de56f">query_and_remove</a></td></tr>
+<tr class="separator:a6835fae6794140222bf632201d8de56f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0823f6a6b07a2f7504880632366c82fe"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpysequoiadb_1_1collection_1_1collection.html#a0823f6a6b07a2f7504880632366c82fe">create_index</a></td></tr>
 <tr class="separator:a0823f6a6b07a2f7504880632366c82fe"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a29e5d38018207c10554198e0ef14db34"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpysequoiadb_1_1collection_1_1collection.html#a29e5d38018207c10554198e0ef14db34">get_indexes</a></td></tr>
@@ -162,11 +166,22 @@ def&#160;</td><td class="memItemRight" valign="bottom"><b>__repr__</b></td></tr>
 <tr class="separator:a6aa9dd355f9f4a2e40dd5ea139dbf42b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0421c5ab6b8534bd89a94e258d1684c4"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpysequoiadb_1_1collection_1_1collection.html#a0421c5ab6b8534bd89a94e258d1684c4">explain</a></td></tr>
 <tr class="separator:a0421c5ab6b8534bd89a94e258d1684c4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1d643e911ce109cc1b73e3dd56959ab1"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a1d643e911ce109cc1b73e3dd56959ab1"></a>
+def&#160;</td><td class="memItemRight" valign="bottom"><b>truncate</b></td></tr>
+<tr class="separator:a1d643e911ce109cc1b73e3dd56959ab1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9c90905bdb314d86aa85098ea4d1c27c"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a9c90905bdb314d86aa85098ea4d1c27c"></a>
+def&#160;</td><td class="memItemRight" valign="bottom"><b>create_id_index</b></td></tr>
+<tr class="separator:a9c90905bdb314d86aa85098ea4d1c27c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac8c0036021cb5a889800dd02a6f3e8b0"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ac8c0036021cb5a889800dd02a6f3e8b0"></a>
+def&#160;</td><td class="memItemRight" valign="bottom"><b>drop_id_index</b></td></tr>
+<tr class="separator:ac8c0036021cb5a889800dd02a6f3e8b0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1cc01791574a091fce4bfb992a9ff1a0"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpysequoiadb_1_1collection_1_1collection.html#a1cc01791574a091fce4bfb992a9ff1a0">create_index_offline</a></td></tr>
+<tr class="separator:a1cc01791574a091fce4bfb992a9ff1a0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><pre class="fragment">Collection for SequoiaDB
 
-All operation need deal with the error code returned first, if it has. 
+All operation need deal with the error code returned first, if it has.
 Every error code is not SDB_OK(or 0), it means something error has appeared,
 and user should deal with it according the meaning of error code printed.
 
@@ -353,7 +368,7 @@ Exceptions:
    pysequoiadb.error.SDBTypeError
    pysequoiadb.error.SDBBaseError
 Info:
-   flags : 0 or 1. 
+   flags : 0 or 1.
    0 : stop insertting when hit index key duplicate error
    1 : continue insertting records even though index key duplicate error hit
 </pre> 
@@ -400,12 +415,70 @@ Info:
         </tr>
       </table>
 </div><div class="memdoc">
-<pre class="fragment">Create the index in current collection.
+<pre class="fragment">Create an index in current collection.
 
 Parameters:
    Name         Type  Info:
    index_def    dict  The dict object of index element.
-                      e.g. {name:1, age:-1}
+                      e.g. {'name':1, 'age':-1}
+   idx_name     str   The index name.
+   is_unique    bool  Whether the index elements are unique or not.
+   is_enforced  bool  Whether the index is enforced unique This
+                      element is meaningful when isUnique is set to
+                      true.
+Exceptions:
+   pysequoiadb.error.SDBTypeError
+   pysequoiadb.error.SDBBaseError
+</pre> 
+</div>
+</div>
+<a class="anchor" id="a1cc01791574a091fce4bfb992a9ff1a0"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">def pysequoiadb.collection.collection.create_index_offline </td>
+          <td>(</td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>self</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>index_def</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>idx_name</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>is_unique</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>is_enforced</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<pre class="fragment">Create an index in current collection offline.
+
+Parameters:
+   Name         Type  Info:
+   index_def    dict  The dict object of index element.
+                      e.g. {'name':1, 'age':-1}
    idx_name     str   The index name.
    is_unique    bool  Whether the index elements are unique or not.
    is_enforced  bool  Whether the index is enforced unique This
@@ -601,8 +674,8 @@ Parameters:
    - num_to_return   long     Only return numToReturn documents,
                               default is -1L for returning
                               all results.
-   - flag            int      
-   - options         json     
+   - flag            int
+   - options         json
 Return values:
    a cursor object of query
 Exceptions:
@@ -947,6 +1020,176 @@ Exceptions:
 </pre> 
 </div>
 </div>
+<a class="anchor" id="a6835fae6794140222bf632201d8de56f"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">def pysequoiadb.collection.collection.query_and_remove </td>
+          <td>(</td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>self</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>condition</em> = <code>None</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>selector</em> = <code>None</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>order_by</em> = <code>None</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>hint</em> = <code>None</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>num_to_skip</em> = <code>0</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>num_to_return</em> = <code>-1</code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<pre class="fragment">Get the matching documents in current collection and remove.
+
+Parameters:
+   Name            Type     Info:
+   condition       dict     The matching rule, update all the
+                              documents if not provided.
+   selector        dict     The selective rule, return the whole
+                              document if not provided.
+   order_by        dict     The ordered rule, result set is unordered
+                              if not provided.
+   hint            dict     The hint, automatically match the optimal
+                              hint if not provided.
+   num_to_skip     long     Skip the first numToSkip documents,
+                              default is 0L.
+   num_to_return   long     Only return numToReturn documents,
+                              default is -1L for returning
+                              all results.
+Return values:
+   a cursor object of query
+Exceptions:
+   pysequoiadb.error.SDBTypeError
+   pysequoiadb.error.SDBBaseError
+</pre> 
+</div>
+</div>
+<a class="anchor" id="ab9a89f2ea9d941944d27acd45cce0746"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">def pysequoiadb.collection.collection.query_and_update </td>
+          <td>(</td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>self</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>update</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>condition</em> = <code>None</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>selector</em> = <code>None</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>order_by</em> = <code>None</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>hint</em> = <code>None</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>num_to_skip</em> = <code>0</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>num_to_return</em> = <code>-1</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>return_new</em> = <code>False</code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<pre class="fragment">Get the matching documents in current collection and update.
+
+Parameters:
+   Name            Type     Info:
+   update          dict     The update rule, can't be null.
+   condition       dict     The matching rule, update all the
+                              documents if not provided.
+   selector        dict     The selective rule, return the whole
+                              document if not provided.
+   order_by        dict     The ordered rule, result set is unordered
+                              if not provided.
+   hint            dict     The hint, automatically match the optimal
+                              hint if not provided.
+   num_to_skip     long     Skip the first numToSkip documents,
+                              default is 0L.
+   num_to_return   long     Only return numToReturn documents,
+                              default is -1L for returning
+                              all results.
+   return_new      bool     When True, returns the updated document rather than the original
+Return values:
+   a cursor object of query
+Exceptions:
+   pysequoiadb.error.SDBTypeError
+   pysequoiadb.error.SDBBaseError
+</pre> 
+</div>
+</div>
 <a class="anchor" id="a6aa9dd355f9f4a2e40dd5ea139dbf42b"></a>
 <div class="memitem">
 <div class="memproto">
@@ -1079,11 +1322,11 @@ Parameters:
                                all documents if None.
    split_end_condition   dict  The split end condition or None.
                                eg:
-                               If we create a collection with the 
+                               If we create a collection with the
                                option { ShardingKey:{"age":1},
                                ShardingType:"Hash",Partition:2^10 },
                                we can fill {age:30} as the
-                               splitCondition, and fill {age:60} 
+                               splitCondition, and fill {age:60}
                                as the splitEndCondition. when split,
                                the target replica group will get the
                                records whose age's hash value are in
@@ -1200,11 +1443,11 @@ Parameters:
                                   of all documents if None.
    split_end_condition   dict     The split end condition or None.
                                   eg:
-                                  If we create a collection with the 
+                                  If we create a collection with the
                                   option { ShardingKey:{"age":1},
                                   ShardingType:"Hash",Partition:2^10 },
                                   we can fill {age:30} as the
-                                  splitCondition, and fill {age:60} 
+                                  splitCondition, and fill {age:60}
                                   as the splitEndCondition. when
                                   split, the target replica group
                                   will get the records whose age's
@@ -1347,13 +1590,14 @@ Note:
    no matching.
 
 Parameters:
-   Name        Type  Info:
-   rule        dict  The updating rule.
-   **kwargs          Useful options are below
-   - condition dict  The matching rule, update all the documents
-                     if not provided.
-   - hint      dict  The hint, automatically match the optimal hint
-                     if not provided
+   Name          Type  Info:
+   rule          dict  The updating rule.
+   **kwargs            Useful options are below
+   - condition   dict  The matching rule, update all the documents
+                       if not provided.
+   - hint        dict  The hint, automatically match the optimal hint
+                       if not provided
+   - setOnInsert dict  The setOnInsert assigns the specified values to the fileds when insert
 Exceptions:
    pysequoiadb.error.SDBTypeError
    pysequoiadb.error.SDBBaseError
@@ -1364,12 +1608,12 @@ Note:
 </div>
 </div>
 <hr/>The documentation for this class was generated from the following file:<ul>
-<li>C:/sequoiadb/driver/python/pysequoiadb/collection.py</li>
+<li>E:/sequoiadb/driver/python/pysequoiadb/collection.py</li>
 </ul>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Mon Mar 16 2015 11:08:37 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Sat Sep 26 2015 13:49:13 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.2
 </small></address>

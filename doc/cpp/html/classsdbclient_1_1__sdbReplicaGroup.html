@@ -128,6 +128,9 @@ virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>getNode</b> 
 <tr class="memitem:a1fb2c054e0b07c257f66ca33831702e4"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a1fb2c054e0b07c257f66ca33831702e4"></a>
 virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>createNode</b> (const CHAR *pHostName, const CHAR *pServiceName, const CHAR *pDatabasePath, std::map&lt; std::string, std::string &gt; &amp;config)=0</td></tr>
 <tr class="separator:a1fb2c054e0b07c257f66ca33831702e4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aff3dd89d216f2608e7ce868f7a67fee7"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aff3dd89d216f2608e7ce868f7a67fee7"></a>
+virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>createNode</b> (const CHAR *pHostName, const CHAR *pServiceName, const CHAR *pDatabasePath, const bson::BSONObj &amp;options=_sdbStaticObject)=0</td></tr>
+<tr class="separator:aff3dd89d216f2608e7ce868f7a67fee7"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9a0dd706078b115267e00526d7ca5af8"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a9a0dd706078b115267e00526d7ca5af8"></a>
 virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>removeNode</b> (const CHAR *pHostName, const CHAR *pServiceName, const bson::BSONObj &amp;configure=_sdbStaticObject)=0</td></tr>
 <tr class="separator:a9a0dd706078b115267e00526d7ca5af8"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -143,6 +146,12 @@ virtual const CHAR *&#160;</td><td class="memItemRight" valign="bottom"><b>getNa
 <tr class="memitem:a3be57350587590a69ac5dd4a2c1be18f"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a3be57350587590a69ac5dd4a2c1be18f"></a>
 virtual BOOLEAN&#160;</td><td class="memItemRight" valign="bottom"><b>isCatalog</b> ()=0</td></tr>
 <tr class="separator:a3be57350587590a69ac5dd4a2c1be18f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a78c4ab2d738ccb3f1fd69d38249e9e69"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a78c4ab2d738ccb3f1fd69d38249e9e69"></a>
+virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>attachNode</b> (const CHAR *pHostName, const CHAR *pSvcName, const bson::BSONObj &amp;options=_sdbStaticObject)=0</td></tr>
+<tr class="separator:a78c4ab2d738ccb3f1fd69d38249e9e69"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a90084ae5bb3fa8cbdb8103c822dcb9c1"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a90084ae5bb3fa8cbdb8103c822dcb9c1"></a>
+virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>detachNode</b> (const CHAR *pHostName, const CHAR *pSvcName, const bson::BSONObj &amp;options=_sdbStaticObject)=0</td></tr>
+<tr class="separator:a90084ae5bb3fa8cbdb8103c822dcb9c1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <hr/>The documentation for this class was generated from the following file:<ul>
 <li>E:/sequoiadb/client/include/<a class="el" href="client_8hpp_source.html">client.hpp</a></li>
@@ -150,7 +159,7 @@ virtual BOOLEAN&#160;</td><td class="memItemRight" valign="bottom"><b>isCatalog<
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Fri Oct 24 2014 13:32:16 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Wed Aug 5 2015 18:22:11 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.2
 </small></address>

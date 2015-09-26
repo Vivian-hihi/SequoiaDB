@@ -128,6 +128,12 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a048f502aa81f7b2a381f293c11e04bbb"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcom_1_1sequoiadb_1_1net_1_1ConfigOptions.html#a048f502aa81f7b2a381f293c11e04bbb">setMaxAutoConnectRetryTime</a> (long maxAutoConnectRetryTime)</td></tr>
 <tr class="memdesc:a048f502aa81f7b2a381f293c11e04bbb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the max auto connect retry time(milliseconds)  <a href="#a048f502aa81f7b2a381f293c11e04bbb"></a><br/></td></tr>
 <tr class="separator:a048f502aa81f7b2a381f293c11e04bbb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0057635a4708ec4c0c05de9a86bd0119"><td class="memItemLeft" align="right" valign="top">boolean&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcom_1_1sequoiadb_1_1net_1_1ConfigOptions.html#a0057635a4708ec4c0c05de9a86bd0119">getUseSSL</a> ()</td></tr>
+<tr class="memdesc:a0057635a4708ec4c0c05de9a86bd0119"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get whether use the SSL or not.  <a href="#a0057635a4708ec4c0c05de9a86bd0119"></a><br/></td></tr>
+<tr class="separator:a0057635a4708ec4c0c05de9a86bd0119"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac9b8a8dd7fc3b93187687be2a7b9a331"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcom_1_1sequoiadb_1_1net_1_1ConfigOptions.html#ac9b8a8dd7fc3b93187687be2a7b9a331">setUseSSL</a> (boolean useSSL)</td></tr>
+<tr class="memdesc:ac9b8a8dd7fc3b93187687be2a7b9a331"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set whether use the SSL or not.  <a href="#ac9b8a8dd7fc3b93187687be2a7b9a331"></a><br/></td></tr>
+<tr class="separator:ac9b8a8dd7fc3b93187687be2a7b9a331"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Database Connection Configuration Option. </p>
@@ -259,6 +265,34 @@ Public Member Functions</h2></td></tr>
 
 <p>Get whether use the Nagle Algorithm or not. </p>
 <dl class="section return"><dt>Returns</dt><dd>boolean </dd></dl>
+
+</div>
+</div>
+<a class="anchor" id="a0057635a4708ec4c0c05de9a86bd0119"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">boolean com.sequoiadb.net.ConfigOptions.getUseSSL </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Get whether use the SSL or not. </p>
+<dl class="section return"><dt>Returns</dt><dd>boolean </dd></dl>
+<dl class="section author"><dt>Author</dt><dd>David Li </dd></dl>
+<dl class="section since"><dt>Since</dt><dd>1.12 </dd></dl>
 
 </div>
 </div>
@@ -422,13 +456,47 @@ Public Member Functions</h2></td></tr>
 
 </div>
 </div>
+<a class="anchor" id="ac9b8a8dd7fc3b93187687be2a7b9a331"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void com.sequoiadb.net.ConfigOptions.setUseSSL </td>
+          <td>(</td>
+          <td class="paramtype">boolean&#160;</td>
+          <td class="paramname"><em>useSSL</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Set whether use the SSL or not. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">useSSL(boolean)</td><td></td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section author"><dt>Author</dt><dd>David Li </dd></dl>
+<dl class="section since"><dt>Since</dt><dd>1.12 </dd></dl>
+
+</div>
+</div>
 <hr/>The documentation for this class was generated from the following file:<ul>
-<li>E:/work/sequoiadb/driver/java/src/main/java/com/sequoiadb/net/ConfigOptions.java</li>
+<li>E:/sequoiadb/driver/java/src/main/java/com/sequoiadb/net/ConfigOptions.java</li>
 </ul>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Tue Oct 21 2014 16:06:31 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Sat Sep 26 2015 13:47:46 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.2
 </small></address>

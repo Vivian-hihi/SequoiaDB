@@ -130,6 +130,10 @@ def&#160;</td><td class="memItemRight" valign="bottom"><b>__repr__</b></td></tr>
 <tr class="separator:a276a1e251cf645a29f78870d713f32b2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7dd581c20493f395db7d1f9d1261c098"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpysequoiadb_1_1replicagroup_1_1replicagroup.html#a7dd581c20493f395db7d1f9d1261c098">is_catalog</a></td></tr>
 <tr class="separator:a7dd581c20493f395db7d1f9d1261c098"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a16c14624da00f1be2d5dcae8cf99f8ab"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpysequoiadb_1_1replicagroup_1_1replicagroup.html#a16c14624da00f1be2d5dcae8cf99f8ab">attach_node</a></td></tr>
+<tr class="separator:a16c14624da00f1be2d5dcae8cf99f8ab"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a584eaeffe3042522246ef94331ecc379"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpysequoiadb_1_1replicagroup_1_1replicagroup.html#a584eaeffe3042522246ef94331ecc379">detach_node</a></td></tr>
+<tr class="separator:a584eaeffe3042522246ef94331ecc379"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><pre class="fragment">Replica group of SequoiaDB
@@ -209,6 +213,60 @@ Exceptions:
 </div>
 </div>
 <h2 class="groupheader">Member Function Documentation</h2>
+<a class="anchor" id="a16c14624da00f1be2d5dcae8cf99f8ab"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">def pysequoiadb.replicagroup.replicagroup.attach_node </td>
+          <td>(</td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>self</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>hostname</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>servicename</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>dbpath</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>config</em> = <code>None</code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<pre class="fragment">Attach node in a given replica group.
+
+Parameters:
+   Name         Type     Info:
+   hostname     str      The host name for the node.
+   servicename  str      The servicename for the node.
+   config       dict     The configurations for the node.
+Exceptions:
+   pysequoiadb.error.SDBTypeError
+   pysequoiadb.error.SDBBaseError
+</pre> 
+</div>
+</div>
 <a class="anchor" id="ae95a48dd45d0e48edee6ad9f6ea47e08"></a>
 <div class="memitem">
 <div class="memproto">
@@ -257,6 +315,54 @@ Parameters:
    hostname     str      The host name for the node.
    servicename  str      The servicename for the node.
    dbpath       str      The database path for the node.
+   config       dict     The configurations for the node.
+Exceptions:
+   pysequoiadb.error.SDBTypeError
+   pysequoiadb.error.SDBBaseError
+</pre> 
+</div>
+</div>
+<a class="anchor" id="a584eaeffe3042522246ef94331ecc379"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">def pysequoiadb.replicagroup.replicagroup.detach_node </td>
+          <td>(</td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>self</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>hostname</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>servicename</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>config</em> = <code>None</code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<pre class="fragment">Detach node in a given replica group.
+
+Parameters:
+   Name         Type     Info:
+   hostname     str      The host name for the node.
+   servicename  str      The servicename for the node.
    config       dict     The configurations for the node.
 Exceptions:
    pysequoiadb.error.SDBTypeError
@@ -563,12 +669,12 @@ Exceptions:
 </div>
 </div>
 <hr/>The documentation for this class was generated from the following file:<ul>
-<li>C:/sequoiadb/driver/python/pysequoiadb/replicagroup.py</li>
+<li>E:/sequoiadb/driver/python/pysequoiadb/replicagroup.py</li>
 </ul>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Mon Mar 16 2015 11:08:37 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Sat Sep 26 2015 13:49:14 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.2
 </small></address>

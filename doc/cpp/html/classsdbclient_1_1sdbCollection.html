@@ -136,9 +136,9 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a4a0d3636bfd79c2c9d7f61e101cb0fcb"><td class="memItemLeft" align="right" valign="top">INT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsdbclient_1_1sdbCollection.html#a4a0d3636bfd79c2c9d7f61e101cb0fcb">update</a> (const bson::BSONObj &amp;rule, const bson::BSONObj &amp;condition=_sdbStaticObject, const bson::BSONObj &amp;hint=_sdbStaticObject)</td></tr>
 <tr class="memdesc:a4a0d3636bfd79c2c9d7f61e101cb0fcb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Update the matching documents in current collection.  <a href="#a4a0d3636bfd79c2c9d7f61e101cb0fcb"></a><br/></td></tr>
 <tr class="separator:a4a0d3636bfd79c2c9d7f61e101cb0fcb"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab50ed90fd2420790deff1a2f36254ede"><td class="memItemLeft" align="right" valign="top">INT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsdbclient_1_1sdbCollection.html#ab50ed90fd2420790deff1a2f36254ede">upsert</a> (const bson::BSONObj &amp;rule, const bson::BSONObj &amp;condition=_sdbStaticObject, const bson::BSONObj &amp;hint=_sdbStaticObject)</td></tr>
-<tr class="memdesc:ab50ed90fd2420790deff1a2f36254ede"><td class="mdescLeft">&#160;</td><td class="mdescRight">Update the matching documents in current collection, insert if no matching.  <a href="#ab50ed90fd2420790deff1a2f36254ede"></a><br/></td></tr>
-<tr class="separator:ab50ed90fd2420790deff1a2f36254ede"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a210c2127a414bc0616ff7fe4af9ca1c3"><td class="memItemLeft" align="right" valign="top">INT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsdbclient_1_1sdbCollection.html#a210c2127a414bc0616ff7fe4af9ca1c3">upsert</a> (const bson::BSONObj &amp;rule, const bson::BSONObj &amp;condition=_sdbStaticObject, const bson::BSONObj &amp;hint=_sdbStaticObject, const bson::BSONObj &amp;setOnInsert=_sdbStaticObject)</td></tr>
+<tr class="memdesc:a210c2127a414bc0616ff7fe4af9ca1c3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Update the matching documents in current collection, insert if no matching.  <a href="#a210c2127a414bc0616ff7fe4af9ca1c3"></a><br/></td></tr>
+<tr class="separator:a210c2127a414bc0616ff7fe4af9ca1c3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a282d616532a50056a8583e1725bea04c"><td class="memItemLeft" align="right" valign="top">INT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsdbclient_1_1sdbCollection.html#a282d616532a50056a8583e1725bea04c">del</a> (const bson::BSONObj &amp;condition=_sdbStaticObject, const bson::BSONObj &amp;hint=_sdbStaticObject)</td></tr>
 <tr class="memdesc:a282d616532a50056a8583e1725bea04c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Delete the matching documents in current collection.  <a href="#a282d616532a50056a8583e1725bea04c"></a><br/></td></tr>
 <tr class="separator:a282d616532a50056a8583e1725bea04c"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -148,9 +148,21 @@ INT32&#160;</td><td class="memItemRight" valign="bottom"><b>query</b> (<a class=
 <tr class="memitem:a5b5dae5cc3d1db97a86c6910be9ef259"><td class="memItemLeft" align="right" valign="top">INT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsdbclient_1_1sdbCollection.html#a5b5dae5cc3d1db97a86c6910be9ef259">query</a> (<a class="el" href="classsdbclient_1_1sdbCursor.html">sdbCursor</a> &amp;cursor, const bson::BSONObj &amp;condition=_sdbStaticObject, const bson::BSONObj &amp;selected=_sdbStaticObject, const bson::BSONObj &amp;orderBy=_sdbStaticObject, const bson::BSONObj &amp;hint=_sdbStaticObject, INT64 numToSkip=0, INT64 numToReturn=-1, INT32 flag=0)</td></tr>
 <tr class="memdesc:a5b5dae5cc3d1db97a86c6910be9ef259"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the matching documents in current collection.  <a href="#a5b5dae5cc3d1db97a86c6910be9ef259"></a><br/></td></tr>
 <tr class="separator:a5b5dae5cc3d1db97a86c6910be9ef259"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7c35cc906239362cb4858fc1b47a9dfa"><td class="memItemLeft" align="right" valign="top">INT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsdbclient_1_1sdbCollection.html#a7c35cc906239362cb4858fc1b47a9dfa">queryOne</a> (bson::BSONObj &amp;obj, const bson::BSONObj &amp;condition=_sdbStaticObject, const bson::BSONObj &amp;selected=_sdbStaticObject, const bson::BSONObj &amp;orderBy=_sdbStaticObject, const bson::BSONObj &amp;hint=_sdbStaticObject, INT64 numToSkip=0, INT32 flag=0)</td></tr>
+<tr class="memdesc:a7c35cc906239362cb4858fc1b47a9dfa"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the first matching documents in current collection.  <a href="#a7c35cc906239362cb4858fc1b47a9dfa"></a><br/></td></tr>
+<tr class="separator:a7c35cc906239362cb4858fc1b47a9dfa"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a86114d4e5600b765a66b11a354c44b8b"><td class="memItemLeft" align="right" valign="top">INT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsdbclient_1_1sdbCollection.html#a86114d4e5600b765a66b11a354c44b8b">queryAndUpdate</a> (<a class="el" href="classsdbclient_1_1sdbCursor.html">sdbCursor</a> &amp;cursor, const bson::BSONObj &amp;<a class="el" href="classsdbclient_1_1sdbCollection.html#a4a0d3636bfd79c2c9d7f61e101cb0fcb">update</a>, const bson::BSONObj &amp;condition=_sdbStaticObject, const bson::BSONObj &amp;selected=_sdbStaticObject, const bson::BSONObj &amp;orderBy=_sdbStaticObject, const bson::BSONObj &amp;hint=_sdbStaticObject, INT64 numToSkip=0, INT64 numToReturn=-1, INT32 flag=0, BOOLEAN returnNew=FALSE)</td></tr>
+<tr class="memdesc:a86114d4e5600b765a66b11a354c44b8b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the matching documents in current collection and update.  <a href="#a86114d4e5600b765a66b11a354c44b8b"></a><br/></td></tr>
+<tr class="separator:a86114d4e5600b765a66b11a354c44b8b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aafe7d07896fe0ccba646d177f999a3d5"><td class="memItemLeft" align="right" valign="top">INT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsdbclient_1_1sdbCollection.html#aafe7d07896fe0ccba646d177f999a3d5">queryAndRemove</a> (<a class="el" href="classsdbclient_1_1sdbCursor.html">sdbCursor</a> &amp;cursor, const bson::BSONObj &amp;condition=_sdbStaticObject, const bson::BSONObj &amp;selected=_sdbStaticObject, const bson::BSONObj &amp;orderBy=_sdbStaticObject, const bson::BSONObj &amp;hint=_sdbStaticObject, INT64 numToSkip=0, INT64 numToReturn=-1, INT32 flag=0)</td></tr>
+<tr class="memdesc:aafe7d07896fe0ccba646d177f999a3d5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the matching documents in current collection and remove.  <a href="#aafe7d07896fe0ccba646d177f999a3d5"></a><br/></td></tr>
+<tr class="separator:aafe7d07896fe0ccba646d177f999a3d5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a233a9df73d247e5a78bd113fe2bd2dff"><td class="memItemLeft" align="right" valign="top">INT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsdbclient_1_1sdbCollection.html#a233a9df73d247e5a78bd113fe2bd2dff">createIndex</a> (const bson::BSONObj &amp;indexDef, const CHAR *pName, BOOLEAN isUnique, BOOLEAN isEnforced)</td></tr>
 <tr class="memdesc:a233a9df73d247e5a78bd113fe2bd2dff"><td class="mdescLeft">&#160;</td><td class="mdescRight">Create the index in current collection.  <a href="#a233a9df73d247e5a78bd113fe2bd2dff"></a><br/></td></tr>
 <tr class="separator:a233a9df73d247e5a78bd113fe2bd2dff"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af9de1be83ad971447537e4ff109ff939"><td class="memItemLeft" align="right" valign="top">INT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsdbclient_1_1sdbCollection.html#af9de1be83ad971447537e4ff109ff939">createIndexOffline</a> (const bson::BSONObj &amp;indexDef, const CHAR *pName, BOOLEAN isUnique, BOOLEAN isEnforced)</td></tr>
+<tr class="memdesc:af9de1be83ad971447537e4ff109ff939"><td class="mdescLeft">&#160;</td><td class="mdescRight">Create the index in current collection in offline mode.  <a href="#af9de1be83ad971447537e4ff109ff939"></a><br/></td></tr>
+<tr class="separator:af9de1be83ad971447537e4ff109ff939"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3f87e58a837453b5c1403b99e4769ce6"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a3f87e58a837453b5c1403b99e4769ce6"></a>
 INT32&#160;</td><td class="memItemRight" valign="bottom"><b>getIndexes</b> (<a class="el" href="classsdbclient_1_1__sdbCursor.html">_sdbCursor</a> **cursor, const CHAR *pName)</td></tr>
 <tr class="separator:a3f87e58a837453b5c1403b99e4769ce6"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -208,6 +220,15 @@ INT32&#160;</td><td class="memItemRight" valign="bottom"><b>getQueryMeta</b> (<a
 <tr class="memitem:ad9256ad1c6815a3941e4f7d2178588eb"><td class="memItemLeft" align="right" valign="top">INT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsdbclient_1_1sdbCollection.html#ad9256ad1c6815a3941e4f7d2178588eb">listLobs</a> (<a class="el" href="classsdbclient_1_1sdbCursor.html">sdbCursor</a> &amp;cursor)</td></tr>
 <tr class="memdesc:ad9256ad1c6815a3941e4f7d2178588eb"><td class="mdescLeft">&#160;</td><td class="mdescRight">List all the lobs' meta data in current collection.  <a href="#ad9256ad1c6815a3941e4f7d2178588eb"></a><br/></td></tr>
 <tr class="separator:ad9256ad1c6815a3941e4f7d2178588eb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5211b8c4862ce35d22bfef25c3c76be4"><td class="memItemLeft" align="right" valign="top">INT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsdbclient_1_1sdbCollection.html#a5211b8c4862ce35d22bfef25c3c76be4">truncate</a> ()</td></tr>
+<tr class="memdesc:a5211b8c4862ce35d22bfef25c3c76be4"><td class="mdescLeft">&#160;</td><td class="mdescRight">truncate the collection  <a href="#a5211b8c4862ce35d22bfef25c3c76be4"></a><br/></td></tr>
+<tr class="separator:a5211b8c4862ce35d22bfef25c3c76be4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:adefc2c57e20cdd060c9addc3288ec873"><td class="memItemLeft" align="right" valign="top">INT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsdbclient_1_1sdbCollection.html#adefc2c57e20cdd060c9addc3288ec873">createIdIndex</a> (const bson::BSONObj &amp;options=_sdbStaticObject)</td></tr>
+<tr class="memdesc:adefc2c57e20cdd060c9addc3288ec873"><td class="mdescLeft">&#160;</td><td class="mdescRight">Create $id index in collection.  <a href="#adefc2c57e20cdd060c9addc3288ec873"></a><br/></td></tr>
+<tr class="separator:adefc2c57e20cdd060c9addc3288ec873"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6daa25e5fab62904eded7f21d4e82786"><td class="memItemLeft" align="right" valign="top">INT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsdbclient_1_1sdbCollection.html#a6daa25e5fab62904eded7f21d4e82786">dropIdIndex</a> ()</td></tr>
+<tr class="memdesc:a6daa25e5fab62904eded7f21d4e82786"><td class="mdescLeft">&#160;</td><td class="mdescRight">Drop $id index in collection.  <a href="#a6daa25e5fab62904eded7f21d4e82786"></a><br/></td></tr>
+<tr class="separator:a6daa25e5fab62904eded7f21d4e82786"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-attribs"></a>
 Public Attributes</h2></td></tr>
@@ -292,10 +313,16 @@ Public Attributes</h2></td></tr>
 <p>Alter the current collection. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramdir">[in]</td><td class="paramname">options</td><td>The modified options as following: ReplSize Number of replnodes for sync write </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">options</td><td>The modified options as following: <pre class="fragment">ReplSize     : Assign how many replica nodes need to be synchronized when a write request(insert, update, etc) is executed
+ShardingKey  : Assign the sharding key
+ShardingType : Assign the sharding type
+Partition    : When the ShardingType is "hash", need to assign Partition, it's the bucket number for hash, the range is [2^3,2^20]
+               e.g. {RepliSize:0, ShardingKey:{a:1}, ShardingType:"hash", Partition:1024}
+</pre> </td></tr>
   </table>
   </dd>
 </dl>
+<dl class="section note"><dt>Note</dt><dd>Can't alter attributes about split in partition collection; After altering a collection to be a partition collection, need to split this collection manually </dd></dl>
 <dl class="retval"><dt>Return values</dt><dd>
   <table class="retval">
     <tr><td class="paramname">SDB_OK</td><td>Operation Success </td></tr>
@@ -391,7 +418,7 @@ Public Attributes</h2></td></tr>
 <p>Insert a bulk of bson objects into current collection. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramdir">[in]</td><td class="paramname">flags</td><td>FLG_INSERT_CONTONDUP or 0 </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">flags</td><td>FLG_INSERT_CONTONDUP or 0. While FLG_INSERT_CONTONDUP is set, if some records hit index key duplicate error, database will skip them and go on inserting. However, while 0 is set, database will stop inserting in that case, and return errno code. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">obj</td><td>The array of inserted bson objects </td></tr>
   </table>
   </dd>
@@ -429,6 +456,46 @@ Public Attributes</h2></td></tr>
 
 <p>create the specified collection of current collection space </p>
 <dl class="deprecated"><dt><b><a class="el" href="deprecated.html#_deprecated000001">Deprecated:</a></b></dt><dd>This function will be deprecated in SequoiaDB1.6, use sdbCollectionSpace::createCollection instead of it. </dd></dl>
+<dl class="retval"><dt>Return values</dt><dd>
+  <table class="retval">
+    <tr><td class="paramname">SDB_OK</td><td>Operation Success </td></tr>
+    <tr><td class="paramname">Others</td><td>Operation Fail </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a class="anchor" id="adefc2c57e20cdd060c9addc3288ec873"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">INT32 sdbclient::sdbCollection::createIdIndex </td>
+          <td>(</td>
+          <td class="paramtype">const bson::BSONObj &amp;&#160;</td>
+          <td class="paramname"><em>options</em> = <code>_sdbStaticObject</code></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Create $id index in collection. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">options</td><td>The arguments of creating id index.e.g.{Offline:true} <pre class="fragment">Offline     : Use offline mode to create index or not, default to be false
+</pre> </td></tr>
+  </table>
+  </dd>
+</dl>
 <dl class="retval"><dt>Return values</dt><dd>
   <table class="retval">
     <tr><td class="paramname">SDB_OK</td><td>Operation Success </td></tr>
@@ -503,6 +570,71 @@ Public Attributes</h2></td></tr>
 
 </div>
 </div>
+<a class="anchor" id="af9de1be83ad971447537e4ff109ff939"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">INT32 sdbclient::sdbCollection::createIndexOffline </td>
+          <td>(</td>
+          <td class="paramtype">const bson::BSONObj &amp;&#160;</td>
+          <td class="paramname"><em>indexDef</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const CHAR *&#160;</td>
+          <td class="paramname"><em>pName</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">BOOLEAN&#160;</td>
+          <td class="paramname"><em>isUnique</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">BOOLEAN&#160;</td>
+          <td class="paramname"><em>isEnforced</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Create the index in current collection in offline mode. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">indexDef</td><td>The bson structure of index element, e.g. {name:1, age:-1} </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">pIndexName</td><td>The index name </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">isUnique</td><td>Whether the index elements are unique or not </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">isEnforced</td><td>Whether the index is enforced unique This element is meaningful when isUnique is set to true </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section note"><dt>Note</dt><dd>when creating index in offline mode, writing operations don't work in this collection </dd></dl>
+<dl class="retval"><dt>Return values</dt><dd>
+  <table class="retval">
+    <tr><td class="paramname">SDB_OK</td><td>Operation Success </td></tr>
+    <tr><td class="paramname">Others</td><td>Operation Fail </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
 <a class="anchor" id="ab1b462cd1506e4afd0cc56d7f4a806d5"></a>
 <div class="memitem">
 <div class="memproto">
@@ -550,7 +682,7 @@ Public Attributes</h2></td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section note"><dt>Note</dt><dd>When oid is offered, use it to create a lob for writing, otherwise, API will generate one. After creating a lob, need to close it to release resource. </dd></dl>
+<dl class="section note"><dt>Note</dt><dd>When oid is offered, use it to create a lob for writing, otherwise, API will generate one. After finish writing the newly created lob, need to close it to release resource. </dd></dl>
 
 </div>
 </div>
@@ -676,6 +808,39 @@ Public Attributes</h2></td></tr>
 
 </div>
 </div>
+<a class="anchor" id="a6daa25e5fab62904eded7f21d4e82786"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">INT32 sdbclient::sdbCollection::dropIdIndex </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Drop $id index in collection. </p>
+<dl class="retval"><dt>Return values</dt><dd>
+  <table class="retval">
+    <tr><td class="paramname">SDB_OK</td><td>Operation Success </td></tr>
+    <tr><td class="paramname">Others</td><td>Operation Fail </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section note"><dt>Note</dt><dd>delete, update and upsert do not work after index "$id" was drop </dd></dl>
+
+</div>
+</div>
 <a class="anchor" id="ae960e209c8ffeb60e95712591b88e021"></a>
 <div class="memitem">
 <div class="memproto">
@@ -798,7 +963,10 @@ Public Attributes</h2></td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">hint</td><td>The hint, automatically match the optimal hint if null </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">numToSkip</td><td>Skip the first numToSkip documents, never skip if this parameter is 0 </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">numToReturn</td><td>Only return numToReturn documents, return all if this parameter is -1 </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">options</td><td>the rules of explain </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">options</td><td>the rules of explain, the options are as below: <pre class="fragment">Run     : Whether execute query explain or not, true for excuting query explain then get
+          the data and time information; false for not excuting query explain but get the
+          query explain information only. e.g. {Run:true}
+</pre> </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">flags</td><td>The flags of query </td></tr>
     <tr><td class="paramdir">[out]</td><td class="paramname">cursor</td><td>The cursor of current query </td></tr>
   </table>
@@ -1306,6 +1474,301 @@ FLG_QUERY_WITH_RETURNDATA(0x00000200) : In general, query won't return data unti
 
 </div>
 </div>
+<a class="anchor" id="aafe7d07896fe0ccba646d177f999a3d5"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">INT32 sdbclient::sdbCollection::queryAndRemove </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classsdbclient_1_1sdbCursor.html">sdbCursor</a> &amp;&#160;</td>
+          <td class="paramname"><em>cursor</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const bson::BSONObj &amp;&#160;</td>
+          <td class="paramname"><em>condition</em> = <code>_sdbStaticObject</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const bson::BSONObj &amp;&#160;</td>
+          <td class="paramname"><em>selected</em> = <code>_sdbStaticObject</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const bson::BSONObj &amp;&#160;</td>
+          <td class="paramname"><em>orderBy</em> = <code>_sdbStaticObject</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const bson::BSONObj &amp;&#160;</td>
+          <td class="paramname"><em>hint</em> = <code>_sdbStaticObject</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">INT64&#160;</td>
+          <td class="paramname"><em>numToSkip</em> = <code>0</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">INT64&#160;</td>
+          <td class="paramname"><em>numToReturn</em> = <code>-1</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">INT32&#160;</td>
+          <td class="paramname"><em>flag</em> = <code>0</code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Get the matching documents in current collection and remove. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">condition</td><td>The matching rule, return all the documents if not provided </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">selected</td><td>The selective rule, return the whole document if not provided </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">orderBy</td><td>The ordered rule, result set is unordered if not provided </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">hint</td><td>The hint, automatically match the optimal hint if not provided </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">numToSkip</td><td>Skip the first numToSkip documents, default is 0 </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">numToReturn</td><td>Only return numToReturn documents, default is -1 for returning all results </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">flag</td><td>The query flag, defalt to be 0 <pre class="fragment">FLG_QUERY_FORCE_HINT(0x00000080)      : Force to use specified hint to query, if database have no index assigned by the hint, fail to query
+FLG_QUERY_PARALLED(0x00000100)        : Enable paralled sub query
+FLG_QUERY_WITH_RETURNDATA(0x00000200) : In general, query won't return data until cursor get from database,
+                                        when add this flag, return data in query response, it will be more high-performance
+</pre> </td></tr>
+    <tr><td class="paramdir">[out]</td><td class="paramname">cursor</td><td>The cursor of current query </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="retval"><dt>Return values</dt><dd>
+  <table class="retval">
+    <tr><td class="paramname">SDB_OK</td><td>Operation Success </td></tr>
+    <tr><td class="paramname">Others</td><td>Operation Fail </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a class="anchor" id="a86114d4e5600b765a66b11a354c44b8b"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">INT32 sdbclient::sdbCollection::queryAndUpdate </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classsdbclient_1_1sdbCursor.html">sdbCursor</a> &amp;&#160;</td>
+          <td class="paramname"><em>cursor</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const bson::BSONObj &amp;&#160;</td>
+          <td class="paramname"><em>update</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const bson::BSONObj &amp;&#160;</td>
+          <td class="paramname"><em>condition</em> = <code>_sdbStaticObject</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const bson::BSONObj &amp;&#160;</td>
+          <td class="paramname"><em>selected</em> = <code>_sdbStaticObject</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const bson::BSONObj &amp;&#160;</td>
+          <td class="paramname"><em>orderBy</em> = <code>_sdbStaticObject</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const bson::BSONObj &amp;&#160;</td>
+          <td class="paramname"><em>hint</em> = <code>_sdbStaticObject</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">INT64&#160;</td>
+          <td class="paramname"><em>numToSkip</em> = <code>0</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">INT64&#160;</td>
+          <td class="paramname"><em>numToReturn</em> = <code>-1</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">INT32&#160;</td>
+          <td class="paramname"><em>flag</em> = <code>0</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">BOOLEAN&#160;</td>
+          <td class="paramname"><em>returnNew</em> = <code>FALSE</code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Get the matching documents in current collection and update. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">update</td><td>The update rule, can't be empty </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">condition</td><td>The matching rule, return all the documents if not provided </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">selected</td><td>The selective rule, return the whole document if not provided </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">orderBy</td><td>The ordered rule, result set is unordered if not provided </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">hint</td><td>The hint, automatically match the optimal hint if not provided </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">numToSkip</td><td>Skip the first numToSkip documents, default is 0 </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">numToReturn</td><td>Only return numToReturn documents, default is -1 for returning all results </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">flag</td><td>The query flag, defalt to be 0 <pre class="fragment">FLG_QUERY_FORCE_HINT(0x00000080)      : Force to use specified hint to query, if database have no index assigned by the hint, fail to query
+FLG_QUERY_PARALLED(0x00000100)        : Enable paralled sub query
+FLG_QUERY_WITH_RETURNDATA(0x00000200) : In general, query won't return data until cursor get from database,
+                                        when add this flag, return data in query response, it will be more high-performance
+</pre> </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">returnNew</td><td>When TRUE, returns the updated document rather than the original </td></tr>
+    <tr><td class="paramdir">[out]</td><td class="paramname">cursor</td><td>The cursor of current query </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="retval"><dt>Return values</dt><dd>
+  <table class="retval">
+    <tr><td class="paramname">SDB_OK</td><td>Operation Success </td></tr>
+    <tr><td class="paramname">Others</td><td>Operation Fail </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a class="anchor" id="a7c35cc906239362cb4858fc1b47a9dfa"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">INT32 sdbclient::sdbCollection::queryOne </td>
+          <td>(</td>
+          <td class="paramtype">bson::BSONObj &amp;&#160;</td>
+          <td class="paramname"><em>obj</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const bson::BSONObj &amp;&#160;</td>
+          <td class="paramname"><em>condition</em> = <code>_sdbStaticObject</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const bson::BSONObj &amp;&#160;</td>
+          <td class="paramname"><em>selected</em> = <code>_sdbStaticObject</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const bson::BSONObj &amp;&#160;</td>
+          <td class="paramname"><em>orderBy</em> = <code>_sdbStaticObject</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const bson::BSONObj &amp;&#160;</td>
+          <td class="paramname"><em>hint</em> = <code>_sdbStaticObject</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">INT64&#160;</td>
+          <td class="paramname"><em>numToSkip</em> = <code>0</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">INT32&#160;</td>
+          <td class="paramname"><em>flag</em> = <code>0</code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Get the first matching documents in current collection. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">condition</td><td>The matching rule, return all the documents if not provided </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">selected</td><td>The selective rule, return the whole document if not provided </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">orderBy</td><td>The ordered rule, result set is unordered if not provided </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">hint</td><td>The hint, automatically match the optimal hint if not provided </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">numToSkip</td><td>Skip the first numToSkip documents, default is 0 </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">flag</td><td>The query flag, defalt to be 0 <pre class="fragment">FLG_QUERY_FORCE_HINT(0x00000080)      : Force to use specified hint to query, if database have no index assigned by the hint, fail to query
+FLG_QUERY_PARALLED(0x00000100)        : Enable paralled sub query
+FLG_QUERY_WITH_RETURNDATA(0x00000200) : In general, query won't return data until cursor get from database,
+                                        when add this flag, return data in query response, it will be more high-performance
+</pre></td></tr>
+    <tr><td class="paramdir">[out]</td><td class="paramname">obj</td><td>The first matching object </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="retval"><dt>Return values</dt><dd>
+  <table class="retval">
+    <tr><td class="paramname">SDB_OK</td><td>Operation Success </td></tr>
+    <tr><td class="paramname">Others</td><td>Operation Fail </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
 <a class="anchor" id="a608760487730d302da5a1e7dc4ce386e"></a>
 <div class="memitem">
 <div class="memproto">
@@ -1601,6 +2064,38 @@ FLG_QUERY_WITH_RETURNDATA(0x00000200) : In general, query won't return data unti
 
 </div>
 </div>
+<a class="anchor" id="a5211b8c4862ce35d22bfef25c3c76be4"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">INT32 sdbclient::sdbCollection::truncate </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>truncate the collection </p>
+<dl class="retval"><dt>Return values</dt><dd>
+  <table class="retval">
+    <tr><td class="paramname">SDB_OK</td><td>Operation Success </td></tr>
+    <tr><td class="paramname">Others</td><td>Operation Fail </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
 <a class="anchor" id="a4a0d3636bfd79c2c9d7f61e101cb0fcb"></a>
 <div class="memitem">
 <div class="memproto">
@@ -1659,7 +2154,7 @@ FLG_QUERY_WITH_RETURNDATA(0x00000200) : In general, query won't return data unti
 
 </div>
 </div>
-<a class="anchor" id="ab50ed90fd2420790deff1a2f36254ede"></a>
+<a class="anchor" id="a210c2127a414bc0616ff7fe4af9ca1c3"></a>
 <div class="memitem">
 <div class="memproto">
 <table class="mlabels">
@@ -1682,7 +2177,13 @@ FLG_QUERY_WITH_RETURNDATA(0x00000200) : In general, query won't return data unti
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">const bson::BSONObj &amp;&#160;</td>
-          <td class="paramname"><em>hint</em> = <code>_sdbStaticObject</code>&#160;</td>
+          <td class="paramname"><em>hint</em> = <code>_sdbStaticObject</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const bson::BSONObj &amp;&#160;</td>
+          <td class="paramname"><em>setOnInsert</em> = <code>_sdbStaticObject</code>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -1703,6 +2204,7 @@ FLG_QUERY_WITH_RETURNDATA(0x00000200) : In general, query won't return data unti
     <tr><td class="paramdir">[in]</td><td class="paramname">rule</td><td>The updating rule </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">condition</td><td>The matching rule, update all the documents if not provided </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">hint</td><td>The hint, automatically match the optimal hint if not provided </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">setOnInsert</td><td>The setOnInsert assigns the specified values to the fileds when insert </td></tr>
   </table>
   </dd>
 </dl>
@@ -1738,7 +2240,7 @@ FLG_QUERY_WITH_RETURNDATA(0x00000200) : In general, query won't return data unti
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Fri Oct 24 2014 13:32:16 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Wed Aug 5 2015 18:22:11 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.2
 </small></address>

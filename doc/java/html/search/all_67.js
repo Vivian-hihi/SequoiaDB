@@ -12,8 +12,9 @@ var searchData=
   ['getcreatetime',['getCreateTime',['../interfacecom_1_1sequoiadb_1_1base_1_1DBLob.html#a54283fecc641846ce2dcd0dc8ede6d5e',1,'com::sequoiadb::base::DBLob']]],
   ['getcsname',['getCSName',['../classcom_1_1sequoiadb_1_1base_1_1DBCollection.html#a64af70d5e520b6bf1a9460abff4c7b5f',1,'com::sequoiadb::base::DBCollection']]],
   ['getcurrent',['getCurrent',['../classcom_1_1sequoiadb_1_1base_1_1DBCursor.html#a38e14f331a4807c94fba2b45ac552012',1,'com::sequoiadb::base::DBCursor']]],
+  ['getdatacenter',['getDataCenter',['../classcom_1_1sequoiadb_1_1base_1_1Sequoiadb.html#aa5608ecda72fb01b8f147928c9ab91ea',1,'com::sequoiadb::base::Sequoiadb']]],
   ['getdeltainccount',['getDeltaIncCount',['../classcom_1_1sequoiadb_1_1base_1_1SequoiadbOption.html#a992000cc20b302e04536d7f635cb1881',1,'com::sequoiadb::base::SequoiadbOption']]],
-  ['getdetail',['getDetail',['../classcom_1_1sequoiadb_1_1base_1_1ReplicaGroup.html#ad3d93947705545f510b2b48119be91a3',1,'com::sequoiadb::base::ReplicaGroup']]],
+  ['getdetail',['getDetail',['../classcom_1_1sequoiadb_1_1base_1_1ReplicaGroup.html#ad3d93947705545f510b2b48119be91a3',1,'com.sequoiadb.base.ReplicaGroup.getDetail()'],['../interfacecom_1_1sequoiadb_1_1base_1_1DBDataCenter.html#a2ca1ecba8625fa77a4e692c188839b45',1,'com.sequoiadb.base.DBDataCenter.getDetail()']]],
   ['getdomain',['getDomain',['../classcom_1_1sequoiadb_1_1base_1_1Sequoiadb.html#ad77a583a16669b353b1dda4149317ad1',1,'com::sequoiadb::base::Sequoiadb']]],
   ['getflag',['getFlag',['../classcom_1_1sequoiadb_1_1base_1_1DBQuery.html#a2cfce7f562cd9c34026113e974a029a7',1,'com::sequoiadb::base::DBQuery']]],
   ['getfullname',['getFullName',['../classcom_1_1sequoiadb_1_1base_1_1DBCollection.html#ac44621b80b057de9d37c13f782f80e94',1,'com::sequoiadb::base::DBCollection']]],
@@ -33,7 +34,7 @@ var searchData=
   ['getmaxconnectionnum',['getMaxConnectionNum',['../classcom_1_1sequoiadb_1_1base_1_1SequoiadbOption.html#ac6efaa78283dc09d43f774ed49eae220',1,'com::sequoiadb::base::SequoiadbOption']]],
   ['getmaxidenum',['getMaxIdeNum',['../classcom_1_1sequoiadb_1_1base_1_1SequoiadbOption.html#aed912755ae8949693008df4d7e44baa9',1,'com::sequoiadb::base::SequoiadbOption']]],
   ['getmodifier',['getModifier',['../classcom_1_1sequoiadb_1_1base_1_1DBQuery.html#abeabfb313b685a9e4cb45883f841aad1',1,'com::sequoiadb::base::DBQuery']]],
-  ['getname',['getName',['../classcom_1_1sequoiadb_1_1base_1_1CollectionSpace.html#a0c562e61274094d842e5a201cf328fc9',1,'com.sequoiadb.base.CollectionSpace.getName()'],['../classcom_1_1sequoiadb_1_1base_1_1DBCollection.html#aee94229ea3df7da97fd28a019c0ad788',1,'com.sequoiadb.base.DBCollection.getName()']]],
+  ['getname',['getName',['../classcom_1_1sequoiadb_1_1base_1_1CollectionSpace.html#a0c562e61274094d842e5a201cf328fc9',1,'com.sequoiadb.base.CollectionSpace.getName()'],['../classcom_1_1sequoiadb_1_1base_1_1DBCollection.html#aee94229ea3df7da97fd28a019c0ad788',1,'com.sequoiadb.base.DBCollection.getName()'],['../classcom_1_1sequoiadb_1_1base_1_1Domain.html#a4ee1f8a030b07cbe14fc42d3d5468724',1,'com.sequoiadb.base.Domain.getName()'],['../interfacecom_1_1sequoiadb_1_1base_1_1DBDataCenter.html#af5042d6c7f2e3a526ec3516d2685280b',1,'com.sequoiadb.base.DBDataCenter.getName()']]],
   ['getnext',['getNext',['../classcom_1_1sequoiadb_1_1base_1_1DBCursor.html#a1c181b58d2558d52e2e30d6f700a454f',1,'com::sequoiadb::base::DBCursor']]],
   ['getnode',['getNode',['../classcom_1_1sequoiadb_1_1base_1_1ReplicaGroup.html#adecf8441dfd6c0c7ca0015351bc8009e',1,'com.sequoiadb.base.ReplicaGroup.getNode(String nodeName)'],['../classcom_1_1sequoiadb_1_1base_1_1ReplicaGroup.html#ae69fd4960faa3941677ac7d967c52569',1,'com.sequoiadb.base.ReplicaGroup.getNode(String hostName, int port)']]],
   ['getnodeid',['getNodeId',['../classcom_1_1sequoiadb_1_1base_1_1Node.html#a414e0887dfc90fa1c1a6f3d35b8482ce',1,'com.sequoiadb.base.Node.getNodeId()'],['../classcom_1_1sequoiadb_1_1base_1_1ReplicaNode.html#af64bbac9780ba535d3471504b3389479',1,'com.sequoiadb.base.ReplicaNode.getNodeId()']]],
@@ -51,7 +52,7 @@ var searchData=
   ['getreturnrowscount',['getReturnRowsCount',['../classcom_1_1sequoiadb_1_1base_1_1DBQuery.html#a50f7c9d74e8b6baa8b1ce8204e2e7db4',1,'com::sequoiadb::base::DBQuery']]],
   ['getsdb',['getSdb',['../classcom_1_1sequoiadb_1_1base_1_1Node.html#a5f8f77c47d6724014a71935505bec6e1',1,'com.sequoiadb.base.Node.getSdb()'],['../classcom_1_1sequoiadb_1_1base_1_1ReplicaNode.html#ada73d1a9edf73716ac22c0abe626a7aa',1,'com.sequoiadb.base.ReplicaNode.getSdb()']]],
   ['getselector',['getSelector',['../classcom_1_1sequoiadb_1_1base_1_1DBQuery.html#a36a5b85845d03755d402383253930cb3',1,'com::sequoiadb::base::DBQuery']]],
-  ['getsequoiadb',['getSequoiadb',['../classcom_1_1sequoiadb_1_1base_1_1CollectionSpace.html#a47ddb98bffee3ec83f4baf6aabd4d139',1,'com.sequoiadb.base.CollectionSpace.getSequoiadb()'],['../classcom_1_1sequoiadb_1_1base_1_1DBCollection.html#a22f3ad8674f688d0812420336e34b2ac',1,'com.sequoiadb.base.DBCollection.getSequoiadb()'],['../classcom_1_1sequoiadb_1_1base_1_1ReplicaGroup.html#acad344a5dbae23aa4f2ed8a12c158c88',1,'com.sequoiadb.base.ReplicaGroup.getSequoiadb()']]],
+  ['getsequoiadb',['getSequoiadb',['../classcom_1_1sequoiadb_1_1base_1_1CollectionSpace.html#a47ddb98bffee3ec83f4baf6aabd4d139',1,'com.sequoiadb.base.CollectionSpace.getSequoiadb()'],['../classcom_1_1sequoiadb_1_1base_1_1DBCollection.html#a22f3ad8674f688d0812420336e34b2ac',1,'com.sequoiadb.base.DBCollection.getSequoiadb()'],['../classcom_1_1sequoiadb_1_1base_1_1ReplicaGroup.html#acad344a5dbae23aa4f2ed8a12c158c88',1,'com.sequoiadb.base.ReplicaGroup.getSequoiadb()'],['../classcom_1_1sequoiadb_1_1base_1_1Domain.html#a56e928f26e6a368ac29482de1c66f4bc',1,'com.sequoiadb.base.Domain.getSequoiadb()']]],
   ['getserveraddress',['getServerAddress',['../classcom_1_1sequoiadb_1_1base_1_1Sequoiadb.html#a6bf8a7d81f8cf0cfb6cabbf5c0e044fd',1,'com::sequoiadb::base::Sequoiadb']]],
   ['getsize',['getSize',['../interfacecom_1_1sequoiadb_1_1base_1_1DBLob.html#a58948ec947f93698ca80a0be97acf267',1,'com::sequoiadb::base::DBLob']]],
   ['getskiprowscount',['getSkipRowsCount',['../classcom_1_1sequoiadb_1_1base_1_1DBQuery.html#a1ca9e3c35a966376f4418efe26e59b24',1,'com::sequoiadb::base::DBQuery']]],
@@ -63,5 +64,6 @@ var searchData=
   ['getstorageunits',['getStorageUnits',['../classcom_1_1sequoiadb_1_1base_1_1Sequoiadb.html#a734eadb09d977625b8cf4b37a9d38a88',1,'com::sequoiadb::base::Sequoiadb']]],
   ['gettimeout',['getTimeout',['../classcom_1_1sequoiadb_1_1base_1_1SequoiadbOption.html#aaa17c39c693f4f1fd2c056a2a219781e',1,'com::sequoiadb::base::SequoiadbOption']]],
   ['getusedconnnum',['getUsedConnNum',['../classcom_1_1sequoiadb_1_1base_1_1SequoiadbDatasource.html#a38289c0be5bcb00c7f6f0de7c1c78931',1,'com::sequoiadb::base::SequoiadbDatasource']]],
-  ['getusenagle',['getUseNagle',['../classcom_1_1sequoiadb_1_1net_1_1ConfigOptions.html#a52a229b72e690bc2474caa6ddd6d5190',1,'com::sequoiadb::net::ConfigOptions']]]
+  ['getusenagle',['getUseNagle',['../classcom_1_1sequoiadb_1_1net_1_1ConfigOptions.html#a52a229b72e690bc2474caa6ddd6d5190',1,'com::sequoiadb::net::ConfigOptions']]],
+  ['getusessl',['getUseSSL',['../classcom_1_1sequoiadb_1_1net_1_1ConfigOptions.html#a0057635a4708ec4c0c05de9a86bd0119',1,'com::sequoiadb::net::ConfigOptions']]]
 ];

@@ -88,6 +88,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
       <li><a href="functions_0x71.html#index_q"><span>q</span></a></li>
       <li><a href="functions_0x72.html#index_r"><span>r</span></a></li>
       <li><a href="functions_0x73.html#index_s"><span>s</span></a></li>
+      <li><a href="functions_0x74.html#index_t"><span>t</span></a></li>
       <li><a href="functions_0x75.html#index_u"><span>u</span></a></li>
       <li><a href="functions_0x77.html#index_w"><span>w</span></a></li>
     </ul>
@@ -150,11 +151,15 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <li>getCurrent()
 : <a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBCursor.html#a38e14f331a4807c94fba2b45ac552012">com.sequoiadb.base.DBCursor</a>
 </li>
+<li>getDataCenter()
+: <a class="el" href="classcom_1_1sequoiadb_1_1base_1_1Sequoiadb.html#aa5608ecda72fb01b8f147928c9ab91ea">com.sequoiadb.base.Sequoiadb</a>
+</li>
 <li>getDeltaIncCount()
 : <a class="el" href="classcom_1_1sequoiadb_1_1base_1_1SequoiadbOption.html#a992000cc20b302e04536d7f635cb1881">com.sequoiadb.base.SequoiadbOption</a>
 </li>
 <li>getDetail()
 : <a class="el" href="classcom_1_1sequoiadb_1_1base_1_1ReplicaGroup.html#ad3d93947705545f510b2b48119be91a3">com.sequoiadb.base.ReplicaGroup</a>
+, <a class="el" href="interfacecom_1_1sequoiadb_1_1base_1_1DBDataCenter.html#a2ca1ecba8625fa77a4e692c188839b45">com.sequoiadb.base.DBDataCenter</a>
 </li>
 <li>getDomain()
 : <a class="el" href="classcom_1_1sequoiadb_1_1base_1_1Sequoiadb.html#ad77a583a16669b353b1dda4149317ad1">com.sequoiadb.base.Sequoiadb</a>
@@ -178,11 +183,11 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 : <a class="el" href="classcom_1_1sequoiadb_1_1base_1_1Node.html#adc1335d0a56cbaa4520567bdac9114f1">com.sequoiadb.base.Node</a>
 , <a class="el" href="classcom_1_1sequoiadb_1_1base_1_1ReplicaNode.html#ac29efa2957b7739c33f4e3e635512f14">com.sequoiadb.base.ReplicaNode</a>
 </li>
-<li>getId()
-: <a class="el" href="classcom_1_1sequoiadb_1_1base_1_1ReplicaGroup.html#a405b7e638fdcb59929bf4eea67f26c78">com.sequoiadb.base.ReplicaGroup</a>
-</li>
 <li>getID()
 : <a class="el" href="interfacecom_1_1sequoiadb_1_1base_1_1DBLob.html#a8ce4359b70e5768f115e06b181b85c6c">com.sequoiadb.base.DBLob</a>
+</li>
+<li>getId()
+: <a class="el" href="classcom_1_1sequoiadb_1_1base_1_1ReplicaGroup.html#a405b7e638fdcb59929bf4eea67f26c78">com.sequoiadb.base.ReplicaGroup</a>
 </li>
 <li>getIdleConnNum()
 : <a class="el" href="classcom_1_1sequoiadb_1_1base_1_1SequoiadbDatasource.html#a1c9316d6f542447108d343134f84adf3">com.sequoiadb.base.SequoiadbDatasource</a>
@@ -220,6 +225,8 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <li>getName()
 : <a class="el" href="classcom_1_1sequoiadb_1_1base_1_1CollectionSpace.html#a0c562e61274094d842e5a201cf328fc9">com.sequoiadb.base.CollectionSpace</a>
 , <a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBCollection.html#aee94229ea3df7da97fd28a019c0ad788">com.sequoiadb.base.DBCollection</a>
+, <a class="el" href="classcom_1_1sequoiadb_1_1base_1_1Domain.html#a4ee1f8a030b07cbe14fc42d3d5468724">com.sequoiadb.base.Domain</a>
+, <a class="el" href="interfacecom_1_1sequoiadb_1_1base_1_1DBDataCenter.html#af5042d6c7f2e3a526ec3516d2685280b">com.sequoiadb.base.DBDataCenter</a>
 </li>
 <li>getNext()
 : <a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBCursor.html#a1c181b58d2558d52e2e30d6f700a454f">com.sequoiadb.base.DBCursor</a>
@@ -258,8 +265,9 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 : <a class="el" href="classcom_1_1sequoiadb_1_1base_1_1SequoiadbOption.html#a05908d656c0510a1a40e6682ac31f55a">com.sequoiadb.base.SequoiadbOption</a>
 </li>
 <li>getReplicaGroup()
-: <a class="el" href="classcom_1_1sequoiadb_1_1base_1_1Node.html#aebf912b19c9751f8785bb29ab709459e">com.sequoiadb.base.Node</a>
-, <a class="el" href="classcom_1_1sequoiadb_1_1base_1_1Sequoiadb.html#a6eda9b71bbfbd813db66c6bd08b739c9">com.sequoiadb.base.Sequoiadb</a>
+: <a class="el" href="classcom_1_1sequoiadb_1_1base_1_1Sequoiadb.html#a6eda9b71bbfbd813db66c6bd08b739c9">com.sequoiadb.base.Sequoiadb</a>
+, <a class="el" href="classcom_1_1sequoiadb_1_1base_1_1Node.html#aebf912b19c9751f8785bb29ab709459e">com.sequoiadb.base.Node</a>
+, <a class="el" href="classcom_1_1sequoiadb_1_1base_1_1Sequoiadb.html#ac529f4977306a6f27f19750b4d2a8337">com.sequoiadb.base.Sequoiadb</a>
 </li>
 <li>getReplicaGroupNames()
 : <a class="el" href="classcom_1_1sequoiadb_1_1base_1_1Sequoiadb.html#a765034dea6086c6fd0d65ebdc8e46557">com.sequoiadb.base.Sequoiadb</a>
@@ -271,16 +279,17 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 : <a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBQuery.html#a50f7c9d74e8b6baa8b1ce8204e2e7db4">com.sequoiadb.base.DBQuery</a>
 </li>
 <li>getSdb()
-: <a class="el" href="classcom_1_1sequoiadb_1_1base_1_1Node.html#a5f8f77c47d6724014a71935505bec6e1">com.sequoiadb.base.Node</a>
-, <a class="el" href="classcom_1_1sequoiadb_1_1base_1_1ReplicaNode.html#ada73d1a9edf73716ac22c0abe626a7aa">com.sequoiadb.base.ReplicaNode</a>
+: <a class="el" href="classcom_1_1sequoiadb_1_1base_1_1ReplicaNode.html#ada73d1a9edf73716ac22c0abe626a7aa">com.sequoiadb.base.ReplicaNode</a>
+, <a class="el" href="classcom_1_1sequoiadb_1_1base_1_1Node.html#a5f8f77c47d6724014a71935505bec6e1">com.sequoiadb.base.Node</a>
 </li>
 <li>getSelector()
 : <a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBQuery.html#a36a5b85845d03755d402383253930cb3">com.sequoiadb.base.DBQuery</a>
 </li>
 <li>getSequoiadb()
-: <a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBCollection.html#a22f3ad8674f688d0812420336e34b2ac">com.sequoiadb.base.DBCollection</a>
+: <a class="el" href="classcom_1_1sequoiadb_1_1base_1_1CollectionSpace.html#a47ddb98bffee3ec83f4baf6aabd4d139">com.sequoiadb.base.CollectionSpace</a>
+, <a class="el" href="classcom_1_1sequoiadb_1_1base_1_1Domain.html#a56e928f26e6a368ac29482de1c66f4bc">com.sequoiadb.base.Domain</a>
+, <a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBCollection.html#a22f3ad8674f688d0812420336e34b2ac">com.sequoiadb.base.DBCollection</a>
 , <a class="el" href="classcom_1_1sequoiadb_1_1base_1_1ReplicaGroup.html#acad344a5dbae23aa4f2ed8a12c158c88">com.sequoiadb.base.ReplicaGroup</a>
-, <a class="el" href="classcom_1_1sequoiadb_1_1base_1_1CollectionSpace.html#a47ddb98bffee3ec83f4baf6aabd4d139">com.sequoiadb.base.CollectionSpace</a>
 </li>
 <li>getServerAddress()
 : <a class="el" href="classcom_1_1sequoiadb_1_1base_1_1Sequoiadb.html#a6bf8a7d81f8cf0cfb6cabbf5c0e044fd">com.sequoiadb.base.Sequoiadb</a>
@@ -319,11 +328,14 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <li>getUseNagle()
 : <a class="el" href="classcom_1_1sequoiadb_1_1net_1_1ConfigOptions.html#a52a229b72e690bc2474caa6ddd6d5190">com.sequoiadb.net.ConfigOptions</a>
 </li>
+<li>getUseSSL()
+: <a class="el" href="classcom_1_1sequoiadb_1_1net_1_1ConfigOptions.html#a0057635a4708ec4c0c05de9a86bd0119">com.sequoiadb.net.ConfigOptions</a>
+</li>
 </ul>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Tue Oct 21 2014 16:06:31 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Sat Sep 26 2015 13:47:46 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.2
 </small></address>

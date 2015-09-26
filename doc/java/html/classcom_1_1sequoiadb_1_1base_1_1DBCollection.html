@@ -129,6 +129,12 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>setConnection</b> (IC
 <tr class="memitem:abdcc3ad4938e32478aac1c47c5079745"><td class="memItemLeft" align="right" valign="top">Object&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBCollection.html#abdcc3ad4938e32478aac1c47c5079745">insert</a> (String insertor)  throws BaseException </td></tr>
 <tr class="memdesc:abdcc3ad4938e32478aac1c47c5079745"><td class="mdescLeft">&#160;</td><td class="mdescRight">Insert a document into current collection, if the document does not contain field "_id", it will be added.  <a href="#abdcc3ad4938e32478aac1c47c5079745"></a><br/></td></tr>
 <tr class="separator:abdcc3ad4938e32478aac1c47c5079745"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a61e33b9c49d9b9b19482097303790b44"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a61e33b9c49d9b9b19482097303790b44"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>ensureOID</b> (boolean flag)</td></tr>
+<tr class="separator:a61e33b9c49d9b9b19482097303790b44"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aecb83d3e9b1d87daa866db551bd86520"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aecb83d3e9b1d87daa866db551bd86520"></a>
+boolean&#160;</td><td class="memItemRight" valign="bottom"><b>isOIDEnsured</b> ()</td></tr>
+<tr class="separator:aecb83d3e9b1d87daa866db551bd86520"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:acbd08e5117cdf2eab50d4e693e127503"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBCollection.html#acbd08e5117cdf2eab50d4e693e127503">bulkInsert</a> (List&lt; BSONObject &gt; insertor, int flag)  throws BaseException </td></tr>
 <tr class="memdesc:acbd08e5117cdf2eab50d4e693e127503"><td class="mdescLeft">&#160;</td><td class="mdescRight">Insert a bulk of bson objects into current collection.  <a href="#acbd08e5117cdf2eab50d4e693e127503"></a><br/></td></tr>
 <tr class="separator:acbd08e5117cdf2eab50d4e693e127503"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -156,6 +162,9 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>setConnection</b> (IC
 <tr class="memitem:a460e339741b7a9efff953cfab676e792"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBCollection.html#a460e339741b7a9efff953cfab676e792">upsert</a> (BSONObject matcher, BSONObject modifier, BSONObject hint)  throws BaseException </td></tr>
 <tr class="memdesc:a460e339741b7a9efff953cfab676e792"><td class="mdescLeft">&#160;</td><td class="mdescRight">Update the BSONObject of current collection, insert if no matching.  <a href="#a460e339741b7a9efff953cfab676e792"></a><br/></td></tr>
 <tr class="separator:a460e339741b7a9efff953cfab676e792"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af295d6d709ab877e909fd0e4089de532"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBCollection.html#af295d6d709ab877e909fd0e4089de532">upsert</a> (BSONObject matcher, BSONObject modifier, BSONObject hint, BSONObject setOnInsert)  throws BaseException </td></tr>
+<tr class="memdesc:af295d6d709ab877e909fd0e4089de532"><td class="mdescLeft">&#160;</td><td class="mdescRight">Update the BSONObject of current collection, insert if no matching.  <a href="#af295d6d709ab877e909fd0e4089de532"></a><br/></td></tr>
+<tr class="separator:af295d6d709ab877e909fd0e4089de532"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae7ca8ac201bc15c259184251992e5844"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBCursor.html">DBCursor</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBCollection.html#ae7ca8ac201bc15c259184251992e5844">explain</a> (BSONObject matcher, BSONObject selector, BSONObject orderBy, BSONObject hint, long skipRows, long returnRows, int flag, BSONObject options)  throws BaseException </td></tr>
 <tr class="memdesc:ae7ca8ac201bc15c259184251992e5844"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get explain of current collection.  <a href="#ae7ca8ac201bc15c259184251992e5844"></a><br/></td></tr>
 <tr class="separator:ae7ca8ac201bc15c259184251992e5844"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -195,15 +204,30 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>setConnection</b> (IC
 <tr class="memitem:a169a70056eb95af85f78591b67911f97"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBCursor.html">DBCursor</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBCollection.html#a169a70056eb95af85f78591b67911f97">getIndexes</a> ()  throws BaseException </td></tr>
 <tr class="memdesc:a169a70056eb95af85f78591b67911f97"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get all the indexes of current collection.  <a href="#a169a70056eb95af85f78591b67911f97"></a><br/></td></tr>
 <tr class="separator:a169a70056eb95af85f78591b67911f97"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a564a4b8125cb443a40b800993dfcc311"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBCursor.html">DBCursor</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBCollection.html#a564a4b8125cb443a40b800993dfcc311">queryAndUpdate</a> (BSONObject matcher, BSONObject selector, BSONObject orderBy, BSONObject hint, BSONObject <a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBCollection.html#aa2c739b429b5a48f8cf5bf5ef02ba772">update</a>, long skipRows, long returnRows, int flag, boolean returnNew)  throws BaseException </td></tr>
+<tr class="memdesc:a564a4b8125cb443a40b800993dfcc311"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the matching documents in current collection and update. in order to make the update take effect, user must travel the <a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBCursor.html" title="Database operation interfaces of cursor.">DBCursor</a> returned by this function.  <a href="#a564a4b8125cb443a40b800993dfcc311"></a><br/></td></tr>
+<tr class="separator:a564a4b8125cb443a40b800993dfcc311"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1d81878f8271c8a4cd4d843a6af30577"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBCursor.html">DBCursor</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBCollection.html#a1d81878f8271c8a4cd4d843a6af30577">queryAndRemove</a> (BSONObject matcher, BSONObject selector, BSONObject orderBy, BSONObject hint, long skipRows, long returnRows, int flag)  throws BaseException </td></tr>
+<tr class="memdesc:a1d81878f8271c8a4cd4d843a6af30577"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the matching documents in current collection and remove. in order to make the remove take effect, user must travel the <a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBCursor.html" title="Database operation interfaces of cursor.">DBCursor</a> returned by this function.  <a href="#a1d81878f8271c8a4cd4d843a6af30577"></a><br/></td></tr>
+<tr class="separator:a1d81878f8271c8a4cd4d843a6af30577"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:abdd89b20edbd831a1df977408203372a"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBCursor.html">DBCursor</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBCollection.html#abdd89b20edbd831a1df977408203372a">getIndex</a> (String name)  throws BaseException </td></tr>
 <tr class="memdesc:abdd89b20edbd831a1df977408203372a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get all of or one of the indexes in current collection.  <a href="#abdd89b20edbd831a1df977408203372a"></a><br/></td></tr>
 <tr class="separator:abdd89b20edbd831a1df977408203372a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a239ea8844f82d189b4e3cf6608d4e8be"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBCollection.html#a239ea8844f82d189b4e3cf6608d4e8be">createIndexOffline</a> (String name, BSONObject key, boolean isUnique, boolean enforced)  throws BaseException </td></tr>
+<tr class="memdesc:a239ea8844f82d189b4e3cf6608d4e8be"><td class="mdescLeft">&#160;</td><td class="mdescRight">Create a index in offline mode with name and key.  <a href="#a239ea8844f82d189b4e3cf6608d4e8be"></a><br/></td></tr>
+<tr class="separator:a239ea8844f82d189b4e3cf6608d4e8be"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aef067a43c61d488dcc7a39c7124630a3"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBCollection.html#aef067a43c61d488dcc7a39c7124630a3">createIndex</a> (String name, BSONObject key, boolean isUnique, boolean enforced)  throws BaseException </td></tr>
 <tr class="memdesc:aef067a43c61d488dcc7a39c7124630a3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Create a index with name and key.  <a href="#aef067a43c61d488dcc7a39c7124630a3"></a><br/></td></tr>
 <tr class="separator:aef067a43c61d488dcc7a39c7124630a3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4dbce5eeaeb2638ce51586a78a0289ef"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBCollection.html#a4dbce5eeaeb2638ce51586a78a0289ef">createIndex</a> (String name, String key, boolean isUnique, boolean enforced)  throws BaseException </td></tr>
 <tr class="memdesc:a4dbce5eeaeb2638ce51586a78a0289ef"><td class="mdescLeft">&#160;</td><td class="mdescRight">Create a index with name and key.  <a href="#a4dbce5eeaeb2638ce51586a78a0289ef"></a><br/></td></tr>
 <tr class="separator:a4dbce5eeaeb2638ce51586a78a0289ef"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa8053773cbb8eabd26cf5d02e6121558"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBCollection.html#aa8053773cbb8eabd26cf5d02e6121558">createIdIndex</a> (BSONObject options)  throws BaseException </td></tr>
+<tr class="memdesc:aa8053773cbb8eabd26cf5d02e6121558"><td class="mdescLeft">&#160;</td><td class="mdescRight">Create an id index.  <a href="#aa8053773cbb8eabd26cf5d02e6121558"></a><br/></td></tr>
+<tr class="separator:aa8053773cbb8eabd26cf5d02e6121558"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aafc8b19893fec31d8f4b01bcebca4466"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBCollection.html#aafc8b19893fec31d8f4b01bcebca4466">dropIdIndex</a> ()  throws BaseException </td></tr>
+<tr class="memdesc:aafc8b19893fec31d8f4b01bcebca4466"><td class="mdescLeft">&#160;</td><td class="mdescRight">drop an id index  <a href="#aafc8b19893fec31d8f4b01bcebca4466"></a><br/></td></tr>
+<tr class="separator:aafc8b19893fec31d8f4b01bcebca4466"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:acccda67f1a55e9367c88487743e85ec2"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBCollection.html#acccda67f1a55e9367c88487743e85ec2">dropIndex</a> (String name)  throws BaseException </td></tr>
 <tr class="memdesc:acccda67f1a55e9367c88487743e85ec2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Remove the named index of current collection.  <a href="#acccda67f1a55e9367c88487743e85ec2"></a><br/></td></tr>
 <tr class="separator:acccda67f1a55e9367c88487743e85ec2"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -244,7 +268,7 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>setConnection</b> (IC
 <tr class="memdesc:abb94fc8694490559e2a0651b3302f74f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Dettach the specified collection.  <a href="#abb94fc8694490559e2a0651b3302f74f"></a><br/></td></tr>
 <tr class="separator:abb94fc8694490559e2a0651b3302f74f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7003ce6587cbdc6abcb9e0934531a192"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBCollection.html#a7003ce6587cbdc6abcb9e0934531a192">alterCollection</a> (BSONObject options)  throws BaseException </td></tr>
-<tr class="memdesc:a7003ce6587cbdc6abcb9e0934531a192"><td class="mdescLeft">&#160;</td><td class="mdescRight">Alter the attribute of current collection.  <a href="#a7003ce6587cbdc6abcb9e0934531a192"></a><br/></td></tr>
+<tr class="memdesc:a7003ce6587cbdc6abcb9e0934531a192"><td class="mdescLeft">&#160;</td><td class="mdescRight">Alter the attributes of current collection.  <a href="#a7003ce6587cbdc6abcb9e0934531a192"></a><br/></td></tr>
 <tr class="separator:a7003ce6587cbdc6abcb9e0934531a192"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:acab79b99ecefaec898b9732527c07de4"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBCursor.html">DBCursor</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBCollection.html#acab79b99ecefaec898b9732527c07de4">listLobs</a> ()  throws BaseException </td></tr>
 <tr class="memdesc:acab79b99ecefaec898b9732527c07de4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get all of the lobs in current collection.  <a href="#acab79b99ecefaec898b9732527c07de4"></a><br/></td></tr>
@@ -261,11 +285,14 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>setConnection</b> (IC
 <tr class="memitem:affaa01cd32f58ac3e13bb83d1e501f97"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBCollection.html#affaa01cd32f58ac3e13bb83d1e501f97">removeLob</a> (ObjectId lobID)  throws BaseException </td></tr>
 <tr class="memdesc:affaa01cd32f58ac3e13bb83d1e501f97"><td class="mdescLeft">&#160;</td><td class="mdescRight">remove an exist lob  <a href="#affaa01cd32f58ac3e13bb83d1e501f97"></a><br/></td></tr>
 <tr class="separator:affaa01cd32f58ac3e13bb83d1e501f97"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6fd38f003b6e52167a7941fadb696669"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBCollection.html#a6fd38f003b6e52167a7941fadb696669">truncate</a> ()  throws BaseException </td></tr>
+<tr class="memdesc:a6fd38f003b6e52167a7941fadb696669"><td class="mdescLeft">&#160;</td><td class="mdescRight">truncate the collection  <a href="#a6fd38f003b6e52167a7941fadb696669"></a><br/></td></tr>
+<tr class="separator:a6fd38f003b6e52167a7941fadb696669"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-static-attribs"></a>
 Static Public Attributes</h2></td></tr>
 <tr class="memitem:ab71411a73dc50ce3dc1e9a464ef460b5"><td class="memItemLeft" align="right" valign="top">static final int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBCollection.html#ab71411a73dc50ce3dc1e9a464ef460b5">FLG_INSERT_CONTONDUP</a> = 0x00000001</td></tr>
-<tr class="memdesc:ab71411a73dc50ce3dc1e9a464ef460b5"><td class="mdescLeft">&#160;</td><td class="mdescRight">The flags represent whether bulk insert continue when hitting index key duplicate error.  <a href="#ab71411a73dc50ce3dc1e9a464ef460b5"></a><br/></td></tr>
+<tr class="memdesc:ab71411a73dc50ce3dc1e9a464ef460b5"><td class="mdescLeft">&#160;</td><td class="mdescRight">this flags represent that bulkInsert will continue when Duplicate key exist.(the duplicate record will be ignored)  <a href="#ab71411a73dc50ce3dc1e9a464ef460b5"></a><br/></td></tr>
 <tr class="separator:ab71411a73dc50ce3dc1e9a464ef460b5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
@@ -331,13 +358,24 @@ Static Public Attributes</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Alter the attribute of current collection. </p>
+<p>Alter the attributes of current collection. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">options</td><td>The options for alter the attribute of current collection, the options are as below: </td></tr>
+    <tr><td class="paramname">options</td><td>The options for altering current collection are as below: <ul>
+<li>
+ReplSize : Assign how many replica nodes need to be synchronized when a write request(insert, update, etc) is executed </li>
+<li>
+ShardingKey : Assign the sharding key </li>
+<li>
+ShardingType : Assign the sharding type </li>
+<li>
+Partition : When the ShardingType is "hash", need to assign Partition, it's the bucket number for hash, the range is [2^3,2^20]. e.g. {RepliSize:0, ShardingKey:{a:1}, ShardingType:"hash", Partition:1024} </li>
+</ul>
+</td></tr>
   </table>
   </dd>
 </dl>
+<dl class="section note"><dt>Note</dt><dd>Can't alter attributes about split in partition collection; After altering a collection to be a partition collection, need to split this collection manually </dd></dl>
 <dl class="exception"><dt>Exceptions</dt><dd>
   <table class="exception">
     <tr><td class="paramname">com.sequoiadb.exception.BaseException</td><td></td></tr>
@@ -432,7 +470,45 @@ Static Public Attributes</h2></td></tr>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">insertor</td><td>The Bson object of insertor list, can't be null </td></tr>
-    <tr><td class="paramname">flag</td><td>FLG_INSERT_CONTONDUP or 0 </td></tr>
+    <tr><td class="paramname">flag</td><td>available value is FLG_INSERT_CONTONDUP or 0. if flag = FLG_INSERT_CONTONDUP, bulkInsert will continue when Duplicate key exist.(the duplicate record will be ignored); if flag = 0, bulkInsert will interrupt when Duplicate key exist. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="exception"><dt>Exceptions</dt><dd>
+  <table class="exception">
+    <tr><td class="paramname">com.sequoiadb.exception.BaseException</td><td></td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a class="anchor" id="aa8053773cbb8eabd26cf5d02e6121558"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void com.sequoiadb.base.DBCollection.createIdIndex </td>
+          <td>(</td>
+          <td class="paramtype">BSONObject&#160;</td>
+          <td class="paramname"><em>options</em></td><td>)</td>
+          <td>  throws BaseException </td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Create an id index. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">options</td><td>can be empty or specify option. e.g. {Offline:true} </td></tr>
   </table>
   </dd>
 </dl>
@@ -553,6 +629,69 @@ Static Public Attributes</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Create a index with name and key. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">name</td><td>The index name </td></tr>
+    <tr><td class="paramname">key</td><td>The index key, like: {"key":1/-1}, ASC(1)/DESC(-1) </td></tr>
+    <tr><td class="paramname">isUnique</td><td>Whether the index elements are unique or not </td></tr>
+    <tr><td class="paramname">enforced</td><td>Whether the index is enforced unique This element is meaningful when isUnique is set to true </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="exception"><dt>Exceptions</dt><dd>
+  <table class="exception">
+    <tr><td class="paramname">com.sequoiadb.exception.BaseException</td><td></td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a class="anchor" id="a239ea8844f82d189b4e3cf6608d4e8be"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void com.sequoiadb.base.DBCollection.createIndexOffline </td>
+          <td>(</td>
+          <td class="paramtype">String&#160;</td>
+          <td class="paramname"><em>name</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">BSONObject&#160;</td>
+          <td class="paramname"><em>key</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">boolean&#160;</td>
+          <td class="paramname"><em>isUnique</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">boolean&#160;</td>
+          <td class="paramname"><em>enforced</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td>  throws BaseException </td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Create a index in offline mode with name and key. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">name</td><td>The index name </td></tr>
@@ -854,6 +993,43 @@ Static Public Attributes</h2></td></tr>
 
 </div>
 </div>
+<a class="anchor" id="aafc8b19893fec31d8f4b01bcebca4466"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void com.sequoiadb.base.DBCollection.dropIdIndex </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td>  throws BaseException </td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>drop an id index </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">null</td><td></td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="exception"><dt>Exceptions</dt><dd>
+  <table class="exception">
+    <tr><td class="paramname">com.sequoiadb.exception.BaseException</td><td></td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
 <a class="anchor" id="acccda67f1a55e9367c88487743e85ec2"></a>
 <div class="memitem">
 <div class="memproto">
@@ -969,8 +1145,24 @@ Static Public Attributes</h2></td></tr>
     <tr><td class="paramname">hint</td><td>the hint, automatically match the optimal hint if null </td></tr>
     <tr><td class="paramname">skipRows</td><td>skip the first numToSkip documents, never skip if this parameter is 0 </td></tr>
     <tr><td class="paramname">returnRows</td><td>only return returnRows documents, return all if this parameter is -1 </td></tr>
-    <tr><td class="paramname">flag</td><td>the flag is used to choose the way to query, the optional options are as below: </td></tr>
-    <tr><td class="paramname">options</td><td>the options of explian </td></tr>
+    <tr><td class="paramname">flag</td><td>the flag is used to choose the way to query, the optional options are as below: <ul>
+<li>
+<a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBQuery.html#a2b4c991db1d4024d6bde92849c6b300c" title="Normally, query return bson stream, when this flag is added, query return binary data stream...">DBQuery.FLG_QUERY_STRINGOUT</a> </li>
+<li>
+<a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBQuery.html#ac26e2c0cee7cf2b23fa52a288abb698c" title="Force to use specified hint to query, if database have no index assigned by the hint, fail to query.">DBQuery.FLG_QUERY_FORCE_HINT</a> </li>
+<li>
+<a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBQuery.html#ad3dbd2e5fe88a3a683fe78d8d73b8a3d" title="Enable paralled sub query.">DBQuery.FLG_QUERY_PARALLED</a> </li>
+<li>
+<a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBQuery.html#a3dfd00ad8d166cee821c46ca18359859" title="return data in query response">DBQuery.FLG_QUERY_WITH_RETURNDATA</a> </li>
+<li>
+<a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBQuery.html#a334a60ade03231167cab57ae23c84ba1" title="explain query">DBQuery.FLG_QUERY_EXPLAIN</a> </li>
+</ul>
+</td></tr>
+    <tr><td class="paramname">options</td><td>The rules of query explain, the options are as below: <ul>
+<li>
+Run : Whether execute query explain or not, true for excuting query explain then get the data and time information; false for not excuting query explain but get the query explain information only. e.g. {Run:true} </li>
+</ul>
+</td></tr>
   </table>
   </dd>
 </dl>
@@ -1434,7 +1626,7 @@ Static Public Attributes</h2></td></tr>
           <td class="memname">Object com.sequoiadb.base.DBCollection.insert </td>
           <td>(</td>
           <td class="paramtype">BSONObject&#160;</td>
-          <td class="paramname"><em>obj</em></td><td>)</td>
+          <td class="paramname"><em>insertor</em></td><td>)</td>
           <td>  throws BaseException </td>
         </tr>
       </table>
@@ -1838,8 +2030,6 @@ BDQuery.FLG_QUERY_PARALLED </li>
     <tr><td class="paramname">selector</td><td>the selective rule, return the whole document if null </td></tr>
     <tr><td class="paramname">orderBy</td><td>the ordered rule, never sort if null </td></tr>
     <tr><td class="paramname">hint</td><td>the hint, automatically match the optimal hint if null </td></tr>
-    <tr><td class="paramname">skipRows</td><td>skip the first numToSkip documents, never skip if this parameter is 0 </td></tr>
-    <tr><td class="paramname">returnRows</td><td>only return returnRows documents, return all if this parameter is -1 </td></tr>
   </table>
   </dd>
 </dl>
@@ -2185,6 +2375,214 @@ BDQuery.FLG_QUERY_PARALLED </li>
 
 </div>
 </div>
+<a class="anchor" id="a1d81878f8271c8a4cd4d843a6af30577"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBCursor.html">DBCursor</a> com.sequoiadb.base.DBCollection.queryAndRemove </td>
+          <td>(</td>
+          <td class="paramtype">BSONObject&#160;</td>
+          <td class="paramname"><em>matcher</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">BSONObject&#160;</td>
+          <td class="paramname"><em>selector</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">BSONObject&#160;</td>
+          <td class="paramname"><em>orderBy</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">BSONObject&#160;</td>
+          <td class="paramname"><em>hint</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">long&#160;</td>
+          <td class="paramname"><em>skipRows</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">long&#160;</td>
+          <td class="paramname"><em>returnRows</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>flag</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td>  throws BaseException </td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Get the matching documents in current collection and remove. in order to make the remove take effect, user must travel the <a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBCursor.html" title="Database operation interfaces of cursor.">DBCursor</a> returned by this function. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">matcher</td><td>the matching rule, return all the documents if null </td></tr>
+    <tr><td class="paramname">selector</td><td>the selective rule, return the whole document if null </td></tr>
+    <tr><td class="paramname">orderBy</td><td>the ordered rule, never sort if null </td></tr>
+    <tr><td class="paramname">hint</td><td>the hint, automatically match the optimal hint if null </td></tr>
+    <tr><td class="paramname">skipRows</td><td>skip the first numToSkip documents, never skip if this parameter is 0 </td></tr>
+    <tr><td class="paramname">returnRows</td><td>only return returnRows documents, return all if this parameter is -1 </td></tr>
+    <tr><td class="paramname">flag</td><td>the flag is used to choose the way to query, the optional options are as below: <ul>
+<li>
+<a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBQuery.html#a2b4c991db1d4024d6bde92849c6b300c" title="Normally, query return bson stream, when this flag is added, query return binary data stream...">DBQuery.FLG_QUERY_STRINGOUT</a> </li>
+<li>
+<a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBQuery.html#ac26e2c0cee7cf2b23fa52a288abb698c" title="Force to use specified hint to query, if database have no index assigned by the hint, fail to query.">DBQuery.FLG_QUERY_FORCE_HINT</a> </li>
+<li>
+<a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBQuery.html#ad3dbd2e5fe88a3a683fe78d8d73b8a3d" title="Enable paralled sub query.">DBQuery.FLG_QUERY_PARALLED</a> </li>
+<li>
+<a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBQuery.html#a3dfd00ad8d166cee821c46ca18359859" title="return data in query response">DBQuery.FLG_QUERY_WITH_RETURNDATA</a> </li>
+<li>
+<a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBQuery.html#a334a60ade03231167cab57ae23c84ba1" title="explain query">DBQuery.FLG_QUERY_EXPLAIN</a> </li>
+</ul>
+</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>a <a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBCursor.html" title="Database operation interfaces of cursor.">DBCursor</a> instance of the result or null if no any matched document </dd></dl>
+<dl class="exception"><dt>Exceptions</dt><dd>
+  <table class="exception">
+    <tr><td class="paramname">com.sequoiadb.exception.BaseException</td><td></td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a class="anchor" id="a564a4b8125cb443a40b800993dfcc311"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBCursor.html">DBCursor</a> com.sequoiadb.base.DBCollection.queryAndUpdate </td>
+          <td>(</td>
+          <td class="paramtype">BSONObject&#160;</td>
+          <td class="paramname"><em>matcher</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">BSONObject&#160;</td>
+          <td class="paramname"><em>selector</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">BSONObject&#160;</td>
+          <td class="paramname"><em>orderBy</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">BSONObject&#160;</td>
+          <td class="paramname"><em>hint</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">BSONObject&#160;</td>
+          <td class="paramname"><em>update</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">long&#160;</td>
+          <td class="paramname"><em>skipRows</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">long&#160;</td>
+          <td class="paramname"><em>returnRows</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>flag</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">boolean&#160;</td>
+          <td class="paramname"><em>returnNew</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td>  throws BaseException </td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Get the matching documents in current collection and update. in order to make the update take effect, user must travel the <a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBCursor.html" title="Database operation interfaces of cursor.">DBCursor</a> returned by this function. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">matcher</td><td>the matching rule, return all the documents if null </td></tr>
+    <tr><td class="paramname">selector</td><td>the selective rule, return the whole document if null </td></tr>
+    <tr><td class="paramname">orderBy</td><td>the ordered rule, never sort if null </td></tr>
+    <tr><td class="paramname">update</td><td>the update rule, can't be null </td></tr>
+    <tr><td class="paramname">hint</td><td>the hint, automatically match the optimal hint if null </td></tr>
+    <tr><td class="paramname">skipRows</td><td>skip the first numToSkip documents, never skip if this parameter is 0 </td></tr>
+    <tr><td class="paramname">returnRows</td><td>only return returnRows documents, return all if this parameter is -1 </td></tr>
+    <tr><td class="paramname">flag</td><td>the flag is used to choose the way to query, the optional options are as below: <ul>
+<li>
+<a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBQuery.html#a2b4c991db1d4024d6bde92849c6b300c" title="Normally, query return bson stream, when this flag is added, query return binary data stream...">DBQuery.FLG_QUERY_STRINGOUT</a> </li>
+<li>
+<a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBQuery.html#ac26e2c0cee7cf2b23fa52a288abb698c" title="Force to use specified hint to query, if database have no index assigned by the hint, fail to query.">DBQuery.FLG_QUERY_FORCE_HINT</a> </li>
+<li>
+<a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBQuery.html#ad3dbd2e5fe88a3a683fe78d8d73b8a3d" title="Enable paralled sub query.">DBQuery.FLG_QUERY_PARALLED</a> </li>
+<li>
+<a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBQuery.html#a3dfd00ad8d166cee821c46ca18359859" title="return data in query response">DBQuery.FLG_QUERY_WITH_RETURNDATA</a> </li>
+<li>
+<a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBQuery.html#a334a60ade03231167cab57ae23c84ba1" title="explain query">DBQuery.FLG_QUERY_EXPLAIN</a> </li>
+</ul>
+</td></tr>
+    <tr><td class="paramname">returnNew</td><td>When true, returns the updated document rather than the original </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>a <a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBCursor.html" title="Database operation interfaces of cursor.">DBCursor</a> instance of the result or null if no any matched document </dd></dl>
+<dl class="exception"><dt>Exceptions</dt><dd>
+  <table class="exception">
+    <tr><td class="paramname">com.sequoiadb.exception.BaseException</td><td></td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
 <a class="anchor" id="a0b522f44602324c540505807065ca1e7"></a>
 <div class="memitem">
 <div class="memproto">
@@ -2359,7 +2757,7 @@ BDQuery.FLG_QUERY_PARALLED </li>
 <p>Set the main keys used in save(). if no main keys are set, use the default main key "_id". </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">keys</td><td>the main keys specified by user. </td></tr>
+    <tr><td class="paramname">keys</td><td>the main keys specified by user. the main key should exist in the object </td></tr>
   </table>
   </dd>
 </dl>
@@ -2425,7 +2823,7 @@ BDQuery.FLG_QUERY_PARALLED </li>
 </pre> <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">splitCondition</td><td>the split condition </td></tr>
-    <tr><td class="paramname">splitEndCondition</td><td>the split end condition or null eg:If we create a collection with the option {ShardingKey:{"age":1},ShardingType:"Hash",Partition:2^10}, we can fill {age:30} as the splitCondition, and fill {age:60} as the splitEndCondition. when split, the targe group will get the records whose age's hash value are in [30,60). If splitEndCondition is null, they are in [30,max). </td></tr>
+    <tr><td class="paramname">splitEndCondition</td><td>the split end condition or null eg:If we create a collection with the option {ShardingKey:{"age":1},ShardingType:"Hash",Partition:2^10}, we can fill {age:30} as the splitCondition, and fill {age:60} as the splitEndCondition. when split, the target group will get the records whose age's hash value are in [30,60). If splitEndCondition is null, they are in [30,max). </td></tr>
   </table>
   </dd>
 </dl>
@@ -2613,6 +3011,38 @@ BDQuery.FLG_QUERY_PARALLED </li>
   </dd>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>return the task id, we can use the return id to manage the sharding which is run backgroup. </dd></dl>
+<dl class="exception"><dt>Exceptions</dt><dd>
+  <table class="exception">
+    <tr><td class="paramname">com.sequoiadb.exception.BaseException</td><td></td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a class="anchor" id="a6fd38f003b6e52167a7941fadb696669"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void com.sequoiadb.base.DBCollection.truncate </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td>  throws BaseException </td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>truncate the collection </p>
+<dl class="section return"><dt>Returns</dt><dd>void </dd></dl>
 <dl class="exception"><dt>Exceptions</dt><dd>
   <table class="exception">
     <tr><td class="paramname">com.sequoiadb.exception.BaseException</td><td></td></tr>
@@ -2832,6 +3262,70 @@ BDQuery.FLG_QUERY_PARALLED </li>
 
 </div>
 </div>
+<a class="anchor" id="af295d6d709ab877e909fd0e4089de532"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void com.sequoiadb.base.DBCollection.upsert </td>
+          <td>(</td>
+          <td class="paramtype">BSONObject&#160;</td>
+          <td class="paramname"><em>matcher</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">BSONObject&#160;</td>
+          <td class="paramname"><em>modifier</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">BSONObject&#160;</td>
+          <td class="paramname"><em>hint</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">BSONObject&#160;</td>
+          <td class="paramname"><em>setOnInsert</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td>  throws BaseException </td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Update the BSONObject of current collection, insert if no matching. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">matcher</td><td>The matching condition </td></tr>
+    <tr><td class="paramname">modifier</td><td>The updating rule </td></tr>
+    <tr><td class="paramname">hint</td><td>Hint </td></tr>
+    <tr><td class="paramname">setOnInsert</td><td>The setOnInsert assigns the specified values to the fileds when insert </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="exception"><dt>Exceptions</dt><dd>
+  <table class="exception">
+    <tr><td class="paramname">com.sequoiadb.exception.BaseException</td><td></td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section note"><dt>Note</dt><dd>when save include update shardingKey field, the shardingKey modify action is not take effect, but the other field update is take effect. Because of current version is not support update shardingKey field. </dd></dl>
+
+</div>
+</div>
 <h2 class="groupheader">Member Data Documentation</h2>
 <a class="anchor" id="ab71411a73dc50ce3dc1e9a464ef460b5"></a>
 <div class="memitem">
@@ -2851,18 +3345,18 @@ BDQuery.FLG_QUERY_PARALLED </li>
 </table>
 </div><div class="memdoc">
 
-<p>The flags represent whether bulk insert continue when hitting index key duplicate error. </p>
+<p>this flags represent that bulkInsert will continue when Duplicate key exist.(the duplicate record will be ignored) </p>
 <p>0x00000001 </p>
 
 </div>
 </div>
 <hr/>The documentation for this class was generated from the following file:<ul>
-<li>E:/work/sequoiadb/driver/java/src/main/java/com/sequoiadb/base/DBCollection.java</li>
+<li>E:/sequoiadb/driver/java/src/main/java/com/sequoiadb/base/DBCollection.java</li>
 </ul>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Tue Oct 21 2014 16:06:31 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Sat Sep 26 2015 13:47:46 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.2
 </small></address>

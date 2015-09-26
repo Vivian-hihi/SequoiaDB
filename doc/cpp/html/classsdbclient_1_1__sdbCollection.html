@@ -107,9 +107,9 @@ virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>bulkInsert</
 <tr class="memitem:abe44845ebdbe5ba2d9434ddb7fd438f7"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="abe44845ebdbe5ba2d9434ddb7fd438f7"></a>
 virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>update</b> (const bson::BSONObj &amp;rule, const bson::BSONObj &amp;condition=_sdbStaticObject, const bson::BSONObj &amp;hint=_sdbStaticObject)=0</td></tr>
 <tr class="separator:abe44845ebdbe5ba2d9434ddb7fd438f7"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a2a44fc949fadc0205ec776374d5c9d3d"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a2a44fc949fadc0205ec776374d5c9d3d"></a>
-virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>upsert</b> (const bson::BSONObj &amp;rule, const bson::BSONObj &amp;condition=_sdbStaticObject, const bson::BSONObj &amp;hint=_sdbStaticObject)=0</td></tr>
-<tr class="separator:a2a44fc949fadc0205ec776374d5c9d3d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a706692e6f590ffea123e4682ecc38a08"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a706692e6f590ffea123e4682ecc38a08"></a>
+virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>upsert</b> (const bson::BSONObj &amp;rule, const bson::BSONObj &amp;condition=_sdbStaticObject, const bson::BSONObj &amp;hint=_sdbStaticObject, const bson::BSONObj &amp;setOnInsert=_sdbStaticObject)=0</td></tr>
+<tr class="separator:a706692e6f590ffea123e4682ecc38a08"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a45a47366149741eb79e1bbe3a72e446f"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a45a47366149741eb79e1bbe3a72e446f"></a>
 virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>del</b> (const bson::BSONObj &amp;condition=_sdbStaticObject, const bson::BSONObj &amp;hint=_sdbStaticObject)=0</td></tr>
 <tr class="separator:a45a47366149741eb79e1bbe3a72e446f"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -119,9 +119,21 @@ virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>query</b> (<
 <tr class="memitem:af1a3c1c078a7bcf9b1c115d73b49952f"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="af1a3c1c078a7bcf9b1c115d73b49952f"></a>
 virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>query</b> (<a class="el" href="classsdbclient_1_1sdbCursor.html">sdbCursor</a> &amp;cursor, const bson::BSONObj &amp;condition=_sdbStaticObject, const bson::BSONObj &amp;selected=_sdbStaticObject, const bson::BSONObj &amp;orderBy=_sdbStaticObject, const bson::BSONObj &amp;hint=_sdbStaticObject, INT64 numToSkip=0, INT64 numToReturn=-1, INT32 flag=0)=0</td></tr>
 <tr class="separator:af1a3c1c078a7bcf9b1c115d73b49952f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af2741533ba200d86de48e4ce54288482"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="af2741533ba200d86de48e4ce54288482"></a>
+virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>queryOne</b> (bson::BSONObj &amp;obj, const bson::BSONObj &amp;condition=_sdbStaticObject, const bson::BSONObj &amp;selected=_sdbStaticObject, const bson::BSONObj &amp;orderBy=_sdbStaticObject, const bson::BSONObj &amp;hint=_sdbStaticObject, INT64 numToSkip=0, INT32 flag=0)=0</td></tr>
+<tr class="separator:af2741533ba200d86de48e4ce54288482"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ada3e8c116d95b0fcf7bccacfacb076b6"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ada3e8c116d95b0fcf7bccacfacb076b6"></a>
+virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>queryAndUpdate</b> (<a class="el" href="classsdbclient_1_1__sdbCursor.html">_sdbCursor</a> **cursor, const bson::BSONObj &amp;update, const bson::BSONObj &amp;condition=_sdbStaticObject, const bson::BSONObj &amp;selected=_sdbStaticObject, const bson::BSONObj &amp;orderBy=_sdbStaticObject, const bson::BSONObj &amp;hint=_sdbStaticObject, INT64 numToSkip=0, INT64 numToReturn=-1, INT32 flag=0, BOOLEAN returnNew=FALSE)=0</td></tr>
+<tr class="separator:ada3e8c116d95b0fcf7bccacfacb076b6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1e45b2aff6bfd456f1ddb4f1ba588893"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a1e45b2aff6bfd456f1ddb4f1ba588893"></a>
+virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>queryAndRemove</b> (<a class="el" href="classsdbclient_1_1__sdbCursor.html">_sdbCursor</a> **cursor, const bson::BSONObj &amp;condition=_sdbStaticObject, const bson::BSONObj &amp;selected=_sdbStaticObject, const bson::BSONObj &amp;orderBy=_sdbStaticObject, const bson::BSONObj &amp;hint=_sdbStaticObject, INT64 numToSkip=0, INT64 numToReturn=-1, INT32 flag=0)=0</td></tr>
+<tr class="separator:a1e45b2aff6bfd456f1ddb4f1ba588893"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5cbd0c3c1bd7cadecb11cddf85f94861"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a5cbd0c3c1bd7cadecb11cddf85f94861"></a>
 virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>createIndex</b> (const bson::BSONObj &amp;indexDef, const CHAR *pName, BOOLEAN isUnique, BOOLEAN isEnforced)=0</td></tr>
 <tr class="separator:a5cbd0c3c1bd7cadecb11cddf85f94861"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a96e137984f2568c05b2c6b4b329ece8d"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a96e137984f2568c05b2c6b4b329ece8d"></a>
+virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>createIndexOffline</b> (const bson::BSONObj &amp;indexDef, const CHAR *pName, BOOLEAN isUnique, BOOLEAN isEnforced)=0</td></tr>
+<tr class="separator:a96e137984f2568c05b2c6b4b329ece8d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad92c4e8da8ad26d364b85c985f5bb497"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ad92c4e8da8ad26d364b85c985f5bb497"></a>
 virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>getIndexes</b> (<a class="el" href="classsdbclient_1_1__sdbCursor.html">_sdbCursor</a> **cursor, const CHAR *pName)=0</td></tr>
 <tr class="separator:ad92c4e8da8ad26d364b85c985f5bb497"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -196,6 +208,17 @@ virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>openLob</b> 
 <tr class="memitem:abf797a0a829dcf71faaa2eed68228f31"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="abf797a0a829dcf71faaa2eed68228f31"></a>
 virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>listLobs</b> (<a class="el" href="classsdbclient_1_1sdbCursor.html">sdbCursor</a> &amp;cursor)=0</td></tr>
 <tr class="separator:abf797a0a829dcf71faaa2eed68228f31"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a95e434522ba723bb743d0df68e6129a9"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a95e434522ba723bb743d0df68e6129a9"></a>
+virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsdbclient_1_1__sdbCollection.html#a95e434522ba723bb743d0df68e6129a9">truncate</a> ()=0</td></tr>
+<tr class="memdesc:a95e434522ba723bb743d0df68e6129a9"><td class="mdescLeft">&#160;</td><td class="mdescRight">truncate <br/></td></tr>
+<tr class="separator:a95e434522ba723bb743d0df68e6129a9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab5bd97effb5749f47bbf944dfec1c897"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ab5bd97effb5749f47bbf944dfec1c897"></a>
+virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsdbclient_1_1__sdbCollection.html#ab5bd97effb5749f47bbf944dfec1c897">createIdIndex</a> (const bson::BSONObj &amp;options=_sdbStaticObject)=0</td></tr>
+<tr class="memdesc:ab5bd97effb5749f47bbf944dfec1c897"><td class="mdescLeft">&#160;</td><td class="mdescRight">create/drop $id index <br/></td></tr>
+<tr class="separator:ab5bd97effb5749f47bbf944dfec1c897"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3d58d2c207fee8f104745b3014be593b"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a3d58d2c207fee8f104745b3014be593b"></a>
+virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>dropIdIndex</b> ()=0</td></tr>
+<tr class="separator:a3d58d2c207fee8f104745b3014be593b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <hr/>The documentation for this class was generated from the following file:<ul>
 <li>E:/sequoiadb/client/include/<a class="el" href="client_8hpp_source.html">client.hpp</a></li>
@@ -203,7 +226,7 @@ virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>listLobs</b>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Fri Oct 24 2014 13:32:16 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Wed Aug 5 2015 18:22:11 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.2
 </small></address>

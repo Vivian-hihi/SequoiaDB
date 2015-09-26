@@ -69,7 +69,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
      onmouseover="return searchBox.OnSearchSelectShow()"
      onmouseout="return searchBox.OnSearchSelectHide()"
      onkeydown="return searchBox.OnSearchSelectKey(event)">
-<a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(0)"><span class="SelectionMark">&#160;</span>All</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(1)"><span class="SelectionMark">&#160;</span>Classes</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(2)"><span class="SelectionMark">&#160;</span>Namespaces</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(3)"><span class="SelectionMark">&#160;</span>Functions</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(4)"><span class="SelectionMark">&#160;</span>Properties</a></div>
+<a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(0)"><span class="SelectionMark">&#160;</span>All</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(1)"><span class="SelectionMark">&#160;</span>Classes</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(2)"><span class="SelectionMark">&#160;</span>Namespaces</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(3)"><span class="SelectionMark">&#160;</span>Functions</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(4)"><span class="SelectionMark">&#160;</span>Variables</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(5)"><span class="SelectionMark">&#160;</span>Properties</a></div>
 
 <!-- iframe showing the search results (closed by default) -->
 <div id="MSearchResultsWindow">
@@ -117,16 +117,44 @@ int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class
 bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSequoiaDB_1_1ConfigOptions.html#a15a604d87972c9c63268117944068810">UseNagle</a><code> [get, set]</code></td></tr>
 <tr class="memdesc:a15a604d87972c9c63268117944068810"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get or group the Nagle Algorithm. <br/></td></tr>
 <tr class="separator:a15a604d87972c9c63268117944068810"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a84428036847afdabc15cda162fb45e7a"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSequoiaDB_1_1ConfigOptions.html#a84428036847afdabc15cda162fb45e7a">UseSSL</a><code> [get, set]</code></td></tr>
+<tr class="memdesc:a84428036847afdabc15cda162fb45e7a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get or set whether use the SSL or not.  <a href="#a84428036847afdabc15cda162fb45e7a"></a><br/></td></tr>
+<tr class="separator:a84428036847afdabc15cda162fb45e7a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Database Connection Configuration Option. </p>
-</div><hr/>The documentation for this class was generated from the following file:<ul>
+</div><h2 class="groupheader">Property Documentation</h2>
+<a class="anchor" id="a84428036847afdabc15cda162fb45e7a"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">SequoiaDB.ConfigOptions.UseSSL</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">get</span><span class="mlabel">set</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Get or set whether use the SSL or not. </p>
+<dl class="section author"><dt>Author</dt><dd>David Li </dd></dl>
+<dl class="section since"><dt>Since</dt><dd>1.12 </dd></dl>
+
+</div>
+</div>
+<hr/>The documentation for this class was generated from the following file:<ul>
 <li>E:/sequoiadb/driver/C#.Net/Driver/net/ConfigOptions.cs</li>
 </ul>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Sun Jul 6 2014 16:02:31 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Sat Sep 26 2015 13:46:26 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.2
 </small></address>

@@ -1,5 +1,6 @@
 var searchData=
 [
+  ['securesdb',['SecureSdb',['../classSecureSdb.html',1,'']]],
   ['selectcollection',['selectCollection',['../classSequoiaCS.html#a33cda5aad4308a4d4ea0181b195a5cae',1,'SequoiaCS']]],
   ['selectcs',['selectCS',['../classSequoiaDB.html#a74192ba99c6fc7afa198abba5c21ee01',1,'SequoiaDB']]],
   ['selectgroup',['selectGroup',['../classSequoiaDB.html#a3bef26e85a037e5b5939ea47b22a7b21',1,'SequoiaDB']]],

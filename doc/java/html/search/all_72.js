@@ -2,6 +2,7 @@ var searchData=
 [
   ['read',['read',['../interfacecom_1_1sequoiadb_1_1base_1_1DBLob.html#a92867936aabbf523e3f452bcc2e87401',1,'com::sequoiadb::base::DBLob']]],
   ['removebackup',['removeBackup',['../classcom_1_1sequoiadb_1_1base_1_1Sequoiadb.html#ad991a9ffb6732d89a9dab377cdda516e',1,'com::sequoiadb::base::Sequoiadb']]],
+  ['removeimage',['removeImage',['../interfacecom_1_1sequoiadb_1_1base_1_1DBDataCenter.html#af7ef29d20670cb236306ea601f4ffd1c',1,'com::sequoiadb::base::DBDataCenter']]],
   ['removelob',['removeLob',['../classcom_1_1sequoiadb_1_1base_1_1DBCollection.html#affaa01cd32f58ac3e13bb83d1e501f97',1,'com::sequoiadb::base::DBCollection']]],
   ['removenode',['removeNode',['../classcom_1_1sequoiadb_1_1base_1_1ReplicaGroup.html#a7e4f605f77d22fe48923b7a148b83cdd',1,'com::sequoiadb::base::ReplicaGroup']]],
   ['removereplicagroup',['removeReplicaGroup',['../classcom_1_1sequoiadb_1_1base_1_1Sequoiadb.html#ac41dd7a44d0363b1e57b6cf9edb6f7d6',1,'com::sequoiadb::base::Sequoiadb']]],

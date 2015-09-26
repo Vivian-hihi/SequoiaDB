@@ -68,6 +68,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
     <ul class="tablist">
       <li><a href="functions.html"><span>All</span></a></li>
       <li class="current"><a href="functions_func.html"><span>Functions</span></a></li>
+      <li><a href="functions_vars.html"><span>Variables</span></a></li>
       <li><a href="functions_prop.html"><span>Properties</span></a></li>
     </ul>
   </div>
@@ -82,6 +83,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
       <li><a href="#index_i"><span>i</span></a></li>
       <li><a href="#index_l"><span>l</span></a></li>
       <li><a href="#index_n"><span>n</span></a></li>
+      <li><a href="#index_o"><span>o</span></a></li>
       <li><a href="#index_q"><span>q</span></a></li>
       <li><a href="#index_r"><span>r</span></a></li>
       <li><a href="#index_s"><span>s</span></a></li>
@@ -96,7 +98,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
      onmouseover="return searchBox.OnSearchSelectShow()"
      onmouseout="return searchBox.OnSearchSelectHide()"
      onkeydown="return searchBox.OnSearchSelectKey(event)">
-<a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(0)"><span class="SelectionMark">&#160;</span>All</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(1)"><span class="SelectionMark">&#160;</span>Classes</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(2)"><span class="SelectionMark">&#160;</span>Namespaces</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(3)"><span class="SelectionMark">&#160;</span>Functions</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(4)"><span class="SelectionMark">&#160;</span>Properties</a></div>
+<a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(0)"><span class="SelectionMark">&#160;</span>All</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(1)"><span class="SelectionMark">&#160;</span>Classes</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(2)"><span class="SelectionMark">&#160;</span>Namespaces</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(3)"><span class="SelectionMark">&#160;</span>Functions</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(4)"><span class="SelectionMark">&#160;</span>Variables</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(5)"><span class="SelectionMark">&#160;</span>Properties</a></div>
 
 <!-- iframe showing the search results (closed by default) -->
 <div id="MSearchResultsWindow">
@@ -109,21 +111,34 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 &#160;
 
 <h3><a class="anchor" id="index_a"></a>- a -</h3><ul>
+<li>ActivateDC()
+: <a class="el" href="classSequoiaDB_1_1DataCenter.html#a214678860eec812995516437dfe4e2ab">SequoiaDB.DataCenter</a>
+</li>
 <li>ActivateReplicaGroup()
 : <a class="el" href="classSequoiaDB_1_1Sequoiadb.html#af16b85f5bf3937a56b84dcb5a9a78da1">SequoiaDB.Sequoiadb</a>
 </li>
 <li>Aggregate()
 : <a class="el" href="classSequoiaDB_1_1DBCollection.html#a8e82772c71a3310e57f96f407397b548">SequoiaDB.DBCollection</a>
 </li>
-<li>attachCollection()
-: <a class="el" href="classSequoiaDB_1_1DBCollection.html#a9f7ccfd91e2281a2f4b825e18996dc49">SequoiaDB.DBCollection</a>
+<li>Alter()
+: <a class="el" href="classSequoiaDB_1_1DBCollection.html#a97263903a28ea299ea68a4a4d67819cd">SequoiaDB.DBCollection</a>
+, <a class="el" href="classSequoiaDB_1_1Domain.html#a2cfe0a09bf044fb4cbd9c94902f7c805">SequoiaDB.Domain</a>
+</li>
+<li>AttachCollection()
+: <a class="el" href="classSequoiaDB_1_1DBCollection.html#a2ea5979bb8aa0a26d309163def344f94">SequoiaDB.DBCollection</a>
+</li>
+<li>AttachGroups()
+: <a class="el" href="classSequoiaDB_1_1DataCenter.html#ad3f48617246b6e955ce6a82263500565">SequoiaDB.DataCenter</a>
+</li>
+<li>attachNode()
+: <a class="el" href="classSequoiaDB_1_1ReplicaGroup.html#a52c0aeadef7b6ed17ec09ce0ba002200">SequoiaDB.ReplicaGroup</a>
 </li>
 </ul>
 
 
 <h3><a class="anchor" id="index_b"></a>- b -</h3><ul>
-<li>backupOffline()
-: <a class="el" href="classSequoiaDB_1_1Sequoiadb.html#a705a34f662399a4cba9c5443a44a7395">SequoiaDB.Sequoiadb</a>
+<li>BackupOffline()
+: <a class="el" href="classSequoiaDB_1_1Sequoiadb.html#aa10c0a61ebc007bca0e748b7097d589f">SequoiaDB.Sequoiadb</a>
 </li>
 <li>BulkInsert()
 : <a class="el" href="classSequoiaDB_1_1DBCollection.html#a109a8164d1277eb6a315953adfab10f8">SequoiaDB.DBCollection</a>
@@ -132,30 +147,47 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 
 
 <h3><a class="anchor" id="index_c"></a>- c -</h3><ul>
-<li>cancelTask()
-: <a class="el" href="classSequoiaDB_1_1Sequoiadb.html#a9b6f879f0c71ed5aa15541a6f34f8dbc">SequoiaDB.Sequoiadb</a>
+<li>CancelTask()
+: <a class="el" href="classSequoiaDB_1_1Sequoiadb.html#a498d840c0dddfb77d4ad6a358b9ada0f">SequoiaDB.Sequoiadb</a>
 </li>
 <li>ChangeConnectionOptions()
 : <a class="el" href="classSequoiaDB_1_1Sequoiadb.html#a27a66181a28ca205a42d9a35f328391a">SequoiaDB.Sequoiadb</a>
 </li>
 <li>Close()
-: <a class="el" href="classSequoiaDB_1_1DBCursor.html#a8d9dc052aa51c2b8d51dd4542af7c526">SequoiaDB.DBCursor</a>
+: <a class="el" href="classSequoiaDB_1_1DBLob.html#a6b5ff9c95dc9d717081dd5684ff38392">SequoiaDB.DBLob</a>
+, <a class="el" href="classSequoiaDB_1_1DBCursor.html#a8d9dc052aa51c2b8d51dd4542af7c526">SequoiaDB.DBCursor</a>
 </li>
-<li>closeAllCursors()
-: <a class="el" href="classSequoiaDB_1_1Sequoiadb.html#a0c6ab0fa29c12c3cafc02bddc7343d39">SequoiaDB.Sequoiadb</a>
+<li>CloseAllCursors()
+: <a class="el" href="classSequoiaDB_1_1Sequoiadb.html#a429e7479d56d62194e078560d53cac92">SequoiaDB.Sequoiadb</a>
 </li>
 <li>Connect()
-: <a class="el" href="classSequoiaDB_1_1Node.html#a753ca37ac212ebf1a08f0bbbd3e268bf">SequoiaDB.Node</a>
+: <a class="el" href="classSequoiaDB_1_1Sequoiadb.html#ab38e72edd418c60fea0d83d221b89ccd">SequoiaDB.Sequoiadb</a>
+, <a class="el" href="classSequoiaDB_1_1Node.html#a753ca37ac212ebf1a08f0bbbd3e268bf">SequoiaDB.Node</a>
 , <a class="el" href="classSequoiaDB_1_1Sequoiadb.html#a979b7b8da650b60ca006ef5da84653db">SequoiaDB.Sequoiadb</a>
 </li>
 <li>CreateCollection()
 : <a class="el" href="classSequoiaDB_1_1CollectionSpace.html#af2271ff99cb710f2d9b4d46e9941a157">SequoiaDB.CollectionSpace</a>
 </li>
 <li>CreateCollectionSpace()
-: <a class="el" href="classSequoiaDB_1_1Sequoiadb.html#a9273b33baa0513fc41b0d1f3c1072754">SequoiaDB.Sequoiadb</a>
+: <a class="el" href="classSequoiaDB_1_1Sequoiadb.html#ad7c177ad9ad6d49fab0a2b0c6539f9e4">SequoiaDB.Sequoiadb</a>
+</li>
+<li>CreateDomain()
+: <a class="el" href="classSequoiaDB_1_1Sequoiadb.html#a60b0a056f93d893224593e6df9d8b633">SequoiaDB.Sequoiadb</a>
+</li>
+<li>CreateIdIndex()
+: <a class="el" href="classSequoiaDB_1_1DBCollection.html#a5938350cf682ffb61779801d4a60a183">SequoiaDB.DBCollection</a>
+</li>
+<li>CreateImage()
+: <a class="el" href="classSequoiaDB_1_1DataCenter.html#ab135e51fbe25efcabbe27801568f4aca">SequoiaDB.DataCenter</a>
 </li>
 <li>CreateIndex()
 : <a class="el" href="classSequoiaDB_1_1DBCollection.html#a7f7647c4cbb90fd537852b32ebb6b2f2">SequoiaDB.DBCollection</a>
+</li>
+<li>CreateIndexOffline()
+: <a class="el" href="classSequoiaDB_1_1DBCollection.html#a0902fc35bf59b50489ef8ca5af5ee443">SequoiaDB.DBCollection</a>
+</li>
+<li>CreateLob()
+: <a class="el" href="classSequoiaDB_1_1DBCollection.html#a98ba855de3079d433baffd391583505a">SequoiaDB.DBCollection</a>
 </li>
 <li>CreateNode()
 : <a class="el" href="classSequoiaDB_1_1ReplicaGroup.html#ad33cd9c199d12a6e41eb86f61ea062e0">SequoiaDB.ReplicaGroup</a>
@@ -176,11 +208,23 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 
 
 <h3><a class="anchor" id="index_d"></a>- d -</h3><ul>
+<li>DeactivateDC()
+: <a class="el" href="classSequoiaDB_1_1DataCenter.html#a70d3a9ee42e5a170cfccce7af8b48d6d">SequoiaDB.DataCenter</a>
+</li>
 <li>Delete()
 : <a class="el" href="classSequoiaDB_1_1DBCollection.html#a47bcd33d34f5605a9a6fbf9a9fda3670">SequoiaDB.DBCollection</a>
 </li>
-<li>detachCollection()
-: <a class="el" href="classSequoiaDB_1_1DBCollection.html#a131eabb7f64eb1bc8227bf98a1e02731">SequoiaDB.DBCollection</a>
+<li>DetachCollection()
+: <a class="el" href="classSequoiaDB_1_1DBCollection.html#abf4521c015df5179439631da5b243c27">SequoiaDB.DBCollection</a>
+</li>
+<li>DetachGroups()
+: <a class="el" href="classSequoiaDB_1_1DataCenter.html#a833d27e10bba52532b9ba12066134a26">SequoiaDB.DataCenter</a>
+</li>
+<li>detachNode()
+: <a class="el" href="classSequoiaDB_1_1ReplicaGroup.html#a10d9481f51ff1a9878f67d42e2fcbdfb">SequoiaDB.ReplicaGroup</a>
+</li>
+<li>DisableImage()
+: <a class="el" href="classSequoiaDB_1_1DataCenter.html#a97d7c2b84be91337ea45114e1d599e4b">SequoiaDB.DataCenter</a>
 </li>
 <li>Disconnect()
 : <a class="el" href="classSequoiaDB_1_1Sequoiadb.html#acf7f9722345820c356e241726e954bb3">SequoiaDB.Sequoiadb</a>
@@ -191,6 +235,12 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <li>DropCollectionSpace()
 : <a class="el" href="classSequoiaDB_1_1Sequoiadb.html#a66455765b61780254392ae20d74a5f83">SequoiaDB.Sequoiadb</a>
 </li>
+<li>DropDomain()
+: <a class="el" href="classSequoiaDB_1_1Sequoiadb.html#afe45ea53fbc186161a286e255afcdf82">SequoiaDB.Sequoiadb</a>
+</li>
+<li>DropIdIndex()
+: <a class="el" href="classSequoiaDB_1_1DBCollection.html#aaeba0157e91ad08a7d4ecb6d80c82fe8">SequoiaDB.DBCollection</a>
+</li>
 <li>DropIndex()
 : <a class="el" href="classSequoiaDB_1_1DBCollection.html#af602c3f75b6d7f8ebf047e1508a99f22">SequoiaDB.DBCollection</a>
 </li>
@@ -198,11 +248,20 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 
 
 <h3><a class="anchor" id="index_e"></a>- e -</h3><ul>
+<li>EnableImage()
+: <a class="el" href="classSequoiaDB_1_1DataCenter.html#a917e93d5f194baaad382187bab4ce1e9">SequoiaDB.DataCenter</a>
+</li>
+<li>EnableReadOnly()
+: <a class="el" href="classSequoiaDB_1_1DataCenter.html#a5f6418f4e939756f0fe7d5167d23efd4">SequoiaDB.DataCenter</a>
+</li>
 <li>Exec()
 : <a class="el" href="classSequoiaDB_1_1Sequoiadb.html#a3ea719a665d5ef22843053f8133a77ef">SequoiaDB.Sequoiadb</a>
 </li>
 <li>ExecUpdate()
 : <a class="el" href="classSequoiaDB_1_1Sequoiadb.html#a11ed29be8a6d63fbee3d166f1cc6942a">SequoiaDB.Sequoiadb</a>
+</li>
+<li>Explain()
+: <a class="el" href="classSequoiaDB_1_1DBCollection.html#a440565fcef581f92742e8cbeab24869e">SequoiaDB.DBCollection</a>
 </li>
 </ul>
 
@@ -217,8 +276,21 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <li>GetCount()
 : <a class="el" href="classSequoiaDB_1_1DBCollection.html#a2950c8b95fb4fdecaa0b5f996e24e182">SequoiaDB.DBCollection</a>
 </li>
+<li>GetCreateTime()
+: <a class="el" href="classSequoiaDB_1_1DBLob.html#a1e6f084a1b4a31b25fb8fc15227d1e34">SequoiaDB.DBLob</a>
+</li>
+<li>GetDC()
+: <a class="el" href="classSequoiaDB_1_1Sequoiadb.html#ac6cad6804d28f1d3e2d38059b9689381">SequoiaDB.Sequoiadb</a>
+</li>
 <li>GetDetail()
 : <a class="el" href="classSequoiaDB_1_1ReplicaGroup.html#af45ac22827ed7f07523389bd383fe85a">SequoiaDB.ReplicaGroup</a>
+, <a class="el" href="classSequoiaDB_1_1DataCenter.html#a5859db356ff64166b5712b7c31844c10">SequoiaDB.DataCenter</a>
+</li>
+<li>GetDomain()
+: <a class="el" href="classSequoiaDB_1_1Sequoiadb.html#aa94c9e70eea1ecf0c433e67b85efc0c4">SequoiaDB.Sequoiadb</a>
+</li>
+<li>GetID()
+: <a class="el" href="classSequoiaDB_1_1DBLob.html#a4502b9b15c9edbceb4a271d3976e7d03">SequoiaDB.DBLob</a>
 </li>
 <li>GetIndex()
 : <a class="el" href="classSequoiaDB_1_1DBCollection.html#a44c3ba30ad6ce23d0fa34dd3246bf89c">SequoiaDB.DBCollection</a>
@@ -227,13 +299,13 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 : <a class="el" href="classSequoiaDB_1_1DBCollection.html#a79507cfca415691ace38241e36963614">SequoiaDB.DBCollection</a>
 </li>
 <li>GetList()
-: <a class="el" href="classSequoiaDB_1_1Sequoiadb.html#ad4306747876c083c1fb272c0acec5ee8">SequoiaDB.Sequoiadb</a>
+: <a class="el" href="classSequoiaDB_1_1Sequoiadb.html#aa70af03d0fec4274d5afd5c2245d447d">SequoiaDB.Sequoiadb</a>
 </li>
 <li>GetMaster()
 : <a class="el" href="classSequoiaDB_1_1ReplicaGroup.html#ae4773dc04fee0e67491b7a1935996d42">SequoiaDB.ReplicaGroup</a>
 </li>
 <li>GetNode()
-: <a class="el" href="classSequoiaDB_1_1ReplicaGroup.html#a9fdce452ac4656c57aeaf55d15345577">SequoiaDB.ReplicaGroup</a>
+: <a class="el" href="classSequoiaDB_1_1ReplicaGroup.html#a193225c05fb7951f65863997d0217015">SequoiaDB.ReplicaGroup</a>
 </li>
 <li>GetNodeNum()
 : <a class="el" href="classSequoiaDB_1_1ReplicaGroup.html#a038283133849bf032aac3968e9524331">SequoiaDB.ReplicaGroup</a>
@@ -243,6 +315,9 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 </li>
 <li>GetReplicaGroup()
 : <a class="el" href="classSequoiaDB_1_1Sequoiadb.html#a9c4311be1faf6602aa9a74c39618094a">SequoiaDB.Sequoiadb</a>
+</li>
+<li>GetSize()
+: <a class="el" href="classSequoiaDB_1_1DBLob.html#a1b73212baf08109f15a20c3e10d95462">SequoiaDB.DBLob</a>
 </li>
 <li>GetSlave()
 : <a class="el" href="classSequoiaDB_1_1ReplicaGroup.html#a8c5d0d8ae9fb816834cb090b9eadd0e9">SequoiaDB.ReplicaGroup</a>
@@ -258,7 +333,10 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 
 <h3><a class="anchor" id="index_i"></a>- i -</h3><ul>
 <li>Insert()
-: <a class="el" href="classSequoiaDB_1_1DBCollection.html#aa3d130e8a5990bf820b56d1f0e4a4082">SequoiaDB.DBCollection</a>
+: <a class="el" href="classSequoiaDB_1_1DBCollection.html#ab760cb822c4859ad2ef1b3fa62c51557">SequoiaDB.DBCollection</a>
+</li>
+<li>IsClosed()
+: <a class="el" href="classSequoiaDB_1_1DBLob.html#ad8cc68e971e4f1d1106e7fae354da579">SequoiaDB.DBLob</a>
 </li>
 <li>IsCollectionExist()
 : <a class="el" href="classSequoiaDB_1_1CollectionSpace.html#ac770dc0b7eb4f126535c6464113e9219">SequoiaDB.CollectionSpace</a>
@@ -266,12 +344,21 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <li>IsCollectionSpaceExist()
 : <a class="el" href="classSequoiaDB_1_1Sequoiadb.html#a353052d53a04a4a23e92a6756b2e2341">SequoiaDB.Sequoiadb</a>
 </li>
+<li>IsDomainExist()
+: <a class="el" href="classSequoiaDB_1_1Sequoiadb.html#a8c936d529d110ef8603adf951a6ffae6">SequoiaDB.Sequoiadb</a>
+</li>
+<li>IsValid()
+: <a class="el" href="classSequoiaDB_1_1Sequoiadb.html#a573ec357b20e20648ef45cb068243b37">SequoiaDB.Sequoiadb</a>
+</li>
 </ul>
 
 
 <h3><a class="anchor" id="index_l"></a>- l -</h3><ul>
-<li>listBackup()
-: <a class="el" href="classSequoiaDB_1_1Sequoiadb.html#ab408e18af93ca779d90c82912505aa17">SequoiaDB.Sequoiadb</a>
+<li>ListBackup()
+: <a class="el" href="classSequoiaDB_1_1Sequoiadb.html#a6be7f9ea90e936c7da9bbcf49f76f7f9">SequoiaDB.Sequoiadb</a>
+</li>
+<li>ListCL()
+: <a class="el" href="classSequoiaDB_1_1Domain.html#a5e4a6d6c765d1d81b65c7605c0884a23">SequoiaDB.Domain</a>
 </li>
 <li>ListCollections()
 : <a class="el" href="classSequoiaDB_1_1Sequoiadb.html#a1c0938085de2f641ef100a511ab8655e">SequoiaDB.Sequoiadb</a>
@@ -279,11 +366,20 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <li>ListCollectionSpaces()
 : <a class="el" href="classSequoiaDB_1_1Sequoiadb.html#a51280d837d1b363443e253207b2d011a">SequoiaDB.Sequoiadb</a>
 </li>
+<li>ListCS()
+: <a class="el" href="classSequoiaDB_1_1Domain.html#a41ad9057cdab5cdacfd05e69cf442004">SequoiaDB.Domain</a>
+</li>
+<li>ListDomains()
+: <a class="el" href="classSequoiaDB_1_1Sequoiadb.html#a4c88d5fbf59494a09a6855f2291b9299">SequoiaDB.Sequoiadb</a>
+</li>
+<li>ListLobs()
+: <a class="el" href="classSequoiaDB_1_1DBCollection.html#a5d9ffe9e42c53348655a29be7767b7c6">SequoiaDB.DBCollection</a>
+</li>
 <li>ListReplicaGroups()
 : <a class="el" href="classSequoiaDB_1_1Sequoiadb.html#a4154feb73dd45bf92db4f01b97b4b4ab">SequoiaDB.Sequoiadb</a>
 </li>
-<li>listTasks()
-: <a class="el" href="classSequoiaDB_1_1Sequoiadb.html#ad34c78b756290b0716f3aa3250437487">SequoiaDB.Sequoiadb</a>
+<li>ListTasks()
+: <a class="el" href="classSequoiaDB_1_1Sequoiadb.html#a609287974e2771fad2ce630590664e9f">SequoiaDB.Sequoiadb</a>
 </li>
 </ul>
 
@@ -295,16 +391,38 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 </ul>
 
 
+<h3><a class="anchor" id="index_o"></a>- o -</h3><ul>
+<li>OpenLob()
+: <a class="el" href="classSequoiaDB_1_1DBCollection.html#aa57b5e56580789a0bbb04312947be3b9">SequoiaDB.DBCollection</a>
+</li>
+</ul>
+
+
 <h3><a class="anchor" id="index_q"></a>- q -</h3><ul>
 <li>Query()
 : <a class="el" href="classSequoiaDB_1_1DBCollection.html#a506a6e77561213842bfae13f8d6ee140">SequoiaDB.DBCollection</a>
+</li>
+<li>QueryAndRemove()
+: <a class="el" href="classSequoiaDB_1_1DBCollection.html#a3d1ceb7087a4d059f1e391fef4838588">SequoiaDB.DBCollection</a>
+</li>
+<li>QueryAndUpdate()
+: <a class="el" href="classSequoiaDB_1_1DBCollection.html#a89d462bb82479035e5fef7c7afdeb21a">SequoiaDB.DBCollection</a>
 </li>
 </ul>
 
 
 <h3><a class="anchor" id="index_r"></a>- r -</h3><ul>
-<li>removeBackup()
-: <a class="el" href="classSequoiaDB_1_1Sequoiadb.html#a70034279b61d0f3ab798cdb6d9827219">SequoiaDB.Sequoiadb</a>
+<li>Read()
+: <a class="el" href="classSequoiaDB_1_1DBLob.html#a50c777f0347ea15e759af50a157967c5">SequoiaDB.DBLob</a>
+</li>
+<li>RemoveBackup()
+: <a class="el" href="classSequoiaDB_1_1Sequoiadb.html#a83665d4802f6fd25f5e1187c9b59647c">SequoiaDB.Sequoiadb</a>
+</li>
+<li>RemoveImage()
+: <a class="el" href="classSequoiaDB_1_1DataCenter.html#ad482655e82e0779a965c75bf3bcb19e1">SequoiaDB.DataCenter</a>
+</li>
+<li>RemoveLob()
+: <a class="el" href="classSequoiaDB_1_1DBCollection.html#ad279d81752b315cda9ec48445ad999a1">SequoiaDB.DBCollection</a>
 </li>
 <li>RemoveNode()
 : <a class="el" href="classSequoiaDB_1_1ReplicaGroup.html#ac00674961aab8b10ff02441194e5665f">SequoiaDB.ReplicaGroup</a>
@@ -322,25 +440,28 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 
 
 <h3><a class="anchor" id="index_s"></a>- s -</h3><ul>
+<li>Seek()
+: <a class="el" href="classSequoiaDB_1_1DBLob.html#ac3f18c0e1cbeebf21be73f3879f724bd">SequoiaDB.DBLob</a>
+</li>
 <li>Sequoiadb()
 : <a class="el" href="classSequoiaDB_1_1Sequoiadb.html#a8279ec32ea35bd5e931ebfb841d6fcc8">SequoiaDB.Sequoiadb</a>
 </li>
-<li>setSessionAttr()
-: <a class="el" href="classSequoiaDB_1_1Sequoiadb.html#ad48286e77e8bb6ce8ca86a04e31c1fd0">SequoiaDB.Sequoiadb</a>
+<li>SetSessionAttr()
+: <a class="el" href="classSequoiaDB_1_1Sequoiadb.html#a790d22f0ba3b00ad37576ee25b8703b1">SequoiaDB.Sequoiadb</a>
 </li>
 <li>Split()
-: <a class="el" href="classSequoiaDB_1_1DBCollection.html#a898f42a68f4c9c513df3010e77e840bd">SequoiaDB.DBCollection</a>
+: <a class="el" href="classSequoiaDB_1_1DBCollection.html#a21b1de6678c11f649937d01f026cda9f">SequoiaDB.DBCollection</a>
 </li>
 <li>SplitAsync()
 : <a class="el" href="classSequoiaDB_1_1DBCollection.html#ac7357efd75bc8413d08a258fabf1176a">SequoiaDB.DBCollection</a>
 </li>
 <li>Start()
-: <a class="el" href="classSequoiaDB_1_1Node.html#a04f187a68597ca35e23c062e6246aa0a">SequoiaDB.Node</a>
-, <a class="el" href="classSequoiaDB_1_1ReplicaGroup.html#a58af332657cf04547c6dc4e5f64d9b3b">SequoiaDB.ReplicaGroup</a>
+: <a class="el" href="classSequoiaDB_1_1ReplicaGroup.html#a58af332657cf04547c6dc4e5f64d9b3b">SequoiaDB.ReplicaGroup</a>
+, <a class="el" href="classSequoiaDB_1_1Node.html#a04f187a68597ca35e23c062e6246aa0a">SequoiaDB.Node</a>
 </li>
 <li>Stop()
-: <a class="el" href="classSequoiaDB_1_1Node.html#a90081bd44e1c9706c6b1d35eeedb7647">SequoiaDB.Node</a>
-, <a class="el" href="classSequoiaDB_1_1ReplicaGroup.html#a5c76b6e94b3c149b0f07c78af8d83257">SequoiaDB.ReplicaGroup</a>
+: <a class="el" href="classSequoiaDB_1_1ReplicaGroup.html#a5c76b6e94b3c149b0f07c78af8d83257">SequoiaDB.ReplicaGroup</a>
+, <a class="el" href="classSequoiaDB_1_1Node.html#a90081bd44e1c9706c6b1d35eeedb7647">SequoiaDB.Node</a>
 </li>
 </ul>
 
@@ -354,6 +475,9 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 </li>
 <li>TransactionRollback()
 : <a class="el" href="classSequoiaDB_1_1Sequoiadb.html#ad8122cb3a1238933a7ae940c379d0430">SequoiaDB.Sequoiadb</a>
+</li>
+<li>Truncate()
+: <a class="el" href="classSequoiaDB_1_1DBCollection.html#a4d948f13e4ad46618a4622d682175755">SequoiaDB.DBCollection</a>
 </li>
 </ul>
 
@@ -369,14 +493,17 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 
 
 <h3><a class="anchor" id="index_w"></a>- w -</h3><ul>
-<li>waitTasks()
-: <a class="el" href="classSequoiaDB_1_1Sequoiadb.html#a62174a11b9661a4e1e0bdafee5b8ad44">SequoiaDB.Sequoiadb</a>
+<li>WaitTasks()
+: <a class="el" href="classSequoiaDB_1_1Sequoiadb.html#aa1e3c3bd69a51d8e83b8c85154c92f50">SequoiaDB.Sequoiadb</a>
+</li>
+<li>Write()
+: <a class="el" href="classSequoiaDB_1_1DBLob.html#af99f0d2ac7f2f64f43b2c63102a397eb">SequoiaDB.DBLob</a>
 </li>
 </ul>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Sun Jul 6 2014 16:02:31 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Sat Sep 26 2015 13:46:27 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.2
 </small></address>
