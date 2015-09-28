@@ -379,18 +379,20 @@ namespace engine
             pDecodeBuff[useLen] = 0 ;
             ++useLen ;
             //url decode value
-            pDecodeValueBuf = pDecodeBuff + useLen ;
-            tempDecodeLen = urlDecodeSize( pValueBuf, valueLen ) ;
-            urlDecode( pValueBuf, valueLen,
-                       &pDecodeValueBuf, tempDecodeLen ) ;
-            useLen += tempDecodeLen ;
-            pDecodeBuff[useLen] = 0 ;
-            ++useLen ;
-
-            //printf("%s = %s\n", pBuffer + keyOffset, pBuffer + valueOffset ) ;
+            if( pValueBuf )
+            {
+               pDecodeValueBuf = pDecodeBuff + useLen ;
+               tempDecodeLen = urlDecodeSize( pValueBuf, valueLen ) ;
+               urlDecode( pValueBuf, valueLen,
+                          &pDecodeValueBuf, tempDecodeLen ) ;
+               useLen += tempDecodeLen ;
+               pDecodeBuff[useLen] = 0 ;
+               ++useLen ;
+            }
             pHttpConnection->_requestQuery.insert(
-                  std::make_pair( pDecodeKeyBuf, pDecodeValueBuf ) ) ;
+                     std::make_pair( pDecodeKeyBuf, pDecodeValueBuf ) ) ;
             pValueBuf = NULL ;
+            pDecodeValueBuf = NULL ;
             keyOffset = i + 1 ;
          }
       }
