@@ -52,10 +52,10 @@ public class ReadSdb implements Runnable {
 		try {
             if(map.get("fieldname") != null)
 			read(map.get("dbType").toString(), map.get("url").toString(), map.get("user").toString(),
-					map.get("password").toString(), sql,map.get("fieldname").toString());
+					map.get("password").toString(), sql,map.get("fieldname").toString(),(boolean)map.get("issql"));
             else
             	read(map.get("dbType").toString(), map.get("url").toString(), map.get("user").toString(),
-    					map.get("password").toString(), sql,null);
+    					map.get("password").toString(), sql,null,(boolean)map.get("issql"));
 		} catch (InterruptedException e) {
 			logger.info(e.getMessage());
 		}
@@ -63,7 +63,7 @@ public class ReadSdb implements Runnable {
 	}
 	// readDB
 	@SuppressWarnings("unused")
-	public void read(String dbType, String url, String user, String password, String sql,String fieldname) throws InterruptedException {
+	public void read(String dbType, String url, String user, String password, String sql,String fieldname,boolean flag) throws InterruptedException {
 
 		ConnectDataBase cdb = new ConnectDataBase(dbType, url, user, password);
 		conn = cdb.getConnection();
@@ -224,8 +224,7 @@ public class ReadSdb implements Runnable {
 							break;
 						case Types.VARBINARY:
 							logger.info("unsupport this type of RAW");
-							System.exit(1);
-							break;	
+							throw new Exception("unsupport this type of RAW");	
 						case -13:
 							logger.info("unsupport this type of BFILE");
 							throw new Exception("unsupport this type of BFILE");	
@@ -234,15 +233,18 @@ public class ReadSdb implements Runnable {
 							break;
 						default:
 							logger.info("Field "+"'"+name+"'"+" could not found this type");
-							System.exit(1);
-							break;
+							throw new Exception("Field "+"'"+name+"'"+" could not found this type");
 						}
 					}
 				} catch (Exception e) {
 					logger.error("failure parase bsonObject: "+bson);
 				}
-
-				if(bson.toMap().size() == rsmd.getColumnCount()-1){
+				 
+				if(flag == false && bson.toMap().size() == rsmd.getColumnCount()-1){
+					System.out.println(bson);
+					SdbMain.paraseSuccess.getAndIncrement();
+				}
+				if(flag == true && bson.toMap().size() == rsmd.getColumnCount()){
 					System.out.println(bson);
 					SdbMain.paraseSuccess.getAndIncrement();
 				}
