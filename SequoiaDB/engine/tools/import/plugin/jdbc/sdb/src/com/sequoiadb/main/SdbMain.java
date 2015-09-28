@@ -266,6 +266,7 @@ public static void main(String[] args) {
 			end = (i + 1) * avg+startRow;
 			list.add(sql);
 		}
+		map.put("issql", false);
 		}
 		if(cl != null && cl.hasOption("sql")){
 			String sqlList = cl.getOptionValue("sql");
@@ -273,6 +274,7 @@ public static void main(String[] args) {
 			for(String sql : sqlStr){
 			list.add(sql);
 			}
+		map.put("issql", true);
 		}
 		if(cl != null && cl.hasOption("fieldmodify")){
 			map.put("fieldname", cl.getOptionValue("fieldmodify"));
