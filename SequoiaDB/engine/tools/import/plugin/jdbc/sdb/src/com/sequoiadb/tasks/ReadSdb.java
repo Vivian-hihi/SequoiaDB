@@ -70,7 +70,8 @@ public class ReadSdb implements Runnable {
 		long startTime = System.currentTimeMillis();
 		logger.info("dbType=" + dbType + " url=" + url + " user=" + user + " sql=" + sql+" fieldname="+fieldname);
 		try {
-			pstmt = conn.prepareStatement("select * from (select rownum as rown,t.* from test3 t where rownum <=10000) tabalias where tabalias.rown >=1");
+			//pstmt = conn.prepareStatement("select * from (select rownum as rown,t.* from test3 t where rownum <=10000) tabalias where tabalias.rown >=1");
+			pstmt = conn.prepareStatement(sql);
 			rs = pstmt.executeQuery();
 			ExecutorService es = Executors.newFixedThreadPool(4);
 			while (rs.next()) {
