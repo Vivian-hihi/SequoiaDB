@@ -70,7 +70,6 @@ public class ReadSdb implements Runnable {
 		long startTime = System.currentTimeMillis();
 		logger.info("dbType=" + dbType + " url=" + url + " user=" + user + " sql=" + sql+" fieldname="+fieldname);
 		try {
-			//pstmt = conn.prepareStatement("select * from (select rownum as rown,t.* from test3 t where rownum <=10000) tabalias where tabalias.rown >=1");
 			pstmt = conn.prepareStatement(sql);
 			rs = pstmt.executeQuery();
 			ExecutorService es = Executors.newFixedThreadPool(4);
@@ -203,16 +202,13 @@ public class ReadSdb implements Runnable {
 							break;	
 						case Types.BLOB:						
 							logger.info("unsupport this type of BLOB");
-							System.exit(1);
-							break;
+							throw new Exception("unsupport this type of BLOB");
 						case Types.CLOB:
 							logger.info("unsupport this type of CLOB");
-							System.exit(1);
-							break;
+							throw new Exception("unsupport this type of CLOB");
 						case Types.NCLOB:
 							logger.info("unsupport this type of NCLOB");
-							System.exit(1);
-							break;	
+							throw new Exception("unsupport this type of NCLOB");
 						case Types.NUMERIC:
 							if(fieldname!= null && name.equals(fieldname))
 							bson.put("_id", rs.getBigDecimal(name));
@@ -232,8 +228,7 @@ public class ReadSdb implements Runnable {
 							break;	
 						case -13:
 							logger.info("unsupport this type of BFILE");
-							System.exit(1);
-							break;	
+							throw new Exception("unsupport this type of BFILE");	
 						case Types.NULL:
 							bson.put(name, null);
 							break;
