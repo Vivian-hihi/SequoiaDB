@@ -44,7 +44,7 @@ public static void main(String[] args) {
 	 * @param unit
 	 * @param workQueue
 	 * */
-	ThreadPoolExecutor executor = new ThreadPoolExecutor(2, 100, 200, TimeUnit.MILLISECONDS,
+	ThreadPoolExecutor executor = new ThreadPoolExecutor(32, 100, 200, TimeUnit.MILLISECONDS,
             new ArrayBlockingQueue<Runnable>(100));
 	PropertyConfigurator.configure("lib/log4j.properties");
 	
