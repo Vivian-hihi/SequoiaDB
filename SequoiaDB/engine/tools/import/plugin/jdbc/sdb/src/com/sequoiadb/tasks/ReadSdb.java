@@ -52,14 +52,13 @@ public class ReadSdb implements Runnable {
 		try {
             if(map.get("fieldname") != null)
 			read(map.get("dbType").toString(), map.get("url").toString(), map.get("user").toString(),
-					map.get("password").toString(), sql,map.get("fieldname").toString(),(boolean)map.get("issql"));
+					map.get("password").toString(), sql,map.get("fieldname").toString(),(Boolean)map.get("issql"));
             else
             	read(map.get("dbType").toString(), map.get("url").toString(), map.get("user").toString(),
-    					map.get("password").toString(), sql,null,(boolean)map.get("issql"));
+    					map.get("password").toString(), sql,null,(Boolean)map.get("issql"));
 		} catch (InterruptedException e) {
 			logger.info(e.getMessage());
 		}
-
 	}
 	// readDB
 	@SuppressWarnings("unused")
