@@ -293,7 +293,7 @@
 		<property name="test.log" value="${test.environment}-${OS_NAME}${BUILD_NUMBER}-[H3][G1][D3]" />
 		<property name="test.log.path" value="${test.reports.path}/${test.log}" />
 
-		<if>
+		<!-- <if>
 		   	<equals arg1="${os.arch}" arg2="amd64" />
 			<then>
 				<parallel>
@@ -365,7 +365,24 @@
 					</sdbtest>
 				</parallel>
 			</else>
-		</if>		
+		</if> -->	
+		<property name="test-type" value="js" />
+		<for list="${test-type}" param="Test-Type">
+			<sequential>
+				<ant antfile="${WORKSPACE}/sequoiadb/misc/ci/test-type.xml" dir="." inheritAll="false">
+					<property name="deploy.case.fullname" value="${deploy.case.fullname}" />
+					<property name="test.reports.path" value="${test.reports.path}" />
+					<property name="Test-Type" value="@{Test-Type}" />
+					<property name="parallel.flag" value="parallel" />
+					<property name="WORKSPACE" value="${WORKSPACE}" />
+					<property name="ci.script.file.path" value="${ci.script.file.path}" />
+					<property name="parallel.count" value="1" />
+					<property name="test.log" value="${test.log}" />
+					<property name="test-type-list" value="${test-type-list}" />
+					<property name="BUILD_NUMBER" value="${BUILD_NUMBER}" />
+				</ant>
+			</sequential>
+		</for>	
 
 		<trycatch>
 			<try>
