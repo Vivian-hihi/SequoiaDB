@@ -433,6 +433,12 @@ static BOOLEAN bsonConvertJson ( CHAR **pbuf,
 #endif
          bsonConvertJsonRawConcat ( pbuf, left, temp, FALSE ) ;
          CHECK_LEFT ( left )
+         if( strchr( temp, '.') == 0 && strchr( temp, 'E') == 0
+             && strchr( temp, 'N') == 0 )
+         {
+            bsonConvertJsonRawConcat ( pbuf, left, ".0", FALSE ) ;
+            CHECK_LEFT ( left )
+         }
          break;
       }
       case BSON_STRING:
