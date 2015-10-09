@@ -42,14 +42,15 @@ namespace engine
    :_buildFunc( NULL ),
     _getFunc( NULL ),
     _name( NULL ),
-    _attribute( MTH_S_ATTR_NONE )
+    _attribute( MTH_S_ATTR_NONE ),
+    _matcher( NULL )
    {
 
    }
 
    _mthSAction::~_mthSAction()
    {
-
+      SAFE_OSS_DELETE( _matcher ) ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__MTHSACTION_BUILD, "_mthSAction::build" )

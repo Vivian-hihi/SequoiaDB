@@ -37,8 +37,6 @@
 #include "mthSColumn.hpp"
 #include "mthNodePool.hpp"
 
-#define MTH_SCOLUMN_POOL_SZ 16
-
 namespace engine
 {
    class _mthSColumnMatrix : public _mthSColumn 

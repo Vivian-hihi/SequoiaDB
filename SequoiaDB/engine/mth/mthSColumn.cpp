@@ -50,7 +50,7 @@ namespace engine
     _name( _staticName ),
     _dynamicName( NULL )
    {
-
+      ossMemset( _staticName, '\0', MTH_SCOLUMN_STATIC_NAME_BUF_LEN ) ;
    }
 
    _mthSColumn::~_mthSColumn()
@@ -139,10 +139,11 @@ namespace engine
 
       _actions.clear() ;
       SAFE_OSS_FREE( _dynamicName ) ;
+      ossMemset( _staticName, '\0', MTH_SCOLUMN_STATIC_NAME_BUF_LEN ) ;
       _name = _staticName ;
       _attribute.clear() ;
       _father = NULL ;
-      _subColumns.clear() ; 
+      _subColumns.clear() ;
       PD_TRACE_EXIT( SDB__MTHSCOLUMN_CLEAR ) ;
       return ;
    }
