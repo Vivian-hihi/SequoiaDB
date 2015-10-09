@@ -141,7 +141,7 @@ namespace engine
 
    private:
       MTH_SACTION_BUILD _buildFunc ;
-      MTH_SACTION_GET _getFunc ;      
+      MTH_SACTION_GET _getFunc ;
 
    private:
       bson::BSONElement _value ;

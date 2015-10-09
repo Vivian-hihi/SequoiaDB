@@ -663,7 +663,6 @@ namespace engine
          BOOLEAN                    _preRead ;
 
          _ixmIndexKeyGen            *_keyGen ;
-         mthSelector                _selector ;
 
          BOOLEAN                    _needReOrder ;
    } ;

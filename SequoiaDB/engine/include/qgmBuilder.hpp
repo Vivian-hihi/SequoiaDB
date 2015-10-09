@@ -192,10 +192,10 @@ namespace engine
                          qgmOPFieldVec &order ) ;
 
       INT32 _addLimit( const SQL_CON_ITR &root,
-                         _qgmOptiSelect *node ) ;
+                       _qgmOptiSelect *node ) ;
 
       INT32 _addSkip( const SQL_CON_ITR &root,
-                         _qgmOptiSelect *node ) ;
+                      _qgmOptiSelect *node ) ;
 
       INT32 _buildInCondition( const SQL_CON_ITR &root,
                                _qgmConditionNode *&condition ) ;
