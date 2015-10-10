@@ -347,7 +347,7 @@ boostCompiler = ""
 boostVersion = ""
 
 usesm = False
-if guess_os == 'linux' or guess_os == 'windows':
+if guess_os == 'linux' or guess_os == 'win32':
    usesm = True
 
 extraLibPlaces = []
