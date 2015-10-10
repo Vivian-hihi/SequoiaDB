@@ -5,7 +5,11 @@
  ******************************************************************************/
 #ifndef COMMON_H__
 #define COMMON_H__
+#if defined(__linux__)
 #include <sys/syscall.h>
+#elif defined(_AIX)
+#include <pthread.h>
+#endif
 #include "client.h"
 
 

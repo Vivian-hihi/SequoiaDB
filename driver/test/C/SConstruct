@@ -20,6 +20,8 @@ def GuessOS():
     return 'linux'
   elif id == 'Windows' or id == 'Microsoft':
     return 'win32'
+  elif id == 'AIX':
+      return 'aix'
   else:
     return None
 
@@ -194,6 +196,29 @@ elif guess_os == "linux":
         env['ENV']['GLIBCXX_FORCE_NEW']=1
     else:
         env.Append( CPPFLAGS=" -O3")
+
+elif guess_os == 'aix':
+    env.Append( CPPDEFINES=["PHP_ATOM_INC","HAVE_CONFIG_H","PIC"])
+    env.Append( CPPFLAGS="-ggdb" )
+    env['ENV']['HOME']=os.environ['HOME']
+    # AIX64
+    env.Append( CPPFLAGS=" -maix64 " )
+    env.Append( LINKFLAGS=" -maix64 " )
+    env.Append( AR=" -X64 " )
+    # use big endian
+    env.Append( CPPDEFINES=[ "SDB_BIG_ENDIAN" ] )
+    env.Append( LIBPATH="/lib" )
+    # use project-related boost library
+    env.Append( LIBPATH=[join(boost_lib_dir,'aix64')] )
+    winLibString = "sdbc boost_program_options boost_thread boost_system boost_filesystem gtest pthread dl"
+    env.Append( LIBS=Split(winLibString) )
+    if debugBuild:
+        env.Append( CPPFLAGS=" -O0 ")
+        env['ENV']['GLIBCXX_FORCE_NEW']=1
+    else:
+        env.Append( CPPFLAGS=" -O3")
+else:
+    print( "No special config for [" + os.sys.platform + "] which probably means it won't work" )
 
 env.Append( LIBPATH=[client_lib_dir, '.'] )
 ext_dir = join(root_dir, 'ext')

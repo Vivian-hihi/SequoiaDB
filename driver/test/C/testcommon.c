@@ -712,6 +712,10 @@ BOOLEAN isCluster( sdbConnectionHandle db )
 }
 
 INT32 gettid()
-{ 
+{
+#if defined(_AIX)
+   return (INT32)pthread_self() ;
+#else
    return (INT32)syscall(SYS_gettid) ;
+#endif
 }
