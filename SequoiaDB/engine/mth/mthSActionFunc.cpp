@@ -447,10 +447,20 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__MTHABSGET ) ;
       SDB_ASSERT( NULL != action, "can not be null" ) ;
-      if ( e.isNumber() )
+      if ( NumberLong == e.type() )
       {
-         builder.appendNumber( fieldName,
-                               ( INT64 )( ceil( e.Number() ) ) ) ;
+         builder.append( fieldName,
+                         ( INT64 )( e.numberLong() ) ) ;
+      }
+      else if ( NumberInt == e.type() )
+      {
+         builder.append( fieldName,
+                         ( INT32 )( e.numberInt() ) ) ;
+      }
+      else if ( NumberDouble == e.type() )
+      {
+         builder.append( fieldName,
+                        ( INT64 )( ceil( e.Number() ) ) ) ;
       }
       else if ( !e.eoo() )
       {
@@ -473,10 +483,22 @@ namespace engine
       BSONObjBuilder builder ;
       BSONObj obj ;
 
-      if ( in.isNumber() )
+      if ( NumberLong == in.type() )
       {
-         builder.appendNumber( fieldName,
-                               ( INT64 )( ceil( in.Number() ) ) ) ;
+         builder.append( fieldName,
+                         ( INT64 )( in.numberLong() ) ) ;
+         obj = builder.obj() ;
+      }
+      else if ( NumberInt == in.type() )
+      {
+         builder.append( fieldName,
+                         ( INT32 )( in.numberInt() ) ) ;
+         obj = builder.obj() ;
+      }
+      else if ( NumberDouble == in.type() )
+      {
+         builder.append( fieldName,
+                        ( FLOAT64 )( ceil( in.Number() ) ) ) ;
          obj = builder.obj() ;
       }
       else if ( !in.eoo() )
@@ -502,10 +524,20 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__MTHFLOORBUILD ) ;
       SDB_ASSERT( NULL != action, "can not be null" ) ;
-      if ( e.isNumber() )
+      if ( NumberInt == e.type() )
       {
-         builder.appendNumber( fieldName,
-                               ( INT64 )( floor( e.Number() ) ) ) ;
+         builder.append( fieldName,
+                        ( INT32 )( e.numberInt() ) ) ;
+      }
+      else if ( NumberLong == e.type() )
+      {
+         builder.append( fieldName,
+                       ( INT64 )( e.numberLong() ) ) ;
+      }
+      else if ( NumberDouble == e.type() )
+      {
+         builder.append( fieldName,
+                        ( FLOAT64 )floor( e.numberDouble() ) ) ;
       }
       else if ( !e.eoo() )
       {
@@ -527,10 +559,22 @@ namespace engine
       BSONObjBuilder builder ;
       BSONObj obj ;
 
-      if ( in.isNumber() )
+      if ( NumberInt == in.type() )
       {
-         builder.appendNumber( fieldName,
-                               ( INT64 )( floor( in.Number() ) ) ) ;
+         builder.append( fieldName,
+                       ( INT32 )( in.numberInt() ) ) ;
+         obj = builder.obj() ;
+      }
+      else if ( NumberLong == in.type() )
+      {
+         builder.append( fieldName,
+                        ( INT64 )( in.numberLong() ) ) ;
+         obj = builder.obj() ;
+      }
+      else if ( NumberDouble == in.type() )
+      {
+         builder.append( fieldName,
+                        ( FLOAT64 )floor( in.numberDouble() ) ) ;
          obj = builder.obj() ;
       }
       else if ( !in.eoo() )
