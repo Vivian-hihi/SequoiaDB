@@ -32,15 +32,19 @@ clientCLibFiles = [
       ]
 
 #Shared Library
-clientCLib = clientCEnv.SharedLibrary('sdbc', clientCLibFiles)
-clientCEnv.Install( '#/client/lib', clientCLib )
+if aix:
+    clientCLib = clientCEnv.SharedLibrary('sdbc', [clientCLibFiles, ssllib_file1, ssllib_file])
+    clientCEnv.Install( '#/client/lib', clientCLib )
+else:
+    clientCLib = clientCEnv.SharedLibrary('sdbc', clientCLibFiles)
+    clientCEnv.Install( '#/client/lib', clientCLib )
 
 #Static Library
 dir = ''
 def merge(target, source = None, env = clientCEnv):
     pureLib = dir + '/libstaticpuresdbc.a'
     clientCLibStatic = dir + '/libstaticsdbc.a'
-    mergeStaticLibrary(clientCLibStatic, ssllib_file, ssllib_file1, pureLib)
+    mergeStaticLibrary(clientCLibStatic, aix, ssllib_file, ssllib_file1, pureLib)
     clientCEnv.Install( '#/client/lib/', clientCLibStatic )
 
 if linux or aix:

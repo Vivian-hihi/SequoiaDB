@@ -46,15 +46,19 @@ clientCPPLibFiles = [
       ]
 
 #Shared Library
-clientCPPLib = clientCppEnv.SharedLibrary('sdbcpp', clientCPPLibFiles)
-clientCppEnv.Install( '#/client/lib/', clientCPPLib )
+if aix:
+    clientCPPLib = clientCppEnv.SharedLibrary('sdbcpp', [clientCPPLibFiles, ssllib_file1, ssllib_file])
+    clientCppEnv.Install( '#/client/lib/', clientCPPLib )
+else:
+    clientCPPLib = clientCppEnv.SharedLibrary('sdbcpp', clientCPPLibFiles)
+    clientCppEnv.Install( '#/client/lib/', clientCPPLib )
 
 #Static Library
 dir = ''
 def merge(target, source = None, env = clientCppEnv):
     pureLib = dir + '/libstaticpuresdbcpp.a'
     clientCPPLibStatic = dir + '/libstaticsdbcpp.a'
-    mergeStaticLibrary(clientCPPLibStatic, ssllib_file, ssllib_file1, pureLib)
+    mergeStaticLibrary(clientCPPLibStatic, aix, ssllib_file, ssllib_file1, pureLib)
     clientCppEnv.Install( '#/client/lib/', clientCPPLibStatic )
 
 if linux or aix:

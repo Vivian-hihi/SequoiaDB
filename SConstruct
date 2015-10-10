@@ -49,9 +49,9 @@ options = {}
 
 options_topass = {}
 
-def mergeStaticLibrary(target, *sources):
-    if not sys.platform.startswith('linux'):
-        raise Exception('mergeStaticLibrary currently only support linux')
+def mergeStaticLibrary(target, aix, *sources):
+    if not sys.platform.startswith('linux') and not sys.platform.startswith('aix'):
+        raise Exception('mergeStaticLibrary currently only support linux or aix')
     if not os.path.isabs(target):
         raise Exception('target must be a absolute path: ' + target)
     path = os.path.dirname(target)
@@ -68,19 +68,29 @@ def mergeStaticLibrary(target, *sources):
     os.mkdir(subdir)
     #print("current directory is " + os.getcwd())
     print("create objs directory: " + subdir )
+    cmd = ""
     for s in sources:
         if not os.path.isabs(s):
             raise Exception('source must be a absolute path: ' + s)
         if not os.path.exists(s):
             raise Exception('source not exists: ' + s)
         print("extract objs from " + s)
-        cmd = "ar x " + s
+        if aix:
+            cmd = "ar -X32_64 x " + s
+        else:
+            cmd = "ar x " + s
         print(cmd)
         subprocess.check_call(cmd, shell=True)
-        cmd = "mv `ar t " + s + "` " + subdir
+        if aix:
+            cmd = "mv `ar -X32_64 t " + s + "` " + subdir
+        else:
+            cmd = "mv `ar t " + s + "` " + subdir
         print(cmd)
         subprocess.check_call(cmd, shell=True)
-    cmd = "ar cr " + target + " " + subdir + "/*.o"
+    if aix:
+        cmd = "ar -X32_64 cr " + target + " " + subdir + "/*.o"
+    else:
+        cmd = "ar cr " + target + " " + subdir + "/*.o"
     print(cmd)
     subprocess.check_call(cmd, shell=True)
     cmd = "ranlib " + target
@@ -637,23 +647,23 @@ elif guess_os == 'aix':
    env.Append( LINKFLAGS=" -maix64 " )
    env.Append( AR=" -X64 " )
    nixLibPrefix = "lib"
-   boost_lib_dir = join(boost_lib_dir,'aix')
+   boost_lib_dir = join(boost_lib_dir,'aix64')
    # use big endian
    env.Append( CPPDEFINES=[ "SDB_BIG_ENDIAN" ] )
    env.Append( EXTRALIBPATH="/lib" )
    # use project-related boost library
    env.Append( EXTRALIBPATH=boost_lib_dir )
    # use project-related ssl library
-   env.Append( EXTRALIBPATH=join(ssl_dir,'lib/aix') )
+   env.Append( EXTRALIBPATH=join(ssl_dir,'lib/aix64') )
    # use project-related spidermonkey library
    if usesm:
       if debugBuild:
-          smlib_dir = join(js_dir,'lib/debug/aix/lib')
-          env.Append( CPPPATH=join(js_dir,'lib/debug/aix/include') )
+          smlib_dir = join(js_dir,'lib/debug/aix64/lib')
+          env.Append( CPPPATH=join(js_dir,'lib/debug/aix64/include') )
           env.Append( EXTRALIBPATH=[smlib_dir] )
       else:
-          smlib_dir = join(js_dir,'lib/release/aix/lib')
-          env.Append( CPPPATH=join(js_dir,'lib/release/aix/include') )
+          smlib_dir = join(js_dir,'lib/release/aix64/lib')
+          env.Append( CPPPATH=join(js_dir,'lib/release/aix64/include') )
           env.Append( EXTRALIBPATH=[smlib_dir] )
 
    # spider monkey
@@ -662,9 +672,9 @@ elif guess_os == 'aix':
       env.Append( CPPDEFINES=[ "XP_UNIX" ] )
       env.Append( LIBS=['js_static'] )
    # SSL
-   ssllib_dir = join(ssl_dir,'lib/aix')
-   env.Append( LIBS=['ssl'] )
-   env.Append( LIBS=['crypto'] )
+   ssllib_dir = join(ssl_dir,'lib/aix64')
+   #env.Append( LIBS=['ssl'] )
+   #env.Append( LIBS=['crypto'] )
    ssllib_file = join(ssllib_dir, 'libcrypto.a')
    ssllib_file1 = join(ssllib_dir, 'libssl.a')
 else:
@@ -679,7 +689,10 @@ if nix:
 
     env.Append( CPPDEFINES="_FILE_OFFSET_BITS=64" )
     env.Append( CXXFLAGS=" -Wnon-virtual-dtor " )
-    env.Append( LINKFLAGS=" -fPIC -pthread -rdynamic" )
+    if aix:
+        env.Append( LINKFLAGS=" -fPIC -pthread " )
+    else:
+        env.Append( LINKFLAGS=" -fPIC -pthread -rdynamic" )
     env.Append( LIBS=[] )
 
     env['ENV']['HOME'] = os.environ['HOME']

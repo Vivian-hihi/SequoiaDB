@@ -132,7 +132,7 @@ elif guess_os == "aix":
     nixLibPrefix = "lib"
     env.Append( EXTRALIBPATH="/usr/lib" )
     env.Append( EXTRALIBPATH="/lib" )
-    env.Append( LIBPATH=join(boost_lib_dir,'aix') )
+    env.Append( LIBPATH=join(boost_lib_dir,'aix64') )
 
     if static:
         env.Append( LINKFLAGS=" -static " )
