@@ -699,9 +699,11 @@ if nix:
     env['ENV']['TERM'] = os.environ['TERM']
 
     if debugBuild:
-        env.Append( CPPFLAGS=" -O0 -fstack-protector " );
-        env['ENV']['GLIBCXX_FORCE_NEW'] = 1;
-        env.Append( CPPFLAGS=" -D_DEBUG" );
+        env.Append( CPPFLAGS=" -O0 " )
+        if not aix:
+            env.Append( CPPFLAGS=" -fstack-protector " )
+        env['ENV']['GLIBCXX_FORCE_NEW'] = 1
+        env.Append( CPPFLAGS=" -D_DEBUG" )
     else:
         env.Append( CPPFLAGS=" -O3 " )
 
