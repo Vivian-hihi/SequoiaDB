@@ -1585,7 +1585,9 @@ namespace engine
       if ( lr <= 0 )
       {
          if ( ' ' == *str ||
-              '\t' == *str )
+              '\t' == *str ||
+              '\n' == *str ||
+              '\r' == *str )
          {
             rc = FALSE ;
             goto done ;
@@ -1595,7 +1597,9 @@ namespace engine
       if ( 0 <= lr )
       {
          if ( ' ' == *( str + strLen - 1 ) ||
-              '\t' == *( str + strLen - 1 ) )
+              '\t' == *( str + strLen - 1 ) ||
+              '\n' == *( str + strLen - 1 ) ||
+              '\r' == *( str + strLen - 1 ) )
          {
             rc = FALSE ;
             goto done ;
@@ -1612,7 +1616,9 @@ namespace engine
       while ( '\0' != *p )
       {
          if ( ' ' != *p &&
-              '\t' != *p )
+              '\t' != *p &&
+              '\n' != *p &&
+              '\r' != *p )
          {
             break ;
          }
@@ -1632,7 +1638,9 @@ namespace engine
       {
          const CHAR *p = str + pos ;
          if ( ' ' != *p &&
-              '\t' != *p )
+              '\t' != *p &&
+              '\n' != *p &&
+              '\r' != *p )
          {
             break ;
          }
