@@ -364,11 +364,22 @@ namespace engine
       }
       else if ( NumberInt == e.type() )
       {
-         builder.append( fieldName, abs(e.Int() ) ) ;
+         INT32 v = e.numberInt() ;
+         /// - 2 ^ 31
+         if ( -2147483648 != v )
+         {
+            builder.append( fieldName, 0 <= v ? v : -v ) ;
+         }
+         else
+         {
+            builder.append( fieldName, -((INT64)v) ) ;
+         }
       }
       else if ( NumberLong == e.type() )
       {
-         builder.appendNumber( fieldName, llabs( e.Long() ) ) ;
+         INT64 v = e.numberLong() ;
+         /// return -9223372036854775808 when v is -9223372036854775808
+         builder.append( fieldName, 0 <= v ? ( INT64 )v : ( INT64 )( -v ) ) ;
       }
       else if ( !e.eoo() )
       {
@@ -400,12 +411,22 @@ namespace engine
       }
       else if ( NumberInt == in.type() )
       {
+         INT32 v = 0 ;
          if ( 0 <= in.Int() )
          {
             out = in ;
             goto done ;
          }
-         builder.append( fieldName, abs(in.Int() ) ) ;
+
+         v = in.numberInt() ;
+         if ( -2147483648 != v )
+         {
+            builder.append( fieldName, ( INT32 )( -v ) ) ;
+         }
+         else
+         {
+            builder.append( fieldName, -(( INT64 )v) ) ;
+         }
          obj = builder.obj() ;
       }
       else if ( NumberLong == in.type() )
@@ -415,7 +436,7 @@ namespace engine
             out = in ;
             goto done ;
          }
-         builder.appendNumber( fieldName, llabs( in.Long() ) ) ;
+         builder.append( fieldName, ( INT64 )( -( in.Long() ) ) ) ;
          obj = builder.obj() ;
       }
       else if ( !in.eoo() )
