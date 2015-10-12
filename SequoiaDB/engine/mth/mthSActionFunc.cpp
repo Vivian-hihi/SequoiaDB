@@ -803,7 +803,7 @@ namespace engine
          else if ( Date == e.type() )
          {
             CHAR buffer[64] = { 0 };
-            time_t timer = (time_t)( e.date() / 1000 ) ;
+            time_t timer = (time_t)( ( INT64 )( e.date() ) / 1000 ) ;
             struct tm psr ;
             local_time ( &timer, &psr ) ;
             sprintf ( buffer,
@@ -818,7 +818,7 @@ namespace engine
             Date_t date = e.timestampTime () ;
             unsigned int inc = e.timestampInc () ;
             char buffer[128] = { 0 };
-            time_t timer = (time_t)(date.millis/1000) ;
+            time_t timer = (time_t)((( INT64 )(date.millis))/1000) ;
             struct tm psr ;
             local_time ( &timer, &psr ) ;
             sprintf ( buffer,
