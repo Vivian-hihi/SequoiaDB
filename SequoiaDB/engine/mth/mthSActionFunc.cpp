@@ -945,6 +945,11 @@ namespace engine
             l += e.timestampInc() / 1000 ;
             builder.appendNumber( fieldName, ( INT32 )l ) ;
          }
+         else if ( Bool == e.type() )
+         {
+            INT32 v = e.Bool() ? 1 : 0 ;
+            builder.append( fieldName, v ) ;
+         }
          else if ( String != e.type() )
          {
             builder.appendNumber( fieldName, e.numberInt() ) ;
@@ -1004,6 +1009,11 @@ namespace engine
             UINT64 l = e.timestampTime().millis ;
             l += e.timestampInc() / 1000 ;
             builder.appendNumber( fieldName, ( INT64 )l ) ;
+         }
+         else if ( Bool == e.type() )
+         {
+            INT64 v = e.Bool() ? 1 : 0 ;
+            builder.append( fieldName, v ) ;
          }
          else if ( String != e.type() )
          {
