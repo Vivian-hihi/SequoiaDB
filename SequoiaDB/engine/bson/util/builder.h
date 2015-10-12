@@ -288,8 +288,9 @@ accesses) is the same as if
             int z = sprintf( start , "%.16g" , x );
             assert( z >= 0 );
             _buf.l = prev + z;
-            if( strchr(start, '.') == 0 && strchr(start, 'E') == 0
-              && strchr(start, 'N') == 0 ) {
+            if( strchr(start, '.') == 0 && strchr(start, 'E') == 0 &&
+                strchr(start, 'N') == 0 && strchr(start, 'e') == 0 &&
+                strchr(start, 'n') == 0 ) {
                 write( ".0" , 2 );
             }
         }
