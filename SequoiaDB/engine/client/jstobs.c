@@ -434,7 +434,8 @@ static BOOLEAN bsonConvertJson ( CHAR **pbuf,
          bsonConvertJsonRawConcat ( pbuf, left, temp, FALSE ) ;
          CHECK_LEFT ( left )
          if( strchr( temp, '.') == 0 && strchr( temp, 'E') == 0
-             && strchr( temp, 'N') == 0 )
+             && strchr( temp, 'N') == 0 && strchr( temp, 'e') == 0
+             && strchr( temp, 'n') == 0 )
          {
             bsonConvertJsonRawConcat ( pbuf, left, ".0", FALSE ) ;
             CHECK_LEFT ( left )
