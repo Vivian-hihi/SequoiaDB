@@ -971,14 +971,16 @@ namespace engine
          if ( e.isNumber() )
          {
             /// millis
-            builder.appendTimestamp( fieldName, e.numberLong(), 0 ) ;
+            OpTime t( (unsigned) (e.numberLong() / 1000) , 0 );
+            builder.appendTimestamp( fieldName, t.asDate() ) ;
          }
          else if ( String == e.type() &&
                    SDB_OK == engine::utilStr2TimeT( e.valuestr(),
                                                     tm,
                                                     &usec ))
          {
-            builder.appendTimestamp( fieldName, tm * 1000, usec ) ;
+            OpTime t( (unsigned) (tm) , usec );
+            builder.appendTimestamp( fieldName, t.asDate() ) ;
          }
          else if ( Date == e.type() )
          {
