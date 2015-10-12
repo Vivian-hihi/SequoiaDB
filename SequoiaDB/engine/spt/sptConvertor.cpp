@@ -1134,9 +1134,9 @@ BOOLEAN sptConvertor::_isValidOid( const CHAR *value )
       return FALSE ;
    for ( UINT32 i = 0; i < 24; ++i )
    {
-      if ( ! ( ( value[i] > '0' && value[i] < '9' ) ||
-               ( value[i] > 'a' && value[i] < 'f' ) ||
-               ( value[i] > 'A' && value[i] < 'F' ) ) )
+      if ( ! ( ( value[i] >= '0' && value[i] <= '9' ) ||
+               ( value[i] >= 'a' && value[i] <= 'f' ) ||
+               ( value[i] >= 'A' && value[i] <= 'F' ) ) )
       {
          return FALSE ;
       }
