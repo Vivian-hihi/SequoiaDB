@@ -108,8 +108,8 @@ namespace engine
       case NumberDouble :
       case String :
       case Object :
-      case Array :
          break ;
+      case Array :
       case BinData :
       case Undefined :
          rc = SDB_INVALIDARG ;
