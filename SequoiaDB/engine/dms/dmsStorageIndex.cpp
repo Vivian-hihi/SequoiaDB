@@ -823,7 +823,9 @@ namespace engine
       rc = rootidx.insert ( key, rid, order, dupAllowed, indexCB ) ;
       if ( rc )
       {
-         PD_LOG ( PDERROR, "Failed to insert index, rc: %d", rc ) ;
+         PD_LOG ( PDERROR, "Failed to insert index, key[%s], rid[%d:%d], rc: %d",
+                  key.toString( FALSE, TRUE ).c_str(), rid._extent,
+                  rid._offset, rc ) ;
          goto error ;
       }
       DMS_MON_OP_COUNT_INC( pMonAppCB, MON_INDEX_WRITE, 1 ) ;
