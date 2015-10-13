@@ -41,6 +41,8 @@
 #include "pdTrace.hpp"
 #include "qgmTrace.hpp"
 
+using namespace bson ;
+
 namespace engine
 {
    // PD_TRACE_DECLARE_FUNCTION( SDB__QGMUTILFIRSTDOT, "qgmUtilFirstDot" )

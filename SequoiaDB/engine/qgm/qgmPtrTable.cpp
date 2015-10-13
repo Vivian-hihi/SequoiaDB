@@ -139,8 +139,8 @@ namespace engine
       itr = _table.find( f ) ;
       if ( _table.end() == itr )
       {
-         field._begin = getOwnedString( begin ) ;
-         field._size = size ;
+         field._begin = getOwnedString( f.toString().c_str() ) ;
+         field._size = ossStrlen( field._begin ) ;
          field._ptrTable = this ;
          _table.insert( field ) ;
       }

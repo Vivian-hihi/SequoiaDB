@@ -43,6 +43,8 @@
 #include "qgmPlan.hpp"
 #include "qgmOptiAggregation.hpp"
 
+using namespace bson ;
+
 namespace engine
 {
 

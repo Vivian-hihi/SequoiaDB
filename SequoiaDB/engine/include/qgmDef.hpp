@@ -92,14 +92,17 @@ namespace engine
                         BOOLEAN includeSame = FALSE,
                         UINT32 *pPos = NULL ) const ;
 
-      _qgmField subField( UINT32 pos, UINT32 size = _qgmField::npos ) ;
-      _qgmField rootField() ;
-      _qgmField lastField() ;
-      _qgmField nextField( const _qgmField &cur ) ;
-      _qgmField preField( const _qgmField &cur ) ;
+      _qgmField subField( UINT32 pos, UINT32 size = _qgmField::npos ) const ;
+      _qgmField rootField() const ;
+      _qgmField lastField() const ;
+      _qgmField nextField( const _qgmField &cur ) const ;
+      _qgmField preField( const _qgmField &cur ) const ;
 
       void      replace( UINT32 pos, UINT32 size,
                          const _qgmField &field ) ;
+
+      BOOLEAN   isArrayIndexFormat() const ;
+      BOOLEAN   isDotted() const ;
 
       const CHAR *begin() const
       {

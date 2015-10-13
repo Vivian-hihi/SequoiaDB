@@ -740,8 +740,7 @@ namespace engine
                   f.value.value.attr() = itr->alias ;
                   f.value.expr = itr->expr ;
                }
-               else if ( f.value.value.attr().rootField() !=
-                         f.value.value.attr() )
+               else if ( f.value.value.attr().isDotted() )
                {
                   rc = SDB_INVALIDARG ;
                   PD_LOG_MSG( PDERROR, "Aggr selector[%s] dotted format "

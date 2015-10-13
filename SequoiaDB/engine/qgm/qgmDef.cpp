@@ -177,7 +177,7 @@ namespace engine
       return FALSE ;
    }
 
-   _qgmField _qgmField::subField( UINT32 pos, UINT32 size )
+   _qgmField _qgmField::subField( UINT32 pos, UINT32 size ) const
    {
       _qgmField sub ;
       sub._ptrTable = _ptrTable ;
@@ -191,7 +191,7 @@ namespace engine
    }
 
    /// ex: self: abc.dek, return: abc
-   _qgmField _qgmField::rootField()
+   _qgmField _qgmField::rootField() const
    {
       UINT32 pos = 0 ;
       _qgmField root( *this ) ;
@@ -204,7 +204,7 @@ namespace engine
    }
 
    /// ex: self: abc.dek, return: dek
-   _qgmField _qgmField::lastField()
+   _qgmField _qgmField::lastField() const
    {
       UINT32 pos = 0 ;
       _qgmField last( *this ) ;
@@ -219,7 +219,7 @@ namespace engine
 
    /// ex: self: abc.def.kk, cur: abc, return: def
    ///                       cur: kk,  return: (null)
-   _qgmField _qgmField::nextField( const _qgmField &cur )
+   _qgmField _qgmField::nextField( const _qgmField &cur ) const
    {
       _qgmField next ;
       next._ptrTable = _ptrTable ;
@@ -247,7 +247,7 @@ namespace engine
 
    /// ex: self: abc.def.kk, cur: kk, return: def
    ///                       cur: abc,return: (null)
-   _qgmField _qgmField::preField( const _qgmField &cur )
+   _qgmField _qgmField::preField( const _qgmField &cur ) const
    {
       _qgmField next ;
       next._ptrTable = _ptrTable ;
@@ -292,6 +292,31 @@ namespace engine
             *this = _ptrTable->getField( tmp, subField( size ) ) ;
          }
       }
+   }
+
+   BOOLEAN _qgmField::isArrayIndexFormat() const
+   {
+      INT32 num = 0 ;
+      if ( _begin && '$' == *_begin && '[' == *(_begin+1) &&
+           SDB_OK == mthConvertSubElemToNumeric( _begin, num ) )
+      {
+         return TRUE ;
+      }
+      return FALSE ;
+   }
+
+   BOOLEAN _qgmField::isDotted() const
+   {
+      UINT32 i = 0 ;
+      while( i < _size )
+      {
+         if ( _begin[ i ] == '.' )
+         {
+            return TRUE ;
+         }
+         ++i ;
+      }
+      return FALSE ;
    }
 
    string _qgmField::toFieldName() const
