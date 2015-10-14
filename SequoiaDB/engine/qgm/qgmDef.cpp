@@ -47,6 +47,7 @@ namespace engine
 {
 
    const UINT32 _qgmField::npos = 0xFFFFFFFF ;
+   #define QGM_FAST_STRING_SIZE        ( 64 )
 
    /*
       _qgmField implement
@@ -325,9 +326,28 @@ namespace engine
 
       if ( _size > 0 )
       {
+         CHAR *namePtr = NULL ;
+         CHAR fastStr[ QGM_FAST_STRING_SIZE + 1 ] = { 0 } ;
+
+         if ( _size > QGM_FAST_STRING_SIZE )
+         {
+            namePtr = (CHAR*)SDB_OSS_MALLOC( _size + 1 ) ;
+            if ( !namePtr )
+            {
+               return string() ;
+            }
+            ossMemcpy( namePtr, _begin, _size ) ;
+            namePtr[ _size ] = 0 ;
+         }
+         else
+         {
+            ossMemcpy( fastStr, _begin, _size ) ;
+            namePtr = fastStr ;
+         }
+
          INT32 pos = 0 ;
          INT32 num = 0 ;
-         utilSplitIterator i( (CHAR*)_begin, '.', _size ) ;
+         utilSplitIterator i( namePtr, '.' ) ;
          while ( i.more() )
          {
             if ( 0 == pos )
@@ -350,7 +370,15 @@ namespace engine
                ss << left ;
             }
          }
+         i.finish() ;
+
+         if ( namePtr && namePtr != fastStr )
+         {
+            SDB_OSS_FREE( namePtr ) ;
+            namePtr = NULL ;
+         }
       }
+
       return ss.str() ;
    }
 

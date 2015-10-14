@@ -553,9 +553,23 @@ namespace engine
       goto done ;
    }
 
+   CHAR* utilSplitIterator::_nextptr( CHAR *str )
+   {
+      while( *str )
+      {
+         if ( _ch == *str )
+         {
+            ++str ;
+            continue ;
+         }
+         return str ;
+      }
+      return NULL ;
+   }
+
    BOOLEAN utilSplitIterator::more() const
    {
-      return ( _src && *_src && _ch != *_src ) ? TRUE : FALSE ;
+      return _src ? TRUE : FALSE ;
    }
 
    const CHAR *utilSplitIterator::next()
@@ -584,19 +598,11 @@ namespace engine
          _src = NULL ;
          goto done ;
       }
-      /// ".abc"
-      else if ( _src == ch )
-      {
-         _src = NULL ;
-         goto done ;
-      }
 
-      *ch = '\0' ;
       _last = ch ;
       r = _src ;
-
-      /// "abc.", "abc.ab"
-      _src = ( '\0' == *( ch + 1 ) ) ? NULL : ch + 1 ;
+      _src = _nextptr( ch ) ;
+      *_last = '\0' ;
 
    done:
       return r ;

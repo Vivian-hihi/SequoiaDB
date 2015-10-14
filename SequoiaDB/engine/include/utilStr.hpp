@@ -97,22 +97,24 @@ namespace engine
    class utilSplitIterator : public SDBObject
    {
    public:
-      utilSplitIterator( CHAR *src, CHAR ch = '.', INT32 size = -1 )
-      :_src( src ),
-       _ch( ch ),
-       _last( NULL ),
-       _pLastPos( NULL ),
-       _chRestore( 0 )
+      utilSplitIterator( CHAR *src, CHAR ch = '.' )
       {
-         if ( _src && size > 0 )
+         _src = NULL ;
+         _ch = ch ;
+         _last = NULL ;
+
+         if ( src )
          {
-            _pLastPos = &_src[ size ] ;
-            _chRestore = *_pLastPos ;
-            *_pLastPos = '\0' ;
+            _src = _nextptr( src ) ;
          }
       }
 
       ~utilSplitIterator()
+      {
+         finish() ;
+      }
+
+      void finish()
       {
          if ( NULL != _last )
          {
@@ -120,12 +122,10 @@ namespace engine
             _last = NULL ;
          }
          _src = NULL ;
-
-         if ( _pLastPos )
-         {
-            *_pLastPos = _chRestore ;
-         }
       }
+
+   protected:
+      CHAR  *_nextptr( CHAR *str ) ;
 
    public:
       BOOLEAN more() const ;
@@ -134,9 +134,6 @@ namespace engine
       CHAR *_src ;
       CHAR _ch ;
       CHAR *_last ;
-
-      CHAR *_pLastPos ;
-      CHAR _chRestore ;
    } ;
 }
 

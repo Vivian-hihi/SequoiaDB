@@ -78,7 +78,7 @@ static UINT64 ossMemTraceDump ( void *p, ossPrimitiveFileOp &trapFile )
    CHAR *pAddr = (CHAR*)p ;
    ossMemset ( lineBuffer, 0, sizeof(lineBuffer) ) ;
    ossSnprintf ( lineBuffer, sizeof(lineBuffer),
-                 " Address: 0x%p\n", pAddr ) ;
+                 " Address: %p\n", pAddr ) ;
    trapFile.Write ( lineBuffer ) ;
    ossMemset ( lineBuffer, 0, sizeof(lineBuffer) ) ;
    ossSnprintf ( lineBuffer, sizeof(lineBuffer),

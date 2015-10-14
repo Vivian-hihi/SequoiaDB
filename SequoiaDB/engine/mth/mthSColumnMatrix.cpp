@@ -367,6 +367,7 @@ namespace engine
             father = node ;
          }
       }
+      i.finish() ;
 
       if ( NULL != node )
       {
