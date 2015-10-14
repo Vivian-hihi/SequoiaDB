@@ -89,7 +89,7 @@
             <abortOnError>0</abortOnError>
             <customErrorMessage>${msg(Install.ErrorMsg.CreateGroup.error)}</customErrorMessage>
             <program>useradd</program>
-            <programArguments> ${username} -p ${userpasswd} -d /home/sequoiadb -g ${username}_group  -s /bin/bash;sig=$? </programArguments>
+            <programArguments> ${username} -p ${userpasswd} -g ${username}_group  -s /bin/bash;sig=$? </programArguments>
             <useMSDOSPath>0</useMSDOSPath>
             <ruleList>
                 <platformTest>
@@ -136,7 +136,7 @@
         <runProgram>
             <abortOnError>0</abortOnError>
             <program>echo</program>
-            <programArguments>'export PATH=$PATH:${installdir}' &gt;&gt; ~${username}/.bashrc</programArguments>
+            <programArguments>'export PATH=$PATH:${installdir}' &gt;&gt; ~${username}/.profile</programArguments>
             <ruleEvaluationLogic>or</ruleEvaluationLogic>
             <ruleList>
                 <fileContentTest>
@@ -152,7 +152,7 @@
             </ruleList>
         </runProgram>
         <changeOwnerAndGroup>
-            <files>/home/sequoiadb</files>
+            <files>/home/${username}</files>
             <group>${username}_group</group>
             <owner>${username}</owner>
             <ruleList>
@@ -335,7 +335,7 @@
         <runProgram>
             <abortOnError>0</abortOnError>
             <program>echo</program>
-            <programArguments>'export PATH=$PATH:${installdir}/bin' &gt;&gt; ~${username}/.bashrc</programArguments>
+            <programArguments>'export PATH=$PATH:${installdir}/bin' &gt;&gt; ~${username}/.profile</programArguments>
             <ruleEvaluationLogic>or</ruleEvaluationLogic>
             <ruleList>
                 <fileContentTest>
