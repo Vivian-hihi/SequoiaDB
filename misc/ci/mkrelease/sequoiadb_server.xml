@@ -127,18 +127,18 @@
         <runProgram>
             <abortOnError>0</abortOnError>
             <program>echo</program>
-            <programArguments>'export PATH=$PATH:${installdir}' &gt;&gt; ~${username}/.profile</programArguments>
+            <programArguments>'export PATH=$PATH:${installdir}' &gt;&gt; ~${username}/.bashrc</programArguments>
             <ruleEvaluationLogic>or</ruleEvaluationLogic>
             <ruleList>
                 <fileContentTest>
                     <encoding>utf-8</encoding>
                     <logic>does_not_contain</logic>
-                    <path>~${username}/.profile</path>
+                    <path>~${username}/.bashrc</path>
                     <text>${installdir}</text>
                 </fileContentTest>
                 <fileExists>
                     <negate>1</negate>
-                    <path>~${username}/.profile</path>
+                    <path>~${username}/.bashrc</path>
                 </fileExists>
             </ruleList>
         </runProgram>
@@ -326,27 +326,18 @@
         <runProgram>
             <abortOnError>0</abortOnError>
             <program>echo</program>
-            <programArguments>'export PATH=$PATH:${installdir}/bin' &gt;&gt; ~${username}/.profile</programArguments>
+            <programArguments>'export PATH=$PATH:${installdir}/bin' &gt;&gt; ~${username}/.bashrc</programArguments>
             <ruleEvaluationLogic>or</ruleEvaluationLogic>
             <ruleList>
                 <fileContentTest>
                     <encoding>utf-8</encoding>
                     <logic>does_not_contain</logic>
-                    <path>~${username}/.profile</path>
+                    <path>~${username}/.bashrc</path>
                     <text>${installdir}/bin</text>
                 </fileContentTest>
                 <fileExists>
                     <negate>1</negate>
-                    <path>~${username}/.profile</path>
-                </fileExists>
-            </ruleList>
-        </runProgram>
-        <runProgram>
-            <program>resource</program>
-            <programArguments>~${username}/.profile</programArguments>
-            <ruleList>
-                <fileExists>
-                    <path>~${username}/.profile</path>
+                    <path>~${username}/.bashrc</path>
                 </fileExists>
             </ruleList>
         </runProgram>
