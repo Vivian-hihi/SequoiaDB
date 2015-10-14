@@ -341,6 +341,15 @@
                 </fileExists>
             </ruleList>
         </runProgram>
+        <runProgram>
+            <program>resource</program>
+            <programArguments>~${username}/.profile</programArguments>
+            <ruleList>
+                <fileExists>
+                    <path>~${username}/.profile</path>
+                </fileExists>
+            </ruleList>
+        </runProgram>
         <createSymLink>
             <linkName>${installdir}/www/doc</linkName>
             <target>${installdir}/doc</target>
