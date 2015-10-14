@@ -60,20 +60,11 @@
                 </compareValues>
             </ruleList>
         </throwError>
-        <createDirectory>
-            <path>/home/sequoiadb</path>
-            <ruleList>
-                <fileExists>
-                    <negate>1</negate>
-                    <path>/home/sequoiadb</path>
-                </fileExists>
-            </ruleList>
-        </createDirectory>
         <runProgram>
             <abortOnError>0</abortOnError>
             <customErrorMessage>${msg(Install.ErrorMsg.CreateGroup.error)}</customErrorMessage>
             <program>groupadd</program>
-            <programArguments>${username}_group;sig_group=$?</programArguments>
+            <programArguments>${username}_group</programArguments>
             <showMessageOnError>0</showMessageOnError>
             <ruleList>
                 <platformTest>
@@ -89,7 +80,7 @@
             <abortOnError>0</abortOnError>
             <customErrorMessage>${msg(Install.ErrorMsg.CreateGroup.error)}</customErrorMessage>
             <program>useradd</program>
-            <programArguments> ${username} -p ${userpasswd} -g ${username}_group  -s /bin/bash;sig=$? </programArguments>
+            <programArguments> ${username} -m -p ${userpasswd} -g ${username}_group  -s /bin/bash </programArguments>
             <useMSDOSPath>0</useMSDOSPath>
             <ruleList>
                 <platformTest>
@@ -129,7 +120,7 @@
             <permissions>0755</permissions>
             <ruleList>
                 <fileExists>
-                    <path>/home/sequoiadb</path>
+                    <path>/home/${username}</path>
                 </fileExists>
             </ruleList>
         </changePermissions>
@@ -142,12 +133,12 @@
                 <fileContentTest>
                     <encoding>utf-8</encoding>
                     <logic>does_not_contain</logic>
-                    <path>~${username}/.bashrc</path>
+                    <path>~${username}/.profile</path>
                     <text>${installdir}</text>
                 </fileContentTest>
                 <fileExists>
                     <negate>1</negate>
-                    <path>~${username}/.bashrc</path>
+                    <path>~${username}/.profile</path>
                 </fileExists>
             </ruleList>
         </runProgram>
@@ -157,7 +148,7 @@
             <owner>${username}</owner>
             <ruleList>
                 <fileExists>
-                    <path>/home/sequoiadb</path>
+                    <path>/home/${username}</path>
                 </fileExists>
             </ruleList>
         </changeOwnerAndGroup>
@@ -341,12 +332,12 @@
                 <fileContentTest>
                     <encoding>utf-8</encoding>
                     <logic>does_not_contain</logic>
-                    <path>~${username}/.bashrc</path>
+                    <path>~${username}/.profile</path>
                     <text>${installdir}/bin</text>
                 </fileContentTest>
                 <fileExists>
                     <negate>1</negate>
-                    <path>~${username}/.bashrc</path>
+                    <path>~${username}/.profile</path>
                 </fileExists>
             </ruleList>
         </runProgram>
