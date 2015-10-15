@@ -462,7 +462,7 @@ SDB_EXPORT int bson_sprint_iterator ( char **pbuf, int *left, bson_iterator *i,
          }
          memset( pBase64Buf, 0, base64_size + 1 ) ;
          pBin_data = (char *)bson_iterator_bin_data ( i ) ;
-         if ( !base64Encode( pBin_data, bin_size, pBase64Buf, base64_size ) )
+         if ( base64Encode( pBin_data, bin_size, pBase64Buf, base64_size ) < 0 )
          {
             free( pBase64Buf ) ;
             pBase64Buf = NULL ;

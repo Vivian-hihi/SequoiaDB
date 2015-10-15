@@ -56,7 +56,7 @@ int base64Encode ( const char *s, int in_size, char *_ret, int out_size )
    int vLen = 0 ;
    int len = in_size ;
    if ( out_size < getEnBase64Size ( in_size ) )
-      return 0 ;
+      return -1 ;
    while ( len > 0 )
    {
       /* This is not support chinese

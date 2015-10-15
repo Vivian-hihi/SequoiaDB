@@ -871,7 +871,7 @@ namespace bson {
                 if ( pBase64Buf )
                 {
                    memset( pBase64Buf, 0, base64_size + 1 ) ;
-                   if ( base64Encode( data, len, pBase64Buf, base64_size ) )
+                   if ( base64Encode( data, len, pBase64Buf, base64_size ) >= 0 )
                    {
                      s << pBase64Buf << "\", \"$type\": \"" << binDataType() ;
                    }

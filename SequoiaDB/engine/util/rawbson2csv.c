@@ -342,7 +342,7 @@ INT32 _appendValue( CHAR delChar, bson_iterator *pIt,
             goto error ;
          }
          ossMemset( pBase64, 0, base64Size ) ;
-         if ( !base64Encode( pTemp, tempSize, pBase64, base64Size ) )
+         if ( base64Encode( pTemp, tempSize, pBase64, base64Size ) < 0 )
          {
             rc = SDB_OOM ;
             goto error ;

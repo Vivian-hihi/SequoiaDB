@@ -561,7 +561,7 @@ static BOOLEAN bsonConvertJson ( CHAR **pbuf,
          }
          memset ( out, 0, len ) ;
          /* encode bin_data to out, with size len */
-         if ( !base64Encode( bin_data, bin_size, out, len ) )
+         if ( base64Encode( bin_data, bin_size, out, len ) < 0 )
          {
             free ( temp ) ;
             free ( out ) ;
