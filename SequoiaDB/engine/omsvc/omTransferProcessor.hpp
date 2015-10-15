@@ -49,6 +49,7 @@ namespace engine
       string service ;
       string user ;
       string passwd ;
+      string preferedInstance ;
 
       _omNodeInfo() 
       {
@@ -56,6 +57,7 @@ namespace engine
          service  = "" ;
          user     = "" ;
          passwd   = "" ;
+         preferedInstance = "" ;
       }
 
       _omNodeInfo( const _omNodeInfo& nodeInfo )
@@ -64,6 +66,7 @@ namespace engine
          service  = nodeInfo.service ;
          user     = nodeInfo.user ;
          passwd   = nodeInfo.passwd ;
+         preferedInstance = nodeInfo.preferedInstance ;
       }
 
    } omNodeInfo ;

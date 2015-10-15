@@ -376,6 +376,14 @@ namespace engine
                            oneConfig.getStringField( OM_CONF_DETAIL_SVCNAME ) ;
                   node.user     = user ;
                   node.passwd   = passwd ;
+                  if ( role == SDB_ROLE_STANDALONE_STR )
+                  {
+                     node.preferedInstance = "" ;
+                  }
+                  else
+                  {
+                     node.preferedInstance = "M" ;
+                  }
                   nodeList.push_back( node ) ;
                }
             }
@@ -472,7 +480,8 @@ namespace engine
             if ( SDB_OK != rc )
             {
                PD_LOG_MSG( PDERROR, "fetch context failed:rc=%d", rc ) ;
-               _sendOpError2Web( rc, pAdaptor, this, _pEDUCB ) ;
+               disconnect() ;
+               //_sendOpError2Web( rc, pAdaptor, this, _pEDUCB ) ;
                goto error ;
             }
             if ( -1 != contextID )
@@ -515,7 +524,8 @@ namespace engine
                   {
                      PD_LOG_MSG( PDERROR, "append http body failed:rc=%d", 
                                  rc ) ;
-                     _sendOpError2Web( rc, pAdaptor, this, _pEDUCB ) ;
+                     disconnect() ;
+                     //_sendOpError2Web( rc, pAdaptor, this, _pEDUCB ) ;
                      goto error ;
                   }
                }
@@ -526,7 +536,8 @@ namespace engine
                   if ( SDB_DMS_EOC != rc )
                   {
                      PD_LOG_MSG( PDERROR, "getmore failed:rc=%d", rc ) ;
-                     _sendOpError2Web( rc, pAdaptor, this, _pEDUCB ) ;
+                     disconnect() ;
+                     //_sendOpError2Web( rc, pAdaptor, this, _pEDUCB ) ;
                      goto error ;
                   }
 

@@ -83,7 +83,8 @@ namespace engine
       }
 
       rc = conn->init( nodeInfo.hostName, ossAtoi( nodeInfo.service.c_str() ), 
-                       nodeInfo.user, nodeInfo.passwd ) ;
+                       nodeInfo.user, nodeInfo.passwd, 
+                       nodeInfo.preferedInstance ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "initial the connection failed:host=%s,port=%s,rc=%d", 

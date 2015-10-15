@@ -31,9 +31,11 @@
 *******************************************************************************/
 
 #include "omSdbConnector.hpp"
+#include "omDef.hpp"
+#include "msgMessage.hpp"
 
 using namespace bson ;
-#define SDB_OM_CONNECTOR_SOCKET_TIMEOUT 10000
+#define SDB_OM_CONNECTOR_SOCKET_TIMEOUT OM_MSG_TIMEOUT_TWO_HOUR
 
 
 namespace engine
@@ -269,8 +271,71 @@ namespace engine
       goto done ;
    }
 
+   INT32 _omSdbConnector::_setAttr( const string &preferedInstance )
+   {
+      INT32 rc = SDB_OK ;
+      MsgHeader *reqMsg     = NULL ;
+      MsgHeader *recvMsg    = NULL ;
+      BSONObj match ;
+      CHAR *pBuff           = NULL ;
+      INT32 buffSize        = 0 ;
+      const CHAR *pCommand  = CMD_ADMIN_PREFIX CMD_NAME_SETSESS_ATTR ;
+
+      if ( "" == preferedInstance )
+      {
+         goto done ;
+      }
+
+      match = BSON( FIELD_NAME_PREFERED_INSTANCE << preferedInstance ) ;
+      rc = msgBuildQueryMsg( &pBuff, &buffSize, pCommand, 0, 0, 0, -1, &match, 
+                             NULL, NULL, NULL ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDWARNING, "build command failed:command=%s, rc=%d", 
+                 pCommand, rc ) ;
+         goto error ;
+      }
+
+      reqMsg = ( MsgHeader * )pBuff ;
+      rc = sendMessage( reqMsg ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDWARNING, "send attribute request failed:rc=%d", rc ) ;
+         goto error ;
+      }
+
+      rc = recvMessage( &recvMsg ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDWARNING, "recv authority response failed:rc=%d", rc ) ;
+         goto error ;
+      }
+
+      rc = ( ( MsgOpReply * )recvMsg )->flags ;
+      if ( rc != SDB_OK )
+      {
+         PD_LOG( PDWARNING, "remote's reply failed:flags=%d", rc ) ;
+         goto error ;
+      }
+
+   done:
+      if ( NULL != pBuff )
+      {
+         SDB_OSS_FREE( pBuff ) ;
+      }
+      if ( NULL != recvMsg )
+      {
+         SDB_OSS_FREE( recvMsg ) ;
+      }
+      return rc ;
+
+   error:
+      goto done ;
+   }
+
    INT32 _omSdbConnector::init( const string &hostName, UINT32 port, 
-                                const string &user, const string &passwd )
+                                const string &user, const string &passwd,
+                                const string &preferedInstance )
    {
       INT32 rc = SDB_OK ;
       if ( _init )
@@ -292,6 +357,15 @@ namespace engine
          PD_LOG( PDERROR, "negotiation failed:host=%s,port=%u,user=%s,rc=%d",
                  hostName.c_str(), port, user.c_str(), rc ) ;
          goto error ;
+      }
+
+      rc = _setAttr( preferedInstance ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDWARNING, "set attribute failed:host=%s,port=%u,user=%s,"
+                 "preferedInstance=%s,rc=%d", hostName.c_str(), port, 
+                 user.c_str(), preferedInstance.c_str(), rc ) ;
+         rc = SDB_OK ;
       }
 
       _init = TRUE ;
