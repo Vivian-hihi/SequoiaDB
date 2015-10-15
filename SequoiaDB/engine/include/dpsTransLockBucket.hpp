@@ -112,6 +112,8 @@ namespace engine
    private:
       dpsTransLockUnitList       _lockLst;
       ossSpinXLatch              _lstMutex;
+      static ossSpinXLatch       _initMutex;
+      static UINT32              _lockTimeout;  // The variable is shared by all lock-buckets
    };
 }
 

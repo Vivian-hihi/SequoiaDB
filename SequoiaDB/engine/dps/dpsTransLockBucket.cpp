@@ -40,11 +40,20 @@
 #include "pmdDef.hpp"
 #include "pdTrace.hpp"
 #include "dpsTrace.hpp"
+#include "pmd.hpp"
 
 namespace engine
 {
+   UINT32 dpsLockBucket::_lockTimeout = 0 ;
+   ossSpinXLatch dpsLockBucket::_initMutex ;
+
    dpsLockBucket::dpsLockBucket()
    {
+      if ( 0 == _lockTimeout )
+      {
+         ossScopedLock _lock( &_initMutex );
+         _lockTimeout = pmdGetOptionCB()->transTimeout() * 1000 ;
+      }
    }
 
    dpsLockBucket::~dpsLockBucket()
@@ -449,7 +458,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       pmdEDUEvent event;
 
-      if ( !eduCB->waitEvent( event, DPS_TRANS_LOCK_WAIT_TIME ) )
+      if ( !eduCB->waitEvent( event, _lockTimeout ) )
       {
          rc = SDB_TIMEOUT ;
          goto error ;

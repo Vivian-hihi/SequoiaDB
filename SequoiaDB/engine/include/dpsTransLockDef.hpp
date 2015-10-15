@@ -48,7 +48,6 @@
 
 namespace engine
 {
-   #define DPS_TRANS_LOCK_WAIT_TIME          864000000ll    //
    class _pmdEDUCB;
 
    enum DPS_TRANSLOCK_TYPE

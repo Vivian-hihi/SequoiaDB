@@ -76,6 +76,7 @@ namespace engine
    #define PMD_MAX_NUMPAGECLEAN        (50)
    #define PMD_DFT_PAGECLEANINTERVAL   (10000)
    #define PMD_MIN_PAGECLEANINTERVAL   (1000)
+   #define PMD_DFT_TRANS_TIMEOUT       (60)  // 1 minute
 
    /*
       _pmdCfgExchange implement
@@ -1247,6 +1248,7 @@ namespace engine
       _traceOn             = FALSE ;
       _traceBufSz          = TRACE_DFT_BUFFER_SIZE ;
       _transactionOn       = FALSE ;
+      _transTimeout        = PMD_DFT_TRANS_TIMEOUT ;
       _sharingBreakTime    = PMD_OPTION_BRK_TIME_DEFAULT ;
       _startShiftTime      = PMD_DFT_START_SHIFT_TIME ;
       _logBuffSize         = DPS_DFT_LOG_BUF_SZ ;
@@ -1410,6 +1412,9 @@ namespace engine
       // --transactionOn
       rdxBooleanS( pEX, PMD_OPTION_TRANSACTIONON, _transactionOn, FALSE,
                    TRUE, FALSE ) ;
+      // --transactionTimeout
+      rdxUInt( pEX, PMD_OPTION_TRANSTIMEOUT, _transTimeout, FALSE, TRUE,
+               PMD_DFT_TRANS_TIMEOUT, TRUE ) ;
       // --sharingBreak
       rdxUInt( pEX, PMD_OPTION_SHARINGBRK, _sharingBreakTime, FALSE, TRUE,
                PMD_OPTION_BRK_TIME_DEFAULT, TRUE ) ;
