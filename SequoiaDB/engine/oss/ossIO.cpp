@@ -1817,6 +1817,12 @@ error :
 INT32 ossExtendFile ( OSSFILE *pFile,
                       const INT64 incrementSize )
 {
+   // OSS_EXTEND_DELTA is for local only, let's def and undef
+#ifdef  OSS_EXTEND_DELTA
+#undef  OSS_EXTEND_DELTA
+#endif
+#define OSS_EXTEND_DELTA      (4194304)      // 4MB
+
    // declare variables at top
    INT32    rc         = SDB_OK ;
    PD_TRACE_ENTRY ( SDB_OSSEXTFILE );
@@ -1838,12 +1844,6 @@ INT32 ossExtendFile ( OSSFILE *pFile,
    SDB_VALIDATE_GOTOERROR ( SDB_OK == rc, rc,
                             "Failed to seek to end of file" ) ;
 
-   // OSS_EXTEND_DELTA is for local only, let's def and undef
-#ifdef  OSS_EXTEND_DELTA
-#undef  OSS_EXTEND_DELTA
-#endif
-// for best performance, this number should be same as segment size
-#define OSS_EXTEND_DELTA 134217728
    loop       = incrementSize / ( OSS_EXTEND_DELTA ) ;
    remainder  = incrementSize % ( OSS_EXTEND_DELTA ) ;
    pBuffer    = (CHAR*) SDB_OSS_MALLOC ( OSS_EXTEND_DELTA ) ;
@@ -1851,6 +1851,7 @@ INT32 ossExtendFile ( OSSFILE *pFile,
    // always check allocation result
    SDB_VALIDATE_GOTOERROR ( pBuffer, SDB_OOM,
                             "Failed to allocate memory" ) ;
+   ossMemset( pBuffer, 0, OSS_EXTEND_DELTA ) ;
 
    // do the main loop for extend
    for ( INT32 i = 0; i < loop ; i++ )
@@ -1860,9 +1861,8 @@ INT32 ossExtendFile ( OSSFILE *pFile,
       {
          rc = ossWrite ( pFile, pBuffer, reminderloop, &lenWritten ) ;
          // do validation
-         PD_RC_CHECK ( rc, PDERROR,
-                                   "Failed to extend file, errno = %d",
-                                   ossGetLastError() ) ;
+         PD_RC_CHECK ( rc, PDERROR, "Failed to extend file, errno = %d",
+                       ossGetLastError() ) ;
          reminderloop -= lenWritten ;
       }
    }
@@ -1874,9 +1874,8 @@ INT32 ossExtendFile ( OSSFILE *pFile,
       {
          rc = ossWrite ( pFile, pBuffer, reminderloop, &lenWritten ) ;
          // do validation
-         PD_RC_CHECK ( rc, PDERROR,
-                                   "Failed to extend file, errno = %d",
-                                   ossGetLastError() ) ;
+         PD_RC_CHECK ( rc, PDERROR, "Failed to extend file, errno = %d",
+                       ossGetLastError() ) ;
          reminderloop -= lenWritten ;
       	}
    }

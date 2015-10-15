@@ -274,20 +274,17 @@ namespace engine
       INT32 rc = SDB_OK ;
       BOOLEAN endianConvert = FALSE ;
       MsgSysInfoReply reply ;
-
-      MsgSysInfoReply *pReply = &reply ;
-      INT32 replySize = sizeof(reply) ;
+      reply.header.specialSysInfoLen      = MSG_SYSTEM_INFO_LEN ;
+      reply.header.eyeCatcher             = MSG_SYSTEM_INFO_EYECATCHER ;
+      reply.header.realMessageLength      = sizeof(MsgSysInfoReply) ;
+      reply.osType                        = OSS_OSTYPE ;
+      ossMemset( reply.pad, 0, sizeof(reply.pad ) ) ;
 
       rc = msgExtractSysInfoRequest ( (CHAR*)msg, endianConvert ) ;
       PD_RC_CHECK ( rc, PDERROR, "Session[%s] failed to extract sys info "
                     "request, rc = %d", sessionName(), rc ) ;
 
-      // reply
-      rc = msgBuildSysInfoReply ( (CHAR**)&pReply, &replySize ) ;
-      PD_RC_CHECK ( rc, PDERROR, "Session[%s] failed to build sys info reply, "
-                    "rc = %d", sessionName(), rc ) ;
-
-      rc = sendData ( (const CHAR*)pReply, replySize ) ;
+      rc = sendData ( (const CHAR*)&reply, sizeof( MsgSysInfoReply ) ) ;
       PD_RC_CHECK ( rc, PDERROR, "Session[%s] failed to send packet, rc = %d",
                     sessionName(), rc ) ;
 
