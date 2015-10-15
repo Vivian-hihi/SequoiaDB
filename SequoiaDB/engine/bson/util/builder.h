@@ -17,6 +17,7 @@
 
 #pragma once
 
+#include <cfloat>
 #include <string>
 #include <string.h>
 #include <stdio.h>
@@ -249,33 +250,41 @@ accesses) is the same as if
     /** stringstream deals with locale so this is a lot faster than std::stringstream for UTF8 */
     class StringBuilder {
     public:
+       static const size_t SDB_DBL_SIZE = 3 + DBL_MANT_DIG - DBL_MIN_EXP + 1;
+       static const size_t SDB_S32_SIZE = 12;
+       static const size_t SDB_U32_SIZE = 11;
+       static const size_t SDB_S64_SIZE = 23;
+       static const size_t SDB_U64_SIZE = 22;
+       static const size_t SDB_S16_SIZE = 7;
+       static const size_t SDB_PTR_SIZE = 19;
+
         StringBuilder( int initsize=256 )
             : _buf( initsize ) {
         }
 
         StringBuilder& operator<<( double x ) {
-            return SBNUM( x , 25 , "%g" );
+            return SBNUM( x , SDB_DBL_SIZE, "%g" );
         }
         StringBuilder& operator<<( int x ) {
-            return SBNUM( x , 11 , "%d" );
+            return SBNUM( x , SDB_S32_SIZE, "%d" );
         }
         StringBuilder& operator<<( unsigned x ) {
-            return SBNUM( x , 11 , "%u" );
+            return SBNUM( x , SDB_U32_SIZE, "%u" );
         }
         StringBuilder& operator<<( long x ) {
-            return SBNUM( x , 22 , "%ld" );
+            return SBNUM( x , SDB_S64_SIZE, "%ld" );
         }
         StringBuilder& operator<<( unsigned long x ) {
-            return SBNUM( x , 22 , "%lu" );
+            return SBNUM( x , SDB_U64_SIZE, "%lu" );
         }
         StringBuilder& operator<<( long long x ) {
-            return SBNUM( x , 22 , "%lld" );
+            return SBNUM( x , SDB_S64_SIZE, "%lld" );
         }
         StringBuilder& operator<<( unsigned long long x ) {
-            return SBNUM( x , 22 , "%llu" );
+            return SBNUM( x , SDB_U64_SIZE, "%llu" );
         }
         StringBuilder& operator<<( short x ) {
-            return SBNUM( x , 8 , "%hd" );
+            return SBNUM( x , SDB_S16_SIZE, "%hd" );
         }
         StringBuilder& operator<<( char c ) {
             _buf.grow( 1 )[0] = c;
@@ -322,7 +331,7 @@ accesses) is the same as if
         template <typename T>
         StringBuilder& SBNUM(T val,int maxSize,const char *macro)  {
             int prev = _buf.l;
-            int z = sprintf( _buf.grow(maxSize) , macro , (val) );
+            int z = snprintf( _buf.grow(maxSize) , maxSize, macro , (val) );
             assert( z >= 0 );
             _buf.l = prev + z;
             return *this;
