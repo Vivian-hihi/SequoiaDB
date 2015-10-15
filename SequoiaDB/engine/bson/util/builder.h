@@ -247,6 +247,11 @@ accesses) is the same as if
 #pragma warning( disable : 4996 )
 #endif
 
+#if defined(_WIN32) && _MSC_VER < 1900
+#pragma push_macro("snprintf")
+#define snprintf _snprintf
+#endif
+
     /** stringstream deals with locale so this is a lot faster than std::stringstream for UTF8 */
     class StringBuilder {
     public:
@@ -293,8 +298,9 @@ accesses) is the same as if
 
         void appendDoubleNice( double x ) {
             int prev = _buf.l;
-            char * start = _buf.grow( 32 );
-            int z = sprintf( start , "%.16g" , x );
+            const int maxSize = 32 ;
+            char * start = _buf.grow( maxSize );
+            int z = snprintf( start, maxSize, "%.16g" , x );
             assert( z >= 0 );
             _buf.l = prev + z;
             if( strchr(start, '.') == 0 && strchr(start, 'E') == 0 &&
@@ -340,6 +346,11 @@ accesses) is the same as if
 
 #if defined(_WIN32)
 #pragma warning( pop )
+#endif
+
+#if defined(_WIN32) && _MSC_VER < 1900
+#undef snprintf
+#pragma pop_macro("snprintf")
 #endif
 
 } // namespace bson
