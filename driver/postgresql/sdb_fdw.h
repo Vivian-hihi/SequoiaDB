@@ -5,12 +5,15 @@
 #include "fmgr.h"
 #include "catalog/pg_foreign_server.h"
 #include "catalog/pg_foreign_table.h"
+#include "nodes/execnodes.h"
+
 
 /* Connection related options */
 #define OPTION_NAME_ADDRESS          "address"
 #define OPTION_NAME_SERVICE          "service"
 #define OPTION_NAME_USER             "user"
 #define OPTION_NAME_PASSWORD         "password"
+#define OPTION_NAME_TRANSACTION      "transaction"
 /******************************/
 
 /* Table related options */
@@ -25,6 +28,10 @@
 #define DEFAULT_SERVICENAME         "30010"
 #define DEFAULT_USERNAME            ""
 #define DEFAULT_PASSWORDNAME        ""
+
+#define SDB_TRANSACTION_ON          "on"
+#define SDB_TRANSACTION_OFF         "off"
+#define DEFAULT_TRANSACTION         SDB_TRANSACTION_OFF
 
 #define INITIAL_ARRAY_CAPACITY         8
 #define SDB_TUPLE_COST_MULTIPLIER      5
@@ -50,6 +57,7 @@ static const SdbInputOption SdbInputOptionList[] =
    { OPTION_NAME_USER,             ForeignServerRelationId },
    { OPTION_NAME_PASSWORD,         ForeignServerRelationId },
    { OPTION_NAME_PREFEREDINSTANCE, ForeignServerRelationId },
+   { OPTION_NAME_TRANSACTION,      ForeignServerRelationId },
 
    { OPTION_NAME_COLLECTIONSPACE,  ForeignTableRelationId },
    { OPTION_NAME_COLLECTION,       ForeignTableRelationId }
@@ -63,7 +71,8 @@ struct SdbInputOptions
    CHAR  *password ;
    CHAR  *collectionspace ;
    CHAR  *collection ;
-   CHAR  *preference_instance;
+   CHAR  *preference_instance ;
+   CHAR  *transaction ;
 } ;
 typedef struct SdbInputOptions SdbInputOptions ;
 
@@ -134,9 +143,13 @@ struct SdbExecState
    char *usr;
    char *passwd;
    char *preferenceInstance;
+   char *transaction;
 
    char *sdbcs;
    char *sdbcl;
+
+   Oid tableID ;
+   Index relid ;
 
    /* pg table column's description */
    PgTableDesc *pgTableDesc;
@@ -161,6 +174,7 @@ struct SdbConnection
    CHAR *connName ;
    sdbConnectionHandle hConnection ;
    /* by default 0 means there's no transaction started on this connection */
+   INT32 isTransactionOn ;
    INT32 transLevel ;
 } ;
 typedef struct SdbConnection SdbConnection ;
@@ -173,6 +187,14 @@ struct SdbConnectionPool
    SdbConnection *connList ;
 } ;
 typedef struct SdbConnectionPool  SdbConnectionPool ;
+
+INT32 sdbRecurExprTree( Node *node, SdbExprTreeState *expr_state, 
+                        sdbbson *condition, ExprContext *exprContext ) ;
+
+int sdbSetBsonValue( sdbbson *bsonObj, const char *name, Datum valueDatum, 
+                     Oid columnType, INT32 columnTypeMod ) ;
+
+List *serializeSdbExecState( SdbExecState *fdwState ) ;
 
 
 extern Datum sdb_fdw_handler(PG_FUNCTION_ARGS);

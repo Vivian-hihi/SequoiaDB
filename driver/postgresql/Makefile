@@ -76,7 +76,8 @@ ifeq ($(endian),big)
 endif
 OPTIMIZATION?=-O3
 WARNINGS?=-Wall -Wno-unknown-pragmas -Wno-missing-prototypes -Wno-missing-format-attribute
-DEBUG?=-ggdb
+#DEBUG?=-ggdb -DSDB_USE_OWN_POSTGRES
+DEBUG?=-ggdb 
 INCLUDEPATH=-I$(EXTERNAL_PATH) -I$(BSON_PATH) -I$(MD5_PATH)
 ALL_CFLAGS=$(CFLAGS) $(OPTIMIZATION) $(WARNINGS) $(DEBUG) $(INCLUDEPATH) $(ALL_DEFINES) $(DYN_FLAGS)
 
@@ -91,7 +92,7 @@ PG_CPPFLAGS = $(ALL_CFLAGS)
 EXTENSION = sdb_fdw
 DATA = sdb_fdw--1.0.sql
 MODULE_big = sdb_fdw
-OBJS = sdb_fdw.o $(OBJECTS)
+OBJS = sdb_fdw_util.o sdb_fdw.o $(OBJECTS)
 #SHLIB_LINK = -lcrypto
 SHLIB_LINK = 
 
