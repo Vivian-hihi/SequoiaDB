@@ -228,6 +228,7 @@ namespace engine
    #define REST_CMD_NAME_LIST          "list"
    #define REST_CMD_NAME_SNAPSHOT      "snapshot"
    #define REST_CMD_NAME_EXEC          "exec"
+   #define REST_CMD_NAME_LISTINDEXES   "list indexes"
 
    #define REST_KEY_NAME_FLAG          "Flag"
    #define REST_KEY_NAME_INSERTOR      "Insertor"
@@ -326,6 +327,9 @@ namespace engine
 
          INT32       _convertListLobs( restAdaptor *pAdaptor,
                                        MsgHeader **msg ) ;
+
+         INT32       _convertListIndexes( restAdaptor *pAdaptor,
+                                          MsgHeader **msg ) ;
 
          //snapshot
          INT32       _convertSnapshotContext( restAdaptor *pAdaptor,

@@ -824,7 +824,7 @@ namespace engine
          { CMD_NAME_LIST_DOMAINS,  
                                  &RestToMSGTransfer::_convertListDomains },
          { CMD_NAME_LIST_TASKS,  &RestToMSGTransfer::_convertListTasks },
-//         { CMD_NAME_LIST_CS_IN_DOMAIN, &RestToMSGTransfer::_convertQuery },
+         { REST_CMD_NAME_LISTINDEXES, &RestToMSGTransfer::_convertListIndexes },
 //         { CMD_NAME_LIST_CL_IN_DOMAIN, &RestToMSGTransfer::_convertQuery },
          { CMD_NAME_SNAPSHOT_CONTEXTS, 
                                  &RestToMSGTransfer::_convertSnapshotContext },
@@ -2343,6 +2343,44 @@ namespace engine
 
       rc = msgBuildQueryMsg( &pBuff, &buffSize, pCommand, 0, 0, 0, -1, &match, 
                              &selector, &order, NULL ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG_MSG( PDERROR, "build command failed:command=%s, rc=%d", 
+                     pCommand, rc ) ;
+         goto error ;
+      }
+
+      *msg = ( MsgHeader * )pBuff ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 RestToMSGTransfer::_convertListIndexes( restAdaptor *pAdaptor,
+                                                 MsgHeader **msg )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj hint ;
+      const CHAR *pTable    = NULL ;
+      CHAR *pBuff           = NULL ;
+      INT32 buffSize        = 0 ;
+      const CHAR *pCommand  = CMD_ADMIN_PREFIX CMD_NAME_GET_INDEXES ;
+
+      pAdaptor->getQuery( _restSession, FIELD_NAME_NAME, &pTable ) ;
+      if ( NULL == pTable )
+      {
+         PD_LOG_MSG( PDERROR, "get field failed:field=%s", 
+                     FIELD_NAME_NAME ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      hint = BSON( FIELD_NAME_COLLECTION << pTable ) ;
+
+      rc = msgBuildQueryMsg( &pBuff, &buffSize, pCommand, 0, 0, 0, -1, NULL, 
+                             NULL, NULL, &hint ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG_MSG( PDERROR, "build command failed:command=%s, rc=%d", 
