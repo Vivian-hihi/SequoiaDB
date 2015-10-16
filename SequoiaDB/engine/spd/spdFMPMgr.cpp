@@ -98,6 +98,9 @@ namespace engine
       CHAR path[OSS_MAX_PATHSIZE + 1] = { 0 } ;
       UINT32 pathLen = 0 ;
       UINT32 appendLen = 0 ;
+      INT32 bufSize = 0 ;
+      string fullPath ;
+      std::list<const CHAR *> argv ;
 
       rc = ossGetEWD( path, OSS_MAX_PATHSIZE ) ;
       if ( SDB_OK != rc )
@@ -123,13 +126,20 @@ namespace engine
          goto error ;
       }
 
-      ossMemcpy( _startBuf, path, pathLen ) ;
-      ossMemcpy( _startBuf + pathLen, OSS_FILE_SEP, 1 ) ; // append '/'
-      ossMemcpy( _startBuf + pathLen + 1, SPD_PROCESS_NAME,
-                 appendLen ) ; // include '\0'
+      fullPath.append( path ) ;
+      fullPath.append( OSS_FILE_SEP ) ;
+      fullPath.append( SPD_PROCESS_NAME ) ;
 
-      PD_LOG( PDEVENT, "sub process path:%s", _startBuf ) ;
+      argv.push_back( fullPath.c_str() ) ;
 
+      rc = ossBuildArguments( &_startBuf, bufSize, argv ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to build arguments for fmp:%d", rc ) ;
+         goto error ;
+      }
+
+      PD_LOG( PDEVENT, "sub process path:%s", fullPath.c_str() ) ;
    done:
       return rc ;
    error:
