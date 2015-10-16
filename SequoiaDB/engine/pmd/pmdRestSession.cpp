@@ -916,14 +916,19 @@ namespace engine
       BSONObj option ;
       BSONObj query ;
 
-      pAdaptor->getQuery( _restSession, FIELD_NAME_NAME, 
-                          &pCollectionSpace ) ;
+      pAdaptor->getQuery( _restSession, FIELD_NAME_NAME, &pCollectionSpace ) ;
       if ( NULL == pCollectionSpace )
       {
-         rc = SDB_INVALIDARG ;
-         PD_LOG_MSG( PDERROR, "get collectionspace's %s failed", 
-                     FIELD_NAME_NAME ) ;
-         goto error ;
+         //try another key name
+         pAdaptor->getQuery( _restSession, REST_KEY_NAME_COLLECTIONSPACE, 
+                             &pCollectionSpace ) ;
+         if ( NULL == pCollectionSpace )
+         {
+            rc = SDB_INVALIDARG ;
+            PD_LOG_MSG( PDERROR, "get collectionspace's %s[or %s] failed", 
+                        FIELD_NAME_NAME, REST_KEY_NAME_COLLECTIONSPACE ) ;
+            goto error ;
+         }
       }
 
       pAdaptor->getQuery( _restSession, FIELD_NAME_OPTIONS, &pOption ) ;
@@ -984,10 +989,15 @@ namespace engine
       pAdaptor->getQuery( _restSession, FIELD_NAME_NAME, &pCollection ) ;
       if ( NULL == pCollection )
       {
-         rc = SDB_INVALIDARG ;
-         PD_LOG_MSG( PDERROR, "get collection's %s failed", 
-                     FIELD_NAME_NAME ) ;
-         goto error ;
+         pAdaptor->getQuery( _restSession, REST_KEY_NAME_COLLECTION, 
+                             &pCollection ) ;
+         if ( NULL == pCollection )
+         {
+            rc = SDB_INVALIDARG ;
+            PD_LOG_MSG( PDERROR, "get collection's %s[or %s] failed", 
+                        FIELD_NAME_NAME, REST_KEY_NAME_COLLECTION ) ;
+            goto error ;
+         }
       }
 
       pAdaptor->getQuery( _restSession, FIELD_NAME_OPTIONS, &pOption ) ;
@@ -1043,22 +1053,21 @@ namespace engine
       const CHAR *pCollectionSpace = NULL ;
       BSONObj query ;
 
-      pAdaptor->getQuery( _restSession, FIELD_NAME_NAME, 
-                          &pCollectionSpace ) ;
+      pAdaptor->getQuery( _restSession, FIELD_NAME_NAME, &pCollectionSpace ) ;
       if ( NULL == pCollectionSpace )
       {
-         rc = SDB_INVALIDARG ;
-         PD_LOG_MSG( PDERROR, "get collectionspace's %s failed", 
-                     FIELD_NAME_NAME ) ;
-         goto error ;
+         pAdaptor->getQuery( _restSession, REST_KEY_NAME_COLLECTIONSPACE, 
+                             &pCollectionSpace ) ;
+         if ( NULL == pCollectionSpace )
+         {
+            rc = SDB_INVALIDARG ;
+            PD_LOG_MSG( PDERROR, "get collectionspace's %s[or %s] failed", 
+                        FIELD_NAME_NAME, REST_KEY_NAME_COLLECTIONSPACE ) ;
+            goto error ;
+         }
       }
 
-      {
-         BSONObjBuilder builder ;
-         builder.append( FIELD_NAME_NAME, pCollectionSpace ) ;
-         query = builder.obj() ;
-      }
-
+      query = BSON( FIELD_NAME_NAME << pCollectionSpace ) ;
       rc = msgBuildQueryMsg( &pBuff, &buffSize, pCommand, 0, 0, 0, -1, &query, 
                              NULL, NULL, NULL ) ;
       if ( SDB_OK != rc )
@@ -1089,18 +1098,18 @@ namespace engine
       pAdaptor->getQuery( _restSession, FIELD_NAME_NAME, &pCollection ) ;
       if ( NULL == pCollection )
       {
-         rc = SDB_INVALIDARG ;
-         PD_LOG_MSG( PDERROR, "get collection's %s failed", 
-                     FIELD_NAME_NAME ) ;
-         goto error ;
+         pAdaptor->getQuery( _restSession, REST_KEY_NAME_COLLECTION, 
+                             &pCollection ) ;
+         if ( NULL == pCollection )
+         {
+            rc = SDB_INVALIDARG ;
+            PD_LOG_MSG( PDERROR, "get collection's %s[or %s] failed", 
+                        FIELD_NAME_NAME, REST_KEY_NAME_COLLECTION ) ;
+            goto error ;
+         }         
       }
 
-      {
-         BSONObjBuilder builder ;
-         builder.append( FIELD_NAME_NAME, pCollection ) ;
-         query = builder.obj() ;
-      }
-
+      query = BSON( FIELD_NAME_NAME  << pCollection ) ;
       rc = msgBuildQueryMsg( &pBuff, &buffSize, pCommand, 0, 0, 0, -1, &query, 
                              NULL, NULL, NULL ) ;
       if ( SDB_OK != rc )
@@ -1147,28 +1156,47 @@ namespace engine
       pAdaptor->getQuery( _restSession, FIELD_NAME_NAME, &pTable ) ;
       if ( NULL == pTable )
       {
-         PD_LOG_MSG( PDERROR, "get field failed:field=%s", 
-                     FIELD_NAME_NAME ) ;
-         rc = SDB_INVALIDARG ;
-         goto error ;
+         pAdaptor->getQuery( _restSession, REST_KEY_NAME_COLLECTION, &pTable ) ;
+         if ( NULL == pTable )
+         {
+            PD_LOG_MSG( PDERROR, "get field failed:field=%s[or %s]", 
+                     FIELD_NAME_NAME, REST_KEY_NAME_COLLECTION ) ;
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
       }
       *collectionName = pTable ;
 
       pAdaptor->getQuery( _restSession, FIELD_NAME_FILTER, &pMatch ) ;
+      if ( NULL == pMatch )
+      {
+         pAdaptor->getQuery( _restSession, REST_KEY_NAME_MATCHER, &pMatch ) ;
+      }
+
       pAdaptor->getQuery( _restSession, FIELD_NAME_SELECTOR, &pSelector ) ;
       pAdaptor->getQuery( _restSession, FIELD_NAME_SORT, &pOrder ) ;
+      if ( NULL == pOrder )
+      {
+         pAdaptor->getQuery( _restSession, REST_KEY_NAME_ORDERBY, &pOrder ) ;
+      }
+
       pAdaptor->getQuery( _restSession, FIELD_NAME_HINT, &pHint ) ;
       pAdaptor->getQuery( _restSession, REST_KEY_NAME_FLAG, &pFlag ) ;
       pAdaptor->getQuery( _restSession, FIELD_NAME_SKIP, &pSkip ) ;
       pAdaptor->getQuery( _restSession, FIELD_NAME_RETURN_NUM, &pReturnRow ) ;
+      if ( NULL == pReturnRow )
+      {
+         pAdaptor->getQuery( _restSession, REST_KEY_NAME_LIMIT, &pReturnRow ) ;
+      }
 
       if ( NULL != pMatch )
       {
          rc = fromjson( pMatch, match ) ;
          if ( SDB_OK != rc )
          {
-            PD_LOG_MSG( PDERROR, "field's format error:field=%s, value=%s", 
-                        FIELD_NAME_FILTER, pMatch ) ;
+            PD_LOG_MSG( PDERROR, "field's format error:field=%s[or %s], "
+                        "value=%s", FIELD_NAME_FILTER, 
+                        REST_KEY_NAME_MATCHER, pMatch ) ;
             goto error ;
          }
       }
@@ -1189,8 +1217,9 @@ namespace engine
          rc = fromjson( pOrder, order ) ;
          if ( SDB_OK != rc )
          {
-            PD_LOG_MSG( PDERROR, "field's format error:field=%s, value=%s", 
-                        FIELD_NAME_SORT, pOrder ) ;
+            PD_LOG_MSG( PDERROR, "field's format error:field=%s[or %s], "
+                        "value=%s", FIELD_NAME_SORT, REST_KEY_NAME_ORDERBY, 
+                        pOrder ) ;
             goto error ;
          }
       }
@@ -1419,10 +1448,15 @@ namespace engine
       pAdaptor->getQuery( _restSession, FIELD_NAME_NAME, &pCollection ) ;
       if ( NULL == pCollection )
       {
-         rc = SDB_INVALIDARG ;
-         PD_LOG_MSG( PDERROR, "get collection's %s failed", 
-                     FIELD_NAME_NAME ) ;
-         goto error ;
+         pAdaptor->getQuery( _restSession, REST_KEY_NAME_COLLECTION, 
+                             &pCollection ) ;
+         if ( NULL == pCollection )
+         {
+            rc = SDB_INVALIDARG ;
+            PD_LOG_MSG( PDERROR, "get collection's %s[or %s] failed", 
+                        FIELD_NAME_NAME, REST_KEY_NAME_COLLECTION ) ;
+            goto error ;
+         }
       }
 
       pAdaptor->getQuery( _restSession, REST_KEY_NAME_FLAG, &pFlag ) ;
@@ -1496,10 +1530,15 @@ namespace engine
       pAdaptor->getQuery( _restSession, FIELD_NAME_NAME, &pCollection ) ;
       if ( NULL == pCollection )
       {
-         rc = SDB_INVALIDARG ;
-         PD_LOG_MSG( PDERROR, "get collection's %s failed", 
-                     FIELD_NAME_NAME ) ;
-         goto error ;
+         pAdaptor->getQuery( _restSession, REST_KEY_NAME_COLLECTION, 
+                             &pCollection ) ;
+         if ( NULL == pCollection )
+         {
+            rc = SDB_INVALIDARG ;
+            PD_LOG_MSG( PDERROR, "get collection's %s[or %s] failed", 
+                        FIELD_NAME_NAME, REST_KEY_NAME_COLLECTION ) ;
+            goto error ;
+         }
       }
 
       pAdaptor->getQuery( _restSession, REST_KEY_NAME_FLAG, &pFlag ) ;
@@ -1509,13 +1548,19 @@ namespace engine
       }
 
       pAdaptor->getQuery( _restSession, FIELD_NAME_FILTER, &pMatcher ) ;
+      if ( NULL == pMatcher )
+      {
+         pAdaptor->getQuery( _restSession, REST_KEY_NAME_MATCHER, &pMatcher ) ;
+      }
+
       if ( NULL != pMatcher )
       {
          rc = fromjson( pMatcher, matcher ) ;
          if ( SDB_OK != rc )
          {
-            PD_LOG_MSG( PDERROR, "field's format error:field=%s,value=%s", 
-                        FIELD_NAME_FILTER, pMatcher ) ;
+            PD_LOG_MSG( PDERROR, "field's format error:field=%s[or %s],"
+                        "value=%s", FIELD_NAME_FILTER, 
+                        REST_KEY_NAME_MATCHER, pMatcher ) ;
             goto error ;
          }
       }
@@ -1620,10 +1665,15 @@ namespace engine
       pAdaptor->getQuery( _restSession, FIELD_NAME_NAME, &pCollection ) ;
       if ( NULL == pCollection )
       {
-         rc = SDB_INVALIDARG ;
-         PD_LOG_MSG( PDERROR, "get collection's %s failed", 
-                     FIELD_NAME_NAME ) ;
-         goto error ;
+         pAdaptor->getQuery( _restSession, REST_KEY_NAME_COLLECTION, 
+                             &pCollection ) ;
+         if ( NULL == pCollection )
+         {
+            rc = SDB_INVALIDARG ;
+            PD_LOG_MSG( PDERROR, "get collection's %s[or %s] failed", 
+                        FIELD_NAME_NAME, REST_KEY_NAME_COLLECTION ) ;
+            goto error ;
+         }
       }
 
       pAdaptor->getQuery( _restSession, REST_KEY_NAME_FLAG, &pFlag ) ;
@@ -1633,13 +1683,19 @@ namespace engine
       }
 
       pAdaptor->getQuery( _restSession, REST_KEY_NAME_DELETOR, &pDeletor ) ;
+      if ( NULL == pDeletor )
+      {
+         pAdaptor->getQuery( _restSession, REST_KEY_NAME_MATCHER, &pDeletor ) ;
+      }
+
       if ( NULL != pDeletor )
       {
          rc = fromjson( pDeletor, deletor ) ;
          if ( SDB_OK != rc )
          {
-            PD_LOG_MSG( PDERROR, "field's format error:field=%s,value=%s", 
-                        REST_KEY_NAME_DELETOR, pDeletor ) ;
+            PD_LOG_MSG( PDERROR, "field's format error:field=%s[or %s],"
+                        "value=%s", REST_KEY_NAME_DELETOR, 
+                        REST_KEY_NAME_MATCHER, pDeletor ) ;
             goto error ;
          }
       }
@@ -1687,10 +1743,15 @@ namespace engine
       pAdaptor->getQuery( _restSession, FIELD_NAME_NAME, &pCollection ) ;
       if ( NULL == pCollection )
       {
-         rc = SDB_INVALIDARG ;
-         PD_LOG_MSG( PDERROR, "get collection's %s failed", 
-                     FIELD_NAME_NAME ) ;
-         goto error ;
+         pAdaptor->getQuery( _restSession, REST_KEY_NAME_COLLECTION, 
+                             &pCollection ) ;
+         if ( NULL == pCollection )
+         {
+            rc = SDB_INVALIDARG ;
+            PD_LOG_MSG( PDERROR, "get collection's %s[or %s] failed", 
+                        FIELD_NAME_NAME, REST_KEY_NAME_COLLECTION ) ;
+            goto error ;
+         }
       }
 
       pAdaptor->getQuery( _restSession, FIELD_NAME_OPTIONS, &pOption ) ;
@@ -1751,14 +1812,18 @@ namespace engine
       BSONObj query ;
 
       //1.FIELD_NAME_NAME & FIELD_NAME_SOURCE & FIELD_NAME_TARGET must exist
-      pAdaptor->getQuery( _restSession, FIELD_NAME_NAME, 
-                          &pCollection ) ;
+      pAdaptor->getQuery( _restSession, FIELD_NAME_NAME, &pCollection ) ;
       if ( NULL == pCollection )
       {
-         rc = SDB_INVALIDARG ;
-         PD_LOG_MSG( PDERROR, "get collection's %s failed", 
-                     FIELD_NAME_NAME ) ;
-         goto error ;
+         pAdaptor->getQuery( _restSession, REST_KEY_NAME_COLLECTION, 
+                             &pCollection ) ;
+         if ( NULL == pCollection )
+         {
+            rc = SDB_INVALIDARG ;
+            PD_LOG_MSG( PDERROR, "get collection's %s[or %s] failed", 
+                        FIELD_NAME_NAME, REST_KEY_NAME_COLLECTION ) ;
+            goto error ;
+         }
       }
 
       pAdaptor->getQuery( _restSession, FIELD_NAME_SOURCE, &pSource ) ;
@@ -1777,28 +1842,42 @@ namespace engine
          goto error ;
       }
 
-      //2.FIELD_NAME_SPLITENDQUERY pr FIELD_NAME_SPLITPERCENT must exist one 
+      //2.FIELD_NAME_SPLITENDQUERY or FIELD_NAME_SPLITPERCENT must exist one 
       pAdaptor->getQuery( _restSession, FIELD_NAME_SPLITPERCENT, &pPercent ) ;
       if ( NULL == pPercent )
       {
-         pAdaptor->getQuery( _restSession, FIELD_NAME_SPLITQUERY, &pSplitQuery ) ;
+         pAdaptor->getQuery( _restSession, FIELD_NAME_SPLITQUERY,
+                             &pSplitQuery ) ;
          if ( NULL == pSplitQuery )
          {
-            rc = SDB_INVALIDARG ;
-            PD_LOG_MSG( PDERROR, "get split's %s failed", FIELD_NAME_SPLITQUERY ) ;
-            goto error ;
+            pAdaptor->getQuery( _restSession, REST_KEY_NAME_LOWBOUND,
+                                &pSplitQuery ) ;
+            if ( NULL == pSplitQuery )
+            {
+               rc = SDB_INVALIDARG ;
+               PD_LOG_MSG( PDERROR, "get split's %s[or %s] failed", 
+                           FIELD_NAME_SPLITQUERY, REST_KEY_NAME_LOWBOUND ) ;
+               goto error ;
+            }
          }
 
          rc = fromjson( pSplitQuery, splitQuery ) ;
          if ( SDB_OK != rc )
          {
-            PD_LOG_MSG( PDERROR, "field's format error:field=%s,value=%s", 
-                        FIELD_NAME_SPLITQUERY, pSplitQuery ) ;
+            PD_LOG_MSG( PDERROR, "field's format error:field=%s[or %s],"
+                        "value=%s", FIELD_NAME_SPLITQUERY, 
+                        REST_KEY_NAME_LOWBOUND, pSplitQuery ) ;
             goto error ;
          }
 
          pAdaptor->getQuery( _restSession, FIELD_NAME_SPLITENDQUERY, 
                              &pSplitEndQuery ) ;
+         if ( NULL == pSplitEndQuery )
+         {
+            pAdaptor->getQuery( _restSession, REST_KEY_NAME_UPBOUND, 
+                                &pSplitEndQuery ) ;
+         }
+
          if ( NULL != pSplitEndQuery )
          {
             rc = fromjson( pSplitEndQuery, splitEndQuery ) ;
@@ -1810,7 +1889,7 @@ namespace engine
             }
          }
       }
-      else 
+      else
       {
          isUsePercent = TRUE ;
          percent      = ossAtoi( pPercent ) ;
@@ -1896,23 +1975,34 @@ namespace engine
       BSONObj matcher ;
       BSONObj hint ;
 
-      pAdaptor->getQuery( _restSession, FIELD_NAME_NAME, 
-                          &pCollection ) ;
+      pAdaptor->getQuery( _restSession, FIELD_NAME_NAME, &pCollection ) ;
       if ( NULL == pCollection )
       {
-         rc = SDB_INVALIDARG ;
-         PD_LOG_MSG( PDERROR, "get collection's %s failed", FIELD_NAME_NAME ) ;
-         goto error ;
+         pAdaptor->getQuery( _restSession, REST_KEY_NAME_COLLECTION, 
+                             &pCollection ) ;
+         if ( NULL == pCollection )
+         {
+            rc = SDB_INVALIDARG ;
+            PD_LOG_MSG( PDERROR, "get collection's %s[or %s] failed", 
+                        FIELD_NAME_NAME, REST_KEY_NAME_COLLECTION ) ;
+            goto error ;
+         }
       }
 
       pAdaptor->getQuery( _restSession, FIELD_NAME_FILTER, &pMatcher ) ;
+      if ( NULL == pMatcher )
+      {
+         pAdaptor->getQuery( _restSession, REST_KEY_NAME_MATCHER, &pMatcher ) ;
+      }
+
       if ( NULL != pMatcher )
       {
          rc = fromjson( pMatcher, matcher ) ;
          if ( SDB_OK != rc )
          {
-            PD_LOG_MSG( PDERROR, "field's format error:field=%s,value=%s", 
-                        FIELD_NAME_FILTER, pMatcher ) ;
+            PD_LOG_MSG( PDERROR, "field's format error:field=%s[or %s],"
+                        "value=%s", FIELD_NAME_FILTER, REST_KEY_NAME_MATCHER, 
+                        pMatcher ) ;
             goto error ;
          }
       }
@@ -1967,15 +2057,25 @@ namespace engine
       const CHAR *pSelector = NULL ;
 
       pAdaptor->getQuery( _restSession, FIELD_NAME_FILTER, &pMatch ) ;
+      if ( NULL == pMatch )
+      {
+         pAdaptor->getQuery( _restSession, REST_KEY_NAME_MATCHER, &pMatch ) ;
+      }
       pAdaptor->getQuery( _restSession, FIELD_NAME_SELECTOR, &pSelector ) ;
       pAdaptor->getQuery( _restSession, FIELD_NAME_SORT, &pOrder ) ;
+      if ( NULL == pOrder )
+      {
+         pAdaptor->getQuery( _restSession, REST_KEY_NAME_ORDERBY, &pOrder ) ;
+      }
+
       if ( NULL != pMatch )
       {
          rc = fromjson( pMatch, match ) ;
          if ( SDB_OK != rc )
          {
-            PD_LOG_MSG( PDERROR, "field's format error:field=%s, value=%s", 
-                        FIELD_NAME_FILTER, pMatch ) ;
+            PD_LOG_MSG( PDERROR, "field's format error:field=%s[or %s], "
+                        "value=%s", FIELD_NAME_FILTER, REST_KEY_NAME_MATCHER, 
+                        pMatch ) ;
             goto error ;
          }
       }
@@ -1996,8 +2096,9 @@ namespace engine
          rc = fromjson( pOrder, order ) ;
          if ( SDB_OK != rc )
          {
-            PD_LOG_MSG( PDERROR, "field's format error:field=%s, value=%s", 
-                        FIELD_NAME_SORT, pOrder ) ;
+            PD_LOG_MSG( PDERROR, "field's format error:field=%s[or %s], "
+                        "value=%s", FIELD_NAME_SORT, REST_KEY_NAME_ORDERBY, 
+                        pOrder ) ;
             goto error ;
          }
       }
@@ -2371,10 +2472,14 @@ namespace engine
       pAdaptor->getQuery( _restSession, FIELD_NAME_NAME, &pTable ) ;
       if ( NULL == pTable )
       {
-         PD_LOG_MSG( PDERROR, "get field failed:field=%s", 
-                     FIELD_NAME_NAME ) ;
-         rc = SDB_INVALIDARG ;
-         goto error ;
+         pAdaptor->getQuery( _restSession, REST_KEY_NAME_COLLECTION, &pTable ) ;
+         if ( NULL == pTable )
+         {
+            PD_LOG_MSG( PDERROR, "get field failed:field=%s[or %s]", 
+                     FIELD_NAME_NAME, REST_KEY_NAME_COLLECTION ) ;
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
       }
 
       hint = BSON( FIELD_NAME_COLLECTION << pTable ) ;
@@ -2479,10 +2584,14 @@ namespace engine
       pAdaptor->getQuery( _restSession, FIELD_NAME_NAME, &clName ) ;
       if ( NULL == clName )
       {
-         rc = SDB_INVALIDARG ;
-         PD_LOG_MSG( PDERROR, "get collection's %s failed", 
-                     FIELD_NAME_NAME ) ;
-         goto error ;
+         pAdaptor->getQuery( _restSession, REST_KEY_NAME_COLLECTION, &clName ) ;
+         if ( NULL == clName )
+         {
+            rc = SDB_INVALIDARG ;
+            PD_LOG_MSG( PDERROR, "get collection's %s failed", 
+                        FIELD_NAME_NAME ) ;
+            goto error ;
+         }
       }
 
       match = BSON( FIELD_NAME_COLLECTION << clName ) ;
