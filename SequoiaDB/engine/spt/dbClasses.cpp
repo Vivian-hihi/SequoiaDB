@@ -5471,10 +5471,10 @@ static JSBool sdb_get_domain ( JSContext *cx, uintN argc, jsval *vp )
    PD_TRACE_ENTRY ( SDB_SDB_DROP_DOMAIN ) ;
    connection = (sdbConnectionHandle *)
          JS_GetPrivate ( cx, JS_THIS_OBJECT ( cx, vp ) ) ;
-   REPORT ( connection, "Sdb.getDoamin(): no connection handle" ) ;
+   REPORT ( connection, "Sdb.getDomain(): no connection handle" ) ;
    ret = JS_ConvertArguments ( cx , argc , JS_ARGV ( cx , vp ) ,
                                "S" , &domainName ) ;
-   REPORT ( ret && domainName, "Sdb.getDoamin(): wrong arguments" ) ;
+   REPORT ( ret && domainName, "Sdb.getDomain(): wrong arguments" ) ;
    // name is freed in done
    name = JS_EncodeString ( cx, domainName ) ;
    VERIFY ( name ) ;
