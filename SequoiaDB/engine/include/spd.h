@@ -32,6 +32,9 @@
    Last Changed =
 
 *******************************************************************************/
+/** \file spd.h
+    \brief Js return type for stored procedures used in sdb shell
+*/
 
 #ifndef SPD_H_
 #define SPD_H_
@@ -42,18 +45,19 @@ SDB_EXTERN_C_START
 
 enum _SDB_SPD_RES_TYPE
 {
-   SDB_SPD_RES_TYPE_VOID = 0,
-   SDB_SPD_RES_TYPE_STR,
-   SDB_SPD_RES_TYPE_NUMBER,
-   SDB_SPD_RES_TYPE_OBJ,
-   SDB_SPD_RES_TYPE_BOOL,
-   SDB_SPD_RES_TYPE_RECORDSET,
-   SDB_SPD_RES_TYPE_CS,
-   SDB_SPD_RES_TYPE_CL,
-   SDB_SPD_RES_TYPE_RG,
-   SDB_SPD_RES_TYPE_RN,
+   SDB_SPD_RES_TYPE_VOID = 0, /**< Js return void type */
+   SDB_SPD_RES_TYPE_STR,      /**< Js return a string */
+   SDB_SPD_RES_TYPE_NUMBER,   /**< Js return a number */
+   SDB_SPD_RES_TYPE_OBJ,      /**< Js return an object */
+   SDB_SPD_RES_TYPE_BOOL,     /**< Js return a bool */
+   SDB_SPD_RES_TYPE_RECORDSET,/**< Js return a cursor handle */
+   SDB_SPD_RES_TYPE_CS,       /**< Js return a collection space handle */
+   SDB_SPD_RES_TYPE_CL,       /**< Js return a collection handle */
+   SDB_SPD_RES_TYPE_RG,       /**< Js return a replica group handle */
+   SDB_SPD_RES_TYPE_RN,       /**< Js return a data node handle */
 } ;
 
+/** Js return type */
 typedef enum _SDB_SPD_RES_TYPE SDB_SPD_RES_TYPE ;
 
 SDB_EXTERN_C_END
