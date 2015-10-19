@@ -336,6 +336,7 @@ __METHOD_IMP(sdb_create_collection_space)
    }
 
 done:
+   DELETE_CPPOBJECT( options ) ;
    return MAKE_RETURN_INT( rc ) ;
 }
 
@@ -1651,6 +1652,7 @@ done:
    DELETE_CPPOBJECT( rule ) ;
    DELETE_CPPOBJECT( condition ) ;
    DELETE_CPPOBJECT( hint ) ;
+   DELETE_CPPOBJECT( setOnInsert ) ;
    return MAKE_RETURN_INT( rc ) ;
 }
 

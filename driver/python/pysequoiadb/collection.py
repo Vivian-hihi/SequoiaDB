@@ -479,7 +479,7 @@ class collection(object):
          **kwargs                   Useful options are below
          - condition       dict     The matching rule, update all the
                                           documents if not provided.
-         - selected        dict     The selective rule, return the whole
+         - selector        dict     The selective rule, return the whole
                                           document if not provided.
          - order_by        dict     The ordered rule, result set is unordered
                                           if not provided.
