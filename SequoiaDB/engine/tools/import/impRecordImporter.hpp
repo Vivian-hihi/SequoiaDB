@@ -50,7 +50,8 @@ namespace import
                      const string& password,
                      const string& csname,
                      const string& clname,
-                     BOOLEAN useSSL = FALSE);
+                     BOOLEAN useSSL = FALSE,
+                     BOOLEAN enableTransaction = FALSE);
       ~RecordImporter();
       INT32 connect();
       void disconnect();
@@ -65,6 +66,7 @@ namespace import
       string   _csname;
       string   _clname;
       BOOLEAN  _useSSL;
+      BOOLEAN  _enableTransaction;
 
       // db handle
       sdbConnectionHandle  _connection;

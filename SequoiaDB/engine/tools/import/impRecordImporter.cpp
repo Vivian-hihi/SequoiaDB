@@ -43,14 +43,16 @@ namespace import
                                   const string& password,
                                   const string& csname,
                                   const string& clname,
-                                  BOOLEAN useSSL)
+                                  BOOLEAN useSSL,
+                                  BOOLEAN enableTransaction)
    : _hostname(hostname),
      _svcname(svcname),
      _user(user),
      _password(password),
      _csname(csname),
      _clname(clname),
-     _useSSL(useSSL)
+     _useSSL(useSSL),
+     _enableTransaction(enableTransaction)
    {
       _connection = 0;
       _collectionSpace = 0;
@@ -165,13 +167,47 @@ namespace import
       }
 #endif
 
+      if (_enableTransaction)
+      {
+         rc = sdbTransactionBegin(_connection);
+         if (SDB_OK != rc)
+         {
+            PD_LOG(PDERROR, "failed to begin transaction, rc=%d", rc);
+            goto error;
+         }
+      }
+
       rc = sdbBulkInsert(_collection, FLG_INSERT_CONTONDUP, objs, num);
       if (SDB_OK != rc)
       {
          PD_LOG(PDERROR, "failed to bulk insert, rc=%d", rc);
+
+         if (_enableTransaction)
+         {
+            INT32 ret = sdbTransactionRollback(_connection);
+            if (SDB_OK != ret)
+            {
+               PD_LOG(PDERROR, "failed to rollback transaction, rc=%d", ret);
+            }
+         }
+
+         goto error;
       }
 
+      if (_enableTransaction)
+      {
+         rc = sdbTransactionCommit(_connection);
+         if (SDB_OK != rc)
+         {
+            PD_LOG(PDERROR, "failed to commit transaction, rc=%d", rc);
+            goto error;
+         }
+      }
+
+   done:
       return rc;
+   error:
+      goto done;
    }
 
    INT32 RecordImporter::import(RecordArray* array)

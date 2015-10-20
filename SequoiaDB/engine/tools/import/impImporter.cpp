@@ -71,7 +71,8 @@ namespace import
                               options->password(),
                               options->csname(),
                               options->clname(),
-                              options->useSSL());
+                              options->useSSL(),
+                              options->enableTransaction());
 
       SDB_ASSERT(NULL != workQueue, "workQueue can't be NULL");
       SDB_ASSERT(NULL != logFile, "logFile can't be NULL");

@@ -85,6 +85,7 @@ namespace import
       inline INT32 jobs() const { return _jobs; }
       inline BOOLEAN enableSharding() const { return _enableSharding; }
       inline BOOLEAN enableCoord() const { return _enableCoord; }
+      inline BOOLEAN enableTransaction() const { return _enableTransaction; }
 
       /* input */
       inline const vector<string>& files() const { return _files; }
@@ -140,6 +141,7 @@ namespace import
       INT32          _jobs;
       BOOLEAN        _enableSharding;
       BOOLEAN        _enableCoord;
+      BOOLEAN        _enableTransaction;
 
       /* input */
       vector<string> _files;

@@ -71,6 +71,7 @@ namespace import
    #define IMP_OPTION_EXEC              "exec"
    #define IMP_OPTION_SHARDING          "sharding"
    #define IMP_OPTION_COORD             "coord"
+   #define IMP_OPTION_TRANSACTION       "transaction"
    #define IMP_OPTION_HELPFUL           "helpful"
    #define IMP_OPTION_RECORDSMEM        "recordsmem"
    #define IMP_OPTION_CAST              "cast"
@@ -108,6 +109,7 @@ namespace import
    #define IMP_EXPLAIN_EXEC             "execute external program to get data, the program should output data to standard outpupt"
    #define IMP_EXPLAIN_SHARDING         "repackage records by sharding, default: true"
    #define IMP_EXPLAIN_COORD            "find coordinators automatically, default: true"
+   #define IMP_EXPLAIN_TRANSACTION      "enable transaction, default: false"
    #define IMP_EXPLAIN_HELPFUL          "print all options"
    #define IMP_EXPLAIN_RECORDSMEM       "the maximum memory size used by records, the unit is MB, range is [128~81920], default: 4096"
    #define IMP_EXPLAIN_CAST             "allow type cast when lost precision, default: false"
@@ -139,6 +141,7 @@ namespace import
       (IMP_OPTION_JOBS",j",            _TYPE(INT32),     IMP_EXPLAIN_JOBS) \
       (IMP_OPTION_COORD,               _TYPE(string),    IMP_EXPLAIN_COORD) \
       (IMP_OPTION_SHARDING,            _TYPE(string),    IMP_EXPLAIN_SHARDING) \
+      (IMP_OPTION_TRANSACTION,         _TYPE(string),    IMP_EXPLAIN_TRANSACTION) \
 
    #define IMP_INPUT_OPTIONS \
       (IMP_OPTION_FILENAME,            _TYPE(string),    IMP_EXPLAIN_FILENAME) \
@@ -458,6 +461,7 @@ namespace import
       _jobs = 1;
       _enableSharding = TRUE;
       _enableCoord = TRUE;
+      _enableTransaction = FALSE;
 
       _stringDelimiter = "\"";
       _fieldDelimiter = ",";
@@ -966,6 +970,12 @@ namespace import
       {
          string coord = get<string>(IMP_OPTION_COORD);
          ossStrToBoolean(coord.c_str(), &_enableCoord);
+      }
+
+      if (has(IMP_OPTION_TRANSACTION))
+      {
+         string tx = get<string>(IMP_OPTION_TRANSACTION);
+         ossStrToBoolean(tx.c_str(), &_enableTransaction);
       }
 
       if (has(IMP_OPTION_RECORDSMEM))
