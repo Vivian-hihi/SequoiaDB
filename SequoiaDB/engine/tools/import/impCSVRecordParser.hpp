@@ -60,8 +60,10 @@ namespace import
 
    struct CSVString
    {
-      CHAR* str;
-      INT32 length;
+      CHAR*    str;
+      INT32    length;
+      BOOLEAN  hasEscape;
+      BOOLEAN  escaped;
    };
 
    struct CSVTimestamp
@@ -125,10 +127,20 @@ namespace import
 
       ~CSVField()
       {
-         if (CSV_TYPE_BINARY == type && hasDefault)
+         if (hasDefault)
          {
-            SAFE_OSS_FREE(defaultValue.binaryVal.bin);
-            defaultValue.binaryVal.binLen = 0;
+            if (CSV_TYPE_BINARY == type)
+            {
+               SAFE_OSS_FREE(defaultValue.binaryVal.bin);
+               defaultValue.binaryVal.binLen = 0;
+            }
+            else if (CSV_TYPE_STRING == type)
+            {
+               if (defaultValue.strVal.escaped)
+               {
+                  SAFE_OSS_FREE(defaultValue.strVal.str);
+               }
+            }
          }
       }
    };
@@ -151,6 +163,17 @@ namespace import
          {
             SAFE_OSS_FREE(value.binaryVal.bin);
             value.binaryVal.binLen = 0;
+         }
+         else if (CSV_TYPE_STRING == type)
+         {
+            if (value.strVal.escaped)
+            {
+               SAFE_OSS_FREE(value.strVal.str);
+            }
+
+            value.strVal.hasEscape = FALSE;
+            value.strVal.escaped = FALSE;
+            value.strVal.length = 0;
          }
 
          type = CSV_TYPE_AUTO;

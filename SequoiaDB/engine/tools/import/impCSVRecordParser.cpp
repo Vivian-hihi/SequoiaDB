@@ -1029,6 +1029,7 @@ namespace import
             // two consecutive string delimiter
             if (_startWith(str, len, strDel, strDelLen))
             {
+               value.hasEscape = TRUE;
                len -= strDelLen;
                str += strDelLen;
                continue;
@@ -1566,6 +1567,61 @@ namespace import
       return rc;
    }
 
+   static INT32 _escapedString(CSVString& value,
+                                const CHAR* strDel,
+                                INT32 strDelLen)
+   {
+      INT32 rc = SDB_OK;
+      CHAR* escStr = NULL;
+      INT32 escLen = 0;
+      CHAR* str = value.str;
+      INT32 len = value.length;
+
+      SDB_ASSERT(value.hasEscape, "string must has escape char");
+      SDB_ASSERT(!value.escaped, "string already escaped");
+
+      escStr = (CHAR*)SDB_OSS_MALLOC(len);
+      if (NULL == escStr)
+      {
+         rc = SDB_OOM;
+         goto error;
+      }
+
+      while (len > 0)
+      {
+         if (_startWith(str, len, strDel, strDelLen))
+         {
+            len -= strDelLen;
+            str += strDelLen;
+
+            // escape string delimiter
+            if (_startWith(str, len, strDel, strDelLen))
+            {
+               memcpy(escStr + escLen, str, strDelLen);
+               escLen += strDelLen;
+               len -= strDelLen;
+               str += strDelLen;
+               continue;
+            }
+         }
+
+         escStr[escLen] = *str;
+         escLen++;
+         len--;
+         str++;
+      }
+
+      escStr[escLen] = '\0';
+      value.escaped = TRUE;
+      value.str = escStr;
+      value.length = escLen;
+
+   done:
+      return rc;
+   error:
+      goto done;
+   }
+
    // support INT/LONG/DOUBLE/BOOL/NULL/STRING
    static inline INT32 _detectFieldType(const CHAR* data, INT32 length,
                                         const CHAR* strDel, INT32 strDelLen,
@@ -1632,6 +1688,15 @@ namespace import
       if (SDB_OK != rc)
       {
          goto error;
+      }
+
+      if (fieldValue.strVal.hasEscape)
+      {
+         rc = _escapedString(fieldValue.strVal, strDel, strDelLen);
+         if (SDB_OK != rc)
+         {
+            goto error;
+         }
       }
 
    done:
@@ -2368,7 +2433,7 @@ namespace import
             PD_LOG(PDERROR, "failed to decode binary");
             goto error;
          }
-   
+
          // ignore '\0'
          value.binLen = base64Len - 1;
       }
@@ -2545,6 +2610,14 @@ namespace import
          if (SDB_OK != rc)
          {
             goto error;
+         }
+         if (fieldValue.strVal.hasEscape)
+         {
+            rc = _escapedString(fieldValue.strVal, strDel, strDelLen);
+            if (SDB_OK != rc)
+            {
+               goto error;
+            }
          }
          goto done;
       case CSV_TYPE_TIMESTAMP:
