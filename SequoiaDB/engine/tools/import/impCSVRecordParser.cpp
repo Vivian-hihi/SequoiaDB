@@ -2345,30 +2345,38 @@ namespace import
       value.str = str;
 
       base64Len = getDeBase64Size(str);
-      if (base64Len <= 1)
+      if (base64Len < 0)
       {
          rc = SDB_INVALIDARG;
          PD_LOG(PDERROR, "invalid binary base64 size");
          goto error;
       }
 
-      value.bin = (CHAR*)SDB_OSS_MALLOC(base64Len);
-      if (NULL == value.bin)
+      if (base64Len > 0)
       {
-         rc = SDB_OOM;
-         PD_LOG(PDERROR, "failed to malloc");
-         goto error;
+         value.bin = (CHAR*)SDB_OSS_MALLOC(base64Len);
+         if (NULL == value.bin)
+         {
+            rc = SDB_OOM;
+            PD_LOG(PDERROR, "failed to malloc");
+            goto error;
+         }
+         ossMemset(value.bin, 0, base64Len);
+         if (0 > base64Decode(str, value.bin, base64Len))
+         {
+            rc = SDB_INVALIDARG;
+            PD_LOG(PDERROR, "failed to decode binary");
+            goto error;
+         }
+   
+         // ignore '\0'
+         value.binLen = base64Len - 1;
       }
-
-      if (0 == base64Decode(str, value.bin, base64Len))
+      else
       {
-         rc = SDB_INVALIDARG;
-         PD_LOG(PDERROR, "failed to decode binary");
-         goto error;
+         value.bin = "";
+         value.binLen = 0;
       }
-
-      // ignore '\0'
-      value.binLen = base64Len - 1;
 
    done:
       // recovery string

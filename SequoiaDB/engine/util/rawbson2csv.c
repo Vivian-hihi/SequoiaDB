@@ -334,24 +334,27 @@ INT32 _appendValue( CHAR delChar, bson_iterator *pIt,
          }
          pTemp = bson_iterator_bin_data( pIt ) ;
          tempSize = bson_iterator_bin_len ( pIt ) ;
-         base64Size = getEnBase64Size ( tempSize ) ;
-         pBase64 = (CHAR *)SDB_OSS_MALLOC( base64Size ) ;
-         if( NULL == pBase64 )
+         if( tempSize > 0 )
          {
-            rc = SDB_OOM ;
-            goto error ;
-         }
-         ossMemset( pBase64, 0, base64Size ) ;
-         if ( base64Encode( pTemp, tempSize, pBase64, base64Size ) < 0 )
-         {
-            rc = SDB_OOM ;
-            goto error ;
-         }
-         rc = _appendString( delChar, pBase64, base64Size - 1,
-                             ppBuffer, pCSVSize ) ;
-         if ( rc )
-         {
-            goto error ;
+            base64Size = getEnBase64Size ( tempSize ) ;
+            pBase64 = (CHAR *)SDB_OSS_MALLOC( base64Size ) ;
+            if( NULL == pBase64 )
+            {
+               rc = SDB_OOM ;
+               goto error ;
+            }
+            ossMemset( pBase64, 0, base64Size ) ;
+            if ( base64Encode( pTemp, tempSize, pBase64, base64Size ) < 0 )
+            {
+               rc = SDB_OOM ;
+               goto error ;
+            }
+            rc = _appendString( delChar, pBase64, base64Size - 1,
+                                ppBuffer, pCSVSize ) ;
+            if ( rc )
+            {
+               goto error ;
+            }
          }
       }
       else if ( type == BSON_REGEX )

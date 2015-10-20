@@ -383,25 +383,38 @@ BOOLEAN sptConvertor2::_addSpecialObj( JSObject *obj,
       }
 
       decodeSize = getDeBase64Size( strBin.c_str() ) ;
-      decode = ( CHAR * )SDB_OSS_MALLOC( decodeSize ) ;
-      if ( NULL == decode )
+      if( decodeSize < 0 )
       {
-         PD_LOG( PDERROR, "failed to allocate mem." ) ;
-         rc = SDB_OOM ;
-         goto error ;
-      }
-
-      if ( !base64Decode( strBin.c_str(), decode, decodeSize ) )
-      {
-         PD_LOG( PDERROR, "failed to decode base64 code" ) ;
+         PD_LOG( PDERROR, "invalid bindata %s", strBin.c_str() ) ;
          rc = SDB_INVALIDARG ;
-         SDB_OSS_FREE( decode ) ;
          goto error ;
       }
-      builder.appendBinData( key, decodeSize,
-                             binType, decode ) ;
-      SDB_OSS_FREE( decode ) ;
-
+      if( decodeSize > 0 )
+      {
+         decode = ( CHAR * )SDB_OSS_MALLOC( decodeSize ) ;
+         if ( NULL == decode )
+         {
+            PD_LOG( PDERROR, "failed to allocate mem." ) ;
+            rc = SDB_OOM ;
+            goto error ;
+         }
+         memset ( decode, 0, decodeSize ) ;
+         if ( base64Decode( strBin.c_str(), decode, decodeSize ) < 0 )
+         {
+            PD_LOG( PDERROR, "failed to decode base64 code" ) ;
+            rc = SDB_INVALIDARG ;
+            SDB_OSS_FREE( decode ) ;
+            goto error ;
+         }
+         builder.appendBinData( key, decodeSize,
+                                binType, decode ) ;
+         SDB_OSS_FREE( decode ) ;
+      }
+      else
+      {
+         builder.appendBinData( key, 0,
+                                binType, "" ) ;
+      }
    }
    else
    {

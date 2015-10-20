@@ -539,49 +539,75 @@ static BOOLEAN bsonConvertJson ( CHAR **pbuf,
          bin_type = bson_iterator_bin_type( &i ) ;
          bin_data = (CHAR *)bson_iterator_bin_data( &i ) ;
          bin_size = bson_iterator_bin_len ( &i ) ;
-         /* first we need to calculate how much space we need to put the new
-          * data */
-         len = getEnBase64Size ( bin_size ) ;
-         /* and then we allocate memory for the display string, which includes
-          * { $binary : xxxxx, $type : xxx }, so we have to put another 40
-          * bytes */
-         temp = (CHAR *)malloc( len + 48 ) ;
-         if ( !temp )
+         if( bin_size > 0 )
          {
-            return FALSE ;
-         }
-         memset ( temp, 0, len + 48 ) ;
-         /* then we have to allocate another piece of memory for base64 encoding
-          */
-         out = (CHAR *)malloc( len + 1 ) ;
-         if ( !out )
-         {
+            /* first we need to calculate how much space we need to put the new
+             * data */
+            len = getEnBase64Size ( bin_size ) ;
+            /* and then we allocate memory for the display string, which includes
+             * { $binary : xxxxx, $type : xxx }, so we have to put another 40
+             * bytes */
+            temp = (CHAR *)malloc( len + 48 ) ;
+            if ( !temp )
+            {
+               return FALSE ;
+            }
+            memset ( temp, 0, len + 48 ) ;
+            /* then we have to allocate another piece of memory for base64 encoding
+             */
+            out = (CHAR *)malloc( len + 1 ) ;
+            if ( !out )
+            {
+               free( temp ) ;
+               return FALSE ;
+            }
+            memset ( out, 0, len ) ;
+            /* encode bin_data to out, with size len */
+            if ( base64Encode( bin_data, bin_size, out, len ) < 0 )
+            {
+               free ( temp ) ;
+               free ( out ) ;
+               return FALSE ;
+            }
+   #ifdef WIN32
+            _snprintf ( temp,
+                        len + 48,
+                        "{ \"$binary\": \"%s\", \"$type\" : \"%d\" }",
+                        out, bin_type ) ;
+   #else
+            snprintf ( temp,
+                       len + 48,
+                       "{ \"$binary\": \"%s\", \"$type\" : \"%d\" }",
+                       out, bin_type ) ;
+   #endif
+            bsonConvertJsonRawConcat ( pbuf, left, temp, FALSE ) ;
             free( temp ) ;
-            return FALSE ;
+            free( out ) ;
+            CHECK_LEFT ( left )
          }
-         memset ( out, 0, len ) ;
-         /* encode bin_data to out, with size len */
-         if ( base64Encode( bin_data, bin_size, out, len ) < 0 )
+         else
          {
-            free ( temp ) ;
-            free ( out ) ;
-            return FALSE ;
+            temp = (CHAR *)malloc( 48 ) ;
+            if ( !temp )
+            {
+               return FALSE ;
+            }
+            memset ( temp, 0, 48 ) ;
+   #ifdef WIN32
+            _snprintf ( temp,
+                        48,
+                        "{ \"$binary\": \"\", \"$type\" : \"%d\" }",
+                        bin_type ) ;
+   #else
+            snprintf ( temp,
+                       48,
+                       "{ \"$binary\": \"\", \"$type\" : \"%d\" }",
+                       bin_type ) ;
+   #endif
+            bsonConvertJsonRawConcat ( pbuf, left, temp, FALSE ) ;
+            free( temp ) ;
+            CHECK_LEFT ( left )
          }
-#ifdef WIN32
-         _snprintf ( temp,
-                     len + 48,
-                     "{ \"$binary\": \"%s\", \"$type\" : \"%d\" }",
-                     out, bin_type ) ;
-#else
-         snprintf ( temp,
-                    len + 48,
-                    "{ \"$binary\": \"%s\", \"$type\" : \"%d\" }",
-                    out, bin_type ) ;
-#endif
-         bsonConvertJsonRawConcat ( pbuf, left, temp, FALSE ) ;
-         free( temp ) ;
-         free( out ) ;
-         CHECK_LEFT ( left )
          break ;
       }
       case BSON_UNDEFINED:
@@ -1136,28 +1162,39 @@ static BOOLEAN jsonConvertBson ( cJSON *cj, bson *bs, BOOLEAN isObj )
             INT32 out_len = 0 ;
             /* first we calculate the expected size after extraction */
             INT32 len = getDeBase64Size ( cj->valuestring ) ;
-            /* and allocate memory */
-            CHAR *out = (CHAR *)malloc ( len ) ;
-            if ( !out )
-               return FALSE ;
-            memset ( out, 0, len ) ;
-            /* and then decode into the buffer we just allocated */
-            if ( !base64Decode( cj->valuestring, out, len ) )
+            if( len < 0 )
             {
-               free ( out ) ;
                return FALSE ;
             }
-            out_len = len - 1 ;
-            if ( 5 == cj->valueint &&
-               CJSON_MD5_16 != out_len &&
-               CJSON_MD5_32 != out_len &&
-               CJSON_MD5_64 != out_len )
-               return FALSE ;
-            if ( 3 == cj->valueint && CJSON_UUID != out_len )
-               return FALSE ;
-            /* and then append into bson */
-            bson_append_binary( bs, cj->string , cj->valueint, out, out_len ) ;
-            free( out ) ;
+            if( len > 0 )
+            {
+               /* and allocate memory */
+               CHAR *out = (CHAR *)malloc ( len ) ;
+               if ( !out )
+                  return FALSE ;
+               memset ( out, 0, len ) ;
+               /* and then decode into the buffer we just allocated */
+               if ( base64Decode( cj->valuestring, out, len ) < 0 )
+               {
+                  free ( out ) ;
+                  return FALSE ;
+               }
+               out_len = len - 1 ;
+               if ( 5 == cj->valueint &&
+                  CJSON_MD5_16 != out_len &&
+                  CJSON_MD5_32 != out_len &&
+                  CJSON_MD5_64 != out_len )
+                  return FALSE ;
+               if ( 3 == cj->valueint && CJSON_UUID != out_len )
+                  return FALSE ;
+               /* and then append into bson */
+               bson_append_binary( bs, cj->string , cj->valueint, out, out_len ) ;
+               free( out ) ;
+            }
+            else
+            {
+               bson_append_binary( bs, cj->string , cj->valueint, "", 0 ) ;
+            }
          }
          else
          {

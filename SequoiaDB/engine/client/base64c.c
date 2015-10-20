@@ -31,16 +31,33 @@ static char B64[64] =
 
 int getEnBase64Size ( int size )
 {
+   if( size == 0 )
+   {
+      return 0 ;
+   }
    int len = size ;
    int zeroize = len % 3 ;
    len = ( len + ( zeroize ? 3 - zeroize : 0 ) ) / 3 * 4 + 1 ;
    return len ;
 }
 
+//return string length + 1
 int getDeBase64Size ( const char *s )
 {
+   if( !s )
+   {
+      return -1 ;
+   }
    int len = strlen ( s ) ;
    int zeroize = 0 ;
+   if( len == 0 )
+   {
+      return 0 ;
+   }
+   else if( len % 4 > 0 )
+   {
+      return -1 ;
+   }
    if ( '=' == s [ len - 2 ] )
       zeroize = 2 ;
    else if ( '=' == s [ len - 1 ] )
@@ -51,51 +68,55 @@ int getDeBase64Size ( const char *s )
 
 int base64Encode ( const char *s, int in_size, char *_ret, int out_size )
 {
+   if( !s || !_ret )
+   {
+      return -1 ;
+   }
    char c = 0x00 ;
    char t = 0x00 ;
    int vLen = 0 ;
    int len = in_size ;
+   /* empty string */
+   if( len == 0 )
+   {
+      return 0 ;
+   }
    if ( out_size < getEnBase64Size ( in_size ) )
+   {
       return -1 ;
+   }
    while ( len > 0 )
    {
-      /* This is not support chinese
-      *_ret++ = B64[ ( s [ 0 ] >> 2 ) & 0x3F ] ;
-      if ( len > 2 )
-      {
-         *_ret++ = B64[ ( ( s [ 0 ] & 3 ) << 4 ) | ( s [ 1 ] >> 4 ) ] ;
-         *_ret++ = B64[ ( ( s [ 1 ] & 0xF ) << 2 ) | ( s [ 2 ] >> 6 ) ] ;
-         *_ret++ = B64[ ( s [ 2 ] & 0x3F ) ] ;
-      }*/
-      /* This is support chinese */
       c = ( s [ 0 ] >> 2 ) ;
       c = c & 0x3F;
       *_ret++ = B64[ (int)c ] ;
       if ( len > 2 )
       {
-         c = ( s [ 0 ] & 3 ) << 4 ;
-         t = ( s [ 1 ] >> 4 ) & 0x0F ;
+         c = ( (unsigned char)s[0] & 3 ) << 4 ;
+         t = ( (unsigned char)s[1] >> 4 ) & 0x0F ;
          *_ret++ = B64 [ ( c ) | ( t ) ] ;
-         c = ( s [ 1 ] & 0xF ) << 2 ;
-         t = ( s [ 2 ] >> 6 ) & 0x3 ;
+         c = ( (unsigned char)s[1] & 0xF ) << 2 ;
+         t = ( (unsigned char)s[2] >> 6 ) & 0x3 ;
          *_ret++ = B64 [ ( c ) | ( t ) ] ;
-         c = s [ 2 ] & 0x3F ;
+         c = ( (unsigned char)s[2] & 0x3F ) ;
          *_ret++ = B64 [ (int)c ] ;
       }
       else
       {
          switch ( len )
          {
-            case 1:
-               *_ret++ = B64[ ( s [ 0 ] & 3 ) << 4 ] ;
-               *_ret++ = '=' ;
-               *_ret++ = '=' ;
-               break ;
-            case 2:
-               *_ret++ = B64[ ( ( s [ 0 ] & 3 ) << 4 ) | ( s [ 1 ] >> 4 ) ] ;
-               *_ret++ = B64[ ( ( s [ 1 ] & 0x0F ) << 2 ) | ( s [ 2 ] >> 6 ) ] ;
-               *_ret++ = '=' ;
-               break ;
+         case 1:
+            *_ret++ = B64[ ( (unsigned char)s[0] & 3 ) << 4 ] ;
+            *_ret++ = '=' ;
+            *_ret++ = '=' ;
+            break ;
+         case 2:
+            *_ret++ = B64[ ( ( (unsigned char)s[0] & 3 ) << 4 ) |
+                             ( (unsigned char)s[1] >> 4 ) ] ;
+            *_ret++ = B64[ ( ( (unsigned char)s[1] & 0x0F ) << 2 ) |
+                             ( (unsigned char)s[2] >> 6 ) ] ;
+            *_ret++ = '=' ;
+            break ;
          }
       }
       s += 3 ;
@@ -137,55 +158,47 @@ char getCharIndex ( char c )
 
 int base64Decode ( const char *s, char *_ret, int out_size )
 {
+   if( !s || !_ret )
+   {
+      return -1 ;
+   }
    static char lpCode [ 4 ] ;
    int vLen = 0 ;
    int len = strlen ( s ) ;
-
-   /* base64 must be 4 bytes aligned */
-   if ( ( len % 4 ) ||
-        ( out_size < getDeBase64Size ( s ) ) )
-      return 0 ;
-
-/* this is error code
-   while ( p < e )
+   /* empty base64 */
+   if( len == 0 )
    {
-      memcpy ( unit, p, 4 ) ;
-      if ( unit[3] == '=' )
-         unit[3] = 0 ;
-      if ( unit[2] == '=' )
-         unit[2] = 0 ;
-      p += 4 ;
-
-      for ( i = 0 ; unit[0] != B64[i] && i < 64 ; i++ ) ;
-      unit[0] = i==64 ? 0 : i ;
-      for ( i = 0 ; unit[1] != B64[i] && i < 64 ; i++ ) ;
-      unit[1] = i==64 ? 0 : i ;
-      for ( i = 0 ; unit[2] != B64[i] && i < 64 ; i++ ) ;
-      unit[2] = i==64 ? 0 : i ;
-      for ( i = 0 ; unit[3] != B64[i] && i < 64 ; i++ ) ;
-      unit[3] = i==64 ? 0 : i ;
-      *r++ = (unit[0]<<2) | (unit[1]>>4) ;
-      *r++ = (unit[1]<<4) | (unit[2]>>2) ;
-      *r++ = (unit[2]<<6) | unit[3] ;
+      return 0 ;
    }
-   *r = 0 ;
-   return _ret ;
-*/
-   while ( len > 2 )
+   /* base64 must be 4 bytes aligned */
+   if( ( len % 4 ) ||
+       ( out_size < getDeBase64Size ( s ) ) )
+   {
+      return -1 ;
+   }
+   while( len >= 4 )
    {
       lpCode [ 0 ] = getCharIndex ( s [ 0 ] ) ;
       lpCode [ 1 ] = getCharIndex ( s [ 1 ] ) ;
       lpCode [ 2 ] = getCharIndex ( s [ 2 ] ) ;
       lpCode [ 3 ] = getCharIndex ( s [ 3 ] ) ;
 
+      if( out_size <= 1 )
+         return vLen ;
       *_ret++ = ( lpCode [ 0 ] << 2 ) | ( lpCode [ 1 ] >> 4 ) ;
+      --out_size ;
+      if( out_size <= 1 )
+         return vLen ;
       *_ret++ = ( lpCode [ 1 ] << 4 ) | ( lpCode [ 2 ] >> 2 ) ;
+      --out_size ;
+      if( out_size <= 1 )
+         return vLen ;
       *_ret++ = ( lpCode [ 2 ] << 6 ) | ( lpCode [ 3 ] ) ;
+      --out_size ;
 
       s += 4 ;
       len -= 4 ;
       vLen += 3 ;
    }
-
    return vLen ;
 }
