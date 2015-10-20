@@ -44,6 +44,7 @@
 #include "qgmHintDef.hpp"
 #include "pdTrace.hpp"
 #include "qgmTrace.hpp"
+#include "qgmDef.hpp"
 
 namespace engine
 {
@@ -784,9 +785,77 @@ namespace engine
          }
       }
       }
+
+      if ( 2 != _children.size() )
+      {
+         goto done ;
+      }
+
+       /// _outer has not been initialized yet.
+      if ( QGM_OPTI_TYPE_SCAN == _children[0]->getType() )
+      {
+         rc = _handleHints( _children[0], hints ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "sub node failed to handle hint:%d", rc ) ;
+            goto error ;
+         }
+      }
+
+      if ( QGM_OPTI_TYPE_SCAN == _children[1]->getType() )
+      {
+         rc = _handleHints( _children[1], hints ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "sub node failed to handle hint:%d", rc ) ;
+            goto error ;
+         }
+      }
    done:
       PD_TRACE_EXITRC( SDB__QGMOPTINLJOIN_HANDLEHINTS, rc ) ;
       return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _qgmOptiNLJoin::_handleHints( _qgmOptiTreeNode *sub,
+                                       const QGM_HINS &hint )
+   {
+      INT32 rc = SDB_OK ;
+      QGM_HINS copy ;
+      const qgmField &alias = sub->getAlias() ;
+      QGM_HINS::const_iterator itr = hint.begin() ;
+      for ( ; itr != hint.end(); itr++ )
+      {
+         if ( 0 == ossStrncmp( itr->value.begin(),
+                               QGM_HINT_USEINDEX,
+                               itr->value.size() ) &&
+              2 == itr->param.size() )
+         {
+            const qgmField &tName = itr->param.begin()->value.attr() ;
+            if ( alias == tName )
+            {
+               copy.push_back( *itr ) ;
+               break ;
+            }
+         }
+      }
+
+      if ( copy.empty() )
+      {
+         goto done ;
+      }
+
+      rc = sub->handleHints( copy ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to handle hint in sub node:%d", rc ) ;
+         goto error ;
+      }
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 
    INT32 _qgmOptiNLJoin::_extend( _qgmOptiTreeNode *&exNode )

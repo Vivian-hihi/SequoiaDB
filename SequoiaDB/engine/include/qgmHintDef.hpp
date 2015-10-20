@@ -41,6 +41,7 @@
 namespace engine
 {
 #define QGM_HINT_HASHJOIN "use_hash"
+#define QGM_HINT_USEINDEX "use_index"
 }
 
 #endif

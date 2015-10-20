@@ -936,5 +936,58 @@ namespace engine
       return rc ;
    }
 
+   string qgmHintToString( const QGM_HINS &hint )
+   {
+      stringstream ss ;
+      QGM_HINS::const_iterator i = hint.begin() ;
+      for ( ; i != hint.end(); ++i )
+      {
+         ss << i->value.toString() << "(" ;
+         vector<qgmOpField>::const_iterator j = i->param.begin() ;
+         for ( ; j != i->param.end(); ++j )
+         {
+            ss << j->value.toString() << "," ;
+         }
+         ss << ") " ;
+      }
+      return ss.str() ;
+   }
+
+   BSONObj qgmUseIndexHintToBson( const qgmHint &h )
+   {
+      BSONObjBuilder builder ;
+      qgmField f ;
+      if ( 1 == h.param.size() )
+      {
+         f = h.param.at( 0 ).value.attr() ;
+      }
+      else if ( 2 == h.param.size() )
+      {
+         f = h.param.at( 1 ).value.attr() ;
+      }
+      else
+      {
+         goto done ;
+      }
+
+      if ( 0 == ossStrncmp( f.begin(),
+                            "null",
+                            f.size() ) ||
+           0 == ossStrncmp( f.begin(),
+                            "NULL",
+                            f.size() ) )
+      {
+         builder.appendNull("") ;
+      }
+      else
+      {
+         builder.appendStrWithNoTerminating( "",
+                                             f.begin(),
+                                             f.size() ) ;
+      }
+
+   done:
+      return builder.obj() ;
+   }
 }
 

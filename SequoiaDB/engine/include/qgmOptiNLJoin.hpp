@@ -87,6 +87,9 @@ namespace engine
 
       INT32 _validateHint() ;
 
+      INT32 _handleHints( _qgmOptiTreeNode *sub,
+                          const QGM_HINS &hint ) ;
+
    public:
       INT32 _joinType ;
       qgmConditionNode *_condition ;

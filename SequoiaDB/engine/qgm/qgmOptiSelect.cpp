@@ -48,6 +48,7 @@
 #include "pmdCB.hpp"
 #include "pdTrace.hpp"
 #include "qgmTrace.hpp"
+#include "qgmHintDef.hpp"
 
 namespace engine
 {
@@ -315,6 +316,11 @@ namespace engine
          ss << ",collection:" << _collection.value.toString() ;
       }
 
+      if ( !_hints.empty() )
+      {
+         ss << ", hint:" << qgmHintToString( _hints ) ;
+      }
+
       ss << "}" ;
       return ss.str() ;
 
@@ -559,10 +565,66 @@ namespace engine
             goto error ;
          }
       }
+/*
+      else if ( NULL != _from &&
+                QGM_OPTI_TYPE_FILTER == _from->getType() )
+      {
+         rc = _from->handleHints( hints ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to handle hints in sub node:%d",rc ) ;
+            goto error ;
+         }
+      }
+*/
+      else if ( NULL == _from )
+      {
+         _handleHint( hints ) ;
+      }
    done:
       return rc ;
    error:
       goto done ;
+   }
+
+   
+   void _qgmOptiSelect::_handleHint( QGM_HINS &hints )
+   {
+      if ( &hints != &_hints )
+      {
+         QGM_HINS::const_iterator itr = hints.begin() ;
+         for ( ; itr != hints.end(); ++itr )
+         {
+            if ( 0 != ossStrncmp( itr->value.begin(),
+                                  QGM_HINT_USEINDEX,
+                                  itr->value.size() ) )
+            {
+               continue ;
+            }
+            _hints.push_back( *itr ) ;
+            break ;
+         }
+      }
+      return ;
+   }
+
+   BSONObj _qgmOptiSelect::getHint() const
+   {
+      BSONObj obj ;
+      QGM_HINS::const_iterator itr = _hints.begin() ;
+      for( ; itr != _hints.end(); ++itr )
+      {
+         if ( 0 != ossStrncmp( itr->value.begin(),
+                               QGM_HINT_USEINDEX,
+                               itr->value.size() ) )
+         {
+            continue ;
+         }
+
+         obj = qgmUseIndexHintToBson( *itr ) ;
+         break ;
+      }
+      return obj ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION( SDB__QGMOPTISELECT__VALIDATEANDCRTPLAN, "_qgmOptiSelect::_validateAndCrtPlan" )

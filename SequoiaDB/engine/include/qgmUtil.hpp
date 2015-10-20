@@ -111,6 +111,10 @@ namespace engine
    INT32 upAggrsByFieldAlias( qgmAggrSelectorVec &aggrs,
                               const qgmOPFieldPtrVec & fieldAlias ) ;
 
+   string qgmHintToString( const QGM_HINS &hint ) ;
+
+   BSONObj qgmUseIndexHintToBson( const qgmHint &h ) ;
+
 }
 
 #endif

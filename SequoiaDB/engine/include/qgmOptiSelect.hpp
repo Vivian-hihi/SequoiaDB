@@ -67,6 +67,8 @@ namespace engine
 
       BOOLEAN hasExpr() const ;
 
+      BSONObj getHint() const ;
+
    protected:
       virtual INT32 _extend( _qgmOptiTreeNode *&exNode ) ;
       virtual UINT32 _getFieldAlias( qgmOPFieldPtrVec &fieldAlias,
@@ -91,6 +93,8 @@ namespace engine
                                    qgmOpField *&selector,
                                    UINT32 *pos ) ;
 
+      void _handleHint( QGM_HINS &hints ) ;
+
    public:
       qgmOPFieldVec        _selector ;
       qgmOPFieldVec        _orderby ;
@@ -100,7 +104,6 @@ namespace engine
       qgmConditionNode     *_condition ;
       INT64 _limit ;
       INT64 _skip ;
-      qgmField _hint ;
       BOOLEAN _hasFunc ;
       _qgmOptiTreeNode *_from ;
    } ;
