@@ -179,6 +179,26 @@ namespace engine
       goto done ;
    }
 
+   BOOLEAN _omRestSession::_isClusterExist( const CHAR *pClusterName )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj selector ;
+      BSONObj matcher ;
+      BSONObj order ;
+      BSONObj hint ;
+      list<BSONObj> records ;
+
+      matcher = BSON( OM_CLUSTER_FIELD_NAME << pClusterName ) ;
+      rc = _queryTable( OM_CS_DEPLOY_CL_CLUSTER, selector, matcher, order, 
+                        hint, 0, 0, -1, records ) ;
+      if ( SDB_OK == rc && records.size() == 1 )
+      {
+         return TRUE ;
+      }
+
+      return FALSE ;
+   }
+
    INT32 _omRestSession::_getBusinessInfo( const CHAR *pClusterName,
                                            const CHAR *pBusinessName,
                                            string &businessType, 
@@ -192,12 +212,21 @@ namespace engine
       BSONObj result ;
       INT32 rc = SDB_OK ;
 
+      if ( !_isClusterExist( pClusterName ) )
+      {
+         rc = SDB_OM_CLUSTER_NOT_EXIST ;
+         PD_LOG_MSG( PDERROR, "cluster is not exist:cluster=%s", 
+                     pClusterName ) ;
+         goto error ;
+      }
+
       matcher = BSON( OM_BUSINESS_FIELD_CLUSTERNAME << pClusterName 
                       << OM_BUSINESS_FIELD_NAME << pBusinessName ) ;
       rc = _queryTable( OM_CS_DEPLOY_CL_BUSINESS, selector, matcher, order, 
                         hint, 0, 0, -1, records ) ;
       if ( rc )
       {
+         rc = SDB_OM_BUSINESS_NOT_EXIST ;
          PD_LOG_MSG( PDERROR, "fail to query table:%s,rc=%d",
                      OM_CS_DEPLOY_CL_BUSINESS, rc ) ;
          goto error ;
@@ -205,10 +234,9 @@ namespace engine
 
       if ( records.size() != 1 )
       {
-         rc = SDB_INVALIDARG ;
-         PD_LOG_MSG( PDERROR, "get business info failed:cluster=%s,"
-                     "business=%s,number=%d", pClusterName, pBusinessName,
-                     records.size() ) ;
+         rc = SDB_OM_BUSINESS_NOT_EXIST ;
+         PD_LOG_MSG( PDERROR, "business[%s] is not exist in cluster[%s]", 
+                     pBusinessName, pClusterName ) ;
          goto error ;
       }
 

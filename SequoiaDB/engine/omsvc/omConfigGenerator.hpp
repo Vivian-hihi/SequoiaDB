@@ -739,6 +739,11 @@ namespace engine
    } ;
 
    //*****************Zookeeper end**************************************
+
+   
+   const CHAR *omGetEDUInfoSafe( _pmdEDUCB *cb, EDU_INFO_TYPE type ) ;
+   const CHAR *omGetMyEDUInfoSafe( EDU_INFO_TYPE type ) ;
+   
 }
 
 

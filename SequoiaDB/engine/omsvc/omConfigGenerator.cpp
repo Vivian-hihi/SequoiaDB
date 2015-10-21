@@ -168,6 +168,23 @@ namespace engine
       return str ;
    }
 
+   const CHAR *omGetMyEDUInfoSafe( EDU_INFO_TYPE type )
+   {
+      return omGetEDUInfoSafe( pmdGetThreadEDUCB(), type ) ;
+   }
+
+   const CHAR *omGetEDUInfoSafe( _pmdEDUCB *cb, EDU_INFO_TYPE type )
+   {
+      SDB_ASSERT( NULL != cb, "cb can't be null" ) ;
+      const CHAR *info = cb->getInfo( type ) ;
+      if ( NULL == info )
+      {
+         return "" ;
+      }
+
+      return info ;
+   }
+
    nodeCounter::nodeCounter()
    {
    }
@@ -2544,7 +2561,7 @@ namespace engine
    done:
       return rc ;
    error:
-      _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+      _errorDetail = omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ;
       goto done ;
    }
 
@@ -2618,7 +2635,7 @@ namespace engine
    done:
       return rc ;
    error:
-      _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+      _errorDetail = omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ;
       goto done ;
    }
 
@@ -4491,7 +4508,7 @@ namespace engine
    done:
       return rc ;
    error:
-      _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+      _errorDetail = omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ;
       goto done ;
    }
 
@@ -4749,7 +4766,7 @@ namespace engine
    done:
       return rc ;
    error:
-      _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+      _errorDetail = omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ;
       goto done ;
    }
 

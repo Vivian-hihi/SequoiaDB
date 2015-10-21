@@ -81,6 +81,7 @@ namespace engine
                                         const BSONObj &hint, SINT32 flag,
                                         SINT64 numSkip, SINT64 numReturn, 
                                         list<BSONObj> &records ) ;
+         BOOLEAN           _isClusterExist( const CHAR *pClusterName ) ;
 
       private:
          omRestCommandBase *_createCommand( HTTP_PARSE_COMMON command,

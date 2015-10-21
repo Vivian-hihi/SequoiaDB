@@ -299,7 +299,7 @@ namespace engine
       const CHAR *pOrder    = NULL ;
       const CHAR *pHint     = NULL ;
       INT32 rc = SDB_OK ;
-      _restAdaptor->getQuery(_restSession, FIELD_NAME_SELECTOR, &pSelector ) ;
+      _restAdaptor->getQuery( _restSession, FIELD_NAME_SELECTOR, &pSelector ) ;
       if ( NULL != pSelector )
       {
          rc = fromjson( pSelector, selector ) ;
@@ -780,7 +780,7 @@ namespace engine
       {
          PD_LOG_MSG( PDERROR, "change rest field to BSONObj failed:src=%s,"
                      "rc=%d", pClusterInfo, rc ) ;
-         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+         _errorDetail = omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ;
          goto error ;
       }
 
@@ -848,14 +848,14 @@ namespace engine
          {
             PD_LOG_MSG( PDERROR, "%s is already exist:rc=%d", 
                         clusterName.c_str(), rc ) ;
-            _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR) ;
+            _errorDetail = omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ;
             _sendErrorRes2Web( rc, _errorDetail ) ;
          }
          else
          {
             PD_LOG_MSG( PDERROR, "failed to insert cluster:name=%s,rc=%d", 
                         clusterName.c_str(), rc ) ;
-            _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR) ;
+            _errorDetail = omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ;
             _sendErrorRes2Web( rc, _errorDetail ) ;
          }
 
@@ -895,7 +895,7 @@ namespace engine
       rc = _getQueryPara( selector, matcher, order, hint ) ;
       if ( SDB_OK != rc )
       {
-         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+         _errorDetail = omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ;
          PD_LOG( PDERROR, "%s,rc=%d", _errorDetail.c_str(), rc ) ;
          _sendErrorRes2Web( rc, _errorDetail ) ;
          goto error ;
@@ -905,7 +905,7 @@ namespace engine
                         hint, 0, 0, -1, records ) ;
       if ( SDB_OK != rc )
       {
-         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+         _errorDetail = omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ;
          PD_LOG( PDERROR, "query table failed:rc=%d", rc ) ;
       }
 
@@ -917,7 +917,7 @@ namespace engine
          if ( rc )
          {
             PD_LOG_MSG( PDERROR, "falied to append http body:rc=%d", rc ) ;
-            _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+            _errorDetail = omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ;
             _sendErrorRes2Web( rc, _errorDetail ) ;
             goto error ;
          }
@@ -1537,7 +1537,7 @@ namespace engine
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "get host list failed:rc=%d", rc ) ;
-         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+         _errorDetail = omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ;
          _sendErrorRes2Web( rc, _errorDetail ) ;
          goto error ;
       }
@@ -1574,7 +1574,7 @@ namespace engine
 
          rc = SDB_OOM ;
          PD_LOG_MSG( PDERROR, "create remove session failed:rc=%d", rc ) ;
-         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+         _errorDetail = omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ;
          _sendErrorRes2Web( rc, _errorDetail ) ;
          goto error ;
       }
@@ -1587,7 +1587,7 @@ namespace engine
          remoteSession->clearSubSession() ;
 
          PD_LOG_MSG( PDERROR, "send message to agent failed:rc=%d", rc ) ;
-         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+         _errorDetail = omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ;
          _sendErrorRes2Web( rc, _errorDetail ) ;
          goto error ;
       }
@@ -1596,7 +1596,7 @@ namespace engine
       if ( SDB_OK != rc )
       {
          PD_LOG_MSG( PDERROR, "receive from agent failed:rc=%d", rc ) ;
-         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+         _errorDetail = omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ;
          _sendErrorRes2Web( rc, _errorDetail ) ;
          goto error ;
       }
@@ -1615,7 +1615,7 @@ namespace engine
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "_parseResonpse failed:rc=%d", rc ) ;
-         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+         _errorDetail = omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ;
          _sendErrorRes2Web( rc, _errorDetail ) ;
          goto error ;
       }
@@ -2476,7 +2476,7 @@ namespace engine
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "fail to get host list:rc=%d", rc ) ;
-         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+         _errorDetail = omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ;
          _sendErrorRes2Web( rc, _errorDetail ) ;
          goto error ;
       }
@@ -2493,7 +2493,7 @@ namespace engine
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "do check failed:rc=%d", rc ) ;
-         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+         _errorDetail = omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ;
          _sendErrorRes2Web( rc, _errorDetail ) ;
          goto error ;
       }
@@ -2905,7 +2905,7 @@ namespace engine
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "fail to get host list:rc=%d", rc ) ;
-         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+         _errorDetail = omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ;
          _sendErrorRes2Web( rc, _errorDetail ) ;
          goto error ;
       }
@@ -2914,7 +2914,7 @@ namespace engine
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "fail to _checkHostExistence:rc=%d", rc ) ;
-         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+         _errorDetail = omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ;
          _sendErrorRes2Web( rc, _errorDetail ) ;
          goto error ;
       }
@@ -2923,7 +2923,7 @@ namespace engine
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "fail to _checkTaskExistence:rc=%d", rc ) ;
-         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+         _errorDetail = omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ;
          _sendErrorRes2Web( rc, _errorDetail ) ;
          goto error ;
       }
@@ -2936,7 +2936,7 @@ namespace engine
          if ( SDB_OK != rc )
          {
             PD_LOG( PDERROR, "generate task info failed:rc=%d", rc ) ;
-            _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+            _errorDetail = omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ;
             _sendErrorRes2Web( rc, _errorDetail ) ;
             goto error ;
          }
@@ -2948,7 +2948,7 @@ namespace engine
          {
             PD_LOG( PDERROR, "fail to save task:taskID="OSS_LL_PRINT_FORMAT
                     ",rc=%d", taskID, rc ) ;
-            _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+            _errorDetail = omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ;
             _sendErrorRes2Web( rc, _errorDetail ) ;
             goto error ;
          }
@@ -2991,14 +2991,14 @@ namespace engine
          //**************test code end********************
       }
 
-      //TODO notify agent to start a task
+      // notify agent to start a task
       rc = _notifyAgentTask( taskID ) ;
       if ( SDB_OK != rc )
       {
          _removeTask( taskID ) ;
          PD_LOG( PDERROR, "fail to notify task:taskID="OSS_LL_PRINT_FORMAT
                  ",rc=%d", taskID, rc ) ;
-         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+         _errorDetail = omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ;
          _sendErrorRes2Web( rc, _errorDetail ) ;
          goto error ;
       }
@@ -3100,7 +3100,7 @@ namespace engine
 
       if ( SDB_OK != rc )
       {
-         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+         _errorDetail = omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ;
          _sendErrorRes2Web( rc, _errorDetail ) ;
          goto error ;
       }
@@ -3135,7 +3135,7 @@ namespace engine
       rc = _getQueryPara( selector, matcher, order, hint ) ;
       if ( SDB_OK != rc )
       {
-         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+         _errorDetail = omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ;
          PD_LOG( PDERROR, "%s,rc=%d", _errorDetail.c_str(), rc ) ;
          _sendErrorRes2Web( rc, _errorDetail ) ;
          goto error ;
@@ -3145,7 +3145,7 @@ namespace engine
                         0, 0, -1, hosts ) ;
       if ( SDB_OK != rc )
       {
-         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+         _errorDetail = omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ;
          PD_LOG( PDERROR, "%s,rc=%d", _errorDetail.c_str(), rc ) ;
          _sendErrorRes2Web( rc, _errorDetail ) ;
          goto error ;
@@ -3368,7 +3368,7 @@ namespace engine
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "_getBusinessList failed:rc=%d", rc ) ;
-         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+         _errorDetail = omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ;
          _sendErrorRes2Web( rc, _errorDetail ) ;
          goto error ;
       }
@@ -3492,7 +3492,7 @@ namespace engine
       {
          PD_LOG( PDERROR, "read template file failed:file=%s:rc=%d", 
                  templateFile.c_str(), rc ) ;
-         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+         _errorDetail = omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ;
          _sendErrorRes2Web( rc, _errorDetail ) ;
          goto error ;
       }
@@ -4331,7 +4331,7 @@ namespace engine
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "get config info failed:rc=%d", rc ) ;
-         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+         _errorDetail = omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ;
          _sendErrorRes2Web( rc, _errorDetail ) ;
          goto error ;
       }
@@ -4341,7 +4341,7 @@ namespace engine
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "_checkBusiness failed:rc=%d", rc ) ;
-         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+         _errorDetail = omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ;
          _sendErrorRes2Web( rc, _errorDetail ) ;
          goto error ;
       }
@@ -4350,7 +4350,7 @@ namespace engine
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "get config item failed:rc=%d", rc ) ;
-         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+         _errorDetail = omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ;
          _sendErrorRes2Web( rc, _errorDetail ) ;
          goto error ;
       }
@@ -4360,7 +4360,7 @@ namespace engine
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "generate config failed:rc=%d", rc ) ;
-         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+         _errorDetail = omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ;
          _sendErrorRes2Web( rc, _errorDetail ) ;
          goto error ;
       }
@@ -5028,8 +5028,7 @@ namespace engine
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "_getRestInfo failed:rc=%d", rc ) ;
-         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
-         _sendErrorRes2Web( rc, _errorDetail ) ;
+         _errorDetail = omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ;
          goto error ;
       }
 
@@ -5038,28 +5037,25 @@ namespace engine
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "_checkBusiness failed:rc=%d", rc ) ;
-         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
-         _sendErrorRes2Web( rc, _errorDetail ) ;
+         _errorDetail = omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ;
          goto error ;
       }
 
+      if ( _isBusinessExistInTask( _businessName ) )
       {
-         if ( _isBusinessExistInTask( _businessName ) )
-         {
-            rc = SDB_INVALIDARG ;
-            _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
-            _sendErrorRes2Web( rc, _errorDetail ) ;
-            goto error ;
-         }
-         pmdGetThreadEDUCB()->resetInfo( EDU_INFO_ERROR ) ;
+         //TODO: ´íÎóÂë
+         rc = SDB_INVALIDARG ;
+         _errorDetail = omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ;
+         goto error ;
       }
+
+      pmdGetThreadEDUCB()->resetInfo( EDU_INFO_ERROR ) ;
       
       rc = _combineConfDetail( _businessType, _deployMod, bsonAllConf ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "_combineConfDetail failed:rc=%d", rc ) ;
-         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
-         _sendErrorRes2Web( rc, _errorDetail ) ;
+         _errorDetail = omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ;
          goto error ;
       }
 
@@ -5067,8 +5063,7 @@ namespace engine
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "get host info failed:rc=%d", rc ) ;
-         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
-         _sendErrorRes2Web( rc, _errorDetail ) ;
+         _errorDetail = omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ;
          goto error ;
       }
 
@@ -5081,7 +5076,6 @@ namespace engine
          {
             _errorDetail = confGenerator.getErrorDetail() ;
             PD_LOG( PDERROR, "%s", _errorDetail.c_str() ) ;
-            _sendErrorRes2Web( rc, _errorDetail ) ;
             goto error ;
          }
       }
@@ -5094,7 +5088,6 @@ namespace engine
          {
             _errorDetail = confGenerator.getErrorDetail() ;
             PD_LOG( PDERROR, "%s", _errorDetail.c_str() ) ;
-            _sendErrorRes2Web( rc, _errorDetail ) ;
             goto error ;
          }
       }
@@ -5106,9 +5099,7 @@ namespace engine
       rc = _compeleteConfValue( bsonHostInfo, bsonConfValue ) ;
       if ( SDB_OK != rc )
       {
-         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
-         PD_LOG( PDERROR, "%s", _errorDetail.c_str() ) ;
-         _sendErrorRes2Web( rc, _errorDetail ) ;
+         _errorDetail = omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ;
          goto error ;
       }
 
@@ -5118,9 +5109,8 @@ namespace engine
          rc = _generateTaskInfo( bsonConfValue, taskInfo, resultInfo ) ;
          if ( SDB_OK != rc )
          {
+            _errorDetail = omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ;
             PD_LOG( PDERROR, "generate task info failed:rc=%d", rc ) ;
-            _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
-            _sendErrorRes2Web( rc, _errorDetail ) ;
             goto error ;
          }
 
@@ -5133,59 +5123,18 @@ namespace engine
                           taskInfo, resultInfo ) ;
          if ( SDB_OK != rc )
          {
+            _errorDetail = omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ;
             PD_LOG( PDERROR, "fail to _saveTask:rc=%d", rc ) ;
-            _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
-            _sendErrorRes2Web( rc, _errorDetail ) ;
             goto error ;
          }
-
-         //TEST CODE
-//         {
-//            BSONObj node1 = BSON( OM_BSON_FIELD_HOST_NAME << "suse-lyb"
-//                                  << OM_ZOO_CONF_DETAIL_ZOOID << "1"
-//                                  << OM_TASKINFO_FIELD_STATUS << 4
-//                                  << OM_TASKINFO_FIELD_STATUS_DESC << "FINISH"
-//                                  << OM_TASKINFO_FIELD_ERRNO << 0
-//                                  << OM_TASKINFO_FIELD_DETAIL << ""
-//                                  << OM_TASKINFO_FIELD_FLOW << "") ;
-//            BSONObj node2 = BSON( OM_BSON_FIELD_HOST_NAME << "suse-lyb"
-//                                  << OM_ZOO_CONF_DETAIL_ZOOID << "2"
-//                                  << OM_TASKINFO_FIELD_STATUS << 4
-//                                  << OM_TASKINFO_FIELD_STATUS_DESC << "FINISH"
-//                                  << OM_TASKINFO_FIELD_ERRNO << 0
-//                                  << OM_TASKINFO_FIELD_DETAIL << ""
-//                                  << OM_TASKINFO_FIELD_FLOW << "") ;
-//            BSONObj node3 = BSON( OM_BSON_FIELD_HOST_NAME << "suse-lyb"
-//                                  << OM_ZOO_CONF_DETAIL_ZOOID << "3"
-//                                  << OM_TASKINFO_FIELD_STATUS << 4
-//                                  << OM_TASKINFO_FIELD_STATUS_DESC << "FINISH"
-//                                  << OM_TASKINFO_FIELD_ERRNO << 0
-//                                  << OM_TASKINFO_FIELD_DETAIL << ""
-//                                  << OM_TASKINFO_FIELD_FLOW << "") ;
-//            BSONArrayBuilder arrayBuilder ;
-//            arrayBuilder.append( node1 ) ;
-//            arrayBuilder.append( node2 ) ;
-//            arrayBuilder.append( node3 ) ;
-//            BSONObj taskUpdateInfo = BSON( OM_TASKINFO_FIELD_TASKID << taskID
-//                                           << OM_TASKINFO_FIELD_STATUS << 4
-//                                           << OM_TASKINFO_FIELD_ERRNO << 0
-//                                           << OM_TASKINFO_FIELD_PROGRESS << 100
-//                                           << OM_TASKINFO_FIELD_RESULTINFO <<
-//                                           arrayBuilder.arr() ) ;
-//            sdbGetOMManager()->getTaskManager()->updateTask( taskID, 
-//                                                             taskUpdateInfo ) ;
-//            
-//         }
-         //TEST CODE END
       }
 
       rc = _notifyAgentTask( taskID ) ;
       if ( SDB_OK != rc )
       {
+         _errorDetail = omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ;
          removeTask( taskID ) ;
          PD_LOG( PDERROR, "fail to _notifyAgentTask:rc=%d", rc ) ;
-         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
-         _sendErrorRes2Web( rc, _errorDetail ) ;
          goto error ;
       }
 
@@ -5199,6 +5148,7 @@ namespace engine
    done:
       return rc ;
    error:
+      _sendErrorRes2Web( rc, _errorDetail ) ;
       goto done ;
    }
 
@@ -5244,9 +5194,8 @@ namespace engine
                      0, _cb, 0, -1, _pDMSCB, _pRTNCB, contextID );
       if ( rc )
       {
-         _errorDetail = string( "fail to query table:" ) 
-                        + OM_CS_DEPLOY_CL_TASKINFO ;
-         PD_LOG( PDERROR, "%s,rc=%d", _errorDetail.c_str(), rc ) ;
+         PD_LOG_MSG( PDERROR, "failed to query table[%s],rc=%d", 
+                     OM_CS_DEPLOY_CL_TASKINFO, rc ) ;
          goto error ;
       }
 
@@ -5263,9 +5212,8 @@ namespace engine
             }
 
             contextID = -1 ;
-            _errorDetail = string( "failed to get record from table:" )
-                           + OM_CS_DEPLOY_CL_TASKINFO ;
-            PD_LOG( PDERROR, "%s,rc=%d", _errorDetail.c_str(), rc ) ;
+            PD_LOG_MSG( PDERROR, "failed to get record from table[%s],rc=%d", 
+                        OM_CS_DEPLOY_CL_TASKINFO, rc ) ;
             goto error ;
          }
 
@@ -5307,6 +5255,7 @@ namespace engine
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "get task list failed:rc=%d", rc ) ;
+         _errorDetail = omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ;
          _sendErrorRes2Web( rc, _errorDetail ) ;
          goto error ;
       }
@@ -5391,7 +5340,7 @@ namespace engine
       rc = _getQueryPara( selector, matcher, order, hint ) ;
       if ( SDB_OK != rc )
       {
-         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+         _errorDetail = omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ;
          PD_LOG( PDERROR, "%s,rc=%d", _errorDetail.c_str(), rc ) ;
          _sendErrorRes2Web( rc, _errorDetail ) ;
          goto error ;
@@ -5401,7 +5350,7 @@ namespace engine
                         hint, 0, 0, -1, tasks ) ;
       if ( SDB_OK != rc )
       {
-         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+         _errorDetail = omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ;
          PD_LOG( PDERROR, "%s,rc=%d", _errorDetail.c_str(), rc ) ;
          _sendErrorRes2Web( rc, _errorDetail ) ;
          goto error ;
@@ -5675,7 +5624,7 @@ namespace engine
          rc = SDB_INVALIDARG ;
          PD_LOG_MSG( PDERROR, "rest field miss:field=%s or field=%s", 
                      OM_REST_HOST_NAME, OM_REST_SVCNAME ) ;
-         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+         _errorDetail = omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ;
          _sendErrorRes2Web( rc, _errorDetail ) ;
          goto error ;
       }
@@ -5683,7 +5632,7 @@ namespace engine
       rc = _getNodeInfo( pHostName, pSvcName, nodeInfo ) ;
       if ( SDB_OK != rc )
       {
-         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+         _errorDetail = omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ;
          PD_LOG( PDERROR, "get node info failed:rc=", rc ) ;
          _sendErrorRes2Web( rc, _errorDetail ) ;
          goto error ;
@@ -5764,7 +5713,7 @@ namespace engine
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "list business failed:rc=%d", rc ) ;
-         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+         _errorDetail = omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ;
          _sendErrorRes2Web( rc, _errorDetail ) ;
          goto error ;
       }
@@ -5833,7 +5782,7 @@ namespace engine
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "get query parameter failed:rc=%d", rc ) ;
-         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+         _errorDetail = omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ;
          _sendErrorRes2Web( rc, _errorDetail ) ;
          goto error ;
       }
@@ -5844,7 +5793,7 @@ namespace engine
       {
          PD_LOG( PDERROR, "query table failed:table=%s,rc=%d", 
                  OM_CS_DEPLOY_CL_BUSINESS, rc ) ;
-         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+         _errorDetail = omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ;
          _sendErrorRes2Web( rc, _errorDetail ) ;
          goto error ;
       }
@@ -5971,7 +5920,7 @@ namespace engine
       rc = _getHostInfo( hostName, hostInfo, isHostExist ) ;
       if ( SDB_OK != rc || !isHostExist )
       {
-         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+         _errorDetail = omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ;
          PD_LOG( PDERROR, "get host info failed:host=%s,rc=%d", 
                  hostName.c_str(), rc ) ;
          goto error ;
@@ -5999,7 +5948,7 @@ namespace engine
                PD_LOG_MSG( PDERROR, "config info is invalid, element of %s "
                            "is not Object type:type=%d", 
                            OM_CONFIGURE_FIELD_CONFIG, ele.type() ) ;
-               _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+               _errorDetail = omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ;
                goto error ;
             }
             BSONObj tmp = ele.embeddedObject() ;
@@ -6262,7 +6211,7 @@ namespace engine
          rc = SDB_INVALIDARG ;
          PD_LOG_MSG( PDERROR, "rest field is miss:field=%s", 
                      OM_REST_CLUSTER_NAME ) ;
-         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+         _errorDetail = omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ;
          _sendErrorRes2Web( rc, _errorDetail ) ;
          goto error ;
       }
@@ -6270,7 +6219,7 @@ namespace engine
       rc = _getClusterExistFlag( clusterName, isClusterExist ) ;
       if ( SDB_OK != rc )
       {
-         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+         _errorDetail = omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ;
          PD_LOG( PDERROR, "_getClusterExistFlag failed:rc=%d", rc ) ;
          _sendErrorRes2Web( rc, _errorDetail ) ;
          goto error ;
@@ -6280,7 +6229,7 @@ namespace engine
       {
          rc = SDB_DMS_RECORD_NOTEXIST ;
          PD_LOG_MSG( PDERROR, "%s is not exist:rc=%d", clusterName, rc ) ;
-         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+         _errorDetail = omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ;
          _sendErrorRes2Web( rc, _errorDetail ) ;
          goto done ;
       }
@@ -6288,7 +6237,7 @@ namespace engine
       rc = _getClusterExistHostFlag( clusterName, isClusterExistHost ) ;
       if ( SDB_OK != rc )
       {
-         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+         _errorDetail = omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ;
          PD_LOG( PDERROR, "_getClusterExistHostFlag failed:rc=%d", rc ) ;
          _sendErrorRes2Web( rc, _errorDetail ) ;
          goto error ;
@@ -6299,7 +6248,7 @@ namespace engine
          rc = SDB_INVALIDARG ;
          PD_LOG_MSG( PDERROR, "host exist in cluster, host should be removed "
                      "first:cluster=", clusterName ) ;
-         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+         _errorDetail = omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ;
          _sendErrorRes2Web( rc, _errorDetail ) ;
          goto error ;
       }
@@ -6308,7 +6257,7 @@ namespace engine
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "_removeCluster failed:rc=%d", rc ) ;
-         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+         _errorDetail = omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ;
          _sendErrorRes2Web( rc, _errorDetail ) ;
          goto error ;
       }
@@ -6599,7 +6548,7 @@ namespace engine
    done:
       return rc ;
    error:
-      _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+      _errorDetail = omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ;
       _sendErrorRes2Web( rc, _errorDetail ) ;
       goto done ;
    }
@@ -6772,7 +6721,7 @@ namespace engine
       {
          rc = SDB_INVALIDARG ;
          PD_LOG_MSG( PDERROR, "rest field:%s is null", OM_REST_BUSINESS_NAME ) ;
-         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+         _errorDetail = omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ;
          _sendErrorRes2Web( rc, _errorDetail ) ;
          goto error ;
       }
@@ -6782,7 +6731,7 @@ namespace engine
       {
          PD_LOG_MSG( PDERROR, "get business failed:business=%s", 
                      pBusinessName ) ;
-         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+         _errorDetail = omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ;
          _sendErrorRes2Web( rc, _errorDetail ) ;
          goto error ;
       }
@@ -6799,7 +6748,7 @@ namespace engine
          if ( _isBusinessExistInTask( tmp ) )
          {
             rc = SDB_INVALIDARG ;
-            _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+            _errorDetail = omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ;
             _sendErrorRes2Web( rc, _errorDetail ) ;
             goto done ;
          }
@@ -6824,7 +6773,7 @@ namespace engine
          if ( SDB_OK != rc )
          {
             PD_LOG( PDERROR, "generate task info failed:rc=%d", rc ) ;
-            _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+            _errorDetail = omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ;
             _sendErrorRes2Web( rc, _errorDetail ) ;
             goto error ;
          }
@@ -6839,7 +6788,7 @@ namespace engine
          if ( SDB_OK != rc )
          {
             PD_LOG( PDERROR, "fail to _saveTask:rc=%d", rc ) ;
-            _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+            _errorDetail = omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ;
             _sendErrorRes2Web( rc, _errorDetail ) ;
             goto error ;
          }
@@ -6850,7 +6799,7 @@ namespace engine
       {
          removeTask( taskID ) ;
          PD_LOG( PDERROR, "fail to _notifyAgentTask:rc=%d", rc ) ;
-         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+         _errorDetail = omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ;
          _sendErrorRes2Web( rc, _errorDetail ) ;
          goto error ;
       }
@@ -6907,7 +6856,7 @@ namespace engine
       {
          PD_LOG_MSG( PDERROR, "change rest field to BSONObj failed:src=%s,"
                      "rc=%d", pHostInfo, rc ) ;
-         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+         _errorDetail = omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ;
          goto error ;
       }
 
@@ -6923,7 +6872,7 @@ namespace engine
                PD_LOG_MSG( PDERROR, "host info is invalid, element of %s "
                            "is not Object type:type=%d", 
                            OM_BSON_FIELD_HOST_INFO, ele.type() ) ;
-               _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+               _errorDetail = omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ;
                goto error ;
             }
             BSONObj oneHost = ele.embeddedObject() ;
@@ -7016,7 +6965,7 @@ namespace engine
                   PD_LOG_MSG( PDERROR, "disk info is invalid, element of %s "
                               "is not Object type:type=%d", 
                               OM_HOST_FIELD_DISK, ele.type() ) ;
-                  _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+                  _errorDetail = omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ;
                   goto error ;
                }
                BSONObj oneDisk = ele.embeddedObject() ;
@@ -7042,7 +6991,7 @@ namespace engine
                   PD_LOG_MSG( PDERROR, "net info is invalid, element of %s "
                               "is not Object type:type=%d", 
                               OM_HOST_FIELD_NET, ele.type() ) ;
-                  _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+                  _errorDetail = omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ;
                   goto error ;
                }
                BSONObj oneNet = ele.embeddedObject() ;
@@ -7217,7 +7166,7 @@ namespace engine
             PD_LOG_MSG( PDERROR, "session disconnected:id=%s,rc=%d", 
                         routeID2String(subSession->getNodeID()).c_str(), 
                         tmpRC ) ;
-            tmpError = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+            tmpError = omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ;
             _appendErrorResult( arrayBuilder, tmpHost, tmpRC, tmpError ) ;
             continue ;
          }
@@ -7227,7 +7176,7 @@ namespace engine
          {
             tmpRC = SDB_UNEXPECTED_RESULT ;
             PD_LOG_MSG( PDERROR, "unexpected result:rc=%d", tmpRC ) ;
-            tmpError = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+            tmpError = omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ;
             _appendErrorResult( arrayBuilder, tmpHost, tmpRC, tmpError ) ;
             continue ;
          }
@@ -7237,7 +7186,7 @@ namespace engine
          if ( SDB_OK != tmpRC )
          {
             PD_LOG_MSG( PDERROR, "extract reply failed:rc=%d", tmpRC ) ;
-            tmpError = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+            tmpError = omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ;
             _appendErrorResult( arrayBuilder, tmpHost, tmpRC, tmpError ) ;
             continue ;
          }
@@ -7258,7 +7207,7 @@ namespace engine
          {
             tmpRC = SDB_UNEXPECTED_RESULT ;
             PD_LOG_MSG( PDERROR, "unexpected response size:rc=%d", tmpRC ) ;
-            tmpError = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+            tmpError = omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ;
             _appendErrorResult( arrayBuilder, tmpHost, tmpRC, tmpError ) ;
             continue ;
          }
@@ -7513,7 +7462,7 @@ namespace engine
       rc = _getHostStatus( hostInfoList, bsonStatus ) ;
       if ( SDB_OK != rc )
       {
-         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+         _errorDetail = omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ;
          PD_LOG( PDERROR, "_getHostStatus failed:rc=%d", rc ) ;
          _sendErrorRes2Web( rc, _errorDetail ) ;
          goto error ;
@@ -7554,7 +7503,7 @@ namespace engine
             rc = SDB_INVALIDARG ;
             PD_LOG_MSG( PDERROR, "host info is invalid, element of host "
                         "is not Object type:type=%d", oneEle.type() ) ;
-            _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+            _errorDetail = omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ;
             goto error ;
          }
          BSONObj oneHostName = oneEle.embeddedObject() ;
@@ -7565,7 +7514,7 @@ namespace engine
             rc = SDB_INVALIDARG ;
             PD_LOG_MSG( PDERROR, "bson field is not String:field=%s,type=%d",
                         OM_BSON_FIELD_HOST_NAME, nameEle.type() ) ;
-            _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+            _errorDetail = omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ;
             goto error ;
          }
          hostNameList.push_back( nameEle.String() ) ;
@@ -7594,7 +7543,7 @@ namespace engine
             rc = SDB_INVALIDARG ;
             PD_LOG_MSG( PDERROR, "property info is invalid, element of property "
                         "is not Object type:type=%d", oneEle.type() ) ;
-            _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+            _errorDetail = omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ;
             goto error ;
          }
 
@@ -7606,7 +7555,7 @@ namespace engine
             rc = SDB_INVALIDARG ;
             PD_LOG_MSG( PDERROR, "bson field is not String:field=%s,type=%d",
                         OM_BSON_PROPERTY_NAME, nameEle.type() ) ;
-            _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+            _errorDetail = omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ;
             goto error ;
          }
          name = nameEle.String() ;
@@ -7617,7 +7566,7 @@ namespace engine
             rc = SDB_INVALIDARG ;
             PD_LOG_MSG( PDERROR, "bson field is not String:field=%s,type=%d",
                         OM_BSON_PROPERTY_VALUE, valueEle.type() ) ;
-            _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+            _errorDetail = omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ;
             goto error ;
          }
          value = valueEle.String() ;
@@ -7638,7 +7587,7 @@ namespace engine
          rc = SDB_INVALIDARG ;
          PD_LOG_MSG( PDERROR, "bson miss template field:field=%s",
                      OM_TEMPLATE_REPLICA_NUM ) ;
-         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+         _errorDetail = omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ;
          goto error ;
       }
 
@@ -7647,7 +7596,7 @@ namespace engine
          rc = SDB_INVALIDARG ;
          PD_LOG_MSG( PDERROR, "bson miss template field:field=%s",
                      OM_TEMPLATE_DATAGROUP_NUM ) ;
-         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+         _errorDetail = omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ;
          goto error ;
       }
 
@@ -7656,7 +7605,7 @@ namespace engine
          rc = SDB_INVALIDARG ;
          PD_LOG_MSG( PDERROR, "replicaNum or groupNum is invalid:replicaNum=%d,"
                      "groupNum=%d", replicaNum, groupNum ) ;
-         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+         _errorDetail = omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ;
          goto error ;
       }
 
@@ -7689,7 +7638,7 @@ namespace engine
       {
          PD_LOG_MSG( PDERROR, "change rest field to BSONObj failed:src=%s,"
                      "rc=%d", pTemplate, rc ) ;
-         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+         _errorDetail = omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ;
          goto error ;
       }
 
@@ -7701,7 +7650,7 @@ namespace engine
             rc = SDB_INVALIDARG ;
             PD_LOG_MSG( PDERROR, "bson field is not array:field=%s,type=%d",
                         OM_BSON_PROPERTY_ARRAY, ele.type() ) ;
-            _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+            _errorDetail = omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ;
             goto error ;
          }
 
@@ -7723,7 +7672,7 @@ namespace engine
             rc = SDB_INVALIDARG ;
             PD_LOG_MSG( PDERROR, "bson field is not array:field=%s,type=%d",
                         OM_BSON_FIELD_HOST_INFO, ele.type() ) ;
-            _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+            _errorDetail = omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ;
             goto error ;
          }
          hostInfos = ele.embeddedObject() ;
@@ -7743,7 +7692,7 @@ namespace engine
             rc = SDB_INVALIDARG ;
             PD_LOG_MSG( PDERROR, "bson field is not String:field=%s,type=%d",
                         OM_BSON_FIELD_CLUSTER_NAME, ele.type() ) ;
-            _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+            _errorDetail = omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ;
             goto error ;
          }
 
@@ -7788,7 +7737,7 @@ namespace engine
          rc = SDB_INVALIDARG ;
          PD_LOG_MSG( PDERROR, "disk info error:diskCount=%u,diskFreeSize="
                      OSS_LL_PRINT_FORMAT, diskCount, totalDiskFreeSize ) ;
-         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+         _errorDetail = omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ;
          goto error ;
       }
 
@@ -7830,7 +7779,7 @@ namespace engine
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "_getSpecificHostInfo failed:rc=%d", rc ) ;
-         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+         _errorDetail = omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ;
          _sendErrorRes2Web( rc, _errorDetail ) ;
          goto error ;
       }
@@ -7840,7 +7789,7 @@ namespace engine
          rc = SDB_INVALIDARG ;
          PD_LOG_MSG( PDERROR, "there is not host in the cluster:clusterName=%s",
                      clusterName.c_str() ) ;
-         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+         _errorDetail = omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ;
          _sendErrorRes2Web( rc, _errorDetail ) ;
          goto error ;
       }
@@ -8105,7 +8054,7 @@ namespace engine
    done:
       return rc ;
    error:
-      _sendErrorRes2Web( rc, pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ) ;
+      _sendErrorRes2Web( rc, omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ) ;
       goto done ;
    }
    // *****************omRemoveBusinessAuthCommand*****************************
@@ -8152,7 +8101,7 @@ namespace engine
    done:
       return rc ;
    error:
-      _sendErrorRes2Web( rc, pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ) ;
+      _sendErrorRes2Web( rc, omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ) ;
       goto done ;
    }
 
@@ -8214,7 +8163,7 @@ namespace engine
    done:
       return rc ;
    error:
-      _sendErrorRes2Web( rc, pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ) ;
+      _sendErrorRes2Web( rc, omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ) ;
       goto done ;
    }
 
@@ -8666,7 +8615,7 @@ namespace engine
    done:
       return rc ;
    error:
-      _sendErrorRes2Web( rc, pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ) ;
+      _sendErrorRes2Web( rc, omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ) ;
       goto done ;
    }
 
