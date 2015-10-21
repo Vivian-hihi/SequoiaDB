@@ -207,11 +207,13 @@ namespace engine
             PD_LOG ( PDERROR, "restore dps file load failed[rc:%d]", rc ) ;
             goto error ;
          }
-         ossMemcpy( &head, block.offset(0), sizeof(dpsLogRecordHeader) ) ;
+         rc = mergeBlock.record().load( block.offset(0) ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to load the log record[rc:%d]", rc ) ;
+         // ossMemcpy( &head, block.offset(0), sizeof(dpsLogRecordHeader) ) ;
          mergeBlock.setRow( TRUE );
-         mergeBlock.record().push( DPS_LOG_ROW_ROWDATA,
-                                   block.length()- sizeof(dpsLogRecordHeader),
-                                   block.offset(sizeof(dpsLogRecordHeader))) ;
+         //mergeBlock.record().push( DPS_LOG_ROW_ROWDATA,
+         //                          block.length()- sizeof(dpsLogRecordHeader),
+         //                          block.offset(sizeof(dpsLogRecordHeader))) ;
          rc = merge ( mergeBlock ) ;
          if ( SDB_OK != rc )
          {
@@ -1064,7 +1066,7 @@ namespace engine
       {
       // and then copy body
       dpsLogRecord::iterator itr( &(block.record()) ) ;
-      if ( block.isRow() )
+      /*if ( block.isRow() )
       {
          /// row data's size should always be one.
          /// and dataheader should not be merged.
@@ -1074,7 +1076,7 @@ namespace engine
          _mergePage( itr.value(), dataMeta.len,
                      work, offset ) ;
       }
-      else
+      else*/
       {
          UINT32 mergeSize = 0 ;
          while ( itr.next() )

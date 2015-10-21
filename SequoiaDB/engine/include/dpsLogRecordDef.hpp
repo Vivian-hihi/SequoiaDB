@@ -129,11 +129,6 @@ namespace engine
    {
    } ;
 
-   enum DPS_LOG_ROW
-   {
-      DPS_LOG_ROW_ROWDATA = 1,
-   };
-
    enum DPS_LOG_LOB
    {
       DPS_LOG_LOB_OID = 1,
