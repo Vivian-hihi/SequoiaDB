@@ -235,7 +235,7 @@ namespace engine
       if ( records.size() != 1 )
       {
          rc = SDB_OM_BUSINESS_NOT_EXIST ;
-         PD_LOG_MSG( PDERROR, "business[%s] is not exist in cluster[%s]", 
+         PD_LOG_MSG( PDERROR, "business[%s] do not exist in cluster[%s]", 
                      pBusinessName, pClusterName ) ;
          goto error ;
       }
