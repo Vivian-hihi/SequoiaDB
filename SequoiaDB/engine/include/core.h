@@ -36,7 +36,7 @@
 #ifndef CORE_H_
 #define CORE_H_
 
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__xlC__)
     #define SDB_INLINE static __OSS_INLINE__
     #define SDB_EXPORT
 #else

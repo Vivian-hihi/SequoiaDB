@@ -234,6 +234,9 @@ add_option( "enterprise", "build enterprise sequoiadb ( with SSL )", 0, False )
 #gprof option
 add_option("gprof", "enable gprofile for sequoiadb", 0, False)
 
+#aix xlc
+add_option("xlc", "use xlc in AIX", 0, False)
+
 # don't run configure if user calls --help
 if GetOption('help'):
     Return()
@@ -262,6 +265,10 @@ linux = False
 linux64  = False
 windows = False
 aix = False
+xlc = False
+
+if guess_os == "aix":
+    xlc = has_option("xlc")
 
 release = True
 debugBuild = False
@@ -634,6 +641,9 @@ elif guess_os == 'aix':
    aix = True
    nix = True
 
+   if xlc:
+      env.Replace( CC=" xlC_r -qtls " )
+      env.Replace( CXX=" xlC_r -qtls " )
    # -lm
    env.Append( LIBS=['m'] )
    # -ldl
@@ -643,8 +653,13 @@ elif guess_os == 'aix':
    # GNU
    env.Append( CPPDEFINES=[ "_GNU_SOURCE" ] )
    # AIX64
-   env.Append( CPPFLAGS=" -maix64 " )
-   env.Append( LINKFLAGS=" -maix64 " )
+   if xlc:
+      env.Append( CPPFLAGS=" -q64 " )
+      env.Append( LINKFLAGS=" -q64 " )
+      env.Replace( SHLINKFLAGS=" -q64 -qmkshrobj " )
+   else: # gcc
+      env.Append( CPPFLAGS=" -maix64 -static-libgcc -static-libstdc++ " )
+      env.Append( LINKFLAGS=" -maix64 -static-libgcc -static-libstdc++ " )
    env.Append( AR=" -X64 " )
    nixLibPrefix = "lib"
    boost_lib_dir = join(boost_lib_dir,'aix64')
@@ -682,19 +697,20 @@ else:
 
 env['STATIC_AND_SHARED_OBJECTS_ARE_THE_SAME'] = 1
 if nix:
-    env.Append( CPPFLAGS="-fPIC -fno-strict-aliasing -ggdb -pthread -Wno-write-strings -Wall -Wsign-compare -Wno-unknown-pragmas -Winvalid-pch -Wno-address" )
+    if xlc:
+        env.Append( CPPFLAGS=" -qpic=large -qalias=noansi -g " )
+    else:
+        env.Append( CPPFLAGS="-fPIC -fno-strict-aliasing -ggdb -pthread -Wno-write-strings -Wall -Wsign-compare -Wno-unknown-pragmas -Winvalid-pch -Wno-address" )
+        env.Append( CXXFLAGS=" -Wnon-virtual-dtor " )
+        if aix:
+            env.Append( LINKFLAGS=" -fPIC -pthread " )
+        else:
+            env.Append( LINKFLAGS=" -fPIC -pthread -rdynamic" )
     if linux:
         env.Append( CPPFLAGS=" -pipe " )
         env.Append( CPPFLAGS=" -fno-builtin-memcmp " )
-
     env.Append( CPPDEFINES="_FILE_OFFSET_BITS=64" )
-    env.Append( CXXFLAGS=" -Wnon-virtual-dtor " )
-    if aix:
-        env.Append( LINKFLAGS=" -fPIC -pthread " )
-    else:
-        env.Append( LINKFLAGS=" -fPIC -pthread -rdynamic" )
     env.Append( LIBS=[] )
-
     env['ENV']['HOME'] = os.environ['HOME']
     env['ENV']['TERM'] = os.environ['TERM']
 
@@ -859,7 +875,8 @@ import jsToCpp
 jsToCpp.jsToCpp(engine_dir)
 
 if hasClient:
-   clientCppEnv.SConscript( 'SequoiaDB/SConscriptClientCpp', variant_dir=clientCppVariantDir, duplicate=False )
+   if not xlc: # xlc doesn't support #pragma once, so there are compiling errors
+       clientCppEnv.SConscript( 'SequoiaDB/SConscriptClientCpp', variant_dir=clientCppVariantDir, duplicate=False )
    clientCEnv.SConscript ( 'SequoiaDB/SConscriptClientC', variant_dir=clientCVariantDir, duplicate=False )
 
 if hasShell:

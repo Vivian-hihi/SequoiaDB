@@ -39,7 +39,7 @@
 #include <stdio.h>
 #include <stdarg.h>
 
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__xlC__)
     #define SDB_EXPORT
 #else
     #ifdef SDB_STATIC_BUILD

@@ -57,7 +57,7 @@ namespace mongo {
     AtomicUInt AtomicUInt::operator--(int) {
         return InterlockedDecrement((volatile long*)&x)+1;
     }
-#elif defined(__GCC_HAVE_SYNC_COMPARE_AND_SWAP_4)
+#elif defined(__GCC_HAVE_SYNC_COMPARE_AND_SWAP_4) || defined(__xlC__)
     // this is in GCC >= 4.1
     inline void AtomicUInt::zero() { x = 0; } // TODO: this isn't thread safe - maybe
     AtomicUInt AtomicUInt::operator++() {

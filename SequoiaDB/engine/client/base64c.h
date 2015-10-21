@@ -24,7 +24,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__xlC__)
     #ifndef SDB_INLINE
        #define SDB_INLINE static __inline__
     #endif
