@@ -1184,9 +1184,15 @@ static BOOLEAN jsonConvertBson ( cJSON *cj, bson *bs, BOOLEAN isObj )
                   CJSON_MD5_16 != out_len &&
                   CJSON_MD5_32 != out_len &&
                   CJSON_MD5_64 != out_len )
+               {
+                  free ( out ) ;
                   return FALSE ;
+               }
                if ( 3 == cj->valueint && CJSON_UUID != out_len )
+               {
+                  free ( out ) ;
                   return FALSE ;
+               }
                /* and then append into bson */
                bson_append_binary( bs, cj->string , cj->valueint, out, out_len ) ;
                free( out ) ;
@@ -1204,26 +1210,38 @@ static BOOLEAN jsonConvertBson ( cJSON *cj, bson *bs, BOOLEAN isObj )
             INT32 out_len = 0 ;
             get_char_num ( num, i, INT_NUM_SIZE ) ;
             len = getDeBase64Size ( cj->valuestring ) ;
-
-            out = (CHAR *)malloc(len) ;
-            if ( !out )
-               return FALSE ;
-            memset ( out, 0, len ) ;
-            if ( !base64Decode( cj->valuestring, out, len ) )
+            if( len > 0 )
             {
+               out = (CHAR *)malloc(len) ;
+               if ( !out )
+                  return FALSE ;
+               memset ( out, 0, len ) ;
+               if ( !base64Decode( cj->valuestring, out, len ) )
+               {
+                  free ( out ) ;
+                  return FALSE ;
+               }
+               out_len = len - 1 ;
+               if ( 5 == cj->valueint &&
+                  CJSON_MD5_16 != out_len &&
+                  CJSON_MD5_32 != out_len &&
+                  CJSON_MD5_64 != out_len )
+               {
+                  free ( out ) ;
+                  return FALSE ;
+               }
+               if ( 3 == cj->valueint && CJSON_UUID != out_len )
+               {
+                  free ( out ) ;
+                  return FALSE ;
+               }
+               bson_append_binary( bs, num , cj->valueint, out, out_len ) ;
                free ( out ) ;
-               return FALSE ;
             }
-            out_len = len - 1 ;
-            if ( 5 == cj->valueint &&
-               CJSON_MD5_16 != out_len &&
-               CJSON_MD5_32 != out_len &&
-               CJSON_MD5_64 != out_len )
-               return FALSE ;
-            if ( 3 == cj->valueint && CJSON_UUID != out_len )
-               return FALSE ;
-            bson_append_binary( bs, num , cj->valueint, out, out_len ) ;
-            free ( out ) ;
+            else
+            {
+               bson_append_binary( bs, num , cj->valueint, "", 0 ) ;
+            }
          }
          break ;
       }
