@@ -645,13 +645,10 @@ public class BasicBSONObject implements Map<String, Object>, BSONObject {
 
 					field = this.get(p.getName());	
 					
-					//如果属性是map<string,?>
-
-					
 					if (field == null) {
 						continue;
 					}else if(p.getPropertyType().equals(java.util.Map.class)){  //TODO
-							//取得map的泛型对象
+							//p is Map
 							Field mapField=type.getDeclaredField(p.getName());
 							Type generictype=mapField.getGenericType();
 							Type valueType=null;
@@ -659,8 +656,8 @@ public class BasicBSONObject implements Map<String, Object>, BSONObject {
 								Type[] types=((ParameterizedType)generictype).getActualTypeArguments();
 								valueType=types[1];
 							}
-							//bson对象转为Map对象
-							Map map=((BSONObject) field).toMap();							
+							//change bson object to map
+							Map map=((BSONObject) field).toMap();
 							Map realMap=new HashMap();
 							Set<Map.Entry<?,?>> set=map.entrySet();
 							Iterator<Map.Entry<?,?>> iterator=set.iterator();
