@@ -1646,7 +1646,7 @@ TEST( collection, sdbCQueryOne )
    bson obj ;
    bson_init( &obj ) ;
    bson_append_int( &obj, "ReplSize", 0 ) ;
-   bson_append_finish_object( &obj ) ;
+   bson_finish( &obj ) ;
    rc = sdbCreateCollection1( cs, clName, &obj, &cl ) ;
    ASSERT_EQ( SDB_OK, rc ) ;
    bson_destroy( &obj ) ;
@@ -1655,7 +1655,7 @@ TEST( collection, sdbCQueryOne )
       bson_init( &obj ) ;
       bson_append_int( &obj, "reacordNumber", i ) ;
       bson_append_string( &obj, "description", "testcase for query limit one" ) ;
-      bson_append_finish_object( &obj ) ;
+      bson_finish( &obj ) ;
       rc = sdbInsert( cl, &obj ) ;
       ASSERT_EQ( SDB_OK, rc ) ;
       bson_destroy( &obj ) ;
@@ -1666,7 +1666,7 @@ TEST( collection, sdbCQueryOne )
    bson_init( &obj ) ;
    //bson_append_string( &obj, "description", "testcase for query limit one" ) ;
    bson_append_int( &obj, "reacordNumber", 11 ) ;
-   bson_append_finish_object( &obj ) ;
+   bson_finish( &obj ) ;
    rc = sdbQuery( cl, &obj, NULL, NULL, NULL, NULL, 1, &cursor ) ;
    ASSERT_EQ( SDB_OK, rc ) ;
    bson_destroy( &obj ) ;
@@ -1686,7 +1686,7 @@ TEST( collection, sdbCQueryOne )
    ****************************/
    bson_init( &obj ) ;
    bson_append_string( &obj, "description", "testcase for query limit one" ) ;
-   bson_append_finish_object( &obj ) ;
+   bson_finish( &obj ) ;
    rc = sdbQuery( cl, &obj, NULL, NULL, NULL, NULL, 1, &cursor ) ;
    ASSERT_EQ( SDB_OK, rc ) ;
    bson_destroy( &obj ) ;
