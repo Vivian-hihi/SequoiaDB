@@ -371,7 +371,7 @@ INT32 clientBuildUpdateMsg ( CHAR **ppBuffer, INT32 *bufferSize,
    }
    else
    {
-
+      INT32 tmpRC = SDB_OK ;
       bson newselector ;
       bson newupdator ;
       bson newhint ;
@@ -380,9 +380,24 @@ INT32 clientBuildUpdateMsg ( CHAR **ppBuffer, INT32 *bufferSize,
       bson_init ( &newselector ) ;
       bson_init ( &newupdator ) ;
       bson_init ( &newhint ) ;
-      bson_copy ( &newselector, selector ) ;
-      bson_copy ( &newupdator, updator ) ;
-      bson_copy ( &newhint, hint ) ;
+      tmpRC = bson_copy ( &newselector, selector ) ;
+	  if ( SDB_OK != tmpRC )
+	  {
+         rc = FALSE ;
+		 goto endian_convert_done ;
+	  }
+      tmpRC = bson_copy ( &newupdator, updator ) ;
+	  if ( SDB_OK != tmpRC )
+	  {
+         rc = FALSE ;
+		 goto endian_convert_done ;
+	  }
+      tmpRC = bson_copy ( &newhint, hint ) ;
+	  if ( SDB_OK != tmpRC )
+	  {
+         rc = FALSE ;
+		 goto endian_convert_done ;
+	  }
 
       rc = bson_endian_convert ( (char*)bson_data(&newselector), &off, TRUE ) ;
       // 0 for false, which is error
@@ -509,10 +524,16 @@ INT32 clientAppendInsertMsg ( CHAR **ppBuffer, INT32 *bufferSize,
    }
    else
    {
+      INT32 tmpRC = SDB_OK ;
       bson newinsertor ;
       off_t off = 0 ;
       bson_init ( &newinsertor ) ;
-      bson_copy ( &newinsertor, insertor ) ;
+      tmpRC = bson_copy ( &newinsertor, insertor ) ;
+	  if ( SDB_OK != tmpRC )
+	  {
+         rc = FALSE ;
+		 goto endian_convert_done ;
+	  }
 
       rc = bson_endian_convert ( (char*)bson_data(&newinsertor), &off, TRUE ) ;
       if ( rc == 0 )
@@ -615,10 +636,16 @@ INT32 clientBuildInsertMsg ( CHAR **ppBuffer, INT32 *bufferSize,
    }
    else
    {
+      INT32 tmpRC = SDB_OK ;
       bson newinsertor ;
       off_t off = 0 ;
       bson_init ( &newinsertor ) ;
-      bson_copy ( &newinsertor, insertor ) ;
+      tmpRC = bson_copy ( &newinsertor, insertor ) ;
+	  if ( SDB_OK != tmpRC )
+	  {
+         rc = FALSE ;
+		 goto endian_convert_done ;
+	  }
       clientEndianConvertHeader ( &pInsert->header ) ;
       rc = bson_endian_convert( (char*)bson_data(&newinsertor), &off, TRUE ) ;
       if ( rc == 0 )
@@ -755,6 +782,7 @@ INT32 clientBuildQueryMsg  ( CHAR **ppBuffer, INT32 *bufferSize,
    }
    else
    {
+      INT32 tmpRC = SDB_OK ;
       bson newquery ;
       bson newselector ;
       bson neworderby ;
@@ -765,10 +793,30 @@ INT32 clientBuildQueryMsg  ( CHAR **ppBuffer, INT32 *bufferSize,
       bson_init ( &newselector ) ;
       bson_init ( &neworderby ) ;
       bson_init ( &newhint ) ;
-      bson_copy ( &newquery, query ) ;
-      bson_copy ( &newselector, fieldSelector ) ;
-      bson_copy ( &neworderby, orderBy ) ;
-      bson_copy ( &newhint, hint ) ;
+      tmpRC = bson_copy ( &newquery, query ) ;
+	  if ( SDB_OK != tmpRC )
+	  {
+         rc = FALSE ;
+		 goto endian_convert_done ;
+	  }
+      tmpRC = bson_copy ( &newselector, fieldSelector ) ;
+	  if ( SDB_OK != tmpRC )
+	  {
+         rc = FALSE ;
+		 goto endian_convert_done ;
+	  }
+      tmpRC = bson_copy ( &neworderby, orderBy ) ;
+	  if ( SDB_OK != tmpRC )
+	  {
+         rc = FALSE ;
+		 goto endian_convert_done ;
+	  }
+      tmpRC = bson_copy ( &newhint, hint ) ;
+	  if ( SDB_OK != tmpRC )
+	  {
+         rc = FALSE ;
+		 goto endian_convert_done ;
+	  }
 
       rc = bson_endian_convert ( (char*)bson_data(&newquery), &off, TRUE ) ;
       if ( rc == 0 )
@@ -986,15 +1034,25 @@ INT32 clientBuildDeleteMsg ( CHAR **ppBuffer, INT32 *bufferSize,
    }
    else
    {
+      INT32 tmpRC = SDB_OK ;
       bson newdeletor ;
       bson newhint ;
       off_t off = 0 ;
       clientEndianConvertHeader ( &pDelete->header ) ;
       bson_init ( &newdeletor ) ;
       bson_init ( &newhint ) ;
-      bson_copy ( &newdeletor, deletor ) ;
-      bson_copy ( &newhint, hint ) ;
-
+      tmpRC = bson_copy ( &newdeletor, deletor ) ;
+	  if ( SDB_OK != tmpRC )
+	  {
+         rc = FALSE ;
+		 goto endian_convert_done ;
+	  }
+      tmpRC = bson_copy ( &newhint, hint ) ;
+	  if ( SDB_OK != tmpRC )
+	  {
+         rc = FALSE ;
+		 goto endian_convert_done ;
+	  }
       rc = bson_endian_convert ( (char*)bson_data(&newdeletor), &off, TRUE ) ;
       if ( rc == 0 )
       {
@@ -1452,9 +1510,24 @@ INT32 clientBuildAuthMsg( CHAR **ppBuffer, INT32 *bufferSize,
    }
 
    bson_init( &obj ) ;
-   bson_append_string( &obj, SDB_AUTH_USER, pUsrName ) ;
-   bson_append_string( &obj, SDB_AUTH_PASSWD, pPasswd ) ;
-   bson_finish( &obj ) ;
+   rc = bson_append_string( &obj, SDB_AUTH_USER, pUsrName ) ;
+   if ( SDB_OK != rc )
+   {
+      rc = SDB_DRIVER_BSON_ERROR ;
+	  goto error ;
+   }
+   rc = bson_append_string( &obj, SDB_AUTH_PASSWD, pPasswd ) ;
+   if ( SDB_OK != rc )
+   {
+      rc = SDB_DRIVER_BSON_ERROR ;
+	  goto error ;
+   }   
+   rc = bson_finish( &obj ) ;
+   if ( SDB_OK != rc )
+   {
+      rc = SDB_DRIVER_BSON_ERROR ;
+	  goto error ;
+   }   
 
    bsonSize = bson_size( &obj ) ;
    msgLen = sizeof( MsgAuthentication ) +
@@ -1489,7 +1562,13 @@ INT32 clientBuildAuthMsg( CHAR **ppBuffer, INT32 *bufferSize,
       off_t off = 0 ;
       clientEndianConvertHeader ( &msg->header ) ;
       bson_init ( &newobj ) ;
-      bson_copy ( &newobj, &obj ) ;
+      rc = bson_copy ( &newobj, &obj ) ;
+	  if ( SDB_OK != rc )
+	  {
+         bson_destroy ( &newobj ) ;
+	     rc = SDB_DRIVER_BSON_ERROR ;
+         goto error ;
+      }
       rc = bson_endian_convert ( (CHAR*)bson_data ( &newobj ) , &off, TRUE ) ;
       if ( !rc )
       {
@@ -1528,9 +1607,24 @@ INT32 clientBuildAuthCrtMsg( CHAR **ppBuffer, INT32 *bufferSize,
    }
 
    bson_init( &obj ) ;
-   bson_append_string( &obj, SDB_AUTH_USER, pUsrName ) ;
-   bson_append_string( &obj, SDB_AUTH_PASSWD, pPasswd ) ;
-   bson_finish( &obj ) ;
+   rc = bson_append_string( &obj, SDB_AUTH_USER, pUsrName ) ;
+   if ( SDB_OK != rc )
+   {
+      rc = SDB_DRIVER_BSON_ERROR ;
+	  goto error ;
+   }
+   rc = bson_append_string( &obj, SDB_AUTH_PASSWD, pPasswd ) ;
+   if ( SDB_OK != rc )
+   {
+      rc = SDB_DRIVER_BSON_ERROR ;
+	  goto error ;
+   }
+   rc = bson_finish( &obj ) ;
+   if ( SDB_OK != rc )
+   {
+      rc = SDB_DRIVER_BSON_ERROR ;
+	  goto error ;
+   }
 
    bsonSize = bson_size( &obj ) ;
    msgLen = sizeof( MsgAuthCrtUsr ) +
@@ -1562,11 +1656,17 @@ INT32 clientBuildAuthCrtMsg( CHAR **ppBuffer, INT32 *bufferSize,
    }
    else
    {
+      INT32 tmpRC = SDB_OK ;
       bson newobj ;
       off_t off = 0 ;
       clientEndianConvertHeader ( &msg->header ) ;
       bson_init ( &newobj ) ;
-      bson_copy ( &newobj, &obj ) ;
+      tmpRC = bson_copy ( &newobj, &obj ) ;
+	  if ( SDB_OK != tmpRC )
+	  {
+	     rc = FALSE ;
+     	 goto endian_convert_done ;
+	  }
 
       rc = bson_endian_convert ( (char*)bson_data(&newobj), &off, TRUE ) ;
       if ( rc == 0 )
@@ -1610,9 +1710,24 @@ INT32 clientBuildAuthDelMsg( CHAR **ppBuffer, INT32 *bufferSize,
    }
 
    bson_init( &obj ) ;
-   bson_append_string( &obj, SDB_AUTH_USER, pUsrName ) ;
-   bson_append_string( &obj, SDB_AUTH_PASSWD, pPasswd ) ;
-   bson_finish( &obj ) ;
+   rc = bson_append_string( &obj, SDB_AUTH_USER, pUsrName ) ;
+   if ( SDB_OK != rc )
+   {
+      rc = SDB_DRIVER_BSON_ERROR ;
+	  goto error ;
+   }
+   rc = bson_append_string( &obj, SDB_AUTH_PASSWD, pPasswd ) ;
+   if ( SDB_OK != rc )
+   {
+      rc = SDB_DRIVER_BSON_ERROR ;
+	  goto error ;
+   }
+   rc = bson_finish( &obj ) ;
+   if ( SDB_OK != rc )
+   {
+      rc = SDB_DRIVER_BSON_ERROR ;
+	  goto error ;
+   }
 
    bsonSize = bson_size( &obj ) ;
    msgLen = sizeof( MsgAuthDelUsr ) +
@@ -1644,11 +1759,17 @@ INT32 clientBuildAuthDelMsg( CHAR **ppBuffer, INT32 *bufferSize,
    }
    else
    {
+      INT32 tmpRC = SDB_OK ;
       bson newobj ;
       off_t off = 0 ;
       clientEndianConvertHeader ( &msg->header ) ;
       bson_init ( &newobj ) ;
-      bson_copy ( &newobj, &obj ) ;
+      tmpRC = bson_copy ( &newobj, &obj ) ;
+      if ( SDB_OK != tmpRC )
+      {
+         rc = FALSE ;
+	     goto endian_convert_done ;
+      }
 
       rc = bson_endian_convert ( (char*)bson_data(&newobj), &off, TRUE ) ;
       if ( rc == 0 )
@@ -1960,10 +2081,16 @@ INT32 clientBuildAggrRequest1( CHAR **ppBuffer, INT32 *bufferSize,
       clientEndianConvertHeader( &pAggr->header );
       for ( i = 0 ; i < num ; i++ )
       {
+         INT32 tmpRC = SDB_OK ;
          off_t off = 0;
          bson newObj;
          bson_init( &newObj );
-         bson_copy( &newObj, objs[i] );
+         tmpRC = bson_copy( &newObj, objs[i] );
+         if ( SDB_OK != tmpRC )
+         {
+            rc = FALSE ;
+	        goto endian_convert_done ;
+         }
          rc = bson_endian_convert((CHAR *)bson_data(&newObj), &off, TRUE );
          if ( 0 == rc )
          {
@@ -2051,10 +2178,16 @@ INT32 clientBuildAggrRequest( CHAR **ppBuffer, INT32 *bufferSize,
    }
    else
    {
+      INT32 tmpRC = SDB_OK ;
       bson newinsertor ;
       off_t off = 0 ;
       bson_init ( &newinsertor ) ;
-      bson_copy ( &newinsertor, obj ) ;
+      tmpRC = bson_copy ( &newinsertor, obj ) ;
+      if ( SDB_OK != tmpRC )
+      {
+         rc = FALSE ;
+	     goto endian_convert_done ;
+      }
       clientEndianConvertHeader ( &pAggr->header ) ;
       rc = bson_endian_convert( (CHAR*)bson_data(&newinsertor), &off, TRUE ) ;
       if ( rc == 0 )
@@ -2136,10 +2269,16 @@ INT32 clientAppendAggrRequest ( CHAR **ppBuffer, INT32 *bufferSize,
    }
    else
    {
+      INT32 tmpRC = SDB_OK ;
       bson newinsertor ;
       off_t off = 0 ;
       bson_init ( &newinsertor ) ;
-      bson_copy ( &newinsertor, obj ) ;
+      tmpRC = bson_copy ( &newinsertor, obj ) ;
+      if ( SDB_OK != tmpRC )
+      {
+         rc = FALSE ;
+	     goto endian_convert_done ;
+      }
 
       rc = bson_endian_convert ( (char*)bson_data(&newinsertor), &off, TRUE ) ;
       if ( rc == 0 )
@@ -2324,7 +2463,13 @@ INT32 clientBuildLobMsg( CHAR **ppBuffer, INT32 *bufferSize,
          off_t off = 0 ;
          bson newObj ;
          bson_init( &newObj ) ;
-         bson_copy( &newObj, meta ) ;
+         rc = bson_copy( &newObj, meta ) ;
+         if ( SDB_OK != rc )
+         {
+            rc = SDB_DRIVER_BSON_ERROR ;
+            bson_destroy( &newObj ) ;
+	        goto error ;
+         }
          res = bson_endian_convert ( (char*)bson_data(&newObj), &off, TRUE ) ;
          if ( rc )
          {

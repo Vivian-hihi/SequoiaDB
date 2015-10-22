@@ -116,7 +116,7 @@ do                                                       \
    rc = bson_append_null( &bsonobj, key ) ;              \
    if ( rc )                                             \
    {                                                     \
-      rc = SDB_SYS ;                                     \
+      rc = SDB_DRIVER_BSON_ERROR ;                       \
       goto error ;                                       \
    }                                                     \
 }while ( FALSE ) 
@@ -127,7 +127,7 @@ do                                                   \
    rc = bson_append_##type( &bsonobj, key, val ) ;   \
    if ( rc )                                         \
    {                                                 \
-      rc = SDB_SYS ;                                 \
+      rc = SDB_DRIVER_BSON_ERROR ;                   \
       goto error ;                                   \
    }                                                 \
 }while( FALSE )
@@ -139,7 +139,7 @@ do                                 \
    rc = bson_finish ( &bson ) ;    \
    if ( rc )                       \
    {                               \
-      rc = SDB_SYS ;               \
+      rc = SDB_DRIVER_BSON_ERROR ; \
       goto error ;                 \
    }                               \
 }while ( FALSE )
@@ -2671,7 +2671,12 @@ SDB_EXPORT INT32 sdbCreateNode ( sdbReplicaGroupHandle cHandle,
             continue ;
          }
 
-         bson_append_element( &configuration, NULL, &it ) ;
+         rc = bson_append_element( &configuration, NULL, &it ) ;
+		 if ( SDB_OK != rc )
+		 {
+            rc = SDB_DRIVER_BSON_ERROR ;
+			goto error ;
+		 }
       } // while
    } // if ( configure )
    BSON_FINISH ( configuration ) ;
@@ -4032,7 +4037,12 @@ static INT32 _sdbAlterCollectionV2( sdbCollectionHandle cHandle,
    BSON_APPEND( obj, FIELD_NAME_NAME, cs->_collectionFullName, string ) ;
    if ( BSON_OBJECT == bson_find( &itr, options, FIELD_NAME_ALTER ) )
    {
-      bson_append_element( &obj, NULL, &itr ) ;
+      rc = bson_append_element( &obj, NULL, &itr ) ;
+	  if ( SDB_OK != rc )
+	  {
+         rc = SDB_DRIVER_BSON_ERROR ;
+		 goto error ;
+	  }
    }
    else
    {
@@ -4043,7 +4053,12 @@ static INT32 _sdbAlterCollectionV2( sdbCollectionHandle cHandle,
    /// optional
    if ( BSON_OBJECT == bson_find( &itr, options, FIELD_NAME_OPTIONS ) )
    {
-      bson_append_element( &obj, NULL, &itr ) ;
+      rc = bson_append_element( &obj, NULL, &itr ) ;
+	  if ( SDB_OK != rc )
+	  {
+         rc = SDB_DRIVER_BSON_ERROR ;
+		 goto error ;
+	  }
    }
    else if ( BSON_EOO != bson_find( &itr, options, FIELD_NAME_OPTIONS ) )
    {
@@ -5687,7 +5702,7 @@ retry :
    rc = bson_copy ( obj, &localobj ) ;
    if ( SDB_OK != rc )
    {
-      rc = SDB_SYS ;
+      rc = SDB_DRIVER_BSON_ERROR ;
       goto done ;
    }
    ++ cs->_totalRead ;
@@ -5750,7 +5765,11 @@ SDB_EXPORT INT32 sdbCurrent ( sdbCursorHandle cHandle,
    if ( cs->_modifiedCurrent )
    {
       //deep copy,never use ossmencpy() which is shallow copy
-      bson_copy ( obj, cs->_modifiedCurrent ) ;
+      rc = bson_copy ( obj, cs->_modifiedCurrent ) ;
+      if ( SDB_OK != rc )
+      {
+         rc = SDB_DRIVER_BSON_ERROR ;
+      }
       goto done ;
    }
    */
@@ -5790,7 +5809,7 @@ retry :
    rc = bson_copy ( obj, &localobj ) ;
    if ( SDB_OK != rc )
    {
-      rc = SDB_SYS ;
+      rc = SDB_DRIVER_BSON_ERROR ;
       goto error ;
    }
    ++ cs->_totalRead ;
@@ -6264,7 +6283,7 @@ SDB_EXPORT INT32 sdbTraceStart ( sdbConnectionHandle cHandle,
       rc = bson_append_start_array ( &obj, FIELD_NAME_COMPONENTS ) ;
       if( rc )
       {
-         rc = SDB_SYS;
+         rc = SDB_DRIVER_BSON_ERROR ;
          goto error;
       }
       rc = sdbTraceStrtok ( &obj, comp ) ;
@@ -6275,7 +6294,7 @@ SDB_EXPORT INT32 sdbTraceStart ( sdbConnectionHandle cHandle,
       rc = bson_append_finish_array( &obj );
       if ( rc )
       {
-         rc = SDB_SYS ;
+         rc = SDB_DRIVER_BSON_ERROR ;
          goto error ;
       }
    }
@@ -6285,7 +6304,7 @@ SDB_EXPORT INT32 sdbTraceStart ( sdbConnectionHandle cHandle,
       rc = bson_append_start_array( &obj, FIELD_NAME_BREAKPOINTS );
       if( rc )
       {
-         rc = SDB_SYS;
+         rc = SDB_DRIVER_BSON_ERROR ;
          goto error;
       }
       rc = sdbTraceStrtok ( &obj, breakPoint ) ;
@@ -6296,7 +6315,7 @@ SDB_EXPORT INT32 sdbTraceStart ( sdbConnectionHandle cHandle,
       rc = bson_append_finish_array( &obj );
       if ( rc )
       {
-         rc = SDB_SYS ;
+         rc = SDB_DRIVER_BSON_ERROR ;
          goto error ;
       }
    }
@@ -7412,13 +7431,13 @@ SDB_EXPORT INT32 sdbWaitTasks ( sdbConnectionHandle cHandle,
    rc = bson_append_start_object ( &newObj, FIELD_NAME_TASKID ) ;
    if ( rc )
    {
-      rc = SDB_SYS ;
+      rc = SDB_DRIVER_BSON_ERROR ;
       goto error ;
    }
    rc = bson_append_start_array ( &newObj, "$in" ) ;
    if ( rc )
    {
-      rc = SDB_SYS ;
+      rc = SDB_DRIVER_BSON_ERROR ;
       goto error ;
    }
    for ( i = 0; i < num; i++ )
@@ -7428,13 +7447,13 @@ SDB_EXPORT INT32 sdbWaitTasks ( sdbConnectionHandle cHandle,
    rc = bson_append_finish_array ( &newObj ) ;
    if ( rc )
    {
-      rc = SDB_SYS ;
+      rc = SDB_DRIVER_BSON_ERROR ;
       goto error ;
    }
    rc = bson_append_finish_object ( &newObj ) ;
    if ( rc )
    {
-      rc = SDB_SYS ;
+      rc = SDB_DRIVER_BSON_ERROR ;
       goto error ;
    }
    BSON_FINISH ( newObj ) ;
@@ -8136,25 +8155,30 @@ SDB_EXPORT INT32 sdbOpenLob( sdbCollectionHandle cHandle,
    rc = bson_append_string( &obj, FIELD_NAME_COLLECTION, cs->_collectionFullName ) ;
    if ( SDB_OK != rc )
    {
-      rc = SDB_SYS ;
+      rc = SDB_DRIVER_BSON_ERROR ;
       goto error ;
    }
 
    rc = bson_append_oid( &obj, FIELD_NAME_LOB_OID, oid ) ;
    if ( SDB_OK != rc )
    {
-      rc = SDB_SYS ;
+      rc = SDB_DRIVER_BSON_ERROR ;
       goto error ;
    }
    
    rc = bson_append_int( &obj, FIELD_NAME_LOB_OPEN_MODE, mode ) ;
    if ( SDB_OK != rc )
    {
-      rc = SDB_SYS ;
+      rc = SDB_DRIVER_BSON_ERROR ;
       goto error ;
    }
  
-   bson_finish( &obj ) ;
+   rc = bson_finish( &obj ) ;
+   if ( SDB_OK != rc )
+   {
+      rc = SDB_DRIVER_BSON_ERROR ;
+	  goto error ;
+   }
 
    rc = clientBuildOpenLobMsg( &cs->_pSendBuffer, &cs->_sendBufferSize,
                                &obj, 0, 1, 0, cs->_endianConvert ) ;
@@ -8675,18 +8699,23 @@ SDB_EXPORT INT32 sdbRemoveLob( sdbCollectionHandle cHandle,
                             cs->_collectionFullName ) ;
    if ( SDB_OK != rc )
    {
-      rc = SDB_SYS ;
+      rc = SDB_DRIVER_BSON_ERROR ;
       goto error ;
    }
 
    rc = bson_append_oid( &meta, FIELD_NAME_LOB_OID, oid ) ;
    if ( SDB_OK != rc )
    {
-      rc = SDB_SYS ;
+      rc = SDB_DRIVER_BSON_ERROR ;
       goto error ;
    }
 
-   bson_finish( &meta ) ;
+   rc = bson_finish( &meta ) ;
+   if ( SDB_OK != rc )
+   {
+      rc = SDB_DRIVER_BSON_ERROR ;
+	  goto error ;
+   }
 
    rc = clientBuildRemoveLobMsg( &cs->_pSendBuffer, &cs->_sendBufferSize,
                                  &meta, 0, 1, 0, cs->_endianConvert ) ;
@@ -8895,11 +8924,16 @@ SDB_EXPORT INT32 sdbListLobs( sdbCollectionHandle cHandle,
    rc = bson_append_string( &obj, FIELD_NAME_COLLECTION, cs->_collectionFullName ) ;
    if ( SDB_OK != rc )
    {
-      rc = SDB_SYS ;
+      rc = SDB_DRIVER_BSON_ERROR ;
       goto error ;
    }
 
-   bson_finish( &obj ) ;
+   rc = bson_finish( &obj ) ;
+   if ( SDB_OK != rc )
+   {
+      rc = SDB_DRIVER_BSON_ERROR ;
+      goto error ;
+   }
 
    rc = _sdbRunCmdOfLob( cHandle, CMD_ADMIN_PREFIX CMD_NAME_LIST_LOBS,
                          &obj, cursor ) ;
@@ -8934,18 +8968,23 @@ SDB_EXPORT INT32 sdbListLobPieces( sdbCollectionHandle cHandle,
    rc = bson_append_string( &obj, FIELD_NAME_COLLECTION, cs->_collectionFullName ) ;
    if ( SDB_OK != rc )
    {
-      rc = SDB_SYS ;
+      rc = SDB_DRIVER_BSON_ERROR ;
       goto error ;
    }
 
    rc = bson_append_bool( &obj, FIELD_NAME_LOB_LIST_PIECES_MODE, TRUE ) ;
    if ( SDB_OK != rc )
    {
-      rc = SDB_SYS ;
+      rc = SDB_DRIVER_BSON_ERROR ;
       goto error ;
    }
 
-   bson_finish( &obj ) ;
+   rc = bson_finish( &obj ) ;
+   if ( SDB_OK != rc )
+   {
+      rc = SDB_DRIVER_BSON_ERROR ;
+      goto error ;
+   }
 
    rc = _sdbRunCmdOfLob( cHandle, CMD_ADMIN_PREFIX CMD_NAME_LIST_LOBS,
                          &obj, cursor ) ;
@@ -8973,20 +9012,35 @@ SDB_EXPORT INT32 sdbReelect( sdbReplicaGroupHandle cHandle,
    bson_init( &ops ) ;
    HANDLE_CHECK( cHandle, rg, SDB_HANDLE_TYPE_REPLICAGROUP ) ;
 
-   bson_append_string( &ops,
-                       FIELD_NAME_GROUPNAME,
-                       rg->_replicaGroupName ) ;
+   rc = bson_append_string( &ops,
+                            FIELD_NAME_GROUPNAME,
+                            rg->_replicaGroupName ) ;
+   if ( SDB_OK != rc )
+   {
+      rc = SDB_DRIVER_BSON_ERROR ;
+	  goto error ;
+   }
 
    if ( NULL != options )
    {
       bson_iterator_init( &itr, options ) ;
       while ( BSON_EOO != bson_iterator_next ( &itr ) )
       {
-         bson_append_element( &ops, NULL, &itr ) ;
+         rc = bson_append_element( &ops, NULL, &itr ) ;
+		 if ( SDB_OK != rc )
+	     {
+	        rc = SDB_DRIVER_BSON_ERROR ;
+	        goto error ;
+		 }
       }
    }
 
-   bson_finish( &ops ) ;
+   rc = bson_finish( &ops ) ;
+   if ( SDB_OK != rc )
+   {
+      rc = SDB_DRIVER_BSON_ERROR ;
+	  goto error ;
+   }
 
    rc = clientBuildQueryMsg( &(rg->_pSendBuffer),
                              &(rg->_sendBufferSize),
@@ -9148,7 +9202,12 @@ SDB_EXPORT INT32 sdbDetachNode( sdbReplicaGroupHandle cHandle,
          if ( 0 != ossStrcmp( key,
                               FIELD_NAME_ONLY_DETACH ) )
          {
-            bson_append_element( &obj, NULL, &it ) ;
+            rc = bson_append_element( &obj, NULL, &it ) ;
+            if ( SDB_OK != rc )
+            {
+               rc = SDB_DRIVER_BSON_ERROR ;
+	           goto error ;
+            }
          }
       }
    }
@@ -9205,7 +9264,12 @@ SDB_EXPORT INT32 sdbAttachNode( sdbReplicaGroupHandle cHandle,
          if ( 0 != ossStrcmp( key,
                               FIELD_NAME_ONLY_ATTACH ) )
          {
-            bson_append_element( &obj, NULL, &it ) ;
+            rc = bson_append_element( &obj, NULL, &it ) ;
+		    if ( SDB_OK != rc )
+		    {
+		       rc = SDB_DRIVER_BSON_ERROR ;
+			   goto error ;
+		    }
          }
       }
    }
@@ -9241,24 +9305,59 @@ SDB_EXPORT INT32 sdbCreateIdIndex( sdbCollectionHandle cHandle,
    HANDLE_CHECK( cHandle, cs, SDB_HANDLE_TYPE_COLLECTION ) ;
 
    BSON_INIT( obj ) ;
-   bson_append_start_object( &obj, FIELD_NAME_ALTER ) ;
-   bson_append_string( &obj, FIELD_NAME_NAME, SDB_ALTER_CRT_ID_INDEX ) ;
+   rc = bson_append_start_object( &obj, FIELD_NAME_ALTER ) ;
+   if ( SDB_OK != rc )
+   {
+      rc = SDB_DRIVER_BSON_ERROR ;
+	  goto error ;
+   }
+   rc = bson_append_string( &obj, FIELD_NAME_NAME, SDB_ALTER_CRT_ID_INDEX ) ;
+   if ( SDB_OK != rc )
+   {
+      rc = SDB_DRIVER_BSON_ERROR ;
+	  goto error ;
+   }
    if ( NULL == args )
    {
-      bson_append_null( &obj, FIELD_NAME_ARGS ) ;
+      rc = bson_append_null( &obj, FIELD_NAME_ARGS ) ;
+      if ( SDB_OK != rc )
+      {
+         rc = SDB_DRIVER_BSON_ERROR ;
+	     goto error ;
+      }
    }
    else
    {
-      bson_append_start_object( &obj, FIELD_NAME_ARGS ) ;
+      rc = bson_append_start_object( &obj, FIELD_NAME_ARGS ) ;
+      if ( SDB_OK != rc )
+      {
+         rc = SDB_DRIVER_BSON_ERROR ;
+	     goto error ;
+      }
       bson_iterator_init ( &itr, args ) ;
       while ( BSON_EOO != bson_iterator_next ( &itr ) )
       {
          BSON_APPEND( obj, NULL, &itr, element ) ;
       }
-      bson_append_finish_object( &obj ) ;
+      rc = bson_append_finish_object( &obj ) ;
+	  if ( SDB_OK != rc )
+	  {
+	     rc = SDB_DRIVER_BSON_ERROR ;
+	     goto error ;
+	  }
    }
-   bson_append_finish_object( &obj ) ;
-   bson_finish( &obj ) ;
+   rc = bson_append_finish_object( &obj ) ;
+   if ( SDB_OK != rc )
+   {
+      rc = SDB_DRIVER_BSON_ERROR ;
+	  goto error ;
+   }
+   rc = bson_finish( &obj ) ;
+   if ( SDB_OK != rc )
+   {
+      rc = SDB_DRIVER_BSON_ERROR ;
+	  goto error ;
+   }
 
    rc = sdbAlterCollection( cHandle, &obj ) ;
    if ( SDB_OK != rc )
@@ -9281,11 +9380,36 @@ SDB_EXPORT INT32 sdbDropIdIndex( sdbCollectionHandle cHandle )
    HANDLE_CHECK( cHandle, cs, SDB_HANDLE_TYPE_COLLECTION ) ;
 
    BSON_INIT( obj ) ;
-   bson_append_start_object( &obj, FIELD_NAME_ALTER ) ;
-   bson_append_string( &obj, FIELD_NAME_NAME, SDB_ALTER_DROP_ID_INDEX ) ;
-   bson_append_null( &obj, FIELD_NAME_ARGS ) ;
-   bson_append_finish_object( &obj ) ;
-   bson_finish( &obj ) ;
+   rc = bson_append_start_object( &obj, FIELD_NAME_ALTER ) ;
+   if ( SDB_OK != rc )
+   {
+      rc = SDB_DRIVER_BSON_ERROR ;
+	  goto error ;
+   }
+   rc = bson_append_string( &obj, FIELD_NAME_NAME, SDB_ALTER_DROP_ID_INDEX ) ;
+   if ( SDB_OK != rc )
+   {
+      rc = SDB_DRIVER_BSON_ERROR ;
+	  goto error ;
+   }
+   rc = bson_append_null( &obj, FIELD_NAME_ARGS ) ;
+   if ( SDB_OK != rc )
+   {
+      rc = SDB_DRIVER_BSON_ERROR ;
+	  goto error ;
+   }
+   rc = bson_append_finish_object( &obj ) ;
+   if ( SDB_OK != rc )
+   {
+      rc = SDB_DRIVER_BSON_ERROR ;
+	  goto error ;
+   }
+   rc = bson_finish( &obj ) ;
+   if ( SDB_OK != rc )
+   {
+      rc = SDB_DRIVER_BSON_ERROR ;
+	  goto error ;
+   }
 
    rc = sdbAlterCollection( cHandle, &obj ) ;
    if ( SDB_OK != rc )
