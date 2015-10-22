@@ -587,16 +587,25 @@ INT32 enterFrontEndMode ( const CHAR * program , const CHAR * cmd )
       goto done ;
    }
 
+   // clear the name pipe fd in windows
    clearDirtyShellPipe( "sdb-shell-f2b-" ) ;
    clearDirtyShellPipe( "sdb-shell-b2f-" ) ;
 
+   // get current process id
    ppid = ossGetParentProcessID () ;
    SH_VERIFY_COND ( ppid != OSS_INVALID_PID , SDB_SYS ) ;
 
+   // set f2dName to be "sdb-shell-b2f-xxx(ppid)"
+   // set d2fName to be "sdb-shell-f2b-xxx(ppid)"
+   // f2dName and d2fName are used as matching condition to get
+   // the bpf2d and bpd2f name pipe if the two name pipe existed
+   // in /tmp/sequoiadb
    rc = getPipeNames ( ppid , f2dName , sizeof ( f2dName ) ,
                        d2fName , sizeof ( d2fName ) ) ;
    SH_VERIFY_RC
 
+   // there may be two name pipe in /tmp/sequoiadb,
+   // get the their names if they existed
    rc = getPipeNames1 ( bpf2dName , sizeof ( bpf2dName ) ,
                         bpd2fName , sizeof ( bpd2fName ) ,
                         f2dName , d2fName ) ;
@@ -640,9 +649,12 @@ INT32 enterFrontEndMode ( const CHAR * program , const CHAR * cmd )
    {
       // named pipe does not exist, so we need to create the daemon process
       // which will create those named pipes
+
+      // get the full path of sdbbp according to current program'name
       rc = ossLocateExecutable ( program , "sdbbp" , bpName , sizeof(bpName) ) ;
       SH_VERIFY_RC
 
+      // create a process which will create two name pipe
       rc = createDaemonProcess ( bpName , ppid , bpf2dName , bpd2fName ) ;
       SH_VERIFY_RC
 
