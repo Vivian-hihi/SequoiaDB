@@ -38,29 +38,42 @@ var sprintf = function( format )
 	var newStr = '' ;
 	for( var i = 0, k = 1; i < strLen; ++i )
 	{
-		var char = format.charAt( i ) ;
-		if( char == '\\' && ( i + 1 < strLen ) && format.charAt( i + 1 ) == '?' )
+		var chars = format.charAt( i ) ;
+		if( chars == '\\' && ( i + 1 < strLen ) && format.charAt( i + 1 ) == '?' )
 		{
 			newStr += '?' ;
 			++i ;
 		}
-		else if( char == '?' && k < len )
+		else if( chars == '?' && k < len )
 		{
 			newStr += ( '' + arguments[k] ) ;
 			++k ;
 		}
 		else
 		{
-			newStr += char ;
+			newStr += chars ;
 		}
 	}
 	return newStr ;
 } ;
 
-//字符串补位
-function pad( num, n, char )
+//保留多少位小数
+function fixedNumber( x, num )
 {
-   char = ( typeof( char ) == 'undefined' ? '0' : char ) ;
+   var y = parseFloat( x );
+   if( isNaN( y ) )
+   {
+      return x ;
+   }
+   var z = Math.pow( 10, num );
+   y = Math.round( y * z ) / z ;
+   return y ;
+}
+
+//字符串补位
+function pad( num, n, chars )
+{
+   chars = ( typeof( chars ) == 'undefined' ? '0' : chars ) ;
    var len = num.toString().length;
    while( len < n )
    {
@@ -123,7 +136,7 @@ function isArray( object ) {
 }
 
 //自动判断类型并转换
-//hasQuotes 如果设置成true，那么如果带有 "xxx"，或转换成 xxxx 的字符串
+//hasQuotes 如果设置成true，那么如果带有 "xxx"，则转换成 xxxx 的字符串
 function autoTypeConvert( val, hasQuotes )
 {
    if( typeof( val ) == 'string' )
@@ -296,6 +309,7 @@ function array2Json( array, parentType )
             json.push( { '$date': val } ) ;
          }
       }
+      /*
       else if( field['type'] == 'Code' )
       {
          var val = field['val'] ;
@@ -308,6 +322,7 @@ function array2Json( array, parentType )
             json.push( { '$code': val } ) ;
          }
       }
+      */
       else if( field['type'] == 'ObjectId' )
       {
          var val = field['val'] ;
@@ -422,11 +437,13 @@ function json2Array( json, level, exact )
             value = value['$date'] ;
             valueType = 'Date' ;
          }
+         /*
          else if( typeof( value['$code'] ) == 'string' )
          {
             value = value['$code'] ;
             valueType = 'Code' ;
          }
+         */
          else if( typeof( value['$minKey'] ) == 'number' )
          {
             value = 'minKey' ;

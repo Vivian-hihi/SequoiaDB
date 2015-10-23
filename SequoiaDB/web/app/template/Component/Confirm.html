@@ -11,10 +11,14 @@
 			<div><i class="fa fa-times-circle contentWarning"></i></div>
 			<div style="padding-top:5px;">{{data.context}}</div>
 		</div>
+      <div ng-if="data.type == 4">
+         <div><i class="fa fa-check-circle contentSuccess"></i></div>
+         <div style="padding-top:5px;">{{data.context}}</div>
+      </div>
    </div>
    <div class="foot">
-      <button class="btn btn-primary confirmOk" ng-if="!(data.noOK == true)||data.type == 1||data.type == 2" ng-click="ok()">{{data.okText}}</button>
-      <button class="btn btn-default confirmClose" ng-if="!(data.noClose == true)||data.type == 1" ng-click="close()">{{data.closeText}}</button>
+      <button class="btn btn-primary confirmOk" ng-if="!(data.noOK == true)" ng-click="ok()">{{data.okText}}</button>
+      <button class="btn btn-default confirmClose" ng-if="!(data.noClose == true)" ng-click="close()">{{data.closeText}}</button>
 	</div>
 </div>
 

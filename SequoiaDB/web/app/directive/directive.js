@@ -337,7 +337,7 @@
                            {
                               var GridHeaderTd = [] ;
                               $.each( scope.data['title'], function( index ){
-                                 var tdEle = $( '> .Grid > .GridHeader > .GridTr:eq(0) > .GridTd:eq(' + index + ')', element ) ;
+                                 var tdEle = $( '> .Grid > .GridHeader > .GridTr:eq(0) > .GridTd:eq(' + index + ')', element ).css( 'cursor', 'pointer' ) ;
                                  GridHeaderTd.push( tdEle ) ;
                                  var lastColumn = -1 ;
                                  $( tdEle ).bind( 'click', function(){
@@ -1074,7 +1074,7 @@
    });
 
    //表单
-   sacApp.directive( 'formCreate', function( SdbFunction ){
+   sacApp.directive( 'formCreate', function( $rootScope, SdbFunction ){
       var dire = {
          restrict: 'A',
          scope: {
@@ -1085,19 +1085,20 @@
          controller: function( $scope, $element ){
             $scope.Setting = {
                Text: {
-                  string: {
-                     min: '?长度不能小于?。',
-                     max: '?长度不能大于?。',
-                     regex: '?格式错误。',
-                     ban: '?不能有?字符。'
+                  'string': {
+                     min: $rootScope.autoLanguage( '?长度不能小于?。' ),
+                     max: $rootScope.autoLanguage( '?长度不能大于?。' ),
+                     regex: $rootScope.autoLanguage( '?格式错误。' ),
+                     ban: $rootScope.autoLanguage( '?不能有?字符。' )
                   },
-                  int: {
-                     min: '?的值不能小于?。',
-                     max: '?的值不能大于?。',
-                     ban: '?的值不能取?。',
-                     step: '?取值错误，取值间隔为?。'
+                  'int': {
+                     min: $rootScope.autoLanguage( '?的值不能小于?。' ),
+                     max: $rootScope.autoLanguage( '?的值不能大于?。' ),
+                     ban: $rootScope.autoLanguage( '?的值不能取?。' ),
+                     step: $rootScope.autoLanguage( '?的值必须是?的倍数。' ),
+                     format: $rootScope.autoLanguage( '?的值必须是整数。' )
                   },
-                  list: '?参数错误。'
+                  list: $rootScope.autoLanguage( '?参数错误。' )
                },
                inputList: $scope.data.inputList,
                checkString: function( name, value, valid ){
@@ -1151,7 +1152,12 @@
                checkInt: function ( name, value, valid ){
                   var rc = true ;
                   var error = '' ;
-                  if( typeof( valid ) == 'object' )
+                  if( isNaN( value ) || parseInt( value ) != value )
+                  {
+                     error = sprintf( $scope.Setting['Text']['int']['format'], name ) ;
+                     rc = false ;
+                  }
+                  else if( typeof( valid ) == 'object' )
                   {
                      var min = valid.min ;
                      var max = valid.max ;
@@ -1159,17 +1165,17 @@
                      var step = valid.step ;
                      if( typeof( min ) == 'number' && value < min )
                      {
-                        error = sprintf( $scope.Setting.Text.int.min, name, min ) ;
+                        error = sprintf( $scope.Setting['Text']['int']['min'], name, min ) ;
                         rc = false ;
                      }
                      else if( typeof( max ) == 'number' && value > max )
                      {
-                        error = sprintf( $scope.Setting.Text.int.max, name, max ) ;
+                        error = sprintf( $scope.Setting['Text']['int']['max'], name, max ) ;
                         rc = false ;
                      }
                      else if( typeof( ban ) == 'number' && value == ban )
                      {
-                        error = sprintf( $scope.Setting.Text.int.ban, name, ban ) ;
+                        error = sprintf( $scope.Setting['Text']['int']['ban'], name, ban ) ;
                         rc = false ;
                      }
                      else if( isArray( ban ) )
@@ -1177,7 +1183,7 @@
                         $.each( ban, function( index, banInt ){
                            if( value == banInt )
                            {
-                              error = sprintf( $scope.Setting.Text.int.ban, name, banInt ) ;
+                              error = sprintf( $scope.Setting['Text']['int']['ban'], name, banInt ) ;
                               rc = false ;
                               return false ;
                            }
@@ -1185,13 +1191,13 @@
                      }
                      else if( typeof( step ) == 'number' && value % step != 0 )
                      {
-                        error = sprintf( $scope.Setting.Text.int.step, name, step ) ;
+                        error = sprintf( $scope.Setting['Text']['int']['step'], name, step ) ;
                         rc = false ;
                      }
                   }
                   return { rc: rc, error: error } ;
                },
-               checkInput: function( inputList ){
+               checkInput: function( inputList, customCheckFun ){
                   var isAllClear = true ;
                   $.each( inputList, function( index, inputInfo ){
                      inputInfo.error = '' ;
@@ -1199,6 +1205,9 @@
                      switch( inputInfo.type )
                      {
                      case 'string':
+                        rv = $scope.Setting.checkString( inputInfo.webName, inputInfo.value, inputInfo.valid ) ;
+                        break ;
+                     case 'password':
                         rv = $scope.Setting.checkString( inputInfo.webName, inputInfo.value, inputInfo.valid ) ;
                         break ;
                      case 'int':
@@ -1235,6 +1244,23 @@
                         inputInfo.error = rv.error ;
                      }
                   } ) ;
+                  if( typeof( customCheckFun ) == 'function' )
+                  {
+                     var rvs = customCheckFun( $scope.Setting.getValue( $scope.Setting.inputList ) ) ;
+                     if( rvs.length > 0 )
+                     {
+                        $.each( rvs, function( index2, errInfo ){
+                           $.each( inputList, function( index3, inputInfo ){
+                              if( inputInfo.name == errInfo.name )
+                              {
+                                 inputInfo.error = errInfo.error ;
+                                 return false ;
+                              }
+                           } ) ;
+                        } ) ;
+                        isAllClear = false ;
+                     }
+                  }
                   return isAllClear ;
                },
                getValue: function( inputList ){
@@ -1243,6 +1269,9 @@
                      switch( inputInfo.type )
                      {
                      case 'string':
+                        returnValue[ inputInfo.name ] = inputInfo.value ;
+                        break ;
+                     case 'password':
                         returnValue[ inputInfo.name ] = inputInfo.value ;
                         break ;
                      case 'int':
@@ -1266,8 +1295,8 @@
                   return returnValue ;
                }
             } ;
-            $scope.data.check = function(){
-               return $scope.Setting.checkInput( $scope.Setting.inputList ) ;
+            $scope.data.check = function( customCheckFun ){
+               return $scope.Setting.checkInput( $scope.Setting.inputList, customCheckFun ) ;
             }
             $scope.data.getValue = function(){
                return $scope.Setting.getValue( $scope.Setting.inputList ) ;
@@ -1769,7 +1798,42 @@
          }
       } ;
       return dire ;
-   } ) ;
+   } );
+
+   //创建折线图
+   sacApp.directive( 'createLineChart', function(){
+      var dire = {
+         restrict: 'A',
+         scope: {
+            data: '=para'
+         },
+         replace: false,
+         //专用控制器
+         controller: function( $scope, $element ){
+            $scope.Setting = {
+               'element': null
+            } ;
+            $scope.$watch( 'data', function(){
+               if( typeof( $scope.data ) == 'object' && typeof( $scope.data.options ) == 'object' && isArray( $scope.data.value ) )
+               {
+                  if( $scope.Setting.element == null )
+                  {
+                     $scope.Setting.element = echarts.init( $( $element ).get(0) ).setOption( $scope.data.options ) ;
+                  }
+                  $scope.Setting.element.addData( $scope.data.value ) ;
+               }
+            } ) ;
+         },
+         //编译
+         compile: function( element, attributes ){
+            return {
+               pre: function preLink( scope, element, attributes ){},
+               post: function postLink( scope, element, attributes ){}
+            } ;
+         }
+      } ;
+      return dire ;
+   });
 
    //创建动态框架
    sacApp.directive( 'createResponse', function( $window ){

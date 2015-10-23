@@ -10,8 +10,8 @@
             <div ng-click="Top.showUserMenu()"><i class="fa fa-user"></i>&nbsp;<span>admin</span>&nbsp;<i class="fa fa-caret-down"></i></div>
             <div id="userMenu">
                <ul>
-                  <li><i class="fa fa-key"></i> {{autoLanguage('修改密码')}}</li>
-                  <li><i class="fa fa-sign-out"></i> {{autoLanguage('注销')}}</li>
+                  <li ng-click="showChangePasswd()"><i class="fa fa-key"></i> {{autoLanguage('修改密码')}}</li>
+                  <li ng-click="logout()"><i class="fa fa-sign-out"></i> {{autoLanguage('注销')}}</li>
                </ul>
             </div>
          </li>

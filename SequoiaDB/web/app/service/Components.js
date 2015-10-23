@@ -130,7 +130,7 @@
          var hideTime = 7000 ;
          var isShow = false ;
          //angular.element( $window ).bind( 'mousemove', function ( ele ) {
-         $( document ).on( 'mousemove', function( ele ){
+         $( window ).on( 'mousemove', function( ele ){
             var pageX = ele['pageX'] ;
             var pageY = ele['pageY'] ;
             ele = $( ele['target'] ) ;
@@ -1336,12 +1336,12 @@
             else
             {
                var hasDisableChar = false ;
-               $.each( disableChar, function( index, char ){
-                  if( value.indexOf( char ) >= 0 )
+               $.each( disableChar, function( index, chars ){
+                  if( value.indexOf( chars ) >= 0 )
                   {
                      rc = false ;
                      hasDisableChar = true ;
-                     $( element ).addClass( 'form-danger' ).attr( 'data-desc', sprintf( g.text['disabled'], key, char ) ) ;
+                     $( element ).addClass( 'form-danger' ).attr( 'data-desc', sprintf( g.text['disabled'], key, chars ) ) ;
                      return false ;
                   }
                } ) ;

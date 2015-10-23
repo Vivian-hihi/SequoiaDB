@@ -1,33 +1,39 @@
 (function(){
    window.SdbSacManagerConf.nowRoute = [
+      { path: '/Index/Index/Index',
+        options: {
+           templateUrl: './app/template/Index/Index/Index.html',
+           resolve: resolveFun( [ './app/controller/Index/Index/Index.js' ] )
+        }
+      },
       { path: '/Data/Overview/Index',
         options: {
            templateUrl: './app/template/Data/Overview/Index.html',
-           resolve: resolveFun( [ './app/controller/Data/Overview/Index.js' ] )
+           resolve: resolveFun( [ './app/other/function/Data/Overview/Index.js', './app/controller/Data/Overview/Index.js' ] )
         }
       },
       { path: '/Data/Operate/Index',
         options: {
            templateUrl: './app/template/Data/Operate/Index.html',
-           resolve: resolveFun( [ './app/controller/Data/Operate/Index.js' ] )
+           resolve: resolveFun( [ './app/other/function/Data/Operate/Index.js', './app/controller/Data/Operate/Index.js' ] )
         }
       },
       { path: '/Data/Operate/Record',
         options: {
            templateUrl: './app/template/Data/Operate/Record.html',
-           resolve: resolveFun( [ './app/controller/Data/Operate/Record.js' ] )
+           resolve: resolveFun( [ './app/other/function/Data/Operate/Record.js', './app/controller/Data/Operate/Record.js' ] )
         }
       },
       { path: '/Data/Operate/Lobs',
         options: {
            templateUrl: './app/template/Data/Operate/Lobs.html',
-           resolve: resolveFun( [ './app/controller/Data/Operate/Lobs.js' ] )
+           resolve: resolveFun( [ './app/other/function/Data/Operate/Lob.js', './app/controller/Data/Operate/Lobs.js' ] )
         }
       },
       { path: '/Data/Database/Index',
         options: {
            templateUrl: './app/template/Data/Database/Index.html',
-           resolve: resolveFun( [ './app/controller/Data/Database/Index.js' ] )
+           resolve: resolveFun( [ './app/other/function/Data/Database/Index.js', './app/controller/Data/Database/Index.js' ] )
         }
       },
       { path: '/Monitor/HostOverview/Index',
@@ -48,10 +54,10 @@
            resolve: resolveFun( [ './app/controller/Monitor/Host/Warning/Index.js' ] )
          }
       },
-      { path: '/Deploy/Index',
+      { path: '/Deploy/AddHost/Index',
         options: {
-           templateUrl: './app/template/Deploy/Index.html',
-           resolve: resolveFun( [ './app/controller/Deploy/Index.js' ] )
+           templateUrl: './app/template/Deploy/AddHost/Index.html',
+           resolve: resolveFun( [ './app/controller/Deploy/AddHost/Index.js' ] )
         }
       }
    ] ;

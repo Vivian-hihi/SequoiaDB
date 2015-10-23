@@ -348,20 +348,9 @@ html,body{ width:100%; height:100%; /*overflow:hidden; */ }
 
 /* ----------------- 数据 - 预览 ----------------- */
 
-#DataList{ font-size:100%; }
-#DataList > div > div{ padding:15px; }
-#DataList > div .DataListBox{ background-color:#FFF; border:1px solid; border-left-width:5px; padding:10px; }
-#DataList > div .DataListBox .DataTitle > .ModuleName{ font-weight:bold; }
-#DataList > div .DataListBox .DataTitle > .ModuleType{ font-size:100%; }
-#DataList > div .DataListBox .DataTitle > .status{ font-size:100%; }
-#DataList > div .DataListBox .DataSubTitle{ padding:8px 0 0 10px; height:20px; }
-#DataList > div .DataListBox .DataOther > p{ margin:0; padding:0; }
-#DataList > div .green{ border-color:#02CCAA; }
-#DataList > div .violet{ border-color:#A47FAE; }
-#DataList > div .yellow{ border-color:#DA9528; }
-#DataList > div .blue{ border-color:#159FDA; }
-#DataList .DataRecordChart{ height:220px; }
-#DataList .DataDatabaseChart{ height:180px; width:210px; padding:0; }
+#ModuleBox{ font-size:100%; }
+.DataRecordChart{ height:220px; }
+.DataDatabaseChart{ height:180px; width:210px; padding:0; }
 
 /* ----------------- 数据 - 集合空间 ----------------- */
 
@@ -379,7 +368,7 @@ html,body{ width:100%; height:100%; /*overflow:hidden; */ }
 .Grid .GridTr{ +zoom:1; }
 .Grid .GridTd{ float:left; text-align:left; border:1px solid #E3E7E8; border-top:0px; border-left:0px; padding:6px; }
 .Grid > .GridHeader{ position:absolute; }
-.Grid > .GridHeader > .GridTr > .GridTd{ background-color:#F1F4F5; font-size:95%; font-weight:bold; cursor:pointer; white-space:nowrap; height:19px; }
+.Grid > .GridHeader > .GridTr > .GridTd{ background-color:#F1F4F5; font-size:95%; font-weight:bold; white-space:nowrap; height:19px; }
 .Grid > .GridBody{ margin-top:32px; }
 .GridTool{ height:30px; width:100%; background:#E7E7E7; -moz-user-select:none; -webkit-user-select:none; -ms-user-select:none; -khtml-user-select:none; user-select:none; }
 .GridTool > .ToolLeft{ margin-left:10px; font-size:90%; float:left; line-height:30px; }
@@ -535,8 +524,9 @@ button,select,input,textarea{ outline:none; }
 .confirm{ width:450px; height:160px; box-shadow: 0px 2px 8px rgba(0,0,0,0.5); border:none; background:#FFF;   position: absolute; z-index: 10001; }
 .confirm > .body{ padding:25px 15px 0px 30px; height:90px; }
 .confirm > .body > div > .contentTitle{ font-size:120%; font-weight:bold; color:#575757; padding-bottom:10px; }
-.confirm > .body > div > .contentText{ font-size:100%; color:#969696; }
+.confirm > .body > div > .contentText{ font-size:100%; color:#555; }
 .confirm > .body > div > div > .contentWarning{ padding-right:15px; float:left; color:#D9534F; font-size:300%; }
+.confirm > .body > div > div > .contentSuccess{ padding-right:15px; float:left; color:#09D1A4; font-size:300%; }
 .confirm > .foot{ text-align:right; padding-right:15px; } 
 .confirm > .foot > .confirmOk{ min-width:60px; height:28px; border-radius:1px;border:solid 1px #F06464; background:#F06464; margin-right:10px; }
 .confirm > .foot > .confirmClose{ min-width:60px; height:28px; border-radius:1px; }
@@ -558,3 +548,16 @@ button,select,input,textarea{ outline:none; }
 .underlineTab > ul.right > li{ float:right; border-top:3px solid #FFF; border-bottom:1px solid #DDD; padding:5px 20px; height:20px; }
 .underlineTab > ul.right > li.active{ border:1px solid #DDD; border-top:3px solid #00B8E6; border-bottom:1px solid #FFF; }
 .underlineTab > ul.right > li.text{ float:left; padding:5px 0; }
+
+/* 自动响应的多彩框 */
+.DataListBox{ background-color:#FFF; border:1px solid; border-left-width:5px; padding:10px; }
+.DataListBox .DataTitle > .ModuleName{ font-weight:bold; }
+.DataListBox .DataTitle > .ModuleType{ font-size:100%; }
+.DataListBox .DataTitle > .status{ font-size:100%; }
+.DataListBox .DataSubTitle{ padding:8px 0 0 10px; height:20px; }
+.DataListBox .DataSubTitle{ padding:8px 0 0 10px; height:20px; }
+.DataListBox .DataOther > p{ margin:0; padding:0; }
+.DataListBox.green{ border-color:#02CCAA; }
+.DataListBox.violet{ border-color:#A47FAE; }
+.DataListBox.yellow{ border-color:#DA9528; }
+.DataListBox.blue{ border-color:#159FDA; }

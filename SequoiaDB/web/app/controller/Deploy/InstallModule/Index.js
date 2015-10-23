@@ -4,6 +4,7 @@
    sacApp.controllerProvider.register( 'Data.Overview.Index.Ctrl', function( $scope, $location, SdbRest, SdbFunction, InheritSize ){
       $scope.selectCluster( function( clusterName ){
          SdbFunction.LocalData( 'SdbClusterName', clusterName ) ;
+         InheritSize.append( $( '#ModuleBox' ) ) ;
          //业务模板列表
          $scope.moduleTemplate = [] ;
          $scope.lastRecord = [] ;

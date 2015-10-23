@@ -5,8 +5,9 @@
          <li ng-repeat="selectLi in inputInfo.selectList | filter: inputInfo.value | limitTo: 3 track by $index" ng-click="inputInfo.value=selectLi;inputInfo.showMenu=false;">{{selectLi}}</li>
       </ul>
    </div>
+   <input ng-switch-when="password" type="password" class="form-control" data-desc="{{inputInfo.error}}" ng-class="{true:'alert-danger'}[inputInfo.error.length > 0]" ng-model="inputInfo.value">
    <input ng-switch-when="int" type="text" class="form-control" data-desc="{{inputInfo.error}}" ng-class="{true:'alert-danger'}[inputInfo.error.length > 0]" placeholder="{{inputInfo.placeholder}}" ng-model="inputInfo.value">
-   <select class="form-control" ng-switch-when="select" ng-change="onChange(inputInfo)" ng-model="inputInfo.value" ng-options="selectList.value as selectList.key for selectList in inputInfo.valid"></select>
+   <select class="form-control" ng-switch-when="select" ng-class="{true:'alert-danger'}[inputInfo.error.length > 0]" ng-change="onChange(inputInfo)" ng-model="inputInfo.value" ng-options="selectList.value as selectList.key for selectList in inputInfo.valid"></select>
    <div style="padding:0 0 0 20px;" ng-switch-when="group">
       <table class="table" style="margin:10px 0 0 0;" ng-repeat="childInfo in inputInfo.child track by $index">
          <tbody>

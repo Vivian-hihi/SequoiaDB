@@ -17,8 +17,7 @@
       }
 
       //发送请求
-      g._post = function( data, before, success, failed, error, complete, showLoading )
-      {
+      g._post = function( data, before, success, failed, error, complete, showLoading ){
          if( typeof( showLoading ) == 'undefined' ) showLoading = true ;
          if( showLoading )
          {
@@ -47,7 +46,7 @@
                else if( jsonArr[0]['errno'] === -62 && typeof( failed ) === 'function' )
                {
                   //session id 不存在
-                  failed( jsonArr[0] ) ;
+                  //failed( jsonArr[0] ) ;
                   window.location.href = './login.html#/Login' ;
                }
                else if( typeof( failed ) === 'function' )
@@ -103,19 +102,19 @@
       {
 	      var json_array = [] ;
 	      var i = 0, len = str.length ;
-	      var char, level, isEsc, isString, start, end, subStr, json ;
+	      var chars, level, isEsc, isString, start, end, subStr, json ;
 	      while( i < len )
 	      {
-		      while( i < len ){	char = str.charAt( i ) ;	if( char === '{' ){	break ;	}	++i ;	}
+		      while( i < len ){	chars = str.charAt( i ) ;	if( chars === '{' ){	break ;	}	++i ;	}
 		      level = 0, isEsc = false, isString = false, start = i ;
 		      while( i < len )
 		      {
-			      char = str.charAt( i ) ;
+			      chars = str.charAt( i ) ;
 			      if( isEsc ){	isEsc = false ;	}
 			      else
 			      {
-				      if( ( char === '{' || char === '[' ) && isString === false ){	++level ;	}
-				      else if( ( char === '}' || char === ']' ) && isString === false )
+				      if( ( chars === '{' || chars === '[' ) && isString === false ){	++level ;	}
+				      else if( ( chars === '}' || chars === ']' ) && isString === false )
 				      {
 					      --level ;
 					      if( level === 0 )
@@ -128,8 +127,8 @@
 						      break ;
 					      }
 				      }
-				      else if( char === '"' ){	isString = !isString ;	}
-				      else if( char === '\\' ){	isEsc = true ;	}
+				      else if( chars === '"' ){	isString = !isString ;	}
+				      else if( chars === '\\' ){	isEsc = true ;	}
 			      }
 			      ++i ;
 		      }
@@ -170,36 +169,17 @@
          }, 'json' ) ;
       }
 
-      g.listCluster = function( data, success, failed, error, complete )
-      {
-         var reData = [ 
-            { "ClusterName": "cluster_1", "Desc": "这是某某业务的集群", "SdbUser": "sdbadmin", "sdbPasswd": "sdbadmin", "SdbUserGroup": "sdbadmin_group", "InstallPath": "/opt/sequoiadb/" },
-            { "ClusterName": "cluster_2", "Desc": "这是某某业务的集群", "SdbUser": "sdbadmin", "sdbPasswd": "sdbadmin", "SdbUserGroup": "sdbadmin_group", "InstallPath": "/opt/sequoiadb/" },
-            { "ClusterName": "cluster_3", "Desc": "这是某某业务的集群", "SdbUser": "sdbadmin", "sdbPasswd": "sdbadmin", "SdbUserGroup": "sdbadmin_group", "InstallPath": "/opt/sequoiadb/" },
-            { "ClusterName": "cluster_4", "Desc": "这是某某业务的集群", "SdbUser": "sdbadmin", "sdbPasswd": "sdbadmin", "SdbUserGroup": "sdbadmin_group", "InstallPath": "/opt/sequoiadb/" }
-         ] ;
-         success( reData ) ;
-      }
-
-      g.QueryAllBusiness = function( data, success, failed, error, complete )
-      {
+      g.QueryAllBusiness = function( data, success, failed, error, complete ){
          g._postTest( './test/query_business', success, failed, error ) ;
       }
 
-      g.QueryCollection = function( data, success, failed, error, complete )
-      {
-         g._postTest( './test/list_cl', success, failed, error ) ;
-      }
-
       //om系统操作
-      g.OmOperation = function( data, success, failed, error, complete, showLoading )
-      {
+      g.OmOperation = function( data, success, failed, error, complete, showLoading ){
          g._post( data, null, success, failed, error, complete, showLoading ) ;
       }
 
       //数据操作
-      g.DataOperation = function( data, success, failed, error, complete )
-      {
+      g.DataOperation = function( data, success, failed, error, complete ){
          g._post( data, function( jqXHR ){
 	         var clusterName = SdbFunction.LocalData( 'SdbClusterName' ) ;
 	         if( clusterName !== null )
@@ -215,8 +195,7 @@
       }
 
       //SQL(自动获取cluster和module)
-      g.Exec = function( sql, success, failed, error, complete, showLoading )
-      {
+      g.Exec = function( sql, success, failed, error, complete, showLoading ){
          var data = { 'cmd': 'exec', 'sql': sql } ;
          g._post( data, function( jqXHR ){
 	         var clusterName = SdbFunction.LocalData( 'SdbClusterName' ) ;
@@ -233,8 +212,7 @@
       }
 
       //SQL(手工设置cluster和module)
-      g.Exec2 = function( clusterName, businessName, sql, success, failed, error, complete, showLoading )
-      {
+      g.Exec2 = function( clusterName, businessName, sql, success, failed, error, complete, showLoading ){
          var data = { 'cmd': 'exec', 'sql': sql } ;
          g._post( data, function( jqXHR ){
 	         if( clusterName !== null )
@@ -249,41 +227,27 @@
       }
 
       //登录
-      g.Login = function( username, password, success, failed, error, complete )
-      {
+      g.Login = function( username, password, success, failed, error, complete ){
          password = $.md5( password ) ;
          var timestamp = parseInt( ( new Date().getTime() ) / 1000 ) ;
 	      var data = { 'cmd' : 'login', 'user': username, 'passwd': password, 'Timestamp': timestamp } ;
          g._post( data, null, success, failed, error, complete, false ) ;
       }
 
-      g.QueryCS = function( data, success, failed, error, complete )
-      {
-         g._postTest( './test/query_cs', success, failed, error ) ;
+      //修改密码
+      g.ChangePasswd = function( username, password, newPassword, success, failed, error, complete ){
+         var timestamp = parseInt( ( new Date().getTime() ) / 1000 ) ;
+         password = $.md5( password ) ;
+         newPassword = $.md5( newPassword ) ;
+	      var data = { 'cmd' : 'change passwd', 'User': username, 'Passwd': password, 'Newpasswd': newPassword, 'Timestamp': timestamp } ;
+         g._post( data, null, success, failed, error, complete, false ) ;
       }
 
-      g.QueryCL = function( data, success, failed, error, complete )
-      {
-         g._postTest( './test/query_cl', success, failed, error ) ;
-      }
-
-      g.CheckSession = function( SessionID, success, failed, error, complete )
-      {
-         g._postTest( './test/check_session', success, failed, error ) ;
-      }
-
-      g.QueryIndexes = function( data, success, failed, error, complete )
-      {
+      g.QueryIndexes = function( data, success, failed, error, complete ){
          g._postTest( './test/query_index', success, failed, error ) ;
       }
 
-      g.QueryLob = function( data, success, failed, error, complete )
-      {
-         g._postTest( './test/query_lob', success, failed, error ) ;
-      }
-
-      g.getPing = function( complete )
-      {
+      g.getPing = function( complete ){
          var time1 = $.now() ;
          g.getFile( './app/language/test', true, function( text ){
             var time2 = $.now() ;

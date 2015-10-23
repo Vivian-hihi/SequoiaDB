@@ -1,7 +1,7 @@
 (function(){
    var sacApp = window.SdbSacManagerModule ;
    //全局模板
-   sacApp.controller( 'Index.Ctrl', function( $scope, $window, $rootScope, Tip, FormModal, SdbFunction, Loading ){
+   sacApp.controller( 'Index.Ctrl', function( $scope, $window, $rootScope, $location, Tip, SdbFunction, Loading, SdbRest ){
       //校验登录信息
       if( SdbFunction.LocalData( 'SdbUser' ) === null || SdbFunction.LocalData( 'SdbSessionID' ) === null )
 		{
@@ -32,22 +32,24 @@
       //-------- 全局函数 ---------
       //格式化
       $rootScope.sprintf = sprintf ;
+      //判断数组
+      $rootScope.isArray = isArray ;
       //语言控制
       $rootScope.autoLanguage = function( text ){
          return _IndexPublic.languageCtrl( $scope, text ) ;
       }
       //选择集群
-      $rootScope.selectCluster = function( selectEvent ){
-         _IndexPublic.createSelectClusterModel( $scope, selectEvent ) ;
+      $rootScope.selectCluster = function( main ){
+         _IndexPublic.createSelectClusterModel( $scope, SdbRest, SdbFunction, main ) ;
       }
       //选择业务
-      $rootScope.selcetModule = function( selectEvent ){
-         _IndexPublic.createSelectModuleModel( $scope, selectEvent ) ;
+      $rootScope.selcetModule = function( clusterName, main ){
+         _IndexPublic.createSelectModuleModel( $scope, $location, SdbRest, SdbFunction, clusterName, main ) ;
       }
    } ) ;
 
    //顶部
-   sacApp.controller( 'Index.Top.Ctrl', function( $scope, SdbRest ){
+   sacApp.controller( 'Index.Top.Ctrl', function( $scope, $location, SdbFunction, SdbRest ){
       $scope.Top = {} ;
       //给用户菜单创建一个遮罩
       var mask = $( '<div class="mask-screen unalpha"></div>' ).on( 'click', function(){
@@ -61,6 +63,14 @@
       $scope.Top.showUserMenu = function(){
          $( '#userMenu' ).show() ;
          mask.appendTo( document.body ) ;
+      }
+      //修改密码弹窗
+      $scope.showChangePasswd = function(){
+         _IndexTop.createPasswdModel( $scope, SdbRest ) ;
+      }
+      //登出
+      $scope.logout = function(){
+         _IndexTop.logout( $location, SdbFunction ) ;
       }
    } ) ;
    //左边
@@ -83,9 +93,62 @@
       var navMenu = [
          {
             'text': $scope.autoLanguage( '部署' ),
-            'module': 'Deploy',
+            'module': 'Deploy2',
             'icon': 'fa-share-alt',
             'action': '/deployment/index.html'
+         },
+         {
+            'text': $scope.autoLanguage( '主页' ),
+            'module': 'Index',
+            'icon': 'fa-home',
+            'list': [
+               {
+                  'title': $scope.autoLanguage( '集群管理' ),
+                  'list': [
+                     {
+                        'text': $scope.autoLanguage( '集群预览' ),
+                        'action': 'Index'
+                     }
+                  ]
+               }
+            ]
+         },
+         {
+            'text': $scope.autoLanguage( '部署' ),
+            'module': 'Deploy',
+            'icon': 'fa-share-alt',
+            'list': [
+               {
+                  'title': $scope.autoLanguage( '主机' ),
+                  'list': [
+                     {
+                        'text': $scope.autoLanguage( '添加主机' ),
+                        'action': 'AddHost'
+                     },
+                     {
+                        'text': $scope.autoLanguage( '发现主机' ),
+                        'action': 'FindHost'
+                     }
+                  ]
+               },
+               {
+                  'title': $scope.autoLanguage( '业务' ),
+                  'list': [
+                     {
+                        'text': $scope.autoLanguage( '安装业务' ),
+                        'action': 'InstallModule'
+                     },
+                     {
+                        'text': $scope.autoLanguage( '发现业务' ),
+                        'action': 'FindModule'
+                     },
+                     {
+                        'text': $scope.autoLanguage( '测试业务' ),
+                        'action': 'TestModule'
+                     }
+                  ]
+               }
+            ]
          },
          {
             'text': $scope.autoLanguage( '监控' ),

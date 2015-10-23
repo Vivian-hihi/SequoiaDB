@@ -5,7 +5,21 @@
       //默认语言
       if( SdbFunction.LocalData( 'SdbLanguage' ) == null )
       {
-         SdbFunction.LocalData( 'SdbLanguage', 'zh-CN' ) ;
+	      var language = navigator.userLanguage ;
+	      if( typeof( language ) === 'undefined' )
+	      {
+		      language = navigator.language ;
+	      }
+	      language = language.substr( 0, 2 ) ;
+	      if( language === 'zh' )
+	      {
+		      language = 'zh-CN' ;
+	      }
+	      if( typeof( language ) === 'undefined' || language === 'undefined' )
+	      {
+		      language = 'en' ;
+	      }
+	      SdbFunction.LocalData( 'SdbLanguage', language ) ;
       }
       //获取语言
       $scope.Language = SdbFunction.LocalData( 'SdbLanguage' ) ;
@@ -41,12 +55,6 @@
 		      SdbFunction.LocalData( 'SdbSessionID', id ) ;
 		      SdbFunction.LocalData( 'SdbUser', $scope.username ) ;
 		      window.location.href = '/deployment/index.html' ;
-
-            //var sql = 'SELECT T1.FullName, T1.IsMainCL, T1.MainCLName, T1.ShardingType, T1.Details.TotalRecord, T1.Details.Indexes AS TotalIndexes FROM (SELECT * FROM $SNAPSHOT_CL split BY Details) AS T1' ;
-            //获取集合列表
-            //SdbRest.Exec( sql, function( data ){}, function( errorInfo ){}, function(){} ) ;
-
-
 	      }, function( errorInfo ){
             $scope.result = errorInfo['detail'] ;
 	      }, function( XMLHttpRequest, textStatus, errorThrown ){

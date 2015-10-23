@@ -1,16 +1,16 @@
 (function(){
    var sacApp = window.SdbSacManagerModule ;
    var GridId ;
-   sacApp.controllerProvider.register( 'Data.Lob.Lobs.Ctrl', function( $scope, $compile, SdbRest, InheritSize, SdbFunction, FormModal){
+   sacApp.controllerProvider.register( 'Data.Lob.Lobs.Ctrl', function( $scope, $compile, $location, SdbRest, InheritSize, SdbFunction, FormModal){
       var clusterName = SdbFunction.LocalData( 'SdbClusterName' ) ;
       var moduleName = SdbFunction.LocalData( 'SdbModuleName' ) ;
       var csName = SdbFunction.LocalData( 'SdbCsName' ) ;
       var clName = SdbFunction.LocalData( 'SdbClName' ) ;
-      var fullName = csName + '.' + clName ;
+      var clType = SdbFunction.LocalData( 'SdbClType' ) ;
       printfDebug( 'Cluster: ' + clusterName + ', Module: ' + moduleName + ', cs: ' + csName + ', cl: ' + clName ) ;
-      if( clusterName == null || moduleName == null || csName == null || clName == null )
+      if( clusterName == null || moduleName == null || csName == null || clName == null || clType == 'main' )
       {
-         $location.path( 'Data/Lob/Index' ) ;
+         $location.path( 'Data/Operate/Index' ) ;
          return;
       }
 
@@ -23,255 +23,63 @@
          InheritSize.append( ele ) ;
       } ) ;
 
+      //cs.cl
       $scope.fullName = csName + '.' + clName ;
-
-      //初始化
-      var isNotFilter = true ;
-      var limit = 30 ;
-      var lobContent = [] ;
+      //是否非条件查询
+      $scope.isNotFilter = true ;
+      //每页显示的记录数
+      $scope.limit = 30 ;
+      //Lob集合
+      $scope.lobContent = [] ;
+      //当前显示页
       $scope.setCurrent = 1 ;
       $scope.current = 1 ;
+      //总页数
       $scope.total = 0 ;
+      //总记录数描述
+      $scope.recordTotal = '' ;
 
       //上一页
-      $scope.previous = function()
-      {
-         --$scope.current ;
-         $scope.setCurrent = $scope.current ;
-         showPage( $scope.current ) ;
+      $scope.previous = function(){
+         _DataOperateLob.previous( $scope, $compile, SdbFunction ) ;
       }
-      //检查输入的页数格式
-      $scope.checkCurrent = function()
-      {
-         if( $scope.setCurrent.length == 0 )
-         {
-            $scope.setCurrent = 1 ;
-         }
-         else if( isNaN( $scope.setCurrent ) || parseInt( $scope.setCurrent ) != $scope.setCurrent )
-         {
-            $scope.setCurrent = parseInt( $scope.setCurrent ) ;
-            if( isNaN( $scope.setCurrent ) )
-            {
-               $scope.setCurrent = 1 ;
-            }
-         }
-         else if( $scope.setCurrent > $scope.total )
-         {
-            $scope.setCurrent = $scope.total ;
-         }
-      }
-      //跳转到指定页
-      $scope.gotoPate = function( event )
-      {
-         if( event.keyCode == 13 )
-         {
-            $scope.current = $scope.setCurrent ;
-            showPage( $scope.current ) ;
-         }
-      }
+
       //下一页
-      $scope.nextPage = function()
-      {
-         ++$scope.current ;
-         $scope.setCurrent = $scope.current ;
-         showPage( $scope.current ) ;
+      $scope.nextPage = function(){
+         _DataOperateLob.nextPage( $scope, $compile, SdbFunction ) ;
       }
 
-      function showPage( pageNum )
-      {
-         var newLobs = [] ;
-         var startOfNum = limit * ( pageNum - 1 ) ;
-         var endOfNum = limit * pageNum ;
-         var start = 0 ;
-         var end = 0 ;
-         endOfNum = ( endOfNum > lobContent.length ? lobContent.length : endOfNum ) ;
-         for( var i = startOfNum; i < endOfNum ; ++i )
-         {
-            newLobs.push( lobContent[i] ) ;
-         }
-         if( newLobs.length > 0 )
-         {
-            start = startOfNum + 1 ;
-            end = endOfNum ;
-         }
-         queryLobs( newLobs, start, end ) ;
+      //检查输入的页数格式
+      $scope.checkCurrent = function(){
+         _DataOperateLob.checkCurrent( $scope ) ;
       }
 
-      function queryLobs( lobs, start, end )
-      {
-         $scope.execResult = sprintf( $scope.autoLanguage( '? ? 执行查询成功，显示 ? - ?，总计 ? 条记录' ), timeFormat( new Date(), 'hh:mm:ss' ), fullName, start, end, lobs.length ) ;
-         $scope.execRc = true ;
-         var gridData = {
-            'title': [],
-            'body': [],
-            'tool':{
-               'position': 'bottom',
-               'left':
-                  []
-            },
-            'options': {
-               'order': { 'active': true },
-               'grid': { 'tool': true, titleWidth: [ '60px', '75px', '250px', 40, 30, 30 ] } 
-            }
-         } ;
-         if( isNotFilter )
-         {
-            gridData.tool.left.push( { 'html': $compile( '<i class="fa fa-play fa-flip-horizontal" ng-show="current > 1" ng-click="previous()"></i>' )( $scope ) } ) ;
-            gridData.tool.left.push( { 'html': $compile( '<input style="width:100px;" ng-change="checkCurrent()" ng-model="setCurrent" ng-keypress="gotoPate($event)">' )( $scope ) } ) ;
-            gridData.tool.left.push( { 'html': $compile( '<span>/<span>' )( $scope ) } ) ;
-            gridData.tool.left.push( { 'html': $compile( '<span ng-bind="total"></span>' )( $scope ) } ) ;
-            gridData.tool.left.push( { 'html': $compile( '<i class="fa fa-play" ng-click="nextPage()"></i>' )( $scope ) } ) ;
-         }
-         var keyList = [ '', '', 'Oid', 'CreateTime' ] ;
-         $.each( lobs, function( index, record ){
-             keyList = SdbFunction.getJsonKeys( record, 6, keyList ) ;
-         } ) ;
-         $.each( keyList, function( index, key ){
-            gridData['title'].push( { 'text': key } );
-         } ) ;
-         $.each( lobs, function( index, record ){
-            var id = index + 1 ;
-            var line = SdbFunction.getJsonValues( record, keyList, [] ) ;
-            var newRow = [] ;
-            newRow[0] = { 'text': id } ;
-            //构造一个删除按钮
-            var removeIcon = $( '<i></i>' ).addClass( 'fa fa-remove' ).text( ' ' + $scope.autoLanguage( '删除' ) ) ;
-            var removeBtn = $compile( '<a ng-click="LobDelete(' + ( index + start - 1 ) + ')"></div>' )( $scope ).addClass( 'linkButton' ).append( removeIcon ) ;
-            newRow[1] = { 'html': removeBtn } ;
-            newRow[2] = { 'html': $compile( '<a ng-click="LobContent(' + index + ')"></a>' )( $scope ).addClass( 'linkButton' ).text( line[2] ) } ;
-            newRow[3] = { 'text': line[3] } ;
-            newRow[4] = { 'text': line[4] } ;
-            newRow[5] = { 'text': line[5] } ;
-            gridData['body'].push( newRow ) ;
-         } ) ;
-         $scope.lobGridData = gridData ;
+      //跳转到指定页
+      $scope.gotoPate = function( event ){
+         _DataOperateLob.gotoPate( $scope, $compile, SdbFunction, event ) ;
       }
 
-      //Lob查询所有
-      $scope.queryAll = function()
-      {
-         var data = { 'cmd': 'list lobs', 'name': csName + '.' + clName } ;
-         SdbRest.DataOperation( data, function( records ){
-            lobContent = records ;
-            $scope.total = parseInt( lobContent.length / limit ) ;
-            if( lobContent.length % limit > 0 )
-            {
-               ++$scope.total ;
-            }
-            $scope.setCurrent = 1 ;
-            $scope.current = 1 ;
-            showPage( 1 ) ;
-         }, function( errorInfo ){
-            $scope.execResult = sprintf( $scope.autoLanguage( '? ? 执行查询失败，错误码: ?，?. ?' ), timeFormat( new Date(), 'hh:mm:ss' ), fullName, errorInfo['errno'], errorInfo['description'], errorInfo['detail'] ) ;
-               $scope.execRc = false ;
-         }, function(){
-            _IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
-         } ) ;
+      //查询所有Lob
+      $scope.queryAll = function(){
+         _DataOperateLob.queryAll( $scope, $compile, SdbFunction, SdbRest ) ;
       }
-      $scope.queryAll() ;
-
+    
       //删除Lob记录
       $scope.LobDelete = function( index ){
-         var oid = lobContent[index]['Oid']['$oid'] ;
-         $scope.Components.Confirm.isShow = true ;
-         $scope.Components.Confirm.type = 1 ;
-         $scope.Components.Confirm.okText = $scope.autoLanguage( '是的，删除' ) ;
-         $scope.Components.Confirm.closeText = $scope.autoLanguage( '取消' ) ;
-         $scope.Components.Confirm.title = $scope.autoLanguage( '要删除这条记录吗？' ) ;
-         $scope.Components.Confirm.context = 'Oid : ' + oid ;
-         $scope.Components.Confirm.ok = function(){
-            var data = { 'cmd': 'delete lob', 'name': fullName, 'oid': oid } ;
-            SdbRest.DataOperation( data, function( json ){
-               $scope.execResult = sprintf( $scope.autoLanguage( '? ? 删除成功' ), timeFormat( new Date(), 'hh:mm:ss' ), fullName ) ;
-               $scope.execRc = true ;
-               $scope.queryAll() ;
-               showPage( $scope.current ) ;
-            }, function( errorInfo ){
-               $scope.execResult = sprintf( $scope.autoLanguage( '? ? 删除失败，错误码: ?，?. ?' ), timeFormat( new Date(), 'hh:mm:ss' ), fullName, errorInfo['errno'], errorInfo['description'], errorInfo['detail'] ) ;
-               $scope.execRc = false ;
-            }, function(){
-               _IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
-            }, function(){
-               //关闭弹窗
-               $scope.Components.Modal.isShow = false ;
-               $scope.$apply() ;
-            } ) ;
-            $scope.Components.Confirm.isShow = false ;
-         }
+         _DataOperateLob.LobDelete( $scope, SdbRest, index ) ;
       }
 
-      //查找lob
+      //查询lob
       $scope.LobQuery = function(){
-         $scope.Components.Modal.icon = 'fa-search' ;
-         $scope.Components.Modal.title = $scope.autoLanguage( 'Lob查询' ) ;
-         $scope.Components.Modal.isShow = true ;
-         $scope.Components.Modal.form = {
-            inputList: [
-               {
-                  "name": "oid",
-                  "webName": "Lob Oid",
-                  "required": true,
-                  "type": "string",
-                  "value": "",
-                  "valid": {
-                     "min": 24,
-                     "max": 24
-                  }
-               }
-            ]
-         } ;
-         $scope.Components.Modal.Context = '<div form-create para="data.form"></div>' ;
-         $scope.Components.Modal.ok = function( data ){
-            var isAllClear = $scope.Components.Modal.form.check() ;
-            if( isAllClear )
-            {
-               var newLobs = [] ;
-               var value = $scope.Components.Modal.form.getValue() ;
-               $.each( lobContent, function( index, lobInfo ){
-                  if( lobInfo['Oid']['$oid'] == value['oid'] )
-                  {
-                     newLobs = [ lobInfo ] ;
-                     return false ;
-                  }
-               } ) ;
-               if( newLobs.length > 0 )
-               {
-                  queryLobs( newLobs, 1, 1 ) ;
-               }
-               else
-               {
-                  queryLobs( newLobs, 0, 0 ) ;
-               }
-            }
-            return isAllClear ;
-         } 
+         _DataOperateLob.LobQuery( $scope, $compile, SdbFunction ) ;
       }
       
-      
-      $scope.LobContent = function( index ){
-         var records = lobContent[index] ;
-         $scope.Components.Modal.icon = '' ;
-         $scope.Components.Modal.title = $scope.autoLanguage( 'Lob信息' ) ;
-         $scope.Components.Modal.isShow = true ;
-         $scope.Components.Modal.Grid = lobContent[index] ;
-         $scope.Components.Modal.Context = '\
-<table class="table loosen border">\
-<tr>\
-   <td style="width:40%;background-color:#F1F4F5;"><b>Key</b></td>\
-   <td style="width:60%;background-color:#F1F4F5;"><b>Value</b></td>\
-</tr>\
-<tr ng-repeat="(key, value) in data.Grid track by $index" ng-if="key == \'Oid\'">\
-   <td>Oid</td>\
-   <td>{{value[\'$oid\']}}</td>\
-</tr>\
-<tr ng-repeat="(key, value) in data.Grid track by $index" ng-if="key != \'Oid\'">\
-   <td>{{key}}</td>\
-   <td ng-if="key != \'CreateTime\'">{{value}}</td>\
-   <td ng-if="key == \'CreateTime\'">{{value[\'$timestamp\']}}</td>\
-</tr>\
-</table>' ;
-         $scope.Components.Modal.noOK = true ;
+      //显示lob的详细信息
+      $scope.showLobInfo = function( index ){
+         _DataOperateLob.showLobInfo( $scope, index ) ;
       }
 
+      //查询所有Lob
+      _DataOperateLob.queryAll( $scope, $compile, SdbFunction, SdbRest ) ;
    } ) ;
 }()) ;
