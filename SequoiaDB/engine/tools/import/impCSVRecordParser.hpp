@@ -192,6 +192,7 @@ namespace import
                       const string& stringDelimiter,
                       const string& dateFormat,
                       const string& timestampFormat,
+                      STR_TRIM_TYPE stringTrimType,
                       BOOLEAN autoAddField,
                       BOOLEAN autoAddValue,
                       BOOLEAN hasHeaderLine,

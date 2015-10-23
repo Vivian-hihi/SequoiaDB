@@ -77,6 +77,7 @@ namespace import
    #define IMP_OPTION_CAST              "cast"
    #define IMP_OPTION_DATEFMT           "datefmt"
    #define IMP_OPTION_TIMESTAMPFMT      "timestampfmt"
+   #define IMP_OPTION_TRIMSTRING        "trim"
 
    #define IMP_EXPLAIN_HELP             "print help information"
    #define IMP_EXPLAIN_VERSION          "print version"
@@ -115,12 +116,21 @@ namespace import
    #define IMP_EXPLAIN_CAST             "allow type cast when lost precision, default: false"
    #define IMP_EXPLAIN_DATEFMT          "set date format, default: YYYY-MM-DD"
    #define IMP_EXPLAIN_TIMESTAMPFMT     "set timestamp format, default: YYYY-MM-DD-HH.mm.ss.ffffff"
+   #define IMP_EXPLAIN_TRIMSTRING       "trim string (arg: [no|right|left|both]), default: no"
 
    #define _TYPE(T) po::value<T>()
 
    #define IMP_DEFAULT_HOSTNAME "localhost"
    #define IMP_DEFAULT_SVCNAME  "11810"
    #define IMP_DEFAULT_HOST     "localhost:11810"
+
+   #define IMP_STR_TRIM_NO    "no"
+   #define IMP_STR_TRIM_RIGHT "right"
+   #define IMP_STR_TRIM_LEFT  "left"
+   #define IMP_STR_TRIM_BOTH  "both"
+
+   #define IMP_STR_TRIM_TYPE_EQ(str, type) \
+      ((sizeof(type) - 1) == str.length() && ossStrncasecmp(str.c_str(), type, str.length()) == 0)
 
    #define IMP_GENERAL_OPTIONS \
       (IMP_OPTION_HELP",h",             /* no arg */     IMP_EXPLAIN_HELP) \
@@ -157,6 +167,7 @@ namespace import
       (IMP_OPTION_FIELDS,              _TYPE(string),    IMP_EXPLAIN_FIELDS) \
       (IMP_OPTION_DATEFMT,             _TYPE(string),    IMP_EXPLAIN_DATEFMT) \
       (IMP_OPTION_TIMESTAMPFMT,        _TYPE(string),    IMP_EXPLAIN_TIMESTAMPFMT) \
+      (IMP_OPTION_TRIMSTRING,          _TYPE(string),    IMP_EXPLAIN_TRIMSTRING) \
       (IMP_OPTION_HEADERLINE,          _TYPE(string),    IMP_EXPLAIN_HEADERLINE) \
       (IMP_OPTION_SPARSE,              _TYPE(string),    IMP_EXPLAIN_SPARSE) \
       (IMP_OPTION_EXTRA,               _TYPE(string),    IMP_EXPLAIN_EXTRA) \
@@ -467,6 +478,7 @@ namespace import
       _fieldDelimiter = ",";
       _dateFormat = "YYYY-MM-DD";
       _timestampFormat = "YYYY-MM-DD-HH.mm.ss.ffffff";
+      _trimString = STR_TRIM_NO;
       _hasHeaderLine = FALSE;
       _autoAddField = TRUE;
       _autoCompletion = FALSE;
@@ -935,6 +947,34 @@ namespace import
          }
 
          _timestampFormat = tsfmt;
+      }
+
+      if (has(IMP_OPTION_TRIMSTRING))
+      {
+         string trim = get<string>(IMP_OPTION_TRIMSTRING);
+         if (IMP_STR_TRIM_TYPE_EQ(trim, IMP_STR_TRIM_NO))
+         {
+            _trimString = STR_TRIM_NO;
+         }
+         else if (IMP_STR_TRIM_TYPE_EQ(trim, IMP_STR_TRIM_RIGHT))
+         {
+            _trimString = STR_TRIM_RIGHT;
+         }
+         else if (IMP_STR_TRIM_TYPE_EQ(trim, IMP_STR_TRIM_LEFT))
+         {
+            _trimString = STR_TRIM_LEFT;
+         }
+         else if (IMP_STR_TRIM_TYPE_EQ(trim, IMP_STR_TRIM_BOTH))
+         {
+            _trimString = STR_TRIM_BOTH;
+         }
+         else
+         {
+            std::cerr << "invalid " << IMP_OPTION_TRIMSTRING
+                      << std::endl;
+            rc = SDB_INVALIDARG;
+            goto error;
+         }
       }
 
       if (has(IMP_OPTION_BUFFERSIZE))

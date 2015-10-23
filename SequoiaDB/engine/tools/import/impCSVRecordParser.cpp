@@ -138,6 +138,7 @@ namespace import
 
    static string  _dateFormat;
    static string  _timestampFormat;
+   static STR_TRIM_TYPE _stringTrimType = STR_TRIM_NO;
    static BOOLEAN _cast = FALSE;
 
    static inline BOOLEAN _startWith(const CHAR* data, INT32 dataLen,
@@ -1622,6 +1623,77 @@ namespace import
       goto done;
    }
 
+   static inline void _trimLeft(CHAR*& str, INT32& length)
+   {
+      CHAR* head = str;
+      INT32 len = length;
+
+      SDB_ASSERT(NULL != str, "str can't be NULL");
+
+      while (len > 0)
+      {
+         if (' ' != *head)
+         {
+            break;
+         }
+
+         head++;
+         len--;
+      }
+
+      str = head;
+      length = len;
+   }
+
+   static inline void _trimRight(CHAR*& str, INT32& length)
+   {
+      CHAR* tail = str + length - 1;
+      INT32 len = length;
+
+      SDB_ASSERT(NULL != str, "str can't be NULL");
+
+      while (len > 0)
+      {
+         if (' ' != *tail)
+         {
+            break;
+         }
+
+         tail--;
+         len--;
+      }
+
+      length = len;
+   }
+
+   static inline void _trimString(CSVString& value, STR_TRIM_TYPE trimType)
+   {
+      SDB_ASSERT(NULL != value.str, "CSVString.str can't be NULL");
+
+      if (0 == value.length)
+      {
+         return;
+      }
+
+      switch (trimType)
+      {
+      case STR_TRIM_NO:
+         break;
+      case STR_TRIM_RIGHT:
+         _trimRight(value.str, value.length);
+         break;
+      case STR_TRIM_LEFT:
+         _trimLeft(value.str, value.length);
+         break;
+      case STR_TRIM_BOTH:
+         _trimRight(value.str, value.length);
+         _trimLeft(value.str, value.length);
+         break;
+      default:
+         SDB_ASSERT(FALSE, "invalid trim type");
+      }
+   }
+
    // support INT/LONG/DOUBLE/BOOL/NULL/STRING
    static inline INT32 _detectFieldType(const CHAR* data, INT32 length,
                                         const CHAR* strDel, INT32 strDelLen,
@@ -1697,6 +1769,11 @@ namespace import
          {
             goto error;
          }
+      }
+
+      if (STR_TRIM_NO != _stringTrimType)
+      {
+         _trimString(fieldValue.strVal, _stringTrimType);
       }
 
    done:
@@ -2619,6 +2696,10 @@ namespace import
                goto error;
             }
          }
+         if (STR_TRIM_NO != _stringTrimType)
+         {
+            _trimString(fieldValue.strVal, _stringTrimType);
+         }
          goto done;
       case CSV_TYPE_TIMESTAMP:
          rc = _stringToString(data, length, strDel, strDelLen, fieldDel,
@@ -3090,6 +3171,7 @@ namespace import
                                     const string& stringDelimiter,
                                     const string& dateFormat,
                                     const string& timestampFormat,
+                                    STR_TRIM_TYPE stringTrimType,
                                     BOOLEAN autoAddField,
                                     BOOLEAN autoAddValue,
                                     BOOLEAN hasHeaderLine,
@@ -3103,6 +3185,7 @@ namespace import
       _hasId = FALSE;
       _dateFormat = dateFormat;
       _timestampFormat = timestampFormat;
+      _stringTrimType = stringTrimType;
       _cast = cast;
    }
 

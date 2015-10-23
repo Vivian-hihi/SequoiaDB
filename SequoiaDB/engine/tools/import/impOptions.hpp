@@ -55,6 +55,14 @@ namespace import
       FORMAT_JSON
    };
 
+   enum STR_TRIM_TYPE
+   {
+      STR_TRIM_NO = 0,
+      STR_TRIM_RIGHT,
+      STR_TRIM_LEFT,
+      STR_TRIM_BOTH
+   };
+
    class Options: public SDBObject
    {
    public:
@@ -102,6 +110,7 @@ namespace import
       inline const string& fields() const { return _fields; }
       inline const string& dateFormat() const { return _dateFormat; }
       inline const string& timestampFormat() const { return _timestampFormat; }
+      inline const STR_TRIM_TYPE trimString() const { return _trimString; }
       inline BOOLEAN hasHeaderLine() const { return _hasHeaderLine; }
       inline BOOLEAN autoAddField() const { return _autoAddField; }
       inline BOOLEAN autoCompletion() const { return _autoCompletion; }
@@ -161,6 +170,7 @@ namespace import
       string         _fields;
       string         _dateFormat;
       string         _timestampFormat;
+      STR_TRIM_TYPE  _trimString;
       BOOLEAN        _hasHeaderLine;
       BOOLEAN        _autoAddField;
       BOOLEAN        _autoCompletion;

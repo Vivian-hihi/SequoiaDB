@@ -59,6 +59,7 @@ namespace import
                                         options.stringDelimiter(),
                                         options.dateFormat(),
                                         options.timestampFormat(),
+                                        options.trimString(),
                                         options.autoAddField(),
                                         options.autoCompletion(),
                                         options.hasHeaderLine(),
