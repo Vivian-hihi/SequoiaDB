@@ -234,7 +234,7 @@ static INT32 _ossEnumFiles( const string &dirPath,
    catch( std::exception &e )
    {
       PD_LOG( PDERROR, "Occur exception: %s", e.what() ) ;
-      rc = SDB_SYS ;
+      rc = SDB_PERM ;
       goto error ;
    }
 
