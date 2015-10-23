@@ -92,6 +92,14 @@ namespace engine
       {
          return TRUE;
       }
+      else if ( _recordExtentID > rhs._recordExtentID )
+      {
+         return FALSE;
+      }
+      if ( _recordOffset < rhs._recordOffset )
+      {
+         return TRUE;
+      }
       return FALSE;
    }
 
