@@ -801,6 +801,8 @@ namespace engine
          { CMD_NAME_DROP_COLLECTION,
                                  &RestToMSGTransfer::_convertDropCL },
          { CMD_NAME_SPLIT,       &RestToMSGTransfer::_convertSplit },
+         { REST_CMD_NAME_ATTACH_COLLECTION, 
+                                 &RestToMSGTransfer::_coverAttachCollection },
          { CMD_NAME_ALTER_COLLECTION,  
                                  &RestToMSGTransfer::_convertAlterCollection },
          { CMD_NAME_GET_COUNT,   &RestToMSGTransfer::_convertGetCount },
@@ -1919,6 +1921,104 @@ namespace engine
                        << FIELD_NAME_SPLITENDQUERY << splitEndQuery
                        << FIELD_NAME_ASYNC << bAsync ) ;
       }
+
+      rc = msgBuildQueryMsg( &pBuff, &buffSize, pCommand, 0, 0, 0, -1, &query, 
+                             NULL, NULL, NULL ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG_MSG( PDERROR, "build command failed:command=%s, rc=%d", 
+                     pCommand, rc ) ;
+         goto error ;
+      }
+
+      *msg = ( MsgHeader * )pBuff ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 RestToMSGTransfer::_coverAttachCollection( restAdaptor *pAdaptor,
+                                                    MsgHeader **msg )
+   {
+      INT32 rc                = SDB_OK ;
+      CHAR *pBuff             = NULL ;
+      INT32 buffSize          = 0 ;
+      const CHAR *pCommand    = CMD_ADMIN_PREFIX CMD_NAME_LINK_CL ;
+      const CHAR *pLowbound   = NULL ;
+      const CHAR *pUpbound    = NULL ;
+      const CHAR *pCollection = NULL ;
+      const CHAR *pSubCLName  = NULL ;
+      BSONObj lowbound ;
+      BSONObj upbound ;
+      BSONObj query ;
+
+      // collection name
+      pAdaptor->getQuery( _restSession, FIELD_NAME_NAME, &pCollection ) ;
+      if ( NULL == pCollection )
+      {
+         pAdaptor->getQuery( _restSession, REST_KEY_NAME_COLLECTION, 
+                             &pCollection ) ;
+         if ( NULL == pCollection )
+         {
+            rc = SDB_INVALIDARG ;
+            PD_LOG_MSG( PDERROR, "get collection's %s[or %s] failed", 
+                        FIELD_NAME_NAME, REST_KEY_NAME_COLLECTION ) ;
+            goto error ;
+         }
+      }
+
+      // subcl name
+      pAdaptor->getQuery( _restSession, REST_KEY_SUBCLNAME, &pSubCLName ) ;
+      if ( NULL == pSubCLName )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG_MSG( PDERROR, "get rest field[%s] failed", 
+                     REST_KEY_SUBCLNAME ) ;
+         goto error ;
+      }
+
+      // lowbound
+      pAdaptor->getQuery( _restSession, REST_KEY_NAME_LOWBOUND, &pLowbound ) ;
+      if ( NULL == pLowbound )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG_MSG( PDERROR, "get rest field[%s] failed", 
+                     REST_KEY_NAME_LOWBOUND ) ;
+         goto error ;
+      }
+
+      rc = fromjson( pLowbound, lowbound ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG_MSG( PDERROR, "field's format error:field=%s, value=%s", 
+                     REST_KEY_NAME_LOWBOUND, pLowbound ) ;
+         goto error ;
+      }
+
+      // upbound
+      pAdaptor->getQuery( _restSession, REST_KEY_NAME_UPBOUND, &pUpbound ) ;
+      if ( NULL == pUpbound )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG_MSG( PDERROR, "get rest field[%s] failed", 
+                     REST_KEY_NAME_UPBOUND ) ;
+         goto error ;
+      }
+
+      rc = fromjson( pUpbound, upbound ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG_MSG( PDERROR, "field's format error:field=%s, value=%s", 
+                     REST_KEY_NAME_UPBOUND, pUpbound ) ;
+         goto error ;
+      }
+
+      query = BSON( FIELD_NAME_NAME << pCollection 
+                    << FIELD_NAME_SUBCLNAME << pSubCLName 
+                    << FIELD_NAME_LOWBOUND << lowbound
+                    << FIELD_NAME_UPBOUND << upbound ) ;
 
       rc = msgBuildQueryMsg( &pBuff, &buffSize, pCommand, 0, 0, 0, -1, &query, 
                              NULL, NULL, NULL ) ;

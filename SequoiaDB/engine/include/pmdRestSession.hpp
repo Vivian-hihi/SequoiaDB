@@ -229,9 +229,11 @@ namespace engine
    #define REST_CMD_NAME_SNAPSHOT      "snapshot"
    #define REST_CMD_NAME_EXEC          "exec"
    #define REST_CMD_NAME_LISTINDEXES   "list indexes"
+   #define REST_CMD_NAME_ATTACH_COLLECTION "attach collection"
 
    #define REST_KEY_NAME_COLLECTIONSPACE "Collectionspace"
    #define REST_KEY_NAME_COLLECTION    "Collectionname"
+   #define REST_KEY_SUBCLNAME          "Subclname"
    #define REST_KEY_NAME_ORDERBY       "Orderby"
    #define REST_KEY_NAME_LIMIT         "Limit"
    #define REST_KEY_NAME_MATCHER       "Matcher"
@@ -295,6 +297,9 @@ namespace engine
          INT32       _convertDelete( restAdaptor *pAdaptor, MsgHeader **msg ) ;
 
          INT32       _convertSplit( restAdaptor *pAdaptor, MsgHeader **msg ) ;
+
+         INT32       _coverAttachCollection( restAdaptor *pAdaptor,
+                                             MsgHeader **msg ) ;
          
          INT32       _convertAlterCollection( restAdaptor *pAdaptor,
                                               MsgHeader **msg ) ;
