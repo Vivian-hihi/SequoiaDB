@@ -823,34 +823,40 @@ INT32 sptConvertor::_addSpecialObj( JSObject *obj,
       }
 
       decodeSize = getDeBase64Size( strBin.c_str() ) ;
-      if ( decodeSize <= 1 )
+      if ( decodeSize < 0 )
       {
-         PD_LOG( PDERROR, "invalid decode size:%d", decodeSize ) ;
+         PD_LOG( PDERROR, "invalid decode %s", strBin.c_str() ) ;
          rc = SDB_INVALIDARG ;
          goto error ;
       }
 
-      decode = ( CHAR * )SDB_OSS_MALLOC( decodeSize ) ;
-      if ( NULL == decode )
+      if( decodeSize > 0 )
       {
-         PD_LOG( PDERROR, "failed to allocate mem." ) ;
-         rc = SDB_OOM ;
-         goto error ;
-      }
-
-      if ( !base64Decode( strBin.c_str(), decode, decodeSize ) )
-      {
-         PD_LOG( PDERROR, "failed to decode base64 code" ) ;
-         rc = SDB_INVALIDARG ;
+         decode = ( CHAR * )SDB_OSS_MALLOC( decodeSize ) ;
+         if ( NULL == decode )
+         {
+            PD_LOG( PDERROR, "failed to allocate mem." ) ;
+            rc = SDB_OOM ;
+            goto error ;
+         }
+         if ( base64Decode( strBin.c_str(), decode, decodeSize ) < 0 )
+         {
+            PD_LOG( PDERROR, "failed to decode base64 code" ) ;
+            rc = SDB_INVALIDARG ;
+            SDB_OSS_FREE( decode ) ;
+            goto error ;
+         }
+   
+         /// we can not push '\0' to bson
+         bson_append_binary( bs, key, binType,
+                             decode, decodeSize - 1 ) ;
          SDB_OSS_FREE( decode ) ;
-         goto error ;
       }
-
-      /// we can not push '\0' to bson
-      bson_append_binary( bs, key, binType,
-                          decode, decodeSize - 1 ) ;
-      SDB_OSS_FREE( decode ) ;
-
+      else
+      {
+         bson_append_binary( bs, key, binType,
+                             "", 0 ) ;
+      }
    }
    else
    {
