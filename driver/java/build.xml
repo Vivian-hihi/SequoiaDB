@@ -56,7 +56,8 @@
            destdir="${base.dir}/build"
            debug="on"
            encoding="UTF-8"
-           fork="yes" >
+           fork="yes" 
+           includeAntRuntime="no" >
        <compilerarg value="-Xlint:unchecked" />
     </javac>
     <tstamp>
