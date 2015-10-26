@@ -31,12 +31,12 @@ static char B64[64] =
 
 int getEnBase64Size ( int size )
 {
+   int len = size ;
+   int zeroize = len % 3 ;
    if( size == 0 )
    {
       return 0 ;
    }
-   int len = size ;
-   int zeroize = len % 3 ;
    len = ( len + ( zeroize ? 3 - zeroize : 0 ) ) / 3 * 4 + 1 ;
    return len ;
 }
@@ -44,12 +44,13 @@ int getEnBase64Size ( int size )
 //return string length + 1
 int getDeBase64Size ( const char *s )
 {
+
+   int len = strlen ( s ) ;
+   int zeroize = 0 ;
    if( !s )
    {
       return -1 ;
    }
-   int len = strlen ( s ) ;
-   int zeroize = 0 ;
    if( len == 0 )
    {
       return 0 ;
@@ -68,14 +69,14 @@ int getDeBase64Size ( const char *s )
 
 int base64Encode ( const char *s, int in_size, char *_ret, int out_size )
 {
-   if( !s || !_ret )
-   {
-      return -1 ;
-   }
    char c = 0x00 ;
    char t = 0x00 ;
    int vLen = 0 ;
    int len = in_size ;
+   if( !s || !_ret )
+   {
+      return -1 ;
+   }
    /* empty string */
    if( len == 0 )
    {
@@ -158,13 +159,13 @@ char getCharIndex ( char c )
 
 int base64Decode ( const char *s, char *_ret, int out_size )
 {
+   static char lpCode [ 4 ] ;
+   int vLen = 0 ;
+   int len = strlen ( s ) ;
    if( !s || !_ret )
    {
       return -1 ;
    }
-   static char lpCode [ 4 ] ;
-   int vLen = 0 ;
-   int len = strlen ( s ) ;
    /* empty base64 */
    if( len == 0 )
    {
