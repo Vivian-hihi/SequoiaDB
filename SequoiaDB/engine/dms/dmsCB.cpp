@@ -353,7 +353,7 @@ namespace engine
          PD_RC_CHECK( rc, PDERROR, "Check sync control failed, rc: %d", rc ) ;
 
          logRecSize = record.alignedLen() ;
-         rc = pTransCB->reservedLogSpace( logRecSize );
+         rc = pTransCB->reservedLogSpace( logRecSize, cb );
          PD_RC_CHECK( rc, PDERROR,
                      "failed to reserved log space(length=%u)",
                      logRecSize );
@@ -972,7 +972,7 @@ namespace engine
          PD_RC_CHECK( rc, PDERROR, "Check sync control failed, rc: %d", rc ) ;
 
          logRecSize = record.alignedLen() ;
-         rc = pTransCB->reservedLogSpace( logRecSize );
+         rc = pTransCB->reservedLogSpace( logRecSize, cb );
          PD_RC_CHECK( rc, PDERROR,
                      "failed to reserved log space(length=%u)",
                      logRecSize );

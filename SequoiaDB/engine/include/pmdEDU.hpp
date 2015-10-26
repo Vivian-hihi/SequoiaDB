@@ -375,6 +375,7 @@ namespace engine
       BOOLEAN isTransNode( MsgRouteID &routeID ) ;
       void  startRollback() { _isDoRollback = TRUE ; }
       void  stopRollback() { _isDoRollback = FALSE ; }
+      BOOLEAN isInRollback() const { return _isDoRollback ; }
       void  setTransRC( INT32 rc ) { _transRC = rc ; }
       INT32 getTransRC() const { return _transRC ; }
       void  clearTransInfo() ;

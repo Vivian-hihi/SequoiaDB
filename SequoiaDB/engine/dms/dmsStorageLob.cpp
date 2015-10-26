@@ -370,7 +370,7 @@ namespace engine
             goto error ;
          }
 
-         rc = transCB->reservedLogSpace( logRecord.head()._length ) ;
+         rc = transCB->reservedLogSpace( logRecord.head()._length, cb ) ;
          if ( rc )
          {
             PD_LOG( PDERROR, "failed to reserved log space(length=%u)",
@@ -605,7 +605,7 @@ namespace engine
             goto error ;
          }
 
-         rc = transCB->reservedLogSpace( logRecord.head()._length ) ;
+         rc = transCB->reservedLogSpace( logRecord.head()._length, cb ) ;
          if ( rc )
          {
             PD_LOG( PDERROR, "failed to reserved log space(length=%u)",
@@ -904,7 +904,7 @@ namespace engine
             goto error ;
          }
 
-         rc = transCB->reservedLogSpace( logRecord.head()._length ) ;
+         rc = transCB->reservedLogSpace( logRecord.head()._length, cb ) ;
          if ( rc )
          {
             PD_LOG( PDERROR, "failed to reserved log space(length=%u)",
@@ -1489,7 +1489,7 @@ namespace engine
             goto error ;
          }
 
-         rc = transCB->reservedLogSpace( logRecord.head()._length ) ;
+         rc = transCB->reservedLogSpace( logRecord.head()._length, cb ) ;
          if ( rc )
          {
             PD_LOG( PDERROR, "failed to reserved log space(length=%u)",

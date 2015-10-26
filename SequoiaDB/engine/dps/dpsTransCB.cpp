@@ -774,11 +774,11 @@ namespace engine
       return _TransLock.hasWait( lockId );
    }
 
-   INT32 dpsTransCB::reservedLogSpace( UINT32 length )
+   INT32 dpsTransCB::reservedLogSpace( UINT32 length, _pmdEDUCB *cb )
    {
       INT32 rc = SDB_OK;
       UINT64 usedSize = 0;
-      if ( !_isOn )
+      if ( !_isOn || ( cb && cb->isInRollback() ) )
       {
          goto done ;
       }

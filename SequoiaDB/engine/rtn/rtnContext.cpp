@@ -4919,7 +4919,7 @@ namespace engine
          PD_RC_CHECK( rc, PDERROR, "Check sync control failed, rc: %d", rc ) ;
 
          logRecSize = record.alignedLen() ;
-         rc = _pTransCB->reservedLogSpace( logRecSize );
+         rc = _pTransCB->reservedLogSpace( logRecSize, cb );
          PD_RC_CHECK( rc, PDERROR,
                       "Failed to reserved log space(length=%u)",
                       logRecSize );

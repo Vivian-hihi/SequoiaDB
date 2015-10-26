@@ -195,7 +195,7 @@ namespace engine
       BOOLEAN hasWait( UINT32 logicCSID, UINT16 collectionID,
                        const dmsRecordID *recordID);
 
-      INT32 reservedLogSpace( UINT32 length );
+      INT32 reservedLogSpace( UINT32 length, _pmdEDUCB *cb ) ;
 
       void releaseLogSpace( UINT32 length );
 

@@ -1375,7 +1375,7 @@ namespace engine
          PD_RC_CHECK( rc, PDERROR, "Check sync control failed, rc: %d", rc ) ;
 
          logRecSize = record.alignedLen() ;
-         rc = pTransCB->reservedLogSpace( logRecSize ) ;
+         rc = pTransCB->reservedLogSpace( logRecSize, cb ) ;
          if( rc )
          {
             PD_LOG( PDERROR, "Failed to reserved log space(length=%u)",
@@ -1570,7 +1570,7 @@ namespace engine
          PD_RC_CHECK( rc, PDERROR, "Check sync control failed, rc: %d", rc ) ;
 
          logRecSize = record.alignedLen() ;
-         rc = pTransCB->reservedLogSpace( logRecSize ) ;
+         rc = pTransCB->reservedLogSpace( logRecSize, cb ) ;
          if( rc )
          {
             PD_LOG( PDERROR, "Failed to reserved log space(length=%u)",
@@ -1725,7 +1725,7 @@ namespace engine
          PD_RC_CHECK( rc, PDERROR, "Check sync control failed, rc: %d", rc ) ;
 
          logRecSize = record.alignedLen() ;
-         rc = pTransCB->reservedLogSpace( logRecSize ) ;
+         rc = pTransCB->reservedLogSpace( logRecSize, cb ) ;
          if( rc )
          {
             PD_LOG( PDERROR, "Failed to reserved log space(length=%u)",
@@ -1901,7 +1901,7 @@ namespace engine
          PD_RC_CHECK( rc, PDERROR, "Check sync control failed, rc: %d", rc ) ;
 
          logRecSize = record.alignedLen() ;
-         rc = pTransCB->reservedLogSpace( logRecSize );
+         rc = pTransCB->reservedLogSpace( logRecSize, cb );
          if( rc )
          {
             PD_LOG( PDERROR, "Failed to reserved log space(length=%u)",
@@ -2110,7 +2110,7 @@ namespace engine
             goto error ;
          }
 
-         rc = pTransCB->reservedLogSpace( logRecSize ) ;
+         rc = pTransCB->reservedLogSpace( logRecSize, cb ) ;
          if ( rc )
          {
             PD_LOG( PDERROR, "Failed to reserved log space(length=%u)",
@@ -2485,7 +2485,7 @@ namespace engine
                             rc ) ;
 
                logRecSize = record.alignedLen() ;
-               rc = pTransCB->reservedLogSpace( logRecSize ) ;
+               rc = pTransCB->reservedLogSpace( logRecSize, cb ) ;
                if ( rc )
                {
                   PD_LOG( PDERROR, "Failed to reserved log space(length=%u)",
@@ -2764,7 +2764,7 @@ namespace engine
                          rc ) ;
 
             logRecSize = record.alignedLen() ;
-            rc = pTransCB->reservedLogSpace( logRecSize );
+            rc = pTransCB->reservedLogSpace( logRecSize, cb );
             if ( rc )
             {
                PD_LOG( PDERROR, "Failed to reserved log space(len:%u), rc: %d",

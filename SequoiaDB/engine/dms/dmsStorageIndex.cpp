@@ -333,7 +333,7 @@ namespace engine
                          rc ) ;
 
             logRecSize = record.alignedLen() ;
-            rc = pTransCB->reservedLogSpace( logRecSize );
+            rc = pTransCB->reservedLogSpace( logRecSize, cb );
             if ( rc )
             {
                PD_LOG( PDERROR, "Failed to reserved log space(length=%u)",
@@ -653,7 +653,7 @@ namespace engine
                          rc ) ;
 
             logRecSize = record.alignedLen() ;
-            rc = pTransCB->reservedLogSpace( logRecSize );
+            rc = pTransCB->reservedLogSpace( logRecSize, cb );
             if ( rc )
             {
                PD_LOG( PDERROR, "Failed to reserved log space(length=%u)",
