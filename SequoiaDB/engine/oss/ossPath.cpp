@@ -231,10 +231,18 @@ static INT32 _ossEnumFiles( const string &dirPath,
          goto error ;
       }
    }
+   catch ( fs::filesystem_error& e )
+   {
+      if ( e.code() == boost::system::errc::permission_denied )
+         rc = SDB_PERM ;
+      else
+         rc = SDB_IO ;
+      goto error ;
+   }
    catch( std::exception &e )
    {
       PD_LOG( PDERROR, "Occur exception: %s", e.what() ) ;
-      rc = SDB_PERM ;
+      rc = SDB_SYS ;
       goto error ;
    }
 

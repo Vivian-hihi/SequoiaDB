@@ -500,6 +500,9 @@ INT32 ossMkdir ( const CHAR* pPathName, UINT32 iPermission )
 
       if ( exists( dirpath ) )
       {
+         /// set permission
+         fs::permissions( dirpath, permission ) ;
+
          rc = SDB_FE ;
          goto error ;
       }
@@ -602,6 +605,14 @@ INT32 ossDelete ( const CHAR *pPathName )
            SDB_VALIDATE_GOTOERROR ( FALSE, SDB_INVALID_FILE_TYPE,
                                     "Invalid file type" ) ;
       }
+   }
+   catch ( fs::filesystem_error& e )
+   {
+      if ( e.code() == boost::system::errc::permission_denied )
+         rc = SDB_PERM ;
+      else
+         rc = SDB_IO ;
+      goto error ;
    }
    catch ( std::exception &e )
    {
