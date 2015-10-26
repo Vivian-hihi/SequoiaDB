@@ -134,8 +134,8 @@ namespace bson {
             return !(*this == r);
         }
         bool operator<(const OpTime& r) const {
-            INT32 l_secs = ( INT32 ) secs ;
-            INT32 r_secs = ( INT32 ) r.secs ;
+            int l_secs = ( int ) secs ;
+            int r_secs = ( int ) r.secs ;
             if ( l_secs != r_secs )
                 return l_secs < r_secs;
             return i < r.i;
