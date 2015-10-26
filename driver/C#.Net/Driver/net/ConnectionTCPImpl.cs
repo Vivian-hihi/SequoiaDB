@@ -48,7 +48,7 @@ namespace SequoiaDB
                     connection.NoDelay = (!options.UseNagle);
                     connection.SendTimeout = options.SendTimeout;
                     connection.ReceiveTimeout = options.ReceiveTimeout;
-                    if (true == options.UseKeepalive)
+                    if (true == options.SocketKeepAlive)
                     {
                         // open keep alive
                         connection.Client.IOControl(IOControlCode.KeepAliveValues,

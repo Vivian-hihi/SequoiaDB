@@ -19,7 +19,7 @@ namespace SequoiaDB
         private int keepIdle = 15000;//15s
         private int keepInterval = 3000;//3s
 
-        private bool useKeepalive = true;
+        private bool socketKeepAlive = false;
         private bool useNagle = false;
         private bool useSSL = false;
 
@@ -128,19 +128,19 @@ namespace SequoiaDB
             }
         }
 
-        /** \property UseKeepalive
+        /** \property UseKeepAlive
          *  \brief Get or set whether use the keep alive or not, default to be open,
          *  and the time is 15s, the interval is 3s
          */
-        public bool UseKeepalive
+        public bool SocketKeepAlive
         {
             get
             {
-                return useKeepalive;
+                return socketKeepAlive;
             }
             set
             {
-                useKeepalive = value;
+                socketKeepAlive = value;
             }
         }
 
