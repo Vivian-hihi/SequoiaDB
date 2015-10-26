@@ -1700,7 +1700,7 @@ namespace SequoiaDB
             byte[] request = SDBMessageHelper.BuildSysInfoRequest();
             connection.SendMessage(request);
             int osType = 0 ;
-            return SDBMessageHelper.ExtractSysInfoReply(connection.ReceiveMessage(128), ref osType );
+            return SDBMessageHelper.ExtractSysInfoReply(connection.ReceiveSysMessage(128), ref osType );
         }
 
         private void Auth()

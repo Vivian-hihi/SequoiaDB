@@ -16,7 +16,10 @@ namespace SequoiaDB
         // Send and Reive Timeout: default is no timeout
         private int sendTimeout = 0;
         private int receiveTimeout = 0;
+        private int keepIdle = 15000;//15s
+        private int keepInterval = 3000;//3s
 
+        private bool useKeepalive = true;
         private bool useNagle = false;
         private bool useSSL = false;
 
@@ -80,6 +83,36 @@ namespace SequoiaDB
             }
         }
 
+        /** \property KeepIdle
+         *  \brief Get or set keep alive idle(milliseconds)
+         */
+        public int KeepIdle
+        {
+            get
+            {
+                return keepIdle;
+            }
+            set
+            {
+                keepIdle = value;
+            }
+        }
+
+        /** \property KeepInterval
+         *  \brief Get or set keep alive interval(milliseconds)
+         */
+        public int KeepInterval
+        {
+            get
+            {
+                return keepInterval;
+            }
+            set
+            {
+                keepInterval = value;
+            }
+        }
+
         /** \property UseNagle
          *  \brief Get or group the Nagle Algorithm
          */
@@ -92,6 +125,22 @@ namespace SequoiaDB
             set
             {
                 useNagle = value;
+            }
+        }
+
+        /** \property UseKeepalive
+         *  \brief Get or set whether use the keep alive or not, default to be open,
+         *  and the time is 15s, the interval is 3s
+         */
+        public bool UseKeepalive
+        {
+            get
+            {
+                return useKeepalive;
+            }
+            set
+            {
+                useKeepalive = value;
             }
         }
 

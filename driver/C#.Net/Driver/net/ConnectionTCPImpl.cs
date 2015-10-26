@@ -5,6 +5,7 @@ using System.Net.Security;
 using System.Net.Sockets;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading;
+using System.Runtime.InteropServices;
 
 namespace SequoiaDB
 {
@@ -41,12 +42,18 @@ namespace SequoiaDB
             {
                 IOException lastError = null;
                 IPEndPoint addr = hostAddress.HostAddress;
-                try 
+                try
                 {
                     connection = new TimeOutSocket().Connect(addr, options.ConnectTimeout);
                     connection.NoDelay = (!options.UseNagle);
                     connection.SendTimeout = options.SendTimeout;
                     connection.ReceiveTimeout = options.ReceiveTimeout;
+                    if (true == options.UseKeepalive)
+                    {
+                        // open keep alive
+                        connection.Client.IOControl(IOControlCode.KeepAliveValues,
+                                                    SetKeepAlive(options.KeepIdle, options.KeepInterval), null);
+                    }
                     if (options.UseSSL)
                     {
                         SslStream sslStream = new SslStream(connection.GetStream(), false, validateServerCertificate, null);
@@ -61,7 +68,11 @@ namespace SequoiaDB
                     }
                     return;
                 }
-                catch(Exception e)
+                catch (BaseException e)
+                {
+                    throw e;
+                }
+                catch (Exception e)
                 {
                     lastError = new IOException("Couldn't connect to ["
                             + addr.ToString() + "] exception:" + e);
@@ -86,8 +97,10 @@ namespace SequoiaDB
         {
             if (connection !=null && connection.Connected)
             {
-                input.Close();
-                output.Close();
+                if (input != null)
+                    input.Close();
+                if (output != null)
+                    output.Close();
                 connection.Close();
             }
 		    connection = null;
@@ -145,6 +158,12 @@ namespace SequoiaDB
                     {
                         retSize = input.Read(buf, rtn, 4 - rtn);
                     }
+                    catch (IOException e)
+                    {
+                        // when keep alive time is up, IOException was thrown
+                        Close();
+                        throw e;
+                    }
                     catch (System.Exception)
                     {
                         Close();
@@ -189,7 +208,7 @@ namespace SequoiaDB
             }
         }
 
-        public byte[] ReceiveMessage(int msgSize)
+        public byte[] ReceiveSysMessage(int msgSize)
         {
             byte[] rtnBuf = new byte[msgSize];
             int rtn = 0;
@@ -213,5 +232,23 @@ namespace SequoiaDB
 
             return rtnBuf; 
         }
+
+        private byte[] SetKeepAlive(int idle, int interval)
+        {
+            if (idle <= 0 || interval <= 0)
+            {
+                Close();
+                throw new BaseException("SDB_INVALIDARG");
+            }
+
+            uint dummy = 0;
+            byte[] SIO_KEEPALIVE_VALS = new byte[3 * Marshal.SizeOf(dummy)];
+            BitConverter.GetBytes((uint)1).CopyTo(SIO_KEEPALIVE_VALS, 0);// use keep alive
+            BitConverter.GetBytes((uint)idle).CopyTo(SIO_KEEPALIVE_VALS, Marshal.SizeOf(dummy));//set idle
+            BitConverter.GetBytes((uint)interval).CopyTo(SIO_KEEPALIVE_VALS, Marshal.SizeOf(dummy)*2);// setinterval
+
+            return SIO_KEEPALIVE_VALS;
+        }
+
     }
 }

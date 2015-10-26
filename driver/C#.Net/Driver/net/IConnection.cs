@@ -10,6 +10,6 @@
 
         void SendMessage(byte[] msg);
         byte[] ReceiveMessage(bool isBigEndian);
-        byte[] ReceiveMessage(int msgSize);
+        byte[] ReceiveSysMessage(int msgSize);
     }
 }

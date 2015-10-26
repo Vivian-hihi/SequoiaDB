@@ -423,7 +423,7 @@ namespace SequoiaDB
             }
         }
 
-        /** \fn void attachNode( string hostName, 
+        /** \fn void AttachNode( string hostName, 
          *                       int port, 
          *                       BsonDocument options )
          *  \brief Attach a node to the group
@@ -433,7 +433,7 @@ namespace SequoiaDB
          *  \retval SDB_OK Operation Success
          *  \retval Others Operation Fail
          */
-        public void attachNode(string hostName, int port, BsonDocument options)
+        public void AttachNode(string hostName, int port, BsonDocument options)
         {
             if (hostName == null || port < 0 || port > 65535 )
                 throw new BaseException("SDB_INVALIDARG");
@@ -461,7 +461,7 @@ namespace SequoiaDB
                 throw new BaseException(flags);
         }
 
-        /** \fn void detachNode( string hostName,
+        /** \fn void DetachNode( string hostName,
          *                       int port,
          *                       BsonDocument options )
          *  \brief Detach a node from the group
@@ -471,7 +471,7 @@ namespace SequoiaDB
          *  \retval SDB_OK Operation Success
          *  \retval Others Operation Fail
          */
-        public void detachNode(string hostName, int port, BsonDocument options)
+        public void DetachNode(string hostName, int port, BsonDocument options)
         {
             if (hostName == null || port < 0 || port > 65535)
                 throw new BaseException("SDB_INVALIDARG");
