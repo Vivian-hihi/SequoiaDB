@@ -114,8 +114,8 @@ def initialize():
       range_cl = cs.create_collection(range_name,range_option)
       hash_cl = cs.create_collection(hash_name,hash_option)
       percent_cl = cs.create_collection(percent_name,percent_option)
-   except Exception as e:
-      print 'Error' + e
+   except SDBBaseError, e:
+      print 'Error' + e.detail
 
 
 
@@ -128,8 +128,8 @@ def finality():
       #print 'world'
       time.sleep(2)
       sdb.disconnect()
-   except Exception as e:
-      print 'Error' + e
+   except SDBBaseError, e:
+      print 'Error' + e.detail
 
 #test PySequoidb class
 class TestPySequoiadb(object):
@@ -253,9 +253,11 @@ class TestPySequoiadb(object):
       #deal with the SDBTypeError
 
       try:
-         sdb.create_user(119,password)
+         sdb.create_user("119",password)
       except SDBTypeError as e:
-         print 'catch the SDBTpyeError'
+         print e
+      except SDBBaseError, e:
+         print e.detail
 
       try:
 
