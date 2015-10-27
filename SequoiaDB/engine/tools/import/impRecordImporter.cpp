@@ -181,16 +181,7 @@ namespace import
       if (SDB_OK != rc)
       {
          PD_LOG(PDERROR, "failed to bulk insert, rc=%d", rc);
-
-         if (_enableTransaction)
-         {
-            INT32 ret = sdbTransactionRollback(_connection);
-            if (SDB_OK != ret)
-            {
-               PD_LOG(PDERROR, "failed to rollback transaction, rc=%d", ret);
-            }
-         }
-
+         // the transaction is rollbacked automatically
          goto error;
       }
 
