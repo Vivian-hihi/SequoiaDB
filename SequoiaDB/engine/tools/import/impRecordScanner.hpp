@@ -31,6 +31,7 @@
 #ifndef IMP_RECORD_SCANNER_HPP_
 #define IMP_RECORD_SCANNER_HPP_
 
+#include "impOptions.hpp"
 #include "core.hpp"
 #include "oss.hpp"
 #include <string>
@@ -44,15 +45,24 @@ namespace import
    public:
       RecordScanner(const string& recordDelimiter,
                     const string& stringDelimiter,
+                    INPUT_FORMAT format,
                     BOOLEAN linePriority);
       ~RecordScanner();
+      inline INPUT_FORMAT format() { return _format; }
       INT32 scan(const CHAR* data, INT32 length, BOOLEAN final,
                  INT32& recordLength);
 
    private:
-      string   _recordDelimiter;
-      string   _stringDelimiter;
-      BOOLEAN  _linePriority;
+      INT32 _scanCSV(const CHAR* data, INT32 length, BOOLEAN final,
+                     INT32& recordLength);
+      INT32 _scanJSON(const CHAR* data, INT32 length, BOOLEAN final,
+                      INT32& recordLength);
+
+   private:
+      string         _recordDelimiter;
+      string         _stringDelimiter;
+      INPUT_FORMAT   _format;
+      BOOLEAN        _linePriority;
    };
 }
 

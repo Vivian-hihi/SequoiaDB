@@ -58,11 +58,14 @@ namespace import
 
    RecordScanner::RecordScanner(const string& recordDelimiter,
                                 const string& stringDelimiter,
+                                INPUT_FORMAT format,
                                 BOOLEAN linePriority)
    : _recordDelimiter(recordDelimiter),
      _stringDelimiter(stringDelimiter),
+     _format(format),
      _linePriority(linePriority)
    {
+      SDB_ASSERT(FORMAT_CSV == format || FORMAT_JSON == format, "invalid format");
    }
 
    RecordScanner::~RecordScanner()
@@ -71,6 +74,24 @@ namespace import
 
    INT32 RecordScanner::scan(const CHAR* data, INT32 length, BOOLEAN final,
                              INT32& recordLength)
+   {
+      SDB_ASSERT(NULL != data, "data can't be NULL");
+      SDB_ASSERT(length > 0, "length must be greater than 0");
+
+      if (FORMAT_CSV == _format)
+      {
+         return _scanCSV(data, length, final, recordLength);
+      }
+      else if (FORMAT_JSON == _format)
+      {
+         return _scanJSON(data, length, final, recordLength);
+      }
+
+      return SDB_INVALIDARG;
+   }
+
+   INT32 RecordScanner::_scanCSV(const CHAR* data, INT32 length, BOOLEAN final,
+                                 INT32& recordLength)
    {
       const CHAR* recDel = _recordDelimiter.c_str();
       const INT32 recDelLen = _recordDelimiter.length();   
@@ -161,6 +182,87 @@ namespace import
       }
 
       if (SDB_EOF == rc && final)
+      {
+         recordLength = length;
+         // it's safe to terminate the string
+         str = (CHAR*)data + length;
+         *str = '\0';
+         rc = SDB_OK;
+      }
+
+      return rc;
+   }
+
+   INT32 RecordScanner::_scanJSON(const CHAR* data, INT32 length, BOOLEAN final,
+                                  INT32& recordLength)
+   {
+      INT32 len = length;
+      CHAR* str = (CHAR*)data;
+      BOOLEAN inString = FALSE;
+      BOOLEAN hasJson = FALSE;
+      INT32 level = 0;
+      INT32 rc = SDB_EOF;
+
+      SDB_ASSERT(NULL != data, "data can't be NULL");
+      SDB_ASSERT(length > 0, "length must be greater than 0");
+
+      while (len > 0)
+      {
+         switch (*str)
+         {
+         case '{':
+            if (!inString)
+            {
+               level++;
+               hasJson = TRUE;
+            }
+            break;
+         case '}':
+            if (!inString)
+            {
+               level--;
+            }
+            break;
+         case '\"':
+            inString = !inString;
+            break;
+         case '\\':
+            // escape char, so skip one more char
+            str++;
+            len--;
+            break;
+         default:
+            break;
+         }
+
+         str++;
+         len--;
+
+         // json is closed
+         if (hasJson && level == 0)
+         {
+            rc = SDB_OK;
+            break;
+         }
+      }
+
+      if (SDB_OK == rc)
+      {
+         // skip chars until next json
+         while (len > 0)
+         {
+            if ('{' == *str)
+            {
+               break;
+            }
+
+            str++;
+            len--;
+         }
+
+         recordLength = length - len;         
+      }
+      else if (SDB_EOF == rc && final)
       {
          recordLength = length;
          // it's safe to terminate the string

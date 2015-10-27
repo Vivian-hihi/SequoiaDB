@@ -129,8 +129,18 @@ namespace import
       }
 
       record = _data;
-      _data += (recordLength + _recDelLen);
-      _dataLength -= (recordLength + _recDelLen);
+
+      if (FORMAT_CSV == _scanner->format())
+      {
+         _data += (recordLength + _recDelLen);
+         _dataLength -= (recordLength + _recDelLen);
+      }
+      else // JSON
+      {
+         _data += recordLength;
+         _dataLength -= recordLength;
+      }
+
       if (_dataLength <= 0)
       {
          _remainSize = 0;

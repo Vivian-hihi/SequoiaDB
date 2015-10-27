@@ -146,11 +146,10 @@ namespace import
 
       SDB_ASSERT(NULL != data, "data can't be NULL");
       SDB_ASSERT(length > 0, "length must be greater than 0");
-      SDB_ASSERT(length == (INT32)ossStrlen(data), "invalid data length");
 
       bson_init(&obj);
 
-      result = jsonToBson2(&obj, data, FALSE, FALSE);
+      result = jsonToBson2(&obj, data, FALSE, TRUE);
       if (!result)
       {
          rc = SDB_INVALIDARG;

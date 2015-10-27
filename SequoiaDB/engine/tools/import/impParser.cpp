@@ -84,6 +84,7 @@ namespace import
 
       RecordScanner scanner(options->recordDelimiter(),
                             options->stringDelimiter(),
+                            options->inputFormat(),
                             options->linePriority());
 
       RecordReader recordReader;
