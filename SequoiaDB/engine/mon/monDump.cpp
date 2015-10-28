@@ -217,21 +217,29 @@ namespace engine
 
          if ( dpscb && ( MON_MASK_LSN_INFO & mask ) )
          {
-            DPS_LSN beginLSN = dpscb->getStartLsn() ;
-            DPS_LSN dpsLSN = dpscb->getCurrentLsn() ;
-            INT64 offset = (INT64)dpsLSN.offset ;
+            DPS_LSN beginLSN ;
+            DPS_LSN currentLSN ;
+            DPS_LSN committed ;
+            dpscb->getLsnWindow( beginLSN, currentLSN, NULL, &committed ) ;
+
+            INT64 offset = (INT64)currentLSN.offset ;
             PD_TRACE2 ( SDB_MONAPPENDSYSTEMINFO,
-                        PD_PACK_RAW ( &dpsLSN, sizeof(DPS_LSN) ),
+                        PD_PACK_RAW ( &currentLSN, sizeof(DPS_LSN) ),
                         PD_PACK_LONG ( offset ) ) ;
             BSONObj bsonTemp = BSON ( FIELD_NAME_LSN_OFFSET << offset <<
                                       FIELD_NAME_LSN_VERSION <<
-                                      dpsLSN.version ) ;
+                                      currentLSN.version ) ;
             BSONObj beginLsnObj = BSON( FIELD_NAME_LSN_OFFSET <<
                                         (INT64)beginLSN.offset <<
                                         FIELD_NAME_LSN_VERSION <<
                                         beginLSN.version ) ;
+            BSONObj committedLsnObj = BSON( FIELD_NAME_LSN_OFFSET <<
+                                           (INT64)committed.offset <<
+                                           FIELD_NAME_LSN_VERSION <<
+                                           committed.version ) ;
             ob.append ( FIELD_NAME_BEGIN_LSN, beginLsnObj ) ;
             ob.append ( FIELD_NAME_CURRENT_LSN, bsonTemp ) ;
+            ob.append ( FIELD_NAME_COMMIT_LSN, committedLsnObj ) ;
          }
 
          if ( transCB && ( MON_MASK_TRANSINFO & mask ) )
