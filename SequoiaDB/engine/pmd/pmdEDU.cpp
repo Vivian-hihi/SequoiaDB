@@ -934,7 +934,8 @@ namespace engine
       if ( _pTransNodeMap )
       {
          iterMap = _pTransNodeMap->find( routeID.columns.groupID );
-         if (  iterMap != _pTransNodeMap->end() )
+         if (  iterMap != _pTransNodeMap->end()
+               && iterMap->second.value == routeID.value )
          {
             isTransNode = TRUE;
          }
