@@ -1572,6 +1572,27 @@ namespace engine
       /// new version
       _rtnAlterRunner _runner ;
    } ;
+
+   class _rtnSyncDB : public _rtnCommand
+   {
+   DECLARE_CMD_AUTO_REGISTER()
+   public:
+      _rtnSyncDB() ;
+      virtual ~_rtnSyncDB() ;
+
+   public:
+      virtual const CHAR * name () { return NAME_SYNC_DB ; }
+      virtual RTN_COMMAND_TYPE type() { return CMD_SYNC_DB ; }
+      virtual BOOLEAN writable() { return FALSE ;}
+      virtual INT32 init ( INT32 flags, INT64 numToSkip, INT64 numToReturn,
+                           const CHAR *pMatcherBuff,
+                           const CHAR *pSelectBuff,
+                           const CHAR *pOrderByBuff,
+                           const CHAR *pHintBuff ) ;
+      virtual INT32 doit ( _pmdEDUCB *cb, _SDB_DMSCB *dmsCB,
+                           _SDB_RTNCB *rtnCB, _dpsLogWrapper *dpsCB,
+                           INT16 w = 1, INT64 *pContextID = NULL ) ;
+   } ;
 }
 
 const UINT32 pdGetTraceFunctionListNum();

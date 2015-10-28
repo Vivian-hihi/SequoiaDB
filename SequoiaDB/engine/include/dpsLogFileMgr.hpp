@@ -108,6 +108,8 @@ namespace engine
       }
       UINT32 getWorkPos() const { return _work ; }
 
+      INT32 sync() ;
+
    protected:
       void     _analysis () ;
       UINT32   _incFileID ( UINT32 fileID ) ;

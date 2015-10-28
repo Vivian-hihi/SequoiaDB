@@ -1140,7 +1140,7 @@ namespace engine
          goto done ;
       }
 
-      _logger->getLsnWindow( fLsn, mLsn, eLsn ) ;
+      _logger->getLsnWindow( fLsn, mLsn, eLsn, NULL, NULL ) ;
       PD_LOG( PDEVENT, "Sync Session[%s]: Recv a consult req. "
               "[remote offset:%lld, remote ver:%d, local foffset:%lld, "
               "local fver:%d], local eoffset:%lld, local ever:%d]",
@@ -1284,7 +1284,7 @@ namespace engine
       msg.identity = routeAgent()->localID() ;
 
       /// get lsn window and judge
-      _logger->getLsnWindow( fLsn, mLsn, eLsn, &expect ) ;
+      _logger->getLsnWindow( fLsn, mLsn, eLsn, &expect, NULL ) ;
       if ( 0 < fLsn.compareOffset( req->next.offset ) )
       {
          PD_LOG( PDWARNING, "Sync Session[%s]: Remote lsn is too old. "

@@ -717,22 +717,28 @@ namespace engine
       return _expectLsn ;
    }
 
-   void _catDCLogMgr::getLsnWindow( DPS_LSN &fileBeginLsn,
-                                    DPS_LSN &memBeginLsn,
+   void _catDCLogMgr::getLsnWindow( DPS_LSN &beginLsn,
                                     DPS_LSN &endLsn,
-                                    DPS_LSN &expected )
+                                    DPS_LSN *expected,
+                                    DPS_LSN *committed )
    {
       ossScopedLock lock( &_latch, SHARED ) ;
-      fileBeginLsn = _getStartLsn() ;
-      memBeginLsn = fileBeginLsn ;
+      beginLsn = _getStartLsn() ;
       endLsn = _curLsn ;
-      expected = _expectLsn ;
+      if ( NULL != expected )
+      {
+         *expected = _expectLsn ;
+      }
+
+      /// no committed
+      return ;
    }
 
    void _catDCLogMgr::getLsnWindow( DPS_LSN &fileBeginLsn,
                                     DPS_LSN &memBeginLsn,
                                     DPS_LSN &endLsn,
-                                    DPS_LSN *pExpectLsn )
+                                    DPS_LSN *pExpectLsn,
+                                    DPS_LSN *committed )
    {
       ossScopedLock lock( &_latch, SHARED ) ;
       fileBeginLsn = _getStartLsn() ;
@@ -742,6 +748,8 @@ namespace engine
       {
          *pExpectLsn = _expectLsn ;
       }
+      /// no committed
+      return ;
    }
 
    INT32 _catDCLogMgr::move( const DPS_LSN_OFFSET &offset,

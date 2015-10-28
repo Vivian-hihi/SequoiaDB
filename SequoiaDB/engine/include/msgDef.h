@@ -54,6 +54,7 @@
 #define FIELD_NAME_IS_PRIMARY                "IsPrimary"
 #define FIELD_NAME_CURRENT_LSN               "CurrentLSN"
 #define FIELD_NAME_BEGIN_LSN                 "BeginLSN"
+#define FIELD_NAME_COMMIT_LSN                "CommittedLSN"
 #define FIELD_NAME_LSN_OFFSET                "Offset"
 #define FIELD_NAME_LSN_VERSION               "Version"
 #define FIELD_NAME_TRANS_INFO                "TransInfo"
@@ -446,6 +447,7 @@
 #define CMD_NAME_JSON_LOAD                   "json load"
 #define CMD_NAME_TRUNCATE                    "truncate"
 #define CMD_NAME_LIST_USERS                  "list users"
+#define CMD_NAME_SYNC_DB                     "sync db"
 
 #define CMD_NAME_SNAPSHOT_DATABASE_INTR      "SNAPSHOT_DB"
 #define CMD_NAME_SNAPSHOT_SYSTEM_INTR        "SNAPSHOT_SYSTEM"

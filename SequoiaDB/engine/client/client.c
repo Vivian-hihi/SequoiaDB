@@ -9730,4 +9730,45 @@ SDB_EXPORT INT32 sdbDetachGroups( sdbDCHandle cHandle, bson *info )
    return _sdbDCCommon( cHandle, info, CMD_VALUE_NAME_DETACH ) ;
 }
 
+SDB_EXPORT INT32 sdbSyncDB( sdbConnectionHandle cHandle,
+                            bson *options,
+                            bson *info )
+{
+   INT32 rc = SDB_OK ;
+   sdbCursorHandle cursor = SDB_INVALID_HANDLE ;
+   sdbConnectionStruct *connection = (sdbConnectionStruct*)cHandle ;
+
+   HANDLE_CHECK( cHandle, connection, SDB_HANDLE_TYPE_CONNECTION ) ;
+
+   rc = _runCommand2( cHandle, &connection->_pSendBuffer,
+                      &connection->_sendBufferSize,
+                      &connection->_pReceiveBuffer,
+                      &connection->_receiveBufferSize,
+                      CMD_ADMIN_PREFIX CMD_NAME_SYNC_DB,
+                      0, 0, -1, -1,
+                      options, NULL, NULL, NULL, &cursor ) ;
+
+   if ( NULL != info && SDB_INVALID_HANDLE != cursor )
+   {
+      INT32 rcTmp = sdbNext( cursor, info ) ;
+      if ( SDB_OK != rcTmp )
+      {
+         goto error ;
+      }
+   }
+
+   if ( SDB_OK != rc )
+   {
+      goto error ;
+   }
+done:
+   if ( SDB_INVALID_HANDLE != cursor )
+   {
+      sdbReleaseCursor ( cursor ) ;
+   }
+   return rc ;
+error:
+   goto done ;
+}
+
 

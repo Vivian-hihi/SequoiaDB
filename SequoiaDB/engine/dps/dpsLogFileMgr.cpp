@@ -499,5 +499,35 @@ namespace engine
          _logicalWork = 0 ;
       }
    }
+
+    // PD_TRACE_DECLARE_FUNCTION ( SDB__DPSLGFILEMGR_SYNC, "_dpsLogFileMgr::sync" )
+   INT32 _dpsLogFileMgr::sync()
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__DPSLGFILEMGR_SYNC ) ;
+
+      /// flush files from the oldest file
+      UINT32 j = _work + 1 ;
+      for ( UINT32 i = 0 ; i <= _files.size(); ++i, ++j )
+      {
+         _dpsLogFile *file = LOG_FILE( j ) ;
+         if ( !file->isDirty() )
+         {
+            continue ;
+         }
+
+         rc = file->sync() ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to sync log file:%d", rc ) ;
+            goto error ;
+         }         
+      }
+   done:
+      PD_TRACE_EXITRC( SDB__DPSLGFILEMGR_SYNC, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
 }
 

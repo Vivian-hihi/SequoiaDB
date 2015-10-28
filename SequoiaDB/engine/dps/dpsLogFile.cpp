@@ -55,6 +55,7 @@ namespace engine
       _fileNum  = 0 ;
       _idleSize = 0 ;
       _inRestore= FALSE ;
+      _dirty = FALSE ;
    }
 
    _dpsLogFile::~_dpsLogFile()
@@ -456,6 +457,7 @@ namespace engine
       }
       _logHeader._logID = logID ;
       _idleSize = _fileSize ;
+      _dirty = FALSE ;
 
       INT32 rc = _flushHeader () ;
       PD_TRACE_EXITRC ( SDB__DPSLOGFILE_RESET, rc );
@@ -482,6 +484,8 @@ namespace engine
          }
          written += (UINT32)writtenLen ;
       }
+
+      _dirty = TRUE ;
    done:
       PD_TRACE_EXITRC ( SDB__DPSLOGFILE__FLUSHHD, rc );
       return rc;
@@ -522,6 +526,7 @@ namespace engine
    {
       INT32 rc = SDB_OK;
       PD_TRACE_ENTRY ( SDB__DPSLOGFILE_WRITE );
+      _dirty = TRUE ;
 
       if ( len <= _idleSize && _idleSize <= _fileSize )
       {
@@ -639,6 +644,7 @@ namespace engine
       const CHAR *pData = ( const CHAR* )&header ;
       UINT32 len = sizeof( header ) ;
       UINT32 idleSize = _idleSize ;
+      _dirty = TRUE ;
 
       if ( 0 == idleSize )
       {
@@ -683,4 +689,29 @@ namespace engine
       goto done;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DPSLOGFILE_SYNC, "_dpsLogFile::sync" )
+   INT32 _dpsLogFile::sync()
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__DPSLOGFILE_SYNC ) ;
+      if ( NULL == _file )
+      {
+         PD_LOG( PDERROR, "file has not been initialized yet" ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+      rc = ossFsync( _file ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to sync file, file no:%d, rc:%d",
+                 _fileNum, rc ) ;
+         goto error ;
+      }      
+      _dirty = FALSE ;
+   done:
+      PD_TRACE_EXITRC( SDB__DPSLOGFILE_SYNC, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
 }

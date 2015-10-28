@@ -78,6 +78,7 @@ namespace engine
       _ossAtomic32               _idleSize;
       DPS_LSN                    _lsn;
       DPS_LSN                    _currentLsn;
+      DPS_LSN                    _lastCommitted ;
       UINT32                     _totalSize;
       UINT32                     _work;
       UINT32                     _begin ;
@@ -135,12 +136,9 @@ namespace engine
       DPS_LSN getStartLsn ( BOOLEAN logBufOnly ) ;
       void getLsnWindow( DPS_LSN &fileBeginLsn,
                          DPS_LSN &memBeginLsn,
-                         DPS_LSN &endLsn ) ;
-
-      void getLsnWindow( DPS_LSN &fileBeginLsn,
-                         DPS_LSN &memBeginLsn,
                          DPS_LSN &endLsn,
-                         DPS_LSN &expected ) ;
+                         DPS_LSN *expected,
+                         DPS_LSN *committed ) ;
 
       INT32 init( const CHAR *path, UINT32 pageNum, dpsTransCB *pTransCB );
 
@@ -158,6 +156,9 @@ namespace engine
       INT32 run( _pmdEDUCB *cb );
       INT32 tearDown();
       INT32 flushAll() ;
+
+      /// committedLsn should be allocated by user
+      INT32 commit( BOOLEAN deeply, DPS_LSN *committedLsn ) ;
 
       INT32 checkSyncControl( UINT32 reqLen, _pmdEDUCB *cb ) ;
 

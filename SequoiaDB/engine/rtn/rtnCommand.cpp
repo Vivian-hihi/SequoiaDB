@@ -3454,6 +3454,75 @@ namespace engine
    error:
       goto done ;
    }
+
+   IMPLEMENT_CMD_AUTO_REGISTER( _rtnSyncDB )
+   _rtnSyncDB::_rtnSyncDB()
+   {
+
+   }
+
+   _rtnSyncDB::~_rtnSyncDB()
+   {
+
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION( SDB__RTNSYNCDB_INIT, "_rtnSyncDB::init" )
+   INT32 _rtnSyncDB::init ( INT32 flags, INT64 numToSkip,
+                            INT64 numToReturn,
+                            const CHAR *pMatcherBuff,
+                            const CHAR *pSelectBuff,
+                            const CHAR *pOrderByBuff,
+                            const CHAR *pHintBuff )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__RTNSYNCDB_INIT ) ;
+   done:
+      PD_TRACE_EXITRC( SDB__RTNSYNCDB_INIT, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION( SDB__RTNSYNCDB_DOIT, "_rtnSyncDB::doit" )
+   INT32 _rtnSyncDB::doit ( _pmdEDUCB *cb, _SDB_DMSCB *dmsCB,
+                            _SDB_RTNCB *rtnCB, _dpsLogWrapper *d,
+                            INT16 w, INT64 *pContextID )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__RTNSYNCDB_DOIT ) ;
+
+/*
+      /// do not use d
+      SDB_DPSCB *dpsCB = sdbGetDPSCB() ;
+      if ( NULL == dpsCB || NULL == dmsCB )
+      {
+         PD_LOG( PDERROR, "dps cb or dms cb is null" ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      
+
+      rc = dmsCB->sync( cb ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to sync dms cb:%d", rc ) ;
+         goto error ;
+      }
+
+      rc = dpsCB->commit( TRUE, NULL ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to sync db:%d", rc ) ;
+         goto error ; 
+      }
+*/
+   done:
+      PD_TRACE_EXITRC( SDB__RTNSYNCDB_DOIT, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
 }
 
 

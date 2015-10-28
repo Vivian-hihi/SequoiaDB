@@ -154,6 +154,7 @@ namespace engine
          rc = _restore () ;
          if ( SDB_OK == rc )
          {
+            _lastCommitted = _currentLsn ;
             PD_LOG ( PDEVENT, "Dps restore succeed, file lsn[%lld], buff "
                      "lsn[%lld], current lsn[%lld], expect lsn[%lld]",
                      _logger.getStartLSN().offset, _getStartLsn().offset,
@@ -465,7 +466,9 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DPSRPCMGR_GETLSNWIN, "_dpsReplicaLogMgr::getLsnWindow" )
    void _dpsReplicaLogMgr::getLsnWindow( DPS_LSN &fileBeginLsn,
                                          DPS_LSN &memBeginLsn,
-                                         DPS_LSN &endLsn )
+                                         DPS_LSN &endLsn,
+                                         DPS_LSN *expected,
+                                         DPS_LSN *committed )
    {
       PD_TRACE_ENTRY ( SDB__DPSRPCMGR_GETLSNWIN );
       ossScopedLock lock( &_mtx ) ;
@@ -476,27 +479,16 @@ namespace engine
          fileBeginLsn = memBeginLsn ;
       }
       endLsn = _currentLsn ;
-      PD_TRACE_EXIT ( SDB__DPSRPCMGR_GETLSNWIN );
-      return ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__DPSRPCMGR_GETLSNWIN2, "_dpsReplicaLogMgr::getLsnWindow" )
-   void _dpsReplicaLogMgr::getLsnWindow( DPS_LSN &fileBeginLsn,
-                                         DPS_LSN &memBeginLsn,
-                                         DPS_LSN &endLsn,
-                                         DPS_LSN &expected )
-   {
-      PD_TRACE_ENTRY ( SDB__DPSRPCMGR_GETLSNWIN2 );
-      ossScopedLock lock( &_mtx ) ;
-      memBeginLsn = _getStartLsn() ;
-      fileBeginLsn = _logger.getStartLSN () ;
-      if ( fileBeginLsn.invalid() || fileBeginLsn.offset > memBeginLsn.offset )
+      if ( NULL != expected)
       {
-         fileBeginLsn = memBeginLsn ;
+         *expected = _lsn ;
       }
-      endLsn = _currentLsn ;
-      expected = _lsn ;
-      PD_TRACE_EXIT ( SDB__DPSRPCMGR_GETLSNWIN2 );
+
+      if ( NULL != committed )
+      {
+         *committed = _lastCommitted ;
+      }
+      PD_TRACE_EXIT ( SDB__DPSRPCMGR_GETLSNWIN );
       return ;
    }
 
@@ -1303,5 +1295,70 @@ namespace engine
       return rc ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION (SDB__DPSRPCMGR_COMMIT, "_dpsReplicaLogMgr::commit" )   
+   INT32 _dpsReplicaLogMgr::commit( BOOLEAN deeply, DPS_LSN *committedLsn )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__DPSRPCMGR_COMMIT ) ;
+      _dpsLogPage *work = NULL ;
+      _dpsLogFile *file = NULL ;
+      _mtx.get() ;
+ 
+      work = WORK_PAGE ;
+
+      if ( 0 ==_lastCommitted.compare( _currentLsn ) )
+      {
+         goto done ;
+      }
+
+      /// wait until all pages in queue are flushed.
+      while ( !_queSize.compare( 0 ) )
+      {
+         ossSleep ( 1 ) ;
+      }
+
+      work->lock() ;
+      work->unlock() ;
+      
+      if ( 0 != work->getLength() )
+      {
+         ossMemset( work->mb()->writePtr(), 0, work->getLastSize() ) ;
+         rc = _logger.flush( work->mb(), work->getBeginLSN(), TRUE ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG ( PDERROR, "Failed to flush page, rc = %d", rc ) ;
+            goto error ;
+         }
+
+         _idleSize.add( work->getLength() ) ;
+         _allocateEvent.signalAll() ;
+      }
+
+      if ( deeply )
+      {
+         rc = _logger.sync() ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to sync log file:%d", rc ) ;
+            goto error ;
+         }
+      }
+
+      /// reset file write pointer
+      file = _logger.getWorkLogFile() ;
+      file->idleSize( file->getIdleSize() + DPS_DEFAULT_PAGE_SIZE ) ;   
+
+      _lastCommitted = _currentLsn ;
+      if ( NULL != committedLsn )
+      {
+          *committedLsn = _lastCommitted ;
+      }
+   done:
+      _mtx.release() ;
+      PD_TRACE_EXITRC( SDB__DPSRPCMGR_COMMIT, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
 }
 

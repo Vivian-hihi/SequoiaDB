@@ -799,7 +799,7 @@ namespace engine
                                           pmdEDUCB *cb,
                                           rtnCoordCtrlParam &ctrlParam,
                                           UINT32 mask,
-                                          ROUTE_RC_MAP faileds,
+                                          ROUTE_RC_MAP &faileds,
                                           rtnContextCoord **ppContext,
                                           BOOLEAN openEmptyContext,
                                           SET_RC *pIgnoreRC,
@@ -808,7 +808,6 @@ namespace engine
       INT32 rc = SDB_OK ;
       pmdKRCB *pKrcb = pmdGetKRCB() ;
       SDB_RTNCB *pRtncb = pKrcb->getRTNCB() ;
-      CoordCB *pCoordcb = pKrcb->getCoordCB() ;
       rtnQueryOptions queryOption ;
       const CHAR *pSrcFilterObjData = NULL ;
       BSONObj *pFilterObj = NULL ;
@@ -6892,5 +6891,85 @@ namespace engine
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION( CMD_RTNCOCMDSYNCDB_EXEC, "rtnCoordCMDSyncDB::execute" )
+   INT32 rtnCoordCMDSyncDB::execute( MsgHeader *pMsg,
+                                     pmdEDUCB *cb,
+                                     INT64 &contextID,
+                                     rtnContextBuf *buf )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( CMD_RTNCOCMDSYNCDB_EXEC ) ;
+
+      rc = _syncDB( pMsg, cb, contextID ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to sync db:%d", rc ) ;
+         goto error ;
+      }
+   done:
+      PD_TRACE_EXITRC( CMD_RTNCOCMDSYNCDB_EXEC, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION( CMD_RTNCOCMDSYNCDB__SYNCDB, "rtnCoordCMDSyncDB::_syncDB" )
+   INT32 rtnCoordCMDSyncDB::_syncDB( MsgHeader *pMsg,
+                                     pmdEDUCB *cb,
+                                     SINT64 &contextID )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( CMD_RTNCOCMDSYNCDB__SYNCDB ) ;
+      ROUTE_RC_MAP errNodes ;
+      rtnContextCoord *context = NULL ;
+      rtnCoordCtrlParam ctrlParam ;
+
+      ctrlParam._isGlobal = TRUE ;
+      ctrlParam._filterID = FILTER_ID_MATCHER ;
+      ctrlParam._emptyFilterSel = NODE_SEL_ALL ;
+
+      rc = executeOnNodes( pMsg, cb, ctrlParam,
+                           RTN_CTRL_MASK_ALL, errNodes, &context ) ;
+      if ( SDB_RTN_CMD_IN_LOCAL_MODE == rc )
+      {
+         PD_LOG( PDERROR, "options of node is necessary when db is coord" ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+      else if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to execute on nodes:%d", rc ) ;
+         goto error ;
+      }
+      else
+      {
+         /// do nothing.
+      }
+
+      if ( NULL != context )
+      {
+         contextID = context->contextID() ;
+      }
+
+/*
+      if ( !errNodes.empty() )
+      {
+         rc = SDB_COORD_NOT_ALL_DONE ;
+         goto error ;
+      }
+*/
+
+   done:
+      PD_TRACE_EXITRC( CMD_RTNCOCMDSYNCDB__SYNCDB, rc ) ;
+      return rc ;
+   error:
+      if ( SDB_COORD_NOT_ALL_DONE != rc && NULL != context )
+      {
+         sdbGetRTNCB()->contextDelete( context->contextID(), cb ) ;
+         contextID = -1 ;
+         context = NULL ;
+      }
+      goto done ;
+   }
 }
 

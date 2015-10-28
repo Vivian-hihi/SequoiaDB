@@ -4715,6 +4715,7 @@ static JSBool isSpecialCSName ( const CHAR *name )
                                    "createSpareRG",
                                    "getSpareRG",
                                    "removeSpareRG",
+                                   "sync"
    };
    JSBool   in = JS_FALSE ;
    INT32    i  = 0 ;
@@ -7748,6 +7749,67 @@ error:
    goto done ;
 }
 
+// PD_TRACE_DECLARE_FUNCTION ( SDB_SDB_SYNC, "sdb_sync" )
+static JSBool sdb_sync ( JSContext *cx , uintN argc , jsval *vp )
+{
+   PD_TRACE_ENTRY( SDB_SDB_SYNC ) ;
+   JSBool ret = JS_TRUE ;
+   INT32 rc = SDB_OK ;
+   sdbConnectionHandle *connection  = NULL ;
+   JSObject *jsObj = NULL ;
+   CHAR *printBuf = NULL ;
+   bson info ;
+   bson options ;
+   bson_init( &options ) ;
+   bson_init( &info ) ;
+
+   ret = JS_ConvertArguments ( cx , argc , JS_ARGV ( cx , vp ) ,
+                               "/o" , &jsObj ) ;
+   REPORT ( ret , "Sdb.sync(): wrong arguments" ) ;
+   connection = (sdbConnectionHandle *)
+      JS_GetPrivate ( cx , JS_THIS_OBJECT ( cx , vp ) ) ;
+   REPORT ( connection , "Sdb.sync(): no connection handle" ) ;
+
+   if ( NULL != jsObj )
+   {
+      sptConvertor c( cx ) ;
+      rc = c.toBson( jsObj, &options ) ;
+      VERIFY ( SDB_OK == rc ) ;
+   }
+
+   rc = sdbSyncDB( *connection, &options, &info ) ;
+   if ( SDB_OK == rc )
+   {
+      JS_SET_RVAL ( cx , vp , JSVAL_VOID ) ;
+   }
+   else if ( 5 <= bson_size( &info ) )
+   { 
+      UINT32 bufLen = 10 * 1024 ;
+      printBuf = ( CHAR * )SDB_OSS_MALLOC( bufLen ) ;
+      if ( NULL != printBuf )
+      {
+         bson_sprint( printBuf, bufLen, &info ) ;
+         REPORT_RC_MSG( FALSE, "Sdb.sync()", rc, printBuf ) ;
+      }
+      else
+      {
+         REPORT_RC( FALSE,  "Sdb.sync()", rc ) ;
+      }
+   }
+   else
+   {
+      REPORT_RC( FALSE,  "Sdb.sync()", rc ) ;
+   }
+done:
+   bson_destroy( &options ) ;
+   bson_destroy( &info ) ;
+   PD_TRACE_EXIT( SDB_SDB_SYNC ) ;
+   return ret ;
+error:
+   TRY_REPORT ( cx , "Sdb.sync(): false" ) ;
+   goto done ;
+}
+
 static JSFunctionSpec sdb_functions[] = {
    JS_FS ( "getCS" , sdb_get_cs , 1 , 0 ) ,
    JS_FS ( "getRG" , sdb_get_rg , 1 , 0 ) ,
@@ -7793,6 +7855,7 @@ static JSFunctionSpec sdb_functions[] = {
    JS_FS ( "invalidateCache", sdb_invalidate_cache, 0, 0 ),
    JS_FS ( "forceSession", sdb_force_session, 0, 0 ),
    JS_FS ( "forceStepUp", sdb_force_step_up, 0, 0 ),
+   JS_FS ( "sync", sdb_sync, 0, 0 ),
    JS_FS_END
 } ;
 

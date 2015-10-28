@@ -128,6 +128,7 @@ namespace engine
    #define COORD_CMD_ALTER_DC                 CMD_ADMIN_PREFIX CMD_NAME_ALTER_DC
    #define COORD_CMD_REELECT                  CMD_ADMIN_PREFIX CMD_NAME_REELECT
    #define COORD_CMD_TRUNCATE                 CMD_ADMIN_PREFIX CMD_NAME_TRUNCATE
+   #define COORD_CMD_SYNC_DB                  CMD_ADMIN_PREFIX CMD_NAME_SYNC_DB
 
    class rtnCoordCommand : virtual public rtnCoordOperator
    {
@@ -204,7 +205,7 @@ namespace engine
                                     pmdEDUCB *cb,
                                     rtnCoordCtrlParam &ctrlParam,
                                     UINT32 mask,
-                                    ROUTE_RC_MAP faileds,
+                                    ROUTE_RC_MAP &faileds,
                                     rtnContextCoord **ppContext = NULL,
                                     BOOLEAN openEmptyContext = FALSE,
                                     SET_RC *pIgnoreRC = NULL,
@@ -1107,6 +1108,17 @@ namespace engine
                              pmdEDUCB *cb,
                              INT64 &contextID,
                              rtnContextBuf *buf ) ;
+   } ;
+
+   class rtnCoordCMDSyncDB : public rtnCoordCommand
+   {
+   public:
+      virtual INT32 execute( MsgHeader *pMsg,
+                             pmdEDUCB *cb,
+                             INT64 &contextID,
+                             rtnContextBuf *buf ) ;
+   private:
+      INT32 _syncDB( MsgHeader *pMsg, pmdEDUCB *cb, SINT64 &contextID ) ;
    } ;
 
 }

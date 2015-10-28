@@ -2417,6 +2417,19 @@ SDB_EXPORT INT32 sdbAttachGroups( sdbDCHandle cHandle, bson *info ) ;
 */
 SDB_EXPORT INT32 sdbDetachGroups( sdbDCHandle cHandle, bson *info ) ;
 
+/** \fn INT32 sdbSyncDB( sdbConnectionHandle cHandle, bson *options, bson *info )
+    \brief sync database which are specified
+    \param [in] cHandle The database connection handle
+    \param [in] options The options specified by user
+    \param [out] info The info returns from database after synchronization done
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+*/
+/// not released yet!
+SDB_EXPORT INT32 sdbSyncDB( sdbConnectionHandle cHandle,
+                            bson *options,
+                            bson *info ) ;
+
 SDB_EXTERN_C_END
 #endif
 

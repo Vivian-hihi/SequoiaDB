@@ -148,15 +148,16 @@ namespace engine
          virtual DPS_LSN   getCurrentLsn() ;
          virtual DPS_LSN   expectLsn() ;
 
-         virtual void      getLsnWindow( DPS_LSN &fileBeginLsn,
+         virtual void      getLsnWindow( DPS_LSN &beginLsn,
                                          DPS_LSN &memBeginLsn,
                                          DPS_LSN &endLsn,
-                                         DPS_LSN *pExpectLsn = NULL ) ;
+                                         DPS_LSN *pExpectLsn,
+                                         DPS_LSN *committed ) ;
 
-         virtual void      getLsnWindow( DPS_LSN &fileBeginLsn,
-                                         DPS_LSN &memBeginLsn,
+         virtual void      getLsnWindow( DPS_LSN &beginLsn,
                                          DPS_LSN &endLsn,
-                                         DPS_LSN &expected ) ;
+                                         DPS_LSN *pExpectLsn,
+                                         DPS_LSN *committed ) ;
 
          virtual INT32     move( const DPS_LSN_OFFSET &offset,
                                  const DPS_LSN_VER &version ) ;

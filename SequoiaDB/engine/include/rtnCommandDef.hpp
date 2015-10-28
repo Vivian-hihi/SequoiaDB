@@ -97,6 +97,7 @@ namespace engine
 #define NAME_TRUNCATE                        CMD_NAME_TRUNCATE
 #define NAME_ALTER_COLLECTION                CMD_NAME_ALTER_COLLECTION
 #define NAME_ALTER_DC                        CMD_NAME_ALTER_DC
+#define NAME_SYNC_DB                         CMD_NAME_SYNC_DB
 
 // the commands that does not supported by data nodes or standalone mode
 #define NAME_CREATE_GROUP                    CMD_NAME_CREATE_GROUP
@@ -227,6 +228,7 @@ namespace engine
       CMD_REELECT                            = 223,
       CMD_FORCE_STEP_UP                      = 224,
 
+      CMD_SYNC_DB                            = 251,
       CMD_UNKNOW                             = 65535
    };
 

@@ -713,7 +713,7 @@ namespace engine
          DPS_LSN fBegin ;
          DPS_LSN mBegin ;
          DPS_LSN end ;
-         _logger->getLsnWindow( fBegin, mBegin, end ) ;
+         _logger->getLsnWindow( fBegin, mBegin, end, NULL, NULL ) ;
          _MsgClsBeat msg ;
          msg.beat.identity = _info.local ;
          msg.beat.endLsn = end ;

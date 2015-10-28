@@ -236,39 +236,35 @@ namespace engine
       return _buf.currentLsn() ;
    }
 
-   void _dpsLogWrapper::getLsnWindow( DPS_LSN &fileBeginLsn,
-                                      DPS_LSN &memBeginLsn,
+   void _dpsLogWrapper::getLsnWindow( DPS_LSN &beginLsn,
                                       DPS_LSN &endLsn,
-                                      DPS_LSN *pExpectLsn )
+                                      DPS_LSN *pExpectLsn,
+                                      DPS_LSN *committed )
    {
       if ( !_initialized )
       {
          return ;
       }
 
-      if ( pExpectLsn )
-      {
-         _buf.getLsnWindow( fileBeginLsn, memBeginLsn, endLsn, *pExpectLsn ) ;
-      }
-      else
-      {
-         _buf.getLsnWindow( fileBeginLsn, memBeginLsn, endLsn ) ;
-      }
+      DPS_LSN memLsn ;
+      _buf.getLsnWindow( beginLsn, memLsn, endLsn, pExpectLsn, committed ) ;
+      return ;
    }
 
    void _dpsLogWrapper::getLsnWindow( DPS_LSN &fileBeginLsn,
                                       DPS_LSN &memBeginLsn,
                                       DPS_LSN &endLsn,
-                                      DPS_LSN &expected )
+                                      DPS_LSN *pExpectLsn,
+                                      DPS_LSN *committed )
    {
       if ( !_initialized )
       {
          return ;
       }
-      _buf.getLsnWindow( fileBeginLsn,
-                         memBeginLsn,
-                         endLsn,
-                         expected ) ;
+
+      _buf.getLsnWindow( fileBeginLsn, memBeginLsn, endLsn,
+                         pExpectLsn, committed ) ;
+      return ;
    }
 
    DPS_LSN _dpsLogWrapper::expectLsn()

@@ -102,6 +102,7 @@ namespace engine
       dpsLogHeader   _logHeader ;
       ossAutoEvent   _writeEvent ;
       BOOLEAN        _inRestore ;
+      BOOLEAN        _dirty ;
 
    public:
       _dpsLogFile();
@@ -158,6 +159,12 @@ namespace engine
 
       INT32 invalidateData() ;
 
+      BOOLEAN isDirty() const
+      {
+         return _dirty ;
+      }
+
+      INT32 sync() ;
    private:
       void _initHead( UINT32 logID )
       {
