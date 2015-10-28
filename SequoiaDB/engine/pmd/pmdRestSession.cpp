@@ -801,6 +801,7 @@ namespace engine
          { CMD_NAME_DROP_COLLECTION,
                                  &RestToMSGTransfer::_convertDropCL },
          { CMD_NAME_CREATE_INDEX, &RestToMSGTransfer::_converCreateIndex },
+         { CMD_NAME_DROP_INDEX,  &RestToMSGTransfer::_converDropIndex },
          { CMD_NAME_SPLIT,       &RestToMSGTransfer::_convertSplit },
          { REST_CMD_NAME_ATTACH_COLLECTION, 
                                  &RestToMSGTransfer::_coverAttachCollection },
@@ -1812,7 +1813,7 @@ namespace engine
       // bson must use the original type of bool
       bool isUnique   = false ;
       bool isEnforced = false ;
-      bool isOnline   = false ;
+      bool isOnline   = true ;
 
       // collection name
       pAdaptor->getQuery( _restSession, REST_KEY_NAME_COLLECTION, 
@@ -1932,8 +1933,64 @@ namespace engine
             hint = BSON( IXM_FIELD_NAME_MODE << IXM_MODE_VALUE_OFFLINE ) ;
          }
                        
-         rc = msgBuildQueryMsg( &pBuff, &buffSize, pCommand, 0, 0, 0, -1, &query, 
-                                NULL, NULL, &hint ) ;
+         rc = msgBuildQueryMsg( &pBuff, &buffSize, pCommand, 0, 0, 0, -1, 
+                                &query, NULL, NULL, &hint ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG_MSG( PDERROR, "build command failed:command=%s, rc=%d", 
+                        pCommand, rc ) ;
+            goto error ;
+         }
+      }
+
+      *msg = ( MsgHeader * )pBuff ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 RestToMSGTransfer::_converDropIndex( restAdaptor *pAdaptor,
+                                              MsgHeader **msg )
+   {
+      INT32 rc                = SDB_OK ;
+      CHAR *pBuff             = NULL ;
+      INT32 buffSize          = 0 ;
+      const CHAR *pCommand    = CMD_ADMIN_PREFIX CMD_NAME_DROP_INDEX ;
+      const CHAR *pIndexName  = NULL ;
+      const CHAR *pCollection = NULL ;
+
+      // collection name
+      pAdaptor->getQuery( _restSession, REST_KEY_NAME_COLLECTION, 
+                          &pCollection ) ;
+      if ( NULL == pCollection )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG_MSG( PDERROR, "get rest field failed:field=%s", 
+                     REST_KEY_NAME_COLLECTION ) ;
+         goto error ;
+      }
+
+      // index name
+      pAdaptor->getQuery( _restSession, FIELD_NAME_INDEXNAME, &pIndexName ) ;
+      if ( NULL == pIndexName )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG_MSG( PDERROR, "get rest field failed:field=%s", 
+                     FIELD_NAME_INDEXNAME ) ;
+         goto error ;
+      }
+
+      {
+         BSONObj index ;
+         BSONObj query ;
+         index = BSON( "" << pIndexName ) ;
+         query = BSON( FIELD_NAME_COLLECTION << pCollection 
+                       << FIELD_NAME_INDEX << index ) ;
+
+         rc = msgBuildQueryMsg( &pBuff, &buffSize, pCommand, 0, 0, 0, -1, 
+                                &query, NULL, NULL, NULL ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG_MSG( PDERROR, "build command failed:command=%s, rc=%d", 

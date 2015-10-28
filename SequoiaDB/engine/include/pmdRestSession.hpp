@@ -302,6 +302,9 @@ namespace engine
          INT32       _converCreateIndex( restAdaptor *pAdaptor,
                                          MsgHeader **msg ) ;
 
+         INT32       _converDropIndex( restAdaptor *pAdaptor, 
+                                       MsgHeader **msg ) ;
+
          INT32       _coverAttachCollection( restAdaptor *pAdaptor,
                                              MsgHeader **msg ) ;
          
