@@ -746,7 +746,7 @@ namespace import
          _batchSize = get<INT32>(IMP_OPTION_BATCHSIZE);
          if (_batchSize <= 0 || _batchSize > 100000)
          {
-            std::cerr << IMP_OPTION_BATCHSIZE " is out of range [1-1000000]: "
+            std::cerr << IMP_OPTION_BATCHSIZE " is out of range [1-100000]: "
                       << _batchSize
                       << std::endl;
             rc = SDB_INVALIDARG;

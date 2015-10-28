@@ -85,7 +85,7 @@ int main(int argc, char* argv[])
    }
    catch(std::exception &e)
    {
-      PD_LOG(PDERROR, "unexpected err happened:%s", e.what());
+      PD_LOG(PDERROR, "unexpected error happened:%s", e.what());
    }
 
 done:
