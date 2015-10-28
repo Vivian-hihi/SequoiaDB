@@ -36,6 +36,32 @@
 
 namespace import
 {
+   void _emptyShardingGroups(ShardingGroups* groups, RecordQueue* outQueue)
+   {
+      SDB_ASSERT(NULL != groups, "groups can't be NULL");
+      SDB_ASSERT(NULL != outQueue, "outQueue can't be NULL");
+
+      if (!groups->empty())
+      {
+         for (ShardingGroups::iterator it = groups->begin();
+              it != groups->end();
+              it++)
+         {
+            SubShardingGroups* subGroups = &(it->second);
+            for (SubShardingGroups::iterator subIt = subGroups->begin();
+                 subIt != subGroups->end();
+                 subIt++)
+            {
+               RecordArray* array = subIt->second;
+               outQueue->push(array);
+            }
+
+            subGroups->clear();
+         }
+
+         groups->clear();
+      }
+   }
 
    void _shardingRoutine(WorkerArgs* args)
    {
@@ -71,11 +97,19 @@ namespace import
       {
          INT32 size;
          inQueue->wait_and_pop(records);
-
          if (NULL == records)
          {
-            // stop
+            // stop signal
             break;
+         }
+
+         if (records->empty())
+         {
+            // empty signal
+            _emptyShardingGroups(groups, outQueue);
+            freeRecordArray(&records);
+            PD_LOG(PDEVENT, "empty sharding groups");
+            continue;
          }
 
          size = records->size();
@@ -173,27 +207,7 @@ namespace import
       }
 
    done:
-      if (!groups->empty())
-      {
-         for (ShardingGroups::iterator it = groups->begin();
-              it != groups->end();
-              it++)
-         {
-            SubShardingGroups* subGroups = &(it->second);
-            for (SubShardingGroups::iterator subIt = subGroups->begin();
-                 subIt != subGroups->end();
-                 subIt++)
-            {
-               RecordArray* array = subIt->second;
-               outQueue->push(array);
-            }
-
-            subGroups->clear();
-         }
-
-         groups->clear();
-      }
-
+      _emptyShardingGroups(groups, outQueue);
       self->_stopped = TRUE;
 
       {

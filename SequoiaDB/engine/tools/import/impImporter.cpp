@@ -103,8 +103,15 @@ namespace import
          workQueue->wait_and_pop(records);
          if (NULL == records)
          {
-            // NULL records is the singal of stopping
+            // stop signal
             break;
+         }
+
+         if (records->empty())
+         {
+            // empty signal, just ignore it
+            freeRecordArray(&records);
+            continue;
          }
 
          if (!dryRun)

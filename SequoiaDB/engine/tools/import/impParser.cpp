@@ -329,6 +329,20 @@ namespace import
                       recordsMem / (1024 * 1024),
                       options->recordsMem() / (1024 * 1024),
                       recordsNum, recordsMem / recordsNum);
+
+               // push an empty array to queue as a signal,
+               // to tell sharding to empty it's sharding groups,
+               // so that sharding can avoid deadly waiting for group FULL 
+               RecordArray* array = NULL;
+               rc = getRecordArray(0, &array);
+               if (SDB_OK != rc)
+               {
+                  PD_LOG(PDERROR, "failed to get free RecordArray");
+                  goto error;
+               }
+               workQueue->push(array);
+               array = NULL;
+
                for(;;)
                {
                   ossSleep(100);

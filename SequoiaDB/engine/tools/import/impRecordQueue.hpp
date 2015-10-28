@@ -177,6 +177,7 @@ namespace import
       RecordArray* array = NULL;
       INT32 rc = SDB_OK;
 
+      SDB_ASSERT(capacity >= 0, "capacity must >= 0");
       SDB_ASSERT(NULL != recordArray, "recordArray can't be NULL");
 
       array = SDB_OSS_NEW RecordArray();
@@ -187,11 +188,14 @@ namespace import
          goto error;
       }
 
-      rc = array->init(capacity);
-      if (SDB_OK != rc)
+      if (capacity > 0)
       {
-         PD_LOG(PDERROR, "failed to init RecordArray, rc=%d", rc);
-         goto error;
+         rc = array->init(capacity);
+         if (SDB_OK != rc)
+         {
+            PD_LOG(PDERROR, "failed to init RecordArray, rc=%d", rc);
+            goto error;
+         }
       }
 
       *recordArray = array;
