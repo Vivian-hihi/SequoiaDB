@@ -800,6 +800,7 @@ namespace engine
                                  &RestToMSGTransfer::_convertDropCS },
          { CMD_NAME_DROP_COLLECTION,
                                  &RestToMSGTransfer::_convertDropCL },
+         { CMD_NAME_CREATE_INDEX, &RestToMSGTransfer::_converCreateIndex },
          { CMD_NAME_SPLIT,       &RestToMSGTransfer::_convertSplit },
          { REST_CMD_NAME_ATTACH_COLLECTION, 
                                  &RestToMSGTransfer::_coverAttachCollection },
@@ -1792,6 +1793,163 @@ namespace engine
       goto done ;
    }
 
+   INT32 RestToMSGTransfer::_converCreateIndex( restAdaptor *pAdaptor,
+                                                MsgHeader **msg )
+   {
+      INT32 rc                = SDB_OK ;
+      CHAR *pBuff             = NULL ;
+      INT32 buffSize          = 0 ;
+      const CHAR *pCommand    = CMD_ADMIN_PREFIX CMD_NAME_CREATE_INDEX ;
+      const CHAR *pIndexName  = NULL ;
+      const CHAR *pIndexDef   = NULL ;
+      const CHAR *pUnique     = NULL ;
+      const CHAR *pEnforced   = NULL ;
+      const CHAR *pFlag       = NULL ;
+      const CHAR *pCollection = NULL ;
+
+      BSONObj indexDef ;
+
+      // bson must use the original type of bool
+      bool isUnique   = false ;
+      bool isEnforced = false ;
+      bool isOnline   = false ;
+
+      // collection name
+      pAdaptor->getQuery( _restSession, REST_KEY_NAME_COLLECTION, 
+                          &pCollection ) ;
+      if ( NULL == pCollection )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG_MSG( PDERROR, "get rest field failed:field=%s", 
+                     REST_KEY_NAME_COLLECTION ) ;
+         goto error ;
+      }
+
+      // index name
+      pAdaptor->getQuery( _restSession, FIELD_NAME_INDEXNAME, &pIndexName ) ;
+      if ( NULL == pIndexName )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG_MSG( PDERROR, "get rest field failed:field=%s", 
+                     FIELD_NAME_INDEXNAME ) ;
+         goto error ;
+      }
+
+      // index define
+      pAdaptor->getQuery( _restSession, IXM_FIELD_NAME_INDEX_DEF, &pIndexDef ) ;
+      if ( NULL == pIndexDef )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG_MSG( PDERROR, "get rest field failed:field=%s", 
+                     IXM_FIELD_NAME_INDEX_DEF ) ;
+         goto error ;
+      }
+
+      rc = fromjson( pIndexDef, indexDef ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG_MSG( PDERROR, "field's format error:field=%s, value=%s", 
+                     IXM_FIELD_NAME_INDEX_DEF, pIndexDef ) ;
+         goto error ;
+      }
+
+      // unique
+      pAdaptor->getQuery( _restSession, IXM_FIELD_NAME_UNIQUE, &pUnique ) ;
+      if ( NULL != pUnique )
+      {
+         if ( ossStrcasecmp( pUnique, "true" ) == 0 )
+         {
+            isUnique = true ;
+         }
+         else if ( ossStrcasecmp( pUnique, "false" ) == 0 )
+         {
+            isUnique = false ;
+         }
+         else
+         {
+            rc = SDB_INVALIDARG ;
+            PD_LOG_MSG( PDERROR, "field's format error:field=%s, value=%s", 
+                        IXM_FIELD_NAME_UNIQUE, pUnique ) ;
+            goto error ;
+         }
+      }
+
+      // enforced
+      pAdaptor->getQuery( _restSession, IXM_FIELD_NAME_ENFORCED, &pEnforced ) ;
+      if ( NULL != pEnforced )
+      {
+         if ( ossStrcasecmp( pEnforced, "true" ) == 0 )
+         {
+            isEnforced = true ;
+         }
+         else if ( ossStrcasecmp( pEnforced, "false" ) == 0 )
+         {
+            isEnforced = false ;
+         }
+         else
+         {
+            rc = SDB_INVALIDARG ;
+            PD_LOG_MSG( PDERROR, "field's format error:field=%s, value=%s", 
+                        IXM_FIELD_NAME_ENFORCED, pEnforced ) ;
+            goto error ;
+         }
+      }
+
+      // flag
+      pAdaptor->getQuery( _restSession, REST_KEY_NAME_FLAG, &pFlag ) ;
+      if ( NULL != pFlag )
+      {
+         if ( ossStrcasecmp( pFlag, IXM_MODE_VALUE_ONLINE ) == 0 )
+         {
+            isOnline = true ;
+         }
+         else if ( ossStrcasecmp( pFlag, IXM_MODE_VALUE_OFFLINE ) == 0 )
+         {
+            isOnline = false ;
+         }
+         else
+         {
+            rc = SDB_INVALIDARG ;
+            PD_LOG_MSG( PDERROR, "field's format error:field=%s, value=%s", 
+                        REST_KEY_NAME_FLAG, pFlag ) ;
+            goto error ;
+         }
+      }
+
+      {
+         BSONObj index ;
+         BSONObj query ;
+         BSONObj hint ;
+         index = BSON( IXM_FIELD_NAME_KEY << indexDef 
+                       << IXM_FIELD_NAME_NAME << pIndexName 
+                       << IXM_FIELD_NAME_UNIQUE << isUnique 
+                       << IXM_FIELD_NAME_ENFORCED << isEnforced ) ;
+
+         query = BSON( FIELD_NAME_COLLECTION << pCollection 
+                       << FIELD_NAME_INDEX << index ) ;
+         if ( !isOnline )
+         {
+            hint = BSON( IXM_FIELD_NAME_MODE << IXM_MODE_VALUE_OFFLINE ) ;
+         }
+                       
+         rc = msgBuildQueryMsg( &pBuff, &buffSize, pCommand, 0, 0, 0, -1, &query, 
+                                NULL, NULL, &hint ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG_MSG( PDERROR, "build command failed:command=%s, rc=%d", 
+                        pCommand, rc ) ;
+            goto error ;
+         }
+      }
+
+      *msg = ( MsgHeader * )pBuff ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
    INT32 RestToMSGTransfer::_convertSplit( restAdaptor *pAdaptor,
                                            MsgHeader **msg )
    {
@@ -1970,12 +2128,12 @@ namespace engine
       }
 
       // subcl name
-      pAdaptor->getQuery( _restSession, REST_KEY_SUBCLNAME, &pSubCLName ) ;
+      pAdaptor->getQuery( _restSession, REST_KEY_NAME_SUBCLNAME, &pSubCLName ) ;
       if ( NULL == pSubCLName )
       {
          rc = SDB_INVALIDARG ;
          PD_LOG_MSG( PDERROR, "get rest field[%s] failed", 
-                     REST_KEY_SUBCLNAME ) ;
+                     REST_KEY_NAME_SUBCLNAME ) ;
          goto error ;
       }
 

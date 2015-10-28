@@ -233,7 +233,7 @@ namespace engine
 
    #define REST_KEY_NAME_COLLECTIONSPACE "Collectionspace"
    #define REST_KEY_NAME_COLLECTION    "Collectionname"
-   #define REST_KEY_SUBCLNAME          "Subclname"
+   #define REST_KEY_NAME_SUBCLNAME     "Subclname"
    #define REST_KEY_NAME_ORDERBY       "Orderby"
    #define REST_KEY_NAME_LIMIT         "Limit"
    #define REST_KEY_NAME_MATCHER       "Matcher"
@@ -245,6 +245,7 @@ namespace engine
    #define REST_KEY_NAME_SQL           "Sql"
    #define REST_KEY_NAME_LOWBOUND      "Lowbound"
    #define REST_KEY_NAME_UPBOUND       "Upbound"
+
 
    class RestToMSGTransfer ;   
    typedef INT32 ( RestToMSGTransfer::*restTransFunc )( restAdaptor *pAdaptor, 
@@ -297,6 +298,9 @@ namespace engine
          INT32       _convertDelete( restAdaptor *pAdaptor, MsgHeader **msg ) ;
 
          INT32       _convertSplit( restAdaptor *pAdaptor, MsgHeader **msg ) ;
+
+         INT32       _converCreateIndex( restAdaptor *pAdaptor,
+                                         MsgHeader **msg ) ;
 
          INT32       _coverAttachCollection( restAdaptor *pAdaptor,
                                              MsgHeader **msg ) ;
