@@ -329,7 +329,7 @@ BOOLEAN sptConvertor2::_addSpecialObj( JSObject *obj,
       jsval typeValName ;
       BinDataType binType ;
       CHAR *decode = NULL ;
-      UINT32 decodeSize = 0 ; 
+      INT32 decodeSize = 0 ; 
 
       if ( !JS_IdToValue( _cx, typeId, &typeValName ))
       {

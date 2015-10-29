@@ -219,7 +219,7 @@ INT32 sptConvertor::_addBinData( JSObject *obj,
    std::string strBin, strType ;
    jsval jsBin, jsType ;
    CHAR *decode = NULL ;
-   UINT32 decodeSize = 0 ;
+   INT32 decodeSize = 0 ;
    INT32 binType = 0 ;
 
    if ( !_getProperty( obj, "_data",
@@ -761,7 +761,7 @@ INT32 sptConvertor::_addSpecialObj( JSObject *obj,
       jsid typeId = properties->vector[1] ;
       jsval typeValName ;
       CHAR *decode = NULL ;
-      UINT32 decodeSize = 0 ;
+      INT32 decodeSize = 0 ;
       INT32 binType = 0 ;
 
       if ( !JS_IdToValue( _cx, typeId, &typeValName ))
