@@ -304,6 +304,7 @@ else if ( $type == "find" )
 				$db -> install ( "{ install : false }" ) ;
 				while ( $str = $cursor -> getNext() )
 				{
+                    $str = str_replace( '\\', '\\\\', $str ) ;
 					$str = str_replace( '"', '\"', $str ) ;
 					array_push ( $find_arr, $str ) ;
 				}
@@ -336,6 +337,7 @@ else
 {
 	$error_msg = date("Y-m-d h:i:s")." ".$common_msg." 执行失败：".$error_msg ;
 }
+$error_msg = str_replace( '\\', '\\\\', $error_msg ) ;
 $error_msg = str_replace( '"', '\"', $error_msg ) ;
 $smarty -> assign( "count_num", $count_num ) ;
 $smarty -> assign( "find_arr", $find_arr ) ;
