@@ -63,9 +63,9 @@ public class TestIndex {
     }
 
     @Test
-    public void testCreateIndexOffline() {
+    public void testCreateIndex() {
         BasicBSONObject key = new BasicBSONObject("a", 1);
-        cl.createIndexOffline(idxName, key, false, false);
+        cl.createIndex(idxName, key, false, false);
         
         DBCursor cursor = cl.getIndex(idxName);
         assertTrue(cursor.hasNext());

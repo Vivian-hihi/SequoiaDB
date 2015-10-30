@@ -1217,7 +1217,7 @@ public class DBCollection {
 
 	/**
 	 * @fn void createIndex(String name, BSONObject key, boolean isUnique,
-	 *     boolean enforced, boolean isOffline)
+	 *     boolean enforced, int sortBufferSize)
 	 * @brief Create a index with name and key
 	 * @param name
 	 *            The index name
@@ -1228,12 +1228,16 @@ public class DBCollection {
 	 * @param enforced
 	 *            Whether the index is enforced unique This element is
 	 *            meaningful when isUnique is set to true
-	 * @param isOffline
-	 *            Whether the index is offline or not
+	 * @param sortBufferSize
+	 *            The size(MB) of sort buffer used when creating index,
+                  zero means don't use sort buffer
 	 * @exception com.sequoiadb.exception.BaseException
 	 */
-	private void createIndex(String name, BSONObject key, boolean isUnique,
-			boolean enforced, boolean isOffline ) throws BaseException {
+	public void createIndex(String name, BSONObject key, boolean isUnique,
+			boolean enforced, int sortBufferSize ) throws BaseException {
+	    if(sortBufferSize < 0){
+	        throw new BaseException("SDB_INVALIDARG", sortBufferSize);
+	    }
 		String commandString = SequoiadbConstants.ADMIN_PROMPT
 				+ SequoiadbConstants.CREATE_INX;
 		BSONObject hint = new BasicBSONObject() ;
@@ -1246,10 +1250,8 @@ public class DBCollection {
 		obj.put(SequoiadbConstants.IXM_ENFORCED, enforced);
 		createObj.put(SequoiadbConstants.FIELD_COLLECTION, collectionFullName);
 		createObj.put(SequoiadbConstants.FIELD_INDEX, obj);
-		if ( isOffline ) {
-		    hint.put( SequoiadbConstants.IXM_FIELD_NAME_MODE, 
-		            SequoiadbConstants.IXM_MODE_VALUE_OFFLINE );
-		}
+		hint.put( SequoiadbConstants.IXM_FIELD_NAME_SORT_BUFFER_SIZE, 
+		        sortBufferSize );
 		SDBMessage rtn = adminCommand(commandString, createObj, dummyObj,
 				dummyObj, hint, -1, -1, 0);
 
@@ -1260,9 +1262,9 @@ public class DBCollection {
 	}
 	
 	/**
-     * @fn void createIndexOffline(String name, BSONObject key, boolean isUnique,
-     *     boolean enforced)
-     * @brief Create a index in offline mode with name and key
+     * @fn void createIndex(String name, String key, boolean isUnique,
+     *     boolean enforced, int sortBufferSize)
+     * @brief Create a index with name and key
      * @param name
      *            The index name
      * @param key
@@ -1272,12 +1274,18 @@ public class DBCollection {
      * @param enforced
      *            Whether the index is enforced unique This element is
      *            meaningful when isUnique is set to true
+     * @param sortBufferSize
+     *            The size(MB) of sort buffer used when creating index,
+                  zero means don't use sort buffer
      * @exception com.sequoiadb.exception.BaseException
      */
-    public void createIndexOffline(String name, BSONObject key, boolean isUnique,
-            boolean enforced ) throws BaseException {
-        createIndex(name, key, isUnique, enforced, true );
-    }
+	public void createIndex(String name, String key, boolean isUnique,
+            boolean enforced, int sortBufferSize ) throws BaseException {
+	    BSONObject k = null;
+        if (key != null)
+            k = (BSONObject) JSON.parse(key);
+        createIndex(name, k, isUnique, enforced, sortBufferSize);
+	}
 
 	/**
      * @fn void createIndex(String name, BSONObject key, boolean isUnique,
@@ -1296,36 +1304,38 @@ public class DBCollection {
      */
 	public void createIndex(String name, BSONObject key, boolean isUnique,
             boolean enforced ) throws BaseException {
-	    createIndex(name, key, isUnique, enforced, false );
+	    createIndex(name, key, isUnique, enforced, 
+	            SequoiadbConstants.IXM_SORT_BUFFER_DEFAULT_SIZE );
 	}
 	
 	/**
-	 * @fn void createIndex(String name, String key, boolean isUnique, boolean
-	 *     enforced)
-	 * @brief Create a index with name and key
-	 * @param name
-	 *            The index name
-	 * @param key
-	 *            The index key, like: {"key":1/-1}, ASC(1)/DESC(-1)
-	 * @param isUnique
-	 *            Whether the index elements are unique or not
-	 * @param enforced
-	 *            Whether the index is enforced unique This element is
-	 *            meaningful when isUnique is set to true
-	 * @exception com.sequoiadb.exception.BaseException
-	 */
-	public void createIndex(String name, String key, boolean isUnique,
-			boolean enforced) throws BaseException {
-		BSONObject k = null;
-		if (key != null)
-			k = (BSONObject) JSON.parse(key);
-		createIndex(name, k, isUnique, enforced, false );
-	}
-	
+     * @fn void createIndex(String name, String key, boolean isUnique, boolean
+     *     enforced)
+     * @brief Create a index with name and key
+     * @param name
+     *            The index name
+     * @param key
+     *            The index key, like: {"key":1/-1}, ASC(1)/DESC(-1)
+     * @param isUnique
+     *            Whether the index elements are unique or not
+     * @param enforced
+     *            Whether the index is enforced unique This element is
+     *            meaningful when isUnique is set to true
+     * @exception com.sequoiadb.exception.BaseException
+     */
+    public void createIndex(String name, String key, boolean isUnique,
+            boolean enforced) throws BaseException {
+        BSONObject k = null;
+        if (key != null)
+            k = (BSONObject) JSON.parse(key);
+        createIndex(name, k, isUnique, enforced, 
+                SequoiadbConstants.IXM_SORT_BUFFER_DEFAULT_SIZE );
+    }
+
 	/**
      * @fn void createIdIndex(BSONObject options)
      * @brief Create an id index
-     * @param options can be empty or specify option. e.g. {Offline:true}
+     * @param options can be empty or specify option. e.g. {SortBufferSize:64}
      * @exception com.sequoiadb.exception.BaseException
      */
     public void createIdIndex(BSONObject options) throws BaseException {
