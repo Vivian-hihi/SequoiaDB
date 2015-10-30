@@ -781,7 +781,8 @@ INT32 createIndex ( sdbCollection *collection,
                     const CHAR *indexDef,
                     const CHAR *pName,
                     BOOLEAN isUnique,
-                    BOOLEAN isEnforced )
+                    BOOLEAN isEnforced,
+                    INT32 sortBufferSize )
 {
    INT32 rc = SDB_OK ;
    BSONObj indexDef_bson ;
@@ -799,34 +800,8 @@ INT32 createIndex ( sdbCollection *collection,
    rc = collection->createIndex( indexDef_bson,
                                  pName,
                                  isUnique,
-                                 isEnforced ) ;
-
-   return rc ;
-}
-
-INT32 createIndexOffline( sdbCollection *collection,
-                          const CHAR *indexDef,
-                          const CHAR *pName,
-                          BOOLEAN isUnique,
-                          BOOLEAN isEnforced )
-{
-   INT32 rc = SDB_OK ;
-   BSONObj indexDefBson ;
-
-   if ( indexDef )
-   {
-      rc = fromjson ( indexDef, indexDefBson ) ;
-      if ( rc )
-         return rc ;
-   }
-   else
-   {
-      return SDB_INVALIDARG;
-   }
-   rc = collection->createIndexOffline( indexDefBson,
-                                        pName,
-                                        isUnique,
-                                        isEnforced ) ;
+                                 isEnforced,
+                                 sortBufferSize ) ;
 
    return rc ;
 }

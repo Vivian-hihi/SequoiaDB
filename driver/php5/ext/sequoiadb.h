@@ -386,22 +386,6 @@ public:
                               bool   $isUnique = false,
                               bool   $isEnforced = false ) ;
 
-   /** \fn array|string createIndexOffline ( array|string $indexDef,
-                                             string $pIndexName,
-                                             [bool  $isUnique],
-                                             [bool  $isEnforced] )
-       \brief Create the index in current collection in offline mode
-       \param [in] $indexDef The bson structure of index element, e.g. {name:1, age:-1}
-       \param [in] $pIndexName The index name
-       \param [in] $isUnique Whether the index elements are unique or not,default is FALSE
-       \param [in] $isEnforced Whether the index is enforced unique This element is meaningful when isUnique is set to true
-       \retval Returns the database response
-   */
-   array|string createIndexOffline( array|string $indexDef,
-                                    string $pIndexName,
-                                    bool   $isUnique = false,
-                                    bool   $isEnforced = false ) ;
-
    /** \fn array|string deleteIndex ( string $pIndexName )
        \brief delete the index in current collection
        \param [in] $pIndexName The index name

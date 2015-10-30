@@ -118,7 +118,6 @@ PHP_METHOD ( SequoiaCL, split ) ;
 PHP_METHOD ( SequoiaCL, drop ) ;
 PHP_METHOD ( SequoiaCL, aggregate ) ;
 PHP_METHOD ( SequoiaCL, createIndex ) ;
-PHP_METHOD ( SequoiaCL, createIndexOffline ) ;
 PHP_METHOD ( SequoiaCL, deleteIndex ) ;
 PHP_METHOD ( SequoiaCL, getIndex ) ;
 PHP_METHOD ( SequoiaCL, getCSName ) ;
