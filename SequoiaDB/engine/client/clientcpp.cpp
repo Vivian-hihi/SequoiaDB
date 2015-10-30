@@ -1661,7 +1661,7 @@ do                                                            \
                                             const CHAR *pName,
                                             BOOLEAN isUnique,
                                             BOOLEAN isEnforced,
-                                            BOOLEAN isOffline )
+                                            INT32 sortBufferSize )
    {
       PD_TRACE_ENTRY ( SDB_CLIENT__CREATEINDEX ) ;
       INT32 rc = SDB_OK ;
@@ -1677,6 +1677,13 @@ do                                                            \
          rc = SDB_INVALIDARG ;
          goto error ;
       }
+
+      if ( sortBufferSize < 0 )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
       indexObj = BSON ( IXM_FIELD_NAME_KEY << indexDef <<
                         IXM_FIELD_NAME_NAME << pName <<
                         IXM_FIELD_NAME_UNIQUE << isUnique <<
@@ -1685,17 +1692,14 @@ do                                                            \
       newObj = BSON ( FIELD_NAME_COLLECTION << _collectionFullName <<
                       FIELD_NAME_INDEX << indexObj ) ;
 
-      if ( isOffline )
-      {
-         hintObj = BSON ( IXM_FIELD_NAME_MODE << IXM_MODE_VALUE_OFFLINE ) ;
-      }
+      hintObj = BSON ( IXM_FIELD_NAME_SORT_BUFFER_SIZE << sortBufferSize ) ;
 
       rc = clientBuildQueryMsgCpp ( &_pSendBuffer, &_sendBufferSize,
                                     CMD_ADMIN_PREFIX CMD_NAME_CREATE_INDEX,
                                     0, 0, -1, -1,
                                     newObj.objdata(),
                                     NULL, NULL,
-                                    isOffline ? hintObj.objdata() : NULL,
+                                    hintObj.objdata(),
                                     _connection->_endianConvert ) ;
       if ( rc )
       {
@@ -1730,15 +1734,17 @@ do                                                            \
                                            BOOLEAN isUnique,
                                            BOOLEAN isEnforced )
    {
-      return _createIndex ( indexDef, pName, isUnique, isEnforced, FALSE ) ;
+      return _createIndex ( indexDef, pName, isUnique, isEnforced,
+                            SDB_INDEX_SORT_BUFFER_DEFAULT_SIZE) ;
    }
 
-   INT32 _sdbCollectionImpl::createIndexOffline ( const BSONObj &indexDef,
-                                                  const CHAR *pName,
-                                                  BOOLEAN isUnique,
-                                                  BOOLEAN isEnforced )
+   INT32 _sdbCollectionImpl::createIndex ( const BSONObj &indexDef,
+                                           const CHAR *pName,
+                                           BOOLEAN isUnique,
+                                           BOOLEAN isEnforced,
+                                           INT32 sortBufferSize )
    {
-      return _createIndex ( indexDef, pName, isUnique, isEnforced, TRUE ) ;
+      return _createIndex ( indexDef, pName, isUnique, isEnforced, sortBufferSize ) ;
    }
 
 //   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_GETINDEXES, "_sdbCollectionImpl::getIndexes" )

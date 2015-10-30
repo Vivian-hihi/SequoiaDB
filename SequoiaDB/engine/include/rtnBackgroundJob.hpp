@@ -54,8 +54,7 @@ namespace engine
    {
       public:
          _rtnIndexJob ( RTN_JOB_TYPE type, const CHAR *pCLName,
-                        const BSONObj &indexObj, SDB_DPSCB *dpsCB,
-                        DMS_INDEX_BUILD_MODE mode ) ;
+                        const BSONObj &indexObj, SDB_DPSCB *dpsCB ) ;
 
          virtual ~_rtnIndexJob() ;
 
@@ -76,7 +75,6 @@ namespace engine
          std::string             _jobName ;
          BSONObj                 _indexObj ;
          BSONElement             _indexEle ;
-         DMS_INDEX_BUILD_MODE    _mode ;
          SDB_DPSCB*              _dpsCB ;
          SDB_DMSCB*              _dmsCB ;
 

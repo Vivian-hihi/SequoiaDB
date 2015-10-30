@@ -355,9 +355,7 @@
 #define IXM_FIELD_NAME_INDEX_DEF             "IndexDef"
 #define IXM_FIELD_NAME_INDEX_FLAG            "IndexFlag"
 #define IXM_FIELD_NAME_SCAN_EXTLID           "ScanExtentLID"
-#define IXM_FIELD_NAME_MODE                  "Mode"
-#define IXM_MODE_VALUE_ONLINE                "online"
-#define IXM_MODE_VALUE_OFFLINE               "offline"
+#define IXM_FIELD_NAME_SORT_BUFFER_SIZE      "SortBufferSize"
 
 #define CMD_NAME_ENFORCED                    "enforced"
 
@@ -493,6 +491,8 @@
 #define DATA_GROUP_ID_BEGIN                  1000
 #define DATA_GROUP_ID_END                    ( 60000 + DATA_GROUP_ID_BEGIN )
 #define CATA_NODE_MAX_NUM                    CLS_REPLSET_MAX_NODE_SIZE
+
+#define SDB_INDEX_SORT_BUFFER_DEFAULT_SIZE   64
 
 #define SDB_ROLE_DATA_STR                    "data"
 #define SDB_ROLE_COORD_STR                   "coord"

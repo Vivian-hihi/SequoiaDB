@@ -2102,7 +2102,7 @@ error :
 }
 
 // PD_TRACE_DECLARE_FUNCTION ( SDB_COLL_CRT_INX, "_collection_create_index" )
-static JSBool _collection_create_index ( JSContext *cx , uintN argc , jsval *vp, BOOLEAN isOffline )
+static JSBool collection_create_index ( JSContext *cx , uintN argc , jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_COLL_CRT_INX );
    sdbCollectionHandle *collection  = NULL ;
@@ -2115,11 +2115,12 @@ static JSBool _collection_create_index ( JSContext *cx , uintN argc , jsval *vp,
    CHAR *               name        = NULL ;
    JSBool               unique      = JS_FALSE ;
    JSBool               enforced    = JS_FALSE ;
+   INT32                sortBufferSize = SDB_INDEX_SORT_BUFFER_DEFAULT_SIZE ;
    stringstream ss ;
 #define BUILD_ERROR_MSG( msg ) \
    do {                        \
    ss.str("") ;                \
-   ss << ( isOffline ? "SdbCollection.createIndexOffline()" : "SdbCollection.createIndex()" ) ; \
+   ss << "SdbCollection.createIndex()" ; \
    ss << ": " ;                \
    ss << string(msg) ;         \
    } while (0)
@@ -2159,19 +2160,16 @@ static JSBool _collection_create_index ( JSContext *cx , uintN argc , jsval *vp,
       REPORT ( JSVAL_IS_BOOLEAN( argv[3]), "the 4th argument should be bool" ) ;
       VERIFY ( JS_ValueToBoolean ( cx, argv[3], &enforced ) ) ;
    }
+   if ( argc >= 5 )
+   {
+      REPORT ( JSVAL_IS_INT( argv[4]), "the 5th argument should be int" ) ;
+      sortBufferSize = JSVAL_TO_INT ( argv[4] ) ;
+      REPORT ( sortBufferSize >= 0, "invalid sortBufferSize: %d", sortBufferSize ) ;
+   }
 
-   if ( isOffline )
-   {
-      rc = sdbCreateIndexOffline ( *collection , bsonDef , name , unique ? TRUE : FALSE,
-                                   enforced ? TRUE : FALSE );
-      REPORT_RC ( SDB_OK == rc , "SdbCollection.createIndexOffline()" , rc ) ;
-   }
-   else
-   {
-      rc = sdbCreateIndex ( *collection , bsonDef , name , unique ? TRUE : FALSE,
-                            enforced ? TRUE : FALSE );
-      REPORT_RC ( SDB_OK == rc , "SdbCollection.createIndex()" , rc ) ;
-   }
+   rc = sdbCreateIndex1 ( *collection , bsonDef , name , unique ? TRUE : FALSE,
+                         enforced ? TRUE : FALSE, sortBufferSize );
+   REPORT_RC ( SDB_OK == rc , "SdbCollection.createIndex()" , rc ) ;
 
    JS_SET_RVAL ( cx , vp , JSVAL_VOID ) ;
 
@@ -2184,16 +2182,6 @@ error :
    BUILD_ERROR_MSG( "false" ) ;
    TRY_REPORT ( cx , ss.str().c_str() ) ;
    goto done ;
-}
-
-static JSBool collection_create_index ( JSContext *cx , uintN argc , jsval *vp )
-{
-   return _collection_create_index( cx, argc, vp, FALSE ) ;
-}
-
-static JSBool collection_create_index_offline ( JSContext *cx , uintN argc , jsval *vp )
-{
-   return _collection_create_index( cx, argc, vp, TRUE ) ;
 }
 
 // PD_TRACE_DECLARE_FUNCTION ( SDB_COLL_GET_INX, "collection_get_indexes" )
@@ -2685,7 +2673,6 @@ static JSFunctionSpec collection_functions[] = {
     JS_FS ( "remove" , collection_remove , 0 , 0 ) ,
     JS_FS ( "_count" , collection_count , 0 , 0 ) ,
     JS_FS ( "createIndex" , collection_create_index , 2 , 0 ) ,
-    JS_FS ( "createIndexOffline" , collection_create_index_offline , 2 , 0 ) ,
     JS_FS ( "_getIndexes" , collection_get_indexes , 1 , 0 ) ,
     JS_FS ( "dropIndex" , collection_drop_index , 1 , 0 ) ,
     JS_FS ( "_bulkInsert" , collection_bulk_insert , 1 , 0 ) ,

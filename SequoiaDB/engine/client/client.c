@@ -4698,7 +4698,7 @@ static INT32 _sdbCreateIndex( sdbCollectionHandle cHandle,
                               const CHAR *pIndexName,
                               BOOLEAN isUnique,
                               BOOLEAN isEnforced,
-                              BOOLEAN isOffline )
+                              INT32 sortBufferSize )
 {
    INT32 rc         = SDB_OK ;
    BOOLEAN result   = FALSE;
@@ -4719,6 +4719,12 @@ static INT32 _sdbCreateIndex( sdbCollectionHandle cHandle,
       goto error ;
    }
 
+   if ( sortBufferSize < 0 )
+   {
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+
    BSON_INIT2( indexObj, indexInit ) ;
    BSON_INIT2( newObj, newInit ) ;
 
@@ -4734,13 +4740,10 @@ static INT32 _sdbCreateIndex( sdbCollectionHandle cHandle,
    BSON_APPEND( newObj, FIELD_NAME_INDEX, &indexObj, bson ) ;
    BSON_FINISH ( newObj ) ;
 
-   if ( isOffline )
-   {
-      BSON_INIT2( hintObj, hintInit ) ;
-      BSON_APPEND( hintObj, IXM_FIELD_NAME_MODE, IXM_MODE_VALUE_OFFLINE, string ) ;
-      BSON_FINISH ( hintObj ) ;
-      hint = &hintObj ;
-   }
+   BSON_INIT2( hintObj, hintInit ) ;
+   BSON_APPEND( hintObj, IXM_FIELD_NAME_SORT_BUFFER_SIZE, sortBufferSize, int ) ;
+   BSON_FINISH ( hintObj ) ;
+   hint = &hintObj ;
 
    rc = clientBuildQueryMsg ( &cs->_pSendBuffer, &cs->_sendBufferSize,
                               CMD_ADMIN_PREFIX CMD_NAME_CREATE_INDEX,
@@ -4787,16 +4790,18 @@ SDB_EXPORT INT32 sdbCreateIndex ( sdbCollectionHandle cHandle,
                                   BOOLEAN isUnique,
                                   BOOLEAN isEnforced )
 {
-   return _sdbCreateIndex( cHandle, indexDef, pIndexName, isUnique, isEnforced, FALSE ) ;
+   return _sdbCreateIndex( cHandle, indexDef, pIndexName, isUnique, isEnforced,
+                           SDB_INDEX_SORT_BUFFER_DEFAULT_SIZE ) ;
 }
 
-SDB_EXPORT INT32 sdbCreateIndexOffline ( sdbCollectionHandle cHandle,
-                                         bson *indexDef,
-                                         const CHAR *pIndexName,
-                                         BOOLEAN isUnique,
-                                         BOOLEAN isEnforced )
+SDB_EXPORT INT32 sdbCreateIndex1 ( sdbCollectionHandle cHandle,
+                                   bson *indexDef,
+                                   const CHAR *pIndexName,
+                                   BOOLEAN isUnique,
+                                   BOOLEAN isEnforced,
+                                   INT32 sortBufferSize )
 {
-   return _sdbCreateIndex( cHandle, indexDef, pIndexName, isUnique, isEnforced, TRUE ) ;
+   return _sdbCreateIndex( cHandle, indexDef, pIndexName, isUnique, isEnforced, sortBufferSize ) ;
 }
 
 SDB_EXPORT INT32 sdbGetIndexes ( sdbCollectionHandle cHandle,

@@ -34,8 +34,8 @@
 #include "dmsScanner.hpp"
 #include "ixmKey.hpp"
 #include "ixm.hpp"
-#include "pmd.hpp"
 #include "dmsCB.hpp"
+#include "pmdEDU.hpp"
 
 namespace engine
 {
@@ -121,21 +121,27 @@ namespace engine
       goto done ;
    }
 
-   _dmsIndexOfflineBuilder::_dmsIndexOfflineBuilder( _dmsStorageIndex* indexSU,
+   _dmsIndexSortingBuilder::_dmsIndexSortingBuilder( _dmsStorageIndex* indexSU,
                                                      _dmsStorageData* dataSU,
                                                      _dmsMBContext* mbContext,
                                                      _pmdEDUCB* eduCB,
                                                      INT32 indexID,
-                                                     dmsExtentID indexLID )
+                                                     dmsExtentID indexLID,
+                                                     INT32 sortBufferSize )
    : _dmsIndexBuilder( indexSU, dataSU, mbContext, eduCB, indexID, indexLID )
    {
       _sorter = NULL ;
-      _bufSize = 0 ;
-      _bufExtSize = 0 ;
       _eoc = FALSE ;
+      _bufSize = (INT64)sortBufferSize * 1024 * 1024 ;
+
+      // add extend size for fetching records by extent granularity
+      // and to prevent sorter's buffer overflowing.
+      // so we assign max extent size to ensure the sorter can't 
+      // overflow when fetching records from a extent.
+      _bufExtSize = DMS_MAX_EXTENT_SZ ;
    }
 
-   _dmsIndexOfflineBuilder::~_dmsIndexOfflineBuilder()
+   _dmsIndexSortingBuilder::~_dmsIndexSortingBuilder()
    {
       if ( NULL != _sorter )
       {
@@ -144,19 +150,12 @@ namespace engine
       }
    }
 
-   INT32 _dmsIndexOfflineBuilder::_init()
+   INT32 _dmsIndexSortingBuilder::_init()
    {
       INT32 rc = SDB_OK ;
 
       Ordering ordering = Ordering::make( _indexCB->keyPattern() ) ;
       _dmsIxmKeyComparer comparer( ordering ) ;
-
-      _bufSize = pmdGetOptionCB()->getSortBufSize() * 1024 * 1024 ;
-      // add extend size for fetching records by extent granularity
-      // and to prevent sorter's buffer overflowing.
-      // so we assign max extent size to ensure the sorter can't 
-      // overflow when fetching records from a extent.
-      _bufExtSize = DMS_MAX_EXTENT_SZ ;
 
       _sorter = sdbGetDMSCB()->createIxmKeySorter( _bufSize + _bufExtSize, comparer ) ;
       if ( NULL == _sorter )
@@ -172,7 +171,7 @@ namespace engine
       goto done ;
    }
 
-   INT32 _dmsIndexOfflineBuilder::_fillSorter()
+   INT32 _dmsIndexSortingBuilder::_fillSorter()
    {
       INT32 rc = SDB_OK ;
 
@@ -202,19 +201,11 @@ namespace engine
             goto done ;
          }
 
-         rc = _mbContext->mbLock( SHARED ) ;
-         if ( SDB_OK != rc )
-         {
-            PD_LOG( PDERROR, "dms mb context lock failed, rc: %d", rc ) ;
-            goto error ;
-         }
-
          rc = _beforeExtent() ;
          if ( SDB_OK != rc )
          {
             if ( _DMS_SKIP_EXTENT == rc )
             {
-               _mbContext->mbUnlock() ;
                continue ;
             }
 
@@ -265,18 +256,16 @@ namespace engine
             goto error ;
          }
 
-         _mbContext->mbUnlock() ;
       }
 
    done:
       return rc ;
    error:
-      _mbContext->mbUnlock() ;
       goto done ;
    }
 
 
-   INT32 _dmsIndexOfflineBuilder::_insertKeys( const Ordering& ordering )
+   INT32 _dmsIndexSortingBuilder::_insertKeys( const Ordering& ordering )
    {
       #define _KEYS_PER_BATCH 10000
       INT32 rc = SDB_OK ;
@@ -289,12 +278,6 @@ namespace engine
          if ( _eduCB->isInterrupted() )
          {
             rc = SDB_APP_INTERRUPT ;
-            goto error ;
-         }
-
-         rc = _checkIndexAfterLock( SHARED ) ;
-         if ( SDB_OK != rc )
-         {
             goto error ;
          }
 
@@ -320,17 +303,15 @@ namespace engine
             }
          }
 
-         _mbContext->mbUnlock() ;
       }
 
    done:
-      _mbContext->mbUnlock() ;
       return rc ;
    error:
       goto done ;
    }
 
-   INT32 _dmsIndexOfflineBuilder::_build()
+   INT32 _dmsIndexSortingBuilder::_build()
    {
       INT32 rc = SDB_OK ;
 
@@ -339,102 +320,55 @@ namespace engine
       rc = _init() ;
       if ( SDB_OK != rc )
       {
-         goto before_build_error ;
-      }
-
-      rc = _beforeBuild() ;
-      if ( SDB_OK != rc )
-      {
-         goto before_build_error ;
+         goto error ;
       }
 
       for(;;)
       {
          if ( _eoc )
          {
-            goto build_done ;
+            goto done ;
          }
 
          rc = _sorter->reset() ;
          if ( SDB_OK != rc )
          {
-            goto build_error ;
+            goto error ;
+         }
+
+         rc = _checkIndexAfterLock( SHARED ) ;
+         if ( SDB_OK != rc )
+         {
+            goto error ;
          }
 
          rc = _fillSorter() ;
          if ( SDB_OK != rc )
          {
-            goto build_error ;
+            goto error ;
          }
 
          rc = _sorter->sort() ;
          if ( SDB_OK != rc )
          {
-            goto build_error ;
+            goto error ;
          }
 
          rc = _insertKeys( ordering ) ;
          if ( SDB_OK != rc )
          {
-            goto build_error ;
+            goto error ;
          }
+
+         _mbContext->mbUnlock() ;
       }
 
    done:
       _mbContext->mbUnlock() ;
       return rc ;
-   before_build_error:
-      goto done ;
-   build_done:
-      {
-         INT32 ret = _afterBuild() ;
-         if ( SDB_OK == rc )
-         {
-            rc = ret ;
-         }
-      }
-      goto done ;
-   build_error:
-      goto build_done ;
+   error:
+      goto done;
    }
 
-   INT32 _dmsIndexOfflineBuilder::_beforeBuild()
-   {
-      INT32 rc = SDB_OK ;
-
-      if ( SDB_OK == ( rc = _checkIndexAfterLock( EXCLUSIVE ) ) )
-      {
-         if ( DMS_IS_MB_FLAG_CREATE_INDEX_OFFLINE( _mbContext->mb()->_flag ) )
-         {
-            // can not create index offline in the same collection at the same time
-            rc = SDB_DMS_INCOMPATIBLE_MODE ;
-            PD_LOG( PDERROR, "create indexes offline in the same time, rc: %d", rc ) ;
-         }
-         else
-         {
-            DMS_SET_MB_FLAG_CREATE_INDEX_OFFLINE( _mbContext->mb()->_flag ) ;
-         }
-         _mbContext->mbUnlock() ;
-      }
-
-      return rc ;
-   }
-
-   INT32 _dmsIndexOfflineBuilder::_afterBuild()
-   {
-      INT32 rc = SDB_OK ;
-
-      if ( SDB_OK == ( rc = _mbContext->mbLock( EXCLUSIVE ) ) )
-      {
-         // should unset mb flag no matter if index is valid or not
-         if ( DMS_IS_MB_FLAG_CREATE_INDEX_OFFLINE( _mbContext->mb()->_flag ) )
-         {
-            DMS_UNSET_MB_FLAG_CREATE_INDEX_OFFLINE( _mbContext->mb()->_flag ) ;
-         }
-         _mbContext->mbUnlock() ;
-      }
-
-      return rc ;
-   }
 }
 

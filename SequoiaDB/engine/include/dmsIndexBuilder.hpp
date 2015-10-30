@@ -94,7 +94,7 @@ namespace engine
                                                _pmdEDUCB* eduCB,
                                                INT32 indexID,
                                                dmsExtentID indexLID, 
-                                               DMS_INDEX_BUILD_MODE mode = DMS_INDEX_BUILD_ONLINE ) ;
+                                               INT32 sortBufferSize ) ;
       static void releaseInstance( _dmsIndexBuilder* builder ) ;
    } ;
    typedef class _dmsIndexBuilder dmsIndexBuilder ;

@@ -1157,16 +1157,19 @@ SDB_EXPORT INT32 sdbCreateIndex ( sdbCollectionHandle cHandle,
     \param [in] isUnique Whether the index elements are unique or not
     \param [in] isEnforced Whether the index is enforced unique
                            This element is meaningful when isUnique is set to true
+    \param [in] sortBufferSize The size of sort buffer used when creating index, the unit is MB,
+                               zero means don't use sort buffer
     \note when creating index in offline mode, writing operations don't work in
           this collection
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
 */
-SDB_EXPORT INT32 sdbCreateIndexOffline ( sdbCollectionHandle cHandle,
-                                         bson *indexDef,
-                                         const CHAR *pIndexName,
-                                         BOOLEAN isUnique,
-                                         BOOLEAN isEnforced ) ;
+SDB_EXPORT INT32 sdbCreateIndex1 ( sdbCollectionHandle cHandle,
+                                   bson *indexDef,
+                                   const CHAR *pIndexName,
+                                   BOOLEAN isUnique,
+                                   BOOLEAN isEnforced,
+                                   INT32 sortBufferSize ) ;
 
 /** \fn INT32 sdbGetIndexes ( sdbCollectionHandle cHandle,
                               const CHAR *pIndexName,
@@ -2269,9 +2272,10 @@ SDB_EXPORT INT32 sdbAttachNode( sdbReplicaGroupHandle cHandle,
 /** \fn INT32 sdbCreateIdIndex( sdbCollectionHandle cHandle, const bson *args )
     \brief Create $id index in collection
     \param [in] cHandle The collection handle.
-    \param [in] args The arguments of creating id index. set it as null if no args. e.g.{Offline:true}
+    \param [in] args The arguments of creating id index. set it as null if no args. e.g.{SortBufferSize:64}
 
-        Offline     : Use offline mode to create index or not, default to be false
+        SortBufferSize     : The size of sort buffer used when creating index, the unit is MB,
+                             zero means don't use sort buffer
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
 */

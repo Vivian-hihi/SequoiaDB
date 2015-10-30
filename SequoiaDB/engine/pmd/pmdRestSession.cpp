@@ -1805,7 +1805,7 @@ namespace engine
       const CHAR *pIndexDef   = NULL ;
       const CHAR *pUnique     = NULL ;
       const CHAR *pEnforced   = NULL ;
-      const CHAR *pFlag       = NULL ;
+      const CHAR *pSortBufferSize = NULL ;
       const CHAR *pCollection = NULL ;
 
       BSONObj indexDef ;
@@ -1813,7 +1813,7 @@ namespace engine
       // bson must use the original type of bool
       bool isUnique   = false ;
       bool isEnforced = false ;
-      bool isOnline   = true ;
+      INT32 sortBufferSize = SDB_INDEX_SORT_BUFFER_DEFAULT_SIZE ;
 
       // collection name
       pAdaptor->getQuery( _restSession, REST_KEY_NAME_COLLECTION, 
@@ -1896,23 +1896,16 @@ namespace engine
          }
       }
 
-      // flag
-      pAdaptor->getQuery( _restSession, REST_KEY_NAME_FLAG, &pFlag ) ;
-      if ( NULL != pFlag )
+      // SortBufferSize
+      pAdaptor->getQuery( _restSession, IXM_FIELD_NAME_SORT_BUFFER_SIZE, &pSortBufferSize ) ;
+      if ( NULL != pSortBufferSize )
       {
-         if ( ossStrcasecmp( pFlag, IXM_MODE_VALUE_ONLINE ) == 0 )
-         {
-            isOnline = true ;
-         }
-         else if ( ossStrcasecmp( pFlag, IXM_MODE_VALUE_OFFLINE ) == 0 )
-         {
-            isOnline = false ;
-         }
-         else
+         sortBufferSize = ossAtoi ( pSortBufferSize ) ;
+         if ( sortBufferSize < 0 )
          {
             rc = SDB_INVALIDARG ;
-            PD_LOG_MSG( PDERROR, "field's format error:field=%s, value=%s", 
-                        REST_KEY_NAME_FLAG, pFlag ) ;
+            PD_LOG_MSG( PDERROR, "field's value error:field=%s, value=%s", 
+                        IXM_FIELD_NAME_SORT_BUFFER_SIZE, pSortBufferSize ) ;
             goto error ;
          }
       }
@@ -1928,10 +1921,7 @@ namespace engine
 
          query = BSON( FIELD_NAME_COLLECTION << pCollection 
                        << FIELD_NAME_INDEX << index ) ;
-         if ( !isOnline )
-         {
-            hint = BSON( IXM_FIELD_NAME_MODE << IXM_MODE_VALUE_OFFLINE ) ;
-         }
+         hint = BSON( IXM_FIELD_NAME_SORT_BUFFER_SIZE << sortBufferSize ) ;
                        
          rc = msgBuildQueryMsg( &pBuff, &buffSize, pCommand, 0, 0, 0, -1, 
                                 &query, NULL, NULL, &hint ) ;

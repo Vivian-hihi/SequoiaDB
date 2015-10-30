@@ -1102,7 +1102,6 @@ namespace engine
       rtnIndexJob *indexJob = NULL ;
       clsCatalogSet *pCatSet = NULL ;
       BOOLEAN useSync = FALSE ;
-      DMS_INDEX_BUILD_MODE mode = DMS_INDEX_BUILD_ONLINE ;
 
       if ( LOG_TYPE_IX_CRT != recordHeader->_type &&
            LOG_TYPE_IX_DELETE != recordHeader->_type )
@@ -1114,8 +1113,7 @@ namespace engine
       {
          rc = dpsRecord2IXCrt( (CHAR *)recordHeader,
                                &fullname,
-                               index,
-                               &mode ) ;
+                               index ) ;
          if ( SDB_OK != rc )
          {
             goto error ;
@@ -1133,14 +1131,13 @@ namespace engine
       }
 
       sdbGetShardCB()->getAndLockCataSet( fullname, &pCatSet, TRUE ) ;
-      if ( ( pCatSet && CLS_REPLSET_MAX_NODE_SIZE == pCatSet->getW() ) ||
-            ( DMS_INDEX_BUILD_OFFLINE == mode ) )
+      if ( pCatSet && CLS_REPLSET_MAX_NODE_SIZE == pCatSet->getW() )
       {
          useSync = TRUE ;
       }
       sdbGetShardCB()->unlockCataSet( pCatSet ) ;
 
-      indexJob = SDB_OSS_NEW rtnIndexJob( type, fullname, index, dpsCB, mode ) ;
+      indexJob = SDB_OSS_NEW rtnIndexJob( type, fullname, index, dpsCB ) ;
       if ( NULL == indexJob )
       {
          PD_LOG ( PDERROR, "Failed to alloc memory for indexJob" ) ;

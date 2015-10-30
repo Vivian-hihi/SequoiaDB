@@ -365,7 +365,7 @@ namespace engine
                                                        _pmdEDUCB* eduCB,
                                                        INT32 indexID,
                                                        dmsExtentID indexLID, 
-                                                       DMS_INDEX_BUILD_MODE mode )
+                                                       INT32 sortBufferSize )
    {
       _dmsIndexBuilder* builder = NULL ;
 
@@ -374,11 +374,14 @@ namespace engine
       SDB_ASSERT( mbContext != NULL, "mbContext can't be NULL" ) ;
       SDB_ASSERT( eduCB != NULL, "eduCB can't be NULL" ) ;
 
-      PD_LOG ( PDDEBUG, "index build mode: %d", mode ) ;
+      PD_LOG ( PDDEBUG, "index sort buffer: %d", sortBufferSize ) ;
 
-      switch( mode )
+      if ( sortBufferSize < 0 )
       {
-      case DMS_INDEX_BUILD_ONLINE:
+         PD_LOG ( PDERROR, "invalid sort buffer size: %d", sortBufferSize ) ;
+      }
+      else if ( 0 == sortBufferSize )
+      {
          builder = SDB_OSS_NEW _dmsIndexOnlineBuilder( indexSU,
                                                        dataSU,
                                                        mbContext,
@@ -389,22 +392,20 @@ namespace engine
          {
             PD_LOG ( PDERROR, "failed to allocate _dmsIndexOnlineBuilder" ) ;
          }
-         break ;
-      case DMS_INDEX_BUILD_OFFLINE:
-         builder = SDB_OSS_NEW _dmsIndexOfflineBuilder( indexSU,
+      }
+      else
+      {
+         builder = SDB_OSS_NEW _dmsIndexSortingBuilder( indexSU,
                                                         dataSU,
                                                         mbContext,
                                                         eduCB,
                                                         indexID,
-                                                        indexLID ) ;
+                                                        indexLID,
+                                                        sortBufferSize ) ;
          if ( NULL == builder)
          {
-            PD_LOG ( PDERROR, "failed to allocate _dmsIndexOfflineBuilder" ) ;
+            PD_LOG ( PDERROR, "failed to allocate _dmsIndexSortingBuilder" ) ;
          }
-         break ;
-      default:
-         SDB_ASSERT( FALSE, "invalid mode" ) ;
-         PD_LOG ( PDERROR, "invalid mode for index builder" ) ;
       }
 
       return builder ;

@@ -47,7 +47,7 @@ namespace engine
                               _dmsMBContext* mbContext,
                               _pmdEDUCB* eduCB,
                               INT32 indexID,
-                              dmsExtentID indexLID = DMS_INVALID_EXTENT ) ;
+                              dmsExtentID indexLID ) ;
       ~_dmsIndexOnlineBuilder() ;
 
    private:
@@ -57,24 +57,23 @@ namespace engine
 
    class _dmsIxmKeySorter ;
 
-   class _dmsIndexOfflineBuilder: public _dmsIndexBuilder
+   class _dmsIndexSortingBuilder: public _dmsIndexBuilder
    {
    public:
-      _dmsIndexOfflineBuilder( _dmsStorageIndex* indexSU,
+      _dmsIndexSortingBuilder( _dmsStorageIndex* indexSU,
                                _dmsStorageData* dataSU,
                                _dmsMBContext* mbContext,
                                _pmdEDUCB* eduCB,
                                INT32 indexID,
-                               dmsExtentID indexLID = DMS_INVALID_EXTENT ) ;
-      ~_dmsIndexOfflineBuilder() ;
+                               dmsExtentID indexLID,
+                               INT32 sortBufferSize ) ;
+      ~_dmsIndexSortingBuilder() ;
 
    private:
       INT32 _init() ;
       INT32 _fillSorter() ;
       INT32 _insertKeys( const Ordering& ordering ) ;
       INT32 _build() ;
-      INT32 _beforeBuild() ;
-      INT32 _afterBuild() ;
 
    private:
       _dmsIxmKeySorter* _sorter ;
@@ -82,7 +81,7 @@ namespace engine
       INT64             _bufExtSize ;
       BOOLEAN           _eoc ;
    } ;
-   typedef class _dmsIndexOfflineBuilder dmsIndexOfflineBuilder ;
+   typedef class _dmsIndexSortingBuilder dmsIndexSortingBuilder ;
 }
 
 #endif /* DMS_INDEX_BUILDER_IMPL_HPP_ */

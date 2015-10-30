@@ -111,6 +111,8 @@ namespace engine
 #define SDB_DMSTEMP_NAME            "SYSTEMP"
 #define DMS_TEMP_NAME_PATTERN       "%s%04d"
 
+#define DMS_INDEX_SORT_BUFFER_MIN_SIZE     32
+
    /*
       DMS TOOL FUNCTIONS:
    */
@@ -127,14 +129,6 @@ namespace engine
       DMS_ACCESS_TYPE_DROP_INDEX
    } ;
    typedef enum _DMS_ACCESS_TYPE DMS_ACCESS_TYPE ;
-
-   enum _DMS_INDEX_BUILD_MODE
-   {
-      DMS_INDEX_BUILD_ONLINE = 0,
-      DMS_INDEX_BUILD_OFFLINE,
-      DMS_INDEX_BUILD_MODE_NUM
-   } ;
-   typedef enum _DMS_INDEX_BUILD_MODE DMS_INDEX_BUILD_MODE ;
 
    typedef SINT32 dmsStorageUnitID ;
    typedef SINT32 dmsExtentID ;

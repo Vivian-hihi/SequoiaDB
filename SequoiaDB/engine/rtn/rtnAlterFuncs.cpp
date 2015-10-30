@@ -43,6 +43,13 @@ namespace engine
                            _dpsLogWrapper *dpsCB )
    {
       INT32 rc = SDB_OK ;
+      INT32 sortBufferSize = SDB_INDEX_SORT_BUFFER_DEFAULT_SIZE ;
+
+      if ( args.hasField( IXM_FIELD_NAME_SORT_BUFFER_SIZE ) )
+      {
+         sortBufferSize = args.getIntField( IXM_FIELD_NAME_SORT_BUFFER_SIZE ) ;
+      }
+
       SDB_ASSERT( NULL != name, "can not be null" ) ;
       SDB_ASSERT( NULL != cb, "can not be null" ) ;
       BSONObj idxDef = BSON( IXM_FIELD_NAME_KEY <<
@@ -56,9 +63,7 @@ namespace engine
                                   sdbGetDMSCB(),
                                   dpsCB,
                                   TRUE,
-                                  args.getBoolField( FIELD_NAME_OFFLINE ) ?
-                                  DMS_INDEX_BUILD_OFFLINE :
-                                  DMS_INDEX_BUILD_ONLINE ) ;
+                                  sortBufferSize ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to create id index on cl:%s, rc:%d",
@@ -74,14 +79,19 @@ namespace engine
    INT32 rtnCreateIDIndexVerify( const bson::BSONObj &args )
    {
       INT32 rc = SDB_OK ;
-      BSONElement e = args.getField( FIELD_NAME_OFFLINE ) ;
-      if ( !e.eoo() && Bool != e.type() )
+
+      if ( args.hasField( IXM_FIELD_NAME_SORT_BUFFER_SIZE ) )
       {
-         PD_LOG( PDERROR, "invalid arguments:%s",
-                 args.toString( FALSE, TRUE ).c_str() ) ;
-         rc = SDB_INVALIDARG ;
-         goto error ;
+         BSONElement e = args.getField( IXM_FIELD_NAME_SORT_BUFFER_SIZE ) ;
+         if ( NumberInt != e.type() || e.Int() < 0 )
+         {
+            PD_LOG( PDERROR, "invalid arguments:%s",
+                    args.toString( FALSE, TRUE ).c_str() ) ;
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
       }
+
    done:
       return rc ;
    error:

@@ -295,7 +295,7 @@ namespace engine
             mbContext->mb()->_flag = flag ;
 
             rc = su->index()->rebuildIndexes ( mbContext, cb,
-                                               DMS_INDEX_BUILD_OFFLINE ) ;
+                                               SDB_INDEX_SORT_BUFFER_DEFAULT_SIZE ) ;
             if ( rc )
             {
                PD_LOG ( PDERROR, "Failed to rebuild indexes, rc = %d", rc ) ;
@@ -553,7 +553,7 @@ namespace engine
          mbContext->mb()->_flag = flag ;
 
          rc = su->index()->rebuildIndexes ( mbContext, cb,
-                                            DMS_INDEX_BUILD_OFFLINE ) ;
+                                            SDB_INDEX_SORT_BUFFER_DEFAULT_SIZE ) ;
          if ( rc )
          {
             PD_LOG ( PDERROR, "Failed to rebuild indexes, rc = %d", rc ) ;

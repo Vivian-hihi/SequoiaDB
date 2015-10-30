@@ -314,10 +314,11 @@ namespace sdbclient
       // uniqueness ( required )
       INT32 createIndex ( const BSONObj &indexDef, const CHAR *pName,
                           BOOLEAN isUnique, BOOLEAN isEnforced ) ;
-      INT32 createIndexOffline ( const BSONObj &indexDef,
-                                 const CHAR *pName,
-                                 BOOLEAN isUnique,
-                                 BOOLEAN isEnforced ) ;
+      INT32 createIndex ( const BSONObj &indexDef,
+                          const CHAR *pName,
+                          BOOLEAN isUnique,
+                          BOOLEAN isEnforced,
+                          INT32 sortBufferSize ) ;
       INT32 getIndexes ( _sdbCursor **cursor,
                          const CHAR *pName ) ;
       INT32 getIndexes ( sdbCursor &cursor,
@@ -454,7 +455,7 @@ namespace sdbclient
       INT32 _alterCollection2( const bson::BSONObj &options ) ;
       INT32 _createIndex ( const BSONObj &indexDef, const CHAR *pName,
                            BOOLEAN isUnique, BOOLEAN isEnforced,
-                           BOOLEAN isOffline ) ;
+                           INT32 sortBufferSize ) ;
 
    } ;
    

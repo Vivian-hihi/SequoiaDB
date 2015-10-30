@@ -504,7 +504,6 @@ namespace engine
     *  truncate phase )                                                   N         N
     *  ONLINE REORG        Y      Y       Y       Y       Y       Y       Y         Y
     *  Load                Y      Y       Y       Y       Y       N       Y         Y
-    *  CRT-IDX OFFLINE     Y      Y       N       N       N       N       Y         Y
     ***************************************************************************/
    BOOLEAN dmsAccessAndFlagCompatiblity ( UINT16 collectionFlag,
                                           DMS_ACCESS_TYPE accessType ) ;

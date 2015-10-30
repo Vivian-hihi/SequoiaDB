@@ -76,7 +76,7 @@ namespace engine
          INT32    createIndex ( _dmsMBContext *context, const BSONObj &index,
                                 _pmdEDUCB *cb, SDB_DPSCB *dpscb,
                                 BOOLEAN isSys = FALSE,
-                                DMS_INDEX_BUILD_MODE mode = DMS_INDEX_BUILD_ONLINE ) ;
+                                INT32 sortBufferSize = SDB_INDEX_SORT_BUFFER_DEFAULT_SIZE ) ;
 
          INT32    dropIndex ( _dmsMBContext *context, OID &indexOID,
                               _pmdEDUCB *cb, SDB_DPSCB *dpscb,
@@ -94,7 +94,7 @@ namespace engine
                               SDB_DPSCB *dpscb, BOOLEAN isSys = FALSE ) ;
 
          INT32    rebuildIndexes ( _dmsMBContext *context, _pmdEDUCB *cb,
-                                      DMS_INDEX_BUILD_MODE mode = DMS_INDEX_BUILD_ONLINE ) ;
+                                   INT32 sortBufferSize = SDB_INDEX_SORT_BUFFER_DEFAULT_SIZE ) ;
 
          // Caller must hold mb exclusive lock
          INT32    indexesInsert ( _dmsMBContext *context, dmsExtentID extLID,
@@ -134,7 +134,7 @@ namespace engine
          // if indexLID == DMS_INALID_EXTENT, it will get from index cb
          INT32    _rebuildIndex ( _dmsMBContext *context, INT32 indexID,
                                   dmsExtentID indexLID, _pmdEDUCB * cb,
-                                  DMS_INDEX_BUILD_MODE mode ) ;
+                                  INT32 sortBufferSize ) ;
 
          INT32    _indexInsert( _ixmIndexCB *indexCB,
                                  const _ixmKey &key, const dmsRecordID &rid,

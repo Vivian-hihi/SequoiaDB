@@ -207,7 +207,7 @@ namespace engine
                                         pmdEDUCB * cb,
                                         SDB_DPSCB *dpscb,
                                         BOOLEAN isSys,
-                                        DMS_INDEX_BUILD_MODE mode )
+                                        INT32 sortBufferSize )
    {
       INT32 rc                     = SDB_OK ;
       dmsExtentID extentID         = DMS_INVALID_EXTENT ;
@@ -325,7 +325,7 @@ namespace engine
             indexDef = indexCB.getDef().getOwned() ;
             _pDataSu->_clFullName( context->mb()->_collectionName, fullName,
                                    sizeof(fullName) ) ;
-            rc = dpsIXCrt2Record( fullName, indexDef, record, mode ) ;
+            rc = dpsIXCrt2Record( fullName, indexDef, record ) ;
             PD_RC_CHECK( rc, PDERROR, "Failed to build record:%d", rc ) ;
 
             rc = dpscb->checkSyncControl( record.alignedLen(), cb ) ;
@@ -375,7 +375,7 @@ namespace engine
       dropDps = dpscb ;
 
       // now we finished allocation part, let's get into build part
-      rc = _rebuildIndex( context, indexID, indexLID, cb, mode ) ;
+      rc = _rebuildIndex( context, indexID, indexLID, cb, sortBufferSize ) ;
       if ( rc )
       {
          PD_LOG( PDERROR, "Failed to build index[%s], rc = %d",
@@ -720,25 +720,31 @@ namespace engine
 
    INT32 _dmsStorageIndex::_rebuildIndex( dmsMBContext *context, INT32 indexID,
                                           dmsExtentID indexLID, pmdEDUCB * cb,
-                                          DMS_INDEX_BUILD_MODE mode )
+                                          INT32 sortBufferSize )
    {
       INT32 rc = SDB_OK ;
       dmsIndexBuilder* builder = NULL ;
 
-      if ( mode >= DMS_INDEX_BUILD_MODE_NUM )
+      if ( sortBufferSize < 0 )
       {
-         PD_LOG ( PDERROR, "invalid index build mode" ) ;
+         PD_LOG ( PDERROR, "invalid index sort buffer size" ) ;
          rc = SDB_INVALIDARG ;
          goto error ;
+      }
+
+      if ( sortBufferSize > 0 && sortBufferSize < DMS_INDEX_SORT_BUFFER_MIN_SIZE )
+      {
+         sortBufferSize = DMS_INDEX_SORT_BUFFER_MIN_SIZE ;
       }
 
       builder = dmsIndexBuilder::createInstance( this, _pDataSu,
                                                  context, cb,
                                                  indexID, indexLID,
-                                                 mode ) ;
+                                                 sortBufferSize ) ;
       if ( NULL == builder )
       {
-         PD_LOG ( PDERROR, "Failed to get index builder instance, mode: %d", mode ) ;
+         PD_LOG ( PDERROR, "Failed to get index builder instance, sort buffer size: %d",
+                  sortBufferSize ) ;
          rc = SDB_SYS ;
          goto error ;
       }
@@ -761,7 +767,7 @@ namespace engine
    }
 
    INT32 _dmsStorageIndex::rebuildIndexes( dmsMBContext *context, pmdEDUCB *cb,
-                                           DMS_INDEX_BUILD_MODE mode )
+                                           INT32 sortBufferSize )
    {
       INT32 rc                     = SDB_OK ;
       INT32  indexID               = 0 ;
@@ -790,7 +796,7 @@ namespace engine
       {
          PD_LOG ( PDEVENT, "Rebuilding index %d for collection %d",
                   indexID, context->mbID() ) ;
-         rc = _rebuildIndex ( context, indexID, DMS_INVALID_EXTENT, cb, mode ) ;
+         rc = _rebuildIndex ( context, indexID, DMS_INVALID_EXTENT, cb, sortBufferSize ) ;
          if ( rc )
          {
             PD_LOG ( PDERROR, "Failed to rebuild index %d, rc: %d", indexID,
@@ -1320,7 +1326,6 @@ namespace engine
          }
       }
 
-      DMS_UNSET_MB_FLAG_CREATE_INDEX_OFFLINE( context->mb()->_flag ) ;
       context->mbStat()->_totalIndexPages = indexID << 1 ;
       context->mbStat()->_totalIndexFreeSpace =
          indexID * ( pageSize()-1-sizeof(ixmExtentHead) ) ;

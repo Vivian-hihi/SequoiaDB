@@ -664,7 +664,7 @@ namespace engine
 
    _rtnCreateIndex::_rtnCreateIndex ()
    : _collectionName ( NULL ),
-     _mode ( DMS_INDEX_BUILD_ONLINE )
+     _sortBufferSize ( SDB_INDEX_SORT_BUFFER_DEFAULT_SIZE )
    {
    }
 
@@ -719,28 +719,19 @@ namespace engine
          goto error ;
       }
 
-      if ( hint.hasField( IXM_FIELD_NAME_MODE ) )
+      if ( hint.hasField( IXM_FIELD_NAME_SORT_BUFFER_SIZE ) )
       {
-         const CHAR* mode = NULL ;
-         rc = rtnGetStringElement( hint, IXM_FIELD_NAME_MODE, &mode ) ;
+         rc = rtnGetIntElement( hint, IXM_FIELD_NAME_SORT_BUFFER_SIZE, _sortBufferSize ) ;
          if ( SDB_OK != rc )
          {
-            PD_LOG ( PDERROR, "Failed to get index mode, hint: %s",
+            PD_LOG ( PDERROR, "Failed to get index sort buffer, hint: %s",
                      hint.toString().c_str() ) ;
             goto error ;
          }
 
-         if ( 0 == ossStrcmp( IXM_MODE_VALUE_ONLINE, mode ) )
+         if ( _sortBufferSize < 0 )
          {
-            _mode = DMS_INDEX_BUILD_ONLINE ;
-         }
-         else if ( 0 == ossStrcmp( IXM_MODE_VALUE_OFFLINE, mode ) )
-         {
-            _mode = DMS_INDEX_BUILD_OFFLINE ;
-         }
-         else
-         {
-            PD_LOG ( PDERROR, "invalid index build mode: %s", mode ) ;
+            PD_LOG ( PDERROR, "invalid index sort buffer size: %d", _sortBufferSize ) ;
             rc = SDB_INVALIDARG ;
             goto error ;
          }
@@ -762,7 +753,7 @@ namespace engine
       PD_TRACE_ENTRY ( SDB__RTNCREATEINDEX_DOIT ) ;
 
       rc = rtnCreateIndexCommand ( _collectionName, _index, cb,
-                                   dmsCB, dpsCB, FALSE, _mode ) ;
+                                   dmsCB, dpsCB, FALSE, _sortBufferSize ) ;
       PD_TRACE_EXITRC ( SDB__RTNCREATEINDEX_DOIT, rc ) ;
       return rc ;
    }
