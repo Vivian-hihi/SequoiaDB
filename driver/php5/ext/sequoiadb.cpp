@@ -2388,6 +2388,12 @@ PHP_METHOD ( SequoiaCL, createIndex )
          RETURN_ARRAY_STRING ( getThis(), error, 0 ) ;
       }
    }
+   if( sortBufferSize < 0 )
+   {
+      SETERROR ( getThis(), SDB_INVALIDARG ) ;
+      PRINTFERROR ( SDB_INVALIDARG, error ) ;
+      RETURN_ARRAY_STRING ( getThis(), error, 0 ) ;
+   }
    rc = createIndex ( collection, indexDef, pName, isUnique, isEnforced, sortBufferSize ) ;
    SETERROR ( getThis(), rc ) ;
    PRINTFERROR ( rc, error ) ;
