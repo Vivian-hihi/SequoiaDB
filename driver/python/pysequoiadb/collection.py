@@ -692,7 +692,7 @@ class collection(object):
 
       return result
 
-   def create_index(self, index_def, idx_name, is_unique, is_enforced):
+   def create_index(self, index_def, idx_name, is_unique, is_enforced, buffer_size = 64):
       """Create an index in current collection.
 
       Parameters:
@@ -704,6 +704,8 @@ class collection(object):
          is_enforced  bool  Whether the index is enforced unique This
                                   element is meaningful when isUnique is set to
                                   true.
+         buffer_size  int   The size of sort buffer used when creating index,
+                                  the unit is MB, zero means don't use sort buffer
       Exceptions:
          pysequoiadb.error.SDBTypeError
          pysequoiadb.error.SDBBaseError
@@ -715,6 +717,8 @@ class collection(object):
       if not isinstance(is_unique, bool):
          raise SDBTypeError("is_unique must be an instance of bool")
       if not isinstance(is_enforced, bool):
+         raise SDBTypeError("is_enforced must be an instance of bool")
+      if not isinstance(buffer_size, int):
          raise SDBTypeError("is_enforced must be an instance of bool")
 
       unique = 0
@@ -728,7 +732,7 @@ class collection(object):
 
       try:
          rc = sdb.cl_create_index(self._cl, bson_index_def, idx_name,
-                                           is_unique, is_enforced)
+                                           is_unique, is_enforced, buffer_size)
          pysequoiadb._raise_if_error("Failed to create index", rc)
       except SDBBaseError:
          raise
@@ -1269,46 +1273,5 @@ class collection(object):
       try:
          rc = sdb.cl_drop_id_index(self._cl)
          pysequoiadb._raise_if_error("Drop id index failed", rc)
-      except SDBBaseError:
-         raise
-
-   def create_index_offline(self, index_def, idx_name, is_unique, is_enforced):
-      """Create an index in current collection offline.
-
-      Parameters:
-         Name         Type  Info:
-         index_def    dict  The dict object of index element.
-                                  e.g. {'name':1, 'age':-1}
-         idx_name     str   The index name.
-         is_unique    bool  Whether the index elements are unique or not.
-         is_enforced  bool  Whether the index is enforced unique This
-                                  element is meaningful when isUnique is set to
-                                  true.
-      Exceptions:
-         pysequoiadb.error.SDBTypeError
-         pysequoiadb.error.SDBBaseError
-      """
-      if not isinstance(index_def, dict):
-         raise SDBTypeError("index definition must be an instance of dict")
-      if not isinstance(idx_name, basestring):
-         raise SDBTypeError("index name must be an instance of basestring")
-      if not isinstance(is_unique, bool):
-         raise SDBTypeError("is_unique must be an instance of bool")
-      if not isinstance(is_enforced, bool):
-         raise SDBTypeError("is_enforced must be an instance of bool")
-
-      unique = 0
-      enforce = 0
-      bson_index_def = bson.BSON.encode(index_def)
-
-      if is_unique:
-         unique = 1
-      if is_enforced:
-         enforced = 1
-
-      try:
-         rc = sdb.cl_create_index_offline(self._cl, bson_index_def, idx_name,
-                                                    is_unique, is_enforced)
-         pysequoiadb._raise_if_error("Failed to create index offline", rc)
       except SDBBaseError:
          raise

@@ -89,7 +89,6 @@ __METHOD_DECLARE(cl_list_lobs) ;
 __METHOD_DECLARE(cl_truncate) ;
 __METHOD_DECLARE(cl_create_id_index) ;
 __METHOD_DECLARE(cl_drop_id_index) ;
-__METHOD_DECLARE(cl_create_index_offline) ;
 
 ///< cursor
 __METHOD_DECLARE(create_cursor) ;

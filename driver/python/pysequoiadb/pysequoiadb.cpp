@@ -1844,14 +1844,15 @@ __METHOD_IMP(cl_create_index)
    INT32 rc                       = 0 ;
    BOOLEAN is_unique              = 0 ;
    BOOLEAN is_enforced            = 0 ;
+   INT32 sort_buffer_size         = 0 ;
    PYOBJECT *obj                  = NULL ;
    PYOBJECT *bson_index_def       = NULL ;
    sdbCollection *cl              = NULL ;
    const bson::BSONObj *index_def = NULL ;
    const CHAR *name               = NULL ;
 
-   if ( !PARSE_PYTHON_ARGS( args, "OOsii", &obj, &bson_index_def, &name,
-      &is_unique, &is_enforced ) )
+   if ( !PARSE_PYTHON_ARGS( args, "OOsiii", &obj, &bson_index_def, &name,
+      &is_unique, &is_enforced, &sort_buffer_size ) )
    {
       rc = SDB_INVALIDARGS ;
       goto done ;
@@ -1860,7 +1861,7 @@ __METHOD_IMP(cl_create_index)
    CAST_PYOBJECT_TO_COBJECT( obj, sdbCollection, cl ) ;
    CAST_PYBSON_TO_CPPBSON( bson_index_def, index_def ) ;
 
-   rc = cl->createIndex( *index_def, name, is_unique, is_enforced ) ;
+   rc = cl->createIndex( *index_def, name, is_unique, is_enforced, sort_buffer_size ) ;
    if ( rc )
    {
       goto done ;
@@ -2298,38 +2299,6 @@ done:
    return MAKE_RETURN_INT(rc) ;
 error:
    goto done ;
-}
-
-__METHOD_IMP(cl_create_index_offline)
-{
-   INT32 rc                       = 0 ;
-   BOOLEAN is_unique              = 0 ;
-   BOOLEAN is_enforced            = 0 ;
-   PYOBJECT *obj                  = NULL ;
-   PYOBJECT *bson_index_def       = NULL ;
-   sdbCollection *cl              = NULL ;
-   const bson::BSONObj *index_def = NULL ;
-   const CHAR *name               = NULL ;
-
-   if ( !PARSE_PYTHON_ARGS( args, "OOsii", &obj, &bson_index_def, &name,
-      &is_unique, &is_enforced ) )
-   {
-      rc = SDB_INVALIDARGS ;
-      goto done ;
-   }
-
-   CAST_PYOBJECT_TO_COBJECT( obj, sdbCollection, cl ) ;
-   CAST_PYBSON_TO_CPPBSON( bson_index_def, index_def ) ;
-
-   rc = cl->createIndexOffline( *index_def, name, is_unique, is_enforced ) ;
-   if ( rc )
-   {
-      goto done ;
-   }
-
-done:
-   DELETE_CPPOBJECT( index_def ) ;
-   return MAKE_RETURN_INT( rc ) ;
 }
 
 __METHOD_IMP(cl_explain)
