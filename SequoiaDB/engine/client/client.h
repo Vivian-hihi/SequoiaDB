@@ -1149,7 +1149,8 @@ SDB_EXPORT INT32 sdbCreateIndex ( sdbCollectionHandle cHandle,
                                 bson *indexDef,
                                 const CHAR *pIndexName,
                                 BOOLEAN isUnique,
-                                BOOLEAN isEnforced )
+                                BOOLEAN isEnforced,
+                                INT32 sortBufferSize )
     \brief Create the index in current collection
     \param [in] cHandle The collection handle
     \param [in] indexDef The bson structure of index element, e.g. {name:1, age:-1}

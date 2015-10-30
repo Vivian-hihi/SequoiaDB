@@ -1021,7 +1021,7 @@ namespace sdbclient
 /** \fn INT32 createIndex ( const bson::BSONObj &indexDef,
                             const CHAR *pName,
                             BOOLEAN isUnique,
-                            BOOLEAN isEnforced
+                            BOOLEAN isEnforced,
                             INT32 sortBufferSize )
     \brief Create the index in current collection
     \param [in] indexDef The bson structure of index element, e.g. {name:1, age:-1}
