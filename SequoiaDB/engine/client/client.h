@@ -1159,8 +1159,6 @@ SDB_EXPORT INT32 sdbCreateIndex ( sdbCollectionHandle cHandle,
                            This element is meaningful when isUnique is set to true
     \param [in] sortBufferSize The size of sort buffer used when creating index, the unit is MB,
                                zero means don't use sort buffer
-    \note when creating index in offline mode, writing operations don't work in
-          this collection
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
 */
