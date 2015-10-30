@@ -213,9 +213,12 @@ boolean&#160;</td><td class="memItemRight" valign="bottom"><b>isOIDEnsured</b> (
 <tr class="memitem:abdd89b20edbd831a1df977408203372a"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBCursor.html">DBCursor</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBCollection.html#abdd89b20edbd831a1df977408203372a">getIndex</a> (String name)  throws BaseException </td></tr>
 <tr class="memdesc:abdd89b20edbd831a1df977408203372a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get all of or one of the indexes in current collection.  <a href="#abdd89b20edbd831a1df977408203372a"></a><br/></td></tr>
 <tr class="separator:abdd89b20edbd831a1df977408203372a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a239ea8844f82d189b4e3cf6608d4e8be"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBCollection.html#a239ea8844f82d189b4e3cf6608d4e8be">createIndexOffline</a> (String name, BSONObject key, boolean isUnique, boolean enforced)  throws BaseException </td></tr>
-<tr class="memdesc:a239ea8844f82d189b4e3cf6608d4e8be"><td class="mdescLeft">&#160;</td><td class="mdescRight">Create a index in offline mode with name and key.  <a href="#a239ea8844f82d189b4e3cf6608d4e8be"></a><br/></td></tr>
-<tr class="separator:a239ea8844f82d189b4e3cf6608d4e8be"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9521629df8124f3fa420e72f9a1c5539"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBCollection.html#a9521629df8124f3fa420e72f9a1c5539">createIndex</a> (String name, BSONObject key, boolean isUnique, boolean enforced, int sortBufferSize)  throws BaseException </td></tr>
+<tr class="memdesc:a9521629df8124f3fa420e72f9a1c5539"><td class="mdescLeft">&#160;</td><td class="mdescRight">Create a index with name and key.  <a href="#a9521629df8124f3fa420e72f9a1c5539"></a><br/></td></tr>
+<tr class="separator:a9521629df8124f3fa420e72f9a1c5539"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af19c33627d63f0cdc18ee2ea784fd0e7"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBCollection.html#af19c33627d63f0cdc18ee2ea784fd0e7">createIndex</a> (String name, String key, boolean isUnique, boolean enforced, int sortBufferSize)  throws BaseException </td></tr>
+<tr class="memdesc:af19c33627d63f0cdc18ee2ea784fd0e7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Create a index with name and key.  <a href="#af19c33627d63f0cdc18ee2ea784fd0e7"></a><br/></td></tr>
+<tr class="separator:af19c33627d63f0cdc18ee2ea784fd0e7"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aef067a43c61d488dcc7a39c7124630a3"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBCollection.html#aef067a43c61d488dcc7a39c7124630a3">createIndex</a> (String name, BSONObject key, boolean isUnique, boolean enforced)  throws BaseException </td></tr>
 <tr class="memdesc:aef067a43c61d488dcc7a39c7124630a3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Create a index with name and key.  <a href="#aef067a43c61d488dcc7a39c7124630a3"></a><br/></td></tr>
 <tr class="separator:aef067a43c61d488dcc7a39c7124630a3"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -508,7 +511,147 @@ Partition : When the ShardingType is "hash", need to assign Partition, it's the 
 <p>Create an id index. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">options</td><td>can be empty or specify option. e.g. {Offline:true} </td></tr>
+    <tr><td class="paramname">options</td><td>can be empty or specify option. e.g. {SortBufferSize:64} </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="exception"><dt>Exceptions</dt><dd>
+  <table class="exception">
+    <tr><td class="paramname">com.sequoiadb.exception.BaseException</td><td></td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a class="anchor" id="a9521629df8124f3fa420e72f9a1c5539"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void com.sequoiadb.base.DBCollection.createIndex </td>
+          <td>(</td>
+          <td class="paramtype">String&#160;</td>
+          <td class="paramname"><em>name</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">BSONObject&#160;</td>
+          <td class="paramname"><em>key</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">boolean&#160;</td>
+          <td class="paramname"><em>isUnique</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">boolean&#160;</td>
+          <td class="paramname"><em>enforced</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>sortBufferSize</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td>  throws BaseException </td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Create a index with name and key. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">name</td><td>The index name </td></tr>
+    <tr><td class="paramname">key</td><td>The index key, like: {"key":1/-1}, ASC(1)/DESC(-1) </td></tr>
+    <tr><td class="paramname">isUnique</td><td>Whether the index elements are unique or not </td></tr>
+    <tr><td class="paramname">enforced</td><td>Whether the index is enforced unique This element is meaningful when isUnique is set to true </td></tr>
+    <tr><td class="paramname">sortBufferSize</td><td>The size(MB) of sort buffer used when creating index, zero means don't use sort buffer </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="exception"><dt>Exceptions</dt><dd>
+  <table class="exception">
+    <tr><td class="paramname">com.sequoiadb.exception.BaseException</td><td></td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a class="anchor" id="af19c33627d63f0cdc18ee2ea784fd0e7"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void com.sequoiadb.base.DBCollection.createIndex </td>
+          <td>(</td>
+          <td class="paramtype">String&#160;</td>
+          <td class="paramname"><em>name</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">String&#160;</td>
+          <td class="paramname"><em>key</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">boolean&#160;</td>
+          <td class="paramname"><em>isUnique</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">boolean&#160;</td>
+          <td class="paramname"><em>enforced</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>sortBufferSize</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td>  throws BaseException </td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Create a index with name and key. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">name</td><td>The index name </td></tr>
+    <tr><td class="paramname">key</td><td>The index key, like: {"key":1/-1}, ASC(1)/DESC(-1) </td></tr>
+    <tr><td class="paramname">isUnique</td><td>Whether the index elements are unique or not </td></tr>
+    <tr><td class="paramname">enforced</td><td>Whether the index is enforced unique This element is meaningful when isUnique is set to true </td></tr>
+    <tr><td class="paramname">sortBufferSize</td><td>The size(MB) of sort buffer used when creating index, zero means don't use sort buffer </td></tr>
   </table>
   </dd>
 </dl>
@@ -629,69 +772,6 @@ Partition : When the ShardingType is "hash", need to assign Partition, it's the 
 </div><div class="memdoc">
 
 <p>Create a index with name and key. </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">name</td><td>The index name </td></tr>
-    <tr><td class="paramname">key</td><td>The index key, like: {"key":1/-1}, ASC(1)/DESC(-1) </td></tr>
-    <tr><td class="paramname">isUnique</td><td>Whether the index elements are unique or not </td></tr>
-    <tr><td class="paramname">enforced</td><td>Whether the index is enforced unique This element is meaningful when isUnique is set to true </td></tr>
-  </table>
-  </dd>
-</dl>
-<dl class="exception"><dt>Exceptions</dt><dd>
-  <table class="exception">
-    <tr><td class="paramname">com.sequoiadb.exception.BaseException</td><td></td></tr>
-  </table>
-  </dd>
-</dl>
-
-</div>
-</div>
-<a class="anchor" id="a239ea8844f82d189b4e3cf6608d4e8be"></a>
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">void com.sequoiadb.base.DBCollection.createIndexOffline </td>
-          <td>(</td>
-          <td class="paramtype">String&#160;</td>
-          <td class="paramname"><em>name</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">BSONObject&#160;</td>
-          <td class="paramname"><em>key</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">boolean&#160;</td>
-          <td class="paramname"><em>isUnique</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">boolean&#160;</td>
-          <td class="paramname"><em>enforced</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td>  throws BaseException </td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Create a index in offline mode with name and key. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">name</td><td>The index name </td></tr>
@@ -3351,12 +3431,12 @@ BDQuery.FLG_QUERY_PARALLED </li>
 </div>
 </div>
 <hr/>The documentation for this class was generated from the following file:<ul>
-<li>E:/sequoiadb/driver/java/src/main/java/com/sequoiadb/base/DBCollection.java</li>
+<li>E:/work/sequoiadb/driver/java/src/main/java/com/sequoiadb/base/DBCollection.java</li>
 </ul>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Sat Sep 26 2015 13:47:46 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Fri Oct 30 2015 16:14:08 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.2
 </small></address>
