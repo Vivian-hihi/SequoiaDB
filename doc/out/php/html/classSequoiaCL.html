@@ -120,12 +120,9 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:aec620b8ba6217b2b3d0df60db76095a5"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classSequoiaCursor.html">SequoiaCursor</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSequoiaCL.html#aec620b8ba6217b2b3d0df60db76095a5">aggregate</a> (array|string $aggrObj)</td></tr>
 <tr class="memdesc:aec620b8ba6217b2b3d0df60db76095a5"><td class="mdescLeft">&#160;</td><td class="mdescRight">aggregate this collection, returning a <a class="el" href="classSequoiaCursor.html">SequoiaCursor</a> for the result set  <a href="#aec620b8ba6217b2b3d0df60db76095a5"></a><br/></td></tr>
 <tr class="separator:aec620b8ba6217b2b3d0df60db76095a5"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ad03a2a4b4e379c79ece0d2ed710ef19b"><td class="memItemLeft" align="right" valign="top">array string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSequoiaCL.html#ad03a2a4b4e379c79ece0d2ed710ef19b">createIndex</a> (array|string $indexDef, string $pIndexName, bool $isUnique=false, bool $isEnforced=false)</td></tr>
-<tr class="memdesc:ad03a2a4b4e379c79ece0d2ed710ef19b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Create the index in current collection.  <a href="#ad03a2a4b4e379c79ece0d2ed710ef19b"></a><br/></td></tr>
-<tr class="separator:ad03a2a4b4e379c79ece0d2ed710ef19b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a269767ef9d14f92bfe1f60a2a11db6b3"><td class="memItemLeft" align="right" valign="top">array string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSequoiaCL.html#a269767ef9d14f92bfe1f60a2a11db6b3">createIndexOffline</a> (array|string $indexDef, string $pIndexName, bool $isUnique=false, bool $isEnforced=false)</td></tr>
-<tr class="memdesc:a269767ef9d14f92bfe1f60a2a11db6b3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Create the index in current collection in offline mode.  <a href="#a269767ef9d14f92bfe1f60a2a11db6b3"></a><br/></td></tr>
-<tr class="separator:a269767ef9d14f92bfe1f60a2a11db6b3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa76379a2bbc2e90f69d9ffcb6dcf40f0"><td class="memItemLeft" align="right" valign="top">array string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSequoiaCL.html#aa76379a2bbc2e90f69d9ffcb6dcf40f0">createIndex</a> (array|string $indexDef, string $pIndexName, bool $isUnique=false, bool $isEnforced=false, int $sortBufferSize=64)</td></tr>
+<tr class="memdesc:aa76379a2bbc2e90f69d9ffcb6dcf40f0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Create the index in current collection.  <a href="#aa76379a2bbc2e90f69d9ffcb6dcf40f0"></a><br/></td></tr>
+<tr class="separator:aa76379a2bbc2e90f69d9ffcb6dcf40f0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a78fc172b8a5af7396e2330266f700579"><td class="memItemLeft" align="right" valign="top">array string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSequoiaCL.html#a78fc172b8a5af7396e2330266f700579">deleteIndex</a> (string $pIndexName)</td></tr>
 <tr class="memdesc:a78fc172b8a5af7396e2330266f700579"><td class="mdescLeft">&#160;</td><td class="mdescRight">delete the index in current collection  <a href="#a78fc172b8a5af7396e2330266f700579"></a><br/></td></tr>
 <tr class="separator:a78fc172b8a5af7396e2330266f700579"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -239,7 +236,7 @@ Public Member Functions</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="ad03a2a4b4e379c79ece0d2ed710ef19b"></a>
+<a class="anchor" id="aa76379a2bbc2e90f69d9ffcb6dcf40f0"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
@@ -265,7 +262,13 @@ Public Member Functions</h2></td></tr>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">bool&#160;</td>
-          <td class="paramname"><em>$isEnforced</em> = <code>false</code>&#160;</td>
+          <td class="paramname"><em>$isEnforced</em> = <code>false</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>$sortBufferSize</em> = <code>64</code>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -282,61 +285,7 @@ Public Member Functions</h2></td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">$pIndexName</td><td>The index name </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">$isUnique</td><td>Whether the index elements are unique or not,default is FALSE </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">$isEnforced</td><td>Whether the index is enforced unique This element is meaningful when isUnique is set to true </td></tr>
-  </table>
-  </dd>
-</dl>
-<dl class="retval"><dt>Return values</dt><dd>
-  <table class="retval">
-    <tr><td class="paramname">Returns</td><td>the database response </td></tr>
-  </table>
-  </dd>
-</dl>
-
-</div>
-</div>
-<a class="anchor" id="a269767ef9d14f92bfe1f60a2a11db6b3"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">array string SequoiaCL::createIndexOffline </td>
-          <td>(</td>
-          <td class="paramtype">array|string&#160;</td>
-          <td class="paramname"><em>$indexDef</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">string&#160;</td>
-          <td class="paramname"><em>$pIndexName</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">bool&#160;</td>
-          <td class="paramname"><em>$isUnique</em> = <code>false</code>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">bool&#160;</td>
-          <td class="paramname"><em>$isEnforced</em> = <code>false</code>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Create the index in current collection in offline mode. </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramdir">[in]</td><td class="paramname">$indexDef</td><td>The bson structure of index element, e.g. {name:1, age:-1} </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">$pIndexName</td><td>The index name </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">$isUnique</td><td>Whether the index elements are unique or not,default is FALSE </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">$isEnforced</td><td>Whether the index is enforced unique This element is meaningful when isUnique is set to true </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">$sortBufferSize</td><td>The size of sort buffer used when creating index, the unit is MB, zero means don't use sort buffer </td></tr>
   </table>
   </dd>
 </dl>
@@ -1003,7 +952,7 @@ Public Member Functions</h2></td></tr>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Sat Sep 26 2015 13:48:28 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Fri Oct 30 2015 17:35:55 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.2
 </small></address>
