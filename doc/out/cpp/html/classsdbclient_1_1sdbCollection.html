@@ -160,9 +160,9 @@ INT32&#160;</td><td class="memItemRight" valign="bottom"><b>query</b> (<a class=
 <tr class="memitem:a233a9df73d247e5a78bd113fe2bd2dff"><td class="memItemLeft" align="right" valign="top">INT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsdbclient_1_1sdbCollection.html#a233a9df73d247e5a78bd113fe2bd2dff">createIndex</a> (const bson::BSONObj &amp;indexDef, const CHAR *pName, BOOLEAN isUnique, BOOLEAN isEnforced)</td></tr>
 <tr class="memdesc:a233a9df73d247e5a78bd113fe2bd2dff"><td class="mdescLeft">&#160;</td><td class="mdescRight">Create the index in current collection.  <a href="#a233a9df73d247e5a78bd113fe2bd2dff"></a><br/></td></tr>
 <tr class="separator:a233a9df73d247e5a78bd113fe2bd2dff"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af9de1be83ad971447537e4ff109ff939"><td class="memItemLeft" align="right" valign="top">INT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsdbclient_1_1sdbCollection.html#af9de1be83ad971447537e4ff109ff939">createIndexOffline</a> (const bson::BSONObj &amp;indexDef, const CHAR *pName, BOOLEAN isUnique, BOOLEAN isEnforced)</td></tr>
-<tr class="memdesc:af9de1be83ad971447537e4ff109ff939"><td class="mdescLeft">&#160;</td><td class="mdescRight">Create the index in current collection in offline mode.  <a href="#af9de1be83ad971447537e4ff109ff939"></a><br/></td></tr>
-<tr class="separator:af9de1be83ad971447537e4ff109ff939"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab1ee59e7ecabcec45fba20e45950efed"><td class="memItemLeft" align="right" valign="top">INT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsdbclient_1_1sdbCollection.html#ab1ee59e7ecabcec45fba20e45950efed">createIndex</a> (const bson::BSONObj &amp;indexDef, const CHAR *pName, BOOLEAN isUnique, BOOLEAN isEnforced, INT32 sortBufferSize)</td></tr>
+<tr class="memdesc:ab1ee59e7ecabcec45fba20e45950efed"><td class="mdescLeft">&#160;</td><td class="mdescRight">Create the index in current collection.  <a href="#ab1ee59e7ecabcec45fba20e45950efed"></a><br/></td></tr>
+<tr class="separator:ab1ee59e7ecabcec45fba20e45950efed"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3f87e58a837453b5c1403b99e4769ce6"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a3f87e58a837453b5c1403b99e4769ce6"></a>
 INT32&#160;</td><td class="memItemRight" valign="bottom"><b>getIndexes</b> (<a class="el" href="classsdbclient_1_1__sdbCursor.html">_sdbCursor</a> **cursor, const CHAR *pName)</td></tr>
 <tr class="separator:a3f87e58a837453b5c1403b99e4769ce6"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -491,7 +491,8 @@ Partition    : When the ShardingType is "hash", need to assign Partition, it's t
 <p>Create $id index in collection. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramdir">[in]</td><td class="paramname">options</td><td>The arguments of creating id index.e.g.{Offline:true} <pre class="fragment">Offline     : Use offline mode to create index or not, default to be false
+    <tr><td class="paramdir">[in]</td><td class="paramname">options</td><td>The arguments of creating id index.e.g.{SortBufferSize:64} <pre class="fragment">SortBufferSize     : The size of sort buffer used when creating index, the unit is MB,
+                     zero means don't use sort buffer
 </pre> </td></tr>
   </table>
   </dd>
@@ -570,7 +571,7 @@ Partition    : When the ShardingType is "hash", need to assign Partition, it's t
 
 </div>
 </div>
-<a class="anchor" id="af9de1be83ad971447537e4ff109ff939"></a>
+<a class="anchor" id="ab1ee59e7ecabcec45fba20e45950efed"></a>
 <div class="memitem">
 <div class="memproto">
 <table class="mlabels">
@@ -578,7 +579,7 @@ Partition    : When the ShardingType is "hash", need to assign Partition, it's t
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">INT32 sdbclient::sdbCollection::createIndexOffline </td>
+          <td class="memname">INT32 sdbclient::sdbCollection::createIndex </td>
           <td>(</td>
           <td class="paramtype">const bson::BSONObj &amp;&#160;</td>
           <td class="paramname"><em>indexDef</em>, </td>
@@ -599,7 +600,13 @@ Partition    : When the ShardingType is "hash", need to assign Partition, it's t
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">BOOLEAN&#160;</td>
-          <td class="paramname"><em>isEnforced</em>&#160;</td>
+          <td class="paramname"><em>isEnforced</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">INT32&#160;</td>
+          <td class="paramname"><em>sortBufferSize</em>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -614,17 +621,17 @@ Partition    : When the ShardingType is "hash", need to assign Partition, it's t
 </table>
 </div><div class="memdoc">
 
-<p>Create the index in current collection in offline mode. </p>
+<p>Create the index in current collection. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[in]</td><td class="paramname">indexDef</td><td>The bson structure of index element, e.g. {name:1, age:-1} </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">pIndexName</td><td>The index name </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">isUnique</td><td>Whether the index elements are unique or not </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">isEnforced</td><td>Whether the index is enforced unique This element is meaningful when isUnique is set to true </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">sortBufferSize</td><td>The size of sort buffer used when creating index, the unit is MB, zero means don't use sort buffer </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section note"><dt>Note</dt><dd>when creating index in offline mode, writing operations don't work in this collection </dd></dl>
 <dl class="retval"><dt>Return values</dt><dd>
   <table class="retval">
     <tr><td class="paramname">SDB_OK</td><td>Operation Success </td></tr>
@@ -2235,12 +2242,12 @@ FLG_QUERY_WITH_RETURNDATA(0x00000200) : In general, query won't return data unti
 </div>
 </div>
 <hr/>The documentation for this class was generated from the following file:<ul>
-<li>E:/sequoiadb/client/include/<a class="el" href="client_8hpp_source.html">client.hpp</a></li>
+<li>E:/sequoiadb/SequoiaDB/engine/client/<a class="el" href="client_8hpp_source.html">client.hpp</a></li>
 </ul>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Aug 5 2015 18:22:11 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Fri Oct 30 2015 17:25:25 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.2
 </small></address>

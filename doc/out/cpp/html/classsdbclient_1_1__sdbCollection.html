@@ -131,9 +131,9 @@ virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>queryAndRemo
 <tr class="memitem:a5cbd0c3c1bd7cadecb11cddf85f94861"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a5cbd0c3c1bd7cadecb11cddf85f94861"></a>
 virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>createIndex</b> (const bson::BSONObj &amp;indexDef, const CHAR *pName, BOOLEAN isUnique, BOOLEAN isEnforced)=0</td></tr>
 <tr class="separator:a5cbd0c3c1bd7cadecb11cddf85f94861"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a96e137984f2568c05b2c6b4b329ece8d"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a96e137984f2568c05b2c6b4b329ece8d"></a>
-virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>createIndexOffline</b> (const bson::BSONObj &amp;indexDef, const CHAR *pName, BOOLEAN isUnique, BOOLEAN isEnforced)=0</td></tr>
-<tr class="separator:a96e137984f2568c05b2c6b4b329ece8d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8dd5fb94fd3811a5c49dcf51a3d82348"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a8dd5fb94fd3811a5c49dcf51a3d82348"></a>
+virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>createIndex</b> (const bson::BSONObj &amp;indexDef, const CHAR *pName, BOOLEAN isUnique, BOOLEAN isEnforced, INT32 sortBufferSize)=0</td></tr>
+<tr class="separator:a8dd5fb94fd3811a5c49dcf51a3d82348"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad92c4e8da8ad26d364b85c985f5bb497"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ad92c4e8da8ad26d364b85c985f5bb497"></a>
 virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>getIndexes</b> (<a class="el" href="classsdbclient_1_1__sdbCursor.html">_sdbCursor</a> **cursor, const CHAR *pName)=0</td></tr>
 <tr class="separator:ad92c4e8da8ad26d364b85c985f5bb497"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -221,12 +221,12 @@ virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>dropIdIndex<
 <tr class="separator:a3d58d2c207fee8f104745b3014be593b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <hr/>The documentation for this class was generated from the following file:<ul>
-<li>E:/sequoiadb/client/include/<a class="el" href="client_8hpp_source.html">client.hpp</a></li>
+<li>E:/sequoiadb/SequoiaDB/engine/client/<a class="el" href="client_8hpp_source.html">client.hpp</a></li>
 </ul>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Aug 5 2015 18:22:11 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Fri Oct 30 2015 17:25:25 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.2
 </small></address>
