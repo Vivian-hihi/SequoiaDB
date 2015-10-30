@@ -1023,7 +1023,7 @@ namespace sdbclient
                             BOOLEAN isUnique,
                             BOOLEAN isEnforced
                             INT32 sortBufferSize )
-    \brief Create the index in current collection in offline mode
+    \brief Create the index in current collection
     \param [in] indexDef The bson structure of index element, e.g. {name:1, age:-1}
     \param [in] pIndexName The index name
     \param [in] isUnique Whether the index elements are unique or not

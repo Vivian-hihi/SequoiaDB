@@ -1145,12 +1145,12 @@ SDB_EXPORT INT32 sdbCreateIndex ( sdbCollectionHandle cHandle,
                                   BOOLEAN isUnique,
                                   BOOLEAN isEnforced ) ;
 
-/** \fn INT32 sdbCreateIndexOffline ( sdbCollectionHandle cHandle,
-                                      bson *indexDef,
-                                      const CHAR *pIndexName,
-                                      BOOLEAN isUnique,
-                                      BOOLEAN isEnforced )
-    \brief Create the index in current collection in offline mode
+/** \fn INT32 sdbCreateIndex1 ( sdbCollectionHandle cHandle,
+                                bson *indexDef,
+                                const CHAR *pIndexName,
+                                BOOLEAN isUnique,
+                                BOOLEAN isEnforced )
+    \brief Create the index in current collection
     \param [in] cHandle The collection handle
     \param [in] indexDef The bson structure of index element, e.g. {name:1, age:-1}
     \param [in] pIndexName The index name
