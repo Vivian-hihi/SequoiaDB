@@ -522,7 +522,8 @@ INT32 ossMkdir ( const CHAR* pPathName, UINT32 iPermission )
    }
    catch ( fs::filesystem_error& e )
    {
-      if ( e.code() == boost::system::errc::permission_denied )
+      if ( e.code() == boost::system::errc::permission_denied ||
+           e.code() == boost::system::errc::operation_not_permitted )
       {
          rc = SDB_PERM ;
       }
