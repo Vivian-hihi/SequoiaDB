@@ -233,10 +233,17 @@ static INT32 _ossEnumFiles( const string &dirPath,
    }
    catch ( fs::filesystem_error& e )
    {
-      if ( e.code() == boost::system::errc::permission_denied )
+      if ( e.code() == boost::system::errc::permission_denied ||
+           e.code() == boost::system::errc::operation_not_permitted )
+      {
          rc = SDB_PERM ;
+      }
       else
+      {
+         PD_LOG( PDERROR, "Enum directory[%s] failed, errno: %d",
+                 dirPath.c_str(), e.code() ) ;
          rc = SDB_IO ;
+      }
       goto error ;
    }
    catch( std::exception &e )
