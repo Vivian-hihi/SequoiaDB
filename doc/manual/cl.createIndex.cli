@@ -59,15 +59,16 @@ Create an index for the collection to accelerate query.
 .sp 2
        \fBFormat\fR
 .br
-              The method "createIndex()" contains three
-              parameters: "name", "indexDef" and "isUnique". The
-              value of "name" should be in the type of string.
-              The field "indexDef" is defined as a JSON object,
-              which contains at least one field. The field name
-              is index name. The value of it is 1 or -1. "1"
-              means ascending order. "-1" means descending order.
-              The parameter "isUnique" is in the type of boolean.
-              Its default value is "false".
+              The method "createIndex()" contains five
+              parameters: "name", "indexDef", "isUnique",
+              "enforced" and "sortBufferSize". The value of
+              "name" should be in the type of string. The field
+              "indexDef" is defined as a JSON object, which
+              contains at least one field. The field name is
+              index name. The value of it is 1 or -1. "1" means
+              ascending order. "-1" means descending order. The
+              parameter "isUnique" is in the type of boolean. Its
+              default value is "false".
 .br
               {"name":"<index name>","indexDef":{"<index field
               1>":<1|-1> [,"<index field 2>":<1|-1>...]
