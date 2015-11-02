@@ -523,9 +523,15 @@ INT32 ossMkdir ( const CHAR* pPathName, UINT32 iPermission )
    catch ( fs::filesystem_error& e )
    {
       if ( e.code() == boost::system::errc::permission_denied )
+      {
          rc = SDB_PERM ;
+      }
       else
+      {
+         PD_LOG( PDERROR, "Create directory[%s] failed, errno: %d",
+                 pPathName, e.code() ) ;
          rc = SDB_IO ;
+      }
       goto error ;
    }
    catch ( std::exception &e )
