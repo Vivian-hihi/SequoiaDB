@@ -264,7 +264,7 @@ namespace engine
 
       cb->startRollback() ;
 
-      PD_LOG ( PDEVENT, "Rollback all unfinished-transaction" ) ;
+      PD_LOG ( PDEVENT, "Rollback all unfinished-transaction(%d)", pTransMap->size() ) ;
 
       while ( pTransMap->size() != 0 )
       {

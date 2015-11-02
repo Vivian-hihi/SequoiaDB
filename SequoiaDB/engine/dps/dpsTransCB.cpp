@@ -46,6 +46,7 @@
 #include "dpsLogRecord.hpp"
 #include "dpsMessageBlock.hpp"
 #include "dpsLogRecordDef.hpp"
+#include "pmdStartup.hpp"
 
 namespace engine
 {
@@ -119,16 +120,19 @@ namespace engine
             _maxUsedSize = temp ;
          }
 
-         DPS_LSN startLSN = sdbGetDPSCB()->getStartLsn() ;
-         if ( _isOn && startLSN.offset != DPS_INVALID_LSN_OFFSET &&
-              SDB_ROLE_STANDALONE != pmdGetDBRole() )
+         if ( pmdGetStartup().isOK() )
          {
-            rc = syncTransInfoFromLocal( startLSN.offset ) ;
-            if ( rc )
+            DPS_LSN startLSN = sdbGetDPSCB()->getStartLsn() ;
+            if ( _isOn && startLSN.offset != DPS_INVALID_LSN_OFFSET &&
+                 SDB_ROLE_STANDALONE != pmdGetDBRole() )
             {
-               PD_LOG( PDERROR, "Failed to sync trans info from local, rc: %d",
-                       rc ) ;
-               goto error ;
+               rc = syncTransInfoFromLocal( startLSN.offset ) ;
+               if ( rc )
+               {
+                  PD_LOG( PDERROR, "Failed to sync trans info from local, rc: %d",
+                          rc ) ;
+                  goto error ;
+               }
             }
          }
          setIsNeedSyncTrans( FALSE ) ;
