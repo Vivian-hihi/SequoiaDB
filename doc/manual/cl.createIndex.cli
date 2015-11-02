@@ -70,10 +70,11 @@ Create an index for the collection to accelerate query.
               parameter "isUnique" is in the type of boolean. Its
               default value is "false".
 .br
-              {"name":"<index name>","indexDef":{"<index field
-              1>":<1|-1> [,"<index field 2>":<1|-1>...]
-              },["isUnique":<true|false>],["enfored":<true|false>],["sortBufferSize":<sort
-              buffer size>]}
+              {"name":"<index name>", "indexDef":{"<index field
+              1>":<1|-1> [, "<index field 2>":<1|-1>...] },
+              ["isUnique":<true|false>],
+              ["enfored":<true|false>], ["sortBufferSize":<sort
+              buffer size>] }
 .sp 2
 \fBNote: \fR
 .sp 2
