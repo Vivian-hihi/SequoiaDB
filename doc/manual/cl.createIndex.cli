@@ -16,7 +16,7 @@ query.
 .sp 2
 
 .sp 2
-db.collectionspace.collection.createIndex(\fB<name>\fR,\fB<indexDef>\fR,\fB[isUnique]\fR,\fB[enforced]\fR)
+db.collectionspace.collection.createIndex(\fB<name>\fR,\fB<indexDef>\fR,\fB[isUnique]\fR,\fB[enforced]\fR,\fB[sortBufferSize]\fR)
 .SH "CATEGORY"
 
 .sp 2
@@ -51,6 +51,12 @@ Create an index for the collection to accelerate query.
        premise of "isUnique" is true, no more than one null index
        key can exist in this index.
 .sp 2
+\fBsortBufferSize (int)\fR
+.br
+       Optional, the size of sort buffer used when creating
+       index, the unit is MB, zero means don't use sort buffer,
+       the default value is 64.
+.sp 2
        \fBFormat\fR
 .br
               The method "createIndex()" contains three
@@ -65,7 +71,8 @@ Create an index for the collection to accelerate query.
 .br
               {"name":"<index name>","indexDef":{"<index field
               1>":<1|-1> [,"<index field 2>":<1|-1>...]
-              },["isUnique":<true|false>],["enfored":<true|false>]}
+              },["isUnique":<true|false>],["enfored":<true|false>],["sortBufferSize":<sort
+              buffer size>]}
 .sp 2
 \fBNote: \fR
 .sp 2
