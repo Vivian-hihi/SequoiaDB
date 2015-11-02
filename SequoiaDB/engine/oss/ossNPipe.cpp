@@ -1166,18 +1166,21 @@ done :
    PD_TRACE_EXITRC ( SDB_OSSOPENNP, rc );
    return rc ;
 error :
-   switch ( rc )
+   if ( rc >= 0 )
    {
-   case ENOENT :
-      rc = SDB_FNE ;
-      break ;
-   case EACCES :
-   case EROFS :
-      rc = SDB_PERM ;
-      break ;
-   default :
-      rc = SDB_SYS ;
-      break ;
+      switch ( rc )
+      {
+      case ENOENT :
+         rc = SDB_FNE ;
+         break ;
+      case EACCES :
+      case EROFS :
+         rc = SDB_PERM ;
+         break ;
+      default :
+         rc = SDB_SYS ;
+         break ;
+      }
    }
    goto done ;
 }
@@ -1345,22 +1348,25 @@ done :
    PD_TRACE_EXITRC ( SDB_OSSDELNP, rc );
    return rc ;
 error :
-   switch ( rc )
+   if ( rc >= 0 )
    {
-   case EACCES :
-   case EPERM :
-   case EROFS :
-      rc = SDB_PERM ;
-      break ;
-   case ENOENT :
-      rc = SDB_FNE ;
-      break ;
-   case ENOMEM :
-      rc = SDB_OOM ;
-      break ;
-   default :
-      rc = SDB_SYS ;
-      break ;
+      switch ( rc )
+      {
+      case EACCES :
+      case EPERM :
+      case EROFS :
+         rc = SDB_PERM ;
+         break ;
+      case ENOENT :
+         rc = SDB_FNE ;
+         break ;
+      case ENOMEM :
+         rc = SDB_OOM ;
+         break ;
+      default :
+         rc = SDB_SYS ;
+         break ;
+      }
    }
    goto done ;
 }
