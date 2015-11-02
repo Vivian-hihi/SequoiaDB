@@ -3,7 +3,7 @@
 <topic id="references_method_createIndex">
   <title>db.collectionspace.collection.createIndex()</title>
   <body>
-    <section><title>db.collectionspace.collection.createIndex(&lt;name>,&lt;indexDef>,[isUnique],[enforced])</title>
+    <section><title>db.collectionspace.collection.createIndex(&lt;name>,&lt;indexDef>,[isUnique],[enforced],[sortBufferSize])</title>
       <p>为集合创建<xref href="../../../administration/concepts/database/topics/index.dita">索引</xref>，提高查询速度。</p>
     </section>
     <section><title>参数描述</title><p></p>
@@ -36,6 +36,12 @@
           <stentry>enforced</stentry>
           <stentry>Boolean</stentry>
           <stentry>索引是否强制唯一，可选参数，在 isUnique 为 true 时生效，默认 false。设置为 true 时代表该索引在 isUnique 为 true 的前提下，不可存在一个以上全空的索引键。</stentry>
+          <stentry>否</stentry>
+        </strow>
+        <strow>
+          <stentry>sortBufferSize</stentry>
+          <stentry>int</stentry>
+          <stentry>创建索引时使用的排序缓存的大小，单位为MB。取值为0时表示不使用排序缓存。默认为64。</stentry>
           <stentry>否</stentry>
         </strow>
       </simpletable>      

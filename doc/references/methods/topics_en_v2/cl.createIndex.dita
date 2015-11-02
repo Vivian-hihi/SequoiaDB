@@ -9,7 +9,7 @@
     </section>
     <section>
       <title>SYNOPSIS</title>
-      <p></p><apiname>db.collectionspace.collection.createIndex</apiname>(<parmname>&lt;name></parmname>,<parmname>&lt;indexDef></parmname>,<parmname>[isUnique]</parmname>,<parmname>[enforced]</parmname>)
+      <p></p><apiname>db.collectionspace.collection.createIndex</apiname>(<parmname>&lt;name></parmname>,<parmname>&lt;indexDef></parmname>,<parmname>[isUnique]</parmname>,<parmname>[enforced]</parmname>,<parmname>[sortBufferSize]</parmname>)
     </section>
     <section>
       <title>CATEGORY</title>
@@ -25,8 +25,7 @@
         </plentry>
         <plentry>
           <pt>indexDef (json object)</pt>
-          <pd>Index key. It contains one or more objects that specify index fields and order
-            direction. "1" means ascending order. "-1" means descending order.</pd>
+          <pd>Index key. It contains one or more objects that specify index fields and order direction. "1" means ascending order. "-1" means descending order.</pd>
         </plentry>
         <plentry>
           <pt>isUnique (Boolean)</pt>
@@ -34,16 +33,16 @@
         </plentry>
         <plentry>
           <pt>enforced (Boolean)</pt>
-          <pd>Optional, whether the index is mandatorily unique or not. Its default value is false, and it becomes effective when "isUnique" is true. When it is true, it means that in the premise of "isUnique" is true, no more than one null index key can exist in this index.
+          <pd>Optional, whether the index is mandatorily unique or not. Its default value is false, and it becomes effective when "isUnique" is true. When it is true, it means that in the premise of "isUnique" is true, no more than one null index key can exist in this index.</pd>
+        </plentry>
+        <plentry>
+          <pt>sortBufferSize (int)</pt>
+          <pd>Optional, the size of sort buffer used when creating index, the unit is MB, zero means don't use sort buffer, the default value is 64.
             <parml>
               <plentry>
                 <pt>Format</pt>
-                <pd>The method "createIndex()" contains three parameters: "name", "indexDef" and "isUnique".
-                  The value of  "name" should be in the type of string. The field "indexDef" is defined as a
-                  JSON object, which contains at least one field. The field name is index name. The value of
-                  it is 1 or -1. "1" means ascending order. "-1" means descending order. The parameter
-                  "isUnique" is in the type of boolean. Its default value is "false".</pd>
-                <pd>{"name":"&lt;index name>","indexDef":{"&lt;index field 1>":&lt;1|-1> [,"&lt;index field 2>":&lt;1|-1>...] },["isUnique":&lt;true|false>],["enfored":&lt;true|false>]}</pd>
+                <pd>The method "createIndex()" contains five parameters: "name", "indexDef", "isUnique", "enforced" and "sortBufferSize". The value of  "name" should be in the type of string. The field "indexDef" is defined as a JSON object, which contains at least one field. The field name is index name. The value of it is 1 or -1. "1" means ascending order. "-1" means descending order. The parameter "isUnique" is in the type of boolean. Its default value is "false".</pd>
+                <pd>{"name":"&lt;index name>", "indexDef":{"&lt;index field 1>":&lt;1|-1> [, "&lt;index field 2>":&lt;1|-1>...] }, ["isUnique":&lt;true|false>], ["enfored":&lt;true|false>], ["sortBufferSize":&lt;sort buffer size>] }</pd>
               </plentry>
             </parml></pd>
         </plentry>        
