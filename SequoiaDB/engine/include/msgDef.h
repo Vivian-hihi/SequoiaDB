@@ -277,6 +277,7 @@
 #define FIELD_NAME_SCAN                      "Scan"
 #define FIELD_NAME_FILTER                    "Filter"
 #define FIELD_NAME_SPLITBY                   "SPLITBY"
+#define FIELD_NAME_COMMITTED                 "Committed"
 
 #define FIELD_NAME_PDLEVEL                   "PDLevel"
 #define FIELD_NAME_ASYNCHRONOUS              "asynchronous"

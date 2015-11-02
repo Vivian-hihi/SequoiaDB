@@ -1385,5 +1385,61 @@ namespace engine
       PD_TRACE_EXIT ( SDB__DMSSU_GETSTATINFO ) ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_SYNC, "_dmsStorageUnit::sync" )
+   INT32 _dmsStorageUnit::sync( _pmdEDUCB *cb )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__DMSSU_SYNC ) ;
+      if ( NULL != _pLobSu )
+      {
+         rc = _pLobSu->sync() ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to sync lob:%d", rc ) ;
+            goto error ;
+         }
+         _pIndexSu->commitValidFlag() ;
+      }
+
+      if ( NULL != _pIndexSu )
+      {
+         rc = _pIndexSu->flushAll( TRUE ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to sync index file:%d", rc ) ;
+            goto error ;
+         }
+         _pIndexSu->commitValidFlag() ;
+      }
+
+      if ( NULL != _pDataSu )
+      {
+         _pDataSu->syncMemToMmap() ;
+         rc = _pDataSu->flushAll( TRUE ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to sync data file:%d", rc ) ;
+            goto error ;
+         }
+         _pDataSu->commitValidFlag() ;
+      }
+
+      
+   done:
+      PD_TRACE_EXITRC( SDB__DMSSU_SYNC, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   UINT64 _dmsStorageUnit::getCurrentLSN() const
+   {
+      return NULL == _pDataSu ? -1: _pDataSu->getCurrentLSN() ;
+   }
+
+   UINT32 _dmsStorageUnit::getValidFlag() const
+   {
+      return NULL == _pDataSu ? 0 : _pDataSu->getValidFlag() ;
+   }
 }  // namespace engine
 

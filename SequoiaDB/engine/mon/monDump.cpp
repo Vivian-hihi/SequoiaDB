@@ -1254,6 +1254,8 @@ namespace engine
                ob.append ( FIELD_NAME_FREE_IDX_SIZE, cs._freeIndexSize ) ;
                ob.append ( FIELD_NAME_TOTAL_LOB_SIZE, cs._totalLobSize ) ;
                ob.append ( FIELD_NAME_FREE_LOB_SIZE, cs._freeLobSize ) ;
+               ob.append ( FIELD_NAME_CURRENT_LSN, ( INT64 )(cs._lsn) ) ;
+               ob.appendBool( FIELD_NAME_COMMITTED, cs._committed ) ;
             }
             ob.append ( FIELD_NAME_NAME, cs._name ) ;
             if ( addInfo )

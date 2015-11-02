@@ -107,13 +107,18 @@ namespace engine
       UINT32 _lobdPageSize ;                             // lobd page size
       UINT32 _createLobs ;                               // create lob files
       UINT32 _validFlag ;                                // valid flag
-      CHAR   _pad [ 65352 ] ;                          
+      UINT64 _lsn ;                                      // last commit lsn
+      CHAR   _pad [ 65344 ] ;
 
       _dmsStorageUnitHeader()
       {
          SDB_ASSERT( DMS_PAGE_SIZE_MAX == sizeof( _dmsStorageUnitHeader ),
                      "_dmsStorageUnitHeader size must be 64K" ) ;
          ossMemset( this, 0, DMS_PAGE_SIZE_MAX ) ;
+
+         /// we use 0 instead of -1 to init lsn.
+         /// coz we want to call swapGreaterThan to update it's value.
+         _lsn = 0 ;
       }
    } ;
    typedef _dmsStorageUnitHeader dmsStorageUnitHeader ;
@@ -236,6 +241,18 @@ namespace engine
             return _lobPageSize ;
          }
 
+         void commitValidFlag() ;
+
+         OSS_INLINE UINT64 getCurrentLSN() const
+         {
+            return _lastLSN.peek() ;
+         }
+
+         OSS_INLINE UINT32 getValidFlag() const
+         {
+            return _validFlag ;
+         }
+
       public:
          INT32 openStorage ( const CHAR *pPath, BOOLEAN createNew = TRUE,
                              BOOLEAN delWhenExist = FALSE ) ;
@@ -245,6 +262,7 @@ namespace engine
          virtual void  syncMemToMmap () {}
          void  flushDirtySegments ( UINT32 *pNum = NULL ) ;
          void  restoreForCrash() { _isCrash = FALSE ; }
+         void  updateLastLSN( UINT64 offset ) ;
 
       private:
          virtual UINT64 _dataOffset()  = 0 ;
@@ -311,8 +329,9 @@ namespace engine
          CHAR                          _fullPathName[ OSS_MAX_PATHSIZE + 1 ] ;
          BOOLEAN                       _isTempSU ;
 
-         UINT32                        _validFlag ;
+         volatile UINT32               _validFlag ;
          BOOLEAN                       _isCrash ;
+         ossAtomic64                   _lastLSN ;
 
    } ;
    typedef _dmsStorageBase dmsStorageBase ;

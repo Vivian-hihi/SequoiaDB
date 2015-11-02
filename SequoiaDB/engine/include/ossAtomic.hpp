@@ -373,7 +373,7 @@ class _ossAtomicSigned64 : public SDBObject
          return sizeof( m_value.value ) ;
       }
 
-      valueType peek()
+      valueType peek() const
       {
          return ossAtomicPeek64( &m_value.value ) ;
       }
@@ -475,7 +475,7 @@ class _ossAtomic64 : public SDBObject
          return  V.size() ;
       }
 
-      valueType peek()
+      valueType peek() const
       {
          return ( valueType )V.peek() ;
       }

@@ -7745,6 +7745,7 @@ static JSBool sdb_sync ( JSContext *cx , uintN argc , jsval *vp )
    sdbConnectionHandle *connection  = NULL ;
    JSObject *jsObj = NULL ;
    CHAR *printBuf = NULL ;
+   BOOLEAN opSpecified = FALSE ;
    bson info ;
    bson options ;
    bson_init( &options ) ;
@@ -7762,26 +7763,26 @@ static JSBool sdb_sync ( JSContext *cx , uintN argc , jsval *vp )
       sptConvertor c( cx ) ;
       rc = c.toBson( jsObj, &options ) ;
       VERIFY ( SDB_OK == rc ) ;
+      opSpecified = TRUE ;
    }
 
-   rc = sdbSyncDB( *connection, &options, &info ) ;
-   if ( SDB_OK == rc )
+   rc = sdbSyncDB( *connection,
+                   opSpecified ? &options : NULL,
+                   &info ) ;
+   if ( 5 <= bson_size( &info ) )
    {
-      JS_SET_RVAL ( cx , vp , JSVAL_VOID ) ;
-   }
-   else if ( 5 <= bson_size( &info ) )
-   { 
       UINT32 bufLen = 10 * 1024 ;
       printBuf = ( CHAR * )SDB_OSS_MALLOC( bufLen ) ;
       if ( NULL != printBuf )
       {
          bson_sprint( printBuf, bufLen, &info ) ;
-         REPORT_RC_MSG( FALSE, "Sdb.sync()", rc, printBuf ) ;
+         printf( "%s\n", printBuf ) ;
       }
-      else
-      {
-         REPORT_RC( FALSE,  "Sdb.sync()", rc ) ;
-      }
+   }
+
+   if ( SDB_OK == rc )
+   {
+      JS_SET_RVAL ( cx , vp , JSVAL_VOID ) ;
    }
    else
    {

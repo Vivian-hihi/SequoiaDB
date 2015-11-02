@@ -283,6 +283,10 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__CLSREP_REPLAY );
       SDB_ASSERT( NULL != recordHeader, "head should not be NULL" ) ;
+      if ( NULL != eduCB )
+      {
+         eduCB->insertLsn( recordHeader->_lsn ) ;
+      }
 
       try
       {
@@ -678,6 +682,11 @@ namespace engine
       }
 
    done:
+      if ( NULL != eduCB )
+      {
+         eduCB->resetLsn() ;
+      }
+
       if ( SDB_OK != rc )
       {
          dpsLogRecord record ;

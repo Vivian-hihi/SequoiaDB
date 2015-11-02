@@ -1253,5 +1253,142 @@ namespace engine
       return ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNSYNCDB, "rtnSyncDB" )
+   INT32 rtnSyncDB( _pmdEDUCB *cb )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB_RTNSYNCDB ) ;
+      SDB_DMSCB *dmsCB = sdbGetDMSCB () ;
+      SDB_DPSCB *dpsCB = sdbGetDPSCB() ;
+      std::set<monCollectionSpace> allCS ;
+      BOOLEAN dmsLocked = FALSE ;
+
+      rc = dmsCB->writable( cb ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "database is not writable, rc = %d", rc ) ;
+         goto error;
+      }
+      dmsLocked = TRUE ;
+
+      if ( NULL != dpsCB )
+      {
+         rc = dpsCB->commit( TRUE, NULL ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to commit dps log:%d", rc ) ;
+            goto error ;
+         }
+      }
+
+      dmsCB->dumpInfo( allCS, TRUE ) ;
+      for ( std::set<monCollectionSpace>::const_iterator itr = allCS.begin();
+            itr != allCS.end();
+            ++itr )
+      {
+         const CHAR *csName = itr->_name ;
+         dmsStorageUnit *su = NULL ;
+         dmsStorageUnitID suID = DMS_INVALID_CS ;
+
+         rc = dmsCB->nameToSUAndLock ( csName, suID,
+                                       &su, EXCLUSIVE ) ;
+         if ( SDB_DMS_CS_NOTEXIST == rc )
+         {
+            /// may be removed. 
+            continue ;
+         }
+         else if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to get lock of cs[%s], rc:%d",
+                    csName, rc ) ;
+            goto error ;
+         }
+         else
+         {
+            rc = su->sync( cb ) ;
+            if ( SDB_OK != rc )
+            {
+               dmsCB->suUnlock( suID, EXCLUSIVE ) ;
+               PD_LOG( PDERROR, "failed to sync cs[%s], rc:%d",
+                       csName, rc ) ;
+               goto error ;
+            }
+            dmsCB->suUnlock( suID, EXCLUSIVE ) ;
+         }
+      }
+   done:
+      if ( dmsLocked )
+      {
+         dmsCB->writeDown( cb ) ;
+      }
+      PD_TRACE_EXITRC( SDB_RTNSYNCDB, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNRECOVERDB, "rtnRecoverDB" )
+   INT32 rtnRecoverDB()
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB_RTNRECOVERDB ) ;
+      SDB_DMSCB *dmsCB = sdbGetDMSCB() ;
+//      SDB_DPSCB *dpsCB = sdbGetDPSCB() ;
+      std::set<monCollectionSpace> allCS ;
+      BOOLEAN needFullSync = FALSE ;
+
+      if ( pmdGetStartup().isOK() )
+      {
+         goto done ;
+      }
+
+      dmsCB->dumpInfo( allCS, TRUE ) ;
+      for ( std::set<monCollectionSpace>::const_iterator itr = allCS.begin();
+            itr != allCS.end();
+            ++itr )
+      {
+         const CHAR *csName = itr->_name ;
+         dmsStorageUnit *su = NULL ;
+         dmsStorageUnitID suID = DMS_INVALID_CS ;
+         BOOLEAN validFlag = FALSE ;
+
+         rc = dmsCB->nameToSUAndLock ( csName, suID,
+                                       &su, EXCLUSIVE ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to get lock of cs[%s], rc:%d",
+                    csName, rc ) ;
+            goto error ;
+         }
+
+         validFlag = su->data()->getHeader()->_validFlag ;
+         dmsCB->suUnlock( suID, EXCLUSIVE ) ;
+
+         if ( !validFlag )
+         {
+            PD_LOG( PDERROR, "can not recover cs[%s]", csName ) ;
+            needFullSync = TRUE ;
+         }
+         else
+         {
+            PD_LOG( PDEVENT, "recovery of cs[%s] is done", csName ) ;
+         }
+      }
+
+      if ( !needFullSync )
+      {
+         pmdGetStartup().ok( TRUE ) ;
+      }
+      else
+      {
+         rc = SDB_SYS ;
+         goto error ;
+      }
+   done:
+      PD_TRACE_EXITRC( SDB_RTNRECOVERDB, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   } 
 }
 

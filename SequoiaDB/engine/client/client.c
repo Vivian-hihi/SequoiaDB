@@ -9741,9 +9741,22 @@ SDB_EXPORT INT32 sdbSyncDB( sdbConnectionHandle cHandle,
 {
    INT32 rc = SDB_OK ;
    sdbCursorHandle cursor = SDB_INVALID_HANDLE ;
+   bson global ;
+   bson *final = NULL ;
    sdbConnectionStruct *connection = (sdbConnectionStruct*)cHandle ;
-
    HANDLE_CHECK( cHandle, connection, SDB_HANDLE_TYPE_CONNECTION ) ;
+
+   bson_init( &global ) ;
+   if ( NULL == options )
+   {
+      BSON_APPEND( global, "Global", 1, bool ) ;
+      bson_finish( &global ) ;
+      final = &global ;
+   }
+   else
+   {
+      final = options ;
+   }
 
    rc = _runCommand2( cHandle, &connection->_pSendBuffer,
                       &connection->_sendBufferSize,
@@ -9751,7 +9764,7 @@ SDB_EXPORT INT32 sdbSyncDB( sdbConnectionHandle cHandle,
                       &connection->_receiveBufferSize,
                       CMD_ADMIN_PREFIX CMD_NAME_SYNC_DB,
                       0, 0, -1, -1,
-                      options, NULL, NULL, NULL, &cursor ) ;
+                      final, NULL, NULL, NULL, &cursor ) ;
 
    if ( NULL != info && SDB_INVALID_HANDLE != cursor )
    {
@@ -9766,11 +9779,17 @@ SDB_EXPORT INT32 sdbSyncDB( sdbConnectionHandle cHandle,
    {
       goto error ;
    }
+   else if ( NULL != info && 5 <= bson_size( info ) )
+   {
+      rc = SDB_COORD_NOT_ALL_DONE ;
+      goto error ;
+   }
 done:
    if ( SDB_INVALID_HANDLE != cursor )
    {
       sdbReleaseCursor ( cursor ) ;
    }
+   bson_destroy( &global ) ;
    return rc ;
 error:
    goto done ;

@@ -3482,32 +3482,12 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RTNSYNCDB_DOIT ) ;
 
-/*
-      /// do not use d
-      SDB_DPSCB *dpsCB = sdbGetDPSCB() ;
-      if ( NULL == dpsCB || NULL == dmsCB )
-      {
-         PD_LOG( PDERROR, "dps cb or dms cb is null" ) ;
-         rc = SDB_SYS ;
-         goto error ;
-      }
-
-      
-
-      rc = dmsCB->sync( cb ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "failed to sync dms cb:%d", rc ) ;
-         goto error ;
-      }
-
-      rc = dpsCB->commit( TRUE, NULL ) ;
+      rc = rtnSyncDB( cb ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to sync db:%d", rc ) ;
-         goto error ; 
+         goto error ;
       }
-*/
    done:
       PD_TRACE_EXITRC( SDB__RTNSYNCDB_DOIT, rc ) ;
       return rc ;

@@ -395,6 +395,11 @@ namespace engine
          OSS_BIT_CLEAR( context->mb()->_attributes,
                         DMS_MB_ATTR_NOIDINDEX ) ;
       }
+
+      if ( NULL != cb )
+      {
+         updateLastLSN( cb->getEndLsn() ) ;
+      }
    done :
       if ( 0 != logRecSize )
       {
@@ -497,6 +502,7 @@ namespace engine
       if ( !found )
       {
          rc = SDB_IXM_NOTEXIST ;
+         goto error ;
       }
 
    done :
@@ -708,6 +714,11 @@ namespace engine
                       "rc: %d", rc ) ;
       }
 
+      if ( NULL != cb )
+      {
+         updateLastLSN( cb->getEndLsn() ) ;
+      }
+
    done :
       if ( 0 != logRecSize )
       {
@@ -835,6 +846,11 @@ namespace engine
          goto error ;
       }
       DMS_MON_OP_COUNT_INC( pMonAppCB, MON_INDEX_WRITE, 1 ) ;
+
+      if ( NULL != cb )
+      {
+         updateLastLSN( cb->getEndLsn() ) ;
+      }
 
    done:
       return rc ;
@@ -1119,6 +1135,11 @@ namespace engine
          }
       }
 
+      if ( NULL != cb )
+      {
+         updateLastLSN( cb->getEndLsn() ) ;
+      }
+
    done :
       return rc ;
    error :
@@ -1228,6 +1249,11 @@ namespace engine
             }
             DMS_MON_OP_COUNT_INC( pMonAppCB, MON_INDEX_WRITE, 1 ) ;
          }
+      }
+
+      if ( NULL != cb )
+      {
+         updateLastLSN( cb->getEndLsn() ) ;
       }
 
    done :
