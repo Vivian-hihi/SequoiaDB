@@ -202,6 +202,7 @@ namespace engine
          INT32 _createIndexOnMainCL( const CHAR *pCommand,
                                      const CHAR *pCollection,
                                      const CHAR *pQuery,
+                                     const CHAR *pHint,
                                      INT16 w,
                                      SINT64 &contextID,
                                      BOOLEAN syscall = FALSE );

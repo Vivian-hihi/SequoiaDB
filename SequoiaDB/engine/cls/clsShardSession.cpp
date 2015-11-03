@@ -2072,7 +2072,7 @@ namespace engine
          writable = TRUE ;
          rc = _createIndexOnMainCL( pCommandName,
                                     pCommand->collectionFullName(),
-                                    pQuery, w, contextID );
+                                    pQuery, pHint, w, contextID );
          break;
 
       case CMD_ALTER_COLLECTION :
@@ -2295,17 +2295,20 @@ namespace engine
    INT32 _clsShdSession::_createIndexOnMainCL( const CHAR *pCommand,
                                                const CHAR *pCollection,
                                                const CHAR *pQuery,
+                                               const CHAR *pHint,
                                                INT16 w,
                                                SINT64 &contextID,
                                                BOOLEAN syscall )
    {
       INT32 rc = SDB_OK;
       const CHAR *pSubCLName = NULL ;
-      BSONObj boMatcher;
-      BSONObj boNewMatcher;
-      BSONObj boIndex;
+      BSONObj boMatcher ;
+      BSONObj boNewMatcher ;
+      BSONObj boIndex ;
+      BSONObj boHint ;
       vector< string > strSubCLList ;
       vector< string >::iterator iter ;
+      INT32 sortBufferSize = SDB_INDEX_SORT_BUFFER_DEFAULT_SIZE ;
 
       try
       {
@@ -2313,6 +2316,31 @@ namespace engine
          rc = rtnGetObjElement( boMatcher, FIELD_NAME_INDEX, boIndex ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to get object index, rc: %d",
                       rc ) ;
+
+         if ( NULL != pHint )
+         {
+            boHint = BSONObj( pHint ) ;
+
+            if ( boHint.hasField( IXM_FIELD_NAME_SORT_BUFFER_SIZE ) )
+            {
+               rc = rtnGetIntElement( boHint, IXM_FIELD_NAME_SORT_BUFFER_SIZE,
+                                      sortBufferSize ) ;
+               if ( SDB_OK != rc )
+               {
+                  PD_LOG ( PDERROR, "Failed to get index sort buffer, hint: %s",
+                           boHint.toString().c_str() ) ;
+                  goto error ;
+               }
+
+               if ( sortBufferSize < 0 )
+               {
+                  PD_LOG ( PDERROR, "invalid index sort buffer size: %d",
+                           sortBufferSize ) ;
+                  rc = SDB_INVALIDARG ;
+                  goto error ;
+               }
+            }
+         }
       }
       catch( std::exception &e )
       {
@@ -2333,7 +2361,8 @@ namespace engine
          pSubCLName = iter->c_str() ;
 
          rcTmp = rtnCreateIndexCommand( pSubCLName, boIndex, _pEDUCB,
-                                        _pDmsCB, _pDpsCB, syscall ) ;
+                                        _pDmsCB, _pDpsCB, syscall,
+                                        sortBufferSize ) ;
          if ( rcTmp )
          {
             rcTmp = _processSubCLResult( rcTmp, pSubCLName,
@@ -3390,7 +3419,7 @@ namespace engine
                                          true << IXM_FIELD_NAME_V << 0 <<
                                          IXM_FIELD_NAME_ENFORCED << true ) );
             rc = _createIndexOnMainCL( "", job.getName(),
-                                       def.objdata(),
+                                       def.objdata(), NULL,
                                        1, contextID, TRUE ) ;
          }
          else if ( RTN_ALTER_CL_DROP_ID_IDX == taskType )
