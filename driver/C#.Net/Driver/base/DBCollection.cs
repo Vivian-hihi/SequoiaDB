@@ -798,7 +798,7 @@ namespace SequoiaDB
         }
 
         /** \fn void CreateIndex(string name, BsonDocument key, bool isUnique, bool isEnforced, int sortBufferSize)
-         *  \brief Create a index in offline mode
+         *  \brief Specify sort buffer size to create a index
          *  \param name The index name
          *  \param key The index key
          *  \param isUnique Whether the index elements are unique or not
