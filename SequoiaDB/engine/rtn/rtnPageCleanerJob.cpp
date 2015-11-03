@@ -40,12 +40,16 @@
 #include "pdTrace.hpp"
 #include "rtnTrace.hpp"
 #include "dmsStorageUnit.hpp"
+#include "rtn.hpp"
+
+#define RTN_START_SYNC_TICK 6000
 
 namespace engine
 {
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNPAGECLEANERJOB_CONSTRUCTOR,"_rtnPageCleanerJob::_rtnPageCleanerJob" )
    _rtnPageCleanerJob::_rtnPageCleanerJob ( INT32 periodTime ):
-   _periodTime ( periodTime )
+   _periodTime ( periodTime ),
+   _tick( 0 )
    {
    }
 
@@ -91,6 +95,11 @@ namespace engine
       {
          // set EDU to wait status
          eduMgr->waitEDU ( cb->getID() ) ;
+
+         /// try to sync db first.
+         /// TODO: merge page cleaning and sync db to one completed function
+         _tryToSyncDB() ;
+
          cleanSUID = DMS_INVALID_SUID ;
          // dispatch the first storage unit in clean pending list
          // 1) suLock to lock the collection space, so that no one is able to
@@ -137,6 +146,47 @@ namespace engine
       }
       PD_TRACE_EXITRC ( SDB_RTNPAGECLEANERJOB_DOIT, rc ) ;
       return rc ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNPAGECLEANERJOB__TRYTOSYNCDB, "_rtnPageCleanerJob::_tryToSyncDB" )
+   void _rtnPageCleanerJob::_tryToSyncDB()
+   {
+      PD_TRACE_ENTRY( SDB_RTNPAGECLEANERJOB__TRYTOSYNCDB ) ;
+
+      SDB_DPSCB *dpsCB = sdbGetDPSCB() ;
+      UINT64 currentTick = pmdGetDBTick() ;
+      DPS_LSN begin ;
+      DPS_LSN end ;
+      DPS_LSN committed ;
+
+      dpsCB->getLsnWindow( begin, end, NULL, &committed ) ;
+
+      /// no data need to be committed, clear tick and return
+      if ( 0 == end.compare( committed ) )
+      {
+         _tick = currentTick ;
+         _lsnOffset = committed.offset ;
+         goto done ;
+      }
+      /// no new write for some time, check tick
+      else if ( _lsnOffset == end.offset )
+      {
+         if ( RTN_START_SYNC_TICK <= currentTick - _tick )
+         {
+            PD_LOG( PDEVENT, "no new write in last cycle, begin to sync db" ) ;
+            INT32 rc = rtnSyncDB( eduCB() ) ;
+            _tick = currentTick ;
+         }
+      }
+      else
+      {
+         _lsnOffset =  end.offset ;
+         _tick = currentTick ;
+      }
+
+   done:
+      PD_TRACE_EXIT( SDB_RTNPAGECLEANERJOB__TRYTOSYNCDB ) ;
+      return ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_STARTPAGECLEANERJOB, "startPageCleanerJob" )

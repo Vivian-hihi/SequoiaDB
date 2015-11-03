@@ -1263,6 +1263,7 @@ namespace engine
       std::set<monCollectionSpace> allCS ;
       BOOLEAN dmsLocked = FALSE ;
 
+      PD_LOG( PDEVENT, "begin to sync db data" ) ;
       rc = dmsCB->writable( cb ) ;
       if ( rc )
       {
@@ -1321,6 +1322,7 @@ namespace engine
       {
          dmsCB->writeDown( cb ) ;
       }
+      PD_LOG( PDEVENT, "result of sync db:%d", rc ) ;
       PD_TRACE_EXITRC( SDB_RTNSYNCDB, rc ) ;
       return rc ;
    error:

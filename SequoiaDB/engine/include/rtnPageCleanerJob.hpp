@@ -56,8 +56,13 @@ namespace engine
       virtual const CHAR* name() const ;
       virtual BOOLEAN muteXOn ( const _rtnBaseJob *pOther ) ;
       virtual INT32 doit () ;
+
+   private:
+      void _tryToSyncDB() ;
    private :
       INT32   _periodTime ;
+      UINT64 _tick ;
+      UINT64 _lsnOffset ;
    } ;
    typedef _rtnPageCleanerJob rtnPageCleanerJob ;
 
