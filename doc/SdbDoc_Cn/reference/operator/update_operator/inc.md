@@ -1,0 +1,20 @@
+## 语法##
+
+<pre class="prettyprint lang-diy">
+{$inc:{<字段名1>:<值1>,<字段名2>:<值2>,...}}</pre>
+
+## 描述##
+
+$inc 操作是给指定“<字段名>”增加指定的“<值>”。如果原记录中没有指定的字段名，那将字段名和值填充到记录中；如果原记录中存在指定的字段名，那么将字段名的值加上指定的值。
+
+## 示例##
+
+* 选择集合 bar 下 age 字段值大于15的记录，然后更新这些记录，将 age 字段的值增加5、ID 的值添加1。
+
+<pre class="prettyprint lang-javascript">
+> db.foo.bar.update({$inc:{age:5,ID:1}},{age:{$gt:15}})</pre>
+
+* 选择集合 bar 中存在数组对象 arr 的记录，将数组对象 arr 的第二个元素值添加1。
+
+<pre class="prettyprint lang-javascript">
+> db.foo.bar.update({$inc:{"arr.1":1}},{arr:{$exists:1}})</pre>
