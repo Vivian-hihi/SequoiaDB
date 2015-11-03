@@ -93,29 +93,35 @@ namespace engine
       }
 
       // if enabled dps
-      if ( pmdGetKRCB()->isCBValue( SDB_CB_DPS ) )
+      if ( _isOn && pmdGetKRCB()->isCBValue( SDB_CB_DPS ) )
       {
          UINT64 logFileSize = pmdGetOptionCB()->getReplLogFileSz() ;
          UINT32 logFileNum = pmdGetOptionCB()->getReplLogFileNum() ;
          _logFileTotalSize = logFileSize * logFileNum ;
+         PD_CHECK( logFileNum >= 5, SDB_INVALIDARG, error, PDERROR,
+                   "The value of parameter \"logfilenum\" must be greater than 5 "
+                   "when  configure transaction" ) ;
+
+         // reserved 2 log-file: because size of rollback-log is bigger than operation-log
+         UINT64 reservedSize = logFileSize * 2 ;
 
          // (1).the max-size of operation-log(update) is 2*DMS_RECORD_MAX_SZ,
          // (2).the max-size of unavailable space in cross-file is 
-         // 2*DMS_RECORD_MAX_SZ*logFileNum,
+         // 2*DMS_RECORD_MAX_SZ*(logFileNum -2),
          // the available size is: availableSize =
-         // _logFileTotalSize - (1) - (2) ;
+         // _logFileTotalSize - (2) - reservedSize;
          // the availableSize can used for operation-log and rollback-log,
          // so the size of operation-log is:
          // _maxUsedSize = availableSize / 2;
-         _maxUsedSize = ( _logFileTotalSize - 2 * DMS_RECORD_MAX_SZ *
-                          logFileNum ) / 2 ;
+         _maxUsedSize = ( _logFileTotalSize - reservedSize
+                              - 2 * DMS_RECORD_MAX_SZ * ( logFileNum - 2 ) ) / 2 ;
 
          // if the logFileSize is 32M, the caculation method is:
          // if the transaction-operation-log  caused X(MB) of log-file,
          // the rollback-log will caused up to 2X( 1X for normal rollback-log
          // and 1X for cross-file-space )
-         UINT64 temp = _logFileTotalSize / 3 ;
-         if ( _maxUsedSize < temp )
+         UINT64 temp = ( _logFileTotalSize - reservedSize ) / 3 ;
+         if ( _maxUsedSize > temp || 0 == _maxUsedSize )
          {
             _maxUsedSize = temp ;
          }
