@@ -1,12 +1,7 @@
 <project default="build">
-	<property name="root_dir" value="/opt/xml2sql/src/com/sequoiadb/xml2sql" />
-	<property name="build_dir" value="/opt/xml2sql/build" />
-	<property name="lib_dir" value="/opt/xml2sql/lib" />
-	<property name="jar.name" value="${build_dir}/../xml2sql.jar" />
-
 	<target name="clean">
 		<delete dir="${build_dir}" failonerror="false" />
-		<delete file="${jar.name}" failonerror="false" />
+		<delete file="${jar_name}" failonerror="false" />
 		<mkdir dir="${build_dir}" />
 	</target>
 
@@ -20,10 +15,9 @@
 		<unjar src="${lib_dir}/dom4j-1.6.1.jar" dest="${build_dir}"  />
 		<unjar src="${lib_dir}/mysql-connector-java-5.1.35-bin.jar" dest="${build_dir}"  />
 
-		<jar file="${jar.name}">
+		<jar file="${jar_name}">
 			<manifest>
 				<attribute name="Main-Class" value="com.sequoiadb.xml2sql.xml2sql" />
-				<!-- <attribute name="Main-Class" value="com.sequoiadb.xml2sql.testFile" /> -->
 			</manifest>
 			<fileset dir="${build_dir}" includes="**/*" />
 		</jar>
