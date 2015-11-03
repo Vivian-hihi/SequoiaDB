@@ -1,21 +1,22 @@
 <project default="load_doc">
+	<property name="CODE_DIR" value="${WORKSPACE}/sequoiadb" />
 	<taskdef resource="com/sequoiadb/ant/ant-sdbtasks.xml">
 		<classpath>
-			<fileset dir="${WORKSPACE}/misc/ci/exec-tools" includes="*.jar" />
+			<fileset dir="${CODE_DIR}/misc/ci/exec-tools" includes="*.jar" />
 		</classpath>
 	</taskdef>
 
 	<target name="clean" depends="">
-		<delete dir="${WORKSPACE}/doc/SdbDoc_Cn" failonerror="false" />
-		<delete dir="${WORKSPACE}/doc/SdbDoc_En" failonerror="false" />
+		<delete dir="${CODE_DIR}/doc/SdbDoc_Cn" failonerror="false" />
+		<delete dir="${CODE_DIR}/doc/SdbDoc_En" failonerror="false" />
 		
-		<mkdir dir="${WORKSPACE}/doc/SdbDoc_Cn" />
-		<mkdir dir="${WORKSPACE}/doc/SdbDoc_En" />
-		<copydir dest="${WORKSPACE}/doc/SdbDoc_Cn" src="${WORKSPACE}/doc/Cn" includes="**/*" />
+		<mkdir dir="${CODE_DIR}/doc/SdbDoc_Cn" />
+		<mkdir dir="${CODE_DIR}/doc/SdbDoc_En" />
+		<copydir dest="${CODE_DIR}/doc/SdbDoc_Cn" src="${CODE_DIR}/doc/Cn" includes="**/*" />
 	</target>
 
 	<target name="compile_web_tools" depends="clean">
-		<property name="base_dir" value="${WORKSPACE}/doc/tools/xml2sql" />
+		<property name="base_dir" value="${CODE_DIR}/doc/tools/xml2sql" />
 		<ant antfile="${base_dir}/build.xml">
 			<property name="root_dir" value="${base_dir}/src/com/sequoiadb/xml2sql" />
 			<property name="build_dir" value="${base_dir}/build" />
@@ -27,15 +28,15 @@
 	<target name="gen_web_doc" depends="compile_web_tools">
 		<foreach target="test-one-suite" param="test.suite.fullname" >
 			<path>
-				<dirset dir="${WORKSPACE}/doc/SdbDoc_Cn" />
+				<dirset dir="${CODE_DIR}/doc/SdbDoc_Cn" />
 			</path>
 			<param name="includes.case.patterns" value="*.md" />
 			<param name="excludes.case.patterns" value="" />
 		</foreach>
-		<copydir dest="${WORKSPACE}/doc/SdbDoc_En" src="${WORKSPACE}/doc/SdbDoc_Cn" includes="**/*" />
+		<copydir dest="${CODE_DIR}/doc/SdbDoc_En" src="${CODE_DIR}/doc/SdbDoc_Cn" includes="**/*" />
 		<foreach target="change-one-suite" param="change.suite.fullname" >
 			<path>
-				<dirset dir="${WORKSPACE}/doc/SdbDoc_En" />
+				<dirset dir="${CODE_DIR}/doc/SdbDoc_En" />
 			</path>
 			<param name="includes.case.patterns" value="*.html" />
 			<param name="excludes.case.patterns" value="" />
