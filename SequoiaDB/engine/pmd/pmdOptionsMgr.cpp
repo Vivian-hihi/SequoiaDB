@@ -1710,6 +1710,13 @@ namespace engine
          }
       }
 
+      if ( _transactionOn )
+      {
+         PD_CHECK( _logFileNum >= 5, SDB_INVALIDARG, error, PDERROR,
+                   "The value of parameter \"logfilenum\" must be greater than 5 "
+                   "when  configure transaction" ) ;
+      }
+
       if ( _memDebugSize != 0 )
       {
          _memDebugSize = OSS_MIN ( _memDebugSize, SDB_MEMDEBUG_MAXGUARDSIZE ) ;
