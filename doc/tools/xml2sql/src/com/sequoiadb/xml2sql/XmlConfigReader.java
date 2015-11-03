@@ -23,9 +23,9 @@ import org.w3c.dom.Node;
 import org.xml.sax.InputSource;
 
 public class XmlConfigReader {
-	private static XmlConfigReader instance = new XmlConfigReader("/opt/Conf_2.0.xml");  
+	private static XmlConfigReader instance = new XmlConfigReader("../../toc.xml");  
     private XmlConfig xmlconfig = new XmlConfig();
-	private String rootDir = new File("/opt/Conf_2.0.xml").getParent();
+	private String rootDir = new File("../../toc.xml").getParent();
     /**
      * initial configuration file
      * @param path
