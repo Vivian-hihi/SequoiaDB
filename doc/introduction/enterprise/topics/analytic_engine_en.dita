@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "http://docs.oasis-open.org/dita/v1.1/OS/dtd/topic.dtd">
-<topic id="sequoiadb_analytic_engine_en">
-  <title>SEE Analytics Engine</title>
-  <body>
-    <p>SequoiaDB Enterprise Edition Analytics Engine includes integration with Apache Spark. And you can optionally install and configure your own Hadoop cluster, in order to better utilize some features in Apache Spark.</p>
-    <p>SEE Analytics Engine is coming with SequoiaDB Enterprise Edition installation package. Please refer Spark Integration section for installing SEE Analytics Engine separately.</p>
-  </body>
-</topic>
