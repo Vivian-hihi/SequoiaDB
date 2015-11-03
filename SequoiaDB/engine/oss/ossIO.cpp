@@ -500,9 +500,6 @@ INT32 ossMkdir ( const CHAR* pPathName, UINT32 iPermission )
 
       if ( exists( dirpath ) )
       {
-         /// set permission
-         fs::permissions( dirpath, permission ) ;
-
          rc = SDB_FE ;
          goto error ;
       }
