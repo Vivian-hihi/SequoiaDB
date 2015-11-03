@@ -300,7 +300,7 @@ public class XmlConfigReader {
 			Matcher url = pattern_url.matcher(sb);
 			while(url.find()){
 				String match_url = url.group(1);
-				InputSource inputSource = new InputSource(new FileInputStream("/opt/Conf_2.0.xml"));
+				InputSource inputSource = new InputSource(new FileInputStream("../../toc.xml"));
 				XPath xPath = XPathFactory.newInstance().newXPath();
 				String expression = "//objlist/obj[cnpath='" + match_url + "' or enpath='" + match_url + "']/id";
 				Node node = (Node) xPath.evaluate(expression,inputSource,XPathConstants.NODE);
