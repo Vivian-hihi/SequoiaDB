@@ -363,19 +363,41 @@ namespace DriverTest
             ObjectId insertID = (ObjectId)coll.Insert(insertor);
             Assert.IsNotNull(insertID);
 
-            // Create Index in online mode
+            // Create Index with default sort buffer size
             BsonDocument key = new BsonDocument();
             key.Add("Last Name", 1);
             key.Add("First Name", 1);
-            string name = "index_name_online";
+            string name = "index_name_default";
             coll.CreateIndex(name, key, false, false);
 
-            // Create Index in offline mode
+            // Create Index without sort buffer
             BsonDocument key2 = new BsonDocument();
             key2.Add("Last Name2", 1);
             key2.Add("First Name2", 1);
-            string name2 = "index_name_offline";
-            coll.CreateIndexOffline(name2, key2, true, true);
+            string name2 = "index_name_without_buffer";
+            coll.CreateIndex(name2, key2, true, true, 0);
+
+            // Create Index with user-defined sort buffer
+            BsonDocument key3 = new BsonDocument();
+            key3.Add("Last Name3", 1);
+            key3.Add("First Name3", 1);
+            string name3 = "index_name_with_user-defined_buffer";
+            coll.CreateIndex(name3, key3, true, true, 128);
+
+            // Create Index, expect -6 exception
+            BsonDocument key4 = new BsonDocument();
+            key3.Add("Last Name4", 1);
+            key3.Add("First Name4", 1);
+            string name4 = "index_name_with_error";
+            try
+            {
+                coll.CreateIndex(name4, key4, true, true, -1);
+                Assert.IsTrue(false);
+            }
+            catch (BaseException e)
+            {
+                Assert.IsTrue(e.ErrorCode == new BaseException("SDB_INVALIDARG").ErrorCode);
+            }
 
             // Get Indexes
             DBCursor cursor = coll.GetIndex(name);
@@ -390,7 +412,14 @@ namespace DriverTest
             BsonDocument index2 = cursor2.Next();
             Assert.IsNotNull(index2);
             Assert.IsTrue(index2["IndexDef"].AsBsonDocument["name"].AsString.Equals(name2));
-            
+
+            // Get Indexes
+            DBCursor cursor3 = coll.GetIndex(name3);
+            Assert.IsNotNull(cursor3);
+            BsonDocument index3 = cursor3.Next();
+            Assert.IsNotNull(index3);
+            Assert.IsTrue(index3["IndexDef"].AsBsonDocument["name"].AsString.Equals(name3));
+
             // Drop Index
             coll.DropIndex(name);
             cursor = coll.GetIndex(name);
@@ -400,6 +429,12 @@ namespace DriverTest
 
             coll.DropIndex(name2);
             cursor = coll.GetIndex(name2);
+            Assert.IsNotNull(cursor);
+            index = cursor.Next();
+            Assert.IsNull(index);
+
+            coll.DropIndex(name3);
+            cursor = coll.GetIndex(name3);
             Assert.IsNotNull(cursor);
             index = cursor.Next();
             Assert.IsNull(index);

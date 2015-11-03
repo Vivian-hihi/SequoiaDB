@@ -120,6 +120,34 @@ namespace DriverTest
         }
 
         [TestMethod()]
+        public void Connect_With_Serval_Arg_Test2()
+        {
+            List<string> list = new List<string>();
+            int conn_num = 100;
+            Sequoiadb []dbs = new Sequoiadb[100] ;
+            int i = 0;
+
+            list.Add("192.168.20.35:12340");
+            list.Add("192.168.20.165:11810");
+            list.Add("192.168.20.35:12340");
+            list.Add("192.168.20.42:11810");
+
+            ConfigOptions options = new ConfigOptions();
+            options.MaxAutoConnectRetryTime = 0;
+            options.ConnectTimeout = 100;
+            // connect
+            for(i=0;i<conn_num;i++)
+            {
+                dbs[i] = new Sequoiadb(list);
+                dbs[i].Connect("", "", options);
+            }
+            for(i=0;i<conn_num;i++)
+            {
+                dbs[i].Disconnect();
+            }
+        }
+
+        [TestMethod()]
         [Ignore]
         public void ConnectWithSSLTest()
         {
@@ -911,6 +939,20 @@ namespace DriverTest
                 Console.WriteLine(e.ErrorType);
                 Assert.Fail();
             }
+        }
+
+        [TestMethod()]
+        public void KeepAlive_Test()
+        {
+            Sequoiadb db = null;
+            ReplicaGroup rg = null;
+            SequoiaDB.Node node = null;
+                
+            db = new Sequoiadb("192.168.30.121", 11810);
+            db.Connect();
+            rg = db.GetReplicaGroup("group2");
+            node = rg.GetNode("ubuntu-hs03", 11840);
+            node.Start();
         }
 
     }

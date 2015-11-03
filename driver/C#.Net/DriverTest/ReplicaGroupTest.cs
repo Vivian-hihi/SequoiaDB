@@ -297,14 +297,14 @@ namespace DriverTest
                 return;
             }
             // detach node
-            group.detachNode(hostName2, port2, null);
+            group.DetachNode(hostName2, port2, null);
 
             // check
             data_node = group.GetNode(hostName2, port2);
             Assert.IsNull(data_node);
 
             //attach node 
-            group.attachNode(hostName2, port2, null);
+            group.AttachNode(hostName2, port2, null);
 
             // check
             data_node = group.GetNode(hostName2, port2);

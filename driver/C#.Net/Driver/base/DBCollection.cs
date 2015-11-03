@@ -794,24 +794,26 @@ namespace SequoiaDB
          */
         public void CreateIndex(string name, BsonDocument key, bool isUnique, bool isEnforced) 
         {
-            _CreateIndex(name, key, isUnique, isEnforced, false);
+            _CreateIndex(name, key, isUnique, isEnforced, SequoiadbConstants.IXM_SORT_BUFFER_DEFAULT_SIZE);
         }
 
-        /** \fn void CreateIndexOffline(string name, BsonDocument key, bool isUnique, bool isEnforced)
+        /** \fn void CreateIndex(string name, BsonDocument key, bool isUnique, bool isEnforced, int sortBufferSize)
          *  \brief Create a index in offline mode
          *  \param name The index name
          *  \param key The index key
          *  \param isUnique Whether the index elements are unique or not
          *  \param isEnforced Whether the index is enforced unique.
          *                    This element is meaningful when isUnique is group to true.
+         *  \param sortBufferSize The size of sort buffer used when creating index, the unit is MB,
+         *                        zero means don't use sort buffer.
          *  \note when creating index in offline mode, writing operations don't work in
          *        this collection
          *  \exception SequoiaDB.BaseException
          *  \exception System.Exception
          */
-        public void CreateIndexOffline(string name, BsonDocument key, bool isUnique, bool isEnforced)
+        public void CreateIndex(string name, BsonDocument key, bool isUnique, bool isEnforced, int sortBufferSize)
         {
-            _CreateIndex(name, key, isUnique, isEnforced, true);
+            _CreateIndex(name, key, isUnique, isEnforced, sortBufferSize);
         }
 
         /** \fn void DropIndex(string name)
@@ -1332,8 +1334,10 @@ namespace SequoiaDB
                 throw new BaseException(flags);
         }
 
-        private void _CreateIndex(string name, BsonDocument key, bool isUnique, bool isEnforced, bool isOffline)
+        private void _CreateIndex(string name, BsonDocument key, bool isUnique, bool isEnforced, int sortBufferSize)
         {
+            if (sortBufferSize < 0)
+                throw new BaseException("SDB_INVALIDARG");
             string commandString = SequoiadbConstants.ADMIN_PROMPT + SequoiadbConstants.CREATE_INX;
             BsonDocument obj = new BsonDocument();
             BsonDocument dummyObj = new BsonDocument();
@@ -1346,10 +1350,7 @@ namespace SequoiaDB
             createObj.Add(SequoiadbConstants.FIELD_COLLECTION, collectionFullName);
             createObj.Add(SequoiadbConstants.FIELD_INDEX, obj);
 
-            if (true == isOffline)
-            {
-                hintObj.Add(SequoiadbConstants.IXM_MODE, SequoiadbConstants.IXM_MODE_OFFLINE);
-            }
+            hintObj.Add(SequoiadbConstants.IXM_SORT_BUFFER_SIZE, sortBufferSize);
 
             SDBMessage rtn = AdminCommand(commandString, createObj, dummyObj, dummyObj, hintObj, -1, -1, 0);
 
