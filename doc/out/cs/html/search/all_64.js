@@ -9,7 +9,7 @@ var searchData=
   ['delete',['Delete',['../classSequoiaDB_1_1DBCollection.html#a47bcd33d34f5605a9a6fbf9a9fda3670',1,'SequoiaDB.DBCollection.Delete(BsonDocument matcher)'],['../classSequoiaDB_1_1DBCollection.html#a759351d07db01dac6ed7c7c32c214590',1,'SequoiaDB.DBCollection.Delete(BsonDocument matcher, BsonDocument hint)']]],
   ['detachcollection',['DetachCollection',['../classSequoiaDB_1_1DBCollection.html#abf4521c015df5179439631da5b243c27',1,'SequoiaDB::DBCollection']]],
   ['detachgroups',['DetachGroups',['../classSequoiaDB_1_1DataCenter.html#a833d27e10bba52532b9ba12066134a26',1,'SequoiaDB::DataCenter']]],
-  ['detachnode',['detachNode',['../classSequoiaDB_1_1ReplicaGroup.html#a10d9481f51ff1a9878f67d42e2fcbdfb',1,'SequoiaDB::ReplicaGroup']]],
+  ['detachnode',['DetachNode',['../classSequoiaDB_1_1ReplicaGroup.html#aac379bbd8fd264fe2812de906bbf7078',1,'SequoiaDB::ReplicaGroup']]],
   ['disableimage',['DisableImage',['../classSequoiaDB_1_1DataCenter.html#a97d7c2b84be91337ea45114e1d599e4b',1,'SequoiaDB::DataCenter']]],
   ['disconnect',['Disconnect',['../classSequoiaDB_1_1Sequoiadb.html#acf7f9722345820c356e241726e954bb3',1,'SequoiaDB::Sequoiadb']]],
   ['domain',['Domain',['../classSequoiaDB_1_1Domain.html',1,'SequoiaDB']]],

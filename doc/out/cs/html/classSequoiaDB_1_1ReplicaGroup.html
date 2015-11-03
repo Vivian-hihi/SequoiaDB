@@ -131,12 +131,12 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a9fdce452ac4656c57aeaf55d15345577"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classSequoiaDB_1_1Node.html">Node</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSequoiaDB_1_1ReplicaGroup.html#a9fdce452ac4656c57aeaf55d15345577">GetNode</a> (string hostName, int port)</td></tr>
 <tr class="memdesc:a9fdce452ac4656c57aeaf55d15345577"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the node by host name and port.  <a href="#a9fdce452ac4656c57aeaf55d15345577"></a><br/></td></tr>
 <tr class="separator:a9fdce452ac4656c57aeaf55d15345577"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a52c0aeadef7b6ed17ec09ce0ba002200"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSequoiaDB_1_1ReplicaGroup.html#a52c0aeadef7b6ed17ec09ce0ba002200">attachNode</a> (string hostName, int port, BsonDocument options)</td></tr>
-<tr class="memdesc:a52c0aeadef7b6ed17ec09ce0ba002200"><td class="mdescLeft">&#160;</td><td class="mdescRight">Attach a node to the group.  <a href="#a52c0aeadef7b6ed17ec09ce0ba002200"></a><br/></td></tr>
-<tr class="separator:a52c0aeadef7b6ed17ec09ce0ba002200"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a10d9481f51ff1a9878f67d42e2fcbdfb"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSequoiaDB_1_1ReplicaGroup.html#a10d9481f51ff1a9878f67d42e2fcbdfb">detachNode</a> (string hostName, int port, BsonDocument options)</td></tr>
-<tr class="memdesc:a10d9481f51ff1a9878f67d42e2fcbdfb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Detach a node from the group.  <a href="#a10d9481f51ff1a9878f67d42e2fcbdfb"></a><br/></td></tr>
-<tr class="separator:a10d9481f51ff1a9878f67d42e2fcbdfb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a379a387d41d2dcc77b1f84e54cb238a7"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSequoiaDB_1_1ReplicaGroup.html#a379a387d41d2dcc77b1f84e54cb238a7">AttachNode</a> (string hostName, int port, BsonDocument options)</td></tr>
+<tr class="memdesc:a379a387d41d2dcc77b1f84e54cb238a7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Attach a node to the group.  <a href="#a379a387d41d2dcc77b1f84e54cb238a7"></a><br/></td></tr>
+<tr class="separator:a379a387d41d2dcc77b1f84e54cb238a7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aac379bbd8fd264fe2812de906bbf7078"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSequoiaDB_1_1ReplicaGroup.html#aac379bbd8fd264fe2812de906bbf7078">DetachNode</a> (string hostName, int port, BsonDocument options)</td></tr>
+<tr class="memdesc:aac379bbd8fd264fe2812de906bbf7078"><td class="mdescLeft">&#160;</td><td class="mdescRight">Detach a node from the group.  <a href="#aac379bbd8fd264fe2812de906bbf7078"></a><br/></td></tr>
+<tr class="separator:aac379bbd8fd264fe2812de906bbf7078"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="properties"></a>
 Properties</h2></td></tr>
@@ -156,7 +156,7 @@ Properties</h2></td></tr>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Database operation interfaces of replica group. </p>
 </div><h2 class="groupheader">Member Function Documentation</h2>
-<a class="anchor" id="a52c0aeadef7b6ed17ec09ce0ba002200"></a>
+<a class="anchor" id="a379a387d41d2dcc77b1f84e54cb238a7"></a>
 <div class="memitem">
 <div class="memproto">
 <table class="mlabels">
@@ -164,7 +164,7 @@ Properties</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">void SequoiaDB.ReplicaGroup.attachNode </td>
+          <td class="memname">void SequoiaDB.ReplicaGroup.AttachNode </td>
           <td>(</td>
           <td class="paramtype">string&#160;</td>
           <td class="paramname"><em>hostName</em>, </td>
@@ -343,7 +343,7 @@ Properties</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="a10d9481f51ff1a9878f67d42e2fcbdfb"></a>
+<a class="anchor" id="aac379bbd8fd264fe2812de906bbf7078"></a>
 <div class="memitem">
 <div class="memproto">
 <table class="mlabels">
@@ -351,7 +351,7 @@ Properties</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">void SequoiaDB.ReplicaGroup.detachNode </td>
+          <td class="memname">void SequoiaDB.ReplicaGroup.DetachNode </td>
           <td>(</td>
           <td class="paramtype">string&#160;</td>
           <td class="paramname"><em>hostName</em>, </td>
@@ -856,7 +856,7 @@ SDB_NODE_UNKNOWN
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Sat Sep 26 2015 13:46:26 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Tue Nov 3 2015 10:30:52 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.2
 </small></address>

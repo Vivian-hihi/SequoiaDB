@@ -6,5 +6,5 @@ var searchData=
   ['alter',['Alter',['../classSequoiaDB_1_1DBCollection.html#a97263903a28ea299ea68a4a4d67819cd',1,'SequoiaDB.DBCollection.Alter()'],['../classSequoiaDB_1_1Domain.html#a2cfe0a09bf044fb4cbd9c94902f7c805',1,'SequoiaDB.Domain.Alter()']]],
   ['attachcollection',['AttachCollection',['../classSequoiaDB_1_1DBCollection.html#a2ea5979bb8aa0a26d309163def344f94',1,'SequoiaDB::DBCollection']]],
   ['attachgroups',['AttachGroups',['../classSequoiaDB_1_1DataCenter.html#ad3f48617246b6e955ce6a82263500565',1,'SequoiaDB::DataCenter']]],
-  ['attachnode',['attachNode',['../classSequoiaDB_1_1ReplicaGroup.html#a52c0aeadef7b6ed17ec09ce0ba002200',1,'SequoiaDB::ReplicaGroup']]]
+  ['attachnode',['AttachNode',['../classSequoiaDB_1_1ReplicaGroup.html#a379a387d41d2dcc77b1f84e54cb238a7',1,'SequoiaDB::ReplicaGroup']]]
 ];
