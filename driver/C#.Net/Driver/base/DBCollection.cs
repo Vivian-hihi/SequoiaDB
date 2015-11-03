@@ -806,8 +806,6 @@ namespace SequoiaDB
          *                    This element is meaningful when isUnique is group to true.
          *  \param sortBufferSize The size of sort buffer used when creating index, the unit is MB,
          *                        zero means don't use sort buffer.
-         *  \note when creating index in offline mode, writing operations don't work in
-         *        this collection
          *  \exception SequoiaDB.BaseException
          *  \exception System.Exception
          */
