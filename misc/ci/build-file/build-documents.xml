@@ -44,7 +44,7 @@
 	</target>
 
 	<target name="load_doc" depends="gen_web_doc">
-		<java jar="/opt/xml2sql/xml2sql.jar" fork="true" />
+		<java jar="${CODE_DIR}/doc/tools/xml2sql/xml2sql.jar" fork="true" />
 	</target>
 
 	<target name="test-one-suite" depends="">
