@@ -316,6 +316,16 @@
 	  	<replaceregexp file="${RELEASE_DIR}/sequoiadb/bin/sdbwsart" match="&#13;&#10;" replace="&#10;" flags="g" />
 	  	<copy file="${CODE_DIR}/script/sdbwstop" todir="${RELEASE_DIR}/sequoiadb/bin" />
 	  	<replaceregexp file="${RELEASE_DIR}/sequoiadb/bin/sdbwstop" match="&#13;&#10;" replace="&#10;" flags="g" />
+
+	  	<ant antfile="${CODE_DIR}/misc/ci/build-file/build-api.xml">
+			<property name="root_dir" value="${CODE_DIR}/doc" />
+			<property name="offline_doc_name" value="${CODE_DIR}/doc/webhelp.tar.gz" />
+
+			<property name="build_dir" value="${base_dir}/build" />
+			<property name="lib_dir" value="${base_dir}/lib" />
+			<property name="jar_name" value="${base_dir}/xml2sql.jar" />
+		</ant>
+
 		<copy todir="${RELEASE_DIR}/sequoiadb/doc">
 			<fileset dir="${CODE_DIR}/doc/out" />
 		</copy>
