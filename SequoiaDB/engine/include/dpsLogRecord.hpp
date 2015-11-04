@@ -231,6 +231,10 @@ namespace engine
 
       INT32 load ( const CHAR *pData ) ;
 
+      INT32 loadBody( const CHAR *pData, INT32 totalSize ) ;
+
+      INT32 loadRowBody() ;
+
       iterator find( DPS_TAG tag ) const ;
 
       INT32 push( DPS_TAG tag, UINT32 len, const CHAR *value ) ;

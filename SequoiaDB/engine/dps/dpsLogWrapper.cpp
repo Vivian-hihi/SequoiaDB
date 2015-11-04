@@ -356,14 +356,18 @@ namespace engine
       {
          SDB_ASSERT( NULL != row, "row should not be NULL!") ;
          _dpsMergeBlock block ;
-         dpsLogRecord &record = block.record() ;
-         rc = record.load( row ) ;
+         dpsLogRecord &record = block.record();
+         dpsLogRecordHeader &header = record.head() ;
+         ossMemcpy( &header, row, sizeof(dpsLogRecordHeader) );
+         block.setRow( TRUE ) ;
+         rc = record.push( DPS_LOG_ROW_ROWDATA,
+                           header._length -  sizeof(dpsLogRecordHeader),
+                           row + sizeof(dpsLogRecordHeader)) ;
          if ( SDB_OK != rc )
          {
-            PD_LOG( PDERROR, "Failed to load row:%d", rc ) ;
+            PD_LOG( PDERROR, "Failed to push row to record:%d", rc ) ;
             goto error;
          }
-         block.setRow( TRUE ) ;
 
          rc = _buf.merge( block );
       }

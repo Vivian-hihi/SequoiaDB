@@ -133,6 +133,89 @@ namespace engine
       return ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DPSLGRECD_LOADROWBODY, "_dpsLogRecord::loadRowBody" )
+   INT32 _dpsLogRecord::loadRowBody()
+   {
+      PD_TRACE_ENTRY ( SDB__DPSLGRECD_LOADROWBODY ) ;
+      INT32 rc = SDB_OK ;
+
+      PD_CHECK( _head._length > sizeof( dpsLogRecordHeader) && _head._length < DPS_RECORD_MAX_LEN,
+                SDB_DPS_CORRUPTED_LOG, error, PDERROR, "the length of record is out of range: %d",
+                _head._length) ;
+      if ( LOG_TYPE_DUMMY == _head._type )
+      {
+         goto done ;
+      }
+
+      {
+      _dpsLogRecord::iterator iter = find( DPS_LOG_ROW_ROWDATA ) ;
+      if ( !iter.valid() )
+      {
+         goto done ;
+      }
+
+      // Complete element must contain 5 bytes at least: TAG(1) + Valuesize(4).
+      // TLV must end with 0(1 byte).
+      // So totalSize - 5 to avoid read the invalid bytes
+      rc = loadBody( iter.value(), iter.len() - DPS_RECORD_ELE_HEADER_LEN ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to parse row-record(rc=%d)!", rc ) ;
+      }
+
+   done:
+      PD_TRACE_EXITRC ( SDB__DPSLGRECD_LOADROWBODY, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DPSLGRECD_LOADBODY, "_dpsLogRecord::loadBody" )
+   INT32 _dpsLogRecord::loadBody( const CHAR * pData, INT32 totalSize )
+   {
+      PD_TRACE_ENTRY ( SDB__DPSLGRECD_LOADBODY );
+      SDB_ASSERT( pData, "pData can't be null!" ) ;
+
+      INT32 rc = SDB_OK ;
+      INT32 loadSize = 0 ;
+      const CHAR *location = pData ;
+      while ( loadSize < totalSize )
+      {
+         DPS_TAG tag = DPS_GET_RECORD_TAG(location) ;
+         UINT32 valueSize = DPS_GET_RECORD_LENGTH( location ) ;
+
+         if ( DPS_MERGE_BLOCK_MAX_DATA == _write )
+         {
+            PD_LOG( PDERROR, "data num is larger than %d",
+                    DPS_MERGE_BLOCK_MAX_DATA ) ;
+            SDB_ASSERT( FALSE, "impossible" ) ;
+            rc = SDB_DPS_CORRUPTED_LOG ;
+            goto error ;
+         }
+         else if ( DPS_INVALID_TAG == tag )
+         {
+            /// the length might be changed. DPS_INVALID_TAG is a stop flag.
+            break ;
+         }
+         else if ( (UINT32)( totalSize - loadSize ) < valueSize )
+         {
+            PD_LOG( PDERROR, "get a invalid value size:%d, total size: %d, "
+                    "load size: %d", valueSize, totalSize, loadSize ) ;
+            rc = SDB_DPS_CORRUPTED_LOG ;
+            goto error ;
+         }
+
+         _dataHeader[_write].tag = tag ;
+         _dataHeader[_write].len = valueSize ;
+         _data[_write++] = DPS_GET_RECORD_VALUE(location)  ;
+         loadSize += ( valueSize + DPS_RECORD_ELE_HEADER_LEN ) ;
+         location += ( valueSize + DPS_RECORD_ELE_HEADER_LEN ) ;
+      }
+   done:
+      PD_TRACE_EXITRC ( SDB__DPSLGRECD_LOADBODY, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DPSLGRECD_LOAD, "_dpsLogRecord::load" )
    INT32 _dpsLogRecord::load( const CHAR *pData )
    {
@@ -166,38 +249,8 @@ namespace engine
       totalSize = _head._length
                   - sizeof( dpsLogRecordHeader )
                   - DPS_RECORD_ELE_HEADER_LEN ;
-      while ( loadSize < totalSize )
-      {
-         DPS_TAG tag = DPS_GET_RECORD_TAG(location) ;
-         UINT32 valueSize = DPS_GET_RECORD_LENGTH( location ) ;
-
-         if ( DPS_MERGE_BLOCK_MAX_DATA == _write )
-         {
-            PD_LOG( PDERROR, "data num is larger than %d",
-                    DPS_MERGE_BLOCK_MAX_DATA ) ;
-            SDB_ASSERT( FALSE, "impossible" ) ;
-            rc = SDB_DPS_CORRUPTED_LOG ;
-            goto error ;
-         }
-         else if ( DPS_INVALID_TAG == tag )
-         {
-            /// the length might be changed. DPS_INVALID_TAG is a stop flag.
-            break ;
-         }
-         else if ( (UINT32)( totalSize - loadSize ) < valueSize )
-         {
-            PD_LOG( PDERROR, "get a invalid value size:%d, total size: %d, "
-                    "load size: %d", valueSize, totalSize, loadSize ) ;
-            rc = SDB_DPS_CORRUPTED_LOG ;
-            goto error ;
-         }
-
-         _dataHeader[_write].tag = tag ;
-         _dataHeader[_write].len = valueSize ;
-         _data[_write++] = DPS_GET_RECORD_VALUE(location)  ;
-         loadSize += ( valueSize + DPS_RECORD_ELE_HEADER_LEN ) ;
-         location += ( valueSize + DPS_RECORD_ELE_HEADER_LEN ) ;
-      }
+      rc = loadBody( location, totalSize ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to parse row-record(rc=%d)!", rc ) ;
    done:
       PD_TRACE_EXITRC ( SDB__DPSLGRECD_LOAD, rc );
       return rc ;
