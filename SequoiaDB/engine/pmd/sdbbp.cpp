@@ -53,6 +53,8 @@
 using std::string ;
 using namespace engine ;
 
+#define SDB_BP_LOG_FILE "sdbbp.log"
+
 #if !defined (SDB_SHELL)
 #error "sdbbp should always have SDB_SHELL defined"
 #endif
@@ -227,15 +229,12 @@ INT32 enterDaemonMode ( sptScope *scope ,
       rc = ossConnectNamedPipe ( b2fPipe , OSS_NPIPE_OUTBOUND ) ;
       SH_VERIFY_RC
 
-      // redirect stdout to b2fPipe
       rc = ossNamedPipeToFd ( b2fPipe , &fd ) ;
       SH_VERIFY_RC
 
-      //newStdout = ossFdopen ( fd , "a" ) ;
-      //SH_VERIFY_COND ( newStdout , SDB_SYS )
-
-      //*stdout = *newStdout ;
+      // save the fd of sdbbp.log
       hOutFd = ossDup( 1 ) ;
+      // redirect fd 1(it had been redirect to sdbbp.log) to b2fPipe
       rc = ossDup2( fd, 1 ) ;
       SH_VERIFY_RC
 
@@ -251,10 +250,17 @@ INT32 enterDaemonMode ( sptScope *scope ,
       result = NULL ;
 
       //*stdout = oldStdout ;
+      // close the copy fd of b2fPipe
       ossCloseFd( 1 ) ;
+      // set 1 redirect back to sdbbp.log
       ossDup2( hOutFd, 1 ) ;
+      // close the copy fd of sdbbp.log
       ossCloseFd( hOutFd ) ;
 
+      // close name pipe
+      // when we close this writen name pipe, the read name pipe
+      // in front process will finish reading, and it will print
+      // the contents
       rc = ossDisconnectNamedPipe ( b2fPipe ) ;
       SH_VERIFY_RC
 
@@ -288,10 +294,26 @@ int main ( int argc , const char * argv[] )
    engine::sptContainer container ;
    engine::sptScope *scope = NULL ;
 
-   if ( ! freopen ( "sdbbp.log" , "a" , stdout ) )
+   // redirect stdout to log file, so, when we printf error info,
+   // thay will be redirected to log file
+   if ( ! freopen ( SDB_BP_LOG_FILE , "a" , stdout ) )
    {
-      rc = SDB_SYS ;
-      goto error ;
+      FILE *stream = NULL ;
+#if defined(_WINDOWS)
+      stream = freopen( "CON", "w", stdout ) ;
+#else
+      stream = freopen( "/dev/tty", "w", stdout ) ;
+#endif
+      if ( NULL == stream )
+      {
+         rc = SDB_SYS ;
+         goto error ;
+      }
+      // this can only display in linux, for in linux, father and son process
+      // share the same terminal, but in window, the follow info display in 
+      // a terminal where we can't see
+      ossPrintf( "warning: failed to freopen stdout to log "
+                 "file[%s]"OSS_NEWLINE, SDB_BP_LOG_FILE ) ;
    }
 
 #if defined( _LINUX )
