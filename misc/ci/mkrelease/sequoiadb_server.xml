@@ -171,14 +171,6 @@
             <linkName>${installdir}/tools/server/php/libxml2/lib/libxml2.so.2</linkName>
             <target>${installdir}/tools/server/php/libxml2/lib/libxml2.so.2.9.0</target>
         </createSymLink>
-        <createSymLink>
-            <linkName>${installdir}/tools/server/php/libxml2/lib/libz.so</linkName>
-            <target>${installdir}/tools/server/php/libxml2/lib/libz.so.1.2.7</target>
-        </createSymLink>
-        <createSymLink>
-            <linkName>${installdir}/tools/server/php/libxml2/lib/libz.so.1</linkName>
-            <target>${installdir}/tools/server/php/libxml2/lib/libz.so.1.2.7</target>
-        </createSymLink>
         <changeOwnerAndGroup>
             <files>${installdir}/tools/server/php/libxml2/lib</files>
             <group>${username}_group</group>
