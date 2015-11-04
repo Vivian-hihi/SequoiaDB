@@ -1612,14 +1612,6 @@
                                     <enabled>true</enabled>
                                 </obj>
                                 <obj>
-                                    <id>1440646152</id>
-                                    <cnname>createIndexOffline()</cnname>
-                                    <enname>createIndexOffline()</enname>
-                                    <cnpath>SdbDoc_Cn/reference/Sequoiadb_command/SdbCollection/createIndexOffline.html</cnpath>
-                                    <enpath>SdbDoc_En/reference/Sequoiadb_command/SdbCollection/createIndexOffline_en.html</enpath>
-                                    <enabled>true</enabled>
-                                </obj>
-                                <obj>
                                     <id>1432190831</id>
                                     <cnname>deleteLob()</cnname>
                                     <enname>deleteLob()</enname>
