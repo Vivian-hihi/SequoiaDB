@@ -23,9 +23,9 @@ import org.w3c.dom.Node;
 import org.xml.sax.InputSource;
 
 public class XmlConfigReader {
-	private static XmlConfigReader instance = new XmlConfigReader("../../toc.xml");  
+	private static XmlConfigReader instance = new XmlConfigReader("../../../doc/toc.xml");  
     private XmlConfig xmlconfig = new XmlConfig();
-	private String rootDir = new File("../../toc.xml").getParent();
+	private String rootDir = new File("../../../doc/toc.xml").getParent();
     /**
      * initial configuration file
      * @param path
@@ -300,7 +300,7 @@ public class XmlConfigReader {
 			Matcher url = pattern_url.matcher(sb);
 			while(url.find()){
 				String match_url = url.group(1);
-				InputSource inputSource = new InputSource(new FileInputStream("../../toc.xml"));
+				InputSource inputSource = new InputSource(new FileInputStream("../../../doc/toc.xml"));
 				XPath xPath = XPathFactory.newInstance().newXPath();
 				String expression = "//objlist/obj[cnpath='" + match_url + "' or enpath='" + match_url + "']/id";
 				Node node = (Node) xPath.evaluate(expression,inputSource,XPathConstants.NODE);

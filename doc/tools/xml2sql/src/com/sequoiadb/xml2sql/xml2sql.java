@@ -20,7 +20,7 @@ public class xml2sql {
 	   sqls.add(DbUtil.queryFileSQL());
 	   sqls.add(DbUtil.insertFileSQL());
 	   sqls.add(DbUtil.updateFileSQL());
-	   LoadDriver_Cn(getConnection("./db_cn.properties"),sqls);
+	   LoadDriver_Cn(getConnection("../../../doc/tools/xml2sql/db_cn.properties"),sqls);
 //	   LoadDriver_En(getConnection("./db_en.properties"),sqls);
 	   System.out.println("Database Update Success!");
     }
