@@ -88,7 +88,8 @@ public class stafTools extends Task{
 						+ " TODIRECTORY "
 						+ saveDir
 						+ " TOMACHINE "
-						+ toHost ; 
+						+ toHost 
+						+ " RECURSE KEEPEMPTYDIRECTORIES"; 
 				
 				System.out.println("exec: staf " + workHost+ " FS " + request);
 				result = handle.submit2( workHost , "FS", request);
