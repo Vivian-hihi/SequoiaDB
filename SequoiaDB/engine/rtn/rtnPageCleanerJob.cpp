@@ -42,8 +42,6 @@
 #include "dmsStorageUnit.hpp"
 #include "rtn.hpp"
 
-#define RTN_START_SYNC_TICK 6000
-
 namespace engine
 {
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNPAGECLEANERJOB_CONSTRUCTOR,"_rtnPageCleanerJob::_rtnPageCleanerJob" )
@@ -161,6 +159,15 @@ namespace engine
 
       dpsCB->getLsnWindow( begin, end, NULL, &committed ) ;
 
+      if ( currentTick < _tick )
+      {
+         /// correct tick
+         PD_LOG( PDWARNING, "current tick:%lld, last tick:%lld,"
+                 "we need to corret it", currentTick, _tick ) ;
+         _tick = currentTick ;
+         goto done ;
+      }
+
       /// no data need to be committed, clear tick and return
       if ( 0 == end.compare( committed ) )
       {
@@ -171,10 +178,11 @@ namespace engine
       /// no new write for some time, check tick
       else if ( _lsnOffset == end.offset )
       {
-         if ( RTN_START_SYNC_TICK <= currentTick - _tick )
+         if ( ( UINT64 )_periodTime * 6 <=
+              ((currentTick - _tick) * PMD_SYNC_CLOCK_INTERVAL ) )
          {
             PD_LOG( PDEVENT, "no new write in last cycle, begin to sync db" ) ;
-            INT32 rc = rtnSyncDB( eduCB() ) ;
+            rtnSyncDB( eduCB() ) ;
             _tick = currentTick ;
          }
       }

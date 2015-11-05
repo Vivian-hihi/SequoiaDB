@@ -570,6 +570,8 @@ namespace engine
       _lsn.offset = offset ;
       _lsn.version = version ;
 
+      _lastCommitted = DPS_LSN() ;
+
    done:
       PD_TRACE_EXITRC ( SDB__DPSRPCMGR__MVPAGES, rc );
       return rc ;
