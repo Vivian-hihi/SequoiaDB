@@ -3,16 +3,32 @@
    var GridId ;
    sacApp.controllerProvider.register( 'Data.Lob.Lobs.Ctrl', function( $scope, $compile, $location, SdbRest, InheritSize, SdbFunction, FormModal){
       var clusterName = SdbFunction.LocalData( 'SdbClusterName' ) ;
+      if( clusterName == null )
+      {
+         SdbFunction.LocalData( 'SdbModuleMode', null ) ;
+         SdbFunction.LocalData( 'SdbModuleName', null ) ;
+         window.location.href = '/deployment/index.html' ;
+         return;
+      }
+
+      var moduleMode = SdbFunction.LocalData( 'SdbModuleMode' ) ;
       var moduleName = SdbFunction.LocalData( 'SdbModuleName' ) ;
+      if( moduleMode == null || moduleName == null )
+      {
+         $location.path( 'Data/Overview/Index' ) ;
+         return;
+      }
+
       var csName = SdbFunction.LocalData( 'SdbCsName' ) ;
       var clName = SdbFunction.LocalData( 'SdbClName' ) ;
       var clType = SdbFunction.LocalData( 'SdbClType' ) ;
-      printfDebug( 'Cluster: ' + clusterName + ', Module: ' + moduleName + ', cs: ' + csName + ', cl: ' + clName ) ;
-      if( clusterName == null || moduleName == null || csName == null || clName == null || clType == 'main' )
+      if( csName == null || clName == null || clType == null )
       {
          $location.path( 'Data/Operate/Index' ) ;
          return;
       }
+
+      printfDebug( 'Cluster: ' + clusterName + ', Module: ' + moduleName + ', cs: ' + csName + ', cl: ' + clName ) ;
 
       //调整外层div宽高
       InheritSize.append( $( '#LobIndex' ) ) ;

@@ -214,9 +214,13 @@
                   {
                      return value['$regex'] ;
                   }
+                  else if( isArray( value ) )
+                  {
+                     return '[ Array ]' ;
+                  }
                   else
                   {
-                     return value ;
+                     return '[ Object ]' ;
                   }
                }
                else if( valueType == 'boolean' )
@@ -324,22 +328,20 @@
 
       g.storageType = g.setBrowserStorage() ;
       //本地数据操作
-      g.LocalData = function( key, value )
-      {
-         
+      g.LocalData = function( key, value ){
          if( typeof( value ) == 'undefined' )
          {
             //读取本地数据
-            var value = null ;
+            var newValue = null ;
 	         if ( g.storageType === 'localStorage' )
 	         {
-		         value = window.localStorage.getItem( key ) ;
+		         newValue = window.localStorage.getItem( key ) ;
 	         }
 	         else if ( g.storageType === 'cookie' )
 	         {
-		         value = $.cookie( key ) ;
+		         newValue = $.cookie( key ) ;
 	         }
-	         return value ;
+	         return newValue ;
          }
          else if( value == null )
          {

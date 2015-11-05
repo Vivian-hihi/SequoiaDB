@@ -14,7 +14,7 @@
    } ) ;
 
    //创建网格的指令
-   sacApp.directive( 'createGrid', function( $filter, $compile, $window ){
+   sacApp.directive( 'createGrid', function( $filter, $compile, $window, SdbFunction ){
       var dire = {
          restrict: 'A',
          scope: {
@@ -24,6 +24,7 @@
          templateUrl: './app/template/Component/Grid.html',
          replace: false,
          controller: function( $scope, $element ){
+            $scope.isFirst_firefox = 0 ;
             $scope.Setting = {
                titleWidth: [],
                bodyWidth: [],
@@ -37,7 +38,7 @@
          },
          compile: function( element, attributes ){
             //设置列宽
-            function setColumnWidth( scope, parentEle )
+            function setColumnWidth( scope, parentEle, isFirefox )
             {
                var tdBorderEle = $( '> .Grid > .GridHeader > .GridTr > .GridTd', parentEle ) ;
                var tdBorderWidth = numberCarry( tdBorderEle.outerWidth() - tdBorderEle.width() ) ;
@@ -45,6 +46,11 @@
                var gridEle = $( '> .Grid', parentEle ) ;
                var width = parseInt( gridEle.outerWidth() - numberCarry( gridEle.outerWidth() - gridEle.width() ) - titleNum * tdBorderWidth ) ;
                var bodyWidth = parseInt( $( '> .Grid > .GridBody', parentEle ).outerWidth() - titleNum * tdBorderWidth ) ;//width - 18 ;
+               if( isFirefox == true  && scope.isFirst_firefox < 2 )
+               {
+                  ++scope.isFirst_firefox ;
+                  bodyWidth -= 17 ;
+               }
                var scrollWidth = width - bodyWidth ;
                var titleWidth = scope.data.options.grid.titleWidth ;
                var sumWidth = 0 ;
@@ -115,6 +121,7 @@
                         {
                            tmpTdWidth = width - sumWidth ;
                         }
+                        if( tmpTdWidth < 0 ) tmpTdWidth = 0 ;
                         scope.Setting.titleWidth[index] = ( tmpTdWidth + 'px' ) ;
                         sumWidth += tmpTdWidth ;
                         //内容
@@ -123,6 +130,7 @@
                         {
                            tmpTdWidth = bodyWidth - sumBodyWidth ;
                         }
+                        if( tmpTdWidth < 0 ) tmpTdWidth = 0 ;
                         scope.Setting.bodyWidth[index] = ( tmpTdWidth + 'px' ) ;
                         sumBodyWidth += tmpTdWidth ;
                      }
@@ -163,7 +171,7 @@
                   var gridBody = $( '> .Grid > .GridBody', parentEle ) ;
                   $.each( scope.data['body'], function( index, row ){
                      var maxHeight = 0 ;
-                     $.each( row, function( index2, column ){
+                        $.each( row, function( index2, column ){
                         var tdEle = $( '> .GridTr:eq(' + index + ') > .GridTd:eq(' + index2 + ')', gridBody ) ;
                         var tdHeight = $( tdEle ).height() ;
                         if( tdHeight > maxHeight )
@@ -308,6 +316,7 @@
                      //清除网格内容
                      if( typeof( scope.data ) == 'object' )
                      {
+                        var browserInfo = SdbFunction.getBrowserInfo() ;
                         clearup( scope, element ) ;
                         setTimeout( function(){
                            //网格内容追加html代码和事件
@@ -315,7 +324,7 @@
                            //网格工具栏追加html代码和事件
                            setGridTool( scope, element ) ;
                            //设置列宽
-                           setColumnWidth( scope, element ) ;
+                           setColumnWidth( scope, element, ( browserInfo[0] == 'firefox' ) ) ;
                            //设置行高
                            setRowHeight( scope, element ) ;
                            //设置总高度
@@ -787,7 +796,14 @@
                var value = parseInt( $scope.data.Height ) ;
                if( !isNaN( value ) )
                {
-                  $scope.Setting.Height = value - 39 ;
+                  if( value >= 39 )
+                  {
+                     $scope.Setting.Height = value - 39 ;
+                  }
+                  else
+                  {
+                     $scope.Setting.Height = 0 ;
+                  }
                }
             } ) ;
             $scope.data['Callback'] = {} ;
@@ -1083,6 +1099,10 @@
          templateUrl: './app/template/Component/Form.html',
          replace: false,
          controller: function( $scope, $element ){
+            $.each( $scope.data.inputList, function( index ){
+               $scope.data.inputList[index]['isClick'] = false ;
+            } ) ;
+            $scope.browserInfo = SdbFunction.getBrowserInfo() ;
             $scope.Setting = {
                Text: {
                   'string': {
@@ -1358,6 +1378,9 @@
                         } ) ;
                         inputInfo.showMenu = true ;
                      }
+                  }
+                  scope.placeholderClick = function( inputInfo ){
+                     inputInfo.isClick = true ;
                   }
                }
             } ;
@@ -1650,6 +1673,9 @@
    sacApp.directive( 'getFocus', function(){
       var dire = {
          restrict: 'A',
+         scope: {
+            data: '=getFocus'
+         },
          replace: false,
          // 专用控制器
          controller: function( $scope, $element ){},
@@ -1658,7 +1684,12 @@
             return {
                pre: function preLink( scope, element, attributes ){},
                post: function postLink( scope, element, attributes ){
-                  $( element ).get(0).focus() ;
+                  scope.$watch( 'data', function(){
+                     if( scope.data == true )
+                     {
+                        $( element ).get(0).focus() ;
+                     }
+                  } ) ;
                }
             } ;
          }
@@ -1802,6 +1833,41 @@
 
    //创建折线图
    sacApp.directive( 'createLineChart', function(){
+      var dire = {
+         restrict: 'A',
+         scope: {
+            data: '=para'
+         },
+         replace: false,
+         //专用控制器
+         controller: function( $scope, $element ){
+            $scope.Setting = {
+               'element': null
+            } ;
+            $scope.$watch( 'data', function(){
+               if( typeof( $scope.data ) == 'object' && typeof( $scope.data.options ) == 'object' && isArray( $scope.data.value ) )
+               {
+                  if( $scope.Setting.element == null )
+                  {
+                     $scope.Setting.element = echarts.init( $( $element ).get(0) ).setOption( $scope.data.options ) ;
+                  }
+                  $scope.Setting.element.addData( $scope.data.value ) ;
+               }
+            } ) ;
+         },
+         //编译
+         compile: function( element, attributes ){
+            return {
+               pre: function preLink( scope, element, attributes ){},
+               post: function postLink( scope, element, attributes ){}
+            } ;
+         }
+      } ;
+      return dire ;
+   });
+
+   //创建饼图
+   sacApp.directive( 'createPieChart', function(){
       var dire = {
          restrict: 'A',
          scope: {

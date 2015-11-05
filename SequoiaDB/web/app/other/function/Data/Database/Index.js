@@ -1,6 +1,176 @@
 ﻿// --------------------- Data.Database.Index ---------------------
 var _DataDatabaseIndex = {} ;
 
+//控制是否显示子集合
+_DataDatabaseIndex.isShowSubCl = function( $scope, SdbFunction, event ){
+   var clList = $.extend( true, [], $scope.sourceClList ) ;
+   var newClList = [] ;
+   $scope.isHideSubCl = $( event.target ).is(':checked') ;
+   if( $scope.isHideSubCl == true )
+   {
+      $.each( clList, function( index, clInfo ){
+         if( typeof( clInfo['MainCLName'] ) != 'string' )
+         {
+            newClList.push( clInfo ) ;
+         }
+      } ) ;
+      SdbFunction.LocalData( 'SdbHidePartition', 1 ) ;
+   }
+   else
+   {
+      newClList = clList ;
+      SdbFunction.LocalData( 'SdbHidePartition', null ) ;
+   }
+   $scope.showCSInfo( 0 ) ;
+   _DataDatabaseIndex.buildClList( $scope, newClList ) ;
+}
+
+//构建cl列表信息
+_DataDatabaseIndex.buildClList = function( $scope, clList ){
+   $scope.partitionCLNum = 0 ;
+   $scope.clList = [] ;
+   if( clList.length == 1 && clList[0]['Name'] == null ) clList = [] ;
+   $.each( $scope.csList, function( index2, csInfo ){
+      csInfo['clNum'] = 0 ;
+   } ) ;
+   $scope.clInfo = clList ;
+   $.each( clList, function( index, clInfo ){
+      var fullName = clInfo['Name'].split( '.' ) ;
+      var csName = fullName[0] ;
+      var clName = fullName[1] ;
+      var clListIndex = -1 ;
+      //查找cl列表是否已经存在该cl
+      $.each( $scope.clList, function( index2, clInfo2 ){
+         if( clName == clInfo2['Name'] && csName == clInfo2['csName'] )
+         {
+            clListIndex = index2 ;
+            return false ;
+         }
+      } ) ;
+      //存在则累加
+      if( clListIndex >= 0 )
+      {
+         $scope.clList[clListIndex]['Record']                      += clInfo['TotalRecords'] ;
+         $scope.clList[clListIndex]['Info']['TotalRecords']        += clInfo['TotalRecords'] ;
+         $scope.clList[clListIndex]['Info']['TotalDataPages']      += clInfo['TotalDataPages'] ;
+         $scope.clList[clListIndex]['Info']['TotalIndexPages']     += clInfo['TotalIndexPages'] ;
+         $scope.clList[clListIndex]['Info']['TotalLobPages']       += clInfo['TotalLobPages'] ;
+         $scope.clList[clListIndex]['Info']['TotalDataFreeSpace']  += clInfo['TotalDataFreeSpace'] ;
+         $scope.clList[clListIndex]['Info']['TotalIndexFreeSpace'] += clInfo['TotalIndexFreeSpace'] ;
+         if( clInfo['GroupName'] != null )
+         {
+            $scope.clList[clListIndex]['GroupName'].push( { 'key': clInfo['GroupName'], 'value': index } ) ;
+         }
+      }
+      //不存在则创建
+      else
+      {
+         var shardingType, shardingTypeDesc ;
+         if( clInfo['IsMainCL'] == true )
+         {
+            shardingType = $scope.autoLanguage( '垂直' ) ;
+            shardingTypeDesc = $scope.autoLanguage( '垂直分区' ) ;
+         }
+         else
+         {
+            if( clInfo['ShardingType'] == 'range' )
+            {
+               ++$scope.partitionCLNum ;
+               shardingType = $scope.autoLanguage( '水平' ) ;
+               shardingTypeDesc = $scope.autoLanguage( '水平范围分区' ) ;
+            }
+            else if( clInfo['ShardingType'] == 'hash' )
+            {
+               ++$scope.partitionCLNum ;
+               shardingType = $scope.autoLanguage( '水平' ) ;
+               shardingTypeDesc = $scope.autoLanguage( '水平散列分区' ) ;
+            }
+            else
+            {
+               shardingType = $scope.autoLanguage( '普通' ) ;
+               shardingTypeDesc = $scope.autoLanguage( '普通' ) ;
+            }
+         }
+         var isHide = false ;
+         var pageSize = 0 ;
+         var lobPageSize = 0 ;
+         //计算cl数量
+         $.each( $scope.csList, function( index2, csInfo ){
+            if( csInfo['Name'] == csName )
+            {
+               ++csInfo['clNum'] ;
+               if( csInfo['clNum'] > 5 )
+               {
+                  isHide = true ;
+               }
+               pageSize = parseInt( csInfo['Info']['PageSize'] ) ;
+               lobPageSize = parseInt( csInfo['Info']['LobPageSize'] ) ;
+               return false ;
+            }
+         } ) ;
+         $scope.clList.push( {
+            'csName': csName,
+            'Name': clName,
+            'type': shardingType,
+            'typeDesc': shardingTypeDesc,
+            'GroupName': ( clInfo['GroupName'] == null ? [] : [ { 'value': index, 'key': clInfo['GroupName'] } ] ),
+            'Lob': clInfo['IsMainCL'] ? null : 0,
+            'Record': clInfo['TotalRecords'],
+            'Index': clInfo['Indexes'],
+            'IsMainCL': clInfo['IsMainCL'],
+            'hide': isHide,
+            'pageSize': pageSize,
+            'lobPageSize': lobPageSize,
+            'MainCLName': clInfo['MainCLName'],
+            'ShardingType': clInfo['ShardingType'],
+            'Info': {
+               'Name':                clName,
+               'IsMainCL':            clInfo['IsMainCL'],
+               'MainCLName':          clInfo['MainCLName'],
+               'ShardingKey':         clInfo['ShardingKey'],
+               'ShardingType':        clInfo['ShardingType'],
+               'ID':                  clInfo['ID'],
+               'LogicalID':           clInfo['LogicalID'],
+               'Sequence':            clInfo['Sequence'],
+               'GroupName':           clInfo['GroupName'],
+               'Status':              clInfo['Status'],
+               'Indexes':             clInfo['Indexes'],
+               'TotalRecords':        clInfo['TotalRecords'],
+               'TotalDataPages':      clInfo['TotalDataPages'],
+               'TotalIndexPages':     clInfo['TotalIndexPages'],
+               'TotalLobPages':       clInfo['TotalLobPages'],
+               'TotalDataFreeSpace':  clInfo['TotalDataFreeSpace'],
+               'TotalIndexFreeSpace': clInfo['TotalIndexFreeSpace'],
+               'EnsureShardingIndex': clInfo['EnsureShardingIndex'],
+               'ReplSize':            clInfo['ReplSize'],
+               'LowBound':            null,
+               'UpBound':             null,
+               'Metadata Ratio':      '0%',
+               'CataInfo':            clInfo['CataInfo'],
+               'Attribute':           clInfo['Attribute']
+            }
+         } ) ;
+      }
+      clInfo['Name'] = clName ;
+      clInfo['TotalDataFreeSpace'] = fixedNumber( clInfo['TotalDataFreeSpace'], 2 ) + 'MB' ;
+      clInfo['TotalIndexFreeSpace'] = fixedNumber( clInfo['TotalIndexFreeSpace'], 2 ) + 'MB' ;
+   } ) ;
+   $.each( $scope.clList, function( index, clInfo ){
+      if( typeof( clInfo['Info']['TotalDataFreeSpace'] ) == 'number' )
+      {
+         clInfo['Info']['TotalDataFreeSpace'] = fixedNumber( clInfo['Info']['TotalDataFreeSpace'], 2 ) + 'MB' ;
+      }
+      if( typeof( clInfo['Info']['TotalIndexFreeSpace'] ) == 'number' )
+      {
+         clInfo['Info']['TotalIndexFreeSpace'] = fixedNumber( clInfo['Info']['TotalIndexFreeSpace'], 2 ) + 'MB' ;
+      }
+      if( typeof( clInfo['Info']['TotalIndexPages'] ) == 'number' && typeof( clInfo['Info']['TotalDataPages'] ) == 'number' && typeof( clInfo['Info']['TotalLobPages'] ) == 'number' && clInfo['Info']['TotalDataPages'] + clInfo['Info']['TotalLobPages'] > 0 )
+      {
+         clInfo['Info']['Metadata Ratio'] = fixedNumber( ( clInfo['Info']['TotalIndexPages'] * 100 * clInfo['pageSize'] ) / ( clInfo['Info']['TotalDataPages'] * clInfo['pageSize'] + clInfo['Info']['TotalLobPages'] * clInfo['lobPageSize'] ), 2 ) + '%' ;
+      }
+   } ) ;
+}
+
 //获取所有cs信息
 _DataDatabaseIndex.getCSInfo = function( $scope, SdbRest ){
    var sql ;
@@ -12,113 +182,164 @@ _DataDatabaseIndex.getCSInfo = function( $scope, SdbRest ){
    {
       sql = 'SELECT Name, PageSize/1024, LobPageSize/1024, GroupName, TotalRecords, FreeDataSize/1048576, FreeIndexSize/1048576, FreeLobSize/1048576, FreeSize/1048576, MaxDataCapSize/1073741824, MaxIndexCapSize/1073741824, MaxLobCapSize/1073741824, TotalDataSize/1048576, TotalIndexSize/1048576, TotalLobSize/1048576, TotalSize/1048576 FROM $SNAPSHOT_CS WHERE NodeSelect="master"' ;
    }
-
+   function dataSizeFmt( value, str )
+   {
+      if( typeof( value ) == 'number' )
+      {
+         return fixedNumber( value, 2 ) + str ;
+      }
+      else
+      {
+         return value ;
+      }
+   }
+   function dataPlus( value )
+   {
+      if( typeof( value ) == 'number' )
+      {
+         return value ;
+      }
+      else
+      {
+         return 0 ;
+      }
+   }
    //获取cs的信息
    SdbRest.Exec( sql, function( csList ){
-      $scope.csList = [] ;
       if( csList.length == 1 && csList[0]['Name'] == null ) csList = [] ;
-      $scope.csInfo = csList ;
-      $.each( csList, function( index, csInfo ){
-         var csListIndex = -1 ;
-         //查找cs列表是否已经存在该cs
-         $.each( $scope.csList, function( index2, csInfo2 ){
-            if( csInfo['Name'] == csInfo2['Name'] )
-            {
-               csListIndex = index2 ;
-               return false ;
-            }
-         } ) ;
-         //存在则累加
-         if( csListIndex >= 0 )
-         {
-            $scope.csList[csListIndex]['Info']['TotalRecords']    += csInfo['TotalRecords'] ;
-            $scope.csList[csListIndex]['Info']['TotalDataSize']   += csInfo['TotalDataSize'] ;
-            $scope.csList[csListIndex]['Info']['FreeDataSize']    += csInfo['FreeDataSize'] ;
-            $scope.csList[csListIndex]['Info']['TotalIndexSize']  += csInfo['TotalIndexSize'] ;
-            $scope.csList[csListIndex]['Info']['FreeIndexSize']   += csInfo['FreeIndexSize'] ;
-            $scope.csList[csListIndex]['Info']['TotalLobSize']    += csInfo['TotalLobSize'] ;
-            $scope.csList[csListIndex]['Info']['FreeLobSize']     += csInfo['FreeLobSize'] ;
-            $scope.csList[csListIndex]['Info']['MaxDataCapSize']  += csInfo['MaxDataCapSize'] ;
-            $scope.csList[csListIndex]['Info']['MaxIndexCapSize'] += csInfo['MaxIndexCapSize'] ;
-            $scope.csList[csListIndex]['Info']['MaxLobCapSize']   += csInfo['MaxLobCapSize'] ;
-            $scope.csList[csListIndex]['Info']['TotalSize']       += csInfo['TotalSize'] ;
-            $scope.csList[csListIndex]['Info']['FreeSize']        += csInfo['FreeSize'] ;
-
-            if( csInfo['GroupName'] != null )
-            {
-               $scope.csList[csListIndex]['GroupName'].push( { 'key': csInfo['GroupName'], 'value': index } ) ;
-            }
-         }
-         //不存在则创建
-         else
-         {
-            var color = '' ;
-            var i = $scope.csList.length ;
-            if( i > 3 ) i = i % 4 ;
-            if( i == 0 ) color = 'green' ;
-            if( i == 1 ) color = 'yellow' ;
-            if( i == 2 ) color = 'blue' ;
-            if( i == 3 ) color = 'violet' ;
-            $scope.csList.push( {
-               'Name': csInfo['Name'],
-               'clNum': 0,
-               'GroupName': ( csInfo['GroupName'] == null ? [] : [ { 'value': index, 'key': csInfo['GroupName'] } ] ),
-               'hide': false,
-               'color': color,
-               'show': false,
-               'Info': {
-                  'Name':            csInfo['Name'],
-                  'PageSize':        csInfo['PageSize'],
-                  'LobPageSize':     csInfo['LobPageSize'],
-                  'TotalRecords':    csInfo['TotalRecords'],
-                  'FreeDataSize':    csInfo['FreeDataSize'],
-                  'FreeIndexSize':   csInfo['FreeIndexSize'],
-                  'FreeLobSize':     csInfo['FreeLobSize'],
-                  'FreeSize':        csInfo['FreeSize'],
-                  'MaxDataCapSize':  csInfo['MaxDataCapSize'],
-                  'MaxIndexCapSize': csInfo['MaxIndexCapSize'],
-                  'MaxLobCapSize':   csInfo['MaxLobCapSize'],
-                  'TotalDataSize':   csInfo['TotalDataSize'],
-                  'TotalIndexSize':  csInfo['TotalIndexSize'],
-                  'TotalLobSize':    csInfo['TotalLobSize'],
-                  'TotalSize':       csInfo['TotalSize']
+      var data = { 'cmd': 'list collectionspaces' } ;
+      SdbRest.DataOperation( data, function( csList2 ){
+         $.each( csList2, function( index2, csInfo2 ){
+            var hasCS = false ;
+            $.each( csList, function( index, csInfo ){
+               if( csInfo['Name'] == csInfo2['Name'] )
+               {
+                  hasCS = true ;
+                  return false ;
                }
             } ) ;
+            if( hasCS == false )
+            {
+               csList.push( csInfo2 ) ;
+            }
+         } ) ;
+         $scope.csList = [] ;
+         $scope.csInfo = csList ;
+         $.each( csList, function( index, csInfo ){
+            var csListIndex = -1 ;
+            //查找cs列表是否已经存在该cs
+            $.each( $scope.csList, function( index2, csInfo2 ){
+               if( csInfo['Name'] == csInfo2['Name'] )
+               {
+                  csListIndex = index2 ;
+                  return false ;
+               }
+            } ) ;
+            //存在则累加
+            if( csListIndex >= 0 )
+            {
+               $scope.csList[csListIndex]['Info']['TotalRecords']    += dataPlus( csInfo['TotalRecords'] ) ;
+               $scope.csList[csListIndex]['Info']['TotalDataSize']   += dataPlus( csInfo['TotalDataSize'] ) ;
+               $scope.csList[csListIndex]['Info']['FreeDataSize']    += dataPlus( csInfo['FreeDataSize'] ) ;
+               $scope.csList[csListIndex]['Info']['TotalIndexSize']  += dataPlus( csInfo['TotalIndexSize'] ) ;
+               $scope.csList[csListIndex]['Info']['FreeIndexSize']   += dataPlus( csInfo['FreeIndexSize'] ) ;
+               $scope.csList[csListIndex]['Info']['TotalLobSize']    += dataPlus( csInfo['TotalLobSize'] ) ;
+               $scope.csList[csListIndex]['Info']['FreeLobSize']     += dataPlus( csInfo['FreeLobSize'] ) ;
+               $scope.csList[csListIndex]['Info']['MaxDataCapSize']  += dataPlus( csInfo['MaxDataCapSize'] ) ;
+               $scope.csList[csListIndex]['Info']['MaxIndexCapSize'] += dataPlus( csInfo['MaxIndexCapSize'] ) ;
+               $scope.csList[csListIndex]['Info']['MaxLobCapSize']   += dataPlus( csInfo['MaxLobCapSize'] ) ;
+               $scope.csList[csListIndex]['Info']['TotalSize']       += dataPlus( csInfo['TotalSize'] ) ;
+               $scope.csList[csListIndex]['Info']['FreeSize']        += dataPlus( csInfo['FreeSize'] ) ;
+               if( csInfo['GroupName'] != null )
+               {
+                  $scope.csList[csListIndex]['GroupName'].push( { 'key': csInfo['GroupName'], 'value': index } ) ;
+               }
+            }
+            //不存在则创建
+            else
+            {
+               var color = '' ;
+               var i = $scope.csList.length ;
+               if( i > 3 ) i = i % 4 ;
+               if( i == 0 ) color = 'green' ;
+               if( i == 1 ) color = 'yellow' ;
+               if( i == 2 ) color = 'blue' ;
+               if( i == 3 ) color = 'violet' ;
+               $scope.csList.push( {
+                  'Name': csInfo['Name'],
+                  'clNum': 0,
+                  'GroupName': ( csInfo['GroupName'] == null ? [] : [ { 'value': index, 'key': csInfo['GroupName'] } ] ),
+                  'hide': false,
+                  'color': color,
+                  'show': false,
+                  'Info': {
+                     'Name':            csInfo['Name'],
+                     'PageSize':        csInfo['PageSize'],
+                     'LobPageSize':     csInfo['LobPageSize'],
+                     'TotalRecords':    csInfo['TotalRecords'],
+                     'FreeDataSize':    csInfo['FreeDataSize'],
+                     'FreeIndexSize':   csInfo['FreeIndexSize'],
+                     'FreeLobSize':     csInfo['FreeLobSize'],
+                     'FreeSize':        csInfo['FreeSize'],
+                     'MaxDataCapSize':  csInfo['MaxDataCapSize'],
+                     'MaxIndexCapSize': csInfo['MaxIndexCapSize'],
+                     'MaxLobCapSize':   csInfo['MaxLobCapSize'],
+                     'TotalDataSize':   csInfo['TotalDataSize'],
+                     'TotalIndexSize':  csInfo['TotalIndexSize'],
+                     'TotalLobSize':    csInfo['TotalLobSize'],
+                     'TotalSize':       csInfo['TotalSize']
+                  }
+               } ) ;
+            }
+            csInfo['PageSize']        = dataSizeFmt( csInfo['PageSize'], 'KB' ) ;
+            csInfo['LobPageSize']     = dataSizeFmt( csInfo['LobPageSize'], 'KB' ) ;
+            csInfo['TotalRecords']    = dataSizeFmt( csInfo['TotalRecords'], 'MB' ) ;
+            csInfo['TotalDataSize']   = dataSizeFmt( csInfo['TotalDataSize'], 'MB' ) ;
+            csInfo['FreeDataSize']    = dataSizeFmt( csInfo['FreeDataSize'], 'MB' ) ;
+            csInfo['TotalIndexSize']  = dataSizeFmt( csInfo['TotalIndexSize'], 'MB' ) ;
+            csInfo['FreeIndexSize']   = dataSizeFmt( csInfo['FreeIndexSize'], 'MB' ) ;
+            csInfo['TotalLobSize']    = dataSizeFmt( csInfo['TotalLobSize'], 'MB' ) ;
+            csInfo['FreeLobSize']     = dataSizeFmt( csInfo['FreeLobSize'], 'MB' ) ;
+            csInfo['TotalSize']       = dataSizeFmt( csInfo['TotalSize'], 'MB' ) ;
+            csInfo['FreeSize']        = dataSizeFmt( csInfo['FreeSize'], 'MB' ) ;
+            csInfo['MaxDataCapSize']  = dataSizeFmt( csInfo['MaxDataCapSize'], 'GB' ) ;
+            csInfo['MaxIndexCapSize'] = dataSizeFmt( csInfo['MaxIndexCapSize'], 'GB' ) ;
+            csInfo['MaxLobCapSize']   = dataSizeFmt( csInfo['MaxLobCapSize'], 'GB' ) ;
+         } ) ;
+
+         $.each( $scope.csList, function( index, csInfo ){
+            csInfo['Info']['PageSize']        = dataSizeFmt( csInfo['Info']['PageSize'], 'KB' ) ;
+            csInfo['Info']['LobPageSize']     = dataSizeFmt( csInfo['Info']['LobPageSize'], 'KB' ) ;
+            csInfo['Info']['TotalRecords']    = dataSizeFmt( csInfo['Info']['TotalRecords'], 'MB' ) ;
+            csInfo['Info']['TotalDataSize']   = dataSizeFmt( csInfo['Info']['TotalDataSize'], 'MB' ) ;
+            csInfo['Info']['FreeDataSize']    = dataSizeFmt( csInfo['Info']['FreeDataSize'], 'MB' ) ;
+            csInfo['Info']['TotalIndexSize']  = dataSizeFmt( csInfo['Info']['TotalIndexSize'], 'MB' ) ;
+            csInfo['Info']['FreeIndexSize']   = dataSizeFmt( csInfo['Info']['FreeIndexSize'], 'MB' ) ;
+            csInfo['Info']['TotalLobSize']    = dataSizeFmt( csInfo['Info']['TotalLobSize'], 'MB' ) ;
+            csInfo['Info']['FreeLobSize']     = dataSizeFmt( csInfo['Info']['FreeLobSize'], 'MB' ) ;
+            csInfo['Info']['TotalSize']       = dataSizeFmt( csInfo['Info']['TotalSize'], 'MB' ) ;
+            csInfo['Info']['FreeSize']        = dataSizeFmt( csInfo['Info']['FreeSize'], 'MB' ) ;
+            csInfo['Info']['MaxDataCapSize']  = dataSizeFmt( csInfo['Info']['MaxDataCapSize'], 'GB' ) ;
+            csInfo['Info']['MaxIndexCapSize'] = dataSizeFmt( csInfo['Info']['MaxIndexCapSize'], 'GB' ) ;
+            csInfo['Info']['MaxLobCapSize']   = dataSizeFmt( csInfo['Info']['MaxLobCapSize'], 'GB' ) ;
+         } ) ;
+         $scope.showCSInfo( 0 ) ;
+         $scope.$apply() ;
+         _DataDatabaseIndex.getCLInfo( $scope, SdbRest ) ;
+      }, function( errorInfo ){
+         $scope.Components.Confirm.isShow = true ;
+         $scope.Components.Confirm.type = 1 ;
+         $scope.Components.Confirm.title = $scope.autoLanguage( '获取数据失败' ) ;
+         $scope.Components.Confirm.okText = $scope.autoLanguage( '重试' ) ;
+         $scope.Components.Confirm.closeText = $scope.autoLanguage( '取消' ) ;
+         $scope.Components.Confirm.context = sprintf( $scope.autoLanguage( '错误码: ?, ?。需要重试吗?' ), errorInfo['errno'], errorInfo['description'] ) ;
+         $scope.Components.Confirm.ok = function(){
+            $scope.Components.Confirm.isShow = false ;
+            _DataDatabaseIndex.getCSInfo( $scope, SdbRest ) ;
          }
-         csInfo['PageSize']        = csInfo['PageSize'] + 'KB' ;
-         csInfo['LobPageSize']     = csInfo['LobPageSize'] + 'KB' ;
-         csInfo['TotalRecords']    = fixedNumber( csInfo['TotalRecords'], 2 ) + 'MB' ;
-         csInfo['TotalDataSize']   = fixedNumber( csInfo['TotalDataSize'], 2 ) + 'MB' ;
-         csInfo['FreeDataSize']    = fixedNumber( csInfo['FreeDataSize'], 2 ) + 'MB' ;
-         csInfo['TotalIndexSize']  = fixedNumber( csInfo['TotalIndexSize'], 2 ) + 'MB' ;
-         csInfo['FreeIndexSize']   = fixedNumber( csInfo['FreeIndexSize'], 2 ) + 'MB' ;
-         csInfo['TotalLobSize']    = fixedNumber( csInfo['TotalLobSize'], 2 ) + 'MB' ;
-         csInfo['FreeLobSize']     = fixedNumber( csInfo['FreeLobSize'], 2 ) + 'MB' ;
-         csInfo['MaxDataCapSize']  = fixedNumber( csInfo['MaxDataCapSize'], 2 ) + 'GB' ;
-         csInfo['MaxIndexCapSize'] = fixedNumber( csInfo['MaxIndexCapSize'], 2 ) + 'GB' ;
-         csInfo['MaxLobCapSize']   = fixedNumber( csInfo['MaxLobCapSize'], 2 ) + 'GB' ;
-         csInfo['TotalSize']       = fixedNumber( csInfo['TotalSize'], 2 ) + 'MB' ;
-         csInfo['FreeSize']        = fixedNumber( csInfo['FreeSize'], 2 ) + 'MB' ;
+      }, function(){
+         _IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
       } ) ;
-      $.each( $scope.csList, function( index, csInfo ){
-         csInfo['Info']['PageSize']        = csInfo['Info']['PageSize'] + 'KB' ;
-         csInfo['Info']['LobPageSize']     = csInfo['Info']['LobPageSize'] + 'KB' ;
-         csInfo['Info']['TotalRecords']    = fixedNumber( csInfo['Info']['TotalRecords'], 2 ) + 'MB' ;
-         csInfo['Info']['TotalDataSize']   = fixedNumber( csInfo['Info']['TotalDataSize'], 2 ) + 'MB' ;
-         csInfo['Info']['FreeDataSize']    = fixedNumber( csInfo['Info']['FreeDataSize'], 2 ) + 'MB' ;
-         csInfo['Info']['TotalIndexSize']  = fixedNumber( csInfo['Info']['TotalIndexSize'], 2 ) + 'MB' ;
-         csInfo['Info']['FreeIndexSize']   = fixedNumber( csInfo['Info']['FreeIndexSize'], 2 ) + 'MB' ;
-         csInfo['Info']['TotalLobSize']    = fixedNumber( csInfo['Info']['TotalLobSize'], 2 ) + 'MB' ;
-         csInfo['Info']['FreeLobSize']     = fixedNumber( csInfo['Info']['FreeLobSize'], 2 ) + 'MB' ;
-         csInfo['Info']['MaxDataCapSize']  = fixedNumber( csInfo['Info']['MaxDataCapSize'], 2 ) + 'GB' ;
-         csInfo['Info']['MaxIndexCapSize'] = fixedNumber( csInfo['Info']['MaxIndexCapSize'], 2 ) + 'GB' ;
-         csInfo['Info']['MaxLobCapSize']   = fixedNumber( csInfo['Info']['MaxLobCapSize'], 2 ) + 'GB' ;
-         csInfo['Info']['TotalSize']       = fixedNumber( csInfo['Info']['TotalSize'], 2 ) + 'MB' ;
-         csInfo['Info']['FreeSize']        = fixedNumber( csInfo['Info']['FreeSize'], 2 ) + 'MB' ;
-      } ) ;
-      $scope.showCSInfo( 0 ) ;
-      $scope.$apply() ;
-      _DataDatabaseIndex.getCLInfo( $scope, SdbRest ) ;
    }, function( errorInfo ){
       $scope.Components.Confirm.isShow = true ;
       $scope.Components.Confirm.type = 1 ;
@@ -138,151 +359,114 @@ _DataDatabaseIndex.getCSInfo = function( $scope, SdbRest ){
 //获取所有cl信息
 _DataDatabaseIndex.getCLInfo = function( $scope, SdbRest )
 {
+   $scope.mainCLNum = 0 ;
    if( $scope.moduleMode == 'standalone' )
    {
       sql = 'SELECT t1.Name, t1.Details.ID, t1.Details.LogicalID, t1.Details.Sequence, t1.Details.GroupName, t1.Details.Status, t1.Details.Indexes, t1.Details.TotalRecords, t1.Details.TotalDataPages, t1.Details.TotalIndexPages, t1.Details.TotalLobPages, t1.Details.TotalDataFreeSpace/1048576, t1.Details.TotalIndexFreeSpace/1048576 FROM (SELECT * FROM $SNAPSHOT_CL split BY Details) AS t1' ;
    }
    else
    {
-      sql = 'SELECT t2.Name, t1.Details.ID, t1.Details.LogicalID, t1.Details.Sequence, t1.Details.GroupName, t1.Details.Status, t1.Details.Indexes, t1.Details.TotalRecords, t1.Details.TotalDataPages, t1.Details.TotalIndexPages, t1.Details.TotalLobPages, t1.Details.TotalDataFreeSpace/1048576, t1.Details.TotalIndexFreeSpace/1048576, t2.IsMainCL, t2.MainCLName, t2.ShardingKey, t2.ShardingType FROM (SELECT * FROM $SNAPSHOT_CL WHERE NodeSelect="master" split BY Details) AS t1 RIGHT OUTER JOIN $SNAPSHOT_CATA AS t2 ON t1.Name = t2.Name' ;
+      /*sql = 'SELECT t2.Name, t1.Details.ID, t1.Details.LogicalID, t1.Details.Sequence, t1.Details.GroupName, t1.Details.Status, t1.Details.Indexes, t1.Details.TotalRecords, t1.Details.TotalDataPages, t1.Details.TotalIndexPages, t1.Details.TotalLobPages, t1.Details.TotalDataFreeSpace/1048576, t1.Details.TotalIndexFreeSpace/1048576, t2.IsMainCL, t2.MainCLName, t2.ShardingKey, t2.ShardingType FROM (SELECT * FROM $SNAPSHOT_CL WHERE NodeSelect="master" split BY Details) AS t1 RIGHT OUTER JOIN $SNAPSHOT_CATA AS t2 ON t1.Name = t2.Name' ;*/
+      sql = 'SELECT t1.Name, t1.Details.ID, t1.Details.LogicalID, t1.Details.Sequence, t1.Details.GroupName, t1.Details.Status, t1.Details.Indexes, t1.Details.TotalRecords, t1.Details.TotalDataPages, t1.Details.TotalIndexPages, t1.Details.TotalLobPages, t1.Details.TotalDataFreeSpace/1048576, t1.Details.TotalIndexFreeSpace/1048576, t1.IsMainCL, t1.MainCLName, t1.ShardingKey, t1.ShardingType FROM (SELECT * FROM $SNAPSHOT_CL WHERE NodeSelect="master" split BY Details) AS t1' ;
+   }
+
+   //合并cl数据
+   function mergedData( clList, cataList ){
+      $.each( cataList, function( index, cataInfo ){
+         if( cataInfo['IsMainCL'] == true )
+         {
+            ++$scope.mainCLNum ;
+            clList.push( cataInfo ) ;
+            cataInfo['TotalRecords'] = 0 ;
+            $.each( cataInfo['CataInfo'], function( index2, rangeInfo ){
+               $.each( clList, function( index3, clInfo ){
+                  if( clInfo['Name'] == rangeInfo['SubCLName'] )
+                  {
+                     cataInfo['TotalRecords'] += clInfo['TotalRecords'] ;
+                  }
+               } ) ;
+            } ) ;
+         }
+         else
+         {
+            $.each( clList, function( index2, clInfo ){
+               if( clInfo['Name'] == cataInfo['Name'] )
+               {
+                  if( typeof( cataInfo['MainCLName'] ) == 'string' )
+                  {
+                     clInfo['MainCLName'] = cataInfo['MainCLName'] ;
+                  }
+                  if( typeof( cataInfo['ShardingType'] ) == 'string' )
+                  {
+                     clInfo['ShardingType'] = cataInfo['ShardingType'] ;
+                     clInfo['ShardingKey'] = cataInfo['ShardingKey'] ;
+                     clInfo['EnsureShardingIndex'] = cataInfo['EnsureShardingIndex'] ;
+                     $.each( cataInfo['CataInfo'], function( index3, groupInfo ){
+                        if( groupInfo['GroupName'] == clInfo['GroupName'] )
+                        {
+                           clInfo['LowBound'] = JSON.stringify( groupInfo['LowBound'] ) ;
+                           clInfo['UpBound'] = JSON.stringify( groupInfo['UpBound'] ) ;
+                           return false;
+                        }
+                     } ) ;
+                  }
+                  if( cataInfo['Attribute'] == 1 )
+                  {
+                     clInfo['Attribute'] = cataInfo['Attribute'] ;
+                  }
+               }
+            } ) ;
+         }
+      } ) ;
+      $scope.sourceClList = $.extend( true, [], clList ) ;
+      var newClList = [] ;
+      if( $scope.isHideSubCl == true )
+      {
+         $.each( clList, function( index, clInfo ){
+            if( typeof( clInfo['MainCLName'] ) != 'string' )
+            {
+               newClList.push( clInfo ) ;
+            }
+         } ) ;
+      }
+      else
+      {
+         newClList = clList ;
+      }
+      return newClList ;
+   }
+   //查询成功执行的
+   function success( clList ){
+      _DataDatabaseIndex.buildClList( $scope, clList ) ;
    }
 
    //获取cl信息
    SdbRest.Exec( sql, function( clList ){
-      $scope.clList = [] ;
-      if( clList.length == 1 && clList[0]['Name'] == null ) clList = [] ;
-      $.each( $scope.csList, function( index2, csInfo ){
-         csInfo['clNum'] = 0 ;
-      } ) ;
-      $scope.clInfo = clList ;
-      $.each( clList, function( index, clInfo ){
-         var fullName = clInfo['Name'].split( '.' ) ;
-         var csName = fullName[0] ;
-         var clName = fullName[1] ;
-         var clListIndex = -1 ;
-         //查找cl列表是否已经存在该cl
-         $.each( $scope.clList, function( index2, clInfo2 ){
-            if( clName == clInfo2['Name'] && csName == clInfo2['csName'] )
-            {
-               clListIndex = index2 ;
-               return false ;
+      if( $scope.moduleMode == 'standalone' )
+      {
+         success( clList ) ;
+      }
+      else
+      {
+         sql = 'select * from $SNAPSHOT_CATA' ;
+         SdbRest.Exec( sql, function( cataList ){
+            var newList = mergedData( clList, cataList ) ;
+            success( newList ) ;
+         }, function( errorInfo ){
+            $scope.Components.Confirm.isShow = true ;
+            $scope.Components.Confirm.type = 1 ;
+            $scope.Components.Confirm.title = $scope.autoLanguage( '获取数据失败' ) ;
+            $scope.Components.Confirm.okText = $scope.autoLanguage( '重试' ) ;
+            $scope.Components.Confirm.closeText = $scope.autoLanguage( '取消' ) ;
+            $scope.Components.Confirm.context = sprintf( $scope.autoLanguage( '错误码: ?, ?。需要重试吗?' ), errorInfo['errno'], errorInfo['description'] ) ;
+            $scope.Components.Confirm.ok = function(){
+               $scope.Components.Confirm.isShow = false ;
+               _DataDatabaseIndex.getCLInfo( $scope, SdbRest ) ;
             }
+         }, function(){
+            _IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
          } ) ;
-         //存在则累加
-         if( clListIndex >= 0 )
-         {
-            $scope.clList[clListIndex]['Record']                      += clInfo['TotalRecords'] ;
-            $scope.clList[clListIndex]['Index']                       += clInfo['Indexes'] ;
-            $scope.clList[clListIndex]['Info']['Indexes']             += clInfo['Indexes'] ;
-            $scope.clList[clListIndex]['Info']['TotalRecords']        += clInfo['TotalRecords'] ;
-            $scope.clList[clListIndex]['Info']['TotalDataPages']      += clInfo['TotalDataPages'] ;
-            $scope.clList[clListIndex]['Info']['TotalIndexPages']     += clInfo['TotalIndexPages'] ;
-            $scope.clList[clListIndex]['Info']['TotalLobPages']       += clInfo['TotalLobPages'] ;
-            $scope.clList[clListIndex]['Info']['TotalDataFreeSpace']  += clInfo['TotalDataFreeSpace'] ;
-            $scope.clList[clListIndex]['Info']['TotalIndexFreeSpace'] += clInfo['TotalIndexFreeSpace'] ;
-            if( clInfo['GroupName'] != null )
-            {
-               $scope.clList[clListIndex]['GroupName'].push( { 'key': clInfo['GroupName'], 'value': index } ) ;
-            }
-         }
-         //不存在则创建
-         else
-         {
-            var shardingType, shardingTypeDesc ;
-            if( clInfo['IsMainCL'] == true )
-            {
-               shardingType = $scope.autoLanguage( '垂直' ) ;
-               shardingTypeDesc = $scope.autoLanguage( '垂直分区' ) ;
-            }
-            else
-            {
-               if( clInfo['ShardingType'] == 'range' )
-               {
-                  shardingType = $scope.autoLanguage( '水平' ) ;
-                  shardingTypeDesc = $scope.autoLanguage( '水平范围分区' ) ;
-               }
-               else if( clInfo['ShardingType'] == 'hash' )
-               {
-                  shardingType = $scope.autoLanguage( '水平' ) ;
-                  shardingTypeDesc = $scope.autoLanguage( '水平散列分区' ) ;
-               }
-               else
-               {
-                  shardingType = $scope.autoLanguage( '普通' ) ;
-                  shardingTypeDesc = $scope.autoLanguage( '普通' ) ;
-               }
-            }
-            var isHide = false ;
-            var pageSize = 0 ;
-            var lobPageSize = 0 ;
-            //计算cl数量
-            $.each( $scope.csList, function( index2, csInfo ){
-               if( csInfo['Name'] == csName )
-               {
-                  ++csInfo['clNum'] ;
-                  if( csInfo['clNum'] > 5 )
-                  {
-                     isHide = true ;
-                  }
-                  pageSize = parseInt( csInfo['Info']['PageSize'] ) ;
-                  lobPageSize = parseInt( csInfo['Info']['LobPageSize'] ) ;
-                  return false ;
-               }
-            } ) ;
-            $scope.clList.push( {
-               'csName': csName,
-               'Name': clName,
-               'type': shardingType,
-               'typeDesc': shardingTypeDesc,
-               'GroupName': ( clInfo['GroupName'] == null ? [] : [ { 'value': index, 'key': clInfo['GroupName'] } ] ),
-               'Lob': 0,
-               'Record': clInfo['TotalRecords'],
-               'Index': clInfo['Indexes'],
-               'Ratio': 0,
-               'IsMainCL': clInfo['IsMainCL'],
-               'hide': isHide,
-               'pageSize': pageSize,
-               'lobPageSize': lobPageSize,
-               'Info': {
-                  'Name':                clName,
-                  'IsMainCL':            clInfo['IsMainCL'],
-                  'MainCLName':          clInfo['MainCLName'],
-                  'ShardingKey':         clInfo['ShardingKey'],
-                  'ShardingType':        clInfo['ShardingType'],
-                  'ID':                  clInfo['ID'],
-                  'LogicalID':           clInfo['LogicalID'],
-                  'Sequence':            clInfo['Sequence'],
-                  'GroupName':           clInfo['GroupName'],
-                  'Status':              clInfo['Status'],
-                  'Indexes':             clInfo['Indexes'],
-                  'TotalRecords':        clInfo['TotalRecords'],
-                  'TotalDataPages':      clInfo['TotalDataPages'],
-                  'TotalIndexPages':     clInfo['TotalIndexPages'],
-                  'TotalLobPages':       clInfo['TotalLobPages'],
-                  'TotalDataFreeSpace':  clInfo['TotalDataFreeSpace'],
-                  'TotalIndexFreeSpace': clInfo['TotalIndexFreeSpace']
-               }
-            } ) ;
-         }
-         clInfo['Name'] = clName ;
-         clInfo['TotalDataFreeSpace'] = fixedNumber( clInfo['TotalDataFreeSpace'], 2 ) + 'MB' ;
-         clInfo['TotalIndexFreeSpace'] = fixedNumber( clInfo['TotalIndexFreeSpace'], 2 ) + 'MB' ;
-      } ) ;
-      $.each( $scope.clList, function( index, clInfo ){
-         if( typeof( clInfo['Info']['TotalDataFreeSpace'] ) == 'number' )
-         {
-            clInfo['Info']['TotalDataFreeSpace'] = fixedNumber( clInfo['Info']['TotalDataFreeSpace'], 2 ) + 'MB' ;
-         }
-         if( typeof( clInfo['Info']['TotalIndexFreeSpace'] ) == 'number' )
-         {
-            clInfo['Info']['TotalIndexFreeSpace'] = fixedNumber( clInfo['Info']['TotalIndexFreeSpace'], 2 ) + 'MB' ;
-         }
-         if( typeof( clInfo['Info']['TotalIndexPages'] ) == 'number' && typeof( clInfo['Info']['TotalDataPages'] ) == 'number' && typeof( clInfo['Info']['TotalLobPages'] ) == 'number' && clInfo['Info']['TotalDataPages'] + clInfo['Info']['TotalLobPages'] > 0 )
-         {
-            clInfo['Ratio'] = fixedNumber( ( clInfo['Info']['TotalIndexPages'] * 100 * clInfo['pageSize'] ) / ( clInfo['Info']['TotalDataPages'] * clInfo['pageSize'] + clInfo['Info']['TotalLobPages'] * clInfo['lobPageSize'] ), 2 ) ;
-         }
-      } ) ;
-      $scope.$apply() ;
+      }
    }, function( errorInfo ){
       $scope.Components.Confirm.isShow = true ;
       $scope.Components.Confirm.type = 1 ;
@@ -309,7 +493,7 @@ _DataDatabaseIndex.auto2SetWidthAndHeight = function( InheritSize ){
 }
 
 //初始化参数
-_DataDatabaseIndex.init = function( $scope, moduleName, moduleMode ){
+_DataDatabaseIndex.init = function( $scope, moduleName, moduleMode, isHideSubCl ){
    //分区组列表
    $scope.GroupList = [] ;
    //业务名
@@ -318,10 +502,16 @@ _DataDatabaseIndex.init = function( $scope, moduleName, moduleMode ){
    $scope.moduleMode = moduleMode ;
    //收起cl列表时，最大显示cl数
    $scope.maxShowCLNum = 5 ;
+   //当前选中的cs的ID
+   $scope.csID = 0 ;
+   //当前选中的cl的ID
+   $scope.clID = 0 ;
    //cs列表
    $scope.csList = [] ;
    //cs详细信息
    $scope.csInfo = [] ;
+   //原始cl列表
+   $scope.sourceClList = [] ;
    //cl列表
    $scope.clList = [] ;
    //cl详细信息
@@ -334,6 +524,12 @@ _DataDatabaseIndex.init = function( $scope, moduleName, moduleMode ){
    $scope.find = '' ;
    //符合搜索的数量
    $scope.findNum = 0 ;
+   //是否隐藏子集合
+   $scope.isHideSubCl = isHideSubCl ;
+   //主表数量
+   $scope.mainCLNum = 0 ;
+   //分区表数量
+   $scope.partitionCLNum = 0 ;
 }
 
 //获取分区组列表
@@ -382,6 +578,21 @@ _DataDatabaseIndex.gotoRecord = function( $scope, $location, SdbFunction, csInde
    SdbFunction.LocalData( 'SdbClName', clName ) ;
    SdbFunction.LocalData( 'SdbClType', clType ) ;
    $location.path( 'Data/Operate/Record' ) ;
+}
+
+//跳到lob页面
+_DataDatabaseIndex.gotoLob = function( $scope, $location, SdbFunction, csIndex, clIndex ){
+   var csName = $scope.csList[csIndex]['Name'] ;
+   var clName = $scope.clList[clIndex]['Info']['Name'] ;
+   var clType = '' ;
+   if( $scope.clList[clIndex]['Info']['IsMainCL'] == true )
+   {
+      clType = 'main' ;
+   }
+   SdbFunction.LocalData( 'SdbCsName', csName ) ;
+   SdbFunction.LocalData( 'SdbClName', clName ) ;
+   SdbFunction.LocalData( 'SdbClType', clType ) ;
+   $location.path( 'Data/Operate/Lobs' ) ;
 }
 
 //搜索cs和cl
@@ -499,7 +710,7 @@ _DataDatabaseIndex.searchCSAndCL = function( $scope, fullName ){
          {
             var num = parseInt( fullName ) ;
             $.each( $scope.clList, function( index, clInfo ){
-               if( clInfo['Lob'] == num || clInfo['Record'] == num || clInfo['Index'] == num || clInfo['Ratio'] == num )
+               if( clInfo['Lob'] == num || clInfo['Record'] == num || clInfo['Index'] == num )
                {
                   clInfo.hide = false ;
                   $.each( $scope.csList, function( index, csInfo ){
@@ -609,11 +820,11 @@ _DataDatabaseIndex.showCreateCS = function( $scope, SdbRest ){
             }
          },
          {
-            "name": "pageSize",
+            "name": "PageSize",
             "webName": $scope.autoLanguage( '数据页大小' ),
             "type": "select",
             "desc": $scope.autoLanguage( '数据页大小创建后不可更改。' ),
-            "value": "4096",
+            "value": "65536",
             "valid": [
                { "key": "4KB", "value": "4096" },
                { "key": "8KB", "value": "8192" },
@@ -647,9 +858,9 @@ _DataDatabaseIndex.showCreateCS = function( $scope, SdbRest ){
                { "key": "64KB", "value": "65536" },
                { "key": "128KB", "value": "131072" },
                { "key": "256KB", "value": "262144" },
-               { "key": "512KB", "value": "524288" },
+               { "key": "512KB", "value": "524288" }
             ]
-         },
+         }
       ]
    } ;
    $scope.Components.Modal.Context = '<div form-create para="data.form"></div>' ;
@@ -658,7 +869,12 @@ _DataDatabaseIndex.showCreateCS = function( $scope, SdbRest ){
       if( isAllClear )
       {
          var value = $scope.Components.Modal.form.getValue() ;
-         var data = { 'cmd': 'create collectionspace', 'name': value['name'] } ;
+         var options = { 'PageSize': autoTypeConvert( value['PageSize'] ), 'LobPageSize': autoTypeConvert( value['LobPageSize'] ) } ;
+         if( value['Domain'].length > 0 )
+         {
+            options['Domain'] = value['Domain'] ;
+         }
+         var data = { 'cmd': 'create collectionspace', 'name': value['name'], 'options': JSON.stringify( options ) } ;
          var exec = function(){
             SdbRest.DataOperation( data, function( json ){
                _DataDatabaseIndex.getCSInfo( $scope, SdbRest ) ;
@@ -822,7 +1038,7 @@ _DataDatabaseIndex.showCreateCL = function( $scope, SdbRest ){
    }
    var createCLExec = function( data ){
       SdbRest.DataOperation( data, function( json ){
-         _DataDatabaseIndex.getCLInfo( $scope, SdbRest ) ;
+         _DataDatabaseIndex.getCSInfo( $scope, SdbRest ) ;
       }, function( errorInfo ){
          $scope.Components.Confirm.isShow = true ;
          $scope.Components.Confirm.type = 1 ;
@@ -1513,7 +1729,7 @@ _DataDatabaseIndex.showRemoveCL = function( $scope, SdbRest ){
    }
 }
 
-//打开 挂载集合 的窗口 ( 未完成 )
+//打开 挂载集合 的窗口
 _DataDatabaseIndex.showAttachCL = function( $scope, SdbRest ){
    var mainCL = [] ;
    var childCL = [] ;
@@ -1527,7 +1743,10 @@ _DataDatabaseIndex.showAttachCL = function( $scope, SdbRest ){
       else
       {
          var id = childCL.length ;
-         childCL.push( { 'key' : clInfo['csName'] + '.' + clInfo['Name'] , 'value' : id } ) ;
+         if( typeof( clInfo['MainCLName'] ) != 'string' )
+         {
+            childCL.push( { 'key' : clInfo['csName'] + '.' + clInfo['Name'] , 'value' : id } ) ;
+         }
       }
    } ) ;
    $scope.Components.Modal.icon = 'fa-paperclip' ;
@@ -1551,7 +1770,7 @@ _DataDatabaseIndex.showAttachCL = function( $scope, SdbRest ){
             "valid": childCL
          },
          {
-            "name": "LowBound",
+            "name": "range",
             "webName":  $scope.autoLanguage( '分区范围' ),
             "required": true,
             "desc": $scope.autoLanguage( '分区范围，包含两个字段“LowBound”（区间左值）以及“UpBound”（区间右值），例如：{LowBound:{a:0},UpBound:{a:100}表示取字段“a”的范围区间：[0, 100)。' ),
@@ -1598,21 +1817,26 @@ _DataDatabaseIndex.showAttachCL = function( $scope, SdbRest ){
       if( isAllClear )
       {
          var value = $scope.Components.Modal.form.getValue() ;
-         alert( JSON.stringify( value ) )
-         /*
-         var csName = $scope.csList[ value['name'] ]['Name'] ;
-         var data = { 'cmd': 'drop collectionspace', 'name': csName } ;
+         var lowbound = {} ;
+         var upbound = {} ;
+         $.each( value['range'], function( index, fieldInfo ){
+            var fieldName = fieldInfo['field'] ;
+            lowbound[ fieldName ] = autoTypeConvert( fieldInfo['LowBound'], true ) ;
+            upbound[ fieldName ] = autoTypeConvert( fieldInfo['UpBound'], true ) ;
+         } ) ;
+         var data = { 'cmd': 'attach collection',
+                      'collectionname': mainCL[ value['name'] ]['key'],
+                      'subclname': childCL[ value['attachName'] ]['key'],
+                      'lowbound': JSON.stringify( lowbound ),
+                      'upbound': JSON.stringify( upbound )
+                    } ;
          var exec = function(){
             SdbRest.DataOperation( data, function( json ){
-               if( $scope.csID == value['name'] )
-               {
-                  $scope.showCSInfo( 0 ) ;
-               }
                _DataDatabaseIndex.getCSInfo( $scope, SdbRest ) ;
             }, function( errorInfo ){
                $scope.Components.Confirm.isShow = true ;
                $scope.Components.Confirm.type = 1 ;
-               $scope.Components.Confirm.title = $scope.autoLanguage( '删除集合空间失败' ) ;
+               $scope.Components.Confirm.title = $scope.autoLanguage( '挂载失败' ) ;
                $scope.Components.Confirm.okText = $scope.autoLanguage( '重试' ) ;
                $scope.Components.Confirm.closeText = $scope.autoLanguage( '取消' ) ;
                $scope.Components.Confirm.context = sprintf( $scope.autoLanguage( '错误码: ?, ?。需要重试吗?' ), errorInfo['errno'], errorInfo['description'] ) ;
@@ -1625,18 +1849,16 @@ _DataDatabaseIndex.showAttachCL = function( $scope, SdbRest ){
             } ) ;
          } ;
          exec() ;
-         */
       }
       return isAllClear ;
    }
 }
 
-//打开 切分数据 的窗口 ( 未完成 )
+//打开 切分数据 的窗口
 _DataDatabaseIndex.showSplit = function( $scope, SdbRest ){
    var clValid = [] ;
    var clIndex = -1 ;
    var sourceGroupValid = [] ;
-   var sourceGroupValue = 0 ;
    var groupValid = [] ;
    $.each( $scope.GroupList, function( index, groupInfo ){
       groupValid.push( { 'key': groupInfo['GroupName'], 'value': index } ) ;
@@ -1646,27 +1868,29 @@ _DataDatabaseIndex.showSplit = function( $scope, SdbRest ){
       {
          if( $scope.csList[ $scope.csID ]['Name'] == clInfo['csName'] && clIndex < 0 )
          {
-            clIndex = index ;
-            sourceGroupValid = $scope.clList[ clIndex ]['GroupName'] ;
-            if( sourceGroupValid.length > 0 )
+            if( clInfo['IsMainCL'] != true && ( clInfo['ShardingType'] == 'hash' || clInfo['ShardingType'] == 'range' ) )
             {
-               sourceGroupValue = sourceGroupValid[0]['value'] ;
+               clIndex = index ;
+               $.each( $scope.clList[ clIndex ]['GroupName'], function( index2, groupInfo ){
+                  sourceGroupValid.push( { 'key': groupInfo['key'], 'value': index2 } ) ;
+               } ) ;
             }
          }
       }
       else
       {
-         if( index == $scope.clID )
+         if( index == $scope.clID && clIndex < 0 )
          {
             clIndex = index ;
-            sourceGroupValid = $scope.clList[ clIndex ]['GroupName'] ;
-            if( sourceGroupValid.length > 0 )
-            {
-               sourceGroupValue = sourceGroupValid[0]['value'] ;
-            }
+            $.each( $scope.clList[ clIndex ]['GroupName'], function( index2, groupInfo ){
+               sourceGroupValid.push( { 'key': groupInfo['key'], 'value': index2 } ) ;
+            } ) ;
          }
       }
-      clValid.push( { 'key' : clInfo['csName'] + '.' + clInfo['Name'] , 'value' : index } );
+      if( clInfo['IsMainCL'] != true && ( clInfo['ShardingType'] == 'hash' || clInfo['ShardingType'] == 'range' ) )
+      {
+         clValid.push( { 'key' : clInfo['csName'] + '.' + clInfo['Name'] , 'value' : index } ) ;
+      }
    } ) ;
    $scope.Components.Modal.icon = 'fa-scissors' ;
    $scope.Components.Modal.title = $scope.autoLanguage( '切分数据' ) ;
@@ -1700,13 +1924,26 @@ _DataDatabaseIndex.showSplit = function( $scope, SdbRest ){
             "webName": $scope.autoLanguage( '集合名' ),
             "type": "select",
             "value": clIndex,
-            "valid": clValid
+            "valid": clValid,
+            "onChange": function( name, key, value ){
+               $.each( $scope.clList, function( index, clInfo ){
+                  if( key == ( clInfo['csName'] + '.' + clInfo['Name'] ) )
+                  {
+                     var sourceGroupValid = [] ;
+                     $.each( $scope.clList[ index ]['GroupName'], function( index2, groupInfo ){
+                        sourceGroupValid.push( { 'key': groupInfo['key'], 'value': index2 } ) ;
+                     } ) ;
+                     $scope.Components.Modal.form1['inputList'][2]['valid'] = sourceGroupValid ;
+                     return false;
+                  }
+               } ) ;
+            }
          },
          {
             "name": "source",
             "webName": $scope.autoLanguage( '源分区组' ),
             "type": "select",
-            "value": sourceGroupValue,
+            "value": 0,
             "valid": sourceGroupValid
          },
          {
@@ -1756,14 +1993,27 @@ _DataDatabaseIndex.showSplit = function( $scope, SdbRest ){
             "webName": $scope.autoLanguage( '集合名' ),
             "type": "select",
             "value": clIndex,
-            "valid": clValid
+            "valid": clValid,
+            "onChange": function( name, key, value ){
+               $.each( $scope.clList, function( index, clInfo ){
+                  if( key == ( clInfo['csName'] + '.' + clInfo['Name'] ) )
+                  {
+                     var sourceGroupValid = [] ;
+                     $.each( $scope.clList[ index ]['GroupName'], function( index2, groupInfo ){
+                        sourceGroupValid.push( { 'key': groupInfo['key'], 'value': index2 } ) ;
+                     } ) ;
+                     $scope.Components.Modal.form2['inputList'][2]['valid'] = sourceGroupValid ;
+                     return false;
+                  }
+               } ) ;
+            }
          },
          {
             "name": "source",
             "webName": $scope.autoLanguage( '源分区组' ),
             "type": "select",
             "value": 0,
-            "valid": groupValid
+            "valid": sourceGroupValid
          },
          {
             "name": "target",
@@ -1774,7 +2024,7 @@ _DataDatabaseIndex.showSplit = function( $scope, SdbRest ){
          },
          {
             "name": "condition",
-            "webName":  $scope.autoLanguage( '起始切分条件' ),
+            "webName":  $scope.autoLanguage( '切分条件' ),
             "required": true,
             "type": "list",
             "valid": {
@@ -1795,43 +2045,20 @@ _DataDatabaseIndex.showSplit = function( $scope, SdbRest ){
                      }
                   },
                   {
-                     "name": "value",
-                     "webName": $scope.autoLanguage( "值" ),
-                     "placeholder": $scope.autoLanguage( "值" ),
-                     "type": "string",
-                     "value": ""
-                  }
-               ]
-            ]
-         },
-         {
-            "name": "endcondition",
-            "webName":  $scope.autoLanguage( '结束范围条件' ),
-            "required": true,
-            "type": "list",
-            "valid": {
-               "min": 1
-            },
-            "child":[
-               [
-                  {
-                     "name": "field",
-                     "webName": $scope.autoLanguage( "字段名" ),
-                     "placeholder": $scope.autoLanguage( "字段名" ),
+                     "name": "start",
+                     "webName": $scope.autoLanguage( "起始范围" ),
+                     "placeholder": $scope.autoLanguage( "起始范围" ),
                      "type": "string",
                      "value": "",
-                     "valid": {
-                        "min": 1,
-                        "regex": "^[^/$].*",
-                        "ban": "."
-                     }
+                     "selectList": [ '$minKey' ]
                   },
                   {
-                     "name": "value",
-                     "webName": $scope.autoLanguage( "值" ),
-                     "placeholder": $scope.autoLanguage( "值" ),
+                     "name": "end",
+                     "webName": $scope.autoLanguage( "结束范围" ),
+                     "placeholder": $scope.autoLanguage( "结束范围" ),
                      "type": "string",
-                     "value": ""
+                     "value": "",
+                     "selectList": [ '$maxKey' ]
                   }
                ]
             ]
@@ -1842,7 +2069,93 @@ _DataDatabaseIndex.showSplit = function( $scope, SdbRest ){
 <div ng-if="data.formShow == 0" form-create para="data.form1"></div>\
 <div ng-if="data.formShow == 1" form-create para="data.form2"></div>' ;
    $scope.Components.Modal.ok = function(){
-
+      var isAllClear = true ;
+      if( $scope.Components.Modal.formShow == 0 )
+      {
+         isAllClear = $scope.Components.Modal.form1.check() ;
+      }
+      else
+      {
+         isAllClear = $scope.Components.Modal.form2.check() ;
+      }
+      if( isAllClear )
+      {
+         var value = {} ;
+         if( $scope.Components.Modal.formShow == 0 )
+         {
+            value = $scope.Components.Modal.form1.getValue() ;
+         }
+         else
+         {
+            value = $scope.Components.Modal.form2.getValue() ;
+         }
+         var fullname = '' ;
+         $.each( clValid, function( index, clValidInfo ){
+            if( clValidInfo['value'] == value['name'] )
+            {
+               fullname = clValidInfo['key'] ;
+               return false ;
+            }
+         } ) ;
+         var data = {
+            'cmd': 'split',
+            'name': fullname,
+            'source': sourceGroupValid[ value['source'] ]['key'],
+            'target': groupValid[ value['target'] ]['key']
+         } ;
+         if( value['type'] == 0 )
+         {
+            //百分比
+            data['splitpercent'] = value['percent'] ;
+         }
+         else
+         {
+            //条件
+            var splitquery = {} ;
+            var splitendquery = {} ;
+            $.each( value['condition'], function( index, conditionInfo ){
+               var fieldName = conditionInfo['field'] ;
+               if( conditionInfo['start'] == '$minKey' || conditionInfo['start'].length == 0 )
+               {
+                  splitquery[ fieldName ] = { '$minKey': 1 } ;
+               }
+               else
+               {
+                  splitquery[ fieldName ] = autoTypeConvert( conditionInfo['start'], true ) ;
+               }
+               if( conditionInfo['end'] == '$maxKey' || conditionInfo['end'].length == 0 )
+               {
+                  splitendquery[ fieldName ] = { '$maxKey': 1 } ;
+               }
+               else
+               {
+                  splitendquery[ fieldName ] = autoTypeConvert( conditionInfo['end'], true ) ;
+               }
+            } ) ;
+            data['splitquery'] = JSON.stringify( splitquery ) ;
+            data['splitendquery'] = JSON.stringify( splitendquery ) ;
+         }
+         var exec = function(){
+            SdbRest.DataOperation( data, function( json ){
+               _DataDatabaseIndex.getCSInfo( $scope, SdbRest ) ;
+            }, function( errorInfo ){
+               $scope.Components.Confirm.isShow = true ;
+               $scope.Components.Confirm.type = 1 ;
+               $scope.Components.Confirm.title = $scope.autoLanguage( '切分失败' ) ;
+               $scope.Components.Confirm.okText = $scope.autoLanguage( '重试' ) ;
+               $scope.Components.Confirm.closeText = $scope.autoLanguage( '取消' ) ;
+               $scope.Components.Confirm.context = sprintf( $scope.autoLanguage( '错误码: ?, ?。需要重试吗?' ), errorInfo['errno'], errorInfo['description'] ) ;
+               $scope.Components.Confirm.ok = function(){
+                  $scope.Components.Confirm.isShow = false ;
+                  exec() ;
+               }
+            }, function(){
+               _IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
+            } ) ;
+         } ;
+         exec() ;
+      }
+      return isAllClear ;
    }
 }
 
@@ -1871,4 +2184,276 @@ _DataDatabaseIndex.showGroupInfo = function( $scope, index ){
          $scope.attr['Info'] = $scope.clInfo[ index ] ;
       }
    }
+}
+
+//打开 创建索引 的窗口
+_DataDatabaseIndex.showCreateIndex = function( $scope, SdbRest ){
+   var clValid = [] ;
+   $.each( $scope.clList, function( index, clInfo ){
+      clValid.push( { 'key': clInfo['csName'] + '.' + clInfo['Name'], 'value': index } ) ;
+   } ) ;
+   $scope.Components.Modal.icon = 'fa-plus' ;
+   $scope.Components.Modal.title = $scope.autoLanguage( '创建索引' ) ;
+   $scope.Components.Modal.isShow = true ;
+   $scope.Components.Modal.form = {
+      inputList: [
+         _operate.selectCL( $scope, clValid ),
+         _operate.indexName( $scope ),
+         _operate.indexDef( $scope ),
+         _operate.unique( $scope ),
+         _operate.enforced( $scope ),
+         _operate.sortbuffersize( $scope )
+      ]
+   } ;
+   $scope.Components.Modal.Context = '<div form-create para="data.form"></div>' ;
+   $scope.Components.Modal.ok = function(){
+      var isAllClear = $scope.Components.Modal.form.check() ;
+      if( isAllClear )
+      {
+         function modalValue2CreateIndex( valueJson )
+         {
+            var indexdef = parseIndexDefValue( valueJson['indexKey'] ) ;
+            //组装
+            var returnJson = {} ;
+            returnJson['collectionname'] = clValid[ valueJson['clName'] ]['key'] ;
+            returnJson['indexname'] = valueJson['indexName'] ;
+            returnJson['indexdef'] = JSON.stringify( indexdef ) ;
+            returnJson['unique'] = valueJson['isUnique'] ;
+            returnJson['enforced'] = valueJson['enforced'] ;
+            returnJson['sortbuffersize'] = valueJson['sortbuffersize'] ;
+            return returnJson ;
+         }
+         var value = $scope.Components.Modal.form.getValue() ;
+         var data = modalValue2CreateIndex( value ) ;
+         data['cmd'] = 'create index' ;
+         var exec = function(){
+            SdbRest.DataOperation( data, function( json ){
+               _DataDatabaseIndex.getCLInfo( $scope, SdbRest ) ;
+            }, function( errorInfo ){
+               $scope.Components.Confirm.isShow = true ;
+               $scope.Components.Confirm.type = 1 ;
+               $scope.Components.Confirm.title = $scope.autoLanguage( '创建索引失败' ) ;
+               $scope.Components.Confirm.okText = $scope.autoLanguage( '重试' ) ;
+               $scope.Components.Confirm.closeText = $scope.autoLanguage( '取消' ) ;
+               $scope.Components.Confirm.context = sprintf( $scope.autoLanguage( '错误码: ?, ?。需要重试吗?' ), errorInfo['errno'], errorInfo['description'] ) ;
+               $scope.Components.Confirm.ok = function(){
+                  $scope.Components.Confirm.isShow = false ;
+                  exec() ;
+               }
+            }, function(){
+               _IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
+            } ) ;
+         } ;
+         exec() ;
+      }
+      return isAllClear ;
+   }
+}
+
+//打开 删除索引 的窗口
+_DataDatabaseIndex.showRemoveIndex = function( $scope, SdbRest ){
+   var clValid = [] ;
+   var indexValid = [] ; 
+   var fullName = '' ;
+   var indexesInfoList = [] ;
+   $.each( $scope.clList, function( index, clInfo ){
+      clValid.push( { 'key': clInfo['csName'] + '.' + clInfo['Name'], 'value': index } ) ;
+      if( $scope.clID == index )
+      {
+         fullName = clInfo['csName'] + '.' + clInfo['Name'] ;
+      }
+   } ) ;
+
+   $scope.Components.Modal.indexList = {} ;
+   $scope.Components.Modal.icon = 'fa-trash-o' ;
+   $scope.Components.Modal.title =  $scope.autoLanguage( '删除索引' ) ;
+   $scope.Components.Modal.ok = function(){
+      return false ;
+   }    
+   var data = { 'cmd': 'list indexes', 'collectionname': fullName } ;
+   SdbRest.DataOperation( data, function( indexList ){
+      indexesInfoList = indexList ;
+      $.each( indexList, function( index, indexInfo ){
+         indexValid.push( { 'key': indexInfo['IndexDef']['name'], 'value': index } ) ;
+      } ) ;
+      $scope.Components.Modal.form = {
+         inputList: [
+            {
+               "name": "clName",
+               "webName": $scope.autoLanguage( '集合' ),
+               "type": "select",
+               "value": $scope.clID,
+               "valid": clValid,
+               "onChange": function( name, key, value ){
+                  var data = { 'cmd': 'list indexes', 'collectionname': key } ;
+                  SdbRest.DataOperation( data, function( indexList ){
+                     indexesInfoList = indexList ;
+                     $scope.Components.Modal.indexList = indexesInfoList[0] ;
+                     indexValid = [] ;
+                     $.each( indexList, function( index, indexInfo ){
+                        indexValid.push( { 'key': indexInfo['IndexDef']['name'], 'value': index } ) ;
+                     } ) ;
+                     $scope.Components.Modal.form['inputList'][1]['value'] = 0 ;
+                     $scope.Components.Modal.form['inputList'][1]['valid'] = indexValid ;
+                  }, function( errorInfo ){
+                     $scope.Components.Confirm.isShow = true ;
+                     $scope.Components.Confirm.type = 1 ;
+                     $scope.Components.Confirm.title = $scope.autoLanguage( '获取索引信息失败' ) ;
+                     $scope.Components.Confirm.okText = $scope.autoLanguage( '重试' ) ;
+                     $scope.Components.Confirm.closeText = $scope.autoLanguage( '取消' ) ;
+                     $scope.Components.Confirm.context = sprintf( $scope.autoLanguage( '错误码: ?, ?。需要重试吗?' ), errorInfo['errno'], errorInfo['description'] ) ;
+                     $scope.Components.Confirm.ok = function(){
+                        $scope.Components.Confirm.isShow = false ;
+                        exec() ;
+                     }
+                  }, function(){
+                     _IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
+                  } ) ;
+               }
+            },
+            {
+               "name": "indexName",
+               "webName":  $scope.autoLanguage( '索引名' ),
+               "type": "select",
+               "value": 0,
+               "valid": indexValid,
+               "onChange": function( name, key, value ){
+                  $scope.Components.Modal.indexList = indexesInfoList[ value ] ;
+               }
+            }
+         ]
+      } ;
+      $scope.Components.Modal.indexList = indexesInfoList[0] ;
+      $scope.Components.Modal.Context = '\
+<div form-create para="data.form"></div>\
+<table class="table loosen border" ng-if="data.indexList">\
+<tr>\
+<td style="width:40%;background-color:#F1F4F5;"><b>Key</b></td>\
+<td style="width:60%;background-color:#F1F4F5;"><b>Value</b></td>\
+</tr>\
+<tr>\
+<td>Name</td>\
+<td>{{data.indexList.IndexDef.name}}</td>\
+</tr>\
+<tr ng-repeat="(key, value) in data.indexList.IndexDef track by $index" ng-if="key != \'name\'&&key != \'_id\'">\
+<td>{{key}}</td>\
+<td>{{value}}</td>\
+</tr>\
+<tr>\
+<td>IndexFlag</td>\
+<td>{{data.indexList.IndexFlag}}</td>\
+</tr>\
+</table>' ;
+      $scope.Components.Modal.isShow = true ;
+      $scope.Components.Modal.ok = function(){
+         var isAllClear = $scope.Components.Modal.form.check() ;
+         if( isAllClear )
+         {
+            var value = $scope.Components.Modal.form.getValue() ;
+            var data = { 'cmd': 'drop index' } ;
+            data['collectionname'] = clValid[ value['clName'] ]['key'] ;
+            data['indexname'] = indexValid[ value['indexName'] ]['key'] ;
+            var exec = function(){
+               SdbRest.DataOperation( data, function( json ){
+                  _DataDatabaseIndex.getCLInfo( $scope, SdbRest ) ;
+               }, function( errorInfo ){
+                  $scope.Components.Confirm.isShow = true ;
+                  $scope.Components.Confirm.type = 1 ;
+                  $scope.Components.Confirm.title = $scope.autoLanguage( '删除索引失败' ) ;
+                  $scope.Components.Confirm.okText = $scope.autoLanguage( '重试' ) ;
+                  $scope.Components.Confirm.closeText = $scope.autoLanguage( '取消' ) ;
+                  $scope.Components.Confirm.context = sprintf( $scope.autoLanguage( '错误码: ?, ?。需要重试吗?' ), errorInfo['errno'], errorInfo['description'] ) ;
+                  $scope.Components.Confirm.ok = function(){
+                     $scope.Components.Confirm.isShow = false ;
+                     exec() ;
+                  }
+               }, function(){
+                  _IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
+               } ) ;
+            } ;
+            exec() ;
+         }
+         return isAllClear ;
+      }   
+      $scope.$apply() ;
+   }, function( errorInfo ){
+      $scope.Components.Confirm.isShow = true ;
+      $scope.Components.Confirm.type = 1 ;
+      $scope.Components.Confirm.title = $scope.autoLanguage( '获取索引信息失败' ) ;
+      $scope.Components.Confirm.okText = $scope.autoLanguage( '重试' ) ;
+      $scope.Components.Confirm.closeText = $scope.autoLanguage( '取消' ) ;
+      $scope.Components.Confirm.context = sprintf( $scope.autoLanguage( '错误码: ?, ?。需要重试吗?' ), errorInfo['errno'], errorInfo['description'] ) ;
+      $scope.Components.Confirm.ok = function(){
+         $scope.Components.Confirm.isShow = false ;
+         exec() ;
+      }
+   }, function(){
+      _IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
+   } ) ;
+}
+
+//打开 索引详细 的窗口
+_DataDatabaseIndex.showIndex = function( $scope, SdbRest, csIndex, clIndex ){
+   var fullName = $scope.clList[clIndex]['csName'] + '.' + $scope.clList[clIndex]['Name'] ;
+   var data = { 'cmd': 'list indexes', 'collectionname': fullName } ;
+   SdbRest.DataOperation( data, function( indexList ){
+      var indexName = [] ; 
+      var indexContent = [] ;
+      $.each( indexList, function( index, indexInfo ){
+         indexName.push( { 'key': indexInfo['IndexDef']['name'] , 'value': index } ) ;
+         indexContent.push( indexInfo ) ;
+      } ) ;
+      $scope.Components.Modal.icon = '' ;
+      $scope.Components.Modal.title = $scope.autoLanguage( '索引信息' ) ;
+      $scope.Components.Modal.noOK = true ;
+      $scope.Components.Modal.isShow = true ;
+      $scope.Components.Modal.form = {
+         inputList: [
+            {
+               "name": "index",
+               "webName": $scope.autoLanguage( "索引名" ),
+               "type": "select",
+               "value":indexName[0]['value'] ,
+               "valid": indexName,
+               "onChange": function( name, key, value ){
+                  $scope.Components.Modal.indexList = indexContent[ value ] ;
+               }
+            }
+         ]
+      } ;
+      $scope.Components.Modal.indexList = indexContent[0] ;
+      $scope.Components.Modal.Context = '\
+<div form-create para="data.form"></div>\
+<table class="table loosen border">\
+<tr>\
+<td style="width:40%;background-color:#F1F4F5;"><b>Key</b></td>\
+<td style="width:60%;background-color:#F1F4F5;"><b>Value</b></td>\
+</tr>\
+<tr>\
+<td>Name</td>\
+<td>{{data.indexList.IndexDef.name}}</td>\
+</tr>\
+<tr ng-repeat="(key, value) in data.indexList.IndexDef track by $index" ng-if="key != \'name\'&&key != \'_id\'">\
+<td>{{key}}</td>\
+<td>{{value}}</td>\
+</tr>\
+<tr>\
+<td>IndexFlag</td>\
+<td>{{data.indexList.IndexFlag}}</td>\
+</tr>\
+</table>' ;
+   }, function( errorInfo ){
+      $scope.Components.Confirm.isShow = true ;
+      $scope.Components.Confirm.type = 1 ;
+      $scope.Components.Confirm.title = $scope.autoLanguage( '获取索引信息失败' ) ;
+      $scope.Components.Confirm.okText = $scope.autoLanguage( '重试' ) ;
+      $scope.Components.Confirm.closeText = $scope.autoLanguage( '取消' ) ;
+      $scope.Components.Confirm.context = sprintf( $scope.autoLanguage( '错误码: ?, ?。需要重试吗?' ), errorInfo['errno'], errorInfo['description'] ) ;
+      $scope.Components.Confirm.ok = function(){
+         $scope.Components.Confirm.isShow = false ;
+         exec() ;
+      }
+   }, function(){
+      _IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
+   } ) ;
 }

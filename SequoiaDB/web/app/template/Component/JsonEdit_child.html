@@ -11,8 +11,9 @@
                         </button>
                      </td>
                      <td ng-style="{ 'true': { background: '#FFFFAB' } }[Setting.Search.length > 0&&field.key.toLowerCase().indexOf(Setting.Search.toLowerCase()) >= 0]">
-                        <div class="fontBox" ng-if="parentType != 'Array'" spellcheck="false" contenteditable="true" ng-model="field.key"></div>
-                        <span ng-if="parentType == 'Array'">{{$index}}</span>
+                        <div class="fontBox" ng-if="parentType != 'Array' && field.level > 0" spellcheck="false" contenteditable="true" ng-model="field.key"></div>
+                        <span style="font-size:90%;" ng-if="parentType == 'Array'">{{$index}}</span>
+                        <span style="font-size:90%;" ng-if="field.level == 0" ng-bind="field.key"></span>
                      </td>
                      <td>
                         <span>:</span>

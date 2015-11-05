@@ -60,11 +60,11 @@ var sprintf = function( format )
 //保留多少位小数
 function fixedNumber( x, num )
 {
-   var y = parseFloat( x );
-   if( isNaN( y ) )
+   if( isNaN( x ) )
    {
       return x ;
    }
+   var y = parseFloat( x );
    var z = Math.pow( 10, num );
    y = Math.round( y * z ) / z ;
    return y ;
@@ -243,7 +243,7 @@ function array2Json( array, parentType )
       }
       else if( field['type'] == 'Auto' )
       {
-         var val = field['val'] ;
+         var val = trim( field['val'] ) ;
          val = autoTypeConvert( val ) ;
          if( parentType == 'Object' )
          {
@@ -268,7 +268,7 @@ function array2Json( array, parentType )
       }
       else if( field['type'] == 'Binary' )
       {
-         var binary = field['val'] ;
+         var binary = trim( field['val'] ) ;
          var binType = '' ;
          if( binary.length > 0 && binary.charAt(0) == '(' && binary.indexOf( ')' ) >= 0 )
          {
@@ -287,7 +287,7 @@ function array2Json( array, parentType )
       }
       else if( field['type'] == 'Timestamp' )
       {
-         var val = field['val'] ;
+         var val = trim( field['val'] ) ;
          if( parentType == 'Object' )
          {
             json[ field['key'] ] = { '$timestamp': val } ;
@@ -299,7 +299,7 @@ function array2Json( array, parentType )
       }
       else if( field['type'] == 'Date' )
       {
-         var val = field['val'] ;
+         var val = trim( field['val'] ) ;
          if( parentType == 'Object' )
          {
             json[ field['key'] ] = { '$date': val } ;
@@ -325,7 +325,7 @@ function array2Json( array, parentType )
       */
       else if( field['type'] == 'ObjectId' )
       {
-         var val = field['val'] ;
+         var val = trim( field['val'] ) ;
          val = pad( val, 24, '0' ) ;
          if( parentType == 'Object' )
          {
@@ -338,7 +338,7 @@ function array2Json( array, parentType )
       }
       else if( field['type'] == 'Regex' )
       {
-         var regex = field['val'] ;
+         var regex = trim( field['val'] ) ;
          var options = '' ;
          if( regex.charAt(0) == '/' && regex.indexOf( '/', 1 ) > 0 )
          {
@@ -603,4 +603,219 @@ function getSystemInfo()
       break;
    }
    return [os, osVersion] ;
+}
+
+//IE7不支持对象用indexOf，为了兼容所以加上代码
+if(!Array.indexOf)
+{
+    Array.prototype.indexOf = function(obj)
+    {              
+        for(var i=0; i<this.length; i++)
+        {
+            if(this[i]==obj)
+            {
+                return i;
+            }
+        }
+        return -1;
+    }
+}
+
+//解析condition的值
+function parseConditionValue( condition )
+{
+   var filter = {} ;
+   var jobj = condition ;
+   if( jobj['condition'].length > 1 || ( jobj['condition'].length == 1 && jobj['condition'][0]['field'].length > 0 ) )
+   {
+      $.each( jobj['condition'], function( index, field ){
+         var fieldValue = autoTypeConvert( trim( field['value'] ), true ) ;
+         switch( field['logic'] )
+         {
+         case '>':
+            filter[ field['field'] ] = { '$gt': fieldValue } ;
+            break ;
+         case '>=':
+            filter[ field['field'] ] = { '$gte': fieldValue } ;
+            break ;
+         case '<':
+            filter[ field['field'] ] = { '$lt': fieldValue } ;
+            break ;
+         case '<=':
+            filter[ field['field'] ] = { '$lte': fieldValue } ;
+            break ;
+         case '!=':
+            filter[ field['field'] ] = { '$ne': fieldValue } ;
+            break ;
+         case '=':
+            filter[ field['field'] ] = fieldValue ;
+            break ;
+         case 'size':
+            filter[ field['field'] ] = { '$size': fieldValue } ;
+            break ;
+         case 'regex':
+            var binary = fieldValue ;
+            var binType = '' ;
+            if( binary.length > 0 && binary.charAt(0) == '(' && binary.indexOf( ')' ) >= 0 )
+            {
+               var right = binary.indexOf( ')' ) ;
+               binType = binary.substr( 1, right - 1 ) ;
+               binary = binary.substr( right + 1 ) ;
+            }
+            filter[ field['field'] ] = { '$regex': binary, '$type': binType } ;
+            break ;
+         case 'type':
+            fieldValue = fieldValue.toLowerCase() ;
+            switch( fieldValue )
+            {
+            case 'int':
+            case 'int32':
+            case 'integer':
+               fieldValue = 16 ;
+               break ;
+            case 'long':
+            case 'long long':
+            case 'int64':
+               fieldValue = 18 ;
+               break ;
+            case 'double':
+            case 'float':
+               fieldValue = 1 ;
+               break ;
+            case 'string':
+            case 'char':
+            case '""':
+               fieldValue = 2 ;
+               break ;
+            case 'objectid':
+            case '_id':
+            case 'id':
+               fieldValue = 7 ;
+               break ;
+            case 'bool':
+            case 'boolean':
+            case 'true':
+            case 'false':
+               fieldValue = 8 ;
+               break ;
+            case 'date':
+               fieldValue = 9 ;
+               break ;
+            case 'time':
+            case 'timestamp':
+               fieldValue = 17 ;
+               break ;
+            case 'bin':
+            case 'binary':
+            case 'data':
+            case 'binary data':
+               fieldValue = 5 ;
+               break ;
+            case 'regex':
+            case 'regular':
+            case 'regular expression':
+            case 'regexp':
+            case 're':
+               fieldValue = 11 ;
+               break ;
+            case 'object':
+            case 'obj':
+               fieldValue = 3 ;
+               break ;
+            case 'array':
+            case 'arr':
+               fieldValue = 4 ;
+               break ;
+            case 'null':
+            case 'nil':
+               fieldValue = 10 ;
+               break ;
+            default:
+               fieldValue = parseInt( fieldValue ) ;
+               break ;
+            }
+            filter[ field['field'] ] = { '$type': fieldValue } ;
+            break ;
+         case 'null':
+            filter[ field['field'] ] = { '$isnull': 1 } ;
+            break ;
+         case 'notnull':
+            filter[ field['field'] ] = { '$isnull': 0 } ;
+            break ;
+         case 'exists':
+            filter[ field['field'] ] = { '$exists': 1 } ;
+            break ;
+         case 'notexists':
+            filter[ field['field'] ] = { '$exists': 0 } ;
+            break ;
+         }
+      } ) ;
+      if( jobj['model'] == 'or' )
+      {
+         filter = { '$or': filter } ;
+      }
+   }
+   return filter ;
+}
+
+//解析selector的值
+function parseSelectorValue( jobj ){
+   var selector = {} ;
+   if( jobj.length > 1 || ( jobj.length == 1 && jobj[0]['field'].length > 0 ) )
+   {
+      $.each( jobj, function( index, field ){
+         selector[ field['field'] ] = 1 ;
+      } ) ;
+   }
+   return selector ;
+}
+
+//解析sort的值
+function parseSortValue( jobj ){
+   var sort = {} ;
+   if( jobj.length > 1 || ( jobj.length == 1 && jobj[0]['field'].length > 0 ) )
+   {
+      $.each( jobj, function( index, field ){
+         sort[ field['field'] ] = autoTypeConvert( field['order'], false )  ;
+      } ) ;
+   }
+   return sort ;
+}
+
+//解析hint的值
+function parseHintValue( jobj )
+{
+   var hint = {} ;
+   if( jobj === 1 )
+   {
+      hint[''] = null ;
+   }
+   else
+   {
+      hint[''] = jobj ;
+   }
+   return hint ;
+}
+
+//解析updator的值
+function parseUpdatorValue( jobj ){
+   var updator = {} ;
+   $.each( jobj, function( index, field ){
+      var fieldValue = autoTypeConvert( field['value'], true ) ;
+      updator[ field['field'] ] = fieldValue ;
+   } ) ;
+   updator = { '$set': updator } ;
+   return updator ;
+}
+
+//解析indexDef的值
+function parseIndexDefValue( jobj ){
+   var indexDef = {} ;
+   if( jobj.length > 1 || ( jobj.length == 1 && jobj[0]['field'].length > 0 ) )
+   {
+      $.each( jobj, function( index, field ){
+         indexDef[ field['field'] ] = autoTypeConvert( field['order'], false )  ;
+      } ) ;
+   }
+   return indexDef ;
 }

@@ -216,8 +216,20 @@
       var tip = $( '<div>loading</div>' ).appendTo( icon ) ;
       var timer = null ;
       var pointNum = 0 ;
-      g.create = function()
-      {
+      $( document ).keydown( function( event ){
+         if( counter > 0 )
+         {
+            if ( ( event.altKey ) && ( ( event.keyCode == 37 ) || ( event.keyCode == 39 ) ) )    
+            { 
+               return false;
+            }
+            if( event.keyCode == 8 )
+            {
+               return false ;
+            }
+         }
+      } ) ;
+      g.create = function(){
          counter += 1 ;
          if( counter == 1 )
          {

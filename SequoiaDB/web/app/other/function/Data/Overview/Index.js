@@ -6,14 +6,40 @@ _DataOverviewIndex.getCLInfo = function( $scope, SdbRest, index, moduleName, mod
    var sql ;
    if( moduleMode == 'standalone' )
    {
-      sql = 'SELECT t1.Name as FullName, t1.Details.ID, t1.Details.LogicalID, t1.Details.Sequence, t1.Details.GroupName, t1.Details.Status, t1.Details.Indexes, t1.Details.TotalRecords, t1.Details.TotalDataPages, t1.Details.TotalIndexPages, t1.Details.TotalLobPages, t1.Details.TotalDataFreeSpace/1048576, t1.Details.TotalIndexFreeSpace/1048576 FROM (SELECT * FROM $SNAPSHOT_CL split BY Details) AS t1' ;
+      sql = 'SELECT t1.Details.Indexes, t1.Details.TotalRecords, t1.Details.TotalDataPages, t1.Details.TotalIndexPages, t1.Details.TotalLobPages FROM (SELECT * FROM $SNAPSHOT_CL split BY Details) AS t1' ;
    }
    else
    {
-      sql = 'SELECT t2.Name as FullName, t1.Details.ID, t1.Details.LogicalID, t1.Details.Sequence, t1.Details.GroupName, t1.Details.Status, t1.Details.Indexes, t1.Details.TotalRecords, t1.Details.TotalDataPages, t1.Details.TotalIndexPages, t1.Details.TotalLobPages, t1.Details.TotalDataFreeSpace/1048576, t1.Details.TotalIndexFreeSpace/1048576, t2.IsMainCL, t2.MainCLName, t2.ShardingKey, t2.ShardingType FROM (SELECT * FROM $SNAPSHOT_CL WHERE NodeSelect="master" split BY Details) AS t1 RIGHT OUTER JOIN $SNAPSHOT_CATA AS t2 ON t1.Name = t2.Name' ;
+      /*sql = 'SELECT t2.Name as FullName, t1.Details.ID, t1.Details.LogicalID, t1.Details.Sequence, t1.Details.GroupName, t1.Details.Status, t1.Details.Indexes, t1.Details.TotalRecords, t1.Details.TotalDataPages, t1.Details.TotalIndexPages, t1.Details.TotalLobPages, t1.Details.TotalDataFreeSpace/1048576, t1.Details.TotalIndexFreeSpace/1048576, t2.IsMainCL, t2.MainCLName, t2.ShardingKey, t2.ShardingType FROM (SELECT * FROM $SNAPSHOT_CL WHERE NodeSelect="master" split BY Details) AS t1 RIGHT OUTER JOIN $SNAPSHOT_CATA AS t2 ON t1.Name = t2.Name' ;*/
+      sql = 'SELECT t1.Name, t1.Details.Indexes, t1.Details.TotalRecords, t1.Details.TotalDataPages, t1.Details.TotalIndexPages, t1.Details.TotalLobPages FROM (SELECT * FROM $SNAPSHOT_CL WHERE NodeSelect="master" split BY Details) AS t1' ;
    }
-   //获取集合列表
-   SdbRest.Exec2( clusterName, moduleName, sql, function( data ){
+   //合并cl数据
+   function mergedData( clList, cataList ){
+      var newClList = []
+      $.each( clList, function( index, clInfo ){
+         var hasFind = false ;
+         $.each( newClList, function( index3, newInfo ){
+            if( newInfo['Name'] == clInfo['Name'] )
+            {
+               newInfo['TotalRecords'] += clInfo['TotalRecords'] ;
+               hasFind = true ;
+            }
+         } ) ;
+         if( hasFind == false )
+         {
+            newClList.push( clInfo ) ;
+         }
+      } ) ;
+      $.each( cataList, function( index, cataInfo ){
+         if( cataInfo['IsMainCL'] == true )
+         {
+            newClList.push( cataInfo ) ;
+         }
+      } ) ;
+      return newClList ;
+   }
+   //查询成功执行的
+   function success( data ){
       if( data.length == 1 && data[0]['Name'] == null ) data = [] ;
       $scope.QueryModule[index]['status1'] = $scope.autoLanguage( '良好' )  ;
       $scope.QueryModule[index]['status2'] = $scope.autoLanguage( '业务运行正常' )  ;
@@ -87,6 +113,32 @@ _DataOverviewIndex.getCLInfo = function( $scope, SdbRest, index, moduleName, mod
          setTimeout( function(){
             _DataOverviewIndex.getCLInfo( $scope, SdbRest, index, moduleName, moduleMode, clusterName )
          }, 5000 ) ;
+      }
+   }
+   //获取集合列表
+   SdbRest.Exec2( clusterName, moduleName, sql, function( data ){
+      if( moduleMode == 'standalone' )
+      {
+         success( data ) ;
+      }
+      else
+      {
+         sql = 'SELECT * FROM $SNAPSHOT_CATA WHERE IsMainCL=true or MainCLName>"" or ShardingType>""' ;
+         SdbRest.Exec2( clusterName, moduleName, sql, function( data2 ){
+            var newData = mergedData( data, data2 ) ;
+            success( newData ) ;
+         }, function( errorInfo ){
+            $scope.QueryModule[index]['status1'] = $scope.autoLanguage( '错误' )  ;
+            $scope.QueryModule[index]['status2'] = $scope.autoLanguage( '业务运行错误' )  ;
+            $scope.QueryModule[index]['detail'] = '' ;
+            $scope.QueryModule[index]['errno'] = errorInfo['errno'] ;
+            $scope.QueryModule[index]['description'] = sprintf( $scope.autoLanguage( '错误码: ?, ?。' ), errorInfo['errno'], errorInfo['description'] ) ;
+            setTimeout( function(){
+               _DataOverviewIndex.getCLInfo( $scope, SdbRest, index, moduleName, moduleMode, clusterName )
+            }, 5000 ) ;
+         }, function(){
+            _IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
+         }, null, false ) ;
       }
    }, function( errorInfo ){
       $scope.QueryModule[index]['status1'] = $scope.autoLanguage( '错误' )  ;

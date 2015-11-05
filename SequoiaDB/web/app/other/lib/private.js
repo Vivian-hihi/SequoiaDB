@@ -47,6 +47,7 @@ _IndexPublic.languageCtrl = function( $scope, text ){
 }
 
 //创建选择module弹窗
+/*
 _IndexPublic.createSelectModuleModel = function( $scope, $location, SdbRest, SdbFunction, clusterName, main ){
    var defaultEvent = function( moduleMode, moduleName ){
       if( moduleMode == null || moduleName == null )
@@ -148,8 +149,10 @@ _IndexPublic.createSelectModuleModel = function( $scope, $location, SdbRest, Sdb
       }
    }
 }
+*/
 
 //创建选择cluster弹窗
+/*
 _IndexPublic.createSelectClusterModel = function( $scope, SdbRest, SdbFunction, main ){
    var defaultEvent = function( clusterName ){
       if( clusterName == null )
@@ -243,6 +246,7 @@ _IndexPublic.createSelectClusterModel = function( $scope, SdbRest, SdbFunction, 
       }
    }
 }
+*/
 
 // --------------------- Index.Bottom ---------------------
 var _IndexBottom = {} ;

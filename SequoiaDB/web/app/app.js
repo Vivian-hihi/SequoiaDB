@@ -3,5 +3,5 @@
    //模块
    window.SdbSacManagerModule = angular.module( 'sacApp', [ 'ngRoute' ] ) ;
 
-   window.SdbDebug = true ;
+   window.SdbDebug = false ;
 }());

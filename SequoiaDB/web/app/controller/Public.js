@@ -38,6 +38,8 @@
       $rootScope.autoLanguage = function( text ){
          return _IndexPublic.languageCtrl( $scope, text ) ;
       }
+
+      /*
       //选择集群
       $rootScope.selectCluster = function( main ){
          _IndexPublic.createSelectClusterModel( $scope, SdbRest, SdbFunction, main ) ;
@@ -46,6 +48,7 @@
       $rootScope.selcetModule = function( clusterName, main ){
          _IndexPublic.createSelectModuleModel( $scope, $location, SdbRest, SdbFunction, clusterName, main ) ;
       }
+      */
    } ) ;
 
    //顶部
@@ -91,12 +94,7 @@
       }
       //获取路由
       var navMenu = [
-         {
-            'text': $scope.autoLanguage( '部署' ),
-            'module': 'Deploy2',
-            'icon': 'fa-share-alt',
-            'action': '/deployment/index.html'
-         },
+                  /*
          {
             'text': $scope.autoLanguage( '主页' ),
             'module': 'Index',
@@ -202,6 +200,12 @@
                   ]
                }
             ]
+         },*/
+         {
+            'text': $scope.autoLanguage( '部署' ),
+            'module': 'Deploy2',
+            'icon': 'fa-share-alt',
+            'action': '/deployment/index.html'
          },
          {
             'text': $scope.autoLanguage( '数据' ),

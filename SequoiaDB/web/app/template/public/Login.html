@@ -22,7 +22,7 @@
             <div>
                <p class="animateTip">{{autoLanguage("密码")}}</p>
                <img src="./images/password.png">
-               <input class="password" type="password" ng-model="password" get-focus>
+               <input class="password" type="password" ng-model="password" get-focus="true">
             </div>
             <div id="chooseLanguage">
                <div id="languageBtn" ng-repeat="item in LanguageList track by $index" ng-if="item.key == Language" ng-click="showLanguageMenu()">

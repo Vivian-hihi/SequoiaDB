@@ -3,16 +3,32 @@
    //控制器
    sacApp.controllerProvider.register( 'Data.Operate.Record.Ctrl', function( $scope, $compile, $location, Loading, SdbRest, InheritSize, SdbFunction, FormModal ){
       var clusterName = SdbFunction.LocalData( 'SdbClusterName' ) ;
+      if( clusterName == null )
+      {
+         SdbFunction.LocalData( 'SdbModuleMode', null ) ;
+         SdbFunction.LocalData( 'SdbModuleName', null ) ;
+         window.location.href = '/deployment/index.html' ;
+         return;
+      }
+
+      var moduleMode = SdbFunction.LocalData( 'SdbModuleMode' ) ;
       var moduleName = SdbFunction.LocalData( 'SdbModuleName' ) ;
+      if( moduleMode == null || moduleName == null )
+      {
+         $location.path( 'Data/Overview/Index' ) ;
+         return;
+      }
+
       var csName = SdbFunction.LocalData( 'SdbCsName' ) ;
       var clName = SdbFunction.LocalData( 'SdbClName' ) ;
       var clType = SdbFunction.LocalData( 'SdbClType' ) ;
-      printfDebug( 'Cluster: ' + clusterName + ', Module: ' + moduleName + ', cs: ' + csName + ', cl: ' + clName ) ;
-      if( clusterName == null || moduleName == null || csName == null || clName == null )
+      if( csName == null || clName == null || clType == null )
       {
          $location.path( 'Data/Operate/Index' ) ;
          return;
       }
+
+      printfDebug( 'Cluster: ' + clusterName + ', Module: ' + moduleName + ', cs: ' + csName + ', cl: ' + clName ) ;
 
       //修正宽高
       InheritSize.append( $( '#OperateRecord' ) ) ;
@@ -28,6 +44,8 @@
 
       //初始化
       _DataOperateRecord.init( $scope ) ;
+
+      _DataOperateRecord.getIndexInfo( $scope, SdbRest ) ;
 
       //查询所有
       $scope.queryAll = function(){
@@ -60,7 +78,7 @@
       }
 
       //查询数据
-      _DataOperateRecord.queryRecord( $scope, SdbRest, SdbFunction, $scope.queryFilter, 1 ) ;
+      _DataOperateRecord.queryRecord( $scope, SdbRest, SdbFunction, $scope.queryFilter, true ) ;
 
       //创建插入弹窗
       $scope.Insert = function( recordIndex ){

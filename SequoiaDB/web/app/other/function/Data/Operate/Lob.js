@@ -18,7 +18,7 @@ _DataOperateLob.queryLobs = function( $scope, $compile, SdbFunction, lobs, start
       },
       'options': {
          'order': { 'active': true },
-         'grid': { 'tool': true, titleWidth: [ '60px', '75px', '250px', 40, 30, 30 ] } 
+         'grid': { 'tool': true, titleWidth: [ '60px', '250px', 40, 30, 30 ] } 
       }
    } ;
    if( $scope.isNotFilter )
@@ -29,9 +29,9 @@ _DataOperateLob.queryLobs = function( $scope, $compile, SdbFunction, lobs, start
       gridData.tool.left.push( { 'html': $compile( '<span ng-bind="total"></span>' )( $scope ) } ) ;
       gridData.tool.left.push( { 'html': $compile( '<i class="fa fa-play" ng-click="nextPage()"></i>' )( $scope ) } ) ;
    }
-   var keyList = [ '', '', 'Oid', 'CreateTime' ] ;
+   var keyList = [ '', 'Oid', 'CreateTime' ] ;
    $.each( lobs, function( index, record ){
-         keyList = SdbFunction.getJsonKeys( record, 6, keyList ) ;
+         keyList = SdbFunction.getJsonKeys( record, 5, keyList ) ;
    } ) ;
    $.each( keyList, function( index, key ){
       gridData['title'].push( { 'text': key } );
@@ -42,13 +42,13 @@ _DataOperateLob.queryLobs = function( $scope, $compile, SdbFunction, lobs, start
       var newRow = [] ;
       newRow[0] = { 'text': id } ;
       //构造一个删除按钮
-      var removeIcon = $( '<i></i>' ).addClass( 'fa fa-remove' ).text( ' ' + $scope.autoLanguage( '删除' ) ) ;
-      var removeBtn = $compile( '<a ng-click="LobDelete(' + ( index + start - 1 ) + ')"></div>' )( $scope ).addClass( 'linkButton' ).append( removeIcon ) ;
-      newRow[1] = { 'html': removeBtn } ;
-      newRow[2] = { 'html': $compile( '<a ng-click="showLobInfo(' + index + ')"></a>' )( $scope ).addClass( 'linkButton' ).text( line[2] ) } ;
+      // var removeIcon = $( '<i></i>' ).addClass( 'fa fa-remove' ).text( ' ' + $scope.autoLanguage( '删除' ) ) ;
+      // var removeBtn = $compile( '<a ng-click="LobDelete(' + ( index + start - 1 ) + ')"></div>' )( $scope ).addClass( 'linkButton' ).append( removeIcon ) ;
+      // newRow[1] = { 'html': removeBtn } ;
+      newRow[1] = { 'html': $compile( '<a ng-click="showLobInfo(' + index + ')"></a>' )( $scope ).addClass( 'linkButton' ).text( line[1] ) } ;
+      newRow[2] = { 'text': line[2] } ;
       newRow[3] = { 'text': line[3] } ;
       newRow[4] = { 'text': line[4] } ;
-      newRow[5] = { 'text': line[5] } ;
       gridData['body'].push( newRow ) ;
    } ) ;
    $scope.lobGridData = gridData ;

@@ -3,26 +3,22 @@
    var GridId ;
    sacApp.controllerProvider.register( 'Data.Operate.Index.Ctrl', function( $scope, $compile, $location, SdbRest, InheritSize, SdbFunction ){
       var clusterName = SdbFunction.LocalData( 'SdbClusterName' ) ;
-      var moduleMode = SdbFunction.LocalData( 'SdbModuleMode' ) ;
-      var moduleName = SdbFunction.LocalData( 'SdbModuleName' ) ;
-      printfDebug( 'Cluster: ' + clusterName + ', Module: ' + moduleName + ', Mode: ' + moduleMode ) ;
       if( clusterName == null )
       {
-         $scope.selectCluster( function( clusterName ){
-            SdbFunction.LocalData( 'SdbClusterName', clusterName ) ;
-            location.reload( false ) ;
-         } ) ;
+         window.location.href = '/deployment/index.html' ;
+         return;
       }
-      else if( moduleName == null || moduleMode == null )
-      {
-         $scope.selcetModule( function( moduleName ){
-            SdbFunction.LocalData( 'SdbModuleName', moduleName ) ;
-            location.reload( false ) ;
-         } ) ;
-      }
-      
-      $scope.moduleName = moduleName ;
 
+      var moduleMode = SdbFunction.LocalData( 'SdbModuleMode' ) ;
+      var moduleName = SdbFunction.LocalData( 'SdbModuleName' ) ;
+      if( moduleMode == null || moduleName == null )
+      {
+         $location.path( 'Data/Overview/Index' ) ;
+         return;
+      }
+
+      printfDebug( 'Cluster: ' + clusterName + ', Module: ' + moduleName + ', Mode: ' + moduleMode ) ;
+      
       //修正宽高
       InheritSize.append( $( '#OperateIndex' ) ) ;
       $( '#OperateIndex > div' ).each( function( index, ele ){
@@ -30,11 +26,16 @@
       } ) ;
 
       //初始化
-      _DataOperateIndex.init( $scope ) ;
+      _DataOperateIndex.init( $scope, moduleName, moduleMode ) ;
 
       //页面跳转
       $scope.gotoRecord = function( listIndex ){
          _DataOperateIndex.gotoRecord( $scope, $location, SdbFunction, listIndex ) ;
+      }
+
+      //Lob页面跳转
+      $scope.gotoLob = function( listIndex ){
+         _DataOperateIndex.gotoLob( $scope, $location, SdbFunction, listIndex ) ;
       }
 
       //上一页

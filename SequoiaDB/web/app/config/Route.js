@@ -1,5 +1,10 @@
 (function(){
    window.SdbSacManagerConf.nowRoute = [
+       { path: '/Index/Index/test',
+        options: {
+           templateUrl: './test.html'
+        }
+      },
       { path: '/Index/Index/Index',
         options: {
            templateUrl: './app/template/Index/Index/Index.html',
