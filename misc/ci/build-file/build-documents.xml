@@ -1,4 +1,4 @@
-<project default="load_doc">
+<project default="build_offline_doc">
 	<property name="CODE_DIR" value="${WORKSPACE}/sequoiadb" />
 	<taskdef resource="com/sequoiadb/ant/ant-sdbtasks.xml">
 		<classpath>
@@ -82,5 +82,104 @@
         </exec>
         <echo message="${screen.output.conv}" />
 		<delete file="${change.case.fullname}" failonerror="false" />
+	</target>
+
+	<target name="build_offline_doc" depends="load_doc">
+		<if>
+			<equals arg1="${offline_doc}" arg2="true" />
+			<then>
+				<antcall target="tar_offline_doc" inheritAll="true">
+					<param name="test.reports.path" value="${WORKSPACE}/reports" />
+				</antcall>
+			</then>
+			<else>
+				<echo message="The generation of document over!" />
+			</else>
+		</if>
+	</target>
+
+	<target name="clean_offline" depends="">
+		<delete dir="${CODE_DIR}/doc/webhelp" failonerror="false" />
+		<delete dir="${CODE_DIR}/doc/out" failonerror="false" />
+		
+		<mkdir dir="${CODE_DIR}/doc/webhelp" />
+		<mkdir dir="${CODE_DIR}/doc/out" />
+	</target>
+
+	<target name="compile_webhelp_tools" depends="clean_offline">
+		<property name="base_dir" value="${CODE_DIR}/doc/tools/xml2web" />
+		<ant antfile="${base_dir}/build.xml">
+			<property name="root_dir" value="${base_dir}/src/com/sequoiadb/xml2web" />
+			<property name="build_dir" value="${base_dir}/build" />
+			<property name="lib_dir" value="${base_dir}/lib" />
+			<property name="jar_name" value="${base_dir}/xml2web.jar" />
+		</ant>
+	</target>
+
+	<target name="gen_webhelp_doc" depends="compile_webhelp_tools">
+		<foreach target="build-one-suite" param="build.suite.fullname" >
+			<path>
+				<dirset dir="${CODE_DIR}/doc/SdbDoc_Cn" />
+			</path>
+			<param name="includes.case.patterns" value="*.html" />
+			<param name="excludes.case.patterns" value="" />
+		</foreach>
+		<copydir dest="${CODE_DIR}/doc/SdbDoc_En" src="${CODE_DIR}/doc/SdbDoc_Cn" includes="**/*" />
+		<foreach target="conv-one-suite" param="conv.suite.fullname" >
+			<path>
+				<dirset dir="${CODE_DIR}/doc/SdbDoc_En" />
+			</path>
+			<param name="includes.case.patterns" value="*.xml" />
+			<param name="excludes.case.patterns" value="" />
+		</foreach>
+	</target>
+
+	<target name="build_new_toc" depends="gen_webhelp_doc">
+		<java jar="${CODE_DIR}/doc/tools/xml2web/xml2web.jar" fork="true" failonerror="true" />
+	</target>
+
+	<target name="tar_offline_doc" depends="build_new_toc">
+		<property name="offline_doc_name" value="webhelp.tar.gz" />
+		<chown owner="jenkins">
+			<fileset dir="${CODE_DIR}/doc/out" includes="**/*" />
+		</chown>
+		<tar destfile="${CODE_DIR}/doc/${offline_doc_name}" basedir="${CODE_DIR}/doc/out" includes="**/*" compression="gzip" />
+	</target>
+
+	<target name="build-one-suite" depends="">
+		<foreach target="build-one-case" param="build.case.fullname">
+			<fileset dir="${build.suite.fullname}" includes="${includes.case.patterns}" excludes="${excludes.case.patterns}" />
+		</foreach>
+	</target>
+
+	<target name="build-one-case" depends="">
+		<basename property="build.case.name" file="${build.case.fullname}" suffix=".html" />
+		<dirname property="build.case.dir" file="${build.case.fullname}" />
+
+		<property name="sdb.cmd.argument" value="  -f html -t docbook -s '${build.case.dir}/${build.case.name}.html' -o '${build.case.dir}/${build.case.name}.xml'" />
+		<property name="command" value="pandoc${sdb.cmd.argument}" />
+		<echo message="Command:${command}" />
+		<exec executable="pandoc" dir="" timeout="60000" outputproperty="screen.output" resultproperty="ret.code" failonerror="false">
+			<arg line="${sdb.cmd.argument}" />
+		</exec>
+		<echo message="${screen.output}" />
+		<delete file="${build.case.fullname}" failonerror="false" />
+	</target>
+
+	<target name="conv-one-suite" depends="">
+		<foreach target="conv-one-case" param="conv.case.fullname">
+			<fileset dir="${conv.suite.fullname}" includes="${includes.case.patterns}" excludes="${excludes.case.patterns}" />
+		</foreach>
+	</target>
+
+	<target name="conv-one-case" depends="">
+		<basename property="conv.case.name" file="${conv.case.fullname}" suffix=".xml" />
+		<dirname property="conv.case.dir" file="${conv.case.fullname}" />
+
+        <exec executable="mv" dir="" timeout="60000" outputproperty="screen.output.conv" resultproperty="ret.code.conv" failonerror="false">
+            <arg line=" '${conv.case.fullname}' '${conv.case.dir}/${conv.case.name}_en.xml'" />
+        </exec>
+        <echo message="${screen.output.conv}" />
+		<delete file="${conv.case.fullname}" failonerror="false" />
 	</target>
 </project>

@@ -319,17 +319,16 @@
 
 	  	<ant antfile="${CODE_DIR}/misc/ci/build-file/build-api.xml">
 			<property name="root_dir" value="${CODE_DIR}/doc" />
-			<property name="offline_doc_name" value="${CODE_DIR}/doc/webhelp.tar.gz" />
-
-			<property name="build_dir" value="${base_dir}/build" />
-			<property name="lib_dir" value="${base_dir}/lib" />
-			<property name="jar_name" value="${base_dir}/xml2sql.jar" />
+			<property name="offline_doc_name" value="${offline_doc_name}" />
+			<property name="offline_dir" value="${offline_dir}" />
+			<property name="edition" value="${edition}" />
+<!-- 			<property name="project.version" value="${project.version}" /> -->	
 		</ant>
-
 		<copy todir="${RELEASE_DIR}/sequoiadb/doc">
 			<fileset dir="${CODE_DIR}/doc/out" />
 		</copy>
 		<copydir src="${CODE_DIR}/doc/manual/" dest="${RELEASE_DIR}/sequoiadb/doc/manual" includes="**/*" />
+
 		<copy todir="${RELEASE_DIR}/sequoiadb/license">
 			<fileset dir="${CODE_DIR}/license" />
 		</copy>

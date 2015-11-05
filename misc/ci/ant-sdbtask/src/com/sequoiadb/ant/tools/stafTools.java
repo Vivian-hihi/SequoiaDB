@@ -59,6 +59,7 @@ public class stafTools extends Task{
 		try {
 			
 			handle = new STAFHandle("ant-sdbtasks");
+
 			if(workType.equals("copy"))
 			{
 				System.out.println("copy work");
@@ -77,9 +78,28 @@ public class stafTools extends Task{
 					}else{
 						System.out.println("The operation has been successful...");
 					}
-				}
+				}	
+			}
+
+			if(workType.equals("copy directory"))
+			{
+				System.out.println("copy directory work");
+				request = "COPY DIRECTORY " 
+						+ fileName
+						+ " TODIRECTORY "
+						+ saveDir
+						+ " TOMACHINE "
+						+ toHost ; 
 				
-				
+				System.out.println("exec: staf " + workHost+ " FS " + request);
+				result = handle.submit2( workHost , "FS", request);
+				if( failonerror ){
+					if (result.rc != STAFResult.Ok) {
+						throw new BuildException(STAFResultToString(result));
+					}else{
+						System.out.println("The operation has been successful...");
+					}
+				}	
 			}
 			
 			if( workType.equals("shell"))
@@ -148,7 +168,6 @@ public class stafTools extends Task{
 			}
 			
 		} catch (STAFException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
