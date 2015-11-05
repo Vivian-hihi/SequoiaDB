@@ -1,12 +1,7 @@
 <project default="build">
-	<property name="root_dir" value="/opt/xml2web/src/com/sequoiadb/xml2web" />
-	<property name="build_dir" value="/opt/xml2web/build" />
-	<property name="lib_dir" value="/opt/xml2web/lib" />
-	<property name="jar.name" value="${build_dir}/../xml2web.jar" />
-
 	<target name="clean">
 		<delete dir="${build_dir}" failonerror="false" />
-		<delete file="${jar.name}" failonerror="false" />
+		<delete file="${jar_name}" failonerror="false" />
 		<mkdir dir="${build_dir}" />
 	</target>
 
@@ -19,7 +14,7 @@
 
 		<unjar src="${lib_dir}/dom4j-1.6.1.jar" dest="${build_dir}"  />
 
-		<jar file="${jar.name}">
+		<jar file="${jar_name}">
 			<manifest>
 				<!-- <attribute name="Main-Class" value="com.sequoiadb.xml2web.xml2web" /> -->
 				<attribute name="Main-Class" value="com.sequoiadb.xml2web.testFile" />

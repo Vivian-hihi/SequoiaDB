@@ -9,14 +9,11 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintStream;
-import java.io.RandomAccessFile;
-import java.io.StringReader;
-import java.nio.charset.Charset;
+
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import javax.print.Doc;
 import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpressionException;
@@ -29,15 +26,14 @@ import org.dom4j.io.OutputFormat;
 import org.dom4j.io.SAXReader;
 import org.dom4j.io.XMLWriter;
 import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 
 public class XmlConfigReader {
-	private static String confFile = "/opt/toc.xml";
+	private static String confFile = "../../../doc/toc.xml";
 //	private static XmlConfigReader instance = new XmlConfigReader(confFile);  
     private XmlConfig xmlconfig = new XmlConfig();
 	private static String rootDir = new File(confFile).getParent();
-	private static String tocFile = rootDir + "/Conf_2.0.xml";
+	private static String tocFile = rootDir + "/toc.xml";
     /**
      * initial configuration file
      * @param path

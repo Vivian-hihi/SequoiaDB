@@ -26,6 +26,7 @@ public class XmlConfigReader {
 	private static XmlConfigReader instance = new XmlConfigReader("../../../doc/toc.xml");  
     private XmlConfig xmlconfig = new XmlConfig();
 	private String rootDir = new File("../../../doc/toc.xml").getParent();
+	private String edition = "200" ;
     /**
      * initial configuration file
      * @param path
@@ -277,8 +278,8 @@ public class XmlConfigReader {
 			BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(String.valueOf(new File(rootDir + "/" + path))),  "UTF-8"));
 			StringBuffer sb = new  StringBuffer();
 			String comm_url = "./";
-			String image_dir = "./index/Public/Home/images/docs/";
-			String api_dir = "./index/Public/Home/document";
+			String image_dir = "./index/Public/Home/images/" + edition + "/";
+			String api_dir = "./index/Public/Home/document/" + edition;
 			String mao_str = "h2 key=\"title\" data-alt=\"alt\"";
 			String temp = null;
 			String str = null;
