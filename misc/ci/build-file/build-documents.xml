@@ -141,7 +141,7 @@
 	<target name="tar_offline_doc" depends="build_new_toc">
 		<property name="offline_doc_name" value="webhelp.tar.gz" />
 <!-- 		<property name="tools_dir" value="/opt/docbook-xsl-ns-1.78.1/webhelp" /> -->
-		<property name="tools_dir" value="${CODE_DIR}/doc/tools/docbook/webhelp">
+		<property name="tools_dir" value="${CODE_DIR}/doc/tools/docbook/webhelp" />
 		<delete dir="${tools_dir}/docs" failonerror="false" />
 		<exec dir="${tools_dir}" executable="make" failonerror="true" />
 		<copydir dest="${tools_dir}/docs" src="${CODE_DIR}/doc/out" includes="**/*" />
