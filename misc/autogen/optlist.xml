@@ -441,14 +441,14 @@
       <name>PMD_OPTION_TRANSTIMEOUT</name>
       <long>transactiontimeout</long>
       <description>
-         <en>Timeout of waiting the transaction-lock(in second), default:60</en>
-         <cn>事务锁等待超时时间（单位：秒）,默认为:60</cn>
+         <en>Timeout of waiting the transaction-lock(in second), default:60, value range:[0,3600]</en>
+         <cn>事务锁等待超时时间（单位：秒）,默认为:60,取值范围[0,3600]</cn>
       </description>
       <type>int</type>
       <default>60</default>
       <detail>
-         <en>Timeout of waiting the transaction-lock(in second), default:60</en>
-         <cn>事务锁等待超时时间（单位：秒）,默认为:60</cn>
+         <en>Timeout of waiting the transaction-lock(in second), default:60, value range:[0,3600]</en>
+         <cn>事务锁等待超时时间（单位：秒）,默认为:60,取值范围[0,3600]</cn>
       </detail>
       <typeofweb>num</typeofweb>
    </opt>
