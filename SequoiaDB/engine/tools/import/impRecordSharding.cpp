@@ -57,6 +57,7 @@ namespace import
       sdbConnectionHandle conn = SDB_INVALID_HANDLE;
       sdbCursorHandle cursor = SDB_INVALID_HANDLE;
       bson cataObj;
+      INT32 cataCount = 0;
 
       SDB_ASSERT(!_inited, "alreay inited");
 
@@ -163,6 +164,15 @@ namespace import
             PD_LOG(PDERROR, "failed to update catalog agent, rc=%d", rc);
             goto error;
          }
+
+         cataCount++;
+      }
+
+      // no catalog info
+      if (0 == cataCount)
+      {
+         _inited = TRUE;
+         goto done;
       }
 
       _collectionName = _csname + "." + _clname;
