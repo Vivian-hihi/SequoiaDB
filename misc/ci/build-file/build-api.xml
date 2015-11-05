@@ -1,6 +1,6 @@
 <project default="build_offline_doc">
 	<property file="${root_dir}/../misc/ci/ci.build.properties" />
-	<echo message="${root_dir}/../misc/ci/ci.build.properties" />
+<!-- 	<echo message="${root_dir}/../misc/ci/ci.build.properties" /> -->
 	<target name="clean" depends="">
 		<delete dir="${root_dir}/api" failonerror="false" />
 		<delete dir="${root_dir}/out" failonerror="false" />
@@ -16,7 +16,7 @@
 	</target>
 
 	<target name="test-one-case" depends="">
-		<property name="sdb.cmd.argument" value=" -g ${test.case.fullname}" />
+		<property name="sdb.cmd.argument" value=" ${test.case.fullname}" />
 		<property name="command" value="doxygen${sdb.cmd.argument}" />
 		<echo message="Command:${command}" />
 		<exec executable="doxygen" dir="" timeout="60000" outputproperty="screen.output" resultproperty="ret.code" failonerror="false">
@@ -40,7 +40,7 @@
 	</target>
 
 	<target name="build_offline_doc" depends="deploy_api_images">
-		<echo message="#####################${offline_dir}/${offline_doc_name}####################" />
+<!-- 		<echo message="#####################${offline_dir}/${offline_doc_name}####################" /> -->
 		<stafTools workType="copy" workHost="${target_offline_ip}" fileName="${offline_dir}/${offline_doc_name}" saveDir="${root_dir}" toHost="${target.deploy_tar_gz.ip}" failonerror="true"/>
 		<untar src="${root_dir}/${offline_doc_name}" dest="${root_dir}/out" compression="gzip" />
 		<mkdir dir="${root_dir}/out/api" />
