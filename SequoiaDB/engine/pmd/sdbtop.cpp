@@ -2134,7 +2134,21 @@ INT32 storeRootWindow( RootWindow &root )
       rc = SDB_ERROR ;
       goto error ;
    }
-   pt_Event = pt_sdbtopXML.get_child( EVENT ) ;
+   try
+   {
+      pt_Event = pt_sdbtopXML.get_child( EVENT ) ;
+   }
+   catch( std::exception &e )
+   {
+      ossSnprintf( errStrBuf, errStrLength,
+                   "%s", errStr ) ;
+      ossSnprintf( errStr, errStrLength,
+                   "%s readConfiguration failed,"
+                   "e.what():%s"OSS_NEWLINE,
+                   errStrBuf, e.what() ) ;
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
    for( BOOST_AUTO( child_event, pt_Event.begin() );
         child_event != pt_Event.end(); ++child_event )
    {
