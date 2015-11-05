@@ -34,6 +34,7 @@ public class XmlConfigReader {
     private XmlConfig xmlconfig = new XmlConfig();
 	private static String rootDir = new File(confFile).getParent();
 	private static String tocFile = rootDir + "/toc.xml";
+	private static String tocFile_bak = rootDir + "/toc_bak.xml";
     /**
      * initial configuration file
      * @param path
@@ -840,7 +841,7 @@ public class XmlConfigReader {
 			while(url.find()){
 				String match_url = url.group(1);
 	 			
-				InputSource inputSource = new InputSource(new FileInputStream(tocFile));
+				InputSource inputSource = new InputSource(new FileInputStream(tocFile_bak));
 				XPath xPath = XPathFactory.newInstance().newXPath();
 				String expression = "//objlist/obj[cnpath='" + match_url + "' or enpath='" + match_url + "']/enabled";
 				Node node = (Node) xPath.evaluate(expression,inputSource,XPathConstants.NODE);
