@@ -1,4 +1,5 @@
 <project default="build_offline_doc">
+	<property file="${CODE_DIR}/../misc/ci/ci.build.properties" />
 	<target name="clean" depends="">
 		<delete dir="${root_dir}/api" failonerror="false" />
 		<delete dir="${root_dir}/out" failonerror="false" />
@@ -14,9 +15,6 @@
 	</target>
 
 	<target name="test-one-case" depends="">
-		<basename property="test.case.name" file="${test.case.fullname}" suffix=".md" />
-		<dirname property="test.case.dir" file="${test.case.fullname}" />
-
 		<property name="sdb.cmd.argument" value=" -g ${test.case.fullname}" />
 		<property name="command" value="doxygen${sdb.cmd.argument}" />
 		<echo message="Command:${command}" />
