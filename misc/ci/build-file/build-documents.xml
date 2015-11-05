@@ -101,9 +101,11 @@
 	<target name="clean_offline" depends="">
 		<delete dir="${CODE_DIR}/doc/webhelp" failonerror="false" />
 		<delete dir="${CODE_DIR}/doc/out" failonerror="false" />
+		<delete dir="${CODE_DIR}/doc/toc_bak.xml" failonerror="false" />
 		
 		<mkdir dir="${CODE_DIR}/doc/webhelp" />
 		<mkdir dir="${CODE_DIR}/doc/out" />
+		<copy file="${CODE_DIR}/doc/toc.xml" todir="${CODE_DIR}/doc/toc_bak.xml" />
 	</target>
 
 	<target name="compile_webhelp_tools" depends="clean_offline">
