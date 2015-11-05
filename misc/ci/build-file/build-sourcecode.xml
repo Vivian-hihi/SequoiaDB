@@ -389,7 +389,7 @@
 	</target>
 
 	<target name="test">
-		<delete dir="${RELEASE_DIR}/sequoiadb/doc" failonerror="false">
+		<delete dir="${RELEASE_DIR}/sequoiadb/doc" failonerror="false" />
 		<mkdir dir="${RELEASE_DIR}/sequoiadb/doc" />
 		<ant antfile="${CODE_DIR}/misc/ci/build-file/build-api.xml">
 			<property name="root_dir" value="${CODE_DIR}/doc" />
