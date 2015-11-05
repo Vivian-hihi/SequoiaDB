@@ -105,7 +105,7 @@
 		
 		<mkdir dir="${CODE_DIR}/doc/webhelp" />
 		<mkdir dir="${CODE_DIR}/doc/out" />
-		<copy file="${CODE_DIR}/doc/toc.xml" todir="${CODE_DIR}/doc/toc_bak.xml" />
+		<copy file="${CODE_DIR}/doc/toc.xml" tofile="${CODE_DIR}/doc/toc_bak.xml" />
 	</target>
 
 	<target name="compile_webhelp_tools" depends="clean_offline">
