@@ -79,6 +79,7 @@ namespace engine
       } ;
    public:
       rtnCoordQuery() { _isReadonly = TRUE ; }
+      rtnCoordQuery( BOOLEAN isReadOnly ) { _isReadonly = isReadOnly ; }
 
       virtual INT32 execute( MsgHeader *pMsg,
                              pmdEDUCB *cb,

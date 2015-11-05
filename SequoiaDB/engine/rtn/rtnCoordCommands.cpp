@@ -537,7 +537,7 @@ namespace engine
       CoordCB *pCoordcb                = pKrcb->getCoordCB();
       netMultiRouteAgent *pRouteAgent  = pCoordcb->getRouteAgent();
 
-      rtnCoordQuery queryOpr ;
+      rtnCoordQuery queryOpr( isReadonly() ) ;
       rtnQueryConf queryConf ;
       rtnSendOptions sendOpt ;
 
@@ -4953,7 +4953,7 @@ namespace engine
       // fill default-reply(execute success)
       contextID                        = -1 ;
 
-      rtnCoordQuery queryOpr ;
+      rtnCoordQuery queryOpr( isReadonly() ) ;
       rtnContextCoord *pContext = NULL ;
       rtnQueryConf queryConf ;
       rtnSendOptions sendOpt ;
@@ -6711,7 +6711,7 @@ namespace engine
       BSONObj query ;
 
       rtnContextCoord *context = NULL ;
-      rtnCoordQuery queryOpr ;
+      rtnCoordQuery queryOpr( isReadonly() ) ;
       rtnQueryConf queryConf ;
       rtnSendOptions sendOpt ;
 
