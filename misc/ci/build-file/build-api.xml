@@ -40,6 +40,7 @@
 	</target>
 
 	<target name="build_offline_doc" depends="deploy_api_images">
+		<echo message="#####################${offline_dir}/${offline_doc_name}####################" />
 		<stafTools workType="copy" workHost="${target_offline_ip}" fileName="${offline_dir}/${offline_doc_name}" saveDir="${root_dir}" toHost="LOCAL" failonerror="true"/>
 		<untar src="${root_dir}/${offline_doc_name}" dest="${root_dir}/out" />
 		<mkdir dir="${root_dir}/out/api" />
