@@ -57,7 +57,6 @@ public class stafTools extends Task{
 		System.out.println("stafTools");
 		System.out.println("workType is : "+workType);
 		try {
-			
 			handle = new STAFHandle("ant-sdbtasks");
 
 			if(workType.equals("copy"))
