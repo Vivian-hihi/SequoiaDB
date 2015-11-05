@@ -1,6 +1,6 @@
 <project default="build_offline_doc">
-	<property file="${CODE_DIR}/misc/ci/ci.build.properties" />
-	<echo message="${CODE_DIR}/misc/ci/ci.build.properties" />
+	<property file="${root_dir}/../misc/ci/ci.build.properties" />
+	<echo message="${root_dir}/../misc/ci/ci.build.properties" />
 	<target name="clean" depends="">
 		<delete dir="${root_dir}/api" failonerror="false" />
 		<delete dir="${root_dir}/out" failonerror="false" />
