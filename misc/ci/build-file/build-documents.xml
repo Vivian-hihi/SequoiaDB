@@ -144,7 +144,9 @@
 		<property name="tools_dir" value="${CODE_DIR}/doc/tools/docbook/webhelp" />
 		<delete dir="${tools_dir}/docs" failonerror="false" />
 		<exec dir="${tools_dir}" executable="make" failonerror="true" />
-		<copydir dest="${tools_dir}/docs" src="${CODE_DIR}/doc/out" includes="**/*" />
+		<copy todir="${CODE_DIR}/doc/out" >
+    		<fileset dir="${tools_dir}/docs" includes="**/*" />
+    	</copy>
 <!-- 		<chown owner="jenkins">
 			<fileset dir="${CODE_DIR}/doc/out" includes="**/*" />
 		</chown> -->
