@@ -1415,6 +1415,7 @@ namespace engine
       // --transactionTimeout
       rdxUInt( pEX, PMD_OPTION_TRANSTIMEOUT, _transTimeout, FALSE, TRUE,
                PMD_DFT_TRANS_TIMEOUT, TRUE ) ;
+      rdvMinMax( pEX, _transTimeout, 0, 3600, TRUE ) ;
       // --sharingBreak
       rdxUInt( pEX, PMD_OPTION_SHARINGBRK, _sharingBreakTime, FALSE, TRUE,
                PMD_OPTION_BRK_TIME_DEFAULT, TRUE ) ;
