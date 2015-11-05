@@ -107,12 +107,12 @@
 	</target>
 
 	<target name="compile_webhelp_tools" depends="clean_offline">
-		<property name="base_dir" value="${CODE_DIR}/doc/tools/xml2web" />
-		<ant antfile="${base_dir}/build.xml">
-			<property name="root_dir" value="${base_dir}/src/com/sequoiadb/xml2web" />
-			<property name="build_dir" value="${base_dir}/build" />
-			<property name="lib_dir" value="${base_dir}/lib" />
-			<property name="jar_name" value="${base_dir}/xml2web.jar" />
+		<property name="base_dirs" value="${CODE_DIR}/doc/tools/xml2web" />
+		<ant antfile="${base_dirs}/build.xml">
+			<property name="root_dir" value="${base_dirs}/src/com/sequoiadb/xml2web" />
+			<property name="build_dir" value="${base_dirs}/build" />
+			<property name="lib_dir" value="${base_dirs}/lib" />
+			<property name="jar_name" value="${base_dirs}/xml2web.jar" />
 		</ant>
 	</target>
 
