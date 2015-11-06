@@ -10,7 +10,7 @@
 	<property name="cdh.hive_connector.filename" value="hive-sequoiadb-cdh-5.0.0-beta-2.jar" />
     <taskdef resource="com/sequoiadb/ant/ant-sdbtasks.xml">
         <classpath>
-            <pathelement location="${WORKSPACE}/sequoiadb/misc/ci/exec-tools/ant-sdbtasks.jar" />
+            <pathelement location="${CODE_DIR}/misc/ci/exec-tools/ant-sdbtasks.jar" />
         </classpath>
     </taskdef>
 
@@ -392,7 +392,6 @@
 		</if>
 		<ant antfile="${CODE_DIR}/misc/ci/build-file/build-api.xml" target="${target_name}">
 			<property name="root_dir" value="${CODE_DIR}/doc" />
-			<property name="edition" value="${edition}" />
 		</ant>
 		<copy todir="${RELEASE_DIR}/sequoiadb/doc">
 			<fileset dir="${CODE_DIR}/doc/out" />
