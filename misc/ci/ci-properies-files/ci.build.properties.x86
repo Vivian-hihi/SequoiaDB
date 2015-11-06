@@ -11,7 +11,7 @@ rpm_dir=/usr/src/packages
 
 target_deploy_api_ip=website-test
 target_offline_ip=sequoiadb-virtual-machine
-api_dir=/mnt/www/html/community/cn/Public/Home/document
-images_dir=/mnt/www/html/community/cn/Public/Home/images
+api_dir=/mnt/www/html/cn/Public/Home/document
+images_dir=/mnt/www/html/cn/Public/Home/images
 offline_dir=/var/lib/jenkins/workspace/sequoiadb_x86_document/sequoiadb/doc
 offline_doc_name=webhelp.tar.gz
