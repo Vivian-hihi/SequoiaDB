@@ -20,7 +20,8 @@
 #define PYTHONPATH "../../driver/python/pysequoiadb/err.prop"
 #define WEBPATHSUFFIX ".php"
 // chinese version document
-#define DOCPATH "../../doc/references/exceptionmapping/topics/exceptionmapping_"
+// #define DOCPATH "../../doc/references/exceptionmapping/topics/exceptionmapping_"
+#define DBCONFFORWEBPATH "../../doc/bak/runtime_configuration"
 #define DOCPATHSUFFIX ".dita"
 // XML element
 #define CONSLIST "rclist.conslist"
