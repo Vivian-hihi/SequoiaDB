@@ -31,7 +31,7 @@
 		<mkdir dir="${root_dir}/out/images" />
 		<copydir src="${root_dir}/api" dest="${root_dir}/out/api" includes="**/*" />
 		<copydir src="${root_dir}/images" dest="${root_dir}/out/images" includes="**/*" />
-		<copy todir="${copy_tar}/out" overwrite="true">
+		<copy todir="${copy_tar}/out">
     		<fileset dir="${CODE_DIR}/doc/out" includes="**/*" />
     	</copy>
 	</target>
