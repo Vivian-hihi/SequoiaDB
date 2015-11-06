@@ -103,7 +103,7 @@
 		<exec executable="/usr/bin/gcc" dir="${CODE_DIR}/misc/ci/exec-tools" failonerror="true">
     		<arg line="${CODE_DIR}/misc/ci/exec-tools/print_version.c -o ${CODE_DIR}/misc/ci/exec-tools/print_version -I${CODE_DIR}/SequoiaDB/engine/include" />
     	</exec>
-    	<exec executable="${CODE_DIR}/misc/ci/exec-tools/print_version" dir="${CODE_DIR}/misc/ci/exec-tools/" failonerror="true" outputproperty="project.version" />
+    	<exec executable="./print_version" dir="${CODE_DIR}/misc/ci/exec-tools" failonerror="true" outputproperty="project.version" />
     	<echo message="&#10;project.version=${project.version}" file="${CODE_DIR}/misc/ci/ci.build.properties" append="true" />
     	<echo message="project.version=${project.version}" />
 		<echo message="compile source code completed." />
@@ -381,7 +381,16 @@
 	<target name="mk-doc">
 		<delete dir="${RELEASE_DIR}/sequoiadb/doc" failonerror="false" />
 		<mkdir dir="${RELEASE_DIR}/sequoiadb/doc" />
-		<ant antfile="${CODE_DIR}/misc/ci/build-file/build-api.xml">
+		<if>
+			<equals arg1="${CPU.version}" arg2="x86" />
+			<then>
+				<property name="target_name" value="deploy_api_images" />
+			</then>
+			<else>
+				<property name="target_name" value="build_offline_doc" />
+			</else>
+		</if>
+		<ant antfile="${CODE_DIR}/misc/ci/build-file/build-api.xml" target="${target_name}">
 			<property name="root_dir" value="${CODE_DIR}/doc" />
 			<property name="edition" value="${edition}" />
 		</ant>

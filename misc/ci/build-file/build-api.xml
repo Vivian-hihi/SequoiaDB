@@ -1,6 +1,5 @@
-<project default="build_offline_doc">
+<project>
 	<property file="${root_dir}/../misc/ci/ci.build.properties" />
-<!-- 	<echo message="${root_dir}/../misc/ci/ci.build.properties" /> -->
 	<target name="clean" depends="">
 		<delete dir="${root_dir}/api" failonerror="false" />
 		<delete dir="${root_dir}/out" failonerror="false" />
@@ -25,7 +24,16 @@
 		<echo message="${screen.output}" />
 	</target>
 
-	<target name="deploy_api_images" depends="gen_api_doc">
+	<target name="build_offline_doc" depends="gen_api_doc">
+		<stafTools workType="copy" workHost="${target_offline_ip}" fileName="${offline_dir}/${offline_doc_name}" saveDir="${root_dir}" toHost="${target.deploy_tar_gz.ip}" failonerror="true"/>
+		<untar src="${root_dir}/${offline_doc_name}" dest="${root_dir}/out" compression="gzip" />
+		<mkdir dir="${root_dir}/out/api" />
+		<mkdir dir="${root_dir}/out/images" />
+		<copydir src="${root_dir}/api" dest="${root_dir}/out/api" includes="**/*" />
+		<copydir src="${root_dir}/images" dest="${root_dir}/out/images" includes="**/*" />
+	</target>
+
+	<target name="deploy_api_images" depends="build_offline_doc">
 		<!-- <var name="op" value="*" />
 		<math result="edition" operand1="${project.version}" operation="${op}" operand2="100" datatype="int" />
 		<echo message="The edition is ${edition}" /> -->
@@ -37,15 +45,5 @@
 		<stafTools worktype="delete" workHost="${target_deploy_api_ip}" fileName="${images_dir}/${edition}" failonerror="false" />
 		<stafTools workType="copy directory" workHost="LOCAL" fileName="${root_dir}/images" saveDir="${images_dir}/${edition}" toHost="${target_deploy_api_ip}" failonerror="true"/>
 		<stafTools workType="shell" workHost="${target_deploy_api_ip}" workDir="${images_dir}" common="chown -R sequoiadb:sequoiadb ${edition}" failonerror="true"/>
-	</target>
-
-	<target name="build_offline_doc" depends="deploy_api_images">
-<!-- 		<echo message="#####################${offline_dir}/${offline_doc_name}####################" /> -->
-		<stafTools workType="copy" workHost="${target_offline_ip}" fileName="${offline_dir}/${offline_doc_name}" saveDir="${root_dir}" toHost="${target.deploy_tar_gz.ip}" failonerror="true"/>
-		<untar src="${root_dir}/${offline_doc_name}" dest="${root_dir}/out" compression="gzip" />
-		<mkdir dir="${root_dir}/out/api" />
-		<mkdir dir="${root_dir}/out/images" />
-		<copydir src="${root_dir}/api" dest="${root_dir}/out/api" includes="**/*" />
-		<copydir src="${root_dir}/images" dest="${root_dir}/out/images" includes="**/*" />
 	</target>
 </project>
