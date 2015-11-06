@@ -38,13 +38,16 @@ void sdbGetIndexEqclause( PlannerInfo *root, RelOptInfo *baserel, Oid tableID,
 
 int sdbGetIndexInfo( SdbExecState *sdbState, sdbIndexInfo *indexInfo ) ;
 
+int sdbGetIndexInfos( SdbExecState *sdbState, sdbIndexInfo *indexInfo, 
+                      int maxNum, int *indexNum ) ;
+
 
 sdbConnectionHandle sdbGetConnectionHandle( const char **serverList, 
-                                             int serverNum, 
-                                             const char *usr, 
-                                             const char *passwd, 
-                                             const char *preference_instance,
-                                             const char *transaction ) ;
+                                            int serverNum, 
+                                            const char *usr, 
+                                            const char *passwd, 
+                                            const char *preference_instance,
+                                            const char *transaction ) ;
 
 sdbCollectionHandle sdbGetSdbCollection( sdbConnectionHandle connectionHandle, 
       const char *sdbcs, const char *sdbcl ) ;

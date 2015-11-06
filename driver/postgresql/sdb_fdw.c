@@ -2638,7 +2638,9 @@ static void SdbGetForeignPaths( PlannerInfo *root,
 
 #ifdef SDB_USE_OWN_POSTGRES
 
-   sdbIndexInfo sdb_idx ;
+   sdbIndexInfo sdb_idxs[SDB_MAX_INDEX_NUM] ;
+   int indexNum = 0 ;
+   int i = 0 ;
    sdbIndexClauseSet idxClauseSet ;
 
 #endif /* SDB_USE_OWN_POSTGRES */
@@ -2678,10 +2680,11 @@ static void SdbGetForeignPaths( PlannerInfo *root,
 
 #ifdef SDB_USE_OWN_POSTGRES
    //debugClauseInfo( root, baserel, foreignTableId ) ;
-   memset(&sdb_idx, 0, sizeof(sdbIndexInfo)) ;
-   sdbGetIndexInfo(fdw_state, &sdb_idx ) ;
-   if ( sdb_idx.keyNum != 0 )
+   memset(sdb_idxs, 0, sizeof(sdbIndexInfo) * SDB_MAX_INDEX_NUM ) ;
+   sdbGetIndexInfos(fdw_state, sdb_idxs, SDB_MAX_INDEX_NUM, &indexNum) ;
+   for ( i = 0; i < indexNum; i++ ) 
    {
+      sdbIndexInfo *pSdbIdx = &sdb_idxs[i] ;
       INT32 rcTmp = SDB_OK ;
       sdbbson condition;
       sdbbson_init(&condition) ;
@@ -2692,12 +2695,12 @@ static void SdbGetForeignPaths( PlannerInfo *root,
       if ( SDB_OK == rcTmp )
       {
          MemSet(&idxClauseSet, 0, sizeof(idxClauseSet));
-         sdbGetIndexEqclause(root, baserel, foreignTableId, &sdb_idx, 
+         sdbGetIndexEqclause(root, baserel, foreignTableId, pSdbIdx, 
                              &idxClauseSet) ;
          if ( idxClauseSet.nonempty )
          {
             Path *idxpath;
-            idxpath = (Path* )sdb_build_index_paths(root, baserel, &sdb_idx, 
+            idxpath = (Path* )sdb_build_index_paths(root, baserel, pSdbIdx, 
                                                     &idxClauseSet,
    				                                     fdw_state);
             if ( NULL != idxpath )
@@ -2706,6 +2709,7 @@ static void SdbGetForeignPaths( PlannerInfo *root,
             }
          }
       }
+      
    }
 
 #endif /* SDB_USE_OWN_POSTGRES */
@@ -2826,10 +2830,10 @@ static void SdbBeginForeignScan( ForeignScanState *scanState,
    fdw_state->hCollection = sdbGetSdbCollection( fdw_state->hConnection, 
          fdw_state->sdbcs, fdw_state->sdbcl ) ;
 
-   //rc = sdbQuery( fdw_state->hCollection, &fdw_state->queryDocument, NULL, NULL, 
-   //      NULL, 0, -1, &fdw_state->hCursor ) ;
+   // do not add flag here!!!!  when nljoin both table will execute query
+   // this will block nljoin
    rc = sdbQuery1( fdw_state->hCollection, &fdw_state->queryDocument, NULL, 
-                   NULL, NULL, 0, -1, FLG_QUERY_WITH_RETURNDATA, 
+                   NULL, NULL, 0, -1, 0, 
                    &fdw_state->hCursor ) ;
    if ( rc )
    {

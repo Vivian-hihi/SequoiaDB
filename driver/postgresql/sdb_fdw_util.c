@@ -549,6 +549,112 @@ error:
    goto done ;
 }
 
+int sdbGetIndexInfos( SdbExecState *sdbState, sdbIndexInfo *indexInfo, 
+                      INT32 maxNum, INT32 *indexNum )
+{
+   INT32 rc = SDB_OK ;
+   sdbCursorHandle cursor ;
+   sdbbson obj ;
+   INT32 count = 0 ;
+
+   sdbState->hConnection = sdbGetConnectionHandle( 
+                                        (const char **)sdbState->sdbServerList,
+                                        sdbState->sdbServerNum, 
+                                        sdbState->usr, 
+                                        sdbState->passwd, 
+                                        sdbState->preferenceInstance,
+                                        sdbState->transaction ) ;
+   sdbState->hCollection = sdbGetSdbCollection(sdbState->hConnection, 
+                           sdbState->sdbcs, sdbState->sdbcl) ;
+
+   rc = sdbGetIndexes(sdbState->hCollection, NULL, &cursor) ;
+   if ( SDB_OK != rc )
+   {
+      ereport(WARNING, (errcode(ERRCODE_FDW_INVALID_OPTION_INDEX),
+            errmsg("Cannot get sdb's indexinfo"), errhint(" "))) ;
+      goto error ;
+   }
+
+   sdbbson_init(&obj);
+   while(!(rc=sdbNext(cursor, &obj)))
+   {
+      sdbbson_iterator sdbbsonIter1 = {NULL, 0} ;
+      sdbbson_iterator_init(&sdbbsonIter1, &obj) ;
+
+      /* for each element in sdbbson object */
+      while(sdbbson_iterator_next(&sdbbsonIter1))
+      {
+         const CHAR *sdbbsonKey   = sdbbson_iterator_key(&sdbbsonIter1) ;
+         sdbbson_type sdbbsonType = sdbbson_iterator_type(&sdbbsonIter1) ;
+         if ( strcmp(sdbbsonKey, "IndexDef") == 0 
+              && sdbbsonType == BSON_OBJECT )
+         {
+            sdbbson indexDef ;
+            sdbbson_iterator sdbbsonIter2 = {NULL, 0} ;
+            sdbbson_init(&indexDef);
+            sdbbson_iterator_subobject(&sdbbsonIter1, &indexDef) ;
+            sdbbson_iterator_init(&sdbbsonIter2, &indexDef) ;
+            while( sdbbson_iterator_next(&sdbbsonIter2) )
+            {
+               const CHAR *key2   = sdbbson_iterator_key(&sdbbsonIter2) ;
+               sdbbson_type type2 = sdbbson_iterator_type(&sdbbsonIter2) ;
+               if ( strcmp(key2, "key") == 0 && type2 == BSON_OBJECT )
+               {
+                  sdbbson keyDef ;
+                  sdbbson_iterator sdbbsonIter3 = {NULL, 0} ;
+                  int i = 0 ;
+                  sdbbson_init(&keyDef);
+                  sdbbson_iterator_subobject(&sdbbsonIter2, &keyDef) ;
+                  sdbbson_iterator_init(&sdbbsonIter3, &keyDef) ;
+                  while ( sdbbson_iterator_next(&sdbbsonIter3) )
+                  {
+                     const CHAR *key3 = sdbbson_iterator_key(&sdbbsonIter3) ;
+                     if ( strcmp(key3, "_id") != 0 )
+                     {
+                        strncpy( indexInfo[count].indexKey[i], key3, 
+                              SDB_MAX_KEY_COLUMN_LENGTH ) ;
+                        indexInfo[count].indexKey[i][SDB_MAX_KEY_COLUMN_LENGTH-1] = 0 ;
+                        i++ ;
+                     }
+                  }
+
+                  sdbbson_destroy(&keyDef) ;
+
+                  indexInfo[count].keyNum = i ;
+                  if ( indexInfo[count].keyNum > 0 )
+                  {
+                     count++;
+                     if ( count >= maxNum )
+                     {
+                        // meet the max index num
+                        sdbbson_destroy(&indexDef) ;
+                        goto done ;
+                     }
+                  }
+               }
+            }
+            sdbbson_destroy(&indexDef) ;
+         }
+      }
+
+      sdbbson_destroy(&obj) ;
+      sdbbson_init(&obj);
+   }
+
+done:
+   *indexNum = count ;
+   sdbbson_destroy(&obj) ;
+   if ( SDB_INVALID_HANDLE != sdbState->hCollection )
+   {
+      sdbReleaseCollection(sdbState->hCollection) ;
+      sdbState->hCollection = SDB_INVALID_HANDLE ;
+   }
+
+   return rc ;
+error:
+   goto done ;
+}
+
 
 sdbConnectionHandle sdbGetConnectionHandle( const char **serverList, 
                                             int serverNum, 
