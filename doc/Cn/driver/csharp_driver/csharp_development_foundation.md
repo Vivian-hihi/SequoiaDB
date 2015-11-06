@@ -1,4 +1,4 @@
-这里介绍如何使用 C# 驱动接口编写使用 SequoiaDB 数据库的程序。该文档介绍了 SequoiaDB 数据库 C# 驱动的简单示例，详细的使用规范可参照官方的 [C# API](api/csharp/html/index.html) 文档。
+这里介绍如何使用 C# 驱动接口编写使用 SequoiaDB 数据库的程序。该文档介绍了 SequoiaDB 数据库 C# 驱动的简单示例，详细的使用规范可参照官方的 [C# API](api/cs/html/index.html) 文档。
 
 ## 命名空间##
 

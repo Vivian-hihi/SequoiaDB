@@ -4,13 +4,13 @@ Java 驱动的 Datasource 提供给用户一个快速获取有效连接实例的
 
 使用类 SequoiadbDatasource 的 getConnection 方法从连接池中获取一个连接，使用 close 方法把取出的连接放回连接池。当连接池使用的连接数到达连接上限时，下一个请求连接的操作将会等待一段时间，若在规定的时间内无空闲的连接可用，将抛出异常。类 ConfigOptions 可以设置连接的各项参数。类 SequoiadbOption 中可以设置连接池的各种参数。
 
-详情请查看相关API介绍。
+详情请查看相关 [Java API](api/java/html/index.html) 介绍。
 
 ## 例子##
 <pre class="prettyprint lang-javascript">
 SequoiadbDatasource ds = null;
 Sequoiadb db = null;
-ArrayList< String > urls = new ArrayList< String >();
+ArrayList&lt;String&gt; urls = new ArrayList&lt;String&gt;();
 ConfigOptions nwOpt = new ConfigOptions();          // 定义连接选项
 SequoiadbOption dsOpt = new SequoiadbOption();	    // 定义连接池选项
 

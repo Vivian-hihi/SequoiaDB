@@ -1,4 +1,4 @@
-这里介绍如何使用Java驱动接口编写使用SequoiaDB数据库的程序。为了简单起见，下面的示例不全部是完整的代码，只起示例性作用。可到安装目录/client/samples/java下获取相应的完整的代码。 更多查看Java API
+这里介绍如何使用Java驱动接口编写使用SequoiaDB数据库的程序。为了简单起见，下面的示例不全部是完整的代码，只起示例性作用。可到安装目录/client/samples/java下获取相应的完整的代码。 更多查看 [Java API](api/java/html/index.html)
 
 ## 数据操作##
 

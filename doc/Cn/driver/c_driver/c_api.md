@@ -1,4 +1,4 @@
-此部分是相关 [C API](api/c/html/index.html) 文档。
+此部分是相关 [C API](api/c/html/index.html) ，[辅助 API](api/base64/html/index.html)文档。
 
 ## 历史更新情况：##
 

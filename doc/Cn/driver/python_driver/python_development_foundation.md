@@ -1,6 +1,6 @@
 本节介绍使用 Python 运行 SequoiaDB。首先安装 SequoiaDB，安装信息请查看 SequoiaDB 服务器安装章节。
 
-这里介绍如何使用 Python 客户端驱动接口编写使用 SequoiaDB 数据库的程序。为了简单起见，下面的示例不全部是完整的代码，只起示例性作用。可到 /sequoiadb/client/samples/python 下获取相应的完整的代码。更多查看 Python API
+这里介绍如何使用 Python 客户端驱动接口编写使用 SequoiaDB 数据库的程序。为了简单起见，下面的示例不全部是完整的代码，只起示例性作用。可到 /sequoiadb/client/samples/python 下获取相应的完整的代码。更多查看 [Python API](api/python/html/index.html)
 
 ## 数据库操作##
 

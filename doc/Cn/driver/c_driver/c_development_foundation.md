@@ -78,7 +78,7 @@ rc = sdbCreateCollectionSpace ( connection, "foo", SDB_PAGESIZE_4K, &collections
 rc = sdbCreateCollection ( collectionspace, "bar", &collection ) ;</pre>
 
 **Note:**
-在创建集合“bar”时并没有附加分区、压缩等信息，关于创建集合的更详细情况，请参考详情请查阅 C API
+在创建集合“bar”时并没有附加分区、压缩等信息，关于创建集合的更详细情况，请参考详情请查阅 [C API](api/c/html/index.html)
 
 * 插入数据
 
