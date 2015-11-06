@@ -31,6 +31,9 @@
 		<mkdir dir="${root_dir}/out/images" />
 		<copydir src="${root_dir}/api" dest="${root_dir}/out/api" includes="**/*" />
 		<copydir src="${root_dir}/images" dest="${root_dir}/out/images" includes="**/*" />
+		<copy todir="${copy_tar}/out" overwrite="true">
+    		<fileset dir="${CODE_DIR}/doc/out" includes="**/*" />
+    	</copy>
 	</target>
 
 	<target name="deploy_api_images" depends="build_offline_doc">
@@ -45,5 +48,10 @@
 		<stafTools worktype="delete" workHost="${target_deploy_api_ip}" fileName="${images_dir}/${edition}" failonerror="false" />
 		<stafTools workType="copy directory" workHost="LOCAL" fileName="${root_dir}/images" saveDir="${images_dir}/${edition}" toHost="${target_deploy_api_ip}" failonerror="true"/>
 		<stafTools workType="shell" workHost="${target_deploy_api_ip}" workDir="${images_dir}" common="chown -R sequoiadb:sequoiadb ${edition}" failonerror="true"/>
+	</target>
+
+	<target name="copy_offline_doc">
+		<delete dir="${root_dir}/out" failonerror="false" />
+		<stafTools workType="copy directory" workHost="${target_offlinedoc_tar_ip}" fileName="${copy_tar}/out" saveDir="${root_dir}" toHost="${target.deploy_tar_gz.ip}" failonerror="true"/>
 	</target>
 </project>

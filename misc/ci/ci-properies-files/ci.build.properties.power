@@ -6,3 +6,4 @@ enterprise.name=enterprise
 
 copy_tar=/test_tar
 target.deploy_tar_gz.ip=powersuse1
+target_offlinedoc_tar_ip=bl465-4

@@ -387,7 +387,7 @@
 				<property name="target_name" value="deploy_api_images" />
 			</then>
 			<else>
-				<property name="target_name" value="build_offline_doc" />
+				<property name="target_name" value="copy_offline_doc" />
 			</else>
 		</if>
 		<ant antfile="${CODE_DIR}/misc/ci/build-file/build-api.xml" target="${target_name}">
