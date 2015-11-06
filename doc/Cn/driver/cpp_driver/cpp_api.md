@@ -44,4 +44,4 @@
 
 （1） 添加类 Node 来取代原来的类 ReplicaNode。类 ReplicaNode 以及与它相关的方法将在 version 2.x 中被弃用。
 
-详情请查看相关 [C++ API](api/cpp/html/index.html)。
+更多详情可查看辅助API [BASE64C API](api/base64c/html/index.html) 和 [FROMJSON API](api/fromjson/html/index.html)。

@@ -1,4 +1,4 @@
-此部分是相关 [C API](api/c/html/index.html) ，[辅助 API](api/base64/html/index.html)文档。
+此部分是相关 [C API](api/c/html/index.html) 文档。
 
 ## 历史更新情况：##
 
@@ -40,4 +40,4 @@
 
 （2） 使用概念“node”取代原来的“replica node”，和“replica node”相关的 API 接口将保留，直到 version 2.x 会被弃用。
 
-详情请查看相关 [C API](api/c/html/index.html)。
+更多详情可查看辅助API [BASE64C API](api/base64c/html/index.html) 和 [JSTOBSON API](api/Jstobs/html/index.html)。
