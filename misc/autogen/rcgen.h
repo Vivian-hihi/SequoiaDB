@@ -21,7 +21,7 @@
 #define WEBPATHSUFFIX ".php"
 // chinese version document
 // #define DOCPATH "../../doc/references/exceptionmapping/topics/exceptionmapping_"
-#define DBCONFFORWEBPATH "../../doc/bak/runtime_configuration"
+#define DOCPATH "../../doc/bak/exceptionmapping_"
 #define DOCPATHSUFFIX ".dita"
 // XML element
 #define CONSLIST "rclist.conslist"
