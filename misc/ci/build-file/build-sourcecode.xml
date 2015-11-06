@@ -103,9 +103,9 @@
 		<exec executable="/usr/bin/gcc" dir="${CODE_DIR}/misc/ci/exec-tools" failonerror="true">
     		<arg line="${CODE_DIR}/misc/ci/exec-tools/print_version.c -o ${CODE_DIR}/misc/ci/exec-tools/print_version -I${CODE_DIR}/SequoiaDB/engine/include" />
     	</exec>
-    	<exec executable="./print_version" dir="${CODE_DIR}/misc/ci/exec-tools" failonerror="true" outputproperty="project.version" />
-    	<echo message="&#10;project.version=${project.version}" file="${CODE_DIR}/misc/ci/ci.build.properties" append="true" />
-    	<echo message="project.version=${project.version}" />
+    	<exec executable="./print_version" dir="${CODE_DIR}/misc/ci/exec-tools" failonerror="true" outputproperty="projects.version" />
+    	<echo message="&#10;projects.version=${projects.version}" file="${CODE_DIR}/misc/ci/ci.build.properties" append="true" />
+    	<echo message="projects.version=${projects.version}" />
 		<echo message="compile source code completed." />
 	</target>
 
@@ -169,7 +169,7 @@
 			<param name="DRIVER.DIR" value="${DRIVER.DIR}" />
 		</antcall>
 
-		<tar destfile="${RELEASE_DIR}/${project.name}-driver-${project.version}-${os.and.platform}.tar.gz" basedir="${RELEASE_DIR}" includes="driver/**" compression="gzip" />
+		<tar destfile="${RELEASE_DIR}/${project.name}-driver-${projects.version}-${os.and.platform}.tar.gz" basedir="${RELEASE_DIR}" includes="driver/**" compression="gzip" />
 		<echo message="Make driver package completed." />
 	</target>
 
@@ -348,23 +348,23 @@
 		</if>
 
 		<exec dir="${RELEASE_DIR}" executable="builder" failonerror="true">
-			<arg line="build sequoiadb_server.xml --setvars project.version=${project.version}  --setvars platform=${os.and.platform} --setvars enterpriseversion=${version.name} --setvars project.outputDirectory=${RELEASE_DIR}" />
+			<arg line="build sequoiadb_server.xml --setvars projects.version=${projects.version}  --setvars platform=${os.and.platform} --setvars enterpriseversion=${version.name} --setvars project.outputDirectory=${RELEASE_DIR}" />
 		</exec>
-		<echo message="build sequoiadb_server.xml --setvars project.version=${project.version}  --setvars platform=${os.and.platform} --setvars enterpriseversion=${version.name} --setvars project.outputDirectory=${RELEASE_DIR}" />
+		<echo message="build sequoiadb_server.xml --setvars projects.version=${projects.version}  --setvars platform=${os.and.platform} --setvars enterpriseversion=${version.name} --setvars project.outputDirectory=${RELEASE_DIR}" />
 		<!-- <echo message="Make relase package completed." />
 		<echo message="os.name=${os.name}, os.arch=${os.arch}" />
 		<if>
 			<equals arg1="${os.arch}" arg2="amd64" />
 			<then>
 				<echo message="begin to make rpm package.." />
-				<echo message="tar the sequoiadb-${project.version}.tar.gz to /usr/src/packages/SOURCES..." />
-				<move file="${RELEASE_DIR}/sequoiadb" tofile="${RELEASE_DIR}/sequoiadb-${project.version}" />
-				<tar destfile="/usr/src/packages/SOURCES/sequoiadb-${project.version}.tar.gz" basedir="${RELEASE_DIR}" includes="sequoiadb-${project.version}/**" compression="gzip" />
-				<copy file="${CODE_DIR}/misc/ci/mkrelease/sequoiadb-${project.version}.spec" todir="/usr/src/packages/SPECS" />
-				<stafTools workType="shell" workHost="LOCAL" common="rpmbuild -bb -bb sequoiadb-${project.version}.spec" workDir="/usr/src/packages/SPECS" waitTime="30m" />
-				<copy file="/usr/src/packages/RPMS/x86_64/sequoiadb-${project.version}-1.x86_64.rpm" todir="${RELEASE_DIR}" failonerror="false" />
-		        <delete file="/usr/src/packages/SOURCES/sequoiadb-${project.version}.tar.gz" />
-		        <delete file="/usr/src/packages/SPECS/sequoiadb-${project.version}.spec" />
+				<echo message="tar the sequoiadb-${projects.version}.tar.gz to /usr/src/packages/SOURCES..." />
+				<move file="${RELEASE_DIR}/sequoiadb" tofile="${RELEASE_DIR}/sequoiadb-${projects.version}" />
+				<tar destfile="/usr/src/packages/SOURCES/sequoiadb-${projects.version}.tar.gz" basedir="${RELEASE_DIR}" includes="sequoiadb-${projects.version}/**" compression="gzip" />
+				<copy file="${CODE_DIR}/misc/ci/mkrelease/sequoiadb-${projects.version}.spec" todir="/usr/src/packages/SPECS" />
+				<stafTools workType="shell" workHost="LOCAL" common="rpmbuild -bb -bb sequoiadb-${projects.version}.spec" workDir="/usr/src/packages/SPECS" waitTime="30m" />
+				<copy file="/usr/src/packages/RPMS/x86_64/sequoiadb-${projects.version}-1.x86_64.rpm" todir="${RELEASE_DIR}" failonerror="false" />
+		        <delete file="/usr/src/packages/SOURCES/sequoiadb-${projects.version}.tar.gz" />
+		        <delete file="/usr/src/packages/SPECS/sequoiadb-${projects.version}.spec" />
 				<echo message="Make rpm package completed.." />
 
 
@@ -372,8 +372,8 @@
 				<exec executable="python" timeout="100000" dir="${WORKSPACE}/sequoiadb/script" outputproperty="RPM.INFO" resultproperty="ret.rpm">
 					<arg line=" package.py" />
 				</exec>
-				<copy file="${WORKSPACE}/sequoiadb/script/sequoiadb-${project.version}-1.x86_64.rpm" todir="${RELEASE_DIR}" />
-				<delete file="${WORKSPACE}/sequoiadb/script/sequoiadb-${project.version}-1.x86_64.rpm" />
+				<copy file="${WORKSPACE}/sequoiadb/script/sequoiadb-${projects.version}-1.x86_64.rpm" todir="${RELEASE_DIR}" />
+				<delete file="${WORKSPACE}/sequoiadb/script/sequoiadb-${projects.version}-1.x86_64.rpm" />
 			</then>
 		</if> -->
 	</target>
