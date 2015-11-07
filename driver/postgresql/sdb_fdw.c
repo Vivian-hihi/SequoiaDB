@@ -1662,59 +1662,59 @@ void sdbAppendConstantValue ( sdbbson *bsonObj, const char *keyName,
 /* sdbApplicableOpExpressionList iterate all operators and push the predicates
  * that's able to handled by sdb into sdb
  */
-static List *sdbApplicableOpExpressionList( RelOptInfo *baserel )
-{
-   List *opExpressionList     = NIL ;
-   List *restrictInfoList     = baserel->baserestrictinfo ;
-   ListCell *restrictInfoCell = NULL ;
+//static List *sdbApplicableOpExpressionList( RelOptInfo *baserel )
+//{
+//   List *opExpressionList     = NIL ;
+//   List *restrictInfoList     = baserel->baserestrictinfo ;
+//   ListCell *restrictInfoCell = NULL ;
 
-   foreach( restrictInfoCell, restrictInfoList )
-   {
-      RestrictInfo *restrictInfo = ( RestrictInfo * )lfirst( restrictInfoCell ) ;
-      Expr *expression           = restrictInfo->clause ;
-      NodeTag expressionType     = 0 ;
-      OpExpr *opExpression       = NULL ;
-      CHAR *operatorName         = NULL ;
-      const CHAR *sdbOpName      = NULL ;
-      List *argumentList         = NIL ;
-      Var *column                = NULL ;
-      Const *constant            = NULL ;
-      BOOLEAN constantIsArray    = FALSE ;
+//   foreach( restrictInfoCell, restrictInfoList )
+//   {
+//      RestrictInfo *restrictInfo = ( RestrictInfo * )lfirst( restrictInfoCell ) ;
+//      Expr *expression           = restrictInfo->clause ;
+//      NodeTag expressionType     = 0 ;
+//      OpExpr *opExpression       = NULL ;
+//      CHAR *operatorName         = NULL ;
+//      const CHAR *sdbOpName      = NULL ;
+//      List *argumentList         = NIL ;
+//      Var *column                = NULL ;
+//      Const *constant            = NULL ;
+//      BOOLEAN constantIsArray    = FALSE ;
 
-      /* we only support operator expressions */
-      expressionType = nodeTag( expression ) ;
-      if( T_OpExpr != expressionType )
-      {
-         continue ;
-      }
-      opExpression = ( OpExpr* )expression ;
-      operatorName = get_opname( opExpression->opno ) ;
-      /* we only support > >= < <= <> = */
-      sdbOpName    = sdbOperatorName( operatorName ) ;
-      if( !sdbOpName )
-      {
-         continue ;
-      }
-      /* we only support simple binary operators */
-      argumentList = opExpression->args ;
-      column = ( Var* )sdbFindArgumentOfType( argumentList, T_Var ) ;
-      constant = ( Const* )sdbFindArgumentOfType( argumentList, T_Const ) ;
-      /* we skip array */
-      if( NULL != constant )
-      {
-         Oid constantArrayTypeId = get_element_type( constant->consttype ) ;
-         if( constantArrayTypeId != InvalidOid )
-         {
-            constantIsArray = TRUE ;
-         }
-      }
-      if( NULL != column && NULL != constant && !constantIsArray )
-      {
-         opExpressionList = lappend( opExpressionList, opExpression ) ;
-      }
-   }
-   return opExpressionList ;
-}
+//      /* we only support operator expressions */
+//      expressionType = nodeTag( expression ) ;
+//      if( T_OpExpr != expressionType )
+//      {
+//         continue ;
+//      }
+//      opExpression = ( OpExpr* )expression ;
+//      operatorName = get_opname( opExpression->opno ) ;
+//      /* we only support > >= < <= <> = */
+//      sdbOpName    = sdbOperatorName( operatorName ) ;
+//      if( !sdbOpName )
+//      {
+//         continue ;
+//      }
+//      /* we only support simple binary operators */
+//      argumentList = opExpression->args ;
+//      column = ( Var* )sdbFindArgumentOfType( argumentList, T_Var ) ;
+//      constant = ( Const* )sdbFindArgumentOfType( argumentList, T_Const ) ;
+//      /* we skip array */
+//      if( NULL != constant )
+//      {
+//         Oid constantArrayTypeId = get_element_type( constant->consttype ) ;
+//         if( constantArrayTypeId != InvalidOid )
+//         {
+//            constantIsArray = TRUE ;
+//         }
+//      }
+//      if( NULL != column && NULL != constant && !constantIsArray )
+//      {
+//         opExpressionList = lappend( opExpressionList, opExpression ) ;
+//      }
+//   }
+//   return opExpressionList ;
+//}
 
 /* sdbColumnList takes the planner's information and extract all columns that
  * may be used in projections, joins, and filter clauses, de-duplicate those
@@ -2622,12 +2622,12 @@ static void SdbGetForeignPaths( PlannerInfo *root,
                                  RelOptInfo *baserel,
                                  Oid foreignTableId )
 {
+   INT32 rc                 = SDB_OK ;
    BlockNumber pageCount    = 0 ;
    INT32 rowWidth           = 0 ;
    FLOAT64 selectivity      = 0.0 ;
    FLOAT64 inputRowCount    = 0.0 ;
    FLOAT64 foreignTableSize = 0.0 ;
-   List *opExpressionList   = NIL ;
    Path *foreignPath        = NULL ;
 
    /* cost estimation */
@@ -2635,6 +2635,8 @@ static void SdbGetForeignPaths( PlannerInfo *root,
    FLOAT64 totalCPUCost     = 0.0 ;
    FLOAT64 totalStartupCost = 0.0 ;
    FLOAT64 totalCost        = 0.0 ;
+
+   sdbbson condition ;
 
 #ifdef SDB_USE_OWN_POSTGRES
 
@@ -2649,10 +2651,24 @@ static void SdbGetForeignPaths( PlannerInfo *root,
 
    fdw_state = ( SdbExecState * )baserel->fdw_private ;
    /* rows estimation after applying predicates */
-   opExpressionList = sdbApplicableOpExpressionList( baserel ) ;
-   selectivity      = clauselist_selectivity( root, opExpressionList,
-                                               0, JOIN_INNER, NULL ) ;
-   inputRowCount    = clamp_row_est( fdw_state->row_count * selectivity ) ;
+   sdbbson_init( &condition ) ;
+   sdbbson_finish( &condition ) ;
+   rc = sdbGenerateFilterCondition(foreignTableId, baserel, &condition);
+   if ( SDB_OK == rc )
+   {
+      // all condition can push down
+      selectivity = clauselist_selectivity( root, baserel->baserestrictinfo,
+                                            0, JOIN_INNER, NULL ) ;
+   }
+   else
+   {
+      // condition can not push down 
+      selectivity = clauselist_selectivity( root, NIL,
+                                            0, JOIN_INNER, NULL ) ;
+   }
+   //opExpressionList = sdbApplicableOpExpressionList( baserel ) ;
+
+   inputRowCount = clamp_row_est( fdw_state->row_count * selectivity ) ;
 
    /* disk cost estimation */
    rowWidth         = get_relation_data_width( foreignTableId,
