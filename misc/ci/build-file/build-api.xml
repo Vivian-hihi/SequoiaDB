@@ -31,9 +31,9 @@
 		<mkdir dir="${root_dir}/out/images" />
 		<copydir src="${root_dir}/api" dest="${root_dir}/out/api" includes="**/*" />
 		<copydir src="${root_dir}/images" dest="${root_dir}/out/images" includes="**/*" />
-		<copy todir="${copy_tar}/out">
-    		<fileset dir="${CODE_DIR}/doc/out" includes="**/*" />
-    	</copy>
+
+		<tar destfile="${root_dir}/${project.name}-document-${projects.version}-linux.tar.gz" basedir="{CODE_DIR}/doc/out" includes="**/*" compression="gzip" />
+		<copy file="${root_dir}/${project.name}-document-${projects.version}-linux.tar.gz" todir="${RELEASE_DIR}" />
 	</target>
 
 	<target name="deploy_api_images" depends="build_offline_doc">
@@ -52,6 +52,8 @@
 
 	<target name="copy_offline_doc">
 		<delete dir="${root_dir}/out" failonerror="false" />
-		<stafTools workType="copy directory" workHost="${target_offlinedoc_tar_ip}" fileName="${copy_tar}/out" saveDir="${root_dir}" toHost="${target.deploy_tar_gz.ip}" failonerror="true"/>
+		<delete file="${root_dir}/${project.name}-document-${projects.version}-linux.tar.gz" failonerror="false" />
+		<stafTools workType="copy" workHost="${target_offlinedoc_tar_ip}" fileName="${copy_tar}/${project.name}-document-${projects.version}-linux.tar.gz" saveDir="${root_dir}" toHost="${target.deploy_tar_gz.ip}" failonerror="true"/>
+		<untar src="${root_dir}/${project.name}-document-${projects.version}-linux.tar.gz" dest="${root_dir}/out" compression="gzip" />
 	</target>
 </project>

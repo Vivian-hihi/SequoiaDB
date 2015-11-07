@@ -28,13 +28,16 @@
 		<echo message="software.package.name=${software.package.name}" />
 		<property name="driver.package.name" value="${project.name}-driver-${projects.version}-${os.and.platform}.tar.gz" />
 		<echo message="driver.package.name=${driver.package.name}" />
+		<property name="document.package.name" value="${project.name}-document-${projects.version}-linux.tar.gz" />
+		<echo message="driver.package.name=${driver.package.name}" />
 
-		<echo message="Begin to copy the ${software.package.name} ${driver.package.name} ..." />
+		<echo message="Begin to copy the ${software.package.name} ${driver.package.name} ${document.package.name}..." />
 		<copy file="${release.path}/${software.package.name}" tofile="${release.path}/${software.package.name}.${BUILD_NUMBER}" />
 		<copy file="${release.path}/${driver.package.name}" tofile="${release.path}/${driver.package.name}.${BUILD_NUMBER}" />
 
 		<stafTools workType="copy" workHost="LOCAL" fileName="${release.path}/${software.package.name}.${BUILD_NUMBER}" saveDir="${copy_tar}" toHost="${target.deploy_tar_gz.ip}" failonerror="true"/>
 		<stafTools workType="copy" workHost="LOCAL" fileName="${release.path}/${driver.package.name}.${BUILD_NUMBER}" saveDir="${copy_tar}" toHost="${target.deploy_tar_gz.ip}" failonerror="true"/>
+		<stafTools workType="copy" workHost="LOCAL" fileName="${release.path}/${document.package.name}" saveDir="${copy_tar}" toHost="${target.deploy_tar_gz.ip}" failonerror="true"/>
 		<echo message="delete the file ${copy_tar}/build.version" />
 		<stafTools workType="delete" workHost="LOCAL" fileName="${copy_tar}/build.version" failonerror="false"/>
 
