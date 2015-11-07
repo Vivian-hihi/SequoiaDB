@@ -19,6 +19,9 @@ list collectionspaces</pre>
 <pre class="prettyprint lang-javascript">
 {
   "Name": "testfoo"
+}
+{
   "Name":"big"
-  ...
-}</pre>
+}
+Return 2 row(s).
+</pre>

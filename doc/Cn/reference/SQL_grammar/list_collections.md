@@ -23,4 +23,5 @@ list collections</pre>
 {
 	"Name":"big.small"
 }
-...</pre>
+Return 2 row(s).
+</pre>
