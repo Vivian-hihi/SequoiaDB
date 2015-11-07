@@ -32,7 +32,7 @@
 		<copydir src="${root_dir}/api" dest="${root_dir}/out/api" includes="**/*" />
 		<copydir src="${root_dir}/images" dest="${root_dir}/out/images" includes="**/*" />
 
-		<tar destfile="${root_dir}/${project.name}-document-${projects.version}-linux.tar.gz" basedir="{CODE_DIR}/doc/out" includes="**/*" compression="gzip" />
+		<tar destfile="${root_dir}/${project.name}-document-${projects.version}-linux.tar.gz" basedir="{root_dir}/out" includes="**/*" compression="gzip" />
 		<copy file="${root_dir}/${project.name}-document-${projects.version}-linux.tar.gz" todir="${RELEASE_DIR}" />
 	</target>
 
