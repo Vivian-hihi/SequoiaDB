@@ -362,7 +362,7 @@ namespace DriverTest
             insertor.Add("Contact", sInsertor);
             ObjectId insertID = (ObjectId)coll.Insert(insertor);
             Assert.IsNotNull(insertID);
-
+            
             // Create Index with default sort buffer size
             BsonDocument key = new BsonDocument();
             key.Add("Last Name", 1);
@@ -376,7 +376,7 @@ namespace DriverTest
             key2.Add("First Name2", 1);
             string name2 = "index_name_without_buffer";
             coll.CreateIndex(name2, key2, true, true, 0);
-
+            
             // Create Index with user-defined sort buffer
             BsonDocument key3 = new BsonDocument();
             key3.Add("Last Name3", 1);
@@ -398,7 +398,7 @@ namespace DriverTest
             {
                 Assert.IsTrue(e.ErrorCode == new BaseException("SDB_INVALIDARG").ErrorCode);
             }
-
+            
             // Get Indexes
             DBCursor cursor = coll.GetIndex(name);
             Assert.IsNotNull(cursor);
@@ -412,7 +412,7 @@ namespace DriverTest
             BsonDocument index2 = cursor2.Next();
             Assert.IsNotNull(index2);
             Assert.IsTrue(index2["IndexDef"].AsBsonDocument["name"].AsString.Equals(name2));
-
+            
             // Get Indexes
             DBCursor cursor3 = coll.GetIndex(name3);
             Assert.IsNotNull(cursor3);
@@ -461,7 +461,9 @@ namespace DriverTest
         [TestMethod()]
         public void BulkInsertTest()
         {
+            long count = 0;
             List<BsonDocument> insertor = new List<BsonDocument>();
+            /// default
             for (int i = 0; i < 10; i++)
             {
                 BsonDocument obj = new BsonDocument();
@@ -472,8 +474,35 @@ namespace DriverTest
             coll.BulkInsert(insertor, 0);
             BsonDocument condition = new BsonDocument();
             condition.Add("operation", "BulkInsert");
-            long count = coll.GetCount(condition);
+            count = coll.GetCount(condition);
             Assert.IsTrue(count == 10);
+
+            /// set EnsureOID to be false
+            insertor.Clear();
+            coll.EnsureOID = false;
+            for (int i = 0; i < 10; i++)
+            {
+                BsonDocument obj = new BsonDocument();
+                obj.Add("operation", "BulkInsert");
+                obj.Add("date", DateTime.Now.ToString());
+                insertor.Add(obj);
+            }
+            coll.BulkInsert(insertor, 0);
+            count = coll.GetCount(condition);
+            Assert.IsTrue(count == 20);
+            /// set EnsureOID to be true
+            insertor.Clear();
+            coll.EnsureOID = true;
+            for (int i = 0; i < 10; i++)
+            {
+                BsonDocument obj = new BsonDocument();
+                obj.Add("operation", "BulkInsert");
+                obj.Add("date", DateTime.Now.ToString());
+                insertor.Add(obj);
+            }
+            coll.BulkInsert(insertor, 0);
+            count = coll.GetCount(condition);
+            Assert.IsTrue(count == 30);
         }
 
         [TestMethod()]
