@@ -35,7 +35,7 @@
 		<copy file="${release.path}/${software.package.name}" tofile="${release.path}/${software.package.name}.${BUILD_NUMBER}" />
 		<copy file="${release.path}/${driver.package.name}" tofile="${release.path}/${driver.package.name}.${BUILD_NUMBER}" />
 
-		<!-- <if>
+		<if>
 			<equals arg1="${CPU.version}" arg2="x86" />
 			<then>
 				<copy file="${release.path}/${document.package.name}" tofile="${release.path}/${document.package.name}.${BUILD_NUMBER}" />
@@ -43,7 +43,7 @@
 				<stafTools workType="copy" workHost="LOCAL" fileName="${release.path}/${document.package.name}" saveDir="${copy_tar}" toHost="${target.deploy_tar_gz.ip}" failonerror="true"/>
 				<delete file="${release.path}/${document.package.name}.${BUILD_NUMBER}" failonerror="false" />
 			</then>
-		</if> -->
+		</if>
 		<!-- The solution of trunk -->
 
 		<stafTools workType="copy" workHost="LOCAL" fileName="${release.path}/${software.package.name}.${BUILD_NUMBER}" saveDir="${copy_tar}" toHost="${target.deploy_tar_gz.ip}" failonerror="true"/>

@@ -321,13 +321,13 @@
 			<fileset dir="${RELEASE_DIR}/sequoiadb" includes="**/.svn" />
 		</delete>
 
-		<!-- <antcall target="mk-doc" inheritAll="true" /> -->
+		<antcall target="mk-doc" inheritAll="true" />
 		<!-- The solution of trunk -->
 
-		<copy todir="${RELEASE_DIR}/sequoiadb/doc">
+		<!-- <copy todir="${RELEASE_DIR}/sequoiadb/doc">
 			<fileset dir="${CODE_DIR}/doc/out" />
 		</copy>
-		<copydir src="${CODE_DIR}/doc/manual" dest="${RELEASE_DIR}/sequoiadb/doc/manual" includes="**/*" />
+		<copydir src="${CODE_DIR}/doc/manual" dest="${RELEASE_DIR}/sequoiadb/doc/manual" includes="**/*" /> -->
 		<!-- The temp solution of branch 1.12 -->
 
 		<copy todir="${RELEASE_DIR}/sequoiadb/license">
