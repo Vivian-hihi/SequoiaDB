@@ -94,15 +94,15 @@ namespace import
    #define IMP_EXPLAIN_BATCHSIZE        "batch insert records number, minimun 1, maximum 100000, default: 100"
    #define IMP_EXPLAIN_FILENAME         "input files name, multiple files or directories must be separated by ',', don't support subdirectories recursively. use standard input if both --exec and --file are not specified"
    #define IMP_EXPLAIN_TYPE             "type of record to load, default: csv (json,csv)"
-   #define IMP_EXPLAIN_FIELDS           "field name, separated by comma (',')(e.g. \"--fields name,age\"). "\
-                                        "field type and default value can be specified for csv input (e.g. \"--fields name string,age int default 18\")"
+   #define IMP_EXPLAIN_FIELDS           "field name, separated by comma (',')(e.g. --fields \"name,age\"). "\
+                                        "field type and default value can be specified for csv input (e.g. --fields \"name string,age int default 18\")"
    #define IMP_EXPLAIN_HEADERLINE       "for csv input, whether the first line defines field name. if --fields is defined, the first line will be ignored if this options is true"
    #define IMP_EXPLAIN_SPARSE           "for csv input, whether to add missing field, default: true"
    #define IMP_EXPLAIN_EXTRA            "for csv input, whether to add missing value, default: false"
    #define IMP_EXPLAIN_LINEPRIORITY     "reverse the priority for record and character delimiter, default: true"
    #define IMP_EXPLAIN_ERRORSTOP        "whether stop by hitting error, default: false"
    #define IMP_EXPLAIN_FORCE            "force to insert the records that are not in utf-8 format, default: false"
-   #define IMP_EXPLAIN_SSL              "use SSL connection (arg: [true|false], e.g. \"--ssl true\"), default: false"
+   #define IMP_EXPLAIN_SSL              "use SSL connection (arg: [true|false], e.g. --ssl true), default: false"
    #define IMP_EXPLAIN_JOBS             "importing job num at once, default: 1"
    #define IMP_EXPLAIN_BUFFER           "set buffer size(unit:MB), default: 64"
    #define IMP_EXPLAIN_DRYRUN           "only parse record, don't import to database"
