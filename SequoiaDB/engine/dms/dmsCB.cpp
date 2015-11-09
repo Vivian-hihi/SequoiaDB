@@ -1297,8 +1297,6 @@ namespace engine
          cs._freeIndexSize = totalIndexFreeSize ;
          cs._totalLobSize = su->totalSize( DMS_SU_LOB ) ;
          cs._freeLobSize = totalLobFreeSize ;
-         cs._lsn = su->getCurrentLSN() ;
-         cs._committed = su->getValidFlag() ;
          su->dumpInfo ( cs._collections, sys ) ;
          csList.insert ( cs ) ;
       }

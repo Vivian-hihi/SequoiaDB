@@ -106,8 +106,6 @@ namespace engine
                      CHAR *buf,
                      UINT32 &readLen ) ;
 
-      INT32 sync() ;
-
    private:
       INT32 _initFileHeader( const dmsStorageInfo &info,
                              _pmdEDUCB *cb ) ;

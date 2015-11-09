@@ -76,7 +76,6 @@ namespace engine
    */
    _dmsStorageBase::_dmsStorageBase( const CHAR *pSuFileName,
                                      dmsStorageInfo *pInfo )
-   :_lastLSN( 0 )
    {
       SDB_ASSERT( pSuFileName, "SU file name can't be NULL" ) ;
 
@@ -1010,31 +1009,10 @@ namespace engine
       {
          _validFlag = 0 ;
          _dmsHeader->_validFlag = 0 ;
-         _dmsHeader->_lsn = 0 ;
 
          /// flush to file
          ossMmapFile::flush( 0, TRUE ) ;
       }
-   }
-
-   void _dmsStorageBase::commitValidFlag()
-   {
-      if ( !_validFlag && _dmsHeader )
-      {
-         _validFlag = 1 ;
-         _dmsHeader->_validFlag = 1 ;
-         _dmsHeader->_lsn = _lastLSN.fetch() ;
-         ossMmapFile::flush( 0, TRUE ) ;
-      }
-   }
-
-   void _dmsStorageBase::updateLastLSN( UINT64 offset )
-   {
-      if ( -1 != offset )
-      {
-         _lastLSN.swapGreaterThan( offset ) ;
-      }
-      return ;
    }
 
    /*

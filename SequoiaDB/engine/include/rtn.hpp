@@ -503,8 +503,6 @@ namespace engine
                               BOOLEAN &needReset ) ;
 
    INT32 rtnSyncDB( pmdEDUCB *cb ) ;
-
-   INT32 rtnRecoverDB() ;
 }
 
 #endif

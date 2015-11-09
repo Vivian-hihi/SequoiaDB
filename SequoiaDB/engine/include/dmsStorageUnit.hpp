@@ -124,8 +124,6 @@ namespace engine
          INT64       totalFreePages( UINT32 type = DMS_SU_ALL ) const ;
          INT64       totalFreeSize( UINT32 type = DMS_SU_ALL ) const ;
          void        getStatInfo( dmsStorageUnitStat &statInfo ) ;
-         UINT64      getCurrentLSN() const ;
-         UINT32      getValidFlag() const ;
 
       public:
          void     dumpInfo ( vector<CHAR*> &collectionList,
@@ -243,8 +241,6 @@ namespace engine
          //loadExtent will init extent records
          INT32    loadExtent ( dmsMBContext *mbContext, const CHAR *pBuffer,
                                UINT16 numPages ) ;
-
-         INT32    sync( _pmdEDUCB *cb ) ;
 
       private :
          rtnAccessPlanManager                _apm ;

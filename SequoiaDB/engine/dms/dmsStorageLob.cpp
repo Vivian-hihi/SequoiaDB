@@ -467,10 +467,6 @@ namespace engine
          dpscb->writeData( info ) ;
       }
 
-      if ( NULL != cb )
-      {
-         _dmsData->updateLastLSN( cb->getEndLsn() ) ;
-      }
    done:
       if ( !locked )
       {
@@ -651,10 +647,6 @@ namespace engine
          dpscb->writeData( info ) ;
       }
 
-      if ( NULL != cb )
-      {
-         _dmsData->updateLastLSN( cb->getEndLsn() ) ;
-      }
    done:
       if ( !locked )
       {
@@ -951,10 +943,6 @@ namespace engine
          dpscb->writeData( info ) ;
       }
 
-      if ( NULL != cb )
-      {
-         _dmsData->updateLastLSN( cb->getEndLsn() ) ;
-      }
    done:
       if ( !locked )
       {
@@ -1572,10 +1560,6 @@ namespace engine
          dpscb->writeData( info ) ;
       }
 
-      if ( NULL != cb )
-      {
-         _dmsData->updateLastLSN( cb->getEndLsn() ) ;
-      }
    done:
       if ( !locked )
       {
@@ -1654,37 +1638,6 @@ namespace engine
          mbContext->mbUnlock() ;
       }
       PD_TRACE_EXITRC( SDB__DMSSTORAGELOB__ROLLBACK, rc ) ;
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGELOB_SYNC, "_dmsStorageLob::sync" )
-   INT32 _dmsStorageLob::sync()
-   {
-      INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY( SDB__DMSSTORAGELOB_SYNC ) ;
-      if ( !isOpened() )
-      {
-         goto done ;
-      }
-
-      rc = _data.sync() ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "failed to sync lob data file:%d", rc ) ;
-         goto error ;
-      }
-
-      rc = flushAll( TRUE ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "failed to sync lob meta[%s], rc:%d",
-                 _suFileName, rc ) ;
-         goto error ;
-      }
-   done:
-      PD_TRACE_EXITRC( SDB__DMSSTORAGELOB_SYNC, rc ) ;
       return rc ;
    error:
       goto done ;

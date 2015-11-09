@@ -197,19 +197,9 @@ namespace engine
       // if start form crash, should full sync
       if ( !pmdGetStartup().isOK() )
       {
-         INT32 rc = rtnRecoverDB() ;
-         if ( SDB_OK != rc )
-         {
-            PD_LOG( PDERROR, "failed to recover db:%d", rc ) ;
-            PD_LOG( PDEVENT, "Sync Session[%s]: The db data is abnormal, "
-                    "need to synchronize full data", sessionName() ) ;
-            _status = CLS_SESSION_STATUS_FULL_SYNC ;
-         }
-         else
-         {
-            SDB_ASSERT( pmdGetStartup().isOK(), "must be ok" ) ;
-            PD_LOG( PDEVENT, "recovery is done. no need to sync all data." ) ;
-         }
+         PD_LOG( PDEVENT, "Sync Session[%s]: The db data is abnormal, "
+                 "need to synchronize full data", sessionName() ) ;
+         _status = CLS_SESSION_STATUS_FULL_SYNC ;
       }
 
       // full sync to repl sync, need to reset repl bucket

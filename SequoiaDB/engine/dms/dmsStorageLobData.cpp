@@ -996,27 +996,5 @@ namespace engine
    error:
       goto done ;
    }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_DMSSTORAGELOBDATA_SYNC, "_dmsStorageLobData::sync" )
-   INT32 _dmsStorageLobData::sync()
-   {
-      INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY( SDB_DMSSTORAGELOBDATA_SYNC ) ;
-      if ( isOpened() )
-      {
-         rc = ossFsync( &_file ) ;
-         if ( SDB_OK != rc )
-         {
-            PD_LOG( PDERROR, "failed to fsync file[%s], rc:%d",
-                    _fileName.c_str(), rc ) ;
-            goto error ;
-         }
-      }
-   done:
-      PD_TRACE_EXITRC( SDB_DMSSTORAGELOBDATA_SYNC, rc ) ;
-      return rc ;
-   error:
-      goto done ;
-   }
 }
 

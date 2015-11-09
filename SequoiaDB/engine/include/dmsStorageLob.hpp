@@ -135,8 +135,6 @@ namespace engine
                       _pmdEDUCB *cb,
                       SDB_DPSCB *dpscb ) ;
 
-      /// ensure no one is writing at this moment
-      INT32 sync() ;
    protected:
       INT32  _openLob( const CHAR *path,
                        BOOLEAN createNew,

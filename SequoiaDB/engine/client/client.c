@@ -9781,6 +9781,7 @@ SDB_EXPORT INT32 sdbSyncDB( sdbConnectionHandle cHandle,
    }
    else if ( NULL != info && 5 <= bson_size( info ) )
    {
+      /// TODO: we do not have a framework which return a context even get error.
       rc = SDB_COORD_NOT_ALL_DONE ;
       goto error ;
    }

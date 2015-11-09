@@ -1500,10 +1500,6 @@ namespace engine
                       "rc: %d", pName, rc ) ;
       }
 
-      if ( NULL != cb )
-      {
-         updateLastLSN( cb->getEndLsn() ) ;
-      }
    done:
       if ( context )
       {
@@ -1666,10 +1662,6 @@ namespace engine
                       "%d", rc ) ;
       }
 
-      if ( NULL != cb )
-      {
-         updateLastLSN( cb->getEndLsn() ) ;
-      }
    done:
       if ( metalocked )
       {
@@ -1820,10 +1812,6 @@ namespace engine
                       "rc: %d", rc ) ;
       }
 
-      if ( NULL != cb )
-      {
-         updateLastLSN( cb->getEndLsn() ) ;
-      }
    done:
       if ( isTransLocked )
       {
@@ -1956,10 +1944,6 @@ namespace engine
                       rc ) ;
       }
 
-      if ( NULL != cb )
-      {
-         updateLastLSN( cb->getEndLsn() ) ;
-      }
    done :
       if ( metalocked )
       {
@@ -2227,10 +2211,6 @@ namespace engine
          }
       }
 
-      if ( NULL != cb )
-      {
-         updateLastLSN( cb->getEndLsn() ) ;
-      }
    done:
       // release the lock immediately if it is not transaction-operation,
       // the transaction-operation's lock will release in rollback or commit
@@ -2578,10 +2558,6 @@ namespace engine
          }
       }
 
-      if ( NULL != cb )
-      {
-         updateLastLSN( cb->getEndLsn() ) ;
-      }
    done :
       if ( 0 != logRecSize )
       {
@@ -2848,10 +2824,6 @@ namespace engine
          }
       }
 
-      if ( NULL != cb )
-      {
-         updateLastLSN( cb->getEndLsn() ) ;
-      }
    done :
       if ( 0 != logRecSize )
       {

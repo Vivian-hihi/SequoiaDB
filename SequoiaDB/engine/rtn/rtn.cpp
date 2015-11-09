@@ -1260,7 +1260,6 @@ namespace engine
       PD_TRACE_ENTRY( SDB_RTNSYNCDB ) ;
       SDB_DMSCB *dmsCB = sdbGetDMSCB () ;
       SDB_DPSCB *dpsCB = sdbGetDPSCB() ;
-      std::set<monCollectionSpace> allCS ;
       BOOLEAN dmsLocked = FALSE ;
 
       PD_LOG( PDEVENT, "begin to sync db data" ) ;
@@ -1282,41 +1281,6 @@ namespace engine
          }
       }
 
-      dmsCB->dumpInfo( allCS, TRUE ) ;
-      for ( std::set<monCollectionSpace>::const_iterator itr = allCS.begin();
-            itr != allCS.end();
-            ++itr )
-      {
-         const CHAR *csName = itr->_name ;
-         dmsStorageUnit *su = NULL ;
-         dmsStorageUnitID suID = DMS_INVALID_CS ;
-
-         rc = dmsCB->nameToSUAndLock ( csName, suID,
-                                       &su, EXCLUSIVE ) ;
-         if ( SDB_DMS_CS_NOTEXIST == rc )
-         {
-            /// may be removed. 
-            continue ;
-         }
-         else if ( SDB_OK != rc )
-         {
-            PD_LOG( PDERROR, "failed to get lock of cs[%s], rc:%d",
-                    csName, rc ) ;
-            goto error ;
-         }
-         else
-         {
-            rc = su->sync( cb ) ;
-            if ( SDB_OK != rc )
-            {
-               dmsCB->suUnlock( suID, EXCLUSIVE ) ;
-               PD_LOG( PDERROR, "failed to sync cs[%s], rc:%d",
-                       csName, rc ) ;
-               goto error ;
-            }
-            dmsCB->suUnlock( suID, EXCLUSIVE ) ;
-         }
-      }
    done:
       if ( dmsLocked )
       {

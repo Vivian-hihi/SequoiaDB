@@ -94,10 +94,6 @@ namespace engine
          // set EDU to wait status
          eduMgr->waitEDU ( cb->getID() ) ;
 
-         /// try to sync db first.
-         /// TODO: merge page cleaning and sync db to one completed function
-         _tryToSyncDB() ;
-
          cleanSUID = DMS_INVALID_SUID ;
          // dispatch the first storage unit in clean pending list
          // 1) suLock to lock the collection space, so that no one is able to
