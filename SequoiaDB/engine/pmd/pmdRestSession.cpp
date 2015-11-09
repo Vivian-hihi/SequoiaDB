@@ -938,7 +938,7 @@ namespace engine
       pAdaptor->getQuery( _restSession, FIELD_NAME_OPTIONS, &pOption ) ;
       if ( NULL != pOption )
       {
-         rc = fromjson( pOption, option ) ;
+         rc = fromjson( pOption, option, 0 ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG_MSG( PDERROR, "field's format error:field=%s, value=%s", 
@@ -1007,7 +1007,7 @@ namespace engine
       pAdaptor->getQuery( _restSession, FIELD_NAME_OPTIONS, &pOption ) ;
       if ( NULL != pOption )
       {
-         rc = fromjson( pOption, option ) ;
+         rc = fromjson( pOption, option, 0 ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG_MSG( PDERROR, "field's format error:field=%s, value=%s", 
@@ -1195,7 +1195,7 @@ namespace engine
 
       if ( NULL != pMatch )
       {
-         rc = fromjson( pMatch, match ) ;
+         rc = fromjson( pMatch, match, 0 ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG_MSG( PDERROR, "field's format error:field=%s[or %s], "
@@ -1207,7 +1207,7 @@ namespace engine
 
       if ( NULL != pSelector )
       {
-         rc = fromjson( pSelector, selector ) ;
+         rc = fromjson( pSelector, selector, 0 ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG_MSG( PDERROR, "field's format error:field=%s, value=%s", 
@@ -1218,7 +1218,7 @@ namespace engine
 
       if ( NULL != pOrder )
       {
-         rc = fromjson( pOrder, order ) ;
+         rc = fromjson( pOrder, order, 0 ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG_MSG( PDERROR, "field's format error:field=%s[or %s], "
@@ -1230,7 +1230,7 @@ namespace engine
 
       if ( NULL != pHint )
       {
-         rc = fromjson( pHint, hint ) ;
+         rc = fromjson( pHint, hint, 0 ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG_MSG( PDERROR, "field's format error:field=%s, value=%s", 
@@ -1363,7 +1363,7 @@ namespace engine
                goto error ;
             }
 
-            rc = fromjson( pUpdate, update ) ;
+            rc = fromjson( pUpdate, update, 0 ) ;
             if ( SDB_OK != rc )
             {
                PD_LOG_MSG( PDERROR, "field's format error:field=%s, value=%s", 
@@ -1478,7 +1478,7 @@ namespace engine
          goto error ;
       }
 
-      rc = fromjson( pInsertor, insertor ) ;
+      rc = fromjson( pInsertor, insertor, 0 ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG_MSG( PDERROR, "field's format error:field=%s,value=%s", 
@@ -1559,7 +1559,7 @@ namespace engine
 
       if ( NULL != pMatcher )
       {
-         rc = fromjson( pMatcher, matcher ) ;
+         rc = fromjson( pMatcher, matcher, 0 ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG_MSG( PDERROR, "field's format error:field=%s[or %s],"
@@ -1578,7 +1578,7 @@ namespace engine
          goto error ;
       }
 
-      rc = fromjson( pUpdator, updator ) ;
+      rc = fromjson( pUpdator, updator, 0 ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG_MSG( PDERROR, "field's format error:field=%s,value=%s", 
@@ -1589,7 +1589,7 @@ namespace engine
       pAdaptor->getQuery( _restSession, FIELD_NAME_HINT, &pHint ) ;
       if ( NULL != pHint )
       {
-         rc = fromjson( pHint, hint ) ;
+         rc = fromjson( pHint, hint, 0 ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG_MSG( PDERROR, "field's format error:field=%s,value=%s", 
@@ -1606,7 +1606,7 @@ namespace engine
          pAdaptor->getQuery( _restSession, REST_KEY_NAME_SET_ON_INSERT, &pSetOnInsert ) ;
          if ( NULL != pSetOnInsert )
          {
-            rc = fromjson( pSetOnInsert, setOnInsert ) ;
+            rc = fromjson( pSetOnInsert, setOnInsert, 0 ) ;
             if ( SDB_OK != rc )
             {
                PD_LOG_MSG( PDERROR, "field's format error:field=%s,value=%s", 
@@ -1694,7 +1694,7 @@ namespace engine
 
       if ( NULL != pDeletor )
       {
-         rc = fromjson( pDeletor, deletor ) ;
+         rc = fromjson( pDeletor, deletor, 0 ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG_MSG( PDERROR, "field's format error:field=%s[or %s],"
@@ -1707,7 +1707,7 @@ namespace engine
       pAdaptor->getQuery( _restSession, FIELD_NAME_HINT, &pHint ) ;
       if ( NULL != pHint )
       {
-         rc = fromjson( pHint, hint ) ;
+         rc = fromjson( pHint, hint, 0 ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG_MSG( PDERROR, "field's format error:field=%s,value=%s", 
@@ -1767,7 +1767,7 @@ namespace engine
          goto error ;
       }
 
-      rc = fromjson( pOption, option ) ;
+      rc = fromjson( pOption, option, 0 ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG_MSG( PDERROR, "field's format error:field=%s, value=%s", 
@@ -1846,7 +1846,7 @@ namespace engine
          goto error ;
       }
 
-      rc = fromjson( pIndexDef, indexDef ) ;
+      rc = fromjson( pIndexDef, indexDef, 0 ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG_MSG( PDERROR, "field's format error:field=%s, value=%s", 
@@ -2068,7 +2068,7 @@ namespace engine
             }
          }
 
-         rc = fromjson( pSplitQuery, splitQuery ) ;
+         rc = fromjson( pSplitQuery, splitQuery, 0 ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG_MSG( PDERROR, "field's format error:field=%s[or %s],"
@@ -2087,7 +2087,7 @@ namespace engine
 
          if ( NULL != pSplitEndQuery )
          {
-            rc = fromjson( pSplitEndQuery, splitEndQuery ) ;
+            rc = fromjson( pSplitEndQuery, splitEndQuery, 0 ) ;
             if ( SDB_OK != rc )
             {
                PD_LOG_MSG( PDERROR, "field's format error:field=%s,value=%s", 
@@ -2194,7 +2194,7 @@ namespace engine
          goto error ;
       }
 
-      rc = fromjson( pLowbound, lowbound ) ;
+      rc = fromjson( pLowbound, lowbound, 0 ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG_MSG( PDERROR, "field's format error:field=%s, value=%s", 
@@ -2212,7 +2212,7 @@ namespace engine
          goto error ;
       }
 
-      rc = fromjson( pUpbound, upbound ) ;
+      rc = fromjson( pUpbound, upbound, 0 ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG_MSG( PDERROR, "field's format error:field=%s, value=%s", 
@@ -2302,7 +2302,7 @@ namespace engine
 
       if ( NULL != pMatcher )
       {
-         rc = fromjson( pMatcher, matcher ) ;
+         rc = fromjson( pMatcher, matcher, 0 ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG_MSG( PDERROR, "field's format error:field=%s[or %s],"
@@ -2315,7 +2315,7 @@ namespace engine
       pAdaptor->getQuery( _restSession, FIELD_NAME_HINT, &pHint ) ;
       if ( NULL != pHint )
       {
-         rc = fromjson( pHint, hint ) ;
+         rc = fromjson( pHint, hint, 0 ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG_MSG( PDERROR, "field's format error:field=%s,value=%s", 
@@ -2375,7 +2375,7 @@ namespace engine
 
       if ( NULL != pMatch )
       {
-         rc = fromjson( pMatch, match ) ;
+         rc = fromjson( pMatch, match, 0 ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG_MSG( PDERROR, "field's format error:field=%s[or %s], "
@@ -2387,7 +2387,7 @@ namespace engine
 
       if ( NULL != pSelector )
       {
-         rc = fromjson( pSelector, selector ) ;
+         rc = fromjson( pSelector, selector, 0 ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG_MSG( PDERROR, "field's format error:field=%s, value=%s", 
@@ -2398,7 +2398,7 @@ namespace engine
 
       if ( NULL != pOrder )
       {
-         rc = fromjson( pOrder, order ) ;
+         rc = fromjson( pOrder, order, 0 ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG_MSG( PDERROR, "field's format error:field=%s[or %s], "

@@ -70,7 +70,8 @@ namespace bson
     \retval SDB_OK Connection Success
     \retval Others Connection Fail
 */
-   SDB_EXPORT INT32 fromjson ( const string &str, BSONObj &out ) ;
+   SDB_EXPORT INT32 fromjson ( const string &str, BSONObj &out, 
+                               BOOLEAN isBatch = TRUE ) ;
 
 /** \fn INT32 fromjson ( const CHAR *pStr, BSONObj &out ) ;
     \brief Convert from json to BSONObj.
@@ -79,7 +80,8 @@ namespace bson
     \retval SDB_OK Connection Success
     \retval Others Connection Fail
 */
-   SDB_EXPORT INT32 fromjson ( const CHAR *pStr, BSONObj &out ) ;
+   SDB_EXPORT INT32 fromjson ( const CHAR *pStr, BSONObj &out,
+                               BOOLEAN isBatch = TRUE ) ;
 
 }
 #endif

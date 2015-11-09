@@ -41,13 +41,13 @@
 #include "utilTrace.hpp"
 namespace bson
 {
-   INT32 fromjson ( const string &str, BSONObj &out )
+   INT32 fromjson ( const string &str, BSONObj &out, BOOLEAN isBatch )
    {
-      return fromjson ( str.c_str(), out ) ;
+      return fromjson ( str.c_str(), out, isBatch ) ;
    }
 
    PD_TRACE_DECLARE_FUNCTION ( SDB_FROMJSON, "fromjson" )
-   INT32 fromjson ( const CHAR *pStr, BSONObj &out )
+   INT32 fromjson ( const CHAR *pStr, BSONObj &out, BOOLEAN isBatch )
    {
       INT32 rc         = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_FROMJSON );
@@ -70,7 +70,7 @@ namespace bson
          // out.getOwned () ;
          goto done ;
       }
-      p = json2rawbson ( pStr ) ;
+      p = json2rawbson ( pStr, isBatch ) ;
       if ( p )
       {
          BSONObj::Holder *h = (BSONObj::Holder*)p ;

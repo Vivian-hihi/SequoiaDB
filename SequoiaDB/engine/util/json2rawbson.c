@@ -49,12 +49,12 @@
 // bson, and then allocate memory and copy the bson into the new memory block.
 // This block is 4 bytes greater than bson size, for BSONObj::Holder obj, and
 // this block will be sent to fromjson() function to convert into BSONObj.
-CHAR * json2rawbson ( const CHAR *str )
+CHAR * json2rawbson ( const CHAR *str, BOOLEAN isBatch )
 {
    bson obj ;
    CHAR *p = NULL ;
    bson_init ( &obj ) ;
-   if ( jsonToBson2 ( &obj, str, 0, 1 ) )
+   if ( jsonToBson2 ( &obj, str, 0, isBatch ) )
    {
       if ( obj.data )
       {
