@@ -349,6 +349,12 @@ namespace engine
       INT32 index = 0 ;
       IControlBlock *pCB = NULL ;
 
+      if ( !_init )
+      {
+         /// not init, don't to call the rest code
+         return ;
+      }
+
       _isActive = FALSE ;
 
       // set quit flag
