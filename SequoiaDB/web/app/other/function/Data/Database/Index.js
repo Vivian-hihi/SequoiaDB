@@ -385,6 +385,8 @@ _DataDatabaseIndex.getCLInfo = function( $scope, SdbRest )
                      cataInfo['TotalRecords'] += clInfo['TotalRecords'] ;
                   }
                } ) ;
+               rangeInfo['LowBound'] = JSON.stringify( rangeInfo['LowBound'] ) ;
+               rangeInfo['UpBound'] = JSON.stringify( rangeInfo['UpBound'] ) ;
             } ) ;
          }
          else
@@ -1797,14 +1799,16 @@ _DataDatabaseIndex.showAttachCL = function( $scope, SdbRest ){
                      "webName": $scope.autoLanguage( "区间左值" ),
                      "placeholder": $scope.autoLanguage( "区间左值" ),
                      "type": "string",
-                     "value": ""
+                     "value": "",
+                     "selectList": [ '$minKey' ]
                   },
                   {
                      "name": "UpBound",
                      "webName": $scope.autoLanguage( "区间右值" ),
                      "placeholder": $scope.autoLanguage( "区间右值" ),
                      "type": "string",
-                     "value": ""
+                     "value": "",
+                     "selectList": [ '$maxKey' ]
                   }
                ]
             ]
@@ -1821,8 +1825,22 @@ _DataDatabaseIndex.showAttachCL = function( $scope, SdbRest ){
          var upbound = {} ;
          $.each( value['range'], function( index, fieldInfo ){
             var fieldName = fieldInfo['field'] ;
-            lowbound[ fieldName ] = autoTypeConvert( fieldInfo['LowBound'], true ) ;
-            upbound[ fieldName ] = autoTypeConvert( fieldInfo['UpBound'], true ) ;
+            if( fieldInfo['LowBound'] == '$minKey' || fieldInfo['LowBound'].length == 0 )
+            {
+               lowbound[ fieldName ] = { '$minKey': 1 } ;
+            }
+            else
+            {
+               lowbound[ fieldName ] = autoTypeConvert( fieldInfo['LowBound'], true ) ;
+            }
+            if( fieldInfo['UpBound'] == '$maxKey' || fieldInfo['UpBound'].length == 0 )
+            {
+               upbound[ fieldName ] = { '$maxKey': 1 } ;
+            }
+            else
+            {
+               upbound[ fieldName ] = autoTypeConvert( fieldInfo['UpBound'], true ) ;
+            }
          } ) ;
          var data = { 'cmd': 'attach collection',
                       'collectionname': mainCL[ value['name'] ]['key'],
