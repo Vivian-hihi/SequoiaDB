@@ -379,6 +379,17 @@ namespace engine
       PD_TRACE_EXIT ( SDB_DPSTRANSCB_DELTRANSCB );
    }
 
+   void dpsTransCB::dumpTransEDUList( TRANS_EDU_LIST & eduList )
+   {
+      ossScopedLock _lock( &_CBMapMutex ) ;
+      TRANS_CB_MAP::iterator iter = _cbMap.begin() ;
+      while( iter != _cbMap.end() )
+      {
+         eduList.push( iter->second->getID() ) ;
+         ++iter ;
+      }
+   }
+
    TRANS_MAP *dpsTransCB::getTransMap()
    {
       return &_TransMap;

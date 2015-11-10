@@ -2018,6 +2018,73 @@ namespace engine
       return CMD_SNAPSHOT_SESSIONS_CURRENT ;
    }
 
+   IMPLEMENT_CMD_AUTO_REGISTER(_rtnSnapshotTransactionsCurrent)
+   _rtnSnapshotTransactionsCurrent::_rtnSnapshotTransactionsCurrent()
+   {
+   }
+
+   _rtnSnapshotTransactionsCurrent::~_rtnSnapshotTransactionsCurrent ()
+   {
+   }
+
+   const CHAR *_rtnSnapshotTransactionsCurrent::name ()
+   {
+      return NAME_SNAPSHOT_TRANSACTIONS_CUR ;
+   }
+
+   RTN_COMMAND_TYPE _rtnSnapshotTransactionsCurrent::type ()
+   {
+      return CMD_SNAPSHOT_TRANSACTIONS_CUR ;
+   }
+
+   INT32 _rtnSnapshotTransactionsCurrent::doit ( _pmdEDUCB *cb,
+                                                 _SDB_DMSCB *dmsCB,
+                                                 _SDB_RTNCB *rtnCB,
+                                                 _dpsLogWrapper *dpsCB,
+                                                 INT16 w,
+                                                 INT64 *pContextID )
+   {
+      INT32 rc = SDB_OK ;
+      rtnContextTransDump *context = NULL ;
+      BSONObj matcher( _matcherBuff ) ;
+      BSONObj selector( _selectBuff ) ;
+
+      rc = rtnCB->contextNew( RTN_CONTEXT_TRANS_DUMP,
+                              (rtnContext **)&context,
+                              *pContextID, cb ) ;
+      PD_RC_CHECK( rc, PDERROR,
+                   "Failed to create new context(rc = %d)!",
+                   rc ) ;
+      rc = context->open( selector, matcher, _numToReturn, _numToSkip,
+                          isDumpCurrent() ) ;
+      PD_RC_CHECK( rc, PDERROR,
+                   "Failed to open the context(rc = %d)!",
+                   rc ) ;
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   IMPLEMENT_CMD_AUTO_REGISTER(_rtnSnapshotTransactions)
+   _rtnSnapshotTransactions::_rtnSnapshotTransactions()
+   {
+   }
+
+   _rtnSnapshotTransactions::~_rtnSnapshotTransactions()
+   {
+   }
+
+   const CHAR *_rtnSnapshotTransactions::name ()
+   {
+      return NAME_SNAPSHOT_TRANSACTIONS ;
+   }
+
+   RTN_COMMAND_TYPE _rtnSnapshotTransactions::type ()
+   {
+      return CMD_SNAPSHOT_TRANSACTIONS ;
+   }
+
    IMPLEMENT_CMD_AUTO_REGISTER(_rtnSnapshotCollections)
    _rtnSnapshotCollections::_rtnSnapshotCollections ()
    {

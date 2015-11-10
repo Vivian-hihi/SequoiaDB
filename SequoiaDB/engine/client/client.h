@@ -47,6 +47,8 @@ enum SDB_SNAP_TYPE
    SDB_SNAP_DATABASE         , /**< Get the snapshot of the database */
    SDB_SNAP_SYSTEM           , /**< Get the snapshot of the system */
    SDB_SNAP_CATALOG          , /**< Get the snapshot of the catalog */
+   SDB_SNAP_TRANSACTION_CURRENT, /**< Get the snapshot of current transaction */
+   SDB_SNAP_TRANSACTION,       /**< Get the snapshot of all the transactions */
    
    SDB_SNAP_END /**< Not a snapshot type, just use to mark the end of current enum */
 };

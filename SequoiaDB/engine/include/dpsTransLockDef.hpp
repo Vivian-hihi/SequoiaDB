@@ -45,6 +45,7 @@
 #include "dms.hpp"
 #include "ossAtomic.hpp"
 #include "msg.h"
+#include "../util/fromjson.hpp"
 
 namespace engine
 {
@@ -80,7 +81,15 @@ namespace engine
 
       BOOLEAN operator<( const dpsTransLockId &rhs ) const;
 
+      BOOLEAN operator==( const dpsTransLockId &rhs ) const;
+
+      dpsTransLockId & operator=( const dpsTransLockId & rhs ) ;
+
       std::string toString() const;
+
+      bson::BSONObj toBson() const ;
+
+      void reset() ;
    public:
       UINT32               _logicCSID;
       dmsExtentID          _recordExtentID;

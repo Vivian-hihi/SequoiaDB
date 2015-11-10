@@ -1185,6 +1185,38 @@ namespace engine
          virtual RTN_COMMAND_TYPE type () ;
    };
 
+   class _rtnSnapshotTransactionsCurrent : public _rtnSnapshot
+   {
+      DECLARE_CMD_AUTO_REGISTER()
+
+      public:
+         _rtnSnapshotTransactionsCurrent () ;
+         ~_rtnSnapshotTransactionsCurrent () ;
+
+         virtual BOOLEAN isDumpCurrent() { return TRUE ;}
+         virtual const CHAR * name () ;
+         virtual RTN_COMMAND_TYPE type () ;
+         virtual INT32 doit ( _pmdEDUCB *cb, _SDB_DMSCB *dmsCB,
+                              _SDB_RTNCB *rtnCB, _dpsLogWrapper *dpsCB,
+                              INT16 w = 1, INT64 *pContextID = NULL  ) ;
+         virtual BOOLEAN writable (){ return TRUE ;}
+
+         virtual const CHAR *getIntrCMDName(){ return NULL ;}
+   };
+
+   class _rtnSnapshotTransactions : public _rtnSnapshotTransactionsCurrent
+   {
+      DECLARE_CMD_AUTO_REGISTER()
+
+      public:
+         _rtnSnapshotTransactions () ;
+         ~_rtnSnapshotTransactions () ;
+
+         virtual BOOLEAN isDumpCurrent() { return FALSE ;}
+         virtual const CHAR * name () ;
+         virtual RTN_COMMAND_TYPE type () ;
+   };
+
    class _rtnTest : public _rtnCommand
    {
       protected:

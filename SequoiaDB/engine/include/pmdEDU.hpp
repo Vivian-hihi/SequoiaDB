@@ -54,6 +54,7 @@
 #include "dpsLogDef.hpp"
 #include "dpsTransCB.hpp"
 #include "dpsTransLockDef.hpp"
+#include "dpsDef.hpp"
 #endif // SDB_ENGINE
 
 #include <set>
@@ -365,6 +366,7 @@ namespace engine
                          DPS_TRANSLOCK_TYPE lockType ) ;
       void  delLockInfo( const dpsTransLockId &lockId ) ;
       DpsTransCBLockList *getLockList() ;
+      void  clearLockList() ;
       INT32 createTransaction() ;
       void  delTransaction() ;
       void  addTransNode( MsgRouteID &routeID ) ;
@@ -379,6 +381,8 @@ namespace engine
       void  setTransRC( INT32 rc ) { _transRC = rc ; }
       INT32 getTransRC() const { return _transRC ; }
       void  clearTransInfo() ;
+      void setWaitLock( const dpsTransLockId &lockId ) ;
+      void clearWaitLock() ;
 
       void dumpInfo ( monEDUSimple &simple ) ;
       void dumpInfo ( monEDUFull &full ) ;
@@ -388,6 +392,8 @@ namespace engine
 
       UINT32 getDmsLockLevel() const { return _dmsLockLevel ; }
       void   setDmsLockLevel( UINT32 lockLevel ) { _dmsLockLevel = lockLevel ; }
+
+      void dumpTransInfo( monTransInfo &transInfo ) ;
 
    #endif // SDB_ENGINE
 
@@ -466,9 +472,11 @@ namespace engine
       DPS_LSN_OFFSET          _relatedTransLSN ;
       DPS_LSN_OFFSET          _curTransLSN ;
       DPS_TRANS_ID            _curTransID ;
+      ossSpinXLatch           _transLockLstMutex ;
       DpsTransCBLockList      _transLockLst ;
       DpsTransNodeMap         *_pTransNodeMap ;
       INT32                   _transRC ;
+      dpsTransLockId          _waitLock ;
 
       /// aligned memory.
       void                    *_alignedMem ;

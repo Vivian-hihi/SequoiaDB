@@ -223,7 +223,8 @@ namespace engine
                                           REQUESTID_MAP &sendNodes,
                                           BOOLEAN isResend,
                                           MSG_ROUTE_SERVICE_TYPE type =
-                                          MSG_ROUTE_SHARD_SERVCIE );
+                                          MSG_ROUTE_SHARD_SERVCIE,
+                                          BOOLEAN ignoreError = FALSE ) ;
 
    /*
       Send to primary node group

@@ -169,6 +169,8 @@ namespace engine
       void dumpInfo ( std::set<monEDUSimple> &info ) ;
       void dumpInfo ( std::set<monEDUFull> &info ) ;
 
+      void dumpTransInfo( EDUID eduId, monTransInfo &transInfo ) ;
+
       void resetMon ()
       {
          std::map<EDUID, pmdEDUCB*>::iterator it ;

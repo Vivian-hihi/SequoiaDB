@@ -39,6 +39,7 @@
 #ifndef DPSTRANSCB_HPP_
 #define DPSTRANSCB_HPP_
 
+#include <queue>
 #include "oss.hpp"
 #include "ossAtomic.hpp"
 #include "dpsDef.hpp"
@@ -65,6 +66,20 @@ namespace engine
    typedef std::map<DPS_TRANS_ID, _pmdEDUCB * >    TRANS_CB_MAP;
    typedef std::map<DPS_LSN_OFFSET, DPS_TRANS_ID>  TRANS_LSN_ID_MAP;
    typedef std::map<DPS_TRANS_ID, DPS_LSN_OFFSET>  TRANS_ID_LSN_MAP;
+   typedef std::queue< EDUID >                     TRANS_EDU_LIST ;
+
+   class _monTransInfo : public SDBObject
+   {
+   public:
+      DPS_TRANS_ID         _transID ;
+      DPS_LSN_OFFSET       _curTransLsn ;
+      UINT64               _eduID ;
+      UINT32               _locksNum ;
+      dpsTransLockId       _waitLock ;
+      DpsTransCBLockList   _lockList ;
+
+   } ;
+   typedef class _monTransInfo monTransInfo ;
 
 
    /*
@@ -115,6 +130,7 @@ namespace engine
 
       void addTransCB( DPS_TRANS_ID transID, _pmdEDUCB *eduCB ) ;
       void delTransCB( DPS_TRANS_ID transID ) ;
+      void dumpTransEDUList( TRANS_EDU_LIST  &eduList ) ;
       UINT32 getTransCBSize() ;
       void termAllTrans() ;
       TRANS_MAP *getTransMap() ;

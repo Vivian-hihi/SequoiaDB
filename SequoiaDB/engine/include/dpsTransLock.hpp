@@ -160,6 +160,22 @@ namespace engine
 
    } ;
 
+   class DPS_TRANS_WAIT_LOCK
+   {
+   public:
+
+      DPS_TRANS_WAIT_LOCK( _pmdEDUCB *eduCB, const dpsTransLockId & lockId ) ;
+
+      DPS_TRANS_WAIT_LOCK( _pmdEDUCB *eduCB, UINT32 logicCSID,
+                           UINT16 collectionID,
+                           const _dmsRecordID *recordID ) ;
+
+      ~DPS_TRANS_WAIT_LOCK() ;
+
+   private:
+      _pmdEDUCB         *_eduCB ;       
+   };
+
 }
 
 #endif //DPSTRANSLOCK_HPP_

@@ -2137,7 +2137,8 @@ namespace engine
                                           pmdEDUCB *cb,
                                           REQUESTID_MAP &sendNodes,
                                           BOOLEAN isResend,
-                                          MSG_ROUTE_SERVICE_TYPE type )
+                                          MSG_ROUTE_SERVICE_TYPE type,
+                                          BOOLEAN ignoreError )
    {
       INT32 rc = SDB_OK;
       PD_TRACE_ENTRY ( SDB_RTNCOSENDREQUESTTONODEGROUPS ) ;
@@ -2164,7 +2165,10 @@ namespace engine
             PD_LOG( PDERROR, "Send msg[opCode: %d, TID: %u] to group[%u] "
                     "failed, rc:%d", pMsg->opCode, pMsg->TID,
                     iter->first, rc ) ;
-            goto error ;
+            if ( !ignoreError )
+            {
+               goto error ;
+            }
          }
          ++iter;
       }

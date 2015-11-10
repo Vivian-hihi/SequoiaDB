@@ -153,6 +153,24 @@ namespace engine
       }
       PD_TRACE_EXIT ( SDB__PMDEDUMGR_DUMPINFO2 );
    }
+
+   void _pmdEDUMgr::dumpTransInfo( EDUID eduId,
+                                   monTransInfo &transInfo )
+   {
+      std::map<EDUID, pmdEDUCB*>::iterator iter ;
+      EDUMGR_SLOCK
+      iter = _runQueue.find( eduId ) ;
+      if ( _runQueue.end() ==  iter )
+      {
+         iter = _idleQueue.find( eduId ) ;
+         if ( _idleQueue.end() == iter )
+         {
+            return ;
+         }
+      }
+      iter->second->dumpTransInfo( transInfo ) ;
+   }
+
 #endif // SDB_ENGINE
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDEDUMGR_DESTROYALL, "_pmdEDUMgr::destroyAll" )
