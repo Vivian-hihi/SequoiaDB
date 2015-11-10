@@ -1707,7 +1707,7 @@ _DataDatabaseIndex.showRemoveCL = function( $scope, SdbRest ){
                   $scope.clID = 0 ;
                   $scope.showCSInfo( $scope.csID ) ;
                }
-               _DataDatabaseIndex.getCLInfo( $scope, SdbRest ) ;
+               _DataDatabaseIndex.getCSInfo( $scope, SdbRest ) ;
             }, function( errorInfo ){
                $scope.Components.Confirm.isShow = true ;
                $scope.Components.Confirm.type = 1 ;
