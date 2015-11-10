@@ -66,9 +66,33 @@
                             <id>1447122217</id>
                             <cnname>可视化数据操作</cnname>
                             <enname>Visualization Data Operation</enname>
-                            <cnpath>SdbDoc_Cn/installation/deployment/visualization_data_operation.html</cnpath>
-                            <enpath>SdbDoc_En/installation/deployment/visualization_data_operation_en.html</enpath>
                             <enabled>true</enabled>
+                            <objlist>
+                                <obj>
+                                    <id>1447137269</id>
+                                    <cnname>操作说明</cnname>
+                                    <enname>Instruction</enname>
+                                    <cnpath>SdbDoc_Cn/installation/deployment/visualization_data_operation/instruction.html</cnpath>
+                                    <enpath>SdbDoc_En/installation/deployment/visualization_data_operation/instruction_en.html</enpath>
+                                    <enabled>true</enabled>
+                                </obj>
+                                <obj>
+                                    <id>1447137279</id>
+                                    <cnname>数据库操作</cnname>
+                                    <enname>Database Operation</enname>
+                                    <cnpath>SdbDoc_Cn/installation/deployment/visualization_data_operation/database_operation.html</cnpath>
+                                    <enpath>SdbDoc_En/installation/deployment/visualization_data_operation/database_operation_en.html</enpath>
+                                    <enabled>true</enabled>
+                                </obj>
+                                <obj>
+                                    <id>1447137286</id>
+                                    <cnname>数据操作</cnname>
+                                    <enname>Data Operation</enname>
+                                    <cnpath>SdbDoc_Cn/installation/deployment/visualization_data_operation/data_operation.html</cnpath>
+                                    <enpath>SdbDoc_En/installation/deployment/visualization_data_operation/data_operation_en.html</enpath>
+                                    <enabled>true</enabled>
+                                </obj>
+                            </objlist>
                         </obj>
                     </objlist>
                 </obj>
