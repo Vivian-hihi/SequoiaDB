@@ -33,9 +33,9 @@ test_machine_no5=rh-ci006
 test_machine_no6=rh-ci007
 
 js_list1=collectionAlter
-js_list2=dropCL,dropCS,dropIndex,insert,listCL,listCS,procedures,update,upsert,rest
+js_list2=dropCL,dropCS,index,insert,listCL,listCS,procedures,update,upsert,rest
 js_list3=query
-js_list4=domain,createIndex,bakupRestore,delete
+js_list4=domain,bakupRestore,delete
 js_list5=aggregate,countHint,createCL,createCS,cursor,sql,subCL,syndate
 js_list6=split,operators,transaction
 

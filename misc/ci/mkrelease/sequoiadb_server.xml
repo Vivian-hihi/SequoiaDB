@@ -124,6 +124,15 @@
                 </fileExists>
             </ruleList>
         </changePermissions>
+        <touchFile>
+            <path>~${username}/.bashrc</path>
+            <ruleList>
+                <fileExists>
+                    <negate>1</negate>
+                    <path>~${username}/.bashrc</path>
+                </fileExists>
+            </ruleList>
+        </touchFile>
         <runProgram>
             <abortOnError>0</abortOnError>
             <program>echo</program>
@@ -137,7 +146,6 @@
                     <text>${installdir}</text>
                 </fileContentTest>
                 <fileExists>
-                    <negate>1</negate>
                     <path>~${username}/.bashrc</path>
                 </fileExists>
             </ruleList>
@@ -328,7 +336,6 @@
                     <text>${installdir}/bin</text>
                 </fileContentTest>
                 <fileExists>
-                    <negate>1</negate>
                     <path>~${username}/.bashrc</path>
                 </fileExists>
             </ruleList>
