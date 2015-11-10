@@ -433,6 +433,15 @@ namespace engine
       rc = su->data()->getMBContext( &mbContext, pCollectionShortName, -1 ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to get dms mb context, rc: %d", rc ) ;
 
+      /// if collection don't have $id index, can't modify( update or remove )
+      if ( OSS_BIT_TEST( flags, FLG_QUERY_MODIFY ) &&
+           OSS_BIT_TEST( mbContext->mb()->_attributes, DMS_MB_ATTR_NOIDINDEX ) )
+      {
+         PD_LOG( PDERROR, "Can not modify data when autoIndexId is false" ) ;
+         rc = SDB_RTN_AUTOINDEXID_IS_FALSE ;
+         goto error ;
+      }
+
       // create a new context
       rc = rtnCB->contextNew ( ( flags & FLG_QUERY_PARALLED ) ?
                                RTN_CONTEXT_PARADATA : RTN_CONTEXT_DATA,
