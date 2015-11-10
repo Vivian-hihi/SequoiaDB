@@ -60,11 +60,13 @@
 
     ![](visualization_data_operation_cs_cn_3.jpg)
 
-    1.4 点击&lt;**确定**&gt;。
+    1.4 其他参数说明，请参考 [数据模型 - 集合空间](SdbDoc_Cn/data_model/collectionspace.html) 。
+
+    1.5 点击&lt;**确定**&gt;。
 
     ![](visualization_data_operation_cs_cn_4.jpg)
 
-    1.5 创建成功;。
+    1.6 创建成功;。
 
     ![](visualization_data_operation_cs_cn_5.jpg)
 
@@ -83,15 +85,17 @@
 
     ![](visualization_data_operation_cl_cn_3.jpg)
 
-    1.4 点击&lt;**确定**&gt;。
+    1.4 其他参数说明，请参考 [数据模型 - 集合](SdbDoc_Cn/data_model/collection.html) 。
+
+    1.5 点击&lt;**确定**&gt;。
 
     ![](visualization_data_operation_cl_cn_4.jpg)
 
-    1.5 等待创建结束。
+    1.6 等待创建结束。
 
     ![](visualization_data_operation_cl_cn_5.jpg)
 
-    1.6 创建成功。
+    1.7 创建成功。
 
     ![](visualization_data_operation_cl_cn_6.jpg)
 
