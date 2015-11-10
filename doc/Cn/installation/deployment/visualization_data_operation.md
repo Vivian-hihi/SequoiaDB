@@ -2,23 +2,23 @@
 
 **Note: **
 
-新界面的设计采用更合理的方式展示信息。
+-   新界面的设计采用更合理的方式展示信息。
 
-1. 所有**<span style="color:#00BFDD">天蓝色</span>**的字体、按钮都是可点击的。
+    1. 所有**<span style="color:#00BFDD">天蓝色</span>**的字体、按钮都是可点击的。
 
-![](visualization_data_operation_cn_4.jpg)
+    ![](visualization_data_operation_cn_4.jpg)
 
-![](visualization_data_operation_cn_5.jpg)
+    ![](visualization_data_operation_cn_5.jpg)
 
-2. 所有出现 ![](visualization_data_operation_cn_7.jpg) 图标的，当鼠标停在图标上，都会出现相关提示。
+    2. 所有出现 ![](visualization_data_operation_cn_7.jpg) 图标的，当鼠标停在图标上，都会出现相关提示。
 
-![](visualization_data_operation_cn_6.jpg)
+    ![](visualization_data_operation_cn_6.jpg)
 
-3. 当出现 **...** 省略符时，把鼠标停留在上面，会出现完整的信息。
+    3. 当出现 **...** 省略符时，把鼠标停留在上面，会出现完整的信息。
 
-![](visualization_data_operation_cn_8.jpg)
+    ![](visualization_data_operation_cn_8.jpg)
 
-![](visualization_data_operation_cn_9.jpg)
+    ![](visualization_data_operation_cn_9.jpg)
 
 ##安装 OM 服务##
 
@@ -78,7 +78,8 @@
 
     ![](visualization_data_operation_cl_cn_2.jpg)
 
-    1.3 现在要创建一个**普通类型**的集合，因此&lt;**集合类型**&gt;不需要修改，填写新建集合的名字。
+    1.3 现在要创建一个 **普通类型** 的集合，因此&lt;**集合类型**&gt;不需要修改，填写新建集合的名字。
+    **Note: ** 集合名可以自由取。
 
     ![](visualization_data_operation_cl_cn_3.jpg)
 
@@ -93,6 +94,48 @@
     1.6 创建成功。
 
     ![](visualization_data_operation_cl_cn_6.jpg)
+
+-   创建集合（水平范围分区）
+
+    1.1 点击&lt;**创建集合**&gt;。
+
+    ![](visualization_data_operation_cl_cn_1.jpg)
+
+    1.2 选择创建集合所属的集合空间。这里仍然默认选**foo**。
+
+    ![](visualization_data_operation_cl_cn_2.jpg)
+
+    1.3 **集合类型** 选 **水平范围分区**。
+
+    ![](visualization_data_operation_cl_cn_7.jpg)
+
+    1.4 填写新建集合的名字。
+    **Note: ** 集合名可以自由取。
+
+    ![](visualization_data_operation_cl_cn_8.jpg)
+
+    1.5 填写分区键，这里演示取 **id** 和 **time**，详细说明参考 [基本操作 - 数据分区 - 分区键](SdbDoc_Cn/basic_operation/sharding/shardingkey.html) 。
+    **Note: ** 分区键可以有多个，通过后面的 **+** 和 **-** 可以添加或删除分区键。
+
+    ![](visualization_data_operation_cl_cn_9.jpg)
+
+    ![](visualization_data_operation_cl_cn_10.jpg)
+
+    ![](visualization_data_operation_cl_cn_11.jpg)
+    
+    1.6 其他参数说明，请参考 [数据模型 - 集合](SdbDoc_Cn/data_model/collection.html) 。
+
+    1.7 点击&lt;**确定**&gt;。
+
+    ![](visualization_data_operation_cl_cn_4.jpg)
+
+    1.8 等待创建结束。
+
+    ![](visualization_data_operation_cl_cn_5.jpg)
+
+    1.9 创建成功。
+
+    ![](visualization_data_operation_cl_cn_12.jpg)
 
 
 
