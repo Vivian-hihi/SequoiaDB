@@ -293,7 +293,7 @@
             <stentry>-71</stentry>
          </strow>
          <strow>
-            <stentry>Requested node does not exist</stentry>
+            <stentry>Reserved</stentry>
             <stentry>-72</stentry>
          </strow>
          <strow>
@@ -537,7 +537,7 @@
             <stentry>-132</stentry>
          </strow>
          <strow>
-            <stentry>Unable to find the group information on catalog</stentry>
+            <stentry>No activated group information on catalog</stentry>
             <stentry>-133</stentry>
          </strow>
          <strow>
@@ -645,7 +645,7 @@
             <stentry>-159</stentry>
          </strow>
          <strow>
-            <stentry>Failed to operate on node only</stentry>
+            <stentry>Failed to operate on node</stentry>
             <stentry>-160</stentry>
          </strow>
          <strow>
@@ -669,7 +669,7 @@
             <stentry>-165</stentry>
          </strow>
          <strow>
-            <stentry>The command can't be run in the serice plane</stentry>
+            <stentry>The command can't be run in the service plane</stentry>
             <stentry>-166</stentry>
          </strow>
          <strow>
@@ -821,7 +821,7 @@
             <stentry>-203</stentry>
          </strow>
          <strow>
-            <stentry>Unable to remove the last node in a group</stentry>
+            <stentry>Unable to remove the last node or primary in a group</stentry>
             <stentry>-204</stentry>
          </strow>
          <strow>
@@ -829,11 +829,11 @@
             <stentry>-205</stentry>
          </strow>
          <strow>
-            <stentry>Unable to remove catalog for non-empty database</stentry>
+            <stentry>Unable to remove primary catalog or catalog group for non-empty database</stentry>
             <stentry>-206</stentry>
          </strow>
          <strow>
-            <stentry>Group does not exist</stentry>
+            <stentry>Reserved</stentry>
             <stentry>-207</stentry>
          </strow>
          <strow>
@@ -1103,6 +1103,106 @@
          <strow>
             <stentry>Node is in restoring</stentry>
             <stentry>-274</stentry>
+         </strow>
+         <strow>
+            <stentry>There are some collections in the collection space</stentry>
+            <stentry>-275</stentry>
+         </strow>
+         <strow>
+            <stentry>'localhost' and '127.0.0.1' cannot be used mixed with other hostname and IP address</stentry>
+            <stentry>-276</stentry>
+         </strow>
+         <strow>
+            <stentry>If use 'localhost' and '127.0.0.1' for hostname, coord and catalog must in the same host </stentry>
+            <stentry>-277</stentry>
+         </strow>
+         <strow>
+            <stentry>The special group is not data group</stentry>
+            <stentry>-278</stentry>
+         </strow>
+         <strow>
+            <stentry>can not update/delete data when autoindexid is false</stentry>
+            <stentry>-279</stentry>
+         </strow>
+         <strow>
+            <stentry>can not step up when primary node exists or LSN is not the biggest</stentry>
+            <stentry>-280</stentry>
+         </strow>
+         <strow>
+            <stentry>Image address is conflict with the self cluster</stentry>
+            <stentry>-281</stentry>
+         </strow>
+         <strow>
+            <stentry>The data group does not have image group</stentry>
+            <stentry>-282</stentry>
+         </strow>
+         <strow>
+            <stentry>The data group has image group</stentry>
+            <stentry>-283</stentry>
+         </strow>
+         <strow>
+            <stentry>The image is in enabled status</stentry>
+            <stentry>-284</stentry>
+         </strow>
+         <strow>
+            <stentry>The cluster's image does not configured</stentry>
+            <stentry>-285</stentry>
+         </strow>
+         <strow>
+            <stentry>This cluster and image cluster is both writable</stentry>
+            <stentry>-286</stentry>
+         </strow>
+         <strow>
+            <stentry>This cluster is readonly</stentry>
+            <stentry>-287</stentry>
+         </strow>
+         <strow>
+            <stentry>Sorting of 'query and modify' must use index</stentry>
+            <stentry>-288</stentry>
+         </strow>
+         <strow>
+            <stentry>'query and modify' can't use skip and limit in multiple nodes or sub-collections</stentry>
+            <stentry>-289</stentry>
+         </strow>
+         <strow>
+            <stentry>Given path is not empty</stentry>
+            <stentry>-290</stentry>
+         </strow>
+         <strow>
+            <stentry>Exist one index which can cover this scene</stentry>
+            <stentry>-291</stentry>
+         </strow>
+         <strow>
+            <stentry>The cluster's image has already configured</stentry>
+            <stentry>-292</stentry>
+         </strow>
+         <strow>
+            <stentry>The command is in local mode</stentry>
+            <stentry>-293</stentry>
+         </strow>
+         <strow>
+            <stentry>The object is not a special object in sdb shell</stentry>
+            <stentry>-294</stentry>
+         </strow>
+         <strow>
+            <stentry>The specified user already exist</stentry>
+            <stentry>-295</stentry>
+         </strow>
+         <strow>
+            <stentry>The collection is empty</stentry>
+            <stentry>-296</stentry>
+         </strow>
+         <strow>
+            <stentry>LOB sequence exists</stentry>
+            <stentry>-297</stentry>
+         </strow>
+         <strow>
+            <stentry>cluster do not exist</stentry>
+            <stentry>-298</stentry>
+         </strow>
+         <strow>
+            <stentry>business do not exist</stentry>
+            <stentry>-299</stentry>
          </strow>
       </simpletable>
    </body>

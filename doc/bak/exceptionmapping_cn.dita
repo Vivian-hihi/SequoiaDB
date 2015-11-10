@@ -293,7 +293,7 @@
             <stentry>-71</stentry>
          </strow>
          <strow>
-            <stentry>请求节点不存在</stentry>
+            <stentry>保留</stentry>
             <stentry>-72</stentry>
          </strow>
          <strow>
@@ -537,7 +537,7 @@
             <stentry>-132</stentry>
          </strow>
          <strow>
-            <stentry>节点组信息不存在</stentry>
+            <stentry>不存在已激活节点组的信息</stentry>
             <stentry>-133</stentry>
          </strow>
          <strow>
@@ -821,7 +821,7 @@
             <stentry>-203</stentry>
          </strow>
          <strow>
-            <stentry>不能删除组内唯一的节点</stentry>
+            <stentry>不能删除组内唯一的节点或者主节点</stentry>
             <stentry>-204</stentry>
          </strow>
          <strow>
@@ -829,11 +829,11 @@
             <stentry>-205</stentry>
          </strow>
          <strow>
-            <stentry>系统存在其它组时不能删除编目节点和组</stentry>
+            <stentry>系统存在其它组时不能删除主编目节点和编目节点组</stentry>
             <stentry>-206</stentry>
          </strow>
          <strow>
-            <stentry>分区组不存在</stentry>
+            <stentry>保留</stentry>
             <stentry>-207</stentry>
          </strow>
          <strow>
@@ -1103,6 +1103,106 @@
          <strow>
             <stentry>节点正在启动恢复</stentry>
             <stentry>-274</stentry>
+         </strow>
+         <strow>
+            <stentry>集合空间中存在有效集合</stentry>
+            <stentry>-275</stentry>
+         </strow>
+         <strow>
+            <stentry>'localhost'和'127.0.0.1'不能与其它hostname和IP地址混合使用</stentry>
+            <stentry>-276</stentry>
+         </strow>
+         <strow>
+            <stentry>如果使用'localhost'和'127.0.0.1'作为节点主机名，协调节点与编目节点必须在同一主机上</stentry>
+            <stentry>-277</stentry>
+         </strow>
+         <strow>
+            <stentry>指定分区组不是数据分区组</stentry>
+            <stentry>-278</stentry>
+         </strow>
+         <strow>
+            <stentry>建立集合时如果指定autoindexid为false，则无法进行update/delete</stentry>
+            <stentry>-279</stentry>
+         </strow>
+         <strow>
+            <stentry>当存在主节点或者本地LSN不为最大值时无法强行升主</stentry>
+            <stentry>-280</stentry>
+         </strow>
+         <strow>
+            <stentry>镜像地址和本集群地址冲突</stentry>
+            <stentry>-281</stentry>
+         </strow>
+         <strow>
+            <stentry>数据组不存在镜像</stentry>
+            <stentry>-282</stentry>
+         </strow>
+         <strow>
+            <stentry>数据组存在镜像</stentry>
+            <stentry>-283</stentry>
+         </strow>
+         <strow>
+            <stentry>镜像处于生效状态</stentry>
+            <stentry>-284</stentry>
+         </strow>
+         <strow>
+            <stentry>集群未配置镜像</stentry>
+            <stentry>-285</stentry>
+         </strow>
+         <strow>
+            <stentry>本集群和镜像集群都为可写状态</stentry>
+            <stentry>-286</stentry>
+         </strow>
+         <strow>
+            <stentry>集群为只读模式</stentry>
+            <stentry>-287</stentry>
+         </strow>
+         <strow>
+            <stentry>在’查询并修改‘操作使用排序时必须使用索引</stentry>
+            <stentry>-288</stentry>
+         </strow>
+         <strow>
+            <stentry>’查询并修改‘操作不能在多个节点或子表上执行skip和limit操作</stentry>
+            <stentry>-289</stentry>
+         </strow>
+         <strow>
+            <stentry>指定目录不为空</stentry>
+            <stentry>-290</stentry>
+         </strow>
+         <strow>
+            <stentry>已经存在一个可以处理本场景的索引</stentry>
+            <stentry>-291</stentry>
+         </strow>
+         <strow>
+            <stentry>集群已配置镜像</stentry>
+            <stentry>-292</stentry>
+         </strow>
+         <strow>
+            <stentry>命令为本地运行模式</stentry>
+            <stentry>-293</stentry>
+         </strow>
+         <strow>
+            <stentry>不是一个特殊类型的Sdb Shell对象</stentry>
+            <stentry>-294</stentry>
+         </strow>
+         <strow>
+            <stentry>指定用户已存在</stentry>
+            <stentry>-295</stentry>
+         </strow>
+         <strow>
+            <stentry>表记录为空</stentry>
+            <stentry>-296</stentry>
+         </strow>
+         <strow>
+            <stentry>大对象的序列已经存在</stentry>
+            <stentry>-297</stentry>
+         </strow>
+         <strow>
+            <stentry>集群不存在</stentry>
+            <stentry>-298</stentry>
+         </strow>
+         <strow>
+            <stentry>业务不存在</stentry>
+            <stentry>-299</stentry>
          </strow>
       </simpletable>
    </body>

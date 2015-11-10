@@ -155,6 +155,12 @@
              2. If it is not specifed, the default value is false.</stentry>
 				</strow>
 				<strow>
+					<stentry>--transactiontimeout</stentry>
+					<stentry>--</stentry>
+					<stentry>num</stentry>
+					<stentry>Timeout of waiting the transaction-lock(in second), default:60, value range:[0,3600]</stentry>
+				</strow>
+				<strow>
 					<stentry>--numpreload</stentry>
 					<stentry>--</stentry>
 					<stentry>num</stentry>
@@ -266,10 +272,16 @@
 					<stentry>Enable authentication. default is true</stentry>
 				</strow>
 				<strow>
-					<stentry>--fap</stentry>
+					<stentry>--arbiter</stentry>
 					<stentry>--</stentry>
-					<stentry>str</stentry>
-					<stentry>加载外部接入协议模块，需指定要加载的模块(动态链接库)名。目前暂支持fapmongo。例如：--fap fapmongo，则自动加载fapmongo.so</stentry>
+					<stentry>boolean</stentry>
+					<stentry>Set node as an arbiter only. Default is false.</stentry>
+				</strow>
+				<strow>
+					<stentry>--planbuckets</stentry>
+					<stentry>--</stentry>
+					<stentry>num</stentry>
+					<stentry>The buckets of access plan cache. Sdb will not cache any access plan if it is zero</stentry>
 				</strow>
 			</simpletable>
 			<note>
