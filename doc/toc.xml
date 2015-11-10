@@ -62,6 +62,14 @@
                             <enpath>SdbDoc_En/installation/deployment/visualization_installation_en.html</enpath>
                             <enabled>true</enabled>
                         </obj>
+                        <obj>
+                            <id>1447122217</id>
+                            <cnname>可视化数据操作</cnname>
+                            <enname>Visualization Data Operation</enname>
+                            <cnpath>SdbDoc_Cn/installation/deployment/visualization_data_operation.html</cnpath>
+                            <enpath>SdbDoc_En/installation/deployment/visualization_data_operation_en.html</enpath>
+                            <enabled>true</enabled>
+                        </obj>
                     </objlist>
                 </obj>
                 <obj>
