@@ -39,7 +39,9 @@
   --weight              --     num       节点选举权重，默认值为10，取值范围[1, 100]
   --usessl              --     boolean   允许客户端使用 SSL 连接（仅限企业版），默认为 false
   --auth                --     boolean   开启鉴权功能，默认为 true
-  --fap                 --     str       加载外部接入协议模块，需指定要加载的模块(动态链接库)名。目前暂支持fapmongo。例如：--fap fapmongo，则自动加载fapmongo.so
+  --planbuckets         --     num       访问计划缓存内桶的个数。当其为零时Sdb将不会缓存任何访问计划
+  --arbiter             --     boolean   将节点设置成为一个仲裁节点。默认为false。
+  --transactiontimeout  --     num       事务锁等待超时时间（单位：秒）,默认为:60,取值范围[0,3600]
 
 **Note:**
 
