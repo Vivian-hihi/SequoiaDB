@@ -143,7 +143,7 @@
                      <tr ng-if="csList.length > 0 && clList.length > 0">
                         <td><a class="linkButton" ng-click="showRemoveCL()">{{autoLanguage("删除集合")}}</a></td>
                      </tr>
-                     <tr ng-if="csList.length > 0 && clList.length > 0 && moduleMode == 'distribution' && mainCLNum > 0">
+                     <tr ng-if="csList.length > 0 && clList.length > 0 && moduleMode == 'distribution' && clList.length > mainCLNum && mainCLNum > 0">
                         <td><a class="linkButton" ng-click="showAttachCL()">{{autoLanguage("挂载集合")}}</a></td>
                      </tr>
                      <tr ng-if="csList.length > 0 && clList.length > 0 && moduleMode == 'distribution' && partitionCLNum > 0">
