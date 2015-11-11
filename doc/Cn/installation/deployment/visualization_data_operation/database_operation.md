@@ -37,6 +37,7 @@
     ![](visualization_data_operation_cl_cn_2.jpg)
 
     1.3 现在要创建一个 **普通类型** 的集合，因此&lt;**集合类型**&gt;不需要修改，填写新建集合的名字。
+
     **Note: ** 集合名可以自由取。
 
     ![](visualization_data_operation_cl_cn_3.jpg)
@@ -91,7 +92,7 @@
 
     1.7 点击&lt;**确定**&gt;。
 
-    ![](visualization_data_operation_cl_cn_4.jpg)
+    ![](visualization_data_operation_rangecl_cn_1.jpg)
 
     1.8 等待创建结束。
 
@@ -137,7 +138,7 @@
 
     1.7 点击&lt;**确定**&gt;。
 
-    ![](visualization_data_operation_cl_cn_4.jpg)
+    ![](visualization_data_operation_hashcl_cn_1.jpg)
 
     1.8 等待创建结束。
 
