@@ -267,8 +267,8 @@
             </ruleList>
         </propertiesFileSet>
         <runProgram>
-            <program>/etc/init.d/sdbcm</program>
-            <programArguments>start</programArguments>
+            <program>service</program>
+            <programArguments> sdbcm start</programArguments>
             <ruleList>
                 <platformTest>
                     <type>linux</type>
