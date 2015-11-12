@@ -654,15 +654,15 @@ function parseConditionValue( condition )
             filter[ field['field'] ] = { '$size': fieldValue } ;
             break ;
          case 'regex':
-            var binary = fieldValue ;
-            var binType = '' ;
-            if( binary.length > 0 && binary.charAt(0) == '(' && binary.indexOf( ')' ) >= 0 )
+            var regex = trim( fieldValue ) ;
+            var options = '' ;
+            if( regex.charAt(0) == '/' && regex.indexOf( '/', 1 ) > 0 )
             {
-               var right = binary.indexOf( ')' ) ;
-               binType = binary.substr( 1, right - 1 ) ;
-               binary = binary.substr( right + 1 ) ;
+               var right = regex.indexOf( '/', 1 ) ;
+               options = regex.substr( right + 1 ) ;
+               regex = regex.substr( 1, right - 1 ) ;
             }
-            filter[ field['field'] ] = { '$regex': binary, '$type': binType } ;
+            filter[ field['field'] ] = { '$regex': regex, '$options': options } ;
             break ;
          case 'type':
             fieldValue = fieldValue.toLowerCase() ;
