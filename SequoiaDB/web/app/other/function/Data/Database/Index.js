@@ -1689,7 +1689,7 @@ _DataDatabaseIndex.showRemoveCL = function( $scope, SdbRest ){
 <td style="width:40%;background-color:#F1F4F5;"><b>Key</b></td>\
 <td style="width:60%;background-color:#F1F4F5;"><b>Value</b></td>\
 </tr>\
-<tr ng-repeat="(key, value) in data.Table track by $index" ng-if="key != \'Name\' && key != \'CataInfo\' && value != undefined">\
+<tr ng-repeat="(key, value) in data.Table track by $index" ng-if="key != \'Name\' && key != \'CataInfo\' && key != \'GroupName\' && value != undefined">\
 <td>{{key}}</td>\
 <td>{{value}}</td>\
 </tr>\
