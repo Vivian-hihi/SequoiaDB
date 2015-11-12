@@ -413,7 +413,7 @@ namespace engine
       }
       goto done ;
    error_after_create :
-      rc1 = dropIndex ( context, indexID, indexLID, cb, dropDps, isSys ) ;
+      rc1 = dropIndex ( context, indexName, cb, dropDps, isSys ) ;
       if ( rc1 )
       {
          PD_LOG ( PDERROR, "Failed to clean up invalid index, rc = %d", rc1 ) ;
