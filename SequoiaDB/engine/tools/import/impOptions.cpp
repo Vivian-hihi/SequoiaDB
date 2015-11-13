@@ -78,6 +78,7 @@ namespace import
    #define IMP_OPTION_DATEFMT           "datefmt"
    #define IMP_OPTION_TIMESTAMPFMT      "timestampfmt"
    #define IMP_OPTION_TRIMSTRING        "trim"
+   #define IMP_OPTION_IGNORENULL        "ignorenull"
 
    #define IMP_EXPLAIN_HELP             "print help information"
    #define IMP_EXPLAIN_VERSION          "print version"
@@ -117,6 +118,7 @@ namespace import
    #define IMP_EXPLAIN_DATEFMT          "set date format, default: YYYY-MM-DD"
    #define IMP_EXPLAIN_TIMESTAMPFMT     "set timestamp format, default: YYYY-MM-DD-HH.mm.ss.ffffff"
    #define IMP_EXPLAIN_TRIMSTRING       "trim string (arg: [no|right|left|both]), default: no"
+   #define IMP_EXPLAIN_IGNORENULL       "ignore null field, default: false"
 
    #define _TYPE(T) po::value<T>()
 
@@ -178,6 +180,7 @@ namespace import
       (IMP_OPTION_BUFFERSIZE,          _TYPE(INT32),     IMP_EXPLAIN_BUFFER) \
       (IMP_OPTION_DRYRUN,               /* no arg */     IMP_EXPLAIN_DRYRUN) \
       (IMP_OPTION_RECORDSMEM,          _TYPE(INT32),     IMP_EXPLAIN_RECORDSMEM) \
+      (IMP_OPTION_IGNORENULL,          _TYPE(string),    IMP_EXPLAIN_IGNORENULL) \
 
    static INT32 _convertAsciiEscapeChar(const string& in, string& out)
    {
@@ -487,6 +490,7 @@ namespace import
       _bufferSize = 64;
       _dryRun = FALSE;
       _recordsMem = (INT64)1024 * 1024 * 1024 * 2; // 2GB
+      _ignoreNull = FALSE;
    }
 
    Options::~Options()
@@ -1031,6 +1035,12 @@ namespace import
          }
 
          _recordsMem = recordsMem * 1024 * 1024; // convert MB to Byte
+      }
+
+      if (has(IMP_OPTION_IGNORENULL))
+      {
+         string ignoreNull = get<string>(IMP_OPTION_IGNORENULL);
+         ossStrToBoolean(ignoreNull.c_str(), &_ignoreNull);
       }
 
    done:

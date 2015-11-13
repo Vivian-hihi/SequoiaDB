@@ -140,6 +140,7 @@ namespace import
    static string  _timestampFormat;
    static STR_TRIM_TYPE _stringTrimType = STR_TRIM_NO;
    static BOOLEAN _cast = FALSE;
+   static BOOLEAN _ignoreNull = FALSE;
 
    static inline BOOLEAN _startWith(const CHAR* data, INT32 dataLen,
                                     const CHAR* str, INT32 strLen)
@@ -3095,7 +3096,10 @@ namespace import
                                    value->strVal.str, value->strVal.length);
          break;
       case CSV_TYPE_NULL:
-         rc = bson_append_null(&obj, field.name.c_str());
+         if (!_ignoreNull)
+         {
+            rc = bson_append_null(&obj, field.name.c_str());
+         }
          break;
       case CSV_TYPE_OID:
          {
@@ -3175,7 +3179,8 @@ namespace import
                                     BOOLEAN autoAddField,
                                     BOOLEAN autoAddValue,
                                     BOOLEAN hasHeaderLine,
-                                    BOOLEAN cast)
+                                    BOOLEAN cast,
+                                    BOOLEAN ignoreNull)
    : RecordParser(fieldDelimiter,
                   stringDelimiter,
                   autoAddField,
@@ -3187,6 +3192,7 @@ namespace import
       _timestampFormat = timestampFormat;
       _stringTrimType = stringTrimType;
       _cast = cast;
+      _ignoreNull = ignoreNull;
    }
 
    CSVRecordParser::~CSVRecordParser()

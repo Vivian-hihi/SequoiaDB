@@ -120,6 +120,7 @@ namespace import
       inline INT32 bufferSize() const { return _bufferSize; }
       inline BOOLEAN dryRun() const { return _dryRun; }
       inline INT64 recordsMem() const { return _recordsMem; }
+      inline BOOLEAN ignoreNull() const { return _ignoreNull; }
 
    private:
       BOOLEAN has(CHAR* option);
@@ -180,6 +181,7 @@ namespace import
       BOOLEAN        _dryRun;
       INT32          _bufferSize;
       INT64          _recordsMem; // the records used momory threshold 
+      BOOLEAN        _ignoreNull;
 
    };
 }

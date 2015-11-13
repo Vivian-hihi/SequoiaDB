@@ -196,7 +196,8 @@ namespace import
                       BOOLEAN autoAddField,
                       BOOLEAN autoAddValue,
                       BOOLEAN hasHeaderLine,
-                      BOOLEAN cast);
+                      BOOLEAN cast,
+                      BOOLEAN ignoreNull);
       ~CSVRecordParser();
       INT32 parseRecord(const CHAR* data, INT32 length, bson& obj);
       INT32 parseFields(const CHAR* data, INT32 length);
