@@ -436,11 +436,15 @@ namespace import
    // _stringToRawXXX used to auto detect field's raw type
    // _stringToXXX used to convert data types
 
+   static inline INT32 _stringToRawNum(const CHAR* data, INT32 length,
+                                          CSV_TYPE& type, CSVFieldValue& value,
+                                          INT32& valueLength, BOOLEAN allowDot = FALSE);
+
    // the number is long type,
    // but if the number is overflow, we set it as double
    static inline INT32 _stringToRawNum(const CHAR* data, INT32 length,
                                           CSV_TYPE& type, CSVFieldValue& value,
-                                          INT32& valueLength)
+                                          INT32& valueLength, BOOLEAN allowDot)
    {
       CHAR* str = (CHAR*)data;
       INT32 len = length;
@@ -478,6 +482,13 @@ namespace import
       quo /= 10;
       intNum = 0;
       floatNum = 0;
+
+      if (allowDot && '.' == *str)
+      {
+         type = CSV_TYPE_DOUBLE;
+         // do not skip '.'
+         goto finish;
+      }
 
       type = CSV_TYPE_LONG;
       start = str;
@@ -523,6 +534,7 @@ namespace import
          goto error;
       }
 
+   finish:
       if (CSV_TYPE_LONG == type)
       {
          value.longVal = neg ? -intNum : intNum;
@@ -566,7 +578,7 @@ namespace import
       }
 
       // integer part
-      rc = _stringToRawNum(str, len, tmpType, tmpValue, intLen);
+      rc = _stringToRawNum(str, len, tmpType, tmpValue, intLen, TRUE);
       if (SDB_OK != rc)
       {
          goto error;
@@ -600,6 +612,13 @@ namespace import
       {
          str++;
          len--;
+
+         // no digit in both sides of '.'
+         if (!isdigit(*str) && !isdigit(*(str-2)))
+         {
+            rc = SDB_INVALIDARG;
+            goto error;
+         }
       }
 
       if (!isdigit(*str))
