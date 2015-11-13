@@ -60,6 +60,9 @@
 		<unjar src="${sdbtask_path}/lib/junit.jar" dest="${build_dir}" />
 		<unjar src="${sdbtask_path}/lib/junit-suse.jar" dest="${build_dir}" />
 		<unjar src="${sdbtask_path}/lib/ant-junit.jar" dest="${build_dir}" />
+
+		<unjar src="${sdbtask_path}/lib/svnant/*" dest="${build_dir}" />
+
 		<echo level="info" message="Step3 : Copy the file &lt;${sdbtask_path}/src/com/sequoiadb/ant/ant-sdbtasks.xml&gt; to &lt;${build_dir}/com/sequoiadb/ant/ant-sdbtasks.xml&gt;." />
 		<copy file="${sdbtask_path}/src/com/sequoiadb/ant/ant-sdbtasks.xml" tofile="${build_dir}/com/sequoiadb/ant/ant-sdbtasks.xml" />
 	</target>
