@@ -47,9 +47,9 @@
 			</else>
 		</if>
     	<echo level="info" message="Step1 : Build the java driver testcases." />
-		<javac srcdir="${sdbtask_path}/src" destdir="${build_dir}" debug="true" debuglevel="lines,vars,source" classpath="" fork="yes" executable="${WORKSPACE}/sequoiadb/java/${jdk_name}/bin/javac">
+		<javac srcdir="${sdbtask_path}/src" destdir="${build_dir}" debug="true" debuglevel="lines,vars,source" fork="yes" executable="${WORKSPACE}/sequoiadb/java/${jdk_name}/bin/javac">
 			<classpath>
-				<fileset dir="${sdbtask_path}/lib" includes="*.jar"/>
+				<fileset dir="${sdbtask_path}/lib" includes="**/*.jar"/>
 				<pathelement location="${WORKSPACE}/release/driver/java/sequoiadb.jar"/>
 			</classpath>
 		</javac>
