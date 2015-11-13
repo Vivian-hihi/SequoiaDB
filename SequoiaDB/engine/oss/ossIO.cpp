@@ -527,7 +527,7 @@ INT32 ossMkdir ( const CHAR* pPathName, UINT32 iPermission )
       else
       {
          PD_LOG( PDERROR, "Create directory[%s] failed, errno: %d",
-                 pPathName, e.code() ) ;
+                 pPathName, e.code().value() ) ;
          rc = SDB_IO ;
       }
       goto error ;
