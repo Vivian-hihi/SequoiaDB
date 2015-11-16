@@ -1491,7 +1491,7 @@ namespace engine
       {
          rc = _allocateExtent( context, initPages, TRUE, FALSE, NULL ) ;
          PD_RC_CHECK( rc, PDERROR, "Allocate new %u pages of collection[%s] "
-                      "failed, rc: %d", pName, rc ) ;
+                      "failed, rc: %d", initPages, pName, rc ) ;
       }
 
       // create $id index[s_idKeyObj]
