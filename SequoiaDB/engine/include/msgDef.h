@@ -53,6 +53,7 @@
 #define FIELD_NAME_NODEID                    "NodeID"
 #define FIELD_NAME_IS_PRIMARY                "IsPrimary"
 #define FIELD_NAME_CURRENT_LSN               "CurrentLSN"
+#define FIELD_NAME_CURRENT_LOB_LSN           "CurrentLobLSN"
 #define FIELD_NAME_BEGIN_LSN                 "BeginLSN"
 #define FIELD_NAME_COMMIT_LSN                "CommittedLSN"
 #define FIELD_NAME_LSN_OFFSET                "Offset"
@@ -283,6 +284,7 @@
 #define FIELD_NAME_FILTER                    "Filter"
 #define FIELD_NAME_SPLITBY                   "SPLITBY"
 #define FIELD_NAME_COMMITTED                 "Committed"
+#define FIELD_NAME_COMMITTED_DESC            "CommittedDesc"
 
 #define FIELD_NAME_PDLEVEL                   "PDLevel"
 #define FIELD_NAME_ASYNCHRONOUS              "asynchronous"

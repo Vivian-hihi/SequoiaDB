@@ -646,6 +646,8 @@ namespace engine
                        _pmdEDUCB *cb,
                        BOOLEAN dataOwned = FALSE ) ;
 
+         virtual INT32 tryToFlush( BOOLEAN ignoreTick, BOOLEAN &failed ) ;
+
       private:
          virtual UINT64 _dataOffset() ;
          virtual const CHAR* _getEyeCatcher() const ;

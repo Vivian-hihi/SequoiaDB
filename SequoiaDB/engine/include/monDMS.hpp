@@ -150,7 +150,8 @@ namespace engine
          _freeDataSize = 0 ;
          _freeIndexSize = 0 ;
          _freeLobSize = 0 ;
-         _lsn = -1 ;
+         _dataLsn = -1 ;
+         _lobLsn = -1 ;
          _committed = 0 ;
       }
       _monCollectionSpace ( const _monCollectionSpace &right )
@@ -169,8 +170,10 @@ namespace engine
          _freeDataSize = right._freeDataSize ;
          _freeIndexSize = right._freeIndexSize ;
          _freeLobSize = right._freeLobSize ;
-         _lsn = right._lsn ;
+         _dataLsn = right._dataLsn ;
+         _lobLsn = right._lobLsn ;
          _committed = right._committed ;
+         _committedDesc = right._committedDesc ;
          try
          {
             for ( it = right._collections.begin();
@@ -219,8 +222,10 @@ namespace engine
       INT64 _freeDataSize ;
       INT64 _freeIndexSize ;
       INT64 _freeLobSize ;
-      UINT64 _lsn ;
+      UINT64 _dataLsn ;
+      UINT64 _lobLsn ;
       UINT8  _committed ;
+      string _committedDesc ;
 
       OSS_INLINE BOOLEAN operator<(const _monCollectionSpace &r) const
       {
@@ -242,8 +247,10 @@ namespace engine
          _freeDataSize = right._freeDataSize ;
          _freeIndexSize = right._freeIndexSize ;
          _freeLobSize = right._freeLobSize ;
-         _lsn = right._lsn ;
+         _dataLsn = right._dataLsn ;
+         _lobLsn = right._lobLsn ;
          _committed = right._committed ;
+         _committedDesc = right._committedDesc ;
          try
          {
             for ( it = right._collections.begin();

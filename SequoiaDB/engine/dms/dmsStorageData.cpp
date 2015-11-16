@@ -507,8 +507,10 @@ namespace engine
    void _dmsStorageData::_onClosed ()
    {
       PD_TRACE_ENTRY ( SDB__DMSSTORAGEDATA__ONCLOSED ) ;
-      // write total count to disk
-      syncMemToMmap () ;
+
+      /// ensure static info will be flushed to file.
+      /// do it here first.
+      syncMemToMmap() ;
 
       _dmsMME     = NULL ;
       PD_TRACE_EXIT ( SDB__DMSSTORAGEDATA__ONCLOSED ) ;
@@ -1364,6 +1366,7 @@ namespace engine
       PD_CHECK( initPages <= segmentPages(), SDB_INVALIDARG, error, PDERROR,
                 "Invalid pages: %u", initPages ) ;
 
+      _registerNewWriting() ;
       // calc the reserve dps size
       if ( dpscb )
       {
@@ -1509,6 +1512,10 @@ namespace engine
       {
          pTransCB->releaseLogSpace( logRecSize );
       }
+      if ( SDB_OK == rc && NULL != cb )
+      {
+         _updateLastLSN( cb->getEndLsn() ) ;
+      }
       PD_TRACE_EXITRC ( SDB__DMSSTORAGEDATA_ADDCOLLECTION, rc ) ;
       return rc ;
    error:
@@ -1580,6 +1587,7 @@ namespace engine
          }
       }
 
+      _registerNewWriting() ;
       // lock collection mb exclusive lock
       if ( NULL == context )
       {
@@ -1661,7 +1669,6 @@ namespace engine
          PD_RC_CHECK( rc, PDERROR, "Failed to insert CLDel record to log, rc: "
                       "%d", rc ) ;
       }
-
    done:
       if ( metalocked )
       {
@@ -1679,6 +1686,11 @@ namespace engine
       if ( 0 != logRecSize )
       {
          pTransCB->releaseLogSpace( logRecSize );
+      }
+
+      if ( SDB_OK == rc && NULL != cb )
+      {
+         _updateLastLSN( cb->getEndLsn() ) ;
       }
       PD_TRACE_EXITRC ( SDB__DMSSTORAGEDATA_DROPCOLLECTION, rc ) ;
       return rc ;
@@ -1714,6 +1726,7 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR, "Invalid collection name %s, rc: %d",
                    pName, rc ) ;
 
+        _registerNewWriting() ;
       // calc the reserve dps size
       if ( dpscb )
       {
@@ -1824,6 +1837,10 @@ namespace engine
       if ( 0 != logRecSize )
       {
          pTransCB->releaseLogSpace( logRecSize ) ;
+      }
+      if ( SDB_OK == rc && NULL != cb )
+      {
+         _updateLastLSN( cb->getEndLsn() ) ;
       }
       PD_TRACE_EXITRC ( SDB__DMSSTORAGEDATA_TRUNCATECOLLECTION, rc ) ;
       return rc ;
@@ -2120,6 +2137,7 @@ namespace engine
          }
       }
 
+      _registerNewWriting() ;
       // lock mb
       rc = context->mbLock( EXCLUSIVE ) ;
       PD_RC_CHECK( rc, PDERROR, "dms mb context lock failed, rc: %d", rc ) ;
@@ -2222,6 +2240,10 @@ namespace engine
       if ( 0 != logRecSize )
       {
          pTransCB->releaseLogSpace( logRecSize ) ;
+      }
+      if ( SDB_OK == rc && NULL != cb )
+      {
+         _updateLastLSN( cb->getEndLsn() ) ;
       }
       PD_TRACE_EXITRC ( SDB__DMSSTORAGEDATA_INSERTRECORD, rc ) ;
       return rc ;
@@ -2391,6 +2413,7 @@ namespace engine
          goto error ;
       }
 
+      _registerNewWriting() ;
       if ( !context->isMBLock( EXCLUSIVE ) )
       {
          PD_LOG( PDERROR, "Caller must hold mb exlusive lock[%s]",
@@ -2563,6 +2586,10 @@ namespace engine
       {
          pTransCB->releaseLogSpace( logRecSize ) ;
       }
+      if ( SDB_OK == rc && NULL != cb )
+      {
+         _updateLastLSN( cb->getEndLsn() ) ;
+      }
       PD_TRACE_EXITRC ( SDB__DMSSTORAGEDATA_DELETERECORD, rc ) ;
       return rc ;
    error :
@@ -2657,6 +2684,7 @@ namespace engine
       DPS_LSN_OFFSET preTransLsn = cb->getCurTransLsn() ;
       DPS_LSN_OFFSET relatedLSN = cb->getRelatedTransLSN() ;
 
+      _registerNewWriting() ;
       // first we need to locate the mem addr of the extent
       extentPtr = extentAddr ( recordID._extent ) ;
       if ( !extentPtr )
@@ -2828,6 +2856,10 @@ namespace engine
       if ( 0 != logRecSize )
       {
          pTransCB->releaseLogSpace( logRecSize );
+      }
+      if ( SDB_OK == rc && NULL != cb )
+      {
+         _updateLastLSN( cb->getEndLsn() ) ;
       }
       PD_TRACE_EXITRC ( SDB__DMSSTORAGEDATA_UPDATERECORD, rc ) ;
       return rc ;
@@ -3146,6 +3178,56 @@ namespace engine
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATA_TRYTOFLUSH, "_dmsStorageData::tryToFlush" )
+   INT32 _dmsStorageData::tryToFlush( BOOLEAN ignoreTick, BOOLEAN &failed )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__DMSSTORAGEDATA_TRYTOFLUSH ) ;
+      BOOLEAN locked = FALSE ;
+
+      if ( !ignoreTick && !_noWriteForAWhile() )
+      {
+         failed = TRUE ;
+         goto done ;
+      }
+
+      _validFlag = 1 ;
+      syncMemToMmap() ;
+      rc = flushAll( TRUE ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to flush dirty segments:%d", rc ) ;
+         goto error ;
+      }
+
+      if ( 0 ==_validFlag )
+      {
+         failed = TRUE ;
+      }
+      else
+      {
+         ossLatch ( &_pagecleanerLatch ) ;
+         locked = TRUE ;
+
+         if ( 0 ==_validFlag )
+         {
+            failed = TRUE ;
+            goto done ; 
+         }
+
+         _markHeaderValid() ;
+         failed = FALSE ;
+      }
+   done:
+      if ( locked )
+      {
+         ossUnlatch( &_pagecleanerLatch ) ;
+      }
+      PD_TRACE_EXITRC( SDB__DMSSTORAGEDATA_TRYTOFLUSH, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
 }
 
 

@@ -3549,7 +3549,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RTNSYNCDB_DOIT ) ;
 
-      rc = rtnSyncDB( cb ) ;
+      rc = rtnSyncDB( cb, TRUE ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to sync db:%d", rc ) ;

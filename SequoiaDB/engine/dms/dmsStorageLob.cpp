@@ -335,6 +335,7 @@ namespace engine
          PD_RC_CHECK( rc, PDERROR, "Delay open failed in write, rc: %d", rc ) ;
       }
 
+      _registerNewWriting() ;
       if ( NULL != dpscb )
       {
          UINT32 csNameLen = ossStrlen( getSuName() ) ;
@@ -478,6 +479,10 @@ namespace engine
          transCB->releaseLogSpace( logRecord.head()._length ) ;
       }
 
+      if ( SDB_OK == rc && NULL != cb )
+      {
+         _updateLastLSN( cb->getEndLsn() ) ;
+      }
       PD_TRACE_EXITRC( SDB__DMSSTORAGELOB_WRITE, rc ) ;
       return rc ;
    error:
@@ -523,6 +528,7 @@ namespace engine
          PD_RC_CHECK( rc, PDERROR, "Delay open failed in update, rc: %d", rc ) ;
       }
 
+      _registerNewWriting() ;
       if ( !locked )
       {
          rc = mbContext->mbLock( EXCLUSIVE ) ;
@@ -656,6 +662,11 @@ namespace engine
       if ( 0 != logRecord.head()._length )
       {
          transCB->releaseLogSpace( logRecord.head()._length ) ;
+      }
+
+      if ( SDB_OK == rc && NULL != cb )
+      {
+         _updateLastLSN( cb->getEndLsn() ) ;
       }
       PD_TRACE_EXITRC( SDB__DMSSTORAGELOB_UPDATE, rc ) ;
       return rc ;
@@ -826,6 +837,7 @@ namespace engine
          PD_RC_CHECK( rc, PDERROR, "Delay open failed in remove, rc: %d", rc ) ;
       }
 
+      _registerNewWriting() ;
       if ( !locked )
       {
          rc = mbContext->mbLock( EXCLUSIVE ) ;
@@ -952,6 +964,10 @@ namespace engine
       if ( 0 != logRecord.head()._length )
       {
          transCB->releaseLogSpace( logRecord.head()._length ) ;
+      }
+      if ( SDB_OK == rc && NULL != cb )
+      {
+         _updateLastLSN( cb->getEndLsn() ) ;
       }
       PD_TRACE_EXITRC( SDB__DMSSTORAGELOB_REMOVE, rc ) ;
       return rc ;
@@ -1451,6 +1467,8 @@ namespace engine
          goto error ;
       }
 
+      _registerNewWriting() ;
+
       locked = mbContext->isMBLock() ;
       if ( !locked )
       {
@@ -1570,6 +1588,11 @@ namespace engine
       {
          transCB->releaseLogSpace( logRecord.head()._length ) ;
       }
+
+      if ( SDB_OK == rc && NULL != cb )
+      {
+         _updateLastLSN( cb->getEndLsn() ) ;
+      }
       PD_TRACE_EXITRC( SDB__DMSSTORAGELOB_TRUNCATE, rc ) ;
       return rc ;
    error:
@@ -1638,6 +1661,68 @@ namespace engine
          mbContext->mbUnlock() ;
       }
       PD_TRACE_EXITRC( SDB__DMSSTORAGELOB__ROLLBACK, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGELOB_TRYTOFLUSH, "_dmsStorageLob::tryToFlush" )
+   INT32 _dmsStorageLob::tryToFlush( BOOLEAN ignoreTick, BOOLEAN &failed )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__DMSSTORAGELOB_TRYTOFLUSH ) ;
+      BOOLEAN locked = FALSE ;
+
+      if ( !isOpened() )
+      {
+         failed = FALSE ;
+         goto done ;
+      }
+
+      if ( !ignoreTick && !_noWriteForAWhile() )
+      {
+         failed = TRUE ;
+         goto done ;
+      }
+
+      _validFlag = 1 ;
+
+      rc = _data.flush() ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to flush lob data:%d", rc ) ;
+         goto error ;
+      }
+
+      rc = flushAll( TRUE ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to flush dirty segments:%d", rc ) ;
+         goto error ;
+      }
+
+      if ( 0 ==_validFlag )
+      {
+         failed = TRUE ;
+      }
+      else
+      {
+         ossLatch ( &_pagecleanerLatch ) ;
+         locked = TRUE ;
+         if ( 0 ==_validFlag )
+         {
+            failed = TRUE ;
+            goto done ;
+         }
+         _markHeaderValid() ;
+         failed = FALSE ;
+      }
+   done:
+      if ( locked )
+      {
+         ossUnlatch( &_pagecleanerLatch ) ;
+      }
+      PD_TRACE_EXITRC( SDB__DMSSTORAGELOB_TRYTOFLUSH, rc ) ;
       return rc ;
    error:
       goto done ;

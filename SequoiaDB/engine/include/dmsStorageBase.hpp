@@ -107,12 +107,14 @@ namespace engine
       UINT32 _lobdPageSize ;                             // lobd page size
       UINT32 _createLobs ;                               // create lob files
       UINT32 _validFlag ;                                // valid flag
-      CHAR   _pad [ 65352 ] ;
+      UINT64 _lsn ;
+      CHAR   _pad [ 65344 ] ;
 
       _dmsStorageUnitHeader()
       {
          SDB_ASSERT( DMS_PAGE_SIZE_MAX == sizeof( _dmsStorageUnitHeader ),
                      "_dmsStorageUnitHeader size must be 64K" ) ;
+         _lsn = -1 ;
          ossMemset( this, 0, DMS_PAGE_SIZE_MAX ) ;
       }
    } ;
@@ -236,7 +238,15 @@ namespace engine
             return _lobPageSize ;
          }
 
-         void commitValidFlag() ;
+         OSS_INLINE UINT64 getCurrentLSN() const
+         {
+            return _lastLSN.peek() ;
+         }
+
+         OSS_INLINE UINT32 getValidFlag() const
+         {
+            return _validFlag ;
+         } 
 
       public:
          INT32 openStorage ( const CHAR *pPath, BOOLEAN createNew = TRUE,
@@ -247,6 +257,15 @@ namespace engine
          virtual void  syncMemToMmap () {}
          void  flushDirtySegments ( UINT32 *pNum = NULL ) ;
          void  restoreForCrash() { _isCrash = FALSE ; }
+         virtual INT32 tryToFlush( BOOLEAN ignoreTick, BOOLEAN &failed ) = 0 ;
+         void resetLastLSN( UINT64 lsn )
+         {
+            _lastLSN.init( lsn ) ;
+         }
+         UINT64 getLastTick() const
+         {
+            return _lastTick ;
+         }
 
       private:
          virtual UINT64 _dataOffset()  = 0 ;
@@ -279,10 +298,23 @@ namespace engine
                               INT64 dataLen ) ;
 
          void     _markDirty ( INT32 extentID ) ;
-         void     _invalidate() ;
+         void     _markHeaderInvalid( BOOLEAN doublecheck ) ;
+         void     _markHeaderValid() ;
 
          virtual INT32 _extendSegments ( UINT32 numSeg ) ;
+ 
+         OSS_INLINE void _updateLastLSN( UINT64 offset )
+         {
+            if ( -1 != (INT64)offset )
+            {
+               _lastLSN.swapGreaterThan( offset ) ;
+            }
+            return ;
+         }
 
+         void _registerNewWriting() ;
+
+         BOOLEAN _noWriteForAWhile() const ;
       private:
          INT32    _initializeStorageUnit () ;
          void     _initHeader ( dmsStorageUnitHeader *pHeader ) ;
@@ -299,10 +331,13 @@ namespace engine
          UINT32                        _lobPageSize ; // cache, not use header
 
          CHAR                          *_dirtyList ;
+         volatile UINT32               _validFlag ;
+         volatile UINT64               _lastTick ;
+         _ossAtomic64                  _lastLSN ;
+         ossSpinXLatch                 _pagecleanerLatch ;
 
       private:
          ossSpinSLatch                 _segmentLatch ;
-         ossSpinXLatch                 _pagecleanerLatch ;
          dmsSMEMgr                     _smeMgr ;
          UINT32                        _dataSegID ;
          UINT32                        _pageNum ;
@@ -313,7 +348,6 @@ namespace engine
          CHAR                          _fullPathName[ OSS_MAX_PATHSIZE + 1 ] ;
          BOOLEAN                       _isTempSU ;
 
-         UINT32                        _validFlag ;
          BOOLEAN                       _isCrash ;
 
    } ;
@@ -448,7 +482,7 @@ namespace engine
       if ( DMS_INVALID_EXTENT == extentID ||
            extentID > DMS_MAX_PG )
          return ;
-      _invalidate() ;
+      //_markHeaderInvalid() ;
       // segment id is the real segment id minus the starting data segment id
       // position
       UINT32 segID = extent2Segment( extentID, NULL ) - _dataSegID ;

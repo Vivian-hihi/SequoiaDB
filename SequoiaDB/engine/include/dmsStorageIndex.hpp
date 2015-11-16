@@ -129,6 +129,8 @@ namespace engine
          void     addStatFreeSpace ( UINT16 mbID, UINT16 size ) ;
          void     decStatFreeSpace ( UINT16 mbID, UINT16 size ) ;
 
+         virtual INT32 tryToFlush( BOOLEAN ignoreTick, BOOLEAN &failed ) ;
+
       private:
 
          // if indexLID == DMS_INALID_EXTENT, it will get from index cb

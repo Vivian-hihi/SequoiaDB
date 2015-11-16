@@ -61,8 +61,7 @@ namespace engine
       void _tryToSyncDB() ;
    private :
       INT32   _periodTime ;
-      UINT64 _tick ;
-      UINT64 _lsnOffset ;
+      UINT64  _lastTick ;
    } ;
    typedef _rtnPageCleanerJob rtnPageCleanerJob ;
 

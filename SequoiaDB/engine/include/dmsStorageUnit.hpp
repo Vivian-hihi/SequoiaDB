@@ -124,6 +124,13 @@ namespace engine
          INT64       totalFreePages( UINT32 type = DMS_SU_ALL ) const ;
          INT64       totalFreeSize( UINT32 type = DMS_SU_ALL ) const ;
          void        getStatInfo( dmsStorageUnitStat &statInfo ) ;
+         INT32       tryToFlush( BOOLEAN ignoreTick, BOOLEAN &failed ) ;
+         UINT64      getCurrentDataLSN() const ;
+         UINT64      getCurrentLobLSN() const ;
+         std::string getValidFlagDesc() const ;
+         UINT32      getValidFlag() const ;
+         void        resetLastLSN( UINT64 offset ) ;
+         UINT64      getLastTick() const ;
 
       public:
          void     dumpInfo ( vector<CHAR*> &collectionList,

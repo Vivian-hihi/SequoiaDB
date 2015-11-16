@@ -47,7 +47,7 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNPAGECLEANERJOB_CONSTRUCTOR,"_rtnPageCleanerJob::_rtnPageCleanerJob" )
    _rtnPageCleanerJob::_rtnPageCleanerJob ( INT32 periodTime ):
    _periodTime ( periodTime ),
-   _tick( 0 )
+   _lastTick( 0 )
    {
    }
 
@@ -88,6 +88,7 @@ namespace engine
       pmdEDUEvent event ;
       SDB_ASSERT ( krcb && eduMgr && dmsCB && cb,
                    "All control blocks can't be NULL" ) ;
+      _lastTick = pmdGetDBTick() ;
 
       while ( !PMD_IS_DB_DOWN() && !cb->isForced() )
       {
@@ -95,6 +96,8 @@ namespace engine
          eduMgr->waitEDU ( cb->getID() ) ;
 
          cleanSUID = DMS_INVALID_SUID ;
+
+         _tryToSyncDB() ;
          // dispatch the first storage unit in clean pending list
          // 1) suLock to lock the collection space, so that no one is able to
          // drop the cs during the time
@@ -146,49 +149,13 @@ namespace engine
    void _rtnPageCleanerJob::_tryToSyncDB()
    {
       PD_TRACE_ENTRY( SDB_RTNPAGECLEANERJOB__TRYTOSYNCDB ) ;
-
-      SDB_DPSCB *dpsCB = sdbGetDPSCB() ;
-      UINT64 currentTick = pmdGetDBTick() ;
-      DPS_LSN begin ;
-      DPS_LSN end ;
-      DPS_LSN committed ;
-
-      dpsCB->getLsnWindow( begin, end, NULL, &committed ) ;
-
-      if ( currentTick < _tick )
+      UINT64 pastTime = pmdGetTickSpanTime( _lastTick ) ;
+      /// 60s
+      if ( 60000 <= pastTime )
       {
-         /// correct tick
-         PD_LOG( PDWARNING, "current tick:%lld, last tick:%lld,"
-                 "we need to corret it", currentTick, _tick ) ;
-         _tick = currentTick ;
-         goto done ;
+         rtnSyncDB( eduCB(), FALSE ) ;
+         _lastTick = pmdGetDBTick() ;
       }
-
-      /// no data need to be committed, clear tick and return
-      if ( 0 == end.compare( committed ) )
-      {
-         _tick = currentTick ;
-         _lsnOffset = committed.offset ;
-         goto done ;
-      }
-      /// no new write for some time, check tick
-      else if ( _lsnOffset == end.offset )
-      {
-         if ( ( UINT64 )_periodTime * 6 <=
-              ((currentTick - _tick) * PMD_SYNC_CLOCK_INTERVAL ) )
-         {
-            PD_LOG( PDEVENT, "no new write in last cycle, begin to sync db" ) ;
-            rtnSyncDB( eduCB() ) ;
-            _tick = currentTick ;
-         }
-      }
-      else
-      {
-         _lsnOffset =  end.offset ;
-         _tick = currentTick ;
-      }
-
-   done:
       PD_TRACE_EXIT( SDB_RTNPAGECLEANERJOB__TRYTOSYNCDB ) ;
       return ;
    }

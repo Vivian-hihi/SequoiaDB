@@ -135,6 +135,8 @@ namespace engine
                       _pmdEDUCB *cb,
                       SDB_DPSCB *dpscb ) ;
 
+      virtual INT32 tryToFlush( BOOLEAN ignoreTick, BOOLEAN &failed ) ;
+
    protected:
       INT32  _openLob( const CHAR *path,
                        BOOLEAN createNew,

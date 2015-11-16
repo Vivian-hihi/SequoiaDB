@@ -140,7 +140,7 @@ namespace engine
 
    void _dmsStorageIndex::_onClosed()
    {
-      // do nothing
+      /// do nothing.
    }
 
    INT32 _dmsStorageIndex::reserveExtent( UINT16 mbID, dmsExtentID &extentID,
@@ -231,6 +231,8 @@ namespace engine
          rc = SDB_INVALIDARG ;
          goto error ;
       }
+
+      _registerNewWriting() ;
 
       // let's first reserve extent
       rc = reserveExtent ( context->mbID(), extentID, context ) ;
@@ -396,6 +398,8 @@ namespace engine
                         DMS_MB_ATTR_NOIDINDEX ) ;
       }
 
+      /// creating index may cost long time. we mark file dirty again here.
+      _registerNewWriting() ;
    done :
       if ( 0 != logRecSize )
       {
@@ -576,6 +580,7 @@ namespace engine
       UINT32 logRecSize            = 0 ;
       BSONObj indexDef ;
 
+      _registerNewWriting() ;
       rc = context->mbLock( EXCLUSIVE ) ;
       if ( rc )
       {
@@ -710,6 +715,7 @@ namespace engine
                       "rc: %d", rc ) ;
       }
 
+      _registerNewWriting() ;
    done :
       if ( 0 != logRecSize )
       {
@@ -905,6 +911,7 @@ namespace engine
       BOOLEAN unique               = FALSE ;
       BOOLEAN dropDups             = FALSE ;
 
+      _registerNewWriting() ;
       if ( !context->isMBLock( EXCLUSIVE ) )
       {
          PD_LOG( PDERROR, "Caller must hold mb exclusive lock[%s]",
@@ -1139,6 +1146,7 @@ namespace engine
       INT32 rc                     = SDB_OK ;
       INT32 indexID                = 0 ;
 
+      _registerNewWriting() ;
       if ( !context->isMBLock( EXCLUSIVE ) )
       {
          rc = SDB_SYS ;
@@ -1247,6 +1255,7 @@ namespace engine
       INT32 rc                     = SDB_OK ;
       INT32 indexID                = 0 ;
 
+      _registerNewWriting() ;
       if ( !context->isMBLock( EXCLUSIVE ) )
       {
          rc = SDB_SYS ;
@@ -1300,6 +1309,7 @@ namespace engine
       INT32 rc                     = SDB_OK ;
       INT32  indexID               = 0 ;
 
+      _registerNewWriting() ;
       rc = context->mbLock( EXCLUSIVE ) ;
       PD_RC_CHECK( rc, PDERROR, "dms mb context lock failed, rc: %d", rc ) ;
 
@@ -1330,8 +1340,9 @@ namespace engine
 
       context->mbStat()->_totalIndexPages = indexID << 1 ;
       context->mbStat()->_totalIndexFreeSpace =
-         indexID * ( pageSize()-1-sizeof(ixmExtentHead) ) ;
+      indexID * ( pageSize()-1-sizeof(ixmExtentHead) ) ;
 
+      _registerNewWriting() ;
    done :
       return rc ;
    error :
@@ -1463,6 +1474,52 @@ namespace engine
       }
    }
 
+   INT32 _dmsStorageIndex::tryToFlush( BOOLEAN ignoreTick, BOOLEAN &failed )
+   {
+      INT32 rc = SDB_OK ;
+      BOOLEAN locked = FALSE ;
+
+      if ( !ignoreTick && !_noWriteForAWhile() )
+      {
+         failed = TRUE ;
+         goto done ;
+      }
+
+      _validFlag = 1 ;
+
+      rc = flushAll( TRUE ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to flush dirty segments:%d", rc ) ;
+         goto error ;
+      }
+
+      if ( 0 ==_validFlag )
+      {
+         failed = TRUE ;
+      }
+      else
+      {
+         ossLatch ( &_pagecleanerLatch ) ;
+         locked = TRUE ;
+         if ( 0 ==_validFlag )
+         {
+            failed = TRUE ;
+            goto done ;
+         }
+
+         _markHeaderValid() ;
+         failed = FALSE ;
+      }
+   done:
+      if ( locked )
+      {
+         ossUnlatch( &_pagecleanerLatch ) ;
+      }
+      return rc ;
+   error:
+      goto done ;
+   }
 }
 
 

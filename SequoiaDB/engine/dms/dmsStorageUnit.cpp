@@ -1385,5 +1385,133 @@ namespace engine
       PD_TRACE_EXIT ( SDB__DMSSU_GETSTATINFO ) ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_TRYTOFLUSH, "_dmsStorageUnit::tryToFlush" )
+   INT32 _dmsStorageUnit::tryToFlush( BOOLEAN ignoreTick, BOOLEAN &failed )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__DMSSU_TRYTOFLUSH ) ;
+
+      if ( NULL != _pLobSu )
+      {
+         rc = _pLobSu->tryToFlush( ignoreTick, failed ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to flush lob data:%d", rc ) ;
+            goto error ;
+         }
+         else if ( failed )
+         {
+            goto done ;
+         }
+      }
+
+      failed = TRUE ;
+      if ( NULL != _pIndexSu )
+      {
+         rc = _pIndexSu->tryToFlush( ignoreTick, failed ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to flush index data:%d", rc ) ;
+            goto error ;
+         }
+         else if ( failed )
+         {
+            goto done ;
+         }
+      }
+
+      failed = TRUE ;
+      if ( NULL != _pDataSu )
+      {
+         rc = _pDataSu->tryToFlush( ignoreTick, failed ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to flush data data:%d", rc ) ;
+            goto error ;
+         }
+         else if ( failed )
+         {
+            goto done ;
+         }
+      }
+
+   done:
+      PD_TRACE_EXITRC( SDB__DMSSU_TRYTOFLUSH, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   UINT64 _dmsStorageUnit::getCurrentDataLSN() const
+   {
+      return NULL == _pDataSu ?
+             -1 : _pDataSu->getCurrentLSN() ;
+   }
+
+   UINT64 _dmsStorageUnit::getCurrentLobLSN() const
+   {
+      return NULL == _pLobSu ?
+             -1 : _pLobSu->getCurrentLSN() ;
+   }
+
+   UINT32 _dmsStorageUnit::getValidFlag() const
+   {
+      UINT32 dataFlag =  NULL == _pDataSu ?
+             0 : _pDataSu->getValidFlag() ;
+      UINT32 indexFlag = NULL == _pIndexSu ?
+             0 : _pIndexSu->getValidFlag() ;
+
+      /// _pLobSu may be NULL, set it as 1
+      UINT32 lobFlag = NULL == _pLobSu ?
+             1: _pLobSu->isOpened() ? _pLobSu->getValidFlag() : 1 ;
+      return dataFlag && indexFlag && lobFlag ;
+   }
+
+   string _dmsStorageUnit::getValidFlagDesc() const
+   {
+      std::stringstream ss ;
+      UINT32 dataFlag =  NULL == _pDataSu ?
+             0 : _pDataSu->getValidFlag() ;
+      UINT32 indexFlag = NULL == _pIndexSu ?
+             0 : _pIndexSu->getValidFlag() ;
+      UINT32 lobFlag = NULL == _pLobSu ?
+             1: _pLobSu->isOpened() ? _pLobSu->getValidFlag() : 1 ;
+      ss << dataFlag << indexFlag << lobFlag ;
+      return ss.str() ;
+   }
+
+   void _dmsStorageUnit::resetLastLSN( UINT64 lsn )
+   {
+      if ( NULL != _pDataSu )
+      {
+         _pDataSu->resetLastLSN( lsn ) ;
+      }
+      if ( NULL != _pLobSu && _pLobSu->isOpened() )
+      {
+         _pLobSu->resetLastLSN( lsn ) ;
+      }
+      return ;
+   }
+
+   UINT64 _dmsStorageUnit::getLastTick() const
+   {
+      UINT64 tick = 0 ;
+      if ( NULL != _pLobSu )
+      {
+         tick = _pLobSu->getLastTick() ;
+      }
+
+      if ( NULL != _pIndexSu && _pIndexSu->getLastTick() > tick )
+      {
+         tick = _pIndexSu->getLastTick() ;
+      }
+
+      if ( NULL != _pDataSu && _pDataSu->getLastTick() > tick )
+      {
+         tick = _pDataSu->getLastTick() ;
+      }
+
+      return tick ;
+   }
 }  // namespace engine
 

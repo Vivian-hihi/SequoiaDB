@@ -994,6 +994,7 @@ namespace engine
                      "rc = %d", tempRC ) ;
          }
       }
+
       // write dps
       if ( SDB_OK == rc && dpsCB )
       {
@@ -1297,6 +1298,10 @@ namespace engine
          cs._freeIndexSize = totalIndexFreeSize ;
          cs._totalLobSize = su->totalSize( DMS_SU_LOB ) ;
          cs._freeLobSize = totalLobFreeSize ;
+         cs._dataLsn = su->getCurrentDataLSN() ;
+         cs._lobLsn = su->getCurrentLobLSN() ;
+         cs._committed = su->getValidFlag() ;
+         cs._committedDesc = su->getValidFlagDesc() ;
          su->dumpInfo ( cs._collections, sys ) ;
          csList.insert ( cs ) ;
       }

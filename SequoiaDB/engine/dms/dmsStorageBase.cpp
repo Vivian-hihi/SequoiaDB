@@ -43,6 +43,7 @@
 #include "dmsTrace.hpp"
 #include "pmdStartup.hpp"
 #include "utilStr.hpp"
+#include "pmdEnv.hpp"
 
 using namespace bson ;
 
@@ -76,6 +77,7 @@ namespace engine
    */
    _dmsStorageBase::_dmsStorageBase( const CHAR *pSuFileName,
                                      dmsStorageInfo *pInfo )
+   :_lastLSN( 0 )
    {
       SDB_ASSERT( pSuFileName, "SU file name can't be NULL" ) ;
 
@@ -104,6 +106,7 @@ namespace engine
       }
 
       _validFlag          = 0 ;
+      _lastTick           = 0 ;
       _isCrash            = FALSE ;
    }
 
@@ -243,6 +246,12 @@ namespace engine
          _dmsHeader->_lobdPageSize = DMS_DEFAULT_LOB_PAGE_SZ ;
       }
 
+      if ( createNew )
+      {
+         /// set flag as true when it is a new file.
+         _dmsHeader->_validFlag = 1 ;
+      }
+
       // after we load SU, let's verify it's expected file
       rc = _validateHeader( _dmsHeader ) ;
       if ( rc )
@@ -342,6 +351,9 @@ namespace engine
 
       _onOpened() ;
 
+      _validFlag = _dmsHeader->_validFlag ;
+      _lastLSN.init( -1 == ( INT64 )(_dmsHeader->_lsn) ?
+                     0 : _dmsHeader->_lsn ) ;
    done:
       return rc ;
    error:
@@ -360,6 +372,7 @@ namespace engine
          if ( !_isCrash )
          {
             _dmsHeader->_validFlag = 1 ;
+            _dmsHeader->_lsn = _lastLSN.peek() ;
          }
          _dmsHeader     = NULL ;
          _dmsSME        = NULL ;
@@ -840,7 +853,6 @@ namespace engine
 
          if ( DMS_INVALID_EXTENT != foundPage )
          {
-            _invalidate() ;
             break ;
          }
 
@@ -917,7 +929,6 @@ namespace engine
 
    INT32 _dmsStorageBase::_releaseSpace( SINT32 pageStart, UINT16 numPages )
    {
-      _invalidate() ;
       return _smeMgr.releasePages( pageStart, numPages ) ;
    }
 
@@ -1003,16 +1014,58 @@ namespace engine
       return ;
    }
 
-   void _dmsStorageBase::_invalidate()
+   void _dmsStorageBase::_markHeaderInvalid( BOOLEAN doublecheck )
    {
+      BOOLEAN locked = FALSE ;
       if ( _validFlag && _dmsHeader )
       {
+         if ( doublecheck )
+         {
+            ossLatch ( &_pagecleanerLatch ) ;
+            locked = TRUE ;
+
+            if ( !_validFlag )
+            {
+               goto done ;
+            }
+         }
+        
          _validFlag = 0 ;
          _dmsHeader->_validFlag = 0 ;
+         _dmsHeader->_lsn = -1 ;
 
-         /// flush to file
+            /// flush to file
          ossMmapFile::flush( 0, TRUE ) ;
       }
+   done:
+       if ( locked )
+       {
+          ossUnlatch( &_pagecleanerLatch ) ;
+       }
+       return ;
+   }
+
+   void _dmsStorageBase::_markHeaderValid()
+   {
+      if ( _dmsHeader )
+      {
+         _dmsHeader->_validFlag = 1 ;
+         _dmsHeader->_lsn = _lastLSN.peek() ;
+         ossMmapFile::flush( 0, TRUE ) ;
+      }
+      return ;
+   }
+
+   void _dmsStorageBase::_registerNewWriting()
+   {
+      _lastTick = pmdGetDBTick() ;
+      _markHeaderInvalid( TRUE ) ;
+      return ;
+   }
+
+   BOOLEAN _dmsStorageBase::_noWriteForAWhile() const
+   {
+      return 120000 < pmdGetTickSpanTime( _lastTick ) ;
    }
 
    /*
@@ -1062,8 +1115,7 @@ namespace engine
       }
 
       return FALSE ;
-   }
-
+    }
 }
 
 
