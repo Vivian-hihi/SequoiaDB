@@ -175,6 +175,9 @@ namespace engine
 
    INT32 rtnCoordCommand::_processNodesReply( REPLY_QUE &replyQue,
                                               ROUTE_RC_MAP &faileds,
+                                              ROUTE_SET &retriedNodes,
+                                              ROUTE_SET &needRetryNodes,
+                                              rtnCoordCtrlParam &ctrlParam,
                                               rtnContextCoord *pContext,
                                               SET_RC *pIgnoreRC,
                                               ROUTE_SET *pSucNodes )
@@ -222,10 +225,13 @@ namespace engine
          }
          else
          {
-            PD_LOG( ( pContext ? PDINFO : PDWARNING ),
-                    "Failed to process reply[node: %s, flag: %d]",
-                    routeID2String( nodeID ).c_str(), pReply->flags ) ;
-            faileds[ nodeID.value ] = pReply->flags ;
+            if ( !_getRetryNodes(retriedNodes, needRetryNodes, ctrlParam, pReply ) )
+            {
+               PD_LOG( ( pContext ? PDINFO : PDWARNING ),
+                       "Failed to process reply[node: %s, flag: %d]",
+                       routeID2String( nodeID ).c_str(), pReply->flags ) ;
+               faileds[ nodeID.value ] = pReply->flags ;
+            }
          }
 
          if ( !takeOver )
@@ -236,6 +242,23 @@ namespace engine
       }
 
       return rc ;
+   }
+
+   BOOLEAN rtnCoordCommand::_getRetryNodes( ROUTE_SET &retriedNodes,
+                                          ROUTE_SET &needRetryNodes,
+                                          rtnCoordCtrlParam &ctrlParam,
+                                          MsgOpReply *pReply )
+   {
+      // Must send to primary but replyed not primary!
+      if ( SDB_CLS_NOT_PRIMARY == pReply->flags
+           && pReply->startFrom != 0
+           && NODE_SEL_PRIMARY == ctrlParam._emptyFilterSel
+           && retriedNodes.find( pReply->startFrom ) == retriedNodes.end() )
+      {
+         needRetryNodes.insert( pReply->startFrom ) ;
+         return TRUE ;
+      }
+      return FALSE ;
    }
 
    INT32 rtnCoordCommand::_buildFailedNodeReply( ROUTE_RC_MAP &failedNodes,
@@ -757,6 +780,7 @@ namespace engine
                                           pmdEDUCB *cb,
                                           ROUTE_SET &nodes,
                                           ROUTE_RC_MAP &faileds,
+                                          rtnCoordCtrlParam &ctrlParam,
                                           ROUTE_SET *pSucNodes,
                                           SET_RC *pIgnoreRC,
                                           rtnContextCoord *pContext )
@@ -768,21 +792,29 @@ namespace engine
       netMultiRouteAgent *pAgent    = pCoordCB->getRouteAgent() ;
       REQUESTID_MAP sendNodes ;
       REPLY_QUE replyQue ;
+      ROUTE_SET retriedNodes ;
+      ROUTE_SET needRetryNodes  = nodes ;
 
       /// clear msg
       pMsg->TID = cb->getTID() ;
       pMsg->routeID.value = MSG_INVALID_ROUTEID ;
 
+   retry:
       /// send msg
-      rtnCoordSendRequestToNodes( (void *)pMsg, nodes, pAgent, cb,
+      rtnCoordSendRequestToNodes( (void *)pMsg, needRetryNodes, pAgent, cb,
                                   sendNodes, faileds ) ;
+      retriedNodes.insert( needRetryNodes.begin(), needRetryNodes.end() ) ;
+      needRetryNodes.clear() ;
+
       /// recv reply
       rcTmp = rtnCoordGetReply( cb, sendNodes, replyQue,
                                 MAKE_REPLY_TYPE(pMsg->opCode),
                                 TRUE, FALSE ) ;
       rc = rc ? rc : rcTmp ;
+
       /// process reply
-      rcTmp = _processNodesReply( replyQue, faileds, pContext,
+      rcTmp = _processNodesReply( replyQue, faileds, retriedNodes,
+                                  needRetryNodes, ctrlParam, pContext,
                                   pIgnoreRC, pSucNodes ) ;
       rc = rc ? rc : rcTmp ;
 
@@ -790,6 +822,10 @@ namespace engine
       {
          rtnClearReplyQue( &replyQue ) ;
          rtnCoordClearRequest( cb, sendNodes ) ;
+      }
+      else if ( needRetryNodes.size() != 0 )
+      {
+         goto retry ;
       }
 
       return rc ;
@@ -977,7 +1013,7 @@ namespace engine
 
       /// 8. execute
       rc = executeOnNodes( (MsgHeader*)pNewMsg, cb, sendNodes,
-                           faileds, pSucNodes, pIgnoreRC,
+                           faileds, ctrlParam, pSucNodes, pIgnoreRC,
                            pTmpContext ) ;
       PD_RC_CHECK( rc, PDERROR, "Execute on nodes failed, rc: %d", rc ) ;
 
@@ -6978,137 +7014,38 @@ namespace engine
                                           rtnContextBuf * buf )
    {
       INT32 rc = SDB_OK ;
-
-      BOOLEAN isNeedRetry = FALSE;
-      BOOLEAN hasRetry = FALSE;
-      REQUESTID_MAP successNodes ;
-      ROUTE_RC_MAP failedNodes ;
-      contextID = -1 ;
-
-      MsgOpQuery *pSrc = (MsgOpQuery *)pMsg ;
-
-      pMsg->routeID.value = 0 ;
-      pMsg->TID = cb->getTID() ;
-
-      pmdKRCB *pKrcb                   = pmdGetKRCB();
-      SDB_RTNCB *pRtncb                = pKrcb->getRTNCB();
-      CoordCB *pCoordcb                = pKrcb->getCoordCB();
-      netMultiRouteAgent *pRouteAgent  = pCoordcb->getRouteAgent();
-      CoordGroupList groupLst ;
-      CoordGroupMap mapGroupInfo ;
+      rtnCoordCtrlParam ctrlParam ;
+      ROUTE_RC_MAP faileds ;
       rtnContextCoord *pContext = NULL ;
 
-      rc = pRtncb->contextNew( RTN_CONTEXT_COORD, (rtnContext**)&pContext,
-                               contextID, cb );
-      PD_RC_CHECK( rc, PDERROR, "failed to allocate context(rc=%d)", rc ) ;
-      rc = pContext->open( BSONObj(), BSONObj(), pSrc->numToReturn,
-                           pSrc->numToSkip ) ;
-      PD_RC_CHECK( rc, PDERROR, "Open context failed, rc: %d", rc ) ;
+      contextID = -1 ;
+      ctrlParam._role[ SDB_ROLE_CATALOG ] = 0 ;
+      ctrlParam._emptyFilterSel = NODE_SEL_PRIMARY ;
 
-      rc = getGroups( cb, groupLst ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to get groups(rc = %d)!", rc ) ;
-
-      do
+      rc = executeOnNodes( pMsg, cb, ctrlParam, RTN_CTRL_MASK_ALL,
+                           faileds, &pContext, FALSE, NULL, NULL ) ;
+      if ( rc )
       {
-         hasRetry = isNeedRetry;
-         isNeedRetry = FALSE;
-         REQUESTID_MAP sendNodes;
-         rc = rtnCoordSendRequestToNodeGroups( (CHAR *)pMsg, groupLst,
-                                               mapGroupInfo,
-                                               TRUE, pRouteAgent, cb,
-                                               sendNodes, FALSE,
-                                               MSG_ROUTE_SHARD_SERVCIE,
-                                               TRUE ) ;
-         if ( rc != SDB_OK )
+         if ( SDB_RTN_CMD_IN_LOCAL_MODE == rc )
          {
-            PD_LOG( PDWARNING,
-                    "Failed to send the request to some nodes(rc = %d), ignore the error!",
-                    rc ) ;
+            rc = SDB_COORD_UNKNOWN_OP_REQ ;
          }
-         REPLY_QUE replyQue;
-         rc = rtnCoordGetReply( cb, sendNodes, replyQue,
-                                MAKE_REPLY_TYPE(pMsg->opCode),
-                                TRUE, FALSE );
-         if ( rc != SDB_OK )
+         else
          {
-            PD_LOG ( PDWARNING, "Failed to execute on data-node, get reply "
-                     "failed(rc=%d)", rc ) ;
+            PD_LOG( PDERROR, "Execute on nodes failed, rc: %d", rc ) ;
          }
-         groupLst.clear() ;
-         rc = processReply( cb, replyQue, pContext, groupLst ) ;
-         if ( rc != SDB_OK )
-         {
-            PD_LOG( PDWARNING, "Failed to process the reply(rc = %d)!", rc ) ;
-         }
-         if ( !hasRetry && groupLst.size() > 0 )
-         {
-            isNeedRetry = TRUE ;
-         }
-      }while ( isNeedRetry );
+         goto error ;
+      }
+
+      if ( pContext )
+      {
+         contextID = pContext->contextID() ;
+      }
 
    done:
       return rc ;
    error:
-      if ( contextID >= 0 )
-      {
-         pRtncb->contextDelete( contextID, cb );
-         contextID = -1 ;
-      }
       goto done ;
-   }
-
-   INT32 rtnCoordCMDQueryOnMain::processReply( pmdEDUCB *cb, REPLY_QUE replyQue,
-                                               rtnContextCoord *pContext,
-                                               CoordGroupList &retryGroups )
-   {
-      INT32 rc = SDB_OK;
-      SDB_ASSERT( pContext != NULL, "pContext can't be NULL!" ) ;
-
-      while( !replyQue.empty() )
-      {
-         MsgOpReply *pReply = NULL;
-         pReply = ( MsgOpReply *)( replyQue.front() );
-         replyQue.pop();
-         INT32 rcTmp = pReply->flags;
-         if ( SDB_OK == rcTmp )
-         {
-            if ( pReply->contextID != -1 )
-            {
-               rcTmp = pContext->addSubContext( pReply->header.routeID,
-                                             pReply->contextID );
-               if ( rcTmp != SDB_OK )
-               {
-                  PD_LOG ( PDERROR, "Failed to add sub-context(rc=%d)",
-                           rc );
-               }
-            }
-            else
-            {
-               rcTmp = SDB_SYS;
-               PD_LOG( PDERROR, "node return invalid contextID(%lld)",
-                       pReply->contextID ) ;
-            }
-         }
-         else
-         {
-            if( SDB_CLS_NOT_PRIMARY == rcTmp )
-            {
-               retryGroups[pReply->header.routeID.columns.groupID]
-                              = pReply->header.routeID.columns.groupID ;
-            }
-            PD_LOG( PDERROR,
-                  "failed to process reply"
-                  "(groupID=%u, nodeID=%u, serviceID=%u, rc=%d)",
-                  pReply->header.routeID.columns.groupID,
-                  pReply->header.routeID.columns.nodeID,
-                  pReply->header.routeID.columns.serviceID,
-                  rc );
-         }
-         SDB_OSS_FREE( pReply ) ;
-         rc = rc ? rc : rcTmp ;
-      }
-
-      return rc;
    }
 
    INT32 rtnCoordSnapshotTransCur::getGroups( pmdEDUCB *cb,

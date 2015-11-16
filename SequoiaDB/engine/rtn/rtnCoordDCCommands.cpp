@@ -158,6 +158,7 @@ namespace engine
       MsgRouteID routeID ;
       ROUTE_RC_MAP::iterator it ;
       BSONObjBuilder errBuild ;
+      rtnCoordCtrlParam ctrlParam ;
       BSONArrayBuilder arrayBuild( errBuild.subarrayStart(
                                    FIELD_NAME_ERROR_NODES ) ) ;
       BSONObj errorInfo ;
@@ -170,7 +171,7 @@ namespace engine
          goto error ;
       }
 
-      rc = executeOnNodes( pMsg, cb, nodes, faileds, NULL, NULL, NULL ) ;
+      rc = executeOnNodes( pMsg, cb, nodes, faileds, ctrlParam, NULL, NULL, NULL ) ;
       it = faileds.begin() ;
       while( it != faileds.end() )
       {

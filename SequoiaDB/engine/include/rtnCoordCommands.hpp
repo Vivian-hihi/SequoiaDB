@@ -199,6 +199,7 @@ namespace engine
                                     pmdEDUCB *cb,
                                     ROUTE_SET &nodes,
                                     ROUTE_RC_MAP &faileds,
+                                    rtnCoordCtrlParam &ctrlParam,
                                     ROUTE_SET *pSucNodes = NULL,
                                     SET_RC *pIgnoreRC = NULL,
                                     rtnContextCoord *pContext = NULL ) ;
@@ -228,6 +229,9 @@ namespace engine
 
       INT32 _processNodesReply( REPLY_QUE &replyQue,
                                 ROUTE_RC_MAP &faileds,
+                                ROUTE_SET &retriedNodes,
+                                ROUTE_SET &needRetryNodes,
+                                rtnCoordCtrlParam &ctrlParam,
                                 rtnContextCoord *pContext = NULL,
                                 SET_RC *pIgnoreRC = NULL,
                                 ROUTE_SET *pSucNodes = NULL ) ;
@@ -243,6 +247,11 @@ namespace engine
                                SET_RC *pIgnoreRC = NULL,
                                CoordGroupList *pSucGrpLst = NULL,
                                rtnContextCoord **ppContext = NULL ) ;
+
+      BOOLEAN _getRetryNodes( ROUTE_SET &retriedNodes,
+                              ROUTE_SET &needRetryNodes,
+                              rtnCoordCtrlParam &ctrlParam,
+                              MsgOpReply *pReply ) ;
 
    };
 
@@ -1123,17 +1132,13 @@ namespace engine
       INT32 _syncDB( MsgHeader *pMsg, pmdEDUCB *cb, SINT64 &contextID ) ;
    } ;
 
-   class rtnCoordCMDQueryOnMain : public rtnCoordCommand
+   class rtnCoordCMDQueryOnMain : public rtnCoordCMDSnapshotIntrBase
    {
    public :
       virtual INT32 execute( MsgHeader *pMsg,
                              pmdEDUCB *cb,
                              INT64 &contextID,
                              rtnContextBuf *buf );
-
-      virtual INT32 processReply( pmdEDUCB *cb, REPLY_QUE replyQue,
-                                  rtnContextCoord *pContext,
-                                  CoordGroupList &retryGroups ) ;
 
       virtual INT32 getGroups( pmdEDUCB *cb, CoordGroupList &groupList ) = 0 ;
    } ;
