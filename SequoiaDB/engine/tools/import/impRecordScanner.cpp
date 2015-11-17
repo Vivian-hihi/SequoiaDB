@@ -163,7 +163,7 @@ namespace import
                   str += strDelLen;
 
                   // two consecutive string delimiter
-                  if (_startWith(str, len, strDel, strDelLen))
+                  if (len > 0 && _startWith(str, len, strDel, strDelLen))
                   {
                      len -= strDelLen;
                      str += strDelLen;
