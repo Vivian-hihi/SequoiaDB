@@ -177,7 +177,7 @@ TEST(collection,sdbCreateIndex)
    bson_append_int( &obj, "age2", -1 ) ;
    bson_finish( &obj ) ;
    // create index
-   rc = sdbCreateIndexOffline ( collection, &obj, pIndexName2, TRUE, TRUE ) ;
+   rc = sdbCreateIndex1 ( collection, &obj, pIndexName2, TRUE, TRUE, 100 ) ;
    ASSERT_EQ( SDB_OK, rc ) ;
    bson_destroy ( &obj ) ;
    // get the newly build index
