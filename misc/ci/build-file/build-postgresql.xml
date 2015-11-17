@@ -25,9 +25,11 @@
     	<echo message="Compile the postgresql..." />
     	<chmod file="${PG_DIR}/configure" perm="u+x" />
     	<exec executable="./configure" dir="${PG_DIR}" failonerror="true">
-    		<arg line=" --without-readline --without-zlib" />
+    		<arg line=" --without-readline --without-zlib --prefix=${PG_DIR}" />
     	</exec>
-    	<exec executable="make" dir="${PG_DIR}" failonerror="true" />
+    	<exec executable="make" dir="${PG_DIR}" failonerror="true">
+    		<arg line=" all" />
+		</exec>
 		<exec executable="make" dir="${PG_DIR}" failonerror="true">
 			<arg line=" install" />
 		</exec>
