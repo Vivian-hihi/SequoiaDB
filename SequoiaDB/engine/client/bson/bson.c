@@ -448,7 +448,7 @@ SDB_EXPORT int bson_sprint_iterator ( char **pbuf, int *left, bson_iterator *i,
          int base64_size = 0 ;
          char *pBase64Buf = NULL ;
          char *pBin_data = NULL ;
-         sprintf ( temp, "\", \"$type\": \"%u\" }", bson_iterator_bin_type ( i ) ) ;
+         sprintf ( temp, "\", \"$type\": \"%u\" }", (unsigned char)bson_iterator_bin_type ( i ) ) ;
          bson_sprint_raw_concat ( pbuf, left, "{ \"$binary\": \"" ) ;
          CHECK_LEFT ( left )
          //bson_sprint_hex_concat ( pbuf, left, bson_iterator_bin_data ( i ),

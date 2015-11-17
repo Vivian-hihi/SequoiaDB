@@ -220,7 +220,7 @@ INT32 sptConvertor::_addBinData( JSObject *obj,
    jsval jsBin, jsType ;
    CHAR *decode = NULL ;
    INT32 decodeSize = 0 ;
-   INT32 binType = 0 ;
+   UINT32 binType = 0 ;
 
    if ( !_getProperty( obj, "_data",
                        JSTYPE_STRING, jsBin ))
@@ -251,6 +251,11 @@ INT32 sptConvertor::_addBinData( JSObject *obj,
    try
    {
       binType = boost::lexical_cast<INT32>( strType.c_str() ) ;
+      if ( binType > 255 )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
    }
    catch ( std::bad_cast &e )
    {
@@ -762,7 +767,7 @@ INT32 sptConvertor::_addSpecialObj( JSObject *obj,
       jsval typeValName ;
       CHAR *decode = NULL ;
       INT32 decodeSize = 0 ;
-      INT32 binType = 0 ;
+      UINT32 binType = 0 ;
 
       if ( !JS_IdToValue( _cx, typeId, &typeValName ))
       {
@@ -814,6 +819,11 @@ INT32 sptConvertor::_addSpecialObj( JSObject *obj,
       try
       {
          binType = boost::lexical_cast<INT32>( strType.c_str() ) ;
+         if ( binType > 255 )
+         {
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
       }
       catch ( std::bad_cast &e )
       {

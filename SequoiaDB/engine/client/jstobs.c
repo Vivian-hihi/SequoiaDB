@@ -573,12 +573,12 @@ static BOOLEAN bsonConvertJson ( CHAR **pbuf,
             _snprintf ( temp,
                         len + 48,
                         "{ \"$binary\": \"%s\", \"$type\" : \"%d\" }",
-                        out, bin_type ) ;
+                        out, (UINT8)bin_type ) ;
    #else
             snprintf ( temp,
                        len + 48,
                        "{ \"$binary\": \"%s\", \"$type\" : \"%d\" }",
-                       out, bin_type ) ;
+                       out, (UINT8)bin_type ) ;
    #endif
             bsonConvertJsonRawConcat ( pbuf, left, temp, FALSE ) ;
             free( temp ) ;
@@ -597,12 +597,12 @@ static BOOLEAN bsonConvertJson ( CHAR **pbuf,
             _snprintf ( temp,
                         48,
                         "{ \"$binary\": \"\", \"$type\" : \"%d\" }",
-                        bin_type ) ;
+                        (UINT8)bin_type ) ;
    #else
             snprintf ( temp,
                        48,
                        "{ \"$binary\": \"\", \"$type\" : \"%d\" }",
-                       bin_type ) ;
+                       (UINT8)bin_type ) ;
    #endif
             bsonConvertJsonRawConcat ( pbuf, left, temp, FALSE ) ;
             free( temp ) ;
@@ -1189,6 +1189,11 @@ static BOOLEAN jsonConvertBson ( cJSON *cj, bson *bs, BOOLEAN isObj )
                   return FALSE ;
                }
                if ( 3 == cj->valueint && CJSON_UUID != out_len )
+               {
+                  free ( out ) ;
+                  return FALSE ;
+               }
+               if ( (UINT32)cj->valueint > 255 )
                {
                   free ( out ) ;
                   return FALSE ;
