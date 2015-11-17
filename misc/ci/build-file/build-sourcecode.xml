@@ -65,13 +65,13 @@
 		</exec>
 
 		<echo message="Compile the connector of postgresql..." />
-		<exec executable="make" dir="${WORKSPACE}/sequoiadb/driver/postgresql" failonerror="false">
+		<exec executable="make" dir="${CODE_DIR}/driver/postgresql" failonerror="false">
 			<arg line=" clean" />
 		</exec>
-		<exec executable="make" dir="${WORKSPACE}/sequoiadb/driver/postgresql" failonerror="false">
+		<exec executable="make" dir="${CODE_DIR}/driver/postgresql" failonerror="false">
 			<arg line=" local" />
 		</exec>
-		<exec executable="make" dir="${WORKSPACE}/sequoiadb/driver/postgresql" failonerror="false">
+		<exec executable="make" dir="${CODE_DIR}/driver/postgresql" failonerror="false">
 			<arg line=" all" />
 		</exec>
 

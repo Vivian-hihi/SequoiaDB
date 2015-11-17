@@ -1,0 +1,65 @@
+<project default="archive_pg_connector">
+	<property name="CODE_DIR" value="${WORKSPACE}/sequoiadb" />
+	<property name="PG_DIR" value="${WORKSPACE}/postgresql" />
+	<property name="pg_connector_name" value="sdb_fdw.so" />
+	<property file="${CODE_DIR}/misc/ci/ci-properies-files/ci.pg.properties.x86" />
+	<taskdef resource="com/sequoiadb/ant/ant-sdbtasks.xml">
+        <classpath>
+            <pathelement location="${CODE_DIR}/misc/ci/exec-tools/ant-sdbtasks.jar" />
+        </classpath>
+    </taskdef>
+
+    <target name="clean" depends="">
+    	<exec executable="make" dir="${PG_DIR}" failonerror="false">
+			<arg line=" uninstall" />
+		</exec>
+		<exec executable="make" dir="${PG_DIR}" failonerror="false">
+			<arg line=" clean" />
+		</exec>
+    	<exec executable="make" dir="${CODE_DIR}/driver/postgresql" failonerror="false">
+			<arg line=" clean" />
+		</exec>
+    </target>
+
+    <target name="compile_pg" depends="clean">
+    	<echo message="Compile the postgresql..." />
+    	<exec executable="./configure" dir="${PG_DIR}" failonerror="true" />
+    	<exec executable="make" dir="${PG_DIR}" failonerror="true" />
+		<exec executable="make" dir="${PG_DIR}" failonerror="true">
+			<arg line=" install" />
+		</exec>
+    </target>
+
+    <target name="build_pg_connector" depends="compile_pg">
+    	<echo message="Compile the connector of postgresql..." />
+    	<replaceregexp file="${CODE_DIR}/driver/postgresql/Makefile" match="DEBUG?=-ggdb" replace="#DEBUG?=-ggdb" flags="g" />
+    	<replaceregexp file="${CODE_DIR}/driver/postgresql/Makefile" match="##DEBUG?=-ggdb -DSDB_USE_OWN_POSTGRES" replace="DEBUG?=-ggdb -DSDB_USE_OWN_POSTGRES" flags="g" />
+		<exec executable="make" dir="${CODE_DIR}/driver/postgresql" failonerror="false">
+			<arg line=" local" />
+		</exec>
+		<exec executable="make" dir="${CODE_DIR}/driver/postgresql" failonerror="false">
+			<arg line=" all" />
+		</exec>
+    </target>
+
+    <target name="copy_pg_connector" depends="build_pg_connector">
+    	<echo message="Begin to copy the ${software.package.name} ${driver.package.name} ${document.package.name}..." />
+		<copy file="${CODE_DIR}/driver/postgresql/${pg_connector_name}" tofile="${CODE_DIR}/driver/postgresql/${pg_connector_name}.${BUILD_NUMBER}" />
+		<stafTools workType="copy" workHost="LOCAL" fileName="${CODE_DIR}/driver/postgresql/${pg_connector_name}.${BUILD_NUMBER}" saveDir="${copy_tar}" toHost="${target.deploy_tar_gz.ip}" failonerror="true"/>
+		<echo message="delete the file ${CODE_DIR}/pg.version" />
+		<stafTools workType="delete" workHost="LOCAL" fileName="${CODE_DIR}/pg.version" failonerror="false"/>
+		<propertyfile file="${CODE_DIR}/pg.version" comment="true">
+			<entry key="BUILD.NUMBER" value="${BUILD_NUMBER}" type="string" />
+			<entry key="BUILD.INSTALL.FILENAME" value="${pg_connector_name}" type="string" />	
+		</propertyfile>
+		<stafTools workType="copy" workHost="LOCAL" fileName="${CODE_DIR}/pg.version" saveDir="${copy_tar}" toHost="LOCAL" failonerror="true"/>
+		<stafTools workType="shell" workHost="LOCAL" common="/usr/bin/find ${copy_tar} -mtime +7 -delete;" workDir="${copy_tar}" waitTime="30m" failonerror="true"/>
+		<delete file="${CODE_DIR}/driver/postgresql/${pg_connector_name}.${BUILD_NUMBER}" />
+    </target>
+
+    <target name="archive_pg_connector" depends="copy_pg_connector">
+    	<delete dir="${WORKSPACE}/release" failonerror="false" />
+    	<mkdir dir="${WORKSPACE}/release" />
+    	<copy file="${CODE_DIR}/driver/postgresql/${pg_connector_name}" tofile="${WORKSPACE}/release/${pg_connector_name}" />
+    </target>
+</project>
