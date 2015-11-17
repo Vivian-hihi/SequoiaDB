@@ -20,6 +20,7 @@
 			<arg line=" clean" />
 		</exec>
 		<delete dir="${PG_DIR}/pgsql" failonerror="false" />
+		<delete dir="${PG_DIR}/pg_data" failonerror="false" />
     </target>
 
     <target name="compile_pg" depends="clean">
@@ -34,16 +35,25 @@
 		<exec executable="make" dir="${PG_DIR}" failonerror="true">
 			<arg line=" install" />
 		</exec>
+		<mkdir dir="${PG_DIR}/pg_data" />
     </target>
 
     <target name="build_pg_connector" depends="compile_pg">
     	<echo message="Compile the connector of postgresql..." />
+    	<property environment="env" />
     	<replaceregexp file="${CODE_DIR}/driver/postgresql/Makefile" match="DEBUG?=-ggdb" replace="#DEBUG?=-ggdb" flags="g" />
     	<replaceregexp file="${CODE_DIR}/driver/postgresql/Makefile" match="##DEBUG?=-ggdb -DSDB_USE_OWN_POSTGRES" replace="DEBUG?=-ggdb -DSDB_USE_OWN_POSTGRES" flags="g" />
-		<exec executable="make" dir="${CODE_DIR}/driver/postgresql" failonerror="false">
+    	<exec executable="./initdb" dir="${PG_DIR}/pgsql/bin" failonerror="true">
+			<arg line=" -D ../pg_data/" />
+			<env key="LD_LIBRARY_PATH" value="${PG_DIR}/pgsql/lib:${env.LD_LIBRARY_PATH}" />
+		</exec>
+		<exec executable="./postgres" dir="${PG_DIR}/pgsql/bin" failonerror="true">
+			<arg line=" -D ../pg_data/ >> logfile 2>&1 &" />
+		</exec>
+		<exec executable="make" dir="${CODE_DIR}/driver/postgresql" failonerror="true">
 			<arg line=" local" />
 		</exec>
-		<exec executable="make" dir="${CODE_DIR}/driver/postgresql" failonerror="false">
+		<exec executable="make" dir="${CODE_DIR}/driver/postgresql" failonerror="true">
 			<arg line=" all" />
 		</exec>
     </target>
