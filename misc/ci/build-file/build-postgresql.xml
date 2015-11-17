@@ -48,7 +48,8 @@
 			<env key="LD_LIBRARY_PATH" value="${PG_DIR}/pgsql/lib:${env.LD_LIBRARY_PATH}" />
 		</exec>
 		<exec executable="./postgres" dir="${PG_DIR}/pgsql/bin" failonerror="true" outputproperty="screen.output">
-			<arg line=" -D ../pg_data/ 2>&#38;1 &#38;" />
+			<!-- <arg line=" -D ../pg_data/ 2>&#38;1 &#38;" /> -->
+			<arg line=" -D ../pg_data/" />
 		</exec>
 		<echo message="${screen.output}" />
 		<exec executable="make" dir="${CODE_DIR}/driver/postgresql" failonerror="true">
