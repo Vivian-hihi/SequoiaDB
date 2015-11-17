@@ -681,7 +681,7 @@ TEST(collection,createIndex)
    /// createIndexOffline
    obj = BSON ( "name2" << 1 << "age2" << -1 ) ;
    // create index
-   rc = cl.createIndexOffline( obj, pIndexName2, TRUE, TRUE ) ;
+   rc = cl.createIndex( obj, pIndexName2, TRUE, TRUE, 100 ) ;
    ASSERT_EQ( SDB_OK, rc ) ;
 
    // get the newly build index
