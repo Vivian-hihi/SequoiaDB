@@ -47,9 +47,10 @@
 			<arg line=" -D ../pg_data/" />
 			<env key="LD_LIBRARY_PATH" value="${PG_DIR}/pgsql/lib:${env.LD_LIBRARY_PATH}" />
 		</exec>
-		<exec executable="./postgres" dir="${PG_DIR}/pgsql/bin" failonerror="true">
-			<arg line=" -D ../pg_data/ >> logfile 2>&#38;1 &#38;" />
+		<exec executable="./postgres" dir="${PG_DIR}/pgsql/bin" failonerror="true" outputproperty="screen.output">
+			<arg line=" -D ../pg_data/ 2>&#38;1 &#38;" />
 		</exec>
+		<echo message="${screen.output}" />
 		<exec executable="make" dir="${CODE_DIR}/driver/postgresql" failonerror="true">
 			<arg line=" local" />
 		</exec>
