@@ -269,6 +269,45 @@ TEST ( cpp_bson_base_type, binary )
    ASSERT_TRUE ( obj.toString(false,true) == "{ \"binaryData\": { \"$binary\": \"aGVsbG8gd29ybGQ=\", \"$type\": \"128\" } }" ) ;
 }
 
+// binary
+TEST ( cpp_bson_base_type, binary_fromjson )
+{
+   int rc = 0 ;
+   int type = 1000 ;
+   BSONObj obj ;
+   BSONObj temp ;
+   BSONObjBuilder ob1 ;
+   BSONObjBuilder ob2 ;
+   BSONObjBuilder ob3 ;
+   BSONObjBuilder ob4 ;
+   BSONObjBuilder ob5 ;
+   BSONObjBuilder ob6 ;
+
+   const char *str = "hello world" ;
+   const char *str2 = "{ \"key\": { \"$binary\" : \"aGVsbG8gd29ybGQ=\", \"$type\": \"-1\" } }" ;
+   const char *str3 = "{ \"key\": { \"$binary\" : \"aGVsbG8gd29ybGQ=\", \"$type\": \"0\" } }" ;
+   const char *str4 = "{ \"key\": { \"$binary\" : \"aGVsbG8gd29ybGQ=\", \"$type\": \"255\" } }" ;
+   const char *str5 = "{ \"key\": { \"$binary\" : \"aGVsbG8gd29ybGQ=\", \"$type\": \"256\" } }" ;
+
+   // fromjson
+   rc = fromjson( str2, temp ) ;
+   ASSERT_EQ ( SDB_INVALIDARG, rc ) ;
+
+   rc = fromjson( str3, temp ) ;
+   ASSERT_EQ ( SDB_OK, rc ) ;
+   cout<<temp.toString(false,true)<<endl ;
+   ASSERT_TRUE ( temp.toString(false,true) == "{ \"key\": { \"$binary\": \"aGVsbG8gd29ybGQ=\", \"$type\": \"0\" } }" ) ;
+
+   rc = fromjson( str4, temp ) ;
+   ASSERT_EQ ( SDB_OK, rc ) ;
+   cout<<temp.toString(false,true)<<endl ;
+   ASSERT_TRUE ( temp.toString(false,true) == "{ \"key\": { \"$binary\": \"aGVsbG8gd29ybGQ=\", \"$type\": \"255\" } }" ) ;
+
+   rc = fromjson( str5, temp ) ;
+   ASSERT_EQ ( SDB_INVALIDARG, rc ) ;
+}
+
+
 // regex
 TEST ( cpp_bson_base_type, regex )
 {
