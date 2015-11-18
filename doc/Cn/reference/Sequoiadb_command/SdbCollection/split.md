@@ -8,7 +8,7 @@
 | ------ | ------ | ------ | ------ |
 | source group | string | 源分区组。 | 是 |
 | target group | string | 目标分区组。 | 是 |
-| percent(0~100) | double | 百分比切分条件。 | percent 和 condition 二选一 |
+| percent(0~100] | double | 百分比切分条件。 | percent 和 condition 二选一 |
 | condition | Json 对象 | 范围切分条件。 | condition 和 percent 二选一 |
 | endcondition | Json 对象 | 结束范围条件。| 可选，且只在按条件切分时有效，按百分比切分时无效 |
 
@@ -51,4 +51,4 @@
 
 **Note:**
 
-百分比切分时，需要保证源分区组中含有数据，即集合不为空。
+百分比切分时，需要注意：1、需要保证源分区组中含有数据，即集合不为空；2、百分比不能为0。
