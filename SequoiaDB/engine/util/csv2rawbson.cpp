@@ -2496,7 +2496,7 @@ the field appears delChar, rc = %d", rc ) ;
    {
       PD_LOG ( PDERROR, "bson size error, %d bytes",
                bsonsize ) ;
-      rc = SDB_OOM ;
+      rc = SDB_DRIVER_BSON_ERROR ;
       goto error ;
    }
    pBsonBuf = (CHAR*)SDB_OSS_MALLOC( bsonsize ) ;
