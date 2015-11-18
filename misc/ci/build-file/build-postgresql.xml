@@ -51,7 +51,7 @@
 			<arg line=" -D ../pg_data/" />
 			<env key="LD_LIBRARY_PATH" value="${PG_DIR}/pgsql/lib:${env.LD_LIBRARY_PATH}" />
 		</exec>
-		<exec executable="./postgres" dir="${PG_DIR}/pgsql/bin" failonerror="false" output="${WORKSPACE}/release/logfile.${BUILD_NUMBER}" timeout="10000">
+		<exec executable="./postgres" dir="${PG_DIR}/pgsql/bin" failonerror="false" output="${WORKSPACE}/release/logfile.${BUILD_NUMBER}" timeout="10000" failifexecutionfails="false">
 			<!-- <arg line=" -D ../pg_data/ 2&gt;&#38;1 &#38;" /> -->
 			<arg line=" -D ../pg_data/" />
 		</exec>
