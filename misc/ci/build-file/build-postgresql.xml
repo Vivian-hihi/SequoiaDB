@@ -1,7 +1,7 @@
 <project default="archive_pg_connector">
 	<property name="CODE_DIR" value="${WORKSPACE}/sequoiadb" />
 	<property name="PG_DIR" value="${WORKSPACE}/postgresql" />
-	<property name="Engine_DIR" value="${CODE_DIR}/SequoiaDB" />
+<!-- 	<property name="Engine_DIR" value="${CODE_DIR}/SequoiaDB" /> -->
 	<property name="pg_connector_name" value="sdb_fdw.so" />
 	<property file="${CODE_DIR}/misc/ci/ci-properies-files/ci.pg.properties.x86" />
 	<taskdef resource="com/sequoiadb/ant/ant-sdbtasks.xml">
@@ -69,7 +69,7 @@
 				<echo message="${enterprise.line}" />
 			</else>
 		</if>
-    	<exec executable="scons" dir="${Engine_DIR}" failonerror="true">
+    	<exec executable="scons" dir="${CODE_DIR}" failonerror="true">
 			<arg line="${compile.arg.line}${enterprise.line} -j 4" />
 		</exec>
     </target>
