@@ -171,10 +171,7 @@ utilFiles = [
 
 dpsFiles = [
       "dps/dpsDump.cpp",
-      "dps/dpsLogRecord.cpp",
-      "tools/sdbDpsFilter.cpp",
-      "tools/sdbDpsLogFilter.cpp",
-      "tools/sdbDpsOption.cpp"
+      "dps/dpsLogRecord.cpp"
       ]
 
 omagentFiles = [
@@ -468,7 +465,7 @@ sdbmemcheckFiles = [
       ]
 
 sdbdpsdumpFiles = [
-      "tools/sdbDpsFilterMain.cpp"
+      "tools/sdbDpsDump.cpp"
       ]
 
 sdbOmToolMain = [
