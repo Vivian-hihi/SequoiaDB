@@ -8,7 +8,7 @@
 <!-- depends:deploy-software-in-host.xml -->
 <!-- call:null -->
 
-<project name="Install-Software" default="install-software">
+<project default="install-software">
 	<property file="${test.basedir}/ci.test.properties" />
 	<property name="db.path" value="${install.path}/sequoiadb" />
 	<taskdef resource="com/sequoiadb/ant/ant-sdbtasks.xml">

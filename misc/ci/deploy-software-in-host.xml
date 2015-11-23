@@ -31,8 +31,7 @@
 		<echo message="hostname=${deploy.host.name}:Clean-install" />
 		<sshexec host="${deploy.host.name}" username="${remote.user}" password="${remote.password}" command="cat ${test.machine.software.path}/clean-install-basic-in-host.log" trust="true" failonerror="true" />
 		<echo message="###############################################################################################################################" />
-		<sshexec host="${deploy.host.name}" username="${remote.user}" password="${remote.password}" command="rm -rf ${test.machine.software.path}" trust="true" failonerror="false" outputproperty="screen.output" />
-		<echo message="******************************************${screen.output}" />
+		<sshexec host="${deploy.host.name}" username="${remote.user}" password="${remote.password}" command="rm -rf ${test.machine.software.path}" trust="true" failonerror="false" />
 		<sshexec host="${deploy.host.name}" username="${remote.user}" password="${remote.password}" command="mkdir ${test.machine.software.path}" trust="true" failonerror="true" />
 	</target>
 
