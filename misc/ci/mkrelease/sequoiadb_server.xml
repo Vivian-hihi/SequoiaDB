@@ -151,12 +151,12 @@
             </ruleList>
         </runProgram>
         <changeOwnerAndGroup>
-            <files>/home/${username}</files>
+            <files>~${username}</files>
             <group>${username}_group</group>
             <owner>${username}</owner>
             <ruleList>
                 <fileExists>
-                    <path>/home/${username}</path>
+                    <path>~${username}</path>
                 </fileExists>
             </ruleList>
         </changeOwnerAndGroup>
