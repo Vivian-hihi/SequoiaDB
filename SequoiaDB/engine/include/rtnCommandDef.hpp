@@ -116,6 +116,9 @@ namespace engine
 #define NAME_LIST_USERS                      CMD_NAME_LIST_USERS
 #define NAME_LIST_DOMAINS                    CMD_NAME_LIST_DOMAINS
 #define NAME_LIST_GROUPS                     CMD_NAME_LIST_GROUPS
+#define NAME_LIST_PROCEDURES                 CMD_NAME_LIST_PROCEDURES
+#define NAME_LIST_CS_IN_DOMAIN               CMD_NAME_LIST_CS_IN_DOMAIN
+#define NAME_LIST_CL_IN_DOMAIN               CMD_NAME_LIST_CL_IN_DOMAIN
 #define NAME_CREATE_CATAGROUP                CMD_NAME_CREATE_CATA_GROUP
 #define NAME_CREATE_DOMAIN                   CMD_NAME_CREATE_DOMAIN
 #define NAME_DROP_DOMAIN                     CMD_NAME_DROP_DOMAIN
@@ -160,6 +163,9 @@ namespace engine
       CMD_LIST_BACKUPS                       = 49,
       CMD_LIST_TASKS                         = 50,
       CMD_LIST_USERS                         = 51,
+      CMD_LIST_PROCEDURES                    = 52,
+      CMD_LIST_CS_IN_DOMAIN                  = 53,
+      CMD_LIST_CL_IN_DOMAIN                  = 54,
 
       CMD_RENAME_COLLECTION                  = 60,
 
