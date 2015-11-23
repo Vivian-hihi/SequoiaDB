@@ -1034,6 +1034,7 @@ namespace engine
          // few operations can't have index, so we simply have full match by
          // default (in isNot phase)
          case BSONObj::opALL:
+         case BSONObj::opIN:
          case BSONObj::opMOD:
          case BSONObj::opTYPE:
             _isInitialized = TRUE ;
@@ -1826,13 +1827,20 @@ namespace engine
                  ( LESS == compareResult && _prevKey[i] == _currentKey[i] ) )
             {
                _currentKey[i]++ ;
+               if ( GREATER == compareResult &&
+                    i + 1 < (INT32)_currentKey.size() )
+               {
+                  _prevKey[ i + 1 ] = -1 ;
+               }
                // set all following fields to 0
                advancePastZeroed(i+1) ;
                continue ;
             }
             // jump out the loop if we get a match
             else if ( MATCH == compareResult )
+            {
                break ;
+            }
             // if jj is less than the current range, let's return the current
             // field id as well as setting _cmp/_inc
             else
