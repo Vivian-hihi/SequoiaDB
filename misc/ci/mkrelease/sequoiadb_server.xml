@@ -160,7 +160,7 @@
             </ruleList>
         </runProgram>
         <changeOwnerAndGroup>
-            <files>~${username}</files>
+            <files>~${username}/*</files>
             <group>${username}_group</group>
             <owner>${username}</owner>
             <ruleList>
