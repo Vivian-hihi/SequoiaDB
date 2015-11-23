@@ -124,6 +124,15 @@
                 </fileExists>
             </ruleList>
         </changePermissions>
+        <createDirectory>
+            <path>~${username}</path>
+            <ruleList>
+                <fileExists>
+                    <negate>1</negate>
+                    <path>~${username}</path>
+                </fileExists>
+            </ruleList>
+        </createDirectory>
         <touchFile>
             <path>~${username}/.bashrc</path>
             <ruleList>
