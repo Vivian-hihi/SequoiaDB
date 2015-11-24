@@ -1311,7 +1311,8 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__DPSRPCMGR_COMMIT ) ;
       _dpsLogPage *work = NULL ;
-      _dpsLogFile *file = NULL ;
+      _dpsLogFile *oldWorkFile = NULL ;
+      _dpsLogFile *workFile = NULL ;
       _mtx.get() ;
  
       work = WORK_PAGE ;
@@ -1329,7 +1330,10 @@ namespace engine
 
       work->lock() ;
       work->unlock() ;
-      
+
+      /// flushing wor page may change work file
+      oldWorkFile = _logger.getWorkLogFile() ;
+
       if ( 0 != work->getLength() )
       {
          ossMemset( work->mb()->writePtr(), 0, work->getLastSize() ) ;
@@ -1340,8 +1344,10 @@ namespace engine
             goto error ;
          }
 
-         _idleSize.add( work->getLength() ) ;
-         _allocateEvent.signalAll() ;
+         /// reset file write pointer
+         workFile = _logger.getWorkLogFile() ;
+         SDB_ASSERT( oldWorkFile == workFile, "must be same" ) ;
+         workFile->idleSize( workFile->getIdleSize() + DPS_DEFAULT_PAGE_SIZE ) ;
       }
 
       if ( deeply )
@@ -1353,10 +1359,6 @@ namespace engine
             goto error ;
          }
       }
-
-      /// reset file write pointer
-      file = _logger.getWorkLogFile() ;
-      file->idleSize( file->getIdleSize() + DPS_DEFAULT_PAGE_SIZE ) ;   
 
       _lastCommitted = _currentLsn ;
       if ( NULL != committedLsn )
