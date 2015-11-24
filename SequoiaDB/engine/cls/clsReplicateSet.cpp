@@ -501,7 +501,7 @@ namespace engine
          else if ( 0 != _lastTimerTick && timeSpan > 3 * interval )
          {
             PD_LOG( PDWARNING, "The %u milli-seconds's timer has %u "
-                    "milli-secons not called, the cluster's main thread "
+                    "milli-seconds not called, the cluster's main thread "
                     "maybe blocked in some operations", interval,
                     timeSpan ) ;
          }
