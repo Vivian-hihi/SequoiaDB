@@ -46,7 +46,7 @@ namespace engine
    {
       DPS_LOG_PUBLIC_INVALID = 0,
       DPS_LOG_PUBLIC_BEGIN = 200,
-      DPS_LOG_PULIBC_FULLNAME = 201,
+      DPS_LOG_PUBLIC_FULLNAME = 201,
       DPS_LOG_PUBLIC_TRANSID = 202,
       DPS_LOG_PUBLIC_PRETRANS = 203,
       DPS_LOG_PUBLIC_RELATED_TRANS = 204,    // only for rollback trans,

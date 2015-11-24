@@ -98,7 +98,7 @@ namespace engine
       dpsLogRecordHeader &header = record.head() ;
       header._type = LOG_TYPE_DATA_INSERT ;
 
-      rc = record.push( DPS_LOG_PULIBC_FULLNAME,
+      rc = record.push( DPS_LOG_PUBLIC_FULLNAME,
                         ossStrlen(fullName) + 1, // '1 for '\0'
                         fullName ) ;
       if ( SDB_OK != rc )
@@ -147,7 +147,7 @@ namespace engine
 
       {
       dpsLogRecord::iterator itrFullName, itrObj ;
-      itrFullName = record.find( DPS_LOG_PULIBC_FULLNAME ) ;
+      itrFullName = record.find( DPS_LOG_PUBLIC_FULLNAME ) ;
       if ( !itrFullName.valid() )
       {
          PD_LOG( PDERROR, "Failed to find tag fullname in record" ) ;
@@ -190,7 +190,7 @@ namespace engine
       dpsLogRecordHeader &header = record.head() ;
       header._type = LOG_TYPE_DATA_UPDATE ;
 
-      rc = record.push( DPS_LOG_PULIBC_FULLNAME,
+      rc = record.push( DPS_LOG_PUBLIC_FULLNAME,
                         ossStrlen(fullName) + 1, // '1 for '\0'
                         fullName ) ;
       if ( SDB_OK != rc )
@@ -273,7 +273,7 @@ namespace engine
       {
       dpsLogRecord::iterator itrFullName, itrOldM,
                              itrOldObj, itrNewM, itrNewObj ;
-      itrFullName = record.find( DPS_LOG_PULIBC_FULLNAME ) ;
+      itrFullName = record.find( DPS_LOG_PUBLIC_FULLNAME ) ;
       if ( !itrFullName.valid() )
       {
          PD_LOG( PDERROR, "Failed to find tag fullname in record" ) ;
@@ -340,7 +340,7 @@ namespace engine
       SDB_ASSERT( NULL != fullName, "Collection name can't be NULL" ) ;
       dpsLogRecordHeader &header = record.head() ;
       header._type = LOG_TYPE_DATA_DELETE ;
-      rc = record.push( DPS_LOG_PULIBC_FULLNAME,
+      rc = record.push( DPS_LOG_PUBLIC_FULLNAME,
                         ossStrlen(fullName) + 1, // '1 for '\0'
                         fullName ) ;
       if ( SDB_OK != rc )
@@ -391,7 +391,7 @@ namespace engine
 
       {
       dpsLogRecord::iterator itrFullName, itrObj ;
-      itrFullName = record.find( DPS_LOG_PULIBC_FULLNAME ) ;
+      itrFullName = record.find( DPS_LOG_PUBLIC_FULLNAME ) ;
       if ( !itrFullName.valid() )
       {
          PD_LOG( PDERROR, "Failed to find tag fullname in record" ) ;
@@ -593,7 +593,7 @@ namespace engine
       dpsLogRecordHeader &header = record.head() ;
       header._type = LOG_TYPE_CL_CRT ;
 
-      rc = record.push( DPS_LOG_PULIBC_FULLNAME,
+      rc = record.push( DPS_LOG_PUBLIC_FULLNAME,
                         ossStrlen(fullName) + 1, // '1 for '\0'
                         fullName ) ;
       if ( SDB_OK != rc )
@@ -641,7 +641,7 @@ namespace engine
 
       {
       dpsLogRecord::iterator itrFullName, itrAttri ;
-      itrFullName = record.find( DPS_LOG_PULIBC_FULLNAME ) ;
+      itrFullName = record.find( DPS_LOG_PUBLIC_FULLNAME ) ;
       if ( !itrFullName.valid() )
       {
          PD_LOG( PDERROR, "failed to find tag fullname in record" ) ;
@@ -674,7 +674,7 @@ namespace engine
       dpsLogRecordHeader &header = record.head() ;
       header._type = LOG_TYPE_CL_DELETE;
 
-      rc = record.push( DPS_LOG_PULIBC_FULLNAME,
+      rc = record.push( DPS_LOG_PUBLIC_FULLNAME,
                         ossStrlen(fullName) + 1, // '1 for '\0'
                         fullName ) ;
       if ( SDB_OK != rc )
@@ -708,7 +708,7 @@ namespace engine
 
       {
       dpsLogRecord::iterator itrFullName =
-                           record.find( DPS_LOG_PULIBC_FULLNAME ) ;
+                           record.find( DPS_LOG_PUBLIC_FULLNAME ) ;
       if ( !itrFullName.valid() )
       {
          PD_LOG( PDERROR, "Failed to find tag fullname in record" ) ;
@@ -735,7 +735,7 @@ namespace engine
       SDB_ASSERT( NULL != fullName, "Collection name can't be NULL" ) ;
       dpsLogRecordHeader &header = record.head() ;
       header._type = LOG_TYPE_IX_CRT ;
-      rc = record.push( DPS_LOG_PULIBC_FULLNAME,
+      rc = record.push( DPS_LOG_PUBLIC_FULLNAME,
                         ossStrlen(fullName) + 1, // '1 for '\0'
                         fullName ) ;
       if ( SDB_OK != rc )
@@ -779,7 +779,7 @@ namespace engine
 
       {
       dpsLogRecord::iterator itrFullName, itrIndex, itrMode ;
-      itrFullName = record.find( DPS_LOG_PULIBC_FULLNAME ) ;
+      itrFullName = record.find( DPS_LOG_PUBLIC_FULLNAME ) ;
       if ( !itrFullName.valid() )
       {
          PD_LOG( PDERROR, "Failed to find tag fullname in record" ) ;
@@ -816,7 +816,7 @@ namespace engine
       dpsLogRecordHeader &header = record.head() ;
       header._type = LOG_TYPE_IX_DELETE ;
 
-      rc = record.push( DPS_LOG_PULIBC_FULLNAME,
+      rc = record.push( DPS_LOG_PUBLIC_FULLNAME,
                         ossStrlen(fullName) + 1, // '1 for '\0'
                         fullName ) ;
       if ( SDB_OK != rc )
@@ -860,7 +860,7 @@ namespace engine
 
       {
       dpsLogRecord::iterator itrFullName, itrIndex ;
-      itrFullName = record.find( DPS_LOG_PULIBC_FULLNAME ) ;
+      itrFullName = record.find( DPS_LOG_PUBLIC_FULLNAME ) ;
       if ( !itrFullName.valid() )
       {
          PD_LOG( PDERROR, "Failed to find tag fullname in record" ) ;
@@ -1000,7 +1000,7 @@ namespace engine
       dpsLogRecordHeader &header = record.head() ;
       header._type = LOG_TYPE_CL_TRUNC ;
 
-      rc = record.push( DPS_LOG_PULIBC_FULLNAME,
+      rc = record.push( DPS_LOG_PUBLIC_FULLNAME,
                         ossStrlen(fullName) + 1, // '1 for '\0'
                         fullName ) ;
       if ( SDB_OK != rc )
@@ -1033,7 +1033,7 @@ namespace engine
 
       {
          dpsLogRecord::iterator itrCLName ;
-         itrCLName = record.find( DPS_LOG_PULIBC_FULLNAME ) ;
+         itrCLName = record.find( DPS_LOG_PUBLIC_FULLNAME ) ;
          if ( !itrCLName.valid() )
          {
             PD_LOG( PDERROR, "Failed to find tag fullname in record" ) ;
@@ -1167,7 +1167,7 @@ namespace engine
       dpsLogRecordHeader &header = record.head() ;
       header._type = LOG_TYPE_INVALIDATE_CATA ;
 
-      rc = record.push( DPS_LOG_PULIBC_FULLNAME,
+      rc = record.push( DPS_LOG_PUBLIC_FULLNAME,
                         ossStrlen( clFullName ) + 1,
                         clFullName ) ;
 
@@ -1202,7 +1202,7 @@ namespace engine
 
       {
       dpsLogRecord::iterator itrFullName =
-                  record.find( DPS_LOG_PULIBC_FULLNAME ) ;
+                  record.find( DPS_LOG_PUBLIC_FULLNAME ) ;
       if ( !itrFullName.valid() )
       {
          PD_LOG( PDERROR, "Failed to find tag fullname in record" ) ;
@@ -1236,7 +1236,7 @@ namespace engine
       PD_TRACE_ENTRY( SDB__DPS_LOBW2RECORD ) ;
       dpsLogRecordHeader &header = record.head() ;
       header._type = LOG_TYPE_LOB_WRITE ;
-      rc = record.push( DPS_LOG_PULIBC_FULLNAME,
+      rc = record.push( DPS_LOG_PUBLIC_FULLNAME,
                         ossStrlen( fullName ) + 1,
                         fullName ) ;
       if ( SDB_OK != rc )
@@ -1348,7 +1348,7 @@ namespace engine
       }
 
       {
-      dpsLogRecord::iterator itr = record.find( DPS_LOG_PULIBC_FULLNAME ) ;
+      dpsLogRecord::iterator itr = record.find( DPS_LOG_PUBLIC_FULLNAME ) ;
       if ( !itr.valid() )
       {
          PD_LOG( PDERROR, "failed to find tag fullname in record" ) ;
@@ -1461,7 +1461,7 @@ namespace engine
       PD_TRACE_ENTRY( SDB__DPS_LOBU2RECORD ) ;
       dpsLogRecordHeader &header = record.head() ;
       header._type = LOG_TYPE_LOB_UPDATE ;
-      rc = record.push( DPS_LOG_PULIBC_FULLNAME,
+      rc = record.push( DPS_LOG_PUBLIC_FULLNAME,
                         ossStrlen( fullName ) + 1,
                         fullName ) ;
       if ( SDB_OK != rc )
@@ -1590,7 +1590,7 @@ namespace engine
       }
 
       {
-      dpsLogRecord::iterator itr = record.find( DPS_LOG_PULIBC_FULLNAME ) ;
+      dpsLogRecord::iterator itr = record.find( DPS_LOG_PUBLIC_FULLNAME ) ;
       if ( !itr.valid() )
       {
          PD_LOG( PDERROR, "failed to find tag fullname in record" ) ;
@@ -1723,7 +1723,7 @@ namespace engine
       PD_TRACE_ENTRY( SDB__DPS_LOBRM2RECORD ) ;
       dpsLogRecordHeader &header = record.head() ;
       header._type = LOG_TYPE_LOB_REMOVE ;
-      rc = record.push( DPS_LOG_PULIBC_FULLNAME,
+      rc = record.push( DPS_LOG_PUBLIC_FULLNAME,
                         ossStrlen( fullName ) + 1,
                         fullName ) ;
       if ( SDB_OK != rc )
@@ -1832,7 +1832,7 @@ namespace engine
       }
 
       {
-      dpsLogRecord::iterator itr = record.find( DPS_LOG_PULIBC_FULLNAME ) ;
+      dpsLogRecord::iterator itr = record.find( DPS_LOG_PUBLIC_FULLNAME ) ;
       if ( !itr.valid() )
       {
          PD_LOG( PDERROR, "failed to find tag fullname in record" ) ;
@@ -1933,7 +1933,7 @@ namespace engine
       PD_TRACE_ENTRY( SDB__DPS_LOBTRUNCATE2RECORD ) ;
       dpsLogRecordHeader &header = record.head() ;
       header._type = LOG_TYPE_LOB_TRUNCATE ;
-      rc = record.push( DPS_LOG_PULIBC_FULLNAME,
+      rc = record.push( DPS_LOG_PUBLIC_FULLNAME,
                         ossStrlen( fullName ) + 1,
                         fullName ) ;
       if ( SDB_OK != rc )
@@ -1965,7 +1965,7 @@ namespace engine
       }
 
       {
-      dpsLogRecord::iterator itr = record.find( DPS_LOG_PULIBC_FULLNAME ) ;
+      dpsLogRecord::iterator itr = record.find( DPS_LOG_PUBLIC_FULLNAME ) ;
       if ( !itr.valid() )
       {
          PD_LOG( PDERROR, "failed to find tag fullname in record" ) ;

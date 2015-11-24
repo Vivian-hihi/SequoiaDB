@@ -143,7 +143,7 @@ TEST(logWrapperTest, recordInsert_1)
    ASSERT_TRUE(rowRecord.head()._length == record.alignedLen() );
    ASSERT_TRUE(rowRecord.head()._type == LOG_TYPE_DATA_INSERT);
 
-   dpsLogRecord::iterator itr = rowRecord.find( DPS_LOG_PULIBC_FULLNAME ) ;
+   dpsLogRecord::iterator itr = rowRecord.find( DPS_LOG_PUBLIC_FULLNAME ) ;
    ASSERT_TRUE( itr.valid() ) ;
 
    rc = ossStrncmp(name.c_str(), itr.value(), name.size() );

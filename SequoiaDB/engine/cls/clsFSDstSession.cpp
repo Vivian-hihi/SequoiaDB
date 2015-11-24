@@ -1153,7 +1153,7 @@ namespace engine
                goto error ;
             }
 
-            itrName = record.find( DPS_LOG_PULIBC_FULLNAME ) ;
+            itrName = record.find( DPS_LOG_PUBLIC_FULLNAME ) ;
             if ( !itrName.valid() )
             {
                PD_LOG( PDERROR, "Session[%s]: Failed to find tag "
@@ -1173,7 +1173,7 @@ namespace engine
                goto error ;
             }
 
-            itrName = record.find( DPS_LOG_PULIBC_FULLNAME) ;
+            itrName = record.find( DPS_LOG_PUBLIC_FULLNAME) ;
             if ( !itrName.valid() )
             {
                PD_LOG( PDERROR, "Session[%s]: Failed to find tag "

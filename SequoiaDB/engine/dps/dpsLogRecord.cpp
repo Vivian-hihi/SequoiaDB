@@ -397,7 +397,7 @@ namespace engine
             len += ossSnprintf ( outBuf + len, outSize - len,
                                  " Type   : %s(%d)"OSS_NEWLINE,
                                  "INSERT", LOG_TYPE_DATA_INSERT ) ;
-            itrName = this->find(DPS_LOG_PULIBC_FULLNAME) ;
+            itrName = this->find(DPS_LOG_PUBLIC_FULLNAME) ;
             if ( !itrName.valid() )
             {
                len += ossSnprintf ( outBuf + len, outSize - len,
@@ -444,7 +444,7 @@ namespace engine
 
             dpsLogRecord::iterator itrFullName, itrOldM, itrOldO,
                                    itrNewM, itrNewO ;
-            itrFullName = this->find( DPS_LOG_PULIBC_FULLNAME ) ;
+            itrFullName = this->find( DPS_LOG_PUBLIC_FULLNAME ) ;
             if ( !itrFullName.valid() )
             {
                len += ossSnprintf ( outBuf + len, outSize - len,
@@ -529,7 +529,7 @@ namespace engine
                                  " Type   : %s(%d)"OSS_NEWLINE,
                                  "DELETE", LOG_TYPE_DATA_DELETE ) ;
             dpsLogRecord::iterator itrFullName, itrM ;
-            itrFullName = this->find( DPS_LOG_PULIBC_FULLNAME ) ;
+            itrFullName = this->find( DPS_LOG_PUBLIC_FULLNAME ) ;
             if ( !itrFullName.valid() )
             {
                PD_LOG( PDERROR, "failed to find fullname in record" ) ;
@@ -627,7 +627,7 @@ namespace engine
                                  " Type   : %s(%d)"OSS_NEWLINE,
                                  "CL CREATE", LOG_TYPE_CL_CRT ) ;
             dpsLogRecord::iterator itrCL =
-                      this->find( DPS_LOG_PULIBC_FULLNAME ) ;
+                      this->find( DPS_LOG_PUBLIC_FULLNAME ) ;
             if ( !itrCL.valid() )
             {
                len += ossSnprintf ( outBuf + len, outSize - len,
@@ -648,7 +648,7 @@ namespace engine
                                  " Type   : %s(%d)"OSS_NEWLINE,
                                  "CL CREATE", LOG_TYPE_CL_DELETE ) ;
             dpsLogRecord::iterator itrCL =
-                      this->find( DPS_LOG_PULIBC_FULLNAME ) ;
+                      this->find( DPS_LOG_PUBLIC_FULLNAME ) ;
             if ( !itrCL.valid() )
             {
                len += ossSnprintf ( outBuf + len, outSize - len,
@@ -671,7 +671,7 @@ namespace engine
                                  "IX CREATE", LOG_TYPE_IX_CRT ) ;
 
             dpsLogRecord::iterator itrFullName, itrIX ;
-            itrFullName = this->find( DPS_LOG_PULIBC_FULLNAME ) ;
+            itrFullName = this->find( DPS_LOG_PUBLIC_FULLNAME ) ;
             if ( !itrFullName.valid() )
             {
                len += ossSnprintf ( outBuf + len, outSize - len,
@@ -718,7 +718,7 @@ namespace engine
                                  "IX DROP", LOG_TYPE_IX_DELETE ) ;
 
             dpsLogRecord::iterator itrFullName, itrIX ;
-            itrFullName = this->find( DPS_LOG_PULIBC_FULLNAME ) ;
+            itrFullName = this->find( DPS_LOG_PUBLIC_FULLNAME ) ;
             if ( !itrFullName.valid() )
             {
                len += ossSnprintf ( outBuf + len, outSize - len,
@@ -813,7 +813,7 @@ namespace engine
                                  " Type   : %s(%d)"OSS_NEWLINE,
                                  "CL TRUNCATE", LOG_TYPE_CL_TRUNC ) ;
             dpsLogRecord::iterator itrCL =
-                                       this->find( DPS_LOG_PULIBC_FULLNAME ) ;
+                                       this->find( DPS_LOG_PUBLIC_FULLNAME ) ;
             if ( !itrCL.valid() )
             {
                len += ossSnprintf ( outBuf + len, outSize - len,
@@ -834,7 +834,7 @@ namespace engine
                                  " Type   : %s(%d)"OSS_NEWLINE,
                                  "INVALIDATE CATA", LOG_TYPE_INVALIDATE_CATA ) ;
             dpsLogRecord::iterator itrCL =
-                                       this->find( DPS_LOG_PULIBC_FULLNAME ) ;
+                                       this->find( DPS_LOG_PUBLIC_FULLNAME ) ;
             if ( !itrCL.valid() )
             {
                len += ossSnprintf ( outBuf + len, outSize - len,
@@ -886,7 +886,7 @@ namespace engine
                                  "LOB_W", LOG_TYPE_LOB_WRITE ) ;
 
             dpsLogRecord::iterator itr ;
-            itr = this->find( DPS_LOG_PULIBC_FULLNAME ) ;
+            itr = this->find( DPS_LOG_PUBLIC_FULLNAME ) ;
             if ( !itr.valid() )
             {
                len += ossSnprintf ( outBuf + len, outSize - len,
@@ -976,7 +976,7 @@ namespace engine
                                  "LOB_REMOVE", LOG_TYPE_LOB_WRITE ) ;
 
             dpsLogRecord::iterator itr ;
-            itr = this->find( DPS_LOG_PULIBC_FULLNAME ) ;
+            itr = this->find( DPS_LOG_PUBLIC_FULLNAME ) ;
             if ( !itr.valid() )
             {
                len += ossSnprintf ( outBuf + len, outSize - len,
@@ -1066,7 +1066,7 @@ namespace engine
                                  "LOB_U", LOG_TYPE_LOB_WRITE ) ;
 
             dpsLogRecord::iterator itr ;
-            itr = this->find( DPS_LOG_PULIBC_FULLNAME ) ;
+            itr = this->find( DPS_LOG_PUBLIC_FULLNAME ) ;
             if ( !itr.valid() )
             {
                len += ossSnprintf ( outBuf + len, outSize - len,

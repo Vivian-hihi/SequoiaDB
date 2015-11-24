@@ -289,7 +289,7 @@ BOOLEAN _dpsNameFilter::match( dpsDumper *dumper, CHAR *pRecord )
    BOOLEAN rc = FALSE ;
    dpsLogRecord record ;
    record.load( pRecord ) ;
-   dpsLogRecord::iterator itr = record.find( DPS_LOG_PULIBC_FULLNAME ) ;
+   dpsLogRecord::iterator itr = record.find( DPS_LOG_PUBLIC_FULLNAME ) ;
 
    if( 0 == ossStrncmp( dumper->name, "", sizeof( dumper->name ) ) )
    {
