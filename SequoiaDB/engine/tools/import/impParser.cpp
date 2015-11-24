@@ -191,7 +191,7 @@ namespace import
                break;
             }
 
-            printf("\nread record error!\n");
+            printf("read record error!\n");
             PD_LOG(PDERROR, "failed to read record");
             goto error;
          }

@@ -32,6 +32,8 @@
 #include "ossUtil.h"
 #include "pd.hpp"
 
+#define IMP_RECORD_MAX_LENGTH (1024 * 1024 * 16) // 16MB
+
 namespace import
 {
    RecordReader::RecordReader()
@@ -118,6 +120,13 @@ namespace import
       {
          if (SDB_EOF == rc)
          {
+            if (_dataLength > IMP_RECORD_MAX_LENGTH)
+            {
+               rc = SDB_INVALIDARG;
+               PD_LOG(PDERROR, "the remain data is out of length [0-%d]: %d",
+                               IMP_RECORD_MAX_LENGTH, _dataLength);
+               goto error;
+            }
             ossMemmove(_buffer, _data, _dataLength);
             _remainSize = _dataLength;
             _dataLength = 0;
