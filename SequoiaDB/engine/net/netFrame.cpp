@@ -159,6 +159,8 @@ namespace engine
                 serviceType == eh->id().columns.serviceID ) )
          {
             eh->mtx().get() ;
+            beat.routeID = eh->id() ;
+            beat.requestID = eh->getAndIncMsgID() ;
             eh->syncSend( (const void*)&beat, beat.messageLength ) ;
             eh->syncLastBeatTick() ;
             eh->mtx().release() ;
@@ -223,6 +225,13 @@ namespace engine
          _beatLastTick = pmdGetDBTick() ;
          _checkBeat = TRUE ;
          _heartbeat( serviceType ) ;
+
+         if ( spanTime > 3 * _beatInterval )
+         {
+            PD_LOG( PDWARNING, "Heartbeat span time[%u] is more than "
+                    "interval time[%u], the thread maybe blocked by "
+                    "some operations", spanTime, _beatInterval ) ;
+         }
       }
    }
 
@@ -882,6 +891,7 @@ namespace engine
          reply.flags = pmdDBIsAbnormal() ? SDB_SYS : SDB_OK ;
 
          eh->mtx().get() ;
+         reply.header.routeID = eh->id() ;
          eh->syncSend( (const void*)&reply, reply.header.messageLength ) ;
          eh->mtx().release() ;
       }

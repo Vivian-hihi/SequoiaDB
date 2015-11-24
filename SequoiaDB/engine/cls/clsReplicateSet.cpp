@@ -98,7 +98,7 @@ namespace engine
 
       _totalLogSize = 0 ;
       _inSyncCtrl   = FALSE ;
-      _checkBreakTick = 0 ;
+      _lastTimerTick = 0 ;
       memset( _sizethreshold, 0, sizeof( _sizethreshold ) ) ;
       memset( _timeThreshold, 0, sizeof( _timeThreshold ) ) ;
 
@@ -492,6 +492,22 @@ namespace engine
       PD_TRACE_ENTRY ( SDB__CLSREPSET_ONTMR );
       if ( _timerID == timerID )
       {
+         UINT64 timeSpan = pmdGetTickSpanTime( _lastTimerTick ) ;
+         /// avoid out-of-data's timeout event
+         if ( timeSpan < interval / 2 )
+         {
+            goto done ;
+         }
+         else if ( 0 != _lastTimerTick && timeSpan > 3 * interval )
+         {
+            PD_LOG( PDWARNING, "The %u milli-seconds's timer has %u "
+                    "milli-secons not called, the cluster's main thread "
+                    "maybe blocked in some operations", interval,
+                    timeSpan ) ;
+         }
+         /// reset the timer tick
+         _lastTimerTick = pmdGetDBTick() ;
+
          _cata.handleTimeout( interval ) ;
          if ( !_active )
          {
@@ -794,13 +810,6 @@ namespace engine
       BOOLEAN needErase = FALSE ;
       map<UINT64, _clsSharingStatus *>::iterator itr ;
       map< UINT64, _clsSharingStatus>::iterator itrInfo ;
-
-      /// avoid out-of-data's timeout event
-      if ( pmdGetTickSpanTime( _checkBreakTick ) < millisec / 2 )
-      {
-         goto done ;
-      }
-      _checkBreakTick = pmdGetDBTick() ;
 
       for ( itr = _info.alives.begin() ; itr != _info.alives.end() ; itr++ )
       {

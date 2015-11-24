@@ -64,6 +64,7 @@ namespace engine
       _lastRecvTick  = pmdGetDBTick() ;
       _lastBeatTick  = pmdGetDBTick() ;
       _isAcitve      = FALSE ;
+      _msgid         = 0 ;
    }
 
    _netEventHandler::~_netEventHandler()

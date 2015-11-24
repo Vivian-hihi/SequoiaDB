@@ -291,7 +291,7 @@ namespace engine
          UINT64                  _timerID ;
          UINT32                  _beatTime ;
          BOOLEAN                 _active ;
-         UINT64                  _checkBreakTick ;
+         UINT64                  _lastTimerTick ;
 
          UINT32                  _srcSessionNum ;
          ossRWMutex              _vecLatch ;

@@ -236,12 +236,33 @@ namespace engine
                    "netfram" ) ;
       SDB_ASSERT ( NULL != header, "message-header should not be NULL" ) ;
       INT32 rc = SDB_OK ;
-
       PD_TRACE_ENTRY ( SDB_CATMAINCT_HANDLEMSG ) ;
       PD_TRACE1 ( SDB_CATMAINCT_HANDLEMSG,
                   PD_PACK_INT ( header->opCode ) ) ;
 
-      rc = _postMsg( handle, header ) ;
+      if ( (UINT32)MSG_SYSTEM_INFO_LEN == (UINT32)header->messageLength )
+      {
+         MsgSysInfoReply reply ;
+         MsgSysInfoReply *pReply = &reply ;
+         INT32 replySize = sizeof(reply) ;
+
+         rc = msgBuildSysInfoReply ( (CHAR**)&pReply, &replySize ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Failed to build sys info reply, rc: %d", rc ) ;
+            rc = SDB_NET_BROKEN_MSG ;
+         }
+         else
+         {
+            rc = _pCatCB->netWork()->syncSendRaw( handle,
+                                                  (const CHAR *)pReply,
+                                                  (UINT32)replySize ) ;
+         }
+      }
+      else
+      {
+         rc = _postMsg( handle, header ) ;
+      }
 
       PD_TRACE_EXITRC ( SDB_CATMAINCT_HANDLEMSG, rc ) ;
       return rc ;

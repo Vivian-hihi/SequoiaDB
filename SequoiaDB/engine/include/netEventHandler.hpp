@@ -84,6 +84,14 @@ namespace engine
          {
             return _id ;
          }
+         OSS_INLINE UINT64 getAndIncMsgID( BOOLEAN inc = TRUE )
+         {
+            if ( inc )
+            {
+               return _msgid++ ;
+            }
+            return _msgid ;
+         }
          OSS_INLINE boost::asio::ip::tcp::socket &socket()
          {
             return _sock ;
@@ -166,6 +174,7 @@ namespace engine
          UINT64                           _lastSendTick ;
          UINT64                           _lastRecvTick ;
          UINT64                           _lastBeatTick ;
+         UINT64                           _msgid ;
 
          BOOLEAN                          _isAcitve ;
 

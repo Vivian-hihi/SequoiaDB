@@ -222,7 +222,6 @@ namespace engine
       PD_TRACE_ENTRY ( SDB__DPSLGRECD_LOAD );
       SDB_ASSERT( NULL != pData, "impossible" ) ;
       INT32 rc = SDB_OK ;
-      INT32 loadSize = 0 ;
       INT32 totalSize = 0 ;
       const CHAR *location = NULL ;
       _head = *(( dpsLogRecordHeader * )pData) ;
@@ -242,7 +241,6 @@ namespace engine
       }
 
       location = pData + sizeof( dpsLogRecordHeader ) ;
-      loadSize = 0;
 
       /// may be byte-aligned.the length of each field is
       /// at least greater than 5.
