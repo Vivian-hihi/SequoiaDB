@@ -544,7 +544,7 @@ INT32 sptConvertor::_addSpecialObj( JSObject *obj,
                                     const CHAR *key,
                                     bson *bs )
 {
-   BOOLEAN ret = TRUE ;
+   //BOOLEAN ret = TRUE ;
    INT32 rc = SDB_OK ;
    JSIdArray *properties = JS_Enumerate( _cx, obj ) ;
    if ( NULL == properties || 0 == properties->length )
@@ -878,7 +878,7 @@ INT32 sptConvertor::_addSpecialObj( JSObject *obj,
 done:
    return rc ;
 error:
-   ret = FALSE ;
+   //ret = FALSE ;
    goto done ;
 }
 

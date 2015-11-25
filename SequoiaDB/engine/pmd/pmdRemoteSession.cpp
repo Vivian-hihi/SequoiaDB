@@ -715,7 +715,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       UINT64 oldReqID = 0 ;
-      INT32 oldAddPos = NULL ;
+      INT32 oldAddPos = 0 ;
       BOOLEAN hasSend = FALSE ;
 
       if ( !pSub )

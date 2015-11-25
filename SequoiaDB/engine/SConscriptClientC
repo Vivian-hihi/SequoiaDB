@@ -28,6 +28,9 @@ clientCLibFiles = [
       "client/base64c.c",
       "client/cJSON.c",
       "client/jstobs.c",
+      "client/timestampParse.c",
+      "client/timestampTm.c",
+      "client/timestampValid.c",
       "bson/md5.c"
       ]
 

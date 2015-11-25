@@ -3540,8 +3540,6 @@ namespace engine
    done:
       PD_TRACE_EXITRC( SDB__RTNSYNCDB_INIT, rc ) ;
       return rc ;
-   error:
-      goto done ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION( SDB__RTNSYNCDB_DOIT, "_rtnSyncDB::doit" )

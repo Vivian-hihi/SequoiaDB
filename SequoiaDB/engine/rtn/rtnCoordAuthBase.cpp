@@ -60,7 +60,7 @@ namespace engine
       CoordGroupInfoPtr cata ;
       REQUESTID_MAP nodes ;
       REPLY_QUE replyQue ;
-      NodeID curNodeID = pmdGetNodeID() ;
+      //NodeID curNodeID = pmdGetNodeID() ;
       UINT32 times = 0 ;
       UINT32 primaryID = 0 ;
 

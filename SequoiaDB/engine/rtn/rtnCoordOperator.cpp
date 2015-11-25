@@ -900,7 +900,7 @@ namespace engine
 
    BOOLEAN rtnCoordShardKicker::_isUpdateReplace( const BSONObj &updator )
    {
-      INT32 rc = SDB_OK ;
+      //INT32 rc = SDB_OK ;
       BSONObjIterator iter( updator ) ;
       static string replaceStr = CMD_ADMIN_PREFIX FIELD_OP_VALUE_REPLACE ;
       while ( iter.more() )

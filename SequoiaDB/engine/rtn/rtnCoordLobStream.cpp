@@ -1243,8 +1243,6 @@ namespace engine
       }
    done:
       return rc ;
-   error:
-      goto done ;
    }
 
    //PD_TRACE_DECLARE_FUNCTION( SDB_RTNCOORDLOBSTREAM__GETREPLY, "_rtnCoordLobStream::_getReply" )

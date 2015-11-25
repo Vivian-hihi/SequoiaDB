@@ -50,8 +50,8 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       const UINT32 pLen = 512 ;
-      SDB_RTNCB *rtnCB = sdbGetRTNCB() ;
-      SDB_DMSCB *dmsCB = sdbGetDMSCB() ;
+      //SDB_RTNCB *rtnCB = sdbGetRTNCB() ;
+      //SDB_DMSCB *dmsCB = sdbGetDMSCB() ;
       std::set<monCollectionSpace> csList ;
 
       /// 1. malloc

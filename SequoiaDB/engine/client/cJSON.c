@@ -936,7 +936,6 @@ static const char *parse_first_command(cJSON *item,const char *value,int cj_type
    {
       const char *value_temp = value;
       int len = 0;
-      time_t timer ;
       if ( isNumber == 1 )
       {
          //{ $date : 123456 }

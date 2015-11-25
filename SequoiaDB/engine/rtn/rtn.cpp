@@ -1360,7 +1360,7 @@ namespace engine
          const CHAR *csName = itr->_name ;
          dmsStorageUnit *su = NULL ;
          dmsStorageUnitID suID = DMS_INVALID_CS ;
-         BOOLEAN failed = TRUE ;
+         //BOOLEAN failed = TRUE ;
 
 
          rc = dmsCB->nameToSUAndLock ( csName, suID,

@@ -321,7 +321,7 @@ INT32 _appendValue( CHAR delChar, bson_iterator *pIt,
             }
             binType = (INT32)bson_iterator_bin_type( pIt ) ;
             tempSize = ossSnprintf ( temp, 64, "%d", binType ) ;
-            rc = _appendString( delChar, &temp, tempSize, ppBuffer, pCSVSize ) ;
+            rc = _appendString( delChar, temp, tempSize, ppBuffer, pCSVSize ) ;
             if ( rc )
             {
                goto error ;

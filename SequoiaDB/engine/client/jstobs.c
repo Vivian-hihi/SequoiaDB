@@ -528,12 +528,12 @@ static BOOLEAN bsonConvertJson ( CHAR **pbuf,
             _snprintf ( temp,
                         BSON_TEMP_SIZE_512,
                         "%lld",
-                        timer * 1000 ) ;
+                        (UINT64)(timer * 1000) ) ;
 #else
             snprintf ( temp,
                        BSON_TEMP_SIZE_512,
                        "%lld",
-                       timer * 1000 ) ;
+                       (UINT64)(timer * 1000) ) ;
 #endif
             bsonConvertJsonRawConcat ( pbuf, left, "{ \"$date\": ", FALSE ) ;
             CHECK_LEFT ( left )

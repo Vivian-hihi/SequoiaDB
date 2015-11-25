@@ -179,7 +179,7 @@ INT32 enterDaemonMode ( sptScope *scope ,
    INT32          fd          = -1 ;
    INT32          hOutFd      = -1 ;
    //FILE *         newStdout   = NULL ;
-   CHAR *         result      = NULL ;
+   //CHAR *         result      = NULL ;
    bson::BSONObj rval ;
    bson::BSONObj detail ;
 
@@ -247,7 +247,7 @@ INT32 enterDaemonMode ( sptScope *scope ,
       SAFE_OSS_FREE ( code ) ;
       // shell always have errno defined
       ossPrintf ( " %d", sdbGetErrno() ) ;
-      result = NULL ;
+      //result = NULL ;
 
       //*stdout = oldStdout ;
       // close the copy fd of b2fPipe
