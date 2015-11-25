@@ -731,7 +731,7 @@ namespace bson {
             else
             {
                s << "{ \"$date\": "  ;
-               sprintf ( buffer, "%lld", timer * 1000 ) ;
+               sprintf ( buffer, "%lld", (unsigned long long)(timer * 1000) ) ;
                s << buffer << " }" ;
             }
             break ;
