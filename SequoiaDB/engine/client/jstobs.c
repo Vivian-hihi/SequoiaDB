@@ -17,6 +17,7 @@
 #include "cJSON.h"
 #include "base64c.h"
 #include "jstobs.h"
+#include "timestamp.h"
 
 /*
  * check the remaining size
@@ -27,6 +28,7 @@
    if ( (*x) <= 0 ) \
       return FALSE ; \
 }
+
 static char *intToString ( int value, char *string, int radix )
 {
    char tmp[33] ;
@@ -496,25 +498,50 @@ static BOOLEAN bsonConvertJson ( CHAR **pbuf,
          CHAR temp[ BSON_TEMP_SIZE_64 ] ;
          struct tm psr;
          time_t timer = bson_iterator_date( &i ) / 1000 ;
-         memset ( temp, 0, BSON_TEMP_SIZE_64 ) ;
-         local_time ( &timer, &psr ) ;
+         if( timer >= TIME_STAMP_DATE_MIN && timer <= TIME_STAMP_DATE_MAX )
+         {
+            memset ( temp, 0, BSON_TEMP_SIZE_64 ) ;
+            local_time ( &timer, &psr ) ;
 #ifdef WIN32
-         _snprintf ( temp,
-                     BSON_TEMP_SIZE_64,
-                     toCSV?DATE_OUTPUT_CSV_FORMAT:DATE_OUTPUT_FORMAT,
-                     psr.tm_year + RELATIVE_YEAR,
-                     psr.tm_mon + 1,
-                     psr.tm_mday ) ;
+            _snprintf ( temp,
+                        BSON_TEMP_SIZE_64,
+                        toCSV?DATE_OUTPUT_CSV_FORMAT:DATE_OUTPUT_FORMAT,
+                        psr.tm_year + RELATIVE_YEAR,
+                        psr.tm_mon + 1,
+                        psr.tm_mday ) ;
 #else
-         snprintf ( temp,
-                    BSON_TEMP_SIZE_64,
-                    toCSV?DATE_OUTPUT_CSV_FORMAT:DATE_OUTPUT_FORMAT,
-                    psr.tm_year + RELATIVE_YEAR,
-                    psr.tm_mon + 1,
-                    psr.tm_mday ) ;
+            snprintf ( temp,
+                       BSON_TEMP_SIZE_64,
+                       toCSV?DATE_OUTPUT_CSV_FORMAT:DATE_OUTPUT_FORMAT,
+                       psr.tm_year + RELATIVE_YEAR,
+                       psr.tm_mon + 1,
+                       psr.tm_mday ) ;
 #endif
-         bsonConvertJsonRawConcat ( pbuf, left, temp, FALSE ) ;
-         CHECK_LEFT ( left )
+            bsonConvertJsonRawConcat ( pbuf, left, temp, FALSE ) ;
+            CHECK_LEFT ( left )
+         }
+         else
+         {
+            CHAR temp[ BSON_TEMP_SIZE_512 ] ;
+            memset ( temp, 0, BSON_TEMP_SIZE_512 ) ;
+#ifdef WIN32
+            _snprintf ( temp,
+                        BSON_TEMP_SIZE_512,
+                        "%lld",
+                        timer * 1000 ) ;
+#else
+            snprintf ( temp,
+                       BSON_TEMP_SIZE_512,
+                       "%lld",
+                       timer * 1000 ) ;
+#endif
+            bsonConvertJsonRawConcat ( pbuf, left, "{ \"$date\": ", FALSE ) ;
+            CHECK_LEFT ( left )
+            bsonConvertJsonRawConcat ( pbuf, left, temp, FALSE ) ;
+            CHECK_LEFT ( left )
+            bsonConvertJsonRawConcat ( pbuf, left, " }", FALSE ) ;
+            CHECK_LEFT ( left )
+         }
          break ;
       }
       case BSON_BINDATA:
@@ -940,29 +967,28 @@ static BOOLEAN jsonConvertBson ( cJSON *cj, bson *bs, BOOLEAN isObj )
          INT32 micros = 0 ;
          time_t timep ;
          memset ( &t, 0, sizeof(t) ) ;
-         if ( cJSON_Timestamp == cj->type )
+
+         if( strchr( cj->valuestring, 'T' ) ||
+             strchr( cj->valuestring, 't' ) )
          {
-            /* for timestamp type, we provide yyyy-mm-dd-hh.mm.ss.uuuuuu */
-            if( !sscanf ( cj->valuestring,
-                          TIME_FORMAT,
-                          &year,
-                          &month,
-                          &day,
-                          &hour,
-                          &minute,
-                          &second,
-                          &micros ) )
+            /* for mongo date type, iso8601 */
+            sdbTimestamp sdbTime ;
+            if( timestampParse( cj->valuestring,
+                                ossStrlen( cj->valuestring ),
+                                &sdbTime ) )
             {
                return FALSE ;
             }
+            timep = (time_t)sdbTime.sec ;
+            micros = sdbTime.nsec / 1000 ;
          }
          else
          {
-            /* for date type, we provide yyyy-mm-dd */
-            if( strchr( cj->valuestring, 'T' ) )
+            if ( cJSON_Timestamp == cj->type )
             {
+               /* for timestamp type, we provide yyyy-mm-dd-hh.mm.ss.uuuuuu */
                if( !sscanf ( cj->valuestring,
-                             TIME_FORMAT_IOS,
+                             TIME_FORMAT,
                              &year,
                              &month,
                              &day,
@@ -985,57 +1011,57 @@ static BOOLEAN jsonConvertBson ( cJSON *cj, bson *bs, BOOLEAN isObj )
                   return FALSE ;
                }
             }
-         }
-         /* sanity check for years */
-         if( cJSON_Timestamp == cj->type )
-         {
-            if( year > INT32_LAST_YEAR )
+            /* sanity check for years */
+            if( cJSON_Timestamp == cj->type )
+            {
+               if( year > INT32_LAST_YEAR )
+               {
+                  return FALSE ;
+               }
+               else if( year < RELATIVE_YEAR )
+               {
+                  return FALSE ;
+               }
+               if( month   >  RELATIVE_MON     || //[1,12]
+                   month   <  1                ||
+                   day     >  RELATIVE_DAY     || //[1,31]
+                   day     <  1                ||
+                   hour    >= RELATIVE_HOUR    || //[0,23]
+                   hour    <  0                ||
+                   minute  >= RELATIVE_MIN_SEC || //[0,59]
+                   minute  <  0                ||
+                   second  >= RELATIVE_MIN_SEC || //[0,59]
+                   second  < 0 )
+               {
+                  return FALSE ;
+               }
+            }
+   
+            if( cJSON_Date == cj->type && (
+                year    >     INT64_LAST_YEAR   || //[1900,9999]
+                year    <     RELATIVE_YEAR     ||
+                month   >     RELATIVE_MON      || //[1,12]
+                month   <     1                 ||
+                day     >     RELATIVE_DAY      || //[1,31]
+                day     <     1 ) )
             {
                return FALSE ;
             }
-            else if( year < RELATIVE_YEAR )
-            {
-               return FALSE ;
-            }
-            if( month   >  RELATIVE_MON     || //[1,12]
-                month   <  1                ||
-                day     >  RELATIVE_DAY     || //[1,31]
-                day     <  1                ||
-                hour    >= RELATIVE_HOUR    || //[0,23]
-                hour    <  0                ||
-                minute  >= RELATIVE_MIN_SEC || //[0,59]
-                minute  <  0                ||
-                second  >= RELATIVE_MIN_SEC || //[0,59]
-                second  < 0 )
-            {
-               return FALSE ;
-            }
+   
+            --month ;
+            year -= RELATIVE_YEAR ;
+   
+            /* construct tm */
+            t.tm_year  = year   ;
+            t.tm_mon   = month  ;
+            t.tm_mday  = day    ;
+            t.tm_hour  = hour   ;
+            t.tm_min   = minute ;
+            t.tm_sec   = second ;
+            /* create integer time representation */
+            timep = mktime( &t ) ;
          }
 
-         if( cJSON_Date == cj->type && (
-             year    >     INT64_LAST_YEAR   || //[1900,9999]
-             year    <     RELATIVE_YEAR     ||
-             month   >     RELATIVE_MON      || //[1,12]
-             month   <     1                 ||
-             day     >     RELATIVE_DAY      || //[1,31]
-             day     <     1 ) )
-         {
-            return FALSE ;
-         }
-
-         --month ;
-         year -= RELATIVE_YEAR ;
-
-         /* construct tm */
-         t.tm_year  = year   ;
-         t.tm_mon   = month  ;
-         t.tm_mday  = day    ;
-         t.tm_hour  = hour   ;
-         t.tm_min   = minute ;
-         t.tm_sec   = second ;
-
-         /* create integer time representation */
-         timep = mktime( &t ) ;
          if( cJSON_Date == cj->type &&
                   ( timep < TIME_STAMP_DATE_MIN || timep > TIME_STAMP_DATE_MAX ) )
          {
@@ -1074,6 +1100,19 @@ static BOOLEAN jsonConvertBson ( cJSON *cj, bson *bs, BOOLEAN isObj )
                get_char_num ( num, i, INT_NUM_SIZE ) ;
                bson_append_date ( bs, num, s ) ;
             }
+         }
+         break ;
+      }
+      case cJSON_Date_Number:
+      {
+         bson_date_t s = ( bson_date_t )cj->valuelongint ;
+         if ( isObj && cj->string )
+            bson_append_date ( bs, cj->string, s ) ;
+         else
+         {
+            CHAR num[ INT_NUM_SIZE ] = {0} ;
+            get_char_num ( num, i, INT_NUM_SIZE ) ;
+            bson_append_date ( bs, num, s ) ;
          }
          break ;
       }

@@ -874,7 +874,11 @@ static const char *parse_first_command(cJSON *item,const char *value,int cj_type
       return 0 ;
    }
    value = skip ( value + 1 ) ;
-   if ( *value != '\"' )
+   if ( *value == '{' && cj_type == cJSON_Date )
+   {
+      isNumber = 2 ;
+   }
+   else if ( *value != '\"' )
    {
       if ( cj_type == cJSON_Date ||
            cj_type == cJSON_MinKey ||
@@ -912,9 +916,11 @@ static const char *parse_first_command(cJSON *item,const char *value,int cj_type
       {
          /* not an object! */
          if ( !((*value_temp >= '0' && *value_temp <= '9') ||
-              *value_temp == '-' ||
-              *value_temp == '.') )
-            return 0 ;
+                 *value_temp == '+' || *value_temp == '-' ||
+                 *value_temp == 't' || *value_temp == 'T' ||
+                 *value_temp == 'z' || *value_temp == 'Z' ||
+                 *value_temp == ':' || *value_temp == '.' ) )
+               return 0 ;
          ++len ;
          ++value_temp ;
       }
@@ -931,13 +937,9 @@ static const char *parse_first_command(cJSON *item,const char *value,int cj_type
       const char *value_temp = value;
       int len = 0;
       time_t timer ;
-      if ( isNumber )
+      if ( isNumber == 1 )
       {
-         long long t = 0 ;
-         int i = 0 ;
-         struct tm psr ;
-         char temp[64] ;
-         memset ( temp, 0, 64 ) ;
+         //{ $date : 123456 }
          value_temp = parse_value ( item, value_temp, 0, 0 ) ;
          if ( !value_temp )
          {
@@ -947,48 +949,97 @@ static const char *parse_first_command(cJSON *item,const char *value,int cj_type
          {
             return 0 ;
          }
-         if ( item->numType == cJSON_INT32 )
-         {
-            t = item->valueint/1000 ;
-            i = item->valueint - ( t * 1000 )  ;
-         }
-         else if ( item->numType == cJSON_INT64 )
-         {
-            t = item->valuelongint/1000 ;
-            i = item->valuelongint - ( t * 1000 )  ;
-         }
-         else
+         if( item->numType != cJSON_INT32 && item->numType != cJSON_INT64 )
          {
             return 0 ;
          }
-         item->type = cJSON_Timestamp ;
-         timer = (time_t)t ;
-         local_time ( &timer, &psr ) ;
-         sprintf( temp,
-                  "%04d-%02d-%02d-%02d.%02d.%02d.%06d",
-                  psr.tm_year + 1900,
-                  psr.tm_mon + 1,
-                  psr.tm_mday,
-                  psr.tm_hour,
-                  psr.tm_min,
-                  psr.tm_sec,
-                  i * 1000 ) ;
-         item->valuestring = (char*)cJSON_malloc( 64 ) ;
-         memset ( item->valuestring, 0, 64 ) ;
-         strncpy ( item->valuestring, temp, 64 ) ;
+         item->type = cJSON_Date_Number ;
          value = value_temp ;
+      }
+      else if ( isNumber == 2 )
+      {
+         //{ $date : { $numberLong: 123456 } }
+         int isString = 0 ;
+         if( *value != '{' )
+         {
+            return 0 ;
+         }
+         value = skip ( value + 1 ) ;
+         if( *value == '\"' )
+         {
+            isString = 1 ;
+            ++value ;
+         }
+         if( *value != '$' ) return 0 ;
+         ++value ;
+         if( *value != 'n' ) return 0 ;
+         ++value ;
+         if( *value != 'u' ) return 0 ;
+         ++value ;
+         if( *value != 'm' ) return 0 ;
+         ++value ;
+         if( *value != 'b' ) return 0 ;
+         ++value ;
+         if( *value != 'e' ) return 0 ;
+         ++value ;
+         if( *value != 'r' ) return 0 ;
+         ++value ;
+         if( *value != 'L' ) return 0 ;
+         ++value ;
+         if( *value != 'o' ) return 0 ;
+         ++value ;
+         if( *value != 'n' ) return 0 ;
+         ++value ;
+         if( *value != 'g' ) return 0 ;
+         ++value ;
+         if( isString && *value != '\"' )
+         {
+            return 0 ;
+         }
+         isString = 0 ;
+         value = skip ( value + 1 ) ;
+         if ( *value != ':' ) return 0 ;
+         value = skip ( value + 1 ) ;
+         if( *value == '\"' )
+         {
+            isString = 1 ;
+            ++value ;
+         }
+         value = parse_value ( item, value, 0, 0 ) ;
+         if ( !value )
+         {
+            return 0 ;
+         }
+         if ( item->type != cJSON_Number )
+         {
+            return 0 ;
+         }
+         if( item->numType != cJSON_INT32 && item->numType != cJSON_INT64 )
+         {
+            return 0 ;
+         }
+         item->type = cJSON_Date_Number ;
+         if( isString && *value != '\"' )
+         {
+            return 0 ;
+         }
+         value = skip ( value + 1 ) ;
+         if ( *value != '}' ) return 0 ;
+         value = skip ( value + 1 ) ;
       }
       else
       {
+         //{ $date: "yyyy-mm-dd-hh.mm.ss.ssssss"
          while ( value_temp &&
                  *value_temp != '\"' &&
                  (unsigned char)*value_temp > 32 )
          {
             /* not an object! */
             if ( !((*value_temp >= '0' && *value_temp <= '9') ||
-                 *value_temp == '-' || *value_temp == 'T' ||
-                 *value_temp == 'Z' || *value_temp == ':' ||
-                 *value_temp == '.' ) )
+                 *value_temp == '+' || *value_temp == '-' ||
+                 *value_temp == 't' || *value_temp == 'T' ||
+                 *value_temp == 'z' || *value_temp == 'Z' ||
+                 *value_temp == ':' || *value_temp == '.' ) )
                return 0 ;
             ++len ;
             ++value_temp ;

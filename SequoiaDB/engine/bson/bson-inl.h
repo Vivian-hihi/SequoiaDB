@@ -714,16 +714,26 @@ namespace bson {
         {
             char buffer[64] ;
             // date() return UINT64, but need INT64
-            time_t timer = (time_t)( ( (long long)date() ) / 1000 ) ;
             struct tm psr ;
-            local_time ( &timer, &psr ) ;
             memset ( buffer, 0, 64 ) ;
-            sprintf ( buffer,
-                      "{\"$date\": \"%04d-%02d-%02d\"}",
-                      psr.tm_year + 1900,
-                      psr.tm_mon + 1,
-                      psr.tm_mday ) ;
-            s << buffer ;
+            time_t timer = (time_t)( ( (long long)date() ) / 1000 ) ;
+            //[ 1900-01-01, 9999-12-31 ]
+            if( timer >= -2208988800 && timer <= 253402300799 )
+            {
+               local_time ( &timer, &psr ) ;
+               sprintf ( buffer,
+                         "{\"$date\": \"%04d-%02d-%02d\"}",
+                         psr.tm_year + 1900,
+                         psr.tm_mon + 1,
+                         psr.tm_mday ) ;
+               s << buffer ;
+            }
+            else
+            {
+               s << "{ \"$date\": "  ;
+               sprintf ( buffer, "%lld", timer * 1000 ) ;
+               s << buffer << " }" ;
+            }
             break ;
         }
         case RegEx: {
