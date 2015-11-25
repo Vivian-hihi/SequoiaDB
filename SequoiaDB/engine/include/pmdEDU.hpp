@@ -168,6 +168,9 @@ namespace engine
          _processEventCount += step ;
       }
 
+      UINT32      getQueSize() ;
+      UINT32      getProcessedNum() const { return _processEventCount ; }
+
       void        interrupt () ;
       void        disconnect () ;
       void        force () ;

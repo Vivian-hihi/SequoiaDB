@@ -811,6 +811,11 @@ namespace engine
       PD_TRACE_EXIT ( SDB___PMDEDUCB_DUMPINFO2 );
    }
 
+   UINT32 _pmdEDUCB::getQueSize()
+   {
+      return _queue.size() ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDEDUCB_GETTRANSLOCK, "_pmdEDUCB::getTransLock" )
    dpsTransCBLockInfo *_pmdEDUCB::getTransLock( const dpsTransLockId &lockId )
    {
