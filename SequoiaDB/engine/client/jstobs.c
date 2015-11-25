@@ -498,7 +498,8 @@ static BOOLEAN bsonConvertJson ( CHAR **pbuf,
          CHAR temp[ BSON_TEMP_SIZE_64 ] ;
          struct tm psr;
          time_t timer = bson_iterator_date( &i ) / 1000 ;
-         if( timer >= TIME_STAMP_DATE_MIN && timer <= TIME_STAMP_DATE_MAX )
+         if( (INT64)timer >= TIME_STAMP_DATE_MIN &&
+             (INT64)timer <= TIME_STAMP_DATE_MAX )
          {
             memset ( temp, 0, BSON_TEMP_SIZE_64 ) ;
             local_time ( &timer, &psr ) ;
@@ -1063,12 +1064,14 @@ static BOOLEAN jsonConvertBson ( cJSON *cj, bson *bs, BOOLEAN isObj )
          }
 
          if( cJSON_Date == cj->type &&
-                  ( timep < TIME_STAMP_DATE_MIN || timep > TIME_STAMP_DATE_MAX ) )
+             ( (INT64)timep < TIME_STAMP_DATE_MIN ||
+               (INT64)timep > TIME_STAMP_DATE_MAX ) )
          {
             return FALSE ;
          }
          else if( cJSON_Timestamp == cj->type &&
-                  ( timep < TIME_STAMP_TIMESTAMP_MIN || timep > TIME_STAMP_TIMESTAMP_MAX ) )
+                  ( (INT64)timep < TIME_STAMP_TIMESTAMP_MIN ||
+                    (INT64)timep > TIME_STAMP_TIMESTAMP_MAX ) )
          {
             return FALSE ;
          }
