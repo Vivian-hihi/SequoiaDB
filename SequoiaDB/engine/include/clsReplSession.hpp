@@ -162,6 +162,7 @@ namespace engine
          _clsReplicateSet              *_repl ;
          BOOLEAN                       _quit ;
          UINT32                        _timeout ;
+         UINT64                        _lastProcRequestID ;
    } ;
    typedef _clsReplSrcSession clsReplSrcSession ;
 

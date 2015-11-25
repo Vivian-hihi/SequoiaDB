@@ -41,6 +41,7 @@ namespace engine
 {
    const UINT32 CLS_SYNC_DEF_LEN = 1024 ;
    const UINT16 CLS_SYNC_INTERVAL = 2000 ;
+   const UINT16 CLS_CONSULT_INTERVAL = 5000 ;
 
    #define CLS_REPL_MAX_TIME           (2)
 
@@ -70,7 +71,7 @@ namespace engine
       _repl = sdbGetReplCB() ;
       _pReplBucket = _repl->getBucket() ;
 
-      _requestID = 0 ;
+      _requestID = 1 ;
       _syncFailedNum = 0 ;
       _isFirstToSync = TRUE ;
 
@@ -116,7 +117,16 @@ namespace engine
 
       _selector.timeout( interval ) ;
 
-      if ( _timeout < CLS_SYNC_INTERVAL || _quit )
+      if ( _quit )
+      {
+         goto done ;
+      }
+      else if ( CLS_SESSION_STATUS_CONSULT == _status &&
+                _timeout < CLS_CONSULT_INTERVAL )
+      {
+         goto done ;
+      }
+      else if ( _timeout < CLS_SYNC_INTERVAL )
       {
          goto done ;
       }
@@ -126,6 +136,7 @@ namespace engine
       {
          _isFirstToSync = TRUE ;
          _status = CLS_SESSION_STATUS_SYNC ;
+         ++_requestID ;
          goto done ;
       }
       else if ( _isFirstToSync &&
@@ -297,6 +308,7 @@ namespace engine
       else
       {
          _selector.clearTime() ;
+         ++_requestID ;
 
          if ( !PMD_IS_DB_NORMAL() )
          {
@@ -457,6 +469,10 @@ namespace engine
                   _requestID ) ;
          goto done ;
       }
+      else
+      {
+         ++_requestID ;
+      }
 
       {
       _MsgReplConsultationRes *msg = ( _MsgReplConsultationRes * )header ;
@@ -604,6 +620,7 @@ namespace engine
                     point.offset + pLogHeader->_length ) ;
 
             _status = CLS_SESSION_STATUS_SYNC ;
+            ++_requestID ;
             _syncFailedNum = 0 ;
             _consultLsn.offset = DPS_INVALID_LSN_OFFSET ;
             _consultLsn.version = DPS_INVALID_LSN_VERSION ;
@@ -685,6 +702,7 @@ namespace engine
 
          pmdGetStartup().ok ( TRUE ) ;
          _status = CLS_SESSION_STATUS_SYNC ;
+         ++_requestID ;
          // force to secondary
          pClsCB->getReplCB()->voteMachine()->force( CLS_ELECTION_STATUS_SEC ) ;
       }
@@ -757,7 +775,7 @@ namespace engine
 
          _MsgReplSyncReq msg ;
          msg.header.TID = CLS_TID( _sessionID ) ;
-         msg.header.requestID = ++_requestID ;
+         msg.header.requestID = _requestID ;
          msg.next = _logger->expectLsn() ;
          msg.needData = PMD_IS_DB_NORMAL() ? 1 : 0 ;
 
@@ -805,6 +823,7 @@ namespace engine
 
       if ( CLS_SESSION_STATUS_CONSULT != _status )
       {
+         ++_requestID ;
          _status = CLS_SESSION_STATUS_CONSULT ;
       }
 
@@ -830,7 +849,7 @@ namespace engine
 
          _MsgReplConsultation msg ;
          msg.header.TID = CLS_TID( _sessionID ) ;
-         msg.header.requestID = ++_requestID ;
+         msg.header.requestID = _requestID ;
          msg.current =  _consultLsn ;
          msg.identity = routeAgent()->localID() ;
 
@@ -1042,6 +1061,8 @@ namespace engine
       _sync = sdbGetReplCB()->syncMgr() ;
       _repl = sdbGetReplCB() ;
 
+      _lastProcRequestID = 0 ;
+
       PD_TRACE_EXIT ( SDB__CLSSRCREPSN__CLSREPSN );
    }
 
@@ -1158,7 +1179,22 @@ namespace engine
          needReply = FALSE ; /// not reply
          goto done ;
       }
-      else if ( msg->current.invalid() )
+      /// when processed reqid >= msg's reqid and msg queque is not empty,
+      /// dispatch the request
+      else if ( header->requestID <= _lastProcRequestID &&
+                eduCB()->getQueSize() > 0 )
+      {
+         PD_LOG( PDINFO, "Sync Session[%s]: Consult's request id[%llu] is no "
+                 "greater than processed request id[%llu], and message queue "
+                 "is not empty, so dispath the request",
+                 header->requestID, _lastProcRequestID ) ;
+         needReply = FALSE ; /// not reply
+         goto done ;
+      }
+      /// update processed request id
+      _lastProcRequestID = header->requestID ;
+
+      if ( msg->current.invalid() )
       {
          res.header.res = SDB_CLS_CONSULT_FAILED ;
          goto done ;
@@ -1299,6 +1335,20 @@ namespace engine
                   "not reply", sessionName() ) ;
          goto done ;
       }
+
+      /// when processed reqid >= msg's reqid and msg queque is not empty,
+      /// dispatch the request
+      if ( req->header.requestID <= _lastProcRequestID &&
+           eduCB()->getQueSize() > 0 )
+      {
+         PD_LOG( PDINFO, "Sync Session[%s]: Sync's request id[%llu] is no "
+                 "greater than processed request id[%llu], and message queue "
+                 "is not empty, so dispath the request",
+                 req->header.requestID, _lastProcRequestID ) ;
+         goto done ;
+      }
+      /// update processed request id
+      _lastProcRequestID = req->header.requestID ;
 
       /// set remote routeID especially, to find remote session.
       msg.oldestTransLsn = pmdGetKRCB()->getTransCB()->getOldestBeginLsn();
