@@ -1118,6 +1118,13 @@
                      step: $rootScope.autoLanguage( '?的值必须是?的倍数。' ),
                      format: $rootScope.autoLanguage( '?的值必须是整数。' )
                   },
+                  'double': {
+                     min: $rootScope.autoLanguage( '?的值不能小于?。' ),
+                     max: $rootScope.autoLanguage( '?的值不能大于?。' ),
+                     ban: $rootScope.autoLanguage( '?的值不能取?。' ),
+                     step: $rootScope.autoLanguage( '?的值必须是?的倍数。' ),
+                     format: $rootScope.autoLanguage( '?的值必须是数字。' )
+                  },
                   list: $rootScope.autoLanguage( '?参数错误。' )
                },
                inputList: $scope.data.inputList,
@@ -1217,6 +1224,54 @@
                   }
                   return { rc: rc, error: error } ;
                },
+               checkDouble: function ( name, value, valid ){
+                  var rc = true ;
+                  var error = '' ;
+                  if( isNaN( value ) )
+                  {
+                     error = sprintf( $scope.Setting['Text']['double']['format'], name ) ;
+                     rc = false ;
+                  }
+                  else if( typeof( valid ) == 'object' )
+                  {
+                     var min = valid.min ;
+                     var max = valid.max ;
+                     var ban = valid.ban ;
+                     var step = valid.step ;
+                     if( typeof( min ) == 'number' && value < min )
+                     {
+                        error = sprintf( $scope.Setting['Text']['double']['min'], name, min ) ;
+                        rc = false ;
+                     }
+                     else if( typeof( max ) == 'number' && value > max )
+                     {
+                        error = sprintf( $scope.Setting['Text']['double']['max'], name, max ) ;
+                        rc = false ;
+                     }
+                     else if( typeof( ban ) == 'number' && value == ban )
+                     {
+                        error = sprintf( $scope.Setting['Text']['double']['ban'], name, ban ) ;
+                        rc = false ;
+                     }
+                     else if( isArray( ban ) )
+                     {
+                        $.each( ban, function( index, banDouble ){
+                           if( value == banDouble )
+                           {
+                              error = sprintf( $scope.Setting['Text']['double']['ban'], name, banDouble ) ;
+                              rc = false ;
+                              return false ;
+                           }
+                        } ) ;
+                     }
+                     else if( typeof( step ) == 'number' && value % step != 0 )
+                     {
+                        error = sprintf( $scope.Setting['Text']['int']['step'], name, step ) ;
+                        rc = false ;
+                     }
+                  }
+                  return { rc: rc, error: error } ;
+               },
                checkInput: function( inputList, customCheckFun ){
                   var isAllClear = true ;
                   $.each( inputList, function( index, inputInfo ){
@@ -1232,6 +1287,9 @@
                         break ;
                      case 'int':
                         rv = $scope.Setting.checkInt( inputInfo.webName, inputInfo.value, inputInfo.valid ) ;
+                        break ;
+                     case 'double':
+                        rv = $scope.Setting.checkDouble( inputInfo.webName, inputInfo.value, inputInfo.valid ) ;
                         break ;
                      case 'group':
                         isAllClear = $scope.Setting.checkInput( inputInfo.child ) ;
@@ -1296,6 +1354,9 @@
                         break ;
                      case 'int':
                         returnValue[ inputInfo.name ] = parseInt( inputInfo.value ) ;
+                        break ;
+                     case 'double':
+                        returnValue[ inputInfo.name ] = parseFloat( inputInfo.value ) ;
                         break ;
                      case 'select':
                         returnValue[ inputInfo.name ] = inputInfo.value ;

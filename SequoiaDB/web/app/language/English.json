@@ -13,6 +13,7 @@
    "?参数错误。": "? invalid parameter.",
    "?的值必须是?的倍数。": "? should be multiple of ?.",
    "?的值必须是整数。": "? should be integer.",
+   "?的值必须是数字。": "? should be number.",
    "?的值不能大于?。": "? cannot be more than ?.",
    "?的值不能取?。": "? cannot be ?.",
    "?的值不能小于?。": "? cannot be less than ?.",

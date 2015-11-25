@@ -1974,10 +1974,11 @@ _DataDatabaseIndex.showSplit = function( $scope, SdbRest ){
          {
             "name": "percent",
             "webName": $scope.autoLanguage( '百分比切分' ),
-            "type": "int",
+            "type": "double",
+            "required": true,
             "value": 50,
             "valid": {
-               'min': 0,
+               'min': 1,
                'max': 100
             }
          }
