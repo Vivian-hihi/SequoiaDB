@@ -179,7 +179,14 @@ namespace engine
          {
             _fieldName = fieldName ;
             _regex = regex ;
-            _flags = options ;
+            if ( NULL == options )
+            {
+               _flags = "" ;
+            }
+            else
+            {
+               _flags = options ;
+            }
             _goSimpleMatch = _isPureWords(_regex, _flags);
             _re.reset ( new RE(_regex, flags2options(_flags) )) ;
          }
