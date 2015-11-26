@@ -1094,7 +1094,7 @@ static BOOLEAN jsonConvertBson ( cJSON *cj, bson *bs, BOOLEAN isObj )
          else
          {
             bson_date_t s = ((( bson_date_t )timep) * 1000 ) ;
-
+            s += ( bson_date_t )( micros / 1000 ) ;
             if ( isObj && cj->string )
                bson_append_date ( bs, cj->string, s ) ;
             else
