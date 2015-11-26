@@ -153,6 +153,7 @@ namespace engine
       DPS_TRANS_ID curTransID = DPS_INVALID_TRANS_ID ;
       DPS_TRANS_ID rollbackID = DPS_INVALID_TRANS_ID ;
       UINT32 retryTimes = 0 ;
+      BOOLEAN doRollback = FALSE ;
       _clsReplayer replayer( TRUE ) ;
 
       cb->startRollback() ;
@@ -172,6 +173,7 @@ namespace engine
 
       PD_LOG ( PDEVENT, "Begin to rollback transaction[ID:%llu, "
                "lastLsn:%llu]...", transID, curLsnOffset ) ;
+      doRollback = TRUE ;
 
       cb->setTransID( rollbackID ) ;
 
@@ -260,8 +262,11 @@ namespace engine
       sdbGetTransCB()->transLockReleaseAll( cb ) ;
       cb->stopRollback() ;
 
-      PD_LOG ( PDEVENT, "Rollback transaction[ID:%llu] finished with rc[%d]",
-               transID, rc ) ;
+      if ( doRollback )
+      {
+         PD_LOG ( PDEVENT, "Rollback transaction[ID:%llu] finished with "
+                  "rc[%d]", transID, rc ) ;
+      }
 
 #if defined ( _DEBUG )
       // only for debug, wait the group other node sync complete
