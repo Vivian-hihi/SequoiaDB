@@ -46,6 +46,11 @@
 
 namespace engine
 {
+
+   /// local define
+   #define RTN_TRANS_ROLLBACK_RETRY_TIMES             ( 20 )
+   #define RTN_TRANS_ROLLBACK_RETRY_INTERVAL          OSS_ONE_SEC
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNTRANSBEGIN, "rtnTransBegin" )
    INT32 rtnTransBegin( _pmdEDUCB * cb )
    {
@@ -103,7 +108,7 @@ namespace engine
       }
       firstTransLsn = sdbGetTransCB()->getBeginLsn( curTransID ) ;
       SDB_ASSERT( firstTransLsn != DPS_INVALID_LSN_OFFSET,
-                  "First trans lsn can't be invalid" ) ;
+                  "First transaction lsn can't be invalid" ) ;
 
       PD_LOG( PDEVENT, "Execute commit(transID=%llu, lastLsn=%llu)",
               curTransID, preTransLsn ) ;
@@ -125,7 +130,7 @@ namespace engine
       sdbGetTransCB()->delTransCB( curTransID ) ;
       cb->setTransID( DPS_INVALID_TRANS_ID ) ;
       cb->setCurTransLsn( DPS_INVALID_LSN_OFFSET ) ;
-      // release all trans lock
+      // release all transactions lock
       sdbGetTransCB()->transLockReleaseAll( cb ) ;
 
    done:
@@ -147,6 +152,7 @@ namespace engine
       DPS_TRANS_ID transID = DPS_INVALID_TRANS_ID ;
       DPS_TRANS_ID curTransID = DPS_INVALID_TRANS_ID ;
       DPS_TRANS_ID rollbackID = DPS_INVALID_TRANS_ID ;
+      UINT32 retryTimes = 0 ;
       _clsReplayer replayer( TRUE ) ;
 
       cb->startRollback() ;
@@ -164,8 +170,8 @@ namespace engine
          goto done ;
       }
 
-      PD_LOG ( PDEVENT, "Execute rollback(transID=%llu, lastLsn=%llu)",
-               transID, curLsnOffset ) ;
+      PD_LOG ( PDEVENT, "Begin to rollback transaction[ID:%llu, "
+               "lastLsn:%llu]...", transID, curLsnOffset ) ;
 
       cb->setTransID( rollbackID ) ;
 
@@ -219,9 +225,28 @@ namespace engine
             }
             cb->setCurTransLsn( curLsnOffset ) ;
 
-            rc = replayer.rollback( ( dpsLogRecordHeader *)mb.offset(0), cb );
-            PD_RC_CHECK( rc, PDERROR, "Rollback failed(lsn=%llu,rc=%d)",
-                         dpsLsn.offset, rc ) ;
+            /// when rollback failed, need to retry some times.
+            /// But all the way do it failed, need to restart the db
+            rc = replayer.rollback( ( dpsLogRecordHeader *)mb.offset(0),
+                                    cb ) ;
+            if ( rc )
+            {
+               PD_LOG( PDERROR, "Rollback transaction[ID:%llu, lsn=%llu, "
+                       "time=%u] failed, rc: %d", transID, dpsLsn.offset,
+                       retryTimes, rc ) ;
+               if ( retryTimes++ > RTN_TRANS_ROLLBACK_RETRY_TIMES )
+               {
+                  PMD_RESTART_DB( rc ) ;
+                  goto error ;
+               }
+               ossSleep( RTN_TRANS_ROLLBACK_RETRY_INTERVAL ) ;
+               /// set the current lsn to last lsn
+               curLsnOffset = cb->getRelatedTransLSN() ;
+            }
+            else
+            {
+               retryTimes = 0 ;
+            }
          }
       }
 
@@ -234,6 +259,9 @@ namespace engine
       cb->setRelatedTransLSN( DPS_INVALID_LSN_OFFSET ) ;
       sdbGetTransCB()->transLockReleaseAll( cb ) ;
       cb->stopRollback() ;
+
+      PD_LOG ( PDEVENT, "Rollback transaction[ID:%llu] finished with rc[%d]",
+               transID, rc ) ;
 
 #if defined ( _DEBUG )
       // only for debug, wait the group other node sync complete
@@ -259,12 +287,14 @@ namespace engine
       DPS_TRANS_ID transID = DPS_INVALID_TRANS_ID ;
       DPS_TRANS_ID rollbackID = DPS_INVALID_TRANS_ID ;
       DPS_LSN_OFFSET curLsnOffset = DPS_INVALID_LSN_OFFSET ;
+      UINT32 retryTimes = 0 ;
       _clsReplayer replayer( TRUE );
       _dpsMessageBlock mb( DPS_MSG_BLOCK_DEF_LEN ) ;
 
       cb->startRollback() ;
 
-      PD_LOG ( PDEVENT, "Rollback all unfinished-transaction(%d)", pTransMap->size() ) ;
+      PD_LOG ( PDEVENT, "Begin to rollback all unfinished transactions[%d]...",
+               pTransMap->size() ) ;
 
       while ( pTransMap->size() != 0 )
       {
@@ -273,6 +303,9 @@ namespace engine
          rollbackID = pTransCB->getRollbackID( transID ) ;
          curLsnOffset = iterMap->second ;
          cb->setTransID( rollbackID ) ;
+
+         PD_LOG( PDEVENT, "Begin to rollback transaction[ID: %llu, "
+                 "lastLSN: %llu]...", transID, curLsnOffset ) ;
 
          while ( curLsnOffset != DPS_INVALID_LSN_OFFSET )
          {
@@ -328,6 +361,7 @@ namespace engine
             }
 
             {
+               cb->setRelatedTransLSN( curLsnOffset ) ;
                dpsLogRecord::iterator tmpitr =
                                record.find( DPS_LOG_PUBLIC_PRETRANS ) ;
                if ( !tmpitr.valid() )
@@ -339,24 +373,46 @@ namespace engine
                   curLsnOffset = *((DPS_LSN_OFFSET *)tmpitr.value() );
                }
                cb->setCurTransLsn( curLsnOffset ) ;
-               rc = replayer.rollback( (dpsLogRecordHeader *)mb.offset(0),
+
+               /// when rollback failed, need to retry some times.
+               /// But all the way do it failed, need to restart the db
+               rc = replayer.rollback( ( dpsLogRecordHeader *)mb.offset(0),
                                        cb ) ;
                if ( rc )
                {
-                  PD_LOG( PDERROR, "Rollback failed(lsn=%llu, rc=%d)",
-                          dpsLsn.offset, rc ) ;
-                  break ;
+                  PD_LOG( PDERROR, "Rollback transaction[ID:%llu, lsn=%llu, "
+                          "time=%u] failed,  rc: %d", transID,
+                          dpsLsn.offset, retryTimes, rc ) ;
+                  if ( retryTimes++ > RTN_TRANS_ROLLBACK_RETRY_TIMES )
+                  {
+                     PMD_RESTART_DB( rc ) ;
+                     goto error ;
+                  }
+                  ossSleep( RTN_TRANS_ROLLBACK_RETRY_INTERVAL ) ;
+                  /// restore cur lsn to last lsn and retry
+                  curLsnOffset = cb->getRelatedTransLSN() ;
                }
-               iterMap->second = curLsnOffset ;
+               else
+               {
+                  retryTimes = 0 ;
+                  iterMap->second = curLsnOffset ;
+               }
             }
-         }
+         } /// while ( curLsnOffset != DPS_INVALID_LSN_OFFSET )
+
+         /// remove the transaction
          pTransMap->erase( iterMap ) ;
-      }
+         PD_LOG( PDEVENT, "Rollback transaction[ID:%lld] finished with rc[%d]",
+                 transID, rc ) ;
+      } /// while ( pTransMap->size() != 0 )
 
    done:
       pTransCB->transLockReleaseAll( cb ) ;
       pTransCB->stopRollbackTask() ;
       cb->stopRollback() ;
+
+      PD_LOG ( PDEVENT, "Rollback all unfinished transactions finished with "
+               "rc[%d]", rc ) ;
       return rc ;
    error:
       goto done ;

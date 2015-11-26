@@ -150,7 +150,7 @@ namespace engine
          // if have trans info, need log
          if ( getTransMap()->size() > 0 )
          {
-            PD_LOG( PDEVENT, "Restored trnas info, have %d trans not "
+            PD_LOG( PDEVENT, "Restored trans info, have %d trans not "
                     "be complete, the oldest lsn offset is %lld",
                     getTransMap()->size(), getOldestBeginLsn() ) ;
          }
