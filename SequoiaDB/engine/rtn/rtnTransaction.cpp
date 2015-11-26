@@ -238,6 +238,8 @@ namespace engine
                        retryTimes, rc ) ;
                if ( retryTimes++ > RTN_TRANS_ROLLBACK_RETRY_TIMES )
                {
+                  PD_LOG( PDSEVERE, "Rollback transaction failed, need to "
+                          "restart the system" ) ;
                   PMD_RESTART_DB( rc ) ;
                   goto error ;
                }
@@ -390,6 +392,8 @@ namespace engine
                           dpsLsn.offset, retryTimes, rc ) ;
                   if ( retryTimes++ > RTN_TRANS_ROLLBACK_RETRY_TIMES )
                   {
+                     PD_LOG( PDSEVERE, "Rollback transaction failed, need to "
+                             "restart the system" ) ;
                      PMD_RESTART_DB( rc ) ;
                      goto error ;
                   }
