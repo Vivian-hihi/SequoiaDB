@@ -374,7 +374,7 @@ namespace engine
       SDB_ASSERT( mbContext != NULL, "mbContext can't be NULL" ) ;
       SDB_ASSERT( eduCB != NULL, "eduCB can't be NULL" ) ;
 
-      PD_LOG ( PDEVENT, "index sort buffer size: %dMB", sortBufferSize ) ;
+      PD_LOG ( PDINFO, "index sort buffer size: %dMB", sortBufferSize ) ;
 
       if ( sortBufferSize < 0 )
       {
