@@ -233,10 +233,11 @@ namespace engine
                                     cb ) ;
             if ( rc )
             {
+               ++retryTimes ;
                PD_LOG( PDERROR, "Rollback transaction[ID:%llu, lsn=%llu, "
                        "time=%u] failed, rc: %d", transID, dpsLsn.offset,
                        retryTimes, rc ) ;
-               if ( retryTimes++ > RTN_TRANS_ROLLBACK_RETRY_TIMES )
+               if ( retryTimes >= RTN_TRANS_ROLLBACK_RETRY_TIMES )
                {
                   PD_LOG( PDSEVERE, "Rollback transaction failed, need to "
                           "restart the system" ) ;
@@ -387,10 +388,11 @@ namespace engine
                                        cb ) ;
                if ( rc )
                {
+                  ++retryTimes ;
                   PD_LOG( PDERROR, "Rollback transaction[ID:%llu, lsn=%llu, "
                           "time=%u] failed,  rc: %d", transID,
                           dpsLsn.offset, retryTimes, rc ) ;
-                  if ( retryTimes++ > RTN_TRANS_ROLLBACK_RETRY_TIMES )
+                  if ( retryTimes >= RTN_TRANS_ROLLBACK_RETRY_TIMES )
                   {
                      PD_LOG( PDSEVERE, "Rollback transaction failed, need to "
                              "restart the system" ) ;
