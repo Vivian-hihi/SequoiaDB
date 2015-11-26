@@ -15,7 +15,9 @@ MD5_HEADER = $(MD5_HEADER_PATH)/md5.h
 
 EXTERNAL_SOURCE = $(EXTERNAL_PATH)/client.c  $(EXTERNAL_PATH)/oss.c     $(EXTERNAL_PATH)/ossUtil.c \
                   $(EXTERNAL_PATH)/common.c  $(EXTERNAL_PATH)/network.c $(EXTERNAL_PATH)/ossMem.c \
-                  $(EXTERNAL_PATH)/base64c.c $(EXTERNAL_PATH)/cJSON.c   $(EXTERNAL_PATH)/jstobs.c
+                  $(EXTERNAL_PATH)/base64c.c $(EXTERNAL_PATH)/cJSON.c   $(EXTERNAL_PATH)/jstobs.c \
+                  $(EXTERNAL_PATH)/timestampParse.c                     $(EXTERNAL_PATH)/timestampTm.c \
+                  $(EXTERNAL_PATH)/timestampValid.c
 
 BSON_HEADER = $(BSON_PATH)/sdbbson.h $(BSON_PATH)/encoding.h
 
@@ -25,7 +27,8 @@ EXTERNAL_HEADER = $(EXTERNAL_PATH)/client.h   $(EXTERNAL_PATH)/jstobs.h  $(EXTER
                   $(EXTERNAL_PATH)/ossUtil.h  $(EXTERNAL_PATH)/ossMem.h  $(EXTERNAL_PATH)/msg.h \
                   $(EXTERNAL_PATH)/msgDef.h   $(EXTERNAL_PATH)/network.h $(EXTERNAL_PATH)/common.h \
                   $(EXTERNAL_PATH)/pmdOptions.h                          $(EXTERNAL_PATH)/msgCatalogDef.h \
-                  $(EXTERNAL_PATH)/fmpDef.h   $(EXTERNAL_PATH)/oss.h     $(EXTERNAL_PATH)/cJSON.h
+                  $(EXTERNAL_PATH)/fmpDef.h   $(EXTERNAL_PATH)/oss.h     $(EXTERNAL_PATH)/cJSON.h \
+                  $(EXTERNAL_PATH)/timestamp.h
 
 $(MD5_PATH)/md5.c:                  $(ENGINE_PATH)/bson/md5.c
 $(MD5_HEADER_PATH)/md5.h:           $(ENGINE_PATH)/bson/lib/md5.h
@@ -42,6 +45,9 @@ $(EXTERNAL_PATH)/network.c:         $(ENGINE_PATH)/client/network.c
 $(EXTERNAL_PATH)/base64c.c:         $(ENGINE_PATH)/client/base64c.c
 $(EXTERNAL_PATH)/cJSON.c:           $(ENGINE_PATH)/client/cJSON.c
 $(EXTERNAL_PATH)/jstobs.c:          $(ENGINE_PATH)/client/jstobs.c
+$(EXTERNAL_PATH)/timestampParse.c:  $(ENGINE_PATH)/client/timestampParse.c
+$(EXTERNAL_PATH)/timestampTm.c:     $(ENGINE_PATH)/client/timestampTm.c
+$(EXTERNAL_PATH)/timestampValid.c:  $(ENGINE_PATH)/client/timestampValid.c
 
 $(BSON_PATH)/sdbbson.h:             $(ENGINE_PATH)/client/bson/bson.h
 $(BSON_PATH)/encoding.h:            $(ENGINE_PATH)/client/bson/encoding.h
@@ -52,6 +58,7 @@ $(EXTERNAL_PATH)/network.h:         $(ENGINE_PATH)/client/network.h
 $(EXTERNAL_PATH)/common.h:          $(ENGINE_PATH)/client/common.h
 $(EXTERNAL_PATH)/client_internal.h: $(ENGINE_PATH)/client/client_internal.h
 $(EXTERNAL_PATH)/cJSON.h:           $(ENGINE_PATH)/client/cJSON.h
+$(EXTERNAL_PATH)/timestamp.h:       $(ENGINE_PATH)/client/timestamp.h
 $(EXTERNAL_PATH)/spd.h:             $(ENGINE_PATH)/include/spd.h
 $(EXTERNAL_PATH)/core.h:            $(ENGINE_PATH)/include/core.h
 $(EXTERNAL_PATH)/ossErr.h:          $(ENGINE_PATH)/include/ossErr.h
