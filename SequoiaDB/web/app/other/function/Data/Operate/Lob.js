@@ -27,7 +27,7 @@ _DataOperateLob.queryLobs = function( $scope, $compile, SdbFunction, lobs, start
       gridData.tool.left.push( { 'html': $compile( '<input style="width:100px;" ng-change="checkCurrent()" ng-model="setCurrent" ng-keypress="gotoPate($event)">' )( $scope ) } ) ;
       gridData.tool.left.push( { 'html': $compile( '<span>/<span>' )( $scope ) } ) ;
       gridData.tool.left.push( { 'html': $compile( '<span ng-bind="total"></span>' )( $scope ) } ) ;
-      gridData.tool.left.push( { 'html': $compile( '<i class="fa fa-play" ng-click="nextPage()"></i>' )( $scope ) } ) ;
+      gridData.tool.left.push( { 'html': $compile( '<i class="fa fa-play" ng-show="current < total" ng-click="nextPage()"></i>' )( $scope ) } ) ;
    }
    var keyList = [ '', 'Oid', 'CreateTime' ] ;
    $.each( lobs, function( index, record ){

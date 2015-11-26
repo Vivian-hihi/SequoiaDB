@@ -549,7 +549,7 @@ _DataOperateRecord.createUpdateModel = function( $scope, SdbRest, SdbFunction ){
 //创建删除操作弹窗
 _DataOperateRecord.createDeleteModel = function( $scope, SdbRest, SdbFunction ){
    $scope.Components.Modal.icon = 'fa-edit' ;
-   $scope.Components.Modal.title = $scope.autoLanguage( '更新' ) ;
+   $scope.Components.Modal.title = $scope.autoLanguage( '删除' ) ;
    $scope.Components.Modal.isShow = true ;
    $scope.Components.Modal.form = {
       inputList: [
