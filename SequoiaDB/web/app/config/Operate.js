@@ -64,10 +64,7 @@ _operate.condition = function( $scope, webName ){
                      "placeholder": $scope.autoLanguage( "值" ),
                      "type": "string",
                      "value": "",
-                     "valid": {
-                        "min": 0,
-                        "max": 127
-                     }
+                     "valid": {}
                   }
                ]
             ]
