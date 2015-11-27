@@ -4796,7 +4796,7 @@ namespace engine
                break ;
             }
 
-            skipCount = (INT64)(totalCount * ( 1 - percent/100 )) ;
+            skipCount = (INT64)(totalCount * ( ( 100 - percent ) / 100 ) ) ;
             hint = BSON( "" << "" ) ;
             flag = FLG_QUERY_FORCE_HINT ;
 
