@@ -40,21 +40,23 @@
 namespace import
 {
    /* csv type */
-   #define CSV_STR_AUTO       "auto"
-   #define CSV_STR_INT        "int"
-   #define CSV_STR_INTEGER    "integer"
-   #define CSV_STR_LONG       "long"
-   #define CSV_STR_BOOL       "bool"
-   #define CSV_STR_BOOLEAN    "boolean"
-   #define CSV_STR_DOUBLE     "double"
-   #define CSV_STR_STRING     "string"
-   #define CSV_STR_TIMESTAMP  "timestamp"
-   #define CSV_STR_DATE       "date"
-   #define CSV_STR_NULL       "null"
-   #define CSV_STR_OID        "oid"
-   #define CSV_STR_REGEX      "regex"
-   #define CSV_STR_BINARY     "binary"
-   #define CSV_STR_NUMBER     "number"
+   #define CSV_STR_AUTO             "auto"
+   #define CSV_STR_INT              "int"
+   #define CSV_STR_INTEGER          "integer"
+   #define CSV_STR_LONG             "long"
+   #define CSV_STR_BOOL             "bool"
+   #define CSV_STR_BOOLEAN          "boolean"
+   #define CSV_STR_DOUBLE           "double"
+   #define CSV_STR_STRING           "string"
+   #define CSV_STR_TIMESTAMP        "timestamp"
+   #define CSV_STR_AUTO_TIMESTAMP   "autotimestamp"
+   #define CSV_STR_DATE             "date"
+   #define CSV_STR_AUTO_DATE        "autodate"
+   #define CSV_STR_NULL             "null"
+   #define CSV_STR_OID              "oid"
+   #define CSV_STR_REGEX            "regex"
+   #define CSV_STR_BINARY           "binary"
+   #define CSV_STR_NUMBER           "number"
 
    #define CSV_STR_TRUE       "true"
    #define CSV_STR_FALSE      "false"
@@ -76,21 +78,23 @@ namespace import
    #define CSV_STR_Y_SIZE     ((INT32)(sizeof(CSV_STR_Y) - 1))
    #define CSV_STR_N_SIZE     ((INT32)(sizeof(CSV_STR_N) - 1))
 
-   #define CSV_STR_INT_SIZE         (sizeof(CSV_STR_INT) - 1)
-   #define CSV_STR_INTEGER_SIZE     (sizeof(CSV_STR_INTEGER) - 1)
-   #define CSV_STR_LONG_SIZE        (sizeof(CSV_STR_LONG) - 1)
-   #define CSV_STR_BOOL_SIZE        (sizeof(CSV_STR_BOOL) - 1)
-   #define CSV_STR_BOOLEAN_SIZE     (sizeof(CSV_STR_BOOLEAN) - 1)
-   #define CSV_STR_DOUBLE_SIZE      (sizeof(CSV_STR_DOUBLE) - 1)
-   #define CSV_STR_STRING_SIZE      (sizeof(CSV_STR_STRING) - 1)
-   #define CSV_STR_TIMESTAMP_SIZE   (sizeof(CSV_STR_TIMESTAMP) - 1)
-   #define CSV_STR_DATE_SIZE        (sizeof(CSV_STR_DATE) - 1)
-   #define CSV_STR_NULL_SIZE        (sizeof(CSV_STR_NULL) - 1)
-   #define CSV_STR_OID_SIZE         (sizeof(CSV_STR_OID) - 1)
-   #define CSV_STR_REGEX_SIZE       (sizeof(CSV_STR_REGEX) - 1)
-   #define CSV_STR_BINARY_SIZE      (sizeof(CSV_STR_BINARY) - 1)
-   #define CSV_STR_NUMBER_SIZE      (sizeof(CSV_STR_NUMBER) - 1)
-   #define CSV_STR_TYPE_MIN_SIZE    3
+   #define CSV_STR_INT_SIZE            (sizeof(CSV_STR_INT) - 1)
+   #define CSV_STR_INTEGER_SIZE        (sizeof(CSV_STR_INTEGER) - 1)
+   #define CSV_STR_LONG_SIZE           (sizeof(CSV_STR_LONG) - 1)
+   #define CSV_STR_BOOL_SIZE           (sizeof(CSV_STR_BOOL) - 1)
+   #define CSV_STR_BOOLEAN_SIZE        (sizeof(CSV_STR_BOOLEAN) - 1)
+   #define CSV_STR_DOUBLE_SIZE         (sizeof(CSV_STR_DOUBLE) - 1)
+   #define CSV_STR_STRING_SIZE         (sizeof(CSV_STR_STRING) - 1)
+   #define CSV_STR_TIMESTAMP_SIZE      (sizeof(CSV_STR_TIMESTAMP) - 1)
+   #define CSV_STR_AUTO_TIMESTAMP_SIZE (sizeof(CSV_STR_AUTO_TIMESTAMP) - 1)
+   #define CSV_STR_DATE_SIZE           (sizeof(CSV_STR_DATE) - 1)
+   #define CSV_STR_AUTO_DATE_SIZE      (sizeof(CSV_STR_AUTO_DATE) - 1)
+   #define CSV_STR_NULL_SIZE           (sizeof(CSV_STR_NULL) - 1)
+   #define CSV_STR_OID_SIZE            (sizeof(CSV_STR_OID) - 1)
+   #define CSV_STR_REGEX_SIZE          (sizeof(CSV_STR_REGEX) - 1)
+   #define CSV_STR_BINARY_SIZE         (sizeof(CSV_STR_BINARY) - 1)
+   #define CSV_STR_NUMBER_SIZE         (sizeof(CSV_STR_NUMBER) - 1)
+   #define CSV_STR_TYPE_MIN_SIZE       3
 
    #define CSV_STR_TYPE_EQ(type, str, len) \
       ((sizeof(type) - 1) == len && ossStrncasecmp(str, type, len) == 0)
@@ -288,8 +292,12 @@ namespace import
          return CSV_STR_STRING;
       case CSV_TYPE_TIMESTAMP:
          return CSV_STR_TIMESTAMP;
+      case CSV_TYPE_AUTO_TIMESTAMP:
+         return CSV_STR_AUTO_TIMESTAMP;
       case CSV_TYPE_DATE:
          return CSV_STR_DATE;
+      case CSV_TYPE_AUTO_DATE:
+         return CSV_STR_AUTO_DATE;
       case CSV_TYPE_NULL:
          return CSV_STR_NULL;
       case CSV_TYPE_OID:
@@ -324,6 +332,19 @@ namespace import
 
       switch(str[0])
       {
+      case 'a':
+      case 'A':
+         // autodate
+         // autotimestamp
+         if (CSV_STR_TYPE_EQ(CSV_STR_AUTO_DATE, str, length))
+         {
+            type = CSV_TYPE_AUTO_DATE;
+         }
+         else if (CSV_STR_TYPE_EQ(CSV_STR_AUTO_TIMESTAMP, str, length))
+         {
+            type = CSV_TYPE_AUTO_TIMESTAMP;
+         }
+         break;
       case 'b':
       case 'B':
          // bool
@@ -1883,7 +1904,7 @@ namespace import
                        'Y' == fmt[1] &&
                        'Y' == fmt[2] &&
                        'Y' == fmt[3], "invalid format of year");
-            rc = _str2i(str, strLen, year, valueLength);
+            rc = _str2i(str, 4, year, valueLength);
             if (SDB_OK != rc)
             {
                goto error;
@@ -1897,7 +1918,7 @@ namespace import
          case 'M':
             SDB_ASSERT('M' == fmt[0] &&
                        'M' == fmt[1], "invalid format of month");
-            rc = _str2i(str, strLen, month, valueLength);
+            rc = _str2i(str, 2, month, valueLength);
             if (SDB_OK != rc)
             {
                goto error;
@@ -1911,7 +1932,7 @@ namespace import
          case 'D':
             SDB_ASSERT('D' == fmt[0] &&
                        'D' == fmt[1], "invalid format of day");
-            rc = _str2i(str, strLen, day, valueLength);
+            rc = _str2i(str, 2, day, valueLength);
             if (SDB_OK != rc)
             {
                goto error;
@@ -1925,7 +1946,7 @@ namespace import
          case 'H':
             SDB_ASSERT('H' == fmt[0] &&
                        'H' == fmt[1], "invalid format of hour");
-            rc = _str2i(str, strLen, hour, valueLength);
+            rc = _str2i(str, 2, hour, valueLength);
             if (SDB_OK != rc)
             {
                goto error;
@@ -1939,7 +1960,7 @@ namespace import
          case 'm':
             SDB_ASSERT('m' == fmt[0] &&
                        'm' == fmt[1], "invalid format of minute");
-            rc = _str2i(str, strLen, minute, valueLength);
+            rc = _str2i(str, 2, minute, valueLength);
             if (SDB_OK != rc)
             {
                goto error;
@@ -1953,7 +1974,7 @@ namespace import
          case 's':
             SDB_ASSERT('s' == fmt[0] &&
                        's' == fmt[1], "invalid format of second");
-            rc = _str2i(str, strLen, second, valueLength);
+            rc = _str2i(str, 2, second, valueLength);
             if (SDB_OK != rc)
             {
                goto error;
@@ -1975,7 +1996,7 @@ namespace import
                   rc = SDB_INVALIDARG;
                   goto error;
                }
-               rc = _str2i(str, strLen, ms, valueLength);
+               rc = _str2i(str, 3, ms, valueLength);
                if (SDB_OK != rc)
                {
                   goto error;
@@ -2001,7 +2022,7 @@ namespace import
                rc = SDB_INVALIDARG;
                goto error;
             }
-            rc = _str2i(str, strLen, microsec, valueLength);
+            rc = _str2i(str, 6, microsec, valueLength);
             if (SDB_OK != rc)
             {
                goto error;
@@ -2047,7 +2068,7 @@ namespace import
       goto done;
    }
 
-   static inline INT32 _stringToTimestamp(CSVString& data,
+   static inline INT32 _stringToTimestamp(CSVString& data, BOOLEAN autoTimestamp,
                                           CSVTimestamp& value)
    {
       CHAR* str = data.str;
@@ -2077,7 +2098,7 @@ namespace import
          }
       }
 
-      if (hasNonDigit)
+      if (hasNonDigit || !autoTimestamp)
       {
          struct tm t ;
          INT32 microsec = 0;
@@ -2191,7 +2212,7 @@ namespace import
       goto done;
    }
 
-   static inline INT32 _stringToDate(CSVString& data, INT64& value)
+   static inline INT32 _stringToDate(CSVString& data, BOOLEAN autoDate, INT64& value)
    {
       CHAR* str = data.str;
       INT32 rc = SDB_OK;
@@ -2220,7 +2241,7 @@ namespace import
          }
       }
 
-      if (hasNonDigit)
+      if (hasNonDigit || !autoDate)
       {
          struct tm t;
          INT32 microsec = 0;
@@ -2653,6 +2674,7 @@ namespace import
       INT32 len = length;
       INT32 rc = SDB_OK;
       fieldEnd = FALSE;
+      BOOLEAN autoDateTime = FALSE;
 
       SDB_ASSERT(NULL != data, "data can't be NULL");
       SDB_ASSERT(length > 0, "length must be greater than 0");
@@ -2721,6 +2743,9 @@ namespace import
             _trimString(fieldValue.strVal, _stringTrimType);
          }
          goto done;
+      case CSV_TYPE_AUTO_TIMESTAMP:
+         autoDateTime = TRUE;
+         // pass through
       case CSV_TYPE_TIMESTAMP:
          rc = _stringToString(data, length, strDel, strDelLen, fieldDel,
                               fieldDelLen, fieldValue.strVal,
@@ -2729,12 +2754,15 @@ namespace import
          {
             goto error;
          }
-         rc = _stringToTimestamp(fieldValue.strVal, fieldValue.timestampVal);
+         rc = _stringToTimestamp(fieldValue.strVal, autoDateTime, fieldValue.timestampVal);
          if (SDB_OK != rc)
          {
             goto error;
          }
          goto done;
+      case CSV_TYPE_AUTO_DATE:
+         autoDateTime = TRUE;
+         // pass through
       case CSV_TYPE_DATE:
          rc = _stringToString(data, length, strDel, strDelLen, fieldDel,
                               fieldDelLen, fieldValue.strVal,
@@ -2743,7 +2771,7 @@ namespace import
          {
             goto error;
          }
-         rc = _stringToDate(fieldValue.strVal, fieldValue.dateVal);
+         rc = _stringToDate(fieldValue.strVal, autoDateTime, fieldValue.dateVal);
          if (SDB_OK != rc)
          {
             goto error;
@@ -3128,11 +3156,13 @@ namespace import
          }
          break;
       case CSV_TYPE_TIMESTAMP:
+      case CSV_TYPE_AUTO_TIMESTAMP:
          rc = bson_append_timestamp2(&obj, field.name.c_str(),
                                      value->timestampVal.sec,
                                      value->timestampVal.us);
          break;
       case CSV_TYPE_DATE:
+      case CSV_TYPE_AUTO_DATE:
          rc = bson_append_date(&obj, field.name.c_str(), value->dateVal);
          break;
       case CSV_TYPE_REGEX:
