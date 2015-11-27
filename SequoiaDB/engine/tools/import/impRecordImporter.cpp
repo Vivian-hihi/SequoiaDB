@@ -44,7 +44,8 @@ namespace import
                                   const string& csname,
                                   const string& clname,
                                   BOOLEAN useSSL,
-                                  BOOLEAN enableTransaction)
+                                  BOOLEAN enableTransaction,
+                                  BOOLEAN allowKeyDuplication)
    : _hostname(hostname),
      _svcname(svcname),
      _user(user),
@@ -52,7 +53,8 @@ namespace import
      _csname(csname),
      _clname(clname),
      _useSSL(useSSL),
-     _enableTransaction(enableTransaction)
+     _enableTransaction(enableTransaction),
+     _allowKeyDuplication(allowKeyDuplication)
    {
       _connection = 0;
       _collectionSpace = 0;
@@ -157,6 +159,7 @@ namespace import
    INT32 RecordImporter::import(bson* objs[], INT32 num)
    {
       INT32 rc = SDB_OK;
+      INT32 flag = 0;
 
       SDB_ASSERT(NULL != objs, "objs can't be NULL");
       SDB_ASSERT(num > 0, "num must be greater than 0");
@@ -177,7 +180,12 @@ namespace import
          }
       }
 
-      rc = sdbBulkInsert(_collection, FLG_INSERT_CONTONDUP, objs, num);
+      if (_allowKeyDuplication)
+      {
+         flag |= FLG_INSERT_CONTONDUP;
+      }
+
+      rc = sdbBulkInsert(_collection, flag, objs, num);
       if (SDB_OK != rc)
       {
          PD_LOG(PDERROR, "failed to bulk insert, rc=%d", rc);

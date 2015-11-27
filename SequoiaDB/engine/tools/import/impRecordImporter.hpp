@@ -51,7 +51,8 @@ namespace import
                      const string& csname,
                      const string& clname,
                      BOOLEAN useSSL = FALSE,
-                     BOOLEAN enableTransaction = FALSE);
+                     BOOLEAN enableTransaction = FALSE,
+                     BOOLEAN allowKeyDuplication = TRUE);
       ~RecordImporter();
       INT32 connect();
       void disconnect();
@@ -67,6 +68,7 @@ namespace import
       string   _clname;
       BOOLEAN  _useSSL;
       BOOLEAN  _enableTransaction;
+      BOOLEAN  _allowKeyDuplication;
 
       // db handle
       sdbConnectionHandle  _connection;

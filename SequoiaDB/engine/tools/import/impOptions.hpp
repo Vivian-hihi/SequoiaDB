@@ -94,6 +94,7 @@ namespace import
       inline BOOLEAN enableSharding() const { return _enableSharding; }
       inline BOOLEAN enableCoord() const { return _enableCoord; }
       inline BOOLEAN enableTransaction() const { return _enableTransaction; }
+      inline BOOLEAN allowKeyDuplication() const { return _allowKeyDuplication; }
 
       /* input */
       inline const vector<string>& files() const { return _files; }
@@ -152,6 +153,7 @@ namespace import
       BOOLEAN        _enableSharding;
       BOOLEAN        _enableCoord;
       BOOLEAN        _enableTransaction;
+      BOOLEAN        _allowKeyDuplication;
 
       /* input */
       vector<string> _files;
