@@ -109,7 +109,7 @@ namespace engine
       return "UNKNOW" ;
    }
 
-   #define RTN_CONTEXT_GETNUM_ONCE              (100)
+   #define RTN_CONTEXT_GETNUM_ONCE              (1000)
 
    /*
       _rtnContextBase implement
@@ -261,6 +261,8 @@ namespace engine
       return SDB_OK ;
    }
 
+   #define RTN_CONTEXT_MAX_BUFF_SIZE      ( 5 * RTN_RESULTBUFFER_SIZE_MAX )
+
    INT32 _rtnContextBase::_reallocBuffer( SINT32 requiredSize )
    {
       INT32 rc = SDB_OK ;
@@ -276,18 +278,18 @@ namespace engine
       while ( requiredSize > _resultBufferSize )
       {
          // make sure we haven't hit max
-         if ( _resultBufferSize >= RTN_RESULTBUFFER_SIZE_MAX )
+         if ( _resultBufferSize >= RTN_CONTEXT_MAX_BUFF_SIZE )
          {
             PD_LOG ( PDERROR, "Result buffer is greater than %d bytes",
-                     RTN_RESULTBUFFER_SIZE_MAX ) ;
+                     RTN_CONTEXT_MAX_BUFF_SIZE ) ;
             rc = SDB_OOM ;
             goto error ;
          }
-         // double buffer size until hitting RTN_RESULTBUFFER_SIZE_MAX
+         // double buffer size until hitting RTN_CONTEXT_MAX_BUFF_SIZE
          _resultBufferSize = _resultBufferSize << 1 ;
-         if (_resultBufferSize > RTN_RESULTBUFFER_SIZE_MAX )
+         if (_resultBufferSize > RTN_CONTEXT_MAX_BUFF_SIZE )
          {
-            _resultBufferSize = RTN_RESULTBUFFER_SIZE_MAX ;
+            _resultBufferSize = RTN_CONTEXT_MAX_BUFF_SIZE ;
          }
       }
 
