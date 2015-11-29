@@ -113,6 +113,10 @@ namespace engine
       if ( ( g_startShiftTime < 0 || g_startShiftTime <= (INT32)_timeout() ) &&
            CLS_VOTE_CS_TIME <= _timeout() )
       {
+         if ( _hasPrint )
+         {
+            PD_LOG( PDEVENT, "Begin to vote..." ) ;
+         }
          g_startShiftTime = -1 ;
          next = CLS_ELECTION_STATUS_VOTE ;
       }
@@ -122,7 +126,7 @@ namespace engine
          {
             _hasPrint = TRUE ;
             PD_LOG( PDEVENT, "With waiting %u seconds or when all nodes beat "
-                    "each, then begin to vote...",
+                    "here, then begin to vote",
                     ( g_startShiftTime - (INT32)_timeout() ) / 1000 ) ;
          }
          next = id() ;
