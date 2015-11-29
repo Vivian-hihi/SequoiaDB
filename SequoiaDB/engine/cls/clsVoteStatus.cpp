@@ -67,13 +67,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__CLSVTSTUS__LAU ) ;
 
-      if ( !pmdGetStartup().isOK() && !_info()->isAllNodeAbnormal( 0 ) )
-      {
-         PD_LOG ( PDINFO, "Start type isn't normal, can't initial voting" ) ;
-         rc = SDB_CLS_VOTE_FAILED ;
-         goto error ;
-      }
-      else if ( 0 != _groupInfo->primary.value )
+      if ( 0 != _groupInfo->primary.value )
       {
          PD_LOG ( PDDEBUG, "Primary[%d] already exist, can't initial voting",
                   _groupInfo->primary.columns.nodeID ) ;
@@ -89,9 +83,16 @@ namespace engine
          rc = SDB_CLS_VOTE_FAILED ;
          goto error ;
       }
+      else if ( !pmdGetStartup().isOK() && !_info()->isAllNodeAbnormal( 0 ) )
+      {
+         PD_LOG ( PDWARNING, "Start type isn't normal, can't initial voting "
+                  "until all nodes had been started" ) ;
+         rc = SDB_CLS_VOTE_FAILED ;
+         goto error ;
+      }
       else if ( !sdbGetReplCB()->getBucket()->isEmpty() )
       {
-         PD_LOG( PDINFO, "Repl log is not empty, can't initial voting, "
+         PD_LOG( PDWARNING, "Repl log is not empty, can't initial voting, "
                  "repl bucket size: %d",
                  sdbGetReplCB()->getBucket()->size() ) ;
          rc = SDB_CLS_VOTE_FAILED ;
@@ -100,7 +101,7 @@ namespace engine
       else if ( sdbGetTransCB()->isNeedSyncTrans() &&
                 pmdGetStartup().isOK() )
       {
-         PD_LOG( PDINFO, "Trans info is not sync, can't initial voting" ) ;
+         PD_LOG( PDWARNING, "Trans info is not sync, can't initial voting" ) ;
          rc = SDB_CLS_VOTE_FAILED ;
          goto error ;
       }

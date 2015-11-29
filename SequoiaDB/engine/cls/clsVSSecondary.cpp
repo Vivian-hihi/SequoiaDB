@@ -43,11 +43,10 @@ namespace engine
    INT32 g_startShiftTime = 0 ;
 
    _clsVSSecondary::_clsVSSecondary( _clsGroupInfo *info,
-                                     _netRouteAgent *agent ):
-                                _clsVoteStatus( info, agent,
-                                                 CLS_ELECTION_STATUS_SEC )
+                                     _netRouteAgent *agent )
+   :_clsVoteStatus( info, agent, CLS_ELECTION_STATUS_SEC )
    {
-
+      _hasPrint = FALSE ;
    }
 
    _clsVSSecondary::~_clsVSSecondary()
@@ -119,6 +118,13 @@ namespace engine
       }
       else
       {
+         if ( !_hasPrint && CLS_VOTE_CS_TIME <= _timeout() )
+         {
+            _hasPrint = TRUE ;
+            PD_LOG( PDEVENT, "With waiting %u seconds or when all nodes beat "
+                    "each, then begin to vote...",
+                    ( g_startShiftTime - (INT32)_timeout() ) / 1000 ) ;
+         }
          next = id() ;
       }
       PD_TRACE_EXIT ( SDB__CLSVSSD_HDTMOUT ) ;
@@ -130,6 +136,7 @@ namespace engine
    {
       PD_TRACE_ENTRY ( SDB__CLSVSSD_ACTIVE ) ;
       _timeout() = 0 ;
+      _hasPrint = FALSE ;
 
       if ( _info()->groupSize() == 1 )
       {
