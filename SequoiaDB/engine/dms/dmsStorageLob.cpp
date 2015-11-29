@@ -476,7 +476,7 @@ namespace engine
 
       if ( 0 != logRecord.head()._length )
       {
-         transCB->releaseLogSpace( logRecord.head()._length ) ;
+         transCB->releaseLogSpace( logRecord.head()._length, cb ) ;
       }
 
       if ( SDB_OK == rc && NULL != cb )
@@ -661,7 +661,7 @@ namespace engine
 
       if ( 0 != logRecord.head()._length )
       {
-         transCB->releaseLogSpace( logRecord.head()._length ) ;
+         transCB->releaseLogSpace( logRecord.head()._length, cb ) ;
       }
 
       if ( SDB_OK == rc && NULL != cb )
@@ -963,7 +963,7 @@ namespace engine
 
       if ( 0 != logRecord.head()._length )
       {
-         transCB->releaseLogSpace( logRecord.head()._length ) ;
+         transCB->releaseLogSpace( logRecord.head()._length, cb ) ;
       }
       if ( SDB_OK == rc && NULL != cb )
       {
@@ -1586,7 +1586,7 @@ namespace engine
 
       if ( 0 != logRecord.head()._length )
       {
-         transCB->releaseLogSpace( logRecord.head()._length ) ;
+         transCB->releaseLogSpace( logRecord.head()._length, cb ) ;
       }
 
       if ( SDB_OK == rc && NULL != cb )

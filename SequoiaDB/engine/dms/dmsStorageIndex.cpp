@@ -403,7 +403,7 @@ namespace engine
    done :
       if ( 0 != logRecSize )
       {
-         pTransCB->releaseLogSpace( logRecSize );
+         pTransCB->releaseLogSpace( logRecSize, cb );
       }
       return rc ;
    error :
@@ -719,7 +719,7 @@ namespace engine
    done :
       if ( 0 != logRecSize )
       {
-         pTransCB->releaseLogSpace( logRecSize ) ;
+         pTransCB->releaseLogSpace( logRecSize, cb ) ;
       }
       return rc ;
    error :

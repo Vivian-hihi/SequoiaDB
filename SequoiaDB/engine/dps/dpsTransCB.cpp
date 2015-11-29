@@ -833,9 +833,9 @@ namespace engine
       goto done;
    }
 
-   void dpsTransCB::releaseLogSpace( UINT32 length )
+   void dpsTransCB::releaseLogSpace( UINT32 length, _pmdEDUCB *cb )
    {
-      if ( !_isOn )
+      if ( !_isOn || ( cb && cb->isInRollback() ) )
       {
          return ;
       }

@@ -5238,7 +5238,7 @@ namespace engine
       }
       if ( _gotLogSize > 0 )
       {
-         _pTransCB->releaseLogSpace( _gotLogSize );
+         _pTransCB->releaseLogSpace( _gotLogSize, cb );
          _gotLogSize = 0;
       }
    }

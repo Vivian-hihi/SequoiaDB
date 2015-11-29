@@ -453,7 +453,7 @@ namespace engine
       }
       if ( isReserved )
       {
-         pTransCB->releaseLogSpace( logRecSize );
+         pTransCB->releaseLogSpace( logRecSize, cb );
       }
       PD_TRACE_EXITRC ( SDB__SDB_DMSCB__CSCBNMREMV, rc );
       return rc ;
@@ -1011,7 +1011,7 @@ namespace engine
    done :
       if ( isReserved )
       {
-         pTransCB->releaseLogSpace( logRecSize );
+         pTransCB->releaseLogSpace( logRecSize, cb );
       }
       PD_TRACE_EXITRC ( SDB__SDB_DMSCB_ADDCS, rc );
       return rc ;

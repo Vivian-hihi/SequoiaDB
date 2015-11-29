@@ -1510,7 +1510,7 @@ namespace engine
       }
       if ( 0 != logRecSize )
       {
-         pTransCB->releaseLogSpace( logRecSize );
+         pTransCB->releaseLogSpace( logRecSize, cb );
       }
       if ( SDB_OK == rc && NULL != cb )
       {
@@ -1685,7 +1685,7 @@ namespace engine
       }
       if ( 0 != logRecSize )
       {
-         pTransCB->releaseLogSpace( logRecSize );
+         pTransCB->releaseLogSpace( logRecSize, cb );
       }
 
       if ( SDB_OK == rc && NULL != cb )
@@ -1836,7 +1836,7 @@ namespace engine
       }
       if ( 0 != logRecSize )
       {
-         pTransCB->releaseLogSpace( logRecSize ) ;
+         pTransCB->releaseLogSpace( logRecSize, cb ) ;
       }
       if ( SDB_OK == rc && NULL != cb )
       {
@@ -1969,7 +1969,7 @@ namespace engine
       }
       if ( 0 != logRecSize )
       {
-         pTransCB->releaseLogSpace( logRecSize );
+         pTransCB->releaseLogSpace( logRecSize, cb );
       }
       PD_TRACE_EXITRC ( SDB__DMSSTORAGEDATA_RENAMECOLLECTION, rc ) ;
       return rc ;
@@ -2239,7 +2239,7 @@ namespace engine
       }
       if ( 0 != logRecSize )
       {
-         pTransCB->releaseLogSpace( logRecSize ) ;
+         pTransCB->releaseLogSpace( logRecSize, cb ) ;
       }
       if ( SDB_OK == rc && NULL != cb )
       {
@@ -2584,7 +2584,7 @@ namespace engine
    done :
       if ( 0 != logRecSize )
       {
-         pTransCB->releaseLogSpace( logRecSize ) ;
+         pTransCB->releaseLogSpace( logRecSize, cb ) ;
       }
       if ( SDB_OK == rc && NULL != cb )
       {
@@ -2855,7 +2855,7 @@ namespace engine
    done :
       if ( 0 != logRecSize )
       {
-         pTransCB->releaseLogSpace( logRecSize );
+         pTransCB->releaseLogSpace( logRecSize, cb );
       }
       if ( SDB_OK == rc && NULL != cb )
       {

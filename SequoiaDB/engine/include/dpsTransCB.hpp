@@ -213,7 +213,7 @@ namespace engine
 
       INT32 reservedLogSpace( UINT32 length, _pmdEDUCB *cb ) ;
 
-      void releaseLogSpace( UINT32 length );
+      void releaseLogSpace( UINT32 length, _pmdEDUCB *cb );
 
       UINT64 remainLogSpace();
 
