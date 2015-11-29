@@ -57,7 +57,7 @@ namespace engine
 
       virtual const CHAR *name() const { return "Secondary" ;}
 
-   private;
+   private:
       BOOLEAN           _hasPrint ;
    } ;
 }
