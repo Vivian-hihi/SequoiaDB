@@ -82,6 +82,7 @@ namespace engine
       INT32 rc = SDB_OK ;
 
       _isOn = pmdGetOptionCB()->transactionOn() ;
+      _rollbackEvent.signal() ;
 
       // register event handle
       IControlBlock *pClsCB = pmdGetKRCB()->getCBByType( SDB_CB_CLS ) ;
@@ -130,19 +131,16 @@ namespace engine
             _maxUsedSize = 0 ;
          }
 
-         if ( pmdGetStartup().isOK() )
+         DPS_LSN startLSN = sdbGetDPSCB()->getStartLsn() ;
+         if ( _isOn && startLSN.offset != DPS_INVALID_LSN_OFFSET &&
+              SDB_ROLE_STANDALONE != pmdGetDBRole() )
          {
-            DPS_LSN startLSN = sdbGetDPSCB()->getStartLsn() ;
-            if ( _isOn && startLSN.offset != DPS_INVALID_LSN_OFFSET &&
-                 SDB_ROLE_STANDALONE != pmdGetDBRole() )
+            rc = syncTransInfoFromLocal( startLSN.offset ) ;
+            if ( rc )
             {
-               rc = syncTransInfoFromLocal( startLSN.offset ) ;
-               if ( rc )
-               {
-                  PD_LOG( PDERROR, "Failed to sync trans info from local, rc: %d",
-                          rc ) ;
-                  goto error ;
-               }
+               PD_LOG( PDERROR, "Failed to sync trans info from local, rc: %d",
+                       rc ) ;
+               goto error ;
             }
          }
          setIsNeedSyncTrans( FALSE ) ;

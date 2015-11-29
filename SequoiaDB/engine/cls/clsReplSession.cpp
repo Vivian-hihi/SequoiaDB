@@ -685,8 +685,9 @@ namespace engine
          {
             goto error ;
          }
-
-         // cut all dps
+         /// clear all trans info
+         sdbGetTransCB()->clearTransInfo() ;
+         // then cut all dps
          rc = _logger->move( 0, _logger->expectLsn().version ) ;
          if ( SDB_OK != rc )
          {

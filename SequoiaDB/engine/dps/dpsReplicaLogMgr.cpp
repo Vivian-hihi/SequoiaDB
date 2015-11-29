@@ -420,7 +420,7 @@ namespace engine
       _mergeLogs( info.getMergeBlock(), info.getMergeBlock().pageMeta() );
       SHARED_UNLOCK_NODES( info.getMergeBlock().pageMeta() );
 
-      if ( _transCB )
+      if ( _transCB && !_restoreFlag )
       {
          if ( info.getMergeBlock().isRow() )
          {
