@@ -137,7 +137,7 @@ namespace engine
       beat.messageLength = sizeof( MsgHeader ) ;
       beat.opCode = MSG_HEARTBEAT ;
       beat.requestID = 0 ;
-      beat.routeID.value = 0 ;
+      beat.routeID.value = _local.value ;
       beat.TID = 0 ;
 
       while( TRUE )
@@ -159,7 +159,6 @@ namespace engine
                 serviceType == eh->id().columns.serviceID ) )
          {
             eh->mtx().get() ;
-            beat.routeID = eh->id() ;
             beat.requestID = eh->getAndIncMsgID() ;
             eh->syncSend( (const void*)&beat, beat.messageLength ) ;
             eh->syncLastBeatTick() ;
@@ -891,7 +890,7 @@ namespace engine
          reply.flags = pmdDBIsAbnormal() ? SDB_SYS : SDB_OK ;
 
          eh->mtx().get() ;
-         reply.header.routeID = eh->id() ;
+         reply.header.routeID = _local ;
          eh->syncSend( (const void*)&reply, reply.header.messageLength ) ;
          eh->mtx().release() ;
       }
