@@ -194,7 +194,7 @@ CSV(Comma Separated Value)格式以逗号分隔数值。默认情况下记录以
  | --coord | - | 指定是否自动查找协调节点，默认为true | 
  | --sharding | - | 指定是否按分区信息重新打包记录，默认为true | 
  | --transaction | - | 指定导入数据时是否开启事务，默认为false。注意此功能需要服务端开启事务。| 
- | --allowkeydup | - | 指定是否允许唯一索引的键重复并忽略错误，默认为true |
+ | --allowkeydup | - | 指定是否允许唯一索引的键出现重复时忽略错误继续导入，默认为true |
 
 ###示例
 
