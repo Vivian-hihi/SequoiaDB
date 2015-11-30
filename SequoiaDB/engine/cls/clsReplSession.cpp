@@ -1187,8 +1187,9 @@ namespace engine
       {
          PD_LOG( PDINFO, "Sync Session[%s]: Consult's request id[%llu] is no "
                  "greater than processed request id[%llu], and message queue "
-                 "is not empty, so dispath the request",
-                 header->requestID, _lastProcRequestID ) ;
+                 "is not empty[%u], so dispath the request", sessionName(),
+                 header->requestID, _lastProcRequestID,
+                 eduCB()->getQueSize() ) ;
          needReply = FALSE ; /// not reply
          goto done ;
       }
@@ -1344,8 +1345,9 @@ namespace engine
       {
          PD_LOG( PDINFO, "Sync Session[%s]: Sync's request id[%llu] is no "
                  "greater than processed request id[%llu], and message queue "
-                 "is not empty, so dispath the request", sessionName(),
-                 req->header.requestID, _lastProcRequestID ) ;
+                 "is not empty[%u], so dispath the request", sessionName(),
+                 req->header.requestID, _lastProcRequestID,
+                 eduCB()->getQueSize() ) ;
          goto done ;
       }
       /// update processed request id
