@@ -520,32 +520,20 @@ namespace engine
       }
       else 
       {
-         rtnContextBuf fetchOneBuff ;
-         if ( -1 != contextID )
+         if ( -1 != contextID && contextBuff.recordNum() > 0 )
          {
-            _fetchOneContext( contextID, fetchOneBuff ) ;
-            if ( -1 != contextID )
-            {
-               // -1 != contextID means we have more data to send. 
-               // so we should enable chunk mod;
-               pAdaptor->setChunkModal( this ) ;
-            }
+            // -1 != contextID means we have more data to send. 
+            // so we should enable chunk mod;
+            pAdaptor->setChunkModal( this ) ;
          }
 
          BSONObj tmp = BSON( OM_REST_RES_RETCODE << rc ) ;
          pAdaptor->setOPResult( this, rc, tmp ) ;
-         if ( 0 != contextBuff.recordNum() )
+         if ( contextBuff.recordNum() > 0 )
          {
             pAdaptor->appendHttpBody( this, contextBuff.data(), 
                                       contextBuff.size(), 
                                       contextBuff.recordNum() ) ;
-         }
-
-         if ( 0 != fetchOneBuff.recordNum() )
-         {
-            pAdaptor->appendHttpBody( this, fetchOneBuff.data(), 
-                                      fetchOneBuff.size(), 
-                                      fetchOneBuff.recordNum() ) ;
          }
 
          if ( -1 != contextID )
