@@ -63,10 +63,10 @@
             </sequential>
         </for>
 
-    	<sdbdeploy host="${trunk_machine_control}" coordport="${coord.service.port}">
-    		<catagroup name="cata1">
-    			<for list="${machineList}" param="hostname">
-    				<sequential>
+        <for list="${machineList}" param="hostname">
+    		<sequential>
+		    	<sdbdeploy host="${trunk_machine_control}" coordport="${coord.service.port}">
+		    		<catagroup name="cata1">
         				<node host="@{hostname}" baseport="${cata.service.port}" dbpath="${install.path}/sequoiadb/database/cata/${cata.service.port}">
 							<confitem name="diaglevel" value="5" />
 							<confitem name="transactionon" value="true" />
@@ -74,11 +74,47 @@
 							<confitem name="fap" value="${fap.value}" />
 							<confitem name="optimeout" value="60000" />
 						</node>
-					</sequential>
-				</for>
-    		</catagroup>
-    	</sdbdeploy>
-            
+		    		</catagroup>
+		    	</sdbdeploy>
+        	</sequential>
+		</for>
+
+		<for list="${machineList}" param="hostname">
+    		<sequential>
+				<sdbdeploy host="${trunk_machine_control}" coordport="${coord.service.port}">
+					<datagroup name="group1">			
+						<node host="@{hostname}" baseport="21100" dbpath="${install.path}/sequoiadb/database/data/21100">
+							<confitem name="diaglevel" value="5" />
+							<confitem name="transactionon" value="true" />
+							<confitem name="sharingbreak" value="30000" />
+							<confitem name="diagnum" value="80" />
+							<confitem name="fap" value="${fap.value}" />
+							<confitem name="optimeout" value="60000" />
+						</node>
+					</datagroup>
+					<datagroup name="group2">
+						<node host="@{hostname}" baseport="22100" dbpath="${install.path}/sequoiadb/database/data/22100">
+							<confitem name="diaglevel" value="5" />
+							<confitem name="transactionon" value="true" />
+							<confitem name="sharingbreak" value="30000" />
+							<confitem name="diagnum" value="80" />
+							<confitem name="fap" value="${fap.value}" />
+							<confitem name="optimeout" value="60000" />
+						</node>
+					</datagroup>
+					<datagroup name="group3">
+						<node host="@{hostname}" baseport="23100" dbpath="${install.path}/sequoiadb/database/data/23100">
+							<confitem name="diaglevel" value="5" />
+							<confitem name="transactionon" value="true" />
+							<confitem name="sharingbreak" value="30000" />
+							<confitem name="diagnum" value="80" />
+							<confitem name="fap" value="${fap.value}" />
+							<confitem name="optimeout" value="60000" />
+						</node>
+					</datagroup>
+				</sdbdeploy>
+			</sequential>
+		</for>
 
 		<!-- <sdbdeploy host="${trunk_machine_control}" coordport="${coord.service.port}">
 			<catagroup name="cata1">
@@ -105,51 +141,6 @@
 				</node>
 			</catagroup>
 		</sdbdeploy> -->
-
-		<sdbdeploy host="${trunk_machine_control}" coordport="${coord.service.port}">
-    		<datagroup name="group1">
-    			<for list="${machineList}" param="hostname">
-    				<sequential>
-        				<node host="@{hostname}" baseport="21100" dbpath="${install.path}/sequoiadb/database/data/21100">
-							<confitem name="diaglevel" value="5" />
-							<confitem name="transactionon" value="true" />
-							<confitem name="sharingbreak" value="30000" />
-							<confitem name="diagnum" value="80" />
-							<confitem name="fap" value="${fap.value}" />
-							<confitem name="optimeout" value="60000" />
-						</node>
-					</sequential>
-				</for>
-    		</datagroup>
-    		<datagroup name="group2">
-    			<for list="${machineList}" param="hostname">
-    				<sequential>
-        				<node host="@{hostname}" baseport="22100" dbpath="${install.path}/sequoiadb/database/data/22100">
-							<confitem name="diaglevel" value="5" />
-							<confitem name="transactionon" value="true" />
-							<confitem name="sharingbreak" value="30000" />
-							<confitem name="diagnum" value="80" />
-							<confitem name="fap" value="${fap.value}" />
-							<confitem name="optimeout" value="60000" />
-						</node>
-					</sequential>
-				</for>
-    		</datagroup>
-    		<datagroup name="group3">
-    			<for list="${machineList}" param="hostname">
-    				<sequential>
-        				<node host="@{hostname}" baseport="23100" dbpath="${install.path}/sequoiadb/database/data/23100">
-							<confitem name="diaglevel" value="5" />
-							<confitem name="transactionon" value="true" />
-							<confitem name="sharingbreak" value="30000" />
-							<confitem name="diagnum" value="80" />
-							<confitem name="fap" value="${fap.value}" />
-							<confitem name="optimeout" value="60000" />
-						</node>
-					</sequential>
-				</for>
-    		</datagroup>
-    	</sdbdeploy>
 
 		<!-- <sdbdeploy host="${machineType}_machine_no1" coordport="${coord.service.port}">
 			<datagroup name="group1">
