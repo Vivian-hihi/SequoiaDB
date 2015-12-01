@@ -47,10 +47,10 @@
 		<if>
 		   	<equals arg1="${isTrunk}" arg2="true" />
 			<then>
-			    <property name="machineList" value="trunk_machine" />
+			    <property name="machineList" value="${trunk_machine}" />
 			</then>
 			<else>
-			    <property name="machineList" value="branch_machine" />
+			    <property name="machineList" value="${branch_machine}" />
 			</else>
 		</if>
 
