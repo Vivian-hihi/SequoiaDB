@@ -144,7 +144,7 @@ static const char *parse_number(cJSON *item,const char *num)
    double n=0,sign=1,scale=0;int subscale=0,signsubscale=1;
    int n1=0 ;
    long long n2 = 0 ;
-   long long n3 = 0 ;
+   volatile long long n3 = 0 ;
    item->numType = cJSON_INT32 ;
    /* Could use sscanf for this? */
    if (*num=='-')
