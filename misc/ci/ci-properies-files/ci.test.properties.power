@@ -37,3 +37,8 @@ testcase.path=/tmp/sequoiadb_test/deploy/hlt
 import.file.name=basic-testcases-time.json
 
 deploy.tar.file.name=deploy.tar.gz
+
+trunk_machine=power-suse-2,power-rhel-2,power-rhel-1
+trunk_machine_control=power-rhel-1
+branch_machine=power-suse-2,power-rhel-2,power-rhel-1
+branch_machine_control=power-rhel-1

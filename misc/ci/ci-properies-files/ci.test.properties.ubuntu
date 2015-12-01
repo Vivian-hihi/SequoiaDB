@@ -32,12 +32,14 @@ test_machine_no4=ubuntu-ci001
 test_machine_no5=ubuntu-ci002
 test_machine_no6=ubuntu-ci003
 
-js_list1=collectionAlter
-js_list2=dropCL,dropCS,index,insert,listCL,listCS,procedures,update,upsert,rest
-js_list3=query
-js_list4=domain,bakupRestore,delete
-js_list5=aggregate,countHint,createCL,createCS,cursor,sql,subCL,syndate
-js_list6=split,operators,transaction
+trunk_machine=ubun-test4,ubun-test3,ubun-test2
+trunk_machine_control=ubun-test2
+branch_machine=ubuntu-ci003,ubuntu-ci002,ubuntu-ci001
+branch_machine_control=ubuntu-ci001
+
+js_list1=collectionAlter,domain,createIndex
+js_list2=dropCL,dropCS,dropIndex,insert,listCL,listCS,operators,procedures,aggregate,bakupRestore,countHint,createCL,createCS,cursor,delete,sql,subCL,syndate,update,upsert,rest
+js_list3=query,split,transaction
 
 testcase.path=/tmp/sequoiadb_test/deploy/hlt
 import.file.name=basic-testcases-time.json

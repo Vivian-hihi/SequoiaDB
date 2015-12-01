@@ -15,136 +15,62 @@
 <project default="Standalone">
 	<property name="properties.dir" value="${basedir}/../ci.test.properties" />
 	<property file="${properties.dir}" />
+	<property name="isTrunk" value="true" />
+	<if>
+	   	<equals arg1="${isTrunk}" arg2="true" />
+		<then>
+		    <property name="machineList" value="${trunk_machine}" />
+		</then>
+		<else>
+		    <property name="machineList" value="${branch_machine}" />
+		</else>
+	</if>
 
-	<target name="12.Deploy-Software" depends="">
-		<if>
-		   	<equals arg1="${os.arch}" arg2="amd64" />
-			<then>
-				<ant antfile="deploy-software-in-host.xml" dir="." inheritAll="false">
-					<property name="install.package.fullname" value="${install.package.fullname}" />
-					<property name="deploy.host.name" value="${test_machine_no1}" />
-					<property name="is.standalone.mode" value="true" />
-					<property name="is.coord.master" value="false"/>
-					<property name="catalog.addrs" value="${test_machine_no1}:11803,${test_machine_no2}:11803,${test_machine_no3}:11803" />
-				</ant>
-				<ant antfile="deploy-software-in-host.xml" dir="." inheritAll="false">
-					<property name="install.package.fullname" value="${install.package.fullname}" />
-					<property name="deploy.host.name" value="${test_machine_no2}" />
-					<property name="is.standalone.mode" value="true" />
-					<property name="is.coord.master" value="false"/>
-					<property name="catalog.addrs" value="${test_machine_no1}:11803,${test_machine_no2}:11803,${test_machine_no3}:11803" />
-				</ant>
-				<ant antfile="deploy-software-in-host.xml" dir="." inheritAll="false">
-					<property name="install.package.fullname" value="${install.package.fullname}" />
-					<property name="deploy.host.name" value="${test_machine_no3}" />
-					<property name="is.standalone.mode" value="true" />
-					<property name="is.coord.master" value="false"/>
-					<property name="catalog.addrs" value="${test_machine_no1}:11803,${test_machine_no2}:11803,${test_machine_no3}:11803" />
-				</ant>
-				<ant antfile="deploy-software-in-host.xml" dir="." inheritAll="false">
-					<property name="install.package.fullname" value="${install.package.fullname}" />
-					<property name="deploy.host.name" value="${test_machine_no4}" />
-					<property name="is.standalone.mode" value="true" />
-					<property name="is.coord.master" value="false"/>
-					<property name="catalog.addrs" value="${test_machine_no1}:11803,${test_machine_no2}:11803,${test_machine_no3}:11803" />
-				</ant>
-				<ant antfile="deploy-software-in-host.xml" dir="." inheritAll="false">
-					<property name="install.package.fullname" value="${install.package.fullname}" />
-					<property name="deploy.host.name" value="${test_machine_no5}" />
-					<property name="is.standalone.mode" value="true" />
-					<property name="is.coord.master" value="false"/>
-					<property name="catalog.addrs" value="${test_machine_no1}:11803,${test_machine_no2}:11803,${test_machine_no3}:11803" />
-				</ant>
-				<ant antfile="deploy-software-in-host.xml" dir="." inheritAll="false">
-					<property name="install.package.fullname" value="${install.package.fullname}" />
-					<property name="deploy.host.name" value="${test_machine_no6}" />
-					<property name="is.standalone.mode" value="true" />
-					<property name="is.coord.master" value="false"/>
-					<property name="catalog.addrs" value="${test_machine_no1}:11803,${test_machine_no2}:11803,${test_machine_no3}:11803" />
-				</ant>
-			</then>
-			<else>
-				<ant antfile="deploy-software-in-host.xml" dir="." inheritAll="false">
-					<property name="install.package.fullname" value="${install.package.fullname}" />
-					<property name="deploy.host.name" value="${test_machine_no1}" />
-					<property name="is.standalone.mode" value="true" />
-					<property name="is.coord.master" value="false"/>
-					<property name="catalog.addrs" value="${test_machine_no1}:11803,${test_machine_no2}:11803,${test_machine_no3}:11803" />
-				</ant>
-				<ant antfile="deploy-software-in-host.xml" dir="." inheritAll="false">
-					<property name="install.package.fullname" value="${install.package.fullname}" />
-					<property name="deploy.host.name" value="${test_machine_no2}" />
-					<property name="is.standalone.mode" value="true" />
-					<property name="is.coord.master" value="false"/>
-					<property name="catalog.addrs" value="${test_machine_no1}:11803,${test_machine_no2}:11803,${test_machine_no3}:11803" />
-				</ant>
-				<ant antfile="deploy-software-in-host.xml" dir="." inheritAll="false">
-					<property name="install.package.fullname" value="${install.package.fullname}" />
-					<property name="deploy.host.name" value="${test_machine_no3}" />
-					<property name="is.standalone.mode" value="true" />
-					<property name="is.coord.master" value="false"/>
-					<property name="catalog.addrs" value="${test_machine_no1}:11803,${test_machine_no2}:11803,${test_machine_no3}:11803" />
-				</ant>
-			</else>
-		</if>	
+	<target name="deploySoftwareInHost">
+        <property name="addrTemp" value="tmp" />
+        <for list="${machineList}" param="hostnames">
+            <sequential>
+                <var name="addrTemp" value="@{hostnames}:11803,${addrTemp}" />
+           </sequential>
+        </for>
+        <basename property="catalog.addrs" file="${addrTemp}" suffix=",tmp" />
+        <ant antfile="deploy-software-in-host.xml" dir="." inheritAll="false" output="${hostname}">
+			<property name="install.package.fullname" value="${install.package.fullname}" />
+			<property name="deploy.host.name" value="${hostname}" />
+			<property name="is.standalone.mode" value="true" />
+			<property name="is.coord.master" value="true"/>
+			<property name="catalog.addrs" value="${catalog.addrs}" />
+		</ant>
+    </target>
+
+	<target name="Deploy-Software" depends="">
+		<for list="${machineList}" param="hostname">
+            <sequential>
+                <antcall target="deploySoftwareInHost" inheritAll="true" >
+                    <param name="hostname" value="@{hostname}" />
+                    <param name="machineList" value="${machineList}" />
+                </antcall>
+            </sequential>
+        </for>
 	</target>
 
 	<target name="Standalone" depends="">
 		<hostinfo prefix="host" />
 		<property name="copy.test.log" value="true"/>
 
-		<if>
-		   	<equals arg1="${os.arch}" arg2="amd64" />
-			<then>
-				<parallel>
-					<ant antfile="deploy-test-in-host.xml" dir="." inheritAll="false">
-						<property name="deploy.file.fullname" value="${deploy.file.fullname}" />
-						<property name="deploy.host.name" value="${test_machine_no1}" />
-					</ant>
-					<ant antfile="deploy-test-in-host.xml" dir="." inheritAll="false">
-						<property name="deploy.file.fullname" value="${deploy.file.fullname}" />
-						<property name="deploy.host.name" value="${test_machine_no2}" />
-					</ant>
-					<ant antfile="deploy-test-in-host.xml" dir="." inheritAll="false">
-						<property name="deploy.file.fullname" value="${deploy.file.fullname}" />
-						<property name="deploy.host.name" value="${test_machine_no3}" />
-					</ant>
-					<ant antfile="deploy-test-in-host.xml" dir="." inheritAll="false">
-						<property name="deploy.file.fullname" value="${deploy.file.fullname}" />
-						<property name="deploy.host.name" value="${test_machine_no4}" />
-					</ant>
-					<ant antfile="deploy-test-in-host.xml" dir="." inheritAll="false">
-						<property name="deploy.file.fullname" value="${deploy.file.fullname}" />
-						<property name="deploy.host.name" value="${test_machine_no5}" />
-					</ant>
-					<ant antfile="deploy-test-in-host.xml" dir="." inheritAll="false">
-						<property name="deploy.file.fullname" value="${deploy.file.fullname}" />
-						<property name="deploy.host.name" value="${test_machine_no6}" />
-					</ant>
-				</parallel>
-			</then>
-			<else>
-				<parallel>
-					<ant antfile="deploy-test-in-host.xml" dir="." inheritAll="false">
-						<property name="deploy.file.fullname" value="${deploy.file.fullname}" />
-						<property name="deploy.host.name" value="${test_machine_no1}" />
-					</ant>
-					<ant antfile="deploy-test-in-host.xml" dir="." inheritAll="false">
-						<property name="deploy.file.fullname" value="${deploy.file.fullname}" />
-						<property name="deploy.host.name" value="${test_machine_no2}" />
-					</ant>
-					<ant antfile="deploy-test-in-host.xml" dir="." inheritAll="false">
-						<property name="deploy.file.fullname" value="${deploy.file.fullname}" />
-						<property name="deploy.host.name" value="${test_machine_no3}" />
-					</ant>
-				</parallel>
-			</else>
-		</if>
+		<for list="${machineList}" param="hostname" parallel="true">
+			<sequential>
+				<ant antfile="deploy-test-in-host.xml" dir="." inheritAll="false">
+					<property name="deploy.file.fullname" value="${deploy.file.fullname}" />
+					<property name="deploy.host.name" value="@{hostname}" />
+				</ant>
+			</sequential>
+		</for>
 
 		<property name="test.log" value="${test.environment}-${OS_NAME}${BUILD_NUMBER}-Standalone" />
 		<property name="test.log.path" value="${test.reports.path}/${test.log}" />
 
-		<property name="test-type" value="js" />
+		<!-- <property name="test-type" value="js" />
 		<for list="${test-type}" param="Test-Type">
 			<sequential>
 				<ant antfile="${WORKSPACE}/sequoiadb/misc/ci/test-type.xml" dir="." inheritAll="false">
@@ -160,9 +86,27 @@
 					<property name="BUILD_NUMBER" value="${BUILD_NUMBER}" />
 				</ant>
 			</sequential>
+		</for> -->
+
+		<for list="driver-java" param="Test-Type">
+			<sequential>
+				<ant antfile="${WORKSPACE}/sequoiadb/misc/ci/test-type.xml" dir="." inheritAll="false">
+					<property name="test.host.NAME" value="${trunk_machine_control}" />
+					<property name="deploy.case.fullname" value="${deploy.case.fullname}" />
+					<property name="test.reports.path" value="${test.reports.path}" />
+					<property name="Test-Type" value="@{Test-Type}" />
+					<property name="parallel.flag" value="parallel" />
+					<property name="WORKSPACE" value="${WORKSPACE}" />
+					<property name="ci.script.file.path" value="${ci.script.file.path}" />
+					<property name="parallel.count" value="1" />
+					<property name="test.log" value="${test.log}" />
+					<property name="test-type-list" value="${test-type-list}" />
+					<property name="BUILD_NUMBER" value="${BUILD_NUMBER}" />
+				</ant>
+			</sequential>
 		</for>
 
-		<if>
+		<!-- <if>
 		   	<equals arg1="${test-type-list}" arg2="js" />
 			<then>
 				<property name="test-driver-list-B" value="ant" />
@@ -298,7 +242,7 @@
 					</else>
 				</if>
 			</then>
-		</if>
+		</if> -->
 	
 		<trycatch>
 			<try>
@@ -307,22 +251,11 @@
 					<then>
 						<mkdir dir="${test.log.path}" />
 
-						<if>
-		   					<equals arg1="${os.arch}" arg2="amd64" />
-							<then>
-								<sdbCopyAndTar fileHostName="${test_machine_no1}" saveHostName="${host.NAME}" diaglogPath="${install.path}/sequoiadb/database" savePath="${test.log.path}" />
-								<sdbCopyAndTar fileHostName="${test_machine_no2}" saveHostName="${host.NAME}" diaglogPath="${install.path}/sequoiadb/database" savePath="${test.log.path}" />
-								<sdbCopyAndTar fileHostName="${test_machine_no3}" saveHostName="${host.NAME}" diaglogPath="${install.path}/sequoiadb/database" savePath="${test.log.path}" />
-								<sdbCopyAndTar fileHostName="${test_machine_no4}" saveHostName="${host.NAME}" diaglogPath="${install.path}/sequoiadb/database" savePath="${test.log.path}" />
-								<sdbCopyAndTar fileHostName="${test_machine_no5}" saveHostName="${host.NAME}" diaglogPath="${install.path}/sequoiadb/database" savePath="${test.log.path}" />
-								<sdbCopyAndTar fileHostName="${test_machine_no6}" saveHostName="${host.NAME}" diaglogPath="${install.path}/sequoiadb/database" savePath="${test.log.path}" />
-							</then>
-							<else>
-								<sdbCopyAndTar fileHostName="${test_machine_no1}" saveHostName="${host.NAME}" diaglogPath="${install.path}/sequoiadb/database" savePath="${test.log.path}" />
-								<sdbCopyAndTar fileHostName="${test_machine_no2}" saveHostName="${host.NAME}" diaglogPath="${install.path}/sequoiadb/database" savePath="${test.log.path}" />
-								<sdbCopyAndTar fileHostName="${test_machine_no3}" saveHostName="${host.NAME}" diaglogPath="${install.path}/sequoiadb/database" savePath="${test.log.path}" />
-							</else>
-						</if>
+						<for list="${machineList}" param="hostname" parallel="true">
+							<sequential>
+								<sdbCopyAndTar fileHostName="@{hostname}" saveHostName="${host.NAME}" diaglogPath="${install.path}/sequoiadb/database" savePath="${test.log.path}" />
+							</sequential>
+						</for>
 
 						<tar basedir="${test.reports.path}" destfile="${test.log.path}.tar.gz" compression="gzip" includes="**/*" />
 						<stafTools workType="copy" workHost="${host.NAME}" fileName="${test.log.path}.tar.gz"  toHost="${save.testLog.hostname}"  saveDir="${save.testLog.dir}" failonerror="true"/>						

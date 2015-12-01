@@ -37,12 +37,9 @@ trunk_machine_control=suse-test2
 branch_machine=suse-ci003,suse-ci002,suse-ci001
 branch_machine_control=suse-ci001
 
-js_list1=collectionAlter
-js_list2=dropCL,dropCS,index,insert,listCL,listCS,procedures,update,upsert,rest
-js_list3=query
-js_list4=domain,bakupRestore,delete
-js_list5=aggregate,countHint,createCL,createCS,cursor,sql,subCL,syndate
-js_list6=split,operators,transaction
+js_list1=collectionAlter,domain,createIndex
+js_list2=dropCL,dropCS,dropIndex,insert,listCL,listCS,operators,procedures,aggregate,bakupRestore,countHint,createCL,createCS,cursor,delete,sql,subCL,syndate,update,upsert,rest
+js_list3=query,split,transaction
 
 testcase.path=/tmp/sequoiadb_test/deploy/hlt
 import.file.name=basic-testcases-time.json
