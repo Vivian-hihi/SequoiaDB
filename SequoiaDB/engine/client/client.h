@@ -1001,7 +1001,7 @@ SDB_EXPORT INT32 sdbDropCollection ( sdbCSHandle cHandle,
     \retval Others Operation Fail
 */
 SDB_EXPORT INT32 sdbGetCSName ( sdbCSHandle cHandle,
-                                CHAR *pBuffer, INT32 size ) ;
+                                       CHAR *pBuffer, INT32 size ) ;
 
 /** \fn INT32 sdbGetCLName ( sdbCollectionHandle cHandle,
                              CHAR *pCLName, INT32 size )
@@ -1012,8 +1012,8 @@ SDB_EXPORT INT32 sdbGetCSName ( sdbCSHandle cHandle,
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
 */
-SDB_EXPORT INT32 sdbGetCLName ( sdbCSHandle cHandle,
-                                CHAR *pBuffer, INT32 size ) ;
+SDB_EXPORT INT32 sdbGetCLName ( sdbCollectionHandle cHandle,
+                                       CHAR *pBuffer, INT32 size ) ;
 
 /** \fn INT32 sdbGetCLFullName ( sdbCollectionHandle cHandle,
                                  CHAR *pBuffer, INT32 size )
@@ -1024,8 +1024,8 @@ SDB_EXPORT INT32 sdbGetCLName ( sdbCSHandle cHandle,
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
 */
-SDB_EXPORT INT32 sdbGetCLFullName ( sdbCSHandle cHandle,
-                                    CHAR *pBuffer, INT32 size ) ;
+SDB_EXPORT INT32 sdbGetCLFullName ( sdbCollectionHandle cHandle,
+                                            CHAR *pBuffer, INT32 size ) ;
 
 /** \fn INT32 sdbSplitCollection ( sdbCollectionHandle cHandle,
                                    const CHAR *pSourceRG,
