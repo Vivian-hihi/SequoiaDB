@@ -234,7 +234,7 @@
         <basename property="catalog.addrs" file="${addrTemp}" suffix=",tmp" />
         <ant antfile="deploy-software-in-host.xml" dir="." inheritAll="false" output="${hostname}">
 			<property name="install.package.fullname" value="${install.package.fullname}" />
-			<property name="deploy.host.name" value="${hostname}" />
+			<property name="deploy.host.name" value="@{hostname}" />
 			<property name="is.standalone.mode" value="false" />
 			<property name="is.coord.master" value="true"/>
 			<property name="catalog.addrs" value="${catalog.addrs}" />
