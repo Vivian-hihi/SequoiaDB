@@ -227,13 +227,13 @@
 
 	<target name="deploySoftwareInHost">
         <property name="addrTemp" value="tmp" />
-        <for list="${machineList}" param="hostname">
+        <for list="${machineList}" param="hostnames">
             <sequential>
-                <var name="addrTemp" value="@{hostname}:11803,${addrTemp}" />
+                <var name="addrTemp" value="@{hostnames}:11803,${addrTemp}" />
            </sequential>
         </for>
         <basename property="catalog.addrs" file="${addrTemp}" suffix=",tmp" />
-        <ant antfile="deploy-software-in-host.xml" dir="." inheritAll="false" output="${hostname}">
+        <ant antfile="deploy-software-in-host.xml" dir="." inheritAll="false" output="@{hostname}">
 			<property name="install.package.fullname" value="${install.package.fullname}" />
 			<property name="deploy.host.name" value="@{hostname}" />
 			<property name="is.standalone.mode" value="false" />
