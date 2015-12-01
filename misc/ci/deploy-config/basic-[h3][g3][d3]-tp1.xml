@@ -17,6 +17,23 @@
 	<property file="${properties.dir}" />
 	<property name="isTrunk" value="true" />
 
+	<target name="deploySoftwareInHost">
+        <property name="addrTemp" value="tmp" />
+        <for list="${machineList}" param="hostnames">
+            <sequential>
+                <var name="addrTemp" value="@{hostnames}:11803,${addrTemp}" />
+           </sequential>
+        </for>
+        <basename property="catalog.addrs" file="${addrTemp}" suffix=",tmp" />
+        <ant antfile="deploy-software-in-host.xml" dir="." inheritAll="false" output="${hostname}">
+			<property name="install.package.fullname" value="${install.package.fullname}" />
+			<property name="deploy.host.name" value="${hostname}" />
+			<property name="is.standalone.mode" value="false" />
+			<property name="is.coord.master" value="true"/>
+			<property name="catalog.addrs" value="${catalog.addrs}" />
+		</ant>
+    </target>
+
 	<target name="Deploy-Software" depends="">
 		<if>
 		   	<equals arg1="${os.arch}" arg2="amd64" />
@@ -45,23 +62,6 @@
                 </antcall>
             </sequential>
         </for>
-
-        <target name="deploySoftwareInHost">
-	        <property name="addrTemp" value="tmp" />
-	        <for list="${machineList}" param="hostnames">
-	            <sequential>
-	                <var name="addrTemp" value="@{hostnames}:11803,${addrTemp}" />
-	           </sequential>
-	        </for>
-	        <basename property="catalog.addrs" file="${addrTemp}" suffix=",tmp" />
-	        <ant antfile="deploy-software-in-host.xml" dir="." inheritAll="false" output="${hostname}">
-				<property name="install.package.fullname" value="${install.package.fullname}" />
-				<property name="deploy.host.name" value="${hostname}" />
-				<property name="is.standalone.mode" value="false" />
-				<property name="is.coord.master" value="true"/>
-				<property name="catalog.addrs" value="${catalog.addrs}" />
-			</ant>
-	    </target>
 
     	<sdbdeploy host="${trunk_machine_control}" coordport="${coord.service.port}">
     		<catagroup name="cata1">
