@@ -15,6 +15,7 @@
 <project default="H3-G3-D3">
 	<property name="properties.dir" value="${basedir}/../ci.test.properties" />
 	<property file="${properties.dir}" />
+	<property name="isTrunk" value="true" />
 
 	<target name="Deploy-Software" depends="">
 		<if>
