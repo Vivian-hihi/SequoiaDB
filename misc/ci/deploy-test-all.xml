@@ -17,12 +17,11 @@
 		${test.environment}-${DEPLOY_WILDCARD}.xml
 -->
 
-<project name="deploy-test-all" default="10.Deploy-Test-All">
+<project default="Deploy-Test-All">
 	<hostinfo prefix="host" />
 	<property file="${ci.script.file.path}/ci.test.properties" />
 	<property name="deploy.config.path" value="${ci.script.file.path}/deploy-config" />
 	<property name="release.path" value="${WORKSPACE}/release" />
-<!-- 	<property name="deploy.tar.file.name" value="deploy.tar.gz" /> -->
 	<property file="${release.path}/build.version" />
 	<taskdef resource="com/sequoiadb/ant/ant-sdbtasks.xml">
 		<classpath>
@@ -30,39 +29,30 @@
 		</classpath>
 	</taskdef>
 	
-	<target name="8.Tar-Deploy-Package" depends="" >
-		<echo level="info" message="Step1 : Tar the package &lt;${WORKSPACE}/${deploy.tar.file.name}&gt; on &lt;${WORKSPACE}&gt;." />
+	<target name="Tar-Deploy-Package" depends="" >
+		<property name="execTools.tar.file.name" value="execTools.tar.gz" />
+		<echo level="info" message="Step1 : Tar the package &lt;${WORKSPACE}/${deploy.tar.file.name}&gt; and on &lt;${WORKSPACE}/${execTools.tar.file.name}&gt; &lt;${WORKSPACE}&gt;." />
 		<tar destfile="${WORKSPACE}/${deploy.tar.file.name}" basedir="${WORKSPACE}" includes="deploy/**/*" compression="gzip" />
+		<!-- <tar destfile="${WORKSPACE}/${execTools.tar.file.name}" basedir="${ci.script.file.path}" includes="exec-tools/SQLExecTest/**/*" compression="gzip" /> -->
 	</target>
 	
-	<target name="9.Clean-Last-Build-Reports" depends="8.Tar-Deploy-Package">
+	<target name="Clean-Last-Build-Reports" depends="Tar-Deploy-Package">
 		<echo level="info" message="Step1 : Rebuild the folder &lt;${WORKSPACE}/reports&gt;." />
 		<delete dir="${WORKSPACE}/reports" failonerror="false" />
 		<mkdir dir="${WORKSPACE}/reports" />
 	</target>
 
-	<target name="10.Deploy-Test-All" depends="9.Clean-Last-Build-Reports">
-		<if>
-			<equals arg1="${test-type-list}" arg2="basic" />
-			<then>
-				<property name="exclude_value" value="${test.environment}-[h3][g1][d3]-tp2.xml" />
-				<property name="environment_information" value="The build test environment is &lt;${test.environment}-[h3][g3][d3]-tp1&gt;,&lt;${test.environment}-standalone-tp1&gt;." />
-			</then>
-			<else>
-				<property name="exclude_value" value="" />
-				<property name="environment_information" value="The build test environment is &lt;${test.environment}-[h3][g1][d3]-tp2&gt;,&lt;${test.environment}-[h3][g3][d3]-tp1&gt;,&lt;${test.environment}-standalone-tp1&gt;." />
-			</else>
-		</if>
-		<foreach target="11.Deploy-And-Test-Case" param="deploy.case.fullname">
+	<target name="Deploy-Test-All" depends="Clean-Last-Build-Reports">
+		<foreach target="Deploy-And-Test-Case" param="deploy.case.fullname">
 			<path>
-				<fileset dir="${deploy.config.path}" includes="${test.environment}-${DEPLOY_WILDCARD}.xml" excludes="${exclude_value}" />
+				<fileset dir="${deploy.config.path}" includes="${test.environment}-${DEPLOY_WILDCARD}.xml" excludes="" />
 			</path>
 		</foreach>
 	</target>
 
-	<target name="11.Deploy-And-Test-Case" depends="">
-		<echo level="info" message="Step1 : Call the target &lt;12.Deploy-Software&gt; on script file &lt;${deploy.case.fullname}&gt; on &lt;${ci.script.file.path}&gt;,command:&lt;ant -f ${deploy.case.fullname} --target=12.Deploy-Software -Dinstall.package.fullname=${release.path}/${BUILD.INSTALL.FILENAME} -Ddeploy.file.fullname=${deploy.file.fullname} -Ddeploy.path=${WORKSPACE}/deploy&gt;." />
-		<ant antfile="${deploy.case.fullname}" dir="${ci.script.file.path}" target="12.Deploy-Software" inheritAll="true">
+	<target name="Deploy-And-Test-Case" depends="">
+		<echo level="info" message="Step1 : Call the target &lt;Deploy-Software&gt; on script file &lt;${deploy.case.fullname}&gt; on &lt;${ci.script.file.path}&gt;,command:&lt;ant -f ${deploy.case.fullname} --target=Deploy-Software -Dinstall.package.fullname=${release.path}/${BUILD.INSTALL.FILENAME} -Ddeploy.file.fullname=${deploy.file.fullname} -Ddeploy.path=${WORKSPACE}/deploy&gt;." />
+		<ant antfile="${deploy.case.fullname}" dir="${ci.script.file.path}" target="Deploy-Software" inheritAll="true">
 			<property name="install.package.fullname" value="${release.path}/${BUILD.INSTALL.FILENAME}" />
 			<property name="deploy.file.fullname" value="${WORKSPACE}/${deploy.tar.file.name}" />
 		</ant>
@@ -81,6 +71,7 @@
 
 					<property name="test-type-list" value="${test-type-list}" />
 					<property name="OS_NAME" value="${OS_NAME}" />
+					<property name="execTools.file.fullname" value="${execTools.file.fullname}" />
 				</ant>
 			</then>
 		</if>

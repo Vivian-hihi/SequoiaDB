@@ -12,7 +12,7 @@
 		build-driver-test.xml
 -->
 
-<project default="7.Build-Testcases">
+<project default="Build-Sdbtasks-Jar">
 	<property file="${SCRIPT_DIR}/ci.test.properties" />
 	<property name="deploy_dir" value="${WORKSPACE}/deploy" />
 	<property name="testcases_dir" value="${WORKSPACE}/sequoiadb/testcases/hlt" />
@@ -23,20 +23,45 @@
 		</classpath>
 	</taskdef>
 
-	<target name="4.Clean-Last-Deploy" depends="">
+	<target name="Clean-Last-Deploy" depends="">
 		<echo level="info" message="Step1 : Rebuild the folder &lt;${deploy_dir}&gt;." />
 		<delete dir="${deploy_dir}" failonerror="false" />
 	</target>
 
-	<target name="5.Build-Sdbtasks-Jar" depends="4.Clean-Last-Deploy" >
+	<target name="Build-Sdbtasks-Jar" depends="Clean-Last-Deploy" >
 		<ant antfile="${SCRIPT_DIR}/ant-sdbtask/build.xml">
 			<property name="WORKSPACE" value="${WORKSPACE}" />
 			<property name="sdbtask_path" value="${SCRIPT_DIR}/ant-sdbtask" />
 			<property name="deploy_dir" value="${deploy_dir}" />
 		</ant>
+		<if>
+			<equals arg1="${isSQLTest}" arg2="true" />
+			<then>
+				<antcall target="Build-SQL-Testcases" inheritAll="true" />
+			</then>
+			<else>
+				<antcall target="Build-Testcases" inheritAll="true" />
+			</else>
+		</if>
 	</target>
 
-	<target name="6.Build-Driver-Testcases" depends="5.Build-Sdbtasks-Jar">
+	<target name="Build-SQL-Testcases" depends="">
+		<mkdir dir="${deploy_dir}/sql/basic_testcases" />
+		<mkdir dir="${deploy_dir}/sql/sequoiadb_foreign" />
+
+		<copy todir="${deploy_dir}/sql/basic_testcases">
+			<fileset dir="${testcases_dir}/basic_testcases" includes="**/*" />
+		</copy>
+		<copy todir="${deploy_dir}/sql/sequoiadb_foreign">
+			<fileset dir="${testcases_dir}/sequoiadb_foreign" includes="**/*" />
+		</copy>
+		<copy file="${SCRIPT_DIR}/ci.test.properties" todir="${deploy_dir}" />
+		<copy todir="${deploy_dir}">
+			<fileset dir="${SCRIPT_DIR}/exec-testcases" includes="exec*.xml" />
+		</copy>
+	</target>
+
+	<target name="Build-Driver-Testcases" depends="">
 		<ant antfile="${SCRIPT_DIR}/build-file/build-driver-test.xml">
 			<property name="SCRIPT_DIR" value="${SCRIPT_DIR}" />
 			<property name="testcases_dir" value="${driver_testcases_dir}" />
@@ -46,7 +71,7 @@
 		</ant>
 	</target>
 
-	<target name="7.Build-Testcases" depends="6.Build-Driver-Testcases">
+	<target name="Build-Testcases" depends="Build-Driver-Testcases">
 		<echo level="info" message="Step1 : Begin to built folders &lt;${deploy_dir}/hlt/ant_testcases&gt;,&lt;${deploy_dir}/hlt/js_testcases&gt;,&lt;${deploy_dir}/hlt/basic_testcases&gt;." />
 		<mkdir dir="${deploy_dir}/hlt/ant_testcases" />
 		<mkdir dir="${deploy_dir}/hlt/js_testcases" />

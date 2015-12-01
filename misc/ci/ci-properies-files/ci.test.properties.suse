@@ -25,12 +25,17 @@ all.spare.port.start=26000
 all.spare.port.stop=29000
 
 jenkins_master=suse-test1
-test_machine_no1=suse-test2
-test_machine_no2=suse-test3
-test_machine_no3=suse-test4
-test_machine_no4=suse-ci001
-test_machine_no5=suse-ci002
-test_machine_no6=suse-ci003
+trunk_machine_no1=suse-test2
+trunk_machine_no2=suse-test3
+trunk_machine_no3=suse-test4
+branch_machine_no1=suse-ci001
+branch_machine_no2=suse-ci002
+branch_machine_no3=suse-ci003
+
+trunk_machine=suse-test4,suse-test3,suse-test2
+trunk_machine_control=suse-test2
+branch_machine=suse-ci003,suse-ci002,suse-ci001
+branch_machine_control=suse-ci001
 
 js_list1=collectionAlter
 js_list2=dropCL,dropCS,index,insert,listCL,listCS,procedures,update,upsert,rest
@@ -43,3 +48,5 @@ testcase.path=/tmp/sequoiadb_test/deploy/hlt
 import.file.name=basic-testcases-time.json
 
 deploy.tar.file.name=deploy.tar.gz
+
+pg_tar_hostname=ubuntu-hs01
