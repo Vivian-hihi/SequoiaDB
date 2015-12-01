@@ -231,7 +231,7 @@
 					<then>
 						<mkdir dir="${test.log.path}" />
 
-						<for list="${machineList}" param="hostname" parallel="true">
+						<for list="${machineList}" param="hostname">
 							<sequential>
 								<sdbCopyAndTar fileHostName="@{hostname}" saveHostName="${host.NAME}" diaglogPath="${install.path}/sequoiadb/database" savePath="${test.log.path}" />
 							</sequential>
