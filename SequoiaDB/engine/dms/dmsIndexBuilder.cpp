@@ -139,8 +139,19 @@ namespace engine
       _unique = _indexCB->unique() ;
       _dropDups = _indexCB->dropDups() ;
 
-      // start rebuilding
+      /// start rebuilding
       _currentExtentID = _mbContext->mb()->_firstExtentID ;
+      if ( DMS_INVALID_EXTENT == _currentExtentID )
+      {
+         /// when the collection is empty, we complete the index creating
+         /// fast( when unlock the context and scan the data, because the 
+         /// scanExtLID always is -1, so when scan finished, the new instor
+         /// will not insert to the index )
+         _indexCB->setFlag ( IXM_INDEX_FLAG_NORMAL ) ;
+         _indexCB->scanExtLID ( DMS_INVALID_EXTENT ) ;
+         rc = SDB_DMS_EOC ;
+         goto error ;
+      }
 
    done:
       _mbContext->mbUnlock() ;
@@ -173,7 +184,13 @@ namespace engine
       INT32 rc = SDB_OK ;
 
       rc = _init() ;
-      if ( SDB_OK != rc )
+      if ( SDB_DMS_EOC == rc )
+      {
+         /// no data, has already finished
+         rc = SDB_OK ;
+         goto done ;
+      }
+      else if ( SDB_OK != rc )
       {
          goto init_error ;
       }
