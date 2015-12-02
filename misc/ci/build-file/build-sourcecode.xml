@@ -59,7 +59,7 @@
 			</else>
 		</if>
 
-		<echo message="exec scons ${compile.arg.line}${enterprise.line} --all -j 4" />
+		<echo message="exec scons ${compile.arg.line}${enterprise.line} --all -j 2" />
 		<exec executable="scons" dir="${WORKSPACE}/sequoiadb" failonerror="true">
 			<arg line="${compile.arg.line}${enterprise.line} --all -j 4" />
 		</exec>
