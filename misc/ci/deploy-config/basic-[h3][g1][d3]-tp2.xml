@@ -15,7 +15,6 @@
 <project default="H3-G1-D3-P2">
 	<property name="properties.dir" value="${basedir}/../ci.test.properties" />
 	<property file="${properties.dir}" />
-	<property name="isTrunk" value="true" />
 	<if>
 	   	<equals arg1="${isTrunk}" arg2="true" />
 		<then>

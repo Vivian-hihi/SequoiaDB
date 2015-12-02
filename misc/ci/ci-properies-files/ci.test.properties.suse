@@ -1,4 +1,4 @@
-STAF.PATH=/usr/local/staf
+#STAF.PATH=/usr/local/staf
 
 install.path=/opt
 install.user=sdbadmin
@@ -11,10 +11,13 @@ test.machine.deploy.path=/tmp/sequoiadb_test
 test.machine.software.path=/tmp/sequoiadb_tools
 
 save.testLog.hostname=bl465-4
-save.testLog.dir=/opt/apache-tomcat-6.0.37/webapps/ROOT
-copy_tar=/test_tar
 deploy_tar_hostname=bl465-4
-copy.log.path=/test_log
+save.testLog.dir=/opt/apache-tomcat-6.0.37/webapps/ROOT
+#copy_tar=/test_tar
+#copy.log.path=/test_log
+
+trunkTarPath=/test_tar
+branchTarPath=/opt/test_tar
 
 coord.service.port=11810
 cata.service.port=11800
@@ -25,13 +28,6 @@ all.spare.port.start=26000
 all.spare.port.stop=29000
 
 jenkins_master=suse-test1
-trunk_machine_no1=suse-test2
-trunk_machine_no2=suse-test3
-trunk_machine_no3=suse-test4
-branch_machine_no1=suse-ci001
-branch_machine_no2=suse-ci002
-branch_machine_no3=suse-ci003
-
 trunk_machine=suse-test4,suse-test3,suse-test2
 trunk_machine_control=suse-test2
 branch_machine=suse-ci003,suse-ci002,suse-ci001
@@ -42,7 +38,7 @@ js_list2=dropCL,dropCS,dropIndex,insert,listCL,listCS,operators,procedures,aggre
 js_list3=query,split,transaction
 
 testcase.path=/tmp/sequoiadb_test/deploy/hlt
-import.file.name=basic-testcases-time.json
+#import.file.name=basic-testcases-time.json
 
 deploy.tar.file.name=deploy.tar.gz
 

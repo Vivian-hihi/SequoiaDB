@@ -94,5 +94,8 @@
 		<copy todir="${deploy_dir}">
 			<fileset dir="${SCRIPT_DIR}/exec-testcases" includes="exec*.xml" />
 		</copy>
+		<copy todir="${deploy_dir}">
+			<fileset dir="${SCRIPT_DIR}/exec-conf" includes="*.xml" />
+		</copy>
 	</target>
 </project>

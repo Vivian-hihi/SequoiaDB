@@ -22,6 +22,16 @@
 			<pathelement location="${SCRIPT_DIR}/exec-tools/ant-sdbtasks.jar" />
 		</classpath>
 	</taskdef>
+	<property name="isTrunk" value="true" />
+	<if>
+	   	<equals arg1="${isTrunk}" arg2="true" />
+		<then>
+		    <property name="copy_tar" value="${trunkTarPath}" />
+		</then>
+		<else>
+		    <property name="copy_tar" value="${branchTarPath}" />
+		</else>
+	</if>
 
 	<target name="Check-Version" depends="">
 		<echo level="info" message="Step1 : Delete the file &lt;${build_dir}/build.version.local&gt;." />

@@ -22,6 +22,16 @@
 	<property file="${ci.script.file.path}/ci.test.properties" />
 	<property name="deploy.config.path" value="${ci.script.file.path}/deploy-config" />
 	<property name="release.path" value="${WORKSPACE}/release" />
+	<property name="isTrunk" value="true" />
+	<if>
+	   	<equals arg1="${isTrunk}" arg2="true" />
+		<then>
+		    <property name="test.reports.path" value="${WORKSPACE}/reportsTrunk" />
+		</then>
+		<else>
+		    <property name="test.reports.path" value="${WORKSPACE}/reportsBranch" />
+		</else>
+	</if>
 	<property file="${release.path}/build.version" />
 	<taskdef resource="com/sequoiadb/ant/ant-sdbtasks.xml">
 		<classpath>
@@ -37,9 +47,9 @@
 	</target>
 	
 	<target name="Clean-Last-Build-Reports" depends="Tar-Deploy-Package">
-		<echo level="info" message="Step1 : Rebuild the folder &lt;${WORKSPACE}/reports&gt;." />
-		<delete dir="${WORKSPACE}/reports" failonerror="false" />
-		<mkdir dir="${WORKSPACE}/reports" />
+		<echo level="info" message="Step1 : Rebuild the folder &lt;${test.reports.path}&gt;." />
+		<delete dir="${test.reports.path}" failonerror="false" />
+		<mkdir dir="${test.reports.path}" />
 	</target>
 
 	<target name="Deploy-Test-All" depends="Clean-Last-Build-Reports">
@@ -55,12 +65,13 @@
 		<ant antfile="${deploy.case.fullname}" dir="${ci.script.file.path}" target="Deploy-Software" inheritAll="true">
 			<property name="install.package.fullname" value="${release.path}/${BUILD.INSTALL.FILENAME}" />
 			<property name="deploy.file.fullname" value="${WORKSPACE}/${deploy.tar.file.name}" />
+			<property name="isTrunk" value="${isTrunk}" />
 		</ant>
 		<if>
 			<equals arg1="${TEST_CHOICE}" arg2="true" />
 			<then>
 				<ant antfile="${deploy.case.fullname}" dir="${ci.script.file.path}" inheritAll="true">
-					<property name="test.reports.path" value="${WORKSPACE}/reports" />
+					<property name="test.reports.path" value="${test.reports.path}" />
 					<property name="deploy.case.fullname" value="${deploy.case.fullname}" />
 					<property name="WORKSPACE" value="${WORKSPACE}" />
 					<property name="test.environment" value="${test.environment}" />
@@ -72,6 +83,8 @@
 					<property name="test-type-list" value="${test-type-list}" />
 					<property name="OS_NAME" value="${OS_NAME}" />
 					<property name="execTools.file.fullname" value="${execTools.file.fullname}" />
+					<property name="isTrunk" value="${isTrunk}" />
+					<property name="BACKUP_LOG" value="${BACKUP_LOG}" />
 				</ant>
 			</then>
 		</if>
