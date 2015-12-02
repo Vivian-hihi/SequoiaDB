@@ -94,7 +94,7 @@
 							<confitem name="optimeout" value="60000" />
 						</node>
 					</datagroup>
-<!-- 					<datagroup name="group2">
+					<datagroup name="group2">
 						<node host="@{hostname}" baseport="22100" dbpath="${install.path}/sequoiadb/database/data/22100">
 							<confitem name="diaglevel" value="5" />
 							<confitem name="transactionon" value="true" />
@@ -113,7 +113,7 @@
 							<confitem name="fap" value="${fap.value}" />
 							<confitem name="optimeout" value="60000" />
 						</node>
-					</datagroup> -->
+					</datagroup>
 				</sdbdeploy>
 			</sequential>
 		</for>
@@ -148,7 +148,6 @@
 
 	<target name="initTestConf">
 		<delete file="testAllot.conf" failonerror="false" />
-<!-- 			<property name="machineList" value="m1,m2,m3" /> -->
 		<property name="num" value="1" />
 		<for list="${machineList}" param="machine" >
 			<sequential>
@@ -176,7 +175,6 @@
 
 	<target name="H3-G3-D3" depends="">
 		<hostinfo prefix="host" />
-		<!-- <property name="copy.test.log" value="true"/> -->
 		<property name="test.log" value="${test.environment}-${OS_NAME}${BUILD_NUMBER}-[H3][G3][D3]" />
 		<property name="test.log.path" value="${test.reports.path}/${test.log}" />
 
@@ -211,7 +209,6 @@
 			    </antcall>
 			</else>
 		</if>
-
 
 		<if>
 			<equals arg1="${BACKUP_LOG}" arg2="true" />

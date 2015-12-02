@@ -1,5 +1,3 @@
-STAF.PATH=/usr/local/staf
-
 install.path=/opt
 install.user=sdbadmin
 install.password=sdbadmin
@@ -11,10 +9,11 @@ test.machine.deploy.path=/tmp/sequoiadb_test
 test.machine.software.path=/tmp/sequoiadb_tools
 
 save.testLog.hostname=bl465-4
-save.testLog.dir=/opt/apache-tomcat-6.0.37/webapps/ROOT
-copy_tar=/test_tar
 deploy_tar_hostname=bl465-4
-copy.log.path=/test_log
+save.testLog.dir=/opt/apache-tomcat-6.0.37/webapps/ROOT
+
+trunkTarPath=/test_tar
+branchTarPath=/opt/test_tar
 
 coord.service.port=11810
 cata.service.port=11800
@@ -25,23 +24,12 @@ all.spare.port.start=26000
 all.spare.port.stop=29000
 
 jenkins_master=centos-ci001
-test_machine_no1=centos-ci002
-test_machine_no2=centos-ci003
-test_machine_no3=centos-ci004
-test_machine_no4=centos-ci005
-test_machine_no5=centos-ci006
-test_machine_no6=centos-ci007
-
 trunk_machine=centos-ci004,centos-ci003,centos-ci002
-trunk_machine_control=centos-ci002
+trunk_machine_control=centos-ci004
 branch_machine=centos-ci007,centos-ci006,centos-ci005
-branch_machine_control=centos-ci005
-
-js_list1=collectionAlter,domain,createIndex
-js_list2=dropCL,dropCS,dropIndex,insert,listCL,listCS,operators,procedures,aggregate,bakupRestore,countHint,createCL,createCS,cursor,delete,sql,subCL,syndate,update,upsert,rest
-js_list3=query,split,transaction
+branch_machine_control=centos-ci007
 
 testcase.path=/tmp/sequoiadb_test/deploy/hlt
-import.file.name=basic-testcases-time.json
-
 deploy.tar.file.name=deploy.tar.gz
+
+pg_tar_hostname=ubuntu-hs01

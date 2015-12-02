@@ -22,7 +22,6 @@
 	<property file="${ci.script.file.path}/ci.test.properties" />
 	<property name="deploy.config.path" value="${ci.script.file.path}/deploy-config" />
 	<property name="release.path" value="${WORKSPACE}/release" />
-<!-- 	<property name="isTrunk" value="true" /> -->
 	<property file="${release.path}/build.version" />
 	<taskdef resource="com/sequoiadb/ant/ant-sdbtasks.xml">
 		<classpath>

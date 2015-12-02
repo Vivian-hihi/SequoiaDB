@@ -37,7 +37,7 @@
 			<property name="install.package.fullname" value="${install.package.fullname}" />
 			<property name="deploy.host.name" value="${hostname}" />
 			<property name="is.standalone.mode" value="true" />
-			<property name="is.coord.master" value="true"/>
+			<property name="is.coord.master" value="false"/>
 			<property name="catalog.addrs" value="${catalog.addrs}" />
 		</ant>
     </target>
@@ -53,41 +53,8 @@
         </for>
 	</target>
 
-	<target name="Standalone" depends="">
-		<hostinfo prefix="host" />
-		<property name="copy.test.log" value="true"/>
-
-		<for list="${machineList}" param="hostname" parallel="true">
-			<sequential>
-				<ant antfile="deploy-test-in-host.xml" dir="." inheritAll="false">
-					<property name="deploy.file.fullname" value="${deploy.file.fullname}" />
-					<property name="deploy.host.name" value="@{hostname}" />
-				</ant>
-			</sequential>
-		</for>
-
-		<property name="test.log" value="${test.environment}-${OS_NAME}${BUILD_NUMBER}-Standalone" />
-		<property name="test.log.path" value="${test.reports.path}/${test.log}" />
-
-		<!-- <property name="test-type" value="js" />
-		<for list="${test-type}" param="Test-Type">
-			<sequential>
-				<ant antfile="${WORKSPACE}/sequoiadb/misc/ci/test-type.xml" dir="." inheritAll="false">
-					<property name="deploy.case.fullname" value="${deploy.case.fullname}" />
-					<property name="test.reports.path" value="${test.reports.path}" />
-					<property name="Test-Type" value="@{Test-Type}" />
-					<property name="parallel.flag" value="parallel" />
-					<property name="WORKSPACE" value="${WORKSPACE}" />
-					<property name="ci.script.file.path" value="${ci.script.file.path}" />
-					<property name="parallel.count" value="1" />
-					<property name="test.log" value="${test.log}" />
-					<property name="test-type-list" value="${test-type-list}" />
-					<property name="BUILD_NUMBER" value="${BUILD_NUMBER}" />
-				</ant>
-			</sequential>
-		</for> -->
-
-		<for list="driver-java" param="Test-Type">
+	<target name="execTest">
+		<for list="${TEST_TYPE}" param="Test-Type" parallel="${isParallel}">
 			<sequential>
 				<ant antfile="${WORKSPACE}/sequoiadb/misc/ci/test-type.xml" dir="." inheritAll="false">
 					<property name="test.host.NAME" value="${trunk_machine_control}" />
@@ -101,165 +68,102 @@
 					<property name="test.log" value="${test.log}" />
 					<property name="test-type-list" value="${test-type-list}" />
 					<property name="BUILD_NUMBER" value="${BUILD_NUMBER}" />
+
+					<property name="machineList" value="${machineList}" />
+				</ant>
+			</sequential>
+		</for>
+	</target>
+
+	<target name="initTest">
+		<basename property="assignLists" file="${assignList}" suffix=",tmp" />
+		<echo file="testAllot.conf" message="${testsuites}=${assignLists}&#10;" append="true" />
+	</target>
+
+	<target name="initTestConf">
+		<delete file="testAllot.conf" failonerror="false" />
+		<property name="num" value="1" />
+		<for list="${machineList}" param="machine" >
+			<sequential>
+				<replace file="${basedir}/exec-conf/basic-testcases-conf.xml" token="machine${num}" value="@{machine}" />
+				<var name="op" value="+" />
+				<math result="num" operand1="${num}" operation="${op}" operand2="1" datatype="int" />
+			</sequential>
+		</for>
+		<for list="${machineList}" param="hostName">
+			<sequential>
+				<var name="assignList" value="tmp" />
+				<xmlproperty file="${basedir}/exec-conf/basic-testcases-conf.xml" />
+				<for list="${shell.@{hostName}.testsuite}" param="testsuite">
+					<sequential>
+						<var name="assignList" value="@{testsuite},${assignList}" />
+					</sequential>
+				</for>
+				<antcall target="initTest" inheritAll="true" >
+					<param name="assignList" value="${assignList}" />
+					<param name="testsuites" value="@{hostName}" />
+				</antcall>
+			</sequential>
+		</for>
+	</target>
+
+	<target name="Standalone" depends="">
+		<hostinfo prefix="host" />
+		<property name="test.log" value="${test.environment}-${OS_NAME}${BUILD_NUMBER}-Standalone" />
+		<property name="test.log.path" value="${test.reports.path}/${test.log}" />
+
+		<for list="${machineList}" param="hostname" parallel="true">
+			<sequential>
+				<ant antfile="deploy-test-in-host.xml" dir="." inheritAll="false">
+					<property name="deploy.file.fullname" value="${deploy.file.fullname}" />
+					<property name="deploy.host.name" value="@{hostname}" />
 				</ant>
 			</sequential>
 		</for>
 
-		<!-- <if>
-		   	<equals arg1="${test-type-list}" arg2="js" />
+		<antcall target="initTestConf" inheritAll="true" />
+
+		<if>
+			<equals arg1="${TEST_TYPE}" arg2="*" />
 			<then>
-				<property name="test-driver-list-B" value="ant" />
-				<property name="test-driver-list-C" value="driver-java,driver-C,driver-CPP,driver-php,lob" />
-				<if>
-				   	<equals arg1="${os.arch}" arg2="amd64" />
-					<then>
-						<parallel>
-							<for list="driver-mongoc,lob" param="Test-Type">
-								<sequential>
-									<ant antfile="${WORKSPACE}/sequoiadb/misc/ci/test-type.xml" dir="." inheritAll="false">
-										<property name="test.host.NAME" value="${test_machine_no1}" />
-										<property name="deploy.case.fullname" value="${deploy.case.fullname}" />
-										<property name="test.reports.path" value="${test.reports.path}" />
-										<property name="Test-Type" value="@{Test-Type}" />
-										<property name="parallel.flag" value="parallel" />
-										<property name="WORKSPACE" value="${WORKSPACE}" />
-										<property name="ci.script.file.path" value="${ci.script.file.path}" />
-										<property name="parallel.count" value="1" />
-										<property name="test.log" value="${test.log}" />
-										<property name="test-type-list" value="${test-type-list}" />
-										<property name="BUILD_NUMBER" value="${BUILD_NUMBER}" />
-									</ant>
-								</sequential>
-							</for>
-							<for list="driver-java" param="Test-Type">
-								<sequential>
-									<ant antfile="${WORKSPACE}/sequoiadb/misc/ci/test-type.xml" dir="." inheritAll="false">
-										<property name="test.host.NAME" value="${test_machine_no2}" />
-										<property name="deploy.case.fullname" value="${deploy.case.fullname}" />
-										<property name="test.reports.path" value="${test.reports.path}" />
-										<property name="Test-Type" value="@{Test-Type}" />
-										<property name="parallel.flag" value="parallel" />
-										<property name="WORKSPACE" value="${WORKSPACE}" />
-										<property name="ci.script.file.path" value="${ci.script.file.path}" />
-										<property name="parallel.count" value="1" />
-										<property name="test.log" value="${test.log}" />
-										<property name="test-type-list" value="${test-type-list}" />
-										<property name="BUILD_NUMBER" value="${BUILD_NUMBER}" />
-									</ant>
-								</sequential>
-							</for>
-							<for list="driver-php,driver-C" param="Test-Type">
-								<sequential>
-									<ant antfile="${WORKSPACE}/sequoiadb/misc/ci/test-type.xml" dir="." inheritAll="false">
-										<property name="test.host.NAME" value="${test_machine_no3}" />
-										<property name="deploy.case.fullname" value="${deploy.case.fullname}" />
-										<property name="test.reports.path" value="${test.reports.path}" />
-										<property name="Test-Type" value="@{Test-Type}" />
-										<property name="parallel.flag" value="parallel" />
-										<property name="WORKSPACE" value="${WORKSPACE}" />
-										<property name="ci.script.file.path" value="${ci.script.file.path}" />
-										<property name="parallel.count" value="1" />
-										<property name="test.log" value="${test.log}" />
-										<property name="test-type-list" value="${test-type-list}" />
-										<property name="BUILD_NUMBER" value="${BUILD_NUMBER}" />
-									</ant>
-								</sequential>
-							</for>
-							<for list="driver-python,driver-CPP" param="Test-Type">
-								<sequential>
-									<ant antfile="${WORKSPACE}/sequoiadb/misc/ci/test-type.xml" dir="." inheritAll="false">
-										<property name="test.host.NAME" value="${test_machine_no4}" />
-										<property name="deploy.case.fullname" value="${deploy.case.fullname}" />
-										<property name="test.reports.path" value="${test.reports.path}" />
-										<property name="Test-Type" value="@{Test-Type}" />
-										<property name="parallel.flag" value="parallel" />
-										<property name="WORKSPACE" value="${WORKSPACE}" />
-										<property name="ci.script.file.path" value="${ci.script.file.path}" />
-										<property name="parallel.count" value="1" />
-										<property name="test.log" value="${test.log}" />
-										<property name="test-type-list" value="${test-type-list}" />
-										<property name="BUILD_NUMBER" value="${BUILD_NUMBER}" />
-									</ant>
-								</sequential>
-							</for>
-							<for list="ant" param="Test-Type">
-								<sequential>
-									<ant antfile="${WORKSPACE}/sequoiadb/misc/ci/test-type.xml" dir="." inheritAll="false">
-										<property name="test.host.NAME" value="${test_machine_no5}" />
-										<property name="deploy.case.fullname" value="${deploy.case.fullname}" />
-										<property name="test.reports.path" value="${test.reports.path}" />
-										<property name="Test-Type" value="@{Test-Type}" />
-										<property name="parallel.flag" value="parallel" />
-										<property name="WORKSPACE" value="${WORKSPACE}" />
-										<property name="ci.script.file.path" value="${ci.script.file.path}" />
-										<property name="parallel.count" value="1" />
-										<property name="test.log" value="${test.log}" />
-										<property name="test-type-list" value="${test-type-list}" />
-										<property name="BUILD_NUMBER" value="${BUILD_NUMBER}" />
-									</ant>
-								</sequential>
-							</for>
-						</parallel>
-					</then>
-					<else>
-						<parallel>
-							<for list="${test-driver-list-C}" param="Test-Type">
-								<sequential>
-									<ant antfile="${WORKSPACE}/sequoiadb/misc/ci/test-type.xml" dir="." inheritAll="false">
-										<property name="test.host.NAME" value="${test_machine_no2}" />
-										<property name="deploy.case.fullname" value="${deploy.case.fullname}" />
-										<property name="test.reports.path" value="${test.reports.path}" />
-										<property name="Test-Type" value="@{Test-Type}" />
-										<property name="parallel.flag" value="parallel" />
-										<property name="WORKSPACE" value="${WORKSPACE}" />
-										<property name="ci.script.file.path" value="${ci.script.file.path}" />
-										<property name="parallel.count" value="1" />
-										<property name="test.log" value="${test.log}" />
-										<property name="test-type-list" value="${test-type-list}" />
-										<property name="BUILD_NUMBER" value="${BUILD_NUMBER}" />
-									</ant>
-								</sequential>
-							</for>
-							<for list="${test-driver-list-B}" param="Test-Type">
-								<sequential>
-									<ant antfile="${WORKSPACE}/sequoiadb/misc/ci/test-type.xml" dir="." inheritAll="false">
-										<property name="test.host.NAME" value="${test_machine_no3}" />
-										<property name="deploy.case.fullname" value="${deploy.case.fullname}" />
-										<property name="test.reports.path" value="${test.reports.path}" />
-										<property name="Test-Type" value="@{Test-Type}" />
-										<property name="parallel.flag" value="parallel" />
-										<property name="WORKSPACE" value="${WORKSPACE}" />
-										<property name="ci.script.file.path" value="${ci.script.file.path}" />
-										<property name="parallel.count" value="1" />
-										<property name="test.log" value="${test.log}" />
-										<property name="test-type-list" value="${test-type-list}" />
-										<property name="BUILD_NUMBER" value="${BUILD_NUMBER}" />
-									</ant>
-								</sequential>
-							</for>
-						</parallel>
-					</else>
-				</if>
+			    <var name="TEST_TYPE" value="ant,driver-python,driver-php,driver-java,lob,driver-C,driver-CPP,driver-mongoc" />
+			    <antcall target="execTest" inheritAll="true">
+			    	<param name="TEST_TYPE" value="shell" />
+			    	<param name="isParallel" value="false" />
+			    </antcall>
+			    <antcall target="execTest" inheritAll="true">
+			    	<param name="TEST_TYPE" value="${TEST_TYPE}" />
+			    	<param name="isParallel" value="true" />
+			    </antcall>
 			</then>
-		</if> -->
-	
+			<else>
+				<antcall target="execTest" inheritAll="true">
+			    	<param name="TEST_TYPE" value="${TEST_TYPE}" />
+			    	<param name="isParallel" value="true" />
+			    </antcall>
+			</else>
+		</if>
+
+		<if>
+			<equals arg1="${BACKUP_LOG}" arg2="true" />
+			<then>
+				<antcall target="backUpLog" inheritAll="true" />
+			</then>
+		</if>
+	</target>
+
+	<target name="backUpLog">
 		<trycatch>
-			<try>
-				<if>
-					<equals arg1="${copy.test.log}" arg2="true" />
-					<then>
-						<mkdir dir="${test.log.path}" />
+			<try>	
+				<mkdir dir="${test.log.path}" />
+				<for list="${machineList}" param="hostname">
+					<sequential>
+						<sdbCopyAndTar fileHostName="@{hostname}" saveHostName="${host.NAME}" diaglogPath="${install.path}/sequoiadb/database" savePath="${test.log.path}" />
+					</sequential>
+				</for>
 
-						<for list="${machineList}" param="hostname">
-							<sequential>
-								<sdbCopyAndTar fileHostName="@{hostname}" saveHostName="${host.NAME}" diaglogPath="${install.path}/sequoiadb/database" savePath="${test.log.path}" />
-							</sequential>
-						</for>
-
-						<tar basedir="${test.reports.path}" destfile="${test.log.path}.tar.gz" compression="gzip" includes="**/*" />
-						<stafTools workType="copy" workHost="${host.NAME}" fileName="${test.log.path}.tar.gz"  toHost="${save.testLog.hostname}"  saveDir="${save.testLog.dir}" failonerror="true"/>						
-					</then>
-				</if>
+				<tar basedir="${test.reports.path}" destfile="${test.log.path}.tar.gz" compression="gzip" includes="**/*" />
+				<stafTools workType="copy" workHost="${host.NAME}" fileName="${test.log.path}.tar.gz"  toHost="${save.testLog.hostname}"  saveDir="${save.testLog.dir}" failonerror="true"/>								
 			</try>
 			<catch>
 				<echo message="Copy log for download code fail" />
@@ -268,7 +172,6 @@
 				<delete file="${test.log.path}.tar.gz" failonerror="false" />
 				<delete dir="${test.log.path}" failonerror="false"/>
 			</finally>
-		</trycatch>	
-
+		</trycatch>
 	</target>
 </project>

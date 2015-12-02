@@ -1,5 +1,3 @@
-#STAF.PATH=/usr/local/staf
-
 install.path=/opt
 install.user=sdbadmin
 install.password=sdbadmin
@@ -13,8 +11,6 @@ test.machine.software.path=/tmp/sequoiadb_tools
 save.testLog.hostname=bl465-4
 deploy_tar_hostname=bl465-4
 save.testLog.dir=/opt/apache-tomcat-6.0.37/webapps/ROOT
-#copy_tar=/test_tar
-#copy.log.path=/test_log
 
 trunkTarPath=/test_tar
 branchTarPath=/opt/test_tar
@@ -33,13 +29,7 @@ trunk_machine_control=suse-test4
 branch_machine=suse-ci003,suse-ci002,suse-ci001
 branch_machine_control=suse-ci003
 
-js_list1=collectionAlter,domain,createIndex
-js_list2=dropCL,dropCS,dropIndex,insert,listCL,listCS,operators,procedures,aggregate,bakupRestore,countHint,createCL,createCS,cursor,delete,sql,subCL,syndate,update,upsert,rest
-js_list3=query,split,transaction
-
 testcase.path=/tmp/sequoiadb_test/deploy/hlt
-#import.file.name=basic-testcases-time.json
-
 deploy.tar.file.name=deploy.tar.gz
 
 pg_tar_hostname=ubuntu-hs01
