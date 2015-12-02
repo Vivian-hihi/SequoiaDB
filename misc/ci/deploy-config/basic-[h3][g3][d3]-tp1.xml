@@ -143,7 +143,7 @@
 				</for>
 				<antcall target="initTest" inheritAll="true" >
 					<param name="assignList" value="${assignList}" />
-					<param name="testsuites" value="@{testsuite}" />
+					<param name="testsuites" value="@{hostName}" />
 				</antcall>
 			</sequential>
 		</for>
