@@ -46,7 +46,7 @@
 		</if>
 		<echo level="info" message="Step3 : Delete the file &lt;${build_dir}/build.version&gt;." />
 		<delete file="${build_dir}/build.version" failonerror="false" />
-<!-- 		<mkdir dir="${build_dir}" /> -->
+		<mkdir dir="${build_dir}" />
 		<echo level="info" message="Step4 : Rebuild the file &lt;${SCRIPT_DIR}/ci.test.properties&gt;." />
 		<delete file="${SCRIPT_DIR}/ci.test.properties" failonerror="false" />
 		<copy file="${SCRIPT_DIR}/ci-properies-files/ci.test.properties.${OS_NAME}" tofile="${SCRIPT_DIR}/ci.test.properties" failonerror="false" />
