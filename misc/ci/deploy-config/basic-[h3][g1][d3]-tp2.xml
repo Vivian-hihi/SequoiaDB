@@ -37,7 +37,7 @@
 			<property name="install.package.fullname" value="${install.package.fullname}" />
 			<property name="deploy.host.name" value="${hostname}" />
 			<property name="is.standalone.mode" value="false" />
-			<property name="is.coord.master" value="true"/>
+			<property name="is.coord.master" value="${is.coord.master}"/>
 			<property name="catalog.addrs" value="${catalog.addrs}" />
 		</ant>
     </target>
@@ -53,12 +53,15 @@
 			</else>
 		</if>
 
+		<property name="is.coord.master" value="true" />
 		<for list="${machineList}" param="hostname">
             <sequential>
                 <antcall target="deploySoftwareInHost" inheritAll="true" >
                     <param name="hostname" value="@{hostname}" />
                     <param name="machineList" value="${machineList}" />
+                    <param name="is.coord.master" value="${is.coord.master}" />
                 </antcall>
+                <var name="is.coord.master" value="false" />
             </sequential>
         </for>
 
