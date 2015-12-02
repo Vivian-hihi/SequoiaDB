@@ -16,10 +16,6 @@
 			<case value="shell">
 				<for list="${machineList}" param="hostname" parallel="true">
 					<sequential>
-						<ant antfile="deploy-test-in-host.xml" dir="." inheritAll="false">
-							<property name="deploy.file.fullname" value="${deploy.file.fullname}" />
-							<property name="deploy.host.name" value="@{hostname}" />
-						</ant>
 						<sdbtest host="@{hostname}" testscript="${test.machine.deploy.path}/deploy/exec-basic-testcases.xml" remotereports="${testcase.path}/js_testcases/reports" masterreports="${test.reports.path}" >
 							<param name="basic.testcase.path" value="${testcase.path}/js_testcases" />
 							<param name="excludes.dir.patterns" value="vote" />
