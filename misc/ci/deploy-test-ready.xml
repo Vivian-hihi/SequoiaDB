@@ -22,16 +22,6 @@
 			<pathelement location="${SCRIPT_DIR}/exec-tools/ant-sdbtasks.jar" />
 		</classpath>
 	</taskdef>
-	<property name="isTrunk" value="true" />
-	<if>
-	   	<equals arg1="${isTrunk}" arg2="true" />
-		<then>
-		    <property name="copy_tar" value="${trunkTarPath}" />
-		</then>
-		<else>
-		    <property name="copy_tar" value="${branchTarPath}" />
-		</else>
-	</if>
 
 	<target name="Check-Version" depends="">
 		<echo level="info" message="Step1 : Delete the file &lt;${build_dir}/build.version.local&gt;." />
@@ -61,6 +51,15 @@
 		<delete file="${SCRIPT_DIR}/ci.test.properties" failonerror="false" />
 		<copy file="${SCRIPT_DIR}/ci-properies-files/ci.test.properties.${OS_NAME}" tofile="${SCRIPT_DIR}/ci.test.properties" failonerror="false" />
 		<property file="${SCRIPT_DIR}/ci.test.properties" />
+		<if>
+		   	<equals arg1="${isTrunk}" arg2="true" />
+			<then>
+			    <property name="copy_tar" value="${trunkTarPath}" />
+			</then>
+			<else>
+			    <property name="copy_tar" value="${branchTarPath}" />
+			</else>
+		</if>
 		<echo level="info" message="Step5 : Copy the file &lt;${copy_tar}/build.version&gt; from &lt;${deploy_tar_hostname}&gt;,command:staf &lt;${deploy_tar_hostname}&gt; FS COPY FILE &lt;${copy_tar}/build.version&gt; TODIRECTORY &lt;${build_dir}&gt; TOMACHINE &lt;${jenkins_master}&gt;." />
 		<stafTools workType="copy" workHost="${deploy_tar_hostname}" fileName="${copy_tar}/build.version" saveDir="${build_dir}" toHost="${jenkins_master}" failonerror="true"/>
     	<property file="${build_dir}/build.version" />
