@@ -23,6 +23,12 @@
 	<property name="deploy.config.path" value="${ci.script.file.path}/deploy-config" />
 	<property name="release.path" value="${WORKSPACE}/release" />
 <!-- 	<property name="isTrunk" value="true" /> -->
+	<property file="${release.path}/build.version" />
+	<taskdef resource="com/sequoiadb/ant/ant-sdbtasks.xml">
+		<classpath>
+			<fileset dir="${WORKSPACE}/deploy/ant-sdbtasks" includes="ant-sdbtasks.jar" />
+		</classpath>
+	</taskdef>
 	<if>
 	   	<equals arg1="${isTrunk}" arg2="true" />
 		<then>
@@ -32,12 +38,6 @@
 		    <property name="test.reports.path" value="${WORKSPACE}/reportsBranch" />
 		</else>
 	</if>
-	<property file="${release.path}/build.version" />
-	<taskdef resource="com/sequoiadb/ant/ant-sdbtasks.xml">
-		<classpath>
-			<fileset dir="${WORKSPACE}/deploy/ant-sdbtasks" includes="ant-sdbtasks.jar" />
-		</classpath>
-	</taskdef>
 	
 	<target name="Tar-Deploy-Package" depends="" >
 		<property name="execTools.tar.file.name" value="execTools.tar.gz" />
