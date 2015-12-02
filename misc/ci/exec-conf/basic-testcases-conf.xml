@@ -1,0 +1,14 @@
+<shell>
+	<machine1>
+		<testsuite>dropCL</testsuite>
+		<testsuite>dropCS</testsuite>
+		<testsuite>dropIndex</testsuite>
+	</machine1>
+	<machine2>	
+		<testsuite>insert</testsuite>
+		<testsuite>listCL</testsuite>
+	</machine2>
+	<machine3>
+		<testsuite>listCS</testsuite>
+	</machine3>
+</shell>
