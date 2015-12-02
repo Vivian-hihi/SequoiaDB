@@ -11,7 +11,7 @@
 <project name="Test-Type" default="Test-Type">
 	<target name="Test-Type" depends="">
 		<property file="${basedir}/ci.test.properties" />
-		<property file="${basedir}/deploy-config/testAllot.conf" />
+		<property file="${basedir}/testAllot.conf" />
 		<switch value="${Test-Type}">
 			<case value="shell">
 				<for list="${machineList}" param="hostname" parallel="true">

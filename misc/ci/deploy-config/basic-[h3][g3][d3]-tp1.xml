@@ -118,7 +118,7 @@
 
 	<target name="initTest">
 		<basename property="assignLists" file="${assignList}" suffix=",tmp" />
-		<echo file="testAllot.conf" message="${testsuite}=${assignLists}&#10;" append="true" />
+		<echo file="testAllot.conf" message="${testsuites}=${assignLists}&#10;" append="true" />
 	</target>
 
 	<target name="initTestConf">
@@ -143,7 +143,7 @@
 				</for>
 				<antcall target="initTest" inheritAll="true" >
 					<param name="assignList" value="${assignList}" />
-					<param name="testsuite" value="@{testsuite}" />
+					<param name="testsuites" value="@{testsuite}" />
 				</antcall>
 			</sequential>
 		</for>
