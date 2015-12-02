@@ -1,6 +1,6 @@
 ##获取驱动开发包##
 
-从 [SequoiaDB](http://www.sequoiadb.com) 下载对应操作系统版本的 SequoiaDB 驱动开发包；解压驱动开发包，从 driver/lib/phpliblibsdbphp-x.x.x.so（x.x.x 为版本号，请根据 PHP 版本选择，前两位需相同版本，第三位版本要小于或等于 PHP 的版本）文件。
+从 [SequoiaDB](http://www.sequoiadb.com) 下载对应操作系统版本的 SequoiaDB 驱动开发包；解压驱动开发包，从 driver/lib/phplib/libsdbphp-x.x.x.so（x.x.x 为版本号，请根据 PHP 版本选择，前两位需相同版本，第三位版本要小于或等于 PHP 的版本）文件。
 
 ##数据操作##
 
