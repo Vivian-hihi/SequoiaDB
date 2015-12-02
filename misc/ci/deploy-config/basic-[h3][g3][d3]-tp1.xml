@@ -213,7 +213,7 @@
 		<if>
 			<equals arg1="${BACKUP_LOG}" arg2="true" />
 			<then>
-				<antcall target="backUpLog" inheritAll="true">
+				<antcall target="backUpLog" inheritAll="true" />
 			</then>
 		</if>
 	</target>
