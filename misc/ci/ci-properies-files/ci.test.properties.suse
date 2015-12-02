@@ -29,9 +29,9 @@ all.spare.port.stop=29000
 
 jenkins_master=suse-test1
 trunk_machine=suse-test4,suse-test3,suse-test2
-trunk_machine_control=suse-test2
+trunk_machine_control=suse-test4
 branch_machine=suse-ci003,suse-ci002,suse-ci001
-branch_machine_control=suse-ci001
+branch_machine_control=suse-ci003
 
 js_list1=collectionAlter,domain,createIndex
 js_list2=dropCL,dropCS,dropIndex,insert,listCL,listCS,operators,procedures,aggregate,bakupRestore,countHint,createCL,createCS,cursor,delete,sql,subCL,syndate,update,upsert,rest
