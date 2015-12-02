@@ -91,7 +91,7 @@
 							<confitem name="optimeout" value="60000" />
 						</node>
 					</datagroup>
-					<datagroup name="group2">
+<!-- 					<datagroup name="group2">
 						<node host="@{hostname}" baseport="22100" dbpath="${install.path}/sequoiadb/database/data/22100">
 							<confitem name="diaglevel" value="5" />
 							<confitem name="transactionon" value="true" />
@@ -110,7 +110,7 @@
 							<confitem name="fap" value="${fap.value}" />
 							<confitem name="optimeout" value="60000" />
 						</node>
-					</datagroup>
+					</datagroup> -->
 				</sdbdeploy>
 			</sequential>
 		</for>
@@ -127,7 +127,7 @@
 		<property name="num" value="1" />
 		<for list="${machineList}" param="machine" >
 			<sequential>
-				<replace file="${test.machine.deploy.path}/deploy/basic-testcases-conf.xml" token="machine${num}" value="@{machine}" />
+				<replace file="${basedir}/../exec-conf/basic-testcases-conf.xml" token="machine${num}" value="@{machine}" />
 				<var name="op" value="+" />
 				<math result="num" operand1="${num}" operation="${op}" operand2="1" datatype="int" />
 			</sequential>
@@ -135,7 +135,7 @@
 		<for list="${machineList}" param="hostName">
 			<sequential>
 				<var name="assignList" value="tmp" />
-				<xmlproperty file="${test.machine.deploy.path}/deploy/basic-testcases-conf.xml" />
+				<xmlproperty file="${basedir}/../exec-conf/basic-testcases-conf.xml" />
 				<for list="${shell.@{hostName}.testsuite}" param="testsuite">
 					<sequential>
 						<var name="assignList" value="@{testsuite},${assignList}" />
@@ -187,7 +187,7 @@
 					<property name="test.log" value="${test.log}" />
 					<property name="test-type-list" value="${test-type-list}" />
 					<property name="BUILD_NUMBER" value="${BUILD_NUMBER}" />
-					
+
 					<property name="machineList" value="${machineList}" />
 				</ant>
 			</sequential>
