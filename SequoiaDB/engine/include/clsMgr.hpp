@@ -198,6 +198,9 @@ namespace engine
          virtual void   attachCB( _pmdEDUCB *cb ) ;
          virtual void   detachCB( _pmdEDUCB *cb ) ;
 
+         virtual INT32 getMaxProcMsgTime() const { return 2 ; }
+         virtual INT32 getMaxProcEventTime() const { return 2 ; }
+
          void     ntyPrimaryChange( BOOLEAN primary,
                                     SDB_EVENT_OCCUR_TYPE type ) ;
 

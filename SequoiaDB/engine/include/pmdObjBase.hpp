@@ -110,6 +110,10 @@ namespace engine
          virtual void   attachCB( _pmdEDUCB *cb ) {}
          virtual void   detachCB( _pmdEDUCB *cb ) {}
 
+         virtual const CHAR *name () const { return "_pmdObjBase"; }
+         virtual INT32 getMaxProcMsgTime() const { return -1 ; }
+         virtual INT32 getMaxProcEventTime() const { return -1 ; }
+
       public:
          OSS_INLINE BOOLEAN isProcess () const { return _bProcess ; }
          OSS_INLINE INT32   dispatch ( pmdEDUEvent *event,
@@ -155,7 +159,6 @@ namespace engine
          OSS_INLINE static const _msgMap* _getBaseMsgMap() { return NULL; }
 
          virtual const _msgMap* getMsgMap() const { return getThisMsgMap(); }
-         virtual const CHAR *name () const { return "_pmdObjBase"; }
 
       private:
          BOOLEAN           _bProcess ;

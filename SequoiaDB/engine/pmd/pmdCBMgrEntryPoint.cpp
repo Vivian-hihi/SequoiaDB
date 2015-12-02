@@ -48,6 +48,11 @@ namespace engine
       _pmdObjBase *pObj = ( _pmdObjBase* )pData ;
       pmdEDUMgr *pEDUMgr = cb->getEDUMgr() ;
       pmdEDUEvent eventData;
+      INT32 timeSpan = 0 ;
+      INT32 maxMsgTime = pObj->getMaxProcMsgTime() ;
+      INT32 maxEventTime = pObj->getMaxProcEventTime() ;
+      INT32 *pMsgTimeSpan = maxMsgTime >= 0 ? &timeSpan : NULL ;
+      INT32 *pEventTimeSpan = maxEventTime >= 0 ? &timeSpan : NULL ;
 
       pObj->attachCB( cb ) ;
 
@@ -79,11 +84,27 @@ namespace engine
             {
                //restore handle
                pObj->dispatchMsg( (NET_HANDLE)eventData._userData,
-                                  (MsgHeader*)(eventData._Data) ) ;
+                                  (MsgHeader*)(eventData._Data),
+                                  pMsgTimeSpan ) ;
+               if ( pMsgTimeSpan && timeSpan > maxMsgTime )
+               {
+                  MsgHeader *pMsg = (MsgHeader*)(eventData._Data) ;
+                  PD_LOG( PDWARNING, "[%s] Process msg[opCode:[%d]%d, "
+                          "requestID: %lld, TID: %d, Len: %d] over %d seconds",
+                          pObj->name(), IS_REPLY_TYPE(pMsg->opCode),
+                          GET_REQUEST_TYPE(pMsg->opCode), pMsg->requestID,
+                          pMsg->TID, pMsg->messageLength, timeSpan ) ;
+               }
             }
             else
             {
-               pObj->dispatchEvent ( &eventData ) ;
+               pObj->dispatchEvent ( &eventData, pEventTimeSpan ) ;
+               if ( pEventTimeSpan && timeSpan > maxEventTime )
+               {
+                  PD_LOG( PDWARNING, "[%s] Process event[type:%d] over %d "
+                          "seconds", pObj->name(), eventData._eventType,
+                          timeSpan ) ;
+               }
             }
 
             //Relase memory
