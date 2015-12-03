@@ -19,9 +19,11 @@
 	   	<equals arg1="${isTrunk}" arg2="true" />
 		<then>
 		    <property name="machineList" value="${trunk_machine}" />
+		    <property name="machine_control" value="${trunk_machine_control}" />
 		</then>
 		<else>
 		    <property name="machineList" value="${branch_machine}" />
+		    <property name="machine_control" value="${branch_machine_control}" />
 		</else>
 	</if>
 
@@ -57,7 +59,7 @@
 		<for list="${TEST_TYPE}" param="Test-Type" parallel="${isParallel}">
 			<sequential>
 				<ant antfile="${WORKSPACE}/sequoiadb/misc/ci/test-type.xml" dir="." inheritAll="false">
-					<property name="test.host.NAME" value="${trunk_machine_control}" />
+					<property name="test.host.NAME" value="${machine_control}" />
 					<property name="deploy.case.fullname" value="${deploy.case.fullname}" />
 					<property name="test.reports.path" value="${test.reports.path}" />
 					<property name="Test-Type" value="@{Test-Type}" />

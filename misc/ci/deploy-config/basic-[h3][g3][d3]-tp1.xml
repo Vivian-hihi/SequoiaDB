@@ -19,9 +19,11 @@
 	   	<equals arg1="${isTrunk}" arg2="true" />
 		<then>
 		    <property name="machineList" value="${trunk_machine}" />
+		    <property name="machine_control" value="${trunk_machine_control}" />
 		</then>
 		<else>
 		    <property name="machineList" value="${branch_machine}" />
+		    <property name="machine_control" value="${branch_machine_control}" />
 		</else>
 	</if>
 
@@ -67,7 +69,7 @@
 
         <for list="${machineList}" param="hostname">
     		<sequential>
-		    	<sdbdeploy host="${trunk_machine_control}" coordport="${coord.service.port}">
+		    	<sdbdeploy host="${machine_control}" coordport="${coord.service.port}">
 		    		<catagroup name="cata1">
         				<node host="@{hostname}" baseport="${cata.service.port}" dbpath="${install.path}/sequoiadb/database/cata/${cata.service.port}">
 							<confitem name="diaglevel" value="5" />
@@ -83,7 +85,7 @@
 
 		<for list="${machineList}" param="hostname">
     		<sequential>
-				<sdbdeploy host="${trunk_machine_control}" coordport="${coord.service.port}">
+				<sdbdeploy host="${machine_control}" coordport="${coord.service.port}">
 					<datagroup name="group1">			
 						<node host="@{hostname}" baseport="21100" dbpath="${install.path}/sequoiadb/database/data/21100">
 							<confitem name="diaglevel" value="5" />
@@ -123,7 +125,7 @@
 		<for list="${TEST_TYPE}" param="Test-Type" parallel="${isParallel}">
 			<sequential>
 				<ant antfile="${WORKSPACE}/sequoiadb/misc/ci/test-type.xml" dir="." inheritAll="false">
-					<property name="test.host.NAME" value="${trunk_machine_control}" />
+					<property name="test.host.NAME" value="${machine_control}" />
 					<property name="deploy.case.fullname" value="${deploy.case.fullname}" />
 					<property name="test.reports.path" value="${test.reports.path}" />
 					<property name="Test-Type" value="@{Test-Type}" />
