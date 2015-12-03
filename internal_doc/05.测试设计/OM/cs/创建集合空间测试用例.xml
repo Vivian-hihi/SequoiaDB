@@ -1,0 +1,263 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<testcases xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+	<testcase name="创建合法集合空间_om.cs.006">
+		<preconditions>1、数据库环境运行正常
+2、登录OM首页，选择集群下的“业务”，进入“业务列表”界面，选择对应业务名进入“数据库操作”页面
+3、创建cs</preconditions>
+		<execution_type>1</execution_type>
+		<importance>3</importance>
+		<steps>
+			<step>
+				<step_number>1</step_number>
+				<actions>1.进入“数据库操作”页面，点击右侧操作栏中“创建集合空间”
+2、打开“创建集合空间”，设置参数如下：
+集合空间名：输入合法值
+数据页大小：选择默认值64K
+所属域：输入已存在域
+Lob数据页大小：选择默认值256K
+3、点击“确定”按钮
+4、在集合空间列表中点击该集合空间，查询该集合空间信息
+
+</actions>
+				<expectedresults>1、点击“确定”后，创建集合空间成功，界面返回到“数据库操作”主页面
+2、指定该集合空间查询信息和实际创建信息一致
+
+</expectedresults>
+				<execution_type>1</execution_type>
+			</step>
+		</steps>
+	</testcase>
+	<testcase name="创建集合空间名含特殊字符（.）集合空间_om.cs.007">
+		<preconditions>1、数据库环境运行正常
+2、登录OM首页，选择集群下的“业务”，进入“业务列表”界面，选择对应业务名进入“数据库操作”页面
+3、输入含特殊字符集合空间名，创建cs</preconditions>
+		<execution_type>1</execution_type>
+		<importance>2</importance>
+		<steps>
+			<step>
+				<step_number>1</step_number>
+				<actions>1.进入“数据库操作”页面，点击右侧操作栏中“创建集合空间”
+2、打开“创建集合空间”，设置参数如下：
+集合空间名：输入含特殊字符的非法值
+数据页大小：选择默认值64K
+所属域：输入已存在域
+Lob数据页大小：选择默认值256K
+
+</actions>
+				<expectedresults>1、点击“确定”后，创建集合空间失败，界面提示不能含有特殊字符
+</expectedresults>
+				<execution_type>1</execution_type>
+			</step>
+		</steps>
+	</testcase>
+	<testcase name="创建集合空间名含特殊字符（$）集合空间_om.cs.008">
+		<preconditions>1、数据库环境运行正常
+2、登录OM首页，选择集群下的“业务”，进入“业务列表”界面，选择对应业务名进入“数据库操作”页面
+3、输入含特殊字符集合空间名，创建cs</preconditions>
+		<execution_type>1</execution_type>
+		<importance>2</importance>
+		<steps>
+			<step>
+				<step_number>1</step_number>
+				<actions>1.进入“数据库操作”页面，点击右侧操作栏中“创建集合空间”
+2、打开“创建集合空间”，设置参数如下：
+集合空间名：输入含特殊字符的非法值
+数据页大小：选择默认值64K
+所属域：输入已存在域
+Lob数据页大小：选择默认值256K
+
+</actions>
+				<expectedresults>1、点击“确定”后，创建集合空间失败，界面提示不能含有特殊字符
+</expectedresults>
+				<execution_type>1</execution_type>
+			</step>
+		</steps>
+	</testcase>
+	<testcase name="创建集合空间名为空的集合空间_om.cs.009">
+		<preconditions>1、数据库环境运行正常
+2、登录OM首页，选择集群下的“业务”，进入“业务列表”界面，选择对应业务名进入“数据库操作”页面
+3、输入集合空间名，输入不存在的域名创建cs</preconditions>
+		<execution_type>1</execution_type>
+		<importance>2</importance>
+		<steps>
+			<step>
+				<step_number>1</step_number>
+				<actions>1.进入“数据库操作”页面，点击右侧操作栏中“创建集合空间”
+2、打开“创建集合空间”，设置参数如下：
+集合空间名：输入合法集合空间名
+数据页大小：选择默认值64K
+所属域：输入不存在域
+Lob数据页大小：选择默认值256K
+
+</actions>
+				<expectedresults>1、点击“确定”后，创建集合空间失败，界面提示集合空间名长度不能小于1
+</expectedresults>
+				<execution_type>1</execution_type>
+			</step>
+		</steps>
+	</testcase>
+	<testcase name="创建合法集合空间名域不存在的集合空间_om.cs.010">
+		<preconditions>1、数据库环境运行正常
+2、登录OM首页，选择集群下的“业务”，进入“业务列表”界面，选择对应业务名进入“数据库操作”页面
+3、不输入集合空间名，创建cs</preconditions>
+		<execution_type>1</execution_type>
+		<importance>2</importance>
+		<steps>
+			<step>
+				<step_number>1</step_number>
+				<actions>1.进入“数据库操作”页面，点击右侧操作栏中“创建集合空间”
+2、打开“创建集合空间”，设置参数如下：
+集合空间名：不输入集合空间名
+数据页大小：选择默认值64K
+所属域：输入已存在域
+Lob数据页大小：选择默认值256K
+
+</actions>
+				<expectedresults>1、点击“确定”后，创建集合空间失败，界面提示-214错误
+</expectedresults>
+				<execution_type>1</execution_type>
+			</step>
+		</steps>
+	</testcase>
+	<testcase name="创建集合空间名重复的集合空间_om.cs.011">
+		<preconditions>1、数据库环境运行正常
+2、登录OM首页，选择集群下的“业务”，进入“业务列表”界面，选择对应业务名进入“数据库操作”页面
+3、输入重复集合空间名，创建cs</preconditions>
+		<execution_type>1</execution_type>
+		<importance>2</importance>
+		<steps>
+			<step>
+				<step_number>1</step_number>
+				<actions>1.进入“数据库操作”页面，点击右侧操作栏中“创建集合空间”
+2、打开“创建集合空间”，设置参数如下：
+集合空间名：输入重复集合空间名
+数据页大小：选择默认值64K
+所属域：输入存在域
+Lob数据页大小：选择默认值256K
+
+</actions>
+				<expectedresults>1、点击“确定”后，创建集合空间失败，界面提示-33错误
+</expectedresults>
+				<execution_type>1</execution_type>
+			</step>
+		</steps>
+	</testcase>
+	<testcase name="“数据页大小”下拉框校验_om.cs.012">
+		<summary>1、本用例只关注下拉列表框界面测试</summary>
+		<preconditions>1、数据库环境运行正常
+2、登录OM首页，选择集群下的“业务”，进入“业务列表”界面，选择对应业务名进入“数据库操作”页面
+3、创建cs
+</preconditions>
+		<execution_type>1</execution_type>
+		<importance>2</importance>
+		<steps>
+			<step>
+				<step_number>1</step_number>
+				<actions>1.进入“数据库操作”页面，点击右侧操作栏中“创建集合空间”
+2、打开“创建集合空间”界面，在“数据页大小”下拉框选择分别选择不同值
+3、查看下拉框是否可选
+</actions>
+				<expectedresults>1、下拉框值可选</expectedresults>
+				<execution_type>1</execution_type>
+			</step>
+		</steps>
+	</testcase>
+	<testcase name="“Lob数据页大小”下拉框校验_om.cs.013">
+		<summary>1、本用例只关注下拉列表框界面测试</summary>
+		<preconditions>1、数据库环境运行正常
+2、登录OM首页，选择集群下的“业务”，进入“业务列表”界面，选择对应业务名进入“数据库操作”页面
+3、创建cs
+</preconditions>
+		<execution_type>1</execution_type>
+		<importance>2</importance>
+		<steps>
+			<step>
+				<step_number>1</step_number>
+				<actions>1.进入“数据库操作”页面，点击右侧操作栏中“创建集合空间”
+2、打开“创建集合空间”界面，在“Lob数据页大小”下拉框选择分别选择不同值
+3、查看下拉框是否可选
+</actions>
+				<expectedresults>1、下拉框值可选</expectedresults>
+				<execution_type>1</execution_type>
+			</step>
+		</steps>
+	</testcase>
+	<testcase name="创建索引界面规范性检查_om.cs.014">
+		<preconditions>1、数据库环境运行正常
+2、登录OM首页，选择集群下的“业务”，进入“业务列表”界面，选择对应业务名进入“数据库操作”页面
+3、创建cs、cl，
+</preconditions>
+		<execution_type>1</execution_type>
+		<importance>2</importance>
+		<steps>
+			<step>
+				<step_number>1</step_number>
+				<actions>1.进入“数据库操作”页面，点击右侧操作栏中“创建索引”
+2、打开“创建索引”界面，检查标题显示是否正确
+3、查看界面风格和全局风格是否统一；按钮、文本框布局是否合理
+</actions>
+				<expectedresults>1、查看标题描述和实际界面实现功能一致
+2、界面风格布局符合界面规范，和全局风格一致
+3、按钮、文本框等布局合理，易用性符合要求</expectedresults>
+				<execution_type>1</execution_type>
+			</step>
+		</steps>
+	</testcase>
+	<testcase name="浏览器兼容测试_om.cs.015">
+		<preconditions>1、数据库环境运行正常
+2、登录OM首页，选择集群下的“业务”，进入“业务列表”界面，选择对应业务名进入“数据库操作”页面
+3、创建cs</preconditions>
+		<execution_type>1</execution_type>
+		<importance>2</importance>
+		<steps>
+			<step>
+				<step_number>1</step_number>
+				<actions>1、分别在如下浏览器测试创建索引功能：IE7、IE8、IE9、Chrome、Firefox；在IE7上全面测试，其他浏览器验证基本功能是否可用
+</actions>
+				<expectedresults>1、在所有浏览器上基本功能正常</expectedresults>
+				<execution_type>1</execution_type>
+			</step>
+		</steps>
+	</testcase>
+	<testcase name="中英文界面测试_om.cs.016">
+		<execution_type>1</execution_type>
+		<importance>2</importance>
+		<steps>
+			<step>
+				<step_number>1</step_number>
+				<actions>1、分别验证中、英文界面（创建集合空间界面），在中文页面全面测试
+2、英文页面主要关注界面显示信息是否正确、无中文信息</actions>
+				<expectedresults>1、中文界面展示正确
+2、英文界面显示信息正确</expectedresults>
+				<execution_type>1</execution_type>
+			</step>
+		</steps>
+	</testcase>
+	<testcase name="单机模式下创建合法集合空间_om.cs.017">
+		<preconditions>1、数据库环境运行正常
+2、登录OM首页，选择集群下的“业务”，进入“业务列表”界面，选择对应业务名进入“数据库操作”页面
+3、创建cs</preconditions>
+		<execution_type>1</execution_type>
+		<importance>2</importance>
+		<steps>
+			<step>
+				<step_number>1</step_number>
+				<actions>1.进入“数据库操作”页面，点击右侧操作栏中“创建集合空间”
+2、打开“创建集合空间”，设置参数如下：
+集合空间名：输入合法值
+数据页大小：选择默认值64K
+所属域：输入已存在域
+Lob数据页大小：选择默认值256K
+3、点击“确定”按钮
+4、在集合空间列表中点击该集合空间，查询该集合空间信息
+
+</actions>
+				<expectedresults>1、点击“确定”后，创建集合空间成功，界面返回到“数据库操作”主页面
+2、指定该集合空间查询信息和实际创建信息一致
+
+</expectedresults>
+				<execution_type>1</execution_type>
+			</step>
+		</steps>
+	</testcase>
+</testcases>

@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<testcases xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+	<testcase name="指定集合空间名删除集合空间_om.cs.018">
+		<preconditions>1、数据库环境运行正常
+2、登录OM首页，选择集群下的“业务”，进入“业务列表”界面，选择对应业务名进入“数据库操作”页面
+3、删除cs</preconditions>
+		<execution_type>1</execution_type>
+		<importance>3</importance>
+		<steps>
+			<step>
+				<step_number>1</step_number>
+				<actions>1.进入“数据库操作”页面，点击右侧操作栏中“删除索引”
+2、打开“删除集合空间”界面，设置参数如下：
+集合空间名：选择对应cs
+3、点击“确定”按钮
+4、打开“数据库操作”界面查询该cs是否存在
+
+</actions>
+				<expectedresults>1、删除cs成功，界面返回到“数据库操作”主页面
+2、在信息界面查询该cs已不存在 
+</expectedresults>
+				<execution_type>1</execution_type>
+			</step>
+		</steps>
+	</testcase>
+	<testcase name="删除集合空间页面显示cs信息正确_om.cs.019">
+		<preconditions>1、数据库环境运行正常
+2、登录OM首页，选择集群下的“业务”，进入“业务列表”界面，选择对应业务名进入“数据库操作”页面
+3、删除cs</preconditions>
+		<execution_type>1</execution_type>
+		<importance>2</importance>
+		<steps>
+			<step>
+				<step_number>1</step_number>
+				<actions>1.进入“数据库操作”页面，点击右侧操作栏中“删除索引”
+2、打开“删除集合空间”界面，设置参数如下：
+集合空间名：选择对应cs
+
+
+</actions>
+				<expectedresults>1、查看对应cs信息是否正确
+</expectedresults>
+				<execution_type>1</execution_type>
+			</step>
+		</steps>
+	</testcase>
+	<testcase name="删除索引界面规范性检查_om.cs.020">
+		<preconditions>1、数据库环境运行正常
+2、登录OM首页，选择集群下的“业务”，进入“业务列表”界面，选择对应业务名进入“数据库操作”页面
+
+</preconditions>
+		<execution_type>1</execution_type>
+		<importance>2</importance>
+		<steps>
+			<step>
+				<step_number>1</step_number>
+				<actions>1.进入“数据库操作”页面，点击右侧操作栏中“数据切分”
+2、打开“删除集合空间”界面，检查标题显示是否正确
+3、查看界面风格和全局风格是否统一；按钮、文本框布局是否合理
+</actions>
+				<expectedresults>1、查看标题描述和实际界面实现功能一致
+2、界面风格布局符合界面规范，和全局风格一致
+3、按钮、文本框等布局合理，易用性符合要求</expectedresults>
+				<execution_type>1</execution_type>
+			</step>
+		</steps>
+	</testcase>
+</testcases>

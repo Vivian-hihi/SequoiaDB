@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<testcases xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+	<testcase name="搜索框填写内容存在校验_om.main.001">
+		<preconditions>1、数据库环境运行正常
+2、登录OM首页，选择集群下的“业务”，进入“业务列表”界面，选择对应业务名进入“数据库操作”页面
+3、在搜索框内填写已存在的cs信息</preconditions>
+		<execution_type>1</execution_type>
+		<importance>3</importance>
+		<steps>
+			<step>
+				<step_number>1</step_number>
+				<actions>1.进入“数据库操作”页面，在搜索框内填写已存在的cs信息
+2.查看是否会显示对应的内容
+
+
+</actions>
+				<expectedresults>1.进入“数据库操作”页面，在搜索框内填写已存在的cs信息
+2.显示对应的内容
+
+</expectedresults>
+				<execution_type>1</execution_type>
+			</step>
+		</steps>
+	</testcase>
+	<testcase name="搜索框填写内容不存在校验_om.main.002">
+		<preconditions>1、数据库环境运行正常
+2、登录OM首页，选择集群下的“业务”，进入“业务列表”界面，选择对应业务名进入“数据库操作”页面
+3、在搜索框内填写不存在的cs信息</preconditions>
+		<execution_type>1</execution_type>
+		<importance>2</importance>
+		<steps>
+			<step>
+				<step_number>1</step_number>
+				<actions>1.进入“数据库操作”页面，在搜索框内填写不存在的cs信息
+2.查看是否会显示不存在提示
+
+
+</actions>
+				<expectedresults>1.进入“数据库操作”页面，在搜索框内填写不存在的cs信息
+2.显示没有搜索到相关信息
+
+</expectedresults>
+				<execution_type>1</execution_type>
+			</step>
+		</steps>
+	</testcase>
+	<testcase name="“子集合”勾选框校验_om.main.003">
+		<preconditions>1、数据库环境运行正常
+2、登录OM首页，选择集群下的“业务”，进入“业务列表”界面，选择对应业务名进入“数据库操作”页面
+3、勾选“子集合”
+</preconditions>
+		<execution_type>1</execution_type>
+		<importance>2</importance>
+		<steps>
+			<step>
+				<step_number>1</step_number>
+				<actions>1.进入“数据库操作”页面勾选“子集合”
+2、检查子集合是否不显示</actions>
+				<expectedresults>1.进入“数据库操作”页面勾选“子集合”
+2、子集合不显示</expectedresults>
+				<execution_type>1</execution_type>
+			</step>
+		</steps>
+	</testcase>
+	<testcase name="浏览器兼容测试_om.main.004">
+		<preconditions>1、数据库环境运行正常
+2、登录OM首页，选择集群下的“业务”，进入“业务列表”界面，选择对应业务名进入“数据库操作”页面
+</preconditions>
+		<execution_type>1</execution_type>
+		<importance>2</importance>
+		<steps>
+			<step>
+				<step_number>1</step_number>
+				<actions>1、分别在如下浏览器测试查看索引界面信息展示：IE7、IE8、IE9、Chrome、Firefox；在IE7上全面测试，其他浏览器验证基本功能是否可用
+</actions>
+				<expectedresults>1、在所有浏览器上基本功能正常</expectedresults>
+				<execution_type>1</execution_type>
+			</step>
+		</steps>
+	</testcase>
+	<testcase name="中英文界面测试_om.main.005">
+		<execution_type>1</execution_type>
+		<importance>2</importance>
+		<steps>
+			<step>
+				<step_number>1</step_number>
+				<actions>1、分别验证中、英文界面（查看索引界面），在中文页面全面测试
+2、英文页面主要关注界面显示信息是否正确、无中文信息</actions>
+				<expectedresults>1、中文界面展示正确
+2、英文界面显示信息正确</expectedresults>
+				<execution_type>1</execution_type>
+			</step>
+		</steps>
+	</testcase>
+</testcases>

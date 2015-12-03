@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<testcases xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+	<testcase name="指定集合空间名查看cs信息_om.cs.001">
+		<preconditions>1、数据库环境运行正常
+2、登录OM首页，选择集群下的“业务”，进入“业务列表”界面，选择对应业务名进入“数据库操作”页面
+3、点击相应的集合空间名</preconditions>
+		<execution_type>1</execution_type>
+		<importance>3</importance>
+		<steps>
+			<step>
+				<step_number>1</step_number>
+				<actions>1.进入“数据库操作”页面，在集合空间列表中，指定cs
+2、查看cs信息展示是否正确
+
+
+</actions>
+				<expectedresults>1、查看cs信息正确，和实际创建cs信息一致
+
+</expectedresults>
+				<execution_type>1</execution_type>
+			</step>
+		</steps>
+	</testcase>
+	<testcase name="“Group”下拉框校验_om.cs.002">
+		<summary>1、本用例只关注下拉列表框界面测试</summary>
+		<preconditions>1、数据库环境运行正常
+2、登录OM首页，选择集群下的“业务”，进入“业务列表”界面，选择对应业务名进入“数据库操作”页面
+3、创建cs
+</preconditions>
+		<execution_type>1</execution_type>
+		<importance>2</importance>
+		<steps>
+			<step>
+				<step_number>1</step_number>
+				<actions>1.进入“数据库操作”页面，在集合空间列表中，指定cs
+2、检查下拉框是否可选
+3、查看对应group的cs信息展示是否正确
+</actions>
+				<expectedresults>1、下拉框值可选
+2、对应group的cs信息展示是否正确</expectedresults>
+				<execution_type>1</execution_type>
+			</step>
+		</steps>
+	</testcase>
+	<testcase name="查看索引界面规范性检查_om.cs.003">
+		<preconditions>1、数据库环境运行正常
+2、登录OM首页，选择集群下的“业务”，进入“业务列表”界面，选择对应业务名进入“数据库操作”页面
+3、点击相应cs名
+</preconditions>
+		<execution_type>1</execution_type>
+		<importance>2</importance>
+		<steps>
+			<step>
+				<step_number>1</step_number>
+				<actions>1.进入“数据库操作”页面，在集合空间列表中，指定cs
+2、检查标题显示是否正确
+3、查看界面风格和全局风格是否统一；按钮、文本框布局是否合理
+</actions>
+				<expectedresults>1、查看标题描述和实际界面实现功能一致
+2、界面风格布局符合界面规范，和全局风格一致
+3、按钮、文本框等布局合理，易用性符合要求</expectedresults>
+				<execution_type>1</execution_type>
+			</step>
+		</steps>
+	</testcase>
+	<testcase name="浏览器兼容测试_om.cs.004">
+		<preconditions>1、数据库环境运行正常
+2、登录OM首页，选择集群下的“业务”，进入“业务列表”界面，选择对应业务名进入“数据库操作”页面
+</preconditions>
+		<execution_type>1</execution_type>
+		<importance>2</importance>
+		<steps>
+			<step>
+				<step_number>1</step_number>
+				<actions>1、分别在如下浏览器测试查看索引界面信息展示：IE7、IE8、IE9、Chrome、Firefox；在IE7上全面测试，其他浏览器验证基本功能是否可用
+</actions>
+				<expectedresults>1、在所有浏览器上基本功能正常</expectedresults>
+				<execution_type>1</execution_type>
+			</step>
+		</steps>
+	</testcase>
+	<testcase name="中英文界面测试_om.cs.005">
+		<execution_type>1</execution_type>
+		<importance>2</importance>
+		<steps>
+			<step>
+				<step_number>1</step_number>
+				<actions>1、分别验证中、英文界面（查看索引界面），在中文页面全面测试
+2、英文页面主要关注界面显示信息是否正确、无中文信息</actions>
+				<expectedresults>1、中文界面展示正确
+2、英文界面显示信息正确</expectedresults>
+				<execution_type>1</execution_type>
+			</step>
+		</steps>
+	</testcase>
+</testcases>
