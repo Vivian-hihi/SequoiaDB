@@ -122,7 +122,7 @@
 	</target>
 
 	<target name="execTest">
-		<for list="${TEST_TYPE}" param="Test-Type" parallel="${isParallel}">
+		<for list="${testList}" param="Test-Type">
 			<sequential>
 				<ant antfile="${WORKSPACE}/sequoiadb/misc/ci/test-type.xml" dir="." inheritAll="false">
 					<property name="test.host.NAME" value="${machine_control}" />
@@ -196,18 +196,15 @@
 			<then>
 			    <var name="TEST_TYPE" value="ant,driver-python,driver-php,driver-java,lob,driver-C,driver-CPP,driver-mongoc" />
 			    <antcall target="execTest" inheritAll="true">
-			    	<param name="TEST_TYPE" value="shell" />
-			    	<param name="isParallel" value="false" />
+			    	<param name="testList" value="shell" />
 			    </antcall>
 			    <antcall target="execTest" inheritAll="true">
-			    	<param name="TEST_TYPE" value="${TEST_TYPE}" />
-			    	<param name="isParallel" value="true" />
+			    	<param name="testList" value="${TEST_TYPE}" />
 			    </antcall>
 			</then>
 			<else>
 				<antcall target="execTest" inheritAll="true">
-			    	<param name="TEST_TYPE" value="${TEST_TYPE}" />
-			    	<param name="isParallel" value="true" />
+			    	<param name="testList" value="${TEST_TYPE}" />
 			    </antcall>
 			</else>
 		</if>
