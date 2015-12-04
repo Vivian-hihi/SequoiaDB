@@ -124,7 +124,7 @@ function runJSFile()
    
    result=0
    lastCmdStr="$sdbRoot/sdb -e \"var CHANGEDPREFIX='${csprefix}'; var COORDSVCNAME='${coordsvcname}'; var COORDHOSTNAME='${coordhostname}';var SPAREPORTSTART='${spareportstart}';var SPAREPORTSTOP='${spareportstop}'; var CATASVCNAME='$catasvcname'; var SPAREPORTPATH='$spareportPath'; var UUID=$uuid; var UUNAME='${uuname}'; var RUNRESULT=$runresult; \" -f \"${libRoot}/func.js,$file\""
-   runresult=0
+#   runresult=0
    if [ $printOut -eq 1 -o $# -gt 1 ] ; then
       echo "CMD: $lastCmdStr"
       eval $lastCmdStr
@@ -185,7 +185,7 @@ function procJSFile()
    $sdbRoot/sdb -s "try{ db.msg('Begin test[$file]') ; } catch( e ) { } "
    runJSFile "$testFile"
    ret=$?
-   runresult=$ret
+#   runresult=$ret
    $sdbRoot/sdb -s "try{ db.msg('End test[$file]') ; } catch( e ) {} "
    testcaseETimeSec=`date +%s`
    if [ $printOut -eq 1 ] ; then
@@ -205,12 +205,15 @@ function procJSFile()
       echo -e "\033[32;49;1m [ Done:$sucNum ] `expr $testcaseETimeSec - $testcaseBTimeSec`(s) \033[39;49;0m"
    fi
 
-   # run clear for testcase
-   runJSFile "${libRoot}/after_usecase.js"
-
+   # run clear for testcase  
    if [ $ret -ne 0 -a $stopWhenFailed -ne 0 ] ; then
+      runresult=$ret
+      runJSFile "${libRoot}/after_usecase.js"
       return 2
    fi
+   
+   runresult=0
+   runJSFile "${libRoot}/after_usecase.js"
 
    if [ $printOut -eq 1 ] ; then
       echo ""
