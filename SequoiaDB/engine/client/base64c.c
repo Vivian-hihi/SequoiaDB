@@ -114,8 +114,7 @@ int base64Encode ( const char *s, int in_size, char *_ret, int out_size )
          case 2:
             *_ret++ = B64[ ( ( (unsigned char)s[0] & 3 ) << 4 ) |
                              ( (unsigned char)s[1] >> 4 ) ] ;
-            *_ret++ = B64[ ( ( (unsigned char)s[1] & 0x0F ) << 2 ) |
-                             ( (unsigned char)s[2] >> 6 ) ] ;
+            *_ret++ = B64[ ( ( (unsigned char)s[1] & 0x0F ) << 2 ) ] ;
             *_ret++ = '=' ;
             break ;
          }
