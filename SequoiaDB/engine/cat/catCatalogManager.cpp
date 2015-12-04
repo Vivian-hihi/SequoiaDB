@@ -1590,8 +1590,8 @@ namespace engine
       PD_TRACE1 ( SDB_CATALOGMGR_CREATECOLLECTION,
                   PD_PACK_INT ( isSpaceExist ) ) ;
 
-     // here we do not care what the values are
-     // we care how many records in the specified collection space
+      // here we do not care what the values are
+      // we care how many records in the specified collection space
       {
          BSONElement ele = boSpaceRecord.getField( CAT_COLLECTION ) ;
          SDB_ASSERT(Array == ele.type(), "Invalid field ") ;
