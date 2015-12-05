@@ -89,11 +89,11 @@
 		<if>
 			<equals arg1="${test-type}" arg2="driver-python" />
 			<then>
-				<property name="command" value="python ${test.case.fullname} -H ${test_machine_no2} -p ${coord.service.port} -d ${data.service.port}" />
+				<property name="command" value="python ${test.case.fullname} -H ${test.host.NAME} -p ${coord.service.port} -d ${data.service.port}" />
 				<echo message="Command:${command}" />
 				<echo message="The testcase ${test.case.name}.py path on ${testcases.path}" />
 				<exec executable="python" dir="${testcases.path}" timeout="1200000" outputproperty="screen.output" resultproperty="ret.code">
-					<arg line=" ${test.case.fullname} -H ${test_machine_no2} -p ${coord.service.port} -d ${data.service.port}" />
+					<arg line=" ${test.case.fullname} -H ${test.host.NAME} -p ${coord.service.port} -d ${data.service.port}" />
 				</exec>
 				<echo message="${screen.output}" />
 				<echo message="The result = ${ret.code} after exec ${test.case.fullname} testcase." />
