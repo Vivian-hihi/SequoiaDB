@@ -1,4 +1,4 @@
-﻿// --------------------- Data.Database.Index ---------------------
+// --------------------- Data.Database.Index ---------------------
 var _DataDatabaseIndex = {} ;
 
 //控制是否显示子集合
@@ -1240,7 +1240,7 @@ _DataDatabaseIndex.showCreateCL = function( $scope, SdbRest ){
                "required": true,
                "value": 1,
                "valid": {
-                  "min": 0,
+                  "min": -1,
                   "max": 7
                }
             },
@@ -1380,7 +1380,7 @@ _DataDatabaseIndex.showCreateCL = function( $scope, SdbRest ){
                "required": true,
                "value": 1,
                "valid": {
-                  "min": 0,
+                  "min": -1,
                   "max": 7
                }
             },
@@ -1520,7 +1520,7 @@ _DataDatabaseIndex.showCreateCL = function( $scope, SdbRest ){
                "required": true,
                "value": 1,
                "valid": {
-                  "min": 0,
+                  "min": -1,
                   "max": 7
                }
             }
