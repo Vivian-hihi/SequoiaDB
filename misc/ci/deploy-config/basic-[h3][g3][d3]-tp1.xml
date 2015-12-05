@@ -73,7 +73,7 @@
 		    		<catagroup name="cata1">
         				<node host="@{hostname}" baseport="${cata.service.port}" dbpath="${install.path}/sequoiadb/database/cata/${cata.service.port}">
 							<confitem name="diaglevel" value="5" />
-							<confitem name="transactionon" value="true" />
+							<confitem name="transactionon" value="false" />
 							<confitem name="sharingbreak" value="30000" />
 							<confitem name="fap" value="${fap.value}" />
 							<confitem name="optimeout" value="60000" />
@@ -89,7 +89,7 @@
 					<datagroup name="group1">			
 						<node host="@{hostname}" baseport="21100" dbpath="${install.path}/sequoiadb/database/data/21100">
 							<confitem name="diaglevel" value="5" />
-							<confitem name="transactionon" value="true" />
+							<confitem name="transactionon" value="false" />
 							<confitem name="sharingbreak" value="30000" />
 							<confitem name="diagnum" value="80" />
 							<confitem name="fap" value="${fap.value}" />
@@ -99,7 +99,7 @@
 					<datagroup name="group2">
 						<node host="@{hostname}" baseport="22100" dbpath="${install.path}/sequoiadb/database/data/22100">
 							<confitem name="diaglevel" value="5" />
-							<confitem name="transactionon" value="true" />
+							<confitem name="transactionon" value="false" />
 							<confitem name="sharingbreak" value="30000" />
 							<confitem name="diagnum" value="80" />
 							<confitem name="fap" value="${fap.value}" />
@@ -109,7 +109,7 @@
 					<datagroup name="group3">
 						<node host="@{hostname}" baseport="23100" dbpath="${install.path}/sequoiadb/database/data/23100">
 							<confitem name="diaglevel" value="5" />
-							<confitem name="transactionon" value="true" />
+							<confitem name="transactionon" value="false" />
 							<confitem name="sharingbreak" value="30000" />
 							<confitem name="diagnum" value="80" />
 							<confitem name="fap" value="${fap.value}" />
