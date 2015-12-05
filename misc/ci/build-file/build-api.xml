@@ -42,13 +42,21 @@
 		<math result="edition" operand1="${projects.version}" operation="${op}" operand2="100" datatype="int" />
 		<echo message="The edition is ${edition}" />
 
-		<stafTools worktype="delete" workHost="${target_deploy_api_ip}" fileName="${api_dir}/${edition}" failonerror="false" />
-		<stafTools workType="copy directory" workHost="LOCAL" fileName="${root_dir}/api" saveDir="${api_dir}/${edition}/api" toHost="${target_deploy_api_ip}" failonerror="true"/>
-		<stafTools workType="shell" workHost="${target_deploy_api_ip}" workDir="${api_dir}" common="chown -R sequoiadb:sequoiadb ${edition}" failonerror="true"/>
+		<if>
+			<equals arg1="${isDeploy}" arg2="true" />
+			<then>
+				<stafTools worktype="delete" workHost="${target_deploy_api_ip}" fileName="${api_dir}/${edition}" failonerror="false" />
+				<stafTools workType="copy directory" workHost="LOCAL" fileName="${root_dir}/api" saveDir="${api_dir}/${edition}/api" toHost="${target_deploy_api_ip}" failonerror="true"/>
+				<stafTools workType="shell" workHost="${target_deploy_api_ip}" workDir="${api_dir}" common="chown -R sequoiadb:sequoiadb ${edition}" failonerror="true"/>
 
-		<stafTools worktype="delete" workHost="${target_deploy_api_ip}" fileName="${images_dir}/${edition}" failonerror="false" />
-		<stafTools workType="copy directory" workHost="LOCAL" fileName="${root_dir}/images" saveDir="${images_dir}/${edition}" toHost="${target_deploy_api_ip}" failonerror="true"/>
-		<stafTools workType="shell" workHost="${target_deploy_api_ip}" workDir="${images_dir}" common="chown -R sequoiadb:sequoiadb ${edition}" failonerror="true"/>
+				<stafTools worktype="delete" workHost="${target_deploy_api_ip}" fileName="${images_dir}/${edition}" failonerror="false" />
+				<stafTools workType="copy directory" workHost="LOCAL" fileName="${root_dir}/images" saveDir="${images_dir}/${edition}" toHost="${target_deploy_api_ip}" failonerror="true"/>
+				<stafTools workType="shell" workHost="${target_deploy_api_ip}" workDir="${images_dir}" common="chown -R sequoiadb:sequoiadb ${edition}" failonerror="true"/>
+			</then>
+			<else>
+				<echo message="This is the rocksdb." />
+			</else>
+		</if>
 	</target>
 
 	<target name="copy_offline_doc">
