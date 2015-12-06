@@ -44,31 +44,72 @@ using namespace bson ;
 namespace engine
 {
 
-   INT32 dmsCompress ( _pmdEDUCB *cb, const CHAR *pInputData,
-                       INT32 inputSize, const CHAR **ppData,
-                       INT32 *pDataSize )
+   INT32 dmsCompress ( _pmdEDUCB *cb, utilCompressor *compressor,
+                       const CHAR *pInputData, INT32 inputSize,
+                       const CHAR **ppData, INT32 *pDataSize )
    {
       INT32 rc = SDB_OK ;
       CHAR *pBuff = NULL ;
+      size_t maxCompressedLen = 0 ;
+      //TEST_TIMECHECK_PREPARE ;
 
       SDB_ASSERT ( pInputData && ppData && pDataSize,
                    "Data pointer and size pointer can't be NULL" ) ;
 
-      // estimate the max possible size for compressed data
-      size_t maxCompressedLen = snappy::MaxCompressedLength ( inputSize ) ;
+      /*
+       * If compressor is not NULL, it's using zlib or lz4. Otherwise, compress
+       * using snappy.
+       */
+      if ( compressor )
+      {
+         /*
+          * From compressor zlib and lz4, 4 bytes which specifies the original
+          * data length are stored before the actual compressed data, as the
+          * compression algorithms don't provide any way to estimate the
+          * uncompressed data length.
+          */
+         maxCompressedLen = compressor->compressBound( inputSize )
+                            + sizeof( UINT32 ) ;
+      }
+      else
+      {
+         maxCompressedLen = snappy::MaxCompressedLength ( inputSize ) ;
+      }
 
       pBuff = cb->getCompressBuff( maxCompressedLen ) ;
       if ( !pBuff )
       {
-         PD_LOG( PDERROR, "Failed to alloc compress buff, size: %d",
-                 maxCompressedLen ) ;
+         PD_LOG( PDERROR, "Failed to alloc compress buff" ) ;
          rc = SDB_OK ;
          goto error ;
       }
 
-      // let's rock :)
-      snappy::RawCompress ( pInputData, (size_t)inputSize,
-                            pBuff, &maxCompressedLen ) ;
+      if ( NULL == compressor )
+      {
+         // let's rock :)
+         snappy::RawCompress ( pInputData, (size_t)inputSize,
+                               pBuff, &maxCompressedLen ) ;
+      }
+      else
+      {
+         //TEST_TIMECHECK_START ;
+         UINT32 actualDataBufLen = maxCompressedLen - sizeof( UINT32 ) ;
+         rc = compressor->compress( pInputData, inputSize,
+                                    pBuff + sizeof( UINT32 ),
+                                    actualDataBufLen ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Failed to compress record, the data will stay in "
+                    "not compressed format, rc: %d", rc ) ;
+            rc = SDB_OK ;
+            goto error ;
+         }
+         //TEST_TIMECHECK_END("compressor->compress") ;
+
+         //If compressed successfully, write the original length in the output.
+         maxCompressedLen = actualDataBufLen + sizeof( UINT32 ) ;
+         *(UINT32 *)pBuff = inputSize ;
+      }
 
       // assign the output buffer pointer
       if ( ppData )
@@ -86,7 +127,8 @@ namespace engine
       goto done ;
    }
 
-   INT32 dmsCompress ( _pmdEDUCB *cb, const BSONObj &obj,
+   INT32 dmsCompress ( _pmdEDUCB *cb, utilCompressor *compressor,
+                       const BSONObj &obj,
                        const CHAR* pOIDPtr, INT32 oidLen,
                        const CHAR **ppData, INT32 *pDataSize )
    {
@@ -113,12 +155,12 @@ namespace engine
          DMS_RECORD_SETDATA_OID ( pTmpBuff, obj.objdata(), obj.objsize(),
                                   BSONElement(pOIDPtr) ) ;
 
-         rc = dmsCompress ( cb, pObjData , BSONObj(pObjData).objsize(),
-                            ppData, pDataSize ) ;
+         rc = dmsCompress ( cb, compressor, pObjData,
+                            BSONObj(pObjData).objsize(), ppData, pDataSize ) ;
       }
       else
       {
-         rc = dmsCompress( cb, obj.objdata(), obj.objsize(),
+         rc = dmsCompress( cb, compressor, obj.objdata(), obj.objsize(),
                            ppData, pDataSize ) ;
       }
 
@@ -132,9 +174,9 @@ namespace engine
       goto done ;
    }
 
-   INT32 dmsUncompress ( _pmdEDUCB *cb, const CHAR *pInputData,
-                         INT32 inputSize, const CHAR **ppData,
-                         INT32 *pDataSize )
+   INT32 dmsUncompress ( _pmdEDUCB *cb, utilCompressor *compressor,
+                         const CHAR *pInputData, INT32 inputSize,
+                         const CHAR **ppData, INT32 *pDataSize )
    {
       INT32 rc = SDB_OK ;
       bool  result = true ;
@@ -144,14 +186,22 @@ namespace engine
                    "Data pointer and size pointer can't be NULL" ) ;
 
       size_t maxUncompressedLen = 0 ;
-      // estimate the max possible size for uncompressed data + sanity check
-      result = snappy::GetUncompressedLength ( pInputData, (size_t)inputSize,
-                                               &maxUncompressedLen ) ;
-      if ( !result )
+      UINT32 destSize = 0 ;
+      if ( compressor )
       {
-         PD_LOG( PDERROR, "Failed to get uncompressed length" ) ;
-         rc = SDB_CORRUPTED_RECORD ;
-         goto error ;
+         maxUncompressedLen = *(UINT32 *)pInputData ;
+      }
+      else
+      {
+         // estimate the max possible size for uncompressed data + sanity check
+         result = snappy::GetUncompressedLength ( pInputData, (size_t)inputSize,
+                                                  &maxUncompressedLen ) ;
+         if ( !result )
+         {
+            PD_LOG( PDERROR, "Failed to get uncompressed length" ) ;
+            rc = SDB_CORRUPTED_RECORD ;
+            goto error ;
+         }
       }
 
       pBuff = cb->getUncompressBuff( maxUncompressedLen ) ;
@@ -163,9 +213,24 @@ namespace engine
          goto error ;
       }
 
-      // let's rock :)
-      result = snappy::RawUncompress ( pInputData, (size_t)inputSize,
-                                       pBuff ) ;
+      destSize = maxUncompressedLen ;
+      if ( compressor )
+      {
+         /*
+          * First 4 bytes of the input data is the original uncompressed data
+          * length.
+          */
+         rc = compressor->decompress( pInputData + sizeof( UINT32 ),
+                                      inputSize - sizeof( UINT32 ),
+                                      pBuff, destSize ) ;
+         result = ( SDB_OK == rc ) ? TRUE : FALSE ;
+      }
+      else
+      {
+         // let's rock :)
+         result = snappy::RawUncompress ( pInputData, (size_t)inputSize,
+                                          pBuff ) ;
+      }
       if ( !result )
       {
          PD_LOG( PDERROR, "Failed to uncompress record" ) ;
@@ -180,7 +245,7 @@ namespace engine
       }
       if ( pDataSize )
       {
-         *pDataSize = maxUncompressedLen ;
+         *pDataSize = destSize ;
       }
 
    done :

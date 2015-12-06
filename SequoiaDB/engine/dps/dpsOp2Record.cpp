@@ -585,6 +585,7 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DPS_CLCRT2RECORD, "dpsCLCrt2Record" )
    INT32 dpsCLCrt2Record( const CHAR *fullName,
                           const UINT32 &attribute,
+                          UINT8 &compType,
                           dpsLogRecord &record )
    {
       PD_TRACE_ENTRY( SDB__DPS_CLCRT2RECORD ) ;
@@ -614,6 +615,9 @@ namespace engine
          }
       }
 
+      record.push( DPS_LOG_CLCRT_COMPRESS_TYPE, sizeof( UINT8 ),
+                   (const CHAR *)(&compType)) ;
+
       header._length = record.alignedLen() ;
    done:
       PD_TRACE_EXITRC( SDB__DPS_CLCRT2RECORD, rc ) ;
@@ -625,7 +629,8 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DPS_RECORD2CLCRT, "dpsRecord2CLCrt" )
    INT32 dpsRecord2CLCrt( const CHAR *logRecord,
                           const CHAR **fullName,
-                          UINT32 &attribute )
+                          UINT32 &attribute,
+                          UTIL_COMPRESSOR_TYPE &compressorType )
    {
       PD_TRACE_ENTRY( SDB__DPS_RECORD2CLCRT ) ;
       INT32 rc = SDB_OK ;
@@ -640,7 +645,7 @@ namespace engine
       }
 
       {
-      dpsLogRecord::iterator itrFullName, itrAttri ;
+      dpsLogRecord::iterator itrFullName, itrAttri, itrCompressorType ;
       itrFullName = record.find( DPS_LOG_PUBLIC_FULLNAME ) ;
       if ( !itrFullName.valid() )
       {
@@ -656,6 +661,14 @@ namespace engine
       {
          attribute = *((UINT32 *)itrAttri.value() ) ;
       }
+
+      itrCompressorType = record.find( DPS_LOG_CLCRT_COMPRESS_TYPE ) ;
+      if ( itrCompressorType.valid() )
+      {
+         compressorType = (UTIL_COMPRESSOR_TYPE)
+                              (*((UINT8 *)itrCompressorType.value()));
+      }
+
       }
    done:
       PD_TRACE_EXITRC( SDB__DPS_RECORD2CLCRT, rc ) ;
@@ -1307,7 +1320,6 @@ namespace engine
          PD_LOG( PDERROR, "failed to push pageid to record, rc:%d", rc ) ;
          goto error ;
       }
-                        
 
       rc = dpsPushTran( transID, preTransLsn, relatedLSN, record ) ;
       if ( SDB_OK != rc )
@@ -1359,7 +1371,7 @@ namespace engine
       }
 
       {
-      dpsLogRecord::iterator itr = record.find( DPS_LOG_LOB_OID ) ; 
+      dpsLogRecord::iterator itr = record.find( DPS_LOG_LOB_OID ) ;
       if ( !itr.valid() )
       {
          PD_LOG( PDERROR, "failed to find tag oid in record" ) ;
@@ -1370,7 +1382,7 @@ namespace engine
       }
 
       {
-      dpsLogRecord::iterator itr = record.find( DPS_LOG_LOB_SEQUENCE ) ; 
+      dpsLogRecord::iterator itr = record.find( DPS_LOG_LOB_SEQUENCE ) ;
       if ( !itr.valid() )
       {
          PD_LOG( PDERROR, "failed to find tag sequence in record" ) ;
@@ -1381,7 +1393,7 @@ namespace engine
       }
 
       {
-      dpsLogRecord::iterator itr = record.find( DPS_LOG_LOB_OFFSET ) ; 
+      dpsLogRecord::iterator itr = record.find( DPS_LOG_LOB_OFFSET ) ;
       if ( !itr.valid() )
       {
          PD_LOG( PDERROR, "failed to find tag offset in record" ) ;
@@ -1392,7 +1404,7 @@ namespace engine
       }
 
       {
-      dpsLogRecord::iterator itr = record.find( DPS_LOG_LOB_HASH ) ; 
+      dpsLogRecord::iterator itr = record.find( DPS_LOG_LOB_HASH ) ;
       if ( !itr.valid() )
       {
          PD_LOG( PDERROR, "failed to find tag hash in record" ) ;
@@ -1403,7 +1415,7 @@ namespace engine
       }
 
       {
-      dpsLogRecord::iterator itr = record.find( DPS_LOG_LOB_LEN ) ; 
+      dpsLogRecord::iterator itr = record.find( DPS_LOG_LOB_LEN ) ;
       if ( !itr.valid() )
       {
          PD_LOG( PDERROR, "failed to find tag len in record" ) ;
@@ -1425,7 +1437,7 @@ namespace engine
       }
 
       {
-      dpsLogRecord::iterator itr = record.find( DPS_LOG_LOB_PAGE ) ; 
+      dpsLogRecord::iterator itr = record.find( DPS_LOG_LOB_PAGE ) ;
       if ( !itr.valid() )
       {
          PD_LOG( PDERROR, "failed to find tag page in record" ) ;
@@ -1601,7 +1613,7 @@ namespace engine
       }
 
       {
-      dpsLogRecord::iterator itr = record.find( DPS_LOG_LOB_OID ) ; 
+      dpsLogRecord::iterator itr = record.find( DPS_LOG_LOB_OID ) ;
       if ( !itr.valid() )
       {
          PD_LOG( PDERROR, "failed to find tag oid in record" ) ;
@@ -1621,7 +1633,7 @@ namespace engine
       }
       sequence = *( ( UINT32 * )( itr.value() ) ) ;
       }
-      
+
       {
       dpsLogRecord::iterator itr = record.find( DPS_LOG_LOB_OFFSET ) ;
       if ( !itr.valid() )
@@ -1687,7 +1699,7 @@ namespace engine
       }
       oldLen = *( ( UINT32 * )( itr.value() ) ) ;
       }
-      
+
       {
       dpsLogRecord::iterator itr = record.find( DPS_LOG_LOB_PAGE ) ;
       if ( !itr.valid() )
@@ -1802,7 +1814,7 @@ namespace engine
          goto error ;
       }
 
-      header._length = record.alignedLen() ;   
+      header._length = record.alignedLen() ;
    done:
       PD_TRACE_EXITRC( SDB__DPS_LOBRM2RECORD, rc ) ;
       return rc ;
@@ -1863,7 +1875,7 @@ namespace engine
       }
       sequence = *( ( UINT32 * )( itr.value() ) ) ;
       }
-      
+
       {
       dpsLogRecord::iterator itr = record.find( DPS_LOG_LOB_OFFSET ) ;
       if ( !itr.valid() )
@@ -1907,9 +1919,9 @@ namespace engine
       }
       *data = itr.value() ;
       }
-      
+
       {
-      dpsLogRecord::iterator itr = record.find( DPS_LOG_LOB_PAGE ) ; 
+      dpsLogRecord::iterator itr = record.find( DPS_LOG_LOB_PAGE ) ;
       if ( !itr.valid() )
       {
          PD_LOG( PDERROR, "failed to find tag page in record" ) ;

@@ -49,6 +49,8 @@
 #include "dmsTrace.hpp"
 #include "dpsOp2Record.hpp"
 #include "rtn.hpp"
+#include "ossLatch.hpp"
+
 #include <list>
 using namespace std;
 namespace engine
@@ -1483,6 +1485,57 @@ namespace engine
       return rc ;
    error :
       goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__SDB_DMSCB_DISPATCHDICTCREATECL, "_SDB_DMSCB::dispatchDictCreateCL" )
+   void _SDB_DMSCB::dispatchDictCreateCL ( BOOLEAN &empty,
+                                           dmsStorageUnitID &suID, UINT16 &mbID )
+   {
+      PD_TRACE_ENTRY ( SDB__SDB_DMSCB_DISPATCHDICTCREATECL ) ;
+      if ( _dictWaitClList.size() > 0 )
+      {
+         suID = _dictWaitClList.front().first ;
+         mbID = _dictWaitClList.front().second ;
+         empty = FALSE ;
+      }
+      else
+      {
+         empty = TRUE ;
+      }
+
+      PD_TRACE_EXIT( SDB__SDB_DMSCB_DISPATCHDICTCREATECL ) ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__SDB_DMSCB_PUSHTODICTCREATECLLIST, "_SDB_DMSCB::pushToDictCreateCLList" )
+   void _SDB_DMSCB::pushToDictCreateCLList( dmsStorageUnitID suID, UINT16 mbID )
+   {
+      PD_TRACE_ENTRY( SDB__SDB_DMSCB_PUSHTODICTCREATECLLIST ) ;
+      _dictWaitClList.push_back( make_pair( suID, mbID ) ) ;
+      PD_TRACE_EXIT( SDB__SDB_DMSCB_PUSHTODICTCREATECLLIST ) ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__SDB_DMSCB_POPFROMDICTCREATECLLIST, "_SDB_DMSCB::popFromDictCreateCLList" )
+   void _SDB_DMSCB::popFromDictCreateCLList()
+   {
+      PD_TRACE_ENTRY( SDB__SDB_DMSCB_POPFROMDICTCREATECLLIST ) ;
+      _dictWaitClList.pop_front() ;
+      PD_TRACE_EXIT( SDB__SDB_DMSCB_POPFROMDICTCREATECLLIST ) ;
+   }
+
+   /*
+    * Skip the current means it will wait for next round to build the
+    * dictionary.
+    */
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__SDB_DMSCB_SKIPCURRENTDICTCREATECL, "_SDB_DMSCB::skipCurrentDictCreateCL" )
+   void _SDB_DMSCB::skipCurrentDictCreateCL()
+   {
+      PD_TRACE_ENTRY( SDB__SDB_DMSCB_SKIPCURRENTDICTCREATECL ) ;
+      dmsStorageUnitID suID = _dictWaitClList.front().first ;
+      UINT16 mbID = _dictWaitClList.front().second ;
+
+      _dictWaitClList.push_back( make_pair( suID, mbID ) ) ;
+      _dictWaitClList.pop_front() ;
+      PD_TRACE_EXIT( SDB__SDB_DMSCB_SKIPCURRENTDICTCREATECL ) ;
    }
 
    void _SDB_DMSCB::aquireCSMutex( const CHAR *pCSName )

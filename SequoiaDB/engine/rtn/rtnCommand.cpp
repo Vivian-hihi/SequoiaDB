@@ -45,6 +45,7 @@
 #include "ossMem.h"
 #include "rtnContextListLob.hpp"
 #include "aggrDef.hpp"
+#include "utilCompressor.hpp"
 
 #if defined (_DEBUG)
 // for qgmDebugQuery function
@@ -484,7 +485,8 @@ namespace engine
    IMPLEMENT_CMD_AUTO_REGISTER(_rtnCreateCollection)
    _rtnCreateCollection::_rtnCreateCollection ()
    :_collectionName ( NULL ),
-    _attributes(0)
+    _attributes(0),
+    _compressorType(UTIL_COMPRESSOR_INVALID)
    {
    }
 
@@ -519,8 +521,10 @@ namespace engine
       BOOLEAN enSureIndex = TRUE ;
       BOOLEAN isCompressed = FALSE ;
       BOOLEAN autoIndexId = TRUE ;
+      const CHAR *compressionType = NULL ;
       PD_TRACE_ENTRY ( SDB__RTNCREATECL_INIT ) ;
       BSONObj matcher ( pMatcherBuff ) ;
+      BSONElement ele ;
       rc = rtnGetStringElement ( matcher, FIELD_NAME_NAME,
                                  &_collectionName ) ;
       if ( rc )
@@ -560,6 +564,39 @@ namespace engine
          _attributes |= DMS_MB_ATTR_COMPRESSED ;
       }
 
+      // Check if the compression type is specified. If yes, set the attribute.
+      // Compression type can only be specified when Compressed is true.
+      ele = matcher.getField( FIELD_NAME_COMPRESSIONTYPE ) ;
+      if ( !ele.eoo() )
+      {
+         if ( !isCompressed )
+         {
+            PD_LOG( PDERROR, "Compression type is specified while Compressed "
+                    "option is false" ) ;
+            goto error ;
+         }
+
+         rtnGetStringElement ( matcher, FIELD_NAME_COMPRESSIONTYPE,
+                               &compressionType ) ;
+         if ( 0 == strcmp( compressionType, VALUE_NAME_LZW ) )
+         {
+            _compressorType = UTIL_COMPRESSOR_LZW ;
+         }
+         else if ( 0 == strcmp( compressionType, VALUE_NAME_LZ4 ) )
+         {
+            _compressorType = UTIL_COMPRESSOR_LZ4 ;
+         }
+         else if ( 0 == strcmp( compressionType, VALUE_NAME_ZLIB ) )
+         {
+            _compressorType = UTIL_COMPRESSOR_ZLIB ;
+         }
+         else
+         {
+            PD_LOG( PDERROR, "Compression type is invalid: %s", compressionType ) ;
+            goto error ;
+         }
+      }
+
       /// auto index id
       rc = rtnGetBooleanElement( matcher, FIELD_NAME_AUTO_INDEX_ID,
                                  autoIndexId ) ;
@@ -589,7 +626,8 @@ namespace engine
       PD_TRACE_ENTRY ( SDB__RTNCREATECL_DOIT ) ;
 
       rc = rtnCreateCollectionCommand ( _collectionName, _shardingKey,
-                                        _attributes, cb, dmsCB, dpsCB ) ;
+                                        _attributes, cb, dmsCB, dpsCB,
+                                        _compressorType) ;
 
       PD_TRACE_EXITRC ( SDB__RTNCREATECL_DOIT, rc ) ;
       return rc ;
@@ -1402,7 +1440,7 @@ namespace engine
       }
 
       rc = su->data()->renameCollection ( _oldCollectionName,
-                                          _newCollectionName, 
+                                          _newCollectionName,
                                           cb, dpsCB ) ;
       if ( SDB_OK != rc )
       {
@@ -2166,8 +2204,8 @@ namespace engine
    }
 
    PD_TRACE_DECLARE_FUNCTION ( SDB__RTNTEST_INIT, "_rtnTest::init" )
-   INT32 _rtnTest::init ( INT32 flags, INT64 numToSkip, INT64 numToReturn, 
-                          const CHAR * pMatcherBuff, const CHAR * pSelectBuff, 
+   INT32 _rtnTest::init ( INT32 flags, INT64 numToSkip, INT64 numToReturn,
+                          const CHAR * pMatcherBuff, const CHAR * pSelectBuff,
                           const CHAR * pOrderByBuff, const CHAR * pHintBuff )
    {
       INT32 rc = SDB_OK ;
@@ -3167,7 +3205,7 @@ namespace engine
       return _fullName ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNLISTLOB_DOIT, "_rtnListLob::doit" ) 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNLISTLOB_DOIT, "_rtnListLob::doit" )
    INT32 _rtnListLob::doit ( _pmdEDUCB *cb, _SDB_DMSCB *dmsCB,
                              _SDB_RTNCB *rtnCB, _dpsLogWrapper *dpsCB,
                              INT16 w, INT64 *pContextID )
@@ -3498,7 +3536,7 @@ namespace engine
          we override the interface collectionFullName(). so
          the local catalog info will be autoly updated before
          this function is called.
-        
+
          catalog info has been updated, clear local's info.
           it will download the last info when next request comes.
          catAgent *catAgent = sdbGetShardCB()->getCataAgent() ;

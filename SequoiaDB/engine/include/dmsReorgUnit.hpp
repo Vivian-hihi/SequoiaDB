@@ -42,6 +42,7 @@
 #include "dmsExtent.hpp"
 #include "ossUtil.hpp"
 #include "ossMem.hpp"
+#include "utilCompressor.hpp"
 #include "../bson/bson.h"
 #include "../bson/oid.h"
 using namespace bson ;
@@ -83,7 +84,8 @@ namespace engine
       INT32 flush () ;
       // MME is always DMS_MB_SIZE bytes
       INT32 importMME ( const CHAR *pMME ) ;
-      INT32 insertRecord ( BSONObj &obj, _pmdEDUCB *cb, UINT32 attributes ) ;
+      INT32 insertRecord ( BSONObj &obj, _pmdEDUCB *cb, UINT32 attributes,
+                           utilCompressor* compressor ) ;
       INT32 exportMME ( CHAR *pBuffer ) ;
       // based on pagesize
       INT32 getNextExtentSize ( SINT32 &size ) ;

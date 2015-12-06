@@ -444,4 +444,5 @@
 #define SDB__RTNSORTING__FETCHFROMINTER                    0x40000000579L
 #define SDB__RTNSORTING__FETCHFROMEXTER                    0x4000000057aL
 #define SDB__SDB_RTNCB_CONTEXTDEL                          0x4000000057bL
+#define SDB_STARTDICTCREATORJOB                            0x4000000057cL
 #endif

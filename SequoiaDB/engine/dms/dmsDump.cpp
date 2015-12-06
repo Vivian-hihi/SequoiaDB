@@ -564,7 +564,8 @@ namespace engine
                                     CHAR *addrPrefix, UINT32 options,
                                     dmsExtentID &nextExtent,
                                     set< dmsRecordID > *ridList,
-                                    BOOLEAN dumpRecord )
+                                    BOOLEAN dumpRecord,
+                                    utilCompressor *compressor )
    {
       UINT32 len           = 0 ;
       UINT32 hexDumpOption = 0 ;
@@ -649,7 +650,7 @@ namespace engine
                len += dumpDataRecord ( cb, ((CHAR*)inBuf)+nextRecord,
                                        inSize - nextRecord,
                                        outBuf + len, outSize - len,
-                                       nextRecord, ridList ) ;
+                                       nextRecord, ridList, compressor ) ;
                len += ossSnprintf ( outBuf + len, outSize - len, OSS_NEWLINE ) ;
                ++recordCount ;
             }
@@ -813,7 +814,8 @@ namespace engine
    UINT32 _dmsDump::dumpDataRecord( pmdEDUCB *cb, void *inBuf, UINT32 inSize,
                                     CHAR *outBuf, UINT32 outSize,
                                     dmsOffset &nextRecord,
-                                    set< dmsRecordID > *ridList )
+                                    set< dmsRecordID > *ridList,
+                                    utilCompressor *compressor )
    {
       INT32 rc = SDB_OK ;
       SDB_ASSERT ( cb, "cb can't be NULL" ) ;
@@ -923,7 +925,8 @@ namespace engine
          try
          {
             ossValuePtr recordPtr = 0 ;
-            DMS_RECORD_EXTRACTDATA ( (ossValuePtr)(inBuf), recordPtr ) ;
+            DMS_RECORD_EXTRACTDATA_EXT ( compressor, (ossValuePtr)(inBuf),
+                                         recordPtr ) ;
             BSONObj obj ( (CHAR*)recordPtr ) ;
             len += ossSnprintf ( outBuf + len, outSize - len,
                                  "       Record: %s"OSS_NEWLINE,

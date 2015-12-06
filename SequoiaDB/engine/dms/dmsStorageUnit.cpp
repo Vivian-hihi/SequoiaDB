@@ -143,7 +143,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__DMSSU_OPEN ) ;
-      if ( !_pDataSu || !_pIndexSu || !_pLobSu ) 
+      if ( !_pDataSu || !_pIndexSu || !_pLobSu )
       {
          rc = SDB_OOM ;
          PD_LOG( PDERROR, "Alloc memory failed" ) ;
@@ -161,6 +161,7 @@ namespace engine
          }
          goto error ;
       }
+
       // open index
       rc = _pIndexSu->openStorage( pIndexPath, createNew, delWhenExist ) ;
       if ( rc )
@@ -893,6 +894,38 @@ namespace engine
       goto done ;
    }
 
+   INT32 _dmsStorageUnit::getCollectionCompType( const CHAR *pName,
+                                                 UTIL_COMPRESSOR_TYPE &compType,
+                                                 dmsMBContext *context )
+   {
+      INT32 rc = SDB_OK ;
+      BOOLEAN getContext = FALSE ;
+
+      if ( !context )
+      {
+         SDB_ASSERT( pName, "Collection name can't be NULL" ) ;
+         rc = _pDataSu->getMBContext( &context, pName, SHARED ) ;
+         PD_RC_CHECK( rc, PDERROR, "Get collection[%s] mb context failed, "
+                      "rc: %d", pName, rc ) ;
+         getContext = TRUE ;
+      }
+      else if ( !context->isMBLock() )
+      {
+         rc = context->mbLock( SHARED ) ;
+         PD_RC_CHECK( rc, PDERROR, "Lock collection failed, rc: %d", rc ) ;
+      }
+
+      compType = (UTIL_COMPRESSOR_TYPE)context->mb()->_compressorType ;
+   done:
+      if ( getContext && context )
+      {
+         _pDataSu->releaseMBContext( context ) ;
+      }
+      return rc ;
+   error:
+      goto done ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_GETSEGEXTENTS, "_dmsStorageUnit::getSegExtents" )
    INT32 _dmsStorageUnit::getSegExtents( const CHAR *pName,
                                          vector < dmsExtentID > &segExtents,
@@ -1384,7 +1417,6 @@ namespace engine
       _pDataSu->_metadataLatch.release_shared() ;
       PD_TRACE_EXIT ( SDB__DMSSU_GETSTATINFO ) ;
    }
-
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_TRYTOFLUSH, "_dmsStorageUnit::tryToFlush" )
    INT32 _dmsStorageUnit::tryToFlush( BOOLEAN ignoreTick, BOOLEAN &failed )
    {

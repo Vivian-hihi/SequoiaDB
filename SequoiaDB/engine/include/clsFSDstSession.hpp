@@ -106,7 +106,8 @@ namespace engine
          INT32          _extractFullNames( const CHAR *names ) ;
          INT32          _extractMeta( const CHAR *objdata, string &cs,
                                       string &collection, UINT32 &pageSize,
-                                      UINT32 &attributes, INT32 &lobPageSize ) ;
+                                      UINT32 &attributes, INT32 &lobPageSize,
+                                      UTIL_COMPRESSOR_TYPE &compType ) ;
          INT32          _extractIndex( const CHAR *objdata, vector<BSONObj> &index,
                                        BOOLEAN &noMore ) ;
 
@@ -222,7 +223,7 @@ namespace engine
          STEP_FINISH,         // notify catalog get all data, will to clean
          STEP_CLEANUP ,       // notify the peer node to clean up data
          STEP_REMOVE,         // remove notify to catalog
-         STEP_END       
+         STEP_END
       };
 
       public:

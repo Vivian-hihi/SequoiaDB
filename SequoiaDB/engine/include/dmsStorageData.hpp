@@ -40,6 +40,7 @@
 
 #include "dmsStorageBase.hpp"
 #include "dpsLogWrapper.hpp"
+#include "utilCompressorFactory.hpp"
 
 #include <map>
 
@@ -236,7 +237,16 @@ namespace engine
       UINT64         _totalIndexFreeSpace ;
       UINT32         _totalLobPages ;
       // end
-      CHAR           _pad [ 404 ] ;
+
+
+      // This extent is used to store dictionary of the collection. If the
+      // dictionary has not been created, the value should be DMS_INVALID_EXTENT.
+      dmsExtentID    _dictExtentID ;
+      // For rebuild, a new dictionary will be created.
+      dmsExtentID    _newDictExtentID ;
+      // dictionary addreess;
+      UINT8          _compressorType ;
+      CHAR           _pad [ 395 ] ;    /* size here before adding dictionary is 404 */
 
       void reset ( const CHAR *clName = NULL,
                    UINT16 mbID = DMS_INVALID_MBID,
@@ -282,6 +292,9 @@ namespace engine
          _totalDataFreeSpace     = 0 ;
          _totalIndexFreeSpace    = 0 ;
          _totalLobPages          = 0 ;
+         _compressorType         = 0 ; /* 0 -- UTIL_COMPRESSOR_INVALID */
+         _dictExtentID           = DMS_INVALID_EXTENT ;
+         _newDictExtentID        = DMS_INVALID_EXTENT ;
 
          // pad
          ossMemset( _pad, 0, sizeof( _pad ) ) ;
@@ -379,6 +392,8 @@ namespace engine
       UINT64      _totalIndexFreeSpace ;
       UINT32      _totalLobPages ;
       UINT32      _uniqueIdxNum ;
+      dmsExtentID _dictExtID ;
+      UINT8       _compressorType ;
 
       void reset()
       {
@@ -389,6 +404,8 @@ namespace engine
          _totalIndexFreeSpace    = 0 ;
          _totalLobPages          = 0 ;
          _uniqueIdxNum           = 0 ;
+         _dictExtID              = DMS_INVALID_EXTENT ;
+         _compressorType         = 0 ; /* 0 -- UTIL_COMPRESSOR_INVALID */
       }
       _dmsMBStatInfo ()
       {
@@ -433,7 +450,6 @@ namespace engine
          UINT16            _mbID ;
          INT32             _mbLockType ;
          INT32             _resumeType ;
-
    };
    typedef _dmsMBContext   dmsMBContext ;
 
@@ -509,6 +525,7 @@ namespace engine
    #define DMS_CONTEXT_MAX_SIZE           (2000)
    #define DMS_RECORDS_PER_EXTENT_SQUARE  4     // value is 2^4=16
    #define DMS_RECORD_OVERFLOW_RATIO      1.2f
+   #define DMS_COMPRESSOR_PER_CL          32
 
    /*
       DMS TRUNCATE TYPE DEFINE
@@ -524,6 +541,109 @@ namespace engine
    class _dmsStorageUnit ;
    class _pmdEDUCB ;
    class _mthModifier ;
+
+   /*
+    * Threshold of record number and total size to build a dictionary:
+    * (1) At least 100 records AND
+    * (2) at least 10M data.
+    */
+   #define DMS_CREATE_DICT_MIN_REC_NUM 100
+   #define DMS_CREATE_DICT_MIN_DATA_SIZE ( 10 << 20 )
+
+   // Class of the cl's dictionary context.
+   class _dmsDictContext : public SDBObject
+   {
+   public:
+      _dmsDictContext()
+         : _lockType( -1 ),
+           _inUse( FALSE ),
+           _clLID( DMS_INVALID_CLID ),
+           _dict( NULL ),
+           _dictLen( 0 ),
+           _compressorType( UTIL_COMPRESSOR_INVALID ),
+           _compressor( NULL )
+      {
+      }
+
+      ~_dmsDictContext() ;
+
+      OSS_INLINE void reset() ;
+      OSS_INLINE UINT32 getClLID() { return _clLID ; }
+      OSS_INLINE void setClLID( UINT32 clLID ) ;
+
+      /*
+       * TBD: Ask the factory for a brand new compressor. The better way is to
+       * get it from a pool.
+       */
+      OSS_INLINE utilCompressor* getCompressor( utilCompressorFactory * factory ) ;
+      OSS_INLINE void releaseCompressor( utilCompressor *& compressor ) ;
+      OSS_INLINE INT32 setDict( const CHAR *dict, UINT32 dictLen ) ;
+      OSS_INLINE void setCompressorType( UTIL_COMPRESSOR_TYPE compressorType )
+      {
+         _compressorType = compressorType ;
+      }
+      OSS_INLINE BOOLEAN dictReady() { return ( NULL != _dict ) ; }
+      OSS_INLINE void lock( INT32 mode )
+      {
+         ossLatch( &_latch, (OSS_LATCH_MODE)mode ) ;
+         _lockMode = mode ;
+      }
+      OSS_INLINE void unlock()
+      {
+         if ( SHARED == _lockMode || EXCLUSIVE == _lockMode )
+         {
+            ossUnlatch( &_latch, (OSS_LATCH_MODE)_lockMode ) ;
+         }
+
+         _lockMode = -1 ;
+      }
+
+   private:
+      ossSpinSLatch _latch ;
+      INT32 _lockMode ;
+      //ossRWMutex _mutex ;
+      INT32 _lockType ;
+      BOOLEAN _inUse ;
+      UINT32 _clLID ;
+      CHAR *_dict ;   /* Points to the dictionary string. */
+      UINT32 _dictLen ;
+      UTIL_COMPRESSOR_TYPE _compressorType ;
+
+      vector<utilCompressor *> _vecCompressor ;
+      ossSpinXLatch _latchCompressor ;
+
+      utilCompressor * _compressor ; /* Compressor will be created at the best time */
+   } ;
+   typedef _dmsDictContext dmsDictContext ;
+
+   /*
+    * This clas is for dictionary cache.
+    */
+   class _dmsDictCache
+   {
+   public:
+      _dmsDictCache () {}
+      ~_dmsDictCache () ;
+
+      void clearCache() ;
+      utilCompressorFactory * getCompressorFactory()
+      {
+         return &_compressorFactory ;
+      }
+
+      OSS_INLINE INT32 getDictContext( const dmsMBContext *mbContext,
+                                       dmsDictContext* &dictContext,
+                                       INT32 lockType = SHARED ) ;
+      OSS_INLINE void releaseDictContext( dmsDictContext *&dictContext ) ;
+   private:
+      /*
+       * One dictionary context for one collection. The index is equal to its
+       * mbID.
+       */
+      dmsDictContext _dictContexts[ DMS_MME_SLOTS ] ;
+      utilCompressorFactory _compressorFactory ;
+   } ;
+   typedef _dmsDictCache dmsDictCache ;
 
    /*
       _dmsStorageData defined
@@ -590,7 +710,9 @@ namespace engine
                                SDB_DPSCB *dpscb = NULL,
                                UINT16 initPages = 0,
                                BOOLEAN sysCollection = FALSE,
-                               BOOLEAN noIDIndex = FALSE ) ;
+                               BOOLEAN noIDIndex = FALSE,
+                               UTIL_COMPRESSOR_TYPE compressorType =
+                                          UTIL_COMPRESSOR_INVALID) ;
 
          INT32 dropCollection ( const CHAR *pName,
                                 _pmdEDUCB *cb,
@@ -648,6 +770,13 @@ namespace engine
 
          virtual INT32 tryToFlush( BOOLEAN ignoreTick, BOOLEAN &failed ) ;
 
+         INT32 saveCLDict( const CHAR *dict, UINT32 dictSize,
+                           dmsMBContext *mbContext ) ;
+         INT32 addDictToCache( const dmsMBContext *mbContext,
+                               const CHAR *dict, UINT32 dictLen,
+                               UTIL_COMPRESSOR_TYPE compressorType ) ;
+         _dmsDictCache* getDictCache() { return &_dictCache ; }
+
       private:
          virtual UINT64 _dataOffset() ;
          virtual const CHAR* _getEyeCatcher() const ;
@@ -655,6 +784,7 @@ namespace engine
          virtual INT32  _checkVersion( dmsStorageUnitHeader *pHeader ) ;
          virtual INT32  _onCreate( OSSFILE *file, UINT64 curOffSet ) ;
          virtual INT32  _onMapMeta( UINT64 curOffSet ) ;
+         virtual INT32  _onOpened() ;
          virtual void   _onClosed() ;
 
       protected:
@@ -686,6 +816,7 @@ namespace engine
                                  _pmdEDUCB *cb, dmsMBContext *context,
                                  dmsExtentID extLID, BOOLEAN needUnLock,
                                  UINT32 *clLID = NULL ) ;
+         INT32          _loadClDictToCache( const dmsMBContext *mbContext ) ;
 
       private:
          //   must be hold the mb EXCLUSIVE lock in this functions :
@@ -762,6 +893,11 @@ namespace engine
          _dmsStorageIndex                    *_pIdxSU ;
          _dmsStorageLob                      *_pLobSU ;
 
+         /*
+          * Dictionary cache. Used to cache collection dictionaries in memory
+          * in order to gain high performance when getting dictionary.
+          */
+         _dmsDictCache                       _dictCache ;
    };
    typedef _dmsStorageData dmsStorageData ;
 
@@ -937,6 +1073,33 @@ namespace engine
       return 16 + 14 - pageSizeSquareRoot() ;
    }
 
+   OSS_INLINE INT32 _dmsDictCache::getDictContext(
+                                             const dmsMBContext *mbContext,
+                                             dmsDictContext* &dictContext,
+                                             INT32 lockType )
+   {
+      INT32 rc = SDB_OK ;
+
+      if ( mbContext->mbID() >= DMS_MME_SLOTS )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      dictContext = &_dictContexts[ mbContext->mbID() ] ;
+      //dictContext->lock( lockType ) ;
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   OSS_INLINE void _dmsDictCache::releaseDictContext(
+                                                dmsDictContext *&dictContext )
+   {
+      //dictContext->unlock() ;
+      dictContext = NULL ;
+   }
 }
 
 #endif //DMSSTORAGE_DATA_HPP_

@@ -56,7 +56,8 @@ namespace engine
       RTN_JOB_PAGECLEANER        = 9,
       RTN_JOB_STARTNODE          = 10, // start node
       RTN_JOB_CMSYNC             = 11, // cm and cmd sync info
-      RTN_JOB_OMAGENT            = 12,  // omagent job
+      RTN_JOB_OMAGENT            = 12, // omagent job
+      RTN_JOB_CREATE_DICT        = 13, // create compression dictionary
 
       RTN_JOB_MAX
    } ;

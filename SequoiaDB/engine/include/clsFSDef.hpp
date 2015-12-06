@@ -58,6 +58,7 @@ namespace engine
    #define CLS_FS_NEEDDATA  "needdata"
    #define CLS_FS_ATTRIBUTES "attributes"
    #define CLS_FS_LOB_PAGE_SIZE "lobpagesize"
+   #define CLS_FS_COMP_TYPE "comptype"
 
    enum CLS_FS_STATUS
    {

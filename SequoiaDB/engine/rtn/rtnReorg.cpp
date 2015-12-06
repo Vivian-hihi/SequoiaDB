@@ -380,6 +380,9 @@ namespace engine
       CHAR fullFilePath [ OSS_MAX_PATHSIZE + 1 ] = {0} ;
       const CHAR *dbpath = krcb->getOptionCB()->getDbPath() ;
       BOOLEAN dataRebuild = FALSE ;
+      dmsDictContext *dictContext = NULL ;
+      utilCompressor *compressor = NULL ;
+      dmsDictCache *dictCache = NULL ;
 
       if ( ossStrlen ( dbpath ) + 1 +
            ossStrlen ( pCollectionFullName ) +
@@ -454,6 +457,25 @@ namespace engine
          PD_LOG ( PDEVENT, "Shadow copy phase starts" ) ;
          //mbContext->mb()->_flag = flag ;
 
+         if ( 0 != mbContext->mb()->_compressorType )
+         {
+            dictCache = su->data()->getDictCache() ;
+            SDB_ASSERT( dictCache, "Dictionary cache invalid" );
+            rc = dictCache->getDictContext( mbContext, dictContext, SHARED ) ;
+            PD_RC_CHECK( rc, PDERROR, "Failed to get dictionary context, "
+                         "mb ID: %d", mbContext->mbID() ) ;
+            if ( dictContext->dictReady() )
+            {
+               compressor = dictContext->getCompressor(
+                                             dictCache->getCompressorFactory()) ;
+               SDB_ASSERT( compressor, "Dictionary cache status invalid" ) ;
+            }
+            else
+            {
+               dictCache->releaseDictContext( dictContext ) ;
+            }
+         }
+
          // copy all records into reorg unit temp file
          while ( TRUE )
          {
@@ -479,7 +501,7 @@ namespace engine
             try
             {
                BSONObj dataRecord ( buffObj.data() ) ;
-               rc = ru.insertRecord ( dataRecord, cb, attributes ) ;
+               rc = ru.insertRecord ( dataRecord, cb, attributes, compressor ) ;
                if ( rc )
                {
                   PD_LOG ( PDERROR, "Failed to insert into temp file, rc = %d",
@@ -494,6 +516,15 @@ namespace engine
                goto error_shadow_copy ;
             }
          } // while ( TRUE )
+
+         if ( dictContext )
+         {
+            if ( compressor )
+            {
+               dictContext->releaseCompressor( compressor ) ;
+            }
+            dictCache->releaseDictContext( dictContext ) ;
+         }
 
          rc = ru.flush () ;
          if ( rc )

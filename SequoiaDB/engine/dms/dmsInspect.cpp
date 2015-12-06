@@ -60,7 +60,7 @@ namespace engine
       UINT32 dataOffset                  = 0 ;
       dmsStorageUnitHeader *header       = (dmsStorageUnitHeader*)inBuf ;
       CHAR   eyeCatcher [ DMS_HEADER_EYECATCHER_LEN+1 ] = {0} ;
-      
+
 
       if ( NULL == inBuf || NULL == outBuf || inSize != DMS_HEADER_SZ )
       {
@@ -517,7 +517,8 @@ namespace engine
                                           UINT16 collectionID,
                                           dmsExtentID &nextExtent,
                                           set< dmsRecordID > *ridList,
-                                          SINT32 &err )
+                                          SINT32 &err,
+                                          utilCompressor *compressor )
    {
       UINT32 len           = 0 ;
       SINT32 localErr      = 0 ;
@@ -582,7 +583,8 @@ namespace engine
                                        inSize - nextRecord,
                                        outBuf + len, outSize - len,
                                        recordCount,
-                                       nextRecord, ridList, localErr ) ;
+                                       nextRecord, ridList, localErr,
+                                       compressor ) ;
             ++recordCount ;
          }
       }
@@ -607,7 +609,8 @@ namespace engine
                                           UINT32 outSize, INT32 currentRecordID,
                                           dmsOffset &nextRecord,
                                           set< dmsRecordID > *ridList,
-                                          SINT32 &err )
+                                          SINT32 &err,
+                                          utilCompressor *compressor)
    {
       INT32 rc          = SDB_OK ;
       UINT32 len        = 0 ;
@@ -681,7 +684,8 @@ namespace engine
          try
          {
             ossValuePtr recordPtr = 0 ;
-            DMS_RECORD_EXTRACTDATA ( (ossValuePtr)(inBuf), recordPtr ) ;
+            DMS_RECORD_EXTRACTDATA_EXT ( compressor, (ossValuePtr)(inBuf),
+                                         recordPtr ) ;
             BSONObj obj ( (CHAR*)recordPtr ) ;
             if ( !obj.isValid() )
             {

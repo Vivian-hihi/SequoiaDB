@@ -116,13 +116,52 @@ namespace engine
       *(INT32*)((CHAR*)(record)+DMS_RECORD_METADATA_SZ)
 
    // Extract Data
-   #define DMS_RECORD_EXTRACTDATA(recordPtr,retPtr)                        \
+   #define DMS_RECORD_EXTRACTDATA( dictCache, dictContext, recordPtr, retPtr ) \
       do {                                                                 \
-            if ( OSS_BIT_TEST ( DMS_RECORD_GETATTR(recordPtr),             \
+            if ( !OSS_BIT_TEST( DMS_RECORD_GETATTR(recordPtr),             \
                                 DMS_RECORD_FLAG_COMPRESSED ) )             \
             {                                                              \
+               (retPtr) = (ossValuePtr)(DMS_RECORD_GETDATA(recordPtr)) ;   \
+            }                                                              \
+            else                                                           \
+            {                                                              \
                INT32 uncompLen = 0 ;                                       \
-               rc = dmsUncompress( cb, DMS_RECORD_GETDATA(recordPtr),      \
+               utilCompressor *compressor = NULL ;                         \
+               if ( dictContext->dictReady() )                             \
+               {                                                           \
+                  compressor = dictContext->getCompressor(                 \
+                                    dictCache->getCompressorFactory()) ;   \
+                  SDB_ASSERT( compressor, "Compressor should not be NULL" ) ; \
+               }                                                           \
+               rc = dmsUncompress( cb, compressor,                         \
+                                   DMS_RECORD_GETDATA(recordPtr),          \
+                                   DMS_RECORD_GETDATALEN(recordPtr),       \
+                                   (const CHAR**)&(retPtr), &uncompLen ) ; \
+               if ( compressor )                                           \
+               {                                                           \
+                  dictContext->releaseCompressor( compressor ) ;           \
+               }                                                           \
+               PD_RC_CHECK ( rc, PDERROR,                                  \
+                             "Failed to uncompress record, rc = %d", rc ); \
+               PD_CHECK ( uncompLen == *(INT32*)(retPtr),                  \
+                          SDB_CORRUPTED_RECORD, error, PDERROR,            \
+                          "uncompressed length %d does not match real "    \
+                          "len %d", uncompLen, *(INT32*)(retPtr) ) ;       \
+            }                                                              \
+      } while ( FALSE )
+
+      #define DMS_RECORD_EXTRACTDATA_EXT( compressor , recordPtr, retPtr ) \
+      do {                                                                 \
+            if ( !OSS_BIT_TEST( DMS_RECORD_GETATTR(recordPtr),             \
+                                DMS_RECORD_FLAG_COMPRESSED ) )             \
+            {                                                              \
+               (retPtr) = (ossValuePtr)(DMS_RECORD_GETDATA(recordPtr)) ;   \
+            }                                                              \
+            else                                                           \
+            {                                                              \
+               INT32 uncompLen = 0 ;                                       \
+               rc = dmsUncompress( cb, compressor,                         \
+                                   DMS_RECORD_GETDATA(recordPtr),          \
                                    DMS_RECORD_GETDATALEN(recordPtr),       \
                                    (const CHAR**)&(retPtr), &uncompLen ) ; \
                PD_RC_CHECK ( rc, PDERROR,                                  \
@@ -132,11 +171,7 @@ namespace engine
                           "uncompressed length %d does not match real "    \
                           "len %d", uncompLen, *(INT32*)(retPtr) ) ;       \
             }                                                              \
-            else                                                           \
-            {                                                              \
-               (retPtr) = (ossValuePtr)(DMS_RECORD_GETDATA(recordPtr)) ;   \
-            }                                                              \
-         } while ( FALSE )
+      } while ( FALSE )
 
    #define DMS_RECORD_SETFLAG(record,flag)   (*((CHAR*)(record))=(CHAR)(flag))
    #define DMS_RECORD_SETSTATE(record,state)  \

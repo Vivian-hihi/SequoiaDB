@@ -208,11 +208,11 @@ namespace engine
          else if ( SDB_OK != rc )
          {
             PD_LOG( PDERROR, "failed to get func:%s, rc=%d",
-                    deletor.toString().c_str(), rc ) ; 
+                    deletor.toString().c_str(), rc ) ;
             goto error ;
          }
 
-         rc = rtnDelete( CAT_PROCEDURES_COLLECTION, 
+         rc = rtnDelete( CAT_PROCEDURES_COLLECTION,
                          deletor, BSONObj(),
                          0, _pEduCB, _pDmsCB, _pDpsCB, _majoritySize() ) ;
          if ( SDB_OK != rc )
@@ -500,7 +500,7 @@ namespace engine
          BSONObj hint ( pHint ) ;
          PD_RC_CHECK ( rc, PDERROR,
                        "Failed to extract message, rc = %d", rc ) ;
-         // pReply will be allocated by catQueryAndGetMore, we are 
+         // pReply will be allocated by catQueryAndGetMore, we are
          // responsible to free the memory
          rc = catQueryAndGetMore ( &pReply, CAT_TASK_INFO_COLLECTION,
                                    selector, matcher, orderBy, hint, flag,
@@ -629,7 +629,7 @@ namespace engine
          rc = SDB_DMS_NOTEXIST ;
          goto error ;
       }
-      
+
    done:
       PD_TRACE_EXITRC( SDB_CATALOGMGR__ALTERCOLLECTION, rc ) ;
       return rc ;
@@ -654,7 +654,7 @@ namespace engine
       BSONObj optionsObj ;
       UINT32 mask = 0 ;
       catCollectionInfo clInfo ;
-      _clsCatalogSet catSet( "" ) ; 
+      _clsCatalogSet catSet( "" ) ;
 
       try
       {
@@ -909,8 +909,8 @@ namespace engine
                       clFullName ) ;
 
             // check collection MainCL. MainCL can't split
-            PD_CHECK( !pCataSet->isMainCL(), SDB_MAIN_CL_OP_ERR, error, 
-                      PDERROR, "Collection[%s] is MainCL, can't split", 
+            PD_CHECK( !pCataSet->isMainCL(), SDB_MAIN_CL_OP_ERR, error,
+                      PDERROR, "Collection[%s] is MainCL, can't split",
                       clFullName ) ;
          }
 
@@ -1216,7 +1216,7 @@ namespace engine
             fieldMask |= CAT_MASK_SHDTYPE ;
 
             clInfo._isHash = ( 0 == ossStrcmp( clInfo._pShardingType,
-                                               CAT_SHARDING_TYPE_HASH ) ) ; 
+                                               CAT_SHARDING_TYPE_HASH ) ) ;
          }
          // sharding partition
          else if ( ossStrcmp( eleTmp.fieldName(),
@@ -1315,6 +1315,38 @@ namespace engine
                       CAT_AUTO_INDEX_ID, eleTmp.type() ) ;
             clInfo._autoIndexId = eleTmp.Bool() ;
             fieldMask |= CAT_MASK_AUTOINDEXID ;
+         }
+         // compression type
+         else if ( 0 == ossStrcmp( eleTmp.fieldName(),
+                                   CAT_COMPRESSIONTYPE ) )
+         {
+            PD_CHECK( TRUE == clInfo._isCompressed, SDB_INVALIDARG, error,
+                      PDERROR, "CompressionType option can only be set when "
+                      "Compressed option is set as true" ) ;
+            PD_CHECK( String == eleTmp.type(), SDB_INVALIDARG, error,
+                      PDERROR, "Field[%s] type[%d] error",
+                      CAT_COMPRESSIONTYPE, eleTmp.type() ) ;
+            if ( 0 == ossStrcmp( eleTmp.valuestr(), CAT_COMPRESSOR_LZW ) )
+            {
+               clInfo._compressorType = UTIL_COMPRESSOR_LZW ;
+            }
+            else if ( 0 == ossStrcmp( eleTmp.valuestr(), CAT_COMPRESSOR_ZLIB ) )
+            {
+               clInfo._compressorType = UTIL_COMPRESSOR_ZLIB ;
+            }
+            else if ( 0 == ossStrcmp( eleTmp.valuestr(), CAT_COMPRESSOR_LZ4) )
+            {
+               clInfo._compressorType = UTIL_COMPRESSOR_LZ4 ;
+            }
+            else
+            {
+               PD_LOG( PDERROR, "Field[%s] value[%s] should be [%s/%s]",
+                      CAT_COMPRESSIONTYPE, eleTmp.valuestr(),
+                      CAT_COMPRESSOR_ZLIB, CAT_COMPRESSOR_LZ4 );
+               rc = SDB_INVALIDARG ;
+               goto error ;
+            }
+            fieldMask |= CAT_MASK_COMPRESSIONTYPE ;
          }
          else
          {
@@ -1548,7 +1580,7 @@ namespace engine
       BSONObj boCollectionRecord ;
       BSONObj domainObj ;
       std::string strGroupName ;
-      groupID = CAT_INVALID_GROUPID ; 
+      groupID = CAT_INVALID_GROUPID ;
       std::map<string, UINT32> range ;
       INT64 clCount = 0 ;
 
@@ -1676,7 +1708,7 @@ namespace engine
          goto rollback ;
       }
 
-      if ( clInfo._autoSplit ) 
+      if ( clInfo._autoSplit )
       {
          rc = _autoHashSplit( newCLRecordObj, taskIDs,
                               strGroupName.c_str(), &range ) ;
@@ -1700,7 +1732,7 @@ namespace engine
    }
 
    // build catalogue-info record:
-   // {  Name: "SpaceName.CollectionName", Version: 1, 
+   // {  Name: "SpaceName.CollectionName", Version: 1,
    //    ShardingKey: { Key1: 1, Key2: -1 },
    //    CataInfo:
    //       [ { GroupID: 1000, LowBound:{ "":MinKey,"":MaxKey }, UpBound:{"":MaxKey,"":MinKey} } ] }
@@ -1810,6 +1842,11 @@ namespace engine
       if ( mask & CAT_MASK_AUTOINDEXID )
       {
          builder.appendBool( CAT_AUTO_INDEX_ID, clInfo._autoIndexId ) ;
+      }
+
+      if ( mask & CAT_MASK_COMPRESSIONTYPE )
+      {
+         builder.append( CAT_COMPRESSIONTYPE, clInfo._compressorType ) ;
       }
 
       catRecord = builder.obj () ;
@@ -2616,7 +2653,7 @@ namespace engine
             }
             }
          }
-         
+
          if ( !found )
          {
             removed.insert( std::make_pair( itr->first, itr->second ) ) ;
@@ -2831,7 +2868,7 @@ namespace engine
    error:
       groupID = CAT_INVALID_GROUPID ;
       groupName.clear() ;
-      splitRange.clear() ; 
+      splitRange.clear() ;
       goto done ;
    }
 
@@ -2898,7 +2935,7 @@ namespace engine
          rc = SDB_SYS ;
          goto error ;
       }
-      
+
 
       if ( NULL == srcGroupName )
       {
@@ -2956,7 +2993,7 @@ namespace engine
 
             endBound = beginBound ;
             beginBound = endBound - avgBound ;
-            taskIDs.push_back( taskID ) ;   
+            taskIDs.push_back( taskID ) ;
          }
          }
       }
@@ -3094,7 +3131,7 @@ namespace engine
                                 alterInfo._autoRebalance ) ;
          }
 
-         alterObj = builder.obj() ; 
+         alterObj = builder.obj() ;
          goto done ;
       }
 
@@ -3185,7 +3222,7 @@ namespace engine
          }
       }
 
-      groups = BSON( CAT_GROUP_NAME << builder.arr() ) ;   
+      groups = BSON( CAT_GROUP_NAME << builder.arr() ) ;
    done:
       PD_TRACE_EXITRC( SDB_CATALOGMGR__GETGROUPSOFCOLLECTIONS, rc ) ;
       return rc ;

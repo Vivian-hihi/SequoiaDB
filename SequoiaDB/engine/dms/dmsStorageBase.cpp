@@ -349,7 +349,14 @@ namespace engine
       }
       ossMemset ( _dirtyList, 0, maxSegmentNum() / 8 ) ;
 
-      _onOpened() ;
+      rc = _onOpened() ;
+      if ( rc )
+      {
+         SDB_OSS_FREE ( _dirtyList ) ;
+         PD_LOG( PDERROR, "Failed on post open operation for file: %s",
+                 _suFileName ) ;
+         goto error ;
+      }
 
       _validFlag = _dmsHeader->_validFlag ;
       _lastLSN.init( -1 == ( INT64 )(_dmsHeader->_lsn) ?
@@ -666,7 +673,7 @@ namespace engine
       }
       if ( (UINT32)_pStorageInfo->_lobdPageSize != pHeader->_lobdPageSize )
       {
-         _pStorageInfo->_lobdPageSize =  pHeader->_lobdPageSize ;   
+         _pStorageInfo->_lobdPageSize =  pHeader->_lobdPageSize ;
       }
       _pageNum = pHeader->_pageNum ;
       _segmentPages = _getSegmentSize() >> _pageSizeSquare ;
@@ -766,7 +773,7 @@ namespace engine
       // This should be safe because no one knows we are increasing the size of
       // file, so other sessions will not attempt to access the new space
       // then we need to increase the size of file first
-      // MAKE SURE NOT HOLD ANY METADATA LATCH DURING SUCH EXPENSIVE DISK 
+      // MAKE SURE NOT HOLD ANY METADATA LATCH DURING SUCH EXPENSIVE DISK
       // OPERATION extendSeg latch is held here so that it's not possible //
       // two sessions doing same extend
       rc = ossExtendFile( &_file, _getSegmentSize() * numSeg ) ;

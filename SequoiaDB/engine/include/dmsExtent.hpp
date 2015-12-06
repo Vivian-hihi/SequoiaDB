@@ -45,6 +45,7 @@
 #include "ossUtil.hpp"
 #include "../bson/bson.h"
 #include "../bson/bsonobj.h"
+#include "pd.hpp"
 
 using namespace bson ;
 
@@ -190,6 +191,58 @@ namespace engine
    } ;
    typedef _dmsMetaExtent dmsMetaExtent ;
    #define DMS_METAEXTENT_HEADER_SZ    sizeof(dmsMetaExtent)
+
+
+   /* Eyecatcher define */
+   #define DMS_DICT_EXTENT_EYECATCHER0    'I'
+   #define DMS_DICT_EXTENT_EYECATCHER1    'E'
+   #define DMS_DICT_EXTENT_CURRENT_V      1
+   struct _dmsDictExtent : public SDBObject
+   {
+      CHAR        _eyeCatcher [2] ;
+      UINT16      _blockSize ;   // num of pages, i.e. 4k to 128MB
+      UINT16      _mbID ;        // 1 to 4096
+      CHAR        _flag ;
+      CHAR        _version ;
+      UINT32      _dictLen ;     /* Actual length of the dictionary. */
+
+      //void init( UINT16 numPages, UINT16 mbID, UINT32 segNum )
+      void init( UINT16 numPages, UINT16 mbID )
+      {
+         _eyeCatcher[0]       = DMS_DICT_EXTENT_EYECATCHER0 ;
+         _eyeCatcher[1]       = DMS_DICT_EXTENT_EYECATCHER1 ;
+         _blockSize           = numPages ;
+         _mbID                = mbID ;
+         _flag                = DMS_EXTENT_FLAG_INUSE ;
+         _version             = DMS_META_EXTENT_CURRENT_V ;
+         _dictLen             = 0 ;
+      }
+
+      void setDict( const CHAR *dict, UINT32 dictLen )
+      {
+         SDB_ASSERT( dict && ( dictLen > 0 && dictLen <= DMS_DICT_MAX_SIZE),
+                     "Invalid argument value" ) ;
+         ossMemcpy((CHAR *)this + sizeof(_dmsDictExtent), dict, dictLen ) ;
+         _dictLen = dictLen ;
+      }
+
+      BOOLEAN validate( UINT16 mbID = DMS_INVALID_MBID )
+      {
+         if ( DMS_DICT_EXTENT_EYECATCHER0 != _eyeCatcher[0] ||
+              DMS_DICT_EXTENT_EYECATCHER1 != _eyeCatcher[1] ||
+              DMS_EXTENT_FLAG_INUSE  != _flag )
+         {
+            return FALSE ;
+         }
+         else if ( DMS_INVALID_MBID != mbID && _mbID != mbID )
+         {
+            return FALSE ;
+         }
+         return TRUE ;
+      }
+   } ;
+   typedef _dmsDictExtent dmsDictExtent ;
+   #define DMS_DICTEXTENT_HEADER_SZ    sizeof(dmsDictExtent)
 
 }
 

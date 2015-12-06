@@ -1085,8 +1085,8 @@ namespace engine
          PD_LOG ( PDERROR, "Collection space %s is already exist",
                   pCollectionSpace ) ;
          rc = SDB_DMS_CS_EXIST ;
-         goto error ;   
-      } 
+         goto error ;
+      }
 
       // only for standalone
       if ( SDB_ROLE_STANDALONE == pmdGetKRCB()->getDBRole() )
@@ -1170,13 +1170,15 @@ namespace engine
                                       _pmdEDUCB * cb,
                                       SDB_DMSCB *dmsCB,
                                       SDB_DPSCB *dpsCB,
+                                      UTIL_COMPRESSOR_TYPE compressorType,
                                       INT32 flags,
                                       BOOLEAN sysCall )
    {
       BSONObj obj ;
       return rtnCreateCollectionCommand ( pCollection,
                                           obj, attributes,
-                                          cb, dmsCB, dpsCB, flags, sysCall ) ;
+                                          cb, dmsCB, dpsCB,
+                                          compressorType, flags, sysCall ) ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCREATECLCOMMAND, "rtnCreateCollectionCommand" )
@@ -1186,6 +1188,7 @@ namespace engine
                                       _pmdEDUCB * cb,
                                       SDB_DMSCB *dmsCB,
                                       SDB_DPSCB *dpsCB,
+                                      UTIL_COMPRESSOR_TYPE compressorType,
                                       INT32 flags, BOOLEAN sysCall )
    {
       INT32 rc              = SDB_OK ;
@@ -1235,7 +1238,8 @@ namespace engine
       writable = TRUE ;
 
       rc = su->data()->addCollection ( pCollectionShortName, NULL, attributes,
-                                       cb, dpsCB, 0, sysCall ) ;
+                                       cb, dpsCB, 0, sysCall, FALSE,
+                                       compressorType ) ;
       if ( rc )
       {
          PD_LOG ( PDERROR, "Failed to create collection %s, rc: %d",
@@ -1257,7 +1261,6 @@ namespace engine
             }
             else if ( SDB_OK != rc )
             {
-     
                PD_LOG ( PDERROR, "Failed to create sharding key for "
                         "collection %s, rc = %d", pCollection, rc ) ;
                goto error_rollback ;

@@ -180,7 +180,7 @@ namespace engine
    #define DMS_HEADER_OFFSET        ( 0 )
    #define DMS_SME_OFFSET           ( DMS_HEADER_OFFSET + DMS_HEADER_SZ )
 
-   /* 
+   /*
       Storage Unit Base
    */
    class _dmsStorageBase : public ossMmapFile
@@ -229,7 +229,7 @@ namespace engine
          // 4) unlock page cleaner, once it's done
          // Since dmsStorageBase destructor will wait for latch before releasing
          // memory, so we should be safe here.
-         // Note in page cleaning function, we check 
+         // Note in page cleaning function, we check
          OSS_INLINE void lockPageCleaner () ;
          OSS_INLINE void unlockPageCleaner () ;
 
@@ -246,7 +246,7 @@ namespace engine
          OSS_INLINE UINT32 getValidFlag() const
          {
             return _validFlag ;
-         } 
+         }
 
       public:
          INT32 openStorage ( const CHAR *pPath, BOOLEAN createNew = TRUE,
@@ -275,7 +275,7 @@ namespace engine
          virtual INT32  _onCreate( OSSFILE *file, UINT64 curOffSet ) = 0 ;
          virtual INT32  _onMapMeta( UINT64 curOffSet ) = 0 ;
          virtual void   _onClosed() {}
-         virtual void   _onOpened() {}
+         virtual INT32  _onOpened() { return SDB_OK ; }
          virtual UINT32 _extendThreshold() const ;
          virtual UINT32 _getSegmentSize() const ;
          virtual void   _initHeaderPageSize( dmsStorageUnitHeader *pHeader,
@@ -302,7 +302,7 @@ namespace engine
          void     _markHeaderValid() ;
 
          virtual INT32 _extendSegments ( UINT32 numSeg ) ;
- 
+
          OSS_INLINE void _updateLastLSN( UINT64 offset )
          {
             if ( -1 != (INT64)offset )

@@ -55,6 +55,8 @@ namespace engine
 #define DMS_PAGE_SIZE32K       32768   // 32K
 #define DMS_PAGE_SIZE64K       65536   // 64K
 
+#define DMS_DICT_MAX_SIZE ( 4 * 1024 * 1024 )
+
 /// for lob
 #define DMS_PAGE_SIZE256B      256
 

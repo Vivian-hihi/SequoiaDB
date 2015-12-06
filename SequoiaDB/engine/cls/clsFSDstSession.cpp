@@ -411,7 +411,7 @@ namespace engine
 
       _fullNames.clear() ;
       _mapEmptyCS.clear() ;
-      
+
       try
       {
          BSONObj obj( names ) ;
@@ -531,7 +531,8 @@ namespace engine
                                                string &collection,
                                                UINT32 &pageSize,
                                                UINT32 &attributes,
-                                               INT32 &lobPageSize )
+                                               INT32 &lobPageSize,
+                                               UTIL_COMPRESSOR_TYPE &compType )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__CLSDATADBS__EXTMETA );
@@ -542,6 +543,7 @@ namespace engine
          BSONElement collecionEle ;
          BSONElement ele ;
          BSONElement attri ;
+         BSONElement compressorType ;
          BSONElement lobPageEle ;
          BSONElement csEle = obj.getField( CLS_FS_CS_NAME ) ;
          PD_LOG( PDDEBUG, "Session[%s]: get meta data: %s", sessionName(),
@@ -580,6 +582,13 @@ namespace engine
          {
             attributes = attri.Number() ;
          }
+
+         compressorType = ele.embeddedObject().getField( CLS_FS_COMP_TYPE );
+         if ( compressorType.eoo() || NumberInt != compressorType.type() )
+         {
+            goto error ;
+         }
+         compType = (UTIL_COMPRESSOR_TYPE)compressorType.Int() ;
 
          lobPageEle =  ele.embeddedObject().getField( CLS_FS_LOB_PAGE_SIZE ) ;
          if ( NumberInt != lobPageEle.type() && !lobPageEle.eoo() )
@@ -715,6 +724,7 @@ namespace engine
       string collection ;
       UINT32 pageSize = 0 ;
       UINT32 attributes = 0 ;
+      UTIL_COMPRESSOR_TYPE compType = UTIL_COMPRESSOR_INVALID ;
       CHAR fullName[DMS_COLLECTION_NAME_SZ +
                     DMS_COLLECTION_SPACE_NAME_SZ + 2] ;
       CHAR *objdata = ( CHAR *)( &( msg->header ) ) +
@@ -725,7 +735,8 @@ namespace engine
                                    cs, collection,
                                    pageSize,
                                    attributes,
-                                   lobPageSize ) )
+                                   lobPageSize,
+                                   compType) )
       {
          _disconnect() ;
          goto done ;
@@ -749,7 +760,8 @@ namespace engine
                                   eduCB(),
                                   SDB_SESSION_FS_DST == sessionType() ?
                                   TRUE : FALSE ) ;
-      rc = _replayer.replayCrtCollection( fullName, attributes, eduCB() ) ;
+      rc = _replayer.replayCrtCollection( fullName, attributes,
+                                          eduCB(), compType ) ;
       if ( SDB_OK != rc && SDB_DMS_EXIST != rc )
       {
          PD_LOG( PDERROR, "Session[%s]: failed to replay collection crt "
@@ -1019,7 +1031,7 @@ namespace engine
          goto error ;
       }
 
-      SDB_ASSERT( _current < _fullNames.size(), "impossible" ) ; 
+      SDB_ASSERT( _current < _fullNames.size(), "impossible" ) ;
       fullName = _fullNames.at( _current ).c_str() ;
       itr += sizeof( MsgClsFSNotifyRes ) ;
       while ( _more( msg, itr, oid,
@@ -2282,7 +2294,7 @@ namespace engine
       if ( CLS_FS_STATUS_BEGIN != _status )
       {
          PD_LOG( PDWARNING, "Split Session[%s]: ignore msg. local statsus: "
-                 "%d, task: %s", sessionName(), _status, 
+                 "%d, task: %s", sessionName(), _status,
                  _pTask->taskName() ) ;
          goto done ;
       }

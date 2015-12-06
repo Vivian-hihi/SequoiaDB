@@ -45,6 +45,7 @@
 #include "pdTrace.hpp"
 #include "clsTrace.hpp"
 #include "rtnLob.hpp"
+#include "utilCompressor.hpp"
 
 using namespace bson ;
 
@@ -433,15 +434,15 @@ namespace engine
          {
             const CHAR *cl = NULL ;
             UINT32 attribute = 0 ;
-            rc = dpsRecord2CLCrt( (CHAR *)recordHeader,
-                                  &cl,
-                                  attribute ) ;
+            UTIL_COMPRESSOR_TYPE compressorType = UTIL_COMPRESSOR_INVALID ;
+            rc = dpsRecord2CLCrt( (CHAR *)recordHeader, &cl, attribute,
+                                  compressorType ) ;
             if ( SDB_OK != rc )
             {
                goto error ;
             }
             rc = rtnCreateCollectionCommand( cl, attribute, eduCB, _dmsCB,
-                                             _dpsCB, 0, TRUE ) ;
+                                             _dpsCB, compressorType, 0, TRUE ) ;
             if ( SDB_DMS_EXIST == rc )
             {
                PD_LOG( PDWARNING, "Collection [%s] already exist when "
@@ -815,9 +816,9 @@ namespace engine
          {
             const CHAR *fullname = NULL ;
             UINT32 attribute = 0 ;
+            UTIL_COMPRESSOR_TYPE compressorType = UTIL_COMPRESSOR_INVALID ;
             rc = dpsRecord2CLCrt( (const CHAR *)recordHeader,
-                                  &fullname,
-                                   attribute ) ;
+                                  &fullname, attribute, compressorType) ;
             if ( SDB_OK != rc )
             {
                goto error ;
@@ -928,7 +929,7 @@ namespace engine
                   goto error ;
                }
             }
-            break ; 
+            break ;
          }
          case LOG_TYPE_LOB_UPDATE :
          {
@@ -959,8 +960,8 @@ namespace engine
             {
                PD_LOG( PDERROR, "failed to update lob:%d", rc ) ;
                goto error ;
-            } 
-            break ; 
+            }
+            break ;
          }
          case LOG_TYPE_LOB_REMOVE :
          {
@@ -1049,14 +1050,15 @@ namespace engine
 
    INT32 _clsReplayer::replayCrtCollection( const CHAR *collection,
                                             UINT32 attributes,
-                                            _pmdEDUCB *eduCB )
+                                            _pmdEDUCB *eduCB,
+                                            UTIL_COMPRESSOR_TYPE compType )
    {
       SDB_ASSERT( NULL != collection, "collection should not be NULL" ) ;
       INT32 rc = rtnTestCollectionCommand( collection, _dmsCB ) ;
       if ( SDB_DMS_NOTEXIST == rc )
       {
          rc = rtnCreateCollectionCommand( collection, attributes, eduCB,
-                                          _dmsCB, _dpsCB, 0, TRUE ) ;
+                                          _dmsCB, _dpsCB, compType, 0, TRUE ) ;
       }
       return rc ;
    }

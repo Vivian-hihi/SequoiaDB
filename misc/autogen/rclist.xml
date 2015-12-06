@@ -2409,6 +2409,43 @@
             <cn>业务不存在</cn>
          </description>
       </code>
+      
+      <code>
+      	<name>SDB_UTIL_COMP_INIT_FAIL</name>
+        <description>
+            <en>compressor initialization failed</en>
+			<cn>压缩初始化失败</cn>
+        </description>
+      </code>
+	  <code>
+		<name>SDB_UTIL_COMP_SETDICT_FAIL</name>
+        <description>
+            <en>set dictionary for compressor failed</en>
+            <cn>为压缩算法设置字典失败</cn>
+        </description>
+      </code>
+	  <code>
+		<name>SDB_UTIL_COMP_BUF_SMALL</name>
+        <description>
+            <en>output buffer for compressor is too small</en>
+            <cn>给压缩算法的输出缓冲区太小</cn>
+        </description>
+      </code>
+	  <code>
+		<name>SDB_UTIL_COMP_COMPRESS_FAIL</name>
+        <description>
+            <en>compress process failed</en>
+            <cn>执行压缩失败</cn>
+        </description>
+      </code>
+	  <code>
+		<name>SDB_UTIL_COMP_DECOMPRESS_FAIL</name>
+        <description>
+            <en>compress process failed</en>
+            <cn>执行压缩失败</cn>
+        </description>
+      </code>
+	  
 
    </codelist>
 </rclist>

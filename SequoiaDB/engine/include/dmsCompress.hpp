@@ -38,6 +38,7 @@
 #define DMSCOMPRESS_HPP__
 
 #include "core.hpp"
+#include "utilCompressor.hpp"
 #include "../bson/bson.h"
 
 using namespace bson ;
@@ -50,20 +51,21 @@ namespace engine
    /*
       ppData: output data pointer, not need release
    */
-   INT32 dmsCompress ( _pmdEDUCB *cb, const CHAR *pInputData,
-                       INT32 inputSize, const CHAR **ppData,
-                       INT32 *pDataSize ) ;
+   INT32 dmsCompress ( _pmdEDUCB *cb, utilCompressor *compressor,
+                       const CHAR *pInputData, INT32 inputSize,
+                       const CHAR **ppData, INT32 *pDataSize ) ;
 
-   INT32 dmsCompress ( _pmdEDUCB *cb, const BSONObj &obj,
-                       const CHAR* pOIDPtr, INT32 oidLen,
+   INT32 dmsCompress ( _pmdEDUCB *cb, utilCompressor *compressor,
+                       const BSONObj &obj, const CHAR* pOIDPtr, INT32 oidLen,
                        const CHAR **ppData, INT32 *pDataSize ) ;
 
    /*
       ppData: output data pointer, not need release
    */
-   INT32 dmsUncompress ( _pmdEDUCB *cb, const CHAR *pInputData,
-                         INT32 inputSize, const CHAR **ppData,
-                         INT32 *pDataSize ) ;
+   INT32 dmsUncompress ( _pmdEDUCB *cb, utilCompressor *compressor,
+                         const CHAR *pInputData, INT32 inputSize,
+                         const CHAR **ppData, INT32 *pDataSize ) ;
+
 
 }
 

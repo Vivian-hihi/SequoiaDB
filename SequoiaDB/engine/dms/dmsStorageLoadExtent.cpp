@@ -167,7 +167,7 @@ namespace engine
          addOID = TRUE ;
       }
 
-      if ( ( dmsrecordSize = 
+      if ( ( dmsrecordSize =
              (record.objsize() + DMS_RECORD_METADATA_SZ + oidLen) )
              > DMS_RECORD_MAX_SZ )
       {
@@ -309,6 +309,7 @@ namespace engine
       dmsOffset      recordOffset   = DMS_INVALID_OFFSET ;
       dmsExtentID    tempExtentID   = 0 ;
       monAppCB * pMonAppCB          = cb ? cb->getMonAppCB() : NULL ;
+      dmsDictContext *dictContext   = NULL ;
 
       SDB_ASSERT ( _su, "_su can't be NULL" ) ;
       SDB_ASSERT ( mbContext, "dms mb context can't be NULL" ) ;
@@ -339,6 +340,11 @@ namespace engine
 
       clearFlagLoadLoad ( mbContext->mb() ) ;
       setFlagLoadBuild ( mbContext->mb() ) ;
+
+      rc = _su->data()->getDictCache()->getDictContext( mbContext, dictContext,
+                                                        SHARED ) ;
+      PD_RC_CHECK( rc, PDERROR,
+                   "Failed to get dictionary context, rc: %d", rc ) ;
 
       while ( !cb->isForced() )
       {
@@ -383,7 +389,8 @@ namespace engine
          {
             recordPtr = extentPtr + recordOffset ;
             recordID._offset = recordOffset ;
-            DMS_RECORD_EXTRACTDATA(recordPtr, recordDataPtr) ;
+            DMS_RECORD_EXTRACTDATA( _su->data()->getDictCache(), dictContext,
+                                    recordPtr, recordDataPtr) ;
             recordOffset = DMS_RECORD_GETNEXTOFFSET(recordPtr) ;
             ++( extAddr->_recCount ) ;
 
@@ -456,6 +463,11 @@ namespace engine
       } // while
 
    done:
+      if ( dictContext )
+      {
+         _su->data()->getDictCache()->releaseDictContext( dictContext ) ;
+      }
+
       PD_TRACE_EXITRC ( SDB__DMSSTORAGELOADEXT__LDDATA, rc );
       return rc ;
    error:

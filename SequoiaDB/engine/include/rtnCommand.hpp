@@ -81,7 +81,7 @@ namespace engine
          virtual BOOLEAN      writable () ;
          virtual const CHAR * collectionFullName () ;
 
-         virtual INT32 init ( INT32 flags, INT64 numToSkip, INT64 numToReturn, 
+         virtual INT32 init ( INT32 flags, INT64 numToSkip, INT64 numToReturn,
                               const CHAR *pMatcherBuff,
                               const CHAR *pSelectBuff,
                               const CHAR *pOrderByBuff,
@@ -492,7 +492,7 @@ namespace engine
          const CHAR                 *_collectionName ;
          BSONObj                    _shardingKey ;
          UINT32                     _attributes ;
-
+         UTIL_COMPRESSOR_TYPE       _compressorType ;
    };
 
    class _rtnCreateCollectionspace : public _rtnCommand
@@ -507,7 +507,7 @@ namespace engine
          virtual RTN_COMMAND_TYPE type () ;
          virtual BOOLEAN      writable () ;
 
-         virtual INT32 init ( INT32 flags, INT64 numToSkip, INT64 numToReturn, 
+         virtual INT32 init ( INT32 flags, INT64 numToSkip, INT64 numToReturn,
                               const CHAR *pMatcherBuff,
                               const CHAR *pSelectBuff,
                               const CHAR *pOrderByBuff,
@@ -536,7 +536,7 @@ namespace engine
          virtual BOOLEAN      writable () ;
          virtual const CHAR * collectionFullName () ;
 
-         virtual INT32 init ( INT32 flags, INT64 numToSkip, INT64 numToReturn, 
+         virtual INT32 init ( INT32 flags, INT64 numToSkip, INT64 numToReturn,
                               const CHAR *pMatcherBuff,
                               const CHAR *pSelectBuff,
                               const CHAR *pOrderByBuff,
@@ -565,7 +565,7 @@ namespace engine
          virtual BOOLEAN      writable () ;
          virtual const CHAR * collectionFullName () ;
 
-         virtual INT32 init ( INT32 flags, INT64 numToSkip, INT64 numToReturn, 
+         virtual INT32 init ( INT32 flags, INT64 numToSkip, INT64 numToReturn,
                               const CHAR *pMatcherBuff,
                               const CHAR *pSelectBuff,
                               const CHAR *pOrderByBuff,
@@ -592,7 +592,7 @@ namespace engine
          virtual RTN_COMMAND_TYPE type () ;
          virtual BOOLEAN      writable () ;
 
-         virtual INT32 init ( INT32 flags, INT64 numToSkip, INT64 numToReturn, 
+         virtual INT32 init ( INT32 flags, INT64 numToSkip, INT64 numToReturn,
                               const CHAR *pMatcherBuff,
                               const CHAR *pSelectBuff,
                               const CHAR *pOrderByBuff,
@@ -617,7 +617,7 @@ namespace engine
          virtual BOOLEAN      writable () ;
          virtual const CHAR * collectionFullName () ;
 
-         virtual INT32 init ( INT32 flags, INT64 numToSkip, INT64 numToReturn, 
+         virtual INT32 init ( INT32 flags, INT64 numToSkip, INT64 numToReturn,
                               const CHAR *pMatcherBuff,
                               const CHAR *pSelectBuff,
                               const CHAR *pOrderByBuff,
@@ -637,7 +637,7 @@ namespace engine
          virtual ~_rtnGet () ;
       public:
          virtual const CHAR * collectionFullName () ;
-         virtual INT32 init ( INT32 flags, INT64 numToSkip, INT64 numToReturn, 
+         virtual INT32 init ( INT32 flags, INT64 numToSkip, INT64 numToReturn,
                               const CHAR *pMatcherBuff,
                               const CHAR *pSelectBuff,
                               const CHAR *pOrderByBuff,
@@ -665,7 +665,7 @@ namespace engine
          _rtnGetCount () ;
          virtual ~_rtnGetCount () ;
 
-         virtual INT32 init ( INT32 flags, INT64 numToSkip, INT64 numToReturn, 
+         virtual INT32 init ( INT32 flags, INT64 numToSkip, INT64 numToReturn,
                               const CHAR *pMatcherBuff,
                               const CHAR *pSelectBuff,
                               const CHAR *pOrderByBuff,
@@ -722,7 +722,7 @@ namespace engine
          _rtnList () ;
          virtual ~_rtnList () ;
       protected:
-         virtual INT32 init ( INT32 flags, INT64 numToSkip, INT64 numToReturn, 
+         virtual INT32 init ( INT32 flags, INT64 numToSkip, INT64 numToReturn,
                               const CHAR *pMatcherBuff,
                               const CHAR *pSelectBuff,
                               const CHAR *pOrderByBuff,
@@ -849,7 +849,7 @@ namespace engine
          virtual BOOLEAN      writable () ;
          virtual const CHAR * collectionFullName () ;
 
-         virtual INT32 init ( INT32 flags, INT64 numToSkip, INT64 numToReturn, 
+         virtual INT32 init ( INT32 flags, INT64 numToSkip, INT64 numToReturn,
                               const CHAR *pMatcherBuff,
                               const CHAR *pSelectBuff,
                               const CHAR *pOrderByBuff,
@@ -873,7 +873,7 @@ namespace engine
       public:
          virtual const CHAR * collectionFullName () ;
 
-         virtual INT32 init ( INT32 flags, INT64 numToSkip, INT64 numToReturn, 
+         virtual INT32 init ( INT32 flags, INT64 numToSkip, INT64 numToReturn,
                               const CHAR *pMatcherBuff,
                               const CHAR *pSelectBuff,
                               const CHAR *pOrderByBuff,
@@ -933,7 +933,7 @@ namespace engine
 
          virtual const CHAR * name () ;
          virtual RTN_COMMAND_TYPE type () ;
-         virtual INT32 init ( INT32 flags, INT64 numToSkip, INT64 numToReturn, 
+         virtual INT32 init ( INT32 flags, INT64 numToSkip, INT64 numToReturn,
                               const CHAR *pMatcherBuff,
                               const CHAR *pSelectBuff,
                               const CHAR *pOrderByBuff,
@@ -949,7 +949,7 @@ namespace engine
          _rtnSnapshot () ;
          virtual ~_rtnSnapshot () ;
       public:
-         virtual INT32 init ( INT32 flags, INT64 numToSkip, INT64 numToReturn, 
+         virtual INT32 init ( INT32 flags, INT64 numToSkip, INT64 numToReturn,
                               const CHAR *pMatcherBuff,
                               const CHAR *pSelectBuff,
                               const CHAR *pOrderByBuff,
@@ -971,7 +971,7 @@ namespace engine
          const CHAR           *_selectBuff ;
          const CHAR           *_orderByBuff ;
          const CHAR           *_hintBuff ;
-         
+
          INT32                _flags ;
    };
 
@@ -1253,7 +1253,7 @@ namespace engine
          _rtnTest () ;
          virtual ~_rtnTest () ;
       public:
-         virtual INT32 init ( INT32 flags, INT64 numToSkip, INT64 numToReturn, 
+         virtual INT32 init ( INT32 flags, INT64 numToSkip, INT64 numToReturn,
                               const CHAR *pMatcherBuff,
                               const CHAR *pSelectBuff,
                               const CHAR *pOrderByBuff,
@@ -1470,7 +1470,7 @@ namespace engine
          virtual const CHAR * name () { return NAME_REMOVE_BACKUP ; }
          virtual RTN_COMMAND_TYPE type () { return CMD_REMOVE_BACKUP ; }
 
-         virtual INT32 init ( INT32 flags, INT64 numToSkip, INT64 numToReturn, 
+         virtual INT32 init ( INT32 flags, INT64 numToSkip, INT64 numToReturn,
                               const CHAR *pMatcherBuff,
                               const CHAR *pSelectBuff,
                               const CHAR *pOrderByBuff,
@@ -1548,7 +1548,7 @@ namespace engine
          virtual const CHAR * name () { return NAME_SET_SESSIONATTR ; }
          virtual RTN_COMMAND_TYPE type () { return CMD_SET_SESSIONATTR ; }
 
-         virtual INT32 init ( INT32 flags, INT64 numToSkip, INT64 numToReturn, 
+         virtual INT32 init ( INT32 flags, INT64 numToSkip, INT64 numToReturn,
                               const CHAR *pMatcherBuff,
                               const CHAR *pSelectBuff,
                               const CHAR *pOrderByBuff,

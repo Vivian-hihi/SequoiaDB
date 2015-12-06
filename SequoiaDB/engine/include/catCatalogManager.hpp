@@ -40,6 +40,7 @@
 #include "pmd.hpp"
 #include "catSplit.hpp"
 #include "rtnContextBuff.hpp"
+#include "utilCompressor.hpp"
 
 using namespace bson ;
 
@@ -69,6 +70,7 @@ namespace engine
    #define CAT_MASK_AUTOASPLIT      0x00000100
    #define CAT_MASK_AUTOREBALAN     0x00000200
    #define CAT_MASK_AUTOINDEXID     0x00000400
+   #define CAT_MASK_COMPRESSIONTYPE 0x00000800
 
    struct _catCollectionInfo
    {
@@ -88,7 +90,8 @@ namespace engine
       INT32       _version ;
       INT32       _assignType ;
       BOOLEAN     _autoIndexId ;
-      
+      UTIL_COMPRESSOR_TYPE _compressorType ;
+
       std::vector<std::string>   _subCLList;
 
       _catCollectionInfo()
@@ -108,6 +111,7 @@ namespace engine
          _version             = 0 ;
          _assignType          = ASSIGN_RANDOM ;
          _autoIndexId         = TRUE ;
+         _compressorType      = UTIL_COMPRESSOR_INVALID ;
       }
    };
    typedef _catCollectionInfo catCollectionInfo ;

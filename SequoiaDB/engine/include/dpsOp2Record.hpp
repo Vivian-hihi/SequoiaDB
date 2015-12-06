@@ -41,6 +41,7 @@
 #include "dpsLogRecord.hpp"
 #include "../bson/bson.h"
 #include "dmsLobDef.hpp"
+#include "utilCompressor.hpp"
 
 using namespace bson ;
 
@@ -104,11 +105,13 @@ namespace engine
 
    INT32 dpsCLCrt2Record( const CHAR *fullName,
                           const UINT32 &attribute,
+                          UINT8 &compType,
                           dpsLogRecord &record ) ;
 
    INT32 dpsRecord2CLCrt( const CHAR *logRecord,
                           const CHAR **fullName,
-                          UINT32 &attribute ) ;
+                          UINT32 &attribute,
+                          UTIL_COMPRESSOR_TYPE &compressorType ) ;
 
    INT32 dpsCLDel2Record( const CHAR *fullName,
                           dpsLogRecord &record ) ;
@@ -187,7 +190,7 @@ namespace engine
                          UINT32 &len,
                          UINT32 &hash,
                          const CHAR **data,
-                         DMS_LOB_PAGEID &pageID ) ;          
+                         DMS_LOB_PAGEID &pageID ) ;
 
    INT32 dpsLobU2Record(  const CHAR *fullName,
                           const bson::OID *oid,

@@ -175,6 +175,7 @@ SDB_INSPT_TYPE gCurInsptType                         = SDB_INSPT_DATA ;
 dmsMBStatInfo gMBStat ;
 dmsMB         gRepaireMB ;
 UINT32        gRepaireMask                           = 0 ;
+utilCompressorFactory gCompressFactory ;
 
 #define PMD_REPAIRE_MB_MASK_FLAG             0x00000001
 #define PMD_REPAIRE_MB_MASK_LID              0x00000002
@@ -206,7 +207,7 @@ INT32 switchFile( OSSFILE& file, const INT32 size )
    {
       ossClose( file ) ;
    retry:
-      
+
       ++gCurFileIndex ;
       ossSnprintf( newFile, OSS_MAX_PATHSIZE, "%s.%d",
                    gOutputFile, gCurFileIndex ) ;
@@ -493,7 +494,7 @@ INT32 resolveArgument ( po::options_description &desc, INT32 argc, CHAR **argv )
       {
          goto error ;
       }
-      
+
       rc = ossOpen ( outputFile, OSS_REPLACE | OSS_WRITEONLY,
                      OSS_RU|OSS_WU|OSS_RG, gFile ) ;
       if ( rc )
@@ -1127,6 +1128,76 @@ INT32 getExtentHead ( OSSFILE &file, dmsExtentID extentID, SINT32 pageSize,
    return rc ;
 }
 
+INT32 getDictExtentHead( OSSFILE &file, dmsExtentID extentID, INT32 pageSize,
+                         dmsDictExtent &extentHead )
+{
+   INT32 rc = SDB_OK ;
+   INT64 readLen = 0 ;
+   rc = ossSeekAndRead( &file, gDataOffset + (INT64)pageSize * extentID,
+                        (CHAR *)&extentHead, DMS_DICTEXTENT_HEADER_SZ,
+                        &readLen ) ;
+   if ( rc || readLen != DMS_DICTEXTENT_HEADER_SZ )
+   {
+      dumpPrintf ( "Error: Failed to read dictionary extent head, "
+                   "read %lld bytes, rc = %d"OSS_NEWLINE, readLen, rc ) ;
+      if ( !rc )
+      {
+         rc = SDB_IO ;
+      }
+      goto error ;
+   }
+
+   if ( !extentHead.validate( extentID ) )
+   {
+      dumpPrintf( "Dictionary extent corrupted, extent id: %d"OSS_NEWLINE,
+                  extentID ) ;
+      rc = SDB_SYS ;
+      goto error ;
+   }
+
+   SDB_ASSERT( extentHead._dictLen > 0
+               && extentHead._dictLen <= DMS_DICT_MAX_SIZE,
+               "Dictionary length in extent is invalid" ) ;
+done:
+   return rc ;
+error:
+   goto done ;
+}
+
+INT32 getDictFromExtent( OSSFILE &file, dmsExtentID extentID, INT32 pageSize,
+                         const dmsDictExtent *extentHead,
+                         CHAR *buf, UINT32 &bufLen )
+{
+   INT32 rc = SDB_OK ;
+   INT64 readLen = 0 ;
+
+   SDB_ASSERT( bufLen >= extentHead->_dictLen,
+               "Unable to load dictionary from file to buffer due to too small "
+               "buffer" );
+   {
+      rc = ossSeekAndRead( &file,
+           gDataOffset + (SINT64)pageSize * extentID + sizeof( dmsDictExtent ),
+           buf, extentHead->_dictLen, readLen ) ;
+      if ( rc || readLen != extentHead->_dictLen )
+      {
+         dumpPrintf( "Failed to read dicionary from file, rc: %d, dictionary "
+                     "length: %d, read length: %lld"OSS_NEWLINE,
+                     rc, extentHead->_dictLen, readLen ) ;
+         if ( !rc )
+         {
+            rc = SDB_IO ;
+         }
+
+         goto error ;
+      }
+   }
+
+done:
+   return rc ;
+error:
+   goto done ;
+}
+
 // extract full extent by
 // 1) input file
 // 2) extent id
@@ -1432,6 +1503,92 @@ done :
    PD_TRACE_EXITRC ( SDB_LOADEXTENT, rc );
    return rc ;
 error :
+   goto done ;
+}
+
+INT32 prepareCompressor( OSSFILE &file, const dmsMB *mb,
+                         INT32 pageSize, utilCompressor *&compressor )
+{
+   INT32 rc = SDB_OK ;
+   dmsDictExtent extentHead ;
+   dmsExtentID dictExtentID = mb->_dictExtentID ;
+
+   utilCompressor *compressorPtr = NULL ;
+   CHAR *dictBuf = NULL ;
+   UINT32 dictLen = 0 ;
+   UINT32 readLen = 0 ;
+
+   rc = gCompressFactory.createCompressor(
+                                 (UTIL_COMPRESSOR_TYPE)mb->_compressorType,
+                                 compressorPtr ) ;
+   if ( rc )
+   {
+      dumpPrintf( "Failed to create create compressor, rc: %d"OSS_NEWLINE,
+                  rc ) ;
+      goto error ;
+   }
+
+   rc = compressorPtr->init() ;
+   if ( rc )
+   {
+      dumpPrintf( "Failed to initialize compressor, rc: %d"OSS_NEWLINE, rc ) ;
+      goto error ;
+   }
+
+   rc = getExtentHead( file, dictExtentID, pageSize, extentHead ) ;
+   if ( rc )
+   {
+      dumpPrintf( "Failed to get dictionary extent head, "
+                  "rc: %d, extent id: %d"OSS_NEWLINE,
+                  rc, dictExtentID ) ;
+      goto error ;
+   }
+
+   rc = getDictExtentHead( file, dictExtentID, pageSize, extentHead ) ;
+   if ( rc )
+   {
+      dumpPrintf( "Failed to get dictionary extent head, "
+                  "rc: %d, extent id: %d"OSS_NEWLINE, rc, dictExtentID ) ;
+      goto error ;
+   }
+
+   dictBuf = SDB_OSS_MALLOC( extentHead._dictLen ) ;
+   if ( !dictBuf )
+   {
+      dumpPrintf( "Failed to allocate memory for dictionary, requested size: "
+                  "%d"OSS_NEWLINE, extentHead._dictLen ) ;
+      goto error ;
+   }
+
+   rc = getDictFromExtent( file, dictExtentID, pageSize, extentHead,
+                           dictBuf, extentHead._dictLen ) ;
+   if ( rc )
+   {
+      dumpPrintf( "Failed to get dictionary from extent, rc: %d, "
+                  "extent id: %d"OSS_NEWLINE, rc, dictExtentID ) ;
+      goto error ;
+   }
+
+   rc = compressor->setDictionary( dictBuf, extentHead._dictLen, TRUE ) ;
+   if ( rc )
+   {
+      dumpPrintf( "Failed to set dictionary for compressor, rc: %d"OSS_NEWLINE,
+                  rc ) ;
+      goto error ;
+   }
+
+done:
+   if ( dictBuf )
+   {
+      SDB_OSS_FREE( dictBuf ) ;
+   }
+
+   return rc ;
+error:
+   if ( compressor )
+   {
+      compFactory->destroyCompressor( compressor ) ;
+   }
    goto done ;
 }
 
@@ -1940,6 +2097,7 @@ void inspectCollectionData( OSSFILE &file, SINT32 pageSize, UINT16 id,
    dmsExtentID firstExtent = DMS_INVALID_EXTENT ;
    dmsExtent *pExtent = NULL ;
    CHAR collectionName[ DMS_COLLECTION_NAME_SZ + 1 ] = { 0 } ;
+   utilCompressor *compressor = NULL ;
 
    rc = loadMB ( id, mb ) ;
    if ( rc )
@@ -1958,6 +2116,16 @@ void inspectCollectionData( OSSFILE &file, SINT32 pageSize, UINT16 id,
         gOnlyMeta )
    {
       goto done ;
+   }
+
+   if ( DMS_INVALID_EXTENT != mb->_dictExtentID )
+   {
+      rc = prepareCompressor( file, mb, pageSize, compressor ) ;
+      if ( rc )
+      {
+         dumpPrintf( "Failed to prepare compressor for collection, rc: %d", rc ) ;
+         goto error ;
+      }
    }
 
    // loop through all extents
@@ -2018,7 +2186,7 @@ retry_data :
       len = dmsInspect::inspectDataExtent ( cb, gExtentBuffer,
                                ((dmsExtent*)gExtentBuffer)->_blockSize*pageSize,
                                gBuffer, gBufferSize, hwm, id, tempExtent,
-                               &extentRIDList, localErr ) ;
+                               &extentRIDList, localErr, compressor ) ;
       if ( (UINT32)len >= gBufferSize-1 )
       {
          // if our buffer is not large enough, let's allocate more memory and
@@ -2045,6 +2213,10 @@ retry_data :
    } //end while
 
 done :
+   if ( compressor )
+   {
+      gCompressFactory.destroyCompressor( compressor ) ;
+   }
    return ;
 error :
    goto done ;
@@ -2145,6 +2317,7 @@ void dumpCollectionData( OSSFILE &file, SINT32 pageSize, UINT16 id )
    dmsMB *mb = NULL ;
    dmsExtentID tempExtent = DMS_INVALID_EXTENT ;
    dmsExtentID firstExtent = DMS_INVALID_EXTENT ;
+   utilCompressor *compressor = NULL ;
 
    rc = loadMB ( id, mb ) ;
    if ( rc )
@@ -2197,6 +2370,16 @@ void dumpCollectionData( OSSFILE &file, SINT32 pageSize, UINT16 id )
       goto done ;
    }
 
+   if ( DMS_INVALID_EXTENT != mb->_dictExtentID )
+   {
+      rc = prepareCompressor( file, mb, pageSize, compressor ) ;
+      if ( rc )
+      {
+         dumpPrintf( "Failed to prepare compressor for collection, rc: %d", rc ) ;
+         goto error ;
+      }
+   }
+
    extentType = INSPECT_EXTENT_TYPE_DATA ;
    firstExtent = mb->_firstExtentID ;
    dumpPrintf ( " Dump Data for Collection [%d]"OSS_NEWLINE, id ) ;
@@ -2224,7 +2407,7 @@ retry_data :
                                DMS_SU_DMP_OPT_HEX_WITH_ASCII |
                                DMS_SU_DMP_OPT_HEX_PREFIX_AS_ADDR |
                                gDumpType, tempExtent, &extentRIDList,
-                               gShowRecordContent ) ;
+                               gShowRecordContent, compressor ) ;
       PD_TRACE1 ( SDB_DUMPCOLL, PD_PACK_INT(len) );
       if ( (UINT32)len >= gBufferSize-1 )
       {
@@ -2249,6 +2432,10 @@ retry_data :
    }
 
 done :
+   if ( compressor )
+   {
+      gCompressFactory.destroyCompressor( compressor ) ;
+   }
    return ;
 error :
    goto done ;

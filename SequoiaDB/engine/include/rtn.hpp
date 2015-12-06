@@ -192,6 +192,8 @@ namespace engine
                                       pmdEDUCB *cb,
                                       SDB_DMSCB *dmsCB,
                                       SDB_DPSCB *dpsCB,
+                                      UTIL_COMPRESSOR_TYPE compressorType =
+                                          UTIL_COMPRESSOR_INVALID,
                                       INT32 flags = 0,
                                       BOOLEAN sysCall = FALSE ) ;
 
@@ -201,6 +203,8 @@ namespace engine
                                       _pmdEDUCB * cb,
                                       SDB_DMSCB *dmsCB,
                                       SDB_DPSCB *dpsCB,
+                                      UTIL_COMPRESSOR_TYPE compressorType =
+                                          UTIL_COMPRESSOR_INVALID,
                                       INT32 flags = 0,
                                       BOOLEAN sysCall = FALSE ) ;
 
@@ -435,7 +439,7 @@ namespace engine
    BOOLEAN rtnIsCommand ( const CHAR *name ) ;
    INT32 rtnParserCommand ( const CHAR *name, _rtnCommand **ppCommand ) ;
    INT32 rtnReleaseCommand ( _rtnCommand **ppCommand ) ;
-   INT32 rtnInitCommand ( _rtnCommand *pCommand ,INT32 flags, INT64 numToSkip, 
+   INT32 rtnInitCommand ( _rtnCommand *pCommand ,INT32 flags, INT64 numToSkip,
                           INT64 numToReturn, const CHAR *pMatcherBuff,
                           const CHAR *pSelectBuff, const CHAR *pOrderByBuff,
                           const CHAR *pHintBuff ) ;

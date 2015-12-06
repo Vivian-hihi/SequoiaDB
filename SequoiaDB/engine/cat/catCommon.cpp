@@ -214,8 +214,8 @@ namespace engine
          }
          ++expectedOptSize ;
       }
-      } 
-      
+      }
+
       if ( options.nFields() != expectedOptSize )
       {
          PD_LOG ( PDERROR, "Actual input doesn't match expected opt size, "
@@ -425,7 +425,7 @@ namespace engine
       BSONObj dummyObj ;
       BSONObj boMatcher ;
       BSONObjBuilder builder ;
- 
+
       if ( dataGroupOnly )
       {
          builder.append( CAT_GROUPNAME_NAME, groupName ) ;
@@ -2364,6 +2364,7 @@ namespace engine
       if ( SDB_DMS_CS_NOTEXIST == rc || SDB_DMS_NOTEXIST == rc )
       {
          rc = rtnCreateCollectionCommand( pCLFullName, 0, cb, dmsCB, dpsCB,
+                                          UTIL_COMPRESSOR_INVALID,
                                           FLG_CREATE_WHEN_NOT_EXIST, sys ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to create collection[%s], rc: %d",
                       pCLFullName, rc ) ;

@@ -487,10 +487,14 @@ namespace engine
       BSONObjBuilder builder1 ;
       BSONObjBuilder builder2 ;
       UINT32 attributes = 0 ;
+      UTIL_COMPRESSOR_TYPE compType = UTIL_COMPRESSOR_INVALID ;
       su->getCollectionAttributes( collection, attributes ) ;
+      su->getCollectionCompType( collection, compType ) ;
+
       builder1.append( CLS_FS_PAGE_SIZE,
                        su->getPageSize() ) ;
       builder1.append( CLS_FS_ATTRIBUTES, attributes ) ;
+      builder1.append( CLS_FS_COMP_TYPE, (INT32)compType ) ;
       builder1.append( CLS_FS_LOB_PAGE_SIZE, su->getLobPageSize() ) ;
       builder2.append( CLS_FS_CS_META_NAME, builder1.obj() ) ;
       builder2.append( CLS_FS_CS_NAME, cs ) ;
@@ -658,7 +662,7 @@ namespace engine
       _mb.clear () ;
       dmsLobInfoOnPage page ;
       BOOLEAN need2Send = FALSE ;
-      const UINT32 bmSize = sizeof( MsgLobTuple ) + sizeof( bson::OID ) ; 
+      const UINT32 bmSize = sizeof( MsgLobTuple ) + sizeof( bson::OID ) ;
       time_t bTime = time( NULL ) ;
 
       /// | oid | MsgLobTuple | data | ... | oid | MsgLobTuple | data |
@@ -850,7 +854,7 @@ namespace engine
       else if ( _canSwitchWhenSyncLog() )
       {
          if ( !_findEnd )
-         { 
+         {
             _syncRecord( handle, packet, routeID, TID, requestID ) ;
          }
          else
@@ -1883,7 +1887,7 @@ namespace engine
          goto error ;
       }
 
-      
+
       // no sharding index, scan by table
       // log of lob can be ignored, coz _findEnd is false.
       if ( TBSCAN == _scanType() && !inEndMap && !_findEnd &&
@@ -2066,7 +2070,7 @@ namespace engine
                _shardingKey = catSet->OwnedShardingKey() ;
                _hashShard   = catSet->isHashSharding() ;
                _partitionBit = catSet->getPartitionBit() ;
-               _internalV = catSet->getInternalV() ;         
+               _internalV = catSet->getInternalV() ;
                catSet->getGroupUpBound( groupID , upBound ) ;
             }
             else

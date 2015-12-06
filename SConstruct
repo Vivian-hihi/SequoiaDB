@@ -39,6 +39,10 @@ pcre_dir = join(engine_dir,'pcre')
 ssh2_dir = join(engine_dir,'ssh2')
 crypto_dir = join(thirdparty_dir, 'crypto')
 ssl_dir = join(crypto_dir, 'openssl-1.0.1c')
+lz4_dir = join(thirdparty_dir, 'lz4')
+lz4_lib_dir = join(lz4_dir, 'lib')
+zlib_dir = join(thirdparty_dir, 'zlib')
+zlib_lib_dir = join(zlib_dir, 'lib')
 gtest_dir = join(engine_dir,'gtest')
 ncursesinclude_dir = join(engine_dir, 'ncurses/include')
 driver_dir = join(db_dir,'driver')
@@ -437,7 +441,7 @@ elif guess_os == "win32":
         hdfsJniMdPath = join(java_dir,"jdk_win64/include/win32")
 
 env.Append(
-CPPPATH=[join(engine_dir,'include'),join(engine_dir,'client'),join(ssl_dir,'include'),join(gtest_dir,'include'),pcre_dir, boost_dir, ssh2_dir, hdfsJniPath, hdfsJniMdPath] )
+CPPPATH=[join(engine_dir,'include'),join(engine_dir,'client'),join(ssl_dir,'include'),join(lz4_dir,'include'),join(zlib_dir,'include'),join(gtest_dir,'include'),pcre_dir, boost_dir, ssh2_dir, hdfsJniPath, hdfsJniMdPath] )
 
 env.Append( CPPDEFINES=["__STDC_LIMIT_MACROS", "HAVE_CONFIG_H"] )
 env.Append( CPPDEFINES=[ "SDB_DLL_BUILD" ] )
@@ -464,6 +468,8 @@ if guess_os == "linux":
         env.Append( EXTRALIBPATH=boost_lib_dir )
         # use project-related ssl library
         env.Append( EXTRALIBPATH=join(ssl_dir,'lib/linux64') )
+        env.Append( EXTRALIBPATH=join(zlib_lib_dir,'linux64') )
+        env.Append( EXTRALIBPATH=join(lz4_lib_dir,'linux64') )
         # use project-related spidermonkey library
         if usesm:
             if debugBuild:
@@ -475,6 +481,8 @@ if guess_os == "linux":
                 env.Append( CPPPATH=join(js_dir,'lib/release/linux64/include') )
                 env.Append( EXTRALIBPATH=[smlib_dir] )
         ssllib_dir = join(ssl_dir,'lib/linux64')
+        zlib_lib_dir_platform = join(zlib_lib_dir, 'linux64')
+        lz4_lib_dir_platform = join(lz4_lib_dir, 'linux64')
     # in case for 32 bit linux or compiling 32 bit in 64 env
     elif guess_arch == "ia32":
         linux64 = False
@@ -485,6 +493,8 @@ if guess_os == "linux":
         env.Append( EXTRALIBPATH=boost_lib_dir )
         # use project-related ssl library
         env.Append( EXTRALIBPATH=join(ssl_dir,'lib/linux32') )
+        env.Append( EXTRALIBPATH=join(zlib_lib_dir,'linux32') )
+        env.Append( EXTRALIBPATH=join(lz4_lib_dir,'linux32') )
         # and 32 bit spidermonkey library
         if usesm:
             if debugBuild:
@@ -497,6 +507,8 @@ if guess_os == "linux":
                 env.Append( EXTRALIBPATH=[smlib_dir] )
                 # if we are in 64 bit box but want to build 32 bit release
         ssllib_dir = join(ssl_dir,'lib/linux32')
+        zlib_lib_dir_platform = join(zlib_lib_dir, 'linux32') 
+        lz4_lib_dir_platform = join(lz4_lib_dir, 'linux32')
     # power pc linux
     elif guess_arch == "ppc64":
         linux64 = True
@@ -510,6 +522,8 @@ if guess_os == "linux":
         env.Append( EXTRALIBPATH=boost_lib_dir )
         # use project-related ssl library
         env.Append( EXTRALIBPATH=join(ssl_dir,'lib/ppclinux64') )
+        env.Append( EXTRALIBPATH=join(zlib_lib_dir,'ppclinux64') )
+        env.Append( EXTRALIBPATH=join(lz4_lib_dir,'ppclinux64') )
         # use project-related spidermonkey library
         if usesm:
             if debugBuild:
@@ -521,7 +535,8 @@ if guess_os == "linux":
                 env.Append( CPPPATH=join(js_dir,'lib/release/ppclinux64/include') )
                 env.Append( EXTRALIBPATH=[smlib_dir] )
         ssllib_dir = join(ssl_dir,'lib/ppclinux64')
-
+        zlib_lib_dir_platform = join(zlib_lib_dir, 'ppclinux32') 
+        lz4_lib_dir_platform = join(lz4_lib_dir, 'ppclinux32')
     # spider monkey
     if usesm:
         smlib_file = join(smlib_dir, 'libmozjs185.so')
@@ -532,6 +547,15 @@ if guess_os == "linux":
     env.Append( LIBS=['crypto'] )
     ssllib_file = join(ssllib_dir, 'libcrypto.a')
     ssllib_file1 = join(ssllib_dir, 'libssl.a')
+
+	# lz4 and zlib
+    #env.Append( EXTRALIBPATH=[lz4_lib_dir] )
+    #env.Append( EXTRALIBPATH=[zlib_lib_dir] )
+    env.Append( LIBS=['lz4'] )
+    env.Append( LIBS=['z'] )
+    zlib_lib = join(zlib_lib_dir_platform, 'libz.a')
+    lz4_lib = join(lz4_lib_dir_platform, 'liblz4.a')
+
     nix = True
 
 elif "win32" == guess_os:
@@ -553,6 +577,8 @@ elif "win32" == guess_os:
         env.Append( EXTRALIBPATH=boost_lib_dir )
         # use project-related ssl library
         env.Append( EXTRALIBPATH=join(ssl_dir,'lib/win64') )
+        env.Append( EXTRALIBPATH=join(zlib_lib_dir,'win64') )
+        env.Append( EXTRALIBPATH=join(lz4_lib_dir,'win64') )
         # use 64 bit spidermonkey
         if usesm:
             if debugBuild:
@@ -564,12 +590,16 @@ elif "win32" == guess_os:
                 env.Append( CPPPATH=join(js_dir,'lib/release/win64/include') )
                 env.Append( EXTRALIBPATH=[smlib_dir] )
         ssllib_dir = join(ssl_dir,'lib/win64')
+        zlib_lib_dir_platform = join(zlib_lib_dir, 'win64') 
+        lz4_lib_dir_platform = join(lz4_lib_dir, 'win64')
     else:
         boost_lib_dir = join(boost_lib_dir,'win32')
         # we are 32 bit
         env.Append( EXTRALIBPATH=boost_lib_dir )
         # use project-related ssl library
         env.Append( EXTRALIBPATH=join(ssl_dir,'lib/win32') )
+        env.Append( EXTRALIBPATH=join(zlib_lib_dir,'win32') )
+        env.Append( EXTRALIBPATH=join(lz4_lib_dir,'win32') )
         if usesm:
             if debugBuild:
                 smlib_dir = join(js_dir,'lib/debug/win32/lib')
@@ -580,6 +610,8 @@ elif "win32" == guess_os:
                 env.Append( CPPPATH=join(js_dir,'lib/release/win32/include') )
                 env.Append( EXTRALIBPATH=[smlib_dir] )
         ssllib_dir = join(ssl_dir,'lib/win32')
+        zlib_lib_dir_platform = join(zlib_lib_dir, 'win32') 
+        lz4_lib_dir_platform = join(lz4_lib_dir, 'win32')
     if usesm:
         smlib_file = join(smlib_dir, 'mozjs185-1.0.dll')
         env.Append( CPPDEFINES=[ "XP_WIN" ] )
@@ -590,6 +622,9 @@ elif "win32" == guess_os:
     env.Append( LIBS=['libeay32'] )
     ssllib_file = join(ssllib_dir, 'libeay32.lib')
     ssllib_file1 = join(ssllib_dir, 'ssleay32.lib')
+
+    # TBD: Add libbraries for lz4 and zlib
+
     # UNICODE
     env.Append( CPPDEFINES=[ "_UNICODE" ] )
     env.Append( CPPDEFINES=[ "UNICODE" ] )
@@ -751,6 +786,9 @@ if nix:
       env.Append ( _LIBFLAGS='${SLIBS}',
                    SLIBS=" " + join(boost_lib_dir,"libboost_" + b + ".a") )
 
+# --- append lz4 and zlib library to env ---
+#env.Append ( LIBS= [join(lz4_dir, "liblz4.a"] )
+#env.Append ( LIBS= [join(zlib_dir, "libz.a"] )
 testEnv = env.Clone()
 testEnv.Append( CPPPATH=["../"] )
 
@@ -833,6 +871,8 @@ if usesm:
    Export("smlib_file")
 Export("ssllib_file")
 Export("ssllib_file1")
+#Export("lz4_lib")
+#Export("zlib_lib")
 Export("hasEngine")
 Export("hasTestcase")
 Export("hasTool")

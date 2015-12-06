@@ -138,7 +138,13 @@ utilFiles = [
       "util/linenoise.cpp",
       "util/utilLinenoiseWrapper.cpp",
       "util/utilString.cpp",
-      "util/utilBsonHashObsolete.cpp"
+      "util/utilBsonHashObsolete.cpp",
+	  "util/utilLZW.cpp",
+      "util/utilDictionary.cpp",
+      "util/utilCompressorFactory.cpp",
+      "util/utilCompressorLZ4.cpp",
+      "util/utilCompressorZlib.cpp",
+	  "util/utilCompressorLZW.cpp"
       ]
 
 rtnFiles = [
@@ -218,7 +224,8 @@ rtnFiles = [
       "rtn/rtnAlterFuncs.cpp",
       "rtn/rtnAlterRunner.cpp",
       "rtn/rtnAlterJob.cpp",
-      "rtn/rtnIxmKeySorter.cpp"
+      "rtn/rtnIxmKeySorter.cpp",
+      "rtn/rtnDictCreatorJob.cpp"
       ]
 
 msgFiles = [

@@ -117,7 +117,8 @@ namespace engine
                                            UINT16 collectionID,
                                            dmsExtentID &nextExtent,
                                            set<dmsRecordID> *ridList,
-                                           SINT32 &err ) ;
+                                           SINT32 &err,
+                                           utilCompressor *compressor = NULL ) ;
 
          static UINT32 inspectDataRecord ( _pmdEDUCB *cb,
                                            void * inBuf,
@@ -127,7 +128,8 @@ namespace engine
                                            INT32 currentRecordID,
                                            dmsOffset &nextRecord,
                                            set<dmsRecordID> *ridList,
-                                           SINT32 &err ) ;
+                                           SINT32 &err,
+                                           utilCompressor *compressor = NULL ) ;
 
          static UINT32 inspectExtentHeader ( void * inBuf,
                                              UINT32 inSize,

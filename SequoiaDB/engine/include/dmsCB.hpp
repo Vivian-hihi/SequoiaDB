@@ -123,6 +123,20 @@ namespace engine
       std::list<_pageCleanHistory>                 _pageCleanHistoryList ;
       std::set<dmsStorageUnitID>                   _pageCleanHistorySet ;
 
+      /*
+       * List of collections which are waitting for dictionaies creation.
+       * Here we store the storage unit id and mb ID of the collection.
+       * One concern here is the reuse of these two IDs, but that's ok. I'll
+       * just check with these IDs to see if dictionary creation is needed for
+       * the CURRENT corresponding collection. If they have been reused, then
+       * the original collection has been dropped. So we just ignore that.
+       * If the IDs have been reused, and added to the list again, it's also ok.
+       * Everytime we are about to create a dictionary, we should check if a
+       * dictionary is there already. If yes, just remove the item from the list.
+       */
+      typedef std::pair<dmsStorageUnitID, UINT16>  _dictWaitCl ;
+      std::list<_dictWaitCl>                       _dictWaitClList ;
+
       ossSpinXLatch           _stateMtx;
       ossEvent                _backEvent ;
       SINT64                  _writeCounter;
@@ -218,6 +232,11 @@ namespace engine
                                     SDB_DPSCB *dpsCB );
 
       _dmsStorageUnit *dispatchPageCleanSU ( dmsStorageUnitID *suID ) ;
+      void dispatchDictCreateCL ( BOOLEAN &empty, dmsStorageUnitID &suID,
+                                  UINT16 &mbID ) ;
+      void pushToDictCreateCLList( dmsStorageUnitID suID, UINT16 mbID ) ;
+      void popFromDictCreateCLList() ;
+      void skipCurrentDictCreateCL() ;
 
       INT32 joinPageCleanSU ( dmsStorageUnitID suID ) ;
 

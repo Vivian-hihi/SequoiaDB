@@ -64,7 +64,6 @@ namespace engine
    typedef _dmsExtendSegmentJob  dmsExtendSegmentJob ;
 
    INT32 startExtendSegmentJob ( EDUID *pEDUID, _dmsStorageBase *pSUBase ) ;
-
 }
 
 #endif //DMS_STORAGE_JOB_HPP__

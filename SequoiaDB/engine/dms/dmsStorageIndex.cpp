@@ -113,7 +113,7 @@ namespace engine
       return SDB_OK ;
    }
 
-   void _dmsStorageIndex::_onOpened()
+   INT32 _dmsStorageIndex::_onOpened()
    {
       for ( UINT16 i = 0 ; i < DMS_MME_SLOTS ; i++ )
       {
@@ -136,6 +136,8 @@ namespace engine
             }
          }
       }
+
+      return SDB_OK ;
    }
 
    void _dmsStorageIndex::_onClosed()
@@ -269,7 +271,7 @@ namespace engine
          BOOLEAN sameName = (0 == ossStrncmp ( indexName,
                                               curIdxCB.getName(),
                                               IXM_INDEX_NAME_SIZE)) ;
-         if ( sameName && 
+         if ( sameName &&
               curIdxCB.isSameDef( index, TRUE ) )
          {
             PD_LOG( PDERROR, "Same index defined already:[%s:%s]",
@@ -642,9 +644,9 @@ namespace engine
                                        IXM_ID_KEY_NAME ) )
          {
             OSS_BIT_SET( context->mb()->_attributes,
-                         DMS_MB_ATTR_NOIDINDEX ) ; 
+                         DMS_MB_ATTR_NOIDINDEX ) ;
          }
-                                       
+
 
          // reserved log-size
          if ( dpscb )

@@ -43,6 +43,7 @@
 #include "oss.hpp"
 #include "dpsLogRecord.hpp"
 #include "rtnBackgroundJob.hpp"
+#include "utilCompressor.hpp"
 #include "../bson/bsonobj.h"
 
 using namespace bson ;
@@ -78,7 +79,8 @@ namespace engine
 
       INT32 replayCrtCollection( const CHAR *collection,
                                  UINT32 attributes,
-                                 _pmdEDUCB *eduCB ) ;
+                                 _pmdEDUCB *eduCB,
+                                 UTIL_COMPRESSOR_TYPE compType ) ;
 
       INT32 replayIXCrt( const CHAR *collection,
                          BSONObj &index,

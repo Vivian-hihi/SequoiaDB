@@ -38,6 +38,7 @@
 #include "clsTrace.hpp"
 #include "rtnDataSet.hpp"
 #include "rtnContextShdOfLob.hpp"
+#include "utilCompressor.hpp"
 
 using namespace bson ;
 
@@ -207,7 +208,7 @@ namespace engine
       //Send message
       if ( size > 0 )
       {
-         rc = routeAgent()->syncSend ( _netHandle, (MsgHeader *)header, 
+         rc = routeAgent()->syncSend ( _netHandle, (MsgHeader *)header,
                                        (void*)buff, size ) ;
       }
       else
@@ -347,7 +348,7 @@ namespace engine
          }
 
          //Need to update catalog info
-         // SDB_CLS_NO_CATALOG_INFO: between update and check, this cata 
+         // SDB_CLS_NO_CATALOG_INFO: between update and check, this cata
          // will be removed by others, so need to retry all the way
          if ( SDB_CLS_NO_CATALOG_INFO == rc ||
               ( ( SDB_CLS_DATA_NODE_CAT_VER_OLD == rc ||
@@ -608,8 +609,9 @@ namespace engine
          }
 
          rc = rtnCreateCollectionCommand( clFullName, shardingKey, attribute,
-                                          _pEDUCB, _pDmsCB, _pDpsCB, 0,
-                                          FALSE ) ;
+                                          _pEDUCB, _pDmsCB, _pDpsCB,
+                                          UTIL_COMPRESSOR_INVALID,
+                                          0, FALSE ) ;
          if ( SDB_DMS_EXIST == rc )
          {
             rc = SDB_OK ;
@@ -706,7 +708,7 @@ namespace engine
          PD_LOG( PDWARNING, "failed to check write status:%d", rc ) ;
          goto error ;
       }
- 
+
       rc = msgExtractUpdate( (CHAR*)msg, &flags, &pCollectionName,
                              &pSelectorBuffer, &pUpdatorBuffer, &pHintBuffer );
       if ( SDB_OK != rc )
@@ -756,7 +758,7 @@ namespace engine
          }
          else
          {
-            rc = rtnUpdate( pCollectionName, selector, updator, hint, 
+            rc = rtnUpdate( pCollectionName, selector, updator, hint,
                             flags, _pEDUCB, _pDmsCB, _pDpsCB, w,
                             ( pUpdate->flags & FLG_UPDATE_RETURNNUM ) ?
                             &updateNum : NULL ) ;
@@ -843,7 +845,7 @@ namespace engine
          else
          {
 
-            rc = rtnInsert ( pCollectionName, insertor, recordNum, flags, 
+            rc = rtnInsert ( pCollectionName, insertor, recordNum, flags,
                              _pEDUCB, _pDmsCB, _pDpsCB, w ) ;
          }
       }
@@ -886,7 +888,7 @@ namespace engine
          goto error ;
       }
 
-      rc = msgExtractDelete ( (CHAR *)msg , &flags, &pCollectionName, 
+      rc = msgExtractDelete ( (CHAR *)msg , &flags, &pCollectionName,
                               &pDeletorBuffer, &pHintBuffer ) ;
       if ( SDB_OK != rc )
       {
@@ -922,7 +924,7 @@ namespace engine
                            hint.toString( false, false ).c_str() );
 
          PD_LOG ( PDDEBUG, "Session[%s] Delete: deletor: %s\nhint: %s",
-                  sessionName(), deletor.toString().c_str(), 
+                  sessionName(), deletor.toString().c_str(),
                   hint.toString().c_str() ) ;
 
          if ( _isMainCL )
@@ -935,7 +937,7 @@ namespace engine
          else
          {
 
-            rc = rtnDelete( pCollectionName, deletor, hint, flags, _pEDUCB, 
+            rc = rtnDelete( pCollectionName, deletor, hint, flags, _pEDUCB,
                             _pDmsCB, _pDpsCB, w,
                             ( pDelete->flags & FLG_DELETE_RETURNNUM ) ?
                             &delNum : NULL ) ;
@@ -1161,9 +1163,9 @@ namespace engine
             rc = _checkCLStatusAndGetSth( pCommand->collectionFullName(),
                                           pQuery->version,
                                           &_isMainCL, &replSize ) ;
-            
+
             if ( SDB_OK != rc )
-            {    
+            {
                goto error ;
             }
 
@@ -1185,7 +1187,7 @@ namespace engine
             {
                PD_LOG( PDERROR, "failed to check repl status:%d", rc ) ;
                goto error ;
-            } 
+            }
          }
 
          PD_LOG ( PDDEBUG, "Command: %s", pCommand->name () ) ;
@@ -1490,7 +1492,7 @@ namespace engine
 
       retryInsert:
             /// insert to sub collection
-            rc = rtnInsert ( pSubCLName, insertor, subObjsNum, flags, 
+            rc = rtnInsert ( pSubCLName, insertor, subObjsNum, flags,
                              _pEDUCB, _pDmsCB, _pDpsCB, w ) ;
             if ( rc )
             {
@@ -2596,7 +2598,7 @@ namespace engine
             goto error ;
          }
          tmp.append( ele ) ;
-         
+
          ele = obj.getField( FIELD_NAME_SCANTYPE ) ;
          if ( String != ele.type() )
          {
@@ -2715,7 +2717,7 @@ namespace engine
          goto error ;
       }
 
-      
+
    done:
       return rc ;
    error:
@@ -2996,7 +2998,7 @@ namespace engine
       }
 
    done:
-      if ( NULL != context ) 
+      if ( NULL != context )
       {
          rtnCB->contextDelete ( context->contextID(), _pEDUCB ) ;
       }
@@ -3259,7 +3261,7 @@ namespace engine
          PD_LOG( PDERROR, "failed to calculate w:%d", rc ) ;
          goto error ;
       }
-   
+
       while ( TRUE )
       {
          BOOLEAN got = FALSE ;
@@ -3296,7 +3298,7 @@ namespace engine
       }
 
       PD_LOG( PDDEBUG, "%d pieces of lob[%s] update done",
-              tupleNum, lobContext->getOID().str().c_str() ) ;      
+              tupleNum, lobContext->getOID().str().c_str() ) ;
    done:
       return rc ;
    error:
@@ -3373,7 +3375,7 @@ namespace engine
                     pSubCLName, rc ) ;
             goto error ;
          }
-         
+
       }
    done:
       return rc ;

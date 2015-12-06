@@ -239,6 +239,9 @@ namespace engine
                                                UINT32 newAttributes,
                                                dmsMBContext *context = NULL ) ;
 
+         INT32    getCollectionCompType ( const CHAR *pName,
+                                          UTIL_COMPRESSOR_TYPE &compType,
+                                          dmsMBContext *context = NULL ) ;
          //loadExtentA is not init extent records
          INT32    loadExtentA ( dmsMBContext *mbContext, const CHAR *pBuffer,
                                 UINT16 numPages, const BOOLEAN toLoad = FALSE,

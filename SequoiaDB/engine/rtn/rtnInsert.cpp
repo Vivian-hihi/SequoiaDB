@@ -37,6 +37,7 @@
 *******************************************************************************/
 #include "rtn.hpp"
 #include "dmsStorageUnit.hpp"
+#include "dmsStorageJob.hpp"
 #include "ossTypes.hpp"
 #include "msgMessage.hpp"
 #include "pmd.hpp"
@@ -57,6 +58,7 @@ namespace engine
       pmdKRCB *krcb = pmdGetKRCB () ;
       SDB_DMSCB *dmsCB = krcb->getDMSCB () ;
       SDB_DPSCB *dpsCB = krcb->getDPSCB () ;
+      //EDUID eduId = cb->getID() ;
 
       if ( dpsCB && cb->isFromLocal() && !dpsCB->isLogLocal() )
       {
@@ -65,6 +67,7 @@ namespace engine
       rc = rtnInsert ( pCollectionName, objs, objNum, flags, cb,
                        dmsCB, dpsCB ) ;
       PD_TRACE_EXITRC ( SDB_RTNINSERT1, rc ) ;
+
       return rc ;
    }
 
@@ -163,6 +166,7 @@ namespace engine
       {
          dmsCB->writeDown( cb );
       }
+
       if ( cb )
       {
          if ( SDB_OK == rc && dpsCB )

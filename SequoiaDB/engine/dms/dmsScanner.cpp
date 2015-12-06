@@ -206,6 +206,7 @@ namespace engine
    {
       INT32 rc                = SDB_OK ;
       BOOLEAN result          = TRUE ;
+      dmsDictContext * dictContext = NULL ;
 
       if ( _firstRun )
       {
@@ -225,6 +226,11 @@ namespace engine
          _skipNum -= _extent->_recCount ;
          _next = DMS_INVALID_OFFSET ;
       }
+
+      rc = _pSu->getDictCache()->getDictContext( _context, dictContext,
+                                                 SHARED ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to get dictionary context. mb ID: %d",
+                   _extent->_mbID ) ;
 
       while ( DMS_INVALID_OFFSET != _next && 0 != _maxRecords )
       {
@@ -306,7 +312,10 @@ namespace engine
                                _ovfRID._offset ;
                DMS_MON_OP_COUNT_INC( _pMonAppCB, MON_DATA_READ, 1 ) ;
             }
-            DMS_RECORD_EXTRACTDATA(_curRecordPtr, recordDataPtr) ;
+
+            DMS_RECORD_EXTRACTDATA( _pSu->getDictCache(), dictContext,
+                                    _curRecordPtr, recordDataPtr ) ;
+
             DMS_MON_OP_COUNT_INC( _pMonAppCB, MON_DATA_READ, 1 ) ;
             DMS_MON_OP_COUNT_INC( _pMonAppCB, MON_READ, 1 ) ;
 
@@ -375,6 +384,10 @@ namespace engine
       goto error ;
 
    done:
+      if ( dictContext )
+      {
+         _pSu->getDictCache()->releaseDictContext( dictContext ) ;
+      }
       return rc ;
    error:
       recordID.reset() ;
@@ -710,6 +723,7 @@ namespace engine
    {
       INT32 rc                = SDB_OK ;
       BOOLEAN result          = TRUE ;
+      dmsDictContext * dictContext = NULL ;
 
       if ( _firstRun )
       {
@@ -721,6 +735,16 @@ namespace engine
       {
          _pTransCB->transLockRelease( cb, _pSu->logicalID(), _context->mbID(),
                                       &_curRID ) ;
+      }
+
+      //DMS_RECORD_EXTRACTDATA(_curRecordPtr, recordDataPtr) ;
+      rc = _pSu->getDictCache()->getDictContext( _context, dictContext,
+                                                 SHARED ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Failed to get collection dictionary context, "
+                 "rc: %d", rc ) ;
+         goto error ;
       }
 
       while ( _onceRestNum-- > 0 && 0 != _maxRecords )
@@ -817,7 +841,7 @@ namespace engine
 
                _context->pause() ;
                {
-               
+
                DPS_TRANS_WAIT_LOCK _transWaitLock( cb, _pSu->logicalID(),
                                                    _context->mbID(), &_curRID ) ;
                rc = _pTransCB->waitLock( cb, _pSu->logicalID(),
@@ -879,7 +903,9 @@ namespace engine
                             _ovfRID._offset ;
             DMS_MON_OP_COUNT_INC( _pMonAppCB, MON_DATA_READ, 1 ) ;
          }
-         DMS_RECORD_EXTRACTDATA(_curRecordPtr, recordDataPtr) ;
+
+         DMS_RECORD_EXTRACTDATA( _pSu->getDictCache(), dictContext,
+                                 _curRecordPtr, recordDataPtr ) ;
          DMS_MON_OP_COUNT_INC( _pMonAppCB, MON_DATA_READ, 1 ) ;
          DMS_MON_OP_COUNT_INC( _pMonAppCB, MON_READ, 1 ) ;
 
@@ -955,6 +981,11 @@ namespace engine
       goto error ;
 
    done:
+      if ( dictContext )
+      {
+         _pSu->getDictCache()->releaseDictContext( dictContext ) ;
+      }
+
       if ( SDB_OK == rc && ( _onceRestNum <= 0 || 0 == _maxRecords ) )
       {
          rc = _scanner->pauseScan( _recordXLock ? FALSE : TRUE ) ;
@@ -963,6 +994,7 @@ namespace engine
             PD_LOG( PDERROR, "Pause scan failed, rc: %d", rc ) ;
          }
       }
+
       return rc ;
    error:
       recordID.reset() ;

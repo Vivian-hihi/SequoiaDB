@@ -89,6 +89,7 @@ namespace engine
    enum DPS_LOG_CLCRT
    {
       DPS_LOG_CLCRT_ATTRIBUTE = 1,
+      DPS_LOG_CLCRT_COMPRESS_TYPE = 2
    } ;
 
    enum DPS_LOG_CLDEL
