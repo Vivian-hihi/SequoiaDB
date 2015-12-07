@@ -1177,7 +1177,7 @@ INT32 getDictFromExtent( OSSFILE &file, dmsExtentID extentID, INT32 pageSize,
    {
       rc = ossSeekAndRead( &file,
            gDataOffset + (SINT64)pageSize * extentID + sizeof( dmsDictExtent ),
-           buf, extentHead->_dictLen, readLen ) ;
+           buf, extentHead->_dictLen, &readLen ) ;
       if ( rc || readLen != extentHead->_dictLen )
       {
          dumpPrintf( "Failed to read dicionary from file, rc: %d, dictionary "
@@ -1526,12 +1526,14 @@ INT32 prepareCompressor( OSSFILE &file, const dmsMB *mb,
       goto error ;
    }
 
+   /*
    rc = compressorPtr->prepare() ;
    if ( rc )
    {
       dumpPrintf( "Failed to initialize compressor, rc: %d"OSS_NEWLINE, rc ) ;
       goto error ;
    }
+   */
 
    rc = getDictExtentHead( file, dictExtentID, pageSize, extentHead ) ;
    if ( rc )
@@ -1541,7 +1543,7 @@ INT32 prepareCompressor( OSSFILE &file, const dmsMB *mb,
       goto error ;
    }
 
-   dictBuf = SDB_OSS_MALLOC( extentHead._dictLen ) ;
+   dictBuf = (CHAR *)SDB_OSS_MALLOC( extentHead._dictLen ) ;
    if ( !dictBuf )
    {
       dumpPrintf( "Failed to allocate memory for dictionary, requested size: "
