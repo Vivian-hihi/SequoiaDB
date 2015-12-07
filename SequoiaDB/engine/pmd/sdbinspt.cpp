@@ -1169,7 +1169,7 @@ INT32 getDictFromExtent( OSSFILE &file, dmsExtentID extentID, INT32 pageSize,
                          CHAR *buf, UINT32 &bufLen )
 {
    INT32 rc = SDB_OK ;
-   INT64 readLen = 0 ;
+   SINT64 readLen = 0 ;
 
    SDB_ASSERT( bufLen >= extentHead->_dictLen,
                "Unable to load dictionary from file to buffer due to too small "
@@ -1515,8 +1515,6 @@ INT32 prepareCompressor( OSSFILE &file, const dmsMB *mb,
 
    utilCompressor *compressorPtr = NULL ;
    CHAR *dictBuf = NULL ;
-   UINT32 dictLen = 0 ;
-   UINT32 readLen = 0 ;
 
    rc = gCompressFactory.createCompressor(
                                  (UTIL_COMPRESSOR_TYPE)mb->_compressorType,
@@ -1528,19 +1526,10 @@ INT32 prepareCompressor( OSSFILE &file, const dmsMB *mb,
       goto error ;
    }
 
-   rc = compressorPtr->init() ;
+   rc = compressorPtr->prepare() ;
    if ( rc )
    {
       dumpPrintf( "Failed to initialize compressor, rc: %d"OSS_NEWLINE, rc ) ;
-      goto error ;
-   }
-
-   rc = getExtentHead( file, dictExtentID, pageSize, extentHead ) ;
-   if ( rc )
-   {
-      dumpPrintf( "Failed to get dictionary extent head, "
-                  "rc: %d, extent id: %d"OSS_NEWLINE,
-                  rc, dictExtentID ) ;
       goto error ;
    }
 
@@ -1560,7 +1549,7 @@ INT32 prepareCompressor( OSSFILE &file, const dmsMB *mb,
       goto error ;
    }
 
-   rc = getDictFromExtent( file, dictExtentID, pageSize, extentHead,
+   rc = getDictFromExtent( file, dictExtentID, pageSize, &extentHead,
                            dictBuf, extentHead._dictLen ) ;
    if ( rc )
    {
@@ -1587,7 +1576,7 @@ done:
 error:
    if ( compressor )
    {
-      compFactory->destroyCompressor( compressor ) ;
+      gCompressFactory.destroyCompressor( compressor ) ;
    }
    goto done ;
 }
