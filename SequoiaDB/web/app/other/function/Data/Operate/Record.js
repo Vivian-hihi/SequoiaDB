@@ -1,4 +1,4 @@
-﻿// --------------------- Data.Operate.Record ---------------------
+// --------------------- Data.Operate.Record ---------------------
 var _DataOperateRecord = {} ;
 
 //打开 索引详细 的窗口
@@ -548,7 +548,7 @@ _DataOperateRecord.createUpdateModel = function( $scope, SdbRest, SdbFunction ){
 
 //创建删除操作弹窗
 _DataOperateRecord.createDeleteModel = function( $scope, SdbRest, SdbFunction ){
-   $scope.Components.Modal.icon = 'fa-edit' ;
+   $scope.Components.Modal.icon = 'fa-remove' ;
    $scope.Components.Modal.title = $scope.autoLanguage( '删除' ) ;
    $scope.Components.Modal.isShow = true ;
    $scope.Components.Modal.form = {
