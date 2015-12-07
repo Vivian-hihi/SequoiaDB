@@ -1,4 +1,4 @@
-﻿<div ng-repeat="field in fields track by $index">
+<div ng-repeat="field in fields track by $index">
    <table class="table">
       <tr>
          <td class="lineBox treeBox">
@@ -49,7 +49,7 @@
                   <li><button class="treeBtn" data-desc="String" ng-click="changeType($event,field,'String')">""</button></li>
                   <li><button class="treeBtn" data-desc="ObjectId" ng-click="changeType($event,field,'ObjectId')" style="font-size:90%">oid</button></li>
                   <li><button class="treeBtn" data-desc="Regex" ng-click="changeType($event,field,'Regex')" style="font-size:90%">reg</button></li>
-                  <li><button class="treeBtn" data-desc="Binart" ng-click="changeType($event,field,'Binary')">01</button></li>
+                  <li><button class="treeBtn" data-desc="Binary" ng-click="changeType($event,field,'Binary')">01</button></li>
                   <!--<li><button class="treeBtn" data-desc="Code" ng-click="changeType($event,field,'Code')"><i class="fa fa-code"></i></button></li>-->
                   <li><button class="treeBtn" data-desc="Timestamp" ng-click="changeType($event,field,'Timestamp')"><i class="fa fa-calendar"></i></button></li>
                   <li><button class="treeBtn" data-desc="Date" ng-click="changeType($event,field,'Date')"><i class="fa fa-calendar"></i></button></li>
