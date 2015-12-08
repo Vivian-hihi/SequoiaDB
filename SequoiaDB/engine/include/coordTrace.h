@@ -17,11 +17,10 @@
 #ifndef coordTRACE_H__
 #define coordTRACE_H__
 // Component: coord
-#define SDB_COORDGI_FRMBSONOBJ                             0x800000000228L
-#define SDB_COORDCB_ADDCATNDADDR                           0x800000000229L
-#define SDB_COORDSN_DISCONN                                0x80000000022aL
-#define SDB_COORDSN_CHECKREMOTEROUTEID                     0x80000000022bL
-#define SDB_COORDSN_GETALLSR                               0x80000000022cL
-#define SDB_COORDSN_ISSUBSNCONN                            0x80000000022dL
-#define SDB_COORDSN_GETLASTND                              0x80000000022eL
+#define SDB_COORDCB_ADDCATNDADDR                           0x800000000258L
+#define SDB_COORDSN_DISCONN                                0x800000000259L
+#define SDB_COORDSN_CHECKREMOTEROUTEID                     0x80000000025aL
+#define SDB_COORDSN_GETALLSR                               0x80000000025bL
+#define SDB_COORDSN_ISSUBSNCONN                            0x80000000025cL
+#define SDB_COORDSN_GETLASTND                              0x80000000025dL
 #endif
