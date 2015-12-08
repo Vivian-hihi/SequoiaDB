@@ -67,7 +67,7 @@
 
     ![](visualization_data_operation_copy_cn_2.jpg)
 
-    3. 插入成功。
+    3. 复制成功。
 
     ![](visualization_data_operation_copy_cn_3.jpg)
 

@@ -126,7 +126,7 @@
 
     ![](visualization_data_operation_cl_cn_2.jpg)
 
-    3. **集合类型** 选 **水平范围分区**。
+    3. **集合类型** 选 **水平散列分区**。
 
     ![](visualization_data_operation_cl_cn_18.jpg)
 
