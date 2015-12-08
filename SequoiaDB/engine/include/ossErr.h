@@ -121,7 +121,7 @@ const CHAR* getErrDesp ( INT32 errCode );
 #define SDB_RTN_IN_BACKUP               -69   /**< Backup is in progress */
 #define SDB_BAR_DAMAGED_BK_FILE         -70   /**< Backup is corrupted */
 #define SDB_RTN_NO_PRIMARY_FOUND        -71   /**< No primary node was found */
-#define SDB_ERROR_RESERVED_1            -72   /**< Reserved */
+#define SDB_CAT_NODE_NOT_FOUND          -72   /**< Requested node does not exist */
 #define SDB_PMD_HELP_ONLY               -73   /**< Engine help argument is specified */
 #define SDB_PMD_CON_INVALID_STATE       -74   /**< Invalid connection state */
 #define SDB_CLT_INVALID_HANDLE          -75   /**< Invalid handle */
@@ -182,7 +182,7 @@ const CHAR* getErrDesp ( INT32 errCode );
 #define SDB_CAT_ASSIGN_NODE_FAILED      -130  /**< Failed to assign data node from coordinator node */
 #define SDB_PHP_DRIVER_INTERNAL_ERROR   -131  /**< PHP driver internal error */
 #define SDB_COORD_SEND_MSG_FAILED       -132  /**< Failed to send the message */
-#define SDB_CAT_NO_NODEGROUP_INFO       -133  /**< No activated group information on catalog */
+#define SDB_CAT_NO_NODEGROUP_INFO       -133  /**< Unable to find the group information on catalog */
 #define SDB_COORD_REMOTE_DISC           -134  /**< Remote-node is disconnected */
 #define SDB_CAT_NO_MATCH_CATALOG        -135  /**< Unable to find the catalog information */
 #define SDB_CLS_UPDATE_CAT_FAILED       -136  /**< Failed to update catalog */
@@ -209,13 +209,13 @@ const CHAR* getErrDesp ( INT32 errCode );
 #define SDB_CM_CONFIG_CONFLICTS         -157  /**< Invalid node configuration */
 #define SDB_CLS_EMPTY_GROUP             -158  /**< Group is empty */
 #define SDB_RTN_COORD_ONLY              -159  /**< The operation is for coord node only */
-#define SDB_CM_OP_NODE_FAILED           -160  /**< Failed to operate on node */
+#define SDB_CM_OP_NODE_FAILED           -160  /**< Failed to operate on node only */
 #define SDB_RTN_MUTEX_JOB_EXIST         -161  /**< The mutex job already exist */
 #define SDB_RTN_JOB_NOT_EXIST           -162  /**< The specified job does not exist */
 #define SDB_CAT_CORRUPTION              -163  /**< The catalog information is corrupted */
 #define SDB_IXM_DROP_SHARD              -164  /**< $shard index can't be dropped */
 #define SDB_RTN_CMD_NO_NODE_AUTH        -165  /**< The command can't be run in the node */
-#define SDB_RTN_CMD_NO_SERVICE_AUTH     -166  /**< The command can't be run in the service plane */
+#define SDB_RTN_CMD_NO_SERVICE_AUTH     -166  /**< The command can't be run in the serice plane */
 #define SDB_CLS_NO_GROUP_INFO           -167  /**< The group info not exist */
 #define SDB_CLS_GROUP_NAME_CONFLICT     -168  /**< Group name is conflict */
 #define SDB_COLLECTION_NOTSHARD         -169  /**< The collection is not sharded */
@@ -253,10 +253,10 @@ const CHAR* getErrDesp ( INT32 errCode );
 #define SDB_UTIL_PARSE_JSON_INVALID     -201  /**< Failed to parse JSON file */
 #define SDB_UTIL_PARSE_CSV_INVALID      -202  /**< Failed to parse CSV file */
 #define SDB_DPS_LOG_FILE_OUT_OF_SIZE    -203  /**< Log file size is too large */
-#define SDB_CATA_RM_NODE_FORBIDDEN      -204  /**< Unable to remove the last node or primary in a group */
+#define SDB_CATA_RM_NODE_FORBIDDEN      -204  /**< Unable to remove the last node in a group */
 #define SDB_CATA_FAILED_TO_CLEANUP      -205  /**< Unable to clean up catalog, manual cleanup may be required */
 #define SDB_CATA_RM_CATA_FORBIDDEN      -206  /**< Unable to remove primary catalog or catalog group for non-empty database */
-#define SDB_ERROR_RESERVED_2            -207  /**< Reserved */
+#define SDB_CAT_GRP_NOT_EXIST           -207  /**< Group does not exist */
 #define SDB_CAT_RM_GRP_FORBIDDEN        -208  /**< Unable to remove non-empty group */
 #define SDB_MIG_END_OF_QUEUE            -209  /**< End of queue */
 #define SDB_COORD_SPLIT_NO_SHDIDX       -210  /**< Unable to split because of no sharding index exists */
@@ -328,30 +328,15 @@ const CHAR* getErrDesp ( INT32 errCode );
 #define SDB_CAT_LOCALHOST_CONFLICT      -276  /**< 'localhost' and '127.0.0.1' cannot be used mixed with other hostname and IP address */
 #define SDB_CAT_NOT_LOCALCONN           -277  /**< If use 'localhost' and '127.0.0.1' for hostname, coord and catalog must in the same host  */
 #define SDB_CAT_IS_NOT_DATAGROUP        -278  /**< The special group is not data group */
-#define SDB_RTN_AUTOINDEXID_IS_FALSE    -279  /**< can not update/delete records when $id index does not exist */
+#define SDB_RTN_AUTOINDEXID_IS_FALSE    -279  /**< can not update/delete data when autoindexid is false */
 #define SDB_CLS_CAN_NOT_STEP_UP         -280  /**< can not step up when primary node exists or LSN is not the biggest */
 #define SDB_CAT_IMAGE_ADDR_CONFLICT     -281  /**< Image address is conflict with the self cluster */
 #define SDB_CAT_GROUP_HASNOT_IMAGE      -282  /**< The data group does not have image group */
 #define SDB_CAT_GROUP_HAS_IMAGE         -283  /**< The data group has image group */
 #define SDB_CAT_IMAGE_IS_ENABLED        -284  /**< The image is in enabled status */
 #define SDB_CAT_IMAGE_NOT_CONFIG        -285  /**< The cluster's image does not configured */
-#define SDB_CAT_DUAL_WRITABLE           -286  /**< This cluster and image cluster is both writable */
-#define SDB_CAT_CLUSTER_IS_READONLY     -287  /**< This cluster is readonly */
+#define SDB_CAT_DUAL_ACTIVE             -286  /**< This cluster and image cluster is both active */
+#define SDB_CAT_CLUSTER_NOT_ACTIVE      -287  /**< This cluster is not active */
 #define SDB_RTN_QUERYMODIFY_SORT_NO_IDX -288  /**< Sorting of 'query and modify' must use index */
-#define SDB_RTN_QUERYMODIFY_MULTI_NODES -289  /**< 'query and modify' can't use skip and limit in multiple nodes or sub-collections */
-#define SDB_DIR_NOT_EMPTY               -290  /**< Given path is not empty */
-#define SDB_IXM_EXIST_COVERD_ONE        -291  /**< Exist one index which can cover this scene */
-#define SDB_CAT_IMAGE_IS_CONFIGURED     -292  /**< The cluster's image has already configured */
-#define SDB_RTN_CMD_IN_LOCAL_MODE       -293  /**< The command is in local mode */
-#define SDB_SPT_NOT_SPECIAL_JSON        -294  /**< The object is not a special object in sdb shell */
-#define SDB_AUTH_USER_ALREADY_EXIST     -295  /**< The specified user already exist */
-#define SDB_DMS_EMPTY_COLLECTION        -296  /**< The collection is empty */
-#define SDB_LOB_SEQUENCE_EXISTS         -297  /**< LOB sequence exists */
-#define SDB_OM_CLUSTER_NOT_EXIST        -298  /**< cluster do not exist */
-#define SDB_OM_BUSINESS_NOT_EXIST       -299  /**< business do not exist */
-#define SDB_UTIL_COMP_INIT_FAIL         -300  /**< compressor initialization failed */
-#define SDB_UTIL_COMP_SETDICT_FAIL      -301  /**< set dictionary for compressor failed */
-#define SDB_UTIL_COMP_BUF_SMALL         -302  /**< output buffer for compressor is too small */
-#define SDB_UTIL_COMP_COMPRESS_FAIL     -303  /**< compress process failed */
-#define SDB_UTIL_COMP_DECOMPRESS_FAIL   -304  /**< compress process failed */
+#define SDB_RTN_QUERYMODIFY_MULTI_NODES -289  /**< 'query and modify' can't use skip and limit in multiple nodes */
 #endif /* OSSERR_HPP_ */
