@@ -9,7 +9,7 @@
 <!--@${test.host.NAME}:which machine test testcases under unparallel env -->
 
 <project name="Test-Type" default="Test-Type">
-	<target name="Test-Type" depends="">
+	<target name="Test-Type" depends="">   
 		<property file="${basedir}/ci.test.properties" />
 		<property file="${basedir}/testAllot.conf" />
 		<switch value="${Test-Type}">
@@ -53,6 +53,7 @@
 			<case value="driver-python">
 				<echo message="...Test python driver..."/>
 				<sdbtest host="${test.host.NAME}" testscript="${test.machine.deploy.path}/deploy/exec-driver-python-test.xml" remotereports="${testcase.path}/drivers_testcases/python/reports" masterreports="${test.reports.path}">
+					<param name="test.host.NAME" value="${test.host.NAME}" />
 					<param name="ci.properties.path" value="${test.machine.software.path}/ci.test.properties" />
 					<param name="antTask.jar.path" value="${test.machine.deploy.path}/deploy/ant-sdbtasks" />
 					<param name="python.testcase.path" value="${testcase.path}/drivers_testcases/python" />
