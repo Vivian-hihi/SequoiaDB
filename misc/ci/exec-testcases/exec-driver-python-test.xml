@@ -54,10 +54,10 @@
 		<hostinfo prefix="host" />
 		<basename property="test.suite.name" file="${test.suite.fullname}" />
 		<basename property="deploy.name" file="${deploy.case.fullname}" suffix=".xml" />
-		<property name="test.suite.class.name" value="testcases-${test-type}.${deploy.name}-${host.NAME}-${parallel.num}-${test.suite.name}" />
+		<property name="test.suite.class.name" value="testcases-${test-type}.${deploy.name}-${test.host.NAME}-${parallel.num}-${test.suite.name}" />
 
 		<echo message="Now testsuite ${test.suite.name} ..." />
-		<echo file="${reports.path}/TEST-${test.suite.class.name}.xml" message="&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot; ?&gt;&#10;&lt;testsuite name=&quot;${test.suite.name}&quot; type=&quot;${test-type}&quot; deploy=&quot;${deploy.name}&quot; hostname=&quot;${host.NAME}&quot; tests=&quot;1&quot; failure=&quot;0&quot;&gt;&#10;" />
+		<echo file="${reports.path}/TEST-${test.suite.class.name}.xml" message="&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot; ?&gt;&#10;&lt;testsuite name=&quot;${test.suite.name}&quot; type=&quot;${test-type}&quot; deploy=&quot;${deploy.name}&quot; hostname=&quot;${test.host.NAME}&quot; tests=&quot;1&quot; failure=&quot;0&quot;&gt;&#10;" />
 
 		<foreach target="test-one-case" param="test.case.fullname">
 			<fileset dir="${test.suite.fullname}" includes="${includes.case.patterns}" excludes="${excludes.case.patterns}" />
@@ -89,11 +89,11 @@
 		<if>
 			<equals arg1="${test-type}" arg2="driver-python" />
 			<then>
-				<property name="command" value="python ${test.case.fullname} -H ${host.NAME} -p ${coord.service.port} -d ${data.service.port}" />
+				<property name="command" value="python ${test.case.fullname} -H ${test.host.NAME} -p ${coord.service.port} -d ${data.service.port}" />
 				<echo message="Command:${command}" />
 				<echo message="The testcase ${test.case.name}.py path on ${testcases.path}" />
 				<exec executable="python" dir="${testcases.path}" timeout="1200000" outputproperty="screen.output" resultproperty="ret.code">
-					<arg line=" ${test.case.fullname} -H ${host.NAME} -p ${coord.service.port} -d ${data.service.port}" />
+					<arg line=" ${test.case.fullname} -H ${test.host.NAME} -p ${coord.service.port} -d ${data.service.port}" />
 				</exec>
 				<echo message="${screen.output}" />
 				<echo message="The result = ${ret.code} after exec ${test.case.fullname} testcase." />
