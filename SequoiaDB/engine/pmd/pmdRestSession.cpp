@@ -1126,11 +1126,11 @@ namespace engine
                                                 BSONObj& order,
                                                 BSONObj& hint,
                                                 INT32* flag,
-                                                INT32* skip,
-                                                INT32* returnRow )
+                                                SINT64* skip,
+                                                SINT64* returnRow )
    {
       INT32 rc              = SDB_OK ;
-      const CHAR *pTable          = NULL ;
+      const CHAR *pTable    = NULL ;
       const CHAR *pOrder    = NULL ;
       const CHAR *pHint     = NULL ;
       const CHAR *pMatch    = NULL ;
@@ -1235,12 +1235,12 @@ namespace engine
 
       if ( NULL != pSkip )
       {
-         *skip = ossAtoi( pSkip ) ;
+         *skip = ossAtoll( pSkip ) ;
       }
 
       if ( NULL != pReturnRow )
       {
-         *returnRow = ossAtoi( pReturnRow ) ;
+         *returnRow = ossAtoll( pReturnRow ) ;
       }
 
    done:
@@ -1262,9 +1262,9 @@ namespace engine
          BSONObj hint ;
          BSONObj match ;
          BSONObj selector ;
-         INT32 flag = 0 ;
-         INT32 skip = 0 ;
-         INT32 returnRow = -1 ;
+         INT32 flag  = 0 ;
+         SINT64 skip = 0 ;
+         SINT64 returnRow = -1 ;
 
          rc = _convertQueryBasic( pAdaptor, &pTable, match, selector, order, hint,
                                   &flag, &skip, &returnRow ) ;
@@ -1312,8 +1312,8 @@ namespace engine
       INT32 buffSize        = 0 ;
       const CHAR *pTable    = NULL ;
       INT32 flag            = 0 ;
-      INT32 skip            = 0 ;
-      INT32 returnRow       = -1 ;
+      SINT64 skip           = 0 ;
+      SINT64 returnRow      = -1 ;
       BSONObj order ;
       BSONObj hint ;
       BSONObj match ;

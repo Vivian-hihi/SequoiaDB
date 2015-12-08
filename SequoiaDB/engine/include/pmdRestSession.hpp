@@ -276,8 +276,8 @@ namespace engine
                                          BSONObj& order,
                                          BSONObj& hint,
                                          INT32* flag,
-                                         INT32* skip,
-                                         INT32* returnRow ) ;
+                                         SINT64* skip,
+                                         SINT64* returnRow ) ;
          INT32       _convertQuery( restAdaptor *pAdaptor, MsgHeader **msg ) ;
 
          INT32       _convertQueryUpdate( restAdaptor *pAdaptor,
