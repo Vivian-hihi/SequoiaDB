@@ -170,7 +170,9 @@ _operate.skip = function( $scope ){
          "required": true,
          "type": "int",
          "valid": {
-            "min": 0
+            "min": 0,
+            //2^53 - 1
+            "max": 9007199254740991
          },
          "value": 0
       } ;
@@ -312,7 +314,7 @@ _operate.sortbuffersize = function( $scope ){
       "type": "int",
       "value": 64,
       "valid": {
-         "min": 1
+         "min": 0
       }
    } ;
 }

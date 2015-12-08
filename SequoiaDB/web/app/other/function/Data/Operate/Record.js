@@ -1,4 +1,4 @@
-// --------------------- Data.Operate.Record ---------------------
+﻿// --------------------- Data.Operate.Record ---------------------
 var _DataOperateRecord = {} ;
 
 //打开 索引详细 的窗口
@@ -280,6 +280,7 @@ _DataOperateRecord.createInsertModel = function( $scope, SdbRest, SdbFunction, r
    }
    else
    {
+      $scope.Components.Modal.title = $scope.autoLanguage( '复制记录' ) ;
       var newObject = jQuery.extend( true, {}, $scope.records[recordIndex] ) ;
       delete newObject['_id'] ;
       $scope.Components.Modal.jsonEdit = { Json: newObject, Height: 0 } ;

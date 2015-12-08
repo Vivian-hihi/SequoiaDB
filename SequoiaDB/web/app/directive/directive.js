@@ -303,6 +303,10 @@
                pre: function preLink( scope, element, attributes ){
                   $( element ).css( 'position', 'relative' ) ;
                   angular.element( $window ).bind( 'resize', function () {
+                     if( !scope.data )
+                     {
+                        return;
+                     }
                      //设置列宽
                      setColumnWidth( scope, element ) ;
                      //设置行高
@@ -820,7 +824,8 @@
                   }
                   catch(e)
                   {
-                     return array2Json( $scope.Setting.View ) ;
+                     alert( e.message ) ;
+                     throw e.message ;
                   }
                }
             }
@@ -1255,10 +1260,10 @@
                      }
                      else if( isArray( ban ) )
                      {
-                        $.each( ban, function( index, banDouble ){
-                           if( value == banDouble )
+                        $.each( ban, function( index, banInt ){
+                           if( value == banInt )
                            {
-                              error = sprintf( $scope.Setting['Text']['double']['ban'], name, banDouble ) ;
+                              error = sprintf( $scope.Setting['Text']['double']['ban'], name, banInt ) ;
                               rc = false ;
                               return false ;
                            }
@@ -1599,6 +1604,33 @@
       return dire ;
    });
 
+   //添加placeholder
+   sacApp.directive( 'ngPlaceholder', function(){
+      var dire = {
+         restrict: 'A',
+         priority: 1,
+         scope: false,
+         replace: false,
+         controller: function( $scope, $element ){
+         },
+         compile: function( element, attributes ){
+            return {
+               pre: function preLink( scope, element, attributes ){
+                  scope.$watch( attributes.ngPlaceholder, function ngPlaceholderAction( placeholder ){
+                     if( typeof( placeholder ) == 'string' )
+                     {
+                        $( element ).attr( 'placeholder', placeholder ) ;
+                     }
+                  } ) ;
+               },
+               post: function postLink( scope, element, attributes ){
+               }
+            } ;
+         }
+      } ;
+      return dire ;
+   });
+
    //创建确认提示框
    sacApp.directive( 'createConfirm', function( $compile, $window, $rootScope ){
       var dire = {
@@ -1738,6 +1770,7 @@
             data: '=getFocus'
          },
          replace: false,
+         priority: 3,
          // 专用控制器
          controller: function( $scope, $element ){},
          // 编译
@@ -1762,6 +1795,7 @@
    sacApp.directive( 'ngAttr', function(){
       var dire = {
          restrict: 'A',
+         priority: 2,
          replace: false,
          scope: {
             data: '=ngAttr'

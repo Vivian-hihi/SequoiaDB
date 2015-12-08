@@ -628,30 +628,32 @@ function parseConditionValue( condition )
    var jobj = condition ;
    if( jobj['condition'].length > 1 || ( jobj['condition'].length == 1 && jobj['condition'][0]['field'].length > 0 ) )
    {
+      filter = [] ;
       $.each( jobj['condition'], function( index, field ){
+         var subCondition = {} ;
          var fieldValue = autoTypeConvert( trim( field['value'] ), true ) ;
          switch( field['logic'] )
          {
          case '>':
-            filter[ field['field'] ] = { '$gt': fieldValue } ;
+            subCondition[ field['field'] ] = { '$gt': fieldValue } ;
             break ;
          case '>=':
-            filter[ field['field'] ] = { '$gte': fieldValue } ;
+            subCondition[ field['field'] ] = { '$gte': fieldValue } ;
             break ;
          case '<':
-            filter[ field['field'] ] = { '$lt': fieldValue } ;
+            subCondition[ field['field'] ] = { '$lt': fieldValue } ;
             break ;
          case '<=':
-            filter[ field['field'] ] = { '$lte': fieldValue } ;
+            subCondition[ field['field'] ] = { '$lte': fieldValue } ;
             break ;
          case '!=':
-            filter[ field['field'] ] = { '$ne': fieldValue } ;
+            subCondition[ field['field'] ] = { '$ne': fieldValue } ;
             break ;
          case '=':
-            filter[ field['field'] ] = fieldValue ;
+            subCondition[ field['field'] ] = fieldValue ;
             break ;
          case 'size':
-            filter[ field['field'] ] = { '$size': fieldValue } ;
+            subCondition[ field['field'] ] = { '$size': fieldValue } ;
             break ;
          case 'regex':
             var regex = trim( fieldValue ) ;
@@ -662,10 +664,13 @@ function parseConditionValue( condition )
                options = regex.substr( right + 1 ) ;
                regex = regex.substr( 1, right - 1 ) ;
             }
-            filter[ field['field'] ] = { '$regex': regex, '$options': options } ;
+            subCondition[ field['field'] ] = { '$regex': regex, '$options': options } ;
             break ;
          case 'type':
-            fieldValue = fieldValue.toLowerCase() ;
+            if( isNaN( fieldValue ) )
+            {
+               fieldValue = fieldValue.toLowerCase() ;
+            }
             switch( fieldValue )
             {
             case 'int':
@@ -734,25 +739,30 @@ function parseConditionValue( condition )
                fieldValue = parseInt( fieldValue ) ;
                break ;
             }
-            filter[ field['field'] ] = { '$type': fieldValue } ;
+            subCondition[ field['field'] ] = { '$type': fieldValue } ;
             break ;
          case 'null':
-            filter[ field['field'] ] = { '$isnull': 1 } ;
+            subCondition[ field['field'] ] = { '$isnull': 1 } ;
             break ;
          case 'notnull':
-            filter[ field['field'] ] = { '$isnull': 0 } ;
+            subCondition[ field['field'] ] = { '$isnull': 0 } ;
             break ;
          case 'exists':
-            filter[ field['field'] ] = { '$exists': 1 } ;
+            subCondition[ field['field'] ] = { '$exists': 1 } ;
             break ;
          case 'notexists':
-            filter[ field['field'] ] = { '$exists': 0 } ;
+            subCondition[ field['field'] ] = { '$exists': 0 } ;
             break ;
          }
+         filter.push( subCondition ) ;
       } ) ;
       if( jobj['model'] == 'or' )
       {
          filter = { '$or': filter } ;
+      }
+      else
+      {
+         filter = { '$and': filter } ;
       }
    }
    return filter ;

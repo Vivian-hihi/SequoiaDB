@@ -1,5 +1,5 @@
 ﻿<div ng-switch on="inputInfo.type" style="position:relative;*zoom:1;">
-   <input ng-switch-when="string" type="text" class="form-control" data-desc="{{inputInfo.error}}" ng-class="{true:'alert-danger'}[inputInfo.error.length > 0]" placeholder="{{inputInfo.placeholder}}" ng-model="inputInfo.value" ng-click="showMenu(inputInfo);" ng-show="!(browserInfo[0]=='ie'&&(browserInfo[1] == 7||browserInfo[1] == 8||browserInfo[1] == 9)&&inputInfo.isClick!=true)" get-focus="inputInfo.isClick" />
+   <input ng-switch-when="string" type="text" class="form-control" data-desc="{{inputInfo.error}}" ng-class="{true:'alert-danger'}[inputInfo.error.length > 0]" ng-placeholder="inputInfo.placeholder" ng-model="inputInfo.value" ng-click="showMenu(inputInfo);" ng-show="!(browserInfo[0]=='ie'&&(browserInfo[1] == 7||browserInfo[1] == 8||browserInfo[1] == 9)&&inputInfo.isClick!=true)" get-focus="inputInfo.isClick" />
    <input ng-switch-when="string" type="text" class="form-control" data-desc="{{inputInfo.error}}" ng-class="{true:'alert-danger'}[inputInfo.error.length > 0]" ng-bind="inputInfo.placeholder" ng-click="placeholderClick(inputInfo);" ng-show="browserInfo[0]=='ie'&&(browserInfo[1] == 7||browserInfo[1] == 8||browserInfo[1] == 9)&&!inputInfo.isClick" />
    <div ng-switch-when="string" ng-if="inputInfo.selectList.length > 0" class="FormSelectList" ng-show="inputInfo.showMenu == true">
       <ul>
@@ -7,8 +7,8 @@
       </ul>
    </div>
    <input ng-switch-when="password" type="password" class="form-control" data-desc="{{inputInfo.error}}" ng-class="{true:'alert-danger'}[inputInfo.error.length > 0]" ng-model="inputInfo.value">
-   <input ng-switch-when="int" type="text" class="form-control" data-desc="{{inputInfo.error}}" ng-class="{true:'alert-danger'}[inputInfo.error.length > 0]" placeholder="{{inputInfo.placeholder}}" ng-model="inputInfo.value">
-   <input ng-switch-when="double" type="text" class="form-control" data-desc="{{inputInfo.error}}" ng-class="{true:'alert-danger'}[inputInfo.error.length > 0]" placeholder="{{inputInfo.placeholder}}" ng-model="inputInfo.value">
+   <input ng-switch-when="int" type="text" class="form-control" data-desc="{{inputInfo.error}}" ng-class="{true:'alert-danger'}[inputInfo.error.length > 0]" ng-placeholder="inputInfo.placeholder" ng-model="inputInfo.value">
+   <input ng-switch-when="double" type="text" class="form-control" data-desc="{{inputInfo.error}}" ng-class="{true:'alert-danger'}[inputInfo.error.length > 0]" ng-placeholder="inputInfo.placeholder" ng-model="inputInfo.value">
    <select class="form-control" ng-switch-when="select" ng-class="{true:'alert-danger'}[inputInfo.error.length > 0]" ng-change="onChange(inputInfo)" ng-model="inputInfo.value" ng-options="selectList.value as selectList.key for selectList in inputInfo.valid"></select>
    <div style="padding:0 0 0 20px;" ng-switch-when="group">
       <table class="table" style="margin:10px 0 0 0;" ng-repeat="childInfo in inputInfo.child track by $index">

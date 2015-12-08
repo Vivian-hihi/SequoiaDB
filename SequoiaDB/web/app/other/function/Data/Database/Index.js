@@ -1,4 +1,4 @@
-// --------------------- Data.Database.Index ---------------------
+﻿// --------------------- Data.Database.Index ---------------------
 var _DataDatabaseIndex = {} ;
 
 //控制是否显示子集合
@@ -359,6 +359,7 @@ _DataDatabaseIndex.getCSInfo = function( $scope, SdbRest ){
 //获取所有cl信息
 _DataDatabaseIndex.getCLInfo = function( $scope, SdbRest )
 {
+   $scope.subCLNum = 0 ;
    $scope.mainCLNum = 0 ;
    if( $scope.moduleMode == 'standalone' )
    {
@@ -396,23 +397,25 @@ _DataDatabaseIndex.getCLInfo = function( $scope, SdbRest )
                {
                   if( typeof( cataInfo['MainCLName'] ) == 'string' )
                   {
+                     ++$scope.subCLNum ;
                      clInfo['MainCLName'] = cataInfo['MainCLName'] ;
                   }
                   if( typeof( cataInfo['ShardingType'] ) == 'string' )
                   {
                      clInfo['ShardingType'] = cataInfo['ShardingType'] ;
                      clInfo['ShardingKey'] = cataInfo['ShardingKey'] ;
+                     clInfo['LowBound'] = [] ;
+                     clInfo['UpBound'] = [] ;
                      clInfo['EnsureShardingIndex'] = cataInfo['EnsureShardingIndex'] ;
                      $.each( cataInfo['CataInfo'], function( index3, groupInfo ){
                         if( groupInfo['GroupName'] == clInfo['GroupName'] )
                         {
-                           clInfo['LowBound'] = JSON.stringify( groupInfo['LowBound'] ) ;
-                           clInfo['UpBound'] = JSON.stringify( groupInfo['UpBound'] ) ;
-                           return false;
+                           clInfo['LowBound'].push( JSON.stringify( groupInfo['LowBound'] ) ) ;
+                           clInfo['UpBound'].push( JSON.stringify( groupInfo['UpBound'] ) ) ;
                         }
                      } ) ;
                   }
-                  if( cataInfo['Attribute'] == 1 )
+                  if( typeof( cataInfo['Attribute'] ) != 'undefined' )
                   {
                      clInfo['Attribute'] = cataInfo['Attribute'] ;
                   }
@@ -530,6 +533,8 @@ _DataDatabaseIndex.init = function( $scope, moduleName, moduleMode, isHideSubCl 
    $scope.isHideSubCl = isHideSubCl ;
    //主表数量
    $scope.mainCLNum = 0 ;
+   //子表数量
+   $scope.subCLNum = 0 ;
    //分区表数量
    $scope.partitionCLNum = 0 ;
 }
@@ -1775,7 +1780,7 @@ _DataDatabaseIndex.showAttachCL = function( $scope, SdbRest ){
             "name": "range",
             "webName":  $scope.autoLanguage( '分区范围' ),
             "required": true,
-            "desc": $scope.autoLanguage( '分区范围，包含两个字段“LowBound”（区间左值）以及“UpBound”（区间右值），例如：{LowBound:{a:0},UpBound:{a:100}表示取字段“a”的范围区间：[0, 100)。' ),
+            "desc": $scope.autoLanguage( '分区范围，包含两个字段“LowBound”（区间左值，填$minKey为负无穷）以及“UpBound”（区间右值，填$maxKey为正无穷），例如：{LowBound:{a:0},UpBound:{a:100}表示取字段“a”的范围区间：[0, 100)。' ),
             "type": "list",
             "valid": {
                "min": 1
@@ -1825,7 +1830,7 @@ _DataDatabaseIndex.showAttachCL = function( $scope, SdbRest ){
          var upbound = {} ;
          $.each( value['range'], function( index, fieldInfo ){
             var fieldName = fieldInfo['field'] ;
-            if( fieldInfo['LowBound'] == '$minKey' || fieldInfo['LowBound'].length == 0 )
+            if( fieldInfo['LowBound'] == '$minKey' )
             {
                lowbound[ fieldName ] = { '$minKey': 1 } ;
             }
@@ -1833,7 +1838,7 @@ _DataDatabaseIndex.showAttachCL = function( $scope, SdbRest ){
             {
                lowbound[ fieldName ] = autoTypeConvert( fieldInfo['LowBound'], true ) ;
             }
-            if( fieldInfo['UpBound'] == '$maxKey' || fieldInfo['UpBound'].length == 0 )
+            if( fieldInfo['UpBound'] == '$maxKey' )
             {
                upbound[ fieldName ] = { '$maxKey': 1 } ;
             }
@@ -1897,7 +1902,7 @@ _DataDatabaseIndex.showSplit = function( $scope, SdbRest ){
       }
       else
       {
-         if( index == $scope.clID && clIndex < 0 )
+         if( index == $scope.clID && clIndex < 0 && clInfo['IsMainCL'] != true && ( clInfo['ShardingType'] == 'hash' || clInfo['ShardingType'] == 'range' ) )
          {
             clIndex = index ;
             $.each( $scope.clList[ clIndex ]['GroupName'], function( index2, groupInfo ){
@@ -1910,6 +1915,13 @@ _DataDatabaseIndex.showSplit = function( $scope, SdbRest ){
          clValid.push( { 'key' : clInfo['csName'] + '.' + clInfo['Name'] , 'value' : index } ) ;
       }
    } ) ;
+   if( clIndex < 0 && clValid.length > 0 )
+   {
+      clIndex = clValid[0]['value'] ;
+      $.each( $scope.clList[ clIndex ]['GroupName'], function( index2, groupInfo ){
+         sourceGroupValid.push( { 'key': groupInfo['key'], 'value': index2 } ) ;
+      } ) ;
+   }
    $scope.Components.Modal.icon = 'fa-scissors' ;
    $scope.Components.Modal.title = $scope.autoLanguage( '切分数据' ) ;
    $scope.Components.Modal.isShow = true ;
@@ -2046,6 +2058,7 @@ _DataDatabaseIndex.showSplit = function( $scope, SdbRest ){
             "webName":  $scope.autoLanguage( '切分条件' ),
             "required": true,
             "type": "list",
+            "desc": $scope.autoLanguage( '起始范围填$minKey为负无穷，结束范围填$maxKey为正无穷。') ,
             "valid": {
                "min": 1
             },
@@ -2134,7 +2147,7 @@ _DataDatabaseIndex.showSplit = function( $scope, SdbRest ){
             var splitendquery = {} ;
             $.each( value['condition'], function( index, conditionInfo ){
                var fieldName = conditionInfo['field'] ;
-               if( conditionInfo['start'] == '$minKey' || conditionInfo['start'].length == 0 )
+               if( conditionInfo['start'] == '$minKey' )
                {
                   splitquery[ fieldName ] = { '$minKey': 1 } ;
                }
@@ -2142,7 +2155,7 @@ _DataDatabaseIndex.showSplit = function( $scope, SdbRest ){
                {
                   splitquery[ fieldName ] = autoTypeConvert( conditionInfo['start'], true ) ;
                }
-               if( conditionInfo['end'] == '$maxKey' || conditionInfo['end'].length == 0 )
+               if( conditionInfo['end'] == '$maxKey' )
                {
                   splitendquery[ fieldName ] = { '$maxKey': 1 } ;
                }

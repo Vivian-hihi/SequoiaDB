@@ -98,7 +98,19 @@
                            </select>
                         </td>
                      </tr>
-                     <tr ng-repeat="(key, value) in attr['Info'] track by $index" ng-if="key != 'Name' && key != 'GroupName' && key != 'CataInfo' && value != undefined">
+                  </tbody>
+                  <tbody ng-repeat="(key, value) in attr['Info']['LowBound'] track by $index" ng-if="attr['Info']['LowBound'] != undefined">
+                     <tr>
+                        <td>LowBound</td>
+                        <td>{{attr['Info']['LowBound'][$index]}}</td>
+                     </tr>
+                     <tr>
+                        <td>UpBound</td>
+                        <td>{{attr['Info']['UpBound'][$index]}}</td>
+                     </tr>
+                  </tbody>
+                  <tbody>
+                     <tr ng-repeat="(key, value) in attr['Info'] track by $index" ng-if="key != 'Name' && key != 'GroupName' && key != 'CataInfo' && key != 'LowBound' && key != 'UpBound' && value != undefined">
                         <td>{{key}}</td>
                         <td>{{value}}</td>
                      </tr>
@@ -143,7 +155,7 @@
                      <tr ng-if="csList.length > 0 && clList.length > 0">
                         <td><a class="linkButton" ng-click="showRemoveCL()">{{autoLanguage("删除集合")}}</a></td>
                      </tr>
-                     <tr ng-if="csList.length > 0 && clList.length > 0 && moduleMode == 'distribution' && clList.length > mainCLNum && mainCLNum > 0">
+                     <tr ng-if="csList.length > 0 && clList.length > 0 && moduleMode == 'distribution' && clList.length > mainCLNum + subCLNum && mainCLNum > 0">
                         <td><a class="linkButton" ng-click="showAttachCL()">{{autoLanguage("挂载集合")}}</a></td>
                      </tr>
                      <tr ng-if="csList.length > 0 && clList.length > 0 && moduleMode == 'distribution' && partitionCLNum > 0">
