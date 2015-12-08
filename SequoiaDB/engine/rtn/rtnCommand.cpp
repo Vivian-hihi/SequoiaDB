@@ -582,7 +582,6 @@ namespace engine
          {
             _compressorType = UTIL_COMPRESSOR_LZW ;
          }
-         /*
          else if ( 0 == strcmp( compressionType, VALUE_NAME_LZ4 ) )
          {
             _compressorType = UTIL_COMPRESSOR_LZ4 ;
@@ -591,7 +590,6 @@ namespace engine
          {
             _compressorType = UTIL_COMPRESSOR_ZLIB ;
          }
-         */
          else
          {
             PD_LOG( PDERROR, "Compression type is invalid: %s", compressionType ) ;
