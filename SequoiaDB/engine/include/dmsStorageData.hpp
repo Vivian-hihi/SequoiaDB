@@ -521,7 +521,8 @@ namespace engine
 
    #define DMS_MME_OFFSET                 ( DMS_SME_OFFSET + DMS_SME_SZ )
    #define DMS_DATASU_EYECATCHER          "SDBDATA"
-   #define DMS_DATASU_CUR_VERSION         1
+   #define DMS_DATASU_CUR_VERSION         2
+   #define DMS_COMPRESSION_ENABLE_VER     2
    #define DMS_CONTEXT_MAX_SIZE           (2000)
    #define DMS_RECORDS_PER_EXTENT_SQUARE  4     // value is 2^4=16
    #define DMS_RECORD_OVERFLOW_RATIO      1.2f

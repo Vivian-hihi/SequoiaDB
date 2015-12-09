@@ -515,6 +515,8 @@ namespace engine
    INT32 _dmsStorageData::_onMapMeta( UINT64 curOffSet )
    {
       INT32 rc = SDB_OK ;
+      BOOLEAN upgradeDictInfo = _dmsHeader->_version < DMS_COMPRESSION_ENABLE_VER ?
+                                TRUE : FALSE ;
 
       PD_TRACE_ENTRY ( SDB__DMSSTORAGEDATA__ONMAPMETA ) ;
       // MME, 4MB
@@ -543,6 +545,12 @@ namespace engine
                _dmsMME->_mbList[i]._totalIndexFreeSpace ;
             _mbStatInfo[i]._totalLobPages =
                _dmsMME->_mbList[i]._totalLobPages ;
+            if ( upgradeDictInfo && ( 0 == _dmsMME->_mbList[i]._dictExtentID ) )
+            {
+               _dmsMME->_mbList[i]._dictExtentID = DMS_INVALID_EXTENT ;
+               _dmsMME->_mbList[i]._newDictExtentID = DMS_INVALID_EXTENT ;
+            }
+
             _mbStatInfo[i]._dictExtID = _dmsMME->_mbList[i]._dictExtentID ;
             _mbStatInfo[i]._compressorType =
                _dmsMME->_mbList[i]._compressorType ;
