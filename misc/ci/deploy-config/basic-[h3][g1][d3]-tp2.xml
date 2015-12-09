@@ -174,7 +174,7 @@
 		<if>
 			<equals arg1="${TEST_TYPE}" arg2="*" />
 			<then>
-			    <var name="TEST_TYPE" value="driver-python,driver-php,driver-java,lob,driver-C,driver-CPP,driver-mongoc" />
+			    <var name="TEST_TYPE" value="ant,driver-python,driver-php,driver-java,lob,driver-C,driver-CPP" />
 			    <antcall target="execTest" inheritAll="true">
 			    	<param name="testList" value="shell" />
 			    </antcall>
