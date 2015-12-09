@@ -93,6 +93,8 @@ namespace engine
          {
             pmdEduEventRelase( data, cb ) ;
          }
+         /// set the edu to active
+         pEduMgr->activateEDU( cb->getID() ) ;
          /// monitor
          rc = v.run() ;
          if ( SDB_OK != rc )
