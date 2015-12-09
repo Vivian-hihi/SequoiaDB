@@ -2373,6 +2373,7 @@ namespace engine
             rc = _pIdxSU->indexesInsert( context,
                                          ((dmsExtent*)extentPtr)->_logicID,
                                          (BSONObj&)record, foundDeletedID, cb ) ;
+            insertedDataPtr = (ossValuePtr)DMS_RECORD_GETDATA( deletedRecordPtr ) ;
          }
 
          PD_RC_CHECK( rc, PDERROR, "Failed to insert to index, rc: %d", rc ) ;
