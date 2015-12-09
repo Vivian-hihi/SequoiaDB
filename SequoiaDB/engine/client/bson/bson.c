@@ -433,10 +433,19 @@ SDB_EXPORT int bson_sprint_iterator ( char **pbuf, int *left, bson_iterator *i,
       case BSON_DATE:
       {
          char temp[64] = {0} ;
-         time_t timer = bson_iterator_date( i );
-         struct tm psr;
-         LocalTime ( &timer, &psr ) ;
-         sprintf ( temp, "{ \"$date\": \"%04d-%02d-%02d\" }", psr.tm_year + 1900, psr.tm_mon + 1, psr.tm_mday ) ;
+         time_t timer = bson_iterator_date( i ) / 1000 ;
+         // [ 1900-01-01, 9999-12-31 ]
+         if ( (long long)timer >= -2208988800LL && 
+              (long long)timer <= 253402300799LL )
+         {
+            struct tm psr;
+            LocalTime ( &timer, &psr ) ;
+            sprintf ( temp, "{ \"$date\": \"%04d-%02d-%02d\" }", psr.tm_year + 1900, psr.tm_mon + 1, psr.tm_mday ) ;
+         }
+         else
+         {
+            sprintf ( temp, "{ \"$date\": %lld }", (unsigned long long)bson_iterator_date( i ) ) ;
+         }
          bson_sprint_raw_concat ( pbuf, left, temp ) ;
          CHECK_LEFT ( left )
          break;

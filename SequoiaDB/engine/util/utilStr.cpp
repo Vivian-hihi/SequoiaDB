@@ -36,6 +36,7 @@
 #include "utilStr.hpp"
 #include "ossUtil.hpp"
 #include "pd.hpp"
+#include "timestamp.h"
 #include <boost/xpressive/xpressive_dynamic.hpp>
 #include <algorithm>
 #include <functional>
@@ -266,36 +267,56 @@ namespace engine
       INT32 second = 0 ;
       INT32 micros = 0 ;
 
-      static cregex reg = cregex::compile("^((((1[6-9]|[2-9]\\d)\\d{2})-(0?[13578]|1[02])-(0?[1-9]|[12]\\d|3[01]))|(((1[6-9]|[2-9]\\d)\\d{2})-(0?[13456789]|1[012])-(0?[1-9]|[12]\\d|30))|(((1[6-9]|[2-9]\\d)\\d{2})-0?2-(0?[1-9]|1\\d|2[0-8]))|(((1[6-9]|[2-9]\\d)(0[48]|[2468][048]|[13579][26])|((16|[2468][048]|[3579][26])00))-0?2-29))-(20|21|22|23|[0-1]?\\d).[0-5]?\\d.[0-5]?\\d(.[0-9]{6})?$") ;
-      if ( !( regex_match( str, reg ) ) )
+      if( ossStrchr( str, 'T' ) || ossStrchr( str, 't' ) )
       {
-         rc = SDB_INVALIDARG ;
-         goto error ;
+         // the format {$date:"2000-01-01T(t)01:30:24:999999Z(z)"} or
+         // {$date:"2000-01-01T(t)01:30:24:000000+0800"}
+         /* for mongo date type, iso8601 */
+         sdbTimestamp sdbTime ;
+         if( timestampParse( str, ossStrlen( str ), &sdbTime ) )
+         {
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+         tm = (time_t)sdbTime.sec ;
+         micros = sdbTime.nsec / 1000 ;
       }
-
-      if ( !sscanf ( str,
-                     "%d-%d-%d-%d.%d.%d.%d",
-                     &year   ,
-                     &month  ,
-                     &day    ,
-                     &hour   ,
-                     &minute ,
-                     &second ,
-                     &micros ) )
+      else
       {
-         rc = SDB_INVALIDARG ;
-         goto error ;
+         // the format is {$date:"2000-01-01-13.14.26.123456"}
+         // the bound is
+         // timestamp min 1901-12-13-20.45.52.000000 +/- TZ
+         // timestamp max 2038-01-19-03.14.07.999999 +/- TZ
+         static cregex reg = cregex::compile("^((((19|[2-9]\\d)\\d{2})-(0?[13578]|1[02])-(0?[1-9]|[12]\\d|3[01]))|(((19|[2-9]\\d)\\d{2})-(0?[13456789]|1[012])-(0?[1-9]|[12]\\d|30))|(((19|[2-9]\\d)\\d{2})-0?2-(0?[1-9]|1\\d|2[0-8]))|(((19|[2-9]\\d)(0[48]|[2468][048]|[13579][26])|(([2468][048]|[3579][26])00))-0?2-29))-(20|21|22|23|[0-1]?\\d).[0-5]?\\d.[0-5]?\\d(.[0-9]{6})?$") ;
+         if ( !( regex_match( str, reg ) ) )
+         {
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+
+         if ( !sscanf ( str,
+                        "%d-%d-%d-%d.%d.%d.%d",
+                        &year   ,
+                        &month  ,
+                        &day    ,
+                        &hour   ,
+                        &minute ,
+                        &second ,
+                        &micros ) )
+         {
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+
+         t.tm_year  = year - 1900  ;
+         t.tm_mon   = month - 1 ;
+         t.tm_mday  = day    ;
+         t.tm_hour  = hour   ;
+         t.tm_min   = minute ;
+         t.tm_sec   = second ;
+
+         tm = mktime( &t ) ;
       }
-
-      t.tm_year  = year - 1900  ;
-      t.tm_mon   = month - 1 ;
-      t.tm_mday  = day    ;
-      t.tm_hour  = hour   ;
-      t.tm_min   = minute ;
-      t.tm_sec   = second ;
-
-      tm = mktime( &t ) ;
-
       if ( NULL != usec )
       {
          *usec = micros ;
@@ -317,35 +338,58 @@ namespace engine
       INT32 month  = 0 ;
       INT32 day    = 0 ;
 
-      static cregex reg = cregex::compile("^((((1[6-9]|[2-9]\\d)\\d{2})-(0?[13578]|1[02])-(0?[1-9]|[12]\\d|3[01]))|(((1[6-9]|[2-9]\\d)\\d{2})-(0?[13456789]|1[012])-(0?[1-9]|[12]\\d|30))|(((1[6-9]|[2-9]\\d)\\d{2})-0?2-(0?[1-9]|1\\d|2[0-8]))|(((1[6-9]|[2-9]\\d)(0[48]|[2468][048]|[13579][26])|((16|[2468][048]|[3579][26])00))-0?2-29))$") ;
-      if ( !( regex_match( str, reg ) ) )
+      if( ossStrchr( str, 'T' ) || ossStrchr( str, 't' ) )
       {
-         rc = SDB_INVALIDARG ;
-         goto error ;
+         // the format {$date:"2000-01-01T(t)01:30:24:999999Z(z)"} or
+         // {$date:"2000-01-01T(t)01:30:24:000000+0800"}
+         /* for mongo date type, iso8601 */
+         INT32 micros = 0 ;
+         sdbTimestamp sdbTime ;
+         if( timestampParse( str, ossStrlen( str ), &sdbTime ) )
+         {
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+         // TODO: millis is UINT64, should we need to case about this?
+         timep = (time_t)sdbTime.sec ;
+         micros = sdbTime.nsec / 1000 ;
+         millis = timep * 1000 + micros / 1000 ;
       }
-
-      if ( !sscanf ( str,
-                     "%d-%d-%d",
-                     &year   ,
-                     &month  ,
-                     &day ) )
+      else
       {
-         rc = SDB_INVALIDARG ;
-         goto error ;
+         // the format is {$date:"2000-01-01"}
+         // the bound is {$date:"1900-01-01"} - {$date:"9999-12-31"}
+         static cregex reg = cregex::compile("^((((19|[2-9]\\d)\\d{2})-(0?[13578]|1[02])-(0?[1-9]|[12]\\d|3[01]))|(((19|[2-9]\\d)\\d{2})-(0?[13456789]|1[012])-(0?[1-9]|[12]\\d|30))|(((19|[2-9]\\d)\\d{2})-0?2-(0?[1-9]|1\\d|2[0-8]))|(((19|[2-9]\\d)(0[48]|[2468][048]|[13579][26])|(([2468][048]|[3579][26])00))-0?2-29))$") ;
+         if ( !( regex_match( str, reg ) ) )
+         {
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+
+         if ( !sscanf ( str,
+                        "%d-%d-%d",
+                        &year   ,
+                        &month  ,
+                        &day ) )
+         {
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+
+         t.tm_year  = year - 1900  ;
+         t.tm_mon   = month - 1 ;
+         t.tm_mday  = day    ;
+
+         timep = mktime( &t ) ;
+         millis = timep * 1000 ;
       }
-
-      t.tm_year  = year - 1900  ;
-      t.tm_mon   = month - 1 ;
-      t.tm_mday  = day    ;
-
-      timep = mktime( &t ) ;
-      millis = timep * 1000 ;
+      
    done:
       return rc ;
    error:
       goto done ;
    }
-
+   
    INT32 utilBuildFullPath( const CHAR *path, const CHAR *name,
                             UINT32 fullSize, CHAR *full )
    {

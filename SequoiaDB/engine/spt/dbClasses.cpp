@@ -8485,29 +8485,59 @@ static JSBool sdbdate_constructor( JSContext *cx, uintN argc, jsval *vp )
                    localTm.tm_mday ) ;                 // 3) Day (UINT32)
       jsTimeProperty = JS_NewStringCopyN( cx, buf, ossStrlen( buf ) ) ;
       VERIFY( jsTimeProperty ) ;
+      valTime = STRING_TO_JSVAL( jsTimeProperty ) ;
    }
    else if ( 1 == argc )
    {
-      UINT64 mills = 0 ;
+      INT64 mills = 0 ;
+      UINT64 tmpMills = 0 ;
+      JSBool retFlag = JS_FALSE ;
 
-      if ( !JSVAL_IS_STRING( argv[0]) )
+      if ( JSVAL_IS_STRING( argv[0] ) )
+      {
+         timeStr = JS_EncodeString( cx, JSVAL_TO_STRING( argv[0]) ) ;
+         VERIFY( timeStr ) ;
+         rc = engine::utilStr2Date( timeStr, tmpMills ) ;
+         if ( SDB_OK == rc )
+         {
+            jsTimeProperty = JS_NewStringCopyN( cx, timeStr, ossStrlen( timeStr ) ) ;
+            VERIFY( jsTimeProperty ) ;
+            valTime = STRING_TO_JSVAL( jsTimeProperty ) ;
+         }
+         else
+         {  // maybe the format is {dateKey:SdbDate("-30610252800000")}, try to parse it
+            try
+            {
+               mills = boost::lexical_cast<INT64>( timeStr ) ;
+            }
+            catch( boost::bad_lexical_cast &e )
+            {
+               REPORT_RC ( SDB_OK == rc , "SdbDate(): wrong arguments", SDB_INVALIDARG ) ;
+            }
+            retFlag = JS_NewNumberValue ( cx , mills , &valTime ) ;
+            VERIFY ( retFlag ) ;
+         }
+      }
+      else if ( JSVAL_IS_NUMBER( argv[0] ) )
+      {
+         jsdouble dp = 0 ;
+         if ( !JS_ValueToNumber( cx, argv[0], &dp ))
+         {
+            REPORT_RC ( SDB_OK == rc , "SdbDate(): wrong arguments", SDB_INVALIDARG ) ;
+         }
+         mills = dp ;  
+         retFlag = JS_NewNumberValue ( cx , mills , &valTime ) ;
+         VERIFY ( retFlag ) ;
+      }
+      else
       {
          REPORT_RC ( FALSE , "SdbDate(): wrong arguments", SDB_INVALIDARG ) ;
       }
-
-      timeStr = JS_EncodeString( cx, JSVAL_TO_STRING( argv[0]) ) ;
-      VERIFY( timeStr ) ;
-      rc = engine::utilStr2Date( timeStr, mills ) ;
-      REPORT_RC ( SDB_OK == rc , "SdbDate(): wrong arguments", SDB_INVALIDARG ) ;
-      jsTimeProperty = JS_NewStringCopyN( cx, timeStr, ossStrlen( timeStr ) ) ;
-      VERIFY( jsTimeProperty ) ;
    }
    else
    {
       REPORT_RC ( FALSE, "SdbDate(): wrong arguments", SDB_INVALIDARG ) ;
    }
-
-   valTime = STRING_TO_JSVAL( jsTimeProperty ) ;
 
    jsObj = JS_NewObject( cx, &sdbdate_class, NULL, NULL ) ;
    VERIFY( jsObj ) ;

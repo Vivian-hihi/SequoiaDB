@@ -42,6 +42,7 @@
 #include "ossMem.hpp"
 #include "utilStr.hpp"
 #include "../client/base64c.h"
+#include "../client/jstobs.h"
 #include <boost/lexical_cast.hpp>
 
 #define SPT_CONVERTOR_SPE_OBJSTART '$'
@@ -54,6 +55,26 @@
 #define SPT_SPEOBJ_BINARY "$binary"
 #define SPT_SPEOBJ_TYPE "$type"
 #define SPT_SPEOBJ_OID "$oid"
+
+// check date type bounds
+#define SDB_DATE_TYPE_CHECK_BOUND(tm)                 \
+   do {                                               \
+      if( (INT64)tm/1000 < TIME_STAMP_DATE_MIN ||     \
+          (INT64)tm/1000 > TIME_STAMP_DATE_MAX ) {    \
+         rc = SDB_INVALIDARG ;                        \
+         goto error ;                                 \
+      }                                               \
+   } while( 0 )
+      
+// check timestamp type bounds
+#define SDB_TIMESTAMP_TYPE_CHECK_BOUND(tm)            \
+   do {                                               \
+      if( (INT64)tm < TIME_STAMP_TIMESTAMP_MIN ||     \
+          (INT64)tm > TIME_STAMP_TIMESTAMP_MAX ) {    \ 
+         rc = SDB_INVALIDARG ;                        \
+         goto error ;                                 \
+      }                                               \
+   } while( 0 )
 
 extern JSBool is_objectid( JSContext *, JSObject * ) ;
 extern JSBool is_bindata( JSContext *, JSObject * ) ;
@@ -334,6 +355,9 @@ INT32 sptConvertor::_addTimestamp( JSObject *obj,
       goto error ;
    }
 
+   // check bounds
+   SDB_TIMESTAMP_TYPE_CHECK_BOUND( tm ) ;
+   // append to bson
    btm.t = tm;
    btm.i = usec ;
    bson_append_timestamp( bs, key, &btm ) ;
@@ -461,25 +485,52 @@ INT32 sptConvertor::_addSdbDate( JSObject *obj,
    INT32 rc = SDB_OK ;
    std::string strValue ;
    jsval value ;
-   UINT64 tm ;
+   UINT64 tm = 0 ;
    bson_date_t datet ;
-   if ( !_getProperty( obj, "_d", JSTYPE_STRING, value ))
+   if ( _getProperty( obj, "_d", JSTYPE_STRING, value ) )
    {
+      rc = _toString( value, strValue ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
+
+      rc = engine::utilStr2Date( strValue.c_str(), tm ) ;
+      if ( SDB_OK != rc )
+      {  // maybe the format is {dateKey:SdbDate("-30610252800000")}
+         try
+         {
+            tm = boost::lexical_cast<UINT64>( strValue.c_str() ) ;
+         }
+         catch( boost::bad_lexical_cast &e )
+         {
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+      }
+      else
+      {
+         // check bounds
+         SDB_DATE_TYPE_CHECK_BOUND( tm ) ;
+      }
+   }
+   else if (  _getProperty( obj, "_d", JSTYPE_NUMBER, value ) )
+   {
+      FLOAT64 fv = 0 ;
+      rc = _toDouble( value, fv ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
+      tm = fv ;
+   }
+   else
+   {
+      rc = SDB_INVALIDARG ;
       goto error ;
    }
 
-   rc = _toString( value, strValue ) ;
-   if ( SDB_OK != rc )
-   {
-      goto error ;
-   }
-
-   if ( SDB_OK != engine::utilStr2Date( strValue.c_str(),
-                                        tm ) )
-   {
-      goto error ;
-   }
-
+   // append to bson
    datet = tm ;
    bson_append_date( bs, key, datet ) ;
 done:
@@ -664,7 +715,9 @@ INT32 sptConvertor::_addSpecialObj( JSObject *obj,
          rc = SDB_INVALIDARG ;
          goto error ;
       }
-
+      // check bounds
+      SDB_TIMESTAMP_TYPE_CHECK_BOUND( tm ) ;
+      // append timestamp
       btm.t = tm;
       btm.i = usec ;
       bson_append_timestamp( bs, key, &btm ) ;
@@ -676,28 +729,97 @@ INT32 sptConvertor::_addSpecialObj( JSObject *obj,
       jsval value ;
       UINT64 tm ;
       bson_date_t datet ;
-      if ( !_getProperty( obj, name.c_str(), JSTYPE_STRING, value ))
+      if ( TRUE == _getProperty( obj, name.c_str(), JSTYPE_STRING, value ) )
+      {
+         // the format is {$date:"2000-01-01"} or
+         // {$date:"2000-01-01T(t)01:30:24:999999Z(z)"} or
+         // {$date:"2000-01-01T(t)01:30:24:000000+0800"}
+         rc = _toString( value, strValue ) ;
+         if ( SDB_OK != rc )
+         {
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+         if ( SDB_OK != engine::utilStr2Date( strValue.c_str(), tm ) )
+         {
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+         // check bounds
+         SDB_DATE_TYPE_CHECK_BOUND( tm ) ;
+      }
+      else if ( TRUE == _getProperty( obj, name.c_str(), JSTYPE_OBJECT, value ) )
+      {
+         // the format is {$date:{$numberLong:"946656000000"}}
+         JSObject *tmpObj = JSVAL_TO_OBJECT( value ) ;
+         jsval tmpValue ;
+         if ( NULL == tmpObj )
+         {
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+         if ( TRUE == _getProperty( tmpObj, "$numberLong",
+                                    JSTYPE_STRING, tmpValue ) )
+         {
+            rc = _toString( tmpValue, strValue ) ;
+            if ( SDB_OK != rc )
+            {
+               rc = SDB_INVALIDARG ;
+               goto error ;
+            }
+            try
+            {
+               tm = boost::lexical_cast<UINT64>( strValue ) ;
+            }
+            catch( boost::bad_lexical_cast &e )
+            {
+               rc = SDB_INVALIDARG ;
+               goto error ;
+            }
+         }
+         else if ( TRUE == _getProperty( tmpObj, "$numberLong",
+                                         JSTYPE_NUMBER, tmpValue ) )
+         {
+            // the format is {$date:{$numberLong:946656000000}}
+            FLOAT64 fv = 0 ;
+            rc = _toDouble( tmpValue, fv ) ;
+            if ( SDB_OK != rc )
+            {
+               goto error ;
+            }
+            tm = fv ;
+         }
+         else
+         {
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+      }
+      else if ( TRUE == _getProperty( obj, name.c_str(), JSTYPE_NUMBER, value ) )
+      {
+         // the format is {$date:946656000000}
+         FLOAT64 fv = 0 ;
+         rc = _toDouble( value, fv ) ;
+         if ( SDB_OK != rc )
+         {
+            goto error ;
+         }
+         tm = fv ;
+      }
+      else
       {
          rc = SDB_INVALIDARG ;
          goto error ;
       }
 
-      rc = _toString( value, strValue ) ;
-      if ( SDB_OK != rc )
-      {
-         rc = SDB_INVALIDARG ;
-         goto error ;
-      }
-
-      if ( SDB_OK != engine::utilStr2Date( strValue.c_str(),
-                                           tm ) )
-      {
-         rc = SDB_INVALIDARG ;
-         goto error ;
-      }
-
+      // append date      
       datet = tm ;
-      bson_append_date( bs, key, datet ) ;
+      rc = bson_append_date( bs, key, datet ) ;
+      if ( SDB_OK !=rc )
+      {
+         rc = SDB_DRIVER_BSON_ERROR ;
+         goto  error ;
+      }
    }
    else if ( 0 == name.compare( SPT_SPEOBJ_REGEX ) &&
              2 == properties->length )
