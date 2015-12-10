@@ -130,7 +130,7 @@
          var hideTime = 7000 ;
          var isShow = false ;
          //angular.element( $window ).bind( 'mousemove', function ( ele ) {
-         $( window ).on( 'mousemove', function( ele ){
+         $( document ).on( 'mousemove', function( ele ){
             var pageX = ele['pageX'] ;
             var pageY = ele['pageY'] ;
             ele = $( ele['target'] ) ;
