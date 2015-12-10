@@ -38,7 +38,7 @@
                            <td>
                               <a class="linkButton" ng-click="showCLInfo($parent.$parent.$index,$index)" ng-style="{ true: {'font-weight':'bold','color':'#FF7547'} }[showType == 'cl'&&clID == $index]">{{clInfo.Name}}</a>
                            </td>
-                           <td ng-if="moduleMode == 'distribution'"><span class="badge badge-info" data-desc="{{clInfo.typeDesc}}">{{clInfo.type}}</span></td>
+                           <td ng-if="moduleMode == 'distribution'"><span class="badge badge-info" ng-attr="{'data-desc':clInfo.typeDesc}">{{clInfo.type}}</span></td>
                            <td ng-if="moduleMode == 'distribution' && isHideSubCl != true"><span>{{clInfo.MainCLName}}</span></td>
                            <td><a class="linkButton" ng-click="gotoLob($parent.$parent.$index,$index)"><span ng-if="clInfo.Lob != null" >-</span></a></td>
                            <td><a class="linkButton" ng-click="gotoRecord($parent.$parent.$index,$index)">{{clInfo.Record}}</a></td>
