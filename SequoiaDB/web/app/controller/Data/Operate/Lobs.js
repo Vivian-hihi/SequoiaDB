@@ -91,8 +91,8 @@
       }
       
       //显示lob的详细信息
-      $scope.showLobInfo = function( index ){
-         _DataOperateLob.showLobInfo( $scope, index ) ;
+      $scope.showLobInfo = function( oid ){
+         _DataOperateLob.showLobInfo( $scope, oid ) ;
       }
 
       //查询所有Lob

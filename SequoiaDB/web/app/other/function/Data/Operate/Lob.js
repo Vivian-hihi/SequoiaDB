@@ -45,7 +45,7 @@ _DataOperateLob.queryLobs = function( $scope, $compile, SdbFunction, lobs, start
       // var removeIcon = $( '<i></i>' ).addClass( 'fa fa-remove' ).text( ' ' + $scope.autoLanguage( '删除' ) ) ;
       // var removeBtn = $compile( '<a ng-click="LobDelete(' + ( index + start - 1 ) + ')"></div>' )( $scope ).addClass( 'linkButton' ).append( removeIcon ) ;
       // newRow[1] = { 'html': removeBtn } ;
-      newRow[1] = { 'html': $compile( '<a ng-click="showLobInfo(' + index + ')"></a>' )( $scope ).addClass( 'linkButton' ).text( line[1] ) } ;
+      newRow[1] = { 'html': $compile( '<a ng-click="showLobInfo(\'' + record['Oid']['$oid'] + '\')"></a>' )( $scope ).addClass( 'linkButton' ).text( line[1] ) } ;
       newRow[2] = { 'text': line[2] } ;
       newRow[3] = { 'text': line[3] } ;
       newRow[4] = { 'text': line[4] } ;
@@ -226,12 +226,18 @@ _DataOperateLob.LobQuery = function( $scope, $compile, SdbFunction ){
 }
 
 //显示lob的详细信息
-_DataOperateLob.showLobInfo = function( $scope, index ){
-   var records = $scope.lobContent[index] ;
+_DataOperateLob.showLobInfo = function( $scope, oid ){
    $scope.Components.Modal.isShow = true ;
    $scope.Components.Modal.icon = '' ;
    $scope.Components.Modal.title = $scope.autoLanguage( 'Lob信息' ) ;
-   $scope.Components.Modal.Grid = $scope.lobContent[index] ;
+   $scope.Components.Modal.Grid = {} ;
+   $.each( $scope.lobContent, function( index, lob ){
+      if( lob['Oid']['$oid'] == oid )
+      {
+         $scope.Components.Modal.Grid = lob ;
+         return false ;
+      }
+   } ) ;
    $scope.Components.Modal.Context = '\
 <table class="table loosen border">\
 <tr>\
