@@ -486,8 +486,10 @@ static BOOLEAN bsonConvertJson ( CHAR **pbuf,
       case BSON_BOOL:
       {
          /* for boolean type, we display either true or false */
-         bsonConvertJsonRawConcat ( pbuf, left,
-                               (bson_iterator_bool( &i ) ? "true" : "false"), FALSE ) ;
+         bsonConvertJsonRawConcat ( pbuf,
+                                    left,
+                                    (bson_iterator_bool( &i )?"true":"false"),
+                                    FALSE ) ;
          CHECK_LEFT ( left )
          break ;
       }
@@ -498,11 +500,11 @@ static BOOLEAN bsonConvertJson ( CHAR **pbuf,
          CHAR temp[ BSON_TEMP_SIZE_64 ] ;
          struct tm psr;
          time_t timer = bson_iterator_date( &i ) / 1000 ;
-         if( (INT64)timer >= TIME_STAMP_DATE_MIN &&
-             (INT64)timer <= TIME_STAMP_DATE_MAX )
+         memset ( temp, 0, BSON_TEMP_SIZE_64 ) ;
+         local_time ( &timer, &psr ) ;
+         if( psr.tm_year + RELATIVE_YEAR >= RELATIVE_YEAR &&
+             psr.tm_year + RELATIVE_YEAR <= INT64_LAST_YEAR )
          {
-            memset ( temp, 0, BSON_TEMP_SIZE_64 ) ;
-            local_time ( &timer, &psr ) ;
 #ifdef WIN32
             _snprintf ( temp,
                         BSON_TEMP_SIZE_64,
@@ -952,8 +954,8 @@ static BOOLEAN jsonConvertBson ( cJSON *cj, bson *bs, BOOLEAN isObj )
             eg. before 1927-12-31-23.54.07,
             will be more than 352 seconds
             UTC time
-            date min 1900-01-01-00.00.00.000000 +/- TZ
-            date max 9999-12-31-23.59.59.999999 +/- TZ
+            date min 1900-01-01-00.00.00.000000
+            date max 9999-12-31-23.59.59.999999
             timestamp min 1901-12-13-20.45.52.000000 +/- TZ
             timestamp max 2038-01-19-03.14.07.999999 +/- TZ
          */
@@ -1063,15 +1065,9 @@ static BOOLEAN jsonConvertBson ( cJSON *cj, bson *bs, BOOLEAN isObj )
             timep = mktime( &t ) ;
          }
 
-         if( cJSON_Date == cj->type &&
-             ( (INT64)timep < TIME_STAMP_DATE_MIN ||
-               (INT64)timep > TIME_STAMP_DATE_MAX ) )
-         {
-            return FALSE ;
-         }
-         else if( cJSON_Timestamp == cj->type &&
-                  ( (INT64)timep < TIME_STAMP_TIMESTAMP_MIN ||
-                    (INT64)timep > TIME_STAMP_TIMESTAMP_MAX ) )
+         if( cJSON_Timestamp == cj->type &&
+             ( (INT64)timep < TIME_STAMP_TIMESTAMP_MIN ||
+               (INT64)timep > TIME_STAMP_TIMESTAMP_MAX ) )
          {
             return FALSE ;
          }

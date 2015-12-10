@@ -125,13 +125,16 @@ namespace import
    #define TIME_FORMAT        (_timestampFormat.c_str())
    #define TIME_FORMAT_LEN    (_timestampFormat.length())
    #define TIME_LAST_YEAR     2038
-   #define TIME_START_YEAR    1901
+   #define TIME_START_YEAR    1900
    #define TIME_MAX_NUM       ((INT64)2147443199)
    #define TIME_MIN_NUM       ((INT64)-2147414400)
 
+   #define TIME_STAMP_TIMESTAMP_MIN -2147483648
+   #define TIME_STAMP_TIMESTAMP_MAX  2147483647
+
    #define DATE_FORMAT        (_dateFormat.c_str())
    #define DATE_FORMAT_LEN    (_dateFormat.length())
-   #define DATE_START_YEAR    -9999
+   #define DATE_START_YEAR    1900
    #define DATE_LAST_YEAR     9999
    #define DATE_MAX_NUM       ((INT64)253402271999)
    #define DATE_MIN_NUM       ((INT64)-377705145943)
@@ -2124,6 +2127,7 @@ namespace import
             goto error;
          }
 
+         /*
          if (TIME_LAST_YEAR == t.tm_year)
          {
             if (t.tm_mon > 0 || (t.tm_mon == 0 && t.tm_mday >= 19))
@@ -2143,6 +2147,7 @@ namespace import
                goto error;
             }
          }
+         */
 
          if (t.tm_hour >= RELATIVE_HOUR || t.tm_hour < 0 ||
              t.tm_min >= RELATIVE_MIN_SEC || t.tm_min < 0 ||
@@ -2158,6 +2163,11 @@ namespace import
 
          /* create integer time representation */
          timep = mktime(&t);
+         if( timep < TIME_STAMP_TIMESTAMP_MIN ||
+             timep > TIME_STAMP_TIMESTAMP_MAX )
+         {
+            return FALSE ;
+         }
          value.sec = (INT32)timep;
          value.us = microsec;
       }
@@ -2283,6 +2293,7 @@ namespace import
             goto error;
          }
 
+         /*
          if (value < DATE_MIN_NUM)
          {
             PD_LOG(PDERROR, "The time stamp %lld is less than %lld",
@@ -2298,6 +2309,7 @@ namespace import
             rc = SDB_INVALIDARG;
             goto error;
          }
+         */
 
          value *= 1000;
       }

@@ -712,16 +712,17 @@ namespace bson {
             break;
         case bson::Date:
         {
+            long long milli = date() ;
             char buffer[64] ;
             // date() return UINT64, but need INT64
             struct tm psr ;
             memset ( buffer, 0, 64 ) ;
-            time_t timer = (time_t)( ( (long long)date() ) / 1000 ) ;
+            time_t timer = (time_t)( ( (long long)milli ) / 1000 ) ;
+            local_time ( &timer, &psr ) ;
             //[ 1900-01-01, 9999-12-31 ]
-            if( (long long)timer >= -2208988800LL &&
-                (long long)timer <= 253402300799LL )
+            if( psr.tm_year + 1900 >= 1900 &&
+                psr.tm_year + 1900 <= 9999 )
             {
-               local_time ( &timer, &psr ) ;
                sprintf ( buffer,
                          "{\"$date\": \"%04d-%02d-%02d\"}",
                          psr.tm_year + 1900,
@@ -732,7 +733,7 @@ namespace bson {
             else
             {
                s << "{ \"$date\": "  ;
-               sprintf ( buffer, "%lld", (unsigned long long)date() ) ;
+               sprintf ( buffer, "%lld", (unsigned long long)milli ) ;
                s << buffer << " }" ;
             }
             break ;

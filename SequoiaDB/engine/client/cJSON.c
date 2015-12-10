@@ -876,18 +876,17 @@ static const char *parse_first_command(cJSON *item,const char *value,int cj_type
    value = skip ( value + 1 ) ;
    if ( *value == '{' && cj_type == cJSON_Date )
    {
-      isNumber = 2 ;
+      isNumber = 1 ;
+   }
+   else if ( cj_type == cJSON_Date )
+   {
+      isNumber = 0 ;
    }
    else if ( *value != '\"' )
    {
-      if ( cj_type == cJSON_Date ||
-           cj_type == cJSON_MinKey ||
-           cj_type == cJSON_MaxKey ||
-           cj_type == cJSON_Undefined )
-      {
-         isNumber = 1 ;
-      }
-      else
+      if ( cj_type != cJSON_MinKey &&
+           cj_type != cJSON_MaxKey &&
+           cj_type != cJSON_Undefined )
       {
          ep = value ;
          return 0 ;
@@ -902,7 +901,7 @@ static const char *parse_first_command(cJSON *item,const char *value,int cj_type
          ep = value ;
          return 0 ;
       }
-      value = skip ( value + 1 ) ;
+      ++value ;
    }
    switch ( cj_type )
    {
@@ -934,31 +933,68 @@ static const char *parse_first_command(cJSON *item,const char *value,int cj_type
    }
    case cJSON_Date:
    {
-      const char *value_temp = value;
+      const char *value_temp = value ;
+      char *pStringLast = 0 ;
       int len = 0;
-      if ( isNumber == 1 )
+      int isString = 0 ;
+      int stringLen = 0 ;
+      if ( isNumber == 0 )
       {
+         if( *value == '\"' )
+         {
+            isString = 1 ;
+            ++value ;
+         }
+         value_temp = value ;
          //{ $date : 123456 }
          value_temp = parse_value ( item, value_temp, 0, 0 ) ;
-         if ( !value_temp )
+         if( value_temp &&
+             item->type == cJSON_Number &&
+             ( item->numType == cJSON_INT32 || item->numType == cJSON_INT64 ) &&
+             ( ( isString == 1 && *value_temp == '\"' ) ||
+               ( isString == 0 && *value_temp != '\"' ) ) )
+         {
+            if( isString == 1 )
+            {
+               ++value_temp ;
+            }
+            item->type = cJSON_Date_Number ;
+            value = value_temp ;
+         }
+         else if( isString == 1 )
+         {
+            item->type = cJSON_Date ;
+            value_temp = value ;
+            //{ $date: "yyyy-mm-dd-hh.mm.ss.ssssss"
+            while ( value_temp &&
+                    *value_temp != '\"' &&
+                    (unsigned char)*value_temp > 32 )
+            {
+               /* not an object! */
+               if ( !((*value_temp >= '0' && *value_temp <= '9') ||
+                    *value_temp == '+' || *value_temp == '-' ||
+                    *value_temp == 't' || *value_temp == 'T' ||
+                    *value_temp == 'z' || *value_temp == 'Z' ||
+                    *value_temp == ':' || *value_temp == '.' ) )
+                  return 0 ;
+               ++len ;
+               ++value_temp ;
+            }
+            if( !value_temp )
+               return 0 ;
+            item->valuestring = (char*)cJSON_malloc( len + 1 ) ;
+            strncpy ( item->valuestring, value, len ) ;
+            item->valuestring [ len ] = 0 ;
+            value = value_temp ;
+         }
+         else
          {
             return 0 ;
          }
-         if ( item->type != cJSON_Number )
-         {
-            return 0 ;
-         }
-         if( item->numType != cJSON_INT32 && item->numType != cJSON_INT64 )
-         {
-            return 0 ;
-         }
-         item->type = cJSON_Date_Number ;
-         value = value_temp ;
       }
-      else if ( isNumber == 2 )
+      else if ( isNumber == 1 )
       {
          //{ $date : { $numberLong: 123456 } }
-         int isString = 0 ;
          if( *value != '{' )
          {
             return 0 ;
@@ -1025,30 +1061,6 @@ static const char *parse_first_command(cJSON *item,const char *value,int cj_type
          value = skip ( value + 1 ) ;
          if ( *value != '}' ) return 0 ;
          value = skip ( value + 1 ) ;
-      }
-      else
-      {
-         //{ $date: "yyyy-mm-dd-hh.mm.ss.ssssss"
-         while ( value_temp &&
-                 *value_temp != '\"' &&
-                 (unsigned char)*value_temp > 32 )
-         {
-            /* not an object! */
-            if ( !((*value_temp >= '0' && *value_temp <= '9') ||
-                 *value_temp == '+' || *value_temp == '-' ||
-                 *value_temp == 't' || *value_temp == 'T' ||
-                 *value_temp == 'z' || *value_temp == 'Z' ||
-                 *value_temp == ':' || *value_temp == '.' ) )
-               return 0 ;
-            ++len ;
-            ++value_temp ;
-         }
-         if( !value_temp )
-            return 0 ;
-         item->valuestring = (char*)cJSON_malloc( len + 1 ) ;
-         strncpy ( item->valuestring, value, len ) ;
-         item->valuestring [ len ] = 0 ;
-         value = value_temp ;
       }
       break ;
    }
