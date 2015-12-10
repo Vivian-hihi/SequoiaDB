@@ -142,7 +142,20 @@ _DataOperateRecord.buildJsonGrid = function( $scope, $compile )
       gridData.tool.left.push( { 'html': $compile( '<i class="fa fa-play" ng-show="current < total" ng-click="nextPage()"></i>' )( $scope ) } ) ;
    }
    $.each( $scope.records, function( index, record ){
-      var tmpJson = JSON.stringify( record, null, 3 ) ;
+      var tmpJson = JSON.stringify( record, function( key, value ){
+         if( value == Number.POSITIVE_INFINITY )
+         {
+            return 1.7976931348623157e+308 ;
+         }
+         else if( value == Number.NEGATIVE_INFINITY )
+         {
+            return -1.7976931348623157e+308 ;
+         }
+         else
+         {
+            return value ;
+         }
+      }, 3 ) ;
       var editBtn = $compile( '<a ng-click="Edit(' + index + ')"></a>' )( $scope ).addClass( 'linkButton' ).append( $( '<i class="fa fa-edit"></i>' ).attr( 'data-desc', $scope.autoLanguage( '编辑' ) ) ) ;
       var copyBtn = $compile( '<a ng-click="Insert(' + index + ')"></a>' )( $scope ).addClass( 'linkButton' ).append( $( '<i class="fa fa-copy"></i>' ).attr( 'data-desc', $scope.autoLanguage( '复制' ) ) ) ;
       var deleteBtn = $compile( '<a ng-click="DeleteRecord(' + index + ')" ></a>' )( $scope ).addClass( 'linkButton' ).append( $( '<i class="fa fa-remove"></i>' ).attr( 'data-desc', $scope.autoLanguage( '删除' ) ) ) ;
@@ -262,6 +275,14 @@ _DataOperateRecord.buildTableGrid = function( $scope, $compile, SdbFunction )
       line[0] = index + 1 ;
       var newRow = [] ;
       $.each( line, function( index, value ){
+         if( value == Number.POSITIVE_INFINITY )
+         {
+            value = '1.7976931348623157e+308' ;
+         }
+         else if( value == Number.NEGATIVE_INFINITY )
+         {
+            value = '-1.7976931348623157e+308' ;
+         }
          newRow.push( { 'text': value } ) ;
       } ) ;
       gridData['body'].push( newRow ) ;
@@ -288,7 +309,20 @@ _DataOperateRecord.createInsertModel = function( $scope, SdbRest, SdbFunction, r
    }
    $scope.Components.Modal.Context = '<div json-edit para="data.jsonEdit"></div>' ;
    $scope.Components.Modal.ok = function(){
-      var str = JSON.stringify( $scope.Components.Modal.jsonEdit.Callback.getJson() ) ;
+      var str = JSON.stringify( $scope.Components.Modal.jsonEdit.Callback.getJson(), function( key, value ){
+         if( value == Number.POSITIVE_INFINITY )
+         {
+            return 1.7976931348623157e+308 ;
+         }
+         else if( value == Number.NEGATIVE_INFINITY )
+         {
+            return -1.7976931348623157e+308 ;
+         }
+         else
+         {
+            return value ;
+         }
+      } ) ;
       var data = { 'cmd': 'insert', 'name': $scope.fullName, 'insertor': str } ;
       SdbRest.DataOperation( data, function( json ){
          $scope.execResult = sprintf( $scope.autoLanguage( '? ? 插入记录成功' ), timeFormat( new Date(), 'hh:mm:ss' ), $scope.fullName ) ;

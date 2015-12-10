@@ -4,8 +4,8 @@
          <li class="text Ellipsis" style="max-width:240px;height:32px;">
             <b>{{moduleName}}</b>
          </li>
-         <li class="text" style="padding-left:20px;width:180px;height:32px;" ng-if="moduleMode == 'distribution'">
-            <input type="checkbox" ng-click="switchShowSubCl($event)" ng-checked="isHideSubCl"/> {{autoLanguage("屏蔽子集合")}} 
+         <li class="text" style="padding-left:20px;width:230px;height:32px;" ng-if="moduleMode == 'distribution'">
+            <input type="checkbox" ng-click="switchShowSubCl($event)" ng-checked="isHideSubCl"/> {{autoLanguage("屏蔽垂直分区信息")}} 
          </li>
          <li style="float:right;height:32px;">
             {{autoLanguage("搜索")}}: <input class="form-control" data-desc={{autoLanguage("用于快速搜索集合空间和集合，例：foo.bar。")}} style="width:300px;" ng-init="searchName=''" ng-model="searchName" ng-change="search(searchName)" />
@@ -29,7 +29,7 @@
                         <tr>
                            <td style="background-color:#F1F4F5;font-weight:bold;">{{autoLanguage("集合名")}}</td>
                            <td style="background-color:#F1F4F5;font-weight:bold;" ng-if="moduleMode == 'distribution'">{{autoLanguage("分区类型")}}</td>
-                           <td style="background-color:#F1F4F5;font-weight:bold;" ng-if="moduleMode == 'distribution' && isHideSubCl != true">{{autoLanguage("主集合")}}</td>
+                           <td style="background-color:#F1F4F5;font-weight:bold;" ng-if="moduleMode == 'distribution' && isHideSubCl != true">{{autoLanguage("归属集合")}}</td>
                            <td style="background-color:#F1F4F5;font-weight:bold;">{{autoLanguage("Lob数")}}</td>
                            <td style="background-color:#F1F4F5;font-weight:bold;">{{autoLanguage("记录数")}}</td>
                            <td style="background-color:#F1F4F5;font-weight:bold;">{{autoLanguage("索引数")}}</td>
@@ -44,10 +44,22 @@
                            <td><a class="linkButton" ng-click="gotoRecord($parent.$parent.$index,$index)">{{clInfo.Record}}</a></td>
                            <td><a class="linkButton" ng-click='showIndex($parent.$parent.$index,$index)'>{{clInfo.Index}}</a></td>
                         </tr>
-                        <tr ng-if="csInfo.clNum > maxShowCLNum && csInfo.show == false && find.length == 0">
+                        <tr ng-if="csInfo.clNum > maxShowCLNum && csInfo.show == false && find.length == 0 && moduleMode == 'standalone'">
+                           <td colspan="4"><a class="linkButton" ng-click="clTableShow(csInfo.Name)">{{autoLanguage("展示所有...")}}</a></td>
+                        </tr>
+                        <tr ng-if="csInfo.clNum > maxShowCLNum && csInfo.show == true && find.length == 0 && moduleMode == 'standalone'">
+                           <td colspan="4"><a class="linkButton" ng-click="clTableHide(csInfo.Name)">{{autoLanguage("收起...")}}</a></td>
+                        </tr>
+                        <tr ng-if="csInfo.clNum > maxShowCLNum && csInfo.show == false && find.length == 0 && isHideSubCl == true && moduleMode == 'distribution'">
+                           <td colspan="5"><a class="linkButton" ng-click="clTableShow(csInfo.Name)">{{autoLanguage("展示所有...")}}</a></td>
+                        </tr>
+                        <tr ng-if="csInfo.clNum > maxShowCLNum && csInfo.show == false && find.length == 0 && isHideSubCl == false && moduleMode == 'distribution'">
                            <td colspan="6"><a class="linkButton" ng-click="clTableShow(csInfo.Name)">{{autoLanguage("展示所有...")}}</a></td>
                         </tr>
-                        <tr ng-if="csInfo.clNum > maxShowCLNum && csInfo.show == true && find.length == 0">
+                        <tr ng-if="csInfo.clNum > maxShowCLNum && csInfo.show == true && find.length == 0 && isHideSubCl == true && moduleMode == 'distribution'">
+                           <td colspan="5"><a class="linkButton" ng-click="clTableHide(csInfo.Name)">{{autoLanguage("收起...")}}</a></td>
+                        </tr>
+                        <tr ng-if="csInfo.clNum > maxShowCLNum && csInfo.show == true && find.length == 0 && isHideSubCl == false && moduleMode == 'distribution'">
                            <td colspan="6"><a class="linkButton" ng-click="clTableHide(csInfo.Name)">{{autoLanguage("收起...")}}</a></td>
                         </tr>
                      </tbody>
@@ -98,40 +110,13 @@
                            </select>
                         </td>
                      </tr>
-                  </tbody>
-                  <tbody ng-repeat="(key, value) in attr['Info']['LowBound'] track by $index" ng-if="attr['Info']['LowBound'] != undefined">
-                     <tr>
-                        <td>LowBound</td>
-                        <td>{{attr['Info']['LowBound'][$index]}}</td>
-                     </tr>
-                     <tr>
-                        <td>UpBound</td>
-                        <td>{{attr['Info']['UpBound'][$index]}}</td>
-                     </tr>
-                  </tbody>
-                  <tbody>
                      <tr ng-repeat="(key, value) in attr['Info'] track by $index" ng-if="key != 'Name' && key != 'GroupName' && key != 'CataInfo' && key != 'LowBound' && key != 'UpBound' && value != undefined">
                         <td>{{key}}</td>
                         <td>{{value}}</td>
                      </tr>
-                  </tbody>
-               </table>
-            </div>
-
-            <div ng-if="attr['Info']['IsMainCL'] == true" style="padding:10px 0 5px 0;"><b>{{autoLanguage("分区属性")}}</b></div>
-            <div style="padding:5px 0 0 0;" ng-if="attr['Info']['IsMainCL'] == true">
-               <table class="table loosen border">
-                  <tbody>
-                     <tr>
-                        <td style="background-color:#F1F4F5;">{{autoLanguage("分区")}}</td>
-                        <td style="background-color:#F1F4F5;">{{autoLanguage("范围")}}</td>
-                     </tr>
-                     <tr ng-repeat="cataInfo in attr['Info']['CataInfo'] track by $index">
-                        <td>{{cataInfo['SubCLName']}}</td>
-                        <td>
-                           <div>{{cataInfo['LowBound']}}</div>
-                           <div>{{cataInfo['UpBound']}}</div>
-                        </td>
+                     <tr ng-if="showType == 'cl' && (attr['Info']['ShardingType'] == 'range' || attr['Info']['ShardingType'] == 'hash')">
+                        <td>Partitions</td>
+                        <td><a class="linkButton" ng-click="showPartitions()">{{autoLanguage("显示")}}</a></td>
                      </tr>
                   </tbody>
                </table>

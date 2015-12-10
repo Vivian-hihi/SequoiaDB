@@ -110,6 +110,11 @@
          _DataDatabaseIndex.showIndex( $scope, SdbRest, csIndex, clIndex ) ;
       }
 
+      //打开 切分范围 的窗口
+      $scope.showPartitions = function(){
+         _DataDatabaseIndex.showPartitions( $scope ) ;
+      }
+
       //显示不同分区组的信息
       $scope.showGroupInfo = function( index ){
          _DataDatabaseIndex.showGroupInfo( $scope, index ) ;

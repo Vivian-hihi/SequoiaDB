@@ -792,7 +792,20 @@
                Height: 0,
                Type: 1,
                View: json2Array( json ),
-               Json: JSON.stringify( json, null, 3 ),
+               Json: JSON.stringify( json, function( key, value ){
+                  if( value == Number.POSITIVE_INFINITY )
+                  {
+                     return 1.7976931348623157e+308 ;
+                  }
+                  else if( value == Number.NEGATIVE_INFINITY )
+                  {
+                     return -1.7976931348623157e+308 ;
+                  }
+                  else
+                  {
+                     return value ;
+                  }
+               }, 3 ),
                Search: ''
             } ;
             $scope.Setting.View[0]['isOpen'] = true ;
@@ -881,7 +894,7 @@
                            } ) ;
                            if( hasKey == false )
                            {
-                              field['val'].push( { key: key, val: 'value', isOpen: true, type: 'String', level: field.level + 1 } ) ;
+                              field['val'].push( { key: key, val: 'value', isOpen: true, type: 'Auto', level: field.level + 1 } ) ;
                               break ;
                            }
                            ++i ;
@@ -904,7 +917,7 @@
                            } ) ;
                            if( hasKey == false )
                            {
-                              field['val'].push( { key: key, val: 'value', isOpen: true, type: 'String', level: field.level + 1 } ) ;
+                              field['val'].push( { key: key, val: 'value', isOpen: true, type: 'Auto', level: field.level + 1 } ) ;
                               break ;
                            }
                            ++i ;
@@ -950,7 +963,20 @@
                      {
                         //视图 -> Json
                         var json = array2Json( scope.Setting.View ) ;
-                        scope.Setting.Json = JSON.stringify( json, null, 3 ) ;
+                        scope.Setting.Json = JSON.stringify( json, function( key, value ){
+                           if( value == Number.POSITIVE_INFINITY )
+                           {
+                              return 1.7976931348623157e+308 ;
+                           }
+                           else if( value == Number.NEGATIVE_INFINITY )
+                           {
+                              return -1.7976931348623157e+308 ;
+                           }
+                           else
+                           {
+                              return value ;
+                           }
+                        }, 3 ) ;
                         scope.Setting.Type = 2 ;
                      }
                      else 
@@ -989,7 +1015,20 @@
                      else
                      {
                         var json = array2Json( scope.Setting.View ) ;
-                        scope.Setting.Json = JSON.stringify( json, null, 3 ) ;
+                        scope.Setting.Json = JSON.stringify( json, function( key, value ){
+                           if( value == Number.POSITIVE_INFINITY )
+                           {
+                              return 1.7976931348623157e+308 ;
+                           }
+                           else if( value == Number.NEGATIVE_INFINITY )
+                           {
+                              return -1.7976931348623157e+308 ;
+                           }
+                           else
+                           {
+                              return value ;
+                           }
+                        }, 3 ) ;
                      }
                   }
                   //收起
@@ -1012,7 +1051,20 @@
                      else
                      {
                         var json = array2Json( scope.Setting.View ) ;
-                        scope.Setting.Json = JSON.stringify( json ) ;
+                        scope.Setting.Json = JSON.stringify( json, function( key, value ){
+                           if( value == Number.POSITIVE_INFINITY )
+                           {
+                              return 1.7976931348623157e+308 ;
+                           }
+                           else if( value == Number.NEGATIVE_INFINITY )
+                           {
+                              return -1.7976931348623157e+308 ;
+                           }
+                           else
+                           {
+                              return value ;
+                           }
+                        } ) ;
                      }
                   }
                   //修改类型

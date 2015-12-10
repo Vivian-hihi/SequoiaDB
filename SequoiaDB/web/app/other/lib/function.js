@@ -309,20 +309,6 @@ function array2Json( array, parentType )
             json.push( { '$date': val } ) ;
          }
       }
-      /*
-      else if( field['type'] == 'Code' )
-      {
-         var val = field['val'] ;
-         if( parentType == 'Object' )
-         {
-            json[ field['key'] ] = { '$code': val } ;
-         }
-         else
-         {
-            json.push( { '$code': val } ) ;
-         }
-      }
-      */
       else if( field['type'] == 'ObjectId' )
       {
          var val = trim( field['val'] ) ;
@@ -499,7 +485,18 @@ function json2Array( json, level, exact )
       }
       else if (valueType == 'number')
       {
-         value = value + '' ;
+         if( value == Number.POSITIVE_INFINITY )
+         {
+            value = '1.7976931348623157e+308' ;
+         }
+         else if( value == Number.NEGATIVE_INFINITY )
+         {
+            value = '-1.7976931348623157e+308' ;
+         }
+         else
+         {
+            value = value + '' ;
+         }
          valueType = 'Auto' ;
          if( exact == true )
          {

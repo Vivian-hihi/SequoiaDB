@@ -181,6 +181,7 @@ _DataOverviewIndex.getModuleList = function( $scope, SdbRest, clusterName ){
             {
                moduleInfo['WebDeployMod'] = templateInfo.WebName ;
                return false ;
+               
             }
          } ) ;
          _DataOverviewIndex.getCLInfo( $scope, SdbRest,index, moduleInfo.BusinessName, moduleInfo.DeployMod, clusterName ) ;

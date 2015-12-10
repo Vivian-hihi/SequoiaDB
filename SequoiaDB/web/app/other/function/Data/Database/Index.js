@@ -23,6 +23,9 @@ _DataDatabaseIndex.isShowSubCl = function( $scope, SdbFunction, event ){
    }
    $scope.showCSInfo( 0 ) ;
    _DataDatabaseIndex.buildClList( $scope, newClList ) ;
+   $.each( $scope.csList, function( index, csInfo ){
+      csInfo.show = false ;
+   } ) ;
 }
 
 //构建cl列表信息
@@ -1118,6 +1121,12 @@ _DataDatabaseIndex.showCreateCL = function( $scope, SdbRest ){
                      $scope.Components.Modal.formShow = 4 ;
                   }
                   $scope.Components.Modal.form1.inputList[1]['value'] = '' ;
+                  $scope.Components.Modal.form2.inputList[0]['value'] = $scope.Components.Modal.form1.inputList[0]['value'] ;
+                  $scope.Components.Modal.form3.inputList[0]['value'] = $scope.Components.Modal.form1.inputList[0]['value'] ;
+                  $scope.Components.Modal.form4.inputList[0]['value'] = $scope.Components.Modal.form1.inputList[0]['value'] ;
+                  $scope.Components.Modal.form2.inputList[2]['value'] = $scope.Components.Modal.form1.inputList[2]['value'] ;
+                  $scope.Components.Modal.form3.inputList[2]['value'] = $scope.Components.Modal.form1.inputList[2]['value'] ;
+                  $scope.Components.Modal.form4.inputList[2]['value'] = $scope.Components.Modal.form1.inputList[2]['value'] ;
                }
             },
             {
@@ -1190,6 +1199,12 @@ _DataDatabaseIndex.showCreateCL = function( $scope, SdbRest ){
                      $scope.Components.Modal.formShow = 4 ;
                   }
                   $scope.Components.Modal.form2.inputList[1]['value'] = 'range' ;
+                  $scope.Components.Modal.form1.inputList[0]['value'] = $scope.Components.Modal.form2.inputList[0]['value'] ;
+                  $scope.Components.Modal.form3.inputList[0]['value'] = $scope.Components.Modal.form2.inputList[0]['value'] ;
+                  $scope.Components.Modal.form4.inputList[0]['value'] = $scope.Components.Modal.form2.inputList[0]['value'] ;
+                  $scope.Components.Modal.form1.inputList[2]['value'] = $scope.Components.Modal.form2.inputList[2]['value'] ;
+                  $scope.Components.Modal.form3.inputList[2]['value'] = $scope.Components.Modal.form2.inputList[2]['value'] ;
+                  $scope.Components.Modal.form4.inputList[2]['value'] = $scope.Components.Modal.form2.inputList[2]['value'] ;
                }
             },
             {
@@ -1318,6 +1333,12 @@ _DataDatabaseIndex.showCreateCL = function( $scope, SdbRest ){
                      $scope.Components.Modal.formShow = 4 ;
                   }
                   $scope.Components.Modal.form3.inputList[1]['value'] = 'hash' ;
+                  $scope.Components.Modal.form1.inputList[0]['value'] = $scope.Components.Modal.form3.inputList[0]['value'] ;
+                  $scope.Components.Modal.form2.inputList[0]['value'] = $scope.Components.Modal.form3.inputList[0]['value'] ;
+                  $scope.Components.Modal.form4.inputList[0]['value'] = $scope.Components.Modal.form3.inputList[0]['value'] ;
+                  $scope.Components.Modal.form1.inputList[2]['value'] = $scope.Components.Modal.form3.inputList[2]['value'] ;
+                  $scope.Components.Modal.form2.inputList[2]['value'] = $scope.Components.Modal.form3.inputList[2]['value'] ;
+                  $scope.Components.Modal.form4.inputList[2]['value'] = $scope.Components.Modal.form3.inputList[2]['value'] ;
                }
             },
             {
@@ -1470,6 +1491,12 @@ _DataDatabaseIndex.showCreateCL = function( $scope, SdbRest ){
                      $scope.Components.Modal.formShow = 4 ;
                   }
                   $scope.Components.Modal.form4.inputList[1]['value'] = '' ;
+                  $scope.Components.Modal.form1.inputList[0]['value'] = $scope.Components.Modal.form4.inputList[0]['value'] ;
+                  $scope.Components.Modal.form2.inputList[0]['value'] = $scope.Components.Modal.form4.inputList[0]['value'] ;
+                  $scope.Components.Modal.form3.inputList[0]['value'] = $scope.Components.Modal.form4.inputList[0]['value'] ;
+                  $scope.Components.Modal.form1.inputList[2]['value'] = $scope.Components.Modal.form4.inputList[2]['value'] ;
+                  $scope.Components.Modal.form2.inputList[2]['value'] = $scope.Components.Modal.form4.inputList[2]['value'] ;
+                  $scope.Components.Modal.form3.inputList[2]['value'] = $scope.Components.Modal.form4.inputList[2]['value'] ;
                }
             },
             {
@@ -1947,6 +1974,8 @@ _DataDatabaseIndex.showSplit = function( $scope, SdbRest ){
                   $scope.Components.Modal.formShow = 1 ;
                }
                $scope.Components.Modal.form1.inputList[0]['value'] = 0 ;
+               $scope.Components.Modal.form2.inputList[1]['value'] = $scope.Components.Modal.form1.inputList[1]['value'] ;
+               $scope.Components.Modal.form2.inputList[3]['value'] = $scope.Components.Modal.form1.inputList[3]['value'] ;
             }
          },
          {
@@ -2017,6 +2046,8 @@ _DataDatabaseIndex.showSplit = function( $scope, SdbRest ){
                   $scope.Components.Modal.formShow = 1 ;
                }
                $scope.Components.Modal.form2.inputList[0]['value'] = 1 ;
+               $scope.Components.Modal.form1.inputList[1]['value'] = $scope.Components.Modal.form2.inputList[1]['value'] ;
+               $scope.Components.Modal.form1.inputList[3]['value'] = $scope.Components.Modal.form2.inputList[3]['value'] ;
             }
          },
          {
@@ -2488,4 +2519,76 @@ _DataDatabaseIndex.showIndex = function( $scope, SdbRest, csIndex, clIndex ){
    }, function(){
       _IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
    } ) ;
+}
+
+//打开 分区信息 的窗口
+_DataDatabaseIndex.showPartitions = function( $scope ){
+   $scope.Components.Modal.icon = '' ;
+   $scope.Components.Modal.title = $scope.autoLanguage( '分区信息' ) ;
+   $scope.Components.Modal.noOK = true ;
+   $scope.Components.Modal.isShow = true ;
+   var partitionInfo = [] ;
+   if( $scope.clList[ $scope.clID ]['IsMainCL'] == true )
+   {
+      $.each( $scope.clList[ $scope.clID ]['Info']['CataInfo'], function( index, info ){
+         partitionInfo.push( {
+            'name'     : info['SubCLName'],
+            'LowBound' : info['LowBound'],
+            'UpBound'  : info['UpBound']
+         } ) ;
+      } ) ;
+      $scope.Components.Modal.partitionInfo = partitionInfo ;
+      $scope.Components.Modal.Context = '\
+<table class="table loosen border">\
+   <tr>\
+      <td style="width:30%;background-color:#F1F4F5;"><b>Partition</b></td>\
+      <td style="width:35%;background-color:#F1F4F5;"><b>LowBound</b></td>\
+      <td style="width:35%;background-color:#F1F4F5;"><b>UpBound</b></td>\
+   </tr>\
+   <tr ng-repeat="(key, value) in data.partitionInfo track by $index">\
+      <td>{{value["name"]}}</td>\
+      <td>{{value["LowBound"]}}</td>\
+      <td>{{value["UpBound"]}}</td>\
+   </tr>\
+</table>' ;
+   }
+   else
+   {
+      if( $scope.selectGroup == null )
+      {
+         $.each( $scope.clList[ $scope.clID ]['GroupName'], function( index, groupInfo ){
+            $.each( $scope.clInfo[ groupInfo['value'] ]['LowBound'], function( index2 ){
+               partitionInfo.push( {
+                  'GroupName': $scope.clInfo[ groupInfo['value'] ]['GroupName'],
+                  'LowBound' : $scope.clInfo[ groupInfo['value'] ]['LowBound'][index2],
+                  'UpBound'  : $scope.clInfo[ groupInfo['value'] ]['UpBound'][index2]
+               } ) ;
+            } ) ;
+         } ) ;
+      }
+      else
+      {
+         $.each( $scope.clInfo[ $scope.selectGroup ]['LowBound'], function( index2 ){
+            partitionInfo.push( {
+               'GroupName': $scope.clInfo[ $scope.selectGroup ]['GroupName'],
+               'LowBound' : $scope.clInfo[ $scope.selectGroup ]['LowBound'][index2],
+               'UpBound'  : $scope.clInfo[ $scope.selectGroup ]['UpBound'][index2]
+            } ) ;
+         } ) ;
+      }
+      $scope.Components.Modal.partitionInfo = partitionInfo ;
+      $scope.Components.Modal.Context = '\
+<table class="table loosen border">\
+   <tr>\
+      <td style="width:30%;background-color:#F1F4F5;"><b>Group</b></td>\
+      <td style="width:35%;background-color:#F1F4F5;"><b>LowBound</b></td>\
+      <td style="width:35%;background-color:#F1F4F5;"><b>UpBound</b></td>\
+   </tr>\
+   <tr ng-repeat="(key, value) in data.partitionInfo track by $index">\
+      <td>{{value["GroupName"]}}</td>\
+      <td>{{value["LowBound"]}}</td>\
+      <td>{{value["UpBound"]}}</td>\
+   </tr>\
+</table>' ;
+   }
 }
