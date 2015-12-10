@@ -1,5 +1,11 @@
 通过OM部署好数据库之后，就可以进行数据库操作了。
 
+##推荐浏览器##
+
+支持IE7/8/9/10/11, Microsoft Edge, Chrome, Firefox等。
+
+推荐使用Chrome, Microsoft Edge, Firefox。
+
 ##安装 OM 服务##
 
 安装OM服务、部署SequoiaDB数据库，请参考 [可视化安装](SdbDoc_Cn/installation/deployment/visualization_installation.html) 。
