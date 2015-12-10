@@ -122,7 +122,17 @@
 						      ++i ;
 						      end = i ;
 						      subStr = str.substring( start, end ) ;
-						      json = JSON.parse( subStr ) ;
+                        try{
+                           json = JSON.parse( subStr ) ;
+                        }catch(e){
+                           subStr = subStr.replace( /[^"-]inf/, '1.7976931348623157e+308' ) ;
+                           subStr = subStr.replace( /[^"]-inf/, '-1.7976931348623157e+308' ) ;
+                           try{
+                              json = JSON.parse( subStr ) ;
+                           }catch(e){
+                              break;
+                           }
+                        }
 						      json_array.push( json ) ;
 						      break ;
 					      }
