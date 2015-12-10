@@ -400,7 +400,7 @@
    });
 
    //弹窗
-   sacApp.directive( 'createModal', function( $compile, $window, $rootScope ){
+   sacApp.directive( 'createModal', function( $compile, $window, $rootScope, Tip ){
       var dire = {
          restrict: 'A',
          scope: {
@@ -635,6 +635,7 @@
                      $( document.body ).removeClass( 'unselect' ) ;
                      $( document ).off( 'mousemove' ) ;
                      $( document ).off( 'mouseup' ) ;
+                     Tip.auto() ;
                   }
 
                   //开始调整窗口大小
