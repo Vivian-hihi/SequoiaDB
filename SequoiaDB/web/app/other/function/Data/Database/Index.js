@@ -1,4 +1,4 @@
-﻿// --------------------- Data.Database.Index ---------------------
+// --------------------- Data.Database.Index ---------------------
 var _DataDatabaseIndex = {} ;
 
 //控制是否显示子集合
@@ -1784,7 +1784,7 @@ _DataDatabaseIndex.showAttachCL = function( $scope, SdbRest ){
       }
    } ) ;
    $scope.Components.Modal.icon = 'fa-paperclip' ;
-   $scope.Components.Modal.title = $scope.autoLanguage( '挂载' ) ;
+   $scope.Components.Modal.title = $scope.autoLanguage( '挂载集合' ) ;
    $scope.Components.Modal.isShow = true ;
    $scope.Components.Modal.form = {
       inputList: [
