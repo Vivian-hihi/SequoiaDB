@@ -1784,7 +1784,7 @@ _DataDatabaseIndex.showAttachCL = function( $scope, SdbRest ){
       }
    } ) ;
    $scope.Components.Modal.icon = 'fa-paperclip' ;
-   $scope.Components.Modal.title = $scope.autoLanguage( '挂载集合' ) ; 
+   $scope.Components.Modal.title = $scope.autoLanguage( '挂载集合' ) ;
    $scope.Components.Modal.isShow = true ;
    $scope.Components.Modal.form = {
       inputList: [
@@ -1975,6 +1975,7 @@ _DataDatabaseIndex.showSplit = function( $scope, SdbRest ){
                }
                $scope.Components.Modal.form1.inputList[0]['value'] = 0 ;
                $scope.Components.Modal.form2.inputList[1]['value'] = $scope.Components.Modal.form1.inputList[1]['value'] ;
+               $scope.Components.Modal.form2.inputList[2]['valid'] = $scope.Components.Modal.form1.inputList[2]['valid'] ;
                $scope.Components.Modal.form2.inputList[3]['value'] = $scope.Components.Modal.form1.inputList[3]['value'] ;
             }
          },
@@ -1988,10 +1989,16 @@ _DataDatabaseIndex.showSplit = function( $scope, SdbRest ){
                $.each( $scope.clList, function( index, clInfo ){
                   if( key == ( clInfo['csName'] + '.' + clInfo['Name'] ) )
                   {
-                     var sourceGroupValid = [] ;
+                     sourceGroupValid = [] ;
+                     var sourceIndex = -1 ;
                      $.each( $scope.clList[ index ]['GroupName'], function( index2, groupInfo ){
+                        if( sourceIndex < 0 )
+                        {
+                           sourceIndex = index2 ;
+                        }
                         sourceGroupValid.push( { 'key': groupInfo['key'], 'value': index2 } ) ;
                      } ) ;
+                     $scope.Components.Modal.form1['inputList'][2]['value'] = sourceIndex ;
                      $scope.Components.Modal.form1['inputList'][2]['valid'] = sourceGroupValid ;
                      return false;
                   }
@@ -2047,6 +2054,7 @@ _DataDatabaseIndex.showSplit = function( $scope, SdbRest ){
                }
                $scope.Components.Modal.form2.inputList[0]['value'] = 1 ;
                $scope.Components.Modal.form1.inputList[1]['value'] = $scope.Components.Modal.form2.inputList[1]['value'] ;
+               $scope.Components.Modal.form1.inputList[2]['valid'] = $scope.Components.Modal.form2.inputList[2]['valid'] ;
                $scope.Components.Modal.form1.inputList[3]['value'] = $scope.Components.Modal.form2.inputList[3]['value'] ;
             }
          },
@@ -2060,10 +2068,16 @@ _DataDatabaseIndex.showSplit = function( $scope, SdbRest ){
                $.each( $scope.clList, function( index, clInfo ){
                   if( key == ( clInfo['csName'] + '.' + clInfo['Name'] ) )
                   {
-                     var sourceGroupValid = [] ;
+                     var sourceIndex = -1 ;
+                     sourceGroupValid = [] ;
                      $.each( $scope.clList[ index ]['GroupName'], function( index2, groupInfo ){
+                        if( sourceIndex < 0 )
+                        {
+                           sourceIndex = index2 ;
+                        }
                         sourceGroupValid.push( { 'key': groupInfo['key'], 'value': index2 } ) ;
                      } ) ;
+                     $scope.Components.Modal.form1['inputList'][2]['value'] = sourceIndex ;
                      $scope.Components.Modal.form2['inputList'][2]['valid'] = sourceGroupValid ;
                      return false;
                   }
