@@ -1,4 +1,4 @@
-﻿{
+{
    "（不包含子集合）": "(Does not include partitions)",
    "? ? 插入记录成功": "? ? insert success",
    "? ? 插入记录失败，错误码: ?，?. ?": "? ? insert failed, error code: ?, ?. ?",
@@ -73,7 +73,7 @@
    "更新操作中会忽略对分区键的修改。": "The update operation will ignore the change to the sharding key.",
    "更新条件": "Condition",
    "挂载": "Attach",
-   "挂载集合": "Attach",
+   "挂载集合": "Attach Collection",
    "挂载失败": "Attach failed",
    "关": "false",
    "归属集合": "Main collection",
