@@ -56,6 +56,7 @@
 #define SPT_SPEOBJ_TYPE "$type"
 #define SPT_SPEOBJ_OID "$oid"
 
+/*
 // check date type bounds
 #define SDB_DATE_TYPE_CHECK_BOUND(tm)                 \
    do {                                               \
@@ -65,7 +66,7 @@
          goto error ;                                 \
       }                                               \
    } while( 0 )
-      
+*/    
 // check timestamp type bounds
 #define SDB_TIMESTAMP_TYPE_CHECK_BOUND(tm)            \
    do {                                               \
@@ -508,11 +509,6 @@ INT32 sptConvertor::_addSdbDate( JSObject *obj,
             goto error ;
          }
       }
-      else
-      {
-         // check bounds
-         SDB_DATE_TYPE_CHECK_BOUND( tm ) ;
-      }
    }
    else if (  _getProperty( obj, "_d", JSTYPE_NUMBER, value ) )
    {
@@ -740,13 +736,20 @@ INT32 sptConvertor::_addSpecialObj( JSObject *obj,
             rc = SDB_INVALIDARG ;
             goto error ;
          }
-         if ( SDB_OK != engine::utilStr2Date( strValue.c_str(), tm ) )
-         {
-            rc = SDB_INVALIDARG ;
-            goto error ;
+         rc = engine::utilStr2Date( strValue.c_str(), tm ) ;
+         if ( SDB_OK != rc )
+         {  
+            // maybe the format is {$date:"253402185600000"}
+            try
+            {
+               tm = boost::lexical_cast<UINT64>( strValue.c_str() ) ;
+            }
+            catch( boost::bad_lexical_cast &e )
+            {
+               rc = SDB_INVALIDARG ;
+               goto error ;
+            }
          }
-         // check bounds
-         SDB_DATE_TYPE_CHECK_BOUND( tm ) ;
       }
       else if ( TRUE == _getProperty( obj, name.c_str(), JSTYPE_OBJECT, value ) )
       {

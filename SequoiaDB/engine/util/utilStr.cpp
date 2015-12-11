@@ -350,7 +350,6 @@ namespace engine
             rc = SDB_INVALIDARG ;
             goto error ;
          }
-         // TODO: millis is UINT64, should we need to case about this?
          timep = (time_t)sdbTime.sec ;
          micros = sdbTime.nsec / 1000 ;
          millis = timep * 1000 + micros / 1000 ;
