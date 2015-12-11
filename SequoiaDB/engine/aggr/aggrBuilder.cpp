@@ -468,15 +468,49 @@ namespace engine
          {
             BSONElement ele = iter.next() ;
 
-            if ( !ignoreNodeParam && (
-                 0 == ossStrcasecmp( ele.fieldName(), FIELD_NAME_GROUPID ) ||
-                 0 == ossStrcasecmp( ele.fieldName(), FIELD_NAME_GROUPNAME ) ||
-                 0 == ossStrcasecmp( ele.fieldName(), FIELD_NAME_GROUPS ) ||
-                 0 == ossStrcasecmp( ele.fieldName(), FIELD_NAME_NODEID ) ||
-                 0 == ossStrcasecmp( ele.fieldName(), FIELD_NAME_HOST ) ||
-                 0 == ossStrcasecmp( ele.fieldName(), PMD_OPTION_SVCNAME ) ||
-                 0 == ossStrcasecmp( ele.fieldName(), FIELD_NAME_SERVICE_NAME )
-                ) )
+            /// $and:[{a:{$eq:1}},{global:{$et:1}}]
+            if ( Array == ele.type() &&
+                 0 == ossStrcmp( ele.fieldName(), "$and" ) )
+            {
+               BSONObj tmpNodeMatcher ;
+               BSONObj tmpNewMatcher ;
+               BSONArrayBuilder subMatcher(
+                  matcherBuilder.subarrayStart( ele.fieldName() ) ) ;
+
+               BSONObjIterator subItr( ele.embeddedObject() ) ;
+               while ( subItr.more() )
+               {
+                  BSONElement subEle = subItr.next() ;
+                  if ( Object != subEle.type() )
+                  {
+                     PD_LOG( PDERROR, "Parse mather obj[%s] failed: "
+                             "invalid $and", query.toString().c_str() ) ;
+                     rc = SDB_INVALIDARG ;
+                     goto error ;
+                  }
+                  else
+                  {
+                     BSONObj tmpObj = subEle.embeddedObject() ;
+                     rc = parseMatcher( tmpObj, tmpNodeMatcher, tmpNewMatcher,
+                                        ignoreNodeParam, ignoreCtrlParam ) ;
+                     PD_RC_CHECK( rc, PDERROR, "Parse matcher[%s] failed",
+                                  query.toString().c_str() ) ;
+
+                     subMatcher.append( tmpNewMatcher ) ;
+                     nodesCondBuilder.appendElements( tmpNodeMatcher ) ;
+                  }
+               } /// end while
+               subMatcher.done() ;
+            }
+            else if ( !ignoreNodeParam && (
+                      0 == ossStrcasecmp( ele.fieldName(), FIELD_NAME_GROUPID ) ||
+                      0 == ossStrcasecmp( ele.fieldName(), FIELD_NAME_GROUPNAME ) ||
+                      0 == ossStrcasecmp( ele.fieldName(), FIELD_NAME_GROUPS ) ||
+                      0 == ossStrcasecmp( ele.fieldName(), FIELD_NAME_NODEID ) ||
+                      0 == ossStrcasecmp( ele.fieldName(), FIELD_NAME_HOST ) ||
+                      0 == ossStrcasecmp( ele.fieldName(), PMD_OPTION_SVCNAME ) ||
+                      0 == ossStrcasecmp( ele.fieldName(), FIELD_NAME_SERVICE_NAME )
+                     ) )
             {
                nodesCondBuilder.append( ele ) ;
             }
