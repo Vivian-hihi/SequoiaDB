@@ -1849,24 +1849,22 @@
       var dire = {
          restrict: 'A',
          priority: 2,
+         scope: false,
          replace: false,
-         scope: {
-            data: '=ngAttr'
-         },
          // 专用控制器
          controller: function( $scope, $element ){},
          // 编译
          compile: function( element, attributes ){
             return {
-               pre: function preLink( scope, element, attributes ){},
-               post: function postLink( scope, element, attributes ){
-                  scope.$watch( 'data', function(){
-                     if( typeof( scope.data ) == 'object' )
+               pre: function preLink( scope, element, attributes ){
+                  scope.$watch( attributes.ngAttr, function ngAttrAction( attr ){
+                     if( typeof( attr ) != 'undefined' )
                      {
-                        $( element ).attr( scope.data ) ;
+                        $( element ).attr( attr ) ;
                      }
-                  } ) ;
-               }
+                  }, true ) ;
+               },
+               post: function postLink( scope, element, attributes ){}
             } ;
          }
       } ;

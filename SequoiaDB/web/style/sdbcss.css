@@ -480,7 +480,7 @@ button,select,input,textarea{ outline:none; }
 .jsonEdit > .viewModel > .editBox .treeBox .treeEdit .caretBtn{ margin-top:3px; border:none; background:none; width:20px; color:#5E5E5E; padding:0; height:15px; cursor:pointer; }
 .jsonEdit > .viewModel > .editBox .treeBox .treeEdit .fontBox{ font-size:90%; display:inline-block; text-align:left; word-break:break-all; word-wrap:break-word;  min-height:19px; }
 .jsonEdit > .viewModel > .editBox .treeBox .treeEdit .fontBox:focus{ background:#FFFFAB; }
-.jsonEdit > .viewModel > .editBox .treeBox .treeEdit .keyBox{ color:#000; }
+.jsonEdit > .viewModel > .editBox .treeBox .treeEdit .keyBox{ min-width:30px; }
 .jsonEdit > .viewModel > .editBox .treeBox .treeEdit .valueBox{ word-wrap:break-word; word-break:normal; word-break:break-all; min-width:30px; }
 .jsonEdit > .viewModel > .editBox .treeBox .treeEdit .string{ color:#00B32D; }
 .jsonEdit > .viewModel > .editBox .treeBox .treeEdit .objectid{ color:blue; }
@@ -489,16 +489,16 @@ button,select,input,textarea{ outline:none; }
 .jsonEdit > .viewModel > .editBox .treeBox .treeEdit .binary{ color:#FFC105; }
 .jsonEdit > .viewModel > .editBox .treeBox .treeEdit .code{ color:#FF52D4 }
 .jsonEdit > .viewModel > .editBox .treeBox .treeEdit .time{ color:#52D4FF }
-.jsonEdit > .viewModel > .editBox .treeBtn{ margin:4px 0; padding:0; border:0; background:#D4D4D4; width:21px; height:21px; color:#FFF; font-size:100%; font-weight:bold; cursor:pointer; }
+.jsonEdit > .viewModel > .editBox .treeBtn{ margin:4px 0; padding:0; border:0; background:#00BFDD; width:21px; height:21px; color:#FFF; font-size:100%; font-weight:bold; cursor:pointer; }
 .jsonEdit > .viewModel > .editBox .treeBtn:hover{ background:#98B1F9; }
 .jsonEdit > .viewModel > .editBox .treeBtnColor1{ margin:0; }
 .jsonEdit > .viewModel > .editBox .treeBtnColor1:hover{ background:#109718; }
 .jsonEdit > .viewModel > .editBox .treeBtnColor2:hover{ background:red; }
 .jsonEdit > .viewModel > .editBox .treeMenu{ position:fixed; z-index:9999; border:1px solid #AAA; background:#FFF; padding:0; box-shadow:-2px 5px 8px rgba(0,0,0,0.5); display:none; }
-.jsonEdit > .viewModel > .editBox .treeMenu > ul{ list-style:none; padding:0; margin:0; }
-.jsonEdit > .viewModel > .editBox .treeMenu > ul > li{ padding:0 5px; color:#111; cursor:pointer; text-align:left; color:#666; font-size:80%; margin:3px 0; }
+.jsonEdit > .viewModel > .editBox .treeMenu > ul{ list-style:none; padding:0; margin:0; width:65px; }
+.jsonEdit > .viewModel > .editBox .treeMenu > ul > li{ float:left; padding:0 5px; color:#111; cursor:pointer; text-align:left; color:#666; font-size:80%; margin:3px 0; }
 .jsonEdit > .viewModel > .editBox .treeMenu > ul > li:hover{ background:#FFFFAB; }
-.jsonEdit > .viewModel > .editBox .treeMenu > ul > li > .treeBtn{ background:#98B1F9; }
+.jsonEdit > .viewModel > .editBox .treeMenu > ul > li > .treeBtn{ background:#00BFDD; }
 .jsonEdit > .viewModel > .editBox .treeMenu > ul > .active{ background:#C1C1C1; }
 
 /* 表单 */

@@ -8,7 +8,7 @@
             <input type="checkbox" ng-click="switchShowSubCl($event)" ng-checked="isHideSubCl"/> {{autoLanguage("屏蔽垂直分区信息")}} 
          </li>
          <li style="float:right;height:32px;">
-            {{autoLanguage("搜索")}}: <input class="form-control" data-desc={{autoLanguage("用于快速搜索集合空间和集合，例：foo.bar。")}} style="width:300px;" ng-init="searchName=''" ng-model="searchName" ng-change="search(searchName)" />
+            {{autoLanguage("搜索")}}: <input class="form-control" ng-attr="{'data-desc':autoLanguage('用于快速搜索集合空间和集合，例：foo.bar。')}" style="width:300px;" ng-init="searchName=''" ng-model="searchName" ng-change="search(searchName)" />
          </li>
       </ul>
    </div>
