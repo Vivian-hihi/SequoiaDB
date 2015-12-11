@@ -493,9 +493,10 @@ namespace engine
       INT32 value = 0 ;
 
       /// a:1 or a:{$et:1}
-      if ( !e.isABSONObj() ||
-           0 != ossStrcmp( e.embeddedObject().firstElement().fieldName(),
-                           "$in") )
+      if ( ( !e.isABSONObj() ||
+             0 != ossStrcmp( e.embeddedObject().firstElement().fieldName(),
+                           "$in") ) &&
+           ( mask & RTN_COORD_PARSE_MASK_ET ) )
       {
          rc = _rtnCoordParseInt( e, value, mask ) ;
          if ( SDB_OK == rc )
@@ -566,9 +567,10 @@ namespace engine
       const CHAR *value = NULL ;
 
       /// a:"xxx" or a:{$et:"xxx"}
-      if ( !e.isABSONObj() ||
-           0 != ossStrcmp( e.embeddedObject().firstElement().fieldName(),
-                           "$in") )
+      if ( ( !e.isABSONObj() ||
+             0 != ossStrcmp( e.embeddedObject().firstElement().fieldName(),
+                             "$in") ) &&
+           ( mask & RTN_COORD_PARSE_MASK_ET ) )
       {
          rc = _rtnCoordParseString( e, value, mask ) ;
          if ( SDB_OK == rc )
@@ -3684,7 +3686,7 @@ namespace engine
          {
             ossMemset( &param._role, 0, sizeof( param._role ) ) ;
             modify = TRUE ;
-            param._parseMask |= RTN_CTRL_MASK_NODE_SELECT ;
+            param._parseMask |= RTN_CTRL_MASK_ROLE ;
 
             for ( UINT32 i = 0 ; i < tmpVecStr.size() ; ++i )
             {
