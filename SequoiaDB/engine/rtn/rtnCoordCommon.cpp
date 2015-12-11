@@ -2855,17 +2855,14 @@ namespace engine
       goto done;
    }
 
-   INT32 rtnCoordParseGroupList( pmdEDUCB *cb,
-                                 const BSONObj &obj,
-                                 CoordGroupList &groupList,
-                                 BSONObj *pNewObj )
+   static INT32 _rtnCoordParseGroupsInfo( const BSONObj &obj,
+                                          vector< INT32 > &vecID,
+                                          vector< const CHAR* > &vecName,
+                                          BSONObj *pNewObj )
    {
       INT32 rc = SDB_OK ;
-      CoordGroupInfoPtr grpPtr ;
       BSONObjBuilder builder ;
       BOOLEAN isModify = FALSE ;
-      vector< INT32 > tmpVecInt ;
-      vector< const CHAR* > tmpVecStr ;
 
       BSONObjIterator it( obj ) ;
       while( it.more() )
@@ -2892,8 +2889,8 @@ namespace engine
                else
                {
                   BSONObj tmpObj = tmpE.embeddedObject() ;
-                  rc = rtnCoordParseGroupList( cb, tmpObj, groupList,
-                                               pNewObj ? &tmpNew : NULL ) ;
+                  rc = _rtnCoordParseGroupsInfo( tmpObj, vecID, vecName,
+                                                 pNewObj ? &tmpNew : NULL ) ;
                   PD_RC_CHECK( rc, PDERROR, "Parse obj[%s] groups failed",
                                obj.toString().c_str() ) ;
                   if ( pNewObj )
@@ -2914,34 +2911,20 @@ namespace engine
          } /// end $and
          // group id
          else if ( 0 == ossStrcasecmp( ele.fieldName(), CAT_GROUPID_NAME ) &&
-                   SDB_OK == _rtnCoordParseInt( ele, tmpVecInt,
+                   SDB_OK == _rtnCoordParseInt( ele, vecID,
                                                 RTN_COORD_PARSE_MASK_ALL ) )
          {
             isModify = TRUE ;
-            for ( UINT32 i = 0 ; i < tmpVecInt.size() ; ++i )
-            {
-               groupList[(UINT32)tmpVecInt[i]] = (UINT32)tmpVecInt[i] ;
-            }
-            tmpVecInt.clear() ;
          }
          // group name
          else if ( ( 0 == ossStrcasecmp( ele.fieldName(),
                                        FIELD_NAME_GROUPNAME ) ||
                      0 == ossStrcasecmp( ele.fieldName(),
                                        FIELD_NAME_GROUPS ) ) &&
-                    SDB_OK == _rtnCoordParseString( ele, tmpVecStr,
+                    SDB_OK == _rtnCoordParseString( ele, vecName,
                                                     RTN_COORD_PARSE_MASK_ALL ) )
          {
             isModify = TRUE ;
-
-            for ( UINT32 i = 0 ; i < tmpVecStr.size() ; ++i )
-            {
-               rc = rtnCoordGetGroupInfo( cb, tmpVecStr[i], FALSE, grpPtr ) ;
-               PD_RC_CHECK( rc, PDERROR, "Get group[%s] failed, rc: %d",
-                            tmpVecStr[i], rc ) ;
-               groupList[ grpPtr->groupID() ] = grpPtr->groupID() ;
-            }
-            tmpVecStr.clear() ;
          }
          else if ( pNewObj )
          {
@@ -2964,8 +2947,42 @@ namespace engine
    done:
       return rc ;
    error:
-      PD_LOG( PDERROR, "Failed to parse group list from bson[%s], rc: %d",
-              obj.toString().c_str(), rc ) ;
+      goto done ;
+   }
+
+   INT32 rtnCoordParseGroupList( pmdEDUCB *cb,
+                                 const BSONObj &obj,
+                                 CoordGroupList &groupList,
+                                 BSONObj *pNewObj )
+   {
+      INT32 rc = SDB_OK ;
+      CoordGroupInfoPtr grpPtr ;
+      vector< INT32 > tmpVecInt ;
+      vector< const CHAR* > tmpVecStr ;
+      UINT32 i = 0 ;
+
+      rc = _rtnCoordParseGroupsInfo( obj, tmpVecInt, tmpVecStr, pNewObj ) ;
+      PD_RC_CHECK( rc, PDERROR, "Parse object[%s] group list failed, rc: %d",
+                   obj.toString().c_str(), rc ) ;
+
+      /// group id
+      for ( i = 0 ; i < tmpVecInt.size() ; ++i )
+      {
+         groupList[(UINT32)tmpVecInt[i]] = (UINT32)tmpVecInt[i] ;
+      }
+
+      /// group name
+      for ( i = 0 ; i < tmpVecStr.size() ; ++i )
+      {
+         rc = rtnCoordGetGroupInfo( cb, tmpVecStr[i], FALSE, grpPtr ) ;
+         PD_RC_CHECK( rc, PDERROR, "Get group[%s] info failed, rc: %d",
+                      tmpVecStr[i], rc ) ;
+         groupList[ grpPtr->groupID() ] = grpPtr->groupID() ;
+      }
+
+   done:
+      return rc ;
+   error:
       goto done ;
    }
 
@@ -3101,17 +3118,14 @@ namespace engine
    }
 
    static INT32 _rtnCoordParseNodesInfo( const BSONObj &obj,
-                                         vector< UINT16 > &vecNodeID,
-                                         vector< string > &vecHostName,
-                                         vector< string > &vecSvcName,
+                                         vector< INT32 > &vecNodeID,
+                                         vector< const CHAR* > &vecHostName,
+                                         vector< const CHAR* > &vecSvcName,
                                          BSONObj *pNewObj )
    {
       INT32 rc = SDB_OK ;
       BSONObjBuilder builder ;
       BOOLEAN isModify = FALSE ;
-
-      vector< INT32 > tmpVecInt ;
-      vector< const CHAR* > tmpVecStr ;
 
       BSONObjIterator itr( obj ) ;
       while( itr.more() )
@@ -3160,40 +3174,25 @@ namespace engine
             sub.done() ;
          } /// end $and
          else if ( 0 == ossStrcasecmp( ele.fieldName(), CAT_NODEID_NAME ) &&
-                   SDB_OK == _rtnCoordParseInt( ele, tmpVecInt,
+                   SDB_OK == _rtnCoordParseInt( ele, vecNodeID,
                                                 RTN_COORD_PARSE_MASK_ALL ) )
          {
-            for ( UINT32 i = 0 ; i < tmpVecInt.size() ; ++i )
-            {
-               isModify = TRUE ;
-               vecNodeID.push_back( (UINT16)tmpVecInt[i] ) ;
-            }
-            tmpVecInt.clear() ;
+            isModify = TRUE ;
          }
          else if ( 0 == ossStrcasecmp( ele.fieldName(), FIELD_NAME_HOST ) &&
-                   SDB_OK == _rtnCoordParseString( ele, tmpVecStr,
+                   SDB_OK == _rtnCoordParseString( ele, vecHostName,
                                                    RTN_COORD_PARSE_MASK_ALL ) )
          {
-            for ( UINT32 i = 0 ; i < tmpVecStr.size() ; ++i )
-            {
-               isModify = TRUE ;
-               vecHostName.push_back( tmpVecStr[i] ) ;
-            }
-            tmpVecStr.clear() ;
+            isModify = TRUE ;
          }
          else if ( ( 0 == ossStrcasecmp( ele.fieldName(),
                                          FIELD_NAME_SERVICE_NAME ) ||
                      0 == ossStrcasecmp( ele.fieldName(),
                                          PMD_OPTION_SVCNAME ) ) &&
-                    SDB_OK == _rtnCoordParseString( ele, tmpVecStr,
+                    SDB_OK == _rtnCoordParseString( ele, vecSvcName,
                                                     RTN_COORD_PARSE_MASK_ALL ) )
          {
-            for ( UINT32 i = 0 ; i < tmpVecStr.size() ; ++i )
-            {
-               isModify = TRUE ;
-               vecSvcName.push_back( tmpVecStr[i] ) ;
-            }
-            tmpVecStr.clear() ;
+            isModify = TRUE ;
          }
          else if ( pNewObj )
          {
@@ -3230,9 +3229,9 @@ namespace engine
       GROUP_VEC groupPtrs ;
       GROUP_VEC::iterator it ;
 
-      vector< UINT16 > vecNodeID ;
-      vector< string > vecHostName ;
-      vector< string > vecSvcName ;
+      vector< INT32 > vecNodeID ;
+      vector< const CHAR* > vecHostName ;
+      vector< const CHAR* > vecSvcName ;
       BOOLEAN emptyFilter = TRUE ;
 
       nodes.clear() ;
@@ -3296,7 +3295,7 @@ namespace engine
                /// check node id
                for ( index = 0 ; index < vecNodeID.size() ; ++index )
                {
-                  if ( vecNodeID[ index ] == itrn->_id.columns.nodeID )
+                  if ( (UINT16)vecNodeID[ index ] == itrn->_id.columns.nodeID )
                   {
                      findNode = TRUE ;
                      break ;
@@ -3311,8 +3310,8 @@ namespace engine
                /// check host name
                for ( index = 0 ; index < vecHostName.size() ; ++index )
                {
-                  if ( 0 == vecHostName[ index ].compare(
-                            itrn->_service[ MSG_ROUTE_LOCAL_SERVICE ] ) )
+                  if ( 0 == ossStrcmp( vecHostName[ index ],
+                                       itrn->_host ) )
                   {
                      findNode = TRUE ;
                      break ;
@@ -3327,8 +3326,8 @@ namespace engine
                /// check svcname
                for ( index = 0 ; index < vecSvcName.size() ; ++index )
                {
-                  if ( 0 == vecSvcName[ index ].compare(
-                            itrn->_service[MSG_ROUTE_LOCAL_SERVICE] ) )
+                  if ( 0 == ossStrcmp( vecSvcName[ index ],
+                                       itrn->_service[MSG_ROUTE_LOCAL_SERVICE].c_str() ) )
                   {
                      findNode = TRUE ;
                      break ;
