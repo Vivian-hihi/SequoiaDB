@@ -18,7 +18,8 @@ from pysequoiadb.error import (SDBEndOfCursor)
 
 """methods mapping
 """
-methods =  ('test_connection',
+methods =  (
+            'test_connection',
             'test_user',
             'test_transaction',
             'test_cs_cl',
@@ -42,12 +43,6 @@ methods_len = len(methods)
 #change by the real envirment
 hostname=None
 service=None
-data_port=None
-"""
-hostname='sdbserver3'
-service='11810'
-data_port='11820'
-"""
 
 #cs,cl name
 cs_name='pytest_cs'
@@ -80,14 +75,12 @@ def parse_option():
       usage()
       sys.exit()
    opts,args = getopt.getopt(sys.argv[1:],'hH:p:d:')
-   global hostname,service,data_port
+   global hostname,service
    for op,value in opts:
       if op == '-H':
          hostname = value
       elif op == '-p':
          service = int(value)
-      elif op == '-d':
-         data_port = int(value)
       elif op == '-h':
          usage()
          sys.exit()
@@ -98,7 +91,6 @@ def usage():
    print '-h         help'
    print '-H   arg   hostname'
    print '-p   arg   coord_port'
-   print '-d   arg   data_port'
 
 #initialize all test data
 def initialize():
@@ -146,16 +138,9 @@ class TestPySequoiadb(object):
          print 'create connection failed!'
          return
 
-
-      hosts = [{'host':'192.168.10.30','service':11200,},
-               {'host':'192.168.10.30','service':11200,},
-               {'host':hostname,'service':service,},]
-
+      hosts = [{'host':hostname,'service':service}]
       sdb.connect_to_hosts(hosts,user="",password="",policy="random")
-
-
       sdb.connect(hostname,service,user="",password="")
-
 
       try:
          cs = sdb.create_collection_space(cs_name,0)
@@ -246,18 +231,9 @@ class TestPySequoiadb(object):
    """create user and use the new user login then delete the user
    """
    def test_user(self):
-      username = 'test'
-      password = 'test'
+      username = 'pydriver_user'
+      password = 'pydriver_passwd'
       sdb = client(hostname,service)
-
-      #deal with the SDBTypeError
-
-      try:
-         sdb.create_user("119",password)
-      except SDBTypeError as e:
-         print e
-      except SDBBaseError, e:
-         print e.detail
 
       try:
 
