@@ -33,6 +33,12 @@
 		<exec executable="python" dir="${install.path}/sequoiadb/python">
 			<arg line=" setup.py install" />
 		</exec>
+		<copy todir="${python.testcase.path}/sequoiadb/bson">
+         <fileset dir="${install.path}/sequoiadb/python/bson"/>
+      </copy>
+      <copy todir="${python.testcase.path}/sequoiadb/pysequoiadb">
+         <fileset dir="${install.path}/sequoiadb/python/pysequoiadb"/>
+      </copy>
 	</target>
 
 	<target name="Test-Driver-Python" depends="Init-Python-Driver">
@@ -89,7 +95,7 @@
 		<if>
 			<equals arg1="${test-type}" arg2="driver-python" />
 			<then>
-				<property name="command" value="python ${test.case.fullname} -H ${test.host.NAME} -p ${coord.service.port} -d ${data.service.port}" />
+				<property name="command" value="python ${test.case.fullname} -H ${test.host.NAME} -p ${coord.service.port}" />
 				<echo message="Command:${command}" />
 				<echo message="The testcase ${test.case.name}.py path on ${testcases.path}" />
 				<exec executable="python" dir="${testcases.path}" timeout="1200000" outputproperty="screen.output" resultproperty="ret.code">
