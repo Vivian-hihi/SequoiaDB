@@ -289,6 +289,23 @@ namespace engine
       return rc ;
    }
 
+   void _dmsCompressorEntry::setCompressor( _utilCompressor *compressor )
+   {
+      SDB_ASSERT( compressor, "Invalid argument" ) ;
+      _compressor = compressor ;
+   }
+
+   void _dmsCompressorEntry::reset()
+   {
+      if ( _compressor )
+      {
+         SDB_OSS_DEL _compressor ;
+      }
+
+      _compressor = NULL ;
+      _lockType = -1 ;
+   }
+
    /*
       _dmsStorageData implement
    */
@@ -302,6 +319,8 @@ namespace engine
       _pLobSU           = NULL ;
       _logicalCSID      = 0 ;
       _CSID             = DMS_INVALID_SUID ;
+      ossMemset( _compressorEntry, 0,
+                 sizeof( _utilCompressor * ) * DMS_MME_SLOTS ) ;
       PD_TRACE_EXIT ( SDB__DMSSTORAGEDATA ) ;
    }
 
@@ -309,6 +328,7 @@ namespace engine
    _dmsStorageData::~_dmsStorageData ()
    {
       PD_TRACE_ENTRY ( SDB__DMSSTORAGEDATA_DESC ) ;
+      utilCompressor *compressor = NULL ;
       _collectionNameMapCleanup() ;
 
       vector<dmsMBContext*>::iterator it = _vecContext.begin() ;
@@ -321,6 +341,16 @@ namespace engine
 
       _pIdxSU = NULL ;
       _pLobSU = NULL ;
+
+      for ( INT32 i = 0; i < DMS_MME_SLOTS; ++i )
+      {
+         compressor = _compressorEntry[i].getCompressor( EXCLUSIVE) ;
+         if ( compressor )
+         {
+            _compressorFactory.destroyCompressor( compressor ) ;
+            _compressorEntry[i].releaseCompressor() ;
+         }
+      }
       PD_TRACE_EXIT ( SDB__DMSSTORAGEDATA_DESC ) ;
    }
 
@@ -470,7 +500,6 @@ namespace engine
       INT32 rc = SDB_OK ;
       dmsExtentID dictExtID = DMS_INVALID_EXTENT ;
       dmsDictExtent *dictExtent = NULL ;
-      dmsDictContext *dictContext = NULL ;
       UINT16 mbID = mbContext->mbID() ;
 
       PD_TRACE_ENTRY ( SDB__DMSSTORAGEDATA__LOADCLDICTTOCACHE ) ;
@@ -489,22 +518,12 @@ namespace engine
          goto error ;
       }
 
-      rc = _dictCache.getDictContext( mbContext, dictContext, EXCLUSIVE ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to get dictionary context, mbID: %d",
-                   mbID ) ;
-      dictContext->setCompressorType(
-                  ( UTIL_COMPRESSOR_TYPE )_mbStatInfo[mbID]._compressorType ) ;
-      rc = dictContext->setDict( (CHAR *)dictExtent + sizeof( dmsDictExtent ),
-                                 dictExtent->_dictLen ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to set dictionary for collection, "
-                   "mbID: %d", mbID ) ;
+      rc = prepareCompressor( mbContext,
+                              (CHAR *)dictExtent + sizeof( dmsDictExtent ),
+                              dictExtent->_dictLen ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to prepare compressor, rc: %d", rc ) ;
 
    done:
-      if ( dictContext )
-      {
-         _dictCache.releaseDictContext( dictContext ) ;
-      }
-
       PD_TRACE_EXITRC ( SDB__DMSSTORAGEDATA__LOADCLDICTTOCACHE, rc ) ;
       return rc ;
    error:
@@ -570,6 +589,8 @@ namespace engine
       INT32 rc = SDB_OK ;
       UINT32 clLID = DMS_INVALID_CLID ;
       dmsMBContext *context = NULL ;
+      pmdKRCB *krCB = pmdGetKRCB() ;
+      SDB_DMSCB *dmsCB = krCB->getDMSCB() ;
 
       PD_TRACE_ENTRY ( SDB__DMSSTORAGEDATA__ONOPENED ) ;
       /*
@@ -579,15 +600,29 @@ namespace engine
        */
       for ( UINT16 i = 0; i < DMS_MME_SLOTS; ++i )
       {
-         if ( DMS_INVALID_EXTENT != _mbStatInfo[i]._dictExtID )
+         if ( UTIL_COMPRESSOR_LZW == _mbStatInfo[i]._compressorType )
          {
-            rc = getMBContext( &context, i, clLID ) ;
-            SDB_ASSERT( SDB_OK == rc, "mb status is invalid" ) ;
-            rc = _loadClDictToCache( context ) ;
-            releaseMBContext( context ) ;
-            PD_RC_CHECK( rc, PDERROR, "Failed to load dictionary from file "
-                      "to cache for collection. Collection name: %s",
-                      _dmsMME->_mbList[i]._collectionName ) ;
+            /*
+             * If _dictExtID is not invalid, the dictionary has been created.
+             * So just load it from file to cache. Otherwise, pass it to the
+             * dictionary creating job.
+             */
+            if ( DMS_INVALID_EXTENT != _mbStatInfo[i]._dictExtID )
+            {
+               rc = getMBContext( &context, i, clLID ) ;
+               SDB_ASSERT( SDB_OK == rc, "mb status is invalid" ) ;
+               rc = _loadClDictToCache( context ) ;
+               releaseMBContext( context ) ;
+               PD_RC_CHECK( rc, PDERROR, "Failed to load dictionary from file "
+                         "to cache for collection. Collection name: %s",
+                         _dmsMME->_mbList[i]._collectionName ) ;
+            }
+            else
+            {
+               //TBD: Error: csid == -1
+               dmsCB->pushToDictCreateCLList( CSID(), i ) ;
+            }
+
          }
       }
 
@@ -607,7 +642,6 @@ namespace engine
       syncMemToMmap() ;
 
       _dmsMME     = NULL ;
-      _dictCache.clearCache() ;
       PD_TRACE_EXIT ( SDB__DMSSTORAGEDATA__ONCLOSED ) ;
    }
 
@@ -1556,7 +1590,9 @@ namespace engine
          mb->_mbExExtentID = mbExExtent ;
          mbExExtent = DMS_INVALID_EXTENT ;
 
-         if ( UTIL_COMPRESSOR_INVALID != compressorType )
+         /* Only new supported compressors such as lzw need a dictionary. */
+         if ( UTIL_COMPRESSOR_SNAPPY < compressorType &&
+              compressorType <= UTIL_COMPRESSOR_ZLIB )
          {
             dmsCB->pushToDictCreateCLList( CSID(), newCollectionID ) ;
          }
@@ -1670,7 +1706,6 @@ namespace engine
       BOOLEAN getContext      = FALSE ;
       BOOLEAN metalocked      = FALSE ;
       dmsMetaExtent *metaExt  = NULL ;
-      dmsDictContext *dictContext = NULL ;
 
       SDB_ASSERT( pName, "Collection name cat't be NULL" ) ;
 
@@ -1764,6 +1799,8 @@ namespace engine
          metaExt->_flag = DMS_EXTENT_FLAG_FREED ;
       }
 
+      rmCompressor( context ) ;
+
       // release mb lock
       context->mbUnlock() ;
 
@@ -1780,20 +1817,6 @@ namespace engine
                        context->clLID(), DMS_INVALID_EXTENT ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to insert CLDel record to log, rc: "
                       "%d", rc ) ;
-      }
-      if ( !isTempSU() )
-      {
-         /*
-          * When dropping collection, Reset the cooresponding dictionary cache.
-          * About the dictionary wait list, just leave it. When checking in the
-          * dictionary creator job thread, it will find out that the collection
-          * is not there any more, and it will be removed from the list there.
-          */
-          rc = _dictCache.getDictContext( context, dictContext, EXCLUSIVE ) ;
-          PD_RC_CHECK( rc, PDERROR, "Failed to get dictionary context, "
-                       "mb ID: %d", context->mbID() ) ;
-          dictContext->reset() ;
-          _dictCache.releaseDictContext( dictContext ) ;
       }
 
    done:
@@ -2164,10 +2187,9 @@ namespace engine
       ossValuePtr extentPtr         = 0 ;
       ossValuePtr deletedRecordPtr  = 0 ;
       ossValuePtr insertedDataPtr   = 0 ;
-      dmsDictContext *dictContext   = NULL ;
       utilCompressor *compressor    = NULL ;
-      BOOLEAN needCompress          = FALSE ;
       BOOLEAN dataModified          = FALSE ;
+      utilCompressorContext compressorContext = NULL ;
 
       // verify whether the record got "_id" inside
       BSONElement ele = record.getField ( DMS_ID_KEY_NAME ) ;
@@ -2207,36 +2229,21 @@ namespace engine
       {
          if ( 0 != context->mb()->_compressorType )
          {
-            /* To protect the dictionary context and compressor. */
-            rc = _dictCache.getDictContext( context, dictContext, SHARED ) ;
-            if ( rc )
+            compressor =
+                  _compressorEntry[context->mbID()].getCompressor( SHARED ) ;
+            if ( compressor )
             {
-               PD_LOG( PDERROR,
-                       "Failed to get dictionary context, rc: %d", rc ) ;
-               goto error ;
+               rc = compressor->prepare( compressorContext ) ;
+               PD_RC_CHECK( rc, PDERROR,
+                            "Failed to prepare compressor, rc: %d", rc ) ;
             }
-
-            if ( dictContext->dictReady() )
-            {
-               compressor = dictContext->getCompressor(
-                                             _dictCache.getCompressorFactory()) ;
-               SDB_ASSERT( compressor, "Dictionary cache status invalid" ) ;
-               needCompress = TRUE ;
-            }
-            else
-            {
-               needCompress = FALSE ;
-            }
-         }
-         else
-         {
-            needCompress = TRUE ;
          }
       }
 
-      if ( needCompress )
+      if ( compressor )
       {
-         rc = dmsCompress( cb, compressor, record, ((CHAR*)(&oid)), oidLen,
+         rc = dmsCompress( cb, compressor, compressorContext,
+                           record, ((CHAR*)(&oid)), oidLen,
                            &compressedData, &compressedDataSize ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to compress data, rc: %d", rc ) ;
 
@@ -2367,8 +2374,14 @@ namespace engine
       {
          if ( dataModified )
          {
-            DMS_RECORD_EXTRACTDATA_EXT( compressor, deletedRecordPtr,
-                                        insertedDataPtr ) ;
+            if ( compressorContext )
+            {
+               rc = compressor->rePrepare( compressorContext ) ;
+               PD_RC_CHECK( rc, PDERROR,
+                            "Failed to prepare compressor, rc: %d", rc ) ;
+            }
+            DMS_RECORD_EXTRACTDATA( compressor, compressorContext,
+                                        deletedRecordPtr, insertedDataPtr ) ;
             BSONObj insertedObj ( (CHAR*)insertedDataPtr ) ;
             DMS_MON_OP_COUNT_INC( pMonAppCB, MON_DATA_READ, 1 ) ;
             DMS_MON_OP_COUNT_INC( pMonAppCB, MON_READ, 1 ) ;
@@ -2387,14 +2400,16 @@ namespace engine
          PD_RC_CHECK( rc, PDERROR, "Failed to insert to index, rc: %d", rc ) ;
       }
 
-      /* After the insertion of data and index, release the compressor and dictContext. */
-      if ( dictContext )
+      if ( compressorContext )
       {
-         if ( compressor )
-         {
-            dictContext->releaseCompressor( compressor ) ;
-         }
-         _dictCache.releaseDictContext( dictContext ) ;
+         compressor->done( compressorContext ) ;
+         compressorContext = UTIL_INVALID_COMP_CTX ;
+      }
+
+      if ( compressor )
+      {
+         _compressorEntry[context->mbID()].releaseCompressor() ;
+         compressor = NULL ;
       }
 
       if ( dpscb )
@@ -2432,6 +2447,16 @@ namespace engine
       }
 
    done:
+      if ( compressorContext )
+      {
+         compressor->done( compressorContext ) ;
+      }
+
+      if ( compressor )
+      {
+         _compressorEntry[context->mbID()].releaseCompressor() ;
+      }
+
       // release the lock immediately if it is not transaction-operation,
       // the transaction-operation's lock will release in rollback or commit
       if ( isTransLocked && ( transID == DPS_INVALID_TRANS_ID || rc ) )
@@ -2684,18 +2709,26 @@ namespace engine
       {
          if ( !deletedDataPtr )
          {
-            //DMS_RECORD_EXTRACTDATA ( realPtr, deletedDataPtr ) ;
-            dmsDictContext *dictContext = NULL ;
-            if ( SDB_OK != _dictCache.getDictContext( context, dictContext,
-                                                      SHARED ) )
+            utilCompressorContext compContext = UTIL_INVALID_COMP_CTX ;
+            utilCompressor *compressor =
+                     _compressorEntry[context->mbID()].getCompressor( SHARED ) ;
+            if ( compressor )
             {
-               PD_LOG( PDERROR, "Failed to get colleciton dictionary context" ) ;
-               rc = SDB_SYS ;
-               goto error ;
+               rc = compressor->prepare( compContext ) ;
+               PD_RC_CHECK( rc, PDERROR,
+                            "Failed to prepare compressor, rc: %d", rc ) ;
             }
-            DMS_RECORD_EXTRACTDATA ( getDictCache(), dictContext,
-                                     realPtr, deletedDataPtr ) ;
-            _dictCache.releaseDictContext( dictContext ) ;
+            DMS_RECORD_EXTRACTDATA ( compressor, compContext,
+                                         realPtr, deletedDataPtr ) ;
+            if ( compContext )
+            {
+               compressor->done( compContext ) ;
+            }
+            if ( compressor )
+            {
+               _compressorEntry[context->mbID()].releaseCompressor() ;
+            }
+
             DMS_MON_OP_COUNT_INC( pMonAppCB, MON_DATA_READ, 1 ) ;
             DMS_MON_OP_COUNT_INC( pMonAppCB, MON_READ, 1 ) ;
          }
@@ -2946,17 +2979,25 @@ namespace engine
             recordRealPtr = ovfExtentPtr + ovfRID._offset ;
          }
 
-         dmsDictContext *dictContext = NULL ;
-         if ( SDB_OK != _dictCache.getDictContext( context, dictContext,
-                                                   SHARED ) )
+         utilCompressorContext compContext = UTIL_INVALID_COMP_CTX ;
+         utilCompressor *compressor =
+                  _compressorEntry[context->mbID()].getCompressor( SHARED ) ;
+         if ( compressor )
          {
-            PD_LOG( PDERROR, "Failed to get colleciton dictionary context" ) ;
-            rc = SDB_SYS ;
-            goto error ;
+            rc = compressor->prepare( compContext ) ;
+            PD_RC_CHECK( rc, PDERROR,
+                         "Failed to prepare compressor, rc: %d", rc ) ;
          }
-         DMS_RECORD_EXTRACTDATA ( getDictCache(),dictContext,
-                                  recordRealPtr, updatedDataPtr ) ;
-         _dictCache.releaseDictContext( dictContext ) ;
+         DMS_RECORD_EXTRACTDATA( compressor, compContext,
+                                     recordRealPtr, updatedDataPtr ) ;
+         if ( compContext )
+         {
+            compressor->done( compContext ) ;
+         }
+         if ( compressor )
+         {
+            _compressorEntry[context->mbID()].releaseCompressor() ;
+         }
          DMS_MON_OP_COUNT_INC( pMonAppCB, MON_DATA_READ, 1 ) ;
          DMS_MON_OP_COUNT_INC( pMonAppCB, MON_READ, 1 ) ;
       }
@@ -3134,27 +3175,28 @@ namespace engine
       // compress data
       if ( OSS_BIT_TEST(context->mb()->_attributes, DMS_MB_ATTR_COMPRESSED ) )
       {
-         dmsDictContext *dictContext = NULL ;
-         utilCompressor *compressor = NULL ;
-         if ( DMS_INVALID_EXTENT != context->mb()->_dictExtentID )
+         utilCompressorContext compContext = UTIL_INVALID_COMP_CTX ;
+         dmsCompressorEntry *compEntry = &_compressorEntry[context->mbID()] ;
+
+         utilCompressor *compressor = compEntry->getCompressor() ;
+         if ( compressor )
          {
-            rc = _dictCache.getDictContext( context, dictContext, SHARED ) ;
+            rc = compressor->prepare( compContext ) ;
             PD_RC_CHECK( rc, PDERROR,
-                         "Failed to get dictionary context, rc: %d", rc ) ;
-            compressor = dictContext->getCompressor(
-                                             _dictCache.getCompressorFactory());
-            SDB_ASSERT( compressor, "Dictionary context is invalid") ;
+                         "Failed to prepare compressor, rc: %d", rc ) ;
          }
 
-         rc = dmsCompress( cb, compressor, (const CHAR*)ptr, len,
+         rc = dmsCompress( cb, compressor, compContext, (const CHAR*)ptr, len,
                            &compressedData, &compressedDataSize ) ;
-         if ( dictContext )
+         if ( UTIL_INVALID_COMP_CTX != compContext )
          {
-            if ( compressor )
-            {
-               _dictCache.releaseDictContext( dictContext ) ;
-            }
+            compressor->done( compContext ) ;
          }
+         if ( compressor )
+         {
+            compEntry->releaseCompressor() ;
+         }
+
          PD_RC_CHECK ( rc, PDERROR, "Failed, to compress record, rc: %d: %s",
                        rc, BSONObj((CHAR*)ptr).toString().c_str() ) ;
 
@@ -3394,18 +3436,26 @@ namespace engine
       try
       {
          ossValuePtr fetchedRecord = 0 ;
-         dmsDictContext *dictContext = NULL ;
-         if ( SDB_OK != _dictCache.getDictContext( context, dictContext,
-                                                   SHARED ) )
-         {
-            PD_LOG( PDERROR, "Failed to get colleciton dictionary context" ) ;
-            rc = SDB_SYS ;
-            goto error ;
-         }
 
-         DMS_RECORD_EXTRACTDATA ( getDictCache(),dictContext,
-                                  recordPtr, fetchedRecord ) ;
-         _dictCache.releaseDictContext( dictContext ) ;
+         utilCompressorContext compContext = UTIL_INVALID_COMP_CTX ;
+         utilCompressor *compressor =
+                  _compressorEntry[context->mbID()].getCompressor( SHARED ) ;
+         if ( compressor )
+         {
+            rc = compressor->prepare( compContext ) ;
+            PD_RC_CHECK( rc, PDERROR,
+                         "Failed to prepare compressor, rc: %d", rc ) ;
+         }
+         DMS_RECORD_EXTRACTDATA( compressor, compContext,
+                                 recordPtr, fetchedRecord ) ;
+         if ( compContext )
+         {
+            compressor->done( compContext ) ;
+         }
+         if ( compressor )
+         {
+            _compressorEntry[context->mbID()].releaseCompressor() ;
+         }
 
          BSONObj obj( (CHAR*)fetchedRecord ) ;
          DMS_MON_OP_COUNT_INC( pMonAppCB, MON_DATA_READ, 1 ) ;
@@ -3484,211 +3534,59 @@ namespace engine
    error:
       goto done ;
    }
-   _dmsDictContext::~_dmsDictContext()
-   {
-      reset() ;
-   }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSDICTCONTEXT_RESET, "_dmsDictContext::reset" )
-   void _dmsDictContext::reset()
-   {
-      PD_TRACE_ENTRY( SDB__DMSDICTCONTEXT_RESET ) ;
-      if ( _inUse )
-      {
-         _clLID = DMS_INVALID_CLID ;
-         if ( _compressor )
-         {
-            SDB_OSS_DEL _compressor ;
-            _compressor = NULL ;
-         }
-         if ( _dict )
-         {
-            SDB_OSS_FREE( _dict ) ;
-            _dict = NULL ;
-            _dictLen = 0 ;
-         }
-      }
-
-      _inUse = FALSE ;
-      PD_TRACE_EXIT( SDB__DMSDICTCONTEXT_RESET ) ;
-   }
-
-   void _dmsDictContext::setClLID( UINT32 clLID )
-   {
-      SDB_ASSERT( (UINT32)DMS_INVALID_CLID != clLID,
-                  "Parameter value is invalid" ) ;
-      _clLID = clLID ;
-      _inUse = TRUE ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSDICTCONTEXT_GETCOMPRESSOR, "_dmsDictContext::getCompressor" )
-   utilCompressor* _dmsDictContext::getCompressor(
-                                             utilCompressorFactory * factory )
+   INT32 _dmsStorageData::prepareCompressor( const _dmsMBContext *context,
+                                             const CHAR *dict, UINT32 dictLen )
    {
       INT32 rc = SDB_OK ;
-      BOOLEAN compressorLock = FALSE ;
       utilCompressor *compressor = NULL ;
+      UTIL_COMPRESSOR_TYPE type  = (UTIL_COMPRESSOR_TYPE)
+                             ((dmsMBContext *)context)->mb()->_compressorType ;
 
-      PD_TRACE_ENTRY( SDB__DMSDICTCONTEXT_GETCOMPRESSOR ) ;
+      rc = _compressorFactory.createCompressor( type, compressor ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to create compressor, rc: %d", rc ) ;
 
-      SDB_ASSERT( factory, "Invalid compressor factory pointer" ) ;
-      SDB_ASSERT( _dict && _dictLen > 0, "The dictionary is empty. This "
-                  "function should only be called when the dictionary is "
-                  "ready" ) ;
+      rc = compressor->setDictionary( dict, dictLen ) ;
+      PD_RC_CHECK( rc, PDERROR,
+                   "Failed to set dictionary for compressor, rc: %d", rc ) ;
 
-      _latchCompressor.get() ;
-      compressorLock = TRUE ;
-      if ( _vecCompressor.size() > 0 )
-      {
-         compressor = _vecCompressor.back() ;
-         _vecCompressor.pop_back() ;
-      }
-      else
-      {
-         rc = factory->createCompressor( _compressorType, compressor ) ;
-         if ( SDB_OK != rc )
-         {
-            PD_LOG( PDERROR, "Failed to create compressor, rc: %d", rc ) ;
-            goto error ;
-         }
 
-         rc = compressor->setDictionary( _dict, _dictLen ) ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to set dictionary for compressor, "
-                      "rc: %d", rc ) ;
-      }
+      _compressorEntry[context->mbID()].setCompressor( compressor ) ;
 
    done:
-      if ( compressorLock )
-      {
-         _latchCompressor.release() ;
-      }
-      PD_TRACE_EXIT( SDB__DMSDICTCONTEXT_GETCOMPRESSOR ) ;
-      return compressor ;
+      return rc ;
    error:
-      if ( compressor )
-      {
-         factory->destroyCompressor( compressor ) ;
-      }
-      compressor = NULL ;
+      _compressorFactory.destroyCompressor( compressor ) ;
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSDICTCONTEXT_RELEASECOMPRESSOR, "_dmsDictContext::releaseCompressor" )
-   void _dmsDictContext::releaseCompressor( utilCompressor *& compressor )
+   void _dmsStorageData::rmCompressor( _dmsMBContext *context )
    {
-      PD_TRACE_ENTRY( SDB__DMSDICTCONTEXT_RELEASECOMPRESSOR ) ;
-
-      if ( !compressor )
-      {
-         return ;
-      }
-
-      _latchCompressor.get() ;
-      if ( _vecCompressor.size() < DMS_COMPRESSOR_PER_CL )
-      {
-         _vecCompressor.push_back( compressor ) ;
-      }
-      else
-      {
-         SDB_OSS_DEL compressor ;
-      }
-      _latchCompressor.release() ;
-      compressor = NULL ;
-
-      PD_TRACE_EXIT( SDB__DMSDICTCONTEXT_RELEASECOMPRESSOR ) ;
+      _compressorEntry[context->mbID()].reset() ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSDICTCONTEXT_SETDICT, "_dmsDictContext::setDict" )
-   INT32 _dmsDictContext::setDict( const CHAR *dict, UINT32 dictLen )
-   {
-      INT32 rc = SDB_OK ;
-      CHAR *dictBuf = NULL ;
-
-      PD_TRACE_ENTRY( SDB__DMSDICTCONTEXT_SETDICT ) ;
-      /*
-       * Set the dictionary for the current collection. If the dictionary has not
-       * been created before, allocate memory and store the dictionary. Otherwise,
-       * the original dictionary in the cache will be replaced with the new one.
-       * If the set failed, the original dictionary will remain unchanged.
-       * Cautious:
-       * For one collection, there should always be one dictionary in the 'stable'
-       * periods(except when rebuilding the whole table).
-       */
-      SDB_ASSERT( dict && ( dictLen > 0 ) ,
-                  "Dictionary information is wrong" ) ;
-
-      dictBuf = ( CHAR * )SDB_OSS_MALLOC( dictLen ) ;
-      PD_CHECK( dictBuf, SDB_OOM, error, PDERROR, "Failed to allocate memory "
-                "for dictionary. Requested size: %d", dictLen ) ;
-
-      ossMemcpy( dictBuf, dict, dictLen ) ;
-      if ( _dict )
-      {
-         SDB_OSS_FREE( _dict ) ;
-      }
-
-      _dict = dictBuf ;
-      _dictLen = dictLen ;
-      _inUse = TRUE ;
-
-   done:
-      PD_TRACE_EXITRC( SDB__DMSDICTCONTEXT_SETDICT, rc ) ;
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATA_ADDDICTTOCACHE, "_dmsStorageData::addDictToCache" )
-   INT32 _dmsStorageData::addDictToCache( const dmsMBContext *mbContext,
-                                          const CHAR *dict, UINT32 dictLen,
-                                          UTIL_COMPRESSOR_TYPE compressorType )
-   {
-      INT32 rc = SDB_OK ;
-      dmsDictContext *dictContext = NULL ;
-
-      PD_TRACE_ENTRY( SDB__DMSSTORAGEDATA_ADDDICTTOCACHE ) ;
-      rc = _dictCache.getDictContext( mbContext, dictContext, EXCLUSIVE ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to get dictionary contxt, "
-                   "mb ID: %d", mbContext->mbID() ) ;
-      rc = dictContext->setDict( dict, dictLen ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to set dictionary for collecton, "
-                   "mbID: %d", mbContext->mbID() ) ;
-      dictContext->setCompressorType( compressorType ) ;
-   done:
-      if ( dictContext )
-      {
-         _dictCache.releaseDictContext( dictContext ) ;
-      }
-
-      PD_TRACE_EXITRC( SDB__DMSSTORAGEDATA_ADDDICTTOCACHE, rc ) ;
-      return rc ;
-   error:
-      goto done;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATA_SAVECLDICT, "_dmsStorageData::saveCLDict" )
-   INT32 _dmsStorageData::saveCLDict( const CHAR *dict, UINT32 dictSize,
-                                      dmsMBContext *mbContext )
+   INT32 _dmsStorageData::dictPersist( UINT16 mbID, UINT32 clLID,
+                                       const CHAR *dict, UINT32 dictLen )
    {
       INT32 rc = SDB_OK ;
       dmsExtentID dictExtID = DMS_INVALID_EXTENT ;
       dmsDictExtent *dictExtent = NULL ;
+      dmsMBContext *context = NULL ;
+      UINT32 currClLID = DMS_INVALID_CLID ;
 
-      PD_TRACE_ENTRY( SDB__DMSSTORAGEDATA_SAVECLDICT ) ;
-      /*
-       * How many pages should be allocated for the dictionary? If page size is
-       * 64k, 2 pages are needed, as there is an extent head at the beginning of
-       * the dictionary extent. If page size is greater than 64k, one page is
-       * enough.
-       */
-      //UINT32 pageNum = ( pageSize() > DMS_DICT_MAX_SIZE ) ? 1 : 2 ;
-      UINT32 pageNum = dictSize / pageSize() + 1 ;
+      /* Number of pages to store the dictionary. */
+      UINT32 pageNum = dictLen / pageSize() + 1 ;
 
-      if ( !mbContext->isMBLock( EXCLUSIVE ) )
+      rc = getMBContext( &context, mbID, currClLID, EXCLUSIVE ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to get dms mb context, rc: %d", rc ) ;
+
+      if ( clLID != context->clLID() )
       {
-         PD_LOG( PDERROR, "Caller must hold mb exclusive lock[%s]",
-                 mbContext->toString().c_str() ) ;
-         rc = SDB_SYS ;
+         /*
+          * If the collection logical ID changed, the original collection has
+          * been dropped.
+          */
+         rc = SDB_DMS_NOTEXIST ;
          goto error ;
       }
 
@@ -3696,8 +3594,8 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR, "Failed to allocate space for dictionary "
                    "extent" ) ;
       dictExtent = ( dmsDictExtent *)extentAddr( dictExtID ) ;
-      dictExtent->init( pageNum, mbContext->mbID() ) ;
-      dictExtent->setDict( dict, dictSize ) ;
+      dictExtent->init( pageNum, context->mbID() ) ;
+      dictExtent->setDict( dict, dictLen ) ;
       for ( INT32 i = 0; i < 3; i++ )
       {
          rc = flush( extent2Segment( dictExtID ), TRUE ) ;
@@ -3713,10 +3611,14 @@ namespace engine
        * Set the dictionary extent id in mb only after the dictionary has been
        * successfully flushed to disk.
        */
-      mbContext->mb()->_dictExtentID = dictExtID ;
+      context->mb()->_dictExtentID = dictExtID ;
 
    done:
-      PD_TRACE_EXITRC( SDB__DMSSTORAGEDATA_SAVECLDICT, rc ) ;
+      if ( context )
+      {
+         releaseMBContext( context ) ;
+      }
+
       return rc ;
    error:
       if ( DMS_INVALID_EXTENT != dictExtID )
@@ -3724,56 +3626,6 @@ namespace engine
          _freeExtent( dictExtID ) ;
       }
       goto done ;
-
    }
-
-   _dmsDictCache::~_dmsDictCache()
-   {
-      clearCache() ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSDICTCACHE_CLEARCACHE, "_dmsDictCache::clearCache" )
-   void _dmsDictCache::clearCache()
-   {
-      PD_TRACE_ENTRY( SDB__DMSDICTCACHE_CLEARCACHE ) ;
-      for ( INT32 i = 0; i < DMS_MME_SLOTS; ++i )
-      {
-         _dictContexts[i].reset() ;
-      }
-      PD_TRACE_EXIT( SDB__DMSDICTCACHE_CLEARCACHE ) ;
-   }
-
-#if 0
-   // PD_TRACE_DECLARE    _FUNCTION ( SDB__DMSDICTCACHE_GETDICTCONTEXT, "_dmsDictCache::getDictContext" )
-   INT32 _dmsDictCache::getDictContext( const dmsMBContext *mbContext,
-                                        dmsDictContext* &dictContext,
-                                        INT32 lockType )
-   {
-      INT32 rc = SDB_OK ;
-
-      PD_TRACE_ENTRY( SDB__DMSDICTCACHE_GETDICTCONTEXT ) ;
-
-      if ( DMS_INVALID_MBID == mbContext->mbID() )
-      {
-         rc = SDB_SYS ;
-         PD_LOG( PDERROR, "Invalid mb context to get dictionary context[%s]",
-                 mbContext->toString().c_str() ) ;
-         goto error ;
-      }
-
-      dictContext = &_dictContexts[ mbContext->mbID() ] ;
-      if ( SHARED == lockType || EXCLUSIVE == lockType )
-      {
-         rc = dictContext->dictCtxLock( lockType ) ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to lock dictionary context, rc: %d",
-                      rc ) ;
-      }
-   done:
-      PD_TRACE_EXITRC( SDB__DMSDICTCACHE_GETDICTCONTEXT, rc ) ;
-      return rc ;
-   error:
-      goto done ;
-   }
-#endif
 }
 

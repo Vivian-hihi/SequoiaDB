@@ -45,6 +45,7 @@
 #include "ossUtil.hpp"
 #include "ossMem.hpp"
 #include "dmsStorageBase.hpp"
+#include "dmsStorageData.hpp"
 #include "../bson/bson.h"
 #include "../bson/bsonobj.h"
 
@@ -132,6 +133,9 @@ namespace engine
          BOOLEAN              _recordXLock ;
          BOOLEAN              _needUnLock ;
          _pmdEDUCB            *_cb ;
+         dmsCompressorEntry   *_compressorEntry ;
+         utilCompressor       *_compressor ;
+         utilCompressorContext _compContext ;
 
    };
    typedef _dmsExtScanner dmsExtScanner ;
@@ -235,6 +239,9 @@ namespace engine
          BOOLEAN              _includeEndKey ;
 
          BOOLEAN              _countOnly ;
+         dmsCompressorEntry  *_compressorEntry ;
+         utilCompressor      *_compressor ;
+         utilCompressorContext _compContext ;
 
    } ;
    typedef _dmsIXSecScanner dmsIXSecScanner ;

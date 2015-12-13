@@ -25,7 +25,8 @@ namespace engine
    #define RTN_DICT_LOAD_TO_CACHE_MAX_TRY 3
 
    _rtnDictCreatorJob::_rtnDictCreatorJob( UINT32 scanInterval )
-      : _scanInterval( scanInterval ),
+      : _dictionary( NULL ) ,
+        _scanInterval( scanInterval ),
         _srcDataBuf( NULL )
    {
    }
@@ -199,37 +200,29 @@ namespace engine
       }
    }
 
-   INT32 _rtnDictCreatorJob::_createAndSaveDictForCl( dmsStorageData *sd,
-                                                      dmsMBContext *context )
+   INT32 _rtnDictCreatorJob::_createDict( dmsStorageData *sd,
+                                         dmsMBContext *context )
    {
       INT32 rc = SDB_OK ;
-      utilDictionary dictionary ;
       dmsRecordID recordID ;
       ossValuePtr recordDataPtr = 0 ;
       pmdEDUCB *cb = pmdGetThreadEDUCB() ;
       UINT32 fetchNum = 0 ;
       UINT64 fetchSize = 0 ;
       BOOLEAN noMoreRecord = FALSE ;
-      BOOLEAN bufFull = FALSE ;
-      INT32 i = 0 ;
-      CHAR *dictBuf = NULL ;
-      UINT32 dictLen = 0 ;
       UINT32 srcDataLen = 0 ;
-      UINT16 mbID = context->mbID() ;
-      UINT32 clLID = context->clLID() ;
       UINT32 bufFreeLen = RTN_DICT_BUF_SIZE ;
-      BOOLEAN sameClCheck = FALSE ;
-      dmsMBContext *mbContext = NULL ;
+      BOOLEAN dictFull = FALSE ;
 
       SDB_ASSERT( sd && context, "Invalid argument value" ) ;
 
       dmsExtScanner scanner( sd, context, NULL, context->mb()->_firstExtentID ) ;
-
       ossMemset( _srcDataBuf, 0, RTN_DICT_BUF_SIZE ) ;
 
       /*
-       * This loop will end either all records have been fetched, or the source
-       * buffer is full.
+       * Inorder to improve performance, call build for a batch records(64M)
+       * instead of one every time. The loop will end either all records have
+       * been fetched, or the dictionary is full.
        */
       do
       {
@@ -239,7 +232,15 @@ namespace engine
             rc = scanner.stepToNextExtent() ;
             if ( SDB_DMS_EOC == rc )
             {
+               /* If the dictionary is not full, use the last batch of data. */
+               if ( srcDataLen && !dictFull )
+               {
+                  rc = _creator.build( _srcDataBuf, srcDataLen, dictFull ) ;
+                  PD_RC_CHECK( rc, PDERROR, "Failed to build dictionary, rc: %d", rc ) ;
+               }
+
                noMoreRecord = TRUE ;
+               rc = SDB_OK ;
                break ;
             }
             continue ;
@@ -250,22 +251,31 @@ namespace engine
          try
          {
             BSONObj bs( (const CHAR*)recordDataPtr ) ;
-            fetchNum++ ;
-            fetchSize += bs.objsize() ;
-            if ( (UINT32)bs.objsize() >= bufFreeLen )
-            {
-               ossMemcpy( _srcDataBuf + srcDataLen, bs.objdata(), bufFreeLen ) ;
-               srcDataLen += bufFreeLen ;
-               bufFreeLen = 0 ;
-               bufFull = TRUE ;
-               break ;
-            }
-            else
+            if ( (UINT32)bs.objsize() <= bufFreeLen )
             {
                ossMemcpy( _srcDataBuf + srcDataLen, bs.objdata(), bs.objsize() ) ;
                bufFreeLen -= bs.objsize() ;
                srcDataLen += bs.objsize() ;
+               fetchNum++ ;
+               fetchSize += bs.objsize() ;
                continue ;
+            }
+            else
+            {
+               rc = _creator.build( _srcDataBuf, srcDataLen, dictFull ) ;
+               PD_RC_CHECK( rc, PDERROR, "Failed to build dictionary, rc: %d", rc ) ;
+               if ( dictFull )
+               {
+                  break ;
+               }
+
+               srcDataLen = 0 ;
+               bufFreeLen = RTN_DICT_BUF_SIZE ;
+               ossMemcpy( _srcDataBuf + srcDataLen, bs.objdata(), bs.objsize() ) ;
+               bufFreeLen -= bs.objsize() ;
+               srcDataLen += bs.objsize() ;
+               fetchNum++ ;
+               fetchSize += bs.objsize() ;
             }
          }
          catch ( std::exception &e )
@@ -274,9 +284,9 @@ namespace engine
             rc = SDB_SYS ;
             goto error ;
          }
-      }while ( FALSE == noMoreRecord && FALSE == bufFull ) ;
+      }while ( FALSE == noMoreRecord ) ;
 
-      PD_CHECK( ( SDB_OK == rc || SDB_DMS_EOC == rc ), rc, error, PDERROR,
+      PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
                 "Failed to fetch record when building dictionary, rc: %d, "
                 "Collection name: %s", rc, context->mb()->_collectionName ) ;
 
@@ -285,8 +295,8 @@ namespace engine
        * it this time, leave it in the queue and wait for the next round to
        * build the dictionary.
        */
-      if ( fetchNum < RTN_DICT_CREATE_MIN_REC_NUM
-           || fetchSize < RTN_DICT_CREATE_MIN_DATA_SIZE )
+      if ( !dictFull && (fetchNum < RTN_DICT_CREATE_MIN_REC_NUM
+           || fetchSize < RTN_DICT_CREATE_MIN_DATA_SIZE ) )
       {
          PD_LOG( PDINFO, "Fetched records not enough when creating dictionary. "
                  "Wait for next round to build" ) ;
@@ -294,70 +304,56 @@ namespace engine
          goto error ;
       }
 
-      dictBuf = ( CHAR *  )SDB_OSS_MALLOC( DMS_DICT_MAX_SIZE ) ;
-      PD_CHECK( dictBuf, SDB_OOM, error, PDERROR, "Failed to allocate "
-                "temporary buffer during create dictionary" ) ;
-      dictLen = DMS_DICT_MAX_SIZE ;
-      rc = dictionary.build( _srcDataBuf, srcDataLen, dictBuf, dictLen ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to build dictionary, rc: %d", rc ) ;
+   done:
+      return rc ;
+   error:
+      _creator.reset() ;
+      goto done ;
+   }
 
+   INT32 _rtnDictCreatorJob::_transferDict( dmsStorageData *sd,
+                                            dmsMBContext *context )
+   {
+      INT32 rc = SDB_OK ;
+      CHAR *dictBuf = NULL ;
+      UINT32 dictBufLen = 0 ;
+      BOOLEAN compressorReady = FALSE ;
+
+      _dictionary = _creator.getDictionary() ;
+      dictBufLen = _dictionary->getDictSize() ;
+      SDB_ASSERT( dictBufLen > 0, "Dictionary length is invalid" ) ;
+
+      dictBuf = (CHAR*)SDB_OSS_MALLOC( dictBufLen ) ;
+      PD_CHECK( dictBuf, SDB_OOM, error, PDERROR,
+                "Failed to allocate memory for dictionary, rc: %d", rc ) ;
+      rc = _dictionary->dumpToStream( dictBuf, dictBufLen ) ;
+      PD_RC_CHECK( rc, PDERROR,
+                   "Failed to dump dictionary into stream format, rc: %d", rc ) ;
+
+      rc = sd->prepareCompressor( context, dictBuf, dictBufLen ) ;
+      PD_RC_CHECK( rc, PDERROR,
+                   "Failed to prepare compressor, rc: %d", rc ) ;
+      compressorReady = TRUE ;
       if ( context->isMBLock() )
       {
          context->mbUnlock() ;
       }
 
-      rc = sd->getMBContext( &mbContext, mbID, DMS_INVALID_CLID, EXCLUSIVE ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to get mb context, rc: %d", rc ) ;
-
-      if ( sameClCheck )
-      {
-         /*
-          * If the collection logical id is not the same as before, the original
-          * collection has been dropped. So just return success and skip.
-          */
-         if ( mbContext->clLID() != clLID )
-         {
-            goto done ;
-         }
-      }
-
-      rc = sd->saveCLDict( dictBuf, dictLen, mbContext ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to store dictionary, rc: %d, "
-                   "Collection name: %s", rc, mbContext->mb()->_collectionName ) ;
-
-      /*
-       * Adding dictionary to cache may fail, most likely because lack of
-       * memory. We try at most three times. If all fail, then just skip it.
-       * The dictionary has been stored in file above. So the dictionary will
-       * be loaded until next startup, and during the current running period,
-       * data of this collection will not be compressed.
-       * Any better solution ???
-       */
-      for ( i = 0; i < RTN_DICT_LOAD_TO_CACHE_MAX_TRY; ++i )
-      {
-         rc = sd->addDictToCache( mbContext, dictBuf, dictLen,
-                        (UTIL_COMPRESSOR_TYPE)mbContext->mb()->_compressorType ) ;
-         if ( SDB_OK == rc )
-         {
-            break ;
-         }
-      }
-
-      PD_RC_CHECK( rc, PDERROR, "Failed to add dictionary to cache. Collection "
-                   "name: %s", mbContext->mb()->_collectionName ) ;
-
+      rc = sd->dictPersist( context->mbID(), context->clLID(),
+                            dictBuf, dictBufLen ) ;
+      PD_RC_CHECK( rc, PDERROR,
+                   "Failed to store dictionary in colleciton, rc: %d", rc ) ;
    done:
       if ( dictBuf )
       {
          SDB_OSS_FREE( dictBuf ) ;
       }
-
-      if ( mbContext )
-      {
-         sd->releaseMBContext( mbContext ) ;
-      }
       return rc ;
    error:
+      if ( compressorReady )
+      {
+         sd->rmCompressor( context ) ;
+      }
       goto done ;
    }
 
@@ -420,7 +416,8 @@ namespace engine
          goto done ;
       }
 
-      if ( 0 == mbContext->mb()->_compressorType )
+      /* Currently we only support LZW. */
+      if ( UTIL_COMPRESSOR_LZW != mbContext->mb()->_compressorType )
       {
          /*
           * The mbID has been reused, and the current collection's
@@ -436,12 +433,16 @@ namespace engine
       }
 
       /* Now, create the dictionary for the collection. */
-      rc = _createAndSaveDictForCl( su->data(), mbContext ) ;
-      if ( rc && ( RTN_DICT_CREATE_COND_NOT_MATCH != rc ) )
-      {
-         PD_RC_CHECK( rc, PDERROR, "Failed to create and store dictionary, "
-                      "rc: %d", rc ) ;
-      }
+      rc = _creator.prepare( DMS_DICT_MAX_SIZE ) ;
+      PD_RC_CHECK( rc, PDERROR,
+                   "Failed to prepare dictionary creator, rc: %d", rc ) ;
+
+      rc = _createDict( su->data(), mbContext ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to create dictionary, rc: %d", rc ) ;
+
+      rc = _transferDict( su->data(), mbContext ) ;
+      PD_RC_CHECK( rc, PDERROR,
+                   "Failed to pass dictionary to dms, rc: %d", rc ) ;
 
    done:
       if ( mbContext )
@@ -453,6 +454,7 @@ namespace engine
       {
          dmsCB->suUnlock( suID ) ;
       }
+      _creator.reset() ;
 
       return rc ;
    error:

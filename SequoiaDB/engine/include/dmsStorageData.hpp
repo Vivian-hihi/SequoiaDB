@@ -551,100 +551,29 @@ namespace engine
    #define DMS_CREATE_DICT_MIN_REC_NUM 100
    #define DMS_CREATE_DICT_MIN_DATA_SIZE ( 10 << 20 )
 
-   // Class of the cl's dictionary context.
-   class _dmsDictContext : public SDBObject
+   class _dmsCompressorEntry
    {
    public:
-      _dmsDictContext()
-         : _lockType( -1 ),
-           _inUse( FALSE ),
-           _clLID( DMS_INVALID_CLID ),
-           _dict( NULL ),
-           _dictLen( 0 ),
-           _compressorType( UTIL_COMPRESSOR_INVALID ),
-           _compressor( NULL )
+      _dmsCompressorEntry()
+         : _compressor( NULL ),
+           _lockType( -1 )
       {
       }
+      ~_dmsCompressorEntry() {}
 
-      ~_dmsDictContext() ;
+      void setCompressor( _utilCompressor *compressor ) ;
+      OSS_INLINE _utilCompressor* getCompressor(
+                                             OSS_LATCH_MODE lockType = SHARED) ;
+      OSS_INLINE void releaseCompressor() ;
 
-      OSS_INLINE void reset() ;
-      OSS_INLINE UINT32 getClLID() { return _clLID ; }
-      OSS_INLINE void setClLID( UINT32 clLID ) ;
-
-      /*
-       * TBD: Ask the factory for a brand new compressor. The better way is to
-       * get it from a pool.
-       */
-      OSS_INLINE utilCompressor* getCompressor( utilCompressorFactory * factory ) ;
-      OSS_INLINE void releaseCompressor( utilCompressor *& compressor ) ;
-      OSS_INLINE INT32 setDict( const CHAR *dict, UINT32 dictLen ) ;
-      OSS_INLINE void setCompressorType( UTIL_COMPRESSOR_TYPE compressorType )
-      {
-         _compressorType = compressorType ;
-      }
-      OSS_INLINE BOOLEAN dictReady() { return ( NULL != _dict ) ; }
-      OSS_INLINE void lock( INT32 mode )
-      {
-         ossLatch( &_latch, (OSS_LATCH_MODE)mode ) ;
-         _lockMode = mode ;
-      }
-      OSS_INLINE void unlock()
-      {
-         if ( SHARED == _lockMode || EXCLUSIVE == _lockMode )
-         {
-            ossUnlatch( &_latch, (OSS_LATCH_MODE)_lockMode ) ;
-         }
-
-         _lockMode = -1 ;
-      }
+      void reset() ;
 
    private:
-      ossSpinSLatch _latch ;
-      INT32 _lockMode ;
-      //ossRWMutex _mutex ;
+      _utilCompressor *_compressor ;
       INT32 _lockType ;
-      BOOLEAN _inUse ;
-      UINT32 _clLID ;
-      CHAR *_dict ;   /* Points to the dictionary string. */
-      UINT32 _dictLen ;
-      UTIL_COMPRESSOR_TYPE _compressorType ;
-
-      vector<utilCompressor *> _vecCompressor ;
-      ossSpinXLatch _latchCompressor ;
-
-      utilCompressor * _compressor ; /* Compressor will be created at the best time */
+      ossSpinSLatch _compressorLatch ;
    } ;
-   typedef _dmsDictContext dmsDictContext ;
-
-   /*
-    * This clas is for dictionary cache.
-    */
-   class _dmsDictCache
-   {
-   public:
-      _dmsDictCache () {}
-      ~_dmsDictCache () ;
-
-      void clearCache() ;
-      utilCompressorFactory * getCompressorFactory()
-      {
-         return &_compressorFactory ;
-      }
-
-      OSS_INLINE INT32 getDictContext( const dmsMBContext *mbContext,
-                                       dmsDictContext* &dictContext,
-                                       INT32 lockType = SHARED ) ;
-      OSS_INLINE void releaseDictContext( dmsDictContext *&dictContext ) ;
-   private:
-      /*
-       * One dictionary context for one collection. The index is equal to its
-       * mbID.
-       */
-      dmsDictContext _dictContexts[ DMS_MME_SLOTS ] ;
-      utilCompressorFactory _compressorFactory ;
-   } ;
-   typedef _dmsDictCache dmsDictCache ;
+   typedef _dmsCompressorEntry dmsCompressorEntry ;
 
    /*
       _dmsStorageData defined
@@ -771,12 +700,13 @@ namespace engine
 
          virtual INT32 tryToFlush( BOOLEAN ignoreTick, BOOLEAN &failed ) ;
 
-         INT32 saveCLDict( const CHAR *dict, UINT32 dictSize,
-                           dmsMBContext *mbContext ) ;
-         INT32 addDictToCache( const dmsMBContext *mbContext,
-                               const CHAR *dict, UINT32 dictLen,
-                               UTIL_COMPRESSOR_TYPE compressorType ) ;
-         _dmsDictCache* getDictCache() { return &_dictCache ; }
+         /* Create the compressor, and set the dictionry for it. */
+         INT32 prepareCompressor( const dmsMBContext *context,
+                                  const CHAR *dict, UINT32 dictLen ) ;
+         void rmCompressor( _dmsMBContext *context ) ;
+         INT32 dictPersist( UINT16 mbID, UINT32 clLID,
+                            const CHAR *dict, UINT32 dictLen ) ;
+         OSS_INLINE _dmsCompressorEntry *getCompressorEntry( UINT16 mbID ) ;
 
       private:
          virtual UINT64 _dataOffset() ;
@@ -894,11 +824,8 @@ namespace engine
          _dmsStorageIndex                    *_pIdxSU ;
          _dmsStorageLob                      *_pLobSU ;
 
-         /*
-          * Dictionary cache. Used to cache collection dictionaries in memory
-          * in order to gain high performance when getting dictionary.
-          */
-         _dmsDictCache                       _dictCache ;
+         utilCompressorFactory               _compressorFactory ;
+         _dmsCompressorEntry                 _compressorEntry[ DMS_MME_SLOTS ] ;
    };
    typedef _dmsStorageData dmsStorageData ;
 
@@ -1061,6 +988,14 @@ namespace engine
       _latchContext.release() ;
       pContext = NULL ;
    }
+
+   OSS_INLINE _dmsCompressorEntry *_dmsStorageData::getCompressorEntry(
+                                                                  UINT16 mbID )
+   {
+      SDB_ASSERT( DMS_INVALID_MBID != mbID, "mb ID is invalid" ) ;
+      return &_compressorEntry[ mbID ] ;
+   }
+
    OSS_INLINE const dmsMBStatInfo* _dmsStorageData::getMBStatInfo( UINT16 mbID ) const
    {
       if ( mbID >= DMS_MME_SLOTS )
@@ -1074,32 +1009,38 @@ namespace engine
       return 16 + 14 - pageSizeSquareRoot() ;
    }
 
-   OSS_INLINE INT32 _dmsDictCache::getDictContext(
-                                             const dmsMBContext *mbContext,
-                                             dmsDictContext* &dictContext,
-                                             INT32 lockType )
+   OSS_INLINE _utilCompressor* dmsCompressorEntry::getCompressor(
+                                                      OSS_LATCH_MODE lockType )
    {
-      INT32 rc = SDB_OK ;
-
-      if ( mbContext->mbID() >= DMS_MME_SLOTS )
+      if ( SHARED == lockType )
       {
-         rc = SDB_INVALIDARG ;
-         goto error ;
+         _compressorLatch.get_shared() ;
+      }
+      else
+      {
+         _compressorLatch.get() ;
       }
 
-      dictContext = &_dictContexts[ mbContext->mbID() ] ;
-      //dictContext->lock( lockType ) ;
-   done:
-      return rc ;
-   error:
-      goto done ;
+      _lockType = lockType ;
+
+      if ( !_compressor )
+      {
+         releaseCompressor( ) ;
+      }
+
+      return _compressor ;
    }
 
-   OSS_INLINE void _dmsDictCache::releaseDictContext(
-                                                dmsDictContext *&dictContext )
+   OSS_INLINE void dmsCompressorEntry::releaseCompressor()
    {
-      //dictContext->unlock() ;
-      dictContext = NULL ;
+      if ( SHARED == _lockType )
+      {
+         _compressorLatch.release_shared() ;
+      }
+      else
+      {
+         _compressorLatch.release() ;
+      }
    }
 }
 

@@ -3,6 +3,7 @@
 
 #include "dmsStorageUnit.hpp"
 #include "rtnBackgroundJobBase.hpp"
+#include "utilLZW.hpp"
 
 namespace engine
 {
@@ -21,10 +22,12 @@ namespace engine
       virtual INT32 doit () ;
    private:
       INT32 _checkAndCreateDictForCL( dmsStorageUnitID suID, UINT16 mbID );
-      INT32 _createAndSaveDictForCl( dmsStorageData *sd,
-                                     dmsMBContext *context ) ;
       BOOLEAN _conditionMatch( dmsStorageUnit *su, UINT16 mbID ) ;
+      INT32 _createDict( dmsStorageData *sd, dmsMBContext *context ) ;
+      INT32 _transferDict( dmsStorageData *sd, dmsMBContext *context ) ;
    private:
+      utilLZWDictCreator _creator ;
+      utilLZWDictionary *_dictionary ;
       INT32 _scanInterval ;
       CHAR *_srcDataBuf ;
    } ;

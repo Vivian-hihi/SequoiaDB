@@ -37,7 +37,6 @@
 *******************************************************************************/
 
 #include "dmsScanner.hpp"
-#include "dmsStorageData.hpp"
 #include "dmsStorageIndex.hpp"
 #include "mthMatcher.hpp"
 #include "rtnIXScanner.hpp"
@@ -91,6 +90,9 @@ namespace engine
       _recordXLock         = FALSE ;
       _needUnLock          = FALSE ;
       _cb                  = NULL ;
+      _compressorEntry     = NULL ;
+      _compressor          = NULL ;
+      _compContext         = NULL ;
 
       if ( DMS_ACCESS_TYPE_UPDATE == _accessType ||
            DMS_ACCESS_TYPE_DELETE == _accessType ||
@@ -110,6 +112,15 @@ namespace engine
       {
          _pTransCB->transLockRelease( _cb, _pSu->logicalID(), _context->mbID(),
                                       &_curRID ) ;
+      }
+
+      if ( _compContext )
+      {
+         _compressor->done( _compContext ) ;
+      }
+      if ( _compressor )
+      {
+         _compressorEntry->releaseCompressor() ;
       }
    }
 
@@ -190,6 +201,16 @@ namespace engine
 
       _cb   = cb ;
       _next = _extent->_firstRecordOffset ;
+
+      _compressorEntry = _pSu->getCompressorEntry( _context->mbID() ) ;
+      _compressor = _compressorEntry->getCompressor( SHARED ) ;
+      if ( _compressor )
+      {
+         rc = _compressor->prepare( _compContext ) ;
+         PD_RC_CHECK( rc, PDERROR,
+                     "Failed to prepare compressor, rc: %d", rc ) ;
+      }
+
       // unset first run
       _firstRun = FALSE ;
 
@@ -206,7 +227,6 @@ namespace engine
    {
       INT32 rc                = SDB_OK ;
       BOOLEAN result          = TRUE ;
-      dmsDictContext * dictContext = NULL ;
 
       if ( _firstRun )
       {
@@ -226,11 +246,6 @@ namespace engine
          _skipNum -= _extent->_recCount ;
          _next = DMS_INVALID_OFFSET ;
       }
-
-      rc = _pSu->getDictCache()->getDictContext( _context, dictContext,
-                                                 SHARED ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to get dictionary context. mb ID: %d",
-                   _extent->_mbID ) ;
 
       while ( DMS_INVALID_OFFSET != _next && 0 != _maxRecords )
       {
@@ -313,7 +328,7 @@ namespace engine
                DMS_MON_OP_COUNT_INC( _pMonAppCB, MON_DATA_READ, 1 ) ;
             }
 
-            DMS_RECORD_EXTRACTDATA( _pSu->getDictCache(), dictContext,
+            DMS_RECORD_EXTRACTDATA( _compressor, _compContext,
                                     _curRecordPtr, recordDataPtr ) ;
 
             DMS_MON_OP_COUNT_INC( _pMonAppCB, MON_DATA_READ, 1 ) ;
@@ -384,10 +399,6 @@ namespace engine
       goto error ;
 
    done:
-      if ( dictContext )
-      {
-         _pSu->getDictCache()->releaseDictContext( dictContext ) ;
-      }
       return rc ;
    error:
       recordID.reset() ;
@@ -544,6 +555,9 @@ namespace engine
       _includeEndKey       = FALSE ;
       _blockScanDir        = 1 ;
       _countOnly           = FALSE ;
+      _compressorEntry     = NULL ;
+      _compressor          = NULL ;
+      _compContext         = NULL ;
 
       if ( DMS_ACCESS_TYPE_UPDATE == _accessType ||
            DMS_ACCESS_TYPE_DELETE == _accessType ||
@@ -562,6 +576,15 @@ namespace engine
       {
          _pTransCB->transLockRelease( _cb, _pSu->logicalID(), _context->mbID(),
                                       &_curRID ) ;
+      }
+
+      if ( _compContext )
+      {
+         _compressor->done( _compContext ) ;
+      }
+      if ( _compressor )
+      {
+         _compressorEntry->releaseCompressor() ;
       }
 
       _scanner    = NULL ;
@@ -686,6 +709,15 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR, "Failed to resum ixscan, rc: %d", rc ) ;
 
       _cb   = cb ;
+
+      _compressorEntry = _pSu->getCompressorEntry( _context->mbID() ) ;
+      _compressor = _compressorEntry->getCompressor( SHARED ) ;
+      if ( _compressor )
+      {
+         rc = _compressor->prepare( _compContext ) ;
+         PD_RC_CHECK( rc, PDERROR,
+                     "Failed to prepare compressor, rc: %d", rc ) ;
+      }
       // unset first run
       _firstRun = FALSE ;
       _onceRestNum = (INT64)pmdGetKRCB()->getOptionCB()->indexScanStep() ;
@@ -693,6 +725,15 @@ namespace engine
    done:
       return rc ;
    error:
+      if ( _compContext )
+      {
+         _compressor->done( _compContext ) ;
+      }
+      if ( _compressor )
+      {
+         _compressorEntry->releaseCompressor() ;
+      }
+
       goto done ;
    }
 
@@ -723,7 +764,6 @@ namespace engine
    {
       INT32 rc                = SDB_OK ;
       BOOLEAN result          = TRUE ;
-      dmsDictContext * dictContext = NULL ;
 
       if ( _firstRun )
       {
@@ -738,15 +778,6 @@ namespace engine
       }
 
       //DMS_RECORD_EXTRACTDATA(_curRecordPtr, recordDataPtr) ;
-      rc = _pSu->getDictCache()->getDictContext( _context, dictContext,
-                                                 SHARED ) ;
-      if ( rc )
-      {
-         PD_LOG( PDERROR, "Failed to get collection dictionary context, "
-                 "rc: %d", rc ) ;
-         goto error ;
-      }
-
       while ( _onceRestNum-- > 0 && 0 != _maxRecords )
       {
          rc = _scanner->advance( _curRID, _recordXLock ? FALSE : TRUE ) ;
@@ -904,8 +935,8 @@ namespace engine
             DMS_MON_OP_COUNT_INC( _pMonAppCB, MON_DATA_READ, 1 ) ;
          }
 
-         DMS_RECORD_EXTRACTDATA( _pSu->getDictCache(), dictContext,
-                                 _curRecordPtr, recordDataPtr ) ;
+         DMS_RECORD_EXTRACTDATA( _compressor, _compContext,
+                                 _curRecordPtr, recordDataPtr) ;
          DMS_MON_OP_COUNT_INC( _pMonAppCB, MON_DATA_READ, 1 ) ;
          DMS_MON_OP_COUNT_INC( _pMonAppCB, MON_READ, 1 ) ;
 
@@ -981,11 +1012,6 @@ namespace engine
       goto error ;
 
    done:
-      if ( dictContext )
-      {
-         _pSu->getDictCache()->releaseDictContext( dictContext ) ;
-      }
-
       if ( SDB_OK == rc && ( _onceRestNum <= 0 || 0 == _maxRecords ) )
       {
          rc = _scanner->pauseScan( _recordXLock ? FALSE : TRUE ) ;

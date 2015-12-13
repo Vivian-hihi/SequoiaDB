@@ -1330,6 +1330,10 @@ namespace engine
             {
                clInfo._compressorType = UTIL_COMPRESSOR_LZW ;
             }
+            else if ( 0 == ossStrcmp( eleTmp.valuestr(), CAT_COMPRESSOR_SNAPPY ) )
+            {
+               clInfo._compressorType = UTIL_COMPRESSOR_SNAPPY ;
+            }
             else if ( 0 == ossStrcmp( eleTmp.valuestr(), CAT_COMPRESSOR_ZLIB ) )
             {
                clInfo._compressorType = UTIL_COMPRESSOR_ZLIB ;

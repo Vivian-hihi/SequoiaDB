@@ -87,6 +87,7 @@
 #define FIELD_NAME_SHARDINGKEY               "ShardingKey"
 #define FIELD_NAME_COMPRESSED                "Compressed"
 #define FIELD_NAME_COMPRESSIONTYPE           "CompressionType"
+#define VALUE_NAME_SNAPPY                    "snappy"
 #define VALUE_NAME_LZW                       "lzw"
 #define VALUE_NAME_LZ4                       "lz4"
 #define VALUE_NAME_ZLIB                      "zlib"

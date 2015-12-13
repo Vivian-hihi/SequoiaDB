@@ -380,9 +380,9 @@ namespace engine
       CHAR fullFilePath [ OSS_MAX_PATHSIZE + 1 ] = {0} ;
       const CHAR *dbpath = krcb->getOptionCB()->getDbPath() ;
       BOOLEAN dataRebuild = FALSE ;
-      dmsDictContext *dictContext = NULL ;
       utilCompressor *compressor = NULL ;
-      dmsDictCache *dictCache = NULL ;
+      dmsCompressorEntry *compEntry = NULL ;
+      utilCompressorContext compContext = UTIL_INVALID_COMP_CTX ;
 
       if ( ossStrlen ( dbpath ) + 1 +
            ossStrlen ( pCollectionFullName ) +
@@ -459,20 +459,13 @@ namespace engine
 
          if ( 0 != mbContext->mb()->_compressorType )
          {
-            dictCache = su->data()->getDictCache() ;
-            SDB_ASSERT( dictCache, "Dictionary cache invalid" );
-            rc = dictCache->getDictContext( mbContext, dictContext, SHARED ) ;
-            PD_RC_CHECK( rc, PDERROR, "Failed to get dictionary context, "
-                         "mb ID: %d", mbContext->mbID() ) ;
-            if ( dictContext->dictReady() )
+            compEntry = su->data()->getCompressorEntry( mbContext->mbID() ) ;
+            compressor = compEntry->getCompressor() ;
+            if ( compressor )
             {
-               compressor = dictContext->getCompressor(
-                                             dictCache->getCompressorFactory()) ;
-               SDB_ASSERT( compressor, "Dictionary cache status invalid" ) ;
-            }
-            else
-            {
-               dictCache->releaseDictContext( dictContext ) ;
+               rc = compressor->prepare( compContext ) ;
+               PD_RC_CHECK( rc, PDERROR,
+                            "Failed to prepare compressor, rc: %d", rc ) ;
             }
          }
 
@@ -501,7 +494,8 @@ namespace engine
             try
             {
                BSONObj dataRecord ( buffObj.data() ) ;
-               rc = ru.insertRecord ( dataRecord, cb, attributes, compressor ) ;
+               rc = ru.insertRecord ( dataRecord, cb, attributes,
+                                      compressor, compContext ) ;
                if ( rc )
                {
                   PD_LOG ( PDERROR, "Failed to insert into temp file, rc = %d",
@@ -515,15 +509,21 @@ namespace engine
                         e.what() ) ;
                goto error_shadow_copy ;
             }
+
+            rc = compressor->rePrepare( compContext ) ;
+            PD_RC_CHECK( rc, PDERROR,
+                         "Failed to prepare compressor, rc: %d", rc ) ;
          } // while ( TRUE )
 
-         if ( dictContext )
+         if ( UTIL_INVALID_COMP_CTX != compContext )
          {
-            if ( compressor )
-            {
-               dictContext->releaseCompressor( compressor ) ;
-            }
-            dictCache->releaseDictContext( dictContext ) ;
+            compressor->done( compContext ) ;
+            compContext = UTIL_INVALID_COMP_CTX ;
+         }
+
+         if ( compressor )
+         {
+            compEntry->releaseCompressor() ;
          }
 
          rc = ru.flush () ;
@@ -638,6 +638,15 @@ namespace engine
       PD_TRACE_EXITRC ( SDB_RTNREORGOFFLINE1, rc ) ;
       return rc ;
    error :
+      if ( UTIL_INVALID_COMP_CTX != compContext )
+      {
+         compressor->done( compContext ) ;
+      }
+      if ( compressor )
+      {
+         compEntry->releaseCompressor() ;
+      }
+
       goto done ;
    }
 

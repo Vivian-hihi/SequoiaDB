@@ -4,269 +4,207 @@
 
 namespace engine
 {
-   using namespace std;
 
-   INT32 _lzwBuildDict( _utilLZWContext *ctx, const CHAR *source,
-                     UINT32 sourceLen, CHAR *destBuf,
-                     UINT32 &destLen )
-   {
-      LZW_CODE   code;
-      unsigned isize = 0;
-      unsigned strlen = 0;
-      LZW_CODE nc ;
-      LZW_CODE tmp ;
-      UINT8    c;
-
-      // TBD: Need to handle destLen
-      //lzw_init(ctx, destBuf);
-      ctx->stream = destBuf ;
-
-      c = source[0] ;
-      code = c;
-      isize++;
-      strlen++;
-
-      for ( ; isize < sourceLen; ++isize )
-      {
-         c = source[ isize ] ;
-         nc = _utilLZWFindStr(ctx, code, c);
-         if (nc == NODE_NULL)
-         {
-            // the string was not found - write <prefix>
-            _utilLZWWrite(ctx, code);
-
-            // add <prefix>+<current symbol> to the dictionary
-            tmp = _utilLZWAddStr(ctx, code, c);
-            if (tmp == NODE_NULL)
-            {
-               /* Dictionary is full */
-               break;
-            }
-
-            code = c;
-            strlen = 1;
-         }
-         else
-         {
-            code = nc;
-            strlen++;
-         }
-      }
-
-      // write last code
-      _utilLZWWrite(ctx, code);
-      _utilLZWFlushBits(ctx);
-      _utilLZWWriteBuf(ctx->stream + ctx->total_out - ctx->lzwn,
-                   ctx->buff, ctx->lzwn);
-      destLen = ctx->total_out ;
-
-      return 0;
-   }
-
-   /******************************************************************************
-   **  lzw_encode
-   **  --------------------------------------------------------------------------
-   **  Encodes input byte stream into LZW code stream.
-   **
-   **  Arguments:
-   **      ctx  - LZW context;
-   **      fin  - input file;
-   **      fout - output file;
-   **
-   **  Return: error code
-   ******************************************************************************/
-   INT32 utilLZWEncode( _utilLZWContext *ctx, const CHAR *source, UINT32 sourceLen,
-                      CHAR *destBuf, UINT32 &destLen )
-   {
-      LZW_CODE   code;
-      unsigned isize = 0;
-      unsigned strlen = 0;
-      LZW_CODE nc ;
-      LZW_CODE tmp ;
-      UINT8    c;
-
-      // TBD: Need to handle destLen
-      //lzw_init(ctx, destBuf);
-      ctx->stream = destBuf ;
-
-      c = source[0] ;
-      code = c;
-      isize++;
-      strlen++;
-
-      for ( ; isize < sourceLen; ++isize )
-      {
-         c = source[ isize ] ;
-         nc = _utilLZWFindStr(ctx, code, c);
-         if (nc == NODE_NULL)
-         {
-            // the string was not found - write <prefix>
-            _utilLZWWrite(ctx, code);
-            code = c;
-            strlen = 1;
-         }
-         else
-         {
-            code = nc;
-            strlen++;
-         }
-      }
-
-      // write last code
-      _utilLZWWrite(ctx, code);
-      _utilLZWFlushBits(ctx);
-      _utilLZWWriteBuf(ctx->stream + ctx->total_out - ctx->lzwn,
-                   ctx->buff, ctx->lzwn);
-      destLen = ctx->total_out ;
-
-      return 0;
-   }
-
-   #define MAX_TMP_BUFF_SIZE  ( 32 * 1024 )
-   UINT8 buff[ MAX_TMP_BUFF_SIZE ] ;
-
-   /******************************************************************************
-   **  lzw_decode
-   **  --------------------------------------------------------------------------
-   **  Decodes input LZW code stream into byte stream.
-   **
-   **  Arguments:
-   **      ctx  - LZW context;
-   **      fin  - input file;
-   **      fout - output file;
-   **
-   **  Return: error code
-   ******************************************************************************/
-   INT32 utilLZWDecode( _utilLZWContext *ctx,  const CHAR *source, UINT32 sourceLen,
-                   CHAR *destBuf, UINT32 &destLen )
-   {
-      unsigned      isize = 0;
-      LZW_CODE        code;
-      UINT8 c;
-      UINT32  destLength = 0 ;
-
-      ctx->stream = (CHAR *)source ;
-      ctx->streamRdPos = ctx->stream ;
-      ctx->streamLen = sourceLen ;
-      ctx->total_out = 0 ;
-
-      for(;;)
-      {
-         unsigned      strlen;
-         LZW_CODE        nc;
-
-         nc = _utilLZWRead(ctx);
-
-         // check input strean for EOF (lzwm == 0)
-         if (!ctx->lzwm)
-            break;
-
-         // unknown code
-         if (nc > ctx->max)
-         {
-            if (nc-1 == ctx->max)
-            {
-               code = NODE_NULL;
-            }
-            else
-            {
-               fprintf(stderr, "ERROR: wrong code %d, input %d\n", nc, isize);
-               break;
-            }
-         }
-
-         // get string for the new code from dictionary
-         strlen = _utilLZWGetStr(ctx, nc, buff, sizeof(buff));
-         // remember the first sybmol of this string
-         c = buff[sizeof(buff) - strlen];
-         memcpy( destBuf + destLength, buff + (sizeof(buff) - strlen ), strlen ) ;
-         destLength += strlen ;
-
-         code = nc;
-         isize++;
-      }
-
-      destLen = destLength ;
-
-      return 0;
-   }
-
-   void utilLZWSaveDict( const _utilLZWContext *ctx, CHAR *dictBuf, UINT32 &maxDictLen )
-   {
-      /*
-       * Please refer to structure _utilLZWContext. The 'dict', 'max' and 'codesize'
-       * members should be stored and used by compressor/decompressor later.
-       * Besides that, store dictionary node number at the beginning.
-       */
-      UINT32 dictFinalLen = 0 ;
-      UINT32 dictNodesLen = sizeof( utilLZWNode ) * ctx->dictNodeNum ;
-      SDB_ASSERT( ( dictNodesLen + sizeof( UINT32 ) * 3 ) <= maxDictLen,
-                  "Buffer for dictionary is too small" ) ;
-
-      *( UINT32 * )dictBuf = ctx->dictNodeNum ;
-      dictFinalLen = sizeof( UINT32 ) ;
-      ossMemcpy( dictBuf + dictFinalLen, ctx->dict, dictNodesLen ) ;
-      dictFinalLen += dictNodesLen ;
-      *( UINT32 * )(dictBuf + dictFinalLen) = ctx->max ;
-      dictFinalLen += sizeof( UINT32 ) ;
-      *( UINT32 * )(dictBuf + dictFinalLen) = ctx->codesize ;
-      dictFinalLen += sizeof( UINT32 ) ;
-
-      maxDictLen = dictFinalLen ;
-   }
-
-   INT32 utilLZWLoadDict( _utilLZWContext *ctx, const CHAR *dict, UINT32 &dictLen )
+   INT32 _utilLZWDictionary::init( UINT32 maxNodeNum )
    {
       INT32 rc = SDB_OK ;
-      UINT32 readPos = 0 ;
-      ctx->dictNodeNum = *( UINT32 *)dict ;
-      readPos += sizeof( UINT32 ) ;
-      ctx->dict = (utilLZWNode *)( dict + readPos ) ;
-      readPos += sizeof( utilLZWNode ) * ctx->dictNodeNum ;
-      ctx->max = *( UINT32 * )( dict + readPos ) ;
-      readPos += sizeof( UINT32 ) ;
-      ctx->codesize = *( UINT32 * )( dict + readPos ) ;
+
+      _maxNodeNum = maxNodeNum ;
+      _nodes = ( _utilLZWNode * )SDB_OSS_MALLOC(
+                                       sizeof( _utilLZWNode ) * maxNodeNum ) ;
+      PD_CHECK( _nodes, SDB_OOM, error, PDERROR,
+                "Failed to allocate memory for dictionary items, "
+                "requested size: %d", sizeof( _utilLZWNode ) * maxNodeNum );
+
+      for ( UINT32 i = 0; i < maxNodeNum; ++i )
+      {
+         _nodes[i]._prev = DICT_INVALID_NODE ;
+         _nodes[i]._first = DICT_INVALID_NODE ;
+         _nodes[i]._next = DICT_INVALID_NODE ;
+         /*
+          * 1 byte(8 bits) can represent 256 characters. Every search will start
+          * with them.
+          */
+         if ( i < 256 )
+         {
+            _nodes[i]._ch = i ;
+            _nodes[i]._len = 1 ;
+         }
+         else
+         {
+            _nodes[i]._len = 0 ;
+         }
+      }
+
+      _head._maxCode = 255 ;
+      _head._codeSize = 8 ;
 
    done:
       return rc ;
+   error:
+      goto done ;
    }
 
-   INT32 utilLZWBuildDict( const CHAR *src, UINT32 srcLen,
-                           CHAR *dict, UINT32 &maxDictLen )
+   void _utilLZWDictionary::reset()
+   {
+      _head._codeSize = 0 ;
+      _head._maxCode = 0 ;
+      if ( _nodes )
+      {
+         SDB_OSS_FREE( _nodes ) ;
+         _nodes = NULL ;
+      }
+   }
+
+   UINT32 _utilLZWDictionary::getDictSize()
+   {
+      return sizeof( _utilLZWDictHead ) +
+             sizeof( _utilLZWNode ) * ( _head._maxCode + 1 ) ;
+   }
+
+   INT32 _utilLZWDictionary::dumpToStream( CHAR *stream, UINT32 &length )
    {
       INT32 rc = SDB_OK ;
-      UINT32 dictNodeNum = 0 ;
-      UINT32 tmpBufLen = srcLen ;
-      _utilLZWContext * lzw_ctx = NULL ;
-      CHAR *tmpBuf = ( CHAR * )SDB_OSS_MALLOC( tmpBufLen ) ;
-      PD_CHECK( tmpBuf, SDB_OOM, error, PDERROR,
-                "Failed to allocate temporary memory to build dictionary, "
-                "requested size: %d", tmpBufLen ) ;
+      UINT32 pos = 0 ;
+      UINT32 nodeTotalSize = sizeof( _utilLZWNode ) * ( _head._maxCode + 1 ) ;
+      UINT32 totalSize = sizeof( _utilLZWDictHead ) + nodeTotalSize ;
 
-      dictNodeNum = ( maxDictLen - sizeof( UINT32 ) ) / ( sizeof( _utilLZWNode ) ) ;
-      SDB_ASSERT( dictNodeNum > 0,
-                  "max dictioinary length provided is invalid" ) ;
-      lzw_ctx = ( _utilLZWContext * )SDB_OSS_MALLOC( sizeof(_utilLZWContext) ) ;
-      PD_CHECK( lzw_ctx, SDB_OOM, error, PDERROR,
-                "Failed to allocate memory to build dictionary, "
-                "requested size: %d", sizeof(_utilLZWContext) ) ;
+      SDB_ASSERT( stream, "Buffer dor dictionary is invalid" ) ;
+      PD_CHECK( length >= totalSize, SDB_INVALIDARG, error, PDERROR,
+                "Length of dictionary buffer is invalid, requested size: %d, "
+                "actual size: %d", totalSize, length ) ;
 
-      utilLZWInit( lzw_ctx, dictNodeNum ) ;
-      lzw_ctx->dictNodeNum = dictNodeNum ;
-      rc = _lzwBuildDict( lzw_ctx, src, srcLen, tmpBuf, tmpBufLen ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to encode sample data to build "
-                   "dictionary, rc: %d", rc ) ;
-      utilLZWSaveDict( lzw_ctx, dict, maxDictLen ) ;
+      *(UINT32 *)stream = _head._codeSize ;
+      pos += sizeof( UINT32 ) ;
+      *(UINT32 *)(stream + pos) = _head._maxCode ;
+      pos += sizeof( UINT32 ) ;
+      ossMemcpy( stream + pos, (CHAR *)_nodes, nodeTotalSize ) ;
+      length = totalSize ;
 
    done:
-      if ( tmpBuf )
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _utilLZWDictionary::loadFromStream( const CHAR *stream, UINT32 len )
+   {
+      INT32 rc = SDB_OK ;
+      UINT32 readPos = 0 ;
+      UINT32 totalNodeSize = 0 ;
+
+      _head._codeSize = *( UINT32 * )stream ;
+      readPos += sizeof( UINT32 ) ;
+      _head._maxCode = *( UINT32 * )( stream + readPos ) ;
+      readPos += sizeof( UINT32 ) ;
+
+      totalNodeSize = sizeof( utilLZWNode ) * ( _head._maxCode + 1 ) ;
+
+      SDB_ASSERT( len == ( sizeof(UINT32) * 2 + totalNodeSize ),
+                  "Dictionary data is invalid" ) ;
+
+      _nodes = ( _utilLZWNode * )SDB_OSS_MALLOC( totalNodeSize ) ;
+      PD_CHECK( _nodes, SDB_OOM, error, PDERROR,
+                "Failed to allocate memory for compressor dictionary, "
+                "requested size: %d", totalNodeSize ) ;
+      ossMemcpy( _nodes, stream + sizeof( UINT32 ) * 2, totalNodeSize ) ;
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _utilLZWDictCreator::prepare( UINT32 maxSize )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_CHECK( maxSize >= MIN_DICT_SIZE, SDB_INVALIDARG, error, PDERROR,
+                "Dictionary size provided is too small: %d. The mininum requred"
+                " size is: %d", maxSize, MIN_DICT_SIZE ) ;
+
+      _dictionary = SDB_OSS_NEW utilLZWDictionary ;
+      PD_CHECK( _dictionary, SDB_OOM, error, PDERROR,
+                "Failed to allocate memory for creating dictionry, "
+                "requested size: %d", maxSize ) ;
+
+      _dictionary->init( ( maxSize - sizeof( _utilLZWDictHead ) )
+                         / sizeof( _utilLZWNode ) ) ;
+      _ctx.setDictionary( _dictionary ) ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   void _utilLZWDictCreator::reset()
+   {
+      if ( _dictionary )
       {
-         SDB_OSS_FREE( tmpBuf ) ;
+         SDB_OSS_DEL _dictionary ;
+         _dictionary = NULL ;
       }
-      if ( lzw_ctx )
+
+      _ctx.reset( FALSE ) ;
+   }
+
+   INT32 _utilLZWDictCreator::build( const CHAR *source, UINT32 sourceLen,
+                                     BOOLEAN &full )
+   {
+      INT32 rc = SDB_OK ;
+
+      UINT8 ch = 0 ;
+      UINT32 pos = 0 ;
+      UINT32 strLen = 0 ;
+      LZW_CODE code = DICT_INVALID_NODE ;
+      LZW_CODE nextCode = DICT_INVALID_NODE ;
+      LZW_CODE maxCode = _ctx.getDictionary()->getMaxNodeNum() - 1 ;
+
+      ch = source[0] ;
+      code = ch ;
+      pos++ ;
+      strLen++ ;
+      full = FALSE ;
+
+      for ( ; pos < sourceLen; ++pos )
       {
-         SDB_OSS_FREE( lzw_ctx ) ;
+         ch = source[pos] ;
+         nextCode = _dictionary->findStr( code, ch ) ;
+         if ( DICT_INVALID_NODE == nextCode )
+         {
+            nextCode = _dictionary->addStr( code, ch ) ;
+            if ( nextCode == maxCode )
+            {
+               /* Dictionary is full */
+               full = TRUE ;
+               goto done ;
+            }
+
+            code = ch ;
+            strLen = 1 ;
+         }
+         else
+         {
+            code = nextCode ;
+            strLen++ ;
+         }
       }
+
+      PD_LOG( PDERROR, "After build, the max code in dictionary is: %d. Max allowed: %d", _dictionary->getMaxCode(),
+              _dictionary->getMaxNodeNum()) ;
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _utilLZWDictCreator::save( CHAR *dictBuf, UINT32 &maxDictLen )
+   {
+      INT32 rc = SDB_OK ;
+
+      rc = _dictionary->dumpToStream( dictBuf, maxDictLen ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to get LZW dictionary, rc: %d", rc ) ;
+   done:
       return rc ;
    error:
       goto done ;

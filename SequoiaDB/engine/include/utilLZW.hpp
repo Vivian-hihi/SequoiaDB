@@ -1,5 +1,6 @@
 #ifndef UTIL_LZW__
 #define UTIL_LZW__
+
 #include "core.hpp"
 #include "oss.hpp"
 #include "ossMem.hpp"
@@ -8,415 +9,513 @@
 
 namespace engine
 {
-   #define NODE_NULL            (-1)
+   #define DICT_INVALID_NODE         (-1)
+
+   /*
+    * Internally we use a 32bit buffer to do continuous bits reading and,
+    * writting, so the maximum node code should be less than 2^24(16M).
+    */
+   #define MAX_NODE_CODE        ( 2 << 24 - 1 )
+
+   /*
+    * 0~255 represent 256 diffrent symbols(initial state of the dictionary),
+    * duplicated strings can be handle only when more are added to the
+    * dictionary.
+    */
+   #define MIN_NODE_NUM         ( 256 + 1 )
    #define MAX_STREAM_BUFF_SIZE 256
 
-   typedef UINT32 LZW_CODE;
-   /* Used to perform byte(bits) reading and writting of compressed stream data. */
+   typedef UINT32 LZW_CODE ;
+
+   /*
+    * Used to perform byte(bits) reading and writting of compressed stream data.
+    * As code of each dictionary node will be stored as part of the dictionary,
+    * we use at least bits to represent a node as possible in order to save
+    * space( both in memory and on disk). The number of bits may be not multiple
+    * of 8, but we store the stream byte by byte. So the bits of one code may
+    * be handled in more than one shot. This buffer is used to handle the
+    * combination of the code bits.
+    */
    struct _utilBitBuffer
    {
-      UINT32 buf;
-      UINT32 n;
+      UINT32 _buf ;
+      UINT32 _n ;     // Number of bits remain in the buffer.
    } ;
    typedef _utilBitBuffer utilBitBuffer ;
 
-   /* LZW node, represents a string */
+   /*
+    * Dictionary node in LZW. Each node represents a string, which linked by
+    * prev of each node. This node contains the last character of the string.
+    * All nodes which mark this node as 'prev' are linked by their 'next', and
+    * this parent node points to the first child using 'first'.
+    */
    struct _utilLZWNode
    {
-      LZW_CODE  prev;
-      LZW_CODE  first;
-      LZW_CODE  next;
-      UINT8     ch;
+      LZW_CODE  _prev;   // Code of the previous part of the string
+                         // (the last character excluded)
+      LZW_CODE  _first;  // first 'child'
+      LZW_CODE  _next;   // first 'brother'
+      UINT32    _len ;   // Length of the string.
+      UINT8     _ch;     // Last character of the string this node represents.
+      UINT8     _pad[3] ;
    } ;
    typedef _utilLZWNode utilLZWNode ;
 
-   /* LZW context, used to maintain information during the compression and decompression */
-   struct _utilLZWContext
+   struct _utilLZWDictHead
    {
-      utilLZWNode      *dict;             // Dictionary builded by provided data.
-      UINT32            max;              // maximal code in the dictionary
-      UINT32            codesize;         // number of bits in code
-      _utilBitBuffer    bb;
-      CHAR             *stream;           // pointer to the stream for reading or writting
-      UINT32            streamLen;        // Stream buffer length
-      CHAR             *streamRdPos;      // Position for reading in the stream buffer.
-      UINT32            total_out;        // total size write to stream(encode only)
-      UINT32            lzwn;             // buffer byte counter
-      UINT32            lzwm;             // buffer size (decoder only)
-      UINT8             buff[MAX_STREAM_BUFF_SIZE];        // stream buffer, adjust its size if you need
-      UINT32            dictNodeNum ;
+      UINT32 _codeSize;       /* Bit number to represent a code. */
+      UINT32 _maxCode;        /* Maximum code in the dictionary. */
    } ;
-   typedef _utilLZWContext utillzwContext ;
+   typedef _utilLZWDictHead utilLZWDictHead ;
 
-   OSS_INLINE void _utilLZWWriteBuf(void *stream, UINT8 *buf, UINT32 size)
+   class _utilLZWDictionary : public SDBObject
    {
-      ossMemcpy( stream, buf, size ) ;
-   }
-
-   OSS_INLINE void _utilLZWReadBuf(void *stream, UINT8 *buf, UINT32 size)
-   {
-      ossMemcpy( buf, stream, size ) ;
-   }
-
-   static OSS_INLINE void _utilLZWWriteByte(_utilLZWContext *ctx, const UINT8 b)
-   {
-      ctx->buff[ctx->lzwn++] = b ;
-      ctx->total_out++ ;
-
-      if (ctx->lzwn == sizeof(ctx->buff)) {
-         ctx->lzwn = 0;
-         _utilLZWWriteBuf( ctx->stream + ctx->total_out - sizeof(ctx->buff),
-                           ctx->buff, sizeof(ctx->buff));
-      }
-   }
-
-   static OSS_INLINE UINT8 _utilLZWReadByte(_utilLZWContext *ctx)
-   {
-      UINT32 streamRemainLen = 0 ;
-
-      if (ctx->lzwn == ctx->lzwm)
+   public:
+      _utilLZWDictionary()
       {
-         streamRemainLen = ctx->streamLen - ( ctx->streamRdPos - ctx->stream ) ;
-         if ( 0 == streamRemainLen )
+         _head._codeSize = 0 ;
+         _head._maxCode = 0 ;
+         _nodes = NULL ;
+      }
+
+      ~_utilLZWDictionary()
+      {
+         if ( _nodes )
          {
-            ctx->lzwm = 0 ;
-            ctx->lzwn = 0 ;
-         }
-         else
-         {
-            ctx->lzwm = streamRemainLen > sizeof(ctx->buff) ?
-                        sizeof(ctx->buff) : streamRemainLen ;
-            _utilLZWReadBuf( ctx->streamRdPos, ctx->buff, ctx->lzwm ) ;
-            ctx->streamRdPos += ctx->lzwm ;
-            ctx->lzwn = 0;
+            SDB_OSS_FREE( _nodes ) ;
          }
       }
 
-      return ctx->buff[ctx->lzwn++] ;
-   }
-
-   /******************************************************************************
-   **  _utilLZWWriteBits
-   **  --------------------------------------------------------------------------
-   **  Write bits into bit-buffer.
-   **  The number of bits should not exceed 24.
-   **
-   **  Arguments:
-   **      ctx     - pointer to LZW context;
-   **      bits    - bits to write;
-   **      nbits   - number of bits to write, 0-24;
-   **
-   **  Return: -
-   ******************************************************************************/
-   static OSS_INLINE void _utilLZWWriteBits(_utilLZWContext *ctx, UINT32 bits, UINT32 nbits)
-   {
-      // shift old bits to the left, add new to the right
-      ctx->bb.buf = (ctx->bb.buf << nbits) | (bits & ((1 << nbits)-1));
-
-      nbits += ctx->bb.n;
-
-      // flush whole bytes
-      while (nbits >= 8) {
-         UINT8 b;
-
-         nbits -= 8;
-         b = ctx->bb.buf >> nbits;
-
-         _utilLZWWriteByte(ctx, b);
-      }
-
-      ctx->bb.n = nbits;
-   }
-
-   /******************************************************************************
-   **  _utilLZWReadBits
-   **  --------------------------------------------------------------------------
-   **  Read bits from bit-buffer.
-   **  The number of bits should not exceed 24.
-   **
-   **  Arguments:
-   **      ctx     - pointer to LZW context;
-   **      nbits   - number of bits to read, 0-24;
-   **
-   **  Return: bits
-   ******************************************************************************/
-   static OSS_INLINE UINT32 _utilLZWReadBits(_utilLZWContext *ctx, UINT32 nbits)
-   {
-      UINT32 bits;
-
-      // read bytes
-      while (ctx->bb.n < nbits) {
-             UINT8 b = _utilLZWReadByte(ctx);
-
-             // shift old bits to the left, add new to the right
-             ctx->bb.buf = (ctx->bb.buf << 8) | b;
-             ctx->bb.n += 8;
-      }
-
-      ctx->bb.n -= nbits;
-      bits = (ctx->bb.buf >> ctx->bb.n) & ((1 << nbits)-1);
-
-      return bits;
-   }
-
-   /******************************************************************************
-   **  _utilLZWFlushBits
-   **  --------------------------------------------------------------------------
-   **  Flush bits into bit-buffer.
-   **  If there is not an integer number of bytes in bit-buffer - add zero bits
-   **  and write these bytes.
-   **
-   **  Arguments:
-   **      pbb     - pointer to bit-buffer context;
-   **
-   **  Return: -
-   ******************************************************************************/
-   static OSS_INLINE void _utilLZWFlushBits(_utilLZWContext *ctx)
-   {
-      if ( ctx->bb.n )
+      INT32 init( UINT32 maxNodeNum ) ;
+      void reset() ;
+      UINT32 getMaxNodeNum() { return _maxNodeNum ; }
+      UINT32 getCodeSize() { return _head._codeSize ; }
+      UINT32 getMaxCode() { return _head._maxCode ; }
+      BOOLEAN codeFull()
       {
-         _utilLZWWriteBits(ctx, 0, 8-ctx->bb.n);
+         return ( _head._maxCode == ( 1 << _head._codeSize ) ) ;
       }
-   }
 
+      void codeSizeInc() { _head._codeSize++; }
+      UINT32 getDictSize() ;
+      INT32 dumpToStream( CHAR *stream, UINT32 &length ) ;
+      INT32 loadFromStream( const CHAR *stream, UINT32 len ) ;
 
-   /******************************************************************************
-   **  lzw_init
-   **  --------------------------------------------------------------------------
-   **  Initializes LZW context.
-   **
-   **  Arguments:
-   **      ctx     - LZW context;
-   **      stream  - Pointer to Input/Output stream object;
-   **
-   **  RETURN: -
-   ******************************************************************************/
-   OSS_INLINE INT32 utilLZWInit( _utilLZWContext *ctx, UINT32 dictNodeNum )
+      OSS_INLINE LZW_CODE addStr( LZW_CODE preCode, UINT8 ch ) ;
+      OSS_INLINE LZW_CODE findStr( LZW_CODE preCode, UINT8 ch ) ;
+      OSS_INLINE UINT32 getStr( LZW_CODE code, UINT8 *buff, UINT32 bufSize ) ;
+
+   private:
+      _utilLZWDictHead _head ;
+      UINT32 _maxNodeNum ;
+      _utilLZWNode *_nodes ;
+   } ;
+   typedef _utilLZWDictionary utilLZWDictionary ;
+
+   /*
+    * For dictionary storage, both in memory and on disk. The above structure
+    * _utilLZWDictionary as well as all the nodes will be stored together
+    */
+   #define MIN_DICT_SIZE \
+      ( sizeof( _utilLZWDictionary ) + sizeof( _utilLZWNode) * MIN_NODE_NUM )
+
+   class _utilLZWContext : public SDBObject
    {
-      UINT32 rc = SDB_OK ;
-      UINT32 i;
-
-      ossMemset(ctx, 0, sizeof(*ctx));
-
-      ctx->dict = ( utilLZWNode * )SDB_OSS_MALLOC( sizeof( utilLZWNode ) * dictNodeNum ) ;
-      PD_CHECK( ctx->dict, SDB_OOM, error, PDERROR,
-                "Failed to allocate memory for dictionary, requested size: %d",
-                sizeof( utilLZWNode ) * dictNodeNum ) ;
-
-      for (i = 0; i < dictNodeNum; i++)
+      friend class _utilLZWDictCreator ;
+      friend class _utilLZW ;
+   public:
+      _utilLZWContext()
       {
-         ctx->dict[i].prev = NODE_NULL;
-         ctx->dict[i].first = NODE_NULL;
-         ctx->dict[i].next = NODE_NULL;
-         if ( i < 256 )
+         reset( FALSE ) ;
+      }
+
+      ~_utilLZWContext() {}
+
+      OSS_INLINE BOOLEAN isReady() { return _ready ; }
+
+      OSS_INLINE void setDictionary( _utilLZWDictionary *dict )
+      {
+         SDB_ASSERT( dict, "Dictionary is invalid" ) ;
+         _dictionary = dict ;
+         _ready = TRUE ;
+      }
+
+      _utilLZWDictionary* getDictionary() { return _dictionary ; }
+
+      OSS_INLINE void reset( BOOLEAN keepDict )
+      {
+         if ( !keepDict )
          {
-         ctx->dict[i].ch = i;
+            _dictionary = NULL ;
+            _ready = FALSE ;
+         }
+
+         _maxDictNodeNum = 0 ;
+         _stream = NULL ;
+         _streamLen = 0 ;
+         _streamPos = 0 ;
+         _bitBuf._buf = 0 ;
+         _bitBuf._n = 0 ;
+      }
+
+   private:
+      BOOLEAN _ready ;
+      utilLZWDictionary *_dictionary ;   /* dictionary pointer */
+      UINT32 _maxDictNodeNum ;
+      UINT8 *_stream ;
+      UINT32 _streamLen ;
+      UINT32 _streamPos ;
+      utilBitBuffer _bitBuf ;   /* bit buffer used during encoding and decoding */
+   } ;
+   typedef _utilLZWContext utilLZWContext ;
+
+   class _utilLZWDictCreator : public SDBObject
+   {
+   public:
+      _utilLZWDictCreator()
+         : _dictionary( NULL )
+      {
+         _ctx.reset( FALSE ) ;
+      }
+
+      ~_utilLZWDictCreator()
+      {
+         if ( _dictionary )
+         {
+            _dictionary->reset() ;
+            SDB_OSS_FREE( _dictionary ) ;
          }
       }
 
-      ctx->max = 255;
-      ctx->codesize = 8;
-   done:
-      return rc ;
-   error:
-      goto done ;
-   }
+      /* The following member functions are used to handle the dictionary. */
+      /* Prepare for dictionary building, setting the maximum allowed size. */
+      INT32 prepare( UINT32 maxSize ) ;
 
-   /******************************************************************************
-   **  _utilLZWFindStr
-   **  --------------------------------------------------------------------------
-   **  Searches a string in LZW dictionaly. It is used only in encoder.
-   **
-   **  Arguments:
-   **      ctx  - LZW context;
-   **      code - code for the string beginning (already in dictionary);
-   **      c    - last symbol;
-   **
-   **  RETURN: code representing the string or NODE_NULL.
-   ******************************************************************************/
-   static OSS_INLINE LZW_CODE _utilLZWFindStr(_utilLZWContext *ctx, LZW_CODE code, UINT8 ch )
+      void reset() ;
+
+      /*
+       * Use the source data to build the dictionary for LZW. It can be called
+       * multiple times, and the dictionary will grow until reaching the maximum
+       * size.
+       * This function should be called after buildDictPrepare.
+       */
+      INT32 build( const CHAR *src, UINT32 srcLen, BOOLEAN &full ) ;
+
+      /* Save the dictionary to the provided memory space. */
+      INT32 save( CHAR *dictBuf, UINT32 &maxDictLen ) ;
+
+      _utilLZWDictionary* getDictionary() { return _dictionary ; }
+
+   private:
+      _utilLZWDictionary *_dictionary ;
+      _utilLZWContext _ctx ;
+   } ;
+   typedef _utilLZWDictCreator utilLZWDictCreator ;
+
+   class _utilLZW : public SDBObject
    {
-      LZW_CODE nc;
+   public:
+      OSS_INLINE INT32 encode( _utilLZWContext *ctx,
+                               const CHAR *source, UINT32 sourceLen,
+                               CHAR *destBuf, UINT32 &destLen ) ;
 
-      for (nc = ctx->dict[code].first; nc != NODE_NULL; nc = ctx->dict[nc].next)
-      {
-         if ( ch < (UINT8)ctx->dict[nc].ch )
-         {
-            continue ;
-         }
-         else
-         {
-            if (code == ctx->dict[nc].prev && ch == ctx->dict[nc].ch)
-            {
-               return nc;
-            }
-            else
-            {
-               break ;
-            }
-         }
-      }
+      OSS_INLINE INT32 decode( _utilLZWContext *ctx,
+                               const CHAR *source, UINT32 sourceLen,
+                               CHAR *destBuf, UINT32 &destLen );
+   private:
+      OSS_INLINE LZW_CODE _readCode( _utilLZWContext *ctx ) ;
+      OSS_INLINE void _writeCode( _utilLZWContext *ctx, LZW_CODE code ) ;
+      //OSS_INLINE UINT32 _readBits( _utilLZWContext *ctx ) ;
+      OSS_INLINE void _writeBits( _utilLZWContext *ctx, UINT32 bits,
+                                  UINT32 codeSize ) ;
+      OSS_INLINE UINT8 _readByte( _utilLZWContext *ctx ) ;
+      OSS_INLINE void _writeByte( _utilLZWContext *ctx, UINT8 ch ) ;
+      //OSS_INLINE void _readBuf() ;
+      //OSS_INLINE void _writeBuf() ;
 
-      return NODE_NULL;
-   }
+      OSS_INLINE void _flushBits( _utilLZWContext *ctx ) ;
+   } ;
+   typedef _utilLZW utilLZW ;
 
-   /******************************************************************************
-   **  _utilLZWGetStr
-   **  --------------------------------------------------------------------------
-   **  Reads string from the LZW dictionaly. Because of particular dictionaty
-   **  structure the buffer is filled from the end so the offset from the
-   **  beginning of the buffer will be <buffer size> - <string size>.
-   **
-   **  Arguments:
-   **      ctx  - LZW context;
-   **      code - code of the string (already in dictionary);
-   **      buff - buffer for the string;
-   **      size - the buffer size;
-   **
-   **  Return: the number of bytes in the string
-   ******************************************************************************/
-   static OSS_INLINE UINT32 _utilLZWGetStr( _utilLZWContext *ctx, LZW_CODE code,
-                                           UINT8 buff[], UINT32 size )
-   {
-      UINT32 i = size;
-
-      while (code != NODE_NULL && i)
-      {
-         buff[--i] = ctx->dict[code].ch;
-         code = ctx->dict[code].prev;
-      }
-
-      return size - i;
-   }
-
-   /******************************************************************************
-   **  _utilLZWAddStr
-   **  --------------------------------------------------------------------------
-   **  Adds string to the LZW dictionaly.
-   **  It is important that codesize is increased after the code was sent into
-   **  the output stream.
-   **
-   **  Arguments:
-   **      ctx  - LZW context;
-   **      code - code for the string beginning (already in dictionary);
-   **      c    - last symbol;
-   **
-   **  RETURN: code representing the string or NODE_NULL if dictionary is full.
-   ******************************************************************************/
-   static OSS_INLINE LZW_CODE _utilLZWAddStr(_utilLZWContext *ctx, LZW_CODE code, UINT8 ch )
+   /* Add new string to the LZW dictionary. */
+   OSS_INLINE LZW_CODE _utilLZWDictionary::addStr( LZW_CODE preCode, UINT8 ch )
    {
       LZW_CODE currCode ;
       LZW_CODE nextCode ;
 
-      ctx->max++;
-
-      if (ctx->max >= ctx->dictNodeNum)
-           return NODE_NULL;
-
-      ctx->dict[ctx->max].prev = code;
-      ctx->dict[ctx->max].first = NODE_NULL;
-
-      if ( NODE_NULL == ctx->dict[code].first )
+      if ( _head._maxCode + 1 == _maxNodeNum )
       {
-         ctx->dict[code].first = ctx->max ;
+         /* Dictionary is full. */
+         return DICT_INVALID_NODE ;
+      }
+
+      _head._maxCode++ ;
+      /*
+       * The current code size is not enough to represent the code, so increase
+       * it by 1 bit.
+       */
+      if ( _head._maxCode == ( 1 << _head._codeSize ) )
+      {
+         _head._codeSize++ ;
+      }
+
+      _nodes[_head._maxCode]._prev = preCode ;
+      _nodes[_head._maxCode]._first = DICT_INVALID_NODE ;
+
+      if ( DICT_INVALID_NODE == _nodes[preCode]._first )
+      {
+         _nodes[preCode]._first = _head._maxCode ;
       }
       else
       {
-         currCode = nextCode = ctx->dict[code].first;
-         while ( ( NODE_NULL != nextCode ) && ( ch < ctx->dict[nextCode].ch ) )
+         currCode = nextCode = _nodes[preCode]._first ;
+         while ( ( DICT_INVALID_NODE != nextCode )
+                 && ( ch < _nodes[nextCode]._ch ) )
          {
             currCode = nextCode ;
-            nextCode = ctx->dict[currCode].next ;
+            nextCode = _nodes[currCode]._next ;
          }
 
-         if ( currCode == ctx->dict[code].first )
+         if ( currCode == _nodes[preCode]._first )
          {
-            /* currCode not moved, then add the new node to the head.*/
-            ctx->dict[ctx->max].next = ctx->dict[code].first ;
-            ctx->dict[code].first = ctx->max ;
+            /* currCode not moved, then add the new node to the head. */
+            _nodes[_head._maxCode]._next = _nodes[preCode]._first ;
+            _nodes[preCode]._first = _head._maxCode;
          }
          else
          {
             /* Add the new node at the middle or end of the chain. */
-            ctx->dict[ctx->max].next = ctx->dict[currCode].next ;
-            ctx->dict[currCode].next = ctx->max ;
+            _nodes[_head._maxCode]._next = _nodes[currCode]._next ;
+            _nodes[currCode]._next = _head._maxCode ;
          }
       }
 
-      ctx->dict[ctx->max].ch = ch ;
+      _nodes[_head._maxCode]._ch = ch ;
+      _nodes[_head._maxCode]._len = _nodes[preCode]._len + 1 ;
 
-      return ctx->max;
+      return _head._maxCode ;
    }
 
-   /******************************************************************************
-   **  _utilLZWWrite
-   **  --------------------------------------------------------------------------
-   **  Writes an output code into the stream.
-   **  This function is used only in encoder.
-   **
-   **  Arguments:
-   **      ctx  - LZW context;
-   **      code - code for the string;
-   **
-   **  RETURN: -
-   ******************************************************************************/
-   static OSS_INLINE void _utilLZWWrite(_utilLZWContext *ctx, LZW_CODE code)
+   OSS_INLINE LZW_CODE _utilLZWDictionary::findStr( LZW_CODE preCode, UINT8 ch )
    {
-      // increase the code size (number of bits) if needed
-      if (ctx->max == (1 << ctx->codesize))
-             ctx->codesize++;
+      LZW_CODE nextCode ;
 
-      _utilLZWWriteBits(ctx, code, ctx->codesize);
-   }
-
-   /******************************************************************************
-   **  _utilLZWRead
-   **  --------------------------------------------------------------------------
-   **  Reads a code from the input stream. Be careful about where you put its
-   **  call because this function changes the codesize.
-   **  This function is used only in decoder.
-   **
-   **  Arguments:
-   **      ctx  - LZW context;
-   **
-   **  RETURN: code
-   ******************************************************************************/
-   static OSS_INLINE LZW_CODE _utilLZWRead(_utilLZWContext *ctx)
-   {
-      // increase the code size (number of bits) if needed
-      if (ctx->max+1 == (1 << ctx->codesize))
-             ctx->codesize++;
-
-      return _utilLZWReadBits(ctx, ctx->codesize);
-   }
-
-   OSS_INLINE void utilLzwReset( _utilLZWContext *ctx, BOOLEAN keepDict )
-   {
-      if ( keepDict )
+      for ( nextCode = _nodes[preCode]._first; nextCode != DICT_INVALID_NODE;
+            nextCode = _nodes[nextCode]._next )
       {
-         memset( (CHAR *)&(ctx->bb), 0, sizeof(_utilLZWContext) -
-                 ((CHAR *)&(ctx->bb) - (CHAR*)ctx));
-      }
-      else
-      {
-         if ( ctx->dict )
+         if ( ch < _nodes[nextCode]._ch )
          {
-            SDB_OSS_FREE( ctx->dict ) ;
-            ctx->dict = NULL ;
+            continue ;
          }
-         memset( ctx, 0, sizeof( _utilLZWContext ) ) ;
+
+         if ( preCode == _nodes[nextCode]._prev && ch == _nodes[nextCode]._ch )
+         {
+            return nextCode ;
+         }
+         else
+         {
+            break ;
+         }
+      }
+
+      return DICT_INVALID_NODE ;
+   }
+
+   OSS_INLINE UINT32 _utilLZWDictionary::getStr( LZW_CODE code, UINT8 *buff,
+                                                 UINT32 bufSize )
+   {
+      UINT32 strLen = _nodes[code]._len ;
+      UINT32 i = strLen ;
+      SDB_ASSERT( bufSize >= strLen, "Invalid argument, bufSize too small" ) ;
+
+      while ( code != DICT_INVALID_NODE && i )
+      {
+         buff[--i] = _nodes[code]._ch ;
+         code = _nodes[code]._prev ;
+      }
+
+      return strLen ;
+   }
+
+   OSS_INLINE LZW_CODE _utilLZW::_readCode( _utilLZWContext *ctx )
+   {
+      UINT32 bits = 0 ;
+      UINT32 codeSize = ctx->getDictionary()->getCodeSize() ;
+
+      while ( ctx->_bitBuf._n < codeSize )
+      {
+         UINT8 ch = _readByte( ctx ) ;
+         ctx->_bitBuf._buf = ( ctx->_bitBuf._buf << 8 ) | ch ;
+         ctx->_bitBuf._n += 8 ;
+      }
+
+      ctx->_bitBuf._n -= codeSize ;
+      bits = ( ctx->_bitBuf._buf >> ctx->_bitBuf._n )
+             & (( 1 << codeSize ) - 1 ) ;
+
+      return bits ;
+   }
+
+   OSS_INLINE void _utilLZW::_writeCode( _utilLZWContext *ctx, LZW_CODE code )
+   {
+      _writeBits( ctx, code, ctx->getDictionary()->getCodeSize() ) ;
+   }
+
+/*
+   OSS_INLINE UINT32 _utilLZW::_readBits( _utilLZWContext *ctx )
+   {
+      UINT32 bits = 0 ;
+      UINT32 codeSize = ctx->getDictionary()->getCodeSize() ;
+
+      while ( ctx->_bitBuf._n < codeSize )
+      {
+         UINT8 ch = _readByte( ctx ) ;
+         ctx->_bitBuf._buf = ( ctx->_bitBuf._buf << 8 ) | ch ;
+         ctx->_bitBuf._n += 8 ;
+      }
+
+      ctx->_bitBuf._n -= codeSize ;
+      bits = ( ctx->_bitBuf._buf >> ctx->_bitBuf._n )
+             & (( 1 << codeSize ) - 1 ) ;
+
+      return bits ;
+   }
+*/
+
+   OSS_INLINE void _utilLZW::_writeBits( _utilLZWContext *ctx, UINT32 bits,
+                                         UINT32 bitNum)
+   {
+      ctx->_bitBuf._buf = ( ctx->_bitBuf._buf << bitNum )
+                          | ( bits & (( 1 << bitNum ) - 1 ) ) ;
+
+      bitNum += ctx->_bitBuf._n ;
+
+      while ( bitNum >= 8 )
+      {
+         UINT8 ch ;
+         bitNum -= 8 ;
+         ch = ctx->_bitBuf._buf >> bitNum ;
+         _writeByte( ctx, ch ) ;
+      }
+
+      ctx->_bitBuf._n = bitNum ;
+   }
+
+
+   OSS_INLINE UINT8 _utilLZW::_readByte( _utilLZWContext *ctx )
+   {
+      return ctx->_stream[ctx->_streamPos++] ;
+   }
+
+   OSS_INLINE void _utilLZW::_writeByte( _utilLZWContext *ctx, UINT8 ch )
+   {
+      ctx->_stream[ctx->_streamPos++] = ch ;
+   }
+
+/*
+   OSS_INLINE void _utilLZW::_readBuf( UINT8 *stream, UINT8 *buf, UINT32 size )
+   {
+      ossMemcpy( buf, stream, size ) ;
+   }
+*/
+
+   OSS_INLINE void _utilLZW::_flushBits( _utilLZWContext *ctx )
+   {
+      if ( ctx->_bitBuf._n )
+      {
+         _writeBits( ctx, 0, 8 - ctx->_bitBuf._n ) ;
       }
    }
 
-   INT32 utilLZWBuildDict( const CHAR *src, UINT32 srcLen,
-                       CHAR *dict, UINT32 &maxDictLen ) ;
-   void utilLZWSaveDict( const _utilLZWContext *ctx, CHAR *dictBuf, UINT32 &maxDictLen ) ;
-   INT32 utilLZWLoadDict( _utilLZWContext *ctx, const CHAR *dict, UINT32 &dictLen ) ;
-   int utilLZWEncode( _utilLZWContext *ctx, const CHAR *source, UINT32 sourceLen,
-                      CHAR *destBuf, UINT32 &destLen ) ;
-   int utilLZWDecode( _utilLZWContext *ctx,  const CHAR *source, UINT32 sourceLen,
-                      CHAR *destBuf, UINT32 &destLen );
+   OSS_INLINE INT32 _utilLZW::encode( _utilLZWContext *ctx,
+                                      const CHAR *source, UINT32 sourceLen,
+                                      CHAR *destBuf, UINT32 &destLen )
+   {
+      INT32 rc = SDB_OK ;
+      UINT8 ch = 0 ;
+      UINT32 pos = 0 ;
+      UINT32 strLen = 0 ;
+      LZW_CODE code = DICT_INVALID_NODE ;
+      LZW_CODE nextCode = DICT_INVALID_NODE ;
+      utilLZWDictionary *dictionary = ctx->getDictionary() ;
+      SDB_ASSERT( dictionary, "Compressor context is invalid" ) ;
 
+      ctx->_stream = (UINT8* )destBuf ;
+      ctx->_streamLen = destLen ;
+
+      ch = source[0] ;
+      code = ch ;
+      pos++ ;
+      strLen++ ;
+
+      for ( ; pos < sourceLen; ++pos )
+      {
+         ch = source[pos] ;
+         nextCode = dictionary->findStr( code, ch ) ;
+         /*
+          * If <code> + ch can not be found in the dictionary, write <code> to
+          * the output stream. Otherwise make <code> = <code> + ch.
+          */
+         if ( DICT_INVALID_NODE == nextCode )
+         {
+            if ( code > dictionary->getMaxCode() )
+            {
+               SDB_ASSERT( 1 == 0, "invalid code" ) ;
+            }
+            _writeCode( ctx, code ) ;
+            code = ch ;
+            strLen = 1 ;
+         }
+         else
+         {
+            code = nextCode ;
+            strLen++ ;
+         }
+      }
+
+      /* Write the last code */
+      if ( code > dictionary->getMaxCode() )
+      {
+         SDB_ASSERT( 1 == 0, "invalid code" ) ;
+      }
+      _writeCode( ctx, code ) ;
+      _flushBits( ctx ) ;
+      destLen = ctx->_streamPos;
+
+      return rc ;
+   }
+
+   OSS_INLINE INT32 _utilLZW::decode( _utilLZWContext *ctx,
+                                      const CHAR *source, UINT32 sourceLen,
+                                      CHAR *destBuf, UINT32 &destLen )
+   {
+      INT32 rc = SDB_OK ;
+      UINT32 strLen = 0 ;
+      LZW_CODE code ;
+      UINT32 totalOut = 0 ;
+      utilLZWDictionary *dictionary = ctx->getDictionary() ;
+      ctx->_stream = (UINT8 *)source ;
+      ctx->_streamLen = sourceLen ;
+      ctx->_streamPos = 0 ;
+
+      for( ; ctx->_streamPos < ctx->_streamLen; )
+      {
+         code = _readCode( ctx ) ;
+         if ( !(code <= dictionary->getMaxCode()) )
+         {
+            PD_LOG( PDERROR, "Invalid code found: code = %d, maxCode = %d", code, dictionary->getMaxCode() ) ;
+            SDB_ASSERT( code <= dictionary->getMaxCode(),
+                        "Invalid code in data" ) ;
+         }
+         strLen = dictionary->getStr( code, (UINT8*)(destBuf + totalOut),
+                                      destLen - totalOut) ;
+         totalOut += strLen ;
+      }
+
+      destLen = totalOut ;
+
+      return rc ;
+   }
 }
 
 #endif /* UTIL_LZW__ */
