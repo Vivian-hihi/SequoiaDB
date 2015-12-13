@@ -140,7 +140,6 @@ utilFiles = [
       "util/utilString.cpp",
       "util/utilBsonHashObsolete.cpp",
 	  "util/utilLZW.cpp",
-      "util/utilDictionary.cpp",
       "util/utilCompressorFactory.cpp",
       #"util/utilCompressorLZ4.cpp",
       #"util/utilCompressorZlib.cpp",
