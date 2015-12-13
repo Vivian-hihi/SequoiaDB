@@ -1,65 +1,148 @@
+#modify: Ting YU 2015-12-11
 import pysequoiadb
 from pysequoiadb import client
 from pysequoiadb import collectionspace
 from pysequoiadb import collection
 from pysequoiadb import cursor
 from pysequoiadb import const
-from pysequoiadb.error import (SDBTypeError,
-                               SDBBaseError,
-                               SDBEndOfCursor)
-if __name__ == "__main__":
+from pysequoiadb.error import (SDBTypeError, SDBBaseError, SDBEndOfCursor)
+import sys,getopt
+import traceback
 
+hostname=None
+service=None
+
+# parase the args
+def parse_option():
+
+   if len( sys.argv ) < 2:
+      usage()
+      sys.exit(1)
+   
+   try:  
+      opts, args = getopt.getopt( sys.argv[1:], 'hH:p:', ['help'] )
+   except getopt.GetoptError, err:
+      print str( err )
+      usage()
+      sys.exit(1)
+   
+   global hostname, service
+   for op, value in opts:
+      if op == '-H':
+         hostname = value
+      elif op == '-p':
+         service = int(value)
+      elif op in ('-h', '--help'):
+         usage()
+         sys.exit()
+      else:
+         print 'arguments error'
+         usage()
+         sys.exit(1)
+         
+def usage():
+   print 'Command options:'
+   print '-h,--help  help'
+   print '-H   arg   hostname'
+   print '-p   arg   coord_port'
+
+def createCL( cs_name, cl_name):
+   print '---begin to drop cs in ready'
    try:
-      # connect to local db, using default args value.
-      # host= '192.168.20.48', port= 11810, user= '', password= ''
-      db = client("192.168.20.48", 50000)
-      cs_name = "gymnasium"
-      cs = db.create_collection_space(cs_name)
-
-      cl_name = "sports"
-      cl = cs.create_collection(cl_name, {"ReplSize":0})
-
-      # insert single record
-      for i in range(0, 10):
-         basketball = {"Item":"basketball", "id":i}
-         cl.insert(basketball)
-
-      cr = cl.query_and_update({"$set":{"id":1000}}, {"id": 1}, return_new=True)
-      while True:
-         try:
-            record = cr.next()
-            pysequoiadb._print(record)
-            if (1000 == record['id']):
-               print 'find and update ok'
-         except SDBEndOfCursor :
-            break
-         except SDBBaseError :
-            raise
-
-      cr = cl.query_and_remove(condition={"id":1000})
-      while True:
-         try:
-            record = cr.next()
-            pysequoiadb._print(record)
-            if (1000 == record['id']):
-               print 'find and remove failed'
-
-         except SDBEndOfCursor :
-            break
-         except SDBBaseError :
-            raise
-
-      # release all
-      cs.drop_collection(cl_name)
-      del cl
-
       db.drop_collection_space(cs_name)
-      del cs
+   except SDBBaseError, e:
+      if ( -34 != e.code ):            
+         raise e
+                   
+   print '---begin to create cs cl'
+   cs = db.create_collection_space(cs_name)     
+   cl = cs.create_collection(cl_name, {"ReplSize":0})
+   
+   return cl
+   
+def insert( cl ):   
+   print '---begin to insert records'
+   for i in range( 0, 10 ):
+      rec = { "item":"item"+str(i), "_id":i }
+      cl.insert( rec )
+      
+def findAndUpdate( cl ):      
+   print '---begin to findAndUpdate'
+   cursor = cl.query_and_update( {"$set":{"item":"updated_item"}}, 
+                                 {"_id": 1}, return_new=True )
+                                 
+   # check return value                           
+   i = 0
+   while True:
+      try:
+         record = cursor.next()
+         if ( "updated_item" != record['item'] or 1 != record['_id'] ):
+            print 'return value, expect: {_id:1,item:"updated_item"}, atual: '
+            print record
+            raise Exception( 'CHECK_ERROR' ) 
+         i = i + 1                  
+      except SDBEndOfCursor :
+         break
+      except SDBBaseError :
+         raise e       
+   if( 1 != i ):
+      print 'return value, expect: 1 record, atual: %d record' % (i)
+      raise  Exception( 'CHECK_ERROR' )       
+   cursor.close()  
+   
+def findAndRemove( cl ):
+   print '---begin to findAndRemove'
+   cursor = cl.query_and_remove( condition={"item":"updated_item"} )
+   
+   # check return value
+   i = 0
+   while True:
+      try:
+         record = cursor.next()
+         if( "updated_item" != record['item'] or 1 != record['_id'] ):
+            print 'return value, expect: {_id:1,item:"updated_item"}, atual: '
+            print record
+            raise Exception( 'CHECK_ERROR' )
+         i = i + 1   
+      except SDBEndOfCursor :
+         break
+      except SDBBaseError :
+         raise e
+   if( 1 != i ):
+      print 'return value, expect: 1 record, atual: %d record' % (i)
+      raise  Exception( 'CHECK_ERROR' )       
+   cursor.close()
 
-      db.disconnect()
-      del db
-
-   except (SDBTypeError, SDBBaseError), e:
-      pysequoiadb._print(e)
+def clean( cs_name ):
+   print '---begin to drop cs in finally'
+   try:
+      db.drop_collection_space(cs_name)
+   except SDBBaseError, e:
+      if ( -34 != e.code ):            
+         raise e
+      
+if __name__ == "__main__":   
+   try:    
+      parse_option()
+      
+      cs_name = "pydriver_findAndModify_cs"
+      cl_name = "pydriver_findAndModify_cl"
+            
+      db = client( hostname, service )      
+      cl = createCL( cs_name, cl_name)
+      insert( cl )
+      findAndUpdate( cl )
+      findAndRemove( cl )
+   
    except SDBBaseError, e:
       pysequoiadb._print(e.detail)
+      raise e  
+   except ( Exception ), e:
+      pysequoiadb._print(e)
+      raise e
+            
+   finally:  
+      if( locals().has_key('db') ):                    
+         clean( cs_name )     
+         db.disconnect()
+         del db 
