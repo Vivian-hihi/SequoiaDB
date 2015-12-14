@@ -103,6 +103,9 @@ srcFiles = [
    curPath + "md5.c",
    curPath + "base64.cpp",
    curPath + "nonce.cpp",
+   curPath + "timestampParse.c",
+   curPath + "timestampTm.c",
+   curPath + "timestampValid.c",
 ]
 
 driver   = env.SharedLibrary("sdb",   [driverFiles, srcFiles])
