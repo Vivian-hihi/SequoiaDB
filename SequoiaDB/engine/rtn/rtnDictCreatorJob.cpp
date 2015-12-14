@@ -15,7 +15,7 @@ namespace engine
     * operation will stop, and wait for the next round to create.
     */
    #define RTN_DICT_CREATE_REC_NUM_THRESHOLD    100
-   #define RTN_DICT_CREATE_REC_DATA_SIZE        ( 10 << 20 )
+   #define RTN_DICT_CREATE_REC_DATA_SIZE        ( 64 << 20 )
    #define RTN_DICT_CREATE_MIN_REC_NUM    \
                               ( RTN_DICT_CREATE_REC_NUM_THRESHOLD * 80 / 100 )
    #define RTN_DICT_CREATE_MIN_DATA_SIZE  \
@@ -200,7 +200,7 @@ namespace engine
    }
 
    INT32 _rtnDictCreatorJob::_createDict( dmsStorageData *sd,
-                                         dmsMBContext *context )
+                                          dmsMBContext *context )
    {
       INT32 rc = SDB_OK ;
       dmsRecordID recordID ;
