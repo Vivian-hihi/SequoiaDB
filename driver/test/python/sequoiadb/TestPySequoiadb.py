@@ -32,7 +32,7 @@ methods =  (
             'test_query_sort',
             'test_aggregate',
             'test_cursor',
-            'test_replgroup'
+            'test_replgroup',
             'test_lob'
            )
 
@@ -318,10 +318,13 @@ class TestPySequoiadb(object):
          if 0 != count:
             print 'delete data failed!'
             return
-
       except SDBBaseError as e:
-         print e.code
-         print e.detail
+         if ( -253 == e.code ): 
+            print 'Transaction is disabled!'
+         else:
+            print e.code
+            print e.detail           
+            raise e       
       finally:
          cl.delete()
 
