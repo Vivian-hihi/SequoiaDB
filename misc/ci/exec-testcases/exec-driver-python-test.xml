@@ -93,7 +93,7 @@
 				<echo message="Command:${command}" />
 				<echo message="The testcase ${test.case.name}.py path on ${testcases.path}" />
 				<exec executable="python" dir="${testcases.path}" timeout="1200000" outputproperty="screen.output" resultproperty="ret.code">
-					<arg line=" ${test.case.fullname} -H ${test.host.NAME} -p ${coord.service.port} -d ${data.service.port}" />
+					<arg line=" ${test.case.fullname} -H ${test.host.NAME} -p ${coord.service.port}" />
 				</exec>
 				<echo message="${screen.output}" />
 				<echo message="The result = ${ret.code} after exec ${test.case.fullname} testcase." />
