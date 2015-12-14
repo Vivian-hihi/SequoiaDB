@@ -33,12 +33,6 @@
 		<exec executable="python" dir="${install.path}/sequoiadb/python">
 			<arg line=" setup.py install" />
 		</exec>
-		<copy todir="${python.testcase.path}/sequoiadb/bson">
-         <fileset dir="${install.path}/sequoiadb/python/bson"/>
-      </copy>
-      <copy todir="${python.testcase.path}/sequoiadb/pysequoiadb">
-         <fileset dir="${install.path}/sequoiadb/python/pysequoiadb"/>
-      </copy>
 	</target>
 
 	<target name="Test-Driver-Python" depends="Init-Python-Driver">
