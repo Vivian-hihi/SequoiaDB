@@ -50,7 +50,8 @@ _DataOperateIndex.showPage = function( $scope, $compile, pageNum ){
          'order': { 'active': true },
          'grid': {
             'tdModel': 'fixed',
-            'tdHeight': '19px'
+            'tdHeight': '19px',
+            'gridModel': 'fixed'
          }
       }
    } ;

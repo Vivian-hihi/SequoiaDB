@@ -128,7 +128,7 @@ _DataOperateRecord.buildJsonGrid = function( $scope, $compile )
          ]
       },
       'options': {
-         'grid': { 'tdModel': 'auto', 'titleWidth': [ '60px', '80px', 100 ] }
+         'grid': { 'tdModel': 'auto', 'gridModel': 'fixed', 'titleWidth': [ '60px', '80px', 100 ] }
       }
    } ;
    if( $scope.isNotFilter )
@@ -188,7 +188,7 @@ _DataOperateRecord.buildTreeGrid = function( $scope, $compile )
          ]
       },
       'options': {
-         'grid': { 'tdModel': 'dynamic' },
+         'grid': { 'tdModel': 'dynamic', 'gridModel': 'fixed' },
          'event': {
             'onResize': function( column, line, width, height ){
                if( column == 0 )
@@ -239,7 +239,7 @@ _DataOperateRecord.buildTableGrid = function( $scope, $compile, SdbFunction )
          ]
       },
       'options': {
-         'grid': { 'tdModel': 'fixed', 'tdHeight': '19px', 'titleWidth': [ '60px' ] }
+         'grid': { 'tdModel': 'fixed', 'gridModel': 'fixed', 'tdHeight': '19px', 'titleWidth': [ '60px' ] }
       }
    } ;
    if( $scope.isNotFilter )

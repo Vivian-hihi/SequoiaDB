@@ -18,7 +18,7 @@ _DataOperateLob.queryLobs = function( $scope, $compile, SdbFunction, lobs, start
       },
       'options': {
          'order': { 'active': true },
-         'grid': { 'tool': true, titleWidth: [ '60px', '250px', 40, 30, 30 ] } 
+         'grid': { 'tool': true, 'gridModel': 'fixed', titleWidth: [ '60px', '250px', 40, 30, 30 ] } 
       }
    } ;
    if( $scope.isNotFilter )
