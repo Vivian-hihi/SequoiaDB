@@ -107,6 +107,12 @@ void _PG_init (  ) ;
 /* transaction management */
 static void SdbFdwXactCallback( XactEvent event, void *arg ) ;
 
+static void SdbDestroyCLStatistics( SdbCLStatistics *clStat, bool freeObj );
+static INT32 SdbInitCLStatistics( SdbCLStatistics *clStat );
+static void SdbFiniCLStatisticsCache( SdbStatisticsCache *cache );
+static SdbStatisticsCache *SdbGetStatisticsCache();
+static const SdbCLStatistics * SdbGetCLStatFromCache( Oid foreignTableId ) ;
+
 #if PG_VERSION_NUM>90300
 static void SdbBeginForeignModify( ModifyTableState *mtstate,
       ResultRelInfo *rinfo, List *fdw_private, int subplan_index, int eflags ) ;
@@ -746,7 +752,27 @@ sdbbson *sdbGetRecordPointer( UINT64 record_addr )
 
 void sdbGetColumnKeyInfo( SdbExecState *fdw_state )
 {
-   int rc = SDB_OK ;
+   const SdbCLStatistics *clStat =
+                SdbGetCLStatFromCache( fdw_state->tableID );
+   if ( NULL == clStat )
+   {
+      ereport( WARNING,( errcode( ERRCODE_FDW_ERROR ),
+                       errmsg( "cannot get stat of cl from cache" ),
+                       errhint( "cs name: %s, cl name:%s",
+                                fdw_state->sdbcs, fdw_state->sdbcl ) ) ) ;
+      return ;
+   }
+
+   fdw_state->key_num = clStat->keyNum ;
+   memcpy( fdw_state->key_name, clStat->shardingKeys,
+           sizeof( clStat->shardingKeys ) ) ;
+   return ;
+}
+
+INT32 sdbGetShardingKeyInfo( const SdbInputOptions *options,
+                             SdbCLStatistics *clStat )
+{
+   INT32 rc = SDB_OK ;
    sdbConnectionHandle connection ;
    sdbCursorHandle cursor ;
    sdbbson condition ;
@@ -757,43 +783,43 @@ void sdbGetColumnKeyInfo( SdbExecState *fdw_state )
    sdbbson_type type ;
 
    StringInfo fullCollectionName = makeStringInfo(  ) ;
-   appendStringInfoString( fullCollectionName, fdw_state->sdbcs ) ;
+   appendStringInfoString( fullCollectionName, options->collectionspace ) ;
    appendStringInfoString( fullCollectionName, "." ) ;
-   appendStringInfoString( fullCollectionName, fdw_state->sdbcl ) ;
+   appendStringInfoString( fullCollectionName, options->collection ) ;
+
+   sdbbson_init( &condition ) ;
+   sdbbson_init( &selector ) ;
+   sdbbson_init( &ShardingKey ) ;
 
    /* first add the _id to the key_name */
-   fdw_state->key_num     = 1 ;
-   strncpy( fdw_state->key_name[0], SDB_COLUMNA_ID_NAME, 
+   clStat->keyNum = 1 ;
+   strncpy( clStat->shardingKeys[0], SDB_COLUMNA_ID_NAME, 
          SDB_MAX_KEY_COLUMN_LENGTH - 1 ) ;
 
    /* get the cs.cl's shardingkey */
-   connection = sdbGetConnectionHandle( (const char **)fdw_state->sdbServerList, 
-                                        fdw_state->sdbServerNum, 
-                                        fdw_state->usr, fdw_state->passwd, 
-                                        fdw_state->preferenceInstance,
-                                        fdw_state->transaction ) ;
+   connection = sdbGetConnectionHandle( ( const char ** )( options->serviceList ), 
+                                        options->serviceNum,
+                                        options->user,
+                                        options->password,
+                                        options->preference_instance,
+                                        options->transaction ) ;
 
-   sdbbson_init( &condition ) ;
    sdbbson_append_string( &condition, "Name", fullCollectionName->data ) ;
    rc = sdbbson_finish( &condition ) ;
    if ( SDB_OK != rc )
    {
-      sdbbson_destroy( &condition ) ;
       ereport( ERROR, ( errcode( ERRCODE_FDW_ERROR ), 
                errmsg( "sdbbson_finish failed:rc=%d", rc ) ) ) ;
-      return ;
+      goto error ;
    }
 
-   sdbbson_init( &selector ) ;
    sdbbson_append_string( &selector, SDB_SHARDINGKEY_NAME, "" ) ;
    rc = sdbbson_finish( &selector ) ;
    if ( SDB_OK != rc )
    {
-      sdbbson_destroy( &condition ) ;
-      sdbbson_destroy( &selector ) ;
       ereport( ERROR, ( errcode( ERRCODE_FDW_ERROR ), 
             errmsg( "sdbbson_finish failed:rc=%d", rc ) ) ) ;
-      return ;
+      goto error ;
    }
 
    rc = sdbGetSnapshot( connection, SDB_SNAP_CATALOG, &condition, &selector, 
@@ -807,20 +833,13 @@ void sdbGetColumnKeyInfo( SdbExecState *fdw_state )
          ereport( WARNING, ( errcode( ERRCODE_FDW_ERROR ), 
                   errmsg( "sdbGetSnapshot failed:rc=%d", rc ) ) ) ;
       }
-
-      sdbbson_destroy( &condition ) ;
-      sdbbson_destroy( &selector ) ;
-      return ;
+      goto error ;
    }
 
-   sdbbson_init( &ShardingKey ) ;
    rc = sdbNext( cursor, &ShardingKey ) ;
    if( rc )
    {
-      sdbbson_destroy( &condition ) ;
-      sdbbson_destroy( &selector ) ;
-      sdbbson_destroy( &ShardingKey ) ;
-      return ;
+      goto error ;
    }
 
    type = sdbbson_find( &ite, &ShardingKey, SDB_SHARDINGKEY_NAME ) ;
@@ -834,18 +853,21 @@ void sdbGetColumnKeyInfo( SdbExecState *fdw_state )
       {
          const CHAR *sdbbsonKey = sdbbson_iterator_key( &ite ) ;
 
-         strncpy( fdw_state->key_name[fdw_state->key_num], 
+         strncpy( clStat->shardingKeys[clStat->keyNum], 
                sdbbsonKey, SDB_MAX_KEY_COLUMN_LENGTH - 1 ) ;
-         fdw_state->key_num++ ;
+         clStat->keyNum++ ;
       }
       sdbbson_destroy( &tmpValue ) ;
    }
 
+   sdbCloseCursor( cursor ) ;
+done:
    sdbbson_destroy( &condition ) ;
    sdbbson_destroy( &selector ) ;
    sdbbson_destroy( &ShardingKey ) ;
-
-   sdbCloseCursor( cursor ) ;
+   return rc ;
+error:
+   goto done ;
 }
 
 bool sdbIsShardingKeyChanged( SdbExecState *fdw_state, sdbbson *oldBson, 
@@ -2290,9 +2312,8 @@ void sdbFreeScanState( SdbExecState *executionState, bool deleteShared )
 
    if( SDB_INVALID_HANDLE != executionState->hCursor )
       sdbReleaseCursor( executionState->hCursor ) ;
-   if( SDB_INVALID_HANDLE != executionState->hCollection )
-      sdbReleaseCollection( executionState->hCollection ) ;
 
+   executionState->hCollection = SDB_INVALID_HANDLE ;
    if ( deleteShared )
    {
       if ( 0 != executionState->bson_record_addr )
@@ -2304,6 +2325,7 @@ void sdbFreeScanState( SdbExecState *executionState, bool deleteShared )
       }
    }
    /* do not free connection since it's in pool */
+   // do not free cl handle since it's in cache
 done :
    return ;
 }
@@ -2507,8 +2529,24 @@ static void sdbFillTupleSlot( const sdbbson *sdbbsonDocument,
    }
 }
 
-/* sdbRowsCount get count of records in the given collection */
 static INT32 sdbRowsCount( Oid foreignTableId, SINT64 *count )
+{
+   INT32 rc = SDB_OK ;
+   const SdbCLStatistics *clStat =
+               SdbGetCLStatFromCache( foreignTableId );
+   if ( NULL != clStat )
+   {
+      *count = clStat->recordCount ;
+   }
+   else
+   {
+      rc = SDB_SYS ;
+   }
+   return rc ;
+}
+
+/* sdbRowsCount get count of records in the given collection */
+static INT32 sdbRowsCountFromSdb( Oid foreignTableId, SINT64 *count )
 {
    INT32 rc                        = SDB_OK ;
    sdbCollectionHandle hCollection = SDB_INVALID_HANDLE ;
@@ -2592,7 +2630,7 @@ static void SdbGetForeignRelSize( PlannerInfo *root,
 
    fdw_state->bson_record_addr = sdbCreateBsonRecordAddr(  ) ;
 
-   sdbRowsCount( foreignTableId, &fdw_state->row_count ) ;
+   rc = sdbRowsCount( foreignTableId, &fdw_state->row_count ) ;
    if ( rc )
    {
       ereport( DEBUG1, ( errmsg( "Unable to retrieve the row count for collection" ),
@@ -2804,7 +2842,6 @@ static void SdbExplainForeignScan( ForeignScanState *scanState,
 static void SdbBeginForeignScan( ForeignScanState *scanState,
                                   INT32 executorFlags )
 {
-   INT32 rc                  = SDB_OK ;
    Oid foreignTableId        = InvalidOid ;
    ForeignScan *foreignScan  = NULL ;
    List *foreignPrivateList  = NIL ;
@@ -2812,6 +2849,8 @@ static void SdbBeginForeignScan( ForeignScanState *scanState,
    HTAB *columnMappingHash   = NULL ;
    List *fdw_state_list      = NIL ;
    SdbExecState *fdw_state   = NULL ;
+   SdbStatisticsCache *cache = NULL ;
+   const SdbCLStatistics *clStat = NULL ;
 
    /* do not begin real scan if it's explain only */
    if( executorFlags & EXEC_FLAG_EXPLAIN_ONLY )
@@ -2820,6 +2859,8 @@ static void SdbBeginForeignScan( ForeignScanState *scanState,
    }
 
    foreignTableId = RelationGetRelid( scanState->ss.ss_currentRelation ) ;
+   cache = SdbGetStatisticsCache() ;
+   clStat = SdbGetCLStatFromCache( foreignTableId ) ;
 
    /* deserialize fdw*/
    foreignScan        = ( ForeignScan * )scanState->ss.ps.plan ;
@@ -2843,25 +2884,7 @@ static void SdbBeginForeignScan( ForeignScanState *scanState,
                                         fdw_state->preferenceInstance,
                                         fdw_state->transaction ) ;
 
-   fdw_state->hCollection = sdbGetSdbCollection( fdw_state->hConnection, 
-         fdw_state->sdbcs, fdw_state->sdbcl ) ;
-
-   // do not add flag here!!!!  when nljoin both table will execute query
-   // this will block nljoin
-   rc = sdbQuery1( fdw_state->hCollection, &fdw_state->queryDocument, NULL, 
-                   NULL, NULL, 0, -1, 0, 
-                   &fdw_state->hCursor ) ;
-   if ( rc )
-   {
-      sdbPrintBson(&fdw_state->queryDocument, WARNING, "SdbBeginForeignScan") ;
-      ereport( ERROR, ( errcode ( ERRCODE_FDW_ERROR ),
-            errmsg( "query collection failed:cs=%s,cl=%s,rc=%d", 
-               fdw_state->sdbcs, fdw_state->sdbcl, rc ),
-            errhint( "Make sure collection exists on remote SequoiaDB database" ) ) ) ;
-
-      sdbbson_dispose( &fdw_state->queryDocument ) ;
-      return ;
-   }
+   fdw_state->hCollection = clStat->clHandle ;
 
    scanState->fdw_state = ( void* )fdw_state ;
 }
@@ -2880,6 +2903,24 @@ static TupleTableSlot * SdbIterateForeignScan( ForeignScanState *scanState )
    bool *columnNulls            = tupleSlot->tts_isnull ;
    INT32 columnCount            = tupleDescriptor->natts ;
    const CHAR *sdbbsonDocumentKey  = NULL ;
+
+   if ( SDB_INVALID_HANDLE == executionState->hCursor )
+   {
+      rc = sdbQuery1( executionState->hCollection, &executionState->queryDocument, NULL, 
+                      NULL, NULL, 0, -1, 0x00200, 
+                      &executionState->hCursor ) ;
+      if ( rc )
+      {
+         sdbPrintBson(&executionState->queryDocument, WARNING, "SdbIterateForeignScan") ;
+         ereport( ERROR, ( errcode ( ERRCODE_FDW_ERROR ),
+         errmsg( "query collection failed:cs=%s,cl=%s,rc=%d", 
+                  executionState->sdbcs, executionState->sdbcl, rc ),
+         errhint( "Make sure collection exists on remote SequoiaDB database" ) ) ) ;
+
+         sdbbson_dispose( &executionState->queryDocument ) ;
+         goto error ;
+      }
+   }
 
    recordObj = sdbGetRecordPointer( executionState->bson_record_addr ) ;
    sdbbson_destroy( recordObj ) ;
@@ -3678,13 +3719,192 @@ static void SdbFdwXactCallback( XactEvent event, void *arg )
    }
 }
 
+static const SdbCLStatistics *SdbGetCLStatFromCache( Oid foreignTableId )
+{
+   INT32 rc = SDB_OK ;
+   SdbStatisticsCache *cache = NULL ;
+   SdbCLStatistics *statInCache = NULL ;
+   bool handleFound = false ;
+   cache = SdbGetStatisticsCache() ;
+
+   statInCache = ( SdbCLStatistics * )
+                 hash_search( cache->ht,
+                 &foreignTableId,
+                 HASH_ENTER,
+                 &handleFound ) ;
+   if ( NULL == statInCache )
+   {
+      goto error ;
+   }
+
+   elog( DEBUG1, "foreign table:%d, handle found:%d", foreignTableId, handleFound ) ;
+
+   if ( !handleFound )
+   {
+      rc = SdbInitCLStatistics( statInCache ) ;
+      if ( SDB_OK != rc )
+      {
+         SdbCLStatistics *toRemove = ( SdbCLStatistics * )
+                                      hash_search( cache->ht,
+                                      &foreignTableId,
+                                      HASH_REMOVE,
+                                      &handleFound ) ;
+         if ( NULL != toRemove )
+         {
+            SdbDestroyCLStatistics( toRemove,  true ) ;
+         }
+         goto error ;
+      }
+   }
+done:
+   return statInCache ;
+error:
+   statInCache = NULL ;
+   ereport( WARNING,( errcode( ERRCODE_FDW_ERROR ),
+                       errmsg( "cannot get stat of cl from cache" ),
+                       errhint( "foreign table id:%d", foreignTableId ) ) ) ;
+   goto done ; 
+}
+
+static SdbStatisticsCache *SdbGetStatisticsCache()
+{
+   static SdbStatisticsCache cache ;
+   return &cache ;
+}
+
+static void SdbInitCLStatisticsCache( SdbStatisticsCache *cache )
+{
+   HASHCTL hashInfo ;
+   const long HASH_TB_SIZE = 2048 ;
+   memset( &hashInfo, 0, sizeof( hashInfo ) ) ;
+   hashInfo.keysize = sizeof( Oid ) ;
+   hashInfo.entrysize = sizeof( SdbCLStatistics ) ;
+   hashInfo.hash = oid_hash ;
+
+   if ( NULL == cache || NULL != cache->ht )
+   {
+      ereport( WARNING, ( errcode( ERRCODE_FDW_ERROR ),
+               errmsg( "the statistics cache is not valid" ) ) ) ;
+      goto error ;
+   }
+
+   /// do not use HASH_CONTEXT
+   cache->ht = hash_create( "CL Statistics Hash",
+                            HASH_TB_SIZE,
+                            &hashInfo,
+                            ( HASH_ELEM | HASH_FUNCTION ) ) ;
+   if ( NULL == cache->ht )
+   {
+      ereport( WARNING,( errcode( ERRCODE_FDW_ERROR ),
+                       errmsg( "failed to init statistics cache" ) ) );
+      goto error ;
+   }
+done:
+   return ;
+error:
+   SdbFiniCLStatisticsCache( cache ) ;
+   goto done ;
+}
+
+static void SdbFiniCLStatisticsCache( SdbStatisticsCache *cache )
+{
+   if ( NULL != cache )
+   {
+      if ( NULL != cache->ht )
+      {
+         HASH_SEQ_STATUS status ;
+         hash_seq_init( &status, cache->ht ) ;
+
+         while ( true )
+         {
+            SdbCLStatistics *clStat = ( SdbCLStatistics * )
+                                      hash_seq_search( &status ) ;
+            if ( NULL == clStat )
+            {
+               break ;
+            }
+
+            SdbDestroyCLStatistics( clStat, true ) ;
+         } 
+         hash_destroy( cache->ht ) ;
+         cache->ht = NULL ;
+      }
+   }
+   return ;
+}
+
+static INT32 SdbInitCLStatistics( SdbCLStatistics *clStat )
+{
+   INT32 rc = SDB_OK ;
+   SdbInputOptions options ;
+   sdbConnectionHandle conn = SDB_INVALID_HANDLE ;
+   Oid oid = clStat->tableID ;
+
+   memset( clStat, 0, sizeof( SdbCLStatistics ) ) ;
+
+   sdbGetOptions( oid, &options ) ;
+   clStat->tableID = oid ;
+   rc = sdbRowsCountFromSdb( oid, &(clStat->recordCount) ) ;
+   if ( SDB_OK != rc )
+   {
+      goto error ;
+   }
+
+   rc = sdbGetShardingKeyInfo( &options, clStat ) ;
+   if ( SDB_OK != rc )
+   {
+      goto error ;
+   }
+
+   conn = sdbGetConnectionHandle( (const char **)options.serviceList, 
+                                   options.serviceNum, options.user, 
+                                   options.password, 
+                                   options.preference_instance,
+                                   options.transaction ) ;
+   if ( SDB_INVALID_HANDLE == conn )
+   {
+      rc = SDB_NETWORK ;
+      goto error ;
+   }
+
+   clStat->clHandle = sdbGetSdbCollection( conn,
+                                           options.collectionspace, 
+                                           options.collection ) ;
+   if ( SDB_INVALID_HANDLE == clStat->clHandle )
+   {
+      rc = SDB_SYS ;
+      goto error ;
+   }
+done:
+   return rc ;
+error:
+   SdbDestroyCLStatistics( clStat, false ) ;
+   goto done ;
+}
+
+static void SdbDestroyCLStatistics( SdbCLStatistics *clStat, bool freeObj )
+{
+   if ( NULL != clStat )
+   {
+      sdbReleaseCollection( clStat->clHandle ) ;
+      memset( clStat, 0, sizeof( SdbCLStatistics ) ) ;
+      if ( freeObj )
+      {
+         free( clStat ) ;
+      }
+   }
+   return ;
+}
+
 void _PG_init (  )
 {
    sdbInitConnectionPool (  ) ;
+   SdbInitCLStatisticsCache( SdbGetStatisticsCache() ) ;
    RegisterXactCallback( SdbFdwXactCallback, NULL ) ;
 }
 
 void _PG_fini (  )
 {
+   SdbFiniCLStatisticsCache( SdbGetStatisticsCache() ) ;
    sdbUninitConnectionPool (  ) ;
 }

@@ -190,6 +190,24 @@ struct SdbConnectionPool
 } ;
 typedef struct SdbConnectionPool  SdbConnectionPool ;
 
+struct SdbCLStatistics
+{
+   Oid tableID ;
+   char shardingKeys[SDB_MAX_KEY_COLUMN_COUNT][SDB_MAX_KEY_COLUMN_LENGTH] ;
+   int keyNum ;
+   SINT64 recordCount ;
+
+   /// clHandle should not exist here actually.
+   sdbCollectionHandle clHandle ;
+} ;
+typedef struct SdbCLStatistics SdbCLStatistics ;
+
+struct SdbStatisticsCache
+{
+   struct HTAB *ht ;
+} ;
+typedef struct SdbStatisticsCache SdbStatisticsCache ;
+
 INT32 sdbRecurExprTree( Node *node, SdbExprTreeState *expr_state, 
                         sdbbson *condition, ExprContext *exprContext ) ;
 
