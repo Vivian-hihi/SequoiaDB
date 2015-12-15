@@ -113,7 +113,7 @@ namespace engine
 
       /// has data
       if ( SDB_OK == rc &&
-           pReply->header.messageLength > sizeof( MsgOpReply ) )
+           pReply->header.messageLength > (INT32)sizeof( MsgOpReply ) )
       {
          if ( !ownned )
          {
