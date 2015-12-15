@@ -78,7 +78,7 @@
     	<echo message="Compile the connector of postgresql..." />
     	<property environment="env" />
     	<echo file="${PG_DIR}/pgsql/build.sh" message="bin/initdb -D pg_data&#10;bin/postgres -D pg_data &gt;&gt; ${WORKSPACE}/release/logfile.${BUILD_NUMBER} 2&gt;&#38;1 &#38;" />
-    	<replace file="${CODE_DIR}/driver/postgresql/Makefile" token="DEBUG?=-ggdb" value="DEBUG?=-ggdb -DSDB_USE_OWN_POSTGRES" />
+    	<!--replace file="${CODE_DIR}/driver/postgresql/Makefile" token="DEBUG?=-ggdb" value="DEBUG?=-ggdb -DSDB_USE_OWN_POSTGRES" /-->
 		<exec executable="sh" dir="${PG_DIR}/pgsql" failonerror="true">
 			<arg line=" ./build.sh" />
 			<env key="LD_LIBRARY_PATH" value="${PG_DIR}/pgsql/lib:${env.LD_LIBRARY_PATH}" />
