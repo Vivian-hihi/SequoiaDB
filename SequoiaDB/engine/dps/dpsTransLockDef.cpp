@@ -123,7 +123,7 @@ namespace engine
 
    BOOLEAN dpsTransLockId::isValid() const
    {
-      if ( ~0 == _logicCSID )
+      if ( (UINT32)~0 == _logicCSID )
       {
          return FALSE ;
       }
