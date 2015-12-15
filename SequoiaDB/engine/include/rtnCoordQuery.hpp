@@ -133,7 +133,8 @@ namespace engine
       INT32 _generateNewHint( const CoordCataInfoPtr &cataInfo,
                               const BSONObj &selector,
                               const BSONObj &hint, BSONObj &newHint,
-                              BOOLEAN &isChanged, pmdEDUCB *cb ) ;
+                              BOOLEAN &isChanged, BOOLEAN &isEmpty,
+                              pmdEDUCB *cb ) ;
 
       INT32 _generateShardUpdator( const CoordCataInfoPtr &cataInfo,
                                    const BSONObj &selector,

@@ -483,7 +483,8 @@ namespace engine
    INT32 rtnCoordQuery::_generateNewHint( const CoordCataInfoPtr &cataInfo,
                                           const BSONObj &selector,
                                           const BSONObj &hint, BSONObj &newHint,
-                                          BOOLEAN &isChanged, pmdEDUCB *cb )
+                                          BOOLEAN &isChanged, BOOLEAN &isEmpty,
+                                          pmdEDUCB *cb )
    {
       INT32 rc = SDB_OK ;
       BSONObj updator ;
@@ -509,9 +510,9 @@ namespace engine
          goto error ;
       }
 
+      isEmpty = newUpdator.isEmpty() ? TRUE : FALSE ;
       if ( isChanged )
       {
-         BOOLEAN isEmpty = newUpdator.isEmpty() ? TRUE : FALSE ;
          BSONObjBuilder builder( hint.objsize() ) ;
          BSONObjIterator itr( hint ) ;
          while( itr.more() )
@@ -681,8 +682,10 @@ namespace engine
       MsgOpQuery *pQueryMsg   = ( MsgOpQuery* )pMsg ;
       SDB_RTNCB *pRtncb       = pmdGetKRCB()->getRTNCB() ;
       CHAR *pNewMsg           = NULL ;
+      INT32 newMsgSize        = 0 ;
       const CHAR* pLastMsg    = NULL ;
-      CHAR *pFindAndModifyMsg = NULL ;
+      CHAR *pModifyMsg        = NULL ;
+      INT32 modifyMsgSize     = 0 ;
       BOOLEAN needReset       = FALSE ;
 
       BOOLEAN isUpdate        = FALSE ;
@@ -699,6 +702,7 @@ namespace engine
       BSONObj objSelector ;
       BSONObj objOrderby ;
       BSONObj objHint ;
+      BSONObj objNewHint ;
 
       rc = msgExtractQuery( (CHAR*)pMsg, &flags, &pCollectionName,
                             &numToSkip, &numToReturn, &pQuery,
@@ -758,7 +762,7 @@ namespace engine
             {
                static BSONObj emptyObj = BSONObj() ;
                rc = _buildNewMsg( (const CHAR*)pMsg, &emptyObj, NULL,
-                                  pNewMsg ) ;
+                                  pNewMsg, newMsgSize ) ;
                if ( SDB_OK != rc )
                {
                   PD_LOG( PDERROR, "Failed to build new msg: %d", rc ) ;
@@ -810,32 +814,40 @@ namespace engine
          pQueryMsg = ( MsgOpQuery* )pLastMsg ;
          inMsg._pMsg = ( MsgHeader* )pLastMsg ;
 
-         SAFE_OSS_FREE( pFindAndModifyMsg ) ;
-
          if ( isUpdate && cataInfo->isSharded() )
          {
             //kick shardingKey
             BOOLEAN isChanged = FALSE ;
-            BSONObj newHint ;
+            BSONObj tmpNewHint = objHint ;
+            BOOLEAN isEmpty = FALSE ;
 
             rc = _generateNewHint( cataInfo, objQuery, objHint,
-                                   newHint, isChanged, cb ) ;
+                                   tmpNewHint, isChanged, isEmpty, cb ) ;
             if ( SDB_OK != rc )
             {
                PD_LOG( PDERROR, "generate new hint failed:rc=%d", rc ) ;
                goto error ;
             }
-            if ( isChanged )
+            else if ( isChanged )
             {
-               rc = _buildNewMsg( (const CHAR*)inMsg._pMsg, NULL,
-                                  &newHint, pFindAndModifyMsg ) ;
-               if ( SDB_OK != rc )
+               if ( !pModifyMsg || !tmpNewHint.equal( objNewHint ) )
                {
-                  PD_LOG( PDERROR, "Failed to build new msg: %d", rc ) ;
-                  goto error ;
+                  rc = _buildNewMsg( (const CHAR*)inMsg._pMsg, NULL,
+                                     &tmpNewHint, pModifyMsg, modifyMsgSize ) ;
+                  if ( SDB_OK != rc )
+                  {
+                     PD_LOG( PDERROR, "Failed to build new msg: %d", rc ) ;
+                     goto error ;
+                  }
+                  pQueryMsg   = (MsgOpQuery *)pModifyMsg ;
+                  inMsg._pMsg = (MsgHeader*)pModifyMsg ;
+
+                  if ( isEmpty )
+                  {
+                     pQueryMsg->flags &= ~FLG_QUERY_MODIFY ;
+                  }
+                  objNewHint = tmpNewHint ;
                }
-               pQueryMsg   = (MsgOpQuery *)pFindAndModifyMsg ;
-               inMsg._pMsg = (MsgHeader*)pFindAndModifyMsg ;
             }
          }
          pQueryMsg->version = cataInfo->getVersion() ;
@@ -884,7 +896,7 @@ namespace engine
 
    done:
       SAFE_OSS_FREE( pNewMsg ) ;
-      SAFE_OSS_FREE( pFindAndModifyMsg ) ;
+      SAFE_OSS_FREE( pModifyMsg ) ;
       if ( pSucGrpLst )
       {
          *pSucGrpLst = result._sucGroupLst ;
@@ -909,7 +921,8 @@ namespace engine
    INT32 rtnCoordQuery::_buildNewMsg( const CHAR *msg,
                                       const bson::BSONObj *newSelector,
                                       const BSONObj *newHint,
-                                      CHAR *&newMsg )
+                                      CHAR *&newMsg,
+                                      INT32 &buffSize )
    {
       INT32 rc = SDB_OK ;
       INT32 flag = 0;
@@ -924,7 +937,6 @@ namespace engine
       BSONObj selector ;
       BSONObj orderBy ;
       BSONObj hint ;
-      INT32 bufSize = 0 ;
       MsgOpQuery *pSrc = (MsgOpQuery *)msg;
 
       SDB_ASSERT( newSelector || newHint, "Selector and hint are both NULL" ) ;
@@ -958,7 +970,7 @@ namespace engine
          hint = *newHint ;
       }
 
-      rc = msgBuildQueryMsg( &newMsg, &bufSize,
+      rc = msgBuildQueryMsg( &newMsg, &buffSize,
                              pCollectionName,
                              flag, pSrc->header.requestID,
                              numToSkip, numToReturn,
@@ -973,6 +985,7 @@ namespace engine
       return rc ;
    error:
       SAFE_OSS_FREE( newMsg ) ;
+      buffSize = 0 ;
       goto done ;
    }
 
