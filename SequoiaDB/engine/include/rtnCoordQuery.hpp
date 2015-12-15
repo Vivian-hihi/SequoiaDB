@@ -113,7 +113,8 @@ namespace engine
    private:
 
       INT32 _buildNewMsg( const CHAR *msg,
-                          const BSONObj &newSelector,
+                          const BSONObj *newSelector,
+                          const BSONObj *newHint,
                           CHAR *&newMsg ) ;
 
       BSONObj _buildNewQuery( const BSONObj &query,
@@ -127,7 +128,7 @@ namespace engine
                        rtnSendOptions &options,
                        rtnProcessResult &result ) ;
 
-      BOOLEAN _isUpdate( const BSONObj &hint ) ;
+      BOOLEAN _isUpdate( const BSONObj &hint, INT32 flags ) ;
 
       INT32 _generateNewHint( const CoordCataInfoPtr &cataInfo,
                               const BSONObj &selector,
@@ -138,13 +139,6 @@ namespace engine
                                    const BSONObj &selector,
                                    const BSONObj &updator, BSONObj &newUpdator,
                                    BOOLEAN &isChanged, pmdEDUCB *cb ) ;
-
-      INT32 _saveMSG( MsgHeader *msg, MsgOpQuery *query ) ;
-
-      INT32 _restoreMSG( MsgHeader **msg, MsgOpQuery **query ) ;
-
-      INT32 _buildNewHintMsg( const CHAR *msg, const BSONObj &newHint,
-                              CHAR *&newMsg ) ;
 
    protected:
       virtual INT32              _prepareCLOp( CoordCataInfoPtr &cataInfo,
@@ -182,8 +176,7 @@ namespace engine
                                                 rtnProcessResult &result ) ;
 
    private:
-      MsgHeader                  *_savedMSG ;
-      MsgOpQuery                 *_savedQuery ;
+      /// can't define members, because it's single instance
 
    };
 
