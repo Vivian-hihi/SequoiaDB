@@ -74,11 +74,13 @@
 		<exec executable="make" dir="${CODE_DIR}/driver/postgresql" failonerror="false">
 			<arg line=" all" />
 		</exec>
-
-		<ant antfile="${WORKSPACE}/sequoiadb/driver/java/build.xml" >
-		   <property name="JDK.VERSION.5" value="${choise.jdk5}" />
-		   <property name="base.dir" value="${WORKSPACE}/sequoiadb/driver/java" />
-		</ant>
+      
+      <echo message="Build java driver..." />
+      <echo message="exec scons ${compile.arg.line}" />
+      <exec executable="scons" dir="${WORKSPACE}/sequoiadb/driver/java" failonerror="true">
+			<arg line="${compile.arg.line}" />
+		</exec>
+		
 		<ant antfile="${WORKSPACE}/sequoiadb/driver/hadoop/hive/build.xml">
 			<property name="java.driver.jar" value="${CODE_DIR}/driver/java/${java.driver.jar.name}"/>
 			<property name="javac.base.dir" value="${WORKSPACE}/sequoiadb/"/>
