@@ -15,13 +15,13 @@
     </taskdef>
 
 	<target name="ready" depends="">
-		<property file="${CODE_DIR}/misc/ci/ci.build.properties" />
-
   		<delete file="${CODE_DIR}/misc/ci/ci.build.properties" failonerror="false" />
   		<delete dir="${RELEASE_DIR}/" failonerror="false" />
 		<echo message="copy the ${CODE_DIR}/misc/ci/ci.build.properties.${CPU.version} file to be named ${CODE_DIR}/misc/ci/ci.build.properties" />
 		<copy file="${CODE_DIR}/misc/ci/ci-properies-files/ci.build.properties.${CPU.version}" tofile="${CODE_DIR}/misc/ci/ci.build.properties" />
 		<echo message="copy ${CODE_DIR}/misc/ci/ci.build.properties.${CPU.version} to ${CODE_DIR}/misc/ci/ci.build.properties is OK" />
+  	   
+  	   <property file="${CODE_DIR}/misc/ci/ci.build.properties" />
   	</target>
 
 	<target name="compile-src" depends="ready">
