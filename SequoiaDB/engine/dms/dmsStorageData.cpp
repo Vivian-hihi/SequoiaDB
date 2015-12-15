@@ -2187,6 +2187,7 @@ namespace engine
       ossValuePtr extentPtr         = 0 ;
       ossValuePtr deletedRecordPtr  = 0 ;
       ossValuePtr insertedDataPtr   = 0 ;
+      BSONObj insertObj ;
       utilCompressor *compressor    = NULL ;
       BOOLEAN dataModified          = FALSE ;
       utilCompressorContext compressorContext = NULL ;
@@ -2381,22 +2382,19 @@ namespace engine
                             "Failed to prepare compressor, rc: %d", rc ) ;
             }
             DMS_RECORD_EXTRACTDATA( compressor, compressorContext,
-                                        deletedRecordPtr, insertedDataPtr ) ;
-            BSONObj insertedObj ( (CHAR*)insertedDataPtr ) ;
+                                    deletedRecordPtr, insertedDataPtr ) ;
+            insertObj = BSONObj( ( const CHAR* )insertedDataPtr ) ;
             DMS_MON_OP_COUNT_INC( pMonAppCB, MON_DATA_READ, 1 ) ;
             DMS_MON_OP_COUNT_INC( pMonAppCB, MON_READ, 1 ) ;
-            rc = _pIdxSU->indexesInsert( context,
-                                         ((dmsExtent*)extentPtr)->_logicID,
-                                         insertedObj, foundDeletedID, cb ) ;
          }
          else
          {
-            rc = _pIdxSU->indexesInsert( context,
-                                         ((dmsExtent*)extentPtr)->_logicID,
-                                         (BSONObj&)record, foundDeletedID, cb ) ;
-            insertedDataPtr = (ossValuePtr)DMS_RECORD_GETDATA( deletedRecordPtr ) ;
+            insertedDataPtr = (ossValuePtr)record.objdata() ;
+            insertObj = record ;
          }
-
+         rc = _pIdxSU->indexesInsert( context,
+                                      ((dmsExtent*)extentPtr)->_logicID,
+                                      insertObj, foundDeletedID, cb ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to insert to index, rc: %d", rc ) ;
       }
 
@@ -2416,17 +2414,9 @@ namespace engine
       {
          dmsExtentID extLID = ((dmsExtent*)extentPtr)->_logicID ;
          info.clear() ;
-         if ( dataModified )
-         {
-            /// here we create record again. the old one may not contain oid.
-            rc = dpsInsert2Record( fullName, BSONObj((CHAR*)insertedDataPtr),
-                                   transID, preTransLsn, relatedLsn, logRecord ) ;
-         }
-         else
-         {
-            rc = dpsInsert2Record( fullName, record,
-                                   transID, preTransLsn, relatedLsn, logRecord ) ;
-         }
+
+         rc = dpsInsert2Record( fullName, insertObj, transID,
+                                preTransLsn, relatedLsn, logRecord ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to build insert record, rc: %d",
                       rc ) ;
 
