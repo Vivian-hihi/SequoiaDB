@@ -182,16 +182,13 @@ namespace engine
       }
 
       _head._maxCode = newCode ;
-      if ( 0 == newCode % 2 )
-      {
-         ossIsPowerOf2( newCode, &square ) ;
-      }
-      else
-      {
-         ossIsPowerOf2( newCode + 1, &square ) ;
-      }
 
-      _head._codeSize = square + 1 ;
+      do
+      {
+         square++ ;
+      } while ( ( newCode >> square ) > 0 ) ;
+
+      _head._codeSize = square ;
       SDB_OSS_FREE( _nodes ) ;
       _nodes = newNodes ;
 
