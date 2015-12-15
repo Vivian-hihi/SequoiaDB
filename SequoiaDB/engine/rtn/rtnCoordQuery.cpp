@@ -467,8 +467,9 @@ namespace engine
 
          modifier = modifierEle.Obj() ;
 
-         BSONElement updatorEle = modifier.getField( FIELD_NAME_OP_UPDATE ) ;
-         if ( Object != updatorEle.type() )
+         BSONElement updatorEle = modifier.getField( FIELD_NAME_OP ) ;
+         if ( String != updatorEle.type() ||
+              0 != ossStrcmp( updatorEle.valuestr(), FIELD_OP_VALUE_UPDATE ) )
          {
             return FALSE ;
          }
@@ -510,20 +511,28 @@ namespace engine
 
       if ( isChanged )
       {
+         BOOLEAN isEmpty = newUpdator.isEmpty() ? TRUE : FALSE ;
          BSONObjBuilder builder( hint.objsize() ) ;
          BSONObjIterator itr( hint ) ;
          while( itr.more() )
          {
             BSONElement e = itr.next() ;
-            if( FIELD_NAME_MODIFY == e.fieldName() &&
+            if( 0 == ossStrcmp( FIELD_NAME_MODIFY, e.fieldName() ) &&
                 Object == e.type() )
             {
+               if ( isEmpty )
+               {
+                  /// new updator is empty, the whole $Modify will be removed
+                  continue ;
+               }
+
                BSONObjBuilder subBuild( builder.subobjStart( FIELD_NAME_MODIFY ) ) ;
                BSONObjIterator subItr( e.embeddedObject() ) ;
                while( subItr.more() )
                {
                   BSONElement subE = subItr.next() ;
-                  if ( FIELD_NAME_OP_UPDATE == subE.fieldName() )
+                  if ( 0 == ossStrcmp( FIELD_NAME_OP_UPDATE,
+                                       subE.fieldName() ) )
                   {
                      subBuild.append( FIELD_NAME_OP_UPDATE, newUpdator ) ;
                   }
