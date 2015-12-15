@@ -115,7 +115,8 @@ namespace engine
       INT32 _buildNewMsg( const CHAR *msg,
                           const BSONObj *newSelector,
                           const BSONObj *newHint,
-                          CHAR *&newMsg ) ;
+                          CHAR *&newMsg,
+                          INT32 &buffSize ) ;
 
       BSONObj _buildNewQuery( const BSONObj &query,
                               const CoordSubCLlist &subCLList ) ;
