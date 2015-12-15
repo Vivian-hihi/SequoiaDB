@@ -1013,7 +1013,8 @@ namespace engine
          {
          UINT32 __hash = 0 ;
          DMS_LOB_GET_HASH_FROM_BLK( blk, __hash ) ;
-         SDB_ASSERT( __hash == record._hash, "must be same" ) ;
+         UINT32 testBucketNo = _getBucket( __hash ) ;
+         SDB_ASSERT( testBucketNo == bucketNumber, "must be same" ) ;
          }
 #endif
          if ( clID == blk->_clLogicalID &&
