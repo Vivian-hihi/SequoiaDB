@@ -32,7 +32,6 @@ namespace engine
    INT32 _utilCompressorLZW::prepare( utilCompressorContext &ctx )
    {
       INT32 rc = SDB_OK ;
-      BOOLEAN newCtx = FALSE ;
       _utilLZWContext *context = NULL ;
 
       _vecCtxLatch.get() ;

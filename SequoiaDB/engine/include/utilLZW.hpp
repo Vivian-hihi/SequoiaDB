@@ -9,21 +9,22 @@
 
 namespace engine
 {
-   #define DICT_INVALID_NODE         (-1)
-
+   #define DICT_INVALID_NODE          (-1)
+   #define DICT_NODE_VALID( code )  ( DICT_INVALID_NODE != code )
+   #define DICT_BASE_NODE_CODE        256
    /*
     * Internally we use a 32bit buffer to do continuous bits reading and,
     * writting, so the maximum node code should be less than 2^24(16M).
     */
-   #define MAX_NODE_CODE        ( 2 << 24 - 1 )
+   #define DICT_MAX_NODE_CODE        ( (2 << 24) - 1 )
 
    /*
     * 0~255 represent 256 diffrent symbols(initial state of the dictionary),
     * duplicated strings can be handle only when more are added to the
     * dictionary.
     */
-   #define MIN_NODE_NUM         ( 256 + 1 )
-   #define MAX_STREAM_BUFF_SIZE 256
+   #define MIN_NODE_NUM              ( 256 + 1 )
+   #define MAX_STREAM_BUFF_SIZE      256
 
    typedef UINT32 LZW_CODE ;
 
@@ -58,6 +59,14 @@ namespace engine
       UINT32    _len ;   // Length of the string.
       UINT8     _ch;     // Last character of the string this node represents.
       UINT8     _pad[3] ;
+
+      void reset()
+      {
+         _prev = DICT_INVALID_NODE ;
+         _first = DICT_INVALID_NODE ;
+         _next = DICT_INVALID_NODE ;
+         _len = 0 ;
+      }
    } ;
    typedef _utilLZWNode utilLZWNode ;
 
@@ -86,29 +95,57 @@ namespace engine
          }
       }
 
-      INT32 init( UINT32 maxNodeNum ) ;
+      INT32 init_old( UINT32 maxNodeNum ) ;
+      INT32 init( UINT32 maxSize ) ;
       void reset() ;
+      INT32 shrink( UINT32 maxSize ) ;
       UINT32 getMaxNodeNum() { return _maxNodeNum ; }
       UINT32 getCodeSize() { return _head._codeSize ; }
       UINT32 getMaxCode() { return _head._maxCode ; }
-      BOOLEAN codeFull()
-      {
-         return ( _head._maxCode == ( 1 << _head._codeSize ) ) ;
-      }
 
-      void codeSizeInc() { _head._codeSize++; }
       UINT32 getDictSize() ;
       INT32 dumpToStream( CHAR *stream, UINT32 &length ) ;
       INT32 loadFromStream( const CHAR *stream, UINT32 len ) ;
 
       OSS_INLINE LZW_CODE addStr( LZW_CODE preCode, UINT8 ch ) ;
       OSS_INLINE LZW_CODE findStr( LZW_CODE preCode, UINT8 ch ) ;
+      OSS_INLINE LZW_CODE findStrExt( LZW_CODE preCode, UINT8 ch ) ;
       OSS_INLINE UINT32 getStr( LZW_CODE code, UINT8 *buff, UINT32 bufSize ) ;
+
+   private:
+      typedef std::pair<UINT32, UINT32> NODE_REF_ITEM ;
+      typedef std::vector<NODE_REF_ITEM> NODE_REF_NUM_VEC ;
+      typedef NODE_REF_NUM_VEC::iterator NODE_REF_NUM_VEC_ITR ;
+
+      OSS_INLINE void _removeStr( LZW_CODE code ) ;
+
+      /*
+       * Move the string from the current position to a new one. It will gain
+       * a new code.
+       */
+      OSS_INLINE void _moveStr( LZW_CODE code, LZW_CODE newCode ) ;
+
+      OSS_INLINE void _incNodeRef( LZW_CODE code ) ;
+
+      OSS_INLINE void _initNodes(  _utilLZWNode *nodes, UINT32 nodeNum ) ;
+
+      OSS_INLINE static BOOLEAN _cmpByNodeNum( NODE_REF_ITEM const &firstNode,
+                                               NODE_REF_ITEM const &secondNode )
+      {
+         return firstNode.first < secondNode.first ;
+      }
+
+      OSS_INLINE static BOOLEAN _cmpByRefNum( NODE_REF_ITEM const &firstNode,
+                                              NODE_REF_ITEM const &secondNode )
+      {
+         return firstNode.second < secondNode.second ;
+      }
 
    private:
       _utilLZWDictHead _head ;
       UINT32 _maxNodeNum ;
       _utilLZWNode *_nodes ;
+      std::vector<NODE_REF_ITEM> _vecNodeRefNum ;
    } ;
    typedef _utilLZWDictionary utilLZWDictionary ;
 
@@ -173,7 +210,8 @@ namespace engine
    {
    public:
       _utilLZWDictCreator()
-         : _dictionary( NULL )
+         : _maxDictSize( 0 ),
+           _dictionary( NULL )
       {
          _ctx.reset( FALSE ) ;
       }
@@ -182,8 +220,7 @@ namespace engine
       {
          if ( _dictionary )
          {
-            _dictionary->reset() ;
-            SDB_OSS_FREE( _dictionary ) ;
+            SDB_OSS_DEL _dictionary ;
          }
       }
 
@@ -207,6 +244,7 @@ namespace engine
       _utilLZWDictionary* getDictionary() { return _dictionary ; }
 
    private:
+      UINT32 _maxDictSize ;
       _utilLZWDictionary *_dictionary ;
       _utilLZWContext _ctx ;
    } ;
@@ -292,6 +330,11 @@ namespace engine
 
       _nodes[_head._maxCode]._ch = ch ;
       _nodes[_head._maxCode]._len = _nodes[preCode]._len + 1 ;
+      /*
+       * Push the new node into the reference information vector, setting its
+       * reference number to 1.
+       */
+      _vecNodeRefNum.push_back(std::make_pair(_head._maxCode, 1)) ;
 
       return _head._maxCode ;
    }
@@ -321,6 +364,22 @@ namespace engine
       return DICT_INVALID_NODE ;
    }
 
+   OSS_INLINE LZW_CODE _utilLZWDictionary::findStrExt( LZW_CODE preCode,
+                                                       UINT8 ch )
+   {
+      LZW_CODE code = findStr( preCode, ch ) ;
+      if ( DICT_NODE_VALID( code ) )
+      {
+         /*
+          * Once a code is found, increase its reference number. The first 256
+          * nodes will be skipped.
+          */
+         _incNodeRef( code ) ;
+      }
+
+      return code ;
+   }
+
    OSS_INLINE UINT32 _utilLZWDictionary::getStr( LZW_CODE code, UINT8 *buff,
                                                  UINT32 bufSize )
    {
@@ -335,6 +394,122 @@ namespace engine
       }
 
       return strLen ;
+   }
+
+   OSS_INLINE void _utilLZWDictionary::_removeStr( LZW_CODE code )
+   {
+      LZW_CODE preCode = DICT_INVALID_NODE ;
+      LZW_CODE currCode = DICT_INVALID_NODE ;
+
+      SDB_ASSERT( code >= DICT_BASE_NODE_CODE,
+                  "Invalid string code to remove" ) ;
+      SDB_ASSERT( DICT_INVALID_NODE == _nodes[code]._first,
+                  "The string to remove is prefix string of others" ) ;
+
+      preCode = _nodes[code]._prev ;
+      if ( DICT_INVALID_NODE != preCode )
+      {
+         if ( code == _nodes[preCode]._first )
+         {
+            _nodes[preCode]._first = _nodes[code]._next ;
+         }
+         else
+         {
+            currCode = _nodes[preCode]._first ;
+            while ( _nodes[currCode]._next != code )
+            {
+               currCode = _nodes[currCode]._next ;
+            }
+            _nodes[currCode]._next = _nodes[code]._next ;
+         }
+      }
+
+      _nodes[code].reset() ;
+   }
+
+   OSS_INLINE void _utilLZWDictionary::_moveStr( LZW_CODE code,
+                                                 LZW_CODE newCode )
+   {
+      LZW_CODE preCode = DICT_INVALID_NODE ;
+      LZW_CODE currCode = DICT_INVALID_NODE ;
+
+      SDB_ASSERT( code >= DICT_BASE_NODE_CODE,
+                  "Invalid string code to move" ) ;
+      SDB_ASSERT( DICT_INVALID_NODE == _nodes[newCode]._prev
+                  && DICT_INVALID_NODE == _nodes[newCode]._first
+                  && DICT_INVALID_NODE == _nodes[newCode]._next,
+                  "Target position is in use" ) ;
+
+      ossMemcpy( &_nodes[newCode], &_nodes[code], sizeof( _utilLZWNode ) ) ;
+      preCode = _nodes[code]._prev ;
+
+      /* Change the nodes who 'point' to this node. */
+      if ( DICT_INVALID_NODE != preCode )
+      {
+         if ( code == _nodes[preCode]._first )
+         {
+            _nodes[preCode]._first = newCode ;
+         }
+         else
+         {
+            currCode = _nodes[preCode]._first ;
+            while ( _nodes[currCode]._next != code )
+            {
+               currCode = _nodes[currCode]._next ;
+            }
+
+            _nodes[currCode]._next = newCode ;
+         }
+      }
+
+      /* Change the nodes which this node 'points to'. */
+      currCode = _nodes[code]._first;
+      if ( DICT_INVALID_NODE != currCode )
+      {
+         _nodes[currCode]._prev = newCode ;
+         while ( DICT_INVALID_NODE != (currCode = _nodes[currCode]._next ) )
+         {
+            _nodes[currCode]._prev = newCode ;
+         }
+      }
+
+      _nodes[code].reset() ;
+   }
+
+   OSS_INLINE void _utilLZWDictionary::_incNodeRef( LZW_CODE code )
+   {
+      SDB_ASSERT( code >= DICT_BASE_NODE_CODE && code <= _head._maxCode,
+                  "Invalid code" ) ;
+
+      /*
+       * References of the first 256(0~255) items are not stored, as they are
+       * always needed in the dictionary.
+       */
+      _vecNodeRefNum[code - DICT_BASE_NODE_CODE].second++ ;
+   }
+
+   OSS_INLINE void _utilLZWDictionary::_initNodes( _utilLZWNode *nodes,
+                                                   UINT32 nodeNum )
+   {
+      for ( UINT32 i = 0; i < nodeNum; ++i )
+      {
+         nodes[i]._prev = DICT_INVALID_NODE ;
+         nodes[i]._first = DICT_INVALID_NODE ;
+         nodes[i]._next = DICT_INVALID_NODE ;
+         /*
+          * 1 byte(8 bits) can represent 256 characters. Every search will start
+          * with them.
+          */
+         if ( i < 256 )
+         {
+            nodes[i]._ch = i ;
+            nodes[i]._len = 1 ;
+         }
+         else
+         {
+            nodes[i]._len = 0 ;
+         }
+      }
    }
 
    OSS_INLINE LZW_CODE _utilLZW::_readCode( _utilLZWContext *ctx )
@@ -360,27 +535,6 @@ namespace engine
    {
       _writeBits( ctx, code, ctx->getDictionary()->getCodeSize() ) ;
    }
-
-/*
-   OSS_INLINE UINT32 _utilLZW::_readBits( _utilLZWContext *ctx )
-   {
-      UINT32 bits = 0 ;
-      UINT32 codeSize = ctx->getDictionary()->getCodeSize() ;
-
-      while ( ctx->_bitBuf._n < codeSize )
-      {
-         UINT8 ch = _readByte( ctx ) ;
-         ctx->_bitBuf._buf = ( ctx->_bitBuf._buf << 8 ) | ch ;
-         ctx->_bitBuf._n += 8 ;
-      }
-
-      ctx->_bitBuf._n -= codeSize ;
-      bits = ( ctx->_bitBuf._buf >> ctx->_bitBuf._n )
-             & (( 1 << codeSize ) - 1 ) ;
-
-      return bits ;
-   }
-*/
 
    OSS_INLINE void _utilLZW::_writeBits( _utilLZWContext *ctx, UINT32 bits,
                                          UINT32 bitNum)
@@ -411,13 +565,6 @@ namespace engine
    {
       ctx->_stream[ctx->_streamPos++] = ch ;
    }
-
-/*
-   OSS_INLINE void _utilLZW::_readBuf( UINT8 *stream, UINT8 *buf, UINT32 size )
-   {
-      ossMemcpy( buf, stream, size ) ;
-   }
-*/
 
    OSS_INLINE void _utilLZW::_flushBits( _utilLZWContext *ctx )
    {
@@ -501,12 +648,8 @@ namespace engine
       for( ; ctx->_streamPos < ctx->_streamLen; )
       {
          code = _readCode( ctx ) ;
-         if ( !(code <= dictionary->getMaxCode()) )
-         {
-            PD_LOG( PDERROR, "Invalid code found: code = %d, maxCode = %d", code, dictionary->getMaxCode() ) ;
-            SDB_ASSERT( code <= dictionary->getMaxCode(),
-                        "Invalid code in data" ) ;
-         }
+         SDB_ASSERT( code <= dictionary->getMaxCode(),
+                     "Invalid code in data" ) ;
          strLen = dictionary->getStr( code, (UINT8*)(destBuf + totalOut),
                                       destLen - totalOut) ;
          totalOut += strLen ;
