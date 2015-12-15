@@ -1022,8 +1022,8 @@ namespace engine
       transInfo._transID      = _curTransID ;
       transInfo._curTransLsn  = _curTransLSN ;
       {
-      ossScopedLock _lock( &_transLockLstMutex ) ;
-      transInfo._lockList     = _transLockLst ;
+         ossScopedLock _lock( &_transLockLstMutex ) ;
+         transInfo._lockList  = _transLockLst ;
       }
       transInfo._locksNum     = transInfo._lockList.size() ;
       transInfo._waitLock     = _waitLock ;

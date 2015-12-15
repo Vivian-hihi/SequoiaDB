@@ -59,7 +59,9 @@ namespace engine
       // build a new one, don't modify the old
       _CoordCataInfo( INT32 version, const char *pCollectionName )
       :_catlogSet ( pCollectionName, FALSE )
-      {}
+      {
+         _catlogSet.setSKSite( clsGetShardingKeySite() ) ;
+      }
 
       ~_CoordCataInfo()
       {}
@@ -197,6 +199,11 @@ namespace engine
          return _catlogSet.name() ;
       }
 
+      UINT32 getShardingKeySiteID() const
+      {
+         return _catlogSet.getShardingKeySiteID() ;
+      }
+
       INT32 getLobGroupID( const bson::OID &oid,
                            UINT32 sequence,
                            UINT32 &groupID )
@@ -219,6 +226,7 @@ namespace engine
 
    typedef boost::shared_ptr< CoordCataInfo >         CoordCataInfoPtr ;
    typedef std::map< std::string, CoordCataInfoPtr >  CoordCataMap ;
+
 }
 
-#endif
+#endif // COORDDEF_HPP__

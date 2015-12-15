@@ -44,8 +44,10 @@
 #include "rtnCoordCommon.hpp"
 #include "msgCatalog.hpp"
 #include "../bson/bson.h"
+#include <set>
 
 using namespace bson ;
+using namespace std ;
 
 namespace engine
 {
@@ -425,6 +427,33 @@ namespace engine
 
    class rtnCoordShardKicker : public SDBObject 
    {
+      struct strContainner
+      {
+         const CHAR *_pStr ;
+         strContainner( const CHAR *str )
+         {
+            _pStr = str ;
+         }
+         strContainner()
+         {
+            _pStr = NULL ;
+         }
+         bool operator<( const strContainner &right ) const
+         {
+            if ( !right._pStr )
+            {
+               return false ;
+            }
+            else if ( !_pStr )
+            {
+               return true ;
+            }
+            return ossStrcmp( _pStr, right._pStr ) < 0 ? true : false ;
+         }
+      } ;
+
+      typedef set< strContainner >              SET_SHARDINGKEY ;
+
    public:
       rtnCoordShardKicker() ;
       ~rtnCoordShardKicker() ;
@@ -437,7 +466,15 @@ namespace engine
                                      const BSONObj &updator, 
                                      BSONObj &newUpdator,
                                      BOOLEAN &hasShardingKey, pmdEDUCB *cb ) ;
-      BOOLEAN _isUpdateReplace( const BSONObj &updator ) ;
+
+   protected:
+      BOOLEAN     _isUpdateReplace( const BSONObj &updator ) ;
+      UINT32      _addKeys( const BSONObj &objKey ) ;
+
+   private:
+      set< UINT32 >              _skSiteIDs ;
+      SET_SHARDINGKEY            _setKeys ;
+
    } ;
 
 }

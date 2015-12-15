@@ -169,7 +169,7 @@ namespace engine
       void dumpInfo ( std::set<monEDUSimple> &info ) ;
       void dumpInfo ( std::set<monEDUFull> &info ) ;
 
-      void dumpTransInfo( EDUID eduId, monTransInfo &transInfo ) ;
+      INT32 dumpTransInfo( EDUID eduId, monTransInfo &transInfo ) ;
 
       void resetMon ()
       {

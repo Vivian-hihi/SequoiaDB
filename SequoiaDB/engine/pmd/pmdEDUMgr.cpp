@@ -154,8 +154,8 @@ namespace engine
       PD_TRACE_EXIT ( SDB__PMDEDUMGR_DUMPINFO2 );
    }
 
-   void _pmdEDUMgr::dumpTransInfo( EDUID eduId,
-                                   monTransInfo &transInfo )
+   INT32 _pmdEDUMgr::dumpTransInfo( EDUID eduId,
+                                    monTransInfo &transInfo )
    {
       std::map<EDUID, pmdEDUCB*>::iterator iter ;
       EDUMGR_SLOCK
@@ -165,10 +165,11 @@ namespace engine
          iter = _idleQueue.find( eduId ) ;
          if ( _idleQueue.end() == iter )
          {
-            return ;
+            return SDB_SYS ;
          }
       }
       iter->second->dumpTransInfo( transInfo ) ;
+      return SDB_OK ;
    }
 
 #endif // SDB_ENGINE

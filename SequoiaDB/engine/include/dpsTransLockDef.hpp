@@ -89,7 +89,9 @@ namespace engine
 
       bson::BSONObj toBson() const ;
 
-      void reset() ;
+      void        reset() ;
+      BOOLEAN     isValid() const ;
+
    public:
       UINT32               _logicCSID;
       dmsExtentID          _recordExtentID;

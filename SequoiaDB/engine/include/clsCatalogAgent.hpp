@@ -151,6 +151,8 @@ namespace engine
       SUBCL_SORT_BY_BOUND
    } ;
 
+   class _clsShardingKeySite ;
+
    class _clsCatalogSet : public SDBObject
    {
       friend class _clsCatalogAgent ;
@@ -163,6 +165,8 @@ namespace engine
       public:
          _clsCatalogSet ( const CHAR * name, BOOLEAN saveName = TRUE ) ;
          ~_clsCatalogSet () ;
+
+         void setSKSite( _clsShardingKeySite *pSite ) { _pSite = pSite ; }
 
       public:
          INT32             getVersion () const ;
@@ -232,6 +236,7 @@ namespace engine
          INT32 delSubCL ( const CHAR *subCLName );
 
          UINT32 getInternalV() const { return _internalV ; }
+         UINT32 getShardingKeySiteID() const { return _skSiteID ; }
 
       protected:
          _clsCatalogSet    *next () ;
@@ -287,6 +292,9 @@ namespace engine
          std::string       _mainCLName;
          UINT32            _internalV ;
          UINT32            _maxID ;
+         /// sharding key site id, 0: invalid
+         UINT32            _skSiteID ;
+         _clsShardingKeySite *_pSite ;
 
    };
    typedef class _clsCatalogSet clsCatalogSet ;
@@ -331,6 +339,27 @@ namespace engine
          ossRWMutex                    _rwMutex ;
    };
    typedef _clsCatalogAgent catAgent ;
+
+   /*
+      _clsShardingKeySite define
+   */
+   class _clsShardingKeySite : public SDBObject
+   {
+      public:
+         _clsShardingKeySite() ;
+         ~_clsShardingKeySite() ;
+
+         UINT32   registerKey( const BSONObj &shardingKey ) ;
+         void     unregisterKey( const BSONObj &shardingKey,
+                                 UINT32 skSiteID ) ;
+
+      private:
+         UINT32                  _id ;
+         /// UINT64 ==> ID:32 + Ref:32
+         map< BSONObj, UINT64 >  _mapKey2ID ;
+         ossRWMutex              _rwMutex ;
+   } ;
+   typedef _clsShardingKeySite clsShardingKeySite ;
 
    typedef _netRouteNode clsNodeItem ;
 
@@ -480,6 +509,9 @@ namespace engine
    /// cls catalog agent tool fucntions :
    INT32    clsPartition( const BSONObj &keyObj, UINT32 partitionBit, UINT32 internalV ) ;
    INT32    clsPartition( const bson::OID &oid, UINT32 sequence, UINT32 partitionBit ) ;
+
+   /// global function
+   clsShardingKeySite* clsGetShardingKeySite() ;
 
 }
 

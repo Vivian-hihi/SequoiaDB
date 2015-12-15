@@ -61,10 +61,7 @@ namespace engine
 
    dpsTransLockId::dpsTransLockId()
    {
-      _logicCSID = ~0 ;
-      _collectionID = DMS_INVALID_MBID ;
-      _recordExtentID = DMS_INVALID_EXTENT ;
-      _recordOffset = DMS_INVALID_OFFSET ;
+      reset() ;
    }
 
    dpsTransLockId::~dpsTransLockId()
@@ -103,12 +100,13 @@ namespace engine
       }
       return FALSE;
    }
+
    BOOLEAN dpsTransLockId::operator==( const dpsTransLockId &rhs ) const
    {
-      if ( _logicCSID == rhs._logicCSID
-           && _collectionID == rhs._collectionID
-           && _recordExtentID == rhs._recordExtentID
-           && _recordOffset == rhs._recordOffset )
+      if ( _logicCSID == rhs._logicCSID &&
+           _collectionID == rhs._collectionID &&
+           _recordExtentID == rhs._recordExtentID &&
+           _recordOffset == rhs._recordOffset )
       {
          return TRUE ;
       }
@@ -121,6 +119,15 @@ namespace engine
       _collectionID = DMS_INVALID_MBID ;
       _recordExtentID = DMS_INVALID_EXTENT ;
       _recordOffset = DMS_INVALID_OFFSET ;
+   }
+
+   BOOLEAN dpsTransLockId::isValid() const
+   {
+      if ( ~0 == _logicCSID )
+      {
+         return FALSE ;
+      }
+      return TRUE ;
    }
 
    dpsTransLockId & dpsTransLockId::operator=( const dpsTransLockId & rhs )
@@ -145,10 +152,10 @@ namespace engine
 
    BSONObj dpsTransLockId::toBson() const
    {
-      return BSON( "CSID" << _logicCSID
-                   << "CLID" << _collectionID
-                   << "recordID" << _recordExtentID
-                   << "recordOffset" << _recordOffset ) ;
+      return BSON( "CSID" << (INT32)_logicCSID <<
+                   "CLID" << (INT32)_collectionID <<
+                   "recordID" << (INT32)_recordExtentID <<
+                   "recordOffset" << (INT32)_recordOffset ) ;
    }
 
    dpsTransCBLockInfo::dpsTransCBLockInfo( DPS_TRANSLOCK_TYPE lockType )

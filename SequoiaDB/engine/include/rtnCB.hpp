@@ -103,10 +103,10 @@ namespace engine
          return _contextList.size() ;
       }
 
-      OSS_INLINE void contextDump ( std::map<UINT64,
-                                    std::set<SINT64> > &contextList )
+      OSS_INLINE void contextDump ( std::map<UINT64, std::set<SINT64> > &contextList,
+                                    EDUID filterEDUID = PMD_INVALID_EDUID )
       {
-         UINT64 eduID = PMD_INVALID_EDUID ;
+         EDUID eduID = PMD_INVALID_EDUID ;
          INT64  contextID = -1  ;
 
          RTNCB_SLOCK
@@ -114,25 +114,37 @@ namespace engine
          for ( it = _contextList.begin() ; it != _contextList.end(); ++it )
          {
             eduID = (*it).second->eduID() ;
-            contextID = (*it).second->contextID() ;
 
+            if ( PMD_INVALID_EDUID != filterEDUID &&
+                 eduID != filterEDUID )
+            {
+               continue ;
+            }
+
+            contextID = (*it).second->contextID() ;
             contextList[ eduID ].insert( contextID ) ;
          }
       }
 
-      OSS_INLINE void monContextSnap ( std::map<UINT64,
-                                       std::set<monContextFull> >
-                                       &contextList )
+      OSS_INLINE void monContextSnap ( std::map<UINT64,std::set<monContextFull> > &contextList,
+                                       EDUID filterEDUID = PMD_INVALID_EDUID )
       {
-         UINT64 eduID = PMD_INVALID_EDUID ;
+         EDUID eduID = PMD_INVALID_EDUID ;
          INT64  contextID = -1  ;
          monContextCB *monCB = NULL ;
 
          RTNCB_SLOCK
          std::map<SINT64, rtnContext*>::const_iterator it ;
-         for ( it = _contextList.begin() ; it != _contextList.end(); it++ )
+         for ( it = _contextList.begin() ; it != _contextList.end(); ++it )
          {
             eduID = (*it).second->eduID() ;
+
+            if ( PMD_INVALID_EDUID != filterEDUID &&
+                 eduID != filterEDUID )
+            {
+               continue ;
+            }
+
             contextID = (*it).second->contextID() ;
             monCB = (*it).second->getMonCB() ;
 
@@ -145,14 +157,14 @@ namespace engine
       }
 
       OSS_INLINE void monContextSnap( UINT64 eduID,
-                                  std::set<monContextFull> &contextList )
+                                      std::set<monContextFull> &contextList )
       {
          INT64  contextID = -1  ;
          monContextCB *monCB = NULL ;
 
          RTNCB_SLOCK
          std::map<SINT64, rtnContext*>::const_iterator it ;
-         for ( it = _contextList.begin() ; it != _contextList.end() ; it++ )
+         for ( it = _contextList.begin() ; it != _contextList.end() ; ++it )
          {
             if ( (*it).second->eduID() == eduID )
             {

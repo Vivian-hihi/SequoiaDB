@@ -902,11 +902,11 @@ namespace engine
    {
       //INT32 rc = SDB_OK ;
       BSONObjIterator iter( updator ) ;
-      static string replaceStr = CMD_ADMIN_PREFIX FIELD_OP_VALUE_REPLACE ;
       while ( iter.more() )
       {
          BSONElement beTmp = iter.next() ;
-         if ( beTmp.fieldName() == replaceStr )
+         if ( 0 == ossStrcmp( beTmp.fieldName(),
+                              CMD_ADMIN_PREFIX FIELD_OP_VALUE_REPLACE ) )
          {
             return TRUE ;
          }
@@ -915,19 +915,50 @@ namespace engine
       return FALSE ;
    }
 
+   UINT32 rtnCoordShardKicker::_addKeys( const BSONObj &objKey )
+   {
+      UINT32 count = 0 ;
+      BSONObjIterator itr( objKey ) ;
+      while( itr.more() )
+      {
+         BSONElement e = itr.next() ;
+         if ( _setKeys.count( e.fieldName() ) > 0 )
+         {
+            continue ;
+         }
+         ++count ;
+         _setKeys.insert( e.fieldName() ) ;
+      }
+      return count ;
+   }
+
    INT32 rtnCoordShardKicker::kickShardingKey( const CoordCataInfoPtr &cataInfo,
                                                const BSONObj &updator,
                                                BSONObj &newUpdator,
                                                BOOLEAN &hasShardingKey )
    {
       INT32 rc = SDB_OK ;
-      BSONObjBuilder keepBuilder ;
-      bool isReplace = _isUpdateReplace( updator ) ;
+      UINT32 skSiteID = cataInfo->getShardingKeySiteID() ;
+
+      if ( skSiteID > 0 )
+      {
+         /// if is the same sharding key
+         if ( _skSiteIDs.count( skSiteID ) > 0 )
+         {
+            newUpdator = updator ;
+            goto done ;
+         }
+         _skSiteIDs.insert( skSiteID ) ;
+      }
+
       try
       {
+         BSONObjBuilder bobNewUpdator( updator.objsize() ) ;
          BSONObj boShardingKey ;
+         BSONObj subObj ;
+
+         BOOLEAN isReplace = _isUpdateReplace( updator ) ;
          cataInfo->getShardingKey( boShardingKey ) ;
-         BSONObjBuilder bobNewUpdator ;
          BSONObjIterator iter( updator ) ;
          while ( iter.more() )
          {
@@ -940,17 +971,19 @@ namespace engine
                goto error;
             }
 
-            BSONObj boTmp = beTmp.Obj() ;
+            subObj = beTmp.embeddedObject() ;
             //if replace. leave the keep
-            if ( isReplace 
-                 && beTmp.fieldName() == CMD_ADMIN_PREFIX FIELD_OP_VALUE_KEEP )
+            if ( isReplace &&
+                 0 == ossStrcmp( beTmp.fieldName(),
+                                 CMD_ADMIN_PREFIX FIELD_OP_VALUE_KEEP ) )
             {
-               keepBuilder.appendElementsUnique( boTmp ) ;
+               _addKeys( subObj ) ;
                continue ;
             }
 
-            BSONObjBuilder bobFields;
-            BSONObjIterator iterField( boTmp ) ;
+            BSONObjBuilder subBuilder( bobNewUpdator.subobjStart(
+                                       beTmp.fieldName() ) ) ;
+            BSONObjIterator iterField( subObj ) ;
             while( iterField.more() )
             {
                BSONElement beField = iterField.next() ;
@@ -982,36 +1015,35 @@ namespace engine
                }
                else
                {
-                  bobFields.append( beField );
+                  subBuilder.append( beField ) ;
                }
-            }
-            BSONObj boFields = bobFields.obj();
-            if ( !boFields.isEmpty() )
-            {
-               bobNewUpdator.appendObject( beTmp.fieldName(),
-                                           boFields.objdata() );
-            }
-         }
-         if ( isReplace ) 
+            } // while( iterField.more() )
+
+            subBuilder.done() ;
+         } // while ( iter.more() )
+
+         if ( isReplace )
          {
             //generate new $keep by combining boUpdator.$keep & boShardingKey.
-            keepBuilder.appendElementsUnique( boShardingKey ) ;
-            BSONObj newKeep = keepBuilder.obj();
-            if ( !newKeep.isEmpty() )
+            UINT32 count = _addKeys( boShardingKey ) ;
+            if ( count > 0 )
             {
-               BSONObjBuilder sortedBuilder ;
-               BSONObjIteratorSorted iterSorted( newKeep ) ;
-               while ( iterSorted.more() )
-               {
-                  BSONElement sortedTmp = iterSorted.next() ;
-                  sortedBuilder.append( sortedTmp ) ;
-               }
-               //{'$keep':{a:1, b:1}}
-               bobNewUpdator.append( CMD_ADMIN_PREFIX FIELD_OP_VALUE_KEEP, 
-                                     sortedBuilder.obj() ) ;
-               hasShardingKey = TRUE ; 
+               hasShardingKey = TRUE ;
             }
-         }
+
+            if ( !_setKeys.empty() )
+            {
+               BSONObjBuilder keepBuilder( bobNewUpdator.subobjStart(
+                                           CMD_ADMIN_PREFIX FIELD_OP_VALUE_KEEP ) ) ;
+               SET_SHARDINGKEY::iterator itKey = _setKeys.begin() ;
+               while( itKey != _setKeys.end() )
+               {
+                  keepBuilder.append( itKey->_pStr, (INT32)1 ) ;
+                  ++itKey ;
+               }
+               keepBuilder.done() ;
+            }
+         } // if ( isReplace )
          newUpdator = bobNewUpdator.obj() ;
       }
       catch ( std::exception &e )
@@ -1058,9 +1090,9 @@ namespace engine
       newUpdator = boNew ;
 
    done:
-      return rc;
+      return rc ;
    error:
-      goto done;
+      goto done ;
    }
 
 }

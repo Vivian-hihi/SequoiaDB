@@ -427,6 +427,8 @@ namespace engine
       _isMainCL = FALSE ;
       _internalV = 0 ;
       _maxID = 0 ;
+      _skSiteID = 0 ;
+      _pSite = NULL ;
    }
 
    _clsCatalogSet::~_clsCatalogSet ()
@@ -591,6 +593,12 @@ namespace engine
          SDB_OSS_DEL _pKeyGen ;
          _pKeyGen = NULL ;
       }
+
+      if ( _pSite && _skSiteID > 0 )
+      {
+         _pSite->unregisterKey( _shardingKey, _skSiteID ) ;
+      }
+      _skSiteID = 0 ;
 
       MAP_CAT_ITEM_IT it = _mapItems.begin () ;
       while ( it != _mapItems.end() )
@@ -1622,6 +1630,12 @@ namespace engine
          {
             _ensureShardingIndex = ele.boolean() ;
          }
+
+         /// register to sharding key site
+         if ( _pSite )
+         {
+            _skSiteID = _pSite->registerKey( _shardingKey ) ;
+         }
       }
 
       if ( isHashSharding() )
@@ -2505,6 +2519,77 @@ namespace engine
    }
 
    /*
+      _clsShardingKeySite implement
+   */
+   _clsShardingKeySite::_clsShardingKeySite()
+   {
+      _id = 1 ;
+   }
+
+   _clsShardingKeySite::~_clsShardingKeySite()
+   {
+   }
+
+   UINT32 _clsShardingKeySite::registerKey( const BSONObj &shardingKey )
+   {
+      UINT32 retID = 0 ;
+      map< BSONObj, UINT64 >::iterator it ;
+
+      /// lock
+      _rwMutex->lock_w() ;
+      it = _mapKey2ID.find( shardingKey ) ;
+      if ( it == _mapKey2ID.end() )
+      {
+         retID = _id++ ;
+         _mapKey2ID[ shardingKey ] = ossPack32To64( retID, 1 ) ;
+      }
+      else
+      {
+         UINT32 lo = 0 ;
+         ossUnpack32From64( it->second, retID, lo ) ;
+         it->second = ossPack32To64( retID, lo + 1 ) ;
+      }
+      /// unlock
+      _rwMutex->release_w() ;
+
+      return retID ;
+   }
+
+   void _clsShardingKeySite::unregisterKey( const BSONObj &shardingKey,
+                                            UINT32 skSiteID )
+   {
+      if ( skSiteID == 0 )
+      {
+         return ;
+      }
+
+      map< BSONObj, UINT64 >::iterator it ;
+      /// lock
+      _rwMutex->lock_w() ;
+      it = _mapKey2ID.find( shardingKey ) ;
+      if ( it != _mapKey2ID.end() )
+      {
+         UINT32 hi = 0 ;
+         UINT32 lo = 0 ;
+         ossUnpack32From64( it->second, hi, lo ) ;
+         /// when equal
+         if ( skSiteID == hi )
+         {
+            if ( lo > 1 )
+            {
+               it->second = ossPack32To64( hi, lo - 1 ) ;
+            }
+            else
+            {
+               _mapKey2ID.erase( it ) ;
+            }
+         }
+      }
+      /// unlock
+      _rwMutex->release_w() ;
+   }
+
+   /*
    note: _clsGroupItem implement
    */
    _clsGroupItem::_clsGroupItem ( UINT32 groupID )
@@ -3287,4 +3372,12 @@ namespace engine
       }
       return (INT32)( hashValue >> ( 32 - partitionBit ) ) ;
    }
+
+   clsShardingKeySite* clsGetShardingKeySite()
+   {
+      static clsShardingKeySite s_skSite ;
+      return &s_skSite ;
+   }
+
 }
+
