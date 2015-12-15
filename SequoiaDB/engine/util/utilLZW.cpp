@@ -2,52 +2,8 @@
 #include "utilCompressor.hpp"
 #include "utilLZW.hpp"
 
-#define CALCULATE_NODE_NUM( maxSize ) \
-   ( ( (maxSize) - sizeof( _utilLZWDictHead ) ) / sizeof( _utilLZWNode ) )
-
 namespace engine
 {
-   INT32 _utilLZWDictionary::init_old( UINT32 maxNodeNum )
-   {
-      INT32 rc = SDB_OK ;
-
-      _maxNodeNum = maxNodeNum <= DICT_MAX_NODE_CODE ?
-                    maxNodeNum : DICT_MAX_NODE_CODE;
-      _nodes = ( _utilLZWNode * )SDB_OSS_MALLOC(
-                                       sizeof( _utilLZWNode ) * maxNodeNum ) ;
-      PD_CHECK( _nodes, SDB_OOM, error, PDERROR,
-                "Failed to allocate memory for dictionary items, "
-                "requested size: %d", sizeof( _utilLZWNode ) * maxNodeNum );
-
-      for ( UINT32 i = 0; i < maxNodeNum; ++i )
-      {
-         _nodes[i]._prev = DICT_INVALID_NODE ;
-         _nodes[i]._first = DICT_INVALID_NODE ;
-         _nodes[i]._next = DICT_INVALID_NODE ;
-         /*
-          * 1 byte(8 bits) can represent 256 characters. Every search will start
-          * with them.
-          */
-         if ( i < 256 )
-         {
-            _nodes[i]._ch = i ;
-            _nodes[i]._len = 1 ;
-         }
-         else
-         {
-            _nodes[i]._len = 0 ;
-         }
-      }
-
-      _head._maxCode = 255 ;
-      _head._codeSize = 8 ;
-
-   done:
-      return rc ;
-   error:
-      goto done ;
-   }
-
    INT32 _utilLZWDictionary::init( UINT32 maxSize )
    {
       INT32 rc = SDB_OK ;
@@ -62,9 +18,7 @@ namespace engine
       PD_CHECK( _nodes, SDB_OOM, error, PDERROR,
                 "Failed to allocate memory for dictionary items, "
                 "requested size: %d", sizeof( _utilLZWNode ) * maxNodeNum );
-
       _initNodes( _nodes, maxNodeNum ) ;
-
       _maxNodeNum = maxNodeNum ;
       _head._maxCode = 255 ;
       _head._codeSize = 8 ;
@@ -73,36 +27,25 @@ namespace engine
       return rc ;
    error:
       _maxNodeNum = 0 ;
-      goto done ;
-   }
-
-   void _utilLZWDictionary::reset()
-   {
-      _head._codeSize = 0 ;
-      _head._maxCode = 0 ;
       if ( _nodes )
       {
          SDB_OSS_FREE( _nodes ) ;
          _nodes = NULL ;
       }
+
+      goto done ;
    }
 
    INT32 _utilLZWDictionary::shrink( UINT32 maxSize )
    {
       INT32 rc = SDB_OK ;
       UINT32 rmNodeNum = 0 ;
-      UINT32 holeNum = 0 ;
-      UINT32 sequare = 0 ;
-      LZW_CODE rmNodeCode = DICT_INVALID_NODE ;
-      std::vector<UINT32> vecRmNodes ;
-      NODE_REF_NUM_VEC_ITR endPos ;
-      utilLZWNode *newNodes = NULL ;
-      LZW_CODE origCode = DICT_INVALID_NODE ;
-      LZW_CODE newCode = DICT_INVALID_NODE ;
-      LZW_CODE traceCode = DICT_INVALID_NODE ;
-      UINT32 refNum = 0 ;
-      UINT32 square = 0 ;
+      UINT32 itemNum = 0 ;
+      LZW_CODE fromCode = DICT_INVALID_NODE ;
+      LZW_CODE toCode = DICT_INVALID_NODE ;
       UINT32 maxNodeNum = CALCULATE_NODE_NUM( maxSize ) ;
+      BOOLEAN finish = FALSE ;
+      BOOLEAN firstRun = FALSE ;
 
       /*
        * Shrink the dictionary to contain nodeNum nodes. It will pick up the
@@ -115,136 +58,56 @@ namespace engine
          goto done ;
       }
 
-      /*
-       * Create another dictionary with maxNodeNum, format all the content of
-       * the dictionary into it, and release the old one.
-       */
-
       // sort by reference number increase
       std::stable_sort( _vecNodeRefNum.begin(), _vecNodeRefNum.end(),
-                        _cmpByRefNum ) ;
+                        dictNodeCmp( _nodes )) ;
 
-      newNodes = ( utilLZWNode *)
-                  SDB_OSS_MALLOC( sizeof(utilLZWNode) * maxNodeNum ) ;
-      PD_CHECK( newNodes, SDB_OOM, error, PDERROR,
-                "Failed to allocate memory for dictionary, requested size: %d",
-                sizeof(utilLZWNode) * maxNodeNum ) ;
+      rmNodeNum = _head._maxCode + 1 - maxNodeNum ;
 
-      _initNodes( newNodes, maxNodeNum ) ;
-
-      newCode = DICT_BASE_NODE_CODE - 1 ;
-
-      //for ( origCode = _vecNodeRefNum.pop_back().first;
-
-
-      while ( _vecNodeRefNum.size() > 0 )
+      for ( itemNum = 0; itemNum < rmNodeNum; ++itemNum )
       {
-         origCode = _vecNodeRefNum.back().first ;
-         refNum = _vecNodeRefNum.back().second ;
-
-         /* If reference number is only 1, throw it away. */
-         if ( refNum < 2 )
-         {
-            break ;
-         }
-
-         _vecNodeRefNum.pop_back() ;
-
-         if ( newCode + _nodes[origCode]._len > maxNodeNum )
-         {
-            break ;
-         }
-
-         newCode++ ;
-
-         /* Only the longest strings will be stored, not their sub-strings. */
-         if ( DICT_INVALID_NODE != _nodes[origCode]._first )
-         {
-            continue ;
-         }
-
-         newNodes[newCode]._ch = _nodes[origCode]._ch ;
-         traceCode = _nodes[origCode]._prev ;
-         if ( traceCode < DICT_BASE_NODE_CODE )
-         {
-            if ( DICT_INVALID_NODE == newNodes[traceCode]._first )
-            {
-               newNodes[traceCode]._first = newCode ;
-            }
-            else
-            {
-               traceCode = newNodes[newNodes[traceCode]._first]._next ;
-               while ( DICT_INVALID_NODE != newNodes[traceCode]._next )
-                  ;
-               newNodes[traceCode]._next = newCode ;
-            }
-         }
+         _removeStr( _vecNodeRefNum[itemNum].first ) ;
       }
 
-      _head._maxCode = newCode ;
+      firstRun = TRUE ;
+      for ( toCode = DICT_BASE_NODE_CODE, fromCode = toCode + 1; ; ++toCode )
+      {
+         while ( DICT_INVALID_NODE != _nodes[toCode]._prev )
+         {
+            ++toCode ;
+         }
 
+         if ( firstRun )
+         {
+            fromCode = toCode + 1 ;
+            firstRun = FALSE ;
+         }
+
+         while ( DICT_INVALID_NODE == _nodes[fromCode]._prev )
+         {
+            ++fromCode ;
+            if ( fromCode > _head._maxCode )
+            {
+               finish = TRUE ;
+               break ;
+            }
+         }
+         if ( finish )
+         {
+            break ;
+         }
+         _moveStr( fromCode, toCode ) ;
+      }
+
+      _head._codeSize = 0 ;
       do
       {
-         square++ ;
-      } while ( ( newCode >> square ) > 0 ) ;
-
-      _head._codeSize = square ;
-      SDB_OSS_FREE( _nodes ) ;
-      _nodes = newNodes ;
-
-
-#if 0
-
-
-      rmNodeNum = ( _head._maxCode + 1 ) - maxNodeNum ;
-
-      endPos =  _vecNodeRefNum.begin() + rmNodeNum ;
-      for ( NODE_REF_NUM_VEC_ITR itr = _vecNodeRefNum.begin();
-            itr < endPos; ++itr )
-      {
-         vecRmNodes.push_back( itr->first ) ;
-      }
-
-      /*
-       * Remove the nodes from the reference information vector, and sort it
-       * in code increasing order.
-       */
-      _vecNodeRefNum = NODE_REF_NUM_VEC( _vecNodeRefNum.begin() + rmNodeNum,
-                                         _vecNodeRefNum.end() ) ;
-
-      /* Recover the node reference number vector, in code increasing order. */
-      std::sort( _vecNodeRefNum.begin(), _vecNodeRefNum.end(),
-                 _cmpByNodeNum ) ;
-
-      /*
-       * Now remove the nodes from the dictionary.
-       */
-      std::sort( vecRmNodes.begin(), vecRmNodes.end() ) ;
-      for ( std::vector<UINT32>::iterator itr = vecRmNodes.begin();
-            itr != vecRmNodes.end(); ++itr )
-      {
-         rmNodeCode = *itr ;
-         _removeStr( rmNodeCode ) ;
-         holeNum++ ;
-         while ( ++rmNodeCode < *( itr + 1 ) )
-         {
-            _moveStr( rmNodeCode, rmNodeCode - holeNum ) ;
-         }
-      }
+         _head._codeSize++ ;
+      }while ( ( maxNodeNum >> _head._codeSize ) > 0 ) ;
 
       _head._maxCode = maxNodeNum - 1 ;
-      ossIsPowerOf2( _head._maxCode, &sequare ) ;
-      _head._codeSize = sequare + 1 ;
-#endif
-
    done:
       return rc ;
-   error:
-      if ( newNodes )
-      {
-         SDB_OSS_FREE( newNodes ) ;
-      }
-      goto done ;
    }
 
    UINT32 _utilLZWDictionary::getDictSize()
@@ -371,27 +234,12 @@ namespace engine
             nextCode = _dictionary->addStr( code, ch ) ;
             if ( nextCode == maxCode )
             {
-               /* Dictionary is full */
-
-               // shrink the dictionary to the target size
+               /* Dictionary is full. Internally its bigger than then size we
+                * specified, so shrink it to the target size.
+                */
                _dictionary->shrink( _maxDictSize ) ;
                full = TRUE ;
                goto done ;
-               /* After shrink, restart the search of the current string. */
-               //code = source[startPos] ;
-               //pos = startPos ;
-               //continue ;
-               //nextCode = _dictionary->addStr( code, ch ) ;
-               /*
-                * After shrink, insertting of string into dictionary should
-                * always succeed.
-                */
-                /*
-               SDB_ASSERT( DICT_INVALID_NODE != nextCode,
-                           "Adding string to dictionary failed" ) ;
-                */
-               //full = TRUE ;
-               //goto done ;
             }
 
             code = ch ;
@@ -406,16 +254,12 @@ namespace engine
       }
    done:
       return rc ;
-   error:
-      goto done ;
    }
 
    INT32 _utilLZWDictCreator::save( CHAR *dictBuf, UINT32 &maxDictLen )
    {
       INT32 rc = SDB_OK ;
 
-      // shrink the dictionary to target size
-      //_dictionary->shrink( _maxDictSize ) ;
       rc = _dictionary->dumpToStream( dictBuf, maxDictLen ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to get LZW dictionary, rc: %d", rc ) ;
    done:

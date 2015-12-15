@@ -17,6 +17,8 @@ namespace engine
     * writting, so the maximum node code should be less than 2^24(16M).
     */
    #define DICT_MAX_NODE_CODE        ( (2 << 24) - 1 )
+   #define DICT_MAX_SIZE             ( 4 << 20 )
+   #define DICT_BUF_SIZE             DICT_MAX_SIZE
 
    /*
     * 0~255 represent 256 diffrent symbols(initial state of the dictionary),
@@ -25,6 +27,9 @@ namespace engine
     */
    #define MIN_NODE_NUM              ( 256 + 1 )
    #define MAX_STREAM_BUFF_SIZE      256
+
+   #define CALCULATE_NODE_NUM( maxSize ) \
+      ( ( (maxSize) - sizeof( _utilLZWDictHead ) ) / sizeof( _utilLZWNode ) )
 
    typedef UINT32 LZW_CODE ;
 
@@ -77,8 +82,30 @@ namespace engine
    } ;
    typedef _utilLZWDictHead utilLZWDictHead ;
 
+   struct _dictNodeCmp
+   {
+      _dictNodeCmp( _utilLZWNode *nodes)
+         : _nodes( nodes )
+      {
+      }
+
+      BOOLEAN operator()( const std::pair<UINT32, UINT32>& firstNode,
+                          const std::pair<UINT32, UINT32>& secondNode )
+      {
+         return firstNode.second < secondNode.second ;
+      }
+
+   private:
+      _utilLZWNode *_nodes ;
+   } ;
+   typedef _dictNodeCmp dictNodeCmp ;
+
    class _utilLZWDictionary : public SDBObject
    {
+      typedef std::pair<UINT32, UINT32> NODE_REF_ITEM ;
+      typedef std::vector<NODE_REF_ITEM> NODE_REF_NUM_VEC ;
+      typedef NODE_REF_NUM_VEC::iterator NODE_REF_NUM_VEC_ITR ;
+
    public:
       _utilLZWDictionary()
       {
@@ -95,7 +122,6 @@ namespace engine
          }
       }
 
-      INT32 init_old( UINT32 maxNodeNum ) ;
       INT32 init( UINT32 maxSize ) ;
       void reset() ;
       INT32 shrink( UINT32 maxSize ) ;
@@ -113,10 +139,6 @@ namespace engine
       OSS_INLINE UINT32 getStr( LZW_CODE code, UINT8 *buff, UINT32 bufSize ) ;
 
    private:
-      typedef std::pair<UINT32, UINT32> NODE_REF_ITEM ;
-      typedef std::vector<NODE_REF_ITEM> NODE_REF_NUM_VEC ;
-      typedef NODE_REF_NUM_VEC::iterator NODE_REF_NUM_VEC_ITR ;
-
       OSS_INLINE void _removeStr( LZW_CODE code ) ;
 
       /*
@@ -128,18 +150,6 @@ namespace engine
       OSS_INLINE void _incNodeRef( LZW_CODE code ) ;
 
       OSS_INLINE void _initNodes(  _utilLZWNode *nodes, UINT32 nodeNum ) ;
-
-      OSS_INLINE static BOOLEAN _cmpByNodeNum( NODE_REF_ITEM const &firstNode,
-                                               NODE_REF_ITEM const &secondNode )
-      {
-         return firstNode.first < secondNode.first ;
-      }
-
-      OSS_INLINE static BOOLEAN _cmpByRefNum( NODE_REF_ITEM const &firstNode,
-                                              NODE_REF_ITEM const &secondNode )
-      {
-         return firstNode.second < secondNode.second ;
-      }
 
    private:
       _utilLZWDictHead _head ;
