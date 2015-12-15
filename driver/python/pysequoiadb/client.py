@@ -205,18 +205,21 @@ class client(object):
 
          return cs
 
-   def __get_local_ip(self, ifname = 'eth0'):
+   def __get_local_ip(self):
 
-      import sys
-      if sys.platform == 'win32':
-         local = socket.gethostname()
-         localip = socket.gethostbyname(local)
-      else:
-         import socket, fcntl, struct
-         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-         inet = fcntl.ioctl( sock.fileno(), 0x8915, 
-                             struct.pack('256s', ifname[:15]))
-         localip = socket.inet_ntoa(inet[20:24])
+      localip = []
+      import socket
+      host = socket.gethostname()
+      ips = socket.gethostbyname_ex(host)
+      for ip in ips:
+         if ip == host:
+            pass
+         if isinstance(ip, list):
+            for one in ip:
+               if one.startswith('127.'):
+                  pass
+               else:
+                  localip.append(one)
 
       return localip
 
@@ -274,7 +277,7 @@ class client(object):
       for ip in hosts:
          if ("localhost" in ip.values() or
              local in ip.values() or
-             localip in ip.values()):
+             ip['host'] in localip ):
 
             host = ip['host']
             svc = ip['service']

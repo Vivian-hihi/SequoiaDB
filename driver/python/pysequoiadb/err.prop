@@ -277,7 +277,7 @@
 -276 = 'localhost' and '127.0.0.1' cannot be used mixed with other hostname and IP address
 -277 = If use 'localhost' and '127.0.0.1' for hostname, coord and catalog must in the same host 
 -278 = The special group is not data group
--279 = can not update/delete data when autoindexid is false
+-279 = can not update/delete records when $id index does not exist
 -280 = can not step up when primary node exists or LSN is not the biggest
 -281 = Image address is conflict with the self cluster
 -282 = The data group does not have image group
@@ -296,3 +296,10 @@
 -295 = The specified user already exist
 -296 = The collection is empty
 -297 = LOB sequence exists
+-298 = cluster do not exist
+-299 = business do not exist
+-300 = compressor initialization failed
+-301 = set dictionary for compressor failed
+-302 = output buffer for compressor is too small
+-303 = compress process failed
+-304 = compress process failed
