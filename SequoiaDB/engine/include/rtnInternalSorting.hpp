@@ -68,7 +68,7 @@ namespace engine
 
       BOOLEAN more() const
       {
-         if ( _limit > 0 && _fetched >= _limit )
+         if ( _limit > 0 && _fetched >= (UINT64)_limit )
          {
             return FALSE ;
          }
