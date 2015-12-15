@@ -382,6 +382,7 @@ TEST(sdb,sdbTransactionBegin)
    INT32 rc                       = SDB_OK ;
    SINT64 count                   = 0 ;
    const CHAR *CLNAME             = "transaction" ;
+   BOOLEAN isTranOnFlag           = FALSE ;
    bson conf ;
    bson obj ;
    rc = initEnv( HOST, SERVER, USER, PASSWD ) ;
@@ -389,6 +390,13 @@ TEST(sdb,sdbTransactionBegin)
    // connect to database
    rc = sdbConnect ( HOST, SERVER, USER, PASSWD, &connection ) ;
    ASSERT_EQ( SDB_OK, rc ) ;
+   rc = isTranOn( connection, &isTranOnFlag ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   if ( FALSE == isTranOnFlag )
+   {
+      printf( "transaction is disable\n" ) ;
+      return ;
+   }
    // get cs
    rc = getCollectionSpace ( connection,
                              COLLECTION_SPACE_NAME,
@@ -436,6 +444,7 @@ TEST(sdb,sdbTransactionCommit)
    INT32 rc                       = SDB_OK ;
    SINT64 count                   = 0 ;
    const CHAR *CLNAME             = "transaction" ;
+   BOOLEAN isTranOnFlag           = FALSE ;
 
    bson conf ;
    bson obj ;
@@ -447,6 +456,13 @@ TEST(sdb,sdbTransactionCommit)
    // connect to database
    rc = sdbConnect ( HOST, SERVER, USER, PASSWD, &connection ) ;
    ASSERT_EQ( SDB_OK, rc ) ;
+   rc = isTranOn( connection, &isTranOnFlag ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   if ( FALSE == isTranOnFlag )
+   {
+      printf( "transaction is disable\n" ) ;
+      return ;
+   }
    // get cs
    rc = getCollectionSpace ( connection,
                              COLLECTION_SPACE_NAME,
@@ -500,6 +516,7 @@ TEST(sdb,sdbTransactionRollback)
    INT32 rc                       = SDB_OK ;
    SINT64 count                   = 0 ;
    const CHAR *CLNAME             = "transaction" ;
+   BOOLEAN isTranOnFlag           = FALSE ;
 
    bson obj ;
    bson conf ;
@@ -508,6 +525,13 @@ TEST(sdb,sdbTransactionRollback)
    // connect to database
    rc = sdbConnect ( HOST, SERVER, USER, PASSWD, &connection ) ;
    ASSERT_EQ( SDB_OK, rc ) ;
+   rc = isTranOn( connection, &isTranOnFlag ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   if ( FALSE == isTranOnFlag )
+   {
+      printf( "transaction is disable\n" ) ;
+      return ;
+   }
    // get cs
    rc = getCollectionSpace ( connection,
                              COLLECTION_SPACE_NAME,
