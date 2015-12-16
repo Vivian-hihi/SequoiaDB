@@ -2169,9 +2169,12 @@ static Datum sdbColumnValue( sdbbson_iterator *sdbbsonIterator, Oid columnTypeId
    }
    case NUMERICOID :
    {
+      Datum numberNoTypeMode;
       FLOAT64 value = sdbbson_iterator_double( sdbbsonIterator ) ;
       Datum valueDatum = Float8GetDatum( value ) ;
-      columnValue = DirectFunctionCall1( float8_numeric, valueDatum ) ;
+      numberNoTypeMode = DirectFunctionCall1( float8_numeric, valueDatum ) ;
+      columnValue = DirectFunctionCall2(numeric, numberNoTypeMode, 
+                                        columnTypeMod);
       break ;
    }
    case BOOLOID :
