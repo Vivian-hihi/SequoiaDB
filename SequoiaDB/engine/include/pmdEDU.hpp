@@ -47,6 +47,7 @@
 #include "ossRWMutex.hpp"
 #include "sdbInterface.hpp"
 #include "pdTrace.hpp"
+#include "utilLZW.hpp"
 
 #if defined ( SDB_ENGINE )
 #include "monEDU.hpp"
@@ -162,6 +163,7 @@ namespace engine
       INT32       getCompressBuffLen () const { return _compressBuffLen ; }
       CHAR*       getUncompressBuff( INT32 len ) ;
       INT32       getUncompressBuffLen() const { return _uncompressBuffLen ; }
+      utilLZWContext *getCompressCtx() { return &_compressCtx ; }
 
       void        incEventCount( UINT32 step = 1 )
       {
@@ -431,6 +433,7 @@ namespace engine
       INT32          _compressBuffLen ;
       CHAR           *_pUncompressBuff ;
       INT32          _uncompressBuffLen ;
+      utilLZWContext _compressCtx ;
 
       CATCH_MAP      _catchMap ;
       ALLOC_MAP      _allocMap ;

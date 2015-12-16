@@ -383,8 +383,7 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSROUNIT_INSRCD, "_dmsReorgUnit::insertRecord" )
    INT32 _dmsReorgUnit::insertRecord ( BSONObj &obj, _pmdEDUCB *cb,
                                        UINT32 attributes,
-                                       utilCompressor* compressor,
-                                       utilCompressorContext compContext )
+                                       utilCompressor* compressor )
    {
       INT32 rc                     = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__DMSROUNIT_INSRCD );
@@ -409,7 +408,7 @@ namespace engine
       // compression
       if ( OSS_BIT_TEST ( attributes, DMS_MB_ATTR_COMPRESSED ) )
       {
-         rc = dmsCompress ( cb, compressor, compContext, obj, NULL, 0,
+         rc = dmsCompress ( cb, compressor, obj, NULL, 0,
                             &compressedData, &compressedDataSize ) ;
          PD_RC_CHECK ( rc, PDERROR,
                        "Failed to compress record, rc = %d: %s",

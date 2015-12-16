@@ -85,8 +85,7 @@ namespace engine
       // MME is always DMS_MB_SIZE bytes
       INT32 importMME ( const CHAR *pMME ) ;
       INT32 insertRecord ( BSONObj &obj, _pmdEDUCB *cb, UINT32 attributes,
-                           utilCompressor* compressor,
-                  utilCompressorContext compContext = UTIL_INVALID_COMP_CTX ) ;
+                           utilCompressor* compressor ) ;
       INT32 exportMME ( CHAR *pBuffer ) ;
       // based on pagesize
       INT32 getNextExtentSize ( SINT32 &size ) ;

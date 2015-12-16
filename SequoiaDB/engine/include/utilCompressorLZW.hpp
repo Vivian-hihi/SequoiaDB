@@ -18,8 +18,9 @@ namespace engine
          size_t compressBound( size_t srcLen ) ;
 
          INT32 prepare( utilCompressorContext &ctx ) ;
+         INT32 prepareExt( utilCompressorContext context ) ;
 
-         INT32 rePrepare( utilCompressorContext &ctx ) ;
+         INT32 rePrepare( utilCompressorContext ctx ) ;
 
          INT32 compress( utilCompressorContext ctx,
                          const CHAR* source, UINT32 sourceLen,

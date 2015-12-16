@@ -518,8 +518,7 @@ namespace engine
                                           dmsExtentID &nextExtent,
                                           set< dmsRecordID > *ridList,
                                           SINT32 &err,
-                                          utilCompressor *compressor,
-                                          utilCompressorContext compContext )
+                                          utilCompressor *compressor )
    {
       UINT32 len           = 0 ;
       SINT32 localErr      = 0 ;
@@ -585,9 +584,8 @@ namespace engine
                                        outBuf + len, outSize - len,
                                        recordCount,
                                        nextRecord, ridList, localErr,
-                                       compressor, compContext ) ;
+                                       compressor ) ;
             ++recordCount ;
-            compressor->rePrepare( compContext ) ;
          }
       }
 
@@ -612,8 +610,7 @@ namespace engine
                                           dmsOffset &nextRecord,
                                           set< dmsRecordID > *ridList,
                                           SINT32 &err,
-                                          utilCompressor *compressor,
-                                          utilCompressorContext compContext )
+                                          utilCompressor *compressor )
    {
       INT32 rc          = SDB_OK ;
       UINT32 len        = 0 ;
@@ -687,7 +684,7 @@ namespace engine
          try
          {
             ossValuePtr recordPtr = 0 ;
-            DMS_RECORD_EXTRACTDATA ( compressor, compContext,
+            DMS_RECORD_EXTRACTDATA ( compressor,
                                      (ossValuePtr)(inBuf), recordPtr ) ;
             BSONObj obj ( (CHAR*)recordPtr ) ;
             if ( !obj.isValid() )

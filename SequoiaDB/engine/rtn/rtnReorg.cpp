@@ -382,7 +382,6 @@ namespace engine
       BOOLEAN dataRebuild = FALSE ;
       utilCompressor *compressor = NULL ;
       dmsCompressorEntry *compEntry = NULL ;
-      utilCompressorContext compContext = UTIL_INVALID_COMP_CTX ;
 
       if ( ossStrlen ( dbpath ) + 1 +
            ossStrlen ( pCollectionFullName ) +
@@ -462,12 +461,6 @@ namespace engine
          {
             compEntry = su->data()->getCompressorEntry( mbContext->mbID() ) ;
             compressor = compEntry->getCompressor() ;
-            if ( compressor )
-            {
-               rc = compressor->prepare( compContext ) ;
-               PD_RC_CHECK( rc, PDERROR,
-                            "Failed to prepare compressor, rc: %d", rc ) ;
-            }
          }
 
          // copy all records into reorg unit temp file
@@ -495,8 +488,7 @@ namespace engine
             try
             {
                BSONObj dataRecord ( buffObj.data() ) ;
-               rc = ru.insertRecord ( dataRecord, cb, attributes,
-                                      compressor, compContext ) ;
+               rc = ru.insertRecord ( dataRecord, cb, attributes, compressor ) ;
                if ( rc )
                {
                   PD_LOG ( PDERROR, "Failed to insert into temp file, rc = %d",
@@ -510,20 +502,7 @@ namespace engine
                         e.what() ) ;
                goto error_shadow_copy ;
             }
-
-            if ( UTIL_INVALID_COMP_CTX != compContext )
-            {
-               rc = compressor->rePrepare( compContext ) ;
-               PD_RC_CHECK( rc, PDERROR,
-                            "Failed to prepare compressor, rc: %d", rc ) ;
-            }
          } // while ( TRUE )
-
-         if ( UTIL_INVALID_COMP_CTX != compContext )
-         {
-            compressor->done( compContext ) ;
-            compContext = UTIL_INVALID_COMP_CTX ;
-         }
 
          if ( compressor )
          {
@@ -642,10 +621,6 @@ namespace engine
       PD_TRACE_EXITRC ( SDB_RTNREORGOFFLINE1, rc ) ;
       return rc ;
    error :
-      if ( UTIL_INVALID_COMP_CTX != compContext )
-      {
-         compressor->done( compContext ) ;
-      }
       if ( compressor )
       {
          compEntry->releaseCompressor() ;

@@ -137,9 +137,7 @@ namespace engine
                                         dmsExtentID &nextExtent,
                                         set<dmsRecordID> *ridList = NULL,
                                         BOOLEAN dumpRecord = FALSE,
-                                        utilCompressor *compressor = NULL,
-                                        utilCompressorContext compContext =
-                                                   UTIL_INVALID_COMP_CTX ) ;
+                                        utilCompressor *compressor = NULL ) ;
 
          static UINT32 dumpExtentHeader ( void * inBuf,
                                           UINT32 inSize,
@@ -163,9 +161,7 @@ namespace engine
                                         UINT32 outSize,
                                         dmsOffset &nextRecord,
                                         set<dmsRecordID> *ridList = NULL,
-                                        utilCompressor *compressor = NULL,
-                                        utilCompressorContext compContext =
-                                                    UTIL_INVALID_COMP_CTX ) ;
+                                        utilCompressor *compressor = NULL ) ;
 
          static UINT32 dumpIndexExtent ( void * inBuf,
                                          UINT32 inSize,

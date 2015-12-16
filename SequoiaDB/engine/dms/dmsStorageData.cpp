@@ -2190,7 +2190,6 @@ namespace engine
       BSONObj insertObj ;
       utilCompressor *compressor    = NULL ;
       BOOLEAN dataModified          = FALSE ;
-      utilCompressorContext compressorContext = NULL ;
 
       // verify whether the record got "_id" inside
       BSONElement ele = record.getField ( DMS_ID_KEY_NAME ) ;
@@ -2232,19 +2231,12 @@ namespace engine
          {
             compressor =
                   _compressorEntry[context->mbID()].getCompressor( SHARED ) ;
-            if ( compressor )
-            {
-               rc = compressor->prepare( compressorContext ) ;
-               PD_RC_CHECK( rc, PDERROR,
-                            "Failed to prepare compressor, rc: %d", rc ) ;
-            }
          }
       }
 
       if ( compressor )
       {
-         rc = dmsCompress( cb, compressor, compressorContext,
-                           record, ((CHAR*)(&oid)), oidLen,
+         rc = dmsCompress( cb, compressor, record, ((CHAR*)(&oid)), oidLen,
                            &compressedData, &compressedDataSize ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to compress data, rc: %d", rc ) ;
 
@@ -2375,13 +2367,7 @@ namespace engine
       {
          if ( dataModified )
          {
-            if ( compressorContext )
-            {
-               rc = compressor->rePrepare( compressorContext ) ;
-               PD_RC_CHECK( rc, PDERROR,
-                            "Failed to prepare compressor, rc: %d", rc ) ;
-            }
-            DMS_RECORD_EXTRACTDATA( compressor, compressorContext,
+            DMS_RECORD_EXTRACTDATA( compressor,
                                     deletedRecordPtr, insertedDataPtr ) ;
             insertObj = BSONObj( ( const CHAR* )insertedDataPtr ) ;
             DMS_MON_OP_COUNT_INC( pMonAppCB, MON_DATA_READ, 1 ) ;
@@ -2396,12 +2382,6 @@ namespace engine
                                       ((dmsExtent*)extentPtr)->_logicID,
                                       insertObj, foundDeletedID, cb ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to insert to index, rc: %d", rc ) ;
-      }
-
-      if ( compressorContext )
-      {
-         compressor->done( compressorContext ) ;
-         compressorContext = UTIL_INVALID_COMP_CTX ;
       }
 
       if ( compressor )
@@ -2437,11 +2417,6 @@ namespace engine
       }
 
    done:
-      if ( compressorContext )
-      {
-         compressor->done( compressorContext ) ;
-      }
-
       if ( compressor )
       {
          _compressorEntry[context->mbID()].releaseCompressor() ;
@@ -2699,21 +2674,10 @@ namespace engine
       {
          if ( !deletedDataPtr )
          {
-            utilCompressorContext compContext = UTIL_INVALID_COMP_CTX ;
             utilCompressor *compressor =
                      _compressorEntry[context->mbID()].getCompressor( SHARED ) ;
-            if ( compressor )
-            {
-               rc = compressor->prepare( compContext ) ;
-               PD_RC_CHECK( rc, PDERROR,
-                            "Failed to prepare compressor, rc: %d", rc ) ;
-            }
-            DMS_RECORD_EXTRACTDATA ( compressor, compContext,
-                                         realPtr, deletedDataPtr ) ;
-            if ( compContext )
-            {
-               compressor->done( compContext ) ;
-            }
+
+            DMS_RECORD_EXTRACTDATA ( compressor, realPtr, deletedDataPtr ) ;
             if ( compressor )
             {
                _compressorEntry[context->mbID()].releaseCompressor() ;
@@ -2969,21 +2933,10 @@ namespace engine
             recordRealPtr = ovfExtentPtr + ovfRID._offset ;
          }
 
-         utilCompressorContext compContext = UTIL_INVALID_COMP_CTX ;
          utilCompressor *compressor =
                   _compressorEntry[context->mbID()].getCompressor( SHARED ) ;
-         if ( compressor )
-         {
-            rc = compressor->prepare( compContext ) ;
-            PD_RC_CHECK( rc, PDERROR,
-                         "Failed to prepare compressor, rc: %d", rc ) ;
-         }
-         DMS_RECORD_EXTRACTDATA( compressor, compContext,
-                                     recordRealPtr, updatedDataPtr ) ;
-         if ( compContext )
-         {
-            compressor->done( compContext ) ;
-         }
+
+         DMS_RECORD_EXTRACTDATA( compressor, recordRealPtr, updatedDataPtr ) ;
          if ( compressor )
          {
             _compressorEntry[context->mbID()].releaseCompressor() ;
@@ -3165,23 +3118,11 @@ namespace engine
       // compress data
       if ( OSS_BIT_TEST(context->mb()->_attributes, DMS_MB_ATTR_COMPRESSED ) )
       {
-         utilCompressorContext compContext = UTIL_INVALID_COMP_CTX ;
          dmsCompressorEntry *compEntry = &_compressorEntry[context->mbID()] ;
-
          utilCompressor *compressor = compEntry->getCompressor() ;
-         if ( compressor )
-         {
-            rc = compressor->prepare( compContext ) ;
-            PD_RC_CHECK( rc, PDERROR,
-                         "Failed to prepare compressor, rc: %d", rc ) ;
-         }
 
-         rc = dmsCompress( cb, compressor, compContext, (const CHAR*)ptr, len,
+         rc = dmsCompress( cb, compressor, (const CHAR*)ptr, len,
                            &compressedData, &compressedDataSize ) ;
-         if ( UTIL_INVALID_COMP_CTX != compContext )
-         {
-            compressor->done( compContext ) ;
-         }
          if ( compressor )
          {
             compEntry->releaseCompressor() ;
@@ -3427,21 +3368,10 @@ namespace engine
       {
          ossValuePtr fetchedRecord = 0 ;
 
-         utilCompressorContext compContext = UTIL_INVALID_COMP_CTX ;
          utilCompressor *compressor =
                   _compressorEntry[context->mbID()].getCompressor( SHARED ) ;
-         if ( compressor )
-         {
-            rc = compressor->prepare( compContext ) ;
-            PD_RC_CHECK( rc, PDERROR,
-                         "Failed to prepare compressor, rc: %d", rc ) ;
-         }
-         DMS_RECORD_EXTRACTDATA( compressor, compContext,
-                                 recordPtr, fetchedRecord ) ;
-         if ( compContext )
-         {
-            compressor->done( compContext ) ;
-         }
+
+         DMS_RECORD_EXTRACTDATA( compressor, recordPtr, fetchedRecord ) ;
          if ( compressor )
          {
             _compressorEntry[context->mbID()].releaseCompressor() ;

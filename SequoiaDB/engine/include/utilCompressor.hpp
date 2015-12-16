@@ -57,13 +57,15 @@ namespace engine
          virtual size_t compressBound( size_t srcLen ) = 0 ;
 
          virtual INT32 prepare( utilCompressorContext &context ) = 0 ;
+
+         virtual INT32 prepareExt( utilCompressorContext context ) = 0 ;
          virtual BOOLEAN canRePrepare() { return _prepared ; }
 
          /*
           * Only called after prepare and before done. It will reuse the context
           * to start another work.
           */
-         virtual INT32 rePrepare( utilCompressorContext &context ) = 0 ;
+         virtual INT32 rePrepare( utilCompressorContext context ) = 0 ;
 
          /*
          * Compress the source data, and write the compressed data into dest.
