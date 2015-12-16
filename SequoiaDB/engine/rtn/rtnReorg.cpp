@@ -457,7 +457,8 @@ namespace engine
          PD_LOG ( PDEVENT, "Shadow copy phase starts" ) ;
          //mbContext->mb()->_flag = flag ;
 
-         if ( 0 != mbContext->mb()->_compressorType )
+         if ( (UTIL_COMPRESSOR_TYPE)mbContext->mb()->_compressorType
+              > UTIL_COMPRESSOR_SNAPPY )
          {
             compEntry = su->data()->getCompressorEntry( mbContext->mbID() ) ;
             compressor = compEntry->getCompressor() ;
@@ -510,9 +511,12 @@ namespace engine
                goto error_shadow_copy ;
             }
 
-            rc = compressor->rePrepare( compContext ) ;
-            PD_RC_CHECK( rc, PDERROR,
-                         "Failed to prepare compressor, rc: %d", rc ) ;
+            if ( UTIL_INVALID_COMP_CTX != compContext )
+            {
+               rc = compressor->rePrepare( compContext ) ;
+               PD_RC_CHECK( rc, PDERROR,
+                            "Failed to prepare compressor, rc: %d", rc ) ;
+            }
          } // while ( TRUE )
 
          if ( UTIL_INVALID_COMP_CTX != compContext )
