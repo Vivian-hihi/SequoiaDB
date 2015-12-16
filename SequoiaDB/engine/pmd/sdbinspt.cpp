@@ -1514,7 +1514,6 @@ INT32 prepareCompressor( OSSFILE &file, const dmsMB *mb, INT32 pageSize,
    dmsExtentID dictExtentID = mb->_dictExtentID ;
 
    utilCompressor *compressorPtr = NULL ;
-   utilCompressorContext context = UTIL_INVALID_COMP_CTX ;
    CHAR *dictBuf = NULL ;
 
    rc = gCompressFactory.createCompressor(
@@ -1560,11 +1559,7 @@ INT32 prepareCompressor( OSSFILE &file, const dmsMB *mb, INT32 pageSize,
       goto error ;
    }
 
-   rc = compressorPtr->prepare( context ) ;
-   PD_RC_CHECK( rc, PDERROR, "Failed to prepare compressor, rc: %d", rc ) ;
-
    compressor = compressorPtr ;
-   compContext = context ;
 done:
    if ( dictBuf )
    {

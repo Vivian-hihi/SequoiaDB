@@ -254,7 +254,6 @@ namespace engine
 
       code = (LZW_CODE)source[0] ;
       pos++ ;
-      startPos = 0 ;
       strLen++ ;
       full = FALSE ;
 
