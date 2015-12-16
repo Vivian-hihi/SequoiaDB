@@ -1869,6 +1869,7 @@ namespace engine
       UINT32 logRecSize       = 0;
       dpsTransCB *pTransCB    = pmdGetKRCB()->getTransCB() ;
       BOOLEAN isTransLocked   = FALSE ;
+      SDB_DMSCB *dmsCB        = pmdGetKRCB()->getDMSCB() ;
 
       SDB_ASSERT( pName, "Collection name cat't be NULL" ) ;
 
@@ -1967,12 +1968,33 @@ namespace engine
          context->_clLID           = newCLID ;
       }
 
+      /* Remove the compressor and dictionary. */
+      rmCompressor( context ) ;
+      if ( DMS_INVALID_EXTENT != context->mb()->_dictExtentID )
+      {
+         context->mb()->_dictExtentID = DMS_INVALID_EXTENT ;
+      }
+
+      if ( DMS_INVALID_EXTENT != context->mb()->_newDictExtentID )
+      {
+         context->mb()->_newDictExtentID = DMS_INVALID_EXTENT ;
+      }
+
       // write dps log
       if ( dpscb )
       {
          rc = _logDPS( dpscb, info, cb, context, DMS_INVALID_EXTENT, TRUE, &oldCLID ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to insert CLTrunc record to log, "
                       "rc: %d", rc ) ;
+      }
+
+      /*
+       * During truncate, the dictionary of the collection is removed. Need
+       * to add it into the dictionary creating list again.
+       */
+      if ( UTIL_COMPRESSOR_LZW == context->mb()->_compressorType )
+      {
+         dmsCB->pushToDictCreateCLList( CSID(), context->mbID() ) ;
       }
 
    done:
