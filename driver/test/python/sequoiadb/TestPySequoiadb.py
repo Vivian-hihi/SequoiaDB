@@ -230,11 +230,20 @@ class TestPySequoiadb(object):
 
    """create user and use the new user login then delete the user
    """
-   def test_user(self):
+   def test_user(self):      
       username = 'pydriver_user'
       password = 'pydriver_passwd'
+      
       sdb = client(hostname,service)
-
+      try:
+         sdb.list_replica_groups()
+      except SDBBaseError, e:
+         if ( -159 == e.code ):
+            print 'Mode is standalone!'
+            return
+         else:   
+            raise e 
+            
       try:
 
          #create new user
