@@ -43,9 +43,8 @@ namespace engine
                                                    _dmsStorageData* dataSU,
                                                    _dmsMBContext* mbContext,
                                                    _pmdEDUCB* eduCB,
-                                                   INT32 indexID,
-                                                   dmsExtentID indexLID )
-   : _dmsIndexBuilder( indexSU, dataSU, mbContext, eduCB, indexID, indexLID )
+                                                   dmsExtentID indexExtentID )
+   : _dmsIndexBuilder( indexSU, dataSU, mbContext, eduCB, indexExtentID )
    {
    }
 
@@ -125,10 +124,9 @@ namespace engine
                                                      _dmsStorageData* dataSU,
                                                      _dmsMBContext* mbContext,
                                                      _pmdEDUCB* eduCB,
-                                                     INT32 indexID,
-                                                     dmsExtentID indexLID,
+                                                     dmsExtentID indexExtentID,
                                                      INT32 sortBufferSize )
-   : _dmsIndexBuilder( indexSU, dataSU, mbContext, eduCB, indexID, indexLID )
+   : _dmsIndexBuilder( indexSU, dataSU, mbContext, eduCB, indexExtentID )
    {
       _sorter = NULL ;
       _eoc = FALSE ;

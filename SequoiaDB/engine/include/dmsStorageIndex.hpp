@@ -134,8 +134,9 @@ namespace engine
       private:
 
          // if indexLID == DMS_INALID_EXTENT, it will get from index cb
-         INT32    _rebuildIndex ( _dmsMBContext *context, INT32 indexID,
-                                  dmsExtentID indexLID, _pmdEDUCB * cb,
+         INT32    _rebuildIndex ( _dmsMBContext *context,
+                                  dmsExtentID indexExtentID,
+                                  _pmdEDUCB * cb,
                                   INT32 sortBufferSize ) ;
 
          INT32    _indexInsert( _ixmIndexCB *indexCB,

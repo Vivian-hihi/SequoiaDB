@@ -379,7 +379,7 @@ namespace engine
       dropDps = dpscb ;
 
       // now we finished allocation part, let's get into build part
-      rc = _rebuildIndex( context, indexID, indexLID, cb, sortBufferSize ) ;
+      rc = _rebuildIndex( context, extentID, cb, sortBufferSize ) ;
       if ( rc )
       {
          PD_LOG( PDERROR, "Failed to build index[%s], rc = %d",
@@ -728,8 +728,9 @@ namespace engine
       goto done ;
    }
 
-   INT32 _dmsStorageIndex::_rebuildIndex( dmsMBContext *context, INT32 indexID,
-                                          dmsExtentID indexLID, pmdEDUCB * cb,
+   INT32 _dmsStorageIndex::_rebuildIndex( dmsMBContext *context, 
+                                          dmsExtentID indexExtentID, 
+                                          pmdEDUCB * cb,
                                           INT32 sortBufferSize )
    {
       INT32 rc = SDB_OK ;
@@ -749,7 +750,7 @@ namespace engine
 
       builder = dmsIndexBuilder::createInstance( this, _pDataSu,
                                                  context, cb,
-                                                 indexID, indexLID,
+                                                 indexExtentID,
                                                  sortBufferSize ) ;
       if ( NULL == builder )
       {
@@ -806,7 +807,8 @@ namespace engine
       {
          PD_LOG ( PDEVENT, "Rebuilding index %d for collection %d",
                   indexID, context->mbID() ) ;
-         rc = _rebuildIndex ( context, indexID, DMS_INVALID_EXTENT, cb, sortBufferSize ) ;
+         rc = _rebuildIndex ( context, context->mb()->_indexExtent[indexID], 
+                              cb, sortBufferSize ) ;
          if ( rc )
          {
             PD_LOG ( PDERROR, "Failed to rebuild index %d, rc: %d", indexID,

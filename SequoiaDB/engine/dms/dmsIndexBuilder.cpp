@@ -40,14 +40,12 @@ namespace engine
                                        _dmsStorageData* dataSU,
                                        _dmsMBContext* mbContext,
                                        _pmdEDUCB* eduCB,
-                                       INT32 indexID,
-                                       dmsExtentID indexLID )
+                                       dmsExtentID indexExtentID )
    : _suIndex ( indexSU ),
      _suData ( dataSU ),
      _mbContext ( mbContext ),
      _eduCB ( eduCB ),
-     _indexID ( indexID ),
-     _indexLID ( indexLID )
+     _indexExtentID ( indexExtentID )
    {
       _indexCB = NULL ;
       _scanExtLID = DMS_INVALID_EXTENT ;
@@ -62,7 +60,6 @@ namespace engine
       _suIndex = NULL ;
       _suData = NULL ;
       _mbContext = NULL ;
-      _indexID = 0 ;
       if ( NULL != _indexCB )
       {
          SDB_OSS_DEL( _indexCB ) ;
@@ -83,12 +80,12 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR, "dms mb context lock failed, rc: %d", rc ) ;
 
       // make sure the extent is valid
-      PD_CHECK ( DMS_INVALID_EXTENT != _mbContext->mb()->_indexExtent[_indexID],
+      PD_CHECK ( DMS_INVALID_EXTENT != _indexExtentID,
                  SDB_INVALIDARG, error, PDERROR,
-                 "Index %d is invalid for collection %d",
-                 _indexID, (INT32)_mbContext->mbID() ) ;
+                 "Index Extent ID %d is invalid for collection %d",
+                 _indexExtentID, (INT32)_mbContext->mbID() ) ;
 
-      _indexCB = SDB_OSS_NEW ixmIndexCB ( _mbContext->mb()->_indexExtent[_indexID],
+      _indexCB = SDB_OSS_NEW ixmIndexCB ( _indexExtentID,
                                           _suIndex, _mbContext ) ;
       if ( NULL == _indexCB )
       {
@@ -101,10 +98,7 @@ namespace engine
       PD_CHECK ( _indexCB->isInitialized(), SDB_DMS_INIT_INDEX,
                  error, PDERROR, "Failed to initialize index" ) ;
 
-      if ( DMS_INVALID_EXTENT == _indexLID )
-      {
-         _indexLID = _indexCB->getLogicalID() ;
-      }
+      _indexLID = _indexCB->getLogicalID() ;
 
       rc = _indexCB->getIndexID ( _indexOID ) ;
       PD_RC_CHECK ( rc, PDERROR, "Failed to get indexID, rc = %d", rc ) ;
@@ -380,8 +374,7 @@ namespace engine
                                                        _dmsStorageData* dataSU,
                                                        _dmsMBContext* mbContext,
                                                        _pmdEDUCB* eduCB,
-                                                       INT32 indexID,
-                                                       dmsExtentID indexLID, 
+                                                       dmsExtentID indexExtentID, 
                                                        INT32 sortBufferSize )
    {
       _dmsIndexBuilder* builder = NULL ;
@@ -403,8 +396,7 @@ namespace engine
                                                        dataSU,
                                                        mbContext,
                                                        eduCB,
-                                                       indexID,
-                                                       indexLID ) ;
+                                                       indexExtentID ) ;
          if ( NULL == builder)
          {
             PD_LOG ( PDERROR, "failed to allocate _dmsIndexOnlineBuilder" ) ;
@@ -416,8 +408,7 @@ namespace engine
                                                         dataSU,
                                                         mbContext,
                                                         eduCB,
-                                                        indexID,
-                                                        indexLID,
+                                                        indexExtentID,
                                                         sortBufferSize ) ;
          if ( NULL == builder)
          {

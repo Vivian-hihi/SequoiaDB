@@ -50,8 +50,7 @@ namespace engine
                         _dmsStorageData* dataSU,
                         _dmsMBContext* mbContext,
                         _pmdEDUCB* eduCB,
-                        INT32 indexID,
-                        dmsExtentID indexLID ) ;
+                        dmsExtentID indexExtentID ) ;
       virtual ~_dmsIndexBuilder() ;
       INT32 build() ;
 
@@ -77,7 +76,7 @@ namespace engine
       _dmsStorageData*   _suData ;
       _dmsMBContext*     _mbContext ;
       _pmdEDUCB*         _eduCB ;
-      INT32              _indexID ;
+      dmsExtentID        _indexExtentID ;
       dmsExtentID        _indexLID ;
       _ixmIndexCB*       _indexCB ;
       OID                _indexOID ;
@@ -92,8 +91,7 @@ namespace engine
                                                _dmsStorageData* dataSU,
                                                _dmsMBContext* mbContext,
                                                _pmdEDUCB* eduCB,
-                                               INT32 indexID,
-                                               dmsExtentID indexLID, 
+                                               dmsExtentID indexExtentID, 
                                                INT32 sortBufferSize ) ;
       static void releaseInstance( _dmsIndexBuilder* builder ) ;
    } ;

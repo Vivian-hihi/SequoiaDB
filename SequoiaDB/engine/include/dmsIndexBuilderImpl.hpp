@@ -46,8 +46,7 @@ namespace engine
                               _dmsStorageData* dataSU,
                               _dmsMBContext* mbContext,
                               _pmdEDUCB* eduCB,
-                              INT32 indexID,
-                              dmsExtentID indexLID ) ;
+                              dmsExtentID indexExtentID ) ;
       ~_dmsIndexOnlineBuilder() ;
 
    private:
@@ -64,8 +63,7 @@ namespace engine
                                _dmsStorageData* dataSU,
                                _dmsMBContext* mbContext,
                                _pmdEDUCB* eduCB,
-                               INT32 indexID,
-                               dmsExtentID indexLID,
+                               dmsExtentID indexExtentID,
                                INT32 sortBufferSize ) ;
       ~_dmsIndexSortingBuilder() ;
 
