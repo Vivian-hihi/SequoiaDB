@@ -3032,6 +3032,14 @@
                     </objlist>
                 </obj>
                 <obj>
+                    <id>1450171368</id>
+                    <cnname>SQL表达式</cnname>
+                    <enname>SQL Expression</enname>
+                    <cnpath>SdbDoc_Cn/reference/SQL_Mathematical_expression.html</cnpath>
+                    <enpath>SdbDoc_En/reference/SQL_Mathematical_expression.html</enpath>
+                    <enabled>true</enabled>
+                </obj>
+                <obj>
                     <id>1432190983</id>
                     <cnname>SQL to SequoiaDB 映射表</cnname>
                     <enname>Mapping Table from SQL to SequoiaDB</enname>
