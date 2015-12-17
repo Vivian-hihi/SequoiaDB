@@ -62,7 +62,7 @@
       <for list="${DEPLOY_WILDCARD}" param="deploymode">
          <sequential>          
             <antcall target="Deploy-And-Test-Case" inheritAll="true" >
-                 <param name="deploy.case.fullname" value="${deploy.config.path}/${test.environment}-@{deploymode}.xml" />
+               <param name="deploy.case.fullname" value="${deploy.config.path}/${test.environment}-@{deploymode}.xml" />
             </antcall>
          </sequential>
       </for>  
