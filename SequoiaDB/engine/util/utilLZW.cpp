@@ -252,7 +252,7 @@ namespace engine
       LZW_CODE nextCode = DICT_INVALID_NODE ;
       LZW_CODE maxCode = _ctx.getDictionary()->getMaxNodeNum() - 1 ;
 
-      code = (LZW_CODE)source[0] ;
+      code = (UINT8)source[0] ;
       pos++ ;
       strLen++ ;
       full = FALSE ;
