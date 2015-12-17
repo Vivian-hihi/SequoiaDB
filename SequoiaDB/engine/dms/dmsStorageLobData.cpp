@@ -547,7 +547,7 @@ namespace engine
 
          if ( 0 != _fileSz &&
               ( sizeBeforeExtend - sizeof( _dmsStorageUnitHeader ) ) %
-              DMS_SEGMENT_SZ != 0 )
+              getSegmentSize() != 0 )
          {
             PD_LOG( PDERROR, "invalid file size:%lld, file:%s",
                     sizeBeforeExtend, _fileName.c_str() ) ;
@@ -642,7 +642,7 @@ namespace engine
          }
 
          if ( ( sizeAfterExtend - sizeof( _dmsStorageUnitHeader ) ) %
-              DMS_SEGMENT_SZ != 0 )
+              getSegmentSize() != 0 )
          {
             PD_LOG( PDERROR, "invalid file size:%lld, file:%s",
                     sizeAfterExtend, _fileName.c_str() ) ;
@@ -893,7 +893,7 @@ namespace engine
       }
       _lastSz = _fileSz ;
 
-      if ( ( _fileSz - sizeof( header ) ) % DMS_SEGMENT_SZ != 0 )
+      if ( ( _fileSz - sizeof( header ) ) % getSegmentSize() != 0 )
       {
          PD_LOG( PDERROR, "invalid file size:%lld, file:%s",
                  _fileSz, _fileName.c_str() ) ;
