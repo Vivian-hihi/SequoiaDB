@@ -50,15 +50,24 @@
 		<delete dir="${test.reports.path}" failonerror="false" />
 		<mkdir dir="${test.reports.path}" />
 	</target>
-
+	
 	<target name="Deploy-Test-All" depends="Clean-Last-Build-Reports">
-		<foreach target="Deploy-And-Test-Case" param="deploy.case.fullname">
-			<path>
-				<fileset dir="${deploy.config.path}" includes="${test.environment}-${DEPLOY_WILDCARD}.xml" excludes="" />
-			</path>
-		</foreach>
+      <if>
+      	<equals arg1="${DEPLOY_WILDCARD}" arg2="*" />
+      	<then>
+      	    <var name="DEPLOY_WILDCARD" value="standalone-tp1,[h3][g1][d3]-tp2,[h3][g3][d3]-tp1" />   	    
+      	</then>
+      </if>
+      
+      <for list="${DEPLOY_WILDCARD}" param="deploymode">
+         <sequential>          
+            <antcall target="Deploy-And-Test-Case" inheritAll="true" >
+                 <param name="deploy.case.fullname" value="${test.environment}-@{deploymode}.xml" />
+            </antcall>
+         </sequential>
+      </for>  
 	</target>
-
+   
 	<target name="Deploy-And-Test-Case" depends="">
 		<echo level="info" message="Step1 : Call the target &lt;Deploy-Software&gt; on script file &lt;${deploy.case.fullname}&gt; on &lt;${ci.script.file.path}&gt;,command:&lt;ant -f ${deploy.case.fullname} --target=Deploy-Software -Dinstall.package.fullname=${release.path}/${BUILD.INSTALL.FILENAME} -Ddeploy.file.fullname=${deploy.file.fullname} -Ddeploy.path=${WORKSPACE}/deploy&gt;." />
 		<ant antfile="${deploy.case.fullname}" dir="${ci.script.file.path}" target="Deploy-Software" inheritAll="true">
