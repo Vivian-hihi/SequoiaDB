@@ -2536,7 +2536,7 @@ namespace engine
       map< BSONObj, UINT64 >::iterator it ;
 
       /// lock
-      _rwMutex.lock_w() ;
+      _mutex.get() ;
       it = _mapKey2ID.find( shardingKey ) ;
       if ( it == _mapKey2ID.end() )
       {
@@ -2550,7 +2550,7 @@ namespace engine
          it->second = ossPack32To64( retID, lo + 1 ) ;
       }
       /// unlock
-      _rwMutex.release_w() ;
+      _mutex.release() ;
 
       return retID ;
    }
@@ -2565,7 +2565,7 @@ namespace engine
 
       map< BSONObj, UINT64 >::iterator it ;
       /// lock
-      _rwMutex.lock_w() ;
+      _mutex.get() ;
       it = _mapKey2ID.find( shardingKey ) ;
       if ( it != _mapKey2ID.end() )
       {
@@ -2586,7 +2586,7 @@ namespace engine
          }
       }
       /// unlock
-      _rwMutex.release_w() ;
+      _mutex.release() ;
    }
 
    /*

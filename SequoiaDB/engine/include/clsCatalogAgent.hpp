@@ -40,6 +40,7 @@
 #include "oss.hpp"
 #include "clsBase.hpp"
 #include "ossRWMutex.hpp"
+#include "ossLatch.hpp"
 #include "netDef.hpp"
 #include "ixmIndexKey.hpp"
 #include "../bson/bson.h"
@@ -357,7 +358,7 @@ namespace engine
          UINT32                  _id ;
          /// UINT64 ==> ID:32 + Ref:32
          map< BSONObj, UINT64 >  _mapKey2ID ;
-         ossRWMutex              _rwMutex ;
+         ossSpinXLatch           _mutex ;
    } ;
    typedef _clsShardingKeySite clsShardingKeySite ;
 
