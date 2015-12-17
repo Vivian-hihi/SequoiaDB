@@ -38,10 +38,10 @@
 
 		<exec command="/bin/sh -c 'eval echo $$$' " dir="" timeout="900000" outputproperty="pid" />
 		<sdbprefix prefixName="CHANGEDSTRING">
-			<param name="${begin.flag}" value="Test" />
-			<param name="${host.NAME}" value="${host.NAME}" />
-			<param name="${pid}" value="${pid}" />
-			<param name="${parallel.num}" value="${parallel.num}" />
+			<param name="${begin.flag}" value="Test_" />
+			<param name="${host.NAME}" value="${host.NAME}_" />
+			<param name="${pid}" value="${pid}_" />
+			<param name="${parallel.num}" value="${parallel.num}_" />
 			<param name="${end.flag}" value="_end" />
 		</sdbprefix>
 
