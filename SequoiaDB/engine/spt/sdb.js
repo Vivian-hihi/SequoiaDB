@@ -84,8 +84,21 @@ function jsonFormat(pretty) {
 // end Global functions
 
 // Bson
+function _numberLongRevier(key, value) {
+   if ( "number" === typeof(value) ) {
+   	// if we use +/-9007199254740992(+/-2^53) as the max/min valid integer
+   	// for sdb shell to input, we must use "<=" and ">=" to compare,
+   	// because, when value is greater then 9007199254740992,
+   	// value may show as 9007199254740992
+      if (value < -9007199254740991 || value > 9007199254740991 ) {
+         throw "can't display number, for it's too large" ;
+	  }
+   }
+   return value ;
+}
+
 Bson.prototype.toObj = function() {
-   return JSON.parse( this.toJson() );
+   return JSON.parse( this.toJson(), _numberLongRevier ) ;
 }
 
 Bson.prototype.toString = function() {
