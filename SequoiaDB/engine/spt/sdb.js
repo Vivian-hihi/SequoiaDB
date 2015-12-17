@@ -74,6 +74,13 @@ function isEmptyObject(obj) {
    return true;
 }
 
+function jsonFormat(pretty) {
+   if (pretty == undefined){
+      pretty = true;
+   }
+   SDB_PRINT_JSON_FORMAT = pretty;
+}
+
 // end Global functions
 
 // Bson
@@ -183,8 +190,8 @@ CLCount.prototype._exec = function() {
 // end CLCount
 
 // SdbCollection
-SdbCollection.prototype.count = function( condition ) {
-   return new CLCount( this, condition ) ;
+SdbCollection.prototype.count = function( condition, hint ) {
+   return new CLCount( this, condition, hint ) ;
 }
 
 SdbCollection.prototype.find = function( query, select ) {
@@ -388,7 +395,7 @@ SdbQuery.prototype.count = function() {
    if (undefined != this._hint && undefined != this._hint.$Modify) {
       throw "count() cannot be executed with update() or remove()";
    }
-   return this._collection.count( this._query ) ;
+   return this._collection.count( this._query, this._hint ) ;
 }
 
 SdbQuery.prototype.explain = function( options ) {
