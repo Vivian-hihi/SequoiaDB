@@ -70,8 +70,7 @@ namespace engine
       pBuffer[ buffSize - 1 ] = 0 ;
    }
 
-
-   #define DMS_EXTEND_THRESHOLD_SIZE      ( 16777216 )   // 16MB
+   #define DMS_EXTEND_THRESHOLD_SIZE      ( 33554432 )   // 32MB
    /*
       _dmsStorageBase : implement
    */
@@ -547,6 +546,7 @@ namespace engine
       pHeader->_secretValue = _pStorageInfo->_secretValue ;
       pHeader->_createLobs = 0 ;
       pHeader->_validFlag  = 0 ;
+      pHeader->_lsn        = 0 ;
    }
 
    INT32 _dmsStorageBase::_checkPageSize( dmsStorageUnitHeader * pHeader )
@@ -835,6 +835,10 @@ namespace engine
 
    UINT32 _dmsStorageBase::_extendThreshold () const
    {
+      if ( _pStorageInfo )
+      {
+         return _pStorageInfo->_extentThreshold >> _pageSizeSquare ;
+      }
       return (UINT32)( DMS_EXTEND_THRESHOLD_SIZE >> _pageSizeSquare ) ;
    }
 

@@ -58,6 +58,8 @@ namespace engine
       PD_TRACE_ENTRY ( SDB__DMSSU ) ;
       SDB_ASSERT ( pSUName, "name can't be null" ) ;
 
+      pmdOptionsCB *options = pmdGetOptionCB() ;
+
       if ( 0 == pageSize )
       {
          pageSize = DMS_PAGE_SIZE_DFT ;
@@ -76,6 +78,8 @@ namespace engine
       ossStrncpy( _storageInfo._suName, pSUName, DMS_SU_NAME_SZ ) ;
       _storageInfo._suName[DMS_SU_NAME_SZ] = 0 ;
       _storageInfo._sequence = sequence ;
+      _storageInfo._overflowRatio = options->getOverFlowRatio() ;
+      _storageInfo._extentThreshold = options->getExtendThreshold() << 20 ;
       // make secret value
       _storageInfo._secretValue = ossPack32To64( (UINT32)time(NULL),
                                                  (UINT32)(ossRand()*239641) ) ;

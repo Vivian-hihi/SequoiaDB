@@ -2293,7 +2293,7 @@ namespace engine
       // add record metadata and oid
       dmsRecordSize += ( DMS_RECORD_METADATA_SZ + oidLen ) ;
       // get the recordsize that we have to allocate
-      // dmsRecordSize *= DMS_RECORD_OVERFLOW_RATIO ;
+      _overflowSize( dmsRecordSize ) ;
       // record is ALWAYS 4 bytes aligned
       dmsRecordSize = OSS_MIN( DMS_RECORD_MAX_SZ,
                                ossAlignX ( dmsRecordSize, 4 ) ) ;
@@ -3223,7 +3223,7 @@ namespace engine
          ossValuePtr deletedRecordPtr = 0 ;
 
          // get the recordsize that we have to allocate
-         dmsRecordSize *= DMS_RECORD_OVERFLOW_RATIO ;
+         _overflowSize( dmsRecordSize ) ;
          // record is ALWAYS 4 bytes aligned
          dmsRecordSize = OSS_MIN( DMS_RECORD_MAX_SZ,
                                   ossAlignX ( dmsRecordSize, 4 ) ) ;

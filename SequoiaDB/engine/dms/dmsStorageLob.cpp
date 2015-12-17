@@ -1159,6 +1159,10 @@ namespace engine
 
    UINT32 _dmsStorageLob::_extendThreshold() const
    {
+      if ( _pStorageInfo )
+      {
+         return _pStorageInfo->_extentThreshold >> _data.pageSizeSquareRoot() ;
+      }
       return (UINT32)( DMS_LOB_EXTEND_THRESHOLD_SIZE >> pageSizeSquareRoot() ) ;
    }
 

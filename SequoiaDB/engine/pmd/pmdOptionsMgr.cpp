@@ -77,6 +77,8 @@ namespace engine
    #define PMD_DFT_PAGECLEANINTERVAL   (10000)
    #define PMD_MIN_PAGECLEANINTERVAL   (1000)
    #define PMD_DFT_TRANS_TIMEOUT       (60)  // 1 minute
+   #define PMD_DFT_OVERFLOW_RETIO      (120)
+   #define PMD_DFT_EXTEND_THRESHOLD    (32)
 
    /*
       _pmdCfgExchange implement
@@ -1263,6 +1265,8 @@ namespace engine
       _auth                = TRUE ;
       _planBucketNum       = 500 ;
       _oprtimeout          = PMD_OPTION_OPR_TIME_DEFAULT ;
+      _overflowRatio       = PMD_DFT_OVERFLOW_RETIO ;
+      _extendThreshold     = PMD_DFT_EXTEND_THRESHOLD ;
 
 #ifdef SDB_ENTERPRISE
 
@@ -1483,7 +1487,15 @@ namespace engine
                FALSE, TRUE, 500, FALSE ) ;
       // --operatortimeout
       rdxUInt( pEX, PMD_OPTION_OPERATOR_TIMEOUT, _oprtimeout, FALSE, TRUE,
-               PMD_OPTION_OPR_TIME_DEFAULT, TRUE ) ;
+               PMD_OPTION_OPR_TIME_DEFAULT, FALSE ) ;
+      // --overflowratio
+      rdxUInt( pEX, PMD_OPTION_OVER_FLOW_RATIO, _overflowRatio, FALSE, TRUE,
+               PMD_DFT_OVERFLOW_RETIO, FALSE ) ;
+      rdvMinMax( pEX, _overflowRatio, 100, 10000, TRUE ) ;
+      // --extendthreshold
+      rdxUInt( pEX, PMD_OPTION_EXTEND_THRESHOLD, _extendThreshold, FALSE, TRUE,
+               PMD_DFT_EXTEND_THRESHOLD, TRUE ) ;
+      rdvMinMax( pEX, _extendThreshold, 0, 128, TRUE ) ;
 
       // end map
 
@@ -1525,6 +1537,12 @@ namespace engine
       if ( !ossIsPowerOf2( _replBucketSize ) )
       {
          _replBucketSize = PMD_DFT_REPL_BUCKET_SIZE ;
+      }
+
+      // extendthreshold check
+      if ( 0 != _extendThreshold && !ossIsPowerOf2( _extendThreshold ) )
+      {
+         _extendThreshold = PMD_DFT_EXTEND_THRESHOLD ;
       }
 
       // syncstrategy check

@@ -476,6 +476,8 @@ namespace engine
          OSS_INLINE BOOLEAN authEnabled() const { return _auth ; }
          OSS_INLINE UINT32 getPlanBuckets() const { return _planBucketNum ; }
          OSS_INLINE UINT32 getOprTimeout() const { return _oprtimeout ; }
+         OSS_INLINE UINT32 getOverFlowRatio() const { return _overflowRatio ; }
+         OSS_INLINE UINT32 getExtendThreshold() const { return _extendThreshold ; }
 
 #ifdef SDB_ENTERPRISE
 
@@ -536,6 +538,8 @@ namespace engine
          BOOLEAN     _auth ;
          UINT32      _planBucketNum ;
          UINT32      _oprtimeout ;
+         UINT32      _overflowRatio ;     // %
+         UINT32      _extendThreshold ;   // MB
 
 #ifdef SDB_ENTERPRISE
 

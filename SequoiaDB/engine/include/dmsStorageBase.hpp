@@ -78,6 +78,9 @@ namespace engine
       UINT64      _secretValue ;
       INT32       _lobdPageSize ;
 
+      UINT32      _overflowRatio ;
+      UINT32      _extentThreshold ;
+
       _dmsStorageInfo ()
       {
          _pageSize      = DMS_PAGE_SIZE_DFT ;
@@ -85,6 +88,9 @@ namespace engine
          _sequence      = 0 ;
          _secretValue   = 0 ;
          _lobdPageSize  = DMS_DO_NOT_CREATE_LOB ;
+
+         _overflowRatio = 0 ;
+         _extentThreshold = 0 ;
       }
    };
    typedef _dmsStorageInfo dmsStorageInfo ;

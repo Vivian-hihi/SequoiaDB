@@ -722,6 +722,7 @@ namespace engine
          OSS_INLINE const CHAR*   _clFullName ( const CHAR *clName,
                                             CHAR *clFullName,
                                             UINT32 fullNameLen ) ;
+         OSS_INLINE void          _overflowSize( UINT32 &size ) ;
 
          void                 _attach ( _dmsStorageIndex *pIndexSu ) ;
          void                 _detach () ;
@@ -892,6 +893,17 @@ namespace engine
       clFullName[ DMS_COLLECTION_FULL_NAME_SZ ] = 0 ;
 
       return clFullName ;
+   }
+   OSS_INLINE void _dmsStorageData::_overflowSize( UINT32 &size )
+   {
+      if ( _pStorageInfo && _pStorageInfo->_overflowRatio > 100 )
+      {
+         size = ( size * _pStorageInfo->_overflowRatio + 50 ) / 100 ;
+      }
+      else if ( !_pStorageInfo )
+      {
+         size = size * DMS_RECORD_OVERFLOW_RATIO ;
+      }
    }
    OSS_INLINE void _dmsStorageData::updateCreateLobs( UINT32 createLobs )
    {
