@@ -540,7 +540,7 @@
          <en>The path of temp files, default is 'dbpath'+'/tmp'</en>
          <cn>数据库临时文件目录，默认为'数据库路径'+'/tmp'</cn>
       </detail>
-      <typeofweb>num</typeofweb>
+      <typeofweb>str</typeofweb>
    </opt>
 
    <opt>
@@ -924,8 +924,46 @@
          <en>The timeout period for heartbeat in each operation ( in ms ), default:30000, 0 for no-timeout </en>
          <cn>判定操作中断的时间(ms),默认值:30000, 0表示不超时</cn>
       </description>
+      <detail>
+         <en>The timeout period for heartbeat in each operation ( in ms ), default:30000, 0 for no-timeout</en>
+         <cn>判定操作中断的时间(ms),默认值:30000, 0表示不超时</cn>
+      </detail>
+      <type>int</type>
+      <default>30000</default>
+      <typeofweb>num</typeofweb>
+   </opt>
+
+   <opt>
+      <name>PMD_OPTION_OVER_FLOW_RATIO</name>
+      <long>overflowratio</long>
+      <description>
+         <en>The overflow ratio(%) of record when inserting, default is 120, value range:[100,10000]</en>
+         <cn>记录空间扩展比(%),默认为120,取值范围:[100,10000]</cn>
+      </description>
+      <detail>
+         <en>The overflow ratio(%) of record when inserting, default is 120, value range:[100,10000]</en>
+         <cn>记录空间扩展比(%),默认为120,取值范围:[100,10000]</cn>
+      </detail>
+      <type>int</type>
+      <default>120</default>
+      <typeofweb>num</typeofweb>
+   </opt>
+
+   <opt>
+      <name>PMD_OPTION_EXTEND_THRESHOLD</name>
+      <long>extendthreshold</long>
+      <description>
+         <en>The threshold size( in MB, must be power of 2 or 0 ) of pre extended segment, default is 32, 0 means disable pre-extend, value range:[0, 128]</en>
+         <cn>预扩展数据段的阈值(单位:MB, 取值必须是2的幂或者0), 默认为32, 0表示不开启预扩展, 取值范围:[0, 128]</cn>
+      </description>
+      <detail>
+         <en>The threshold size( in MB, must be power of 2 or 0 ) of pre extended segment, default is 32, 0 means disable pre-extend, value range:[0, 128]</en>
+         <cn>预扩展数据段的阈值(单位:MB, 取值必须是2的幂或者0), 默认为32, 0表示不开启预扩展, 取值范围:[0, 128]</cn>
+      </detail>
       <type>int</type>
       <hidden>true</hidden>
+      <default>32</default>
+      <typeofweb>num</typeofweb>
    </opt>
 
 </optlist>
