@@ -937,15 +937,15 @@
       <name>PMD_OPTION_OVER_FLOW_RATIO</name>
       <long>overflowratio</long>
       <description>
-         <en>The overflow ratio(%) of record when inserting, default is 120, value range:[100,10000]</en>
-         <cn>记录空间扩展比(%),默认为120,取值范围:[100,10000]</cn>
+         <en>The overflow ratio(%) of record when inserting, default is 12, value range:[0,10000]</en>
+         <cn>记录大小预留空间扩展比(%),默认为12,取值范围:[0,10000]</cn>
       </description>
       <detail>
-         <en>The overflow ratio(%) of record when inserting, default is 120, value range:[100,10000]</en>
-         <cn>记录空间扩展比(%),默认为120,取值范围:[100,10000]</cn>
+         <en>The overflow ratio(%) of record when inserting, default is 12, value range:[0,10000]</en>
+         <cn>记录大小预留空间扩展比(%),默认为12,取值范围:[0,10000]</cn>
       </detail>
       <type>int</type>
-      <default>120</default>
+      <default>12</default>
       <typeofweb>num</typeofweb>
    </opt>
 
