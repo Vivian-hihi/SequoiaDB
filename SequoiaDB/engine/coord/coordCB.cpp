@@ -162,6 +162,10 @@ namespace engine
          SDB_OSS_DEL _pNetWork ;
          _pNetWork = NULL ;
       }
+      /// need to clear the catalog map, because the catalogset will
+      /// use the global var, so need clear before main eixt
+      _cataInfoMap.clear() ;
+      _nodeGroupInfo.clear() ;
       return SDB_OK ;
    }
 
