@@ -57,6 +57,7 @@ namespace import
    #define CSV_STR_REGEX            "regex"
    #define CSV_STR_BINARY           "binary"
    #define CSV_STR_NUMBER           "number"
+   #define CSV_STR_SKIP             "skip"
 
    #define CSV_STR_TRUE       "true"
    #define CSV_STR_FALSE      "false"
@@ -94,6 +95,7 @@ namespace import
    #define CSV_STR_REGEX_SIZE          (sizeof(CSV_STR_REGEX) - 1)
    #define CSV_STR_BINARY_SIZE         (sizeof(CSV_STR_BINARY) - 1)
    #define CSV_STR_NUMBER_SIZE         (sizeof(CSV_STR_NUMBER) - 1)
+   #define CSV_STR_SKIP_SIZE           (sizeof(CSV_STR_SKIP) - 1)
    #define CSV_STR_TYPE_MIN_SIZE       3
 
    #define CSV_STR_TYPE_EQ(type, str, len) \
@@ -309,6 +311,8 @@ namespace import
          return CSV_STR_REGEX;
       case CSV_TYPE_BINARY:
          return CSV_STR_BINARY;
+      case CSV_TYPE_SKIP:
+         return CSV_STR_SKIP;
       default:
          return "unknown type";
       }
@@ -426,9 +430,14 @@ namespace import
       case 's':
       case 'S':
          // string
+         // skip
          if (CSV_STR_TYPE_EQ(CSV_STR_STRING, str, length))
          {
             type = CSV_TYPE_STRING;
+         }
+         else if (CSV_STR_TYPE_EQ(CSV_STR_SKIP, str, length))
+         {
+            type = CSV_TYPE_SKIP;
          }
          break;
       case 't':
@@ -2842,6 +2851,16 @@ namespace import
             goto error;
          }
          goto done;
+      case CSV_TYPE_SKIP:
+         // treat SKIP filed as string
+         rc = _stringToString(data, length, strDel, strDelLen, fieldDel,
+                              fieldDelLen, fieldValue.strVal,
+                              valueLength, fieldEnd);
+         if (SDB_OK != rc)
+         {
+            goto error;
+         }
+         goto done;
       default:
          rc = SDB_INVALIDARG;
       }
@@ -3213,6 +3232,10 @@ namespace import
                                  value->binaryVal.type,
                                  value->binaryVal.bin,
                                  value->binaryVal.binLen);
+         break;
+      case CSV_TYPE_SKIP:
+         // no need to append SKIP filed
+         rc = SDB_OK;
          break;
       case CSV_TYPE_AUTO:
       default:

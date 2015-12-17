@@ -57,6 +57,7 @@ namespace import
       CSV_TYPE_OID,
       CSV_TYPE_REGEX,
       CSV_TYPE_BINARY,
+      CSV_TYPE_SKIP,
       CSV_TYPE_NUM
    };
 
