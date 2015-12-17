@@ -565,7 +565,8 @@ namespace engine
                                     dmsExtentID &nextExtent,
                                     set< dmsRecordID > *ridList,
                                     BOOLEAN dumpRecord,
-                                    utilCompressor *compressor )
+                                    utilCompressor *compressor,
+                                    utilCompressorContext compContext )
    {
       UINT32 len           = 0 ;
       UINT32 hexDumpOption = 0 ;
@@ -650,9 +651,14 @@ namespace engine
                len += dumpDataRecord ( cb, ((CHAR*)inBuf)+nextRecord,
                                        inSize - nextRecord,
                                        outBuf + len, outSize - len,
-                                       nextRecord, ridList, compressor ) ;
+                                       nextRecord, ridList,
+                                       compressor, compContext) ;
                len += ossSnprintf ( outBuf + len, outSize - len, OSS_NEWLINE ) ;
                ++recordCount ;
+               if ( compContext )
+               {
+                  compressor->rePrepare( compContext ) ;
+               }
             }
          }
       }
@@ -815,7 +821,8 @@ namespace engine
                                     CHAR *outBuf, UINT32 outSize,
                                     dmsOffset &nextRecord,
                                     set< dmsRecordID > *ridList,
-                                    utilCompressor *compressor )
+                                    utilCompressor *compressor,
+                                    utilCompressorContext compContext )
    {
       INT32 rc = SDB_OK ;
       SDB_ASSERT ( cb, "cb can't be NULL" ) ;
@@ -925,7 +932,7 @@ namespace engine
          try
          {
             ossValuePtr recordPtr = 0 ;
-            DMS_RECORD_EXTRACTDATA ( compressor,
+            DMS_RECORD_EXTRACTDATA ( compressor, compContext,
                                      (ossValuePtr)(inBuf), recordPtr ) ;
             BSONObj obj ( (CHAR*)recordPtr ) ;
             len += ossSnprintf ( outBuf + len, outSize - len,

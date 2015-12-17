@@ -32,6 +32,7 @@ namespace engine
    INT32 _utilCompressorLZW::prepare( utilCompressorContext &ctx )
    {
       INT32 rc = SDB_OK ;
+      BOOLEAN newCtx = FALSE ;
       _utilLZWContext *context = NULL ;
 
       _vecCtxLatch.get() ;
@@ -59,21 +60,11 @@ namespace engine
       goto done ;
    }
 
-   INT32 _utilCompressorLZW::prepareExt( utilCompressorContext context )
-   {
-      SDB_ASSERT( context, "Invalid argument" ) ;
-
-      ((_utilLZWContext *)context)->setDictionary( _dictionary ) ;
-      _prepared  = TRUE ;
-
-      return SDB_OK ;
-   }
-
    /*
     * Reset everything in the context except the dictionary. Then it can be used
     * directly to compress or decompress.
     */
-   INT32 _utilCompressorLZW::rePrepare( utilCompressorContext ctx )
+   INT32 _utilCompressorLZW::rePrepare( utilCompressorContext &ctx )
    {
       _utilLZWContext *context = ( _utilLZWContext * )ctx ;
 

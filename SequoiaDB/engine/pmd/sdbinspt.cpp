@@ -1507,13 +1507,14 @@ error :
 }
 
 INT32 prepareCompressor( OSSFILE &file, const dmsMB *mb, INT32 pageSize,
-                         utilCompressor *&compressor )
+               utilCompressor *&compressor, utilCompressorContext &compContext )
 {
    INT32 rc = SDB_OK ;
    dmsDictExtent extentHead ;
    dmsExtentID dictExtentID = mb->_dictExtentID ;
 
    utilCompressor *compressorPtr = NULL ;
+   utilCompressorContext context = UTIL_INVALID_COMP_CTX ;
    CHAR *dictBuf = NULL ;
 
    rc = gCompressFactory.createCompressor(
@@ -1559,7 +1560,11 @@ INT32 prepareCompressor( OSSFILE &file, const dmsMB *mb, INT32 pageSize,
       goto error ;
    }
 
+   rc = compressorPtr->prepare( context ) ;
+   PD_RC_CHECK( rc, PDERROR, "Failed to prepare compressor, rc: %d", rc ) ;
+
    compressor = compressorPtr ;
+   compContext = context ;
 done:
    if ( dictBuf )
    {
@@ -2081,6 +2086,7 @@ void inspectCollectionData( OSSFILE &file, SINT32 pageSize, UINT16 id,
    dmsExtent *pExtent = NULL ;
    CHAR collectionName[ DMS_COLLECTION_NAME_SZ + 1 ] = { 0 } ;
    utilCompressor *compressor = NULL ;
+   utilCompressorContext compContext = UTIL_INVALID_COMP_CTX ;
 
    rc = loadMB ( id, mb ) ;
    if ( rc )
@@ -2103,7 +2109,7 @@ void inspectCollectionData( OSSFILE &file, SINT32 pageSize, UINT16 id,
 
    if ( DMS_INVALID_EXTENT != mb->_dictExtentID )
    {
-      rc = prepareCompressor( file, mb, pageSize, compressor ) ;
+      rc = prepareCompressor( file, mb, pageSize, compressor, compContext ) ;
       if ( rc )
       {
          dumpPrintf( "Failed to prepare compressor for collection, rc: %d", rc ) ;
@@ -2169,7 +2175,8 @@ retry_data :
       len = dmsInspect::inspectDataExtent ( cb, gExtentBuffer,
                                ((dmsExtent*)gExtentBuffer)->_blockSize*pageSize,
                                gBuffer, gBufferSize, hwm, id, tempExtent,
-                               &extentRIDList, localErr, compressor ) ;
+                               &extentRIDList, localErr,
+                               compressor, compContext ) ;
       if ( (UINT32)len >= gBufferSize-1 )
       {
          // if our buffer is not large enough, let's allocate more memory and
@@ -2196,6 +2203,10 @@ retry_data :
    } //end while
 
 done :
+   if ( compContext )
+   {
+      compressor->done( compContext ) ;
+   }
    if ( compressor )
    {
       gCompressFactory.destroyCompressor( compressor ) ;
@@ -2301,6 +2312,7 @@ void dumpCollectionData( OSSFILE &file, SINT32 pageSize, UINT16 id )
    dmsExtentID tempExtent = DMS_INVALID_EXTENT ;
    dmsExtentID firstExtent = DMS_INVALID_EXTENT ;
    utilCompressor *compressor = NULL ;
+   utilCompressorContext compContext = UTIL_INVALID_COMP_CTX ;
 
    rc = loadMB ( id, mb ) ;
    if ( rc )
@@ -2355,7 +2367,7 @@ void dumpCollectionData( OSSFILE &file, SINT32 pageSize, UINT16 id )
 
    if ( DMS_INVALID_EXTENT != mb->_dictExtentID )
    {
-      rc = prepareCompressor( file, mb, pageSize, compressor ) ;
+      rc = prepareCompressor( file, mb, pageSize, compressor, compContext ) ;
       if ( rc )
       {
          dumpPrintf( "Failed to prepare compressor for collection, rc: %d", rc ) ;
@@ -2390,7 +2402,7 @@ retry_data :
                                DMS_SU_DMP_OPT_HEX_WITH_ASCII |
                                DMS_SU_DMP_OPT_HEX_PREFIX_AS_ADDR |
                                gDumpType, tempExtent, &extentRIDList,
-                               gShowRecordContent, compressor ) ;
+                               gShowRecordContent, compressor, compContext ) ;
       PD_TRACE1 ( SDB_DUMPCOLL, PD_PACK_INT(len) );
       if ( (UINT32)len >= gBufferSize-1 )
       {
@@ -2415,6 +2427,10 @@ retry_data :
    }
 
 done :
+   if ( compContext )
+   {
+      compressor->done( compContext ) ;
+   }
    if ( compressor )
    {
       gCompressFactory.destroyCompressor( compressor ) ;

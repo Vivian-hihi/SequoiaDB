@@ -310,6 +310,7 @@ namespace engine
       dmsExtentID    tempExtentID   = 0 ;
       monAppCB * pMonAppCB          = cb ? cb->getMonAppCB() : NULL ;
       dmsCompressorEntry *compressorEntry = NULL ;
+      utilCompressorContext compContext = UTIL_INVALID_COMP_CTX ;
       utilCompressor *compressor    = NULL ;
 
       SDB_ASSERT ( _su, "_su can't be NULL" ) ;
@@ -344,6 +345,12 @@ namespace engine
 
       compressorEntry = _su->data()->getCompressorEntry( mbContext->mbID() ) ;
       compressor = compressorEntry->getCompressor( SHARED ) ;
+      if ( compressor )
+      {
+         rc = compressor->prepare( compContext ) ;
+         PD_RC_CHECK( rc, PDERROR,
+                      "Failed to prepare compressor, rc: %d", rc ) ;
+      }
       while ( !cb->isForced() )
       {
          rc = mbContext->mbLock( EXCLUSIVE ) ;
@@ -387,7 +394,8 @@ namespace engine
          {
             recordPtr = extentPtr + recordOffset ;
             recordID._offset = recordOffset ;
-            DMS_RECORD_EXTRACTDATA( compressor, recordPtr, recordDataPtr) ;
+            DMS_RECORD_EXTRACTDATA( compressor, compContext,
+                                    recordPtr, recordDataPtr) ;
             recordOffset = DMS_RECORD_GETNEXTOFFSET(recordPtr) ;
             ++( extAddr->_recCount ) ;
 
@@ -453,6 +461,13 @@ namespace engine
                extAddr->_firstRecordOffset = recordID._offset ;
             }
             extAddr->_lastRecordOffset = recordID._offset ;
+
+            if ( compContext )
+            {
+               rc = compressor->rePrepare( compContext ) ;
+               PD_RC_CHECK( rc, PDERROR,
+                           "Failed to prepare compressor, rc: %d", rc ) ;
+            }
          } //while ( DMS_INVALID_OFFSET != recordOffset )
 
          // unlock
@@ -460,6 +475,10 @@ namespace engine
       } // while
 
    done:
+      if ( compContext )
+      {
+         compressor->done( compContext ) ;
+      }
       if ( compressor )
       {
          compressorEntry->releaseCompressor() ;

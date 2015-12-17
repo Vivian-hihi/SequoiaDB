@@ -118,7 +118,9 @@ namespace engine
                                            dmsExtentID &nextExtent,
                                            set<dmsRecordID> *ridList,
                                            SINT32 &err,
-                                           utilCompressor *compressor = NULL ) ;
+                                           utilCompressor *compressor = NULL,
+                                           utilCompressorContext compContext =
+                                             UTIL_INVALID_COMP_CTX ) ;
 
          static UINT32 inspectDataRecord ( _pmdEDUCB *cb,
                                            void * inBuf,
@@ -129,7 +131,9 @@ namespace engine
                                            dmsOffset &nextRecord,
                                            set<dmsRecordID> *ridList,
                                            SINT32 &err,
-                                           utilCompressor *compressor = NULL ) ;
+                                           utilCompressor *compressor = NULL,
+                                           utilCompressorContext compContext =
+                                             UTIL_INVALID_COMP_CTX ) ;
 
          static UINT32 inspectExtentHeader ( void * inBuf,
                                              UINT32 inSize,

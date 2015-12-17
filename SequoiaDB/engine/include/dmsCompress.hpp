@@ -52,10 +52,12 @@ namespace engine
       ppData: output data pointer, not need release
    */
    INT32 dmsCompress ( _pmdEDUCB *cb, utilCompressor *compressor,
+                       utilCompressorContext compContext,
                        const CHAR *pInputData, INT32 inputSize,
                        const CHAR **ppData, INT32 *pDataSize ) ;
 
    INT32 dmsCompress ( _pmdEDUCB *cb, utilCompressor *compressor,
+                       utilCompressorContext compContext,
                        const BSONObj &obj, const CHAR* pOIDPtr, INT32 oidLen,
                        const CHAR **ppData, INT32 *pDataSize ) ;
 
@@ -63,6 +65,7 @@ namespace engine
       ppData: output data pointer, not need release
    */
    INT32 dmsUncompress ( _pmdEDUCB *cb, utilCompressor *compressor,
+                         utilCompressorContext compContext,
                          const CHAR *pInputData, INT32 inputSize,
                          const CHAR **ppData, INT32 *pDataSize ) ;
 

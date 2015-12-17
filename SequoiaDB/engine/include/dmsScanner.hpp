@@ -135,6 +135,8 @@ namespace engine
          _pmdEDUCB            *_cb ;
          dmsCompressorEntry   *_compressorEntry ;
          utilCompressor       *_compressor ;
+         utilCompressorContext _compContext ;
+
    };
    typedef _dmsExtScanner dmsExtScanner ;
 
@@ -239,6 +241,8 @@ namespace engine
          BOOLEAN              _countOnly ;
          dmsCompressorEntry  *_compressorEntry ;
          utilCompressor      *_compressor ;
+         utilCompressorContext _compContext ;
+
    } ;
    typedef _dmsIXSecScanner dmsIXSecScanner ;
 

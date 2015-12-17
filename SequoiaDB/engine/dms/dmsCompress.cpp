@@ -45,6 +45,7 @@ namespace engine
 {
 
    INT32 dmsCompress ( _pmdEDUCB *cb, utilCompressor *compressor,
+                       utilCompressorContext compContext,
                        const CHAR *pInputData, INT32 inputSize,
                        const CHAR **ppData, INT32 *pDataSize )
    {
@@ -92,18 +93,6 @@ namespace engine
       else
       {
          UINT32 actualDataBufLen = maxCompressedLen - sizeof( UINT32 ) ;
-         utilLZWContext *compContext = cb->getCompressCtx() ;
-         if ( compContext->isReady() )
-         {
-            rc = compressor->rePrepare( compContext ) ;
-         }
-         else
-         {
-            rc = compressor->prepareExt( compContext ) ;
-         }
-         PD_RC_CHECK( rc, PDERROR,
-                      "Failed to prepare compressor, rc: %d", rc ) ;
-
          rc = compressor->compress( compContext,  pInputData, inputSize,
                                     pBuff + sizeof( UINT32 ),
                                     actualDataBufLen ) ;
@@ -137,6 +126,7 @@ namespace engine
    }
 
    INT32 dmsCompress ( _pmdEDUCB *cb, utilCompressor *compressor,
+                       utilCompressorContext compContext,
                        const BSONObj &obj,
                        const CHAR* pOIDPtr, INT32 oidLen,
                        const CHAR **ppData, INT32 *pDataSize )
@@ -164,12 +154,12 @@ namespace engine
          DMS_RECORD_SETDATA_OID ( pTmpBuff, obj.objdata(), obj.objsize(),
                                   BSONElement(pOIDPtr) ) ;
 
-         rc = dmsCompress ( cb, compressor, pObjData,
+         rc = dmsCompress ( cb, compressor, compContext, pObjData,
                             BSONObj(pObjData).objsize(), ppData, pDataSize ) ;
       }
       else
       {
-         rc = dmsCompress( cb, compressor, obj.objdata(),
+         rc = dmsCompress( cb, compressor, compContext, obj.objdata(),
                            obj.objsize(), ppData, pDataSize ) ;
       }
 
@@ -184,13 +174,13 @@ namespace engine
    }
 
    INT32 dmsUncompress ( _pmdEDUCB *cb, utilCompressor *compressor,
+                         utilCompressorContext compContext,
                          const CHAR *pInputData, INT32 inputSize,
                          const CHAR **ppData, INT32 *pDataSize )
    {
       INT32 rc = SDB_OK ;
       bool  result = FALSE ;
       CHAR *pBuff = NULL ;
-      utilLZWContext *compContext = NULL ;
 
       SDB_ASSERT ( pInputData && ppData && pDataSize,
                    "Data pointer and size pointer can't be NULL" ) ;
@@ -200,7 +190,6 @@ namespace engine
       if ( compressor )
       {
          maxUncompressedLen = *(UINT32 *)pInputData ;
-         compContext = cb->getCompressCtx() ;
       }
       else
       {
@@ -231,16 +220,6 @@ namespace engine
           * First 4 bytes of the input data is the original uncompressed data
           * length.
           */
-         if ( compContext->isReady() )
-         {
-            rc = compressor->rePrepare( compContext ) ;
-         }
-         else
-         {
-            rc = compressor->prepareExt( compContext ) ;
-         }
-         PD_RC_CHECK( rc, PDERROR,
-                      "Failed to prepare compressor, rc: %d", rc ) ;
          rc = compressor->decompress( compContext,
                                       pInputData + sizeof( UINT32 ),
                                       inputSize - sizeof( UINT32 ),

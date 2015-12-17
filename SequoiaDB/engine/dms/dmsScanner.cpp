@@ -92,6 +92,7 @@ namespace engine
       _cb                  = NULL ;
       _compressorEntry     = NULL ;
       _compressor          = NULL ;
+      _compContext         = NULL ;
 
       if ( DMS_ACCESS_TYPE_UPDATE == _accessType ||
            DMS_ACCESS_TYPE_DELETE == _accessType ||
@@ -113,6 +114,10 @@ namespace engine
                                       &_curRID ) ;
       }
 
+      if ( _compContext )
+      {
+         _compressor->done( _compContext ) ;
+      }
       if ( _compressor )
       {
          _compressorEntry->releaseCompressor() ;
@@ -201,8 +206,7 @@ namespace engine
       _compressor = _compressorEntry->getCompressor( SHARED ) ;
       if ( _compressor )
       {
-         rc = _compressor->prepareExt(
-                                 (utilCompressorContext)cb->getCompressCtx() ) ;
+         rc = _compressor->prepare( _compContext ) ;
          PD_RC_CHECK( rc, PDERROR,
                      "Failed to prepare compressor, rc: %d", rc ) ;
       }
@@ -324,7 +328,8 @@ namespace engine
                DMS_MON_OP_COUNT_INC( _pMonAppCB, MON_DATA_READ, 1 ) ;
             }
 
-            DMS_RECORD_EXTRACTDATA( _compressor, _curRecordPtr, recordDataPtr ) ;
+            DMS_RECORD_EXTRACTDATA( _compressor, _compContext,
+                                    _curRecordPtr, recordDataPtr ) ;
 
             DMS_MON_OP_COUNT_INC( _pMonAppCB, MON_DATA_READ, 1 ) ;
             DMS_MON_OP_COUNT_INC( _pMonAppCB, MON_READ, 1 ) ;
@@ -552,6 +557,7 @@ namespace engine
       _countOnly           = FALSE ;
       _compressorEntry     = NULL ;
       _compressor          = NULL ;
+      _compContext         = NULL ;
 
       if ( DMS_ACCESS_TYPE_UPDATE == _accessType ||
            DMS_ACCESS_TYPE_DELETE == _accessType ||
@@ -572,6 +578,10 @@ namespace engine
                                       &_curRID ) ;
       }
 
+      if ( _compContext )
+      {
+         _compressor->done( _compContext ) ;
+      }
       if ( _compressor )
       {
          _compressorEntry->releaseCompressor() ;
@@ -704,8 +714,7 @@ namespace engine
       _compressor = _compressorEntry->getCompressor( SHARED ) ;
       if ( _compressor )
       {
-         rc = _compressor->prepareExt(
-                              (utilCompressorContext)cb->getCompressCtx() ) ;
+         rc = _compressor->prepare( _compContext ) ;
          PD_RC_CHECK( rc, PDERROR,
                      "Failed to prepare compressor, rc: %d", rc ) ;
       }
@@ -716,6 +725,10 @@ namespace engine
    done:
       return rc ;
    error:
+      if ( _compContext )
+      {
+         _compressor->done( _compContext ) ;
+      }
       if ( _compressor )
       {
          _compressorEntry->releaseCompressor() ;
@@ -922,7 +935,8 @@ namespace engine
             DMS_MON_OP_COUNT_INC( _pMonAppCB, MON_DATA_READ, 1 ) ;
          }
 
-         DMS_RECORD_EXTRACTDATA( _compressor, _curRecordPtr, recordDataPtr) ;
+         DMS_RECORD_EXTRACTDATA( _compressor, _compContext,
+                                 _curRecordPtr, recordDataPtr) ;
          DMS_MON_OP_COUNT_INC( _pMonAppCB, MON_DATA_READ, 1 ) ;
          DMS_MON_OP_COUNT_INC( _pMonAppCB, MON_READ, 1 ) ;
 
