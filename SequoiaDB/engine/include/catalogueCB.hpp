@@ -97,7 +97,7 @@ namespace engine
          UINT16   allocNodeID() ;
          void     releaseNodeID( UINT16 nodeID ) ;
          UINT16   allocSystemNodeID() ;
-         BOOLEAN  checkGroupActived( const CHAR *gpName ) ;
+         BOOLEAN  checkGroupActived( const CHAR *gpName, BOOLEAN &gpExist  ) ;
 
          void        clearInfo() ;
          GRP_ID_MAP* getGroupMap( BOOLEAN isActive = TRUE ) ;

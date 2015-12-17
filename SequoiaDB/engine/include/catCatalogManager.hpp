@@ -217,7 +217,7 @@ namespace engine
                                  UINT32 *pGroupID = NULL ) ;
       INT32 _assignGroup( vector< UINT32 > *pGoups, UINT32 &groupID ) ;
 
-      BOOLEAN _checkGroupActived( const CHAR *gpName ) ;
+      INT32 _checkGroupStatus( const CHAR *gpName ) ;
 
       INT32 _buildCatalogRecord( const catCollectionInfo &clInfo,
                                  UINT32 mask,

@@ -529,20 +529,30 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CATALOGCB_CHECKGROUPACTIVED, "sdbCatalogueCB::checkGroupActived" )
-   BOOLEAN sdbCatalogueCB::checkGroupActived( const CHAR *gpName )
+   BOOLEAN sdbCatalogueCB::checkGroupActived( const CHAR *gpName,
+                                              BOOLEAN &gpExist )
    {
       BOOLEAN actived = FALSE ;
+      gpExist = FALSE ;
       PD_TRACE_ENTRY( SDB_CATALOGCB_CHECKGROUPACTIVED ) ;
       GRP_ID_MAP::iterator it = _grpIdMap.begin() ;
       for ( ; _grpIdMap.end() != it ; ++it )
       {
-         if ( 0 == ossStrncmp( gpName, it->second.c_str(),
-                               ossStrlen( gpName ) ) &&
-              0 == ossStrncmp( gpName, it->second.c_str(),
-                               it->second.length() ) )
+         if ( 0 == ossStrcmp( gpName, it->second.c_str() ) )
          {
             actived = TRUE ;
+            gpExist = TRUE ;
             break ;
+         }
+      }
+
+      it = _deactiveGrpIdMap.begin() ;
+      for ( ; _deactiveGrpIdMap.end() != it ; ++it )
+      {
+         if ( 0 == ossStrcmp( gpName, it->second.c_str() ) )
+         {
+            gpExist = TRUE ;
+            break;
          }
       }
 

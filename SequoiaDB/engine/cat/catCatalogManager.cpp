@@ -717,6 +717,15 @@ namespace engine
             goto error ;
          }
 
+         // check group is active or not
+         rc = _checkGroupStatus( clInfo._gpSpecified ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "group[%s] is inactive",
+                    clInfo._gpSpecified ) ;
+            goto error ;
+         }
+
          // build search condition
          matcher = BSON ( CAT_COLLECTION_NAME << strName ) ;
          // perform update
@@ -1388,17 +1397,6 @@ namespace engine
                    "auto options only can be set when shard type is hash" ) ;
       }
 
-      if ( NULL != clInfo._gpSpecified )
-      {
-         if ( !_checkGroupActived( clInfo._gpSpecified ) )
-         {
-            PD_LOG( PDERROR, "group[%s] is inactive",
-                    clInfo._gpSpecified ) ;
-            rc = SDB_REPL_GROUP_NOT_ACTIVE ;
-            goto error ;
-         }
-      }
-
       if ( fieldMask & CAT_MASK_SHDIDX ||
            fieldMask & CAT_MASK_SHDTYPE ||
            fieldMask & CAT_MASK_SHDPARTITION )
@@ -1441,9 +1439,20 @@ namespace engine
       return rc ;
    }
 
-   BOOLEAN catCatalogueManager::_checkGroupActived( const CHAR *gpName )
+   INT32 catCatalogueManager::_checkGroupStatus( const CHAR *gpName )
    {
-      return _pCatCB->checkGroupActived( gpName ) ;
+      INT32 rc = SDB_OK ;
+      BOOLEAN exist = FALSE ;
+      if ( !_pCatCB->checkGroupActived( gpName, exist ) )
+      {
+         rc = SDB_REPL_GROUP_NOT_ACTIVE ;
+         if ( !exist )
+         {
+            rc = SDB_CLS_GRP_NOT_EXIST ;
+         }
+      }
+
+      return rc ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CATALOGMGR__CHECKGROUPINDOMAIN, "catCatalogueManager::_checkGroupInDomain" )
@@ -1704,7 +1713,15 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR, "failed to choose group for cl[%s], rc: %d",
                    collectionName, rc ) ;
 
-      // build new collection record for meata data.
+      rc = _checkGroupStatus( strGroupName.c_str() ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "group[%s] is inactive",
+                 strGroupName.c_str() ) ;
+         goto error ;
+      }
+
+      // build new collection record for meta data.
       rc = _buildCatalogRecord( clInfo, fieldMask, groupID,
                                 strGroupName.c_str(),
                                 newCLRecordObj ) ;
@@ -2362,11 +2379,11 @@ namespace engine
             // check group is active or not
             for ( UINT32 i = 0 ; i < vecGroups.size() ; ++i )
             {
-               if ( !_checkGroupActived( vecGroups[i].c_str() ) )
+               rc = _checkGroupStatus( vecGroups[i].c_str() ) ;
+               if ( SDB_OK != rc )
                {
                   PD_LOG( PDERROR, "group[%s] is inactive",
                           vecGroups[i].c_str() ) ;
-                  rc = SDB_REPL_GROUP_NOT_ACTIVE ;
                   goto error ;
                }
             }
@@ -2573,11 +2590,11 @@ namespace engine
       // check group is active or not
       for ( UINT32 i = 0 ; i < vecGroups.size() ; ++i )
       {
-         if ( !_checkGroupActived( vecGroups[i].c_str() ) )
+         rc = _checkGroupStatus( vecGroups[i].c_str() ) ;
+         if ( SDB_OK != rc )
          {
             PD_LOG( PDERROR, "group[%s] is inactive",
                     vecGroups[i].c_str() ) ;
-            rc = SDB_REPL_GROUP_NOT_ACTIVE ;
             goto error ;
          }
       }
@@ -2845,13 +2862,6 @@ namespace engine
             rc = rtnGetIntElement( gpObj, CAT_GROUPID_NAME, tmpGrpID ) ;
             PD_RC_CHECK( rc, PDERROR, "Get groupid of group[%s] info failed, "
                          "rc: %d", clInfo._gpSpecified, rc ) ;
-            if ( !_checkGroupActived( clInfo._gpSpecified ) )
-            {
-               PD_LOG( PDERROR, "group[%s] is inactive",
-                       clInfo._gpSpecified ) ;
-               rc = SDB_REPL_GROUP_NOT_ACTIVE ;
-               goto error ;
-            }
             groupID = tmpGrpID ;
          }
 
