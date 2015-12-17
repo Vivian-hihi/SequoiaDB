@@ -77,7 +77,7 @@ namespace engine
    #define PMD_DFT_PAGECLEANINTERVAL   (10000)
    #define PMD_MIN_PAGECLEANINTERVAL   (1000)
    #define PMD_DFT_TRANS_TIMEOUT       (60)  // 1 minute
-   #define PMD_DFT_OVERFLOW_RETIO      (120)
+   #define PMD_DFT_OVERFLOW_RETIO      (12)
    #define PMD_DFT_EXTEND_THRESHOLD    (32)
 
    /*
@@ -1491,7 +1491,7 @@ namespace engine
       // --overflowratio
       rdxUInt( pEX, PMD_OPTION_OVER_FLOW_RATIO, _overflowRatio, FALSE, TRUE,
                PMD_DFT_OVERFLOW_RETIO, FALSE ) ;
-      rdvMinMax( pEX, _overflowRatio, 100, 10000, TRUE ) ;
+      rdvMinMax( pEX, _overflowRatio, 0, 10000, TRUE ) ;
       // --extendthreshold
       rdxUInt( pEX, PMD_OPTION_EXTEND_THRESHOLD, _extendThreshold, FALSE, TRUE,
                PMD_DFT_EXTEND_THRESHOLD, TRUE ) ;

@@ -896,9 +896,9 @@ namespace engine
    }
    OSS_INLINE void _dmsStorageData::_overflowSize( UINT32 &size )
    {
-      if ( _pStorageInfo && _pStorageInfo->_overflowRatio > 100 )
+      if ( _pStorageInfo && _pStorageInfo->_overflowRatio > 0 )
       {
-         size = ( size * _pStorageInfo->_overflowRatio + 50 ) / 100 ;
+         size += ( size * _pStorageInfo->_overflowRatio + 50 ) / 100 ;
       }
       else if ( !_pStorageInfo )
       {
