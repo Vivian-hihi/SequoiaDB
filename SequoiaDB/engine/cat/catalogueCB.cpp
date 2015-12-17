@@ -528,6 +528,28 @@ namespace engine
       }
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATALOGCB_CHECKGROUPACTIVED, "sdbCatalogueCB::checkGroupActived" )
+   BOOLEAN sdbCatalogueCB::checkGroupActived( const CHAR *gpName )
+   {
+      BOOLEAN actived = FALSE ;
+      PD_TRACE_ENTRY( SDB_CATALOGCB_CHECKGROUPACTIVED ) ;
+      GRP_ID_MAP::iterator it = _grpIdMap.begin() ;
+      for ( ; _grpIdMap.end() != it ; ++it )
+      {
+         if ( 0 == ossStrncmp( gpName, it->second.c_str(),
+                               ossStrlen( gpName ) ) &&
+              0 == ossStrncmp( gpName, it->second.c_str(),
+                               it->second.length() ) )
+         {
+            actived = TRUE ;
+            break ;
+         }
+      }
+
+      PD_TRACE_EXIT( SDB_CATALOGCB_CHECKGROUPACTIVED ) ;
+      return actived ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CATALOGCB_GETAGROUPRAND, "sdbCatalogueCB::getAGroupRand" )
    INT32 sdbCatalogueCB::getAGroupRand( UINT32 &groupID )
    {

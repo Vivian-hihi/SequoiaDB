@@ -1372,6 +1372,7 @@ namespace engine
                    SDB_INVALIDARG, error, PDERROR,
                    "can not set auto-index-id on main collection" ) ;
       }
+
       if ( clInfo._autoSplit || clInfo._autoRebalance )
       {
          PD_CHECK ( clInfo._isSharding,
@@ -1385,6 +1386,17 @@ namespace engine
          PD_CHECK( clInfo._isHash,
                    SDB_INVALIDARG, error, PDERROR,
                    "auto options only can be set when shard type is hash" ) ;
+      }
+
+      if ( NULL != clInfo._gpSpecified )
+      {
+         if ( !_checkGroupActived( clInfo._gpSpecified ) )
+         {
+            PD_LOG( PDERROR, "group[%s] is inactive",
+                    clInfo._gpSpecified ) ;
+            rc = SDB_REPL_GROUP_NOT_ACTIVE ;
+            goto error ;
+         }
       }
 
       if ( fieldMask & CAT_MASK_SHDIDX ||
@@ -1424,8 +1436,14 @@ namespace engine
          UINT32 size = pGoups->size() ;
          groupID = (*pGoups)[ ossRand() % size ] ;
       }
+
       PD_TRACE_EXITRC ( SDB_CATALOGMGR__ASSIGNGROUP, rc ) ;
       return rc ;
+   }
+
+   BOOLEAN catCatalogueManager::_checkGroupActived( const CHAR *gpName )
+   {
+      return _pCatCB->checkGroupActived( gpName ) ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CATALOGMGR__CHECKGROUPINDOMAIN, "catCatalogueManager::_checkGroupInDomain" )
@@ -2341,6 +2359,18 @@ namespace engine
             }
             expectedObjSize ++ ;
 
+            // check group is active or not
+            for ( UINT32 i = 0 ; i < vecGroups.size() ; ++i )
+            {
+               if ( !_checkGroupActived( vecGroups[i].c_str() ) )
+               {
+                  PD_LOG( PDERROR, "group[%s] is inactive",
+                          vecGroups[i].c_str() ) ;
+                  rc = SDB_REPL_GROUP_NOT_ACTIVE ;
+                  goto error ;
+               }
+            }
+
             if ( _pCatCB->isImageEnabled() )
             {
                // the group that has no image can't be added to domain when
@@ -2538,6 +2568,18 @@ namespace engine
       {
          PD_LOG( PDERROR, "failed to validate options object:%d", rc ) ;
          goto error ;
+      }
+
+      // check group is active or not
+      for ( UINT32 i = 0 ; i < vecGroups.size() ; ++i )
+      {
+         if ( !_checkGroupActived( vecGroups[i].c_str() ) )
+         {
+            PD_LOG( PDERROR, "group[%s] is inactive",
+                    vecGroups[i].c_str() ) ;
+            rc = SDB_REPL_GROUP_NOT_ACTIVE ;
+            goto error ;
+         }
       }
 
       if ( _pCatCB->isImageEnabled() )
@@ -2803,6 +2845,13 @@ namespace engine
             rc = rtnGetIntElement( gpObj, CAT_GROUPID_NAME, tmpGrpID ) ;
             PD_RC_CHECK( rc, PDERROR, "Get groupid of group[%s] info failed, "
                          "rc: %d", clInfo._gpSpecified, rc ) ;
+            if ( !_checkGroupActived( clInfo._gpSpecified ) )
+            {
+               PD_LOG( PDERROR, "group[%s] is inactive",
+                       clInfo._gpSpecified ) ;
+               rc = SDB_REPL_GROUP_NOT_ACTIVE ;
+               goto error ;
+            }
             groupID = tmpGrpID ;
          }
 
