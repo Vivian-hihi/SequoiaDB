@@ -71,7 +71,7 @@ namespace engine
    }
 
 
-   #define DMS_EXTEND_THRESHOLD_SIZE      ( 33554432 )   // 32MB
+   #define DMS_EXTEND_THRESHOLD_SIZE      ( 16777216 )   // 16MB
    /*
       _dmsStorageBase : implement
    */

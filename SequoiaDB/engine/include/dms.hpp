@@ -83,7 +83,7 @@ namespace engine
 #define DMS_MAX_SZ(x)          (((UINT64)DMS_MAX_PG)*(x))
 
 // fixed segment size 128MB
-#define DMS_SEGMENT_SZ         (128*1024*1024)
+#define DMS_SEGMENT_SZ         (32*1024*1024)
 #define DMS_SEGMENT_PG(x)      (DMS_SEGMENT_SZ/(x))
 
 #define DMS_MAX_EXTENT_SZ      DMS_SEGMENT_SZ
