@@ -1,4 +1,4 @@
-// --------------------- Data.Database.Index ---------------------
+﻿// --------------------- Data.Database.Index ---------------------
 var _DataDatabaseIndex = {} ;
 
 //控制是否显示子集合
@@ -144,6 +144,7 @@ _DataDatabaseIndex.buildClList = function( $scope, clList ){
                'TotalLobPages':       clInfo['TotalLobPages'],
                'TotalDataFreeSpace':  clInfo['TotalDataFreeSpace'],
                'TotalIndexFreeSpace': clInfo['TotalIndexFreeSpace'],
+               'ReplSize':            clInfo['ReplSize'],
                'EnsureShardingIndex': clInfo['EnsureShardingIndex'],
                'ReplSize':            clInfo['ReplSize'],
                'LowBound':            null,
@@ -409,6 +410,7 @@ _DataDatabaseIndex.getCLInfo = function( $scope, SdbRest )
                      clInfo['ShardingKey'] = cataInfo['ShardingKey'] ;
                      clInfo['LowBound'] = [] ;
                      clInfo['UpBound'] = [] ;
+                     clInfo['ReplSize'] = cataInfo['ReplSize'] ;
                      clInfo['EnsureShardingIndex'] = cataInfo['EnsureShardingIndex'] ;
                      $.each( cataInfo['CataInfo'], function( index3, groupInfo ){
                         if( groupInfo['GroupName'] == clInfo['GroupName'] )
