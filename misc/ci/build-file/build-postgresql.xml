@@ -1,7 +1,8 @@
-<project default="archive_pg_connector">
+<project default="copy_pg_connector">
 	<property name="CODE_DIR" value="${WORKSPACE}/sequoiadb" />
 	<property name="PG_DIR" value="${WORKSPACE}/postgresql" />
-<!-- 	<property name="Engine_DIR" value="${CODE_DIR}/SequoiaDB" /> -->
+	<property name="RELEASE_DIR" value="${WORKSPACE}/release" />
+	<property name="RELEASE_DIR_BEFORE_TAR" value="${RELEASE_DIR}/postgresql" />
 	<property name="pg_connector_name" value="sdb_fdw.so" />
 	<property file="${CODE_DIR}/misc/ci/ci-properies-files/ci.pg.properties.x86" />
 	<taskdef resource="com/sequoiadb/ant/ant-sdbtasks.xml">
@@ -22,8 +23,9 @@
 		</exec>
 		<delete dir="${PG_DIR}/pgsql" failonerror="false" />
 		<delete dir="${PG_DIR}/pgsql/pg_data" failonerror="false" />
-		<delete dir="${WORKSPACE}/release" failonerror="false" />
-    	<mkdir dir="${WORKSPACE}/release" />
+		<delete dir="${RELEASE_DIR}" failonerror="false" />
+    	<mkdir dir="${RELEASE_DIR}" />
+    	<mkdir dir="${RELEASE_DIR_BEFORE_TAR}" />
     </target>
 
     <target name="compile_pg" depends="clean">
@@ -77,7 +79,7 @@
     <target name="build_pg_connector" depends="compile_sdb">
     	<echo message="Compile the connector of postgresql..." />
     	<property environment="env" />
-    	<echo file="${PG_DIR}/pgsql/build.sh" message="bin/initdb -D pg_data&#10;bin/postgres -D pg_data &gt;&gt; ${WORKSPACE}/release/logfile.${BUILD_NUMBER} 2&gt;&#38;1 &#38;" />
+    	<echo file="${PG_DIR}/pgsql/build.sh" message="bin/initdb -D pg_data&#10;bin/postgres -D pg_data &gt;&gt; ${RELEASE_DIR}/logfile.${BUILD_NUMBER} 2&gt;&#38;1 &#38;" />
     	<!--replace file="${CODE_DIR}/driver/postgresql/Makefile" token="DEBUG?=-ggdb" value="DEBUG?=-ggdb -DSDB_USE_OWN_POSTGRES" /-->
 		<exec executable="sh" dir="${PG_DIR}/pgsql" failonerror="true">
 			<arg line=" ./build.sh" />
@@ -91,10 +93,17 @@
 		</exec>
     </target>
 
-    <target name="copy_pg_connector" depends="build_pg_connector">
-    	<echo message="Begin to copy the ${pg_connector_name} ... " />
-		<copy file="${CODE_DIR}/driver/postgresql/${pg_connector_name}" tofile="${CODE_DIR}/driver/postgresql/${pg_connector_name}.${BUILD_NUMBER}" />
-		<stafTools workType="copy" workHost="LOCAL" fileName="${CODE_DIR}/driver/postgresql/${pg_connector_name}.${BUILD_NUMBER}" saveDir="${copy_tar}" toHost="${target.deploy_tar_gz.ip}" failonerror="true"/>
+    <target name="copy_pg_connector" depends="build_pg_connector">     
+    	<echo message="Begin to copy the ${pg_connector_name} sdb_fdw.control sdb_fdw--1.0.sql to ${RELEASE_DIR_BEFORE_TAR}" />
+		<!--copy file="${CODE_DIR}/driver/postgresql/${pg_connector_name}" tofile="${CODE_DIR}/driver/postgresql/${pg_connector_name}.${BUILD_NUMBER}" /-->
+		<copy file="${CODE_DIR}/driver/postgresql/${pg_connector_name}" tofile="${RELEASE_DIR_BEFORE_TAR}/${pg_connector_name}" />
+		<copy file="${CODE_DIR}/driver/postgresql/sdb_fdw.control" tofile="${RELEASE_DIR_BEFORE_TAR}/sdb_fdw.control" />
+		<copy file="${CODE_DIR}/driver/postgresql/sdb_fdw--1.0.sql" tofile="${RELEASE_DIR_BEFORE_TAR}/sdb_fdw--1.0.sql" />
+
+      <echo message="Begin to tar ${RELEASE_DIR_BEFORE_TAR}" />
+      <tar destfile="${RELEASE_DIR}/postgresql.tar.gz.${BUILD_NUMBER}" basedir="${RELEASE_DIR_BEFORE_TAR}" includes="*" compression="gzip" />		
+      
+		<stafTools workType="copy" workHost="LOCAL" fileName="${RELEASE_DIR}/postgresql.tar.gz.${BUILD_NUMBER}" saveDir="${copy_tar}" toHost="${target.deploy_tar_gz.ip}" failonerror="true"/>
 		<echo message="delete the file ${CODE_DIR}/pg.version" />
 		<stafTools workType="delete" workHost="LOCAL" fileName="${CODE_DIR}/pg.version" failonerror="false"/>
 		<if>
@@ -118,7 +127,4 @@
 		<delete file="${CODE_DIR}/driver/postgresql/${pg_connector_name}.${BUILD_NUMBER}" />
     </target>
 
-    <target name="archive_pg_connector" depends="copy_pg_connector">
-    	<copy file="${CODE_DIR}/driver/postgresql/${pg_connector_name}" tofile="${WORKSPACE}/release/${pg_connector_name}" />
-    </target>
 </project>
