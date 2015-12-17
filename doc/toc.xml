@@ -3036,7 +3036,7 @@
                     <cnname>SQL表达式</cnname>
                     <enname>SQL Expression</enname>
                     <cnpath>SdbDoc_Cn/reference/SQL_Mathematical_expression.html</cnpath>
-                    <enpath>SdbDoc_En/reference/SQL_Mathematical_expression.html</enpath>
+                    <enpath>SdbDoc_En/reference/SQL_Mathematical_expression_en.html</enpath>
                     <enabled>true</enabled>
                 </obj>
                 <obj>
