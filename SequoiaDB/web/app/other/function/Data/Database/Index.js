@@ -1978,6 +1978,7 @@ _DataDatabaseIndex.showSplit = function( $scope, SdbRest ){
                $scope.Components.Modal.form1.inputList[0]['value'] = 0 ;
                $scope.Components.Modal.form2.inputList[1]['value'] = $scope.Components.Modal.form1.inputList[1]['value'] ;
                $scope.Components.Modal.form2.inputList[2]['valid'] = $scope.Components.Modal.form1.inputList[2]['valid'] ;
+               $scope.Components.Modal.form2.inputList[2]['value'] = $scope.Components.Modal.form1.inputList[2]['value'] ;
                $scope.Components.Modal.form2.inputList[3]['value'] = $scope.Components.Modal.form1.inputList[3]['value'] ;
             }
          },
@@ -2057,6 +2058,7 @@ _DataDatabaseIndex.showSplit = function( $scope, SdbRest ){
                $scope.Components.Modal.form2.inputList[0]['value'] = 1 ;
                $scope.Components.Modal.form1.inputList[1]['value'] = $scope.Components.Modal.form2.inputList[1]['value'] ;
                $scope.Components.Modal.form1.inputList[2]['valid'] = $scope.Components.Modal.form2.inputList[2]['valid'] ;
+               $scope.Components.Modal.form1.inputList[2]['value'] = $scope.Components.Modal.form2.inputList[2]['value'] ;
                $scope.Components.Modal.form1.inputList[3]['value'] = $scope.Components.Modal.form2.inputList[3]['value'] ;
             }
          },
@@ -2079,7 +2081,7 @@ _DataDatabaseIndex.showSplit = function( $scope, SdbRest ){
                         }
                         sourceGroupValid.push( { 'key': groupInfo['key'], 'value': index2 } ) ;
                      } ) ;
-                     $scope.Components.Modal.form1['inputList'][2]['value'] = sourceIndex ;
+                     $scope.Components.Modal.form2['inputList'][2]['value'] = sourceIndex ;
                      $scope.Components.Modal.form2['inputList'][2]['valid'] = sourceGroupValid ;
                      return false;
                   }
