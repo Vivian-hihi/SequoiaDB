@@ -111,20 +111,19 @@
 			<then>
 				<propertyfile file="${CODE_DIR}/pg.version" comment="true">
 					<entry key="BUILD.NUMBER" value="${BUILD_NUMBER}" type="string" />
-					<entry key="BUILD.INSTALL.FILENAME" value="${pg_connector_name}${enterprise.line}" type="string" />
+					<entry key="BUILD.INSTALL.FILENAME" value="postgresql.tar.gz${enterprise.line}" type="string" />
 					<entry key="RELEASE.NUMBER" value="${BUILD_NUMBER}" type="string"/>	
 				</propertyfile>
 			</then>
 			<else>
 				<propertyfile file="${CODE_DIR}/pg.version" comment="true">
 					<entry key="BUILD.NUMBER" value="${BUILD_NUMBER}" type="string" />
-					<entry key="BUILD.INSTALL.FILENAME" value="${pg_connector_name}${enterprise.line}" type="string" />	
+					<entry key="BUILD.INSTALL.FILENAME" value="postgresql.tar.gz${enterprise.line}" type="string" />	
 				</propertyfile>
 			</else>
 		</if>
 		<stafTools workType="copy" workHost="LOCAL" fileName="${CODE_DIR}/pg.version" saveDir="${copy_tar}" toHost="LOCAL" failonerror="true"/>
 		<stafTools workType="shell" workHost="LOCAL" common="/usr/bin/find ${copy_tar} -mtime +7 -delete;" workDir="${copy_tar}" waitTime="30m" failonerror="true"/>
-		<delete file="${CODE_DIR}/driver/postgresql/${pg_connector_name}.${BUILD_NUMBER}" />
     </target>
 
 </project>
