@@ -101,9 +101,12 @@
 		<copy file="${CODE_DIR}/driver/postgresql/sdb_fdw--1.0.sql" tofile="${RELEASE_DIR_BEFORE_TAR}/sdb_fdw--1.0.sql" />
 
       <echo message="Begin to tar ${RELEASE_DIR_BEFORE_TAR}" />
-      <tar destfile="${RELEASE_DIR}/postgresql.tar.gz.${BUILD_NUMBER}" basedir="${RELEASE_DIR_BEFORE_TAR}" includes="*" compression="gzip" />		
+      <tar destfile="${RELEASE_DIR}/postgresql.tar.gz" basedir="${RELEASE_DIR_BEFORE_TAR}" includes="*" compression="gzip" />		
       
+      <copy file="${RELEASE_DIR}/postgresql.tar.gz" tofile="${RELEASE_DIR}/postgresql.tar.gz.${BUILD_NUMBER}" />		
 		<stafTools workType="copy" workHost="LOCAL" fileName="${RELEASE_DIR}/postgresql.tar.gz.${BUILD_NUMBER}" saveDir="${copy_tar}" toHost="${target.deploy_tar_gz.ip}" failonerror="true"/>
+		<delete file="${RELEASE_DIR}/postgresql.tar.gz.${BUILD_NUMBER}" />
+		
 		<echo message="delete the file ${CODE_DIR}/pg.version" />
 		<stafTools workType="delete" workHost="LOCAL" fileName="${CODE_DIR}/pg.version" failonerror="false"/>
 		<if>
