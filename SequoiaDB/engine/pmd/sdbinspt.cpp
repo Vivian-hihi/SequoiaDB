@@ -2271,34 +2271,35 @@ error :
 void inspectCollection ( OSSFILE &file, SINT32 pageSize, UINT16 id,
                          SINT32 hwm, CHAR *pExpBuffer, SINT32 &err )
 {
+   UINT32 len = 0 ;
    gMBStat.reset() ;
    if ( SDB_INSPT_DATA == gCurInsptType )
    {
       inspectCollectionData( file, pageSize, id, hwm, pExpBuffer, err ) ;
       /// flush data info
-      ossSnprintf( gBuffer, gBufferSize,
-                   " ****The collection data info****"OSS_NEWLINE
-                   "   Total Record           : %llu"OSS_NEWLINE
-                   "   Total Data Pages       : %u"OSS_NEWLINE
-                   "   Total Data Free Space  : %llu"OSS_NEWLINE,
-                   gMBStat._totalRecords,
-                   gMBStat._totalDataPages,
-                   gMBStat._totalDataFreeSpace ) ;
-      flushOutput( gBuffer, gBufferSize ) ;
+      len = ossSnprintf( gBuffer, gBufferSize,
+                         " ****The collection data info****"OSS_NEWLINE
+                         "   Total Record           : %llu"OSS_NEWLINE
+                         "   Total Data Pages       : %u"OSS_NEWLINE
+                         "   Total Data Free Space  : %llu"OSS_NEWLINE,
+                         gMBStat._totalRecords,
+                         gMBStat._totalDataPages,
+                         gMBStat._totalDataFreeSpace ) ;
+      flushOutput( gBuffer, len ) ;
    }
    else if ( SDB_INSPT_INDEX == gCurInsptType )
    {
       inspectCollectionIndex( file, pageSize, id, hwm, pExpBuffer, err ) ;
       /// flush index info
-      ossSnprintf( gBuffer, gBufferSize,
-                   " ****The collection index info****"OSS_NEWLINE
-                   "   Total Index Pages      : %u"OSS_NEWLINE
-                   "   Total Index Free Space : %llu"OSS_NEWLINE
-                   "   Unique Index Number    : %u"OSS_NEWLINE,
-                   gMBStat._totalIndexPages,
-                   gMBStat._totalIndexFreeSpace,
-                   gMBStat._uniqueIdxNum ) ;
-      flushOutput( gBuffer, gBufferSize ) ;
+      len = ossSnprintf( gBuffer, gBufferSize,
+                         " ****The collection index info****"OSS_NEWLINE
+                         "   Total Index Pages      : %u"OSS_NEWLINE
+                         "   Total Index Free Space : %llu"OSS_NEWLINE
+                         "   Unique Index Number    : %u"OSS_NEWLINE,
+                         gMBStat._totalIndexPages,
+                         gMBStat._totalIndexFreeSpace,
+                         gMBStat._uniqueIdxNum ) ;
+      flushOutput( gBuffer, len ) ;
    }
 }
 
