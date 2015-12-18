@@ -2107,6 +2107,36 @@ void inspectCollectionData( OSSFILE &file, SINT32 pageSize, UINT16 id,
       goto done ;
    }
 
+   /// when the meta expand extent is valid, need to set this page to occupied
+   if ( pExpBuffer &&
+        DMS_INVALID_EXTENT != mb->_mbExExtentID )
+   {
+      dmsMetaExtent *pMetaEx = NULL ;
+      INSPECT_EXTENT_TYPE tmpExtentType = INSPECT_EXTENT_TYPE_MBEX ;
+      rc = loadExtent( file, tmpExtentType, pageSize,
+                       mb->_mbExExtentID, id ) ;
+      if ( rc )
+      {
+         dumpPrintf( "Error: Failed to load mb expand extent %d, rc = %d"
+                     OSS_NEWLINE, mb->_mbExExtentID, rc ) ;
+         goto error ;
+      }
+      pMetaEx = ((dmsMetaExtent*)gExtentBuffer)  ;
+
+      dmsSpaceManagementExtent *pSME=(dmsSpaceManagementExtent*)pExpBuffer ;
+      for ( INT32 i = 0 ; i < pMetaEx->_blockSize ; ++i )
+      {
+         if ( pSME->getBitMask( mb->_mbExExtentID + i ) != DMS_SME_FREE )
+         {
+            dumpPrintf ( "Error: Meta Expand extent 0x%08lx (%d) is not free"
+                         OSS_NEWLINE, mb->_mbExExtentID + i ,
+                         mb->_mbExExtentID + i ) ;
+            ++err ;
+         }
+         pSME->setBitMask( mb->_mbExExtentID + i ) ;
+      }
+   }
+
    if ( DMS_INVALID_EXTENT != mb->_dictExtentID )
    {
       rc = prepareCompressor( file, mb, pageSize, compressor, compContext ) ;
@@ -2954,7 +2984,8 @@ void actionCSAttempt ( const CHAR *pFile, const CHAR *expectEye,
       inspectSME ( file, NULL, hwm, totalErr ) ;
 
       // allocate expected SME for global collectionspace inspect only
-      if ( ossStrlen ( gCLName ) == 0 )
+      if ( ossStrlen ( gCLName ) == 0 && ( FALSE == gOnlyMeta ||
+           OSS_BIT_TEST( gAction, ACTION_STAT ) ) )
       {
          // allocate memory for expected SME
          // this buffer is used to store all allocated pages from collection

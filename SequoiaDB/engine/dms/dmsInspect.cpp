@@ -481,7 +481,9 @@ namespace engine
                   ++localErr ;
                }
             }
-            // index list
+            /// don't to check this, because the maxPages is data file's,
+            /// but is not index files's
+            /*
             for ( UINT16 i = 0 ; i < DMS_COLLECTION_MAX_INDEX ; i++ )
             {
                if ( DMS_INVALID_EXTENT != mb->_indexExtent[i] &&
@@ -493,7 +495,7 @@ namespace engine
                                        i, mb->_indexExtent[i] ) ;
                   ++localErr ;
                }
-            }
+            } */
          }
       }
 
