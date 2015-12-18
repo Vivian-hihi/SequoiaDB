@@ -158,6 +158,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__RTNIXSCAN_ADVANCE ) ;
       monAppCB * pMonAppCB = _cb ? _cb->getMonAppCB() : NULL ;
+      ixmRecordID lastRID ;
 
    begin:
       SDB_ASSERT ( _indexCB, "_indexCB can't be NULL, call resumeScan first" ) ;
@@ -204,12 +205,17 @@ namespace engine
          // In such scenario, we advance to next element
          if ( _savedRID.isNull() )
          {
+            lastRID = _curIndexRID ;
             // changed during the time
             rc = indexExtent.advance ( _curIndexRID, _direction ) ;
             if ( rc )
             {
                PD_LOG ( PDERROR, "Failed to advance to next key, rc: %d", rc ) ;
                goto error ;
+            }
+            if ( lastRID == _curIndexRID )
+            {
+               _curIndexRID.reset() ;
             }
          }
          // need to specially deal with the situation that index tree structure
@@ -368,6 +374,7 @@ namespace engine
             // further advance the key in index
             else if ( rc >= 0 )
             {
+               lastRID = _curIndexRID ;
                rc = indexExtent.keyAdvance ( _curIndexRID, _curKeyObj, rc,
                                              _listIterator.after(),
                                              _listIterator.cmp(),
@@ -375,6 +382,10 @@ namespace engine
                                              _order, _direction, _cb ) ;
                PD_RC_CHECK ( rc, PDERROR,
                              "Failed to advance, rc = %d", rc ) ;
+               if ( lastRID == _curIndexRID )
+               {
+                  _curIndexRID.reset() ;
+               }
                continue ;
             }
             // otherwise let's attempt to get dms rid

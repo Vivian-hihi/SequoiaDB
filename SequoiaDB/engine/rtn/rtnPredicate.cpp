@@ -1606,7 +1606,6 @@ namespace engine
                                                         ]._startKey._bound ;
       _inc[i] = _predList._predicates[i]._startStopKeys[_currentKey[i]
                                                        ]._startKey._inclusive ;
-      _prevKey[ i ] = _currentKey[ i ] ;
       // reset all other following fields
       for ( INT32 j = i+1; j < (INT32)_currentKey.size(); ++j )
       {
@@ -1614,7 +1613,7 @@ namespace engine
             &_predList._predicates[j]._startStopKeys.front()._startKey._bound ;
          _inc[j] =
           _predList._predicates[j]._startStopKeys.front()._startKey._inclusive ;
-         _prevKey[ j ] = -1 ;
+         _currentKey[j] = 0 ;
       }
       _after = FALSE ;
       PD_TRACE_EXIT ( SDB__RTNPREDLISTITE_ADVTOLOBOU ) ;
@@ -1711,12 +1710,14 @@ namespace engine
       // for each of the key field
       for ( INT32 i = 0; i < (INT32)_currentKey.size(); ++i )
       {
+         _prevKey[i] = _currentKey[i] ;
          // everytime when we search for the best match, we should do binary
          // search to find the best match place
          // one exception is that i-1'th field is equal predicate, which means
          // the next followed field must be in order
-         if ( i>0 && !_predList._predicates[i-1]._startStopKeys[_currentKey[i-1]
-                                                              ].isEquality() )
+         if ( i > 0 && ( _prevKey[ i-1 ] != _currentKey[ i-1 ] ||
+              !_predList._predicates[i-1]._startStopKeys[_currentKey[i-1]
+                                                        ].isEquality() ) )
          {
             _currentKey[i] = -1 ;
          }
@@ -1731,6 +1732,7 @@ namespace engine
          // this condition is only hit when the previous field is NOT equal
          if ( -1 == _currentKey[i] )
          {
+   retry:
             BOOLEAN lowEquality ;
             // compare the key element with predicate
             INT32 l = _predList.matchingLowElement ( jj, i, !reverse,
@@ -1744,8 +1746,8 @@ namespace engine
                // from it
                if ( ((INT32)_predList._predicates[i]._startStopKeys.size() >
                         _currentKey[i]+1) ||
-                     (_predList._predicates[i]._startStopKeys.back().
-                      _stopKey._bound.woCompare ( jj, FALSE ) != 0) )
+                     (_predList._predicates[i]._startStopKeys.back(
+                      )._stopKey._bound.woCompare ( jj, FALSE ) != 0) )
                {
                   // this means we are not at the end point
                   // or we are at the end range but didn't hit stopKey
@@ -1779,7 +1781,7 @@ namespace engine
                // field
                if ( lowEquality )
                {
-                  rc = advancePast ( i+1 ) ;
+                  rc = advancePastZeroed ( i+1 ) ;
                   goto done ;
                }
                // otherwise let's move advance to next start/stop key range (
@@ -1823,17 +1825,9 @@ namespace engine
             // When both condition satisfied, that means we keep hitting the
             // same key ( not nessacerily the same one, but the one before range
             // ) twice, which means we need to increment our current key range.
-            if ( GREATER == compareResult ||
-                 ( LESS == compareResult && _prevKey[i] == _currentKey[i] ) )
+            if ( GREATER == compareResult )
             {
                _currentKey[i]++ ;
-               if ( GREATER == compareResult &&
-                    i + 1 < (INT32)_currentKey.size() )
-               {
-                  _prevKey[ i + 1 ] = -1 ;
-               }
-               // set all following fields to 0
-               advancePastZeroed(i+1) ;
                continue ;
             }
             // jump out the loop if we get a match
@@ -1845,7 +1839,14 @@ namespace engine
             // field id as well as setting _cmp/_inc
             else
             {
-               rc = advanceToLowerBound(i) ;
+               if ( _prevKey[i] != _currentKey[i] )
+               {
+                  rc = advanceToLowerBound(i) ;
+               }
+               else
+               {
+                  goto retry ;
+               }
                goto done ;
             }
          }
