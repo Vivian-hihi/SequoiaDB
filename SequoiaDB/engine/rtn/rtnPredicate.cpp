@@ -1713,7 +1713,8 @@ namespace engine
          _prevKey[i] = _currentKey[i] ;
          // everytime when we search for the best match, we should do binary
          // search to find the best match place
-         // one exception is that i-1'th field is equal predicate, which means
+         // one exception is that i-1'th field is equal predicate, and don't
+         // change the predicate index which means
          // the next followed field must be in order
          if ( i > 0 && ( _prevKey[ i-1 ] != _currentKey[ i-1 ] ||
               !_predList._predicates[i-1]._startStopKeys[_currentKey[i-1]
@@ -1813,18 +1814,6 @@ namespace engine
             // the current range
             // compareResult = LESS means the current key in record is smaller
             // than the current range
-            // When LESS happened, that means the current key doesn't reach the
-            // lowbound of current range. When this happened first time, we know
-            // we need to jump the current RID to lowbound of range. However if
-            // there is no record in the index satisfy the condition, we might
-            // endup with getting the exact same record again, which is LESS
-            // than the current range. If we do not add the condition, we'll
-            // endup with infinite loop. So the condition checks
-            // 1) the compareResult is LESS
-            // 2) it's NOT the first time hitting this key
-            // When both condition satisfied, that means we keep hitting the
-            // same key ( not nessacerily the same one, but the one before range
-            // ) twice, which means we need to increment our current key range.
             if ( GREATER == compareResult )
             {
                _currentKey[i]++ ;
@@ -1839,12 +1828,16 @@ namespace engine
             // field id as well as setting _cmp/_inc
             else
             {
+               /// has increased the start-stop key, so need to relocated
                if ( _prevKey[i] != _currentKey[i] )
                {
                   rc = advanceToLowerBound(i) ;
                }
                else
                {
+                  /// means the pre keys has changed, so need to binary find
+                  /// again. ex: { a:1, b:1, c:5 } ==> { a:2, b:1, c:0 }, cur
+                  /// is c, range is:[5,5]
                   goto retry ;
                }
                goto done ;
