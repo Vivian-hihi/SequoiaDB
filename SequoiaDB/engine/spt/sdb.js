@@ -98,7 +98,7 @@ function _numberLongRevier(key, value) {
 }
 
 Bson.prototype.toObj = function() {
-   return JSON.parse( this.toJson(), _numberLongRevier ) ;
+   return JSON.parse( this.toJson() ) ;
 }
 
 Bson.prototype.toString = function() {
