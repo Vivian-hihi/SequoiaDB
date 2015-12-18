@@ -950,6 +950,28 @@ namespace engine
             INT32 v = e.Bool() ? 1 : 0 ;
             builder.append( fieldName, v ) ;
          }
+         else if ( NumberLong == e.type() )
+         {
+            INT32 v = 0 ;
+            INT64 l = e.numberLong() ;
+            v = ( INT32 )l ;
+            if ( l > 2147483647LL || l < -2147483648LL )
+            {
+               v = 0 ;
+            }
+            builder.appendNumber( fieldName, v ) ;
+         }
+         else if ( NumberDouble == e.type() )
+         {
+            INT32 v = 0 ;
+            double d = e.Double() ;
+            v = ( INT32 )d ;
+            if ( d > 2147483647.0 || d < -2147483648.0 )
+            {
+               v = 0 ;
+            }
+            builder.appendNumber( fieldName, v ) ;
+         }
          else if ( String != e.type() )
          {
             builder.appendNumber( fieldName, e.numberInt() ) ;
@@ -959,7 +981,13 @@ namespace engine
             try
             {
                INT32 i = 0 ;
-               i = boost::lexical_cast<INT32>( e.valuestr () ) ;
+               double v = 0 ;
+               v = boost::lexical_cast<double>( e.valuestr () ) ;
+               i = ( INT32 )v ;
+               if ( v > 2147483647.0 || v < -2147483648.0 )
+               {
+                  i = 0 ;
+               }
                builder.appendNumber( fieldName, i ) ;
             }
             catch ( boost::bad_lexical_cast &e )
@@ -1022,10 +1050,22 @@ namespace engine
          else
          {
             try
-            {
-               INT64 l = 0  ;
-               l = boost::lexical_cast<INT64>( e.valuestr () ) ;
-               builder.appendNumber( fieldName, l ) ;
+            {  
+            	 //if the STRING has "." "e" or "E" use double type
+            	 if ( ossStrchr ( e.valuestr (), '.' ) != NULL || 
+                    ossStrchr ( e.valuestr (), 'E' ) != NULL || 
+                    ossStrchr ( e.valuestr (), 'e' ) != NULL )
+            	 {
+            	    double d = 0  ;
+                  d = boost::lexical_cast<double>( e.valuestr () ) ;
+                  builder.appendNumber( fieldName, ( INT64 )d ) ;
+            	 }
+            	 else
+            	 {
+            	    INT64 l = 0 ;
+            	    l = boost::lexical_cast<INT64>( e.valuestr () ) ;
+                  builder.appendNumber( fieldName, l ) ;
+            	 }
             }
             catch ( boost::bad_lexical_cast &e )
             {

@@ -123,6 +123,7 @@ extern "C"
 #define CJSON_OP_AVG       "$avg"
 #define CJSON_OP_SORT      "$sort"
 #define CJSON_OP_MERGEARRAYSET   "$mergearrayset"
+#define CJSON_OP_CAST      "$cast"
 
 #define CJSON_INNER_META         "$Meta"
 #define CJSON_INNER_AGGR         "$Aggr"
