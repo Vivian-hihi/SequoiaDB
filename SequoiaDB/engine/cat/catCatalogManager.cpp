@@ -1670,9 +1670,7 @@ namespace engine
          BSONElement ele = boSpaceRecord.getField( CAT_COLLECTION ) ;
          SDB_ASSERT(Array == ele.type(), "Invalid field ") ;
          BSONObj obj = ele.embeddedObject();
-         std::vector<BSONObj> cls;
-         obj.Vals(cls);
-         clCount = cls.size();
+         clCount = obj.nFields();
          if ( clCount >= DMS_MAX_CS_NUM )
          {
             PD_LOG( PDERROR, "CollectionSpace: [%s] cannot accept more "
