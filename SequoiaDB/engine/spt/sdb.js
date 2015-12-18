@@ -203,8 +203,8 @@ CLCount.prototype._exec = function() {
 // end CLCount
 
 // SdbCollection
-SdbCollection.prototype.count = function( condition, hint ) {
-   return new CLCount( this, condition, hint ) ;
+SdbCollection.prototype.count = function( condition ) {
+   return new CLCount( this, condition ) ;
 }
 
 SdbCollection.prototype.find = function( query, select ) {
@@ -373,7 +373,7 @@ SdbQuery.prototype.remove = function() {
    if (undefined == this._hint) {
       this._hint = {};
    } else if (undefined != this._hint.$Modify) {
-      throw "SdbQuery.update(): duplicate modification";
+      throw "SdbQuery.remove(): duplicate modification";
    }
 
    var modify = {};
@@ -408,7 +408,11 @@ SdbQuery.prototype.count = function() {
    if (undefined != this._hint && undefined != this._hint.$Modify) {
       throw "count() cannot be executed with update() or remove()";
    }
-   return this._collection.count( this._query, this._hint ) ;
+   var countObj = this._collection.count( this._query ) ;
+   if ( undefined != this._hint ) {
+      countObj.hint( this._hint ) ;
+   }
+   return countObj ;
 }
 
 SdbQuery.prototype.explain = function( options ) {
