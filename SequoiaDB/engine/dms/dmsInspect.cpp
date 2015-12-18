@@ -587,7 +587,6 @@ namespace engine
                                        nextRecord, ridList, localErr,
                                        compressor, compContext ) ;
             ++recordCount ;
-            compressor->rePrepare( compContext ) ;
          }
       }
 
