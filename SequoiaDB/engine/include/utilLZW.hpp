@@ -9,7 +9,7 @@
 
 namespace engine
 {
-   #define DICT_INVALID_NODE         (-1)
+   #define DICT_INVALID_NODE         4294967295
 
    /*
     * Internally we use a 32bit buffer to do continuous bits reading and,

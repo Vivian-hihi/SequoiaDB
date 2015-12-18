@@ -202,13 +202,16 @@ namespace engine
       _cb   = cb ;
       _next = _extent->_firstRecordOffset ;
 
-      _compressorEntry = _pSu->getCompressorEntry( _context->mbID() ) ;
-      _compressor = _compressorEntry->getCompressor( SHARED ) ;
-      if ( _compressor )
+      if ( DMS_INVALID_EXTENT != _context->mb()->_dictExtentID )
       {
-         rc = _compressor->prepare( _compContext ) ;
-         PD_RC_CHECK( rc, PDERROR,
-                     "Failed to prepare compressor, rc: %d", rc ) ;
+         _compressorEntry = _pSu->getCompressorEntry( _context->mbID() ) ;
+         _compressor = _compressorEntry->getCompressor( SHARED ) ;
+         if ( _compressor )
+         {
+            rc = _compressor->prepare( _compContext ) ;
+            PD_RC_CHECK( rc, PDERROR,
+                        "Failed to prepare compressor, rc: %d", rc ) ;
+         }
       }
 
       // unset first run
@@ -710,13 +713,16 @@ namespace engine
 
       _cb   = cb ;
 
-      _compressorEntry = _pSu->getCompressorEntry( _context->mbID() ) ;
-      _compressor = _compressorEntry->getCompressor( SHARED ) ;
-      if ( _compressor )
+      if ( DMS_INVALID_EXTENT != _context->mb()->_dictExtentID )
       {
-         rc = _compressor->prepare( _compContext ) ;
-         PD_RC_CHECK( rc, PDERROR,
-                     "Failed to prepare compressor, rc: %d", rc ) ;
+         _compressorEntry = _pSu->getCompressorEntry( _context->mbID() ) ;
+         _compressor = _compressorEntry->getCompressor( SHARED ) ;
+         if ( _compressor )
+         {
+            rc = _compressor->prepare( _compContext ) ;
+            PD_RC_CHECK( rc, PDERROR,
+                        "Failed to prepare compressor, rc: %d", rc ) ;
+         }
       }
       // unset first run
       _firstRun = FALSE ;
