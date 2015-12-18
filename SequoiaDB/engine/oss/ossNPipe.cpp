@@ -1177,6 +1177,9 @@ error :
       case EROFS :
          rc = SDB_PERM ;
          break ;
+      case EMFILE :
+         rc = SDB_TOO_MANY_OPEN_FD ;
+         break ;
       default :
          rc = SDB_SYS ;
          break ;

@@ -96,6 +96,11 @@ namespace engine
             {
                continue ;
             }
+            else if ( SDB_TOO_MANY_OPEN_FD == rc )
+            {
+               ossSleep( OSS_ONE_SEC ) ;
+               continue ;
+            }
             // if we are not able to connect named pipe, then we are not able
             // to stop it using sdbstop.exe. So we should nicely shutdown
             // database in order to prevent killing process later
