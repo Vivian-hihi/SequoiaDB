@@ -1624,7 +1624,6 @@ namespace engine
       std::string strGroupName ;
       groupID = CAT_INVALID_GROUPID ;
       std::map<string, UINT32> range ;
-      INT64 clCount = 0 ;
 
       // check createObj
       rc = _checkAndBuildCataRecord( createObj, fieldMask, clInfo ) ;
@@ -1668,15 +1667,16 @@ namespace engine
       // we care how many records in the specified collection space
       {
          BSONElement ele = boSpaceRecord.getField( CAT_COLLECTION ) ;
-         SDB_ASSERT(Array == ele.type(), "Invalid field ") ;
-         BSONObj obj = ele.embeddedObject();
-         clCount = obj.nFields();
-         if ( clCount >= DMS_MAX_CS_NUM )
+         /// some times, the CAT_COLLECTION will be not exist
+         if ( Array == ele.type() )
          {
-            PD_LOG( PDERROR, "CollectionSpace: [%s] cannot accept more "
-                    "collection", szSpace );
-            rc = SDB_DMS_NOSPC ;
-            goto error ;
+            if ( ele.embeddedObject().nFields() >= DMS_MAX_CS_NUM )
+            {
+               PD_LOG( PDERROR, "CollectionSpace: [%s] cannot accept more "
+                       "collection", szSpace );
+               rc = SDB_DMS_NOSPC ;
+               goto error ;
+            }
          }
       }
 
