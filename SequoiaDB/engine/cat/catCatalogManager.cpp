@@ -718,12 +718,23 @@ namespace engine
          }
 
          // check group is active or not
-         rc = _checkGroupStatus( clInfo._gpSpecified ) ;
-         if ( SDB_OK != rc )
+         if ( NULL != clInfo._gpSpecified )
          {
-            PD_LOG( PDERROR, "group[%s] is inactive",
-                    clInfo._gpSpecified ) ;
-            goto error ;
+            rc = _checkGroupStatus( clInfo._gpSpecified ) ;
+            if ( SDB_OK != rc )
+            {
+               if ( SDB_CLS_GRP_NOT_EXIST == rc )
+               {
+                  PD_LOG( PDERROR, "group[%s] is not exist",
+                          clInfo._gpSpecified ) ;
+               }
+               else if ( SDB_REPL_GROUP_NOT_ACTIVE == rc )
+               {
+                  PD_LOG( PDERROR, "group[%s] is inactive",
+                          clInfo._gpSpecified ) ;
+               }
+               goto error ;
+            }
          }
 
          // build search condition
@@ -1716,8 +1727,16 @@ namespace engine
       rc = _checkGroupStatus( strGroupName.c_str() ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "group[%s] is inactive",
-                 strGroupName.c_str() ) ;
+         if ( SDB_CLS_GRP_NOT_EXIST == rc )
+         {
+            PD_LOG( PDERROR, "group[%s] is not exist",
+                    strGroupName.c_str() ) ;
+         }
+         else if ( SDB_REPL_GROUP_NOT_ACTIVE == rc )
+         {
+            PD_LOG( PDERROR, "group[%s] is inactive",
+                    strGroupName.c_str() ) ;
+         }
          goto error ;
       }
 
@@ -2382,8 +2401,16 @@ namespace engine
                rc = _checkGroupStatus( vecGroups[i].c_str() ) ;
                if ( SDB_OK != rc )
                {
-                  PD_LOG( PDERROR, "group[%s] is inactive",
-                          vecGroups[i].c_str() ) ;
+                  if ( SDB_CLS_GRP_NOT_EXIST == rc )
+                  {
+                     PD_LOG( PDERROR, "group[%s] is not exist",
+                             vecGroups[i].c_str() ) ;
+                  }
+                  else if ( SDB_REPL_GROUP_NOT_ACTIVE == rc )
+                  {
+                     PD_LOG( PDERROR, "group[%s] is inactive",
+                             vecGroups[i].c_str() ) ;
+                  }
                   goto error ;
                }
             }
@@ -2593,8 +2620,16 @@ namespace engine
          rc = _checkGroupStatus( vecGroups[i].c_str() ) ;
          if ( SDB_OK != rc )
          {
-            PD_LOG( PDERROR, "group[%s] is inactive",
-                    vecGroups[i].c_str() ) ;
+            if ( SDB_CLS_GRP_NOT_EXIST == rc )
+            {
+               PD_LOG( PDERROR, "group[%s] is not exist",
+                       vecGroups[i].c_str() ) ;
+            }
+            else if ( SDB_REPL_GROUP_NOT_ACTIVE == rc )
+            {
+               PD_LOG( PDERROR, "group[%s] is inactive",
+                       vecGroups[i].c_str() ) ;
+            }
             goto error ;
          }
       }
