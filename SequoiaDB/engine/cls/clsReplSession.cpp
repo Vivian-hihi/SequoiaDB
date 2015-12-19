@@ -671,6 +671,18 @@ namespace engine
          PD_LOG( PDWARNING, "Sync Session[%s]: Group size is one or the node "
                  "begin to primary, begin to rebuild database",
                  sessionName() ) ;
+         DPS_LSN expectLSN = _logger->expectLsn() ;
+         if ( DPS_INVALID_LSN_OFFSET == expectLSN.offset ||
+              0 == expectLSN.offset )
+         {
+            /// when rebuild, we can't move the dps to 0, because the new add
+            /// node will sync from lsn 0
+            expectLSN.offset = ossAlign4( sizeof( dpsLogRecordHeader ) ) ;
+         }
+         if ( DPS_INVALID_LSN_VERSION == expectLSN.version )
+         {
+            expectLSN.version = DPS_INVALID_LSN_VERSION + 1 ;
+         }
 
          PMD_SET_DB_STATUS( SDB_DB_REBUILDING ) ;
          pClsCB->getReplCB()->getFaultEvent()->signalAll( SDB_RTN_IN_REBUILD ) ;
@@ -688,7 +700,7 @@ namespace engine
          /// clear all trans info
          sdbGetTransCB()->clearTransInfo() ;
          // then cut all dps
-         rc = _logger->move( 0, _logger->expectLsn().version ) ;
+         rc = _logger->move( 0, expectLSN.version ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG( PDERROR, "Sync Session[%s]: Move dps to begin failed "
@@ -700,6 +712,8 @@ namespace engine
             PD_LOG( PDEVENT, "Sync Session[%s]: Move dps to begin after "
                     "rebuild succeed", sessionName() ) ;
          }
+         /// then move to none-zero
+         _logger->move( expectLSN.offset, expectLSN.version ) ;
 
          pmdGetStartup().ok ( TRUE ) ;
          _status = CLS_SESSION_STATUS_SYNC ;
