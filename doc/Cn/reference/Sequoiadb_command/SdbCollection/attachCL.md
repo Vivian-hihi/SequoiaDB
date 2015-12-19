@@ -15,4 +15,4 @@
 * 在主分区集合的指定区间下挂载子分区集合
 
 <pre class="prettyprint lang-javascript">
-> db.foo.year.attachCL("foo2.January",{LowBound:{date:"20130101"},UpBound:{date:"20130131"}}</pre>
+> db.foo.year.attachCL("foo2.January",{LowBound:{date:"20130101"},UpBound:{date:"20130131"}})</pre>

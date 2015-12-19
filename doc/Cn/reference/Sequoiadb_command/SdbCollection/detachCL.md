@@ -14,4 +14,4 @@
 * 从主分区集合中分离指定子分区
 
 <pre class="prettyprint lang-javascript">
-> db.foo.year.detachCL("foo2.January"}</pre>
+> db.foo.year.detachCL("foo2.January")</pre>
