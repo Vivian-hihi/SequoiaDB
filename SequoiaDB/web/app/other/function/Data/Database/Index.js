@@ -1,4 +1,4 @@
-﻿// --------------------- Data.Database.Index ---------------------
+// --------------------- Data.Database.Index ---------------------
 var _DataDatabaseIndex = {} ;
 
 //控制是否显示子集合
@@ -144,7 +144,6 @@ _DataDatabaseIndex.buildClList = function( $scope, clList ){
                'TotalLobPages':       clInfo['TotalLobPages'],
                'TotalDataFreeSpace':  clInfo['TotalDataFreeSpace'],
                'TotalIndexFreeSpace': clInfo['TotalIndexFreeSpace'],
-               'ReplSize':            clInfo['ReplSize'],
                'EnsureShardingIndex': clInfo['EnsureShardingIndex'],
                'ReplSize':            clInfo['ReplSize'],
                'LowBound':            null,
@@ -419,6 +418,10 @@ _DataDatabaseIndex.getCLInfo = function( $scope, SdbRest )
                            clInfo['UpBound'].push( JSON.stringify( groupInfo['UpBound'] ) ) ;
                         }
                      } ) ;
+                  }
+                  if( typeof( cataInfo['ReplSize'] ) != 'undefined' )
+                  {
+                     clInfo['ReplSize'] = cataInfo['ReplSize'] ;
                   }
                   if( typeof( cataInfo['Attribute'] ) != 'undefined' )
                   {
@@ -995,6 +998,7 @@ _DataDatabaseIndex.showCreateCL = function( $scope, SdbRest ){
          if( valueJson['type'] == '' )
          {
             rv['options']['Compressed'] = valueJson['Compressed'] ;
+            rv['options']['ReplSize'] = valueJson['ReplSize'] ;
             if( valueJson['Group'] > 0 )
             {
                rv['options']['Group'] = $scope.GroupList[ valueJson['Group'] - 1 ]['GroupName'] ;
@@ -1141,6 +1145,17 @@ _DataDatabaseIndex.showCreateCL = function( $scope, SdbRest ){
                   "min": 1,
                   "max": 127,
                   "ban": [ ".", "$" ]
+               }
+            },
+            {
+               "name": "ReplSize",
+               "webName":  $scope.autoLanguage( '副本数' ),
+               "type": "int",
+               "required": true,
+               "value": 1,
+               "valid": {
+                  "min": -1,
+                  "max": 7
                }
             },
             {
@@ -2609,4 +2624,5 @@ _DataDatabaseIndex.showPartitions = function( $scope ){
    </tr>\
 </table>' ;
    }
+
 }
