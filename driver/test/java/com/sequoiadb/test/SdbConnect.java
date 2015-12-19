@@ -91,7 +91,7 @@ public class SdbConnect {
 		end = System.currentTimeMillis();
 		System.out.println("Takes " + (end - begin));
 		// set option and change the connect
-		options.setConnectTimeout(2000);
+		options.setConnectTimeout(15000);
 		sdb1.changeConnectionOptions(options);
 		// check
 		DBCursor cursor = sdb1.getList(4, null, null, null);
