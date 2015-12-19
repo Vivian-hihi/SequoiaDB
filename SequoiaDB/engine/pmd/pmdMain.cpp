@@ -145,7 +145,7 @@ namespace engine
             {
                /// when rebuild, we can't move the dps to 0, because the new add
                /// node will sync from lsn 0
-               expectLSN.offset = ossAlign4( sizeof( dpsLogRecordHeader ) ) ;
+               expectLSN.offset = ossAlign4( (UINT32)sizeof( dpsLogRecordHeader ) ) ;
             }
             if ( DPS_INVALID_LSN_VERSION == expectLSN.version )
             {
