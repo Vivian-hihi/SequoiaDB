@@ -3,7 +3,9 @@ package com.sequoiadb.test;
 import static org.junit.Assert.*;
 import static org.junit.Assert.assertEquals;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -70,33 +72,40 @@ public class SdbConnect {
 	@Test
 	public void sdbConnect() {
 		List<String> list = new ArrayList<String>();
-		list.add("192.168.20.35:12340");
-		list.add("192.168.20.36:12340");
-		list.add("123:123");
-		list.add("");
-		list.add(":12340");
-		list.add("localhost:50000");
-		list.add("localhost:11810");
-		list.add("localhost:12340");
-		list.add(Constants.COOR_NODE_CONN);
-
-		ConfigOptions options = new ConfigOptions();
-		options.setMaxAutoConnectRetryTime(0);
-		options.setConnectTimeout(1);
-		// connect
-		long begin = 0;
-		long end = 0;
-		begin = System.currentTimeMillis();
-		Sequoiadb sdb1 = new Sequoiadb(list, "", "", options);
-		end = System.currentTimeMillis();
-		System.out.println("Takes " + (end - begin));
-		// set option and change the connect
-		options.setConnectTimeout(15000);
-		sdb1.changeConnectionOptions(options);
-		// check
-		DBCursor cursor = sdb1.getList(4, null, null, null);
-		assertTrue(cursor != null);
-		sdb1.disconnect();
+		try {
+			list.add("192.168.20.35:12340");
+			list.add("192.168.20.36:12340");
+			list.add("123:123");
+			list.add("");
+			list.add(":12340");
+			list.add("localhost:50000");
+			list.add("localhost:11810");
+			list.add("localhost:12340");
+			list.add(Constants.COOR_NODE_CONN);
+	
+			ConfigOptions options = new ConfigOptions();
+			options.setMaxAutoConnectRetryTime(0);
+			options.setConnectTimeout(10000);
+			// connect
+			long begin = 0;
+			long end = 0;
+			begin = System.currentTimeMillis();
+			Sequoiadb sdb1 = new Sequoiadb(list, "", "", options);
+			end = System.currentTimeMillis();
+			System.out.println("Takes " + (end - begin));
+			// set option and change the connect
+			options.setConnectTimeout(15000);
+			sdb1.changeConnectionOptions(options);
+			// check
+			DBCursor cursor = sdb1.getList(4, null, null, null);
+			assertTrue(cursor != null);
+			sdb1.disconnect();
+		}catch(BaseException e) {
+			SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+			System.out.println("Debug info: failed to testcase at: " + df.format(new Date()));
+			System.out.println("Debug info: address list is: " + list.toString());
+			throw e;
+		}
 	}
 	
 	
