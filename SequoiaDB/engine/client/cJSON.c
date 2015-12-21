@@ -935,10 +935,8 @@ static const char *parse_first_command(cJSON *item,const char *value,int cj_type
    case cJSON_Date:
    {
       const char *value_temp = value ;
-      char *pStringLast = 0 ;
       int len = 0;
       int isString = 0 ;
-      int stringLen = 0 ;
       if ( isNumber == 0 )
       {
          if( *value == '\"' )
