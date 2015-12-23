@@ -83,7 +83,7 @@ namespace engine
       ossStrncat( pBuffer, flagStr, bufSize - ossStrlen( pBuffer ) ) ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__MBFLAG2STRING, "mbFlag2String" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__MBFLAG2STRING, "mbFlag2String" )
    void mbFlag2String( UINT16 flag, CHAR * pBuffer, INT32 bufSize )
    {
       PD_TRACE_ENTRY ( SDB__MBFLAG2STRING ) ;
@@ -183,7 +183,7 @@ namespace engine
    }
 
    #define DMS_MB_ATTR_COMPRESSED_STR                        "Compressed"
-   PD_TRACE_DECLARE_FUNCTION ( SDB__MBATTR2STRING, "mbAttr2String" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__MBATTR2STRING, "mbAttr2String" )
    void mbAttr2String( UINT32 attributes, CHAR * pBuffer, INT32 bufSize )
    {
       PD_TRACE_ENTRY ( SDB__MBATTR2STRING ) ;
@@ -210,7 +210,7 @@ namespace engine
    /*
       _dmsMBContext implement
    */
-   PD_TRACE_DECLARE_FUNCTION ( SDB__DMSMBCONTEXT, "_dmsMBContext::_dmsMBContext" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSMBCONTEXT, "_dmsMBContext::_dmsMBContext" )
    _dmsMBContext::_dmsMBContext ()
    {
       PD_TRACE_ENTRY ( SDB__DMSMBCONTEXT ) ;
@@ -218,7 +218,7 @@ namespace engine
       PD_TRACE_EXIT ( SDB__DMSMBCONTEXT ) ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__DMSMBCONTEXT_DESC, "_dmsMBContext::~_dmsMBContext" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSMBCONTEXT_DESC, "_dmsMBContext::~_dmsMBContext" )
    _dmsMBContext::~_dmsMBContext ()
    {
       PD_TRACE_ENTRY ( SDB__DMSMBCONTEXT_DESC ) ;
@@ -226,7 +226,7 @@ namespace engine
       PD_TRACE_EXIT ( SDB__DMSMBCONTEXT_DESC ) ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__DMSMBCONTEXT__RESET, "_dmsMBContext::_reset" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSMBCONTEXT__RESET, "_dmsMBContext::_reset" )
    void _dmsMBContext::_reset ()
    {
       PD_TRACE_ENTRY ( SDB__DMSMBCONTEXT__RESET ) ;
@@ -260,7 +260,7 @@ namespace engine
       return ss.str() ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__DMSMBCONTEXT_PAUSE, "_dmsMBContext::pause" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSMBCONTEXT_PAUSE, "_dmsMBContext::pause" )
    INT32 _dmsMBContext::pause()
    {
       INT32 rc = SDB_OK ;
@@ -274,7 +274,7 @@ namespace engine
       return rc ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__DMSMBCONTEXT_RESUME, "_dmsMBContext::resume" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSMBCONTEXT_RESUME, "_dmsMBContext::resume" )
    INT32 _dmsMBContext::resume()
    {
       INT32 rc = SDB_OK ;
@@ -309,7 +309,7 @@ namespace engine
    /*
       _dmsStorageData implement
    */
-   PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATA, "_dmsStorageData::_dmsStorageData" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATA, "_dmsStorageData::_dmsStorageData" )
    _dmsStorageData::_dmsStorageData ( const CHAR *pSuFileName,
                                       dmsStorageInfo *pInfo )
    :_dmsStorageBase( pSuFileName, pInfo )
@@ -324,7 +324,7 @@ namespace engine
       PD_TRACE_EXIT ( SDB__DMSSTORAGEDATA ) ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATA_DESC, "_dmsStorageData::~_dmsStorageData" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATA_DESC, "_dmsStorageData::~_dmsStorageData" )
    _dmsStorageData::~_dmsStorageData ()
    {
       PD_TRACE_ENTRY ( SDB__DMSSTORAGEDATA_DESC ) ;
@@ -354,7 +354,7 @@ namespace engine
       PD_TRACE_EXIT ( SDB__DMSSTORAGEDATA_DESC ) ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATA_SYNCMEMTOMMAP, "_dmsStorageData::syncMemToMmap" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATA_SYNCMEMTOMMAP, "_dmsStorageData::syncMemToMmap" )
    void _dmsStorageData::syncMemToMmap ()
    {
       PD_TRACE_ENTRY ( SDB__DMSSTORAGEDATA_SYNCMEMTOMMAP ) ;
@@ -453,7 +453,7 @@ namespace engine
       return rc ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATA__ONCREATE, "_dmsStorageData::_onCreate" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATA__ONCREATE, "_dmsStorageData::_onCreate" )
    INT32 _dmsStorageData::_onCreate( OSSFILE * file, UINT64 curOffSet )
    {
       INT32 rc          = SDB_OK ;
@@ -530,7 +530,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATA__ONMAPMETA, "_dmsStorageData::_onMapMeta" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATA__ONMAPMETA, "_dmsStorageData::_onMapMeta" )
    INT32 _dmsStorageData::_onMapMeta( UINT64 curOffSet )
    {
       INT32 rc = SDB_OK ;
@@ -634,7 +634,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATA__ONCLOSED, "_dmsStorageData::_onClosed" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATA__ONCLOSED, "_dmsStorageData::_onClosed" )
    void _dmsStorageData::_onClosed ()
    {
       PD_TRACE_ENTRY ( SDB__DMSSTORAGEDATA__ONCLOSED ) ;
@@ -646,7 +646,7 @@ namespace engine
       PD_TRACE_EXIT ( SDB__DMSSTORAGEDATA__ONCLOSED ) ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATA__INITMME, "_dmsStorageData::_initializeMME" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATA__INITMME, "_dmsStorageData::_initializeMME" )
    void _dmsStorageData::_initializeMME ()
    {
       PD_TRACE_ENTRY ( SDB__DMSSTORAGEDATA__INITMME ) ;
@@ -659,7 +659,7 @@ namespace engine
       PD_TRACE_EXIT ( SDB__DMSSTORAGEDATA__INITMME ) ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATA__LOGDPS, "_dmsStorageData::_logDPS" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATA__LOGDPS, "_dmsStorageData::_logDPS" )
    INT32 _dmsStorageData::_logDPS( SDB_DPSCB * dpsCB,
                                    dpsMergeInfo & info,
                                    pmdEDUCB * cb,
@@ -700,7 +700,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATA__LOGDPS1, "_dmsStorageData::_logDPS" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATA__LOGDPS1, "_dmsStorageData::_logDPS" )
    INT32 _dmsStorageData::_logDPS( SDB_DPSCB *dpsCB, dpsMergeInfo &info,
                                    pmdEDUCB *cb, dmsMBContext *context,
                                    dmsExtentID extLID,
@@ -734,7 +734,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATA__ALLOCATEEXTENT, "_dmsStorageData::_allocateExtent" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATA__ALLOCATEEXTENT, "_dmsStorageData::_allocateExtent" )
    INT32 _dmsStorageData::_allocateExtent( dmsMBContext * context,
                                            UINT16 numPages,
                                            BOOLEAN map2DelList,
@@ -853,7 +853,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATA__FREEEXTENT, "_dmsStorageData::_freeExtent" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATA__FREEEXTENT, "_dmsStorageData::_freeExtent" )
    INT32 _dmsStorageData::_freeExtent( dmsExtentID extentID )
    {
       INT32 rc = SDB_OK ;
@@ -895,7 +895,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATA__RESERVEFROMDELETELIST, "_dmsStorageData::_reserveFromDeleteList" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATA__RESERVEFROMDELETELIST, "_dmsStorageData::_reserveFromDeleteList" )
    INT32 _dmsStorageData::_reserveFromDeleteList( dmsMBContext *context,
                                                   UINT32 requiredSize,
                                                   dmsRecordID &resultID,
@@ -1038,7 +1038,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATA__TRUNCATECOLLECTION, "_dmsStorageData::_truncateCollection" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATA__TRUNCATECOLLECTION, "_dmsStorageData::_truncateCollection" )
    INT32 _dmsStorageData::_truncateCollection( dmsMBContext *context )
    {
       INT32 rc                     = SDB_OK ;
@@ -1111,7 +1111,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATA__TRUNCATECOLLECITONLOADS, "_dmsStorageData::_truncateCollectionLoads" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATA__TRUNCATECOLLECITONLOADS, "_dmsStorageData::_truncateCollectionLoads" )
    INT32 _dmsStorageData::_truncateCollectionLoads( dmsMBContext * context )
    {
       INT32 rc                     = SDB_OK ;
@@ -1155,7 +1155,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATA__SAVEDELETEDRECORD, "_dmsStorageData::_saveDeletedRecord" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATA__SAVEDELETEDRECORD, "_dmsStorageData::_saveDeletedRecord" )
    INT32 _dmsStorageData::_saveDeletedRecord( dmsMB *mb, dmsExtent * extAddr,
                                               dmsOffset offset,
                                               INT32 recordSize,
@@ -1215,7 +1215,7 @@ namespace engine
       return SDB_OK ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATA__SAVEDELETEDRECORD1, "_dmsStorageData::_saveDeletedRecord" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATA__SAVEDELETEDRECORD1, "_dmsStorageData::_saveDeletedRecord" )
    INT32 _dmsStorageData::_saveDeletedRecord( dmsMB * mb,
                                               const dmsRecordID &recordID,
                                               INT32 recordSize )
@@ -1247,7 +1247,7 @@ namespace engine
       return rc ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATA__MAPEXTENT2DELLIST, "_dmsStorageData::_mapExtent2DelList" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATA__MAPEXTENT2DELLIST, "_dmsStorageData::_mapExtent2DelList" )
    void _dmsStorageData::_mapExtent2DelList( dmsMB * mb, dmsExtent * extAddr,
                                              SINT32 extentID )
    {
@@ -1312,7 +1312,7 @@ namespace engine
       return ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATA_ADDEXTENT2META, "_dmsStorageData::addExtent2Meta" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATA_ADDEXTENT2META, "_dmsStorageData::addExtent2Meta" )
    INT32 _dmsStorageData::addExtent2Meta( dmsExtentID extID,
                                           dmsExtent *extent,
                                           dmsMBContext *context )
@@ -1452,7 +1452,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATA_ADDCOLLECTION, "_dmsStorageData::addCollection" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATA_ADDCOLLECTION, "_dmsStorageData::addCollection" )
    INT32 _dmsStorageData::addCollection( const CHAR * pName,
                                          UINT16 * collectionID,
                                          UINT32 attributes,
@@ -1689,7 +1689,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATA_DROPCOLLECTION, "_dmsStorageData::dropCollection" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATA_DROPCOLLECTION, "_dmsStorageData::dropCollection" )
    INT32 _dmsStorageData::dropCollection( const CHAR * pName, pmdEDUCB * cb,
                                           SDB_DPSCB * dpscb,
                                           BOOLEAN sysCollection,
@@ -1849,7 +1849,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATA_TRUNCATECOLLECTION, "_dmsStorageData::truncateCollection" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATA_TRUNCATECOLLECTION, "_dmsStorageData::truncateCollection" )
    INT32 _dmsStorageData::truncateCollection( const CHAR *pName,
                                               pmdEDUCB *cb,
                                               SDB_DPSCB *dpscb,
@@ -1999,7 +1999,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATA_TRUNCATECOLLECTIONLOADS, "_dmsStorageData::truncateCollectionLoads" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATA_TRUNCATECOLLECTIONLOADS, "_dmsStorageData::truncateCollectionLoads" )
    INT32 _dmsStorageData::truncateCollectionLoads( const CHAR *pName,
                                                    dmsMBContext * context )
    {
@@ -2032,7 +2032,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATA_RENAMECOLLECTION, "_dmsStorageData::renameCollecion" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATA_RENAMECOLLECTION, "_dmsStorageData::renameCollecion" )
    INT32 _dmsStorageData::renameCollection( const CHAR * oldName,
                                             const CHAR * newName,
                                             pmdEDUCB * cb,
@@ -2128,7 +2128,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATA_FINDCOLLECTION, "_dmsStorageData::findCollection" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATA_FINDCOLLECTION, "_dmsStorageData::findCollection" )
    INT32 _dmsStorageData::findCollection( const CHAR * pName,
                                           UINT16 & collectionID )
    {
@@ -2154,7 +2154,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATA_INSERTRECORD, "_dmsStorageData::insertRecord" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATA_INSERTRECORD, "_dmsStorageData::insertRecord" )
    INT32 _dmsStorageData::insertRecord( dmsMBContext *context,
                                         const BSONObj &record, pmdEDUCB *cb,
                                         SDB_DPSCB *dpscb, BOOLEAN mustOID,
@@ -2483,7 +2483,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATA__EXTENTINSERTRECORD, "_dmsStorageData::_extentInsertRecord" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATA__EXTENTINSERTRECORD, "_dmsStorageData::_extentInsertRecord" )
    INT32 _dmsStorageData::_extentInsertRecord( dmsMBContext *context,
                                                ossValuePtr deletedRecordPtr,
                                                UINT32 dmsRecordSize,
@@ -2598,7 +2598,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATA_DELETERECORD, "_dmsStorageData::deleteRecord" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATA_DELETERECORD, "_dmsStorageData::deleteRecord" )
    INT32 _dmsStorageData::deleteRecord( dmsMBContext *context,
                                         const dmsRecordID &recordID,
                                         ossValuePtr deletedDataPtr,
@@ -2834,7 +2834,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATA__EXTENTREMOVERECORD, "_dmsStorageData::_extentRemoveRecord" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATA__EXTENTREMOVERECORD, "_dmsStorageData::_extentRemoveRecord" )
    INT32 _dmsStorageData::_extentRemoveRecord( dmsMB *mb,
                                                const dmsRecordID &recordID,
                                                INT32 recordSize,
@@ -2898,7 +2898,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATA_UPDATERECORD, "_dmsStorageData::updateRecord" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATA_UPDATERECORD, "_dmsStorageData::updateRecord" )
    INT32 _dmsStorageData::updateRecord( dmsMBContext *context,
                                         const dmsRecordID &recordID,
                                         ossValuePtr updatedDataPtr,
@@ -3124,7 +3124,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATA__EXTENTUPDATERECORD, "_dmsStorageData::_extentUpdatedRecord" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATA__EXTENTUPDATERECORD, "_dmsStorageData::_extentUpdatedRecord" )
    INT32 _dmsStorageData::_extentUpdatedRecord( dmsMBContext *context,
                                                 const dmsRecordID &recordID,
                                                 ossValuePtr recordDataPtr,
@@ -3335,7 +3335,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATA_FETCH, "_dmsStorageData::fetch" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATA_FETCH, "_dmsStorageData::fetch" )
    INT32 _dmsStorageData::fetch( dmsMBContext *context,
                                  const dmsRecordID &recordID,
                                  BSONObj &dataRecord,
