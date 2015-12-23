@@ -2,7 +2,7 @@
 
 # define test root path
 hltTestRoot="testcases/hlt/js_testcases/js"
-sdvTestRoot="testcases/sdv/js_testcases"
+sdvTestRoot="testcases/sdv/normal_parallel"
 testRoots=($hltTestRoot)
 
 libRoot="testcases/hlt/js_testcases/libs"
