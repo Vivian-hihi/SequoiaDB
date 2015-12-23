@@ -183,6 +183,7 @@ namespace engine
    }
 
    #define DMS_MB_ATTR_COMPRESSED_STR                        "Compressed"
+   #define DMS_MB_ATTR_NOIDINDEX_STR                         "NoIDIndex"
    // PD_TRACE_DECLARE_FUNCTION ( SDB__MBATTR2STRING, "mbAttr2String" )
    void mbAttr2String( UINT32 attributes, CHAR * pBuffer, INT32 bufSize )
    {
@@ -194,6 +195,11 @@ namespace engine
       {
          appendFlagString( pBuffer, bufSize, DMS_MB_ATTR_COMPRESSED_STR ) ;
          OSS_BIT_CLEAR( attributes, DMS_MB_ATTR_COMPRESSED ) ;
+      }
+      if ( OSS_BIT_TEST ( attributes, DMS_MB_ATTR_NOIDINDEX ) )
+      {
+         appendFlagString( pBuffer, bufSize, DMS_MB_ATTR_NOIDINDEX_STR ) ;
+         OSS_BIT_CLEAR( attributes, DMS_MB_ATTR_NOIDINDEX ) ;
       }
 
       // Test other bits
