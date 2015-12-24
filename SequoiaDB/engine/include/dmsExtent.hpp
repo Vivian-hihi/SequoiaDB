@@ -193,8 +193,8 @@ namespace engine
    #define DMS_METAEXTENT_HEADER_SZ    sizeof(dmsMetaExtent)
 
 
-   /* Eyecatcher define */
-   #define DMS_DICT_EXTENT_EYECATCHER0    'I'
+   /* Eyecatcher define, 'C' stands for 'Compression' */
+   #define DMS_DICT_EXTENT_EYECATCHER0    'C'
    #define DMS_DICT_EXTENT_EYECATCHER1    'E'
    #define DMS_DICT_EXTENT_CURRENT_V      1
    struct _dmsDictExtent : public SDBObject
