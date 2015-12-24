@@ -3763,7 +3763,7 @@ done:
    return statInCache ;
 error:
    statInCache = NULL ;
-   ereport( WARNING,( errcode( ERRCODE_FDW_ERROR ),
+   ereport( ERROR,( errcode( ERRCODE_FDW_ERROR ),
                        errmsg( "cannot get stat of cl from cache" ),
                        errhint( "foreign table id:%d", foreignTableId ) ) ) ;
    goto done ; 
@@ -3854,9 +3854,13 @@ static INT32 SdbInitCLStatistics( SdbCLStatistics *clStat )
    }
 
    rc = sdbGetShardingKeyInfo( &options, clStat ) ;
-   if ( SDB_OK != rc )
+   if ( SDB_OK != rc && rc != SDB_RTN_COORD_ONLY )
    {
       goto error ;
+   }
+   else
+   {
+      rc = SDB_OK ;
    }
 
    conn = sdbGetConnectionHandle( (const char **)options.serviceList, 
