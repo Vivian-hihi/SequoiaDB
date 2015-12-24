@@ -46,7 +46,7 @@
 #include "dms.hpp"
 #endif
 
-PD_TRACE_DECLARE_FUNCTION ( SDB__OSSMMF_OPEN, "_ossMmapFile::open" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB__OSSMMF_OPEN, "_ossMmapFile::open" )
 INT32 _ossMmapFile::open ( const CHAR *pFilename,
                            UINT32 iMode,
                            UINT32 iPermission )
@@ -73,7 +73,7 @@ error :
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB__OSSMMF_CLOSE, "_ossMmapFile::close" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB__OSSMMF_CLOSE, "_ossMmapFile::close" )
 void _ossMmapFile::close ()
 {
    PD_TRACE_ENTRY ( SDB__OSSMMF_CLOSE );
@@ -102,7 +102,7 @@ void _ossMmapFile::close ()
    PD_TRACE_EXIT ( SDB__OSSMMF_CLOSE );
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB__OSSMMF_SIZE, "_ossMmapFile::size" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB__OSSMMF_SIZE, "_ossMmapFile::size" )
 INT32 _ossMmapFile::size ( UINT64 &fileSize )
 {
    PD_TRACE_ENTRY ( SDB__OSSMMF_SIZE ) ;
@@ -124,7 +124,7 @@ error :
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB__OSSMMF_MAP, "_ossMmapFile::map" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB__OSSMMF_MAP, "_ossMmapFile::map" )
 INT32 _ossMmapFile::map ( UINT64 offset, UINT32 length, void **pAddress )
 {
    PD_TRACE_ENTRY ( SDB__OSSMMF_MAP );
@@ -245,7 +245,7 @@ error :
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB__OSSMMF_FLHALL, "_ossMmapFile::flushAll" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB__OSSMMF_FLHALL, "_ossMmapFile::flushAll" )
 INT32 _ossMmapFile::flushAll ( BOOLEAN sync )
 {
    INT32 rc = SDB_OK ;
@@ -266,7 +266,7 @@ error:
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB__OSSMMF_FLUSH, "_ossMmapFile::flush" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB__OSSMMF_FLUSH, "_ossMmapFile::flush" )
 INT32 _ossMmapFile::flush ( UINT32 segmentID, BOOLEAN sync )
 {
    INT32 rc = SDB_OK ;
@@ -308,7 +308,7 @@ error :
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB__OSSMMF_UNLINK, "_ossMmapFile::unlink" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB__OSSMMF_UNLINK, "_ossMmapFile::unlink" )
 INT32 _ossMmapFile::unlink ()
 {
    INT32 rc = SDB_OK ;

@@ -46,6 +46,9 @@
 
 using namespace std ;
 
+/*
+   _ossMmapFile define
+*/
 class _ossMmapFile : public SDBObject
 {
 protected:
@@ -124,4 +127,5 @@ public:
 
 } ;
 typedef class _ossMmapFile ossMmapFile ;
-#endif
+
+#endif // OSSMMAP_HPP_
