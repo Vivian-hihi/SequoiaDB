@@ -741,6 +741,15 @@ SDB_EXPORT void bson_destroy( bson *b );
 SDB_EXPORT bson *bson_empty( bson *obj );
 
 /**
+ * Check BSON object is empty or not.
+ *
+ * @param obj the BSON object.
+ *
+ * @return true or false.
+ */
+SDB_EXPORT bson_bool_t bson_is_empty( bson *obj );
+
+/**
  * Make a complete copy of the a BSON object.
  * The source bson object must be in a finished
  * state; otherwise, the copy will fail.

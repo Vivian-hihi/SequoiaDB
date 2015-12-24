@@ -110,6 +110,17 @@ SDB_EXPORT bson *bson_empty( bson *obj ) {
     return obj;
 }
 
+SDB_EXPORT bson_bool_t bson_is_empty( bson *obj ) {
+   bson_iterator it ;
+   if ( !obj )
+   {
+      return 1 ;
+   }
+
+   bson_iterator_init( &it, obj );
+   return !bson_iterator_more( &it ) ;
+}
+
 SDB_EXPORT int bson_copy( bson *out, const bson *in ) {
     if ( !out || !in ) return BSON_ERROR;
     if ( !in->finished ) return BSON_ERROR;
