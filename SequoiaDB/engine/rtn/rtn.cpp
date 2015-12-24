@@ -1262,8 +1262,8 @@ namespace engine
       SDB_DPSCB *dpsCB = sdbGetDPSCB() ;
       std::set<monCollectionSpace> allCS ;
       BOOLEAN dmsLocked = FALSE ;
+      UINT64 beginTick = pmdGetDBTick() ;
 
-      PD_LOG( PDEVENT, "begin to sync db data" ) ;
       rc = dmsCB->writable( cb ) ;
       if ( rc )
       {
@@ -1323,13 +1323,13 @@ namespace engine
 
          dmsCB->suUnlock( suID ) ;
       }
-
    done:
       if ( dmsLocked )
       {
          dmsCB->writeDown( cb ) ;
       }
-      PD_LOG( PDEVENT, "result of sync db:%d", rc ) ;
+      PD_LOG( PDDEBUG, "finish to sync db, return code:%d, cost(ms): %lld",
+              rc, pmdGetTickSpanTime( beginTick ) ) ;
       PD_TRACE_EXITRC( SDB_RTNSYNCDB, rc ) ;
       return rc ;
    error:
