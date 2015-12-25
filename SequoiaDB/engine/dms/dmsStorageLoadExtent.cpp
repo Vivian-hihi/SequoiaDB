@@ -344,7 +344,7 @@ namespace engine
       setFlagLoadBuild ( mbContext->mb() ) ;
 
       compressorEntry = _su->data()->getCompressorEntry( mbContext->mbID() ) ;
-      compressor = compressorEntry->getCompressor( SHARED ) ;
+      compressor = compressorEntry->getCompressor() ;
       if ( compressor )
       {
          rc = compressor->prepare( compContext ) ;
@@ -478,10 +478,6 @@ namespace engine
       if ( compContext )
       {
          compressor->done( compContext ) ;
-      }
-      if ( compressor )
-      {
-         compressorEntry->releaseCompressor() ;
       }
 
       PD_TRACE_EXITRC ( SDB__DMSSTORAGELOADEXT__LDDATA, rc );

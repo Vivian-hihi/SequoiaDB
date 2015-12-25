@@ -239,7 +239,6 @@ namespace engine
          BOOLEAN              _includeEndKey ;
 
          BOOLEAN              _countOnly ;
-         dmsCompressorEntry  *_compressorEntry ;
          utilCompressor      *_compressor ;
          utilCompressorContext _compContext ;
 

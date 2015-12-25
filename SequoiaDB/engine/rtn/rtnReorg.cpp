@@ -525,11 +525,6 @@ namespace engine
             compContext = UTIL_INVALID_COMP_CTX ;
          }
 
-         if ( compressor )
-         {
-            compEntry->releaseCompressor() ;
-         }
-
          rc = ru.flush () ;
          if ( rc )
          {
@@ -639,18 +634,14 @@ namespace engine
       }
 
    done :
-      PD_TRACE_EXITRC ( SDB_RTNREORGOFFLINE1, rc ) ;
-      return rc ;
-   error :
       if ( UTIL_INVALID_COMP_CTX != compContext )
       {
          compressor->done( compContext ) ;
       }
-      if ( compressor )
-      {
-         compEntry->releaseCompressor() ;
-      }
 
+      PD_TRACE_EXITRC ( SDB_RTNREORGOFFLINE1, rc ) ;
+      return rc ;
+   error :
       goto done ;
    }
 

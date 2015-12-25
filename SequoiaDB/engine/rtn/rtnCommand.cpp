@@ -598,6 +598,17 @@ namespace engine
             goto error ;
          }
       }
+      else
+      {
+         /*
+          * If 'Compressed' is set as true, but no 'CompressionType' is set,
+          * the 'CompressionType' is set to 'snappy' by default.
+          */
+         if ( isCompressed )
+         {
+            _compressorType = UTIL_COMPRESSOR_SNAPPY ;
+         }
+      }
 
       /// auto index id
       rc = rtnGetBooleanElement( matcher, FIELD_NAME_AUTO_INDEX_ID,

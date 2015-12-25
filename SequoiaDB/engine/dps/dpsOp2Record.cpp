@@ -585,7 +585,7 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DPS_CLCRT2RECORD, "dpsCLCrt2Record" )
    INT32 dpsCLCrt2Record( const CHAR *fullName,
                           const UINT32 &attribute,
-                          UINT8 &compType,
+                          SINT8 &compressorType,
                           dpsLogRecord &record )
    {
       PD_TRACE_ENTRY( SDB__DPS_CLCRT2RECORD ) ;
@@ -615,8 +615,8 @@ namespace engine
          }
       }
 
-      record.push( DPS_LOG_CLCRT_COMPRESS_TYPE, sizeof( UINT8 ),
-                   (const CHAR *)(&compType)) ;
+      record.push( DPS_LOG_CLCRT_COMPRESS_TYPE, sizeof( SINT8 ),
+                   (const CHAR *)(&compressorType)) ;
 
       header._length = record.alignedLen() ;
    done:
@@ -630,7 +630,7 @@ namespace engine
    INT32 dpsRecord2CLCrt( const CHAR *logRecord,
                           const CHAR **fullName,
                           UINT32 &attribute,
-                          UTIL_COMPRESSOR_TYPE &compressorType )
+                          SINT8 &compressorType )
    {
       PD_TRACE_ENTRY( SDB__DPS_RECORD2CLCRT ) ;
       INT32 rc = SDB_OK ;
@@ -665,8 +665,7 @@ namespace engine
       itrCompressorType = record.find( DPS_LOG_CLCRT_COMPRESS_TYPE ) ;
       if ( itrCompressorType.valid() )
       {
-         compressorType = (UTIL_COMPRESSOR_TYPE)
-                              (*((UINT8 *)itrCompressorType.value()));
+         compressorType = *((SINT8 *)itrCompressorType.value());
       }
 
       }

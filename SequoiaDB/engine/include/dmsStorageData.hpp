@@ -245,7 +245,7 @@ namespace engine
       // For rebuild, a new dictionary will be created.
       dmsExtentID    _newDictExtentID ;
       // dictionary addreess;
-      UINT8          _compressorType ;
+      SINT8          _compressorType ;
       CHAR           _pad [ 395 ] ;    /* size here before adding dictionary is 404 */
 
       void reset ( const CHAR *clName = NULL,
@@ -292,7 +292,7 @@ namespace engine
          _totalDataFreeSpace     = 0 ;
          _totalIndexFreeSpace    = 0 ;
          _totalLobPages          = 0 ;
-         _compressorType         = 0 ; /* 0 -- UTIL_COMPRESSOR_INVALID */
+         _compressorType         = -1 ; /* -1 -- UTIL_COMPRESSOR_INVALID */
          _dictExtentID           = DMS_INVALID_EXTENT ;
          _newDictExtentID        = DMS_INVALID_EXTENT ;
 
@@ -393,7 +393,7 @@ namespace engine
       UINT32      _totalLobPages ;
       UINT32      _uniqueIdxNum ;
       dmsExtentID _dictExtID ;
-      UINT8       _compressorType ;
+      SINT8       _compressorType ;
 
       void reset()
       {
@@ -543,37 +543,70 @@ namespace engine
    class _pmdEDUCB ;
    class _mthModifier ;
 
-   /*
-    * Threshold of record number and total size to build a dictionary:
-    * (1) At least 100 records AND
-    * (2) at least 10M data.
-    */
-   #define DMS_CREATE_DICT_MIN_REC_NUM 100
-   #define DMS_CREATE_DICT_MIN_DATA_SIZE ( 10 << 20 )
-
    class _dmsCompressorEntry
    {
+      friend class _dmsCompressorGuard ;
    public:
       _dmsCompressorEntry()
-         : _compressor( NULL ),
-           _lockType( -1 )
+         : _compressor( NULL )
       {
       }
-      ~_dmsCompressorEntry() {}
+      ~_dmsCompressorEntry()
+      {
+         reset() ;
+      }
 
       void setCompressor( _utilCompressor *compressor ) ;
-      OSS_INLINE _utilCompressor* getCompressor(
-                                             OSS_LATCH_MODE lockType = SHARED) ;
-      OSS_INLINE void releaseCompressor() ;
+      OSS_INLINE _utilCompressor* getCompressor() { return _compressor ; }
 
       void reset() ;
 
    private:
       _utilCompressor *_compressor ;
-      INT32 _lockType ;
-      ossSpinSLatch _compressorLatch ;
+      ossRWMutex _lock ;
    } ;
    typedef _dmsCompressorEntry dmsCompressorEntry ;
+
+   class _dmsCompressorGuard
+   {
+   public:
+      _dmsCompressorGuard( dmsCompressorEntry &compEntry, OSS_LATCH_MODE mode )
+         : _lock( &compEntry._lock),
+           _mode( mode )
+      {
+         if ( SHARED == _mode )
+         {
+            _lock->lock_r() ;
+         }
+         else if ( EXCLUSIVE == _mode )
+         {
+            _lock->lock_w() ;
+         }
+      }
+
+      ~_dmsCompressorGuard()
+      {
+         release() ;
+      }
+
+      void release()
+      {
+         if ( SHARED == _mode )
+         {
+            _lock->release_r() ;
+         }
+         else if ( EXCLUSIVE == _mode )
+         {
+            _lock->release_w() ;
+         }
+         _mode = -1 ;
+      }
+
+   private:
+      ossRWMutex *_lock ;
+      INT32 _mode ;
+   } ;
+   typedef _dmsCompressorGuard dmsCompressorGuard ;
 
    /*
       _dmsStorageData defined
@@ -1021,39 +1054,6 @@ namespace engine
       return 16 + 14 - pageSizeSquareRoot() ;
    }
 
-   OSS_INLINE _utilCompressor* dmsCompressorEntry::getCompressor(
-                                                      OSS_LATCH_MODE lockType )
-   {
-      if ( SHARED == lockType )
-      {
-         _compressorLatch.get_shared() ;
-      }
-      else
-      {
-         _compressorLatch.get() ;
-      }
-
-      _lockType = lockType ;
-
-      if ( !_compressor )
-      {
-         releaseCompressor( ) ;
-      }
-
-      return _compressor ;
-   }
-
-   OSS_INLINE void dmsCompressorEntry::releaseCompressor()
-   {
-      if ( SHARED == _lockType )
-      {
-         _compressorLatch.release_shared() ;
-      }
-      else
-      {
-         _compressorLatch.release() ;
-      }
-   }
 }
 
 #endif //DMSSTORAGE_DATA_HPP_

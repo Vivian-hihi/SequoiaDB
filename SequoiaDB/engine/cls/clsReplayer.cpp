@@ -434,15 +434,16 @@ namespace engine
          {
             const CHAR *cl = NULL ;
             UINT32 attribute = 0 ;
-            UTIL_COMPRESSOR_TYPE compressorType = UTIL_COMPRESSOR_INVALID ;
+            SINT8 compType = -1 ;
             rc = dpsRecord2CLCrt( (CHAR *)recordHeader, &cl, attribute,
-                                  compressorType ) ;
+                                  compType ) ;
             if ( SDB_OK != rc )
             {
                goto error ;
             }
+
             rc = rtnCreateCollectionCommand( cl, attribute, eduCB, _dmsCB,
-                                             _dpsCB, compressorType, 0, TRUE ) ;
+                           _dpsCB, (UTIL_COMPRESSOR_TYPE)compType, 0, TRUE ) ;
             if ( SDB_DMS_EXIST == rc )
             {
                PD_LOG( PDWARNING, "Collection [%s] already exist when "
@@ -816,9 +817,9 @@ namespace engine
          {
             const CHAR *fullname = NULL ;
             UINT32 attribute = 0 ;
-            UTIL_COMPRESSOR_TYPE compressorType = UTIL_COMPRESSOR_INVALID ;
+            SINT8 compType = -1 ;
             rc = dpsRecord2CLCrt( (const CHAR *)recordHeader,
-                                  &fullname, attribute, compressorType) ;
+                                  &fullname, attribute, compType) ;
             if ( SDB_OK != rc )
             {
                goto error ;

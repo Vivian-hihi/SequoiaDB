@@ -90,7 +90,6 @@ namespace engine
       _recordXLock         = FALSE ;
       _needUnLock          = FALSE ;
       _cb                  = NULL ;
-      _compressorEntry     = NULL ;
       _compressor          = NULL ;
       _compContext         = NULL ;
 
@@ -117,10 +116,6 @@ namespace engine
       if ( _compContext )
       {
          _compressor->done( _compContext ) ;
-      }
-      if ( _compressor )
-      {
-         _compressorEntry->releaseCompressor() ;
       }
    }
 
@@ -202,10 +197,11 @@ namespace engine
       _cb   = cb ;
       _next = _extent->_firstRecordOffset ;
 
-      if ( DMS_INVALID_EXTENT != _context->mb()->_dictExtentID )
+      if ( DMS_INVALID_EXTENT != _context->mb()->_dictExtentID
+           && ( UTIL_INVALID_COMP_CTX == _compContext ) )
       {
-         _compressorEntry = _pSu->getCompressorEntry( _context->mbID() ) ;
-         _compressor = _compressorEntry->getCompressor( SHARED ) ;
+         _compressor =
+            _pSu->getCompressorEntry( _context->mbID() )->getCompressor() ;
          if ( _compressor )
          {
             rc = _compressor->prepare( _compContext ) ;
@@ -220,6 +216,11 @@ namespace engine
    done:
       return rc ;
    error:
+      if ( UTIL_INVALID_COMP_CTX != _compContext )
+      {
+         _compressor->done( _compContext ) ;
+         _compContext = UTIL_INVALID_COMP_CTX ;
+      }
       goto done ;
    }
 
@@ -558,7 +559,6 @@ namespace engine
       _includeEndKey       = FALSE ;
       _blockScanDir        = 1 ;
       _countOnly           = FALSE ;
-      _compressorEntry     = NULL ;
       _compressor          = NULL ;
       _compContext         = NULL ;
 
@@ -584,10 +584,6 @@ namespace engine
       if ( _compContext )
       {
          _compressor->done( _compContext ) ;
-      }
-      if ( _compressor )
-      {
-         _compressorEntry->releaseCompressor() ;
       }
 
       _scanner    = NULL ;
@@ -713,10 +709,11 @@ namespace engine
 
       _cb   = cb ;
 
-      if ( DMS_INVALID_EXTENT != _context->mb()->_dictExtentID )
+      if ( DMS_INVALID_EXTENT != _context->mb()->_dictExtentID
+           && UTIL_INVALID_COMP_CTX == _compContext )
       {
-         _compressorEntry = _pSu->getCompressorEntry( _context->mbID() ) ;
-         _compressor = _compressorEntry->getCompressor( SHARED ) ;
+         _compressor =
+            _pSu->getCompressorEntry( _context->mbID() )->getCompressor() ;
          if ( _compressor )
          {
             rc = _compressor->prepare( _compContext ) ;
@@ -731,13 +728,10 @@ namespace engine
    done:
       return rc ;
    error:
-      if ( _compContext )
+      if ( UTIL_INVALID_COMP_CTX != _compContext )
       {
          _compressor->done( _compContext ) ;
-      }
-      if ( _compressor )
-      {
-         _compressorEntry->releaseCompressor() ;
+         _compContext = UTIL_INVALID_COMP_CTX ;
       }
 
       goto done ;
