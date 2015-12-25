@@ -2702,7 +2702,10 @@ namespace import
 
       if (_startWith(str, len, fieldDel, fieldDelLen))
       {
-         type = CSV_TYPE_NULL;
+         if (CSV_TYPE_SKIP != type)
+         {
+            type = CSV_TYPE_NULL;
+         }
          valueLength = 0;
          fieldEnd = TRUE;
          goto done;
