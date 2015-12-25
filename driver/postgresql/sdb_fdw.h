@@ -209,7 +209,8 @@ struct SdbStatisticsCache
 typedef struct SdbStatisticsCache SdbStatisticsCache ;
 
 INT32 sdbRecurExprTree( Node *node, SdbExprTreeState *expr_state, 
-                        sdbbson *condition, ExprContext *exprContext ) ;
+                        sdbbson *condition, ExprContext *exprContext, 
+                        bool *isExistDecimal ) ;
 
 int sdbSetBsonValue( sdbbson *bsonObj, const char *name, Datum valueDatum, 
                      Oid columnType, INT32 columnTypeMod ) ;

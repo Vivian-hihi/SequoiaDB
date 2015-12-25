@@ -1183,12 +1183,14 @@ EnumSdbArgType getArgumentType(List *arguments)
 int sdbGenerateRescanCondition(SdbExecState *fdw_state, PlanState *planState, 
                                sdbbson *rescanCondition)
 {
-   ListCell *cell = NULL ;
-   int rc         = SDB_OK ;
+   ListCell *cell     = NULL ;
+   int rc             = SDB_OK ;
+   bool isExitDecimal = false ;
    SdbExprTreeState expr_state ;
 
    if ( bms_is_empty(planState->chgParam) )
    {
+      sdbbson_finish( rescanCondition ) ;
       goto error ;
    }
 
@@ -1196,13 +1198,12 @@ int sdbGenerateRescanCondition(SdbExecState *fdw_state, PlanState *planState,
    expr_state.foreign_table_index = fdw_state->relid ;
    expr_state.foreign_table_id    = fdw_state->tableID ;
 
-   sdbbson_destroy(rescanCondition) ;
-   sdbbson_init(rescanCondition) ;
-   foreach(cell, planState->qual)
+   sdbbson_init( rescanCondition ) ;
+   foreach( cell, planState->qual )
    {
       RestrictInfo *info =(RestrictInfo *)lfirst(cell) ;
       sdbRecurExprTree((Node *)info->clause, &expr_state, rescanCondition,
-                       planState->ps_ExprContext) ;
+                       planState->ps_ExprContext, &isExitDecimal ) ;
       if( expr_state.unsupport_count > 0 )
       {
          sdbbson_destroy(rescanCondition) ;
@@ -1215,8 +1216,6 @@ int sdbGenerateRescanCondition(SdbExecState *fdw_state, PlanState *planState,
    {
       sdbbson_destroy( rescanCondition ) ;
    }
-
-   //sdbPrintBson( rescanCondition, DEBUG1 ) ;
 
 done:
    return rc ;
