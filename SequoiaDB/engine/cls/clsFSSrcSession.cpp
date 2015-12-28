@@ -802,7 +802,6 @@ namespace engine
          if ( _deqLSN.size() > 0 )
          {
             _lsn.offset = _deqLSN.front() ;
-            _beginLSNOffset = _lsn.offset ;
             _deqLSN.pop_front() ;
          }
          else
@@ -1623,6 +1622,7 @@ namespace engine
       UINT64 fullCLLID = ossPack32To64 ( suLID, clLID ) ;
       map<UINT64, UINT32>::iterator it ;
       BOOLEAN needRelease = FALSE ;
+      UINT32 lsnLen = 0 ;
 
       if ( !_init || _quit || offset < _beginLSNOffset )
       {
@@ -1660,6 +1660,7 @@ namespace engine
          }
 
          rh = ( const dpsLogRecordHeader * )( _lsnSearchMB.startPtr() ) ;
+         lsnLen = rh->_length ;
          if ( CLS_IS_LOB_LOG( rh->_type ) )
          {
             if ( !_findEnd )
@@ -1691,6 +1692,7 @@ namespace engine
    done:
       if ( needRelease )
       {
+         _beginLSNOffset = offset + lsnLen ;
          _LSNlatch.release () ;
       }
       PD_TRACE_EXIT ( SDB__CLSFSSS_NTFLSN );
@@ -1826,6 +1828,7 @@ namespace engine
       BOOLEAN inEndMap = FALSE ;
       dpsLogRecord record ;
       DPS_LSN lsn ;
+      UINT32 lsnLen = 0 ;
       BSONObj recordObj ;
       SDB_DPSCB *dpsCB = pmdGetKRCB()->getDPSCB() ;
 
@@ -1886,7 +1889,7 @@ namespace engine
                   sessionName(), rc ) ;
          goto error ;
       }
-
+      lsnLen = record.head()._length ;
 
       // no sharding index, scan by table
       // log of lob can be ignored, coz _findEnd is false.
@@ -2016,12 +2019,10 @@ namespace engine
          }
       }
 
-      _LSNlatch.release () ;
-      locked = FALSE ;
-
    done:
       if ( locked )
       {
+         _beginLSNOffset = offset + lsnLen ;
          _LSNlatch.release() ;
       }
       PD_TRACE_EXIT ( SDB__CLSSPLSS_NTFLSN );
