@@ -296,7 +296,7 @@ _DataDatabaseIndex.getCSInfo = function( $scope, SdbRest ){
             }
             csInfo['PageSize']        = dataSizeFmt( csInfo['PageSize'], 'KB' ) ;
             csInfo['LobPageSize']     = dataSizeFmt( csInfo['LobPageSize'], 'KB' ) ;
-            csInfo['TotalRecords']    = dataSizeFmt( csInfo['TotalRecords'], 'MB' ) ;
+            csInfo['TotalRecords']    = dataSizeFmt( csInfo['TotalRecords'], '' ) ;
             csInfo['TotalDataSize']   = dataSizeFmt( csInfo['TotalDataSize'], 'MB' ) ;
             csInfo['FreeDataSize']    = dataSizeFmt( csInfo['FreeDataSize'], 'MB' ) ;
             csInfo['TotalIndexSize']  = dataSizeFmt( csInfo['TotalIndexSize'], 'MB' ) ;
@@ -313,7 +313,7 @@ _DataDatabaseIndex.getCSInfo = function( $scope, SdbRest ){
          $.each( $scope.csList, function( index, csInfo ){
             csInfo['Info']['PageSize']        = dataSizeFmt( csInfo['Info']['PageSize'], 'KB' ) ;
             csInfo['Info']['LobPageSize']     = dataSizeFmt( csInfo['Info']['LobPageSize'], 'KB' ) ;
-            csInfo['Info']['TotalRecords']    = dataSizeFmt( csInfo['Info']['TotalRecords'], 'MB' ) ;
+            csInfo['Info']['TotalRecords']    = dataSizeFmt( csInfo['Info']['TotalRecords'], '' ) ;
             csInfo['Info']['TotalDataSize']   = dataSizeFmt( csInfo['Info']['TotalDataSize'], 'MB' ) ;
             csInfo['Info']['FreeDataSize']    = dataSizeFmt( csInfo['Info']['FreeDataSize'], 'MB' ) ;
             csInfo['Info']['TotalIndexSize']  = dataSizeFmt( csInfo['Info']['TotalIndexSize'], 'MB' ) ;
@@ -2624,5 +2624,4 @@ _DataDatabaseIndex.showPartitions = function( $scope ){
    </tr>\
 </table>' ;
    }
-
 }
