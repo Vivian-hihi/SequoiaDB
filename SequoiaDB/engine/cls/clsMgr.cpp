@@ -373,7 +373,8 @@ namespace engine
          // if we find the requested nodeID is not the nodeID for the current
          // node, that means we get something from another node and we are
          // going to create a new replsrc session
-         if ( pmdGetNodeID().columns.nodeID != nodeID )
+         if ( pmdGetNodeID().columns.nodeID != 0 &&
+              pmdGetNodeID().columns.nodeID != nodeID )
          {
             pSession = SDB_OSS_NEW clsReplSrcSession( sessionID ) ;
          }
