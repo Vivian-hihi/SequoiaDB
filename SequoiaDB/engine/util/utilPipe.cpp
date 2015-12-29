@@ -44,6 +44,7 @@
 #include "ossNPipe.hpp"
 #include <vector>
 #include <string>
+#include <iostream>
 
 namespace fs = boost::filesystem ;
 

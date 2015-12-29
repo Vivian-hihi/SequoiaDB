@@ -37,6 +37,7 @@
 #include "utilSdb.hpp"
 #include "ossVer.h"
 #include <string>
+#include <iostream>
 
 #define OPTION_HELP        "help"
 #define OPTION_VERSION     "version"

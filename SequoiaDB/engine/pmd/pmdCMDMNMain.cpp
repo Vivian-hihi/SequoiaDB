@@ -45,6 +45,7 @@
 #include "pd.hpp"
 #include "ossUtil.h"
 #include "ossVer.h"
+#include <iostream>
 
 namespace engine
 {
