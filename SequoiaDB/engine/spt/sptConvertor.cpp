@@ -70,10 +70,10 @@
 // check timestamp type bounds
 #define SDB_TIMESTAMP_TYPE_CHECK_BOUND(tm)            \
    do {                                               \
-      if( (INT64)tm < TIME_STAMP_TIMESTAMP_MIN ||     \
-          (INT64)tm > TIME_STAMP_TIMESTAMP_MAX ) {    \ 
-         rc = SDB_INVALIDARG ;                        \
-         goto error ;                                 \
+      if ( (INT64)tm < TIME_STAMP_TIMESTAMP_MIN ||    \
+           (INT64)tm > TIME_STAMP_TIMESTAMP_MAX ) {   \
+           rc = SDB_INVALIDARG ;                      \
+           goto error ;                               \
       }                                               \
    } while( 0 )
 
