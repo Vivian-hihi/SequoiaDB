@@ -31,10 +31,10 @@ $ sudo make && make install</pre>
 
 ##用法##
 
-在下面的例子，sdbtop 使用配置文件为“/opt/sequoiadb/conf/sdbtop.xml”，监控主机名为 sdbserver3，端口服务名为11810，用户名为 test，密码为 test 的数据库集群中的一个节点。
+在下面的例子，sdbtop 使用配置文件为“/opt/sequoiadb/conf/sample/sdbtop.xml”，监控主机名为 sdbserver3，端口服务名为11810，用户名为 test，密码为 test 的数据库集群中的一个节点。
 
 <pre class="prettyprint lang-javascript">
-$ sdbtop -c /opt/sequoiadb/conf/sdbtop.xml -i sdbserver3 -s 11810 -u test -p test</pre>
+$ sdbtop -c /opt/sequoiadb/conf/sample/sdbtop.xml -i sdbserver3 -s 11810 -u test -p test</pre>
 
 接着进入主窗口：
 
