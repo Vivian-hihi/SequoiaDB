@@ -1435,7 +1435,7 @@ INT32 ossProcLimits::init()
    _initRLimit( RLIMIT_MEMLOCK, OSS_LIMIT_MEM_LOCK ) ; 
    _initRLimit( RLIMIT_MSGQUEUE, OSS_LIMIT_MSG_QUEUE ) ; 
    _initRLimit( RLIMIT_RTPRIO, OSS_LIMIT_SCHE_PRIO) ;
-#endif
+#endif  //_AIX
    return rc ;
 }
 
@@ -1499,5 +1499,5 @@ std::string ossProcLimits::str()const
 {
    return "" ;
 }
-#endif
+#endif // defined (_LINUX) || defined (_AIX)
 
