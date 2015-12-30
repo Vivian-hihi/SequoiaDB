@@ -42,6 +42,10 @@
 #include <map>
 #include <string>
 
+#include <boost/bind.hpp>
+#include <boost/thread/thread.hpp>
+#include <boost/program_options/parsers.hpp>
+
 using namespace std ;
 
 namespace engine
@@ -89,6 +93,8 @@ namespace engine
       string         _outStr ;
       INT32          _readResult ;
       INT64          _timeout ;
+
+      boost::thread  *_pThread ;
 
    } ;
    typedef class _ossCmdRunner ossCmdRunner ;

@@ -35,9 +35,9 @@
 #include "ossMem.hpp"
 #include "ossUtil.hpp"
 
-#include <boost/bind.hpp>
-#include <boost/thread/thread.hpp>
-#include <boost/program_options/parsers.hpp>
+#ifndef _WINDOWS
+#include "signal.h"
+#endif // _WINDOWS
 
 #define SPT_CMD_RUNNER_MAX_READ_BUF    ( 4 * 1024 * 1024 )
 
@@ -54,6 +54,7 @@ namespace engine
       _readResult = SDB_OK ;
       _timeout = -1 ;
       _stop = TRUE ;
+      _pThread = NULL ;
    }
 
    _ossCmdRunner::~_ossCmdRunner()
@@ -69,8 +70,14 @@ namespace engine
       try
       {
          _event.reset() ;
-         boost::thread thrd( &_ossCmdRunner::asyncRead, this ) ;
-         thrd.detach () ;
+         _pThread = new boost::thread( &_ossCmdRunner::asyncRead, this ) ;
+
+         if ( NULL == _pThread )
+         {
+            PD_LOG ( PDSEVERE, "Failed to create new thread: %s",
+                     "Allocate memory failed" ) ;
+            _event.signal() ;
+         }
       }
       catch ( std::exception &e )
       {
@@ -103,7 +110,35 @@ namespace engine
 
    void _ossCmdRunner::monitor()
    {
-      INT32 rc = _event.wait( _timeout ) ;
+      INT32 rc = SDB_OK ;
+      INT64 timeout = _timeout >= 0 ? _timeout : 0x7FFFFFFF ;
+      INT64 onceTime = 0 ;
+
+      while( TRUE )
+      {
+         onceTime = timeout > OSS_ONE_SEC ? OSS_ONE_SEC : timeout ;
+         rc = _event.wait( onceTime ) ;
+         if ( SDB_TIMEOUT != rc )
+         {
+            break ;
+         }
+         timeout -= onceTime ;
+         if ( _stop )
+         {
+#ifdef _WINDOWS
+            TerminateThread( _pThread->native_handle(), 0 ) ;
+#else
+            pthread_kill( _pThread->native_handle(), 9 ) ;
+#endif //_WINDOWS
+            _hasRead = TRUE ;
+            _event.signal() ;
+         }
+         else if ( timeout <= 0 )
+         {
+            break ;
+         }
+      }
+
       if ( rc ) // timeout
       {
          UINT32 i = 0 ;
@@ -320,6 +355,11 @@ namespace engine
          ossCloseNamedPipe( _out ) ;
          _id = OSS_INVALID_PID ;
          _monitorEvent.wait() ;
+      }
+      if ( _pThread )
+      {
+         delete _pThread ;
+         _pThread = NULL ;
       }
       return SDB_OK ;
    }
