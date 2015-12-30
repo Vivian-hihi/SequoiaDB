@@ -3566,10 +3566,12 @@ namespace engine
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATA_PREPARECOMPRESSOR, "_dmsStorageData::prepareCompressor" )
    INT32 _dmsStorageData::prepareCompressor( const _dmsMBContext *context,
                                              const CHAR *dict, UINT32 dictLen )
    {
       INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__DMSSTORAGEDATA_PREPARECOMPRESSOR ) ;
       utilCompressor *compressor = NULL ;
       UTIL_COMPRESSOR_TYPE type  = (UTIL_COMPRESSOR_TYPE)
                              ((dmsMBContext *)context)->mb()->_compressorType ;
@@ -3586,23 +3588,29 @@ namespace engine
       _compressorEntry[context->mbID()].setCompressor( compressor ) ;
 
    done:
+      PD_TRACE_EXITRC( SDB__DMSSTORAGEDATA_PREPARECOMPRESSOR, rc ) ;
       return rc ;
    error:
       _compressorFactory.destroyCompressor( compressor ) ;
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATA_RMCOMPRESSOR, "_dmsStorageData::rmCompressor" )
    void _dmsStorageData::rmCompressor( _dmsMBContext *context )
    {
+      PD_TRACE_ENTRY( SDB__DMSSTORAGEDATA_RMCOMPRESSOR ) ;
       dmsCompressorGuard compGuard( _compressorEntry[context->mbID()],
                                     EXCLUSIVE ) ;
       _compressorEntry[context->mbID()].reset() ;
+      PD_TRACE_EXIT( SDB__DMSSTORAGEDATA_RMCOMPRESSOR ) ;
    }
 
+    // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATA_DICTPERSIST, "_dmsStorageData::dictPersist" )
    INT32 _dmsStorageData::dictPersist( UINT16 mbID, UINT32 clLID,
                                        const CHAR *dict, UINT32 dictLen )
    {
       INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__DMSSTORAGEDATA_DICTPERSIST ) ;
       dmsExtentID dictExtID = DMS_INVALID_EXTENT ;
       dmsDictExtent *dictExtent = NULL ;
       dmsMBContext *context = NULL ;
@@ -3653,6 +3661,7 @@ namespace engine
          releaseMBContext( context ) ;
       }
 
+      PD_TRACE_EXITRC( SDB__DMSSTORAGEDATA_DICTPERSIST, rc ) ;
       return rc ;
    error:
       if ( DMS_INVALID_EXTENT != dictExtID )

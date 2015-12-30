@@ -1128,10 +1128,12 @@ INT32 getExtentHead ( OSSFILE &file, dmsExtentID extentID, SINT32 pageSize,
    return rc ;
 }
 
+// PD_TRACE_DECLARE_FUNCTION ( SDB_GETDICTEXTENTHEAD, "getDictExtentHead" )
 INT32 getDictExtentHead( OSSFILE &file, dmsExtentID extentID, INT32 pageSize,
                          dmsDictExtent &extentHead )
 {
    INT32 rc = SDB_OK ;
+   PD_TRACE_ENTRY( SDB_GETDICTEXTENTHEAD ) ;
    INT64 readLen = 0 ;
    rc = ossSeekAndRead( &file, gDataOffset + (INT64)pageSize * extentID,
                         (CHAR *)&extentHead, DMS_DICTEXTENT_HEADER_SZ,
@@ -1154,21 +1156,23 @@ INT32 getDictExtentHead( OSSFILE &file, dmsExtentID extentID, INT32 pageSize,
       rc = SDB_SYS ;
       goto error ;
    }
-
    SDB_ASSERT( extentHead._dictLen > 0
                && extentHead._dictLen <= DMS_DICT_MAX_SIZE,
                "Dictionary length in extent is invalid" ) ;
 done:
+   PD_TRACE_EXITRC( SDB_GETDICTEXTENTHEAD, rc ) ;
    return rc ;
 error:
    goto done ;
 }
 
+// PD_TRACE_DECLARE_FUNCTION ( SDB_GETDICTFROMEXTENT, "getDictFromExtent" )
 INT32 getDictFromExtent( OSSFILE &file, dmsExtentID extentID, INT32 pageSize,
                          const dmsDictExtent *extentHead,
                          CHAR *buf, UINT32 &bufLen )
 {
    INT32 rc = SDB_OK ;
+   PD_TRACE_ENTRY( SDB_GETDICTFROMEXTENT ) ;
    SINT64 readLen = 0 ;
 
    SDB_ASSERT( bufLen >= extentHead->_dictLen,
@@ -1193,6 +1197,7 @@ INT32 getDictFromExtent( OSSFILE &file, dmsExtentID extentID, INT32 pageSize,
    }
 
 done:
+   PD_TRACE_EXITRC( SDB_GETDICTFROMEXTENT, rc ) ;
    return rc ;
 error:
    goto done ;

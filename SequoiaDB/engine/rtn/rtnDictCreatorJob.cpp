@@ -17,9 +17,9 @@ namespace engine
    #define RTN_DICT_CREATE_REC_NUM_THRESHOLD    100
    #define RTN_DICT_CREATE_REC_DATA_SIZE        ( 64 << 20 )
    #define RTN_DICT_CREATE_MIN_REC_NUM    \
-                              ( RTN_DICT_CREATE_REC_NUM_THRESHOLD * 80 / 100 )
+                              ( RTN_DICT_CREATE_REC_NUM_THRESHOLD * 4 / 5 )
    #define RTN_DICT_CREATE_MIN_DATA_SIZE  \
-                              ( RTN_DICT_CREATE_REC_DATA_SIZE * 80 / 100 )
+                              ( RTN_DICT_CREATE_REC_DATA_SIZE * 4 / 5 )
    #define RTN_DICT_BUF_SIZE ( 64 << 20 )
    #define RTN_DICT_LOAD_TO_CACHE_MAX_TRY 3
 
@@ -255,7 +255,7 @@ namespace engine
                ossMemcpy( _srcDataBuf + srcDataLen, bs.objdata(), bs.objsize() ) ;
                bufFreeLen -= bs.objsize() ;
                srcDataLen += bs.objsize() ;
-               fetchNum++ ;
+               fetchNum++ ;
                fetchSize += bs.objsize() ;
                continue ;
             }
