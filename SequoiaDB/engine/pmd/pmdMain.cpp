@@ -225,7 +225,11 @@ namespace engine
       {
          ossProcLimits limitInfo ;
          rc = limitInfo.init() ;
-         if ( SDB_OK != rc )
+         if ( SDB_SYS == rc )
+         {
+            /// the system not implement, do nothing
+         }
+         else if ( SDB_OK != rc )
          {
             PD_LOG( PDWARNING, "can not init limit info:%d", rc ) ;
          }
