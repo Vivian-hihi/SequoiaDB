@@ -1149,13 +1149,6 @@ INT32 getDictExtentHead( OSSFILE &file, dmsExtentID extentID, INT32 pageSize,
       goto error ;
    }
 
-   if ( !extentHead.validate( extentID ) )
-   {
-      dumpPrintf( "Dictionary extent corrupted, extent id: %d"OSS_NEWLINE,
-                  extentID ) ;
-      rc = SDB_SYS ;
-      goto error ;
-   }
    SDB_ASSERT( extentHead._dictLen > 0
                && extentHead._dictLen <= DMS_DICT_MAX_SIZE,
                "Dictionary length in extent is invalid" ) ;
@@ -1589,7 +1582,9 @@ error:
 void inspectOverflowedRecords ( OSSFILE &file, SINT32 pageSize,
                                 UINT16 collectionID, dmsExtentID ovfFromExtent,
                                 std::set<dmsRecordID> &overRIDList,
-                                SINT32 &err )
+                                SINT32 &err,
+                                utilCompressor *compressor,
+                                utilCompressorContext compContext )
 {
    INT32 rc        = SDB_OK ;
    PD_TRACE_ENTRY ( SDB_INSPOVFLWRECRDS );
@@ -1639,7 +1634,8 @@ retry :
       localErr = 0 ;
       len = dmsInspect::inspectDataRecord ( cb, gExtentBuffer + offset,
               ((dmsExtent*)gExtentBuffer)->_blockSize * pageSize - offset,
-              gBuffer, gBufferSize, count, offset, NULL, localErr ) ;
+              gBuffer, gBufferSize, count, offset, NULL, localErr,
+              compressor, compContext ) ;
       if ( len >= gBufferSize-1 )
       {
          if ( reallocBuffer () )
@@ -1677,7 +1673,9 @@ error :
 // PD_TRACE_DECLARE_FUNCTION ( SDB_DUMPOVFWRECRDS, "dumpOverflowedRecords" )
 void dumpOverflowedRecords ( OSSFILE &file, SINT32 pageSize,
                              UINT16 collectionID, dmsExtentID ovfFromExtID,
-                             std::set<dmsRecordID> &overRIDList )
+                             std::set<dmsRecordID> &overRIDList,
+                             utilCompressor *compressor ,
+                             utilCompressorContext compContext )
 {
    INT32 rc = SDB_OK ;
    PD_TRACE_ENTRY ( SDB_DUMPOVFWRECRDS );
@@ -1713,7 +1711,7 @@ retry :
                    rid._extent, rid._offset ) ;
       len = dmsDump::dumpDataRecord ( cb, gExtentBuffer + offset,
                  ((dmsExtent*)gExtentBuffer)->_blockSize * pageSize - offset,
-                 gBuffer, gBufferSize, offset, NULL ) ;
+                 gBuffer, gBufferSize, offset, NULL, compressor, compContext ) ;
       PD_TRACE1 ( SDB_DUMPOVFWRECRDS, PD_PACK_UINT(len) );
       if ( len >= gBufferSize-1 )
       {
@@ -2230,7 +2228,7 @@ retry_data :
       if ( extentRIDList.size() != 0 )
       {
          inspectOverflowedRecords( file, pageSize, id, firstExtent,
-                                   extentRIDList, err ) ;
+                                   extentRIDList, err, compressor, compContext ) ;
       }
 
       firstExtent = tempExtent ;
@@ -2456,7 +2454,7 @@ retry_data :
       if ( extentRIDList.size() != 0 && gShowRecordContent )
       {
          dumpOverflowedRecords ( file, pageSize, id, firstExtent,
-                                 extentRIDList ) ;
+                                 extentRIDList, compressor, compContext ) ;
       }
 
       firstExtent = tempExtent ;
