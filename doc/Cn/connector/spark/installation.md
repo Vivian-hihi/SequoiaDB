@@ -129,7 +129,7 @@ res2: Long = 19</pre>
 	SPARK_DAEMON_JAVA_OPTS="-Dspark.deploy.recoveryMode=ZOOKEEPER -Dspark.deploy.zookeeper.url=server1:2181,server2:2181,server3:2181 -Dspark.deploy.zookeeper.dir=/spark"
 	SPARK_WORKER_DIR=/data/spark_works
 	SPARK_LOCAL_DIRS=/data/spark_data1,/data/spark_data2
-	SPARK_CLASSPATH=$SPARK_HOME/lib/sequoiadb.jar:$SPARK_HOME/lib/spark-sequoiadb_2.10-1.12.0.jar"</pre>
+	SPARK_CLASSPATH=$SPARK_HOME/lib/sequoiadb.jar:$SPARK_HOME/lib/spark-sequoiadb_2.10-1.12.0.jar</pre>
 
 	**Note:**
 
