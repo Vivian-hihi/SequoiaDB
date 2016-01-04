@@ -2217,8 +2217,8 @@
             <cn>集合空间中存在有效集合</cn>
          </description>
       </code>
-	  
-	  <code>
+
+      <code>
          <name>SDB_CAT_LOCALHOST_CONFLICT</name>
          <description>
             <en>'localhost' and '127.0.0.1' cannot be used mixed with other hostname and IP address</en>
@@ -2226,7 +2226,7 @@
          </description>
       </code>
 
-	  <code>
+      <code>
          <name>SDB_CAT_NOT_LOCALCONN</name>
          <description>
             <en>If use 'localhost' and '127.0.0.1' for hostname, coord and catalog must in the same host </en>
@@ -2393,7 +2393,7 @@
             <cn>大对象的序列已经存在</cn>
          </description>
       </code>
-      
+
       <code>
          <name>SDB_OM_CLUSTER_NOT_EXIST</name>
          <description>
@@ -2401,7 +2401,7 @@
             <cn>集群不存在</cn>
          </description>
       </code>
-      
+
       <code>
          <name>SDB_OM_BUSINESS_NOT_EXIST</name>
          <description>
@@ -2409,7 +2409,7 @@
             <cn>业务不存在</cn>
          </description>
       </code>
-      
+
       <code>
          <name>SDB_UTIL_COMP_INIT_FAIL</name>
          <description>
@@ -2417,7 +2417,7 @@
             <cn>压缩初始化失败</cn>
          </description>
       </code>
-      
+
       <code>
          <name>SDB_UTIL_COMP_SETDICT_FAIL</name>
          <description>
@@ -2425,7 +2425,7 @@
             <cn>为压缩算法设置字典失败</cn>
          </description>
       </code>
-    
+
       <code>
          <name>SDB_UTIL_COMP_BUF_SMALL</name>
          <description>
@@ -2433,7 +2433,7 @@
             <cn>给压缩算法的输出缓冲区太小</cn>
          </description>
       </code>
-   
+
       <code>
          <name>SDB_UTIL_COMP_COMPRESS_FAIL</name>
          <description>

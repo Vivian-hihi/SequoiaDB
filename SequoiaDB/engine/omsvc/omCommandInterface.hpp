@@ -100,7 +100,15 @@ namespace engine
          virtual INT32     doAgentResponse ( MsgHeader* pAgentResponse ) ;
 
       protected:
-         INT32             _getBusinessInfo( string business, 
+         INT32             _queryTable( const string &tableName, 
+                                        const BSONObj &selector, 
+                                        const BSONObj &matcher,
+                                        const BSONObj &order, 
+                                        const BSONObj &hint, SINT32 flag,
+                                        SINT64 numSkip, SINT64 numReturn, 
+                                        list<BSONObj> &records ) ;
+
+         INT32             _getBusinessInfo( const string &business, 
                                              BSONObj &businessInfo ) ;
          INT32             _deleteHost( const string &hostName ) ;
          INT32             _getClusterInfo( const string &clusterName, 
@@ -126,6 +134,13 @@ namespace engine
 
          INT32             _getBusinessType( const string &businessName ,
                                              string &businessType ) ;
+
+         BOOLEAN           _isClusterExist( const string &clusterName ) ;
+         BOOLEAN           _isBusinessExist( const string &clusterName, 
+                                             const string &businessName ) ;
+
+         BOOLEAN           _isHostExistInCluster( const string &hostName,
+                                                  const string &clusterName ) ;
          
       protected:
          SDB_RTNCB         *_pRTNCB ;

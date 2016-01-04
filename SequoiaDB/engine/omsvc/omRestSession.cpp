@@ -801,10 +801,16 @@ namespace engine
                                                                 this ) ;
          }
          else if ( ossStrcasecmp( pSubCommand, 
-                                  OM_DISCOVERY_BUSINESS_REQ ) == 0 )
+                                  OM_DISCOVER_BUSINESS_REQ ) == 0 )
          {
             commandIf = SDB_OSS_NEW omDiscoverBusinessCommand( pAdptor, 
                                                                this ) ;
+         }
+         else if ( ossStrcasecmp( pSubCommand, 
+                                  OM_UNDISCOVER_BUSINESS_REQ ) == 0 )
+         {
+            commandIf = SDB_OSS_NEW omUnDiscoverBusinessCommand( pAdptor, 
+                                                                 this ) ;
          }
          else
          {

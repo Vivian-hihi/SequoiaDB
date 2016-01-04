@@ -91,6 +91,7 @@ namespace engine
    #define OM_BUSINESS_ZOOKEEPER             "zookeeper"
    #define OM_BUSINESS_SPARK                 "spark"
    #define OM_BUSINESS_HDFS                  "hdfs"
+   #define OM_BUSINESS_YARN                  "yarn"
 
    
    #define OM_CS_DEPLOY                      "SYSDEPLOY"
@@ -154,8 +155,11 @@ namespace engine
    #define OM_BUSINESS_FIELD_DEPLOYMOD       "DeployMod"
    #define OM_BUSINESS_FIELD_CLUSTERNAME     OM_HOST_FIELD_CLUSTERNAME
    #define OM_BUSINESS_FIELD_TIME            "Time"
+   /* mark the business is discovery or not */
    #define OM_BUSINESS_FIELD_ADDTYPE         "AddtionType"
    #define OM_BUSINESS_FIELD_LOCATION        "Location"
+
+   #define OM_BUSINESS_ADDTYPE_DISCOVERY     1
 
    #define OM_CS_DEPLOY_CL_BUSINESSIDX1      "{name:\"SYSDEPLOY_BUSINESS_IDX1\",key: {"\
                                              OM_BUSINESS_FIELD_NAME":1}, unique: true, enforced: true } "
@@ -344,7 +348,8 @@ namespace engine
    #define  OM_SET_BUSINESS_AUTH_REQ         "set business authority"
    #define  OM_REMOVE_BUSINESS_AUTH_REQ      "remove business authority"
    #define  OM_QUERY_BUSINESS_AUTH_REQ       "query business authority"
-   #define  OM_DISCOVERY_BUSINESS_REQ        "discovery business"
+   #define  OM_DISCOVER_BUSINESS_REQ         "discover business"
+   #define  OM_UNDISCOVER_BUSINESS_REQ       "undiscover business"
    //**************************************************************************
 
    //*********************param between rest and om****************************
@@ -435,6 +440,8 @@ namespace engine
    #define  OM_BSON_MASTER_WEBUI_PORT        "MasterWebuiPort"
    #define  OM_BSON_NAMENODE_PORT            "NamenodePort"
    #define  OM_BSON_NAMENODE_WEBUI_PORT      "NamenodeWebuiPort"
+
+   #define  OM_BSON_WEB_SERVICE_PORT         "WebServicePort"
 
    #define  OM_CONF_PATH_STR                 "conf"
    #define  OM_LOG_PATH_STR                  "log"

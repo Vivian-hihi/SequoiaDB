@@ -99,13 +99,6 @@ namespace engine
 
          INT32           _getQueryPara( BSONObj &selector, BSONObj &matcher,
                                         BSONObj &order, BSONObj &hint) ;
-         INT32           _queryTable( const string &tableName, 
-                                      const BSONObj &selector, 
-                                      const BSONObj &matcher,
-                                      const BSONObj &order, 
-                                      const BSONObj &hint, SINT32 flag,
-                                      SINT64 numSkip, SINT64 numReturn, 
-                                      list<BSONObj> &records ) ;
          string          _getLanguage() ;
          void            _setFileLanguageSep() ;
 
@@ -890,12 +883,31 @@ namespace engine
          INT32           _checkBusinssCFG( BSONObj &configInfo ) ;
          INT32           _checkSparkCFG( BSONObj &configInfo ) ;
          INT32           _checkHdfsCFG( BSONObj &configInfo ) ;
+         INT32           _checkYarnCFG( BSONObj &configInfo ) ;
 
-         string          _generateName( const string &keyName ) ;
          INT32           _storeBusinessInfo( BSONObj &configInfo ) ;
          INT32           _storeSparkBInfo( BSONObj &configInfo ) ;
          INT32           _storeHdfsBInfo( BSONObj &configInfo ) ;
+         INT32           _storeYarnBInfo( BSONObj &configInfo ) ;
+   } ;
 
+   class omUnDiscoverBusinessCommand : public omAuthCommand
+   {
+      public:
+         omUnDiscoverBusinessCommand( restAdaptor *pRestAdaptor, 
+                                      pmdRestSession *pRestSession ) ;
+
+         virtual ~omUnDiscoverBusinessCommand() ;
+
+      public:
+         virtual INT32   doCommand() ;
+
+      protected:
+         INT32           _getRestBusinessInfo( string &clusterName, 
+                                               string &businessName ) ;
+
+         INT32           _UnDiscoverBusiness( const string &clusterName, 
+                                              const string &businessName ) ;
    } ;
 
    class omGetFileCommand : public omGetLogCommand

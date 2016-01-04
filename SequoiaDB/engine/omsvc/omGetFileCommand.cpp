@@ -353,58 +353,6 @@ namespace engine
       goto done ;
    }
 
-   INT32 omAuthCommand::_queryTable( const string &tableName, 
-                                    const BSONObj &selector, 
-                                    const BSONObj &matcher,
-                                    const BSONObj &order, 
-                                    const BSONObj &hint, SINT32 flag,
-                                    SINT64 numSkip, SINT64 numReturn, 
-                                    list<BSONObj> &records )
-   {
-      INT32 rc         = SDB_OK ;
-      SINT64 contextID = -1 ;
-      rc = rtnQuery( tableName.c_str(), selector, matcher, order, hint, flag, 
-                     _cb, numSkip, numReturn, _pDMSCB, _pRTNCB, contextID );
-      if ( rc )
-      {
-         PD_LOG_MSG( PDERROR, "fail to query table:name=%s,rc=%d", 
-                     tableName.c_str(), rc ) ;
-         goto error ;
-      }
-
-      while ( TRUE )
-      {
-         rtnContextBuf buffObj ;
-         rc = rtnGetMore ( contextID, 1, buffObj, _cb, _pRTNCB ) ;
-         if ( rc )
-         {
-            if ( SDB_DMS_EOC == rc )
-            {
-               rc = SDB_OK ;
-               break ;
-            }
-
-            _pRTNCB->contextDelete( contextID, _cb ) ;
-            contextID = -1 ;
-            PD_LOG_MSG( PDERROR, "failed to get record from table:name=%s,"
-                        "rc=%d", tableName.c_str(), rc ) ;
-            goto error ;
-         }
-
-         BSONObj result( buffObj.data() ) ;
-         records.push_back( result.copy() );
-      }
-
-   done:
-      if ( -1 != contextID )
-      {
-         _pRTNCB->contextDelete ( contextID, _cb ) ;
-      }
-      return rc ;
-   error:
-      goto done ;
-   }
-
    void omAuthCommand::_sendOKRes2Web()
    {
       _sendErrorRes2Web( SDB_OK, "" ) ;
@@ -8091,8 +8039,8 @@ namespace engine
       rc = rtnDelete( OM_CS_DEPLOY_CL_BUSINESS_AUTH, deletor, hint, 0, _cb ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "rtnDelete failed:deletor=%s,rc=%d", 
-                 deletor.toString().c_str(), rc ) ;
+         PD_LOG_MSG( PDERROR, "rtnDelete failed:deletor=%s,rc=%d", 
+                     deletor.toString().c_str(), rc ) ;
          goto error ;
       }
 
@@ -8228,9 +8176,20 @@ namespace engine
          goto error ;
       }
 
+      if ( !_isClusterExist( clusterName ) )
       {
+         rc = SDB_OM_CLUSTER_NOT_EXIST ;
+         PD_LOG_MSG( PDERROR, "cluster is not exist:cluster=%s", 
+                     clusterName.c_str() ) ;
+         goto error ;
+      }
+
+      {
+         string hostName ;
+         string webPort ;
+         BSONObj oneHost ;
          BSONElement ele = configInfo.getField( OM_BSON_BUSINESS_INFO ) ;
-         if ( Array != ele.type() )
+         if ( Object != ele.type() )
          {
             rc = SDB_INVALIDARG ;
             PD_LOG_MSG( PDERROR, "get businessinfo failed:rc=%d,type=%d", 
@@ -8238,38 +8197,96 @@ namespace engine
             goto error ;
          }
 
-         BSONObjIterator iter( ele.embeddedObject() ) ;
-         while ( iter.more() )
+         oneHost  = ele.embeddedObject() ;
+         hostName = oneHost.getStringField( OM_BSON_FIELD_HOST_NAME ) ;
+         webPort  = oneHost.getStringField( OM_BSON_WEB_SERVICE_PORT ) ;
+         if ( hostName.empty() || webPort.empty() )
          {
-            string hostName ;
-            string nameNodePort ;
-            string nameNodeWebPort ;
-            BSONObj oneMaster ;
-            BSONElement masterEle = iter.next() ;
-            if ( Object != masterEle.type() )
-            {
-               rc = SDB_INVALIDARG ;
-               PD_LOG_MSG( PDERROR, "business config is invalid:type=%d", 
-                           masterEle.type() ) ;
-               goto error ;
-            }
+            rc = SDB_INVALIDARG ;
+            PD_LOG_MSG( PDERROR, "hdfs's info is invalid:%s=%s,"
+                        "%s=%s", OM_BSON_FIELD_HOST_NAME, hostName.c_str(), 
+                        OM_BSON_WEB_SERVICE_PORT, webPort.c_str() ) ;
+            goto error ;
+         }
 
-            oneMaster    = masterEle.embeddedObject() ;
-            hostName     = oneMaster.getStringField( OM_BSON_FIELD_HOST_NAME ) ;
-            nameNodePort = oneMaster.getStringField( OM_BSON_NAMENODE_PORT ) ;
-            nameNodeWebPort
-                     = oneMaster.getStringField( OM_BSON_NAMENODE_WEBUI_PORT ) ;
-            if ( hostName.empty() || nameNodePort.empty() 
-                 || nameNodeWebPort.empty() )
-            {
-               rc = SDB_INVALIDARG ;
-               PD_LOG_MSG( PDERROR, "hdfs's info is invalid:%s=%s,"
-                           "%s=%s,%s=%s", OM_BSON_FIELD_HOST_NAME, 
-                           hostName.c_str(), OM_BSON_NAMENODE_PORT,
-                           nameNodePort.c_str(), OM_BSON_NAMENODE_WEBUI_PORT,
-                           nameNodeWebPort.c_str() ) ;
-               goto error ;
-            }
+         if ( !_isHostExistInCluster( hostName, clusterName ) )
+         {
+            rc = SDB_INVALIDARG ;
+            PD_LOG_MSG( PDERROR, "host is not exist in cluster:host=%s,"
+                        "cluster=%s", hostName.c_str(), 
+                        clusterName.c_str() ) ;
+            goto error ;
+         }
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 omDiscoverBusinessCommand::_checkYarnCFG( BSONObj &configInfo )
+   {
+      INT32 rc = SDB_OK ;
+      string businessName ;
+      string clusterName ;
+
+      businessName = configInfo.getStringField( OM_BSON_BUSINESS_NAME ) ;
+      if ( businessName.empty() )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG_MSG( PDERROR, "get business name failed:rc=%d", rc ) ;
+         goto error ;
+      }
+
+      clusterName = configInfo.getStringField( OM_BSON_FIELD_CLUSTER_NAME ) ;
+      if ( clusterName.empty() )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG_MSG( PDERROR, "get cluster name failed:rc=%d", rc ) ;
+         goto error ;
+      }
+
+      if ( !_isClusterExist( clusterName ) )
+      {
+         rc = SDB_OM_CLUSTER_NOT_EXIST ;
+         PD_LOG_MSG( PDERROR, "cluster is not exist:cluster=%s", 
+                     clusterName.c_str() ) ;
+         goto error ;
+      }
+
+      {
+         string hostName ;
+         string webPort ;
+         BSONObj oneHost ;
+         BSONElement ele = configInfo.getField( OM_BSON_BUSINESS_INFO ) ;
+         if ( Object != ele.type() )
+         {
+            rc = SDB_INVALIDARG ;
+            PD_LOG_MSG( PDERROR, "get businessinfo failed:rc=%d,type=%d", 
+                        rc, ele.type() ) ;
+            goto error ;
+         }
+
+         oneHost  = ele.embeddedObject() ;
+         hostName = oneHost.getStringField( OM_BSON_FIELD_HOST_NAME ) ;
+         webPort  = oneHost.getStringField( OM_BSON_WEB_SERVICE_PORT ) ;
+         if ( hostName.empty() || webPort.empty() )
+         {
+            rc = SDB_INVALIDARG ;
+            PD_LOG_MSG( PDERROR, "spark's master info is invalid:%s=%s,"
+                        "%s=%s", OM_BSON_FIELD_HOST_NAME, hostName.c_str(), 
+                        OM_BSON_MASTER_PORT, webPort.c_str() ) ;
+            goto error ;
+         }
+
+         if ( !_isHostExistInCluster( hostName, clusterName ) )
+         {
+            rc = SDB_INVALIDARG ;
+            PD_LOG_MSG( PDERROR, "host is not exist in cluster:host=%s,"
+                        "cluster=%s", hostName.c_str(), 
+                        clusterName.c_str() ) ;
+            goto error ;
          }
       }
 
@@ -8301,9 +8318,20 @@ namespace engine
          goto error ;
       }
 
+      if ( !_isClusterExist( clusterName ) )
       {
+         rc = SDB_OM_CLUSTER_NOT_EXIST ;
+         PD_LOG_MSG( PDERROR, "cluster is not exist:cluster=%s", 
+                     clusterName.c_str() ) ;
+         goto error ;
+      }
+
+      {
+         string hostName ;
+         string webPort ;
+         BSONObj oneHost ;
          BSONElement ele = configInfo.getField( OM_BSON_BUSINESS_INFO ) ;
-         if ( Array != ele.type() )
+         if ( Object != ele.type() )
          {
             rc = SDB_INVALIDARG ;
             PD_LOG_MSG( PDERROR, "get businessinfo failed:rc=%d,type=%d", 
@@ -8311,38 +8339,25 @@ namespace engine
             goto error ;
          }
 
-         BSONObjIterator iter( ele.embeddedObject() ) ;
-         while ( iter.more() )
+         oneHost  = ele.embeddedObject() ;
+         hostName = oneHost.getStringField( OM_BSON_FIELD_HOST_NAME ) ;
+         webPort  = oneHost.getStringField( OM_BSON_WEB_SERVICE_PORT ) ;
+         if ( hostName.empty() || webPort.empty() )
          {
-            string hostName ;
-            string masterPort ;
-            string masterWebuiPort ;
-            BSONObj oneMaster ;
-            BSONElement masterEle = iter.next() ;
-            if ( Object != masterEle.type() )
-            {
-               rc = SDB_INVALIDARG ;
-               PD_LOG_MSG( PDERROR, "business config is invalid:type=%d", 
-                           masterEle.type() ) ;
-               goto error ;
-            }
+            rc = SDB_INVALIDARG ;
+            PD_LOG_MSG( PDERROR, "spark's master info is invalid:%s=%s,"
+                        "%s=%s", OM_BSON_FIELD_HOST_NAME, hostName.c_str(), 
+                        OM_BSON_MASTER_PORT, webPort.c_str() ) ;
+            goto error ;
+         }
 
-            oneMaster  = masterEle.embeddedObject() ;
-            hostName   = oneMaster.getStringField( OM_BSON_FIELD_HOST_NAME ) ;
-            masterPort = oneMaster.getStringField( OM_BSON_MASTER_PORT ) ;
-            masterWebuiPort 
-                       = oneMaster.getStringField( OM_BSON_MASTER_WEBUI_PORT ) ;
-            if ( hostName.empty() || masterPort.empty() 
-                 || masterWebuiPort.empty() )
-            {
-               rc = SDB_INVALIDARG ;
-               PD_LOG_MSG( PDERROR, "spark's master info is invalid:%s=%s,"
-                           "%s=%s,%s=%s", OM_BSON_FIELD_HOST_NAME,
-                           hostName.c_str(), OM_BSON_MASTER_PORT,
-                           masterPort.c_str(), OM_BSON_MASTER_WEBUI_PORT,
-                           masterWebuiPort.c_str() ) ;
-               goto error ;
-            }
+         if ( !_isHostExistInCluster( hostName, clusterName ) )
+         {
+            rc = SDB_INVALIDARG ;
+            PD_LOG_MSG( PDERROR, "host is not exist in cluster:host=%s,"
+                        "cluster=%s", hostName.c_str(), 
+                        clusterName.c_str() ) ;
+            goto error ;
          }
       }
 
@@ -8359,7 +8374,7 @@ namespace engine
       string businessName ;
       string clusterName ;
       businessType = configInfo.getStringField( OM_BSON_BUSINESS_TYPE ) ;
-      if ( businessType == OM_BUSINESS_SPARK )
+      if ( OM_BUSINESS_SPARK == businessType )
       {
          rc = _checkSparkCFG( configInfo ) ;
          if ( SDB_OK != rc )
@@ -8368,12 +8383,21 @@ namespace engine
             goto error ;
          }
       }
-      else if ( businessType == OM_BUSINESS_HDFS )
+      else if ( OM_BUSINESS_HDFS == businessType )
       {
          rc = _checkHdfsCFG( configInfo ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG( PDERROR, "check Hdfs BusinessInfo failed:rc=%d", rc ) ;
+            goto error ;
+         }
+      }
+      else if ( OM_BUSINESS_YARN == businessType )
+      {
+         rc = _checkYarnCFG( configInfo ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "check Yarn BusinessInfo failed:rc=%d", rc ) ;
             goto error ;
          }
       }
@@ -8391,66 +8415,45 @@ namespace engine
       goto done ;
    }
 
-   string omDiscoverBusinessCommand::_generateName( const string &keyName )
+   INT32 omDiscoverBusinessCommand::_storeYarnBInfo( BSONObj &configInfo )
    {
-      BSONObjBuilder builder ;
-      BSONObj selector ;
-      BSONObj matcher ;
-      BSONObj orderBy ;
-      BSONObj hint ;
-      string retName   = keyName + "1" ;
-      SINT64 contextID = -1 ;
-      INT32 rc         = SDB_OK ;
-      string regrex    = "^" + keyName ;
+      INT32 rc = SDB_OK ;
+      string businessType ;
+      string businessName ;
+      string clusterName ;
+      BSONObj bRecord ;
 
-      orderBy  = BSON( OM_BUSINESS_FIELD_NAME << -1 ) ;
-      builder.appendRegex( OM_BUSINESS_FIELD_NAME, regrex ) ;
-      matcher = builder.obj() ;
-      rc = rtnQuery( OM_CS_DEPLOY_CL_BUSINESS, selector, matcher, orderBy, hint, 
-                     1, _cb, 0, -1, _pDMSCB, _pRTNCB, contextID ) ;
-      if ( rc )
+      clusterName  = configInfo.getStringField( OM_BSON_FIELD_CLUSTER_NAME ) ;
+      businessType = configInfo.getStringField( OM_BSON_BUSINESS_TYPE ) ;
+      businessName = configInfo.getStringField( OM_BSON_BUSINESS_NAME ) ;
+
       {
-         PD_LOG_MSG( PDERROR, "failed to query table:name=%s,rc=%d",
-                     OM_CS_DEPLOY_CL_BUSINESS, rc ) ;
+         BSONElement infoELe ;
+         BSONObjBuilder builder ;
+         time_t now = time( NULL ) ;
+         builder.append( OM_BUSINESS_FIELD_NAME, businessName ) ;
+         builder.append( OM_BUSINESS_FIELD_TYPE, businessType ) ;
+         builder.append( OM_BUSINESS_FIELD_DEPLOYMOD, "" ) ;
+         builder.append( OM_BUSINESS_FIELD_CLUSTERNAME, clusterName ) ;
+         builder.appendTimestamp( OM_BUSINESS_FIELD_TIME, 
+                                  (unsigned long long)now * 1000, 0 ) ;
+         builder.append( OM_BUSINESS_FIELD_ADDTYPE, 
+                         OM_BUSINESS_ADDTYPE_DISCOVERY ) ;
+
+         infoELe = configInfo.getField( OM_BSON_BUSINESS_INFO ) ;
+         builder.append( infoELe ) ;
+         bRecord = builder.obj() ;
+      }
+      
+      rc = rtnInsert( OM_CS_DEPLOY_CL_BUSINESS, bRecord, 1, 0, _cb ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG_MSG( PDERROR, "insert record failed:rc=%d", rc ) ;
          goto error ;
       }
 
-      while ( TRUE )
-      {
-         rtnContextBuf buffObj ;
-         rc = rtnGetMore ( contextID, 1, buffObj, _cb, _pRTNCB ) ;
-         if ( rc )
-         {
-            if ( SDB_DMS_EOC == rc )
-            {
-               rc = SDB_OK ;
-               
-               break ;
-            }
-
-            contextID = -1 ;
-            PD_LOG_MSG( PDERROR, "failed to get record from table:name=%s,"
-                        "rc=%d", OM_CS_DEPLOY_CL_BUSINESS, rc ) ;
-            goto error ;
-         }
-
-         BSONObj result( buffObj.data() ) ;
-         CHAR cNum[ OM_INT32_LENGTH + 1 ] = "" ;
-         string tmpName = result.getStringField( OM_BUSINESS_FIELD_NAME ) ;
-         string strNum  = tmpName.substr( keyName.length() ) ;
-         INT32 num      = ossAtoi( strNum.c_str() );
-         num++ ;
-         ossItoa( num, cNum, OM_INT32_LENGTH ) ;
-         retName = keyName + cNum ;
-         break ;
-      }
-
    done:
-      if ( -1 != contextID )
-      {
-         _pRTNCB->contextDelete ( contextID, _cb ) ;
-      }
-      return retName ;
+      return rc ;
    error:
       goto done ;
    }
@@ -8466,10 +8469,6 @@ namespace engine
       clusterName  = configInfo.getStringField( OM_BSON_FIELD_CLUSTER_NAME ) ;
       businessType = configInfo.getStringField( OM_BSON_BUSINESS_TYPE ) ;
       businessName = configInfo.getStringField( OM_BSON_BUSINESS_NAME ) ;
-      if ( businessName.empty() )
-      {
-         businessName = _generateName( OM_BUSINESS_SPARK ) ;
-      }
 
       {
          BSONElement infoELe ;
@@ -8481,7 +8480,8 @@ namespace engine
          builder.append( OM_BUSINESS_FIELD_CLUSTERNAME, clusterName ) ;
          builder.appendTimestamp( OM_BUSINESS_FIELD_TIME, 
                                   (unsigned long long)now * 1000, 0 ) ;
-         builder.append( OM_BUSINESS_FIELD_ADDTYPE, 1 ) ;
+         builder.append( OM_BUSINESS_FIELD_ADDTYPE, 
+                         OM_BUSINESS_ADDTYPE_DISCOVERY ) ;
 
          infoELe = configInfo.getField( OM_BSON_BUSINESS_INFO ) ;
          builder.append( infoELe ) ;
@@ -8495,7 +8495,6 @@ namespace engine
          goto error ;
       }
 
-      
    done:
       return rc ;
    error:
@@ -8525,6 +8524,15 @@ namespace engine
             goto error ;
          }
       }
+      else if ( OM_BUSINESS_YARN == businessType )
+      {
+         rc = _storeYarnBInfo( configInfo ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "store Yarn BusinessInfo failed:rc=%d", rc ) ;
+            goto error ;
+         }
+      }
       else
       {
          rc = SDB_INVALIDARG ;
@@ -8550,10 +8558,6 @@ namespace engine
       clusterName  = configInfo.getStringField( OM_BSON_FIELD_CLUSTER_NAME ) ;
       businessType = configInfo.getStringField( OM_BSON_BUSINESS_TYPE ) ;
       businessName = configInfo.getStringField( OM_BSON_BUSINESS_NAME ) ;
-      if ( businessName.empty() )
-      {
-         businessName = _generateName( OM_BUSINESS_SPARK ) ;
-      }
 
       {
          BSONElement infoELe ;
@@ -8565,7 +8569,8 @@ namespace engine
          builder.append( OM_BUSINESS_FIELD_CLUSTERNAME, clusterName ) ;
          builder.appendTimestamp( OM_BUSINESS_FIELD_TIME, 
                                   (unsigned long long)now * 1000, 0 ) ;
-         builder.append( OM_BUSINESS_FIELD_ADDTYPE, 1 ) ;
+         builder.append( OM_BUSINESS_FIELD_ADDTYPE, 
+                         OM_BUSINESS_ADDTYPE_DISCOVERY ) ;
 
          infoELe = configInfo.getField( OM_BSON_BUSINESS_INFO ) ;
          builder.append( infoELe ) ;
@@ -8612,6 +8617,138 @@ namespace engine
       }
 
       _sendOKRes2Web() ;
+   done:
+      return rc ;
+   error:
+      _sendErrorRes2Web( rc, omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ) ;
+      goto done ;
+   }
+
+   omUnDiscoverBusinessCommand::omUnDiscoverBusinessCommand( 
+                                                restAdaptor *pRestAdaptor, 
+                                                pmdRestSession *pRestSession )
+                               :omAuthCommand( pRestAdaptor, pRestSession )
+   {
+   }
+
+   omUnDiscoverBusinessCommand::~omUnDiscoverBusinessCommand()
+   {
+   }
+
+   INT32 omUnDiscoverBusinessCommand::_UnDiscoverBusiness(
+                                                   const string &clusterName,
+                                                   const string &businessName )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj businessInfo ;
+      BSONObj deletor ;
+      BSONObj hint ;
+      BSONElement addTypeEle ;
+      INT32 addType = 0 ;
+      rc = _getBusinessInfo( businessName, businessInfo ) ;
+      if ( SDB_OK != rc )
+      {
+         if ( SDB_DMS_EOC == rc )
+         {
+            rc = SDB_OM_BUSINESS_NOT_EXIST ;
+            PD_LOG_MSG( PDERROR, "business is not exist:business=%s", 
+                        businessName.c_str() ) ;
+            goto error ;
+         }
+         else
+         {
+            PD_LOG_MSG( PDERROR, "get business info failed:rc=%d", rc ) ;
+            goto error ;
+         }
+      }
+
+      addTypeEle = businessInfo.getField( OM_BUSINESS_FIELD_ADDTYPE ) ;
+      if ( addTypeEle.isNumber() )
+      {
+         addType = addTypeEle.Int() ;
+      }
+
+      if ( OM_BUSINESS_ADDTYPE_DISCOVERY != addType )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG_MSG( PDERROR, "can not undiscover business that is not"
+                     " discovered:business=%s", businessName.c_str() ) ;
+         goto error ;
+      }
+
+      deletor = BSON( OM_BUSINESS_FIELD_NAME << businessName ) ;
+      rc = rtnDelete( OM_CS_DEPLOY_CL_BUSINESS, deletor, hint, 0, _cb ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG_MSG( PDERROR, "rtnDelete failed:deletor=%s,rc=%d", 
+                     deletor.toString().c_str(), rc ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 omUnDiscoverBusinessCommand::_getRestBusinessInfo( 
+                                                       string &clusterName, 
+                                                       string &businessName )
+   {
+      const CHAR *pClusterName  = NULL ;
+      const CHAR *pBusinessName = NULL ;
+      INT32 rc = SDB_OK ;
+      _restAdaptor->getQuery( _restSession, OM_REST_CLUSTER_NAME, 
+                              &pClusterName ) ;
+      if ( NULL == pClusterName )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG_MSG( PDERROR, "get rest field failed:field=%s", 
+                     OM_REST_CLUSTER_NAME) ;
+         goto error ;
+      }
+
+      _restAdaptor->getQuery( _restSession, OM_REST_BUSINESS_NAME, 
+                              &pBusinessName ) ;
+      if ( NULL == pBusinessName )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG_MSG( PDERROR, "get rest field failed:field=%s", 
+                     OM_REST_BUSINESS_NAME) ;
+         goto error ;
+      }
+
+      clusterName  = pClusterName ;
+      businessName = pBusinessName ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 omUnDiscoverBusinessCommand::doCommand()
+   {
+      INT32 rc = SDB_OK ;
+      string clusterName ;
+      string businessName ;
+
+      rc = _getRestBusinessInfo( clusterName,  businessName ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "get business info failed:rc=%d", rc ) ;
+         goto error ;
+      }
+
+      rc = _UnDiscoverBusiness( clusterName, businessName ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "remove business info failed:rc=%d", rc ) ;
+         goto error ;
+      }
+
+      _sendOKRes2Web() ;
+
    done:
       return rc ;
    error:

@@ -130,7 +130,59 @@ namespace engine
       goto done ;
    }
 
-   INT32 omRestCommandBase::_getBusinessInfo( string business, 
+   INT32 omRestCommandBase::_queryTable( const string &tableName, 
+                                         const BSONObj &selector, 
+                                         const BSONObj &matcher,
+                                         const BSONObj &order, 
+                                         const BSONObj &hint, SINT32 flag,
+                                         SINT64 numSkip, SINT64 numReturn, 
+                                         list<BSONObj> &records )
+   {
+      INT32 rc         = SDB_OK ;
+      SINT64 contextID = -1 ;
+      rc = rtnQuery( tableName.c_str(), selector, matcher, order, hint, flag, 
+                     _cb, numSkip, numReturn, _pDMSCB, _pRTNCB, contextID );
+      if ( rc )
+      {
+         PD_LOG_MSG( PDERROR, "fail to query table:name=%s,rc=%d", 
+                     tableName.c_str(), rc ) ;
+         goto error ;
+      }
+
+      while ( TRUE )
+      {
+         rtnContextBuf buffObj ;
+         rc = rtnGetMore ( contextID, 1, buffObj, _cb, _pRTNCB ) ;
+         if ( rc )
+         {
+            if ( SDB_DMS_EOC == rc )
+            {
+               rc = SDB_OK ;
+               break ;
+            }
+
+            _pRTNCB->contextDelete( contextID, _cb ) ;
+            contextID = -1 ;
+            PD_LOG_MSG( PDERROR, "failed to get record from table:name=%s,"
+                        "rc=%d", tableName.c_str(), rc ) ;
+            goto error ;
+         }
+
+         BSONObj result( buffObj.data() ) ;
+         records.push_back( result.copy() );
+      }
+
+   done:
+      if ( -1 != contextID )
+      {
+         _pRTNCB->contextDelete ( contextID, _cb ) ;
+      }
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 omRestCommandBase::_getBusinessInfo( const string &business, 
                                               BSONObj &businessInfo )
    {
       BSONObjBuilder bsonBuilder ;
@@ -748,6 +800,61 @@ namespace engine
       return rc ;
    error:
       goto done ;
+   }
+
+   BOOLEAN omRestCommandBase::_isClusterExist( const string &clusterName )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj clusterInfo ;
+      rc = _getClusterInfo( clusterName, clusterInfo ) ;
+      if ( SDB_OK != rc )
+      {
+         return FALSE ;
+      }
+
+      return TRUE ;
+   }
+
+   BOOLEAN omRestCommandBase::_isBusinessExist( const string &clusterName, 
+                                                const string &businessName )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj businessInfo ;
+      rc = _getBusinessInfo( businessName, businessInfo ) ;
+      if ( SDB_OK != rc )
+      {
+         return FALSE ;
+      }
+
+      return TRUE ;
+   }
+
+   BOOLEAN omRestCommandBase::_isHostExistInCluster( const string &hostName,
+                                                     const string &clusterName )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj selector ;
+      BSONObj matcher ;
+      BSONObj order ;
+      BSONObj hint ;
+      list < BSONObj > records ;
+
+      matcher = BSON( OM_HOST_FIELD_NAME << hostName 
+                      << OM_HOST_FIELD_CLUSTERNAME << clusterName ) ;
+      selector = BSON( OM_HOST_FIELD_NAME << "" ) ;
+      rc = _queryTable( OM_CS_DEPLOY_CL_HOST, selector, matcher, order, hint, 
+                        0, 0, -1, records ) ;
+      if ( SDB_OK != rc )
+      {
+         return FALSE ;
+      }
+
+      if ( records.size() > 0 )
+      {
+         return TRUE ;
+      }
+
+      return FALSE ;
    }
 
    omAgentReqBase::omAgentReqBase( BSONObj &request )
