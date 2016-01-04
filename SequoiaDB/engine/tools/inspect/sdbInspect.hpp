@@ -323,9 +323,14 @@ struct _ciGroup
    {
       if ( NULL != _next )
       {
-         delete _next ;
-         _next = NULL ;
+         freeNext() ;
       }
+   }
+
+   void freeNext()
+   {
+      delete _next ;
+      _next = NULL ;
    }
 } ;
 typedef _ciGroup ciGroup ;
@@ -355,9 +360,14 @@ struct _ciNode
 
       if ( NULL != _next )
       {
-         delete _next ;
-         _next = NULL ;
+         freeNext() ;
       }
+   }
+
+   void freeNext()
+   {
+      delete _next ;
+      _next = NULL ;
    }
 } ;
 typedef _ciNode ciNode ;
@@ -378,9 +388,14 @@ struct _ciCollection
    {
       if ( NULL != _next )
       {
-         delete _next ;
-         _next = NULL ;
+         freeNext() ;
       }
+   }
+
+   void freeNext()
+   {
+      delete _next ;
+      _next = NULL ;
    }
 } ;
 typedef _ciCollection ciCollection ;
@@ -397,9 +412,14 @@ struct _ciRecord
    {
       if( NULL != _next )
       {
-         delete _next ;
-         _next = NULL ;
+         freeNext() ;
       }
+   }
+
+   void freeNext()
+   {
+      delete _next ;
+      _next = NULL ;
    }
 } ;
 typedef _ciRecord ciRecord ;
@@ -431,9 +451,14 @@ struct _ciCursor
 
       if ( NULL != _next )
       {
-         delete _next ;
-         _next = NULL ;
+         freeNext() ;
       }
+   }
+
+   void freeNext()
+   {
+      delete _next ;
+      _next = NULL ;
    }
 } ;
 typedef _ciCursor ciCursor ;
@@ -456,9 +481,14 @@ struct _ciOffset
    {
       if ( NULL != _next )
       {
-         delete _next ;
-         _next = NULL ;
+         freeNext() ;
       }
+   }
+
+   void freeNext()
+   {
+      delete _next ;
+      _next = NULL ;
    }
 };
 typedef _ciOffset ciOffset ;
