@@ -319,18 +319,20 @@ struct _ciGroup
    {
       ossMemset( _groupName, 0, CI_GROUPNAME_SIZE + 1 ) ;
    }
+
    ~_ciGroup()
    {
-      if ( NULL != _next )
+      while (NULL != _next)
       {
-         freeNext() ;
-      }
-   }
+         // separate next node from the list
+         _ciGroup* ptr = _next ;
+         _next = _next->_next ;
+         ptr->_next = NULL ;
 
-   void freeNext()
-   {
-      delete _next ;
-      _next = NULL ;
+         // delete the separate node
+         delete ptr ;
+         ptr = NULL ;
+      }
    }
 } ;
 typedef _ciGroup ciGroup ;
@@ -358,16 +360,17 @@ struct _ciNode
          _db = NULL ;
       }
 
-      if ( NULL != _next )
+      while (NULL != _next)
       {
-         freeNext() ;
-      }
-   }
+         // separate next node from the list
+         _ciNode* ptr = _next ;
+         _next = _next->_next ;
+         ptr->_next = NULL ;
 
-   void freeNext()
-   {
-      delete _next ;
-      _next = NULL ;
+         // delete the separate node
+         delete ptr ;
+         ptr = NULL ;
+      }
    }
 } ;
 typedef _ciNode ciNode ;
@@ -386,16 +389,17 @@ struct _ciCollection
    }
    ~_ciCollection()
    {
-      if ( NULL != _next )
+      while (NULL != _next)
       {
-         freeNext() ;
-      }
-   }
+         // separate next node from the list
+         _ciCollection* ptr = _next ;
+         _next = _next->_next ;
+         ptr->_next = NULL ;
 
-   void freeNext()
-   {
-      delete _next ;
-      _next = NULL ;
+         // delete the separate node
+         delete ptr ;
+         ptr = NULL ;
+      }
    }
 } ;
 typedef _ciCollection ciCollection ;
@@ -410,16 +414,17 @@ struct _ciRecord
    {}
    ~_ciRecord()
    {
-      if( NULL != _next )
+      while (NULL != _next)
       {
-         freeNext() ;
-      }
-   }
+         // separate next node from the list
+         _ciRecord* ptr = _next ;
+         _next = _next->_next ;
+         ptr->_next = NULL ;
 
-   void freeNext()
-   {
-      delete _next ;
-      _next = NULL ;
+         // delete the separate node
+         delete ptr ;
+         ptr = NULL ;
+      }
    }
 } ;
 typedef _ciRecord ciRecord ;
@@ -449,16 +454,17 @@ struct _ciCursor
          _cursor = NULL ;
       }
 
-      if ( NULL != _next )
+      while (NULL != _next)
       {
-         freeNext() ;
-      }
-   }
+         // separate next node from the list
+         _ciCursor* ptr = _next ;
+         _next = _next->_next ;
+         ptr->_next = NULL ;
 
-   void freeNext()
-   {
-      delete _next ;
-      _next = NULL ;
+         // delete the separate node
+         delete ptr ;
+         ptr = NULL ;
+      }
    }
 } ;
 typedef _ciCursor ciCursor ;
@@ -479,16 +485,17 @@ struct _ciOffset
 
    ~_ciOffset()
    {
-      if ( NULL != _next )
+      while (NULL != _next)
       {
-         freeNext() ;
-      }
-   }
+         // separate next node from the list
+         _ciOffset* ptr = _next ;
+         _next = _next->_next ;
+         ptr->_next = NULL ;
 
-   void freeNext()
-   {
-      delete _next ;
-      _next = NULL ;
+         // delete the separate node
+         delete ptr ;
+         ptr = NULL ;
+      }
    }
 };
 typedef _ciOffset ciOffset ;
