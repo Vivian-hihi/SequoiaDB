@@ -177,11 +177,14 @@ namespace engine
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTN_DICTCREATORJOB__CONDITIONMATCH, "_rtnDictCreatorJob::_conditionMatch" )
    BOOLEAN _rtnDictCreatorJob::_conditionMatch( dmsStorageUnit *su,
                                                 UINT16 mbID )
    {
+      PD_TRACE_ENTRY( SDB__RTN_DICTCREATORJOB__CONDITIONMATCH ) ;
       const dmsMBStatInfo *mbStatInfo = NULL ;
       UINT64 totalSize = 0 ;
+      BOOLEAN rc = FALSE ;
 
       mbStatInfo = su->data()->getMBStatInfo( mbID ) ;
       SDB_ASSERT( mbStatInfo, "mbStatInfo should never be null" ) ;
@@ -191,18 +194,23 @@ namespace engine
       if ( mbStatInfo->_totalRecords >= RTN_DICT_CREATE_REC_NUM_THRESHOLD
            && totalSize >= RTN_DICT_CREATE_REC_DATA_SIZE )
       {
-         return TRUE ;
+         rc = TRUE ;
       }
       else
       {
-         return FALSE ;
+         rc = FALSE ;
       }
+
+      PD_TRACE_EXIT( SDB__RTN_DICTCREATORJOB__CONDITIONMATCH ) ;
+      return rc ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTN_DICTCREATORJOB__CREATEDICT, "_rtnDictCreatorJob::_createDict" )
    INT32 _rtnDictCreatorJob::_createDict( dmsStorageData *sd,
                                           dmsMBContext *context )
    {
       INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__RTN_DICTCREATORJOB__CREATEDICT ) ;
       dmsRecordID recordID ;
       ossValuePtr recordDataPtr = 0 ;
       pmdEDUCB *cb = pmdGetThreadEDUCB() ;
@@ -304,16 +312,19 @@ namespace engine
       }
 
    done:
+      PD_TRACE_EXITRC( SDB__RTN_DICTCREATORJOB__CREATEDICT, rc ) ;
       return rc ;
    error:
       _creator.reset() ;
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTN_DICTCREATORJOB__TRANSFERDICT, "_rtnDictCreatorJob::_transferDict" )
    INT32 _rtnDictCreatorJob::_transferDict( dmsStorageData *sd,
                                             dmsMBContext *context )
    {
       INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__RTN_DICTCREATORJOB__TRANSFERDICT ) ;
       CHAR *dictBuf = NULL ;
       UINT32 dictBufLen = 0 ;
       BOOLEAN compressorReady = FALSE ;
@@ -347,6 +358,7 @@ namespace engine
       {
          SDB_OSS_FREE( dictBuf ) ;
       }
+      PD_TRACE_EXITRC( SDB__RTN_DICTCREATORJOB__TRANSFERDICT, rc ) ;
       return rc ;
    error:
       if ( compressorReady )
@@ -356,10 +368,12 @@ namespace engine
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTN_DICTCREATORJOB__CHECKANDCREATEDICTFORCL, "_rtnDictCreatorJob::_checkAndCreateDictForCL" )
    INT32 _rtnDictCreatorJob::_checkAndCreateDictForCL( dmsStorageUnitID suID,
                                                        UINT16 mbID )
    {
       INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__RTN_DICTCREATORJOB__CHECKANDCREATEDICTFORCL ) ;
       dmsStorageUnit *su = NULL ;
       dmsMBContext *mbContext = NULL ;
       UINT32 clLID = DMS_INVALID_CLID ;
@@ -455,6 +469,7 @@ namespace engine
       }
       _creator.reset() ;
 
+      PD_TRACE_EXITRC( SDB__RTN_DICTCREATORJOB__CHECKANDCREATEDICTFORCL, rc ) ;
       return rc ;
    error:
       goto done ;
