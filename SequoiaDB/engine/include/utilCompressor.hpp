@@ -22,13 +22,6 @@ namespace engine
       UTIL_COMPRESSOR_ZLIB = 3,
    } ;
 
-   enum UTIL_COMPRESSOR_STATE
-   {
-      UTIL_COMP_NOT_INIT = 0,
-      UTIL_COMP_COMPRESS_READY,
-      UTIL_COMP_DECOMPRESS_READY
-   } ;
-
    /* This class provides compressor interfaces. */
    class _utilCompressor : public SDBObject
    {
@@ -36,7 +29,6 @@ namespace engine
          _utilCompressor(UTIL_COMPRESSOR_TYPE type)
             : _type(type), _dictCopy( FALSE ),
               _dictionary( NULL ), _dictSize( 0 ),
-              _state( UTIL_COMP_NOT_INIT ),
               _prepared( FALSE )
          {
          }
@@ -95,7 +87,6 @@ namespace engine
          BOOLEAN _dictCopy ;
          CHAR *_dictionary ;
          UINT32 _dictSize ;
-         UTIL_COMPRESSOR_STATE _state ;
          BOOLEAN _prepared ;
    };
    typedef _utilCompressor utilCompressor;
