@@ -1126,40 +1126,44 @@ EnumSdbArgType getArgumentType(List *arguments)
    foreach( argumentCell, arguments )
    {
       Expr *argument = (Expr *)lfirst(argumentCell) ;
-      if( nodeTag(argument) == T_Var )
+      NodeTag argType = nodeTag(argument) ;
+      if( argType == T_Var )
       {
          varCount++ ;
       }
-      else if ( nodeTag(argument) == T_Param )
+      else if ( argType == T_Param )
       {
          ParamCount++ ;
       }
-      else if ( nodeTag(argument) == T_Const )
+      else if ( argType == T_Const )
       {
          ConstCount++ ;
       }
-      else if ( nodeTag( argument ) == T_RelabelType )
+      else if ( argType == T_RelabelType )
       {
          RelabelType *relabel = (RelabelType *)argument ;
-         if ( nodeTag(relabel->arg) == T_Var )
+         NodeTag relabelArgType = nodeTag(relabel->arg) ;
+         if ( relabelArgType == T_Var )
          {
             varCount++ ;
          }
-         else if ( nodeTag(relabel->arg) == T_Param )
+         else if ( relabelArgType == T_Param )
          {
             ParamCount++ ;
          }
-         else if ( nodeTag(relabel->arg) == T_Const )
+         else if ( relabelArgType == T_Const )
          {
             ConstCount++ ;
          }
          else
          {
+            elog( WARNING, "unsupport argument type:type=%d", relabelArgType ) ;
             return SDB_UNSUPPORT_ARG_TYPE ;
          }
       }
       else
       {
+         elog( WARNING, "unsupport argument type:type=%d", argType ) ;
          return SDB_UNSUPPORT_ARG_TYPE ;
       }
    }

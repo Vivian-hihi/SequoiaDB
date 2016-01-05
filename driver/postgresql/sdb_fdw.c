@@ -3016,7 +3016,7 @@ static TupleTableSlot * SdbIterateForeignScan( ForeignScanState *scanState )
    if ( SDB_INVALID_HANDLE == executionState->hCursor )
    {
       rc = sdbQuery1( executionState->hCollection, &executionState->queryDocument, NULL, 
-                      NULL, NULL, 0, -1, 0x00200, 
+                      NULL, NULL, 0, -1, FLG_QUERY_WITH_RETURNDATA, 
                       &executionState->hCursor ) ;
       if ( rc )
       {
@@ -3218,6 +3218,18 @@ static INT32 sdbAcquireSampleRows( Relation relation, INT32 errorLevel,
    SdbBeginForeignScan( scanState, executorFlags ) ;
 
    fdw_state = ( SdbExecState* )scanState->fdw_state ;
+   rc = sdbQuery1( fdw_state->hCollection, &fdw_state->queryDocument, NULL, 
+                   NULL, NULL, 0, -1, FLG_QUERY_WITH_RETURNDATA, 
+                   &fdw_state->hCursor ) ;
+   if ( rc )
+   {
+      ereport( ERROR, ( errcode ( ERRCODE_FDW_ERROR ),
+               errmsg( "query collection failed:cs=%s,cl=%s,rc=%d", 
+                       fdw_state->sdbcs, fdw_state->sdbcl, rc ) ) ) ;
+      sdbbson_dispose( &fdw_state->queryDocument ) ;
+      goto error ;
+   }
+
    hCursor = fdw_state->hCursor ;
    columnMappingHash = fdw_state->columnMappingHash ;
 
