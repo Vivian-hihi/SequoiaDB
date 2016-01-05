@@ -2242,7 +2242,7 @@ namespace engine
       utilCompressor *compressor    = NULL ;
       BOOLEAN compressorReady       = FALSE ;
       BOOLEAN dataModified          = FALSE ;
-      utilCompressorContext compressorContext = NULL ;
+      utilCompressorContext compressorContext = UTIL_INVALID_COMP_CTX ;
       BOOLEAN dictCompress          = FALSE ;
 
       /* For concurrency protection with drop CL and set compresor. */
@@ -2343,6 +2343,15 @@ namespace engine
          dmsRecordSize = record.objsize() ;
       }
 
+      /*
+       * Release the compressor context and guard to avoid deadlock with
+       * truncate/drop collection.
+       */
+      if ( UTIL_INVALID_COMP_CTX != compressorContext )
+      {
+         compressor->done( compressorContext ) ;
+         compressorContext = UTIL_INVALID_COMP_CTX ;
+      }
       compGuard.release() ;
 
       // add record metadata and oid
@@ -2446,13 +2455,18 @@ namespace engine
          {
             if ( dictCompress )
             {
-               rc = compressor->rePrepare( compressorContext ) ;
+               rc = compressor->prepare( compressorContext ) ;
                PD_RC_CHECK( rc, PDERROR,
                             "Failed to prepare compressor, rc: %d", rc ) ;
             }
 
             DMS_RECORD_EXTRACTDATA( compressor, compressorContext,
                                     deletedRecordPtr, insertedDataPtr ) ;
+            if ( compressorContext )
+            {
+               compressor->done( compressorContext ) ;
+               compressorContext = UTIL_INVALID_COMP_CTX ;
+            }
             insertObj = BSONObj( ( const CHAR* )insertedDataPtr ) ;
             DMS_MON_OP_COUNT_INC( pMonAppCB, MON_DATA_READ, 1 ) ;
             DMS_MON_OP_COUNT_INC( pMonAppCB, MON_READ, 1 ) ;
@@ -2466,12 +2480,6 @@ namespace engine
                                       ((dmsExtent*)extentPtr)->_logicID,
                                       insertObj, foundDeletedID, cb ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to insert to index, rc: %d", rc ) ;
-      }
-
-      if ( compressorContext )
-      {
-         compressor->done( compressorContext ) ;
-         compressorContext = UTIL_INVALID_COMP_CTX ;
       }
 
       if ( dpscb )
