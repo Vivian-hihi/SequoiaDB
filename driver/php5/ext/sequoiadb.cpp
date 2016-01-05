@@ -3755,7 +3755,7 @@ PHP_SEQUOIADB_API void php_json_encode ( CHAR **buf,
          if ( len > 0 )
          {
             CHAR *data = Z_STRVAL_P(val) ;
-            /*CHAR *temp = (CHAR *)emalloc ( len ) ;
+            CHAR *temp = (CHAR *)emalloc ( len ) ;
             ossMemset ( temp, 0, len ) ;
             for ( INT32 i = 0, k = 0; i < len && k < valLen; ++i, ++k )
             {
@@ -3775,6 +3775,7 @@ PHP_SEQUOIADB_API void php_json_encode ( CHAR **buf,
                  temp[i] = '\"' ;
                  break ;
                }
+               /*
                case '\\':
                {
                  temp[i] = '\\' ;
@@ -3782,6 +3783,7 @@ PHP_SEQUOIADB_API void php_json_encode ( CHAR **buf,
                  temp[i] = '\\' ;
                  break ;
                }
+               */
                default :
                {
                   temp[i] = *data ;
@@ -3789,9 +3791,9 @@ PHP_SEQUOIADB_API void php_json_encode ( CHAR **buf,
                }
                }
                ++data ;
-            }*/
+            }
             append ( buf, bufSize, leftLen,
-                     data, valLen  TSRMLS_CC ) ;
+                     temp, ossStrlen(temp)  TSRMLS_CC ) ;
          }
          append ( buf, bufSize, leftLen, "\"", 1 TSRMLS_CC ) ;
          break ;
