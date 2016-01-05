@@ -129,6 +129,12 @@ namespace engine
 
    size_t _utilCompressorLZW::compressBound( size_t srcLen )
    {
+      /*
+       * At the worst scenario, no string in the source with length greater than
+       * 1 can be found in the dictionary. In this case, each character in the
+       * source should be represented by one dictionary code separately. If the
+       * code size is greater than 8, the data will expand after encoding...
+       */
       return ( _dictionary->getCodeSize() * srcLen ) / 8 + 1 ;
    }
 
@@ -173,21 +179,29 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION ( SDB__UTILCOMPRESSORLZW_DONE, "_utilCompressorLZW::done" )
    INT32 _utilCompressorLZW::done( utilCompressorContext &ctx )
    {
+      BOOLEAN delContext = FALSE ;
       PD_TRACE_ENTRY( SDB__UTILCOMPRESSORLZW_DONE ) ;
       _utilLZWContext *context = ( _utilLZWContext * )ctx ;
       SDB_ASSERT( context, "Invalid compressor context" ) ;
 
+      context->reset( TRUE ) ;
+
       _vecCtxLatch.get() ;
       if ( _vecContext.size() < MAX_DICT_CTX_NUM )
       {
-         context->reset( TRUE ) ;
          _vecContext.push_back( context ) ;
       }
       else
       {
-         SDB_OSS_DEL context ;
+         delContext = TRUE ;
+
       }
       _vecCtxLatch.release() ;
+
+      if ( delContext )
+      {
+         SDB_OSS_DEL context ;
+      }
 
       ctx = UTIL_INVALID_COMP_CTX ;
 
