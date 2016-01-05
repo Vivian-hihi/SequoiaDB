@@ -1189,7 +1189,7 @@ namespace engine
       {
          /// the old message( no hashValue, and reserved )
          PD_LOG( PDWARNING, "Sync Session[%s]: Recv consult request message "
-                 "length[%d] is less than %d", header->messageLength,
+                 "length[%d] is less than %d", sessionName(), header->messageLength,
                  sizeof( _MsgReplConsultation ) ) ;
          needReply = FALSE ; /// not reply
          goto done ;
