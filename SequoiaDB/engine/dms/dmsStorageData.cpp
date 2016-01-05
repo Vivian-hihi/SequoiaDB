@@ -3616,8 +3616,9 @@ namespace engine
       dmsMBContext *context = NULL ;
       UINT32 currClLID = DMS_INVALID_CLID ;
 
-      /* Number of pages to store the dictionary. */
-      UINT32 pageNum = dictLen / pageSize() + 1 ;
+      /* Number of pages to store the dictionary, including the extent header.*/
+      UINT32 pageNum =
+      ( sizeof( dmsDictExtent ) + dictLen + ( pageSize() - 1 ) ) / pageSize() ;
 
       rc = getMBContext( &context, mbID, currClLID, EXCLUSIVE ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to get dms mb context, rc: %d", rc ) ;
