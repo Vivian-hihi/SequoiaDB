@@ -162,7 +162,7 @@ namespace engine
    INT32 _ossRWMutex::release_r ()
    {
       INT32 rc = SDB_OK ;
-		PD_TRACE_ENTRY ( SDB__OSSRWM_RLS_R );
+      PD_TRACE_ENTRY ( SDB__OSSRWM_RLS_R );
 
       if ( _r.compare ( 0 ) )
       {
