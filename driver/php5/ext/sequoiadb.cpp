@@ -1840,7 +1840,7 @@ PHP_METHOD ( SequoiaCL, insert )
    }
    INT32 record_strlen = ossStrlen ( record ) + 32 ;
    CHAR *temp = (CHAR *)emalloc ( record_strlen ) ;
-   ossSnprintf ( temp, record_strlen, "{\"errno\":0,\"_id\":%s}", record ) ;
+   ossSnprintf ( temp, record_strlen, "{\"errno\":0,\"_id\":\"%s\"}", record ) ;
    free ( record ) ;
    RETURN_ARRAY_STRING ( getThis(), temp, 0 ) ;
 }
@@ -3761,13 +3761,6 @@ PHP_SEQUOIADB_API void php_json_encode ( CHAR **buf,
             {
                switch ( *data )
                {
-               case '\'':
-               {
-                 temp[i] = '\\' ;
-                 ++i ;
-                 temp[i] = '\'' ;
-                 break ;
-               }
                case '\"':
                {
                  temp[i] = '\\' ;
@@ -3775,15 +3768,6 @@ PHP_SEQUOIADB_API void php_json_encode ( CHAR **buf,
                  temp[i] = '\"' ;
                  break ;
                }
-               /*
-               case '\\':
-               {
-                 temp[i] = '\\' ;
-                 ++i ;
-                 temp[i] = '\\' ;
-                 break ;
-               }
-               */
                default :
                {
                   temp[i] = *data ;
