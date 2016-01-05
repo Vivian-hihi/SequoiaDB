@@ -1056,6 +1056,7 @@ namespace engine
       dmsExtentID lastExt          = DMS_INVALID_EXTENT ;
       dmsExtentID prevExt          = DMS_INVALID_EXTENT ;
       dmsMetaExtent *metaExt       = NULL ;
+      dmsDictExtent *dictExt       = NULL ;
 
       SDB_ASSERT( context, "dms mb context can't be NULL" ) ;
 
@@ -1111,6 +1112,25 @@ namespace engine
       {
          metaExt->reset() ;
       }
+
+      /*
+       * Incase of drop/truncate collection, destroy the compressor and release
+       * the dictionary both in memory and on disk.
+       */
+      if ( DMS_INVALID_EXTENT != context->mb()->_dictExtentID )
+      {
+         /*
+          * First remove the compressor, this will invalid the compressor entry.
+          */
+         rmCompressor( context ) ;
+         dictExt
+            = ( dmsDictExtent * )extentAddr( context->mb()->_dictExtentID ) ;
+         _releaseSpace( context->mb()->_dictExtentID, dictExt->_blockSize ) ;
+         dictExt->_flag = DMS_EXTENT_FLAG_FREED ;
+         context->mb()->_dictExtentID = DMS_INVALID_EXTENT ;
+         context->mbStat()->_dictExtID = DMS_INVALID_EXTENT ;
+      }
+
       context->mbStat()->_totalDataFreeSpace = 0 ;
       context->mbStat()->_totalDataPages = 0 ;
       context->mbStat()->_totalRecords = 0 ;
@@ -1803,6 +1823,16 @@ namespace engine
       DMS_SET_MB_FREE( context->mb()->_flag ) ;
       context->mb()->_logicalID-- ;
 
+      /*
+       * The space of dictionary has been release in _truncateCollection. In
+       * drop case, the compression type should be set to invalid.
+       */
+      if ( -1 != context->mb()->_compressorType)
+      {
+         context->mb()->_compressorType = -1 ;
+         context->mbStat()->_compressorType = -1 ;
+      }
+
       // free meta extent
       metaExt = ( dmsMetaExtent* )extentAddr( context->mb()->_mbExExtentID ) ;
       if ( metaExt )
@@ -1810,8 +1840,6 @@ namespace engine
          _releaseSpace( context->mb()->_mbExExtentID, metaExt->_blockSize ) ;
          metaExt->_flag = DMS_EXTENT_FLAG_FREED ;
       }
-
-      rmCompressor( context ) ;
 
       // release mb lock
       context->mbUnlock() ;
@@ -1881,6 +1909,7 @@ namespace engine
       UINT32 logRecSize       = 0;
       dpsTransCB *pTransCB    = pmdGetKRCB()->getTransCB() ;
       BOOLEAN isTransLocked   = FALSE ;
+      SDB_DMSCB *dmsCB = pmdGetKRCB()->getDMSCB() ;
 
       SDB_ASSERT( pName, "Collection name cat't be NULL" ) ;
 
@@ -1985,6 +2014,16 @@ namespace engine
          rc = _logDPS( dpscb, info, cb, context, DMS_INVALID_EXTENT, TRUE, &oldCLID ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to insert CLTrunc record to log, "
                       "rc: %d", rc ) ;
+      }
+
+      if ( -1 != context->mb()->_compressorType )
+      {
+         /*
+          * The original dictionary and compressor will be removed during
+          * truncation. So it should be pushed to the dictionary creating list
+          * again after truncation.
+          */
+         dmsCB->pushToDictCreateCLList( CSID() , context->mbID() ) ;
       }
 
    done:
