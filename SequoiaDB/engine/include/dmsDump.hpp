@@ -121,6 +121,13 @@ namespace engine
                                  CHAR * addrPrefix,
                                  UINT32 options,
                                  dmsExtentID extID ) ;
+         static UINT32 dumpDictExtent( void * inBuf,
+                                       UINT32 inSize,
+                                       CHAR * outBuf,
+                                       UINT32 outSize,
+                                       CHAR * addrPrefix,
+                                       UINT32 options,
+                                       dmsExtentID extID ) ;
 
          static UINT32 dumpRawPage ( void * inBuf,
                                      UINT32 inSize,
@@ -152,6 +159,10 @@ namespace engine
                                               UINT32 outSize ) ;
 
          static UINT32 dumpMetaExtentHeader( void * inBuf,
+                                             UINT32 inSize,
+                                             CHAR * outBuf,
+                                             UINT32 outSize ) ;
+         static UINT32 dumpDictExtentHeader( void *inBuf,
                                              UINT32 inSize,
                                              CHAR * outBuf,
                                              UINT32 outSize ) ;
@@ -199,7 +210,9 @@ namespace engine
                                             CHAR * addrPrefix,
                                             UINT32 options,
                                             dmsExtentID &root ) ;
-
+      private:
+         static UINT32 _dumpExtentHeaderComm( const dmsExtent *extent,
+                                              CHAR *outBuf, UINT32 outSize ) ;
    } ;
    typedef _dmsDump dmsDump ;
 

@@ -214,7 +214,7 @@ namespace engine
          _blockSize           = numPages ;
          _mbID                = mbID ;
          _flag                = DMS_EXTENT_FLAG_INUSE ;
-         _version             = DMS_META_EXTENT_CURRENT_V ;
+         _version             = DMS_DICT_EXTENT_CURRENT_V ;
          _dictLen             = 0 ;
       }
 

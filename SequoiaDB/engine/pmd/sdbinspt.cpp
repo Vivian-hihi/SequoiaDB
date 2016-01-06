@@ -1128,74 +1128,6 @@ INT32 getExtentHead ( OSSFILE &file, dmsExtentID extentID, SINT32 pageSize,
    return rc ;
 }
 
-// PD_TRACE_DECLARE_FUNCTION ( SDB_GETDICTEXTENTHEAD, "getDictExtentHead" )
-INT32 getDictExtentHead( OSSFILE &file, dmsExtentID extentID, INT32 pageSize,
-                         dmsDictExtent &extentHead )
-{
-   INT32 rc = SDB_OK ;
-   PD_TRACE_ENTRY( SDB_GETDICTEXTENTHEAD ) ;
-   INT64 readLen = 0 ;
-   rc = ossSeekAndRead( &file, gDataOffset + (INT64)pageSize * extentID,
-                        (CHAR *)&extentHead, DMS_DICTEXTENT_HEADER_SZ,
-                        &readLen ) ;
-   if ( rc || readLen != DMS_DICTEXTENT_HEADER_SZ )
-   {
-      dumpPrintf ( "Error: Failed to read dictionary extent head, "
-                   "read %lld bytes, rc = %d"OSS_NEWLINE, readLen, rc ) ;
-      if ( !rc )
-      {
-         rc = SDB_IO ;
-      }
-      goto error ;
-   }
-
-   SDB_ASSERT( extentHead._dictLen > 0
-               && extentHead._dictLen <= DMS_DICT_MAX_SIZE,
-               "Dictionary length in extent is invalid" ) ;
-done:
-   PD_TRACE_EXITRC( SDB_GETDICTEXTENTHEAD, rc ) ;
-   return rc ;
-error:
-   goto done ;
-}
-
-// PD_TRACE_DECLARE_FUNCTION ( SDB_GETDICTFROMEXTENT, "getDictFromExtent" )
-INT32 getDictFromExtent( OSSFILE &file, dmsExtentID extentID, INT32 pageSize,
-                         const dmsDictExtent *extentHead,
-                         CHAR *buf, UINT32 &bufLen )
-{
-   INT32 rc = SDB_OK ;
-   PD_TRACE_ENTRY( SDB_GETDICTFROMEXTENT ) ;
-   SINT64 readLen = 0 ;
-
-   SDB_ASSERT( bufLen >= extentHead->_dictLen,
-               "Unable to load dictionary from file to buffer due to too small "
-               "buffer" );
-   {
-      rc = ossSeekAndRead( &file,
-           gDataOffset + (SINT64)pageSize * extentID + sizeof( dmsDictExtent ),
-           buf, extentHead->_dictLen, &readLen ) ;
-      if ( rc || readLen != extentHead->_dictLen )
-      {
-         dumpPrintf( "Failed to read dicionary from file, rc: %d, dictionary "
-                     "length: %d, read length: %lld"OSS_NEWLINE,
-                     rc, extentHead->_dictLen, readLen ) ;
-         if ( !rc )
-         {
-            rc = SDB_IO ;
-         }
-
-         goto error ;
-      }
-   }
-
-done:
-   PD_TRACE_EXITRC( SDB_GETDICTFROMEXTENT, rc ) ;
-   return rc ;
-error:
-   goto done ;
-}
-
 // extract full extent by
 // 1) input file
 // 2) extent id
@@ -1250,6 +1182,7 @@ enum INSPECT_EXTENT_TYPE
    INSPECT_EXTENT_TYPE_INDEX,
    INSPECT_EXTENT_TYPE_INDEX_CB,
    INSPECT_EXTENT_TYPE_MBEX,
+   INSPECT_EXTENT_TYPE_DICT,
    // for unknown type, that means we do not know which type of extent it is.
    // For example if we are provided by a single extent id without any other
    // information, in this case our extract function should first read extent
@@ -1382,6 +1315,37 @@ retry :
          result = FALSE ;
       }
    }
+   else if ( INSPECT_EXTENT_TYPE_DICT == type )
+   {
+      dmsDictExtent *dictExt = ( dmsDictExtent* )&extentHead ;
+      if ( dictExt->_eyeCatcher[0] != DMS_DICT_EXTENT_EYECATCHER0 ||
+           dictExt->_eyeCatcher[1] != DMS_DICT_EXTENT_EYECATCHER1 )
+      {
+         dumpPrintf( "Error: Invalid eye catcher: %c%c"OSS_NEWLINE,
+                     dictExt->_eyeCatcher[0],
+                     dictExt->_eyeCatcher[1] ) ;
+         result = FALSE ;
+      }
+      if ( dictExt->_blockSize <= 0 ||
+           dictExt->_blockSize * pageSize > DMS_SEGMENT_SZ )
+      {
+         dumpPrintf( "Error: Invalid block size: %d, pageSize: %d"OSS_NEWLINE,
+                     dictExt->_blockSize, pageSize ) ;
+         result = FALSE ;
+      }
+      if ( dictExt->_mbID != expID )
+      {
+         dumpPrintf( "Error: Unexpected id: %d, expected %d"OSS_NEWLINE,
+                     dictExt->_mbID, expID ) ;
+         result = FALSE ;
+      }
+      if ( dictExt->_version > DMS_DICT_EXTENT_CURRENT_V )
+      {
+         dumpPrintf( "Error: Invalid version: %d, current %d"OSS_NEWLINE,
+                     dictExt->_version, DMS_DICT_EXTENT_CURRENT_V ) ;
+         result = FALSE ;
+      }
+   }
    else if ( INSPECT_EXTENT_TYPE_UNKNOWN == type )
    {
       // if we do not know which type to read, let's first check eye catcher
@@ -1410,6 +1374,12 @@ retry :
                 extentHead._eyeCatcher[1] == DMS_META_EXTENT_EYECATCHER1 )
       {
          type = INSPECT_EXTENT_TYPE_MBEX ;
+         goto retry ;
+      }
+      else if ( extentHead._eyeCatcher[0] == DMS_DICT_EXTENT_EYECATCHER0 &&
+                extentHead._eyeCatcher[1] == DMS_DICT_EXTENT_EYECATCHER1 )
+      {
+         type = INSPECT_EXTENT_TYPE_DICT ;
          goto retry ;
       }
       else
@@ -1488,7 +1458,8 @@ INT32 loadExtent ( OSSFILE &file, INSPECT_EXTENT_TYPE &type,
    // for Index and IndexCB extent, the size should always be 1
    rc = getExtent ( file, extentID, pageSize,
                     ( INSPECT_EXTENT_TYPE_DATA == type ||
-                      INSPECT_EXTENT_TYPE_MBEX == type ) ?
+                      INSPECT_EXTENT_TYPE_MBEX == type ||
+                      INSPECT_EXTENT_TYPE_DICT == type ) ?
                       extentHead._blockSize : 1 ) ;
    if ( rc )
    {
@@ -1504,71 +1475,56 @@ error :
    goto done ;
 }
 
-INT32 prepareCompressor( OSSFILE &file, const dmsMB *mb, INT32 pageSize,
-               utilCompressor *&compressor, utilCompressorContext &compContext )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_PREPARECOMPRESSOR, "prepareCompressor" )
+INT32 prepareCompressor( SINT8 compType, utilCompressor *&compressorPtr,
+                         utilCompressorContext &compContext )
 {
+   PD_TRACE_ENTRY( SDB_PREPARECOMPRESSOR ) ;
+
    INT32 rc = SDB_OK ;
-   dmsDictExtent extentHead ;
-   dmsExtentID dictExtentID = mb->_dictExtentID ;
-
-   utilCompressor *compressorPtr = NULL ;
+   utilCompressor *compressor = NULL ;
    utilCompressorContext context = UTIL_INVALID_COMP_CTX ;
-   CHAR *dictBuf = NULL ;
+   UTIL_COMPRESSOR_TYPE type = (UTIL_COMPRESSOR_TYPE)compType ;
+   dmsDictExtent *dictExtent = (dmsDictExtent*)gExtentBuffer ;
 
-   rc = gCompressFactory.createCompressor(
-                                 (UTIL_COMPRESSOR_TYPE)mb->_compressorType,
-                                 compressorPtr ) ;
+   if ( UTIL_COMPRESSOR_LZW != type )
+   {
+      dumpPrintf( "Error: Invalid compressor type %d"OSS_NEWLINE, compType ) ;
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+
+   rc = gCompressFactory.createCompressor( type, compressor ) ;
    if ( rc )
    {
-      dumpPrintf( "Failed to create create compressor, rc: %d"OSS_NEWLINE,
+      dumpPrintf( "Error: Failed to create compressor, type = %d, rc = %d"
+                  OSS_NEWLINE, compType, rc ) ;
+      goto error ;
+   }
+
+   rc = compressor->setDictionary( ((CHAR *)dictExtent)
+                                    + DMS_DICTEXTENT_HEADER_SZ,
+                                    dictExtent->_dictLen ) ;
+   if ( rc )
+   {
+      dumpPrintf( "Error: Failed to set dictionary for compressor, rc = %d"
+                  OSS_NEWLINE, rc ) ;
+      goto error ;
+   }
+
+   rc = compressor->prepare( context ) ;
+   if ( rc )
+   {
+      dumpPrintf( "Error: Failed to prepare compressor, rc = %d"OSS_NEWLINE,
                   rc ) ;
       goto error ;
    }
 
-   rc = getDictExtentHead( file, dictExtentID, pageSize, extentHead ) ;
-   if ( rc )
-   {
-      dumpPrintf( "Failed to get dictionary extent head, "
-                  "rc: %d, extent id: %d"OSS_NEWLINE, rc, dictExtentID ) ;
-      goto error ;
-   }
-
-   dictBuf = (CHAR *)SDB_OSS_MALLOC( extentHead._dictLen ) ;
-   if ( !dictBuf )
-   {
-      dumpPrintf( "Failed to allocate memory for dictionary, requested size: "
-                  "%d"OSS_NEWLINE, extentHead._dictLen ) ;
-      goto error ;
-   }
-
-   rc = getDictFromExtent( file, dictExtentID, pageSize, &extentHead,
-                           dictBuf, extentHead._dictLen ) ;
-   if ( rc )
-   {
-      dumpPrintf( "Failed to get dictionary from extent, rc: %d, "
-                  "extent id: %d"OSS_NEWLINE, rc, dictExtentID ) ;
-      goto error ;
-   }
-
-   rc = compressorPtr->setDictionary( dictBuf, extentHead._dictLen ) ;
-   if ( rc )
-   {
-      dumpPrintf( "Failed to set dictionary for compressor, rc: %d"OSS_NEWLINE,
-                  rc ) ;
-      goto error ;
-   }
-
-   rc = compressorPtr->prepare( context ) ;
-   PD_RC_CHECK( rc, PDERROR, "Failed to prepare compressor, rc: %d", rc ) ;
-
-   compressor = compressorPtr ;
+   compressorPtr = compressor ;
    compContext = context ;
-done:
-   if ( dictBuf )
-   {
-      SDB_OSS_FREE( dictBuf ) ;
-   }
 
+done:
+   PD_TRACE_EXITRC( SDB_PREPARECOMPRESSOR, rc ) ;
    return rc ;
 error:
    if ( compressor )
@@ -2075,6 +2031,29 @@ error :
    goto done ;
 }
 
+// PD_TRACE_DECLARE_FUNCTION ( SDB_INSPECTDICTPAGESTATE, "inspectDictPageState" )
+void inspectDictPageState( CHAR *pExpBuffer, dmsExtentID extentID,
+                           SINT32 &err )
+{
+   PD_TRACE_ENTRY( SDB_INSPECTDICTPAGESTATE ) ;
+   dmsDictExtent *dictExtent = (dmsDictExtent*)gExtentBuffer ;
+   dmsSpaceManagementExtent *sme = (dmsSpaceManagementExtent*)pExpBuffer ;
+   for ( INT32 i = 0; i < dictExtent->_blockSize; ++i )
+   {
+      if ( sme->getBitMask( extentID + i ) != DMS_SME_FREE )
+      {
+         dumpPrintf( "Error: Compression Dictionary extent 0x%08lx (%d) "
+                     "is not free"OSS_NEWLINE, extentID + i, extentID + i ) ;
+         ++err ;
+      }
+      else
+      {
+         sme->setBitMask( extentID + i ) ;
+      }
+   }
+   PD_TRACE_EXIT( SDB_INSPECTDICTPAGESTATE ) ;
+}
+
 void inspectCollectionData( OSSFILE &file, SINT32 pageSize, UINT16 id,
                             SINT32 hwm, CHAR *pExpBuffer, SINT32 &err )
 {
@@ -2115,9 +2094,8 @@ void inspectCollectionData( OSSFILE &file, SINT32 pageSize, UINT16 id,
         DMS_INVALID_EXTENT != mb->_mbExExtentID )
    {
       dmsMetaExtent *pMetaEx = NULL ;
-      INSPECT_EXTENT_TYPE tmpExtentType = INSPECT_EXTENT_TYPE_MBEX ;
-      rc = loadExtent( file, tmpExtentType, pageSize,
-                       mb->_mbExExtentID, id ) ;
+      extentType = INSPECT_EXTENT_TYPE_MBEX ;
+      rc = loadExtent( file, extentType, pageSize, mb->_mbExExtentID, id ) ;
       if ( rc )
       {
          dumpPrintf( "Error: Failed to load mb expand extent %d, rc = %d"
@@ -2142,14 +2120,30 @@ void inspectCollectionData( OSSFILE &file, SINT32 pageSize, UINT16 id,
 
    if ( DMS_INVALID_EXTENT != mb->_dictExtentID )
    {
-      rc = prepareCompressor( file, mb, pageSize, compressor, compContext ) ;
+      extentType = INSPECT_EXTENT_TYPE_DICT ;
+      rc = loadExtent( file, extentType, pageSize, mb->_dictExtentID, id ) ;
       if ( rc )
       {
-         dumpPrintf( "Failed to prepare compressor for collection, rc: %d", rc ) ;
+         dumpPrintf( "Error: Failed to load dictionary extent %d, rc = %d"
+                     OSS_NEWLINE, mb->_dictExtentID, rc ) ;
+         goto error ;
+      }
+
+      if ( pExpBuffer )
+      {
+         inspectDictPageState( pExpBuffer, mb->_dictExtentID, err ) ;
+      }
+
+      rc = prepareCompressor( mb->_compressorType, compressor, compContext ) ;
+      if ( rc )
+      {
+         dumpPrintf( "Error: Failed to prepare compressor for collection, "
+                     "rc = %d"OSS_NEWLINE, rc ) ;
          goto error ;
       }
    }
 
+   extentType = INSPECT_EXTENT_TYPE_DATA ;
    // loop through all extents
    while ( DMS_INVALID_EXTENT != firstExtent )
    {
@@ -2401,12 +2395,46 @@ void dumpCollectionData( OSSFILE &file, SINT32 pageSize, UINT16 id )
 
    if ( DMS_INVALID_EXTENT != mb->_dictExtentID )
    {
-      rc = prepareCompressor( file, mb, pageSize, compressor, compContext ) ;
+      UINT32 size = 0 ;
+      extentType = INSPECT_EXTENT_TYPE_DICT ;
+
+      dumpPrintf ( "Dump Compression Dictionary Extent for Collection [%d]"
+                   OSS_NEWLINE, id ) ;
+
+      rc = loadExtent( file, extentType, pageSize, mb->_dictExtentID, id ) ;
+      if ( rc )
+      {
+         dumpPrintf( "Error: Failed to load dictionary extent %d, rc = %d"
+                     OSS_NEWLINE, mb->_dictExtentID, rc ) ;
+         goto error ;
+      }
+
+      rc = prepareCompressor( mb->_compressorType, compressor, compContext ) ;
       if ( rc )
       {
          dumpPrintf( "Failed to prepare compressor for collection, rc: %d", rc ) ;
          goto error ;
       }
+
+      size = ((dmsDictExtent*)gExtentBuffer)->_blockSize * pageSize ;
+
+   retry_dictExt:
+      len = dmsDump::dumpDictExtent( gExtentBuffer, size,
+                                     gBuffer, gBufferSize, NULL,
+                                     DMS_SU_DMP_OPT_HEX |
+                                     DMS_SU_DMP_OPT_HEX_WITH_ASCII |
+                                     DMS_SU_DMP_OPT_HEX_PREFIX_AS_ADDR |
+                                     gDumpType, mb->_dictExtentID ) ;
+      if ( (UINT32)len >= gBufferSize - 1 )
+      {
+         if ( reallocBuffer() )
+         {
+            clearBuffer() ;
+            goto error ;
+         }
+         goto retry_dictExt ;
+      }
+      flushOutput( gBuffer, len ) ;
    }
 
    extentType = INSPECT_EXTENT_TYPE_DATA ;

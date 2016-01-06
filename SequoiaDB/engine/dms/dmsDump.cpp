@@ -383,6 +383,25 @@ namespace engine
          len += ossSnprintf( outBuf + len, outSize - len,
                              " Collection ID     : %u"OSS_NEWLINE,
                               mb->_blockID ) ;
+
+         CHAR *compressorType = NULL ;
+         if ( 1 == mb->_compressorType )
+         {
+            compressorType = "lzw" ;
+         }
+         else if ( 0 == mb->_compressorType )
+         {
+            compressorType = "snappy" ;
+         }
+         else if ( -1 == mb->_compressorType )
+         {
+            compressorType = "none" ;
+         }
+         else
+         {
+            compressorType = "invalid type" ;
+         }
+
          len += ossSnprintf( outBuf + len, outSize - len,
                              " First extent ID   : 0x%08lx (%d)"OSS_NEWLINE
                              " Last extent ID    : 0x%08lx (%d)"OSS_NEWLINE
@@ -396,7 +415,9 @@ namespace engine
                              " Total data pages  : %u"OSS_NEWLINE
                              " Total data free sp: %llu"OSS_NEWLINE
                              " Total index pages : %u"OSS_NEWLINE
-                             " Total idx free sp : %llu"OSS_NEWLINE,
+                             " Total idx free sp : %llu"OSS_NEWLINE
+                             " Dictionary extent ID: 0x%08lx (%d)"OSS_NEWLINE
+                             " Compression Type  : %s"OSS_NEWLINE,
                              mb->_firstExtentID, mb->_firstExtentID,
                              mb->_lastExtentID, mb->_lastExtentID,
                              mb->_logicalID, mb->_logicalID,
@@ -407,7 +428,9 @@ namespace engine
                              mb->_mbExExtentID, mb->_mbExExtentID,
                              mb->_totalRecords, mb->_totalDataPages,
                              mb->_totalDataFreeSpace, mb->_totalIndexPages,
-                             mb->_totalIndexFreeSpace ) ;
+                             mb->_totalIndexFreeSpace,
+                             mb->_dictExtentID, mb->_dictExtentID,
+                             compressorType ) ;
          // Delete list
          len += ossSnprintf( outBuf + len, outSize - len,
                              " Deleted list :"OSS_NEWLINE ) ;
@@ -559,6 +582,70 @@ namespace engine
       return len ;
    }
 
+   UINT32 _dmsDump::dumpDictExtent( void * inBuf, UINT32 inSize, CHAR * outBuf,
+                                    UINT32 outSize, CHAR * addrPrefix,
+                                    UINT32 options, dmsExtentID extID )
+   {
+      UINT32 len = 0 ;
+      UINT32 hexDumpOption = 0 ;
+      dmsDictExtent *extent = (dmsDictExtent*)inBuf ;
+
+      if ( NULL == inBuf || NULL == outBuf || inSize < sizeof( dmsDictExtent )
+           || inSize % DMS_PAGE_SIZE4K != 0 )
+      {
+         len = ossSnprintf( outBuf, outSize,
+                            "Error: dumpDictExtent input size (%d) is too "
+                            "small or not aligned with 4K"OSS_NEWLINE,
+                            inSize ) ;
+         goto exit ;
+      }
+
+      if ( extent->_eyeCatcher[0] != DMS_DICT_EXTENT_EYECATCHER0
+           || extent->_eyeCatcher[1] != DMS_DICT_EXTENT_EYECATCHER1 )
+      {
+         len += ossSnprintf( outBuf + len, outSize - len,
+                             "Error: Invalid eye catcher: %c%c"OSS_NEWLINE,
+                             extent->_eyeCatcher[0],
+                             extent->_eyeCatcher[1] ) ;
+         goto exit ;
+      }
+
+      len += ossSnprintf( outBuf + len, outSize - len,
+                          " ExtentId: 0x%08lx (%d)"OSS_NEWLINE,
+                          extID, extID ) ;
+      if ( DMS_SU_DMP_OPT_HEX & options )
+      {
+         if ( DMS_SU_DMP_OPT_HEX_PREFIX_AS_ADDR & options )
+         {
+            hexDumpOption |= OSS_HEXDUMP_PREFIX_AS_ADDR ;
+         }
+         if ( !(DMS_SU_DMP_OPT_HEX_WITH_ASCII & options ) )
+         {
+            hexDumpOption |= OSS_HEXDUMP_RAW_HEX_ONLY ;
+         }
+         len += ossHexDumpBuffer( inBuf, inSize, outBuf + len, outSize - len,
+                                  addrPrefix, hexDumpOption ) ;
+      }
+
+      if ( DMS_SU_DMP_OPT_FORMATTED & options )
+      {
+         len += ossSnprintf( outBuf + len, outSize - len,
+                         " Compression Dictionary Extent Header :"OSS_NEWLINE ) ;
+         len += dumpExtentHeader( inBuf, inSize, outBuf + len, outSize - len ) ;
+         if ( DMS_EXTENT_FLAG_FREED == extent->_flag )
+         {
+            len += ossSnprintf( outBuf + len, outSize - len,
+                                "Error: Extent is not in use"OSS_NEWLINE ) ;
+            goto exit ;
+         }
+      }
+
+      // TBD: validate the dictionary
+      len += ossSnprintf ( outBuf + len, outSize - len, OSS_NEWLINE ) ;
+   exit:
+      return len ;
+   }
+
    UINT32 _dmsDump::dumpDataExtent( pmdEDUCB *cb, void *inBuf, UINT32 inSize,
                                     CHAR *outBuf, UINT32 outSize,
                                     CHAR *addrPrefix, UINT32 options,
@@ -692,6 +779,11 @@ namespace engine
       {
          return dumpMetaExtentHeader( inBuf, inSize, outBuf, outSize ) ;
       }
+      else if ( DMS_DICT_EXTENT_EYECATCHER0 == extent->_eyeCatcher[0] &&
+                DMS_DICT_EXTENT_EYECATCHER1 == extent->_eyeCatcher[1] )
+      {
+         return dumpDictExtentHeader( inBuf, inSize, outBuf, outSize ) ;
+      }
       else if ( IXM_EXTENT_EYECATCHER0 == extent->_eyeCatcher[0] &&
                 IXM_EXTENT_EYECATCHER1 == extent->_eyeCatcher[1] )
       {
@@ -714,22 +806,11 @@ namespace engine
       return len ;
    }
 
-   UINT32 _dmsDump::dumpDataExtentHeader( void *inBuf, UINT32 inSize,
-                                          CHAR *outBuf, UINT32 outSize )
+   UINT32 _dmsDump::_dumpExtentHeaderComm( const dmsExtent *extent,
+                                           CHAR *outBuf, UINT32 outSize )
    {
-      UINT32 len           = 0 ;
-      dmsExtent *extent    = (dmsExtent*)inBuf ;
-
-      if ( NULL == inBuf || NULL == outBuf || inSize < sizeof(dmsExtent) )
-      {
-         len += ossSnprintf ( outBuf + len, outSize - len,
-                              "Error: dumpExtentHeader input size (%d) "
-                              "is too small"OSS_NEWLINE,
-                              inSize ) ;
-         goto exit ;
-      }
-
-      len += ossSnprintf ( outBuf + len, outSize - len,
+      UINT32 len = 0 ;
+      len += ossSnprintf ( outBuf, outSize,
                            "    Eye Catcher  : %c%c"OSS_NEWLINE,
                            extent->_eyeCatcher[0], extent->_eyeCatcher[1] ) ;
       len += ossSnprintf ( outBuf + len, outSize - len,
@@ -745,6 +826,26 @@ namespace engine
       len += ossSnprintf ( outBuf + len, outSize - len,
                            "    Version      : %d"OSS_NEWLINE,
                            extent->_version ) ;
+      return len ;
+   }
+
+   UINT32 _dmsDump::dumpDataExtentHeader( void *inBuf, UINT32 inSize,
+                                          CHAR *outBuf, UINT32 outSize )
+   {
+      UINT32 len           = 0 ;
+      dmsExtent *extent    = (dmsExtent*)inBuf ;
+
+      if ( NULL == inBuf || NULL == outBuf || inSize < sizeof(dmsExtent) )
+      {
+         len += ossSnprintf ( outBuf + len, outSize - len,
+                              "Error: dumpExtentHeader input size (%d) "
+                              "is too small"OSS_NEWLINE,
+                              inSize ) ;
+         goto exit ;
+      }
+
+      len += _dmsDump::_dumpExtentHeaderComm( (dmsExtent *)extent,
+                                              outBuf, outSize ) ;
       len += ossSnprintf ( outBuf + len, outSize - len,
                            "    Logic ID     : %d"OSS_NEWLINE,
                            extent->_logicID ) ;
@@ -788,30 +889,40 @@ namespace engine
          goto exit ;
       }
 
+      len += _dmsDump::_dumpExtentHeaderComm( (dmsExtent *)extent,
+                                              outBuf, outSize ) ;
       len += ossSnprintf ( outBuf + len, outSize - len,
-                           "    Eye Catcher  : %c%c"OSS_NEWLINE,
-                           extent->_eyeCatcher[0], extent->_eyeCatcher[1] ) ;
-      len += ossSnprintf ( outBuf + len, outSize - len,
-                           "    Extent Size  : %u"OSS_NEWLINE,
-                           extent->_blockSize ) ;
-      len += ossSnprintf ( outBuf + len, outSize - len,
-                           "    CollectionID : %u"OSS_NEWLINE,
-                           extent->_mbID ) ;
-      len += ossSnprintf ( outBuf + len, outSize - len,
-                           "    Flag         : 0x%02x (%s)"OSS_NEWLINE,
-                           extent->_flag, extent->_flag==DMS_EXTENT_FLAG_INUSE ?
-                           "InUse" : "Free" ) ;
-      len += ossSnprintf ( outBuf + len, outSize - len,
-                           "    Version      : %d"OSS_NEWLINE,
-                           extent->_version ) ;
-      len += ossSnprintf ( outBuf + len, outSize - len,
-                           "   Segment num   : %d"OSS_NEWLINE,
+                           "    Segment num  : %d"OSS_NEWLINE,
                            extent->_segNum ) ;
       len += ossSnprintf ( outBuf + len, outSize - len,
-                           "   Used seg num  : %d"OSS_NEWLINE,
+                           "    Used seg num : %d"OSS_NEWLINE,
                            extent->_usedSegNum ) ;
 
    exit :
+      return len ;
+   }
+
+   UINT32 _dmsDump::dumpDictExtentHeader( void *inBuf, UINT32 inSize,
+                                          CHAR * outBuf, UINT32 outSize )
+   {
+      UINT32 len = 0 ;
+      dmsDictExtent *extent = (dmsDictExtent *)inBuf ;
+
+      if ( NULL == inBuf || NULL == outBuf
+           ||  inSize < DMS_DICTEXTENT_HEADER_SZ)
+      {
+         len = ossSnprintf( outBuf, outSize,
+                            "Error: dumpDictExtentHeader input size (%d) is "
+                            "too small"OSS_NEWLINE, inSize ) ;
+         goto exit ;
+      }
+
+      len += _dmsDump::_dumpExtentHeaderComm( (dmsExtent *)extent,
+                                              outBuf, outSize ) ;
+      len += ossSnprintf( outBuf + len, outSize - len,
+                          "    Dictionary size: %u"OSS_NEWLINE,
+                          extent->_dictLen ) ;
+   exit:
       return len ;
    }
 
