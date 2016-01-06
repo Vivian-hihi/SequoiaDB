@@ -1592,6 +1592,10 @@ retry :
               ((dmsExtent*)gExtentBuffer)->_blockSize * pageSize - offset,
               gBuffer, gBufferSize, count, offset, NULL, localErr,
               compressor, compContext ) ;
+      if ( compContext )
+      {
+         compressor->rePrepare( compContext ) ;
+      }
       if ( len >= gBufferSize-1 )
       {
          if ( reallocBuffer () )
@@ -1668,6 +1672,10 @@ retry :
       len = dmsDump::dumpDataRecord ( cb, gExtentBuffer + offset,
                  ((dmsExtent*)gExtentBuffer)->_blockSize * pageSize - offset,
                  gBuffer, gBufferSize, offset, NULL, compressor, compContext ) ;
+      if ( compContext )
+      {
+         compressor->rePrepare( compContext ) ;
+      }
       PD_TRACE1 ( SDB_DUMPOVFWRECRDS, PD_PACK_UINT(len) );
       if ( len >= gBufferSize-1 )
       {
@@ -2204,6 +2212,10 @@ retry_data :
                                gBuffer, gBufferSize, hwm, id, tempExtent,
                                &extentRIDList, localErr,
                                compressor, compContext ) ;
+      if ( compContext )
+      {
+         compressor->rePrepare( compContext ) ;
+      }
       if ( (UINT32)len >= gBufferSize-1 )
       {
          // if our buffer is not large enough, let's allocate more memory and
@@ -2223,6 +2235,10 @@ retry_data :
       {
          inspectOverflowedRecords( file, pageSize, id, firstExtent,
                                    extentRIDList, err, compressor, compContext ) ;
+         if ( compContext )
+         {
+            compressor->rePrepare( compContext ) ;
+         }
       }
 
       firstExtent = tempExtent ;
@@ -2465,6 +2481,10 @@ retry_data :
                                DMS_SU_DMP_OPT_HEX_PREFIX_AS_ADDR |
                                gDumpType, tempExtent, &extentRIDList,
                                gShowRecordContent, compressor, compContext ) ;
+      if ( compContext )
+      {
+         compressor->rePrepare( compContext ) ;
+      }
       PD_TRACE1 ( SDB_DUMPCOLL, PD_PACK_INT(len) );
       if ( (UINT32)len >= gBufferSize-1 )
       {
@@ -2483,6 +2503,10 @@ retry_data :
       {
          dumpOverflowedRecords ( file, pageSize, id, firstExtent,
                                  extentRIDList, compressor, compContext ) ;
+         if ( compContext )
+         {
+            compressor->rePrepare( compContext ) ;
+         }
       }
 
       firstExtent = tempExtent ;

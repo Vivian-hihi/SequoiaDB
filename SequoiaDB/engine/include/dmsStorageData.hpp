@@ -405,7 +405,7 @@ namespace engine
          _totalLobPages          = 0 ;
          _uniqueIdxNum           = 0 ;
          _dictExtID              = DMS_INVALID_EXTENT ;
-         _compressorType         = 0 ; /* 0 -- UTIL_COMPRESSOR_INVALID */
+         _compressorType         = -1 ; /* -1 -- UTIL_COMPRESSOR_INVALID */
       }
       _dmsMBStatInfo ()
       {

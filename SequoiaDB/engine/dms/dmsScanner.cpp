@@ -90,8 +90,6 @@ namespace engine
       _recordXLock         = FALSE ;
       _needUnLock          = FALSE ;
       _cb                  = NULL ;
-      _compressor          = NULL ;
-      _compContext         = NULL ;
 
       if ( DMS_ACCESS_TYPE_UPDATE == _accessType ||
            DMS_ACCESS_TYPE_DELETE == _accessType ||
@@ -111,11 +109,6 @@ namespace engine
       {
          _pTransCB->transLockRelease( _cb, _pSu->logicalID(), _context->mbID(),
                                       &_curRID ) ;
-      }
-
-      if ( _compContext )
-      {
-         _compressor->done( _compContext ) ;
       }
    }
 
@@ -197,30 +190,12 @@ namespace engine
       _cb   = cb ;
       _next = _extent->_firstRecordOffset ;
 
-      if ( DMS_INVALID_EXTENT != _context->mb()->_dictExtentID
-           && ( UTIL_INVALID_COMP_CTX == _compContext ) )
-      {
-         _compressor =
-            _pSu->getCompressorEntry( _context->mbID() )->getCompressor() ;
-         if ( _compressor )
-         {
-            rc = _compressor->prepare( _compContext ) ;
-            PD_RC_CHECK( rc, PDERROR,
-                        "Failed to prepare compressor, rc: %d", rc ) ;
-         }
-      }
-
       // unset first run
       _firstRun = FALSE ;
 
    done:
       return rc ;
    error:
-      if ( UTIL_INVALID_COMP_CTX != _compContext )
-      {
-         _compressor->done( _compContext ) ;
-         _compContext = UTIL_INVALID_COMP_CTX ;
-      }
       goto done ;
    }
 
@@ -231,6 +206,8 @@ namespace engine
    {
       INT32 rc                = SDB_OK ;
       BOOLEAN result          = TRUE ;
+      utilCompressor *compressor = NULL ;
+      utilCompressorContext compContext = UTIL_INVALID_COMP_CTX ;
 
       if ( _firstRun )
       {
@@ -332,9 +309,21 @@ namespace engine
                DMS_MON_OP_COUNT_INC( _pMonAppCB, MON_DATA_READ, 1 ) ;
             }
 
-            DMS_RECORD_EXTRACTDATA( _compressor, _compContext,
+            compressor =
+               _pSu->getCompressorEntry( _context->mbID() )->getCompressor() ;
+            if ( compressor )
+            {
+               rc = compressor->prepare( compContext ) ;
+               PD_RC_CHECK( rc, PDERROR,
+                           "Failed to prepare compressor, rc: %d", rc ) ;
+            }
+            DMS_RECORD_EXTRACTDATA( compressor, compContext,
                                     _curRecordPtr, recordDataPtr ) ;
-
+            if ( compContext )
+            {
+               compressor->done( compContext ) ;
+               compContext = UTIL_INVALID_COMP_CTX ;
+            }
             DMS_MON_OP_COUNT_INC( _pMonAppCB, MON_DATA_READ, 1 ) ;
             DMS_MON_OP_COUNT_INC( _pMonAppCB, MON_READ, 1 ) ;
 
@@ -403,6 +392,10 @@ namespace engine
       goto error ;
 
    done:
+      if ( UTIL_INVALID_COMP_CTX != compContext )
+      {
+         compressor->done( compContext ) ;
+      }
       return rc ;
    error:
       recordID.reset() ;
@@ -559,8 +552,6 @@ namespace engine
       _includeEndKey       = FALSE ;
       _blockScanDir        = 1 ;
       _countOnly           = FALSE ;
-      _compressor          = NULL ;
-      _compContext         = NULL ;
 
       if ( DMS_ACCESS_TYPE_UPDATE == _accessType ||
            DMS_ACCESS_TYPE_DELETE == _accessType ||
@@ -579,11 +570,6 @@ namespace engine
       {
          _pTransCB->transLockRelease( _cb, _pSu->logicalID(), _context->mbID(),
                                       &_curRID ) ;
-      }
-
-      if ( _compContext )
-      {
-         _compressor->done( _compContext ) ;
       }
 
       _scanner    = NULL ;
@@ -709,18 +695,6 @@ namespace engine
 
       _cb   = cb ;
 
-      if ( DMS_INVALID_EXTENT != _context->mb()->_dictExtentID
-           && UTIL_INVALID_COMP_CTX == _compContext )
-      {
-         _compressor =
-            _pSu->getCompressorEntry( _context->mbID() )->getCompressor() ;
-         if ( _compressor )
-         {
-            rc = _compressor->prepare( _compContext ) ;
-            PD_RC_CHECK( rc, PDERROR,
-                        "Failed to prepare compressor, rc: %d", rc ) ;
-         }
-      }
       // unset first run
       _firstRun = FALSE ;
       _onceRestNum = (INT64)pmdGetKRCB()->getOptionCB()->indexScanStep() ;
@@ -728,12 +702,6 @@ namespace engine
    done:
       return rc ;
    error:
-      if ( UTIL_INVALID_COMP_CTX != _compContext )
-      {
-         _compressor->done( _compContext ) ;
-         _compContext = UTIL_INVALID_COMP_CTX ;
-      }
-
       goto done ;
    }
 
@@ -764,6 +732,8 @@ namespace engine
    {
       INT32 rc                = SDB_OK ;
       BOOLEAN result          = TRUE ;
+      utilCompressor *compressor = NULL ;
+      utilCompressorContext compContext = UTIL_INVALID_COMP_CTX ;
 
       if ( _firstRun )
       {
@@ -935,8 +905,22 @@ namespace engine
             DMS_MON_OP_COUNT_INC( _pMonAppCB, MON_DATA_READ, 1 ) ;
          }
 
-         DMS_RECORD_EXTRACTDATA( _compressor, _compContext,
+         compressor =
+            _pSu->getCompressorEntry( _context->mbID() )->getCompressor() ;
+         if ( compressor )
+         {
+            rc = compressor->prepare( compContext ) ;
+            PD_RC_CHECK( rc, PDERROR,
+                        "Failed to prepare compressor, rc: %d", rc ) ;
+         }
+         DMS_RECORD_EXTRACTDATA( compressor, compContext,
                                  _curRecordPtr, recordDataPtr) ;
+         if ( compContext )
+         {
+            compressor->done( compContext ) ;
+            compContext = UTIL_INVALID_COMP_CTX ;
+         }
+
          DMS_MON_OP_COUNT_INC( _pMonAppCB, MON_DATA_READ, 1 ) ;
          DMS_MON_OP_COUNT_INC( _pMonAppCB, MON_READ, 1 ) ;
 
@@ -1012,6 +996,11 @@ namespace engine
       goto error ;
 
    done:
+      if ( UTIL_INVALID_COMP_CTX != compContext )
+      {
+         compressor->done( compContext ) ;
+      }
+
       if ( SDB_OK == rc && ( _onceRestNum <= 0 || 0 == _maxRecords ) )
       {
          rc = _scanner->pauseScan( _recordXLock ? FALSE : TRUE ) ;

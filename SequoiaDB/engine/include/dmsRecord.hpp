@@ -130,12 +130,6 @@ namespace engine
                                 DMS_RECORD_GETDATA(recordPtr),          \
                                 DMS_RECORD_GETDATALEN(recordPtr),       \
                                 (const CHAR**)&(retPtr), &uncompLen ) ; \
-            if ( compContext )                                          \
-            {                                                           \
-               rc =  compressor->rePrepare( compContext ) ;             \
-               PD_RC_CHECK( rc, PDERROR,                                \
-                        "Failed to prepare compressor, rc: %d", rc ) ;  \
-            }                       \
             PD_RC_CHECK ( rc, PDERROR,                                  \
                           "Failed to uncompress record, rc = %d", rc ); \
             PD_CHECK ( uncompLen == *(INT32*)(retPtr),                  \

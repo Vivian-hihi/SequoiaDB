@@ -133,10 +133,6 @@ namespace engine
          BOOLEAN              _recordXLock ;
          BOOLEAN              _needUnLock ;
          _pmdEDUCB            *_cb ;
-         dmsCompressorEntry   *_compressorEntry ;
-         utilCompressor       *_compressor ;
-         utilCompressorContext _compContext ;
-
    };
    typedef _dmsExtScanner dmsExtScanner ;
 
@@ -239,9 +235,6 @@ namespace engine
          BOOLEAN              _includeEndKey ;
 
          BOOLEAN              _countOnly ;
-         utilCompressor      *_compressor ;
-         utilCompressorContext _compContext ;
-
    } ;
    typedef _dmsIXSecScanner dmsIXSecScanner ;
 
