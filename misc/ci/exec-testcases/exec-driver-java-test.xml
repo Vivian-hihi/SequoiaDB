@@ -23,7 +23,7 @@
     <target name="Test-Driver-Java" depends="Clean-Java-Reports">
         <hostinfo prefix="host" />
         
-        <junit printsummary="yes" fork="yes" showoutput="true" jvm="/opt/jdk1.6.0_sequoiadb/bin/java" timeout="1200000">
+        <junit printsummary="yes" fork="yes" showoutput="true" timeout="1200000">
             <classpath>
                 <pathelement path="${antTask.jar.path}/ant-sdbtasks.jar" />
                 <pathelement path="${java.testcase.path}/lib/sequoiadb.jar" />
