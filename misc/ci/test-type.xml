@@ -89,7 +89,6 @@
 					<param name="antTask.jar.path" value="${test.machine.deploy.path}/deploy/ant-sdbtasks" />
 					<param name="java.testcase.path" value="${testcase.path}/drivers_testcases/java" />
 					<param name="deploy.case.fullname" value="${deploy.case.fullname}" />
-					<param name="excludes.dir.patterns" value="SdbTransaction" />
 					<param name="includes.dir.patterns" value="*" />
 					<param name="BUILD_NUMBER" value="${BUILD_NUMBER}" />
 					<param name="test-type-list" value="${test-type-list}" />
