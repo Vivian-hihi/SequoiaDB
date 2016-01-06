@@ -26,6 +26,7 @@
 |                | 	-   Red Hat Enterprise Linux (RHEL) 6                     |
 |                | 	-   SUSE Linux Enterprise Server (SLES) 11 Service Pack 1 |
 |                | 	-   SUSE Linux Enterprise Server (SLES) 11 Service Pack 2 |
+|                | 	-   SUSE Linux Enterprise Server (SLES) 12 Service Pack 1 |
 |                | 	-   Ubuntu 12                                             |
 |                | 	-   CentOS 6                                              |
 +----------------+------------------------------------------------------------+
