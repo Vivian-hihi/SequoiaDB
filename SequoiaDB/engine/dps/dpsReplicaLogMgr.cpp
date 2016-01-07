@@ -1295,7 +1295,7 @@ namespace engine
       {
          for( UINT32 i = 0 ; i < _vecEventHandler.size() ; ++i )
          {
-            _vecEventHandler[i]->canAssignLogPage( reqLen, cb ) ;
+            rc = _vecEventHandler[i]->canAssignLogPage( reqLen, cb ) ;
             if ( rc )
             {
                break ;
