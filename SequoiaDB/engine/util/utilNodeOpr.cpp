@@ -500,14 +500,14 @@ namespace engine
       rc = nodePipe.readPipe( pReadBuf, readLen, hasRead ) ;
       if ( rc )
       {
-         PD_LOG ( PDERROR, "Failed to read %s return from pip %s, rc: %d",
+         PD_LOG ( PDERROR, "Failed to read %s return from pipe %s, rc: %d",
                   pWriteBuf, nodePipe.getReadPipeName(), rc ) ;
          goto error ;
       }
 
       if ( checkLen && readLen != hasRead )
       {
-         PD_LOG ( PDERROR, "Failed to read %s return from pip %s, rc: %d",
+         PD_LOG ( PDERROR, "Failed to read %s return from pipe %s, rc: %d",
                   pWriteBuf, nodePipe.getReadPipeName(), rc ) ;
          rc = SDB_SYS ;
          goto error ;
