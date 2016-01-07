@@ -21,28 +21,56 @@
     </target>
 
     <target name="Test-Driver-Java" depends="Clean-Java-Reports">
+        <property name="jdk6_dir" value="/opt/jdk1.6.0/bin/java" />
         <hostinfo prefix="host" />
+        <if>
+    	   	<equals arg1="${isTrunk}" arg2="false" />
+    		<then>
+    		    <junit printsummary="yes" fork="yes" jvm="${jdk6_dir}" showoutput="true" timeout="1200000">
+                    <classpath>
+                        <pathelement path="${antTask.jar.path}/ant-sdbtasks.jar" />
+                        <pathelement path="${java.testcase.path}/lib/sequoiadb.jar" />
+                        <pathelement path="${java.testcase.path}/lib/java_test.jar" />
+                    </classpath>
+                    <formatter type="xml" />
+                    <batchtest todir="${reports.path}">
+                        <fileset dir="${java.testcase.path}/build">
+                            <include name="**/*" />
+                            <exclude name="**/TestConstant*.*" />
+                            <exclude name="**/Replica*.*" />
+                            <exclude name="**/*testdata*/*" />
+                            <exclude name="**/*Constan*.class" />
+                            <exclude name="**/SdbNest.class" />
+                            <exclude name="**/MultiThread*" />  
+                        </fileset>
+                    </batchtest>
+                </junit>    
+    		</then>
+    		<else>
+    		    <junit printsummary="yes" fork="yes" showoutput="true" timeout="1200000">
+                    <classpath>
+                        <pathelement path="${antTask.jar.path}/ant-sdbtasks.jar" />
+                        <pathelement path="${java.testcase.path}/lib/sequoiadb.jar" />
+                        <pathelement path="${java.testcase.path}/lib/java_test.jar" />
+                    </classpath>
+                    <formatter type="xml" />
+                    <batchtest todir="${reports.path}">
+                        <fileset dir="${java.testcase.path}/build">
+                            <include name="**/*" />
+                            <exclude name="**/TestConstant*.*" />
+                            <exclude name="**/Replica*.*" />
+                            <exclude name="**/*testdata*/*" />
+                            <exclude name="**/*Constan*.class" />
+                            <exclude name="**/SdbNest.class" />
+                            <exclude name="**/MultiThread*" />  
+                        </fileset>
+                    </batchtest>
+                </junit>    
+    		</else>
+	    </if>
         
-        <junit printsummary="yes" fork="yes" showoutput="true" timeout="1200000">
-            <classpath>
-                <pathelement path="${antTask.jar.path}/ant-sdbtasks.jar" />
-                <pathelement path="${java.testcase.path}/lib/sequoiadb.jar" />
-                <pathelement path="${java.testcase.path}/lib/java_test.jar" />
-            </classpath>
-            <formatter type="xml" />
-            <batchtest todir="${reports.path}">
-                <fileset dir="${java.testcase.path}/build">
-                    <include name="**/*" />
-                    <exclude name="**/TestConstant*.*" />
-                    <exclude name="**/Replica*.*" />
-                    <exclude name="**/*testdata*/*" />
-                    <exclude name="**/*Constan*.class" />
-                    <exclude name="**/SdbNest.class" />
-                    <exclude name="**/MultiThread*" />  
-                </fileset>
-            </batchtest>
-        </junit>
     </target>
+    
 
     <target name="Exec-Testcases-Over" depends="Test-Driver-Java">
         <hostinfo prefix="host" />

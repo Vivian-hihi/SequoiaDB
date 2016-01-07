@@ -92,6 +92,7 @@
 					<param name="includes.dir.patterns" value="*" />
 					<param name="BUILD_NUMBER" value="${BUILD_NUMBER}" />
 					<param name="test-type-list" value="${test-type-list}" />
+					<param name="isTrunk" value="${isTrunk}" />
 				</sdbtest>
 				<echo message="... Test java driver is over ..." />
 			</case>
