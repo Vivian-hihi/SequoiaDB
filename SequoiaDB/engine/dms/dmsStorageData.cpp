@@ -1623,8 +1623,7 @@ namespace engine
          mbExExtent = DMS_INVALID_EXTENT ;
 
          /* Only new supported compressors such as lzw need a dictionary. */
-         if ( UTIL_COMPRESSOR_SNAPPY < compressorType &&
-              compressorType <= UTIL_COMPRESSOR_ZLIB )
+         if ( UTIL_COMPRESSOR_LZW == compressorType )
          {
             dmsCB->pushToDictCreateCLList( CSID(), newCollectionID ) ;
          }

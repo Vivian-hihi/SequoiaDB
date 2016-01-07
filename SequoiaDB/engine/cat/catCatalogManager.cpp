@@ -1354,6 +1354,7 @@ namespace engine
             {
                clInfo._compressorType = UTIL_COMPRESSOR_SNAPPY ;
             }
+            /*
             else if ( 0 == ossStrcmp( eleTmp.valuestr(), CAT_COMPRESSOR_ZLIB ) )
             {
                clInfo._compressorType = UTIL_COMPRESSOR_ZLIB ;
@@ -1362,11 +1363,14 @@ namespace engine
             {
                clInfo._compressorType = UTIL_COMPRESSOR_LZ4 ;
             }
+            */
             else
             {
-               PD_LOG( PDERROR, "Field[%s] value[%s] should be [%s/%s]",
-                      CAT_COMPRESSIONTYPE, eleTmp.valuestr(),
-                      CAT_COMPRESSOR_ZLIB, CAT_COMPRESSOR_LZ4 );
+               PD_LOG( PDERROR,
+                       "Invalid Compression Type. Field[%s] value[%s] should "
+                       "be [%s/%s] or leave empty",
+                       CAT_COMPRESSIONTYPE, eleTmp.valuestr(),
+                       CAT_COMPRESSOR_LZW, CAT_COMPRESSOR_SNAPPY );
                rc = SDB_INVALIDARG ;
                goto error ;
             }

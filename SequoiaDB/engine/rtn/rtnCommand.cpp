@@ -582,6 +582,10 @@ namespace engine
          {
             _compressorType = UTIL_COMPRESSOR_LZW ;
          }
+         else if ( 0 == strcmp( compressionType, VALUE_NAME_SNAPPY ) )
+         {
+            _compressorType = UTIL_COMPRESSOR_SNAPPY ;
+         }
          /*
          else if ( 0 == strcmp( compressionType, VALUE_NAME_LZ4 ) )
          {
@@ -595,6 +599,7 @@ namespace engine
          else
          {
             PD_LOG( PDERROR, "Compression type is invalid: %s", compressionType ) ;
+            rc = SDB_INVALIDARG ;
             goto error ;
          }
       }
