@@ -32,6 +32,7 @@
 #include "impCSVRecordParser.hpp"
 #include "jstobs.h"
 #include "pd.hpp"
+#include <iostream>
 
 namespace import
 {
