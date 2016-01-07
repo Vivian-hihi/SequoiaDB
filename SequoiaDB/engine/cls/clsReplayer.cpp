@@ -94,7 +94,8 @@ namespace engine
       UINT32 bucketID = ~0 ;
 
       SDB_ASSERT( recordHeader && pBucket, "Invalid param" ) ;
-
+      try
+      {
       switch( recordHeader->_type )
       {
          case LOG_TYPE_DATA_INSERT :
@@ -254,6 +255,14 @@ namespace engine
             pBucket->_expectLSN.offset += recordHeader->_length ;
             pBucket->_expectLSN.version = recordHeader->_version ;
          }
+      }
+      }
+      catch (std::exception &e)
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG( PDERROR, "received unexcepted error when parsing inner bson "
+                 "object dps repl log, error:%s", e.what() ) ;
+         goto error ;
       }
 
    done:
