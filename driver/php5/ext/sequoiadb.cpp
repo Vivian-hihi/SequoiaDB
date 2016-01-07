@@ -3768,6 +3768,13 @@ PHP_SEQUOIADB_API void php_json_encode ( CHAR **buf,
                  temp[i] = '\"' ;
                  break ;
                }
+               case '\\':
+               {
+                 temp[i] = '\\' ;
+                 ++i ;
+                 temp[i] = '\\' ;
+                 break ;
+               }
                default :
                {
                   temp[i] = *data ;

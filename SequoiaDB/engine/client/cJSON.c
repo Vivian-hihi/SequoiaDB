@@ -902,7 +902,10 @@ static const char *parse_first_command(cJSON *item,const char *value,int cj_type
          ep = value ;
          return 0 ;
       }
-      ++value ;
+      if( cj_type != cJSON_Regex )
+      {
+         value = value + 1 ;
+      }
    }
    switch ( cj_type )
    {
@@ -1086,22 +1089,10 @@ static const char *parse_first_command(cJSON *item,const char *value,int cj_type
    }
    case cJSON_Regex:
    {
-      const char *value_temp = value;
-      int len = 0;
-      while ( value_temp &&
-              *value_temp != '\"' &&
-              (unsigned char)*value_temp > 32 )
-      {
-         ++len ;
-         ++value_temp ;
-      }
-      /* not an object! */
-      if( !value_temp )
+      value = parse_string( item, value, 0 ) ;
+      if( !value )
          return 0 ;
-      item->valuestring = (char*)cJSON_malloc( len + 1 ) ;
-      strncpy ( item->valuestring, value, len ) ;
-      item->valuestring [ len ] = 0 ;
-      value = value_temp ;
+      item->type = cJSON_Regex ;
       break ;
    }
    case cJSON_Binary:
