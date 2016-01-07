@@ -1267,6 +1267,7 @@ namespace engine
                       PDERROR, "Field[%s] type[%d] error",
                       CAT_COMPRESSED, eleTmp.type() ) ;
             clInfo._isCompressed = eleTmp.boolean() ;
+            clInfo._compressorType = UTIL_COMPRESSOR_SNAPPY ;
             fieldMask |= CAT_MASK_COMPRESSED ;
          }
          // main-collection flag
@@ -1833,6 +1834,7 @@ namespace engine
             attr |= DMS_MB_ATTR_COMPRESSED ;
          }
          builder.append( CAT_ATTRIBUTE_NAME, attr ) ;
+         builder.append( CAT_COMPRESSIONTYPE, clInfo._compressorType ) ;
       }
       if ( mask & CAT_MASK_SHDKEY )
       {
@@ -1902,11 +1904,6 @@ namespace engine
       if ( mask & CAT_MASK_AUTOINDEXID )
       {
          builder.appendBool( CAT_AUTO_INDEX_ID, clInfo._autoIndexId ) ;
-      }
-
-      if ( mask & CAT_MASK_COMPRESSIONTYPE )
-      {
-         builder.append( CAT_COMPRESSIONTYPE, clInfo._compressorType ) ;
       }
 
       catRecord = builder.obj () ;
