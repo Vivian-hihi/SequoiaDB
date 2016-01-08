@@ -191,8 +191,8 @@ class collection(object):
          raise SDBTypeError("source group name must be an instance of basestring")
       if not isinstance(target_group_name, basestring):
          raise SDBTypeError("target group name must be an instance of basestring")
-      if not isinstance(percent, float):
-         raise SDBTypeError("precent must be an instance of float")
+      if not isinstance(percent, float) and not isinstance(percent, int):
+         raise SDBTypeError("precent must be an instance of float or int values in (0, 100]")
 
       try:
          rc = sdb.cl_split_by_percent(self._cl, source_group_name,
@@ -285,7 +285,7 @@ class collection(object):
          raise SDBTypeError("percent must be an instance of float")
 
       try:
-         rc, task_id = sdb.cl_splite_async_by_percent(self._cl,
+         rc, task_id = sdb.cl_split_async_by_percent(self._cl,
                                                      source_group_name,
                                                      target_group_name,
                                                      percent)

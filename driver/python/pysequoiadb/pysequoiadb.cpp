@@ -1439,7 +1439,7 @@ __METHOD_IMP(cl_split_by_percent)
    FLOAT64 percent      = 0 ;
 
    if ( !PARSE_PYTHON_ARGS( args, "Ossd", &obj, &src_name, &dst_name,
-      &percent ) )
+        &percent ) )
    {
       rc = SDB_INVALIDARGS ;
       goto done ;
@@ -1494,7 +1494,7 @@ done:
    return MAKE_RETURN_INT_LONG( rc, task_id ) ;
 }
 
-__METHOD_IMP(cl_splite_async_by_percent)
+__METHOD_IMP(cl_split_async_by_percent)
 {
    INT32 rc             = 0 ;
    PYOBJECT *obj        = NULL ;
@@ -1505,7 +1505,7 @@ __METHOD_IMP(cl_splite_async_by_percent)
    SINT64 task_id       = 0 ;
 
    if ( !PARSE_PYTHON_ARGS( args, "Ossd", &obj, &src_name, &dst_name,
-      &percent ) )
+        &percent ) )
    {
       rc = SDB_INVALIDARGS ;
       goto done ;
@@ -3696,7 +3696,7 @@ static PyMethodDef sequoiadb_methods[] = {
    {"cl_split_by_condition",           cl_split_by_condition,           METH_VARARGS},
    {"cl_split_by_percent",             cl_split_by_percent,             METH_VARARGS},
    {"cl_split_async_by_condition",     cl_split_async_by_condition,     METH_VARARGS},
-   {"cl_splite_async_by_percent",      cl_splite_async_by_percent,      METH_VARARGS},
+   {"cl_split_async_by_percent",       cl_split_async_by_percent,       METH_VARARGS},
    {"cl_bulk_insert",                  cl_bulk_insert,                  METH_VARARGS},
    {"cl_insert",                       cl_insert,                       METH_VARARGS},
    {"cl_update",                       cl_update,                       METH_VARARGS},
@@ -3721,6 +3721,8 @@ static PyMethodDef sequoiadb_methods[] = {
    {"cl_list_lobs",                    cl_list_lobs,                    METH_VARARGS},
    {"cl_explain",                      cl_explain,                      METH_VARARGS},
    {"cl_truncate",                     cl_truncate,                     METH_VARARGS},
+   {"cl_create_id_index",              cl_create_id_index,              METH_VARARGS},
+   {"cl_drop_id_index",                cl_create_id_index,              METH_VARARGS},
    /** cr */
    {"create_cursor",                   create_cursor,                   METH_VARARGS},
    {"release_cursor",                  release_cursor,                  METH_VARARGS},
