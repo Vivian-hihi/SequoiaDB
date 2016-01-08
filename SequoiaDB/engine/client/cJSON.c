@@ -183,11 +183,18 @@ static const char *parse_number(cJSON *item,const char *num)
    {
       item->numType = cJSON_DOUBLE ;
       num++;
+      /*
+         这个公式，先除再加 n = (n) + ( *num - '0') / pow( 10.0, scale )
+         可能会导致小数位精度丢失。改为先把小数计算，最后再加上整数。
+       */
       do
       {
-         n=(n)+(*num++ -'0')/pow(10.0,++scale) ;
+         decimal = decimal * 10 + ( *num - '0') ;
+         ++num ;
+         ++scale ;
       }
       while (*num>='0' && *num<='9');
+      n = n + decimal / pow( 10.0, scale ) ;
    }   /* Fractional part? */
    if (*num=='e' || *num=='E')      /* Exponent? */
    {
