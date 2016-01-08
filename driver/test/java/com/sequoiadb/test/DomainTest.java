@@ -1,6 +1,6 @@
 package com.sequoiadb.test;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 
 import java.util.ArrayList;
 import java.util.Random;
@@ -39,26 +39,22 @@ public class DomainTest {
 	
 	@AfterClass
 	public static void DropConnAfterClass() throws Exception {
-			dropDomain(domainName);
-			sdb.disconnect();
+		if (!standaloneFlag)
+	     	dropDomain(domainName);
+		sdb.disconnect();
 	}
 	
 	@Before
 	public void setUp() throws Exception {
-	    if (sdb.isCollectionSpaceExist(csName1)) {
-	        sdb.dropCollectionSpace(csName1);
-	    }
 	}
 	
 	@After
 	public void tearDown() throws Exception {
-	    if (sdb.isCollectionSpaceExist(csName1)) {
-            sdb.dropCollectionSpace(csName1);
-        }
 	}
 	
 	@Test
 	public void domainCreateDrop(){
+		if (standaloneFlag) return;
 		boolean result;
 		
 		Random r = new Random();
@@ -73,7 +69,26 @@ public class DomainTest {
 	}
 	
 	@Test
+	public void csOfDomain(){
+		boolean result;
+		if (standaloneFlag) return;
+		
+		result = createCSofDomain(csName1,domainName);
+		assertEquals(!standaloneFlag,result);
+		
+		if(result){
+			result = createHashCL(clName1, csName1);
+			assertEquals(!standaloneFlag,result);
+			if(!standaloneFlag)
+				getCLDetail(csName1 + "." + clName1);
+		}
+		result = dropCS(csName1);
+		assertTrue(result);
+	}
+	
+	@Test
 	public void listDomains(){
+		if (standaloneFlag) return;
 		boolean result;
 		result = listDomainsLow();
 		assertEquals(!standaloneFlag,result);
@@ -81,6 +96,7 @@ public class DomainTest {
 	
 	@Test
 	public void listCSInDomin(){
+		if (standaloneFlag) return;
 		boolean result;
 		result = listCSInDomainLow(domainName);
 		assertEquals(!standaloneFlag,result);
@@ -88,6 +104,7 @@ public class DomainTest {
 	
 	@Test
 	public void listCLInDomain(){
+		if (standaloneFlag) return;
 		boolean result;
 		result = listCLInDomainLow(domainName);
 		assertEquals(!standaloneFlag,result);
@@ -95,6 +112,7 @@ public class DomainTest {
 	
 	@Test
 	public void domainIsExists(){
+		if (standaloneFlag) return;
 		boolean result;
 		
 		result = domainIsExistsLow(domainName);
@@ -106,6 +124,7 @@ public class DomainTest {
 	
 	@Test
 	public void alterDomain(){
+		if (standaloneFlag) return;
 		boolean result;
 		
 		result = addDataGroupToDomain(domainName, groupList.size());
@@ -188,12 +207,30 @@ public class DomainTest {
 	}
 	
 	private boolean createCSofDomain(String csName, String domainName){
+		try{
+			sdb.dropCollectionSpace(csName);
+		}catch(BaseException e){
+		}
 		boolean flag = false;
 		try{
 			BSONObject options = new BasicBSONObject();
 			options = (BSONObject)JSON.parse("{Domain:'" + domainName + "'}");
 			sdb.createCollectionSpace(csName, options);
 			SDBTestHelper.println("create cs " + csName + " at domain:" + domainName + " succ!");
+			flag = true;
+		}catch(BaseException e){
+			SDBTestHelper.println("ErrorCode: rc=" + e.getErrorCode());
+			SDBTestHelper.println("ErrorDesc: " + e.getErrorType());
+			SDBTestHelper.println("ErrorMess: " + e.getMessage());
+		}
+		return flag;
+	}
+	
+	private boolean dropCS(String csName){
+		boolean flag = false;
+		try{
+			sdb.dropCollectionSpace(csName);
+			SDBTestHelper.println("drop cs " + csName + " succ!");
 			flag = true;
 		}catch(BaseException e){
 			SDBTestHelper.println("ErrorCode: rc=" + e.getErrorCode());
