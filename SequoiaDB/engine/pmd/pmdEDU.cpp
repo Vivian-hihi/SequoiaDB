@@ -1040,6 +1040,7 @@ namespace engine
       __try
       {
 #endif
+         initCurAuditMask( getAuditMask() ) ;
          // register TLS, this must happen at very beginning of each thread
          return pmdEDUEntryPoint ( type, pmdDeclareEDUCB ( cb ), arg ) ;
 #if defined (_WINDOWS)

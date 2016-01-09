@@ -44,6 +44,7 @@
 #define PD_DFT_FILE_NUM             (20)
 #define PD_DFT_FILE_SZ              (100)
 #define PD_DFT_DIAGLOG              "sdbdiag.log"
+#define PD_DFT_AUDIT                "sdbaudit.log"
 
 #define PD_LOG_STRINGMAX            ( 4096 )
 
@@ -174,6 +175,133 @@ void pdLog( PDLEVEL level, const CHAR* func, const CHAR* file,
             UINT32 line, const std::string &message ) ;
 
 void pdLogRaw( PDLEVEL level, const CHAR* pData ) ;
+
+/*
+   PD Audit Define
+*/
+enum AUDIT_TYPE
+{
+   AUDIT_ACCESS         = 1,     /// User login, logout
+   AUDIT_CLUSTER        = 2,     /// Group, Domain, Node operations
+   AUDIT_SYSTEM         = 3,     /// System Info
+
+   AUDIT_DML            = 8,     /// Insert, Update, Delete operation
+   AUDIT_DDL            = 9,     /// Create/Drop Collection, and so on
+   AUDIT_DCL            = 10,    /// Create User, Drop User and so on
+   AUDIT_DQL            = 11,    /// Query, Explain
+
+   AUDIT_DEL            = 20,    /// The detail of delete record
+   AUDIT_UPDATE         = 21,    /// The detail of update record
+
+   AUDIT_OTHER          = 255    /// Other
+} ;
+
+#define AUDIT_MASK_ACCESS     0x00000001
+#define AUDIT_MASK_CLUSTER    0x00000002
+#define AUDIT_MASK_SYSTEM     0x00000004
+#define AUDIT_MASK_DML        0x00000010
+#define AUDIT_MASK_DDL        0x00000020
+#define AUDIT_MASK_DCL        0x00000040
+#define AUDIT_MASK_DQL        0x00000080
+#define AUDIT_MASK_DEL        0x00000100
+#define AUDIT_MASK_UPDATE     0x00000200
+#define AUDIT_MASK_OTHER      0x00001000
+
+#define AUDIT_MASK_DEFAULT    ( AUDIT_SYSTEM | AUDIT_MASK_ACCESS | AUDIT_MASK_DDL | AUDIT_MASK_DCL )
+#define AUDIT_MASK_DFT_STR    "SYSTEM|ACCESS|DDL|DCL"
+#define AUDIT_MASK_ALL        0xFFFFFFFF
+
+/*
+   AUDIT_OBJ_TYPE define
+*/
+enum AUDIT_OBJ_TYPE
+{
+   AUDIT_OBJ_SYSTEM        = 0,
+   AUDIT_OBJ_CS,
+   AUDIT_OBJ_CL,
+   AUDIT_OBJ_GROUP,
+   AUDIT_OBJ_NODE,
+   AUDIT_OBJ_DOMAIN,
+   AUDIT_OBJ_PROCEDURE,
+   AUDIT_OBJ_FILE,
+
+   AUDIT_OBJ_MAX
+} ;
+const CHAR* pdAuditObjType2String( AUDIT_OBJ_TYPE objtype ) ;
+
+#define PD_AUDIT(type, username, action, objtype, objname, fmt, ...) \
+   do { \
+      if ( getCurAuditMask() & pdAuditType2Mask( type ) ) \
+      { \
+         pdAudit(type, username, action, objtype, objname, \
+                 __FUNC__, __FILE__, __LINE__, fmt, ##__VA_ARGS__); \
+      } \
+   }while( 0 )
+
+#define PD_AUDIT_SYSTEM(action,objtype,objname, fmt, ...) \
+   do { \
+      PD_AUDIT(AUDIT_SYSTEM,"",action,objtype,objname,fmt,##__VA_ARGS__) ; \
+   }while( 0 )
+
+#define PD_AUDIT_OP(type,optype,objtype,objname,fmt, ...)\
+   do { \
+         const CHAR *pUserName = "" ; \
+         _pmdEDUCB *cb = pmdGetThreadEDUCB() ; \
+         if ( cb ) \
+         { \
+            pUserName = cb->getUserName() ; \
+         } \
+      PD_AUDIT(type,pUserName,msgType2String((MSG_TYPE)optype),\
+               objtype,objname, fmt,##__VA_ARGS__) ; \
+   }while( 0 )
+
+#define PD_AUDIT_COMMAND(type,commandstr,objtype,objname,fmt, ... ) \
+   do { \
+         const CHAR *pUserName = "" ; \
+         _pmdEDUCB *cb = pmdGetThreadEDUCB() ; \
+         if ( cb ) \
+         { \
+            pUserName = cb->getUserName() ; \
+         } \
+         CHAR tmp[ 100 ] = { 0 } ;\
+         ossSnprintf( tmp, sizeof(tmp)-1, "%s(%s)", \
+                      msgType2String(MSG_BS_QUERY_REQ, TRUE), commandstr ) ;\
+         PD_AUDIT(type,pUserName,tmp,objtype,objname,fmt, ##__VA_ARGS__) ;\
+   }while( 0 )
+
+UINT32 pdAuditType2Mask( AUDIT_TYPE auditType ) ;
+const CHAR* pdGetAuditTypeDesp( AUDIT_TYPE auditType ) ;
+INT32  pdString2AuditMask( const CHAR *pStr, UINT32 &mask ) ;
+
+UINT32&     getAuditMask() ;
+UINT32      setAuditMask( UINT32 newMask ) ;
+UINT32&     getCurAuditMask() ;
+UINT32      setCurAuditMask( UINT32 newMask ) ;
+void        initCurAuditMask( UINT32 newMask ) ;
+
+const CHAR* getAuditName() ;
+const CHAR* getAuditPath() ;
+
+void sdbEnableAudit( const CHAR *pdPathOrFile,
+                     INT32 fileMaxNum = PD_DFT_FILE_NUM,
+                     UINT32 fileMaxSize = PD_DFT_FILE_SZ ) ;
+void sdbDisableAudit() ;
+
+BOOLEAN sdbIsAuditEnabled() ;
+
+void pdAudit( AUDIT_TYPE type, const CHAR *pUserName,
+              const CHAR *pAction, AUDIT_OBJ_TYPE objType,
+              const CHAR *pObjName,
+              const CHAR* func, const CHAR* file,
+              UINT32 line, const CHAR* format, ...) ;
+
+void pdAudit( AUDIT_TYPE type, const CHAR *pUserName,
+              const CHAR *pAction, AUDIT_OBJ_TYPE objType,
+              const CHAR *pObjName,
+              const CHAR* func, const CHAR* file,
+              UINT32 line, const std::string &message ) ;
+
+void pdAuditRaw( AUDIT_TYPE type, const CHAR* pData ) ;
 
 #endif // PD_HPP_
 

@@ -2,6 +2,7 @@
 #include "pd.hpp"
 #include "utilCompressorFactory.hpp"
 #include "utilCompressorLZW.hpp"
+#include "msgDef.hpp"
 #include "pdTrace.hpp"
 #include "utilTrace.hpp"
 //#include "utilCompressorLZ4.hpp"
@@ -52,6 +53,27 @@ namespace engine
          SDB_OSS_DEL compressor;
       }
       PD_TRACE_EXIT( SDB__UTILCOMPRESSORFACTORY_DESTROYCOMPRESSOR ) ;
+   }
+
+   const CHAR *utilCompressType2String( UINT8 type )
+   {
+      switch( type )
+      {
+         case UTIL_COMPRESSOR_SNAPPY :
+            return VALUE_NAME_SNAPPY ;
+            break ;
+         case UTIL_COMPRESSOR_LZW :
+            return VALUE_NAME_LZW ;
+            break ;
+         case UTIL_COMPRESSOR_LZ4 :
+            return VALUE_NAME_LZ4 ;
+            break ;
+         case UTIL_COMPRESSOR_ZLIB :
+            return VALUE_NAME_ZLIB ;
+            break ;
+         default :
+            return "Invalid" ;
+      }
    }
 }
 

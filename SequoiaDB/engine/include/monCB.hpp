@@ -75,6 +75,7 @@ namespace engine
       if ( NULL != _pMonAppCB_ )                                     \
       {                                                              \
          _pMonAppCB_->setLastOpType( opType ) ;                      \
+         _pMonAppCB_->setLastCmdType( CMD_UNKNOW ) ;                 \
          _pMonAppCB_->saveLastOpDetail( format,                      \
                                        ##__VA_ARGS__ ) ;             \
       }                                                              \

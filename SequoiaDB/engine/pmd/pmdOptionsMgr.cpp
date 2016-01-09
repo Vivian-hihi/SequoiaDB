@@ -1231,6 +1231,7 @@ namespace engine
       ossMemset( _catAddrLine, 0, OSS_MAX_PATHSIZE + 1 ) ;
       ossMemset( _dmsTmpBlkPath, 0, OSS_MAX_PATHSIZE + 1 ) ;
       ossMemset( _krcbLobPath, 0, OSS_MAX_PATHSIZE + 1 ) ;
+      ossMemset( _auditMaskStr, 0, sizeof( _auditMaskStr ) ) ;
 
       _krcbMaxPool         = 0 ;
       _krcbDiagLvl         = (UINT16)PDWARNING ;
@@ -1259,6 +1260,8 @@ namespace engine
       _pagecleanNum        = PMD_DFT_NUMPAGECLEAN ;
       _pagecleanInterval   = PMD_DFT_PAGECLEANINTERVAL ;
       _dialogFileNum       = 0 ;
+      _auditFileNum        = 0 ;
+      _auditMask           = 0 ;
       _directIOInLob       = FALSE ;
       _sparseFile          = FALSE ;
       _weight              = 0 ;
@@ -1325,6 +1328,12 @@ namespace engine
       // --diagnum
       rdxInt( pEX, PMD_OPTION_DIAGLOG_NUM, _dialogFileNum, FALSE, TRUE,
               PD_DFT_FILE_NUM ) ;
+      // --auditnum
+      rdxInt( pEX, PMD_OPTION_AUDIT_NUM, _auditFileNum, FALSE, TRUE,
+              PD_DFT_FILE_NUM ) ;
+      // --auditmask
+      rdxString( pEX, PMD_OPTION_AUDIT_MASK, _auditMaskStr, sizeof(_auditMaskStr),
+                 FALSE, FALSE, AUDIT_MASK_DFT_STR ) ;
       // --svcname
       rdxString( pEX, PMD_OPTION_SVCNAME, _krcbSvcName, sizeof(_krcbSvcName),
                  FALSE, FALSE,
@@ -1553,6 +1562,14 @@ namespace engine
          _syncStrategy = CLS_SYNC_DTF_STRATEGY ;
       }
       _syncStrategyStr[0] = 0 ;
+
+      // audit mask check
+      if ( SDB_OK != pdString2AuditMask( _auditMaskStr, _auditMask ) )
+      {
+         std::cerr << PMD_OPTION_AUDIT_MASK << " value error, use default"
+                   << endl ;
+         _auditMask = AUDIT_MASK_DEFAULT ;
+      }
 
       // preferreplica check
       _preferReplica = utilPrefReplStr2Enum( _prefReplStr ) ;

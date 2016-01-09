@@ -22,6 +22,8 @@ namespace engine
       UTIL_COMPRESSOR_ZLIB = 3,
    } ;
 
+   const CHAR *utilCompressType2String( UINT8 type ) ;
+
    /* This class provides compressor interfaces. */
    class _utilCompressor : public SDBObject
    {

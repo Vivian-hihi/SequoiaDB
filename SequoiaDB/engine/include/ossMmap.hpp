@@ -122,6 +122,11 @@ public:
    INT32 map ( UINT64 offset, UINT32 length, void **pAddress ) ;
    INT32 flushAll ( BOOLEAN sync = FALSE ) ;
    INT32 flush ( UINT32 segmentID, BOOLEAN sync = FALSE ) ;
+   /*
+      length : -1, means flush offset to end
+   */
+   INT32 flushBlock ( UINT32 segmentID, UINT32 offset,
+                      INT32 length, BOOLEAN sync = FALSE ) ;
    INT32 unlink () ;
    INT32 size ( UINT64 &fileSize ) ;
 

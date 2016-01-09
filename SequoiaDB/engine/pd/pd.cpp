@@ -97,7 +97,8 @@ typedef struct _pdLogFile pdLogFile ;
 // currently we only have diag log, we may have different types of logs later
 enum _pdLogType
 {
-   PD_DIAGLOG = 0,
+   PD_DIAGLOG  = 0,
+   PD_AUDIT    = 1,
    PD_LOG_MAX
 } ;
 pdLogFile _pdLogFiles [ PD_LOG_MAX ] ;
@@ -130,20 +131,24 @@ typedef struct _pdCfgInfo
    }
 } pdCfgInfo ;
 
-static pdCfgInfo& _getPDCfgInfo()
+/// define the pd config
+pdCfgInfo g_pdCfg[ PD_LOG_MAX ] ;
+
+static pdCfgInfo& _getPDCfgInfo( _pdLogType type )
 {
-   static pdCfgInfo s_pdCfg ;
-   return s_pdCfg ;
+   if ( type >= PD_DIAGLOG && type < PD_LOG_MAX )
+      return g_pdCfg[ type ] ;
+   return g_pdCfg[ PD_DIAGLOG ] ;
 }
 
 const CHAR* getDialogName ()
 {
-   return _getPDCfgInfo()._pdLogFile ;
+   return _getPDCfgInfo( PD_DIAGLOG )._pdLogFile ;
 }
 
 const CHAR* getDialogPath ()
 {
-   return _getPDCfgInfo()._pdLogPath ;
+   return _getPDCfgInfo( PD_DIAGLOG )._pdLogPath ;
 }
 
 void sdbEnablePD( const CHAR *pdPathOrFile, INT32 fileMaxNum,
@@ -151,7 +156,7 @@ void sdbEnablePD( const CHAR *pdPathOrFile, INT32 fileMaxNum,
 {
    sdbDisablePD() ;
 
-   pdCfgInfo &info = _getPDCfgInfo() ;
+   pdCfgInfo &info = _getPDCfgInfo( PD_DIAGLOG ) ;
    const CHAR *shortName = PD_DFT_DIAGLOG ;
 
    if ( pdPathOrFile && 0 != pdPathOrFile[0] )
@@ -196,12 +201,12 @@ void sdbDisablePD()
    {
       logFile._logFile.Close() ;
    }
-   _getPDCfgInfo()._pdLogFile[0] = 0 ;
+   _getPDCfgInfo( PD_DIAGLOG )._pdLogFile[0] = 0 ;
 }
 
 BOOLEAN sdbIsPDEnabled ()
 {
-   return _getPDCfgInfo().isEnabled() ;
+   return _getPDCfgInfo( PD_DIAGLOG ).isEnabled() ;
 }
 
 /*
@@ -305,7 +310,7 @@ static INT32 pdLogFileWrite ( _pdLogType type, const CHAR *pData )
    SDB_ASSERT ( type < PD_LOG_MAX, "type is out of range" ) ;
    SINT64 dataSize = ossStrlen ( pData ) ;
    pdLogFile &logFile = _pdLogFiles[type] ;
-   pdCfgInfo &info = _getPDCfgInfo() ;
+   pdCfgInfo &info = _getPDCfgInfo( PD_DIAGLOG ) ;
 
    // lock file first
    logFile._mutex.get() ;
@@ -471,7 +476,7 @@ void pdLogRaw( PDLEVEL level, const CHAR *pData )
       ossPrintf ( "%s"OSS_NEWLINE, pData ) ;
 #else
    /* We write into log file if the string is not empty */
-   if ( _getPDCfgInfo().isEnabled() )
+   if ( _getPDCfgInfo( PD_DIAGLOG ).isEnabled() )
 #endif
    {
       rc = pdLogFileWrite ( PD_DIAGLOG, pData ) ;
@@ -503,4 +508,433 @@ void pdcheck(const CHAR* string, const CHAR* func, const CHAR* file, UINT32 line
 }
 
 #endif // _DEBUG
+
+/*
+   PD Audit Implement
+*/
+
+const CHAR* pdAuditObjType2String( AUDIT_OBJ_TYPE objtype )
+{
+   const static CHAR* s_objtypeString[] = {
+      "SYSTEM",
+      "COLLECTIONSPACE",
+      "COLLECTION",
+      "GROUP",
+      "NODE",
+      "DOMAIN",
+      "PROCEDURE",
+      "FILE"
+      } ;
+   if ( (UINT32)objtype >= 0 &&
+        (UINT32)objtype < sizeof(s_objtypeString) / sizeof(const CHAR*) )
+   {
+      return s_objtypeString[ (UINT32)objtype ] ;
+   }
+   return "UNKNOW" ;
+}
+
+UINT32 pdAuditType2Mask( AUDIT_TYPE auditType )
+{
+   switch( auditType )
+   {
+      case AUDIT_ACCESS :
+         return AUDIT_MASK_ACCESS ;
+      case AUDIT_CLUSTER :
+         return AUDIT_MASK_CLUSTER ;
+      case AUDIT_SYSTEM :
+         return AUDIT_MASK_SYSTEM ;
+      case AUDIT_DML :
+         return AUDIT_MASK_DML ;
+      case AUDIT_DDL :
+         return AUDIT_MASK_DDL ;
+      case AUDIT_DCL :
+         return AUDIT_MASK_DCL ;
+      case AUDIT_DQL :
+         return AUDIT_MASK_DQL ;
+      case AUDIT_DEL :
+         return AUDIT_MASK_DEL ;
+      case AUDIT_UPDATE :
+         return AUDIT_MASK_UPDATE ;
+      case AUDIT_OTHER :
+         return AUDIT_MASK_OTHER ;
+      default :
+         break ;
+   }
+   return 0 ;
+}
+
+const CHAR* pdGetAuditTypeDesp( AUDIT_TYPE auditType )
+{
+   switch( auditType )
+   {
+      case AUDIT_ACCESS :
+         return "ACCESS" ;
+      case AUDIT_CLUSTER :
+         return "CLUSTER" ;
+      case AUDIT_SYSTEM :
+         return "SYSTEM" ;
+      case AUDIT_DML :
+         return "DML" ;
+      case AUDIT_DDL :
+         return "DDL" ;
+      case AUDIT_DCL :
+         return "DCL" ;
+      case AUDIT_DQL :
+         return "DQL" ;
+      case AUDIT_DEL :
+         return "DELETE" ;
+      case AUDIT_UPDATE :
+         return "UPDATE" ;
+      case AUDIT_OTHER :
+         return "OTHER" ;
+      default :
+         break ;
+   }
+   return "UNKNOW" ;
+}
+
+static INT32 _pdString2AuditMask( const CHAR *pStr, UINT32 &mask )
+{
+   if ( !pStr || !*pStr )
+      return SDB_OK ;
+   const CHAR *start = pStr ;
+   while( *start && ' ' == *start )
+   {
+      ++start ;
+   }
+   if ( !*start )
+      return SDB_OK ;
+   const CHAR *end = start + ossStrlen( start ) - 1 ;
+   while( end != start && ' ' == *end )
+   {
+      --end ;
+   }
+   UINT32 len = end - start + 1 ;
+   /// compare
+   if ( 0 == ossStrncasecmp( start, "ACCESS", len ) )
+   {
+      mask |= AUDIT_MASK_ACCESS ;
+   }
+   else if ( 0 == ossStrncasecmp( start, "CLUSTER", len ) )
+   {
+      mask |= AUDIT_MASK_CLUSTER ;
+   }
+   else if ( 0 == ossStrncasecmp( start, "SYSTEM", len ) )
+   {
+      mask |= AUDIT_MASK_SYSTEM ;
+   }
+   else if ( 0 == ossStrncasecmp( start, "DML", len ) )
+   {
+      mask |= AUDIT_MASK_DML ;
+   }
+   else if ( 0 == ossStrncasecmp( start, "DDL", len ) )
+   {
+      mask |= AUDIT_MASK_DDL ;
+   }
+   else if ( 0 == ossStrncasecmp( start, "DCL", len ) )
+   {
+      mask |= AUDIT_MASK_DCL ;
+   }
+   else if ( 0 == ossStrncasecmp( start, "DQL", len ) )
+   {
+      mask |= AUDIT_MASK_DQL ;
+   }
+   else if ( 0 == ossStrncasecmp( start, "DELETE", len ) )
+   {
+      mask |= AUDIT_MASK_DEL ;
+   }
+   else if ( 0 == ossStrncasecmp( start, "UPDATE", len ) )
+   {
+      mask |= AUDIT_MASK_UPDATE ;
+   }
+   else if ( 0 == ossStrncasecmp( start, "OTHER", len ) )
+   {
+      mask |= AUDIT_MASK_OTHER ;
+   }
+   else if ( 0 == ossStrncasecmp( start, "NONE", len ) )
+   {
+      mask = 0 ;
+   }
+   else if ( 0 == ossStrncasecmp( start, "ALL", len ) )
+   {
+      mask = AUDIT_MASK_ALL ;
+   }
+   else
+   {
+      return SDB_INVALIDARG ;
+   }
+   return SDB_OK ;
+}
+
+INT32 pdString2AuditMask( const CHAR *pStr, UINT32 &mask )
+{
+   INT32 rc = SDB_OK ;
+   if ( !pStr || !*pStr )
+   {
+      return SDB_OK ;
+   }
+   const CHAR *p = pStr ;
+   CHAR *p1 = NULL ;
+   while( p && *p )
+   {
+      p1 = (CHAR*)ossStrchr( p, '|' ) ;
+      if ( p1 )
+      {
+         *p1 = 0 ;
+      }
+      rc = _pdString2AuditMask( p, mask ) ;
+      if ( p1 )
+      {
+         *p1 = '|' ;
+      }
+      if ( rc )
+      {
+         break ;
+      }
+      p = p1 ? p1 + 1 : NULL ;
+
+      if ( 0 == mask || AUDIT_MASK_ALL == mask )
+      {
+         break ;
+      }
+   }
+   return rc ;
+}
+
+UINT32& getAuditMask()
+{
+   static UINT32 s_auditMask = AUDIT_MASK_DEFAULT ;
+   return s_auditMask ;
+}
+
+UINT32 setAuditMask( UINT32 newMask )
+{
+   UINT32 oldMask = getAuditMask() ;
+   getAuditMask() = newMask ;
+   return oldMask ;
+}
+
+static OSS_THREAD_LOCAL UINT32 s_curAuditMask = 0 ;
+
+UINT32& getCurAuditMask()
+{
+   return s_curAuditMask ;
+}
+
+UINT32 setCurAuditMask( UINT32 newMask )
+{
+   UINT32 oldMask = getCurAuditMask() ;
+   getCurAuditMask() = newMask ;
+   return oldMask ;
+}
+
+void initCurAuditMask( UINT32 newMask )
+{
+   s_curAuditMask = newMask ;
+}
+
+const CHAR* getAuditName ()
+{
+   return _getPDCfgInfo( PD_AUDIT )._pdLogFile ;
+}
+
+const CHAR* getAuditPath ()
+{
+   return _getPDCfgInfo( PD_AUDIT )._pdLogPath ;
+}
+
+void sdbEnableAudit( const CHAR *pdPathOrFile, INT32 fileMaxNum,
+                     UINT32 fileMaxSize )
+{
+   sdbDisableAudit() ;
+
+   pdCfgInfo &info = _getPDCfgInfo( PD_AUDIT ) ;
+   const CHAR *shortName = PD_DFT_AUDIT ;
+
+   if ( pdPathOrFile && 0 != pdPathOrFile[0] )
+   {
+      const CHAR *pDotStr = ossStrrchr( pdPathOrFile, '.' ) ;
+      const CHAR *pSepStr1 = ossStrrchr( pdPathOrFile, '/' ) ;
+      const CHAR *pSepStr2 = ossStrrchr( pdPathOrFile, '\\' ) ;
+      const CHAR *pSepStr = pSepStr1 >= pSepStr2 ? pSepStr1 : pSepStr2 ;
+
+      // is file
+      if ( pDotStr && pDotStr > pSepStr )
+      {
+         shortName = pSepStr ? pSepStr + 1 : pdPathOrFile ;
+         ossStrncpy( info._pdLogPath, pdPathOrFile, shortName - pdPathOrFile ) ;
+      }
+      // is path
+      else
+      {
+         ossStrncpy( info._pdLogPath, pdPathOrFile, OSS_MAX_PATHSIZE ) ;
+      }
+   }
+
+   if ( 0 == info._pdLogPath[0] )
+   {
+      ossStrcpy( info._pdLogPath, "." ) ;
+   }
+
+   if ( info._pdLogPath[0] != 0 )
+   {
+      engine::utilBuildFullPath( info._pdLogPath, shortName,
+                                 OSS_MAX_PATHSIZE, info._pdLogFile ) ;
+      info._pdLogFile[ OSS_MAX_PATHSIZE ] = 0 ;
+   }
+   info._pdFileMaxNum = fileMaxNum ;
+   info._pdFileMaxSize = (UINT64)fileMaxSize * 1024 * 1024 ;
+}
+
+void sdbDisableAudit()
+{
+   pdLogFile &logFile = _pdLogFiles[ PD_AUDIT ] ;
+   if ( logFile._logFile.isValid() )
+   {
+      logFile._logFile.Close() ;
+   }
+   _getPDCfgInfo( PD_AUDIT )._pdLogFile[0] = 0 ;
+}
+
+BOOLEAN sdbIsAuditEnabled ()
+{
+   return _getPDCfgInfo( PD_AUDIT ).isEnabled() ;
+}
+
+void pdAuditRaw( AUDIT_TYPE type, const CHAR *pData )
+{
+   INT32 rc = SDB_OK ;
+
+   if ( !( getCurAuditMask() & pdAuditType2Mask( type ) ) )
+      return ;
+
+   // use thread specific pointer to make sure there's no nested pdLog (i.e.
+   // calling pdLog in signal handler when the thread is already in pdLog
+   // function will not proceed)
+   static OSS_THREAD_LOCAL BOOLEAN amIInPD = FALSE ;
+   if ( amIInPD )
+   {
+      goto done ;
+   }
+   amIInPD = TRUE ;
+
+   /* We write into log file if the string is not empty */
+   if ( _getPDCfgInfo( PD_AUDIT ).isEnabled() )
+   {
+      rc = pdLogFileWrite ( PD_AUDIT, pData ) ;
+      if ( rc )
+      {
+         ossPrintf ( "Failed to write into audit log file, rc: %d"OSS_NEWLINE,
+                     rc ) ;
+         ossPrintf ( "%s"OSS_NEWLINE, pData ) ;
+      }
+   }
+
+   // make sure to reset this before leaving
+   amIInPD = FALSE ;
+
+done:
+   return ;
+}
+
+void pdAudit( AUDIT_TYPE type, const CHAR *pUserName,
+              const CHAR *pAction, AUDIT_OBJ_TYPE objType,
+              const CHAR *pObjName,
+              const CHAR* func, const CHAR* file,
+              UINT32 line, const std::string &message )
+{
+   pdAudit( type, pUserName, pAction, objType, pObjName, func,
+            file, line, message.c_str() ) ;
+}
+
+/*
+ * Audit Log Header format
+ * Arguments:
+ * 1) Year (UINT32)
+ * 2) Month (UINT32)
+ * 3) Day (UINT32)
+ * 4) Hour (UINT32)
+ * 5) Minute (UINT32)
+ * 6) Second (UINT32)
+ * 7) Microsecond (UINT32)
+ * 8) Type (string)
+ * 9) Process ID (UINT64)
+ * 10) Thread ID (UINT64)
+ * 11) UserName (string)
+ * 12) Action (string)
+ * 13) ObjectType (string)
+ * 14) ObjectName (string)
+ * 15) File Name (string)
+ * 16) Function Name (string)
+ * 17) Line number (UINT32)
+ * 18) Message
+ */
+const static CHAR *PD_AUDIT_LOG_HEADER_FORMAT="%04d-%02d-%02d-%02d.%02d.%02d.%06d\
+               \
+Type:%s"OSS_NEWLINE"PID:%-37dTID:%d"OSS_NEWLINE
+"UserName:%-32sAction:%s"OSS_NEWLINE
+"ObjectType:%-30sObjectName:%s"OSS_NEWLINE
+"Function:%-32sLine:%d"OSS_NEWLINE"File:%s"OSS_NEWLINE
+"Message:"OSS_NEWLINE"%s"OSS_NEWLINE OSS_NEWLINE ;
+
+// PD_TRACE_DECLARE_FUNCTION ( SDB_PDAUDIT, "pdAudit" )
+void pdAudit( AUDIT_TYPE type, const CHAR *pUserName,
+              const CHAR *pAction, AUDIT_OBJ_TYPE objType,
+              const CHAR *pObjName,
+              const CHAR* func, const CHAR* file,
+              UINT32 line, const CHAR* format, ... )
+{
+   INT32 rc = SDB_OK ;
+   if ( !( getCurAuditMask() & pdAuditType2Mask( type ) ) )
+      return ;
+   va_list ap;
+   PD_TRACE_ENTRY ( SDB_PDAUDIT ) ;
+   struct tm otm ;
+   struct timeval tv;
+   struct timezone tz;
+   time_t tt ;
+   CHAR userInfo[ PD_LOG_STRINGMAX + 1 ] = { 0 } ;
+   CHAR sysInfo[ PD_LOG_STRINGMAX + 1 ] = { 0 } ;  // for log header
+
+   gettimeofday(&tv, &tz);
+   tt = tv.tv_sec ;
+
+#if defined (_WINDOWS)
+   localtime_s( &otm, &tt ) ;
+#else
+   localtime_r( &tt, &otm ) ;
+#endif
+
+   // create the user information
+   va_start(ap, format);
+   vsnprintf(userInfo, PD_LOG_STRINGMAX, format, ap);
+   va_end(ap);
+
+   // create log header
+   ossSnprintf(sysInfo, PD_LOG_STRINGMAX, PD_AUDIT_LOG_HEADER_FORMAT,
+               otm.tm_year+1900,            // 1) Year (UINT32)
+               otm.tm_mon+1,                // 2) Month (UINT32)
+               otm.tm_mday,                 // 3) Day (UINT32)
+               otm.tm_hour,                 // 4) Hour (UINT32)
+               otm.tm_min,                  // 5) Minute (UINT32)
+               otm.tm_sec,                  // 6) Second (UINT32)
+               tv.tv_usec,                  // 7) Microsecond (UINT32)
+               pdGetAuditTypeDesp(type),    // 8) Type (string)
+               ossGetCurrentProcessID(),    // 9) Process ID (UINT64)
+               ossGetCurrentThreadID(),     // 10) Thread ID (UINT64)
+               pUserName ? pUserName : "",  // 11) UserName (string)
+               pAction ? pAction : "",      // 12) Action (string)
+               pdAuditObjType2String(objType),// 13) ObjectType (string)
+               pObjName ? pObjName : "",    // 14) ObjectName (string)
+               func,                        // 15) Function Name (string)
+               line,                        // 16) Line number (UINT32)
+               file,                        // 17) File Name (string)
+               userInfo                     // 18) Message
+   ) ;
+
+   pdAuditRaw( type, sysInfo ) ;
+
+   PD_TRACE_EXITRC ( SDB_PDAUDIT, rc ) ;
+   return ;
+}
 

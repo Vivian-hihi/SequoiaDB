@@ -70,6 +70,8 @@ BOOLEAN msgIsInnerOpReply( MsgHeader *pMsg ) ;
    ( msgIsInnerOpReply(msg) ? sizeof(MsgOpReply) : \
                               sizeof(MsgInternalReplyHeader) )
 
+///  get the msg type string desp
+const CHAR* msgType2String( MSG_TYPE msgType, BOOLEAN isCommand = FALSE ) ;
 
 /*
  * Create Update Message in ppBuffer

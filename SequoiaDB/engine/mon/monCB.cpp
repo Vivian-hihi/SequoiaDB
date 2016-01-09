@@ -189,6 +189,12 @@ namespace engine
       _lastOpType = opType ;
    }
 
+   void _monAppCB::setLastCmdType( INT32 cmdType )
+   {
+      _lastOpType = MSG_BS_QUERY_REQ ;
+      _cmdType = cmdType ;
+   }
+
    void _monAppCB::opTimeSpentInc( ossTickDelta delta )
    {
       switch ( _lastOpType )

@@ -465,6 +465,8 @@ namespace engine
          OSS_INLINE UINT32 preferedReplica () const { return _preferReplica ; }
          OSS_INLINE const CHAR* dbroleStr() const { return _krcbRole ; }
          OSS_INLINE INT32 diagFileNum() const { return _dialogFileNum ; }
+         OSS_INLINE INT32 auditFileNum() const { return _auditFileNum ; }
+         OSS_INLINE UINT32 auditMask() const { return _auditMask ; }
          OSS_INLINE BOOLEAN isDpsLocal() const { return _dpslocal ; }
          OSS_INLINE UINT32 sharingBreakTime() const { return _sharingBreakTime ; }
          OSS_INLINE UINT32 startShiftTime() const { return _startShiftTime * OSS_ONE_SEC ; }
@@ -505,6 +507,7 @@ namespace engine
          CHAR        _krcbRole[ PMD_MAX_ENUM_STR_LEN + 1 ] ;
          CHAR        _syncStrategyStr[ PMD_MAX_ENUM_STR_LEN + 1 ] ;
          CHAR        _prefReplStr[ PMD_MAX_ENUM_STR_LEN + 1 ] ;
+         CHAR        _auditMaskStr[ OSS_MAX_PATHSIZE + 1 ] ;
          UINT32      _logFileSz ;
          UINT32      _logFileNum ;
          UINT32      _numPreLoaders ;
@@ -532,6 +535,8 @@ namespace engine
          UINT32      _pagecleanNum ;
          UINT32      _pagecleanInterval ;
          INT32       _dialogFileNum ;
+         INT32       _auditFileNum ;
+         UINT32      _auditMask ;
          BOOLEAN     _directIOInLob ;
          BOOLEAN     _sparseFile ;
          UINT32      _weight ;
