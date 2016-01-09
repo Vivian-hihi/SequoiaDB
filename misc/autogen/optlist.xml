@@ -147,6 +147,23 @@
    </opt>
 
    <opt>
+      <name>PMD_OPTION_AUDIT_NUM</name>
+      <long>auditnum</long>
+      <type>int</type>
+      <description>
+         <en>The max number of audit log files, default:20, -1:unlimited</en>
+         <cn>审计日志文件最大数量,默认值:20, -1表示不限制</cn>
+      </description>
+      <detail>
+         <en>1. It specifies the number of audit log file. <fig></fig>
+             2. If it is not specified, the default 20; -1 means unlimited.</en>
+         <cn>1.指定审计日志文件最大数量。<fig></fig>
+             2.如果不指定，则默认为：20，-1表示不限制。</cn>
+      </detail>
+      <typeofweb>num</typeofweb>
+   </opt>
+
+   <opt>
       <name>PMD_OPTION_BKUPPATH</name>
       <long>bkuppath</long>
       <description>
@@ -338,6 +355,22 @@
              2.如果不指定，则默认为WARNING。</cn>
       </detail>
       <typeofweb>num</typeofweb>
+   </opt>
+
+   <opt>
+      <name>PMD_OPTION_AUDIT_MASK</name>
+      <long>auditmask</long>
+      <description>
+         <en>Audit mask,default:SYSTEM|ACCESS|DDL|DCL,value list: ACCESS,CLUSTER,SYSTEM,DML,DDL,DCL,DQL,DELETE,UPDATE,OTHER, use '|' join multiple values, ALL enable all mask, NONE disable all mask</en>
+         <cn>审计掩码,默认值:SYSTEM|ACCESS|DDL|DCL,取值列表为: ACCESS,CLUSTER,SYSTEM,DML,DDL,DCL,DQL,DELETE,UPDATE,OTHER, 使用'|'连接多个取值, ALL取值表示开启所有, NONE关闭全部</cn>
+      </description>
+      <detail>
+         <en>1. It specifies the mask of audit log. Audit type in sequoiaDB as follow: ACCESS,CLUSTER,SYSTEM,DML,DDL,DCL,DQL,DELETE,UPDATE,OTHER.<fig></fig>
+             2. If it is not specified, the default value is "SYSTEM|ACCESS|DDL|DCL". ALL enable all mask, NONE disable all mask</en>
+         <cn>1.指定审计日志打印掩码。SequoiaDB中审计日志类型有：ACCESS,CLUSTER,SYSTEM,DML,DDL,DCL,DQL,DELETE,UPDATE,OTHER。<fig></fig>
+             2.如果不指定，则默认为"SYSTEM|ACCESS|DDL|DCL", ALL取值表示开启所有,NONE关闭全部。</cn>
+      </detail>
+      <typeofweb>str</typeofweb>
    </opt>
 
    <opt>
