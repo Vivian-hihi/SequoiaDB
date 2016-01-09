@@ -211,6 +211,7 @@ namespace engine
       sdbEnableAudit( pmdGetOptionCB()->getDiagLogPath(),
                       pmdGetOptionCB()->auditFileNum() ) ;
       setAuditMask( pmdGetOptionCB()->auditMask() ) ;
+      initCurAuditMask( getAuditMask() ) ;
 
       ossSprintVersion( "Version", verText, OSS_MAX_PATHSIZE, FALSE ) ;
 
