@@ -168,7 +168,7 @@ const CHAR* msgType2String( MSG_TYPE msgType, BOOLEAN isCommand )
       case MSG_BS_AGGREGATE_REQ :
          return "AGGREGATE" ;
       case MSG_AUTH_VERIFY_REQ :
-         return "AUTHENTICATION" ;
+         return "LOGIN" ;
       case MSG_AUTH_CRTUSR_REQ :
          return "CREATE USER" ;
       case MSG_AUTH_DELUSR_REQ :

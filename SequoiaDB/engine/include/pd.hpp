@@ -230,21 +230,21 @@ enum AUDIT_OBJ_TYPE
 } ;
 const CHAR* pdAuditObjType2String( AUDIT_OBJ_TYPE objtype ) ;
 
-#define PD_AUDIT(type, username, action, objtype, objname, fmt, ...) \
+#define PD_AUDIT(type, username, action, objtype, objname, result, fmt, ...) \
    do { \
       if ( getCurAuditMask() & pdAuditType2Mask( type ) ) \
       { \
-         pdAudit(type, username, action, objtype, objname, \
+         pdAudit(type, username, action, objtype, objname, result, \
                  __FUNC__, __FILE__, __LINE__, fmt, ##__VA_ARGS__); \
       } \
    }while( 0 )
 
-#define PD_AUDIT_SYSTEM(action,objtype,objname, fmt, ...) \
+#define PD_AUDIT_SYSTEM(action,objtype,objname,result,fmt, ...) \
    do { \
-      PD_AUDIT(AUDIT_SYSTEM,"",action,objtype,objname,fmt,##__VA_ARGS__) ; \
+      PD_AUDIT(AUDIT_SYSTEM,"",action,objtype,objname,result,fmt,##__VA_ARGS__) ; \
    }while( 0 )
 
-#define PD_AUDIT_OP(type,optype,objtype,objname,fmt, ...)\
+#define PD_AUDIT_OP(type,optype,objtype,objname,result,fmt, ...)\
    do { \
          const CHAR *pUserName = "" ; \
          _pmdEDUCB *cb = pmdGetThreadEDUCB() ; \
@@ -253,10 +253,10 @@ const CHAR* pdAuditObjType2String( AUDIT_OBJ_TYPE objtype ) ;
             pUserName = cb->getUserName() ; \
          } \
       PD_AUDIT(type,pUserName,msgType2String((MSG_TYPE)optype),\
-               objtype,objname, fmt,##__VA_ARGS__) ; \
+               objtype,objname,result,fmt,##__VA_ARGS__) ; \
    }while( 0 )
 
-#define PD_AUDIT_COMMAND(type,commandstr,objtype,objname,fmt, ... ) \
+#define PD_AUDIT_COMMAND(type,commandstr,objtype,objname,result,fmt, ... ) \
    do { \
          const CHAR *pUserName = "" ; \
          _pmdEDUCB *cb = pmdGetThreadEDUCB() ; \
@@ -267,7 +267,7 @@ const CHAR* pdAuditObjType2String( AUDIT_OBJ_TYPE objtype ) ;
          CHAR tmp[ 100 ] = { 0 } ;\
          ossSnprintf( tmp, sizeof(tmp)-1, "%s(%s)", \
                       msgType2String(MSG_BS_QUERY_REQ, TRUE), commandstr ) ;\
-         PD_AUDIT(type,pUserName,tmp,objtype,objname,fmt, ##__VA_ARGS__) ;\
+         PD_AUDIT(type,pUserName,tmp,objtype,objname,result,fmt, ##__VA_ARGS__) ;\
    }while( 0 )
 
 UINT32 pdAuditType2Mask( AUDIT_TYPE auditType ) ;
@@ -292,13 +292,13 @@ BOOLEAN sdbIsAuditEnabled() ;
 
 void pdAudit( AUDIT_TYPE type, const CHAR *pUserName,
               const CHAR *pAction, AUDIT_OBJ_TYPE objType,
-              const CHAR *pObjName,
+              const CHAR *pObjName, INT32 result,
               const CHAR* func, const CHAR* file,
               UINT32 line, const CHAR* format, ...) ;
 
 void pdAudit( AUDIT_TYPE type, const CHAR *pUserName,
               const CHAR *pAction, AUDIT_OBJ_TYPE objType,
-              const CHAR *pObjName,
+              const CHAR *pObjName, INT32 result,
               const CHAR* func, const CHAR* file,
               UINT32 line, const std::string &message ) ;
 

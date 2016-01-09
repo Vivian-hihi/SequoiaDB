@@ -263,7 +263,8 @@ namespace engine
          CHAR szTmp[ 16 ] = { 0 } ;
          ossSnprintf( szTmp, sizeof(szTmp)-1, "%llu", _pEDUCB->getID() ) ;
          PD_AUDIT_OP( AUDIT_ACCESS, MSG_AUTH_VERIFY_REQ, AUDIT_OBJ_SESSION,
-                      szTmp, "User[UserName:%s, RemoteIP:%s, RemotePort:%u, "
+                      szTmp, SDB_OK,
+                      "User[UserName:%s, RemoteIP:%s, RemotePort:%u, "
                       "LocalIP:%s, LocalPort:%u] login succeed",
                       getUsername(), getPeerIPAddr(), getPeerPort(),
                       getLocalIPAddr(), getLocalPort() ) ;
@@ -312,11 +313,12 @@ namespace engine
       {
          CHAR szTmp[ 16 ] = { 0 } ;
          ossSnprintf( szTmp, sizeof(szTmp)-1, "%llu", _pEDUCB->getID() ) ;
-         PD_AUDIT_OP( AUDIT_ACCESS, MSG_AUTH_VERIFY_REQ, AUDIT_OBJ_SESSION,
-                      szTmp, "User[UserName:%s, RemoteIP:%s, RemotePort:%u, "
-                      "LocalIP:%s, LocalPort:%u] logout succeed",
-                      getUsername(), getPeerIPAddr(), getPeerPort(),
-                      getLocalIPAddr(), getLocalPort() ) ;
+         PD_AUDIT( AUDIT_ACCESS, getUsername(), "LOGOUT", AUDIT_OBJ_SESSION,
+                   szTmp, SDB_OK,
+                   "User[UserName:%s, RemoteIP:%s, RemotePort:%u, "
+                   "LocalIP:%s, LocalPort:%u] logout succeed",
+                   getUsername(), getPeerIPAddr(), getPeerPort(),
+                   getLocalIPAddr(), getLocalPort() ) ;
       }
       _isAuthed = FALSE ;
    }

@@ -840,12 +840,12 @@ done:
 
 void pdAudit( AUDIT_TYPE type, const CHAR *pUserName,
               const CHAR *pAction, AUDIT_OBJ_TYPE objType,
-              const CHAR *pObjName,
+              const CHAR *pObjName, INT32 result,
               const CHAR* func, const CHAR* file,
               UINT32 line, const std::string &message )
 {
-   pdAudit( type, pUserName, pAction, objType, pObjName, func,
-            file, line, message.c_str() ) ;
+   pdAudit( type, pUserName, pAction, objType, pObjName,
+            result, func, file, line, message.c_str() ) ;
 }
 
 /*
@@ -863,17 +863,20 @@ void pdAudit( AUDIT_TYPE type, const CHAR *pUserName,
  * 10) Thread ID (UINT64)
  * 11) UserName (string)
  * 12) Action (string)
- * 13) ObjectType (string)
- * 14) ObjectName (string)
- * 15) File Name (string)
- * 16) Function Name (string)
- * 17) Line number (UINT32)
- * 18) Message
+ * 13) Result (string) SUCCEED/FAILED
+ * 14) ResultCode (INT32)
+ * 14) ObjectType (string)
+ * 15) ObjectName (string)
+ * 16) File Name (string)
+ * 17) Function Name (string)
+ * 18) Line number (UINT32)
+ * 19) Message
  */
 const static CHAR *PD_AUDIT_LOG_HEADER_FORMAT="%04d-%02d-%02d-%02d.%02d.%02d.%06d\
-               \
-Type:%s"OSS_NEWLINE"PID:%-37dTID:%d"OSS_NEWLINE
+               Type:%s"OSS_NEWLINE
+"PID:%-37dTID:%d"OSS_NEWLINE
 "UserName:%-32sAction:%s"OSS_NEWLINE
+"Result:%-34sResultCode:%d"OSS_NEWLINE
 "ObjectType:%-30sObjectName:%s"OSS_NEWLINE
 "Function:%-32sLine:%d"OSS_NEWLINE"File:%s"OSS_NEWLINE
 "Message:"OSS_NEWLINE"%s"OSS_NEWLINE OSS_NEWLINE ;
@@ -881,7 +884,7 @@ Type:%s"OSS_NEWLINE"PID:%-37dTID:%d"OSS_NEWLINE
 // PD_TRACE_DECLARE_FUNCTION ( SDB_PDAUDIT, "pdAudit" )
 void pdAudit( AUDIT_TYPE type, const CHAR *pUserName,
               const CHAR *pAction, AUDIT_OBJ_TYPE objType,
-              const CHAR *pObjName,
+              const CHAR *pObjName, INT32 result,
               const CHAR* func, const CHAR* file,
               UINT32 line, const CHAR* format, ... )
 {
@@ -925,12 +928,14 @@ void pdAudit( AUDIT_TYPE type, const CHAR *pUserName,
                ossGetCurrentThreadID(),     // 10) Thread ID (UINT64)
                pUserName ? pUserName : "",  // 11) UserName (string)
                pAction ? pAction : "",      // 12) Action (string)
-               pdAuditObjType2String(objType),// 13) ObjectType (string)
-               pObjName ? pObjName : "",    // 14) ObjectName (string)
-               func,                        // 15) Function Name (string)
-               line,                        // 16) Line number (UINT32)
-               file,                        // 17) File Name (string)
-               userInfo                     // 18) Message
+               result ? "FAILED" ? "SUCCEED",//13) Result (string)
+               result,                      // 14) ResultCode (INT32)
+               pdAuditObjType2String(objType),// 15) ObjectType (string)
+               pObjName ? pObjName : "",    // 16) ObjectName (string)
+               func,                        // 17) Function Name (string)
+               line,                        // 18) Line number (UINT32)
+               file,                        // 19) File Name (string)
+               userInfo                     // 20) Message
    ) ;
 
    pdAuditRaw( type, sysInfo ) ;
