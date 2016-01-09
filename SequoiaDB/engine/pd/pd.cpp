@@ -310,7 +310,7 @@ static INT32 pdLogFileWrite ( _pdLogType type, const CHAR *pData )
    SDB_ASSERT ( type < PD_LOG_MAX, "type is out of range" ) ;
    SINT64 dataSize = ossStrlen ( pData ) ;
    pdLogFile &logFile = _pdLogFiles[type] ;
-   pdCfgInfo &info = _getPDCfgInfo( PD_DIAGLOG ) ;
+   pdCfgInfo &info = _getPDCfgInfo( type ) ;
 
    // lock file first
    logFile._mutex.get() ;
