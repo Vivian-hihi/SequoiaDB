@@ -122,6 +122,7 @@ namespace engine
 
       _onDetach() ;
       clear() ;
+      _client.logout() ;
       _client.detachCB() ;
       _pEDUCB->detachSession() ;
       _pEDUCB->setClientSock( NULL ) ;

@@ -523,7 +523,8 @@ const CHAR* pdAuditObjType2String( AUDIT_OBJ_TYPE objtype )
       "NODE",
       "DOMAIN",
       "PROCEDURE",
-      "FILE"
+      "FILE",
+      "SESSION"
       } ;
    if ( (UINT32)objtype >= 0 &&
         (UINT32)objtype < sizeof(s_objtypeString) / sizeof(const CHAR*) )

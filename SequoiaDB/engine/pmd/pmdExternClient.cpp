@@ -259,6 +259,14 @@ namespace engine
          _username = user.valuestrsafe() ;
          _password = pass.valuestrsafe() ;
          _makeName() ;
+
+         CHAR szTmp[ 16 ] = { 0 } ;
+         ossSnprintf( szTmp, sizeof(szTmp)-1, "%llu", _pEDUCB->getID() ) ;
+         PD_AUDIT_OP( AUDIT_ACCESS, MSG_AUTH_VERIFY_REQ, AUDIT_OBJ_SESSION,
+                      szTmp, "User[UserName:%s, RemoteIP:%s, RemotePort:%u"
+                      "LocalIP:%s, LocalPort:%u] login succeed",
+                      getUsername(), getPeerIPAddr(), getPeerPort(),
+                      getLocalIPAddr(), getLocalPort() ) ;
       }
       return rc ;
    error:
@@ -300,16 +308,26 @@ namespace engine
 
    void _pmdExternClient::logout()
    {
+      if ( _isAuthed )
+      {
+         CHAR szTmp[ 16 ] = { 0 } ;
+         ossSnprintf( szTmp, sizeof(szTmp)-1, "%llu", _pEDUCB->getID() ) ;
+         PD_AUDIT_OP( AUDIT_ACCESS, MSG_AUTH_VERIFY_REQ, AUDIT_OBJ_SESSION,
+                      szTmp, "User[UserName:%s, RemoteIP:%s, RemotePort:%u"
+                      "LocalIP:%s, LocalPort:%u] logout succeed",
+                      getUsername(), getPeerIPAddr(), getPeerPort(),
+                      getLocalIPAddr(), getLocalPort() ) ;
+      }
       _isAuthed = FALSE ;
    }
 
    INT32 _pmdExternClient::disconnect()
    {
+      logout() ;
       if ( _pSocket && !_pSocket->isClosed() )
       {
          _pSocket->close() ;
       }
-      _isAuthed = FALSE ;
       return SDB_OK ;
    }
 

@@ -308,6 +308,70 @@ error :
    goto done ;
 }
 
+// PD_TRACE_DECLARE_FUNCTION ( SDB__OSSMMF_FLUSHBLOCK, "_ossMmapFile::flushBlock" )
+INT32 _ossMmapFile::flushBlock( UINT32 segmentID, UINT32 offset,
+                                INT32 length, BOOLEAN sync )
+{
+   INT32 rc = SDB_OK ;
+   PD_TRACE_ENTRY ( SDB__OSSMMF_FLUSHBLOCK );
+   INT32 err = 0 ;
+   ossMmapSegment *pSegment = NULL ;
+   ossValuePtr ptr = 0 ;
+
+   if( segmentID >= _segments.size() )
+   {
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+
+   pSegment = &_segments[segmentID] ;
+   if ( offset > pSegment->_length )
+   {
+      /// offset more than segment size
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+   else if ( length == 0 || offset == pSegment->_length )
+   {
+      goto done ;
+   }
+   else if ( length < 0 ||
+             length + offset > pSegment->_length )
+   {
+      length = pSegment->_length - offset ;
+   }
+
+   ptr = pSegment->_ptr + offset ;
+
+#if defined (_LINUX)
+   if ( msync((void*)ptr, length, sync ? MS_SYNC : MS_ASYNC) )
+   {
+      err = ossGetLastError () ;
+      PD_LOG ( PDERROR, "Failed to msync, err=%d", err ) ;
+      goto error ;
+   }
+#elif defined (_WINDOWS)
+   if ( !FlushViewOfFile( (LPCVOID)ptr, length ) )
+   {
+      err = ossGetLastError() ;
+      PD_LOG ( PDERROR, "Failed to FlushViewOfFile, err=%d", err );
+      goto error ;
+   }
+   if ( !FlushFileBuffers( _file.hFile ) )
+   {
+      err = ossGetLastError() ;
+      PD_LOG ( PDERROR, "Failed to FlushFileBuffers, err=%d", err );
+      goto error ;
+   }
+#endif
+
+done :
+   PD_TRACE_EXITRC ( SDB__OSSMMF_FLUSHBLOCK, rc );
+   return rc ;
+error :
+   goto done ;
+}
+
 // PD_TRACE_DECLARE_FUNCTION ( SDB__OSSMMF_UNLINK, "_ossMmapFile::unlink" )
 INT32 _ossMmapFile::unlink ()
 {
