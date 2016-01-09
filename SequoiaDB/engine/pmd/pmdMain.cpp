@@ -207,6 +207,10 @@ namespace engine
       sdbEnablePD( pmdGetOptionCB()->getDiagLogPath(),
                    pmdGetOptionCB()->diagFileNum() ) ;
       setPDLevel( (PDLEVEL)( pmdGetOptionCB()->getDiagLevel() ) ) ;
+      // enalble pd audit
+      sdbEnableAudit( pmdGetOptionCB()->getDiagLogPath(),
+                      pmdGetOptionCB()->auditFileNum() ) ;
+      setAuditMask( pmdGetOptionCB()->auditMask() ) ;
 
       ossSprintVersion( "Version", verText, OSS_MAX_PATHSIZE, FALSE ) ;
 
