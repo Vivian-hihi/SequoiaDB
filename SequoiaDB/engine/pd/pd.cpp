@@ -928,7 +928,7 @@ void pdAudit( AUDIT_TYPE type, const CHAR *pUserName,
                ossGetCurrentThreadID(),     // 10) Thread ID (UINT64)
                pUserName ? pUserName : "",  // 11) UserName (string)
                pAction ? pAction : "",      // 12) Action (string)
-               result ? "FAILED" ? "SUCCEED",//13) Result (string)
+               result ? "FAILED" : "SUCCEED",//13) Result (string)
                result,                      // 14) ResultCode (INT32)
                pdAuditObjType2String(objType),// 15) ObjectType (string)
                pObjName ? pObjName : "",    // 16) ObjectName (string)
