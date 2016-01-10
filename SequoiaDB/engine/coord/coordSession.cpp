@@ -39,6 +39,10 @@
 #include "coordTrace.hpp"
 #include "pmd.hpp"
 #include "rtnCoordCommon.hpp"
+#include "msgMessageFormat.hpp"
+#include "../bson/bson.h"
+
+using namespace bson ;
 
 namespace engine
 {
@@ -111,56 +115,104 @@ namespace engine
       return rc;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_COORDSN_CHECKREMOTEROUTEID, "CoordSession::checkRemoteRouteID" )
-   INT32 CoordSession::checkRemoteRouteID( const MsgRouteID & routeID )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_COORDSN_SESSIONINIT, "CoordSession::sessionInit" )
+   INT32 CoordSession::sessionInit( const MsgRouteID & routeID )
    {
       INT32 rc = SDB_OK;
-      PD_TRACE_ENTRY ( SDB_COORDSN_CHECKREMOTEROUTEID );
-      netMultiRouteAgent *pRouteAgent = pmdGetKRCB()->getCoordCB()->getRouteAgent();
-      SDB_ASSERT( _pEduCB, "_pEduCB can't be NULL!" );
-      MsgCoordCheckRouteID msgReq;
-      msgReq.header.requestID = 0;
-      msgReq.header.messageLength = sizeof( MsgCoordCheckRouteID );
-      msgReq.header.opCode = MSG_COM_CHECK_ROUTEID_REQ;
-      msgReq.header.routeID.value = 0;
-      msgReq.header.TID = _pEduCB->getTID();
-      msgReq.dstRouteID = routeID;
-      REQUESTID_MAP requestIdMap;
-      REPLY_QUE replyQue;
+      PD_TRACE_ENTRY ( SDB_COORDSN_SESSIONINIT ) ;
+      CoordCB *pCoordCB = pmdGetKRCB()->getCoordCB() ;
+      netMultiRouteAgent *pRouteAgent = pCoordCB->getRouteAgent() ;
+      SDB_ASSERT( _pEduCB, "_pEduCB can't be NULL!" ) ;
+      BSONObj objInfo ;
+      CHAR *pBuff = NULL ;
+      INT32 buffLen = 0 ;
+      MsgComSessionInitReq *pInitReq = NULL ;
+      UINT32 msgLength = sizeof( MsgComSessionInitReq ) ;
 
-      rc = rtnCoordSendRequestToNodeWithoutCheck( (void *)(&msgReq), routeID,
+      REQUESTID_MAP requestIdMap ;
+      REPLY_QUE replyQue ;
+
+      /// construct info
+      try
+      {
+         objInfo = BSON( SDB_AUTH_USER << _pEduCB->getUserName() <<
+                         SDB_AUTH_PASSWD << _pEduCB->getPassword() <<
+                         FIELD_NAME_HOST << pmdGetKRCB()->getHostName() <<
+                         PMD_OPTION_SVCNAME << pmdGetOptionCB()->getServiceAddr() ) ;
+         msgLength += objInfo.objsize() ;
+      }
+      catch( std::exception &e )
+      {
+         PD_LOG( PDERROR, "Occur exception: %s", e.what() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      /// allocate memory
+      rc = _pEduCB->allocBuff( msgLength, &pBuff, buffLen ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Alloc memory failed, size: %d, rc: %d",
+                 msgLength, rc ) ;
+         goto error ;
+      }
+      pInitReq = (MsgComSessionInitReq*)pBuff ;
+
+      /// init message
+      pInitReq->header.messageLength = msgLength ;
+      pInitReq->header.opCode = MSG_COM_SESSION_INIT_REQ ;
+      pInitReq->header.requestID = 0 ;
+      pInitReq->header.routeID.value = 0 ;
+      pInitReq->header.TID = _pEduCB->getTID() ;
+      pInitReq->dstRouteID.value = routeID.value ;
+      pInitReq->srcRouteID.value = pCoordCB->netWork()->localID().value ;
+      pInitReq->localIP = _netFrame::getLocalAddress() ;
+      pInitReq->peerIP = 0 ;
+      pInitReq->localPort = pmdGetOptionCB()->getServicePort() ;
+      pInitReq->peerPort = 0 ;
+      pInitReq->localTID = _pEduCB->getTID() ;
+      pInitReq->localSessionID = _pEduCB->getID() ;
+      ossMemset( pInitReq->reserved, 0, sizeof( pInitReq->reserved ) ) ;
+      ossMemcpy( pInitReq->data, objInfo.objdata(), objInfo.objsize() ) ;
+
+      /// send message to peer
+      rc = rtnCoordSendRequestToNodeWithoutCheck( (void *)pBuff, routeID,
                                                   pRouteAgent, _pEduCB,
-                                                  requestIdMap );
+                                                  requestIdMap ) ;
       PD_RC_CHECK( rc, PDERROR,
-                  "failed to send the message to the node"
-                  "(groupID=%u, nodeID=%u, serviceID=%u)",
-                  routeID.columns.groupID,
-                  routeID.columns.nodeID,
-                  routeID.columns.serviceID );
+                   "Failed to send the message to the node[%s], rc: %d",
+                   routeID2String( routeID ).c_str(), rc ) ;
+
+      /// get reply
       rc = rtnCoordGetReply( _pEduCB, requestIdMap, replyQue,
-                             MSG_COM_CHECK_ROUTEID_RSP );
+                             MSG_COM_SESSION_INIT_RSP ) ;
       PD_RC_CHECK( rc, PDERROR,
-                  "failed to get reply from node"
-                  "(groupID=%u, nodeID=%u, serviceID=%u, rc=%d)",
-                  routeID.columns.groupID,
-                  routeID.columns.nodeID,
-                  routeID.columns.serviceID,
-                  rc );
+                   "Failed to get reply from node[%s], rc: %d",
+                   routeID2String( routeID ).c_str(), rc ) ;
+
+      /// analyse the reply
       while ( !replyQue.empty() )
       {
          MsgOpReply *pReply = NULL;
-         pReply = (MsgOpReply *)(replyQue.front());
+         pReply = (MsgOpReply *)(replyQue.front()) ;
          SDB_ASSERT( pReply, "pReply can't be NULL!" );
          replyQue.pop();
-         rc = rc ? rc : pReply->flags;
-         SDB_OSS_FREE( pReply );
+         rc = rc ? rc : pReply->flags ;
+         SDB_OSS_FREE( pReply ) ;
       }
+
    done:
-      PD_TRACE_EXIT ( SDB_COORDSN_CHECKREMOTEROUTEID );
-      return rc;
+      if ( pBuff && _pEduCB )
+      {
+         _pEduCB->releaseBuff( pBuff ) ;
+         pBuff = NULL ;
+         buffLen = 0 ;
+      }
+      PD_TRACE_EXIT ( SDB_COORDSN_SESSIONINIT );
+      return rc ;
    error:
-      rtnCoordClearRequest( _pEduCB, requestIdMap );
-      goto done;
+      rtnCoordClearRequest( _pEduCB, requestIdMap ) ;
+      goto done ;
    }
 
    void CoordSession::addSubSessionWithoutCheck( const MsgRouteID &routeID )
@@ -189,7 +241,7 @@ namespace engine
          ossScopedLock _lock( &_mutex ) ;
          _subSessionMap[routeID.value] = subSession;
       }
-      rc = checkRemoteRouteID( routeID );
+      rc = sessionInit( routeID );
       if ( rc )
       {
          {
@@ -200,9 +252,11 @@ namespace engine
             iterMap->second.isConnected = FALSE;
          }
          }
-         PD_LOG( PDERROR, "check remote routeID failed(rc=%d)", rc ) ;
-         goto error;
+         PD_LOG( PDERROR, "Init session with node[%s] failed, rc: %d",
+                 routeID2String( routeID ).c_str(), rc ) ;
+         goto error ;
       }
+
    done:
       return rc;
    error:

@@ -58,6 +58,10 @@ namespace engine
          _pmdSession( SOCKET fd ) ;
          virtual ~_pmdSession() ;
 
+         virtual UINT64    identifyID() ;
+         virtual UINT32    identifyTID() ;
+         virtual UINT64    identifyEDUID() ;
+
          virtual void            clear() ;
 
          virtual const CHAR*     sessionName() const ;

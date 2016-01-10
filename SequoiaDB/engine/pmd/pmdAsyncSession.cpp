@@ -77,7 +77,7 @@ namespace engine
       clear() ;
 
       _sessionID   = sessionID ;
-      _makeName () ;
+
       // we need to latch the object in constructor because
       // we are going to call waitAttach right after creating the object
       // the creating thread will stay in waitAttach until another call
@@ -98,9 +98,25 @@ namespace engine
 
    UINT64 _pmdAsyncSession::identifyID()
    {
-      // TODO:XUJIANHUI
-      // BY COORD SESSION INFO
-      return 0 ;
+      return _identifyID ;
+   }
+
+   UINT32 _pmdAsyncSession::identifyTID()
+   {
+      return _identifyTID ;
+   }
+
+   UINT64 _pmdAsyncSession::identifyEDUID()
+   {
+      return _identifyEDUID ;
+   }
+
+   void _pmdAsyncSession::setIdentifyInfo( UINT32 ip, UINT16 port,
+                                           UINT32 tid, UINT64 eduID )
+   {
+      _identifyID = ossPack32To64( ip, port ) ;
+      _identifyTID = tid ;
+      _identifyEDUID = eduID ;
    }
 
    INT32 _pmdAsyncSession::getServiceType() const
@@ -128,6 +144,10 @@ namespace engine
       _pEDUCB->setName( sessionName() ) ;
       _pEDUCB->attachSession( this ) ;
       _client.attachCB( cb ) ;
+
+      /// set identify tid and eduid
+      _identifyTID = cb->getTID() ;
+      _identifyEDUID = cb->getID() ;
 
       // since the object can be only attached by one thread, we use try_get
       // here just in case someone forgot to release the latch
@@ -200,6 +220,9 @@ namespace engine
       _netHandle = NET_INVALID_HANDLE ;
       _name [0]  = 0 ;
       _pMeta     = NULL ;
+      _identifyEDUID = 0 ;
+      _identifyID= 0 ;
+      _identifyTID=0 ;
 
       // release all buffer pointers
       for ( UINT32 index = 0 ; index < MAX_BUFFER_ARRAY_SIZE; ++index )
@@ -791,6 +814,7 @@ namespace engine
       PD_TRACE_ENTRY ( PMD_SESSMGR_GETSESSION );
       pmdAsyncSession *pSession    = NULL ;
       SDB_SESSION_TYPE sessionType = SDB_SESSION_MAX ;
+      NET_EH eh ;
 
       // check if there's already session for the sessionID
       MAPSESSION_IT it = _mapSession.find( sessionID ) ;
@@ -864,6 +888,13 @@ namespace engine
       _mapSession[ sessionID ] = pSession ;
       pSession->startType( startType ) ;
       pSession->sessionID( sessionID ) ;
+      // set identify id
+      eh = _pRTAgent->getFrame()->getEventHandle( handle ) ;
+      if ( eh.get() )
+      {
+         pSession->setIdentifyInfo( ossStr2IP( eh->localAddr().c_str() ),
+                                    eh->localPort(), 0, 0 ) ;
+      }
 
       PD_LOG ( PDEVENT, "Create session[Name: %s, StartType: %d]",
                pSession->sessionName(), startType ) ;

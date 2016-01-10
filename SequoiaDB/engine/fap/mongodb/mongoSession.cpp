@@ -82,11 +82,6 @@ void _mongoSession::_resetBuffers()
    }
 }
 
-UINT64 _mongoSession::identifyID()
-{
-   return ossPack32To64( _socket.getLocalIP(), _socket.getLocalPort() ) ;
-}
-
 INT32 _mongoSession::getServiceType() const
 {
    return CMD_SPACE_SERVICE_LOCAL ;

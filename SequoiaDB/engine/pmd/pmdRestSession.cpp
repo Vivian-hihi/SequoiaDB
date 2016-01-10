@@ -130,15 +130,6 @@ namespace engine
       }
    }
 
-   UINT64 _pmdRestSession::identifyID()
-   {
-      if ( _pSessionInfo )
-      {
-         return _pSessionInfo->_attr._sessionID ;
-      }
-      return 0 ;
-   }
-
    INT32 _pmdRestSession::getServiceType() const
    {
       return CMD_SPACE_SERVICE_LOCAL ;

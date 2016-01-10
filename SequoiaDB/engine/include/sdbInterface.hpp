@@ -284,6 +284,9 @@ namespace engine
 
       public:
          virtual UINT64             identifyID() = 0 ;
+         virtual UINT32             identifyTID() = 0 ;
+         virtual UINT64             identifyEDUID() = 0 ;
+
          virtual const CHAR*        sessionName() const = 0 ;
          virtual SDB_SESSION_TYPE   sessionType() const = 0 ;
          virtual INT32              getServiceType() const = 0 ;

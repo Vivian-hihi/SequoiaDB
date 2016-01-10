@@ -375,6 +375,12 @@ namespace engine
             goto error ;
          }
 
+         MON_SAVE_CMD_DETAIL( eduCB()->getMonAppCB(), pCommand->type(),
+                              "Command:%s, Collection:%s",
+                              pCollectionName,
+                              pCommand->collectionFullName() ?
+                              pCommand->collectionFullName() : "" ) ;
+
          PD_LOG ( PDDEBUG, "Command: %s", pCommand->name () ) ;
 
          //run command

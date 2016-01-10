@@ -58,6 +58,7 @@ namespace engine
          virtual ~_clsShdSession ( ) ;
 
          virtual SDB_SESSION_TYPE sessionType() const ;
+         virtual const CHAR*      className() const { return "Shard" ; }
          virtual EDU_TYPES eduType () const ;
 
          virtual void    onRecieve ( const NET_HANDLE netHandle,
@@ -119,7 +120,7 @@ namespace engine
          INT32 _onTransInsertReqMsg ( NET_HANDLE handle, MsgHeader *msg ) ;
          INT32 _onTransDeleteReqMsg ( NET_HANDLE handle, MsgHeader *msg,
                                       INT64 &delNum ) ;
-         INT32 _onCheckRouteIDReqMsg ( MsgHeader *msg ) ;
+         INT32 _onSessionInitReqMsg ( MsgHeader *msg ) ;
 
          INT32 _onCatalogChangeNtyMsg( MsgHeader *msg ) ;
 

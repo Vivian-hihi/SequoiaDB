@@ -161,7 +161,6 @@ namespace engine
          _pmdRestSession( SOCKET fd ) ;
          virtual ~_pmdRestSession () ;
 
-         virtual UINT64    identifyID() ;
          virtual INT32     getServiceType() const ;
          virtual SDB_SESSION_TYPE sessionType() const ;
 

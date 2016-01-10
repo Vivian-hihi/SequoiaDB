@@ -37,21 +37,17 @@
 *******************************************************************************/
 #ifndef MSGMESSAGE_HPP_
 #define MSGMESSAGE_HPP_
-#include "msg.hpp"
-#include "netDef.hpp"
-#include "../bson/bson.h"
-#include "../bson/oid.h"
+
+#include "msgMessageFormat.hpp"
 #include <vector>
 #include <string>
+
 using namespace bson;
 using namespace std;
 
 INT32 msgCheckBuffer ( CHAR **ppBuffer, INT32 *bufferSize,
                        INT32 packetLength ) ;
 INT32 extractRC ( BSONObj &obj ) ;
-string routeID2String( MsgRouteID routeID ) ;
-string routeID2String( UINT64 nodeID ) ;
-string msg2String( MsgHeader *pMsg ) ;
 
 BOOLEAN msgIsInnerOpReply( MsgHeader *pMsg ) ;
 
@@ -69,9 +65,6 @@ BOOLEAN msgIsInnerOpReply( MsgHeader *pMsg ) ;
 #define MSG_GET_INNER_REPLY_HEADER_LEN(msg) \
    ( msgIsInnerOpReply(msg) ? sizeof(MsgOpReply) : \
                               sizeof(MsgInternalReplyHeader) )
-
-///  get the msg type string desp
-const CHAR* msgType2String( MSG_TYPE msgType, BOOLEAN isCommand = FALSE ) ;
 
 /*
  * Create Update Message in ppBuffer
@@ -295,7 +288,6 @@ INT32 msgBuildGetLobMetaRequest( CHAR **ppBuffer, INT32 *pBufferSize ) ;
 INT32 msgExtractReadResult( const MsgOpReply *header,
                             const MsgLobTuple **begin,
                             UINT32 *tupleSz ) ;
-
 
 #endif // MSGMESSAGE_HPP_
 

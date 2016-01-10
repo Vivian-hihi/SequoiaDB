@@ -66,6 +66,7 @@ namespace engine
          virtual ~_clsReplDstSession () ;
 
          virtual SDB_SESSION_TYPE sessionType() const ;
+         virtual const CHAR*      className() const { return "Sync-Dest" ; }
 
          virtual EDU_TYPES eduType () const ;
          virtual BOOLEAN canAttachMeta() const { return FALSE ; }
@@ -135,6 +136,7 @@ namespace engine
          virtual ~_clsReplSrcSession () ;
 
          virtual SDB_SESSION_TYPE sessionType() const ;
+         virtual const CHAR*      className() const { return "Sync-Source" ; }
 
          virtual EDU_TYPES eduType () const ;
          virtual void    onRecieve ( const NET_HANDLE netHandle,

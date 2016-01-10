@@ -1089,9 +1089,9 @@ namespace engine
             rc = _processAuthDel( handle, pMsg ) ;
             break ;
          }
-      case MSG_COM_CHECK_ROUTEID_REQ :
+      case MSG_COM_SESSION_INIT_REQ :
          {
-            rc = _processCheckRouteID( handle, pMsg ) ;
+            rc = _processSessionInit( handle, pMsg ) ;
             break;
          }
       default :
@@ -1341,42 +1341,40 @@ namespace engine
       goto done ;
    }
 
-   //PD_TRACE_DECLARE_FUNCTION ( SDB_CATMAINCT_CHECKROUTEID, "catMainController::_processCheckRouteID" )
-   INT32 catMainController::_processCheckRouteID( const NET_HANDLE &handle,
-                                                  MsgHeader *pMsg )
+   //PD_TRACE_DECLARE_FUNCTION ( SDB_CATMAINCT_SESSIONINIT, "catMainController::_processSessionInit" )
+   INT32 catMainController::_processSessionInit( const NET_HANDLE &handle,
+                                                 MsgHeader *pMsg )
    {
       INT32 rc = SDB_OK;
-      PD_TRACE_ENTRY ( SDB_CATMAINCT_CHECKROUTEID ) ;
-      MsgCoordCheckRouteID *pMsgReq = (MsgCoordCheckRouteID *)pMsg;
-      MsgOpReply reply;
-      reply.contextID = -1;
-      reply.numReturned = 0;
-      reply.startFrom = 0;
-      reply.header.messageLength = sizeof( MsgOpReply );
-      reply.header.opCode = MSG_COM_CHECK_ROUTEID_RSP ;
-      reply.header.requestID = pMsgReq->header.requestID;
-      reply.header.routeID.value = 0;
-      reply.header.TID = pMsgReq->header.TID;
-      MsgRouteID localRouteID = _pCatCB->netWork()->localID();
-      if ( pMsgReq->dstRouteID.columns.nodeID != localRouteID.columns.nodeID
-         || pMsgReq->dstRouteID.columns.groupID != localRouteID.columns.groupID
-         || pMsgReq->dstRouteID.columns.serviceID != localRouteID.columns.serviceID )
+      PD_TRACE_ENTRY ( SDB_CATMAINCT_SESSIONINIT ) ;
+      MsgComSessionInitReq *pMsgReq = (MsgComSessionInitReq*)pMsg ;
+      MsgOpReply reply ;
+
+      /// init reply
+      reply.contextID               = -1;
+      reply.numReturned             = 0;
+      reply.startFrom               = 0;
+      reply.header.messageLength    = sizeof( MsgOpReply ) ;
+      reply.header.opCode           = MSG_COM_SESSION_INIT_RSP ;
+      reply.header.requestID        = pMsgReq->header.requestID;
+      reply.header.routeID.value    = 0 ;
+      reply.header.TID              = pMsgReq->header.TID ;
+
+      /// check wether the route id is right
+      MsgRouteID localRouteID       = _pCatCB->netWork()->localID() ;
+      if ( pMsgReq->dstRouteID.value != localRouteID.value )
       {
-         rc = SDB_INVALID_ROUTEID;
-         PD_LOG ( PDERROR, "routeID is different from local: "
-                  "RemoteRouteID(groupID=%u, nodeID=%u, serviceID=%u)"
-                  "LocalRouteID(groupID=%u, nodeID=%u, serviceID=%u)",
-                  pMsgReq->dstRouteID.columns.groupID,
-                  pMsgReq->dstRouteID.columns.nodeID,
-                  pMsgReq->dstRouteID.columns.serviceID,
-                  localRouteID.columns.groupID,
-                  localRouteID.columns.nodeID,
-                  localRouteID.columns.serviceID );
+         rc = SDB_INVALID_ROUTEID ;
+         PD_LOG ( PDERROR, "Session init failed: route id does not match."
+                  "Message info: [%s], Local route id: %s",
+                  msg2String( pMsg ).c_str(),
+                  routeID2String( localRouteID ).c_str() ) ;
       }
-      reply.flags = rc;
-      _pCatCB->netWork()->syncSend( handle, (void *)&reply );
-      PD_TRACE_EXITRC ( SDB_CATMAINCT_CHECKROUTEID, rc ) ;
-      return rc;
+      reply.flags = rc ;
+      _pCatCB->netWork()->syncSend( handle, (void *)&reply ) ;
+
+      PD_TRACE_EXITRC ( SDB_CATMAINCT_SESSIONINIT, rc ) ;
+      return rc ;
    }
 
    void catMainController::_addContext( const UINT32 &handle, UINT32 tid,

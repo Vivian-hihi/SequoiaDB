@@ -121,9 +121,9 @@ namespace engine
          pHeader->TID = pEduCB->getTID();
          pSession = pEduCB->getCoordSession();
          SDB_ASSERT( pSession, "pSession can't be NULL!" ) ;
-         rc = pSession->addSubSession( id );
+         rc = pSession->addSubSession( id ) ;
       }
-      PD_RC_CHECK( rc, PDERROR, "Failed to create session(rc=%d)", rc ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to create session rc: %d", rc ) ;
 
       reqID = _pReqID->inc();
       pHeader->requestID = reqID;
@@ -177,7 +177,7 @@ namespace engine
          SDB_ASSERT( pSession, "pSession can't be NULL!" ) ;
          rc = pSession->addSubSession( id );
       }
-      PD_RC_CHECK( rc, PDERROR, "failed to create session(rc=%d)", rc );
+      PD_RC_CHECK( rc, PDERROR, "Failed to create session, rc: %d", rc ) ;
 
       reqID = _pReqID->inc();
       pHeader->requestID = reqID;

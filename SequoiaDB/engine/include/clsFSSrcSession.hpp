@@ -185,6 +185,7 @@ namespace engine
 
    public:
       virtual SDB_SESSION_TYPE sessionType() const ;
+      virtual const CHAR*      className() const { return "FullSync-Source" ; }
       virtual EDU_TYPES eduType () const ;
 
    public:
@@ -226,6 +227,7 @@ namespace engine
 
       public:
          virtual SDB_SESSION_TYPE sessionType() const ;
+         virtual const CHAR*      className() const { return "Split-Source" ; }
          virtual EDU_TYPES eduType () const ;
 
       protected:

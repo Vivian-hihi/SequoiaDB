@@ -67,7 +67,7 @@ namespace engine
       ON_MSG ( MSG_BS_TRANS_UPDATE_REQ, _onOPMsg )
       ON_MSG ( MSG_BS_TRANS_DELETE_REQ, _onOPMsg )
       ON_MSG ( MSG_BS_TRANS_INSERT_REQ, _onOPMsg )
-      ON_MSG ( MSG_COM_CHECK_ROUTEID_REQ, _onOPMsg )
+      ON_MSG ( MSG_COM_SESSION_INIT_REQ, _onOPMsg )
 #if defined (_DEBUG)
       ON_MSG ( MSG_AUTH_VERIFY_REQ, _onOPMsg )
       ON_MSG ( MSG_AUTH_CRTUSR_REQ, _onOPMsg )
@@ -319,8 +319,8 @@ namespace engine
                rc = _onTransCommitPreMsg( msg );
                break;
 
-            case MSG_COM_CHECK_ROUTEID_REQ:
-               rc = _onCheckRouteIDReqMsg( msg );
+            case MSG_COM_SESSION_INIT_REQ:
+               rc = _onSessionInitReqMsg( msg );
                break;
 
             case MSG_BS_LOB_OPEN_REQ:
@@ -1139,6 +1139,11 @@ namespace engine
             _pCollectionName = _cmdCollectionName.c_str() ;
          }
 
+         MON_SAVE_CMD_DETAIL( _pEDUCB->getMonAppCB(), pCommand->type(),
+                              "Command:%s, Collection:%s",
+                              pCollectionName,
+                              _cmdCollectionName.c_str() ) ;
+
          if ( pCommand->writable () )
          {
             rc = _checkWriteStatus() ;
@@ -1412,28 +1417,40 @@ namespace engine
       return _onDeleteReqMsg( handle, msg, delNum );
    }
 
-   INT32 _clsShdSession::_onCheckRouteIDReqMsg ( MsgHeader *msg )
+   INT32 _clsShdSession::_onSessionInitReqMsg ( MsgHeader *msg )
    {
-      INT32 rc = SDB_OK;
-      MsgCoordCheckRouteID *pMsgReq = (MsgCoordCheckRouteID *)msg;
-      MsgRouteID localRouteID = routeAgent()->localID();
-      if ( pMsgReq->dstRouteID.columns.nodeID !=
-           localRouteID.columns.nodeID ||
-           pMsgReq->dstRouteID.columns.groupID !=
-           localRouteID.columns.groupID ||
-           pMsgReq->dstRouteID.columns.serviceID !=
-           localRouteID.columns.serviceID )
+      INT32 rc = SDB_OK ;
+      MsgComSessionInitReq *pMsgReq = (MsgComSessionInitReq*)msg ;
+      MsgRouteID localRouteID = routeAgent()->localID() ;
+
+      /// check wether the route id is matched
+      if ( pMsgReq->dstRouteID.value != localRouteID.value )
       {
          rc = SDB_INVALID_ROUTEID;
-         PD_LOG ( PDERROR, "routeID is different from the local"
-                  "RemoteRouteID(groupID=%u, nodeID=%u, serviceID=%u)"
-                  "LocalRouteID(groupID=%u, nodeID=%u, serviceID=%u)",
-                  pMsgReq->dstRouteID.columns.groupID,
-                  pMsgReq->dstRouteID.columns.nodeID,
-                  pMsgReq->dstRouteID.columns.serviceID,
-                  localRouteID.columns.groupID,
-                  localRouteID.columns.nodeID,
-                  localRouteID.columns.serviceID );
+         PD_LOG ( PDERROR, "Session init failed: route id does not match."
+                  "Message info: [%s], Local route id: %s",
+                  msg2String( msg ).c_str(),
+                  routeID2String( localRouteID ).c_str() ) ;
+      }
+      else if ( msg->messageLength > sizeof( MsgComSessionInitReq ) )
+      {
+         /// set user name info
+         try
+         {
+            BSONObj obj( pMsgReq->data ) ;
+            BSONElement user = obj.getField( SDB_AUTH_USER ) ;
+            BSONElement passwd = obj.getField( SDB_AUTH_PASSWD ) ;
+            _client.authenticate( user.valuestrsafe(),
+                                  passwd.valuestrsafe() ) ;
+         }
+         catch( std::exception &e )
+         {
+            PD_LOG( PDERROR, "Occur exception: %s", e.what() ) ;
+            /// do not report error
+         }
+         /// set the remote info into this session
+         setIdentifyInfo( pMsgReq->localIP, pMsgReq->localPort,
+                          pMsgReq->localTID, pMsgReq->localSessionID ) ;
       }
       return rc ;
    }

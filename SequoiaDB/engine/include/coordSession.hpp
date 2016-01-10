@@ -121,7 +121,7 @@ namespace engine
    private:
       CoordSession(){}
       CoordSession( CoordSession &coordSession ){}
-      INT32 checkRemoteRouteID( const MsgRouteID &routeID );
+      INT32 sessionInit( const MsgRouteID &routeID );
 
    private:
       pmdEDUCB                   *_pEduCB;

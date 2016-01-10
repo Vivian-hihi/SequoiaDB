@@ -140,11 +140,15 @@ namespace engine
          virtual ~_pmdAsyncSession();
 
          virtual UINT64          identifyID() ;
+         virtual UINT32          identifyTID() ;
+         virtual UINT64          identifyEDUID() ;
+
          virtual const CHAR*     sessionName() const ;
          virtual INT32           getServiceType() const ;
          virtual IClient*        getClient() { return &_client ; }
 
-         virtual EDU_TYPES eduType () const = 0 ;
+         virtual EDU_TYPES       eduType () const = 0 ;
+         virtual const CHAR*     className() const = 0 ;
 
          virtual void    onRecieve ( const NET_HANDLE netHandle,
                                      MsgHeader * msg ) ;
@@ -172,6 +176,9 @@ namespace engine
 
          BOOLEAN        isBufferFull() const ;
          BOOLEAN        isBufferEmpty() const ;
+
+         void        setIdentifyInfo( UINT32 ip, UINT16 port,
+                                      UINT32 tid, UINT64 eduID ) ;
 
       private:
          void        startType ( INT32 startType ) ;
@@ -222,6 +229,11 @@ namespace engine
          UINT32               _buffBegin ;
          UINT32               _buffEnd ;
          UINT32               _buffCount ;
+
+         /// identify info
+         UINT64               _identifyID ;
+         UINT32               _identifyTID ;
+         UINT64               _identifyEDUID ;
 
    };
    typedef _pmdAsyncSession pmdAsyncSession ;

@@ -56,10 +56,10 @@ namespace engine
          _omaSession ( UINT64 sessionID ) ;
          virtual ~_omaSession () ;
 
-         virtual UINT64 identifyID() { return (UINT64)SDB_OK ; }
          virtual INT32 getServiceType() const { return SDB_OK ; }
 
          virtual SDB_SESSION_TYPE sessionType() const ;
+         virtual const CHAR*      className() const { return "OMAgent" ; }
          virtual EDU_TYPES eduType () const ;
 
          virtual void    onRecieve ( const NET_HANDLE netHandle,

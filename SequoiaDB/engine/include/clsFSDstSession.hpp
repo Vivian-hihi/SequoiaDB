@@ -172,6 +172,7 @@ namespace engine
       };
    public:
       virtual SDB_SESSION_TYPE sessionType() const ;
+      virtual const CHAR*      className() const { return "FullSync-Dest" ; }
       virtual EDU_TYPES eduType () const ;
       virtual BOOLEAN canAttachMeta() const ;
 
@@ -228,6 +229,7 @@ namespace engine
 
       public:
          virtual SDB_SESSION_TYPE sessionType() const ;
+         virtual const CHAR*      className() const { return "Split-Dest" ; }
          virtual EDU_TYPES eduType () const ;
          virtual BOOLEAN canAttachMeta() const ;
 

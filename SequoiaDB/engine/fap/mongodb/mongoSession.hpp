@@ -54,7 +54,6 @@ public:
    _mongoSession( SOCKET fd, engine::IResource *resource ) ;
    virtual ~_mongoSession() ;
 
-   virtual UINT64 identifyID() ;
    virtual INT32 getServiceType() const ;
    virtual engine::SDB_SESSION_TYPE sessionType() const ;
 

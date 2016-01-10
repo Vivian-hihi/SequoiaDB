@@ -148,6 +148,29 @@ namespace engine
       return _sessionName.c_str() ;
    }
 
+   UINT64 _pmdSession::identifyID()
+   {
+      return ossPack32To64( _socket.getLocalIP(), _socket.getLocalPort() ) ;
+   }
+
+   UINT32 _pmdSession::identifyTID()
+   {
+      if ( _pEDUCB )
+      {
+         return _pEDUCB->getTID() ;
+      }
+      return 0 ;
+   }
+
+   UINT64 _pmdSession::identifyEDUID()
+   {
+      if ( _pEDUCB )
+      {
+         return _pEDUCB->getID() ;
+      }
+      return 0 ;
+   }
+
    INT32 _pmdSession::allocBuff( INT32 len, CHAR **ppBuff, INT32 &buffLen )
    {
       INT32 rc = SDB_OK ;

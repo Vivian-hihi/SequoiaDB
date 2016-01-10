@@ -94,34 +94,6 @@ error :
    goto done ;
 }
 
-string routeID2String( MsgRouteID routeID )
-{
-   stringstream ss ;
-   ss << routeID.columns.groupID << "." << routeID.columns.nodeID
-      << "." << routeID.columns.serviceID ;
-   return ss.str() ;
-}
-
-string routeID2String( UINT64 nodeID )
-{
-   return routeID2String( *(MsgRouteID*)&nodeID ) ;
-}
-
-string msg2String( MsgHeader *pMsg )
-{
-   stringstream ss ;
-   ss << "Length: " << pMsg->messageLength
-      << ", OpCode: (" << IS_REPLY_TYPE( pMsg->opCode ) << ")"
-                       << GET_REQUEST_TYPE( pMsg->opCode )
-      << ", TID: " << pMsg->TID
-      << ", RouteID: " << pMsg->routeID.columns.groupID << "."
-                       << pMsg->routeID.columns.nodeID << "."
-                       << pMsg->routeID.columns.serviceID
-      << ", ReqID: " << pMsg->requestID ;
-
-   return ss.str() ;
-}
-
 BOOLEAN msgIsInnerOpReply( MsgHeader *pMsg )
 {
    if ( pMsg->messageLength < (SINT32)sizeof( MsgOpReply ) )
@@ -135,58 +107,6 @@ BOOLEAN msgIsInnerOpReply( MsgHeader *pMsg )
       return FALSE ;
    }
    return TRUE ;
-}
-
-const CHAR* msgType2String( MSG_TYPE msgType, BOOLEAN isCommand )
-{
-   switch( GET_REQUEST_TYPE( msgType ) )
-   {
-      case MSG_BS_INSERT_REQ :
-      case MSG_BS_TRANS_INSERT_REQ :
-         return "INSERT" ;
-      case MSG_BS_UPDATE_REQ :
-      case MSG_BS_TRANS_UPDATE_REQ :
-         return "UPDATE" ;
-      case MSG_BS_SQL_REQ :
-         return "SQL" ;
-      case MSG_BS_QUERY_REQ :
-         return isCommand ? "COMMAND" : "QUERY" ;
-      case MSG_BS_GETMORE_REQ :
-         return "GETMORE" ;
-      case MSG_BS_DELETE_REQ :
-      case MSG_BS_TRANS_DELETE_REQ :
-         return "DELETE" ;
-      case MSG_BS_KILL_CONTEXT_REQ :
-         return "KILLCONTEXT" ;
-      case MSG_BS_TRANS_BEGIN_REQ :
-         return "BEGIN" ;
-      case MSG_BS_TRANS_COMMIT_REQ :
-      case MSG_BS_TRANS_COMMITPRE_REQ :
-         return "COMMIT" ;
-      case MSG_BS_TRANS_ROLLBACK_REQ :
-         return "ROLLBACK" ;
-      case MSG_BS_AGGREGATE_REQ :
-         return "AGGREGATE" ;
-      case MSG_AUTH_VERIFY_REQ :
-         return "LOGIN" ;
-      case MSG_AUTH_CRTUSR_REQ :
-         return "CREATE USER" ;
-      case MSG_AUTH_DELUSR_REQ :
-         return "DELETE USER" ;
-      case MSG_BS_LOB_OPEN_REQ :
-         return "LOB OPEN" ;
-      case MSG_BS_LOB_WRITE_REQ :
-         return "LOB WRITE" ;
-      case MSG_BS_LOB_READ_REQ :
-         return "LOB READ" ;
-      case MSG_BS_LOB_REMOVE_REQ :
-         return "LOB REMOVE" ;
-      case MSG_BS_LOB_UPDATE_REQ :
-         return "LOB UPDATE" ;
-      case MSG_BS_LOB_CLOSE_REQ :
-         return "LOB CLOSE" ;
-   } ;
-   return "UNKNOW" ;
 }
 
 // PD_TRACE_DECLARE_FUNCTION ( SDB_MSGBLDUPMSG, "msgBuildUpdateMsg" )

@@ -59,11 +59,6 @@ namespace engine
    {
    }
 
-   UINT64 _pmdLocalSession::identifyID()
-   {
-      return ossPack32To64( _socket.getLocalIP(), _socket.getLocalPort() ) ;
-   }
-
    INT32 _pmdLocalSession::getServiceType () const
    {
       return CMD_SPACE_SERVICE_LOCAL ;

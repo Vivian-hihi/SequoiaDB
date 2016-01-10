@@ -57,7 +57,6 @@ namespace engine
          _pmdLocalSession( SOCKET fd ) ;
          virtual ~_pmdLocalSession () ;
 
-         virtual UINT64    identifyID() ;
          virtual INT32     getServiceType() const ;
          virtual SDB_SESSION_TYPE sessionType() const ;
 

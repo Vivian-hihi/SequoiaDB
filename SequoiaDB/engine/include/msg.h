@@ -296,8 +296,8 @@ enum MSG_TYPE
    /// common msg
    MSG_COM_BEGIN                       = 5000,
    MSG_COM_REMOTE_DISC                 = 5001,
-   MSG_COM_CHECK_ROUTEID_REQ           = 5002,
-   MSG_COM_CHECK_ROUTEID_RSP           = MAKE_REPLY_TYPE(MSG_COM_CHECK_ROUTEID_REQ),
+   MSG_COM_SESSION_INIT_REQ            = 5002,
+   MSG_COM_SESSION_INIT_RSP            = MAKE_REPLY_TYPE(MSG_COM_SESSION_INIT_REQ),
    MSG_COM_END                         = 5999,
 
    MSG_CM_REMOTE                       = 6000,
@@ -677,11 +677,21 @@ typedef struct _MsgOpTransRollback
    MsgHeader header;
 } MsgOpTransRollback;
 
-typedef struct _MsgCoordCheckRouteID
+typedef struct _MsgComSessionInitReq
 {
-   MsgHeader   header;
-   MsgRouteID  dstRouteID;
-}MsgCoordCheckRouteID;
+   MsgHeader   header ;
+   MsgRouteID  dstRouteID ;
+   /// The new infomation( with the version 2.0 and more )
+   MsgRouteID  srcRouteID ;
+   UINT32      localIP ;         /// local ip of the hostname
+   UINT32      peerIP ;          /// 0, not used
+   UINT16      localPort ;       /// the port of svcname
+   UINT16      peerPort ;        /// 0, not used
+   UINT32      localTID ;        /// local TID
+   UINT64      localSessionID ;  /// local eduid
+   CHAR        reserved[8] ;
+   CHAR        data[0] ;         /// BSON DATA( usename, passwd and so on...)
+} MsgComSessionInitReq ;
 
 typedef struct _MsgOpAggregate
 {
