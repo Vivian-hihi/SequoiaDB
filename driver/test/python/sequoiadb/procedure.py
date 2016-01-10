@@ -46,6 +46,19 @@ def usage():
    print '-H   arg   hostname'
    print '-p   arg   coord_port'
 
+def isStandalone( db ):   
+   print '---begin to get cluster mode'   
+   is_standalone = False
+   try:
+      db.list_replica_groups()
+   except SDBBaseError, e:
+      if ( -159 == e.code ):
+         is_standalone = True
+      else:
+         raise e   
+         
+   return is_standalone 
+   
 def ready():
    print '---begin to remove procedure in ready'
    try:
@@ -122,7 +135,7 @@ def clean():
    try:
       db.remove_procedure( 'sum' )
    except SDBBaseError, e:
-      if ( -233 != e.code ):         
+      if ( -233 != e.code and -6 != e.code ):         
          raise e
       
 if __name__ == "__main__":   
@@ -130,9 +143,14 @@ if __name__ == "__main__":
       parse_option()
             
       db = client( hostname, service )
-      ready()
+           
       # main
-      procedure()
+      if( isStandalone( db ) == True ):
+         print 'Mode is standalone!'
+         exit(0) 
+      else:  
+         ready()
+         procedure()
       
    except SDBBaseError, e:
       pysequoiadb._print( e.detail )

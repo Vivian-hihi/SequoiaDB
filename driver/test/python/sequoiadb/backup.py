@@ -46,6 +46,19 @@ def usage():
    print '-H   arg   hostname'
    print '-p   arg   coord_port'
 
+def isStandalone( db ):   
+   print '---begin to get cluster mode'   
+   is_standalone = False
+   try:
+      db.list_replica_groups()
+   except SDBBaseError, e:
+      if ( -159 == e.code ):
+         is_standalone = True
+      else:
+         raise e   
+         
+   return is_standalone 
+   
 def getOneRG():
    print '---begin to get 1 data group name'
    rc = db.get_list( 7, condition={'Role': 0} ) 
@@ -121,8 +134,12 @@ if __name__ == "__main__":
       ready( backupName )
       
       # main
-      dataRGName = getOneRG()
-      backup( dataRGName, backupName )
+      if( isStandalone( db ) == True ):
+         print 'Mode is standalone!'
+         exit(0) 
+      else:    
+         dataRGName = getOneRG()
+         backup( dataRGName, backupName )
       
    except SDBBaseError, e:
       pysequoiadb._print( e.detail )
