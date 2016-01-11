@@ -36,6 +36,7 @@
 #include "authTrace.hpp"
 #include "pmdCB.hpp"
 #include "catCommon.hpp"
+#include "msgMessageFormat.hpp"
 
 using namespace bson ;
 
