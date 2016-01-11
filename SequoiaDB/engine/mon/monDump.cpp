@@ -1169,19 +1169,19 @@ namespace engine
                   monDMSCollectionFlagToString ( flag, status ) ;
                   ob1.append ( FIELD_NAME_STATUS, status ) ;
                   mbAttr2String( detail._attribute, tmp, MON_TMP_STR_SZ ) ;
-                  sub.append ( FIELD_NAME_ATTRIBUTE, tmp ) ;
+                  ob1.append ( FIELD_NAME_ATTRIBUTE, tmp ) ;
                   if ( OSS_BIT_TEST( detail._attribute, DMS_MB_ATTR_COMPRESSED ) )
                   {
-                     sub.append ( FIELD_NAME_COMPRESSIONTYPE,
+                     ob1.append ( FIELD_NAME_COMPRESSIONTYPE,
                                   utilCompressType2String( detail._compressType ) ) ;
                   }
                   else
                   {
-                     sub.append ( FIELD_NAME_COMPRESSIONTYPE, "" ) ;
+                     ob1.append ( FIELD_NAME_COMPRESSIONTYPE, "" ) ;
                   }
-                  sub.appendBool( FIELD_NAME_HAS_DICT, detail._hasDict ) ;
-                  sub.append ( FIELD_NAME_PAGE_SIZE, detail._pageSize ) ;
-                  sub.append ( FIELD_NAME_LOB_PAGE_SIZE, detail._lobPageSize ) ;
+                  ob1.appendBool( FIELD_NAME_HAS_DICT, detail._hasDict ) ;
+                  ob1.append ( FIELD_NAME_PAGE_SIZE, detail._pageSize ) ;
+                  ob1.append ( FIELD_NAME_LOB_PAGE_SIZE, detail._lobPageSize ) ;
                   /// Stat info
                   ob1.append ( FIELD_NAME_TOTAL_RECORDS,
                                (long long)(detail._totalRecords )) ;
