@@ -89,6 +89,16 @@ namespace engine
       return pmdGetSysInfo()->_startTime ;
    }
 
+   void pmdSetLocalPort( UINT16 port )
+   {
+      pmdGetSysInfo()->_localPort = port ;
+   }
+
+   UINT16 pmdGetLocalPort()
+   {
+      return pmdGetSysInfo()->_localPort ;
+   }
+
    BOOLEAN pmdIsQuitApp()
    {
       return pmdGetSysInfo()->_quitFlag ;

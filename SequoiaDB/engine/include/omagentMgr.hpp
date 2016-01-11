@@ -135,6 +135,8 @@ namespace engine
          CHAR                       _startProcFile[ OSS_MAX_PATHSIZE + 1 ] ;
          CHAR                       _stopProcFile[ OSS_MAX_PATHSIZE + 1 ] ;
 
+         UINT16                     _localPort ;
+
          vector < pmdAddrPair >     _vecOMAddr ;
 
          BOOLEAN                    _useCurUser ;

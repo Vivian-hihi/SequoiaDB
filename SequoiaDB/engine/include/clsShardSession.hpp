@@ -57,9 +57,11 @@ namespace engine
          _clsShdSession ( UINT64 sessionID ) ;
          virtual ~_clsShdSession ( ) ;
 
+         virtual const CHAR*      sessionName() const ;
          virtual SDB_SESSION_TYPE sessionType() const ;
          virtual const CHAR*      className() const { return "Shard" ; }
          virtual EDU_TYPES eduType () const ;
+         virtual void clear() ;
 
          virtual void    onRecieve ( const NET_HANDLE netHandle,
                                      MsgHeader * msg ) ;
@@ -268,6 +270,8 @@ namespace engine
          BOOLEAN                _hasUpdateCataInfo ;
 
          ossTimestamp           _lastRecvTime ;
+
+         CHAR                   _detailName[SESSION_NAME_LEN+1] ;
    };
 
 }

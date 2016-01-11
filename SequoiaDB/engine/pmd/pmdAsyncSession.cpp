@@ -74,7 +74,7 @@ namespace engine
       _startType   = PMD_SESSION_PASSIVE ;
       _pSessionMgr = NULL ;
 
-      clear() ;
+      _reset() ;
 
       _sessionID   = sessionID ;
 
@@ -208,7 +208,13 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDSN_CLEAR, "_pmdAsyncSession::clear" )
    void _pmdAsyncSession::clear()
    {
-      PD_TRACE_ENTRY ( SDB__PMDSN_CLEAR );
+      _reset() ;      
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDSN_RESET, "_pmdAsyncSession::_reset" )
+   void _pmdAsyncSession::_reset()
+   {
+      PD_TRACE_ENTRY ( SDB__PMDSN_RESET );
       if ( _lockFlag )
       {
          _unlock () ;
@@ -220,9 +226,11 @@ namespace engine
       _netHandle = NET_INVALID_HANDLE ;
       _name [0]  = 0 ;
       _pMeta     = NULL ;
-      _identifyEDUID = 0 ;
-      _identifyID= 0 ;
+
+      _identifyID= ossPack32To64( _netFrame::getLocalAddress(),
+                                  pmdGetLocalPort() ) ;
       _identifyTID=0 ;
+      _identifyEDUID = 0 ;
 
       // release all buffer pointers
       for ( UINT32 index = 0 ; index < MAX_BUFFER_ARRAY_SIZE; ++index )
@@ -235,7 +243,7 @@ namespace engine
       _buffBegin = 0 ;
       _buffEnd   = 0 ;
       _buffCount = 0 ;
-      PD_TRACE_EXIT ( SDB__PMDSN_CLEAR );
+      PD_TRACE_EXIT ( SDB__PMDSN_RESET );
    }
 
    void _pmdAsyncSession::onRecieve ( const NET_HANDLE netHandle,
@@ -322,14 +330,14 @@ namespace engine
       if ( nodeID > PMD_BASE_HANDLE_ID )
       {
          // if the session is coming from coord
-         ossSnprintf( _name , SESSION_NAME_LEN, "NetID:%u,TID:%u",
-                      nodeID - PMD_BASE_HANDLE_ID, TID ) ;
+         ossSnprintf( _name , SESSION_NAME_LEN, "Type:%s,NetID:%u,R-TID:%u",
+                      className(), nodeID - PMD_BASE_HANDLE_ID, TID ) ;
       }
       else
       {
          // otherwise it's not session from coord
-         ossSnprintf( _name , SESSION_NAME_LEN, "NodeID:%u,TID:%u,Start:%s",
-                      nodeID, TID, isStartActive() ? "active" : "passive" ) ;
+         ossSnprintf( _name , SESSION_NAME_LEN, "Type:%s,NodeID:%u,TID:%u",
+                      className(), nodeID, TID ) ;
       }
       _name [SESSION_NAME_LEN] = 0 ;
       PD_TRACE_EXIT ( SDB__PMDSN__MKNAME );
@@ -888,13 +896,6 @@ namespace engine
       _mapSession[ sessionID ] = pSession ;
       pSession->startType( startType ) ;
       pSession->sessionID( sessionID ) ;
-      // set identify id
-      eh = _pRTAgent->getFrame()->getEventHandle( handle ) ;
-      if ( eh.get() )
-      {
-         pSession->setIdentifyInfo( ossStr2IP( eh->localAddr().c_str() ),
-                                    eh->localPort(), 0, 0 ) ;
-      }
 
       PD_LOG ( PDEVENT, "Create session[Name: %s, StartType: %d]",
                pSession->sessionName(), startType ) ;

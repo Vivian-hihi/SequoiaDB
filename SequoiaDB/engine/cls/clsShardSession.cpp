@@ -99,6 +99,7 @@ namespace engine
       _pDpsCB    = pKRCB->getDPSCB () ;
       _pRtnCB    = pKRCB->getRTNCB () ;
       _primaryID.value = MSG_INVALID_ROUTEID ;
+      ossMemset( _detailName, 0, sizeof( _detailName ) ) ;
       PD_TRACE_EXIT ( SDB__CLSSDSESS__CLSSHDSESS ) ;
    }
 
@@ -112,6 +113,21 @@ namespace engine
       _pDpsCB    = NULL ;
       _pCollectionName = NULL ;
       _cmdCollectionName.clear() ;
+   }
+
+   const CHAR* _clsShdSession::sessionName() const
+   {
+      if ( 0 != _detailName[0] )
+      {
+         return _detailName ;
+      }
+      return _pmdAsyncSession::sessionName() ;
+   }
+
+   void _clsShdSession::clear()
+   {
+      ossMemset( _detailName, 0, sizeof( _detailName ) ) ;
+      _pmdAsyncSession::clear() ;
    }
 
    SDB_SESSION_TYPE _clsShdSession::sessionType() const
@@ -172,6 +188,27 @@ namespace engine
          {
             PD_LOG ( PDERROR, "Failed to rollback(rc=%d)", rcTmp ) ;
          }
+      }
+
+      /// has session init
+      if ( 0 != _detailName[0] )
+      {
+         UINT32 ip = 0 ;
+         UINT32 port = 0 ;
+         ossUnpack32From64( identifyID(), ip, port ) ;
+
+         /// audit
+         CHAR szTmpIP[ 50 ] = { 0 } ;
+         ossIP2Str( ip, szTmpIP, sizeof(szTmpIP) - 1 ) ;
+         CHAR szTmpID[ 20 ] = { 0 } ;
+         ossSnprintf( szTmpID, sizeof(szTmpID) - 1, "%llu", eduID() ) ;
+
+         PD_AUDIT( AUDIT_ACCESS, _client.getUsername(), "LOGOUT",
+                   AUDIT_OBJ_SESSION, szTmpID, SDB_OK,
+                   "User[UserName:%s, FromIP:%s, FromPort:%u, "
+                   "FromSession:%llu, FromTID:%u] logout succeed",
+                   _client.getUsername(), szTmpIP, port,
+                   identifyEDUID(), identifyTID() ) ;
       }
 
       _pmdAsyncSession::_onDetach () ;
@@ -1435,6 +1472,7 @@ namespace engine
       else if ( msg->messageLength > sizeof( MsgComSessionInitReq ) )
       {
          /// set user name info
+         BSONElement host, svcname ;
          try
          {
             BSONObj obj( pMsgReq->data ) ;
@@ -1451,6 +1489,22 @@ namespace engine
          /// set the remote info into this session
          setIdentifyInfo( pMsgReq->localIP, pMsgReq->localPort,
                           pMsgReq->localTID, pMsgReq->localSessionID ) ;
+
+         /// set detail name
+         CHAR szTmpIP[ 50 ] = { 0 } ;
+         ossIP2Str( pMsgReq->localIP, szTmpIP, sizeof(szTmpIP) - 1 ) ;
+         ossSnprintf( _detailName, SESSION_NAME_LEN, "%s,R-IP:%s,R-Port:%u",
+                      _pmdAsyncSession::sessionName(), szTmpIP,
+                      pMsgReq->localPort ) ;
+         /// audit
+         CHAR szTmpID[ 20 ] = { 0 } ;
+         ossSnprintf( szTmpID, sizeof(szTmpID) - 1, "%llu", eduID() ) ;
+         PD_AUDIT_OP( AUDIT_ACCESS, MSG_AUTH_VERIFY_REQ, AUDIT_OBJ_SESSION,
+                      szTmpID, SDB_OK, "User[UserName:%s, FromIP:%s, "
+                      "FromPort:%u, FromSession:%llu, FromTID:%u] "
+                      "login succeed", _client.getUsername(),
+                      szTmpIP, pMsgReq->localPort,
+                      pMsgReq->localSessionID, pMsgReq->localTID ) ;
       }
       return rc ;
    }

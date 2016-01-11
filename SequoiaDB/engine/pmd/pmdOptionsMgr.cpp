@@ -46,6 +46,7 @@
 #include "ossIO.hpp"
 #include "ossVer.hpp"
 #include "dpsLogWrapper.hpp"
+#include "pmdEnv.hpp"
 
 #include "rtnSortDef.hpp"
 #include "clsUtil.hpp"
@@ -1523,6 +1524,7 @@ namespace engine
          rc = SDB_INVALIDARG ;
          goto error ;
       }
+      pmdSetLocalPort( _krcbSvcPort ) ;
 
       // logbuffsize check
       if ( _logBuffSize > _logFileNum * _logFileSz *

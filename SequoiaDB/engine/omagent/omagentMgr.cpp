@@ -67,6 +67,8 @@ namespace engine
       ossMemset( _stopProcFile, 0, sizeof( _stopProcFile ) ) ;
       ossMemset( _omAddress, 0, sizeof( _omAddress ) ) ;
 
+      _localPort           = 0 ;
+
       // defaut service name
       ossSnprintf( _dftSvcName, OSS_MAX_SERVICENAME, "%u",
                    SDBCM_DFT_PORT ) ;
@@ -293,6 +295,15 @@ namespace engine
          PD_RC_CHECK( rc, PDERROR, "Parse om address[%s] failed, rc: %d",
                       _omAddress, rc ) ;
       }
+
+      rc = ossGetPort( _cmServiceName, _localPort ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Failed to get port by service name[%s], rc: %d",
+                 _cmServiceName, rc ) ;
+         goto error ;
+      }
+      pmdSetLocalPort( _localPort ) ;
 
    done:
       return rc ;

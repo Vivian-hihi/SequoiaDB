@@ -199,6 +199,7 @@ namespace engine
          void  _makeName () ;
          INT32 _lock () ;
          INT32 _unlock () ;
+         void  _reset() ;
 
          netRouteAgent* routeAgent() ;
 
