@@ -64,7 +64,8 @@ using namespace bson ;
 
 namespace engine
 {
-
+   #define MON_MAX_SLICE_SIZE       ( 1000 )
+   #define MON_TMP_STR_SZ           ( 64 )
    #define OSS_MAX_FILE_SZ          ( 8796093022208ll )
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_MONGETNODENAME, "monGetNodeName" )
@@ -1143,6 +1144,16 @@ namespace engine
             std::map<UINT32, detailedInfo>::iterator it1 ;
             if ( details )
             {
+               CHAR tmp[ MON_TMP_STR_SZ + 1 ] = { 0 } ;
+               /// add space name
+               ob.append ( FIELD_NAME_NAME, collection._name ) ;
+               const CHAR *pDot = ossStrchr( collection._name, '.' ) ;
+               if ( pDot )
+               {
+                  ob.appendStrWithNoTerminating ( FIELD_NAME_COLLECTIONSPACE,
+                                                  collection._name,
+                                                  pDot - collection._name ) ;
+               }
                for ( it1 = collection._details.begin();
                      it1 != collection._details.end();
                      it1++ )
@@ -1157,6 +1168,21 @@ namespace engine
                   ob1.append ( FIELD_NAME_INDEXES,  detail._numIndexes ) ;
                   monDMSCollectionFlagToString ( flag, status ) ;
                   ob1.append ( FIELD_NAME_STATUS, status ) ;
+                  mbAttr2String( detail._attribute, tmp, MON_TMP_STR_SZ ) ;
+                  sub.append ( FIELD_NAME_ATTRIBUTE, tmp ) ;
+                  if ( OSS_BIT_TEST( detail._attribute, DMS_MB_ATTR_COMPRESSED ) )
+                  {
+                     sub.append ( FIELD_NAME_COMPRESSIONTYPE,
+                                  utilCompressType2String( detail._compressType ) ) ;
+                  }
+                  else
+                  {
+                     sub.append ( FIELD_NAME_COMPRESSIONTYPE, "" ) ;
+                  }
+                  sub.appendBool( FIELD_NAME_HAS_DICT, detail._hasDict ) ;
+                  sub.append ( FIELD_NAME_PAGE_SIZE, detail._pageSize ) ;
+                  sub.append ( FIELD_NAME_LOB_PAGE_SIZE, detail._lobPageSize ) ;
+                  /// Stat info
                   ob1.append ( FIELD_NAME_TOTAL_RECORDS,
                                (long long)(detail._totalRecords )) ;
                   ob1.append ( FIELD_NAME_TOTAL_LOBS,
@@ -1814,9 +1840,6 @@ namespace engine
    error:
       goto done ;
    }
-
-   #define MON_MAX_SLICE_SIZE          ( 1000 )
-   #define MON_TMP_STR_SZ              ( 64 )
 
    /*
       _monTransFetcher implement
