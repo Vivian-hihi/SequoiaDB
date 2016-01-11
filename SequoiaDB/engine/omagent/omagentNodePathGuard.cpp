@@ -68,6 +68,11 @@ namespace engine {
       {
          _nodePaths.push_back( options->getDiagLogPath() ) ;
       }
+      /// auditlog path
+      if ( 0 != ossStrncmp( dbpath, options->getAuditLogPath(), pathLen ) )
+      {
+         _nodePaths.push_back( options->getAuditLogPath() ) ;
+      }
       /// repl-log path
       if ( 0 != ossStrncmp( dbpath, options->getReplLogPath(), pathLen ) )
       {

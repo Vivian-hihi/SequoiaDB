@@ -371,6 +371,10 @@ namespace engine
          {
             return _krcbDiagLogPath;
          }
+         OSS_INLINE const CHAR *getAuditLogPath() const
+         {
+            return _krcbAuditLogPath ;
+         }
          OSS_INLINE UINT32 getMaxPooledEDU() const
          {
             return _krcbMaxPool;
@@ -492,6 +496,7 @@ namespace engine
          CHAR        _krcbDbPath[ OSS_MAX_PATHSIZE + 1 ] ;
          CHAR        _krcbIndexPath[ OSS_MAX_PATHSIZE + 1 ] ;
          CHAR        _krcbDiagLogPath[ OSS_MAX_PATHSIZE + 1 ] ;
+         CHAR        _krcbAuditLogPath [ OSS_MAX_PATHSIZE + 1 ] ;
          CHAR        _krcbLogPath[ OSS_MAX_PATHSIZE + 1 ] ;
          CHAR        _krcbBkupPath[ OSS_MAX_PATHSIZE + 1 ] ;
          CHAR        _krcbWWWPath[ OSS_MAX_PATHSIZE + 1 ] ;

@@ -242,6 +242,7 @@ namespace engine
    #define PMD_DFT_CONF                "sdb.conf"
    #define PMD_DFT_CAT                 "sdb.cat"
    #define PMD_OPTION_DIAG_PATH        "diaglog"
+   #define PMD_OPTION_AUDIT_PATH       PMD_OPTION_DIAG_PATH
    #define PMD_OPTION_LOG_PATH         "replicalog"
    #define PMD_OPTION_BK_PATH          "bakfile"
    #define PMD_OPTION_WWW_PATH_DIR     "web"

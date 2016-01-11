@@ -208,7 +208,7 @@ namespace engine
                    pmdGetOptionCB()->diagFileNum() ) ;
       setPDLevel( (PDLEVEL)( pmdGetOptionCB()->getDiagLevel() ) ) ;
       // enalble pd audit
-      sdbEnableAudit( pmdGetOptionCB()->getDiagLogPath(),
+      sdbEnableAudit( pmdGetOptionCB()->getAuditLogPath(),
                       pmdGetOptionCB()->auditFileNum() ) ;
       setAuditMask( pmdGetOptionCB()->auditMask() ) ;
       initCurAuditMask( getAuditMask() ) ;

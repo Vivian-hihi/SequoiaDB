@@ -95,6 +95,7 @@ namespace engine
       ( PMD_OPTION_LOGPATH, boost::program_options::value<string>(),     "override log file path" )                    \
       ( PMD_OPTION_CONFPATH, boost::program_options::value<string>(),    "override configure file path" )              \
       ( PMD_OPTION_DIAGLOGPATH, boost::program_options::value<string>(), "override diagnostic log file path" )         \
+      ( PMD_OPTION_AUDITLOGPATH, boost::program_options::value<string>(), "Audit log file path" )                      \
       ( PMD_OPTION_BKUPPATH, boost::program_options::value<string>(),    "override backup path" )                      \
       ( PMD_OPTION_SVCNAME, boost::program_options::value<string>(),     "override local service name or port" )       \
       ( PMD_OPTION_REPLNAME, boost::program_options::value<string>(),    "override replication service name or port" ) \
@@ -118,6 +119,7 @@ namespace engine
               0 == ossStrcmp( ele.fieldName(), PMD_OPTION_LOGPATH ) ||
               0 == ossStrcmp( ele.fieldName(), PMD_OPTION_CONFPATH ) ||
               0 == ossStrcmp( ele.fieldName(), PMD_OPTION_DIAGLOGPATH ) ||
+              0 == ossStrcmp( ele.fieldName(), PMD_OPTION_AUDITLOGPATH ) ||
               0 == ossStrcmp( ele.fieldName(), PMD_OPTION_BKUPPATH ) ||
               0 == ossStrcmp( ele.fieldName(), PMD_OPTION_SVCNAME ) ||
               0 == ossStrcmp( ele.fieldName(), PMD_OPTION_REPLNAME ) ||
