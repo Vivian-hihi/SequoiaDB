@@ -179,6 +179,8 @@ namespace engine
       {
          goto error ;
       }
+      PD_AUDIT_OP( AUDIT_DCL, MSG_AUTH_CRTUSR_REQ, AUDIT_OBJ_SYSTEM,
+                   "", rc, "%s", obj.toString().c_str() ) ;
 
    done:
       PD_TRACE_EXITRC ( SDB_AUTHCB_CREATEUSR, rc ) ;
@@ -249,6 +251,8 @@ namespace engine
                     "rc: %d", rc ) ;
             goto error ;
          }
+         PD_AUDIT_OP( AUDIT_DCL, MSG_AUTH_DELUSR_REQ, AUDIT_OBJ_SYSTEM,
+                      "", rc, "%s", obj.toString().c_str() ) ;
       }
 
    done:

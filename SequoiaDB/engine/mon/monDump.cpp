@@ -2660,8 +2660,8 @@ namespace engine
          }
          /// add detial
          BSONArrayBuilder ba( ob.subarrayStart( FIELD_NAME_DETAILS ) ) ;
-         for ( itDetail = full._details.cbegin() ;
-               itDetail != full._details.cend() ;
+         for ( itDetail = full._details.begin() ;
+               itDetail != full._details.end() ;
                ++itDetail )
          {
             const detailedInfo &detail = itDetail->second ;
