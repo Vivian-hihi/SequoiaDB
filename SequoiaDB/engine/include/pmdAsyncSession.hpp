@@ -55,7 +55,7 @@ namespace engine
       Global Define
    */
    #define INVLIAD_SESSION_ID       (0)
-   #define SESSION_NAME_LEN         (50)
+   #define SESSION_NAME_LEN         (100)
 
    #define MAX_BUFFER_ARRAY_SIZE    (20)
 
