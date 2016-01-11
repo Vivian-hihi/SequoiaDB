@@ -191,7 +191,6 @@ namespace engine
 
    void _monAppCB::setLastCmdType( INT32 cmdType )
    {
-      _lastOpType = MSG_BS_QUERY_REQ ;
       _cmdType = cmdType ;
    }
 

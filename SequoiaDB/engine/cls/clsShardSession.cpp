@@ -906,9 +906,9 @@ namespace engine
       {
          BSONObj insertor ( pInsertorBuffer ) ;
          MON_SAVE_OP_DETAIL( _pEDUCB->getMonAppCB(), MSG_BS_INSERT_REQ,
-                           "CL:%s, Insertor:%s",
-                           pCollectionName,
-                           insertor.toString( false, false ).c_str() ) ;
+                             "Collection:%s, Insertor:%s",
+                             pCollectionName,
+                             insertor.toString().c_str() ) ;
 
          PD_LOG ( PDDEBUG, "Session[%s] Insert: %s\nCollection: %s",
                   sessionName(), insertor.toString().c_str(),

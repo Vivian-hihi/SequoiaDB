@@ -92,7 +92,6 @@ namespace engine
       }                                                              \
    }
 
-
    struct _monConfigCB : public SDBObject
    {
       BOOLEAN timestampON ;
