@@ -212,6 +212,7 @@ namespace engine
                       pmdGetOptionCB()->auditFileNum() ) ;
       setAuditMask( pmdGetOptionCB()->auditMask() ) ;
       initCurAuditMask( getAuditMask() ) ;
+      pmdSetLocalPort( pmdGetOptionCB()->getServicePort() ) ;
 
       ossSprintVersion( "Version", verText, OSS_MAX_PATHSIZE, FALSE ) ;
 
