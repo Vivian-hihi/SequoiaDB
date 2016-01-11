@@ -59,6 +59,7 @@ namespace engine
       ossAtomic32                   _isPrimary ;
       SDB_TYPE                      _dbType ;
       UINT64                        _startTime ;
+      UINT16                        _localPort ;
 
       BOOLEAN                       _quitFlag ;
       PMD_ON_QUIT_FUNC              _pQuitFunc ;
@@ -78,6 +79,7 @@ namespace engine
          _dbType        = SDB_TYPE_DB ;
          _pQuitFunc     = NULL ;
          _startTime     = time( NULL ) ;
+         _localPort     = 0 ;
          _tick          = 0 ;
          _validationTick = 0 ;
       }
@@ -93,6 +95,9 @@ namespace engine
    void           pmdSetPrimary( BOOLEAN primary ) ;
 
    UINT64         pmdGetStartTime() ;
+
+   void           pmdSetLocalPort( UINT16 port ) ;
+   UINT16         pmdGetLocalPort() ;
 
    void           pmdSetQuit() ;
    BOOLEAN        pmdIsQuitApp() ;
