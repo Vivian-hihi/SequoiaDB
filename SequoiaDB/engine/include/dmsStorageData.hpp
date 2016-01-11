@@ -246,7 +246,12 @@ namespace engine
       dmsExtentID    _newDictExtentID ;
       // dictionary addreess;
       SINT8          _compressorType ;
-      CHAR           _pad [ 395 ] ;    /* size here before adding dictionary is 404 */
+      UINT8          _pad1[ 3 ] ;  // reserved
+      // for stat
+      UINT64         _totalLobs ;
+      // end stat
+      CHAR           _pad [ 384 ] ;
+
 
       void reset ( const CHAR *clName = NULL,
                    UINT16 mbID = DMS_INVALID_MBID,
@@ -292,11 +297,13 @@ namespace engine
          _totalDataFreeSpace     = 0 ;
          _totalIndexFreeSpace    = 0 ;
          _totalLobPages          = 0 ;
+         _totalLobs              = 0 ;
          _compressorType         = -1 ; /* -1 -- UTIL_COMPRESSOR_INVALID */
          _dictExtentID           = DMS_INVALID_EXTENT ;
          _newDictExtentID        = DMS_INVALID_EXTENT ;
 
          // pad
+         ossMemset( _pad1, 0, sizeof( _pad1 ) ) ;
          ossMemset( _pad, 0, sizeof( _pad ) ) ;
       }
    } ;
@@ -391,6 +398,7 @@ namespace engine
       UINT64      _totalDataFreeSpace ;
       UINT64      _totalIndexFreeSpace ;
       UINT32      _totalLobPages ;
+      UINT64      _totalLobs ;
       UINT32      _uniqueIdxNum ;
       dmsExtentID _dictExtID ;
       SINT8       _compressorType ;
@@ -403,6 +411,7 @@ namespace engine
          _totalDataFreeSpace     = 0 ;
          _totalIndexFreeSpace    = 0 ;
          _totalLobPages          = 0 ;
+         _totalLobs              = 0 ;
          _uniqueIdxNum           = 0 ;
          _dictExtID              = DMS_INVALID_EXTENT ;
          _compressorType         = -1 ; /* -1 -- UTIL_COMPRESSOR_INVALID */
@@ -663,6 +672,9 @@ namespace engine
 
          OSS_INLINE void   updateCreateLobs( UINT32 createLobs ) ;
 
+         /// flush mme
+         INT32         flushMME( BOOLEAN sync = FALSE ) ;
+
       public:
 
          // create a new collection for given name, returns collectionID
@@ -851,6 +863,8 @@ namespace engine
          COLNAME_MAP                         _collectionNameMap ;
          UINT32                              _logicalCSID ;
          dmsStorageUnitID                    _CSID ;
+
+         UINT32                              _mmeSegID ;
 
          vector<dmsMBContext*>               _vecContext ;
          ossSpinXLatch                       _latchContext ;

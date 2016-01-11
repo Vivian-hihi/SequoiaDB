@@ -86,9 +86,7 @@ namespace engine
                   BOOLEAN createNew,
                   BOOLEAN rmWhenExist) ;
 
-      void removeStorageFiles() ;
-
-      BOOLEAN isOpened()const ;
+      void  removeStorageFiles() ;
 
       INT32 getLobMeta( const bson::OID &oid,
                         dmsMBContext *mbContext,
@@ -143,6 +141,8 @@ namespace engine
                        BOOLEAN rmWhenExist ) ;
       INT32 _delayOpen() ;
 
+      INT32 _calcCount() ;
+
    private:
       virtual INT32  _onCreate( OSSFILE *file, UINT64 curOffSet ) ;
       virtual INT32  _onMapMeta( UINT64 curOffSet ) ;
@@ -157,6 +157,9 @@ namespace engine
       virtual void   _initHeaderPageSize( dmsStorageUnitHeader *pHeader,
                                           dmsStorageInfo *pInfo ) ;
       virtual INT32  _checkPageSize( dmsStorageUnitHeader *pHeader ) ;
+
+      /// flush callback:  SDB_OK: continue, no SDB_OK: stop
+      virtual INT32  _onFlushDirty( BOOLEAN sync ) ;
 
    private:
       OSS_INLINE UINT32 _getBucket( UINT32 hash )

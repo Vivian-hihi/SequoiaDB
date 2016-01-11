@@ -71,6 +71,7 @@ namespace engine
    }
 
    #define DMS_EXTEND_THRESHOLD_SIZE      ( 33554432 )   // 32MB
+   #define DMS_NO_WRITE_TIME_FOR_SYNC     ( 120000 )     // 2 Mins
    /*
       _dmsStorageBase : implement
    */
@@ -948,14 +949,95 @@ namespace engine
       return _smeMgr.totalFree() ;
    }
 
+   INT32 _dmsStorageBase::flushHeader( BOOLEAN sync )
+   {
+      return ossMmapFile::flush( 0, sync ) ;
+   }
+
+   INT32 _dmsStorageBase::flushSME( BOOLEAN sync )
+   {
+      return ossMmapFile::flush( 1, sync ) ;
+   }
+
+   INT32 _dmsStorageBase::flushMeta( BOOLEAN sync, UINT32 *pExceptID,
+                                     UINT32 num )
+   {
+      INT32 rc = SDB_OK ;
+      INT32 rcTmp = SDB_OK ;
+
+      syncMemToMmap() ;
+
+      for ( UINT32 i = 0 ; i < _dataSegID ; ++i )
+      {
+         if ( pExceptID )
+         {
+            BOOLEAN bExcept = FALSE ;
+            for ( UINT32 j = 0 ; j < num ; ++j )
+            {
+               if ( pExceptID[ j ] == i )
+               {
+                  bExcept = TRUE ;
+                  break ;
+               }
+            }
+            if ( bExcept )
+            {
+               continue ;
+            }
+         }
+         rcTmp = ossMmapFile::flush( i, sync ) ;
+         if ( rcTmp )
+         {
+            PD_LOG( PDERROR, "Flush segment %u to disk failed, rc: %d",
+                    i, rcTmp ) ;
+            if ( SDB_OK == rc )
+            {
+               rc = rcTmp ;
+            }
+         }
+      }
+      return rc ;
+   }
+
+   INT32 _dmsStorageBase::flushPages( SINT32 pageID, UINT16 pageNum,
+                                      BOOLEAN sync )
+   {
+      INT32 rc = SDB_OK ;
+
+      if( DMS_INVALID_EXTENT == pageID )
+      {
+         rc = SDB_INVALIDARG ;
+      }
+      else
+      {
+         UINT32 offset = 0 ;
+         UINT32 segmentID = extent2Segment( pageID, &offset ) ;
+         INT32 length = (INT32)pageNum << pageSizeSquareRoot() ;
+         rc = ossMmapFile::flushBlock( segmentID, offset, length, sync ) ;
+      }
+
+      return rc ;
+   }
+
+   INT32 _dmsStorageBase::flushSegment( UINT32 segmentID, BOOLEAN sync )
+   {
+      return ossMmapFile::flush( segmentID, sync ) ;
+   }
+
+   INT32 _dmsStorageBase::flushAll( BOOLEAN sync )
+   {
+      return ossMmapFile::flushAll( sync ) ;
+   }
+
    // flush all dirty segments to disk by traverse _dirtyList array
    // this function returns void since it doesn't affect frontend workload
    // regardless whether the flush success or not
-   void _dmsStorageBase::flushDirtySegments ( UINT32 *pNum )
+   void _dmsStorageBase::flushDirtySegments ( UINT32 *pNum, BOOLEAN sync )
    {
       INT32 rc = SDB_OK ;
       INT32 maxSegmentID = 0 ;
       UINT32 numbers = 0 ;
+      UINT32 segmentID = 0 ;
       // once we latch the storage unit, we have to check if the header is null.
       // If the header is null, that means closeStorage is called and we should
       // get out of the function
@@ -968,25 +1050,19 @@ namespace engine
                    maxSegmentNum() + _dataSegID,
                    "current top segment id can't be greater than "
                    "maximum number of segment for storage unit" ) ;
+
+      if ( SDB_OK != _onFlushDirty( sync ) )
+      {
+         /// stop
+         goto done ;
+      }
+
+      /// first flush meta
+      flushMeta( sync ) ;
+
       // calculate how many "segment groups" we should go through
       // note each group is consists of 8 segments
       maxSegmentID = ceil (( _maxSegID + 1 - _dataSegID ) / 8.0f ) ;
-      // always flush header and metadata
-      for ( UINT32 i = 0; i < _dataSegID; ++i )
-      {
-         // we should check the header before every phyical flush, to make sure
-         // the storage unit is still open at the time
-         if ( !_dmsHeader )
-            goto done ;
-         rc = flush ( i, TRUE ) ;
-         if ( rc )
-         {
-            PD_LOG ( PDWARNING,
-                     "Failed to flush segment %d to disk, rc = %d",
-                     i, rc ) ;
-         }
-      }
-
       // then flush data with dirty pages
       for ( INT32 i = 0; i < maxSegmentID; ++i )
       {
@@ -995,34 +1071,36 @@ namespace engine
          if ( !_dmsHeader )
             goto done ;
          // each byte represents 8 segments, let's check each byte first
-         if ( _dirtyList[i] != 0 )
+         if ( 0 == _dirtyList[i] )
          {
-            // if the byte is not 0, let's see which page need to be flushed
-            for ( INT32 j = 0; j < 8; ++j )
+            continue ;
+         }
+         // if the byte is not 0, let's see which page need to be flushed
+         for ( INT32 j = 0 ; j < 8 ; ++j )
+         {
+            // if the segment on j's bit is dirty, let's flush
+            if ( OSS_BIT_TEST( _dirtyList[i], ( 1 << j ) ) )
             {
-               // if the segment on j's bit is dirty, let's flush
-               if ( OSS_BIT_TEST ( _dirtyList[i], ( 1 << j ) ) )
+               // now let's convert the bit back to 0
+               OSS_BIT_CLEAR( _dirtyList[i], ( 1 << j ) ) ;
+               segmentID = _dataSegID + ( i << 3 ) + j ;
+               rc = flushSegment( segmentID, sync ) ;
+               if ( rc )
                {
-                  rc = flush ( _dataSegID + (i<<3) + j, TRUE ) ;
-                  if ( rc )
-                  {
-                     PD_LOG ( PDWARNING,
-                              "Failed to flush segment %d to disk, rc = %d",
-                              i + _dataSegID, rc ) ;
-                  }
-                  // now let's convert the bit back to 0
-                  OSS_BIT_CLEAR ( _dirtyList[i], ( 1 << j ) ) ;
-                  ++numbers ;
-               } // if ( _dirtyList[i] & ( 1 << j ) )
-            } // for ( INT32 j = 0; j < 8; ++j )
-         } // if ( _dirtyList[i] != 0 )
+                  OSS_BIT_SET( _dirtyList[i], ( 1 << j ) ) ;
+                  PD_LOG ( PDWARNING, "Failed to flush segment %d to disk, "
+                           "rc = %d", segmentID, rc ) ;
+               }
+               ++numbers ;
+            } // if ( _dirtyList[i] & ( 1 << j ) )
+         } // for ( INT32 j = 0; j < 8; ++j )
       } // for ( INT32 i = 0; i < maxSegmentNum; ++i )
+
    done :
       if ( pNum )
       {
          *pNum = numbers ;
       }
-      return ;
    }
 
    void _dmsStorageBase::_markHeaderInvalid( BOOLEAN doublecheck )
@@ -1040,20 +1118,19 @@ namespace engine
                goto done ;
             }
          }
-        
+
          _validFlag = 0 ;
          _dmsHeader->_validFlag = 0 ;
          _dmsHeader->_lsn = -1 ;
 
             /// flush to file
-         ossMmapFile::flush( 0, TRUE ) ;
+         flushHeader( TRUE ) ;
       }
    done:
        if ( locked )
        {
           ossUnlatch( &_pagecleanerLatch ) ;
        }
-       return ;
    }
 
    void _dmsStorageBase::_markHeaderValid()
@@ -1062,7 +1139,7 @@ namespace engine
       {
          _dmsHeader->_validFlag = 1 ;
          _dmsHeader->_lsn = _lastLSN.peek() ;
-         ossMmapFile::flush( 0, TRUE ) ;
+         flushHeader( TRUE ) ;
       }
       return ;
    }
@@ -1076,7 +1153,7 @@ namespace engine
 
    BOOLEAN _dmsStorageBase::_noWriteForAWhile() const
    {
-      return 120000 < pmdGetTickSpanTime( _lastTick ) ;
+      return DMS_NO_WRITE_TIME_FOR_SYNC < pmdGetTickSpanTime( _lastTick ) ;
    }
 
    /*

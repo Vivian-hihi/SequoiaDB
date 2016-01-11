@@ -105,6 +105,12 @@ namespace engine
       else
       {
          rc = _openLob( path, createNew, rmWhenExist ) ;
+         /// when open exist lob files, need to analysis the lob count
+         if ( !createNew && SDB_OK == rc &&
+              getHeader()->_version <= DMS_LOB_VERSION_1 )
+         {
+            rc = _calcCount() ;
+         }
       }
 
       PD_TRACE_EXITRC( SDB__DMSSTORAGELOB_OPEN, rc ) ;
@@ -219,11 +225,6 @@ namespace engine
 
       PD_TRACE_EXIT( SDB__DMSSTORAGELOB_REMOVESTORAGEFILES ) ;
       return ;
-   }
-
-   BOOLEAN _dmsStorageLob::isOpened() const
-   {
-      return _data.isOpened() ;
    }
 
     // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGELOB_GETLOBMETA, "_dmsStorageLob::getLobMeta" )
@@ -787,11 +788,15 @@ namespace engine
       }
 
       blk = DMS_LOB_META( extent ) ;
+      ossMemset( blk->_pad1, 0, sizeof( blk->_pad1 ) ) ;
+      ossMemset( blk->_pad2, 0, sizeof( blk->_pad2 ) ) ;
       ossMemcpy( blk->_oid, record._oid, DMS_LOB_OID_LEN ) ;
       blk->_sequence = record._sequence ;
       blk->_dataLen = record._dataLen ;
       blk->_clLogicalID = context->clLID() ;
       blk->_mbID = context->mbID() ;
+      blk->_prevPageInBucket = DMS_LOB_INVALID_PAGEID ;
+      blk->_nextPageInBucket = DMS_LOB_INVALID_PAGEID ;
 
       rc = _push2Bucket( _getBucket( record._hash ),
                          page, *blk ) ;
@@ -800,6 +805,12 @@ namespace engine
          PD_LOG( PDERROR, "failed to push page[%d] to bucket[%d]",
                  page, _getBucket( record._hash ) ) ;
          goto error ;
+      }
+
+      /// add stat
+      if ( DMS_LOB_META_SEQUENCE == record._sequence )
+      {
+         context->mbStat()->_totalLobs++ ;
       }
 
    done:
@@ -1274,6 +1285,68 @@ namespace engine
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGELOB_CALCCOUNT, "_dmsStorageLob::_calcCount" )
+   INT32 _dmsStorageLob::_calcCount()
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__DMSSTORAGELOB_CALCCOUNT ) ;
+      DMS_LOB_PAGEID current = 0 ;
+
+      /// clear all lob count
+      for( UINT32 i = 0 ; i < DMS_MME_SLOTS ; ++i )
+      {
+         _dmsData->_mbStatInfo[i]._totalLobs = 0 ;
+      }
+
+      /// re-count
+      while ( current < (INT32)pageNum() )
+      {
+         if ( DMS_LOB_PAGE_IN_USED( current ) )
+         {
+            _dmsLobDataMapBlk *blk = NULL ;
+            dmsMB *mb = NULL ;
+            ossValuePtr extent = extentAddr( current ) ;
+            if ( !extent )
+            {
+               PD_LOG( PDERROR, "we got a NULL extent from extendAddr(), pageid:%d",
+                       current ) ;
+               rc = SDB_SYS ;
+               goto error ;
+            }
+
+            blk = DMS_LOB_META( extent ) ;
+            if ( blk->_mbID >= DMS_MME_SLOTS || blk->_mbID < 0 )
+            {
+               ++current ;
+               continue ;
+            }
+            mb = &(_dmsData->_dmsMME->_mbList[ blk->_mbID ] ) ;
+            if ( mb->_logicalID != blk->_clLogicalID ||
+                 DMS_LOB_META_SEQUENCE != blk->_sequence )
+            {
+               ++current ;
+               continue ;
+            }
+
+            /// stat
+            _dmsData->_mbStatInfo[blk->_mbID]._totalLobs += 1 ;
+         }
+         ++current ;
+      }
+      /// flush MME
+      _dmsData->flushMME( TRUE ) ;
+
+      /// update the header
+      _dmsHeader->_version = DMS_LOB_CUR_VERSION ;
+      flushHeader( TRUE ) ;
+
+   done:
+      PD_TRACE_EXITRC( SDB__DMSSTORAGELOB_CALCCOUNT, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGELOB_READPAGE, "_dmsStorageLob::_readPage" )
    INT32 _dmsStorageLob::readPage( DMS_LOB_PAGEID &pos,
                                    BOOLEAN onlyMetaPage,
@@ -1442,6 +1515,10 @@ namespace engine
       }
 
       _dmsData->_mbStatInfo[ blk->_mbID ]._totalLobPages -= 1 ;
+      if ( DMS_LOB_META_SEQUENCE == blk->_sequence )
+      {
+         _dmsData->_mbStatInfo[ blk->_mbID ]._totalLobs -= 1 ;
+      }
       _releasePage( page, NULL ) ;
    done:
       PD_TRACE_EXITRC( SDB__DMSSTORAGELOB__REMOVEPAGE, rc ) ;
@@ -1559,6 +1636,7 @@ namespace engine
 
       // clear the stat info
       mbContext->mbStat()->_totalLobPages = 0 ;
+      mbContext->mbStat()->_totalLobs = 0 ;
 
       if ( NULL != dpscb )
       {
@@ -1669,6 +1747,23 @@ namespace engine
       return rc ;
    error:
       goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGELOB_ONFLUSHDIRTY, "_dmsStorageLob::_onFlushDirty" )
+   INT32 _dmsStorageLob::_onFlushDirty( BOOLEAN sync )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__DMSSTORAGELOB_ONFLUSHDIRTY ) ;
+      if ( !isOpened() )
+      {
+         rc = SDB_INVALIDARG ;
+      }
+      else
+      {
+         _data.flush() ;
+      }
+      PD_TRACE_EXITRC( SDB__DMSSTORAGELOB_ONFLUSHDIRTY, rc ) ;
+      return rc ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGELOB_TRYTOFLUSH, "_dmsStorageLob::tryToFlush" )

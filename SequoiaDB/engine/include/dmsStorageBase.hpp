@@ -260,18 +260,27 @@ namespace engine
          void  closeStorage () ;
          INT32 removeStorage() ;
          BOOLEAN isOpened() const { return ossMmapFile::_opened ; }
-         virtual void  syncMemToMmap () {}
-         void  flushDirtySegments ( UINT32 *pNum = NULL ) ;
+
+         /// flush functions
+         INT32 flushHeader( BOOLEAN sync = FALSE ) ;
+         INT32 flushSME( BOOLEAN sync = FALSE ) ;
+         INT32 flushMeta( BOOLEAN sync = FALSE,
+                          UINT32 *pExceptID = NULL,
+                          UINT32 num = 0 ) ;
+         INT32 flushPages( SINT32 pageID, UINT16 pageNum,
+                           BOOLEAN sync = FALSE ) ;
+         INT32 flushSegment( UINT32 segmentID, BOOLEAN sync = FALSE ) ;
+         INT32 flushAll( BOOLEAN sync = FALSE ) ;
+         void  flushDirtySegments( UINT32 *pNum = NULL,
+                                   BOOLEAN sync = TRUE ) ;
+
          void  restoreForCrash() { _isCrash = FALSE ; }
+         void  resetLastLSN( UINT64 lsn ) { _lastLSN.init( lsn ) ; }
+         UINT64 getLastTick() const { return _lastTick ; }
+
+         /// virtual interface
+         virtual void  syncMemToMmap () {}
          virtual INT32 tryToFlush( BOOLEAN ignoreTick, BOOLEAN &failed ) = 0 ;
-         void resetLastLSN( UINT64 lsn )
-         {
-            _lastLSN.init( lsn ) ;
-         }
-         UINT64 getLastTick() const
-         {
-            return _lastTick ;
-         }
 
       private:
          virtual UINT64 _dataOffset()  = 0 ;
@@ -287,10 +296,10 @@ namespace engine
          virtual void   _initHeaderPageSize( dmsStorageUnitHeader *pHeader,
                                              dmsStorageInfo *pInfo ) ;
          virtual INT32  _checkPageSize( dmsStorageUnitHeader *pHeader ) ;
-         virtual BOOLEAN _keepInRam() const
-         {
-            return FALSE ;
-         }
+         virtual BOOLEAN _keepInRam() const { return FALSE ; }
+
+         /// flush callback:  SDB_OK: continue, no SDB_OK: stop
+         virtual INT32  _onFlushDirty( BOOLEAN sync ) { return SDB_OK ; }
 
       protected:
          // No space will extent new segment
@@ -318,9 +327,9 @@ namespace engine
             return ;
          }
 
-         void _registerNewWriting() ;
+         void     _registerNewWriting() ;
+         BOOLEAN  _noWriteForAWhile() const ;
 
-         BOOLEAN _noWriteForAWhile() const ;
       private:
          INT32    _initializeStorageUnit () ;
          void     _initHeader ( dmsStorageUnitHeader *pHeader ) ;
@@ -419,7 +428,7 @@ namespace engine
       return 0 ;
    }
    OSS_INLINE UINT32 _dmsStorageBase::extent2Segment( dmsExtentID extentID,
-                                                  UINT32 * pSegOffset )
+                                                      UINT32 * pSegOffset )
    {
       if ( pSegOffset )
       {
@@ -430,7 +439,7 @@ namespace engine
       return ( extentID >> _segmentPagesSquare ) + _dataSegID ;
    }
    OSS_INLINE dmsExtentID _dmsStorageBase::segment2Extent( UINT32 segID,
-                                                       UINT32 segOffset )
+                                                           UINT32 segOffset )
    {
       if ( segID < _dataSegID )
       {

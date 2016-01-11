@@ -211,6 +211,11 @@ namespace engine
                                       SDB_DPSCB *dpsCB ) ;
       INT32 unloadCollectonSpace( const CHAR *pName, _pmdEDUCB *cb ) ;
 
+      void dumpInfo ( std::set<monCLSimple> &collectionList,
+                      BOOLEAN sys = FALSE ) ;
+      void dumpInfo ( std::set<monCSSimple> &csList,
+                      BOOLEAN sys = FALSE ) ;
+
       void dumpInfo ( std::set<monCollection> &collectionList,
                       BOOLEAN sys = FALSE ) ;
       void dumpInfo ( std::set<monCollectionSpace> &csList,

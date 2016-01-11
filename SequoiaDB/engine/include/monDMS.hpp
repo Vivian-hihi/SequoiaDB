@@ -51,17 +51,27 @@ using namespace bson ;
 
 namespace engine
 {
+   /*
+      _detailedInfo define
+   */
    class _detailedInfo : public SDBObject
    {
    public :
-      UINT32 _sequence ;
       UINT32 _numIndexes ;
       UINT16 _blockID ;
       UINT16 _flag ;
       UINT32 _logicID ;
 
+      UINT32 _attribute ;
+      UINT8  _compressType ;
+      UINT32 _hasDict ;
+
+      UINT32 _pageSize ;
+      UINT32 _lobPageSize ;
+
       // stat info
       UINT64 _totalRecords ;
+      UINT64 _totalLobs ;
       UINT32 _totalDataPages ;
       UINT32 _totalIndexPages ;
       UINT32 _totalLobPages ;
@@ -69,21 +79,23 @@ namespace engine
       UINT64 _totalIndexFreeSpace ;
       // end
 
-      OSS_INLINE BOOLEAN operator<(const _detailedInfo &r) const
-      {
-         return _sequence < r._sequence ;
-      }
-
       _detailedInfo ()
       {
-         _sequence            = 0 ;
          _numIndexes          = 0 ;
          _blockID             = 0 ;
          _flag                = 0 ;
          _flag                = 0 ;
          _logicID             = 0 ;
 
+         _attribute           = 0 ;
+         _compressType        = 0 ;
+         _hasDict             = FALSE ;
+
+         _pageSize            = 0 ;
+         _lobPageSize         = 0 ;
+
          _totalRecords        = 0 ;
+         _totalLobs           = 0 ;
          _totalDataPages      = 0 ;
          _totalIndexPages     = 0 ;
          _totalLobPages       = 0 ;
@@ -92,27 +104,54 @@ namespace engine
       }
    } ;
    typedef class _detailedInfo detailedInfo ;
-   // for list collections
+
+   /*
+      _monCLSimple define
+   */
+   class _monCLSimple : public SDBObject
+   {
+      public:
+         CHAR  _name[ DMS_COLLECTION_FULL_NAME_SZ + 1 ] ;
+
+         _monCLSimple()
+         {
+            _name[ 0 ] = 0 ;
+         }
+
+         BOOLEAN operator<(const _monCLSimple &r) const
+         {
+            return ossStrncmp( _name, r._name, sizeof(_name))<0 ;
+         }
+   } ;
+   typedef _monCLSimple monCLSimple ;
+
+   /*
+      _monCollection define
+   */
    class _monCollection : public SDBObject
    {
    public :
       CHAR _name [ DMS_COLLECTION_FULL_NAME_SZ + 1 ] ;
-      std::set<detailedInfo> _details ;
+      std::map<UINT32, detailedInfo>   _details ;
+
+      _monCollection()
+      {
+         _name[ 0 ]  = 0 ;
+      }
       OSS_INLINE BOOLEAN operator<(const _monCollection &r) const
       {
          return ossStrncmp( _name, r._name, sizeof(_name))<0 ;
       }
-      OSS_INLINE void addDetails ( UINT32 sequence, UINT32 numIndexes,
-                                   UINT16 blockID, UINT16 flag,
-                                   UINT32 logicID, UINT64 totalRecords,
-                                   UINT32 totalDataPages,
-                                   UINT32 totalIndexPages,
-                                   UINT32 totalLobPages,
-                                   UINT64 totalDataFreeSpace,
-                                   UINT64 totalIndexFreeSpace)
+      OSS_INLINE detailedInfo& addDetails ( UINT32 sequence, UINT32 numIndexes,
+                                            UINT16 blockID, UINT16 flag,
+                                            UINT32 logicID, UINT64 totalRecords,
+                                            UINT32 totalDataPages,
+                                            UINT32 totalIndexPages,
+                                            UINT32 totalLobPages,
+                                            UINT64 totalDataFreeSpace,
+                                            UINT64 totalIndexFreeSpace )
       {
-         detailedInfo info ;
-         info._sequence = sequence ;
+         detailedInfo &info = _details[ sequence ] ;
          info._numIndexes = numIndexes ;
          info._blockID = blockID ;
          info._flag = flag ;
@@ -125,19 +164,60 @@ namespace engine
          info._totalDataFreeSpace  = totalDataFreeSpace ;
          info._totalIndexFreeSpace = totalIndexFreeSpace ;
 
-         _details.insert ( info ) ;
+         return info ;
       }
 
    } ;
    typedef class _monCollection monCollection ;
 
+   /*
+      _monCSSimple define
+   */
+   class _monCSSimple : public SDBObject
+   {
+      public:
+         CHAR  _name[ DMS_COLLECTION_SPACE_NAME_SZ + 1 + 1 ] ;
+
+         _monCSSimple()
+         {
+            _name[ 0 ] = 0 ;
+         }
+
+         BOOLEAN operator<(const _monCSSimple &r) const
+         {
+            return ossStrncmp( _name, r._name, sizeof(_name))<0 ;
+         }
+   } ;
+   typedef _monCSSimple monCSSimple ;
+
+   /*
+      _monCollectionSpace define
+   */
    class _monCollectionSpace : public SDBObject
    {
    public :
+      CHAR _name [ DMS_COLLECTION_SPACE_NAME_SZ + 1 ] ;
+      vector<monCLSimple> _collections ;
+      INT32 _pageSize ;
+      INT32 _clNum ;
+      INT64 _totalRecordNum ;
+      INT64 _totalSize ;
+      INT64 _freeSize ;
+      INT32 _lobPageSize ;
+      INT64 _totalDataSize ;
+      INT64 _totalIndexSize ;
+      INT64 _totalLobSize ;
+      INT64 _freeDataSize ;
+      INT64 _freeIndexSize ;
+      INT64 _freeLobSize ;
+      UINT64 _dataLsn ;
+      UINT64 _lobLsn ;
+      UINT8  _committed ;
+      string _committedDesc ;
+
       _monCollectionSpace ()
       {
          ossMemset ( _name, 0, sizeof(_name)) ;
-         _collections.clear() ;
          _pageSize = 0 ;
          _clNum    = 0 ;
          _totalRecordNum = 0 ;
@@ -156,8 +236,8 @@ namespace engine
       }
       _monCollectionSpace ( const _monCollectionSpace &right )
       {
-         vector<CHAR *>::const_iterator it ;
          ossMemcpy ( _name, right._name, sizeof(_name) ) ;
+         _collections = right._collections ;
          _pageSize = right._pageSize ;
          _clNum    = right._clNum ;
          _totalRecordNum = right._totalRecordNum ;
@@ -174,58 +254,11 @@ namespace engine
          _lobLsn = right._lobLsn ;
          _committed = right._committed ;
          _committedDesc = right._committedDesc ;
-         try
-         {
-            for ( it = right._collections.begin();
-                  it != right._collections.end(); ++it )
-            {
-               CHAR *p = (CHAR*)SDB_OSS_MALLOC ( DMS_COLLECTION_NAME_SZ + 1 ) ;
-               if ( p )
-               {
-                  ossMemcpy ( p, *it, DMS_COLLECTION_NAME_SZ + 1 ) ;
-                  _collections.push_back ( p ) ;
-               }
-               else
-               {
-                  PD_LOG ( PDERROR, "Failed to allocate memory" ) ;
-               }
-            }
-         }
-         catch ( std::exception &e )
-         {
-            PD_LOG ( PDERROR,
-                     "Exception happened during monCollectionSpace =: %s",
-                     e.what() ) ;
-         }
       }
       ~_monCollectionSpace()
       {
-         vector<CHAR*>::iterator i ;
-         for ( i = _collections.begin(); i != _collections.end(); ++i )
-         {
-            SDB_OSS_FREE ( *i ) ;
-         }
          _collections.clear() ;
       }
-
-      CHAR _name [ DMS_COLLECTION_SPACE_NAME_SZ + 1 ] ;
-      vector<CHAR *> _collections ;
-      INT32 _pageSize ;
-      INT32 _clNum ;
-      INT64 _totalRecordNum ;
-      INT64 _totalSize ;
-      INT64 _freeSize ;
-      INT32 _lobPageSize ;
-      INT64 _totalDataSize ;
-      INT64 _totalIndexSize ;
-      INT64 _totalLobSize ;
-      INT64 _freeDataSize ;
-      INT64 _freeIndexSize ;
-      INT64 _freeLobSize ;
-      UINT64 _dataLsn ;
-      UINT64 _lobLsn ;
-      UINT8  _committed ;
-      string _committedDesc ;
 
       OSS_INLINE BOOLEAN operator<(const _monCollectionSpace &r) const
       {
@@ -233,8 +266,8 @@ namespace engine
       }
       _monCollectionSpace &operator= (const _monCollectionSpace &right)
       {
-         vector<CHAR *>::const_iterator it ;
          ossMemcpy ( _name, right._name, sizeof(_name) ) ;
+         _collections = right._collections ;
          _pageSize = right._pageSize ;
          _clNum    = right._clNum ;
          _totalRecordNum = right._totalRecordNum ;
@@ -251,34 +284,15 @@ namespace engine
          _lobLsn = right._lobLsn ;
          _committed = right._committed ;
          _committedDesc = right._committedDesc ;
-         try
-         {
-            for ( it = right._collections.begin();
-                  it != right._collections.end(); ++it )
-            {
-               CHAR *p = (CHAR*)SDB_OSS_MALLOC ( DMS_COLLECTION_NAME_SZ + 1 ) ;
-               if ( p )
-               {
-                  ossMemcpy ( p, *it, DMS_COLLECTION_NAME_SZ + 1 ) ;
-                  _collections.push_back ( p ) ;
-               }
-               else
-               {
-                  PD_LOG ( PDERROR, "Failed to allocate memory" ) ;
-               }
-            }
-         }
-         catch ( std::exception &e )
-         {
-            PD_LOG ( PDERROR,
-                     "Exception happened during monCollectionSpace =: %s",
-                     e.what() ) ;
-         }
+
          return *this ;
       }
    } ;
    typedef class _monCollectionSpace monCollectionSpace ;
 
+   /*
+      _monStorageUnit define
+   */
    class _monStorageUnit : public SDBObject
    {
    public :
@@ -291,6 +305,7 @@ namespace engine
       SINT32 _numCollections ;
       SINT32 _collectionHWM ;
       SINT64 _size ;
+
       OSS_INLINE BOOLEAN operator<(const _monStorageUnit &r) const
       {
          SINT32 rc = ossStrncmp( _name, r._name, sizeof(_name))<0 ;
@@ -299,10 +314,25 @@ namespace engine
             return _sequence < r._sequence ;
          return rc ;
       }
+
+      _monStorageUnit()
+      {
+         _name[ 0 ] = 0 ;
+         _CSID = -1 ;
+         _logicalCSID = 0 ;
+         _pageSize = 0 ;
+         _lobPageSize = 0 ;
+         _sequence = 0 ;
+         _numCollections = 0 ;
+         _collectionHWM = 0 ;
+         _size = 0 ;
+      }
    } ;
    typedef class _monStorageUnit monStorageUnit ;
 
-   // for indexes
+   /*
+      _monIndex define
+   */
    class _monIndex : public SDBObject
    {
    public:
@@ -310,6 +340,13 @@ namespace engine
       CHAR           _version ;
       dmsExtentID    _scanExtLID ;
       BSONObj        _indexDef ;
+
+      _monIndex()
+      {
+         _indexFlag = 0 ;
+         _version = 0 ;
+         _scanExtLID = -1 ;
+      }
    } ;
    typedef _monIndex monIndex ;
 

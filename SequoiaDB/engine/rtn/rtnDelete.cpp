@@ -47,6 +47,7 @@
 #include "pdTrace.hpp"
 #include "rtnTrace.hpp"
 #include "dmsScanner.hpp"
+#include "msgMessageFormat.hpp"
 
 using namespace bson ;
 
@@ -215,6 +216,14 @@ namespace engine
       if ( writable )
       {
          dmsCB->writeDown( cb ) ;
+      }
+      if ( delNum > 0 || SDB_OK == rc )
+      {
+         PD_AUDIT_OP( AUDIT_DML, MSG_BS_DELETE_REQ, AUDIT_OBJ_CL,
+                      pCollectionName, rc,
+                      "DeletedNum:%u, Match:%s, Hint:%s, Flag:%u",
+                      delNum, deletor.toString().c_str(),
+                      hint.toString().c_str(), flags ) ;
       }
       if ( cb )
       {

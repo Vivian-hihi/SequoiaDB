@@ -1203,6 +1203,79 @@ namespace engine
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__SDB_DMSCB_DUMPCLSIMPLE, "_SDB_DMSCB::dumpInfo" )
+   void _SDB_DMSCB::dumpInfo( std::set<monCLSimple> &collectionList,
+                              BOOLEAN sys )
+   {
+      PD_TRACE_ENTRY ( SDB__SDB_DMSCB_DUMPCLSIMPLE );
+      dmsStorageUnit *su = NULL ;
+      ossScopedLock _lock(&_mutex, SHARED) ;
+
+#if defined (_WINDOWS)
+      std::map<const CHAR*, dmsStorageUnitID, cmp_cscb>::const_iterator it ;
+#elif defined (_LINUX)
+      std::map<const CHAR*, dmsStorageUnitID>::const_iterator it ;
+#endif
+      for ( it = _cscbNameMap.begin(); it != _cscbNameMap.end(); it++ )
+      {
+         su = NULL ;
+         dmsStorageUnitID suID = (*it).second ;
+
+         SDB_DMS_CSCB *cscb = _cscbVec[suID] ;
+         if ( !cscb )
+            continue ;
+         su = cscb->_su ;
+         SDB_ASSERT ( su, "storage unit pointer can't be NULL" ) ;
+
+         if ( ( !sys && dmsIsSysCSName(su->CSName()) ) ||
+              ( ossStrcmp ( su->CSName(), SDB_DMSTEMP_NAME ) == 0 ) )
+         {
+            continue ;
+         }
+         su->dumpInfo ( collectionList, sys ) ;
+      } // for ( it = _cscbNameMap.begin(); it != _cscbNameMap.end(); it++ )
+      PD_TRACE_EXIT ( SDB__SDB_DMSCB_DUMPCLSIMPLE );
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__SDB_DMSCB_DUMPCSSIMPLE, "_SDB_DMSCB::dumpInfo" )
+   void _SDB_DMSCB::dumpInfo( std::set < monCSSimple > &csList,
+                              BOOLEAN sys )
+   {
+      PD_TRACE_ENTRY ( SDB__SDB_DMSCB_DUMPCSSIMPLE );
+
+      ossScopedLock _lock(&_mutex, SHARED) ;
+#if defined (_WINDOWS)
+      std::map<const CHAR*, dmsStorageUnitID, cmp_cscb>::const_iterator it ;
+#elif defined (_LINUX)
+      std::map<const CHAR*, dmsStorageUnitID>::const_iterator it ;
+#endif
+      for ( it = _cscbNameMap.begin(); it != _cscbNameMap.end(); ++it )
+      {
+         SDB_DMS_CSCB *cscb = _cscbVec[(*it).second] ;
+         if ( !cscb )
+         {
+            continue ;
+         }
+
+         SDB_ASSERT ( cscb->_su, "storage unit pointer can't be NULL" ) ;
+         if ( !sys && dmsIsSysCSName(cscb->_name) )
+         {
+            continue ;
+         }
+         // do not dump temp cs
+         else if ( dmsIsSysCSName(cscb->_name) &&
+                   0 == ossStrcmp(cscb->_name, SDB_DMSTEMP_NAME ) )
+         {
+            continue ;
+         }
+         monCSSimple  cs ;
+         ossMemset ( cs._name, 0, sizeof(cs._name) ) ;
+         ossStrncpy ( cs._name, cscb->_name, DMS_COLLECTION_SPACE_NAME_SZ );
+         csList.insert ( cs ) ;
+      }
+      PD_TRACE_EXIT ( SDB__SDB_DMSCB_DUMPCSSIMPLE );
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB__SDB_DMSCB_DUMPINFO, "_SDB_DMSCB::dumpInfo" )
    void _SDB_DMSCB::dumpInfo ( std::set<monCollection> &collectionList,
                                BOOLEAN sys )
@@ -1300,6 +1373,7 @@ namespace engine
          cs._freeIndexSize = totalIndexFreeSize ;
          cs._totalLobSize = su->totalSize( DMS_SU_LOB ) ;
          cs._freeLobSize = totalLobFreeSize ;
+
          cs._dataLsn = su->getCurrentDataLSN() ;
          cs._lobLsn = su->getCurrentLobLSN() ;
          cs._committed = su->getValidFlag() ;

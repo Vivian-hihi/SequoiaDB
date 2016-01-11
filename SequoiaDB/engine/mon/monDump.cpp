@@ -246,7 +246,12 @@ namespace engine
 
          if ( transCB && ( MON_MASK_TRANSINFO & mask ) )
          {
-            BSONObj obj = BSON( FIELD_NAME_BEGIN_LSN <<
+            UINT32 transCount = pmdIsPrimary() ?
+                                transCB->getTransCBSize() :
+                                (UINT32)transCB->getTransMap()->size() ;
+            BSONObj obj = BSON( FIELD_NAME_TOTAL_COUNT <<
+                                (INT32)transCount <<
+                                FIELD_NAME_BEGIN_LSN <<
                                 (INT64)transCB->getOldestBeginLsn() ) ;
             ob.append ( FIELD_NAME_TRANS_INFO, obj ) ;
          }
@@ -578,7 +583,7 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_MONSESSIONMONEDUFULL, "monSessionMonEDUFull" )
-   INT32 monSessionMonEDUFull(  BSONObjBuilder &ob, monEDUFull &full,
+   INT32 monSessionMonEDUFull(  BSONObjBuilder &ob, const monEDUFull &full,
                                 ossTickConversionFactor &factor,
                                 ossTime userTime, ossTime sysTime  )
    {
@@ -1135,7 +1140,7 @@ namespace engine
             BSONArrayBuilder ba ;
             monCollection collection = (*it) ;
             ob.append ( FIELD_NAME_NAME, collection._name ) ;
-            std::set<detailedInfo>::const_iterator it1 ;
+            std::map<UINT32, detailedInfo>::iterator it1 ;
             if ( details )
             {
                for ( it1 = collection._details.begin();
@@ -1143,26 +1148,29 @@ namespace engine
                      it1++ )
                {
                   BSONObjBuilder ob1 ;
-                  UINT16 flag = (*it1)._flag ;
+                  detailedInfo &detail = it1->second ;
+                  UINT16 flag = detail._flag ;
                   std::string status = "" ;
-                  ob1.append ( FIELD_NAME_ID,       (*it1)._blockID ) ;
-                  ob1.append ( FIELD_NAME_LOGICAL_ID, (*it1)._logicID ) ;
-                  ob1.append ( FIELD_NAME_SEQUENCE, (*it1)._sequence ) ;
-                  ob1.append ( FIELD_NAME_INDEXES,  (*it1)._numIndexes ) ;
+                  ob1.append ( FIELD_NAME_ID,       detail._blockID ) ;
+                  ob1.append ( FIELD_NAME_LOGICAL_ID, detail._logicID ) ;
+                  ob1.append ( FIELD_NAME_SEQUENCE, (INT32)it1->first ) ;
+                  ob1.append ( FIELD_NAME_INDEXES,  detail._numIndexes ) ;
                   monDMSCollectionFlagToString ( flag, status ) ;
                   ob1.append ( FIELD_NAME_STATUS, status ) ;
                   ob1.append ( FIELD_NAME_TOTAL_RECORDS,
-                               (long long)((*it1)._totalRecords )) ;
+                               (long long)(detail._totalRecords )) ;
+                  ob1.append ( FIELD_NAME_TOTAL_LOBS,
+                               (long long)(detail._totalLobs) ) ;
                   ob1.append ( FIELD_NAME_TOTAL_DATA_PAGES,
-                               (*it1)._totalDataPages ) ;
+                               detail._totalDataPages ) ;
                   ob1.append ( FIELD_NAME_TOTAL_INDEX_PAGES,
-                               (*it1)._totalIndexPages ) ;
+                               detail._totalIndexPages ) ;
                   ob1.append ( FIELD_NAME_TOTAL_LOB_PAGES,
-                               (*it1)._totalLobPages ) ;
+                               detail._totalLobPages ) ;
                   ob1.append ( FIELD_NAME_TOTAL_DATA_FREESPACE,
-                               (long long)((*it1)._totalDataFreeSpace )) ;
+                               (long long)(detail._totalDataFreeSpace )) ;
                   ob1.append ( FIELD_NAME_TOTAL_INDEX_FREESPACE,
-                               (long long)((*it1)._totalIndexFreeSpace )) ;
+                               (long long)(detail._totalIndexFreeSpace )) ;
                   if ( addInfo )
                   {
                      monAppendSystemInfo( ob1, MON_MASK_NODE_NAME ) ;
@@ -1227,12 +1235,12 @@ namespace engine
                // do not list detailed collections if we are on temp cs
                if ( ossStrcmp ( cs._name, SDB_DMSTEMP_NAME ) != 0 )
                {
-                  std::vector<CHAR*>::const_iterator it1 ;
+                  std::vector<monCLSimple>::const_iterator it1 ;
                   for ( it1 = cs._collections.begin();
                         it1!= cs._collections.end();
                         it1++ )
                   {
-                     ab.append (BSON ( FIELD_NAME_NAME << (*it1) ) ) ;
+                     ab.append (BSON ( FIELD_NAME_NAME << (*it1)._name ) ) ;
                   }
                }
                dataCapSize = (INT64)cs._pageSize * DMS_MAX_PG ;
@@ -1806,5 +1814,1121 @@ namespace engine
    error:
       goto done ;
    }
+
+   #define MON_MAX_SLICE_SIZE          ( 1000 )
+   #define MON_TMP_STR_SZ              ( 64 )
+
+   /*
+      _monTransFetcher implement
+   */
+   _monTransFetcher::_monTransFetcher()
+   {
+      _dumpCurrent = TRUE ;
+      _detail = FALSE ;
+      _hitEnd = TRUE ;
+      _addInfoMask = 0 ;
+      _slice = 0 ;
+   }
+
+   _monTransFetcher::~_monTransFetcher()
+   {
+   }
+
+   INT32 _monTransFetcher::init( pmdEDUCB *cb,
+                                 UINT32 addInfoMask,
+                                 BOOLEAN isDumpCurrentEdu,
+                                 BOOLEAN detail )
+   {
+      INT32 rc = SDB_OK ;
+      _dumpCurrent = isDumpCurrentEdu ;
+      _detail = detail ;
+      _addInfoMask = addInfoMask ;
+
+      if ( _dumpCurrent )
+      {
+         _eduList.push( cb->getID() ) ;
+      }
+      else
+      {
+         dpsTransCB *transCB = pmdGetKRCB()->getTransCB() ;
+         if ( transCB )
+         {
+            transCB->dumpTransEDUList( _eduList ) ;
+         }
+      }
+
+      if ( _eduList.empty() )
+      {
+         _hitEnd = TRUE ;
+      }
+      else
+      {
+         _hitEnd = FALSE ;
+         rc = _fetchNextTransInfo() ;
+      }
+
+      return rc ;
+   }
+
+   const CHAR* _monTransFetcher::getName() const
+   {
+      if ( _dumpCurrent )
+      {
+         return _detail ? CMD_NAME_SNAPSHOT_TRANSACTIONS_CUR :
+                          CMD_NAME_LIST_TRANSACTIONS_CUR ;
+      }
+      return _detail ? CMD_NAME_SNAPSHOT_TRANSACTIONS :
+                       CMD_NAME_LIST_TRANSACTIONS ;
+   }
+
+   BOOLEAN _monTransFetcher::isHitEnd() const
+   {
+      return _hitEnd ;
+   }
+
+   INT32 _monTransFetcher::_fetchNextTransInfo()
+   {
+      INT32 rc = SDB_OK ;
+      EDUID eduID = PMD_INVALID_EDUID ;
+      pmdEDUMgr *pMgr = pmdGetKRCB()->getEDUMgr() ;
+      dpsTransCB *pTransCB= sdbGetTransCB() ;
+
+   retry:
+      if ( _eduList.empty() )
+      {
+         _hitEnd = TRUE ;
+         rc = SDB_DMS_EOC ;
+         goto error ;
+      }
+
+      eduID = _eduList.front() ;
+      _eduList.pop() ;
+
+      /// clear
+      _curTransInfo._lockList.clear() ;
+      _curTransInfo._transID = DPS_INVALID_TRANS_ID ;
+
+      if ( SDB_OK != pMgr->dumpTransInfo( eduID, _curTransInfo ) ||
+           DPS_INVALID_TRANS_ID == _curTransInfo._transID )
+      {
+         /// if the edu has exited
+         goto retry ;
+      }
+
+      _pos = _curTransInfo._lockList.begin() ;
+
+      try
+      {
+         BSONObjBuilder builder ;
+         monAppendSystemInfo( builder, _addInfoMask ) ;
+         builder.append( FIELD_NAME_SESSIONID,
+                         (INT64)_curTransInfo._eduID ) ;
+         builder.append( FIELD_NAME_TRANSACTION_ID,
+                         (INT64)pTransCB->getTransID( _curTransInfo._transID ) ) ;
+         builder.appendBool( FIELD_NAME_IS_ROLLBACK,
+                             pTransCB->isRollback( _curTransInfo._transID ) ?
+                             TRUE : FALSE ) ;
+         builder.append( FIELD_NAME_TRANS_LSN_CUR,
+                         (INT64)_curTransInfo._curTransLsn ) ;
+         builder.append( FIELD_NAME_TRANS_WAIT_LOCK,
+                         _curTransInfo._waitLock.toBson() ) ;
+         builder.append( FIELD_NAME_TRANS_LOCKS_NUM,
+                         (INT32)_curTransInfo._locksNum ) ;
+
+         _curEduInfo = builder.obj() ;
+         _slice = 0 ;
+      }
+      catch( std::exception &e )
+      {
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "Occur exception: %s", e.what() ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _monTransFetcher::fetch( BSONObj &obj )
+   {
+      INT32 rc = SDB_OK ;
+      UINT32 lockNum = 0 ;
+      BOOLEAN hitThisEnd = FALSE ;
+
+      if ( _hitEnd )
+      {
+         rc = SDB_DMS_EOC ;
+         goto error ;
+      }
+
+      if ( !_detail )
+      {
+         obj = _curEduInfo ;
+         hitThisEnd = TRUE ;
+      }
+      else
+      {
+         BSONObjBuilder bobEduTransInfo ;
+         bobEduTransInfo.appendElements( _curEduInfo ) ;
+
+         BSONArrayBuilder babLockList( bobEduTransInfo.subarrayStart(
+                                       FIELD_NAME_TRANS_LOCKS ) ) ;
+         for ( ; lockNum < MON_MAX_SLICE_SIZE ; ++lockNum )
+         {
+            if ( _pos == _curTransInfo._lockList.end() )
+            {
+               break ;
+            }
+            else if ( _pos->first == _curTransInfo._waitLock )
+            {
+               ++_pos ;
+               continue ;
+            }
+            babLockList.append( _pos->first.toBson() ) ;
+            ++_pos ;
+         }
+         bobEduTransInfo.done() ;
+
+         if ( _pos == _curTransInfo._lockList.end() )
+         {
+            hitThisEnd = TRUE ;
+         }
+         else if ( 0 == _slice )
+         {
+            _slice = 1 ;
+         }
+
+         if ( _slice > 0 )
+         {
+            bobEduTransInfo.append( FIELD_NAME_SLICE, (INT32)_slice ) ;
+            ++_slice ;
+         }
+         obj = bobEduTransInfo.obj() ;
+      }
+
+      if ( hitThisEnd )
+      {
+         rc = _fetchNextTransInfo() ;
+         if ( SDB_DMS_EOC == rc )
+         {
+            rc = SDB_OK ;
+         }
+         PD_RC_CHECK( rc, PDERROR, "Fetch next trans info failed, rc: %d",
+                      rc ) ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   /*
+      _monContextFetcher implement
+   */
+   _monContextFetcher::_monContextFetcher()
+   {
+      _dumpCurrent = FALSE ;
+      _detail = TRUE ;
+      _addInfoMask = 0 ;
+      _hitEnd = TRUE ;
+   }
+
+   _monContextFetcher::~_monContextFetcher()
+   {
+   }
+
+   INT32 _monContextFetcher::init( pmdEDUCB *cb, UINT32 addInfoMask,
+                                   BOOLEAN isDumpCurrentEdu,
+                                   BOOLEAN detail )
+   {
+      SDB_RTNCB *rtnCB = pmdGetKRCB()->getRTNCB() ;
+      SDB_ASSERT( rtnCB, "RTNCB can't be NULL" ) ;
+      SDB_ASSERT( cb, "CB can't be NULL" ) ;
+
+      _addInfoMask = addInfoMask ;
+      _detail = detail ;
+      _dumpCurrent = isDumpCurrentEdu ;
+
+      if ( !_detail )
+      {
+         if ( _dumpCurrent )
+         {
+            std::set <SINT64> &contextList = _contextList[ cb->getID() ] ;
+            cb->contextCopy( contextList ) ;
+         }
+         else
+         {
+            rtnCB->contextDump( _contextList ) ;
+         }
+         _hitEnd = _contextList.empty() ? TRUE : FALSE ;
+      }
+      else
+      {
+         rtnCB->monContextSnap( _contextInfoList, _dumpCurrent ?
+                                cb->getID() : PMD_INVALID_EDUID ) ;
+         _hitEnd = _contextInfoList.empty() ? TRUE : FALSE ;
+      }
+
+      return SDB_OK ;
+   }
+
+   const CHAR* _monContextFetcher::getName() const
+   {
+      if ( _dumpCurrent )
+      {
+         return _detail ? CMD_NAME_SNAPSHOT_CONTEXTS_CURRENT :
+                          CMD_NAME_LIST_CONTEXTS_CURRENT ;
+      }
+      return _detail ? CMD_NAME_SNAPSHOT_CONTEXTS :
+                       CMD_NAME_LIST_CONTEXTS ;
+   }
+
+   BOOLEAN _monContextFetcher::isHitEnd() const
+   {
+      return _hitEnd ;
+   }
+
+   INT32 _monContextFetcher::fetch( BSONObj &obj )
+   {
+      INT32 rc = SDB_OK ;
+
+      if ( _hitEnd )
+      {
+         rc = SDB_DMS_EOC ;
+         goto error ;
+      }
+
+      if ( _detail )
+      {
+         rc = _fetchNextDetail( obj ) ;
+      }
+      else
+      {
+         rc = _fetchNextSimple( obj ) ;
+      }
+      if ( rc )
+      {
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _monContextFetcher::_fetchNextSimple( BSONObj &obj )
+   {
+      INT32 rc = SDB_OK ;
+
+      if ( _contextList.size() == 0 )
+      {
+         _hitEnd = TRUE ;
+         rc = SDB_DMS_EOC ;
+         goto error ;
+      }
+
+      try
+      {
+         BSONObjBuilder ob ;
+         std::map<UINT64, std::set<SINT64> >::iterator it ;
+         std::set<SINT64>::iterator itSet ;
+
+         it = _contextList.begin() ;
+         std::set<SINT64> &setCtx = it->second ;
+
+         /// add system info
+         monAppendSystemInfo( ob, _addInfoMask ) ;
+
+         ob.append( FIELD_NAME_SESSIONID, (SINT64)it->first ) ;
+         ob.append( FIELD_NAME_TOTAL_COUNT, (INT32)setCtx.size() ) ;
+
+         BSONArrayBuilder ba( ob.subarrayStart( FIELD_NAME_CONTEXTS ) ) ;
+         for ( itSet = setCtx.begin(); itSet!= setCtx.end(); ++itSet )
+         {
+            ba.append ( (*itSet) ) ;
+         }
+         ba.done() ;
+         obj = ob.obj() ;
+
+         /// remove current edu info
+         _contextList.erase( it ) ;
+         if ( _contextList.size() == 0 )
+         {
+            _hitEnd = TRUE ;
+         }
+      }
+      catch ( std::exception &e )
+      {
+         PD_LOG ( PDERROR, "Failed to create BSON objects for context, %s",
+                  e.what() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _monContextFetcher::_fetchNextDetail( BSONObj &obj )
+   {
+      INT32 rc = SDB_OK ;
+
+      if ( _contextInfoList.size() == 0 )
+      {
+         _hitEnd = TRUE ;
+         rc = SDB_DMS_EOC ;
+         goto error ;
+      }
+
+      try
+      {
+         BSONObjBuilder ob ;
+         ossTickConversionFactor factor ;
+
+         std::map<UINT64, std::set<monContextFull> >::iterator it ;
+         std::set<monContextFull>::iterator itSet ;
+
+         CHAR timestampStr[ OSS_TIMESTAMP_STRING_LEN + 1] = { 0 } ;
+         UINT32 seconds = 0 ;
+         UINT32 microseconds = 0 ;
+
+         it = _contextInfoList.begin() ;
+         std::set<monContextFull> &setInfo = it->second ;
+
+         /// add system info
+         monAppendSystemInfo( ob, _addInfoMask ) ;
+
+         /// add session id
+         ob.append( FIELD_NAME_SESSIONID, (INT64)it->first ) ;
+
+         BSONArrayBuilder ba( ob.subarrayStart( FIELD_NAME_CONTEXTS ) ) ;
+         for ( itSet = setInfo.begin() ; itSet != setInfo.end() ; ++itSet )
+         {
+            const monContextFull &ctx = *itSet ;
+            ossTimestamp startTime = ctx._monContext._startTimestamp ;
+            BSONObjBuilder sub( ba.subobjStart() ) ;
+
+            sub.append( FIELD_NAME_CONTEXTID, ctx._contextID );
+            sub.append( FIELD_NAME_TYPE, ctx._typeDesp ) ;
+            sub.append( FIELD_NAME_DESP, ctx._info ) ;
+            sub.append( FIELD_NAME_DATAREAD,
+                        (SINT64)ctx._monContext.dataRead );
+            sub.append( FIELD_NAME_INDEXREAD,
+                        (SINT64)ctx._monContext.indexRead ) ;
+            ctx._monContext.queryTimeSpent.convertToTime ( factor,
+                                                           seconds,
+                                                           microseconds ) ;
+            sub.append( FIELD_NAME_QUERYTIMESPENT,
+                        (SINT64)(seconds * 1000 + microseconds / 1000 ) ) ;
+            ossTimestampToString( startTime, timestampStr ) ;
+            sub.append(FIELD_NAME_STARTTIMESTAMP, timestampStr ) ;
+            sub.done() ;
+         }
+         ba.done() ;
+         obj = ob.obj() ;
+
+         /// remove current
+         _contextInfoList.erase( it ) ;
+         if ( _contextInfoList.size() == 0 )
+         {
+            _hitEnd = TRUE ;
+         }
+      }
+      catch ( std::exception &e )
+      {
+         PD_LOG ( PDERROR, "Failed to create BSON objects for context: %s",
+                  e.what() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   /*
+      _monSessionFetcher implement
+   */
+   _monSessionFetcher::_monSessionFetcher()
+   {
+      _dumpCurrent = TRUE ;
+      _detail = FALSE ;
+      _addInfoMask = 0 ;
+      _hitEnd = TRUE ;
+   }
+
+   _monSessionFetcher::~_monSessionFetcher()
+   {
+   }
+
+   INT32 _monSessionFetcher::init( pmdEDUCB *cb,
+                                   UINT32 addInfoMask,
+                                   BOOLEAN isDumpCurrentEdu,
+                                   BOOLEAN detail )
+   {
+      SDB_ASSERT( cb, "cb can't be NULL" ) ;
+      _addInfoMask = addInfoMask ;
+      _detail = detail ;
+      _dumpCurrent = isDumpCurrentEdu ;
+
+      if ( !_detail )
+      {
+         if ( _dumpCurrent )
+         {
+            monEDUSimple info ;
+            cb->dumpInfo( info ) ;
+            _setInfoSimple.insert( info ) ;
+         }
+         else
+         {
+            cb->getEDUMgr()->dumpInfo( _setInfoSimple ) ;
+         }
+
+         _hitEnd = _setInfoSimple.empty() ? TRUE : FALSE ;
+      }
+      else
+      {
+         if ( _dumpCurrent )
+         {
+            monEDUFull info ;
+            cb->dumpInfo( info ) ;
+            _setInfoDetail.insert( info ) ;
+         }
+         else
+         {
+            cb->getEDUMgr()->dumpInfo( _setInfoDetail ) ;
+         }
+         _hitEnd = _setInfoDetail.empty() ? TRUE : FALSE ;
+      }
+
+      return SDB_OK ;
+   }
+
+   const CHAR* _monSessionFetcher::getName() const
+   {
+      if ( _dumpCurrent )
+      {
+         return _detail ? CMD_NAME_SNAPSHOT_SESSIONS_CURRENT :
+                          CMD_NAME_LIST_SESSIONS_CURRENT ;
+      }
+      return _detail ? CMD_NAME_SNAPSHOT_SESSIONS :
+                       CMD_NAME_LIST_SESSIONS ;
+   }
+
+   BOOLEAN _monSessionFetcher::isHitEnd() const
+   {
+      return _hitEnd ;
+   }
+
+   INT32 _monSessionFetcher::fetch( BSONObj &obj )
+   {
+      INT32 rc = SDB_OK ;
+
+      if ( _hitEnd )
+      {
+         rc = SDB_DMS_EOC ;
+         goto error ;
+      }
+
+      if ( _detail )
+      {
+         rc = _fetchNextDetail( obj ) ;
+      }
+      else
+      {
+         rc = _fetchNextSimple( obj ) ;
+      }
+      if ( rc )
+      {
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _monSessionFetcher::_fetchNextSimple( BSONObj &obj )
+   {
+      INT32 rc = SDB_OK ;
+
+      if ( _setInfoSimple.size() == 0 )
+      {
+         _hitEnd = TRUE ;
+         rc = SDB_DMS_EOC ;
+         goto error ;
+      }
+
+      try
+      {
+         BSONObjBuilder ob ;
+         std::set<monEDUSimple>::iterator it ;
+
+         it = _setInfoSimple.begin() ;
+         const monEDUSimple &simple = *it ;
+
+         /// add system info
+         monAppendSystemInfo( ob, _addInfoMask ) ;
+
+         ob.append ( FIELD_NAME_SESSIONID, (SINT64)simple._eduID ) ;
+         ob.append ( FIELD_NAME_TID, simple._tid ) ;
+         ob.append ( FIELD_NAME_STATUS, simple._eduStatus ) ;
+         ob.append ( FIELD_NAME_TYPE, simple._eduType ) ;
+         ob.append ( FIELD_NAME_EDUNAME, simple._eduName ) ;
+
+         obj = ob.obj () ;
+
+         /// remove current
+         _setInfoSimple.erase( it ) ;
+         if ( _setInfoSimple.empty() )
+         {
+            _hitEnd = TRUE ;
+         }
+      }
+      catch ( std::exception &e )
+      {
+         PD_LOG ( PDERROR, "Failed to create BSON objects for session: %s",
+                  e.what() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _monSessionFetcher::_fetchNextDetail( BSONObj &obj )
+   {
+      INT32 rc = SDB_OK ;
+
+      if ( _setInfoDetail.size() == 0 )
+      {
+         _hitEnd = TRUE ;
+         rc = SDB_DMS_EOC ;
+         goto error ;
+      }
+
+      try
+      {
+         BSONObjBuilder ob ;
+         std::set<monEDUFull>::iterator it ;
+
+         it = _setInfoDetail.begin() ;
+         const monEDUFull &full = *it ;
+
+         /// add system info
+         monAppendSystemInfo( ob, _addInfoMask ) ;
+
+         ob.append( FIELD_NAME_SESSIONID, (INT64)full._eduID ) ;
+         ob.append( FIELD_NAME_TID, full._tid ) ;
+         ob.append( FIELD_NAME_STATUS, full._eduStatus ) ;
+         ob.append( FIELD_NAME_TYPE, full._eduType ) ;
+         ob.append( FIELD_NAME_EDUNAME, full._eduName ) ;
+         ob.append( FIELD_NAME_QUEUE_SIZE, full._queueSize ) ;
+         ob.append( FIELD_NAME_PROCESS_EVENT_COUNT,
+                    (SINT64)full._processEventCount ) ;
+
+         /// add contexts
+         BSONArrayBuilder ba( ob.subarrayStart( FIELD_NAME_CONTEXTS ) ) ;
+         std::set<SINT64>::const_iterator itCtx ;
+         for ( itCtx = full._eduContextList.begin() ;
+               itCtx != full._eduContextList.end() ;
+               ++itCtx )
+         {
+            ba.append( *itCtx ) ;
+         }
+         ba.done() ;
+
+         ossTime userTime, sysTime ;
+         ossTickConversionFactor factor ;
+         ossGetCPUUsage( full._threadHdl, userTime, sysTime ) ;
+         /// add app cb info
+         monSessionMonEDUFull( ob, full, factor, userTime, sysTime ) ;
+         obj = ob.obj () ;
+
+         /// remove the current
+         _setInfoDetail.erase( it ) ;
+         if ( _setInfoDetail.empty() )
+         {
+            _hitEnd = TRUE ;
+         }
+      }
+      catch ( std::exception &e )
+      {
+         PD_LOG ( PDERROR, "Failed to create BSON objects for session: %s",
+                  e.what() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   /*
+      _monCollectionFetch implement
+   */
+   _monCollectionFetch::_monCollectionFetch()
+   {
+      _detail = FALSE ;
+      _includeSys = FALSE ;
+      _addInfoMask = 0 ;
+      _hitEnd = TRUE ;
+   }
+
+   _monCollectionFetch::~_monCollectionFetch()
+   {
+   }
+
+   INT32 _monCollectionFetch::init( pmdEDUCB *cb,
+                                    UINT32 addInfoMask,
+                                    BOOLEAN includeSys,
+                                    BOOLEAN detail )
+   {
+      SDB_DMSCB *dmsCB = pmdGetKRCB()->getDMSCB() ;
+      SDB_ASSERT( dmsCB, "DMSCB can't be NULL" ) ;
+
+      _addInfoMask = addInfoMask ;
+      _detail = detail ;
+      _includeSys = includeSys ;
+
+      if ( !_detail )
+      {
+         dmsCB->dumpInfo( _collectionList, _includeSys ) ;
+         _hitEnd = _collectionList.empty() ? TRUE : FALSE ;
+      }
+      else
+      {
+         dmsCB->dumpInfo( _collectionInfo, _includeSys ) ;
+         _hitEnd = _collectionInfo.empty() ? TRUE : FALSE ;
+      }
+
+      return SDB_OK ;
+   }
+
+   const CHAR* _monCollectionFetch::getName() const
+   {
+      return _detail ? CMD_NAME_SNAPSHOT_COLLECTIONS :
+                       CMD_NAME_LIST_COLLECTIONS ;
+   }
+
+   BOOLEAN _monCollectionFetch::isHitEnd() const
+   {
+      return _hitEnd ;
+   }
+
+   INT32 _monCollectionFetch::fetch( BSONObj &obj )
+   {
+      INT32 rc = SDB_OK ;
+
+      if ( _hitEnd )
+      {
+         rc = SDB_DMS_EOC ;
+         goto error ;
+      }
+
+      if ( _detail )
+      {
+         rc = _fetchNextDetail( obj ) ;
+      }
+      else
+      {
+         rc = _fetchNextSimple( obj ) ;
+      }
+      if ( rc )
+      {
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _monCollectionFetch::_fetchNextSimple( BSONObj &obj )
+   {
+      INT32 rc = SDB_OK ;
+
+      if ( _collectionList.size() == 0 )
+      {
+         _hitEnd = TRUE ;
+         rc = SDB_DMS_EOC ;
+         goto error ;
+      }
+
+      try
+      {
+         BSONObjBuilder ob ;
+         std::set< monCLSimple >::iterator it ;
+
+         it = _collectionList.begin() ;
+         const monCLSimple &simple = *it ;
+
+         ob.append ( FIELD_NAME_NAME, simple._name ) ;
+
+         obj = ob.obj () ;
+
+         /// remove current
+         _collectionList.erase( it ) ;
+         if ( _collectionList.empty() )
+         {
+            _hitEnd = TRUE ;
+         }
+      }
+      catch ( std::exception &e )
+      {
+         PD_LOG ( PDERROR, "Failed to create BSON objects for collections: %s",
+                  e.what() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _monCollectionFetch::_fetchNextDetail( BSONObj &obj )
+   {
+      INT32 rc = SDB_OK ;
+
+      if ( _collectionInfo.size() == 0 )
+      {
+         _hitEnd = TRUE ;
+         rc = SDB_DMS_EOC ;
+         goto error ;
+      }
+
+      try
+      {
+         BSONObjBuilder ob( 512 ) ;
+         std::set< monCollection >::iterator it ;
+         std::map<UINT32, detailedInfo>::const_iterator itDetail ;
+
+         it = _collectionInfo.begin() ;
+         const monCollection &full = *it ;
+
+         /// add system info
+         monAppendSystemInfo( ob, _addInfoMask ) ;
+
+         /// add name & space name
+         ob.append ( FIELD_NAME_NAME, full._name ) ;
+         const CHAR *pDot = ossStrchr( full._name, '.' ) ;
+         if ( pDot )
+         {
+            ob.appendStrWithNoTerminating ( FIELD_NAME_COLLECTIONSPACE,
+                                            full._name,
+                                            pDot - full._name ) ;
+         }
+         /// add detial
+         BSONArrayBuilder ba( ob.subarrayStart( FIELD_NAME_DETAILS ) ) ;
+         for ( itDetail = full._details.cbegin() ;
+               itDetail != full._details.cend() ;
+               ++itDetail )
+         {
+            const detailedInfo &detail = itDetail->second ;
+            BSONObjBuilder sub( ba.subobjStart() ) ;
+
+            UINT16 flag = detail._flag ;
+            std::string status = "" ;
+            CHAR tmp[ MON_TMP_STR_SZ + 1 ] = { 0 } ;
+
+            sub.append ( FIELD_NAME_ID, detail._blockID ) ;
+            sub.append ( FIELD_NAME_LOGICAL_ID, detail._logicID ) ;
+            sub.append ( FIELD_NAME_SEQUENCE, (INT32)itDetail->first ) ;
+            sub.append ( FIELD_NAME_INDEXES, detail._numIndexes ) ;
+            monDMSCollectionFlagToString ( flag, status ) ;
+            sub.append ( FIELD_NAME_STATUS, status ) ;
+            mbAttr2String( detail._attribute, tmp, MON_TMP_STR_SZ ) ;
+            sub.append ( FIELD_NAME_ATTRIBUTE, tmp ) ;
+            if ( OSS_BIT_TEST( detail._attribute, DMS_MB_ATTR_COMPRESSED ) )
+            {
+               sub.append ( FIELD_NAME_COMPRESSIONTYPE,
+                            utilCompressType2String( detail._compressType ) ) ;
+            }
+            else
+            {
+               sub.append ( FIELD_NAME_COMPRESSIONTYPE, "" ) ;
+            }
+            sub.appendBool( FIELD_NAME_HAS_DICT, detail._hasDict ) ;
+            sub.append ( FIELD_NAME_PAGE_SIZE, detail._pageSize ) ;
+            sub.append ( FIELD_NAME_LOB_PAGE_SIZE, detail._lobPageSize ) ;
+
+            /// stat info
+            sub.append ( FIELD_NAME_TOTAL_RECORDS,
+                         (long long)(detail._totalRecords )) ;
+            sub.append ( FIELD_NAME_TOTAL_LOBS,
+                         (long long)(detail._totalLobs) ) ;
+            sub.append ( FIELD_NAME_TOTAL_DATA_PAGES,
+                         detail._totalDataPages ) ;
+            sub.append ( FIELD_NAME_TOTAL_INDEX_PAGES,
+                         detail._totalIndexPages ) ;
+            sub.append ( FIELD_NAME_TOTAL_LOB_PAGES,
+                         detail._totalLobPages ) ;
+            sub.append ( FIELD_NAME_TOTAL_DATA_FREESPACE,
+                         (long long)(detail._totalDataFreeSpace )) ;
+            sub.append ( FIELD_NAME_TOTAL_INDEX_FREESPACE,
+                         (long long)(detail._totalIndexFreeSpace )) ;
+            sub.done() ;
+         }
+         ba.done() ;
+         obj = ob.obj() ;
+
+         /// remove the current
+         _collectionInfo.erase( it ) ;
+         if ( _collectionInfo.empty() )
+         {
+            _hitEnd = TRUE ;
+         }
+      }
+      catch ( std::exception &e )
+      {
+         PD_LOG ( PDERROR, "Failed to create BSON objects for collections: %s",
+                  e.what() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   /*
+      _monCollectionSpaceFetch implement
+   */
+   _monCollectionSpaceFetch::_monCollectionSpaceFetch()
+   {
+      _detail = FALSE ;
+      _includeSys = FALSE ;
+      _addInfoMask = 0 ;
+      _hitEnd = TRUE ;
+   }
+
+   _monCollectionSpaceFetch::~_monCollectionSpaceFetch()
+   {
+   }
+
+   INT32 _monCollectionSpaceFetch::init( pmdEDUCB *cb,
+                                         UINT32 addInfoMask,
+                                         BOOLEAN includeSys,
+                                         BOOLEAN detail )
+   {
+      SDB_DMSCB *dmsCB = pmdGetKRCB()->getDMSCB() ;
+      SDB_ASSERT( dmsCB, "DMSCB can't be NULL" ) ;
+
+      _addInfoMask = addInfoMask ;
+      _detail = detail ;
+      _includeSys = includeSys ;
+
+      if ( !_detail )
+      {
+         dmsCB->dumpInfo( _csList, _includeSys ) ;
+         _hitEnd = _csList.empty() ? TRUE : FALSE ;
+      }
+      else
+      {
+         dmsCB->dumpInfo( _csInfo, _includeSys ) ;
+         _hitEnd = _csInfo.empty() ? TRUE : FALSE ;
+      }
+
+      return SDB_OK ;
+   }
+
+   const CHAR* _monCollectionSpaceFetch::getName() const
+   {
+      return _detail ? CMD_NAME_SNAPSHOT_COLLECTIONSPACES :
+                       CMD_NAME_LIST_COLLECTIONSPACES ;
+   }
+
+   BOOLEAN _monCollectionSpaceFetch::isHitEnd() const
+   {
+      return _hitEnd ;
+   }
+
+   INT32 _monCollectionSpaceFetch::fetch( BSONObj &obj )
+   {
+      INT32 rc = SDB_OK ;
+
+      if ( _hitEnd )
+      {
+         rc = SDB_DMS_EOC ;
+         goto error ;
+      }
+
+      if ( _detail )
+      {
+         rc = _fetchNextDetail( obj ) ;
+      }
+      else
+      {
+         rc = _fetchNextSimple( obj ) ;
+      }
+      if ( rc )
+      {
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _monCollectionSpaceFetch::_fetchNextSimple( BSONObj &obj )
+   {
+      INT32 rc = SDB_OK ;
+
+      if ( _csList.size() == 0 )
+      {
+         _hitEnd = TRUE ;
+         rc = SDB_DMS_EOC ;
+         goto error ;
+      }
+
+      try
+      {
+         BSONObjBuilder ob ;
+         std::set< monCSSimple >::iterator it ;
+
+         it = _csList.begin() ;
+         const monCSSimple &simple = *it ;
+
+         ob.append ( FIELD_NAME_NAME, simple._name ) ;
+
+         obj = ob.obj () ;
+
+         /// remove current
+         _csList.erase( it ) ;
+         if ( _csList.empty() )
+         {
+            _hitEnd = TRUE ;
+         }
+      }
+      catch ( std::exception &e )
+      {
+         PD_LOG ( PDERROR, "Failed to create BSON objects for "
+                  "collectionspaces: %s",
+                  e.what() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _monCollectionSpaceFetch::_fetchNextDetail( BSONObj &obj )
+   {
+      INT32 rc = SDB_OK ;
+
+      if ( _csInfo.size() == 0 )
+      {
+         _hitEnd = TRUE ;
+         rc = SDB_DMS_EOC ;
+         goto error ;
+      }
+
+      try
+      {
+         INT64 dataCapSize    = 0 ;
+         INT64 lobCapSize     = 0 ;
+         BSONObjBuilder ob( 512 ) ;
+         std::set< monCollectionSpace >::iterator it ;
+         std::map<UINT32, detailedInfo>::const_iterator itDetail ;
+
+         it = _csInfo.begin() ;
+         const monCollectionSpace &full = *it ;
+
+         /// add system info
+         monAppendSystemInfo( ob, _addInfoMask ) ;
+
+         /// add name & space name
+         ob.append ( FIELD_NAME_NAME, full._name ) ;
+         /// add detial
+         BSONArrayBuilder sub( ob.subarrayStart( FIELD_NAME_COLLECTION ) ) ;
+         // do not list detailed collections if we are on temp cs
+         if ( ossStrcmp ( full._name, SDB_DMSTEMP_NAME ) != 0 )
+         {
+            std::vector<monCLSimple>::const_iterator it1 ;
+            for ( it1 = full._collections.begin();
+                  it1!= full._collections.end();
+                  it1++ )
+            {
+               sub.append (BSON ( FIELD_NAME_NAME << (*it1)._name ) ) ;
+            }
+         }
+         sub.done() ;
+
+         dataCapSize = (INT64)full._pageSize * DMS_MAX_PG ;
+         lobCapSize  = (INT64)full._lobPageSize * DMS_MAX_PG ;
+         if ( lobCapSize > OSS_MAX_FILE_SZ )
+         {
+            lobCapSize = OSS_MAX_FILE_SZ ;
+         }
+         ob.append ( FIELD_NAME_PAGE_SIZE, full._pageSize ) ;
+         ob.append ( FIELD_NAME_LOB_PAGE_SIZE, full._lobPageSize ) ;
+         ob.append ( FIELD_NAME_MAX_CAPACITY_SIZE,
+                     2 * dataCapSize + lobCapSize ) ;
+         ob.append ( FIELD_NAME_MAX_DATA_CAP_SIZE, dataCapSize ) ;
+         ob.append ( FIELD_NAME_MAX_INDEX_CAP_SIZE, dataCapSize ) ;
+         ob.append ( FIELD_NAME_MAX_LOB_CAP_SIZE, lobCapSize ) ;
+         ob.append ( FIELD_NAME_NUMCOLLECTIONS, full._clNum ) ;
+         ob.append ( FIELD_NAME_TOTAL_RECORDS, full._totalRecordNum ) ;
+         ob.append ( FIELD_NAME_TOTAL_SIZE, full._totalSize ) ;
+         ob.append ( FIELD_NAME_FREE_SIZE, full._freeSize ) ;
+         ob.append ( FIELD_NAME_TOTAL_DATA_SIZE, full._totalDataSize ) ;
+         ob.append ( FIELD_NAME_FREE_DATA_SIZE, full._freeDataSize ) ;
+         ob.append ( FIELD_NAME_TOTAL_IDX_SIZE, full._totalIndexSize ) ;
+         ob.append ( FIELD_NAME_FREE_IDX_SIZE, full._freeIndexSize ) ;
+         ob.append ( FIELD_NAME_TOTAL_LOB_SIZE, full._totalLobSize ) ;
+         ob.append ( FIELD_NAME_FREE_LOB_SIZE, full._freeLobSize ) ;
+         ob.append ( FIELD_NAME_CURRENT_LSN, ( INT64 )(full._dataLsn) ) ;
+         ob.append ( FIELD_NAME_CURRENT_LOB_LSN, ( INT64 )(full._lobLsn) ) ;
+         ob.append ( FIELD_NAME_COMMITTED_DESC, full._committedDesc ) ;
+         ob.appendBool( FIELD_NAME_COMMITTED, full._committed ) ;
+
+         obj = ob.obj() ;
+
+         /// remove the current
+         _csInfo.erase( it ) ;
+         if ( _csInfo.empty() )
+         {
+            _hitEnd = TRUE ;
+         }
+      }
+      catch ( std::exception &e )
+      {
+         PD_LOG ( PDERROR, "Failed to create BSON objects for "
+                  "collectionspaces: %s",
+                  e.what() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
 }
 

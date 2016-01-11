@@ -256,6 +256,18 @@ const CHAR* pdAuditObjType2String( AUDIT_OBJ_TYPE objtype ) ;
                objtype,objname,result,fmt,##__VA_ARGS__) ; \
    }while( 0 )
 
+#define PD_AUDIT_OP_WITHNAME(type,opname,objtype,objname,result,fmt, ...)\
+   do { \
+         const CHAR *pUserName = "" ; \
+         _pmdEDUCB *cb = pmdGetThreadEDUCB() ; \
+         if ( cb ) \
+         { \
+            pUserName = cb->getUserName() ; \
+         } \
+      PD_AUDIT(type,pUserName,opname,\
+               objtype,objname,result,fmt,##__VA_ARGS__) ; \
+   }while( 0 )
+
 #define PD_AUDIT_COMMAND(type,commandstr,objtype,objname,result,fmt, ... ) \
    do { \
          const CHAR *pUserName = "" ; \

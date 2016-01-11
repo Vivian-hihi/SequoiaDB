@@ -1105,7 +1105,7 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_DUMPINFO, "_dmsStorageUnit::dumpInfo" )
-   void _dmsStorageUnit::dumpInfo ( vector<CHAR*> &collectionList,
+   void _dmsStorageUnit::dumpInfo ( vector<monCLSimple> &collectionList,
                                     BOOLEAN sys )
    {
       PD_TRACE_ENTRY( SDB__DMSSU_DUMPINFO ) ;
@@ -1120,17 +1120,11 @@ namespace engine
             ++it ;
             continue ;
          }
-
-         CHAR *pBuffer = (CHAR*)SDB_OSS_MALLOC ( DMS_COLLECTION_NAME_SZ + 1 ) ;
-         if ( !pBuffer )
-         {
-            PD_LOG( PDERROR, "Allocate memory failed" ) ;
-            goto error ;
-         }
-         ossStrncpy ( pBuffer, it->first, DMS_COLLECTION_NAME_SZ ) ;
-         pBuffer[ DMS_COLLECTION_NAME_SZ ] = 0 ;
+         monCLSimple info ;
+         ossStrncpy ( info._name, it->first, DMS_COLLECTION_NAME_SZ ) ;
+         info._name[ DMS_COLLECTION_NAME_SZ ] = 0 ;
          // add
-         collectionList.push_back ( pBuffer ) ;
+         collectionList.push_back ( info ) ;
 
          ++it ;
       }
@@ -1142,6 +1136,40 @@ namespace engine
       return ;
    error :
       goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_DUMPCLSIMPLE, "_dmsStorageUnit::dumpInfo" )
+   void _dmsStorageUnit::dumpInfo( set<monCLSimple> &collectionList,
+                                   BOOLEAN sys )
+   {
+      PD_TRACE_ENTRY ( SDB__DMSSU_DUMPCLSIMPLE ) ;
+      // lock meta
+      _pDataSu->_metadataLatch.get_shared() ;
+
+      dmsStorageData::COLNAME_MAP_IT it = _pDataSu->_collectionNameMap.begin() ;
+      while ( it != _pDataSu->_collectionNameMap.end() )
+      {
+         monCLSimple collection ;
+         if ( !sys && dmsIsSysCLName( it->first ) )
+         {
+            ++it ;
+            continue ;
+         }
+
+         ossMemset ( collection._name, 0, sizeof(collection._name) ) ;
+         ossStrncpy ( collection._name, CSName(), DMS_SU_NAME_SZ ) ;
+         ossStrncat ( collection._name, ".", 1 ) ;
+         ossStrncat ( collection._name, it->first,
+                      DMS_COLLECTION_NAME_SZ ) ;
+         //add
+         collectionList.insert ( collection ) ;
+
+         ++it ;
+      }
+
+      // release meta
+      _pDataSu->_metadataLatch.release_shared() ;
+      PD_TRACE_EXIT ( SDB__DMSSU_DUMPCLSIMPLE ) ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_DUMPINFO1, "_dmsStorageUnit::dumpInfo" )
@@ -1173,17 +1201,25 @@ namespace engine
          ossStrncat ( collection._name, ".", 1 ) ;
          ossStrncat ( collection._name, mb->_collectionName,
                       DMS_COLLECTION_NAME_SZ ) ;
-         collection.addDetails ( CSSequence(),
-                                 mb->_numIndexes,
-                                 mb->_blockID,
-                                 mb->_flag,
-                                 mb->_logicalID,
-                                 mbStat->_totalRecords,
-                                 mbStat->_totalDataPages,
-                                 mbStat->_totalIndexPages,
-                                 mbStat->_totalLobPages,
-                                 mbStat->_totalDataFreeSpace,
-                                 mbStat->_totalIndexFreeSpace ) ;
+         detailedInfo &info = collection.addDetails ( CSSequence(),
+                                                      mb->_numIndexes,
+                                                      mb->_blockID,
+                                                      mb->_flag,
+                                                      mb->_logicalID,
+                                                      mbStat->_totalRecords,
+                                                      mbStat->_totalDataPages,
+                                                      mbStat->_totalIndexPages,
+                                                      mbStat->_totalLobPages,
+                                                      mbStat->_totalDataFreeSpace,
+                                                      mbStat->_totalIndexFreeSpace ) ;
+         info._attribute = mb->_attributes ;
+         info._compressType = mbStat->_compressorType ;
+         info._hasDict = mbStat->_dictExtID != DMS_INVALID_EXTENT ? 1 : 0 ;
+         info._totalLobs = mbStat->_totalLobs ;
+
+         info._pageSize = getPageSize() ;
+         info._lobPageSize = getLobPageSize() ;
+
          //add
          collectionList.insert ( collection ) ;
 
@@ -1506,12 +1542,13 @@ namespace engine
    string _dmsStorageUnit::getValidFlagDesc() const
    {
       std::stringstream ss ;
-      UINT32 dataFlag =  NULL == _pDataSu ?
-             0 : _pDataSu->getValidFlag() ;
-      UINT32 indexFlag = NULL == _pIndexSu ?
-             0 : _pIndexSu->getValidFlag() ;
-      UINT32 lobFlag = NULL == _pLobSu ?
-             1: _pLobSu->isOpened() ? _pLobSu->getValidFlag() : 1 ;
+      UINT32 dataFlag =  ( NULL == _pDataSu ?
+                           0 : _pDataSu->getValidFlag() ) ;
+      UINT32 indexFlag = ( NULL == _pIndexSu ?
+                           0 : _pIndexSu->getValidFlag() ) ;
+      UINT32 lobFlag = ( NULL == _pLobSu ?
+                         1 : ( _pLobSu->isOpened() ?
+                               _pLobSu->getValidFlag() : 1 ) ) ;
       ss << dataFlag << indexFlag << lobFlag ;
       return ss.str() ;
    }

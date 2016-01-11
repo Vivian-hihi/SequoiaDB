@@ -46,6 +46,7 @@
 #include "pdTrace.hpp"
 #include "rtnTrace.hpp"
 #include "dmsScanner.hpp"
+#include "msgMessageFormat.hpp"
 
 using namespace bson ;
 
@@ -251,6 +252,9 @@ namespace engine
                      target.toString().c_str(), pCollectionShortName ) ;
             goto error ;
          }
+         PD_AUDIT_OP( AUDIT_DML, MSG_BS_INSERT_REQ, AUDIT_OBJ_CL,
+                      pCollectionName, SDB_OK, "%s",
+                      target.toString().c_str() ) ;
       }
 
    done :
@@ -277,6 +281,15 @@ namespace engine
       if ( writable )
       {
          dmsCB->writeDown( cb ) ;
+      }
+      if ( numUpdatedRecords > 0 || SDB_OK == rc )
+      {
+         PD_AUDIT_OP( AUDIT_DML, MSG_BS_UPDATE_REQ, AUDIT_OBJ_CL,
+                      pCollectionName, rc,
+                      "UpdatedNum:%u, Match:%s, Modifier:%s, Hint:%s, Flag:%u",
+                      numUpdatedRecords, selector.toString().c_str(),
+                      updator.toString().c_str(),
+                      hint.toString().c_str(), flags ) ;
       }
       if ( cb )
       {

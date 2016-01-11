@@ -43,6 +43,7 @@
 #include "dmsStorageIndex.hpp"
 #include "dmsStorageLob.hpp"
 #include "rtnAPM.hpp"
+#include "monDMS.hpp"
 
 using namespace bson ;
 
@@ -133,7 +134,9 @@ namespace engine
          UINT64      getLastTick() const ;
 
       public:
-         void     dumpInfo ( vector<CHAR*> &collectionList,
+         void     dumpInfo ( set<monCLSimple> &collectionList,
+                             BOOLEAN sys = FALSE ) ;
+         void     dumpInfo ( vector<monCLSimple> &collectionList,
                              BOOLEAN sys = FALSE ) ;
          void     dumpInfo ( set<_monCollection> &collectionList,
                              BOOLEAN sys = FALSE ) ;

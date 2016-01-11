@@ -323,6 +323,7 @@ namespace engine
       _pLobSU           = NULL ;
       _logicalCSID      = 0 ;
       _CSID             = DMS_INVALID_SUID ;
+      _mmeSegID         = 0 ;
       ossMemset( _compressorEntry, 0,
                  sizeof( _utilCompressor * ) * DMS_MME_SLOTS ) ;
       PD_TRACE_EXIT ( SDB__DMSSTORAGEDATA ) ;
@@ -393,9 +394,21 @@ namespace engine
                _dmsMME->_mbList[i]._totalLobPages =
                   _mbStatInfo[i]._totalLobPages ;
             }
+            if ( _dmsMME->_mbList[i]._totalLobs !=
+                 _mbStatInfo[i]._totalLobs )
+            {
+               _dmsMME->_mbList[i]._totalLobs =
+                  _mbStatInfo[i]._totalLobs ;
+            }
          }
       }
       PD_TRACE_EXIT ( SDB__DMSSTORAGEDATA_SYNCMEMTOMMAP ) ;
+   }
+
+   INT32 _dmsStorageData::flushMME( BOOLEAN sync )
+   {
+      syncMemToMmap() ;
+      return flushSegment( _mmeSegID, sync ) ;
    }
 
    void _dmsStorageData::_attach( _dmsStorageIndex * pIndexSu )
@@ -533,6 +546,7 @@ namespace engine
 
       PD_TRACE_ENTRY ( SDB__DMSSTORAGEDATA__ONMAPMETA ) ;
       // MME, 4MB
+      _mmeSegID = ossMmapFile::segmentSize() ;
       rc = map ( DMS_MME_OFFSET, DMS_MME_SZ, (void**)&_dmsMME ) ;
       if ( rc )
       {
@@ -558,6 +572,8 @@ namespace engine
                _dmsMME->_mbList[i]._totalIndexFreeSpace ;
             _mbStatInfo[i]._totalLobPages =
                _dmsMME->_mbList[i]._totalLobPages ;
+            _mbStatInfo[i]._totalLobs =
+               _dmsMME->_mbList[i]._totalLobs ;
             /*
              * The following branch is for using newer program(SequoiaDB 2.0 or
              * later) with data of elder versions(Before 2.0). As dictionary
@@ -1307,7 +1323,7 @@ namespace engine
 
       // make sure the delete record is not greater 16MB
       deleteRecordSize    = OSS_MIN ( extentUseableSpace,
-                                           DMS_RECORD_MAX_SZ ) ;
+                                      DMS_RECORD_MAX_SZ ) ;
       // place first record offset
       recordOffset        = extentSize - extentUseableSpace ;
       curUseableSpace     = extentUseableSpace ;
@@ -1900,6 +1916,7 @@ namespace engine
       BOOLEAN getContext = FALSE ;
       UINT32 newCLID     = DMS_INVALID_CLID ;
       UINT32 oldCLID     = DMS_INVALID_CLID ;
+      UINT64 oldRecords  = 0 ;
 
       PD_TRACE_ENTRY ( SDB__DMSSTORAGEDATA_TRUNCATECOLLECTION ) ;
       CHAR fullName[DMS_COLLECTION_FULL_NAME_SZ + 1] = {0} ;
@@ -1984,6 +2001,8 @@ namespace engine
       rc = context->resume() ;
       PD_RC_CHECK( rc, PDERROR, "dms mb context resume falied, rc: %d", rc ) ;
 
+      oldRecords = context->mbStat()->_totalRecords ;
+
       rc = _pIdxSU->truncateIndexes( context ) ;
       PD_RC_CHECK( rc, PDERROR, "Truncate collection[%s] indexes failed, "
                    "rc: %d", pName, rc ) ;
@@ -2010,6 +2029,9 @@ namespace engine
       // write dps log
       if ( dpscb )
       {
+         PD_AUDIT_OP_WITHNAME( AUDIT_DML, "TRUNCATE", AUDIT_OBJ_CL,
+                               fullName, rc, "Record:%llu",
+                               oldRecords ) ;
          rc = _logDPS( dpscb, info, cb, context, DMS_INVALID_EXTENT, TRUE, &oldCLID ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to insert CLTrunc record to log, "
                       "rc: %d", rc ) ;
@@ -2483,6 +2505,10 @@ namespace engine
 
       if ( dpscb )
       {
+         PD_AUDIT_OP_WITHNAME( AUDIT_DML, "INSERT", AUDIT_OBJ_CL,
+                               fullName, rc, "%s",
+                               insertObj.toString().c_str() ) ;
+
          dmsExtentID extLID = ((dmsExtent*)extentPtr)->_logicID ;
          info.clear() ;
 
@@ -2778,7 +2804,7 @@ namespace engine
                }
             }
             DMS_RECORD_EXTRACTDATA ( compressor, compContext,
-                                         realPtr, deletedDataPtr ) ;
+                                     realPtr, deletedDataPtr ) ;
             if ( UTIL_INVALID_COMP_CTX != compContext )
             {
                compressor->done( compContext ) ;
@@ -2867,6 +2893,18 @@ namespace engine
       // if we are asked to log
       if ( dpscb && FALSE == isDeleting )
       {
+         try
+         {
+            PD_AUDIT_OP_WITHNAME( AUDIT_DEL, "DELETE", AUDIT_OBJ_CL,
+                                  fullName, rc, "%s",
+                                  BSONObj( (CHAR*)deletedDataPtr ).toString().c_str() ) ;
+         }
+         catch( std::exception &e )
+         {
+            PD_LOG( PDERROR, "Failed to audit delete record: %s", e.what() ) ;
+            /// ignore the error
+         }
+
          dmsExtentID extLID = ((dmsExtent*)extentPtr)->_logicID ;
          rc = _logDPS( dpscb, info, cb, context, extLID, FALSE ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to insert record into log, rc: %d",
@@ -3053,7 +3091,7 @@ namespace engine
             }
          }
          DMS_RECORD_EXTRACTDATA( compressor, compContext,
-                                     recordRealPtr, updatedDataPtr ) ;
+                                 recordRealPtr, updatedDataPtr ) ;
          if ( UTIL_INVALID_COMP_CTX != compContext )
          {
             compressor->done( compContext ) ;
@@ -3163,6 +3201,14 @@ namespace engine
                   oldChg.toString().c_str(),
                   newMatch.toString().c_str(),
                   newChg.toString().c_str() ) ;
+
+         PD_AUDIT_OP_WITHNAME( AUDIT_UPDATE, "UPDATE", AUDIT_OBJ_CL,
+                               fullName, rc, "OldMatch:%s, OldChange:%s, "
+                               "NewMatch:%s, NewChange:%s",
+                               oldMatch.toString().c_str(),
+                               oldChg.toString().c_str(),
+                               newMatch.toString().c_str(),
+                               newChg.toString().c_str() ) ;
 
          rc = _logDPS( dpscb, info, cb, context, extent->_logicID, FALSE ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to insert update record into log, "
@@ -3687,7 +3733,7 @@ namespace engine
       dictExtent->setDict( dict, dictLen ) ;
       for ( INT32 i = 0; i < 3; i++ )
       {
-         rc = flush( extent2Segment( dictExtID ), TRUE ) ;
+         rc = flushPages( dictExtID, pageNum, TRUE ) ;
          if ( SDB_OK == rc )
          {
             break ;
