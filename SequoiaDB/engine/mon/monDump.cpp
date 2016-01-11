@@ -51,6 +51,8 @@
 #include "dmsStorageUnit.hpp"
 #include "dmsDump.hpp"
 #include "barBkupLogger.hpp"
+#include "rtnCommand.hpp"
+#include "msgMessage.hpp"
 
 #include "pdTrace.hpp"
 #include "monTrace.hpp"
@@ -607,23 +609,27 @@ namespace engine
       ob.append( FIELD_NAME_TOTALWRITETIME,
                  (SINT64)(seconds*1000 + microseconds / 1000 ) ) ;
 
+      /// the spent time is last op
       full._monApplCB._readTimeSpent.convertToTime ( factor,
-                                                    seconds,
-                                                    microseconds ) ;
+                                                     seconds,
+                                                     microseconds ) ;
       ob.append( FIELD_NAME_READTIMESPENT,
                  (SINT64)(seconds*1000 + microseconds / 1000 ) ) ;
 
       full._monApplCB._writeTimeSpent.convertToTime ( factor,
-                                                    seconds,
-                                                    microseconds ) ;
+                                                      seconds,
+                                                      microseconds ) ;
       ob.append( FIELD_NAME_WRITETIMESPENT,
                  (SINT64)(seconds*1000 + microseconds / 1000 ) ) ;
 
-      ossTimestampToString( full._monApplCB._connectTimestamp, timestamp ) ;
+      ossTimestamp tmpTm = full._monApplCB._connectTimestamp ;
+      ossTimestampToString( tmpTm, timestamp ) ;
       ob.append ( FIELD_NAME_CONNECTTIMESTAMP, timestamp ) ;
 
+      /// add last op info
       monDumpLastOpInfo( ob, full._monApplCB ) ;
 
+      /// add cpu info
       double userCpu;
       userCpu = userTime.seconds + (double)userTime.microsec / 1000000 ;
       ob.append( FIELD_NAME_USERCPU, userCpu ) ;
@@ -1038,8 +1044,8 @@ namespace engine
                   PD_LOG ( PDERROR, "Failed to add object %s to session",
                            obj.toString().c_str() ) ;
                   goto error ;
-               }
             }
+         }
          }
          catch ( std::exception &e )
          {
@@ -1057,7 +1063,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_MONDMSCOLLECTIONFLAGTOSTRING, "monDMSCollectionFlagToString" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_MONDMSCOLLECTIONFLAGTOSTRING, "monDMSCollectionFlagToString" )
    void monDMSCollectionFlagToString ( UINT16 flag, std::string &out )
    {
       PD_TRACE_ENTRY ( SDB_MONDMSCOLLECTIONFLAGTOSTRING ) ;
@@ -1753,48 +1759,14 @@ namespace engine
       PD_TRACE_ENTRY ( SDB_MONDBDUMPLASTOPINFO ) ;
       try
       {
-         switch( moncb._lastOpType )
+         BOOLEAN isCommand = FALSE ;
+         if ( MSG_BS_QUERY_REQ == moncb._lastOpType &&
+              CMD_UNKNOW != moncb._cmdType )
          {
-            case MSG_BS_QUERY_REQ:
-               {
-                  if ( MSG_NULL == moncb._cmdType )
-                  {
-                     // it is query
-                     ob.append( FIELD_NAME_LASTOPTYPE, "query" ) ;
-                  }
-                  else
-                  {
-                     // it is command
-                  }
-                  break ;
-               }
-            case MSG_BS_GETMORE_REQ:
-               {
-                  ob.append( FIELD_NAME_LASTOPTYPE, "getmore" ) ;
-                  break ;
-               }
-            case MSG_BS_DELETE_REQ:
-               {
-                  ob.append( FIELD_NAME_LASTOPTYPE, "delete" ) ;
-                  break ;
-               }
-            case MSG_BS_INSERT_REQ:
-               {
-                  ob.append( FIELD_NAME_LASTOPTYPE, "insert" ) ;
-                  break ;
-               }
-            case MSG_BS_UPDATE_REQ:
-               {
-                  ob.append( FIELD_NAME_LASTOPTYPE, "update" ) ;
-                  break ;
-               }
-            default:
-               {
-                  ob.append( FIELD_NAME_LASTOPTYPE, "unknow" ) ;
-                  break ;
-               }
+            isCommand = TRUE ;
          }
-
+         ob.append( FIELD_NAME_LASTOPTYPE,
+                    msgType2String( (MSG_TYPE)moncb._lastOpType, isCommand ) ) ;
          CHAR   timestamp[ OSS_TIMESTAMP_STRING_LEN + 1] = { 0 } ;
          if ( ( BOOLEAN )( moncb._lastOpBeginTime ) )
          {
