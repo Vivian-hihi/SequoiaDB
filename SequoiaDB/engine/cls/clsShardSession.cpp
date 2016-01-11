@@ -283,11 +283,12 @@ namespace engine
       _hasUpdateCataInfo = FALSE ;
       BOOLEAN isNeedRollback = FALSE;
 
-      MON_START_OP( _pEDUCB->getMonAppCB() ) ;
       _primaryID.value = MSG_INVALID_ROUTEID ;
 
       while ( loop )
       {
+         MON_START_OP( _pEDUCB->getMonAppCB() ) ;
+
          switch ( msg->opCode )
          {
             case MSG_BS_UPDATE_REQ :
@@ -1496,6 +1497,8 @@ namespace engine
          ossSnprintf( _detailName, SESSION_NAME_LEN, "%s,R-IP:%s,R-Port:%u",
                       _pmdAsyncSession::sessionName(), szTmpIP,
                       pMsgReq->localPort ) ;
+         eduCB()->setName( _detailName ) ;
+
          /// audit
          CHAR szTmpID[ 20 ] = { 0 } ;
          ossSnprintf( szTmpID, sizeof(szTmpID) - 1, "%llu", eduID() ) ;
