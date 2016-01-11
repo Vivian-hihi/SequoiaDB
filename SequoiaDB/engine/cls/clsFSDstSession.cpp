@@ -1324,7 +1324,7 @@ namespace engine
       SDB_DPSCB *dpsCB = NULL ;
       if ( CLS_FS_STATUS_BEGIN != _status )
       {
-         PD_LOG( PDWARNING, "FS Session[%s]: ignore msg. local statsus:",
+         PD_LOG( PDWARNING, "Session[%s]: ignore msg. local statsus:",
                  sessionName(), _status ) ;
          goto done ;
       }
@@ -1337,7 +1337,7 @@ namespace engine
 
       if ( SDB_OK != msg->header.res )
       {
-         PD_LOG ( PDWARNING, "FS Session[%s]: Node[%d] refused full sync "
+         PD_LOG ( PDWARNING, "Session[%s]: Node[%d] refused full sync "
                   "seq[rc:%d]", sessionName(), _selector.src().columns.nodeID,
                   msg->header.res ) ;
          _selector.addToBlakList ( _selector.src() ) ;
@@ -1349,14 +1349,14 @@ namespace engine
       if ( SDB_OK != _extractFullNames( ( CHAR * )(&( msg->header )) +
                                         sizeof( MsgClsFSBeginRes )) )
       {
-         PD_LOG( PDWARNING, "FS Session[%s]: Failed to extract fullnames, "
+         PD_LOG( PDWARNING, "Session[%s]: Failed to extract fullnames, "
                  "disconnect session", sessionName() ) ;
          _disconnect() ;
          goto done ;
       }
 
       // disconnect all collection
-      PD_LOG( PDEVENT, "FS Session[%s] close all shard connections",
+      PD_LOG( PDEVENT, "Session[%s] close all shard connections",
               sessionName() ) ;
       sdbGetClsCB()->getShardRouteAgent()->disconnectAll() ;
 
@@ -1378,7 +1378,7 @@ namespace engine
       dpsCB->move ( 0, 0 ) ;
       if ( SDB_OK != dpsCB->move( _expectLSN.offset, _expectLSN.version ) )
       {
-         PD_LOG( PDWARNING, "FS Session[%s]: Failed to move dps[%d,%lld], "
+         PD_LOG( PDWARNING, "Session[%s]: Failed to move dps[%d,%lld], "
                  "disconnect session", sessionName(), _expectLSN.version,
                  _expectLSN.offset ) ;
          _disconnect() ;
@@ -1386,14 +1386,14 @@ namespace engine
       }
       {
          DPS_LSN expect = dpsCB->expectLsn() ;
-         PD_LOG( PDEVENT, "FS Session[%s]: begin to get meta. expect lsn is "
+         PD_LOG( PDEVENT, "Session[%s]: begin to get meta. expect lsn is "
                  "[ver:%d][offset:%lld]", sessionName(), expect.version,
                  expect.offset ) ;
 
          /// before send meta req, we clear local data.
          if ( SDB_OK != sdbGetClsCB()->clearAllData () )
          {
-            PD_LOG( PDERROR, "FS Session[%s]: Failed to clear data.",
+            PD_LOG( PDERROR, "Session[%s]: Failed to clear data.",
                     sessionName() ) ;
             _disconnect () ;
             goto done ;
@@ -1411,7 +1411,7 @@ namespace engine
                                         eduCB(), TRUE ) ;
             if ( SDB_OK != rc && SDB_DMS_CS_EXIST != rc )
             {
-               PD_LOG( PDWARNING, "FS Session[%s]: create empty collection "
+               PD_LOG( PDWARNING, "Session[%s]: create empty collection "
                        "space[%s] failed, rc: %d", sessionName(),
                        itCS->first.c_str(), rc ) ;
                _disconnect() ;
@@ -1438,7 +1438,7 @@ namespace engine
 
       if ( CLS_FS_STATUS_END != _status )
       {
-         PD_LOG( PDWARNING, "FS Session[%s]: status[%d] is not expect[%d]",
+         PD_LOG( PDWARNING, "Session[%s]: status[%d] is not expect[%d]",
                  sessionName(), _status, CLS_FS_STATUS_END ) ;
          _disconnect () ;
          goto done ;
@@ -1446,7 +1446,7 @@ namespace engine
 
       _quit = TRUE ;
 
-      PD_LOG( PDEVENT, "FS Session[%s]: full sync has been done. expect lsn "
+      PD_LOG( PDEVENT, "Session[%s]: full sync has been done. expect lsn "
               "is [%d][%lld]", sessionName(), lsn.version, lsn.offset ) ;
 
    done:
@@ -1500,7 +1500,7 @@ namespace engine
 
       if ( STEP_TS_END == _tsStep )
       {
-         PD_LOG( PDEVENT, "FS Session[%s]: End to pull trans log",
+         PD_LOG( PDEVENT, "Session[%s]: End to pull trans log",
                  sessionName() ) ;
          goto doend ;
       }
@@ -1512,7 +1512,7 @@ namespace engine
             _tsStep = STEP_TS_END ;
             goto doend ;
          }
-         PD_LOG( PDEVENT, "FS Session[%s]: Begin to pull trans log",
+         PD_LOG( PDEVENT, "Session[%s]: Begin to pull trans log",
                  sessionName() ) ;
       }
       else
@@ -1529,11 +1529,11 @@ namespace engine
          INT32 rcTmp = dpsCB->move ( _expectLSN.offset, _expectLSN.version ) ;
          if ( rcTmp )
          {
-            PD_LOG ( PDERROR, "FS Session[%s]: failed to move lsn[%d,%lld]",
+            PD_LOG ( PDERROR, "Session[%s]: failed to move lsn[%d,%lld]",
                      sessionName(), _expectLSN.version, _expectLSN.offset ) ;
             goto error ;
          }
-         PD_LOG( PDEVENT, "FS Session[%s]: Move repl-log to %d.%lld",
+         PD_LOG( PDEVENT, "Session[%s]: Move repl-log to %d.%lld",
                  sessionName(), _expectLSN.version, _expectLSN.offset ) ;
       }
       msg.header.TID = CLS_TID( _sessionID ) ;
@@ -1579,7 +1579,7 @@ namespace engine
       //if change to primary
       if ( sdbGetReplCB()->primaryIsMe() )
       {
-         PD_LOG( PDWARNING, "FS Session[%s] disconnect when self is primary",
+         PD_LOG( PDWARNING, "Session[%s] disconnect when self is primary",
                  sessionName() ) ;
          _disconnect () ;
          result = FALSE ;
@@ -1590,7 +1590,7 @@ namespace engine
            _recvTimeout > CLS_SRC_SESSION_NO_MSG_TIME &&
            !sdbGetReplCB()->isAlive ( _selector.src() ) )
       {
-         PD_LOG ( PDWARNING, "FS Session[%s] peer node sharing-beak, "
+         PD_LOG ( PDWARNING, "Session[%s] peer node sharing-beak, "
                   "disconnect", sessionName() ) ;
          _disconnect () ;
          result = FALSE ;
@@ -1619,7 +1619,7 @@ namespace engine
          pmdGetStartup().ok ( TRUE ) ;
       }
 
-      PD_LOG( PDEVENT, "FS Session[%s]: start sync session.", sessionName() ) ;
+      PD_LOG( PDEVENT, "Session[%s]: start sync session.", sessionName() ) ;
       pmdGetKRCB()->getClsCB()->startInnerSession( CLS_REPL,
                                                    CLS_TID_REPL_SYC ) ;
 
@@ -1662,7 +1662,7 @@ namespace engine
 
       if ( CLS_FS_STATUS_END != _status )
       {
-         PD_LOG( PDWARNING, "FS Session[%s]: ignore msg. local status:%d",
+         PD_LOG( PDWARNING, "Session[%s]: ignore msg. local status:%d",
                  sessionName(), _status ) ;
          goto done ;
       }
@@ -1671,7 +1671,7 @@ namespace engine
          goto done ;
       }
 
-      PD_RC_CHECK( rc, PDERROR, "FS Session[%s]: Failed to synchronise "
+      PD_RC_CHECK( rc, PDERROR, "Session[%s]: Failed to synchronise "
                    "transaction-log, rc: %d", sessionName(), rc );
 
       if ( CLS_FS_EOF == pRsp->eof )
@@ -1697,7 +1697,7 @@ namespace engine
             rc = dpsCB->move( header->_lsn, header->_version ) ;
             if ( rc )
             {
-               PD_LOG( PDERROR, "FS Session[%s]: Failed to move lsn to "
+               PD_LOG( PDERROR, "Session[%s]: Failed to move lsn to "
                        "[%u, %lld] for sync the log info, rc: %d",
                        sessionName(), header->_version, header->_lsn,
                        rc ) ;
@@ -1705,7 +1705,7 @@ namespace engine
             }
             else
             {
-               PD_LOG( PDEVENT, "FS Session[%s]: Move lsn to [%u, %lld] for "
+               PD_LOG( PDEVENT, "Session[%s]: Move lsn to [%u, %lld] for "
                        "sync the log info succeed", sessionName(),
                        header->_version, header->_lsn ) ;
                _tsStep = STEP_TS_ING ;
@@ -1791,7 +1791,7 @@ namespace engine
       if ( CLS_TASK_STATUS_RUN == _pTask->status() ||
            CLS_TASK_STATUS_PAUSE == _pTask->status() )
       {
-         PD_LOG ( PDEVENT, "Split Session[%s]: Split task[%s] already start, "
+         PD_LOG ( PDEVENT, "Session[%s]: Split task[%s] already start, "
                   "status:%d, need clean up data first", sessionName(),
                   _pTask->taskName(), _pTask->status() ) ;
 
@@ -1809,7 +1809,7 @@ namespace engine
       // the task is finished, need to notify peer to clean up data
       else if ( CLS_TASK_STATUS_FINISH == _pTask->status() )
       {
-         PD_LOG ( PDEVENT, "Split Session[%s]: Split task[%s] already finished,"
+         PD_LOG ( PDEVENT, "Session[%s]: Split task[%s] already finished,"
                   "need to notify destination node to clean up data",
                   sessionName(), _pTask->taskName() ) ;
 
@@ -1817,7 +1817,7 @@ namespace engine
          _needSyncData = 0 ;
       }
 
-      PD_LOG ( PDEVENT, "Split Session[%s]: Begin to split[%s]",
+      PD_LOG ( PDEVENT, "Session[%s]: Begin to split[%s]",
                sessionName(), _pTask->taskName() ) ;
 
       // register collection
@@ -1862,7 +1862,7 @@ namespace engine
             }
          }
 
-         PD_LOG ( PDEVENT, "Split Session[%s]: Split[%s] is not complete"
+         PD_LOG ( PDEVENT, "Session[%s]: Split[%s] is not complete"
                   "[status: %d, step: %d], need restart", sessionName(),
                   _pTask->taskName(), _status, _step ) ;
          pClsMgr->startTaskCheck( _taskObj ) ;
@@ -1888,7 +1888,7 @@ namespace engine
       // when all task is finished, close the socket
       if ( getMeta() && 1 == getMeta()->getBasedHandleNum() )
       {
-         PD_LOG( PDEVENT, "Split Session[%s] close socket[handle: %d]",
+         PD_LOG( PDEVENT, "Session[%s] close socket[handle: %d]",
                  sessionName(), getMeta()->getHandle() ) ;
          _agent->close( getMeta()->getHandle() ) ;
       }
@@ -1910,7 +1910,7 @@ namespace engine
          _regTask = FALSE ;
       }
 
-      PD_LOG( PDEVENT, "Split Session[%s]: Split[%s] has been done",
+      PD_LOG( PDEVENT, "Session[%s]: Split[%s] has been done",
               sessionName(), _pTask->taskName() ) ;
       _quit = TRUE ;
    }
@@ -1930,7 +1930,7 @@ namespace engine
       // when the node is not primary, need disconnect
       else if ( !sdbGetReplCB()->primaryIsMe() )
       {
-         PD_LOG ( PDERROR, "Split Session[%s]: Self node is not primary, "
+         PD_LOG ( PDERROR, "Session[%s]: Self node is not primary, "
                   "disconnect. task:%s", sessionName(),
                   _pTask->taskName() ) ;
          _disconnect() ;
@@ -2085,7 +2085,7 @@ namespace engine
                if ( catSet->isKeyInGroup( _pTask->splitKeyObj(),
                                           selfNode.columns.groupID ) )
                {
-                  PD_LOG ( PDEVENT, "Split Session[%s]: catalog is valid, "
+                  PD_LOG ( PDEVENT, "Session[%s]: catalog is valid, "
                            "task: %s", sessionName(), _pTask->taskName() ) ;
                   pmdGetKRCB()->getClsCB()->invalidateCata(
                      _pTask->clFullName() ) ;
@@ -2101,7 +2101,7 @@ namespace engine
                                                             OSS_ONE_SEC ) ;
                if ( rcTmp )
                {
-                  PD_LOG( PDWARNING, "Split Session[%s]: Update catalog info "
+                  PD_LOG( PDWARNING, "Session[%s]: Update catalog info "
                           "of main-collection(%s) failed, rc: %d",
                           sessionName(), mainCLName.c_str(), rcTmp ) ;
                }
@@ -2174,7 +2174,7 @@ namespace engine
                                  &_taskObj, NULL, NULL, NULL ) ;
          if ( SDB_OK != rc )
          {
-            PD_LOG ( PDERROR, "Split Session[%s]: Failed to build start "
+            PD_LOG ( PDERROR, "Session[%s]: Failed to build start "
                      "request, rc = %d", sessionName(), rc ) ;
             goto error ;
          }
@@ -2187,7 +2187,7 @@ namespace engine
       }
       catch ( std::exception &e )
       {
-         PD_LOG ( PDERROR, "Split Session[%s]: Failed to build start "
+         PD_LOG ( PDERROR, "Session[%s]: Failed to build start "
                   "request: %s", sessionName(), e.what() ) ;
          rc = SDB_SYS ;
          goto error ;
@@ -2229,7 +2229,7 @@ namespace engine
                 SDB_CAT_TASK_NOTFOUND == msg->flags )
       {
          //the task is removed
-         PD_LOG ( PDWARNING, "Split Session[%s]: The split task[%s] is removed",
+         PD_LOG ( PDWARNING, "Session[%s]: The split task[%s] is removed",
                   sessionName(), _pTask->taskName() ) ;
          if ( STEP_REMOVE != _step )
          {
@@ -2239,7 +2239,7 @@ namespace engine
       }
       else if ( SDB_TASK_HAS_CANCELED == msg->flags )
       {
-         PD_LOG( PDERROR, "Split Session[%s]: The split task[%s] has canceled",
+         PD_LOG( PDERROR, "Session[%s]: The split task[%s] has canceled",
                  sessionName(), _pTask->taskName() ) ;
          _status = CLS_FS_STATUS_END ;
          _pTask->setStatus( CLS_TASK_STATUS_CANCELED ) ;
@@ -2247,7 +2247,7 @@ namespace engine
       }
       else if ( SDB_OK != msg->flags )
       {
-         PD_LOG ( PDERROR, "Split Session[%s]: The split task[%s] notify "
+         PD_LOG ( PDERROR, "Session[%s]: The split task[%s] notify "
                   "response failed[%d]", sessionName(),
                   _pTask->taskName(), msg->flags ) ;
          goto done ;
@@ -2293,7 +2293,7 @@ namespace engine
       // sanity check
       if ( CLS_FS_STATUS_BEGIN != _status )
       {
-         PD_LOG( PDWARNING, "Split Session[%s]: ignore msg. local statsus: "
+         PD_LOG( PDWARNING, "Session[%s]: ignore msg. local statsus: "
                  "%d, task: %s", sessionName(), _status,
                  _pTask->taskName() ) ;
          goto done ;
@@ -2309,7 +2309,7 @@ namespace engine
       // if source refused to split
       if ( SDB_OK != msg->header.res )
       {
-         PD_LOG ( PDWARNING, "Split Session[%s]: Node[%d] refused split sync "
+         PD_LOG ( PDWARNING, "Session[%s]: Node[%d] refused split sync "
                   "seq[rc:%d]", sessionName(), _selector.src().columns.nodeID,
                   msg->header.res ) ;
          _selector.clearSrc () ;
@@ -2340,7 +2340,7 @@ namespace engine
       PD_TRACE_ENTRY ( SDB__CLSSPLDS_HNDENDRES );
       if ( CLS_FS_STATUS_END != _status )
       {
-         PD_LOG( PDWARNING, "Split Session[%s]: Split[%s] status[%d] is not "
+         PD_LOG( PDWARNING, "Session[%s]: Split[%s] status[%d] is not "
                  "expect[%d]", sessionName(), _pTask->taskName(),
                  _status, CLS_FS_STATUS_END ) ;
          goto done ;
@@ -2376,7 +2376,7 @@ namespace engine
 
       if ( CLS_FS_STATUS_END != _status )
       {
-         PD_LOG( PDWARNING, "Split Session[%s]: Split[%s] status[%d] is not "
+         PD_LOG( PDWARNING, "Session[%s]: Split[%s] status[%d] is not "
                  "expect[%d]", sessionName(), _pTask->taskName(),
                  _status, CLS_FS_STATUS_END ) ;
          goto done ;

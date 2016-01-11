@@ -142,7 +142,7 @@ namespace engine
       else if ( _isFirstToSync &&
                 pmdGetKRCB()->getEDUMgr()->getWritingEDUCount() > 0 )
       {
-         PD_LOG( PDWARNING, "Sync Session[%s]: Has some writing edus don't "
+         PD_LOG( PDWARNING, "Session[%s]: Has some writing edus don't "
                  "exit, can't to sync", sessionName() ) ;
          goto done ;
       }
@@ -153,7 +153,7 @@ namespace engine
       if ( MSG_INVALID_ROUTEID != _syncSrc.value &&
            !_repl->isAlive ( _syncSrc ) )
       {
-         PD_LOG ( PDWARNING, "Sync Session[%s]: Peer node sharing-break",
+         PD_LOG ( PDWARNING, "Session[%s]: Peer node sharing-break",
                   sessionName() ) ;
          _selector.addToBlakList ( _syncSrc ) ;
          _selector.clearSrc () ;
@@ -168,14 +168,14 @@ namespace engine
          INT32 rcTmp = _logger->move( expectLSN.offset, expectLSN.version ) ;
          if ( rcTmp )
          {
-            PD_LOG( PDERROR, "Sync Session[%s]: Failed to move lsn to "
+            PD_LOG( PDERROR, "Session[%s]: Failed to move lsn to "
                     "[%u, %llu], rc: %d", sessionName(), expectLSN.version,
                     expectLSN.offset, rcTmp ) ;
             _status = CLS_SESSION_STATUS_FULL_SYNC ;
          }
          else
          {
-            PD_LOG( PDEVENT, "Sync Session[%s]: Move lsn to[%u, %llu]",
+            PD_LOG( PDEVENT, "Session[%s]: Move lsn to[%u, %llu]",
                     sessionName(), expectLSN.version, expectLSN.offset ) ;
          }
       }
@@ -225,7 +225,7 @@ namespace engine
          
          if ( needFullSync )
          {
-            PD_LOG( PDEVENT, "Sync Session[%s]: The db data is abnormal, "
+            PD_LOG( PDEVENT, "Session[%s]: The db data is abnormal, "
                     "need to synchronize full data", sessionName() ) ;
             _status = CLS_SESSION_STATUS_FULL_SYNC ;
          }
@@ -249,13 +249,13 @@ namespace engine
          INT32 rcTmp = _logger->move( expectLSN.offset, expectLSN.version ) ;
          if ( rcTmp )
          {
-            PD_LOG( PDERROR, "Sync Session[%s]: Failed to move lsn to "
+            PD_LOG( PDERROR, "Session[%s]: Failed to move lsn to "
                     "[%u, %llu], rc: %d", sessionName(), expectLSN.version,
                     expectLSN.offset, rcTmp ) ;
          }
          else
          {
-            PD_LOG( PDEVENT, "Sync Session[%s]: Move lsn to [%u, %llu]",
+            PD_LOG( PDEVENT, "Session[%s]: Move lsn to [%u, %llu]",
                     sessionName(), expectLSN.version, expectLSN.offset ) ;
          }
       }
@@ -280,27 +280,27 @@ namespace engine
       MsgReplSyncRes *msg = ( MsgReplSyncRes * )header ;
       if ( CLS_SESSION_STATUS_SYNC != _status )
       {
-         PD_LOG ( PDDEBUG, "Sync Session[%s]: Status[%d] not expect[%d], "
+         PD_LOG ( PDDEBUG, "Session[%s]: Status[%d] not expect[%d], "
                   "ignore", sessionName(), _status ,
                   CLS_SESSION_STATUS_SYNC ) ;
          goto done ;
       }
       else if ( !_sync->isReadyToReplay() )
       {
-         PD_LOG ( PDDEBUG, "Sync Session[%s]: Not ready to replay, ignore",
+         PD_LOG ( PDDEBUG, "Session[%s]: Not ready to replay, ignore",
                   sessionName() ) ;
          goto done ;
       }
       else if ( msg->identity.value != _syncSrc.value )
       {
-         PD_LOG ( PDDEBUG, "Sync Session[%s]: Node id[%d] is not expect[%d], "
+         PD_LOG ( PDDEBUG, "Session[%s]: Node id[%d] is not expect[%d], "
                   "ignore", sessionName(), msg->identity.columns.nodeID,
                   _syncSrc.columns.nodeID ) ;
          goto done ;
       }
       else if ( msg->header.header.requestID != _requestID )
       {
-         PD_LOG ( PDDEBUG, "Sync Session[%s]: RequestID[%lld] not "
+         PD_LOG ( PDDEBUG, "Session[%s]: RequestID[%lld] not "
                   "expected[%lld], ignore", sessionName(),
                   msg->header.header.requestID, _requestID ) ;
          goto done ;
@@ -312,7 +312,7 @@ namespace engine
 
          if ( !PMD_IS_DB_NORMAL() )
          {
-            PD_LOG ( PDDEBUG, "Sync Session[%s]: Repl status[%d] is not "
+            PD_LOG ( PDDEBUG, "Session[%s]: Repl status[%d] is not "
                      "normal, ignore", sessionName(), PMD_DB_STATUS() ) ;
             goto done ;
          }
@@ -327,7 +327,7 @@ namespace engine
                ( ( ossValuePtr )(&(msg->header)) + sizeof( MsgReplSyncRes ) ),
                msg->header.header.messageLength - sizeof( MsgReplSyncRes ),
                num ) ;
-         PD_LOG ( PDDEBUG, "Sync Session[%s]: ReplyLog num:%d, rc: %d",
+         PD_LOG ( PDDEBUG, "Session[%s]: ReplyLog num:%d, rc: %d",
                   sessionName(), num, rc ) ;
 
          if ( 0 != num )
@@ -394,7 +394,7 @@ namespace engine
          {
             if ( _pReplBucket->maxReplSync() > 0 )
             {
-               PD_LOG( PDEVENT, "Sync Session[%s]: Repl bucket info[%s]",
+               PD_LOG( PDEVENT, "Session[%s]: Repl bucket info[%s]",
                        sessionName(),
                        _pReplBucket->toBson().toString().c_str() ) ;
             }
@@ -422,7 +422,7 @@ namespace engine
       PD_TRACE_ENTRY ( SDB__CLSDSTREPSN_HNDNTF );
       if ( CLS_SESSION_STATUS_SYNC != _status )
       {
-         PD_LOG ( PDDEBUG, "Sync Session[%s]: Status[%d] not expected, ignore",
+         PD_LOG ( PDDEBUG, "Session[%s]: Status[%d] not expected, ignore",
                   sessionName(), _status, CLS_SESSION_STATUS_SYNC ) ;
          goto done ;
       }
@@ -444,27 +444,27 @@ namespace engine
       if ( (UINT32)header->messageLength < sizeof( _MsgReplConsultationRes ) )
       {
          /// the message is old( no hashValue, no reserved )
-         PD_LOG( PDWARNING, "Sync Session[%s]: Consultation responses message "
+         PD_LOG( PDWARNING, "Session[%s]: Consultation responses message "
                  "length[%d] is less than %d", header->messageLength,
                  sizeof( _MsgReplConsultationRes ) ) ;
          goto done ;
       }
       else if ( CLS_SESSION_STATUS_CONSULT != _status )
       {
-         PD_LOG ( PDDEBUG, "Sync Session[%s]: Status[%d] not expected[%d], "
+         PD_LOG ( PDDEBUG, "Session[%s]: Status[%d] not expected[%d], "
                   "ignore", sessionName(), _status,
                   CLS_SESSION_STATUS_CONSULT ) ;
          goto done ;
       }
       else if ( !_sync->isReadyToReplay() )
       {
-         PD_LOG ( PDDEBUG, "Sync Session[%s]: Not ready to replay, ignore",
+         PD_LOG ( PDDEBUG, "Session[%s]: Not ready to replay, ignore",
                   sessionName() ) ;
          goto done ;
       }
       else if ( header->requestID != _requestID )
       {
-         PD_LOG ( PDDEBUG, "Sync Session[%s]: RequestID[%lld] not exptected "
+         PD_LOG ( PDDEBUG, "Session[%s]: RequestID[%lld] not exptected "
                   "[%lld], ignore", sessionName(), header->requestID,
                   _requestID ) ;
          goto done ;
@@ -478,14 +478,14 @@ namespace engine
       _MsgReplConsultationRes *msg = ( _MsgReplConsultationRes * )header ;
       if ( SDB_OK != msg->header.res )
       {
-         PD_LOG( PDEVENT, "Sync Session[%s]: Consult failed[%d], need to "
+         PD_LOG( PDEVENT, "Session[%s]: Consult failed[%d], need to "
                  "synchronize full data", sessionName(), msg->header.res ) ;
          _fullSync() ;
          goto done ;
       }
       else
       {
-         PD_LOG ( PDEVENT, "Sync Session[%s]: Consult returnTo "
+         PD_LOG ( PDEVENT, "Session[%s]: Consult returnTo "
                   "LSN[ver:%d, offset:%lld]", sessionName(),
                   msg->returnTo.version, msg->returnTo.offset ) ;
 
@@ -496,7 +496,7 @@ namespace engine
 
          if ( msg->returnTo.invalid() )
          {
-            PD_LOG ( PDWARNING, "Sync Session[%s]: Consult returnTo lsn is "
+            PD_LOG ( PDWARNING, "Session[%s]: Consult returnTo lsn is "
                      "invalid, need to synchronize full data",
                      sessionName() ) ;
             _fullSync() ;
@@ -517,7 +517,7 @@ namespace engine
 
          if ( !bValid )
          {
-            PD_LOG ( PDINFO, "Sync Session[%s]: Consult Lsn[%d,%lld], "
+            PD_LOG ( PDINFO, "Session[%s]: Consult Lsn[%d,%lld], "
                      "curLsn[%d,%lld]", sessionName(), _consultLsn.version,
                      _consultLsn.offset, curLsn.version, curLsn.offset ) ;
 
@@ -528,7 +528,7 @@ namespace engine
                _mb.clear() ;
                if ( SDB_OK != _logger->searchHeader( search, &_mb ) )
                {
-                  PD_LOG ( PDWARNING, "Sync Session[%s]: No find the lsn less "
+                  PD_LOG ( PDWARNING, "Session[%s]: No find the lsn less "
                            "than(offset:%lld, version:%d), need to "
                            "synchronize full data", sessionName(),
                            msg->returnTo.offset, msg->returnTo.version ) ;
@@ -557,7 +557,7 @@ namespace engine
 
             if ( 0 != point.compareVersion( msg->returnTo.version ) )
             {
-               PD_LOG( PDERROR, "Sync Session[%s]: The local searched "
+               PD_LOG( PDERROR, "Session[%s]: The local searched "
                        "lsn[%u,%lld] is not the same with consult "
                        "lsn[%u,%lld], need to synchronize full data",
                        sessionName(), point.version, point.offset,
@@ -576,7 +576,7 @@ namespace engine
                            "search should always be successful" ) ;
                if ( SDB_OK != rc )
                {
-                  PD_LOG( PDERROR, "Sync Session[%s]: Search lsn[%lld, %d] "
+                  PD_LOG( PDERROR, "Session[%s]: Search lsn[%lld, %d] "
                           "failed, rc: %d, need to synchronize full data",
                           sessionName(), rollback.offset, rollback.version,
                           rc ) ;
@@ -591,7 +591,7 @@ namespace engine
                }
                else if ( SDB_OK != _rollback( _mb.offset( 0 ) ) )
                {
-                  PD_LOG( PDERROR, "Sync Session[%s]: Rollback lsn[%lld, %d] "
+                  PD_LOG( PDERROR, "Session[%s]: Rollback lsn[%lld, %d] "
                           "failed, need to synchronize full data",
                           sessionName(), rollback.offset, rollback.version  ) ;
                   _fullSync() ;
@@ -608,12 +608,12 @@ namespace engine
             if ( SDB_OK != _logger->move( point.offset + pLogHeader->_length,
                                           point.version ) )
             {
-               PD_LOG( PDERROR, "Sync Session[%s]: Rollback log failed, "
+               PD_LOG( PDERROR, "Session[%s]: Rollback log failed, "
                        "need to synchronize full data", sessionName() ) ;
                _fullSync() ;
                goto done ;
             }
-            PD_LOG( PDEVENT, "Sync Session[%s]: Complete consult and "
+            PD_LOG( PDEVENT, "Session[%s]: Complete consult and "
                     "rollbacked %u records, current lsn[%u, %lld], "
                     "expect lsn[%u, %lld]", sessionName(), rollbackNum,
                     point.version, point.offset, point.version,
@@ -668,7 +668,7 @@ namespace engine
       // if the group size is 1, then rebuild, otherwise full sync
       if ( 1 >=  pClsCB->getReplCB()->groupSize() || pmdIsPrimary() )
       {
-         PD_LOG( PDWARNING, "Sync Session[%s]: Group size is one or the node "
+         PD_LOG( PDWARNING, "Session[%s]: Group size is one or the node "
                  "begin to primary, begin to rebuild database",
                  sessionName() ) ;
          DPS_LSN expectLSN = _logger->expectLsn() ;
@@ -703,13 +703,13 @@ namespace engine
          rc = _logger->move( 0, expectLSN.version ) ;
          if ( SDB_OK != rc )
          {
-            PD_LOG( PDERROR, "Sync Session[%s]: Move dps to begin failed "
+            PD_LOG( PDERROR, "Session[%s]: Move dps to begin failed "
                     "after rebuild, rc: %d", sessionName(), rc ) ;
             goto error ;
          }
          else
          {
-            PD_LOG( PDEVENT, "Sync Session[%s]: Move dps to begin after "
+            PD_LOG( PDEVENT, "Session[%s]: Move dps to begin after "
                     "rebuild succeed", sessionName() ) ;
          }
          /// then move to none-zero
@@ -728,7 +728,7 @@ namespace engine
          if ( _addFSSession.compareAndSwap( 0, 1 ) )
          {
             pClsCB->startInnerSession( CLS_REPL, CLS_TID_REPL_FS_SYC ) ;
-            PD_LOG( PDEVENT, "Sync Session[%s]: Start the synchronization of full",
+            PD_LOG( PDEVENT, "Session[%s]: Start the synchronization of full",
                     sessionName() ) ;
          }
       }
@@ -737,7 +737,7 @@ namespace engine
       PD_TRACE_EXIT ( SDB__CLSDSTREPSN__FULLSYNC ) ;
       return ;
    error:
-      PD_LOG ( PDSEVERE, "Sync Session[%s]: Local database rebuild failed "
+      PD_LOG ( PDSEVERE, "Session[%s]: Local database rebuild failed "
                "with %d", sessionName(), rc ) ;
       PMD_SHUTDOWN_DB( rc ) ;
       goto done ;
@@ -749,7 +749,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__CLSDSTREPSN__RLBCK );
       const dpsLogRecordHeader *header = (const dpsLogRecordHeader *)log;
-      PD_LOG( PDDEBUG, "Sync Session[%s]: Begin to rollback lsn:[%lld, %d]",
+      PD_LOG( PDDEBUG, "Session[%s]: Begin to rollback lsn:[%lld, %d]",
               sessionName(), header->_lsn, header->_version ) ;
       rc = _replayer.rollback( header, eduCB() ) ;
       if ( rc )
@@ -820,7 +820,7 @@ namespace engine
 
          msg.identity = routeAgent()->localID() ;
          routeAgent()->syncSend( _syncSrc, &msg ) ;
-         PD_LOG( PDDEBUG, "Sync Session[%s]: Send sync req to [node: %d, "
+         PD_LOG( PDDEBUG, "Session[%s]: Send sync req to [node: %d, "
                  "group:%d], lsn: [%llu][%u], complete lsn: [%lld][%u]",
                  sessionName(), _syncSrc.columns.nodeID,
                  _syncSrc.columns.groupID, msg.next.offset, msg.next.version,
@@ -844,7 +844,7 @@ namespace engine
 
       if ( !_pReplBucket->isEmpty() )
       {
-         PD_LOG( PDDEBUG, "Sync Session[%s]: Repl bucket is not empty, "
+         PD_LOG( PDDEBUG, "Session[%s]: Repl bucket is not empty, "
                  "size: %d, can't send consult req", sessionName(),
                  _pReplBucket->size() ) ;
          goto done ;
@@ -878,7 +878,7 @@ namespace engine
          }
 
          routeAgent()->syncSend( _syncSrc, &msg ) ;
-         PD_LOG( PDEVENT, "Sync Session[%s]: Send consult req to [node: %d, "
+         PD_LOG( PDEVENT, "Session[%s]: Send consult req to [node: %d, "
                  "group:%d], [LSN: %d:%lld]", sessionName(),
                  _syncSrc.columns.nodeID, _syncSrc.columns.groupID,
                  msg.current.version,  msg.current.offset ) ;
@@ -906,7 +906,7 @@ namespace engine
       {
          if ( eduCB()->isInterrupted() )
          {
-            PD_LOG ( PDEVENT, "Sync Session[%s]: ReplayLog is interrupted",
+            PD_LOG ( PDEVENT, "Session[%s]: ReplayLog is interrupted",
                      sessionName() ) ;
             break ;
          }
@@ -914,7 +914,7 @@ namespace engine
          recordHeader = (dpsLogRecordHeader *)log ;
          needRollback = FALSE ;
 
-         PD_LOG( PDDEBUG, "Sync Session[%s]: Replay record [lsn offset: %lld, "
+         PD_LOG( PDDEBUG, "Session[%s]: Replay record [lsn offset: %lld, "
                  "version: %d, len:%d, preLsn:%lld]", sessionName(),
                  recordHeader->_lsn, recordHeader->_version,
                  recordHeader->_length, recordHeader->_preLsn ) ;
@@ -932,7 +932,7 @@ namespace engine
             rc = _logger->search( searchLSN, &_mb ) ;
             if ( SDB_OK != rc )
             {
-               PD_LOG( PDERROR, "Sync Session[%s]: Find lsn[%u,%lld] in local "
+               PD_LOG( PDERROR, "Session[%s]: Find lsn[%u,%lld] in local "
                        "Failed, rc: %d", sessionName(), searchLSN.version,
                        searchLSN.offset, rc ) ;
                goto error ;
@@ -942,7 +942,7 @@ namespace engine
             if ( recordHeader->_version != searchHeader->_version ||
                  recordHeader->_length != searchHeader->_length )
             {
-               PD_LOG( PDERROR, "Sync Session[%s]: Local lsn[%u,%lld, len: %u] "
+               PD_LOG( PDERROR, "Session[%s]: Local lsn[%u,%lld, len: %u] "
                        "is not the same with remote[%s] lsn[%u,%lld, len: %u]",
                        sessionName(), searchHeader->_version,
                        searchHeader->_lsn, searchHeader->_length,
@@ -956,7 +956,7 @@ namespace engine
             if ( ossHash( log, recordHeader->_length ) !=
                  ossHash( _mb.offset(0), searchHeader->_length ) )
             {
-               PD_LOG( PDERROR, "Sync Session[%s]: Local lsn[%u, %lld] 's "
+               PD_LOG( PDERROR, "Session[%s]: Local lsn[%u, %lld] 's "
                        "hash value is not the same with remote[%s] "
                        "lsn[%u, %lld]", sessionName(), searchHeader->_version,
                        searchHeader->_lsn,
@@ -974,7 +974,7 @@ namespace engine
          if ( 0 != expectLSN.compareOffset( recordHeader->_lsn ) ||
               0 < expectLSN.compareVersion( recordHeader->_version ) )
          {
-            PD_LOG ( PDWARNING, "Sync Session[%s]: ReplayLog, cur lsn[%d,%lld] "
+            PD_LOG ( PDWARNING, "Session[%s]: ReplayLog, cur lsn[%d,%lld] "
                      "can't fit expect lsn[%d,%lld]", sessionName(),
                      recordHeader->_version, recordHeader->_lsn,
                      expectLSN.version, expectLSN.offset ) ;
@@ -987,7 +987,7 @@ namespace engine
          SDB_ASSERT( SDB_OK == rc, "must be ok" ) ;
          if ( SDB_OK != rc )
          {
-            PD_LOG( PDERROR, "Sync Session[%s]: Failed to replay log, rc: %d",
+            PD_LOG( PDERROR, "Session[%s]: Failed to replay log, rc: %d",
                     sessionName(), rc ) ;
             goto error ;
          }
@@ -995,7 +995,7 @@ namespace engine
          rc = _logger->recordRow( log, recordHeader->_length ) ;
          if ( SDB_OK != rc )
          {
-            PD_LOG( PDERROR, "Sync Session[%s]: Row record failed[rc:%d]",
+            PD_LOG( PDERROR, "Session[%s]: Row record failed[rc:%d]",
                     sessionName(), rc ) ;
             needRollback = TRUE ;
             goto error ;
@@ -1015,14 +1015,14 @@ namespace engine
          rc = _logger->move( expectLSN.offset, expectLSN.version ) ;
          if ( rc )
          {
-            PD_LOG( PDERROR, "Sync Session[%s]: Failed to move lsn to "
+            PD_LOG( PDERROR, "Session[%s]: Failed to move lsn to "
                     "[%u, %llu], rc: %d, need to synchronize full data",
                     sessionName(), expectLSN.version, expectLSN.offset ) ;
             _fullSync() ;
          }
          else
          {
-            PD_LOG( PDEVENT, "Sync Session[%s]: Move lsn to[%u, %llu]",
+            PD_LOG( PDEVENT, "Session[%s]: Move lsn to[%u, %llu]",
                     sessionName(), expectLSN.version, expectLSN.offset ) ;
          }
       }
@@ -1031,7 +1031,7 @@ namespace engine
          rc = _rollback( log ) ;
          if ( SDB_OK != rc )
          {
-            PD_LOG( PDERROR, "Sync Session[%s]: Failed to rollback[%lld, "
+            PD_LOG( PDERROR, "Session[%s]: Failed to rollback[%lld, "
                     "type: %d], rc: %d, need to synchronize full data",
                     sessionName(), recordHeader->_lsn, recordHeader->_type,
                     rc ) ;
@@ -1116,7 +1116,7 @@ namespace engine
       //if the peer node no msg a long time,need to quit
       if ( !_quit && CLS_DST_SESSION_NO_MSG_TIME < _timeout )
       {
-         PD_LOG ( PDEVENT, "Sync Session[%s] peer node a long time no msg, "
+         PD_LOG ( PDEVENT, "Session[%s] peer node a long time no msg, "
                   "quit", sessionName() ) ;
          _quit = TRUE ;
       }
@@ -1188,7 +1188,7 @@ namespace engine
       if ( (UINT32)header->messageLength < sizeof( _MsgReplConsultation ) )
       {
          /// the old message( no hashValue, and reserved )
-         PD_LOG( PDWARNING, "Sync Session[%s]: Recv consult request message "
+         PD_LOG( PDWARNING, "Session[%s]: Recv consult request message "
                  "length[%d] is less than %d", sessionName(), header->messageLength,
                  sizeof( _MsgReplConsultation ) ) ;
          needReply = FALSE ; /// not reply
@@ -1199,7 +1199,7 @@ namespace engine
       else if ( header->requestID <= _lastProcRequestID &&
                 eduCB()->getQueSize() > 0 )
       {
-         PD_LOG( PDINFO, "Sync Session[%s]: Consult's request id[%llu] is no "
+         PD_LOG( PDINFO, "Session[%s]: Consult's request id[%llu] is no "
                  "greater than processed request id[%llu], and message queue "
                  "is not empty[%u], so dispath the request", sessionName(),
                  header->requestID, _lastProcRequestID,
@@ -1217,7 +1217,7 @@ namespace engine
       }
 
       _logger->getLsnWindow( fLsn, mLsn, eLsn, NULL, NULL ) ;
-      PD_LOG( PDEVENT, "Sync Session[%s]: Recv a consult req. "
+      PD_LOG( PDEVENT, "Session[%s]: Recv a consult req. "
               "[remote offset:%lld, remote ver:%d, local foffset:%lld, "
               "local fver:%d], local eoffset:%lld, local ever:%d]",
               sessionName(), msg->current.offset, msg->current.version,
@@ -1309,7 +1309,7 @@ namespace engine
    done:
       if ( needReply )
       {
-         PD_LOG( PDEVENT, "Sync Session[%s]: Consult result[%d], "
+         PD_LOG( PDEVENT, "Session[%s]: Consult result[%d], "
                  "return lsn[%u,%lld]", sessionName(), res.header.res,
                  res.returnTo.version, res.returnTo.offset ) ;
          _mb.clear() ;
@@ -1347,7 +1347,7 @@ namespace engine
       //if don't know who is primary node, don't reply
       if ( MSG_INVALID_ROUTEID == _repl->getPrimary().value )
       {
-         PD_LOG ( PDINFO, "Sync Session[%s]: Don't know who is primary node, "
+         PD_LOG ( PDINFO, "Session[%s]: Don't know who is primary node, "
                   "not reply", sessionName() ) ;
          goto done ;
       }
@@ -1357,7 +1357,7 @@ namespace engine
       if ( req->header.requestID <= _lastProcRequestID &&
            eduCB()->getQueSize() > 0 )
       {
-         PD_LOG( PDINFO, "Sync Session[%s]: Sync's request id[%llu] is no "
+         PD_LOG( PDINFO, "Session[%s]: Sync's request id[%llu] is no "
                  "greater than processed request id[%llu], and message queue "
                  "is not empty[%u], so dispath the request", sessionName(),
                  req->header.requestID, _lastProcRequestID,
@@ -1378,7 +1378,7 @@ namespace engine
       _logger->getLsnWindow( fLsn, mLsn, eLsn, &expect, NULL ) ;
       if ( 0 < fLsn.compareOffset( req->next.offset ) )
       {
-         PD_LOG( PDWARNING, "Sync Session[%s]: Remote lsn is too old. "
+         PD_LOG( PDWARNING, "Session[%s]: Remote lsn is too old. "
                  "remote [offset:%lld, version:%d], local [fLsn offset:%lld, "
                  "fLsn version:%d, eLsn offset:%lld, eLsn version:%d]",
                  sessionName(), req->next.offset, req->next.version,
@@ -1398,7 +1398,7 @@ namespace engine
             {
                msg.header.res = SDB_CLS_SYNC_FAILED ;
                rc = SDB_CLS_SYNC_FAILED ;
-               PD_LOG( PDWARNING, "Sync Session[%s]: Remote lsn is not match "
+               PD_LOG( PDWARNING, "Session[%s]: Remote lsn is not match "
                        "local.[remote offset:%lld, remote ver:%d]"
                        "[end offset:%lld, end version:%d][expect offset:%lld,"
                        "expect version:%d]", sessionName(),req->next.offset,
@@ -1407,7 +1407,7 @@ namespace engine
             }
             else
             {
-               PD_LOG( PDDEBUG, "Sync Session[%s]: Local has no more new data",
+               PD_LOG( PDDEBUG, "Session[%s]: Local has no more new data",
                        sessionName() ) ;
                msg.header.res = SDB_OK ;
                rc = SDB_OK ;
@@ -1415,7 +1415,7 @@ namespace engine
          }
          else
          {
-            PD_LOG( PDDEBUG, "Sync Session[%s]: Local has no more new data.",
+            PD_LOG( PDDEBUG, "Session[%s]: Local has no more new data.",
                     sessionName() ) ;
             msg.header.res = SDB_OK ;
             rc = SDB_OK ;
@@ -1431,7 +1431,7 @@ namespace engine
       }
       else
       {
-         PD_LOG( PDDEBUG, "Sync Session[%s]: Begin to find log. remote "
+         PD_LOG( PDDEBUG, "Session[%s]: Begin to find log. remote "
                  "[offset:%lld, version:%d], local [fLsn offset:%lld, "
                  "fLsn version:%d] [eLsn offset:%lld, eLsn version:%d]",
                  sessionName(), req->next.offset, req->next.version,
@@ -1455,7 +1455,7 @@ namespace engine
       {
          rc = SDB_CLS_SYNC_FAILED ;
          msg.header.res = SDB_CLS_SYNC_FAILED ;
-         PD_LOG( PDWARNING, "Sync Session[%s]: Can not find [ver:%d, "
+         PD_LOG( PDWARNING, "Session[%s]: Can not find [ver:%d, "
                  "offset:%lld]", sessionName(), search.version,
                  search.offset ) ;
          routeAgent()->syncSend( handle, &msg ) ;

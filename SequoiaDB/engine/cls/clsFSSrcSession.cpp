@@ -1414,7 +1414,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__CLSFSSS_HNDBEGIN );
       SDB_ASSERT( NULL != header, "header should not be NULL" ) ;
-      PD_LOG( PDEVENT, "FS Session[%s] begin to full sync", sessionName() ) ;
+      PD_LOG( PDEVENT, "Session[%s] begin to full sync", sessionName() ) ;
 
       SDB_DPSCB *dpscb = pmdGetKRCB()->getDPSCB() ;
       MsgClsFSBeginRes msg ;
@@ -1425,7 +1425,7 @@ namespace engine
 
       if ( _hasMeta || _mapOveredCLs.size() > 0 )
       {
-         PD_LOG( PDWARNING, "FS Session[%s] already hasMeta, can't begin, "
+         PD_LOG( PDWARNING, "Session[%s] already hasMeta, can't begin, "
                  "disconnect", sessionName() ) ;
          _disconnect() ;
          goto done ;
@@ -1435,7 +1435,7 @@ namespace engine
                 DPS_INVALID_LSN_OFFSET ==
                 dpscb->getCurrentLsn().offset )
       {
-         PD_LOG( PDWARNING, "FS Session[%s] not primary and nodata can not be "
+         PD_LOG( PDWARNING, "Session[%s] not primary and nodata can not be "
                  "source node", sessionName() ) ;
          msg.header.res = SDB_CLS_NOTP_AND_NODATA ;
          _quit = TRUE ;
@@ -1446,7 +1446,7 @@ namespace engine
       //if not ready, can't be the source node of the full sync
       if ( SDB_OK != ( rc = _isReady() ) )
       {
-         PD_LOG( PDWARNING, "FS Session[%s] is not ready[%d], refused",
+         PD_LOG( PDWARNING, "Session[%s] is not ready[%d], refused",
                  sessionName(), rc ) ;
          msg.header.res = rc ;
          _quit = TRUE ;
@@ -1476,7 +1476,7 @@ namespace engine
 
          if ( SDB_OK != _constructFullNames( obj ) )
          {
-            PD_LOG ( PDWARNING, "FS Session[%s] construct collections name "
+            PD_LOG ( PDWARNING, "Session[%s] construct collections name "
                      "failed", sessionName() ) ;
             _disconnect() ;
             goto done ;
@@ -1509,7 +1509,7 @@ namespace engine
       /*
       if ( !_init )
       {
-         PD_LOG( PDWARNING, "FS Session[%s]: not init, disconnect",
+         PD_LOG( PDWARNING, "Session[%s]: not init, disconnect",
                  sessionName() ) ;
          _disconnect() ;
          goto done ;
@@ -1522,7 +1522,7 @@ namespace engine
 
       if ( SDB_OK == _agent->syncSend( handle, &msg ) )
       {
-         PD_LOG( PDEVENT, "FS Session[%s]: end to full sync", sessionName() ) ;
+         PD_LOG( PDEVENT, "Session[%s]: end to full sync", sessionName() ) ;
          _quit = TRUE ;
       }
 
@@ -1547,14 +1547,14 @@ namespace engine
 
       if ( !_init )
       {
-         PD_LOG( PDWARNING, "FS Session[%s]: not init, disconnect",
+         PD_LOG( PDWARNING, "Session[%s]: not init, disconnect",
                  sessionName() ) ;
          rc = SDB_SYS ;
          goto error ;
       }
       else if ( SDB_OK != ( rc = _isReady() ) )
       {
-         PD_LOG( PDWARNING, "FS Session[%s] is not ready[%d], disconnect",
+         PD_LOG( PDWARNING, "Session[%s] is not ready[%d], disconnect",
                  sessionName(), rc ) ;
          goto error ;
       }
@@ -1632,7 +1632,7 @@ namespace engine
       _LSNlatch.get() ;
       needRelease = TRUE ;
 
-      PD_LOG ( PDINFO, "FS Session[%s]: dps notify[suLID:%d, clLID:%d, "
+      PD_LOG ( PDINFO, "Session[%s]: dps notify[suLID:%d, clLID:%d, "
                "extLID:%d, offset:%lld], curScan extLID:%d", sessionName(),
                suLID, clLID, extLID, offset, _curExtID ) ;
 
@@ -1654,7 +1654,7 @@ namespace engine
          INT32 rc = dpsCB->searchHeader( lsn, &_lsnSearchMB ) ;
          if ( SDB_OK != rc )
          {
-            PD_LOG ( PDERROR, "FS Src Session[%s]: Failed to load dps "
+            PD_LOG ( PDERROR, "Session[%s]: Failed to load dps "
                      "log[offset:%lld, rc:%d]", sessionName(), offset, rc ) ;
             goto error ;
          }
@@ -1725,28 +1725,28 @@ namespace engine
       {
          /* MSG_INVALID_ROUTEID != sdbGetReplCB()->getPrimary().value */
          rc = SDB_CLS_NOT_PRIMARY ;
-         PD_LOG( PDWARNING, "FS Session[%s] not ready: Self node is not "
+         PD_LOG( PDWARNING, "Session[%s] not ready: Self node is not "
                  "primary", sessionName() ) ;
       }
       /// 2. in full sync
       else if ( SDB_DB_FULLSYNC == PMD_DB_STATUS() )
       {
          rc = SDB_CLS_FULL_SYNC ;
-         PD_LOG( PDWARNING, "FS Session[%s] not ready: Self node is "
+         PD_LOG( PDWARNING, "Session[%s] not ready: Self node is "
                  "already in full sync", sessionName() ) ;
       }
       /// 3. in rebuild
       else if ( SDB_DB_REBUILDING == PMD_DB_STATUS() )
       {
          rc = SDB_RTN_IN_REBUILD ;
-         PD_LOG( PDWARNING, "FS Session[%s] not ready: Self node is "
+         PD_LOG( PDWARNING, "Session[%s] not ready: Self node is "
                  "already in rebuilding", sessionName() ) ;
       }
       /// 4. business is not ok
       else if ( !pmdGetStartup().isOK () )
       {
          rc = SDB_RTN_IN_REBUILD ;
-         PD_LOG( PDWARNING, "FS Session[%s] not ready: Self node is "
+         PD_LOG( PDWARNING, "Session[%s] not ready: Self node is "
                  "not recoverd from crash", sessionName() ) ;
       }
 
@@ -1877,7 +1877,7 @@ namespace engine
       rc = dpsCB->search( lsn, &_lsnSearchMB ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG ( PDERROR, "Split Session[%s]: Failed to load dps "
+         PD_LOG ( PDERROR, "Session[%s]: Failed to load dps "
                   "log[offset:%lld, rc:%d]", sessionName(), offset, rc ) ;
          goto error ;
       }
@@ -1885,7 +1885,7 @@ namespace engine
       rc = record.load( _lsnSearchMB.startPtr() ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG ( PDERROR, "Split Session[%s]: parse dps log failed[rc:%d]",
+         PD_LOG ( PDERROR, "Session[%s]: parse dps log failed[rc:%d]",
                   sessionName(), rc ) ;
          goto error ;
       }
@@ -1911,7 +1911,7 @@ namespace engine
                           record.find( DPS_LOG_LOB_OID ) ;
             if ( !itr.valid() )
             {
-               PD_LOG( PDERROR, "Split Session[%s]: can not find oid obj in "
+               PD_LOG( PDERROR, "Session[%s]: can not find oid obj in "
                       "record.", sessionName() ) ;
                rc = SDB_SYS ;
                goto error ;
@@ -1921,7 +1921,7 @@ namespace engine
             itr = record.find( DPS_LOG_LOB_SEQUENCE ) ;
             if ( !itr.valid() )
             {
-               PD_LOG( PDERROR, "Split Session[%s]: can not find oid obj in "
+               PD_LOG( PDERROR, "Session[%s]: can not find oid obj in "
                       "record.", sessionName() ) ;
                rc = SDB_SYS ;
                goto error ;
@@ -1931,7 +1931,7 @@ namespace engine
             rc = _onLobFilter( *oid, *sequence, need2Notify ) ;
             if ( SDB_OK != rc )
             {
-               PD_LOG( PDERROR, "Split Session[%s]: can not filter the log "
+               PD_LOG( PDERROR, "Session[%s]: can not filter the log "
                        , sessionName() ) ;
                rc = SDB_SYS ;
                goto error ;
@@ -1957,7 +1957,7 @@ namespace engine
                              record.find( DPS_LOG_INSERT_OBJ ) ;
             if ( !itr.valid() )
             {
-               PD_LOG( PDERROR, "Split Session[%s]: can not find insert obj in "
+               PD_LOG( PDERROR, "Session[%s]: can not find insert obj in "
                        "record.", sessionName() ) ;
                rc = SDB_SYS ;
                goto error ;
@@ -1970,7 +1970,7 @@ namespace engine
                          record.find( DPS_LOG_DELETE_OLDOBJ ) ;
             if ( !itr.valid() )
             {
-               PD_LOG( PDERROR, "Split Session[%s] can not find delete obj in "
+               PD_LOG( PDERROR, "Session[%s] can not find delete obj in "
                        "record.", sessionName() ) ;
                rc = SDB_SYS ;
                goto error ;
@@ -1998,7 +1998,7 @@ namespace engine
                   ( TBSCAN == _scanType() && extLID <= _curExtID ) ) )
             {
                _deqLSN.push_back( offset ) ;
-               /*PD_LOG( PDERROR, "Split Session[%s]: push queue: %s, curObj: "
+               /*PD_LOG( PDERROR, "Session[%s]: push queue: %s, curObj: "
                        "%s, rangeKey: %s, findEnd: %d, contextID: %lld",
                        sessionName(), keyObj.toString().c_str(),
                        _curScanKeyObj.toString().c_str(),
@@ -2008,7 +2008,7 @@ namespace engine
             }
             /*else
             {
-               PD_LOG( PDERROR, "Split Session[%s] :dispatch: %s, curObj: %s, "
+               PD_LOG( PDERROR, "Session[%s] :dispatch: %s, curObj: %s, "
                        "rangeKey: %s, findEnd: %d, contextID: %lld",
                        sessionName(), keyObj.toString().c_str(),
                        _curScanKeyObj.toString().c_str(),
@@ -2050,7 +2050,7 @@ namespace engine
       //check range key
       if ( _rangeKeyObj.isEmpty() )
       {
-         PD_LOG ( PDERROR, "Split Session[%s] range key obj is empty",
+         PD_LOG ( PDERROR, "Session[%s] range key obj is empty",
                   sessionName() ) ;
          rc = SDB_INVALIDARG ;
          goto done ;
@@ -2152,7 +2152,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__CLSSPLSS_HNDBEGIN );
-      PD_LOG( PDEVENT, "Split Session[%s]: Begin for split", sessionName() ) ;
+      PD_LOG( PDEVENT, "Session[%s]: Begin for split", sessionName() ) ;
 
       MsgClsFSBeginRes msg ;
       msg.header.header.TID = header->TID ;
@@ -2162,7 +2162,7 @@ namespace engine
 
       if ( _hasMeta || _mapOveredCLs.size() > 0 )
       {
-         PD_LOG( PDWARNING, "Split Session[%s]: already hasMeta, can't begin, "
+         PD_LOG( PDWARNING, "Session[%s]: already hasMeta, can't begin, "
                  "disconnect", sessionName() ) ;
          _disconnect() ;
          goto done ;
@@ -2172,7 +2172,7 @@ namespace engine
       if ( header->routeID.columns.groupID ==
            sdbGetShardCB()->nodeID().columns.groupID )
       {
-         PD_LOG ( PDERROR, "Split Session[%s]: the source and dst node is in "
+         PD_LOG ( PDERROR, "Session[%s]: the source and dst node is in "
                   "same group", sessionName() ) ;
          _disconnect () ;
          goto done ;
@@ -2181,7 +2181,7 @@ namespace engine
       //if not ready, can't be the source node of split
       if ( SDB_OK != ( rc = _isReady() ) )
       {
-         PD_LOG( PDWARNING, "Split Session[%s] not ready[%d], refused",
+         PD_LOG( PDWARNING, "Session[%s] not ready[%d], refused",
                  sessionName(), rc ) ;
          _disconnect () ;
          goto done ;
@@ -2224,14 +2224,14 @@ namespace engine
       {
          if ( !_init )
          {
-            PD_LOG( PDWARNING, "Split Session[%s]: not init, disconnect",
+            PD_LOG( PDWARNING, "Session[%s]: not init, disconnect",
                     sessionName() ) ;
             _disconnect() ;
             goto done ;
          }
          else if ( SDB_OK != ( rc = _isReady() ) )
          {
-            PD_LOG( PDWARNING, "Split Session[%s] is not ready[%d], "
+            PD_LOG( PDWARNING, "Session[%s] is not ready[%d], "
                     "disconnect", sessionName(), rc ) ;
             _disconnect() ;
             goto done ;
@@ -2258,7 +2258,7 @@ namespace engine
       {
          if ( cleanResult )
          {
-            PD_LOG( PDWARNING, "Split Session[%s] cleanup data failed, rc: %d",
+            PD_LOG( PDWARNING, "Session[%s] cleanup data failed, rc: %d",
                     sessionName(), cleanResult ) ;
             _disconnect () ;
             goto done ;
@@ -2283,7 +2283,7 @@ namespace engine
 
          if ( SDB_OK == _agent->syncSend( handle, (MsgHeader*)&res ) )
          {
-            PD_LOG( PDEVENT, "Split Session[%s]: end for split",
+            PD_LOG( PDEVENT, "Session[%s]: end for split",
                     sessionName() ) ;
             _quit = TRUE ;
             _cleanupJobID = PMD_INVALID_EDUID ;
@@ -2310,7 +2310,7 @@ namespace engine
 
       if ( !_init )
       {
-         PD_LOG( PDWARNING, "Split Session[%s]: not init, disconnect",
+         PD_LOG( PDWARNING, "Session[%s]: not init, disconnect",
                  sessionName() ) ;
          rc = SDB_SYS ;
          _disconnect() ;
@@ -2318,7 +2318,7 @@ namespace engine
       }
       else if ( SDB_OK != ( rc = _isReady() ) )
       {
-         PD_LOG( PDWARNING, "Split Session[%s] is not ready[%d], disconnect",
+         PD_LOG( PDWARNING, "Session[%s] is not ready[%d], disconnect",
                  sessionName(), rc ) ;
          _disconnect() ;
          goto done ;
@@ -2350,7 +2350,7 @@ namespace engine
                                                   OSS_ONE_SEC ) ;
          if ( rcTmp )
          {
-            PD_LOG( PDWARNING, "Split Session[%s]: update main-collection(%s) "
+            PD_LOG( PDWARNING, "Session[%s]: update main-collection(%s) "
                     "failed, rc: %d", sessionName(), mainCLName.c_str(),
                     rcTmp ) ;
          }
@@ -2384,28 +2384,28 @@ namespace engine
       if ( !pmdIsPrimary() )
       {
          rc = SDB_CLS_NOT_PRIMARY ;
-         PD_LOG( PDWARNING, "Split Session[%s] not ready: Self node is "
+         PD_LOG( PDWARNING, "Session[%s] not ready: Self node is "
                  "not primary", sessionName() ) ;
       }
       /// 2. In full sync
       else if ( SDB_DB_FULLSYNC == PMD_DB_STATUS() )
       {
          rc = SDB_CLS_FULL_SYNC ;
-         PD_LOG( PDWARNING, "Split Session[%s] not ready: Self node is "
+         PD_LOG( PDWARNING, "Session[%s] not ready: Self node is "
                  "in full sync", sessionName() ) ;
       }
       /// 3. In rebuild
       else if ( SDB_DB_REBUILDING == PMD_DB_STATUS() )
       {
          rc = SDB_RTN_IN_REBUILD ;
-         PD_LOG( PDWARNING, "Split Session[%s] not ready: Self node is "
+         PD_LOG( PDWARNING, "Session[%s] not ready: Self node is "
                  "in rebuilding", sessionName() ) ;
       }
       /// 4. not recoved from crash
       else if ( !pmdGetStartup().isOK () )
       {
          rc = SDB_RTN_IN_REBUILD ;
-         PD_LOG( PDWARNING, "Split Session[%s] not ready: Self node is "
+         PD_LOG( PDWARNING, "Session[%s] not ready: Self node is "
                  "not recovered from crash", sessionName() ) ;
       }
 
@@ -2424,13 +2424,13 @@ namespace engine
       rc = keyGen.getKeys( obj , objSet ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG ( PDERROR, "Split Session[%s] gen sharding key obj from %s "
+         PD_LOG ( PDERROR, "Session[%s] gen sharding key obj from %s "
                   "failed[rc:%d]", sessionName(), obj.toString().c_str(), rc ) ;
          goto error ;
       }
       if ( objSet.size() != 1 )
       {
-         PD_LOG ( PDERROR, "Split Session[%s]: More than one sharding key[%d] "
+         PD_LOG ( PDERROR, "Session[%s]: More than one sharding key[%d] "
                   "is detected[%s]", sessionName(), objSet.size(),
                   obj.toString().c_str() ) ;
          rc = SDB_MULTI_SHARDING_KEY ;
@@ -2510,7 +2510,7 @@ namespace engine
          rc = _filterMB.extend( tempSize ) ;
          if ( SDB_OK != rc )
          {
-            PD_LOG ( PDERROR, "Split Session[%s] failed to extent message "
+            PD_LOG ( PDERROR, "Session[%s] failed to extent message "
                      "block[size:%d, rc:%d]", sessionName(), tempSize, rc ) ;
             goto error ;
          }
@@ -2579,7 +2579,7 @@ namespace engine
       }
       catch( std::exception &e )
       {
-         PD_LOG ( PDERROR, "Split Session[%s]: filter object exception: %s",
+         PD_LOG ( PDERROR, "Session[%s]: filter object exception: %s",
                   sessionName(), e.what() ) ;
          rc = SDB_SYS ;
          goto error ;
@@ -2592,7 +2592,7 @@ namespace engine
       PD_TRACE_EXIT ( SDB__CLSSPLSS__ONOBJFLT );
       return outBuff ;
    error:
-      PD_LOG( PDERROR, "Split Session[%s]: Filter obj failed[%d], disconnect",
+      PD_LOG( PDERROR, "Session[%s]: Filter obj failed[%d], disconnect",
               sessionName(), rc ) ;
       outSize = 0 ;
       _disconnect() ;
