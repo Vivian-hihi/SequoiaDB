@@ -326,6 +326,7 @@ namespace engine
 
       // start operator
       MON_START_OP( _pEDUCB->getMonAppCB() ) ;
+      _pEDUCB->getMonAppCB()->setLastOpType( msg->opCode ) ;
 
       return SDB_OK ;
    }
