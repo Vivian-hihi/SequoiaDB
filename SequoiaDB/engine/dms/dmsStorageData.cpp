@@ -1917,6 +1917,7 @@ namespace engine
       UINT32 newCLID     = DMS_INVALID_CLID ;
       UINT32 oldCLID     = DMS_INVALID_CLID ;
       UINT64 oldRecords  = 0 ;
+      UINT64 oldLobs     = 0 ;
 
       PD_TRACE_ENTRY ( SDB__DMSSTORAGEDATA_TRUNCATECOLLECTION ) ;
       CHAR fullName[DMS_COLLECTION_FULL_NAME_SZ + 1] = {0} ;
@@ -2030,8 +2031,8 @@ namespace engine
       if ( dpscb )
       {
          PD_AUDIT_OP_WITHNAME( AUDIT_DML, "TRUNCATE", AUDIT_OBJ_CL,
-                               fullName, rc, "Record:%llu",
-                               oldRecords ) ;
+                               fullName, rc, "RecordNum:%llu, LobNum:%llu",
+                               oldRecords, oldLobs ) ;
          rc = _logDPS( dpscb, info, cb, context, DMS_INVALID_EXTENT, TRUE, &oldCLID ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to insert CLTrunc record to log, "
                       "rc: %d", rc ) ;
