@@ -3750,6 +3750,9 @@ namespace engine
        */
       context->mb()->_dictExtentID = dictExtID ;
 
+      /// Make sure the dict persist
+      flushMME( TRUE ) ;
+
    done:
       if ( context )
       {
