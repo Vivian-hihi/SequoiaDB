@@ -288,6 +288,7 @@ namespace engine
       while ( loop )
       {
          MON_START_OP( _pEDUCB->getMonAppCB() ) ;
+         _pEDUCB->getMonAppCB()->setLastOpType( msg->opCode ) ;
 
          switch ( msg->opCode )
          {
