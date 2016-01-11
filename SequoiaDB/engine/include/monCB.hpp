@@ -335,7 +335,7 @@ namespace engine
       ossTick _lastOpEndTime ;
       ossTickDelta _readTimeSpent ;
       ossTickDelta _writeTimeSpent ;
-      CHAR _lastOpDetail[ 128 ] ;
+      CHAR _lastOpDetail[ 256 ] ;
 
       void monOperationTimeInc( MON_OPERATION_TYPES op, ossTickDelta &delta )
       {
