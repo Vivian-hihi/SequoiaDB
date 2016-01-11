@@ -2003,6 +2003,7 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR, "dms mb context resume falied, rc: %d", rc ) ;
 
       oldRecords = context->mbStat()->_totalRecords ;
+      oldLobs = context->mbStat()->_totalLobs ;
 
       rc = _pIdxSU->truncateIndexes( context ) ;
       PD_RC_CHECK( rc, PDERROR, "Truncate collection[%s] indexes failed, "
