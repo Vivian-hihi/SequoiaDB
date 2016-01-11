@@ -897,7 +897,7 @@ namespace engine
       pSession->startType( startType ) ;
       pSession->sessionID( sessionID ) ;
 
-      PD_LOG ( PDEVENT, "Create session[Name: %s, StartType: %d]",
+      PD_LOG ( PDEVENT, "Create session[%s,StartType:%d]",
                pSession->sessionName(), startType ) ;
 
       // attach meta
