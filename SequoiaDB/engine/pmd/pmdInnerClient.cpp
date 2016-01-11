@@ -58,9 +58,6 @@ namespace engine
       ossMemset( _peerIP, 0, sizeof( _peerIP ) ) ;
       ossMemset( _clientName, 0, sizeof( _clientName ) ) ;
 
-      _username      = "DB" ;
-      _password      = "DB" ;
-
       _makeName() ;
    }
 
@@ -122,8 +119,11 @@ namespace engine
 
       _isAuthed = TRUE ;
       _username = user.valuestrsafe() ;
-      _password = pass.valuestrsafe() ;
-      _pEDUCB->setUserInfo( user.valuestrsafe(), pass.valuestrsafe() ) ;
+      if ( !_username.empty() )
+      {
+         _password = pass.valuestrsafe() ;
+      }
+      _pEDUCB->setUserInfo( _username, _password ) ;
 
    done:
       return rc ;
@@ -140,7 +140,10 @@ namespace engine
       }
       _isAuthed = TRUE ;
       _username = username ;
-      _password = password ;
+      if ( !_username.empty() )
+      {
+         _password = password ;
+      }
       _pEDUCB->setUserInfo( username, password ) ;
       return SDB_OK ;
    }

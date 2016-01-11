@@ -72,6 +72,8 @@ namespace engine
    } ;
    typedef _innerSessionInfo innerSessionInfo ;
 
+   struct _clsIdentifyInfo ;
+
    /*
       _clsShardSessionMgr define
    */
@@ -90,6 +92,10 @@ namespace engine
 
          virtual UINT64       makeSessionID( const NET_HANDLE &handle,
                                              const MsgHeader *header ) ;
+
+         virtual void         onSessionDisconnect( pmdAsyncSession *pSession ) ;
+         virtual void         onSessionHandleClose( pmdAsyncSession *pSession ) ;
+         virtual void         onSessionDestoryed( pmdAsyncSession *pSession ) ;
 
       protected:
          /*
@@ -118,6 +124,7 @@ namespace engine
       protected:
          _clsMgr                 *_pClsMgr ;
          UINT32                  _unShardSessionTimer ;
+         map< UINT64, _clsIdentifyInfo >    _mapIdentifys ;
 
    } ;
    typedef _clsShardSessionMgr clsShardSessionMgr ;

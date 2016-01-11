@@ -196,6 +196,15 @@ namespace engine
       else if ( SDB_SESSION_SHARD == sessionType )
       {
          pSession = SDB_OSS_NEW _clsShdSession ( sessionID ) ;
+
+         map< UINT64, clsIdentifyInfo >::iterator it ;
+         if ( pSession &&
+              ( it = _mapIdentifys.find( sessionID ) ) != _mapIdentifys.end() )
+         {
+            _clsShdSession *pShdSession = ( _clsShdSession* )pSession ;
+            pShdSession->setDelayLogin( it->second ) ;
+            _mapIdentifys.erase( it ) ;
+         }
       }
       else
       {
@@ -258,6 +267,50 @@ namespace engine
             continue ;
          }
          ++it ;
+      }
+   }
+
+   void _clsShardSessionMgr::onSessionDestoryed( pmdAsyncSession *pSession )
+   {
+      if ( SDB_SESSION_SHARD == pSession->sessionType() )
+      {
+         _clsShdSession *pShdSession = ( _clsShdSession* )pSession ;
+         if( !pShdSession->isSetLogout() )
+         {
+            /// save identify info
+            clsIdentifyInfo info ;
+            info._id = pSession->identifyID() ;
+            info._eduid = pSession->identifyEDUID() ;
+            info._tid = pSession->identifyTID() ;
+            info._username = pSession->getClient()->getUsername() ;
+            if ( !info._username.empty() )
+            {
+               info._passwd = pSession->getClient()->getPassword() ;
+            }
+            _mapIdentifys[ pSession->sessionID() ] = info ;
+         }
+      }
+   }
+
+   void _clsShardSessionMgr::onSessionDisconnect( pmdAsyncSession *pSession )
+   {
+      /// recv the disconnect msg, so need to logout
+      if ( SDB_SESSION_SHARD == pSession->sessionType() )
+      {
+         _clsShdSession *pShdSession = ( _clsShdSession* )pSession ;
+         pShdSession->setLogout() ;
+         _mapIdentifys.erase( pSession->sessionID() ) ;
+      }
+   }
+
+   void _clsShardSessionMgr::onSessionHandleClose( pmdAsyncSession *pSession )
+   {
+      /// when net handle closed, need to logout
+      if ( SDB_SESSION_SHARD == pSession->sessionType() )
+      {
+         _clsShdSession *pShdSession = ( _clsShdSession* )pSession ;
+         pShdSession->setLogout() ;
+         _mapIdentifys.erase( pSession->sessionID() ) ;
       }
    }
 

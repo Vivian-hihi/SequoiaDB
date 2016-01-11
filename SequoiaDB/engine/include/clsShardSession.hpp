@@ -49,6 +49,24 @@ namespace engine
    class _clsCatalogAgent ;
    class _rtnContextBase ;
 
+   struct _clsIdentifyInfo
+   {
+      UINT64   _id ;
+      UINT32   _tid ;
+      UINT64   _eduid ;
+
+      string   _username ;
+      string   _passwd ;
+
+      _clsIdentifyInfo()
+      {
+         _id = 0 ;
+         _tid = 0 ;
+         _eduid = 0 ;
+      }
+   } ;
+   typedef _clsIdentifyInfo clsIdentifyInfo ;
+
    class _clsShdSession : public _pmdAsyncSession
    {
       DECLARE_OBJ_MSG_MAP()
@@ -66,6 +84,11 @@ namespace engine
          virtual void    onRecieve ( const NET_HANDLE netHandle,
                                      MsgHeader * msg ) ;
          virtual BOOLEAN timeout ( UINT32 interval ) ;
+
+         BOOLEAN isSetLogout() const ;
+         BOOLEAN isDelayLogin() const ;
+         void    setLogout() ;
+         void    setDelayLogin( const clsIdentifyInfo &info ) ;
 
       protected:
          INT32 _checkWriteStatus() ;
@@ -252,6 +275,8 @@ namespace engine
 
          INT32 _checkReplStatus() ;
 
+         void  _login() ;
+
       protected:
          _clsReplicateSet       *_pReplSet ;
          _clsShardMgr           *_pShdMgr ;
@@ -272,6 +297,10 @@ namespace engine
          ossTimestamp           _lastRecvTime ;
 
          CHAR                   _detailName[SESSION_NAME_LEN+1] ;
+         BOOLEAN                _logout ;
+         BOOLEAN                _delayLogin ;
+         string                 _username ;
+         string                 _passwd ;
    };
 
 }

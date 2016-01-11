@@ -287,6 +287,7 @@ namespace engine
       {
          PD_LOG ( PDINFO, "Session[%s] recieved disconnect message", 
                   pSession->sessionName() ) ;
+         _pSessionMgr->onSessionDisconnect( pSession ) ;
          // Session will be released and we don't need to push message
          rc = _pSessionMgr->releaseSession( pSession, TRUE ) ;
          if ( rc )

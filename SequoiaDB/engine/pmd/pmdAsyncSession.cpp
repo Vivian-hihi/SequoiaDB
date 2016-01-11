@@ -1061,6 +1061,8 @@ namespace engine
       // Wait the working agent finish the job
       pSession->waitDetach () ;
 
+      onSessionDestoryed( pSession ) ;
+
       // dec based handle number
       if ( pSession->getMeta() )
       {
@@ -1147,6 +1149,7 @@ namespace engine
          {
             PD_LOG ( PDEVENT, "Session[%s, handle:%d] closed",
                      pSession->sessionName(), pSession->netHandle() ) ;
+            onSessionHandleClose( pSession ) ;
             _releaseSession_i( pSession, TRUE, TRUE ) ;
             _mapSession.erase( it++ ) ;
             continue ;

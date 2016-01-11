@@ -297,6 +297,13 @@ namespace engine
          virtual UINT64       makeSessionID( const NET_HANDLE &handle,
                                              const MsgHeader *header ) = 0 ;
 
+         /*
+            Session distory callback functions
+         */
+         virtual void   onSessionDisconnect( pmdAsyncSession *pSession ) {}
+         virtual void   onSessionHandleClose( pmdAsyncSession *pSession ) {}
+         virtual void   onSessionDestoryed( pmdAsyncSession *pSession ) {}
+
       protected:
          /*
             Parse the session type

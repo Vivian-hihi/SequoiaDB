@@ -100,6 +100,8 @@ namespace engine
       _pRtnCB    = pKRCB->getRTNCB () ;
       _primaryID.value = MSG_INVALID_ROUTEID ;
       ossMemset( _detailName, 0, sizeof( _detailName ) ) ;
+      _logout    = TRUE ;
+      _delayLogin= FALSE ;
       PD_TRACE_EXIT ( SDB__CLSSDSESS__CLSSHDSESS ) ;
    }
 
@@ -127,6 +129,10 @@ namespace engine
    void _clsShdSession::clear()
    {
       ossMemset( _detailName, 0, sizeof( _detailName ) ) ;
+      _username = "" ;
+      _passwd = "" ;
+      _logout = TRUE ;
+      _delayLogin = FALSE ;
       _pmdAsyncSession::clear() ;
    }
 
@@ -169,6 +175,32 @@ namespace engine
    done :
       PD_TRACE_EXIT ( SDB__CLSSHDSESS_TMOUT ) ;
       return ret ;
+   }
+
+   BOOLEAN _clsShdSession::isSetLogout() const
+   {
+      return _logout ;
+   }
+
+   BOOLEAN _clsShdSession::isDelayLogin() const
+   {
+      return _delayLogin ;
+   }
+
+   void _clsShdSession::setLogout()
+   {
+      _logout = TRUE ;
+   }
+
+   void _clsShdSession::setDelayLogin( const clsIdentifyInfo &info )
+   {
+      _delayLogin = TRUE ;
+
+      UINT32 ip = 0, port = 0 ;
+      ossUnpack32From64( info._id, ip, port ) ;
+      setIdentifyInfo( ip, port, info._tid, info._eduid ) ;
+      _username = info._username ;
+      _passwd = info._passwd ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSHDSESS__ONDETACH, "_clsShdSession::_onDetach" )
@@ -284,6 +316,11 @@ namespace engine
       BOOLEAN isNeedRollback = FALSE;
 
       _primaryID.value = MSG_INVALID_ROUTEID ;
+
+      if ( isDelayLogin() )
+      {
+         _login() ;
+      }
 
       while ( loop )
       {
@@ -1456,6 +1493,37 @@ namespace engine
       return _onDeleteReqMsg( handle, msg, delNum );
    }
 
+   void _clsShdSession::_login()
+   {
+      UINT32 ip = 0, port = 0 ;
+
+      _delayLogin = FALSE ;
+      _logout     = FALSE ;
+
+      if ( !_username.empty() )
+      {
+         _client.authenticate( _username.c_str(), _passwd.c_str() ) ;
+      }
+
+      ossUnpack32From64( identifyID(), ip, port ) ;
+      /// set detail name
+      CHAR szTmpIP[ 50 ] = { 0 } ;
+      ossIP2Str( ip, szTmpIP, sizeof(szTmpIP) - 1 ) ;
+      ossSnprintf( _detailName, SESSION_NAME_LEN, "%s,R-IP:%s,R-Port:%u",
+                   _pmdAsyncSession::sessionName(), szTmpIP,
+                   port ) ;
+      eduCB()->setName( _detailName ) ;
+
+      /// audit
+      CHAR szTmpID[ 20 ] = { 0 } ;
+      ossSnprintf( szTmpID, sizeof(szTmpID) - 1, "%llu", eduID() ) ;
+      PD_AUDIT_OP( AUDIT_ACCESS, MSG_AUTH_VERIFY_REQ, AUDIT_OBJ_SESSION,
+                   szTmpID, SDB_OK, "User[UserName:%s, FromIP:%s, "
+                   "FromPort:%u, FromSession:%llu, FromTID:%u] "
+                   "login succeed", _client.getUsername(),
+                   szTmpIP, port, identifyEDUID(), identifyTID() ) ;
+   }
+
    INT32 _clsShdSession::_onSessionInitReqMsg ( MsgHeader *msg )
    {
       INT32 rc = SDB_OK ;
@@ -1474,7 +1542,6 @@ namespace engine
       else if ( msg->messageLength > sizeof( MsgComSessionInitReq ) )
       {
          /// set user name info
-         BSONElement host, svcname ;
          try
          {
             BSONObj obj( pMsgReq->data ) ;
@@ -1491,24 +1558,8 @@ namespace engine
          /// set the remote info into this session
          setIdentifyInfo( pMsgReq->localIP, pMsgReq->localPort,
                           pMsgReq->localTID, pMsgReq->localSessionID ) ;
-
-         /// set detail name
-         CHAR szTmpIP[ 50 ] = { 0 } ;
-         ossIP2Str( pMsgReq->localIP, szTmpIP, sizeof(szTmpIP) - 1 ) ;
-         ossSnprintf( _detailName, SESSION_NAME_LEN, "%s,R-IP:%s,R-Port:%u",
-                      _pmdAsyncSession::sessionName(), szTmpIP,
-                      pMsgReq->localPort ) ;
-         eduCB()->setName( _detailName ) ;
-
-         /// audit
-         CHAR szTmpID[ 20 ] = { 0 } ;
-         ossSnprintf( szTmpID, sizeof(szTmpID) - 1, "%llu", eduID() ) ;
-         PD_AUDIT_OP( AUDIT_ACCESS, MSG_AUTH_VERIFY_REQ, AUDIT_OBJ_SESSION,
-                      szTmpID, SDB_OK, "User[UserName:%s, FromIP:%s, "
-                      "FromPort:%u, FromSession:%llu, FromTID:%u] "
-                      "login succeed", _client.getUsername(),
-                      szTmpIP, pMsgReq->localPort,
-                      pMsgReq->localSessionID, pMsgReq->localTID ) ;
+         /// inner login
+         _login() ;
       }
       return rc ;
    }
