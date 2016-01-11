@@ -139,6 +139,8 @@ namespace engine
          return SDB_INVALIDARG ;
       }
       _isAuthed = TRUE ;
+      _username = username ;
+      _password = password ;
       _pEDUCB->setUserInfo( username, password ) ;
       return SDB_OK ;
    }
