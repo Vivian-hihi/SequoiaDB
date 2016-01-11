@@ -2033,7 +2033,8 @@ namespace engine
          PD_AUDIT_OP_WITHNAME( AUDIT_DML, "TRUNCATE", AUDIT_OBJ_CL,
                                fullName, rc, "RecordNum:%llu, LobNum:%llu",
                                oldRecords, oldLobs ) ;
-         rc = _logDPS( dpscb, info, cb, context, DMS_INVALID_EXTENT, TRUE, &oldCLID ) ;
+         rc = _logDPS( dpscb, info, cb, context, DMS_INVALID_EXTENT,
+                       TRUE, &oldCLID ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to insert CLTrunc record to log, "
                       "rc: %d", rc ) ;
       }
