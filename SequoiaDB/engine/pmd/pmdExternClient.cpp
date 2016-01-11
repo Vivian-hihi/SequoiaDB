@@ -255,9 +255,13 @@ namespace engine
    done:
       if ( SDB_OK == rc && _isAuthed )
       {
-         _pEDUCB->setUserInfo( user.valuestrsafe(), pass.valuestrsafe() ) ;
          _username = user.valuestrsafe() ;
-         _password = pass.valuestrsafe() ;
+         if ( !_username.empty() )
+         {
+            _password = pass.valuestrsafe() ;
+         }
+         _pEDUCB->setUserInfo( _username, _password ) ;
+
          _makeName() ;
 
          CHAR szTmp[ 16 ] = { 0 } ;
