@@ -130,6 +130,22 @@
    </opt>
 
    <opt>
+      <name>PMD_OPTION_AUDITLOGPATH</name>
+      <long>auditpath</long>
+      <description>
+         <en>Audit log file path</en>
+         <cn>审计日志文件路径</cn>
+      </description>
+      <detail>
+         <en>1. It specifies the catalog of audit log. <fig></fig>
+             2. If it is not specified, the default path is "Data file path/diaglog".</en>
+         <cn>1.指定审计日志存放目录。<fig></fig>
+             2.如果不指定，则默认为：数据文件路径/diaglog</cn>
+      </detail>
+      <typeofweb>str</typeofweb>
+   </opt>
+
+   <opt>
       <name>PMD_OPTION_DIAGLOG_NUM</name>
       <long>diagnum</long>
       <type>int</type>
@@ -361,14 +377,14 @@
       <name>PMD_OPTION_AUDIT_MASK</name>
       <long>auditmask</long>
       <description>
-         <en>Audit mask,default:SYSTEM|ACCESS|DDL|DCL,value list: ACCESS,CLUSTER,SYSTEM,DML,DDL,DCL,DQL,DELETE,UPDATE,OTHER, use '|' join multiple values, ALL enable all mask, NONE disable all mask</en>
-         <cn>审计掩码,默认值:SYSTEM|ACCESS|DDL|DCL,取值列表为: ACCESS,CLUSTER,SYSTEM,DML,DDL,DCL,DQL,DELETE,UPDATE,OTHER, 使用'|'连接多个取值, ALL取值表示开启所有, NONE关闭全部</cn>
+         <en>Audit mask,default:SYSTEM|DDL|DCL,value list: ACCESS,CLUSTER,SYSTEM,DML,DDL,DCL,DQL,DELETE,UPDATE,OTHER, use '|' join multiple values, ALL enable all mask, NONE disable all mask</en>
+         <cn>审计掩码,默认值:SYSTEM|DDL|DCL,取值列表为: ACCESS,CLUSTER,SYSTEM,DML,DDL,DCL,DQL,DELETE,UPDATE,OTHER, 使用'|'连接多个取值, ALL取值表示开启所有, NONE关闭全部</cn>
       </description>
       <detail>
          <en>1. It specifies the mask of audit log. Audit type in sequoiaDB as follow: ACCESS,CLUSTER,SYSTEM,DML,DDL,DCL,DQL,DELETE,UPDATE,OTHER.<fig></fig>
-             2. If it is not specified, the default value is "SYSTEM|ACCESS|DDL|DCL". ALL enable all mask, NONE disable all mask</en>
+             2. If it is not specified, the default value is "SYSTEM|DDL|DCL". ALL enable all mask, NONE disable all mask</en>
          <cn>1.指定审计日志打印掩码。SequoiaDB中审计日志类型有：ACCESS,CLUSTER,SYSTEM,DML,DDL,DCL,DQL,DELETE,UPDATE,OTHER。<fig></fig>
-             2.如果不指定，则默认为"SYSTEM|ACCESS|DDL|DCL", ALL取值表示开启所有,NONE关闭全部。</cn>
+             2.如果不指定，则默认为"SYSTEM|DDL|DCL", ALL取值表示开启所有,NONE关闭全部。</cn>
       </detail>
       <typeofweb>str</typeofweb>
    </opt>
