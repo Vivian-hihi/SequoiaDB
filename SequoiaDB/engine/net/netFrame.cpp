@@ -260,14 +260,11 @@ namespace engine
       NET_EH eh ;
       _mtx.get_shared() ;
       map<NET_HANDLE, NET_EH>::iterator itr = _opposite.find( handle ) ;
-      if ( _opposite.end() == itr )
-      {
-         _mtx.release_shared() ;
-      }
-      else
+      if ( _opposite.end() != itr )
       {
          eh = itr->second ;
       }
+
       _mtx.release_shared() ;
 
       return eh ;
