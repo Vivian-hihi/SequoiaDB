@@ -79,9 +79,8 @@ def user( username, password ):
    
    print '---begin to login by new user'          
    db_new = client(hostname,service,username,password)
-   db.remove_user(username,password)
    
-   print '---begin to create new user'             
+   print '---begin to remove new user'             
    db.remove_user(username,password)
       
 if __name__ == "__main__":   
