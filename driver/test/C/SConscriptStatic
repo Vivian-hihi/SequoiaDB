@@ -3,62 +3,62 @@ import os
 Import("env")
 
 gtestFiles = [
-      "../../../../../../../SequoiaDB/engine/gtest/src/gtest-all.cc"
+      "../../../../../../SequoiaDB/engine/gtest/src/gtest-all.cc"
       ]
 
 gtestMainFile = [
-      "../../../../../../../SequoiaDB/engine/gtest/src/gtest_main.cc"
+      "../../../../../../SequoiaDB/engine/gtest/src/gtest_main.cc"
       ]
 
 testFiles1 = [
         "testcommon.c",
         "collection.cpp",
-        "../../../../../../../client/lib/libstaticsdbc.a"
+        "../../../../../../client/lib/libstaticsdbc.a"
       ]
 testFiles2 = [
         "testcommon.c",
         "collectionspace.cpp",
-        "../../../../../../../client/lib/libstaticsdbc.a"
+        "../../../../../../client/lib/libstaticsdbc.a"
       ]
 testFiles3 = [
         "testcommon.c",
         "cursor.cpp",
-        "../../../../../../../client/lib/libstaticsdbc.a"
+        "../../../../../../client/lib/libstaticsdbc.a"
       ]
 testFiles4 = [
         "testcommon.c",
         "sdb.cpp",
-        "../../../../../../../client/lib/libstaticsdbc.a"
+        "../../../../../../client/lib/libstaticsdbc.a"
       ]
 testFiles5 = [
         "testcommon.c",
         "snapshot.cpp",
-        "../../../../../../../client/lib/libstaticsdbc.a"
+        "../../../../../../client/lib/libstaticsdbc.a"
       ]
 testFiles6 = [
         "testcommon.c",
         "concurrent_insert.cpp",
-        "../../../../../../../client/lib/libstaticsdbc.a"
+        "../../../../../../client/lib/libstaticsdbc.a"
       ]
 testFiles7 = [
         "testcommon.c",
         "shard.cpp",
-        "../../../../../../../client/lib/libstaticsdbc.a"
+        "../../../../../../client/lib/libstaticsdbc.a"
       ]
 testFiles8 = [
         "testcommon.c",
         "debug.cpp",
-        "../../../../../../../client/lib/libstaticsdbc.a"
+        "../../../../../../client/lib/libstaticsdbc.a"
       ]
 testFiles9 = [
         "testcommon.c",
         "cbson.cpp",
-        "../../../../../../../client/lib/libstaticsdbc.a"
+        "../../../../../../client/lib/libstaticsdbc.a"
       ]
 testFiles10 = [
         "testcommon.c",
         "domain.cpp",
-        "../../../../../../../client/lib/libstaticsdbc.a"
+        "../../../../../../client/lib/libstaticsdbc.a"
       ]
 
 #Google Test
