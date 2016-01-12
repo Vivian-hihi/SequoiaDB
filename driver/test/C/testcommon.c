@@ -711,6 +711,68 @@ BOOLEAN isCluster( sdbConnectionHandle db )
    return TRUE ;
 }
 
+INT32 isTranOn( sdbConnectionHandle db, BOOLEAN *flag )
+{
+   INT32 rc = SDB_OK ;
+   INT32 tmpRC = SDB_OK ;
+   sdbCollectionHandle cl = 0 ;
+   const CHAR *pTranTmpCSName = "tran_tmp" ;
+   const CHAR *pTranTmpCLFullName = "tran_tmp.tram_tmp" ;
+   BOOLEAN tranOn = FALSE ;
+   bson obj ;
+   bson_init( &obj ) ;
+   bson_finish( &obj ) ;
+   
+   rc = getCollection( db, pTranTmpCLFullName, &cl ) ;
+   if ( rc )
+   {
+      goto error ;
+   }
+   rc = sdbTransactionBegin( db ) ;
+   if ( rc )
+   {
+      goto error ;
+   }
+   tranOn = TRUE ;
+   rc = sdbInsert( cl, &obj ) ;
+   if ( SDB_DPS_TRANS_DIABLED == rc )
+   {
+      *flag = FALSE ;
+      rc = SDB_OK ;
+      goto done ;
+   }
+   else if ( SDB_OK == rc )
+   {
+      *flag = TRUE ;
+      goto done ;
+   }
+   else
+   {
+      goto error ;
+   }
+   
+final:
+   bson_destroy( &obj ) ;
+   if ( TRUE == tranOn )
+   {
+      tmpRC = sdbTransactionRollback( db ) ;
+      if ( tmpRC && SDB_OK == rc )
+      {
+         rc = tmpRC ;
+      } 
+   }
+   tmpRC = sdbDropCollectionSpace( db, pTranTmpCSName ) ;
+   if ( tmpRC && SDB_OK == rc )
+   {
+      rc = tmpRC ;
+      goto done ;
+   }
+done:
+   return rc ;
+error:
+   goto done ;
+}
+
 INT32 gettid()
 {
 #if defined(_AIX)

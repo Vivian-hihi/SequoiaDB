@@ -14,11 +14,11 @@
 
 
 
-//#define HOST                  "192.168.20.192"
-//#define HOST                  "192.168.20.165"
+//#define HOST                  "192.168.20.166"
+//#define HOST                  "192.168.30.161"
 #define HOST                  "localhost"
+//#define SERVER                "10000"
 //#define SERVER                "50000"
-//#define SERVER                "60000"
 #define SERVER                "11810"
 #define SERVER1               "11800"
 #define SERVER2               "21100"
@@ -171,6 +171,8 @@ long getRecordNum ( sdbCursorHandle cursor ) ;
 void getUniqueName( const CHAR *modName, CHAR getName[] ) ;
 
 BOOLEAN isCluster( sdbConnectionHandle db ) ;
+
+INT32 isTranOn( sdbConnectionHandle db, BOOLEAN *flag ) ;
 
 INT32 gettid() ;
 
