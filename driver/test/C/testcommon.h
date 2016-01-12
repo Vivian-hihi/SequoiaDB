@@ -17,7 +17,7 @@
 #define HOST                  "localhost"
 #define SERVER                "11810" // for coord
 #define SERVER1               "11800" // for catalog
-#define SERVER2               "11820" // for data
+#define SERVER2               "21100" // for data
 #define USER                  ""
 #define PASSWD                ""
 #define USER1                 "sequoiadb"
