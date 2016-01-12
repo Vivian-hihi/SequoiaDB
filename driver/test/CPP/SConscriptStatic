@@ -3,16 +3,16 @@ import os
 Import("env")
 
 gtestFiles = [
-      "../../../../../../../SequoiaDB/engine/gtest/src/gtest-all.cc"
+      "../../../../../../SequoiaDB/engine/gtest/src/gtest-all.cc"
       ]
 
 gtestMainFile = [
-      "../../../../../../../SequoiaDB/engine/gtest/src/gtest_main.cc"
+      "../../../../../../SequoiaDB/engine/gtest/src/gtest_main.cc"
       ]
 
 testCommonFiles = [
         "testcommon.cpp",
-        "../../../../../../../client/lib/libstaticsdbcpp.a"
+        "../../../../../../client/lib/libstaticsdbcpp.a"
       ]
 
 testFiles1 = [
