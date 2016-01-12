@@ -2030,28 +2030,28 @@ namespace engine
          rc = ossDelete( _krcbBkupPath ) ;
          PD_RC_CHECK( rc, PDERROR, "Remove dir[%s] failed, rc: %d",
                       _krcbBkupPath, rc ) ;
-     }
+           }
 
       if ( _krcbLogPath[ 0 ] != 0 && 0 == ossAccess( _krcbLogPath ) )
       {
          rc = ossDelete( _krcbLogPath ) ;
          PD_RC_CHECK( rc, PDERROR, "Remove dir[%s] failed, rc: %d",
                       _krcbLogPath, rc ) ;
-     }
+           }
 
       if ( _krcbDiagLogPath[ 0 ] != 0 && 0 == ossAccess( _krcbDiagLogPath ) )
       {
          rc = ossDelete( _krcbDiagLogPath ) ;
          PD_RC_CHECK( rc, PDERROR, "Remove dir[%s] failed, rc: %d",
                       _krcbDiagLogPath, rc ) ;
-     }
+           }
 
       if ( _krcbAuditLogPath[ 0 ] != 0 && 0 == ossAccess( _krcbAuditLogPath ) )
       {
          rc = ossDelete( _krcbAuditLogPath ) ;
          PD_RC_CHECK( rc, PDERROR, "Remove dir[%s] failed, rc: %d",
                       _krcbAuditLogPath, rc ) ;
-     }
+           }
 
       if ( _krcbLobPath[ 0 ] != 0 && 0 == ossAccess( _krcbLobPath ) )
       {
