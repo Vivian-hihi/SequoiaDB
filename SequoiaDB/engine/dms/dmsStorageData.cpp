@@ -1064,7 +1064,8 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATA__TRUNCATECOLLECTION, "_dmsStorageData::_truncateCollection" )
-   INT32 _dmsStorageData::_truncateCollection( dmsMBContext *context )
+   INT32 _dmsStorageData::_truncateCollection( dmsMBContext *context,
+                                               BOOLEAN needChangeCLID )
    {
       INT32 rc                     = SDB_OK ;
       dmsExtentID lastExt          = DMS_INVALID_EXTENT ;
@@ -1131,7 +1132,8 @@ namespace engine
        * Incase of drop/truncate collection, destroy the compressor and release
        * the dictionary both in memory and on disk.
        */
-      if ( DMS_INVALID_EXTENT != context->mb()->_dictExtentID )
+      if ( DMS_INVALID_EXTENT != context->mb()->_dictExtentID
+           && needChangeCLID )
       {
          /*
           * First remove the compressor, this will invalid the compressor entry.
@@ -2007,7 +2009,7 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR, "Truncate collection[%s] indexes failed, "
                    "rc: %d", pName, rc ) ;
 
-      rc = _truncateCollection( context ) ;
+      rc = _truncateCollection( context, needChangeCLID ) ;
       PD_RC_CHECK( rc, PDERROR, "Truncate collection[%s] data failed, rc: %d",
                    pName, rc ) ;
 
@@ -2038,7 +2040,7 @@ namespace engine
                       "rc: %d", rc ) ;
       }
 
-      if ( -1 != context->mb()->_compressorType )
+      if ( -1 != context->mb()->_compressorType && needChangeCLID )
       {
          /*
           * The original dictionary and compressor will be removed during

@@ -819,7 +819,8 @@ namespace engine
                                                  dmsRecordID &resultID,
                                                  _pmdEDUCB *cb ) ;
 
-         INT32          _truncateCollection ( dmsMBContext *context ) ;
+         INT32          _truncateCollection ( dmsMBContext *context,
+                                              BOOLEAN needChangeCLID = TRUE ) ;
 
          INT32          _truncateCollectionLoads( dmsMBContext *context ) ;
 
