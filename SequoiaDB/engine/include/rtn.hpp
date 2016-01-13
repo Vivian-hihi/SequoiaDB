@@ -88,21 +88,27 @@ namespace engine
                           std::vector< dmsRecordID > &idxRIDs ) ;
 
    INT32 rtnInsert ( const CHAR *pCollectionName, BSONObj &objs, INT32 objNum,
-                     INT32 flags, pmdEDUCB *cb ) ;
+                     INT32 flags, pmdEDUCB *cb,
+                     INT32 *pInsertedNum = NULL,
+                     INT32 *pIgnoredNum = NULL ) ;
 
    // for insert/update/delete, if dpsCB = NULL, that means we don't log
    INT32 rtnInsert ( const CHAR *pCollectionName, BSONObj &objs, INT32 objNum,
                      INT32 flags, pmdEDUCB *cb, SDB_DMSCB *dmsCB,
-                     SDB_DPSCB *dpsCB, INT16 w = 1 ) ;
+                     SDB_DPSCB *dpsCB, INT16 w = 1,
+                     INT32 *pInsertedNum = NULL,
+                     INT32 *pIgnoredNum = NULL ) ;
 
    INT32 rtnUpdate ( const CHAR *pCollectionName, const BSONObj &selector,
                      const BSONObj &updator, const BSONObj &hint, INT32 flags,
-                     pmdEDUCB *cb, INT64 *pUpdateNum = NULL ) ;
+                     pmdEDUCB *cb, INT64 *pUpdateNum = NULL,
+                     INT32 *pInsertNum = NULL ) ;
 
    INT32 rtnUpdate ( const CHAR *pCollectionName, const BSONObj &selector,
                      const BSONObj &updator, const BSONObj &hint, INT32 flags,
                      pmdEDUCB *cb, SDB_DMSCB *dmsCB, SDB_DPSCB *dpsCB,
-                     INT16 w = 1, INT64 *pUpdateNum = NULL ) ;
+                     INT16 w = 1, INT64 *pUpdateNum = NULL,
+                     INT32 *pInsertNum = NULL ) ;
 
    INT32 rtnUpsertSet( const BSONElement& setOnInsert, BSONObj& target ) ;
 

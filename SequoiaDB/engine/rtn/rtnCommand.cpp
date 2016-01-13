@@ -46,6 +46,7 @@
 #include "rtnContextListLob.hpp"
 #include "aggrDef.hpp"
 #include "utilCompressor.hpp"
+#include "msgMessageFormat.hpp"
 
 #if defined (_DEBUG)
 // for qgmDebugQuery function
@@ -645,7 +646,22 @@ namespace engine
 
       rc = rtnCreateCollectionCommand ( _collectionName, _shardingKey,
                                         _attributes, cb, dmsCB, dpsCB,
-                                        _compressorType) ;
+                                        _compressorType ) ;
+
+      if ( CMD_SPACE_SERVICE_LOCAL == getFromService() )
+      {
+         CHAR szTmp[ 50 ] = { 0 } ;
+         mbAttr2String( _attributes, szTmp, sizeof(szTmp) - 1 ) ;
+         /// AUDIT
+         PD_AUDIT_COMMAND( AUDIT_DDL, name(), AUDIT_OBJ_CL,
+                           _collectionName, rc,
+                           "ShardingKey:%s, Attribute:0x%08x(%s), "
+                           "CompressType:%d(%s)",
+                           _shardingKey.toString().c_str(),
+                           _attributes, szTmp,
+                           _compressorType,
+                           utilCompressType2String( _compressorType ) ) ;
+      }
 
       PD_TRACE_EXITRC ( SDB__RTNCREATECL_DOIT, rc ) ;
       return rc ;
@@ -714,6 +730,15 @@ namespace engine
 
       rc = rtnCreateCollectionSpaceCommand ( _spaceName, cb, dmsCB, dpsCB,
                                              _pageSize, _lobPageSize ) ;
+
+      if ( CMD_SPACE_SERVICE_LOCAL == getFromService() )
+      {
+         /// AUDIT
+         PD_AUDIT_COMMAND( AUDIT_DDL, name(), AUDIT_OBJ_CS,
+                           _spaceName, rc,
+                           "PageSize:%u, LobPageSize:%u",
+                           _pageSize, _lobPageSize ) ;
+      }
 
       PD_TRACE_EXITRC ( SDB__RTNCREATECS_DOIT, rc ) ;
       return rc ;
@@ -813,6 +838,15 @@ namespace engine
 
       rc = rtnCreateIndexCommand ( _collectionName, _index, cb,
                                    dmsCB, dpsCB, FALSE, _sortBufferSize ) ;
+
+      if ( CMD_SPACE_SERVICE_LOCAL == getFromService() )
+      {
+         /// AUDIT
+         PD_AUDIT_COMMAND( AUDIT_DDL, name(), AUDIT_OBJ_CL,
+                           _collectionName, rc,
+                           "IndexDef:%s, SortBuffSize:%d",
+                           _index.toString().c_str(), _sortBufferSize ) ;
+      }
       PD_TRACE_EXITRC ( SDB__RTNCREATEINDEX_DOIT, rc ) ;
       return rc ;
    }
@@ -885,6 +919,9 @@ namespace engine
       else
       {
          rc = rtnDropCollectionCommand ( _collectionName, cb, dmsCB, dpsCB ) ;
+         /// AUDIT
+         PD_AUDIT_COMMAND( AUDIT_DDL, name(), AUDIT_OBJ_CL,
+                           _collectionName, rc, "" ) ;
       }
    done :
       PD_TRACE_EXITRC ( SDB__RTNDROPCL_DOIT, rc ) ;
@@ -967,6 +1004,9 @@ namespace engine
       else
       {
          rc = rtnDropCollectionSpaceCommand ( _spaceName, cb, dmsCB, dpsCB ) ;
+         /// AUDIT
+         PD_AUDIT_COMMAND( AUDIT_DDL, name(), AUDIT_OBJ_CS,
+                           _spaceName, rc, "" ) ;
       }
    done :
       PD_TRACE_EXITRC ( SDB__RTNDROPCS_DOIT, rc ) ;
@@ -1051,6 +1091,14 @@ namespace engine
       PD_TRACE_ENTRY ( SDB__RTNDROPINDEX_DOIT ) ;
       BSONElement ele = _index.firstElement() ;
       rc = rtnDropIndexCommand ( _collectionName, ele, cb, dmsCB, dpsCB ) ;
+
+      if ( CMD_SPACE_SERVICE_LOCAL == getFromService() )
+      {
+         /// AUDIT
+         PD_AUDIT_COMMAND( AUDIT_DDL, name(), AUDIT_OBJ_CL,
+                           _collectionName, rc, "IndexDef:%s",
+                           _index.toString().c_str() ) ;
+      }
       PD_TRACE_EXITRC ( SDB__RTNDROPINDEX_DOIT, rc ) ;
       return rc ;
    }
@@ -1460,6 +1508,15 @@ namespace engine
       rc = su->data()->renameCollection ( _oldCollectionName,
                                           _newCollectionName,
                                           cb, dpsCB ) ;
+      if ( CMD_SPACE_SERVICE_LOCAL == getFromService() )
+      {
+         /// AUDIT
+         PD_AUDIT_COMMAND( AUDIT_DDL, name(), AUDIT_OBJ_CL,
+                           _oldCollectionName, rc,
+                           "NewCollectionName:%s",
+                           _newCollectionName ) ;
+      }
+
       if ( SDB_OK != rc )
       {
          PD_LOG ( PDERROR, "Failed to rename collection from %s to %s",
@@ -1548,6 +1605,14 @@ namespace engine
             break ;
       }
       dmsCB->writeDown ( cb ) ;
+
+      if ( CMD_SPACE_SERVICE_LOCAL == getFromService() )
+      {
+         /// AUDIT
+         PD_AUDIT_COMMAND( AUDIT_DDL, name(), AUDIT_OBJ_CL,
+                           _collectionName, rc, "" ) ;
+      }
+
    done :
       PD_TRACE_EXITRC ( SDB__RTNREORG_DOIT, rc ) ;
       return rc ;
@@ -1644,6 +1709,11 @@ namespace engine
    {
       PD_LOG( PDEVENT, "Shut down sevice" ) ;
       PMD_SHUTDOWN_DB( SDB_OK ) ;
+
+      /// AUDIT
+      PD_AUDIT_COMMAND( AUDIT_SYSTEM, name(), AUDIT_OBJ_NODE,
+                        "", SDB_OK, "" ) ;
+
       return SDB_OK ;
    }
 
@@ -3403,10 +3473,10 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION( SDB__RTNALTERCOLLECTION_INIT, "_rtnAlterCollection::init" )
    INT32 _rtnAlterCollection::init( INT32 flags, INT64 numToSkip, INT64 numToReturn,
-                           const CHAR *pMatcherBuff,
-                           const CHAR *pSelectBuff,
-                           const CHAR *pOrderByBuff,
-                           const CHAR *pHintBuff )
+                                    const CHAR *pMatcherBuff,
+                                    const CHAR *pSelectBuff,
+                                    const CHAR *pOrderByBuff,
+                                    const CHAR *pHintBuff )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RTNALTERCOLLECTION_INIT ) ;
@@ -3462,14 +3532,23 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION( SDB__RTNALTERCOLLECTION_DOIT, "_rtnAlterCollection::doit" )
    INT32 _rtnAlterCollection::doit( _pmdEDUCB *cb, _SDB_DMSCB *dmsCB,
-                                 _SDB_RTNCB *rtnCB, _dpsLogWrapper *dpsCB,
-                                 INT16 w, INT64 *pContextID )
+                                    _SDB_RTNCB *rtnCB, _dpsLogWrapper *dpsCB,
+                                    INT16 w, INT64 *pContextID )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RTNALTERCOLLECTION_DOIT ) ;
       if ( _alterObj.isEmpty() )
       {
          rc = _runner.run( cb, dpsCB ) ;
+
+         if ( CMD_SPACE_SERVICE_LOCAL == getFromService() )
+         {
+            /// AUDIT
+            PD_AUDIT_COMMAND( AUDIT_DDL, name(), AUDIT_OBJ_CL,
+                              _runner.getJob().getName(), rc,
+                              "Option:%s",
+                              _runner.getJob().getJobObj().toString().c_str() ) ;
+         }
          if ( SDB_OK != rc )
          {
             PD_LOG( PDERROR, "failed to run alter command:%d", rc ) ;

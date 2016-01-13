@@ -103,6 +103,8 @@ const CHAR* msgType2String( MSG_TYPE msgType, BOOLEAN isCommand )
          return "DELETE" ;
       case MSG_BS_KILL_CONTEXT_REQ :
          return "KILLCONTEXT" ;
+      case MSG_BS_INTERRUPTE :
+         return "INTERRUPTE" ;
       case MSG_BS_TRANS_BEGIN_REQ :
          return "BEGIN" ;
       case MSG_BS_TRANS_COMMIT_REQ :

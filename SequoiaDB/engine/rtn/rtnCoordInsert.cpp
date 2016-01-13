@@ -39,6 +39,7 @@
 #include "coordCB.hpp"
 #include "pmd.hpp"
 #include "pmdCB.hpp"
+#include "rtnCommandDef.hpp"
 #include "pdTrace.hpp"
 #include "rtnTrace.hpp"
 
@@ -46,6 +47,7 @@ using namespace bson;
 
 namespace engine
 {
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOINS_EXECUTE, "rtnCoordInsert::execute" )
    INT32 rtnCoordInsert::execute( MsgHeader *pMsg,
                                   pmdEDUCB *cb,
@@ -70,12 +72,14 @@ namespace engine
 
       CoordCataInfoPtr cataInfo ;
       MsgRouteID errNodeID ;
-      GroupSubCLMap grpSubCLDatas ;
-      inMsg._pvtData = ( CHAR* )&grpSubCLDatas ;
+      rtnCoordInsertPvtData pvtData ;
+      inMsg._pvtData = ( CHAR* )&pvtData ;
       inMsg._pvtType = PRIVATE_DATA_USER ;
 
       // fill default-reply(insert success)
-      MsgOpInsert *pInsertMsg          = (MsgOpInsert *)pMsg;
+      MsgOpInsert *pInsertMsg          = (MsgOpInsert *)pMsg ;
+      INT32 oldFlag                    = pInsertMsg->flags ;
+      pInsertMsg->flags               |= FLG_INSERT_RETURNNUM ;
       contextID                        = -1 ;
 
       INT32 flag = 0 ;
@@ -84,8 +88,20 @@ namespace engine
       INT32 count = 0 ;
       rc = msgExtractInsert( (CHAR*)pMsg, &flag,
                              &pCollectionName, &pInsertor, count ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to parse insert request, rc: %d",
-                   rc ) ;
+      if( rc )
+      {
+         PD_LOG( PDERROR, "Failed to parse insert request, rc: %d", rc ) ;
+         pCollectionName = NULL ;
+         goto error ;
+      }
+
+      // add list op info
+      MON_SAVE_OP_DETAIL( cb->getMonAppCB(), pMsg->opCode,
+                          "Collection:%s, Insertors:%s, ObjNum:%d, "
+                          "Flag:0x%08x(%u)",
+                          pCollectionName,
+                          BSONObj(pInsertor).toString().c_str(),
+                          count, oldFlag, oldFlag ) ;
 
       rc = rtnCoordGetCataInfo( cb, pCollectionName, FALSE, cataInfo ) ;
       PD_RC_CHECK( rc, PDERROR, "Insert failed, failed to get the "
@@ -131,6 +147,23 @@ namespace engine
       }
 
    done:
+      /// AUDIT
+      if ( pCollectionName )
+      {
+         UINT32 insertedNum = 0 ;
+         UINT32 ignoredNum = 0 ;
+         ossUnpack32From64( pvtData._insertMixNum, insertedNum, ignoredNum ) ;
+
+         PD_AUDIT_OP( AUDIT_DML, MSG_BS_INSERT_REQ, AUDIT_OBJ_CL,
+                      pCollectionName, rc, "InsertedNum:%u, IgnoredNum:%u, "
+                      "ObjNum:%u, Insertor:%s, Flag:0x%08x(%u)", insertedNum,
+                      ignoredNum, count, BSONObj(pInsertor).toString().c_str(),
+                      oldFlag, oldFlag ) ;
+      }
+      if ( oldFlag & FLG_INSERT_RETURNNUM )
+      {
+         contextID = pvtData._insertMixNum ;
+      }
       PD_TRACE_EXITRC ( SDB_RTNCOINS_EXECUTE, rc ) ;
       return rc;
    error:
@@ -245,6 +278,29 @@ namespace engine
    void rtnCoordInsert::_prepareForTrans( pmdEDUCB *cb, MsgHeader *pMsg )
    {
       pMsg->opCode = MSG_BS_TRANS_INSERT_REQ ;
+   }
+
+   void rtnCoordInsert::_onNodeReply( INT32 processType,
+                                      MsgOpReply *pReply,
+                                      pmdEDUCB *cb,
+                                      rtnSendMsgIn &inMsg )
+   {
+      if ( inMsg._pvtType == PRIVATE_DATA_USER && inMsg._pvtData )
+      {
+         rtnCoordInsertPvtData *pvtData = ( rtnCoordInsertPvtData* )inMsg._pvtData ;
+
+         if ( pReply->contextID > 0 )
+         {
+            UINT32 hi1 = 0, lo1 = 0 ;
+            UINT32 hi2 = 0, lo2 = 0 ;
+            /// (UINT32)insertedNum + (UINT32)ignoredNum
+            ossUnpack32From64( pReply->contextID, hi1, lo1 ) ;
+            ossUnpack32From64( pvtData->_insertMixNum, hi2, lo2 ) ;
+            hi2 += hi1 ;
+            lo2 += lo1 ;
+            pvtData->_insertMixNum = ossPack32To64( hi2, lo2 ) ;
+         }         
+      }
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOINS_SHARDANOBJ, "rtnCoordInsert::shardAnObj" )
@@ -415,7 +471,8 @@ namespace engine
 
       SDB_ASSERT( inMsg._pvtType == PRIVATE_DATA_USER &&
                   inMsg._pvtData, "Private data is error" ) ;
-      GroupSubCLMap *pGrpSubCLDatas = ( GroupSubCLMap* )inMsg._pvtData ;
+      rtnCoordInsertPvtData *pvtData = ( rtnCoordInsertPvtData*)inMsg._pvtData ;
+      GroupSubCLMap *pGrpSubCLDatas = NULL ;
 
       MsgOpInsert *pInsertMsg = ( MsgOpInsert* )inMsg.msg() ;
       netIOV fixed( ( CHAR*)inMsg.msg() + sizeof( MsgHeader ),
@@ -433,13 +490,14 @@ namespace engine
          goto error ;
       }
 
-      if ( !pGrpSubCLDatas )
+      if ( !pvtData )
       {
          PD_LOG( PDSEVERE, "System error, group sub collection map is NULL" ) ;
          rc = SDB_SYS ;
          goto error ;
       }
-      else if ( pGrpSubCLDatas->size() == 0 )
+      pGrpSubCLDatas = &(pvtData->_grpSubCLDatas) ;
+      if ( pGrpSubCLDatas->size() == 0 )
       {
          INT32 flag = 0 ;
          CHAR *pCollectionName = NULL ;
@@ -501,16 +559,16 @@ namespace engine
    {
       SDB_ASSERT( inMsg._pvtType == PRIVATE_DATA_USER &&
                   inMsg._pvtData, "Private data is error" ) ;
-      GroupSubCLMap *pGrpSubCLDatas = ( GroupSubCLMap* )inMsg._pvtData ;
+      rtnCoordInsertPvtData *pvtData = (rtnCoordInsertPvtData*)inMsg._pvtData ;
       vector< BSONObj > *pVecObj = ( vector< BSONObj > * )itPtr ;
 
       // remove the datas by succeed group
-      if ( pGrpSubCLDatas && pGrpSubCLDatas->size() > 0 )
+      if ( pvtData && pvtData->_grpSubCLDatas.size() > 0 )
       {
          CoordGroupList::iterator it = result._sucGroupLst.begin() ;
          while( it != result._sucGroupLst.end() )
          {
-            pGrpSubCLDatas->erase( it->second ) ;
+            pvtData->_grpSubCLDatas.erase( it->second ) ;
             ++it ;
          }
       }

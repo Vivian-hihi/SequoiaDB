@@ -142,6 +142,15 @@ namespace engine
 
     done:
       rtnClearReplyQue( &replyQue ) ;
+      if ( !user.eoo() &&
+           ( MSG_AUTH_CRTUSR_REQ == pMsg->opCode ||
+             MSG_AUTH_DELUSR_REQ == pMsg->opCode )
+         )
+      {
+         /// AUDIT
+         PD_AUDIT_OP( AUDIT_DCL, pMsg->opCode, AUDIT_OBJ_USER,
+                      user.valuestrsafe(), rc, "" ) ;
+      }
       PD_TRACE_EXITRC ( SDB_RTNCOAUTHBASE_FORWARD, rc ) ;
       return rc ;
    error:

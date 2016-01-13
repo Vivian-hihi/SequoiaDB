@@ -185,13 +185,16 @@ enum AUDIT_TYPE
    AUDIT_CLUSTER        = 2,     /// Group, Domain, Node operations
    AUDIT_SYSTEM         = 3,     /// System Info
 
-   AUDIT_DML            = 8,     /// Insert, Update, Delete operation
+   AUDIT_DML            = 8,     /// Insert, Update, Delete operation, but
+                                 /// not include detail records. If you need
+                                 /// to audit detail info, use AUDIT_INSERT...
    AUDIT_DDL            = 9,     /// Create/Drop Collection, and so on
    AUDIT_DCL            = 10,    /// Create User, Drop User and so on
    AUDIT_DQL            = 11,    /// Query, Explain
 
-   AUDIT_DEL            = 20,    /// The detail of delete record
-   AUDIT_UPDATE         = 21,    /// The detail of update record
+   AUDIT_DELETE         = 20,    /// The detail of delete records
+   AUDIT_UPDATE         = 21,    /// The detail of update records
+   AUDIT_INSERT         = 22,    /// The detail of insert records
 
    AUDIT_OTHER          = 255    /// Other
 } ;
@@ -203,8 +206,9 @@ enum AUDIT_TYPE
 #define AUDIT_MASK_DDL        0x00000020
 #define AUDIT_MASK_DCL        0x00000040
 #define AUDIT_MASK_DQL        0x00000080
-#define AUDIT_MASK_DEL        0x00000100
+#define AUDIT_MASK_DELETE     0x00000100
 #define AUDIT_MASK_UPDATE     0x00000200
+#define AUDIT_MASK_INSERT     0x00000400
 #define AUDIT_MASK_OTHER      0x00001000
 
 #define AUDIT_MASK_DEFAULT    ( AUDIT_SYSTEM | AUDIT_MASK_DDL | AUDIT_MASK_DCL )
@@ -225,6 +229,7 @@ enum AUDIT_OBJ_TYPE
    AUDIT_OBJ_PROCEDURE,
    AUDIT_OBJ_FILE,
    AUDIT_OBJ_SESSION,
+   AUDIT_OBJ_USER,
 
    AUDIT_OBJ_MAX
 } ;
@@ -234,8 +239,10 @@ const CHAR* pdAuditObjType2String( AUDIT_OBJ_TYPE objtype ) ;
    do { \
       if ( getCurAuditMask() & pdAuditType2Mask( type ) ) \
       { \
-         pdAudit(type, username, action, objtype, objname, result, \
-                 __FUNC__, __FILE__, __LINE__, fmt, ##__VA_ARGS__); \
+         try { \
+            pdAudit(type, username, action, objtype, objname, result, \
+                    __FUNC__, __FILE__, __LINE__, fmt, ##__VA_ARGS__); \
+         } catch( ... ) {} \
       } \
    }while( 0 )
 

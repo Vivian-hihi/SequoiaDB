@@ -38,6 +38,7 @@
 #include "pmd.hpp"
 #include "pmdCB.hpp"
 #include "msgMessage.hpp"
+#include "rtnCommandDef.hpp"
 #include "pdTrace.hpp"
 #include "rtnTrace.hpp"
 
@@ -75,6 +76,8 @@ namespace engine
 
       // fill default-reply(delete success)
       MsgOpDelete *pDelMsg             = (MsgOpDelete *)pMsg ;
+      INT32 oldFlag                    = pDelMsg->flags ;
+      pDelMsg->flags                  |= FLG_DELETE_RETURNNUM ;
       contextID                        = -1 ;
 
       INT32 flag = 0;
@@ -83,8 +86,12 @@ namespace engine
       CHAR *pHint = NULL ;
       rc = msgExtractDelete( (CHAR*)pMsg, &flag, &pCollectionName,
                              &pDeletor, &pHint ) ;
-      PD_RC_CHECK( rc, PDERROR,
-                   "Failed to parse delete request, rc: %d", rc ) ;
+      if( rc )
+      {
+         PD_LOG( PDERROR,"Failed to parse delete request, rc: %d", rc ) ;
+         pCollectionName = NULL ;
+         goto error ;
+      }
 
       try
       {
@@ -96,6 +103,15 @@ namespace engine
                       "Delete failed, received unexpected error:%s",
                       e.what() ) ;
       }
+
+      // add last op info
+      MON_SAVE_OP_DETAIL( cb->getMonAppCB(), pMsg->opCode,
+                          "Collection:%s, Deletor:%s, Hint:%s, "
+                          "Flag:0x%08x(%u)",
+                          pCollectionName,
+                          boDeletor.toString().c_str(),
+                          BSONObj(pHint).toString().c_str(),
+                          oldFlag, oldFlag ) ;
 
       rc = rtnCoordGetCataInfo( cb, pCollectionName, FALSE, cataInfo ) ;
       PD_RC_CHECK( rc, PDERROR, "Delete failed, failed to get the "
@@ -140,6 +156,19 @@ namespace engine
       }
 
    done:
+      if ( oldFlag & FLG_DELETE_RETURNNUM )
+      {
+         contextID = deleteNum ;
+      }
+      if ( pCollectionName )
+      {
+         /// AUDIT
+         PD_AUDIT_OP( AUDIT_DML, MSG_BS_DELETE_REQ, AUDIT_OBJ_CL,
+                      pCollectionName, rc,
+                      "DeletedNum:%u, Deletor:%s, Hint:%s, Flag:0x%08x(%u)",
+                      deleteNum, boDeletor.toString().c_str(),
+                      BSONObj(pHint).toString().c_str(), oldFlag, oldFlag ) ;
+      }
       PD_TRACE_EXITRC ( SDB_RTNCODEL_EXECUTE, rc ) ;
       return rc ;
    error:

@@ -39,7 +39,6 @@
 #include "dmsStorageUnit.hpp"
 #include "dmsStorageJob.hpp"
 #include "ossTypes.hpp"
-#include "msgMessage.hpp"
 #include "pmd.hpp"
 #include "pmdCB.hpp"
 #include "pdTrace.hpp"
@@ -51,7 +50,8 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNINSERT1, "rtnInsert" )
    INT32 rtnInsert ( const CHAR *pCollectionName, BSONObj &objs, INT32 objNum,
-                     INT32 flags, pmdEDUCB *cb )
+                     INT32 flags, pmdEDUCB *cb, INT32 *pInsertedNum,
+                     INT32 *pIgnoredNum )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_RTNINSERT1 ) ;
@@ -65,7 +65,7 @@ namespace engine
          dpsCB = NULL ;
       }
       rc = rtnInsert ( pCollectionName, objs, objNum, flags, cb,
-                       dmsCB, dpsCB ) ;
+                       dmsCB, dpsCB, 1, pInsertedNum ) ;
       PD_TRACE_EXITRC ( SDB_RTNINSERT1, rc ) ;
 
       return rc ;
@@ -74,7 +74,8 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNINSERT2, "rtnInsert" )
    INT32 rtnInsert ( const CHAR *pCollectionName, BSONObj &objs, INT32 objNum,
                      INT32 flags, pmdEDUCB *cb, SDB_DMSCB *dmsCB,
-                     SDB_DPSCB *dpsCB, INT16 w )
+                     SDB_DPSCB *dpsCB, INT16 w, INT32 *pInsertedNum,
+                     INT32 *pIgnoredNum )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_RTNINSERT2 ) ;
@@ -85,6 +86,8 @@ namespace engine
       dmsStorageUnitID suID = DMS_INVALID_CS ;
       const CHAR *pCollectionShortName = NULL ;
       UINT32 insertCount = 0 ;
+      INT32  ignoredNum = 0 ;
+      INT32  allInsertNum = 0 ;
       BOOLEAN writable = FALSE ;
 
       ossValuePtr pDataPos = 0 ;
@@ -136,6 +139,7 @@ namespace engine
                if ( ( SDB_IXM_DUP_KEY == rc ) &&
                     ( FLG_INSERT_CONTONDUP & flags ) )
                {
+                  ++ignoredNum ;
                   rc = SDB_OK ;
                }
                else
@@ -146,6 +150,7 @@ namespace engine
                   goto error ;
                }
             }
+            ++allInsertNum ;
             pDataPos += ossAlignX ( (ossValuePtr)record.objsize(), 4 ) ;
          }
          catch ( std::exception &e )
@@ -158,6 +163,14 @@ namespace engine
       }
 
    done :
+      if ( pInsertedNum )
+      {
+         *pInsertedNum = allInsertNum ;
+      }
+      if ( pIgnoredNum )
+      {
+         *pIgnoredNum = ignoredNum ;
+      }
       if ( DMS_INVALID_CS != suID )
       {
          dmsCB->suUnlock ( suID ) ;
@@ -166,7 +179,6 @@ namespace engine
       {
          dmsCB->writeDown( cb );
       }
-
       if ( cb )
       {
          if ( SDB_OK == rc && dpsCB )

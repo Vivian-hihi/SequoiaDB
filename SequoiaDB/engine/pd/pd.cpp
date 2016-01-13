@@ -524,14 +524,15 @@ const CHAR* pdAuditObjType2String( AUDIT_OBJ_TYPE objtype )
       "DOMAIN",
       "PROCEDURE",
       "FILE",
-      "SESSION"
+      "SESSION",
+      "USER"
       } ;
    if ( (UINT32)objtype >= 0 &&
         (UINT32)objtype < sizeof(s_objtypeString) / sizeof(const CHAR*) )
    {
       return s_objtypeString[ (UINT32)objtype ] ;
    }
-   return "UNKNOW" ;
+   return "" ;
 }
 
 UINT32 pdAuditType2Mask( AUDIT_TYPE auditType )
@@ -552,10 +553,12 @@ UINT32 pdAuditType2Mask( AUDIT_TYPE auditType )
          return AUDIT_MASK_DCL ;
       case AUDIT_DQL :
          return AUDIT_MASK_DQL ;
-      case AUDIT_DEL :
-         return AUDIT_MASK_DEL ;
+      case AUDIT_DELETE :
+         return AUDIT_MASK_DELETE ;
       case AUDIT_UPDATE :
          return AUDIT_MASK_UPDATE ;
+      case AUDIT_INSERT :
+         return AUDIT_MASK_INSERT ;
       case AUDIT_OTHER :
          return AUDIT_MASK_OTHER ;
       default :
@@ -582,10 +585,12 @@ const CHAR* pdGetAuditTypeDesp( AUDIT_TYPE auditType )
          return "DCL" ;
       case AUDIT_DQL :
          return "DQL" ;
-      case AUDIT_DEL :
+      case AUDIT_DELETE :
          return "DELETE" ;
       case AUDIT_UPDATE :
          return "UPDATE" ;
+      case AUDIT_INSERT :
+         return "INSERT" ;
       case AUDIT_OTHER :
          return "OTHER" ;
       default :
@@ -642,11 +647,15 @@ static INT32 _pdString2AuditMask( const CHAR *pStr, UINT32 &mask )
    }
    else if ( 0 == ossStrncasecmp( start, "DELETE", len ) )
    {
-      mask |= AUDIT_MASK_DEL ;
+      mask |= AUDIT_MASK_DELETE ;
    }
    else if ( 0 == ossStrncasecmp( start, "UPDATE", len ) )
    {
       mask |= AUDIT_MASK_UPDATE ;
+   }
+   else if ( 0 == ossStrncasecmp( start, "INSERT", len ) )
+   {
+      mask |= AUDIT_MASK_INSERT ;
    }
    else if ( 0 == ossStrncasecmp( start, "OTHER", len ) )
    {

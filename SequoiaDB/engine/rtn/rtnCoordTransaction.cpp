@@ -38,6 +38,7 @@
 #include "pmd.hpp"
 #include "pmdCB.hpp"
 #include "msgMessage.hpp"
+#include "rtnCommandDef.hpp"
 
 namespace engine
 {
@@ -258,6 +259,12 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
 
+      // add last op info
+      MON_SAVE_OP_DETAIL( cb->getMonAppCB(), MSG_BS_TRANS_COMMIT_REQ,
+                          "TransactionID: 0x%016x(%llu)",
+                          cb->getTransID(),
+                          cb->getTransID() ) ;
+
       rc = rtnCoord2PhaseCommit::execute( pMsg, cb, contextID, buf ) ;
       PD_RC_CHECK( rc, PDERROR,
                    "Failed to commit the transaction(rc=%d)",
@@ -293,6 +300,12 @@ namespace engine
          rc = SDB_DPS_TRANS_NO_TRANS ;
          goto error;
       }
+
+      // add last op info
+      MON_SAVE_OP_DETAIL( cb->getMonAppCB(), MSG_BS_TRANS_ROLLBACK_REQ,
+                          "TransactionID: 0x%016x(%llu)",
+                          cb->getTransID(),
+                          cb->getTransID() ) ;
 
       rc = rtnCoordTransOperator::rollBack( cb, pRouteAgent ) ;
       PD_RC_CHECK( rc, PDERROR, "Rollback transaction failed, rc: %d", rc ) ;

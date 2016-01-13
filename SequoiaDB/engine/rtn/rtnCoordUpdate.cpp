@@ -70,6 +70,7 @@ namespace engine
       CoordCataInfoPtr cataInfo ;
       MsgRouteID errNodeID ;
       UINT64 updateNum = 0 ;
+      INT32  insertNum = 0 ;
       inMsg._pvtData = ( CHAR* )&updateNum ;
       inMsg._pvtType = PRIVATE_DATA_NUMBERLONG ;
 
@@ -81,6 +82,8 @@ namespace engine
 
       // fill default-reply(update success)
       MsgOpUpdate *pUpdate             = (MsgOpUpdate *)pMsg ;
+      INT32 oldFlag                    = pUpdate->flags ;
+      pUpdate->flags                  |= FLG_UPDATE_RETURNNUM ;
       contextID                        = -1 ;
 
       INT32 flag                       = 0;
@@ -92,9 +95,13 @@ namespace engine
       BSONObj boHint ;
       BSONObj boUpdator ;
       rc = msgExtractUpdate( (CHAR*)pMsg, &flag, &pCollectionName,
-                             &pSelector, &pUpdator, &pHint );
-      PD_RC_CHECK( rc, PDERROR, "Failed to parse update request, rc: %d",
-                   rc ) ;
+                             &pSelector, &pUpdator, &pHint ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Failed to parse update request, rc: %d", rc ) ;
+         pCollectionName = NULL ;
+         goto error ;
+      }
 
       try
       {
@@ -108,6 +115,15 @@ namespace engine
             rc = SDB_INVALIDARG ;
             goto error ;
          }
+         // add last op info
+         MON_SAVE_OP_DETAIL( cb->getMonAppCB(), pMsg->opCode,
+                             "Collection:%s, Matcher:%s, Updator:%s, Hint:%s, "
+                             "Flag:0x%08x(%u)",
+                             pCollectionName,
+                             boSelector.toString().c_str(),
+                             boUpdator.toString().c_str(),
+                             boHint.toString().c_str(),
+                             oldFlag, oldFlag ) ;
       }
       catch ( std::exception &e )
       {
@@ -205,7 +221,6 @@ namespace engine
          if ( pNewUpdate->flags | FLG_UPDATE_UPSERT )
          {
             pNewUpdate->flags &= ~FLG_UPDATE_UPSERT ;
-            pNewUpdate->flags |= FLG_UPDATE_RETURNNUM ;
          }
          inMsg._pMsg = ( MsgHeader* )pNewUpdate ;
 
@@ -290,12 +305,25 @@ namespace engine
                                      cb, contextID, buf ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to insert the data[%s], rc: %d",
                       target.toString().c_str(), rc ) ;
+         insertNum = 1 ;
       }
 
    done:
-      if ( flag & FLG_UPDATE_RETURNNUM )
+      if ( oldFlag & FLG_UPDATE_RETURNNUM )
       {
          contextID = updateNum ;
+      }
+      if ( pCollectionName )
+      {
+         /// AUDIT
+         PD_AUDIT_OP( AUDIT_DML, MSG_BS_UPDATE_REQ, AUDIT_OBJ_CL,
+                      pCollectionName, rc,
+                      "UpdatedNum:%llu, InsertedNum:%u, Matcher:%s, "
+                      "Updator:%s, Hint:%s, Flag:0x%08x(%u)",
+                      updateNum, insertNum,
+                      boSelector.toString().c_str(),
+                      boUpdator.toString().c_str(),
+                      boHint.toString().c_str(), oldFlag, oldFlag ) ;
       }
       if ( pMsgBuff )
       {

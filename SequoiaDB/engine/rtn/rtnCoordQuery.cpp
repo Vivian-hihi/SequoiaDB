@@ -411,11 +411,23 @@ namespace engine
       contextID                        = -1 ;
 
       CHAR *pCollectionName            = NULL ;
+      INT32 flag                       = 0 ;
+      INT64 numToSkip                  = 0 ;
+      INT64 numToReturn                = 0 ;
+      CHAR *pQuery                     = NULL ;
+      CHAR *pSelector                  = NULL ;
+      CHAR *pOrderby                   = NULL ;
+      CHAR *pHint                      = NULL ;
 
-      rc = msgExtractQuery( (CHAR*)pMsg, NULL, &pCollectionName,
-                            NULL, NULL, NULL, NULL, NULL, NULL ) ;
-      PD_RC_CHECK( rc, PDERROR,
-                  "Failed to parse query request, rc: %d", rc ) ;
+      rc = msgExtractQuery( (CHAR*)pMsg, &flag, &pCollectionName,
+                            &numToSkip, &numToReturn, &pQuery, &pSelector,
+                            &pOrderby, &pHint ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Failed to parse query request, rc: %d", rc ) ;
+         pCollectionName = NULL ;
+         goto error ;
+      }
 
       // process command
       if ( pCollectionName != NULL && '$' == pCollectionName[0] )
@@ -428,6 +440,18 @@ namespace engine
          PD_CHECK( pCmdProcesser != NULL, SDB_INVALIDARG, error, PDERROR,
                   "unknown command:%s", pCollectionName ) ;
 
+         // add last op info
+         MON_SAVE_CMD_DETAIL( cb->getMonAppCB(), CMD_UNKNOW - 1,
+                              "Command:%s, Match:%s, "
+                              "Selector:%s, OrderBy:%s, Hint:%s, Skip:%llu, "
+                              "Limit:%lld, Flag:0x%08x(%u)",
+                              pCollectionName,
+                              BSONObj(pQuery).toString().c_str(),
+                              BSONObj(pSelector).toString().c_str(),
+                              BSONObj(pOrderby).toString().c_str(),
+                              BSONObj(pHint).toString().c_str(),
+                              numToSkip, numToReturn, flag, flag ) ;
+
          rc = pCmdProcesser->execute( pMsg, cb, contextID, buf ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to execute the "
                       "command(command:%s, rc=%d)",
@@ -436,8 +460,35 @@ namespace engine
       else
       {
          rtnSendOptions sendOpt ;
+
+         // add last op info
+         MON_SAVE_OP_DETAIL( cb->getMonAppCB(), pMsg->opCode,
+                             "Collection:%s, Matcher:%s, Selector:%s, "
+                             "OrderBy:%s, Hint:%s, Skip:%llu, Limit:%lld, "
+                             "Flag:0x%08x(%u)",
+                             pCollectionName,
+                             BSONObj(pQuery).toString().c_str(),
+                             BSONObj(pSelector).toString().c_str(),
+                             BSONObj(pOrderby).toString().c_str(),
+                             BSONObj(pHint).toString().c_str(),
+                             numToSkip, numToReturn,
+                             flag, flag ) ;
+
          rc = queryOrDoOnCL( pMsg, pRouteAgent, cb, &pContext,
                              sendOpt ) ;
+         /// AUDIT
+         PD_AUDIT_OP( ( flag & FLG_QUERY_MODIFY ? AUDIT_DML : AUDIT_DQL ),
+                      MSG_BS_QUERY_REQ, AUDIT_OBJ_CL,
+                      pCollectionName, rc,
+                      "ContextID:%lld, Matcher:%s, Selector:%s, OrderBy:%s, "
+                      "Hint:%s, Skip:%llu, Limit:%lld, Flag:0x%08x(%u)",
+                      pContext ? pContext->contextID() : -1,
+                      BSONObj(pQuery).toString().c_str(),
+                      BSONObj(pSelector).toString().c_str(),
+                      BSONObj(pOrderby).toString().c_str(),
+                      BSONObj(pHint).toString().c_str(),
+                      numToSkip, numToReturn,
+                      flag, flag ) ;
          PD_RC_CHECK( rc, PDERROR, "query failed, rc: %d", rc ) ;
 
          contextID = pContext->contextID() ;

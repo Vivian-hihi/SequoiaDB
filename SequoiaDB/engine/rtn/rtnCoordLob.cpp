@@ -34,6 +34,7 @@
 #include "rtnLob.hpp"
 #include "rtnTrace.hpp"
 #include "msgMessage.hpp"
+#include "rtnCommandDef.hpp"
 #include "rtnCoordLobStream.hpp"
 
 using namespace bson ;
@@ -60,6 +61,10 @@ namespace engine
          PD_LOG( PDERROR, "failed to extract open msg:%d", rc ) ;
          goto error ;
       }
+
+      // add last op info
+      MON_SAVE_OP_DETAIL( cb->getMonAppCB(), pMsg->opCode,
+                          "Option:%s", obj.toString().c_str() ) ;
 
       rc = rtnOpenLob( obj, header->flags, FALSE, cb,
                        NULL, 0, contextID,
@@ -102,6 +107,11 @@ namespace engine
          goto error ;
       }
 
+      // add last op info
+      MON_SAVE_OP_DETAIL( cb->getMonAppCB(), pMsg->opCode,
+                          "ContextID:%lld, Len:%u, Offset:%llu",
+                          header->contextID, len, offset ) ;
+
       rc = rtnWriteLob( header->contextID, cb, len, data ) ;
       if ( SDB_OK != rc )
       {
@@ -140,6 +150,11 @@ namespace engine
          goto error ;
       }
 
+      // add last op info
+      MON_SAVE_OP_DETAIL( cb->getMonAppCB(), pMsg->opCode,
+                          "ContextID:%lld, Len:%u, Offset:%llu",
+                          header->contextID, readLen, offset ) ;
+
       rc = rtnReadLob( header->contextID, cb, len,
                        offset, &data, readLen ) ;
       if ( SDB_OK != rc )
@@ -173,6 +188,10 @@ namespace engine
          PD_LOG( PDERROR, "failed to extract msg:%d", rc ) ;
          goto error ;
       } 
+
+      // add last op info
+      MON_SAVE_OP_DETAIL( cb->getMonAppCB(), pMsg->opCode,
+                          "ContextID:%lld", header->contextID ) ;
 
       rc = rtnCloseLob( header->contextID, cb ) ;
       if ( SDB_OK != rc )
@@ -228,6 +247,10 @@ namespace engine
          rc = SDB_SYS ;
          goto error ;
       }
+
+      // add last op info
+      MON_SAVE_OP_DETAIL( cb->getMonAppCB(), pMsg->opCode,
+                          "Option:%s", obj.toString().c_str() ) ;
 
       rc = stream.open( fullName,
                         ele.__oid(), SDB_LOB_MODE_REMOVE,

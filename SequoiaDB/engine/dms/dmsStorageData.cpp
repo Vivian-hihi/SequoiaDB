@@ -2514,7 +2514,7 @@ namespace engine
 
       if ( dpscb )
       {
-         PD_AUDIT_OP_WITHNAME( AUDIT_DML, "INSERT", AUDIT_OBJ_CL,
+         PD_AUDIT_OP_WITHNAME( AUDIT_INSERT, "INSERT", AUDIT_OBJ_CL,
                                fullName, rc, "%s",
                                insertObj.toString().c_str() ) ;
 
@@ -2904,7 +2904,7 @@ namespace engine
       {
          try
          {
-            PD_AUDIT_OP_WITHNAME( AUDIT_DEL, "DELETE", AUDIT_OBJ_CL,
+            PD_AUDIT_OP_WITHNAME( AUDIT_DELETE, "DELETE", AUDIT_OBJ_CL,
                                   fullName, rc, "%s",
                                   BSONObj( (CHAR*)deletedDataPtr ).toString().c_str() ) ;
          }

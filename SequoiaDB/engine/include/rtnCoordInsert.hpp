@@ -48,6 +48,12 @@ namespace engine
    typedef map< string, netIOVec >        SubCLObjsMap ;
    typedef map< UINT32, SubCLObjsMap >    GroupSubCLMap ;
 
+   struct rtnCoordInsertPvtData
+   {
+      UINT64         _insertMixNum ;   /// InsertedNum(Hi) + IgnoredNum(Lo)
+      GroupSubCLMap  _grpSubCLDatas ;
+   } ;
+
    public:
       virtual INT32 execute( MsgHeader *pMsg,
                              pmdEDUCB *cb,
@@ -129,6 +135,11 @@ namespace engine
 
       virtual void               _prepareForTrans( pmdEDUCB *cb,
                                                    MsgHeader *pMsg ) ;
+
+      virtual void               _onNodeReply( INT32 processType,
+                                               MsgOpReply *pReply,
+                                               pmdEDUCB *cb,
+                                               rtnSendMsgIn &inMsg ) ;
 
    } ;
 }

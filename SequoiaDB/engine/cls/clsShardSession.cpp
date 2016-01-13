@@ -334,8 +334,17 @@ namespace engine
                rc = _onUpdateReqMsg ( handle, msg, contextID ) ;
                break ;
             case MSG_BS_INSERT_REQ :
+               {
+               MsgOpInsert *pInsert = (MsgOpInsert*)msg ;
+               INT32 insertedNum = 0 ;
+               INT32 ignoredNum = 0 ;
                isNeedRollback = TRUE ;
-               rc = _onInsertReqMsg ( handle, msg ) ;
+               rc = _onInsertReqMsg ( handle, msg, insertedNum, ignoredNum ) ;
+               if ( pInsert->flags & FLG_INSERT_RETURNNUM )
+               {
+                  contextID = ossPack32To64( insertedNum, ignoredNum ) ;
+               }
+               }
                break ;
             case MSG_BS_DELETE_REQ :
                isNeedRollback = TRUE ;
@@ -353,8 +362,18 @@ namespace engine
                rc = _onTransUpdateReqMsg ( handle, msg, contextID ) ;
                break ;
             case MSG_BS_TRANS_INSERT_REQ :
+               {
+               INT32 insertedNum = 0 ;
+               INT32 ignoredNum = 0 ;
+               MsgOpInsert *pInsert = (MsgOpInsert*)msg ;
                isNeedRollback = TRUE ;
-               rc = _onTransInsertReqMsg ( handle, msg ) ;
+               rc = _onTransInsertReqMsg ( handle, msg, insertedNum,
+                                           ignoredNum ) ;
+               if ( pInsert->flags & FLG_INSERT_RETURNNUM )
+               {
+                  contextID = ossPack32To64( insertedNum, ignoredNum ) ;
+               }
+               }
                break ;
             case MSG_BS_TRANS_DELETE_REQ :
                isNeedRollback = TRUE ;
@@ -815,12 +834,15 @@ namespace engine
          BSONObj selector( pSelectorBuffer );
          BSONObj updator( pUpdatorBuffer );
          BSONObj hint( pHintBuffer );
-         MON_SAVE_OP_DETAIL( _pEDUCB->getMonAppCB(), MSG_BS_UPDATE_REQ,
-                           "CL:%s, Match:%s, Updator:%s, Hint:%s",
-                           pCollectionName,
-                           selector.toString( false, false ).c_str(),
-                           updator.toString(false, false ).c_str(),
-                           hint.toString(false, false ).c_str() ) ;
+         // add last op info
+         MON_SAVE_OP_DETAIL( eduCB()->getMonAppCB(), msg->opCode,
+                             "Collection:%s, Matcher:%s, Updator:%s, Hint:%s, "
+                             "Flag:0x%08x(%u)",
+                             pCollectionName,
+                             selector.toString().c_str(),
+                             updator.toString().c_str(),
+                             hint.toString().c_str(),
+                             flags, flags ) ;
 
          PD_LOG ( PDDEBUG, "Session[%s] Update: selctor: %s\nupdator: %s\n"
                   "hint: %s", sessionName(), selector.toString().c_str(),
@@ -856,7 +878,9 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSHDSESS__ONINSTREQMSG, "_clsShdSession::_onInsertReqMsg" )
-   INT32 _clsShdSession::_onInsertReqMsg ( NET_HANDLE handle, MsgHeader * msg )
+   INT32 _clsShdSession::_onInsertReqMsg ( NET_HANDLE handle, MsgHeader * msg,
+                                           INT32 &insertedNum,
+                                           INT32 &ignoredNum )
    {
       PD_LOG ( PDDEBUG, "session[%s] _onInsertReqMsg", sessionName() ) ;
 
@@ -905,10 +929,13 @@ namespace engine
       try
       {
          BSONObj insertor ( pInsertorBuffer ) ;
-         MON_SAVE_OP_DETAIL( _pEDUCB->getMonAppCB(), MSG_BS_INSERT_REQ,
-                             "Collection:%s, Insertor:%s",
+         // add list op info
+         MON_SAVE_OP_DETAIL( eduCB()->getMonAppCB(), msg->opCode,
+                             "Collection:%s, Insertors:%s, ObjNum:%d, "
+                             "Flag:0x%08x(%u)",
                              pCollectionName,
-                             insertor.toString().c_str() ) ;
+                             insertor.toString().c_str(),
+                             recordNum, flags, flags ) ;
 
          PD_LOG ( PDDEBUG, "Session[%s] Insert: %s\nCollection: %s",
                   sessionName(), insertor.toString().c_str(),
@@ -916,13 +943,15 @@ namespace engine
 
          if ( _isMainCL )
          {
-            rc = _insertToMainCL( insertor, recordNum, flags, w );
+            rc = _insertToMainCL( insertor, recordNum, flags, w,
+                                  insertedNum, ignoredNum );
          }
          else
          {
 
             rc = rtnInsert ( pCollectionName, insertor, recordNum, flags,
-                             _pEDUCB, _pDmsCB, _pDpsCB, w ) ;
+                             _pEDUCB, _pDmsCB, _pDpsCB, w,
+                             &insertedNum, &ignoredNum ) ;
          }
       }
       catch ( std::exception &e )
@@ -993,11 +1022,14 @@ namespace engine
       {
          BSONObj deletor ( pDeletorBuffer ) ;
          BSONObj hint ( pHintBuffer ) ;
-         MON_SAVE_OP_DETAIL( _pEDUCB->getMonAppCB(), MSG_BS_DELETE_REQ,
-                           "CL:%s, Deletor:%s, Hint:%s",
-                           pCollectionName,
-                           deletor.toString( false, false ).c_str(),
-                           hint.toString( false, false ).c_str() );
+         // add last op info
+         MON_SAVE_OP_DETAIL( eduCB()->getMonAppCB(), msg->opCode,
+                             "Collection:%s, Deletor:%s, Hint:%s, "
+                             "Flag:0x%08x(%u)",
+                             pCollectionName,
+                             deletor.toString().c_str(),
+                             hint.toString().c_str(),
+                             flags, flags ) ;
 
          PD_LOG ( PDDEBUG, "Session[%s] Delete: deletor: %s\nhint: %s",
                   sessionName(), deletor.toString().c_str(),
@@ -1119,13 +1151,18 @@ namespace engine
             BSONObj selector ( pFieldSelector ) ;
             BSONObj orderBy ( pOrderByBuffer ) ;
             BSONObj hint ( pHintBuffer ) ;
-            MON_SAVE_OP_DETAIL( _pEDUCB->getMonAppCB(), MSG_BS_QUERY_REQ,
-                                "CL:%s, Match:%s, Selector:%s, OrderBy:%s, Hint:%s",
+            // add last op info
+            MON_SAVE_OP_DETAIL( eduCB()->getMonAppCB(), msg->opCode,
+                                "Collection:%s, Matcher:%s, Selector:%s, "
+                                "OrderBy:%s, Hint:%s, Skip:%llu, Limit:%lld, "
+                                "Flag:0x%08x(%u)",
                                 pCollectionName,
                                 matcher.toString().c_str(),
                                 selector.toString().c_str(),
                                 orderBy.toString().c_str(),
-                                hint.toString().c_str() ) ;
+                                hint.toString().c_str(),
+                                numToSkip, numToReturn,
+                                flags, flags ) ;
 
             PD_LOG ( PDDEBUG, "Session[%s] Query: matcher: %s\nselector: "
                      "%s\norderBy: %s\nhint:%s", sessionName(),
@@ -1216,9 +1253,15 @@ namespace engine
          }
 
          MON_SAVE_CMD_DETAIL( _pEDUCB->getMonAppCB(), pCommand->type(),
-                              "Command:%s, Collection:%s",
-                              pCollectionName,
-                              _cmdCollectionName.c_str() ) ;
+                              "Command:%s, Collection:%s, Match:%s, "
+                              "Selector:%s, OrderBy:%s, Hint:%s, Skip:%llu, "
+                              "Limit:%lld, Flag:0x%08x(%u)",
+                              pCollectionName, _cmdCollectionName.c_str(),
+                              BSONObj(pQueryBuff).toString().c_str(),
+                              BSONObj(pFieldSelector).toString().c_str(),
+                              BSONObj(pOrderByBuffer).toString().c_str(),
+                              BSONObj(pHintBuffer).toString().c_str(),
+                              numToSkip, numToReturn, flags, flags ) ;
 
          if ( pCommand->writable () )
          {
@@ -1344,7 +1387,8 @@ namespace engine
          goto error ;
       }
 
-      MON_SAVE_OP_DETAIL( _pEDUCB->getMonAppCB(), MSG_BS_GETMORE_REQ,
+      // add last op info
+      MON_SAVE_OP_DETAIL( eduCB()->getMonAppCB(), msg->opCode,
                           "ContextID:%lld, NumToRead:%d",
                           contextID, numToRead ) ;
 
@@ -1380,6 +1424,11 @@ namespace engine
                   sessionName(), rc ) ;
          goto error ;
       }
+
+      // add last op info
+      MON_SAVE_OP_DETAIL( eduCB()->getMonAppCB(), msg->opCode,
+                          "ContextNum:%d, ContextID:%lld",
+                          contextNum, pContextIDs[0] ) ;
 
       if ( contextNum > 0 )
       {
@@ -1440,6 +1489,11 @@ namespace engine
       {
          return SDB_CLS_NOT_PRIMARY;
       }
+      // add last op info
+      MON_SAVE_OP_DETAIL( eduCB()->getMonAppCB(), MSG_BS_TRANS_COMMIT_REQ,
+                          "TransactionID: 0x%016x(%llu)",
+                          eduCB()->getTransID(),
+                          eduCB()->getTransID() ) ;
       return rtnTransCommit( _pEDUCB, _pDpsCB );
    }
 
@@ -1449,6 +1503,11 @@ namespace engine
       {
          return SDB_CLS_NOT_PRIMARY;
       }
+      // add last op info
+      MON_SAVE_OP_DETAIL( eduCB()->getMonAppCB(), MSG_BS_TRANS_ROLLBACK_REQ,
+                          "TransactionID: 0x%016x(%llu)",
+                          eduCB()->getTransID(),
+                          eduCB()->getTransID() ) ;
       return rtnTransRollback( _pEDUCB, _pDpsCB ) ;
    }
 
@@ -1473,13 +1532,15 @@ namespace engine
    }
 
    INT32 _clsShdSession::_onTransInsertReqMsg ( NET_HANDLE handle,
-                                                MsgHeader *msg )
+                                                MsgHeader *msg,
+                                                INT32 &insertedNum,
+                                                INT32 &ignoredNum )
    {
       if ( _pEDUCB->getTransID() == DPS_INVALID_TRANS_ID )
       {
          return SDB_DPS_TRANS_NO_TRANS;
       }
-      return _onInsertReqMsg( handle, msg );
+      return _onInsertReqMsg( handle, msg, insertedNum, ignoredNum );
    }
 
    INT32 _clsShdSession::_onTransDeleteReqMsg ( NET_HANDLE handle,
@@ -1575,7 +1636,9 @@ namespace engine
    }
 
    INT32 _clsShdSession::_insertToMainCL( BSONObj &objs, INT32 objNum,
-                                          INT32 flags, INT16 w )
+                                          INT32 flags, INT16 w,
+                                          INT32 &insertedNum,
+                                          INT32 &ignoredNum )
    {
       INT32 rc = SDB_OK ;
       ossValuePtr pCurPos = 0 ;
@@ -1617,9 +1680,14 @@ namespace engine
             insertor = BSONObj( (CHAR *)pCurPos ) ;
 
       retryInsert:
+            INT32 subInsertNum = 0 ;
+            INT32 subIgnoredNum = 0 ;
             /// insert to sub collection
             rc = rtnInsert ( pSubCLName, insertor, subObjsNum, flags,
-                             _pEDUCB, _pDmsCB, _pDpsCB, w ) ;
+                             _pEDUCB, _pDmsCB, _pDpsCB, w,
+                             &subInsertNum, &subIgnoredNum ) ;
+            insertedNum += subInsertNum ;
+            ignoredNum += subIgnoredNum ;            
             if ( rc )
             {
                rc = _processSubCLResult( rc, pSubCLName, _pCollectionName ) ;
@@ -1628,7 +1696,6 @@ namespace engine
                   goto retryInsert ;
                }
             }
-
             if( rc )
             {
                PD_LOG( PDERROR, "Session[%s]: Failed to insert to "
@@ -2895,6 +2962,10 @@ namespace engine
          goto error ;
       }
 
+      // add last op info
+      MON_SAVE_OP_DETAIL( eduCB()->getMonAppCB(), msg->opCode,
+                          "Option:%s", lob.toString().c_str() ) ;
+
       if ( SDB_LOB_MODE_R != mode.Int() )
       {
          rc = _checkWriteStatus() ;
@@ -3010,6 +3081,11 @@ namespace engine
       _pCollectionName = lobContext->getFullName() ;
       wWhenOpen = lobContext->getW() ;
 
+      // add last op info
+      MON_SAVE_OP_DETAIL( eduCB()->getMonAppCB(), msg->opCode,
+                          "ContextID:%lld, CollectionName:%s, TupleSize:%u",
+                          header->contextID, _pCollectionName, tSize ) ;
+
       rc = _checkWriteStatus() ;
       if ( SDB_OK != rc )
       {
@@ -3116,6 +3192,13 @@ namespace engine
       /// do not check version coz we will not
       ///  change any thing except close the context.
       lobContext = ( rtnContextShdOfLob * )context ;
+
+      // add last op info
+      MON_SAVE_OP_DETAIL( eduCB()->getMonAppCB(), msg->opCode,
+                          "ContextID:%lld, Collection:%s",
+                          header->contextID,
+                          lobContext->getFullName() ) ;
+
       rc = lobContext->close( _pEDUCB ) ;
       if ( SDB_OK != rc )
       {
@@ -3173,6 +3256,11 @@ namespace engine
 
       lobContext = ( rtnContextShdOfLob * )context ;
       _pCollectionName = lobContext->getFullName() ;
+
+      // add last op info
+      MON_SAVE_OP_DETAIL( eduCB()->getMonAppCB(), msg->opCode,
+                          "ContextID:%lld, Collection:%s, TupleSize:%u",
+                          header->contextID, _pCollectionName, tuplesSize ) ;
 
       rc = _checkPrimaryWhenRead(FLG_LOBREAD_PRIMARY,  header->flags ) ;
       if ( SDB_OK != rc )
@@ -3252,6 +3340,12 @@ namespace engine
       lobContext = ( rtnContextShdOfLob * )context ;
       _pCollectionName = lobContext->getFullName() ;
       wWhenOpen = lobContext->getW() ;
+
+      // add last op info
+      MON_SAVE_OP_DETAIL( eduCB()->getMonAppCB(), msg->opCode,
+                          "ContextID:%lld, Collection:%s, TupleSize:%u",
+                          header->contextID, _pCollectionName,
+                          tuplesSize ) ;
 
       rc = _checkWriteStatus() ;
       if ( SDB_OK != rc )
@@ -3365,6 +3459,11 @@ namespace engine
       lobContext = ( rtnContextShdOfLob * )context ;
       _pCollectionName = lobContext->getFullName() ;
       wWhenOpen = lobContext->getW() ;
+
+      // add last op info
+      MON_SAVE_OP_DETAIL( eduCB()->getMonAppCB(), msg->opCode,
+                          "ContextID:%lld, Collection:%s, TupleSize:%u",
+                          header->contextID, _pCollectionName, tSize ) ;
 
       rc = _checkWriteStatus() ;
       if ( SDB_OK != rc )

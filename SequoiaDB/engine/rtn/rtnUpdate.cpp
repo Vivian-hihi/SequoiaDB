@@ -46,7 +46,6 @@
 #include "pdTrace.hpp"
 #include "rtnTrace.hpp"
 #include "dmsScanner.hpp"
-#include "msgMessageFormat.hpp"
 
 using namespace bson ;
 
@@ -56,7 +55,7 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNUPDATE1, "rtnUpdate" )
    INT32 rtnUpdate ( const CHAR *pCollectionName, const BSONObj &selector,
                      const BSONObj &updator, const BSONObj &hint, INT32 flags,
-                     pmdEDUCB *cb, INT64 *pUpdateNum )
+                     pmdEDUCB *cb, INT64 *pUpdateNum, INT32 *pInsertNum )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_RTNUPDATE1 ) ;
@@ -70,7 +69,7 @@ namespace engine
       }
 
       rc = rtnUpdate ( pCollectionName, selector, updator, hint, flags, cb,
-                       dmsCB, dpsCB, 1, pUpdateNum ) ;
+                       dmsCB, dpsCB, 1, pUpdateNum, pInsertNum ) ;
 
       PD_TRACE_EXITRC ( SDB_RTNUPDATE1, rc ) ;
       return rc ;
@@ -80,7 +79,7 @@ namespace engine
    INT32 rtnUpdate ( const CHAR *pCollectionName, const BSONObj &selector,
                      const BSONObj &updator, const BSONObj &hint, INT32 flags,
                      pmdEDUCB *cb, SDB_DMSCB *dmsCB, SDB_DPSCB *dpsCB,
-                     INT16 w, INT64 *pUpdateNum )
+                     INT16 w, INT64 *pUpdateNum, INT32 *pInsertNum )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_RTNUPDATE2 ) ;
@@ -90,6 +89,7 @@ namespace engine
       SDB_ASSERT ( dmsCB, "dmsCB can't be NULL" ) ;
 
       SINT64 numUpdatedRecords         = 0 ;
+      INT32  insertNum                 = 0 ;
       dmsStorageUnit *su               = NULL ;
       dmsMBContext   *mbContext        = NULL ;
       dmsStorageUnitID suID            = DMS_INVALID_CS ;
@@ -252,15 +252,17 @@ namespace engine
                      target.toString().c_str(), pCollectionShortName ) ;
             goto error ;
          }
-         PD_AUDIT_OP( AUDIT_DML, MSG_BS_INSERT_REQ, AUDIT_OBJ_CL,
-                      pCollectionName, SDB_OK, "%s",
-                      target.toString().c_str() ) ;
+         ++insertNum ;
       }
 
    done :
       if ( pUpdateNum )
       {
          *pUpdateNum = numUpdatedRecords ;
+      }
+      if ( pInsertNum )
+      {
+         *pInsertNum = insertNum ;
       }
       if ( pScanner )
       {
@@ -281,15 +283,6 @@ namespace engine
       if ( writable )
       {
          dmsCB->writeDown( cb ) ;
-      }
-      if ( numUpdatedRecords > 0 || SDB_OK == rc )
-      {
-         PD_AUDIT_OP( AUDIT_DML, MSG_BS_UPDATE_REQ, AUDIT_OBJ_CL,
-                      pCollectionName, rc,
-                      "UpdatedNum:%u, Match:%s, Modifier:%s, Hint:%s, Flag:%u",
-                      numUpdatedRecords, selector.toString().c_str(),
-                      updator.toString().c_str(),
-                      hint.toString().c_str(), flags ) ;
       }
       if ( cb )
       {

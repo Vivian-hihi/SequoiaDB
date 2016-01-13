@@ -33,6 +33,7 @@
 #include "rtnCoordSql.hpp"
 #include "pmd.hpp"
 #include "pmdCB.hpp"
+#include "rtnCommandDef.hpp"
 #include "msgMessage.hpp"
 
 namespace engine
@@ -56,6 +57,10 @@ namespace engine
          rc = SDB_SYS ;
          goto error ;
       }
+
+      // add last op info
+      MON_SAVE_OP_DETAIL( cb->getMonAppCB(), pMsg->opCode,
+                          "%s", sql ) ;
 
       rc = sqlcb->exec( sql, cb, contextID ) ;
 

@@ -187,24 +187,39 @@ namespace engine
 
       try
       {
+         INT64   updatedNum = 0 ;
+         INT32   insertNum = 0 ;
          BSONObj selector( pSelectorBuffer );
          BSONObj updator( pUpdatorBuffer );
          BSONObj hint( pHintBuffer );
          // add last op info
          MON_SAVE_OP_DETAIL( eduCB()->getMonAppCB(), msg->opCode,
-                             "CL:%s, Match:%s, Updator:%s, Hint:%s",
+                             "Collection:%s, Matcher:%s, Updator:%s, Hint:%s, "
+                             "Flag:0x%08x(%u)",
                              pCollectionName,
                              selector.toString().c_str(),
                              updator.toString().c_str(),
-                             hint.toString().c_str() ) ;
+                             hint.toString().c_str(),
+                             flags, flags ) ;
 
-         PD_LOG ( PDDEBUG, "Session[%s] Update: selctor: %s\nupdator: %s\n"
-                  "hint: %s", getSession()->sessionName(), 
+         PD_LOG ( PDDEBUG, "Session[%s] Update:\nMatcher: %s\nUpdator: %s\n"
+                  "hint: %s\nFlag: 0x%08x(%u)", getSession()->sessionName(), 
                   selector.toString().c_str(),
-                  updator.toString().c_str(), hint.toString().c_str() ) ;
+                  updator.toString().c_str(), hint.toString().c_str(),
+                  flags, flags ) ;
 
          rc = rtnUpdate( pCollectionName, selector, updator, hint,
-                         flags, eduCB(), _pDMSCB, dpsCB ) ;
+                         flags, eduCB(), _pDMSCB, dpsCB, 1, &updatedNum,
+                         &insertNum ) ;
+         /// AUDIT
+         PD_AUDIT_OP( AUDIT_DML, MSG_BS_UPDATE_REQ, AUDIT_OBJ_CL,
+                      pCollectionName, rc,
+                      "UpdatedNum:%llu, InsertedNum:%u, Matcher:%s, "
+                      "Updator:%s, Hint:%s, Flag:0x%08x(%u)",
+                      updatedNum, insertNum,
+                      selector.toString().c_str(),
+                      updator.toString().c_str(),
+                      hint.toString().c_str(), flags, flags ) ;
       }
       catch ( std::exception &e )
       {
@@ -235,19 +250,31 @@ namespace engine
 
       try
       {
+         INT32   insertedNum = 0 ;
+         INT32   ignoredNum = 0 ;
          BSONObj insertor( pInsertor ) ;
          // add list op info
          MON_SAVE_OP_DETAIL( eduCB()->getMonAppCB(), msg->opCode,
-                             "CL:%s, Insertors:%s, count: %d",
+                             "Collection:%s, Insertors:%s, ObjNum:%d, "
+                             "Flag:0x%08x(%u)",
                              pCollectionName,
                              insertor.toString().c_str(),
-                             count ) ;
+                             count, flag, flag ) ;
 
-         PD_LOG ( PDDEBUG, "Session[%s] insert objs: %s\ncount: %d\n"
-                  "collection: %s", getSession()->sessionName(), 
-                  insertor.toString().c_str(), count, pCollectionName ) ;
+         PD_LOG ( PDDEBUG, "Session[%s] insert objs: %s\nObjCount: %d\n"
+                  "Collection: %s\nFlag:0x%08x(%u)",
+                  getSession()->sessionName(), insertor.toString().c_str(),
+                  count, pCollectionName, flag, flag ) ;
 
-         rc = rtnInsert( pCollectionName, insertor, count, flag, eduCB() ) ;
+         rc = rtnInsert( pCollectionName, insertor, count, flag, eduCB(),
+                         &insertedNum, &ignoredNum ) ;
+         /// AUDIT
+         PD_AUDIT_OP( AUDIT_DML, MSG_BS_INSERT_REQ, AUDIT_OBJ_CL,
+                      pCollectionName, rc, "InsertedNum:%u, IgnoredNum:%u, "
+                      "ObjNum:%u, Insertor:%s, Flag:0x%08x(%u)", insertedNum,
+                      ignoredNum, count, insertor.toString().c_str(), flag,
+                      flag ) ;
+
          PD_RC_CHECK( rc, PDERROR, "Session[%s] insert objs[%s, count:%d, "
                       "collection: %s] failed, rc: %d", 
                       getSession()->sessionName(), insertor.toString().c_str(), 
@@ -300,21 +327,41 @@ namespace engine
             BSONObj hint ( pHintBuffer ) ;
             // add last op info
             MON_SAVE_OP_DETAIL( eduCB()->getMonAppCB(), msg->opCode,
-                               "CL:%s, Match:%s, Selector:%s, OrderBy:%s, "
-                               "Hint:%s", pCollectionName,
-                               matcher.toString().c_str(),
-                               selector.toString().c_str(),
-                               orderBy.toString().c_str(),
-                               hint.toString().c_str() ) ;
+                                "Collection:%s, Matcher:%s, Selector:%s, "
+                                "OrderBy:%s, Hint:%s, Skip:%llu, Limit:%lld, "
+                                "Flag:0x%08x(%u)",
+                                pCollectionName,
+                                matcher.toString().c_str(),
+                                selector.toString().c_str(),
+                                orderBy.toString().c_str(),
+                                hint.toString().c_str(),
+                                numToSkip, numToReturn,
+                                flags, flags ) ;
 
-            PD_LOG ( PDDEBUG, "Session[%s] Query: matcher: %s\nselector: "
-                     "%s\norderBy: %s\nhint:%s", getSession()->sessionName(),
+            PD_LOG ( PDDEBUG, "Session[%s] Query: Matcher: %s\nSelector: "
+                     "%s\nOrderBy: %s\nHint:%s\nSkip: %llu\nLimit: %lld\n"
+                     "Flag: 0x%08x(%u)", getSession()->sessionName(),
                      matcher.toString().c_str(), selector.toString().c_str(),
-                     orderBy.toString().c_str(), hint.toString().c_str() ) ;
+                     orderBy.toString().c_str(), hint.toString().c_str(),
+                     numToSkip, numToReturn, flags ,flags ) ;
 
             rc = rtnQuery( pCollectionName, selector, matcher, orderBy,
                            hint, flags, eduCB(), numToSkip, numToReturn,
                            _pDMSCB, _pRTNCB, contextID, &pContext, TRUE ) ;
+            /// AUDIT
+            PD_AUDIT_OP( ( flags & FLG_QUERY_MODIFY ? AUDIT_DML : AUDIT_DQL ),
+                         MSG_BS_QUERY_REQ, AUDIT_OBJ_CL,
+                         pCollectionName, rc,
+                         "ContextID:%lld, Matcher:%s, Selector:%s, OrderBy:%s, "
+                         "Hint:%s, Skip:%llu, Limit:%lld, Flag:0x%08x(%u)",
+                         contextID,
+                         matcher.toString().c_str(),
+                         selector.toString().c_str(),
+                         orderBy.toString().c_str(),
+                         hint.toString().c_str(),
+                         numToSkip, numToReturn,
+                         flags, flags ) ;
+            /// Jduge error
             if ( rc )
             {
                goto error ;
@@ -376,10 +423,17 @@ namespace engine
          }
 
          MON_SAVE_CMD_DETAIL( eduCB()->getMonAppCB(), pCommand->type(),
-                              "Command:%s, Collection:%s",
+                              "Command:%s, Collection:%s, Match:%s, "
+                              "Selector:%s, OrderBy:%s, Hint:%s, Skip:%llu, "
+                              "Limit:%lld, Flag:0x%08x(%u)",
                               pCollectionName,
                               pCommand->collectionFullName() ?
-                              pCommand->collectionFullName() : "" ) ;
+                              pCommand->collectionFullName() : "",
+                              BSONObj(pQueryBuff).toString().c_str(),
+                              BSONObj(pFieldSelector).toString().c_str(),
+                              BSONObj(pOrderByBuffer).toString().c_str(),
+                              BSONObj(pHintBuffer).toString().c_str(),
+                              numToSkip, numToReturn, flags, flags ) ;
 
          PD_LOG ( PDDEBUG, "Command: %s", pCommand->name () ) ;
 
@@ -418,21 +472,30 @@ namespace engine
 
       try
       {
+         INT64 deletedNum = 0 ;
          BSONObj deletor ( pDeletorBuffer ) ;
          BSONObj hint ( pHintBuffer ) ;
          // add last op info
          MON_SAVE_OP_DETAIL( eduCB()->getMonAppCB(), msg->opCode,
-                            "CL:%s, Deletor:%s, Hint:%s",
-                            pCollectionName,
-                            deletor.toString().c_str(),
-                            hint.toString().c_str() ) ;
+                             "Collection:%s, Deletor:%s, Hint:%s, "
+                             "Flag:0x%08x(%u)",
+                             pCollectionName,
+                             deletor.toString().c_str(),
+                             hint.toString().c_str(),
+                             flags, flags ) ;
 
-         PD_LOG ( PDDEBUG, "Session[%s] Delete: deletor: %s\nhint: %s",
+         PD_LOG ( PDDEBUG, "Session[%s] Delete: Deletor: %s\nhint: %s\n"
+                  "Flag: 0x%08x(%u)",
                   getSession()->sessionName(), deletor.toString().c_str(), 
-                  hint.toString().c_str() ) ;
-
+                  hint.toString().c_str(), flags, flags ) ;
          rc = rtnDelete( pCollectionName, deletor, hint, flags, eduCB(), 
-                         _pDMSCB, dpsCB ) ;
+                         _pDMSCB, dpsCB, 1, &deletedNum ) ;
+         /// AUDIT
+         PD_AUDIT_OP( AUDIT_DML, MSG_BS_DELETE_REQ, AUDIT_OBJ_CL,
+                      pCollectionName, rc,
+                      "DeletedNum:%u, Deletor:%s, Hint:%s, Flag:0x%08x(%u)",
+                      deletedNum, deletor.toString().c_str(),
+                      hint.toString().c_str(), flags, flags ) ;
       }
       catch ( std::exception &e )
       {
@@ -464,8 +527,8 @@ namespace engine
                           "ContextID:%lld, NumToRead:%d",
                           contextID, numToRead ) ;
 
-      PD_LOG ( PDDEBUG, "GetMore: contextID:%lld\nnumToRead: %d", contextID,
-               numToRead ) ;
+      PD_LOG ( PDDEBUG, "Session[%s] GetMore: contextID:%lld\nnumToRead: %d",
+               getSession()->sessionName(), contextID, numToRead ) ;
 
       rc = rtnGetMore ( contextID, numToRead, buffObj, eduCB(), _pRTNCB ) ;
 
@@ -487,6 +550,11 @@ namespace engine
       rc = msgExtractKillContexts ( (CHAR*)msg, &contextNum, &pContextIDs ) ;
       PD_RC_CHECK( rc, PDERROR, "Session[%s] extract kill contexts msg failed, "
                    "rc: %d", getSession()->sessionName(), rc ) ;
+
+      // add last op info
+      MON_SAVE_OP_DETAIL( eduCB()->getMonAppCB(), msg->opCode,
+                          "ContextNum:%d, ContextID:%lld",
+                          contextNum, pContextIDs[0] ) ;
 
       if ( contextNum > 0 )
       {
@@ -511,6 +579,10 @@ namespace engine
       rc = msgExtractSql( (CHAR*)msg, &sql ) ;
       PD_RC_CHECK( rc, PDERROR, "Session[%s] extract sql msg failed, rc: %d",
                    getSession()->sessionName(), rc ) ;
+
+      // add last op info
+      MON_SAVE_OP_DETAIL( eduCB()->getMonAppCB(), msg->opCode,
+                          "%s", sql ) ;
 
       rc = sqlcb->exec( sql, eduCB(), contextID ) ;
 
@@ -553,6 +625,12 @@ namespace engine
       }
       else
       {
+         // add last op info
+         MON_SAVE_OP_DETAIL( eduCB()->getMonAppCB(), MSG_BS_TRANS_COMMIT_REQ,
+                             "TransactionID: 0x%016x(%llu)",
+                             eduCB()->getTransID(),
+                             eduCB()->getTransID() ) ;
+
          rc = rtnTransCommit( eduCB(), dpsCB ) ;
       }
 
@@ -574,6 +652,12 @@ namespace engine
       }
       else
       {
+         // add last op info
+         MON_SAVE_OP_DETAIL( eduCB()->getMonAppCB(), MSG_BS_TRANS_ROLLBACK_REQ,
+                             "TransactionID: 0x%016x(%llu)",
+                             eduCB()->getTransID(),
+                             eduCB()->getTransID() ) ;
+
          rc = rtnTransRollback( eduCB(), dpsCB ) ;
       }
 
@@ -599,8 +683,38 @@ namespace engine
       try
       {
          BSONObj objs( pObjs ) ;
+
+         /// Prepare last info
+         CHAR szTmp[ MON_APP_LASTOP_DESC_LEN + 1 ] = { 0 } ;
+         UINT32 len = 0 ;
+         const CHAR *pObjData = pObjs ;
+         for ( INT32 i = 0 ; i < count ; ++i )
+         {
+            BSONObj tmpObj( pObjData ) ;
+            len += ossSnprintf( szTmp, MON_APP_LASTOP_DESC_LEN - len,
+                                "%s", tmpObj.toString().c_str() ) ;
+            pObjData += ossAlignX( (UINT32)tmpObj.objsize(), 4 ) ;
+            if ( len >= MON_APP_LASTOP_DESC_LEN )
+            {
+               break ;
+            }
+         }
+
+         // add last op info
+         MON_SAVE_OP_DETAIL( eduCB()->getMonAppCB(), msg->opCode,
+                             "Collection:%s, ObjNum:%u, Objs:%s, "
+                             "Flag:0x%08x(%u)",
+                             pCollectionName, count, szTmp,
+                             flags, flags ) ;
+
          rc = rtnAggregate( pCollectionName, objs, count, flags, eduCB(),
                             _pDMSCB, contextID ) ;
+
+         /// AUDIT
+         PD_AUDIT_OP( AUDIT_DQL, msg->opCode, AUDIT_OBJ_CL,
+                      pCollectionName, rc,
+                      "ContextID:%lld, ObjNum:%u, Objs:%s, Flag:0x%08x(%u)",
+                      contextID, count, szTmp, flags, flags ) ;
       }
       catch( std::exception &e )
       {
@@ -631,15 +745,29 @@ namespace engine
          goto error ;
       }
 
-      rc = rtnOpenLob( lob, header->flags, TRUE, eduCB(),
-                       dpsCB, header->w, contextID, meta ) ;
-      if ( SDB_OK != rc )
+      try
       {
-         PD_LOG( PDERROR, "failed to open lob:%d", rc ) ;
+         // add last op info
+         MON_SAVE_OP_DETAIL( eduCB()->getMonAppCB(), msg->opCode,
+                             "Option:%s", lob.toString().c_str() ) ;
+
+         rc = rtnOpenLob( lob, header->flags, TRUE, eduCB(),
+                          dpsCB, header->w, contextID, meta ) ;
+         /// Jduge
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to open lob:%d", rc ) ;
+            goto error ;
+         }
+         buffObj = rtnContextBuf( meta.objdata(), meta.objsize(), 1 ) ;
+      }
+      catch( std::exception &e )
+      {
+         PD_LOG( PDERROR, "Occur exception: %s", e.what() ) ;
+         rc = SDB_INVALIDARG ;
          goto error ;
       }
 
-      buffObj = rtnContextBuf( meta.objdata(), meta.objsize(), 1 ) ;
    done:
       return rc ;
    error:
@@ -661,6 +789,11 @@ namespace engine
          PD_LOG( PDERROR, "failed to extract write msg:%d", rc ) ;
          goto error ;
       }
+
+      // add last op info
+      MON_SAVE_OP_DETAIL( eduCB()->getMonAppCB(), msg->opCode,
+                          "ContextID:%lld, Len:%u, Offset:%llu",
+                          header->contextID, len, offset ) ;
 
       rc = rtnWriteLob( header->contextID, eduCB(), len, data ) ;
       if ( SDB_OK != rc )
@@ -692,6 +825,11 @@ namespace engine
          goto error ;
       }
 
+      // add last op info
+      MON_SAVE_OP_DETAIL( eduCB()->getMonAppCB(), msg->opCode,
+                          "ContextID:%lld, Len:%u, Offset:%llu",
+                          header->contextID, readLen, offset ) ;
+
       rc = rtnReadLob( header->contextID, eduCB(),
                        readLen, offset, &data, length ) ;
       if ( SDB_OK != rc )
@@ -717,6 +855,10 @@ namespace engine
          PD_LOG( PDERROR, "failed to extract close msg:%d", rc ) ;
          goto error ;
       }
+
+      // add last op info
+      MON_SAVE_OP_DETAIL( eduCB()->getMonAppCB(), msg->opCode,
+                          "ContextID:%lld", header->contextID ) ;
 
       rc = rtnCloseLob( header->contextID, eduCB() ) ;
       if ( SDB_OK != rc )
@@ -744,12 +886,26 @@ namespace engine
          goto error ;
       }
 
-      rc = rtnRemoveLob( meta, header->flags, header->w, eduCB(), dpsCB ) ;
-      if ( SDB_OK != rc )
+      try
       {
-         PD_LOG( PDERROR, "failed to remove lob:%d", rc ) ;
+         // add last op info
+         MON_SAVE_OP_DETAIL( eduCB()->getMonAppCB(), msg->opCode,
+                             "Option:%s", meta.toString().c_str() ) ;
+
+         rc = rtnRemoveLob( meta, header->flags, header->w, eduCB(), dpsCB ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to remove lob:%d", rc ) ;
+            goto error ;
+         }
+      }
+      catch( std::exception &e )
+      {
+         PD_LOG( PDERROR, "Occur exception: %s", e.what() ) ;
+         rc = SDB_INVALIDARG ;
          goto error ;
       }
+
    done:
       return rc ;
    error:

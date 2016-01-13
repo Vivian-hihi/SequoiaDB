@@ -74,10 +74,12 @@ namespace engine
    {                                                                 \
       if ( NULL != _pMonAppCB_ )                                     \
       {                                                              \
-         _pMonAppCB_->setLastOpType( opType ) ;                      \
-         _pMonAppCB_->setLastCmdType( CMD_UNKNOW ) ;                 \
-         _pMonAppCB_->saveLastOpDetail( format,                      \
-                                       ##__VA_ARGS__ ) ;             \
+         try {                                                       \
+            _pMonAppCB_->setLastOpType( opType ) ;                   \
+            _pMonAppCB_->setLastCmdType( CMD_UNKNOW ) ;              \
+            _pMonAppCB_->saveLastOpDetail( format,                   \
+                                           ##__VA_ARGS__ ) ;         \
+         } catch( ... ) {}                                           \
       }                                                              \
    }
 
@@ -85,10 +87,12 @@ namespace engine
    {                                                                 \
       if ( NULL != _pMonAppCB_ )                                     \
       {                                                              \
-         _pMonAppCB_->setLastOpType( MSG_BS_QUERY_REQ ) ;            \
-         _pMonAppCB_->setLastCmdType( cmdType ) ;                    \
-         _pMonAppCB_->saveLastOpDetail( format,                      \
-                                       ##__VA_ARGS__ ) ;             \
+         try {                                                       \
+            _pMonAppCB_->setLastOpType( MSG_BS_QUERY_REQ ) ;         \
+            _pMonAppCB_->setLastCmdType( cmdType ) ;                 \
+            _pMonAppCB_->saveLastOpDetail( format,                   \
+                                           ##__VA_ARGS__ ) ;         \
+         } catch(...) {}                                             \
       }                                                              \
    }
 
@@ -308,6 +312,7 @@ namespace engine
    } ;
    typedef class _monDBCB  monDBCB ;
 
+   #define MON_APP_LASTOP_DESC_LEN                 ( 1024 )
    class _monAppCB : public SDBObject
    {
    public :
@@ -334,7 +339,7 @@ namespace engine
       ossTick _lastOpEndTime ;
       ossTickDelta _readTimeSpent ;
       ossTickDelta _writeTimeSpent ;
-      CHAR _lastOpDetail[ 256 ] ;
+      CHAR _lastOpDetail[ MON_APP_LASTOP_DESC_LEN + 1 ] ;
 
       void monOperationTimeInc( MON_OPERATION_TYPES op, ossTickDelta &delta )
       {

@@ -115,6 +115,12 @@ namespace engine
       if ( SDB_LOB_MODE_R == mode )
       {
          rc = _open4Read( cb ) ;
+         /// AUDIT
+         PD_AUDIT_OP_WITHNAME( AUDIT_DQL, "LOB READ", AUDIT_OBJ_CL,
+                               getFullName(), rc,
+                               "OID:%s, Length:%llu, CreateTime:%llu",
+                               getOID().toString().c_str(),
+                               _meta._lobLen, _meta._createTime ) ;
       }
       else if ( SDB_LOB_MODE_CREATEONLY == mode )
       {
@@ -219,6 +225,12 @@ namespace engine
          _meta._status = DMS_LOB_COMPLETE ;
 
          rc = _completeLob( _meta, cb ) ;
+         /// AUDIT
+         PD_AUDIT_OP_WITHNAME( AUDIT_DML, "LOB CREATE", AUDIT_OBJ_CL,
+                               getFullName(), rc, "OID:%s, Length:%llu",
+                               getOID().toString().c_str(),
+                               _meta._lobLen ) ;
+         /// Jduge Errors
          if ( SDB_OK != rc )
          {
             PD_LOG( PDERROR, "failed to complete lob:%d", rc ) ;
@@ -234,6 +246,12 @@ namespace engine
          RTN_LOB_TUPLES tuples ;
          tuples.push_back( tuple ) ;
          rc = _removev( tuples, cb ) ;
+         /// AUDIT
+         PD_AUDIT_OP_WITHNAME( AUDIT_DML, "LOB REMOVE", AUDIT_OBJ_CL,
+                               getFullName(), rc, "OID:%s, Meta:%s",
+                               getOID().toString().c_str(),
+                               _metaObj.toString().c_str() ) ;
+         /// Jduge Errors
          if ( SDB_OK != rc )
          {
             PD_LOG( PDERROR, "failed to remove meta data of lob:%d", rc ) ;

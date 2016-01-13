@@ -125,7 +125,8 @@ namespace engine
          INT32 _onOPMsg ( NET_HANDLE handle, MsgHeader *msg ) ;
          INT32 _onUpdateReqMsg ( NET_HANDLE handle, MsgHeader *msg,
                                  INT64 &updateNum ) ;
-         INT32 _onInsertReqMsg ( NET_HANDLE handle, MsgHeader *msg ) ;
+         INT32 _onInsertReqMsg ( NET_HANDLE handle, MsgHeader *msg,
+                                 INT32 &insertedNum, INT32 &ignoredNum ) ;
          INT32 _onDeleteReqMsg ( NET_HANDLE handle, MsgHeader *msg,
                                  INT64 &delNum ) ;
          INT32 _onQueryReqMsg ( NET_HANDLE handle, MsgHeader *msg, 
@@ -142,7 +143,9 @@ namespace engine
          INT32 _onTransCommitPreMsg( MsgHeader *msg );
          INT32 _onTransUpdateReqMsg ( NET_HANDLE handle, MsgHeader *msg,
                                       INT64 &updateNum ) ;
-         INT32 _onTransInsertReqMsg ( NET_HANDLE handle, MsgHeader *msg ) ;
+         INT32 _onTransInsertReqMsg ( NET_HANDLE handle, MsgHeader *msg,
+                                      INT32 &insertedNum,
+                                      INT32 &ignoredNum ) ;
          INT32 _onTransDeleteReqMsg ( NET_HANDLE handle, MsgHeader *msg,
                                       INT64 &delNum ) ;
          INT32 _onSessionInitReqMsg ( MsgHeader *msg ) ;
@@ -171,7 +174,9 @@ namespace engine
                                     const BSONObj &orderBy,
                                     BOOLEAN &result );
          INT32 _insertToMainCL( BSONObj &objs, INT32 objNum, INT32 flags,
-                                INT16 w = 1 );
+                                INT16 w, INT32 &insertedNum,
+                                INT32 &ignoredNum ) ;
+
          INT32 _queryToMainCL( const CHAR *pCollectionName,
                                const BSONObj &selector,
                                const BSONObj &matcher,
