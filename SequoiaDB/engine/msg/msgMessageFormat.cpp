@@ -238,7 +238,7 @@ void msgExpandComSessionInit2String( stringstream &ss,
    MsgComSessionInitReq *pReq = ( MsgComSessionInitReq* )pMsg ;
 
    if ( pMsg->messageLength != offsetof( MsgComSessionInitReq, srcRouteID ) &&
-        pMsg->messageLength <= sizeof( MsgComSessionInitReq ) )
+        pMsg->messageLength <= (INT32)sizeof( MsgComSessionInitReq ) )
    {
       ss << "Error: Size not match" ;
    }
@@ -246,7 +246,7 @@ void msgExpandComSessionInit2String( stringstream &ss,
    {
       ss << "DestRouteID: " << routeID2String( pReq->dstRouteID ) << ", " ;
 
-      if ( pMsg->messageLength > sizeof( MsgComSessionInitReq ) )
+      if ( pMsg->messageLength > (INT32)sizeof( MsgComSessionInitReq ) )
       {
          CHAR szTmp[ 40 ] = { 0 } ;
          ossIP2Str( pReq->localIP, szTmp, sizeof( szTmp ) - 1 ) ;

@@ -276,7 +276,7 @@ namespace engine
    error:
       if ( pBlock )
       {
-         for ( INT32 i = 0 ; i < pBlock->size() ; ++i )
+         for ( INT32 i = 0 ; i < (INT32)pBlock->size() ; ++i )
          {
             cb->releaseBuff( (*pBlock)[ i ] ) ;
          }
@@ -298,7 +298,7 @@ namespace engine
       vector<CHAR*> *pBlock = ( vector<CHAR*>* )itPtr ;
       if ( NULL != pBlock )
       {
-         for ( INT32 i = 0 ; i < pBlock->size() ; ++i )
+         for ( INT32 i = 0 ; i < (INT32)pBlock->size() ; ++i )
          {
             cb->releaseBuff( (*pBlock)[ i ] ) ;
          }

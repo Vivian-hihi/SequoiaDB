@@ -39,9 +39,9 @@
 #include "core.h"
 
 
-#define MAKE_REPLY_TYPE(type)       ((UINT32)type | 0x80000000)
-#define IS_REPLY_TYPE(type)         ((UINT32)type >> 31 )
-#define GET_REQUEST_TYPE(type)      ((UINT32)type & 0x7FFFFFFF)
+#define MAKE_REPLY_TYPE(type)       ((INT32)type | 0x80000000)
+#define IS_REPLY_TYPE(type)         ((INT32)type >> 31 )
+#define GET_REQUEST_TYPE(type)      ((INT32)type & 0x7FFFFFFF)
 
 enum MSG_TYPE
 {

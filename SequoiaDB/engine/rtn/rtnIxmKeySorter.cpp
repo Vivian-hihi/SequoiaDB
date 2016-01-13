@@ -100,7 +100,8 @@ namespace engine
       SDB_ASSERT( _inited, "must be inited before pushing" ) ;
       SDB_ASSERT( !_sorted, "already sorted, can't push" ) ;
 
-      if ( keyDataSize + sizeof(dmsRecordID) + sizeof(ixmKey*) > ( _tailOffset - _headOffset ) )
+      if ( (INT64)( keyDataSize + sizeof(dmsRecordID) + sizeof(ixmKey*) ) >
+           _tailOffset - _headOffset )
       {
          rc = SDB_DMS_EOC ;
          goto error ;

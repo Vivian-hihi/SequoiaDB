@@ -567,7 +567,8 @@ namespace engine
       }
 
       // get cfg file
-      len = ( ossStrlen(cfgFile) + 1 <= bufSize ) ? ossStrlen(cfgFile) + 1 : bufSize ;
+      len = ( ossStrlen(cfgFile) + 1 <= (UINT32)bufSize ) ?
+            ossStrlen(cfgFile) + 1 : bufSize ;
       ossStrncpy( pBuffer, cfgFile, len - 1 ) ;
       pBuffer[len] = '\0' ;      
 
