@@ -1249,5 +1249,109 @@ void sdbPrintBson( sdbbson *bson, int log_level, const char *label )
    free( p ) ;
 }
 
+void SdbInitRecordCache()
+{
+   INT32 i = 0 ;
+   SdbRecordCache *cache = SdbGetRecordCache() ;
+   cache->size      = SDB_MAX_RECORD_SIZE ;
+   cache->usedCount = 0 ;
+   for (; i < cache->size; i++ )
+   {
+      cache->recordArray[i].record = malloc( sizeof( sdbbson ) ) ;
+      sdbbson_init( cache->recordArray[i].record ) ;
+      cache->recordArray[i].isUsed = FALSE ;
+   }
+}
+
+void SdbFiniRecordCache()
+{
+   INT32 i = 0 ;
+   SdbRecordCache *cache = SdbGetRecordCache() ;
+   
+   for (; i < cache->size; i++ )
+   {
+      sdbbson_destroy( cache->recordArray[i].record ) ;
+      free( cache->recordArray[i].record ) ;
+      cache->recordArray[i].record = NULL ;
+   }
+   
+   cache->usedCount = 0 ;
+   cache->size      = 0 ;
+}
+
+SdbRecordCache *SdbGetRecordCache()
+{
+   static SdbRecordCache cache ;
+   return &cache ;
+}
+
+sdbbson *SdbAllocRecord( SdbRecordCache *recordCache, UINT64 *recordID )
+{
+   INT32 i = 0 ;
+   sdbbson *pRecord ;
+
+   for ( ; i < recordCache->size ; i++ )
+   {
+      if ( !recordCache->recordArray[i].isUsed )
+      {
+         pRecord = recordCache->recordArray[i].record ;
+         recordCache->recordArray[i].isUsed = TRUE ;
+         *recordID = i ;
+
+         recordCache->usedCount++ ;
+         elog( DEBUG1, "SdbAllocRecord:usedCount=%d,index=%d", 
+               recordCache->usedCount, i ) ;
+         return pRecord ;
+      }
+   }
+
+   elog( ERROR, "SdbAllocRecord failed:usedCount=%d,index=%d", 
+         recordCache->usedCount, i) ;
+   return NULL ;
+}
+
+sdbbson *SdbGetRecord( SdbRecordCache *recordCache, UINT64 recordID )
+{
+   INT32 index = ( INT32 ) recordID ;
+   elog( DEBUG1, "SdbGetRecord:usedCount=%d,index=%d", 
+         recordCache->usedCount, index ) ;
+
+   if ( index >= recordCache->size )
+   {
+      elog( ERROR, "recordID is not correct:recordID=%d", index ) ;
+      return NULL ;
+   }
+
+   if ( !recordCache->recordArray[index].isUsed )
+   {
+      elog( DEBUG1, "get released record!!!:index=%d", index ) ;
+      recordCache->recordArray[index].isUsed = TRUE ;
+      recordCache->usedCount++ ;
+   }
+
+   return recordCache->recordArray[index].record ;
+}
+
+void SdbReleaseRecord( SdbRecordCache *recordCache, UINT64 recordID )
+{
+   INT32 index = ( INT32 ) recordID ;
+   elog( DEBUG1, "SdbReleaseRecord:usedCount=%d,index=%d", 
+         recordCache->usedCount, index ) ;
+
+   if ( index >= recordCache->size || index < 0 )
+   {
+      elog( ERROR, "recordID is not correct:recordID=%d", index ) ;
+      return ;
+   }
+
+   if ( !recordCache->recordArray[index].isUsed )
+   {
+      elog( ERROR, "release twice:index=%d", index ) ;
+      return ;
+   }
+
+   recordCache->recordArray[index].isUsed = FALSE ;
+   recordCache->usedCount-- ;
+}
 
 

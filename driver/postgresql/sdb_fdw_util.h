@@ -81,6 +81,32 @@ void sdbPrintBson( sdbbson *bson, int log_level, const char *label ) ;
 
 void debugClauseInfo( PlannerInfo *root, RelOptInfo *baserel, Oid tableID ) ;
 
+
+/* record cache */
+typedef struct
+{
+   sdbbson *record ;
+   BOOLEAN isUsed ;
+} SdbRecordItem ;
+
+
+#define SDB_MAX_RECORD_SIZE 10
+typedef struct
+{
+   INT32 size ;
+   INT32 usedCount ;
+   SdbRecordItem recordArray[ SDB_MAX_RECORD_SIZE ] ;
+} SdbRecordCache ;
+
+void SdbInitRecordCache() ;
+void SdbFiniRecordCache() ;
+
+SdbRecordCache *SdbGetRecordCache() ;
+sdbbson *SdbAllocRecord( SdbRecordCache *recordCache, UINT64 *recordID ) ;
+sdbbson *SdbGetRecord( SdbRecordCache *recordCache, UINT64 recordID ) ;
+void SdbReleaseRecord( SdbRecordCache *recordCache, UINT64 recordID ) ;
+
+
 #ifdef SDB_USE_OWN_POSTGRES
 void sdbuseownpostgres() ;
 #endif /* SDB_USE_OWN_POSTGRES */

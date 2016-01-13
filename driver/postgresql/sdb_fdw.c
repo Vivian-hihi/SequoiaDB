@@ -107,13 +107,12 @@ void _PG_init (  ) ;
 /* transaction management */
 static void SdbFdwXactCallback( XactEvent event, void *arg ) ;
 
+/* sequoiadb's statistic info */
 static void SdbDestroyCLStatistics( SdbCLStatistics *clStat, bool freeObj );
 static INT32 SdbInitCLStatistics( SdbCLStatistics *clStat );
 static void SdbFiniCLStatisticsCache( SdbStatisticsCache *cache );
 static SdbStatisticsCache *SdbGetStatisticsCache();
 static const SdbCLStatistics * SdbGetCLStatFromCache( Oid foreignTableId ) ;
-//static char *sdbFillZeroHeader( char *tmpValue, int precision, 
-//                                int scale ) ;
 
 
 #if PG_VERSION_NUM>90300
@@ -349,6 +348,8 @@ void initSdbExecState( SdbExecState *sdbExecState )
    sdbExecState->hCursor           = SDB_INVALID_HANDLE ;
    sdbExecState->hConnection       = SDB_INVALID_HANDLE ;
    sdbExecState->hCollection       = SDB_INVALID_HANDLE ;
+
+   sdbExecState->bson_record_addr  = -1 ;
 
    sdbbson_init( &sdbExecState->queryDocument ) ;
    sdbbson_finish( &sdbExecState->queryDocument ) ;
@@ -751,17 +752,17 @@ int sdbSetBsonValue( sdbbson *bsonObj, const char *name, Datum valueDatum,
 
 UINT64 sdbCreateBsonRecordAddr(  )
 {
-   sdbbson *p = malloc( sizeof( sdbbson ) ) ;
-   sdbbson_init( p ) ;
-
-   return ( UINT64 )p ;
+   UINT64 id = 0 ;
+   SdbRecordCache *cache = SdbGetRecordCache() ;
+   SdbAllocRecord( cache, &id ) ; 
+   
+   return id ;
 }
 
 sdbbson *sdbGetRecordPointer( UINT64 record_addr )
 {
-   sdbbson *p = ( sdbbson * )record_addr ;
-
-   return p ;
+   SdbRecordCache *cache = SdbGetRecordCache() ;
+   return SdbGetRecord( cache, record_addr ) ;
 }
 
 void sdbGetColumnKeyInfo( SdbExecState *fdw_state )
@@ -2414,7 +2415,6 @@ static Datum sdbColumnValue( sdbbson_iterator *sdbbsonIterator, Oid columnTypeId
  */
 void sdbFreeScanState( SdbExecState *executionState, bool deleteShared )
 {
-   sdbbson *original = NULL ;
    if( !executionState )
       goto done ;
 
@@ -2424,12 +2424,11 @@ void sdbFreeScanState( SdbExecState *executionState, bool deleteShared )
    executionState->hCollection = SDB_INVALID_HANDLE ;
    if ( deleteShared )
    {
-      if ( 0 != executionState->bson_record_addr )
+      if ( -1 != executionState->bson_record_addr )
       {
-         original = sdbGetRecordPointer( executionState->bson_record_addr ) ;
-         sdbbson_destroy( original ) ;
-         free( original ) ;
-         executionState->bson_record_addr = 0 ;
+         SdbReleaseRecord( SdbGetRecordCache(), 
+                           executionState->bson_record_addr ) ;
+         executionState->bson_record_addr = -1 ;
       }
    }
    /* do not free connection since it's in pool */
@@ -4079,6 +4078,9 @@ void _PG_init (  )
 {
    sdbInitConnectionPool (  ) ;
    SdbInitCLStatisticsCache( SdbGetStatisticsCache() ) ;
+   /* we may lose the the pointer of record if it is temporary, so we must
+      keep it in global */
+   SdbInitRecordCache() ;
    RegisterXactCallback( SdbFdwXactCallback, NULL ) ;
 }
 
@@ -4086,4 +4088,5 @@ void _PG_fini (  )
 {
    SdbFiniCLStatisticsCache( SdbGetStatisticsCache() ) ;
    sdbUninitConnectionPool (  ) ;
+   SdbFiniRecordCache() ;
 }
