@@ -38,6 +38,7 @@
 #include "../util/text.h"
 #include "pd.hpp"
 #include <sstream>
+#include <iostream>
 
 namespace import
 {
