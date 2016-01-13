@@ -123,18 +123,21 @@ namespace engine
             break ;
          }
          timeout -= onceTime ;
+#ifdef _WINDOWS
+         // The asyncRead thread may cause the process hangs in Windows system,
+         // we terminate the thread if the start thread is finished
          if ( _stop )
          {
-#ifdef _WINDOWS
+
             TerminateThread( _pThread->native_handle(), 0 ) ;
-#else
-            pthread_kill( _pThread->native_handle(), 9 ) ;
-#endif //_WINDOWS
             _hasRead = TRUE ;
             _event.signal() ;
+            continue ;
          }
-         else if ( timeout <= 0 )
+#endif //_WINDOWS         
+         if ( timeout <= 0 )
          {
+            PD_LOG( PDWARNING, "Monitor timeout" ) ;
             break ;
          }
       }
