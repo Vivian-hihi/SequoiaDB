@@ -324,8 +324,6 @@ namespace engine
       _logicalCSID      = 0 ;
       _CSID             = DMS_INVALID_SUID ;
       _mmeSegID         = 0 ;
-      ossMemset( _compressorEntry, 0,
-                 sizeof( _utilCompressor * ) * DMS_MME_SLOTS ) ;
       PD_TRACE_EXIT ( SDB__DMSSTORAGEDATA ) ;
    }
 
