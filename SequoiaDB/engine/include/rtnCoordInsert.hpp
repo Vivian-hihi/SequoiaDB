@@ -52,6 +52,11 @@ namespace engine
    {
       UINT64         _insertMixNum ;   /// InsertedNum(Hi) + IgnoredNum(Lo)
       GroupSubCLMap  _grpSubCLDatas ;
+
+      rtnCoordInsertPvtData()
+      {
+         _insertMixNum = 0 ;
+      }
    } ;
 
    public:
