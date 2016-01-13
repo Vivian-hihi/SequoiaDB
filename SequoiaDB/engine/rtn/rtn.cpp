@@ -485,6 +485,25 @@ namespace engine
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNRESUMECLDICTCREATE, "rtnResumeClDictCreate" )
+   static void rtnResumeClDictCreate( dmsStorageUnit *su, SDB_DMSCB *dmsCB )
+   {
+      PD_TRACE_ENTRY( SDB_RTNRESUMECLDICTCREATE ) ;
+
+      const dmsMBStatInfo *mbStat = NULL ;
+      for ( UINT16 mbID = 0; mbID < DMS_MME_SLOTS; ++mbID )
+      {
+         mbStat = su->data()->getMBStatInfo( mbID ) ;
+         if ( UTIL_COMPRESSOR_LZW == mbStat->_compressorType
+              && DMS_INVALID_EXTENT == mbStat->_dictExtID )
+         {
+            dmsCB->pushToDictCreateCLList( su->CSID(), mbID ) ;
+         }
+      }
+
+      PD_TRACE_EXIT( SDB_RTNRESUMECLDICTCREATE ) ;
+   }
+
    // Load all collection spaces from database path
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNLOADCSS, "rtnLoadCollectionSpaces" )
    INT32 rtnLoadCollectionSpaces ( const CHAR *dataPath,
@@ -558,6 +577,17 @@ namespace engine
                                 "space[%s], rc: %d", csName, rc ) ;
                         PMD_RESTART_DB( rc ) ;
                         goto error ;
+                     }
+
+                     /*
+                      * Scan all the collections, to check if any one should be
+                      * put into the dictionary creating list. This should be
+                      * done if the system restarted before the dictionary was
+                      * created.
+                      */
+                     if ( !storageUnit->data()->isTempSU() )
+                     {
+                        rtnResumeClDictCreate( storageUnit, dmsCB ) ;
                      }
                   } // if ( rtnVerifyCollectionSpaceFileName
                   else if ( SDB_FILE_UNKNOW == rtnParseFileName( pFileName ) )
@@ -644,7 +674,7 @@ namespace engine
             }
             if ( ossStrcmp ( ctx->getSU()->CSName(), pCollectionSpace ) == 0 )
             {
-               // if the su is held by myself, i have to kill the context 
+               // if the su is held by myself, i have to kill the context
                // from global
                rtnCB->contextDelete( contextID, cb ) ;
             }
@@ -1041,7 +1071,7 @@ namespace engine
             }
             else
             {
-               PD_LOG ( PDERROR, "run command[%s] failed[rc=%d]", 
+               PD_LOG ( PDERROR, "run command[%s] failed[rc=%d]",
                         pCommand->name(), rc ) ;
             }
          }
@@ -1138,7 +1168,7 @@ namespace engine
             rc = SDB_IXM_NOTEXIST ;
             goto error ;
          }
- 
+
          // get the predicate list
          predList = plan->getPredList() ;
          SDB_ASSERT ( predList, "predList can't be NULL" ) ;
@@ -1225,7 +1255,7 @@ namespace engine
          while ( itr.more() )
          {
             /// find({}, {a:null}).sort({a.b:1})
-            /// we do not want to clear it's selector when 
+            /// we do not want to clear it's selector when
             /// query is like above. --yunwu
             BSONElement ele = itr.next() ;
             const CHAR *fieldName = ele.fieldName() ;
@@ -1291,7 +1321,6 @@ namespace engine
          dmsStorageUnit *su = NULL ;
          dmsStorageUnitID suID = DMS_INVALID_CS ;
          BOOLEAN failed = TRUE ;
-         
 
          rc = dmsCB->nameToSUAndLock ( csName, suID,
                                        &su, SHARED ) ;
