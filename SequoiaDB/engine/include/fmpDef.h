@@ -51,7 +51,7 @@
 
 /// WARNING: do not modify this define.
 /// spdFMP.cpp::SPD_NEXT is depend on this define.
-#define FMP_MSG_MAGIC               {0xFF, 0xFE, 0xFD, 0xFB, 0}
+#define FMP_MSG_MAGIC               {(CHAR)0xFF, (CHAR)0xFE, (CHAR)0xFD, (CHAR)0xFB, 0}
 
 #define FMP_FUNC_VALUE        FIELD_NAME_FUNC
 #define FMP_FUNC_NAME         "name"
