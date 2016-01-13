@@ -79,8 +79,9 @@ namespace engine
       pBuff = cb->getCompressBuff( maxCompressedLen ) ;
       if ( !pBuff )
       {
-         PD_LOG( PDERROR, "Failed to alloc compress buff" ) ;
-         rc = SDB_OK ;
+         PD_LOG( PDERROR, "Failed to alloc compress buff, size: %d",
+                 maxCompressedLen ) ;
+         rc = SDB_OOM ;
          goto error ;
       }
 
@@ -100,7 +101,6 @@ namespace engine
          {
             PD_LOG( PDERROR, "Failed to compress record, the data will stay in "
                     "not compressed format, rc: %d", rc ) ;
-            rc = SDB_OK ;
             goto error ;
          }
 
@@ -161,6 +161,10 @@ namespace engine
       {
          rc = dmsCompress( cb, compressor, compContext, obj.objdata(),
                            obj.objsize(), ppData, pDataSize ) ;
+      }
+      if ( rc )
+      {
+         goto error ;
       }
 
    done :

@@ -411,20 +411,25 @@ namespace engine
       {
          rc = dmsCompress ( cb, compressor, compContext, obj, NULL, 0,
                             &compressedData, &compressedDataSize ) ;
-         PD_RC_CHECK ( rc, PDERROR,
-                       "Failed to compress record, rc = %d: %s",
-                       rc, obj.toString().c_str() ) ;
-         // 4 bytes len + compressed record
-         dmsrecordSize = compressedDataSize + sizeof(INT32) ;
-         // if compressed version is larger than uncompressed, let's use
-         // original
-         if ( dmsrecordSize > (UINT32)(obj.objsize()) )
+         if ( rc )
          {
+            // In case of compression failure, store the record in original format.
             dmsrecordSize = obj.objsize() ;
          }
          else
          {
-            isCompressed = TRUE ;
+            // 4 bytes len + compressed record
+            dmsrecordSize = compressedDataSize + sizeof(INT32) ;
+            // if compressed version is larger than uncompressed, let's use
+            // original
+            if ( dmsrecordSize > (UINT32)(obj.objsize()) )
+            {
+               dmsrecordSize = obj.objsize() ;
+            }
+            else
+            {
+               isCompressed = TRUE ;
+            }
          }
       }
       else

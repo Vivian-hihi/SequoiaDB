@@ -2337,28 +2337,34 @@ namespace engine
          rc = dmsCompress( cb, compressor, compressorContext,
                            record, ((CHAR*)(&oid)), oidLen,
                            &compressedData, &compressedDataSize ) ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to compress data, rc: %d", rc ) ;
-
-         // 4 bytes len + compressed record
-         dmsRecordSize = compressedDataSize + sizeof(INT32) ;
-         PD_TRACE2 ( SDB__DMSSTORAGEDATA_INSERTRECORD,
-                     PD_PACK_STRING ( "size after compress" ),
-                     PD_PACK_UINT ( dmsRecordSize ) ) ;
-
-         // if we find the record size is greater than non-compression, let's
-         // save non-compressed version
-         if ( dmsRecordSize > (UINT32)(record.objsize() + oidLen) )
+         if ( rc )
          {
+            // If compression failed, store the record in its original format.
             dmsRecordSize = record.objsize() ;
          }
          else
          {
-            // oid is already added into compression buffer, so let's unset
-            // addOID stuff
-            addOID = FALSE ;
-            oidLen = 0 ;
-            // set compression flag
-            isCompressed = TRUE ;
+            // 4 bytes len + compressed record
+            dmsRecordSize = compressedDataSize + sizeof(INT32) ;
+            PD_TRACE2 ( SDB__DMSSTORAGEDATA_INSERTRECORD,
+                        PD_PACK_STRING ( "size after compress" ),
+                        PD_PACK_UINT ( dmsRecordSize ) ) ;
+
+            // if we find the record size is greater than non-compression, let's
+            // save non-compressed version
+            if ( dmsRecordSize > (UINT32)(record.objsize() + oidLen) )
+            {
+               dmsRecordSize = record.objsize() ;
+            }
+            else
+            {
+               // oid is already added into compression buffer, so let's unset
+               // addOID stuff
+               addOID = FALSE ;
+               oidLen = 0 ;
+               // set compression flag
+               isCompressed = TRUE ;
+            }
          }
       }
       else
@@ -3313,19 +3319,23 @@ namespace engine
             compContext = UTIL_INVALID_COMP_CTX ;
          }
 
-         PD_RC_CHECK ( rc, PDERROR, "Failed, to compress record, rc: %d: %s",
-                       rc, BSONObj((CHAR*)ptr).toString().c_str() ) ;
-
-         dmsRecordSize = compressedDataSize + sizeof(INT32) ;
-         // if we find the record size is greater than non-compression, let's
-         // save non-compressed version
-         if ( dmsRecordSize > (UINT32)len )
+         if ( rc )
          {
-            dmsRecordSize = (UINT32)len ;
+             dmsRecordSize = (UINT32)len ;
          }
          else
          {
-            isCompressed = TRUE ;
+            dmsRecordSize = compressedDataSize + sizeof(INT32) ;
+            // if we find the record size is greater than non-compression, let's
+            // save non-compressed version
+            if ( dmsRecordSize > (UINT32)len )
+            {
+               dmsRecordSize = (UINT32)len ;
+            }
+            else
+            {
+               isCompressed = TRUE ;
+            }
          }
       }
       else
@@ -3754,6 +3764,8 @@ namespace engine
       /// Make sure the dict persist
       flushMME( TRUE ) ;
 
+      PD_LOG( PDEVENT, "Compression dictionary created succesfully for "
+              "collection[%s]", context->mb()->_collectionName ) ;
    done:
       if ( context )
       {

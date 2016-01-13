@@ -361,27 +361,6 @@ namespace engine
       _writeBits( ctx, code, ctx->getDictionary()->getCodeSize() ) ;
    }
 
-/*
-   OSS_INLINE UINT32 _utilLZW::_readBits( _utilLZWContext *ctx )
-   {
-      UINT32 bits = 0 ;
-      UINT32 codeSize = ctx->getDictionary()->getCodeSize() ;
-
-      while ( ctx->_bitBuf._n < codeSize )
-      {
-         UINT8 ch = _readByte( ctx ) ;
-         ctx->_bitBuf._buf = ( ctx->_bitBuf._buf << 8 ) | ch ;
-         ctx->_bitBuf._n += 8 ;
-      }
-
-      ctx->_bitBuf._n -= codeSize ;
-      bits = ( ctx->_bitBuf._buf >> ctx->_bitBuf._n )
-             & (( 1 << codeSize ) - 1 ) ;
-
-      return bits ;
-   }
-*/
-
    OSS_INLINE void _utilLZW::_writeBits( _utilLZWContext *ctx, UINT32 bits,
                                          UINT32 bitNum)
    {
@@ -460,7 +439,7 @@ namespace engine
          {
             if ( code > dictionary->getMaxCode() )
             {
-               SDB_ASSERT( 1 == 0, "invalid code" ) ;
+               SDB_ASSERT( FALSE, "invalid code" ) ;
             }
             _writeCode( ctx, code ) ;
             code = ch ;
@@ -476,7 +455,7 @@ namespace engine
       /* Write the last code */
       if ( code > dictionary->getMaxCode() )
       {
-         SDB_ASSERT( 1 == 0, "invalid code" ) ;
+         SDB_ASSERT( FALSE, "invalid code" ) ;
       }
       _writeCode( ctx, code ) ;
       _flushBits( ctx ) ;
