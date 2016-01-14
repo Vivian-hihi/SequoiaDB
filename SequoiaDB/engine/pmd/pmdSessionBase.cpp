@@ -35,6 +35,7 @@
 #include "pmdEnv.hpp"
 #include "pmd.hpp"
 #include "dpsLogWrapper.hpp"
+#include "netFrame.hpp"
 
 namespace engine
 {
