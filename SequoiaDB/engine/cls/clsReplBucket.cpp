@@ -460,11 +460,17 @@ namespace engine
                  "index: %u, nty que size: %u, index size: %u", curAgentNum(),
                  idleAgentNum(), _totalCount.peek(), size(), idleUnitCount(),
                  index, _ntyQueue.size(), _dataBucket[ index ]->size() ) ;*/
-
-         if ( SDB_OK == startReplSyncJob( NULL, this, 60*OSS_ONE_SEC ) )
+         INT32 rcTmp = startReplSyncJob( NULL, this, 60*OSS_ONE_SEC ) ;
+         if ( SDB_OK == rcTmp )
          {
             incCurAgent() ;
             incIdleAgent() ;
+         }
+         else if ( SDB_QUIESCED == rcTmp )
+         {
+            /// DB Shutdown
+            rc = rcTmp ;
+            goto error ;
          }
       }
 
