@@ -322,7 +322,7 @@ namespace engine
       UINT32 ip = 0 ;
       UINT32 port = 0 ;
       /// IP:00000000, PORT:0000, TID:00000000
-      CHAR szTmp[ 8 + 4 + 8 + 1 ] = { 0 } ;
+      CHAR szTmp[ 8 + 4 + 8 + 2 ] = { 0 } ;
 
       if ( 0 != relatedNID )
       {
