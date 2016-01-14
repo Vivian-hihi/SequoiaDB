@@ -27,7 +27,8 @@
    Change Activity:
    defect Date        Who Description
    ====== =========== === ==============================================
-          12/1/2014  ly  Initial Draft
+          12/1/2014   ly  Initial Draft
+          01/12/2016  hjw
 
    Last Changed =
 
@@ -50,6 +51,12 @@
 #define CSV_STR_MAXKEY_SIZE      ( sizeof( CSV_STR_MAXKEY ) - 1 )
 
 SDB_EXTERN_C_START
+
+SDB_EXPORT void setPrintfLog( void (*pFun)( const CHAR *pFunc,
+                                            const CHAR *pFile,
+                                            UINT32 line,
+                                            const CHAR *pFmt,
+                                            ... ) ) ;
 
 SDB_EXPORT INT32 getCSVSize( CHAR delChar, CHAR delField,
                              CHAR *pbson, INT32 *pCSVSize,

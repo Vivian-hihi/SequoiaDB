@@ -110,6 +110,23 @@ INT32 utilDecodeBson::_filterString( CHAR **pField, INT32 &size )
    return rc ;
 }
 
+void _utilPrintLog( const CHAR *pFunc,
+                    const CHAR *pFile,
+                    UINT32 line,
+                    const CHAR *pFmt,
+                    ... )
+{
+   va_list ap;
+   CHAR userInfo[ PD_LOG_STRINGMAX + 1 ] = { 0 } ;
+   va_start(ap, pFmt);
+   vsnprintf(userInfo, PD_LOG_STRINGMAX, pFmt, ap);
+   va_end(ap);
+   if( getPDLevel() >= PDERROR )
+   {
+      pdLog( PDERROR, pFunc, pFile, line, userInfo ) ;
+   }
+}
+
 INT32 utilDecodeBson::init( CHAR delChar, CHAR delField,
                             BOOLEAN includeBinary,
                             BOOLEAN includeRegex )
@@ -151,6 +168,7 @@ INT32 utilDecodeBson::init( CHAR delChar, CHAR delField,
    _delField = delField ;
    _includeBinary = includeBinary ;
    _includeRegex = includeRegex ;
+   setPrintfLog( _utilPrintLog ) ;
 done:
    return rc ;
 error:
