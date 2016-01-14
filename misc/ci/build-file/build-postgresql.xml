@@ -78,17 +78,19 @@
 
     <target name="build_pg_connector" depends="compile_sdb">
     	<echo message="Compile the connector of postgresql..." />
-    	<property environment="env" />
+    	<!--property environment="env" /-->
     	<echo file="${PG_DIR}/pgsql/build.sh" message="bin/initdb -D pg_data&#10;bin/postgres -D pg_data &gt;&gt; ${RELEASE_DIR}/logfile.${BUILD_NUMBER} 2&gt;&#38;1 &#38;" />
     	<replace file="${CODE_DIR}/driver/postgresql/Makefile" token="DEBUG?=-ggdb" value="DEBUG?=-ggdb -DSDB_USE_OWN_POSTGRES" />
-		<exec executable="sh" dir="${PG_DIR}/pgsql" failonerror="true">
+		<!--exec executable="sh" dir="${PG_DIR}/pgsql" failonerror="true">
 			<arg line=" ./build.sh" />
-			<env key="LD_LIBRARY_PATH" value="${PG_DIR}/pgsql/lib:${env.LD_LIBRARY_PATH}" />
-		</exec>
+			<env key="LD_LIBRARY_PATH" path="${PG_DIR}/pgsql/lib:${LD_LIBRARY_PATH}" />
+		</exec-->
 		<exec executable="make" dir="${CODE_DIR}/driver/postgresql" failonerror="true">
+		   <env key="PATH" path="${PG_DIR}/pgsql/bin:${PATH}" />
 			<arg line=" local" />
 		</exec>
 		<exec executable="make" dir="${CODE_DIR}/driver/postgresql" failonerror="true">
+		   <env key="PATH" path="${PG_DIR}/pgsql/bin:${PATH}" />
 			<arg line=" all" />
 		</exec>
     </target>
