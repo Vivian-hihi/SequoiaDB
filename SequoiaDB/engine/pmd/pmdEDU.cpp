@@ -784,6 +784,16 @@ namespace engine
                    MON_EDU_STATUS_SZ ) ;
       ossStrncpy ( simple._eduType, getEDUName (_eduType), MON_EDU_TYPE_SZ ) ;
       ossStrncpy ( simple._eduName, _Name, MON_EDU_NAME_SZ ) ;
+      if ( _pSession )
+      {
+         simple._relatedNID = _pSession->identifyID() ;
+         simple._relatedTID = _pSession->identifyTID() ;
+      }
+      else
+      {
+         simple._relatedTID = _tid ;
+         simple._relatedNID = 0 ;
+      }
       PD_TRACE_EXIT ( SDB___PMDEDUCB_DUMPINFO );
    }
 
@@ -806,8 +816,17 @@ namespace engine
 
       full._monApplCB = _monApplCB ;
       full._threadHdl = _threadHdl ;
-
       full._eduContextList = _contextList ;
+      if ( _pSession )
+      {
+         full._relatedNID = _pSession->identifyID() ;
+         full._relatedTID = _pSession->identifyTID() ;
+      }
+      else
+      {
+         full._relatedTID = _tid ;
+         full._relatedNID = 0 ;
+      }
       PD_TRACE_EXIT ( SDB___PMDEDUCB_DUMPINFO2 );
    }
 

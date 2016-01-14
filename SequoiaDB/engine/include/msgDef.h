@@ -176,6 +176,7 @@
 #define FIELD_NAME_EDUNAME                   "Name"
 #define FIELD_NAME_QUEUE_SIZE                "QueueSize"
 #define FIELD_NAME_PROCESS_EVENT_COUNT       "ProcessEventCount"
+#define FIELD_NAME_RELATED_ID                "RelatedID"
 #define FIELD_NAME_ID                        "ID"
 #define FIELD_NAME_LOGICAL_ID                "LogicalID"
 #define FIELD_NAME_SEQUENCE                  "Sequence"

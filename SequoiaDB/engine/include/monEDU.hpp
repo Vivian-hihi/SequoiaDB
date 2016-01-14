@@ -59,6 +59,8 @@ namespace engine
       CHAR     _eduStatus[MON_EDU_STATUS_SZ+1] ;
       CHAR     _eduType[MON_EDU_TYPE_SZ+1] ;
       CHAR     _eduName[MON_EDU_NAME_SZ+1] ;
+      UINT64   _relatedNID ;
+      UINT32   _relatedTID ;
       _monEDUSimple()
       {
          ossMemset ( _eduStatus, 0, sizeof(_eduStatus) ) ;
@@ -66,6 +68,8 @@ namespace engine
          ossMemset ( _eduName, 0, sizeof(_eduName) ) ;
          _eduID = 0 ;
          _tid = 0 ;
+         _relatedNID = 0 ;
+         _relatedTID = 0 ;
       }
       OSS_INLINE BOOLEAN operator< (const _monEDUSimple &r) const
       {
@@ -86,6 +90,8 @@ namespace engine
       CHAR     _eduStatus[MON_EDU_STATUS_SZ+1] ;
       CHAR     _eduType[MON_EDU_TYPE_SZ+1] ;
       CHAR     _eduName[MON_EDU_NAME_SZ+1] ;
+      UINT64   _relatedNID ;
+      UINT32   _relatedTID ;
       std::set<SINT64> _eduContextList ;
       monAppCB _monApplCB ;
    #if defined ( _WINDOWS )
@@ -103,6 +109,8 @@ namespace engine
          _tid = 0 ;
          _queueSize = 0 ;
          _processEventCount = 0 ;
+         _relatedNID = 0 ;
+         _relatedTID = 0 ;
       }
       OSS_INLINE BOOLEAN operator< (const _monEDUFull &r) const
       {
@@ -120,6 +128,8 @@ namespace engine
          _eduContextList = rhs._eduContextList ;
          _monApplCB      = rhs._monApplCB ;
          _threadHdl      = rhs._threadHdl ;
+         _relatedNID     = rhs._relatedNID ;
+         _relatedTID     = rhs._relatedTID ;
 
          return *this ;
       }

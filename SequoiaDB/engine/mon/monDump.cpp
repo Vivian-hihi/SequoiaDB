@@ -315,6 +315,29 @@ namespace engine
       PD_TRACE_EXIT ( SDB_MONAPPENDVERSION ) ;
    }
 
+   void monAppendSessionIdentify( BSONObjBuilder &ob,
+                                  UINT64 relatedNID,
+                                  UINT32 relatedTID )
+   {
+      UINT32 ip = 0 ;
+      UINT32 port = 0 ;
+      /// IP:00000000, PORT:0000, TID:00000000
+      CHAR szTmp[ 8 + 4 + 8 + 1 ] = { 0 } ;
+
+      if ( 0 != relatedNID )
+      {
+         ossUnpack32From64( relatedNID, ip, port ) ;
+      }
+      else
+      {
+         ip = _netFrame::getLocalAddress() ;
+         port = pmdGetLocalPort() ;
+      }
+      ossSnprintf( szTmp, sizeof(szTmp)-1, "%08x%04x%08x",
+                   ip, (UINT16)port, relatedTID ) ;
+      ob.append( FIELD_NAME_RELATED_ID, szTmp ) ;
+   }
+
    // dump all contexts for a given EDUCB
    // PD_TRACE_DECLARE_FUNCTION ( SDB_MONDUMPCONTEXTSFROMCB, "monDumpContextsFromCB" )
    INT32 monDumpContextsFromCB ( pmdEDUCB *cb, rtnContextDump *context,
@@ -875,6 +898,8 @@ namespace engine
             ob.append ( FIELD_NAME_STATUS, simple._eduStatus ) ;
             ob.append ( FIELD_NAME_TYPE, simple._eduType ) ;
             ob.append ( FIELD_NAME_EDUNAME, simple._eduName ) ;
+            monAppendSessionIdentify( ob, simple._relatedNID,
+                                      simple._relatedTID ) ;
             if ( addInfo )
             {
                monAppendSystemInfo( ob, MON_MASK_NODE_NAME ) ;
@@ -917,6 +942,8 @@ namespace engine
             ob.append ( FIELD_NAME_QUEUE_SIZE, full._queueSize ) ;
             ob.append ( FIELD_NAME_PROCESS_EVENT_COUNT,
                         (SINT64)full._processEventCount ) ;
+            monAppendSessionIdentify( ob, full._relatedNID,
+                                      full._relatedTID ) ;
             BSONArrayBuilder ab ;
             std::set<SINT64>::const_iterator it ;
             for ( it = full._eduContextList.begin();
@@ -983,6 +1010,8 @@ namespace engine
                ob.append ( FIELD_NAME_STATUS, simple._eduStatus ) ;
                ob.append ( FIELD_NAME_TYPE, simple._eduType ) ;
                ob.append ( FIELD_NAME_EDUNAME, simple._eduName ) ;
+               monAppendSessionIdentify( ob, simple._relatedNID,
+                                         simple._relatedTID ) ;
                if ( addInfo )
                {
                   monAppendSystemInfo( ob, MON_MASK_NODE_NAME ) ;
@@ -1028,7 +1057,8 @@ namespace engine
                ob.append( FIELD_NAME_QUEUE_SIZE, (*it)._queueSize ) ;
                ob.append( FIELD_NAME_PROCESS_EVENT_COUNT,
                           (SINT64)(*it)._processEventCount ) ;
-
+               monAppendSessionIdentify( ob, (*it)._relatedNID,
+                                         (*it)._relatedTID ) ;
                std::set<SINT64>::const_iterator itr ;
                for ( itr = (*it)._eduContextList.begin();
                      itr != (*it)._eduContextList.end() ;
@@ -2407,6 +2437,8 @@ namespace engine
          ob.append ( FIELD_NAME_STATUS, simple._eduStatus ) ;
          ob.append ( FIELD_NAME_TYPE, simple._eduType ) ;
          ob.append ( FIELD_NAME_EDUNAME, simple._eduName ) ;
+         monAppendSessionIdentify( ob, simple._relatedNID,
+                                   simple._relatedTID ) ;
 
          obj = ob.obj () ;
 
@@ -2461,7 +2493,8 @@ namespace engine
          ob.append( FIELD_NAME_QUEUE_SIZE, full._queueSize ) ;
          ob.append( FIELD_NAME_PROCESS_EVENT_COUNT,
                     (SINT64)full._processEventCount ) ;
-
+         monAppendSessionIdentify( ob, full._relatedNID,
+                                   full._relatedTID ) ;
          /// add contexts
          BSONArrayBuilder ba( ob.subarrayStart( FIELD_NAME_CONTEXTS ) ) ;
          std::set<SINT64>::const_iterator itCtx ;
