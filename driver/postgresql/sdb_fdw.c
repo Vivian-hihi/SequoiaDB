@@ -2757,8 +2757,6 @@ static void SdbGetForeignRelSize( PlannerInfo *root,
       return ;
    }
 
-   fdw_state->bson_record_addr = sdbCreateBsonRecordAddr(  ) ;
-
    rc = sdbRowsCount( foreignTableId, &fdw_state->row_count ) ;
    if ( rc )
    {
@@ -2932,6 +2930,8 @@ static ForeignScan *SdbGetForeignPlan( PlannerInfo *root,
 
    sdbGenerateFilterCondition( foreignTableId, baserel, &fdw_state->queryDocument ) ;
    sdbPrintBson( &fdw_state->queryDocument, DEBUG1, "foreignplan" ) ;
+
+   fdw_state->bson_record_addr = sdbCreateBsonRecordAddr() ;
    foreignPrivateList = serializeSdbExecState( fdw_state ) ;
 
    /* copy document list */
