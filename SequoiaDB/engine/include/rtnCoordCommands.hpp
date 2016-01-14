@@ -471,12 +471,14 @@ namespace engine
       INT32 _executeOld( MsgHeader *pMsg,
                          pmdEDUCB *cb,
                          INT64 &contextID,
-                         rtnContextBuf *buf ) ;
+                         rtnContextBuf *buf,
+                         string &clName ) ;
 
       INT32 _execute( MsgHeader *pMsg,
                       pmdEDUCB *cb,
                       INT64 &contextID,
-                      rtnContextBuf *buf ) ;
+                      rtnContextBuf *buf,
+                      string &clName ) ;
 
       INT32 _testCollection( const CHAR *fullName, pmdEDUCB *cb ) ;
    } ;
@@ -723,6 +725,7 @@ namespace engine
    protected:
       INT32         checkIndexKey( const CoordCataInfoPtr &cataInfo,
                                    const BSONObj &indexObj,
+                                   set< UINT32 > &haveSet,
                                    pmdEDUCB *cb ) ;
 
    };

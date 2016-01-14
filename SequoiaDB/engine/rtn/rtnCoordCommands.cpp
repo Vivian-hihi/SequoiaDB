@@ -227,11 +227,11 @@ namespace engine
          {
             if ( !_getRetryNodes(retriedNodes, needRetryNodes, ctrlParam, pReply ) )
             {
-               PD_LOG( ( pContext ? PDINFO : PDWARNING ),
-                       "Failed to process reply[node: %s, flag: %d]",
-                       routeID2String( nodeID ).c_str(), pReply->flags ) ;
-               faileds[ nodeID.value ] = pReply->flags ;
-            }
+            PD_LOG( ( pContext ? PDINFO : PDWARNING ),
+                    "Failed to process reply[node: %s, flag: %d]",
+                    routeID2String( nodeID ).c_str(), pReply->flags ) ;
+            faileds[ nodeID.value ] = pReply->flags ;
+         }
          }
 
          if ( !takeOver )
@@ -1203,17 +1203,40 @@ namespace engine
       INT32 rc                         = SDB_OK;
       PD_TRACE_ENTRY ( SDB_RTNCOCMDCRCS_EXE ) ;
 
+      CHAR *pCollectionName = NULL ;
+      CHAR *pQuery = NULL ;
+      BSONObj boQuery ;
+
       // fill default-reply
       contextID                        = -1 ;
-
       MsgOpQuery *pCreateReq           = (MsgOpQuery *)pMsg;
-      pCreateReq->header.opCode        = MSG_CAT_CREATE_COLLECTION_SPACE_REQ;
 
-      // execute create collection on catalog
-      rc = executeOnCataGroup ( pMsg, cb, TRUE ) ;
-      if ( rc )
+      try
       {
-         PD_LOG ( PDERROR, "create collectionspace failed, rc = %d", rc ) ;
+         rc = msgExtractQuery( (CHAR*)pMsg, NULL, &pCollectionName,
+                               NULL, NULL, &pQuery, NULL, NULL, NULL ) ;
+         PD_RC_CHECK( rc, PDERROR, "Extract message failed, rc: %d", rc ) ;
+
+         boQuery = BSONObj( pQuery ) ;
+
+         pCreateReq->header.opCode = MSG_CAT_CREATE_COLLECTION_SPACE_REQ ;
+         // execute create collection on catalog
+         rc = executeOnCataGroup ( pMsg, cb, TRUE ) ;
+         /// AUDIT
+         PD_AUDIT_COMMAND( AUDIT_DDL, pCollectionName + 1, AUDIT_OBJ_CS,
+                           boQuery.getField(FIELD_NAME_NAME).valuestrsafe(),
+                           rc, "Option:%s", boQuery.toString().c_str() ) ;
+         /// CHECK ERRORS
+         if ( rc )
+         {
+            PD_LOG ( PDERROR, "create collectionspace failed, rc = %d", rc ) ;
+            goto error ;
+         }
+      }
+      catch( std::exception &e )
+      {
+         PD_LOG( PDERROR, "Occur exception: %s", e.what() ) ;
+         rc = SDB_INVALIDARG ;
          goto error ;
       }
 
@@ -1228,7 +1251,8 @@ namespace engine
    INT32 rtnCoordCMDAlterCollection::_executeOld( MsgHeader *pMsg,
                                                   pmdEDUCB *cb,
                                                   INT64 &contextID,
-                                                  rtnContextBuf *buf )
+                                                  rtnContextBuf *buf,
+                                                  string &clName )
    {
       INT32 rc                         = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_RTNCOCMDALCL__EXEOLD ) ;
@@ -1265,6 +1289,7 @@ namespace engine
          }
 
          fullName = ele.valuestr() ;
+         clName = fullName ;
       }
       catch ( std::exception &e )
       {
@@ -1340,7 +1365,8 @@ namespace engine
    INT32 rtnCoordCMDAlterCollection::_execute( MsgHeader *pMsg,
                                                pmdEDUCB *cb,
                                                INT64 &contextID,
-                                               rtnContextBuf *buf )
+                                               rtnContextBuf *buf,
+                                               string &clName )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB_RTNCOCMDALCL__EXE ) ;
@@ -1368,6 +1394,7 @@ namespace engine
             PD_LOG( PDERROR, "failed to init alter job:%d", rc ) ;
             goto error ;
          }
+         clName = job.getName() ;
       }
       catch( std::exception &e )
       {
@@ -1425,6 +1452,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB_RTNCOCMDALCL_EXE ) ;
+      string clName ;
       CHAR *query = NULL ;
       BOOLEAN isOld = FALSE ;
       rc = msgExtractQuery( (CHAR*)pMsg, NULL, NULL,
@@ -1448,14 +1476,20 @@ namespace engine
       }
 
       rc = isOld ?
-           _executeOld( pMsg, cb, contextID, buf ) :
-           _execute( pMsg, cb, contextID, buf ) ;
+           _executeOld( pMsg, cb, contextID, buf, clName ) :
+           _execute( pMsg, cb, contextID, buf, clName ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to alter collection:%d", rc ) ;
          goto error ;
       }
    done:
+      if ( !clName.empty() )
+      {
+         PD_AUDIT_COMMAND( AUDIT_DDL, CMD_NAME_ALTER_COLLECTION, AUDIT_OBJ_CL,
+                           clName.c_str(), rc, "Option:%s",
+                           BSONObj(query).toString().c_str() ) ;
+      }
       PD_TRACE_EXITRC( SDB_RTNCOCMDALCL_EXE, rc ) ;
       return rc ;
    error:
@@ -1481,21 +1515,27 @@ namespace engine
       vector<BSONObj> replyFromCata ;
       BOOLEAN isMainCL                 = FALSE ;
       const CHAR *pCollectionName      = NULL ;
+      CHAR *pCommand                   = NULL ;
+      BSONObj boQuery ;
 
       try
       {
          CHAR *pQuery = NULL ;
-         BSONObj boQuery;
          BSONElement beIsMainCL ;
          BSONElement beShardingType ;
          BSONElement beShardingKey ;
          BSONElement eleName ;
 
-         rc = msgExtractQuery( (CHAR*)pMsg, NULL, NULL,
+         rc = msgExtractQuery( (CHAR*)pMsg, NULL, &pCommand,
                                NULL, NULL, &pQuery,
                                NULL, NULL, NULL ) ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to parse the "
-                      "create-collection-message(rc=%d)", rc ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Failed to parse the create collection "
+                    "message, rc:%d", rc ) ;
+            goto error ;
+         }
+
          boQuery = BSONObj( pQuery );
          beIsMainCL = boQuery.getField( FIELD_NAME_ISMAINCL );
          isMainCL = beIsMainCL.booleanSafe();
@@ -1523,7 +1563,7 @@ namespace engine
       }
       catch ( std::exception &e )
       {
-         rc = SDB_INVALIDARG;
+         rc = SDB_INVALIDARG ;
          PD_LOG ( PDERROR, "Failed to create collection, received "
                   "unexpected error: %s", e.what() ) ;
          goto error ;
@@ -1581,6 +1621,12 @@ namespace engine
       }
 
    done :
+      if ( pCollectionName )
+      {
+         PD_AUDIT_COMMAND( AUDIT_DDL, pCommand + 1, AUDIT_OBJ_CL,
+                           pCollectionName, rc, "Option:%s",
+                           boQuery.toString().c_str() ) ;
+      }
       PD_TRACE_EXITRC ( SDB_RTNCOCMDCRCL_EXE, rc ) ;
       return rc;
    error :
@@ -1833,6 +1879,14 @@ namespace engine
       {
          pRtncb->contextDelete ( contextID, cb ) ;
          contextID = -1 ;
+      }
+      if ( !strName.empty() )
+      {
+         BOOLEAN isCL = ossStrchr( strName.c_str(), '.' ) ? TRUE : FALSE ;
+         PD_AUDIT_COMMAND( AUDIT_DDL, ( isCL ? CMD_NAME_DROP_COLLECTION :
+                                               CMD_NAME_DROP_COLLECTIONSPACE ),
+                           ( isCL ? AUDIT_OBJ_CL : AUDIT_OBJ_CS ),
+                           strName.c_str(), rc, "" ) ;
       }
       PD_TRACE_EXITRC ( SDB_RTNCOCMD2PC_EXE, rc ) ;
       return rc;
@@ -3593,24 +3647,40 @@ namespace engine
 
    INT32 rtnCoordCMDCreateIndex::checkIndexKey( const CoordCataInfoPtr &cataInfo,
                                                 const BSONObj &indexObj,
+                                                set< UINT32 > &haveSet,
                                                 pmdEDUCB *cb )
    {
       INT32 rc = SDB_OK ;
       BSONObj shardingKey ;
-      cataInfo->getShardingKey ( shardingKey ) ;
-      BSONObjIterator shardingItr ( shardingKey ) ;
-      while ( shardingItr.more () )
+      UINT32 skSiteID = cataInfo->getShardingKeySiteID() ;
+
+      if ( skSiteID > 0 )
       {
-         BSONElement sk = shardingItr.next() ;
-         if ( indexObj.getField( sk.fieldName() ).eoo() )
+         if ( haveSet.count( skSiteID ) > 0 )
          {
-            PD_LOG( PDWARNING, "All fields in sharding key must "
-                    "be included in unique index, missing field: %s,"
-                    "shardingKey: %s, indexKey: %s, collection: %s",
-                    sk.fieldName(), shardingKey.toString().c_str(),
-                    indexObj.toString().c_str(), cataInfo->getName() ) ;
-            rc = SDB_SHARD_KEY_NOT_IN_UNIQUE_KEY ;
-            goto error ;
+            /// already checked
+            goto done ;
+         }
+         haveSet.insert( skSiteID ) ;
+      }
+
+      /// check the sharding key
+      {
+         cataInfo->getShardingKey ( shardingKey ) ;
+         BSONObjIterator shardingItr ( shardingKey ) ;
+         while ( shardingItr.more() )
+         {
+            BSONElement sk = shardingItr.next() ;
+            if ( indexObj.getField( sk.fieldName() ).eoo() )
+            {
+               PD_LOG( PDWARNING, "All fields in sharding key must "
+                       "be included in unique index, missing field: %s,"
+                       "shardingKey: %s, indexKey: %s, collection: %s",
+                       sk.fieldName(), shardingKey.toString().c_str(),
+                       indexObj.toString().c_str(), cataInfo->getName() ) ;
+               rc = SDB_SHARD_KEY_NOT_IN_UNIQUE_KEY ;
+               goto error ;
+            }
          }
       }
 
@@ -3628,7 +3698,7 @@ namespace engine
             PD_RC_CHECK( rc, PDERROR, "Get sub collection[%s] catalog info "
                          "failed, rc: %d", (*it).c_str(), rc ) ;
 
-            rc = checkIndexKey( subCataInfo, indexObj, cb ) ;
+            rc = checkIndexKey( subCataInfo, indexObj, haveSet, cb ) ;
             if ( rc )
             {
                goto error ;
@@ -3751,7 +3821,8 @@ namespace engine
             // sharding key and indexKey if it's unique
             if ( isUnique )
             {
-               rc = checkIndexKey( cataInfo, indexKey, cb ) ;
+               set< UINT32 > haveSet ;
+               rc = checkIndexKey( cataInfo, indexKey, haveSet, cb ) ;
                if ( SDB_SHARD_KEY_NOT_IN_UNIQUE_KEY == rc &&
                     !emptyUpdateCata )
                {
@@ -3787,6 +3858,12 @@ namespace engine
       }
 
    done :
+      if ( strCollectionName )
+      {
+         PD_AUDIT_COMMAND( AUDIT_DDL, CMD_NAME_CREATE_INDEX, AUDIT_OBJ_CL,
+                           strCollectionName, rc, "Option:%s",
+                           BSONObj(pQuery).toString().c_str() ) ;
+      }
       if ( pDropMsg )
       {
          SDB_OSS_FREE ( pDropMsg ) ;
@@ -3889,6 +3966,12 @@ namespace engine
       }
 
    done:
+      if ( !realCLName.empty() )
+      {
+         PD_AUDIT_COMMAND( AUDIT_DDL, CMD_NAME_DROP_INDEX, AUDIT_OBJ_CL,
+                           realCLName.c_str(), rc, "Option:%s",
+                           BSONObj(pQuery).toString().c_str() ) ;
+      }
       PD_TRACE_EXITRC ( SDB_RTNCOCMDDPIN_EXE, rc ) ;
       return rc ;
    error:
@@ -3972,6 +4055,13 @@ namespace engine
       }
 
    done:
+      if ( strHostName && svcname )
+      {
+         PD_AUDIT_COMMAND( AUDIT_SYSTEM, queryOption._fullName + 1,
+                           AUDIT_OBJ_NODE, "", rc,
+                           "HostName:%s, ServiceName:%s", strHostName,
+                           svcname ) ;
+      }
       PD_TRACE_EXITRC ( SDB_RTNCOCMDOPONNODE_EXE, rc ) ;
       return rc ;
    error:
@@ -4000,11 +4090,12 @@ namespace engine
       SDB_RTNCB *pRtncb                = pKrcb->getRTNCB();
       CoordCB *pCoordcb                = pKrcb->getCoordCB();
       contextID                        = -1 ;
+      const CHAR *pGroupName           = NULL ;
+      CHAR *pCMDName                   = NULL ;
 
       do
       {
          INT32 flag;
-         CHAR *pCMDName;
          SINT64 numToSkip;
          SINT64 numToReturn;
          CHAR *pQuery;
@@ -4035,6 +4126,7 @@ namespace engine
                         FIELD_NAME_GROUPNAME ) ;
                break ;
             }
+            pGroupName = beGroupName.valuestr() ;
             bobQuery.append( beGroupName );
             boQuery = bobQuery.obj();
          }
@@ -4110,6 +4202,12 @@ namespace engine
       {
          pRtncb->contextDelete( contextID, cb ) ;
          contextID = -1 ;
+      }
+
+      if ( pGroupName )
+      {
+         PD_AUDIT_COMMAND( AUDIT_SYSTEM, pCMDName, AUDIT_OBJ_GROUP,
+                           pGroupName, rc, "" ) ;
       }
 
       PD_TRACE_EXITRC ( SDB_RTNCOCMDOPONGR_EXE, rc ) ;
@@ -4284,7 +4382,7 @@ namespace engine
       CoordCB *pCoordcb                = pKRCB->getCoordCB () ;
       contextID                        = -1 ;
 
-      CHAR *pCollectionName            = NULL ;
+      CHAR *pCommandName               = NULL ;
       CHAR *pQuery                     = NULL ;
 
       CHAR szSource [ OSS_MAX_GROUPNAME_SIZE + 1 ] = {0} ;
@@ -4297,6 +4395,7 @@ namespace engine
       MsgOpQuery *pSplitQuery          = NULL ;
       UINT64 taskID                    = 0 ;
       BOOLEAN async                    = FALSE ;
+      BSONObj taskInfoObj ;
 
       BSONObj boShardingKey ;
       CoordCataInfoPtr cataInfo ;
@@ -4323,7 +4422,7 @@ namespace engine
       // send request to data-node to find the partitioning key
       // Extract the SplitQuery Field and build a query request to send to data
       // node
-      rc = msgExtractQuery ( (CHAR*)pSplitReq, NULL, &pCollectionName,
+      rc = msgExtractQuery ( (CHAR*)pSplitReq, NULL, &pCommandName,
                              NULL, NULL, &pQuery,
                              NULL, NULL, NULL ) ;
       PD_RC_CHECK ( rc, PDERROR,
@@ -4483,6 +4582,7 @@ namespace engine
                          CAT_SPLITPERCENT_NAME << percent <<
                          CAT_SPLITVALUE_NAME << boKeyStart <<
                          CAT_SPLITENDVALUE_NAME << boKeyEnd ) ;
+         taskInfoObj = boSend ;
          rc = msgBuildQueryMsg ( &splitReadyBuffer, &splitReadyBufferSz,
                                  CMD_ADMIN_PREFIX CMD_NAME_SPLIT, 0,
                                  0, 0, -1, &boSend, NULL,
@@ -4566,6 +4666,12 @@ namespace engine
       }
 
    done :
+      if ( pCommandName && strName )
+      {
+         PD_AUDIT_COMMAND( AUDIT_DDL, pCommandName + 1, AUDIT_OBJ_CL,
+                           strName, rc, "Option:%s, TaskID:%llu",
+                           taskInfoObj.toString().c_str(), taskID ) ;
+      }
       if ( splitReadyBuffer )
       {
          SDB_OSS_FREE ( splitReadyBuffer ) ;
@@ -6172,6 +6278,7 @@ namespace engine
       INT32 rc                         = SDB_OK;
       PD_TRACE_ENTRY ( SDB_RTNCOCMDLINKCL_EXE ) ;
 
+      CHAR *pQuery                     = NULL;
       string mainCLName ;
       string strSubClName ;
       CoordGroupList groupLst ;
@@ -6183,7 +6290,6 @@ namespace engine
 
       try
       {
-         CHAR *pQuery                     = NULL;
          rc = msgExtractQuery( (CHAR*)pMsg, NULL, NULL,
                                NULL, NULL, &pQuery, NULL,
                                NULL, NULL ) ;
@@ -6239,6 +6345,12 @@ namespace engine
       }
 
    done :
+      if ( !mainCLName.empty() && !strSubClName.empty() )
+      {
+         PD_AUDIT_COMMAND( AUDIT_DDL, CMD_NAME_LINK_CL, AUDIT_OBJ_CL,
+                           mainCLName.c_str(), rc, "Option:%s",
+                           BSONObj(pQuery).toString().c_str() ) ;
+      }
       PD_TRACE_EXITRC ( SDB_RTNCOCMDLINKCL_EXE, rc ) ;
       return rc ;
    error_rollback:
@@ -6321,6 +6433,12 @@ namespace engine
                    strSubClName.c_str(), rc ) ;
 
    done:
+      if ( !strMainCLName.empty() && !strSubClName.empty() )
+      {
+         PD_AUDIT_COMMAND( AUDIT_DDL, CMD_NAME_UNLINK_CL, AUDIT_OBJ_CL,
+                           strMainCLName.c_str(), rc, "Option:%s",
+                           BSONObj(pQuery).toString().c_str() ) ;
+      }
       PD_TRACE_EXITRC ( SDB_RTNCOCMDUNLINKCL_EXE, rc ) ;
       return rc;
    error :
@@ -6921,6 +7039,11 @@ namespace engine
          goto error ;
       }
    done:
+      if ( fullName )
+      {
+         PD_AUDIT_COMMAND( AUDIT_DDL, CMD_NAME_TRUNCATE, AUDIT_OBJ_CL,
+                           fullName, rc, "" ) ;
+      }
       PD_TRACE_EXITRC( CMD_RTNCOCMDTRUNCATE_EXEC, rc ) ;
       return rc ;
    error:
