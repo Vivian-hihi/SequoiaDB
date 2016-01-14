@@ -150,7 +150,8 @@ namespace engine
 
    UINT64 _pmdSession::identifyID()
    {
-      return ossPack32To64( _socket.getLocalIP(), _socket.getLocalPort() ) ;
+      return ossPack32To64( _netFrame::getLocalAddress(),
+                            pmdGetLocalPort() ) ;
    }
 
    UINT32 _pmdSession::identifyTID()
