@@ -277,6 +277,7 @@ const CHAR* pdAuditObjType2String( AUDIT_OBJ_TYPE objtype ) ;
 
 #define PD_AUDIT_COMMAND(type,commandstr,objtype,objname,result,fmt, ... ) \
    do { \
+         if ( AUDIT_DDL == type && SDB_OK != result ) { break ; } \
          const CHAR *pUserName = "" ; \
          _pmdEDUCB *cb = pmdGetThreadEDUCB() ; \
          if ( cb ) \
