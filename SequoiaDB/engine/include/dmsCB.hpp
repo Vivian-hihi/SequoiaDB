@@ -136,6 +136,7 @@ namespace engine
        */
       typedef std::pair<dmsStorageUnitID, UINT16>  _dictWaitCl ;
       std::list<_dictWaitCl>                       _dictWaitClList ;
+      std::list<_dictWaitCl>                       _dictWaitClListTrans ;
 
       ossSpinXLatch           _stateMtx;
       ossEvent                _backEvent ;
@@ -239,6 +240,7 @@ namespace engine
       _dmsStorageUnit *dispatchPageCleanSU ( dmsStorageUnitID *suID ) ;
       void dispatchDictCreateCL ( BOOLEAN &empty, dmsStorageUnitID &suID,
                                   UINT16 &mbID ) ;
+      void dictCreateResumeWaitCL() ;
       void pushToDictCreateCLList( dmsStorageUnitID suID, UINT16 mbID ) ;
       void popFromDictCreateCLList() ;
       void skipCurrentDictCreateCL() ;

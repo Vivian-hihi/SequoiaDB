@@ -28,7 +28,7 @@ namespace engine
    private:
       utilLZWDictCreator _creator ;
       utilLZWDictionary *_dictionary ;
-      INT32 _scanInterval ;
+      UINT32 _scanInterval ;
       CHAR *_srcDataBuf ;
    } ;
    typedef _rtnDictCreatorJob rtnDictCreatorJob ;

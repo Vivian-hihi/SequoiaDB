@@ -1580,6 +1580,17 @@ namespace engine
       PD_TRACE_EXIT( SDB__SDB_DMSCB_DISPATCHDICTCREATECL ) ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__SDB_DMSCB_DICTCREATERESUMEWAITCL, "_SDB_DMSCB::dictCreateResumeWaitCL" )
+   void _SDB_DMSCB::dictCreateResumeWaitCL()
+   {
+      PD_TRACE_ENTRY( SDB__SDB_DMSCB_DICTCREATERESUMEWAITCL ) ;
+      if ( _dictWaitClListTrans.size() > 0 )
+      {
+         _dictWaitClList.merge( _dictWaitClListTrans ) ;
+      }
+      PD_TRACE_EXIT( SDB__SDB_DMSCB_DICTCREATERESUMEWAITCL ) ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB__SDB_DMSCB_PUSHTODICTCREATECLLIST, "_SDB_DMSCB::pushToDictCreateCLList" )
    void _SDB_DMSCB::pushToDictCreateCLList( dmsStorageUnitID suID, UINT16 mbID )
    {
@@ -1604,10 +1615,7 @@ namespace engine
    void _SDB_DMSCB::skipCurrentDictCreateCL()
    {
       PD_TRACE_ENTRY( SDB__SDB_DMSCB_SKIPCURRENTDICTCREATECL ) ;
-      dmsStorageUnitID suID = _dictWaitClList.front().first ;
-      UINT16 mbID = _dictWaitClList.front().second ;
-
-      _dictWaitClList.push_back( make_pair( suID, mbID ) ) ;
+      _dictWaitClListTrans.push_back( _dictWaitClList.front() ) ;
       _dictWaitClList.pop_front() ;
       PD_TRACE_EXIT( SDB__SDB_DMSCB_SKIPCURRENTDICTCREATECL ) ;
    }

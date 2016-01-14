@@ -53,19 +53,12 @@ namespace engine
    INT32 _rtnDictCreatorJob::doit ()
    {
       /*
-       * Each storage unit maintains a queue of collections with
-       * 'CompressionType' option. One collection will be added to this queue
-       * when:
-       * (1) The collection is being created and 'CompressionType' is specified
-       *     or
-       * (2) when the system starts up and the dictionary of this collection has
-       *     not been created yet.
-       * This thread will scan each queue of all the storage unit(temparary
-       * storage units excluded), check all the collections in the queue. If the
+       * This thread will check all the collections in the list. If the
        * condition of creating dictionary is matched, the dictionary of the
        * collection will be created. And once this is done successfully, the
-       * collection will be removed from the queue, and will never be put into
-       * it again.
+       * collection will be removed from the list, and will never be put into
+       * it again. Otherwise it will be put back into the list and try to create
+       * again.
        * Note:
        * This job thread should be started after the dictionary caches of all
        * storage units have been created. That is done during the control block
@@ -82,8 +75,7 @@ namespace engine
       dmsStorageUnitID suID = DMS_INVALID_SUID ;
       UINT16 mbID = DMS_INVALID_MBID ;
       BOOLEAN listEmpty = FALSE ;
-      BOOLEAN roundFinish = FALSE ;
-      UINT16 firstID = DMS_INVALID_MBID ;
+      UINT64 lastStartTime = pmdGetDBTick() ;
 
       _srcDataBuf = ( CHAR * )SDB_OSS_MALLOC( RTN_DICT_BUF_SIZE ) ;
       PD_CHECK( _srcDataBuf, SDB_OOM, error, PDERROR,
@@ -101,30 +93,26 @@ namespace engine
          if ( listEmpty )
          {
             /* If no colleciton is waitting for dictionary creating, wait... */
-            cb->waitEvent( event, _scanInterval ) ;
-            roundFinish = TRUE ;
-            continue ;
-         }
-
-         if ( roundFinish )
-         {
-            firstID = mbID ;
-            roundFinish = FALSE ;
-         }
-         else
-         {
-            if ( firstID == mbID )
+            while ( pmdGetTickSpanTime( lastStartTime ) < _scanInterval )
             {
-               cb->waitEvent( event, _scanInterval ) ;
+               cb->waitEvent( event, OSS_ONE_SEC ) ;
             }
+
+            /*
+             * Resume all the ones which skipped before, and start the next
+             * round.
+             */
+            dmsCB->dictCreateResumeWaitCL() ;
+            lastStartTime = pmdGetDBTick() ;
+            continue ;
          }
 
          eduMgr->activateEDU( cb->getID() ) ;
 
          /*
           * Check with the fetched storage unit id and mb id. Any arror happened
-          * during the creation of the dictionary, it should be put back into
-          * the list, and try again in the next round. If everything goes fine,
+          * during the creation of the dictionary, it should be skipped this
+          * time, and try again in the next round. If everything goes fine,
           * remove it from the list, and never check it again.
           */
          if ( SDB_OK != _checkAndCreateDictForCL( suID, mbID ) )
