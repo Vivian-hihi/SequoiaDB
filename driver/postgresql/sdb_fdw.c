@@ -178,6 +178,7 @@ static int sdbGetSdbServerOptions( Oid foreignTableId, SdbExecState *sdbExecStat
 static PgTableDesc *sdbGetPgTableDesc( Oid foreignTableId ) ;
 static void initSdbExecState( SdbExecState *sdbExecState ) ;
 static void sdbFreeScanState( SdbExecState *executionState, bool deleteShared ) ;
+static void sdbFreeScanStateInModifyEnd( SdbExecState *executionState ) ;
 
 static Const *sdbSerializeDocument( sdbbson *document ) ;
 static void sdbDeserializeDocument( Const *constant, sdbbson *document ) ;
@@ -647,6 +648,7 @@ int sdbSetBsonValue( sdbbson *bsonObj, const char *name, Datum valueDatum,
          getTypeOutputInfo( columnType, &outputFunctionId, &typeVarLength ) ;
          outputString = OidOutputFunctionCall( outputFunctionId, valueDatum ) ;
          sdbbson_append_string( bsonObj, name, outputString ) ;
+         pfree( outputString ) ;
          break ;
       }
 
@@ -662,6 +664,7 @@ int sdbSetBsonValue( sdbbson *bsonObj, const char *name, Datum valueDatum,
          memset( sdbbsonObjectId.bytes, 0, sizeof( sdbbsonObjectId.bytes ) ) ;
          sdbbson_oid_from_string( &sdbbsonObjectId, outputString ) ;
          sdbbson_append_oid( bsonObj, name, &sdbbsonObjectId ) ;
+         pfree( outputString ) ;
          break ;
       }
 
@@ -2411,6 +2414,25 @@ static Datum sdbColumnValue( sdbbson_iterator *sdbbsonIterator, Oid columnTypeId
    return columnValue ;
 }
 
+/* sdbFreeScanStateInModifyEnd closes the cursor, connection and collection to SequoiaDB
+ */
+void sdbFreeScanStateInModifyEnd( SdbExecState *executionState )
+{
+   if( !executionState )
+      goto done ;
+
+   if( SDB_INVALID_HANDLE != executionState->hCursor )
+      sdbReleaseCursor( executionState->hCursor ) ;
+
+   if( SDB_INVALID_HANDLE != executionState->hCollection )
+   {
+      sdbReleaseCollection( executionState->hCollection ) ;
+   }
+done :
+   return ;
+}
+
+
 /* sdbFreeScanState closes the cursor, connection and collection to SequoiaDB
  */
 void sdbFreeScanState( SdbExecState *executionState, bool deleteShared )
@@ -3784,7 +3806,7 @@ void SdbEndForeignModify( EState *estate, ResultRelInfo *rinfo )
    SdbExecState *fdw_state = ( SdbExecState * )rinfo->ri_FdwState ;
    if ( fdw_state )
    {
-      sdbFreeScanState( fdw_state, false ) ;
+      sdbFreeScanStateInModifyEnd( fdw_state ) ;
    }
 }
 
