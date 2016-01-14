@@ -93,7 +93,7 @@ namespace engine
       UINT32 getMaxCode() { return _head._maxCode ; }
       BOOLEAN codeFull()
       {
-         return ( _head._maxCode == ( 1 << _head._codeSize ) ) ;
+         return ( _head._maxCode == (UINT32)( 1 << _head._codeSize ) ) ;
       }
 
       void codeSizeInc() { _head._codeSize++; }
@@ -254,7 +254,7 @@ namespace engine
        * The current code size is not enough to represent the code, so increase
        * it by 1 bit.
        */
-      if ( _head._maxCode == ( 1 << _head._codeSize ) )
+      if ( _head._maxCode == (UINT32)( 1 << _head._codeSize ) )
       {
          _head._codeSize++ ;
       }
