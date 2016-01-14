@@ -183,7 +183,8 @@ def clean( csName ):
    try:
       db.drop_collection_space( csName )
    except SDBBaseError, e:
-      if ( -34 != e.code ):            
+      if ( -34 != e.code ):
+         pysequoiadb._print(e.detail)              
          raise e
       
 if __name__ == "__main__":   

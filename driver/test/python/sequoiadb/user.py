@@ -65,12 +65,14 @@ def clean( cs_name, username, password ):
    try:
       db.drop_collection_space( cs_name )
    except SDBBaseError, e:
-      if ( -34 != e.code ):            
+      if ( -34 != e.code ): 
+         pysequoiadb._print(e.detail)             
          raise e          
    try:      
       db.remove_user( username, password )
    except SDBBaseError, e:
-      if ( -6 != e.code ): #standalone throw -6           
+      if ( -6 != e.code ): #standalone throw -6   
+         pysequoiadb._print(e.detail)          
          raise e 
          
 def user( username, password ):
