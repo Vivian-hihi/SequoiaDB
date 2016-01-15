@@ -6,7 +6,7 @@
 
 * 数据库连接（Connecting）
 
-connect.py 演示如何连接到数据库。文件应当 import “pysequoiadb”中的 client，const 等模块，以及 error 模块中的 SequoiaDBError 类。
+connect.py 演示如何连接到数据库。文件应当 import “pysequoiadb”中的 client，const 等模块，以及 error 模块中的 SDBBaseError 类。
 
 <pre class="prettyprint lang-javascript">
 import pysequoiadb
