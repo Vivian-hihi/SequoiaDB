@@ -235,8 +235,8 @@ namespace engine
          CHAR szTmpID[ 20 ] = { 0 } ;
          ossSnprintf( szTmpID, sizeof(szTmpID) - 1, "%llu", eduID() ) ;
 
-         PD_AUDIT( AUDIT_ACCESS, _client.getUsername(), "LOGOUT",
-                   AUDIT_OBJ_SESSION, szTmpID, SDB_OK,
+         PD_AUDIT( AUDIT_ACCESS, _client.getUsername(), szTmpIP, (UINT16)port,
+                   "LOGOUT", AUDIT_OBJ_SESSION, szTmpID, SDB_OK,
                    "User[UserName:%s, FromIP:%s, FromPort:%u, "
                    "FromSession:%llu, FromTID:%u] logout succeed",
                    _client.getUsername(), szTmpIP, port,

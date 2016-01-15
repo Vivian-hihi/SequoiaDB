@@ -848,13 +848,14 @@ done:
 }
 
 void pdAudit( AUDIT_TYPE type, const CHAR *pUserName,
+              const CHAR* ipAddr, UINT16 port,
               const CHAR *pAction, AUDIT_OBJ_TYPE objType,
               const CHAR *pObjName, INT32 result,
               const CHAR* func, const CHAR* file,
               UINT32 line, const std::string &message )
 {
-   pdAudit( type, pUserName, pAction, objType, pObjName,
-            result, func, file, line, message.c_str() ) ;
+   pdAudit( type, pUserName, ipAddr, port, pAction, objType,
+            pObjName, result, func, file, line, message.c_str() ) ;
 }
 
 /*
@@ -871,27 +872,33 @@ void pdAudit( AUDIT_TYPE type, const CHAR *pUserName,
  * 9) Process ID (UINT64)
  * 10) Thread ID (UINT64)
  * 11) UserName (string)
- * 12) Action (string)
- * 13) Result (string) SUCCEED/FAILED
- * 14) ResultCode (INT32)
- * 14) ObjectType (string)
- * 15) ObjectName (string)
- * 16) File Name (string)
- * 17) Function Name (string)
- * 18) Line number (UINT32)
- * 19) Message
+ * 12) From (string)
+ * 13) Action (string)
+ * 14) Result (string) SUCCEED/FAILED
+ * 15) ResultCode (INT32)
+ * 16) ObjectType (string)
+ * 17) ObjectName (string)
+ *************ONLY IN DEBUG*************
+ * 18) File Name (string)
+ * 19) Function Name (string)
+ * 20) Line number (UINT32)
+ *************ONLY IN DEBUG*************
+ * 21) Message
  */
 const static CHAR *PD_AUDIT_LOG_HEADER_FORMAT="%04d-%02d-%02d-%02d.%02d.%02d.%06d\
                Type:%s"OSS_NEWLINE
 "PID:%-37dTID:%d"OSS_NEWLINE
-"UserName:%-32sAction:%s"OSS_NEWLINE
-"Result:%-34sResultCode:%d"OSS_NEWLINE
+"UserName:%-32sFrom:%s"OSS_NEWLINE
+"Action:%-34sResult:%s(%d)"OSS_NEWLINE
 "ObjectType:%-30sObjectName:%s"OSS_NEWLINE
+#ifdef _DEBUG
 "Function:%-32sLine:%d"OSS_NEWLINE"File:%s"OSS_NEWLINE
+#endif //_DEBUG
 "Message:"OSS_NEWLINE"%s"OSS_NEWLINE OSS_NEWLINE ;
 
 // PD_TRACE_DECLARE_FUNCTION ( SDB_PDAUDIT, "pdAudit" )
 void pdAudit( AUDIT_TYPE type, const CHAR *pUserName,
+              const CHAR* ipAddr, UINT16 port,
               const CHAR *pAction, AUDIT_OBJ_TYPE objType,
               const CHAR *pObjName, INT32 result,
               const CHAR* func, const CHAR* file,
@@ -908,6 +915,7 @@ void pdAudit( AUDIT_TYPE type, const CHAR *pUserName,
    time_t tt ;
    CHAR userInfo[ PD_LOG_STRINGMAX + 1 ] = { 0 } ;
    CHAR sysInfo[ PD_LOG_STRINGMAX + 1 ] = { 0 } ;  // for log header
+   CHAR szFrom[ 30 ] = { 0 } ;   // ip + port
 
    gettimeofday(&tv, &tz);
    tt = tv.tv_sec ;
@@ -923,6 +931,11 @@ void pdAudit( AUDIT_TYPE type, const CHAR *pUserName,
    vsnprintf(userInfo, PD_LOG_STRINGMAX, format, ap);
    va_end(ap);
 
+   if ( ipAddr && *ipAddr && port )
+   {
+      ossSnprintf( szFrom, sizeof(szFrom)-1, "%s:%u", ipAddr, port ) ;
+   }
+
    // create log header
    ossSnprintf(sysInfo, PD_LOG_STRINGMAX, PD_AUDIT_LOG_HEADER_FORMAT,
                otm.tm_year+1900,            // 1) Year (UINT32)
@@ -936,15 +949,18 @@ void pdAudit( AUDIT_TYPE type, const CHAR *pUserName,
                ossGetCurrentProcessID(),    // 9) Process ID (UINT64)
                ossGetCurrentThreadID(),     // 10) Thread ID (UINT64)
                pUserName ? pUserName : "",  // 11) UserName (string)
-               pAction ? pAction : "",      // 12) Action (string)
-               result ? "FAILED" : "SUCCEED",//13) Result (string)
-               result,                      // 14) ResultCode (INT32)
-               pdAuditObjType2String(objType),// 15) ObjectType (string)
-               pObjName ? pObjName : "",    // 16) ObjectName (string)
-               func,                        // 17) Function Name (string)
-               line,                        // 18) Line number (UINT32)
-               file,                        // 19) File Name (string)
-               userInfo                     // 20) Message
+               szFrom,                      // 12) From (string)
+               pAction ? pAction : "",      // 13) Action (string)
+               result ? "FAILED" : "SUCCEED",//14) Result (string)
+               result,                      // 15) ResultCode (INT32)
+               pdAuditObjType2String(objType),// 16) ObjectType (string)
+               pObjName ? pObjName : "",    // 17) ObjectName (string)
+#ifdef _DEBUG
+               func,                        // 18) Function Name (string)
+               line,                        // 19) Line number (UINT32)
+               file,                        // 20) File Name (string)
+#endif //_DEBUG
+               userInfo                     // 21) Message
    ) ;
 
    pdAuditRaw( type, sysInfo ) ;
