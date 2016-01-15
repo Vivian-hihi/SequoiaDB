@@ -262,10 +262,13 @@ const CHAR* pdAuditObjType2String( AUDIT_OBJ_TYPE objtype ) ;
          { \
             pUserName = cb->getUserName() ; \
             ISession *pSession = cb->getSession() ; \
-            UINT32 hi = 0, lo = 0 ; \
-            ossUnpack32From64( pSession->identifyID(), hi, lo ) ; \
-            ossIP2Str( hi, szIP, sizeof(szIP)-1 ) ; \
-            port = lo ; \
+            if ( pSession ) \
+            { \
+               UINT32 hi = 0, lo = 0 ; \
+               ossUnpack32From64( pSession->identifyID(), hi, lo ) ; \
+               ossIP2Str( hi, szIP, sizeof(szIP)-1 ) ; \
+               port = lo ; \
+            } \
          } \
       PD_AUDIT(type,pUserName,szIP,port,msgType2String((MSG_TYPE)optype),\
                objtype,objname,result,fmt,##__VA_ARGS__) ; \
@@ -281,10 +284,13 @@ const CHAR* pdAuditObjType2String( AUDIT_OBJ_TYPE objtype ) ;
          { \
             pUserName = cb->getUserName() ; \
             ISession *pSession = cb->getSession() ; \
-            UINT32 hi = 0, lo = 0 ; \
-            ossUnpack32From64( pSession->identifyID(), hi, lo ) ; \
-            ossIP2Str( hi, szIP, sizeof(szIP)-1 ) ; \
-            port = lo ; \
+            if ( pSession ) \
+            { \
+               UINT32 hi = 0, lo = 0 ; \
+               ossUnpack32From64( pSession->identifyID(), hi, lo ) ; \
+               ossIP2Str( hi, szIP, sizeof(szIP)-1 ) ; \
+               port = lo ; \
+            } \
          } \
       PD_AUDIT(type,pUserName,szIP,port,opname,\
                objtype,objname,result,fmt,##__VA_ARGS__) ; \
@@ -301,10 +307,13 @@ const CHAR* pdAuditObjType2String( AUDIT_OBJ_TYPE objtype ) ;
          { \
             pUserName = cb->getUserName() ; \
             ISession *pSession = cb->getSession() ; \
-            UINT32 hi = 0, lo = 0 ; \
-            ossUnpack32From64( pSession->identifyID(), hi, lo ) ; \
-            ossIP2Str( hi, szIP, sizeof(szIP)-1 ) ; \
-            port = lo ; \
+            if ( pSession ) \
+            { \
+               UINT32 hi = 0, lo = 0 ; \
+               ossUnpack32From64( pSession->identifyID(), hi, lo ) ; \
+               ossIP2Str( hi, szIP, sizeof(szIP)-1 ) ; \
+               port = lo ; \
+            } \
          } \
          CHAR tmp[ 100 ] = { 0 } ;\
          ossSnprintf( tmp, sizeof(tmp)-1, "%s(%s)", \
