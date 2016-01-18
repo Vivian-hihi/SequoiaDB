@@ -336,6 +336,8 @@ namespace engine
    INT32 _utilNodePipe::writePipe( const CHAR * pBuff, INT32 size )
    {
       INT32 rc = SDB_OK ;
+      INT64 bufWrite = 0 ;
+      INT64 totalWrite = 0 ;
 
       _connectError = FALSE ;
       rc = connectPipe() ;
@@ -344,20 +346,30 @@ namespace engine
          _connectError = TRUE ;
          goto error ;
       }
-#if defined( _WINDOWS )
-      rc = ossWriteNamedPipe( _pipeRHandle, pBuff, size, NULL ) ;
-#else
-      rc = ossWriteNamedPipe( _pipeWHandle, pBuff, size, NULL ) ;
-#endif //_WINDOWS
-      if ( rc )
+
+      while( totalWrite < size )
       {
-         if ( SDB_TIMEOUT != rc )
+#if defined( _WINDOWS )
+         rc = ossWriteNamedPipe( _pipeRHandle, pBuff, size, &bufWrite ) ;
+#else
+         rc = ossWriteNamedPipe( _pipeWHandle, pBuff, size, &bufWrite ) ;
+#endif //_WINDOWS
+         if ( SDB_INTERRUPT == rc )
          {
-            PD_LOG( PDERROR, "Write named pipe[%s] failed, rc: %d",
-                    _pipeWName, rc ) ;
-            disconnectPipe() ;
+            totalWrite += bufWrite ;
+            bufWrite = 0 ;
+            continue ;
          }
-         goto error ;
+         else if ( rc )
+         {
+            if ( SDB_TIMEOUT != rc )
+            {
+               PD_LOG( PDERROR, "Write named pipe[%s] failed, rc: %d",
+                       _pipeWName, rc ) ;
+               disconnectPipe() ;
+            }
+            goto error ;
+         }
       }
 
    done:
@@ -434,6 +446,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       INT64 buffRead = 0 ;
+      INT64 totalRead = 0 ;
 
       _connectError = FALSE ;
       rc = connectPipe() ;
@@ -443,20 +456,29 @@ namespace engine
          goto error ;
       }
 
-      rc = ossReadNamedPipe( _pipeRHandle, pBuff, readSize, &buffRead,
-                             UTIL_NODE_PIPE_TIMEOUT ) ;
-      if ( rc )
+      while( totalRead < readSize )
       {
-         if ( SDB_TIMEOUT != rc )
+         rc = ossReadNamedPipe( _pipeRHandle, pBuff[totalRead],
+                                readSize - totalRead, &buffRead,
+                                UTIL_NODE_PIPE_TIMEOUT ) ;
+         if ( rc )
          {
-            PD_LOG ( PDERROR, "Read named pipe[%s] failed, rc: %d",
-                     _pipeRName, rc ) ;
-            disconnectPipe() ;
+            if ( SDB_INTERRUPT == rc )
+            {
+               totalRead += buffRead ;
+               buffRead = 0 ;
+               continue ;
+            }
+            else if ( SDB_TIMEOUT != rc )
+            {
+               PD_LOG ( PDERROR, "Read named pipe[%s] failed, rc: %d",
+                        _pipeRName, rc ) ;
+               disconnectPipe() ;
+            }
+            goto error ;
          }
-         goto error ;
       }
-
-      hasRead = (INT32)buffRead ;
+      hasRead = (INT32)totalRead ;
 
    done:
       return rc ;
