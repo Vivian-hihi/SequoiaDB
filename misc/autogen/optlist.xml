@@ -1015,5 +1015,16 @@
       <typeofweb>num</typeofweb>
    </opt>
 
+   <opt>
+      <name>PMD_OPTION_SIGNAL_INTERVAL</name>
+      <long>signalinterval</long>
+      <description>
+         <en>Signal test interval(second), default:0, 0 or less value means disable signal test</en>
+         <cn>信号测试周期(秒),默认值0.小于等于0表示关闭信号测试功能</cn>
+      </description>
+      <type>int</type>
+      <hidden>true</hidden>
+   </opt>
+
 </optlist>
 
