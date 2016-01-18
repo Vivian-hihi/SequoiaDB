@@ -350,9 +350,11 @@ namespace engine
       while( totalWrite < size )
       {
 #if defined( _WINDOWS )
-         rc = ossWriteNamedPipe( _pipeRHandle, pBuff, size, &bufWrite ) ;
+         rc = ossWriteNamedPipe( _pipeRHandle, &pBuff[totalWrite],
+                                 size - totalWrite, &bufWrite ) ;
 #else
-         rc = ossWriteNamedPipe( _pipeWHandle, pBuff, size, &bufWrite ) ;
+         rc = ossWriteNamedPipe( _pipeWHandle, &pBuff[totalWrite],
+                                 size - totalWrite, &bufWrite ) ;
 #endif //_WINDOWS
          if ( rc && SDB_INTERRUPT != rc )
          {
@@ -455,7 +457,7 @@ namespace engine
 
       while( totalRead < readSize )
       {
-         rc = ossReadNamedPipe( _pipeRHandle, pBuff[totalRead],
+         rc = ossReadNamedPipe( _pipeRHandle, &pBuff[totalRead],
                                 readSize - totalRead, &buffRead,
                                 UTIL_NODE_PIPE_TIMEOUT ) ;
          if ( rc && SDB_INTERRUPT != rc )
