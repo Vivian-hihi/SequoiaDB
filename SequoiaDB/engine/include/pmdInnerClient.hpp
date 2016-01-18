@@ -64,6 +64,8 @@ namespace engine
          void setClientInfo( _netRouteAgent *pNetRouter, NET_HANDLE handle ) ;
          void enableAuth( BOOLEAN bAuth ) { _isAuthed = bAuth ; }
 
+         void setFromInfo( const CHAR *ip, UINT16 port ) ;
+
       public:
          virtual SDB_CLIENT_TYPE clientType() const ;
          virtual const CHAR*     clientName() const ;
@@ -85,6 +87,9 @@ namespace engine
          virtual const CHAR*  getUsername() const ;
          virtual const CHAR*  getPassword() const ;
 
+         virtual const CHAR*  getFromIPAddr() const ;
+         virtual UINT16       getFromPort() const ;
+
       public:
          _netRouteAgent*      getNetAgent() { return _pRTAgent ; }
 
@@ -104,6 +109,9 @@ namespace engine
          CHAR                 _localIP[ PMD_IPADDR_LEN + 1 ] ;
          CHAR                 _peerIP[ PMD_IPADDR_LEN + 1 ] ;
          CHAR                 _clientName[ PMD_CLIENTNAME_LEN + 1 ] ;
+
+         CHAR                 _fromIP[ PMD_IPADDR_LEN + 1 ] ;
+         UINT16               _fromPort ;
 
    } ;
    typedef _pmdInnerClient pmdInnerClient ;

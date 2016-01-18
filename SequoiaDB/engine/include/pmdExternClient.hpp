@@ -81,6 +81,9 @@ namespace engine
          virtual const CHAR*  getUsername() const ;
          virtual const CHAR*  getPassword() const ;
 
+         virtual const CHAR*  getFromIPAddr() const ;
+         virtual UINT16       getFromPort() const ;
+
          void                 setAuthed( BOOLEAN authed ) ;
 
       public:
@@ -100,6 +103,7 @@ namespace engine
          UINT16               _peerPort ;
          CHAR                 _localIP[ PMD_IPADDR_LEN + 1 ] ;
          CHAR                 _peerIP[ PMD_IPADDR_LEN + 1 ] ;
+         CHAR                 _fromIP[ PMD_IPADDR_LEN + 1 ] ;
          CHAR                 _clientName[ PMD_CLIENTNAME_LEN + 1 ] ;
 
    } ;

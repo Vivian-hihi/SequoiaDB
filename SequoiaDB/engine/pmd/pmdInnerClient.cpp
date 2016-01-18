@@ -54,8 +54,10 @@ namespace engine
       _netHandle     = NET_INVALID_HANDLE ;
       _localPort     = 0 ;
       _peerPort      = 0 ;
+      _fromPort      = 0 ;
       ossMemset( _localIP, 0, sizeof( _localIP ) ) ;
       ossMemset( _peerIP, 0, sizeof( _peerIP ) ) ;
+      ossMemset( _fromIP, 0, sizeof( _fromIP ) ) ;
       ossMemset( _clientName, 0, sizeof( _clientName ) ) ;
 
       _makeName() ;
@@ -90,6 +92,15 @@ namespace engine
 
          _makeName() ;
       }
+   }
+
+   void _pmdInnerClient::setFromInfo( const CHAR *ip, UINT16 port )
+   {
+      if ( ip )
+      {
+         ossStrncpy( _fromIP, ip, PMD_IPADDR_LEN ) ;
+      }
+      _fromPort = port ;
    }
 
    SDB_CLIENT_TYPE _pmdInnerClient::clientType() const
@@ -190,6 +201,16 @@ namespace engine
    const CHAR* _pmdInnerClient::getPeerIPAddr() const
    {
       return _peerIP ;
+   }
+
+   const CHAR* _pmdInnerClient::getFromIPAddr() const
+   {
+      return _fromIP[0] != 0 ? _fromIP : _peerIP ;
+   }
+
+   UINT16 _pmdInnerClient::getFromPort() const
+   {
+      return _fromPort != 0 ? _fromPort : _peerPort ;
    }
 
    const CHAR* _pmdInnerClient::getUsername() const

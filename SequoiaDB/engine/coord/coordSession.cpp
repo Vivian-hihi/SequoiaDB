@@ -116,7 +116,9 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_COORDSN_SESSIONINIT, "CoordSession::sessionInit" )
-   INT32 CoordSession::sessionInit( const MsgRouteID & routeID )
+   INT32 CoordSession::sessionInit( const MsgRouteID & routeID,
+                                    const CHAR *pRemoteIP,
+                                    UINT16 remotePort )
    {
       INT32 rc = SDB_OK;
       PD_TRACE_ENTRY ( SDB_COORDSN_SESSIONINIT ) ;
@@ -138,7 +140,9 @@ namespace engine
          objInfo = BSON( SDB_AUTH_USER << _pEduCB->getUserName() <<
                          SDB_AUTH_PASSWD << _pEduCB->getPassword() <<
                          FIELD_NAME_HOST << pmdGetKRCB()->getHostName() <<
-                         PMD_OPTION_SVCNAME << pmdGetOptionCB()->getServiceAddr() ) ;
+                         PMD_OPTION_SVCNAME << pmdGetOptionCB()->getServiceAddr() <<
+                         FIELD_NAME_REMOTE_IP << pRemoteIP <<
+                         FIELD_NAME_REMOTE_PORT << (INT32)remotePort ) ;
          msgLength += objInfo.objsize() ;
       }
       catch( std::exception &e )
@@ -225,15 +229,32 @@ namespace engine
    }
 
    //Note: addSubSession and delSubSession must be called by the same thread
-   INT32 CoordSession::addSubSession( const MsgRouteID &routeID )
+   INT32 CoordSession::addSubSession( const MsgRouteID &routeID,
+                                      ISession *pSession )
    {
-      INT32 rc = SDB_OK;
-      COORD_SUBSESSION_MAP::iterator iterMap = _subSessionMap.find( routeID.value );
+      INT32 rc = SDB_OK ;
+      const CHAR *pRemoteIP = "" ;
+      UINT16 remotePort = 0 ;
+      COORD_SUBSESSION_MAP::iterator iterMap ;
+
+      iterMap = _subSessionMap.find( routeID.value );
       if ( iterMap != _subSessionMap.end() &&
            TRUE == iterMap->second.isConnected )
       {
          goto done;
       }
+
+      /// get remote info
+      if ( pSession )
+      {
+         IClient *pClient = pSession->getClient() ;
+         if ( pClient )
+         {
+            pRemoteIP = pClient->getFromIPAddr() ;
+            remotePort = pClient->getFromPort() ;
+         }
+      }
+
       {
          subSessionInfo subSession;
          subSession.routeID = routeID;
@@ -241,16 +262,16 @@ namespace engine
          ossScopedLock _lock( &_mutex ) ;
          _subSessionMap[routeID.value] = subSession;
       }
-      rc = sessionInit( routeID );
+      rc = sessionInit( routeID, pRemoteIP, remotePort );
       if ( rc )
       {
          {
-         ossScopedLock _lock( &_mutex ) ;
-         iterMap = _subSessionMap.find( routeID.value );
-         if ( iterMap != _subSessionMap.end() )
-         {
-            iterMap->second.isConnected = FALSE;
-         }
+            ossScopedLock _lock( &_mutex ) ;
+            iterMap = _subSessionMap.find( routeID.value );
+            if ( iterMap != _subSessionMap.end() )
+            {
+               iterMap->second.isConnected = FALSE;
+            }
          }
          PD_LOG( PDERROR, "Init session with node[%s] failed, rc: %d",
                  routeID2String( routeID ).c_str(), rc ) ;

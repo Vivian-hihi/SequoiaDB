@@ -42,6 +42,7 @@
    #include "rtnCoord.hpp"
    #include "rtnCoordOperator.hpp"
    #include "msgMessage.hpp"
+   #include "netFrame.hpp"
 #endif // SDB_ENGINE
 
 #include "../bson/bson.h"
@@ -68,6 +69,7 @@ namespace engine
       _peerPort      = 0 ;
       ossMemset( _localIP, 0, sizeof( _localIP ) ) ;
       ossMemset( _peerIP, 0, sizeof( _peerIP ) ) ;
+      ossMemset( _fromIP, 0, sizeof( _fromIP ) ) ;
       ossMemset( _clientName, 0, sizeof( _clientName ) ) ;
 
       if ( pSocket )
@@ -76,6 +78,14 @@ namespace engine
          _peerPort = pSocket->getPeerPort() ;
          pSocket->getLocalAddress( _localIP, PMD_IPADDR_LEN ) ;
          pSocket->getPeerAddress( _peerIP, PMD_IPADDR_LEN ) ;
+
+         ossStrcpy( _fromIP, _peerIP ) ;
+#if defined ( SDB_ENGINE )
+         if ( 0 == ossStrcmp( _peerIP, "127.0.0.1" ) )
+         {
+            ossIP2Str( _netFrame::getLocalAddress(), _fromIP, PMD_IPADDR_LEN ) ;
+         }
+#endif // SDB_ENGINE
       }
 
       _makeName() ;
@@ -394,6 +404,16 @@ namespace engine
    const CHAR* _pmdExternClient::getPassword() const
    {
       return _password.c_str() ;
+   }
+
+   const CHAR* _pmdExternClient::getFromIPAddr() const
+   {
+      return _fromIP ;
+   }
+
+   UINT16 _pmdExternClient::getFromPort() const
+   {
+      return getPeerPort() ;
    }
 
 }

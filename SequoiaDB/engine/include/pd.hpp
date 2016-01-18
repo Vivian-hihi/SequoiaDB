@@ -255,44 +255,40 @@ const CHAR* pdAuditObjType2String( AUDIT_OBJ_TYPE objtype ) ;
 #define PD_AUDIT_OP(type,optype,objtype,objname,result,fmt, ...)\
    do { \
          const CHAR *pUserName = "" ; \
-         CHAR szIP[20] = {0} ; \
-         UINT16 port = 0 ;\
+         const CHAR *fromIP = "" ; \
+         UINT16 fromPort = 0 ;\
          _pmdEDUCB *cb = pmdGetThreadEDUCB() ; \
          if ( cb ) \
          { \
             pUserName = cb->getUserName() ; \
             ISession *pSession = cb->getSession() ; \
-            if ( pSession ) \
+            if ( pSession && pSession->getClient() ) \
             { \
-               UINT32 hi = 0, lo = 0 ; \
-               ossUnpack32From64( pSession->identifyID(), hi, lo ) ; \
-               ossIP2Str( hi, szIP, sizeof(szIP)-1 ) ; \
-               port = lo ; \
+               fromIP = pSession->getClient()->getFromIPAddr() ; \
+               fromPort = pSession->getClient()->getFromPort() ; \
             } \
          } \
-      PD_AUDIT(type,pUserName,szIP,port,msgType2String((MSG_TYPE)optype),\
+      PD_AUDIT(type,pUserName,fromIP,fromPort,msgType2String((MSG_TYPE)optype),\
                objtype,objname,result,fmt,##__VA_ARGS__) ; \
    }while( 0 )
 
 #define PD_AUDIT_OP_WITHNAME(type,opname,objtype,objname,result,fmt, ...)\
    do { \
          const CHAR *pUserName = "" ; \
-         CHAR szIP[20] = {0} ; \
-         UINT16 port = 0 ;\
+         const CHAR *fromIP = "" ; \
+         UINT16 fromPort = 0 ;\
          _pmdEDUCB *cb = pmdGetThreadEDUCB() ; \
          if ( cb ) \
          { \
             pUserName = cb->getUserName() ; \
             ISession *pSession = cb->getSession() ; \
-            if ( pSession ) \
+            if ( pSession && pSession->getClient() ) \
             { \
-               UINT32 hi = 0, lo = 0 ; \
-               ossUnpack32From64( pSession->identifyID(), hi, lo ) ; \
-               ossIP2Str( hi, szIP, sizeof(szIP)-1 ) ; \
-               port = lo ; \
+               fromIP = pSession->getClient()->getFromIPAddr() ; \
+               fromPort = pSession->getClient()->getFromPort() ; \
             } \
          } \
-      PD_AUDIT(type,pUserName,szIP,port,opname,\
+      PD_AUDIT(type,pUserName,fromIP,fromPort,opname,\
                objtype,objname,result,fmt,##__VA_ARGS__) ; \
    }while( 0 )
 
@@ -300,25 +296,23 @@ const CHAR* pdAuditObjType2String( AUDIT_OBJ_TYPE objtype ) ;
    do { \
          if ( AUDIT_DDL == type && SDB_OK != result ) { break ; } \
          const CHAR *pUserName = "" ; \
-         CHAR szIP[20] = {0} ; \
-         UINT16 port = 0 ;\
+         const CHAR *fromIP = "" ; \
+         UINT16 fromPort = 0 ;\
          _pmdEDUCB *cb = pmdGetThreadEDUCB() ; \
          if ( cb ) \
          { \
             pUserName = cb->getUserName() ; \
             ISession *pSession = cb->getSession() ; \
-            if ( pSession ) \
+            if ( pSession && pSession->getClient() ) \
             { \
-               UINT32 hi = 0, lo = 0 ; \
-               ossUnpack32From64( pSession->identifyID(), hi, lo ) ; \
-               ossIP2Str( hi, szIP, sizeof(szIP)-1 ) ; \
-               port = lo ; \
+               fromIP = pSession->getClient()->getFromIPAddr() ; \
+               fromPort = pSession->getClient()->getFromPort() ; \
             } \
          } \
          CHAR tmp[ 100 ] = { 0 } ;\
          ossSnprintf( tmp, sizeof(tmp)-1, "%s(%s)", \
                       msgType2String(MSG_BS_QUERY_REQ, TRUE), commandstr ) ;\
-         PD_AUDIT(type,pUserName,szIP,port,tmp,objtype,objname,result,fmt, ##__VA_ARGS__) ;\
+         PD_AUDIT(type,pUserName,fromIP,fromPort,tmp,objtype,objname,result,fmt, ##__VA_ARGS__) ;\
    }while( 0 )
 
 UINT32 pdAuditType2Mask( AUDIT_TYPE auditType ) ;

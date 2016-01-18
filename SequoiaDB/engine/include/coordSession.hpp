@@ -93,7 +93,8 @@ namespace engine
       ~CoordSession(){}
 
    public:
-      INT32    addSubSession( const MsgRouteID &routeID );
+      INT32    addSubSession( const MsgRouteID &routeID,
+                              ISession *pSession );
       void     addSubSessionWithoutCheck( const MsgRouteID &routeID );
       BOOLEAN  delSubSession( const MsgRouteID &routeID );
       INT32    disConnect( const MsgRouteID &routeID );
@@ -121,7 +122,9 @@ namespace engine
    private:
       CoordSession(){}
       CoordSession( CoordSession &coordSession ){}
-      INT32 sessionInit( const MsgRouteID &routeID );
+      INT32 sessionInit( const MsgRouteID &routeID,
+                         const CHAR *pRemoteIP,
+                         UINT16 remotePort );
 
    private:
       pmdEDUCB                   *_pEduCB;

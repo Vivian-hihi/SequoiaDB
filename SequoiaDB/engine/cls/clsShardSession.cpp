@@ -1608,8 +1608,17 @@ namespace engine
             BSONObj obj( pMsgReq->data ) ;
             BSONElement user = obj.getField( SDB_AUTH_USER ) ;
             BSONElement passwd = obj.getField( SDB_AUTH_PASSWD ) ;
+            BSONElement remoteIP = obj.getField( FIELD_NAME_REMOTE_IP ) ;
+            BSONElement remotePort = obj.getField( FIELD_NAME_REMOTE_PORT ) ;
+
             _client.authenticate( user.valuestrsafe(),
                                   passwd.valuestrsafe() ) ;
+
+            if ( String == remoteIP.type() && NumberInt == remotePort.type() )
+            {
+               _client.setFromInfo( remoteIP.valuestr(),
+                                    (UINT16)remotePort.numberInt() ) ;
+            }
          }
          catch( std::exception &e )
          {

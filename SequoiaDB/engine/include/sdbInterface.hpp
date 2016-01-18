@@ -270,6 +270,9 @@ namespace engine
          virtual const CHAR*  getUsername() const = 0 ;
          virtual const CHAR*  getPassword() const = 0 ;
 
+         virtual const CHAR*  getFromIPAddr() const = 0 ;
+         virtual UINT16       getFromPort() const = 0 ;
+
    } ;
    typedef _IClient IClient ;
 
