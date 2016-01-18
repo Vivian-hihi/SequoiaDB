@@ -290,6 +290,10 @@ namespace engine
       IControlBlock *pCB = NULL ;
 
       _mainEDU.setName( "Main" ) ;
+#if defined (_LINUX )
+      _mainEDU.setThreadID ( ossPThreadSelf() ) ;
+#endif
+      _mainEDU.setTID ( ossGetCurrentThreadID() ) ;
       if ( NULL == pmdGetThreadEDUCB() )
       {
          pmdDeclareEDUCB( &_mainEDU ) ;

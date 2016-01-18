@@ -165,6 +165,9 @@ namespace engine
       EDU_TYPE_PIPESLISTENER,
       EDU_TYPE_FAPLISTENER,
       EDU_TYPE_DBMONITOR,
+#if defined (_LINUX)
+      EDU_TYPE_SIGNALTEST,
+#endif // _LINUX
 
       // Agent EDU Type Begin
       EDU_TYPE_AGENT_BEGIN,

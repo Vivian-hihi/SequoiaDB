@@ -83,6 +83,10 @@ namespace engine
    INT32 pmdFapListenerEntryPoint ( pmdEDUCB *cb, void *pData ) ;
    INT32 pmdFapAgentEntryPoint( pmdEDUCB *cb, void *arg ) ;
 
+#if defined (_LINUX)
+   INT32 pmdSignalTestEntryPoint( pmdEDUCB *cb, void *arg ) ;
+#endif
+
 }
 
 #endif // PMD_EDU_ENTRYPOINT_HPP__

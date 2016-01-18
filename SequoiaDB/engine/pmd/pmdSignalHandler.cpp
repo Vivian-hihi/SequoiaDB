@@ -53,7 +53,7 @@ namespace engine
          { "SIGBUS", 1 },     //7
          { "SIGFPE", 1 },     //8
          { "SIGKILL", 1 },    //9
-         { "SIGUSR1", 0 },    //10
+         { "SIGUSR1", 0 },    //10     ---for dump the thread stack
          { "SIGSEGV", 1 },    //11
          { "SIGUSR2", 0 },    //12
          { "SIGPIPE", 0 },    //13
@@ -66,7 +66,7 @@ namespace engine
          { "SIGTSTP", 0 },    //20
          { "SIGTTIN", 0 },    //21
          { "SIGTTOU", 0 },    //22
-         { "SIGURG", 0 },     //23
+         { "SIGURG", 0 },     //23     ---for notify all thread the singal 10
          { "SIGXCPU", 0 },    //24
          { "SIGXFSZ", 0 },    //25
          { "SIGVTALRM", 0 },  //26
@@ -78,8 +78,8 @@ namespace engine
          { "UNKNOW", 0 },     //32
          { "UNKNOW", 0 },     //33
          { "SIGRTMIN", 0 },   //34
-         { "SIGRTMIN+1", 0 }, //35
-         { "SIGRTMIN+2", 0 }, //36
+         { "SIGRTMIN+1", 0 }, //35     ---for notify all thread the signal 36
+         { "SIGRTMIN+2", 0 }, //36     ---do nothing for self thread
          { "SIGRTMIN+3", 0 }, //37
          { "SIGRTMIN+4", 0 }, //38
          { "SIGTTMIN+5", 0 }, //39

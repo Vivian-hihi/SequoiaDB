@@ -1271,6 +1271,7 @@ namespace engine
       _oprtimeout          = PMD_OPTION_OPR_TIME_DEFAULT ;
       _overflowRatio       = PMD_DFT_OVERFLOW_RETIO ;
       _extendThreshold     = PMD_DFT_EXTEND_THRESHOLD ;
+      _signalInterval      = 0 ;
 
 #ifdef SDB_ENTERPRISE
 
@@ -1509,6 +1510,9 @@ namespace engine
       rdxUInt( pEX, PMD_OPTION_EXTEND_THRESHOLD, _extendThreshold, FALSE, TRUE,
                PMD_DFT_EXTEND_THRESHOLD, TRUE ) ;
       rdvMinMax( pEX, _extendThreshold, 0, 128, TRUE ) ;
+      // --signalinterval
+      rdxInt( pEX, PMD_OPTION_SIGNAL_INTERVAL, _signalInterval, FALSE, TRUE,
+              0, TRUE ) ;
 
       // end map
 

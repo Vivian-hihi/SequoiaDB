@@ -176,6 +176,17 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR, "Start db monitor edu failed, rc: %d", rc ) ;
       pEDUMgr->regSystemEDU( EDU_TYPE_DBMONITOR, eduID ) ;
 
+#if defined ( _LINUX )
+      // start signal test
+      if ( pmdGetOptionCB()->getSignalInterval() > 0 )
+      {
+         pmdEDUCB *mainCB = pmdGetThreadEDUCB() ;
+         rc = pEDUMgr->startEDU( EDU_TYPE_SIGNALTEST, (void*)mainCB, &eduID ) ;
+         PD_RC_CHECK( rc, PDERROR, "Start signal test edu failed, rc: %d", rc ) ;
+         pEDUMgr->regSystemEDU( EDU_TYPE_SIGNALTEST, eduID ) ;
+      }
+#endif // _LINUX
+
       // start tcp listern edu and http listerner edu
       rc = pEDUMgr->startEDU( EDU_TYPE_TCPLISTENER, (void*)_pTcpListener,
                               &eduID ) ;

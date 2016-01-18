@@ -125,6 +125,11 @@ namespace engine
          ON_EDUTYPE_TO_ENTRY1 ( EDU_TYPE_DBMONITOR, TRUE,
                                 pmdDBMonitorEntryPoint,
                                 "DBMonitor" ),
+#if defined (_LINUX)
+         ON_EDUTYPE_TO_ENTRY1 ( EDU_TYPE_SIGNALTEST, TRUE,
+                                pmdSignalTestEntryPoint,
+                                "SignalTest" ),
+#endif // _LINUX
 
          // For the end
          ON_EDUTYPE_TO_ENTRY1 ( EDU_TYPE_MAXIMUM, FALSE,
@@ -166,6 +171,29 @@ namespace engine
       }
       return SDB_OK ;
    }
+
+#if defined (_LINUX)
+   INT32 pmdSignalTestEntryPoint( pmdEDUCB *cb, void *arg )
+   {
+      pmdEDUCB *mainCB = ( pmdEDUCB* )arg ;
+      INT32 interval = pmdGetOptionCB()->getSignalInterval() ;
+      UINT32 timeCounter = 0 ;
+
+      while( !cb->isDisconnected() )
+      {
+         ossSleep( OSS_ONE_SEC ) ;
+         ++timeCounter ;
+
+         if ( interval > 0 && timeCounter >= (UINT32)interval )
+         {
+            ossPThreadKill( mainCB->getThreadID(), OSS_TEST_SIGNAL ) ;
+            timeCounter = 0 ;
+         }
+      }
+
+      return SDB_OK ;
+   }
+#endif
 
 }
 

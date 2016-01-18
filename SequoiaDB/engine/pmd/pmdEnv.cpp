@@ -152,6 +152,44 @@ namespace engine
       PD_TRACE_EXIT ( SDB_PMDSIGHND ) ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_PMDSIGTESTHND, "pmdSignalTestHandler" )
+   void pmdSignalTestHandler ( OSS_HANDPARMS )
+   {
+      PD_TRACE_ENTRY ( SDB_PMDSIGTESTHND ) ;
+
+      static OSS_THREAD_LOCAL BOOLEAN amIIn = FALSE ;
+      if ( amIIn )
+      {
+         goto done ;
+      }
+      amIIn = TRUE ;
+
+#ifdef _DEBUG
+      PD_LOG( PDEVENT, "Receive Signal[%d]", signum ) ;
+#endif //_DEBUG
+
+      if ( signum == OSS_TEST_SIGNAL )
+      {
+         std::set<pthread_t>::iterator it ;
+         std::set<pthread_t> tidList ;
+         pmdGetKRCB()->getEDUMgr()->getEDUThreadID ( tidList ) ;
+         for ( it = tidList.begin(); it != tidList.end(); ++it )
+         {
+            // threadID was initialized to 0 in constructor, and set to real
+            // thread id in pmdEDUEntryPoint
+            if ( 0 == (*it) )
+            {
+               continue ;
+            }
+            ossPThreadKill ( (*it), OSS_INTERNAL_TEST_SIGNAL ) ;
+         }
+      }
+      amIIn = FALSE ;
+
+   done:
+      PD_TRACE_EXIT ( SDB_PMDSIGTESTHND ) ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB_PMDEDUUSERTRAPHNDL, "pmdEDUUserTrapHandler" )
    void pmdEDUUserTrapHandler( OSS_HANDPARMS )
    {
@@ -275,6 +313,25 @@ namespace engine
          goto error ;
       }
 
+      // signal test
+      newact.sa_sigaction = ( OSS_SIGFUNCPTR ) pmdSignalTestHandler ;
+      newact.sa_flags |= SA_SIGINFO ;
+      newact.sa_flags |= SA_ONSTACK ;
+      if ( sigaction ( OSS_TEST_SIGNAL, &newact, NULL ) )
+      {
+         PD_LOG ( PDERROR, "Failed to setup signal handler for test signal" ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+      // capture the internal user stack dump signal
+      if ( sigaction ( OSS_INTERNAL_TEST_SIGNAL, &newact, NULL ) )
+      {
+         PD_LOG ( PDERROR, "Failed to setup signal handler for internal "
+                  "test signal" ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
       // other signal
       sigSet.fillSet () ;
       sigSet.sigDel ( SIGSEGV ) ;
@@ -283,6 +340,8 @@ namespace engine
       sigSet.sigDel ( SIGPROF ) ;
       sigSet.sigDel ( OSS_STACK_DUMP_SIGNAL ) ;
       sigSet.sigDel ( OSS_STACK_DUMP_SIGNAL_INTERNAL ) ;
+      sigSet.sigDel ( OSS_TEST_SIGNAL ) ;
+      sigSet.sigDel ( OSS_INTERNAL_TEST_SIGNAL ) ;
 
       if ( pDelSig )
       {

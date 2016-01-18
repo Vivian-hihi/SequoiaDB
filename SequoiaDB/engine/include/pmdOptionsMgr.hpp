@@ -484,6 +484,7 @@ namespace engine
          OSS_INLINE UINT32 getOprTimeout() const { return _oprtimeout ; }
          OSS_INLINE UINT32 getOverFlowRatio() const { return _overflowRatio ; }
          OSS_INLINE UINT32 getExtendThreshold() const { return _extendThreshold ; }
+         OSS_INLINE INT32 getSignalInterval() const { return _signalInterval ; }
 
 #ifdef SDB_ENTERPRISE
 
@@ -550,6 +551,7 @@ namespace engine
          UINT32      _oprtimeout ;
          UINT32      _overflowRatio ;     // %
          UINT32      _extendThreshold ;   // MB
+         INT32       _signalInterval ;
 
 #ifdef SDB_ENTERPRISE
 
