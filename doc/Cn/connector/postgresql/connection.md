@@ -141,7 +141,7 @@ test
 在 PostgreSQL 中建立相应的映射表：
 
 <pre class="prettyprint lang-javascript">
-foo=# create foreign table bartest (name numeric[], id numeric) server sdb_server options ( collectionspace 'foo', collection 'bar' ) ;</pre>
+foo=# create foreign table bartest (name int[], id int) server sdb_server options ( collectionspace 'foo', collection 'bar' ) ;</pre>
 
 执行查询命令：
 
