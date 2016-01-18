@@ -934,8 +934,8 @@ namespace engine
          ++iter;
       }
    done:
-      return rc;
       PD_TRACE_EXITRC ( SDB__CLSCTSET_FINDGPIDS, rc ) ;
+      return rc;
    error:
       goto done;
    }
