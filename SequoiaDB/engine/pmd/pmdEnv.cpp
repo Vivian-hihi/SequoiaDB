@@ -155,8 +155,8 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION ( SDB_PMDSIGTESTHND, "pmdSignalTestHandler" )
    void pmdSignalTestHandler ( OSS_HANDPARMS )
    {
+#if defined( SDB_ENGINE )
       PD_TRACE_ENTRY ( SDB_PMDSIGTESTHND ) ;
-
       static OSS_THREAD_LOCAL BOOLEAN amIIn = FALSE ;
       if ( amIIn )
       {
@@ -188,6 +188,7 @@ namespace engine
 
    done:
       PD_TRACE_EXIT ( SDB_PMDSIGTESTHND ) ;
+#endif // SDB_ENGINE
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_PMDEDUUSERTRAPHNDL, "pmdEDUUserTrapHandler" )
