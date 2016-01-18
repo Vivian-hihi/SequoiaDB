@@ -39,6 +39,10 @@
 #include "pmdEDUEntryPoint.hpp"
 #include "pmd.hpp"
 
+#if defined (_LINUX)
+#include "ossSignal.hpp"
+#endif // _LINUX
+
 namespace engine
 {
 
