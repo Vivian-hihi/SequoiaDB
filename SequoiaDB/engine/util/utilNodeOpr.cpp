@@ -354,13 +354,7 @@ namespace engine
 #else
          rc = ossWriteNamedPipe( _pipeWHandle, pBuff, size, &bufWrite ) ;
 #endif //_WINDOWS
-         if ( SDB_INTERRUPT == rc )
-         {
-            totalWrite += bufWrite ;
-            bufWrite = 0 ;
-            continue ;
-         }
-         else if ( rc )
+         if ( rc && SDB_INTERRUPT != rc )
          {
             if ( SDB_TIMEOUT != rc )
             {
@@ -370,6 +364,9 @@ namespace engine
             }
             goto error ;
          }
+
+         totalWrite += bufWrite ;
+         bufWrite = 0 ;
       }
 
    done:
@@ -461,15 +458,9 @@ namespace engine
          rc = ossReadNamedPipe( _pipeRHandle, pBuff[totalRead],
                                 readSize - totalRead, &buffRead,
                                 UTIL_NODE_PIPE_TIMEOUT ) ;
-         if ( rc )
+         if ( rc && SDB_INTERRUPT != rc )
          {
-            if ( SDB_INTERRUPT == rc )
-            {
-               totalRead += buffRead ;
-               buffRead = 0 ;
-               continue ;
-            }
-            else if ( SDB_TIMEOUT != rc )
+            if ( SDB_TIMEOUT != rc )
             {
                PD_LOG ( PDERROR, "Read named pipe[%s] failed, rc: %d",
                         _pipeRName, rc ) ;
@@ -477,6 +468,8 @@ namespace engine
             }
             goto error ;
          }
+         totalRead += buffRead ;
+         buffRead = 0 ;
       }
       hasRead = (INT32)totalRead ;
 
