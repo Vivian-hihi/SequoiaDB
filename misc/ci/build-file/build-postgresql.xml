@@ -1,134 +1,132 @@
-<project default="copy_pg_connector">
-	<property name="CODE_DIR" value="${WORKSPACE}/sequoiadb" />
-	<property name="PG_DIR" value="${WORKSPACE}/postgresql" />
-	<property name="RELEASE_DIR" value="${WORKSPACE}/release" />
-	<property name="RELEASE_DIR_BEFORE_TAR" value="${RELEASE_DIR}/postgresql" />
-	<property name="pg_connector_name" value="sdb_fdw.so" />
-	<property file="${CODE_DIR}/misc/ci/ci-properies-files/ci.pg.properties.x86" />
-	<taskdef resource="com/sequoiadb/ant/ant-sdbtasks.xml">
-        <classpath>
-            <pathelement location="${CODE_DIR}/misc/ci/exec-tools/ant-sdbtasks.jar" />
-        </classpath>
-    </taskdef>
+<project default="make_release">
+   <property name="SEQUOIADB_CODE_DIR" value="${WORKSPACE}/sequoiadb" />
+   <property name="FDW_CODE_DIR" value="${SEQUOIADB_CODE_DIR}/driver/postgresql" />
+   <property name="PG_CODE_DIR" value="${WORKSPACE}/postgresql" />
+   
+   <!--SEQUOIASQL_DIR: for pg output and fdw output, before packed by builder-->
+   <property name="SEQUOIASQL_DIR" value="${PG_CODE_DIR}/sequoiasql" /> 
+   <property name="RELEASE_CONF_DIR" value="${PG_CODE_DIR}/package/run/conf" />
+   <property name="RELEASE_DIR" value="${WORKSPACE}/release" />
+	
+   <property file="${SEQUOIADB_CODE_DIR}/misc/ci/ci-properies-files/ci.pg.properties.x86" />
+   <taskdef resource="com/sequoiadb/ant/ant-sdbtasks.xml">
+      <classpath>
+         <pathelement location="${SEQUOIADB_CODE_DIR}/misc/ci/exec-tools/ant-sdbtasks.jar" />
+      </classpath>
+   </taskdef>
+   
+   <target name="clean" depends="">
+      <exec executable="make" dir="${PG_CODE_DIR}" failonerror="false">
+         <arg line=" uninstall" />
+      </exec>
+      <exec executable="make" dir="${PG_CODE_DIR}" failonerror="false">
+         <arg line=" clean" />
+      </exec>
+      <exec executable="make" dir="${FDW_CODE_DIR}" failonerror="false">
+         <arg line=" clean" />
+      </exec>
+      <delete dir="${SEQUOIASQL_DIR}" failonerror="false" />
+      <delete dir="${RELEASE_DIR}" failonerror="false" />
+      <mkdir dir="${RELEASE_DIR}" />
+   </target>
 
-    <target name="clean" depends="">
-    	<exec executable="make" dir="${PG_DIR}" failonerror="false">
-			<arg line=" uninstall" />
-		</exec>
-		<exec executable="make" dir="${PG_DIR}" failonerror="false">
-			<arg line=" clean" />
-		</exec>
-    	<exec executable="make" dir="${CODE_DIR}/driver/postgresql" failonerror="false">
-			<arg line=" clean" />
-		</exec>
-		<delete dir="${PG_DIR}/pgsql" failonerror="false" />
-		<delete dir="${PG_DIR}/pgsql/pg_data" failonerror="false" />
-		<delete dir="${RELEASE_DIR}" failonerror="false" />
-    	<mkdir dir="${RELEASE_DIR}" />
-    	<mkdir dir="${RELEASE_DIR_BEFORE_TAR}" />
-    </target>
-
-    <target name="compile_pg" depends="clean">
-    	<echo message="Compile the postgresql..." />
-    	<chmod file="${PG_DIR}/configure" perm="u+x" />
-    	<exec executable="./configure" dir="${PG_DIR}" failonerror="true">
-    		<arg line=" --without-readline --without-zlib --prefix=${PG_DIR}/pgsql" />
-    	</exec>
-    	<exec executable="make" dir="${PG_DIR}" failonerror="true">
-    		<arg line=" all" />
-		</exec>
-		<exec executable="make" dir="${PG_DIR}" failonerror="true">
-			<arg line=" install" />
-		</exec>
-		<mkdir dir="${PG_DIR}/pgsql/pg_data" />
-    </target>
-
-    <target name="compile_sdb" depends="compile_pg">
-    	<if>
+   <target name="compile_pg" depends="clean">
+      <echo message="Compile the postgresql..." />
+      
+      <if>
 			<equals arg1="${compile.debug}" arg2="true" />
 			<then>
-				<echo message="compile.debug is ture" />
-				<property name="compile.arg.line" value="--dd" />
-				<echo message="${compile.arg.line}" />
+				<echo message="compile pg is debug" />
+				<property name="compile.arg.line" value="'CFLAGS=-O0' --enable-debug" />
 			</then>
 			<else>
-				<echo message="compile.debug is false" />
+				<echo message="compile pg is release" />
 				<property name="compile.arg.line" value="" />
-				<echo message="${compile.arg.line}" />
 			</else>
 		</if>
+      
+      <chmod file="${PG_CODE_DIR}/configure" perm="u+x" />
+      <exec executable="./configure" dir="${PG_CODE_DIR}" failonerror="true">
+         <arg line=" --without-readline --without-zlib ${compile.arg.line} --prefix=${SEQUOIASQL_DIR}" />
+      </exec>
+      <exec executable="make" dir="${PG_CODE_DIR}" failonerror="true">
+         <arg line=" all" />
+      </exec>
+      <exec executable="make" dir="${PG_CODE_DIR}" failonerror="true">
+         <arg line=" install" />
+      </exec>
+   </target>
 
-		<if>
-			<equals arg1="${enterprise}" arg2="true" />
+   <target name="compile_sequoiadb" depends="compile_pg">
+      <echo message="Compile the sequoiadb..." />     
+      <exec executable="scons" dir="${SEQUOIADB_CODE_DIR}" failonerror="true">
+         <arg line=" --enterprise -j 4" />
+      </exec>
+   </target>
+
+   <target name="build_pg_connector" depends="compile_sequoiadb">
+      <echo message="Compile the connector of postgresql..." />
+      <property environment="env" />
+      
+      <if>
+			<equals arg1="${compile.debug}" arg2="true" />
 			<then>
-				<echo message="enterprise is ture" />
-				<property name="enterprise.line" value=" --enterprise" />
-				<echo message="${enterprise.line}" />
+				<echo message="compile fdw is debug" />
+				<replace file="${FDW_CODE_DIR}/Makefile" token="OPTIMIZATION?=-O3" value="OPTIMIZATION?=-O0" />      
 			</then>
 			<else>
-				<echo message="enterprise is false" />
-				<property name="enterprise.line" value="" />
-				<echo message="${enterprise.line}" />
+				<echo message="compile fdw is release" />				
 			</else>
 		</if>
-    	<exec executable="scons" dir="${CODE_DIR}" failonerror="true">
-			<arg line="${compile.arg.line}${enterprise.line} -j 4" />
-		</exec>
-    </target>
-
-    <target name="build_pg_connector" depends="compile_sdb">
-    	<echo message="Compile the connector of postgresql..." />
-    	<!--property environment="env" /-->
-    	<echo file="${PG_DIR}/pgsql/build.sh" message="bin/initdb -D pg_data&#10;bin/postgres -D pg_data &gt;&gt; ${RELEASE_DIR}/logfile.${BUILD_NUMBER} 2&gt;&#38;1 &#38;" />
-    	<replace file="${CODE_DIR}/driver/postgresql/Makefile" token="DEBUG?=-ggdb" value="DEBUG?=-ggdb -DSDB_USE_OWN_POSTGRES" />
-		<!--exec executable="sh" dir="${PG_DIR}/pgsql" failonerror="true">
-			<arg line=" ./build.sh" />
-			<env key="LD_LIBRARY_PATH" path="${PG_DIR}/pgsql/lib:${LD_LIBRARY_PATH}" />
-		</exec-->
-		<exec executable="make" dir="${CODE_DIR}/driver/postgresql" failonerror="true">
-		   <env key="PATH" path="${PG_DIR}/pgsql/bin:${PATH}" />
-			<arg line=" local" />
-		</exec>
-		<exec executable="make" dir="${CODE_DIR}/driver/postgresql" failonerror="true">
-		   <env key="PATH" path="${PG_DIR}/pgsql/bin:${PATH}" />
-			<arg line=" all" />
-		</exec>
-    </target>
-
-    <target name="copy_pg_connector" depends="build_pg_connector">     
-    	<echo message="Begin to copy the ${pg_connector_name} sdb_fdw.control sdb_fdw--1.0.sql to ${RELEASE_DIR_BEFORE_TAR}" />
-		<!--copy file="${CODE_DIR}/driver/postgresql/${pg_connector_name}" tofile="${CODE_DIR}/driver/postgresql/${pg_connector_name}.${BUILD_NUMBER}" /-->
-		<copy file="${CODE_DIR}/driver/postgresql/${pg_connector_name}" tofile="${RELEASE_DIR_BEFORE_TAR}/${pg_connector_name}" />
-		<copy file="${CODE_DIR}/driver/postgresql/sdb_fdw.control" tofile="${RELEASE_DIR_BEFORE_TAR}/sdb_fdw.control" />
-		<copy file="${CODE_DIR}/driver/postgresql/sdb_fdw--1.0.sql" tofile="${RELEASE_DIR_BEFORE_TAR}/sdb_fdw--1.0.sql" />
-
-      <echo message="Begin to tar ${RELEASE_DIR_BEFORE_TAR}" />
-      <tar destfile="${RELEASE_DIR}/postgresql.tar.gz" basedir="${RELEASE_DIR_BEFORE_TAR}" includes="*" compression="gzip" />		
-      
-      <copy file="${RELEASE_DIR}/postgresql.tar.gz" tofile="${RELEASE_DIR}/postgresql.tar.gz.${BUILD_NUMBER}" />		
-		<stafTools workType="copy" workHost="LOCAL" fileName="${RELEASE_DIR}/postgresql.tar.gz.${BUILD_NUMBER}" saveDir="${copy_tar}" toHost="${target.deploy_tar_gz.ip}" failonerror="true"/>
-		<delete file="${RELEASE_DIR}/postgresql.tar.gz.${BUILD_NUMBER}" />
 		
-		<echo message="delete the file ${CODE_DIR}/pg.version" />
-		<stafTools workType="delete" workHost="LOCAL" fileName="${CODE_DIR}/pg.version" failonerror="false"/>
+      <!--fdw for changed pg-->
+      <replace file="${FDW_CODE_DIR}/Makefile" token="DEBUG?=-ggdb" value="DEBUG?=-ggdb -DSDB_USE_OWN_POSTGRES" />
+      	
+      <exec executable="make" dir="${FDW_CODE_DIR}" failonerror="true">
+         <env key="PATH" path="${SEQUOIASQL_DIR}/bin:${env.PATH}" />
+         <arg line=" local" />
+      </exec>
+      <exec executable="make" dir="${SEQUOIADB_CODE_DIR}/driver/postgresql" failonerror="true">
+         <env key="PATH" path="${SEQUOIASQL_DIR}/bin:${env.PATH}" />
+         <arg line=" all" />
+      </exec>
+   </target>
+
+   <!--copy files to releaseDir, ready to pack by builder-->
+   <target name="make_release" depends="build_pg_connector"> 	
+      <echo message="Begin to copy fdw files to ${SEQUOIASQL_DIR}"/>    
+      <mkdir dir="${SEQUOIASQL_DIR}/driver" />
+      <copy file="${FDW_CODE_DIR}/sdb_fdw.so"       tofile="${SEQUOIASQL_DIR}/driver/sdb_fdw.so" />
+		<copy file="${FDW_CODE_DIR}/sdb_fdw.control"  tofile="${SEQUOIASQL_DIR}/driver/sdb_fdw.control" />
+		<copy file="${FDW_CODE_DIR}/sdb_fdw--1.0.sql" tofile="${SEQUOIASQL_DIR}/driver/sdb_fdw--1.0.sql" />
+      
+      <exec dir="${RELEASE_CONF_DIR}" executable="builder" failonerror="true">
+			<arg line="build sequoiasql.xml --setvars project.outputDirectory=${RELEASE_DIR}" />
+		</exec>
+		<echo message="builder build sequoiasql.xml --setvars project.outputDirectory=${RELEASE_DIR}" />
+		
+		<property name="PACKAGE_NAME" value="${project.name}-${sequoiasql.version}-installer.run" />		
+		<echo message="Begin to copy ${PACKAGE_NAME} to ${archive.dir}"/>
+		<copy file="${RELEASE_DIR}/${PACKAGE_NAME}" tofile="${archive.dir}/${PACKAGE_NAME}.${BUILD_NUMBER}" />		
+		
+		<echo message="Begin to make pg.version, copy it to ${archive.dir}"/>
+		<delete file="${PG_CODE_DIR}/pg.version" failonerror="false"/>
 		<if>
 			<equals arg1="${compile.debug}" arg2="false" />
-			<then>
-				<propertyfile file="${CODE_DIR}/pg.version" comment="true">
+			<then> <!--release-->
+				<propertyfile file="${PG_CODE_DIR}/pg.version" comment="true">
 					<entry key="BUILD.NUMBER" value="${BUILD_NUMBER}" type="string" />
-					<entry key="BUILD.INSTALL.FILENAME" value="postgresql.tar.gz${enterprise.line}" type="string" />
+					<entry key="BUILD.INSTALL.FILENAME" value="${PACKAGE_NAME}" type="string" />
 					<entry key="RELEASE.NUMBER" value="${BUILD_NUMBER}" type="string"/>	
 				</propertyfile>
 			</then>
-			<else>
-				<propertyfile file="${CODE_DIR}/pg.version" comment="true">
+			<else> <!--debug-->
+				<propertyfile file="${PG_CODE_DIR}/pg.version" comment="true">
 					<entry key="BUILD.NUMBER" value="${BUILD_NUMBER}" type="string" />
-					<entry key="BUILD.INSTALL.FILENAME" value="postgresql.tar.gz${enterprise.line}" type="string" />	
-				</propertyfile>
+					<entry key="BUILD.INSTALL.FILENAME" value="${PACKAGE_NAME}" type="string" />	
+				</propertyfile>			
 			</else>
-		</if>
-		<stafTools workType="copy" workHost="LOCAL" fileName="${CODE_DIR}/pg.version" saveDir="${copy_tar}" toHost="LOCAL" failonerror="true"/>
-		<stafTools workType="shell" workHost="LOCAL" common="/usr/bin/find ${copy_tar} -mtime +7 -delete;" workDir="${copy_tar}" waitTime="30m" failonerror="true"/>
-    </target>
-
+		</if>		
+		<copy file="${PG_CODE_DIR}/pg.version" tofile="${archive.dir}/pg.version" failonerror="true"/>				
+   </target>
 </project>

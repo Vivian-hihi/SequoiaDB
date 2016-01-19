@@ -1,2 +1,4 @@
-copy_tar=/opt/test_tar
-target.deploy_tar_gz.ip=suse-ci004
+archive.dir=/opt/test_tar
+project.name=sequoiasql
+os.and.platform=linux_x86_64
+sequoiasql.version=1.0
