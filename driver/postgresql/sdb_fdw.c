@@ -2276,7 +2276,7 @@ static Datum sdbColumnValue( sdbbson_iterator *sdbbsonIterator, Oid columnTypeId
 								     valueStr, ObjectIdGetDatum(InvalidOid), 
 								     Int32GetDatum(columnTypeMod) );
       }
-      else if ( bsonType == BSON_DOUBLE )
+      else
       {
          Datum numberNoTypeMode;
          FLOAT64 value = sdbbson_iterator_double( sdbbsonIterator ) ;
