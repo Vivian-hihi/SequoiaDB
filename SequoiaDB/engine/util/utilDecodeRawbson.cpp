@@ -121,10 +121,7 @@ void _utilPrintLog( const CHAR *pFunc,
    va_start(ap, pFmt);
    vsnprintf(userInfo, PD_LOG_STRINGMAX, pFmt, ap);
    va_end(ap);
-   if( getPDLevel() >= PDERROR )
-   {
-      pdLog( PDERROR, pFunc, pFile, line, userInfo ) ;
-   }
+   pdLog( PDERROR, pFunc, pFile, line, userInfo ) ;
 }
 
 INT32 utilDecodeBson::init( CHAR delChar, CHAR delField,
