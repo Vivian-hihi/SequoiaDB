@@ -90,7 +90,7 @@ typedef struct
 } SdbRecordItem ;
 
 
-#define SDB_MAX_RECORD_SIZE 10
+#define SDB_MAX_RECORD_SIZE 100
 typedef struct
 {
    INT32 size ;

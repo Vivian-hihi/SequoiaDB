@@ -657,7 +657,7 @@ int sdbSetBsonValue( sdbbson *bsonObj, const char *name, Datum valueDatum,
          sdbbson_oid_t sdbbsonObjectId ;
          CHAR *outputString    = NULL ;
          Oid outputFunctionId  = InvalidOid ;
-         bool typeVarLength    = false ;         
+         bool typeVarLength    = false ;
          getTypeOutputInfo( columnType, &outputFunctionId, &typeVarLength ) ;
          outputString = OidOutputFunctionCall( outputFunctionId, valueDatum ) ;
 
@@ -717,6 +717,7 @@ int sdbSetBsonValue( sdbbson *bsonObj, const char *name, Datum valueDatum,
       case 1182:
       case 1014 :
       {
+         INT32 i = 0 ;
          Datum datumTmp ;
          bool isNull            = false ;
          ArrayType *arr         = DatumGetArrayTypeP( valueDatum ) ;
@@ -726,11 +727,15 @@ int sdbSetBsonValue( sdbbson *bsonObj, const char *name, Datum valueDatum,
          sdbbson_append_start_array( bsonObj, name ) ;
          while ( array_iterate( iterator, &datumTmp, &isNull ) )
          {
-            rc = sdbSetBsonValue( bsonObj, "", datumTmp, element_type, 0 ) ;
+            CHAR arrayIndex[SDB_MAX_KEY_COLUMN_LENGTH + 1] = "" ;
+            sprintf( arrayIndex, "%d", i ) ;
+            rc = sdbSetBsonValue( bsonObj, arrayIndex, datumTmp, 
+                                  element_type, 0 ) ;
             if ( SDB_OK != rc )
             {
                break ;
             }
+            i++ ;
          }
          sdbbson_append_finish_array( bsonObj ) ;
 
@@ -1259,7 +1264,7 @@ INT32 sdbOperExpr( OpExpr *opr, SdbExprTreeState *expr_state,
          sdbbson_init( condition ) ;
 
          sdbbson_append_start_array( condition, "$not" ) ;
-         sdbbson_append_sdbbson( condition, "", &temp ) ;
+         sdbbson_append_sdbbson( condition, "0", &temp ) ;
          sdbbson_append_finish_array( condition ) ;
          sdbbson_destroy( &temp ) ;
       }
@@ -1475,8 +1480,10 @@ INT32 sdbRecurBoolExpr( BoolExpr *boolexpr, SdbExprTreeState *expr_state,
 
       if ( !sdbbson_is_empty( &sub_condition ) )
       {
+         CHAR arrayIndex[SDB_MAX_KEY_COLUMN_LENGTH + 1] = "" ;
+         sprintf( arrayIndex, "%d", count ) ;
+         sdbbson_append_sdbbson( &tmpCondition, arrayIndex, &sub_condition ) ;
          count++ ;
-         sdbbson_append_sdbbson( &tmpCondition, "", &sub_condition ) ;
       }
 
       sdbbson_destroy( &sub_condition ) ;
@@ -2165,7 +2172,8 @@ static BOOLEAN sdbColumnTypesCompatible( sdbbson_type sdbbsonType, Oid columnTyp
    }
    case NUMERICOID :
    {
-      if( BSON_STRING == sdbbsonType || BSON_DOUBLE == sdbbsonType )
+      if( BSON_STRING == sdbbsonType || BSON_DOUBLE == sdbbsonType ||
+          BSON_INT == sdbbsonType || BSON_LONG == sdbbsonType )
       {
          compatibleType = TRUE ;
       }
@@ -2260,16 +2268,7 @@ static Datum sdbColumnValue( sdbbson_iterator *sdbbsonIterator, Oid columnTypeId
    case NUMERICOID :
    {
       sdbbson_type bsonType = sdbbson_iterator_type(sdbbsonIterator);
-      if ( bsonType == BSON_DOUBLE )
-      {
-         Datum numberNoTypeMode;
-         FLOAT64 value = sdbbson_iterator_double( sdbbsonIterator ) ;
-         Datum valueDatum = Float8GetDatum( value ) ;
-         numberNoTypeMode = DirectFunctionCall1( float8_numeric, valueDatum ) ;
-         columnValue = DirectFunctionCall2( numeric, numberNoTypeMode, 
-                                            columnTypeMod ) ;
-      }
-      else if ( bsonType == BSON_STRING )
+      if ( bsonType == BSON_STRING )
       {
          const char *value = sdbbson_iterator_string( sdbbsonIterator ) ;
          Datum valueStr    = CStringGetDatum( value ) ;
@@ -2277,11 +2276,14 @@ static Datum sdbColumnValue( sdbbson_iterator *sdbbsonIterator, Oid columnTypeId
 								     valueStr, ObjectIdGetDatum(InvalidOid), 
 								     Int32GetDatum(columnTypeMod) );
       }
-      else
+      else if ( bsonType == BSON_DOUBLE )
       {
-         ereport( ERROR,( errcode( ERRCODE_FDW_INVALID_DATA_TYPE ),
-                  errmsg( "bsonType must be string or double:bsontype=%d", 
-                  bsonType ), errhint( "cannot malloc memory" ) ) ) ;
+         Datum numberNoTypeMode;
+         FLOAT64 value = sdbbson_iterator_double( sdbbsonIterator ) ;
+         Datum valueDatum = Float8GetDatum( value ) ;
+         numberNoTypeMode = DirectFunctionCall1( float8_numeric, valueDatum ) ;
+         columnValue = DirectFunctionCall2( numeric, numberNoTypeMode, 
+                                            columnTypeMod ) ;
       }
       
       break ;
@@ -2910,11 +2912,11 @@ static void SdbGetForeignPaths( PlannerInfo *root,
 
 /* SdbGetForeignPlan creates a foreign scan plan node for Sdb collection */
 static ForeignScan *SdbGetForeignPlan( PlannerInfo *root,
-                                        RelOptInfo *baserel,
-                                        Oid foreignTableId,
-                                        ForeignPath *bestPath,
-                                        List *targetList,
-                                        List *restrictionClauses )
+                                       RelOptInfo *baserel,
+                                       Oid foreignTableId,
+                                       ForeignPath *bestPath,
+                                       List *targetList,
+                                       List *restrictionClauses )
 {
    Index scanRangeTableIndex = baserel->relid ;
    ForeignScan *foreignScan  = NULL ;
@@ -2957,6 +2959,11 @@ static ForeignScan *SdbGetForeignPlan( PlannerInfo *root,
 static void SdbExplainForeignScan( ForeignScanState *scanState,
                                     ExplainState *explainState )
 {
+   ForeignScan *foreignScan  = NULL ;
+   List *foreignPrivateList  = NIL ;
+   List *fdw_state_list      = NIL ;
+   SdbExecState *fdw_state   = NULL ;
+
    SdbInputOptions options ;
    StringInfo namespaceName = makeStringInfo (  ) ;
    Oid foreignTableId = RelationGetRelid( scanState->ss.ss_currentRelation ) ;
@@ -2965,6 +2972,19 @@ static void SdbExplainForeignScan( ForeignScanState *scanState,
                       options.collectionspace, options.collection ) ;
    ExplainPropertyText( "Foreign Namespace", namespaceName->data,
                          explainState ) ;
+
+   /* deserialize fdw*/
+   foreignScan        = ( ForeignScan * )scanState->ss.ps.plan ;
+   foreignPrivateList = foreignScan->fdw_private ;
+   fdw_state_list     = ( List * )linitial( foreignPrivateList ) ;
+   fdw_state          = deserializeSdbExecState( fdw_state_list ) ;
+   if ( -1 != fdw_state->bson_record_addr )
+   {
+      SdbReleaseRecord( SdbGetRecordCache(), fdw_state->bson_record_addr ) ;
+      fdw_state->bson_record_addr = -1 ;
+   }
+
+   pfree( fdw_state ) ;   
 }
 
 /* SdbBeginForeignScan connects to sdb server and open a cursor to perform scan
