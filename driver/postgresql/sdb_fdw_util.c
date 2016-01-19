@@ -1346,7 +1346,6 @@ void SdbReleaseRecord( SdbRecordCache *recordCache, UINT64 recordID )
 
    if ( !recordCache->recordArray[index].isUsed )
    {
-      elog( ERROR, "release twice:index=%d", index ) ;
       return ;
    }
 
