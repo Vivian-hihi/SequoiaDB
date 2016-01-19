@@ -40,9 +40,9 @@ INT32 buildOneRecord ( bson* obj )
    bson_init ( obj ) ;
    bson_append_int ( obj, FIELD1, 100 ) ;
    bson_append_start_array ( obj, FIELD2 ) ;
-   bson_append_string ( obj, "", "1" ) ;
-   bson_append_string ( obj, "", "2" ) ;
-   bson_append_string ( obj, "", "3" ) ;
+   bson_append_string ( obj, "0", "a" ) ;
+   bson_append_string ( obj, "1", "b" ) ;
+   bson_append_string ( obj, "2", "c" ) ;
    bson_append_finish_array ( obj ) ;
    rc = bson_finish ( obj ) ;
    CHECK_RC ( rc, "Failed to build bson" ) ;
