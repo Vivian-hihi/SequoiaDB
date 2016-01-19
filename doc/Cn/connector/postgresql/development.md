@@ -15,7 +15,7 @@
 3) 重启 PostgreSQL
 
   <pre class="prettyprint lang-javascript">
-  $ bin/pg_ctl stop -s -D pg_data/ -m fast; bin/postgres -D pg_data/ >> logfile 2 > &1 &</pre>
+  $ bin/pg_ctl stop -s -D pg_data/ -m fast; bin/postgres -D pg_data/ >> logfile 2>&1 &</pre>
 
 ##JDBC连接程序##
 
@@ -25,7 +25,7 @@ import java.sql.*;
 public class postgresql_sample {
    static{
        try {
-           Class.forName"org.postgresql.Driver");
+           Class.forName("org.postgresql.Driver");
        } catch (ClassNotFoundException e) {
            e.printStackTrace();
        }
@@ -51,7 +51,7 @@ public class postgresql_sample {
                    isHeaderPrint = true;
                }
            }
-           for (i = 1; i <= col_num; i++) {
+           for (int i = 1; i <= col_num; i++) {
                System.out.print(rs.getString(i) + "|");
            }
            System.out.println();
