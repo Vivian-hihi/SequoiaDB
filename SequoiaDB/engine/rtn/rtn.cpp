@@ -486,22 +486,48 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNRESUMECLDICTCREATE, "rtnResumeClDictCreate" )
-   static void rtnResumeClDictCreate( dmsStorageUnit *su, SDB_DMSCB *dmsCB )
+   static INT32 rtnResumeClDictCreate( dmsStorageUnit *su, SDB_DMSCB *dmsCB )
    {
+      INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB_RTNRESUMECLDICTCREATE ) ;
 
-      const dmsMBStatInfo *mbStat = NULL ;
+      UINT32 clLID = DMS_INVALID_CLID ;
+      dmsMBContext *context = NULL ;
+      dmsMB *mb = NULL ;
       for ( UINT16 mbID = 0; mbID < DMS_MME_SLOTS; ++mbID )
       {
-         mbStat = su->data()->getMBStatInfo( mbID ) ;
-         if ( UTIL_COMPRESSOR_LZW == mbStat->_compressorType
-              && DMS_INVALID_EXTENT == mbStat->_dictExtID )
+         rc = su->data()->getMBContext( &context, mbID, clLID ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to get dms mb context, rc: %d", rc ) ;
+         mb = context->mb() ;
+         if ( DMS_IS_MB_INUSE( mb->_flag ) )
          {
-            dmsCB->pushToDictCreateCLList( su->CSID(), mbID ) ;
+            /*
+             * Three conditions should be matched to resume dictionary creating job
+             * for a collection:
+             * (1) 'Compressed' option is set as true
+             * (2) 'CompressionType' is set as 'lzw'
+             * (3) The dictionary extent id is invalid currently, which means the
+             *     dictionary has not been created yet.
+             */
+            if ( OSS_BIT_TEST( mb->_attributes, DMS_MB_ATTR_COMPRESSED )
+                 && ( UTIL_COMPRESSOR_LZW == mb->_compressorType )
+                 && ( DMS_INVALID_EXTENT == mb->_dictExtentID ) )
+            {
+               dmsCB->pushToDictCreateCLList( su->CSID(), mbID ) ;
+            }
          }
+         su->data()->releaseMBContext( context ) ;
       }
 
+   done:
+      if ( context )
+      {
+         su->data()->releaseMBContext( context ) ;
+      }
       PD_TRACE_EXIT( SDB_RTNRESUMECLDICTCREATE ) ;
+      return rc ;
+   error:
+      goto done ;
    }
 
    // Load all collection spaces from database path
@@ -587,7 +613,10 @@ namespace engine
                       */
                      if ( !storageUnit->data()->isTempSU() )
                      {
-                        rtnResumeClDictCreate( storageUnit, dmsCB ) ;
+                        rc = rtnResumeClDictCreate( storageUnit, dmsCB ) ;
+                        PD_RC_CHECK( rc, PDERROR,
+                                     "Failed to resume dictionary creating "
+                                     "job, rc: %d", rc ) ;
                      }
                   } // if ( rtnVerifyCollectionSpaceFileName
                   else if ( SDB_FILE_UNKNOW == rtnParseFileName( pFileName ) )
