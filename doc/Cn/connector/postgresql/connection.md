@@ -206,7 +206,7 @@ Note:
 3) 修改配置文件，调整 pg_shell 查询时，每次获取记录数
 
 <pre class="prettyprint lang-javascript">
-$ ${PG_HOME}/bin/pg_config -sysconfdir</pre>
+$ ${PG_HOME}/bin/pg_config --sysconfdir</pre>
 
 结果为：
 
