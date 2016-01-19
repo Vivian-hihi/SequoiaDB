@@ -472,6 +472,12 @@ namespace engine
          }
          totalRead += buffRead ;
          buffRead = 0 ;
+
+         if ( SDB_OK == rc )
+         {
+            break ;
+         }
+         rc = SDB_OK ;
       }
       hasRead = (INT32)totalRead ;
 
