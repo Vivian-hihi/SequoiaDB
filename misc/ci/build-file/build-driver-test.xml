@@ -182,7 +182,7 @@
 		<exec executable="scons" dir="${testcases_dir}/CPP/staticlib" failonerror="false">
 			<arg line=" ==dd ==lib_path=${driver_dir}/lib ==include_path=${driver_dir}/include" />
 		</exec-->
-		<--echo level="info" message="Step3 : Copy the CPP driver dynamic testcases from &lt;${testcases_dir}/CPP/build_test&gt; to &lt;${deploy_dir}/hlt/drivers_testcases/CPP/build&gt;." />
+		<echo level="info" message="Step3 : Copy the CPP driver dynamic testcases from &lt;${testcases_dir}/CPP/build_test&gt; to &lt;${deploy_dir}/hlt/drivers_testcases/CPP/build&gt;." />
 		<copy todir="${deploy_dir}/hlt/drivers_testcases/CPP/build">
 			<fileset dir="${testcases_dir}/CPP/build_test" includes="*" />
 		</copy>
