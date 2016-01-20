@@ -49,13 +49,13 @@ except SDBBaseError, e:
 # success to connect to db
 try:
 cs_name = 'foo'
-  cs = db.create_collection_space(cs_name, 16384) except SDBBaseError, e:
+  cs = db.create_collection_space(cs_name, {PageSize:16384}) except SDBBaseError, e:
 pysequoiadb._print(e)
 
 # success to create collection space
 cl_name = 'bar'
 try:
-  cs = cs.create_collection(cl_name)
+  cl = cs.create_collection(cl_name)
 except SDBBaseError, e:
 pysequoiadb._print(e)</pre>
 
