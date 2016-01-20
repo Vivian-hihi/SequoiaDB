@@ -65,7 +65,7 @@
 	<pre class="prettyprint lang-javascript">
 	$ PGSHAREDIR=$(bin/pg_config --sharedir)</pre>
 
-	在 shardir 目录上再创建 extemsion 目录
+	在 shardir 目录上再创建 extension 目录
 
 	<pre class="prettyprint lang-javascript">
 	$ mkdir -p ${PGSHAREDIR}/extension</pre>
