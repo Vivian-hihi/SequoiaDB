@@ -67,7 +67,9 @@
       <property environment="env" />
       <echo message="PATH=${env.PATH}"/>
       <echo message="LD_LIBRARY_PATH=${env.LD_LIBRARY_PATH}"/>
-      
+      <exec executable="which" dir="${CODE_DIR}/driver/postgresql" failonerror="true">
+			<arg line=" progres" />
+		</exec>
 		<echo message="Compile the connector of postgresql..." />
 		<exec executable="make" dir="${CODE_DIR}/driver/postgresql" failonerror="true">
 			<arg line=" clean" />
