@@ -65,9 +65,6 @@
 		</exec-->
       
       <property environment="env" />
-      <exec executable="which" dir="${CODE_DIR}/driver/postgresql" failonerror="false">
-			<arg line=" postgres" />
-		</exec>
 		<echo message="PATH=${env.PATH}"/>
 			
 		<echo message="Compile the connector of postgresql..." />
