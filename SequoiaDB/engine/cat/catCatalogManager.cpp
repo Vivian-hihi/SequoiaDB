@@ -1795,7 +1795,7 @@ namespace engine
       {
          attr |= DMS_MB_ATTR_COMPRESSED ;
       }
-      if ( ( mask & CAT_MASK_AUTOINDEXID ) && clInfo._autoIndexId )
+      if ( ( mask & CAT_MASK_AUTOINDEXID ) && !clInfo._autoIndexId )
       {
          attr |= DMS_MB_ATTR_NOIDINDEX ;
       }
