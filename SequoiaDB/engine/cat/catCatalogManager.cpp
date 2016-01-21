@@ -717,26 +717,6 @@ namespace engine
             goto error ;
          }
 
-         // check group is active or not
-         if ( NULL != clInfo._gpSpecified )
-         {
-            rc = _checkGroupStatus( clInfo._gpSpecified ) ;
-            if ( SDB_OK != rc )
-            {
-               if ( SDB_CLS_GRP_NOT_EXIST == rc )
-               {
-                  PD_LOG( PDERROR, "group[%s] is not exist",
-                          clInfo._gpSpecified ) ;
-               }
-               else if ( SDB_REPL_GROUP_NOT_ACTIVE == rc )
-               {
-                  PD_LOG( PDERROR, "group[%s] is inactive",
-                          clInfo._gpSpecified ) ;
-               }
-               goto error ;
-            }
-         }
-
          // build search condition
          matcher = BSON ( CAT_COLLECTION_NAME << strName ) ;
          // perform update
@@ -1808,6 +1788,18 @@ namespace engine
       PD_TRACE_ENTRY ( SDB_CATALOGMGR_BUILDCATALOGRECORD ) ;
 
       BSONObjBuilder builder ;
+      UINT32 attr = 0 ;
+      CHAR szAttr[ 100 ] = { 0 } ;
+
+      if ( ( mask & CAT_MASK_COMPRESSED ) && clInfo._isCompressed )
+      {
+         attr |= DMS_MB_ATTR_COMPRESSED ;
+      }
+      if ( ( mask & CAT_MASK_AUTOINDEXID ) && clInfo._autoIndexId )
+      {
+         attr |= DMS_MB_ATTR_NOIDINDEX ;
+      }
+      mbAttr2String( attr, szAttr, sizeof( szAttr ) - 1 ) ;
 
       if ( mask & CAT_MASK_CLNAME )
       {
@@ -1825,16 +1817,15 @@ namespace engine
          builder.append( CAT_CATALOG_W_NAME, clInfo._replSize ) ;
       }
 
+      builder.append( CAT_ATTRIBUTE_NAME, attr ) ;
+      builder.append( FIELD_NAME_ATTRIBUTE_DESC, szAttr ) ;
+
       /// only record the options specified by user.
-      if ( mask & CAT_MASK_COMPRESSED )
+      if ( attr & DMS_MB_ATTR_COMPRESSED )
       {
-         UINT32 attr = 0 ;
-         if ( clInfo._isCompressed )
-         {
-            attr |= DMS_MB_ATTR_COMPRESSED ;
-         }
-         builder.append( CAT_ATTRIBUTE_NAME, attr ) ;
          builder.append( CAT_COMPRESSIONTYPE, clInfo._compressorType ) ;
+         builder.append( FIELD_NAME_COMPRESSIONTYPE_DESC,
+                         utilCompressType2String( clInfo._compressorType ) ) ;
       }
       if ( mask & CAT_MASK_SHDKEY )
       {
