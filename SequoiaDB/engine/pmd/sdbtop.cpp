@@ -253,8 +253,8 @@ const string DISPLAYMODECHOOSER[DISPLAYMODENUMBER] = { ABSOLUTE,
 #define BUTTON_F5 542058306331
 
 #define PREFIX_TAB      " Tab : "
-#define PREFIX_LEFT     "  <  : "
-#define PREFIX_RIGHT    "  >  : "
+#define PREFIX_LEFT     "  <- : "
+#define PREFIX_RIGHT    "  -> : "
 #define PREFIX_ENTER    "Enter: "
 #define PREFIX_ESC      " ESC : "
 #define PREFIX_F5       " F5  : "
