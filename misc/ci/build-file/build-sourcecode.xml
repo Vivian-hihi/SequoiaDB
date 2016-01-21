@@ -63,7 +63,11 @@
 		<exec executable="scons" dir="${WORKSPACE}/sequoiadb" failonerror="true">
 			<arg line="${compile.arg.line}${enterprise.line} ++all -j 4" />
 		</exec-->
-
+      
+      <property environment="env" />
+      <echo message="PATH=${env.PATH}"/>
+      <echo message="LD_LIBRARY_PATH=${env.LD_LIBRARY_PATH}"/>
+      
 		<echo message="Compile the connector of postgresql..." />
 		<exec executable="make" dir="${CODE_DIR}/driver/postgresql" failonerror="true">
 			<arg line=" clean" />
