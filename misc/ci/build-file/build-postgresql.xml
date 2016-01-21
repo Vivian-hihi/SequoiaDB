@@ -16,15 +16,17 @@
    </taskdef>
    
    <target name="clean" depends="">
-      <exec executable="make" dir="${PG_CODE_DIR}" failonerror="false">
+      <exec executable="make" dir="${FDW_CODE_DIR}" failonerror="false">
+         <env key="PATH" path="${SEQUOIASQL_DIR}/bin:${env.PATH}" />
+         <arg line=" clean" />
+      </exec>
+      <exec executable="make" dir="${PG_CODE_DIR}" failonerror="true">
          <arg line=" uninstall" />
       </exec>
-      <exec executable="make" dir="${PG_CODE_DIR}" failonerror="false">
+      <exec executable="make" dir="${PG_CODE_DIR}" failonerror="true">
          <arg line=" clean" />
       </exec>
-      <exec executable="make" dir="${FDW_CODE_DIR}" failonerror="false">
-         <arg line=" clean" />
-      </exec>
+      
       <delete dir="${SEQUOIASQL_DIR}" failonerror="false" />
       <delete dir="${RELEASE_DIR}" failonerror="false" />
       <mkdir dir="${RELEASE_DIR}" />
