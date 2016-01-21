@@ -68,7 +68,7 @@
       <echo message="PATH=${env.PATH}"/>
       <echo message="LD_LIBRARY_PATH=${env.LD_LIBRARY_PATH}"/>
       <exec executable="which" dir="${CODE_DIR}/driver/postgresql" failonerror="false">
-			<arg line=" progres" />
+			<arg line=" postgres" />
 		</exec>
 		<exec executable="pg_config" dir="${CODE_DIR}/driver/postgresql" failonerror="false"/>	
 		<echo message="Compile the connector of postgresql..." />
