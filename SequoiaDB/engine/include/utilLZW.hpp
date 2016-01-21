@@ -15,7 +15,7 @@ namespace engine
     * Internally we use a 32bit buffer to do continuous bits reading and,
     * writting, so the maximum node code should be less than 2^24(16M).
     */
-   #define MAX_NODE_CODE        ( 2 << 24 - 1 )
+   #define MAX_NODE_CODE        ( 1 << 24 - 1 )
 
    /*
     * 0~255 represent 256 diffrent symbols(initial state of the dictionary),
