@@ -235,7 +235,7 @@ $ /opt/sequoiadb/pgsql/etc</pre>
 <pre class="prettyprint lang-javascript">
 mkdir -p /opt/sequoiadb/pgsql/etc</pre>
 
-将需要修改的参数写入配置文件中：
+将需要修改的参数写入配置文件中(需重启psql使配置生效)：
 
 <pre class="prettyprint lang-javascript">
 $ echo "\\set FETCH_COUNT 100" >> /opt/sequoiadb/pgsql/etc/psqlrc</pre>

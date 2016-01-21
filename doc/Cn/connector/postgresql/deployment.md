@@ -77,7 +77,7 @@
 	<pre class="prettyprint lang-javascript">
 	$ cp -f /opt/sequoiadb/postgresql/sdb_fdw.so ${PGLIBDIR}</pre>
 
-4) 将 sdb_fdw.control 和 sdb_fdw--1.0.sql 脚本拷贝到 extension 目录中，两个脚本需要用户手工编辑：
+4) 将 sdb_fdw.control 和 sdb_fdw--1.0.sql 脚本拷贝到 extension 目录中：
 
 	<pre class="prettyprint lang-javascript">
 	$ cp -f /opt/sequoiadb/postgresql/sdb_fdw.control ${PGSHAREDIR}/extension/ ;
