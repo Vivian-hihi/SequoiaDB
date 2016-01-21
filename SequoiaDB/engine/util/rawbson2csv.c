@@ -149,7 +149,7 @@ INT32 _appendObj( CHAR delChar, bson_iterator *pIt,
       UTIL_RAW2BSON_PRINTF_LOG( "Csv buffer is too small,\
  need %d, only %d, rc=%d.",
                                 size,
-                                (*pCSVSize)
+                                (*pCSVSize),
                                 rc ) ;
       goto error ;
    }
