@@ -146,7 +146,11 @@ INT32 _appendObj( CHAR delChar, bson_iterator *pIt,
    if ( ppCSVBuf && size > (*pCSVSize) )
    {
       rc = SDB_OOM ;
-      UTIL_RAW2BSON_PRINTF_LOG( "Csv buffer is too small, rc=%d", rc ) ;
+      UTIL_RAW2BSON_PRINTF_LOG( "Csv buffer is too small,\
+ need %d, only %d, rc=%d.",
+                                size,
+                                (*pCSVSize)
+                                rc ) ;
       goto error ;
    }
 
@@ -154,7 +158,9 @@ INT32 _appendObj( CHAR delChar, bson_iterator *pIt,
    if ( !pBuffer )
    {
       rc = SDB_OOM ;
-      UTIL_RAW2BSON_PRINTF_LOG( "Failed to malloc memory, size=%d, rc=%d", size, rc ) ;
+      UTIL_RAW2BSON_PRINTF_LOG( "Failed to malloc memory, size=%d, rc=%d",
+                                size,
+                                rc ) ;
       goto error ;
    }
    pTempBuf = pBuffer ;
@@ -166,7 +172,8 @@ INT32 _appendObj( CHAR delChar, bson_iterator *pIt,
                                pIt, '"' ) )
    {
       rc = SDB_OOM ;
-      UTIL_RAW2BSON_PRINTF_LOG( "Failed to call bson_sprint_iterator, rc=%d", rc ) ;
+      UTIL_RAW2BSON_PRINTF_LOG( "Failed to call bson_sprint_iterator, rc=%d",
+                                rc ) ;
       goto error ;
    }
    objSize -= size ;
@@ -208,7 +215,8 @@ INT32 _appendNonString( CHAR delChar, bson_iterator *pIt,
                                 pIt, delChar ) )
    {
       rc = SDB_OOM ;
-      UTIL_RAW2BSON_PRINTF_LOG( "Failed to call bson_sprint_iterator, rc=%d", rc ) ;
+      UTIL_RAW2BSON_PRINTF_LOG( "Failed to call bson_sprint_iterator, rc=%d",
+                                rc ) ;
       goto error ;
    }
 done:
@@ -241,7 +249,8 @@ INT32 _appendValue( CHAR delChar, bson_iterator *pIt,
       rc = _appendNonString( delChar, pIt, ppBuffer, pCSVSize ) ;
       if ( rc )
       {
-         UTIL_RAW2BSON_PRINTF_LOG( "Failed to call appendNonString, rc=%d", rc ) ;
+         UTIL_RAW2BSON_PRINTF_LOG( "Failed to call appendNonString, rc=%d",
+                                   rc ) ;
          goto error ;
       }
    }
@@ -270,7 +279,8 @@ INT32 _appendValue( CHAR delChar, bson_iterator *pIt,
          rc = _appendString( delChar, temp, tempSize, ppBuffer, pCSVSize ) ;
          if ( rc )
          {
-            UTIL_RAW2BSON_PRINTF_LOG( "Failed to call appendString, rc=%d", rc ) ;
+            UTIL_RAW2BSON_PRINTF_LOG( "Failed to call appendString, rc=%d",
+                                      rc ) ;
             goto error ;
          }
       }
@@ -285,7 +295,8 @@ INT32 _appendValue( CHAR delChar, bson_iterator *pIt,
          rc = _appendString( delChar, temp, tempSize, ppBuffer, pCSVSize ) ;
          if ( rc )
          {
-            UTIL_RAW2BSON_PRINTF_LOG( "Failed to call appendString, rc=%d", rc ) ;
+            UTIL_RAW2BSON_PRINTF_LOG( "Failed to call appendString, rc=%d",
+                                      rc ) ;
             goto error ;
          }
       }
@@ -296,7 +307,8 @@ INT32 _appendValue( CHAR delChar, bson_iterator *pIt,
                              ppBuffer, pCSVSize ) ;
          if ( rc )
          {
-            UTIL_RAW2BSON_PRINTF_LOG( "Failed to call appendString, rc=%d", rc ) ;
+            UTIL_RAW2BSON_PRINTF_LOG( "Failed to call appendString, rc=%d",
+                                      rc ) ;
             goto error ;
          }
       }
@@ -306,7 +318,8 @@ INT32 _appendValue( CHAR delChar, bson_iterator *pIt,
                              CSV_STR_MINKEY_SIZE, ppBuffer, pCSVSize ) ;
          if ( rc )
          {
-            UTIL_RAW2BSON_PRINTF_LOG( "Failed to call appendString, rc=%d", rc ) ;
+            UTIL_RAW2BSON_PRINTF_LOG( "Failed to call appendString, rc=%d",
+                                      rc ) ;
             goto error ;
          }
       }
@@ -316,7 +329,8 @@ INT32 _appendValue( CHAR delChar, bson_iterator *pIt,
                              CSV_STR_MAXKEY_SIZE, ppBuffer, pCSVSize ) ;
          if ( rc )
          {
-            UTIL_RAW2BSON_PRINTF_LOG( "Failed to call appendString, rc=%d", rc ) ;
+            UTIL_RAW2BSON_PRINTF_LOG( "Failed to call appendString, rc=%d",
+                                      rc ) ;
             goto error ;
          }
       }
@@ -327,7 +341,8 @@ INT32 _appendValue( CHAR delChar, bson_iterator *pIt,
                              ppBuffer, pCSVSize ) ;
          if ( rc )
          {
-            UTIL_RAW2BSON_PRINTF_LOG( "Failed to call appendString, rc=%d", rc ) ;
+            UTIL_RAW2BSON_PRINTF_LOG( "Failed to call appendString, rc=%d",
+                                      rc ) ;
             goto error ;
          }
       }
@@ -338,7 +353,8 @@ INT32 _appendValue( CHAR delChar, bson_iterator *pIt,
                              ppBuffer, pCSVSize ) ;
          if ( rc )
          {
-            UTIL_RAW2BSON_PRINTF_LOG( "Failed to call appendString, rc=%d", rc ) ;
+            UTIL_RAW2BSON_PRINTF_LOG( "Failed to call appendString, rc=%d",
+                                      rc ) ;
             goto error ;
          }
       }
@@ -346,10 +362,15 @@ INT32 _appendValue( CHAR delChar, bson_iterator *pIt,
       {
          if( TRUE == includeBinary )
          {
-            rc = _appendString( delChar, CSV_STR_LEFTBRACKET, 1, ppBuffer, pCSVSize ) ;
+            rc = _appendString( delChar,
+                                CSV_STR_LEFTBRACKET,
+                                1,
+                                ppBuffer,
+                                pCSVSize ) ;
             if ( rc )
             {
-               UTIL_RAW2BSON_PRINTF_LOG( "Failed to call appendString, rc=%d", rc ) ;
+               UTIL_RAW2BSON_PRINTF_LOG( "Failed to call appendString, rc=%d",
+                                         rc ) ;
                goto error ;
             }
             binType = (INT32)bson_iterator_bin_type( pIt ) ;
@@ -357,13 +378,19 @@ INT32 _appendValue( CHAR delChar, bson_iterator *pIt,
             rc = _appendString( delChar, temp, tempSize, ppBuffer, pCSVSize ) ;
             if ( rc )
             {
-               UTIL_RAW2BSON_PRINTF_LOG( "Failed to call appendString, rc=%d", rc ) ;
+               UTIL_RAW2BSON_PRINTF_LOG( "Failed to call appendString, rc=%d",
+                                         rc ) ;
                goto error ;
             }
-            rc = _appendString( delChar, CSV_STR_RIGHTBRACKET, 1, ppBuffer, pCSVSize ) ;
+            rc = _appendString( delChar,
+                                CSV_STR_RIGHTBRACKET,
+                                1,
+                                ppBuffer,
+                                pCSVSize ) ;
             if ( rc )
             {
-               UTIL_RAW2BSON_PRINTF_LOG( "Failed to call appendString, rc=%d", rc ) ;
+               UTIL_RAW2BSON_PRINTF_LOG( "Failed to call appendString, rc=%d",
+                                         rc ) ;
                goto error ;
             }
          }
@@ -387,14 +414,16 @@ INT32 _appendValue( CHAR delChar, bson_iterator *pIt,
             if ( base64Encode( pTemp, tempSize, pBase64, base64Size ) < 0 )
             {
                rc = SDB_INVALIDARG ;
-               UTIL_RAW2BSON_PRINTF_LOG( "Failed to call base64Encode, rc=%d", rc ) ;
+               UTIL_RAW2BSON_PRINTF_LOG( "Failed to call base64Encode, rc=%d",
+                                         rc ) ;
                goto error ;
             }
             rc = _appendString( delChar, pBase64, base64Size - 1,
                                 ppBuffer, pCSVSize ) ;
             if ( rc )
             {
-               UTIL_RAW2BSON_PRINTF_LOG( "Failed to call appendString, rc=%d", rc ) ;
+               UTIL_RAW2BSON_PRINTF_LOG( "Failed to call appendString, rc=%d",
+                                         rc ) ;
                goto error ;
             }
          }
@@ -407,7 +436,8 @@ INT32 _appendValue( CHAR delChar, bson_iterator *pIt,
                                 ppBuffer, pCSVSize ) ;
             if ( rc )
             {
-               UTIL_RAW2BSON_PRINTF_LOG( "Failed to call appendString, rc=%d", rc ) ;
+               UTIL_RAW2BSON_PRINTF_LOG( "Failed to call appendString, rc=%d",
+                                         rc ) ;
                goto error ;
             }
          }
@@ -416,7 +446,8 @@ INT32 _appendValue( CHAR delChar, bson_iterator *pIt,
                              ppBuffer, pCSVSize ) ;
          if ( rc )
          {
-            UTIL_RAW2BSON_PRINTF_LOG( "Failed to call appendString, rc=%d", rc ) ;
+            UTIL_RAW2BSON_PRINTF_LOG( "Failed to call appendString, rc=%d",
+                                      rc ) ;
             goto error ;
          }
          if( TRUE == includeRegex )
@@ -425,7 +456,8 @@ INT32 _appendValue( CHAR delChar, bson_iterator *pIt,
                                 ppBuffer, pCSVSize ) ;
             if ( rc )
             {
-               UTIL_RAW2BSON_PRINTF_LOG( "Failed to call appendString, rc=%d", rc ) ;
+               UTIL_RAW2BSON_PRINTF_LOG( "Failed to call appendString, rc=%d",
+                                         rc ) ;
                goto error ;
             }
             pTemp = bson_iterator_regex_opts( pIt ) ;
@@ -433,7 +465,8 @@ INT32 _appendValue( CHAR delChar, bson_iterator *pIt,
                                 ppBuffer, pCSVSize ) ;
             if ( rc )
             {
-               UTIL_RAW2BSON_PRINTF_LOG( "Failed to call appendString, rc=%d", rc ) ;
+               UTIL_RAW2BSON_PRINTF_LOG( "Failed to call appendString, rc=%d",
+                                         rc ) ;
                goto error ;
             }
          }
@@ -444,7 +477,8 @@ INT32 _appendValue( CHAR delChar, bson_iterator *pIt,
          rc = _appendString( delChar, temp, 24, ppBuffer, pCSVSize ) ;
          if ( rc )
          {
-            UTIL_RAW2BSON_PRINTF_LOG( "Failed to call appendString, rc=%d", rc ) ;
+            UTIL_RAW2BSON_PRINTF_LOG( "Failed to call appendString, rc=%d",
+                                      rc ) ;
             goto error ;
          }
       }
@@ -532,7 +566,8 @@ INT32 bson2csv( CHAR delChar, CHAR delField, CHAR *pbson,
          rc = _appendString( delChar, &delField, 1, ppBuffer, pCSVSize ) ;
          if ( rc )
          {
-            UTIL_RAW2BSON_PRINTF_LOG( "Failed to call appendString, rc=%d", rc ) ;
+            UTIL_RAW2BSON_PRINTF_LOG( "Failed to call appendString, rc=%d",
+                                      rc ) ;
             goto error ;
          }
       }
