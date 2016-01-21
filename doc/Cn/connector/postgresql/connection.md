@@ -29,37 +29,42 @@ foo=# create foreign table test (name text, id numeric) server sdb_server option
 
 映射SequoiaDB 的数组类型，创建方式参考注意事项2。
 
-4) 查询
+4) 更新表的统计信息
+
+<pre class="prettyprint lang-javascript">
+foo=# analyze test;</pre>
+
+5) 查询
 
 <pre class="prettyprint lang-javascript">
 foo=# select * from test;</pre>
 
-5) 写入数据
+6) 写入数据
 
 <pre class="prettyprint lang-javascript">
 foo=# insert into test values('one',3);</pre>
 
-6) 更改数据
+7) 更改数据
 
 <pre class="prettyprint lang-javascript">
 foo=# update test set id=9 where name='one';</pre>
 
-7) 查看所有的表(show tables;)
+8) 查看所有的表(show tables;)
 
 <pre class="prettyprint lang-javascript">
 foo=# \d</pre>
 
-8) 查看表的描述信息
+9) 查看表的描述信息
 
 <pre class="prettyprint lang-javascript">
 foo=# \d test</pre>
 
-9) 删除表
+10) 删除表的映射关系
 
 <pre class="prettyprint lang-javascript">
 foo=# drop foreign table test;</pre>
 
-10) 退出PostgreSQL shell环境
+11) 退出PostgreSQL shell环境
 
 <pre class="prettyprint lang-javascript">
 foo=# \q</pre>
@@ -68,13 +73,23 @@ foo=# \q</pre>
 
 1) 数据类型的对应关系
 
-SequoiaDB         PostgreSQL
------------------ ------------
+SequoiaDB         PostgreSQL          注意事项
+----------------- ------------------- --------------------------------
+int               integer
+long              bigint
+int               serial
+long              bigserial
+double            real                存在精度问题，sdb存储时不是完全一致
+double            double precision
+string            numeric
+string            decimal
 string            text
-int/double/long   numeric
+string            char
+string            varchar
+binary(type=0)    bytea
 date              date
 timestamp         timestamp
-array             TYPE[]
+array             TYPE[]              仅支持一维数组
 boolean           boolean
 null              text
 
