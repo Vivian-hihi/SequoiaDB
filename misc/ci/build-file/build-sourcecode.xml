@@ -68,8 +68,7 @@
       <exec executable="which" dir="${CODE_DIR}/driver/postgresql" failonerror="false">
 			<arg line=" postgres" />
 		</exec>
-		<exec executable="export"  failonerror="false"/>
-		<exec executable="pg_config" dir="${CODE_DIR}/driver/postgresql" failonerror="false"/>	
+			
 		<echo message="Compile the connector of postgresql..." />
 		<exec executable="make" dir="${CODE_DIR}/driver/postgresql" failonerror="true">
 			<arg line=" clean" />
