@@ -59,9 +59,9 @@
 			</else>
 		</if>
 
-		<echo message="exec scons ${compile.arg.line}${enterprise.line} ++all -j 4" />
+		<echo message="exec scons ${compile.arg.line}${enterprise.line} --all -j 4" />
 		<exec executable="scons" dir="${WORKSPACE}/sequoiadb" failonerror="true">
-			<arg line="${compile.arg.line}${enterprise.line} ++all -j 4" />
+			<arg line="${compile.arg.line}${enterprise.line} --all -j 4" />
 		</exec>
 			
 		<echo message="Compile the connector of postgresql..." />
