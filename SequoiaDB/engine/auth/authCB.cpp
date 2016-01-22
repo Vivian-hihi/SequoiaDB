@@ -231,15 +231,64 @@ namespace engine
       PD_TRACE_ENTRY ( SDB_AUTHCB_REMOVEUSR ) ;
       SDB_DMSCB *dmsCB = pmdGetKRCB()->getDMSCB() ;
       SDB_DPSCB *dpsCB = pmdGetKRCB()->getDPSCB() ;
+      SDB_RTNCB *rtnCB = pmdGetKRCB()->getRTNCB() ;
+      SINT64 contextID = -1 ;
+      BSONObj hint ;
+      BSONObj selector ;
+      BSONObj order ;
+      BSONObj newObj = BSON( SDB_AUTH_USER 
+                             << obj.getStringField(SDB_AUTH_USER) ) ;
+      rtnContextBuf buffObj ;
 
-      rc = authenticate( obj, cb, FALSE ) ;
+      // firstly, we check the user is exist or not
+      rc = rtnQuery( AUTH_USR_COLLECTION, selector, newObj, order, hint,
+                     0, cb, 0, -1, dmsCB, rtnCB, contextID ) ;
       if ( SDB_OK != rc )
       {
+         PD_LOG( PDERROR, "failed to query:%d",rc ) ;
          goto error ;
       }
 
+      rc = rtnGetMore( contextID, -1, buffObj, cb, rtnCB ) ;
+      if ( SDB_OK != rc && SDB_DMS_EOC != rc)
       {
-         BSONObj hint = BSON( "" << AUTH_USR_INDEX_NAME ) ;
+         PD_LOG( PDERROR, "failed to getmore:%d",rc ) ;
+         rc = SDB_AUTH_USER_NOT_EXIST ;
+         goto error ;
+      }
+      else if ( SDB_DMS_EOC == rc )
+      {
+         rc = SDB_AUTH_USER_NOT_EXIST ;
+         goto error ;
+      }
+      else if ( 0 == buffObj.recordNum() )
+      {
+         rc = SDB_AUTH_USER_NOT_EXIST ;
+         goto error ;
+      }
+      else if ( 1 == buffObj.recordNum() )
+      {
+         rc = SDB_OK ;
+      }
+      else
+      {
+         PD_LOG( PDERROR, "get more than one record, impossible" ) ;
+         rc = SDB_SYS ;
+         SDB_ASSERT( FALSE, "impossible" ) ;
+         goto error;
+      }
+         
+      {
+         // then, we check user name and password is correct or not
+         rc = authenticate( obj, cb, FALSE ) ;
+         if ( SDB_OK != rc )
+         {
+            goto error ;
+         }
+
+         // at last, we confirm eht user and password is correct
+         // now we remove the record from system collection
+         hint = BSON( "" << AUTH_USR_INDEX_NAME ) ;
          rc = rtnDelete( AUTH_USR_COLLECTION,
                          obj, hint,
                          0, cb, dmsCB, dpsCB, w ) ;
