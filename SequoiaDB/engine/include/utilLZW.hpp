@@ -391,13 +391,6 @@ namespace engine
       ctx->_stream[ctx->_streamPos++] = ch ;
    }
 
-/*
-   OSS_INLINE void _utilLZW::_readBuf( UINT8 *stream, UINT8 *buf, UINT32 size )
-   {
-      ossMemcpy( buf, stream, size ) ;
-   }
-*/
-
    OSS_INLINE void _utilLZW::_flushBits( _utilLZWContext *ctx )
    {
       if ( ctx->_bitBuf._n )
@@ -437,10 +430,7 @@ namespace engine
           */
          if ( DICT_INVALID_NODE == nextCode )
          {
-            if ( code > dictionary->getMaxCode() )
-            {
-               SDB_ASSERT( FALSE, "invalid code" ) ;
-            }
+            SDB_ASSERT( code <= dictionary->getMaxCode(), "invalid code" ) ;
             _writeCode( ctx, code ) ;
             code = ch ;
             strLen = 1 ;
@@ -453,10 +443,7 @@ namespace engine
       }
 
       /* Write the last code */
-      if ( code > dictionary->getMaxCode() )
-      {
-         SDB_ASSERT( FALSE, "invalid code" ) ;
-      }
+      SDB_ASSERT( code <= dictionary->getMaxCode(), "invalid code" ) ;
       _writeCode( ctx, code ) ;
       _flushBits( ctx ) ;
       destLen = ctx->_streamPos;
@@ -480,11 +467,17 @@ namespace engine
       for( ; ctx->_streamPos < ctx->_streamLen; )
       {
          code = _readCode( ctx ) ;
-         if ( !(code <= dictionary->getMaxCode()) )
+         /*
+          * Generally this should not happen. If it does, there is something
+          * wrong in the data to be decompressed.
+          */
+         SDB_ASSERT( code <= dictionary->getMaxCode(), "invalid code in data" ) ;
+         if ( code > dictionary->getMaxCode() )
          {
-            PD_LOG( PDERROR, "Invalid code found: code = %d, maxCode = %d", code, dictionary->getMaxCode() ) ;
-            SDB_ASSERT( code <= dictionary->getMaxCode(),
-                        "Invalid code in data" ) ;
+            PD_LOG( PDERROR, "Invalid code found: code = %d, maxCode = %d",
+                    code, dictionary->getMaxCode() ) ;
+            rc = SDB_CORRUPTED_RECORD ;
+            goto error ;
          }
          strLen = dictionary->getStr( code, (UINT8*)(destBuf + totalOut),
                                       destLen - totalOut) ;
@@ -493,7 +486,10 @@ namespace engine
 
       destLen = totalOut ;
 
+   done:
       return rc ;
+   error:
+      goto done ;
    }
 }
 
