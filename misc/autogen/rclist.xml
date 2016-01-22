@@ -2449,6 +2449,14 @@
             <cn>执行压缩失败</cn>
          </description>
       </code>
+      <code>
+         <name>SDB_AUTH_USER_NOT_EXIST</name>
+         <description>
+            <en>user specified is not exist or password is invalid</en>
+            <cn>用户不存在或密码错误</cn>
+         </description>
+      </code>
+
 
    </codelist>
 </rclist>
