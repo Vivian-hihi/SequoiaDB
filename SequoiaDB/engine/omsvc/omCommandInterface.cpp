@@ -48,13 +48,16 @@ namespace engine
    {
    }
 
-   omRestCommandBase::omRestCommandBase()
+   omRestCommandBase::omRestCommandBase( restAdaptor *pRestAdaptor, 
+                                         pmdRestSession *pRestSession )
    {
       _pKRCB  = pmdGetKRCB() ;
       _pDMDCB = _pKRCB->getDMSCB() ;
       _pRTNCB = _pKRCB->getRTNCB() ;
       _pDMSCB = _pKRCB->getDMSCB() ;
       _cb     = NULL ;
+      _restAdaptor = pRestAdaptor ;
+      _restSession = pRestSession ;
    }
 
    omRestCommandBase::~omRestCommandBase()
@@ -855,6 +858,70 @@ namespace engine
       }
 
       return FALSE ;
+   }
+
+   void omRestCommandBase::_setOPResult( INT32 rc, const CHAR* detail )
+   {
+      BSONObj res = BSON( OM_REST_RES_RETCODE << rc 
+                          << OM_REST_RES_DESP << getErrDesp( rc )
+                          << OM_REST_RES_DETAIL << detail ) ;
+
+      _restAdaptor->setOPResult( _restSession, rc, res ) ;
+   }
+
+   void omRestCommandBase::_sendOKRes2Web()
+   {
+      _sendErrorRes2Web( SDB_OK, "" ) ;
+   }
+
+   void omRestCommandBase::_sendErrorRes2Web( INT32 rc, const CHAR* detail )
+   {
+      _setOPResult( rc, detail ) ;
+      _restAdaptor->sendResponse( _restSession, HTTP_OK ) ;
+   }
+
+   void omRestCommandBase::_sendErrorRes2Web( INT32 rc, const string &detail )
+   {
+      _sendErrorRes2Web( rc, detail.c_str() ) ;
+   }
+
+   INT32 omRestCommandBase::_parseIPsField( const CHAR *input,
+                                            std::set<std::string> &IPs )
+   {
+      INT32 rc = SDB_OK ;
+      INT32 len = 0 ;
+      const CHAR *pCur = input ;
+      const CHAR *pBegin = input ;
+      while( TRUE )
+      {
+         if ( ',' == *pCur || 0 == *pCur )
+         {
+            INT32 nLen = pCur - pBegin ;
+            if ( nLen > 0 )
+            {
+               if ( TRUE == ossNetIpIsValid( pBegin, nLen ) )
+               {
+                  std::string ip( pBegin, nLen ) ;
+                  IPs.insert( ip ) ;
+               }
+               else
+               {
+                  rc = SDB_INVALIDARG ;
+                  goto error ;
+               }
+            }
+            if ( 0 == *pCur )
+            {
+               break ;
+            }
+            pBegin = pCur + 1 ;
+         }
+         ++pCur ;
+      }
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 
    omAgentReqBase::omAgentReqBase( BSONObj &request )

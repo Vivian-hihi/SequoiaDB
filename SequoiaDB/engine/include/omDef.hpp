@@ -196,6 +196,13 @@ namespace engine
    #define OM_TASKINFO_FIELD_PROGRESS        "Progress"
    #define OM_TASKINFO_FIELD_RESULTINFO      "ResultInfo"
 
+   // strategy.business_task_property
+   #define OM_CS_STRATEGY                          "SYSSTRATEGY"
+   #define OM_CS_STRATEGY_CL_BUSINESS_TASK_PRO     OM_CS_STRATEGY".SYSBUSINESSTASKPROPERTY"
+   #define OM_STRATEGY_FIELD_TASKID                FIELD_NAME_TASKID
+   #define OM_CS_STRATEGY_CL_BUSINESSTASKPROIDX1   "{name:\"OM_CS_STRATEGY_CL_BUSINESSTASKPROIDX1\",key: {"\
+                                                   OM_STRATEGY_FIELD_TASKID":1} } "
+
    /*
       addHost's ResultInfo:
       {
@@ -206,7 +213,7 @@ namespace engine
    //**********************************************
 
    #define OM_CS_DEPLOY_CL_TASKINFOIDX1      "{name:\"SYSDEPLOY_TASKINFO_IDX1\",key: {"\
-                                             OM_TASKINFO_FIELD_TASKID":1}, unique: true, enforced: true } "
+                                             OM_TASKINFO_FIELD_TASKID":1} } "
 
    enum omTaskType
    {
@@ -350,6 +357,12 @@ namespace engine
    #define  OM_QUERY_BUSINESS_AUTH_REQ       "query business authority"
    #define  OM_DISCOVER_BUSINESS_REQ         "discover business"
    #define  OM_UNDISCOVER_BUSINESS_REQ       "undiscover business"
+   #define  OM_TASK_STRATEGY_LIST_REQ        "list task strategy"
+   #define  OM_TASK_STRATEGY_ADD_REQ         "add task strategy"
+   #define  OM_TASK_STRATEGY_UPDATE_NICE_REQ "update task strategy nice"
+   #define  OM_TASK_STRATEGY_ADD_IPS_REQ     "add task strategy ips"
+   #define  OM_TASK_STRATEGY_DEL_IPS_REQ     "del task strategy ips"
+   #define  OM_TASK_STRATEGY_DEL_REQ         "del task strategy"
    //**************************************************************************
 
    //*********************param between rest and om****************************
@@ -368,6 +381,13 @@ namespace engine
    #define  OM_REST_FIELD_TIMESTAMP          "Timestamp"
    #define  OM_REST_FIELD_NEW_PASSWD         "NewPasswd"
    #define  OM_REST_FIELD_HOST_INFO          "HostInfo"
+   #define  OM_REST_FIELD_TASK_ID            "TaskID"
+   #define  OM_REST_FIELD_RULE_ID            "RuleID"
+   #define  OM_REST_FIELD_USER_NAME          "UserName"
+   #define  OM_REST_FIELD_TASK_NAME          "TaskName"
+   #define  OM_REST_FIELD_IPS                "IPs"
+   #define  OM_REST_FIELD_NICE               "Nice"
+
    #define  OM_BSON_FIELD_HOST_INFO          OM_REST_FIELD_HOST_INFO
    #define  OM_BSON_FIELD_HOST_IP            OM_HOST_FIELD_IP
    #define  OM_BSON_FIELD_HOST_NAME          OM_HOST_FIELD_NAME

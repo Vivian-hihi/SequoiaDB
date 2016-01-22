@@ -38,6 +38,8 @@
 #include "dmsCB.hpp"
 #include "netDef.hpp"
 #include "pmdRemoteSession.hpp"
+#include "restAdaptor.hpp"
+#include "pmdRestSession.hpp"
 #include <map>
 #include <string>
 
@@ -91,7 +93,10 @@ namespace engine
    class omRestCommandBase : public omCommandInterafce
    {
       public:
-         omRestCommandBase() ;
+
+         omRestCommandBase( restAdaptor *pRestAdaptor,
+                            pmdRestSession *pRestSession ) ;
+
          virtual ~omRestCommandBase() ;
 
       public:
@@ -141,6 +146,11 @@ namespace engine
 
          BOOLEAN           _isHostExistInCluster( const string &hostName,
                                                   const string &clusterName ) ;
+         void              _sendOKRes2Web() ;
+         void              _setOPResult( INT32 rc, const CHAR* detail ) ;
+         void              _sendErrorRes2Web( INT32 rc, const CHAR* detail ) ;
+         void              _sendErrorRes2Web( INT32 rc, const string &detail ) ;
+         INT32             _parseIPsField( const CHAR *input, std::set<std::string> &IPs ) ;
          
       protected:
          SDB_RTNCB         *_pRTNCB ;
@@ -151,6 +161,8 @@ namespace engine
          pmdEDUCB          *_cb ;
 
          string            _errorDetail ;
+         restAdaptor*      _restAdaptor ;
+         pmdRestSession*   _restSession ;
    } ;
 
    class omAgentReqBase : public omCommandInterafce

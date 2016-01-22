@@ -37,8 +37,8 @@
 #include "restDefine.hpp"
 #include "ossLatch.hpp"
 #include "ossAtomic.hpp"
-#include "../omsvc/omCommandInterface.hpp"
 #include "pmdProcessorBase.hpp"
+#include "pmdEDU.hpp"
 #include <string>
 
 using namespace bson ;

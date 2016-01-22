@@ -812,6 +812,36 @@ namespace engine
             commandIf = SDB_OSS_NEW omUnDiscoverBusinessCommand( pAdptor, 
                                                                  this ) ;
          }
+         else if ( ossStrcasecmp( pSubCommand, 
+                                  OM_TASK_STRATEGY_LIST_REQ ) == 0 )
+         {
+            commandIf = SDB_OSS_NEW omTaskStrategyList( pAdptor, this ) ;
+         }
+         else if ( ossStrcasecmp( pSubCommand, 
+                                  OM_TASK_STRATEGY_ADD_REQ ) == 0 )
+         {
+            commandIf = SDB_OSS_NEW omTaskStrategyInsert( pAdptor, this ) ;
+         }
+         else if ( ossStrcasecmp( pSubCommand, 
+                                  OM_TASK_STRATEGY_UPDATE_NICE_REQ ) == 0 )
+         {
+            commandIf = SDB_OSS_NEW omTaskStrategyUpdateNice( pAdptor, this ) ;
+         }
+         else if ( ossStrcasecmp( pSubCommand, 
+                                  OM_TASK_STRATEGY_ADD_IPS_REQ ) == 0 )
+         {
+            commandIf = SDB_OSS_NEW omTaskStrategyAddIps( pAdptor, this ) ;
+         }
+         else if ( ossStrcasecmp( pSubCommand, 
+                                  OM_TASK_STRATEGY_DEL_IPS_REQ ) == 0 )
+         {
+            commandIf = SDB_OSS_NEW omTaskStrategyDelIps( pAdptor, this ) ;
+         }
+         else if ( ossStrcasecmp( pSubCommand, 
+                                  OM_TASK_STRATEGY_DEL_REQ ) == 0 )
+         {
+            commandIf = SDB_OSS_NEW omTaskStrategyDel( pAdptor, this ) ;
+         }
          else
          {
             rc = SDB_INVALIDARG ;

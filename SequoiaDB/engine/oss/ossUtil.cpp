@@ -1501,3 +1501,42 @@ std::string ossProcLimits::str()const
 }
 #endif // defined (_LINUX) || defined (_AIX)
 
+BOOLEAN ossNetIpIsValid( const CHAR *ip, INT32 len )
+{
+   INT32 section = 0 ;
+   INT32 dot = 0 ;
+   INT32 last = -1 ;
+   INT32 curLen = 0 ;
+   while ( *ip && curLen < len  )
+   {
+      if ( '.' == *ip )
+      {
+         if ( ++dot > 3 )
+         {
+            return FALSE ;
+         }
+         section = 0 ;
+      }
+      else if ( *ip >= '0' && *ip <= '9' )
+      {
+         section = section * 10 + *ip - '0' ;
+         if ( section < 0 || section > 255 )
+         {
+            return FALSE ;
+         }
+      }
+      else
+      {
+         return FALSE ;
+      }
+      last = *ip ;
+      ++ip ;
+      ++curLen ;
+   }
+   if ( 3 == dot && last != '.' )
+   {
+       return TRUE ;
+   }
+   return FALSE ;
+
+}

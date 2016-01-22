@@ -85,10 +85,6 @@ namespace engine
          virtual INT32   doCommand() ;
 
       protected:
-         void            _sendOKRes2Web() ;
-         void            _setOPResult( INT32 rc, const CHAR* detail ) ;
-         void            _sendErrorRes2Web( INT32 rc, const CHAR* detail ) ;
-         void            _sendErrorRes2Web( INT32 rc, const string &detail ) ;
          void            _decryptPasswd( const string &encryptPasswd, 
                                          const string &time,
                                          string &decryptPasswd) ;
@@ -103,8 +99,6 @@ namespace engine
          void            _setFileLanguageSep() ;
 
       protected:
-         restAdaptor*    _restAdaptor ;
-         pmdRestSession* _restSession ;
          string          _languageFileSep ;
    };
 
@@ -947,6 +941,90 @@ namespace engine
          map < string, string > _transfer ;
 
          map < string, string > _publicAccessFiles ;
+   };
+
+   class omTaskStrategyInsert : public omRestCommandBase
+   {
+      public:
+
+         virtual INT32 doCommand() ;
+
+      public:
+
+         omTaskStrategyInsert( restAdaptor *pRestAdaptor, 
+                               pmdRestSession *pRestSession ) ;
+
+         ~omTaskStrategyInsert() ;
+   };
+
+   class omTaskStrategyList : public omRestCommandBase
+   {
+      public:
+
+         virtual INT32   doCommand() ;
+
+      public:
+
+         omTaskStrategyList( restAdaptor *pRestAdaptor, 
+                             pmdRestSession *pRestSession ) ;
+
+         ~omTaskStrategyList() ;
+   };
+
+   class omTaskStrategyUpdateNice : public omRestCommandBase
+   {
+      public:
+
+         virtual INT32   doCommand() ;
+
+      public:
+
+         omTaskStrategyUpdateNice( restAdaptor *pRestAdaptor, 
+                                   pmdRestSession *pRestSession ) ;
+
+         ~omTaskStrategyUpdateNice() ;
+   };
+
+   class omTaskStrategyAddIps : public omRestCommandBase
+   {
+      public:
+
+         virtual INT32   doCommand() ;
+
+      public:
+
+         omTaskStrategyAddIps( restAdaptor *pRestAdaptor, 
+                               pmdRestSession *pRestSession ) ;
+
+         ~omTaskStrategyAddIps() ;
+   };
+
+   class omTaskStrategyDelIps : public omRestCommandBase
+   {
+      public:
+
+         virtual INT32   doCommand() ;
+
+      public:
+
+         omTaskStrategyDelIps( restAdaptor *pRestAdaptor, 
+                               pmdRestSession *pRestSession ) ;
+
+         ~omTaskStrategyDelIps() ;
+   };
+
+   class omTaskStrategyDel : public omRestCommandBase
+   {
+      public:
+
+         virtual INT32   doCommand() ;
+
+      public:
+
+         omTaskStrategyDel( restAdaptor *pRestAdaptor, 
+                            pmdRestSession *pRestSession ) ;
+
+         ~omTaskStrategyDel() ;
    };
 }
 

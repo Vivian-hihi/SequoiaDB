@@ -45,6 +45,7 @@
 #include "omManagerJob.hpp"
 #include "../omsvc/omGetFileCommand.hpp"
 #include "ossVer.h"
+#include "omStrategyMgr.hpp"
 
 using namespace bson ;
 
@@ -119,6 +120,10 @@ namespace engine
       rc = _initOmTables();
       PD_RC_CHECK ( rc, PDERROR, "Failed to initial the om tables rc = %d", 
                     rc ) ;
+
+      rc = omStrategyMgrInst.init( pmdGetThreadEDUCB() ) ;
+      PD_RC_CHECK ( rc, PDERROR, "Failed to init strategy manager, rc:%d",
+                    rc) ;
 
       rc = _createJobs() ;
       PD_RC_CHECK ( rc, PDERROR, "Failed to create jobs:rc=%d", 

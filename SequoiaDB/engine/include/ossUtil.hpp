@@ -1104,5 +1104,7 @@ private:
    std::map<const CHAR *, std::pair<INT64, INT64>, cmp > _desc ;
 } ;
 
+BOOLEAN ossNetIpIsValid( const CHAR *ip, INT32 len ) ;
+
 #endif  //OSSUTIL_HPP_
 

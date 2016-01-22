@@ -403,7 +403,8 @@ omsvcFiles = [
       "omsvc/omRestSession.cpp",
       "omsvc/omTransferProcessor.cpp",
       "omsvc/omContextTransfer.cpp",
-      "omsvc/omSdbConnector.cpp"
+      "omsvc/omSdbConnector.cpp",
+      "omsvc/omStrategyMgr.cpp"
       ]
 
 barFiles = [
