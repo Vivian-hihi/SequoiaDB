@@ -1026,5 +1026,20 @@
       <hidden>true</hidden>
    </opt>
 
+   <opt>
+      <name>PMD_OPTION_OMSVC_ADDR</name>
+      <long>omsvcaddr</long>
+      <short>t</short>
+      <description>
+         <en>Omsvc addr (hostname:omservicename)</en>
+         <cn>omsvc节点地址(hostname:omservicename)</cn>
+      </description>
+      <detail>
+         <en>1. It specifies the address of omsvc node. The format is "hostname:omservicename".</en>
+         <cn>1.指定omsvc节点的地址。配置形式为"hostname:omservicename"。</cn>
+      </detail>
+      <typeofweb>str</typeofweb>
+   </opt>
+
 </optlist>
 
