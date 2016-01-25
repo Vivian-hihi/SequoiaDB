@@ -60,18 +60,12 @@ def isStandalone( db ):
          
    return is_standalone 
         
-def clean( cs_name, username, password ):
-   print '---begin to drop cs and remove user in finally'
-   try:
-      db.drop_collection_space( cs_name )
-   except SDBBaseError, e:
-      if ( -34 != e.code ): 
-         pysequoiadb._print(e.detail)             
-         raise e          
+def clean( username, password ):
+   print '---begin to remove user in finally'      
    try:      
       db.remove_user( username, password )
    except SDBBaseError, e:
-      if ( -6 != e.code ): #standalone throw -6   
+      if ( -6 != e.code and -305 != e.code ): #standalone throw -6  
          pysequoiadb._print(e.detail)          
          raise e 
          
@@ -88,8 +82,6 @@ def user( username, password ):
 if __name__ == "__main__":   
    try:    
       parse_option()     
-      cs_name = "pydriver_user_cs"
-      cl_name = "pydriver_user_cl"
       username = 'pydriver_user'
       password = 'pydriver_passwd'
        
@@ -105,6 +97,6 @@ if __name__ == "__main__":
             
    finally:  
       if( locals().has_key('db') ):                    
-         clean( cs_name, username, password )
+         clean( username, password )
          db.disconnect()
          del db 
