@@ -153,6 +153,31 @@
 				</antcall>
 			</sequential>
 		</for>
+		
+		<delete file="testAllot-sdv.conf" failonerror="false" />
+		<property name="num" value="1" />
+		<for list="${machineList}" param="machine" >
+			<sequential>
+				<replace file="${basedir}/exec-conf/basic-testcases-conf.xml" token="machine${num}" value="@{machine}" />
+				<var name="op" value="+" />
+				<math result="num" operand1="${num}" operation="${op}" operand2="1" datatype="int" />
+			</sequential>
+		</for>
+		<for list="${machineList}" param="hostName">
+			<sequential>
+				<var name="assignList" value="tmp" />
+				<xmlproperty file="${basedir}/exec-conf/sdv-testcases-conf.xml" />
+				<for list="${shell.@{hostName}.testsuite}" param="testsuite">
+					<sequential>
+						<var name="assignList" value="@{testsuite},${assignList}" />
+					</sequential>
+				</for>
+				<antcall target="initTest" inheritAll="true" >
+					<param name="assignList" value="${assignList}" />
+					<param name="testsuites" value="@{hostName}" />
+				</antcall>
+			</sequential>
+		</for>
 	</target>
 
 	<target name="H3-G1-D3" depends="">

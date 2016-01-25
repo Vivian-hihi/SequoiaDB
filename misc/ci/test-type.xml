@@ -10,10 +10,10 @@
 
 <project name="Test-Type" default="Test-Type">
 	<target name="Test-Type" depends="">   
-		<property file="${basedir}/ci.test.properties" />
-		<property file="${basedir}/testAllot.conf" />
+		<property file="${basedir}/ci.test.properties" />		
 		<switch value="${Test-Type}">
 			<case value="shell">
+			   <property file="${basedir}/testAllot.conf" />
 				<for list="${machineList}" param="hostname" parallel="true">
 					<sequential>
 						<sdbtest host="@{hostname}" testscript="${test.machine.deploy.path}/deploy/exec-basic-testcases.xml" remotereports="${testcase.path}/js_testcases/reports" masterreports="${test.reports.path}" >
@@ -28,13 +28,32 @@
 							<param name="test.log" value="${test.log}" />
 							<param name="test-type-list" value="${test-type-list}" />
 							<param name="BUILD_NUMBER" value="${BUILD_NUMBER}" />
-							<param name="parallel-id" value="1" />
-							<param name="parallel-num" value="3" />
 						</sdbtest>
 					</sequential>
 				</for>
 			</case>
-
+            
+         <case value="sdv">
+            <property file="${basedir}/testAllot-sdv.conf" />
+				<for list="${machineList}" param="hostname" parallel="true">
+					<sequential>
+						<sdbtest host="@{hostname}" testscript="${test.machine.deploy.path}/deploy/exec-sdv-testcases.xml" remotereports="${testcase.path}/sdv_testcases/reports" masterreports="${test.reports.path}" >
+							<param name="testcase.path" value="${testcase.path}/sdv_testcases" />
+							<param name="excludes.dir.patterns" value="" />
+							<param name="includes.dir.patterns" value="${@{hostname}}" />						
+							<param name="deploy.case.fullname" value="${deploy.case.fullname}" />
+							<param name="antTask.jar.path" value="${test.machine.deploy.path}/deploy/ant-sdbtasks" />
+							<param name="ci.properties.file" value="${test.machine.software.path}/ci.test.properties" />
+							<param name="WORKSPACE" value="${WORKSPACE}" />
+							<param name="ci.script.file.path" value="${ci.script.file.path}" />
+							<param name="test.log" value="${test.log}" />
+							<param name="test.type" value="${test-type-list}" />
+							<param name="BUILD_NUMBER" value="${BUILD_NUMBER}" />
+						</sdbtest>
+					</sequential>
+				</for>
+			</case>
+			
 			<case value="ant">
 				<echo message="... Test ant testcases ..." />
 				<sdbtest host="${test.host.NAME}" testscript="${test.machine.deploy.path}/deploy/exec-ant-testcases.xml" remotereports="${testcase.path}/ant_testcases/reports" masterreports="${test.reports.path}">
@@ -156,6 +175,8 @@
 				</sdbtest>
 				<echo message="... Test mongoc driver is over ..." />
 			</case>
+			
+			
 		</switch>
 	</target>
 </project>

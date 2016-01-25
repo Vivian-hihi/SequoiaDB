@@ -72,10 +72,10 @@
 	</target>
 
 	<target name="Build-Testcases" depends="Build-Driver-Testcases">
-		<echo level="info" message="Step1 : Begin to built folders &lt;${deploy_dir}/hlt/ant_testcases&gt;,&lt;${deploy_dir}/hlt/js_testcases&gt;,&lt;${deploy_dir}/hlt/basic_testcases&gt;." />
+		<echo level="info" message="Step1 : Begin to built folders &lt;${deploy_dir}/hlt/ant_testcases&gt;,&lt;${deploy_dir}/hlt/js_testcases&gt;,&lt;${deploy_dir}/hlt/sdv_testcases&gt;." />
 		<mkdir dir="${deploy_dir}/hlt/ant_testcases" />
 		<mkdir dir="${deploy_dir}/hlt/js_testcases" />
-		<mkdir dir="${deploy_dir}/hlt/basic_testcases" />
+		<mkdir dir="${deploy_dir}/hlt/sdv_testcases" />
 		<echo level="info" message="Step2 : Copy the folder from &lt;${testcases_dir}/ant_testcases&gt; to folder &lt;${deploy_dir}/hlt/ant_testcases&gt;." />
 		<copy todir="${deploy_dir}/hlt/ant_testcases">
 			<fileset dir="${testcases_dir}/ant_testcases" includes="**/*" />
@@ -84,9 +84,13 @@
 		<copy todir="${deploy_dir}/hlt/js_testcases">
 			<fileset dir="${testcases_dir}/js_testcases" includes="**/*" />
 		</copy>
-		<echo level="info" message="Step4 : Copy the folder from &lt;${testcases_dir}/basic_testcases&gt; to folder &lt;${deploy_dir}/hlt/basic_testcases&gt;." />
-		<copy todir="${deploy_dir}/hlt/basic_testcases">
-			<fileset dir="${testcases_dir}/basic_testcases" includes="**/*" />
+		<property name="sdv_testcase_dir" value="${testcases_dir}/../sdv/"/>
+		<echo level="info" message="Step4 : Copy the folder from &lt;${sdv_testcase_dir}/normal_parallel&gt; to folder &lt;${deploy_dir}/hlt/sdv_testcases/js&gt;." />
+		<copy todir="${deploy_dir}/hlt/sdv_testcases/js">
+			<fileset dir="${sdv_testcase_dir}/normal_parallel" includes="**/*" />
+		</copy>
+		<copy todir="${deploy_dir}/hlt/sdv_testcases/libs">
+			<fileset dir="${testcases_dir}/js_testcases/libs" includes="**/*" />
 		</copy>
 		<echo level="info" message="Step5 : Copy the file &lt;${SCRIPT_DIR}/ci.test.properties&gt; to folder &lt;${deploy_dir}&gt;." />
 		<copy file="${SCRIPT_DIR}/ci.test.properties" todir="${deploy_dir}" />
