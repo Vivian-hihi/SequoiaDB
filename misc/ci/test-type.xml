@@ -13,7 +13,7 @@
 		<property file="${basedir}/ci.test.properties" />		
 		<switch value="${Test-Type}">
 		   
-			<case value="shell">
+			<case value="story">
 			   <echo message="... Test story testcases ..." />
 			   <property file="${basedir}/testAllot.conf" />
 				<for list="${machineList}" param="hostname" parallel="true">
@@ -28,7 +28,7 @@
 							<param name="WORKSPACE" value="${WORKSPACE}" />
 							<param name="ci.script.file.path" value="${ci.script.file.path}" />
 							<param name="test.log" value="${test.log}" />
-							<param name="test-type-list" value="js" />
+							<param name="test-type-list" value="${Test-Type}" />
 							<param name="BUILD_NUMBER" value="${BUILD_NUMBER}" />
 						</sdbtest>
 					</sequential>
