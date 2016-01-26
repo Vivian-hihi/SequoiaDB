@@ -519,7 +519,7 @@ SdbExecState *deserializeSdbExecState( List *sdbExecStateList )
       cell = lnext( cell ) ;
    }
 
-   sdbbson_init( &fdwState->queryDocument ) ;
+   sdbbson_destroy( &fdwState->queryDocument ) ;
    sdbDeserializeDocument( ( Const * )lfirst( cell ), &fdwState->queryDocument ) ;
    cell = lnext( cell ) ;
 
@@ -1619,6 +1619,7 @@ INT32 sdbGenerateFilterCondition ( Oid foreign_id, RelOptInfo *baserel,
 
    if ( expr_state.unsupport_count > 0 )
    {
+      sdbbson_destroy( condition ) ;
       return -1 ;
    }
 
@@ -1670,25 +1671,41 @@ static void sdbUninitConnectionPool (  )
 Const *sdbSerializeDocument( sdbbson *document )
 {
    Const *serializedDocument = NULL ;
-   Datum documentDatum       = 0 ;
    const CHAR *documentData  = sdbbson_data( document ) ;
    INT32 documentSize        = sdbbson_buffer_size( document ) ;
-   documentDatum             = CStringGetDatum( documentData ) ;
-   serializedDocument        = makeConst( CSTRINGOID, -1,
-                                           InvalidOid, documentSize,
-                                           documentDatum, FALSE, FALSE ) ;
+   if ( NULL != documentData )
+   {
+      Datum documentDatum = 0 ;
+      documentDatum = CStringGetDatum( cstring_to_text_with_len( documentData, 
+                                                              documentSize )) ;
+      serializedDocument = makeConst( CSTRINGOID, -1, InvalidOid, documentSize,
+                                      documentDatum, FALSE, FALSE ) ;
+   }
+   else
+   {
+      serializedDocument = makeNullConst( TEXTOID, -1, InvalidOid ) ;
+   }
+   
    return serializedDocument ;
 }
 
 /* sdbDeserializeDocument deserializes a constant into sdbbson document
  */
-void sdbDeserializeDocument( Const *constant,
-                                     sdbbson *document )
+void sdbDeserializeDocument( Const *constant, sdbbson *document )
 {
-   Datum documentDatum = constant->constvalue ;
-   CHAR *documentData = DatumGetCString( documentDatum ) ;
-   sdbbson_init_size( document, 0 ) ;
-   sdbbson_init_finished_data( document, documentData ) ;
+   if ( constant->constisnull )
+   {
+      sdbbson_finish( document ) ;
+   }
+   else
+   {
+      Datum documentDatum = constant->constvalue ;
+      text *documentText = DatumGetPointer( documentDatum ) ;
+      CHAR *documentData = text_to_cstring(documentText) ;
+      sdbbson_init_size( document, constant->constlen ) ;
+      sdbbson_init_finished_data( document, documentData ) ;
+   }
+   
    return ;
 }
 
@@ -2935,6 +2952,7 @@ static ForeignScan *SdbGetForeignPlan( PlannerInfo *root,
 
    fdw_state->bson_record_addr = sdbCreateBsonRecordAddr() ;
    foreignPrivateList = serializeSdbExecState( fdw_state ) ;
+   sdbbson_destroy( &fdw_state->queryDocument ) ;
 
    /* copy document list */
    columnList = sdbColumnList( baserel ) ;
@@ -3468,6 +3486,7 @@ static void SdbAddForeignUpdateTargets( Query *parsetree, RangeTblEntry *target_
    RangeTblEntry *rte           = NULL ;
    Oid foreignTableId ;
    SdbExecState *fdw_state      = NULL ;
+   List *listModify             = NIL ;
    //TODO: returningList should be support for select * for update?
    //List *returningList = NIL ;
 
@@ -3505,7 +3524,9 @@ static void SdbAddForeignUpdateTargets( Query *parsetree, RangeTblEntry *target_
       }
    }
 
-   return serializeSdbExecState( fdw_state ) ;
+   listModify = serializeSdbExecState( fdw_state ) ;
+   sdbbson_destroy( &fdw_state->queryDocument ) ;
+   return listModify ;
 }
 
 void SdbBeginForeignModify( ModifyTableState *mtstate,
