@@ -1041,5 +1041,35 @@
       <typeofweb>str</typeofweb>
    </opt>
 
+   <opt>
+      <name>PMD_OPTION_STRATEGY_TASK_NAME_DFT</name>
+      <long>strategytasknamedefault</long>
+      <short>t</short>
+      <description>
+         <en>Default task-name for unknown task in strategy configure</en>
+         <cn>在策略配置中给未知任务指定默认的任务名</cn>
+      </description>
+      <detail>
+         <en>Default task-name for unknown task in strategy configure</en>
+         <cn>在策略配置中给未知任务指定默认的任务名</cn>
+      </detail>
+      <typeofweb>str</typeofweb>
+   </opt>
+
+   <opt>
+      <name>PMD_OPTION_STRATEGY_TASK_NICE_DFT</name>
+      <long>strategytasknicedefault</long>
+      <short>t</short>
+      <description>
+         <en>Default nice for task in strategy configure</en>
+         <cn>在策略配置中，任务默认的nice值</cn>
+      </description>
+      <detail>
+         <en>Default nice for task in strategy configure</en>
+         <cn>在策略配置中，任务默认的nice值</cn>
+      </detail>
+      <typeofweb>int</typeofweb>
+   </opt>
+
 </optlist>
 
