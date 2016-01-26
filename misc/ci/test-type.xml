@@ -12,7 +12,9 @@
 	<target name="Test-Type" depends="">   
 		<property file="${basedir}/ci.test.properties" />		
 		<switch value="${Test-Type}">
+		   
 			<case value="shell">
+			   <echo message="... Test story testcases ..." />
 			   <property file="${basedir}/testAllot.conf" />
 				<for list="${machineList}" param="hostname" parallel="true">
 					<sequential>
@@ -34,6 +36,7 @@
 			</case>
             
          <case value="sdv">
+            <echo message="... Test sdv testcases ..." />
             <property file="${basedir}/testAllot-sdv.conf" />
 				<for list="${machineList}" param="hostname" parallel="true">
 					<sequential>

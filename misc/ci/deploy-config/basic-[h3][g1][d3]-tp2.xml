@@ -125,8 +125,8 @@
 
 	<target name="initTest">
 		<basename property="assignLists" file="${assignList}" suffix=",tmp" />
-		<echo file="testAllot.conf" message="${testsuites}=${assignLists}&#10;" append="true" />
-	</target>
+		<echo file="${conf.file}" message="${testsuites}=${assignLists}&#10;" append="true" />
+	</target>			
 
 	<target name="initTestConf">
 		<delete file="testAllot.conf" failonerror="false" />
@@ -148,17 +148,20 @@
 					</sequential>
 				</for>
 				<antcall target="initTest" inheritAll="true" >
+				   <param name="conf.file" value="testAllot.conf" />
 					<param name="assignList" value="${assignList}" />
 					<param name="testsuites" value="@{hostName}" />
-				</antcall>
+				</antcall>		
 			</sequential>
 		</for>
-		
+	</target>
+	
+	<target name="initTestConf-sdv">	
 		<delete file="testAllot-sdv.conf" failonerror="false" />
 		<property name="num" value="1" />
 		<for list="${machineList}" param="machine" >
 			<sequential>
-				<replace file="${basedir}/exec-conf/basic-testcases-conf.xml" token="machine${num}" value="@{machine}" />
+				<replace file="${basedir}/exec-conf/sdv-testcases-conf.xml" token="machine${num}" value="@{machine}" />
 				<var name="op" value="+" />
 				<math result="num" operand1="${num}" operation="${op}" operand2="1" datatype="int" />
 			</sequential>
@@ -173,9 +176,10 @@
 					</sequential>
 				</for>
 				<antcall target="initTest" inheritAll="true" >
+				   <param name="conf.file" value="testAllot-sdv.conf" />
 					<param name="assignList" value="${assignList}" />
 					<param name="testsuites" value="@{hostName}" />
-				</antcall>
+				</antcall>		
 			</sequential>
 		</for>
 	</target>
@@ -195,7 +199,8 @@
 		</for>
 
 		<antcall target="initTestConf" inheritAll="true" />
-
+      <antcall target="initTestConf-sdv" inheritAll="true" />
+      
 		<if>
 			<equals arg1="${TEST_TYPE}" arg2="*" />
 			<then>

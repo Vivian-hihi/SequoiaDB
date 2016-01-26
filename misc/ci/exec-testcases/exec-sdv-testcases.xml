@@ -13,9 +13,10 @@
    </taskdef>
 
    <target name="Init" depends="">
-      <echo message="Begin to clean report path: ${report.path}" />
-      <delete dir="${report.path}" failonerror="false" />
-      <mkdir dir="${report.path}" />
+      <echo message="yt">
+      <echo message="Begin to clean report path: ${reports.path}" />
+      <delete dir="${reports.path}" failonerror="false" />
+      <mkdir dir="${reports.path}" />
            
       <exec command="/bin/sh -c 'eval echo $$$' " dir="" timeout="900000" outputproperty="pid" />
       <sdbprefix prefixName="CHANGEDSTRING">
@@ -70,9 +71,9 @@
 
       <echo message="Now testsuite ${test.suite.name} ..." />
       
-      <echo file="${report.path}/${testsuite.report.name}.xml" 
+      <echo file="${reports.path}/${testsuite.report.name}.xml" 
             message="&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot; ?&gt;&#10;" />
-      <echo file="${report.path}/${testsuite.report.name}.xml" 
+      <echo file="${reports.path}/${testsuite.report.name}.xml" 
             message="&lt;testsuite name=&quot;${test.suite.name}&quot; type=&quot;${test.type}&quot; deploy=&quot;${deploy.mode}&quot; hostname=&quot;${host.NAME}&quot; tests=&quot;1&quot; failure=&quot;0&quot;&gt;&#10;" />
 
       <available property="commlib.exist" file="${test.suite.fullname}/commlib.js" />
@@ -93,7 +94,7 @@
          <param name="testsuite.class.name" value="${testsuite.class.name}" />                                           
       </foreach>
 
-      <echo file="${report.path}/${testsuite.report.name}.xml" 
+      <echo file="${reports.path}/${testsuite.report.name}.xml" 
             message="&lt;/testsuite&gt;&#10;" append="true" />
       
       <tstamp>
@@ -173,30 +174,18 @@
          <then>           
             <echo message="The result code is ${testcase.retcode} and it's succ ..." />
             <echo message="The testcase ${testcase.name}.js end with ${testcase.end.time} and cost ${testcase.cost.time}s in total..." />
-            <echo file="${report.path}/${testsuite.report.name}.xml" append="true" 
-                  message="&lt;testcase classname=&quot;${testsuite.class.name}&quot; name=&quot;${testcase.name}&quot; begin_time=&quot;${testcase.begin.time}&quot; end_time=&quot;${testcase.end.time}&quot; time=&quot;${testcase.cost.time}&quot; path=&quot;${testcase.path}&quot; status=&quot;succ&quot;&gt;&#10;&lt;/testcase&gt;&#10;" />
-         
+            <echo file="${reports.path}/${testsuite.report.name}.xml" append="true" 
+                  message="&lt;testcase classname=&quot;${testsuite.class.name}&quot; name=&quot;${testcase.name}&quot; begin_time=&quot;${testcase.begin.time}&quot; end_time=&quot;${testcase.end.time}&quot; time=&quot;${testcase.cost.time}&quot; path=&quot;${testcase.path}&quot; status=&quot;succ&quot;&gt;&#10;&lt;/testcase&gt;&#10;" />         
         </then>
          <else>
             <echo message="The result code is ${testcase.retcode} and it's fail ..." />
             <echo message="The testcase ${testcase.name}.js end with ${testcase.end.time} and cost ${testcase.cost.time}s in total..." />
 
-            <echo file="${report.path}/${testsuite.report.name}.xml" append="true" 
-                  message="&lt;testcase classname=&quot;${testsuite.class.name}&quot; name=&quot;${testcase.name}&quot; begin_time=&quot;${testcase.begin.time}&quot; end_time=&quot;${testcase.end.time}&quot; time=&quot;${testcase.cost.time}&quot; path=&quot;${testcase.path}&quot; status=&quot;fail&quot;&gt;&#10;&lt;failure&gt;&#10;&lt;![CDATA[&#10;COMMAND : ${testcase.cmd}&#10;RETURNCODE : ${testcase.retcode}&#10;SDB VERSION : &#10; ${SDB.VERSION.INFO}&#10;&#10;ERROR MESSAGE : &#10;${screen.output}&#10;&#10;Download the test log :&#10;${URL.download.pre}/${test.log}.tar.gz]]&gt;&#10;&lt;/failure&gt;&#10;&lt;/testcase&gt;&#10;" />
-         
-         
-            
+            <echo file="${reports.path}/${testsuite.report.name}.xml" append="true" 
+                  message="&lt;testcase classname=&quot;${testsuite.class.name}&quot; name=&quot;${testcase.name}&quot; begin_time=&quot;${testcase.begin.time}&quot; end_time=&quot;${testcase.end.time}&quot; time=&quot;${testcase.cost.time}&quot; path=&quot;${testcase.path}&quot; status=&quot;fail&quot;&gt;&#10;&lt;failure&gt;&#10;&lt;![CDATA[&#10;COMMAND : ${testcase.cmd}&#10;RETURNCODE : ${testcase.retcode}&#10;SDB VERSION : &#10; ${SDB.VERSION.INFO}&#10;&#10;ERROR MESSAGE : &#10;${testcase.output}&#10;&#10;Download the test log :&#10;${URL.download.pre}/${test.log}.tar.gz]]&gt;&#10;&lt;/failure&gt;&#10;&lt;/testcase&gt;&#10;" />                             
          </else>
-      </if>
-      
-      
+      </if>           
    </target>
-
-
-
-
-
-
 
 
 
