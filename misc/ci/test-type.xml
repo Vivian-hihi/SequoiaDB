@@ -28,11 +28,12 @@
 							<param name="WORKSPACE" value="${WORKSPACE}" />
 							<param name="ci.script.file.path" value="${ci.script.file.path}" />
 							<param name="test.log" value="${test.log}" />
-							<param name="test-type-list" value="${test-type-list}" />
+							<param name="test-type-list" value="js" />
 							<param name="BUILD_NUMBER" value="${BUILD_NUMBER}" />
 						</sdbtest>
 					</sequential>
 				</for>
+				<echo message="... Test story testcases is over ..." />
 			</case>
             
          <case value="sdv">
@@ -55,6 +56,7 @@
 						</sdbtest>
 					</sequential>
 				</for>
+				<echo message="... Test sdv testcases is over ..." />
 			</case>
 			
 			<case value="ant">
@@ -67,7 +69,7 @@
 					<param name="excludes.dir.patterns" value="reports*" />
 					<param name="includes.dir.patterns" value="*" />
 					<param name="BUILD_NUMBER" value="${BUILD_NUMBER}" />
-					<param name="test-type-list" value="${test-type-list}" />
+					<param name="test-type-list" value="${Test-Type}" />
 				</sdbtest>
 				<echo message="... Test ant testcases is over ..." />
 			</case>
@@ -83,7 +85,7 @@
 					<param name="excludes.dir.patterns" value="reports*" />
 					<param name="includes.dir.patterns" value="*" />
 					<param name="BUILD_NUMBER" value="${BUILD_NUMBER}" />
-					<param name="test-type-list" value="${test-type-list}" />
+					<param name="test-type-list" value="${Test-Type}" />
 				</sdbtest>
 				<echo message="... Test python driver is over ..." />
 			</case>
@@ -100,7 +102,7 @@
 					<param name="php-bin.dir" value="/opt/sequoiadb/tools/server/php/bin" />
 					<param name="phpunit.phar.dir" value="${testcase.path}/drivers_testcases/php/tools/phpunit.phar" />
 					<param name="BUILD_NUMBER" value="${BUILD_NUMBER}" />
-					<param name="test-type-list" value="${test-type-list}" />
+					<param name="test-type-list" value="${Test-Type}" />
 				</sdbtest>
 				<echo message="... Test php driver is over ..." />
 			</case>
@@ -113,7 +115,7 @@
 					<param name="deploy.case.fullname" value="${deploy.case.fullname}" />
 					<param name="includes.dir.patterns" value="*" />
 					<param name="BUILD_NUMBER" value="${BUILD_NUMBER}" />
-					<param name="test-type-list" value="${test-type-list}" />
+					<param name="test-type-list" value="${Test-Type}" />
 					<param name="isTrunk" value="${isTrunk}" />
 				</sdbtest>
 				<echo message="... Test java driver is over ..." />
@@ -129,9 +131,9 @@
 					<param name="excludes.dir.patterns" value="" />
 					<param name="includes.dir.patterns" value="*" />
 					<param name="BUILD_NUMBER" value="${BUILD_NUMBER}" />
-					<param name="test-type-list" value="${test-type-list}" />
+					<param name="test-type-list" value="${Test-Type}" />
 				</sdbtest>
-				<echo message="... Test lob testcases ..." />
+				<echo message="... Test lob testcases is over ..." />
 			</case>
 
 			<case value="driver-C">
@@ -144,7 +146,7 @@
 					<param name="excludes.dir.patterns" value="" />
 					<param name="includes.dir.patterns" value="*" />
 					<param name="BUILD_NUMBER" value="${BUILD_NUMBER}" />
-					<param name="test-type-list" value="${test-type-list}" />
+					<param name="test-type-list" value="${Test-Type}" />
 				</sdbtest>
 				<echo message="... Test c driver is over ..." />
 			</case>
@@ -159,7 +161,7 @@
 					<param name="excludes.dir.patterns" value="rg" />
 					<param name="includes.dir.patterns" value="*" />
 					<param name="BUILD_NUMBER" value="${BUILD_NUMBER}" />
-					<param name="test-type-list" value="${test-type-list}" />
+					<param name="test-type-list" value="${Test-Type}" />
 				</sdbtest>
 				<echo message="... Test c++ driver is over ..." />
 			</case>
@@ -174,7 +176,7 @@
 					<param name="mongoc.test.host" value="localhost:${fap.service.port}" />
 					<param name="deploy.case.fullname" value="${deploy.case.fullname}" />
 					<param name="BUILD_NUMBER" value="${BUILD_NUMBER}" />
-					<param name="test-type-list" value="${test-type-list}" />
+					<param name="test-type-list" value="${Test-Type}" />
 				</sdbtest>
 				<echo message="... Test mongoc driver is over ..." />
 			</case>
