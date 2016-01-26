@@ -13,7 +13,6 @@
    </taskdef>
 
    <target name="Init" depends="">
-      <echo message="yt">
       <echo message="Begin to clean report path: ${reports.path}" />
       <delete dir="${reports.path}" failonerror="false" />
       <mkdir dir="${reports.path}" />
