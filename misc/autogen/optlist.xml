@@ -1027,48 +1027,17 @@
    </opt>
 
    <opt>
-      <name>PMD_OPTION_OMSVC_ADDR</name>
-      <long>omsvcaddr</long>
-      <short>t</short>
+      <name>PMD_OPTION_OM_ADDR</name>
+      <long>omaddr</long>
       <description>
-         <en>Omsvc addr (hostname:omservicename)</en>
-         <cn>omsvc节点地址(hostname:omservicename)</cn>
+         <en>Om addr (hostname:omservicename)</en>
+         <cn>om节点地址(hostname:omservicename)</cn>
       </description>
       <detail>
-         <en>1. It specifies the address of omsvc node. The format is "hostname:omservicename".</en>
-         <cn>1.指定omsvc节点的地址。配置形式为"hostname:omservicename"。</cn>
+         <en>1. It specifies the address of om node. The format is "hostname:omservicename".</en>
+         <cn>1.指定om节点的地址。配置形式为"hostname:omservicename"。</cn>
       </detail>
       <typeofweb>str</typeofweb>
-   </opt>
-
-   <opt>
-      <name>PMD_OPTION_STRATEGY_TASK_NAME_DFT</name>
-      <long>strategytasknamedefault</long>
-      <short>t</short>
-      <description>
-         <en>Default task-name for unknown task in strategy configure</en>
-         <cn>在策略配置中给未知任务指定默认的任务名</cn>
-      </description>
-      <detail>
-         <en>Default task-name for unknown task in strategy configure</en>
-         <cn>在策略配置中给未知任务指定默认的任务名</cn>
-      </detail>
-      <typeofweb>str</typeofweb>
-   </opt>
-
-   <opt>
-      <name>PMD_OPTION_STRATEGY_TASK_NICE_DFT</name>
-      <long>strategytasknicedefault</long>
-      <short>t</short>
-      <description>
-         <en>Default nice for task in strategy configure</en>
-         <cn>在策略配置中，任务默认的nice值</cn>
-      </description>
-      <detail>
-         <en>Default nice for task in strategy configure</en>
-         <cn>在策略配置中，任务默认的nice值</cn>
-      </detail>
-      <typeofweb>int</typeofweb>
    </opt>
 
 </optlist>
