@@ -1013,6 +1013,7 @@ namespace engine
          UINT32 offset = 0 ;
          UINT32 segmentID = extent2Segment( pageID, &offset ) ;
          INT32 length = (INT32)pageNum << pageSizeSquareRoot() ;
+         offset <<= pageSizeSquareRoot() ;
          rc = ossMmapFile::flushBlock( segmentID, offset, length, sync ) ;
       }
 
