@@ -211,7 +211,7 @@ void OptGen::genHeaderC ()
     for (int i = 0; i < optlist.size(); ++i)
     {
         OptElement *optEle = optlist[i] ;
-        fout<<"#define "<<setw(32)<<optEle->nametag<<"\""<<optEle->longtag<<"\""<<endl ;
+        fout<<"#define "<<setw(64)<<optEle->nametag<<"\""<<optEle->longtag<<"\""<<endl ;
     }
     fout<<"#endif"<<endl ;
     fout.close() ;
