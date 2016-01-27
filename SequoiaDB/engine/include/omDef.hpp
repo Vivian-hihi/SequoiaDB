@@ -213,7 +213,7 @@ namespace engine
    //**********************************************
 
    #define OM_CS_DEPLOY_CL_TASKINFOIDX1      "{name:\"SYSDEPLOY_TASKINFO_IDX1\",key: {"\
-                                             OM_TASKINFO_FIELD_TASKID":1} } "
+                                             OM_TASKINFO_FIELD_TASKID":1}, unique: true, enforced: true } "
 
    enum omTaskType
    {
