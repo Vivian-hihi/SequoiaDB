@@ -42,7 +42,7 @@ using namespace bson ;
 
 namespace engine
 {
-   #define PMD_RECV_DATA_AFTER_LENGTH_TIMEOUT         ( 30 * OSS_ONE_SEC )
+   #define PMD_RECV_DATA_AFTER_LENGTH_TIMEOUT         ( 120 * OSS_ONE_SEC )
 
    /*
       _pmdLocalSession implement
