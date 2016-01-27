@@ -181,17 +181,20 @@ namespace engine
             }
             buffSize = getBuffLen() ;
             *(UINT32*)pBuff = msgSize ;
+            INT32 hasReceived = 0 ;
             // recv the rest msg, need timeout
             rc = recvData( pBuff + sizeof(UINT32),
                            msgSize - sizeof(UINT32),
-                           PMD_RECV_DATA_AFTER_LENGTH_TIMEOUT ) ;
+                           PMD_RECV_DATA_AFTER_LENGTH_TIMEOUT,
+                           &hasReceived ) ;
             if ( rc )
             {
                if ( SDB_APP_FORCED != rc )
                {
-                  PD_LOG( PDERROR, "Session[%s] failed to recv msg[len: %u], "
-                          "rc: %d", sessionName(), msgSize - sizeof(UINT32),
-                          rc ) ;
+                  PD_LOG( PDERROR, "Session[%s] failed to recv msg[len: %u, "
+                          "recieved: %d], rc: %d",
+                          sessionName(), msgSize - sizeof(UINT32),
+                          hasReceived, rc ) ;
                }
                break ;
             }
