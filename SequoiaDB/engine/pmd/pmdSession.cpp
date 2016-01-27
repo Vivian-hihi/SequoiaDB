@@ -186,7 +186,7 @@ namespace engine
             rc = recvData( pBuff + sizeof(UINT32),
                            msgSize - sizeof(UINT32),
                            PMD_RECV_DATA_AFTER_LENGTH_TIMEOUT,
-                           &hasReceived ) ;
+                           TRUE, &hasReceived ) ;
             if ( rc )
             {
                if ( SDB_APP_FORCED != rc )
