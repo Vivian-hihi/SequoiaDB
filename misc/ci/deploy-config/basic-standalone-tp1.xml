@@ -13,21 +13,21 @@
 <!-- call:deploy-software-in-host.xml,deploy-test-in-host.xml,test-type.xml -->
 
 <project default="Standalone">
-	<property name="properties.dir" value="${basedir}/../ci.test.properties" />
-	<property file="${properties.dir}" />
-	<if>
-	   	<equals arg1="${isTrunk}" arg2="true" />
-		<then>
-		    <property name="machineList" value="${trunk_machine}" />
-		    <property name="machine_control" value="${trunk_machine_control}" />
-		</then>
-		<else>
-		    <property name="machineList" value="${branch_machine}" />
-		    <property name="machine_control" value="${branch_machine_control}" />
-		</else>
-	</if>
+   <property name="properties.dir" value="${basedir}/../ci.test.properties" />
+   <property file="${properties.dir}" />
+   <if>
+         <equals arg1="${isTrunk}" arg2="true" />
+      <then>
+          <property name="machineList" value="${trunk_machine}" />
+          <property name="machine_control" value="${trunk_machine_control}" />
+      </then>
+      <else>
+          <property name="machineList" value="${branch_machine}" />
+          <property name="machine_control" value="${branch_machine_control}" />
+      </else>
+   </if>
 
-	<target name="deploySoftwareInHost">
+   <target name="deploySoftwareInHost">
         <property name="addrTemp" value="tmp" />
         <for list="${machineList}" param="hostnames">
             <sequential>
@@ -36,16 +36,16 @@
         </for>
         <basename property="catalog.addrs" file="${addrTemp}" suffix=",tmp" />
         <ant antfile="deploy-software-in-host.xml" dir="." inheritAll="false" output="${hostname}">
-			<property name="install.package.fullname" value="${install.package.fullname}" />
-			<property name="deploy.host.name" value="${hostname}" />
-			<property name="is.standalone.mode" value="true" />
-			<property name="is.coord.master" value="false"/>
-			<property name="catalog.addrs" value="${catalog.addrs}" />
-		</ant>
+         <property name="install.package.fullname" value="${install.package.fullname}" />
+         <property name="deploy.host.name" value="${hostname}" />
+         <property name="is.standalone.mode" value="true" />
+         <property name="is.coord.master" value="false"/>
+         <property name="catalog.addrs" value="${catalog.addrs}" />
+      </ant>
     </target>
 
-	<target name="Deploy-Software" depends="">
-		<for list="${machineList}" param="hostname">
+   <target name="Deploy-Software" depends="">
+      <for list="${machineList}" param="hostname">
             <sequential>
                 <antcall target="deploySoftwareInHost" inheritAll="true" >
                     <param name="hostname" value="@{hostname}" />
@@ -53,41 +53,69 @@
                 </antcall>
             </sequential>
         </for>
-	</target>
+   </target>
 
-	<target name="execTest">
-		<for list="${testList}" param="Test-Type">
-			<sequential>
-				<ant antfile="${WORKSPACE}/sequoiadb/misc/ci/test-type.xml" dir="." inheritAll="false">
-					<property name="test.host.NAME" value="${machine_control}" />
-					<property name="deploy.case.fullname" value="${deploy.case.fullname}" />
-					<property name="test.reports.path" value="${test.reports.path}" />
-					<property name="Test-Type" value="@{Test-Type}" />
-					<property name="parallel.flag" value="parallel" />
-					<property name="WORKSPACE" value="${WORKSPACE}" />
-					<property name="ci.script.file.path" value="${ci.script.file.path}" />
-					<property name="parallel.count" value="1" />
-					<property name="test.log" value="${test.log}" />
-					<property name="test-type-list" value="${test-type-list}" />
-					<property name="BUILD_NUMBER" value="${BUILD_NUMBER}" />
+   <target name="execTest">
+      <for list="${testList}" param="Test-Type">
+         <sequential>
+            <ant antfile="${WORKSPACE}/sequoiadb/misc/ci/test-type.xml" dir="." inheritAll="false">
+               <property name="test.host.NAME" value="${machine_control}" />
+               <property name="deploy.case.fullname" value="${deploy.case.fullname}" />
+               <property name="test.reports.path" value="${test.reports.path}" />
+               <property name="Test-Type" value="@{Test-Type}" />
+               <property name="parallel.flag" value="parallel" />
+               <property name="WORKSPACE" value="${WORKSPACE}" />
+               <property name="ci.script.file.path" value="${ci.script.file.path}" />
+               <property name="parallel.count" value="1" />
+               <property name="test.log" value="${test.log}" />
+               <property name="test-type-list" value="${test-type-list}" />
+               <property name="BUILD_NUMBER" value="${BUILD_NUMBER}" />
 
-					<property name="machineList" value="${machineList}" />
-				</ant>
-			</sequential>
-		</for>
-	</target>
+               <property name="machineList" value="${machineList}" />
+            </ant>
+         </sequential>
+      </for>
+   </target>
 
-	<target name="initTest">
-		<basename property="assignLists" file="${assignList}" suffix=",tmp" />
-		<echo file="testAllot.conf" message="${testsuites}=${assignLists}&#10;" append="true" />
-	</target>
+   <target name="initTest">
+      <basename property="assignLists" file="${assignList}" suffix=",tmp" />
+      <echo file="${conf.file}" message="${testsuites}=${assignLists}&#10;" append="true" />
+   </target>
 
-	<target name="initTestConf">
-		<delete file="testAllot.conf" failonerror="false" />
+   <target name="initTestConf">
+      <delete file="testAllot.conf" failonerror="false" />
+      <property name="num" value="1" />
+      <for list="${machineList}" param="machine" >
+         <sequential>
+            <replace file="${basedir}/exec-conf/basic-testcases-conf.xml" token="machine${num}" value="@{machine}" />
+            <var name="op" value="+" />
+            <math result="num" operand1="${num}" operation="${op}" operand2="1" datatype="int" />
+         </sequential>
+      </for>
+      <for list="${machineList}" param="hostName">
+         <sequential>
+            <var name="assignList" value="tmp" />
+            <xmlproperty file="${basedir}/exec-conf/basic-testcases-conf.xml" />
+            <for list="${shell.@{hostName}.testsuite}" param="testsuite">
+               <sequential>
+                  <var name="assignList" value="@{testsuite},${assignList}" />
+               </sequential>
+            </for>
+            <antcall target="initTest" inheritAll="true" >
+				   <param name="conf.file" value="testAllot.conf" />
+					<param name="assignList" value="${assignList}" />
+					<param name="testsuites" value="@{hostName}" />
+				</antcall>
+         </sequential>
+      </for>
+   </target>
+   
+	<target name="initTestConf-sdv">	
+		<delete file="testAllot-sdv.conf" failonerror="false" />
 		<property name="num" value="1" />
 		<for list="${machineList}" param="machine" >
 			<sequential>
-				<replace file="${basedir}/exec-conf/basic-testcases-conf.xml" token="machine${num}" value="@{machine}" />
+				<replace file="${basedir}/exec-conf/sdv-testcases-conf.xml" token="machine${num}" value="@{machine}" />
 				<var name="op" value="+" />
 				<math result="num" operand1="${num}" operation="${op}" operand2="1" datatype="int" />
 			</sequential>
@@ -95,82 +123,81 @@
 		<for list="${machineList}" param="hostName">
 			<sequential>
 				<var name="assignList" value="tmp" />
-				<xmlproperty file="${basedir}/exec-conf/basic-testcases-conf.xml" />
+				<xmlproperty file="${basedir}/exec-conf/sdv-testcases-conf.xml" />
 				<for list="${shell.@{hostName}.testsuite}" param="testsuite">
 					<sequential>
 						<var name="assignList" value="@{testsuite},${assignList}" />
 					</sequential>
 				</for>
 				<antcall target="initTest" inheritAll="true" >
+				   <param name="conf.file" value="testAllot-sdv.conf" />
 					<param name="assignList" value="${assignList}" />
 					<param name="testsuites" value="@{hostName}" />
-				</antcall>
+				</antcall>		
 			</sequential>
 		</for>
-	</target>
+	</target>   
 
-	<target name="Standalone" depends="">
-		<hostinfo prefix="host" />
-		<property name="test.log" value="${test.environment}-${OS_NAME}${BUILD_NUMBER}-Standalone" />
-		<property name="test.log.path" value="${test.reports.path}/${test.log}" />
+   <target name="Standalone" depends="">
+      <hostinfo prefix="host" />
+      <property name="test.log" value="${test.environment}-${OS_NAME}${BUILD_NUMBER}-Standalone" />
+      <property name="test.log.path" value="${test.reports.path}/${test.log}" />
 
-		<for list="${machineList}" param="hostname" parallel="true">
-			<sequential>
-				<ant antfile="deploy-test-in-host.xml" dir="." inheritAll="false">
-					<property name="deploy.file.fullname" value="${deploy.file.fullname}" />
-					<property name="deploy.host.name" value="@{hostname}" />
-				</ant>
-			</sequential>
-		</for>
+      <for list="${machineList}" param="hostname" parallel="true">
+         <sequential>
+            <ant antfile="deploy-test-in-host.xml" dir="." inheritAll="false">
+               <property name="deploy.file.fullname" value="${deploy.file.fullname}" />
+               <property name="deploy.host.name" value="@{hostname}" />
+            </ant>
+         </sequential>
+      </for>
 
-		<antcall target="initTestConf" inheritAll="true" />
+      <antcall target="initTestConf" inheritAll="true" />
+      <antcall target="initTestConf-sdv" inheritAll="true" />
+      
+      <if>
+         <equals arg1="${TEST_TYPE}" arg2="*" />
+         <then>
+             <var name="TEST_TYPE" value="story,sdv,ant,driver-python,driver-php,driver-java,lob,driver-C,driver-CPP,driver-mongoc" />             
+             <antcall target="execTest" inheritAll="true">
+               <param name="testList" value="${TEST_TYPE}" />
+             </antcall>
+         </then>
+         <else>
+            <antcall target="execTest" inheritAll="true">
+               <param name="testList" value="${TEST_TYPE}" />
+             </antcall>
+         </else>
+      </if>
 
-		<if>
-			<equals arg1="${TEST_TYPE}" arg2="*" />
-			<then>
-			    <var name="TEST_TYPE" value="ant,driver-python,driver-php,driver-java,lob,driver-C,driver-CPP,driver-mongoc" />
-			    <antcall target="execTest" inheritAll="true">
-			    	<param name="testList" value="shell" />
-			    </antcall>
-			    <antcall target="execTest" inheritAll="true">
-			    	<param name="testList" value="${TEST_TYPE}" />
-			    </antcall>
-			</then>
-			<else>
-				<antcall target="execTest" inheritAll="true">
-			    	<param name="testList" value="${TEST_TYPE}" />
-			    </antcall>
-			</else>
-		</if>
+      <if>
+         <equals arg1="${BACKUP_LOG}" arg2="true" />
+         <then>
+            <antcall target="backUpLog" inheritAll="true" />
+         </then>
+      </if>
+   </target>
 
-		<if>
-			<equals arg1="${BACKUP_LOG}" arg2="true" />
-			<then>
-				<antcall target="backUpLog" inheritAll="true" />
-			</then>
-		</if>
-	</target>
+   <target name="backUpLog">
+      <trycatch>
+         <try> 
+            <mkdir dir="${test.log.path}" />
+            <for list="${machineList}" param="hostname">
+               <sequential>
+                  <sdbCopyAndTar fileHostName="@{hostname}" saveHostName="${host.NAME}" diaglogPath="${install.path}/sequoiadb/database" savePath="${test.log.path}" />
+               </sequential>
+            </for>
 
-	<target name="backUpLog">
-		<trycatch>
-			<try>	
-				<mkdir dir="${test.log.path}" />
-				<for list="${machineList}" param="hostname">
-					<sequential>
-						<sdbCopyAndTar fileHostName="@{hostname}" saveHostName="${host.NAME}" diaglogPath="${install.path}/sequoiadb/database" savePath="${test.log.path}" />
-					</sequential>
-				</for>
-
-				<tar basedir="${test.reports.path}" destfile="${test.log.path}.tar.gz" compression="gzip" includes="**/*" />
-				<stafTools workType="copy" workHost="${host.NAME}" fileName="${test.log.path}.tar.gz"  toHost="${save.testLog.hostname}"  saveDir="${save.testLog.dir}" failonerror="true"/>								
-			</try>
-			<catch>
-				<echo message="Copy log for download code fail" />
-			</catch>
-			<finally>
-				<delete file="${test.log.path}.tar.gz" failonerror="false" />
-				<delete dir="${test.log.path}" failonerror="false"/>
-			</finally>
-		</trycatch>
-	</target>
+            <tar basedir="${test.reports.path}" destfile="${test.log.path}.tar.gz" compression="gzip" includes="**/*" />
+            <stafTools workType="copy" workHost="${host.NAME}" fileName="${test.log.path}.tar.gz"  toHost="${save.testLog.hostname}"  saveDir="${save.testLog.dir}" failonerror="true"/>                       
+         </try>
+         <catch>
+            <echo message="Copy log for download code fail" />
+         </catch>
+         <finally>
+            <delete file="${test.log.path}.tar.gz" failonerror="false" />
+            <delete dir="${test.log.path}" failonerror="false"/>
+         </finally>
+      </trycatch>
+   </target>
 </project>
