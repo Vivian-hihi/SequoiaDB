@@ -7,7 +7,7 @@
 #include <boost/foreach.hpp>
 
 // name string align
-#define RCALIGN 32
+#define RCALIGN 64
 // xml source file
 #define RCXMLSRC "rclist.xml"
 // output file path
