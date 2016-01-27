@@ -1575,7 +1575,7 @@ namespace engine
       // --strategytasknicedefault
       rdxInt( pEX, PMD_OPTION_STRATEGY_TASK_NICE_DFT, _strategyTaskNiceDFT,
               FALSE, FALSE, OM_TASK_STRATEGY_NICE_DEF ) ;
-      rdvMinMax( pEX, _extendThreshold, OM_TASK_STRATEGY_NICE_MIN,
+      rdvMinMax( pEX, _strategyTaskNiceDFT, OM_TASK_STRATEGY_NICE_MIN,
                  OM_TASK_STRATEGY_NICE_MAX, TRUE ) ;
 
       // end map
