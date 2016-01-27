@@ -68,6 +68,7 @@ namespace engine
       SDB_CB_OMAGT,
 
       SDB_CB_PMDCTRL,
+      SDB_CB_OMPROXY,
       // THE MAX CB TYPE
       SDB_CB_MAX
    } ;

@@ -33,48 +33,16 @@
 #ifndef OM_STRATEGY_MGR_HPP_
 #define OM_STRATEGY_MGR_HPP_
 
-#include "ossTypes.h"
 #include "pmd.hpp"
 #include "pmdEDU.hpp"
 #include "dmsCB.hpp"
 #include "rtnCB.hpp"
 #include "ossLatch.hpp"
-#include "../bson/bsonobj.h"
+#include "omStrategyDef.hpp"
 #include <string>
 
 namespace engine
 {
-#define OM_TASK_STRATEGY_NICE_MAX      19
-#define OM_TASK_STRATEGY_NICE_MIN      -20
-#define OM_TASK_STRATEGY_NICE_DEF      0
-
-   typedef struct _omTaskStrategyInfo
-   {
-   private:
-      INT64                      taskID ;
-   public:
-      INT64                      _id  ;
-      INT32                      nice ;
-      std::string                taskName ;
-      std::string                userName ;
-      std::set<std::string>      ips ;
-
-   public:
-      friend class omStrategyMgr ;
-      _omTaskStrategyInfo()
-      {
-         _id = 0 ;
-         nice = 0 ;
-         taskID = 0 ;
-      }
-
-      INT32 toBSON( bson::BSONObj &obj ) ;
-      INT32 fromBSON( const bson::BSONObj &obj ) ;
-
-   protected:
-      void setTaskID( INT64 newTaskID ) ;
-
-   }omTaskStrategyInfo ;
    class omStrategyMgr : public SDBObject
    {
    public:

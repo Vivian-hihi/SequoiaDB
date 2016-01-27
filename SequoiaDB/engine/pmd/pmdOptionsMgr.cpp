@@ -46,6 +46,7 @@
 #include "ossIO.hpp"
 #include "ossVer.hpp"
 #include "dpsLogWrapper.hpp"
+#include "omStrategyDef.hpp"
 
 #include "rtnSortDef.hpp"
 #include "clsUtil.hpp"
@@ -1098,6 +1099,55 @@ namespace engine
       goto done ;
    }
 
+   INT32 _pmdCfgRecord::rdvMinMax( pmdCfgExchange *pEX, INT32 &value,
+                                   INT32 minV, INT32 maxV,
+                                   BOOLEAN autoAdjust )
+   {
+      if ( _result )
+      {
+         goto error ;
+      }
+
+      if ( !pEX->isLoad() )
+      {
+         goto done ;
+      }
+
+      if ( value < minV )
+      {
+         ossPrintf( "Waring: Field[%s] value[%u] is less than min value[%u]\n",
+                    _curFieldName.c_str(), value, minV ) ;
+         if ( autoAdjust )
+         {
+            value = minV ;
+         }
+         else
+         {
+            _result = SDB_INVALIDARG ;
+            goto error ;
+         }
+      }
+      else if ( value > maxV )
+      {
+         ossPrintf( "Waring: Field[%s] value[%u] is more than max value[%u]\n",
+                 _curFieldName.c_str(), value, maxV ) ;
+         if ( autoAdjust )
+         {
+            value = maxV ;
+         }
+         else
+         {
+            _result = SDB_INVALIDARG ;
+            goto error ;
+         }
+      }
+
+   done:
+      return _result ;
+   error:
+      goto done ;
+   }
+
    INT32 _pmdCfgRecord::rdvMinMax( pmdCfgExchange *pEX, UINT16 &value,
                                    UINT16 minV, UINT16 maxV,
                                    BOOLEAN autoAdjust )
@@ -1514,6 +1564,20 @@ namespace engine
       rdxInt( pEX, PMD_OPTION_SIGNAL_INTERVAL, _signalInterval, FALSE, TRUE,
               0, TRUE ) ;
 
+      // --omsvcaddr
+      rdxString( pEX, PMD_OPTION_OMSVC_ADDR, _omsvcAddrLine,
+                 sizeof(_omsvcAddrLine), FALSE, FALSE, "" ) ;
+
+      // --strategytasknamedefault
+      rdxString( pEX, PMD_OPTION_STRATEGY_TASK_NAME_DFT, _strategyTaskNameDFT,
+                 sizeof(_strategyTaskNameDFT), FALSE, FALSE, "" ) ;
+
+      // --strategytasknicedefault
+      rdxInt( pEX, PMD_OPTION_STRATEGY_TASK_NICE_DFT, _strategyTaskNiceDFT,
+              FALSE, FALSE, OM_TASK_STRATEGY_NICE_DEF ) ;
+      rdvMinMax( pEX, _extendThreshold, OM_TASK_STRATEGY_NICE_MIN,
+                 OM_TASK_STRATEGY_NICE_MAX, TRUE ) ;
+
       // end map
 
       return getResult () ;
@@ -1811,6 +1875,12 @@ namespace engine
          _syncStrategy     = CLS_SYNC_NONE ;
       }
 
+      rc = parseAddressLine( _omsvcAddrLine, _vecOmsvc ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+
    done:
       return rc ;
    error:
@@ -1822,11 +1892,20 @@ namespace engine
       return makeAddressLine( _vecCat ) ;
    }
 
+   const std::string &_pmdOptionsMgr::getOmsvcAddr() const
+   {
+      return makeAddressLine( _vecOmsvc ) ;
+   }
+
    INT32 _pmdOptionsMgr::preSaving ()
    {
       string addr = makeAddressLine( _vecCat ) ;
       ossStrncpy( _catAddrLine, addr.c_str(), OSS_MAX_PATHSIZE ) ;
       _catAddrLine[ OSS_MAX_PATHSIZE ] = 0 ;
+
+      addr = makeAddressLine( _vecOmsvc ) ;
+      ossStrncpy( _omsvcAddrLine, addr.c_str(), OSS_MAX_PATHSIZE ) ;
+      _omsvcAddrLine[ OSS_MAX_PATHSIZE ] = 0 ;
 
       clsStrategy2String( _syncStrategy, _syncStrategyStr,
                           sizeof( _syncStrategyStr ) ) ;
