@@ -1664,6 +1664,27 @@ static void sdbUninitConnectionPool (  )
    free( pool->connList ) ;
 }
 
+//void sdbPrintDocument( const char *documentData, INT32 documentSize, 
+//                       const char *flag )
+//{
+//   CHAR tmpValue[1000] = "" ;
+//   INT32 i = 0 ;
+//   INT32 j = 0 ;
+
+//   for ( i = 0 ; i < documentSize; i++ )
+//   {
+//      if ( i > 0 && i%4 == 0 )
+//      {
+//         sprintf( &tmpValue[j], " " ) ;
+//         j = j + 1 ;
+//      }
+//      sprintf( &tmpValue[j], "%02x", documentData[i] ) ;
+//      j = j + 2 ;
+//   }
+//   tmpValue[j] = '\0' ;
+//   elog( INFO, "%s, tmpValue=%s", flag, tmpValue ) ;
+//}
+
 /* sdbSerializeDocument serializes the sdbbson document to a constant
  * Note this function just copies the pointer of documents' data,
  * therefore the caller should NOT destroy the object
@@ -1675,9 +1696,12 @@ Const *sdbSerializeDocument( sdbbson *document )
    INT32 documentSize        = sdbbson_buffer_size( document ) ;
    if ( NULL != documentData )
    {
+      // copy the data here. so we can free the document outside. 
       Datum documentDatum = 0 ;
-      documentDatum = CStringGetDatum( cstring_to_text_with_len( documentData, 
-                                                              documentSize )) ;
+      CHAR *pTmp = palloc( documentSize + 1 ) ;
+      memcpy( pTmp, documentData, documentSize ) ;
+      pTmp[ documentSize ] = '\0' ;
+      documentDatum      = CStringGetDatum( pTmp ) ;
       serializedDocument = makeConst( CSTRINGOID, -1, InvalidOid, documentSize,
                                       documentDatum, FALSE, FALSE ) ;
    }
@@ -1700,12 +1724,11 @@ void sdbDeserializeDocument( Const *constant, sdbbson *document )
    else
    {
       Datum documentDatum = constant->constvalue ;
-      text *documentText = DatumGetPointer( documentDatum ) ;
-      CHAR *documentData = text_to_cstring(documentText) ;
-      sdbbson_init_size( document, constant->constlen ) ;
+      CHAR *documentData = DatumGetCString( documentDatum ) ;
+      sdbbson_init_size( document, 0 ) ;
       sdbbson_init_finished_data( document, documentData ) ;
    }
-   
+
    return ;
 }
 
