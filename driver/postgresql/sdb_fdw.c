@@ -1613,6 +1613,8 @@ INT32 sdbGenerateFilterCondition ( Oid foreign_id, RelOptInfo *baserel,
    {
       //sdbPrintBson( condition ) ;
       sdbbson_destroy( condition ) ;
+      sdbbson_init( condition ) ;
+      sdbbson_finish( condition ) ;
    }
 
    //sdbPrintBson( condition, DEBUG1 ) ;
@@ -1620,6 +1622,8 @@ INT32 sdbGenerateFilterCondition ( Oid foreign_id, RelOptInfo *baserel,
    if ( expr_state.unsupport_count > 0 )
    {
       sdbbson_destroy( condition ) ;
+      sdbbson_init( condition ) ;
+      sdbbson_finish( condition ) ;
       return -1 ;
    }
 
@@ -1701,6 +1705,7 @@ Const *sdbSerializeDocument( sdbbson *document )
       CHAR *pTmp = palloc( documentSize + 1 ) ;
       memcpy( pTmp, documentData, documentSize ) ;
       pTmp[ documentSize ] = '\0' ;
+//      sdbPrintDocument( pTmp, documentSize, "sdbSerializeDocument" ) ;
       documentDatum      = CStringGetDatum( pTmp ) ;
       serializedDocument = makeConst( CSTRINGOID, -1, InvalidOid, documentSize,
                                       documentDatum, FALSE, FALSE ) ;
@@ -1719,12 +1724,14 @@ void sdbDeserializeDocument( Const *constant, sdbbson *document )
 {
    if ( constant->constisnull )
    {
+      sdbbson_init( document ) ;
       sdbbson_finish( document ) ;
    }
    else
    {
       Datum documentDatum = constant->constvalue ;
       CHAR *documentData = DatumGetCString( documentDatum ) ;
+//      sdbPrintDocument( documentData, constant->constlen, "sdbDeserializeDocument" ) ;
       sdbbson_init_size( document, 0 ) ;
       sdbbson_init_finished_data( document, documentData ) ;
    }
