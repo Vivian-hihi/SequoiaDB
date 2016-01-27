@@ -489,9 +489,7 @@ namespace engine
          OSS_INLINE UINT32 getExtendThreshold() const { return _extendThreshold ; }
          OSS_INLINE INT32 getSignalInterval() const { return _signalInterval ; }
 
-         const std::string &getOmsvcAddr() const ;
-         OSS_INLINE const CHAR * getStrategyTaskNameDFT() const{ return _strategyTaskNameDFT ; }
-         OSS_INLINE INT32 getStrategyTaskNiceDFT() const{ return _strategyTaskNiceDFT ; }
+         const std::string &getOmAddr() const ;
 
 #ifdef SDB_ENTERPRISE
 
@@ -559,9 +557,7 @@ namespace engine
          UINT32      _overflowRatio ;     // %
          UINT32      _extendThreshold ;   // MB
          INT32       _signalInterval ;
-         CHAR        _omsvcAddrLine[ OSS_MAX_PATHSIZE + 1 ] ;
-         CHAR        _strategyTaskNameDFT[ OSS_MAX_PATHSIZE + 1 ] ;
-         INT32       _strategyTaskNiceDFT ;
+         CHAR        _omAddrLine[ OSS_MAX_PATHSIZE + 1 ] ;
 
 #ifdef SDB_ENTERPRISE
 
@@ -577,7 +573,7 @@ namespace engine
          vector< pmdAddrPair >   _vecCat ;
          UINT16      _krcbSvcPort ;
          std::string _exePath ;
-         vector< pmdAddrPair >   _vecOmsvc ;
+         vector< pmdAddrPair >   _vecOm ;
 
    } ;
 

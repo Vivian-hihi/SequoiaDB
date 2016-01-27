@@ -1564,19 +1564,9 @@ namespace engine
       rdxInt( pEX, PMD_OPTION_SIGNAL_INTERVAL, _signalInterval, FALSE, TRUE,
               0, TRUE ) ;
 
-      // --omsvcaddr
-      rdxString( pEX, PMD_OPTION_OMSVC_ADDR, _omsvcAddrLine,
-                 sizeof(_omsvcAddrLine), FALSE, FALSE, "" ) ;
-
-      // --strategytasknamedefault
-      rdxString( pEX, PMD_OPTION_STRATEGY_TASK_NAME_DFT, _strategyTaskNameDFT,
-                 sizeof(_strategyTaskNameDFT), FALSE, FALSE, "" ) ;
-
-      // --strategytasknicedefault
-      rdxInt( pEX, PMD_OPTION_STRATEGY_TASK_NICE_DFT, _strategyTaskNiceDFT,
-              FALSE, FALSE, OM_TASK_STRATEGY_NICE_DEF ) ;
-      rdvMinMax( pEX, _strategyTaskNiceDFT, OM_TASK_STRATEGY_NICE_MIN,
-                 OM_TASK_STRATEGY_NICE_MAX, TRUE ) ;
+      // --omaddr
+      rdxString( pEX, PMD_OPTION_OM_ADDR, _omAddrLine,
+                 sizeof(_omAddrLine), FALSE, FALSE, "" ) ;
 
       // end map
 
@@ -1875,7 +1865,7 @@ namespace engine
          _syncStrategy     = CLS_SYNC_NONE ;
       }
 
-      rc = parseAddressLine( _omsvcAddrLine, _vecOmsvc ) ;
+      rc = parseAddressLine( _omAddrLine, _vecOm ) ;
       if ( rc )
       {
          goto error ;
@@ -1892,9 +1882,9 @@ namespace engine
       return makeAddressLine( _vecCat ) ;
    }
 
-   const std::string &_pmdOptionsMgr::getOmsvcAddr() const
+   const std::string &_pmdOptionsMgr::getOmAddr() const
    {
-      return makeAddressLine( _vecOmsvc ) ;
+      return makeAddressLine( _vecOm ) ;
    }
 
    INT32 _pmdOptionsMgr::preSaving ()
@@ -1903,9 +1893,9 @@ namespace engine
       ossStrncpy( _catAddrLine, addr.c_str(), OSS_MAX_PATHSIZE ) ;
       _catAddrLine[ OSS_MAX_PATHSIZE ] = 0 ;
 
-      addr = makeAddressLine( _vecOmsvc ) ;
-      ossStrncpy( _omsvcAddrLine, addr.c_str(), OSS_MAX_PATHSIZE ) ;
-      _omsvcAddrLine[ OSS_MAX_PATHSIZE ] = 0 ;
+      addr = makeAddressLine( _vecOm ) ;
+      ossStrncpy( _omAddrLine, addr.c_str(), OSS_MAX_PATHSIZE ) ;
+      _omAddrLine[ OSS_MAX_PATHSIZE ] = 0 ;
 
       clsStrategy2String( _syncStrategy, _syncStrategyStr,
                           sizeof( _syncStrategyStr ) ) ;
