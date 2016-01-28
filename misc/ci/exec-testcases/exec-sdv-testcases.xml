@@ -148,7 +148,7 @@
       <exec executable="${bin.dir}/sdb"
             outputproperty="testcase.output" 
             resultproperty="testcase.retcode"
-            timeout="600000000" >
+            timeout="1200000" >
          <arg line="${testcase.cmd}" />
       </exec>
       <echo message="${testcase.output}" />

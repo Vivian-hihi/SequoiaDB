@@ -192,7 +192,7 @@
 		<property name="command" value="sdb${sdb.cmd.argument}" />
 		<echo message="Command:${command}" />
 		<echo message="The testcase ${test.case.fullname} path on ${testcases.path}" />
-		<exec executable="${bin_dir}/sdb" dir="" timeout="600000000" outputproperty="screen.output" resultproperty="ret.code" failonerror="false">
+		<exec executable="${bin_dir}/sdb" dir="" timeout="1200000" outputproperty="screen.output" resultproperty="ret.code" failonerror="false">
 			<arg line="${sdb.cmd.argument}" />
 		</exec>
 		<echo message="${screen.output}" />
