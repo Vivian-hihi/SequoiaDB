@@ -489,7 +489,7 @@ namespace engine
          OSS_INLINE UINT32 getExtendThreshold() const { return _extendThreshold ; }
          OSS_INLINE INT32 getSignalInterval() const { return _signalInterval ; }
 
-         const std::string &getOmAddr() const ;
+         const std::string getOmAddr() const ;
 
 #ifdef SDB_ENTERPRISE
 
