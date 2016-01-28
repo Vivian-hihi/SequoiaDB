@@ -301,6 +301,10 @@ namespace engine
       }
 
    done:
+      if ( -1 != contextID )
+      {
+         rtnKillContexts( 1, &contextID, cb, rtnCB ) ;
+      }
       PD_TRACE_EXITRC ( SDB_AUTHCB_REMOVEUSR, rc ) ;
       return rc ;
    error:
