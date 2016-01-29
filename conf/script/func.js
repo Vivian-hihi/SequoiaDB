@@ -444,6 +444,454 @@ function getSptPath( path )
    return retStr ;
 }
 
+/******************************************************************************
+@discretion: create the psql's task workpath
+@author: YouBin Lin
+@parameter
+   path[string]: the path of current program working
+                 e.g. /opt/sequoiadb/bin
+@return
+***************************************************************************** */
+function createPsqlTaskWorkPath( taskID )
+{
+   var taskWorkPath = "" ;
+   
+   try
+   {
+      if ( SYS_LINUX == SYS_TYPE )
+      {
+         taskWorkPath = OMA_PATH_OMA_WORK_TASK_DIR + '/' + taskID ;
+         File.mkdir( taskWorkPath ) ;
+      }
+      else
+      {
+         // TODO:
+      }
+   }
+   catch( e )
+   {
+      SYSEXPHANDLE( e ) ;
+      rc = GETLASTERROR() ;
+      errMsg = "Failed to create task work path[" + taskWorkPath + "]" ;
+      PD_LOG( arguments, PDERROR, FILE_NAME_FUNC,
+              errMsg + ", rc: " + rc + ", detail: " + GETLASTERRMSG() ) ;
+      exception_handle( rc, errMsg ) ;
+   }
+
+   return ;
+}
+
+/******************************************************************************
+@discretion: remove the psql's task workpath
+@author: YouBin Lin
+@parameter
+   path[string]: the path of current program working
+                 e.g. /opt/sequoiadb/bin
+@return
+***************************************************************************** */
+function removePsqlTaskWorkPath( taskID )
+{
+   var taskWorkPath = "" ;
+   try
+   {
+      if ( SYS_LINUX == SYS_TYPE )
+      {
+         taskWorkPath = OMA_PATH_OMA_WORK_TASK_DIR + '/' + taskID ;
+         var isPathExist = File.exist( taskWorkPath ) ;
+         if ( isPathExist == true )
+         {
+            File.remove( taskWorkPath ) ;
+         }
+         else
+         {
+            PD_LOG( arguments, PDEVENT, FILE_NAME_FUNC,
+                    "task work path is not exist[" + taskWorkPath + "]" ) ;
+         }
+      }
+      else
+      {
+         // TODO:
+      }
+   }
+   catch( e )
+   {
+      SYSEXPHANDLE( e ) ;
+      rc = GETLASTERROR() ;
+      errMsg = "Failed to remove task work path[" + taskWorkPath + "]" ;
+      PD_LOG( arguments, PDERROR, FILE_NAME_FUNC,
+              errMsg + ", rc: " + rc + ", detail: " + GETLASTERRMSG() ) ;
+      exception_handle( rc, errMsg ) ;
+   }
+
+   return ;
+}
+
+/******************************************************************************
+@discretion: create the psql's resultfile
+@author: YouBin Lin
+@parameter
+   path[string]: the path of current program working
+                 e.g. /opt/sequoiadb/bin
+@return
+   retStr[string]: the path of psql's result file path
+***************************************************************************** */
+function createPsqlResultFilePath( taskID )
+{
+   var retStr   = "" ;
+   var totalCmd = "" ;
+   try
+   {
+      var cmd = new Cmd() ;
+      if ( SYS_LINUX == SYS_TYPE )
+      {
+         retStr = OMA_PATH_OMA_WORK_TASK_DIR + '/' + taskID + '/' + OMA_FILE_PSQL_FIFO_FILE ;
+         totalCmd = "mkfifo " + retStr ;
+         cmd.run( totalCmd ) ;
+      }
+      else
+      {
+         // TODO:
+      }
+   }
+   catch( e )
+   {
+      SYSEXPHANDLE( e ) ;
+      rc = GETLASTERROR() ;
+      errMsg = "Failed to run cmd[" + totalCmd + "]" ;
+      PD_LOG( arguments, PDERROR, FILE_NAME_FUNC,
+              errMsg + ", rc: " + rc + ", detail: " + GETLASTERRMSG() ) ;
+      exception_handle( rc, errMsg ) ;
+   }
+
+   return retStr ;
+}
+
+/******************************************************************************
+@discretion: remove the psql's resultfile
+@author: YouBin Lin
+@parameter
+   path[string]: the path of current program working
+                 e.g. /opt/sequoiadb/bin
+@return
+***************************************************************************** */
+function removePsqlResultFile( taskID )
+{
+   var resultFile = "" ;
+   try
+   {
+      if ( SYS_LINUX == SYS_TYPE )
+      {
+         resultFile = OMA_PATH_OMA_WORK_TASK_DIR + '/' + taskID + '/' + OMA_FILE_PSQL_FIFO_FILE ;
+         var isFileExist = File.exist( resultFile ) ;
+         if ( isFileExist == true )
+         {
+            var cmd = new Cmd() ;
+            cmd.run( "rm " + resultFile ) ;
+         }
+      }
+      else
+      {
+         // TODO:
+      }
+   }
+   catch( e )
+   {
+      SYSEXPHANDLE( e ) ;
+      rc = GETLASTERROR() ;
+      errMsg = "Failed to remove result file[" + resultFile + "]" ;
+      PD_LOG2( taskID, arguments, PDERROR, FILE_NAME_FUNC,
+               errMsg + ", rc: " + rc + ", detail: " + GETLASTERRMSG() ) ;
+      exception_handle( rc, errMsg ) ;
+   }
+
+   return ;
+}
+
+/******************************************************************************
+@discretion: create the psql's pid file
+@author: YouBin Lin
+@parameter
+   path[string]: the path of current program working
+                 e.g. /opt/sequoiadb/bin
+@return
+   retStr[string]: the path of psql's pid file path
+***************************************************************************** */
+function createPsqlPidFilePath( taskID )
+{
+   var retStr   = "" ;
+   var totalCmd = "" ;
+   try
+   {
+      var cmd = new Cmd() ;
+      if ( SYS_LINUX == SYS_TYPE )
+      {
+         retStr = OMA_PATH_OMA_WORK_TASK_DIR + '/' + taskID + '/' + OMA_FILE_PSQL_PID_FILE ;
+         totalCmd = "touch " + retStr ;
+         cmd.run( totalCmd ) ;
+      }
+      else
+      {
+         // TODO:
+      }
+   }
+   catch( e )
+   {
+      SYSEXPHANDLE( e ) ;
+      rc = GETLASTERROR() ;
+      errMsg = "Failed to run cmd[" + totalCmd + "]" ;
+      PD_LOG( arguments, PDERROR, FILE_NAME_FUNC,
+              errMsg + ", rc: " + rc + ", detail: " + GETLASTERRMSG() ) ;
+      exception_handle( rc, errMsg ) ;
+   }
+
+   return retStr ;
+}
+
+/******************************************************************************
+@discretion: check this pid is psql or not
+@author: YouBin Lin
+@parameter
+   path[string]: the path of current program working
+                 e.g. /opt/sequoiadb/bin
+@return
+   true/false
+***************************************************************************** */
+function _isPsqlProc( pid )
+{
+   var isPsql = true ;
+   var cmd    = new Cmd() ;
+   try
+   {
+      var result = cmd.run( "ps -ef | grep psql | grep -v grep | grep " + pid ) ;
+   }
+   catch( e )
+   {
+   }
+   
+   if ( result == "" )
+   {
+      isPsql = false ;
+   }
+   
+   return isPsql ;
+}
+
+/******************************************************************************
+@discretion: get pid from the psql's pid file
+@author: YouBin Lin
+@parameter
+   path[string]: the path of current program working
+                 e.g. /opt/sequoiadb/bin
+@return
+   pid
+***************************************************************************** */
+function getPidFromPsqlPidFile( taskID )
+{
+   var pidFile  = "" ;
+   var pid      = "" ;
+   try
+   {
+      var cmd = new Cmd() ;
+      if ( SYS_LINUX == SYS_TYPE )
+      {
+         pidFile  = OMA_PATH_OMA_WORK_TASK_DIR + '/' + taskID + '/' + OMA_FILE_PSQL_PID_FILE ;
+         var isPidFileExist = File.exist( pidFile ) ;
+         if ( isPidFileExist == true )
+         {
+            var myFile     = new File( pidFile ) ;
+            var isPsqlProc = false ;
+            try
+            {
+               pid = myFile.read() ;
+            }
+            catch ( e )
+            {
+               SYSEXPHANDLE( e ) ;
+               var tmpRC = GETLASTERROR() ;
+               if ( -9 != tmpRC )
+               {
+                  exception_handle( tmpRC, GETLASTERRMSG() ) ;
+               }
+               else
+               {
+                  pid = null ;
+               }
+            }
+            
+            isPsqlProc = _isPsqlProc( pid ) ;
+            if ( !isPsqlProc )
+            {
+               pid = null ;
+            }  
+         }
+         else
+         {
+            pid = null ;
+         }
+      }
+      else
+      {
+         // TODO:
+      }
+   }
+   catch( e )
+   {
+      SYSEXPHANDLE( e ) ;
+      rc = GETLASTERROR() ;
+      errMsg = "Failed to read from pidfile[" + pidFile + "]" ;
+      PD_LOG( arguments, PDERROR, FILE_NAME_FUNC,
+              errMsg + ", rc: " + rc + ", detail: " + GETLASTERRMSG() ) ;
+      exception_handle( rc, errMsg ) ;
+   }
+
+   return pid ;
+}
+
+/******************************************************************************
+@discretion: remove the psql's pid file
+@author: YouBin Lin
+@parameter
+   path[string]: the path of current program working
+                 e.g. /opt/sequoiadb/bin
+@return
+***************************************************************************** */
+function removePsqlPidFile( taskID )
+{
+   var pidFile = "" ;
+   try
+   {
+      if ( SYS_LINUX == SYS_TYPE )
+      {
+         pidFile = OMA_PATH_OMA_WORK_TASK_DIR + '/' + taskID + '/' + OMA_FILE_PSQL_PID_FILE ;
+         var isPidFileExist = File.exist( pidFile ) ;
+         if ( isPidFileExist == true )
+         {
+            File.remove( pidFile ) ;
+         }
+      }
+      else
+      {
+         // TODO:
+      }
+   }
+   catch( e )
+   {
+      SYSEXPHANDLE( e ) ;
+      rc = GETLASTERROR() ;
+      errMsg = "Failed to remove pid file[" + pidFile + "]" ;
+      PD_LOG( arguments, PDERROR, FILE_NAME_FUNC,
+              errMsg + ", rc: " + rc + ", detail: " + GETLASTERRMSG() ) ;
+      exception_handle( rc, errMsg ) ;
+   }
+
+   return ;
+}
+
+/******************************************************************************
+@discretion: write pid to the psql's pid file
+@author: YouBin Lin
+@parameter
+   path[string]: the path of current program working
+                 e.g. /opt/sequoiadb/bin
+@return
+***************************************************************************** */
+function writeSsqlPidFile( pid_file, pid )
+{
+   try
+   {
+      if ( SYS_LINUX == SYS_TYPE )
+      {
+         pid = pid + "" ;
+         var myFile = new File( pid_file ) ;
+         myFile.write( pid ) ;
+      }
+      else
+      {
+         // TODO:
+      }
+   }
+   catch( e )
+   {
+      SYSEXPHANDLE( e ) ;
+      rc = GETLASTERROR() ;
+      errMsg = "Failed to write pid_file[" + pid_file + "]" ;
+      PD_LOG( arguments, PDERROR, FILE_NAME_FUNC,
+              errMsg + ", rc: " + rc + ", detail: " + GETLASTERRMSG() ) ;
+      exception_handle( rc, errMsg ) ;
+   }
+
+   return ;
+}
+
+/* *****************************************************************************
+@discretion: get the psql's library path
+@author: YouBin Lin
+@parameter
+   path[string]: the path of current program working
+                 e.g. /opt/sequoiadb/bin
+@return
+   retStr[string]: the path of psql's library file path
+***************************************************************************** */
+function getPsqlLibPath( path )
+{
+   var retStr = "" ;
+   var str = "" ;
+   var pos = -1 ;
+
+   if ( SYS_LINUX == SYS_TYPE )
+   {
+      retStr = adaptPath( path ) ;
+      str = "/" ;
+      pos = path.lastIndexOf( str, retStr.length - 2 ) ;
+      if ( -1 == pos )
+      {
+         setLastErrMsg( "Invalid sdb running path: " + path ) ;
+         setLastError( SDB_INVALIDARG ) ;
+         throw SDB_INVALIDARG ;
+      }
+      retStr = path.substring( 0, pos + 1 ) + "lib/" ;
+   }
+   else
+   {
+      // TODO:
+   }
+   return retStr ;
+}
+
+/* *****************************************************************************
+@discretion: get the psql's path
+@author: YouBin Lin
+@parameter
+   path[string]: the path of current program working
+                 e.g. /opt/sequoiadb/bin
+@return
+   retStr[string]: the path of psql's file path
+***************************************************************************** */
+function getPsqlPath( path )
+{
+   var retStr = "" ;
+   var str = "" ;
+   var pos = -1 ;
+
+   if ( SYS_LINUX == SYS_TYPE )
+   {
+      retStr = adaptPath( path ) + "psql";
+   }
+   else
+   {
+      // TODO:
+   }
+   return retStr ;
+}
+
+/* *****************************************************************************
+@discretion: get the service of local formal sdbcm
+@author: Tanzhaobo
+@parameter void
+@exception
+@return
+   retStr[string]: the service of local formal sdbcm
+***************************************************************************** */
 /* *****************************************************************************
 @discretion: get the service of local formal sdbcm
 @author: Tanzhaobo

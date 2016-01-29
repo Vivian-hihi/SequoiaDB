@@ -150,3 +150,16 @@ function checkSAInfo()
    this.svcname                   = "" ;
 }
 
+function psqlResult()
+{
+   this.errno                    = SDB_OK ;
+   this.detail                    = "" ; 
+   this.PipeFile                  = "" ;
+}
+
+function cleanPsqlResult()
+{
+   this.errno                    = SDB_OK ;
+   this.detail                    = "" ; 
+}
+

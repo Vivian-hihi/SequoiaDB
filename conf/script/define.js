@@ -104,6 +104,14 @@ var SdbUserGroup                           = "SdbUserGroup" ;
 var SdbPasswd                              = "SdbPasswd" ;
 var SdbUser                                = "SdbUser" ;
 var Service                                = "Service" ;
+var ServiceName                            = "ServiceName" ;
+var DbName                                 = "DbName" ;
+var DbUser                                 = "DbUser" ;
+var DbPasswd                               = "DbPasswd" ;
+var Sql                                    = "Sql" ;
+var ResultFormat                           = "ResultFormat" ;
+var FormatPretty                           = "pretty" ;
+var PipeFile                               = "PipeFile" ;
 var ServerInfo                             = "ServerInfo" ;
 var Size                                   = "Size" ;
 var SshPort                                = "SshPort" ;
@@ -193,6 +201,12 @@ var OMA_PATH_TEMP_LOCAL_DIR                = "/tmp/omatmp/conf/local/" ;
 var OMA_PATH_TEMP_SPT_DIR                  = "/tmp/omatmp/conf/script/" ;
 var OMA_PATH_BIN                           = "bin/";
 
+var OMA_PATH_OMA_WORK_DIR                  = "/tmp/omagent" ;
+var OMA_PATH_OMA_WORK_TASK_DIR             = "/tmp/omagent/task" ;
+//  /tmp/omagent/task/$taskID/pid.txt
+var OMA_FILE_PSQL_PID_FILE                 = "pid.txt" ;
+//  /tmp/omagent/task/$taskID/result.fifo
+var OMA_FILE_PSQL_FIFO_FILE                = "result.fifo" ;
 
 var OMA_FILE_TEMP_ADD_HOST_CHECK           = OMA_PATH_TEMP_TEMP_DIR + "addHostCheckEnvResult" ;
 var OMA_FILE_SDBCM_CONF                    = "sdbcm.conf" ;
