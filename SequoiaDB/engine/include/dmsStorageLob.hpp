@@ -134,6 +134,7 @@ namespace engine
                       SDB_DPSCB *dpscb ) ;
 
       virtual INT32 tryToFlush( BOOLEAN ignoreTick, BOOLEAN &failed ) ;
+      virtual BOOLEAN isOpened() const { return _data.isOpened() ; }
 
    protected:
       INT32  _openLob( const CHAR *path,

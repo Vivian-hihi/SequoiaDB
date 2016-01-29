@@ -259,7 +259,6 @@ namespace engine
                              BOOLEAN delWhenExist = FALSE ) ;
          void  closeStorage () ;
          INT32 removeStorage() ;
-         BOOLEAN isOpened() const { return ossMmapFile::_opened ; }
 
          /// flush functions
          INT32 flushHeader( BOOLEAN sync = FALSE ) ;
@@ -281,6 +280,7 @@ namespace engine
          /// virtual interface
          virtual void  syncMemToMmap () {}
          virtual INT32 tryToFlush( BOOLEAN ignoreTick, BOOLEAN &failed ) = 0 ;
+         virtual BOOLEAN isOpened() const { return ossMmapFile::_opened ; }
 
       private:
          virtual UINT64 _dataOffset()  = 0 ;
