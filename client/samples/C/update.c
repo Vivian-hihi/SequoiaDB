@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Name: update.c
- * Description: This program demostrates how to connect to update data.
+ * Description: This program demostrates how to update data.
  * Parameters:
  *              HostName: The hostname for database server
  *              ServiceName: The service name or port number for the database
@@ -27,9 +27,9 @@
  *       cl /Focommonstatic.obj /c common.c /I..\..\include /wd4047 /DSDB_STATIC_BUILD
  *       link /OUT:updatestaic.exe /LIBPATH:..\..\lib staticsdbc.lib updatestatic.obj commonstatic.obj
  * Run:
- *    Linux: LD_LIBRARY_PATH=<path for libsdbc.so> ./insert <hostname> <servicename> \
+ *    Linux: LD_LIBRARY_PATH=<path for libsdbc.so> ./update <hostname> <servicename> \
  *           <Username> <Username>
- *    Win: insert.exe <hostname> <servicename> <Username> <Username>
+ *    Win: update.exe <hostname> <servicename> <Username> <Username>
  * Note: While the appended data invalid, C BSON API will return error code,
  *       we need to handle this kind of error. Please see bson.h for more
  *       detail.
