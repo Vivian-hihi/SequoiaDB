@@ -675,7 +675,7 @@ INT32 _ossSocket::recv ( CHAR *pMsg, INT32 len,
 #if defined (_WINDOWS)
          if ( WSAETIMEDOUT == rc && _timeout > 0 )
 #else
-         if ( (EAGAIN == rc || EWOULDBLOCK == rc) &&
+         if ( (EAGAIN == rc || EWOULDBLOCK == rc || ETIMEDOUT == rc ) &&
               _timeout > 0 )
 #endif
          {
