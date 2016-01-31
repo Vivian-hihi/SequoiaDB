@@ -91,7 +91,7 @@ namespace engine
          try
          {
             BSONObj objTemp( &_pBuff[_curOffset] ) ;
-            offset += ossAlign4( objTemp.objsize() ) ;
+            offset += ossAlign4( (UINT32)objTemp.objsize() ) ;
             ++recordNum ;
          }
          catch( std::exception &e )
