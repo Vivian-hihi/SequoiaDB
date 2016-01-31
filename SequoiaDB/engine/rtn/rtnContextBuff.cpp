@@ -90,7 +90,7 @@ namespace engine
          offset = ossAlign4( (UINT32)offset ) ;
          try
          {
-            BSONObj objTemp( &_pBuff[_curOffset] ) ;
+            BSONObj objTemp( &_pBuff[ offset ] ) ;
             offset += objTemp.objsize() ;
             ++recordNum ;
          }
