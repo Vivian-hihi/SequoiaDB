@@ -1385,12 +1385,27 @@ static int bson_append_estart( bson *b, int type, const char *name, const int da
     }
     // check nested array's field
     if ( _bson_is_nested_array( b ) ) {
-       if ( len >= 2 ) {
+       char c = '0' ;
+       if ( len == 2 ) {
           // check whether the field name is "x" (x is 0/1/2/3/...) or not
-          int num = atoi( name ) ;
-          if ( num < 0 || (num == 0 && 48 != (char)(name[0])) ) {
+          c = (char)(name[0]) ;
+          if ( c < '0' || c > '9' ) {
              bson_builder_error( b );
              return BSON_ERROR ;
+          }
+       } else if ( len > 2 ) {
+          int i = 0 ;
+          c = (char)(name[0]) ;
+          if ( c < '1' || c > '9' ) {
+             bson_builder_error( b );
+             return BSON_ERROR ;
+          }
+          for ( i = 1; i < len - 1; i++ ) {
+             c = (char)(name[i]) ;
+             if ( c < '0' || c > '9' ) {
+                bson_builder_error( b );
+                return BSON_ERROR ;
+             }
           }
        } else {
           // name is "", return error
