@@ -47,7 +47,7 @@ function _init()
    task_id = getTaskID( BUS_JSON ) ;
    setTaskLogFileName( task_id ) ;  
    PD_LOG2( task_id, arguments, PDEVENT, FILE_NAME_ADD_HOST_CHECK_INFO,
-            sprintf( "Begin to check add host info in task[?]", task_id ) ) ;
+            sprintf( "Begin to check added host info in task[?]", task_id ) ) ;
 }
 
 /* *****************************************************************************
@@ -59,7 +59,7 @@ function _init()
 function _final()
 {
    PD_LOG2( task_id, arguments, PDEVENT, FILE_NAME_ADD_HOST_CHECK_INFO,
-            sprintf( "Finish checking add host info in task[?]", task_id ) ) ;
+            sprintf( "Finish checking added host info in task[?]", task_id ) ) ;
 }
 
 /* *****************************************************************************
@@ -219,7 +219,7 @@ function main()
    catch ( e )
    {
       SYSEXPHANDLE( e ) ;
-      errMsg = "Failed to check add host's information" ;
+      errMsg = "Failed to check added host's information" ;
       rc = GETLASTERROR() ;
       PD_LOG2( task_id, arguments, PDERROR, FILE_NAME_ADD_HOST_CHECK_INFO,
                sprintf( errMsg + ", rc: ?, detail: ?", rc, GETLASTERRMSG() ) ) ;
