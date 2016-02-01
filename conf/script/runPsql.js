@@ -161,17 +161,13 @@ function main()
 
       argResultFile = " -o " + result_file ;
       cmd = new Cmd() ;
-      
-      PD_LOG2( task_id, arguments, PDEVENT, FILE_NAME_RUNPSQL,
-               sprintf( "start to run export[?]", prelib ) ) ;
-      cmd.run( prelib ) ;
 
-      totalCmd = exeName + argHostName + argSvcName + argDbName + 
+      totalCmd = prelib + " ; " + exeName + argHostName + argSvcName + argDbName + 
                  argDbUser + argDbSql + argFormat + argResultFile ;
       PD_LOG2( task_id, arguments, PDEVENT, FILE_NAME_RUNPSQL,
                sprintf( "start to run psql[?:?:?]",
                host_name, host_svc, totalCmd ) ) ;
-      var pid = cmd.start( totalCmd, "", 0) ; 
+      var pid = cmd.start(totalCmd) ; 
 
       isPsql = isPsqlProc( pid ) ;
       if ( !isPsql )

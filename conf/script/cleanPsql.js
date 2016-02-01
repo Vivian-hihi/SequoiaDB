@@ -132,11 +132,14 @@ function main()
             {
                PD_LOG2( task_id, arguments, PDEVENT, FILE_NAME_CLEANPSQL,
                         "start to kill psql process:" + pid ) ;
-               cmd.run('kill ' + pid ) ;
+               cmd.run("ps awx -o \"%p %P\" | grep  " + pid + " | awk ' { print $1} ' | xargs kill" ) ;
             }
             catch( e )
             {
                //ignore if pid is not exist
+               var tmpErr = GETLASTERRMSG() ;
+               var tmpRc = GETLASTERROR() ;
+               PD_LOG2( task_id, arguments, PDERROR, FILE_NAME_CLEANPSQL, "run error:rc=" + tmpRc + ",err=" + tmpErr ) ;
             }
          }
          else
