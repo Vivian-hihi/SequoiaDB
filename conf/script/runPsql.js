@@ -140,9 +140,12 @@ function main()
 
    try
    {
+      var isPsql = false ;
+      var local_lib_path = getPsqlLibPath( System.getEWD() ) ;
+      var prelib = 'export LD_LIBRARY_PATH=' + local_lib_path + ':' + '$LD_LIBRARY_PATH'
       createPsqlTaskWorkPath( task_id ) ;
 
-      exeName = getPsqlPath( System.getEWD() ) ;
+      exeName = getPsqlFile( System.getEWD() ) ;
       argHostName = " -h " + host_name ;
       argSvcName  = " -p " + host_svc ;
       argDbName   = " -d " + db_name ;
@@ -158,6 +161,10 @@ function main()
 
       argResultFile = " -o " + result_file ;
       cmd = new Cmd() ;
+      
+      PD_LOG2( task_id, arguments, PDEVENT, FILE_NAME_RUNPSQL,
+               sprintf( "start to run export[?]", prelib ) ) ;
+      cmd.run( prelib ) ;
 
       totalCmd = exeName + argHostName + argSvcName + argDbName + 
                  argDbUser + argDbSql + argFormat + argResultFile ;
@@ -165,6 +172,14 @@ function main()
                sprintf( "start to run psql[?:?:?]",
                host_name, host_svc, totalCmd ) ) ;
       var pid = cmd.start( totalCmd, "", 0) ; 
+
+      isPsql = isPsqlProc( pid ) ;
+      if ( !isPsql )
+      {
+         rc = -1 ;
+         errMsg = "failed to check pid:" + pid ;
+         exception_handle( rc, errMsg ) ;
+      }  
 
       try
       {
@@ -180,8 +195,16 @@ function main()
          PD_LOG2( task_id, arguments, PDERROR, FILE_NAME_RUNPSQL,
                   "failed to write pid[" + pid + "] to pid_file[" + pid_file + "]" 
                   + "rc=" + rc + ",detail=" + errMsg ) ;
-         var tmpCmd = new Cmd() ;
-         tmpCmd.run('kill ' + pid ) ;
+         try
+         {
+            var tmpCmd = new Cmd() ;
+            tmpCmd.run('kill ' + pid ) ;
+         }
+         catch( e )
+         {
+            //do nothing here
+         }
+         
          exception_handle( rc, errMsg ) ;
       }
 

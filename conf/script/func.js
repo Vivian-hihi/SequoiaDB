@@ -448,8 +448,7 @@ function getSptPath( path )
 @discretion: create the psql's task workpath
 @author: YouBin Lin
 @parameter
-   path[string]: the path of current program working
-                 e.g. /opt/sequoiadb/bin
+   taskID:    task's id
 @return
 ***************************************************************************** */
 function createPsqlTaskWorkPath( taskID )
@@ -485,8 +484,7 @@ function createPsqlTaskWorkPath( taskID )
 @discretion: remove the psql's task workpath
 @author: YouBin Lin
 @parameter
-   path[string]: the path of current program working
-                 e.g. /opt/sequoiadb/bin
+   taskID:    task's id
 @return
 ***************************************************************************** */
 function removePsqlTaskWorkPath( taskID )
@@ -527,11 +525,30 @@ function removePsqlTaskWorkPath( taskID )
 }
 
 /******************************************************************************
+@discretion: check if task's work dirpath exists
+@author: YouBin Lin
+@parameter
+   taskID[INT64]: task's id
+@return
+   true/false
+***************************************************************************** */
+function isTaskWorkDirExist( taskID )
+{
+   var isExist = false ;
+   if ( SYS_LINUX == SYS_TYPE )
+   {
+      var taskDir  = OMA_PATH_OMA_WORK_TASK_DIR + '/' + taskID ;
+      isExist = File.exist( taskDir ) ;
+   }
+   
+   return isExist ;
+}
+
+/******************************************************************************
 @discretion: create the psql's resultfile
 @author: YouBin Lin
 @parameter
-   path[string]: the path of current program working
-                 e.g. /opt/sequoiadb/bin
+   taskID:    task's id
 @return
    retStr[string]: the path of psql's result file path
 ***************************************************************************** */
@@ -570,8 +587,7 @@ function createPsqlResultFilePath( taskID )
 @discretion: remove the psql's resultfile
 @author: YouBin Lin
 @parameter
-   path[string]: the path of current program working
-                 e.g. /opt/sequoiadb/bin
+   taskID:    task's id
 @return
 ***************************************************************************** */
 function removePsqlResultFile( taskID )
@@ -611,8 +627,7 @@ function removePsqlResultFile( taskID )
 @discretion: create the psql's pid file
 @author: YouBin Lin
 @parameter
-   path[string]: the path of current program working
-                 e.g. /opt/sequoiadb/bin
+   taskID: task's id
 @return
    retStr[string]: the path of psql's pid file path
 ***************************************************************************** */
@@ -651,18 +666,18 @@ function createPsqlPidFilePath( taskID )
 @discretion: check this pid is psql or not
 @author: YouBin Lin
 @parameter
-   path[string]: the path of current program working
-                 e.g. /opt/sequoiadb/bin
+   pid:     pid
 @return
    true/false
 ***************************************************************************** */
-function _isPsqlProc( pid )
+function isPsqlProc( pid )
 {
    var isPsql = true ;
    var cmd    = new Cmd() ;
+   var result = "" ;
    try
    {
-      var result = cmd.run( "ps -ef | grep psql | grep -v grep | grep " + pid ) ;
+      result = cmd.run( "ps -ef | grep psql | grep -v grep | grep " + pid ) ;
    }
    catch( e )
    {
@@ -680,8 +695,7 @@ function _isPsqlProc( pid )
 @discretion: get pid from the psql's pid file
 @author: YouBin Lin
 @parameter
-   path[string]: the path of current program working
-                 e.g. /opt/sequoiadb/bin
+   taskID[INT64]: task's id
 @return
    pid
 ***************************************************************************** */
@@ -699,7 +713,7 @@ function getPidFromPsqlPidFile( taskID )
          if ( isPidFileExist == true )
          {
             var myFile     = new File( pidFile ) ;
-            var isPsqlProc = false ;
+            var isPsql     = false ;
             try
             {
                pid = myFile.read() ;
@@ -718,8 +732,8 @@ function getPidFromPsqlPidFile( taskID )
                }
             }
             
-            isPsqlProc = _isPsqlProc( pid ) ;
-            if ( !isPsqlProc )
+            isPsql = isPsqlProc( pid ) ;
+            if ( !isPsql )
             {
                pid = null ;
             }  
@@ -751,8 +765,7 @@ function getPidFromPsqlPidFile( taskID )
 @discretion: remove the psql's pid file
 @author: YouBin Lin
 @parameter
-   path[string]: the path of current program working
-                 e.g. /opt/sequoiadb/bin
+   taskID[INT64]: task's id
 @return
 ***************************************************************************** */
 function removePsqlPidFile( taskID )
@@ -791,8 +804,9 @@ function removePsqlPidFile( taskID )
 @discretion: write pid to the psql's pid file
 @author: YouBin Lin
 @parameter
-   path[string]: the path of current program working
-                 e.g. /opt/sequoiadb/bin
+   pid_file[string]: the path of pid file
+                     e.g. /tmp/omagent/task/1/pid.txt
+   pid[string]:      pid
 @return
 ***************************************************************************** */
 function writeSsqlPidFile( pid_file, pid )
@@ -840,16 +854,7 @@ function getPsqlLibPath( path )
 
    if ( SYS_LINUX == SYS_TYPE )
    {
-      retStr = adaptPath( path ) ;
-      str = "/" ;
-      pos = path.lastIndexOf( str, retStr.length - 2 ) ;
-      if ( -1 == pos )
-      {
-         setLastErrMsg( "Invalid sdb running path: " + path ) ;
-         setLastError( SDB_INVALIDARG ) ;
-         throw SDB_INVALIDARG ;
-      }
-      retStr = path.substring( 0, pos + 1 ) + "lib/" ;
+      retStr = adaptPath( path ) + "lib";
    }
    else
    {
@@ -859,7 +864,7 @@ function getPsqlLibPath( path )
 }
 
 /* *****************************************************************************
-@discretion: get the psql's path
+@discretion: get the psql's file path
 @author: YouBin Lin
 @parameter
    path[string]: the path of current program working
@@ -867,11 +872,9 @@ function getPsqlLibPath( path )
 @return
    retStr[string]: the path of psql's file path
 ***************************************************************************** */
-function getPsqlPath( path )
+function getPsqlFile( path )
 {
    var retStr = "" ;
-   var str = "" ;
-   var pos = -1 ;
 
    if ( SYS_LINUX == SYS_TYPE )
    {

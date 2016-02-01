@@ -121,31 +121,45 @@ function main()
 
    try
    {
-      var pid = getPidFromPsqlPidFile( task_id ) ;
-      if ( null != pid && undefined != pid )
+      var isExist = isTaskWorkDirExist( task_id ) ;
+      if ( isExist == true )
       {
-         var cmd = new Cmd() ;
-         try
+         var pid = getPidFromPsqlPidFile( task_id ) ;
+         if ( null != pid && undefined != pid )
+         {
+            var cmd = new Cmd() ;
+            try
+            {
+               PD_LOG2( task_id, arguments, PDEVENT, FILE_NAME_CLEANPSQL,
+                        "start to kill psql process:" + pid ) ;
+               cmd.run('kill ' + pid ) ;
+            }
+            catch( e )
+            {
+               //ignore if pid is not exist
+            }
+         }
+         else
          {
             PD_LOG2( task_id, arguments, PDEVENT, FILE_NAME_CLEANPSQL,
-                     "start to kill psql process:" + pid ) ;
-            cmd.run('kill ' + pid ) ;
+                     "psql's process is not exist" ) ;
          }
-         catch( e )
-         {
-            //ignore if pid is not exist
-         }
+  
+         PD_LOG2( task_id, arguments, PDEVENT, FILE_NAME_CLEANPSQL,
+                  "start to remove pid file" ) ;
+         removePsqlPidFile( task_id ) ;
+         PD_LOG2( task_id, arguments, PDEVENT, FILE_NAME_CLEANPSQL,
+                  "start to remove sql result file" ) ;
+         removePsqlResultFile( task_id ) ;
+         PD_LOG2( task_id, arguments, PDEVENT, FILE_NAME_CLEANPSQL,
+                  "start to remove task work path" ) ;
+         removePsqlTaskWorkPath( task_id ) ;
       }
-
-      PD_LOG2( task_id, arguments, PDEVENT, FILE_NAME_CLEANPSQL,
-               "start to remove pid file" ) ;
-      removePsqlPidFile( task_id ) ;
-      PD_LOG2( task_id, arguments, PDEVENT, FILE_NAME_CLEANPSQL,
-               "start to remove sql result file" ) ;
-      removePsqlResultFile( task_id ) ;
-      PD_LOG2( task_id, arguments, PDEVENT, FILE_NAME_CLEANPSQL,
-               "start to remove task work path" ) ;
-      removePsqlTaskWorkPath( task_id ) ;
+      else
+      {
+         PD_LOG2( task_id, arguments, PDEVENT, FILE_NAME_CLEANPSQL,
+                  "task's work dir is not exist" ) ;
+      }
 
       RET_JSON[Errno]    = rc ;
       RET_JSON[Detail]   = "" ;
