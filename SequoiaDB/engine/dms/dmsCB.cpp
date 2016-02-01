@@ -112,6 +112,11 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
 
+      if ( pmdGetKRCB()->isRestore() )
+      {
+         goto done ;
+      }
+
       // 1. load all
       if ( SDB_ROLE_COORD != pmdGetDBRole() )
       {

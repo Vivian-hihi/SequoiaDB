@@ -519,6 +519,7 @@ namespace engine
       rc = restoreSysInit () ;
       PD_RC_CHECK ( rc, PDERROR, "Failed to initialize, rc: %d", rc ) ;
 
+      krcb->setIsRestore( TRUE ) ;
       // 5. inti krcb
       rc = krcb->init() ;
       if ( rc )

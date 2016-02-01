@@ -116,6 +116,9 @@ namespace engine
 
       BOOLEAN isActive() const { return _isActive ; }
 
+      void    setIsRestore( BOOLEAN isRestore ) { _isRestore = isRestore ; }
+      BOOLEAN isRestore() const { return _isRestore ; }
+
    public:
       virtual IParam*            getParam() ;
       virtual IControlBlock*     getCBByType( SDB_CB_TYPE type ) ;
@@ -183,6 +186,8 @@ namespace engine
       BOOLEAN        _businessOK ;
       INT32          _exitCode ;
       BOOLEAN        _restart ;
+
+      BOOLEAN        _isRestore ;
 
       _pmdEDUMgr     _eduMgr ;
 

@@ -375,6 +375,8 @@ namespace engine
                                                 INT32 &release,
                                                 const CHAR **build ) const = 0 ;
 
+         virtual BOOLEAN            isRestore() const = 0 ;
+
    } ;
    typedef _IResource IResource ;
 

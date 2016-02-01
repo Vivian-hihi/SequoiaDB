@@ -55,6 +55,7 @@ namespace engine
       _exitCode = SDB_OK ;
       _businessOK = TRUE ;
       _restart = FALSE ;
+      _isRestore = FALSE ;
 
       _flowControl = FALSE ;
 
