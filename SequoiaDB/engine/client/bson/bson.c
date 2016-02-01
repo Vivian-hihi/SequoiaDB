@@ -1359,6 +1359,14 @@ SDB_EXPORT void bson_destroy( bson *b ) {
     }
 }
 
+static bson_bool_t _bson_is_nested_array( const bson *b ) {
+   if ( ( b->stackPos > 0 ) &&
+        ( BSON_ARRAY == (bson_type)(b->stackType[ b->stackPos - 1 ]) ) )
+      return 1 ;
+   else
+      return 0 ;
+}
+
 static int bson_append_estart( bson *b, int type, const char *name, const int dataSize ) {
     const int len = strlen( name ) + 1;
 
@@ -1374,6 +1382,21 @@ static int bson_append_estart( bson *b, int type, const char *name, const int da
     if( bson_check_field_name( b, ( const char * )name, len - 1 ) == BSON_ERROR ) {
         bson_builder_error( b );
         return BSON_ERROR;
+    }
+    // check nested array's field
+    if ( _bson_is_nested_array( b ) ) {
+       if ( len >= 2 ) {
+          // check whether the field name is "x" (x is 0/1/2/3/...) or not
+          int num = atoi( name ) ;
+          if ( num < 0 || (num == 0 && 48 != (char)(name[0])) ) {
+             bson_builder_error( b );
+             return BSON_ERROR ;
+          }
+       } else {
+          // name is "", return error
+          bson_builder_error( b );
+          return BSON_ERROR ;
+       }
     }
 
     bson_append_byte( b, ( char )type );
@@ -1622,7 +1645,9 @@ SDB_EXPORT int bson_append_start_object( bson *b, const char *name ) {
     if ( bson_append_estart( b, BSON_OBJECT, name, 5 ) == BSON_ERROR ) return BSON_ERROR;
     // make sure the bson doesn't have too many embedded layers
     if ( b->stackPos >= BSON_MAX_STACK_SIZE-1 ) return BSON_ERROR ;
-    b->stack[ b->stackPos++ ] = b->cur - b->data;
+    b->stack[ b->stackPos ] = b->cur - b->data;
+    b->stackType[ b->stackPos ] = (char)BSON_OBJECT ;
+    b->stackPos++ ;
     bson_append32( b , &zero );
     return BSON_OK;
 }
@@ -1631,7 +1656,9 @@ SDB_EXPORT int bson_append_start_array( bson *b, const char *name ) {
     if ( bson_append_estart( b, BSON_ARRAY, name, 5 ) == BSON_ERROR ) return BSON_ERROR;
     // make sure the bson doesn't have too many embedded layers
     if ( b->stackPos >= BSON_MAX_STACK_SIZE-1 ) return BSON_ERROR ;
-    b->stack[ b->stackPos++ ] = b->cur - b->data;
+    b->stack[ b->stackPos ] = b->cur - b->data;
+    b->stackType[ b->stackPos ] = (char)BSON_ARRAY ;
+    b->stackPos++ ;
     bson_append32( b , &zero );
     return BSON_OK;
 }
@@ -1642,7 +1669,9 @@ SDB_EXPORT int bson_append_finish_object( bson *b ) {
     if ( bson_ensure_space( b, 1 ) == BSON_ERROR ) return BSON_ERROR;
     bson_append_byte( b , 0 );
 
-    start = b->data + b->stack[ --b->stackPos ];
+    --b->stackPos ;
+    b->stackType[ b->stackPos ] = (char)(-1) ;    
+    start = b->data + b->stack[ b->stackPos ];
     i = b->cur - start;
     bson_little_endian32( start, &i );
 

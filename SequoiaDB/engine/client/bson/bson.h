@@ -150,6 +150,7 @@ typedef struct {
     int dataSize;  /**< The number of bytes allocated to char *data. */
     bson_bool_t finished; /**< When finished, the BSON object can no longer be modified. */
     int stack[BSON_MAX_STACK_SIZE];        /**< A stack used to keep track of nested BSON elements. */
+    char stackType[BSON_MAX_STACK_SIZE];        /**< A stack used to keep track of nested BSON types. */
     int stackPos;         /**< Index of current stack position. */
     int err; /**< Bitfield representing errors or warnings on this buffer */
     char *errstr; /**< A string representation of the most recent error or warning. */

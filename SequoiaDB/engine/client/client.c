@@ -1161,8 +1161,10 @@ static INT32 sdbTraceStrtok ( bson *obj, CHAR *pLine )
 {
    INT32 rc     = SDB_OK ;
    INT32 len    = 0 ;
+   INT32 pos    = 0 ;
    CHAR *pStart = pLine ;
    CHAR *pStop  = pLine ;
+   CHAR pos_buf[128] = { 0 } ;
    if ( !pLine )
    {
       goto done ;
@@ -1193,7 +1195,8 @@ static INT32 sdbTraceStrtok ( bson *obj, CHAR *pLine )
                --pTmp ;
             }
             // append query object
-            BSON_APPEND( *obj, "", pStart, string ) ;
+            ossSnprintf ( pos_buf, sizeof(pos_buf), "%d", pos++ ) ;
+            BSON_APPEND( *obj, pos_buf, pStart, string ) ;
          }
          // set pstart to stop + 1
          pStart = pStop + 1 ;
@@ -7421,6 +7424,8 @@ SDB_EXPORT INT32 sdbWaitTasks ( sdbConnectionHandle cHandle,
    BOOLEAN result                = FALSE ;
    SINT64 contextID              = 0 ;
    SINT32 i                      = 0 ;
+   INT32 pos                     = 0 ;
+   CHAR pos_buf[128]             = { 0 } ;
    bson newObj ;
    BOOLEAN bsoninit              = FALSE ;
    sdbConnectionStruct *connection = (sdbConnectionStruct*) cHandle ;
@@ -7449,7 +7454,8 @@ SDB_EXPORT INT32 sdbWaitTasks ( sdbConnectionHandle cHandle,
    }
    for ( i = 0; i < num; i++ )
    {
-      BSON_APPEND( newObj, "", taskIDs[i], long ) ;
+      ossSnprintf ( pos_buf, sizeof(pos_buf), "%d", pos++ ) ;
+      BSON_APPEND( newObj, pos_buf, taskIDs[i], long ) ;
    }
    rc = bson_append_finish_array ( &newObj ) ;
    if ( rc )
