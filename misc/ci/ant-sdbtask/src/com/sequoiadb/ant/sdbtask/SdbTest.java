@@ -35,7 +35,7 @@ public class SdbTest extends Task {
 
 	private String masterReportsPath;
 	
-	private String antFileName = Integer.toString( (int)(Math.random()*1000) ) ; 
+	private String antFileName = Integer.toString( (int)(Math.random()*100000) ) ; 
 
 	private List<Parameter> params = new ArrayList<Parameter>();
 	
