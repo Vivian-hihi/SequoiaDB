@@ -9468,6 +9468,8 @@ namespace engine
          if ( OM_TASK_STATUS_FINISH == status || 
               OM_TASK_STATUS_CANCEL == status )
          {
+            PD_LOG( PDEVENT, "task is finish:taskID="OSS_LL_PRINT_FORMAT
+                    ",status=%d", _taskID, status ) ;
             _isFinished = TRUE ;
          }
       }
@@ -9496,8 +9498,8 @@ namespace engine
                              0, 0, 0, -1, &bsonRequest, NULL, NULL, NULL ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG_MSG( PDERROR, "build msg failed:cmd=%s,rc=%d", OM_NOTIFY_TASK,
-                     rc ) ;
+         PD_LOG_MSG( PDERROR, "build msg failed:cmd=%s,rc=%d", 
+                     OM_INTERRUPT_TASK_REQ, rc ) ;
          goto error ;
       }
 
