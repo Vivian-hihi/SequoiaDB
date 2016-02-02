@@ -108,7 +108,7 @@ namespace import
             // empty signal
             _emptyShardingGroups(groups, outQueue);
             freeRecordArray(&records);
-            PD_LOG(PDEVENT, "empty sharding groups");
+            PD_LOG(PDINFO, "empty sharding groups");
             continue;
          }
 
