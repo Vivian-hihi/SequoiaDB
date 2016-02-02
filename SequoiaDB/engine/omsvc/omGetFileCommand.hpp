@@ -573,9 +573,8 @@ namespace engine
          INT32          _getSsqlResult( BSONObj &oneTask ) ;
          INT32          _ssqlGetMore( INT64 taskID, INT32 &flag, 
                                       BSONObj &result ) ;
-         INT32          _finishSsqlTask( INT64 taskID, INT32 flag,
-                                         const string &errDetail ) ;
-         INT32          _updateTaskEndTime( INT64 taskID ) ;
+         INT32          _updateSsqlTask( INT64 taskID, 
+                                         const BSONObj &taskInfo ) ;
 
       private:
          void           _sendTaskInfo2Web( list<BSONObj> &tasks ) ;

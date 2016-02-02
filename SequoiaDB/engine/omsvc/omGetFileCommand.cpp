@@ -5335,50 +5335,12 @@ namespace engine
       goto done ;
    }
 
-   INT32 omQueryTaskCommand::_finishSsqlTask( INT64 taskID, INT32 flag,
-                                              const string &errDetail )
-   {
-      INT32 rc = SDB_OK ;
-      INT32 status = OM_TASK_STATUS_FINISH ;
-      BSONObjBuilder builder ;
-
-      if ( SDB_OK != flag )
-      {
-         status = OM_TASK_STATUS_CANCEL ;
-      }
-
-      time_t now = time( NULL ) ;
-      builder.appendTimestamp( OM_TASKINFO_FIELD_END_TIME, now * 1000, 0 ) ;
-      builder.append( OM_TASKINFO_FIELD_STATUS, status ) ;
-      builder.append( OM_TASKINFO_FIELD_STATUS_DESC, 
-                      getTaskStatusStr( status ) ) ;
-      builder.append( OM_TASKINFO_FIELD_ERRNO, flag ) ;
-      builder.append( OM_TASKINFO_FIELD_DETAIL, errDetail ) ;
-      builder.append( OM_TASKINFO_FIELD_PROGRESS, 100 ) ;
-      BSONObj selector = BSON( OM_TASKINFO_FIELD_TASKID << taskID ) ;
-      BSONObj updator  = BSON( "$set" << builder.obj() ) ;
-      BSONObj hint ;
-      INT64 updateNum = 0 ;
-      rc = rtnUpdate( OM_CS_DEPLOY_CL_TASKINFO, selector, updator, hint, 0, 
-                      pmdGetThreadEDUCB(), &updateNum ) ;
-      if ( SDB_OK != rc || 0 == updateNum )
-      {
-         PD_LOG( PDERROR, "update task failed:table=%s,updateNum=%d,taskID="
-                 OSS_LL_PRINT_FORMAT",updator=%s,selector=%s,rc=%d",
-                 OM_CS_DEPLOY_CL_TASKINFO, updateNum, taskID, 
-                 updator.toString().c_str(), selector.toString().c_str(), rc ) ;
-         goto error ;
-      }
-   done:
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   INT32 omQueryTaskCommand::_updateTaskEndTime( INT64 taskID )
+   INT32 omQueryTaskCommand::_updateSsqlTask( INT64 taskID, 
+                                              const BSONObj &taskInfo )
    {
       INT32 rc = SDB_OK ;
       BSONObjBuilder builder ;
+      builder.appendElements( taskInfo ) ;
       time_t now = time( NULL ) ;
       builder.appendTimestamp( OM_TASKINFO_FIELD_END_TIME, now * 1000, 0 ) ;
       BSONObj selector = BSON( OM_TASKINFO_FIELD_TASKID << taskID ) ;
@@ -5429,45 +5391,73 @@ namespace engine
 
       if ( flag != SDB_OK )
       {
+         BSONObj taskInfo ;
          rc = flag ;
          string errorDetail = result.getStringField( 
                                                  OM_TASKINFO_FIELD_DETAIL ) ;
-         _finishSsqlTask( taskID, flag, errorDetail ) ;
+         taskInfo = BSON( OM_TASKINFO_FIELD_STATUS << OM_TASK_STATUS_FINISH
+                          << OM_TASKINFO_FIELD_STATUS_DESC 
+                          << OM_TASK_STATUS_FINISH_STR
+                          << OM_TASKINFO_FIELD_ERRNO << rc
+                          << OM_TASKINFO_FIELD_DETAIL << errorDetail 
+                          << OM_TASKINFO_FIELD_PROGRESS << 100 ) ;
+         _updateSsqlTask( taskID, taskInfo ) ;
          PD_LOG_MSG( PDERROR, "ssql get more failed:taskID="OSS_LL_PRINT_FORMAT
                      ",rc=%d,detail=%s", taskID, flag, errorDetail.c_str() ) ;
          goto error ;
       }
 
-      status = result.getIntField( OM_TASKINFO_FIELD_STATUS ) ;
-      if ( OM_TASK_STATUS_FINISH == status )
       {
-         rc = _finishSsqlTask( taskID, 0, "" ) ;
+         INT32 progress = 0 ;
+         BSONObj taskInfo ;
+         BSONObjBuilder builder ;
+         BSONElement resultElement ;
+         resultElement = result.getField( OM_TASKINFO_FIELD_RESULTINFO ) ;
+         status = result.getIntField( OM_TASKINFO_FIELD_STATUS ) ;
+         if ( OM_TASK_STATUS_FINISH == status )
+         {
+            progress = 100 ;
+         }
+
+         builder.append( OM_TASKINFO_FIELD_STATUS, status ) ;
+         builder.append( OM_TASKINFO_FIELD_STATUS_DESC, 
+                         getTaskStatusStr( status ) ) ;
+         builder.append( OM_TASKINFO_FIELD_PROGRESS, progress ) ;
+         builder.append( resultElement ) ;
+
+         rc = _updateSsqlTask( taskID, builder.obj() ) ;
          if ( SDB_OK != rc )
          {
-            PD_LOG_MSG( PDERROR, "finish ssql task failed:taskID="
-                        OSS_LL_PRINT_FORMAT"rc=%d", taskID, rc ) ;
+            PD_LOG_MSG( PDERROR, "update ssql's task info failed:task="
+                        OSS_LL_PRINT_FORMAT, taskID ) ;
             goto error ;
          }
       }
-      else
-      {
-         _updateTaskEndTime( taskID ) ;
-      }
 
       {
-         BSONElement resultElement ;
-         BSONObj filter ;
-         BSONObjBuilder resultBuilder ;
-         BSONObj tmp ;
-         tmp    = oneTask.filterFieldsUndotted( filter, false ) ;
-         filter = BSON( OM_TASKINFO_FIELD_STATUS << "" 
-                        << OM_TASKINFO_FIELD_RESULTINFO << "" ) ;
-         resultElement = result.getField( OM_TASKINFO_FIELD_RESULTINFO ) ;
-         resultBuilder.appendElements( tmp ) ;
-         resultBuilder.append( OM_TASKINFO_FIELD_STATUS, status ) ;
-         resultBuilder.append( resultElement ) ;
+         BSONObj selector ;
+         BSONObj matcher = BSON( OM_TASKINFO_FIELD_TASKID << taskID ) ;
+         BSONObj order ;
+         BSONObj hint ;
+         list<BSONObj> tasks ;
+         rc = _queryTable( OM_CS_DEPLOY_CL_TASKINFO, selector, matcher, order, 
+                           hint, 0, 0, -1, tasks ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "query table failed:task="OSS_LL_PRINT_FORMAT
+                    ",rc=%d", taskID, rc ) ;
+            goto error ;
+         }
 
-         oneTask = resultBuilder.obj() ;
+         if ( tasks.size() != 1 )
+         {
+            rc = SDB_INVALIDARG ;
+            PD_LOG( PDERROR, "query task failed:task="OSS_LL_PRINT_FORMAT
+                    ",rc=%d", taskID, rc ) ;
+            goto error ;
+         }
+
+         oneTask = *tasks.begin() ;
       }
 
    done:
@@ -8695,14 +8685,14 @@ namespace engine
             goto error ;
          }
 
-         if ( !_isHostExistInCluster( hostName, clusterName ) )
-         {
-            rc = SDB_INVALIDARG ;
-            PD_LOG_MSG( PDERROR, "host is not exist in cluster:host=%s,"
-                        "cluster=%s", hostName.c_str(), 
-                        clusterName.c_str() ) ;
-            goto error ;
-         }
+//         if ( !_isHostExistInCluster( hostName, clusterName ) )
+//         {
+//            rc = SDB_INVALIDARG ;
+//            PD_LOG_MSG( PDERROR, "host is not exist in cluster:host=%s,"
+//                        "cluster=%s", hostName.c_str(), 
+//                        clusterName.c_str() ) ;
+//            goto error ;
+//         }
       }
 
    done:
