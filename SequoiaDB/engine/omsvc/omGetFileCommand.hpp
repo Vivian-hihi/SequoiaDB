@@ -974,7 +974,8 @@ namespace engine
          virtual INT32   doCommand() ;
 
       public:
-         INT32           updateTaskStatus( INT64 taskID, INT32 status ) ;
+         INT32           updateTaskStatus( INT64 taskID, INT32 status,          
+                                           INT32 errNo ) ;
          INT32           notifyAgentInteruptTask( INT64 taskID ) ;
 
       protected:

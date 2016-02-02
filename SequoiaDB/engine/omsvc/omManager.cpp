@@ -445,7 +445,7 @@ namespace engine
       // register
       pEDUMgr->regSystemEDU( EDU_TYPE_OMNET, eduID ) ;
 
-      // start ssql exec timeout checker (10 minutes)
+      // start ssql exec timeout checker (1 minutes)
       _ssqlCheckTimer = setTimer( 60 * OSS_ONE_SEC ) ;
 
    done:
@@ -691,7 +691,8 @@ namespace engine
             goto done ;
          }
 
-         interruptTask.updateTaskStatus( taskID, OM_TASK_STATUS_CANCEL ) ;
+         interruptTask.updateTaskStatus( taskID, OM_TASK_STATUS_CANCEL, 
+                                         SDB_TIMEOUT ) ;
       }
 
    done:

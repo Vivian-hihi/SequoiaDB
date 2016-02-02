@@ -7037,7 +7037,7 @@ namespace engine
          {
             rc = _saveRC ;
             PD_LOG_MSG( PDERROR, "task is failed!:taskID="OSS_LL_PRINT_FORMAT
-                        ",rc=%d,error=%s", _taskID, rc, _errorDetail ) ;
+                        ",rc=%d,error=%s", _taskID, rc, _errorDetail.c_str() ) ;
             goto error ;
          }
 

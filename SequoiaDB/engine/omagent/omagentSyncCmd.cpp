@@ -519,6 +519,7 @@ namespace engine
          goto error ;
       }
 
+      PD_LOG( PDEVENT, "interrupt task="OSS_LL_PRINT_FORMAT, _taskID ) ;
       rc = pmdGetKRCB()->getEDUMgr()->postEDUPost( pTask->getJobInfo(), 
                                                    PMD_EDU_EVENT_TERM ) ;
       if ( SDB_OK != rc )

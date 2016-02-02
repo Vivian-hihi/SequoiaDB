@@ -9548,12 +9548,14 @@ namespace engine
       goto done ;
    }
 
-   INT32 omInterruptTaskCommand::updateTaskStatus( INT64 taskID, INT32 status )
+   INT32 omInterruptTaskCommand::updateTaskStatus( INT64 taskID, INT32 status,
+                                                   INT32 errNo )
    {
       INT32 rc = SDB_OK ;
       BSONObjBuilder builder ;
       time_t now = time( NULL ) ;
       builder.appendTimestamp( OM_TASKINFO_FIELD_END_TIME, now * 1000, 0 ) ;
+      builder.append( OM_TASKINFO_FIELD_ERRNO, errNo ) ;
       builder.append( OM_TASKINFO_FIELD_STATUS, status ) ;
       builder.append( OM_TASKINFO_FIELD_STATUS_DESC, 
                       getTaskStatusStr( status ) ) ;
@@ -9597,7 +9599,7 @@ namespace engine
             goto error ;
          }
 
-         rc = updateTaskStatus( _taskID, OM_TASK_STATUS_CANCEL ) ;
+         rc = updateTaskStatus( _taskID, OM_TASK_STATUS_CANCEL, 0 ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG( PDERROR, "update task's status failed:taskID=%s"

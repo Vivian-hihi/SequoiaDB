@@ -931,6 +931,12 @@ namespace engine
                                                        localAgentHost,
                                                        localAgentPort ) ;
          }
+         else if ( ossStrcasecmp( pSubCommand, OM_INTERRUPT_TASK_REQ ) == 0 )
+         {
+            commandIf = SDB_OSS_NEW omInterruptTaskCommand( pAdptor, this, 
+                                                            localAgentHost,
+                                                            localAgentPort ) ;
+         }
          else if ( ossStrcasecmp( pSubCommand, 
                                   OM_TASK_STRATEGY_LIST_REQ ) == 0 )
          {
