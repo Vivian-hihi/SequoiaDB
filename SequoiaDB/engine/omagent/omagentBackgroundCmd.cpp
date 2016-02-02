@@ -1686,6 +1686,161 @@ namespace engine
       goto done ;
    }
 
+   /*
+      _omaRunPsqlCmd
+   */
+   _omaRunPsqlCmd::_omaRunPsqlCmd( SsqlExecInfo &ssqlInfo )
+                  :_ssqlInfo( ssqlInfo )
+   {
+   }
+   
+   _omaRunPsqlCmd::~_omaRunPsqlCmd()
+   {
+   }
+   
+   INT32 _omaRunPsqlCmd::init( const CHAR *nullInfo )
+   {
+      INT32 rc = SDB_OK ;
+      stringstream ss ;
+      BSONObj bus ;
+      BSONObj sys = BSON( OMA_FIELD_TASKID << _ssqlInfo._taskID ) ;
+
+      bus = BSON( OMA_FIELD_HOSTNAME << _ssqlInfo._hostName << 
+                  FIELD_NAME_SERVICE_NAME << _ssqlInfo._serviceName <<
+                  OMA_FIELD_USER << _ssqlInfo._sshUser <<
+                  OMA_FIELD_PASSWD << _ssqlInfo._sshPasswd <<
+                  OMA_FIELD_INSTALLPATH << _ssqlInfo._installPath <<
+                  OMA_FIELD_DBNAME << _ssqlInfo._dbName <<
+                  OMA_FIELD_DBUSER << _ssqlInfo._dbUser <<
+                  OMA_FIELD_DBPASSWD << _ssqlInfo._dbPasswd <<
+                  OMA_FIELD_SQL << _ssqlInfo._sql << 
+                  OMA_FIELD_RESULTFORMAT << _ssqlInfo._resultFormat ) ;
+      // build js file arguments
+      ss << "var " << JS_ARG_BUS << " = " 
+         << bus.toString(FALSE, TRUE).c_str() << " ; "
+         << "var " << JS_ARG_SYS << " = "
+         << sys.toString(FALSE, TRUE).c_str() << " ; " ;
+      _jsFileArgs = ss.str() ;
+
+      PD_LOG ( PDDEBUG, "ssql execute argument: %s", _jsFileArgs.c_str() ) ;
+      // add js file
+      rc = addJsFile( FILE_RUN_PSQL, _jsFileArgs.c_str() ) ;
+      if ( rc )
+      {
+         PD_LOG_MSG ( PDERROR, "Failed to add js file[%s], rc = %d ",
+                      FILE_RUN_PSQL, rc ) ;
+         goto error ;
+      }
+         
+   done:
+      return rc ;
+   error:
+     goto done ;
+   }
+
+   /*
+      _omaCleanSsqlExecCmd
+   */
+   _omaCleanSsqlExecCmd::_omaCleanSsqlExecCmd( SsqlExecInfo &ssqlInfo )
+                        :_ssqlInfo( ssqlInfo )
+   {
+   }
+   
+   _omaCleanSsqlExecCmd::~_omaCleanSsqlExecCmd()
+   {
+   }
+   
+   INT32 _omaCleanSsqlExecCmd::init( const CHAR *nullInfo )
+   {
+      INT32 rc = SDB_OK ;
+      stringstream ss ;
+      BSONObj bus ;
+      BSONObj sys = BSON( OMA_FIELD_TASKID << _ssqlInfo._taskID ) ;
+
+      bus = BSON( OMA_FIELD_HOSTNAME << _ssqlInfo._hostName << 
+                  FIELD_NAME_SERVICE_NAME << _ssqlInfo._serviceName <<
+                  OMA_FIELD_USER << _ssqlInfo._sshUser <<
+                  OMA_FIELD_PASSWD << _ssqlInfo._sshPasswd <<
+                  OMA_FIELD_INSTALLPATH << _ssqlInfo._installPath <<
+                  OMA_FIELD_DBNAME << _ssqlInfo._dbName <<
+                  OMA_FIELD_DBUSER << _ssqlInfo._dbUser <<
+                  OMA_FIELD_DBPASSWD << _ssqlInfo._dbPasswd <<
+                  OMA_FIELD_SQL << _ssqlInfo._sql << 
+                  OMA_FIELD_RESULTFORMAT << _ssqlInfo._resultFormat ) ;
+      // build js file arguments
+      ss << "var " << JS_ARG_BUS << " = " 
+         << bus.toString(FALSE, TRUE).c_str() << " ; "
+         << "var " << JS_ARG_SYS << " = "
+         << sys.toString(FALSE, TRUE).c_str() << " ; " ;
+      _jsFileArgs = ss.str() ;
+
+      PD_LOG ( PDDEBUG, "ssql execute argument: %s", _jsFileArgs.c_str() ) ;
+      // add js file
+      rc = addJsFile( FILE_CLEAN_SSQL_EXEC, _jsFileArgs.c_str() ) ;
+      if ( rc )
+      {
+         PD_LOG_MSG ( PDERROR, "Failed to add js file[%s], rc = %d ",
+                      FILE_CLEAN_SSQL_EXEC, rc ) ;
+         goto error ;
+      }
+         
+   done:
+      return rc ;
+   error:
+     goto done ;
+   }
+
+   /*
+      _omaGetPsqlCmd
+   */
+   _omaGetPsqlCmd::_omaGetPsqlCmd( SsqlExecInfo &ssqlInfo )
+                  :_ssqlInfo( ssqlInfo )
+   {
+   }
+   
+   _omaGetPsqlCmd::~_omaGetPsqlCmd()
+   {
+   }
+   
+   INT32 _omaGetPsqlCmd::init( const CHAR *nullInfo )
+   {
+      INT32 rc = SDB_OK ;
+      stringstream ss ;
+      BSONObj bus ;
+      BSONObj sys = BSON( OMA_FIELD_TASKID << _ssqlInfo._taskID ) ;
+
+      bus = BSON( OMA_FIELD_HOSTNAME << _ssqlInfo._hostName << 
+                  FIELD_NAME_SERVICE_NAME << _ssqlInfo._serviceName <<
+                  OMA_FIELD_USER << _ssqlInfo._sshUser <<
+                  OMA_FIELD_PASSWD << _ssqlInfo._sshPasswd <<
+                  OMA_FIELD_INSTALLPATH << _ssqlInfo._installPath <<
+                  OMA_FIELD_DBNAME << _ssqlInfo._dbName <<
+                  OMA_FIELD_DBUSER << _ssqlInfo._dbUser <<
+                  OMA_FIELD_DBPASSWD << _ssqlInfo._dbPasswd <<
+                  OMA_FIELD_SQL << _ssqlInfo._sql << 
+                  OMA_FIELD_RESULTFORMAT << _ssqlInfo._resultFormat ) ;
+      // build js file arguments
+      ss << "var " << JS_ARG_BUS << " = " 
+         << bus.toString(FALSE, TRUE).c_str() << " ; "
+         << "var " << JS_ARG_SYS << " = "
+         << sys.toString(FALSE, TRUE).c_str() << " ; " ;
+      _jsFileArgs = ss.str() ;
+
+      PD_LOG ( PDDEBUG, "ssql execute argument: %s", _jsFileArgs.c_str() ) ;
+      // add js file
+      rc = addJsFile( FILE_GET_PSQL, _jsFileArgs.c_str() ) ;
+      if ( rc )
+      {
+         PD_LOG_MSG ( PDERROR, "Failed to add js file[%s], rc = %d ",
+                      FILE_GET_PSQL, rc ) ;
+         goto error ;
+      }
+         
+   done:
+      return rc ;
+   error:
+     goto done ;
+   }
 
 }
 

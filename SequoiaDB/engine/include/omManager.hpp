@@ -147,6 +147,10 @@ namespace engine
          INT32             _onAgentUpdateTaskReq( NET_HANDLE handle, 
                                                   MsgHeader *pMsg ) ;
          BOOLEAN           _isCommand( const CHAR *pCheckName ) ;
+         void              _sendResVector2Agent( NET_HANDLE handle, 
+                                                 MsgHeader *pSrcMsg, 
+                                                 INT32 flag, 
+                                                 vector < BSONObj > &objs ) ;
          void              _sendRes2Agent( NET_HANDLE handle, 
                                            MsgHeader *pSrcMsg, 
                                            INT32 flag, BSONObj &obj ) ;
@@ -154,6 +158,10 @@ namespace engine
                                            MsgHeader *pSrcMsg, 
                                            INT32 flag, 
                                            rtnContextBuf &buffObj ) ;
+
+         void              _checkSsqlTimeout() ;
+
+         void              _checkTaskTimeout( const BSONObj &task ) ;
 
          void              _createVersionFile() ;
 
@@ -187,6 +195,8 @@ namespace engine
          omHostVersion                          *_hostVersion ;
 
          omTaskManager                          *_taskManager ;
+
+         UINT64                                 _ssqlCheckTimer ;
    } ;
 
    typedef _omManager omManager ;

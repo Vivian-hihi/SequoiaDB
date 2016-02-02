@@ -100,7 +100,7 @@ namespace engine
             if ( SDB_OK != rc )
             {
                PD_LOG_MSG( PDERROR, "login failed:rc=%d", rc ) ;
-                _sendOpError2Web( rc, pAdaptor, this, _pEDUCB ) ;
+               _sendOpError2Web( rc, pAdaptor, this, _pEDUCB ) ;
             }
 
             goto done ;
@@ -110,9 +110,40 @@ namespace engine
       pAdaptor->getHttpHeader( this, OM_REST_HEAD_CLUSTERNAME, &pClusterName ) ;
       pAdaptor->getHttpHeader( this, OM_REST_HEAD_BUSINESSNAME, 
                                &pBusinessName ) ;
-      if ( ( NULL != pClusterName ) && ( NULL != pBusinessName ) )
+      if ( ( NULL != pClusterName ) && ( NULL != pBusinessName ) && 
+           ( *pClusterName != '\0' ) && ( *pBusinessName != '\0' ) )
       {
-         rc = _processTransferMsg( pAdaptor, pClusterName, pBusinessName ) ;
+         string businessType ;
+         string deployMode ;
+         rc = _getBusinessInfo( pClusterName, pBusinessName, businessType, 
+                                deployMode ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG_MSG( PDERROR, "get business info failed:cluster=%s,"
+            "business=%s,rc=%d", pClusterName, pBusinessName, rc ) ;
+            _sendOpError2Web( rc, pAdaptor, this, _pEDUCB ) ;
+            goto error ;
+         }
+
+         if ( OM_BUSINESS_SEQUOIADB == businessType )
+         {
+            rc = _processSdbTransferMsg( pAdaptor, pClusterName, 
+                                         pBusinessName ) ;
+         }
+//         else if ( OM_BUSINESS_SEQUOIASQL == businessType )
+//         {
+//            rc = _processSsqlTransferMsg( pAdaptor, pClusterName, 
+//                                          pBusinessName ) ;
+//         }
+         else
+         {
+            rc = SDB_INVALIDARG ;
+            PD_LOG_MSG( PDERROR, "transfer msg is unsupported in this business:"
+                        "clusterName=%s,businessName=%s,businessType=%s",
+                        pClusterName, pBusinessName, businessType.c_str() ) ;
+            _sendOpError2Web( rc, pAdaptor, this, _pEDUCB ) ;
+            goto error ;
+         }
       }
       else
       {
@@ -122,6 +153,8 @@ namespace engine
    done:
       //PD_TRACE_EXITRC ( SDB_OMRESTSN_PROMSG, rc );
       return rc ;
+   error:
+      goto done ;
    }
 
    INT32 _omRestSession::_queryTable( const string &tableName, 
@@ -426,9 +459,88 @@ namespace engine
       goto done ;
    }
 
-   INT32 _omRestSession::_processTransferMsg( restAdaptor *pAdaptor,
-                                              const CHAR *pClusterName,
-                                              const CHAR *pBusinessName )
+   omRestCommandBase *_omRestSession::_createSsqlCommand( restAdaptor *pAdaptor,
+                                                  const string &localAgentHost,
+                                                  const string &localAgentPort )
+   {
+      INT32 rc = SDB_OK ;
+      omRestCommandBase *commandIf = NULL ;
+      const CHAR *pSubCommand      = NULL ;
+      pAdaptor->getQuery( this, OM_REST_FIELD_COMMAND, &pSubCommand ) ;
+      if ( NULL == pSubCommand )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG_MSG( PDERROR, "get command failed:filed=%s,rc=%d",
+                     OM_REST_FIELD_COMMAND, rc ) ;
+         _sendOpError2Web( rc, pAdaptor, this, eduCB() ) ;
+         goto error ;
+      }
+
+      PD_LOG( PDDEBUG, "OM: command:command=%s", pSubCommand ) ;
+
+      if ( ossStrcasecmp( pSubCommand, OM_SSQL_EXEC_REQ ) == 0 )
+      {
+         commandIf = SDB_OSS_NEW omSsqlExecCommand( pAdaptor, this, 
+                                                    localAgentHost,
+                                                    localAgentPort ) ;
+      }
+      else
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG_MSG( PDERROR, "command is unreconigzed:command=%s,rc=%d",
+                     pSubCommand, rc ) ;
+         _sendOpError2Web( rc, pAdaptor, this, eduCB() ) ;
+         goto error ;
+      }
+
+   done:
+      return commandIf ;
+   error:
+      goto done ;
+   }
+
+   INT32 _omRestSession::_processSsqlTransferMsg( restAdaptor *pAdaptor,
+                                                  const CHAR *pClusterName,
+                                                  const CHAR *pBusinessName )
+   {
+      INT32 rc = SDB_OK ;
+      omRestCommandBase *pOmCommand = NULL ;
+      const CHAR* hostName  = pmdGetKRCB()->getHostName();
+      string localAgentHost = hostName ;
+      string localAgentPort = sdbGetOMManager()->getLocalAgentPort() ;
+      if ( !isAuthOK() )
+      {
+         rc = SDB_PMD_SESSION_NOT_EXIST ;
+         PD_LOG( PDERROR, "session is not exist:rc=%d", rc ) ;
+         _sendOpError2Web( rc, pAdaptor, this, eduCB() ) ;
+         goto error ;
+      }
+
+      pOmCommand = _createSsqlCommand( pAdaptor, localAgentHost, 
+                                       localAgentPort ) ;
+      if ( NULL == pOmCommand )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      pOmCommand->init( _pEDUCB ) ;
+      pOmCommand->doCommand() ;
+
+   done:
+      if ( NULL != pOmCommand )
+      {
+         SDB_OSS_DEL pOmCommand ;
+      }
+      return rc ;
+
+   error:
+      goto done ;
+   }
+
+   INT32 _omRestSession::_processSdbTransferMsg( restAdaptor *pAdaptor,
+                                                 const CHAR *pClusterName,
+                                                 const CHAR *pBusinessName )
    {
       INT32 rc        = SDB_OK ;
       INT64 contextID = -1 ;
@@ -778,7 +890,8 @@ namespace engine
          }
          else if ( ossStrcasecmp( pSubCommand, OM_QUERY_TASK_REQ ) == 0 )
          {
-            commandIf = SDB_OSS_NEW omQueryTaskCommand( pAdptor, this ) ;
+            commandIf = SDB_OSS_NEW omQueryTaskCommand( pAdptor, this, 
+                                              localAgentHost, localAgentPort ) ;
          }
          else if ( ossStrcasecmp( pSubCommand, OM_GET_LOG_REQ ) == 0 )
          {
@@ -811,6 +924,12 @@ namespace engine
          {
             commandIf = SDB_OSS_NEW omUnDiscoverBusinessCommand( pAdptor, 
                                                                  this ) ;
+         }
+         else if ( ossStrcasecmp( pSubCommand, OM_SSQL_EXEC_REQ ) == 0 )
+         {
+            commandIf = SDB_OSS_NEW omSsqlExecCommand( pAdptor, this, 
+                                                       localAgentHost,
+                                                       localAgentPort ) ;
          }
          else if ( ossStrcasecmp( pSubCommand, 
                                   OM_TASK_STRATEGY_LIST_REQ ) == 0 )

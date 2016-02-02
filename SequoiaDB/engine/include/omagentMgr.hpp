@@ -193,7 +193,7 @@ namespace engine
       DECLARE_OBJ_MSG_MAP()
 
       typedef std::map<UINT64, BSONObj>         MAPTASKQUERY ;
-      typedef MAPTASKQUERY                      MAP_TASKINFO ;
+      typedef std::map<UINT64, omaTaskPtr >     MAP_TASKINFO ;
       typedef std::map<UINT64, ossAutoEvent*>   MAP_TASKEVENT ;
 
       public:
@@ -233,7 +233,8 @@ namespace engine
          INT32           startTaskCheck ( const BSONObj& match ) ;
 
          BOOLEAN         isTaskInfoExist( UINT64 taskID ) ;
-         void            registerTaskInfo( UINT64 taskID, const BSONObj &obj ) ;
+         void            registerTaskInfo( UINT64 taskID, omaTaskPtr &taskPtr ) ;
+         INT32           getTaskInfo( UINT64 taskID, _omaTask **pTask ) ;
          void            submitTaskInfo( UINT64 taskID ) ;
          UINT64          getRequestID() ;
          void            registerTaskEvent( UINT64 reqID, ossAutoEvent *pEvent ) ;

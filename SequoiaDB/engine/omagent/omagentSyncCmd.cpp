@@ -53,6 +53,8 @@ namespace engine
    IMPLEMENT_OACMD_AUTO_REGISTER( _omaQueryHostStatus )
 //   IMPLEMENT_OACMD_AUTO_REGISTER( _omaQueryTaskProgress )
    IMPLEMENT_OACMD_AUTO_REGISTER( _omaHandleTaskNotify )
+   IMPLEMENT_OACMD_AUTO_REGISTER( _omaHandleInterruptTask )
+   IMPLEMENT_OACMD_AUTO_REGISTER( _omaHandleSsqlGetMore )
 
 
    /******************************* scan host *********************************/
@@ -446,6 +448,197 @@ namespace engine
    done:
       return rc ;
    error:
+      goto done ;
+   }
+
+   /*************************** handle interrupt task ****************************/
+   /*
+      _omaHandleInterruptTask
+   */
+   _omaHandleInterruptTask::_omaHandleInterruptTask()
+   {
+   }
+
+   _omaHandleInterruptTask::~_omaHandleInterruptTask()
+   {
+   }
+
+   INT32 _omaHandleInterruptTask::init ( const CHAR *pInterruptInfo )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj obj ;
+      BSONElement ele ;
+      try
+      {
+         obj = BSONObj( pInterruptInfo ).copy() ;
+         // get taskID from omsvc
+         ele = obj.getField( OMA_FIELD_TASKID ) ;
+         if ( NumberInt != ele.type() && NumberLong != ele.type() )
+         {
+            PD_LOG_MSG ( PDERROR, "Receive invalid task id from omsvc" ) ;
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+         _taskID = ele.numberLong() ;
+      }
+      catch ( std::exception &e )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG ( PDERROR, "Failed to build bson, exception is: %s",
+                  e.what() ) ;
+         goto error ;
+      }
+      
+   done:
+      return rc ;
+   error :
+      goto done ;
+   }
+
+   INT32 _omaHandleInterruptTask::doit ( BSONObj &retObj )
+   {
+      INT32 rc        = SDB_OK ;
+      _omaTask *pTask = NULL ;
+      string detail ;
+      pmdGetThreadEDUCB()->resetInfo( EDU_INFO_ERROR ) ;
+      rc = sdbGetOMAgentMgr()->getTaskInfo( _taskID, &pTask );
+      if ( SDB_OK != rc )
+      {
+         rc = SDB_OM_TASK_NOT_EXIST ;
+         PD_LOG_MSG( PDERROR, "task is not exist:task="OSS_LL_PRINT_FORMAT
+                     ",rc=%d", _taskID, rc ) ;
+         goto error ;
+      }
+
+      if ( OMA_TASK_SSQL_EXEC != pTask->getTaskType() )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG_MSG( PDERROR, "task is not ssql_exec, can't interrupt:type=%d,"
+                     "taskID="OSS_LL_PRINT_FORMAT, pTask->getTaskType(), 
+                     _taskID ) ;
+         goto error ;
+      }
+
+      rc = pmdGetKRCB()->getEDUMgr()->postEDUPost( pTask->getJobInfo(), 
+                                                   PMD_EDU_EVENT_TERM ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG_MSG( PDERROR, "send term message to task failed:task="
+                     OSS_LL_PRINT_FORMAT",rc=%d", _taskID, rc ) ;
+         goto error ;
+      }
+      
+   done:
+      return rc ;
+   error:
+      detail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+      retObj = BSON( OMA_FIELD_DETAIL << detail ) ;
+      goto done ;
+   }
+
+   /***************************** handle ssql get more **************************/
+   /*
+      _omaHandleSsqlGetMore
+   */
+   _omaHandleSsqlGetMore::_omaHandleSsqlGetMore()
+   {
+   }
+
+   _omaHandleSsqlGetMore::~_omaHandleSsqlGetMore()
+   {
+   }
+
+   INT32 _omaHandleSsqlGetMore::init ( const CHAR *pInterruptInfo )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj obj ;
+      BSONElement ele ;
+      try
+      {
+         obj = BSONObj( pInterruptInfo ).copy() ;
+         // get taskID from omsvc
+         ele = obj.getField( OMA_FIELD_TASKID ) ;
+         if ( NumberInt != ele.type() && NumberLong != ele.type() )
+         {
+            PD_LOG_MSG( PDERROR, "Receive invalid task id from omsvc" ) ;
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+         _taskID = ele.numberLong() ;
+      }
+      catch ( std::exception &e )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG_MSG( PDERROR, "Failed to build bson, exception is: %s",
+                     e.what() ) ;
+         goto error ;
+      }
+      
+   done:
+      return rc ;
+   error :
+      goto done ;
+   }
+
+   INT32 _omaHandleSsqlGetMore::doit ( BSONObj &retObj )
+   {
+      INT32 rc        = SDB_OK ;
+      _omaTask *pTask = NULL ;
+      _omaSsqlExecTask *pSsqlExecTask = NULL ;
+      list<ssqlRowData_t> data ;
+      list<ssqlRowData_t>::iterator iter ;
+      BSONArrayBuilder arrayBuilder ;
+      BOOLEAN isFinish = FALSE ;
+      string detail ;
+      INT32 status = OMA_TASK_STATUS_RUNNING ;
+      pmdGetThreadEDUCB()->resetInfo( EDU_INFO_ERROR ) ;
+      rc = sdbGetOMAgentMgr()->getTaskInfo( _taskID, &pTask );
+      if ( SDB_OK != rc )
+      {
+         rc = SDB_OM_TASK_NOT_EXIST ;
+         PD_LOG_MSG( PDERROR, "task is not exist:task="OSS_LL_PRINT_FORMAT
+                     "rc=%d", _taskID, rc ) ;
+         goto error ;
+      }
+
+      if ( OMA_TASK_SSQL_EXEC != pTask->getTaskType() )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG_MSG( PDERROR, "task is not ssql_exec, can't SsqlGetMore:"
+                     "type=%d,taskID="OSS_LL_PRINT_FORMAT, 
+                     pTask->getTaskType(), _taskID ) ;
+         goto error ;
+      }
+
+      pSsqlExecTask = ( _omaSsqlExecTask *)pTask ;
+      rc = pSsqlExecTask->getSqlData( data, isFinish ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG_MSG( PDERROR, "get sql data failed:rc=%d,task="
+                     OSS_LL_PRINT_FORMAT, rc, _taskID ) ;
+         goto error ;
+      }
+      
+      for ( iter = data.begin() ; iter != data.end() ; iter++ )
+      {
+         BSONObj oneRow = BSON( OMA_FIELD_ROWNUM << (long long )iter->rowNum 
+                                << OMA_FIELD_ROWVALUE << iter->rowData ) ;
+         arrayBuilder.append( oneRow ) ;
+      }
+
+      if ( isFinish )
+      {
+         status = OMA_TASK_STATUS_FINISH ;
+      }
+
+      retObj = BSON( OMA_FIELD_STATUS << status << 
+                     OMA_FIELD_RESULTINFO << arrayBuilder.arr() ) ;
+
+   done:
+      return rc ;
+   error:
+      detail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+      retObj = BSON( OMA_FIELD_DETAIL << detail ) ;
       goto done ;
    }
 

@@ -55,7 +55,7 @@ namespace engine
    class _omagentJob : public _rtnBaseJob
    {
       public:
-         _omagentJob ( _omaTask *pTask, const BSONObj &info, void *ptr ) ;
+         _omagentJob ( omaTaskPtr pTask, const BSONObj &info, void *ptr ) ;
          virtual ~_omagentJob () ;
 
       public:
@@ -65,7 +65,7 @@ namespace engine
          virtual INT32        doit () ;
 
       private:
-         _omaTask   *_pTask ;
+         omaTaskPtr _taskPtr ;
          BSONObj    _info ;
          void       *_pointer ;
          string     _jobName ;
@@ -74,7 +74,8 @@ namespace engine
 
    // start omagent job
    INT32 startOmagentJob ( OMA_TASK_TYPE taskType, INT64 taskID,
-                           const BSONObj &info, void *ptr = NULL ) ;
+                           const BSONObj &info, omaTaskPtr &taskPtr,
+                           void *ptr = NULL ) ;
    
    _omaTask* getTaskByType( OMA_TASK_TYPE taskType, INT64 taskID ) ;
 

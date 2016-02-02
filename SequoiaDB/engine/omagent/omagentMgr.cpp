@@ -538,10 +538,21 @@ namespace engine
       // if is gerenal agent, need to restore
       if ( _options.isGeneralAgent() )
       {
+         BSONObj noFinish ;
+         BSONObj noCancel ;
+         BSONArrayBuilder arrayBuilder ;
+         BSONObj check ;
          pmdGetKRCB()->setBusinessOK( FALSE ) ;
          // {"Status":{$ne:4}}
-         startTaskCheck( BSON( OMA_FIELD_STATUS <<
-                               BSON( "$ne" << OMA_TASK_STATUS_FINISH ) ) ) ;
+
+         noFinish = BSON( "$ne" << OMA_TASK_STATUS_FINISH ) ;
+         noCancel = BSON( "$ne" << OMA_TASK_STATUS_CANCEL ) ;
+
+         arrayBuilder.append( BSON( OMA_FIELD_STATUS << noFinish ) ) ;
+         arrayBuilder.append( BSON( OMA_FIELD_STATUS << noCancel ) ) ;
+
+         check = BSON( "$and" << arrayBuilder.arr() ) ;
+         startTaskCheck( check ) ;
       }
 
       // 1. create listen
@@ -1105,9 +1116,11 @@ namespace engine
 
                if ( !isTaskInfoExist( taskID ) )
                {
-                  if ( SDB_OK == _startTask ( tmpObj ) )
+                  INT32 tmpRc = _startTask ( tmpObj ) ;
+                  if ( SDB_OK != tmpRc )
                   {
-                     registerTaskInfo( taskID, tmpObj ) ;
+                     PD_LOG( PDERROR, "Failed to start task["OSS_LL_PRINT_FORMAT
+                             "]rc = %d", taskID, rc ) ;
                   }
                }
                ++index ;
@@ -1166,10 +1179,24 @@ namespace engine
       return TRUE ;
    }
 
-   void _omAgentMgr::registerTaskInfo( UINT64 taskID, const BSONObj &obj )
+   void _omAgentMgr::registerTaskInfo( UINT64 taskID, omaTaskPtr &taskPtr )
    {
       ossScopedLock lock( &_mgrLatch, EXCLUSIVE ) ;
-      _mapTaskInfo[ taskID ] = obj.getOwned() ;
+      _mapTaskInfo[ taskID ] = taskPtr ;
+   }
+
+   INT32 _omAgentMgr::getTaskInfo( UINT64 taskID, _omaTask **pTask )
+   {
+      ossScopedLock lock( &_mgrLatch, EXCLUSIVE ) ;
+      MAP_TASKINFO::iterator it = _mapTaskInfo.find( taskID ) ;
+      if ( it != _mapTaskInfo.end() )
+      {
+         omaTaskPtr taskPtr = it->second ;
+         *pTask = taskPtr.get() ;
+         return SDB_OK ;
+      }
+
+      return -1 ;
    }
 
    void _omAgentMgr::submitTaskInfo( UINT64 taskID )
@@ -1340,6 +1367,7 @@ namespace engine
       INT64 taskID           = 0 ;
       BSONElement ele ;
       BSONObj data ;
+      omaTaskPtr taskPtr ;
 
       // get task type
       rc = _getTaskType( obj, &taskType ) ;
@@ -1359,13 +1387,15 @@ namespace engine
       }
       taskID = (INT64)ele.numberLong() ;
       // run task as a background job
-      rc = startOmagentJob( taskType, taskID, obj, NULL ) ;
+      rc = startOmagentJob( taskType, taskID, obj, taskPtr, NULL ) ;
       if ( rc )
       {
          PD_LOG( PDERROR, "Failed to start omagent job "
                  "rc = %d", rc ) ;
          goto error ;
       }
+
+      registerTaskInfo( taskID, taskPtr ) ;
 
    done:
       return rc ;

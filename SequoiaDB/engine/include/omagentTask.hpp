@@ -41,6 +41,7 @@
 #include "omagentTaskBase.hpp"
 #include "../bson/bson.h"
 #include "omagent.hpp"
+#include "ossIO.hpp"
 #include <map>
 #include <set>
 #include <vector>
@@ -55,7 +56,10 @@ using namespace bson ;
 #define OMA_TASK_NAME_REMOVE_DB_BUSINESS      "remove db business task"
 #define OMA_TASK_NAME_INSTALL_ZN_BUSINESS     "install zn business task"
 #define OMA_TASK_NAME_REMOVE_ZN_BUSINESS      "remove zn business task"
+#define OMA_TASK_NAME_SSQL_EXEC               "ssql exec task"
 
+
+#define OMA_MAX_READ_LENGTH                   ( 4096 )   
 
 namespace engine
 {
@@ -416,6 +420,62 @@ namespace engine
    } ;
    typedef _omaRemoveZNBusTask omaRemoveZNBusTask ;
 
+   /*
+      ssql execute task
+   */
+
+   typedef struct ssqlRowData_s{
+      UINT64 rowNum ;
+      string rowData ;
+   } ssqlRowData_t ;
+
+   class _omaSsqlExecTask : public _omaTask
+   {
+      public:
+         _omaSsqlExecTask( INT64 taskID ) ;
+         virtual ~_omaSsqlExecTask() ;
+
+      public:
+         virtual INT32        init( const BSONObj &info, void *ptr = NULL ) ;
+         virtual INT32        doit() ;
+
+      public:
+         INT32                getSqlData( list<ssqlRowData_t> &data, 
+                                          BOOLEAN &isFinish ) ;
+
+      private:
+         INT32                _cleanTask() ;
+         INT32                _executeSsql( string &pipeFile ) ;
+         INT32                _updateTaskStatus2OM( INT32 status ) ;
+         INT32                _waitOMReadData() ;
+         INT32                _waitAgentReadData() ;
+         INT32                _getLines( const CHAR *newData, INT32 length, 
+                                         INT32 maxLines ) ;
+         INT32                _readDataFromPipe( OSSFILE *file, 
+                                                 INT32 maxLines ) ; 
+         INT32                _getPsql() ;
+         INT32                _select( OSSFILE *file, INT32 timeout ) ;
+
+      private:
+         SsqlExecInfo         _ssqlInfo ;
+         BOOLEAN              _isCleanTask ;
+         BOOLEAN              _isFinish ;
+
+         string               _errorDetail ;
+         INT32                _saveRC ;
+
+         ossEvent             _dataReadyEvent ; // agent have read data
+         ossEvent             _readDataEvent ;  // om have read data
+
+         ossSpinSLatch        _taskLatch ;
+         list<ssqlRowData_t>  _readDataList ;
+         UINT64               _rowNum ;
+         CHAR                 _lastLeftData[ OMA_MAX_READ_LENGTH + 1 ] ;
+         INT32                _lastLeftLength ;
+         BOOLEAN              _readFinish ;
+         
+   } ;
+   typedef _omaSsqlExecTask omaSsqlExecTask ;
 
 }
 

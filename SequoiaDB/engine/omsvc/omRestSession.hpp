@@ -59,7 +59,7 @@ namespace engine
       protected:
          INT32             _processOMRestMsg( HTTP_PARSE_COMMON command,
                                               const CHAR *pFilePath ) ;
-         INT32             _processTransferMsg( restAdaptor *pAdaptor,
+         INT32             _processSdbTransferMsg( restAdaptor *pAdaptor,
                                                 const CHAR *pClusterName,
                                                 const CHAR *pBusinessName ) ;
          INT32             _getBusinessAccessNode( const CHAR *pClusterName,
@@ -82,6 +82,14 @@ namespace engine
                                         SINT64 numSkip, SINT64 numReturn, 
                                         list<BSONObj> &records ) ;
          BOOLEAN           _isClusterExist( const CHAR *pClusterName ) ;
+
+         omRestCommandBase *_createSsqlCommand( restAdaptor *pAdaptor,
+                                                const string &localAgentHost,
+                                                const string &localAgentPort ) ;
+
+         INT32             _processSsqlTransferMsg( restAdaptor *pAdaptor,
+                                                    const CHAR *pClusterName,
+                                                    const CHAR *pBusinessName ) ;
 
       private:
          omRestCommandBase *_createCommand( HTTP_PARSE_COMMON command,

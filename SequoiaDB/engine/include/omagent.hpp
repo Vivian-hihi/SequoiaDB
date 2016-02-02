@@ -240,6 +240,53 @@ namespace engine
    } ;
    typedef struct _AddZNResultInfo AddZNResultInfo ;
    typedef AddZNResultInfo ZNResultInfo ;
+
+
+   struct _SsqlExecInfo
+   {
+      INT64       _taskID ;
+      string      _hostName ;
+      string      _serviceName ;
+      string      _sshUser ;
+      string      _sshPasswd ;
+      string      _installPath ;
+      string      _dbUser ;
+      string      _dbPasswd ;
+      string      _dbName ;
+      string      _sql ;
+      string      _resultFormat ;
+      _SsqlExecInfo()
+      {
+         _taskID       = 0 ;
+         _hostName     = "" ;
+         _serviceName  = "" ;
+         _sshUser      = "" ;
+         _sshPasswd    = "" ;
+         _installPath  = "" ;
+         _dbUser       = "" ;
+         _dbPasswd     = "" ;
+         _dbName       = "" ;
+         _sql          = "" ;
+         _resultFormat = "" ;
+      }
+
+      _SsqlExecInfo( const struct engine::_SsqlExecInfo &right )
+      {
+         _taskID       = right._taskID ;
+         _hostName     = right._hostName ;
+         _serviceName  = right._serviceName ;
+         _sshUser      = right._sshUser ;
+         _sshPasswd    = right._sshPasswd ;
+         _installPath  = right._installPath ;
+         _dbUser       = right._dbUser ;
+         _dbPasswd     = right._dbPasswd ;
+         _dbName       = right._dbName ;
+         _sql          = right._sql ;
+         _resultFormat = right._resultFormat ;
+      }
+   } ;
+
+   typedef struct _SsqlExecInfo SsqlExecInfo ;
    
 }
 

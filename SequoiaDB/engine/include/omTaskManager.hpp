@@ -177,6 +177,26 @@ namespace engine
          INT32             _taskType ;
    } ;
 
+   class omSsqlExecTask : public omTaskBase
+   {
+      public:
+         omSsqlExecTask( INT64 taskID ) ;
+         virtual ~omSsqlExecTask() ;
+
+      public:
+         virtual INT32     finish( BSONObj &resultInfo ) ;
+
+         virtual INT32     getType() ;
+
+         virtual INT64     getTaskID() ;
+
+         virtual INT32     checkUpdateInfo( const BSONObj &updateInfo ) ;
+
+      private:
+         INT64             _taskID ;
+         INT32             _taskType ;
+   } ;
+
    class omTaskManager : public SDBObject
    {
       public:
@@ -192,6 +212,12 @@ namespace engine
                                          const BSONObj &orderBy,
                                          const BSONObj &hint , 
                                          BSONObj &oneTask ) ;
+
+         INT32             queryTasks( const BSONObj &selector, 
+                                       const BSONObj &matcher, 
+                                       const BSONObj &orderBy,
+                                       const BSONObj &hint, 
+                                       vector< BSONObj >&tasks ) ;
 
       private:
          INT32             _updateTask( INT64 taskID, 

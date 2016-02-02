@@ -146,6 +146,10 @@ namespace engine
    #define OMA_CMD_REMOVE_ZOOKEEPER                   "remove zookeeper node"
    #define OMA_CMD_CHECK_ZOOKEEPER                    "check zookeeper node"
    #define OMA_CMD_CHECK_ZOOKEEPER_ENV                "check install zookeeper env"
+
+   #define OMA_CMD_SSQL_EXEC                          "sequoiasql exec"
+   #define OMA_CMD_CLEAN_SSQL_EXEC                    "clean sequoiasql exec"
+   #define OMA_CMD_GET_PSQL                           "get psql"
    
 
    #define OMA_INIT_ENV                               "init for exeuting js"
@@ -200,6 +204,9 @@ namespace engine
    #define FILE_CHECK_ZOOKEEPER             "checkZNodes.js"
    #define FILE_CHECK_ZOOKEEPER_ENV         "checkZNEnv.js"
 
+   #define FILE_RUN_PSQL                    "runPsql.js"
+   #define FILE_CLEAN_SSQL_EXEC             "cleanPsql.js"
+   #define FILE_GET_PSQL                    "getPsql.js"
 
    /*
       oma js argument type

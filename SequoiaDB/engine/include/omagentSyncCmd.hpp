@@ -102,7 +102,7 @@ namespace engine
 
    /******************************* remove host *******************************/
    /*
-      _omaRemoveHost
+      _omaRemoveHost is background command
    */
 /*
    class _omaRemoveHost : public _omaCommand
@@ -167,6 +167,46 @@ namespace engine
 
       private:
          BSONObj   _taskIDObj ;
+   } ;
+
+   /***************************** handle interrupt task **************************/
+   /*
+      _omaHandleInterruptTask
+   */
+   class _omaHandleInterruptTask : public _omaCommand
+   {
+      DECLARE_OACMD_AUTO_REGISTER ()
+      public:
+         _omaHandleInterruptTask() ;
+         ~_omaHandleInterruptTask() ;
+
+      public:
+         virtual const CHAR* name () { return OM_INTERRUPT_TASK_REQ ; }
+         virtual INT32 init ( const CHAR *pInterruptInfo ) ;
+         virtual INT32 doit ( BSONObj &retObj ) ;
+
+      private:
+         INT64    _taskID ;
+   } ;
+
+   /***************************** handle ssql get more **************************/
+   /*
+      _omaHandleSsqlGetMore
+   */
+   class _omaHandleSsqlGetMore : public _omaCommand
+   {
+      DECLARE_OACMD_AUTO_REGISTER ()
+      public:
+         _omaHandleSsqlGetMore() ;
+         ~_omaHandleSsqlGetMore() ;
+
+      public:
+         virtual const CHAR* name () { return OM_SSQL_GET_MORE_REQ ; }
+         virtual INT32 init ( const CHAR *pInterruptInfo ) ;
+         virtual INT32 doit ( BSONObj &retObj ) ;
+
+      private:
+         INT64    _taskID ;
    } ;
 
    

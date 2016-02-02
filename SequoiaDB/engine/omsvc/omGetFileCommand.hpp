@@ -557,18 +557,30 @@ namespace engine
          void           _sendTaskList2Web( list<BSONObj> &taskList ) ;
    } ;
 
-   class omQueryTaskCommand : public omAuthCommand
+   class omQueryTaskCommand : public omScanHostCommand
    {
       public:
          omQueryTaskCommand( restAdaptor *pRestAdaptor, 
-                            pmdRestSession *pRestSession ) ;
+                             pmdRestSession *pRestSession,
+                             const string &localAgentHost, 
+                             const string &localAgentService ) ;
          virtual ~omQueryTaskCommand() ;
 
       public:
          virtual INT32  doCommand() ;
 
+      protected:
+         INT32          _getSsqlResult( BSONObj &oneTask ) ;
+         INT32          _ssqlGetMore( INT64 taskID, INT32 &flag, 
+                                      BSONObj &result ) ;
+         INT32          _finishSsqlTask( INT64 taskID, INT32 flag,
+                                         const string &errDetail ) ;
+         INT32          _updateTaskEndTime( INT64 taskID ) ;
+
       private:
          void           _sendTaskInfo2Web( list<BSONObj> &tasks ) ;
+         void           _sendOneTaskInfo2Web( BSONObj &oneTask ) ;
+         void           _modifyTaskInfo( BSONObj &task ) ;
    } ;
 
    class omListNodeCommand : public omAuthCommand
@@ -738,6 +750,8 @@ namespace engine
                                            BSONObj &nodeInfos, 
                                            BSONObj &taskInfo,
                                            BSONArray &resultInfo ) ;
+
+         BOOLEAN        _isDiscoveredBusiness( BSONObj &businessInfo ) ;
    } ;
 
    class omQueryHostStatusCommand : public omStartBusinessCommand
@@ -878,11 +892,13 @@ namespace engine
          INT32           _checkSparkCFG( BSONObj &configInfo ) ;
          INT32           _checkHdfsCFG( BSONObj &configInfo ) ;
          INT32           _checkYarnCFG( BSONObj &configInfo ) ;
+         INT32           _checkSequoiasqlCFG( BSONObj &configInfo ) ;
 
          INT32           _storeBusinessInfo( BSONObj &configInfo ) ;
          INT32           _storeSparkBInfo( BSONObj &configInfo ) ;
          INT32           _storeHdfsBInfo( BSONObj &configInfo ) ;
          INT32           _storeYarnBInfo( BSONObj &configInfo ) ;
+         INT32           _storeSequoiasqlInfo( BSONObj &configInfo ) ;
    } ;
 
    class omUnDiscoverBusinessCommand : public omAuthCommand
@@ -902,6 +918,71 @@ namespace engine
 
          INT32           _UnDiscoverBusiness( const string &clusterName, 
                                               const string &businessName ) ;
+   } ;
+
+   class omSsqlExecCommand : public omScanHostCommand
+   {
+      public:
+         omSsqlExecCommand( restAdaptor *pRestAdaptor, 
+                            pmdRestSession *pRestSession, 
+                            const string &localAgentHost,
+                            const string &localAgentPort ) ;
+
+         virtual ~omSsqlExecCommand() ;
+
+      public:
+         virtual INT32   doCommand() ;
+
+      protected:
+         INT32           _parseRestSsqlExecInfo() ;
+         INT32           _sendTaskInfo2Web( INT64 taskID ) ;
+         INT32           _generateSsqlTaskInfo( BSONObj &taskInfo, 
+                                                BSONArray &resultInfo ) ;
+         INT32           _createSsqlExecTask( INT64 &taskID ) ;
+
+      protected:
+         string          _clusterName ;
+         string          _businessName ;
+         string          _dbName ;
+         //_dbUser & _dbPasswd is the ssql's user & password 
+         string          _dbUser ;
+         string          _dbPasswd ;
+         
+         string          _sql ;
+         string          _resultFormat ;
+         string          _ssqlHost ;
+         string          _ssqlService ;
+         string          _ssqlInstallPath ;
+
+         //_user & _passwd is the host's user & password
+         string          _user ;
+         string          _passwd ;
+
+   } ;
+
+   class omInterruptTaskCommand : public omScanHostCommand
+   {
+      public:
+         omInterruptTaskCommand( restAdaptor *pRestAdaptor, 
+                                 pmdRestSession *pRestSession, 
+                                 const string &localAgentHost,
+                                 const string &localAgentPort ) ;
+
+         virtual ~omInterruptTaskCommand() ;
+
+      public:
+         virtual INT32   doCommand() ;
+
+      public:
+         INT32           updateTaskStatus( INT64 taskID, INT32 status ) ;
+         INT32           notifyAgentInteruptTask( INT64 taskID ) ;
+
+      protected:
+         INT32           _parseInterruptTaskInfo() ;
+
+      protected:
+         BOOLEAN         _isFinished ;
+         INT64           _taskID ;
    } ;
 
    class omGetFileCommand : public omGetLogCommand

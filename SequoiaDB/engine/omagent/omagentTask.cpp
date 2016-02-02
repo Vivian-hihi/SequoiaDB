@@ -41,6 +41,9 @@
 #include <set>
 #include <sstream>
 
+
+using namespace bson ;
+
 namespace engine
 {
 
@@ -55,7 +58,10 @@ namespace engine
    #define OMA_WAIT_SUB_TASK_NOTIFY_TIMEOUT ( 3 * OSS_ONE_SEC )
    #define MAX_THREAD_NUM          10
 
-   
+   #define OMA_WAIT_OM_READ_DATA_TIMEOUT    ( 1 * OSS_ONE_SEC )
+
+   #define OMA_MAX_READLINE_NUM             ( 200 )
+
    /*
       add host task
    */
@@ -506,8 +512,9 @@ namespace engine
          // run add host sub tasks
          if ( OMA_TASK_STATUS_RUNNING == _taskStatus )
          {
+            omaTaskPtr taskPtr ;
             rc = startOmagentJob( OMA_TASK_ADD_HOST_SUB, _taskID,
-                                  BSONObj(), (void *)this ) ;
+                                  BSONObj(), taskPtr, (void *)this ) ;
             if ( rc )
             {
                PD_LOG_MSG ( PDERROR, "Failed to run add host sub task with the "
@@ -2824,8 +2831,9 @@ namespace engine
          // run add host sub tasks
          if ( OMA_TASK_STATUS_RUNNING == _taskStatus )
          {
+            omaTaskPtr taskPtr ;
             rc = startOmagentJob( OMA_TASK_INSTALL_DB_SUB, _taskID,
-                                  BSONObj(), (void *)this ) ;
+                                  BSONObj(), taskPtr, (void *)this ) ;
             if ( rc )
             {
                PD_LOG ( PDERROR, "Failed to run add host sub task with the "
@@ -6296,8 +6304,9 @@ namespace engine
          // run sub tasks
          if ( OMA_TASK_STATUS_RUNNING == _taskStatus )
          {
+            omaTaskPtr taskPtr ;
             rc = startOmagentJob( OMA_TASK_INSTALL_ZN_SUB, _taskID,
-                                  BSONObj(), (void *)this ) ;
+                                  BSONObj(), taskPtr, (void *)this ) ;
             if ( rc )
             {
                PD_LOG_MSG ( PDERROR, "Failed to run install znodes' sub task "
@@ -6658,5 +6667,811 @@ namespace engine
       goto done ;
    }
 
+   /*
+      ssql exec task
+   */
+   _omaSsqlExecTask::_omaSsqlExecTask( INT64 taskID )
+                    :_omaTask( taskID )
+   {
+      _taskType = OMA_TASK_SSQL_EXEC ;
+      _taskName = OMA_TASK_NAME_SSQL_EXEC ;
+      _isCleanTask = FALSE ;
+      _isFinish    = FALSE ;
+      _errorDetail = "" ;
+      _lastLeftData[0] = '\0' ;
+      _lastLeftLength  = 0 ;
+      _rowNum          = 1 ;
+      _saveRC          = SDB_OK ;
+   }
+
+   _omaSsqlExecTask::~_omaSsqlExecTask()
+   {
+   }
+
+   INT32 _omaSsqlExecTask::init( const BSONObj &oneTask, void *ptr )
+   {
+      INT32 rc                   = SDB_OK ;
+      const CHAR *pHostName      = NULL ;
+      const CHAR *pServiceName   = NULL ;
+      const CHAR *pSshUser       = NULL ;
+      const CHAR *pSshPasswd     = NULL ;
+      const CHAR *pInstallPath   = NULL ;
+      const CHAR *pDbName        = NULL ;
+      const CHAR *pDbUser        = NULL ;
+      const CHAR *pDbPasswd      = NULL ;
+      const CHAR *pSql           = NULL ;
+      const CHAR *pResultFormat  = NULL ;
+      INT64 taskID ;
+      BSONElement ele ;
+      BSONObj ssqlInfo ;
+
+      // 1. get task id
+      ele = oneTask.getField( OMA_FIELD_TASKID ) ;
+      if ( NumberInt != ele.type() && NumberLong != ele.type() )
+      {
+         PD_LOG_MSG ( PDERROR, "Receive invalid task id from omsvc" ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+       }
+
+      taskID = ele.numberLong() ;
+      SDB_ASSERT( taskID == _taskID, "taskID must be the same!" ) ;
+
+      // 2. get task status
+      ele = oneTask.getField( OMA_FIELD_STATUS ) ;
+      if ( NumberInt != ele.type() && NumberLong != ele.type() )
+      {
+         PD_LOG_MSG ( PDERROR, "Receive invalid task status from omsvc" ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+      _taskStatus = (OMA_TASK_STATUS)ele.numberInt() ;
+
+      SDB_ASSERT( OMA_TASK_STATUS_CANCEL != _taskStatus, "" ) ;
+      SDB_ASSERT( OMA_TASK_STATUS_FINISH != _taskStatus, "" ) ;
+      if ( OMA_TASK_STATUS_CANCEL == _taskStatus || 
+           OMA_TASK_STATUS_FINISH == _taskStatus )
+      {
+         PD_LOG_MSG( PDERROR, "task is canceled or finished:status=%d,task="
+                     OSS_LL_PRINT_FORMAT, _taskStatus, _taskID ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      if ( OMA_TASK_STATUS_INIT != _taskStatus )
+      {
+         // if task's status is not init, we should clean it. and wait for 
+         // interrupt
+         PD_LOG_MSG( PDEVENT, "start to clean task:status=%d,taskID="
+                     OSS_LL_PRINT_FORMAT, _taskStatus, _taskID ) ;
+         _isCleanTask = TRUE ;
+      }
+
+      // 3. get ssqlexec info
+      rc = omaGetObjElement( oneTask, OMA_FIELD_INFO, ssqlInfo ) ;
+      PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
+                "Get field[%s] failed, rc: %d",
+                OMA_FIELD_INFO, rc ) ;
+
+      //***************************Info**********************************
+      // get hostName
+      rc = omaGetStringElement( ssqlInfo, OMA_FIELD_HOSTNAME, &pHostName ) ;
+      PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
+                "Get field[%s] failed, rc: %d", OMA_FIELD_HOSTNAME, rc ) ;
+
+      // get serviceName
+      rc = omaGetStringElement( ssqlInfo, FIELD_NAME_SERVICE_NAME ,
+                                &pServiceName ) ;
+      PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
+                "Get field[%s] failed, rc: %d",FIELD_NAME_SERVICE_NAME, rc ) ;
+
+      // get sshUser
+      rc = omaGetStringElement( ssqlInfo, OMA_FIELD_USER, &pSshUser ) ;
+      PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
+                "Get field[%s] failed, rc: %d", OMA_FIELD_USER, rc ) ;
+
+      // get sshPasswd
+      rc = omaGetStringElement( ssqlInfo, OMA_FIELD_PASSWD, &pSshPasswd ) ;
+      PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
+                "Get field[%s] failed, rc: %d", OMA_FIELD_PASSWD, rc ) ;
+
+      // get installPath
+      rc = omaGetStringElement( ssqlInfo, OMA_FIELD_INSTALLPATH, 
+                                &pInstallPath ) ;
+      PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
+                "Get field[%s] failed, rc: %d", OMA_FIELD_INSTALLPATH, rc ) ;
+
+      // get dbName
+      rc = omaGetStringElement( ssqlInfo, OMA_FIELD_DBNAME, &pDbName ) ;
+      PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
+                "Get field[%s] failed, rc: %d", OMA_FIELD_DBNAME, rc ) ;
+
+      // get dbUser
+      rc = omaGetStringElement( ssqlInfo, OMA_FIELD_DBUSER, &pDbUser ) ;
+      PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
+                "Get field[%s] failed, rc: %d", OMA_FIELD_DBUSER, rc ) ;
+
+      // get dbPasswd
+      rc = omaGetStringElement( ssqlInfo, OMA_FIELD_DBPASSWD, &pDbPasswd ) ;
+      PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
+                "Get field[%s] failed, rc: %d", OMA_FIELD_DBPASSWD, rc ) ;
+
+      // get dbResultFormat
+      rc = omaGetStringElement( ssqlInfo, OMA_FIELD_RESULTFORMAT, 
+                                &pResultFormat ) ;
+      PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
+                "Get field[%s] failed, rc: %d", OMA_FIELD_RESULTFORMAT, rc ) ;
+
+      // get dbSql
+      rc = omaGetStringElement( ssqlInfo, OMA_FIELD_SQL, &pSql ) ;
+      PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
+                "Get field[%s] failed, rc: %d", OMA_FIELD_SQL, rc ) ;
+
+      _ssqlInfo._taskID       = _taskID ;
+      _ssqlInfo._hostName     = pHostName ;
+      _ssqlInfo._serviceName  = pServiceName ;
+      _ssqlInfo._sshUser      = pSshUser ;
+      _ssqlInfo._sshPasswd    = pSshPasswd ;
+      _ssqlInfo._installPath  = pInstallPath ;
+      _ssqlInfo._dbName       = pDbName ;
+      _ssqlInfo._dbUser       = pDbUser ;
+      _ssqlInfo._dbPasswd     = pDbPasswd ;
+      _ssqlInfo._sql          = pSql ;
+      _ssqlInfo._resultFormat = pResultFormat ;
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _omaSsqlExecTask::_cleanTask()
+   {
+      INT32 rc              = SDB_OK ;
+      INT32 jsErrno         = SDB_OK ;
+      const CHAR *pJsErr    = NULL ;
+      BSONObj retObj ;
+      _omaCleanSsqlExecCmd runCmd( _ssqlInfo ) ;
+
+      rc = runCmd.init( NULL ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG ( PDERROR, "Failed to init to check clean psql's info:rc=%d", 
+                  rc ) ;
+         goto error ;
+      }
+
+      rc = runCmd.doit( retObj ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "clean ssql exec cmd failed:rc=%d", rc ) ;
+         omaGetStringElement( retObj, OMA_FIELD_DETAIL, &pJsErr ) ;
+         if ( NULL != pJsErr )
+         {
+            _errorDetail = pJsErr ;
+         }
+
+         goto error ;
+      }
+
+      rc = omaGetIntElement( retObj, OMA_FIELD_ERRNO, jsErrno ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG_MSG( PDERROR, "failed to get js's return value:key=%s",
+                     OMA_FIELD_ERRNO ) ;
+         goto error ;
+      }
+
+      if ( SDB_OK != jsErrno )
+      {
+         omaGetStringElement( retObj, OMA_FIELD_DETAIL, &pJsErr ) ;
+         if ( NULL != pJsErr )
+         {
+            _errorDetail = pJsErr ;
+         }
+         else
+         {
+            _errorDetail = "unkown js err" ;
+         }
+
+         rc = jsErrno ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _omaSsqlExecTask::_executeSsql( string &pipeFile )
+   {
+      INT32 rc              = SDB_OK ;
+      INT32 jsErrno         = SDB_OK ;
+      const CHAR *pJsErr    = NULL ;
+      const CHAR *pPipeFile = NULL ;
+      BSONObj retObj ;
+      _omaRunPsqlCmd runCmd( _ssqlInfo ) ;
+
+      rc = runCmd.init( NULL ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG ( PDERROR, "Failed to init to check run psql's info:rc=%d", 
+                  rc ) ;
+         goto error ;
+      }
+
+      rc = runCmd.doit( retObj ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "run psql cmd failed:rc=%d", rc ) ;
+         omaGetStringElement( retObj, OMA_FIELD_DETAIL, &pJsErr ) ;
+         if ( NULL != pJsErr )
+         {
+            _errorDetail = pJsErr ;
+         }
+
+         goto error ;
+      }
+
+      rc = omaGetIntElement( retObj, OMA_FIELD_ERRNO, jsErrno ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG_MSG( PDERROR, "failed to get js's return value:key=%s",
+                     OMA_FIELD_ERRNO ) ;
+         goto error ;
+      }
+
+      if ( SDB_OK != jsErrno )
+      {
+         omaGetStringElement( retObj, OMA_FIELD_DETAIL, &pJsErr ) ;
+         if ( NULL != pJsErr )
+         {
+            _errorDetail = pJsErr ;
+         }
+         else
+         {
+            _errorDetail = "unkown js err" ;
+         }
+
+         rc = jsErrno ;
+         PD_LOG_MSG( PDERROR, "js result:detail=%s,rc=%d", 
+                     _errorDetail.c_str(), rc ) ;
+         goto error ;
+      }
+
+      rc = omaGetStringElement( retObj, OMA_FIELD_PIPE_FILE, &pPipeFile ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG_MSG( PDERROR, "can't get ssql's pipefile:field=%s,rc=%d", 
+                     OMA_FIELD_PIPE_FILE, rc ) ;
+         SDB_ASSERT( SDB_OK == rc , "can't happened!" ) ;
+         goto error ;
+      }
+
+      pipeFile = pPipeFile ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _omaSsqlExecTask::_updateTaskStatus2OM( INT32 status )
+   {
+      INT32 rc            = SDB_OK ;
+      INT32 retRc         = SDB_OK ;
+      UINT64 reqID        = 0 ;
+      omAgentMgr *pOmaMgr = sdbGetOMAgentMgr() ;
+      _pmdEDUCB *cb       = pmdGetThreadEDUCB () ;
+      ossAutoEvent updateEvent ;
+      BSONObj updateObj ;
+
+      // 1. build update task object
+      updateObj = BSON( OMA_FIELD_TASKID << _taskID <<
+                        OMA_FIELD_ERRNO << SDB_OK <<
+                        OMA_FIELD_STATUS << status <<
+                        OMA_FIELD_STATUSDESC << 
+                        getTaskStatusDesc( (OMA_TASK_STATUS)status ) ) ;
+
+      // 2. get request id from omagentMgr
+      reqID = pOmaMgr->getRequestID() ;
+      pOmaMgr->registerTaskEvent( reqID, &updateEvent ) ;
+      
+      // 3. send message to omsvc
+      while( !cb->isInterrupted() )
+      {
+         pOmaMgr->sendUpdateTaskReq( reqID, &updateObj ) ;
+         while ( !cb->isInterrupted() )
+         {
+            if ( SDB_OK != updateEvent.wait( OMA_WAIT_OMSVC_RES_TIMEOUT, 
+                                             &retRc ) )
+            {
+               // try to send update task request again
+               break ;
+            }
+            else
+            {
+               if ( SDB_OM_TASK_NOT_EXIST == retRc )
+               {
+                  PD_LOG( PDERROR, "Failed to update task[%s]'s progress "
+                          "with requestID[%lld], rc = %d",
+                          _taskName.c_str(), reqID, retRc ) ;
+                  pOmaMgr->unregisterTaskEvent( reqID ) ;
+                  rc = retRc ;
+                  goto error ;
+               }
+               else if ( SDB_OK != retRc )
+               {
+                  PD_LOG( PDWARNING, "Retry to update task[%s]'s progress "
+                          "with requestID[%lld], rc = %d",
+                          _taskName.c_str(), reqID, retRc ) ;
+                  break ;
+               }
+               else
+               {
+                  PD_LOG( PDDEBUG, "Success to update task[%s]'s progress "
+                          "with requestID[%lld]", _taskName.c_str(), reqID ) ;
+                  pOmaMgr->unregisterTaskEvent( reqID ) ;
+                  goto done ;
+               }
+            }
+         }
+      }
+
+      PD_LOG( PDERROR, "Receive interrupt when update status to OM" ) ;
+      rc = SDB_APP_INTERRUPT ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _omaSsqlExecTask::_waitAgentReadData()
+   {
+      INT32 rc = SDB_OK ;
+      _pmdEDUCB *cb = pmdGetThreadEDUCB() ;
+      while ( TRUE )
+      {
+         if ( SDB_OK != _saveRC )
+         {
+            rc = _saveRC ;
+            PD_LOG_MSG( PDERROR, "task is failed!:taskID="OSS_LL_PRINT_FORMAT
+                        ",rc=%d,error=%s", _taskID, rc, _errorDetail ) ;
+            goto error ;
+         }
+
+         if ( cb->isInterrupted() )
+         {
+            PD_LOG_MSG( PDERROR, "task is interrupted!:taskID="
+                        OSS_LL_PRINT_FORMAT, _taskID ) ;
+            rc = SDB_INTERRUPT ;
+            goto error ;
+         }
+
+         if ( SDB_OK != _dataReadyEvent.wait( OMA_WAIT_OM_READ_DATA_TIMEOUT ) )
+         {
+            continue ;
+         }
+         else
+         {
+            break ;
+         }
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _omaSsqlExecTask::getSqlData( list<ssqlRowData_t> &data, 
+                                       BOOLEAN &isFinish )
+   {
+      INT32 rc = SDB_OK ;
+      list<ssqlRowData_t>::iterator iter ;
+      rc = _waitAgentReadData() ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "wait agent read data failed:rc=%d", rc ) ;
+         goto error ;
+      }
+
+      for ( iter = _readDataList.begin(); iter != _readDataList.end(); iter++ )
+      {
+         data.push_back( *iter ) ;
+      }
+
+      isFinish = _readFinish ;
+
+      _readDataEvent.signal() ;
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _omaSsqlExecTask::_waitOMReadData()
+   {
+      INT32 rc = SDB_OK ;
+      _pmdEDUCB *cb = pmdGetThreadEDUCB() ;
+      while ( TRUE )
+      {
+         if ( cb->isInterrupted() )
+         {
+            PD_LOG( PDERROR, "task is interrupted!:taskID="OSS_LL_PRINT_FORMAT,
+                    _taskID ) ;
+            rc = SDB_INTERRUPT ;
+            goto error ;
+         }
+
+         if ( SDB_OK != _readDataEvent.wait( OMA_WAIT_OM_READ_DATA_TIMEOUT ) )
+         {
+            continue ;
+         }
+         else
+         {
+            break ;
+         }
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _omaSsqlExecTask::_getLines( const CHAR *newData, INT32 length, 
+                                      INT32 maxLines )
+   {
+      INT32 lineCounter = 0 ;
+      INT32 lineEnd     = 0 ;
+      INT32 lineBegin   = 0 ;
+      CHAR allData[ 2*OMA_MAX_READ_LENGTH + 1 ] = "" ;
+      INT32 totalLen = _lastLeftLength + length ;
+      if ( totalLen == 0 )
+      {
+         goto done ;
+      }
+
+      if ( _lastLeftLength > 0 )
+      {
+         memcpy( allData, _lastLeftData, _lastLeftLength ) ;
+      }
+
+      if ( length > 0 && NULL != newData )
+      {
+         memcpy( allData + _lastLeftLength, newData, length ) ;
+      }
+
+      allData[ totalLen ] = '\0' ;
+
+      while( lineEnd < totalLen && lineCounter < maxLines )
+      {
+         if ( allData[ lineEnd ] == '\n' )
+         {
+            ssqlRowData_t oneRow ;
+            CHAR tmp[ OMA_MAX_READ_LENGTH + 1] = "" ;
+            INT32 len = lineEnd - lineBegin ;
+            if ( len > 0 )
+            {
+               memcpy( tmp, allData + lineBegin, len ) ;
+            }
+
+            tmp[ len ] = '\0' ;
+            oneRow.rowNum  = _rowNum++ ;
+            oneRow.rowData = tmp ;
+            _readDataList.push_back( oneRow ) ;
+            lineCounter++ ;
+
+            lineBegin = lineEnd + 1 ;
+         }
+
+         lineEnd++ ;
+      }
+
+      _lastLeftLength = totalLen - lineBegin ;
+      if ( _lastLeftLength > 0 )
+      {
+         memcpy( _lastLeftData, allData + lineBegin, _lastLeftLength ) ;
+      }
+
+      _lastLeftData[ _lastLeftLength ] = '\0' ;
+
+   done:
+      return lineCounter ;
+   }
+
+   INT32 _omaSsqlExecTask::_select( OSSFILE *file, INT32 timeout )
+   {
+      INT32 rc = SDB_OK ;
+      struct timeval selectTimeout ;
+      selectTimeout.tv_sec  = timeout / 1000 ;
+      selectTimeout.tv_usec = ( timeout % 1000 ) * 1000 ;
+      fd_set fds ;
+      while ( true )
+      {
+         FD_ZERO( &fds ) ;
+         FD_SET( file->fd, &fds ) ;
+         rc = select( file->fd + 1, &fds, NULL, NULL, &selectTimeout ) ;
+         // 0 means timeout
+         if ( 0 == rc )
+         {
+            rc = SDB_TIMEOUT ;
+            goto done ;
+         }
+
+         // if < 0, means something wrong
+         if ( 0 > rc )
+         {
+            rc = ossGetLastError() ;
+            // if we failed due to interrupt, let's continue
+            if ( SOCKET_EINTR == rc )
+            {
+               continue ;
+            }
+
+            PD_LOG( PDERROR, "falied to select from fd:rc=%d", rc ) ;
+            goto error ;
+         }
+
+         if ( FD_ISSET( file->fd, &fds ) )
+         {
+            rc = SDB_OK ;
+            break ;
+         }
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _omaSsqlExecTask::_readDataFromPipe( OSSFILE *file, INT32 maxLines ) 
+   {
+      INT32 rc = SDB_OK ;
+      INT32 lineCounter = 0 ;
+      CHAR data[ OMA_MAX_READ_LENGTH + 1 ] ;
+      _pmdEDUCB *cb = pmdGetThreadEDUCB() ;
+      SINT64 length = 0 ;
+
+      _readDataList.clear() ;
+
+      // get the lastLeftdata
+      lineCounter += _getLines( data, length, maxLines-lineCounter ) ;
+
+      while ( lineCounter < maxLines )
+      {
+         length = 0 ;
+         if ( cb->isInterrupted() )
+         {
+            rc = SDB_INTERRUPT ;
+            PD_LOG( PDERROR, "task is interrupt" ) ;
+            goto error ;
+         }
+
+         rc = _select( file, OSS_ONE_SEC ) ;
+         if ( SDB_TIMEOUT == rc )
+         {
+            rc = SDB_OK ;
+            continue ;
+         }
+         else if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "select failed:rc=%d", rc ) ;
+            goto error ;
+         }
+
+         rc = ossRead( file, data, OMA_MAX_READ_LENGTH, &length ) ;
+         if ( SDB_INTERRUPT == rc )
+         {
+            rc = SDB_OK ;
+            //continue read
+            continue ;
+         }
+
+         if ( SDB_OK != rc && SDB_EOF != rc )
+         {
+            PD_LOG( PDERROR, "read from file failed:rc=%d", rc ) ;
+            goto error ;
+         }
+
+         if ( SDB_OK == rc )
+         {
+            lineCounter += _getLines( data, length, maxLines-lineCounter ) ;
+         }
+         else
+         {
+            //SDB_EOF
+            break ;
+         }
+      }
+
+      if ( SDB_EOF == rc )
+      {
+         rc          = SDB_OK ;
+         _readFinish = TRUE ;
+
+         if ( _lastLeftLength > 0 )
+         {
+            //insert the lastLeftData;
+            ssqlRowData_t oneRow ;
+            oneRow.rowNum  = _rowNum++ ;
+            oneRow.rowData = _lastLeftData ;
+            _readDataList.push_back( oneRow ) ;
+         }
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _omaSsqlExecTask::_getPsql()
+   {
+      INT32 rc              = SDB_OK ;
+      INT32 jsErrno         = SDB_OK ;
+      const CHAR *pJsErr    = NULL ;
+      BSONObj retObj ;
+      _omaGetPsqlCmd runCmd( _ssqlInfo ) ;
+
+      rc = runCmd.init( NULL ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG ( PDERROR, "Failed to init to check get psql's info:rc=%d", 
+                  rc ) ;
+         goto error ;
+      }
+
+      rc = runCmd.doit( retObj ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "get psql cmd failed:rc=%d", rc ) ;
+         omaGetStringElement( retObj, OMA_FIELD_DETAIL, &pJsErr ) ;
+         if ( NULL != pJsErr )
+         {
+            _errorDetail = pJsErr ;
+         }
+
+         goto error ;
+      }
+
+      rc = omaGetIntElement( retObj, OMA_FIELD_ERRNO, jsErrno ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG_MSG( PDERROR, "failed to get js's return value:key=%s",
+                     OMA_FIELD_ERRNO ) ;
+         goto error ;
+      }
+
+      if ( SDB_OK != jsErrno )
+      {
+         omaGetStringElement( retObj, OMA_FIELD_DETAIL, &pJsErr ) ;
+         if ( NULL != pJsErr )
+         {
+            _errorDetail = pJsErr ;
+         }
+         else
+         {
+            _errorDetail = "unkown js err" ;
+         }
+
+         rc = jsErrno ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _omaSsqlExecTask::doit()
+   {
+      INT32 rc = SDB_OK ;
+      OSSFILE file ;
+      BOOLEAN isFileOpen = FALSE ;
+
+      if ( _isCleanTask )
+      {
+         goto done ;
+      }
+
+      if ( !_isCleanTask )
+      {
+         string pipeFile ;
+         // 1. update om's task status
+         rc = _updateTaskStatus2OM( OMA_TASK_STATUS_RUNNING ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG_MSG( PDERROR, "update task status failed:rc=%d,task="
+                        OSS_LL_PRINT_FORMAT, rc, _taskID ) ;
+            goto error ;
+         }
+
+         // 2. get psql from remote
+         rc = _getPsql() ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG_MSG( PDERROR, "get psql failed:rc=%d,task="
+                        OSS_LL_PRINT_FORMAT, rc, _taskID ) ;
+            goto error ;
+         }
+
+         // 3. execute the ssql: write pid to pid.txt & write result to pipeFile
+         rc = _executeSsql( pipeFile ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG_MSG( PDERROR, "execute ssql failed:rc=%d,task="
+                        OSS_LL_PRINT_FORMAT, rc, _taskID ) ;
+            goto error ;
+         }
+
+         rc = ossOpen( pipeFile.c_str(), OSS_READONLY | OSS_SHAREREAD, OSS_RU, 
+                       file ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG_MSG( PDERROR, "open pipe file failed:file=%s,rc=%d,task="
+                        OSS_LL_PRINT_FORMAT, pipeFile.c_str(), rc, _taskID ) ;
+            goto error ;
+         }
+
+         isFileOpen = TRUE ;
+
+         while ( true )
+         {
+            // 4. read data from the pipe
+            rc = _readDataFromPipe( &file, OMA_MAX_READLINE_NUM ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG_MSG( PDERROR, "read data from pipe file failed:file=%s,"
+                           "rc=%d,task="OSS_LL_PRINT_FORMAT, pipeFile.c_str(), 
+                           rc, _taskID ) ;
+               goto error ;
+            }
+
+            _dataReadyEvent.signal() ;
+
+            // 5. single.wait(), wait for the om read the data
+            rc = _waitOMReadData() ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG_MSG( PDERROR, "wait om read data failed:rc=%d,task="
+                           OSS_LL_PRINT_FORMAT, rc, _taskID ) ;
+               goto error ;
+            }         
+
+            // 6. if _readFinish=true, close this task
+            if ( _readFinish ) 
+            {
+               break ;
+            }
+
+            // 7. if _readFinish=false, goto 2
+            // continue here ;
+         }
+      }
+
+   done:
+      if ( isFileOpen )
+      {
+         ossClose( file ) ;
+      }
+
+      _cleanTask() ;
+      sdbGetOMAgentMgr()->submitTaskInfo( _taskID ) ;
+      PD_LOG( PDEVENT, "Omagent finish running %s", getTaskName() ) ;
+      return rc ;
+   error:
+      _saveRC = rc ;
+      if ( "" == _errorDetail )
+      {
+         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+      }
+      goto done ;
+   }
 
 } // namespace engine
+

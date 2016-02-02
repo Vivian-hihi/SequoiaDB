@@ -58,6 +58,7 @@ namespace engine
       OMA_TASK_REMOVE_HOST        = OM_TASK_TYPE_REMOVE_HOST, // remove host
       OMA_TASK_ADD_BUS            = OM_TASK_TYPE_ADD_BUSINESS, // install business
       OMA_TASK_REMOVE_BUS         = OM_TASK_TYPE_REMOVE_BUSINESS, // remove business
+      OMA_TASK_SSQL_EXEC          = OM_TASK_TYPE_SSQL_EXEC, // execute ssql
       OMA_TASK_TYPE_END,
       
       OMA_TASK_SUB_TYPE_BEGIN,
@@ -112,6 +113,7 @@ namespace engine
             _taskID           = taskID ;
             _taskStatus       = OMA_TASK_STATUS_INIT ;
             _subTaskSerialNum = 0 ;
+            _eduID            = 0 ;
          }
          virtual ~_omaTask () {}
 
@@ -124,6 +126,8 @@ namespace engine
          INT32 setSubTaskStatus( string &name, OMA_TASK_STATUS status ) ;
          INT32 getSubTaskStatus( string &name, OMA_TASK_STATUS &status ) ;
          INT32 getSubTaskSerialNum() ;
+         void setJobInfo( EDUID eduID ) ;
+         EDUID getJobInfo() ;
 
       public:
          virtual INT32 initJsEnv() ;
@@ -140,8 +144,11 @@ namespace engine
          OMA_TASK_STATUS                  _taskStatus ;
          map< string, OMA_TASK_STATUS >   _subTaskStatus ;
          INT32                            _subTaskSerialNum ;
+         EDUID                            _eduID ;
    } ;
    typedef _omaTask omaTask ;
+
+   typedef boost::shared_ptr< omaTask >  omaTaskPtr ;
 
    /*
       task manager

@@ -92,6 +92,7 @@ namespace engine
    #define OM_BUSINESS_SPARK                 "spark"
    #define OM_BUSINESS_HDFS                  "hdfs"
    #define OM_BUSINESS_YARN                  "yarn"
+   #define OM_BUSINESS_SEQUOIASQL            "sequoiasql"
 
    
    #define OM_CS_DEPLOY                      "SYSDEPLOY"
@@ -157,6 +158,7 @@ namespace engine
    #define OM_BUSINESS_FIELD_TIME            "Time"
    /* mark the business is discovery or not */
    #define OM_BUSINESS_FIELD_ADDTYPE         "AddtionType"
+   #define OM_BUSINESS_FIELD_INFO            "BusinessInfo"
    #define OM_BUSINESS_FIELD_LOCATION        "Location"
 
    #define OM_BUSINESS_ADDTYPE_DISCOVERY     1
@@ -180,12 +182,17 @@ namespace engine
    
    // deploy.taskinfo
    #define OM_CS_DEPLOY_CL_TASKINFO          OM_CS_DEPLOY".SYSTASKINFO"
+   //INT64
    #define OM_TASKINFO_FIELD_TASKID          FIELD_NAME_TASKID
+   //INT32
    #define OM_TASKINFO_FIELD_TYPE            "Type"
    #define OM_TASKINFO_FIELD_TYPE_DESC       "TypeDesc"
    #define OM_TASKINFO_FIELD_NAME            "TaskName"
+   //timestamp
    #define OM_TASKINFO_FIELD_CREATE_TIME     "CreateTime"
+   //timestamp
    #define OM_TASKINFO_FIELD_END_TIME        "EndTime"
+   //INT32
    #define OM_TASKINFO_FIELD_STATUS          "Status"
    #define OM_TASKINFO_FIELD_STATUS_DESC     "StatusDesc"
    #define OM_TASKINFO_FIELD_AGENTHOST       "AgentHost"
@@ -221,6 +228,7 @@ namespace engine
       OM_TASK_TYPE_REMOVE_HOST     = 1,
       OM_TASK_TYPE_ADD_BUSINESS    = 2,
       OM_TASK_TYPE_REMOVE_BUSINESS = 3,
+      OM_TASK_TYPE_SSQL_EXEC       = 4,
 
       OM_TASK_TYPE_END
    } ;
@@ -229,6 +237,7 @@ namespace engine
    #define OM_TASK_TYPE_REMOVE_HOST_STR       "REMOVE_HOST"
    #define OM_TASK_TYPE_ADD_BUSINESS_STR      "ADD_BUSINESS"
    #define OM_TASK_TYPE_REMOVE_BUSINESS_STR   "REMOVE_BUSINESS"
+   #define OM_TASK_TYPE_SSQL_EXEC_STR         "SSQL_EXEC"
 
    const CHAR *getTaskTypeStr( INT32 taskType ) ;
 
@@ -363,6 +372,8 @@ namespace engine
    #define  OM_TASK_STRATEGY_ADD_IPS_REQ     "add task strategy ips"
    #define  OM_TASK_STRATEGY_DEL_IPS_REQ     "del task strategy ips"
    #define  OM_TASK_STRATEGY_DEL_REQ         "del task strategy"
+   
+   #define  OM_SSQL_EXEC_REQ                 "ssql exec"
    //**************************************************************************
 
    //*********************param between rest and om****************************
@@ -373,7 +384,7 @@ namespace engine
    #define  OM_BSON_FIELD_SDB_USER           OM_CLUSTER_FIELD_SDBUSER
    #define  OM_BSON_FIELD_SDB_PASSWD         OM_CLUSTER_FIELD_SDBPASSWD
    #define  OM_BSON_FIELD_SDB_USERGROUP      OM_CLUSTER_FIELD_SDBUSERGROUP
-   #define  OM_BSON_FIELD_INSTALLPATH        OM_CLUSTER_FIELD_INSTALLPATH
+   #define  OM_BSON_FIELD_INSTALL_PATH        OM_CLUSTER_FIELD_INSTALLPATH
    #define  OM_REST_HEAD_SESSIONID           "SdbSessionID"
    #define  OM_REST_HEAD_LANGUAGE            "SdbLanguage"
    #define  OM_REST_FIELD_LOGIN_NAME         "User"
@@ -414,7 +425,6 @@ namespace engine
    #define  OM_BSON_FIELD_SAFETY             OM_HOST_FIELD_SAFETY
    #define  OM_BSON_FIELD_CONFIG             OM_CONFIGURE_FIELD_CONFIG
    #define  OM_BSON_FIELD_NEEDUNINSTALL      "IsNeedUninstall"
-   #define  OM_BSON_FIELD_INSTALL_PATH       OM_HOST_FIELD_INSTALLPATH
    #define  OM_BSON_FIELD_PATCKET_PATH       "InstallPacket"
    #define  OM_PACKET_SUBPATH                "packet"
    #define  OM_BSON_FIELD_CPU_SYS            "Sys"
@@ -447,7 +457,7 @@ namespace engine
    #define  OM_REST_BUSINESS_NAME            OM_BSON_BUSINESS_NAME
    #define  OM_REST_SVCNAME                  FIELD_NAME_SERVICE_NAME
    #define  OM_REST_CLUSTER_NAME             OM_BSON_FIELD_CLUSTER_NAME
-   #define  OM_BSON_BUSINESS_INFO            "BusinessInfo"
+   #define  OM_BSON_BUSINESS_INFO            OM_BUSINESS_FIELD_INFO
    #define  OM_REST_HOST_NAME                OM_BSON_FIELD_HOST_NAME
    #define  OM_REST_ISFORCE                  "IsForce"
    #define  OM_SDB_AUTH_USER                 "AuthUser"
@@ -456,12 +466,16 @@ namespace engine
    #define  OM_BSON_FIELD_TOTAL_SIZE         "TotalSize"
    #define  OM_BSON_FIELD_REDUNDANCY_RATE    "RedundancyRate"
    #define  OM_REST_LOG_NAME                 "Name"
-   #define  OM_BSON_MASTER_PORT              "MasterPort"
-   #define  OM_BSON_MASTER_WEBUI_PORT        "MasterWebuiPort"
-   #define  OM_BSON_NAMENODE_PORT            "NamenodePort"
-   #define  OM_BSON_NAMENODE_WEBUI_PORT      "NamenodeWebuiPort"
 
-   #define  OM_BSON_WEB_SERVICE_PORT         "WebServicePort"
+   #define  OM_REST_WEB_SERVICE_PORT         "WebServicePort"
+   #define  OM_REST_DBNAME                   "DbName"
+   #define  OM_REST_DBUSER                   OM_BSON_FIELD_HOST_USER
+   #define  OM_REST_DBPASSWD                 OM_BSON_FIELD_HOST_PASSWD
+   #define  OM_REST_SQL                      "Sql"
+   #define  OM_REST_RESULT_FORMAT            "ResultFormat"
+
+   #define  OM_BSON_FIELD_DBUSER             "DbUser"
+   #define  OM_BSON_FIELD_DBPASSWD           "DbPasswd"
 
    #define  OM_CONF_PATH_STR                 "conf"
    #define  OM_LOG_PATH_STR                  "log"
@@ -498,6 +512,8 @@ namespace engine
    #define  OM_AGENT_UPDATE_TASK             "update task"
    #define  OM_QUERY_TASK_REQ                "query task"
    #define  OM_NOTIFY_TASK                   "notify task"
+   #define  OM_SSQL_GET_MORE_REQ             "ssql getmore"
+   #define  OM_INTERRUPT_TASK_REQ            "interrupt task"
    //**************************************************************************
 
    // this is for the web transfer request.  web -> om -> coord/data

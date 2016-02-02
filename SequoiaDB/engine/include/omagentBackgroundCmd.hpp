@@ -448,6 +448,51 @@ namespace engine
          virtual INT32 init ( const CHAR *pInstallInfo ) ;
    } ;
 
+   /*
+      _omaRunPsqlCmd
+   */
+   class _omaRunPsqlCmd : public _omaCommand
+   {
+      public:
+         _omaRunPsqlCmd( SsqlExecInfo &ssqlInfo ) ;
+         ~_omaRunPsqlCmd() ;
+         virtual const CHAR * name() { return OMA_CMD_SSQL_EXEC ; }
+         virtual INT32 init( const CHAR *nullInfo ) ;
+
+      private:
+         SsqlExecInfo      _ssqlInfo ;
+   } ;
+
+   /*
+      _omaCleanSsqlExecCmd
+   */
+   class _omaCleanSsqlExecCmd : public _omaCommand
+   {
+      public:
+         _omaCleanSsqlExecCmd( SsqlExecInfo &ssqlInfo ) ;
+         ~_omaCleanSsqlExecCmd() ;
+         virtual const CHAR * name() { return OMA_CMD_CLEAN_SSQL_EXEC ; }
+         virtual INT32 init( const CHAR *nullInfo ) ;
+
+      private:
+         SsqlExecInfo      _ssqlInfo ;
+   } ;
+
+   /*
+      _omaGetPsqlCmd
+   */
+   class _omaGetPsqlCmd : public _omaCommand
+   {
+      public:
+         _omaGetPsqlCmd( SsqlExecInfo &ssqlInfo ) ;
+         ~_omaGetPsqlCmd() ;
+         virtual const CHAR * name() { return OMA_CMD_GET_PSQL ; }
+         virtual INT32 init( const CHAR *nullInfo ) ;
+
+      private:
+         SsqlExecInfo      _ssqlInfo ;
+   } ;
+
 } // namespace engine
 
 

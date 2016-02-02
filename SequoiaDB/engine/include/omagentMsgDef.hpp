@@ -210,6 +210,18 @@
 // safety
 #define OMA_FIELD_CONTEXT                          "Context"
 
+// ssql exec
+#define OMA_FIELD_DBUSER                           "DbUser"
+#define OMA_FIELD_DBPASSWD                         "DbPasswd"
+#define OMA_FIELD_DBNAME                           "DbName"
+#define OMA_FIELD_SQL                              "Sql"
+#define OMA_FIELD_RESULTFORMAT                     "ResultFormat"
+
+#define OMA_FIELD_PIPE_FILE                        "PipeFile"
+
+#define OMA_FIELD_ROWNUM                           "RowNum"
+#define OMA_FIELD_ROWVALUE                         "Value"
+
 // business
 
 

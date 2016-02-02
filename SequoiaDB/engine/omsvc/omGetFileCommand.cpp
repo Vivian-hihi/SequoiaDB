@@ -214,13 +214,13 @@ namespace engine
    const CHAR *getTaskStatusStr( INT32 status )
    {
       static CHAR *s_taskStatusStr[ OM_TASK_STATUS_END ] = 
-                                                    { 
-                                                       "INIT", 
-                                                       "RUNNING", 
-                                                       "ROLLBACK", 
-                                                       "CANCEL", 
-                                                       "FINISH" 
-                                                    } ;
+                                                 { 
+                                                    OM_TASK_STATUS_INIT_STR, 
+                                                    OM_TASK_STATUS_RUNNING_STR, 
+                                                    OM_TASK_STATUS_ROLLBACK_STR, 
+                                                    OM_TASK_STATUS_CANCEL_STR, 
+                                                    OM_TASK_STATUS_FINISH_STR
+                                                 } ;
       if ( status < OM_TASK_STATUS_END )
       {
          return s_taskStatusStr[status] ;
@@ -238,7 +238,8 @@ namespace engine
                                                OM_TASK_TYPE_ADD_HOST_STR, 
                                                OM_TASK_TYPE_REMOVE_HOST_STR,
                                                OM_TASK_TYPE_ADD_BUSINESS_STR,
-                                               OM_TASK_TYPE_REMOVE_BUSINESS_STR
+                                               OM_TASK_TYPE_REMOVE_BUSINESS_STR,
+                                               OM_TASK_TYPE_SSQL_EXEC_STR
                                             } ;
       if ( type < OM_TASK_TYPE_END )
       {
@@ -5194,8 +5195,11 @@ namespace engine
 
    // *****************omQueryTaskCommand *****************************
    omQueryTaskCommand::omQueryTaskCommand( restAdaptor *pRestAdaptor, 
-                                           pmdRestSession *pRestSession )
-                      :omAuthCommand( pRestAdaptor, pRestSession ) 
+                                           pmdRestSession *pRestSession,
+                                           const string &localAgentHost, 
+                                           const string &localAgentService )
+                      :omScanHostCommand( pRestAdaptor, pRestSession, 
+                                          localAgentHost, localAgentService)
    {
    }
 
@@ -5203,45 +5207,64 @@ namespace engine
    {
    }
 
-   void omQueryTaskCommand::_sendTaskInfo2Web( list<BSONObj> &tasks )
+   void omQueryTaskCommand::_modifyTaskInfo( BSONObj &task )
    {
       string clusterName ;
       string businessName ;
-      BSONObj filter = BSON( OM_TASKINFO_FIELD_INFO << "" ) ;
+      BSONObjBuilder resultBuilder ;
+      BSONElement businessEle ;
+      BSONElement clusterEle ;
 
+      BSONObj info ;
+      BSONObj tmp ;
+
+      BSONObj filter = BSON( OM_TASKINFO_FIELD_INFO << "" ) ;
+      
+      clusterEle = task.getFieldDotted( 
+                        OM_TASKINFO_FIELD_INFO"."OM_BSON_FIELD_CLUSTER_NAME ) ;
+      if ( clusterEle.type() == String )
+      {
+         clusterName  = clusterEle.String() ;
+      }
+
+      businessEle = task.getFieldDotted( 
+                      OM_TASKINFO_FIELD_INFO"."OM_BSON_BUSINESS_NAME ) ;
+      if ( businessEle.type() == String )
+      {
+         businessName = businessEle.String() ;
+      }
+
+      info = BSON( OM_BSON_FIELD_CLUSTER_NAME << clusterName 
+                   << OM_BSON_BUSINESS_NAME << businessName ) ;
+
+      tmp = task.filterFieldsUndotted( filter, false ) ;
+      
+      resultBuilder.appendElements( tmp ) ;
+      if ( task.hasField( OM_TASKINFO_FIELD_INFO ) )
+      {
+         resultBuilder.append( OM_TASKINFO_FIELD_INFO, info ) ;
+      }
+
+      task = resultBuilder.obj() ;
+   }
+
+   void omQueryTaskCommand::_sendOneTaskInfo2Web( BSONObj &oneTask )
+   {
+      _modifyTaskInfo( oneTask ) ;
+      _restAdaptor->appendHttpBody( _restSession, oneTask.objdata(), 
+                                    oneTask.objsize(), 1 ) ;
+      _sendOKRes2Web() ;
+
+      return ;
+   }
+
+   void omQueryTaskCommand::_sendTaskInfo2Web( list<BSONObj> &tasks )
+   {
       list<BSONObj>::iterator iter = tasks.begin() ;
       while ( iter != tasks.end() )
       {
-         clusterName  = "" ;
-         businessName = "" ;
-         BSONElement clusterEle ;
-         clusterEle = iter->getFieldDotted( 
-                         OM_TASKINFO_FIELD_INFO"."OM_BSON_FIELD_CLUSTER_NAME ) ;
-         if ( clusterEle.type() == String )
-         {
-            clusterName  = clusterEle.String() ;
-         }
-
-         BSONElement businessEle ;
-         businessEle = iter->getFieldDotted( 
-                         OM_TASKINFO_FIELD_INFO"."OM_BSON_BUSINESS_NAME ) ;
-         if ( businessEle.type() == String )
-         {
-            businessName = businessEle.String() ;
-         }
-
-         BSONObj info = BSON( OM_BSON_FIELD_CLUSTER_NAME << clusterName 
-                              << OM_BSON_BUSINESS_NAME << businessName ) ;
-
-         BSONObj tmp = iter->filterFieldsUndotted( filter, false ) ;
-         BSONObjBuilder resultBuilder ;
-         resultBuilder.appendElements( tmp ) ;
-         if ( iter->hasField( OM_TASKINFO_FIELD_INFO ) )
-         {
-            resultBuilder.append( OM_TASKINFO_FIELD_INFO, info ) ;
-         }
-
-         BSONObj result = resultBuilder.obj() ;
+         BSONObj result = *iter ;
+         _modifyTaskInfo( result ) ;
          _restAdaptor->appendHttpBody( _restSession, result.objdata(), 
                                        result.objsize(), 1 ) ;
          iter++ ;
@@ -5250,6 +5273,207 @@ namespace engine
       _sendOKRes2Web() ;
 
       return ;
+   }
+
+   INT32 omQueryTaskCommand::_ssqlGetMore( INT64 taskID, INT32 &flag, 
+                                           BSONObj &result )
+   {
+      INT32 rc          = SDB_OK ;
+      CHAR *pContent    = NULL ;
+      INT32 contentSize = 0 ;
+      MsgHeader *pMsg   = NULL ;
+      omManager *om     = NULL ;
+      pmdRemoteSession *remoteSession = NULL ;
+      BSONObj bsonRequest ;
+      bsonRequest = BSON( OM_TASKINFO_FIELD_TASKID << taskID ) ;
+      rc = msgBuildQueryMsg( &pContent, &contentSize, 
+                             CMD_ADMIN_PREFIX OM_SSQL_GET_MORE_REQ, 
+                             0, 0, 0, -1, &bsonRequest, NULL, NULL, NULL ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG_MSG( PDERROR, "build msg failed:cmd=%s,rc=%d", OM_NOTIFY_TASK,
+                     rc ) ;
+         goto error ;
+      }
+
+      // create remote session
+      om            = sdbGetOMManager() ;
+      remoteSession = om->getRSManager()->addSession( _cb, 
+                                                      OM_MSG_TIMEOUT_TWO_HOUR,
+                                                      NULL ) ;
+      if ( NULL == remoteSession )
+      {
+         rc = SDB_OOM ;
+         PD_LOG_MSG( PDERROR, "create remote session failed:rc=%d", rc ) ;
+         SDB_OSS_FREE( pContent ) ;
+         goto error ;
+      }
+
+      // send message to agent
+      pMsg = (MsgHeader *)pContent ;
+      rc   = _sendMsgToLocalAgent( om, remoteSession, pMsg ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG_MSG( PDERROR, "send message to agent failed:rc=%d", rc ) ;
+         SDB_OSS_FREE( pContent ) ;
+         remoteSession->clearSubSession() ;
+         goto error ;
+      }
+
+      // receiving for agent's response
+      rc = _receiveFromAgent( remoteSession, flag, result ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG_MSG( PDERROR, "receive from agent failed:rc=%d", rc ) ;
+         goto error ;
+      }
+
+   done:
+      _clearSession( om, remoteSession ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 omQueryTaskCommand::_finishSsqlTask( INT64 taskID, INT32 flag,
+                                              const string &errDetail )
+   {
+      INT32 rc = SDB_OK ;
+      INT32 status = OM_TASK_STATUS_FINISH ;
+      BSONObjBuilder builder ;
+
+      if ( SDB_OK != flag )
+      {
+         status = OM_TASK_STATUS_CANCEL ;
+      }
+
+      time_t now = time( NULL ) ;
+      builder.appendTimestamp( OM_TASKINFO_FIELD_END_TIME, now * 1000, 0 ) ;
+      builder.append( OM_TASKINFO_FIELD_STATUS, status ) ;
+      builder.append( OM_TASKINFO_FIELD_STATUS_DESC, 
+                      getTaskStatusStr( status ) ) ;
+      builder.append( OM_TASKINFO_FIELD_ERRNO, flag ) ;
+      builder.append( OM_TASKINFO_FIELD_DETAIL, errDetail ) ;
+      builder.append( OM_TASKINFO_FIELD_PROGRESS, 100 ) ;
+      BSONObj selector = BSON( OM_TASKINFO_FIELD_TASKID << taskID ) ;
+      BSONObj updator  = BSON( "$set" << builder.obj() ) ;
+      BSONObj hint ;
+      INT64 updateNum = 0 ;
+      rc = rtnUpdate( OM_CS_DEPLOY_CL_TASKINFO, selector, updator, hint, 0, 
+                      pmdGetThreadEDUCB(), &updateNum ) ;
+      if ( SDB_OK != rc || 0 == updateNum )
+      {
+         PD_LOG( PDERROR, "update task failed:table=%s,updateNum=%d,taskID="
+                 OSS_LL_PRINT_FORMAT",updator=%s,selector=%s,rc=%d",
+                 OM_CS_DEPLOY_CL_TASKINFO, updateNum, taskID, 
+                 updator.toString().c_str(), selector.toString().c_str(), rc ) ;
+         goto error ;
+      }
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 omQueryTaskCommand::_updateTaskEndTime( INT64 taskID )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObjBuilder builder ;
+      time_t now = time( NULL ) ;
+      builder.appendTimestamp( OM_TASKINFO_FIELD_END_TIME, now * 1000, 0 ) ;
+      BSONObj selector = BSON( OM_TASKINFO_FIELD_TASKID << taskID ) ;
+      BSONObj updator  = BSON( "$set" << builder.obj() ) ;
+      BSONObj hint ;
+      INT64 updateNum = 0 ;
+      rc = rtnUpdate( OM_CS_DEPLOY_CL_TASKINFO, selector, updator, hint, 0, 
+                      pmdGetThreadEDUCB(), &updateNum ) ;
+      if ( SDB_OK != rc || 0 == updateNum )
+      {
+         PD_LOG( PDERROR, "update task failed:table=%s,updateNum=%d,taskID="
+                 OSS_LL_PRINT_FORMAT",updator=%s,selector=%s,rc=%d",
+                 OM_CS_DEPLOY_CL_TASKINFO, updateNum, taskID, 
+                 updator.toString().c_str(), selector.toString().c_str(), rc ) ;
+         goto error ;
+      }
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 omQueryTaskCommand::_getSsqlResult( BSONObj &oneTask )
+   {
+      INT32 rc   = SDB_OK ;
+      INT32 flag = SDB_OK ;
+      BSONObj result ;
+      BSONElement taskEle ;
+      INT64 taskID ;
+      INT32 status ;
+
+      status = oneTask.getIntField( OM_TASKINFO_FIELD_STATUS ) ;
+      if ( OM_TASK_STATUS_FINISH == status || OM_TASK_STATUS_CANCEL == status ||
+           OM_TASK_STATUS_INIT == status )
+      {
+         goto done ;
+      }
+
+      taskEle = oneTask.getField( OM_TASKINFO_FIELD_TASKID ) ;
+      taskID  = taskEle.Long() ;
+      rc = _ssqlGetMore( taskID, flag, result ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "ssql get more failed:taskID="OSS_LL_PRINT_FORMAT
+                 "rc=%d", taskID, rc ) ;
+         goto error ;
+      }
+
+      if ( flag != SDB_OK )
+      {
+         rc = flag ;
+         string errorDetail = result.getStringField( 
+                                                 OM_TASKINFO_FIELD_DETAIL ) ;
+         _finishSsqlTask( taskID, flag, errorDetail ) ;
+         PD_LOG_MSG( PDERROR, "ssql get more failed:taskID="OSS_LL_PRINT_FORMAT
+                     ",rc=%d,detail=%s", taskID, flag, errorDetail.c_str() ) ;
+         goto error ;
+      }
+
+      status = result.getIntField( OM_TASKINFO_FIELD_STATUS ) ;
+      if ( OM_TASK_STATUS_FINISH == status )
+      {
+         rc = _finishSsqlTask( taskID, 0, "" ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG_MSG( PDERROR, "finish ssql task failed:taskID="
+                        OSS_LL_PRINT_FORMAT"rc=%d", taskID, rc ) ;
+            goto error ;
+         }
+      }
+      else
+      {
+         _updateTaskEndTime( taskID ) ;
+      }
+
+      {
+         BSONElement resultElement ;
+         BSONObj filter ;
+         BSONObjBuilder resultBuilder ;
+         BSONObj tmp ;
+         tmp    = oneTask.filterFieldsUndotted( filter, false ) ;
+         filter = BSON( OM_TASKINFO_FIELD_STATUS << "" 
+                        << OM_TASKINFO_FIELD_RESULTINFO << "" ) ;
+         resultElement = result.getField( OM_TASKINFO_FIELD_RESULTINFO ) ;
+         resultBuilder.appendElements( tmp ) ;
+         resultBuilder.append( OM_TASKINFO_FIELD_STATUS, status ) ;
+         resultBuilder.append( resultElement ) ;
+
+         oneTask = resultBuilder.obj() ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 
    INT32 omQueryTaskCommand::doCommand()
@@ -5278,6 +5502,30 @@ namespace engine
          PD_LOG( PDERROR, "%s,rc=%d", _errorDetail.c_str(), rc ) ;
          _sendErrorRes2Web( rc, _errorDetail ) ;
          goto error ;
+      }
+
+      if ( tasks.size() == 1 )
+      {
+         INT32 taskType ;
+         BSONObj oneTask = *tasks.begin() ;
+
+         taskType = oneTask.getIntField( OM_TASKINFO_FIELD_TYPE ) ;
+         if ( OM_TASK_TYPE_SSQL_EXEC == taskType )
+         {
+            rc = _getSsqlResult( oneTask ) ;
+            if ( SDB_OK != rc )
+            {
+               _errorDetail =  omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ;
+               PD_LOG( PDERROR, "_getSsqlResult failed:rc=%d", rc ) ;
+               _sendErrorRes2Web( rc, _errorDetail ) ;
+               goto error ;
+            }
+            else
+            {
+               _sendOneTaskInfo2Web( oneTask ) ;
+               goto done ;
+            }
+         }
       }
 
       _sendTaskInfo2Web( tasks ) ;
@@ -6387,7 +6635,7 @@ namespace engine
                              << hostInfo.clusterName
                              << OM_BSON_FIELD_HOST_USER << hostInfo.user
                              << OM_BSON_FIELD_HOST_PASSWD << hostInfo.passwd
-                             << OM_BSON_FIELD_INSTALLPATH 
+                             << OM_BSON_FIELD_INSTALL_PATH 
                              << hostInfo.installPath
                              << OM_BSON_FIELD_HOST_SSHPORT 
                              << hostInfo.sshPort ) ;
@@ -6631,17 +6879,34 @@ namespace engine
       goto done ;
    }
 
+   BOOLEAN omRemoveBusinessCommand::_isDiscoveredBusiness( 
+                                                      BSONObj &businessInfo )
+   {
+      BSONElement eleAddType ;
+      eleAddType = businessInfo.getField( OM_BUSINESS_FIELD_ADDTYPE ) ;
+      if ( eleAddType.isNumber() )
+      {
+         INT32 addType = eleAddType.Int() ;
+         if ( OM_BUSINESS_ADDTYPE_DISCOVERY == addType )
+         {
+            return TRUE ;
+         }
+      }
+
+      return FALSE ;
+   }
+
    INT32 omRemoveBusinessCommand::doCommand()
    {
       BSONObj nodeInfos ;
       INT64 taskID ;
-      BOOLEAN isBusinessExist     = FALSE ;
       BOOLEAN isBusinessExistNode = FALSE ;
       INT32 rc                    = SDB_OK ;
       const CHAR *pBusinessName   = NULL ;
+      BSONObj businessInfo ;
       _restAdaptor->getQuery( _restSession, OM_REST_BUSINESS_NAME, 
                               &pBusinessName ) ;
-      if ( NULL == pBusinessName )
+      if ( NULL == pBusinessName || 0 == ossStrlen( pBusinessName ) )
       {
          rc = SDB_INVALIDARG ;
          PD_LOG_MSG( PDERROR, "rest field:%s is null", OM_REST_BUSINESS_NAME ) ;
@@ -6650,21 +6915,39 @@ namespace engine
          goto error ;
       }
 
-      rc = _getBusinessExistFlag( pBusinessName, isBusinessExist ) ;
+      rc = _getBusinessInfo( pBusinessName, businessInfo ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG_MSG( PDERROR, "get business failed:business=%s", 
-                     pBusinessName ) ;
+         if ( SDB_DMS_EOC == rc )
+         {
+            PD_LOG_MSG( PDERROR, "business is not exist:business=%s,rc=%d", 
+                        pBusinessName, rc ) ;
+            _errorDetail = omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ;
+            _sendErrorRes2Web( rc, _errorDetail ) ;
+         }
+         else
+         {
+            PD_LOG_MSG( PDERROR, "get business failed:business=%s,rc=%d", 
+                        pBusinessName, rc ) ;
+            _errorDetail = omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ;
+            _sendErrorRes2Web( rc, _errorDetail ) ;
+            goto error ;
+         }
+      }
+
+      if ( _isDiscoveredBusiness( businessInfo ) )
+      {
+         INT32 addType = 0 ;
+         string businessType ;
+         rc = SDB_INVALIDARG ;
+         addType      = businessInfo.getIntField( OM_BUSINESS_FIELD_ADDTYPE ) ;
+         businessType = businessInfo.getStringField( OM_BUSINESS_FIELD_TYPE ) ;
+         PD_LOG_MSG( PDERROR, "discovered business could not be removed:"
+                     "business=%s,type=%s,addType=%d", 
+                     pBusinessName, businessType.c_str(), addType ) ;
          _errorDetail = omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ;
          _sendErrorRes2Web( rc, _errorDetail ) ;
          goto error ;
-      }
-
-      if ( !isBusinessExist )
-      {
-         string detail = string( pBusinessName ) + " is not exist" ;
-         _sendErrorRes2Web( SDB_DMS_RECORD_NOTEXIST, detail ) ;
-         goto done ;
       }
 
       {
@@ -8175,24 +8458,24 @@ namespace engine
 
          oneHost  = ele.embeddedObject() ;
          hostName = oneHost.getStringField( OM_BSON_FIELD_HOST_NAME ) ;
-         webPort  = oneHost.getStringField( OM_BSON_WEB_SERVICE_PORT ) ;
+         webPort  = oneHost.getStringField( OM_REST_WEB_SERVICE_PORT ) ;
          if ( hostName.empty() || webPort.empty() )
          {
             rc = SDB_INVALIDARG ;
             PD_LOG_MSG( PDERROR, "hdfs's info is invalid:%s=%s,"
                         "%s=%s", OM_BSON_FIELD_HOST_NAME, hostName.c_str(), 
-                        OM_BSON_WEB_SERVICE_PORT, webPort.c_str() ) ;
+                        OM_REST_WEB_SERVICE_PORT, webPort.c_str() ) ;
             goto error ;
          }
 
-         if ( !_isHostExistInCluster( hostName, clusterName ) )
-         {
-            rc = SDB_INVALIDARG ;
-            PD_LOG_MSG( PDERROR, "host is not exist in cluster:host=%s,"
-                        "cluster=%s", hostName.c_str(), 
-                        clusterName.c_str() ) ;
-            goto error ;
-         }
+//         if ( !_isHostExistInCluster( hostName, clusterName ) )
+//         {
+//            rc = SDB_INVALIDARG ;
+//            PD_LOG_MSG( PDERROR, "host is not exist in cluster:host=%s,"
+//                        "cluster=%s", hostName.c_str(), 
+//                        clusterName.c_str() ) ;
+//            goto error ;
+//         }
       }
 
    done:
@@ -8246,24 +8529,24 @@ namespace engine
 
          oneHost  = ele.embeddedObject() ;
          hostName = oneHost.getStringField( OM_BSON_FIELD_HOST_NAME ) ;
-         webPort  = oneHost.getStringField( OM_BSON_WEB_SERVICE_PORT ) ;
+         webPort  = oneHost.getStringField( OM_REST_WEB_SERVICE_PORT ) ;
          if ( hostName.empty() || webPort.empty() )
          {
             rc = SDB_INVALIDARG ;
             PD_LOG_MSG( PDERROR, "spark's master info is invalid:%s=%s,"
                         "%s=%s", OM_BSON_FIELD_HOST_NAME, hostName.c_str(), 
-                        OM_BSON_MASTER_PORT, webPort.c_str() ) ;
+                        OM_REST_WEB_SERVICE_PORT, webPort.c_str() ) ;
             goto error ;
          }
 
-         if ( !_isHostExistInCluster( hostName, clusterName ) )
-         {
-            rc = SDB_INVALIDARG ;
-            PD_LOG_MSG( PDERROR, "host is not exist in cluster:host=%s,"
-                        "cluster=%s", hostName.c_str(), 
-                        clusterName.c_str() ) ;
-            goto error ;
-         }
+//         if ( !_isHostExistInCluster( hostName, clusterName ) )
+//         {
+//            rc = SDB_INVALIDARG ;
+//            PD_LOG_MSG( PDERROR, "host is not exist in cluster:host=%s,"
+//                        "cluster=%s", hostName.c_str(), 
+//                        clusterName.c_str() ) ;
+//            goto error ;
+//         }
       }
 
    done:
@@ -8317,13 +8600,98 @@ namespace engine
 
          oneHost  = ele.embeddedObject() ;
          hostName = oneHost.getStringField( OM_BSON_FIELD_HOST_NAME ) ;
-         webPort  = oneHost.getStringField( OM_BSON_WEB_SERVICE_PORT ) ;
+         webPort  = oneHost.getStringField( OM_REST_WEB_SERVICE_PORT ) ;
          if ( hostName.empty() || webPort.empty() )
          {
             rc = SDB_INVALIDARG ;
             PD_LOG_MSG( PDERROR, "spark's master info is invalid:%s=%s,"
                         "%s=%s", OM_BSON_FIELD_HOST_NAME, hostName.c_str(), 
-                        OM_BSON_MASTER_PORT, webPort.c_str() ) ;
+                        OM_REST_WEB_SERVICE_PORT, webPort.c_str() ) ;
+            goto error ;
+         }
+
+//         if ( !_isHostExistInCluster( hostName, clusterName ) )
+//         {
+//            rc = SDB_INVALIDARG ;
+//            PD_LOG_MSG( PDERROR, "host is not exist in cluster:host=%s,"
+//                        "cluster=%s", hostName.c_str(), 
+//                        clusterName.c_str() ) ;
+//            goto error ;
+//         }
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 omDiscoverBusinessCommand::_checkSequoiasqlCFG( BSONObj &configInfo )
+   {
+      INT32 rc = SDB_OK ;
+      string businessName ;
+      string clusterName ;
+
+      businessName = configInfo.getStringField( OM_BSON_BUSINESS_NAME ) ;
+      if ( businessName.empty() )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG_MSG( PDERROR, "get business name failed:rc=%d", rc ) ;
+         goto error ;
+      }
+
+      clusterName = configInfo.getStringField( OM_BSON_FIELD_CLUSTER_NAME ) ;
+      if ( clusterName.empty() )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG_MSG( PDERROR, "get cluster name failed:rc=%d", rc ) ;
+         goto error ;
+      }
+
+      if ( !_isClusterExist( clusterName ) )
+      {
+         rc = SDB_OM_CLUSTER_NOT_EXIST ;
+         PD_LOG_MSG( PDERROR, "cluster is not exist:cluster=%s", 
+                     clusterName.c_str() ) ;
+         goto error ;
+      }
+
+      {
+         string hostName ;
+         string serviceName ;
+         string dbName ;
+         string user ;
+         string passwd ;
+         string installPath ;
+         BSONObj oneHost ;
+         BSONElement ele = configInfo.getField( OM_BSON_BUSINESS_INFO ) ;
+         if ( Object != ele.type() )
+         {
+            rc = SDB_INVALIDARG ;
+            PD_LOG_MSG( PDERROR, "get businessinfo failed:rc=%d,type=%d", 
+                        rc, ele.type() ) ;
+            goto error ;
+         }
+
+         oneHost     = ele.embeddedObject() ;
+         hostName    = oneHost.getStringField( OM_BSON_FIELD_HOST_NAME ) ;
+         serviceName = oneHost.getStringField( OM_BSON_FIELD_SVCNAME ) ;
+         installPath = oneHost.getStringField( OM_BSON_FIELD_INSTALL_PATH ) ;
+         dbName      = oneHost.getStringField( OM_REST_DBNAME ) ;
+         user        = oneHost.getStringField( OM_BSON_FIELD_HOST_USER ) ;
+         passwd      = oneHost.getStringField( OM_BSON_FIELD_HOST_PASSWD ) ;
+         if ( hostName.empty() || serviceName.empty() || dbName.empty() ||
+              user.empty() || passwd.empty() || installPath.empty() )
+         {
+            rc = SDB_INVALIDARG ;
+            PD_LOG_MSG( PDERROR, "Sequoiasql's info is invalid:%s=%s,"
+                        "%s=%s,%s=%s,%s=%s,%s=%s or %s is empty", 
+                        OM_BSON_FIELD_HOST_NAME, hostName.c_str(), 
+                        OM_BSON_FIELD_SVCNAME, serviceName.c_str(), 
+                        OM_REST_DBNAME, dbName.c_str(),
+                        OM_BSON_FIELD_HOST_USER, user.c_str(),
+                        OM_BSON_FIELD_INSTALL_PATH, installPath.c_str(),
+                        OM_BSON_FIELD_HOST_PASSWD ) ;
             goto error ;
          }
 
@@ -8377,11 +8745,64 @@ namespace engine
             goto error ;
          }
       }
+      else if ( OM_BUSINESS_SEQUOIASQL == businessType )
+      {
+         rc = _checkSequoiasqlCFG( configInfo ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "check Sequoiasql BusinessInfo failed:rc=%d", 
+                    rc ) ;
+            goto error ;
+         }
+      }
       else
       {
          rc = SDB_INVALIDARG ;
          PD_LOG_MSG( PDERROR, "get business type failed:type=%s,rc=%d", 
                      businessType.c_str(), rc ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 omDiscoverBusinessCommand::_storeSequoiasqlInfo( BSONObj &configInfo )
+   {
+      INT32 rc = SDB_OK ;
+      string businessType ;
+      string businessName ;
+      string clusterName ;
+      BSONObj bRecord ;
+
+      clusterName  = configInfo.getStringField( OM_BSON_FIELD_CLUSTER_NAME ) ;
+      businessType = configInfo.getStringField( OM_BSON_BUSINESS_TYPE ) ;
+      businessName = configInfo.getStringField( OM_BSON_BUSINESS_NAME ) ;
+
+      {
+         BSONElement infoELe ;
+         BSONObjBuilder builder ;
+         time_t now = time( NULL ) ;
+         builder.append( OM_BUSINESS_FIELD_NAME, businessName ) ;
+         builder.append( OM_BUSINESS_FIELD_TYPE, businessType ) ;
+         builder.append( OM_BUSINESS_FIELD_DEPLOYMOD, "" ) ;
+         builder.append( OM_BUSINESS_FIELD_CLUSTERNAME, clusterName ) ;
+         builder.appendTimestamp( OM_BUSINESS_FIELD_TIME, 
+                                  (unsigned long long)now * 1000, 0 ) ;
+         builder.append( OM_BUSINESS_FIELD_ADDTYPE, 
+                         OM_BUSINESS_ADDTYPE_DISCOVERY ) ;
+
+         infoELe = configInfo.getField( OM_BSON_BUSINESS_INFO ) ;
+         builder.append( infoELe ) ;
+         bRecord = builder.obj() ;
+      }
+      
+      rc = rtnInsert( OM_CS_DEPLOY_CL_BUSINESS, bRecord, 1, 0, _cb ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG_MSG( PDERROR, "insert record failed:rc=%d", rc ) ;
          goto error ;
       }
 
@@ -8506,6 +8927,15 @@ namespace engine
          if ( SDB_OK != rc )
          {
             PD_LOG( PDERROR, "store Yarn BusinessInfo failed:rc=%d", rc ) ;
+            goto error ;
+         }
+      }
+      else if ( OM_BUSINESS_SEQUOIASQL == businessType )
+      {
+         rc = _storeSequoiasqlInfo( configInfo ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "store Sequoiasql BusinessInfo failed:rc=%d", rc) ;
             goto error ;
          }
       }
@@ -8725,6 +9155,458 @@ namespace engine
 
       _sendOKRes2Web() ;
 
+   done:
+      return rc ;
+   error:
+      _sendErrorRes2Web( rc, omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ) ;
+      goto done ;
+   }
+
+   omSsqlExecCommand::omSsqlExecCommand( restAdaptor *pRestAdaptor, 
+                                         pmdRestSession *pRestSession,
+                                         const string &localAgentHost,
+                                         const string &localAgentPort )
+                     :omScanHostCommand( pRestAdaptor, pRestSession,
+                                         localAgentHost, localAgentPort )
+   {
+   }
+
+   omSsqlExecCommand::~omSsqlExecCommand()
+   {
+   }
+
+   INT32 omSsqlExecCommand::_parseRestSsqlExecInfo()
+   {
+      INT32 rc = SDB_OK ;
+      const CHAR *pClusterName  = NULL ;
+      const CHAR *pBusinessName = NULL ;
+      const CHAR *pDbName       = NULL ;
+      const CHAR *pUser         = NULL ;
+      const CHAR *pPasswd       = NULL ;
+      const CHAR *pSql          = NULL ;
+      const CHAR *pResultFormat = NULL ;
+      BSONObj selector ;
+      BSONObj matcher ;
+      BSONObj order ;
+      BSONObj hint ;
+      list <BSONObj> records ;
+      BSONObj businessInfo ;
+      BSONElement element ;
+      string businessType ;
+
+      _restAdaptor->getQuery( _restSession, OM_BUSINESS_FIELD_CLUSTERNAME, 
+                              &pClusterName ) ;
+      _restAdaptor->getQuery( _restSession, OM_BUSINESS_FIELD_NAME, 
+                              &pBusinessName ) ;
+      if ( NULL == pClusterName || NULL == pBusinessName )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG_MSG( PDERROR, "get rest info failed:%s is NULL or %s is NULL", 
+                     OM_BUSINESS_FIELD_CLUSTERNAME, OM_BUSINESS_FIELD_NAME ) ;
+         goto error ;
+      }
+
+      _clusterName  = pClusterName ;
+      _businessName = pBusinessName ;
+
+      matcher = BSON( OM_BUSINESS_FIELD_CLUSTERNAME << pClusterName 
+                      << OM_BUSINESS_FIELD_NAME << pBusinessName ) ;
+      _queryTable( OM_CS_DEPLOY_CL_BUSINESS, selector, matcher, order, 
+                      hint, 0, 0, -1, records ) ;
+      if ( records.size() != 1 )
+      {
+         rc = SDB_OM_BUSINESS_NOT_EXIST ;
+         PD_LOG_MSG( PDERROR, "business is not exist:cluster=%s,business=%s", 
+                     pClusterName, pBusinessName ) ;
+         goto error ;
+      }
+
+      businessInfo = *records.begin() ;
+      businessType = businessInfo.getStringField( OM_BUSINESS_FIELD_TYPE ) ;
+      if ( OM_BUSINESS_SEQUOIASQL != businessType )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG_MSG( PDERROR, "business is not %s:cluster=%s,business=%s,"
+                     "businessType=%s", OM_BUSINESS_SEQUOIASQL, pClusterName,
+                     pBusinessName, businessType.c_str() ) ;
+         goto error ;
+      }
+      //ssql's host
+      element = businessInfo.getFieldDotted( OM_BUSINESS_FIELD_INFO"."
+                                             OM_BSON_FIELD_HOST_NAME ) ;
+      _ssqlHost = element.String() ;
+
+      //ssql's port
+      element = businessInfo.getFieldDotted( OM_BUSINESS_FIELD_INFO"."
+                                             OM_BSON_FIELD_SVCNAME ) ;
+      _ssqlService = element.String() ;
+
+      //ssql's installpath
+      element = businessInfo.getFieldDotted( OM_BUSINESS_FIELD_INFO"."
+                                             OM_BSON_FIELD_INSTALL_PATH ) ;
+      _ssqlInstallPath = element.String() ;
+
+      //ssql's dbname
+      element = businessInfo.getFieldDotted( OM_BUSINESS_FIELD_INFO"."
+                                             OM_REST_DBNAME ) ;
+      _dbName = element.String() ;
+
+      //ssql's dbuser
+      element = businessInfo.getFieldDotted( OM_BUSINESS_FIELD_INFO"."
+                                             OM_BSON_FIELD_HOST_USER ) ;
+      _user   = element.String() ;
+
+      //ssql's passwd
+      element = businessInfo.getFieldDotted( OM_BUSINESS_FIELD_INFO"."
+                                             OM_BSON_FIELD_HOST_PASSWD ) ;
+      _passwd = element.String() ;
+
+      _dbUser   = _user ;
+      _dbPasswd = _passwd ;
+
+      _restAdaptor->getQuery( _restSession, OM_REST_SQL, &pSql ) ;
+      _restAdaptor->getQuery( _restSession, OM_REST_RESULT_FORMAT, 
+                              &pResultFormat ) ;
+      if ( NULL == pSql )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG_MSG( PDERROR, "get rest field failed:field=%s", 
+                     OM_REST_SQL) ;
+         goto error ;
+      }
+
+      if ( NULL == pResultFormat )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG_MSG( PDERROR, "get rest field failed:field=%s", 
+                     OM_REST_RESULT_FORMAT) ;
+         goto error ;
+      }
+      _sql = pSql ;
+      _resultFormat = pResultFormat ;
+
+      _restAdaptor->getQuery( _restSession, OM_REST_DBNAME, &pDbName ) ;
+      _restAdaptor->getQuery( _restSession, OM_REST_DBUSER, &pUser ) ;
+      _restAdaptor->getQuery( _restSession, OM_REST_DBPASSWD, &pPasswd ) ;
+      if ( NULL != pDbName )
+      {
+         _dbName = pDbName ;
+      }
+
+      if ( NULL != pUser )
+      {
+         _dbUser = pUser ;
+      }
+
+      if ( NULL != pPasswd )
+      {
+         _dbPasswd = pPasswd ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 omSsqlExecCommand::_sendTaskInfo2Web( INT64 taskID )
+   {
+      BSONObj result = BSON( OM_BSON_TASKID << (long long)taskID ) ;
+      _restAdaptor->appendHttpBody( _restSession, result.objdata(), 
+                                    result.objsize(), 1 ) ;
+      _sendOKRes2Web() ;
+
+      return SDB_OK ;
+   }
+
+   INT32 omSsqlExecCommand::_generateSsqlTaskInfo( BSONObj &taskInfo, 
+                                                   BSONArray &resultInfo )
+   {
+      INT32 rc = SDB_OK ;
+      BSONArrayBuilder arrayBuilder ;
+      
+      taskInfo = BSON( OM_BUSINESS_FIELD_CLUSTERNAME << _clusterName
+                       << OM_BUSINESS_FIELD_NAME << _businessName 
+                       << OM_BSON_FIELD_HOST_NAME << _ssqlHost 
+                       << OM_BSON_FIELD_SVCNAME << _ssqlService
+                       << OM_BSON_FIELD_INSTALL_PATH << _ssqlInstallPath 
+                       << OM_BSON_FIELD_HOST_USER << _user
+                       << OM_BSON_FIELD_HOST_PASSWD << _passwd 
+                       << OM_REST_DBNAME << _dbName 
+                       << OM_BSON_FIELD_DBUSER << _dbUser 
+                       << OM_BSON_FIELD_DBPASSWD << _dbPasswd 
+                       << OM_REST_SQL << _sql
+                       << OM_REST_RESULT_FORMAT << _resultFormat ) ;
+
+      resultInfo = arrayBuilder.arr() ;
+      return rc ;
+   }
+
+   INT32 omSsqlExecCommand::_createSsqlExecTask( INT64 &taskID )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj taskInfo ;
+      BSONArray resultInfo ;
+      rc = _generateSsqlTaskInfo( taskInfo, resultInfo ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "generate task info failed:rc=%d", rc ) ;
+         goto error ;
+      }
+
+      getMaxTaskID( taskID ) ;
+      taskID++ ;
+
+      rc = createTask( OM_TASK_TYPE_SSQL_EXEC, taskID, 
+                       getTaskTypeStr( OM_TASK_TYPE_SSQL_EXEC ), 
+                       _localAgentHost, _localAgentService,
+                       taskInfo, resultInfo ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "fail to createTask:rc=%d", rc ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 omSsqlExecCommand::doCommand()
+   {
+      INT32 rc = SDB_OK ;
+      string clusterName ;
+      string businessName ;
+      INT64 taskID ;
+
+      rc = _parseRestSsqlExecInfo() ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "_parseRestSsqlExecInfo failed:rc=%d", rc ) ;
+         goto error ;
+      }
+
+      rc = _createSsqlExecTask( taskID ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "createSSqlExecTask failed:rc=%d", rc ) ;
+         goto error ;
+      }
+
+      rc = _notifyAgentTask( taskID ) ;
+      if ( SDB_OK != rc )
+      {
+         removeTask( taskID ) ;
+         PD_LOG( PDERROR, "fail to _notifyAgentTask:rc=%d", rc ) ;
+         goto error ;
+      }
+
+      _sendTaskInfo2Web( taskID ) ;
+
+   done:
+      return rc ;
+   error:
+      _sendErrorRes2Web( rc, omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ) ;
+      goto done ;
+   }
+
+   omInterruptTaskCommand::omInterruptTaskCommand( restAdaptor *pRestAdaptor, 
+                                                  pmdRestSession *pRestSession, 
+                                                  const string &localAgentHost,
+                                                  const string &localAgentPort )
+                          :omScanHostCommand( pRestAdaptor, pRestSession, 
+                                              localAgentHost, localAgentPort )
+   {
+   }
+
+   omInterruptTaskCommand::~omInterruptTaskCommand()
+   {
+   }
+
+   INT32 omInterruptTaskCommand::_parseInterruptTaskInfo()
+   {
+      INT32 rc = SDB_OK ;
+      const CHAR *pTaskID = NULL ;
+      BSONObj selector ;
+      BSONObj matcher ;
+      BSONObj order ;
+      BSONObj hint ;
+      list<BSONObj> records ;
+      _restAdaptor->getQuery( _restSession, FIELD_NAME_TASKID, &pTaskID ) ;
+      if ( NULL == pTaskID )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG_MSG( PDERROR, "get rest field failed:field=%s", 
+                     FIELD_NAME_TASKID) ;
+         goto error ;
+      }
+
+      _taskID = ossAtoll( pTaskID ) ;
+
+      matcher = BSON( OM_TASKINFO_FIELD_TASKID << _taskID ) ;
+      rc = _queryTable( OM_CS_DEPLOY_CL_TASKINFO, selector, matcher, order, 
+                        hint, 0, 0, -1, records ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "query table failed:table=%s,rc=%d",
+                 OM_CS_DEPLOY_CL_TASKINFO, rc ) ;
+         goto error ;
+      }
+      else if ( records.size() == 0 )
+      {
+         rc = SDB_OM_TASK_NOT_EXIST ;
+         PD_LOG_MSG( PDERROR, "task is not exist:taskID="OSS_LL_PRINT_FORMAT,
+                     _taskID ) ;
+         goto error ;
+      }
+      else
+      {
+         INT32 status ;
+         BSONObj oneTask = *records.begin() ;
+         status = oneTask.getIntField( OM_TASKINFO_FIELD_STATUS ) ;
+         if ( OM_TASK_STATUS_FINISH == status || 
+              OM_TASK_STATUS_CANCEL == status )
+         {
+            _isFinished = TRUE ;
+         }
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 omInterruptTaskCommand::notifyAgentInteruptTask( INT64 taskID )
+   {
+      INT32 rc          = SDB_OK ;
+      SINT32 flag       = SDB_OK ;
+      CHAR *pContent    = NULL ;
+      INT32 contentSize = 0 ;
+      MsgHeader *pMsg   = NULL ;
+      omManager *om     = NULL ;
+      pmdRemoteSession *remoteSession = NULL ;
+      BSONObj bsonRequest ;
+      BSONObj result ;
+
+      bsonRequest = BSON( OM_TASKINFO_FIELD_TASKID << taskID ) ;
+      rc = msgBuildQueryMsg( &pContent, &contentSize, 
+                             CMD_ADMIN_PREFIX OM_INTERRUPT_TASK_REQ, 
+                             0, 0, 0, -1, &bsonRequest, NULL, NULL, NULL ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG_MSG( PDERROR, "build msg failed:cmd=%s,rc=%d", OM_NOTIFY_TASK,
+                     rc ) ;
+         goto error ;
+      }
+
+      // create remote session
+      om            = sdbGetOMManager() ;
+      remoteSession = om->getRSManager()->addSession( _cb, 
+                                                      OM_NOTIFY_TASK_TIMEOUT,
+                                                      NULL ) ;
+      if ( NULL == remoteSession )
+      {
+         rc = SDB_OOM ;
+         PD_LOG_MSG( PDERROR, "create remote session failed:rc=%d", rc ) ;
+         SDB_OSS_FREE( pContent ) ;
+         goto error ;
+      }
+
+      // send message to agent
+      pMsg = (MsgHeader *)pContent ;
+      rc   = _sendMsgToLocalAgent( om, remoteSession, pMsg ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG_MSG( PDERROR, "send message to agent failed:rc=%d", rc ) ;
+         SDB_OSS_FREE( pContent ) ;
+         remoteSession->clearSubSession() ;
+         goto error ;
+      }
+
+      // receiving for agent's response
+      rc = _receiveFromAgent( remoteSession, flag, result ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG_MSG( PDERROR, "receive from agent failed:rc=%d", rc ) ;
+         goto error ;
+      }
+
+      if ( SDB_OK != flag )
+      {
+         rc = flag ;
+         string tmpError = result.getStringField( OM_REST_RES_DETAIL ) ;
+         PD_LOG_MSG( PDERROR, "agent process failed:detail=(%s),rc=%d", 
+                     tmpError.c_str(), rc ) ;
+         goto error ;
+      }
+   done:
+      _clearSession( om, remoteSession ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 omInterruptTaskCommand::updateTaskStatus( INT64 taskID, INT32 status )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObjBuilder builder ;
+      time_t now = time( NULL ) ;
+      builder.appendTimestamp( OM_TASKINFO_FIELD_END_TIME, now * 1000, 0 ) ;
+      builder.append( OM_TASKINFO_FIELD_STATUS, status ) ;
+      builder.append( OM_TASKINFO_FIELD_STATUS_DESC, 
+                      getTaskStatusStr( status ) ) ;
+      BSONObj selector = BSON( OM_TASKINFO_FIELD_TASKID << taskID ) ;
+      BSONObj updator  = BSON( "$set" << builder.obj() ) ;
+      BSONObj hint ;
+      INT64 updateNum = 0 ;
+      rc = rtnUpdate( OM_CS_DEPLOY_CL_TASKINFO, selector, updator, hint, 0, 
+                      pmdGetThreadEDUCB(), &updateNum ) ;
+      if ( SDB_OK != rc || 0 == updateNum )
+      {
+         PD_LOG_MSG( PDERROR, "update task failed:table=%s,updateNum=%d,taskID="
+                     OSS_LL_PRINT_FORMAT",updator=%s,selector=%s,rc=%d",
+                 OM_CS_DEPLOY_CL_TASKINFO, updateNum, taskID, 
+                 updator.toString().c_str(), selector.toString().c_str(), rc ) ;
+         goto error ;
+      }
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 omInterruptTaskCommand::doCommand()
+   {
+      INT32 rc = SDB_OK ;
+      rc = _parseInterruptTaskInfo() ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "parse task info failed:rc=%d", rc ) ;
+         goto error ;
+      }
+
+      if ( !_isFinished )
+      {
+         rc = notifyAgentInteruptTask( _taskID ) ;
+         if ( SDB_OK != rc && SDB_OM_TASK_NOT_EXIST != rc )
+         {
+            PD_LOG( PDERROR, "notify agent to interrupt task failed:taskID="
+                    OSS_LL_PRINT_FORMAT",rc=%d", _taskID, rc ) ;
+            goto error ;
+         }
+
+         rc = updateTaskStatus( _taskID, OM_TASK_STATUS_CANCEL ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "update task's status failed:taskID=%s"
+                    OSS_LL_PRINT_FORMAT",rc=%d", _taskID, rc ) ;
+            goto error ;
+         }
+      }
+
+      _sendOKRes2Web() ;
    done:
       return rc ;
    error:

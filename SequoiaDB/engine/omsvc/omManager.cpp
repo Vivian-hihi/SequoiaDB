@@ -79,6 +79,8 @@ namespace engine
       _pDmsCB              = NULL ;
       _hostVersion         = SDB_OSS_NEW omHostVersion() ;
       _taskManager         = SDB_OSS_NEW omTaskManager() ;
+
+      _ssqlCheckTimer      = NET_INVALID_TIMER_ID ;
    }
 
    _omManager::~_omManager()
@@ -443,6 +445,9 @@ namespace engine
       // register
       pEDUMgr->regSystemEDU( EDU_TYPE_OMNET, eduID ) ;
 
+      // start ssql exec timeout checker (10 minutes)
+      _ssqlCheckTimer = setTimer( 60 * OSS_ONE_SEC ) ;
+
    done:
       return rc ;
    error:
@@ -497,6 +502,10 @@ namespace engine
 
    void _omManager::onTimer( UINT64 timerID, UINT32 interval )
    {
+      if ( _ssqlCheckTimer == timerID )
+      {
+         _checkSsqlTimeout() ;
+      }
    }
 
    INT32 _omManager::authenticate( BSONObj &obj, pmdEDUCB *cb )
@@ -648,6 +657,88 @@ namespace engine
       }
    }
 
+   void _omManager::_checkTaskTimeout( const BSONObj &task )
+   {
+      BSONElement element ;
+      time_t now ;
+      unsigned long long nowMills ;
+      unsigned long long lastMills ;
+
+      element   = task.getField( OM_TASKINFO_FIELD_END_TIME ) ;
+      lastMills = element.timestampTime() ;
+
+      now = time( NULL ) ;
+      nowMills = now * 1000 ;
+
+      if ( ( nowMills - lastMills ) > 10 * 60 * OSS_ONE_SEC )
+      {
+         INT32 rc = SDB_OK ;
+         BSONElement taskIDEle ;
+         INT64 taskID ;
+         const CHAR* hostName = pmdGetKRCB()->getHostName();
+         string localAgentHost = hostName ;
+         string localAgentPort = this->getLocalAgentPort() ;
+         omInterruptTaskCommand interruptTask( NULL, NULL, localAgentHost,
+                                               localAgentPort ) ;
+         interruptTask.init( pmdGetThreadEDUCB() ) ;
+         taskIDEle = task.getField( OM_TASKINFO_FIELD_TASKID ) ;
+         taskID    = taskIDEle.Long() ;
+         rc = interruptTask.notifyAgentInteruptTask( taskID ) ;
+         if ( SDB_OK != rc && SDB_OM_TASK_NOT_EXIST != rc )
+         {
+            PD_LOG( PDERROR, "notify agent interrupt task failed:taskID="
+                    OSS_LL_PRINT_FORMAT",rc=%d", taskID, rc ) ;
+            goto done ;
+         }
+
+         interruptTask.updateTaskStatus( taskID, OM_TASK_STATUS_CANCEL ) ;
+      }
+
+   done:
+      pmdGetThreadEDUCB()->resetInfo( EDU_INFO_ERROR ) ;
+      return ;
+   }
+
+   void _omManager::_checkSsqlTimeout()
+   {
+      INT32 rc = SDB_OK ;
+      BSONElement element ;
+      BSONObj selector ;
+      BSONObj matcher ;
+      BSONObj orderBy ;
+      BSONObj hint ;
+      vector <BSONObj> results ;
+      UINT32 index = 0 ;
+
+      BSONObj noFinish ;
+      BSONObj noCancel ;
+      BSONArrayBuilder arrayBuilder ;
+      noFinish = BSON( "$ne" << OM_TASK_STATUS_FINISH ) ;
+      noCancel = BSON( "$ne" << OM_TASK_STATUS_CANCEL ) ;
+
+      arrayBuilder.append( BSON( OM_TASKINFO_FIELD_STATUS<< noFinish ) ) ;
+      arrayBuilder.append( BSON( OM_TASKINFO_FIELD_STATUS << noCancel ) ) ;
+      arrayBuilder.append( BSON( OM_TASKINFO_FIELD_TYPE 
+                                 << OM_TASK_TYPE_SSQL_EXEC ) ) ;
+
+      matcher = BSON( "$and" << arrayBuilder.arr() ) ;
+      rc = _taskManager->queryTasks( selector, matcher, orderBy, hint, 
+                                     results ) ;
+      if ( SDB_OK != rc || results.size() == 0 )
+      {
+         goto done ;
+      }
+
+      for ( index = 0 ; index < results.size() ; index++ )
+      {
+         BSONObj oneTask = results[index] ;
+         _checkTaskTimeout( oneTask ) ;
+      }
+
+   done:
+      return ;
+   }
+
    string _omManager::getLocalAgentPort()
    {
       return _localAgentPort ;
@@ -791,6 +882,40 @@ namespace engine
       return FALSE ;
    }
 
+   void _omManager::_sendResVector2Agent( NET_HANDLE handle, MsgHeader *pSrcMsg, 
+                                          INT32 flag, vector < BSONObj > &objs )
+   {
+      INT32 rc          = SDB_OK ;
+      CHAR *pbuffer     = NULL ;
+      INT32 bufferSize  = 0 ;
+      MsgOpReply *reply = NULL ;
+      rc = msgBuildReplyMsg( &pbuffer, &bufferSize, 
+                             pSrcMsg->opCode, flag, -1, 
+                             0, objs.size(), pSrcMsg->requestID, &objs ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "build reply msg failed:rc=%d", rc ) ;
+         goto error ;
+      }
+
+      reply = ( MsgOpReply *) pbuffer ;
+      reply->header.TID = 0 ;
+      rc = _netAgent.syncSend( handle, pbuffer ) ;
+      if ( rc != SDB_OK )
+      {
+         PD_LOG ( PDERROR, "send response to agent failed:rc=%d", rc ) ;
+         goto error ;
+      }
+   done:
+      if ( NULL != pbuffer )
+      {
+         SDB_OSS_FREE( pbuffer ) ;
+      }
+      return ;
+   error:
+      goto done ;
+   }
+
    void _omManager::_sendRes2Agent( NET_HANDLE handle, MsgHeader *pSrcMsg, 
                                     INT32 flag, rtnContextBuf &buffObj )
    {
@@ -828,7 +953,6 @@ namespace engine
    void _omManager::_sendRes2Agent( NET_HANDLE handle, MsgHeader *pSrcMsg, 
                                     INT32 flag, BSONObj &obj )
    {
-
       MsgOpReply reply ;
       INT32 rc                   = SDB_OK ;
       const CHAR *pBody          = obj.objdata() ;
@@ -942,6 +1066,7 @@ namespace engine
       CHAR *pHintBuffer         = NULL ;
       SINT64 numToSkip          = -1 ;
       SINT64 numToReturn        = -1 ;
+      vector < BSONObj > result ;
       BSONObj response ;
       // extract command
       rc = msgExtractQuery ( (CHAR *)pMsg, &flags, &pCollectionName,
@@ -967,8 +1092,13 @@ namespace engine
                   matcher.toString().c_str(), selector.toString().c_str(),
                   orderBy.toString().c_str(), hint.toString().c_str() ) ;
 
-         rc = _taskManager->queryOneTask( selector, matcher, orderBy, hint, 
-                                          response ) ;
+         rc = _taskManager->queryTasks( selector, matcher, orderBy, hint, 
+                                        result ) ;
+         if ( SDB_OK == rc && result.size() == 0 )
+         {
+            rc = SDB_DMS_EOC ;
+         }
+
          if( SDB_OK != rc )
          {
             PD_LOG_MSG( PDERROR, "query task failed:rc=%d", rc ) ;
@@ -987,7 +1117,8 @@ namespace engine
 
       if ( SDB_OK == rc )
       {
-         _sendRes2Agent( handle, pMsg, rc, response ) ;
+         //_sendRes2Agent( handle, pMsg, rc, result[0] ) ;
+         _sendResVector2Agent( handle, pMsg, rc, result ) ;
       }
       else
       {

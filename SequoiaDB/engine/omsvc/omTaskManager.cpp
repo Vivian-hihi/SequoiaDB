@@ -44,8 +44,11 @@ namespace engine
    static BOOLEAN isInElement( const BSONObj &source, const string eleKey,
                                const BSONObj &find ) ;
    static INT32 queryOneTask( const BSONObj &selector, const BSONObj &matcher,
-                              const BSONObj &orderBy, const BSONObj &hint , 
+                              const BSONObj &orderBy, const BSONObj &hint, 
                               BSONObj &oneTask ) ;
+   static INT32 queryTasks( const BSONObj &selecor, const BSONObj &matcher,
+                            const BSONObj &orderBy, const BSONObj &hint,
+                            vector< BSONObj > &tasks ) ;
 
    BOOLEAN isSubSet( const BSONObj &source, const BSONObj &find )
    {
@@ -126,6 +129,75 @@ namespace engine
          BSONObj result( buffObj.data() ) ;
          oneTask = result.copy() ;
          goto done ;
+      }
+
+   done:
+      if ( -1 != contextID )
+      {
+         pRtnCB->contextDelete ( contextID, cb ) ;
+      }
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 queryTasks( const BSONObj &selector, const BSONObj &matcher,
+                     const BSONObj &orderBy, const BSONObj &hint,
+                     vector< BSONObj > &tasks )
+   {
+      INT32 rc = SDB_OK ;
+      pmdEDUCB *cb       = pmdGetThreadEDUCB() ;
+      pmdKRCB *pKRCB     = pmdGetKRCB() ;
+      _SDB_DMSCB *pdmsCB = pKRCB->getDMSCB() ;
+      _SDB_RTNCB *pRtnCB = pKRCB->getRTNCB() ;
+      SINT64 contextID = -1 ;
+
+      rc = rtnQuery( OM_CS_DEPLOY_CL_TASKINFO, selector, matcher, orderBy, 
+                     hint, 0, cb, 0, -1, pdmsCB, pRtnCB, contextID ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG_MSG( PDERROR, "query table failed:table=%s,rc=%d", 
+                     OM_CS_DEPLOY_CL_TASKINFO, rc ) ;
+         goto error ;
+      }
+
+      while (TRUE )
+      {
+         rtnContextBuf contextBuff ;
+         rc = rtnGetMore ( contextID, -1, contextBuff, cb, pRtnCB ) ;
+         if ( SDB_DMS_EOC == rc )
+         {
+            rc = SDB_OK ;
+            break ;
+         }
+         else if ( SDB_OK != rc )
+         {
+            PD_LOG_MSG( PDERROR, "failed to get record from table:%s,rc=%d", 
+                        OM_CS_DEPLOY_CL_TASKINFO, rc ) ;
+            goto error ;
+         }
+         else
+         {
+            BSONObj record ;
+            _rtnObjBuff rtnObj( contextBuff.data(), contextBuff.size(), 
+                                contextBuff.recordNum() ) ;
+            while( TRUE )
+            {
+               rc = rtnObj.nextObj( record ) ;
+               if ( SDB_DMS_EOC == rc )
+               {
+                  rc = SDB_OK ;
+                  break ;
+               }
+               else if ( SDB_OK != rc )
+               {
+                  PD_LOG ( PDERROR, "Failed to get nextObj:rc=%d", rc ) ;
+                  goto error ;
+               }
+               
+               tasks.push_back( record.copy() ) ;
+            }
+         }
       }
 
    done:
@@ -702,9 +774,9 @@ namespace engine
       clusterName   = taskInfoValue.getStringField( OM_BSON_FIELD_CLUSTER_NAME ) ;
 
       obj = BSON( OM_BUSINESS_FIELD_NAME << businessName 
-                  << OM_BSON_BUSINESS_TYPE << businessType 
-                  << OM_BSON_DEPLOY_MOD << deployMod
-                  << OM_BSON_FIELD_CLUSTER_NAME << clusterName ) ;
+                  << OM_BUSINESS_FIELD_TYPE << businessType 
+                  << OM_BUSINESS_FIELD_DEPLOYMOD << deployMod
+                  << OM_BUSINESS_FIELD_CLUSTERNAME << clusterName ) ;
       rc = rtnInsert( OM_CS_DEPLOY_CL_BUSINESS, obj, 1, 0, cb );
       if ( rc )
       {
@@ -1100,6 +1172,52 @@ namespace engine
       goto done ;
    }
 
+   omSsqlExecTask::omSsqlExecTask( INT64 taskID )
+   {
+      _taskID   = taskID ;
+      _taskType = OM_TASK_TYPE_SSQL_EXEC ;
+   }
+
+   omSsqlExecTask::~omSsqlExecTask()
+   {
+
+   }
+
+   INT32 omSsqlExecTask::finish( BSONObj &resultInfo )
+   {
+      return SDB_OK ;
+   }
+
+   INT32 omSsqlExecTask::getType()
+   {
+      return _taskType ;
+   }
+
+   INT64 omSsqlExecTask::getTaskID()
+   {
+      return _taskID ;
+   }
+
+   INT32 omSsqlExecTask::checkUpdateInfo( const BSONObj &updateInfo )
+   {
+      INT32 rc = SDB_OK ;
+
+      if ( !updateInfo.hasField( OM_TASKINFO_FIELD_STATUS ) )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG( PDERROR, "updateinfo miss field:fields=[%s],updateInfo"
+                 "=%s", OM_TASKINFO_FIELD_STATUS, 
+                 updateInfo.toString().c_str() ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+
    omTaskManager::omTaskManager()
    {
    }
@@ -1159,6 +1277,14 @@ namespace engine
       return rc ;
    error:
       goto done ;
+   }
+
+   INT32 omTaskManager::queryTasks( const BSONObj &selector, 
+                                    const BSONObj &matcher, 
+                                    const BSONObj &orderBy, const BSONObj &hint, 
+                                    vector< BSONObj >&tasks )
+   {
+      return engine::queryTasks( selector, matcher, orderBy, hint, tasks ) ; 
    }
 
    INT32 omTaskManager::queryOneTask( const BSONObj &selector, 
@@ -1256,10 +1382,16 @@ namespace engine
          pTask = SDB_OSS_NEW omRemoveBusinessTask( taskID ) ;
          break ;
 
+      case OM_TASK_TYPE_SSQL_EXEC :
+         pTask = SDB_OSS_NEW omSsqlExecTask( taskID ) ;
+         break ;
+
       default :
          PD_LOG( PDERROR, "unknown task type:taskID="OSS_LL_PRINT_FORMAT
                  ",taskType=%d", taskID, taskType ) ;
          SDB_ASSERT( FALSE, "unknown task type" ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
       }
 
       rc = pTask->checkUpdateInfo( taskUpdateInfo ) ;

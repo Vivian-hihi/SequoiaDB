@@ -39,20 +39,24 @@ namespace engine
    /*
       omagent job
    */
-   _omagentJob::_omagentJob ( _omaTask *pTask, const BSONObj &info, void *ptr )
+   _omagentJob::_omagentJob ( omaTaskPtr taskPtr, const BSONObj &info, void *ptr )
    {
-      _pTask   = pTask ;
+      _taskPtr = taskPtr ;
       _info    = info.copy() ;
+
       _pointer = ptr ;
-      if ( _pTask )
+
+      _omaTask *pTask = _taskPtr.get() ;
+      if ( pTask )
          _jobName = _jobName + "Omagent job for task[" +
-                    _pTask->getTaskName() + "]" ;
+                    pTask->getTaskName() + "]" ;
    }
 
    _omagentJob::~_omagentJob()
    {
       // free pTask malloc int getTaskByType()
-      SAFE_OSS_FREE( _pTask ) ;
+      //free _taskPtr
+      //SAFE_OSS_FREE( _taskPtr ) ;
    }
 
    RTN_JOB_TYPE _omagentJob::type () const
@@ -73,25 +77,26 @@ namespace engine
    INT32 _omagentJob::doit()
    {
       INT32 rc = SDB_OK ;
-
-      if ( NULL == _pTask )
+      _omaTask *pTask = _taskPtr.get() ;
+      
+      if ( NULL == pTask )
       {
          rc = SDB_INVALIDARG ;
          PD_LOG( PDERROR, "Invalid task poiter" ) ;
          goto error ;
       }
-      rc = _pTask->init( _info, _pointer ) ;
+      rc = pTask->init( _info, _pointer ) ;
       if ( rc )
       {
          PD_LOG( PDERROR, "Failed to init in job[%s] for running task[%s], "
-                 "rc = %d", _jobName.c_str(), _pTask->getTaskName(), rc ) ;
+                 "rc = %d", _jobName.c_str(), pTask->getTaskName(), rc ) ;
          goto error ;
       }
-      rc = _pTask->doit() ;
+      rc = pTask->doit() ;
       if ( rc )
       {
          PD_LOG( PDERROR, "Failed to do it in job[%s] for running task[%s], "
-                 "rc = %d", _jobName.c_str(), _pTask->getTaskName(), rc ) ;
+                 "rc = %d", _jobName.c_str(), pTask->getTaskName(), rc ) ;
          goto error ;
       }
 
@@ -107,7 +112,7 @@ namespace engine
    // start job
 
    INT32 startOmagentJob ( OMA_TASK_TYPE taskType, INT64 taskID,
-                           const BSONObj &info, void *ptr )
+                           const BSONObj &info, omaTaskPtr &taskPtr, void *ptr )
    {
       INT32 rc               = SDB_OK ;
       EDUID eduID            = PMD_INVALID_EDUID ;
@@ -123,23 +128,32 @@ namespace engine
          rc = SDB_INVALIDARG ;
          goto error ;
       }
-      // new job
-      pJob = SDB_OSS_NEW _omagentJob( pTask, info, ptr ) ;
-      if ( !pJob )
+
       {
-         PD_LOG ( PDERROR, "Failed to alloc memory for running task "
-                  "with the type[%d]", taskType ) ;
-         rc = SDB_OOM ;
-         goto error ;
-      }
-      // start job
-      rc = rtnGetJobMgr()->startJob( pJob, RTN_JOB_MUTEX_NONE, &eduID,
-                                     returnResult ) ;
-      if ( rc )
-      {
-         PD_LOG ( PDERROR, "Failed to start task with the type[%d], rc = %d",
-                  taskType, rc ) ;
-         goto done ;
+         // new job
+         omaTaskPtr myTaskPtr( pTask ) ;
+         pJob = SDB_OSS_NEW _omagentJob( myTaskPtr, info, ptr ) ;
+         if ( !pJob )
+         {
+            PD_LOG ( PDERROR, "Failed to alloc memory for running task "
+                     "with the type[%d]", taskType ) ;
+            rc = SDB_OOM ;
+            goto error ;
+         }
+
+         // start job
+         rc = rtnGetJobMgr()->startJob( pJob, RTN_JOB_MUTEX_NONE, &eduID,
+                                        returnResult ) ;
+         if ( rc )
+         {
+            PD_LOG ( PDERROR, "Failed to start task with the type[%d], rc = %d",
+                     taskType, rc ) ;
+            goto done ;
+         }
+
+         pTask->setJobInfo( eduID ) ;
+
+         taskPtr = myTaskPtr ;
       }
 
    done:
@@ -189,6 +203,10 @@ namespace engine
          case OMA_TASK_REMOVE_ZN :
             pTask = SDB_OSS_NEW _omaRemoveZNBusTask( taskID ) ;
             break ;
+         // ssql exec
+         case OMA_TASK_SSQL_EXEC :
+            pTask = SDB_OSS_NEW _omaSsqlExecTask( taskID ) ;
+            break;
          default :
             PD_LOG_MSG( PDERROR, "Unknow task type[%d]", taskType ) ;
             break ;

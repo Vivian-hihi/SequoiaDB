@@ -95,7 +95,7 @@ namespace engine
 
       SDB_ASSERT ( name && buf && bufSize, "Invalid arguments" ) ;
 
-      rc = op.Open ( name , OSS_PRIMITIVE_FILE_OP_READ_WRITE ) ;
+      rc = op.Open ( name , OSS_PRIMITIVE_FILE_OP_READ_ONLY ) ;
       if ( rc != SDB_OK )
       {
          PD_LOG ( PDERROR, "Can't open file: %s", name ) ;

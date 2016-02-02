@@ -143,6 +143,16 @@ namespace engine
       return _subTaskSerialNum++ ;
    }
 
+   void _omaTask::setJobInfo( EDUID eduID )
+   {
+      _eduID = eduID ;
+   }
+   
+   EDUID _omaTask::getJobInfo()
+   {
+      return _eduID ;
+   }
+
    INT32 _omaTask::initJsEnv()
    {
       INT32 rc     = SDB_OK ;
