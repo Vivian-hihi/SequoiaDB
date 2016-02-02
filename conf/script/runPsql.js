@@ -159,7 +159,7 @@ function main()
       result_file = createPsqlResultFilePath( task_id ) ;
       pid_file    = createPsqlPidFilePath( task_id ) ;
 
-      argResultFile = " -o " + result_file ;
+      argResultFile = " > " + result_file + " 2>&1 ";
       cmd = new Cmd() ;
 
       totalCmd = prelib + " ; " + exeName + argHostName + argSvcName + argDbName + 
@@ -167,7 +167,7 @@ function main()
       PD_LOG2( task_id, arguments, PDEVENT, FILE_NAME_RUNPSQL,
                sprintf( "start to run psql[?:?:?]",
                host_name, host_svc, totalCmd ) ) ;
-      var pid = cmd.start(totalCmd) ; 
+      var pid = cmd.start(totalCmd) ;
 
       isPsql = isPsqlProc( pid ) ;
       if ( !isPsql )
@@ -175,7 +175,7 @@ function main()
          rc = -1 ;
          errMsg = "failed to check pid:" + pid ;
          exception_handle( rc, errMsg ) ;
-      }  
+      }
 
       try
       {
@@ -200,7 +200,7 @@ function main()
          {
             //do nothing here
          }
-         
+
          exception_handle( rc, errMsg ) ;
       }
 

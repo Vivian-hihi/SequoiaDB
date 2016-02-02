@@ -150,6 +150,25 @@ function genTimeStamp()
 }
 
 /* *****************************************************************************
+@discretion: sleep n milliseconds
+@author: YouBin Lin
+@parameter
+  n:      milliseconds
+@return
+***************************************************************************** */
+function sleep(n)
+{
+   var start = new Date().getTime();
+   while( true )
+   {
+      if ( new Date().getTime() - start > n )
+      {
+         break ;
+      }
+   }
+}
+
+/* *****************************************************************************
 @discretion: check whether it's in local host environment
 @author: Tanzhaobo
 @parameter
