@@ -60,7 +60,7 @@ namespace engine
 
    #define OMA_WAIT_OM_READ_DATA_TIMEOUT    ( 1 * OSS_ONE_SEC )
 
-   #define OMA_MAX_READLINE_NUM             ( 200 )
+   #define OMA_MAX_READLINE_NUM             ( 100 )
 
    /*
       add host task

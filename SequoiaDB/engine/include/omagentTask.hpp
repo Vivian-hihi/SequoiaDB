@@ -59,7 +59,7 @@ using namespace bson ;
 #define OMA_TASK_NAME_SSQL_EXEC               "ssql exec task"
 
 
-#define OMA_MAX_READ_LENGTH                   ( 4096 )   
+#define OMA_MAX_READ_LENGTH                   ( 1024 )   
 
 namespace engine
 {
@@ -464,8 +464,8 @@ namespace engine
          string               _errorDetail ;
          INT32                _saveRC ;
 
-         ossEvent             _dataReadyEvent ; // agent have read data
-         ossEvent             _readDataEvent ;  // om have read data
+         ossAutoEvent         _dataReadyEvent ; // agent have read data
+         ossAutoEvent         _readDataEvent ;  // om have read data
 
          ossSpinSLatch        _taskLatch ;
          list<ssqlRowData_t>  _readDataList ;
