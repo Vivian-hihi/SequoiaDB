@@ -150,7 +150,7 @@ function main()
       argSvcName  = " -p " + host_svc ;
       argDbName   = " -d " + db_name ;
       argDbUser   = " -U " + db_user ;
-      argDbSql    = " -c " + "'" + sql + "'" ;
+      argDbSql    = " -c " + '"' + sql + '"' ;
       if ( null != format && undefined != format && format == FormatPretty )
       {
          argFormat = " -P 'border=2' " ;
