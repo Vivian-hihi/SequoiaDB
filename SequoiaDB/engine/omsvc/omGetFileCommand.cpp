@@ -9267,13 +9267,14 @@ namespace engine
 
       if ( NULL == pResultFormat )
       {
-         rc = SDB_INVALIDARG ;
-         PD_LOG_MSG( PDERROR, "get rest field failed:field=%s", 
-                     OM_REST_RESULT_FORMAT) ;
-         goto error ;
+         _resultFormat = "" ;
       }
+      else
+      {
+         _resultFormat = pResultFormat ;
+      }
+
       _sql = pSql ;
-      _resultFormat = pResultFormat ;
 
       _restAdaptor->getQuery( _restSession, OM_REST_DBNAME, &pDbName ) ;
       _restAdaptor->getQuery( _restSession, OM_REST_DBUSER, &pUser ) ;
