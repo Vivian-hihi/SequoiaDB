@@ -1965,7 +1965,7 @@ namespace engine
                          _majoritySize() ) ;
          if ( SDB_OK != rc )
          {
-            PD_LOG( PDERROR, "failed to delete record:%s", rc ) ;
+            PD_LOG( PDERROR, "failed to delete record, rc: %d", rc ) ;
             goto error ;
          }
       }
