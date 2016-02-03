@@ -82,6 +82,11 @@ namespace fs = boost::filesystem ;
  * SDB_FNE (file not exist)
  * SDB_FE (file already exist)
  * SDB_IO (generic IO error)
+ *
+ * Notice: when mode=OSS_READONLY, read & write mode is set in this function.
+ *         it can cause block when the file is a pipe. 
+ *         set mode=OSS_READONLY | OSS_SHAREREAD, to make sure it's really 
+ *         read only!!
  */
  // PD_TRACE_DECLARE_FUNCTION ( SDB_OSSOPEN, "ossOpen" )
 INT32 ossOpen(const CHAR   *pFileName ,
