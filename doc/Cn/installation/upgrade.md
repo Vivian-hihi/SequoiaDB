@@ -7,17 +7,27 @@
 	<pre class="prettyprint lang-javascript">
 	$ service sdbcm stop</pre>
 
--   执行如下命令停止 SequoiaDB 数据库服务程序
+-   执行如下命令检测本机与 SequoiaDB 数据库相关的服务进程是否都已经停止
 
 	<pre class="prettyprint lang-javascript">
 	$ su - sdbadmin
-	$ sdbstop</pre>
+	$ /opt/sequoiadb/bin/sdblist -t all</pre>
+	
+-   若仍存在 SequoiaDB 数据库进程，可使用以下命令停止这些进程
 
--   执行如下命令命令备份 SequoiaDB 执行程序以及配置文件
+	<pre class="prettyprint lang-javascript">
+	$ /opt/sequoiadb/bin/sdbstop -t all</pre>
+
+-   若仍存在 SequoiaDB 数据库管理进程，可使用以下命令停止这些进程
+
+	<pre class="prettyprint lang-javascript">
+	$ /opt/sequoiadb/bin/sdbcmtop</pre>
+
+-   执行如下命令备份 SequoiaDB 执行程序以及配置文件
 
 	<pre class="prettyprint lang-javascript">
 	$ scp /opt/sequoiadb/bin/sequoiadb /home/sequoiadb_bak
-	$ scp -rf /opt/sequoiadb/conf /home/sequoiadb_conf_bak</pre>
+	$ scp -r /opt/sequoiadb/conf /home/sequoiadb_conf_bak</pre>
 
 -   以 root 身份执行如下命令卸载 SequoiaDB 软件
 

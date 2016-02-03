@@ -6,6 +6,6 @@
 
 3.修改每台集群主机上 /etc/hosts 文件，将新增的主机IP地址与主机对应关系加入到 /etc/hosts 文件中；
 
-4.按照[系统配置需求](SdbDoc_Cn/installation/system.html)一节验证配置的正确性；
+4.按照[系统要求](SdbDoc_Cn/installation/system.html)一节验证配置的正确性；
 
-5.按照 [SequoiaDB安装](SdbDoc_Cn/installation/deployment/command_installation/installation.html)一节，安装 SequoiaDB 软件。安装时，注意配置管理服务端口与现有系统的端口保持一致。
+5.按照 [数据库安装](SdbDoc_Cn/installation/deployment/command_installation/installation.html)一节，安装 SequoiaDB 软件。安装时，注意配置管理服务端口与现有系统的端口保持一致。

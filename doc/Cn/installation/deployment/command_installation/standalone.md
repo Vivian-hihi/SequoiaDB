@@ -24,7 +24,7 @@
 -   启动 SequoiaDB Shell 控制台（下文以默认安装路径 /opt/sequoiadb 为例）
 
 	<pre class="prettyprint lang-javascript">
-	$ sdb</pre>
+	$ /opt/sequoiadb/bin/sdb</pre>
 
 -   连接到本地的集群管理服务进程 sdbcm
 

@@ -21,6 +21,7 @@ sdblobtool 是一款用于管理集合大对象的工具。
   operation    操作类型             -           是
   file         本地文件全路径       -           是
   collection   需要导出的集合全名   -           是
+  prefer       优先选择的实例       A           否
   ssl          使用 SSL 连接。      false       否
 
 **导入选项**

@@ -1,7 +1,7 @@
 ##语法##
 ***db.collectionspace.collection.createIdIndex()***
 
-在 SequoiaDB 中创建集合时可以根据需要将 AutoIndexId 置为 true。这样集合将不会创建默认的“$id”索引，同时数据的更新、删除操作将被禁止。本方法可以恢复“&#36;id”索引，同时开放更新和删除功能。
+在 SequoiaDB 中创建集合时可以根据需要将 AutoIndexId 置为 false。这样集合将不会创建默认的“$id”索引，同时数据的更新、删除操作将被禁止。本方法可以恢复“&#36;id”索引，同时开放更新和删除功能。
 
 ##参数描述##
 
