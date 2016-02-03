@@ -93,7 +93,7 @@
     > db.foo.bar.find(
     {
       "name":{
-        "first":"Tom"
+        "$elemMatch":{ "first":"Tom" }
       }
     }
     )</pre>
