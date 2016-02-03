@@ -35,7 +35,9 @@ var host_name = "" ;
 var ssh_port  = "22" ;
 var user      = "" ;
 var passwd    = "" ;
+var dir_sep   = "" ;
 var install_path = "" ;
+
 
 var FILE_NAME_GETPSQL = "getPsql.js" ;
 
@@ -92,6 +94,33 @@ function _init()
 }
 
 /* *****************************************************************************
+@discretion: pullFileFromRemote
+@author: YouBin Lin
+@parameter 
+ssh:            ssh
+remoteLibDir:   remote host's lib directory
+remoteLibArray: remote host's library array
+localLibDir:    local host's lib directory
+@return void
+***************************************************************************** */
+function pullFileFromRemote( ssh, remoteLibDir, remoteLibArray, localLibDir )
+{
+   var cmd      = new Cmd() ;
+   var chmodCmd = 'chmod a+x ' ;
+   for ( var i = 0; i < remoteLibArray.length; i++ )
+   {
+      var remote_lib = remoteLibDir + dir_sep + remoteLibArray[i] ;
+      var local_lib  = localLibDir + dir_sep + remoteLibArray[i] ;
+      
+      PD_LOG2( task_id, arguments, PDEVENT, FILE_NAME_GETPSQL,
+            sprintf( "get file:remote[?],local[?]", remote_lib,
+            local_lib ) ) ;
+      ssh.pull(remote_lib, local_lib) ;
+      cmd.run( chmodCmd + local_lib ) ;
+   }
+}
+
+/* *****************************************************************************
 @discretion: final
 @author: YouBin Lin
 @parameter void
@@ -111,7 +140,6 @@ function main()
    var local_bin      = "" ;
    var local_lib_path = "" ;
 
-   var dir_sep = "" ;
    if ( SYS_LINUX == SYS_TYPE )
    {
       dir_sep = "/" ;
@@ -126,9 +154,13 @@ function main()
    try
    {
       var isLocalBinExist = false ;
-      var libNameArray = new Array('libpq.so', 'libpq.so.5', 'libpq.so.5.6');
-      remote_bin     = adaptPath(install_path) + "bin" + dir_sep + "psql" ;
+      var remoteLibpqPath = adaptPath(install_path) + "lib" + dir_sep ;
+      var libPqArray      = new Array('libpq.so', 'libpq.so.5', 'libpq.so.5.3');
+
+      var remoteLibeditPath = adaptPath(install_path) + "thirdparty" + dir_sep + "lib" + dir_sep ;
+      var libEditArray      = new Array('libedit.so', 'libedit.so.0', 'libedit.so.0.0.53');
       
+      remote_bin     = adaptPath(install_path) + "bin" + dir_sep + "psql" ;
       local_bin      = getPsqlFile( System.getEWD() ) ;
       local_lib_path = getPsqlLibPath( System.getEWD() ) ;
 
@@ -136,29 +168,22 @@ function main()
       if ( isLocalBinExist == false )
       {
          var chmodCmd = 'chmod a+x ' ;
-         var cmd      = new Cmd() ;
+         var cmd      = null ;
          File.mkdir( local_lib_path ) ;
          
          PD_LOG2( task_id, arguments, PDEVENT, FILE_NAME_GETPSQL,
                   sprintf( "start to ssh:remote[?:?]", host_name, user ) ) ;
          ssh = new Ssh( host_name, user, passwd ) ;
          
-         for ( var i = 0; i < libNameArray.length; i++ )
-         {
-            var remote_lib = adaptPath(install_path) + "lib" + dir_sep + libNameArray[i] ;
-            var local_lib  = local_lib_path + dir_sep + libNameArray[i] ;
-            
-            PD_LOG2( task_id, arguments, PDEVENT, FILE_NAME_GETPSQL,
-                  sprintf( "get file:remote[?],local[?]", remote_lib,
-                  local_lib ) ) ;
-            ssh.pull(remote_lib, local_lib) ;
-            cmd.run( chmodCmd + local_lib ) ;
-         }
+         pullFileFromRemote( ssh, remoteLibpqPath, libPqArray, local_lib_path ) ;
+         pullFileFromRemote( ssh, remoteLibeditPath, libEditArray, local_lib_path ) ;
 
          PD_LOG2( task_id, arguments, PDEVENT, FILE_NAME_GETPSQL,
                   sprintf( "get file:remote[?],local[?]", remote_bin,
                   local_bin ) ) ;
          ssh.pull(remote_bin, local_bin) ;
+         
+         cmd = new Cmd() ;
          cmd.run( chmodCmd + local_bin ) ;
       }
 
