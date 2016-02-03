@@ -59,8 +59,6 @@ using namespace bson ;
 #define OMA_TASK_NAME_SSQL_EXEC               "ssql exec task"
 
 
-#define OMA_MAX_READ_LENGTH                   ( 1024 )   
-
 namespace engine
 {
    /*
@@ -427,6 +425,18 @@ namespace engine
    typedef struct ssqlRowData_s{
       UINT64 rowNum ;
       string rowData ;
+      ssqlRowData_s()
+      {
+         rowNum  = 0 ;
+         rowData = "" ;
+      }
+
+      ssqlRowData_s( const ssqlRowData_s &right )
+      {
+         rowNum  = right.rowNum ;
+         rowData = right.rowData ;
+      }
+
    } ssqlRowData_t ;
 
    class _omaSsqlExecTask : public _omaTask
@@ -459,7 +469,6 @@ namespace engine
       private:
          SsqlExecInfo         _ssqlInfo ;
          BOOLEAN              _isCleanTask ;
-         BOOLEAN              _isFinish ;
 
          string               _errorDetail ;
          INT32                _saveRC ;
@@ -470,8 +479,7 @@ namespace engine
          ossSpinSLatch        _taskLatch ;
          list<ssqlRowData_t>  _readDataList ;
          UINT64               _rowNum ;
-         CHAR                 _lastLeftData[ OMA_MAX_READ_LENGTH + 1 ] ;
-         INT32                _lastLeftLength ;
+         string               _lastLeftData ;
          BOOLEAN              _readFinish ;
          
    } ;

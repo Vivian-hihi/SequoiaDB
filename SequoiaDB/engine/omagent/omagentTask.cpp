@@ -60,6 +60,7 @@ namespace engine
 
    #define OMA_WAIT_OM_READ_DATA_TIMEOUT    ( 1 * OSS_ONE_SEC )
 
+   #define OMA_MAX_READ_LENGTH              ( 1024 )
    #define OMA_MAX_READLINE_NUM             ( 100 )
 
    /*
@@ -6675,13 +6676,12 @@ namespace engine
    {
       _taskType = OMA_TASK_SSQL_EXEC ;
       _taskName = OMA_TASK_NAME_SSQL_EXEC ;
-      _isCleanTask = FALSE ;
-      _isFinish    = FALSE ;
-      _errorDetail = "" ;
-      _lastLeftData[0] = '\0' ;
-      _lastLeftLength  = 0 ;
-      _rowNum          = 1 ;
-      _saveRC          = SDB_OK ;
+      _isCleanTask  = FALSE ;
+      _errorDetail  = "" ;
+      _lastLeftData = "" ;
+      _rowNum       = 1 ;
+      _readFinish   = FALSE ;
+      _saveRC       = SDB_OK ;
    }
 
    _omaSsqlExecTask::~_omaSsqlExecTask()
@@ -7125,58 +7125,49 @@ namespace engine
                                       INT32 maxLines )
    {
       INT32 lineCounter = 0 ;
-      INT32 lineEnd     = 0 ;
-      INT32 lineBegin   = 0 ;
-      CHAR allData[ 2*OMA_MAX_READ_LENGTH + 1 ] = "" ;
-      INT32 totalLen = _lastLeftLength + length ;
+      string allData    = "" ;
+      std::size_t beginPos = 0 ;
+      INT32 totalLen = _lastLeftData.length() + length ;
       if ( totalLen == 0 )
       {
          goto done ;
       }
 
-      if ( _lastLeftLength > 0 )
-      {
-         memcpy( allData, _lastLeftData, _lastLeftLength ) ;
-      }
-
+      allData = _lastLeftData ;
       if ( length > 0 && NULL != newData )
       {
-         memcpy( allData + _lastLeftLength, newData, length ) ;
+         allData = allData + newData ;
       }
 
-      allData[ totalLen ] = '\0' ;
-
-      while( lineEnd < totalLen && lineCounter < maxLines )
+      while( lineCounter < maxLines )
       {
-         if ( allData[ lineEnd ] == '\n' )
+         std::size_t found = 0 ;
+         found = allData.find_first_of( '\n', beginPos ) ;
+         if ( found != std::string::npos )
          {
             ssqlRowData_t oneRow ;
-            CHAR tmp[ OMA_MAX_READ_LENGTH + 1] = "" ;
-            INT32 len = lineEnd - lineBegin ;
-            if ( len > 0 )
-            {
-               memcpy( tmp, allData + lineBegin, len ) ;
-            }
-
-            tmp[ len ] = '\0' ;
+            string tmp = allData.substr( beginPos, found - beginPos );
             oneRow.rowNum  = _rowNum++ ;
             oneRow.rowData = tmp ;
             _readDataList.push_back( oneRow ) ;
             lineCounter++ ;
-
-            lineBegin = lineEnd + 1 ;
+         }
+         else
+         {
+            break ;
          }
 
-         lineEnd++ ;
+         beginPos = found + 1 ;
       }
 
-      _lastLeftLength = totalLen - lineBegin ;
-      if ( _lastLeftLength > 0 )
+      if ( beginPos < allData.length() )
       {
-         memcpy( _lastLeftData, allData + lineBegin, _lastLeftLength ) ;
+         _lastLeftData = allData.substr( beginPos ) ;
       }
-
-      _lastLeftData[ _lastLeftLength ] = '\0' ;
+      else
+      {
+         _lastLeftData = "" ;
+      }
 
    done:
       return lineCounter ;
@@ -7232,17 +7223,17 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       INT32 lineCounter = 0 ;
-      CHAR data[ OMA_MAX_READ_LENGTH + 1 ] ;
       _pmdEDUCB *cb = pmdGetThreadEDUCB() ;
       SINT64 length = 0 ;
 
       _readDataList.clear() ;
 
       // get the lastLeftdata
-      lineCounter += _getLines( data, length, maxLines-lineCounter ) ;
+      lineCounter += _getLines( NULL, 0, maxLines - lineCounter ) ;
 
       while ( lineCounter < maxLines )
       {
+         CHAR data[ OMA_MAX_READ_LENGTH + 1 ] = "" ;
          length = 0 ;
          if ( cb->isInterrupted() )
          {
@@ -7279,6 +7270,7 @@ namespace engine
 
          if ( SDB_OK == rc )
          {
+            data[ length ] = '\0' ;
             lineCounter += _getLines( data, length, maxLines-lineCounter ) ;
          }
          else
@@ -7293,7 +7285,7 @@ namespace engine
          rc          = SDB_OK ;
          _readFinish = TRUE ;
 
-         if ( _lastLeftLength > 0 )
+         if ( _lastLeftData.length() > 0 )
          {
             //insert the lastLeftData;
             ssqlRowData_t oneRow ;
@@ -7441,7 +7433,7 @@ namespace engine
                PD_LOG_MSG( PDERROR, "wait om read data failed:rc=%d,task="
                            OSS_LL_PRINT_FORMAT, rc, _taskID ) ;
                goto error ;
-            }         
+            }
 
             // 6. if _readFinish=true, close this task
             if ( _readFinish ) 
