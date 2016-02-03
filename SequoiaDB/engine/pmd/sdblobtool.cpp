@@ -91,6 +91,7 @@ static INT32 parseCmdLine( const po::options_description &desc,
 
    if ( vm.count( "version" ) )
    {
+      ossPrintVersion("sdblobtool version") ;
       doNothing = TRUE ;
       goto done ;
    }
@@ -267,8 +268,6 @@ INT32 main( INT32 argc, CHAR *argv[] )
             SDB_ENGINE_SUBVERSION_CURRENT,
             SDB_ENGINE_RELEASE_CURRENT,
             SDB_ENGINE_BUILD_TIME ) ;
-
-   ossPrintVersion("sdblobtool version") ;
 
    initDesc( desc ) ;
 
