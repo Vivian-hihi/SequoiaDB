@@ -9782,13 +9782,13 @@ namespace engine
           rc = SDB_INVALIDARG ;
           goto error ;
       }
-      inputInfo.nice = atoi( pValTmp ) ;
+      inputInfo.nice = ossAtoi( pValTmp ) ;
 
       _restAdaptor->getQuery( _restSession, OM_REST_FIELD_RULE_ID,
                               &pValTmp ) ;
       if ( pValTmp != NULL )
       {
-         inputInfo._id = atoll( pValTmp ) ;
+         inputInfo._id = ossAtoll( pValTmp ) ;
       }
 
       _restAdaptor->getQuery( _restSession, OM_REST_FIELD_USER_NAME,
@@ -9933,7 +9933,7 @@ namespace engine
           rc = SDB_INVALIDARG ;
           goto error ;
       }
-      nice = atoi( pValTmp ) ;
+      nice = ossAtoi( pValTmp ) ;
 
       _restAdaptor->getQuery( _restSession, OM_REST_FIELD_RULE_ID,
                               &pValTmp ) ;
@@ -9944,7 +9944,7 @@ namespace engine
           rc = SDB_INVALIDARG ;
           goto error ;
       }
-      ruleId = atoll( pValTmp ) ;
+      ruleId = ossAtoll( pValTmp ) ;
 
       rc = omStrategyMgrInst.updateTaskNiceById( nice, ruleId, _cb ) ;
       if ( rc != SDB_OK )
@@ -9991,7 +9991,7 @@ namespace engine
           rc = SDB_INVALIDARG ;
           goto error ;
       }
-      ruleId = atoll( pValTmp ) ;
+      ruleId = ossAtoll( pValTmp ) ;
 
       _restAdaptor->getQuery( _restSession, OM_REST_FIELD_IPS,
                               &pValTmp ) ;
@@ -10055,7 +10055,7 @@ namespace engine
           rc = SDB_INVALIDARG ;
           goto error ;
       }
-      ruleId = atoll( pValTmp ) ;
+      ruleId = ossAtoll( pValTmp ) ;
 
       _restAdaptor->getQuery( _restSession, OM_REST_FIELD_IPS,
                               &pValTmp ) ;
@@ -10118,7 +10118,7 @@ namespace engine
           rc = SDB_INVALIDARG ;
           goto error ;
       }
-      ruleId = atoll( pValTmp ) ;
+      ruleId = ossAtoll( pValTmp ) ;
 
       rc = omStrategyMgrInst.delTaskById( ruleId, _cb ) ;
       if ( rc != SDB_OK )
