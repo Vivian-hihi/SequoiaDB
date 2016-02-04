@@ -208,6 +208,14 @@
                     <enabled>true</enabled>
                     <objlist>
                         <obj>
+                            <id>1454575727</id>
+                            <cnname>分区类型</cnname>
+                            <enname>Sharding Key</enname>
+                            <cnpath>SdbDoc_Cn/basic_operation/sharding/sharding_index.html</cnpath>
+                            <enpath>SdbDoc_En/basic_operation/sharding/sharding_index_en.html</enpath>
+                            <enabled>true</enabled>
+                        </obj>
+                        <obj>
                             <id>1432190616</id>
                             <cnname>分区键</cnname>
                             <enname>Sharding Key</enname>
