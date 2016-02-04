@@ -60,6 +60,9 @@ namespace engine
       {
          goto error ;
       }
+      /// close the old connections
+      _frame.close( oldID ) ;
+
    done :
       PD_TRACE_EXITRC ( SDB__NETRTAG_UPRT, rc );
       return rc ;
