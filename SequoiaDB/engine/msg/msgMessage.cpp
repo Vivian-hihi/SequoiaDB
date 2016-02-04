@@ -1095,9 +1095,13 @@ INT32 msgBuildReplyMsg ( CHAR **ppBuffer, INT32 *bufferSize, INT32 opCode,
       rc = SDB_INVALIDARG ;
       goto error ;
    }
+
    for ( UINT32 i = 0; i < objList->size(); i ++ )
    {
-      rc = msgCheckBuffer ( ppBuffer, bufferSize, packetLength ) ;
+      INT32 alignObjSize ;
+      alignObjSize = ossRoundUpToMultipleX( (*objList)[i].objsize(), 4 ) ;
+      rc = msgCheckBuffer ( ppBuffer, bufferSize, 
+                            packetLength + alignObjSize ) ;
       if ( rc )
       {
          PD_LOG ( PDERROR, "Failed to check buffer" ) ;
@@ -1105,7 +1109,7 @@ INT32 msgBuildReplyMsg ( CHAR **ppBuffer, INT32 *bufferSize, INT32 opCode,
       }
       ossMemcpy ( &((*ppBuffer)[packetLength]), (*objList)[i].objdata(),
                                                 (*objList)[i].objsize() ) ;
-      packetLength += ossRoundUpToMultipleX ( (*objList)[i].objsize(), 4 ) ;
+      packetLength += alignObjSize ;
    }
    PD_TRACE1 ( SDB_MSGBLDREPLYMSG, PD_PACK_INT(packetLength) );
    pReply                       = (MsgOpReply*)(*ppBuffer) ;
