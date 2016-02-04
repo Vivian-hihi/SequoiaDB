@@ -1121,7 +1121,7 @@
             <stentry>-278</stentry>
          </strow>
          <strow>
-            <stentry>建立集合时如果指定autoindexid为false，则无法进行update/delete</stentry>
+            <stentry>当集合没有$id索引时，无法update/delete记录</stentry>
             <stentry>-279</stentry>
          </strow>
          <strow>

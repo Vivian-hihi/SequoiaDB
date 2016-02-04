@@ -1121,7 +1121,7 @@
             <stentry>-278</stentry>
          </strow>
          <strow>
-            <stentry>can not update/delete data when autoindexid is false</stentry>
+            <stentry>can not update/delete records when $id index does not exist</stentry>
             <stentry>-279</stentry>
          </strow>
          <strow>
