@@ -48,7 +48,7 @@ $ su sdbadmin</pre>
 2.在任意一台数据库服务器上（以下步骤都只需要在这台服务器上操作），启动 SequoiaDB Shell 控制台
 
 <pre class="prettyprint lang-javascript">
-$ sdb</pre>
+$ /opt/sequoiadb/bin/sdb</pre>
 
 3.连接到本地的集群管理服务进程 sdbcm
 
