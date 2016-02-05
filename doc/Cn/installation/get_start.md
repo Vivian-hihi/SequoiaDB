@@ -6,7 +6,7 @@ SequoiaDB 自带一个 JavaScript shell，可以从命令行与 SequoiaDB 实例
 
 <pre class="prettyprint lang-javascript">
 $ su - sdbadmin
-$ sdb
+$ /opt/sequoiadb/bin/sdb
 Welcome to SequoiaDB shell!
 help() for help, Ctrl+c or quit to exit</pre>
 
