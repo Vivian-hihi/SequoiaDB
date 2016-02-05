@@ -46,6 +46,7 @@ namespace engine
    */
    #define OMAGENT_WAIT_CB_ATTACH_TIMEOUT             ( 300 * OSS_ONE_SEC )
    #define OMAGENT_ALONE_ALIVE_TIMEOUT_DFT            ( 300 ) // secs
+   #define OMAGENT_IMMEDIATELY_TIMEOUT                ( 1 )
 
    /*
       _omAgentOptions implement
@@ -497,6 +498,7 @@ namespace engine
       _oneSecTimer         = NET_INVALID_TIMER_ID ;
       _nodeMonitorTimer    = NET_INVALID_TIMER_ID ;
       _watchAndCleanTimer  = NET_INVALID_TIMER_ID ;
+      _immediatelyTimer    = NET_INVALID_TIMER_ID ;
       _primaryPos          = -1 ;
       _requestID           = 0 ;
       _sessionNum          = 0 ;
@@ -913,6 +915,19 @@ namespace engine
          _nodeMgr.watchManualNodes() ;
          _nodeMgr.cleanDeadNodes() ;
       }
+      else if ( _immediatelyTimer == timerID )
+      {
+         PD_LOG( PDDEBUG, "deal immediately timer:timer=%d", 
+                 _immediatelyTimer ) ;
+         _prepareTask() ;
+
+         {
+            // remove it. we do not need a loop timer.
+            ossScopedLock lock( &_immediatelyTimerLatch, EXCLUSIVE ) ;
+            _netAgent.removeTimer( _immediatelyTimer ) ;
+            _immediatelyTimer = NET_INVALID_TIMER_ID ;
+         }
+      }
    }
 
    omAgentOptions* _omAgentMgr::getOptions()
@@ -1028,6 +1043,37 @@ namespace engine
    {
       ossScopedLock lock ( &_mgrLatch, EXCLUSIVE ) ;
       _mapTaskQuery[++_requestID] = match.copy() ;
+
+      return SDB_OK ;
+   }
+
+   INT32 _omAgentMgr::startTaskCheckImmediately( const BSONObj &match )
+   {
+      INT32 rc = SDB_OK ;
+      {
+         ossScopedLock lock ( &_mgrLatch, EXCLUSIVE ) ;
+         _mapTaskQuery[++_requestID] = match.copy() ;
+      }
+
+      {
+         ossScopedLock lock( &_immediatelyTimerLatch, EXCLUSIVE ) ;
+         // add a immediatelyTimer
+         if ( _immediatelyTimer == NET_INVALID_TIMER_ID )
+         {
+            rc = _netAgent.addTimer( OMAGENT_IMMEDIATELY_TIMEOUT, 
+                                     &_timerHandler, _immediatelyTimer ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "start check task immediately failed:rc=%d", 
+                       rc ) ;
+               //just log a message here, do not return rc.
+               //because we have the one_second_timer to active this task too.
+            }
+
+            PD_LOG( PDDEBUG, "add immediately timer:timer=%d", 
+                    _immediatelyTimer ) ;
+         }
+      }
 
       return SDB_OK ;
    }

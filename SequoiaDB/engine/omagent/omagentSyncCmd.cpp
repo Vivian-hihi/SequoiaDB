@@ -439,7 +439,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       
-      rc = sdbGetOMAgentMgr()->startTaskCheck( _taskIDObj ) ;
+      rc = sdbGetOMAgentMgr()->startTaskCheckImmediately( _taskIDObj ) ;
       if ( rc )
       {
          PD_LOG ( PDERROR, "Failed to start task check, rc = %d", rc ) ;

@@ -231,6 +231,7 @@ namespace engine
          INT32           sendToOM( MsgHeader *msg, INT32 *pSendNum = NULL ) ;
 
          INT32           startTaskCheck ( const BSONObj& match ) ;
+         INT32           startTaskCheckImmediately( const BSONObj &match ) ;
 
          BOOLEAN         isTaskInfoExist( UINT64 taskID ) ;
          void            registerTaskInfo( UINT64 taskID, omaTaskPtr &taskPtr ) ;
@@ -268,6 +269,9 @@ namespace engine
 
          ossEvent                   _attachEvent ;
          UINT32                     _oneSecTimer ;
+
+         ossSpinSLatch              _immediatelyTimerLatch ;
+         UINT32                     _immediatelyTimer ;
 
          UINT32                     _nodeMonitorTimer ;
          UINT32                     _watchAndCleanTimer ;
