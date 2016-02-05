@@ -88,6 +88,7 @@ $ /opt/sequoiadb/bin/sdb</pre>
 
 **Note: **
 
+如果配置路径不以“/”开头，数据文件存放路径将是数据库管理员用户(默认为sdbadmin)的主目录(默认为/home/sequoiadb) + 配置的路径。
 请确保存放路径的权限，如果 SequoiaDB 采用的默认安装，那么给路径赋予 sdbadmin 权限，下同。
 
 3.添加另外两个编目节点
