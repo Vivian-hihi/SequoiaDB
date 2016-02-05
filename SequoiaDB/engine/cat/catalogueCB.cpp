@@ -199,6 +199,9 @@ namespace engine
          goto error ;
       }
 
+      PD_LOG ( PDEVENT, "Success to listen[host=%s, service=%s] for catalog cb",
+               _strHostName.c_str(), _strCatServiceName.c_str() );
+
    done:
       PD_TRACE_EXITRC ( SDB_CATALOGCB_INIT, rc ) ;
       return rc ;
