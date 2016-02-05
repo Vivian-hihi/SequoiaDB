@@ -47,7 +47,7 @@ should belong to one and only one collection.
        \fBShardingType (string)\fR
 .br
               The sharding type of the collection, could be one
-              of the following
+              of the following, default to be "hash"
 .sp 2
               \fB"hash"\fR
 .br
@@ -81,15 +81,30 @@ should belong to one and only one collection.
 .sp 2
        \fBCompressed (boolean)\fR
 .br
-              ompress the collection or not
+              Compress the collection or not, default to be false
+.sp 2
+       \fBCompressionType (string)\fR
+.br
+              The Compressed type, could be one of the following,
+              default to be "snappy"
+.sp 2
+              \fB"snappy"\fR
+.br
+                     Compressing by snappy algorithm
+.sp 2
+              \fB"lzw"\fR
+.br
+                     Compressing by lzw algorithm
+.sp 2
+
 .sp 2
        \fBIsMainCL (boolean)\fR
 .br
-              Partitioned collection
+              Partitioned collection, default to be false
 .sp 2
        \fBAutoSplit (boolean)\fR
 .br
-              automatic split.
+              Split automatically or not, default to be false.
 .sp 2
        \fBGroup (string)\fR
 .br
@@ -97,6 +112,11 @@ should belong to one and only one collection.
               be in.
 .br
               Group:<group name>
+.sp 2
+       \fBAutoIndexId (boolean)\fR
+.br
+              Creating "$id" index automatically for the
+              collection or not, default to be true
 .sp 2
 
 .sp 2
