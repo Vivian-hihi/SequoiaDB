@@ -92,8 +92,8 @@ INT32 _appendString( CHAR delChar, const CHAR *pBuffer, INT32 size,
    {
       if ( ppCSVBuf && (*pCSVSize) == 0 )
       {
-         rc = SDB_OOM ;
-         UTIL_RAW2BSON_PRINTF_LOG( "CSV Buffer size can't NULL, rc=%d", rc ) ;
+         rc = SDB_SYS ;
+         UTIL_RAW2BSON_PRINTF_LOG( "CSV Buffer is too small, rc=%d", rc ) ;
          goto error ;
       }
       if ( isDoubleChar )
@@ -169,7 +169,7 @@ INT32 _appendObj( CHAR delChar, bson_iterator *pIt,
 
    if ( ppCSVBuf && objSize > (*pCSVSize) )
    {
-      rc = SDB_OOM ;
+      rc = SDB_SYS ;
       UTIL_RAW2BSON_PRINTF_LOG( "Csv buffer is too small,\
  need %d, only %d, rc=%d.",
                                 objSize,
@@ -208,7 +208,7 @@ INT32 _appendNonString( CHAR delChar, bson_iterator *pIt,
 
    if ( size > (*pCSVSize) )
    {
-      rc = SDB_OOM ;
+      rc = SDB_SYS ;
       UTIL_RAW2BSON_PRINTF_LOG( "Csv buffer is too small, rc=%d", rc ) ;
       goto error ;
    }
