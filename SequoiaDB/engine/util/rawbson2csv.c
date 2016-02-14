@@ -143,17 +143,6 @@ INT32 _appendObj( CHAR delChar, bson_iterator *pIt,
 
    size = bson_sprint_length_iterator ( pIt ) ;
 
-   if ( ppCSVBuf && size > (*pCSVSize) )
-   {
-      rc = SDB_OOM ;
-      UTIL_RAW2BSON_PRINTF_LOG( "Csv buffer is too small,\
- need %d, only %d, rc=%d.",
-                                size,
-                                (*pCSVSize),
-                                rc ) ;
-      goto error ;
-   }
-
    pBuffer = (CHAR *)SDB_OSS_MALLOC( size ) ;
    if ( !pBuffer )
    {
@@ -177,6 +166,18 @@ INT32 _appendObj( CHAR delChar, bson_iterator *pIt,
       goto error ;
    }
    objSize -= size ;
+
+   if ( ppCSVBuf && objSize > (*pCSVSize) )
+   {
+      rc = SDB_OOM ;
+      UTIL_RAW2BSON_PRINTF_LOG( "Csv buffer is too small,\
+ need %d, only %d, rc=%d.",
+                                objSize,
+                                (*pCSVSize),
+                                rc ) ;
+      goto error ;
+   }
+
    rc = _appendString( delChar, pBuffer, objSize,
                        ppCSVBuf, pCSVSize ) ;
    if ( rc )
