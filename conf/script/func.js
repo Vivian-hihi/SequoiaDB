@@ -130,11 +130,11 @@ function removeLineBreak ( str )
 }
 
 /* *****************************************************************************
-@discretion: gen a string with the format "YYYY-MM-DD-HH.mm.ss.ffffff"
+@discretion: gen a string with the format "YYYY-MM-DD-HH:mm:ss.fff"
 @author: Tanzhaobo
 @parameter
 @return
-   retStr[string]: a string with the format "YYYY-MM-DD-HH.mm.ss.ffffff"
+   retStr[string]: a string with the format "YYYY-MM-DD-HH:mm:ss.fff"
                    to express current timestamp
 ***************************************************************************** */
 function genTimeStamp()
@@ -143,8 +143,9 @@ function genTimeStamp()
    var dateVar = new Date() ;
    var dateStr = dateVar.toLocaleDateString() ;
    var timeStr = dateVar.toLocaleTimeString() ;
+   var millStr = _sprintf('%03s', '' + dateVar.getMilliseconds()) ;
    var strs = dateStr.split( '/' ) ;
-   retStr = strs[2] + "-" + strs[0] + "-" + strs[1] + "-" + timeStr ;
+   retStr = strs[2] + "-" + strs[0] + "-" + strs[1] + "-" + timeStr + "." + millStr ;
 
    return retStr ;
 }
