@@ -121,7 +121,7 @@ should belong to one and only one collection.
 .sp 2
        \fBEnsureShardingIndex (boolean)\fR
 .br
-              Whether to Use the fields of the ShardingKey
+              Whether to use the fields of "ShardingKey"
               automatically to create index "$shard" for the
               collection or not, default to be true
 .sp 2
