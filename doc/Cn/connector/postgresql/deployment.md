@@ -118,19 +118,15 @@
 	$ vi pg_data/postgresql.conf </pre>
 
 	打印连接信息
-
 	log_connections = on
 
 	打印断连信息
-
 	log_disconnections = on 
 
 	日志中打印时间，进程id，客户端地址信息
-
 	log_line_prefix = '%m %p %r'
 
-  出现错误时，断开当前session
-
+	出现错误时，断开当前连接
 	exit_on_error = on
 
 2) 检查端口是否被占用
