@@ -115,15 +115,15 @@ should belong to one and only one collection.
 .sp 2
        \fBAutoIndexId (boolean)\fR
 .br
-              Using the field of "_id" to create qnique index
-              "$id" automatically for the collection or not,
-              default to be true
+              Whether to use the field of "_id" automatically to
+              create unique index "$id" for the collection or
+              not, default to be true
 .sp 2
        \fBEnsureShardingIndex (boolean)\fR
 .br
-              Using the fields of the ShardingKey to create index
-              "$shard" automatically for the collection or not,
-              default to be true
+              Whether to Use the fields of the ShardingKey
+              automatically to create index "$shard" for the
+              collection or not, default to be true
 .sp 2
 
 .sp 2
