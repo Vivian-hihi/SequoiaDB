@@ -112,7 +112,21 @@
 
 ##部署 PostgreSQL##
 
-1) 检查端口是否被占用
+1) 修改PostgreSQL的日志配置，日志中增加打印时间信息、连接信息等
+
+	<pre class="prettyprint lang-javascript">
+	$ vi pg_data/postgresql.conf </pre>
+
+	打印连接信息
+	log_connections = on
+
+	打印断连信息
+	log_disconnections = on 
+
+	日志中打印时间，进程id，客户端地址信息
+	log_line_prefix = '%m %p %r'
+
+2) 检查端口是否被占用
 
 	PostgreSQL 默认启动端口为”5432”,检查端口是否被占用(检查操作建议使用 root 用户操作，只有检查端口需要 root 权限，其余操作还是需要在 sdbadmin 用户下操作)
 
@@ -124,12 +138,12 @@
 	<pre class="prettyprint lang-javascript">
 	$ sed -i "s/#port = 5432/port = 11780/g" pg_data/postgresql.conf</pre>
 
-2) 启动 Postgresql 服务进程（需要使用 sdbadmin 用户执行以下命令）
+3) 启动 Postgresql 服务进程（需要使用 sdbadmin 用户执行以下命令）
 
 	<pre class="prettyprint lang-javascript">
 	$ bin/postgres -D pg_data/ >> logfile 2>&1 &</pre>
 
-3) 检查 PostgreSQL 是否启动成功
+4) 检查 PostgreSQL 是否启动成功
 
 	<pre class="prettyprint lang-javascript">
 	$ netstat -nap | grep 5432</pre>
@@ -140,7 +154,7 @@
 	tcp   0   0 127.0.0.1:5432     0.0.0.0:*         LISTEN     20502/postgres
 	unix  2   [ ACC ]   STREAM    LISTENING   40776754 20502/postgres     /tmp/.s.PGSQL.5432</pre>
 
-4) 创建 PostgreSQL 的 database
+5) 创建 PostgreSQL 的 database
 
 	<pre class="prettyprint lang-javascript">
 	$ bin/createdb -p 5432 foo</pre>
