@@ -1,4 +1,4 @@
-package com.sequoiadb.test.save;
+package com.sequoiadb.test;
 
 import static org.junit.Assert.*;
 

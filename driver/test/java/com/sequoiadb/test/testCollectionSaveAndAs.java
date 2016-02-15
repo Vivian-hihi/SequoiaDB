@@ -1,7 +1,7 @@
 /**
  * 
  */
-package com.sequoiadb.test.save;
+package com.sequoiadb.test;
 
 import static org.junit.Assert.*;
 
@@ -36,7 +36,7 @@ import com.sequoiadb.testdata.*;
  * @author qiushanggao
  * 
  */
-public class testCollectionSavaAndAs {
+public class testCollectionSaveAndAs {
 	static private Sequoiadb sdb = null;
 	static private CollectionSpace cs = null;
 	static private DBCollection cl = null;
