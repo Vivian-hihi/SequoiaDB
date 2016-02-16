@@ -4,7 +4,7 @@
 
 ![](sh3.jpg)
 
-**垂直分区** [垂直分区](#mao1)又称为集合分区或纵向分区。
+**垂直分区** [垂直分区](#垂直分区示例)又称为集合分区或纵向分区。
 
 |	在 SequoiaDB集群环境中，用户也可以将一个集合全局关系的属性分成若干子集，并在这些子集上作投影运算，将这些子集映射到另外的集合上，从而实现集合关系的垂直切分；该集合称之为主集合，每个切分的子集称为分区，分区映射的集合称为子集合；一个分区只能映射到一个子集合中，但一个子集合可以承载多个分区；分区在子集合之间可以通过垂直切分操作进行重映射。
 
@@ -30,36 +30,36 @@ Range 方式下依据记录中分区键的范围选择所要插入的分区。Ha
 
 1、创建主表(主表必须用range切分)
 <pre class="prettyprint lang-javascript">
-> db.createCS("maincs").createCL("maincl",{IsMainCL:true,ShardingKey:{a:1},ShardingType:"range"})
+&gt; db.createCS("maincs").createCL("maincl",{IsMainCL:true,ShardingKey:{a:1},ShardingType:"range"})
 localhost:50000.maincs.maincl
 Takes 0.8144s.
 </pre>
 
 2、创建子表1(子表既可用range，也可用hash，ShardingKey也不必一定要和主表的一致)
 <pre class="prettyprint lang-javascript">
-> db.createCS("year2015").createCL("month01",{ShardingKey:{a:1},ShardingType:"hash",Partition:1024})
+&gt; db.createCS("year2015").createCL("month01",{ShardingKey:{a:1},ShardingType:"hash",Partition:1024})
 localhost:50000.year2015.month01
 Takes 0.899728s.
 </pre>
 
 3、创建子表2
 <pre class="prettyprint lang-javascript">
-> db.year2015.createCL("month02",{ShardingKey:{a:1},ShardingType:"hash",Partition:1024})
+&gt; db.year2015.createCL("month02",{ShardingKey:{a:1},ShardingType:"hash",Partition:1024})
 localhost:50000.year2015.month02
 Takes 0.9760s.
 </pre>
 
 4、将子表1、子表2关联到主表中(将子表附到主表中去，每个子表都有一个范围)
 <pre class="prettyprint lang-javascript">
-> db.maincs.maincl.attachCL("year2015.month01",{LowBound:{a:0},UpBound:{a:100}})
+&gt; db.maincs.maincl.attachCL("year2015.month01",{LowBound:{a:0},UpBound:{a:100}})
 Takes 0.8920s.
-> db.maincs.maincl.attachCL("year2015.month02",{LowBound:{a:100},UpBound:{a:200}})
+&gt; db.maincs.maincl.attachCL("year2015.month02",{LowBound:{a:100},UpBound:{a:200}})
 Takes 0.9837s.
 </pre>
 
 5、查看主子表情况
 <pre class="prettyprint lang-javascript">
-> db.snapshot(8)
+&gt; db.snapshot(8)
 {
   "CataInfo": [
     {
@@ -155,9 +155,9 @@ Takes 0.10594s.
 
 6、插数据
 <pre class="prettyprint lang-javascript">
-> db.maincs.maincl.insert({a:1})  // 数据落到子表1中
+&gt; db.maincs.maincl.insert({a:1})  // 数据落到子表1中
 Takes 0.2195s.
-> db.maincs.maincl.insert({a:101}) // 数据落到子表2中
+&gt; db.maincs.maincl.insert({a:101}) // 数据落到子表2中
 Takes 0.1872s.
 </pre>
 
@@ -172,7 +172,7 @@ Takes 0.1872s.
 }
 Return 1 row(s).
 Takes 0.3209s.
-> db.year2015.month02.find()
+&gt; db.year2015.month02.find()
 {
   "_id": {
     "$oid": "564968be5fc84bb828000001"
@@ -186,8 +186,8 @@ Takes 0.3407s.
 
 8、解除主子表之间的关联
 <pre class="prettyprint lang-javascript">
-> db.maincs.maincl.detachCL("year2015.month01")
+&gt; db.maincs.maincl.detachCL("year2015.month01")
 Takes 0.10324s.
-> db.maincs.maincl.detachCL("year2015.month02")
+&gt; db.maincs.maincl.detachCL("year2015.month02")
 Takes 0.7857s.
 </pre>
