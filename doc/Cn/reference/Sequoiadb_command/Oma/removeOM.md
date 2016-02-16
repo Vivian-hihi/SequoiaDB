@@ -1,7 +1,7 @@
 ##语法##
 ***oma.removeOM(< svcname >)***
 
-删除一个 om 节点。
+删除sdbom服务进程。
 
 ## 参数描述##
 
@@ -11,11 +11,12 @@
 
 **Note:**
 
-* 指定删除的节点必须存在，否则出现异常。
+* oma对象为连接到目标（本地/远端机器）集群控制器（sdbcm）获得的连接对象。
 
 ## 示例##
 
-* 在集群中删除一个端口号为11830的 om 节点
+* 删除安装在本地的sdbom服务进程
 
 <pre class="prettyprint lang-javascript">
+var oma = new Oma("localhost", 11790);
 oma.removeOM(11830)</pre>

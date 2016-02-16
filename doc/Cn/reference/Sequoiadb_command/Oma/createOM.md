@@ -1,7 +1,7 @@
 ##语法##
 ***oma.createOM(< svcname >,< dbpath >,[ config obj ])***
 
-创建一个 om 节点。
+在目标集群控制器（sdbcm）所在的机器中创建sdbom服务进程（SequoiaDB管理中心进程）。
 
 ## 参数描述##
 
@@ -13,11 +13,13 @@
 
 **Note:**
 
-* 在一个集群中可以创建多个 om 节点，但是连个节点的端口号必须相差5以上，因为系统为每个节点后台控制了5个通信接口。
+* oma对象为连接到目标（本地/远端机器）集群控制器（sdbcm）获得的连接对象。
+* 一个集群只能归属于一个SequoiaDB管理中心管理，但一个SequoiaDB管理中心却可管理多个集群。一般只创建一个sdbom服务进程即可。
 
 ## 示例##
 
-* 在集群中创建一个端口号为11830的 om 节点，指定日志文件大小为64MB
+* 在本地中创建一个本地端口号为11780，http端口为8000的的sdbom进程。
 
 <pre class="prettyprint lang-javascript">
-oma.createOM(11830,"/opt/sequoiadb/om/11830",{logfilesz:64})</pre>
+var oma = new Oma("localhost", 11790);
+oma.createOM(11780,"/opt/sequoiadb/database/sms/11780",{httpname:8000})</pre>

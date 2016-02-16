@@ -1,7 +1,7 @@
 ##语法##
 ***oma.removeData(< svcname >)***
 
-在 standalone 中删除一个 data 节点。
+在目标集群控制器（sdbcm）所在的机器中删除一个 standalone 节点。
 
 ## 参数描述##
 
@@ -11,11 +11,13 @@
 
 **Note:**
 
+* oma对象为连接到目标（本地/远端机器）集群控制器（sdbcm）获得的连接对象。
 * 指定删除的节点必须存在，否则出现异常。
 
 ## 示例##
 
-* 在 standalone 中删除一个端口号为11820的 data 节点
+* 在本地删除一个端口号为11820的 standalone 节点
 
 <pre class="prettyprint lang-javascript">
-oma.removeData(11820)</pre>
+var oma = new Oma("localhost", 11790);
+oma.removeData(11820);</pre>
