@@ -3277,6 +3277,7 @@ namespace engine
       utilCompressorContext compContext = UTIL_INVALID_COMP_CTX ;
       dmsCompressorEntry *compEntry = &_compressorEntry[context->mbID()] ;
       utilCompressor *compressor   = NULL ;
+      BOOLEAN needCompress         = FALSE ;
 
       SDB_ASSERT ( 0 != recordDataPtr, "recordDataPtr can't be NULL" ) ;
 
@@ -3308,34 +3309,51 @@ namespace engine
                rc = compressor->prepare( compContext ) ;
                PD_RC_CHECK( rc, PDERROR,
                             "Failed to prepare compressor, rc: %d", rc ) ;
+               needCompress = TRUE ;
             }
          }
-
-         rc = dmsCompress( cb, compressor, compContext, (const CHAR*)ptr, len,
-                           &compressedData, &compressedDataSize ) ;
-         if ( UTIL_INVALID_COMP_CTX != compContext )
+         else if ( UTIL_COMPRESSOR_SNAPPY ==
+              (UTIL_COMPRESSOR_TYPE)context->mb()->_compressorType )
          {
-            compressor->done( compContext ) ;
-            compContext = UTIL_INVALID_COMP_CTX ;
-         }
-
-         if ( rc )
-         {
-             dmsRecordSize = (UINT32)len ;
+            needCompress = TRUE ;
          }
          else
          {
-            dmsRecordSize = compressedDataSize + sizeof(INT32) ;
-            // if we find the record size is greater than non-compression, let's
-            // save non-compressed version
-            if ( dmsRecordSize > (UINT32)len )
+            needCompress = FALSE ;
+         }
+
+         if ( needCompress )
+         {
+            rc = dmsCompress( cb, compressor, compContext, (const CHAR*)ptr,
+                              len, &compressedData, &compressedDataSize ) ;
+            if ( UTIL_INVALID_COMP_CTX != compContext )
             {
-               dmsRecordSize = (UINT32)len ;
+               compressor->done( compContext ) ;
+               compContext = UTIL_INVALID_COMP_CTX ;
+            }
+
+            if ( rc )
+            {
+                dmsRecordSize = (UINT32)len ;
             }
             else
             {
-               isCompressed = TRUE ;
+               dmsRecordSize = compressedDataSize + sizeof(INT32) ;
+               // if we find the record size is greater than non-compression,
+               // let's save non-compressed version
+               if ( dmsRecordSize > (UINT32)len )
+               {
+                  dmsRecordSize = (UINT32)len ;
+               }
+               else
+               {
+                  isCompressed = TRUE ;
+               }
             }
+         }
+         else
+         {
+            dmsRecordSize = (UINT32)len ;
          }
       }
       else
