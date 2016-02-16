@@ -7176,6 +7176,7 @@ namespace engine
    INT32 _omaSsqlExecTask::_select( OSSFILE *file, INT32 timeout )
    {
       INT32 rc = SDB_OK ;
+#if defined _LINUX
       struct timeval selectTimeout ;
       selectTimeout.tv_sec  = timeout / 1000 ;
       selectTimeout.tv_usec = ( timeout % 1000 ) * 1000 ;
@@ -7212,6 +7213,7 @@ namespace engine
             break ;
          }
       }
+#endif
 
    done:
       return rc ;
