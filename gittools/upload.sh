@@ -1,3 +1,5 @@
+# this tool should be copied outside trunk directory
+# usage: ./upload.sh <svn version>
 #!/bin/sh
 #BASERELEASE="trunk"
 BASERELEASE="engine_1.12"
