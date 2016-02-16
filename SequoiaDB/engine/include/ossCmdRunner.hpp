@@ -65,7 +65,8 @@ namespace engine
                   INT64 timeout = -1,
                   BOOLEAN needResize = FALSE,
                   OSSHANDLE *pHandle = NULL,
-                  BOOLEAN addShellPrefix = FALSE ) ;
+                  BOOLEAN addShellPrefix = FALSE,
+                  BOOLEAN usePipe = TRUE ) ;
 
       INT32 done() ;
 

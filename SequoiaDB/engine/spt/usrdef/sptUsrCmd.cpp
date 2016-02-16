@@ -213,6 +213,7 @@ namespace engine
       string ev ;
       ossCmdRunner runner ;
       UINT32 useShell = TRUE ;
+      UINT32 usePipe  = TRUE ;
 
       _command.clear() ;
 
@@ -248,10 +249,20 @@ namespace engine
       }
       rc = SDB_OK ;
 
+      // usePipe, default : 1
+      rc = arg.getNative( 3, (void*)&usePipe, SPT_NATIVE_INT32 ) ;
+      if ( SDB_OK != rc && SDB_OUT_OF_BOUND != rc )
+      {
+         rc = SDB_INVALIDARG ;
+         detail = BSON( SPT_ERR << "usePipe should be a number" ) ;
+         goto error ;
+      }
+      rc = SDB_OK ;
+
       _strOut = "" ;
       _retCode = 0 ;
       rc = runner.exec( _command.c_str(), _retCode, TRUE, -1, FALSE, NULL,
-                        useShell ? TRUE : FALSE ) ;
+                        useShell ? TRUE : FALSE, usePipe ? TRUE : FALSE ) ;
       if ( SDB_OK != rc )
       {
          stringstream ss ;

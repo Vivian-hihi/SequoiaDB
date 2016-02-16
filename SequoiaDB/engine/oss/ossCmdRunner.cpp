@@ -169,7 +169,8 @@ namespace engine
                               INT64 timeout,
                               BOOLEAN needResize,
                               OSSHANDLE *pHandle,
-                              BOOLEAN addShellPrefix )
+                              BOOLEAN addShellPrefix, 
+                              BOOLEAN usePipe )
    {
       INT32 rc = SDB_OK ;
       SDB_ASSERT( NULL != cmd, "can not be null" ) ;
@@ -231,8 +232,16 @@ namespace engine
       _outStr = "" ;
       done() ;
 
-      rc = ossExec( arguments, arguments, NULL, flags,
-                    _id, res, NULL, &_out, this, pHandle ) ;
+      if ( usePipe )
+      {
+         rc = ossExec( arguments, arguments, NULL, flags,
+                       _id, res, NULL, &_out, this, pHandle ) ;
+      }
+      else
+      {
+         rc = ossExec( arguments, arguments, NULL, flags,
+                       _id, res, NULL, &_out, NULL, pHandle ) ;
+      }
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to exec cmd:%s, rc:%d",
