@@ -167,7 +167,7 @@ function main()
       PD_LOG2( task_id, arguments, PDEVENT, FILE_NAME_RUNPSQL,
                sprintf( "start to run psql[?:?:?]",
                host_name, host_svc, totalCmd ) ) ;
-      var pid = cmd.start(totalCmd) ;
+      var pid = cmd.start(totalCmd, '', 1, 0) ;
 
       isPsql = isPsqlProc( pid ) ;
       if ( !isPsql )
