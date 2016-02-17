@@ -1882,7 +1882,7 @@ namespace engine
       return makeAddressLine( _vecCat ) ;
    }
 
-   const std::string _pmdOptionsMgr::getOmAddr() const
+   string _pmdOptionsMgr::getOmAddr() const
    {
       return makeAddressLine( _vecOm ) ;
    }
