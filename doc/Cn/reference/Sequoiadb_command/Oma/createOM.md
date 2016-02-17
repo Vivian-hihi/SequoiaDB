@@ -18,8 +18,8 @@
 
 ## 示例##
 
-* 在本地中创建一个本地端口号为11780，http端口为8000的的sdbom进程。
+* 在本地中创建一个本地端口号为11780，http端口为8000，web路径为/opt/sequoiadb/web的sdbom进程。
 
 <pre class="prettyprint lang-javascript">
 var oma = new Oma("localhost", 11790);
-oma.createOM(11780,"/opt/sequoiadb/database/sms/11780",{httpname:8000})</pre>
+oma.createOM(11780,"/opt/sequoiadb/database/sms/11780",{httpname:8000,wwwpath:"/opt/sequoiadb/web"})</pre>
