@@ -1098,18 +1098,19 @@ INT32 msgBuildReplyMsg ( CHAR **ppBuffer, INT32 *bufferSize, INT32 opCode,
 
    for ( UINT32 i = 0; i < objList->size(); i ++ )
    {
-      INT32 alignObjSize ;
-      alignObjSize = ossRoundUpToMultipleX( (*objList)[i].objsize(), 4 ) ;
+      INT32 objSize ;
+      objSize = (*objList)[i].objsize() ;
+      packetLength = ossRoundUpToMultipleX( packetLength, 4 ) ;
       rc = msgCheckBuffer ( ppBuffer, bufferSize, 
-                            packetLength + alignObjSize ) ;
+                            packetLength + objSize ) ;
       if ( rc )
       {
          PD_LOG ( PDERROR, "Failed to check buffer" ) ;
          goto error ;
       }
       ossMemcpy ( &((*ppBuffer)[packetLength]), (*objList)[i].objdata(),
-                                                (*objList)[i].objsize() ) ;
-      packetLength += alignObjSize ;
+                                                objSize ) ;
+      packetLength += objSize ;
    }
    PD_TRACE1 ( SDB_MSGBLDREPLYMSG, PD_PACK_INT(packetLength) );
    pReply                       = (MsgOpReply*)(*ppBuffer) ;
