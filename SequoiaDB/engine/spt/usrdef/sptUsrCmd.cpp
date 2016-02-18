@@ -275,16 +275,19 @@ namespace engine
          OSSPID pid = runner.getPID() ;
          rval.setNativeVal( "", NumberInt, (const void*)&pid ) ;
 
-         ossSleep( 100 ) ;
-         if ( !ossIsProcessRunning( pid ) )
+         if ( usePipe )
          {
-            rc = runner.read( _strOut ) ;
-            if ( rc )
+            ossSleep( 100 ) ;
+            if ( !ossIsProcessRunning( pid ) )
             {
-               stringstream ss ;
-               ss << "read run command[" << _command << "] result failed" ;
-               detail = BSON( SPT_ERR << ss.str() ) ;
-               goto error ;
+               rc = runner.read( _strOut ) ;
+               if ( rc )
+               {
+                  stringstream ss ;
+                  ss << "read run command[" << _command << "] result failed" ;
+                  detail = BSON( SPT_ERR << ss.str() ) ;
+                  goto error ;
+               }
             }
          }
       }
