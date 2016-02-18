@@ -2445,8 +2445,8 @@
       <code>
          <name>SDB_UTIL_COMP_DECOMPRESS_FAIL</name>
          <description>
-            <en>compress process failed</en>
-            <cn>执行压缩失败</cn>
+            <en>decompress process failed</en>
+            <cn>执行解压缩失败</cn>
          </description>
       </code>
       <code>
