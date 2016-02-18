@@ -231,9 +231,11 @@ static INT32 sdbRecurBoolExpr( BoolExpr *boolexpr, SdbExprTreeState *expr_state,
 static INT32 sdbGenerateFilterCondition( Oid foreign_id, RelOptInfo *baserel,
                                          sdbbson *condition ) ;
 
-static const CHAR *sdbOperatorName( const CHAR *operatorName ) ;
+static const CHAR *sdbOperatorName( const CHAR *operatorName, 
+                                    BOOLEAN isVarFirst ) ;
 
-static Expr *sdbFindArgumentOfType( List *argumentList, NodeTag argumentType ) ;
+static Expr *sdbFindArgumentOfType( List *argumentList, NodeTag argumentType,
+                                    INT32 *index ) ;
 
 
 bool SdbIsListMode( CHAR *hostName )
@@ -986,6 +988,9 @@ INT32 sdbOperExprParamVar( OpExpr *expr, SdbExprTreeState *expr_state,
    ListCell *argumentCell = NULL ;
    Var *var               = NULL ;
    Param *param           = NULL ;
+   INT32 index            = 0 ;
+   INT32 paramIndex       = 0 ;
+   INT32 varIndex         = 0 ;
    ParamExecData *paramData = NULL ;
 
 
@@ -998,6 +1003,7 @@ INT32 sdbOperExprParamVar( OpExpr *expr, SdbExprTreeState *expr_state,
    foreach( argumentCell, expr->args )
    {
       Expr *tmp = (Expr *)lfirst(argumentCell) ;
+      index++ ;
       if ( T_Var == nodeTag(tmp) )
       {
          var = (Var *)tmp ;
@@ -1015,10 +1021,13 @@ INT32 sdbOperExprParamVar( OpExpr *expr, SdbExprTreeState *expr_state,
             *isCurrentExistDecimal = true ;
             goto done ;
          }
+
+         varIndex = index ;
       }
       else if ( T_Param == nodeTag(tmp) )
       {
-         param = (Param *)tmp ;
+         param      = (Param *)tmp ;
+         paramIndex = index ;
       }
       else
       {
@@ -1040,7 +1049,7 @@ INT32 sdbOperExprParamVar( OpExpr *expr, SdbExprTreeState *expr_state,
    }
 
    pgOpName    = get_opname( expr->opno ) ;
-   sdbOpName   = sdbOperatorName( pgOpName ) ;
+   sdbOpName   = sdbOperatorName( pgOpName, ( varIndex <= paramIndex ) ) ;
    if( !sdbOpName )
    {
       elog( DEBUG1, "operator is not supported:op=%s", pgOpName ) ;
@@ -1129,7 +1138,7 @@ INT32 sdbOperExprTwoVar( OpExpr *opr_two_argument, SdbExprTreeState *expr_state,
    /* the caller make sure the argument have two var! */
 
    pgOpName    = get_opname( opr_two_argument->opno ) ;
-   sdbOpName   = sdbOperatorName( pgOpName ) ;
+   sdbOpName   = sdbOperatorName( pgOpName, TRUE ) ;
    if( !sdbOpName )
    {
       elog( DEBUG1, "operator is not supported:op=%s", pgOpName ) ;
@@ -1204,17 +1213,12 @@ INT32 sdbOperExpr( OpExpr *opr, SdbExprTreeState *expr_state,
    }
    else if ( SDB_VAR_CONST == argType )
    {
+      INT32 varIndex   = 0 ;
+      INT32 constIndex = 0 ;
       pgOpName  = get_opname( opr->opno ) ;
-      /* we only support > >= < <= <> = ~~ */
-      sdbOpName = sdbOperatorName( pgOpName ) ;
-      if( !sdbOpName )
-      {
-         elog( DEBUG1, "operator is not supported:op=%s", pgOpName ) ;
-         goto error ;
-      }
 
       /* first find the key( column )*/
-      var = ( Var * )sdbFindArgumentOfType( opr->args, T_Var ) ;
+      var = ( Var * )sdbFindArgumentOfType( opr->args, T_Var, &varIndex ) ;
       if ( NULL == var )
       {
          /* var must exist */
@@ -1240,12 +1244,21 @@ INT32 sdbOperExpr( OpExpr *opr, SdbExprTreeState *expr_state,
       columnName = get_relid_attribute_name( expr_state->foreign_table_id, 
                                                    var->varattno ) ;
 
-      const_val = ( Const * )sdbFindArgumentOfType( opr->args, T_Const ) ;
+      const_val = ( Const * )sdbFindArgumentOfType( opr->args, T_Const, 
+                                                    &constIndex ) ;
       if ( NULL == const_val || ( InvalidOid != get_element_type( const_val->consttype ) ) )
       {
          /* const must exist and const is not array */
          /* get_element_type(  )!= InvalidOid indicate const_val is array */
          elog( DEBUG1, " const_val is null " ) ;
+         goto error ;
+      }
+
+      /* we only support > >= < <= <> = ~~ */
+      sdbOpName = sdbOperatorName( pgOpName, ( varIndex <= constIndex ) ) ;
+      if( !sdbOpName )
+      {
+         elog( DEBUG1, "operator is not supported:op=%s", pgOpName ) ;
          goto error ;
       }
 
@@ -1307,7 +1320,7 @@ INT32 sdbScalarArrayOpExpr( ScalarArrayOpExpr *scalaExpr,
    }
 
    /* first find the key( column )*/
-   var = ( Var * )sdbFindArgumentOfType( scalaExpr->args, T_Var ) ;
+   var = ( Var * )sdbFindArgumentOfType( scalaExpr->args, T_Var, NULL ) ;
    if ( NULL == var )
    {
       /* var must exist */
@@ -1741,17 +1754,17 @@ void sdbDeserializeDocument( Const *constant, sdbbson *document )
 
 /* sdbOperatorName converts PG comparison operator to Sdb
  */
-const CHAR *sdbOperatorName( const CHAR *operatorName )
+const CHAR *sdbOperatorName( const CHAR *operatorName, BOOLEAN isVarFirst )
 {
    const CHAR *pResult                  = NULL ;
    const INT32 totalNames               = 6 ;
-   static const CHAR *nameMappings[][2] = {
-      { "<",   "$lt"    },
-      { "<=",  "$lte"   },
-      { ">",   "$gt"    },
-      { ">=",  "$gte"   },
-      { "=",   "$et"    },
-      { "<>",  "$ne"    }
+   static const CHAR *nameMappings[][3] = {
+      { "<",   "$lt",  "$gt"   },
+      { "<=",  "$lte", "$gte"  },
+      { ">",   "$gt",  "$lt"   },
+      { ">=",  "$gte", "$lte"  },
+      { "=",   "$et",  "$et"   },
+      { "<>",  "$ne",  "$ne"   }
    } ;
 
    INT32 i = 0 ;
@@ -1760,7 +1773,15 @@ const CHAR *sdbOperatorName( const CHAR *operatorName )
       if( strncmp( nameMappings[i][0],
                      operatorName, NAMEDATALEN )== 0 )
       {
-         pResult = nameMappings[i][1] ;
+         if ( isVarFirst )
+         {
+            pResult = nameMappings[i][1] ;
+         }
+         else
+         {
+            pResult = nameMappings[i][2] ;
+         }
+
          break ;
       }
    }
@@ -1770,16 +1791,23 @@ const CHAR *sdbOperatorName( const CHAR *operatorName )
 /* sdbFindArgumentOfType iterate the given argument list, looks for an argument
  * with the given type and returns the argument if found
  */
-Expr *sdbFindArgumentOfType( List *argumentList, NodeTag argumentType )
+Expr *sdbFindArgumentOfType( List *argumentList, NodeTag argumentType, 
+                             INT32 *argIndex )
 {
-   Expr *foundArgument = NULL ;
+   Expr *foundArgument    = NULL ;
    ListCell *argumentCell = NULL ;
+   INT32 index = 0 ;
    foreach( argumentCell, argumentList )
    {
       Expr *argument = ( Expr * )lfirst( argumentCell ) ;
+      index++ ;
       if( nodeTag( argument )== argumentType )
       {
          foundArgument = argument ;
+         if ( NULL != argIndex )
+         {
+            *argIndex = index ;
+         }
          break ;
       }
       else if ( nodeTag( argument ) == T_RelabelType )
@@ -1788,6 +1816,10 @@ Expr *sdbFindArgumentOfType( List *argumentList, NodeTag argumentType )
          if ( nodeTag( relabel->arg ) == argumentType )
          {
             foundArgument = relabel->arg ;
+            if ( NULL != argIndex )
+            {
+               *argIndex = index ;
+            }
             break ;
          }
       }
