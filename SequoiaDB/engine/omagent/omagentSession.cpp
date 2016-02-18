@@ -65,12 +65,22 @@ namespace engine
    {
       ossMemset( (void*)&_replyHeader, 0, sizeof(_replyHeader) ) ;
       _pNodeMgr   = NULL ;
+      ossMemset( _detailName, 0, sizeof( _detailName ) ) ;
       sdbGetOMAgentMgr()->incSession() ;
    }
 
    _omaSession::~_omaSession()
    {
       sdbGetOMAgentMgr()->decSession() ;
+   }
+
+   const CHAR* _omaSession::sessionName() const
+   {
+      if ( _detailName[0] )
+      {
+         return _detailName ;
+      }
+      return _pmdAsyncSession::sessionName() ;
    }
 
    SDB_SESSION_TYPE _omaSession::sessionType() const
@@ -122,6 +132,10 @@ namespace engine
 
    void _omaSession::_onAttach()
    {
+      ossSnprintf( _detailName, SESSION_NAME_LEN, "%s,R-IP:%s,R-Port:%u",
+                   _pmdAsyncSession::sessionName(), _client.getPeerIPAddr(),
+                   _client.getPeerPort() ) ;
+      eduCB()->setName( _detailName ) ;
       _pNodeMgr = sdbGetOMAgentMgr()->getNodeMgr() ;
    }
 

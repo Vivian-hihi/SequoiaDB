@@ -58,6 +58,7 @@ namespace engine
 
          virtual INT32 getServiceType() const { return SDB_OK ; }
 
+         virtual const CHAR*      sessionName() const ;
          virtual SDB_SESSION_TYPE sessionType() const ;
          virtual const CHAR*      className() const { return "OMAgent" ; }
          virtual EDU_TYPES eduType () const ;
@@ -99,6 +100,7 @@ namespace engine
          _omAgentNodeMgr      *_pNodeMgr ;
 
          ossTimestamp         _lastRecvTime ;
+         CHAR                 _detailName[SESSION_NAME_LEN+1] ;
 
    } ;
 
