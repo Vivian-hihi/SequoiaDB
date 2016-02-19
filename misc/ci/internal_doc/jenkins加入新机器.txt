@@ -1,0 +1,42 @@
+1.创建jenkins用户和用户组
+groupadd jenkins
+useradd -d /var/lib/jenkins -m -g jenkins 
+
+2.安装jdk
+拷贝jdk目录
+配置环境变量如下
+export JAVA_HOME=/opt/ibm-java-ppc64-71
+export PATH=$JAVA_HOME/bin:$PATH
+export CLASSPATH=.:$JAVA_HOME/lib/dt.jar:$JAVA_HOME/lib/tools.jar
+
+3.安装ant
+拷贝ant目录
+export ANT_HOME=/opt/apache-ant-1.9.6
+export PATH=$ANT_HOME/bin:$PATH
+
+4.安装staf
+拷贝staf目录
+配置/usr/local/staf/bin/STAF.cfg 如下：
+TRUST LEVEL 5 MACHINE 192.168.20.*
+TRUST LEVEL 5 MACHINE 192.168.30.*
+配置本机的/etc/hosts，配置其他CI相关机器的/etc/hosts(加入该机的host ip)
+启动staf: ./startSTAFProc.sh 
+
+5.安装builder（仅适用于编译机）
+export PATH=/opt/installbuilder-8.5.2/bin:$PATH
+
+6.安装pg（仅适用于编译机）
+拷贝pgsql目录
+export PATH=/usr/local/pgsql/bin:$PATH
+
+7.安装Python（仅适用于编译机）
+拷贝头文件到/usr/include/python2.6/下
+
+8.配置该机与20.200的信任关系
+A、B机切换到jenkins用户下
+在A机上执行ssh-keygen -t rsa
+把A机的~/.ssh/id_rsa.pub拷贝追加到B机的~/.ssh/authorized_keys
+把B机的~/.ssh/id_rsa.pub拷贝追加到A机的~/.ssh/authorized_keys
+
+9.用root权限创建存放artifact的目录（仅适用于编译机）
+如/test_tar
