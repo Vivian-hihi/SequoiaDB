@@ -8,9 +8,11 @@
       </ul>
    </div>
    -->
+   <input ng-switch-when="checkbox" type="checkbox" ng-model="inputInfo.value"/> <span ng-switch-when="checkbox">{{inputInfo.webName}}</span>
    <input ng-switch-when="password" type="password" class="form-control" ng-attr="{'data-desc':inputInfo.error}" ng-class="{true:'alert-danger'}[inputInfo.error.length > 0]" ng-model="inputInfo.value">
    <input ng-switch-when="int" type="text" class="form-control" ng-attr="{'data-desc':inputInfo.error}" ng-class="{true:'alert-danger'}[inputInfo.error.length > 0]" ng-placeholder="inputInfo.placeholder" ng-model="inputInfo.value">
    <input ng-switch-when="double" type="text" class="form-control" ng-attr="{'data-desc':inputInfo.error}" ng-class="{true:'alert-danger'}[inputInfo.error.length > 0]" ng-placeholder="inputInfo.placeholder" ng-model="inputInfo.value">
+   <textarea ng-switch-when="text" class="form-control" ng-attr="{'data-desc':inputInfo.error}" ng-class="{true:'alert-danger'}[inputInfo.error.length > 0]" ng-placeholder="inputInfo.placeholder" ng-model="inputInfo.value"></textarea>
    <select class="form-control" ng-switch-when="select" ng-class="{true:'alert-danger'}[inputInfo.error.length > 0]" ng-change="onChange(inputInfo)" ng-model="inputInfo.value" ng-options="selectList.value as selectList.key for selectList in inputInfo.valid"></select>
    <div style="padding:0 0 0 20px;" ng-switch-when="group">
       <table class="table" style="margin:10px 0 0 0;" ng-repeat="childInfo in inputInfo.child track by $index">

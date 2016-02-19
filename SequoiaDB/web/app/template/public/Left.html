@@ -1,15 +1,15 @@
-<div class="{{Language}}" ng-controller="Index.Left.Ctrl" inherit-size>
-   <div id="PublicNav2" class="relativeBox">
-      <div class="absoluteLeftBox first" data-width="80">
-         <div class="button" data-height="17" nav-fold><i class="fa fa-forward"></i></div>
-         <div class="list" data-offsetY="-17">
+<div ng-controller="Index.Left.Ctrl" ng-container="{}">
+   <div id="PublicNav2" class="relativeBox" ng-container="{}">
+      <div class="absoluteLeftBox first" ng-container="Left.nav1">
+         <div class="button" ng-style="Left.nav1Btn" ng-click="toggleNav2()" ng-container="{height:17}"><i class="fa fa-forward"></i></div>
+         <div class="list" ng-container="{offsetY:-17}">
             <ul>
-               <li ng-repeat="nav in Left.navMenu track by $index" ng-class="{active:Left.selectModule==nav.module}">
-                  <a ng-if="!nav.action" ng-click="selectLeftModule(nav.module)">
+               <li ng-repeat="nav in Left.navMenu track by $index" ng-class="{active:showModuleIndex==$index}">
+                  <a ng-if="!nav.action" ng-click="selectLeftModule($index)">
                      <i ng-class="'fa fa-lg ' + nav.icon"></i>
                      <p>{{nav.text}}</p>
                   </a>
-                  <a ng-if="nav.action" ng-href="{{nav.action}}">
+                  <a ng-if="nav.action" ng-href="{{nav.action}}" ng-click="selectLeftModule($index)">
                      <i ng-class="'fa fa-lg ' + nav.icon"></i>
                      <p>{{nav.text}}</p>
                   </a>
@@ -17,15 +17,15 @@
             </ul>
          </div>
       </div>
-      <div class="second" data-width="180" data-mLeft="80" id="PublicLeftMenu">
-         <div style="visibility:hidden;" class="button" data-height="17" nav-fold><i class="fa fa-backward"></i></div>
-         <div class="list" data-offsetY="-17">
+      <div class="second" id="PublicLeftMenu" ng-container="Left.nav2" ng-if="Left.nav2Show">
+         <div style="visibility:hidden;" class="button" ng-style="Left.nav2Btn" ng-click="toggleNav2()" ng-container="{height:17}"><i class="fa fa-backward"></i></div>
+         <div class="list" ng-container="{offsetY:-17}">
             <ul>
-               <li ng-repeat="menu in Left.selectMenu track by $index">
+               <li ng-repeat="menu in Left.navMenu[ showModuleIndex ].list track by $index" ng-if="menu.list.length > 0">
                   <div>{{menu.title}}</div>
                   <ul>
-                     <li ng-repeat="list in menu.list track by $index" ng-class="{ active: Left.selectAction == list.action }">
-                        <a ng-href="#/{{Left.selectModule}}/{{list.action}}/Index">{{list.text}}</a>
+                     <li class="Ellipsis" ng-repeat="list in menu.list track by $index" ng-class="{active:showModuleIndex==cursorIndex[0] && cursorIndex[1]==$parent.$index && cursorIndex[2]==$index}">
+                        <a style="cursor:pointer;" ng-click="gotoModule(showModuleIndex,$parent.$index,$index)">{{list.name}}</a>
                      </li>
                   </ul>
                </li>

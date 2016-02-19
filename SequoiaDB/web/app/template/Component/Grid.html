@@ -6,7 +6,7 @@
       <span ng-repeat="right in data.tool.right track by $index">{{right.text}}</span>
    </div>
 </div>
-<div class="Grid" ng-style="{'height': Setting.grid.height,'max-height': Setting.grid.maxHeight}">
+<div class="Grid" ng-style="{'height': Setting.grid.height,'max-height': Setting.grid.maxHeight,'border-bottom': Setting.grid.borderBottom}">
    <div class="GridHeader">
       <div class="GridTr">
          <div class="GridTd Ellipsis" ng-repeat="title in data['title'] track by $index" ng-style="{'width':Setting.titleWidth[$index]}">{{title.text}}</div>

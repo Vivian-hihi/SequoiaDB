@@ -11,47 +11,54 @@
 					 "The host already exists in the list"
 				]
         },
-        "web": {
-            "input": [
-                "Error: ? Please input a number.",
-					 "Error: ? Min value ?.",
-					 "Error: ? Max value ?.",
-					 "Error: ? Invalid port.",
-					 "Error: ? A value must be selected."
-            ],
-				"create": [
-					 "Error: Invalid cluster name. Only alphabetic charameters, numbers and '_' are valid. The length must be less than 255 charaters.",
-					 "Error: Invalid user name. User name must be less than 1024 characters.",
-					 "Error: Invalid password. Password must be less than 1024 characters.",
-					 "Error: Invalid user's group. Group must be less than 1024 characters.",
-					 "Error: Invalid install path. Path must be less than 4096 characters.",
-					 "Error: Invalid module name. Only alphabetic charameters, numbers and '_' are valid. The length must be less than 255 charaters.",
-					 "Error: Module already exist.",
-					 "Error: Unable to add module into a cluster without any host.",
-					 "Error: Invalid password. Password must be less than 1024 characters.",
-					 "Error: Invalid new password. New password must be less than 1024 characters."
-				],
-				"scanhost": [
-					 "Error: IP / HostName must be less than 255 characters.",
-					 "Error: User name must be less than 255 characters.",
-					 "Error: Password must be less than 255 characters.",
-					 "Error: Invalid SSH Port.",
-					 "Error: Invalid Agent Port.",
-					 "Error: Please choose at least one host."
-				],
-				"addhost": [
-					 "Error: No active hosts detected."
-				],
-				"confsdb": [
-					 "Error: At leaset one host is required."
-				],
-				"modsdbd": [
-					 "Error: Unable to remove non-empty Replica Group ?.",
-					 "Error: Invalid replica group name. Only alphabetic charameters, numbers and '_' are valid. The length must be less than 255 charaters.",
-					 "Error: Replica Group already exist.",
-					 "Error: Invalid Service."
-				]
-        }
+      "web": {
+         "addhost": [
+            "Error: No active hosts detected."
+         ],
+         "confsdb": [
+            "Error: At leaset one host is required."
+         ],
+         "create": [
+            "Error: Invalid cluster name. Only alphabetic charameters, numbers and '_' are valid. The length must be less than 255 charaters.",
+            "Error: Invalid user name. User name must be less than 1024 characters.",
+            "Error: Invalid password. Password must be less than 1024 characters.",
+            "Error: Invalid user's group. Group must be less than 1024 characters.",
+            "Error: Invalid install path. Path must be less than 4096 characters.",
+            "Error: Invalid module name. Only alphabetic charameters, numbers and '_' are valid. The length must be less than 255 charaters.",
+            "Error: Module already exist.",
+            "Error: Unable to add module into a cluster without any host.",
+            "Error: Invalid password. Password must be less than 1024 characters.",
+            "Error: Invalid new password. New password must be less than 1024 characters."
+         ],
+         "input": [
+            "Error: ? Please input a number.",
+            "Error: ? Min value ?.",
+            "Error: ? Max value ?.",
+            "Error: ? Invalid port.",
+            "Error: ? A value must be selected."
+         ],
+         "modsdbd": [
+            "Error: Unable to remove non-empty Replica Group ?.",
+            "Error: Invalid replica group name. Only alphabetic charameters, numbers and '_' are valid. The length must be less than 255 charaters.",
+            "Error: Replica Group already exist.",
+            "Error: Invalid Service."
+         ],
+         "module": [
+            "Please install the host, and then install the business."
+         ],
+         "modzookeeper": [
+            "Error: Node ID must be a positive integer",
+            "Error: Node ID already exists"
+         ],
+         "scanhost": [
+            "Error: IP / HostName must be less than 255 characters.",
+            "Error: User name must be less than 255 characters.",
+            "Error: Password must be less than 255 characters.",
+            "Error: Invalid SSH Port.",
+            "Error: Invalid Agent Port.",
+            "Error: Please choose at least one host."
+         ]
+      }
     },
 	 "info": {
 	 		"web": {

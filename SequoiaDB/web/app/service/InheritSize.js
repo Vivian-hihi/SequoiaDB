@@ -5,7 +5,7 @@
       var g = this ;
       var list = [] ;
       function _renderWidth( ele, width )
-      {
+      {  
          var marginLeft  = $( ele ).attr( 'data-mLeft' ) ;
          var marginRight = $( ele ).attr( 'data-mRight' ) ;
          var offsetX = $( ele ).attr( 'data-offsetX' ) ;

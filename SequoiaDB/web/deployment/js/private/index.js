@@ -165,22 +165,50 @@ function openAddBusinessModal( clusterID )
 //打开发现业务的模态框
 function openAppendBusinessModal( clusterID )
 {
-    sdbjs.fun.setCSS( 'appendBusinessFootAlert', { 'display': 'none' } ) ;
-	sdbjs.parts.buttonBox.update( 'appendBusinessOK', htmlEncode( _languagePack['public']['button']['ok'] ), 'primary', null, 'appendBusiness(' + clusterID + ')' ) ;
-    sdbjs.parts.modalBox.show( 'appendBusiness' ) ;
+   sdbjs.fun.setCSS( 'appendBusinessFootAlert', { 'display': 'none' } ) ;
+   sdbjs.parts.buttonBox.update( 'appendBusinessOK', htmlEncode( _languagePack['public']['button']['ok'] ), 'primary', null, 'appendBusiness(' + clusterID + ')' ) ;
+   $( '#businessName_ap' ).val( 'myModule' ) ;
+   $( '#businessType_ap' ).val( 'sequoiasql' ) ;
+   $( '#hostName_ap' ).val( '' ) ;
+   $( '#serviceName_ap' ).val( '' ) ;
+   $( '#installpath_ap' ).val( '' ) ;
+   $( '#databaseName_ap' ).val( '' ) ;
+   $( '#userName_ap' ).val( '' ) ;
+   $( '#userPwd_ap' ).val( '' ) ;
+   $( '#databaseName_ap' ).parent().parent().show() ;
+   $( '#userName_ap' ).parent().parent().show() ;
+   $( '#userPwd_ap' ).parent().parent().show() ;
+   sdbjs.parts.modalBox.show( 'appendBusiness' ) ;
 }
 
 function appendBusiness( clusterID )
 {
-    var businessName = $( '#businessName_ap' ).val() ;
-	var businessType = $( '#businessType_ap' ).val() ;
-    if( !checkStrName( businessName ) )
-	{
-		showModalError( 'appendBusinessFootAlert', _languagePack['error']['web']['create'][5] ) ;//'业务名格式错误，业务名只能由数字字母下划线组成，并且长度在 1 - 255 个字符内.'
-		return;
-	}
-    var SdbSessionID = sdbjs.fun.getData( 'SdbSessionID' ) ;
-    window.location = './data/appendspark.html?businessName=' + encodeURIComponent( businessName ) + '&businessType=' + encodeURIComponent( businessType ) + '&clusterName=' + encodeURIComponent( _clusterList[clusterID]['ClusterName'] ) + '&SdbSessionID=' + encodeURIComponent( SdbSessionID ) ;
+   var businessName = $( '#businessName_ap' ).val() ;
+   var businessType = $( '#businessType_ap' ).val() ;
+   var hostName = $( '#hostName_ap' ).val() ;
+   var serviceName = $( '#serviceName_ap' ).val() ;
+   var installPath = $( '#installpath_ap' ).val() ;
+   var databaseName = '' ;
+   var userName = '' ;
+   var userPwd = '' ;
+   if( businessType == 'sequoiasql'){
+      databaseName = $( '#databaseName_ap' ).val() ;
+      userName = $( '#userName_ap' ).val() ;
+      userPwd = $( '#userPwd_ap' ).val() ;
+   }
+   if( !checkStrName( businessName ) )
+   {
+      showModalError( 'appendBusinessFootAlert', _languagePack['error']['web']['create'][5] ) ;//'业务名格式错误，业务名只能由数字字母下划线组成，并且长度在 1 - 255 个字符内.'
+      return;
+   }
+   restDiscoveryModule( true, function( jsonArr, textStatus, jqXHR ){
+		gotoPage( 'index.html' ) ;
+	}, function( json ){
+      showModalError( 'appendBusinessFootAlert', htmlEncode( json['detail'] ) ) ;
+	}, function(){
+		sdbjs.parts.loadingBox.hide( 'loading' ) ;
+		sdbjs.parts.modalBox.show( 'appendBusiness' ) ;
+	}, _clusterList[clusterID]['ClusterName'], businessName, businessType, hostName, serviceName, installPath, databaseName, userName, userPwd ) ;
 }
 
 //添加业务
@@ -235,7 +263,7 @@ function addBusiness( clusterID )
             showModalError( 'addBusinessFootAlert', json['detail'] ) ;
         }, null, _clusterList[clusterID]['ClusterName'] ) ;
 	}
-    else if( businessType === 'zookeeper' )
+   else if( businessType === 'zookeeper' )
 	{
         restGetClusterHostsInfo( false, function( jsonArr, textStatus, jqXHR ){
             var hostsInfo = jsonArr ;
@@ -853,7 +881,7 @@ function loadClusterList()
 				sdbjs.parts.dropDownBox.add( dropNodeName, htmlEncode( _languagePack['index']['clusterOperation'][1] ), true, 'gotoHostList(' + index + ')' ) ;//'主机列表'
 				sdbjs.parts.dropDownBox.add( dropNodeName, '', true ) ;
 				sdbjs.parts.dropDownBox.add( dropNodeName, htmlEncode( _languagePack['index']['clusterOperation'][2] ), true, 'openAddBusinessModal(' + index + ')' ) ;//'添加业务'
-                //sdbjs.parts.dropDownBox.add( dropNodeName, htmlEncode( _languagePack['index']['clusterOperation'][6] ), true, 'openAppendBusinessModal(' + index + ')' ) ;//'发现业务'
+            sdbjs.parts.dropDownBox.add( dropNodeName, htmlEncode( _languagePack['index']['clusterOperation'][6] ), true, 'openAppendBusinessModal(' + index + ')' ) ;//'发现业务'
 				sdbjs.parts.dropDownBox.add( dropNodeName, htmlEncode( _languagePack['index']['clusterOperation'][3] ), true, 'gotoBusinessList(' + index + ')' ) ;//业务列表
 				sdbjs.parts.dropDownBox.add( dropNodeName, '', true ) ;
 				sdbjs.parts.dropDownBox.add( dropNodeName, htmlEncode( _languagePack['index']['clusterOperation'][4] ), true, 'openRemoveCluster(' + index + ')' ) ;//'删除集群'
@@ -931,7 +959,31 @@ function loadBusinessType()
 	} ) ;
 
     var selectObj_3 = $( '#businessType_ap' ) ;
-    selectObj_3.append( '<option value="' + htmlEncode( 'spark' ) + '"' + '>' + htmlEncode( 'spark' ) + '</option>' ) ;
+    selectObj_3.append( '<option value="' + htmlEncode( 'sequoiasql' ) + '"' + '>' + htmlEncode( 'SequoiaSQL' ) + '</option>' ) ;
+    selectObj_3.append( '<option value="' + htmlEncode( 'spark' ) + '"' + '>' + htmlEncode( 'Spark' ) + '</option>' ) ;
+    selectObj_3.append( '<option value="' + htmlEncode( 'hdfs' ) + '"' + '>' + htmlEncode( 'Hdfs' ) + '</option>' ) ;
+    selectObj_3.append( '<option value="' + htmlEncode( 'yarn' ) + '"' + '>' + htmlEncode( 'Yarn' ) + '</option>' ) ;
+    //selectObj_3.append( '<option value="' + htmlEncode( 'zookeeper' ) + '"' + '>' + htmlEncode( 'zookeeper' ) + '</option>' ) ;
+   selectObj_3.change( function(){
+      var moduleType = selectObj_3.children( 'option:selected' ).val() ;
+      switch( moduleType )
+      {
+      case 'sequoiasql':
+         $( '#databaseName_ap' ).parent().parent().show() ;
+         $( '#userName_ap' ).parent().parent().show() ;
+         $( '#userPwd_ap' ).parent().parent().show() ;
+         sdbjs.parts.modalBox.hide( 'appendBusiness' ) ;
+         sdbjs.parts.modalBox.show( 'appendBusiness' ) ;
+         break ;
+      default:
+         $( '#databaseName_ap' ).parent().parent().hide() ;
+         $( '#userName_ap' ).parent().parent().hide() ;
+         $( '#userPwd_ap' ).parent().parent().hide() ;
+         sdbjs.parts.modalBox.hide( 'appendBusiness' ) ;
+         sdbjs.parts.modalBox.show( 'appendBusiness' ) ;
+         break ;
+      }
+   } ) ;
 }
 
 //检测部署状态
@@ -1248,31 +1300,64 @@ function createHtml()
 		sdbjs.parts.tableBox.create( bodyObj, 'appendBusinessTable' ) ;
 		sdbjs.parts.tableBox.update( 'appendBusinessTable', 'loosen' ) ;
 		//'业务名：' '安装的业务名'
-		sdbjs.parts.tableBox.addBody( 'appendBusinessTable', [{ 'text': htmlEncode( _languagePack['index']['modal']['appendBusiness']['body'][0]['name'] ), 'width': 100 },
-																			{ 'text': '<input class="form-control" type="text" id="businessName_ap" value="mySpark">' },
-																			{ 'text': htmlEncode( _languagePack['index']['modal']['appendBusiness']['body'][0]['desc'] ) } ] ) ;
+		sdbjs.parts.tableBox.addBody( 'appendBusinessTable', [
+         { 'text': htmlEncode( _languagePack['index']['modal']['appendBusiness']['body'][0]['name'] ), 'width': 120 },
+         { 'text': '<input class="form-control" type="text" id="businessName_ap" value="myModule">' },
+         { 'text': htmlEncode( _languagePack['index']['modal']['appendBusiness']['body'][0]['desc'] ) } ] ) ;
 		//'业务类型：'
-		sdbjs.parts.tableBox.addBody( 'appendBusinessTable', [{ 'text': htmlEncode( _languagePack['index']['modal']['appendBusiness']['body'][1]['name'] ), 'width': 100 },
-																			{ 'text': '<select class="form-control" id="businessType_ap"></select>' },
-																			{ 'text': htmlEncode( _languagePack['index']['modal']['appendBusiness']['body'][1]['desc'] ) } ] ) ;
+		sdbjs.parts.tableBox.addBody( 'appendBusinessTable', [
+         { 'text': htmlEncode( _languagePack['index']['modal']['appendBusiness']['body'][1]['name'] ), 'width': 120 },
+         { 'text': '<select class="form-control" id="businessType_ap"></select>' },
+         { 'text': htmlEncode( _languagePack['index']['modal']['appendBusiness']['body'][1]['desc'] ) } ] ) ;
+      //'主机名：'
+		sdbjs.parts.tableBox.addBody( 'appendBusinessTable', [
+         { 'text': htmlEncode( _languagePack['index']['modal']['appendBusiness']['body'][2]['name'] ), 'width': 120 },
+         { 'text': '<input class="form-control" type="text" id="hostName_ap" value="">' },
+         { 'text': htmlEncode( _languagePack['index']['modal']['appendBusiness']['body'][2]['desc'] ) } ] ) ;
+      //'服务名：'
+		sdbjs.parts.tableBox.addBody( 'appendBusinessTable', [
+         { 'text': htmlEncode( _languagePack['index']['modal']['appendBusiness']['body'][3]['name'] ), 'width': 120 },
+         { 'text': '<input class="form-control" type="text" id="serviceName_ap" value="">' },
+         { 'text': htmlEncode( _languagePack['index']['modal']['appendBusiness']['body'][3]['desc'] ) } ] ) ;
+      //'路径：'
+		sdbjs.parts.tableBox.addBody( 'appendBusinessTable', [
+         { 'text': htmlEncode( _languagePack['index']['modal']['appendBusiness']['body'][7]['name'] ), 'width': 120 },
+         { 'text': '<input class="form-control" type="text" id="installpath_ap" value="">' },
+         { 'text': htmlEncode( _languagePack['index']['modal']['appendBusiness']['body'][7]['desc'] ) } ] ) ;
+      //'数据库名：'
+		sdbjs.parts.tableBox.addBody( 'appendBusinessTable', [
+         { 'text': htmlEncode( _languagePack['index']['modal']['appendBusiness']['body'][4]['name'] ), 'width': 120 },
+         { 'text': '<input class="form-control" type="text" id="databaseName_ap" value="">' },
+         { 'text': htmlEncode( _languagePack['index']['modal']['appendBusiness']['body'][4]['desc'] ) } ] ) ;
+      //'数据库用户：'
+		sdbjs.parts.tableBox.addBody( 'appendBusinessTable', [
+         { 'text': htmlEncode( _languagePack['index']['modal']['appendBusiness']['body'][5]['name'] ), 'width': 120 },
+         { 'text': '<input class="form-control" type="text" id="userName_ap" value="">' },
+         { 'text': htmlEncode( _languagePack['index']['modal']['appendBusiness']['body'][5]['desc'] ) } ] ) ;
+      //'数据库用户密码：'
+		sdbjs.parts.tableBox.addBody( 'appendBusinessTable', [
+         { 'text': htmlEncode( _languagePack['index']['modal']['appendBusiness']['body'][6]['name'] ), 'width': 120 },
+         { 'text': '<input class="form-control" type="text" id="userPwd_ap" value="">' },
+         { 'text': htmlEncode( _languagePack['index']['modal']['appendBusiness']['body'][6]['desc'] ) } ] ) ;
 	}, function( footObj ){
 		sdbjs.parts.tableBox.create( footObj, 'appendBusinessFootTable' ) ;
-		sdbjs.parts.tableBox.addBody( 'appendBusinessFootTable', [{ 'text': function( tdObj ){
-																				sdbjs.parts.alertBox.create( tdObj, 'appendBusinessFootAlert' ) ;
-																				sdbjs.fun.setCSS( 'appendBusinessFootAlert', { 'display': 'none', 'padding': '8px', 'text-align': 'left' } ) ;
-																			} },
-																			{ 'text': function( tdObj ){
-																				sdbjs.parts.buttonBox.create( tdObj, 'appendBusinessOK' ) ;
-																				$( tdObj ).append( '&nbsp;' ) ;
-																				sdbjs.parts.buttonBox.create( tdObj, 'appendBusinessClose' ) ;
-																				//'确定'
-																				sdbjs.parts.buttonBox.update( 'appendBusinessOK', htmlEncode( _languagePack['public']['button']['ok'] ), 'primary', null, '' ) ;
-																				//'关闭'
-																				sdbjs.parts.buttonBox.update( 'appendBusinessClose', function( buttonObj ){
-																					$( buttonObj ).text( _languagePack['public']['button']['close'] ).attr( 'data-toggle', 'modalBox' ).attr( 'data-target', 'appendBusiness' ) ;
-																				}, 'primary' ) ;
-																			}, 'width': 120  } ] ) ;
-		
+		sdbjs.parts.tableBox.addBody( 'appendBusinessFootTable', [
+         { 'text': function( tdObj ){
+            sdbjs.parts.alertBox.create( tdObj, 'appendBusinessFootAlert' ) ;
+            sdbjs.fun.setCSS( 'appendBusinessFootAlert', { 'display': 'none', 'padding': '8px', 'text-align': 'left' } ) ;
+         } },
+         { 'text': function( tdObj ){
+            $( tdObj ).css( { 'width': '150px' } ) ;
+            sdbjs.parts.buttonBox.create( tdObj, 'appendBusinessOK' ) ;
+            $( tdObj ).append( '&nbsp;' ) ;
+            sdbjs.parts.buttonBox.create( tdObj, 'appendBusinessClose' ) ;
+            //'确定'
+            sdbjs.parts.buttonBox.update( 'appendBusinessOK', htmlEncode( _languagePack['public']['button']['ok'] ), 'primary', null, '' ) ;
+            //'关闭'
+            sdbjs.parts.buttonBox.update( 'appendBusinessClose', function( buttonObj ){
+               $( buttonObj ).text( _languagePack['public']['button']['close'] ).attr( 'data-toggle', 'modalBox' ).attr( 'data-target', 'appendBusiness' ) ;
+            }, 'primary' ) ;
+         }, 'width': 120  } ] ) ;
 	} ) ;
 	
 	/* 确认是否要删除集群 */

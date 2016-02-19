@@ -1,6 +1,6 @@
 (function () {
    var sacApp = window.SdbSacManagerModule;
-   sacApp.service('SdbFunction', function () {
+   sacApp.service( 'SdbFunction', function() {
       var g = this;
       g.repeatList = [] ;
       //设置循环结束的回调
@@ -370,6 +370,44 @@
 	         }
          }
       }
-
+      //中转站跳转控制
+      g.TransferCtr = function( $location, SdbRest ){
+         var data = { 'cmd': 'query business', 'sort': JSON.stringify( { 'BusinessName': 1, 'ClusterName': 1 } ) } ;
+         SdbRest.OmOperation( data, function( moduleList ){
+            if( moduleList.length > 0 )
+            {
+               var moduleInfo = moduleList[0] ;
+               g.LocalData( 'SdbClusterName', moduleInfo['ClusterName'] ) ;
+               g.LocalData( 'SdbModuleName', moduleInfo['BusinessName'] ) ;
+               g.LocalData( 'SdbModuleType', moduleInfo['BusinessType'] ) ;
+               g.LocalData( 'SdbModuleMode', moduleInfo['DeployMod'] ) ;
+               var params = { 'r': new Date().getTime() } ;
+               switch( moduleInfo['BusinessType'] )
+               {
+               case 'sequoiadb':
+                  $location.path( '/Data/SDB-Database/Index' ).search( params ) ; break ;
+               case 'sequoiasql':
+                  $location.path( '/Data/SQL-Metadata/Index' ).search( params ) ; break ;
+               case 'hdfs':
+                  $location.path( '/Data/HDFS-web/Index' ).search( params ) ; break ;
+               case 'spark':
+                  $location.path( '/Data/SPARK-web/Index' ).search( params ) ; break ;
+               case 'yarn':
+                  $location.path( '/Data/YARN-web/Index' ).search( params ) ; break ;
+               default:
+                  window.location.href = '/deployment/index.html' ;
+                  break ;
+               }
+            }
+            else
+            {
+               window.location.href = '/deployment/index.html' ;
+            }
+         }, function( errorInfo ){
+            window.location.href = '/deployment/index.html' ;
+         }, function(){
+            window.location.href = '/deployment/index.html' ;
+         } ) ;
+      }
    } ) ;
 }());

@@ -46,207 +46,119 @@ _IndexPublic.languageCtrl = function( $scope, text ){
    return newText ;
 }
 
-//创建选择module弹窗
-/*
-_IndexPublic.createSelectModuleModel = function( $scope, $location, SdbRest, SdbFunction, clusterName, main ){
-   var defaultEvent = function( moduleMode, moduleName ){
-      if( moduleMode == null || moduleName == null )
-      {
-         $location.path( 'Data/Overview/Index' ) ;
-      }
-      else
-      {
-         if( typeof( main ) == 'function' )
+// --------------------- Index.Left ---------------------
+var _IndexLeft = {} ;
+
+//更新导航信息
+_IndexLeft.updateNav = function( $scope, $rootScope, SdbRest, callBack )
+{
+   //获取业务实例列表
+   var data = { 'cmd': 'query business', 'sort': JSON.stringify( { 'BusinessName': 1, 'ClusterName': 1 } ) } ;
+   SdbRest.OmOperation( data, function( instanceList ){
+      $rootScope.initNav() ;
+      var navMenuLength = $scope.Left.navMenu.length ;
+      $.each( instanceList, function( index, moduleInfo ){
+         var thisModule = { 'name': moduleInfo['BusinessName'],
+                            'type': moduleInfo['BusinessType'],
+                            'mode': moduleInfo['DeployMod'],
+                            'cluster': moduleInfo['ClusterName'] } ;
+         for( var i = 0; i < navMenuLength; ++i )
          {
-            main( moduleMode, moduleName ) ;
-         }
-      }
-   } ;
-   var selectEvent = function( moduleMode, moduleName ){
-      SdbFunction.LocalData( 'SdbModuleMode', moduleMode ) ;
-      SdbFunction.LocalData( 'SdbModuleName', moduleName ) ;
-      location.reload( false ) ;
-   } ;
-   $scope.Components.Modal.icon = '' ;
-   $scope.Components.Modal.title = $scope.autoLanguage( '选择业务' ) ;
-   $scope.Components.Modal.noOK = false ;
-   $scope.Components.Modal.setModule = function( moduleMode, moduleName ){
-      printfDebug( '当前选择业务为： ' + moduleName ) ;
-      if( typeof( selectEvent ) == 'function' )
-      {
-         selectEvent( moduleMode, moduleName ) ;
-      }
-   }
-   $scope.Components.Modal.Context = '<table class="table loosen border">\
-   <tbody>\
-      <tr style="font-weight:bold;">\
-         <td style="width:40%;background-color:#F1F4F5;">Module Name</td>\
-         <td style="width:30%;background-color:#F1F4F5;">DeployMod</td>\
-         <td style="width:30%;background-color:#F1F4F5;">Cluster</td>\
-      </tr>\
-      <tr ng-repeat="moduleInfo in data.moduleList track by $index">\
-         <td><a class="linkButton" ng-click="data.setModule(moduleInfo.DeployMod,moduleInfo.BusinessName)">{{moduleInfo.BusinessName}}</a></td>\
-         <td>{{moduleInfo.DeployMod}}</td>\
-         <td>{{moduleInfo.ClusterName}}</td>\
-      </tr>\
-   </tbody>\
-</table>' ;
-   var quertModule = function(){
-      SdbRest.OmOperation( { 'cmd': 'query business', 'filter': JSON.stringify( { 'ClusterName': clusterName } ) }, function( moduleList ){
-         $scope.Components.Modal.moduleList = moduleList ;
-         if( typeof( defaultEvent ) == 'function' )
-         {
-            if( moduleList.length > 0 )
+            if( isArray( $scope.Left.navMenu[i]['list'] ) == true )
             {
-               defaultEvent( moduleList[0]['DeployMod'], moduleList[0]['BusinessName'] ) ;
-            }
-            else
-            {
-               defaultEvent( null, null ) ;
+               var moduleLength = $scope.Left.navMenu[i]['list'].length ;
+               for( var k = 0; k < moduleLength; ++k )
+               {
+                  if( $scope.Left.navMenu[i]['list'][k]['title'].toLocaleLowerCase() == moduleInfo['BusinessType'].toLocaleLowerCase() )
+                  {
+                     $scope.Left.navMenu[i]['list'][k]['list'].push( thisModule ) ;
+                  }
+               }
             }
          }
-         if( moduleList.length > 1 )
-         {
-            $scope.Components.Modal.isShow = true ;
-         }
-      }, function( errorInfo ){
-         $scope.Components.Confirm.isShow = true ;
-         $scope.Components.Confirm.type = 1 ;
-         $scope.Components.Confirm.title = $scope.autoLanguage( '获取数据失败' ) ;
-         $scope.Components.Confirm.okText = $scope.autoLanguage( '重试' ) ;
-         $scope.Components.Confirm.closeText = $scope.autoLanguage( '取消' ) ;
-         $scope.Components.Confirm.context = sprintf( $scope.autoLanguage( '错误码: ?, ?。需要重试吗?' ), errorInfo['errno'], errorInfo['description'] ) ;
-         $scope.Components.Confirm.ok = function(){
-            $scope.Components.Confirm.isShow = false ;
-            quertModule() ;
-         }
-      }, function(){
-         _IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
-      }, null, true ) ;
-      $scope.Components.Modal.moduleList = [
-         { "BusinessName": "myModule", "BusinessType": "sequoiadb", "DeployMod": "distribution", "ClusterName": "cluster_1" },
-         { "BusinessName": "TestModule_2", "BusinessType": "sequoiadb", "DeployMod": "distribution", "ClusterName": "cluster_1" },
-         { "BusinessName": "TestModule_3", "BusinessType": "sequoiadb", "DeployMod": "distribution", "ClusterName": "cluster_2" },
-         { "BusinessName": "TestModule_4", "BusinessType": "sequoiadb", "DeployMod": "distribution", "ClusterName": "cluster_2" },
-         { "BusinessName": "TestModule_5", "BusinessType": "sequoiadb", "DeployMod": "distribution", "ClusterName": "cluster_2" },
-         { "BusinessName": "TestModule_6", "BusinessType": "sequoiadb", "DeployMod": "distribution", "ClusterName": "cluster_3" },
-         { "BusinessName": "TestModule_7", "BusinessType": "sequoiadb", "DeployMod": "distribution", "ClusterName": "cluster_3" },
-         { "BusinessName": "TestModule_8", "BusinessType": "sequoiadb", "DeployMod": "distribution", "ClusterName": "cluster_3" },
-         { "BusinessName": "TestModule_9", "BusinessType": "sequoiadb", "DeployMod": "distribution", "ClusterName": "cluster_3" }
-      ] ;
-   }
-   var moduleMode = SdbFunction.LocalData( 'SdbModuleMode' ) ;
-   var moduleName = SdbFunction.LocalData( 'SdbModuleName' ) ;
-   if( moduleMode == null || moduleName == null )
+      } ) ;
+      $scope.$apply() ;
+      if( typeof( callBack ) == 'function' )
+      {
+         callBack( instanceList, $scope.Left.navMenu ) ;
+      }
+   }, function( errorInfo ){
+      $scope.Components.Confirm.isShow = true ;
+      $scope.Components.Confirm.type = 1 ;
+      $scope.Components.Confirm.title = $scope.autoLanguage( '获取数据失败' ) ;
+      $scope.Components.Confirm.okText = $scope.autoLanguage( '重试' ) ;
+      $scope.Components.Confirm.closeText = $scope.autoLanguage( '取消' ) ;
+      $scope.Components.Confirm.context = sprintf( $scope.autoLanguage( '错误码: ?, ?。需要重试吗?' ), errorInfo['errno'], errorInfo['description'] ) ;
+      $scope.Components.Confirm.ok = function(){
+         $scope.Components.Confirm.isShow = false ;
+      }
+   }, function(){
+      _IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
+   } ) ;
+}
+
+//激活导航要激活的业务的索引
+_IndexLeft.getActiveIndex = function( $rootScope, SdbFunction, navMenu )
+{
+   var defaultIndex   = [ -1, -1, -1 ] ;
+   var cursorIndex    = [ -1, -1, -1 ] ;
+   var cursorModule   = $rootScope.Url.Module ;
+   var cursorCluster  = SdbFunction.LocalData( 'SdbClusterName' ) ;
+   var cursorInstance = SdbFunction.LocalData( 'SdbModuleName' ) ;
+   switch( cursorModule )
    {
-      quertModule() ;
+   case 'Data':
+      cursorIndex[0] = 0 ;
+      break ;
+   case 'Monitor':
+      cursorIndex[0] = 1 ;
+      break ;
+   case 'Strategy':
+      cursorIndex[0] = 2 ;
+      break ;
+   case 'Deploy':
+      cursorIndex[0] = 4 ;
+      break ;
+   default:
+      cursorIndex[0] = 0 ;
+      break ;
+   }
+   defaultIndex[0] = cursorIndex[0] ;
+   if( typeof( navMenu[ cursorIndex[0] ]['list'] ) != 'undefined' )
+   {
+      $.each( navMenu[ cursorIndex[0] ]['list'], function( index1, moduleNav ){
+         $.each( moduleNav['list'], function( index2, instanceNav ){
+            if( defaultIndex[1] == -1 )
+            {
+               defaultIndex[1] = index1 ;
+            }
+            if( defaultIndex[2] == -1 )
+            {
+               defaultIndex[2] = index2 ;
+            }
+            if( instanceNav['cluster'] == cursorCluster &&
+                instanceNav['name'] == cursorInstance )
+            {
+               cursorIndex[1] = index1 ;
+               cursorIndex[2] = index2 ;
+               return false ;
+            }
+         } ) ;
+         if( cursorIndex[0] >= 0 && cursorIndex[1] >= 0 && cursorIndex[2] >= 0 )
+         {
+            return false
+         }
+      } ) ;
+   }
+   if( cursorIndex[0] >= 0 && cursorIndex[1] >= 0 && cursorIndex[2] >= 0 )
+   {
+      return cursorIndex ;
    }
    else
    {
-      if( typeof( main ) == 'function' )
-      {
-         main( moduleMode, moduleName ) ;
-      }
+      return defaultIndex ;
    }
 }
-*/
-
-//创建选择cluster弹窗
-/*
-_IndexPublic.createSelectClusterModel = function( $scope, SdbRest, SdbFunction, main ){
-   var defaultEvent = function( clusterName ){
-      if( clusterName == null )
-      {
-         $location.path( '/deployment/index.html' ) ;
-      }
-      else
-      {
-         if( typeof( main ) == 'function' )
-         {
-            main( clusterName ) ;
-         }
-      }
-   } ;
-   var selectEvent = function( clusterName ){
-      SdbFunction.LocalData( 'SdbClusterName', clusterName ) ;
-      location.reload( false ) ;
-   } ;
-   $scope.Components.Modal.icon = '' ;
-   $scope.Components.Modal.title = $scope.autoLanguage( '选择集群' ) ;
-   $scope.Components.Modal.noOK = true ;
-   $scope.Components.Modal.Context = '<table class="table loosen border">\
-   <tbody>\
-      <tr style="font-weight:bold;">\
-         <td style="width:40%;background-color:#F1F4F5;">' + $scope.autoLanguage( '集群名' ) + '</td>\
-         <td style="width:30%;background-color:#F1F4F5;">' + $scope.autoLanguage( '描述' ) + '</td>\
-         <td style="width:15%;background-color:#F1F4F5;">' + $scope.autoLanguage( '主机数' ) + '</td>\
-         <td style="width:15%;background-color:#F1F4F5;">' + $scope.autoLanguage( '业务数' ) + '</td>\
-      </tr>\
-      <tr ng-repeat="clusterInfo in data.clusterList track by $index">\
-         <td><a class="linkButton" ng-click="data.setCluster(clusterInfo.ClusterName)">{{clusterInfo.ClusterName}}</a></td>\
-         <td>{{clusterInfo.Desc}}</td>\
-         <td></td>\
-         <td></td>\
-      </tr>\
-   </tbody>\
-</table>' ;
-   $scope.Components.Modal.setCluster = function( name ){
-      printfDebug( '当前选择Cluster为： ' + name ) ;
-      if( typeof( selectEvent ) == 'function' )
-      {
-         selectEvent( name ) ;
-      }
-   }
-   var quertCluster = function(){
-      SdbRest.OmOperation( { 'cmd': 'query cluster' }, function( clusterList ){
-         $scope.Components.Modal.clusterList = clusterList ;
-         if( typeof( defaultEvent ) == 'function' )
-         {
-            if( clusterList.length > 0 )
-            {
-               defaultEvent( clusterList[0]['ClusterName'] ) ;
-            }
-            else
-            {
-               defaultEvent( null ) ;
-            }
-         }
-         if( clusterList.length > 1 )
-         {
-            $scope.Components.Modal.isShow = true ;
-         }
-      }, function( errorInfo ){
-         $scope.Components.Confirm.isShow = true ;
-         $scope.Components.Confirm.type = 1 ;
-         $scope.Components.Confirm.title = $scope.autoLanguage( '获取数据失败' ) ;
-         $scope.Components.Confirm.okText = $scope.autoLanguage( '重试' ) ;
-         $scope.Components.Confirm.closeText = $scope.autoLanguage( '取消' ) ;
-         $scope.Components.Confirm.context = sprintf( $scope.autoLanguage( '错误码: ?, ?。需要重试吗?' ), errorInfo['errno'], errorInfo['description'] ) ;
-         $scope.Components.Confirm.ok = function(){
-            $scope.Components.Confirm.isShow = false ;
-            quertCluster() ;
-         }
-      }, function(){
-         _IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
-      }, null, true ) ;
-   } ;
-
-   var clusterName = SdbFunction.LocalData( 'SdbClusterName' ) ;
-   if( clusterName == null )
-   {
-      SdbFunction.LocalData( 'SdbModuleMode', null ) ;
-      SdbFunction.LocalData( 'SdbModuleName', null ) ;
-      quertCluster() ;
-   }
-   else
-   {
-      if( typeof( main ) == 'function' )
-      {
-         main( clusterName ) ;
-      }
-   }
-}
-*/
 
 // --------------------- Index.Bottom ---------------------
 var _IndexBottom = {} ;
@@ -375,5 +287,5 @@ _IndexTop.logout = function( $location, SdbFunction ){
    //删除cl
    SdbFunction.LocalData( 'SdbClType', null ) ;
    SdbFunction.LocalData( 'SdbClName', null ) ;
-   $location.path( '/login.html#/Login' ) ;
+   window.location.href = '/login.html' ;
 }

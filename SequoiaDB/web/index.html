@@ -37,37 +37,36 @@
    <script src="./app/service/Cylinder.js"></script>
    <script src="./app/service/InheritSize.js"></script>
    <script src="./app/service/Components.js"></script>
-   <script src="./app/directive/Public.js"></script>
    <script src="./app/directive/directive.js"></script>
    <script src="./app/controller/Public.js"></script>
 </head>
 <body id="ng-app" ng-app="sacApp" ng-cloak>
 
-   <div id="PublicLayout" ng-controller="Index.Ctrl" inherit-size>
+   <div id="PublicLayout" ng-controller="Index.Ctrl" ng-container="{}">
 
-      <div id="PublicTop" data-height="40">
+      <div id="PublicTop" ng-container="layout.top">
          <div ng-include="Templates.Top"></div>
       </div>
 
-      <div class="relativeBox" data-offsetY="-40">
-         <div id="PublicLeft" class="absoluteLeftBox" data-width="260">
-            <div ng-include="Templates.Left" inherit-size></div>
+      <div class="relativeBox" ng-container="layout.content">
+         <div id="PublicLeft" class="absoluteLeftBox" ng-container="layout.left">
+            <div ng-include="Templates.Left" ng-container="{}"></div>
          </div>
 
-         <div id="PublicCentre" data-offsetX="-260" data-mLeft="260">
+         <div id="PublicCentre" ng-container="layout.centre">
 
-            <div style="background-color:#5B5B6B;" data-height="2"></div>
-            <div class="relativeBox" data-offsetY="-42">
+            <div style="background-color:#5B5B6B;" ng-container="{height:2}"></div>
+            <div class="relativeBox" ng-container="{offsetY:-42}">
                <div style="height:100%;zoom:1;" ng-view></div>
             </div>
-            <div id="PublicBottom" data-height="40">
+            <div id="PublicBottom" ng-container="layout.bottom">
                <div ng-include="Templates.Bottom"></div>
             </div>
 
          </div>
       </div>
-      <div data-height="0" create-modal para="Components.Modal"></div>
-      <div data-height="0" create-confirm para="Components.Confirm"></div>
+      <div style="height:0" create-modal para="Components.Modal"></div>
+      <div style="height:0" create-confirm para="Components.Confirm"></div>
    </div>
 </body>
 </html>

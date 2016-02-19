@@ -1,6 +1,6 @@
 (function(){
    var sacApp = window.SdbSacManagerModule ;
-   sacApp.service( 'SdbRest', function( $http, Loading, SdbFunction ){
+   sacApp.service( 'SdbRest', function( $q, Loading, SdbFunction ){
       var g = this ;
       function restBeforeSend( jqXHR )
       {
@@ -41,12 +41,11 @@
                else if( jsonArr[0]['errno'] === 0 && typeof( success ) == 'function' )
                {
                   jsonArr.splice( 0, 1 ) ;
-                  success( jsonArr, textStatus, jqXHR )
+                  success( jsonArr, textStatus, jqXHR ) ;
                }
-               else if( jsonArr[0]['errno'] === -62 && typeof( failed ) === 'function' )
+               else if( jsonArr[0]['errno'] === -62 )
                {
                   //session id 不存在
-                  //failed( jsonArr[0] ) ;
                   window.location.href = './login.html#/Login' ;
                }
                else if( typeof( failed ) === 'function' )
@@ -70,6 +69,58 @@
                before( XMLHttpRequest ) ;
             }
          } } ) ;
+      }
+
+      //发送请求(新版，异步调用)
+      g._post2 = function( data, showLoading ){
+         var defferred = $q.defer() ;
+         if( typeof( showLoading ) == 'undefined' ) showLoading = true ;
+         if( showLoading )
+         {
+            Loading.create() ;
+         }
+         $.ajax( { 'type': 'POST', 'url': '/', 'data': data, 'success': function( json, textStatus, jqXHR ){
+            json = trim( json ) ;
+            if( json.length == 0 )
+            {
+               //收到响应，但是没有任何数据
+               defferred.reject( { "errno": -10, "description": "System error", "detail": "No rest response data." } ) ;
+            }
+            else
+            {
+               var jsonArr = g._parseJsons( json ) ;
+               if( jsonArr.length == 0 )
+               {
+                  //有数据，但是没有记录，理论上不会发生
+                  defferred.reject( { "errno": -10, "description": "System error", "detail": "Rest response data error." } ) ;
+               }
+               else if( jsonArr[0]['errno'] === 0 )
+               {
+                  jsonArr.splice( 0, 1 ) ;
+                  defferred.resolve( jsonArr ) ;
+               }
+               else if( jsonArr[0]['errno'] === -62 )
+               {
+                  //session id 不存在
+                  window.location.href = './login.html#/Login' ;
+               }
+               else
+               {
+                  //其他错误
+                  defferred.reject( jsonArr[0] ) ;
+               }
+            }
+         }, 'error': function( XMLHttpRequest, textStatus, errorThrown ) {
+            defferred.reject() ;
+         }, 'complete': function ( XMLHttpRequest, textStatus ) {
+            if( showLoading )
+            {
+               Loading.cancel() ;
+            }
+         }, 'beforeSend': function( XMLHttpRequest ){
+            restBeforeSend( XMLHttpRequest ) ;
+         } } ) ;
+         return defferred.promise ;
       }
 
       //测试发送
@@ -178,11 +229,7 @@
             success( reData ) ;
          }, 'json' ) ;
       }
-
-      g.QueryAllBusiness = function( data, success, failed, error, complete ){
-         g._postTest( './test/query_business', success, failed, error ) ;
-      }
-
+      
       //om系统操作
       g.OmOperation = function( data, success, failed, error, complete, showLoading ){
          g._post( data, null, success, failed, error, complete, showLoading ) ;
@@ -202,6 +249,45 @@
 		         jqXHR.setRequestHeader( 'SdbBusinessName', businessName ) ;
 	         }
          }, success, failed, error, complete ) ;
+      }
+
+      //sequoiasql操作
+      g.SequoiaSQL = function( data, success, failed, error, complete ){
+         var clusterName = SdbFunction.LocalData( 'SdbClusterName' ) ;
+	      if( clusterName != null )
+	      {
+		      data['ClusterName'] = clusterName ;
+	      }
+	      var businessName = SdbFunction.LocalData( 'SdbModuleName' )
+	      if( businessName != null )
+	      {
+            data['BusinessName'] = businessName ;
+	      }
+         Loading.create() ;
+         g._post( data, null, function( returnData ){
+            var taskDefferred = $q.when( returnData[0] ) ;
+            var taskPromise = taskDefferred.promise ;
+            var taskID = returnData[0] ;
+            var queryTask = function(){
+               var taskData = { 'cmd': 'query task', 'filter': JSON.stringify( taskID ) } ;
+               g._post( taskData, null, function( taskInfo ){
+                  if( taskInfo[0]['Status'] == 0 )
+                  {
+                     queryTask()
+                     return ;
+                  }
+                  if( taskInfo[0]['Status'] == 3 || taskInfo[0]['Status'] == 4 )
+                  {
+                     success( taskInfo[0]['ResultInfo'], true ) ;
+                     Loading.cancel() ;
+                     return ;
+                  }
+                  success( taskInfo[0]['ResultInfo'], false ) ;
+                  setTimeout( queryTask, 100 ) ;
+               }, failed, error, complete, false ) ;
+            }
+            queryTask() ;
+         }, failed, error, complete ) ;
       }
 
       //SQL(自动获取cluster和module)
@@ -253,10 +339,6 @@
          g._post( data, null, success, failed, error, complete, false ) ;
       }
 
-      g.QueryIndexes = function( data, success, failed, error, complete ){
-         g._postTest( './test/query_index', success, failed, error ) ;
-      }
-
       g.getPing = function( complete ){
          var time1 = $.now() ;
          g.getFile( './app/language/test', true, function( text ){
@@ -266,5 +348,6 @@
             complete( -1 ) ;
          } ) ;
       }
+
    } ) ;
 }());

@@ -826,3 +826,295 @@ function parseIndexDefValue( jobj ){
    }
    return indexDef ;
 }
+
+/*
+   str    是字符串
+   state  是状态机，结构如下
+   {
+      status: 0,         <---  状态
+      length: 0,         <---  一行的长度
+      header: [          <---  表头
+         6, 4, 5 , 10    <---  对应每列字段的最大长度
+      ],
+      field: [           <---  字段列表
+         { name: "field_1", type: "int" }  <---  字段名 和 字段类型
+         { name: "field_2", type: "text" }
+      ],
+      value: [           <---  获得的数据
+         "aaaa",
+         "bbbb"
+      ],
+      isJoin: false,     <---  当前行是不是上一行的追加内容
+      attr: [
+         "Has OIDs: no",
+         "Options: appendonly=true",
+         "Distributed randomly"
+      ],
+      rc: true           <---  执行成功或失败
+      result: 'ERROR:  syntax error at or near "aaa"'   <---  执行成功或失败返回的内容
+   }
+   status 当前状态 0: 未发现表头， 1：找到表头， 2：找到字段表， 3：表头结束， 4：内容， 5：内容结束， 6：其他数据， 7:解析错误, 8:解析返回结果
+*/
+function parseSSQL( str, state )
+{
+   if( !state )
+   {
+      state = { 'status': 0 } ;
+   }
+   if( typeof( str ) != 'string' )
+   {
+      state['status'] = 7 ;
+      return state ;
+   }
+   var sqlStrlen = function(str){
+      var len = 0;
+      for (var i=0; i<str.length; i++) { 
+         var c = str.charCodeAt(i); 
+         if ((c >= 0x0001 && c <= 0x007e) || (0xff60<=c && c<=0xff9f)) { 
+            len++; 
+         } 
+         else { 
+            len+=2; 
+         } 
+      } 
+      return len;
+   }
+   var parseSSQLResult = function( result, state ){
+      if( state['status'] != 8 )
+      {
+         if( result.indexOf( 'ERROR:' ) == 0 )
+         {
+            state['status'] = 8 ;
+            state['rc'] = false ;
+         }
+         else if( result.indexOf( 'psql:' ) == 0 )
+         {
+            state['status'] = 8 ;
+            state['rc'] = false ;
+         }
+         else if( result.indexOf( 'CREATE DATABASE' ) == 0 )
+         {
+            state['status'] = 8 ;
+            state['rc'] = true ;
+         }
+         else if( result.indexOf( 'DROP DATABASE' ) == 0 )
+         {
+            state['status'] = 8 ;
+            state['rc'] = true ;
+         }
+         else if( result.indexOf( 'CREATE TABLE' ) == 0 )
+         {
+            state['status'] = 8 ;
+            state['rc'] = true ;
+         }
+         else if( result.indexOf( 'DROP TABLE' ) == 0 )
+         {
+            state['status'] = 8 ;
+            state['rc'] = true ;
+         }
+         else if( result.indexOf( 'ALTER TABLE' ) == 0 )
+         {
+            state['status'] = 8 ;
+            state['rc'] = true ;
+         }
+         else if( result.indexOf( 'INSERT ' ) == 0 )
+         {
+            state['status'] = 8 ;
+            state['rc'] = true ;
+         }
+      }
+      if( state['status'] == 8 )
+      {
+         if( typeof( state['result'] ) == 'undefined' )
+         {
+            state['result'] = '' ;
+         }
+         else
+         {
+            state['result'] += ', ' ;
+         }
+         state['result'] += result ;
+      }
+      return state ;
+   }
+   var parseSSQLHeader = function( header, state ){
+      var len, char, start, end, fieldMaxLen ;
+      len = header.length ;
+      if( len < 5 )
+      {
+         return parseSSQLResult( header, state ) ;
+      }
+      if( header.charAt(0) != '+' )
+      {
+         return parseSSQLResult( header, state ) ;
+      }
+      state['header'] = [] ;
+      state['length'] = len ;
+      start = 0 ;
+      for( var i = 1; i < len; ++i )
+      {
+         char = header.charAt(i) ;
+         if( char == '-' )
+         {
+            continue ;
+         }
+         else if( char == '+' )
+         {
+            end = i ;
+            if( end - start < 4 )
+            {
+               state['status'] = 7 ;
+               return state ;
+            }
+            state['header'].push( end - start - 3 ) ;
+            start = i ;
+         }
+         else
+         {
+            break ;
+         }
+      }
+      state['status'] = 1 ;
+      return state ;
+   }
+   var parseSSQLField = function( fields, state ){
+      var len, start, end ;
+      len = fields.length ;
+      if( len != state['length'] )
+      {
+         state['status'] = 7 ;
+         return state ;
+      }
+      if( str.charAt(0) != '|' )
+      {
+         state['status'] = 7 ;
+         return state ;
+      }
+      if( state['field'] && state['field'].length > 0 )
+      {
+         state['status'] = 2 ;
+         return state ; 
+      }
+      state['field'] = [] ;
+      start = 0 ;
+      for( var i = 0; i < state['header'].length; ++i )
+      {
+         start = start + 2 ;
+         state['field'].push( { 'name': trim( fields.substr( start, state['header'][i] ) ) } ) ;
+         start = start + state['header'][i] + 1 ;
+      }
+      state['status'] = 2 ;
+      return state ; 
+   }
+   var parseSSQLEndHeader = function( header, state ){
+      var len, char, start, end ;
+      len = header.length ;
+      if( len != state['length'] )
+      {
+         state['status'] = 7 ;
+         return state ;
+      }
+      if( header.charAt(0) != '+' ) return state ;
+      state['length'] = len ;
+      start = 0 ;
+      for( var i = 1; i < len; ++i )
+      {
+         char = header.charAt(i) ;
+         if( char == '-' )
+         {
+            continue ;
+         }
+         else if( char == '+' )
+         {
+            end = i ;
+            if( end - start < 4 )
+            {
+               state['status'] = 7 ;
+               return state ;
+            }
+            start = i ;
+         }
+         else
+         {
+            break ;
+         }
+      }
+      state['status'] = 3 ;
+      return state ; 
+   }
+   var parseSSQLContent = function( content, state ){
+      var len, start, end ;
+      len = sqlStrlen( content ) ;
+      state['isJoin'] = false ;
+      if( len != state['length'] )
+      {
+         state['status'] = 7 ;
+         return state ;
+      }
+      if( str.charAt(0) == '|' )
+      {
+         state['status'] = 4 ;
+         state['value'] = [] ;
+         start = 0 ;
+         for( var i = 0; i < state['header'].length; ++i )
+         {
+            start = start + 2 ;
+            state['value'].push( trim( content.substr( start, state['header'][i] ) ) ) ;
+            start = start + state['header'][i] + 1 ;
+         }
+      }
+      else if( str.charAt(0) == '+' )
+      {
+         state['status'] = 5 ;
+      }
+      else
+      {
+         state['status'] = 7 ;
+      }
+      return state ; 
+   }
+   var parseSSQLAttr = function( attr, state ){
+      state['status'] = 6 ;
+      state['value'] = [] ;
+      if( typeof( state['attr'] ) == 'undefined' )
+      {
+         state['attr'] = [] ;
+      }
+      attr = trim( attr ) ;
+      if( attr.length > 0 )
+      {
+         state['attr'].push( attr ) ;
+      }
+      return state ;
+   }
+   switch( state['status'] )
+   {
+   case 0:
+      state = parseSSQLHeader( str, state ) ;
+      break ;
+   case 1:
+      state = parseSSQLField( str, state ) ;
+      break ;
+   case 2:
+      state = parseSSQLEndHeader( str, state ) ;
+      break ;
+   case 3:
+   case 4:
+      state = parseSSQLContent( str, state ) ;
+      break ;
+   case 5:
+   case 6:
+      state = parseSSQLAttr( str, state ) ;
+      break ;
+   case 8:
+      state = parseSSQLResult( str, state ) ;
+   }
+   return state ;
+}
+
+//sql转义
+function sqlEscape( sql )
+{
+   sql = sql.replace( /\\/g, "\\\\" ) ;
+   return "'" + sql.replace( /'/g, "\\'" ) + "'" ;
+}

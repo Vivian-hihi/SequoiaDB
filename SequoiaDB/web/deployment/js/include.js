@@ -32,7 +32,7 @@ function htmlEncode( str )
 		str = str.replace( / /g, "&nbsp;" ) ;
 		return str ;
 	} ) ;
-	s = s.replace( /\'/g, "&#39;" ) ;
+	//s = s.replace( /\'/g, "&#39;" ) ;
 	s = s.replace( /\"/g, "&quot;" ) ;
 	s = s.replace( /\n/g, "<br>" ) ;
 	return s ;

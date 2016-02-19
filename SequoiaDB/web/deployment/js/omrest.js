@@ -247,3 +247,25 @@ function restQueryBusinessAuth( async, success, error, complete, businessName )
 	var data = { 'cmd': 'query business authority', 'filter': JSON.stringify( { 'BusinessName': businessName } ) } ;
 	ajaxSendMsg( data, async, restBeforeSend, success, error, complete ) ;
 }
+
+//发现业务
+function restDiscoveryModule( async, success, error, complete, clusterName, moduleName, moduleType, hostName, serviceName, installPath, dbName, user, pwd )
+{
+   var data = { 'cmd': 'discover business' } ;
+   if( moduleType == 'sequoiasql' )
+   {
+      data['ConfigInfo'] = JSON.stringify( { 'ClusterName': clusterName, 'BusinessType': moduleType, 'BusinessName': moduleName, 'BusinessInfo': { 'HostName': hostName, 'ServiceName': serviceName, 'InstallPath': installPath,'DbName': dbName, 'User': user, 'Passwd': pwd } } ) ;
+   }
+   else
+   {
+      data['ConfigInfo'] = JSON.stringify( { 'ClusterName': clusterName, 'BusinessType': moduleType, 'BusinessName': moduleName, 'BusinessInfo': { 'HostName': hostName, 'WebServicePort': serviceName } } ) ;
+   }
+	ajaxSendMsg( data, async, restBeforeSend, success, error, complete ) ;
+}
+
+//移除业务
+function restUndiscoverModule( async, success, error, complete, clusterName, moduleName )
+{
+   var data = { 'cmd': 'undiscover business', 'ClusterName': clusterName, 'BusinessName': moduleName } ;
+   ajaxSendMsg( data, async, restBeforeSend, success, error, complete ) ;
+}

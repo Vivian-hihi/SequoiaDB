@@ -1,4 +1,4 @@
-(function(){
+ï»¿(function(){
    var sacApp = window.SdbSacManagerModule ;
    sacApp.service( 'Graphics', function(){
       var g = this ;
@@ -10,7 +10,7 @@
          var width  = $( id ).width()  - offsetX ;
          var height = $( id ).height() - offsetY ;
          var rvArr = { id: id, offsetX: offsetX, offsetY: offsetY, round: round, data: data, ele: [] } ;
-         //´´½¨Ò»¸ö»­²¼
+         //åˆ›å»ºä¸€ä¸ªç”»å¸ƒ
          var paper = new Raphael( id, width, height ) ;
          rvArr['paper'] = paper ;
          function create( index, arg ){
@@ -26,31 +26,31 @@
             var name    = arg['name'] ;
             var percent = arg['percent'] ;
             var rv = {} ;
-            //Ô²ÖùÖ÷¸É
+            //åœ†æŸ±ä¸»å¹²
             rv['z1'] = paper.rect( offsetX, round + offsetY, width - offsetX - 1, height - round * 2 - offsetY ).
             attr( { 'stroke-width': 2, 'stroke-linecap': 'butt', 'stroke-linejoin': 'miter', 'stroke': color3, 'fill': color2, 'opacity': 1 } ) ;
-            //Ô²Öùµ×²¿
+            //åœ†æŸ±åº•éƒ¨
             rv['d'] = paper.ellipse( (width + offsetX)/2 - 1, height - round - 1, ( width - offsetX )/2 - 1, round ).
             attr( { 'stroke-width': 2, 'stroke-linecap': 'butt', 'stroke-linejoin': 'miter', 'stroke': color3, 'fill': color2, 'opacity': 1 } ) ;
-            //Ô²ÖùÖ÷¸É2
+            //åœ†æŸ±ä¸»å¹²2
             rv['z2'] = paper.rect( offsetX + 1, round + offsetY, width - offsetX - 3, height - round * 2 - offsetY - 2, 0 ).
             attr( { 'stroke-width': 0, 'fill': color2, 'opacity': 1 } ) ;
-            //Ô²ÖùÍ·
+            //åœ†æŸ±å¤´
             rv['t'] = paper.ellipse( (width + offsetX)/2 - 1, round + offsetY, ( width - offsetX )/2 - 1, round ).
             attr( { 'stroke-width': 2, 'stroke-linecap': 'butt', 'stroke-linejoin': 'miter', 'stroke': notLast ? color3 : '#F5F5F5', 'fill': color1, 'opacity': 1 } ) ;
-            //¼ýÍ·
+            //ç®­å¤´
             var pointX = width - 2 ;
             var pointY = height / 2 + offsetY / 2 + 5 ;
             rv['j'] = paper.path( 'M' + pointX + ',' + pointY + 'L' + ( pointX + 25 ) + ',' + ( pointY - 6 ) ).
             attr( { 'stroke-width': 2, 'stroke-linecap': 'butt', 'stroke-linejoin': 'miter', 'stroke': color2 } ) ;
-            //×ÖÌå
+            //å­—ä½“
             rv['f'] = paper.text( 0, 0, name + ' ' + ( percent * 100 ) + '%' ).
             attr( { 'fill': '#27A9E3', 'font-weight': 'bold' } ) ;
             var fontBox = rv['f'].getBBox() ;
             rv['f'].attr( { x: width + 29 + fontBox['width'] * 0.5, y: ( height / 2 + offsetY / 2 - 2 ) } ) ;
             return rv ;
          }
-         //Ô²ÖùÕæÕýµÄ¸ß¶È
+         //åœ†æŸ±çœŸæ­£çš„é«˜åº¦
          var height2 = height - ( round * 2 ) - offsetY ;
          var height3 = 0 ;
          var len = data.length ;
@@ -93,7 +93,7 @@
          var height = $( id ).height() - offsetY ;
          var paper  = arr['paper'] ;
          paper.setSize( width, height ) ;
-         //Ô²ÖùÕæÕýµÄ¸ß¶È
+         //åœ†æŸ±çœŸæ­£çš„é«˜åº¦
          var height2 = height - ( round * 2 ) - offsetY ;
          var height3 = 0 ;
          var len = data.length ;
@@ -109,19 +109,19 @@
             var notLast = arg['notLast'] ;
             var name    = arg['name'] ;
             var percent = arg['percent'] ;
-            //Ô²ÖùÖ÷¸É
+            //åœ†æŸ±ä¸»å¹²
             rv['z1'].attr( { 'width': width - offsetX - 1, 'height': height - round * 2 - offsetY } ) ;
-            //Ô²Öùµ×²¿
+            //åœ†æŸ±åº•éƒ¨
             rv['d'].attr( { 'cx': (width + offsetX)/2 - 1, 'cy': height - round - 1, 'rx': ( width - offsetX )/2 - 1 } ) ;
-            //Ô²ÖùÖ÷¸É2
+            //åœ†æŸ±ä¸»å¹²2
             rv['z2'].attr( { 'width': width - offsetX - 3, 'height': height - round * 2 - offsetY - 2 } ) ;
-            //Ô²ÖùÍ·
+            //åœ†æŸ±å¤´
             rv['t'].attr( { 'cx': (width + offsetX)/2 - 1, 'cy': round + offsetY, 'rx': ( width - offsetX )/2 - 1 } ) ;
-            //¼ýÍ·
+            //ç®­å¤´
             var pointX = width - 2 ;
             var pointY = height / 2 + offsetY / 2 + 5 ;
             rv['j'].attr( { 'path': 'M' + pointX + ' ' + pointY + 'L' + ( pointX + 25 ) + ' ' + ( pointY - 6 ) } ) ;
-            //×ÖÌå
+            //å­—ä½“
             var fontBox = rv['f'].getBBox() ;
             rv['f'].attr( { x: width + 29 + fontBox['width'] * 0.5, y: ( height / 2 + offsetY / 2 - 2 ) } ) ;
          }
