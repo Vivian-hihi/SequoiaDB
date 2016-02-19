@@ -2290,8 +2290,7 @@ static BOOLEAN sdbColumnTypesCompatible( sdbbson_type sdbbsonType, Oid columnTyp
    }
    case JSONOID :
    {
-      compatibleType = ( BSON_OBJECT == sdbbsonType ||
-                         BSON_ARRAY == sdbbsonType ) ;
+      compatibleType = TRUE ;
       break ;
    }
    default :
@@ -2443,44 +2442,23 @@ static Datum sdbColumnValue( sdbbson_iterator *sdbbsonIterator, Oid columnTypeId
    }
    case JSONOID :
    {
-      sdbbson_type type = sdbbson_iterator_type( sdbbsonIterator )  ;
-      if ( BSON_OBJECT == type || BSON_ARRAY == type )
-      {
-         INT32 length = 0 ;
-//         INT32 leftLength = 0 ;
-         CHAR *p = NULL ;
-//         CHAR *sprintP = NULL ;
-         sdbbson obj ;
-         text *result ;
-         StringInfo sBuf = makeStringInfo() ; 
-         sdbbson_init( &obj ) ;
+      INT32 length = 0 ;
+      CHAR *pBuff  = NULL ;
+      CHAR *pTemp  = NULL ;
+      Datum tmpResult ;
 
-         sdbbson_iterator_subobject( sdbbsonIterator, &obj ) ;
-         length = sdbbson_sprint_length( &obj ) ;
-//         leftLength = length ;
-         p = (CHAR *)palloc( length ) ;
-         if ( NULL == p )
-         {
-            ereport( ERROR,( errcode( ERRCODE_FDW_OUT_OF_MEMORY ),
-                         errmsg( "cannot malloc memory" ),
-                         errhint( "cannot malloc memory" ) ) ) ;
-         }
-//         sprintP = p ;
-//         memset( p, 0, length ) ;
-//         sdbbson_sprint_raw( &sprintP, &leftLength, obj.data, (BSON_OBJECT == type)) ;
-         sdbbson_sprint( p, length, &obj ) ;
-         appendStringInfoString( sBuf, p ) ;
-         result = cstring_to_text_with_len( sBuf->data, sBuf->len ) ;
-         columnValue = PointerGetDatum( result ) ;
-         sdbbson_destroy( &obj ) ;
-         pfree( p ) ;
-      }
-      else
+      length = sdbbson_sprint_length_iterator( sdbbsonIterator ) ;
+      pBuff = palloc0( length + 1 ) ;
+      if ( NULL == pBuff )
       {
-         ereport( ERROR,( errcode( ERRCODE_FDW_INVALID_DATA_TYPE_DESCRIPTORS ),
-                         errmsg( "invalid data type" ),
-                         errhint( "invalid data type %d", type ) ) ) ;
+         ereport( ERROR, ( errcode( ERRCODE_FDW_ERROR ),
+                  errmsg( "out of memory" ) ) ) ;
       }
+      pTemp = pBuff ;
+      sdbbson_sprint_iterator( &pTemp, &length, sdbbsonIterator, '"' ) ;
+      tmpResult = CStringGetTextDatum( pBuff ) ;
+      columnValue = PointerGetDatum( tmpResult ) ;
+
       break ;
    }
    default :
