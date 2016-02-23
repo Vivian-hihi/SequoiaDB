@@ -284,11 +284,11 @@ namespace engine
          INT32 rdvMinMax( pmdCfgExchange *pEX, UINT32 &value,
                           UINT32 minV, UINT32 maxV,
                           BOOLEAN autoAdjust = TRUE ) ;
-         INT32 rdvMinMax( pmdCfgExchange *pEX, UINT16 &value,
-                          UINT16 minV, UINT16 maxV,
-                          BOOLEAN autoAdjust = TRUE ) ;
          INT32 rdvMinMax( pmdCfgExchange *pEX, INT32 &value,
                           INT32 minV, INT32 maxV,
+                          BOOLEAN autoAdjust = TRUE ) ;
+         INT32 rdvMinMax( pmdCfgExchange *pEX, UINT16 &value,
+                          UINT16 minV, UINT16 maxV,
                           BOOLEAN autoAdjust = TRUE ) ;
          INT32 rdvMaxChar( pmdCfgExchange *pEX, CHAR *pValue,
                            UINT32 maxChar, BOOLEAN autoAdjust = TRUE ) ;
