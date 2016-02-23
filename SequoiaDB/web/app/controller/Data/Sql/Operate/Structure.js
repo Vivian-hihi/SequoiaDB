@@ -72,18 +72,18 @@
                   break ;
                }
             }
-            if( isEnd == true && state['status'] == 8 && state['rc'] == true )
+            if( isEnd == true && state['rc'] == true )
             {
                $scope.queryTableStruct() ;
             }
-            else if( isEnd == true && state['status'] == 8 && state['rc'] == false )
+            else if( isEnd == true && state['rc'] == false )
             {
                $scope.Components.Confirm.isShow = true ;
                $scope.Components.Confirm.type = 1 ;
                $scope.Components.Confirm.title = $scope.autoLanguage( '添加字段失败' ) ;
                $scope.Components.Confirm.okText = $scope.autoLanguage( '重试' ) ;
                $scope.Components.Confirm.closeText = $scope.autoLanguage( '取消' ) ;
-               $scope.Components.Confirm.context = sprintf( $scope.autoLanguage( '? 需要重试吗?' ), state['result'] ) ;
+               $scope.Components.Confirm.context = state['result'] ;
                $scope.Components.Confirm.ok = function(){
                   $scope.Components.Confirm.isShow = false ;
                   addColumn( sql ) ;
@@ -116,7 +116,7 @@
                $scope.Components.Confirm.title = $scope.autoLanguage( '删除字段失败' ) ;
                $scope.Components.Confirm.okText = $scope.autoLanguage( '重试' ) ;
                $scope.Components.Confirm.closeText = $scope.autoLanguage( '取消' ) ;
-               $scope.Components.Confirm.context = sprintf( $scope.autoLanguage( '? 需要重试吗?' ), state['result'] ) ;
+               $scope.Components.Confirm.context = state['result'] ;
                $scope.Components.Confirm.ok = function(){
                   $scope.Components.Confirm.isShow = false ;
                   dropColumn( sql ) ;
@@ -335,7 +335,7 @@
          } ;
          var state = { 'status': 0 } ;
          var sql = '\\d+ ' + tbName ;
-         sequoiasqlOperate( dbName, dbUser, dbPwd, sql, function( taskInfo ){
+         sequoiasqlOperate( dbName, dbUser, dbPwd, sql, function( taskInfo, isEnd ){
             for( var i = 0, k = 1; i < taskInfo.length; ++i )
             {
                state = parseSSQL( taskInfo[i]['Value'], state ) ;
@@ -362,12 +362,31 @@
                   break ;
                }
             }
-            $.each( state['attr'], function( index, attr ){
-               parseAppendOnly( attr ) ;
-            } ) ;
-            fieldGridData['tool']['left'][0]['text'] = $scope.sprintf( $scope.autoLanguage( '一共?个字段' ), fieldGridData['body'].length ) ;
-            $scope.fieldGridData = $.extend( true, {}, fieldGridData ) ;
-            $scope.$apply() ;
+            if( isEnd == true && state['rc'] == false )
+            {
+               $scope.Components.Confirm.isShow = true ;
+               $scope.Components.Confirm.type = 1 ;
+               $scope.Components.Confirm.title = $scope.autoLanguage( '获取数据库列表失败' ) ;
+               $scope.Components.Confirm.okText = $scope.autoLanguage( '重试' ) ;
+               $scope.Components.Confirm.closeText = $scope.autoLanguage( '取消' ) ;
+               $scope.Components.Confirm.context = state['result'] ;
+               $scope.Components.Confirm.ok = function(){
+                  $scope.Components.Confirm.isShow = false ;
+                  $scope.queryTableStruct() ;
+               }
+            }
+            if( isEnd == true )
+            {
+               if( typeof( state['attr'] ) != 'undefined' )
+               {
+                  $.each( state['attr'], function( index, attr ){
+                     parseAppendOnly( attr ) ;
+                  } ) ;
+               }
+               fieldGridData['tool']['left'][0]['text'] = $scope.sprintf( $scope.autoLanguage( '一共?个字段' ), fieldGridData['body'].length ) ;
+               $scope.fieldGridData = $.extend( true, {}, fieldGridData ) ;
+               $scope.$apply() ;
+            }
          } ) ;
       }
       $scope.queryTableStruct() ;

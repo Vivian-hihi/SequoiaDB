@@ -72,14 +72,14 @@
                   }
                }
             }
-            if( isEnd == true && state['status'] == 8 && state['rc'] == false )
+            if( isEnd == true && state['rc'] == false )
             {
                $scope.Components.Confirm.isShow = true ;
                $scope.Components.Confirm.type = 1 ;
                $scope.Components.Confirm.title = $scope.autoLanguage( '获取数据库列表失败' ) ;
                $scope.Components.Confirm.okText = $scope.autoLanguage( '重试' ) ;
                $scope.Components.Confirm.closeText = $scope.autoLanguage( '取消' ) ;
-               $scope.Components.Confirm.context = sprintf( $scope.autoLanguage( '? 需要重试吗?' ), state['result'] ) ;
+               $scope.Components.Confirm.context = state['result'] ;
                $scope.Components.Confirm.ok = function(){
                   $scope.Components.Confirm.isShow = false ;
                   queryDbList( needQueryTable ) ;
@@ -152,14 +152,14 @@
                }
             }
             $scope.GridData = gridData ;
-            if( isEnd == true && state['status'] == 8 && state['rc'] == false )
+            if( isEnd == true && state['rc'] == false )
             {
                $scope.Components.Confirm.isShow = true ;
                $scope.Components.Confirm.type = 1 ;
                $scope.Components.Confirm.title = $scope.autoLanguage( '获取数据表失败' ) ;
                $scope.Components.Confirm.okText = $scope.autoLanguage( '重试' ) ;
                $scope.Components.Confirm.closeText = $scope.autoLanguage( '取消' ) ;
-               $scope.Components.Confirm.context = sprintf( $scope.autoLanguage( '? 需要重试吗?' ), state['result'] ) ;
+               $scope.Components.Confirm.context = state['result'] ;
                $scope.Components.Confirm.ok = function(){
                   $scope.Components.Confirm.isShow = false ;
                   queryTable() ;
@@ -227,18 +227,18 @@
                   break ;
                }
             }
-            if( isEnd == true && state['status'] == 8 && state['rc'] == true )
+            if( isEnd == true && state['rc'] == true )
             {
                queryDbList( false ) ;
             }
-            else if( isEnd == true && state['status'] == 8 && state['rc'] == false )
+            else if( isEnd == true && state['rc'] == false )
             {
                $scope.Components.Confirm.isShow = true ;
                $scope.Components.Confirm.type = 1 ;
                $scope.Components.Confirm.title = $scope.autoLanguage( '创建数据库失败' ) ;
                $scope.Components.Confirm.okText = $scope.autoLanguage( '重试' ) ;
                $scope.Components.Confirm.closeText = $scope.autoLanguage( '取消' ) ;
-               $scope.Components.Confirm.context = sprintf( $scope.autoLanguage( '? 需要重试吗?' ), state['result'] ) ;
+               $scope.Components.Confirm.context = state['result'] ;
                $scope.Components.Confirm.ok = function(){
                   $scope.Components.Confirm.isShow = false ;
                   createDatabase( newDBName ) ;
@@ -265,18 +265,18 @@
                   break ;
                }
             }
-            if( isEnd == true && state['status'] == 8 && state['rc'] == true )
+            if( isEnd == true && state['rc'] == true )
             {
                queryDbList( false ) ;
             }
-            else if( isEnd == true && state['status'] == 8 && state['rc'] == false )
+            else if( isEnd == true && state['rc'] == false )
             {
                $scope.Components.Confirm.isShow = true ;
                $scope.Components.Confirm.type = 1 ;
                $scope.Components.Confirm.title = $scope.autoLanguage( '删除数据库失败' ) ;
                $scope.Components.Confirm.okText = $scope.autoLanguage( '重试' ) ;
                $scope.Components.Confirm.closeText = $scope.autoLanguage( '取消' ) ;
-               $scope.Components.Confirm.context = sprintf( $scope.autoLanguage( '? 需要重试吗?' ), state['result'] ) ;
+               $scope.Components.Confirm.context = state['result'] ;
                $scope.Components.Confirm.ok = function(){
                   $scope.Components.Confirm.isShow = false ;
                   dropDatabase( dropDBName ) ;
@@ -302,18 +302,18 @@
                   break ;
                }
             }
-            if( isEnd == true && state['status'] == 8 && state['rc'] == true )
+            if( isEnd == true && state['rc'] == true )
             {
                $scope.showTableInfo( index ) ;
             }
-            else if( isEnd == true && state['status'] == 8 && state['rc'] == false )
+            else if( isEnd == true && state['rc'] == false )
             {
                $scope.Components.Confirm.isShow = true ;
                $scope.Components.Confirm.type = 1 ;
                $scope.Components.Confirm.title = $scope.autoLanguage( '创建数据表失败' ) ;
                $scope.Components.Confirm.okText = $scope.autoLanguage( '重试' ) ;
                $scope.Components.Confirm.closeText = $scope.autoLanguage( '取消' ) ;
-               $scope.Components.Confirm.context = sprintf( $scope.autoLanguage( '? 需要重试吗?' ), state['result'] ) ;
+               $scope.Components.Confirm.context = state['result'] ;
                $scope.Components.Confirm.ok = function(){
                   $scope.Components.Confirm.isShow = false ;
                   createTable( sql, index ) ;
@@ -336,18 +336,18 @@
                   break ;
                }
             }
-            if( isEnd == true && state['status'] == 8 && state['rc'] == true )
+            if( isEnd == true && state['rc'] == true )
             {
                queryTable() ;
             }
-            else if( isEnd == true && state['status'] == 8 && state['rc'] == false )
+            else if( isEnd == true && state['rc'] == false )
             {
                $scope.Components.Confirm.isShow = true ;
                $scope.Components.Confirm.type = 1 ;
                $scope.Components.Confirm.title = $scope.autoLanguage( '删除数据表失败' ) ;
                $scope.Components.Confirm.okText = $scope.autoLanguage( '重试' ) ;
                $scope.Components.Confirm.closeText = $scope.autoLanguage( '取消' ) ;
-               $scope.Components.Confirm.context = sprintf( $scope.autoLanguage( '? 需要重试吗?' ), state['result'] ) ;
+               $scope.Components.Confirm.context = state['result'] ;
                $scope.Components.Confirm.ok = function(){
                   $scope.Components.Confirm.isShow = false ;
                   dropTable( dropTBName ) ;

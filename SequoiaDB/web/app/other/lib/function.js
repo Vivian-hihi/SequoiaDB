@@ -934,6 +934,11 @@ function parseSSQL( str, state )
             state['result'] += ', ' ;
          }
          state['result'] += result ;
+         if( result.indexOf( 'LINE ' ) == 0 )
+         {
+            state['status'] = 0 ;
+            state['rc'] = false ;
+         }
       }
       return state ;
    }

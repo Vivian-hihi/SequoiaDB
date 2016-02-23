@@ -99,7 +99,7 @@
             }
             if( isEnd == true )
             {
-               if( state['status'] == 8 && state['rc'] == false )
+               if( state['rc'] == false )
                {
                   $scope.execRc = false ;
                   $scope.execResult = sprintf( '? ?', timeFormat( new Date(), 'hh:mm:ss' ), state['result'] ) ;
@@ -295,7 +295,7 @@
       //获取表结构
       var state = { 'status': 0 } ;
       var sql = '\\d+ ' + tbName ;
-      sequoiasqlOperate( dbName, dbUser, dbPwd, sql, function( taskInfo ){
+      sequoiasqlOperate( dbName, dbUser, dbPwd, sql, function( taskInfo, isEnd ){
          var length = taskInfo.length ;
          for( var i = 0, k = 0; i < length; ++i )
          {
@@ -337,6 +337,19 @@
             if( state['status'] == 7 )
             {
                break ;
+            }
+         }
+         if( isEnd == true && state['rc'] == false )
+         {
+            $scope.Components.Confirm.isShow = true ;
+            $scope.Components.Confirm.type = 1 ;
+            $scope.Components.Confirm.title = $scope.autoLanguage( '获取数据库列表失败' ) ;
+            $scope.Components.Confirm.okText = $scope.autoLanguage( '重试' ) ;
+            $scope.Components.Confirm.closeText = $scope.autoLanguage( '取消' ) ;
+            $scope.Components.Confirm.context = state['result'] ;
+            $scope.Components.Confirm.ok = function(){
+               $scope.Components.Confirm.isShow = false ;
+               $scope.queryTableStruct() ;
             }
          }
       } ) ;
