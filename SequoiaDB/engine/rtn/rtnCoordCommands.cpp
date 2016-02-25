@@ -3353,15 +3353,15 @@ namespace engine
          }
       }
 
-      if ( SDB_OK != rc )
-      {
-         goto error ;
-      }
-
       /// do not care rc.
       if ( CATALOG_GROUPID == groupInfo->groupID() )
       {
          rtnCataChangeNtyToAllNodes( cb ) ;
+      }
+
+      if ( SDB_OK != rc )
+      {
+         goto error ;
       }
 
    done:
