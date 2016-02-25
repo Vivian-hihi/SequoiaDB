@@ -87,6 +87,7 @@ namespace engine
       CHAR _host[OSS_MAX_HOSTNAME+1] ;
       std::string _service[MSG_ROUTE_SERVICE_TYPE_MAX] ;
       MsgRouteID _id ;
+      BOOLEAN  _isActive ;
 
    private:
       SINT32 _status;     // make sure the addr of _status is aligned 4 bytes,
@@ -99,6 +100,7 @@ namespace engine
        _faultTime( 0 )
       {
          _id.value = MSG_INVALID_ROUTEID ;
+         _isActive = TRUE ;
          _host[0] = 0 ;
       }
       _netRouteNode( const _netRouteNode &node )
@@ -107,6 +109,7 @@ namespace engine
          SDB_ASSERT( (UINT64)&_status % 4 == 0,
                      "the addr of _status must be aligned 4 bytes!" );
          _id = node._id ;
+         _isActive = node._isActive ;
          ossMemcpy( _host, node._host, OSS_MAX_HOSTNAME+1 ) ;
          for ( UINT32 i = 0; i < MSG_ROUTE_SERVICE_TYPE_MAX; i++ )
          {
@@ -117,6 +120,7 @@ namespace engine
       const _netRouteNode &operator=(const _netRouteNode &node )
       {
          _id = node._id ;
+         _isActive = node._isActive ;
          _status = node._status ;
          ossMemcpy( _host, node._host, OSS_MAX_HOSTNAME+1 ) ;
          for ( UINT32 i = 0; i < MSG_ROUTE_SERVICE_TYPE_MAX; i++ )

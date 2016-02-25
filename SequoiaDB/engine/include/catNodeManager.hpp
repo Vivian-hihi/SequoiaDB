@@ -98,8 +98,8 @@ namespace engine
                                BSONObj &boGroupInfo );
       INT32 saveGroupInfo ( BSONObj &boGroupInfo, INT16 w );
       INT32 parseIDInfo( BSONObj &obj );
-      INT32 getNodeInfo( const BSONObj &boReq,
-                         BSONObj &boNodeInfo );
+      INT32 getNodeInfo( const BSONObj &boReq, BSONObj &boNodeInfo,
+                         INT32 &role ) ;
       INT32 removeGrp( const CHAR *groupName ) ;
       INT32 activeGrp( const std::string &strGroupName,
                        UINT32 groupID,
@@ -107,6 +107,10 @@ namespace engine
 
       INT32 _count( const CHAR *collection, const BSONObj &matcher,
                     UINT64 &count ) ;
+
+      INT32 _checkAndUpdateNodeInfo( const BSONObj &reqObj,
+                                     INT32 role,
+                                     const BSONObj &nodeObj ) ;
 
    protected:
       void  _fillRspHeader( MsgHeader *rspMsg, const MsgHeader *reqMsg ) ;
@@ -119,7 +123,8 @@ namespace engine
       INT32 _addNodeToGrp ( BSONObj &boGroupInfo, BSONObj &boNodeInfo,
                             UINT16 nodeID ) ;
       INT32 _updateNodeToGrp ( BSONObj &boGroupInfo, BSONObj &boNodeInfoNew,
-                               UINT16 nodeID, BOOLEAN isLoalConn ) ;
+                               UINT16 nodeID, BOOLEAN isLoalConn,
+                               BOOLEAN setStatus ) ;
       INT32 _getRemovedGroupsObj( const BSONObj &srcGroupsObj,
                                   UINT16 removeNode,
                                   BSONObj &removedObj,

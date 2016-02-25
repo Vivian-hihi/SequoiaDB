@@ -1370,29 +1370,51 @@ namespace engine
 
       bsonBuilder.append ( CAT_TYPE_FIELD_NAME,  (INT32)(pKRCB->getDBRole()) ) ;
       bsonBuilder.append ( CAT_HOST_FIELD_NAME, hostName ) ;
+      bsonBuilder.append ( PMD_OPTION_DBPATH, pKRCB->getDBPath() ) ;
 
-      BSONArrayBuilder arrayBuilder ;
-      BSONObjBuilder subBuilderRepl, subBuilderShd ;
+      BSONArrayBuilder subServiceBuild( bsonBuilder.subarrayStart(
+         CAT_SERVICE_FIELD_NAME ) ) ;
 
-      subBuilderRepl.append ( CAT_SERVICE_TYPE_FIELD_NAME ,
-                              (INT32)_replServiceID ) ;
-      subBuilderRepl.append ( CAT_SERVICE_NAME_FIELD_NAME,
-                              _replServiceName ) ;
-      arrayBuilder.append( subBuilderRepl.obj() ) ;
+      /// local
+      BSONObjBuilder subLocalBuild( subServiceBuild.subobjStart() ) ;
+      subLocalBuild.append ( CAT_SERVICE_TYPE_FIELD_NAME ,
+                            (INT32)MSG_ROUTE_LOCAL_SERVICE ) ;
+      subLocalBuild.append ( CAT_SERVICE_NAME_FIELD_NAME,
+                            pKRCB->getSvcname() ) ;
+      subLocalBuild.done() ;
 
-      subBuilderShd.append ( CAT_SERVICE_TYPE_FIELD_NAME ,
-                             (INT32)_shardServiceID) ;
-      subBuilderShd.append ( CAT_SERVICE_NAME_FIELD_NAME,
-                             _shdServiceName) ;
-      arrayBuilder.append( subBuilderShd.obj() ) ;
+      /// repl
+      BSONObjBuilder subReplBuild( subServiceBuild.subobjStart() ) ;
+      subReplBuild.append ( CAT_SERVICE_TYPE_FIELD_NAME ,
+                            (INT32)_replServiceID ) ;
+      subReplBuild.append ( CAT_SERVICE_NAME_FIELD_NAME,
+                            _replServiceName ) ;
+      subReplBuild.done() ;
 
-      bsonBuilder.appendArray ( CAT_SERVICE_FIELD_NAME, arrayBuilder.arr() ) ;
+      /// shard
+      BSONObjBuilder subShdBuild( subServiceBuild.subobjStart() ) ;
+      subShdBuild.append ( CAT_SERVICE_TYPE_FIELD_NAME ,
+                           (INT32)_shardServiceID) ;
+      subShdBuild.append ( CAT_SERVICE_NAME_FIELD_NAME,
+                           _shdServiceName) ;
+      subShdBuild.done() ;
+
+      /// cata
+      BSONObjBuilder subCataBuild( subServiceBuild.subobjStart() ) ;
+      subCataBuild.append ( CAT_SERVICE_TYPE_FIELD_NAME ,
+                            (INT32)MSG_ROUTE_CAT_SERVICE ) ;
+      subCataBuild.append ( CAT_SERVICE_NAME_FIELD_NAME,
+                            pKRCB->getOptionCB()->catService() ) ;
+      subCataBuild.done() ;
+
+      subServiceBuild.done() ;
 
       // append IP address
       ossIPInfo ipInfo ;
       if ( ipInfo.getIPNum() > 0 )
       {
-         BSONArrayBuilder ipArray ;
+         BSONArrayBuilder subIPBuild( bsonBuilder.subarrayStart(
+            CAT_IP_FIELD_NAME ) ) ;
 
          ossIP* ip = ipInfo.getIPs() ;
          for ( INT32 i = ipInfo.getIPNum(); i > 0; i-- )
@@ -1401,16 +1423,16 @@ namespace engine
             if (0 != ossStrncmp( ip->ipAddr, OSS_LOOPBACK_IP,
                                  ossStrlen(OSS_LOOPBACK_IP)) )
             {
-               ipArray.append( ip->ipAddr ) ;
+               subIPBuild.append( ip->ipAddr ) ;
             }
             ip++ ;
          }
 
          // support 'localhost' and '127.0.0.1' for node's hostname
-         ipArray.append( OSS_LOOPBACK_IP ) ;
-         ipArray.append( OSS_LOCALHOST ) ;
+         subIPBuild.append( OSS_LOOPBACK_IP ) ;
+         subIPBuild.append( OSS_LOCALHOST ) ;
 
-         bsonBuilder.appendArray ( CAT_IP_FIELD_NAME, ipArray.arr() ) ;
+         subIPBuild.done() ;
       }
 
       BSONObj regObj = bsonBuilder.obj () ;

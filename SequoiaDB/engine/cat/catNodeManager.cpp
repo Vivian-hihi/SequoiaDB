@@ -500,6 +500,7 @@ namespace engine
       MsgCatRegisterReq *pRegReq = (MsgCatRegisterReq *)pMsg ;
       PD_TRACE_ENTRY ( SDB_CATNODEMGR_REGREQ ) ;
       BSONObj boNodeInfo ;
+      INT32 realRole = SDB_ROLE_DATA ;
 
       /// fill reply header
       _fillRspHeader( &replyHeader.header, pMsg ) ;
@@ -536,13 +537,30 @@ namespace engine
                 "service deactive but received register-request:%s",
                 boReq.toString().c_str() );
 
-      rc = getNodeInfo( boReq, boNodeInfo );
+      rc = getNodeInfo( boReq, boNodeInfo, realRole );
       if ( rc )
       {
          PD_LOG ( PDERROR, "Failed to get node-info:%s (rc=%d)",
                   boReq.toString().c_str(), rc );
-         rc = SDB_CAT_AUTH_FAILED ;
+         rc = ( SDB_CLS_NODE_NOT_EXIST == rc ) ? SDB_CAT_AUTH_FAILED : rc ;
          goto error;
+      }
+      else if ( realRole != nodeRole )
+      {
+         PD_LOG( PDERROR, "The register node role[%d] is unexpected[%d]",
+                 nodeRole, realRole ) ;
+         rc = SDB_CAT_AUTH_FAILED ;
+         goto error ;
+      }
+
+      rc = _checkAndUpdateNodeInfo( boReq, realRole, boNodeInfo ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Check and update node info failed, rc: %d, "
+                 "request obj: %s, node obj: %s", rc,
+                 boReq.toString().c_str(), boNodeInfo.toString().c_str() ) ;
+         rc = ( SDB_CLS_NODE_NOT_EXIST == rc ) ? SDB_CAT_AUTH_FAILED : rc ;
+         goto error ;
       }
 
       // build the response message
@@ -567,6 +585,85 @@ namespace engine
       return rc;
    error:
       replyHeader.flags = rc ;
+      goto done ;
+   }
+
+   INT32 catNodeManager::_checkAndUpdateNodeInfo( const BSONObj &reqObj,
+                                                  INT32 role,
+                                                  const BSONObj &nodeObj )
+   {
+      INT32 rc = SDB_OK ;
+
+      /// check local, repl, cata service.
+      /// shard has alread check in getNodeInfo
+      BSONElement beSvcL = reqObj.getField( CAT_SERVICE_FIELD_NAME ) ;
+      BSONElement beSvcR = nodeObj.getField( CAT_SERVICE_FIELD_NAME ) ;
+
+      const CHAR *pSvcL = NULL ;
+      const CHAR *pSvcR = NULL ;
+
+      /// local
+      pSvcL = getServiceName( beSvcL, MSG_ROUTE_LOCAL_SERVICE ) ;
+      pSvcR = getServiceName( beSvcR, MSG_ROUTE_LOCAL_SERVICE ) ;
+      if ( 0 != ossStrcmp( pSvcL, pSvcR ) )
+      {
+         PD_LOG( PDERROR, "Local service is not the same" ) ;
+         rc = SDB_CLS_NODE_NOT_EXIST ;
+         goto error ;
+      }
+
+      /// repl
+      pSvcL = getServiceName( beSvcL, MSG_ROUTE_REPL_SERVICE ) ;
+      pSvcR = getServiceName( beSvcR, MSG_ROUTE_REPL_SERVICE ) ;
+      if ( 0 != ossStrcmp( pSvcL, pSvcR ) )
+      {
+         PD_LOG( PDERROR, "Repl service is not the same" ) ;
+         rc = SDB_CLS_NODE_NOT_EXIST ;
+         goto error ;
+      }
+
+      /// cat
+      if ( role == SDB_ROLE_CATALOG )
+      {
+         pSvcL = getServiceName( beSvcL, MSG_ROUTE_CAT_SERVICE ) ;
+         pSvcR = getServiceName( beSvcR, MSG_ROUTE_CAT_SERVICE ) ;
+         if ( 0 != ossStrcmp( pSvcL, pSvcR ) )
+         {
+            PD_LOG( PDERROR, "Cat service is not the same" ) ;
+            rc = SDB_CLS_NODE_NOT_EXIST ;
+            goto error ;
+         }
+      }
+
+      /// update dbpath and status
+      {
+         BSONObj groupInfo ;
+         INT32 nodeID = CAT_INVALID_NODEID ;
+         BSONObj seletor ;
+
+         BSONElement beDbpath = reqObj.getField( PMD_OPTION_DBPATH ) ;
+         if ( String == beDbpath.type() )
+         {
+            seletor = BSON( PMD_OPTION_DBPATH << beDbpath.valuestr() ) ;
+         }
+
+         rc = rtnGetIntElement( nodeObj, FIELD_NAME_NODEID, nodeID ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to get field[%s], rc: %d",
+                      FIELD_NAME_NODEID, rc ) ;
+
+         rc = catGetGroupObj( (UINT16)nodeID, groupInfo, _pEduCB ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to get group info by nodeid[%d], "
+                      "rc: %d", nodeID, rc ) ;
+
+         rc = _updateNodeToGrp( groupInfo, seletor, (UINT16)nodeID,
+                                TRUE, TRUE ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to update node to group, rc: %d",
+                      rc ) ;
+      }
+
+   done:
+      return rc ;
+   error:
       goto done ;
    }
 
@@ -782,7 +879,7 @@ namespace engine
                       "rc: %d", nodeID, rc ) ;
 
          rc = _updateNodeToGrp( groupInfo, seletor, (UINT16)nodeID,
-                                isLocalConnection ) ;
+                                isLocalConnection, FALSE ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to update node to group, rc: %d",
                       rc ) ;
       }
@@ -1492,7 +1589,9 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CATNODEMGR_GETNODEINFO, "catNodeManager::getNodeInfo" )
-   INT32 catNodeManager::getNodeInfo( const BSONObj &boReq, BSONObj &boNodeInfo )
+   INT32 catNodeManager::getNodeInfo( const BSONObj &boReq,
+                                      BSONObj &boNodeInfo,
+                                      INT32 &role )
    {
       INT32 rc                         = SDB_OK;
       SINT64 sContextID                = -1;
@@ -1514,24 +1613,23 @@ namespace engine
          BSONElement beHostName = boReq.getField( CAT_HOST_FIELD_NAME);
          if ( beHostName.type()!=String )
          {
-            PD_LOG ( PDERROR,
-                     "failed to get the field: %s", CAT_HOST_FIELD_NAME );
+            PD_LOG ( PDERROR, "Failed to get the field: %s",
+                     CAT_HOST_FIELD_NAME );
             rc = SDB_INVALIDARG ;
             goto error ;
          }
          BSONElement beServiceName = boReq.getField( CAT_SERVICE_FIELD_NAME );
          if ( beServiceName.type()!=Array )
          {
-            PD_LOG( PDERROR,
-                    "failed to get the field: %s", CAT_SERVICE_FIELD_NAME );
+            PD_LOG( PDERROR, "Failed to get the field: %s",
+                    CAT_SERVICE_FIELD_NAME );
             rc = SDB_INVALIDARG ;
             goto error ;
          }
          strShardServiceName = getShardServiceName ( beServiceName ) ;
          if ( !strShardServiceName || strShardServiceName[0] == '\0' )
          {
-            PD_LOG( PDERROR,
-                    "failed to get the shard service name" );
+            PD_LOG( PDERROR, "Failed to get the shard service name" ) ;
             rc = SDB_INVALIDARG ;
             goto error ;
          }
@@ -1539,9 +1637,8 @@ namespace engine
          if ( beHostIP.type() == Array )
          {
             BSONArrayBuilder hostNameArrayBuilder;
-
-            hostNameArrayBuilder.append( BSON(CAT_MATCHER_HOST_NAME << beHostName.valuestr()));
-
+            hostNameArrayBuilder.append( BSON( CAT_MATCHER_HOST_NAME <<
+                                               beHostName.valuestr() ) );
             BSONObjIterator iter( beHostIP.embeddedObject() );
             while ( iter.more() )
             {
@@ -1550,34 +1647,33 @@ namespace engine
                {
                   continue;
                }
-
-               hostNameArrayBuilder.append( BSON(CAT_MATCHER_HOST_NAME << ip.valuestr()));
+               hostNameArrayBuilder.append( BSON( CAT_MATCHER_HOST_NAME <<
+                                                  ip.valuestr() ) ) ;
             }
-
             //{Group:{$elemMatch:{ $or:[{HostName:***},{HostName:*ip*},***], Service.Name:***}}}
             boMatcher = BSON( FIELD_NAME_GROUP
                               << BSON("$elemMatch"
                                     << BSON( "$or" << hostNameArrayBuilder.arr()
-                                          << CAT_MATCHER_SERVICE_NAME
-                                             << strShardServiceName )));
+                                       << CAT_MATCHER_SERVICE_NAME
+                                       << strShardServiceName ) ) );
          }
          else
          {
             //{Group:{$elemMatch:{HostName:*****, Service.Name:****}}}
             boMatcher = BSON( FIELD_NAME_GROUP
                               << BSON("$elemMatch"
-                                    << BSON(CAT_MATCHER_HOST_NAME
+                                    << BSON( CAT_MATCHER_HOST_NAME
                                              << beHostName.valuestr()
                                           << CAT_MATCHER_SERVICE_NAME
-                                             << strShardServiceName )));
+                                          << strShardServiceName ) ) ) ;
          }
 
          // copy collection name into buffer
-         ossStrncpy( szBuf, CAT_NODE_INFO_COLLECTION, OP_MAXNAMELENGTH);
+         ossStrncpy( szBuf, CAT_NODE_INFO_COLLECTION, OP_MAXNAMELENGTH ) ;
          // perform query
          rc = rtnQuery ( szBuf, boSelector, boMatcher,
-                         boOrderBy, boHint, 0, _pEduCB, 0, -1, _pDmsCB,
-                         _pRtnCB, sContextID);
+                         boOrderBy, boHint, 0, _pEduCB, 0, 1, _pDmsCB,
+                         _pRtnCB, sContextID ) ;
          if ( rc )
          {
             PD_LOG ( PDERROR, "Failed to query from collection %s, rc = %d",
@@ -1586,8 +1682,7 @@ namespace engine
          }
          // we only call GetMore ONCE, so we have to manually destroy
          // context id
-         rc = rtnGetMore( sContextID, 1, buffObj, _pEduCB,
-                          _pRtnCB );
+         rc = rtnGetMore( sContextID, 1, buffObj, _pEduCB, _pRtnCB ) ;
          if ( rc )
          {
             if ( SDB_DMS_EOC != rc )
@@ -1606,16 +1701,16 @@ namespace engine
 
          // when we read at least one record, let's extract the record
          {
-            BSONObj boGrpInfo ( buffObj.data() );
+            BSONObj boGrpInfo ( buffObj.data() ) ;
             PD_TRACE1 ( SDB_CATNODEMGR_GETNODEINFO,
                         PD_PACK_STRING ( boGrpInfo.toString().c_str() ) ) ;
             // first let's get all elements in the group
             BSONElement beGroup = boGrpInfo.getField( CAT_GROUP_NAME );
             // make sure it exists and array type
-            if ( !beGroup.eoo() && beGroup.type()==Array )
+            if ( beGroup.type() == Array )
             {
-               BSONObjIterator i(beGroup.embeddedObject());
-               BSONObj boTmp;
+               BSONObjIterator i( beGroup.embeddedObject() ) ;
+               BSONObj boTmp ;
                // loop for each element in group
                while( i.more() )
                {
@@ -1624,8 +1719,7 @@ namespace engine
                   if ( beTmp.type() != Object )
                   {
                      rc = SDB_CAT_CORRUPTION ;
-                     PD_LOG ( PDERROR,
-                              "Field is not Object: %s",
+                     PD_LOG ( PDERROR, "Field is not Object: %s",
                               beTmp.toString().c_str() ) ;
                      goto error ;
                   }
@@ -1633,17 +1727,16 @@ namespace engine
                      boTmp = beTmp.embeddedObject();
                      // get hostname
                      BSONElement beHostNameTmp =
-                           boTmp.getField( CAT_HOST_FIELD_NAME );
+                        boTmp.getField( CAT_HOST_FIELD_NAME );
                      BSONElement beServiceTmp =
-                           boTmp.getField( CAT_SERVICE_FIELD_NAME );
+                        boTmp.getField( CAT_SERVICE_FIELD_NAME );
                      // make sure host name exists
-                     if ( beHostNameTmp.eoo() || beHostNameTmp.type()!= String )
+                     if ( beHostNameTmp.type() != String )
                      {
                         // if we do not have such field, catalog is corrupted
                         rc = SDB_CAT_CORRUPTION ;
-                        PD_LOG( PDERROR,
-                                "failed to get the field: %s",
-                                CAT_HOST_FIELD_NAME );
+                        PD_LOG( PDERROR, "Failed to get the field: %s",
+                                CAT_HOST_FIELD_NAME ) ;
                         goto error ;
                      }
                      // if it's not the host we want to find, let's continue the
@@ -1662,15 +1755,14 @@ namespace engine
                         while ( iter.more() )
                         {
                            BSONElement ip = iter.next();
-                           if (ip.type() != String)
+                           if ( ip.type() != String )
                            {
                               continue ;
                            }
-
                            if (ossStrcmp ( beHostNameTmp.valuestr(),
-                                      ip.valuestr() ) == 0 )
+                                           ip.valuestr() ) == 0 )
                            {
-                              isIP = TRUE;
+                              isIP = TRUE ;
                               break;
                            }
                         }
@@ -1681,22 +1773,20 @@ namespace engine
                         }
                      }
                      // make sure the service name is also array
-                     if ( beServiceTmp.eoo() || beServiceTmp.type()!=Array )
+                     if ( beServiceTmp.type() != Array )
                      {
                         rc = SDB_CAT_CORRUPTION ;
-                        PD_LOG( PDERROR,
-                                "failed to get the field: %s",
+                        PD_LOG( PDERROR, "Failed to get the field: %s",
                                 CAT_HOST_FIELD_NAME );
                         goto error ;
                      }
-                     strShardServiceNameTmp = getShardServiceName
-                           ( beServiceTmp ) ;
+                     strShardServiceNameTmp = getShardServiceName(beServiceTmp);
                      if ( !strShardServiceNameTmp ||
-                           strShardServiceNameTmp[0] == '\0' )
+                          strShardServiceNameTmp[0] == '\0' )
                      {
                         rc = SDB_CAT_CORRUPTION ;
                         PD_LOG( PDERROR,
-                                "failed to get the shard service name" );
+                                "Failed to get the shard service name" );
                         goto error ;
                      }
                      // if both hostname + service name matches, let's mark
@@ -1710,25 +1800,31 @@ namespace engine
                   }
                } // while ( i.more() )
 
-               //got the node-info
+               SDB_ASSERT( found, "Found must be TRUE" ) ;
+               /// got the node-info
                if ( found )
                {
                   //build response
                   BSONObjBuilder bobNodeInfo;
-                  bobNodeInfo.append( boGrpInfo.getField(CAT_TYPE_FIELD_NAME) );
-                  bobNodeInfo.append( boGrpInfo.getField(CAT_GROUPID_NAME) );
-                  bobNodeInfo.append( boTmp.getField(CAT_HOST_FIELD_NAME) );
-                  bobNodeInfo.append( boTmp.getField(CAT_NODEID_NAME) );
-                  bobNodeInfo.append( boTmp.getField(CAT_SERVICE_FIELD_NAME) );
-                  boNodeInfo = bobNodeInfo.obj();
+                  bobNodeInfo.append( boGrpInfo.getField(CAT_GROUPID_NAME) ) ;
+                  bobNodeInfo.append( boGrpInfo.getField(CAT_GROUPNAME_NAME) ) ;
+                  bobNodeInfo.append( boGrpInfo.getField(CAT_ROLE_NAME) ) ;
+                  bobNodeInfo.appendElements( boTmp ) ;
+                  boNodeInfo = bobNodeInfo.obj() ;
+                  role = boGrpInfo.getField(CAT_ROLE_NAME).numberInt() ;
+               }
+               else
+               {
+                  PD_LOG( PDERROR, "Unknow system error" ) ;
+                  rc = SDB_SYS ;
+                  goto error ;
                }
             } // if ( !beGroup.eoo() && beGroup.type()==Array )
          }
       }
       catch ( std::exception &e )
       {
-         PD_LOG ( PDERROR,
-                  "unexpected exception: %s", e.what() ) ;
+         PD_LOG ( PDERROR, "unexpected exception: %s", e.what() ) ;
          rc = SDB_CAT_CORRUPTION ;
       }
 
@@ -1739,7 +1835,7 @@ namespace engine
          _pRtnCB->contextDelete ( sContextID, _pEduCB ) ;
       }
       PD_TRACE_EXITRC ( SDB_CATNODEMGR_GETNODEINFO, rc ) ;
-      return rc;
+      return rc ;
    error :
       goto done ;
    }
@@ -2133,7 +2229,7 @@ namespace engine
 
          /// when we do forceStepUp, rtnUpdate may return SDB_CLS_WAIT_SYNC_FAILED
          /// if do not set it with 1.
-         w = repl->isInStepUp() ? 1 : _majoritySize() ;
+         w = ( forced || repl->isInStepUp() ) ? 1 : _majoritySize() ;
 
          updateBuilder.append("$inc", BSON( FIELD_NAME_VERSION << 1 ) ) ;
          updateBuilder.append("$set", BSON( FIELD_NAME_GROUP <<
@@ -2281,6 +2377,7 @@ namespace engine
       rc = _checkNodeInfo( boNodeInfo, nodeRole, &newObjBuilder ) ;
       PD_RC_CHECK( rc, PDERROR, "Check node info failed, rc: %d", rc ) ;
       newObjBuilder.append( FIELD_NAME_NODEID, nodeID ) ;
+      newObjBuilder.append( FIELD_NAME_STATUS, (INT32)SDB_CAT_GRP_DEACTIVE ) ;
       newInfoObj = newObjBuilder.obj() ;
 
       rc = rtnGetStringElement( boGroupInfo, FIELD_NAME_GROUPNAME,
@@ -2311,7 +2408,8 @@ namespace engine
    INT32 catNodeManager::_updateNodeToGrp ( BSONObj &boGroupInfo,
                                             BSONObj &boNodeInfoNew,
                                             UINT16 nodeID,
-                                            BOOLEAN isLoalConn )
+                                            BOOLEAN isLoalConn,
+                                            BOOLEAN setStatus )
    {
       INT32 rc = SDB_OK ;
       INT32 nodeRole = SDB_ROLE_DATA ;
@@ -2320,6 +2418,7 @@ namespace engine
       BSONObj oldInfoObj ;
       BSONObj newInfoObj ;
       BSONArrayBuilder newGroupsBuild ;
+      BOOLEAN incVer = FALSE ;
 
       BSONObjBuilder updateBuilder ;
       BSONObj updator, matcher ;
@@ -2369,22 +2468,45 @@ namespace engine
 
       // merge new and old
       {
+         BOOLEAN modifyNum = 0 ;
          BSONObjBuilder mergeBuild ;
          mergeBuild.append( FIELD_NAME_HOST, hostName ) ;
+
+         BSONElement beStatus = oldInfoObj.getField( FIELD_NAME_STATUS ) ;
+         if ( setStatus && beStatus.numberInt() != SDB_CAT_GRP_ACTIVE )
+         {
+            mergeBuild.append( FIELD_NAME_STATUS, (INT32)SDB_CAT_GRP_ACTIVE ) ;
+            if ( !beStatus.eoo() )
+            {
+               incVer = TRUE ;
+            }
+            ++modifyNum ;
+         }
+         else
+         {
+            mergeBuild.append( beStatus ) ;
+         }
 
          BSONObjIterator itr( oldInfoObj ) ;
          while ( itr.more() )
          {
             BSONElement e = itr.next() ;
             if ( 0 == ossStrcmp( e.fieldName(), FIELD_NAME_HOST ) ||
-                 0 == ossStrcmp( e.fieldName(), FIELD_NAME_NODEID ) )
+                 0 == ossStrcmp( e.fieldName(), FIELD_NAME_NODEID ) ||
+                 0 == ossStrcmp( e.fieldName(), FIELD_NAME_STATUS ) )
             {
                continue ;
             }
+
             BSONElement newEle = boNodeInfoNew.getField( e.fieldName() ) ;
-            if ( !newEle.eoo() )
+            if ( !newEle.eoo() && 0 != newEle.woCompare( e, false ) )
             {
                mergeBuild.append( newEle ) ;
+               ++modifyNum ;
+               if ( 0 == ossStrcmp( e.fieldName(), FIELD_NAME_SERVICE ) )
+               {
+                  incVer = TRUE ;
+               }
             }
             else
             {
@@ -2393,16 +2515,22 @@ namespace engine
          }
          mergeBuild.append( FIELD_NAME_NODEID, nodeID ) ;
          newInfoObj = mergeBuild.obj() ;
-      }
 
-      rc = _checkNodeInfo( newInfoObj, nodeRole, NULL ) ;
-      PD_RC_CHECK( rc, PDERROR, "Check node info failed, rc: %d", rc ) ;
+         /// nothing change
+         if ( 0 == modifyNum )
+         {
+            goto done ;
+         }
+      }
 
       // append new node info
       newGroupsBuild.append( newInfoObj ) ;
 
       // update group info
-      updateBuilder.append("$inc", BSON( FIELD_NAME_VERSION << 1 ) ) ;
+      if ( incVer )
+      {
+         updateBuilder.append("$inc", BSON( FIELD_NAME_VERSION << 1 ) ) ;
+      }
       updateBuilder.append("$set", BSON( FIELD_NAME_GROUP <<
                             newGroupsBuild.arr() ) ) ;
 
@@ -2471,7 +2599,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       const CHAR *tmpHostName = NULL ;
       BOOLEAN exist = FALSE ;
-      string strSvcName ;
+      const CHAR *pSvcNameTmp = NULL ;
 
       BSONObjIterator i( srcGroupsObj ) ;
       while ( i.more() )
@@ -2491,7 +2619,6 @@ namespace engine
          // sevice
          else
          {
-            strSvcName = "" ;
             BSONElement beService = boNode.getField( FIELD_NAME_SERVICE ) ;
             if ( beService.eoo() || Array != beService.type() )
             {
@@ -2500,9 +2627,9 @@ namespace engine
                        FIELD_NAME_SERVICE, beService.type() ) ;
                goto error ;
             }
-            strSvcName = getServiceName( beService, MSG_ROUTE_LOCAL_SERVICE ) ;
+            pSvcNameTmp = getServiceName( beService, MSG_ROUTE_LOCAL_SERVICE ) ;
 
-            if ( 0 == ossStrcmp( serviceName, strSvcName.c_str() ) )
+            if ( 0 == ossStrcmp( serviceName, pSvcNameTmp ) )
             {
                exist = TRUE ;
                // get node id

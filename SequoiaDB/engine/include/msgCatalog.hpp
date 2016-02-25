@@ -61,10 +61,13 @@ namespace engine
    /************************************************
    * node register request message
    * data is a BsonObject:
-   * {"Type":0, "Host":"vmsvr1",
-   *    "Service":[{"Type":"0","Name":"cat"},
-   *               {"Type":"1","Name":"repl"},
-   *               {"Type":"2", "Name":"shard"}]}
+   * {"Role":0, "Host":"vmsvr1", "dbpath":"...",
+   *    "Service":[{"Type":0,"Name":"cat"},
+   *               {"Type":1,"Name":"repl"},
+   *               {"Type":2,"Name":"shard"},
+   *               {"Type":3,"Name":"cata"}],
+   *    "IP":["xxxx",...,"127.0.0.1","localhost"]
+   * }
    ************************************************/
    class _MsgCatRegisterMessage : public SDBObject
    {
@@ -88,7 +91,8 @@ namespace engine
    /************************************************
    * response message of node register
    * the data is a BsonObject:
-   * {"Type":0, "Host":"vmsvr1","GroupID":00000001,"NodeID":00000001,
+   * {"Role":0, "GroupID":1000, "GroupName":"db1", "HostName":"xxx",
+   *  "NodeID":1000, "dbpath":"xxxx",
    *    "Service":[{"Type":0,"Name":"cat"},
    *               {"Type":1,"Name":"repl"},
    *               {"Type":2, "Name":"shard"}]}
@@ -170,10 +174,9 @@ namespace engine
                               map<UINT64, _netRouteNode> &group,
                               UINT32 *pPrimary = NULL ) ;
 
-   const CHAR* getShardServiceName ( bson::BSONElement &beService ) ;
-   
-   std::string getServiceName ( bson::BSONElement &beService,
+   const CHAR* getServiceName ( const bson::BSONElement &beService,
                                 INT32 serviceType ) ;
+   const CHAR* getShardServiceName ( const bson::BSONElement &beService ) ;
 
    //down catalog group info
    typedef MsgCatGroupReq        MsgCatCatGroupReq ;

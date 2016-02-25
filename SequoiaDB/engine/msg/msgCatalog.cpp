@@ -158,6 +158,7 @@ namespace engine
          BSONObj next = nextEle.embeddedObject() ;
          UINT16 nodeID = 0 ;
          _netRouteNode route ;
+         /// NodeID
          BSONElement  node = next.getField( CAT_NODEID_NAME ) ;
          if ( node.eoo() || NumberInt != node.type() )
          {
@@ -165,6 +166,7 @@ namespace engine
             goto error ;
          }
          nodeID = node.Int() ;
+         /// HostName
          node = next.getField( CAT_HOST_FIELD_NAME ) ;
          if ( node.eoo() || String != node.type() )
          {
@@ -177,7 +179,17 @@ namespace engine
          ossMemcpy( route._host, node.String().c_str(), len ) ;
          route._host[len] = '\0';
          }
-
+         /// Status
+         node = next.getField( CAT_STATUS_NAME ) ;
+         if ( node.eoo() || SDB_CAT_GRP_ACTIVE == node.numberInt() )
+         {
+            route._isActive = TRUE ;
+         }
+         else
+         {
+            route._isActive = FALSE ;
+         }
+         /// Service
          node = next.getField( CAT_SERVICE_FIELD_NAME ) ;
          if ( node.eoo() || Array != node.type() )
          {
@@ -240,8 +252,7 @@ namespace engine
       }
       catch ( std::exception &e )
       {
-         pdLog ( PDERROR, __FUNC__, __FILE__, __LINE__,
-                 "unexpected exception: %s", e.what() ) ;
+         PD_LOG ( PDERROR, "unexpected exception: %s", e.what() ) ;
          rc = SDB_INVALIDARG ;
          goto error ;
       }
@@ -253,11 +264,13 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_GETSVCNAME, "getServiceName" )
-   std::string getServiceName ( bson::BSONElement &beService, INT32 serviceType )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_GETSVCNAME, "getServiceName" )
+   const CHAR* getServiceName ( const bson::BSONElement &beService,
+                                INT32 serviceType )
    {
       PD_TRACE_ENTRY ( SDB_GETSVCNAME );
-      std::string strName;
+      const CHAR *pSvcName = "" ;
+
       try
       {
          if ( beService.type() != Array )
@@ -270,79 +283,51 @@ namespace engine
          {
             BSONElement beTmp = i.next();
             BSONObj boTmp = beTmp.embeddedObject();
-            BSONElement beServiceType = boTmp.getField(CAT_SERVICE_TYPE_FIELD_NAME);
+            BSONElement beServiceType = boTmp.getField(
+               CAT_SERVICE_TYPE_FIELD_NAME );
             if ( beServiceType.eoo() || !beServiceType.isNumber() )
             {
-               goto done ;
+               continue ;
             }
             if ( beServiceType.numberInt() == serviceType )
             {
-               BSONElement beServiceName = boTmp.getField(CAT_SERVICE_NAME_FIELD_NAME);
+               BSONElement beServiceName = boTmp.getField(
+                  CAT_SERVICE_NAME_FIELD_NAME );
                if ( beServiceName.type() != String )
                {
                   goto done ;
                }
-               strName = beServiceName.str() ;
+               pSvcName = beServiceName.valuestr() ;
                goto done ;
             }
          }
       }
       catch ( std::exception &e )
       {
-         PD_LOG ( PDERROR,
-                  "unexpected exception: %s", e.what() ) ;
+         PD_LOG ( PDERROR, "unexpected exception: %s", e.what() ) ;
       }
+
    done :
-      PD_TRACE1 ( SDB_GETSVCNAME, PD_PACK_STRING(strName.c_str()) );
+      PD_TRACE1 ( SDB_GETSVCNAME, PD_PACK_STRING( pSvcName ) );
       PD_TRACE_EXIT ( SDB_GETSVCNAME );
-      return strName ;
+      return pSvcName ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_GETSHDSVCNAME, "getShardServiceName" )
-   const CHAR * getShardServiceName ( BSONElement &beService )
+   const CHAR *getShardServiceName ( const BSONElement &beService )
    {
-      PD_TRACE_ENTRY ( SDB_GETSHDSVCNAME );
-      const CHAR *ret = NULL ;
-      try
-      {
-         if ( beService.type() != Array )
-         {
-            goto done ;
-         }
+      PD_TRACE_ENTRY ( SDB_GETSHDSVCNAME ) ;
 
-         BSONObjIterator i( beService.embeddedObject() );
-         while ( i.more() )
-         {
-            BSONElement beTmp = i.next();
-            BSONObj boTmp = beTmp.embeddedObject();
-            BSONElement beServiceType = boTmp.getField(CAT_SERVICE_TYPE_FIELD_NAME);
-            if ( beServiceType.eoo() || !beServiceType.isNumber() )
-            {
-               goto done ;
-            }
-            if ( beServiceType.numberInt() == MSG_ROUTE_SHARD_SERVCIE )
-            {
-               BSONElement beServiceName = boTmp.getField(CAT_SERVICE_NAME_FIELD_NAME);
-               if ( beServiceName.type() != String )
-               {
-                  goto done ;
-               }
-               ret = beServiceName.valuestr() ;
-               goto done ;
-            }
-         }
-      }
-      catch ( std::exception &e )
+      const CHAR* pRet = getServiceName( beService,
+                                         MSG_ROUTE_SHARD_SERVCIE ) ;
+      if ( pRet && !*pRet )
       {
-         PD_LOG ( PDERROR,
-                  "unexpected exception: %s", e.what() ) ;
+         pRet = NULL ;
       }
-   done :
-      if ( NULL == ret )
-         PD_TRACE1 ( SDB_GETSHDSVCNAME, PD_PACK_NULL );
-      else
-         PD_TRACE1 ( SDB_GETSHDSVCNAME, PD_PACK_STRING(ret) );
+
       PD_TRACE_EXIT ( SDB_GETSHDSVCNAME );
-      return ret ;
-   }//end of getShardServiceName()
+      return pRet ;
+   }
+
 }
+

@@ -309,10 +309,16 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSREPSET__SETGPSET, "_clsReplicateSet::_setGroupSet" )
    INT32 _clsReplicateSet::_setGroupSet( const CLS_GROUP_VERSION &version,
-                                         map<UINT64, _netRouteNode> &nodes )
+                                         map<UINT64, _netRouteNode> &nodes,
+                                         BOOLEAN &changeStatus )
    {
       INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY( SDB__CLSREPSET__SETGPSET );
+      PD_TRACE_ENTRY( SDB__CLSREPSET__SETGPSET ) ;
+      BOOLEAN hasLocal = FALSE ;
+      std::map<UINT64, _netRouteNode>::iterator itr ;
+      std::map<UINT64, _clsSharingStatus>::iterator itr2 ;
+      changeStatus = FALSE ;
+
       if ( version <= _info.version )
       {
          rc = SDB_REPL_REMOTE_G_V_EXPIRED ;
@@ -329,23 +335,32 @@ namespace engine
 
       _info.version = version ;
 
-      {
       /// update new nodes, include the node with
       /// same id but different address
-      BOOLEAN hasLocal = FALSE ;
       if ( SPARE_GROUPID == _info.local.columns.groupID )
       {
          hasLocal = TRUE ;
          nodes.clear() ;
       }
 
-      map<UINT64, _netRouteNode>::iterator itr = nodes.begin() ;
+      itr = nodes.begin() ;
       for ( ; itr != nodes.end(); itr++ )
       {
         if ( itr->first == _info.local.value )
         {
            hasLocal = TRUE ;
            continue ;
+        }
+        else if ( !itr->second._isActive )
+        {
+           if ( g_startShiftTime < 0 )
+           {
+              /// when has overed the start shift time, need ignore
+              /// the nodes there are not actived
+              continue ;
+           }
+           itr->second._isActive = TRUE ;
+           changeStatus = TRUE ;
         }
         if ( SDB_OK == _agent->updateRoute( itr->second._id,
                                             itr->second ) )
@@ -369,14 +384,13 @@ namespace engine
          PMD_RESTART_DB( SDB_SYS ) ;
          goto done ;
       }
-      }
 
-      {
       /// remove deleted nodes
-      map<UINT64, _clsSharingStatus>::iterator itr2 = _info.info.begin() ;
+      itr2 = _info.info.begin() ;
       for ( ; itr2 != _info.info.end(); )
       {
-         if ( nodes.end() == nodes.find( itr2->first ) )
+         itr = nodes.find( itr2->first ) ;
+         if ( nodes.end() == itr || FALSE == itr->second._isActive )
          {
             /// if primary is deleted, set primary invalid
             if ( itr2->first == _info.primary.value )
@@ -397,9 +411,9 @@ namespace engine
             ++itr2 ;
          }
       } // for ( ; itr2 != _info.info.end(); itr2++ )
-      }
 
       _sync.updateNotifyList( TRUE ) ;
+
    done:
       PD_TRACE_EXITRC ( SDB__CLSREPSET__SETGPSET, rc );
       return rc ;
@@ -654,6 +668,7 @@ namespace engine
       CLS_GROUP_VERSION version ;
       map<UINT64, _netRouteNode> group ;
       string groupName ;
+      BOOLEAN changeStatus = FALSE ;
 
       if ( SDB_OK != MSG_GET_INNER_REPLY_RC(pHeader) )
       {
@@ -680,7 +695,7 @@ namespace engine
          goto error ;
       }
 
-      rc = _setGroupSet( version, group ) ;
+      rc = _setGroupSet( version, group, changeStatus ) ;
       if ( SDB_OK != rc )
       {
          if ( SDB_REPL_REMOTE_G_V_EXPIRED != rc )
@@ -691,7 +706,10 @@ namespace engine
          rc = SDB_OK ;
       }
 
-      _cata.remove( &(msg->header), MSG_GET_INNER_REPLY_RC(pHeader) ) ;
+      if ( !changeStatus )
+      {
+         _cata.remove( &(msg->header), MSG_GET_INNER_REPLY_RC(pHeader) ) ;
+      }
 
       pmdGetKRCB()->setGroupName ( groupName.c_str() ) ;
       if ( !_active )
