@@ -3689,6 +3689,14 @@ namespace engine
 
             for ( UINT32 i = 0 ; i < tmpVecStr.size() ; ++i )
             {
+               if ( 0 == ossStrcasecmp( tmpVecStr[i], "all" ) )
+               {
+                  for ( UINT32 k = 0 ; k < (UINT32)SDB_ROLE_MAX ; ++k )
+                  {
+                     param._role[ k ] = 1 ;
+                  }
+                  break ;
+               }
                if ( SDB_ROLE_MAX != utilGetRoleEnum( tmpVecStr[ i ] ) )
                {
                   param._role[ utilGetRoleEnum( tmpVecStr[ i ] ) ] = 1 ;
