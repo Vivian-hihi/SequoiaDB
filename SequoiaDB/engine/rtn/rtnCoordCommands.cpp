@@ -850,9 +850,11 @@ namespace engine
       BOOLEAN hasNodeOrGroupFilter = FALSE ;
 
       CoordGroupList allGroupLst ;
+      CoordGroupList expectGrpLst ;
       CoordGroupList groupLst ;
       ROUTE_SET sendNodes ;
       BSONObj newFilterObj ;
+      BOOLEAN hasParseRetry = FALSE ;
 
       CHAR *pNewMsg = NULL ;
       INT32 newMsgSize = 0 ;
@@ -873,25 +875,29 @@ namespace engine
       *pFilterObj = newFilterObj ;
 
       /// 4. parse groups
-      rc = rtnCoordGetAllGroupList( cb, allGroupLst, NULL,
-                                    !ctrlParam._role[ SDB_ROLE_CATALOG ],
-                                    !ctrlParam._role[ SDB_ROLE_COORD ] ) ;
+      rc = rtnCoordGetAllGroupList( cb, allGroupLst, NULL, FALSE, FALSE ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to get all group list, rc: %d",
                    rc ) ;
-      if ( !ctrlParam._role[ SDB_ROLE_DATA ] )
       {
          CoordGroupList::iterator itGrp = allGroupLst.begin() ;
          while( itGrp != allGroupLst.end() )
          {
-            if ( itGrp->second >= DATA_GROUP_ID_BEGIN &&
-                 itGrp->second <= DATA_GROUP_ID_END )
+            if ( ( !ctrlParam._role[ SDB_ROLE_DATA ] &&
+                   itGrp->second >= DATA_GROUP_ID_BEGIN &&
+                   itGrp->second <= DATA_GROUP_ID_END ) ||
+                 ( !ctrlParam._role[ SDB_ROLE_CATALOG ] &&
+                   CATALOG_GROUPID == itGrp->second ) ||
+                 ( !ctrlParam._role[ SDB_ROLE_COORD ] &&
+                   COORD_GROUPID == itGrp->second ) )
             {
-               allGroupLst.erase( itGrp++ ) ;
+               itGrp++ ;
                continue ;
             }
+            expectGrpLst[ itGrp->first ] = itGrp->second ;
             ++itGrp ;
          }
       }
+
       if ( !pFilterObj->isEmpty() )
       {
          rc = rtnCoordParseGroupList( cb, *pFilterObj, groupLst,
@@ -903,13 +909,13 @@ namespace engine
          }
          *pFilterObj = newFilterObj ;
       }
-      if ( 0 == groupLst.size() )
-      {
-         groupLst = allGroupLst ;
-      }
+
+   parseNode:
       /// 5. parse nodes
       rc = rtnCoordGetGroupNodes( cb, *pFilterObj, ctrlParam._emptyFilterSel,
-                                  groupLst, sendNodes, &newFilterObj ) ;
+                                  ( 0 == groupLst.size() ? ( hasParseRetry ?
+                                  expectGrpLst : allGroupLst ) : groupLst ),
+                                  sendNodes, &newFilterObj ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to get nodes, rc: %d", rc ) ;
       if ( sendNodes.size() == 0 )
       {
@@ -921,6 +927,12 @@ namespace engine
       if ( pFilterObj->objdata() != newFilterObj.objdata() )
       {
          hasNodeOrGroupFilter = TRUE ;
+      }
+      else if ( !hasParseRetry && 0 == groupLst.size() &&
+                allGroupLst.size() != expectGrpLst.size() )
+      {
+         hasParseRetry = TRUE ;
+         goto parseNode ;
       }
       *pFilterObj = newFilterObj ;
 
