@@ -2657,6 +2657,7 @@ namespace engine
       CHAR *pListReq = NULL;
       SINT64 contextID = -1;
       rtnContextBuf buffObj ;
+      UINT64 identify = pCoordcb->getGrpIdentify() ;
 
       rtnCoordProcesserFactory *pProcesserFactory
                = pCoordcb->getProcesserFactory();
@@ -2698,8 +2699,8 @@ namespace engine
             pGroupInfo = SDB_OSS_NEW CoordGroupInfo( beGroupID.number() );
             PD_CHECK( pGroupInfo != NULL, SDB_OOM, error, PDERROR,
                       "malloc failed!" );
-            groupInfoTmp = CoordGroupInfoPtr( pGroupInfo );
-            rc = groupInfoTmp->updateGroupItem( boGroupInfo );
+            groupInfoTmp = CoordGroupInfoPtr( pGroupInfo ) ;
+            rc = groupInfoTmp->updateGroupItem( boGroupInfo ) ;
             PD_RC_CHECK( rc, PDERROR, "failed to parse the group info(rc=%d)",
                          rc ) ;
 
@@ -2738,6 +2739,12 @@ namespace engine
             PD_RC_CHECK( rc, PDERROR, "Failed to process group info, received "
                          "unexpected error:%s", e.what() ) ;
          }
+      }
+
+      if ( NULL == query || query->isEmpty() )
+      {
+         /// clear the out-of-date group info
+         pCoordcb->invalidateGroupInfo( identify ) ;
       }
 
    done:

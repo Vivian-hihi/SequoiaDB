@@ -85,6 +85,8 @@ namespace engine
          return &_processerFactory ;
       }
 
+      UINT64 getGrpIdentify() const { return _upGrpIndentify ; }
+
       void getLock( OSS_LATCH_MODE mode )
       {
          if ( SHARED == mode )
@@ -180,7 +182,7 @@ namespace engine
       BOOLEAN isSubCollection( const CHAR *pCLName ) ;
 
       void  invalidateCataInfo() ;
-      void  invalidateGroupInfo() ;
+      void  invalidateGroupInfo( UINT64 identify = 0 ) ;
 
    protected:
       INT32         _addGroupName ( const std::string& name, UINT32 id ) ;
@@ -201,6 +203,7 @@ namespace engine
       CoordCataMap                        _cataInfoMap;
 
       CoordVecNodeInfo                    _cataNodeAddrList;
+      UINT64                              _upGrpIndentify ;
 
    };
    typedef _CoordCB CoordCB ;

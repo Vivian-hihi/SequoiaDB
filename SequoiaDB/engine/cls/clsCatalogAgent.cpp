@@ -2598,6 +2598,7 @@ namespace engine
       _groupVersion = 0 ;
       _primaryPos = CLS_RG_NODE_POS_INVALID;
       _primaryNode.value = MSG_INVALID_ROUTEID ;
+      _upIdentify = 0 ;
    }
 
    _clsGroupItem::~_clsGroupItem ()

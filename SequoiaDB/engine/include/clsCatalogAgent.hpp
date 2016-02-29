@@ -380,6 +380,9 @@ namespace engine
 
          INT32  updateGroupItem( const BSONObj &obj ) ;
 
+         void   setIdentify( UINT64 identify ) { _upIdentify = identify ; }
+         UINT64 getIdentify() const { return _upIdentify ; }
+
       protected:
          void   setGroupInfo ( const std::string& name, UINT32 version,
                                UINT32 primary ) ;
@@ -448,6 +451,7 @@ namespace engine
          VEC_NODE_INFO                 _vecNodes ;
          MsgRouteID                    _primaryNode ;
          UINT32                        _primaryPos;
+         UINT64                        _upIdentify ;
 
          ossRWMutex                    _rwMutex ;
 

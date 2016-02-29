@@ -53,6 +53,7 @@ namespace engine
    _CoordCB::_CoordCB()
    {
       _pNetWork = NULL ;
+      _upGrpIndentify = 1 ;
    }
 
    _CoordCB::~_CoordCB()
@@ -360,6 +361,7 @@ namespace engine
    {
       ossScopedLock _lock( &_nodeGroupMutex, EXCLUSIVE ) ;
 
+      groupInfo->setIdentify( ++_upGrpIndentify ) ;
       _nodeGroupInfo[groupInfo->groupID()] = groupInfo ;
 
       // clear group name map
@@ -509,11 +511,38 @@ namespace engine
       _cataInfoMap.clear() ;
    }
 
-   void _CoordCB::invalidateGroupInfo()
+   void _CoordCB::invalidateGroupInfo( UINT64 identify )
    {
       ossScopedLock _lock(&_nodeGroupMutex, EXCLUSIVE) ;
-      _nodeGroupInfo.clear() ;
-      _groupNameMap.clear() ;
+
+      if ( 0 == identify )
+      {
+         _nodeGroupInfo.clear() ;
+         _groupNameMap.clear() ;
+      }
+      else
+      {
+         CoordGroupMap::iterator it = _nodeGroupInfo.begin() ;
+         while( it != _nodeGroupInfo.end() )
+         {
+            if ( it->second->getIdentify() <= identify )
+            {
+               /// first erase the name map
+               GROUP_NAME_MAP::iterator itName =
+                  _groupNameMap.find( it->second->groupName() ) ;
+               if ( itName != _groupNameMap.end() )
+               {
+                  _groupNameMap.erase( itName ) ;
+               }
+               /// erase
+               _nodeGroupInfo.erase( it++ ) ;
+            }
+            else
+            {
+               ++it ;
+            }
+         }
+      }
    }
 
    /*
