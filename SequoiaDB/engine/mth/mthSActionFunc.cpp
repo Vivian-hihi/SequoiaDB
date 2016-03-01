@@ -481,7 +481,7 @@ namespace engine
       else if ( NumberDouble == e.type() )
       {
          builder.append( fieldName,
-                        ( INT64 )( ceil( e.Number() ) ) ) ;
+                        ( FLOAT64 )ceil( e.numberDouble() ) ) ;      
       }
       else if ( !e.eoo() )
       {
