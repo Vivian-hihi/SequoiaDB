@@ -131,6 +131,7 @@
                   }
                ]
             },
+            /*
             {
                'text': $scope.autoLanguage( '监控' ),
                'module': 'Monitor',
@@ -142,6 +143,7 @@
                   }
                ]
             },
+            */
             /*
             {
                'text': $scope.autoLanguage( '策略' ),
