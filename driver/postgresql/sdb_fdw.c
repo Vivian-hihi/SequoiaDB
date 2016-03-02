@@ -1005,6 +1005,74 @@ UINT64 sdbbson_iterator_getusecs( sdbbson_iterator *ite )
    }
 }
 
+BOOLEAN isNormalChar( CHAR c )
+{
+   if ( c >= '0' && c <= '9' )
+   {
+      return TRUE ;
+   }
+   else if ( c >= 'A' && c <= 'Z' )
+   {
+      return TRUE ;
+   }
+   else if ( c >= 'a' && c <= 'z' )
+   {
+      return TRUE ;
+   }
+   else
+   {
+      return FALSE ;
+   }
+}
+
+CHAR *changeToRegexFormat( CHAR *likeStr )
+{
+   INT32 i = 0 ;
+   INT32 regexj = 0 ;
+   CHAR *regexStr  = NULL ;
+   INT32 oldlength = strlen( likeStr ) ;
+   INT32 newLength = 2 * oldlength + 2 ;
+
+   regexStr = palloc0( newLength ) ;
+   regexStr[regexj] = '^' ;
+   regexj++ ;
+
+   for ( i = 0 ; i < oldlength ; i++ )
+   {
+      if ( isNormalChar( likeStr[i] ) )
+      {
+         regexStr[regexj] = likeStr[i] ;
+         regexj++ ;
+      }
+      else if ( '_' == likeStr[i] )
+      {
+         regexStr[regexj] = '.' ;
+         regexj++ ;
+      }
+      else if ( '%' == likeStr[i] )
+      {
+         regexStr[regexj] = '.' ;
+         regexj++ ;
+         regexStr[regexj] = '*' ;
+         regexj++ ;
+      }
+      else
+      {
+         elog( DEBUG1, "can't support like str=[%s]", likeStr ) ;
+         goto error ;
+      }
+   }
+
+   regexStr[regexj] = '$' ;
+
+done:
+   return regexStr ;
+error:
+   pfree( regexStr ) ;
+   regexStr = NULL ;
+   goto done ;
+}
+
 INT32 sdbOperExprParamVar( OpExpr *expr, SdbExprTreeState *expr_state, 
                            sdbbson *condition, ExprContext *exprContext, 
                            bool *isCurrentExistDecimal )
@@ -3634,75 +3702,6 @@ void SdbBeginForeignModify( ModifyTableState *mtstate,
 
 }
 
-BOOLEAN isNormalChar( CHAR c )
-{
-   if ( c >= '0' && c <= '9' )
-   {
-      return TRUE ;
-   }
-   else if ( c >= 'A' && c <= 'Z' )
-   {
-      return TRUE ;
-   }
-   else if ( c >= 'a' && c <= 'z' )
-   {
-      return TRUE ;
-   }
-   else
-   {
-      return FALSE ;
-   }
-}
-
-CHAR *changeToRegexFormat( CHAR *likeStr )
-{
-   INT32 i = 0 ;
-   INT32 regexj = 0 ;
-   CHAR *regexStr  = NULL ;
-   INT32 oldlength = strlen( likeStr ) ;
-   INT32 newLength = 2 * oldlength + 2 ;
-
-   regexStr = palloc0( newLength ) ;
-   regexStr[regexj] = '^' ;
-   regexj++ ;
-
-   for ( i = 0 ; i < oldlength ; i++ )
-   {
-      if ( isNormalChar( likeStr[i] ) )
-      {
-         regexStr[regexj] = likeStr[i] ;
-         regexj++ ;
-      }
-      else if ( '_' == likeStr[i] )
-      {
-         regexStr[regexj] = '.' ;
-         regexj++ ;
-      }
-      else if ( '%' == likeStr[i] )
-      {
-         regexStr[regexj] = '.' ;
-         regexj++ ;
-         regexStr[regexj] = '*' ;
-         regexj++ ;
-      }
-      else
-      {
-         elog( DEBUG1, "can't support like str=[%s]", likeStr ) ;
-         goto error ;
-      }
-   }
-
-   regexStr[regexj] = '$' ;
-
-done:
-   return regexStr ;
-error:
-   pfree( regexStr ) ;
-   regexStr = NULL ;
-   goto done ;
-}
-
-
 void sdb_slot_deform_tuple( TupleTableSlot *slot, int natts )
 {
    HeapTuple tuple     = slot->tts_tuple;
@@ -3850,7 +3849,7 @@ TupleTableSlot *SdbExecForeignInsert( EState *estate, ResultRelInfo *rinfo,
    rc = sdbInsert( fdw_state->hCollection, &insert ) ;
    if ( rc != SDB_OK )
    {
-      ereport( WARNING, ( errcode( ERRCODE_FDW_ERROR ), 
+      ereport( ERROR, ( errcode( ERRCODE_FDW_ERROR ), 
             errmsg( "sdbInsert failed:rc = %d", rc ), 
             errhint( "Make sure the data type is all right" ) ) ) ;
 
@@ -3888,7 +3887,7 @@ TupleTableSlot *SdbExecForeignDelete( EState *estate, ResultRelInfo *rinfo,
    if ( rc != SDB_OK )
    {
       sdbbson_destroy( &sdbbsonCondition ) ;
-      ereport( WARNING, ( errcode( ERRCODE_FDW_ERROR ), 
+      ereport( ERROR, ( errcode( ERRCODE_FDW_ERROR ), 
             errmsg( "sdbDelete failed:rc = %d", rc ), 
             errhint( "Make sure the data type is all right" ) ) ) ;
       return NULL ;
