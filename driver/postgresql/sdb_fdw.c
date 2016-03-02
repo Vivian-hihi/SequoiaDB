@@ -50,6 +50,8 @@
 #define SDB_FIELD_SEMICOLON          ":"
 #define SDB_FIELD_SEMICOLON_CHR      ':'
 
+#define SDB_KEYNAME_REGEX            "$regex"
+
 #define SDB_FIELD_VALUE_LEN          (128)
 
 static bool SdbIsListMode( CHAR *hostName ) ;
@@ -113,6 +115,9 @@ static INT32 SdbInitCLStatistics( SdbCLStatistics *clStat );
 static void SdbFiniCLStatisticsCache( SdbStatisticsCache *cache );
 static SdbStatisticsCache *SdbGetStatisticsCache();
 static const SdbCLStatistics * SdbGetCLStatFromCache( Oid foreignTableId ) ;
+
+static BOOLEAN isNormalChar( CHAR c ) ;
+static CHAR *changeToRegexFormat( CHAR *outputString ) ;
 
 
 #if PG_VERSION_NUM>90300
@@ -194,8 +199,8 @@ static Oid deserializeOid( Const *constant ) ;
 //static long deserializeLong( Const *constant ) ;
 static SdbExecState *deserializeSdbExecState( List *sdbExecStateList ) ;
 
-static void sdbAppendConstantValue( sdbbson *bsonObj, const char *keyName, 
-      Const *constant ) ;
+static INT32 sdbAppendConstantValue( sdbbson *bsonObj, const char *keyName, 
+                                     Const *constant ) ;
 
 
 static UINT64 sdbCreateBsonRecordAddr(  ) ;
@@ -649,7 +654,28 @@ int sdbSetBsonValue( sdbbson *bsonObj, const char *name, Datum valueDatum,
          bool typeVarLength    = false ;
          getTypeOutputInfo( columnType, &outputFunctionId, &typeVarLength ) ;
          outputString = OidOutputFunctionCall( outputFunctionId, valueDatum ) ;
-         sdbbson_append_string( bsonObj, name, outputString ) ;
+         if ( strcmp( name, SDB_KEYNAME_REGEX ) == 0 )
+         {
+            CHAR *regexFormat = changeToRegexFormat( outputString ) ;
+            if ( NULL != regexFormat )
+            {
+               sdbbson_append_string( bsonObj, name, regexFormat ) ;
+               pfree( regexFormat ) ;
+            }
+            else
+            {
+               rc = -1 ;
+               pfree( outputString ) ;
+               elog( WARNING, "value can't change to regex:value=%s", 
+                     outputString ) ;
+               goto error ;
+            }
+         }
+         else
+         {
+            sdbbson_append_string( bsonObj, name, outputString ) ;
+         }
+         
          pfree( outputString ) ;
          break ;
       }
@@ -756,8 +782,10 @@ int sdbSetBsonValue( sdbbson *bsonObj, const char *name, Datum valueDatum,
          return -1 ;
       }
    }
-
+done:
    return rc ;
+error:
+   goto done ;
 }
 
 UINT64 sdbCreateBsonRecordAddr(  )
@@ -1052,7 +1080,7 @@ INT32 sdbOperExprParamVar( OpExpr *expr, SdbExprTreeState *expr_state,
    sdbOpName   = sdbOperatorName( pgOpName, ( varIndex <= paramIndex ) ) ;
    if( !sdbOpName )
    {
-      elog( DEBUG1, "operator is not supported:op=%s", pgOpName ) ;
+      elog( DEBUG1, "operator is not supported1:op=%s", pgOpName ) ;
       goto error ;
    }
 
@@ -1141,7 +1169,7 @@ INT32 sdbOperExprTwoVar( OpExpr *opr_two_argument, SdbExprTreeState *expr_state,
    sdbOpName   = sdbOperatorName( pgOpName, TRUE ) ;
    if( !sdbOpName )
    {
-      elog( DEBUG1, "operator is not supported:op=%s", pgOpName ) ;
+      elog( DEBUG1, "operator is not supported2:op=%s", pgOpName ) ;
       goto error ;
    }
 
@@ -1258,12 +1286,18 @@ INT32 sdbOperExpr( OpExpr *opr, SdbExprTreeState *expr_state,
       sdbOpName = sdbOperatorName( pgOpName, ( varIndex <= constIndex ) ) ;
       if( !sdbOpName )
       {
-         elog( DEBUG1, "operator is not supported:op=%s", pgOpName ) ;
+         elog( DEBUG1, "operator is not supported3:op=%s", pgOpName ) ;
          goto error ;
       }
 
       sdbbson_append_start_object( condition, columnName ) ;
-      sdbAppendConstantValue( condition, sdbOpName, const_val ) ;
+      rc = sdbAppendConstantValue( condition, sdbOpName, const_val ) ;
+      if ( SDB_OK != rc )
+      {
+         elog( DEBUG1, "operator is not supported4:op=%s", pgOpName ) ;
+         goto error ;
+      }
+
       sdbbson_append_finish_object( condition ) ;
 
       if ( need_not_condition )
@@ -1314,7 +1348,7 @@ INT32 sdbScalarArrayOpExpr( ScalarArrayOpExpr *scalaExpr,
    }
    else
    {
-      elog( DEBUG1, "operator is not supported:op=%d,str=%s", 
+      elog( DEBUG1, "operator is not supported5:op=%d,str=%s", 
             scalaExpr->opno, pgOpName ) ;
       goto error ;
    }
@@ -1757,14 +1791,15 @@ void sdbDeserializeDocument( Const *constant, sdbbson *document )
 const CHAR *sdbOperatorName( const CHAR *operatorName, BOOLEAN isVarFirst )
 {
    const CHAR *pResult                  = NULL ;
-   const INT32 totalNames               = 6 ;
+   const INT32 totalNames               = 7 ;
    static const CHAR *nameMappings[][3] = {
       { "<",   "$lt",  "$gt"   },
       { "<=",  "$lte", "$gte"  },
       { ">",   "$gt",  "$lt"   },
       { ">=",  "$gte", "$lte"  },
       { "=",   "$et",  "$et"   },
-      { "<>",  "$ne",  "$ne"   }
+      { "<>",  "$ne",  "$ne"   },
+      { "~~",  "$regex", "$regex" }
    } ;
 
    INT32 i = 0 ;
@@ -1828,8 +1863,8 @@ Expr *sdbFindArgumentOfType( List *argumentList, NodeTag argumentType,
 }
 
 /* sdbAppendConstantValue appends to query document with key and value */
-void sdbAppendConstantValue ( sdbbson *bsonObj, const char *keyName, 
-      Const *constant )
+INT32 sdbAppendConstantValue ( sdbbson *bsonObj, const char *keyName, 
+                               Const *constant )
 {
    int rc = SDB_OK ;
 
@@ -1837,17 +1872,18 @@ void sdbAppendConstantValue ( sdbbson *bsonObj, const char *keyName,
    {
       /* this matches null and not exists for both table and index scan */
       sdbbson_append_int( bsonObj, "$isnull", 1 ) ;
-      return ;
+      return rc ;
    }
 
    rc = sdbSetBsonValue( bsonObj, keyName, constant->constvalue, 
-         constant->consttype, constant->consttypmod ) ;
+                         constant->consttype, constant->consttypmod ) ;
    if ( SDB_OK != rc )
    {
       ereport ( WARNING, ( errcode( ERRCODE_FDW_INVALID_DATA_TYPE ),
                 errmsg( "convert value failed:key=%s", keyName ) ) ) ;
    }
 
+   return rc ;
 }
 
 /* sdbApplicableOpExpressionList iterate all operators and push the predicates
@@ -3598,6 +3634,75 @@ void SdbBeginForeignModify( ModifyTableState *mtstate,
 
 }
 
+BOOLEAN isNormalChar( CHAR c )
+{
+   if ( c >= '0' && c <= '9' )
+   {
+      return TRUE ;
+   }
+   else if ( c >= 'A' && c <= 'Z' )
+   {
+      return TRUE ;
+   }
+   else if ( c >= 'a' && c <= 'z' )
+   {
+      return TRUE ;
+   }
+   else
+   {
+      return FALSE ;
+   }
+}
+
+CHAR *changeToRegexFormat( CHAR *likeStr )
+{
+   INT32 i = 0 ;
+   INT32 regexj = 0 ;
+   CHAR *regexStr  = NULL ;
+   INT32 oldlength = strlen( likeStr ) ;
+   INT32 newLength = 2 * oldlength + 2 ;
+
+   regexStr = palloc0( newLength ) ;
+   regexStr[regexj] = '^' ;
+   regexj++ ;
+
+   for ( i = 0 ; i < oldlength ; i++ )
+   {
+      if ( isNormalChar( likeStr[i] ) )
+      {
+         regexStr[regexj] = likeStr[i] ;
+         regexj++ ;
+      }
+      else if ( '_' == likeStr[i] )
+      {
+         regexStr[regexj] = '.' ;
+         regexj++ ;
+      }
+      else if ( '%' == likeStr[i] )
+      {
+         regexStr[regexj] = '.' ;
+         regexj++ ;
+         regexStr[regexj] = '*' ;
+         regexj++ ;
+      }
+      else
+      {
+         elog( DEBUG1, "can't support like str=[%s]", likeStr ) ;
+         goto error ;
+      }
+   }
+
+   regexStr[regexj] = '$' ;
+
+done:
+   return regexStr ;
+error:
+   pfree( regexStr ) ;
+   regexStr = NULL ;
+   goto done ;
+}
+
+
 void sdb_slot_deform_tuple( TupleTableSlot *slot, int natts )
 {
    HeapTuple tuple     = slot->tts_tuple;
@@ -3858,7 +3963,7 @@ TupleTableSlot *SdbExecForeignUpdate( EState *estate, ResultRelInfo *rinfo,
    sdbbson_finish( &sdbbsonValues ) ;
 
    //update the bson to the sdb
-   //TODO: WARNING, the shardingKey columns can not be change in the sequoiadb!!!!
+   //WARNING, the shardingKey columns can not be change in the sequoiadb!!!!
    rc = sdbUpdate( fdw_state->hCollection, &sdbbsonValues, &sdbbsonCondition, NULL ) ;
    if ( rc != SDB_OK )
    {
