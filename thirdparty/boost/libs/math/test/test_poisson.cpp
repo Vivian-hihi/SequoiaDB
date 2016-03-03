@@ -23,7 +23,8 @@
 #  pragma warning(disable: 4127) // conditional expression is constant.
 #endif
 
-#include <boost/test/test_exec_monitor.hpp> // Boost.Test
+#define BOOST_TEST_MAIN
+#include <boost/test/unit_test.hpp> // Boost.Test
 #include <boost/test/floating_point_comparison.hpp>
 
 #include <boost/math/concepts/real_concept.hpp> // for real_concept
@@ -33,6 +34,8 @@
 
 #include <boost/math/special_functions/gamma.hpp> // for (incomplete) gamma.
 //   using boost::math::qamma_Q;
+#include "table_type.hpp"
+#include "test_out_of_range.hpp"
 
 #include <iostream>
    using std::cout;
@@ -103,45 +106,65 @@ void test_spots(RealType)
   using  ::boost::math::pdf;
 
    // Check that bad arguments throw.
-   BOOST_CHECK_THROW(
+   BOOST_MATH_CHECK_THROW(
    cdf(poisson_distribution<RealType>(static_cast<RealType>(0)), // mean zero is bad.
       static_cast<RealType>(0)),  // even for a good k.
       std::domain_error); // Expected error to be thrown.
 
-    BOOST_CHECK_THROW(
+    BOOST_MATH_CHECK_THROW(
    cdf(poisson_distribution<RealType>(static_cast<RealType>(-1)), // mean negative is bad.
       static_cast<RealType>(0)),
       std::domain_error);
 
-   BOOST_CHECK_THROW(
+   BOOST_MATH_CHECK_THROW(
    cdf(poisson_distribution<RealType>(static_cast<RealType>(1)), // mean unit OK,
       static_cast<RealType>(-1)),  // but negative events is bad.
       std::domain_error);
 
-  BOOST_CHECK_THROW(
+  BOOST_MATH_CHECK_THROW(
      cdf(poisson_distribution<RealType>(static_cast<RealType>(0)), // mean zero is bad.
       static_cast<RealType>(99999)),  // for any k events. 
       std::domain_error);
   
-  BOOST_CHECK_THROW(
+  BOOST_MATH_CHECK_THROW(
      cdf(poisson_distribution<RealType>(static_cast<RealType>(0)), // mean zero is bad.
       static_cast<RealType>(99999)),  // for any k events. 
       std::domain_error);
 
-  BOOST_CHECK_THROW(
+  BOOST_MATH_CHECK_THROW(
      quantile(poisson_distribution<RealType>(static_cast<RealType>(0)), // mean zero.
       static_cast<RealType>(0.5)),  // probability OK. 
       std::domain_error);
 
-  BOOST_CHECK_THROW(
+  BOOST_MATH_CHECK_THROW(
      quantile(poisson_distribution<RealType>(static_cast<RealType>(-1)), 
       static_cast<RealType>(-1)),  // bad probability. 
       std::domain_error);
 
-  BOOST_CHECK_THROW(
+  BOOST_MATH_CHECK_THROW(
      quantile(poisson_distribution<RealType>(static_cast<RealType>(1)), 
       static_cast<RealType>(-1)),  // bad probability. 
       std::domain_error);
+
+  BOOST_MATH_CHECK_THROW(
+     quantile(poisson_distribution<RealType>(static_cast<RealType>(1)), 
+      static_cast<RealType>(1)),  // bad probability. 
+      std::overflow_error);
+
+  BOOST_MATH_CHECK_THROW(
+     quantile(complement(poisson_distribution<RealType>(static_cast<RealType>(1)), 
+      static_cast<RealType>(0))),  // bad probability. 
+      std::overflow_error);
+
+  BOOST_CHECK_EQUAL(
+     quantile(poisson_distribution<RealType>(static_cast<RealType>(1)), 
+      static_cast<RealType>(0)),  // bad probability. 
+      0);
+
+  BOOST_CHECK_EQUAL(
+     quantile(complement(poisson_distribution<RealType>(static_cast<RealType>(1)), 
+      static_cast<RealType>(1))),  // bad probability. 
+      0);
 
   // Check some test values.
 
@@ -484,12 +507,12 @@ void test_spots(RealType)
      x = quantile(complement(p6, poisson_quantile_data[i][1]));
      BOOST_CHECK_EQUAL(x, floor(poisson_quantile_data[i][3] + 0.5f));
   }
-
+   check_out_of_range<poisson_distribution<RealType> >(1);
 } // template <class RealType>void test_spots(RealType)
 
 //
 
-int test_main(int, char* [])
+BOOST_AUTO_TEST_CASE( test_main )
 {
   // Check that can construct normal distribution using the two convenience methods:
   using namespace boost::math;
@@ -511,13 +534,17 @@ int test_main(int, char* [])
   // poisson mydudpoisson(0.);
   // throws (if BOOST_MATH_DOMAIN_ERROR_POLICY == throw_on_error).
 
- 
-  BOOST_CHECK_THROW(poisson mydudpoisson(-1), std::domain_error);// Mean must be > 0.
-  BOOST_CHECK_THROW(poisson mydudpoisson(-1), std::logic_error);// Mean must be > 0.
+#ifndef BOOST_NO_EXCEPTIONS
+  BOOST_MATH_CHECK_THROW(poisson mydudpoisson(-1), std::domain_error);// Mean must be > 0.
+  BOOST_MATH_CHECK_THROW(poisson mydudpoisson(-1), std::logic_error);// Mean must be > 0.
+#else
+  BOOST_MATH_CHECK_THROW(poisson(-1), std::domain_error);// Mean must be > 0.
+  BOOST_MATH_CHECK_THROW(poisson(-1), std::logic_error);// Mean must be > 0.
+#endif
   // Passes the check because logic_error is a parent????
-  // BOOST_CHECK_THROW(poisson mydudpoisson(-1), std::overflow_error); // fails the check
+  // BOOST_MATH_CHECK_THROW(poisson mydudpoisson(-1), std::overflow_error); // fails the check
   // because overflow_error is unrelated - except from std::exception
-  BOOST_CHECK_THROW(cdf(mypoisson, -1), std::domain_error); // k must be >= 0
+  BOOST_MATH_CHECK_THROW(cdf(mypoisson, -1), std::domain_error); // k must be >= 0
 
   BOOST_CHECK_EQUAL(mean(mypoisson), 4.);
   BOOST_CHECK_CLOSE(
@@ -599,14 +626,14 @@ int test_main(int, char* [])
 #endif
   }
 
-  #if !BOOST_WORKAROUND(__BORLANDC__, BOOST_TESTED_AT(0x582))
+#ifndef BOOST_MATH_NO_REAL_CONCEPT_TESTS
 #ifdef TEST_REAL_CONCEPT
   test_spots(boost::math::concepts::real_concept(0.)); // Test real concept.
 #endif
-  #endif
 #endif
-   return 0;
-} // int test_main(int, char* [])
+#endif
+   
+} // BOOST_AUTO_TEST_CASE( test_main )
 
 /*
 

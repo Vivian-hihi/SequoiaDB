@@ -5,7 +5,8 @@
 //  LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 
 #include <boost/math/concepts/real_concept.hpp>
-#include <boost/test/test_exec_monitor.hpp>
+#define BOOST_TEST_MAIN
+#include <boost/test/unit_test.hpp>
 #include <boost/test/floating_point_comparison.hpp>
 #include <boost/math/special_functions/math_fwd.hpp>
 #include <boost/math/tools/stats.hpp>
@@ -15,21 +16,22 @@
 #include <boost/array.hpp>
 #include "functor.hpp"
 
-#include "test_beta_hooks.hpp"
 #include "handle_test_result.hpp"
+#include "table_type.hpp"
 
 #ifndef SC_
-#define SC_(x) static_cast<T>(BOOST_JOIN(x, L))
+#define SC_(x) static_cast<typename table_type<T>::type>(BOOST_JOIN(x, L))
 #endif
 
-template <class T>
+template <class Real, class T>
 void do_test_beta(const T& data, const char* type_name, const char* test_name)
 {
-   typedef typename T::value_type row_type;
-   typedef typename row_type::value_type value_type;
+   typedef Real                   value_type;
 
    typedef value_type (*pg)(value_type, value_type, value_type);
-#if defined(BOOST_MATH_NO_DEDUCED_FUNCTION_POINTERS)
+#ifdef BETA_INC_FUNCTION_TO_TEST
+   pg funcp = BETA_INC_FUNCTION_TO_TEST;
+#elif defined(BOOST_MATH_NO_DEDUCED_FUNCTION_POINTERS)
    pg funcp = boost::math::beta<value_type, value_type, value_type>;
 #else
    pg funcp = boost::math::beta;
@@ -37,61 +39,63 @@ void do_test_beta(const T& data, const char* type_name, const char* test_name)
 
    boost::math::tools::test_result<value_type> result;
 
+#if !(defined(ERROR_REPORTING_MODE) && !defined(BETA_INC_FUNCTION_TO_TEST))
    std::cout << "Testing " << test_name << " with type " << type_name
       << "\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n";
 
    //
    // test beta against data:
    //
-   result = boost::math::tools::test(
+   result = boost::math::tools::test_hetero<Real>(
       data,
-      bind_func(funcp, 0, 1, 2),
-      extract_result(3));
-   handle_test_result(result, data[result.worst()], result.worst(), type_name, "boost::math::beta", test_name);
+      bind_func<Real>(funcp, 0, 1, 2),
+      extract_result<Real>(3));
+   handle_test_result(result, data[result.worst()], result.worst(), type_name, "beta (incomplete)", test_name);
+#endif
 
-#if defined(BOOST_MATH_NO_DEDUCED_FUNCTION_POINTERS)
+#ifdef BETAC_INC_FUNCTION_TO_TEST
+   funcp = BETAC_INC_FUNCTION_TO_TEST;
+#elif defined(BOOST_MATH_NO_DEDUCED_FUNCTION_POINTERS)
    funcp = boost::math::betac<value_type, value_type, value_type>;
 #else
    funcp = boost::math::betac;
 #endif
-   result = boost::math::tools::test(
+#if !(defined(ERROR_REPORTING_MODE) && !defined(BETAC_INC_FUNCTION_TO_TEST))
+   result = boost::math::tools::test_hetero<Real>(
       data,
-      bind_func(funcp, 0, 1, 2),
-      extract_result(4));
-   handle_test_result(result, data[result.worst()], result.worst(), type_name, "boost::math::betac", test_name);
-
-#if defined(BOOST_MATH_NO_DEDUCED_FUNCTION_POINTERS)
+      bind_func<Real>(funcp, 0, 1, 2),
+      extract_result<Real>(4));
+   handle_test_result(result, data[result.worst()], result.worst(), type_name, "betac", test_name);
+#endif
+#ifdef IBETA_FUNCTION_TO_TEST
+   funcp = IBETA_FUNCTION_TO_TEST;
+#elif defined(BOOST_MATH_NO_DEDUCED_FUNCTION_POINTERS)
    funcp = boost::math::ibeta<value_type, value_type, value_type>;
 #else
    funcp = boost::math::ibeta;
 #endif
-   result = boost::math::tools::test(
+#if !(defined(ERROR_REPORTING_MODE) && !defined(IBETA_FUNCTION_TO_TEST))
+   result = boost::math::tools::test_hetero<Real>(
       data,
-      bind_func(funcp, 0, 1, 2),
-      extract_result(5));
-   handle_test_result(result, data[result.worst()], result.worst(), type_name, "boost::math::ibeta", test_name);
-
-#if defined(BOOST_MATH_NO_DEDUCED_FUNCTION_POINTERS)
+      bind_func<Real>(funcp, 0, 1, 2),
+      extract_result<Real>(5));
+   handle_test_result(result, data[result.worst()], result.worst(), type_name, "ibeta", test_name);
+#endif
+#ifdef IBETAC_FUNCTION_TO_TEST
+   funcp = IBETAC_FUNCTION_TO_TEST;
+#elif defined(BOOST_MATH_NO_DEDUCED_FUNCTION_POINTERS)
    funcp = boost::math::ibetac<value_type, value_type, value_type>;
 #else
    funcp = boost::math::ibetac;
 #endif
-   result = boost::math::tools::test(
+#if !(defined(ERROR_REPORTING_MODE) && !defined(IBETAC_FUNCTION_TO_TEST))
+   result = boost::math::tools::test_hetero<Real>(
       data,
-      bind_func(funcp, 0, 1, 2),
-      extract_result(6));
-   handle_test_result(result, data[result.worst()], result.worst(), type_name, "boost::math::ibetac", test_name);
-#ifdef TEST_OTHER
-   if(::boost::is_floating_point<value_type>::value){
-      funcp = other::ibeta;
-      result = boost::math::tools::test(
-         data,
-         bind_func(funcp, 0, 1, 2),
-         extract_result(5));
-      print_test_result(result, data[result.worst()], result.worst(), type_name, "other::ibeta");
-   }
-#endif
+      bind_func<Real>(funcp, 0, 1, 2),
+      extract_result<Real>(6));
+   handle_test_result(result, data[result.worst()], result.worst(), type_name, "ibetac", test_name);
    std::cout << std::endl;
+#endif
 }
 
 template <class T>
@@ -106,25 +110,25 @@ void test_beta(T, const char* name)
 #if !defined(TEST_DATA) || (TEST_DATA == 1)
 #  include "ibeta_small_data.ipp"
 
-   do_test_beta(ibeta_small_data, name, "Incomplete Beta Function: Small Values");
+   do_test_beta<T>(ibeta_small_data, name, "Incomplete Beta Function: Small Values");
 #endif
 
 #if !defined(TEST_DATA) || (TEST_DATA == 2)
 #  include "ibeta_data.ipp"
 
-   do_test_beta(ibeta_data, name, "Incomplete Beta Function: Medium Values");
+   do_test_beta<T>(ibeta_data, name, "Incomplete Beta Function: Medium Values");
 
 #endif
 #if !defined(TEST_DATA) || (TEST_DATA == 3)
 #  include "ibeta_large_data.ipp"
 
-   do_test_beta(ibeta_large_data, name, "Incomplete Beta Function: Large and Diverse Values");
+   do_test_beta<T>(ibeta_large_data, name, "Incomplete Beta Function: Large and Diverse Values");
 #endif
 
 #if !defined(TEST_DATA) || (TEST_DATA == 4)
 #  include "ibeta_int_data.ipp"
 
-   do_test_beta(ibeta_int_data, name, "Incomplete Beta Function: Small Integer Values");
+   do_test_beta<T>(ibeta_int_data, name, "Incomplete Beta Function: Small Integer Values");
 #endif
 }
 
@@ -133,7 +137,8 @@ void test_spots(T)
 {
    //
    // basic sanity checks, tolerance is 30 epsilon expressed as a percentage:
-   //
+   // Spot values are from http://functions.wolfram.com/webMathematica/FunctionEvaluation.jsp?name=BetaRegularized
+   // using precision of 50 decimal digits.
    T tolerance = boost::math::tools::epsilon<T>() * 3000;
    BOOST_CHECK_CLOSE(
       ::boost::math::ibeta(
@@ -238,7 +243,7 @@ void test_spots(T)
          static_cast<T>(1),
          static_cast<T>(32)/100),
       static_cast<T>(0.94856839398626914764591440181367780660208493234722L), tolerance);
-   
+
    // try with some integer arguments:
    BOOST_CHECK_CLOSE(
       ::boost::math::ibeta(
@@ -283,15 +288,155 @@ void test_spots(T)
    BOOST_CHECK_EQUAL(::boost::math::ibetac(static_cast<T>(0), static_cast<T>(2), static_cast<T>(0.5)), static_cast<T>(0));
    BOOST_CHECK_EQUAL(::boost::math::ibetac(static_cast<T>(4), static_cast<T>(0), static_cast<T>(0.5)), static_cast<T>(1));
 
-   BOOST_CHECK_THROW(::boost::math::beta(static_cast<T>(0), static_cast<T>(2), static_cast<T>(0.5)), std::domain_error);
-   BOOST_CHECK_THROW(::boost::math::beta(static_cast<T>(3), static_cast<T>(0), static_cast<T>(0.5)), std::domain_error);
-   BOOST_CHECK_THROW(::boost::math::betac(static_cast<T>(0), static_cast<T>(2), static_cast<T>(0.5)), std::domain_error);
-   BOOST_CHECK_THROW(::boost::math::betac(static_cast<T>(4), static_cast<T>(0), static_cast<T>(0.5)), std::domain_error);
+   BOOST_MATH_CHECK_THROW(::boost::math::beta(static_cast<T>(0), static_cast<T>(2), static_cast<T>(0.5)), std::domain_error);
+   BOOST_MATH_CHECK_THROW(::boost::math::beta(static_cast<T>(3), static_cast<T>(0), static_cast<T>(0.5)), std::domain_error);
+   BOOST_MATH_CHECK_THROW(::boost::math::betac(static_cast<T>(0), static_cast<T>(2), static_cast<T>(0.5)), std::domain_error);
+   BOOST_MATH_CHECK_THROW(::boost::math::betac(static_cast<T>(4), static_cast<T>(0), static_cast<T>(0.5)), std::domain_error);
 
-   BOOST_CHECK_THROW(::boost::math::ibetac(static_cast<T>(0), static_cast<T>(0), static_cast<T>(0.5)), std::domain_error);
-   BOOST_CHECK_THROW(::boost::math::ibetac(static_cast<T>(-1), static_cast<T>(2), static_cast<T>(0.5)), std::domain_error);
-   BOOST_CHECK_THROW(::boost::math::ibetac(static_cast<T>(2), static_cast<T>(-2), static_cast<T>(0.5)), std::domain_error);
-   BOOST_CHECK_THROW(::boost::math::ibetac(static_cast<T>(2), static_cast<T>(2), static_cast<T>(-0.5)), std::domain_error);
-   BOOST_CHECK_THROW(::boost::math::ibetac(static_cast<T>(2), static_cast<T>(2), static_cast<T>(1.5)), std::domain_error);
+   BOOST_MATH_CHECK_THROW(::boost::math::ibetac(static_cast<T>(0), static_cast<T>(0), static_cast<T>(0.5)), std::domain_error);
+   BOOST_MATH_CHECK_THROW(::boost::math::ibetac(static_cast<T>(-1), static_cast<T>(2), static_cast<T>(0.5)), std::domain_error);
+   BOOST_MATH_CHECK_THROW(::boost::math::ibetac(static_cast<T>(2), static_cast<T>(-2), static_cast<T>(0.5)), std::domain_error);
+   BOOST_MATH_CHECK_THROW(::boost::math::ibetac(static_cast<T>(2), static_cast<T>(2), static_cast<T>(-0.5)), std::domain_error);
+   BOOST_MATH_CHECK_THROW(::boost::math::ibetac(static_cast<T>(2), static_cast<T>(2), static_cast<T>(1.5)), std::domain_error);
+
+   //
+   // a = b = 0.5 is a special case:
+   //
+   BOOST_CHECK_CLOSE(
+      ::boost::math::ibeta(
+         static_cast<T>(0.5f),
+         static_cast<T>(0.5f),
+         static_cast<T>(0.25)),
+      static_cast<T>(1) / 3, tolerance);
+   BOOST_CHECK_CLOSE(
+      ::boost::math::ibetac(
+         static_cast<T>(0.5f),
+         static_cast<T>(0.5f),
+         static_cast<T>(0.25)),
+      static_cast<T>(2) / 3, tolerance);
+   BOOST_CHECK_CLOSE(
+      ::boost::math::ibeta(
+         static_cast<T>(0.5f),
+         static_cast<T>(0.5f),
+         static_cast<T>(0.125)),
+      static_cast<T>(0.230053456162615885213780567705142893009911395270714102055874L), tolerance);
+   BOOST_CHECK_CLOSE(
+      ::boost::math::ibetac(
+         static_cast<T>(0.5f),
+         static_cast<T>(0.5f),
+         static_cast<T>(0.125)),
+      static_cast<T>(0.769946543837384114786219432294857106990088604729285897944125L), tolerance);
+   BOOST_CHECK_CLOSE(
+      ::boost::math::ibeta(
+         static_cast<T>(0.5f),
+         static_cast<T>(0.5f),
+         static_cast<T>(0.825L)),
+      static_cast<T>(0.725231121519469565327291851560156562956885802608457839260161L), tolerance);
+   BOOST_CHECK_CLOSE(
+      ::boost::math::ibetac(
+         static_cast<T>(0.5f),
+         static_cast<T>(0.5f),
+         static_cast<T>(0.825L)),
+      static_cast<T>(0.274768878480530434672708148439843437043114197391542160739838L), tolerance);
+   //
+   // Second argument is 1 is a special case, see http://functions.wolfram.com/GammaBetaErf/BetaRegularized/03/01/01/
+   //
+   BOOST_CHECK_CLOSE(
+      ::boost::math::ibeta(
+         static_cast<T>(0.5f),
+         static_cast<T>(1),
+         static_cast<T>(0.825L)),
+      static_cast<T>(0.908295106229247499626759842915458109758420750043003849691665L), tolerance);
+   BOOST_CHECK_CLOSE(
+      ::boost::math::ibetac(
+         static_cast<T>(0.5f),
+         static_cast<T>(1),
+         static_cast<T>(0.825L)),
+      static_cast<T>(0.091704893770752500373240157084541890241579249956996150308334L), tolerance);
+   BOOST_CHECK_CLOSE(
+      ::boost::math::ibeta(
+         static_cast<T>(30),
+         static_cast<T>(1),
+         static_cast<T>(0.825L)),
+      static_cast<T>(0.003116150729395132012981654047222541793435357905008020740211L), tolerance);
+   BOOST_CHECK_CLOSE(
+      ::boost::math::ibetac(
+         static_cast<T>(30),
+         static_cast<T>(1),
+         static_cast<T>(0.825L)),
+      static_cast<T>(0.996883849270604867987018345952777458206564642094991979259788L), tolerance);
+
+   //
+   // Bug cases from Rocco Romeo:
+   //
+   BOOST_CHECK_CLOSE(
+      ::boost::math::beta(
+      static_cast<T>(2),
+      static_cast<T>(24),
+      ldexp(static_cast<T>(1), -52)),
+      static_cast<T>(2.46519032881565349871772482100516780410072110983579277754743e-32L), tolerance);
+   BOOST_CHECK_CLOSE(
+      ::boost::math::ibeta(
+      static_cast<T>(2),
+      static_cast<T>(24),
+      ldexp(static_cast<T>(1), -52)),
+      static_cast<T>(1.47911419728939209923063489260310068246043266590147566652846e-29L), tolerance);
+   BOOST_CHECK_CLOSE(
+      ::boost::math::beta(
+      static_cast<T>(3),
+      static_cast<T>(2),
+      ldexp(static_cast<T>(1), -270)),
+      static_cast<T>(4.88182556606650701438035298707052523938789614661168065734809e-245L), tolerance);
+   BOOST_CHECK_CLOSE(
+      ::boost::math::beta(
+      static_cast<T>(2),
+      static_cast<T>(31),
+      ldexp(static_cast<T>(1), -373)),
+      static_cast<T>(1.35080680244581673116149460571129957689952846520037541640260e-225L), tolerance);
+   BOOST_CHECK_CLOSE(
+      ::boost::math::ibeta(
+      static_cast<T>(3),
+      static_cast<T>(2),
+      ldexp(static_cast<T>(1), -270)),
+      static_cast<T>(5.85819067927980841725642358448463028726547537593401678881771e-244L), tolerance);
+   BOOST_CHECK_CLOSE(
+      ::boost::math::ibeta(
+      static_cast<T>(2),
+      static_cast<T>(31),
+      ldexp(static_cast<T>(1), -373)),
+      static_cast<T>(1.34000034802625019731220264886560918028433223747877241307138e-222L), tolerance);
+   //
+   // Bug cases from Rocco Romeo:
+   //
+   BOOST_CHECK_CLOSE(
+      ::boost::math::beta(
+         static_cast<T>(2),
+         static_cast<T>(4),
+         ldexp(static_cast<T>(1 + static_cast<T>(1.0) / 1024), -351)),
+      static_cast<T>(2.381008060978474962211278613067275529112106932635520021e-212L), tolerance);
+      BOOST_CHECK_CLOSE(
+         ::boost::math::beta(
+            static_cast<T>(2),
+            static_cast<T>(4),
+            ldexp(static_cast<T>(1 + static_cast<T>(1.0) / 2048), -351)),
+         static_cast<T>(2.378685692854274898232669682422430136513931911501225435e-212L), tolerance);
+      BOOST_CHECK_CLOSE(
+         ::boost::math::ibeta(
+            static_cast<T>(3),
+            static_cast<T>(5),
+            ldexp(static_cast<T>(1 + static_cast<T>(15) / 16), -268)),
+            static_cast<T>(2.386034198603463687323052353589201848077110231388968865e-240L), tolerance);
+      BOOST_CHECK_CLOSE(
+         ::boost::math::ibeta_derivative(
+            static_cast<T>(2),
+            static_cast<T>(4),
+            ldexp(static_cast<T>(1), -557)),
+         static_cast<T>(4.23957586190238472641508753637420672781472122471791800210e-167L), tolerance * 4);
+      BOOST_CHECK_CLOSE(
+         ::boost::math::ibeta_derivative(
+            static_cast<T>(2),
+            static_cast<T>(4.5),
+            ldexp(static_cast<T>(1), -557)),
+         static_cast<T>(5.24647512910420109893867082626308082567071751558842352760e-167L), tolerance * 4);
 }
 

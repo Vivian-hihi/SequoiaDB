@@ -6,13 +6,13 @@
 //  LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 
 //  See http://www.boost.org/libs/config for the most recent version.//
-//  Revision $Id: no_scoped_enums_pass.cpp 51606 2009-03-04 14:28:36Z bemandawes $
+//  Revision $Id$
 //
 
 
-// Test file for macro BOOST_NO_SCOPED_ENUMS
+// Test file for macro BOOST_NO_CXX11_SCOPED_ENUMS
 // This file should compile, if it does not then
-// BOOST_NO_SCOPED_ENUMS should be defined.
+// BOOST_NO_CXX11_SCOPED_ENUMS should be defined.
 // See file boost_no_scoped_enums.ipp for details
 
 // Must not have BOOST_ASSERT_CONFIG set; it defeats
@@ -24,14 +24,14 @@
 #include <boost/config.hpp>
 #include "test.hpp"
 
-#ifndef BOOST_NO_SCOPED_ENUMS
+#ifndef BOOST_NO_CXX11_SCOPED_ENUMS
 #include "boost_no_scoped_enums.ipp"
 #else
-namespace boost_no_scoped_enums = empty_boost;
+namespace boost_no_cxx11_scoped_enums = empty_boost;
 #endif
 
 int main( int, char *[] )
 {
-   return boost_no_scoped_enums::test();
+   return boost_no_cxx11_scoped_enums::test();
 }
 

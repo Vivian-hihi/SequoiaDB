@@ -3,7 +3,7 @@
 //  Boost Software License, Version 1.0. (See accompanying file
 //  LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 
-#include <pch.hpp>
+#include <pch_light.hpp>
 #include "test_tgamma_ratio.hpp"
 
 //
@@ -59,7 +59,7 @@ void expected_results()
       "HP-UX|Mac OS|linux|.*(bsd|BSD).*",      // platform
       "float",                          // test type(s)
       "[^|]*",                          // test data group
-      "boost::math::tgamma_ratio[^|]*", 35, 8);                 // test function
+      "tgamma_ratio[^|]*", 35, 8);                 // test function
    //
    // Linux AMD x86em64 has slightly higher rates:
    //
@@ -69,14 +69,22 @@ void expected_results()
       "linux.*",                          // platform
       largest_type,                     // test type(s)
       "[^|]*",               // test data group
-      "boost::math::tgamma_ratio[^|]*", 300, 100);                 // test function
+      "tgamma_ratio[^|]*", 300, 100);                 // test function
    add_expected_result(
       "[^|]*",                          // compiler
       "[^|]*",                          // stdlib
       "linux.*",                          // platform
       "real_concept",                     // test type(s)
       "[^|]*",               // test data group
-      "boost::math::tgamma_ratio[^|]*", 300, 100);                 // test function
+      "tgamma_ratio[^|]*", 300, 100);                 // test function
+
+   add_expected_result(
+      "GNU.*",                          // compiler
+      "[^|]*",                          // stdlib
+      "Win32.*",                          // platform
+      largest_type,                     // test type(s)
+      "[^|]*",               // test data group
+      "tgamma_ratio[^|]*", 300, 100);                 // test function
    //
    // Catch all cases come last:
    //
@@ -86,28 +94,28 @@ void expected_results()
       "[^|]*",                          // platform
       largest_type,                     // test type(s)
       "[^|]*",                          // test data group
-      "boost::math::tgamma_delta_ratio[^|]*", 30, 20);                 // test function
+      "tgamma_delta_ratio[^|]*", 30, 20);                 // test function
    add_expected_result(
       "[^|]*",                          // compiler
       "[^|]*",                          // stdlib
       "[^|]*",                          // platform
       largest_type,                     // test type(s)
       "[^|]*",               // test data group
-      "boost::math::tgamma_ratio[^|]*", 100, 50);                 // test function
+      "tgamma_ratio[^|]*", 100, 50);                 // test function
    add_expected_result(
       "[^|]*",                          // compiler
       "[^|]*",                          // stdlib
       "[^|]*",                          // platform
       "real_concept",                   // test type(s)
       "[^|]*",                          // test data group
-      "boost::math::tgamma_delta_ratio[^|]*", 40, 15);                 // test function
+      "tgamma_delta_ratio[^|]*", 40, 15);                 // test function
    add_expected_result(
       "[^|]*",                          // compiler
       "[^|]*",                          // stdlib
       "[^|]*",                          // platform
       "real_concept",                   // test type(s)
       "[^|]*",               // test data group
-      "boost::math::tgamma_ratio[^|]*", 150, 50);                 // test function
+      "[^|]*", 250, 150);                 // test function
 
    //
    // Finish off by printing out the compiler/stdlib/platform names,
@@ -117,7 +125,7 @@ void expected_results()
       << BOOST_STDLIB << ", " << BOOST_PLATFORM << std::endl;
 }
 
-int test_main(int, char* [])
+BOOST_AUTO_TEST_CASE( test_main )
 {
    BOOST_MATH_CONTROL_FP;
    expected_results();
@@ -137,9 +145,26 @@ int test_main(int, char* [])
    std::cout << "<note>The long double tests have been disabled on this platform "
       "either because the long double overloads of the usual math functions are "
       "not available at all, or because they are too inaccurate for these tests "
-      "to pass.</note>" << std::cout;
+      "to pass.</note>" << std::endl;
 #endif
-   return 0;
+   
+#ifndef BOOST_MATH_BUGGY_LARGE_FLOAT_CONSTANTS
+   test_spots(0.1F, "float");
+#endif
+   test_spots(0.1, "double");
+#ifndef BOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS
+   test_spots(0.1L, "long double");
+#ifndef BOOST_MATH_NO_REAL_CONCEPT_TESTS
+#if !BOOST_WORKAROUND(__BORLANDC__, BOOST_TESTED_AT(0x582))
+   test_spots(boost::math::concepts::real_concept(0.1), "real_concept");
+#endif
+#endif
+#else
+   std::cout << "<note>The long double tests have been disabled on this platform "
+      "either because the long double overloads of the usual math functions are "
+      "not available at all, or because they are too inaccurate for these tests "
+      "to pass.</note>" << std::endl;
+#endif
 }
 
 

@@ -18,12 +18,15 @@
 
 // #define BOOST_MATH_ASSERT_UNDEFINED_POLICY false 
 // To compile even if Cauchy mean is used.
-
+#include <boost/math/tools/test.hpp>
 #include <boost/math/concepts/real_concept.hpp> // for real_concept
 #include <boost/math/distributions/cauchy.hpp>
     using boost::math::cauchy_distribution;
 
-#include <boost/test/test_exec_monitor.hpp> // Boost.Test
+#include "test_out_of_range.hpp"
+
+#define BOOST_TEST_MAIN
+#include <boost/test/unit_test.hpp> // Boost.Test
 #include <boost/test/floating_point_comparison.hpp>
 
 #include <iostream>
@@ -33,38 +36,20 @@
 template <class RealType>
 void test_spots(RealType T)
 {
-  // Check some bad parameters to the distribution,
-   BOOST_CHECK_THROW(boost::math::cauchy_distribution<RealType> nbad1(0, 0), std::domain_error); // zero sd
-   BOOST_CHECK_THROW(boost::math::cauchy_distribution<RealType> nbad1(0, -1), std::domain_error); // negative scale (shape)
+  // Check some bad parameters to construct the distribution,
+#ifndef BOOST_NO_EXCEPTIONS
+  BOOST_MATH_CHECK_THROW(boost::math::cauchy_distribution<RealType> nbad1(0, 0), std::domain_error); // zero scale.
+  BOOST_MATH_CHECK_THROW(boost::math::cauchy_distribution<RealType> nbad1(0, -1), std::domain_error); // negative scale (shape).
+#else
+  BOOST_MATH_CHECK_THROW(boost::math::cauchy_distribution<RealType>(0, 0), std::domain_error); // zero scale.
+  BOOST_MATH_CHECK_THROW(boost::math::cauchy_distribution<RealType>(0, -1), std::domain_error); // negative scale (shape).
+#endif
   cauchy_distribution<RealType> C01;
 
   BOOST_CHECK_EQUAL(C01.location(), 0); // Check standard values.
   BOOST_CHECK_EQUAL(C01.scale(), 1);
 
-  // Tests on extreme values of random variate x, if has numeric_limit infinity etc.
-  if(std::numeric_limits<RealType>::has_infinity)
-  {
-    BOOST_CHECK_EQUAL(pdf(C01, +std::numeric_limits<RealType>::infinity()), 0); // x = + infinity, pdf = 0
-    BOOST_CHECK_EQUAL(pdf(C01, -std::numeric_limits<RealType>::infinity()), 0); // x = - infinity, pdf = 0
-    BOOST_CHECK_EQUAL(cdf(C01, +std::numeric_limits<RealType>::infinity()), 1); // x = + infinity, cdf = 1
-    BOOST_CHECK_EQUAL(cdf(C01, -std::numeric_limits<RealType>::infinity()), 0); // x = - infinity, cdf = 0
-    BOOST_CHECK_EQUAL(cdf(complement(C01, +std::numeric_limits<RealType>::infinity())), 0); // x = + infinity, cdf = 0
-    BOOST_CHECK_EQUAL(cdf(complement(C01, -std::numeric_limits<RealType>::infinity())), 1); // x = - infinity, cdf = 1
-    BOOST_CHECK_THROW(boost::math::cauchy_distribution<RealType> nbad1(std::numeric_limits<RealType>::infinity(), static_cast<RealType>(1)), std::domain_error); // +infinite mean
-     BOOST_CHECK_THROW(boost::math::cauchy_distribution<RealType> nbad1(-std::numeric_limits<RealType>::infinity(),  static_cast<RealType>(1)), std::domain_error); // -infinite mean
-     BOOST_CHECK_THROW(boost::math::cauchy_distribution<RealType> nbad1(static_cast<RealType>(0), std::numeric_limits<RealType>::infinity()), std::domain_error); // infinite sd
-  }
-
-  if (std::numeric_limits<RealType>::has_quiet_NaN)
-  { // No longer allow x to be NaN, so these tests should throw.
-    BOOST_CHECK_THROW(pdf(C01, +std::numeric_limits<RealType>::quiet_NaN()), std::domain_error); // x = NaN
-    BOOST_CHECK_THROW(cdf(C01, +std::numeric_limits<RealType>::quiet_NaN()), std::domain_error); // x = NaN
-    BOOST_CHECK_THROW(cdf(complement(C01, +std::numeric_limits<RealType>::quiet_NaN())), std::domain_error); // x = + infinity
-    BOOST_CHECK_THROW(quantile(C01, +std::numeric_limits<RealType>::quiet_NaN()), std::domain_error); // p = + infinity
-    BOOST_CHECK_THROW(quantile(complement(C01, +std::numeric_limits<RealType>::quiet_NaN())), std::domain_error); // p = + infinity
-  }
-
-  // Basic sanity checks.
+   // Basic sanity checks.
   // 50eps as a percentage, up to a maximum of double precision
   // (that's the limit of our test data).
   RealType tolerance = (std::max)(
@@ -677,48 +662,51 @@ void test_spots(RealType T)
    // To compile even if Cauchy mean is used.
    // See policy reference, mathematically undefined function policies
    //
-   //BOOST_CHECK_THROW(
+   //BOOST_MATH_CHECK_THROW(
    //    mean(dist),
    //    std::domain_error);
-   //BOOST_CHECK_THROW(
+   //BOOST_MATH_CHECK_THROW(
    //    variance(dist),
    //    std::domain_error);
-   //BOOST_CHECK_THROW(
+   //BOOST_MATH_CHECK_THROW(
    //    standard_deviation(dist),
    //    std::domain_error);
-   //BOOST_CHECK_THROW(
+   //BOOST_MATH_CHECK_THROW(
    //    kurtosis(dist),
    //    std::domain_error);
-   //BOOST_CHECK_THROW(
+   //BOOST_MATH_CHECK_THROW(
    //    kurtosis_excess(dist),
    //    std::domain_error);
-   //BOOST_CHECK_THROW(
+   //BOOST_MATH_CHECK_THROW(
    //    skewness(dist),
    //    std::domain_error);
 
-   BOOST_CHECK_THROW(
+   BOOST_MATH_CHECK_THROW(
        quantile(dist, RealType(0.0)),
        std::overflow_error);
-   BOOST_CHECK_THROW(
+   BOOST_MATH_CHECK_THROW(
        quantile(dist, RealType(1.0)),
        std::overflow_error);
-   BOOST_CHECK_THROW(
+   BOOST_MATH_CHECK_THROW(
        quantile(complement(dist, RealType(0.0))),
        std::overflow_error);
-   BOOST_CHECK_THROW(
+   BOOST_MATH_CHECK_THROW(
        quantile(complement(dist, RealType(1.0))),
        std::overflow_error);
+
+   check_out_of_range<boost::math::cauchy_distribution<RealType> >(0, 1); // (All) valid constructor parameter values.
+
 
 
 } // template <class RealType>void test_spots(RealType)
 
-int test_main(int, char* [])
+BOOST_AUTO_TEST_CASE( test_main )
 {
-    BOOST_MATH_CONTROL_FP;
+  BOOST_MATH_CONTROL_FP;
    // Check that can generate cauchy distribution using the two convenience methods:
-   boost::math::cauchy mycd1(1.); // Using typedef
-   cauchy_distribution<> mycd2(1.); // Using default RealType double.
-   cauchy_distribution<> C01; // Using default RealType double for Standard Cauchy.
+  boost::math::cauchy mycd1(1.); // Using typedef
+  cauchy_distribution<> mycd2(1.); // Using default RealType double.
+  cauchy_distribution<> C01; // Using default RealType double for Standard Cauchy.
   BOOST_CHECK_EQUAL(C01.location(), 0); // Check standard values.
   BOOST_CHECK_EQUAL(C01.scale(), 1);
 
@@ -735,12 +723,10 @@ int test_main(int, char* [])
    std::cout << "<note>The long double tests have been disabled on this platform "
       "either because the long double overloads of the usual math functions are "
       "not available at all, or because they are too inaccurate for these tests "
-      "to pass.</note>" << std::cout;
+      "to pass.</note>" << std::endl;
 #endif
 
-   return 0;
-} // int test_main(int, char* [])
-
+} // BOOST_AUTO_TEST_CASE( test_main )
 
 /*
 Output:
@@ -751,6 +737,5 @@ Tolerance for type double is 1.11022e-012 %
 Tolerance for type long double is 1.11022e-012 %
 Tolerance for type class boost::math::concepts::real_concept is 1.11022e-012 %
 *** No errors detected
-
 
 */

@@ -94,9 +94,6 @@ int test_main(int argc, char* argv[])
     property<vertex_index_t, int >,
     property<edge_weight_t, double> > graph_t;
 
-  typedef graph_traits<graph_t>::vertex_descriptor vertex_t;
-  typedef graph_traits<graph_t>::edge_descriptor edge_t;
-
   graph_t graph;  
   generate_random_graph(graph, vertices_to_create, edges_to_create, generator);
 
@@ -109,8 +106,6 @@ int test_main(int argc, char* argv[])
     put(index_map, current_vertex, vertex_index++);
   }
 
-  typedef property_map<graph_t, edge_weight_t>::type weight_map_t;
-  weight_map_t weight_map = get(edge_weight, graph);
   randomize_property<edge_weight_t>(graph, generator);
 
   // Run comparison test with original dijkstra_shortest_paths

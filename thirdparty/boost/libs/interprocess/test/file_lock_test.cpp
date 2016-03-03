@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztanaga 2004-2011. Distributed under the Boost
+// (C) Copyright Ion Gaztanaga 2004-2012. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -71,8 +71,8 @@ int main ()
    }
 
    //test::test_all_lock<file_lock_lock_test_wrapper>();
-   //test::test_all_mutex<false, file_lock_lock_test_wrapper>();
-   //test::test_all_sharable_mutex<false, file_lock_lock_test_wrapper>();
+   //test::test_all_mutex<file_lock_lock_test_wrapper>();
+   //test::test_all_sharable_mutex<file_lock_lock_test_wrapper>();
    std::remove(get_filename().c_str());
 
    return 0;

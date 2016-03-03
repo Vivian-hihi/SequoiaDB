@@ -1,21 +1,24 @@
 // Copyright (C) 2001-2003
 // William E. Kempf
+// (C) Copyright 2013 Vicente J. Botet Escriba
 //
-//  Distributed under the Boost Software License, Version 1.0. (See accompanying 
+//  Distributed under the Boost Software License, Version 1.0. (See accompanying
 //  file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
+
+#define BOOST_THREAD_PROVIDES_INTERRUPTIONS
 
 #include <boost/thread/detail/config.hpp>
 
 #include <boost/thread/thread.hpp>
 #include <boost/thread/barrier.hpp>
 
-#include <boost/test/unit_test.hpp>
+#include <boost/detail/lightweight_test.hpp>
 #include <vector>
 
 namespace {
 
 // Shared variables for generation barrier test
-const int N_THREADS=10;
+const int N_THREADS=3;
 boost::barrier gen_barrier(N_THREADS);
 boost::mutex mutex;
 long global_parameter;
@@ -26,7 +29,7 @@ void barrier_thread()
     {
         if (gen_barrier.wait())
         {
-            boost::mutex::scoped_lock lock(mutex);
+            boost::unique_lock<boost::mutex> lock(mutex);
             global_parameter++;
         }
     }
@@ -47,20 +50,20 @@ void test_barrier()
     }
     catch(...)
     {
+        BOOST_TEST(false);
         g.interrupt_all();
         g.join_all();
-        throw;
+        //throw;
     }
-    
-    BOOST_CHECK_EQUAL(global_parameter,5);
+
+    BOOST_TEST(global_parameter==5);
+
 }
 
-boost::unit_test::test_suite* init_unit_test_suite(int, char*[])
+int main()
 {
-    boost::unit_test::test_suite* test =
-        BOOST_TEST_SUITE("Boost.Threads: barrier test suite");
 
-    test->add(BOOST_TEST_CASE(&test_barrier));
-
-    return test;
+    test_barrier();
+    return boost::report_errors();
 }
+

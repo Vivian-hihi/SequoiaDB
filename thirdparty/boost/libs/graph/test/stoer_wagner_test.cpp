@@ -45,9 +45,6 @@ struct edge_t
 // the example from Stoer & Wagner (1997)
 BOOST_AUTO_TEST_CASE(test0)
 {
-  typedef boost::graph_traits<undirected_graph>::vertex_descriptor vertex_descriptor;
-  typedef boost::graph_traits<undirected_graph>::edge_descriptor edge_descriptor;
-  
   edge_t edges[] = {{0, 1}, {1, 2}, {2, 3},
     {0, 4}, {1, 4}, {1, 5}, {2, 6}, {3, 6}, {3, 7}, {4, 5}, {5, 6}, {6, 7}};
   weight_type ws[] = {2, 3, 4, 3, 2, 2, 2, 2, 2, 3, 1, 3};
@@ -72,16 +69,12 @@ BOOST_AUTO_TEST_CASE(test0)
 BOOST_AUTO_TEST_CASE(test1)
 {
   { // if only one vertex, can't run `boost::stoer_wagner_min_cut`
-    typedef boost::graph_traits<undirected_graph>::vertex_descriptor vertex_descriptor;
-    typedef boost::graph_traits<undirected_graph>::edge_descriptor edge_descriptor;
-  
     undirected_graph g;
     add_vertex(g);
     
     BOOST_CHECK_THROW(boost::stoer_wagner_min_cut(g, get(boost::edge_weight, g)), boost::bad_graph);
   }{ // three vertices with one multi-edge
     typedef boost::graph_traits<undirected_graph>::vertex_descriptor vertex_descriptor;
-    typedef boost::graph_traits<undirected_graph>::edge_descriptor edge_descriptor;
     
     edge_t edges[] = {{0, 1}, {1, 2}, {1, 2}, {2, 0}};
     weight_type ws[] = {3, 1, 1, 1};
@@ -104,9 +97,6 @@ BOOST_AUTO_TEST_CASE(test1)
 // example by Daniel Trebbien
 BOOST_AUTO_TEST_CASE(test2)
 {
-  typedef boost::graph_traits<undirected_graph>::vertex_descriptor vertex_descriptor;
-  typedef boost::graph_traits<undirected_graph>::edge_descriptor edge_descriptor;
-  
   edge_t edges[] = {{5, 2}, {0, 6}, {5, 6},
     {3, 1}, {0, 1}, {6, 3}, {4, 6}, {2, 4}, {5, 3}};
   weight_type ws[] = {1, 3, 4, 6, 4, 1, 2, 5, 2};
@@ -129,9 +119,6 @@ BOOST_AUTO_TEST_CASE(test2)
 // example by Daniel Trebbien
 BOOST_AUTO_TEST_CASE(test3)
 {
-  typedef boost::graph_traits<undirected_graph>::vertex_descriptor vertex_descriptor;
-  typedef boost::graph_traits<undirected_graph>::edge_descriptor edge_descriptor;
-  
   edge_t edges[] = {{3, 4}, {3, 6}, {3, 5}, {0, 4}, {0, 1}, {0, 6}, {0, 7},
     {0, 5}, {0, 2}, {4, 1}, {1, 6}, {1, 5}, {6, 7}, {7, 5}, {5, 2}, {3, 4}};
   weight_type ws[] = {0, 3, 1, 3, 1, 2, 6, 1, 8, 1, 1, 80, 2, 1, 1, 4};
@@ -196,7 +183,6 @@ BOOST_AUTO_TEST_CASE(test4)
 BOOST_AUTO_TEST_CASE(test_prgen_20_70_2)
 {
   typedef boost::graph_traits<undirected_graph>::vertex_descriptor vertex_descriptor;
-  typedef boost::graph_traits<undirected_graph>::edge_descriptor edge_descriptor;
   
   std::ifstream ifs((test_dir + "/prgen_input_graphs/prgen_20_70_2.net").c_str());
   undirected_graph g;
@@ -206,10 +192,12 @@ BOOST_AUTO_TEST_CASE(test_prgen_20_70_2)
   boost::associative_property_map<std::map<vertex_descriptor, std::size_t> > components(component);
   BOOST_CHECK_EQUAL(boost::connected_components(g, components), 1U); // verify the connectedness assumption
   
-  BOOST_AUTO(distances, (boost::make_shared_array_property_map(num_vertices(g), weight_type(0), get(boost::vertex_index, g))));
+  typedef boost::shared_array_property_map<weight_type, boost::property_map<undirected_graph, boost::vertex_index_t>::const_type> distances_type;
+  distances_type distances = boost::make_shared_array_property_map(num_vertices(g), weight_type(0), get(boost::vertex_index, g));
   typedef std::vector<vertex_descriptor>::size_type index_in_heap_type;
-  BOOST_AUTO(indicesInHeap, (boost::make_shared_array_property_map(num_vertices(g), index_in_heap_type(-1), get(boost::vertex_index, g))));
-  boost::d_ary_heap_indirect<vertex_descriptor, 22, BOOST_TYPEOF(indicesInHeap), BOOST_TYPEOF(distances), std::greater<weight_type> > pq(distances, indicesInHeap);
+  typedef boost::shared_array_property_map<index_in_heap_type, boost::property_map<undirected_graph, boost::vertex_index_t>::const_type> indicesInHeap_type;
+  indicesInHeap_type indicesInHeap = boost::make_shared_array_property_map(num_vertices(g), index_in_heap_type(-1), get(boost::vertex_index, g));
+  boost::d_ary_heap_indirect<vertex_descriptor, 22, indicesInHeap_type, distances_type, std::greater<weight_type> > pq(distances, indicesInHeap);
   
   int w = boost::stoer_wagner_min_cut(g, get(boost::edge_weight, g), boost::max_priority_queue(pq));
   BOOST_CHECK_EQUAL(w, 3407);
@@ -219,7 +207,6 @@ BOOST_AUTO_TEST_CASE(test_prgen_20_70_2)
 BOOST_AUTO_TEST_CASE(test_prgen_50_40_2)
 {
   typedef boost::graph_traits<undirected_graph>::vertex_descriptor vertex_descriptor;
-  typedef boost::graph_traits<undirected_graph>::edge_descriptor edge_descriptor;
   
   std::ifstream ifs((test_dir + "/prgen_input_graphs/prgen_50_40_2.net").c_str());
   undirected_graph g;
@@ -237,7 +224,6 @@ BOOST_AUTO_TEST_CASE(test_prgen_50_40_2)
 BOOST_AUTO_TEST_CASE(test_prgen_50_70_2)
 {
   typedef boost::graph_traits<undirected_graph>::vertex_descriptor vertex_descriptor;
-  typedef boost::graph_traits<undirected_graph>::edge_descriptor edge_descriptor;
   
   std::ifstream ifs((test_dir + "/prgen_input_graphs/prgen_50_70_2.net").c_str());
   undirected_graph g;

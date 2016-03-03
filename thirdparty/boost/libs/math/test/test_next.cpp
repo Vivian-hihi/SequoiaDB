@@ -6,13 +6,27 @@
 #include <pch.hpp>
 
 #include <boost/math/concepts/real_concept.hpp>
-#include <boost/test/test_exec_monitor.hpp>
+#include <boost/math/tools/test.hpp>
+#define BOOST_TEST_MAIN
+#include <boost/test/unit_test.hpp>
 #include <boost/test/floating_point_comparison.hpp>
 #include <boost/math/special_functions/next.hpp>
+#include <boost/math/special_functions/ulp.hpp>
+#include <iostream>
+#include <iomanip>
 
 #ifdef BOOST_MSVC
 #pragma warning(disable:4127)
 #endif
+
+#if !defined(_CRAYC) && !defined(__CUDACC__) && (!defined(__GNUC__) || (__GNUC__ > 3) || ((__GNUC__ == 3) && (__GNUC_MINOR__ > 3)))
+#if (defined(_M_IX86_FP) && (_M_IX86_FP >= 2)) || defined(__SSE2__) || defined(TEST_SSE2)
+#include <float.h>
+#include "xmmintrin.h"
+#define TEST_SSE2
+#endif
+#endif
+
 
 template <class T>
 void test_value(const T& val, const char* name)
@@ -27,10 +41,10 @@ void test_value(const T& val, const char* name)
    BOOST_CHECK(float_next(val) > val);
    BOOST_CHECK_EQUAL(float_distance(float_prior(val), val), 1);
    BOOST_CHECK(float_prior(val) < val);
-   BOOST_CHECK_EQUAL(float_distance(nextafter(val, upper), val), -1);
-   BOOST_CHECK(nextafter(val, upper) > val);
-   BOOST_CHECK_EQUAL(float_distance(nextafter(val, lower), val), 1);
-   BOOST_CHECK(nextafter(val, lower) < val);
+   BOOST_CHECK_EQUAL(float_distance((boost::math::nextafter)(val, upper), val), -1);
+   BOOST_CHECK((boost::math::nextafter)(val, upper) > val);
+   BOOST_CHECK_EQUAL(float_distance((boost::math::nextafter)(val, lower), val), 1);
+   BOOST_CHECK((boost::math::nextafter)(val, lower) < val);
    BOOST_CHECK_EQUAL(float_distance(float_next(float_next(val)), val), -2);
    BOOST_CHECK_EQUAL(float_distance(float_prior(float_prior(val)), val), 2);
    BOOST_CHECK_EQUAL(float_distance(float_prior(float_prior(val)), float_next(float_next(val))), 4);
@@ -46,6 +60,36 @@ void test_value(const T& val, const char* name)
       BOOST_CHECK_EQUAL(float_distance(float_advance(float_next(float_next(val)), 4), float_next(float_next(val))), -4);
       BOOST_CHECK_EQUAL(float_distance(float_advance(float_next(float_next(val)), -4), float_next(float_next(val))), 4);
    }
+   if(val > 0)
+   {
+      T n = val + ulp(val);
+      T fn = float_next(val);
+      if(n > fn)
+      {
+         BOOST_CHECK_LE(ulp(val), boost::math::tools::min_value<T>());
+      }
+      else
+      {
+         BOOST_CHECK_EQUAL(fn, n);
+      }
+   }
+   else if(val == 0)
+   {
+      BOOST_CHECK_GE(boost::math::tools::min_value<T>(), ulp(val));
+   }
+   else
+   {
+      T n = val - ulp(val);
+      T fp = float_prior(val);
+      if(n < fp)
+      {
+         BOOST_CHECK_LE(ulp(val), boost::math::tools::min_value<T>());
+      }
+      else
+      {
+         BOOST_CHECK_EQUAL(fp, n);
+      }
+   }
 }
 
 template <class T>
@@ -57,6 +101,18 @@ void test_values(const T& val, const char* name)
    static const T one = 1;
    static const T two = 2;
 
+   std::cout << "Testing type " << name << std::endl;
+
+   T den = (std::numeric_limits<T>::min)() / 4;
+   if(den != 0)
+   {
+      std::cout << "Denormals are active\n";
+   }
+   else
+   {
+      std::cout << "Denormals are flushed to zero.\n";
+   }
+
    test_value(a, name);
    test_value(-a, name);
    test_value(b, name);
@@ -65,7 +121,7 @@ void test_values(const T& val, const char* name)
    test_value(-boost::math::tools::epsilon<T>(), name);
    test_value(boost::math::tools::min_value<T>(), name);
    test_value(-boost::math::tools::min_value<T>(), name);
-   if(std::numeric_limits<T>::is_specialized && (std::numeric_limits<T>::has_denorm == std::denorm_present))
+   if (std::numeric_limits<T>::is_specialized && (std::numeric_limits<T>::has_denorm == std::denorm_present) && ((std::numeric_limits<T>::min)() / 2 != 0))
    {
       test_value(z, name);
       test_value(-z, name);
@@ -74,14 +130,20 @@ void test_values(const T& val, const char* name)
    test_value(-one, name);
    test_value(two, name);
    test_value(-two, name);
-   if(std::numeric_limits<T>::is_specialized && (std::numeric_limits<T>::has_denorm == std::denorm_present))
+#if defined(TEST_SSE2)
+   if((_mm_getcsr() & (_MM_FLUSH_ZERO_ON | 0x40)) == 0)
    {
-      test_value(std::numeric_limits<T>::denorm_min(), name);
-      test_value(-std::numeric_limits<T>::denorm_min(), name);
-      test_value(2 * std::numeric_limits<T>::denorm_min(), name);
-      test_value(-2 * std::numeric_limits<T>::denorm_min(), name);
+#endif
+      if(std::numeric_limits<T>::is_specialized && (std::numeric_limits<T>::has_denorm == std::denorm_present) && ((std::numeric_limits<T>::min)() / 2 != 0))
+      {
+         test_value(std::numeric_limits<T>::denorm_min(), name);
+         test_value(-std::numeric_limits<T>::denorm_min(), name);
+         test_value(2 * std::numeric_limits<T>::denorm_min(), name);
+         test_value(-2 * std::numeric_limits<T>::denorm_min(), name);
+      }
+#if defined(TEST_SSE2)
    }
-
+#endif
    static const int primes[] = {
       11,     13,     17,     19,     23,     29, 
       31,     37,     41,     43,     47,     53,     59,     61,     67,     71, 
@@ -112,12 +174,12 @@ void test_values(const T& val, const char* name)
    {
       BOOST_CHECK_EQUAL(boost::math::float_prior(std::numeric_limits<T>::infinity()), (std::numeric_limits<T>::max)());
       BOOST_CHECK_EQUAL(boost::math::float_next(-std::numeric_limits<T>::infinity()), -(std::numeric_limits<T>::max)());
-      BOOST_CHECK_THROW(boost::math::float_prior(-std::numeric_limits<T>::infinity()), std::domain_error);
-      BOOST_CHECK_THROW(boost::math::float_next(std::numeric_limits<T>::infinity()), std::domain_error);
+      BOOST_MATH_CHECK_THROW(boost::math::float_prior(-std::numeric_limits<T>::infinity()), std::domain_error);
+      BOOST_MATH_CHECK_THROW(boost::math::float_next(std::numeric_limits<T>::infinity()), std::domain_error);
       if(boost::math::policies:: BOOST_MATH_OVERFLOW_ERROR_POLICY == boost::math::policies::throw_on_error)
       {
-         BOOST_CHECK_THROW(boost::math::float_prior(-(std::numeric_limits<T>::max)()), std::overflow_error);
-         BOOST_CHECK_THROW(boost::math::float_next((std::numeric_limits<T>::max)()), std::overflow_error);
+         BOOST_MATH_CHECK_THROW(boost::math::float_prior(-(std::numeric_limits<T>::max)()), std::overflow_error);
+         BOOST_MATH_CHECK_THROW(boost::math::float_next((std::numeric_limits<T>::max)()), std::overflow_error);
       }
       else
       {
@@ -127,7 +189,7 @@ void test_values(const T& val, const char* name)
    }
 }
 
-int test_main(int, char* [])
+BOOST_AUTO_TEST_CASE( test_main )
 {
    test_values(1.0f, "float");
    test_values(1.0, "double");
@@ -135,7 +197,37 @@ int test_main(int, char* [])
    test_values(1.0L, "long double");
    test_values(boost::math::concepts::real_concept(0), "real_concept");
 #endif
-   return 0;
+#if defined(TEST_SSE2)
+
+#ifdef _MSC_VER
+#  pragma message("Compiling SSE2 test code")
+#endif
+#ifdef __GNUC__
+#  pragma message "Compiling SSE2 test code"
+#endif
+
+   int mmx_flags = _mm_getcsr(); // We'll restore these later.
+
+#ifdef _WIN32
+   // These tests fail pretty badly on Linux x64, especially with Intel-12.1
+   _MM_SET_FLUSH_ZERO_MODE(_MM_FLUSH_ZERO_ON);
+   std::cout << "Testing again with Flush-To-Zero set" << std::endl;
+   std::cout << "SSE2 control word is: " << std::hex << _mm_getcsr() << std::endl;
+   test_values(1.0f, "float");
+   test_values(1.0, "double");
+   _MM_SET_FLUSH_ZERO_MODE(_MM_FLUSH_ZERO_OFF);
+#endif
+   BOOST_ASSERT((_mm_getcsr() & 0x40) == 0);
+   _mm_setcsr(_mm_getcsr() | 0x40);
+   std::cout << "Testing again with Denormals-Are-Zero set" << std::endl;
+   std::cout << "SSE2 control word is: " << std::hex << _mm_getcsr() << std::endl;
+   test_values(1.0f, "float");
+   test_values(1.0, "double");
+
+   // Restore the MMX flags:
+   _mm_setcsr(mmx_flags);
+#endif
+   
 }
 
 

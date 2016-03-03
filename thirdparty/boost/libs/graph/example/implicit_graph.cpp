@@ -95,6 +95,12 @@ namespace boost {
     typedef edge_weight_map type;
     typedef edge_weight_map const_type;
   };
+
+  template<>
+  struct property_map< const ring_graph, edge_weight_t > {
+    typedef edge_weight_map type;
+    typedef edge_weight_map const_type;
+  };
 }
 
 // Tag values that specify the traversal type in graph::traversal_category.
@@ -374,7 +380,7 @@ edges_size_type num_edges(const ring_graph& g) {
 // AdjacencyMatrix valid expressions
 std::pair<edge_descriptor, bool>
 edge(vertex_descriptor u, vertex_descriptor v, const ring_graph& g) {
-  if (abs(u-v) == 1 &&
+  if ((u == v + 1 || v == u + 1) &&
       u >= 0 && u < num_vertices(g) && v >= 0 && v < num_vertices(g))
     return std::pair<edge_descriptor, bool>(edge_descriptor(u, v), true);
   else
@@ -460,7 +466,6 @@ int main (int argc, char const *argv[]) {
 
   // Create a small ring graph.
   ring_graph g(n);
-  const_edge_weight_map m = get(edge_weight, g);
 
   // Print the outgoing edges of all the vertices.  For n=5 this will print:
   //
@@ -522,10 +527,16 @@ int main (int argc, char const *argv[]) {
     vertex_descriptor source = 0;
     std::vector<vertex_descriptor> pred(num_vertices(g));
     std::vector<edge_weight_map_value_type> dist(num_vertices(g));
+    iterator_property_map<std::vector<vertex_descriptor>::iterator,
+                          property_map<ring_graph, vertex_index_t>::const_type>
+      pred_pm(pred.begin(), get(vertex_index, g));
+    iterator_property_map<std::vector<edge_weight_map_value_type>::iterator,
+                          property_map<ring_graph, vertex_index_t>::const_type>
+      dist_pm(dist.begin(), get(vertex_index, g));
 
     dijkstra_shortest_paths(g, source,
-                            predecessor_map(&pred[0]).
-                            distance_map(&dist[0]) );
+                            predecessor_map(pred_pm).
+                            distance_map(dist_pm) );
 
     std::cout << "Dijkstra search from vertex " << source << std::endl;
     for (boost::tie(vi, vi_end) = vertices(g); vi != vi_end; ++vi) {

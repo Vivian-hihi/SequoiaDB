@@ -140,6 +140,20 @@ int main()
         TEST_TO("\xf8\x90\x80\x80\x80",illegal);  // 400 0000
         TEST_TO("\xfd\xbf\xbf\xbf\xbf\xbf",illegal);  // 7fff ffff
 
+        std::cout << "-- Invalid trail" << std::endl;
+        TEST_TO("\xC2\x7F",illegal);
+        TEST_TO("\xdf\x7F",illegal);
+        TEST_TO("\xe0\x7F\x80",illegal);
+        TEST_TO("\xef\xbf\x7F",illegal);
+        TEST_TO("\xe0\x7F\x80",illegal);
+        TEST_TO("\xef\xbf\x7F",illegal);
+        TEST_TO("\xf0\x7F\x80\x80",illegal);
+        TEST_TO("\xf4\x7f\xbf\xbf",illegal);
+        TEST_TO("\xf0\x90\x7F\x80",illegal);
+        TEST_TO("\xf4\x8f\x7F\xbf",illegal);
+        TEST_TO("\xf0\x90\x80\x7F",illegal);
+        TEST_TO("\xf4\x8f\xbf\x7F",illegal);
+
         std::cout << "-- Invalid length" << std::endl;
 
         /// Test that this actually works
@@ -274,8 +288,12 @@ int main()
         std::cout << "Testing Shift-JIS using POSIX/iconv" << std::endl;
 
         cvt = boost::locale::impl_posix::create_iconv_converter("Shift-JIS");
-        TEST(cvt.get());
-        test_shiftjis(cvt);
+        if(cvt.get()) {
+            test_shiftjis(cvt);
+        }
+        else {
+            std::cout<< "- Shift-JIS is not supported!" << std::endl;
+        }
         #endif
 
     }

@@ -1,12 +1,14 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztanaga 2006-2011. Distributed under the Boost
+// (C) Copyright Ion Gaztanaga 2006-2012. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 // See http://www.boost.org/libs/interprocess for documentation.
 //
 //////////////////////////////////////////////////////////////////////////////
+#if defined(BOOST_INTERPROCESS_MAPPED_FILES)
+
 #include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/detail/workaround.hpp>
 
@@ -21,11 +23,11 @@
 //->
 
 using namespace boost::interprocess;
-typedef list<int, allocator<int, managed_mapped_file::segment_manager> > 
+typedef list<int, allocator<int, managed_mapped_file::segment_manager> >
    MyList;
 
 int main ()
-{   
+{
    //Define file names
    //<-
    #if 1
@@ -77,7 +79,7 @@ int main ()
          //so use previously obtained handle to find the new pointer.
          MyList *mylist = static_cast<MyList *>
                            (mfile_memory.get_address_from_handle(list_handle));
-         
+
          //Fill list until there is no more room in the file
          try{
             while(1) {
@@ -88,7 +90,7 @@ int main ()
             //mapped file is full
          }
 
-         //Let's obtain the new size of the list      
+         //Let's obtain the new size of the list
          MyList::size_type new_size = mylist->size();
 
          assert(new_size > old_size);
@@ -106,3 +108,10 @@ int main ()
 }
 
 #include <boost/interprocess/detail/config_end.hpp>
+
+#else //#if defined(BOOST_INTERPROCESS_MAPPED_FILES)
+int main()
+{
+   return 0;
+}
+#endif//#if defined(BOOST_INTERPROCESS_MAPPED_FILES)

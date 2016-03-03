@@ -5,7 +5,7 @@
     
     http://www.boost.org/
 
-    Copyright (c) 2001-2011 Hartmut Kaiser. Distributed under the Boost 
+    Copyright (c) 2001-2012 Hartmut Kaiser. Distributed under the Boost 
     Software License, Version 1.0. (See accompanying file 
     LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 =============================================================================*/
@@ -658,7 +658,7 @@ public:
                     case T_EXTSTRINGLIT:
                     case T_EXTRAWSTRINGLIT:
                         id = token_id(id & ~AltTokenType);
-                        // fall through
+                        BOOST_FALLTHROUGH;
 
                     case T_CHARLIT:
                     case T_STRINGLIT:
@@ -780,7 +780,7 @@ lexer::lexer<IteratorT, PositionT> slex_functor<IteratorT, PositionT>::lexer;
 //
 //  This function is declared inside the cpp_slex_token.hpp file, which is 
 //  referenced by the source file calling the lexer and the source file, which
-//  instantiates the lex_functor. But is is defined here, so it will be 
+//  instantiates the lex_functor. But it is defined here, so it will be 
 //  instantiated only while compiling the source file, which instantiates the 
 //  lex_functor. While the cpp_slex_token.hpp file may be included everywhere,
 //  this file (cpp_slex_lexer.hpp) should be included only once. This allows

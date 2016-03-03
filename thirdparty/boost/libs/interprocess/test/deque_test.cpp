@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztanaga 2004-2011. Distributed under the Boost
+// (C) Copyright Ion Gaztanaga 2004-2012. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -9,11 +9,9 @@
 //////////////////////////////////////////////////////////////////////////////
 
 #include <boost/interprocess/detail/config_begin.hpp>
-#include <algorithm>
 #include <memory>
 #include <deque>
 #include <iostream>
-#include <functional>
 #include <list>
 
 #include <boost/interprocess/managed_shared_memory.hpp>
@@ -26,7 +24,7 @@
 #include <boost/interprocess/allocators/allocator.hpp>
 #include "allocator_v1.hpp"
 #include <boost/interprocess/exceptions.hpp>
-#include <boost/interprocess/detail/move.hpp>
+#include <boost/move/utility_core.hpp>
 #include <boost/interprocess/detail/mpl.hpp>
 #include <boost/interprocess/detail/type_traits.hpp>
 #include <string>
@@ -57,7 +55,7 @@ bool copyable_only(V1 *shmdeque, V2 *stddeque, ipcdetail::true_type)
    typedef typename V1::value_type IntType;
    std::size_t size = shmdeque->size();
    stddeque->insert(stddeque->end(), 50, 1);
-   shmdeque->insert(shmdeque->end(), 50, 1);
+   shmdeque->insert(shmdeque->end(), 50, IntType(1));
    if(!test::CheckEqualContainers(shmdeque, stddeque)) return false;
    {
       IntType move_me(1);
@@ -144,8 +142,7 @@ bool do_test()
 
       /*try*/{
          //Compare several shared memory deque operations with std::deque
-         int i;
-         for(i = 0; i < max*50; ++i){
+         for(int i = 0; i < max*50; ++i){
             IntType move_me(i);
             shmdeque->insert(shmdeque->end(), boost::move(move_me));
             stddeque->insert(stddeque->end(), i);
@@ -157,7 +154,7 @@ bool do_test()
          shmdeque->clear();
          stddeque->clear();
 
-         for(i = 0; i < max*50; ++i){
+         for(int i = 0; i < max*50; ++i){
             IntType move_me(i);
             shmdeque->push_back(boost::move(move_me));
             stddeque->push_back(i);
@@ -169,7 +166,7 @@ bool do_test()
          shmdeque->clear();
          stddeque->clear();
 
-         for(i = 0; i < max*50; ++i){
+         for(int i = 0; i < max*50; ++i){
             IntType move_me(i);
             shmdeque->push_front(boost::move(move_me));
             stddeque->push_front(i);
@@ -241,7 +238,7 @@ bool do_test()
 
          if(!test::CheckEqualContainers(shmdeque, stddeque)) return false;
 
-         for(i = 0; i < max; ++i){
+         for(int i = 0; i < max; ++i){
             IntType move_me(i);
             shmdeque->insert(shmdeque->begin(), boost::move(move_me));
             stddeque->insert(stddeque->begin(), i);
@@ -261,11 +258,11 @@ bool do_test()
 
          shmdeque->resize(100);
          stddeque->resize(100);
-         if(!test::CheckEqualContainers(shmdeque, stddeque)) return 1;         
+         if(!test::CheckEqualContainers(shmdeque, stddeque)) return 1;
 
          shmdeque->resize(200);
          stddeque->resize(200);
-         if(!test::CheckEqualContainers(shmdeque, stddeque)) return 1;         
+         if(!test::CheckEqualContainers(shmdeque, stddeque)) return 1;
 
          segment.template destroy<MyShmDeque>("MyShmDeque");
          delete stddeque;
@@ -278,7 +275,7 @@ bool do_test()
          std::cout << ex.what() << std::endl;
          return false;
       }*/
-      
+
       std::cout << std::endl << "Test OK!" << std::endl;
    }/*
    catch(...){

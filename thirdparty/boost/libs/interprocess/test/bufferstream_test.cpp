@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztanaga 2006. Distributed under the Boost
+// (C) Copyright Ion Gaztanaga 2006-2012. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -33,7 +33,13 @@ static int bufferstream_test()
       const int BufSize = 10001;
       //This will be zero-initialized
       static char buffer [BufSize];
-      bufferstream bufstream;;
+      bufferstream bufstream;
+      if(bufstream.tellg() != std::streampos(0)){
+         return 1;
+      }
+      if(bufstream.tellp() != std::streampos(0)){
+         return 1;
+      }
       std::stringstream std_stringstream;
       std::string str1, str2, str3("testline:");
       int number1, number2;
@@ -60,10 +66,10 @@ static int bufferstream_test()
          bufstream         >> str1 >> number1;
          std_stringstream  >> str2 >> number2;
          if((str1 != str2) || (str1 != str3)){
-            assert(0); return 1;  
+            assert(0); return 1;
          }
          if((number1 != number2) || (number1 != i)){
-            assert(0); return 1;   
+            assert(0); return 1;
          }
       }
       //We shouldn't have reached the end of the buffer reading
@@ -90,7 +96,7 @@ static int bufferstream_test()
          bufstream         << "testline: " << i << std::endl;
          std_stringstream  << "testline: " << i << std::endl;
       }
-     
+
       //Contents should be different
       if(std::strcmp(buffer, std_stringstream.str().c_str()) == 0){
          return 1;
@@ -117,7 +123,7 @@ static int bufferstream_test()
          assert(0);
          return 1;
       }
-      //The eof flag indicates we have reached the end of the 
+      //The eof flag indicates we have reached the end of the
       //buffer while reading
       if(!bufstream.eof()){
          assert(0);
@@ -129,7 +135,7 @@ static int bufferstream_test()
 
 int main ()
 {
-   if(bufferstream_test()==-1){
+   if(bufferstream_test()){
       return 1;
    }
    return 0;

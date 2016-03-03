@@ -6,13 +6,13 @@
 //  LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 
 //  See http://www.boost.org/libs/config for the most recent version.//
-//  Revision $Id: no_char16_t_pass.cpp 51606 2009-03-04 14:28:36Z bemandawes $
+//  Revision $Id$
 //
 
 
-// Test file for macro BOOST_NO_CHAR16_T
+// Test file for macro BOOST_NO_CXX11_CHAR16_T
 // This file should compile, if it does not then
-// BOOST_NO_CHAR16_T should be defined.
+// BOOST_NO_CXX11_CHAR16_T should be defined.
 // See file boost_no_char16_t.ipp for details
 
 // Must not have BOOST_ASSERT_CONFIG set; it defeats
@@ -24,14 +24,14 @@
 #include <boost/config.hpp>
 #include "test.hpp"
 
-#ifndef BOOST_NO_CHAR16_T
+#ifndef BOOST_NO_CXX11_CHAR16_T
 #include "boost_no_char16_t.ipp"
 #else
-namespace boost_no_char16_t = empty_boost;
+namespace boost_no_cxx11_char16_t = empty_boost;
 #endif
 
 int main( int, char *[] )
 {
-   return boost_no_char16_t::test();
+   return boost_no_cxx11_char16_t::test();
 }
 

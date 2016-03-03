@@ -1,7 +1,7 @@
 // test_beta_dist.cpp
 
 // Copyright John Maddock 2006.
-// Copyright  Paul A. Bristow 2007, 2009, 2010.
+// Copyright  Paul A. Bristow 2007, 2009, 2010, 2012.
 
 // Use, modification and distribution are subject to the
 // Boost Software License, Version 1.0.
@@ -28,20 +28,23 @@
 
 #ifdef _MSC_VER
 #  pragma warning(disable: 4127) // conditional expression is constant.
-# pragma warning (disable : 4996) // POSIX name for this item is deprecated
-# pragma warning (disable : 4224) // nonstandard extension used : formal parameter 'arg' was previously defined as a type
-# pragma warning (disable : 4180) // qualifier applied to function type has no meaning; ignored
+# pragma warning (disable : 4996) // POSIX name for this item is deprecated.
+# pragma warning (disable : 4224) // nonstandard extension used : formal parameter 'arg' was previously defined as a type.
 #endif
 
 #include <boost/math/concepts/real_concept.hpp> // for real_concept
 using ::boost::math::concepts::real_concept;
+#include <boost/math/tools/test.hpp>
 
 #include <boost/math/distributions/beta.hpp> // for beta_distribution
 using boost::math::beta_distribution;
 using boost::math::beta;
 
-#include <boost/test/test_exec_monitor.hpp> // for test_main
+#define BOOST_TEST_MAIN
+#include <boost/test/unit_test.hpp> // for test_main
 #include <boost/test/floating_point_comparison.hpp> // for BOOST_CHECK_CLOSE_FRACTION
+
+#include "test_out_of_range.hpp"
 
 #include <iostream>
 using std::cout;
@@ -151,40 +154,40 @@ void test_spots(RealType)
   using  ::boost::math::pdf;
 
   // Tests that should throw:
-  BOOST_CHECK_THROW(mode(beta_distribution<RealType>(static_cast<RealType>(1), static_cast<RealType>(1))), std::domain_error);
+  BOOST_MATH_CHECK_THROW(mode(beta_distribution<RealType>(static_cast<RealType>(1), static_cast<RealType>(1))), std::domain_error);
   // mode is undefined, and throws domain_error!
 
- // BOOST_CHECK_THROW(median(beta_distribution<RealType>(static_cast<RealType>(1), static_cast<RealType>(1))), std::domain_error);
+ // BOOST_MATH_CHECK_THROW(median(beta_distribution<RealType>(static_cast<RealType>(1), static_cast<RealType>(1))), std::domain_error);
   // median is undefined, and throws domain_error!
   // But now median IS provided via derived accessor as quantile(half).
 
 
-  BOOST_CHECK_THROW( // For various bad arguments.
+  BOOST_MATH_CHECK_THROW( // For various bad arguments.
        pdf(
           beta_distribution<RealType>(static_cast<RealType>(-1), static_cast<RealType>(1)), // bad alpha < 0.
           static_cast<RealType>(1)), std::domain_error);
 
-  BOOST_CHECK_THROW(
+  BOOST_MATH_CHECK_THROW(
        pdf(
           beta_distribution<RealType>(static_cast<RealType>(0), static_cast<RealType>(1)), // bad alpha == 0.
           static_cast<RealType>(1)), std::domain_error);
 
-  BOOST_CHECK_THROW(
+  BOOST_MATH_CHECK_THROW(
        pdf(
           beta_distribution<RealType>(static_cast<RealType>(1), static_cast<RealType>(0)), // bad beta == 0.
           static_cast<RealType>(1)), std::domain_error);
 
-  BOOST_CHECK_THROW(
+  BOOST_MATH_CHECK_THROW(
        pdf(
           beta_distribution<RealType>(static_cast<RealType>(1), static_cast<RealType>(-1)), // bad beta < 0.
           static_cast<RealType>(1)), std::domain_error);
 
-  BOOST_CHECK_THROW(
+  BOOST_MATH_CHECK_THROW(
        pdf(
           beta_distribution<RealType>(static_cast<RealType>(1), static_cast<RealType>(1)), // bad x < 0.
           static_cast<RealType>(-1)), std::domain_error);
 
-  BOOST_CHECK_THROW(
+  BOOST_MATH_CHECK_THROW(
        pdf(
           beta_distribution<RealType>(static_cast<RealType>(1), static_cast<RealType>(1)), // bad x > 1.
           static_cast<RealType>(999)), std::domain_error);
@@ -456,9 +459,87 @@ void test_spots(RealType)
      static_cast<RealType>(1-0.5545844446520295253493059553548880128511L),  // Complement of CDF Q = 1 - P
      tolerance); // Test tolerance.
 
+    //
+   // Error checks:
+   // Construction with 'bad' parameters.
+   BOOST_MATH_CHECK_THROW(beta_distribution<RealType>(1, -1), std::domain_error);
+   BOOST_MATH_CHECK_THROW(beta_distribution<RealType>(-1, 1), std::domain_error);
+   BOOST_MATH_CHECK_THROW(beta_distribution<RealType>(1, 0), std::domain_error);
+   BOOST_MATH_CHECK_THROW(beta_distribution<RealType>(0, 1), std::domain_error);
+
+   beta_distribution<> dist;
+   BOOST_MATH_CHECK_THROW(pdf(dist, -1), std::domain_error);
+   BOOST_MATH_CHECK_THROW(cdf(dist, -1), std::domain_error);
+   BOOST_MATH_CHECK_THROW(cdf(complement(dist, -1)), std::domain_error);
+   BOOST_MATH_CHECK_THROW(quantile(dist, -1), std::domain_error);
+   BOOST_MATH_CHECK_THROW(quantile(complement(dist, -1)), std::domain_error);
+   BOOST_MATH_CHECK_THROW(quantile(dist, -1), std::domain_error);
+   BOOST_MATH_CHECK_THROW(quantile(complement(dist, -1)), std::domain_error);
+
+ // No longer allow any parameter to be NaN or inf, so all these tests should throw.
+   if (std::numeric_limits<RealType>::has_quiet_NaN)
+   { 
+    // Attempt to construct from non-finite should throw.
+     RealType nan = std::numeric_limits<RealType>::quiet_NaN();
+#ifndef BOOST_NO_EXCEPTIONS
+     BOOST_MATH_CHECK_THROW(beta_distribution<RealType> w(nan), std::domain_error);
+     BOOST_MATH_CHECK_THROW(beta_distribution<RealType> w(1, nan), std::domain_error);
+#else
+     BOOST_MATH_CHECK_THROW(beta_distribution<RealType>(nan), std::domain_error);
+     BOOST_MATH_CHECK_THROW(beta_distribution<RealType>(1, nan), std::domain_error);
+#endif
+     
+    // Non-finite parameters should throw.
+     beta_distribution<RealType> w(RealType(1)); 
+     BOOST_MATH_CHECK_THROW(pdf(w, +nan), std::domain_error); // x = NaN
+     BOOST_MATH_CHECK_THROW(cdf(w, +nan), std::domain_error); // x = NaN
+     BOOST_MATH_CHECK_THROW(cdf(complement(w, +nan)), std::domain_error); // x = + nan
+     BOOST_MATH_CHECK_THROW(quantile(w, +nan), std::domain_error); // p = + nan
+     BOOST_MATH_CHECK_THROW(quantile(complement(w, +nan)), std::domain_error); // p = + nan
+  } // has_quiet_NaN
+
+  if (std::numeric_limits<RealType>::has_infinity)
+  {
+     // Attempt to construct from non-finite should throw.
+     RealType inf = std::numeric_limits<RealType>::infinity(); 
+#ifndef BOOST_NO_EXCEPTIONS
+     BOOST_MATH_CHECK_THROW(beta_distribution<RealType> w(inf), std::domain_error);
+     BOOST_MATH_CHECK_THROW(beta_distribution<RealType> w(1, inf), std::domain_error);
+#else
+     BOOST_MATH_CHECK_THROW(beta_distribution<RealType>(inf), std::domain_error);
+     BOOST_MATH_CHECK_THROW(beta_distribution<RealType>(1, inf), std::domain_error);
+#endif
+
+    // Non-finite parameters should throw.
+     beta_distribution<RealType> w(RealType(1)); 
+#ifndef BOOST_NO_EXCEPTIONS
+     BOOST_MATH_CHECK_THROW(beta_distribution<RealType> w(inf), std::domain_error);
+     BOOST_MATH_CHECK_THROW(beta_distribution<RealType> w(1, inf), std::domain_error);
+#else
+     BOOST_MATH_CHECK_THROW(beta_distribution<RealType>(inf), std::domain_error);
+     BOOST_MATH_CHECK_THROW(beta_distribution<RealType>(1, inf), std::domain_error);
+#endif
+     BOOST_MATH_CHECK_THROW(pdf(w, +inf), std::domain_error); // x = inf
+     BOOST_MATH_CHECK_THROW(cdf(w, +inf), std::domain_error); // x = inf
+     BOOST_MATH_CHECK_THROW(cdf(complement(w, +inf)), std::domain_error); // x = + inf
+     BOOST_MATH_CHECK_THROW(quantile(w, +inf), std::domain_error); // p = + inf
+     BOOST_MATH_CHECK_THROW(quantile(complement(w, +inf)), std::domain_error); // p = + inf
+   } // has_infinity
+
+   // Error handling checks:
+   check_out_of_range<boost::math::beta_distribution<RealType> >(1, 1); // (All) valid constructor parameter values.
+   // and range and non-finite.
+
+   // Not needed??????
+   BOOST_MATH_CHECK_THROW(pdf(boost::math::beta_distribution<RealType>(0, 1), 0), std::domain_error);
+   BOOST_MATH_CHECK_THROW(pdf(boost::math::beta_distribution<RealType>(-1, 1), 0), std::domain_error);
+   BOOST_MATH_CHECK_THROW(quantile(boost::math::beta_distribution<RealType>(1, 1), -1), std::domain_error);
+   BOOST_MATH_CHECK_THROW(quantile(boost::math::beta_distribution<RealType>(1, 1), 2), std::domain_error);
+
+
 } // template <class RealType>void test_spots(RealType)
 
-int test_main(int, char* [])
+BOOST_AUTO_TEST_CASE( test_main )
 {
    BOOST_MATH_CONTROL_FP;
    // Check that can generate beta distribution using one convenience methods:
@@ -473,7 +554,7 @@ int test_main(int, char* [])
    BOOST_CHECK_EQUAL(mybeta11.alpha(), 1); //
    BOOST_CHECK_EQUAL(mybeta11.beta(), 1);
    BOOST_CHECK_EQUAL(mean(mybeta11), 0.5); // 1 / (1 + 1) = 1/2 exactly
-   BOOST_CHECK_THROW(mode(mybeta11), std::domain_error);
+   BOOST_MATH_CHECK_THROW(mode(mybeta11), std::domain_error);
    beta_distribution<> mybeta22(2., 2.); // pdf is dome shape.
    BOOST_CHECK_EQUAL(mode(mybeta22), 0.5); // 2-1 / (2+2-2) = 1/2 exactly.
    beta_distribution<> mybetaH2(0.5, 2.); //
@@ -550,8 +631,7 @@ int test_main(int, char* [])
    test_spots(boost::math::concepts::real_concept(0.)); // Test real concept.
 #endif
 #endif
-   return 0;
-} // int test_main(int, char* [])
+} // BOOST_AUTO_TEST_CASE( test_main )
 
 /*
 
@@ -576,6 +656,8 @@ Boost::math::tools::epsilon = 2.22045e-016
 std::numeric_limits::epsilon = 0
 epsilon = 2.22045e-016, Tolerance = 2.22045e-011%.
 *** No errors detected
+
+
 */
 
 

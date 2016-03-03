@@ -18,14 +18,17 @@
 #include <pch.hpp> // include directory libs/math/src/tr1/ is needed.
 
 #include <boost/math/concepts/real_concept.hpp> // for real_concept
-#include <boost/test/test_exec_monitor.hpp> // Boost.Test
+#define BOOST_TEST_MAIN
+#include <boost/test/unit_test.hpp> // Boost.Test
 #include <boost/test/floating_point_comparison.hpp>
 
 #include <boost/math/distributions/gamma.hpp>
     using boost::math::gamma_distribution;
 #include <boost/math/tools/test.hpp>
+#include "test_out_of_range.hpp"
 
 #include <iostream>
+#include <iomanip>
    using std::cout;
    using std::endl;
    using std::setprecision;
@@ -213,9 +216,16 @@ void test_spots(RealType)
        (std::max)(tol2, static_cast<RealType>(std::numeric_limits<double>::epsilon() * 2 * 100))); // 2 eps as persent
     // Rely on default definition in derived accessors.
 
+   // error tests
+   check_out_of_range<boost::math::gamma_distribution<RealType> >(1, 1);
+   BOOST_MATH_CHECK_THROW(boost::math::gamma_distribution<RealType>(0, 1), std::domain_error);
+   BOOST_MATH_CHECK_THROW(boost::math::gamma_distribution<RealType>(-1, 1), std::domain_error);
+   BOOST_MATH_CHECK_THROW(boost::math::gamma_distribution<RealType>(1, 0), std::domain_error);
+   BOOST_MATH_CHECK_THROW(boost::math::gamma_distribution<RealType>(1, -1), std::domain_error);
+
 } // template <class RealType>void test_spots(RealType)
 
-int test_main(int, char* [])
+BOOST_AUTO_TEST_CASE( test_main )
 {
    // Basic sanity-check spot values.
    // (Parameter value, arbitrarily zero, only communicates the floating point type).
@@ -223,18 +233,18 @@ int test_main(int, char* [])
   test_spots(0.0); // Test double. OK at decdigits 7, tolerance = 1e07 %
 #ifndef BOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS
   test_spots(0.0L); // Test long double.
-#if !BOOST_WORKAROUND(__BORLANDC__, BOOST_TESTED_AT(0x0582))
+#ifndef BOOST_MATH_NO_REAL_CONCEPT_TESTS
   test_spots(boost::math::concepts::real_concept(0.)); // Test real concept.
 #endif
 #else
    std::cout << "<note>The long double tests have been disabled on this platform "
       "either because the long double overloads of the usual math functions are "
       "not available at all, or because they are too inaccurate for these tests "
-      "to pass.</note>" << std::cout;
+      "to pass.</note>" << std::endl;
 #endif
 
-   return 0;
-} // int test_main(int, char* [])
+   
+} // BOOST_AUTO_TEST_CASE( test_main )
 
 
 /*

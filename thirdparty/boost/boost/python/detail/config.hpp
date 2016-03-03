@@ -29,9 +29,6 @@
 # endif
 
 # if defined(BOOST_MSVC)
-#  if _MSC_VER < 1300
-#   define BOOST_MSVC6_OR_EARLIER 1
-#  endif
 
 #  pragma warning (disable : 4786) // disable truncated debug symbols
 #  pragma warning (disable : 4251) // disable exported dll function
@@ -76,13 +73,13 @@
 
 #  if BOOST_PYTHON_USE_GCC_SYMBOL_VISIBILITY
 #     if defined(BOOST_PYTHON_SOURCE)
-#        define BOOST_PYTHON_DECL __attribute__ ((visibility("default")))
+#        define BOOST_PYTHON_DECL __attribute__ ((__visibility__("default")))
 #        define BOOST_PYTHON_BUILD_DLL
 #     else
 #        define BOOST_PYTHON_DECL
 #     endif
 #     define BOOST_PYTHON_DECL_FORWARD
-#     define BOOST_PYTHON_DECL_EXCEPTION __attribute__ ((visibility("default")))
+#     define BOOST_PYTHON_DECL_EXCEPTION __attribute__ ((__visibility__("default")))
 #  elif (defined(_WIN32) || defined(__CYGWIN__))
 #     if defined(BOOST_PYTHON_SOURCE)
 #        define BOOST_PYTHON_DECL __declspec(dllexport)

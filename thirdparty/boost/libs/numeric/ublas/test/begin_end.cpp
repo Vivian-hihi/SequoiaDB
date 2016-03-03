@@ -1,4 +1,8 @@
-/** -*- c++ -*- \file begin_end.hpp \brief Test the \c begin and \c end operations. */
+//  Copyright (c) 2011 David Bellot
+//
+//  Distributed under the Boost Software License, Version 1.0. (See
+//  accompanying file LICENSE_1_0.txt or copy at
+//  http://www.boost.org/LICENSE_1_0.txt)
 
 #include <cmath>
 #include <boost/numeric/ublas/traits/const_iterator_type.hpp>
@@ -13,7 +17,7 @@
 #include <boost/numeric/ublas/vector.hpp>
 #include <boost/numeric/ublas/vector_expression.hpp>
 #include <iostream>
-#include "libs/numeric/ublas/test/utils.hpp"
+#include "utils.hpp"
 
 
 static const double TOL(1.0e-5); ///< Used for comparing two real numbers.
@@ -45,7 +49,7 @@ BOOST_UBLAS_TEST_DEF( test_vector_iteration )
             ++it
     ) {
         BOOST_UBLAS_DEBUG_TRACE( "*it = " << *it << " ==> " << v(ix) );
-        BOOST_UBLAS_TEST_CHECK( std::fabs(*it - v(ix)) <= TOL );
+        BOOST_UBLAS_TEST_CHECK( std::abs(*it - v(ix)) <= TOL );
         ++ix;
     }
 }
@@ -74,7 +78,7 @@ BOOST_UBLAS_TEST_DEF( test_vector_const_iteration )
             ++it
     ) {
         BOOST_UBLAS_DEBUG_TRACE( "*it = " << *it << " ==> " << v(ix) );
-        BOOST_UBLAS_TEST_CHECK( std::fabs(*it - v(ix)) <= TOL );
+        BOOST_UBLAS_TEST_CHECK( std::abs(*it - v(ix)) <= TOL );
         ++ix;
     }
 }
@@ -112,7 +116,7 @@ BOOST_UBLAS_TEST_DEF( test_row_major_matrix_iteration )
                 ++inner_it
         ) {
             BOOST_UBLAS_DEBUG_TRACE( "*it = " << *inner_it << " ==> " << A(row,col) );
-            BOOST_UBLAS_TEST_CHECK( std::fabs(*inner_it - A(row,col)) <= TOL );
+            BOOST_UBLAS_TEST_CHECK( std::abs(*inner_it - A(row,col)) <= TOL );
 
             ++col;
         }
@@ -154,7 +158,7 @@ BOOST_UBLAS_TEST_DEF( test_col_major_matrix_iteration )
                 ++inner_it
         ) {
             BOOST_UBLAS_DEBUG_TRACE( "*it = " << *inner_it << " ==> " << A(row,col) );
-            BOOST_UBLAS_TEST_CHECK( std::fabs(*inner_it - A(row,col)) <= TOL );
+            BOOST_UBLAS_TEST_CHECK( std::abs(*inner_it - A(row,col)) <= TOL );
 
             ++row;
         }

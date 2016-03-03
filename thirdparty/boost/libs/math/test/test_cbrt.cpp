@@ -12,6 +12,9 @@
 #include <pch_light.hpp> // include /libs/math/src/
 #include "test_cbrt.hpp"
 
+#include <boost/math/special_functions/cbrt.hpp> // Added to avoid link failure missing cbrt variants.
+// Assumes special functions library built rather than included?
+
 //
 // DESCRIPTION:
 // ~~~~~~~~~~~~
@@ -73,7 +76,7 @@ void expected_results()
       << BOOST_STDLIB << ", " << BOOST_PLATFORM << std::endl;
 }
 
-int test_main(int, char* [])
+BOOST_AUTO_TEST_CASE( test_main )
 {
    expected_results();
    BOOST_MATH_CONTROL_FP;
@@ -85,6 +88,5 @@ int test_main(int, char* [])
    test_cbrt(boost::math::concepts::real_concept(0.1), "real_concept");
 #endif
 #endif
-   return 0;
 }
 

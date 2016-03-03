@@ -1,6 +1,6 @@
 /////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztanaga  2006-2011
+// (C) Copyright Ion Gaztanaga  2006-2013
 //
 // Distributed under the Boost Software License, Version 1.0.
 //    (See accompanying file LICENSE_1_0.txt or copy at
@@ -9,6 +9,18 @@
 // See http://www.boost.org/libs/intrusive for documentation.
 //
 /////////////////////////////////////////////////////////////////////////////
+
+#include <boost/config.hpp>
+
+#ifdef BOOST_NO_EXCEPTIONS
+
+//Interprocess does not support BOOST_NO_EXCEPTIONS so nothing to test here
+int main()
+{
+   return 0;
+}
+
+#else //!BOOST_NO_EXCEPTIONS
 
 //This is needed to allow concurrent test execution in
 //several platforms. The shared memory must be unique
@@ -47,7 +59,6 @@ class shared_memory_data
 //[doc_offset_ptr_1
 #include <boost/interprocess/managed_shared_memory.hpp>
 #include <boost/interprocess/containers/vector.hpp>
-#include <boost/interprocess/containers/list.hpp>
 #include <boost/interprocess/allocators/allocator.hpp>
 
 //Definition of the shared memory friendly intrusive list
@@ -61,7 +72,7 @@ int main()
    const int ShmSize    = 50000;
    const char *ShmName  = get_shared_memory_name();
    {
-      //Erase all old shared memory 
+      //Erase all old shared memory
       ip::shared_memory_object::remove(ShmName);
       ip::managed_shared_memory shm(ip::create_only, ShmName, ShmSize);
 
@@ -72,7 +83,7 @@ int main()
             shm_allocator_t;
       typedef ip::vector<shared_memory_data, shm_allocator_t> shm_vector_t;
       shm_allocator_t shm_alloc(shm.get_segment_manager());
-      shm_vector_t *pshm_vect = 
+      shm_vector_t *pshm_vect =
          shm.construct<shm_vector_t>(ip::anonymous_instance)(shm_alloc);
       pshm_vect->resize(MaxElem);
 
@@ -100,3 +111,6 @@ int main()
    return 0;
 }
 //]
+
+#endif //BOOST_NO_EXCEPTIONS
+

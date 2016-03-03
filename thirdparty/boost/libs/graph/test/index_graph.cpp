@@ -20,7 +20,7 @@ void test()
     static const size_t N = 5;
 
     Graph g;
-    IndexMap x = get(vertex_index, g);
+    (void)(IndexMap)get(vertex_index, g);
 
     // build up the graph
     Vertex v[N];
@@ -64,7 +64,6 @@ void test()
 template <typename Graph>
 void build()
 {
-    typedef typename graph_traits<Graph>::vertex_descriptor Vertex;
     typedef typename graph_traits<Graph>::vertex_iterator Iterator;
     typedef typename property_map<Graph, vertex_index_t>::type IndexMap;
 
@@ -73,7 +72,7 @@ void build()
     Graph g(N);
     BOOST_ASSERT(max_vertex_index(g) == N);
 
-    IndexMap x = get(vertex_index, g);
+    (void)(IndexMap)get(vertex_index, g);
 
     // Each vertex should be numbered correctly.
     Iterator i, end;

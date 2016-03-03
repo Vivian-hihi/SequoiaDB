@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztanaga 2006. Distributed under the Boost
+// (C) Copyright Ion Gaztanaga 2006-2012. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -12,18 +12,23 @@
 #define BOOST_INTERPROCESS_NAMED_ALLOCATION_TEST_TEMPLATE_HEADER
 
 #include <boost/interprocess/detail/config_begin.hpp>
+
+// interprocess
 #include <boost/interprocess/managed_shared_memory.hpp>
 #include <boost/interprocess/mem_algo/rbtree_best_fit.hpp>
-#include <boost/interprocess/sync/mutex_family.hpp>
 #include <boost/interprocess/streams/bufferstream.hpp>
-#include <vector>
-#include <iostream>
+#include <boost/interprocess/sync/mutex_family.hpp>
+// container
+#include <boost/container/detail/iterator.hpp>
+#include <boost/container/detail/minimal_char_traits_header.hpp>  //char_traits
+// std
 #include <cstdio>
+#include <iostream>
 #include <new>
-#include <utility>
-#include <iterator>
 #include <set>
-#include <string>
+#include <vector>
+
+// local
 #include "get_process_id_name.hpp"
 
 namespace boost { namespace interprocess { namespace test {
@@ -100,7 +105,6 @@ template<class ManagedMemory>
 bool test_named_iterators(ManagedMemory &m)
 {
    typedef typename ManagedMemory::char_type char_type;
-   typedef std::char_traits<char_type> char_traits_type;
    std::vector<char*> buffers;
    const int BufferLen = 100;
    char_type name[BufferLen];
@@ -129,13 +133,13 @@ bool test_named_iterators(ManagedMemory &m)
    const_named_iterator named_beg = m.named_begin();
    const_named_iterator named_end = m.named_end();
 
-   if((std::size_t)std::distance(named_beg, named_end) != (std::size_t)buffers.size()){
+   if((std::size_t)boost::container::iterator_distance(named_beg, named_end) != (std::size_t)buffers.size()){
       return 1;
    }
 
    for(; named_beg != named_end; ++named_beg){
-      const char_type *name = named_beg->name();
-      aux_str = name;
+      const char_type *name_str = named_beg->name();
+      aux_str = name_str;
       if(names.find(aux_str) == names.end()){
          return 1;
       }
@@ -144,7 +148,7 @@ bool test_named_iterators(ManagedMemory &m)
          return 1;
       }
 
-      const void *found_value = m.template find<char>(name).first;
+      const void *found_value = m.template find<char>(name_str).first;
 
       if(found_value == 0)
          return false;
@@ -172,7 +176,6 @@ template<class ManagedMemory>
 bool test_shrink_to_fit(ManagedMemory &m)
 {
    typedef typename ManagedMemory::char_type char_type;
-   typedef std::char_traits<char_type> char_traits_type;
    std::vector<char*> buffers;
    const int BufferLen = 100;
    char_type name[BufferLen];
@@ -214,7 +217,6 @@ template<class ManagedMemory>
 bool test_direct_named_allocation_destruction(ManagedMemory &m)
 {
    typedef typename ManagedMemory::char_type char_type;
-   typedef std::char_traits<char_type> char_traits_type;
    std::vector<char*> buffers;
    const int BufferLen = 100;
    char_type name[BufferLen];
@@ -255,7 +257,6 @@ template<class ManagedMemory>
 bool test_named_allocation_inverse_destruction(ManagedMemory &m)
 {
    typedef typename ManagedMemory::char_type char_type;
-   typedef std::char_traits<char_type> char_traits_type;
 
    std::vector<char*> buffers;
    const int BufferLen = 100;
@@ -295,7 +296,6 @@ template<class ManagedMemory>
 bool test_named_allocation_mixed_destruction(ManagedMemory &m)
 {
    typedef typename ManagedMemory::char_type char_type;
-   typedef std::char_traits<char_type> char_traits_type;
 
    std::vector<char*> buffers;
    const int BufferLen = 100;
@@ -337,7 +337,6 @@ template<class ManagedMemory>
 bool test_inverse_named_allocation_destruction(ManagedMemory &m)
 {
    typedef typename ManagedMemory::char_type char_type;
-   typedef std::char_traits<char_type> char_traits_type;
 
    std::vector<char*> buffers;
    const int BufferLen = 100;
@@ -494,4 +493,3 @@ bool test_named_allocation()
 #include <boost/interprocess/detail/config_end.hpp>
 
 #endif   //BOOST_INTERPROCESS_NAMED_ALLOCATION_TEST_TEMPLATE_HEADER
-

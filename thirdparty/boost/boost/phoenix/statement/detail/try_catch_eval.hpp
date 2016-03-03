@@ -40,10 +40,10 @@
                         BOOST_PP_CAT(A, N)                                      \
                       , 0                                                       \
                     >::type                                                     \
-                >::type::type &                                                 \
+                >::type::type &e                                                \
             )                                                                   \
             {                                                                   \
-                boost::phoenix::eval(proto::child_c<1>(BOOST_PP_CAT(a, N)), ctx);               \
+                eval_catch_body(BOOST_PP_CAT(a, N), e, ctx);                    \
             }                                                                   \
     /**/
 
@@ -71,7 +71,7 @@
             >
           , result_type
         >::type
-        operator()(Try const & try_, BOOST_PHOENIX_A_const_ref_a, Context & ctx) const
+        operator()(Try const & try_, BOOST_PHOENIX_A_const_ref_a, Context const & ctx) const
         {
             try
             {
@@ -88,7 +88,7 @@
             >
           , result_type
         >::type
-        operator()(Try const & try_, BOOST_PHOENIX_A_const_ref_a, Context & ctx) const
+        operator()(Try const & try_, BOOST_PHOENIX_A_const_ref_a, Context const & ctx) const
         {
             try
             {

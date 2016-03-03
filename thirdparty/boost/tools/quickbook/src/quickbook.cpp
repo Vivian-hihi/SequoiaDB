@@ -9,19 +9,23 @@
 =============================================================================*/
 #include "grammar.hpp"
 #include "quickbook.hpp"
-#include "actions_class.hpp"
+#include "state.hpp"
+#include "actions.hpp"
 #include "post_process.hpp"
 #include "utils.hpp"
 #include "files.hpp"
-#include "input_path.hpp"
-#include "id_manager.hpp"
+#include "native_text.hpp"
+#include "document_state.hpp"
 #include <boost/program_options.hpp>
-#include <boost/filesystem/v3/path.hpp>
-#include <boost/filesystem/v3/operations.hpp>
-#include <boost/filesystem/v3/fstream.hpp>
+#include <boost/filesystem/path.hpp>
+#include <boost/filesystem/operations.hpp>
+#include <boost/filesystem/fstream.hpp>
 #include <boost/range/algorithm.hpp>
 #include <boost/ref.hpp>
 #include <boost/version.hpp>
+#include <boost/foreach.hpp>
+#include <boost/algorithm/string/split.hpp>
+#include <boost/algorithm/string/classification.hpp>
 
 #include <stdexcept>
 #include <vector>
@@ -36,7 +40,7 @@
 #pragma warning(disable:4355)
 #endif
 
-#define QUICKBOOK_VERSION "Quickbook Version 1.5.7"
+#define QUICKBOOK_VERSION "Quickbook Version 1.6.1"
 
 namespace quickbook
 {
@@ -52,26 +56,27 @@ namespace quickbook
     std::vector<std::string> preset_defines;
     fs::path image_location;
 
-    static void set_macros(actions& actor)
+    static void set_macros(quickbook::state& state)
     {
         for(std::vector<std::string>::const_iterator
                 it = preset_defines.begin(),
                 end = preset_defines.end();
                 it != end; ++it)
         {
-            parse_iterator first(it->begin());
-            parse_iterator last(it->end());
+            boost::string_ref val(*it);
+            parse_iterator first(val.begin());
+            parse_iterator last(val.end());
 
             cl::parse_info<parse_iterator> info =
-                cl::parse(first, last, actor.grammar().command_line_macro);
+                cl::parse(first, last, state.grammar().command_line_macro);
 
             if (!info.full) {
                 detail::outerr()
                     << "Error parsing command line definition: '"
-                    << detail::utf8(*it)
+                    << *it
                     << "'"
                     << std::endl;
-                ++actor.error_count;
+                ++state.error_count;
             }
         }
     }
@@ -81,72 +86,105 @@ namespace quickbook
     //  Parse a file
     //
     ///////////////////////////////////////////////////////////////////////////
-    void parse_file(actions& actor, value include_doc_id, bool nested_file)
+    void parse_file(quickbook::state& state, value include_doc_id, bool nested_file)
     {
-        parse_iterator first(actor.current_file->source.begin());
-        parse_iterator last(actor.current_file->source.end());
+        parse_iterator first(state.current_file->source().begin());
+        parse_iterator last(state.current_file->source().end());
 
-        cl::parse_info<parse_iterator> info = cl::parse(first, last, actor.grammar().doc_info);
+        cl::parse_info<parse_iterator> info = cl::parse(first, last, state.grammar().doc_info);
         assert(info.hit);
 
-        if (!actor.error_count)
+        if (!state.error_count)
         {
             parse_iterator pos = info.stop;
-            std::string doc_type = pre(actor, pos, include_doc_id, nested_file);
+            std::string doc_type = pre(state, pos, include_doc_id, nested_file);
 
-            info = cl::parse(info.hit ? info.stop : first, last, actor.grammar().block);
+            info = cl::parse(info.hit ? info.stop : first, last, state.grammar().block_start);
 
-            post(actor, doc_type);
+            post(state, doc_type);
 
             if (!info.full)
             {
-                file_position const& pos = actor.current_file->position_of(info.stop.base());
-                detail::outerr(actor.current_file->path, pos.line)
+                file_position const& pos = state.current_file->position_of(info.stop.base());
+                detail::outerr(state.current_file->path, pos.line)
                     << "Syntax Error near column " << pos.column << ".\n";
-                ++actor.error_count;
+                ++state.error_count;
             }
         }
     }
+
+    struct parse_document_options
+    {
+        parse_document_options() :
+            indent(-1),
+            linewidth(-1),
+            pretty_print(true),
+            deps_out_flags(quickbook::dependency_tracker::default_)
+        {}
+
+        int indent;
+        int linewidth;
+        bool pretty_print;
+        fs::path deps_out;
+        quickbook::dependency_tracker::flags deps_out_flags;
+        fs::path locations_out;
+        fs::path xinclude_base;
+    };
 
     static int
     parse_document(
         fs::path const& filein_
       , fs::path const& fileout_
-      , fs::path const& xinclude_base_
-      , int indent
-      , int linewidth
-      , bool pretty_print)
+      , parse_document_options const& options_)
     {
         string_stream buffer;
-        id_manager ids;
+        document_state output;
 
         int result = 0;
 
         try {
-            actions actor(filein_, xinclude_base_, buffer, ids);
-            set_macros(actor);
+            quickbook::state state(filein_, options_.xinclude_base, buffer, output);
+            set_macros(state);
 
-            if (actor.error_count == 0) {
-                actor.current_file = load(filein_); // Throws load_error
+            if (state.error_count == 0) {
+                state.dependencies.add_dependency(filein_);
+                state.current_file = load(filein_); // Throws load_error
 
-                parse_file(actor);
+                parse_file(state);
 
-                if(actor.error_count) {
+                if(state.error_count) {
                     detail::outerr()
-                        << "Error count: " << actor.error_count << ".\n";
+                        << "Error count: " << state.error_count << ".\n";
                 }
             }
 
-            result = actor.error_count ? 1 : 0;
+            result = state.error_count ? 1 : 0;
+
+            if (!options_.deps_out.empty())
+            {
+                state.dependencies.write_dependencies(options_.deps_out,
+                        options_.deps_out_flags);
+            }
+
+            if (!options_.locations_out.empty())
+            {
+                fs::ofstream out(options_.locations_out);
+                state.dependencies.write_dependencies(options_.locations_out,
+                        dependency_tracker::checked);
+            }
         }
         catch (load_error& e) {
-            detail::outerr(filein_) << detail::utf8(e.what()) << std::endl;
+            detail::outerr(filein_) << e.what() << std::endl;
+            result = 1;
+        }
+        catch (std::runtime_error& e) {
+            detail::outerr() << e.what() << std::endl;
             result = 1;
         }
 
-        if (result == 0)
+        if (!fileout_.empty() && result == 0)
         {
-            std::string stage2 = ids.replace_placeholders(buffer.str());
+            std::string stage2 = output.replace_placeholders(buffer.str());
 
             fs::ofstream fileout(fileout_);
 
@@ -159,11 +197,12 @@ namespace quickbook
                 return 1;
             }
 
-            if (pretty_print)
+            if (options_.pretty_print)
             {
                 try
                 {
-                    fileout << post_process(stage2, indent, linewidth);
+                    fileout << post_process(stage2, options_.indent,
+                        options_.linewidth);
                 }
                 catch (quickbook::post_process_failure&)
                 {
@@ -216,7 +255,7 @@ main(int argc, char* argv[])
         using boost::program_options::notify;
         using boost::program_options::positional_options_description;
         
-        using quickbook::detail::input_string;
+        using quickbook::detail::command_line_string;
 
         // First thing, the filesystem should record the current working directory.
         fs::initial_path<fs::path>();
@@ -224,6 +263,8 @@ main(int argc, char* argv[])
         // Various initialisation methods
         quickbook::detail::initialise_output();
         quickbook::detail::initialise_markups();
+
+        // Declare the program options
 
         options_description desc("Allowed options");
         options_description hidden("Hidden options");
@@ -242,22 +283,32 @@ main(int argc, char* argv[])
             ("no-self-linked-headers", "stop headers linking to themselves")
             ("indent", PO_VALUE<int>(), "indent spaces")
             ("linewidth", PO_VALUE<int>(), "line width")
-            ("input-file", PO_VALUE<input_string>(), "input file")
-            ("output-file", PO_VALUE<input_string>(), "output file")
+            ("input-file", PO_VALUE<command_line_string>(), "input file")
+            ("output-file", PO_VALUE<command_line_string>(), "output file")
+            ("output-deps", PO_VALUE<command_line_string>(), "output dependency file")
             ("debug", "debug mode (for developers)")
             ("ms-errors", "use Microsoft Visual Studio style error & warn message format")
-            ("include-path,I", PO_VALUE< std::vector<input_string> >(), "include path")
-            ("define,D", PO_VALUE< std::vector<input_string> >(), "define macro")
-            ("image-location", PO_VALUE<input_string>(), "image location")
+            ("include-path,I", PO_VALUE< std::vector<command_line_string> >(), "include path")
+            ("define,D", PO_VALUE< std::vector<command_line_string> >(), "define macro")
+            ("image-location", PO_VALUE<command_line_string>(), "image location")
         ;
 
         hidden.add_options()
             ("expect-errors",
                 "Succeed if the input file contains a correctly handled "
                 "error, fail otherwise.")
-            ("xinclude-base", PO_VALUE<input_string>(),
+            ("xinclude-base", PO_VALUE<command_line_string>(),
                 "Generate xincludes as if generating for this target "
                 "directory.")
+            ("output-deps-format", PO_VALUE<command_line_string>(),
+             "Comma separated list of formatting options for output-deps, "
+             "options are: escaped, checked")
+            ("output-checked-locations", PO_VALUE<command_line_string>(),
+             "Writes a file listing all the file locations that were "
+             "checked, starting with '+' if they were found, or '-' "
+             "if they weren't.\n"
+             "This is deprecated, use 'output-deps-format=checked' to "
+             "write the deps file in this format.")
         ;
 
         all.add(desc).add(hidden);
@@ -265,10 +316,9 @@ main(int argc, char* argv[])
         positional_options_description p;
         p.add("input-file", -1);
 
+        // Read option from the command line
+
         variables_map vm;
-        int indent = -1;
-        int linewidth = -1;
-        bool pretty_print = true;
 
 #if QUICKBOOK_WIDE_PATHS
         quickbook::ignore_variable(&argc);
@@ -298,6 +348,9 @@ main(int argc, char* argv[])
 
         notify(vm);
 
+        // Process the command line options
+
+        quickbook::parse_document_options parse_document_options;
         bool expect_errors = vm.count("expect-errors");
         int error_count = 0;
 
@@ -306,8 +359,7 @@ main(int argc, char* argv[])
             std::ostringstream description_text;
             description_text << desc;
 
-            quickbook::detail::out()
-                << quickbook::detail::utf8(description_text.str()) << "\n";
+            quickbook::detail::out() << description_text.str() << "\n";
 
             return 0;
         }
@@ -320,7 +372,7 @@ main(int argc, char* argv[])
             quickbook::detail::out()
                 << QUICKBOOK_VERSION
                 << " (Boost "
-                << quickbook::detail::utf8(boost_version)
+                << boost_version
                 << ")"
                 << std::endl;
             return 0;
@@ -330,15 +382,15 @@ main(int argc, char* argv[])
             quickbook::ms_errors = true;
 
         if (vm.count("no-pretty-print"))
-            pretty_print = false;
+            parse_document_options.pretty_print = false;
 
         quickbook::self_linked_headers = !vm.count("no-self-link-headers");
 
         if (vm.count("indent"))
-            indent = vm["indent"].as<int>();
+            parse_document_options.indent = vm["indent"].as<int>();
 
         if (vm.count("linewidth"))
-            linewidth = vm["linewidth"].as<int>();
+            parse_document_options.linewidth = vm["linewidth"].as<int>();
 
         if (vm.count("debug"))
         {
@@ -369,51 +421,103 @@ main(int argc, char* argv[])
         if (vm.count("include-path"))
         {
             boost::transform(
-                vm["include-path"].as<std::vector<input_string> >(),
+                vm["include-path"].as<std::vector<command_line_string> >(),
                 std::back_inserter(quickbook::include_path),
-                quickbook::detail::input_to_path);
+                quickbook::detail::command_line_to_path);
         }
 
         quickbook::preset_defines.clear();
         if (vm.count("define"))
         {
             boost::transform(
-                vm["define"].as<std::vector<input_string> >(),
+                vm["define"].as<std::vector<command_line_string> >(),
                 std::back_inserter(quickbook::preset_defines),
-                quickbook::detail::input_to_utf8);
+                quickbook::detail::command_line_to_utf8);
         }
 
         if (vm.count("input-file"))
         {
-            fs::path filein = quickbook::detail::input_to_path(
-                vm["input-file"].as<input_string>());
+            fs::path filein = quickbook::detail::command_line_to_path(
+                vm["input-file"].as<command_line_string>());
             fs::path fileout;
+
+            bool default_output = true;
+
+            if (vm.count("output-deps"))
+            {
+                parse_document_options.deps_out =
+                    quickbook::detail::command_line_to_path(
+                        vm["output-deps"].as<command_line_string>());
+                default_output = false;
+            }
+
+            if (vm.count("output-deps-format"))
+            {
+                std::string format_flags =
+                    quickbook::detail::command_line_to_utf8(
+                        vm["output-deps-format"].as<command_line_string>());
+
+                std::vector<std::string> flag_names;
+                boost::algorithm::split(flag_names, format_flags,
+                        boost::algorithm::is_any_of(", "),
+                        boost::algorithm::token_compress_on);
+
+                unsigned flags = 0;
+
+                BOOST_FOREACH(std::string const& flag, flag_names) {
+                    if (flag == "checked") {
+                        flags |= quickbook::dependency_tracker::checked;
+                    }
+                    else if (flag == "escaped") {
+                        flags |= quickbook::dependency_tracker::escaped;
+                    }
+                    else if (!flag.empty()) {
+                        quickbook::detail::outerr()
+                            << "Unknown dependency format flag: "
+                            << flag
+                            <<std::endl;
+
+                        ++error_count;
+                    }
+                }
+
+                parse_document_options.deps_out_flags =
+                    quickbook::dependency_tracker::flags(flags);
+            }
+
+            if (vm.count("output-checked-locations"))
+            {
+                parse_document_options.locations_out =
+                    quickbook::detail::command_line_to_path(
+                        vm["output-checked-locations"].as<command_line_string>());
+                default_output = false;
+            }
 
             if (vm.count("output-file"))
             {
-                fileout = quickbook::detail::input_to_path(
-                    vm["output-file"].as<input_string>());
+                fileout = quickbook::detail::command_line_to_path(
+                    vm["output-file"].as<command_line_string>());
             }
-            else
+            else if (default_output)
             {
                 fileout = filein;
                 fileout.replace_extension(".xml");
             }
-            
-            fs::path xinclude_base;
+
             if (vm.count("xinclude-base"))
             {
-                xinclude_base = quickbook::detail::input_to_path(
-                    vm["xinclude-base"].as<input_string>());
+                parse_document_options.xinclude_base =
+                    quickbook::detail::command_line_to_path(
+                        vm["xinclude-base"].as<command_line_string>());
             }
             else
             {
-                xinclude_base = fileout.parent_path();
-                if (xinclude_base.empty())
-                    xinclude_base = ".";
+                parse_document_options.xinclude_base = fileout.parent_path();
+                if (parse_document_options.xinclude_base.empty())
+                    parse_document_options.xinclude_base = ".";
             }
 
-            if (!fs::is_directory(xinclude_base))
+            if (!fs::is_directory(parse_document_options.xinclude_base))
             {
                 quickbook::detail::outerr()
                     << (vm.count("xinclude-base") ?
@@ -424,20 +528,23 @@ main(int argc, char* argv[])
 
             if (vm.count("image-location"))
             {
-                quickbook::image_location = quickbook::detail::input_to_path(
-                    vm["image-location"].as<input_string>());
+                quickbook::image_location = quickbook::detail::command_line_to_path(
+                    vm["image-location"].as<command_line_string>());
             }
             else
             {
                 quickbook::image_location = filein.parent_path() / "html";
             }
 
-            quickbook::detail::out() << "Generating Output File: "
-                << quickbook::detail::path_to_stream(fileout)
-                << std::endl;
+            if (!fileout.empty()) {
+                quickbook::detail::out() << "Generating Output File: "
+                    << fileout
+                    << std::endl;
+            }
 
             if (!error_count)
-                error_count += quickbook::parse_document(filein, fileout, xinclude_base, indent, linewidth, pretty_print);
+                error_count += quickbook::parse_document(
+                        filein, fileout, parse_document_options);
 
             if (expect_errors)
             {
@@ -455,14 +562,14 @@ main(int argc, char* argv[])
             description_text << desc;
         
             quickbook::detail::outerr() << "No filename given\n\n"
-                << quickbook::detail::utf8(description_text.str()) << std::endl;
+                << description_text.str() << std::endl;
             return 1;
         }        
     }
 
     catch(std::exception& e)
     {
-        quickbook::detail::outerr() << quickbook::detail::utf8(e.what()) << "\n";
+        quickbook::detail::outerr() << e.what() << "\n";
         return 1;
     }
 

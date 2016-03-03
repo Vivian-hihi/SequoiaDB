@@ -22,7 +22,7 @@
 #include <boost/geometry/geometries/point_xy.hpp>
 #include <boost/geometry/geometries/adapted/boost_tuple.hpp>
 
-BOOST_GEOMETRY_REGISTER_BOOST_TUPLE_CS(cs::cartesian);
+BOOST_GEOMETRY_REGISTER_BOOST_TUPLE_CS(cs::cartesian)
 
 
 
@@ -76,7 +76,7 @@ void test_non_geometry()
     it += 2;
     BOOST_CHECK_EQUAL(*it, 1);
 
-    BOOST_CHECK_EQUAL(boost::size(view), 4);
+    BOOST_CHECK_EQUAL(boost::size(view), 4u);
 }
 
 

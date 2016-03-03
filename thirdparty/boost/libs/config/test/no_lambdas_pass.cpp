@@ -6,13 +6,13 @@
 //  LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 
 //  See http://www.boost.org/libs/config for the most recent version.//
-//  Revision $Id: no_lambdas_pass.cpp 53445 2009-05-30 11:22:59Z bemandawes $
+//  Revision $Id$
 //
 
 
-// Test file for macro BOOST_NO_LAMBDAS
+// Test file for macro BOOST_NO_CXX11_LAMBDAS
 // This file should compile, if it does not then
-// BOOST_NO_LAMBDAS should be defined.
+// BOOST_NO_CXX11_LAMBDAS should be defined.
 // See file boost_no_lambdas.ipp for details
 
 // Must not have BOOST_ASSERT_CONFIG set; it defeats
@@ -24,14 +24,14 @@
 #include <boost/config.hpp>
 #include "test.hpp"
 
-#ifndef BOOST_NO_LAMBDAS
+#ifndef BOOST_NO_CXX11_LAMBDAS
 #include "boost_no_lambdas.ipp"
 #else
-namespace boost_no_lambdas = empty_boost;
+namespace boost_no_cxx11_lambdas = empty_boost;
 #endif
 
 int main( int, char *[] )
 {
-   return boost_no_lambdas::test();
+   return boost_no_cxx11_lambdas::test();
 }
 

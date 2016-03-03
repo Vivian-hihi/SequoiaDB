@@ -6,6 +6,9 @@
 //  http://www.boost.org/LICENSE_1_0.txt)
 //
 #define BOOST_LOCALE_SOURCE
+#if defined(__FreeBSD__)
+#include <xlocale.h>
+#endif
 #include <locale>
 #include <string>
 #include <ios>
@@ -210,7 +213,7 @@ public:
     {
         while(begin!=end) {
             char c= *begin++;
-            mask r=mask();
+            int r=0;
             if(isspace_l(c,*lc_))
                 r|=space;
             if(isprint_l(c,*lc_))
@@ -229,7 +232,10 @@ public:
                 r|=xdigit;
             if(ispunct_l(c,*lc_))
                 r|=punct;
-            *m++ = r;
+            // r actually should be mask, but some standard
+            // libraries (like STLPort)
+            // do not define operator | properly so using int+cast
+            *m++ = static_cast<mask>(r);
         }
         return begin;
     }
@@ -305,7 +311,7 @@ public:
     {
         while(begin!=end) {
             wchar_t c= *begin++;
-            mask r=mask();
+            int r=0;
             if(iswspace_l(c,*lc_))
                 r|=space;
             if(iswprint_l(c,*lc_))
@@ -324,7 +330,10 @@ public:
                 r|=xdigit;
             if(iswpunct_l(c,*lc_))
                 r|=punct;
-            *m++ = r;
+            // r actually should be mask, but some standard
+            // libraries (like STLPort)
+            // do not define operator | properly so using int+cast
+            *m++ = static_cast<mask>(r);
         }
         return begin;
     }
@@ -379,7 +388,7 @@ struct basic_numpunct {
     }
     basic_numpunct(locale_t lc) 
     {
-    #ifdef __APPLE__
+    #if defined(__APPLE__) || defined(__FreeBSD__)
         lconv *cv = localeconv_l(lc);
         grouping = cv->grouping;
         thousands_sep = cv->thousands_sep;

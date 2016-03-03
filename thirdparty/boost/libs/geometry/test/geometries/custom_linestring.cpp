@@ -56,7 +56,7 @@ namespace boost { namespace geometry { namespace traits {
 // by specializing the "use_std" traits to false.
 // It should therefore implement the traits:: clear / append_point
 template <typename P>
-struct custom_linestring2 : std::deque<P> // std::pair<typename std::vector<P>::const_iterator, typename std::vector<P>::const_iterator> 
+struct custom_linestring2 : std::deque<P> // std::pair<typename std::vector<P>::const_iterator, typename std::vector<P>::const_iterator>
 {
 };
 
@@ -87,15 +87,15 @@ void test_linestring()
     typedef typename bg::point_type<G>::type P;
 
     bg::clear(geometry);
-    BOOST_CHECK_EQUAL(boost::size(geometry), 0);
+    BOOST_CHECK_EQUAL(boost::size(geometry), 0u);
 
     bg::append(geometry, bg::make_zero<P>());
-    BOOST_CHECK_EQUAL(boost::size(geometry), 1);
+    BOOST_CHECK_EQUAL(boost::size(geometry), 1u);
 
     //std::cout << geometry << std::endl;
 
     bg::clear(geometry);
-    BOOST_CHECK_EQUAL(boost::size(geometry), 0);
+    BOOST_CHECK_EQUAL(boost::size(geometry), 0u);
 
 
     //P p = boost::range::front(geometry);

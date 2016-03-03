@@ -13,7 +13,7 @@
 #include "test3.hpp"
 
 // Test matrix expression templates
-template<class M, int N>
+template<class M, std::size_t N>
 struct test_my_matrix {
     typedef typename M::value_type value_type;
 
@@ -341,6 +341,30 @@ void test_matrix () {
 #ifdef USE_DOUBLE
     std::cout << "std::complex<double> coordinate_matrix" << std::endl;
     test_my_matrix<ublas::coordinate_matrix<std::complex<double> >, 3 > () ();
+#endif
+#endif
+#endif
+
+#ifdef USE_MAPPED_VECTOR_OF_MAPPED_VECTOR
+#ifdef USE_FLOAT
+    std::cout << "float mapped_vector_of_mapped_vector" << std::endl;
+    test_my_matrix<ublas::mapped_vector_of_mapped_vector<float>, 3 > () ();
+#endif
+
+#ifdef USE_DOUBLE
+    std::cout << "double mapped_vector_of_mapped_vector" << std::endl;
+    test_my_matrix<ublas::mapped_vector_of_mapped_vector<double>, 3 > () ();
+#endif
+
+#ifdef USE_STD_COMPLEX
+#ifdef USE_FLOAT
+    std::cout << "std::complex<float> mapped_vector_of_mapped_vector" << std::endl;
+    test_my_matrix<ublas::mapped_vector_of_mapped_vector<std::complex<float> >, 3 > () ();
+#endif
+
+#ifdef USE_DOUBLE
+    std::cout << "std::complex<double> mapped_vector_of_mapped_vector" << std::endl;
+    test_my_matrix<ublas::mapped_vector_of_mapped_vector<std::complex<double> >, 3 > () ();
 #endif
 #endif
 #endif

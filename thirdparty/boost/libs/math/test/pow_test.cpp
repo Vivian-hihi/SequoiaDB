@@ -11,7 +11,9 @@
 #include <iostream>
 
 #include <boost/math/concepts/real_concept.hpp>
-#include <boost/test/test_exec_monitor.hpp>
+#include <boost/math/tools/test.hpp>
+#define BOOST_TEST_MAIN
+#include <boost/test/unit_test.hpp>
 #include <boost/test/floating_point_comparison.hpp>
 
 #include <boost/typeof/typeof.hpp>
@@ -35,13 +37,13 @@ void test_pow(T base)
 
     if ((base == 0) && N < 0)
     {
-       BOOST_CHECK_THROW(math::pow<N>(base), std::overflow_error);
+       BOOST_MATH_CHECK_THROW(math::pow<N>(base), std::overflow_error);
     }
     else
     {
        BOOST_CHECK_CLOSE(math::pow<N>(base),
               pow(static_cast<result_type>(base), static_cast<result_type>(N)),
-              boost::math::tools::epsilon<result_type>() * 100 * 200); // 200 eps as a %
+              boost::math::tools::epsilon<result_type>() * 100 * 400); // 400 eps as a %
     }
 }
 
@@ -141,7 +143,7 @@ void test_error_policy()
                 == 456.78);
 }
 
-int test_main(int, char* [])
+BOOST_AUTO_TEST_CASE( test_main )
 {
     using namespace std;
 
@@ -182,21 +184,19 @@ int test_main(int, char* [])
     test_with_big_exponents<long double, -1>();
 
     cout << "Testing with concepts::real_concept precision bases and positive small exponents" << endl;
-    test_with_small_exponents<concepts::real_concept, 1>();
+    test_with_small_exponents<boost::math::concepts::real_concept, 1>();
     cout << "Testing with concepts::real_concept precision bases and negative small exponents" << endl;
-    test_with_small_exponents<concepts::real_concept, -1>();
+    test_with_small_exponents<boost::math::concepts::real_concept, -1>();
 
     cout << "Testing with concepts::real_concept precision bases and positive big exponents" << endl;
-    test_with_big_exponents<concepts::real_concept, 1>();
+    test_with_big_exponents<boost::math::concepts::real_concept, 1>();
     cout << "Testing with concepts::real_concept precision bases and negative big exponents" << endl;
-    test_with_big_exponents<concepts::real_concept, -1>();
+    test_with_big_exponents<boost::math::concepts::real_concept, -1>();
 #endif
 
     test_return_types();
 
     test_error_policy();
-
-    return 0;
 }
 
 /*

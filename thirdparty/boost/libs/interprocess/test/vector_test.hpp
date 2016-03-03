@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztanaga 2004-2011. Distributed under the Boost
+// (C) Copyright Ion Gaztanaga 2004-2012. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -12,23 +12,23 @@
 #define BOOST_INTERPROCESS_TEST_VECTOR_TEST_HEADER
 
 #include <boost/interprocess/detail/config_begin.hpp>
-#include <algorithm>
-#include <memory>
-#include <vector>
-#include <iostream>
-#include <functional>
-#include <list>
 
 #include <boost/interprocess/exceptions.hpp>
-#include <boost/interprocess/detail/move.hpp>
+#include <boost/move/utility_core.hpp>
 #include <boost/interprocess/detail/mpl.hpp>
 #include "print_container.hpp"
 #include "check_equal_containers.hpp"
 #include "movable_int.hpp"
-#include <string>
-#include <vector>
+
 #include "get_process_id_name.hpp"
 #include "emplace_test.hpp"
+
+#include <vector>
+#include <list>
+#include <string>
+#include <iostream>
+#include <cstddef>
+
 
 namespace boost{
 namespace interprocess{
@@ -102,15 +102,15 @@ int vector_test()
 
          shmvector->resize(100);
          stdvector->resize(100);
-         if(!test::CheckEqualContainers(shmvector, stdvector)) return 1;         
+         if(!test::CheckEqualContainers(shmvector, stdvector)) return 1;
 
          shmvector->resize(200);
          stdvector->resize(200);
-         if(!test::CheckEqualContainers(shmvector, stdvector)) return 1;         
+         if(!test::CheckEqualContainers(shmvector, stdvector)) return 1;
 
          shmvector->resize(0);
          stdvector->resize(0);
-         if(!test::CheckEqualContainers(shmvector, stdvector)) return 1;         
+         if(!test::CheckEqualContainers(shmvector, stdvector)) return 1;
 
          for(int i = 0; i < max; ++i){
             IntType new_int(i);

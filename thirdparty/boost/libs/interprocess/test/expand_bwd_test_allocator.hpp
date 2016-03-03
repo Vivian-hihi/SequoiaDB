@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztanaga 2005-2011. Distributed under the Boost
+// (C) Copyright Ion Gaztanaga 2005-2012. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -11,7 +11,7 @@
 #ifndef BOOST_INTERPROCESS_EXPAND_BWD_TEST_ALLOCATOR_HPP
 #define BOOST_INTERPROCESS_EXPAND_BWD_TEST_ALLOCATOR_HPP
 
-#if (defined _MSC_VER) && (_MSC_VER >= 1200)
+#if defined (_MSC_VER)
 #  pragma once
 #endif
 
@@ -24,11 +24,11 @@
 #include <boost/interprocess/detail/utilities.hpp>
 #include <boost/interprocess/containers/version_type.hpp>
 #include <boost/interprocess/exceptions.hpp>
+#include <boost/move/adl_move_swap.hpp>
 #include <memory>
-#include <algorithm>
 #include <cstddef>
-#include <stdexcept>
 #include <cassert>
+#include <new>
 
 //!\file
 //!Describes an allocator to test expand capabilities
@@ -37,11 +37,11 @@ namespace boost {
 namespace interprocess {
 namespace test {
 
-//This allocator just allows two allocations. The first one will return 
+//This allocator just allows two allocations. The first one will return
 //mp_buffer + m_offset configured in the constructor. The second one
 //will return mp_buffer.
 template<class T>
-class expand_bwd_test_allocator 
+class expand_bwd_test_allocator
 {
  private:
    typedef expand_bwd_test_allocator<T> self_t;
@@ -66,17 +66,20 @@ class expand_bwd_test_allocator
 
    typedef boost::interprocess::version_type<expand_bwd_test_allocator, 2>   version;
 
+   //Dummy multiallocation chain
+   struct multiallocation_chain{};
+
    template<class T2>
    struct rebind
    {  typedef expand_bwd_test_allocator<T2>   other;   };
 
    //!Constructor from the segment manager. Never throws
-   expand_bwd_test_allocator(T *buffer, size_type size, difference_type offset) 
-      : mp_buffer(buffer), m_size(size)
+   expand_bwd_test_allocator(T *buf, size_type sz, difference_type offset)
+      : mp_buffer(buf), m_size(sz)
       , m_offset(offset),  m_allocations(0){ }
 
    //!Constructor from other expand_bwd_test_allocator. Never throws
-   expand_bwd_test_allocator(const expand_bwd_test_allocator &other) 
+   expand_bwd_test_allocator(const expand_bwd_test_allocator &other)
       : mp_buffer(other.mp_buffer), m_size(other.m_size)
       , m_offset(other.m_offset),  m_allocations(0){ }
 
@@ -109,39 +112,35 @@ class expand_bwd_test_allocator
    {  return m_size;   }
 
    friend void swap(self_t &alloc1, self_t &alloc2)
-   {  
-      ipcdetail::do_swap(alloc1.mp_buffer, alloc2.mp_buffer);
-      ipcdetail::do_swap(alloc1.m_size,    alloc2.m_size);
-      ipcdetail::do_swap(alloc1.m_offset,  alloc2.m_offset);
+   {
+      ::boost::adl_move_swap(alloc1.mp_buffer, alloc2.mp_buffer);
+      ::boost::adl_move_swap(alloc1.m_size,    alloc2.m_size);
+      ::boost::adl_move_swap(alloc1.m_offset,  alloc2.m_offset);
    }
 
    //Experimental version 2 expand_bwd_test_allocator functions
 
-   std::pair<pointer, bool>
-      allocation_command(boost::interprocess::allocation_type command,
-                         size_type limit_size, 
-                         size_type preferred_size,
-                         size_type &received_size, const pointer &reuse = 0)
+   pointer allocation_command(boost::interprocess::allocation_type command,
+                         size_type limit_size, size_type &prefer_in_recvd_out_size, pointer &reuse)
    {
-      (void)preferred_size;   (void)reuse;   (void)command;
+      (void)reuse;   (void)command;
       //This allocator only expands backwards!
       assert(m_allocations == 0 || (command & boost::interprocess::expand_bwd));
-      
-      received_size = limit_size;
+      prefer_in_recvd_out_size = limit_size;
 
       if(m_allocations == 0){
          if((m_offset + limit_size) > m_size){
             assert(0);
          }
          ++m_allocations;
-         return std::pair<pointer, bool>(mp_buffer + m_offset, false);
+         return mp_buffer + m_offset;
       }
       else if(m_allocations == 1){
          if(limit_size > m_size){
             assert(0);
          }
          ++m_allocations;
-         return std::pair<pointer, bool>(mp_buffer, true);
+         return mp_buffer;
       }
       else{
          assert(0);
@@ -174,13 +173,13 @@ class expand_bwd_test_allocator
 
 //!Equality test for same type of expand_bwd_test_allocator
 template<class T> inline
-bool operator==(const expand_bwd_test_allocator<T>  &alloc1, 
+bool operator==(const expand_bwd_test_allocator<T>  &alloc1,
                 const expand_bwd_test_allocator<T>  &alloc2)
 {  return false; }
 
 //!Inequality test for same type of expand_bwd_test_allocator
 template<class T> inline
-bool operator!=(const expand_bwd_test_allocator<T>  &alloc1, 
+bool operator!=(const expand_bwd_test_allocator<T>  &alloc1,
                 const expand_bwd_test_allocator<T>  &alloc2)
 {  return true; }
 

@@ -5,7 +5,8 @@
 
 #include <pch.hpp>
 
-#include <boost/test/test_exec_monitor.hpp>
+#define BOOST_TEST_MAIN
+#include <boost/test/unit_test.hpp>
 #include <boost/test/floating_point_comparison.hpp>
 #include <boost/test/results_collector.hpp>
 #include <boost/math/special_functions/beta.hpp>
@@ -13,6 +14,9 @@
 #include <boost/test/results_collector.hpp>
 #include <boost/test/unit_test.hpp>
 #include <boost/array.hpp>
+#include "table_type.hpp"
+#include <iostream>
+#include <iomanip>
 
 #define BOOST_CHECK_CLOSE_EX(a, b, prec, i) \
    {\
@@ -205,7 +209,7 @@ double inverse_ibeta_halley(double a, double b, double z)
    return boost::math::tools::halley_iterate(ibeta_roots_3<double, boost::math::policies::policy<> >(a, b, z, invert), guess, min, max, precision);
 }
 
-double inverse_ibeta_schroeder(double a, double b, double z)
+double inverse_ibeta_schroder(double a, double b, double z)
 {
    double guess = 0.5;
    bool invert = false;
@@ -233,16 +237,16 @@ double inverse_ibeta_schroeder(double a, double b, double z)
 
    double min = 0;
    double max = 1;
-   return boost::math::tools::schroeder_iterate(ibeta_roots_3<double, boost::math::policies::policy<> >(a, b, z, invert), guess, min, max, precision);
+   return boost::math::tools::schroder_iterate(ibeta_roots_3<double, boost::math::policies::policy<> >(a, b, z, invert), guess, min, max, precision);
 }
 
 
-template <class T>
+template <class Real, class T>
 void test_inverses(const T& data)
 {
    using namespace std;
    typedef typename T::value_type row_type;
-   typedef typename row_type::value_type value_type;
+   typedef Real                   value_type;
 
    value_type precision = static_cast<value_type>(ldexp(1.0, 1-boost::math::policies::digits<value_type, boost::math::policies::policy<> >()/2)) * 100;
    if(boost::math::policies::digits<value_type, boost::math::policies::policy<> >() < 50)
@@ -258,37 +262,37 @@ void test_inverses(const T& data)
       //
       if(data[i][5] == 0)
       {
-         BOOST_CHECK_EQUAL(inverse_ibeta_halley(data[i][0], data[i][1], data[i][5]), value_type(0));
-         BOOST_CHECK_EQUAL(inverse_ibeta_schroeder(data[i][0], data[i][1], data[i][5]), value_type(0));
-         BOOST_CHECK_EQUAL(inverse_ibeta_newton(data[i][0], data[i][1], data[i][5]), value_type(0));
-         BOOST_CHECK_EQUAL(inverse_ibeta_bisect(data[i][0], data[i][1], data[i][5]), value_type(0));
+         BOOST_CHECK_EQUAL(inverse_ibeta_halley(Real(data[i][0]), Real(data[i][1]), Real(data[i][5])), value_type(0));
+         BOOST_CHECK_EQUAL(inverse_ibeta_schroder(Real(data[i][0]), Real(data[i][1]), Real(data[i][5])), value_type(0));
+         BOOST_CHECK_EQUAL(inverse_ibeta_newton(Real(data[i][0]), Real(data[i][1]), Real(data[i][5])), value_type(0));
+         BOOST_CHECK_EQUAL(inverse_ibeta_bisect(Real(data[i][0]), Real(data[i][1]), Real(data[i][5])), value_type(0));
       }
       else if((1 - data[i][5] > 0.001) 
          && (fabs(data[i][5]) > 2 * boost::math::tools::min_value<value_type>()) 
          && (fabs(data[i][5]) > 2 * boost::math::tools::min_value<double>()))
       {
-         value_type inv = inverse_ibeta_halley(data[i][0], data[i][1], data[i][5]);
-         BOOST_CHECK_CLOSE_EX(data[i][2], inv, precision, i);
-         inv = inverse_ibeta_schroeder(data[i][0], data[i][1], data[i][5]);
-         BOOST_CHECK_CLOSE_EX(data[i][2], inv, precision, i);
-         inv = inverse_ibeta_newton(data[i][0], data[i][1], data[i][5]);
-         BOOST_CHECK_CLOSE_EX(data[i][2], inv, precision, i);
-         inv = inverse_ibeta_bisect(data[i][0], data[i][1], data[i][5]);
-         BOOST_CHECK_CLOSE_EX(data[i][2], inv, precision, i);
+         value_type inv = inverse_ibeta_halley(Real(data[i][0]), Real(data[i][1]), Real(data[i][5]));
+         BOOST_CHECK_CLOSE_EX(Real(data[i][2]), inv, precision, i);
+         inv = inverse_ibeta_schroder(Real(data[i][0]), Real(data[i][1]), Real(data[i][5]));
+         BOOST_CHECK_CLOSE_EX(Real(data[i][2]), inv, precision, i);
+         inv = inverse_ibeta_newton(Real(data[i][0]), Real(data[i][1]), Real(data[i][5]));
+         BOOST_CHECK_CLOSE_EX(Real(data[i][2]), inv, precision, i);
+         inv = inverse_ibeta_bisect(Real(data[i][0]), Real(data[i][1]), Real(data[i][5]));
+         BOOST_CHECK_CLOSE_EX(Real(data[i][2]), inv, precision, i);
       }
       else if(1 == data[i][5])
       {
-         BOOST_CHECK_EQUAL(inverse_ibeta_halley(data[i][0], data[i][1], data[i][5]), value_type(1));
-         BOOST_CHECK_EQUAL(inverse_ibeta_schroeder(data[i][0], data[i][1], data[i][5]), value_type(1));
-         BOOST_CHECK_EQUAL(inverse_ibeta_newton(data[i][0], data[i][1], data[i][5]), value_type(1));
-         BOOST_CHECK_EQUAL(inverse_ibeta_bisect(data[i][0], data[i][1], data[i][5]), value_type(1));
+         BOOST_CHECK_EQUAL(inverse_ibeta_halley(Real(data[i][0]), Real(data[i][1]), Real(data[i][5])), value_type(1));
+         BOOST_CHECK_EQUAL(inverse_ibeta_schroder(Real(data[i][0]), Real(data[i][1]), Real(data[i][5])), value_type(1));
+         BOOST_CHECK_EQUAL(inverse_ibeta_newton(Real(data[i][0]), Real(data[i][1]), Real(data[i][5])), value_type(1));
+         BOOST_CHECK_EQUAL(inverse_ibeta_bisect(Real(data[i][0]), Real(data[i][1]), Real(data[i][5])), value_type(1));
       }
 
    }
 }
 
 #ifndef SC_
-#define SC_(x) static_cast<T>(BOOST_JOIN(x, L))
+#define SC_(x) static_cast<typename table_type<T>::type>(BOOST_JOIN(x, L))
 #endif
 
 template <class T>
@@ -302,21 +306,21 @@ void test_beta(T, const char* /* name */)
    //
 #  include "ibeta_small_data.ipp"
 
-   test_inverses(ibeta_small_data);
+   test_inverses<T>(ibeta_small_data);
 
 #  include "ibeta_data.ipp"
 
-   test_inverses(ibeta_data);
+   test_inverses<T>(ibeta_data);
 
 #  include "ibeta_large_data.ipp"
 
-   test_inverses(ibeta_large_data);
+   test_inverses<T>(ibeta_large_data);
 }
 
-int test_main(int, char* [])
+BOOST_AUTO_TEST_CASE( test_main )
 {
    test_beta(0.1, "double");
-   return 0;
+   
 }
 
 

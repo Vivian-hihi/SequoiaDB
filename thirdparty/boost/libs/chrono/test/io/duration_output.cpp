@@ -20,18 +20,18 @@ template<typename D>
 void test_good_symbol(const char* str, D d)
 {
   std::ostringstream out;
-#if defined BOOST_CHRONO_DONT_PROVIDE_DEPRECATED_IO_V1
+#if BOOST_CHRONO_VERSION==2
   out << boost::chrono::duration_fmt(boost::chrono::duration_style::symbol) << d;
 #else
   out << boost::chrono::duration_short  << d;
 #endif
   BOOST_TEST(out.good());
-  BOOST_TEST(out.str() == str);
+  BOOST_TEST_EQ(out.str(), str);
 }
-#if defined BOOST_CHRONO_DONT_PROVIDE_DEPRECATED_IO_V1
+#if BOOST_CHRONO_VERSION==2
 
 template<typename D>
-void test_good(const char* str, D d, boost::chrono::duration_style::type style)
+void test_good(const char* str, D d, boost::chrono::duration_style style)
 {
   std::ostringstream out;
 
@@ -41,12 +41,27 @@ void test_good(const char* str, D d, boost::chrono::duration_style::type style)
 }
 
 template<typename D>
-void test_state_saver(const char* str, const char* str2, D d, boost::chrono::duration_style::type style)
+void test_state_saver(const char* str, const char* str2, D d, boost::chrono::duration_style style)
 {
   std::ostringstream out;
   {
     boost::chrono::duration_style_io_saver ios(out);
     out << boost::chrono::duration_fmt(style) << d;
+    BOOST_TEST(out.good());
+    BOOST_TEST(out.str() == str);
+  }
+  out << " " <<  d;
+  BOOST_TEST(out.good());
+  BOOST_TEST(out.str() == str2);
+}
+
+template<typename D>
+void test_state_saver2(const char* str, const char* str2, D d, boost::chrono::duration_style style)
+{
+  std::ostringstream out;
+  {
+    boost::chrono::duration_style_io_saver ios(out, style);
+    out << d;
     BOOST_TEST(out.good());
     BOOST_TEST(out.str() == str);
   }
@@ -75,7 +90,7 @@ int main()
   test_good_prefix("5000 [1/30]seconds", duration<boost::int_least64_t, ratio<1, 30> > (5000));
 
   test_good_symbol("5000 h", hours(5000));
-#if defined BOOST_CHRONO_DONT_PROVIDE_DEPRECATED_IO_V1
+#if BOOST_CHRONO_VERSION==2
   test_good_symbol("5000 min", minutes(5000));
 #else
   test_good_symbol("5000 m", minutes(5000));
@@ -86,10 +101,11 @@ int main()
   test_good_symbol("5000 ds", duration<boost::int_least64_t, deci> (5000));
   test_good_symbol("5000 [1/30]s", duration<boost::int_least64_t, ratio<1, 30> > (5000));
 
-#if defined BOOST_CHRONO_DONT_PROVIDE_DEPRECATED_IO_V1
+#if BOOST_CHRONO_VERSION==2
   test_good("5000 hours", hours(5000), duration_style::prefix);
   test_good("5000 h", hours(5000), duration_style::symbol);
   test_state_saver("5000 h", "5000 h 5000 hours", hours(5000), duration_style::symbol);
+  test_state_saver2("5000 h", "5000 h 5000 hours", hours(5000), duration_style::symbol);
 #endif
 
   return boost::report_errors();

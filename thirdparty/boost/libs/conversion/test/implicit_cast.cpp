@@ -28,5 +28,11 @@ int main()
 
     type<foo> f = check_return(boost::implicit_cast<foo>("hello"));
     type<long> z = check_return(boost::implicit_cast<long>(foo("hello")));
+
+    // warning suppression:
+    (void)x;
+    (void)f;
+    (void)z;
+
     return boost::report_errors();
 }

@@ -7,6 +7,7 @@
 
 # See library home page at http://www.boost.org/libs/system
 
+
 project
     : requirements
       <library>/boost/system//boost_system
@@ -16,6 +17,7 @@ project
    lib throw_test
      : throw_test.cpp
      : <link>shared:<define>BOOST_SYSTEM_DYN_LINK=1
+       <link>static:<define>BOOST_SYSTEM_STATIC_LINK=1
      ;
    
 
@@ -49,5 +51,8 @@ project
          ]
          [ run header_only_test.cpp
            :  :  : <link>static
+         ]
+         [ run config_test.cpp
+           :  :  : <test-info>always_show_run_output 
          ]
          ;

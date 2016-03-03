@@ -6,7 +6,8 @@
 
 #include <boost/math/concepts/real_concept.hpp>
 #include <boost/math/special_functions/math_fwd.hpp>
-#include <boost/test/test_exec_monitor.hpp>
+#define BOOST_TEST_MAIN
+#include <boost/test/unit_test.hpp>
 #include <boost/test/floating_point_comparison.hpp>
 #include <boost/math/tools/stats.hpp>
 #include <boost/math/tools/test.hpp>
@@ -16,36 +17,33 @@
 #include "functor.hpp"
 
 #include "handle_test_result.hpp"
-#include "test_expint_hooks.hpp"
+#include "table_type.hpp"
 
 #ifndef SC_
-#define SC_(x) static_cast<T>(BOOST_JOIN(x, L))
+#define SC_(x) static_cast<typename table_type<T>::type>(BOOST_JOIN(x, L))
 #endif
 
 template <class T>
 T expint_wrapper(T n, T z)
 {
+#ifdef EN_FUNCTION_TO_TEST
+   return EN_FUNCTION_TO_TEST(
+      boost::math::itrunc(n), z);
+#else
    return boost::math::expint(
       boost::math::itrunc(n), z);
+#endif
 }
 
-#ifdef TEST_OTHER
-template <class T>
-T other_expint_wrapper(T n, T z)
-{
-   return other::expint(
-      boost::math::itrunc(n), z);
-}
-#endif
-template <class T>
+template <class Real, class T>
 void do_test_expint(const T& data, const char* type_name, const char* test_name)
 {
+#if !(defined(ERROR_REPORTING_MODE) && !defined(EN_FUNCTION_TO_TEST))
    //
    // test En(T) against data:
    //
    using namespace std;
-   typedef typename T::value_type row_type;
-   typedef typename row_type::value_type value_type;
+   typedef Real                   value_type;
 
    std::cout << test_name << " with type " << type_name << std::endl;
 
@@ -60,42 +58,31 @@ void do_test_expint(const T& data, const char* type_name, const char* test_name)
    //
    // test expint against data:
    //
-   result = boost::math::tools::test(
+   result = boost::math::tools::test_hetero<Real>(
       data,
-      bind_func(funcp, 0, 1),
-      extract_result(2));
-   handle_test_result(result, data[result.worst()], result.worst(), type_name, "boost::math::expint", test_name);
-#ifdef TEST_OTHER
-   if(boost::is_floating_point<value_type>::value && other::expint(2u, 2.0))
-   {
-      funcp = other_expint_wrapper;
-      //
-      // test expint against data:
-      //
-      result = boost::math::tools::test(
-         data,
-         bind_func(funcp, 0, 1),
-         extract_result(2));
-      handle_test_result(result, data[result.worst()], result.worst(), type_name, "other::expint", test_name);
-   }
-#endif
+      bind_func<Real>(funcp, 0, 1),
+      extract_result<Real>(2));
+   handle_test_result(result, data[result.worst()], result.worst(), type_name, "expint (En)", test_name);
    std::cout << std::endl;
+#endif
 }
 
-template <class T>
+template <class Real, class T>
 void do_test_expint_Ei(const T& data, const char* type_name, const char* test_name)
 {
+#if !(defined(ERROR_REPORTING_MODE) && !defined(EI_FUNCTION_TO_TEST))
    //
    // test Ei(T) against data:
    //
    using namespace std;
-   typedef typename T::value_type row_type;
-   typedef typename row_type::value_type value_type;
+   typedef Real                   value_type;
 
    std::cout << test_name << " with type " << type_name << std::endl;
 
    typedef value_type (*pg)(value_type);
-#if defined(BOOST_MATH_NO_DEDUCED_FUNCTION_POINTERS)
+#ifdef EI_FUNCTION_TO_TEST
+   pg funcp = EI_FUNCTION_TO_TEST;
+#elif defined(BOOST_MATH_NO_DEDUCED_FUNCTION_POINTERS)
    pg funcp = boost::math::expint<value_type>;
 #else
    pg funcp = boost::math::expint;
@@ -105,24 +92,11 @@ void do_test_expint_Ei(const T& data, const char* type_name, const char* test_na
    //
    // test expint against data:
    //
-   result = boost::math::tools::test(
+   result = boost::math::tools::test_hetero<Real>(
       data,
-      bind_func(funcp, 0),
-      extract_result(1));
-   handle_test_result(result, data[result.worst()], result.worst(), type_name, "boost::math::expint", test_name);
-#ifdef TEST_OTHER
-   if(boost::is_floating_point<value_type>::value && other::expint(2.0))
-   {
-      funcp = other::expint;
-      //
-      // test expint against data:
-      //
-      result = boost::math::tools::test(
-         data,
-         bind_func(funcp, 0),
-         extract_result(1));
-      handle_test_result(result, data[result.worst()], result.worst(), type_name, "other::expint", test_name);
-   }
+      bind_func<Real>(funcp, 0),
+      extract_result<Real>(1));
+   handle_test_result(result, data[result.worst()], result.worst(), type_name, "expint (Ei)", test_name);
 #endif
 }
 
@@ -133,24 +107,24 @@ void test_expint(T, const char* name)
    // The actual test data is rather verbose, so it's in a separate file
    //
 #include "expint_data.ipp"
-   do_test_expint(expint_data, name, "Exponential Integral En");
+   do_test_expint<T>(expint_data, name, "Exponential Integral En");
 #include "expint_small_data.ipp"
-   do_test_expint(expint_small_data, name, "Exponential Integral En: small z values");
+   do_test_expint<T>(expint_small_data, name, "Exponential Integral En: small z values");
 #include "expint_1_data.ipp"
-   do_test_expint(expint_1_data, name, "Exponential Integral E1");
+   do_test_expint<T>(expint_1_data, name, "Exponential Integral E1");
 #include "expinti_data.ipp"
-   do_test_expint_Ei(expinti_data, name, "Exponential Integral Ei");
+   do_test_expint_Ei<T>(expinti_data, name, "Exponential Integral Ei");
 
    if(boost::math::tools::log_max_value<T>() > 100)
    {
 #include "expinti_data_double.ipp"
-      do_test_expint_Ei(expinti_data_double, name, "Exponential Integral Ei: double exponent range");
+      do_test_expint_Ei<T>(expinti_data_double, name, "Exponential Integral Ei: double exponent range");
    }
 #if (defined(LDBL_MAX_10_EXP) && (LDBL_MAX_10_EXP > 2000)) || defined(TEST_UDT)
    if(boost::math::tools::log_max_value<T>() > 1000)
    {
 #include "expinti_data_long.ipp"
-      do_test_expint_Ei(expinti_data_long, name, "Exponential Integral Ei: long exponent range");
+      do_test_expint_Ei<T>(expinti_data_long, name, "Exponential Integral Ei: long exponent range");
    }
 #endif
 }

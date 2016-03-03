@@ -25,6 +25,7 @@ void test_type()
         ("bar", value<string>(), "")
         ;
     
+#ifndef BOOST_NO_RTTI
     const typed_value_base* b = dynamic_cast<const typed_value_base*>
         (desc.find("foo", false).semantic().get());
     BOOST_CHECK(b);
@@ -34,6 +35,7 @@ void test_type()
         (desc.find("bar", false).semantic().get());
     BOOST_CHECK(b2);
     BOOST_CHECK(b2->value_type() == typeid(string));
+#endif
 }
 
 void test_approximation()
@@ -228,6 +230,21 @@ void test_default_values()
    );   
 }
 
+void test_value_name()
+{
+    options_description desc("Supported options");
+    desc.add_options()
+        ("include", value<string>()->value_name("directory"), "Search for headers in 'directory'.")
+        ;
+
+    stringstream ss;
+    ss << desc;
+   BOOST_CHECK_EQUAL(ss.str(),
+"Supported options:\n"
+"  --include directory   Search for headers in 'directory'.\n"
+   );
+}
+
 
 int main(int, char* [])
 {
@@ -238,6 +255,7 @@ int main(int, char* [])
     test_long_default_value();
     test_word_wrapping();
     test_default_values();
+    test_value_name();
     return 0;
 }
 

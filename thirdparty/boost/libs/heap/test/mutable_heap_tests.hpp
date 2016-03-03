@@ -1,3 +1,11 @@
+/*=============================================================================
+    Copyright (c) 2010 Tim Blechmann
+
+    Use, modification and distribution is subject to the Boost Software
+    License, Version 1.0. (See accompanying file LICENSE_1_0.txt or copy at
+    http://www.boost.org/LICENSE_1_0.txt)
+=============================================================================*/
+
 // random uses boost.fusion, which clashes with boost.test
 //#define USE_BOOST_RANDOM
 
@@ -215,7 +223,7 @@ template <typename pri_queue>
 void pri_queue_test_erase(void)
 {
 #ifdef USE_BOOST_RANDOM
-	boost::mt19937 rng;
+    boost::mt19937 rng;
 #endif
 
     for (int i = 0; i != test_size; ++i)
@@ -227,12 +235,12 @@ void pri_queue_test_erase(void)
         for (int j = 0; j != i; ++j)
         {
 #ifdef USE_BOOST_RANDOM
-			boost::uniform_int<> range(0, data.size() - 1);
-			boost::variate_generator<boost::mt19937&, boost::uniform_int<> > gen(rng, range);
+            boost::uniform_int<> range(0, data.size() - 1);
+            boost::variate_generator<boost::mt19937&, boost::uniform_int<> > gen(rng, range);
 
-			int index = gen();
+            int index = gen();
 #else
-            int index = rand() % (data.size() - 1);
+            int index = std::rand() % (data.size() - 1);
 #endif
             q.erase(handles[index]);
             handles.erase(handles.begin() + index);
@@ -285,6 +293,19 @@ void run_mutable_heap_erase_tests(void)
     pri_queue_test_erase<pri_queue>();
 }
 
+template <typename pri_queue>
+void run_mutable_heap_test_handle_from_iterator(void)
+{
+    pri_queue que;
+
+    que.push(3);
+    que.push(1);
+    que.push(4);
+
+    que.update(pri_queue::s_handle_from_iterator(que.begin()),
+               6);
+}
+
 
 template <typename pri_queue>
 void run_mutable_heap_tests(void)
@@ -294,6 +315,7 @@ void run_mutable_heap_tests(void)
     run_mutable_heap_decrease_tests<pri_queue>();
     run_mutable_heap_increase_tests<pri_queue>();
     run_mutable_heap_erase_tests<pri_queue>();
+    run_mutable_heap_test_handle_from_iterator<pri_queue>();
 }
 
 template <typename pri_queue>

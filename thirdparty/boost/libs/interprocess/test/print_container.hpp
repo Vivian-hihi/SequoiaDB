@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztanaga 2004-2011. Distributed under the Boost
+// (C) Copyright Ion Gaztanaga 2004-2012. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -12,33 +12,25 @@
 #define BOOST_INTERPROCESS_TEST_PRINTCONTAINER_HPP
 
 #include <boost/interprocess/detail/config_begin.hpp>
-#include <functional>
 #include <iostream>
-#include <algorithm>
 
 namespace boost{
 namespace interprocess{
 namespace test{
 
-struct PrintValues : public std::unary_function<int, void>
-{
-   void operator() (int value) const
-   {
-      std::cout << value << " ";
-   }
-};
-
 template<class Container>
 void PrintContents(const Container &cont, const char *contName)
 {
    std::cout<< "Printing contents of " << contName << std::endl;
-   std::for_each(cont.begin(), cont.end(), PrintValues());
+   typename Container::iterator b(cont.begin()), e(cont.end());
+   for(; b != e; ++b){
+      std::cout << *b << " ";
+   }
    std::cout<< std::endl << std::endl;
 }
 
 //Function to dump data
-template<class MyShmCont
-        ,class MyStdCont>
+template<class MyShmCont, class MyStdCont>
 void PrintContainers(MyShmCont *shmcont, MyStdCont *stdcont)
 {
    typename MyShmCont::iterator itshm = shmcont->begin(), itshmend = shmcont->end();
@@ -48,8 +40,8 @@ void PrintContainers(MyShmCont *shmcont, MyStdCont *stdcont)
    for(; itshm != itshmend; ++itshm){
       std::cout << *itshm << std::endl;
    }
-   std::cout << "MyStdCont" << std::endl; 
-  
+   std::cout << "MyStdCont" << std::endl;
+
    for(; itstd != itstdend; ++itstd){
       std::cout << *itstd << std::endl;
    }

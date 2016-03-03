@@ -1,16 +1,18 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztanaga 2006-2011. Distributed under the Boost
+// (C) Copyright Ion Gaztanaga 2006-2012. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 // See http://www.boost.org/libs/interprocess for documentation.
 //
 //////////////////////////////////////////////////////////////////////////////
+#if defined(BOOST_INTERPROCESS_MAPPED_FILES)
+
 #include <boost/interprocess/detail/config_begin.hpp>
 //[doc_managed_multiple_allocation
 #include <boost/interprocess/managed_shared_memory.hpp>
-#include <boost/interprocess/detail/move.hpp> //boost::move
+#include <boost/move/utility_core.hpp> //boost::move
 #include <cassert>//assert
 #include <cstring>//std::memset
 #include <new>    //std::nothrow
@@ -54,7 +56,8 @@ int main()
    //->
 
    //Allocate 16 elements of 100 bytes in a single call. Non-throwing version.
-   multiallocation_chain chain(managed_shm.allocate_many(100, 16, std::nothrow));
+   multiallocation_chain chain;
+   managed_shm.allocate_many(std::nothrow, 100, 16, chain);
 
    //Check if the memory allocation was successful
    if(chain.empty()) return 1;
@@ -64,8 +67,7 @@ int main()
 
    //Initialize our data
    while(!chain.empty()){
-      void *buf = chain.front();
-      chain.pop_front();
+      void *buf = chain.pop_front();
       allocated_buffers.push_back(buf);
       //The iterator must be incremented before overwriting memory
       //because otherwise, the iterator is invalidated.
@@ -83,9 +85,16 @@ int main()
    for(std::size_t i = 0; i < 10; ++i)
       sizes[i] = i*3;
 
-   chain = managed_shm.allocate_many(sizes, 10);
-   managed_shm.deallocate_many(boost::move(chain));
+   managed_shm.allocate_many(sizes, 10, 1, chain);
+   managed_shm.deallocate_many(chain);
    return 0;
 }
 //]
 #include <boost/interprocess/detail/config_end.hpp>
+
+#else //#if defined(BOOST_INTERPROCESS_MAPPED_FILES)
+int main()
+{
+   return 0;
+}
+#endif//#if defined(BOOST_INTERPROCESS_MAPPED_FILES)

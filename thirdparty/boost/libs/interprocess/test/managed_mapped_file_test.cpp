@@ -1,12 +1,14 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztanaga 2004-2011. Distributed under the Boost
+// (C) Copyright Ion Gaztanaga 2004-2012. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 // See http://www.boost.org/libs/interprocess for documentation.
 //
 //////////////////////////////////////////////////////////////////////////////
+
+#if defined(BOOST_INTERPROCESS_MAPPED_FILES)
 
 #include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/allocators/allocator.hpp>
@@ -48,7 +50,7 @@ int main ()
       managed_mapped_file mfile(create_only, FileName, FileSize);
 
       int i;
-      //Let's allocate some memory 
+      //Let's allocate some memory
       for(i = 0; i < max; ++i){
          array[i] = mfile.allocate(i+1);
       }
@@ -83,7 +85,7 @@ int main ()
 
       //Construct a vector in the memory-mapped file
       mfile_vect = mfile.construct<MyVect> ("MyVector") (myallocator);
-      
+
       //Flush cached data from memory-mapped file to disk
       mfile.flush();
    }
@@ -224,3 +226,12 @@ int main ()
 }
 
 #include <boost/interprocess/detail/config_end.hpp>
+
+#else //#if defined(BOOST_INTERPROCESS_MAPPED_FILES)
+
+int main()
+{
+   return 0;
+}
+
+#endif//#if defined(BOOST_INTERPROCESS_MAPPED_FILES)

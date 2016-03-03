@@ -13,6 +13,7 @@
 
 // test ratio_add
 
+#define BOOST_RATIO_EXTENSIONS
 #include <boost/ratio/ratio_io.hpp>
 #include <boost/detail/lightweight_test.hpp>
 #include <climits>
@@ -22,133 +23,148 @@ int main()
 
     {
         BOOST_TEST((
-                boost::ratio_string<boost::atto, char>::long_name() == "atto"
+                boost::ratio_string<boost::atto, char>::prefix() == "atto"
         ));
         BOOST_TEST((
-                boost::ratio_string<boost::atto, char>::short_name() == "a"
+                boost::ratio_string<boost::atto, char>::symbol() == "a"
         ));
     }
     {
         BOOST_TEST((
-                boost::ratio_string<boost::femto, char>::long_name() == "femto"
+                boost::ratio_string<boost::femto, char>::prefix() == "femto"
         ));
         BOOST_TEST((
-                boost::ratio_string<boost::femto, char>::short_name() == "f"
+                boost::ratio_string<boost::femto, char>::symbol() == "f"
         ));
     }
     {
         BOOST_TEST((
-                boost::ratio_string<boost::pico, char>::long_name() == "pico"
+                boost::ratio_string<boost::pico, char>::prefix() == "pico"
         ));
         BOOST_TEST((
-                boost::ratio_string<boost::pico, char>::short_name() == "p"
+                boost::ratio_string<boost::pico, char>::symbol() == "p"
         ));
     }
     {
         BOOST_TEST((
-                boost::ratio_string<boost::nano, char>::long_name() == "nano"
+                boost::ratio_string<boost::nano, char>::prefix() == "nano"
         ));
         BOOST_TEST((
-                boost::ratio_string<boost::nano, char>::short_name() == "n"
+                boost::ratio_string<boost::nano, char>::symbol() == "n"
         ));
     }
     {
         BOOST_TEST((
-                boost::ratio_string<boost::micro, char>::long_name() == "micro"
+                boost::ratio_string<boost::micro, char>::prefix() == "micro"
         ));
         BOOST_TEST((
-                boost::ratio_string<boost::micro, char>::short_name() == "\xC2\xB5"
+                boost::ratio_string<boost::micro, char>::symbol() == "\xC2\xB5"
         ));
     }
     {
         BOOST_TEST((
-                boost::ratio_string<boost::milli, char>::long_name() == "milli"
+                boost::ratio_string<boost::milli, char>::prefix() == "milli"
         ));
         BOOST_TEST((
-                boost::ratio_string<boost::milli, char>::short_name() == "m"
+                boost::ratio_string<boost::milli, char>::symbol() == "m"
         ));
     }
     {
         BOOST_TEST((
-                boost::ratio_string<boost::centi, char>::long_name() == "centi"
+                boost::ratio_string<boost::centi, char>::prefix() == "centi"
         ));
         BOOST_TEST((
-                boost::ratio_string<boost::centi, char>::short_name() == "c"
+                boost::ratio_string<boost::centi, char>::symbol() == "c"
         ));
     }
     {
         BOOST_TEST((
-                boost::ratio_string<boost::deci, char>::long_name() == "deci"
+                boost::ratio_string<boost::deci, char>::prefix() == "deci"
         ));
         BOOST_TEST((
-                boost::ratio_string<boost::deci, char>::short_name() == "d"
+                boost::ratio_string<boost::deci, char>::symbol() == "d"
         ));
     }
     {
         BOOST_TEST((
-                boost::ratio_string<boost::deca, char>::long_name() == "deca"
+                boost::ratio_string<boost::deca, char>::prefix() == "deca"
         ));
         BOOST_TEST((
-                boost::ratio_string<boost::deca, char>::short_name() == "da"
+                boost::ratio_string<boost::deca, char>::symbol() == "da"
         ));
     }
     {
         BOOST_TEST((
-                boost::ratio_string<boost::hecto, char>::long_name() == "hecto"
+                boost::ratio_string<boost::hecto, char>::prefix() == "hecto"
         ));
         BOOST_TEST((
-                boost::ratio_string<boost::hecto, char>::short_name() == "h"
+                boost::ratio_string<boost::hecto, char>::symbol() == "h"
         ));
     }
     {
         BOOST_TEST((
-                boost::ratio_string<boost::kilo, char>::long_name() == "kilo"
+                boost::ratio_string<boost::kilo, char>::prefix() == "kilo"
         ));
         BOOST_TEST((
-                boost::ratio_string<boost::kilo, char>::short_name() == "k"
+                boost::ratio_string<boost::kilo, char>::symbol() == "k"
         ));
     }
     {
         BOOST_TEST((
-                boost::ratio_string<boost::mega, char>::long_name() == "mega"
+                boost::ratio_string<boost::mega, char>::prefix() == "mega"
         ));
         BOOST_TEST((
-                boost::ratio_string<boost::mega, char>::short_name() == "M"
+                boost::ratio_string<boost::mega, char>::symbol() == "M"
         ));
     }
     {
         BOOST_TEST((
-                boost::ratio_string<boost::giga, char>::long_name() == "giga"
+                boost::ratio_string<boost::giga, char>::prefix() == "giga"
         ));
         BOOST_TEST((
-                boost::ratio_string<boost::giga, char>::short_name() == "G"
+                boost::ratio_string<boost::giga, char>::symbol() == "G"
         ));
     }
     {
         BOOST_TEST((
-                boost::ratio_string<boost::tera, char>::long_name() == "tera"
+                boost::ratio_string<boost::tera, char>::prefix() == "tera"
         ));
         BOOST_TEST((
-                boost::ratio_string<boost::tera, char>::short_name() == "T"
+                boost::ratio_string<boost::tera, char>::symbol() == "T"
         ));
     }
     {
         BOOST_TEST((
-                boost::ratio_string<boost::peta, char>::long_name() == "peta"
+                boost::ratio_string<boost::peta, char>::prefix() == "peta"
         ));
         BOOST_TEST((
-                boost::ratio_string<boost::peta, char>::short_name() == "P"
+                boost::ratio_string<boost::peta, char>::symbol() == "P"
         ));
     }
     {
         BOOST_TEST((
-                boost::ratio_string<boost::exa, char>::long_name() == "exa"
+                boost::ratio_string<boost::exa, char>::prefix() == "exa"
         ));
         BOOST_TEST((
-                boost::ratio_string<boost::exa, char>::short_name() == "E"
+                boost::ratio_string<boost::exa, char>::symbol() == "E"
         ));
     }
-//    return 1;
+    {
+        BOOST_TEST((
+                boost::ratio_string<boost::kibi, char>::prefix() == "kibi"
+        ));
+        BOOST_TEST((
+                boost::ratio_string<boost::kibi, char>::symbol() == "Ki"
+        ));
+    }
+    {
+        BOOST_TEST((
+                boost::ratio_string<boost::gibi, char>::prefix() == "gibi"
+        ));
+        BOOST_TEST((
+                boost::ratio_string<boost::gibi, char>::symbol() == "Gi"
+        ));
+    }
     return boost::report_errors();
 }
 

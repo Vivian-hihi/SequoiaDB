@@ -2,18 +2,21 @@
 // William E. Kempf
 // Copyright (C) 2007 Anthony Williams
 //
-//  Distributed under the Boost Software License, Version 1.0. (See accompanying 
+//  Distributed under the Boost Software License, Version 1.0. (See accompanying
 //  file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 
+#define BOOST_THREAD_VERSION 2
+#define BOOST_THREAD_PROVIDES_INTERRUPTIONS
+#define BOOST_TEST_MODULE Boost.Threads: condition test suite
 #include <boost/thread/detail/config.hpp>
 
 #include <boost/thread/condition.hpp>
-#include <boost/thread/thread.hpp>
+#include <boost/thread/thread_only.hpp>
 #include <boost/thread/xtime.hpp>
 
 #include <boost/test/unit_test.hpp>
 
-#include <libs/thread/test/util.inl>
+#include "./util.inl"
 
 struct condition_test_data
 {
@@ -27,7 +30,7 @@ struct condition_test_data
 
 void condition_test_thread(condition_test_data* data)
 {
-    boost::mutex::scoped_lock lock(data->mutex);
+    boost::unique_lock<boost::mutex> lock(data->mutex);
     BOOST_CHECK(lock ? true : false);
     while (!(data->notified > 0))
         data->condition.wait(lock);
@@ -45,12 +48,12 @@ struct cond_predicate
     int _val;
 private:
     void operator=(cond_predicate&);
-    
+
 };
 
 void condition_test_waits(condition_test_data* data)
 {
-    boost::mutex::scoped_lock lock(data->mutex);
+    boost::unique_lock<boost::mutex> lock(data->mutex);
     BOOST_CHECK(lock ? true : false);
 
     // Test wait.
@@ -104,7 +107,7 @@ void do_test_condition_waits()
     boost::thread thread(bind(&condition_test_waits, &data));
 
     {
-        boost::mutex::scoped_lock lock(data.mutex);
+        boost::unique_lock<boost::mutex> lock(data.mutex);
         BOOST_CHECK(lock ? true : false);
 
         boost::thread::sleep(delay(1));
@@ -153,7 +156,7 @@ void do_test_condition_waits()
     BOOST_CHECK_EQUAL(data.awoken, 5);
 }
 
-void test_condition_waits()
+BOOST_AUTO_TEST_CASE(test_condition_waits)
 {
     // We should have already tested notify_one here, so
     // a timed test with the default execution_monitor::use_condition
@@ -173,18 +176,8 @@ void do_test_condition_wait_is_a_interruption_point()
 }
 
 
-void test_condition_wait_is_a_interruption_point()
+BOOST_AUTO_TEST_CASE(test_condition_wait_is_a_interruption_point)
 {
     timed_test(&do_test_condition_wait_is_a_interruption_point, 1);
 }
 
-boost::unit_test::test_suite* init_unit_test_suite(int, char*[])
-{
-    boost::unit_test::test_suite* test =
-        BOOST_TEST_SUITE("Boost.Threads: condition test suite");
-
-    test->add(BOOST_TEST_CASE(&test_condition_waits));
-    test->add(BOOST_TEST_CASE(&test_condition_wait_is_a_interruption_point));
-
-    return test;
-}

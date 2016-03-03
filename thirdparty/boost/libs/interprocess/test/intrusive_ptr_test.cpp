@@ -1,7 +1,7 @@
 //////////////////////////////////////////////////////////////////////////////
 //
 // (C) Copyright Peter Dimov 2002-2005.
-// (C) Copyright Ion Gaztanaga 2006. Distributed under the Boost
+// (C) Copyright Ion Gaztanaga 2006-2012. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -14,9 +14,9 @@
 #include <boost/interprocess/smart_ptr/intrusive_ptr.hpp>
 #include <boost/interprocess/managed_shared_memory.hpp>
 
-#include <boost/detail/lightweight_test.hpp>
+#include <boost/core/lightweight_test.hpp>
 #include <boost/config.hpp>
-#include <algorithm>
+#include <boost/move/adl_move_swap.hpp>
 #include <functional>
 
 typedef boost::interprocess::offset_ptr<void> VP;
@@ -283,8 +283,7 @@ void test()
       BOOST_TEST(px.get() == 0);
       BOOST_TEST(px2.get() == 0);
 
-      using std::swap;
-      swap(px, px2);
+      ::boost::adl_move_swap(px, px2);
 
       BOOST_TEST(px.get() == 0);
       BOOST_TEST(px2.get() == 0);
@@ -304,8 +303,7 @@ void test()
       BOOST_TEST(px3.get() == p);
       BOOST_TEST(px3->use_count() == 2);
 
-      using std::swap;
-      swap(px, px2);
+      ::boost::adl_move_swap(px, px2);
 
       BOOST_TEST(px.get() == 0);
       BOOST_TEST(px2.get() == p);
@@ -330,8 +328,7 @@ void test()
       BOOST_TEST(px3.get() == p2);
       BOOST_TEST(px3->use_count() == 2);
 
-      using std::swap;
-      swap(px, px2);
+      ::boost::adl_move_swap(px, px2);
 
       BOOST_TEST(px.get() == p1);
       BOOST_TEST(px->use_count() == 1);
@@ -456,12 +453,12 @@ namespace n_report_1
 {
 
 class foo: public N::base
-{ 
+{
    public:
 
    foo(): m_self(this)
    {
-   } 
+   }
 
    void suicide()
    {
@@ -471,13 +468,13 @@ class foo: public N::base
    private:
 
    boost::interprocess::intrusive_ptr<foo, VP> m_self;
-}; 
+};
 
 void test()
 {
    boost::interprocess::offset_ptr<foo> foo_ptr = new foo;
    foo_ptr->suicide();
-} 
+}
 
 } // namespace n_report_1
 

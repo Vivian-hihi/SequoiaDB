@@ -79,7 +79,7 @@ void expected_results()
 }
 
 
-int test_main(int, char* [])
+BOOST_AUTO_TEST_CASE( test_main )
 {
     expected_results();
     BOOST_MATH_CONTROL_FP;
@@ -95,8 +95,7 @@ int test_main(int, char* [])
    std::cout << "<note>The long double tests have been disabled on this platform "
       "either because the long double overloads of the usual math functions are "
       "not available at all, or because they are too inaccurate for these tests "
-      "to pass.</note>" << std::cout;
+      "to pass.</note>" << std::endl;
 #endif
 
-    return 0;
 }

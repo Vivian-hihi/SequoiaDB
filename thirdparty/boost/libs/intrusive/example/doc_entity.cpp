@@ -1,6 +1,6 @@
 /////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztanaga  2006-2009
+// (C) Copyright Ion Gaztanaga  2006-2013
 //
 // Distributed under the Boost Software License, Version 1.0.
 //    (See accompanying file LICENSE_1_0.txt or copy at
@@ -27,7 +27,15 @@ class some_entity  :  public entity
 {/**/};
 
 //Definition of the intrusive list
-typedef list<entity> entity_list;
+struct entity_list : list<entity>
+{
+   ~entity_list()
+   {
+      // entity's destructor removes itself from the global list implicitly
+      while (!this->empty())
+         delete &this->front();
+   }
+};
 
 //A global list
 entity_list global_list;
@@ -38,15 +46,7 @@ entity::~entity()
 
 //Function to insert a new "some_entity" in the global list
 void insert_some_entity()
-{  global_list.push_back (*new some_entity(/*...*/));  } 
-
-//Function to clear an entity from the intrusive global list
-void clear_list ()
-{
-   // entity's destructor removes itself from the global list implicitly
-   while (!global_list.empty())
-      delete &global_list.front();   
-}
+{  global_list.push_back (*new some_entity(/*...*/));  }
 
 int main()
 {
@@ -57,4 +57,4 @@ int main()
    return 0;
 }
 
-//]
+//]   

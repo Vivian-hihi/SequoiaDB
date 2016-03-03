@@ -6,7 +6,7 @@
 // License, Version 1.0. (See accompanying file LICENSE_1_0.txt or copy at
 // http://www.boost.org/LICENSE_1_0.txt)
 
-#include <algorithm>
+#include <algorithm> // std::copy
 #include <vector>
 #include <cstdlib> // for rand
 #include <functional>
@@ -42,8 +42,8 @@ void test_wchar_from_mb(const wchar_t *la, const char * a, const unsigned int si
     typedef boost::archive::iterators::wchar_from_mb<const char *> translator;
     BOOST_CHECK((
         std::equal(
-            translator(BOOST_MAKE_PFTO_WRAPPER(a)),
-            translator(BOOST_MAKE_PFTO_WRAPPER(a + size)),
+            translator(a),
+            translator(a + size),
             la
         )
     ));
@@ -53,8 +53,8 @@ void test_mb_from_wchar(const char * a, const wchar_t *la, const unsigned int si
     typedef boost::archive::iterators::mb_from_wchar<const wchar_t *> translator;
     BOOST_CHECK(
         std::equal(
-            translator(BOOST_MAKE_PFTO_WRAPPER(la)), 
-            translator(BOOST_MAKE_PFTO_WRAPPER(la + size)), 
+            translator(la),
+            translator(la + size),
             a
         )
     );
@@ -72,8 +72,8 @@ void test_xml_escape(
 
     BOOST_CHECK(
         std::equal(
-            translator(BOOST_MAKE_PFTO_WRAPPER(xml)),
-            translator(BOOST_MAKE_PFTO_WRAPPER(xml + size)),
+            translator(xml),
+            translator(xml + size),
             xml_escaped
         )
     );
@@ -91,8 +91,8 @@ void test_xml_unescape(
 
     BOOST_CHECK(
         std::equal(
-            translator(BOOST_MAKE_PFTO_WRAPPER(xml_escaped)),
-            translator(BOOST_MAKE_PFTO_WRAPPER(xml_escaped + size)),
+            translator(xml_escaped),
+            translator(xml_escaped + size),
             xml
         )
     );
@@ -102,9 +102,9 @@ template<int BitsOut, int BitsIn>
 void test_transform_width(unsigned int size){
     // test transform_width
     char rawdata[8];
-    
+
     char * rptr;
-    for(rptr = rawdata + 6; rptr-- > rawdata;)
+    for(rptr = rawdata + size; rptr-- > rawdata;)
         *rptr = static_cast<char>(0xff & std::rand());
 
     // convert 8 to 6 bit characters
@@ -112,32 +112,41 @@ void test_transform_width(unsigned int size){
         char *, BitsOut, BitsIn 
     > translator1;
 
-    std::vector<char> v6;
+    std::vector<char> vout;
 
     std::copy(
-        translator1(BOOST_MAKE_PFTO_WRAPPER(static_cast<char *>(rawdata))),
-        translator1(BOOST_MAKE_PFTO_WRAPPER(rawdata + size)),
-        std::back_inserter(v6)
+        translator1(static_cast<char *>(rawdata)),
+        translator1(rawdata + size),
+        std::back_inserter(vout)
     );
 
     // check to see we got the expected # of characters out
     if(0 ==  size)
-        BOOST_CHECK(v6.size() == 0);
+        BOOST_CHECK(vout.size() == 0);
     else
-        BOOST_CHECK(v6.size() == (size * BitsIn - 1 ) / BitsOut + 1);
+        BOOST_CHECK(vout.size() == (size * BitsIn - 1 ) / BitsOut + 1);
 
     typedef boost::archive::iterators::transform_width<
         std::vector<char>::iterator, BitsIn, BitsOut
     > translator2;
 
+    std::vector<char> vin;
+    std::copy(
+        translator2(vout.begin()),
+        translator2(vout.end()),
+        std::back_inserter(vin)
+    );
+
+    // check to see we got the expected # of characters out
+    BOOST_CHECK(vin.size() == size);
+
     BOOST_CHECK(
         std::equal(
             rawdata,
             rawdata + size,
-            translator2(BOOST_MAKE_PFTO_WRAPPER(v6.begin()))
+            vin.begin()
         )
     );
-
 }
 
 template<class CharType>

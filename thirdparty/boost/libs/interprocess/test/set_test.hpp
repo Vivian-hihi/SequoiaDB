@@ -1,6 +1,6 @@
 ////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztanaga 2004-2011. Distributed under the Boost
+// (C) Copyright Ion Gaztanaga 2004-2012. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -13,13 +13,11 @@
 
 #include <boost/interprocess/detail/config_begin.hpp>
 #include "check_equal_containers.hpp"
-#include <memory>
-#include <set>
-#include <functional>
 #include "print_container.hpp"
-#include <boost/interprocess/detail/move.hpp>
-#include <string>
+#include <boost/move/utility_core.hpp>
 #include "get_process_id_name.hpp"
+
+#include <functional>
 
 namespace boost{
 namespace interprocess{
@@ -46,19 +44,19 @@ int set_test ()
 
       //Shared memory allocator must be always be initialized
       //since it has no default constructor
-      MyShmSet *shmset = 
+      MyShmSet *shmset =
          segment.template construct<MyShmSet>("MyShmSet")
             (std::less<IntType>(), segment.get_segment_manager());
 
       MyStdSet *stdset = new MyStdSet;
 
-      MyShmMultiSet *shmmultiset = 
+      MyShmMultiSet *shmmultiset =
          segment.template construct<MyShmMultiSet>("MyShmMultiSet")
             (std::less<IntType>(), segment.get_segment_manager());
 
       MyStdMultiSet *stdmultiset = new MyStdMultiSet;
 
-      //Test construction from a range   
+      //Test construction from a range
       {
          IntType aux_vect[50];
          for(int i = 0; i < 50; ++i){
@@ -75,7 +73,7 @@ int set_test ()
             aux_vect3[i] = boost::move(move_me);
          }
 
-         MyShmSet *shmset2 = 
+         MyShmSet *shmset2 =
             segment.template construct<MyShmSet>("MyShmSet2")
                ( ::boost::make_move_iterator(&aux_vect[0])
                , ::boost::make_move_iterator(aux_vect + 50)
@@ -83,7 +81,7 @@ int set_test ()
 
          MyStdSet *stdset2 = new MyStdSet(aux_vect2, aux_vect2 + 50);
 
-         MyShmMultiSet *shmmultiset2 = 
+         MyShmMultiSet *shmmultiset2 =
             segment.template construct<MyShmMultiSet>("MyShmMultiSet2")
                ( ::boost::make_move_iterator(&aux_vect3[0])
                , ::boost::make_move_iterator(aux_vect3 + 50)
@@ -114,7 +112,7 @@ int set_test ()
             aux_vect3[i] = boost::move(move_me);
          }
 
-         MyShmSet *shmset3 = 
+         MyShmSet *shmset3 =
             segment.template construct<MyShmSet>("MyShmSet3")
                ( ordered_unique_range
                , ::boost::make_move_iterator(&aux_vect[0])
@@ -123,7 +121,7 @@ int set_test ()
 
          MyStdSet *stdset3 = new MyStdSet(aux_vect2, aux_vect2 + 50);
 
-         MyShmMultiSet *shmmultiset3 = 
+         MyShmMultiSet *shmmultiset3 =
             segment.template construct<MyShmMultiSet>("MyShmMultiSet3")
                ( ordered_range
                , ::boost::make_move_iterator(&aux_vect3[0])
@@ -157,8 +155,7 @@ int set_test ()
          return 1;
       }
 
-      int i, j;
-      for(i = 0; i < max/2; ++i){
+      for(int i = 0; i < max/2; ++i){
          IntType move_me(i);
          shmset->insert(boost::move(move_me));
          stdset->insert(i);
@@ -352,7 +349,7 @@ int set_test ()
          }
       }
 
-      for(i = 0; i < max/2; ++i){
+      for(int i = 0; i < max/2; ++i){
          IntType move_me(i);
          shmset->insert(shmset->begin(), boost::move(move_me));
          stdset->insert(stdset->begin(), i);
@@ -375,79 +372,81 @@ int set_test ()
          return 1;
       }
 
-      for(i = 0; i < max; ++i){
-         IntType move_me(i);
-         shmset->insert(shmset->begin(), boost::move(move_me));
-         stdset->insert(stdset->begin(), i);
-         //PrintContainers(shmset, stdset);
-         IntType move_me2(i);
-         shmmultiset->insert(shmmultiset->begin(), boost::move(move_me2));
-         stdmultiset->insert(stdmultiset->begin(), i);
-         //PrintContainers(shmmultiset, stdmultiset);
-         if(!CheckEqualContainers(shmset, stdset)){
-            std::cout << "Error in shmset->insert(shmset->begin(), boost::move(move_me))" << std::endl;
-            return 1;
-         }
-         if(!CheckEqualContainers(shmmultiset, stdmultiset)){
-            std::cout << "Error in shmmultiset->insert(shmmultiset->begin(), boost::move(move_me2))" << std::endl;
-            return 1;
-         }
+      for(int i = 0; i < max; ++i){
+         {
+            IntType move_me(i);
+            shmset->insert(shmset->begin(), boost::move(move_me));
+            stdset->insert(stdset->begin(), i);
+            //PrintContainers(shmset, stdset);
+            IntType move_me2(i);
+            shmmultiset->insert(shmmultiset->begin(), boost::move(move_me2));
+            stdmultiset->insert(stdmultiset->begin(), i);
+            //PrintContainers(shmmultiset, stdmultiset);
+            if(!CheckEqualContainers(shmset, stdset)){
+               std::cout << "Error in shmset->insert(shmset->begin(), boost::move(move_me))" << std::endl;
+               return 1;
+            }
+            if(!CheckEqualContainers(shmmultiset, stdmultiset)){
+               std::cout << "Error in shmmultiset->insert(shmmultiset->begin(), boost::move(move_me2))" << std::endl;
+               return 1;
+            }
 
-         IntType move_me3(i);
-         shmset->insert(shmset->end(), boost::move(move_me3));
-         stdset->insert(stdset->end(), i);
-         IntType move_me4(i);
-         shmmultiset->insert(shmmultiset->end(), boost::move(move_me4));
-         stdmultiset->insert(stdmultiset->end(), i);
-         if(!CheckEqualContainers(shmset, stdset)){
-            std::cout << "Error in shmset->insert(shmset->end(), boost::move(move_me3))" << std::endl;
-            return 1;
-         }
-         if(!CheckEqualContainers(shmmultiset, stdmultiset)){
-            std::cout << "Error in shmmultiset->insert(shmmultiset->end(), boost::move(move_me4))" << std::endl;
-            return 1;
+            IntType move_me3(i);
+            shmset->insert(shmset->end(), boost::move(move_me3));
+            stdset->insert(stdset->end(), i);
+            IntType move_me4(i);
+            shmmultiset->insert(shmmultiset->end(), boost::move(move_me4));
+            stdmultiset->insert(stdmultiset->end(), i);
+            if(!CheckEqualContainers(shmset, stdset)){
+               std::cout << "Error in shmset->insert(shmset->end(), boost::move(move_me3))" << std::endl;
+               return 1;
+            }
+            if(!CheckEqualContainers(shmmultiset, stdmultiset)){
+               std::cout << "Error in shmmultiset->insert(shmmultiset->end(), boost::move(move_me4))" << std::endl;
+               return 1;
+            }
          }
          {
-         IntType move_me(i);
-         shmset->insert(shmset->upper_bound(move_me), boost::move(move_me));
-         stdset->insert(stdset->upper_bound(i), i);
-         //PrintContainers(shmset, stdset);
-         IntType move_me2(i);
-         shmmultiset->insert(shmmultiset->upper_bound(move_me2), boost::move(move_me2));
-         stdmultiset->insert(stdmultiset->upper_bound(i), i);
-         //PrintContainers(shmmultiset, stdmultiset);
-         if(!CheckEqualContainers(shmset, stdset)){
-            std::cout << "Error in shmset->insert(shmset->upper_bound(move_me), boost::move(move_me))" << std::endl;
-            return 1;
-         }
-         if(!CheckEqualContainers(shmmultiset, stdmultiset)){
-            std::cout << "Error in shmmultiset->insert(shmmultiset->upper_bound(move_me2), boost::move(move_me2))" << std::endl;
-            return 1;
-         }
-
+            IntType move_me(i);
+            shmset->insert(shmset->upper_bound(move_me), boost::move(move_me));
+            stdset->insert(stdset->upper_bound(i), i);
+            //PrintContainers(shmset, stdset);
+            IntType move_me2(i);
+            shmmultiset->insert(shmmultiset->upper_bound(move_me2), boost::move(move_me2));
+            stdmultiset->insert(stdmultiset->upper_bound(i), i);
+            //PrintContainers(shmmultiset, stdmultiset);
+            if(!CheckEqualContainers(shmset, stdset)){
+               std::cout << "Error in shmset->insert(shmset->upper_bound(move_me), boost::move(move_me))" << std::endl;
+               return 1;
+            }
+            if(!CheckEqualContainers(shmmultiset, stdmultiset)){
+               std::cout << "Error in shmmultiset->insert(shmmultiset->upper_bound(move_me2), boost::move(move_me2))" << std::endl;
+               return 1;
+            }
          }
          {
-         IntType move_me(i);
-         shmset->insert(shmset->lower_bound(move_me), boost::move(move_me2));
-         stdset->insert(stdset->lower_bound(i), i);
-         //PrintContainers(shmset, stdset);
-         IntType move_me2(i);
-         shmmultiset->insert(shmmultiset->lower_bound(move_me2), boost::move(move_me2));
-         stdmultiset->insert(stdmultiset->lower_bound(i), i);
-         //PrintContainers(shmmultiset, stdmultiset);
-         if(!CheckEqualContainers(shmset, stdset)){
-            std::cout << "Error in shmset->insert(shmset->lower_bound(move_me), boost::move(move_me2))" << std::endl;
-            return 1;
-         }
-         if(!CheckEqualContainers(shmmultiset, stdmultiset)){
-            std::cout << "Error in shmmultiset->insert(shmmultiset->lower_bound(move_me2), boost::move(move_me2))" << std::endl;
-            return 1;
-         }
+            IntType move_me(i);
+            IntType move_me2(i);
+            shmset->insert(shmset->lower_bound(move_me), boost::move(move_me2));
+            stdset->insert(stdset->lower_bound(i), i);
+            //PrintContainers(shmset, stdset);
+            move_me2 = i;
+            shmmultiset->insert(shmmultiset->lower_bound(move_me2), boost::move(move_me2));
+            stdmultiset->insert(stdmultiset->lower_bound(i), i);
+            //PrintContainers(shmmultiset, stdmultiset);
+            if(!CheckEqualContainers(shmset, stdset)){
+               std::cout << "Error in shmset->insert(shmset->lower_bound(move_me), boost::move(move_me2))" << std::endl;
+               return 1;
+            }
+            if(!CheckEqualContainers(shmmultiset, stdmultiset)){
+               std::cout << "Error in shmmultiset->insert(shmmultiset->lower_bound(move_me2), boost::move(move_me2))" << std::endl;
+               return 1;
+            }
          }
       }
 
       //Compare count with std containers
-      for(i = 0; i < max; ++i){
+      for(int i = 0; i < max; ++i){
          IntType count_me(i);
          if(shmset->count(count_me) != stdset->count(i)){
             return -1;
@@ -463,8 +462,8 @@ int set_test ()
       shmset->clear();
       shmmultiset->clear();
 
-      for(j = 0; j < 3; ++j)
-      for(i = 0; i < 100; ++i){
+      for(int j = 0; j < 3; ++j)
+      for(int i = 0; i < 100; ++i){
          IntType move_me(i);
          shmset->insert(boost::move(move_me));
          IntType move_me2(i);
@@ -520,20 +519,19 @@ int set_test_copyable ()
 
       //Shared memory allocator must be always be initialized
       //since it has no default constructor
-      MyShmSet *shmset = 
+      MyShmSet *shmset =
          segment.template construct<MyShmSet>("MyShmSet")
             (std::less<IntType>(), segment.get_segment_manager());
 
       MyStdSet *stdset = new MyStdSet;
 
-      MyShmMultiSet *shmmultiset = 
+      MyShmMultiSet *shmmultiset =
          segment.template construct<MyShmMultiSet>("MyShmMultiSet")
             (std::less<IntType>(), segment.get_segment_manager());
 
       MyStdMultiSet *stdmultiset = new MyStdMultiSet;
 
-      int i;
-      for(i = 0; i < max; ++i){
+      for(int i = 0; i < max; ++i){
          IntType move_me(i);
          shmset->insert(boost::move(move_me));
          stdset->insert(i);
@@ -567,12 +565,14 @@ int set_test_copyable ()
 
          shmmsetcopy = *shmmultiset;
          stdmsetcopy = *stdmultiset;
-         
+
          if(!CheckEqualContainers(&shmmsetcopy, &stdmsetcopy))
             return 1;
       }
       segment.destroy_ptr(shmset);
       segment.destroy_ptr(shmmultiset);
+      delete stdset;
+      delete stdmultiset;
       segment.shrink_to_fit_indexes();
       if(!segment.all_memory_deallocated())
          return 1;

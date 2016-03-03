@@ -75,12 +75,26 @@ void expected_results()
       ".*", 400, 200);               // test function
 
    add_expected_result(
+      "GNU.*",                       // compiler
+      ".*",                          // stdlib
+      "Win32.*",                     // platform
+      largest_type,                  // test type(s)
+      ".*Random.*",                  // test data group
+      ".*", 400, 200);               // test function
+   add_expected_result(
+      "GNU.*",                          // compiler
+      ".*",                          // stdlib
+      "Win32.*",                          // platform
+      largest_type,                  // test type(s)
+      ".*",                          // test data group
+      ".*", 30, 10);                 // test function
+   add_expected_result(
       ".*",                          // compiler
       ".*",                          // stdlib
       ".*",                          // platform
       largest_type,                  // test type(s)
       ".*",                          // test data group
-      ".*", 15, 10);                 // test function
+      ".*", 20, 10);                 // test function
    //
    // Set error rates a little higher for real_concept - 
    // now that we use a series approximation for small z
@@ -103,7 +117,7 @@ void expected_results()
       << BOOST_STDLIB << ", " << BOOST_PLATFORM << std::endl;
 }
 
-int test_main(int, char* [])
+BOOST_AUTO_TEST_CASE( test_main )
 {
 #ifdef TEST_GSL
    gsl_set_error_handler_off();
@@ -124,9 +138,8 @@ int test_main(int, char* [])
    std::cout << "<note>The long double tests have been disabled on this platform "
       "either because the long double overloads of the usual math functions are "
       "not available at all, or because they are too inaccurate for these tests "
-      "to pass.</note>" << std::cout;
+      "to pass.</note>" << std::endl;
 #endif
-   return 0;
 }
 
 

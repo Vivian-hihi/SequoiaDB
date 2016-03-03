@@ -6,8 +6,6 @@
 // accompanying file LICENSE_1_0.txt or copy at
 // http://www.boost.org/LICENSE_1_0.txt)
 
-// Disclaimer: Not a Boost library.
-
 #ifndef BOOST_HEAP_DETAIL_TREE_ITERATOR_HPP
 #define BOOST_HEAP_DETAIL_TREE_ITERATOR_HPP
 
@@ -23,27 +21,13 @@ namespace detail {
 
 
 template<typename type>
-struct identity:
-    public std::unary_function<type,type>
+struct identity
 {
     type& operator()(type& x) const
     { return x; }
 
     const type& operator()(const type& x) const
     { return x; }
-};
-
-template<typename type>
-struct caster:
-    public std::unary_function<type,type>
-{
-    template <typename U>
-    type& operator()(U& x) const
-    { return static_cast<type&>(x); }
-
-    template <typename U>
-    const type& operator()(const U& x) const
-    { return static_cast<const type&>(x); }
 };
 
 template<typename Node>
@@ -254,6 +238,11 @@ public:
         return !operator!=(rhs);
     }
 
+    const Node * get_node() const
+    {
+        return adaptor_type::base_reference();
+    }
+
 private:
     void increment(void)
     {
@@ -372,6 +361,11 @@ public:
     static const Node * get_node(NodeIterator const & it)
     {
         return static_cast<const Node *>(&*it);
+    }
+
+    const Node * get_node() const
+    {
+        return get_node(adaptor_type::base_reference());
     }
 };
 

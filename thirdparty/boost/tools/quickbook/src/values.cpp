@@ -50,7 +50,7 @@ namespace quickbook
         file_ptr value_node::get_file() const { UNDEFINED_ERROR(); }
         string_iterator value_node::get_position() const { UNDEFINED_ERROR(); }
         int value_node::get_int() const { UNDEFINED_ERROR(); }
-        string_ref value_node::get_quickbook() const { UNDEFINED_ERROR(); }
+        boost::string_ref value_node::get_quickbook() const { UNDEFINED_ERROR(); }
         std::string value_node::get_encoded() const { UNDEFINED_ERROR(); }
         value_node* value_node::get_list() const { UNDEFINED_ERROR(); }
 
@@ -332,7 +332,7 @@ namespace quickbook
             virtual value_node* clone() const;
             virtual file_ptr get_file() const;
             virtual string_iterator get_position() const;
-            virtual string_ref get_quickbook() const;
+            virtual boost::string_ref get_quickbook() const;
             virtual bool empty() const;
             virtual bool equals(value_node*) const;
 
@@ -354,7 +354,7 @@ namespace quickbook
             virtual value_node* clone() const;
             virtual file_ptr get_file() const;
             virtual string_iterator get_position() const;
-            virtual string_ref get_quickbook() const;
+            virtual boost::string_ref get_quickbook() const;
             virtual std::string get_encoded() const;
             virtual bool empty() const;
             virtual bool is_encoded() const;
@@ -433,8 +433,8 @@ namespace quickbook
         string_iterator qbk_value_impl::get_position() const
             { return begin_; }
 
-        string_ref qbk_value_impl::get_quickbook() const
-            { return string_ref(begin_, end_); }
+        boost::string_ref qbk_value_impl::get_quickbook() const
+            { return boost::string_ref(begin_, end_ - begin_); }
 
         bool qbk_value_impl::empty() const
             { return begin_ == end_; }
@@ -481,8 +481,8 @@ namespace quickbook
         string_iterator encoded_qbk_value_impl::get_position() const
             { return begin_; }
 
-        string_ref encoded_qbk_value_impl::get_quickbook() const
-            { return string_ref(begin_, end_); }
+        boost::string_ref encoded_qbk_value_impl::get_quickbook() const
+            { return boost::string_ref(begin_, end_ - begin_); }
 
         std::string encoded_qbk_value_impl::get_encoded() const
             { return encoded_value_; }
@@ -765,6 +765,11 @@ namespace quickbook
             back_ = merge_sort(&head_);
             assert(*back_ == &value_list_end_impl::instance);
         }
+
+        bool value_list_builder::empty() const
+        {
+            return head_ == &value_list_end_impl::instance;
+        }
     }
 
     //////////////////////////////////////////////////////////////////////////
@@ -799,16 +804,6 @@ namespace quickbook
         return value(new detail::value_list_impl(current, list_tag));
     }
 
-    void value_builder::reset() {
-        detail::value_list_builder new_builder;
-        current.swap(new_builder);
-        list_tag = value::default_tag;
-    }
-
-    void value_builder::set_tag(value::tag_type tag) {
-        list_tag = tag;
-    }
-
     void value_builder::insert(value const& item) {
         current.append(item.value_);
     }
@@ -822,9 +817,8 @@ namespace quickbook
     }
 
     void value_builder::start_list(value::tag_type tag) {
-        value::tag_type saved_tag = tag;
         save();
-        list_tag = saved_tag;
+        list_tag = tag;
     }
 
     void value_builder::finish_list() {
@@ -840,6 +834,11 @@ namespace quickbook
     void value_builder::sort_list()
     {
         current.sort();
+    }
+
+    bool value_builder::empty() const
+    {
+        return current.empty();
     }
 
     ////////////////////////////////////////////////////////////////////////////

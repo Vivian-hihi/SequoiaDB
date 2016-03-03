@@ -7,12 +7,15 @@
 
 // test_extreme_value.cpp
 
+#include <boost/math/tools/test.hpp>
 #include <boost/math/concepts/real_concept.hpp> // for real_concept
 #include <boost/math/distributions/extreme_value.hpp>
     using boost::math::extreme_value_distribution;
 
-#include <boost/test/test_exec_monitor.hpp> // Boost.Test
+#define BOOST_TEST_MAIN
+#include <boost/test/unit_test.hpp> // Boost.Test
 #include <boost/test/floating_point_comparison.hpp>
+#include "test_out_of_range.hpp"
 
 #include <iostream>
    using std::cout;
@@ -124,7 +127,7 @@ void test_spots(RealType)
          tolerance); // %
    BOOST_CHECK_CLOSE(
       ::boost::math::standard_deviation(
-         extreme_value_distribution<RealType>(-1, 0.5)), 
+         extreme_value_distribution<RealType>(1, 0.5)), 
          static_cast<RealType>(0.6412749150809320477720181798355L),
          tolerance); // %
    BOOST_CHECK_CLOSE(
@@ -158,30 +161,52 @@ void test_spots(RealType)
    // Things that are errors:
    //
    extreme_value_distribution<RealType> dist(0.5, 2);
-   BOOST_CHECK_THROW(
+   BOOST_MATH_CHECK_THROW(
        quantile(dist, RealType(1.0)),
        std::overflow_error);
-   BOOST_CHECK_THROW(
+   BOOST_MATH_CHECK_THROW(
        quantile(complement(dist, RealType(0.0))),
        std::overflow_error);
-   BOOST_CHECK_THROW(
+   BOOST_MATH_CHECK_THROW(
        quantile(dist, RealType(0.0)),
        std::overflow_error);
-   BOOST_CHECK_THROW(
+   BOOST_MATH_CHECK_THROW(
        quantile(complement(dist, RealType(1.0))),
        std::overflow_error);
-   BOOST_CHECK_THROW(
+   BOOST_MATH_CHECK_THROW(
        cdf(extreme_value_distribution<RealType>(0, -1), RealType(1)),
        std::domain_error);
-   BOOST_CHECK_THROW(
+   BOOST_MATH_CHECK_THROW(
        quantile(dist, RealType(-1)),
        std::domain_error);
-   BOOST_CHECK_THROW(
+   BOOST_MATH_CHECK_THROW(
        quantile(dist, RealType(2)),
        std::domain_error);
+   check_out_of_range<extreme_value_distribution<RealType> >(1, 2);
+   if(std::numeric_limits<RealType>::has_infinity)
+   {
+      RealType inf = std::numeric_limits<RealType>::infinity();
+      BOOST_CHECK_EQUAL(pdf(extreme_value_distribution<RealType>(), -inf), 0);
+      BOOST_CHECK_EQUAL(pdf(extreme_value_distribution<RealType>(), inf), 0);
+      BOOST_CHECK_EQUAL(cdf(extreme_value_distribution<RealType>(), -inf), 0);
+      BOOST_CHECK_EQUAL(cdf(extreme_value_distribution<RealType>(), inf), 1);
+      BOOST_CHECK_EQUAL(cdf(complement(extreme_value_distribution<RealType>(), -inf)), 1);
+      BOOST_CHECK_EQUAL(cdf(complement(extreme_value_distribution<RealType>(), inf)), 0);
+   }
+   //
+   // Bug reports:
+   //
+   // https://svn.boost.org/trac/boost/ticket/10938:
+   BOOST_CHECK_CLOSE(
+   ::boost::math::pdf(
+      extreme_value_distribution<RealType>(0, 1),
+      static_cast<RealType>(-1000)),              // x
+      static_cast<RealType>(0),                // probability.
+      tolerance); // %
+
 } // template <class RealType>void test_spots(RealType)
 
-int test_main(int, char* [])
+BOOST_AUTO_TEST_CASE( test_main )
 {
 
   // Check that can generate extreme_value distribution using the two convenience methods:
@@ -201,11 +226,11 @@ int test_main(int, char* [])
    std::cout << "<note>The long double tests have been disabled on this platform "
       "either because the long double overloads of the usual math functions are "
       "not available at all, or because they are too inaccurate for these tests "
-      "to pass.</note>" << std::cout;
+      "to pass.</note>" << std::endl;
 #endif
 
-   return 0;
-} // int test_main(int, char* [])
+   
+} // BOOST_AUTO_TEST_CASE( test_main )
 
 /*
 

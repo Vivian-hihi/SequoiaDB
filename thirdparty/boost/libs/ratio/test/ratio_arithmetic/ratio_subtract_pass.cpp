@@ -14,13 +14,19 @@
 // test ratio_subtract
 
 #include <boost/ratio/ratio.hpp>
-#if !defined(BOOST_NO_STATIC_ASSERT)
+#if !defined(BOOST_NO_CXX11_STATIC_ASSERT)
 #define NOTHING ""
 #endif
 
 void test()
 {
 
+  {
+  typedef boost::ratio<0> R1;
+  typedef boost::ratio<0> R2;
+  typedef boost::ratio_subtract<R1, R2> R;
+  BOOST_RATIO_STATIC_ASSERT(R::num == 0 && R::den == 1, NOTHING, ());
+  }
     {
     typedef boost::ratio<1, 1> R1;
     typedef boost::ratio<1, 1> R2;

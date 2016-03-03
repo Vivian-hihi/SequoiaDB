@@ -8,15 +8,28 @@
 // (See accompanying file LICENSE_1_0.txt
 // or copy at http://www.boost.org/LICENSE_1_0.txt)
 
+#ifdef _MSC_VER
+#  pragma warning(disable: 4100) // unreferenced formal parameter.
+// Seems an entirely spurious warning - formal parameter T IS used - get error if /* T */
+//#  pragma warning(disable: 4535) // calling _set_se_translator() requires /EHa (in Boost.test)
+// Enable C++ Exceptions Yes With SEH Exceptions (/EHa) prevents warning 4535.
+#  pragma warning(disable: 4127) // conditional expression is constant
+#endif
+
+#include <boost/math/tools/test.hpp> // for real_concept
 #include <boost/math/concepts/real_concept.hpp> // for real_concept
 using ::boost::math::concepts::real_concept;
 
 #include <boost/math/distributions/chi_squared.hpp> // for chi_squared_distribution
+#include <boost/math/distributions/non_central_chi_squared.hpp> // for chi_squared_distribution
 using boost::math::chi_squared_distribution;
 using boost::math::chi_squared;
 
-#include <boost/test/test_exec_monitor.hpp> // for test_main
+#define BOOST_TEST_MAIN
+#include <boost/test/unit_test.hpp> // for test_main
 #include <boost/test/floating_point_comparison.hpp> // for BOOST_CHECK_CLOSE
+
+#include "test_out_of_range.hpp"
 
 #include <iostream>
 using std::cout;
@@ -58,6 +71,25 @@ void test_spot(
             quantile(dist, P), cs, tol);
       BOOST_CHECK_CLOSE(
             quantile(complement(dist, Q)), cs, tol);
+   }
+
+   boost::math::non_central_chi_squared_distribution<RealType> dist2(df, 0);
+   BOOST_CHECK_CLOSE(
+      cdf(dist2, cs), P, tol);
+   BOOST_CHECK_CLOSE(
+      pdf(dist2, cs), naive_pdf(dist2.degrees_of_freedom(), cs), tol);
+   if((P < 0.99) && (Q < 0.99))
+   {
+      //
+      // We can only check this if P is not too close to 1,
+      // so that we can guarentee Q is free of error:
+      //
+      BOOST_CHECK_CLOSE(
+         cdf(complement(dist2, cs)), Q, tol);
+      BOOST_CHECK_CLOSE(
+         quantile(dist2, P), cs, tol);
+      BOOST_CHECK_CLOSE(
+         quantile(complement(dist2, Q)), cs, tol);
    }
 }
 
@@ -279,14 +311,14 @@ double lower_critical_values[][6] = {
 };
 
 template <class RealType> // Any floating-point type RealType.
-void test_spots(RealType)
+void test_spots(RealType T)
 {
   // Basic sanity checks, test data is to three decimal places only
   // so set tolerance to 0.001 expressed as a persentage.
 
   RealType tolerance = 0.001f * 100;
 
-  cout << "Tolerance = " << tolerance << "%." << endl;
+  cout << "Tolerance for type " << typeid(T).name()  << " is " << tolerance << " %" << endl;
 
   using boost::math::chi_squared_distribution;
   using  ::boost::math::chi_squared;
@@ -412,7 +444,7 @@ void test_spots(RealType)
        kurtosis_excess(dist)
        , static_cast<RealType>(1.5), tol2);
     // special cases:
-    BOOST_CHECK_THROW(
+    BOOST_MATH_CHECK_THROW(
        pdf(
           chi_squared_distribution<RealType>(static_cast<RealType>(1)),
           static_cast<RealType>(0)), std::overflow_error
@@ -442,62 +474,62 @@ void test_spots(RealType)
        cdf(complement(chi_squared_distribution<RealType>(3), static_cast<RealType>(0)))
        , static_cast<RealType>(1));
 
-    BOOST_CHECK_THROW(
+    BOOST_MATH_CHECK_THROW(
        pdf(
           chi_squared_distribution<RealType>(static_cast<RealType>(-1)),
           static_cast<RealType>(1)), std::domain_error
        );
-    BOOST_CHECK_THROW(
+    BOOST_MATH_CHECK_THROW(
        pdf(
           chi_squared_distribution<RealType>(static_cast<RealType>(8)),
           static_cast<RealType>(-1)), std::domain_error
        );
-    BOOST_CHECK_THROW(
+    BOOST_MATH_CHECK_THROW(
        cdf(
           chi_squared_distribution<RealType>(static_cast<RealType>(-1)),
           static_cast<RealType>(1)), std::domain_error
        );
-    BOOST_CHECK_THROW(
+    BOOST_MATH_CHECK_THROW(
        cdf(
           chi_squared_distribution<RealType>(static_cast<RealType>(8)),
           static_cast<RealType>(-1)), std::domain_error
        );
-    BOOST_CHECK_THROW(
+    BOOST_MATH_CHECK_THROW(
        cdf(complement(
           chi_squared_distribution<RealType>(static_cast<RealType>(-1)),
           static_cast<RealType>(1))), std::domain_error
        );
-    BOOST_CHECK_THROW(
+    BOOST_MATH_CHECK_THROW(
        cdf(complement(
           chi_squared_distribution<RealType>(static_cast<RealType>(8)),
           static_cast<RealType>(-1))), std::domain_error
        );
-    BOOST_CHECK_THROW(
+    BOOST_MATH_CHECK_THROW(
        quantile(
           chi_squared_distribution<RealType>(static_cast<RealType>(-1)),
           static_cast<RealType>(0.5)), std::domain_error
        );
-    BOOST_CHECK_THROW(
+    BOOST_MATH_CHECK_THROW(
        quantile(
           chi_squared_distribution<RealType>(static_cast<RealType>(8)),
           static_cast<RealType>(-1)), std::domain_error
        );
-    BOOST_CHECK_THROW(
+    BOOST_MATH_CHECK_THROW(
        quantile(
           chi_squared_distribution<RealType>(static_cast<RealType>(8)),
           static_cast<RealType>(1.1)), std::domain_error
        );
-    BOOST_CHECK_THROW(
+    BOOST_MATH_CHECK_THROW(
        quantile(complement(
           chi_squared_distribution<RealType>(static_cast<RealType>(-1)),
           static_cast<RealType>(0.5))), std::domain_error
        );
-    BOOST_CHECK_THROW(
+    BOOST_MATH_CHECK_THROW(
        quantile(complement(
           chi_squared_distribution<RealType>(static_cast<RealType>(8)),
           static_cast<RealType>(-1))), std::domain_error
        );
-    BOOST_CHECK_THROW(
+    BOOST_MATH_CHECK_THROW(
        quantile(complement(
           chi_squared_distribution<RealType>(static_cast<RealType>(8)),
           static_cast<RealType>(1.1))), std::domain_error
@@ -519,9 +551,12 @@ void test_spots(RealType)
     BOOST_CHECK_EQUAL(
        ceil(chi_squared_distribution<RealType>::find_degrees_of_freedom(
          -10, 0.05f, 0.01f, 100)), static_cast<RealType>(2826));
+
+    check_out_of_range<boost::math::chi_squared_distribution<RealType> >(1); // (All) valid constructor parameter values.
+
 } // template <class RealType>void test_spots(RealType)
 
-int test_main(int, char* [])
+BOOST_AUTO_TEST_CASE( test_main )
 {
   BOOST_MATH_CONTROL_FP;
   // Check that can generate chi_squared distribution using the two convenience methods:
@@ -535,24 +570,23 @@ int test_main(int, char* [])
   test_spots(0.0); // Test double.
 #ifndef BOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS
   test_spots(0.0L); // Test long double.
-#if !BOOST_WORKAROUND(__BORLANDC__, BOOST_TESTED_AT(0x582))
+#if !defined(BOOST_MATH_NO_REAL_CONCEPT_TESTS)
   test_spots(boost::math::concepts::real_concept(0.)); // Test real concept.
 #endif
 #endif
-  return 0;
-} // int test_main(int, char* [])
+} // BOOST_AUTO_TEST_CASE( test_main )
 
 /*
 
 Output:
 
-Autorun "i:\boost-06-05-03-1300\libs\math\test\Math_test\debug\test_chi_squared.exe"
-Running 1 test case...
-Tolerance = 0.1%.
-Tolerance = 0.1%.
-Tolerance = 0.1%.
-Tolerance = 0.1%.
-*** No errors detected
+Description: Autorun "J:\Cpp\MathToolkit\test\Math_test\Debug\test_chi_squared.exe"
+  Running 1 test case...
+  Tolerance for type float is 0.1 %
+  Tolerance for type double is 0.1 %
+  Tolerance for type long double is 0.1 %
+  Tolerance for type class boost::math::concepts::real_concept is 0.1 %
+
 
 */
 

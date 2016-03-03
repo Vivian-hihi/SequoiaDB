@@ -12,6 +12,23 @@
 #  include <boost/type_traits/has_trivial_destructor.hpp>
 #endif
 
+#ifndef BOOST_NO_CXX11_DELETED_FUNCTIONS
+
+struct deleted_destruct
+{
+   deleted_destruct();
+   ~deleted_destruct() = delete;
+};
+
+#endif
+
+struct private_destruct
+{
+   private_destruct();
+private:
+   ~private_destruct();
+};
+
 TT_TEST_BEGIN(has_trivial_destructor)
 
 BOOST_CHECK_INTEGRAL_CONSTANT(::tt::has_trivial_destructor<bool>::value, true);
@@ -143,7 +160,7 @@ BOOST_CHECK_INTEGRAL_CONSTANT(::tt::has_trivial_destructor<enum_UDT>::value, tru
 
 //
 // These are commented out for now because it's not clear what the semantics should be:
-// on the one hand references always have trivial destructors (in the sence that there is
+// on the one hand references always have trivial destructors (in the sense that there is
 // nothing to destruct), on the other hand the thing referenced may not have a trivial
 // destructor, it really depends upon the users code as to what should happen here:
 //
@@ -169,6 +186,11 @@ BOOST_CHECK_INTEGRAL_CONSTANT(::tt::has_trivial_destructor<wrap<trivial_except_d
 BOOST_CHECK_SOFT_INTEGRAL_CONSTANT(::tt::has_trivial_destructor<wrap<trivial_except_copy> >::value, true, false);
 BOOST_CHECK_SOFT_INTEGRAL_CONSTANT(::tt::has_trivial_destructor<wrap<trivial_except_construct> >::value, true, false);
 BOOST_CHECK_SOFT_INTEGRAL_CONSTANT(::tt::has_trivial_destructor<wrap<trivial_except_assign> >::value, true, false);
+
+BOOST_CHECK_INTEGRAL_CONSTANT(::tt::has_trivial_destructor<private_destruct>::value, false);
+#ifndef BOOST_NO_CXX11_DELETED_FUNCTIONS
+BOOST_CHECK_INTEGRAL_CONSTANT(::tt::has_trivial_destructor<deleted_destruct>::value, false);
+#endif
 
 TT_TEST_END
 

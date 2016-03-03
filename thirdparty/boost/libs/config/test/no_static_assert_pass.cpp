@@ -6,13 +6,13 @@
 //  LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 
 //  See http://www.boost.org/libs/config for the most recent version.//
-//  Revision $Id: no_static_assert_pass.cpp 51606 2009-03-04 14:28:36Z bemandawes $
+//  Revision $Id$
 //
 
 
-// Test file for macro BOOST_NO_STATIC_ASSERT
+// Test file for macro BOOST_NO_CXX11_STATIC_ASSERT
 // This file should compile, if it does not then
-// BOOST_NO_STATIC_ASSERT should be defined.
+// BOOST_NO_CXX11_STATIC_ASSERT should be defined.
 // See file boost_no_static_assert.ipp for details
 
 // Must not have BOOST_ASSERT_CONFIG set; it defeats
@@ -24,14 +24,14 @@
 #include <boost/config.hpp>
 #include "test.hpp"
 
-#ifndef BOOST_NO_STATIC_ASSERT
+#ifndef BOOST_NO_CXX11_STATIC_ASSERT
 #include "boost_no_static_assert.ipp"
 #else
-namespace boost_no_static_assert = empty_boost;
+namespace boost_no_cxx11_static_assert = empty_boost;
 #endif
 
 int main( int, char *[] )
 {
-   return boost_no_static_assert::test();
+   return boost_no_cxx11_static_assert::test();
 }
 

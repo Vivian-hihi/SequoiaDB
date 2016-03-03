@@ -64,21 +64,21 @@ void expected_results()
       "linux",                          // platform
       largest_type,                     // test type(s)
       "[^|]*medium[^|]*",               // test data group
-      "[^|]*", 1000, 200);                 // test function
+      "[^|]*", 1300, 200);                 // test function
    add_expected_result(
       "[^|]*",                          // compiler
       "[^|]*",                          // stdlib
       "linux",                          // platform
       largest_type,                     // test type(s)
       "[^|]*integer[^|]*",               // test data group
-      "[^|]*", 1000, 200);                 // test function
+      "[^|]*", 1300, 200);                 // test function
    add_expected_result(
       "[^|]*",                          // compiler
       "[^|]*",                          // stdlib
       "linux",                          // platform
       "real_concept",                   // test type(s)
       "[^|]*medium[^|]*",               // test data group
-      "[^|]*", 1000, 200);                // test function
+      "[^|]*", 1300, 200);                // test function
    add_expected_result(
       "[^|]*",                          // compiler
       "[^|]*",                          // stdlib
@@ -105,7 +105,7 @@ void expected_results()
       "Mac OS",                          // platform
       largest_type,                     // test type(s)
       "[^|]*small[^|]*",               // test data group
-      "[^|]*", 40, 15);                 // test function
+      "[^|]*", 80, 40);                 // test function
    add_expected_result(
       "[^|]*",                          // compiler
       "[^|]*",                          // stdlib
@@ -126,7 +126,7 @@ void expected_results()
       "Mac OS",                          // platform
       "real_concept",                     // test type(s)
       "[^|]*small[^|]*",               // test data group
-      "[^|]*", 40, 15);                 // test function
+      "[^|]*", 75, 15);                 // test function
    add_expected_result(
       "[^|]*",                          // compiler
       "[^|]*",                          // stdlib
@@ -195,6 +195,45 @@ void expected_results()
       "[^|]*", 100, 50);                 // test function
 
    //
+   // Minw:
+   //
+   add_expected_result(
+      "GNU[^|]*",                          // compiler
+      "[^|]*",                          // stdlib
+      "Win32[^|]*",                          // platform
+      "real_concept",                   // test type(s)
+      "[^|]*medium[^|]*",               // test data group
+      "[^|]*", 1300, 200);               // test function
+   add_expected_result(
+      "GNU[^|]*",                          // compiler
+      "[^|]*",                          // stdlib
+      "Win32[^|]*",                          // platform
+      largest_type,                     // test type(s)
+      "[^|]*medium[^|]*",               // test data group
+      "[^|]*", 700, 200);                 // test function
+   add_expected_result(
+      "GNU[^|]*",                          // compiler
+      "[^|]*",                          // stdlib
+      "Win32[^|]*",                          // platform
+      largest_type,                     // test type(s)
+      "[^|]*small[^|]*",                // test data group
+      "[^|]*", 100, 50);                  // test function
+   add_expected_result(
+      "GNU[^|]*",                          // compiler
+      "[^|]*",                          // stdlib
+      "Win32[^|]*",                          // platform
+      largest_type,                     // test type(s)
+      "[^|]*integer[^|]*",              // test data group
+      ".*", 120, 50);                   // test function
+   add_expected_result(
+      "GNU[^|]*",                          // compiler
+      "[^|]*",                          // stdlib
+      "Win32[^|]*",                          // platform
+      "real_concept",                   // test type(s)
+      "[^|]*integer[^|]*",              // test data group
+      ".*", 100, 50);                    // test function
+
+   //
    // Large exponent range causes more extreme test cases to be evaluated:
    //
    if(std::numeric_limits<long double>::max_exponent > std::numeric_limits<double>::max_exponent)
@@ -232,21 +271,21 @@ void expected_results()
       "[^|]*",                          // platform
       largest_type,                     // test type(s)
       "[^|]*large[^|]*",                // test data group
-      "boost::math::gamma_q", 500, 50);  // test function
+      "gamma_q", 500, 50);  // test function
    add_expected_result(
       "[^|]*",                          // compiler
       "[^|]*",                          // stdlib
       "Cygwin",                         // platform
       largest_type,                     // test type(s)
       "[^|]*large[^|]*",                // test data group
-      "boost::math::gamma_p", 700, 50);  // test function
+      "gamma_p", 700, 50);  // test function
    add_expected_result(
       "[^|]*",                          // compiler
       "[^|]*",                          // stdlib
       "[^|]*",                          // platform
       largest_type,                     // test type(s)
       "[^|]*large[^|]*",                // test data group
-      "boost::math::gamma_p", 350, 50);  // test function
+      "gamma_p", 350, 50);  // test function
    add_expected_result(
       "[^|]*",                          // compiler
       "[^|]*",                          // stdlib
@@ -260,14 +299,14 @@ void expected_results()
       "[^|]*",                          // platform
       "real_concept",                   // test type(s)
       "[^|]*medium[^|]*",               // test data group
-      "[^|]*", 200, 50);                // test function
+      "[^|]*", 1500, 400);                // test function
    add_expected_result(
       "[^|]*",                          // compiler
       "[^|]*",                          // stdlib
       "[^|]*",                          // platform
       "real_concept",                   // test type(s)
       "[^|]*small[^|]*",                // test data group
-      ".*", 20, 10);                  // test function
+      ".*", 100, 20);                  // test function
    add_expected_result(
       "[^|]*",                          // compiler
       "[^|]*",                          // stdlib
@@ -281,7 +320,7 @@ void expected_results()
       "[^|]*",                          // platform
       "real_concept",                   // test type(s)
       "[^|]*integer[^|]*",              // test data group
-      ".*", 40, 10);                    // test function
+      ".*", 200, 40);                    // test function
 
    //
    // Finish off by printing out the compiler/stdlib/platform names,
@@ -291,7 +330,7 @@ void expected_results()
       << BOOST_STDLIB << ", " << BOOST_PLATFORM << std::endl;
 }
 
-int test_main(int, char* [])
+BOOST_AUTO_TEST_CASE( test_main )
 {
    expected_results();
    BOOST_MATH_CONTROL_FP;
@@ -302,7 +341,7 @@ int test_main(int, char* [])
    test_spots(0.0);
 #ifndef BOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS
    test_spots(0.0L);
-#if !BOOST_WORKAROUND(__BORLANDC__, BOOST_TESTED_AT(0x582))
+#ifndef BOOST_MATH_NO_REAL_CONCEPT_TESTS
    test_spots(boost::math::concepts::real_concept(0.1));
 #endif
 #endif
@@ -322,9 +361,9 @@ int test_main(int, char* [])
    std::cout << "<note>The long double tests have been disabled on this platform "
       "either because the long double overloads of the usual math functions are "
       "not available at all, or because they are too inaccurate for these tests "
-      "to pass.</note>" << std::cout;
+      "to pass.</note>" << std::endl;
 #endif
-   return 0;
+   
 }
 
 

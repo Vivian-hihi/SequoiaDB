@@ -105,16 +105,16 @@ void expected_results()
    // causes more extreme test cases to be executed:
    //
    add_expected_result(
-      ".*mingw.*",                          // compiler
+      "GNU.*",                          // compiler
       ".*",                          // stdlib
-      ".*",                          // platform
+      "Win32.*",                          // platform
       "double",                // test type(s)
       ".*",                          // test data group
       ".*", 10, 10);         // test function
    add_expected_result(
-      ".*mingw.*",                          // compiler
+      "GNU.*",                          // compiler
       ".*",                          // stdlib
-      ".*",                          // platform
+      "Win32.*",                          // platform
       largest_type,                // test type(s)
       ".*",                          // test data group
       ".*", 300000, 20000);         // test function
@@ -171,7 +171,7 @@ void expected_results()
       << BOOST_STDLIB << ", " << BOOST_PLATFORM << std::endl;
 }
 
-int test_main(int, char* [])
+BOOST_AUTO_TEST_CASE( test_main )
 {
    BOOST_MATH_CONTROL_FP;
    expected_results();
@@ -212,9 +212,9 @@ int test_main(int, char* [])
    std::cout << "<note>The long double tests have been disabled on this platform "
       "either because the long double overloads of the usual math functions are "
       "not available at all, or because they are too inaccurate for these tests "
-      "to pass.</note>" << std::cout;
+      "to pass.</note>" << std::endl;
 #endif
-   return 0;
+   
 }
 
 

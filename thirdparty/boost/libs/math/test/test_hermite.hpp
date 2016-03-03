@@ -12,7 +12,8 @@
 #endif
 
 #include <boost/math/concepts/real_concept.hpp>
-#include <boost/test/test_exec_monitor.hpp>
+#define BOOST_TEST_MAIN
+#include <boost/test/unit_test.hpp>
 #include <boost/test/floating_point_comparison.hpp>
 #include <boost/math/special_functions/math_fwd.hpp>
 #include <boost/math/constants/constants.hpp>
@@ -20,26 +21,26 @@
 #include "functor.hpp"
 
 #include "handle_test_result.hpp"
-#include "test_legendre_hooks.hpp"
+#include "table_type.hpp"
 
 #ifndef SC_
-#define SC_(x) static_cast<T>(BOOST_JOIN(x, L))
+#define SC_(x) static_cast<typename table_type<T>::type>(BOOST_JOIN(x, L))
 #endif
 
-template <class T>
+template <class Real, class T>
 void do_test_hermite(const T& data, const char* type_name, const char* test_name)
 {
-   typedef typename T::value_type row_type;
-   typedef typename row_type::value_type value_type;
+#if !(defined(ERROR_REPORTING_MODE) && !defined(HERMITE_FUNCTION_TO_TEST))
+   typedef Real                   value_type;
 
    typedef value_type (*pg)(unsigned, value_type);
-#if defined(BOOST_MATH_NO_DEDUCED_FUNCTION_POINTERS)
+#ifdef HERMITE_FUNCTION_TO_TEST
+   pg funcp = HERMITE_FUNCTION_TO_TEST;
+#elif defined(BOOST_MATH_NO_DEDUCED_FUNCTION_POINTERS)
    pg funcp = boost::math::hermite<value_type>;
 #else
    pg funcp = boost::math::hermite;
 #endif
-
-   typedef unsigned (*cast_t)(value_type);
 
    boost::math::tools::test_result<value_type> result;
 
@@ -49,13 +50,14 @@ void do_test_hermite(const T& data, const char* type_name, const char* test_name
    //
    // test hermite against data:
    //
-   result = boost::math::tools::test(
+   result = boost::math::tools::test_hetero<Real>(
       data, 
-      bind_func_int1(funcp, 0, 1), 
-      extract_result(2));
-   handle_test_result(result, data[result.worst()], result.worst(), type_name, "boost::math::hermite", test_name);
+      bind_func_int1<Real>(funcp, 0, 1), 
+      extract_result<Real>(2));
+   handle_test_result(result, data[result.worst()], result.worst(), type_name, "hermite", test_name);
 
    std::cout << std::endl;
+#endif
 }
 
 template <class T>
@@ -69,7 +71,7 @@ void test_hermite(T, const char* name)
    // 
 #  include "hermite.ipp"
 
-   do_test_hermite(hermite, name, "Hermite Polynomials");
+   do_test_hermite<T>(hermite, name, "Hermite Polynomials");
 }
 
 template <class T>

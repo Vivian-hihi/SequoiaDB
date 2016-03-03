@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztanaga 2004-2011. Distributed under the Boost
+// (C) Copyright Ion Gaztanaga 2004-2012. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -14,7 +14,7 @@
 #include <iostream>
 #include <boost/interprocess/file_mapping.hpp>
 #include <boost/interprocess/mapped_region.hpp>
-#include <memory>    //std::auto_ptr
+#include <boost/container/vector.hpp>
 #include <stdexcept> //std::exception
 #include <cstddef>   //std::size_t
 #include "get_process_id_name.hpp"
@@ -62,7 +62,7 @@ int main ()
                               ,FileSize - FileSize/2
                               );
 
-         //Fill two regions with a pattern   
+         //Fill two regions with a pattern
          unsigned char *filler = static_cast<unsigned char*>(region.get_address());
          for(std::size_t i = 0
             ;i < FileSize/2
@@ -76,6 +76,13 @@ int main ()
             ;++i){
             *filler++ = static_cast<unsigned char>(i);
          }
+         if(!region.flush(0, 0, false)){
+            return 1;
+         }
+
+         if(!region2.flush(0, 0, true)){
+            return 1;
+         }
       }
 
       //See if the pattern is correct in the file
@@ -84,13 +91,13 @@ int main ()
          std::ifstream file(get_filename().c_str(), std::ios::binary);
 
          //Create a memory buffer
-         std::auto_ptr<unsigned char> memory (new unsigned char [FileSize/2 +1]);
-         
+         boost::container::vector<unsigned char> memory(FileSize/2 +1);
+
          //Fill buffer
-         file.read(static_cast<char*>(static_cast<void*>(memory.get()))
+         file.read(static_cast<char*>(static_cast<void*>(memory.data()))
                   , FileSize/2);
 
-         unsigned char *checker = memory.get();
+         unsigned char *checker = memory.data();
          //Check pattern
          for(std::size_t i = 0
             ;i < FileSize/2
@@ -101,10 +108,10 @@ int main ()
          }
 
          //Fill buffer
-         file.read(static_cast<char*>(static_cast<void*>(memory.get()))
+         file.read(static_cast<char*>(static_cast<void*>(memory.data()))
                   , FileSize - FileSize/2);
 
-         checker = memory.get();
+         checker = memory.data();
          //Check pattern
          for(std::size_t i = FileSize/2
             ;i < FileSize

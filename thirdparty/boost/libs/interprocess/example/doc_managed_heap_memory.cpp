@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztanaga 2006-2011. Distributed under the Boost
+// (C) Copyright Ion Gaztanaga 2006-2012. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -16,7 +16,7 @@
 #include <cstddef>
 
 using namespace boost::interprocess;
-typedef list<int, allocator<int, managed_heap_memory::segment_manager> > 
+typedef list<int, allocator<int, managed_heap_memory::segment_manager> >
    MyList;
 
 int main ()
@@ -41,6 +41,9 @@ int main ()
    }
    //Let's obtain the size of the list
    MyList::size_type old_size = mylist->size();
+   //<-
+   (void)old_size;
+   //->
 
    //To make the list bigger, let's increase the heap buffer
    //in 1000 bytes more.
@@ -50,7 +53,7 @@ int main ()
    //use previously obtained handle to find the new pointer.
    mylist = static_cast<MyList *>
                (heap_memory.get_address_from_handle(list_handle));
-   
+
    //Fill list until there is no more memory in the buffer
    try{
       while(1) {
@@ -61,8 +64,11 @@ int main ()
       //memory is full
    }
 
-   //Let's obtain the new size of the list      
+   //Let's obtain the new size of the list
    MyList::size_type new_size = mylist->size();
+   //<-
+   (void)new_size;
+   //->
 
    assert(new_size > old_size);
 

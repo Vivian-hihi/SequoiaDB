@@ -6,13 +6,13 @@
 //  LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 
 //  See http://www.boost.org/libs/config for the most recent version.//
-//  Revision $Id: no_auto_multidecl_pass.cpp 53445 2009-05-30 11:22:59Z bemandawes $
+//  Revision $Id$
 //
 
 
-// Test file for macro BOOST_NO_AUTO_MULTIDECLARATIONS
+// Test file for macro BOOST_NO_CXX11_AUTO_MULTIDECLARATIONS
 // This file should compile, if it does not then
-// BOOST_NO_AUTO_MULTIDECLARATIONS should be defined.
+// BOOST_NO_CXX11_AUTO_MULTIDECLARATIONS should be defined.
 // See file boost_no_auto_multidecl.ipp for details
 
 // Must not have BOOST_ASSERT_CONFIG set; it defeats
@@ -24,14 +24,14 @@
 #include <boost/config.hpp>
 #include "test.hpp"
 
-#ifndef BOOST_NO_AUTO_MULTIDECLARATIONS
+#ifndef BOOST_NO_CXX11_AUTO_MULTIDECLARATIONS
 #include "boost_no_auto_multidecl.ipp"
 #else
-namespace boost_no_auto_multideclarations = empty_boost;
+namespace boost_no_cxx11_auto_multideclarations = empty_boost;
 #endif
 
 int main( int, char *[] )
 {
-   return boost_no_auto_multideclarations::test();
+   return boost_no_cxx11_auto_multideclarations::test();
 }
 

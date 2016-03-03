@@ -392,6 +392,16 @@ Error: XSL template 'link-or-anchor' called with invalid link-type '<xsl:value-o
     </computeroutput>
   </xsl:template>
 
+  <xsl:template match="code[@language='jam']">
+    <computeroutput>
+      <xsl:apply-templates mode="highlight-jam"/>
+    </computeroutput>
+  </xsl:template>
+
+  <xsl:template match="code[@language='c++']">
+    <xsl:apply-templates select="." mode="annotation"/>
+  </xsl:template>
+
   <xsl:template match="bold">
     <emphasis role="bold">
       <xsl:apply-templates mode="annotation"/>
@@ -425,12 +435,7 @@ Error: XSL template 'link-or-anchor' called with invalid link-type '<xsl:value-o
   <xsl:template match="chapter">
     <xsl:if test="$boost.include.libraries=''">
       <chapter>
-        <xsl:for-each select="./@*">
-          <xsl:attribute name="{name(.)}">
-            <xsl:value-of select="."/>
-          </xsl:attribute>
-        </xsl:for-each>
-
+        <xsl:copy-of select="./@*" />
         <xsl:apply-templates/>
       </chapter>
     </xsl:if>
@@ -445,6 +450,16 @@ Error: XSL template 'link-or-anchor' called with invalid link-type '<xsl:value-o
 
   <xsl:template match="programlisting">
     <programlisting><xsl:apply-templates/></programlisting>
+  </xsl:template>
+
+  <xsl:template match="programlisting[@language='jam']">
+    <programlisting>
+      <xsl:apply-templates mode="highlight-jam"/>
+    </programlisting>
+  </xsl:template>
+
+  <xsl:template match="programlisting[@language='c++']">
+    <xsl:apply-templates select="." mode="annotation"/>
   </xsl:template>
 
   <!-- These DocBook elements have special meaning. Use the annotation mode -->
@@ -478,11 +493,7 @@ Error: XSL template 'link-or-anchor' called with invalid link-type '<xsl:value-o
        chapters within chpaters into sections. -->
   <xsl:template match="part/part|part/article">
     <chapter>
-      <xsl:for-each select="./@*">
-        <xsl:attribute name="{name(.)}">
-          <xsl:value-of select="."/>
-        </xsl:attribute>
-      </xsl:for-each>
+      <xsl:copy-of select="./@*"/>
       <xsl:apply-templates/>
     </chapter>
   </xsl:template>
@@ -491,11 +502,7 @@ Error: XSL template 'link-or-anchor' called with invalid link-type '<xsl:value-o
   </xsl:template>
   <xsl:template match="part/part/chapter|part/part/appendix">
     <section>
-      <xsl:for-each select="./@*">
-        <xsl:attribute name="{name(.)}">
-          <xsl:value-of select="."/>
-        </xsl:attribute>
-      </xsl:for-each>
+      <xsl:copy-of select="./@*"/>
       <xsl:apply-templates/>
     </section>
   </xsl:template>

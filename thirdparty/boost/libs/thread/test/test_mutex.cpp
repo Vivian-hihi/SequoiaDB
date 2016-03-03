@@ -1,21 +1,27 @@
 // Copyright (C) 2001-2003
 // William E. Kempf
 //
-//  Distributed under the Boost Software License, Version 1.0. (See accompanying 
+//  Distributed under the Boost Software License, Version 1.0. (See accompanying
 //  file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
+
+#define BOOST_THREAD_VERSION 2
+#define BOOST_TEST_MODULE Boost.Threads: mutex test suite
 
 #include <boost/thread/detail/config.hpp>
 
 #include <boost/thread/mutex.hpp>
-#include <boost/thread/thread.hpp>
+#include <boost/thread/lock_types.hpp>
+#include <boost/thread/thread_only.hpp>
 #include <boost/thread/recursive_mutex.hpp>
 #include <boost/thread/thread_time.hpp>
 #include <boost/thread/condition.hpp>
 
+#define BOOST_TEST_MODULE Boost.Threads: mutex test suite
+
 #include <boost/test/unit_test.hpp>
 
 #define DEFAULT_EXECUTION_MONITOR_TYPE execution_monitor::use_sleep_only
-#include <libs/thread/test/util.inl>
+#include "./util.inl"
 
 template <typename M>
 struct test_lock
@@ -101,13 +107,13 @@ template<typename Mutex>
 struct test_lock_times_out_if_other_thread_has_lock
 {
     typedef boost::unique_lock<Mutex> Lock;
-    
+
     Mutex m;
     boost::mutex done_mutex;
     bool done;
     bool locked;
     boost::condition_variable done_cond;
-    
+
     test_lock_times_out_if_other_thread_has_lock():
         done(false),locked(false)
     {}
@@ -139,25 +145,25 @@ struct test_lock_times_out_if_other_thread_has_lock
     }
 
     typedef test_lock_times_out_if_other_thread_has_lock<Mutex> this_type;
-    
+
     void do_test(void (this_type::*test_func)())
     {
         Lock lock(m);
 
         locked=false;
         done=false;
-        
+
         boost::thread t(test_func,this);
 
         try
         {
             {
-                boost::mutex::scoped_lock lk(done_mutex);
+                boost::unique_lock<boost::mutex> lk(done_mutex);
                 BOOST_CHECK(done_cond.timed_wait(lk,boost::posix_time::seconds(2),
                                                  boost::bind(&this_type::is_done,this)));
                 BOOST_CHECK(!locked);
             }
-            
+
             lock.unlock();
             t.join();
         }
@@ -168,7 +174,7 @@ struct test_lock_times_out_if_other_thread_has_lock
             throw;
         }
     }
-    
+
 
     void operator()()
     {
@@ -191,7 +197,7 @@ struct test_timedlock
     void operator()()
     {
         test_lock_times_out_if_other_thread_has_lock<mutex_type>()();
-        
+
         mutex_type mutex;
         boost::condition condition;
 
@@ -243,7 +249,7 @@ struct test_timedlock
         BOOST_CHECK(lock ? true : false);
         lock.unlock();
         BOOST_CHECK(!lock);
-        
+
     }
 };
 
@@ -267,7 +273,7 @@ void do_test_mutex()
     test_lock<boost::mutex>()();
 }
 
-void test_mutex()
+BOOST_AUTO_TEST_CASE(test_mutex)
 {
     timed_test(&do_test_mutex, 3);
 }
@@ -278,7 +284,7 @@ void do_test_try_mutex()
     test_trylock<boost::try_mutex>()();
 }
 
-void test_try_mutex()
+BOOST_AUTO_TEST_CASE(test_try_mutex)
 {
     timed_test(&do_test_try_mutex, 3);
 }
@@ -290,7 +296,7 @@ void do_test_timed_mutex()
     test_timedlock<boost::timed_mutex>()();
 }
 
-void test_timed_mutex()
+BOOST_AUTO_TEST_CASE(test_timed_mutex)
 {
     timed_test(&do_test_timed_mutex, 3);
 }
@@ -301,7 +307,7 @@ void do_test_recursive_mutex()
     test_recursive_lock<boost::recursive_mutex>()();
 }
 
-void test_recursive_mutex()
+BOOST_AUTO_TEST_CASE(test_recursive_mutex)
 {
     timed_test(&do_test_recursive_mutex, 3);
 }
@@ -313,7 +319,7 @@ void do_test_recursive_try_mutex()
     test_recursive_lock<boost::recursive_try_mutex>()();
 }
 
-void test_recursive_try_mutex()
+BOOST_AUTO_TEST_CASE(test_recursive_try_mutex)
 {
     timed_test(&do_test_recursive_try_mutex, 3);
 }
@@ -326,22 +332,10 @@ void do_test_recursive_timed_mutex()
     test_recursive_lock<boost::recursive_timed_mutex>()();
 }
 
-void test_recursive_timed_mutex()
+BOOST_AUTO_TEST_CASE(test_recursive_timed_mutex)
 {
     timed_test(&do_test_recursive_timed_mutex, 3);
 }
 
-boost::unit_test::test_suite* init_unit_test_suite(int, char*[])
-{
-    boost::unit_test::test_suite* test =
-        BOOST_TEST_SUITE("Boost.Threads: mutex test suite");
 
-    test->add(BOOST_TEST_CASE(&test_mutex));
-    test->add(BOOST_TEST_CASE(&test_try_mutex));
-    test->add(BOOST_TEST_CASE(&test_timed_mutex));
-    test->add(BOOST_TEST_CASE(&test_recursive_mutex));
-    test->add(BOOST_TEST_CASE(&test_recursive_try_mutex));
-    test->add(BOOST_TEST_CASE(&test_recursive_timed_mutex));
 
-    return test;
-}

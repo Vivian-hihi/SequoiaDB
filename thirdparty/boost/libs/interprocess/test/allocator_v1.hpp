@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztanaga 2005-2011. Distributed under the Boost
+// (C) Copyright Ion Gaztanaga 2005-2012. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -11,7 +11,7 @@
 #ifndef BOOST_INTERPROCESS_ALLOCATOR_V1_HPP
 #define BOOST_INTERPROCESS_ALLOCATOR_V1_HPP
 
-#if (defined _MSC_VER) && (_MSC_VER >= 1200)
+#if defined (_MSC_VER)
 #  pragma once
 #endif
 
@@ -23,12 +23,9 @@
 #include <boost/interprocess/interprocess_fwd.hpp>
 #include <boost/interprocess/containers/allocation_type.hpp>
 #include <boost/interprocess/detail/utilities.hpp>
-#include <boost/interprocess/containers/version_type.hpp>
 #include <boost/interprocess/exceptions.hpp>
-#include <memory>
-#include <algorithm>
-#include <cstddef>
-#include <stdexcept>
+#include <boost/move/adl_move_swap.hpp>
+#include <boost/static_assert.hpp>
 
 //!\file
 //!Describes an allocator_v1 that allocates portions of fixed size
@@ -38,12 +35,12 @@ namespace boost {
 namespace interprocess {
 namespace test {
 
-//!An STL compatible allocator_v1 that uses a segment manager as 
+//!An STL compatible allocator_v1 that uses a segment manager as
 //!memory source. The internal pointer type will of the same type (raw, smart) as
 //!"typename SegmentManager::void_pointer" type. This allows
 //!placing the allocator_v1 in shared memory, memory mapped-files, etc...*/
 template<class T, class SegmentManager>
-class allocator_v1 
+class allocator_v1
 {
  private:
    typedef allocator_v1<T, SegmentManager>         self_t;
@@ -86,7 +83,7 @@ class allocator_v1
    //!Obtains an allocator_v1 of other type
    template<class T2>
    struct rebind
-   {   
+   {
       typedef allocator_v1<T2, SegmentManager>     other;
    };
 
@@ -103,28 +100,33 @@ class allocator_v1
    {  return const_pointer(addressof(value));  }
 */
    //!Constructor from the segment manager. Never throws
-   allocator_v1(segment_manager *segment_mngr) 
+   allocator_v1(segment_manager *segment_mngr)
       : mp_mngr(segment_mngr) { }
 
    //!Constructor from other allocator_v1. Never throws
-   allocator_v1(const allocator_v1 &other) 
+   allocator_v1(const allocator_v1 &other)
       : mp_mngr(other.get_segment_manager()){ }
 
    //!Constructor from related allocator_v1. Never throws
    template<class T2>
-   allocator_v1(const allocator_v1<T2, SegmentManager> &other) 
+   allocator_v1(const allocator_v1<T2, SegmentManager> &other)
       : mp_mngr(other.get_segment_manager()){}
 
-   //!Allocates memory for an array of count elements. 
+   //!Allocates memory for an array of count elements.
    //!Throws boost::interprocess::bad_alloc if there is no enough memory
    pointer allocate(size_type count, cvoid_ptr hint = 0)
-   {  (void)hint; return pointer(static_cast<value_type*>(mp_mngr->allocate(count*sizeof(value_type))));  }
+   {
+      if(size_overflows<sizeof(T)>(count)){
+         throw bad_alloc();
+      }
+      (void)hint; return pointer(static_cast<T*>(mp_mngr->allocate(count*sizeof(T))));
+   }
 
    //!Deallocates memory previously allocated. Never throws
    void deallocate(const pointer &ptr, size_type)
    {  mp_mngr->deallocate((void*)ipcdetail::to_raw_pointer(ptr));  }
 
-   //!Construct object, calling constructor. 
+   //!Construct object, calling constructor.
    //!Throws if T(const T&) throws
    void construct(const pointer &ptr, const_reference value)
    {  new((void*)ipcdetail::to_raw_pointer(ptr)) value_type(value);  }
@@ -140,18 +142,18 @@ class allocator_v1
    //!Swap segment manager. Does not throw. If each allocator_v1 is placed in
    //!different memory segments, the result is undefined.
    friend void swap(self_t &alloc1, self_t &alloc2)
-   {  ipcdetail::do_swap(alloc1.mp_mngr, alloc2.mp_mngr);   }
+   {  ::boost::adl_move_swap(alloc1.mp_mngr, alloc2.mp_mngr);   }
 };
 
 //!Equality test for same type of allocator_v1
 template<class T, class SegmentManager> inline
-bool operator==(const allocator_v1<T , SegmentManager>  &alloc1, 
+bool operator==(const allocator_v1<T , SegmentManager>  &alloc1,
                 const allocator_v1<T, SegmentManager>  &alloc2)
    {  return alloc1.get_segment_manager() == alloc2.get_segment_manager(); }
 
 //!Inequality test for same type of allocator_v1
 template<class T, class SegmentManager> inline
-bool operator!=(const allocator_v1<T, SegmentManager>  &alloc1, 
+bool operator!=(const allocator_v1<T, SegmentManager>  &alloc1,
                 const allocator_v1<T, SegmentManager>  &alloc2)
    {  return alloc1.get_segment_manager() != alloc2.get_segment_manager(); }
 

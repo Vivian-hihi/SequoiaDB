@@ -1,6 +1,6 @@
 ////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztanaga 2006. Distributed under the Boost
+// (C) Copyright Ion Gaztanaga 2006-2012. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -14,12 +14,18 @@
 #include <boost/interprocess/detail/config_begin.hpp>
 #include "check_equal_containers.hpp"
 #include <map>
-#include <functional>
-#include <utility>
-#include "print_container.hpp"
-#include <boost/interprocess/detail/utilities.hpp>
+
+// interprocess
 #include <boost/interprocess/containers/pair.hpp>
+// interprocess/detail
+#include <boost/interprocess/detail/utilities.hpp>
+// intrusive/detail
+#include <boost/intrusive/detail/minimal_pair_header.hpp>
+#include <boost/intrusive/detail/minimal_less_equal_header.hpp>
+// std
 #include <string>
+
+#include "print_container.hpp"
 #include "get_process_id_name.hpp"
 
 template<class T1, class T2, class T3, class T4>
@@ -55,19 +61,19 @@ int map_test ()
 
       //Shared memory allocator must be always be initialized
       //since it has no default constructor
-      MyShmMap *shmmap = 
+      MyShmMap *shmmap =
          segment.template construct<MyShmMap>("MyShmMap")
             (std::less<IntType>(), segment.get_segment_manager());
 
       MyStdMap *stdmap = new MyStdMap;
 
-      MyShmMultiMap *shmmultimap = 
+      MyShmMultiMap *shmmultimap =
          segment.template construct<MyShmMultiMap>("MyShmMultiMap")
             (std::less<IntType>(), segment.get_segment_manager());
 
       MyStdMultiMap *stdmultimap = new MyStdMultiMap;
 
-      //Test construction from a range   
+      //Test construction from a range
       {
          //This is really nasty, but we have no other simple choice
          IntPairType aux_vect[50];
@@ -92,7 +98,7 @@ int map_test ()
             new(&aux_vect3[i])IntPairType(boost::move(i1), boost::move(i2));
          }
 
-         MyShmMap *shmmap2 = 
+         MyShmMap *shmmap2 =
             segment.template construct<MyShmMap>("MyShmMap2")
                ( ::boost::make_move_iterator(&aux_vect[0])
                , ::boost::make_move_iterator(aux_vect + 50)
@@ -100,7 +106,7 @@ int map_test ()
 
          MyStdMap *stdmap2 = new MyStdMap(aux_vect2, aux_vect2 + 50);
 
-         MyShmMultiMap *shmmultimap2 = 
+         MyShmMultiMap *shmmultimap2 =
             segment.template construct<MyShmMultiMap>("MyShmMultiMap2")
                ( ::boost::make_move_iterator(&aux_vect3[0])
                , ::boost::make_move_iterator(aux_vect3 + 50)
@@ -128,7 +134,7 @@ int map_test ()
             new(&aux_vect3[i])IntPairType(boost::move(i1), boost::move(i2));
          }
 
-         MyShmMap *shmmap3 = 
+         MyShmMap *shmmap3 =
             segment.template construct<MyShmMap>("MyShmMap3")
                ( ordered_unique_range
                , ::boost::make_move_iterator(&aux_vect[0])
@@ -137,7 +143,7 @@ int map_test ()
 
          MyStdMap *stdmap3 = new MyStdMap(aux_vect2, aux_vect2 + 50);
 
-         MyShmMultiMap *shmmultimap3 = 
+         MyShmMultiMap *shmmultimap3 =
             segment.template construct<MyShmMultiMap>("MyShmMultiMap3")
                ( ordered_range
                , ::boost::make_move_iterator(&aux_vect3[0])
@@ -508,13 +514,13 @@ int map_test_copyable ()
 
    //Shared memory allocator must be always be initialized
    //since it has no default constructor
-   MyShmMap *shmmap = 
+   MyShmMap *shmmap =
       segment.template construct<MyShmMap>("MyShmMap")
          (std::less<IntType>(), segment.get_segment_manager());
 
    MyStdMap *stdmap = new MyStdMap;
 
-   MyShmMultiMap *shmmultimap = 
+   MyShmMultiMap *shmmultimap =
       segment.template construct<MyShmMultiMap>("MyShmMultiMap")
          (std::less<IntType>(), segment.get_segment_manager());
 
@@ -555,11 +561,13 @@ int map_test_copyable ()
          stdmapcopy  = *stdmap;
          shmmmapcopy = *shmmultimap;
          stdmmapcopy = *stdmultimap;
-         
+
          if(!CheckEqualContainers(&shmmapcopy, &stdmapcopy))
             return 1;
          if(!CheckEqualContainers(&shmmmapcopy, &stdmmapcopy))
             return 1;
+         delete stdmap;
+         delete stdmultimap;
          segment.destroy_ptr(shmmap);
          segment.destroy_ptr(shmmultimap);
       }

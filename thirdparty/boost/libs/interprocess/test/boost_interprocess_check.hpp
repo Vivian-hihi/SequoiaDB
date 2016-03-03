@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztanaga 2004-2011. Distributed under the Boost
+// (C) Copyright Ion Gaztanaga 2004-2012. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -17,7 +17,7 @@
 
 namespace boost { namespace interprocess { namespace test {
 
-#define BOOST_INTERPROCES_CHECK( P )  \
+#define BOOST_INTERPROCESS_CHECK( P )  \
    if(!(P)) do{  assert(P); std::cout << "Failed: " << #P << " file: " << __FILE__ << " line : " << __LINE__ << std::endl; throw boost::interprocess::interprocess_exception(#P);}while(0)
 
 }}}   //namespace boost { namespace interprocess { namespace test {

@@ -1,6 +1,6 @@
 ////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztanaga 2006. Distributed under the Boost
+// (C) Copyright Ion Gaztanaga 2006-2012. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -18,7 +18,7 @@
 #include <vector>
 #include <functional>
 #include "print_container.hpp"
-#include <boost/interprocess/detail/move.hpp>
+#include <boost/move/utility_core.hpp>
 #include <string>
 #include "get_process_id_name.hpp"
 
@@ -219,7 +219,7 @@ int list_test (bool copied_allocators_equal = true)
             shmlist->splice(shmlist->begin(), othershmlist);
             stdlist->splice(stdlist->begin(), otherstdlist);
             if(!CheckEqualContainers(shmlist, stdlist))
-               return 1;   
+               return 1;
          }
 
          listsize = (int)shmlist->size();

@@ -26,6 +26,7 @@
 #  define TEST_REAL_CONCEPT
 #endif
 
+#include <boost/math/tools/test.hpp> // for real_concept
 #include <boost/math/concepts/real_concept.hpp> // for real_concept
 using ::boost::math::concepts::real_concept;
 
@@ -35,8 +36,11 @@ using boost::math::negative_binomial_distribution;
 #include <boost/math/special_functions/gamma.hpp>
   using boost::math::lgamma;  // log gamma
 
-#include <boost/test/test_exec_monitor.hpp> // for test_main
+#define BOOST_TEST_MAIN
+#include <boost/test/unit_test.hpp> // for test_main
 #include <boost/test/floating_point_comparison.hpp> // for BOOST_CHECK_CLOSE
+#include "table_type.hpp"
+#include "test_out_of_range.hpp"
 
 #include <iostream>
 using std::cout;
@@ -301,6 +305,13 @@ if(std::numeric_limits<RealType>::is_specialized)
   // Wolfram       0.517304753506834882009032744488738352004003696396461766326713
   // JM nonLanczos 0.51730475350664229 differs at the 13th decimal digit.
   // MathCAD       0.51730475342603199 differs at 10th decimal digit.
+
+  // Error tests:
+  check_out_of_range<negative_binomial_distribution<RealType> >(20, 0.5);
+  BOOST_MATH_CHECK_THROW(negative_binomial_distribution<RealType>(0, 0.5), std::domain_error);
+  BOOST_MATH_CHECK_THROW(negative_binomial_distribution<RealType>(-2, 0.5), std::domain_error);
+  BOOST_MATH_CHECK_THROW(negative_binomial_distribution<RealType>(20, -0.5), std::domain_error);
+  BOOST_MATH_CHECK_THROW(negative_binomial_distribution<RealType>(20, 1.5), std::domain_error);
 }
  // End of single spot tests using RealType
 
@@ -602,7 +613,7 @@ if(std::numeric_limits<RealType>::is_specialized)
     // Note that these assume that  BOOST_MATH_OVERFLOW_ERROR_POLICY is NOT throw_on_error.
     // #define BOOST_MATH_THROW_ON_OVERFLOW_POLICY ==  throw_on_error would throw here.
     // #define BOOST_MAT_DOMAIN_ERROR_POLICY IS defined throw_on_error,
-    //  so the throw path of error handling is tested below with BOOST_CHECK_THROW tests.
+    //  so the throw path of error handling is tested below with BOOST_MATH_CHECK_THROW tests.
 
     BOOST_CHECK(
     quantile(  // At P == 1 so k failures should be infinite.
@@ -666,55 +677,55 @@ if(std::numeric_limits<RealType>::is_specialized)
   );
 
   // Check that duff arguments throw domain_error:
-  BOOST_CHECK_THROW(
+  BOOST_MATH_CHECK_THROW(
   pdf( // Negative successes!
   negative_binomial_distribution<RealType>(static_cast<RealType>(-1), static_cast<RealType>(0.25)),
   static_cast<RealType>(0)), std::domain_error
   );
-  BOOST_CHECK_THROW(
+  BOOST_MATH_CHECK_THROW(
   pdf( // Negative success_fraction!
   negative_binomial_distribution<RealType>(static_cast<RealType>(8), static_cast<RealType>(-0.25)),
   static_cast<RealType>(0)), std::domain_error
   );
-  BOOST_CHECK_THROW(
+  BOOST_MATH_CHECK_THROW(
   pdf( // Success_fraction > 1!
   negative_binomial_distribution<RealType>(static_cast<RealType>(8), static_cast<RealType>(1.25)),
   static_cast<RealType>(0)),
   std::domain_error
   );
-  BOOST_CHECK_THROW(
+  BOOST_MATH_CHECK_THROW(
   pdf( // Negative k argument !
   negative_binomial_distribution<RealType>(static_cast<RealType>(8), static_cast<RealType>(0.25)),
   static_cast<RealType>(-1)),
   std::domain_error
   );
-  //BOOST_CHECK_THROW(
+  //BOOST_MATH_CHECK_THROW(
   //pdf( // Unlike binomial there is NO limit on k (failures)
   //negative_binomial_distribution<RealType>(static_cast<RealType>(8), static_cast<RealType>(0.25)),
   //static_cast<RealType>(9)), std::domain_error
   //);
-  BOOST_CHECK_THROW(
+  BOOST_MATH_CHECK_THROW(
   cdf(  // Negative k argument !
   negative_binomial_distribution<RealType>(static_cast<RealType>(8), static_cast<RealType>(0.25)),
   static_cast<RealType>(-1)),
   std::domain_error
   );
-  BOOST_CHECK_THROW(
+  BOOST_MATH_CHECK_THROW(
   cdf( // Negative success_fraction!
   negative_binomial_distribution<RealType>(static_cast<RealType>(8), static_cast<RealType>(-0.25)),
   static_cast<RealType>(0)), std::domain_error
   );
-  BOOST_CHECK_THROW(
+  BOOST_MATH_CHECK_THROW(
   cdf( // Success_fraction > 1!
   negative_binomial_distribution<RealType>(static_cast<RealType>(8), static_cast<RealType>(1.25)),
   static_cast<RealType>(0)), std::domain_error
   );
-  BOOST_CHECK_THROW(
+  BOOST_MATH_CHECK_THROW(
   quantile(  // Negative success_fraction!
   negative_binomial_distribution<RealType>(static_cast<RealType>(8), static_cast<RealType>(-0.25)),
   static_cast<RealType>(0)), std::domain_error
   );
-  BOOST_CHECK_THROW(
+  BOOST_MATH_CHECK_THROW(
   quantile( // Success_fraction > 1!
   negative_binomial_distribution<RealType>(static_cast<RealType>(8), static_cast<RealType>(1.25)),
   static_cast<RealType>(0)), std::domain_error
@@ -789,7 +800,7 @@ if(std::numeric_limits<RealType>::is_specialized)
   return;
 } // template <class RealType> void test_spots(RealType) // Any floating-point type RealType.
 
-int test_main(int, char* [])
+BOOST_AUTO_TEST_CASE( test_main )
 {
   // Check that can generate negative_binomial distribution using the two convenience methods:
   using namespace boost::math;
@@ -818,7 +829,7 @@ int test_main(int, char* [])
 #ifdef TEST_LDOUBLE
   test_spots(0.0L); // Test long double.
 #endif
-  #if !BOOST_WORKAROUND(__BORLANDC__, BOOST_TESTED_AT(0x582))
+#ifndef BOOST_MATH_NO_REAL_CONCEPT_TESTS
 #ifdef TEST_REAL_CONCEPT
     test_spots(boost::math::concepts::real_concept(0.)); // Test real concept.
 #endif
@@ -827,11 +838,11 @@ int test_main(int, char* [])
    std::cout << "<note>The long double tests have been disabled on this platform "
       "either because the long double overloads of the usual math functions are "
       "not available at all, or because they are too inaccurate for these tests "
-      "to pass.</note>" << std::cout;
+      "to pass.</note>" << std::endl;
 #endif
 
-  return 0;
-} // int test_main(int, char* [])
+  
+} // BOOST_AUTO_TEST_CASE( test_main )
 
 /*
 

@@ -1,16 +1,18 @@
 // Copyright (C) 2007 Anthony Williams
 //
-//  Distributed under the Boost Software License, Version 1.0. (See accompanying 
+//  Distributed under the Boost Software License, Version 1.0. (See accompanying
 //  file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 
+#define BOOST_THREAD_VERSION 2
+#define BOOST_TEST_MODULE Boost.Threads: condition_variable notify_all test suite
 #include <boost/thread/detail/config.hpp>
 
-#include <boost/thread/thread.hpp>
+#include <boost/thread/thread_only.hpp>
 
 #include <boost/test/unit_test.hpp>
 
-#include <libs/thread/test/util.inl>
-#include "condition_test_common.hpp"
+#include "./util.inl"
+#include "./condition_test_common.hpp"
 
 unsigned const number_of_test_threads=5;
 
@@ -28,7 +30,7 @@ void do_test_condition_notify_all_wakes_from_wait()
         }
 
         {
-            boost::mutex::scoped_lock lock(data.mutex);
+            boost::unique_lock<boost::mutex> lock(data.mutex);
             data.flag=true;
             data.cond_var.notify_all();
         }
@@ -57,7 +59,7 @@ void do_test_condition_notify_all_wakes_from_wait_with_predicate()
         }
 
         {
-            boost::mutex::scoped_lock lock(data.mutex);
+            boost::unique_lock<boost::mutex> lock(data.mutex);
             data.flag=true;
             data.cond_var.notify_all();
         }
@@ -86,7 +88,7 @@ void do_test_condition_notify_all_wakes_from_timed_wait()
         }
 
         {
-            boost::mutex::scoped_lock lock(data.mutex);
+            boost::unique_lock<boost::mutex> lock(data.mutex);
             data.flag=true;
             data.cond_var.notify_all();
         }
@@ -115,7 +117,7 @@ void do_test_condition_notify_all_wakes_from_timed_wait_with_predicate()
         }
 
         {
-            boost::mutex::scoped_lock lock(data.mutex);
+            boost::unique_lock<boost::mutex> lock(data.mutex);
             data.flag=true;
             data.cond_var.notify_all();
         }
@@ -144,7 +146,7 @@ void do_test_condition_notify_all_wakes_from_relative_timed_wait_with_predicate(
         }
 
         {
-            boost::mutex::scoped_lock lock(data.mutex);
+            boost::unique_lock<boost::mutex> lock(data.mutex);
             data.flag=true;
             data.cond_var.notify_all();
         }
@@ -167,11 +169,11 @@ namespace
 
     void wait_for_condvar_and_increase_count()
     {
-        boost::mutex::scoped_lock lk(multiple_wake_mutex);
+        boost::unique_lock<boost::mutex> lk(multiple_wake_mutex);
         multiple_wake_cond.wait(lk);
         ++multiple_wake_count;
     }
-    
+
 }
 
 
@@ -189,9 +191,9 @@ void do_test_notify_all_following_notify_one_wakes_all_threads()
     multiple_wake_cond.notify_one();
     multiple_wake_cond.notify_all();
     boost::this_thread::sleep(boost::posix_time::milliseconds(200));
-    
+
     {
-        boost::mutex::scoped_lock lk(multiple_wake_mutex);
+        boost::unique_lock<boost::mutex> lk(multiple_wake_mutex);
         BOOST_CHECK(multiple_wake_count==3);
     }
 
@@ -200,7 +202,7 @@ void do_test_notify_all_following_notify_one_wakes_all_threads()
     thread3.join();
 }
 
-void test_condition_notify_all()
+BOOST_AUTO_TEST_CASE(test_condition_notify_all)
 {
     timed_test(&do_test_condition_notify_all_wakes_from_wait, timeout_seconds);
     timed_test(&do_test_condition_notify_all_wakes_from_wait_with_predicate, timeout_seconds);
@@ -211,12 +213,4 @@ void test_condition_notify_all()
 }
 
 
-boost::unit_test::test_suite* init_unit_test_suite(int, char*[])
-{
-    boost::unit_test::test_suite* test =
-        BOOST_TEST_SUITE("Boost.Threads: condition test suite");
 
-    test->add(BOOST_TEST_CASE(&test_condition_notify_all));
-
-    return test;
-}

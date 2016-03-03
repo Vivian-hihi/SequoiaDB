@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztanaga 2004-2011. Distributed under the Boost
+// (C) Copyright Ion Gaztanaga 2004-2012. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -15,25 +15,24 @@
 #include <boost/interprocess/containers/string.hpp>
 #include <boost/interprocess/offset_ptr.hpp>
 #include <string>
-#include <vector>
 #include <algorithm>
 #include <cstring>
 #include <cstdio>
 #include <cstddef>
-#include <new>
 #include "dummy_test_allocator.hpp"
 #include "check_equal_containers.hpp"
 #include "expand_bwd_test_allocator.hpp"
 #include "expand_bwd_test_template.hpp"
 #include "allocator_v1.hpp"
 #include "get_process_id_name.hpp"
+#include <new> //std::nothrow
 
 using namespace boost::interprocess;
 
-typedef test::dummy_test_allocator<char>           DummyCharAllocator; 
+typedef test::dummy_test_allocator<char>           DummyCharAllocator;
 typedef basic_string<char, std::char_traits<char>, DummyCharAllocator> DummyString;
 typedef test::dummy_test_allocator<DummyString>    DummyStringAllocator;
-typedef test::dummy_test_allocator<wchar_t>              DummyWCharAllocator; 
+typedef test::dummy_test_allocator<wchar_t>              DummyWCharAllocator;
 typedef basic_string<wchar_t, std::char_traits<wchar_t>, DummyWCharAllocator> DummyWString;
 typedef test::dummy_test_allocator<DummyWString>         DummyWStringAllocator;
 
@@ -45,7 +44,7 @@ struct StringEqual
       if(string1.size() != string2.size())
          return false;
       return std::char_traits<typename Str1::value_type>::compare
-		  (string1.c_str(), string2.c_str(), (std::size_t)string1.size()) == 0;
+        (string1.c_str(), string2.c_str(), (std::size_t)string1.size()) == 0;
    }
 };
 
@@ -54,7 +53,7 @@ template<class StrVector1, class StrVector2>
 bool CheckEqualStringVector(StrVector1 *strvect1, StrVector2 *strvect2)
 {
    StringEqual comp;
-   return std::equal(strvect1->begin(), strvect1->end(), 
+   return std::equal(strvect1->begin(), strvect1->end(),
                      strvect2->begin(), comp);
 }
 
@@ -82,13 +81,13 @@ int string_test()
             (create_only,
             process_name.c_str(),//segment name
             65536);              //segment size in bytes
-      
+
       ShmemAllocatorChar shmallocator (segment.get_segment_manager());
 
       //Initialize vector with a range or iterators and allocator
-      ShmStringVector *shmStringVect = 
+      ShmStringVector *shmStringVect =
          segment.construct<ShmStringVector>
-                                 (anonymous_instance, std::nothrow)  //object name 
+                                 (anonymous_instance, std::nothrow)  //object name
                                  (shmallocator);
 
       StdStringVector *stdStringVect = new StdStringVector;
@@ -113,7 +112,7 @@ int string_test()
          return 1;
       }
 
-      //Now push back moving 
+      //Now push back moving
       for(int i = 0; i < MaxSize; ++i){
          auxShmString = "String";
          auxStdString = "String";
@@ -143,7 +142,7 @@ int string_test()
          return 1;
       }
 
-      //Now push front moving 
+      //Now push front moving
       for(int i = 0; i < MaxSize; ++i){
          auxShmString = "String";
          auxStdString = "String";
@@ -166,16 +165,16 @@ int string_test()
       shm_swapper.swap(auxShmString);
       std_swapper.swap(auxStdString);
       if(!StringEqual()(auxShmString, auxStdString))
-         return 1;   
+         return 1;
       if(!StringEqual()(shm_swapper, std_swapper))
-         return 1;   
+         return 1;
 
       shm_swapper.swap(auxShmString);
       std_swapper.swap(auxStdString);
       if(!StringEqual()(auxShmString, auxStdString))
-         return 1;   
+         return 1;
       if(!StringEqual()(shm_swapper, std_swapper))
-         return 1;   
+         return 1;
 
       auxShmString = "LongLongLongLongLongLongLongLongLongLongLongLongLongString";
       auxStdString = "LongLongLongLongLongLongLongLongLongLongLongLongLongString";
@@ -184,16 +183,16 @@ int string_test()
       shm_swapper.swap(auxShmString);
       std_swapper.swap(auxStdString);
       if(!StringEqual()(auxShmString, auxStdString))
-         return 1;   
+         return 1;
       if(!StringEqual()(shm_swapper, std_swapper))
-         return 1;   
+         return 1;
 
       shm_swapper.swap(auxShmString);
       std_swapper.swap(auxStdString);
       if(!StringEqual()(auxShmString, auxStdString))
-         return 1;   
+         return 1;
       if(!StringEqual()(shm_swapper, std_swapper))
-         return 1;   
+         return 1;
 
       //No sort
       std::sort(shmStringVect->begin(), shmStringVect->end());
@@ -207,9 +206,9 @@ int string_test()
       for(int i = 0; i < MaxSize; ++i){
          (*shmStringVect)[i].append(sufix);
          (*stdStringVect)[i].append(sufix);
-         (*shmStringVect)[i].insert((*shmStringVect)[i].begin(), 
+         (*shmStringVect)[i].insert((*shmStringVect)[i].begin(),
                                     prefix, prefix + prefix_size);
-         (*stdStringVect)[i].insert((*stdStringVect)[i].begin(), 
+         (*stdStringVect)[i].insert((*stdStringVect)[i].begin(),
                                     prefix, prefix + prefix_size);
       }
 
@@ -237,10 +236,10 @@ int string_test()
       if(!CheckEqualStringVector(shmStringVect, stdStringVect)) return 1;
 
       for(int i = 0; i < MaxSize; ++i){
-         (*shmStringVect)[i].replace((*shmStringVect)[i].begin(), 
+         (*shmStringVect)[i].replace((*shmStringVect)[i].begin(),
                                     (*shmStringVect)[i].end(),
                                     "String");
-         (*stdStringVect)[i].replace((*stdStringVect)[i].begin(), 
+         (*stdStringVect)[i].replace((*stdStringVect)[i].begin(),
                                     (*stdStringVect)[i].end(),
                                     "String");
       }

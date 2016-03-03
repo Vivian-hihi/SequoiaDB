@@ -13,168 +13,130 @@
 #include <boost/spirit/include/classic_symbols.hpp>
 #include <boost/spirit/include/classic_loops.hpp>
 #include "grammar.hpp"
-#include "grammar_impl.hpp" // Just for context stuff. Should move?
-#include "actions_class.hpp"
+#include "state.hpp"
+#include "actions.hpp"
+#include "syntax_highlight.hpp"
+#include "utils.hpp"
 #include "files.hpp"
-#include "input_path.hpp"
+#include "native_text.hpp"
+#include "phrase_tags.hpp"
 
 namespace quickbook
 {    
     namespace cl = boost::spirit::classic;
 
-    // quickbook::actions is used in a few places here, as 'escape_actions'.
-    // It's named differently to distinguish it from the syntax highlighting
-    // actions, declared below.
-
     // Syntax Highlight Actions
 
-    struct span
+    struct syntax_highlight_actions
     {
-        // Decorates c++ code fragments
+        quickbook::state& state;
+        do_macro_action do_macro_impl;
 
-        span(char const* name, collector& out)
-        : name(name), out(out) {}
+        // State
+        bool support_callouts;
+        boost::string_ref marked_text;
 
-        void operator()(parse_iterator first, parse_iterator last) const;
+        syntax_highlight_actions(quickbook::state& state, bool is_block) :
+            state(state),
+            do_macro_impl(state),
+            support_callouts(is_block && (qbk_version_n >= 107u ||
+                state.current_file->is_code_snippets)),
+            marked_text()
+        {}
 
-        char const* name;
-        collector& out;
+        void span(parse_iterator, parse_iterator, char const*);
+        void span_start(parse_iterator, parse_iterator, char const*);
+        void span_end(parse_iterator, parse_iterator);
+        void unexpected_char(parse_iterator, parse_iterator);
+        void plain_char(parse_iterator, parse_iterator);
+        void pre_escape_back(parse_iterator, parse_iterator);
+        void post_escape_back(parse_iterator, parse_iterator);
+        void do_macro(std::string const&);
+
+        void mark_text(parse_iterator, parse_iterator);
+        void callout(parse_iterator, parse_iterator);
     };
 
-    struct span_start
+    void syntax_highlight_actions::span(parse_iterator first,
+            parse_iterator last, char const* name)
     {
-        span_start(char const* name, collector& out)
-        : name(name), out(out) {}
-
-        void operator()(parse_iterator first, parse_iterator last) const;
-
-        char const* name;
-        collector& out;
-    };
-
-    struct span_end
-    {
-        span_end(collector& out)
-        : out(out) {}
-
-        void operator()(parse_iterator first, parse_iterator last) const;
-
-        collector& out;
-    };
-
-    struct unexpected_char
-    {
-        // Handles unexpected chars in c++ syntax
-
-        unexpected_char(
-            collector& out
-          , quickbook::actions& escape_actions)
-        : out(out)
-        , escape_actions(escape_actions) {}
-
-        void operator()(parse_iterator first, parse_iterator last) const;
-
-        collector& out;
-        quickbook::actions& escape_actions;
-    };
-
-    struct plain_char
-    {
-        // Prints a single plain char.
-        // Converts '<' to "&lt;"... etc See utils.hpp
-
-        plain_char(collector& out)
-        : out(out) {}
-
-        void operator()(char ch) const;
-        void operator()(parse_iterator first, parse_iterator last) const;
-
-        collector& out;
-    };
-
-    struct pre_escape_back
-    {
-        // Escapes back from code to quickbook (Pre)
-
-        pre_escape_back(actions& escape_actions)
-            : escape_actions(escape_actions) {}
-
-        void operator()(parse_iterator first, parse_iterator last) const;
-
-        actions& escape_actions;
-    };
-
-    struct post_escape_back
-    {
-        // Escapes back from code to quickbook (Post)
-
-        post_escape_back(collector& out, actions& escape_actions)
-            : out(out), escape_actions(escape_actions) {}
-
-        void operator()(parse_iterator first, parse_iterator last) const;
-
-        collector& out;
-        actions& escape_actions;
-    };
-
-    void span::operator()(parse_iterator first, parse_iterator last) const
-    {
-        out << "<phrase role=\"" << name << "\">";
+        state.phrase << "<phrase role=\"" << name << "\">";
         while (first != last)
-            detail::print_char(*first++, out.get());
-        out << "</phrase>";
+            detail::print_char(*first++, state.phrase.get());
+        state.phrase << "</phrase>";
     }
 
-    void span_start::operator()(parse_iterator first, parse_iterator last) const
+    void syntax_highlight_actions::span_start(parse_iterator first,
+            parse_iterator last, char const* name)
     {
-        out << "<phrase role=\"" << name << "\">";
+        state.phrase << "<phrase role=\"" << name << "\">";
         while (first != last)
-            detail::print_char(*first++, out.get());
+            detail::print_char(*first++, state.phrase.get());
     }
 
-    void span_end::operator()(parse_iterator first, parse_iterator last) const
+    void syntax_highlight_actions::span_end(parse_iterator first,
+            parse_iterator last)
     {
         while (first != last)
-            detail::print_char(*first++, out.get());
-        out << "</phrase>";
+            detail::print_char(*first++, state.phrase.get());
+        state.phrase << "</phrase>";
     }
 
-    void unexpected_char::operator()(parse_iterator first, parse_iterator last) const
+    void syntax_highlight_actions::unexpected_char(parse_iterator first,
+            parse_iterator last)
     {
-        file_position const pos = escape_actions.current_file->position_of(first.base());
+        file_position const pos = state.current_file->position_of(first.base());
 
-        detail::outwarn(escape_actions.current_file->path, pos.line)
+        detail::outwarn(state.current_file->path, pos.line)
             << "in column:" << pos.column
-            << ", unexpected character: " << detail::utf8(first, last)
+            << ", unexpected character: " << std::string(first.base(), last.base())
             << "\n";
 
         // print out an unexpected character
-        out << "<phrase role=\"error\">";
+        state.phrase << "<phrase role=\"error\">";
         while (first != last)
-            detail::print_char(*first++, out.get());
-        out << "</phrase>";
+            detail::print_char(*first++, state.phrase.get());
+        state.phrase << "</phrase>";
     }
 
-    void plain_char::operator()(char ch) const
-    {
-        detail::print_char(ch, out.get());
-    }
-
-    void plain_char::operator()(parse_iterator first, parse_iterator last) const
+    void syntax_highlight_actions::plain_char(parse_iterator first,
+            parse_iterator last)
     {
         while (first != last)
-            detail::print_char(*first++, out.get());
+            detail::print_char(*first++, state.phrase.get());
     }
 
-    void pre_escape_back::operator()(parse_iterator, parse_iterator) const
+    void syntax_highlight_actions::pre_escape_back(parse_iterator,
+            parse_iterator)
     {
-        escape_actions.phrase.push(); // save the stream
+        state.push_output(); // save the stream
     }
 
-    void post_escape_back::operator()(parse_iterator, parse_iterator) const
+    void syntax_highlight_actions::post_escape_back(parse_iterator,
+            parse_iterator)
     {
-        out << escape_actions.phrase.str();
-        escape_actions.phrase.pop(); // restore the stream
+        std::string tmp;
+        state.phrase.swap(tmp);
+        state.pop_output(); // restore the stream
+        state.phrase << tmp;
+    }
+
+    void syntax_highlight_actions::do_macro(std::string const& v)
+    {
+        do_macro_impl(v);
+    }
+
+    void syntax_highlight_actions::mark_text(parse_iterator first,
+            parse_iterator last)
+    {
+        marked_text = boost::string_ref(first.base(), last.base() - first.base());
+    }
+
+    void syntax_highlight_actions::callout(parse_iterator, parse_iterator)
+    {
+        state.phrase << state.add_callout(qbk_value(state.current_file,
+            marked_text.begin(), marked_text.end()));
+        marked_text.clear();
     }
 
     // Syntax
@@ -186,20 +148,23 @@ namespace quickbook
         keywords_holder()
         {
             cpp
-                    =   "and_eq", "and", "asm", "auto", "bitand", "bitor",
-                        "bool", "break", "case", "catch", "char", "class",
-                        "compl", "const_cast", "const", "continue", "default",
-                        "delete", "do", "double", "dynamic_cast",  "else",
-                        "enum", "explicit", "export", "extern", "false",
-                        "float", "for", "friend", "goto", "if", "inline",
-                        "int", "long", "mutable", "namespace", "new", "not_eq",
-                        "not", "operator", "or_eq", "or", "private",
-                        "protected", "public", "register", "reinterpret_cast",
-                        "return", "short", "signed", "sizeof", "static",
+                    =   "alignas", "alignof", "and_eq", "and", "asm", "auto",
+                        "bitand", "bitor", "bool", "break", "case", "catch",
+                        "char", "char16_t", "char32_t", "class", "compl",
+                        "const", "const_cast", "constexpr", "continue",
+                        "decltype", "default", "delete", "do", "double",
+                        "dynamic_cast",  "else", "enum", "explicit", "export",
+                        "extern", "false", "float", "for", "friend", "goto",
+                        "if", "inline", "int", "long", "mutable", "namespace",
+                        "new", "noexcept", "not_eq", "not", "nullptr",
+                        "operator", "or_eq", "or", "private", "protected",
+                        "public", "register", "reinterpret_cast", "return",
+                        "short", "signed", "sizeof", "static", "static_assert",
                         "static_cast", "struct", "switch", "template", "this",
-                        "throw", "true", "try", "typedef", "typeid",
-                        "typename", "union", "unsigned", "using", "virtual",
-                        "void", "volatile", "wchar_t", "while", "xor_eq", "xor"
+                        "thread_local", "throw", "true", "try", "typedef",
+                        "typeid", "typename", "union", "unsigned", "using",
+                        "virtual", "void", "volatile", "wchar_t", "while",
+                        "xor_eq", "xor"
                     ;
 
             python
@@ -225,79 +190,123 @@ namespace quickbook
     }
 
     // Grammar for C++ highlighting
-    struct cpp_highlight
-    : public cl::grammar<cpp_highlight>
+    struct cpp_highlight : public cl::grammar<cpp_highlight>
     {
-        cpp_highlight(collector& out, actions& escape_actions)
-        : out(out), escape_actions(escape_actions) {}
+        cpp_highlight(syntax_highlight_actions& actions)
+            : actions(actions) {}
 
         template <typename Scanner>
         struct definition
         {
             definition(cpp_highlight const& self)
-                : g(self.escape_actions.grammar())
+                : g(self.actions.state.grammar())
             {
-                program
-                    =
-                    *(  (+cl::space_p)  [plain_char(self.out)]
+                member_action1<syntax_highlight_actions, char const*>
+                    span(self.actions, &syntax_highlight_actions::span),
+                    span_start(self.actions, &syntax_highlight_actions::span_start);
+                member_action<syntax_highlight_actions>
+                    span_end(self.actions, &syntax_highlight_actions::span_end),
+                    unexpected_char(self.actions, &syntax_highlight_actions::unexpected_char),
+                    plain_char(self.actions, &syntax_highlight_actions::plain_char),
+                    pre_escape_back(self.actions, &syntax_highlight_actions::pre_escape_back),
+                    post_escape_back(self.actions, &syntax_highlight_actions::post_escape_back),
+                    mark_text(self.actions, &syntax_highlight_actions::mark_text),
+                    callout(self.actions, &syntax_highlight_actions::callout);
+                member_action_value<syntax_highlight_actions, std::string const&>
+                    do_macro(self.actions, &syntax_highlight_actions::do_macro);
+                error_action error(self.actions.state);
+
+                program =
+                    *(  (*cl::space_p)                  [plain_char]
+                    >>  (line_start | rest_of_line)
+                    >>  *rest_of_line
+                    )
+                    ;
+
+                line_start =
+                        preprocessor                    [span("preprocessor")]
+                    ;
+                
+                rest_of_line = 
+                        (+cl::blank_p)                  [plain_char]
                     |   macro
                     |   escape
-                    |   preprocessor    [span("preprocessor", self.out)]
+                    |   cl::eps_p(ph::var(self.actions.support_callouts))
+                    >>  (   line_callout                [callout]
+                        |   inline_callout              [callout]
+                        )
                     |   comment
-                    |   keyword         [span("keyword", self.out)]
-                    |   identifier      [span("identifier", self.out)]
-                    |   special         [span("special", self.out)]
-                    |   string_         [span("string", self.out)]
-                    |   char_           [span("char", self.out)]
-                    |   number          [span("number", self.out)]
-                    |   cl::repeat_p(1)[cl::anychar_p]
-                                        [unexpected_char(self.out, self.escape_actions)]
-                    )
+                    |   keyword                         [span("keyword")]
+                    |   identifier                      [span("identifier")]
+                    |   special                         [span("special")]
+                    |   string_                         [span("string")]
+                    |   char_                           [span("char")]
+                    |   number                          [span("number")]
+                    |   ~cl::eps_p(cl::eol_p)
+                    >>  u8_codepoint_p                  [unexpected_char]
                     ;
 
                 macro =
                     // must not be followed by alpha or underscore
-                    cl::eps_p(self.escape_actions.macro
+                    cl::eps_p(self.actions.state.macro
                         >> (cl::eps_p - (cl::alpha_p | '_')))
-                    >> self.escape_actions.macro        [do_macro_action(self.out, self.escape_actions)]
+                    >> self.actions.state.macro
+                                                        [do_macro]
                     ;
 
                 escape =
-                    cl::str_p("``")     [pre_escape_back(self.escape_actions)]
+                    cl::str_p("``")                     [pre_escape_back]
                     >>
                     (
                         (
                             (
                                 (+(cl::anychar_p - "``") >> cl::eps_p("``"))
-                                & g.phrase
+                                & g.phrase_start
                             )
                             >>  cl::str_p("``")
                         )
                         |
                         (
-                            cl::eps_p   [self.escape_actions.error]
+                            cl::eps_p                   [error]
                             >> *cl::anychar_p
                         )
-                    )                   [post_escape_back(self.out, self.escape_actions)]
+                    )                                   [post_escape_back]
                     ;
 
                 preprocessor
                     =   '#' >> *cl::space_p >> ((cl::alpha_p | '_') >> *(cl::alnum_p | '_'))
                     ;
 
+                inline_callout
+                    =   cl::confix_p(
+                            "/*<" >> *cl::space_p,
+                            (*cl::anychar_p)            [mark_text],
+                            ">*/"
+                        )
+                        ;
+
+                line_callout
+                    =   cl::confix_p(
+                            "/*<<" >> *cl::space_p,
+                            (*cl::anychar_p)            [mark_text],
+                            ">>*/"
+                        )
+                    >>  *cl::space_p
+                    ;
+
                 comment
-                    =   cl::str_p("//")         [span_start("comment", self.out)]
+                    =   cl::str_p("//")                 [span_start("comment")]
                     >>  *(  escape
                         |   (+(cl::anychar_p - (cl::eol_p | "``")))
-                                                [plain_char(self.out)]
+                                                        [plain_char]
                         )
-                    >>  cl::eps_p               [span_end(self.out)]
-                    |   cl::str_p("/*")         [span_start("comment", self.out)]
+                    >>  cl::eps_p                       [span_end]
+                    |   cl::str_p("/*")                 [span_start("comment")]
                     >>  *(  escape
                         |   (+(cl::anychar_p - (cl::str_p("*/") | "``")))
-                                                [plain_char(self.out)]
+                                                        [plain_char]
                         )
-                    >>  (!cl::str_p("*/"))      [span_end(self.out)]
+                    >>  (!cl::str_p("*/"))              [span_end]
                     ;
 
                 keyword
@@ -305,10 +314,10 @@ namespace quickbook
                     ;   // make sure we recognize whole words only
 
                 special
-                    =   +cl::chset_p("~!%^&*()+={[}]:;,<.>?/|\\-")
+                    =   +cl::chset_p("~!%^&*()+={[}]:;,<.>?/|\\#-")
                     ;
 
-                string_char = ('\\' >> cl::anychar_p) | (cl::anychar_p - '\\');
+                string_char = ('\\' >> u8_codepoint_p) | (cl::anychar_p - '\\');
 
                 string_
                     =   !cl::as_lower_d['l'] >> cl::confix_p('"', *string_char, '"')
@@ -333,7 +342,9 @@ namespace quickbook
             }
 
             cl::rule<Scanner>
-                            program, macro, preprocessor, comment, special, string_, 
+                            program, line_start, rest_of_line, macro, preprocessor,
+                            inline_callout, line_callout, comment,
+                            special, string_, 
                             char_, number, identifier, keyword, escape,
                             string_char;
 
@@ -343,74 +354,87 @@ namespace quickbook
             start() const { return program; }
         };
 
-        collector& out;
-        actions& escape_actions;
+        syntax_highlight_actions& actions;
     };
 
     // Grammar for Python highlighting
     // See also: The Python Reference Manual
     // http://docs.python.org/ref/ref.html
-    struct python_highlight
-    : public cl::grammar<python_highlight>
+    struct python_highlight : public cl::grammar<python_highlight>
     {
-        python_highlight(collector& out, actions& escape_actions)
-        : out(out), escape_actions(escape_actions) {}
+        python_highlight(syntax_highlight_actions& actions)
+            : actions(actions) {}
 
         template <typename Scanner>
         struct definition
         {
             definition(python_highlight const& self)
-                : g(self.escape_actions.grammar())
+                : g(self.actions.state.grammar())
             {
+                member_action1<syntax_highlight_actions, char const*>
+                    span(self.actions, &syntax_highlight_actions::span),
+                    span_start(self.actions, &syntax_highlight_actions::span_start);
+                member_action<syntax_highlight_actions>
+                    span_end(self.actions, &syntax_highlight_actions::span_end),
+                    unexpected_char(self.actions, &syntax_highlight_actions::unexpected_char),
+                    plain_char(self.actions, &syntax_highlight_actions::plain_char),
+                    pre_escape_back(self.actions, &syntax_highlight_actions::pre_escape_back),
+                    post_escape_back(self.actions, &syntax_highlight_actions::post_escape_back),
+                    mark_text(self.actions, &syntax_highlight_actions::mark_text),
+                    callout(self.actions, &syntax_highlight_actions::callout);
+                member_action_value<syntax_highlight_actions, std::string const&>
+                    do_macro(self.actions, &syntax_highlight_actions::do_macro);
+                error_action error(self.actions.state);
+
                 program
                     =
-                    *(  (+cl::space_p)  [plain_char(self.out)]
+                    *(  (+cl::space_p)                  [plain_char]
                     |   macro
                     |   escape          
                     |   comment
-                    |   keyword         [span("keyword", self.out)]
-                    |   identifier      [span("identifier", self.out)]
-                    |   special         [span("special", self.out)]
-                    |   string_         [span("string", self.out)]
-                    |   number          [span("number", self.out)]
-                    |   cl::repeat_p(1)[cl::anychar_p]
-                                        [unexpected_char(self.out, self.escape_actions)]
+                    |   keyword                         [span("keyword")]
+                    |   identifier                      [span("identifier")]
+                    |   special                         [span("special")]
+                    |   string_                         [span("string")]
+                    |   number                          [span("number")]
+                    |   u8_codepoint_p                  [unexpected_char]
                     )
                     ;
 
                 macro = 
                     // must not be followed by alpha or underscore
-                    cl::eps_p(self.escape_actions.macro
+                    cl::eps_p(self.actions.state.macro
                         >> (cl::eps_p - (cl::alpha_p | '_')))
-                    >> self.escape_actions.macro        [do_macro_action(self.out, self.escape_actions)]
+                    >> self.actions.state.macro
+                                                        [do_macro]
                     ;
 
                 escape =
-                    cl::str_p("``")     [pre_escape_back(self.escape_actions)]
+                    cl::str_p("``")                     [pre_escape_back]
                     >>
                     (
                         (
                             (
                                 (+(cl::anychar_p - "``") >> cl::eps_p("``"))
-                                & g.phrase
+                                & g.phrase_start
                             )
                             >>  cl::str_p("``")
                         )
                         |
                         (
-                            cl::eps_p   [self.escape_actions.error]
+                            cl::eps_p                   [error]
                             >> *cl::anychar_p
                         )
-                    )                   [post_escape_back(self.out, self.escape_actions)]
+                    )                                   [post_escape_back]
                     ;
 
                 comment
-                    =   cl::str_p("#")          [span_start("comment", self.out)]
+                    =   cl::str_p("#")                  [span_start("comment")]
                     >>  *(  escape
                         |   (+(cl::anychar_p - (cl::eol_p | "``")))
-                                                [plain_char(self.out)]
+                                                        [plain_char]
                         )
-                    >>  cl::eps_p               [span_end(self.out)]
+                    >>  cl::eps_p                       [span_end]
                     ;
 
                 keyword
@@ -429,7 +453,7 @@ namespace quickbook
                     =   ! string_prefix >> (long_string | short_string)
                     ;
 
-                string_char = ('\\' >> cl::anychar_p) | (cl::anychar_p - '\\');
+                string_char = ('\\' >> u8_codepoint_p) | (cl::anychar_p - '\\');
             
                 short_string
                     =   cl::confix_p('\'', * string_char, '\'') |
@@ -468,55 +492,62 @@ namespace quickbook
             start() const { return program; }
         };
 
-        collector& out;
-        actions& escape_actions;
+        syntax_highlight_actions& actions;
     };
 
     // Grammar for plain text (no actual highlighting)
-    struct teletype_highlight
-    : public cl::grammar<teletype_highlight>
+    struct teletype_highlight : public cl::grammar<teletype_highlight>
     {
-        teletype_highlight(collector& out, actions& escape_actions)
-        : out(out), escape_actions(escape_actions) {}
+        teletype_highlight(syntax_highlight_actions& actions)
+            : actions(actions) {}
 
         template <typename Scanner>
         struct definition
         {
             definition(teletype_highlight const& self)
-                : g(self.escape_actions.grammar())
+                : g(self.actions.state.grammar())
             {
+                member_action<syntax_highlight_actions>
+                    plain_char(self.actions, &syntax_highlight_actions::plain_char),
+                    pre_escape_back(self.actions, &syntax_highlight_actions::pre_escape_back),
+                    post_escape_back(self.actions, &syntax_highlight_actions::post_escape_back);
+                member_action_value<syntax_highlight_actions, std::string const&>
+                    do_macro(self.actions, &syntax_highlight_actions::do_macro);
+                error_action error(self.actions.state);
+
                 program
                     =
                     *(  macro
                     |   escape          
-                    |   cl::repeat_p(1)[cl::anychar_p]  [plain_char(self.out)]
+                    |   u8_codepoint_p                  [plain_char]
                     )
                     ;
 
                 macro =
                     // must not be followed by alpha or underscore
-                    cl::eps_p(self.escape_actions.macro
+                    cl::eps_p(self.actions.state.macro
                         >> (cl::eps_p - (cl::alpha_p | '_')))
-                    >> self.escape_actions.macro        [do_macro_action(self.out, self.escape_actions)]
+                    >> self.actions.state.macro
+                                                        [do_macro]
                     ;
 
                 escape =
-                    cl::str_p("``")     [pre_escape_back(self.escape_actions)]
+                    cl::str_p("``")                     [pre_escape_back]
                     >>
                     (
                         (
                             (
                                 (+(cl::anychar_p - "``") >> cl::eps_p("``"))
-                                & g.phrase
+                                & g.phrase_start
                             )
                             >>  cl::str_p("``")
                         )
                         |
                         (
-                            cl::eps_p   [self.escape_actions.error]
+                            cl::eps_p                   [error]
                             >> *cl::anychar_p
                         )
-                    )                   [post_escape_back(self.out, self.escape_actions)]
+                    )                                   [post_escape_back]
                     ;
             }
 
@@ -528,42 +559,38 @@ namespace quickbook
             start() const { return program; }
         };
 
-        collector& out;
-        actions& escape_actions;
+        syntax_highlight_actions& actions;
     };
 
-    std::string syntax_highlight(
+    void syntax_highlight(
         parse_iterator first,
         parse_iterator last,
-        actions& escape_actions,
-        std::string const& source_mode)
+        quickbook::state& state,
+        source_mode_type source_mode,
+        bool is_block)
     {
-        quickbook::collector temp;
+        syntax_highlight_actions syn_actions(state, is_block);
 
         // print the code with syntax coloring
-        if (source_mode == "c++")
+        switch(source_mode)
         {
-            cpp_highlight cpp_p(temp, escape_actions);
-            boost::spirit::classic::parse(first, last, cpp_p);
+            case source_mode_tags::cpp: {
+                cpp_highlight cpp_p(syn_actions);
+                boost::spirit::classic::parse(first, last, cpp_p);
+                break;
+            }
+            case source_mode_tags::python: {
+                python_highlight python_p(syn_actions);
+                boost::spirit::classic::parse(first, last, python_p);
+                break;
+            }
+            case source_mode_tags::teletype: {
+                teletype_highlight teletype_p(syn_actions);
+                boost::spirit::classic::parse(first, last, teletype_p);
+                break;
+            }
+            default:
+                BOOST_ASSERT(0);
         }
-        else if (source_mode == "python")
-        {
-            python_highlight python_p(temp, escape_actions);
-            boost::spirit::classic::parse(first, last, python_p);
-        }
-        else if (source_mode == "teletype")
-        {
-            teletype_highlight teletype_p(temp, escape_actions);
-            boost::spirit::classic::parse(first, last, teletype_p);
-        }
-        else
-        {
-            BOOST_ASSERT(0);
-        }
-
-        std::string str;
-        temp.swap(str);
-        
-        return str;
     }
 }

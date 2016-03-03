@@ -1,3 +1,8 @@
+// Copyright (C) 2010 Vicente Botet
+//
+//  Distributed under the Boost Software License, Version 1.0. (See accompanying
+//  file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
+
 // bm.cpp
 
 //  g++ test.cpp -lboost_thread-mt && ./a.out
@@ -7,18 +12,20 @@
 int XXX = 20;
 int YYY = 10;
 
-#include <boost/thread.hpp>
+#include <boost/thread/thread_only.hpp>
 #include <boost/thread/shared_mutex.hpp>
 
-#include <unistd.h>
+//#include <unistd.h>
 #include <iostream>
 #include <boost/detail/lightweight_test.hpp>
 
 using namespace std;
 
-void sleepmillis(useconds_t miliis)
+//void sleepmillis(useconds_t miliis)
+void sleepmillis(int miliis)
 {
-  usleep(miliis * 1000);
+  //usleep(miliis * 1000);
+  boost::this_thread::sleep(boost::posix_time::milliseconds(miliis));
 }
 
 void worker1(boost::shared_mutex * lk, int * x)

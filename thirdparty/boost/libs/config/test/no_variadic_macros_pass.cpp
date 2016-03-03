@@ -10,9 +10,9 @@
 //
 
 
-// Test file for macro BOOST_NO_VARIADIC_MACROS
+// Test file for macro BOOST_NO_CXX11_VARIADIC_MACROS
 // This file should compile, if it does not then
-// BOOST_NO_VARIADIC_MACROS should be defined.
+// BOOST_NO_CXX11_VARIADIC_MACROS should be defined.
 // See file boost_no_variadic_macros.ipp for details
 
 // Must not have BOOST_ASSERT_CONFIG set; it defeats
@@ -24,14 +24,14 @@
 #include <boost/config.hpp>
 #include "test.hpp"
 
-#ifndef BOOST_NO_VARIADIC_MACROS
+#ifndef BOOST_NO_CXX11_VARIADIC_MACROS
 #include "boost_no_variadic_macros.ipp"
 #else
-namespace boost_no_variadic_macros = empty_boost;
+namespace boost_no_cxx11_variadic_macros = empty_boost;
 #endif
 
 int main( int, char *[] )
 {
-   return boost_no_variadic_macros::test();
+   return boost_no_cxx11_variadic_macros::test();
 }
 

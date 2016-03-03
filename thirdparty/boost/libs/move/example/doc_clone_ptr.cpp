@@ -8,7 +8,8 @@
 // See http://www.boost.org/libs/move for documentation.
 //
 //////////////////////////////////////////////////////////////////////////////
-#include <boost/move/move.hpp>
+#include <boost/move/detail/config_begin.hpp>
+#include <boost/move/utility_core.hpp>
 
 //[clone_ptr_base_derived
 class Base
@@ -18,18 +19,20 @@ class Base
    public:
    Base(){}
 
-   Base(const Base &x) {/**/}             // Copy ctor
+   Base(const Base &/*x*/) {/**/}            // Copy ctor
 
-   Base(BOOST_RV_REF(Base) x) {/**/}      // Move ctor
+   Base(BOOST_RV_REF(Base) /*x*/) {/**/}     // Move ctor
 
-   Base& operator=(BOOST_RV_REF(Base) x)
-   {/**/ return *this;}                   // Move assign
+   Base& operator=(BOOST_RV_REF(Base) /*x*/)
+   {/**/ return *this;}                      // Move assign
 
-   Base& operator=(BOOST_COPY_ASSIGN_REF(Base) x)
-   {/**/ return *this;}                   // Copy assign
+   Base& operator=(BOOST_COPY_ASSIGN_REF(Base) /*x*/)
+   {/**/ return *this;}                      // Copy assign
    
    virtual Base *clone() const
    {  return new Base(*this);  }
+
+   virtual ~Base(){}
 };
 
 class Member
@@ -61,19 +64,19 @@ class Derived : public Base
    // Compiler-generated copy constructor...
 
    Derived(BOOST_RV_REF(Derived) x)             // Move ctor
-      : Base(boost::move(static_cast<Base&>(x))), 
+      : Base(BOOST_MOVE_BASE(Base, x)), 
         mem_(boost::move(x.mem_)) { }
 
    Derived& operator=(BOOST_RV_REF(Derived) x)  // Move assign
    {
-      Base::operator=(boost::move(static_cast<Base&>(x)));
-      mem_  = boost::move(x.mem_);
+      Base::operator=(BOOST_MOVE_BASE(Base, x));
+      mem_ = boost::move(x.mem_);
       return *this;
    }
 
    Derived& operator=(BOOST_COPY_ASSIGN_REF(Derived) x)  // Copy assign
    {
-      Base::operator=(static_cast<const Base&>(x));
+      Base::operator=(x);
       mem_  = x.mem_;
       return *this;
    }
@@ -150,3 +153,5 @@ int main()
    //]
    return 0;
 }
+
+#include <boost/move/detail/config_end.hpp>

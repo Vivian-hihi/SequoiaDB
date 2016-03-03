@@ -6,7 +6,7 @@
 
 //  See http://www.boost.org/libs/config for more information.
 
-//  MACRO:         BOOST_NO_LAMBDAS
+//  MACRO:         BOOST_NO_CXX11_LAMBDAS
 //  TITLE:         C++0x lambda feature unavailable
 //  DESCRIPTION:   The compiler does not support the C++0x lambda feature
 
@@ -14,12 +14,17 @@
 #  error This feature is not available in non-C++0x mode
 #endif
 
-namespace boost_no_lambdas {
+namespace boost_no_cxx11_lambdas {
+
+template <class Func>
+int f(Func f)
+{
+   return f();
+}
 
 int test()
 {
-  [](){};
-  return 0;
+  return f([](){ return 0; });
 }
 
 }

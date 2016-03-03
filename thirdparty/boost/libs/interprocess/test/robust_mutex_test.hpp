@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztanaga 2010-2011. Distributed under the Boost
+// (C) Copyright Ion Gaztanaga 2010-2012. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -16,6 +16,7 @@
 #include <cstdlib> //std::system
 #include <boost/interprocess/sync/scoped_lock.hpp>
 #include <boost/interprocess/managed_shared_memory.hpp>
+#include <boost/interprocess/sync/spin/wait.hpp>
 #include "get_process_id_name.hpp"
 #include "mutex_test_template.hpp"
 #include <iostream>
@@ -37,7 +38,7 @@ int robust_mutex_test(int argc, char *argv[])
       std::cout << "robust mutex recovery test" << std::endl;
 
       //Remove shared memory on construction and destruction
-      class shm_remove 
+      class shm_remove
       {
          public:
          shm_remove(){ shared_memory_object::remove
@@ -66,10 +67,11 @@ int robust_mutex_test(int argc, char *argv[])
          return 1;
 
       //Wait until child locks the mutexes and dies
+      spin_wait swait;
       while(!*go_ahead){
-         ipcdetail::thread_yield();
+         swait.yield();
       }
-      
+
       std::cout << "... recovering mutex[0]" << std::endl;
       //First try to recover lock[0], put into consistent
       //state and relock it again
@@ -163,8 +165,9 @@ int robust_mutex_test(int argc, char *argv[])
          }
 
          //Wait until child locks the 2nd mutex and dies
+         spin_wait swait;
          while(!*go_ahead2){
-            ipcdetail::thread_yield();
+            swait.yield();
          }
 
          //Done, now try to lock number 3 to see if robust

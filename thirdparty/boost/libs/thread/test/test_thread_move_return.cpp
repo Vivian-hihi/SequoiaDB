@@ -1,8 +1,12 @@
 // Copyright (C) 2009 Anthony Williams
 //
-//  Distributed under the Boost Software License, Version 1.0. (See accompanying 
+//  Distributed under the Boost Software License, Version 1.0. (See accompanying
 //  file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
-#include <boost/thread/thread.hpp>
+
+#define BOOST_THREAD_USES_MOVE
+#define BOOST_TEST_MODULE Boost.Threads: thread move return test suite
+
+#include <boost/thread/thread_only.hpp>
 #include <boost/test/unit_test.hpp>
 
 void do_nothing(boost::thread::id* my_id)
@@ -16,7 +20,7 @@ boost::thread make_thread_move_return(boost::thread::id* the_id)
     return boost::move(t);
 }
 
-void test_move_from_function_move_return()
+BOOST_AUTO_TEST_CASE(test_move_from_function_move_return)
 {
     boost::thread::id the_id;
     boost::thread x=make_thread_move_return(&the_id);
@@ -25,11 +29,3 @@ void test_move_from_function_move_return()
     BOOST_CHECK_EQUAL(the_id,x_id);
 }
 
-boost::unit_test::test_suite* init_unit_test_suite(int, char*[])
-{
-    boost::unit_test::test_suite* test =
-        BOOST_TEST_SUITE("Boost.Threads: thread move test suite");
-
-    test->add(BOOST_TEST_CASE(test_move_from_function_move_return));
-    return test;
-}

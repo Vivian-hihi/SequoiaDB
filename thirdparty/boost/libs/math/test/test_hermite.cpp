@@ -61,14 +61,14 @@ void expected_results()
       ".*",                          // platform
       largest_type,                  // test type(s)
       ".*",      // test data group
-      "boost::math::hermite", 10, 5);  // test function
+      "hermite", 10, 5);  // test function
    add_expected_result(
       ".*",                          // compiler
       ".*",                          // stdlib
       ".*",                          // platform
       "real_concept",                  // test type(s)
       ".*",      // test data group
-      "boost::math::hermite", 10, 5);  // test function
+      "hermite", 10, 5);  // test function
    //
    // Finish off by printing out the compiler/stdlib/platform names,
    // we do this to make it easier to mark up expected error rates.
@@ -77,7 +77,7 @@ void expected_results()
       << BOOST_STDLIB << ", " << BOOST_PLATFORM << std::endl;
 }
 
-int test_main(int, char* [])
+BOOST_AUTO_TEST_CASE( test_main )
 {
    BOOST_MATH_CONTROL_FP;
 
@@ -107,9 +107,9 @@ int test_main(int, char* [])
    std::cout << "<note>The long double tests have been disabled on this platform "
       "either because the long double overloads of the usual math functions are "
       "not available at all, or because they are too inaccurate for these tests "
-      "to pass.</note>" << std::cout;
+      "to pass.</note>" << std::endl;
 #endif
-   return 0;
+   
 }
 
 

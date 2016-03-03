@@ -16,7 +16,7 @@ TT_TEST_BEGIN(is_pointer)
 
 BOOST_CHECK_INTEGRAL_CONSTANT(::tt::is_pointer<int>::value, false);
 BOOST_CHECK_INTEGRAL_CONSTANT(::tt::is_pointer<int&>::value, false);
-#ifndef BOOST_NO_RVALUE_REFERENCES
+#ifndef BOOST_NO_CXX11_RVALUE_REFERENCES
 BOOST_CHECK_INTEGRAL_CONSTANT(::tt::is_pointer<int&&>::value, false);
 #endif
 BOOST_CHECK_INTEGRAL_CONSTANT(::tt::is_pointer<int*>::value, true);
@@ -50,6 +50,7 @@ BOOST_CHECK_INTEGRAL_CONSTANT(::tt::is_pointer<foo1_t>::value, false);
 BOOST_CHECK_INTEGRAL_CONSTANT(::tt::is_pointer<foo2_t>::value, false);
 BOOST_CHECK_INTEGRAL_CONSTANT(::tt::is_pointer<foo3_t>::value, false);
 BOOST_CHECK_INTEGRAL_CONSTANT(::tt::is_pointer<foo4_t>::value, false);
+BOOST_CHECK_INTEGRAL_CONSTANT(::tt::is_pointer<int(*const)()>::value, true);
 
 BOOST_CHECK_INTEGRAL_CONSTANT(::tt::is_pointer<test_abc1>::value, false);
 

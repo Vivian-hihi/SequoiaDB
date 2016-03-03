@@ -1,6 +1,6 @@
 /////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztanaga  2007-2009
+// (C) Copyright Ion Gaztanaga  2007-2013
 //
 // Distributed under the Boost Software License, Version 1.0.
 //    (See accompanying file LICENSE_1_0.txt or copy at
@@ -27,8 +27,8 @@ struct stateful_value_traits
    typedef node *                            node_ptr;
    typedef const node *                      const_node_ptr;
    typedef identifier_t                      value_type;
-   typedef identifier_t *                    pointer; 
-   typedef const identifier_t *              const_pointer; 
+   typedef identifier_t *                    pointer;
+   typedef const identifier_t *              const_pointer;
    static const link_mode_type link_mode =   normal_link;
 
    stateful_value_traits(pointer ids, node_ptr node_array)
@@ -36,11 +36,11 @@ struct stateful_value_traits
    {}
 
    ///Note: non static functions!
-   node_ptr to_node_ptr (value_type &value)
+   node_ptr to_node_ptr (value_type &value) const
       {  return this->nodes_ + (&value - this->ids_); }
    const_node_ptr to_node_ptr (const value_type &value) const
       {  return this->nodes_ + (&value - this->ids_); }
-   pointer to_value_ptr(node_ptr n)
+   pointer to_value_ptr(node_ptr n) const
       {  return this->ids_ + (n - this->nodes_); }
    const_pointer to_value_ptr(const_node_ptr n) const
       {  return this->ids_ + (n - this->nodes_); }

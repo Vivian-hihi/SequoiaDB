@@ -1,6 +1,6 @@
 /////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztanaga  2006-2009
+// (C) Copyright Ion Gaztanaga  2006-2013
 //
 // Distributed under the Boost Software License, Version 1.0.
 //    (See accompanying file LICENSE_1_0.txt or copy at
@@ -12,7 +12,7 @@
 //[doc_treap_set_code
 #include <boost/intrusive/treap_set.hpp>
 #include <vector>
-#include <algorithm>
+#include <functional>
 #include <cassert>
 
 using namespace boost::intrusive;
@@ -70,7 +70,7 @@ int main()
 
    BaseSet baseset;
    MemberMultiset membermultiset;
-   
+
    //Now insert them in the sets
    for(VectIt it(values.begin()), itend(values.end()); it != itend; ++it){
       baseset.insert(*it);
@@ -79,8 +79,8 @@ int main()
 
    //Now test treap_sets
    {
-      BaseSet::reverse_iterator rbit(baseset.rbegin()), rbitend(baseset.rend());
-      MemberMultiset::iterator mit(membermultiset.begin()), mitend(membermultiset.end());
+      BaseSet::reverse_iterator rbit(baseset.rbegin());
+      MemberMultiset::iterator mit(membermultiset.begin());
       VectIt it(values.begin()), itend(values.end());
 
       //Test the objects inserted in the base hook treap_set

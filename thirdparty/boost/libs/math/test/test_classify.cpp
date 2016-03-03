@@ -11,10 +11,13 @@
 #include <boost/limits.hpp>
 #include <boost/math/concepts/real_concept.hpp>
 #include <boost/math/special_functions/fpclassify.hpp>
-#include <boost/test/test_exec_monitor.hpp>
+#define BOOST_TEST_MAIN
+#include <boost/test/unit_test.hpp>
+#include <iostream>
+#include <iomanip>
 
 #ifdef _MSC_VER
-#pragma warning(disable: 4127) //  conditional expression is constant
+#pragma warning(disable: 4127 4146) //  conditional expression is constant
 #endif
 
 const char* method_name(const boost::math::detail::native_tag&)
@@ -83,16 +86,19 @@ void test_classify(T t, const char* type)
       BOOST_CHECK_EQUAL((::boost::math::isnormal)(t), true);
       BOOST_CHECK_EQUAL((::boost::math::isnormal)(-t), true);
       t = (std::numeric_limits<T>::min)();
-      BOOST_CHECK_EQUAL((::boost::math::fpclassify)(t), (int)FP_NORMAL);
-      BOOST_CHECK_EQUAL((::boost::math::fpclassify)(-t), (int)FP_NORMAL);
-      BOOST_CHECK_EQUAL((::boost::math::isfinite)(t), true);
-      BOOST_CHECK_EQUAL((::boost::math::isfinite)(-t), true);
-      BOOST_CHECK_EQUAL((::boost::math::isinf)(t), false);
-      BOOST_CHECK_EQUAL((::boost::math::isinf)(-t), false);
-      BOOST_CHECK_EQUAL((::boost::math::isnan)(t), false);
-      BOOST_CHECK_EQUAL((::boost::math::isnan)(-t), false);
-      BOOST_CHECK_EQUAL((::boost::math::isnormal)(t), true);
-      BOOST_CHECK_EQUAL((::boost::math::isnormal)(-t), true);
+      if(t != 0)
+      {
+         BOOST_CHECK_EQUAL((::boost::math::fpclassify)(t), (int)FP_NORMAL);
+         BOOST_CHECK_EQUAL((::boost::math::fpclassify)(-t), (int)FP_NORMAL);
+         BOOST_CHECK_EQUAL((::boost::math::isfinite)(t), true);
+         BOOST_CHECK_EQUAL((::boost::math::isfinite)(-t), true);
+         BOOST_CHECK_EQUAL((::boost::math::isinf)(t), false);
+         BOOST_CHECK_EQUAL((::boost::math::isinf)(-t), false);
+         BOOST_CHECK_EQUAL((::boost::math::isnan)(t), false);
+         BOOST_CHECK_EQUAL((::boost::math::isnan)(-t), false);
+         BOOST_CHECK_EQUAL((::boost::math::isnormal)(t), true);
+         BOOST_CHECK_EQUAL((::boost::math::isnormal)(-t), true);
+      }
    }
    if(std::numeric_limits<T>::has_denorm)
    {
@@ -247,7 +253,7 @@ void test_classify(T t, const char* type)
 #endif
 }
 
-int test_main(int, char* [] )
+BOOST_AUTO_TEST_CASE( test_main )
 {
    BOOST_MATH_CONTROL_FP;
    // start by printing some information:
@@ -269,11 +275,14 @@ int test_main(int, char* [] )
    // then run the tests:
    test_classify(float(0), "float");
    test_classify(double(0), "double");
-#ifndef BOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS
+   // long double support for fpclassify is considered "core" so we always test it
+   // even when long double support is turned off via BOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS
    test_classify((long double)(0), "long double");
    test_classify((boost::math::concepts::real_concept)(0), "real_concept");
-#endif
-  return 0;
+
+   // We should test with integer types as well:
+   test_classify(int(0), "int");
+   test_classify(unsigned(0), "unsigned");
 }
 
 /*

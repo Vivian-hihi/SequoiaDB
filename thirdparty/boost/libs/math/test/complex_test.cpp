@@ -3,8 +3,8 @@
 //  Boost Software License, Version 1.0. (See accompanying file
 //  LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 
-#include <boost/test/test_tools.hpp>
-#include <boost/test/test_exec_monitor.hpp>
+#define BOOST_TEST_MAIN
+#include <boost/test/unit_test.hpp>
 #include <boost/test/floating_point_comparison.hpp>
 #include <boost/type_traits/is_same.hpp>
 #include <boost/type_traits/is_floating_point.hpp>
@@ -271,11 +271,10 @@ void check_spots(const T&)
    static const T zero = 0;
    static const T mzero = -zero;
    static const T one = 1;
-   static const T pi = static_cast<T>(3.141592653589793238462643383279502884197L);
-   static const T half_pi = static_cast<T>(1.57079632679489661923132169163975144L);
-   static const T quarter_pi = static_cast<T>(0.78539816339744830961566084581987572L);
-   static const T three_quarter_pi = static_cast<T>(2.35619449019234492884698253745962716L);
-   //static const T log_two = static_cast<T>(0.69314718055994530941723212145817657L);
+   static const T pi = boost::math::constants::pi<T>();
+   static const T half_pi = boost::math::constants::half_pi<T>();
+   static const T quarter_pi = half_pi / 2;
+   static const T three_quarter_pi = boost::math::constants::three_quarters_pi<T>();
    T infinity = std::numeric_limits<T>::infinity();
    bool test_infinity = std::numeric_limits<T>::has_infinity;
    T nan = 0;
@@ -897,7 +896,7 @@ void test_boundaries()
 }
 
 
-int test_main(int, char*[])
+BOOST_AUTO_TEST_CASE( test_main )
 {
    std::cout << "Running complex trig sanity checks for type float." << std::endl;
    test_inverse_trig(float(0));
@@ -916,7 +915,6 @@ int test_main(int, char*[])
 
    std::cout << "Running complex trig boundary and accuracy tests." << std::endl;
    test_boundaries();
-   return 0;
 }
 
 

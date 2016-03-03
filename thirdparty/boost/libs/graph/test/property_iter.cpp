@@ -68,8 +68,10 @@ int main(int, char* [])
   std::size_t current_edge_id = 0;
 
   property_map<Graph, vertex_id_t>::type vertex_id_map = get(vertex_id, g);
+  (void)vertex_id_map;
 
   property_map<Graph, edge_id_t>::type edge_id_map = get(edge_id, g);
+  (void)edge_id_map;
 
   for (std::size_t k = 0; k < N; ++k)
     add_vertex(current_vertex_id++, g);
@@ -107,19 +109,9 @@ int main(int, char* [])
       ++E;
     }
 
-  typedef boost::graph_property_iter_range< Graph, vertex_id_t>::const_iterator    TNodeConstIterator;
-  typedef boost::graph_property_iter_range< Graph, vertex_id_t>::const_type        TNodeConstIteratorType;
-
   typedef boost::graph_property_iter_range< Graph, vertex_id_t>::iterator    TNodeIterator;
-  typedef boost::graph_property_iter_range< Graph, vertex_id_t>::type        TNodeIteratorType;
-
-  typedef boost::graph_property_iter_range< Graph, edge_id_t>::const_iterator    TLinkConstIterator;
-  typedef boost::graph_property_iter_range< Graph, edge_id_t>::const_type        TLinkConstIteratorType;
 
   typedef boost::graph_property_iter_range< Graph, edge_id_t>::iterator    TLinkIterator;
-  typedef boost::graph_property_iter_range< Graph, edge_id_t>::type        TLinkIteratorType;
-
-  typedef std::pair<TLinkConstIterator, TLinkConstIterator> tLinkConstIteratorPair;
 
   TLinkIterator itEdgeBegin, itEdgeEnd;
 

@@ -20,6 +20,7 @@ project
       #<toolset>gcc-mw:<link>static
       #<toolset>gcc-mingw:<link>static
       <toolset>gcc-cygwin:<link>static
+      <toolset>sun:<link>static
     ;
 
 #
@@ -124,8 +125,8 @@ test-suite regex
             ../build//boost_regex
       ]
       
-      [ run unicode/unicode_iterator_test.cpp ../build//boost_regex : : : <define>TEST_UTF8 : unicode_iterator_test_utf8 ]
-      [ run unicode/unicode_iterator_test.cpp ../build//boost_regex : : : <define>TEST_UTF16 : unicode_iterator_test_utf16 ]
+      [ run unicode/unicode_iterator_test.cpp ../build//boost_regex : : : release <define>TEST_UTF8 : unicode_iterator_test_utf8 ]
+      [ run unicode/unicode_iterator_test.cpp ../build//boost_regex : : : release <define>TEST_UTF16 : unicode_iterator_test_utf16 ]
       [ run static_mutex/static_mutex_test.cpp
             ../../thread/build//boost_thread ../build//boost_regex
       ]
@@ -149,10 +150,9 @@ test-suite regex
       : : : <test-info>always_show_run_output : test_collate_info ]
 
 
-      [ compile concepts/concept_check.cpp ../build//boost_regex
-      ]
-      [ compile concepts/icu_concept_check.cpp ../build//boost_regex
-      ]
+      [ link concepts/concept_check.cpp ../build//boost_regex ]
+      [ link concepts/icu_concept_check.cpp ../build//boost_regex ]
+      [ link concepts/range_concept_check.cpp ../build//boost_regex ]
       
      [ run
     # sources

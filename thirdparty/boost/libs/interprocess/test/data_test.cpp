@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztanaga 2004-2011. Distributed under the Boost
+// (C) Copyright Ion Gaztanaga 2004-2012. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -13,8 +13,6 @@
 #include <boost/interprocess/managed_shared_memory.hpp>
 #include <boost/interprocess/containers/vector.hpp>
 #include <boost/interprocess/containers/list.hpp>
-#include <iostream>
-#include <algorithm>
 #include <functional>
 #include <string>
 #include "print_container.hpp"
@@ -47,12 +45,11 @@ int main ()
    const char *allocName = "testAllocation";
 
    typedef boost::interprocess::vector<int, shmem_allocator_int_t > MyVect;
-   typedef boost::interprocess::list<int, shmem_allocator_int_t >   MyList;
 
    //----   ALLOC, NAMED_ALLOC, NAMED_NEW TEST   ----//
    {
       int i;
-      //Let's allocate some memory 
+      //Let's allocate some memory
       for(i = 0; i < max; ++i){
          array[i] = segment.allocate(i+1);
       }

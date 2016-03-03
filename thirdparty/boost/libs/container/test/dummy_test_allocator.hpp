@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztanaga 2005-2011. Distributed under the Boost
+// (C) Copyright Ion Gaztanaga 2005-2013. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -11,30 +11,36 @@
 #ifndef BOOST_CONTAINER_DUMMY_TEST_ALLOCATOR_HPP
 #define BOOST_CONTAINER_DUMMY_TEST_ALLOCATOR_HPP
 
-#if (defined _MSC_VER) && (_MSC_VER >= 1200)
+#ifndef BOOST_CONFIG_HPP
+#  include <boost/config.hpp>
+#endif
+
+#if defined(BOOST_HAS_PRAGMA_ONCE)
 #  pragma once
 #endif
 
 #include <boost/container/detail/config_begin.hpp>
 #include <boost/container/detail/workaround.hpp>
-
 #include <boost/container/container_fwd.hpp>
+
+#include <boost/container/throw_exception.hpp>
+
+#include <boost/container/detail/addressof.hpp>
 #include <boost/container/detail/allocation_type.hpp>
-#include <boost/assert.hpp>
-#include <boost/container/detail/utilities.hpp>
-#include <boost/container/detail/type_traits.hpp>
 #include <boost/container/detail/mpl.hpp>
-#include <boost/container/detail/version_type.hpp>
 #include <boost/container/detail/multiallocation_chain.hpp>
-#include <boost/move/move.hpp>
+#include <boost/container/detail/type_traits.hpp>
+#include <boost/container/detail/version_type.hpp>
+
+#include <boost/move/utility_core.hpp>
+#include <boost/move/adl_move_swap.hpp>
+
+#include <boost/assert.hpp>
+
 #include <memory>
 #include <algorithm>
 #include <cstddef>
-#include <stdexcept>
 #include <cassert>
-
-//!\file
-//!Describes an allocator to test expand capabilities
 
 namespace boost {
 namespace container {
@@ -55,7 +61,7 @@ class simple_allocator
    {}
 
    T* allocate(std::size_t n)
-   {  return (T*)::new char[sizeof(T)*n];  }
+   { return (T*)::new char[sizeof(T)*n];  }
 
    void deallocate(T*p, std::size_t)
    { delete[] ((char*)p);}
@@ -69,7 +75,7 @@ class simple_allocator
 
 //Version 2 allocator with rebind
 template<class T>
-class dummy_test_allocator 
+class dummy_test_allocator
 {
  private:
    typedef dummy_test_allocator<T>  self_t;
@@ -80,10 +86,10 @@ class dummy_test_allocator
    typedef T                                    value_type;
    typedef T *                                  pointer;
    typedef const T *                            const_pointer;
-   typedef typename container_detail::add_reference
-                     <value_type>::type         reference;
-   typedef typename container_detail::add_reference
-                     <const value_type>::type   const_reference;
+   typedef typename container_detail::
+      unvoid_ref<value_type>::type              reference;
+   typedef typename container_detail::
+      unvoid_ref<const value_type>::type        const_reference;
    typedef std::size_t                          size_type;
    typedef std::ptrdiff_t                       difference_type;
 
@@ -100,7 +106,7 @@ class dummy_test_allocator
 
    //!Default constructor. Never throws
    dummy_test_allocator()
-   {} 
+   {}
 
    //!Constructor from other dummy_test_allocator. Never throws
    dummy_test_allocator(const dummy_test_allocator &)
@@ -111,11 +117,11 @@ class dummy_test_allocator
    dummy_test_allocator(const dummy_test_allocator<T2> &)
    {}
 
-   pointer address(reference value) 
-   {  return pointer(addressof(value));  }
+   pointer address(reference value)
+   {  return pointer(container_detail::addressof(value));  }
 
    const_pointer address(const_reference value) const
-   {  return const_pointer(addressof(value));  }
+   {  return const_pointer(container_detail::addressof(value));  }
 
    pointer allocate(size_type, cvoid_ptr = 0)
    {  return 0; }
@@ -138,12 +144,8 @@ class dummy_test_allocator
 
    //Experimental version 2 dummy_test_allocator functions
 
-   std::pair<pointer, bool>
-      allocation_command(boost::container::allocation_type,
-                         size_type, 
-                         size_type,
-                         size_type &, const pointer & = 0)
-   {  return std::pair<pointer, bool>(pointer(), true); }
+   pointer allocation_command(boost::container::allocation_type, size_type, size_type &, pointer &p)
+   {  p = pointer();   return pointer();  }
 
    //!Returns maximum the number of objects the previously allocated memory
    //!pointed by p can hold.
@@ -168,8 +170,8 @@ class dummy_test_allocator
    //!preferred_elements. The number of actually allocated elements is
    //!will be assigned to received_size. Memory allocated with this function
    //!must be deallocated only with deallocate_one().
-   multiallocation_chain allocate_individual(size_type)
-   {  return multiallocation_chain(); }
+   void allocate_individual(size_type, multiallocation_chain &)
+   {}
 
    //!Allocates many elements of size == 1 in a contiguous block
    //!of memory. The minimum number to be allocated is min_elements,
@@ -177,7 +179,7 @@ class dummy_test_allocator
    //!preferred_elements. The number of actually allocated elements is
    //!will be assigned to received_size. Memory allocated with this function
    //!must be deallocated only with deallocate_one().
-   void deallocate_individual(multiallocation_chain)
+   void deallocate_individual(multiallocation_chain &)
    {}
 
    //!Allocates many elements of size elem_size in a contiguous block
@@ -186,25 +188,25 @@ class dummy_test_allocator
    //!preferred_elements. The number of actually allocated elements is
    //!will be assigned to received_size. The elements must be deallocated
    //!with deallocate(...)
-   void deallocate_many(multiallocation_chain)
+   void deallocate_many(multiallocation_chain &)
    {}
 };
 
 //!Equality test for same type of dummy_test_allocator
 template<class T> inline
-bool operator==(const dummy_test_allocator<T>  &, 
+bool operator==(const dummy_test_allocator<T>  &,
                 const dummy_test_allocator<T>  &)
 {  return true; }
 
 //!Inequality test for same type of dummy_test_allocator
 template<class T> inline
-bool operator!=(const dummy_test_allocator<T>  &, 
+bool operator!=(const dummy_test_allocator<T>  &,
                 const dummy_test_allocator<T>  &)
 {  return false; }
 
 
 template< class T
-        , bool PropagateOnContCopyAssign 
+        , bool PropagateOnContCopyAssign
         , bool PropagateOnContMoveAssign
         , bool PropagateOnContSwap
         , bool CopyOnPropagateOnContSwap
@@ -236,7 +238,7 @@ class propagation_test_allocator
    {  return CopyOnPropagateOnContSwap ? propagation_test_allocator(*this) : propagation_test_allocator();  }
 
    explicit propagation_test_allocator()
-      : id_(unique_id_++)
+      : id_(++unique_id_)
       , ctr_copies_(0)
       , ctr_moves_(0)
       , assign_copies_(0)
@@ -261,7 +263,7 @@ class propagation_test_allocator
                                        , PropagateOnContSwap
                                        , CopyOnPropagateOnContSwap> &x)
       : id_(x.id_)
-      , ctr_copies_(0)
+      , ctr_copies_(x.ctr_copies_+1)
       , ctr_moves_(0)
       , assign_copies_(0)
       , assign_moves_(0)
@@ -299,8 +301,8 @@ class propagation_test_allocator
       return *this;
    }
 
-   static void reset_unique_id()
-   {  unique_id_ = 0;  }
+   static void reset_unique_id(unsigned id = 0)
+   {  unique_id_ = id;  }
 
    T* allocate(std::size_t n)
    {  return (T*)::new char[sizeof(T)*n];  }
@@ -314,15 +316,20 @@ class propagation_test_allocator
    friend bool operator!=(const propagation_test_allocator &, const propagation_test_allocator &)
    {  return false;  }
 
+   void swap(propagation_test_allocator &r)
+   {
+      ++this->swaps_; ++r.swaps_;
+      boost::adl_move_swap(this->id_, r.id_);
+      boost::adl_move_swap(this->ctr_copies_, r.ctr_copies_);
+      boost::adl_move_swap(this->ctr_moves_, r.ctr_moves_);
+      boost::adl_move_swap(this->assign_copies_, r.assign_copies_);
+      boost::adl_move_swap(this->assign_moves_, r.assign_moves_);
+      boost::adl_move_swap(this->swaps_, r.swaps_);
+   }
+
    friend void swap(propagation_test_allocator &l, propagation_test_allocator &r)
    {
-      ++l.swaps_; ++r.swaps_;
-      container_detail::do_swap(l.id_, r.id_);
-      container_detail::do_swap(l.ctr_copies_, r.ctr_copies_);
-      container_detail::do_swap(l.ctr_moves_, r.ctr_moves_);
-      container_detail::do_swap(l.assign_copies_, r.assign_copies_);
-      container_detail::do_swap(l.assign_moves_, r.assign_moves_);
-      container_detail::do_swap(l.swaps_, r.swaps_);
+      l.swap(r);
    }
 
    unsigned int id_;
@@ -335,7 +342,7 @@ class propagation_test_allocator
 };
 
 template< class T
-        , bool PropagateOnContCopyAssign 
+        , bool PropagateOnContCopyAssign
         , bool PropagateOnContMoveAssign
         , bool PropagateOnContSwap
         , bool CopyOnPropagateOnContSwap

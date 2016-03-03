@@ -19,6 +19,12 @@
 #pragma warning(disable:4100) // unreferenced formal parameter
 #endif
 
+#if !BOOST_WORKAROUND(BOOST_MSVC, == 1500)
+#define BOOST_UNORDERED_CHECK_ADDR_OPERATOR_NOT_USED 1
+#else
+#define BOOST_UNORDERED_CHECK_ADDR_OPERATOR_NOT_USED 0
+#endif
+
 namespace test
 {
 namespace minimal
@@ -26,10 +32,12 @@ namespace minimal
     class destructible;
     class copy_constructible;
     class copy_constructible_equality_comparable;
-    class default_copy_constructible;
+    class default_assignable;
     class assignable;
 
-    struct ampersand_operator_used {};
+    struct ampersand_operator_used {
+        ampersand_operator_used() { BOOST_TEST(false); }
+    };
 
     template <class T> class hash;
     template <class T> class equal_to;
@@ -48,6 +56,7 @@ namespace minimal
     public:
         destructible(constructor_param const&) {}
         ~destructible() {}
+        void dummy_member() const {}
     private:
         destructible(destructible const&);
         destructible& operator=(destructible const&);
@@ -59,6 +68,7 @@ namespace minimal
         copy_constructible(constructor_param const&) {}
         copy_constructible(copy_constructible const&) {}
         ~copy_constructible() {}
+        void dummy_member() const {}
     private:
         copy_constructible& operator=(copy_constructible const&);
         copy_constructible() {}
@@ -78,11 +88,15 @@ namespace minimal
         {
         }
 
+        void dummy_member() const {}
     private:
         copy_constructible_equality_comparable& operator=(
             copy_constructible_equality_comparable const&);
         copy_constructible_equality_comparable() {}
-        ampersand_operator_used operator&() const { return ampersand_operator_used(); }
+#if BOOST_UNORDERED_CHECK_ADDR_OPERATOR_NOT_USED
+        ampersand_operator_used operator&() const {
+            return ampersand_operator_used(); }
+#endif
     };
 
     bool operator==(
@@ -99,28 +113,34 @@ namespace minimal
         return false;
     }
 
-    class default_copy_constructible
+    class default_assignable
     {
     public:
-        default_copy_constructible(constructor_param const&) {}
+        default_assignable(constructor_param const&) {}
 
-        default_copy_constructible()
+        default_assignable()
         {
         }
 
-        default_copy_constructible(default_copy_constructible const&)
+        default_assignable(default_assignable const&)
         {
         }
 
-        ~default_copy_constructible()
+        default_assignable& operator=(default_assignable const&)
+        {
+            return *this;
+        }
+
+        ~default_assignable()
         {
         }
 
-    private:
-        default_copy_constructible& operator=(
-            default_copy_constructible const&);
+        void dummy_member() const {}
+
+#if BOOST_UNORDERED_CHECK_ADDR_OPERATOR_NOT_USED
         ampersand_operator_used operator&() const {
             return ampersand_operator_used(); }
+#endif
     };
 
     class assignable
@@ -130,11 +150,13 @@ namespace minimal
         assignable(assignable const&) {}
         assignable& operator=(assignable const&) { return *this; }
         ~assignable() {}
-
+        void dummy_member() const {}
     private:
         assignable() {}
-        // TODO: This messes up a concept check in the tests.
-        //ampersand_operator_used operator&() const { return ampersand_operator_used(); }
+#if BOOST_UNORDERED_CHECK_ADDR_OPERATOR_NOT_USED
+        ampersand_operator_used operator&() const {
+            return ampersand_operator_used(); }
+#endif
     };
 
     struct movable_init {};
@@ -148,11 +170,12 @@ namespace minimal
         movable1() {}
         explicit movable1(movable_init) {}
         movable1(BOOST_RV_REF(movable1)) {}
-        movable1& operator=(BOOST_RV_REF(movable1));
+        movable1& operator=(BOOST_RV_REF(movable1)) { return *this; }
         ~movable1() {}
+        void dummy_member() const {}
     };
 
-#if !defined(BOOST_NO_RVALUE_REFERENCES)
+#if !defined(BOOST_NO_CXX11_RVALUE_REFERENCES)
     class movable2
     {
     public:
@@ -160,6 +183,8 @@ namespace minimal
         explicit movable2(movable_init) {}
         movable2(movable2&&) {}
         ~movable2() {}
+        movable2& operator=(movable2&&) { return *this; }
+        void dummy_member() const {}
     private:
         movable2() {}
         movable2(movable2 const&);
@@ -180,8 +205,10 @@ namespace minimal
         ~hash() {}
 
         std::size_t operator()(T const&) const { return 0; }
-    private:
-        ampersand_operator_used operator&() const { return ampersand_operator_used(); }
+#if BOOST_UNORDERED_CHECK_ADDR_OPERATOR_NOT_USED
+        ampersand_operator_used operator&() const {
+            return ampersand_operator_used(); }
+#endif
     };
 
     template <class T>
@@ -195,8 +222,10 @@ namespace minimal
         ~equal_to() {}
 
         bool operator()(T const&, T const&) const { return true; }
-    private:
-        ampersand_operator_used operator&() const { return ampersand_operator_used(); }
+#if BOOST_UNORDERED_CHECK_ADDR_OPERATOR_NOT_USED
+        ampersand_operator_used operator&() const {
+            return ampersand_operator_used(); }
+#endif
     };
 
     template <class T> class ptr;
@@ -284,9 +313,10 @@ namespace minimal
         bool operator>(ptr const& x) const { return ptr_ > x.ptr_; }
         bool operator<=(ptr const& x) const { return ptr_ <= x.ptr_; }
         bool operator>=(ptr const& x) const { return ptr_ >= x.ptr_; }
-    private:
-        // TODO:
-        //ampersand_operator_used operator&() const { return ampersand_operator_used(); }
+#if BOOST_UNORDERED_CHECK_ADDR_OPERATOR_NOT_USED
+        ampersand_operator_used operator&() const {
+            return ampersand_operator_used(); }
+#endif
     };
 
     template <class T>
@@ -321,9 +351,10 @@ namespace minimal
         bool operator>(const_ptr const& x) const { return ptr_ > x.ptr_; }
         bool operator<=(const_ptr const& x) const { return ptr_ <= x.ptr_; }
         bool operator>=(const_ptr const& x) const { return ptr_ >= x.ptr_; }
-    private:
-        // TODO:
-        //ampersand_operator_used operator&() const { return ampersand_operator_used(); }
+#if BOOST_UNORDERED_CHECK_ADDR_OPERATOR_NOT_USED
+        ampersand_operator_used operator&() const {
+            return ampersand_operator_used(); }
+#endif
     };
 
     template <class T>
@@ -367,8 +398,8 @@ namespace minimal
 
         void construct(T* p, T const& t) { new((void*)p) T(t); }
 
-#if defined(BOOST_UNORDERED_VARIADIC_MOVE)
-        template<class... Args> void construct(T* p, Args&&... args) {
+#if !defined(BOOST_NO_CXX11_VARIADIC_TEMPLATES)
+        template<class... Args> void construct(T* p, BOOST_FWD_REF(Args)... args) {
             new((void*)p) T(boost::forward<Args>(args)...);
         }
 #endif
@@ -383,8 +414,10 @@ namespace minimal
 #else
     private: allocator& operator=(allocator const&);
 #endif
-    private:
-        ampersand_operator_used operator&() const { return ampersand_operator_used(); }
+#if BOOST_UNORDERED_CHECK_ADDR_OPERATOR_NOT_USED
+        ampersand_operator_used operator&() const {
+            return ampersand_operator_used(); }
+#endif
     };
 
     template <class T>
@@ -439,8 +472,8 @@ namespace minimal
 
         void construct(T* p, T const& t) { new((void*)p) T(t); }
 
-#if defined(BOOST_UNORDERED_VARIADIC_MOVE)
-        template<class... Args> void construct(T* p, Args&&... args) {
+#if !defined(BOOST_NO_CXX11_VARIADIC_TEMPLATES)
+        template<class... Args> void construct(T* p, BOOST_FWD_REF(Args)... args) {
             new((void*)p) T(boost::forward<Args>(args)...);
         }
 #endif

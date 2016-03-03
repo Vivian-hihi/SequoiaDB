@@ -15,9 +15,12 @@
 #include <boost/math/concepts/real_concept.hpp> // for real_concept
 #include <boost/math/distributions/rayleigh.hpp>
     using boost::math::rayleigh_distribution;
+#include <boost/math/tools/test.hpp>
 
-#include <boost/test/test_exec_monitor.hpp> // Boost.Test
+#define BOOST_TEST_MAIN
+#include <boost/test/unit_test.hpp> // Boost.Test
 #include <boost/test/floating_point_comparison.hpp>
+#include "test_out_of_range.hpp"
 
 #include <iostream>
    using std::cout;
@@ -58,6 +61,13 @@ void test_spot(RealType s, RealType x, RealType p, RealType q, RealType toleranc
             x,
             tolerance); // %
    }
+   if(std::numeric_limits<RealType>::has_infinity)
+   {
+      RealType inf = std::numeric_limits<RealType>::infinity();
+      BOOST_CHECK_EQUAL(pdf(rayleigh_distribution<RealType>(s), inf), 0);
+      BOOST_CHECK_EQUAL(cdf(rayleigh_distribution<RealType>(s), inf), 1);
+      BOOST_CHECK_EQUAL(cdf(complement(rayleigh_distribution<RealType>(s), inf)), 0);
+   }
 } // void test_spot
 
 template <class RealType>
@@ -79,32 +89,33 @@ void test_spots(RealType T)
    // Things that are errors:
    rayleigh_distribution<RealType> dist(0.5);
 
-   BOOST_CHECK_THROW(
+   check_out_of_range<rayleigh_distribution<RealType> >(1);
+   BOOST_MATH_CHECK_THROW(
        quantile(dist,
        RealType(1.)), // quantile unity should overflow.
        std::overflow_error);
-   BOOST_CHECK_THROW(
+   BOOST_MATH_CHECK_THROW(
        quantile(complement(dist,
        RealType(0.))), // quantile complement zero should overflow.
        std::overflow_error);
-   BOOST_CHECK_THROW(
+   BOOST_MATH_CHECK_THROW(
        pdf(dist, RealType(-1)), // Bad negative x.
        std::domain_error);
-   BOOST_CHECK_THROW(
+   BOOST_MATH_CHECK_THROW(
        cdf(dist, RealType(-1)), // Bad negative x.
        std::domain_error);
-   BOOST_CHECK_THROW(
+   BOOST_MATH_CHECK_THROW(
        cdf(rayleigh_distribution<RealType>(-1), // bad sigma < 0
        RealType(1)),
        std::domain_error);
-   BOOST_CHECK_THROW(
+   BOOST_MATH_CHECK_THROW(
        cdf(rayleigh_distribution<RealType>(0), // bad sigma == 0
        RealType(1)),
        std::domain_error);
-   BOOST_CHECK_THROW(
+   BOOST_MATH_CHECK_THROW(
        quantile(dist, RealType(-1)), // negative quantile probability.
        std::domain_error);
-   BOOST_CHECK_THROW(
+   BOOST_MATH_CHECK_THROW(
        quantile(dist, RealType(2)), // > unity  quantile probability.
        std::domain_error);
 
@@ -184,9 +195,11 @@ void test_spots(RealType T)
          tolerance * 100); // %
 
    BOOST_CHECK_CLOSE(
-      ::boost::math::kurtosis_excess(
-         rayleigh_distribution<RealType>(1.L)),
-         static_cast<RealType>(0.2450893006876380628486604106197544154170667057995L),
+     ::boost::math::kurtosis_excess(
+     rayleigh_distribution<RealType>(1.L)),
+     -static_cast<RealType>(6 * pi<RealType>() * pi<RealType>() - 24 * pi<RealType>() + 16) /
+        ((4 - pi<RealType>()) * (4 - pi<RealType>())),
+        // static_cast<RealType>(0.2450893006876380628486604106197544154170667057995L),
          tolerance * 1000); // %
 
    BOOST_CHECK_CLOSE(
@@ -204,7 +217,7 @@ void test_spots(RealType T)
 
 } // template <class RealType>void test_spots(RealType)
 
-int test_main(int, char* [])
+BOOST_AUTO_TEST_CASE( test_main )
 {
   // Check that can generate rayleigh distribution using the two convenience methods:
    boost::math::rayleigh ray1(1.); // Using typedef
@@ -296,11 +309,11 @@ int test_main(int, char* [])
    std::cout << "<note>The long double tests have been disabled on this platform "
       "either because the long double overloads of the usual math functions are "
       "not available at all, or because they are too inaccurate for these tests "
-      "to pass.</note>" << std::cout;
+      "to pass.</note>" << std::endl;
 #endif
 
-   return 0;
-} // int test_main(int, char* [])
+   
+} // BOOST_AUTO_TEST_CASE( test_main )
 
 /*
 

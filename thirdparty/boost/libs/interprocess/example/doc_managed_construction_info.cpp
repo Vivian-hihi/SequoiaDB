@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztanaga 2006-2011. Distributed under the Boost
+// (C) Copyright Ion Gaztanaga 2006-2012. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -61,7 +61,7 @@ int main()
 
    //Now test "get_instance_name" function.
    assert(0 == std::strcmp(managed_shared_memory::get_instance_name(named_object), "Object name"));
-   assert(0 == managed_shared_memory::get_instance_name(unique_object));
+   assert(0 == std::strcmp(managed_shared_memory::get_instance_name(unique_object), typeid(my_class).name()));
    assert(0 == managed_shared_memory::get_instance_name(anon_object));
 
    //Now test "get_instance_type" function.
