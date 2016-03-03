@@ -369,7 +369,7 @@ string OptGenForWeb::genOptions ()
     pt.add_child ( TOPICTAG, topic ) ;
     pt.add ( TOPIC_ATTRTAG, TOPIC_ATTR ) ;
     // write to stream
-    xml_writer_settings<char> settings( '\t', 1 ) ;
+    xml_writer_settings<std::string> settings( '\t', 1 ) ;
     write_xml ( oss, pt, settings ) ;
     return oss.str () ;
 }
