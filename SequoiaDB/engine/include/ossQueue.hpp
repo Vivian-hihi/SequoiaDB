@@ -43,6 +43,7 @@
 #include <queue>
 #include <boost/thread.hpp>
 #include <boost/thread/thread_time.hpp>
+#include <boost/thread/cv_status.hpp>
 template<typename Data>
 class ossQueue : public SDBObject
 {
@@ -91,12 +92,12 @@ public :
 
    BOOLEAN timed_wait_and_pop ( Data& value, INT64 millsec )
    {
-      boost::system_time const timeout=boost::get_system_time() + 
-            boost::posix_time::milliseconds(millsec);
+      boost::chrono::milliseconds timeout
+         = boost::chrono::milliseconds(millsec) ;
       boost::mutex::scoped_lock lock ( _mutex ) ;
       // if timed_wait return false, that means we failed by timeout
       while ( _queue.empty () )
-         if ( !_cond.timed_wait ( lock, timeout ) )
+         if ( boost::cv_status::timeout == _cond.wait_for( lock, timeout ) )
             return FALSE ;
       value = _queue.front () ;
       _queue.pop () ;

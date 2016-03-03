@@ -38,7 +38,7 @@
 #ifndef NETTIMER_HPP_
 #define NETTIMER_HPP_
 #include "core.hpp"
-#include <boost/date_time/posix_time/posix_time.hpp>
+#include <boost/asio/steady_timer.hpp>
 #include <boost/enable_shared_from_this.hpp>
 #include <boost/bind.hpp>
 #include <boost/asio.hpp>
@@ -63,7 +63,7 @@ namespace engine
       public:
          _netTimer( UINT32 millisec, UINT32 id, boost::asio::io_service &io,
                     _netTimeoutHandler *handler ):
-                  _timer( io, boost::posix_time::milliseconds(millisec)),
+                  _timer( io ),
                   _handler(handler),
                   _id(id),
                   _millisec(millisec),
@@ -100,7 +100,8 @@ namespace engine
             {
                return ;
             }
-            _timer.expires_from_now(boost::posix_time::milliseconds(_millisec));
+
+            _timer.expires_from_now( boost::chrono::milliseconds(_millisec) );
             _timer.async_wait(boost::bind(&_netTimer::timeoutCallback,
                                           shared_from_this(),
                                           boost::asio::placeholders::error));
@@ -112,7 +113,7 @@ namespace engine
          }
 
       private:
-         boost::asio::deadline_timer _timer;
+         boost::asio::steady_timer _timer;
          _netTimeoutHandler *_handler ;
          UINT32 _id ;
          UINT32 _millisec ;

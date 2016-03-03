@@ -489,7 +489,7 @@ public :
    {
       try
       {
-         return _m.timed_lock ( boost::posix_time::milliseconds ( 0 ) ) ;
+         return _m.try_lock_for( boost::chrono::milliseconds ( 0 ) ) ;
       }
       catch(...)
       {
@@ -501,7 +501,7 @@ public :
    {
       try
       {
-         return _m.timed_lock_shared ( boost::posix_time::milliseconds ( 0 ) ) ;
+         return _m.try_lock_shared_for( boost::chrono::milliseconds ( 0 ) ) ;
       }
       catch(...)
       {

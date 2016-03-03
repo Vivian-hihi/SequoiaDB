@@ -38,7 +38,7 @@
 #include "core.hpp"
 #include "oss.hpp"
 #include <boost/thread.hpp>
-#include <boost/thread/thread_time.hpp>
+#include <boost/thread/cv_status.hpp>
 
 namespace engine
 {

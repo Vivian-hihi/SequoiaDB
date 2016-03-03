@@ -47,6 +47,7 @@
 #include <boost/bind.hpp>
 #include <boost/enable_shared_from_this.hpp>
 #include <boost/shared_ptr.hpp>
+#include <boost/asio/steady_timer.hpp>
 #include <map>
 using namespace boost::asio ;
 using namespace boost::asio::ip ;
@@ -110,7 +111,7 @@ class _timerPair : public
       public SDBObject
 {
 private :
-   deadline_timer _timer ;
+   boost::asio::steady_timer _timer ;
    ossAsioProcessFunction _onTimer ;
    UINT32 _timeoutMS ;
 public :
