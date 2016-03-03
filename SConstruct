@@ -262,7 +262,7 @@ def printLocalInfo():
 
 printLocalInfo()
 
-boostLibs = [ "thread" , "filesystem", "program_options", "system" ]
+boostLibs = [ "thread" , "filesystem", "program_options", "system", "chrono" ]
 
 nix = False
 linux = False
@@ -325,7 +325,10 @@ hasTool = has_option( "tool" )
 hasShell = has_option( "shell" )
 hasFmp = has_option("fmp")
 hasAll = has_option( "all" )
-hasFap = has_option("fap")
+if guess_os == "win32":
+    pass
+else:
+   hasFap = has_option("fap")
 hasEnterprise = has_option("enterprise")
 hasGProf = has_option("gprof")
 hasSSL = False
@@ -343,7 +346,10 @@ if hasAll:
    hasTool = True
    hasShell = True
    hasFmp = True
-   hasFap = True
+   if guess_os == "win32":
+      hasFap = False
+   else:
+      hasFap = True
 # if nothing specified, let's use engine+client+shell by default
 elif not ( hasEngine or hasClient or hasTestcase or hasTool or hasShell or hasFmp or hasFap ):
    hasEngine = True
@@ -444,7 +450,7 @@ env.Append(
 #CPPPATH=[join(engine_dir,'include'),join(engine_dir,'client'),join(ssl_dir,'include'),join(lz4_dir,'include'),join(zlib_dir,'include'),join(gtest_dir,'include'),pcre_dir, boost_dir, ssh2_dir, hdfsJniPath, hdfsJniMdPath] )
 CPPPATH=[join(engine_dir,'include'),join(engine_dir,'client'),join(ssl_dir,'include'),join(gtest_dir,'include'),pcre_dir, boost_dir, ssh2_dir, hdfsJniPath, hdfsJniMdPath] )
 
-env.Append( CPPDEFINES=["__STDC_LIMIT_MACROS", "HAVE_CONFIG_H"] )
+env.Append( CPPDEFINES=["__STDC_LIMIT_MACROS", "HAVE_CONFIG_H", "BOOST_THREAD_HAS_CONDATTR_SET_CLOCK_MONOTONIC"] )
 env.Append( CPPDEFINES=[ "SDB_DLL_BUILD" ] )
 # specify dependent libraries for javascript engine and boost
 if guess_os == "linux":
@@ -782,6 +788,9 @@ if nix:
    for b in boostLibs:
       env.Append ( _LIBFLAGS='${SLIBS}',
                    SLIBS=" " + join(boost_lib_dir,"libboost_" + b + ".a") )
+if linux:
+   # add -lrt for boost_thread.a, need clock_gettime reference
+   env.Append ( _LIBFLAGS=' -lrt ' )
 
 testEnv = env.Clone()
 testEnv.Append( CPPPATH=["../"] )
