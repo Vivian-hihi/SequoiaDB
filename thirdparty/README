@@ -20,7 +20,7 @@ Windows32:
 		ActivePerl
 		cygwin
 
-	Boost 1.49.0:
+	Boost 1.60.0:
 		cd boost\tools\build\v2\
 		bootstrap.bat
 		cd boost
@@ -71,7 +71,7 @@ Windows64:
                 ActivePerl
 		cygwin
 
-        Boost 1.49.0:
+        Boost 1.69.0:
                 cd boost\tools\build\v2\
                 bootstrap.bat
                 cd boost
@@ -120,7 +120,7 @@ Linux32:
                 scons
 		perl
 
-        Boost 1.49.0:
+        Boost 1.60.0:
 		./bootstrap.sh --prefix=./
 		./bjam link=static threading=multi variant=release address-model=32 toolset=gcc runtime-link=static cxxflags="-fPIC"
                 copy boost/stage/lib/* to boost/lib/linux32
@@ -157,7 +157,7 @@ Linux64:
                 scons
                 perl
 
-        Boost 1.49.0:
+        Boost 1.60.0:
                 ./bootstrap.sh --prefix=./
                 ./bjam link=static threading=multi variant=release address-model=64 toolset=gcc runtime-link=static cxxflags="-fPIC"
                 copy boost/stage/lib/* to boost/lib/linux64
@@ -194,9 +194,9 @@ PowerLinux64:
                 scons
                 perl
 
-        Boost 1.49.0:
+        Boost 1.60.0:
                 ./bootstrap.sh --prefix=./
-                ./bjam link=static threading=multi variant=release address-model=64 toolset=gcc runtime-link=static
+                ./bjam link=static threading=multi variant=release address-model=64 toolset=gcc runtime-link=static cxxflags="-fPIC"
                 copy boost/stage/lib/* to boost/lib/ppclinux64
 
         SpiderMonkey 1.8.5:
@@ -235,7 +235,7 @@ Aix64:
 
         NOTE: gcc-aix generates 32-bit objects by default, so it needs add -maix64 for generating 64-bit objects.
 
-        Boost 1.49.0:
+        Boost 1.60.0:
                 ./bootstrap.sh --prefix=./
                 ./bjam link=static threading=multi variant=release address-model=64 toolset=gcc runtime-link=static cxxflags="-maix64" linkflags="-maix64"
                 copy boost/stage/lib/* to boost/lib/aix64
