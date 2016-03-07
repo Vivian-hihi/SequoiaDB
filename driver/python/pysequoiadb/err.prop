@@ -298,8 +298,4 @@
 -297 = LOB sequence exists
 -298 = cluster do not exist
 -299 = business do not exist
--300 = compressor initialization failed
--301 = set dictionary for compressor failed
--302 = output buffer for compressor is too small
--303 = compress process failed
--304 = compress process failed
+-300 = user specified is not exist or password is invalid
