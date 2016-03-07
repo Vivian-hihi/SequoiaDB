@@ -152,6 +152,20 @@ env = Environment( BUILD_DIR=variantDir )
 env.Append ( CPPDEFINES=[ "SDB_DLL_BUILD" ] )
 env.Append ( CPPDEFINES=[ "SDB_CLIENT" ] )
 env.Append ( CPPDEFINES=[ "SDB_SSL" ] )
+
+if guess_os == "win32":
+   pass
+else:
+   boostLibs = ["system"]
+   if guess_arch == "ppc64":
+      boost_lib_dir_another = join(boost_lib_dir,'ppclinux64')
+   if guess_arch == "ia64":
+      boost_lib_dir_another = join(boost_lib_dir,'linux64')
+   elif guess_arch == "ia32":
+      boost_lib_dir_another = join(boost_lib_dir,'linux32')
+   for b in boostLibs:
+      env.Append ( _LIBFLAGS='${SLIBS}', SLIBS=" " + join(boost_lib_dir_another, "libboost_" + b + ".a") )
+
 if guess_os == "win32":
     # check VC compiler
     for pathdir in env['ENV']['PATH'].split(os.pathsep):
