@@ -829,6 +829,15 @@ toolEnv.Append( CPPDEFINES=[ "SDB_SSL" ] )
 clientCppEnv.Append( CPPDEFINES=[ "SDB_SSL" ] )
 clientCEnv.Append( CPPDEFINES=[ "SDB_SSL" ] )
 shellEnv.Append( CPPDEFINES=[ "SDB_SSL" ] )
+
+# cpp driver depends on boost_system library, we should add it here
+if guess_os == "win32":
+   pass
+else:
+   libs = ["system"]
+   for b in libs:
+      clientCppEnv.Append ( _LIBFLAGS='${SLIBS}', SLIBS=" " + join(boost_lib_dir, "libboost_" + b + ".a") )
+
 if hasSSL:
     env.Append( CPPDEFINES=[ "SDB_SSL" ] )
     fapEnv.Append( CPPDEFINES=[ "SDB_SSL" ] )
