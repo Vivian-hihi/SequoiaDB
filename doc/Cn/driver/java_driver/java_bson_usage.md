@@ -1,13 +1,13 @@
 ## Java BSON 数据类型##
 
-目前，SequoiaDB 支持多种 BSON 数据类型。详情请查看数据库概念 - 数据库 - 文档一节。
+目前，SequoiaDB 支持多种 BSON 数据类型。详情请查看数据模型 - 文档一节。
 
 ## Java 构造 BSON 数据类型##
 
-* 整数/符浮点数
+* 整数/浮点数
 
 <pre class="prettyprint lang-javascript">
-Java BSON 构造整数/符浮点数类型// {a:123, b:3.14}
+Java BSON 构造整数/浮点数类型// {a:123, b:3.14}
 BSONObject obj = new BasicBSONObject();
 obj.put("a", 123);
 obj.put("b", 3.14);</pre>

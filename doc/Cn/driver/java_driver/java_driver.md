@@ -78,7 +78,7 @@ SequoiaDB 数据库中的集群操作分为三个级别：
         <td>数据节点实例代表一个单独的数据节点</td>
     </tr>
     <tr>
-        <td>sdbDomain</td>
+        <td>Domain</td>
         <td>域类</td>
         <td>域实例代表一个管理若干个分区组的域</td>
     </tr>
