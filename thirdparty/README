@@ -122,7 +122,7 @@ Linux32:
 
         Boost 1.49.0:
 		./bootstrap.sh --prefix=./
-		./bjam link=static threading=multi variant=release address-model=32 toolset=gcc runtime-link=static
+		./bjam link=static threading=multi variant=release address-model=32 toolset=gcc runtime-link=static cxxflags="-fPIC"
                 copy boost/stage/lib/* to boost/lib/linux32
 
         SpiderMonkey 1.8.5:
@@ -196,7 +196,7 @@ PowerLinux64:
 
         Boost 1.49.0:
                 ./bootstrap.sh --prefix=./
-                ./bjam link=static threading=multi variant=release address-model=64 toolset=gcc runtime-link=static
+                ./bjam link=static threading=multi variant=release address-model=64 toolset=gcc runtime-link=static cxxflags="-fPIC"
                 copy boost/stage/lib/* to boost/lib/ppclinux64
 
         SpiderMonkey 1.8.5:
@@ -237,7 +237,7 @@ Aix64:
 
         Boost 1.49.0:
                 ./bootstrap.sh --prefix=./
-                ./bjam link=static threading=multi variant=release address-model=64 toolset=gcc runtime-link=static cxxflags="-maix64" linkflags="-maix64"
+                ./bjam link=static threading=multi variant=release address-model=64 toolset=gcc runtime-link=static cxxflags="-maix64" linkflags="-maix64 -fPIC"
                 copy boost/stage/lib/* to boost/lib/aix64
 
         OpenSSL 1.0.1c:
