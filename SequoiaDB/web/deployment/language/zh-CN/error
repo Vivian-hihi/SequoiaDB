@@ -2,7 +2,8 @@
     "error": {
         "system": {
 		  		"errModalTitle": "错误",
-            "networkErr": "Error: 网络错误。",
+         "networkErr": "Error: 网络错误。",
+         "notFoundLog": "Error: 日志文件不存在。",
 				"scanErr": [
 					 "连接成功",
 					 "网络连接错误",

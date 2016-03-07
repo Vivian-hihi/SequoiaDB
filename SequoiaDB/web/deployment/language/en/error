@@ -2,7 +2,8 @@
     "error": {
         "system": {
 		  		"errModalTitle": "Error",
-            "networkErr": "Error: Network error.",
+         "networkErr": "Error: Network error.",
+         "notFoundLog": "Error: Log file does not exist.",
 				"scanErr": [
 					 "Connection successful",
 					 "Network error",
@@ -19,16 +20,16 @@
             "Error: At leaset one host is required."
          ],
          "create": [
-            "Error: Invalid cluster name. Only alphabetic charameters, numbers and '_' are valid. The length must be less than 255 charaters.",
-            "Error: Invalid user name. User name must be less than 1024 characters.",
-            "Error: Invalid password. Password must be less than 1024 characters.",
-            "Error: Invalid user's group. Group must be less than 1024 characters.",
-            "Error: Invalid install path. Path must be less than 4096 characters.",
-            "Error: Invalid module name. Only alphabetic charameters, numbers and '_' are valid. The length must be less than 255 charaters.",
+            "Error: Invalid cluster name. Only alphabetic charameters, numbers and '_' are valid. The length must be 1-255 charaters.",
+            "Error: Invalid user name. User name must be 1-1024 characters.",
+            "Error: Invalid password. Password must be 1-1024 characters.",
+            "Error: Invalid user's group. Group must be 1-1024 characters.",
+            "Error: Invalid install path. Path must be 1-4096 characters.",
+            "Error: Invalid module name. Only alphabetic charameters, numbers and '_' are valid. The length must be 1-255 charaters.",
             "Error: Module already exist.",
             "Error: Unable to add module into a cluster without any host.",
-            "Error: Invalid password. Password must be less than 1024 characters.",
-            "Error: Invalid new password. New password must be less than 1024 characters."
+            "Error: Invalid password. Password must be 1-1024 characters.",
+            "Error: Invalid new password. New password must be 1-1024 characters."
          ],
          "input": [
             "Error: ? Please input a number.",
@@ -39,7 +40,7 @@
          ],
          "modsdbd": [
             "Error: Unable to remove non-empty Replica Group ?.",
-            "Error: Invalid replica group name. Only alphabetic charameters, numbers and '_' are valid. The length must be less than 255 charaters.",
+            "Error: Invalid replica group name. Only alphabetic charameters, numbers and '_' are valid. The length must be 1-255 charaters.",
             "Error: Replica Group already exist.",
             "Error: Invalid Service."
          ],
@@ -51,9 +52,9 @@
             "Error: Node ID already exists"
          ],
          "scanhost": [
-            "Error: IP / HostName must be less than 255 characters.",
-            "Error: User name must be less than 255 characters.",
-            "Error: Password must be less than 255 characters.",
+            "Error: IP / HostName must be 1-255 characters.",
+            "Error: User name must be 1-255 characters.",
+            "Error: Password must be 1-255 characters.",
             "Error: Invalid SSH Port.",
             "Error: Invalid Agent Port.",
             "Error: Please choose at least one host."
