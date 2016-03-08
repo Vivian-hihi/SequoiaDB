@@ -555,12 +555,12 @@ function loadHostList()
 	{
 		checkedHostLis = JSON.parse( checkedHostLis ) ;
 		$.each( checkedHostLis, function( index, value ){
-			var hostname = value['HostName'] ;
-			var user     = value['User'] ;
-			var pwd      = value['Passwd'] ;
-			var ssh      = value['SshPort'] ;
-			var proxy    = value['AgentService'] ;
-			var hostListArr = [ [ { 'HostName': hostname } ] ] ;
+			var ip     = value['IP'] ;
+			var user   = value['User'] ;
+			var pwd    = value['Passwd'] ;
+			var ssh    = value['SshPort'] ;
+			var proxy  = value['AgentService'] ;
+			var hostListArr = [ [ { 'IP': ip } ] ] ;
 			scanHostList( 0, hostListArr, user, pwd, ssh, proxy ) ;
 		} ) ;
 	}
