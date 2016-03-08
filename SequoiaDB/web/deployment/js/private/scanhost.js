@@ -63,7 +63,14 @@ function parseAddress( address )
 					else
 					{
 						//这是一个区间 [1-10]
-						ip_search.push( new Array( matches[4], matches[5] ) ) ;
+                  if( matches[4] > matches[5] )
+                  {
+                     ip_search.push( new Array( matches[5], matches[4] ) ) ;
+                  }
+                  else
+                  {
+                     ip_search.push( new Array( matches[4], matches[5] ) ) ;
+                  }
 					}
 				}
 			}
