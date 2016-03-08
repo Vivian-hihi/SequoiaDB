@@ -150,8 +150,8 @@ _DataDatabaseIndex.buildClList = function( $scope, clList ){
                'UpBound':             null,
                'Metadata Ratio':      '0%',
                'CataInfo':            clInfo['CataInfo'],
-               'Attribute':           clInfo['Attribute'],
-               'CompressionType':     clInfo['CompressionType'],
+               'Attribute':           clInfo['AttributeDesc'],
+               'CompressionType':     clInfo['CompressionTypeDesc'],
                'HasDict':             clInfo['HasDict']
             }
          } ) ;
@@ -373,7 +373,7 @@ _DataDatabaseIndex.getCLInfo = function( $scope, SdbRest )
    }
    else
    {
-      sql = 'SELECT t1.Name, t1.Details.ID, t1.Details.LogicalID, t1.Details.Sequence, t1.Details.GroupName, t1.Details.Status, t1.Details.Indexes, t1.Details.TotalRecords, t1.Details.TotalDataPages, t1.Details.TotalIndexPages, t1.Details.TotalLobPages, t1.Details.TotalDataFreeSpace/1048576, t1.Details.TotalIndexFreeSpace/1048576, t1.IsMainCL, t1.MainCLName, t1.ShardingKey, t1.ShardingType FROM (SELECT * FROM $SNAPSHOT_CL WHERE NodeSelect="master" split BY Details) AS t1 ORDER BY t1.Name' ;
+      sql = 'SELECT t1.Name, t1.Details.ID, t1.Details.LogicalID, t1.Details.Sequence, t1.Details.GroupName, t1.Details.Status, t1.Details.Indexes, t1.Details.TotalRecords, t1.Details.TotalDataPages, t1.Details.HasDict, t1.Details.TotalIndexPages, t1.Details.TotalLobPages, t1.Details.TotalDataFreeSpace/1048576, t1.Details.TotalIndexFreeSpace/1048576, t1.IsMainCL, t1.MainCLName, t1.ShardingKey, t1.ShardingType FROM (SELECT * FROM $SNAPSHOT_CL WHERE NodeSelect="master" split BY Details) AS t1 ORDER BY t1.Name' ;
    }
 
    //合并cl数据
@@ -425,9 +425,13 @@ _DataDatabaseIndex.getCLInfo = function( $scope, SdbRest )
                   {
                      clInfo['ReplSize'] = cataInfo['ReplSize'] ;
                   }
-                  if( typeof( cataInfo['Attribute'] ) != 'undefined' )
+                  if( typeof( cataInfo['AttributeDesc'] ) != 'undefined' )
                   {
-                     clInfo['Attribute'] = cataInfo['Attribute'] ;
+                     clInfo['AttributeDesc'] = cataInfo['AttributeDesc'] ;
+                  }
+                  if( typeof( cataInfo['CompressionTypeDesc'] ) != 'undefined' )
+                  {
+                     clInfo['CompressionTypeDesc'] = cataInfo['CompressionTypeDesc'] ;
                   }
                }
             } ) ;
@@ -993,7 +997,18 @@ _DataDatabaseIndex.showCreateCL = function( $scope, SdbRest ){
       {
          if( valueJson['type'] == '' )
          {
-            rv['options']['Compressed'] = valueJson['Compressed'] ;
+            rv['options']['Compressed'] = valueJson['Compressed'] == 0 ? false : true ;
+            if( rv['options']['Compressed'] == true )
+            {
+               if( valueJson['Compressed'] == 1 )
+               {
+                  rv['options']['CompressionType'] = 'snappy' ;
+               }
+               else if( valueJson['Compressed'] == 2 )
+               {
+                  rv['options']['CompressionType'] = 'lzw' ;
+               }
+            }
             rv['options']['ReplSize'] = valueJson['ReplSize'] ;
             if( valueJson['Group'] > 0 )
             {
@@ -1008,7 +1023,18 @@ _DataDatabaseIndex.showCreateCL = function( $scope, SdbRest ){
                rv['options']['ShardingKey'][ field['field'] ] = field['sort'] ;
             } ) ;
             rv['options']['ReplSize'] = valueJson['ReplSize'] ;
-            rv['options']['Compressed'] = valueJson['Compressed'] ;
+            rv['options']['Compressed'] = valueJson['Compressed'] == 0 ? false : true ;
+            if( rv['options']['Compressed'] == true )
+            {
+               if( valueJson['Compressed'] == 1 )
+               {
+                  rv['options']['CompressionType'] = 'snappy' ;
+               }
+               else if( valueJson['Compressed'] == 2 )
+               {
+                  rv['options']['CompressionType'] = 'lzw' ;
+               }
+            }
             if( valueJson['Group'] > 0 )
             {
                rv['options']['Group'] = $scope.GroupList[ valueJson['Group'] - 1 ]['GroupName'] ;
@@ -1024,7 +1050,18 @@ _DataDatabaseIndex.showCreateCL = function( $scope, SdbRest ){
             } ) ;
             rv['options']['Partition'] = valueJson['Partition'] ;
             rv['options']['ReplSize'] = valueJson['ReplSize'] ;
-            rv['options']['Compressed'] = valueJson['Compressed'] ;
+            rv['options']['Compressed'] = valueJson['Compressed'] == 0 ? false : true ;
+            if( rv['options']['Compressed'] == true )
+            {
+               if( valueJson['Compressed'] == 1 )
+               {
+                  rv['options']['CompressionType'] = 'snappy' ;
+               }
+               else if( valueJson['Compressed'] == 2 )
+               {
+                  rv['options']['CompressionType'] = 'lzw' ;
+               }
+            }
             rv['options']['AutoSplit'] = valueJson['AutoSplit'] ;
             if( valueJson['Group'] > 0 )
             {
@@ -1044,7 +1081,18 @@ _DataDatabaseIndex.showCreateCL = function( $scope, SdbRest ){
       }
       else if( $scope.moduleMode == 'standalone' )
       {
-         rv['options']['Compressed'] = valueJson['Compressed'] ;
+         rv['options']['Compressed'] = valueJson['Compressed'] == 0 ? false : true ;
+         if( rv['options']['Compressed'] == true )
+            {
+               if( valueJson['Compressed'] == 1 )
+               {
+                  rv['options']['CompressionType'] = 'snappy' ;
+               }
+               else if( valueJson['Compressed'] == 2 )
+               {
+                  rv['options']['CompressionType'] = 'lzw' ;
+               }
+            }
       }
       return rv ;
    }
@@ -1159,10 +1207,11 @@ _DataDatabaseIndex.showCreateCL = function( $scope, SdbRest ){
                "webName":  $scope.autoLanguage( '数据压缩' ),
                "type": "select",
                "required": false,
-               "value": false,
+               "value": 0,
                "valid": [
-                  { "key": $scope.autoLanguage( '开' ), "value": true },
-                  { "key": $scope.autoLanguage( '关' ), "value": false }
+                  { "key": $scope.autoLanguage( '关' ), "value": 0 },
+                  { "key": $scope.autoLanguage( 'Snappy' ), "value": 1 },
+                  { "key": $scope.autoLanguage( 'LZW' ), "value": 2 }
                ]
             },
             {
@@ -1281,10 +1330,12 @@ _DataDatabaseIndex.showCreateCL = function( $scope, SdbRest ){
                "name": "Compressed",
                "webName":  $scope.autoLanguage( '数据压缩' ),
                "type": "select",
-               "value": false,
+               "required": false,
+               "value": 0,
                "valid": [
-                  { "key": $scope.autoLanguage( '开' ), "value": true },
-                  { "key": $scope.autoLanguage( '关' ), "value": false }
+                  { "key": $scope.autoLanguage( '关' ), "value": 0 },
+                  { "key": $scope.autoLanguage( 'Snappy' ), "value": 1 },
+                  { "key": $scope.autoLanguage( 'LZW' ), "value": 2 }
                ]
             },
             {
@@ -1427,10 +1478,12 @@ _DataDatabaseIndex.showCreateCL = function( $scope, SdbRest ){
                "name": "Compressed",
                "webName":  $scope.autoLanguage( '数据压缩' ),
                "type": "select",
-               "value": false,
+               "required": false,
+               "value": 0,
                "valid": [
-                  { "key": $scope.autoLanguage( '开' ), "value": true },
-                  { "key": $scope.autoLanguage( '关' ), "value": false }
+                  { "key": $scope.autoLanguage( '关' ), "value": 0 },
+                  { "key": $scope.autoLanguage( 'Snappy' ), "value": 1 },
+                  { "key": $scope.autoLanguage( 'LZW' ), "value": 2 }
                ]
             },
             {
@@ -1664,10 +1717,11 @@ _DataDatabaseIndex.showCreateCL = function( $scope, SdbRest ){
                "webName":  $scope.autoLanguage( '数据压缩' ),
                "type": "select",
                "required": false,
-               "value": false,
+               "value": 0,
                "valid": [
-                  { "key": $scope.autoLanguage( '开' ), "value": true },
-                  { "key": $scope.autoLanguage( '关' ), "value": false }
+                  { "key": $scope.autoLanguage( '关' ), "value": 0 },
+                  { "key": $scope.autoLanguage( 'Snappy' ), "value": 1 },
+                  { "key": $scope.autoLanguage( 'LZW' ), "value": 2 }
                ]
             }
          ]
