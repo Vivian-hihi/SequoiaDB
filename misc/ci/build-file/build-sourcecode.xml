@@ -176,7 +176,7 @@
 	</target>
 
   	<target name="build-and-copy-php" depends="">
-  		<delete dir="${CODE_DIR}/driver/php5/build}" />
+  		<delete dir="${CODE_DIR}/driver/php5/build" />
   		<mkdir dir="${RELEASE_DIR}/sequoiadb/lib/phplib" />
 
   		<chmod perm="u+x" file="${WORKSPACE}/sequoiadb/thirdparty/php/linux/retriConfig.sh" />
