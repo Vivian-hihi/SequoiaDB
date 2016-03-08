@@ -6409,7 +6409,7 @@ namespace engine
       {
          rc = SDB_INVALIDARG ;
          PD_LOG_MSG( PDERROR, "host exist in cluster, host should be removed "
-                     "first:cluster=", clusterName ) ;
+                     "first:cluster=%s", clusterName ) ;
          _errorDetail = omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ;
          _sendErrorRes2Web( rc, _errorDetail ) ;
          goto error ;
