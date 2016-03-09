@@ -737,8 +737,8 @@ namespace bson {
             s << "\" }" ;
             */
             s << "{ \"$regex\": \"" ;
-            tempData = regex() ;
-            len = strlen( tempData ) ;
+            const char *tempData = regex() ;
+            int len = strlen( tempData ) ;
             for ( int i = 0; i < len; ++i )
             {
                switch( *tempData )
