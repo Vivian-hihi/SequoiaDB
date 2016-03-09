@@ -212,8 +212,8 @@ static const char *parse_number(cJSON *item,const char *num)
           subscale=(subscale*10)+(*num++ - '0');   /* Number? */
    }
 
-  if ( cJSON_DOUBLE == item->numType )
-  {
+   if ( cJSON_DOUBLE == item->numType )
+   {
       n=sign*n*pow(10.0,(subscale*signsubscale*1.0));   /* number = +/- number.fraction * 10^+/- exponent */
    }
    else if ( cJSON_INT64 == item->numType )
@@ -226,6 +226,11 @@ static const char *parse_number(cJSON *item,const char *num)
       {
          // if subscale = 0, that means we don't need to translate into double, which may cause loose precision
          n2=(((long long)sign)*n2) ;
+      }
+      if( n2 == CJSON_INT32_MIN )
+      {
+         n1 = CJSON_INT32_MIN ;
+         item->numType = cJSON_INT32 ;
       }
    }
    else if ( cJSON_INT32 == item->numType )
