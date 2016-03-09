@@ -652,15 +652,6 @@ namespace bson {
             {
                switch( *tempData )
                {
-               /*
-                 the JSON standard does not need to be
-                 escaped single quotation marks
-               */
-               /*case '\'':
-               {
-                  s << "\\\'" ;
-                  break ;
-               }*/
                case '\"':
                {
                   s << "\\\"" ;
@@ -739,7 +730,63 @@ namespace bson {
             break ;
         }
         case RegEx: {
+            /*
             s << "{ \"$regex\": \"" << regex() << "\", \"$options\": \"" ;
+            const char *p = regexFlags () ;
+            if ( p ) s << p ;
+            s << "\" }" ;
+            */
+            s << "{ \"$regex\": \"" ;
+            tempData = regex() ;
+            len = strlen( tempData ) ;
+            for ( int i = 0; i < len; ++i )
+            {
+               switch( *tempData )
+               {
+               case '\"':
+               {
+                  s << "\\\"" ;
+                  break ;
+               }
+               case '\\':
+               {
+                  s << "\\\\" ;
+                  break ;
+               }
+               case '\b':
+               {
+                  s << "\\b" ;
+                  break ;
+               }
+               case '\f':
+               {
+                  s << "\\f" ;
+                  break ;
+               }
+               case '\n':
+               {
+                  s << "\\n" ;
+                  break ;
+               }
+               case '\r':
+               {
+                  s << "\\r" ;
+                  break ;
+               }
+               case '\t':
+               {
+                  s << "\\t" ;
+                  break ;
+               }
+               default:
+               {
+                  s << (*tempData) ;
+                  break ;
+               }
+               }
+               ++tempData ;
+            }
+            s << "\", \"$options\": \"" ;
             const char *p = regexFlags () ;
             if ( p ) s << p ;
             s << "\" }" ;
