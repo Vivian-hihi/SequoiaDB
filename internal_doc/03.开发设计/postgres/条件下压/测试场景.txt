@@ -1,0 +1,107 @@
+// 条件树过滤 ()
+explain select * from test where a = 1 and ( b = 1 or (c+1=2) );
+WARNING:  unsupport argument type:type=311
+DEBUG:  bson value={ "a": { "$et": 1 } }
+
+                        QUERY PLAN                        
+----------------------------------------------------------
+ Foreign Scan on test  (cost=0.00..0.70 rows=10 width=32)
+   Filter: ((a = 1) AND ((b = 1) OR ((c + 1) = 2)))
+   Foreign Namespace: cs.cl
+(3 rows)
+
+其中条件(c+1=2)可以用来构造无法支持的条件
+
+A and ( B or C )              ==> A
+explain select * from test where a = 1 and ( b = 1 or (c+1=2) );
+
+A and ( B and C )             ==> A and B
+explain select * from test where a = 1 and ( b = 1 and (c+1=2) );
+
+
+
+A and ( B or ( C or D ) )     ==> A
+explain select * from test where a = 1 and ( b = 1 or ( (c+1=2) or d = 1 ) );
+bson value={ "a": { "$et": 1 } }
+
+A and ( B or ( C and D ) )    ==> A and ( B or D )
+explain select * from test where a = 1 and ( b = 1 or ( (c+1=2) and d = 1 ) );
+bson value={ "$or": [ { "b": { "$et": 1 } }, { "$and": [ { "d": { "$et": 1 } } ] } ], "a": { "$et": 1 } }
+
+A and ( B and ( C or D ) )    ==> A and B
+explain select * from test where a = 1 and ( b = 1 and ( (c+1=2) or d = 1 ) );
+bson value={ "a": { "$et": 1 }, "b": { "$et": 1 } }
+
+A and ( B and ( C and D ) )   ==> A and B and D
+explain select * from test where a = 1 and ( b = 1 and ( (c+1=2) and d = 1 ) );
+bson value={ "a": { "$et": 1 }, "b": { "$et": 1 }, "d": { "$et": 1 } }
+
+A or ( B or ( C or D ) )      ==> 全集
+explain select * from test where a = 1 or ( b = 1 or ( (c+1=2) or d = 1 ) );
+bson value={  }
+
+A or ( B or ( C and D ) )     ==> A or B or D
+explain select * from test where a = 1 or ( b = 1 or ( (c+1=2) and d = 1 ) );
+bson value={ "$or": [ { "a": { "$et": 1 } }, { "b": { "$et": 1 } }, { "$and": [ { "d": { "$et": 1 } } ] } ] }
+
+A or ( B and ( C or D ) )     ==> A or B
+explain select * from test where a = 1 or ( b = 1 and ( (c+1=2) or d = 1 ) );
+bson value={ "$or": [ { "a": { "$et": 1 } }, { "$and": [ { "b": { "$et": 1 } } ] } ] }
+
+A or ( B and ( C and D ) )    ==> A or ( B and D )
+explain select * from test where a = 1 or ( b = 1 and ( (c+1=2) and d = 1 ) );
+bson value={ "$or": [ { "a": { "$et": 1 } }, { "$and": [ { "b": { "$et": 1 } }, { "d": { "$et": 1 } } ] } ] }
+
+
+================================
+not
+
+not ( A and ( B or ( C or D ) ) )   pg会重写条件 => !A or ( !B and !C and !D )
+explain select * from test where not (a = 1 and ( b = 1 or ( (c+1=2) or d = 1 ) ) );
+                             QUERY PLAN                             
+--------------------------------------------------------------------
+ Foreign Scan on test  (cost=0.00..0.72 rows=10 width=32)
+   Filter: ((a <> 1) OR ((b <> 1) AND ((c + 1) <> 2) AND (d <> 1)))
+   Foreign Namespace: cs.cl
+(3 rows)
+
+
+A and ( B or not ( C or D ) )     => A and ( B or ( !C and !D ) )
+explain select * from test where a = 1 and ( b = 1 or not ( (c+1=2) or d = 1 ) );
+
+其他情况从略
+
+
+A and ( B or ( not C or D ) )     ==> A
+explain select * from test where a = 1 and ( b = 1 or ( c not in (select * from t2) or d = 1 ) );
+bson value={ "a": { "$et": 1 } }
+
+A and ( B or ( not C and D ) )    ==> A and ( B or D )
+explain select * from test where a = 1 and ( b = 1 or ( c not in (select * from t2) and d = 1 ) );
+bson value={ "$or": [ { "b": { "$et": 1 } }, { "$and": [ { "d": { "$et": 1 } } ] } ], "a": { "$et": 1 } }
+
+A and ( B and ( not C or D ) )    ==> A and B
+explain select * from test where a = 1 and ( b = 1 and ( c not in (select * from t2) or d = 1 ) );
+bson value={ "a": { "$et": 1 }, "b": { "$et": 1 } }
+
+A and ( B and ( C and D ) )       ==> A and B and D
+explain select * from test where a = 1 and ( b = 1 and ( c not in (select * from t2) and d = 1 ) );
+bson value={ "a": { "$et": 1 }, "b": { "$et": 1 }, "d": { "$et": 1 } }
+
+A or ( B or ( C or D ) )          ==> 全集
+explain select * from test where a = 1 or ( b = 1 or ( c not in (select * from t2) or d = 1 ) );
+bson value={  }
+
+A or ( B or ( C and D ) )         ==> A or B or D
+explain select * from test where a = 1 or ( b = 1 or ( c not in (select * from t2) and d = 1 ) );
+bson value={ "$or": [ { "a": { "$et": 1 } }, { "b": { "$et": 1 } }, { "$and": [ { "d": { "$et": 1 } } ] } ] }
+
+A or ( B and ( C or D ) )         ==> A or B
+explain select * from test where a = 1 or ( b = 1 and ( c not in (select * from t2) or d = 1 ) );
+bson value={ "$or": [ { "a": { "$et": 1 } }, { "$and": [ { "b": { "$et": 1 } } ] } ] }
+
+A or ( B and ( C and D ) )        ==> A or ( B and D )
+explain select * from test where a = 1 or ( b = 1 and ( c not in (select * from t2) and d = 1 ) );
+bson value={ "$or": [ { "a": { "$et": 1 } }, { "$and": [ { "b": { "$et": 1 } }, { "d": { "$et": 1 } } ] } ] }
+
+================================
