@@ -127,6 +127,12 @@ namespace engine
       // set signum
       PMD_SIGNUM = sigNum ;
 
+      if ( ossGetSignalShieldFlag() )
+      {
+         ossGetPendingSignal() = sigNum ;
+         goto done ;
+      }
+
       if ( sigNum > 0 && sigNum <= OSS_MAX_SIGAL )
       {
          if ( SIGPIPE == sigNum && !s_closeStdFds &&
@@ -149,6 +155,8 @@ namespace engine
             }
          }
       }
+
+   done:
       PD_TRACE_EXIT ( SDB_PMDSIGHND ) ;
    }
 
@@ -158,7 +166,12 @@ namespace engine
 #if defined( SDB_ENGINE )
       PD_TRACE_ENTRY ( SDB_PMDSIGTESTHND ) ;
       static OSS_THREAD_LOCAL BOOLEAN amIIn = FALSE ;
-      if ( amIIn )
+      if ( ossGetSignalShieldFlag() )
+      {
+         ossGetPendingSignal() = signum ;
+         goto done ;
+      }
+      else if ( amIIn )
       {
          goto done ;
       }
@@ -199,7 +212,12 @@ namespace engine
       PD_TRACE_ENTRY ( SDB_PMDEDUUSERTRAPHNDL );
       oss_edu_data * pEduData = NULL ;
       const CHAR *dumpPath = ossGetTrapExceptionPath () ;
-      if ( !dumpPath )
+      if ( ossGetSignalShieldFlag() )
+      {
+         ossGetPendingSignal() = signum ;
+         goto done ;
+      }
+      else if ( !dumpPath )
       {
          goto done ;
       }

@@ -415,6 +415,9 @@ void pdLog( PDLEVEL level, const CHAR* func, const CHAR* file,
    CHAR userInfo[ PD_LOG_STRINGMAX + 1 ] = { 0 } ;
    CHAR sysInfo[ PD_LOG_STRINGMAX + 1 ] = { 0 } ;  // for log header
 
+   ossSignalShield sigShield ;
+   sigShield.doNothing() ;
+
    gettimeofday(&tv, &tz);
    tt = tv.tv_sec ;
 
@@ -916,6 +919,9 @@ void pdAudit( AUDIT_TYPE type, const CHAR *pUserName,
    CHAR userInfo[ PD_LOG_STRINGMAX + 1 ] = { 0 } ;
    CHAR sysInfo[ PD_LOG_STRINGMAX + 1 ] = { 0 } ;  // for log header
    CHAR szFrom[ 30 ] = { 0 } ;   // ip + port
+
+   ossSignalShield sigShield ;
+   sigShield.doNothing() ;
 
    gettimeofday(&tv, &tz);
    tt = tv.tv_sec ;

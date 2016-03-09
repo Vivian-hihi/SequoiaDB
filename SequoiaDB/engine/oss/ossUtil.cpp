@@ -1540,3 +1540,41 @@ BOOLEAN ossNetIpIsValid( const CHAR *ip, INT32 len )
    return FALSE ;
 
 }
+
+BOOLEAN& ossGetSignalShieldFlag()
+{
+   static OSS_THREAD_LOCAL BOOLEAN s_signalShieldFlag = FALSE ;
+   return s_signalShieldFlag ;
+}
+
+INT32& ossGetPendingSignal()
+{
+   static OSS_THREAD_LOCAL INT32 s_pendingSignal = 0 ;
+   return s_pendingSignal ;
+}
+
+/*
+   ossSignalShield implement
+*/
+ossSignalShield::ossSignalShield()
+{
+   ossGetSignalShieldFlag() = TRUE ;
+}
+
+ossSignalShield::~ossSignalShield()
+{
+   close() ;
+}
+
+void ossSignalShield::close()
+{
+   ossGetSignalShieldFlag() = FALSE ;
+
+#if defined (_LINUX)
+   if ( ossGetPendingSignal() > 0 )
+   {
+      ossPThreadKill( ossPThreadSelf(), ossGetPendingSignal() ) ;
+   }
+#endif // _LINUX
+   ossGetPendingSignal() = 0 ;
+}
