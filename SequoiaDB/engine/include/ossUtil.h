@@ -43,6 +43,8 @@
 #if defined (_LINUX) || defined ( _AIX )
 #include <sys/time.h>
 #include <strings.h>
+#include <pthread.h>
+#include <signal.h>
 #else
 #include <io.h>
 #endif
