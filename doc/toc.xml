@@ -2435,6 +2435,14 @@
                                     <enpath>SdbDoc_En/reference/operator/match_operator/regex_en.html</enpath>
                                     <enabled>true</enabled>
                                 </obj>
+                                <obj>
+                                    <id>1457512366</id>
+                                    <cnname>$field</cnname>
+                                    <enname>$field</enname>
+                                    <cnpath>SdbDoc_Cn/reference/operator/match_operator/field.html</cnpath>
+                                    <enpath>SdbDoc_En/reference/operator/match_operator/field_en.html</enpath>
+                                    <enabled>true</enabled>
+                                </obj>
                             </objlist>
                         </obj>
                         <obj>
