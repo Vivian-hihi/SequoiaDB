@@ -263,6 +263,7 @@
    "正在加载...": "Loading...",
    "正在使用": "Using",
    "执行": "Exec",
+   "执行当前的操作会删除所有记录！要继续吗？": "The current operation will delete all records! Continue anyway?",
    "值": "value",
    "指定了?，不能开启?。": "Specifies the ?, can not use ?.",
    "重试": "Try again",

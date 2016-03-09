@@ -57,6 +57,30 @@ var sprintf = function( format )
 	return newStr ;
 } ;
 
+//判断是否空
+function isEmpty( val )
+{
+   switch( typeof( val ) )
+   {
+   case 'undefined':
+      return true ;
+   case 'number':
+      return val == 0 ;
+   case 'string':
+      return val.length == 0 ;
+   case 'object':
+      for( var k in val )
+      {
+         return false ;
+      }
+      return true ;
+   default:
+      alert( val ) ;
+      return false ;
+   }
+   return false ;
+}
+
 //保留多少位小数
 function fixedNumber( x, num )
 {

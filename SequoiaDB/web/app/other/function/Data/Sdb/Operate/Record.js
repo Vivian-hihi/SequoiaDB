@@ -612,22 +612,34 @@ _DataOperateRecord.createDeleteModel = function( $scope, SdbRest, SdbFunction ){
          }
          var value = $scope.Components.Modal.form.getValue() ;
          var data = modalValue2Delete( value ) ;
-         data['cmd'] = 'delete' ;
-         data['name'] = $scope.fullName ;
-         SdbRest.DataOperation( data, function( json ){
-            $scope.execResult = sprintf( $scope.autoLanguage( '? ? 删除成功' ), timeFormat( new Date(), 'hh:mm:ss' ), $scope.fullName ) ;
-            $scope.execRc = true ;
-            _DataOperateRecord.queryRecord( $scope, SdbRest, SdbFunction, $scope.queryFilter, $scope.showType, false ) ;
-         }, function( errorInfo ){
-            $scope.execResult = sprintf( $scope.autoLanguage( '? ? 删除失败，错误码: ?，?. ?' ), timeFormat( new Date(), 'hh:mm:ss' ), $scope.fullName, errorInfo['errno'], errorInfo['description'], errorInfo['detail'] ) ;
-            $scope.execRc = false ;
-         }, function(){
-            _IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
-         }, function(){
-            //关闭弹窗
-            $scope.Components.Modal.isShow = false ;
-            $scope.$apply() ;
-         } ) ;
+         var exec = function(){
+            data['cmd'] = 'delete' ;
+            data['name'] = $scope.fullName ;
+            SdbRest.DataOperation( data, function( json ){
+               $scope.execResult = sprintf( $scope.autoLanguage( '? ? 删除成功' ), timeFormat( new Date(), 'hh:mm:ss' ), $scope.fullName ) ;
+               $scope.execRc = true ;
+               _DataOperateRecord.queryRecord( $scope, SdbRest, SdbFunction, $scope.queryFilter, $scope.showType, false ) ;
+            }, function( errorInfo ){
+               $scope.execResult = sprintf( $scope.autoLanguage( '? ? 删除失败，错误码: ?，?. ?' ), timeFormat( new Date(), 'hh:mm:ss' ), $scope.fullName, errorInfo['errno'], errorInfo['description'], errorInfo['detail'] ) ;
+               $scope.execRc = false ;
+            }, function(){
+               _IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
+            }, function(){
+               //关闭弹窗
+               $scope.Components.Modal.isShow = false ;
+               $scope.$apply() ;
+            } ) ;
+         }
+         if( isEmpty( data ) )
+         {
+            _IndexPublic.createInfoModel( $scope, $scope.autoLanguage( "执行当前的操作会删除所有记录！要继续吗？" ), $scope.autoLanguage( '是' ), function(){
+               exec() ;
+            } ) ;
+         }
+         else
+         {
+            exec() ;
+         }
       }
       return false ;
    }

@@ -11,6 +11,19 @@ _IndexPublic.createErrorModel = function( $scope, context ){
    $scope.Components.Confirm.isShow = true ;
 }
 
+//创建提示弹窗
+_IndexPublic.createInfoModel = function( $scope, context, bt1, bt1Fun, bt2 ){
+   $scope.Components.Confirm.isShow = true ;
+   $scope.Components.Confirm.type = 2 ;
+   $scope.Components.Confirm.okText = bt1 ;
+   $scope.Components.Confirm.closeText = $scope.autoLanguage( '取消' ) ;
+   $scope.Components.Confirm.context = context ;
+   $scope.Components.Confirm.ok = function(){
+      $scope.Components.Confirm.isShow = false ;
+      if( typeof( bt1Fun ) == 'function' ) bt1Fun() ;
+   }
+}
+
 //语言控制器
 _IndexPublic.languageCtrl = function( $scope, text ){
    var newText = text ;
