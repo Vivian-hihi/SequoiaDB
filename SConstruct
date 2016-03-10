@@ -326,7 +326,7 @@ hasShell = has_option( "shell" )
 hasFmp = has_option("fmp")
 hasAll = has_option( "all" )
 if guess_os == "win32":
-    pass
+    hasFap = False
 else:
    hasFap = has_option("fap")
 hasEnterprise = has_option("enterprise")
