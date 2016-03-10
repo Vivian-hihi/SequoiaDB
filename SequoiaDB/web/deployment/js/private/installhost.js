@@ -266,7 +266,7 @@ function returnPage()
 // 下一步
 function nextPage()
 {
-	if( _deployModel === 'AddHost' )
+	if( _deployModel === 'AddHost' || _deployModel == 'taskAddHost' )
 	{
 		gotoPage( 'index.html' ) ;
 	}
@@ -276,40 +276,40 @@ function nextPage()
 		{
 			gotoPage( 'confsdb.html' ) ;
 		}
-        else if( _businessType === 'zookeeper' )
+      else if( _businessType === 'zookeeper' )
 		{
-            var clusterName = sdbjs.fun.getData( 'SdbClusterName' ) ;
-            if( clusterName === null )
-            {
-                gotoPage( 'index.html' ) ;
-                return;
-            }
-            var businessName = sdbjs.fun.getData( 'SdbBusinessName' ) ;
-            if( businessName === null )
-            {
-                gotoPage( 'index.html' ) ;
-                return;
-            }
-            var businessType = _businessType ;
-            restGetClusterHostsInfo( false, function( jsonArr, textStatus, jqXHR ){
-                var hostsInfo = jsonArr ;
-                var tempHostInfo = [] ;
-                $.each( hostsInfo, function( index, value ){
-                    tempHostInfo.push( { 'HostName': value['HostName'] } ) ;
-                } ) ;
-                var businessConf = {} ;
-                businessConf['ClusterName']	 = clusterName ;
-                businessConf['BusinessName'] = businessName ;
-                businessConf['BusinessType'] = businessType ;
-                businessConf['DeployMod'] = 'distribution' ;
-                businessConf['Property'] = [ { 'Name': 'zoonodenum', 'Value': '3' } ] ;
-                businessConf['HostInfo'] = tempHostInfo ;
-                sdbjs.fun.saveData( 'SdbBusinessConfig', JSON.stringify( businessConf ) ) ;
-                sdbjs.fun.delData( 'SdbConfigInfo' ) ;
-                gotoPage( 'modzookeeper.html' ) ;
-            }, function( json ){
-                showModalError( 'addBusinessFootAlert', json['detail'] ) ;
-            }, null, clusterName ) ;
+         var clusterName = sdbjs.fun.getData( 'SdbClusterName' ) ;
+         if( clusterName === null )
+         {
+               gotoPage( 'index.html' ) ;
+               return;
+         }
+         var businessName = sdbjs.fun.getData( 'SdbBusinessName' ) ;
+         if( businessName === null )
+         {
+               gotoPage( 'index.html' ) ;
+               return;
+         }
+         var businessType = _businessType ;
+         restGetClusterHostsInfo( false, function( jsonArr, textStatus, jqXHR ){
+               var hostsInfo = jsonArr ;
+               var tempHostInfo = [] ;
+               $.each( hostsInfo, function( index, value ){
+                  tempHostInfo.push( { 'HostName': value['HostName'] } ) ;
+               } ) ;
+               var businessConf = {} ;
+               businessConf['ClusterName']	 = clusterName ;
+               businessConf['BusinessName'] = businessName ;
+               businessConf['BusinessType'] = businessType ;
+               businessConf['DeployMod'] = 'distribution' ;
+               businessConf['Property'] = [ { 'Name': 'zoonodenum', 'Value': '3' } ] ;
+               businessConf['HostInfo'] = tempHostInfo ;
+               sdbjs.fun.saveData( 'SdbBusinessConfig', JSON.stringify( businessConf ) ) ;
+               sdbjs.fun.delData( 'SdbConfigInfo' ) ;
+               gotoPage( 'modzookeeper.html' ) ;
+         }, function( json ){
+               showModalError( 'addBusinessFootAlert', json['detail'] ) ;
+         }, null, clusterName ) ;
 		}
 	}
 }
