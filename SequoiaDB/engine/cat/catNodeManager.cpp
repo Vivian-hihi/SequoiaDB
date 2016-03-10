@@ -2341,7 +2341,7 @@ namespace engine
          PD_CHECK( CAT_INVALID_NODEID != nodeID, SDB_SYS, error, PDERROR,
                    "Failed to allocate node id, maybe node is full" ) ;
 
-         rc = _addNodeToGrp( boGroupInfo, boNodeInfo, nodeID ) ;
+         rc = _addNodeToGrp( boGroupInfo, boNodeInfo, nodeID, nodeStatus ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to add node to group, rc: %d", rc ) ;
       }
       catch ( std::exception &e )
