@@ -121,7 +121,7 @@ namespace engine
       INT32 _createNode( const CHAR *pQuery, BOOLEAN isLoalConn ) ;
       INT32 _delNode( BSONObj &boDelNodeInfo, BOOLEAN isLoalConn ) ;
       INT32 _addNodeToGrp ( BSONObj &boGroupInfo, BSONObj &boNodeInfo,
-                            UINT16 nodeID ) ;
+                            UINT16 nodeID, INT32 nodeStatus ) ;
       INT32 _updateNodeToGrp ( BSONObj &boGroupInfo, BSONObj &boNodeInfoNew,
                                UINT16 nodeID, BOOLEAN isLoalConn,
                                BOOLEAN setStatus ) ;

@@ -636,6 +636,7 @@ namespace engine
       }
 
       /// update dbpath and status
+      if ( pmdIsPrimary() )
       {
          BSONObj groupInfo ;
          INT32 nodeID = CAT_INVALID_NODEID ;
@@ -1239,6 +1240,7 @@ namespace engine
          PD_CHECK( nodeID!=CAT_INVALID_NODEID, SDB_SYS, error,
                   PDERROR, "failed to allocate nodeId" );
          bobNodeInfo.append( FIELD_NAME_NODEID, nodeID );
+         bobNodeInfo.append( FIELD_NAME_STATUS, (INT32)SDB_CAT_GRP_ACTIVE ) ;
          BSONObj boNodeInfo = bobNodeInfo.obj();
          BSONArrayBuilder babGroup;
          babGroup.append( boNodeInfo );
@@ -2259,6 +2261,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       UINT16 nodeID = CAT_INVALID_NODEID ;
+      INT32  nodeStatus = SDB_CAT_GRP_DEACTIVE ;
 
       try
       {
@@ -2284,7 +2287,7 @@ namespace engine
          BSONElement beGroupId = boGroupInfo.getField( FIELD_NAME_GROUPID );
          PD_CHECK( beGroupId.type() == NumberInt, SDB_SYS, error, PDERROR,
                   "failed to get the field(%s)", FIELD_NAME_GROUPID );
-         CoordGroupInfo groupInfo( beGroupId.numberInt() );
+         clsGroupItem groupInfo( beGroupId.numberInt() );
          rc = groupInfo.updateGroupItem( boGroupInfo ) ;
          PD_RC_CHECK( rc, PDERROR,
                      "failed to parse group info(rc=%d)",
@@ -2328,6 +2331,7 @@ namespace engine
               0 == ossStrcmp( groupName, COORD_GROUPNAME ) )
          {
             nodeID = _pCatCB->allocSystemNodeID() ;
+            nodeStatus = SDB_CAT_GRP_ACTIVE ;
          }
          else
          {
@@ -2359,7 +2363,8 @@ namespace engine
 
    INT32 catNodeManager::_addNodeToGrp ( BSONObj &boGroupInfo,
                                          BSONObj &boNodeInfo,
-                                         UINT16 nodeID )
+                                         UINT16 nodeID,
+                                         INT32 nodeStatus )
    {
       INT32 rc = SDB_OK ;
       INT32  nodeRole = SDB_ROLE_DATA ;
@@ -2377,7 +2382,7 @@ namespace engine
       rc = _checkNodeInfo( boNodeInfo, nodeRole, &newObjBuilder ) ;
       PD_RC_CHECK( rc, PDERROR, "Check node info failed, rc: %d", rc ) ;
       newObjBuilder.append( FIELD_NAME_NODEID, nodeID ) ;
-      newObjBuilder.append( FIELD_NAME_STATUS, (INT32)SDB_CAT_GRP_DEACTIVE ) ;
+      newObjBuilder.append( FIELD_NAME_STATUS, nodeStatus ) ;
       newInfoObj = newObjBuilder.obj() ;
 
       rc = rtnGetStringElement( boGroupInfo, FIELD_NAME_GROUPNAME,
