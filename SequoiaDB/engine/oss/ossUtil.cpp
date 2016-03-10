@@ -1571,7 +1571,8 @@ void ossSignalShield::close()
    ossGetSignalShieldFlag() = FALSE ;
 
 #if defined (_LINUX)
-   if ( ossGetPendingSignal() > 0 )
+   if ( ossGetPendingSignal() > 0 &&
+        SIGPIPE != ossGetPendingSignal() )
    {
       ossPThreadKill( ossPThreadSelf(), ossGetPendingSignal() ) ;
    }
