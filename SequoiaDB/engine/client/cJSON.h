@@ -130,7 +130,7 @@ extern "C"
 #define CJSON_INNER_SETONINSERT  "$SetOnInsert"
 #define CJSON_INNER_MODIFY       "$Modify"
 
-#define CJSON_INT32_MIN    -2147483648
+#define CJSON_INT32_MIN    (-2147483647-1)
 #define CJSON_INT64_MAX_10 922337203685477580
 #define CSJON_INT64_MAX_Last 7
 
