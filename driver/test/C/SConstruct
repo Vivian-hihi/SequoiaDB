@@ -130,6 +130,9 @@ if has_option("libPath"):
 variantDir = get_variant_dir()
 env = Environment( BUILD_DIR=variantDir )
 
+if guess_os == "linux":
+   # add -lrt for boost_thread.a, need clock_gettime reference
+   env.Append ( _LIBFLAGS=' -lrt ' )
 
 env.Append ( CPPDEFINES=[ "SDB_DLL_BUILD" ] )
 if guess_os == "win32":
