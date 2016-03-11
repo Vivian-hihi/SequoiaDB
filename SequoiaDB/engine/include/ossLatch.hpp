@@ -39,7 +39,6 @@
 
 #include "core.hpp"
 #include <boost/thread/shared_mutex.hpp>
-#include <boost/date_time/posix_time/posix_time_types.hpp>
 // include core.hpp first to get _WINDOWS macro defines
 #include "oss.hpp"
 #include "pd.hpp"
