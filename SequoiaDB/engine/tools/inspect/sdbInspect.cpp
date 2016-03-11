@@ -1175,11 +1175,11 @@ INT32 getCiCursor( ciLinkList< ciNode > &nodes, const CHAR* clName,
          rc = db->getCollection( clName, cl ) ;
          if ( SDB_OK != rc )
          {
-            curNode->_state = 1 ;//cannot get collection
+            curNode->_state = 2 ;//cannot get collection
          }
       }
 
-      if ( 1 != curNode->_state )
+      if ( 0 == curNode->_state )
       {
          cr = new sdbclient::sdbCursor() ;
          if ( NULL == cr )
@@ -1224,13 +1224,13 @@ error:
 /**
 ** query bson record in each cursor
 ***/
-BOOLEAN recordQuery( ciLinkList< ciCursor > &cursors,
+BOOLEAN recordQuery( ciLinkList< ciNode > &nodes,
+                     ciLinkList< ciCursor > &cursors,
                      ciState &state, bson::BSONObj &obj, INT32 &rc )
 {
    BOOLEAN same = FALSE ;
-   INT32 idx = 0 ;
-   INT32 count = cursors.count() ;
-   ciCursor *cursor = NULL ;
+   INT32 nodeCount = nodes.count() ;
+   ciNode *node = NULL ;
    ciBson docs ;
 
    state.reset() ;
@@ -1239,22 +1239,23 @@ BOOLEAN recordQuery( ciLinkList< ciCursor > &cursors,
    rc = getNext( state, cursors, 0, docs, FALSE ) ;
    CHECK_VALUE( ( SDB_OK != rc ), done ) ;
 
-   cursors.resetCurrentNode() ;
-   cursor = cursors.getHead() ;
+   nodes.resetCurrentNode() ;
+   node = nodes.getHead() ;
    state.reset() ;
 
-   while ( idx < count )
+   for ( INT32 idx = 0 ; idx < nodeCount ; ++idx, node = nodes.next() )
    {
-      if ( NULL == cursor->_cursor ||
-         ( !docs.objs[ idx ].isEmpty() && docs.objs[ idx ].equal( obj ) ) )
+      if ( 1 == node->_state )   // node is not available
       {
          state.set( idx ) ;
       }
-      ++idx ;
-      cursor = cursors.next() ;
+      else if ( 0 == node->_state && docs.objs[idx].equal( obj ) )
+      {
+         state.set( idx ) ;
+      }
    }
 
-   if ( state._state == ( ( 1 << count ) - 1 ) || state._state == 0 )
+   if ( state._state == ( ( 1 << nodeCount ) - 1 ) || state._state == 0 )
    {
       same = TRUE ;
    }
@@ -1317,7 +1318,7 @@ INT32 readCiRecord( OSSFILE &in, INT64 &offset,
       }
 
       ciState st ;
-      if ( dump || !recordQuery( cursors, st, obj, rc ) )
+      if ( dump || !recordQuery( nodes, cursors, st, obj, rc ) )
       {
          ciRecord *record = records.createNode() ;
          if ( NULL == record )
@@ -2426,7 +2427,11 @@ BOOLEAN compare( ciLinkList< ciNode > &nodes,
 
    for ( INT32 idx = 0 ; idx < nodeCount ; ++idx, node = nodes.next() )
    {
-      if ( node->_state || doc.objs[idx].equal( obj ) )
+      if ( 1 == node->_state )// node is not available, we assume the record exist
+      {
+         state.set( idx ) ;
+      }
+      else if ( 0 == node->_state && doc.objs[idx].equal( obj ) )
       {
          state.set( idx ) ;
       }
