@@ -9,15 +9,9 @@
 | ------ | ------ | ------ | ------ |
 | name | string | 域名。 | 是 |
 
-## 格式##
-
-dropDomain() 方法的定义格式必须指定 name 参数，并且 name 的值在系统中存在，否则操作异常。
-
-<pre class="prettyprint lang-diy">
-{"name":"&lt;域名&gt;"}</pre>
-
 **Note:**
 
+* dropDomain() 方法的定义格式必须指定 name 参数，并且 name 的值在系统中存在，否则操作异常。
 * 删除域前必须保证域中不存在任何数据。
 * 不能删除系统域。
 
