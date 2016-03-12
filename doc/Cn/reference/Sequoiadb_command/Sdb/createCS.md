@@ -16,8 +16,8 @@
 | ------ | ------ | ------ |
 | PageSize | 数据页大小。默认为65536B。 | PageSize:&lt;int32&gt; |
 | Domain | 所属域 | Domain:&lt;string&gt; |
-| LobPageSize | Lob | 数据页大小。默认262144B | LobPageSize:&lt;int32&gt; |
-| IndexEngineType（社区版） | 索引存储引擎类型 | IndexEngineType:&lt;string&gt;。默认mmap |
+| LobPageSize | Lob数据页大小。默认262144B | LobPageSize:&lt;int32&gt; |
+| IndexEngineType（社区版） | 索引存储引擎类型。默认mmap | IndexEngineType:&lt;string&gt; |
 
 **Note:**
 
