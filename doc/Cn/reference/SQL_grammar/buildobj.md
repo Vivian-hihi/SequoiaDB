@@ -19,7 +19,7 @@ buildobj(field name1,fieldname2,...)</pre>
 {a:3,b:3,c:3}</pre>
 
 <pre class="prettyprint lang-javascript">
-SELECT LAST(a) AS a, b FROM foo.bar GROUP BY b</pre>
+SELECT a, buildobj(d, c) AS d FROM foo.bar</pre>
 
 得到记录
 
