@@ -116,9 +116,11 @@ typedef struct PgColumnDesc_s
 
 typedef struct SdbExprTreeState_s
 {
-   INT32 unsupport_count;
    Index foreign_table_index;   /* range table index of foreign table */
-   Oid foreign_table_id;      
+   Oid foreign_table_id;
+   INT32 total_unsupport_count;
+   INT32 and_unsupport_count ;  /* AND's child node, just impact NOT node*/
+   INT32 or_unsupport_count ;   /* OR/NOT 's child node, impact OR/NOT node*/
 }SdbExprTreeState;
 
 typedef struct PgTableDesc_s
@@ -209,8 +211,7 @@ struct SdbStatisticsCache
 typedef struct SdbStatisticsCache SdbStatisticsCache ;
 
 INT32 sdbRecurExprTree( Node *node, SdbExprTreeState *expr_state, 
-                        sdbbson *condition, ExprContext *exprContext, 
-                        bool *isExistDecimal ) ;
+                        sdbbson *condition, ExprContext *exprContext ) ;
 
 int sdbSetBsonValue( sdbbson *bsonObj, const char *name, Datum valueDatum, 
                      Oid columnType, INT32 columnTypeMod ) ;

@@ -214,20 +214,16 @@ static bool sdbIsShardingKeyChanged( SdbExecState *fdw_state, sdbbson *oldBson,
 static UINT64 sdbbson_iterator_getusecs( sdbbson_iterator *ite ) ;
 
 static INT32 sdbOperExprParamVar( OpExpr *expr, SdbExprTreeState *expr_state, 
-                           sdbbson *condition, ExprContext *exprContext,
-                           bool *isCurrentExistDecimal ) ;
+                           sdbbson *condition, ExprContext *exprContext ) ;
 static INT32 sdbOperExprTwoVar( OpExpr *opr_two_argument, 
                                 SdbExprTreeState *expr_state, 
-                                sdbbson *condition, 
-                                bool *isCurrentExistDecimal ) ;
+                                sdbbson *condition ) ;
 static INT32 sdbOperExpr( OpExpr *opr, SdbExprTreeState *expr_state, 
-                          sdbbson *condition, ExprContext *exprContext, 
-                          bool *isCurrentExistDecimal ) ;
+                          sdbbson *condition, ExprContext *exprContext ) ;
 
 static INT32 sdbScalarArrayOpExpr( ScalarArrayOpExpr *scalaExpr, 
                                  SdbExprTreeState *expr_state, 
-                                 sdbbson *condition, 
-                                 bool *isCurrentExistDecimal ) ;
+                                 sdbbson *condition ) ;
 static INT32 sdbNullTestExpr( NullTest *ntest, SdbExprTreeState *expr_state, 
                               sdbbson *condition ) ;
 static INT32 sdbRecurBoolExpr( BoolExpr *boolexpr, SdbExprTreeState *expr_state, 
@@ -1074,8 +1070,7 @@ error:
 }
 
 INT32 sdbOperExprParamVar( OpExpr *expr, SdbExprTreeState *expr_state, 
-                           sdbbson *condition, ExprContext *exprContext, 
-                           bool *isCurrentExistDecimal )
+                           sdbbson *condition, ExprContext *exprContext )
 {
    INT32 rc               = SDB_OK ;
    char *pgOpName         = NULL ;
@@ -1092,6 +1087,7 @@ INT32 sdbOperExprParamVar( OpExpr *expr, SdbExprTreeState *expr_state,
 
    if ( NULL == exprContext )
    {
+      rc = SDB_INVALIDARG ;
       elog(DEBUG1, "exprContext can't be null") ;
       goto error ;
    }
@@ -1106,6 +1102,7 @@ INT32 sdbOperExprParamVar( OpExpr *expr, SdbExprTreeState *expr_state,
          if ( var->varno != expr_state->foreign_table_index 
               || var->varlevelsup != 0 )
          {
+            rc = SDB_INVALIDARG ;
             elog( DEBUG1, "column is not reconigzed:table_index=%d, varno=%d, "
                "valevelsup=%d", expr_state->foreign_table_index, 
                var->varno, var->varlevelsup ) ;
@@ -1114,8 +1111,9 @@ INT32 sdbOperExprParamVar( OpExpr *expr, SdbExprTreeState *expr_state,
 
          if ( NUMERICOID == var->vartype )
          {
-            *isCurrentExistDecimal = true ;
-            goto done ;
+            rc = SDB_INVALIDARG ;
+            elog( DEBUG1, "exist decimal condition" ) ;
+            goto error ;
          }
 
          varIndex = index ;
@@ -1127,6 +1125,7 @@ INT32 sdbOperExprParamVar( OpExpr *expr, SdbExprTreeState *expr_state,
       }
       else
       {
+         rc = SDB_INVALIDARG ;
          elog( DEBUG1, "unreconigzed expr:type=%d", nodeTag(tmp) ) ;
          goto error ;
       }
@@ -1134,12 +1133,14 @@ INT32 sdbOperExprParamVar( OpExpr *expr, SdbExprTreeState *expr_state,
 
    if ( NULL == var || NULL == param )
    {
+      rc = SDB_INVALIDARG ;
       elog(DEBUG1, "miss argument") ;
       goto error ;
    }
 
    if ( PARAM_EXEC != param->paramkind )
    {
+      rc = SDB_INVALIDARG ;
       elog( DEBUG1, "paramkind error:paramkind=%d", param->paramkind ) ;
       goto error ;
    }
@@ -1148,6 +1149,7 @@ INT32 sdbOperExprParamVar( OpExpr *expr, SdbExprTreeState *expr_state,
    sdbOpName   = sdbOperatorName( pgOpName, ( varIndex <= paramIndex ) ) ;
    if( !sdbOpName )
    {
+      rc = SDB_INVALIDARG ;
       elog( DEBUG1, "operator is not supported1:op=%s", pgOpName ) ;
       goto error ;
    }
@@ -1170,12 +1172,11 @@ INT32 sdbOperExprParamVar( OpExpr *expr, SdbExprTreeState *expr_state,
 done:
    return rc ;
 error:
-   rc = -1 ;
    goto done ;
 }
 
 INT32 sdbOperExprTwoVar( OpExpr *opr_two_argument, SdbExprTreeState *expr_state, 
-                         sdbbson *condition, bool *isCurrentExistDecimal )
+                         sdbbson *condition )
 {
    INT32 rc               = SDB_OK ;
    char *pgOpName         = NULL ;
@@ -1206,8 +1207,9 @@ INT32 sdbOperExprTwoVar( OpExpr *opr_two_argument, SdbExprTreeState *expr_state,
 
          if ( NUMERICOID == argument1->vartype )
          {
-            *isCurrentExistDecimal = true ;
-            goto done ;
+            rc = SDB_INVALIDARG ;
+            elog( DEBUG1, "exist decimal condition" ) ;
+            goto error ;
          }
       }
       else
@@ -1216,6 +1218,7 @@ INT32 sdbOperExprTwoVar( OpExpr *opr_two_argument, SdbExprTreeState *expr_state,
          if ( ( argument2->varno != expr_state->foreign_table_index )
                    || ( argument2->varlevelsup != 0 ) )
          {
+            rc = SDB_INVALIDARG ;
             elog( DEBUG1, "column is not reconigzed:table_index=%d, varno=%d, "
                   "valevelsup=%d", expr_state->foreign_table_index, 
                   argument2->varno, argument2->varlevelsup ) ;
@@ -1224,8 +1227,9 @@ INT32 sdbOperExprTwoVar( OpExpr *opr_two_argument, SdbExprTreeState *expr_state,
 
          if ( NUMERICOID == argument2->vartype )
          {
-            *isCurrentExistDecimal = true ;
-            goto done ;
+            rc = SDB_INVALIDARG ;
+            elog( DEBUG1, "exist decimal condition" ) ;
+            goto error ;
          }
       }
 
@@ -1237,6 +1241,7 @@ INT32 sdbOperExprTwoVar( OpExpr *opr_two_argument, SdbExprTreeState *expr_state,
    sdbOpName   = sdbOperatorName( pgOpName, TRUE ) ;
    if( !sdbOpName )
    {
+      rc = SDB_INVALIDARG ;
       elog( DEBUG1, "operator is not supported2:op=%s", pgOpName ) ;
       goto error ;
    }
@@ -1261,14 +1266,12 @@ INT32 sdbOperExprTwoVar( OpExpr *opr_two_argument, SdbExprTreeState *expr_state,
 done:
    return rc ;
 error:
-   rc = -1 ;
    goto done ;
 
 }
 
 INT32 sdbOperExpr( OpExpr *opr, SdbExprTreeState *expr_state, 
-                   sdbbson *condition, ExprContext *exprContext, 
-                   bool *isCurrentExistDecimal )
+                   sdbbson *condition, ExprContext *exprContext )
 {
    INT32 rc              = SDB_OK ;
    char *pgOpName        = NULL ;
@@ -1282,13 +1285,13 @@ INT32 sdbOperExpr( OpExpr *opr, SdbExprTreeState *expr_state,
    argType = getArgumentType(opr->args) ;
    if ( SDB_UNSUPPORT_ARG_TYPE == argType )
    {
+      rc = SDB_INVALIDARG ;
       goto error ;
    }
    
    if ( SDB_VAR_VAR == argType )
    {
-      rc = sdbOperExprTwoVar( opr, expr_state, condition, 
-                              isCurrentExistDecimal ) ;
+      rc = sdbOperExprTwoVar( opr, expr_state, condition ) ;
       if ( rc != SDB_OK )
       {
          goto error ;
@@ -1298,8 +1301,7 @@ INT32 sdbOperExpr( OpExpr *opr, SdbExprTreeState *expr_state,
    }
    else if ( SDB_PARAM_VAR == argType )
    {
-      rc = sdbOperExprParamVar( opr, expr_state, condition, exprContext,
-                                isCurrentExistDecimal ) ;
+      rc = sdbOperExprParamVar( opr, expr_state, condition, exprContext ) ;
       if ( SDB_OK != rc )
       {
          goto error ;
@@ -1318,6 +1320,7 @@ INT32 sdbOperExpr( OpExpr *opr, SdbExprTreeState *expr_state,
       if ( NULL == var )
       {
          /* var must exist */
+         rc = SDB_INVALIDARG ;
          elog( DEBUG1, " Var is null " ) ;
          goto error ;
       }
@@ -1326,6 +1329,7 @@ INT32 sdbOperExpr( OpExpr *opr, SdbExprTreeState *expr_state,
       if ( ( var->varno != expr_state->foreign_table_index )
              || ( var->varlevelsup != 0 ) )
       {
+         rc = SDB_INVALIDARG ;
          elog( DEBUG1, "column is not reconigzed:table_index=%d, varno=%d, valevelsup=%d", 
                expr_state->foreign_table_index, var->varno, var->varlevelsup ) ;
          goto error ;
@@ -1333,19 +1337,22 @@ INT32 sdbOperExpr( OpExpr *opr, SdbExprTreeState *expr_state,
 
       if ( NUMERICOID == var->vartype )
       {
-         *isCurrentExistDecimal = true ;
-         goto done ;
+         rc = SDB_INVALIDARG ;
+         elog( DEBUG1, "exist decimal condition" ) ;
+         goto error ;
       }
 
       columnName = get_relid_attribute_name( expr_state->foreign_table_id, 
-                                                   var->varattno ) ;
+                                             var->varattno ) ;
 
       const_val = ( Const * )sdbFindArgumentOfType( opr->args, T_Const, 
                                                     &constIndex ) ;
-      if ( NULL == const_val || ( InvalidOid != get_element_type( const_val->consttype ) ) )
+      if ( NULL == const_val || 
+           ( InvalidOid != get_element_type( const_val->consttype ) ) )
       {
          /* const must exist and const is not array */
          /* get_element_type(  )!= InvalidOid indicate const_val is array */
+         rc = SDB_INVALIDARG ;
          elog( DEBUG1, " const_val is null " ) ;
          goto error ;
       }
@@ -1354,6 +1361,7 @@ INT32 sdbOperExpr( OpExpr *opr, SdbExprTreeState *expr_state,
       sdbOpName = sdbOperatorName( pgOpName, ( varIndex <= constIndex ) ) ;
       if( !sdbOpName )
       {
+         rc = SDB_INVALIDARG ;
          elog( DEBUG1, "operator is not supported3:op=%s", pgOpName ) ;
          goto error ;
       }
@@ -1362,6 +1370,7 @@ INT32 sdbOperExpr( OpExpr *opr, SdbExprTreeState *expr_state,
       rc = sdbAppendConstantValue( condition, sdbOpName, const_val ) ;
       if ( SDB_OK != rc )
       {
+         rc = SDB_INVALIDARG ;
          elog( DEBUG1, "operator is not supported4:op=%s", pgOpName ) ;
          goto error ;
       }
@@ -1388,13 +1397,12 @@ INT32 sdbOperExpr( OpExpr *opr, SdbExprTreeState *expr_state,
 done:
    return rc ;
 error:
-   rc = -1 ;
    goto done ;
 }
 
 INT32 sdbScalarArrayOpExpr( ScalarArrayOpExpr *scalaExpr, 
                             SdbExprTreeState *expr_state, 
-                            sdbbson *condition, bool *isCurrentExistDecimal )
+                            sdbbson *condition )
 {
    INT32 rc         = SDB_OK ;
    char *pgOpName   = NULL ;
@@ -1416,6 +1424,7 @@ INT32 sdbScalarArrayOpExpr( ScalarArrayOpExpr *scalaExpr,
    }
    else
    {
+      rc = SDB_INVALIDARG ;
       elog( DEBUG1, "operator is not supported5:op=%d,str=%s", 
             scalaExpr->opno, pgOpName ) ;
       goto error ;
@@ -1426,6 +1435,7 @@ INT32 sdbScalarArrayOpExpr( ScalarArrayOpExpr *scalaExpr,
    if ( NULL == var )
    {
       /* var must exist */
+      rc = SDB_INVALIDARG ;
       elog( DEBUG1, " Var is null " ) ;
       goto error ;
    }
@@ -1433,6 +1443,7 @@ INT32 sdbScalarArrayOpExpr( ScalarArrayOpExpr *scalaExpr,
    if ( ( var->varno != expr_state->foreign_table_index )
           || ( var->varlevelsup != 0 ) )
    {
+      rc = SDB_INVALIDARG ;
       elog( DEBUG1, "column is not reconigzed:table_index=%d, varno=%d, valevelsup=%d", 
             expr_state->foreign_table_index, var->varno, var->varlevelsup ) ;
       goto error ;
@@ -1440,8 +1451,9 @@ INT32 sdbScalarArrayOpExpr( ScalarArrayOpExpr *scalaExpr,
 
    if ( NUMERICOID == var->vartype )
    {
-      *isCurrentExistDecimal = true ;
-      goto done ;
+      rc = SDB_INVALIDARG ;
+      elog( DEBUG1, "exist decimal condition" ) ;
+      goto error ;
    }
 
    columnName = get_relid_attribute_name( expr_state->foreign_table_id, 
@@ -1475,12 +1487,14 @@ INT32 sdbScalarArrayOpExpr( ScalarArrayOpExpr *scalaExpr,
       }
       else
       {
+         rc = SDB_INVALIDARG ;
          goto error ;
       }
    }
 
    if ( ( varCount != 1 )|| ( constCount != 1 ) )
    {
+      rc = SDB_INVALIDARG ;
       elog( DEBUG1, "parameter count error:varCount=%d, constCount=%d", 
             varCount, constCount ) ;
       goto error ;
@@ -1489,7 +1503,6 @@ INT32 sdbScalarArrayOpExpr( ScalarArrayOpExpr *scalaExpr,
 done:
    return rc ;
 error:
-   rc = -1 ;
    goto done ;
 }
 
@@ -1504,12 +1517,14 @@ INT32 sdbNullTestExpr( NullTest *ntest, SdbExprTreeState *expr_state,
 
    if ( ntest->argisrow )
    {
+      rc = SDB_INVALIDARG ;
       elog( DEBUG1, "argisrow is true" ) ;
       goto error ;
    }
 
    if ( T_Var != ( ( Expr * )( ntest->arg ) )->type )
    {
+      rc = SDB_INVALIDARG ;
       elog( DEBUG1, "argument is not var:type=%d", ( ( Expr * )( ntest->arg ) )->type ) ;
       goto error ;
    }
@@ -1518,6 +1533,7 @@ INT32 sdbNullTestExpr( NullTest *ntest, SdbExprTreeState *expr_state,
    if ( ( var->varno != expr_state->foreign_table_index )
           || ( var->varlevelsup != 0 ) )
    {
+      rc = SDB_INVALIDARG ;
       elog( DEBUG1, "column is not reconigzed:table_index=%d, varno=%d, valevelsup=%d", 
             expr_state->foreign_table_index, var->varno, var->varlevelsup ) ;
       goto error ;
@@ -1537,6 +1553,7 @@ INT32 sdbNullTestExpr( NullTest *ntest, SdbExprTreeState *expr_state,
 
          break ;
       default:
+         rc = SDB_INVALIDARG ;
          sdbbson_destroy( &isNullcondition ) ;
          elog( DEBUG1, "nulltesttype error:type=%d", ntest->nulltesttype ) ;
          goto error ;
@@ -1549,7 +1566,6 @@ INT32 sdbNullTestExpr( NullTest *ntest, SdbExprTreeState *expr_state,
 done:
    return rc ;
 error:
-   rc = -1 ;
    goto done ;
 }
 
@@ -1560,8 +1576,8 @@ INT32 sdbRecurBoolExpr( BoolExpr *boolexpr, SdbExprTreeState *expr_state,
    ListCell *cell ;
    char *key = NULL ;
    sdbbson tmpCondition ;
+   SdbExprTreeState tmp_expr_state ;
    int count = 0 ;
-   bool isNextLevelExistDecimal = false ;
 
    switch ( boolexpr->boolop )
    {
@@ -1577,28 +1593,50 @@ INT32 sdbRecurBoolExpr( BoolExpr *boolexpr, SdbExprTreeState *expr_state,
          key = "$not" ;
          break ;
       default:
+         rc = SDB_INVALIDARG ;
          elog( DEBUG1, "unsupported boolean expression type:type=%d", 
-            boolexpr->boolop ) ;
+               boolexpr->boolop ) ;
          goto error ;
    }
+
+   memset( &tmp_expr_state, 0, sizeof(tmp_expr_state) ) ;
+   tmp_expr_state.foreign_table_id      = expr_state->foreign_table_id ;
+   tmp_expr_state.foreign_table_index   = expr_state->foreign_table_index ;
 
    sdbbson_init( &tmpCondition ) ;
    sdbbson_append_start_array( &tmpCondition, key ) ;
    foreach( cell, boolexpr->args )
    {
+      INT32 rcTmp = SDB_OK ;
       Node *bool_arg = ( Node * )lfirst ( cell ) ;
       sdbbson sub_condition ;
       sdbbson_init( &sub_condition ) ;
-      sdbRecurExprTree( bool_arg, expr_state, &sub_condition, exprContext, 
-                        &isNextLevelExistDecimal ) ;
+      rcTmp = sdbRecurExprTree( bool_arg, &tmp_expr_state, &sub_condition, 
+                                exprContext ) ;
       sdbbson_finish( &sub_condition ) ;
 
-      if ( !sdbbson_is_empty( &sub_condition ) )
+      if ( SDB_OK == rcTmp )
       {
-         CHAR arrayIndex[SDB_MAX_KEY_COLUMN_LENGTH + 1] = "" ;
-         sprintf( arrayIndex, "%d", count ) ;
-         sdbbson_append_sdbbson( &tmpCondition, arrayIndex, &sub_condition ) ;
-         count++ ;
+         if ( !sdbbson_is_empty( &sub_condition ) )
+         {
+            CHAR arrayIndex[SDB_MAX_KEY_COLUMN_LENGTH + 1] = "" ;
+            sprintf( arrayIndex, "%d", count ) ;
+            sdbbson_append_sdbbson( &tmpCondition, arrayIndex, 
+                                    &sub_condition ) ;
+            count++ ;
+         }
+      }
+      else
+      {
+         tmp_expr_state.total_unsupport_count++ ;
+         if ( 0 == strcmp( key, "$and" ) )
+         {
+            tmp_expr_state.and_unsupport_count++ ;
+         }
+         else
+         {
+            tmp_expr_state.or_unsupport_count++ ;
+         }
       }
 
       sdbbson_destroy( &sub_condition ) ;
@@ -1606,33 +1644,51 @@ INT32 sdbRecurBoolExpr( BoolExpr *boolexpr, SdbExprTreeState *expr_state,
 
    sdbbson_append_finish_array( &tmpCondition ) ;
    sdbbson_finish( &tmpCondition ) ;
-   if ( !isNextLevelExistDecimal || strcmp( key, "$or" ) != 0 )
+   if ( 0 == tmp_expr_state.total_unsupport_count || 
+        0 == strcmp( key, "$and" ) )
    {
       if ( count > 0 )
       {
          sdbbson_append_elements( condition, &tmpCondition ) ;
       }
    }
+   else // tmp_expr_state.total_unsupport_count > && 0 != strcmp( key, "$and" )
+   {
+      if ( 0 == strcmp( key, "$or" ) && 0 == tmp_expr_state.or_unsupport_count )
+      {
+         if ( count > 0 )
+         {
+            sdbbson_append_elements( condition, &tmpCondition ) ;
+         }
+      }
+   }
+
+   sdbbson_destroy( &tmpCondition ) ;
+   expr_state->total_unsupport_count += tmp_expr_state.total_unsupport_count ; 
+   expr_state->and_unsupport_count   += tmp_expr_state.and_unsupport_count ;
+   if ( 0 != strcmp( key, "$and" ) )
+   {
+      expr_state->or_unsupport_count += tmp_expr_state.or_unsupport_count ; 
+   }
    else
    {
-      // isNextLevelExistDecimal && strcmp( key, "$or" ) == 0
-      // just ignore add this or node
+      /* 
+         do not deliver the or_unsupport_count if we meet the AND
+         let's assume C is unsupported.
+         A or ( B and ( C or D ) )  => A or B
+      */
    }
-   
-   sdbbson_destroy( &tmpCondition ) ;
 
 done:
    return rc ;
 
 error:
-   rc = -1 ;
    goto done ;
 }
 
 /* This is a recurse function to walk over the tree */
 INT32 sdbRecurExprTree( Node *node, SdbExprTreeState *expr_state, 
-                        sdbbson *condition, ExprContext *exprContext, 
-                        bool *isCurrentExistDecimal )
+                        sdbbson *condition, ExprContext *exprContext )
 {
    INT32 rc = SDB_OK ;
    if( NULL == node )
@@ -1663,8 +1719,7 @@ INT32 sdbRecurExprTree( Node *node, SdbExprTreeState *expr_state,
    else if ( IsA( node, ScalarArrayOpExpr ) )
    {
       rc = sdbScalarArrayOpExpr( ( ScalarArrayOpExpr * )node, 
-                                 expr_state, condition, 
-                                 isCurrentExistDecimal ) ;
+                                 expr_state, condition ) ;
       if ( rc != SDB_OK )
       {
          elog( DEBUG1, "sdbRecurScalarArrayOpExpr" ) ;
@@ -1673,8 +1728,7 @@ INT32 sdbRecurExprTree( Node *node, SdbExprTreeState *expr_state,
    }
    else if ( IsA( node, OpExpr ) )
    {
-      rc = sdbOperExpr( ( OpExpr * )node, expr_state, condition, exprContext, 
-                        isCurrentExistDecimal ) ;
+      rc = sdbOperExpr( ( OpExpr * )node, expr_state, condition, exprContext ) ;
       if ( rc != SDB_OK )
       {
          elog( DEBUG1, "sdbRecurOperExpr" ) ;
@@ -1683,15 +1737,15 @@ INT32 sdbRecurExprTree( Node *node, SdbExprTreeState *expr_state,
    }
    else
    {
+      rc = SDB_INVALIDARG ;
       elog( DEBUG1, "node type is not supported:type=%d", nodeTag( node ) ) ;
       goto error ;
    }
 
 done:
-   return SDB_OK ;
+   return rc ;
 
 error:
-   expr_state->unsupport_count++ ;
    goto done ;
 
 }
@@ -1702,7 +1756,7 @@ INT32 sdbGenerateFilterCondition ( Oid foreign_id, RelOptInfo *baserel,
    ListCell *cell = NULL ;
    INT32 rc       = SDB_OK ;
    SdbExprTreeState expr_state ;
-   bool isExistDecimal = false ;
+   BOOLEAN isExistUnsupport = FALSE ;
 
    memset( &expr_state, 0, sizeof( SdbExprTreeState ) ) ;
    expr_state.foreign_table_index = baserel->relid ;
@@ -1712,14 +1766,26 @@ INT32 sdbGenerateFilterCondition ( Oid foreign_id, RelOptInfo *baserel,
    sdbbson_init( condition ) ;
    foreach( cell, baserel->baserestrictinfo )
    {
+      INT32 rcTmp = SDB_OK ;
+      sdbbson subBson ;
       RestrictInfo *info =( RestrictInfo * )lfirst( cell ) ;
-      sdbRecurExprTree( ( Node * )info->clause, &expr_state, condition, NULL,
-                        &isExistDecimal ) ;
-      if( expr_state.unsupport_count > 0 )
+      sdbbson_init( &subBson ) ;
+      expr_state.total_unsupport_count = 0 ;
+      rcTmp = sdbRecurExprTree( ( Node * )info->clause, &expr_state, &subBson, 
+                                NULL ) ;
+      sdbbson_finish( &subBson ) ;
+      if( SDB_OK == rcTmp )
       {
-         sdbbson_destroy( condition ) ;
-         sdbbson_init( condition ) ;
-         break ;
+         if ( !sdbbson_is_empty( &subBson ) )
+         {
+            sdbbson_append_elements( condition, &subBson ) ;
+         }
+      }
+
+      sdbbson_destroy( &subBson ) ;
+      if ( expr_state.total_unsupport_count > 0 )
+      {
+         isExistUnsupport = TRUE ;
       }
    }
 
@@ -1732,13 +1798,8 @@ INT32 sdbGenerateFilterCondition ( Oid foreign_id, RelOptInfo *baserel,
       sdbbson_finish( condition ) ;
    }
 
-   //sdbPrintBson( condition, DEBUG1 ) ;
-
-   if ( expr_state.unsupport_count > 0 )
+   if ( isExistUnsupport )
    {
-      sdbbson_destroy( condition ) ;
-      sdbbson_init( condition ) ;
-      sdbbson_finish( condition ) ;
       return -1 ;
    }
 

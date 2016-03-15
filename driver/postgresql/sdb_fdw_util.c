@@ -1189,7 +1189,6 @@ int sdbGenerateRescanCondition(SdbExecState *fdw_state, PlanState *planState,
 {
    ListCell *cell     = NULL ;
    int rc             = SDB_OK ;
-   bool isExitDecimal = false ;
    SdbExprTreeState expr_state ;
 
    if ( bms_is_empty(planState->chgParam) )
@@ -1205,20 +1204,31 @@ int sdbGenerateRescanCondition(SdbExecState *fdw_state, PlanState *planState,
    sdbbson_init( rescanCondition ) ;
    foreach( cell, planState->qual )
    {
+      INT32 rcTmp = SDB_OK ;
+      sdbbson subBson ;
       RestrictInfo *info =(RestrictInfo *)lfirst(cell) ;
-      sdbRecurExprTree((Node *)info->clause, &expr_state, rescanCondition,
-                       planState->ps_ExprContext, &isExitDecimal ) ;
-      if( expr_state.unsupport_count > 0 )
+      sdbbson_init( &subBson ) ;
+      rcTmp = sdbRecurExprTree( (Node *)info->clause, &expr_state, 
+                                &subBson, planState->ps_ExprContext ) ;
+      sdbbson_finish( &subBson ) ;
+      if( SDB_OK == rcTmp )
       {
-         sdbbson_destroy(rescanCondition) ;
-         goto error ;
+         if ( !sdbbson_is_empty( &subBson ) )
+         {
+            sdbPrintBson( &subBson, DEBUG1, "rescan_sub" ) ;
+            sdbbson_append_elements( rescanCondition, &subBson ) ;
+         }
       }
+
+      sdbbson_destroy( &subBson ) ;
    }
 
    rc = sdbbson_finish( rescanCondition ) ;
    if ( SDB_OK != rc )
    {
       sdbbson_destroy( rescanCondition ) ;
+      sdbbson_init( rescanCondition ) ;
+      sdbbson_finish( rescanCondition ) ;
    }
 
 done:
@@ -1313,8 +1323,8 @@ sdbbson *SdbAllocRecord( SdbRecordCache *recordCache, UINT64 *recordID )
 sdbbson *SdbGetRecord( SdbRecordCache *recordCache, UINT64 recordID )
 {
    INT32 index = ( INT32 ) recordID ;
-   elog( DEBUG1, "SdbGetRecord:usedCount=%d,index=%d", 
-         recordCache->usedCount, index ) ;
+//   elog( DEBUG1, "SdbGetRecord:usedCount=%d,index=%d", 
+//         recordCache->usedCount, index ) ;
 
    if ( index >= recordCache->size )
    {
@@ -1335,8 +1345,8 @@ sdbbson *SdbGetRecord( SdbRecordCache *recordCache, UINT64 recordID )
 void SdbReleaseRecord( SdbRecordCache *recordCache, UINT64 recordID )
 {
    INT32 index = ( INT32 ) recordID ;
-   elog( DEBUG1, "SdbReleaseRecord:usedCount=%d,index=%d", 
-         recordCache->usedCount, index ) ;
+//   elog( DEBUG1, "SdbReleaseRecord:usedCount=%d,index=%d", 
+//         recordCache->usedCount, index ) ;
 
    if ( index >= recordCache->size || index < 0 )
    {
