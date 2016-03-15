@@ -440,8 +440,7 @@ class collection(object):
          raise
 
    def save(self, doc):
-      """save a documents in current collection, insert if
-      no(matching) _id.
+      """save a documents in current collection, insert if no(matching) _id.
       Parameters:
          Name          Type  Info:
          doc           dict  The updating rule.
@@ -455,10 +454,6 @@ class collection(object):
       if not isinstance(doc, dict):
          raise SDBTypeError("rule must be an instance of dict")
 
-      #if doc.get("_id") is not None:
-      #   idstr = doc.pop("_id")
-      #   oid["_id"] = ObjectId(doc.pop("_id"))
-      #   rule["$set"] = doc
       hasOid = False
       if "_id" in doc:
          hasOid = True
