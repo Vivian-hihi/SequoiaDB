@@ -439,6 +439,42 @@ class collection(object):
       except SDBBaseError:
          raise
 
+   def save(self, doc):
+      """save a documents in current collection, insert if
+      no(matching) _id.
+      Parameters:
+         Name          Type  Info:
+         doc           dict  The updating rule.
+      Exceptions:
+         pysequoiadb.error.SDBTypeError
+         pysequoiadb.error.SDBBaseError
+      Note:
+         It won't work to update the "ShardingKey" field, but the other fields
+               take effect.
+      """
+      if not isinstance(doc, dict):
+         raise SDBTypeError("rule must be an instance of dict")
+
+      #if doc.get("_id") is not None:
+      #   idstr = doc.pop("_id")
+      #   oid["_id"] = ObjectId(doc.pop("_id"))
+      #   rule["$set"] = doc
+      hasOid = False
+      if "_id" in doc:
+         hasOid = True
+         oidv = doc.pop("_id")
+         if isinstance(oidv, dict):
+            oid = ObjectId(oidv["$oid"])
+         elif isinstance(oidv, basestring):
+            oid = ObjectId(oidv)
+         elif isinstance(oidv, ObjectId):
+            oid = oidv
+
+      if hasOid:
+         return self.upsert({"$set":doc}, condition={"_id":oid})
+      else:
+         return self.insert(doc)
+
    def delete(self, **kwargs):
       """Delete the matching documents in current collection.
 

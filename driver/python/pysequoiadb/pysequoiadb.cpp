@@ -1589,6 +1589,9 @@ __METHOD_IMP(cl_update)
    const bson::BSONObj *rule      = NULL ;
    const bson::BSONObj *condition = NULL ;
    const bson::BSONObj *hint      = NULL ;
+   bson::BSONObjBuilder bob ;
+   bson::BSONElement e ;
+
 
    if ( !PARSE_PYTHON_ARGS( args, "OOOO", &obj, &bson_rule,
       &bson_condition, &bson_hint ) )
@@ -1601,8 +1604,19 @@ __METHOD_IMP(cl_update)
    CAST_PYBSON_TO_CPPBSON( bson_rule, rule ) ;
    CAST_PYBSON_TO_CPPBSON( bson_condition, condition ) ;
    CAST_PYBSON_TO_CPPBSON( bson_hint, hint ) ;
+   if ( 0 == condition->nFields() && condition->hasField( "_id" ) )
+   {
+      if ( condition->getObjectID(e) )
+      {
+         bob.append( "_id", e.OID() );
+      }
+      rc = cl->update( *rule, bob.obj(), *hint ) ;
+   }
+   else
+   {
+      rc = cl->update( *rule, *condition, *hint ) ;
+   }
 
-   rc = cl->update( *rule, *condition, *hint ) ;
    if ( rc )
    {
       goto done ;
