@@ -44,7 +44,7 @@
 
 using namespace bson ;
 
-#define SPD_READ_TIMEOUT      1
+#define SPD_READ_TIMEOUT      1000
 const INT32 SPD_MSG_MAX_LEN = 17 * 1024 *1024 ;
 #define SPD_READ_PAGE         4096
 

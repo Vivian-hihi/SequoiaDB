@@ -96,8 +96,8 @@ BOOLEAN ossIsProcessRunning ( OSSPID pid )
          {
             if ( status[0] == PROC_STATUS_ZOMBIE )
             {
-               PD_LOG( PDERROR, "Process[%s, %d] is zombie", procName,
-                       readpid ) ;
+               PD_LOG( PDERROR, "Process[%s, %d, parent: %d] is zombie",
+                       procName, readpid, ppid ) ;
                isRunning = FALSE ;
             }
          }
@@ -118,6 +118,7 @@ void ossCloseProcessHandle( OSSHANDLE & handle )
 #define OSS_INVALID_MSG_QUEUE_ID -1
 // Linux wait child process
 // It calls waitpid until the given pid stop
+// When the pid is still running, will return SDB_TIMEOUT
 // PD_TRACE_DECLARE_FUNCTION ( SDB_OSSWAITCHLD, "ossWaitChild" )
 INT32 ossWaitChild ( OSSPID pid, ossResultCode &result, BOOLEAN block )
 {
@@ -133,11 +134,16 @@ INT32 ossWaitChild ( OSSPID pid, ossResultCode &result, BOOLEAN block )
       err = errno ;
    } while ( -1 == rc && EINTR == err ) ;
 
+   // if the child already exist
+   if ( 0 == rc )
+   {
+      rc = SDB_TIMEOUT ;
+   }
    // if we can get return code or the child doesn't exist
-   if ( -1 == rc || 0 == rc )
+   else if ( -1 == rc )
    {
       // child already terminated
-      if ( -1 == rc && ECHILD == err )
+      if ( ENOENT == err || ECHILD == err )
       {
          result.termcode = OSS_EXIT_NORMAL ;
          result.exitcode = 0 ;
@@ -257,7 +263,7 @@ static INT32 ossCreateList ( const CHAR *pArguments,
          // copy original arguments to new memory
          ossMemcpy ( pTempMem, pArguments, bufferLen ) ;
          // set the last argument to all space
-         ossMemset ( &pTempMem[bufferLen], ' ',
+         ossMemset ( &pTempMem[bufferLen], 0,
                      OSS_RENAME_PROCESS_BUFFER_LEN-bufferLen ) ;
          // set last byte to two '\0'
          pTempMem[OSS_RENAME_PROCESS_BUFFER_LEN-1] = '\0' ;
@@ -604,15 +610,25 @@ INT32 ossExec ( const CHAR * program,
          retcode = ossWaitChild ( pid, result ) ;
          if ( retcode )
          {
-            PD_LOG ( PDERROR, "Failed to wait for child, rc = %d", retcode ) ;
-            goto error ;
+            PD_LOG( PDERROR, "Failed to wait for child[%d], rc: %d",
+                    pid, retcode ) ;
+            /// not report error
          }
-         PD_LOG ( ( (0==result.termcode) && (0==result.exitcode) ) ?
-                  PDINFO:PDERROR,
-                  "Process %d is terminated with termcode %d, exitcode %d", pid,
-                  result.termcode, result.exitcode ) ;
-         // if a message exists on the queue, then exec() failed, and let's get
-         // failed message
+         else
+         {
+            if ( 0 == result.termcode && 0 == result.exitcode )
+            {
+               PD_LOG( PDINFO, "Process %d is terminated normally", pid ) ;
+            }
+            else
+            {
+               PD_LOG( PDERROR, "Process %d is terminated with termcode %d, "
+                       "exitcode %d", pid, result.termcode, result.exitcode ) ;
+            }
+         }
+
+         // if a message exists on the queue, then exec() failed,
+         // and let's get failed message
          msgRecvBytes = msgrcv ( msgQueue, &failedMessage,
                                  sizeof(failedMessage),
                                  0, IPC_NOWAIT ) ;
@@ -635,8 +651,8 @@ INT32 ossExec ( const CHAR * program,
                // good
                if ( retcode != 0 )
                {
-                  PD_LOG ( PDERROR, "Cannot find msg in queue, retcode=%d",
-                           retcode ) ;
+                  PD_LOG ( PDERROR, "Cannot find msg in queue, err=%d, "
+                           "retcode=%d", err, retcode ) ;
                   rc = retcode ;
                   goto error ;
                }
@@ -649,9 +665,14 @@ INT32 ossExec ( const CHAR * program,
          }
          else
          {
-            PD_LOG ( PDERROR, "Error receive from queue, retcode=%d", retcode );
+            PD_LOG ( PDERROR, "Error receive from queue, retcode=%d",
+                     msgRecvBytes ) ;
             goto error ;
          }
+      }
+      else
+      {
+         rc = retcode ;
       } // if ( SDB_OK == retcode )
    } // if ( OSS_EXEC_SSAVE & exec_flag )
    else

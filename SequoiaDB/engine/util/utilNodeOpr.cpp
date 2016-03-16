@@ -82,7 +82,7 @@ namespace engine
 #endif // _LINUX
    }
 
-   #define UTIL_NODE_PIPE_TIMEOUT         ( 1 )
+   #define UTIL_NODE_PIPE_TIMEOUT         ( 1000 )
    #define UTIL_NODE_OPEN_PIPE_TIMEOUT    ( 0 )
    #define UTIL_NODE_PIPE_BUFFSZ          ( 1024 )
 

@@ -58,7 +58,8 @@ namespace engine
 
    public:
       /*
-         timeout is ms, ignore when isBackground = TRUE
+         timeout is ms, ignored when isBackground = TRUE
+         dupOut: whether duplicate the exe's stdout
       */
       INT32 exec( const CHAR *cmd, UINT32 &exit,
                   BOOLEAN isBackground = FALSE,
@@ -66,7 +67,7 @@ namespace engine
                   BOOLEAN needResize = FALSE,
                   OSSHANDLE *pHandle = NULL,
                   BOOLEAN addShellPrefix = FALSE,
-                  BOOLEAN usePipe = TRUE ) ;
+                  BOOLEAN dupOut = TRUE ) ;
 
       INT32 done() ;
 

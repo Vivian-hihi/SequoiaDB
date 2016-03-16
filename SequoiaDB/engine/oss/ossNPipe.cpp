@@ -409,7 +409,7 @@ INT32 ossCreateNamedPipe ( const CHAR *name,
    ossStrncpy ( handle._name, fullName.c_str(), OSS_NPIPE_MAX_NAME_LEN + 1 ) ;
    handle._handle = CreateNamedPipe ( lpwstrName, openMode, pipeMode,
                                       numInstances, outboundBufferSize,
-                                      inboundBufferSize, defaultTimeout*1000,
+                                      inboundBufferSize, defaultTimeout,
                                       NULL ) ;
    if ( INVALID_HANDLE_VALUE == handle._handle )
    {
@@ -662,7 +662,7 @@ INT32 ossConnectNamedPipe ( OSSNPIPE &handle,
       }
       else
       {
-         connectTimeout = timeout * 1000 ;
+         connectTimeout = timeout ;
       }
       // wait until something arrive
       rc = ossWaitInterrupt ( handle._overlapped.hEvent,
@@ -718,7 +718,7 @@ INT32 ossReadNamedPipe ( OSSNPIPE &handle,
          }
          else
          {
-            timeWait = timeout * 1000 ;
+            timeWait = timeout ;
          }
          // wait for interrupt
          rc = ossWaitInterrupt ( handle._overlapped.hEvent, timeWait ) ;
@@ -1213,8 +1213,8 @@ INT32 ossReadNamedPipe ( OSSNPIPE &handle,
    {
       FD_ZERO ( &fds ) ;
       FD_SET ( handle._handle, &fds ) ;
-      selectTimeout.tv_sec = timeout ;
-      selectTimeout.tv_usec = 0 ;
+      selectTimeout.tv_sec = timeout / 1000 ;
+      selectTimeout.tv_usec = ( timeout % 1000 ) * 1000 ;
       rc = select ( handle._handle+1, &fds, NULL, NULL, &selectTimeout ) ;
       if ( 0 == rc )
       {

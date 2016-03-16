@@ -40,6 +40,7 @@
 #endif // _WINDOWS
 
 #define SPT_CMD_RUNNER_MAX_READ_BUF    ( 4 * 1024 * 1024 )
+#define SPT_CMD_MONITOR_ONCE_TIME      ( 10 )   // ms
 
 namespace engine
 {
@@ -116,7 +117,8 @@ namespace engine
 
       while( TRUE )
       {
-         onceTime = timeout > OSS_ONE_SEC ? OSS_ONE_SEC : timeout ;
+         onceTime = timeout > SPT_CMD_MONITOR_ONCE_TIME ?
+                    SPT_CMD_MONITOR_ONCE_TIME : timeout ;
          rc = _event.wait( onceTime ) ;
          if ( SDB_TIMEOUT != rc )
          {
@@ -128,13 +130,12 @@ namespace engine
          // we terminate the thread if the start thread is finished
          if ( _stop )
          {
-
             TerminateThread( _pThread->native_handle(), 0 ) ;
             _hasRead = TRUE ;
             _event.signal() ;
             continue ;
          }
-#endif //_WINDOWS         
+#endif //_WINDOWS
          if ( timeout <= 0 )
          {
             PD_LOG( PDWARNING, "Monitor timeout" ) ;
@@ -169,8 +170,8 @@ namespace engine
                               INT64 timeout,
                               BOOLEAN needResize,
                               OSSHANDLE *pHandle,
-                              BOOLEAN addShellPrefix, 
-                              BOOLEAN usePipe )
+                              BOOLEAN addShellPrefix,
+                              BOOLEAN dupOut )
    {
       INT32 rc = SDB_OK ;
       SDB_ASSERT( NULL != cmd, "can not be null" ) ;
@@ -185,9 +186,11 @@ namespace engine
       std::vector<std::string> vecArgs ;
 #endif // _LINUX
 
+      _timeout = -1 ;
       if ( !isBackground )
       {
          flags |= OSS_EXEC_SSAVE ;
+         _timeout = timeout ;
       }
 
       if ( !needResize )
@@ -197,7 +200,6 @@ namespace engine
 
       res.exitcode = 0 ;
       res.termcode = 0 ;
-      _timeout     = timeout ;
 
 #if defined( _LINUX )
       if ( addShellPrefix )
@@ -225,23 +227,23 @@ namespace engine
          goto error ;
       }
 
+      done() ;
+
       _event.signal() ;
       _monitorEvent.signal() ;
       _hasRead = FALSE ;
       _readResult = SDB_OK ;
       _outStr = "" ;
-      done() ;
 
-      if ( usePipe )
+      if ( !dupOut )
       {
-         rc = ossExec( arguments, arguments, NULL, flags,
-                       _id, res, NULL, &_out, this, pHandle ) ;
+         _hasRead = TRUE ;
       }
-      else
-      {
-         rc = ossExec( arguments, arguments, NULL, flags,
-                       _id, res, NULL, &_out, NULL, pHandle ) ;
-      }
+
+      rc = ossExec( arguments, arguments, NULL, flags,
+                    _id, res, NULL, dupOut ? &_out : NULL,
+                    dupOut ? this : NULL,
+                    pHandle ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to exec cmd:%s, rc:%d",
@@ -364,9 +366,9 @@ namespace engine
       _stop = TRUE ;
       if ( OSS_INVALID_PID != _id )
       {
+         _monitorEvent.wait() ;
          ossCloseNamedPipe( _out ) ;
          _id = OSS_INVALID_PID ;
-         _monitorEvent.wait() ;
       }
       if ( _pThread )
       {

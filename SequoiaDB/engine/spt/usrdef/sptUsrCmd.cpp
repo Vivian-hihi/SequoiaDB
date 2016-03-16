@@ -61,6 +61,8 @@ namespace engine
       JS_ADD_MEMBER_FUNC( "getCommand", getCommand )
    JS_MAPPING_END()
 
+   #define SPT_USER_CMD_ONCE_SLEEP_TIME            ( 2 )
+
    _sptUsrCmd::_sptUsrCmd()
    {
       _retCode    = 0 ;
@@ -212,8 +214,17 @@ namespace engine
       INT32 rc = SDB_OK ;
       string ev ;
       ossCmdRunner runner ;
-      UINT32 useShell = TRUE ;
-      UINT32 usePipe  = TRUE ;
+      UINT32 useShell = 1 ;
+      UINT32 timeout  = 100 ;
+      OSSHANDLE processHandle = (OSSHANDLE)0 ;
+#if defined( _LINUX )
+      struct sigaction    ignore ;
+      struct sigaction    savechild ;
+      sigset_t            childmask ;
+      sigset_t            savemask ;
+      BOOLEAN             restoreSigMask         = FALSE ;
+      BOOLEAN             restoreSIGCHLDHandling = FALSE ;
+#endif // _LINUX
 
       _command.clear() ;
 
@@ -233,10 +244,11 @@ namespace engine
          detail = BSON( SPT_ERR << "environment should be a string" ) ;
          goto error ;
       }
-      else if ( SDB_OK == rc )
+      else if ( SDB_OK == rc && !ev.empty() )
       {
          _command += " " ;
          _command += ev ;
+         utilStrTrim( _command ) ;
       }
 
       // useShell, default : 1
@@ -249,20 +261,52 @@ namespace engine
       }
       rc = SDB_OK ;
 
-      // usePipe, default : 1
-      rc = arg.getNative( 3, (void*)&usePipe, SPT_NATIVE_INT32 ) ;
+      // timeout, default : 100
+      rc = arg.getNative( 3, (void*)&timeout, SPT_NATIVE_INT32 ) ;
       if ( SDB_OK != rc && SDB_OUT_OF_BOUND != rc )
       {
          rc = SDB_INVALIDARG ;
-         detail = BSON( SPT_ERR << "usePipe should be a number" ) ;
+         detail = BSON( SPT_ERR << "timeout should be a number" ) ;
          goto error ;
       }
       rc = SDB_OK ;
 
+#if defined( _LINUX )
+      // we should block SIGCHLD and rembmer caller's mask
+      sigemptyset ( &childmask ) ;
+      sigaddset ( &childmask, SIGCHLD ) ;
+      // set new mask, save old mask
+      rc = pthread_sigmask( SIG_BLOCK, &childmask, &savemask ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to block sigchld, err=%d", rc ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+      // once we changed signal mask, we have to restore it later
+      restoreSigMask = TRUE ;
+
+      // change sigchld action to default
+      ignore.sa_handler = SIG_DFL ;
+      sigemptyset ( &ignore.sa_mask ) ;
+      ignore.sa_flags = 0 ;
+      rc = sigaction ( SIGCHLD, &ignore, &savechild ) ;
+      if ( rc < 0 )
+      {
+         PD_LOG ( PDERROR, "Failed to run sigaction, err = %d", rc ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+      // once we change signal handler, we have to restore it later
+      restoreSIGCHLDHandling = TRUE ;
+#endif //_LINUX
+
       _strOut = "" ;
       _retCode = 0 ;
-      rc = runner.exec( _command.c_str(), _retCode, TRUE, -1, FALSE, NULL,
-                        useShell ? TRUE : FALSE, usePipe ? TRUE : FALSE ) ;
+      rc = runner.exec( _command.c_str(), _retCode, TRUE, -1, FALSE,
+                        timeout > 0 ? &processHandle : NULL,
+                        useShell ? TRUE : FALSE,
+                        timeout > 0 ? TRUE : FALSE ) ;
       if ( SDB_OK != rc )
       {
          stringstream ss ;
@@ -273,26 +317,67 @@ namespace engine
       else
       {
          OSSPID pid = runner.getPID() ;
-         rval.setNativeVal( "", NumberInt, (const void*)&pid ) ;
-
-         if ( usePipe )
+         if ( 0 != processHandle )
          {
-            ossSleep( 100 ) ;
-            if ( !ossIsProcessRunning( pid ) )
+            UINT32 times = 0 ;
+            while ( times < timeout )
             {
-               rc = runner.read( _strOut ) ;
-               if ( rc )
+               if ( ossIsProcessRunning( pid ) )
                {
-                  stringstream ss ;
-                  ss << "read run command[" << _command << "] result failed" ;
-                  detail = BSON( SPT_ERR << ss.str() ) ;
-                  goto error ;
+                  ossSleep( SPT_USER_CMD_ONCE_SLEEP_TIME ) ;
+                  times += SPT_USER_CMD_ONCE_SLEEP_TIME ;
+               }
+               else
+               {
+                  /// get exitcode and out string
+                  rc = ossGetExitCodeProcess( processHandle, _retCode ) ;
+                  if ( rc )
+                  {
+                     stringstream ss ;
+                     ss << "get exit code from process[ " << runner.getPID()
+                        << " ] failed" ;
+                     detail = BSON( SPT_ERR << ss.str() ) ;
+                     goto error ;
+                  }
+                  rc = runner.read( _strOut ) ;
+                  if ( rc )
+                  {
+                     stringstream ss ;
+                     ss << "read run command[" << _command
+                        << "] result failed" ;
+                     detail = BSON( SPT_ERR << ss.str() ) ;
+                     goto error ;
+                  }
+
+                  if ( SDB_OK != _retCode )
+                  {
+                     detail = BSON( SPT_ERR << _strOut ) ;
+                     rc = _retCode ;
+                     goto error ;
+                  }
+                  break ;
                }
             }
          }
+
+         rval.setNativeVal( "", NumberInt, (const void*)&pid ) ;
       }
 
    done:
+      if ( 0 != processHandle )
+      {
+         ossCloseProcessHandle( processHandle ) ;
+      }
+#if defined( _LINUX )
+      if ( restoreSIGCHLDHandling )
+      {
+         sigaction ( SIGCHLD, &savechild, NULL ) ;
+      }
+      if ( restoreSigMask )
+      {
+         pthread_sigmask ( SIG_SETMASK, &savemask, NULL ) ;
+      }
+#endif // _LINUX
       return rc ;
    error:
       goto done ;
@@ -308,9 +393,9 @@ namespace engine
          << "   run( cmd, [args], [timeout], [useShell] )  " << endl
          << "        timeout(ms), default 0: never timeout," << endl
          << "        useShell 0/1, default 1" << endl
-         << "   start( cmd, [args], [useShell], [usePipe] )  " << endl 
+         << "   start( cmd, [args], [useShell], [timeout] )  " << endl
          << "          useShell 0/1, default 1" << endl
-         << "          usePipe 0/1, default 1" << endl
+         << "          timeout(ms), default 100" << endl
          << "   getCommand()" << endl
          << "   getLastRet()" << endl
          << "   getLastOut()" << endl ;

@@ -144,13 +144,13 @@ INT32 ossCreateNamedPipe ( const CHAR *name,
                            UINT32 numInstances,       // ignore on linux
                            // unit: second
                            // can be OSS_NPIPE_INFINITE_TIMEOUT
-                           SINT32 defaultTimeout,
+                           SINT32 defaultTimeout,     // ms
                            OSSNPIPE &handle,
                            const CHAR *pRootPath = OSS_NPIPE_LOCAL_PREFIX ) ;
 
 INT32 ossOpenNamedPipe ( const CHAR *name,
                          UINT32 action,
-                         SINT32 openTimeout, // ignore on linux
+                         SINT32 openTimeout, // ignore on linux, ms
                          OSSNPIPE &handle,
                          const CHAR *pRootPath = OSS_NPIPE_LOCAL_PREFIX ) ;
 
@@ -163,7 +163,7 @@ INT32 ossReadNamedPipe ( OSSNPIPE &handle,
                          CHAR *pBuffer,
                          INT64 bufSize,
                          INT64 *bufRead,
-                         SINT32 timeout = OSS_NPIPE_INFINITE_TIMEOUT ) ;
+                         SINT32 timeout = OSS_NPIPE_INFINITE_TIMEOUT ) ; // ms
 
 INT32 ossWriteNamedPipe ( OSSNPIPE &handle,
                           const CHAR *pBuffer,

@@ -169,6 +169,10 @@ INT32 ossStopService( const CHAR *serviceName,
 
 #elif defined (_LINUX)
 
+/*
+   It calls waitpid until the given pid stop
+   When the pid is still running, will return SDB_TIMEOUT
+*/
 INT32 ossWaitChild ( OSSPID pid, ossResultCode &result,
                      BOOLEAN block = TRUE ) ;
 void  ossEnableNameChanges ( const INT32 argc, CHAR **pArgv0 ) ;
