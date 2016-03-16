@@ -172,6 +172,20 @@ INT32 _mongoSession::run()
          }
          pBuff[ msgSize ] = 0 ;
          {
+            if (_authed)
+            {
+               // authentication passed
+               // set session attribute, read from master
+               if ( !_masterRead )
+               {
+                  rc = _setSeesionAttr() ;
+                  if ( SDB_OK != rc )
+                  {
+                     goto error ;
+                  }
+               }
+            }
+
             // make sure buffers are empty for coming msg
             _resetBuffers() ;
             // convert msg first
@@ -205,22 +219,7 @@ INT32 _mongoSession::run()
                rc = _processMsg( pInMsg ) ;
                if ( SDB_OK == rc )
                {
-                  MsgHeader *hdr = (MsgHeader *)pInMsg ;
-                  if ( MSG_AUTH_VERIFY_REQ == hdr->opCode )
-                  {
-                     _authed = TRUE ;
-                  }
-
-                  // operation success
-                  // set session attribute
-                  if ( !_masterRead )
-                  {
-                     rc = _setSeesionAttr() ;
-                     if ( SDB_OK != rc )
-                     {
-                        goto error ;
-                     }
-                  }
+                  _authed = TRUE ;
                }
 
                rc = _converter.reConvert( _inBuffer, &_replyHeader ) ;
