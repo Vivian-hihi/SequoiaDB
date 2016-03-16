@@ -172,20 +172,6 @@ INT32 _mongoSession::run()
          }
          pBuff[ msgSize ] = 0 ;
          {
-            if (_authed)
-            {
-               // authentication passed
-               // set session attribute, read from master
-               if ( !_masterRead )
-               {
-                  rc = _setSeesionAttr() ;
-                  if ( SDB_OK != rc )
-                  {
-                     goto error ;
-                  }
-               }
-            }
-
             // make sure buffers are empty for coming msg
             _resetBuffers() ;
             // convert msg first
