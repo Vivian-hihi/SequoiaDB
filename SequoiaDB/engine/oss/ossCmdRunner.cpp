@@ -35,10 +35,6 @@
 #include "ossMem.hpp"
 #include "ossUtil.hpp"
 
-#ifndef _WINDOWS
-#include "signal.h"
-#endif // _WINDOWS
-
 #define SPT_CMD_RUNNER_MAX_READ_BUF    ( 4 * 1024 * 1024 )
 #define SPT_CMD_MONITOR_ONCE_TIME      ( 10 )   // ms
 
