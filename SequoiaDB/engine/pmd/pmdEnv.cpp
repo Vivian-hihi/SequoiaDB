@@ -351,12 +351,16 @@ namespace engine
          goto error ;
       }
 
+      /// ignore the SIGPIPE
+      signal( SIGPIPE, SIG_IGN ) ;
+
       // other signal
       sigSet.fillSet () ;
       sigSet.sigDel ( SIGSEGV ) ;
       sigSet.sigDel ( SIGBUS ) ;
       sigSet.sigDel ( SIGALRM ) ;
       sigSet.sigDel ( SIGPROF ) ;
+      sigSet.sigDel ( SIGPIPE ) ;
       sigSet.sigDel ( OSS_STACK_DUMP_SIGNAL ) ;
       sigSet.sigDel ( OSS_STACK_DUMP_SIGNAL_INTERNAL ) ;
       sigSet.sigDel ( OSS_TEST_SIGNAL ) ;
