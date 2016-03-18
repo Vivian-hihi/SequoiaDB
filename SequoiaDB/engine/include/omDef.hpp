@@ -489,6 +489,7 @@ namespace engine
    #define  OM_REST_BUSINESS_TYPE            OM_BSON_BUSINESS_TYPE
    #define  OM_BSON_DEPLOY_MOD_LIST          "DeployModList"
    #define  OM_BSON_DEPLOY_MOD               "DeployMod"
+   #define  OM_BSON_SEPARATE_CONFIG          "SeparateConfig"
    #define  OM_BSON_PROPERTY_ARRAY           "Property"
    #define  OM_BSON_PROPERTY_NAME            "Name"
    #define  OM_BSON_PROPERTY_TYPE            "Type"

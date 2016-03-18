@@ -889,7 +889,6 @@ namespace engine
                                             std::set<std::string> &IPs )
    {
       INT32 rc = SDB_OK ;
-      INT32 len = 0 ;
       const CHAR *pCur = input ;
       const CHAR *pBegin = input ;
       while( TRUE )

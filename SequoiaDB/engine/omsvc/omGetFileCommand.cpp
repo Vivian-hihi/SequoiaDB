@@ -42,6 +42,7 @@
 #include "ossProc.hpp"
 #include <set>
 #include <stdlib.h>
+#include <sstream>
 
 using namespace bson;
 using namespace boost::property_tree;
@@ -3514,6 +3515,7 @@ namespace engine
       string businessType ;
       string deployMod ;
       string businessName ;
+      string separateConfig ;
       string file ;
       list<BSONObj> deployModList ;
       list<BSONObj>::iterator iterList ;
@@ -3559,10 +3561,13 @@ namespace engine
          goto error ;
       }
 
+      separateConfig = oneDeployMod.getStringField( OM_BSON_SEPARATE_CONFIG ) ;
+
       builder.append( OM_BSON_FIELD_CLUSTER_NAME, businessName ) ;
       builder.append( OM_BSON_BUSINESS_TYPE, businessType ) ;
       builder.append( OM_BSON_DEPLOY_MOD, deployMod ) ;
       builder.append( OM_BSON_BUSINESS_NAME, businessName ) ;
+      builder.append( OM_BSON_SEPARATE_CONFIG, separateConfig ) ;
       /*{
            "Property": [ { "Name": "replica_num", "Type": "int", "Default": "1", 
                            "Valid": "1", "Display": "edit box", "Edit": "false", 
@@ -4098,6 +4103,40 @@ namespace engine
       goto done ;
    }
 
+   INT32 omConfigBusinessCommand::_buildConfigFilePath( const string &businessType,
+                                                        const string &deployMod,
+                                                        const string &separateConfig,
+                                                        string &configFilePath)
+   {
+      INT32 rc = SDB_OK ;
+      stringstream path;
+      BOOLEAN sepCfg = FALSE ;
+
+      SDB_ASSERT( businessType != "", "empty businessType" ) ;
+      SDB_ASSERT( deployMod != "", "empty deployMod" ) ;
+
+      path << _rootPath ;
+      if ( OSS_FILE_SEP != _rootPath.substr( _rootPath.length() - 1, 1 ) )
+      {
+         path << OSS_FILE_SEP ;
+      }
+      path << OM_BUSINESS_CONFIG_SUBDIR
+           << OSS_FILE_SEP
+           << businessType ;
+      ossStrToBoolean( separateConfig.c_str(), &sepCfg ) ;
+      if ( sepCfg )
+      {
+         path << "_" << deployMod ;
+      }
+      path << OM_CONFIG_ITEM_FILE_NAME
+           << _languageFileSep
+           << OM_CONFIG_FILE_TYPE ;
+
+      configFilePath = path.str() ;
+
+      return rc ;
+   }
+
    /*
    bsonConfDetail:
    {
@@ -4114,6 +4153,8 @@ namespace engine
       INT32 rc = SDB_OK ;
       string confDetailFile = "" ;
       string businessType ;
+      string deployMod ;
+      string separateConfig ;
 
       businessType = bsonTemplate.getStringField( OM_REST_BUSINESS_TYPE ) ;
       if ( businessType.length() == 0 )
@@ -4122,11 +4163,30 @@ namespace engine
          PD_LOG_MSG( PDERROR, "%s is null", OM_REST_BUSINESS_TYPE ) ;
          goto error ;
       }
-      confDetailFile = _rootPath + OSS_FILE_SEP + OM_BUSINESS_CONFIG_SUBDIR 
-                       + OSS_FILE_SEP + businessType + OM_CONFIG_ITEM_FILE_NAME
-                       + _languageFileSep + OM_CONFIG_FILE_TYPE ;
 
-      rc = _readConfDetail(confDetailFile, bsonConfDetail ) ;
+      deployMod = bsonTemplate.getStringField( OM_BSON_DEPLOY_MOD ) ;
+      if ( deployMod.length() == 0 )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG_MSG( PDERROR, "%s is null", OM_BSON_DEPLOY_MOD ) ;
+         goto error ;
+      }
+
+      separateConfig = bsonTemplate.getStringField( OM_BSON_SEPARATE_CONFIG ) ;
+
+      rc = _buildConfigFilePath( businessType,
+                                 deployMod,
+                                 separateConfig,
+                                 confDetailFile ) ;
+      if( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR,
+                 "failed to build config file path: businessType=%s, deployMod=%s", 
+                 businessType.c_str(), deployMod.c_str() ) ;
+         goto error ;
+      }
+
+      rc = _readConfDetail( confDetailFile, bsonConfDetail ) ;
       if( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "read configure failed:file=%s", 
@@ -4411,6 +4471,7 @@ namespace engine
       BSONObj bsonDeployMod ;
       BSONObj bsonDetail ;
       string confDetailFile ;
+      string separateConfig ;
 
       templateFile = _rootPath + OSS_FILE_SEP + OM_BUSINESS_CONFIG_SUBDIR 
                      + OSS_FILE_SEP + businessType + OM_TEMPLATE_FILE_NAME
@@ -4443,10 +4504,20 @@ namespace engine
          goto error ;
       }
 
-      confDetailFile = _rootPath + OSS_FILE_SEP + OM_BUSINESS_CONFIG_SUBDIR 
-                       + OSS_FILE_SEP + businessType 
-                       + OM_CONFIG_ITEM_FILE_NAME + _languageFileSep 
-                       + OM_CONFIG_FILE_TYPE ;
+      separateConfig = bsonDeployMod.getStringField( OM_BSON_SEPARATE_CONFIG ) ;
+
+      rc = _buildConfigFilePath( businessType,
+                                 deployMod,
+                                 separateConfig,
+                                 confDetailFile ) ;
+      if( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR,
+                 "failed to build config file path: businessType=%s, deployMod=%s", 
+                 businessType.c_str(), deployMod.c_str() ) ;
+         goto error ;
+      }
+
       rc = _readConfDetail( confDetailFile, bsonDetail ) ;
       if ( SDB_OK != rc )
       {

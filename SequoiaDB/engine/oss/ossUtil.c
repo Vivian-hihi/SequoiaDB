@@ -302,16 +302,21 @@ CHAR *ossStrnchr(const CHAR *pString, UINT32 c, UINT32 n)
 void ossStrToBoolean(const char* pString, BOOLEAN* pBoolean)
 {
    UINT32 i = 0 ;
-   size_t len=ossStrlen(pString);
-   for(; i<sizeof(OSSTRUELIST)/sizeof(ossValuePtr); i++)
+   size_t len = ossStrlen(pString);
+   if (0 == len)
    {
-      if(ossStrncasecmp(pString, OSSTRUELIST[i], len)==0)
+      *pBoolean=FALSE;
+      return;
+   }
+   for(; i < sizeof(OSSTRUELIST)/sizeof(ossValuePtr); i++)
+   {
+      if(ossStrncasecmp(pString, OSSTRUELIST[i], len) == 0)
       {
-         *pBoolean=TRUE;
+         *pBoolean = TRUE;
          return;
       }
    }
-   *pBoolean=FALSE;
+   *pBoolean = FALSE;
 }
 
 size_t ossVsnprintf

@@ -468,6 +468,11 @@ namespace engine
                                         const string &deployMod,
                                         const string &clusterName ) ;
 
+         INT32          _buildConfigFilePath( const string &businessType,
+                                              const string &deployMod,
+                                              const string &separateConfig,
+                                              string &configFilePath) ;
+
       private:
          INT32          _generateConfig( const BSONObj &bsonTemplate, 
                                          const BSONObj &bsonHostInfo, 
