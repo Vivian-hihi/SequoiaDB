@@ -4,7 +4,7 @@
 
 默认情况下，事务功能是关闭的。
 
-如要打开事务功能需要在节点的配置文件中配置参数：transactionon =TRUE；在创建数据节点时，增加 JSON 类型的参数：{ "transactionon" : "YES" } 或 { "transctionon" : true }。
+如要打开事务功能需要在节点的配置文件中配置参数：transactionon =TRUE；在创建数据节点时，增加 JSON 类型的参数：{ "transactionon" : "YES" } 或 { "transactionon" : true }。
 
 注意：要打开事务功能，必须将[logfilenum](SdbDoc_Cn/database_management/runtime_configuration.html)设置为大于等于5的值（如果未单独配置，其默认为20，则不需要修改）
 
