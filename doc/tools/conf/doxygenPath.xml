@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<contents>
+	<!-- <content>
+		<name>base64c-API.pdf</name>
+		<conf>conf/doxygenConfs/doxygen-base64c.conf</conf>
+		<latex>docs/base64/latex</latex>
+	</content>
+	<content>
+		<name>bson-API.pdf</name>
+		<conf>conf/doxygenConfs/doxygen-bson.conf</conf>
+		<latex>docs/bson/latex</latex>
+	</content>
+	<content>
+		<name>bsoncpp-API.pdf</name>
+		<conf>conf/doxygenConfs/doxygen-bsoncpp.conf</conf>
+		<latex>docs/bsoncpp/latex</latex>
+	</content>
+	<content>
+		<name>c-API.pdf</name>
+		<conf>conf/doxygenConfs/doxygen-c.conf</conf>
+		<latex>docs/c/latex</latex>
+	</content>
+	<content>
+		<name>cpp-API.pdf</name>
+		<conf>conf/doxygenConfs/doxygen-cpp.conf</conf>
+		<latex>docs/cpp/latex</latex>
+	</content>
+	<content>
+		<name>cs-API.pdf</name>
+		<conf>conf/doxygenConfs/doxygen-cs.conf</conf>
+		<latex>docs/cs/latex</latex>
+	</content>
+	<content>
+		<name>fromjson-API.pdf</name>
+		<conf>conf/doxygenConfs/doxygen-fromjson.conf</conf>
+		<latex>docs/fromjson/latex</latex>
+	</content> -->
+	<content>
+		<name>java-API.pdf</name>
+		<conf>conf/doxygenConfs/doxygen-java.conf</conf>
+		<latex>docs/java/latex</latex>
+	</content>
+	<!-- <content>
+		<name>Jstobs-API.pdf</name>
+		<conf>conf/doxygenConfs/doxygen-Jstobs.conf</conf>
+		<latex>docs/Jstobs/latex</latex>
+	</content>
+	<content>
+		<name>ossErr-API.pdf</name>
+		<conf>conf/doxygenConfs/doxygen-ossErr.conf</conf>
+		<latex>docs/ossErr/latex</latex>
+	</content> -->
+	<content>
+		<name>php-API.pdf</name>
+		<conf>conf/doxygenConfs/doxygen-php.conf</conf>
+		<latex>docs/php/latex</latex>
+	</content>
+	<!-- <content>
+		<name>python-API.pdf</name>
+		<conf>conf/doxygenConfs/doxygen-python.conf</conf>
+		<latex>docs/python/latex</latex>
+	</content> -->
+</contents>
