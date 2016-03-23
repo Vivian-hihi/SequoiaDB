@@ -1,0 +1,37 @@
+Java 驱动的 Datasource 提供给用户一个快速获取有效连接实例的途径。
+
+## 连接池用法##
+
+使用类 SequoiadbDatasource 的 getConnection 方法从连接池中获取一个连接，使用 close 方法把取出的连接放回连接池。当连接池使用的连接数到达连接上限时，下一个请求连接的操作将会等待一段时间，若在规定的时间内无空闲的连接可用，将抛出异常。类 ConfigOptions 可以设置连接的各项参数。类 SequoiadbOption 中可以设置连接池的各种参数。
+
+详情请查看相关 [Java API](api/java/html/index.html) 介绍。
+
+## 例子##
+<pre class="prettyprint lang-javascript">
+SequoiadbDatasource ds = null;
+Sequoiadb db = null;
+ArrayList&lt;String&gt; urls = new ArrayList&lt;String&gt;();
+ConfigOptions nwOpt = new ConfigOptions();        // 定义连接选项
+SequoiadbOption dsOpt = new SequoiadbOption();	  // 定义连接池选项
+
+urls.add("ubuntu-dev1:11810");
+urls.add("ubuntu-dev2:11810");
+urls.add("ubuntu-dev3:11810");
+
+nwOpt.setConnectTimeout(500);                     // 设置若连接失败，超时时间（ms）
+nwOpt.setMaxAutoConnectRetryTime(0);	          // 设置若连接失败，重试次数
+
+// 以下设置的都是 SequoiadbOption 的默认值
+dsOpt.setMaxConnectionNum(500);                   // 设置连接池最大连接数
+dsOpt.setInitConnectionNum(10);                   // 初始化连接池时，创建连接的数量
+dsOpt.setDeltaIncCount(10) ;                      // 当池中没有可用连接时，增加连接的数量
+dsOpt.setMaxIdeNum(10);                           // 周期清理多余的空闲连接时，应保留连接的数量
+dsOpt.setTimeout(5 * 1000);                 // 当已使用的连接数到达设置的最大连接数时（500），请求连接的等待时间。
+dsOpt.setAbandonTime(10 * 60 * 1000);             // 连接存活时间，当连接空闲时间超过连接存活时间，将被连接池丢弃
+dsOpt.setRecheckCyclePeriod(1 * 60 * 1000);       // 清除多余空闲连接的周期
+dsOpt.setRecaptureConnPeriod(10 * 60 * 1000);     // 检测并取回异常地址的周期
+
+ds = new SequoiadbDatasource(urls, "", "", nwOpt, dsOpt); // 创建连接池
+db = ds.getConnection();                                  // 从连接池获取连接
+// do something else                                      // 使用连接进行业务操作
+ds.close(db);</pre>
