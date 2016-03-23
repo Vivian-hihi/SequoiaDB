@@ -232,37 +232,67 @@ namespace engine
    {
       INT32 rc = SDB_OK;
       CHAR *pFuncBuf = NULL;
+
       try
       {
-         // add select fields(note: alias, _id)
-         PD_CHECK( beField.type() == Object, SDB_INVALIDARG, error, PDERROR,
-                  "failed to parse selector field, field type must be object!" );
-
+         // format ex: {a:{$first:"$a"}} or {a:"$a"}
+         qgmOpField selector;
          // parse field
          const CHAR *pAlias = beField.fieldName();
-         BSONObj funcObj;
-         funcObj = beField.embeddedObject();
-         const CHAR *pFuncName = funcObj.firstElementFieldName();
-         PD_CHECK( AGGR_KEYWORD_PREFIX == pFuncName[0], SDB_INVALIDARG, error, PDERROR,
-                  "failed to parse selector field, function name must begin with \"$\"" );
-
-         hasFunc = TRUE;
-
-         // build selector
-         qgmField slValAttr;
-         qgmField slValRelegation;
-
-         rc = parseInputFunc( funcObj, pCLName, slValAttr, pTable );
-         PD_RC_CHECK( rc, PDERROR, "failed to parse selector field(rc=%d)" );
-
-         qgmDbAttr slVal( slValRelegation, slValAttr );
          qgmField slAlias;
-         rc = pTable->getOwnField( pAlias, slAlias );
-         qgmOpField selector;
-         selector.alias = slAlias;
-         selector.value = slVal;
-         selector.type = SQL_GRAMMAR::FUNC;
-         selectorVec.push_back( selector );
+         rc = pTable->getOwnField( pAlias, slAlias ) ;
+         PD_RC_CHECK( rc, PDERROR, "Get owned filed[%s] failed, rc: %d",
+                      pAlias, rc ) ;
+
+         if ( Object == beField.type() )
+         {
+            BSONObj funcObj;
+            funcObj = beField.embeddedObject();
+            const CHAR *pFuncName = funcObj.firstElementFieldName();
+            PD_CHECK( AGGR_KEYWORD_PREFIX == pFuncName[0], SDB_INVALIDARG, error, PDERROR,
+                     "failed to parse selector field, function name must begin with \"$\"" );
+
+            hasFunc = TRUE;
+
+            // build selector
+            qgmField slValAttr;
+            qgmField slValRelegation;
+
+            rc = parseInputFunc( funcObj, pCLName, slValAttr, pTable );
+            PD_RC_CHECK( rc, PDERROR, "failed to parse selector field(rc=%d)" );
+
+            qgmDbAttr slVal( slValRelegation, slValAttr );
+            selector.alias = slAlias;
+            selector.value = slVal;
+            selector.type = SQL_GRAMMAR::FUNC;
+            selectorVec.push_back( selector ) ;
+         }
+         else if ( String == beField.type() &&
+                   AGGR_KEYWORD_PREFIX == beField.valuestr()[0] )
+         {
+            // build selector
+            qgmField slValAttr;
+            qgmField slValRelegation ;
+
+            rc = pTable->getOwnField( AGGR_CL_DEFAULT_ALIAS, slValRelegation ) ;
+            PD_RC_CHECK( rc, PDERROR, "Failed to get the field[%s], rc: %d",
+                         AGGR_CL_DEFAULT_ALIAS, rc ) ;
+
+            selector.alias = slAlias;
+            rc = pTable->getOwnField( &beField.valuestr()[1], slValAttr );
+            PD_RC_CHECK( rc, PDERROR,"Failed to get the field(%s), rc: %d",
+                         beField.valuestr(), rc ) ;
+            qgmDbAttr slVal( slValRelegation, slValAttr ) ;
+            selector.value = slVal ;
+            selector.type = SQL_GRAMMAR::DBATTR ;
+            selectorVec.push_back( selector ) ;
+         }
+         else
+         {
+            PD_LOG( PDERROR, "Failed to parse selector field, field type "
+                    "must be object or field name with '$': %s",
+                    beField.toString( true, true ).c_str() ) ;
+         }
       }
       catch ( std::exception &e )
       {
@@ -321,7 +351,7 @@ namespace engine
          {
             PD_CHECK( beField.type()==String, SDB_INVALIDARG, error, PDERROR,
                      "failed to parse function, field-type must be string!" );
-            pParam = funcObj.firstElement().valuestr();
+            pParam = beField.valuestr();
             PD_CHECK( AGGR_KEYWORD_PREFIX == pParam[0] , SDB_INVALIDARG, error, PDERROR,
                      "failed to parse function, parameter must begin with \"$\"" );
          }
