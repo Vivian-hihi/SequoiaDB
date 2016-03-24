@@ -49,6 +49,16 @@ namespace engine
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__UTILLZWDICTIONARY_ATTACH, "_utilLZWDictionary::attach" )
+   void _utilLZWDictionary::attach( const CHAR* dictionary )
+   {
+      PD_TRACE_ENTRY( SDB__UTILLZWDICTIONARY_ATTACH ) ;
+      _head = *( ( _utilLZWDictHead *)dictionary ) ;
+      _nodes = ( _utilLZWNode *)( dictionary + sizeof( _utilLZWDictHead ) ) ;
+      _attached = TRUE ;
+      PD_TRACE_EXIT( SDB__UTILLZWDICTIONARY_ATTACH ) ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB__UTILLZWDICTIONARY_RESET, "_utilLZWDictionary::reset" )
    void _utilLZWDictionary::reset()
    {
@@ -93,36 +103,6 @@ namespace engine
 
    done:
       PD_TRACE_EXITRC( SDB__UTILLZWDICTIONARY_DUMPTOSTREAM, rc ) ;
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__UTILLZWDICTIONARY_LOADFROMSTREAM, "_utilLZWDictionary::loadFromStream" )
-   INT32 _utilLZWDictionary::loadFromStream( const CHAR *stream, UINT32 len )
-   {
-      INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY( SDB__UTILLZWDICTIONARY_LOADFROMSTREAM ) ;
-      UINT32 readPos = 0 ;
-      UINT32 totalNodeSize = 0 ;
-
-      _head._codeSize = *( UINT32 * )stream ;
-      readPos += sizeof( UINT32 ) ;
-      _head._maxCode = *( UINT32 * )( stream + readPos ) ;
-      readPos += sizeof( UINT32 ) ;
-
-      totalNodeSize = sizeof( utilLZWNode ) * ( _head._maxCode + 1 ) ;
-
-      SDB_ASSERT( len == ( sizeof(UINT32) * 2 + totalNodeSize ),
-                  "Dictionary data is invalid" ) ;
-
-      _nodes = ( _utilLZWNode * )SDB_OSS_MALLOC( totalNodeSize ) ;
-      PD_CHECK( _nodes, SDB_OOM, error, PDERROR,
-                "Failed to allocate memory for compressor dictionary, "
-                "requested size: %d", totalNodeSize ) ;
-      ossMemcpy( _nodes, stream + sizeof( UINT32 ) * 2, totalNodeSize ) ;
-   done:
-      PD_TRACE_EXITRC( SDB__UTILLZWDICTIONARY_LOADFROMSTREAM, rc ) ;
       return rc ;
    error:
       goto done ;

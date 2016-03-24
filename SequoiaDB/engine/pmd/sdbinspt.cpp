@@ -152,6 +152,8 @@ UINT32  gBufferSize                                  = 0 ;
 CHAR *  gExtentBuffer = NULL ;
 UINT32  gExtentBufferSize = 0 ;
 
+CHAR *  gDictBuffer = NULL ;
+
 pmdEDUCB *cb             = NULL ;
 
 // other value
@@ -175,7 +177,6 @@ SDB_INSPT_TYPE gCurInsptType                         = SDB_INSPT_DATA ;
 dmsMBStatInfo gMBStat ;
 dmsMB         gRepaireMB ;
 UINT32        gRepaireMask                           = 0 ;
-utilCompressorFactory gCompressFactory ;
 
 #define PMD_REPAIRE_MB_MASK_FLAG             0x00000001
 #define PMD_REPAIRE_MB_MASK_LID              0x00000002
@@ -189,6 +190,11 @@ utilCompressorFactory gCompressFactory ;
 
 
 #define RETRY_COUNT 5
+
+INT32 prepareCompressor( OSSFILE &file, SINT32 pageSize, dmsMB *mb, UINT16 id,
+                         CHAR *pExpBuffer, dmsCompressorEntry &compressorEntry,
+                         SINT32 &err ) ;
+
 INT32 switchFile( OSSFILE& file, const INT32 size )
 {
    INT32 rc = SDB_OK ;
@@ -812,7 +818,6 @@ INT32 reallocBuffer ()
       gBufferSize = 0 ;
       goto error ;
    }
-
 done :
    PD_TRACE_EXITRC ( SDB_REALLOCBUFFER, rc );
    return rc ;
@@ -1136,25 +1141,36 @@ INT32 getExtentHead ( OSSFILE &file, dmsExtentID extentID, SINT32 pageSize,
 // This function store output to global gExtentBuffer
 // PD_TRACE_DECLARE_FUNCTION ( SDB_GETEXTENT, "getExtent" )
 INT32 getExtent ( OSSFILE &file, dmsExtentID extentID, SINT32 pageSize,
-                  SINT32 extentSize )
+                  SINT32 extentSize, BOOLEAN dictExtent = FALSE )
 {
    INT32 rc = SDB_OK ;
    PD_TRACE_ENTRY ( SDB_GETEXTENT );
    SINT64 lenRead ;
-   // only realloc extent memory when it's not large enough
-   if ( gExtentBufferSize < (UINT32)(extentSize * pageSize ) )
+   CHAR *buffer = NULL ;
+
+   if ( dictExtent )
    {
-      rc = getExtentBuffer ( extentSize*pageSize ) ;
-      if ( rc )
-      {
-         dumpPrintf ( "Error: Failed to allocate extent buffer, rc = %d"
-                      OSS_NEWLINE, rc ) ;
-         goto error ;
-      }
+      buffer = gDictBuffer ;
    }
+   else
+   {
+      // only realloc extent memory when it's not large enough
+      if ( gExtentBufferSize < (UINT32)(extentSize * pageSize ) )
+      {
+         rc = getExtentBuffer ( extentSize*pageSize ) ;
+         if ( rc )
+         {
+            dumpPrintf ( "Error: Failed to allocate extent buffer, rc = %d"
+                         OSS_NEWLINE, rc ) ;
+            goto error ;
+         }
+      }
+      buffer = gExtentBuffer ;
+   }
+
    // seek to offset and read entire extent
    rc = ossSeekAndRead ( &file, gDataOffset + (SINT64)pageSize * extentID,
-                         gExtentBuffer, extentSize * pageSize,
+                         buffer, extentSize * pageSize,
                          &lenRead ) ;
    // output sanity check
    if ( rc || lenRead != extentSize * pageSize )
@@ -1460,7 +1476,8 @@ INT32 loadExtent ( OSSFILE &file, INSPECT_EXTENT_TYPE &type,
                     ( INSPECT_EXTENT_TYPE_DATA == type ||
                       INSPECT_EXTENT_TYPE_MBEX == type ||
                       INSPECT_EXTENT_TYPE_DICT == type ) ?
-                      extentHead._blockSize : 1 ) ;
+                      extentHead._blockSize : 1,
+                      INSPECT_EXTENT_TYPE_DICT == type) ;
    if ( rc )
    {
       dumpPrintf ( "Error: Failed to get extent %d, rc = %d"
@@ -1475,72 +1492,12 @@ error :
    goto done ;
 }
 
-// PD_TRACE_DECLARE_FUNCTION ( SDB_PREPARECOMPRESSOR, "prepareCompressor" )
-INT32 prepareCompressor( SINT8 compType, utilCompressor *&compressorPtr,
-                         utilCompressorContext &compContext )
-{
-   PD_TRACE_ENTRY( SDB_PREPARECOMPRESSOR ) ;
-
-   INT32 rc = SDB_OK ;
-   utilCompressor *compressor = NULL ;
-   utilCompressorContext context = UTIL_INVALID_COMP_CTX ;
-   UTIL_COMPRESSOR_TYPE type = (UTIL_COMPRESSOR_TYPE)compType ;
-   dmsDictExtent *dictExtent = (dmsDictExtent*)gExtentBuffer ;
-
-   if ( UTIL_COMPRESSOR_LZW != type )
-   {
-      dumpPrintf( "Error: Invalid compressor type %d"OSS_NEWLINE, compType ) ;
-      rc = SDB_INVALIDARG ;
-      goto error ;
-   }
-
-   rc = gCompressFactory.createCompressor( type, compressor ) ;
-   if ( rc )
-   {
-      dumpPrintf( "Error: Failed to create compressor, type = %d, rc = %d"
-                  OSS_NEWLINE, compType, rc ) ;
-      goto error ;
-   }
-
-   rc = compressor->setDictionary( ((CHAR *)dictExtent)
-                                    + DMS_DICTEXTENT_HEADER_SZ,
-                                    dictExtent->_dictLen ) ;
-   if ( rc )
-   {
-      dumpPrintf( "Error: Failed to set dictionary for compressor, rc = %d"
-                  OSS_NEWLINE, rc ) ;
-      goto error ;
-   }
-
-   rc = compressor->prepare( context ) ;
-   if ( rc )
-   {
-      dumpPrintf( "Error: Failed to prepare compressor, rc = %d"OSS_NEWLINE,
-                  rc ) ;
-      goto error ;
-   }
-
-   compressorPtr = compressor ;
-   compContext = context ;
-
-done:
-   PD_TRACE_EXITRC( SDB_PREPARECOMPRESSOR, rc ) ;
-   return rc ;
-error:
-   if ( compressor )
-   {
-      gCompressFactory.destroyCompressor( compressor ) ;
-   }
-   goto done ;
-}
-
 // PD_TRACE_DECLARE_FUNCTION ( SDB_INSPOVFLWRECRDS, "inspectOverflowedRecords" )
 void inspectOverflowedRecords ( OSSFILE &file, SINT32 pageSize,
                                 UINT16 collectionID, dmsExtentID ovfFromExtent,
                                 std::set<dmsRecordID> &overRIDList,
                                 SINT32 &err,
-                                utilCompressor *compressor,
-                                utilCompressorContext compContext )
+                                dmsCompressorEntry *compressorEntry )
 {
    INT32 rc        = SDB_OK ;
    PD_TRACE_ENTRY ( SDB_INSPOVFLWRECRDS );
@@ -1591,11 +1548,7 @@ retry :
       len = dmsInspect::inspectDataRecord ( cb, gExtentBuffer + offset,
               ((dmsExtent*)gExtentBuffer)->_blockSize * pageSize - offset,
               gBuffer, gBufferSize, count, offset, NULL, localErr,
-              compressor, compContext ) ;
-      if ( compContext )
-      {
-         compressor->rePrepare( compContext ) ;
-      }
+              compressorEntry ) ;
       if ( len >= gBufferSize-1 )
       {
          if ( reallocBuffer () )
@@ -1634,8 +1587,7 @@ error :
 void dumpOverflowedRecords ( OSSFILE &file, SINT32 pageSize,
                              UINT16 collectionID, dmsExtentID ovfFromExtID,
                              std::set<dmsRecordID> &overRIDList,
-                             utilCompressor *compressor ,
-                             utilCompressorContext compContext )
+                             dmsCompressorEntry *compressorEntry )
 {
    INT32 rc = SDB_OK ;
    PD_TRACE_ENTRY ( SDB_DUMPOVFWRECRDS );
@@ -1671,11 +1623,8 @@ retry :
                    rid._extent, rid._offset ) ;
       len = dmsDump::dumpDataRecord ( cb, gExtentBuffer + offset,
                  ((dmsExtent*)gExtentBuffer)->_blockSize * pageSize - offset,
-                 gBuffer, gBufferSize, offset, NULL, compressor, compContext ) ;
-      if ( compContext )
-      {
-         compressor->rePrepare( compContext ) ;
-      }
+                 gBuffer, gBufferSize, offset, compressorEntry, NULL ) ;
+
       PD_TRACE1 ( SDB_DUMPOVFWRECRDS, PD_PACK_UINT(len) );
       if ( len >= gBufferSize-1 )
       {
@@ -2044,7 +1993,7 @@ void inspectDictPageState( CHAR *pExpBuffer, dmsExtentID extentID,
                            SINT32 &err )
 {
    PD_TRACE_ENTRY( SDB_INSPECTDICTPAGESTATE ) ;
-   dmsDictExtent *dictExtent = (dmsDictExtent*)gExtentBuffer ;
+   dmsDictExtent *dictExtent = (dmsDictExtent*)gDictBuffer ;
    dmsSpaceManagementExtent *sme = (dmsSpaceManagementExtent*)pExpBuffer ;
    for ( INT32 i = 0; i < dictExtent->_blockSize; ++i )
    {
@@ -2075,8 +2024,7 @@ void inspectCollectionData( OSSFILE &file, SINT32 pageSize, UINT16 id,
    dmsExtentID firstExtent = DMS_INVALID_EXTENT ;
    dmsExtent *pExtent = NULL ;
    CHAR collectionName[ DMS_COLLECTION_NAME_SZ + 1 ] = { 0 } ;
-   utilCompressor *compressor = NULL ;
-   utilCompressorContext compContext = UTIL_INVALID_COMP_CTX ;
+   dmsCompressorEntry compressorEntry ;
 
    rc = loadMB ( id, mb ) ;
    if ( rc )
@@ -2126,23 +2074,10 @@ void inspectCollectionData( OSSFILE &file, SINT32 pageSize, UINT16 id,
       }
    }
 
-   if ( DMS_INVALID_EXTENT != mb->_dictExtentID )
+   if ( UTIL_COMPRESSOR_INVALID != (UTIL_COMPRESSOR_TYPE)mb->_compressorType )
    {
-      extentType = INSPECT_EXTENT_TYPE_DICT ;
-      rc = loadExtent( file, extentType, pageSize, mb->_dictExtentID, id ) ;
-      if ( rc )
-      {
-         dumpPrintf( "Error: Failed to load dictionary extent %d, rc = %d"
-                     OSS_NEWLINE, mb->_dictExtentID, rc ) ;
-         goto error ;
-      }
-
-      if ( pExpBuffer )
-      {
-         inspectDictPageState( pExpBuffer, mb->_dictExtentID, err ) ;
-      }
-
-      rc = prepareCompressor( mb->_compressorType, compressor, compContext ) ;
+      rc = prepareCompressor( file, pageSize, mb, id,
+                              pExpBuffer, compressorEntry, err ) ;
       if ( rc )
       {
          dumpPrintf( "Error: Failed to prepare compressor for collection, "
@@ -2211,11 +2146,7 @@ retry_data :
                                ((dmsExtent*)gExtentBuffer)->_blockSize*pageSize,
                                gBuffer, gBufferSize, hwm, id, tempExtent,
                                &extentRIDList, localErr,
-                               compressor, compContext ) ;
-      if ( compContext )
-      {
-         compressor->rePrepare( compContext ) ;
-      }
+                               &compressorEntry ) ;
       if ( (UINT32)len >= gBufferSize-1 )
       {
          // if our buffer is not large enough, let's allocate more memory and
@@ -2234,11 +2165,7 @@ retry_data :
       if ( extentRIDList.size() != 0 )
       {
          inspectOverflowedRecords( file, pageSize, id, firstExtent,
-                                   extentRIDList, err, compressor, compContext ) ;
-         if ( compContext )
-         {
-            compressor->rePrepare( compContext ) ;
-         }
+                                   extentRIDList, err, &compressorEntry ) ;
       }
 
       firstExtent = tempExtent ;
@@ -2246,14 +2173,6 @@ retry_data :
    } //end while
 
 done :
-   if ( compContext )
-   {
-      compressor->done( compContext ) ;
-   }
-   if ( compressor )
-   {
-      gCompressFactory.destroyCompressor( compressor ) ;
-   }
    return ;
 error :
    goto done ;
@@ -2355,8 +2274,7 @@ void dumpCollectionData( OSSFILE &file, SINT32 pageSize, UINT16 id )
    dmsMB *mb = NULL ;
    dmsExtentID tempExtent = DMS_INVALID_EXTENT ;
    dmsExtentID firstExtent = DMS_INVALID_EXTENT ;
-   utilCompressor *compressor = NULL ;
-   utilCompressorContext compContext = UTIL_INVALID_COMP_CTX ;
+   dmsCompressorEntry compressorEntry ;
 
    rc = loadMB ( id, mb ) ;
    if ( rc )
@@ -2409,33 +2327,27 @@ void dumpCollectionData( OSSFILE &file, SINT32 pageSize, UINT16 id )
       goto done ;
    }
 
-   if ( DMS_INVALID_EXTENT != mb->_dictExtentID )
+   if ( UTIL_COMPRESSOR_INVALID != (UTIL_COMPRESSOR_TYPE)(mb->_compressorType) )
    {
-      UINT32 size = 0 ;
-      extentType = INSPECT_EXTENT_TYPE_DICT ;
-
-      dumpPrintf ( "Dump Compression Dictionary Extent for Collection [%d]"
-                   OSS_NEWLINE, id ) ;
-
-      rc = loadExtent( file, extentType, pageSize, mb->_dictExtentID, id ) ;
-      if ( rc )
-      {
-         dumpPrintf( "Error: Failed to load dictionary extent %d, rc = %d"
-                     OSS_NEWLINE, mb->_dictExtentID, rc ) ;
-         goto error ;
-      }
-
-      rc = prepareCompressor( mb->_compressorType, compressor, compContext ) ;
+      SINT32 err = 0 ;
+      rc = prepareCompressor(file, pageSize, mb, id, NULL, compressorEntry, err  ) ;
       if ( rc )
       {
          dumpPrintf( "Failed to prepare compressor for collection, rc: %d", rc ) ;
          goto error ;
       }
+   }
 
-      size = ((dmsDictExtent*)gExtentBuffer)->_blockSize * pageSize ;
+   if ( DMS_INVALID_EXTENT != mb->_dictExtentID )
+   {
+      UINT32 size = 0 ;
+      dumpPrintf ( "Dump Compression Dictionary Extent for Collection [%d]"
+                   OSS_NEWLINE, id ) ;
+
+      size = ((dmsDictExtent*)gDictBuffer)->_blockSize * pageSize ;
 
    retry_dictExt:
-      len = dmsDump::dumpDictExtent( gExtentBuffer, size,
+      len = dmsDump::dumpDictExtent( gDictBuffer, size,
                                      gBuffer, gBufferSize, NULL,
                                      DMS_SU_DMP_OPT_HEX |
                                      DMS_SU_DMP_OPT_HEX_WITH_ASCII |
@@ -2479,12 +2391,9 @@ retry_data :
                                DMS_SU_DMP_OPT_HEX |
                                DMS_SU_DMP_OPT_HEX_WITH_ASCII |
                                DMS_SU_DMP_OPT_HEX_PREFIX_AS_ADDR |
-                               gDumpType, tempExtent, &extentRIDList,
-                               gShowRecordContent, compressor, compContext ) ;
-      if ( compContext )
-      {
-         compressor->rePrepare( compContext ) ;
-      }
+                               gDumpType, tempExtent, &compressorEntry,
+                               &extentRIDList,  gShowRecordContent ) ;
+
       PD_TRACE1 ( SDB_DUMPCOLL, PD_PACK_INT(len) );
       if ( (UINT32)len >= gBufferSize-1 )
       {
@@ -2502,25 +2411,13 @@ retry_data :
       if ( extentRIDList.size() != 0 && gShowRecordContent )
       {
          dumpOverflowedRecords ( file, pageSize, id, firstExtent,
-                                 extentRIDList, compressor, compContext ) ;
-         if ( compContext )
-         {
-            compressor->rePrepare( compContext ) ;
-         }
+                                 extentRIDList, &compressorEntry ) ;
       }
 
       firstExtent = tempExtent ;
    }
 
 done :
-   if ( compContext )
-   {
-      compressor->done( compContext ) ;
-   }
-   if ( compressor )
-   {
-      gCompressFactory.destroyCompressor( compressor ) ;
-   }
    return ;
 error :
    goto done ;
@@ -3313,6 +3210,44 @@ void inspectDB( SDB_INSPT_ACTION action )
    PD_TRACE_EXIT ( SDB_INSPECTDB );
 }
 
+// PD_TRACE_DECLARE_FUNCTION ( SDB_PREPARECOMPRESSOR, "prepareCompressor" )
+INT32 prepareCompressor( OSSFILE &file, SINT32 pageSize, dmsMB *mb, UINT16 id,
+                         CHAR *pExpBuffer, dmsCompressorEntry &compressorEntry,
+                         SINT32 &err )
+{
+   INT32 rc = SDB_OK ;
+   PD_TRACE_ENTRY( SDB_PREPARECOMPRESSOR ) ;
+   UTIL_COMPRESSOR_TYPE type = (UTIL_COMPRESSOR_TYPE)( mb->_compressorType ) ;
+   dmsCompressorGuard gard( &compressorEntry, EXCLUSIVE ) ;
+
+   if ( DMS_INVALID_EXTENT != mb->_dictExtentID )
+   {
+      /* LZW compression, need to load the dictionary. */
+      INSPECT_EXTENT_TYPE extentType = INSPECT_EXTENT_TYPE_DICT ;
+      rc = loadExtent( file, extentType, pageSize, mb->_dictExtentID, id ) ;
+      if ( rc )
+      {
+         dumpPrintf( "Error: Failed to load dictionary extent %d, rc = %d"
+                     OSS_NEWLINE, mb->_dictExtentID, rc ) ;
+         goto error ;
+      }
+
+      if ( pExpBuffer )
+      {
+         inspectDictPageState( pExpBuffer, mb->_dictExtentID, err ) ;
+      }
+
+      compressorEntry.setDictionary( gDictBuffer + DMS_DICTEXTENT_HEADER_SZ ) ;
+   }
+   compressorEntry.setCompressor( getCompressorByType( type ) ) ;
+
+done:
+   PD_TRACE_EXITRC( SDB_PREPARECOMPRESSOR, rc ) ;
+   return rc ;
+error:
+   goto done ;
+}
+
 // main function
 // PD_TRACE_DECLARE_FUNCTION ( SDB_SDBINSPT_MAIN, "main" )
 INT32 main ( INT32 argc, CHAR **argv )
@@ -3352,6 +3287,15 @@ INT32 main ( INT32 argc, CHAR **argv )
       goto done ;
    }
    ossMemset( gMMEBuff, 0, DMS_MME_SZ ) ;
+
+   gDictBuffer = (CHAR*)SDB_OSS_MALLOC( DMS_DICT_MAX_SIZE ) ;
+   if ( !gDictBuffer )
+   {
+      dumpPrintf( "Error: Failed to allocate dictionary buffer, "
+                  "exit"OSS_NEWLINE ) ;
+      goto done ;
+   }
+   ossMemset( gDictBuffer, 0, DMS_DICT_MAX_SIZE ) ;
 
    // allocate some buffer initially
    rc = reallocBuffer () ;
@@ -3418,6 +3362,11 @@ done :
    {
       SDB_OSS_FREE ( gMMEBuff ) ;
       gMMEBuff = NULL ;
+   }
+   if ( gDictBuffer )
+   {
+      SDB_OSS_FREE( gDictBuffer ) ;
+      gDictBuffer = NULL ;
    }
    // close output file
    if ( ossStrlen ( gOutputFile ) != 0 )

@@ -315,7 +315,6 @@ namespace engine
       PD_TRACE_ENTRY( SDB__RTN_DICTCREATORJOB__TRANSFERDICT ) ;
       CHAR *dictBuf = NULL ;
       UINT32 dictBufLen = 0 ;
-      BOOLEAN compressorReady = FALSE ;
 
       _dictionary = _creator.getDictionary() ;
       dictBufLen = _dictionary->getDictSize() ;
@@ -328,10 +327,6 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR,
                    "Failed to dump dictionary into stream format, rc: %d", rc ) ;
 
-      rc = sd->prepareCompressor( context, dictBuf, dictBufLen ) ;
-      PD_RC_CHECK( rc, PDERROR,
-                   "Failed to prepare compressor, rc: %d", rc ) ;
-      compressorReady = TRUE ;
       if ( context->isMBLock() )
       {
          context->mbUnlock() ;
@@ -349,10 +344,6 @@ namespace engine
       PD_TRACE_EXITRC( SDB__RTN_DICTCREATORJOB__TRANSFERDICT, rc ) ;
       return rc ;
    error:
-      if ( compressorReady )
-      {
-         sd->rmCompressor( context ) ;
-      }
       goto done ;
    }
 

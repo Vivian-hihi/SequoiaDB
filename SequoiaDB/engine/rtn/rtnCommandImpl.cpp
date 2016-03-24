@@ -1200,6 +1200,7 @@ namespace engine
       dmsStorageUnitID suID = DMS_INVALID_CS ;
       const CHAR *pCollectionShortName = NULL ;
       BOOLEAN writable      = FALSE ;
+      UINT16 collectionID = DMS_INVALID_MBID ;
 
       rc = rtnResolveCollectionNameAndLock ( pCollection, dmsCB, &su,
                                              &pCollectionShortName, suID ) ;
@@ -1237,8 +1238,8 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR, "Database is not writable, rc = %d", rc ) ;
       writable = TRUE ;
 
-      rc = su->data()->addCollection ( pCollectionShortName, NULL, attributes,
-                                       cb, dpsCB, 0, sysCall, FALSE,
+      rc = su->data()->addCollection ( pCollectionShortName, &collectionID,
+                                       attributes, cb, dpsCB, 0, sysCall, FALSE,
                                        compressorType ) ;
       if ( rc )
       {
@@ -1273,6 +1274,26 @@ namespace engine
             goto error_rollback ;
          }
       }
+
+      if ( !su->data()->isTempSU() )
+      {
+         /*
+          * If the compression type is snappy, set it directly. If it's lzw, push
+          * it to the dictionary creating list.
+          */
+         if ( UTIL_COMPRESSOR_LZW == compressorType )
+         {
+            dmsCB->pushToDictCreateCLList( suID, collectionID ) ;
+         }
+         else
+         {
+            if ( UTIL_COMPRESSOR_SNAPPY == compressorType )
+            {
+               su->data()->setCompressor( collectionID, compressorType ) ;
+            }
+         }
+      }
+
    done :
       if ( DMS_INVALID_CS != suID )
       {

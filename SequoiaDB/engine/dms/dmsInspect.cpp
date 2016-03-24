@@ -520,8 +520,7 @@ namespace engine
                                           dmsExtentID &nextExtent,
                                           set< dmsRecordID > *ridList,
                                           SINT32 &err,
-                                          utilCompressor *compressor,
-                                          utilCompressorContext compContext )
+                                          dmsCompressorEntry *compressorEntry )
    {
       UINT32 len           = 0 ;
       SINT32 localErr      = 0 ;
@@ -587,11 +586,7 @@ namespace engine
                                        outBuf + len, outSize - len,
                                        recordCount,
                                        nextRecord, ridList, localErr,
-                                       compressor, compContext ) ;
-            if ( compContext )
-            {
-               compressor->rePrepare( compContext ) ;
-            }
+                                       compressorEntry ) ;
             ++recordCount ;
          }
       }
@@ -617,8 +612,7 @@ namespace engine
                                           dmsOffset &nextRecord,
                                           set< dmsRecordID > *ridList,
                                           SINT32 &err,
-                                          utilCompressor *compressor,
-                                          utilCompressorContext compContext )
+                                          dmsCompressorEntry *compressorEntry )
    {
       INT32 rc          = SDB_OK ;
       UINT32 len        = 0 ;
@@ -692,8 +686,8 @@ namespace engine
          try
          {
             ossValuePtr recordPtr = 0 ;
-            DMS_RECORD_EXTRACTDATA ( compressor, compContext,
-                                     (ossValuePtr)(inBuf), recordPtr ) ;
+            DMS_RECORD_EXTRACTDATA ( (ossValuePtr)(inBuf), recordPtr,
+                                     compressorEntry ) ;
             BSONObj obj ( (CHAR*)recordPtr ) ;
             if ( !obj.isValid() )
             {

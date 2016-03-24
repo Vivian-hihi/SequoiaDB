@@ -139,11 +139,10 @@ utilFiles = [
       "util/utilLinenoiseWrapper.cpp",
       "util/utilString.cpp",
       "util/utilBsonHashObsolete.cpp",
-	  "util/utilLZW.cpp",
-      "util/utilCompressorFactory.cpp",
-      #"util/utilCompressorLZ4.cpp",
-      #"util/utilCompressorZlib.cpp",
-	  "util/utilCompressorLZW.cpp"
+      "util/utilLZW.cpp",
+      "util/utilCompressor.cpp",
+      "util/utilCompressorLZW.cpp",
+      "util/utilCompressorSnappy.cpp"
       ]
 
 rtnFiles = [

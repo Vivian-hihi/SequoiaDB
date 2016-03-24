@@ -650,10 +650,9 @@ namespace engine
                                     CHAR *outBuf, UINT32 outSize,
                                     CHAR *addrPrefix, UINT32 options,
                                     dmsExtentID &nextExtent,
+                                    dmsCompressorEntry *compressorEntry,
                                     set< dmsRecordID > *ridList,
-                                    BOOLEAN dumpRecord,
-                                    utilCompressor *compressor,
-                                    utilCompressorContext compContext )
+                                    BOOLEAN dumpRecord )
    {
       UINT32 len           = 0 ;
       UINT32 hexDumpOption = 0 ;
@@ -738,14 +737,9 @@ namespace engine
                len += dumpDataRecord ( cb, ((CHAR*)inBuf)+nextRecord,
                                        inSize - nextRecord,
                                        outBuf + len, outSize - len,
-                                       nextRecord, ridList,
-                                       compressor, compContext) ;
+                                       nextRecord, compressorEntry, ridList ) ;
                len += ossSnprintf ( outBuf + len, outSize - len, OSS_NEWLINE ) ;
                ++recordCount ;
-               if ( compContext )
-               {
-                  compressor->rePrepare( compContext ) ;
-               }
             }
          }
       }
@@ -931,9 +925,8 @@ namespace engine
    UINT32 _dmsDump::dumpDataRecord( pmdEDUCB *cb, void *inBuf, UINT32 inSize,
                                     CHAR *outBuf, UINT32 outSize,
                                     dmsOffset &nextRecord,
-                                    set< dmsRecordID > *ridList,
-                                    utilCompressor *compressor,
-                                    utilCompressorContext compContext )
+                                    dmsCompressorEntry *compressorEntry,
+                                    set< dmsRecordID > *ridList )
    {
       INT32 rc = SDB_OK ;
       SDB_ASSERT ( cb, "cb can't be NULL" ) ;
@@ -1043,8 +1036,8 @@ namespace engine
          try
          {
             ossValuePtr recordPtr = 0 ;
-            DMS_RECORD_EXTRACTDATA ( compressor, compContext,
-                                     (ossValuePtr)(inBuf), recordPtr ) ;
+            DMS_RECORD_EXTRACTDATA ( (ossValuePtr)(inBuf), recordPtr,
+                                      compressorEntry ) ;
             BSONObj obj ( (CHAR*)recordPtr ) ;
             len += ossSnprintf ( outBuf + len, outSize - len,
                                  "       Record: %s"OSS_NEWLINE,

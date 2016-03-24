@@ -116,7 +116,7 @@ namespace engine
       *(INT32*)((CHAR*)(record)+DMS_RECORD_METADATA_SZ)
 
    // Extract Data
-   #define DMS_RECORD_EXTRACTDATA( compressor, compContext, recordPtr, retPtr ) \
+   #define DMS_RECORD_EXTRACTDATA( recordPtr, retPtr, compressorEntry ) \
    do {                                                                 \
          if ( !OSS_BIT_TEST( DMS_RECORD_GETATTR(recordPtr),             \
                              DMS_RECORD_FLAG_COMPRESSED ) )             \
@@ -126,7 +126,7 @@ namespace engine
          else                                                           \
          {                                                              \
             INT32 uncompLen = 0 ;                                       \
-            rc = dmsUncompress( cb, compressor, compContext,            \
+            rc = dmsUncompress( cb, compressorEntry,                    \
                                 DMS_RECORD_GETDATA(recordPtr),          \
                                 DMS_RECORD_GETDATALEN(recordPtr),       \
                                 (const CHAR**)&(retPtr), &uncompLen ) ; \

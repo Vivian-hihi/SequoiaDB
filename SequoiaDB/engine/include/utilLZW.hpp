@@ -51,20 +51,20 @@ namespace engine
     */
    struct _utilLZWNode
    {
-      LZW_CODE  _prev;   // Code of the previous part of the string
-                         // (the last character excluded)
-      LZW_CODE  _first;  // first 'child'
-      LZW_CODE  _next;   // first 'brother'
-      UINT32    _len ;   // Length of the string.
-      UINT8     _ch;     // Last character of the string this node represents.
+      LZW_CODE  _prev ;   // Code of the previous part of the string
+                          // (the last character excluded)
+      LZW_CODE  _first ;  // first 'child'
+      LZW_CODE  _next ;   // first 'brother'
+      UINT32    _len ;    // Length of the string.
+      UINT8     _ch ;     // Last character of the string this node represents.
       UINT8     _pad[3] ;
    } ;
    typedef _utilLZWNode utilLZWNode ;
 
    struct _utilLZWDictHead
    {
-      UINT32 _codeSize;       /* Bit number to represent a code. */
-      UINT32 _maxCode;        /* Maximum code in the dictionary. */
+      UINT32 _codeSize ;       /* Bit number to represent a code. */
+      UINT32 _maxCode ;        /* Maximum code in the dictionary. */
    } ;
    typedef _utilLZWDictHead utilLZWDictHead ;
 
@@ -76,17 +76,19 @@ namespace engine
          _head._codeSize = 0 ;
          _head._maxCode = 0 ;
          _nodes = NULL ;
+         _attached = FALSE ;
       }
 
       ~_utilLZWDictionary()
       {
-         if ( _nodes )
+         if ( (!_attached) && _nodes )
          {
             SDB_OSS_FREE( _nodes ) ;
          }
       }
 
       INT32 init( UINT32 maxNodeNum ) ;
+      void attach( const CHAR* dictionary ) ;
       void reset() ;
       UINT32 getMaxNodeNum() { return _maxNodeNum ; }
       UINT32 getCodeSize() { return _head._codeSize ; }
@@ -99,7 +101,6 @@ namespace engine
       void codeSizeInc() { _head._codeSize++; }
       UINT32 getDictSize() ;
       INT32 dumpToStream( CHAR *stream, UINT32 &length ) ;
-      INT32 loadFromStream( const CHAR *stream, UINT32 len ) ;
 
       OSS_INLINE LZW_CODE addStr( LZW_CODE preCode, UINT8 ch ) ;
       OSS_INLINE LZW_CODE findStr( LZW_CODE preCode, UINT8 ch ) ;
@@ -109,6 +110,7 @@ namespace engine
       _utilLZWDictHead _head ;
       UINT32 _maxNodeNum ;
       _utilLZWNode *_nodes ;
+      BOOLEAN _attached ;
    } ;
    typedef _utilLZWDictionary utilLZWDictionary ;
 
@@ -212,6 +214,11 @@ namespace engine
    } ;
    typedef _utilLZWDictCreator utilLZWDictCreator ;
 
+   struct _utilLZWHeader
+   {
+      UINT32 _uncompressedLen ;
+   } ;
+   typedef _utilLZWHeader utilLZWHeader ;
    class _utilLZW : public SDBObject
    {
    public:
@@ -409,11 +416,17 @@ namespace engine
       UINT32 strLen = 0 ;
       LZW_CODE code = DICT_INVALID_NODE ;
       LZW_CODE nextCode = DICT_INVALID_NODE ;
+      _utilLZWHeader *header = NULL ;
       utilLZWDictionary *dictionary = ctx->getDictionary() ;
       SDB_ASSERT( dictionary, "Compressor context is invalid" ) ;
 
       ctx->_stream = (UINT8* )destBuf ;
       ctx->_streamLen = destLen ;
+
+      /* Store the header at the beginning. */
+      header = ( _utilLZWHeader * )( ctx->_stream ) ;
+      header->_uncompressedLen = sourceLen ;
+      ctx->_streamPos += sizeof( _utilLZWHeader ) ;
 
       ch = source[0] ;
       code = ch ;
@@ -460,9 +473,11 @@ namespace engine
       LZW_CODE code ;
       UINT32 totalOut = 0 ;
       utilLZWDictionary *dictionary = ctx->getDictionary() ;
+
       ctx->_stream = (UINT8 *)source ;
       ctx->_streamLen = sourceLen ;
-      ctx->_streamPos = 0 ;
+      /* Skip the length at the beginning. */
+      ctx->_streamPos = sizeof( UINT32 ) ;
 
       for( ; ctx->_streamPos < ctx->_streamLen; )
       {

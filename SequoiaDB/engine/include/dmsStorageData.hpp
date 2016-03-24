@@ -40,7 +40,7 @@
 
 #include "dmsStorageBase.hpp"
 #include "dpsLogWrapper.hpp"
-#include "utilCompressorFactory.hpp"
+#include "dmsCompress.hpp"
 
 #include <map>
 
@@ -552,71 +552,6 @@ namespace engine
    class _pmdEDUCB ;
    class _mthModifier ;
 
-   class _dmsCompressorEntry
-   {
-      friend class _dmsCompressorGuard ;
-   public:
-      _dmsCompressorEntry()
-         : _compressor( NULL )
-      {
-      }
-      ~_dmsCompressorEntry()
-      {
-         reset() ;
-      }
-
-      void setCompressor( _utilCompressor *compressor ) ;
-      OSS_INLINE _utilCompressor* getCompressor() { return _compressor ; }
-
-      void reset() ;
-
-   private:
-      _utilCompressor *_compressor ;
-      ossRWMutex _lock ;
-   } ;
-   typedef _dmsCompressorEntry dmsCompressorEntry ;
-
-   class _dmsCompressorGuard
-   {
-   public:
-      _dmsCompressorGuard( dmsCompressorEntry &compEntry, OSS_LATCH_MODE mode )
-         : _lock( &compEntry._lock),
-           _mode( mode )
-      {
-         if ( SHARED == _mode )
-         {
-            _lock->lock_r() ;
-         }
-         else if ( EXCLUSIVE == _mode )
-         {
-            _lock->lock_w() ;
-         }
-      }
-
-      ~_dmsCompressorGuard()
-      {
-         release() ;
-      }
-
-      void release()
-      {
-         if ( SHARED == _mode )
-         {
-            _lock->release_r() ;
-         }
-         else if ( EXCLUSIVE == _mode )
-         {
-            _lock->release_w() ;
-         }
-         _mode = -1 ;
-      }
-
-   private:
-      ossRWMutex *_lock ;
-      INT32 _mode ;
-   } ;
-   typedef _dmsCompressorGuard dmsCompressorGuard ;
-
    /*
       _dmsStorageData defined
    */
@@ -686,8 +621,7 @@ namespace engine
                                UINT16 initPages = 0,
                                BOOLEAN sysCollection = FALSE,
                                BOOLEAN noIDIndex = FALSE,
-                               UTIL_COMPRESSOR_TYPE compressorType =
-                                          UTIL_COMPRESSOR_INVALID) ;
+                               SINT8  compressionType = -1 ) ;
 
          INT32 dropCollection ( const CHAR *pName,
                                 _pmdEDUCB *cb,
@@ -746,8 +680,7 @@ namespace engine
          virtual INT32 tryToFlush( BOOLEAN ignoreTick, BOOLEAN &failed ) ;
 
          /* Create the compressor, and set the dictionry for it. */
-         INT32 prepareCompressor( const dmsMBContext *context,
-                                  const CHAR *dict, UINT32 dictLen ) ;
+         INT32 setCompressor( UINT16 mbID, UTIL_COMPRESSOR_TYPE type ) ;
          void rmCompressor( _dmsMBContext *context ) ;
          INT32 dictPersist( UINT16 mbID, UINT32 clLID,
                             const CHAR *dict, UINT32 dictLen ) ;
@@ -793,7 +726,7 @@ namespace engine
                                  _pmdEDUCB *cb, dmsMBContext *context,
                                  dmsExtentID extLID, BOOLEAN needUnLock,
                                  UINT32 *clLID = NULL ) ;
-         INT32          _loadClDictToCache( const dmsMBContext *mbContext ) ;
+         INT32          _initCompressorEntry( UINT16 mbID ) ;
 
       private:
          //   must be hold the mb EXCLUSIVE lock in this functions :
@@ -873,7 +806,6 @@ namespace engine
          _dmsStorageIndex                    *_pIdxSU ;
          _dmsStorageLob                      *_pLobSU ;
 
-         utilCompressorFactory               _compressorFactory ;
          _dmsCompressorEntry                 _compressorEntry[ DMS_MME_SLOTS ] ;
    };
    typedef _dmsStorageData dmsStorageData ;

@@ -380,9 +380,7 @@ namespace engine
       CHAR fullFilePath [ OSS_MAX_PATHSIZE + 1 ] = {0} ;
       const CHAR *dbpath = krcb->getOptionCB()->getDbPath() ;
       BOOLEAN dataRebuild = FALSE ;
-      utilCompressor *compressor = NULL ;
       dmsCompressorEntry *compEntry = NULL ;
-      utilCompressorContext compContext = UTIL_INVALID_COMP_CTX ;
 
       if ( ossStrlen ( dbpath ) + 1 +
            ossStrlen ( pCollectionFullName ) +
@@ -457,18 +455,7 @@ namespace engine
          PD_LOG ( PDEVENT, "Shadow copy phase starts" ) ;
          //mbContext->mb()->_flag = flag ;
 
-         if ( (UTIL_COMPRESSOR_TYPE)mbContext->mb()->_compressorType
-              > UTIL_COMPRESSOR_SNAPPY )
-         {
-            compEntry = su->data()->getCompressorEntry( mbContext->mbID() ) ;
-            compressor = compEntry->getCompressor() ;
-            if ( compressor )
-            {
-               rc = compressor->prepare( compContext ) ;
-               PD_RC_CHECK( rc, PDERROR,
-                            "Failed to prepare compressor, rc: %d", rc ) ;
-            }
-         }
+         compEntry = su->data()->getCompressorEntry( mbContext->mbID() ) ;
 
          // copy all records into reorg unit temp file
          while ( TRUE )
@@ -495,8 +482,7 @@ namespace engine
             try
             {
                BSONObj dataRecord ( buffObj.data() ) ;
-               rc = ru.insertRecord ( dataRecord, cb, attributes,
-                                      compressor, compContext ) ;
+               rc = ru.insertRecord ( dataRecord, cb, attributes, compEntry ) ;
                if ( rc )
                {
                   PD_LOG ( PDERROR, "Failed to insert into temp file, rc = %d",
@@ -510,20 +496,7 @@ namespace engine
                         e.what() ) ;
                goto error_shadow_copy ;
             }
-
-            if ( UTIL_INVALID_COMP_CTX != compContext )
-            {
-               rc = compressor->rePrepare( compContext ) ;
-               PD_RC_CHECK( rc, PDERROR,
-                            "Failed to prepare compressor, rc: %d", rc ) ;
-            }
          } // while ( TRUE )
-
-         if ( UTIL_INVALID_COMP_CTX != compContext )
-         {
-            compressor->done( compContext ) ;
-            compContext = UTIL_INVALID_COMP_CTX ;
-         }
 
          rc = ru.flush () ;
          if ( rc )
@@ -634,11 +607,6 @@ namespace engine
       }
 
    done :
-      if ( UTIL_INVALID_COMP_CTX != compContext )
-      {
-         compressor->done( compContext ) ;
-      }
-
       PD_TRACE_EXITRC ( SDB_RTNREORGOFFLINE1, rc ) ;
       return rc ;
    error :

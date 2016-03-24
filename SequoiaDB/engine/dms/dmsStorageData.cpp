@@ -43,13 +43,12 @@
 #include "dpsTransCB.hpp"
 #include "dpsOp2Record.hpp"
 #include "mthModifier.hpp"
-#include "dmsCompress.hpp"
 #include "ixm.hpp"
 #include "pdTrace.hpp"
 #include "dmsTrace.hpp"
-#include "utilCompressorFactory.hpp"
 #include "dmsCB.hpp"
 #include "pd.hpp"
+#include "utilCompressor.hpp"
 
 using namespace bson ;
 
@@ -295,21 +294,6 @@ namespace engine
       return rc ;
    }
 
-   void _dmsCompressorEntry::setCompressor( _utilCompressor *compressor )
-   {
-      SDB_ASSERT( compressor, "Invalid argument" ) ;
-      _compressor = compressor ;
-   }
-
-   void _dmsCompressorEntry::reset()
-   {
-      if ( _compressor )
-      {
-         SDB_OSS_DEL _compressor ;
-         _compressor = NULL ;
-      }
-   }
-
    /*
       _dmsStorageData implement
    */
@@ -499,37 +483,48 @@ namespace engine
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATA__LOADCLDICTTOCACHE, "_dmsStorageData::_loadClDictToCache" )
-   INT32 _dmsStorageData::_loadClDictToCache( const dmsMBContext *mbContext )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATA__INITCOMPRESSORENTRY, "_dmsStorageData::_initCompressorEntry" )
+   INT32 _dmsStorageData::_initCompressorEntry( UINT16 mbID )
    {
       INT32 rc = SDB_OK ;
-      dmsExtentID dictExtID = DMS_INVALID_EXTENT ;
+      PD_TRACE_ENTRY( SDB__DMSSTORAGEDATA__INITCOMPRESSORENTRY ) ;
       dmsDictExtent *dictExtent = NULL ;
-      UINT16 mbID = mbContext->mbID() ;
+      dmsExtentID dictExtID = _mbStatInfo[mbID]._dictExtID ;
+      UTIL_COMPRESSOR_TYPE type =
+         ( UTIL_COMPRESSOR_TYPE)_mbStatInfo[mbID]._compressorType;
+      utilCompressor *compressor = NULL ;
 
-      PD_TRACE_ENTRY ( SDB__DMSSTORAGEDATA__LOADCLDICTTOCACHE ) ;
+      dmsCompressorGuard compGuard( &_compressorEntry[mbID], EXCLUSIVE ) ;
 
-      dictExtID = _mbStatInfo[mbID]._dictExtID ;
-      SDB_ASSERT( ( DMS_INVALID_EXTENT != dictExtID ),
-                  "Dictionary extent id in mb is invalid" ) ;
-
-      /* Load the dictionary from extent to dictionary context in cache. */
-      dictExtent = (dmsDictExtent *)extentAddr( dictExtID ) ;
-      if ( !dictExtent->validate( mbID ) )
+      /*
+       * If the compression type is lzw and the dictionary has not been created,
+       * return directly.
+       */
+      if ( UTIL_COMPRESSOR_LZW == type && DMS_INVALID_EXTENT == dictExtID )
       {
-         PD_LOG( PDERROR, "Dictionary extent is invalid. Extent id: %d",
-                 dictExtID ) ;
-         rc = SDB_SYS ;
-         goto error ;
+         goto done ;
       }
 
-      rc = prepareCompressor( mbContext,
-                              (CHAR *)dictExtent + sizeof( dmsDictExtent ),
-                              dictExtent->_dictLen ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to prepare compressor, rc: %d", rc ) ;
+      compressor = getCompressorByType( type ) ;
+      SDB_ASSERT( compressor, "compressor pointer should not be NULL" ) ;
+      _compressorEntry[mbID].setCompressor( compressor ) ;
 
+      if ( UTIL_COMPRESSOR_LZW == type )
+      {
+         dictExtent = (dmsDictExtent *)extentAddr( dictExtID ) ;
+         if ( !dictExtent->validate( mbID ) )
+         {
+            PD_LOG( PDERROR, "Dictionary extent is invalid. Extent id: %d",
+                    dictExtID ) ;
+            rc = SDB_DMS_CORRUPTED_EXTENT ;
+            goto error ;
+         }
+
+         _compressorEntry[mbID].setDictionary(
+            (CHAR *)dictExtent + DMS_DICTEXTENT_HEADER_SZ ) ;
+      }
    done:
-      PD_TRACE_EXITRC ( SDB__DMSSTORAGEDATA__LOADCLDICTTOCACHE, rc ) ;
+      PD_TRACE_EXITRC( SDB__DMSSTORAGEDATA__INITCOMPRESSORENTRY, rc ) ;
       return rc ;
    error:
       goto done ;
@@ -621,34 +616,18 @@ namespace engine
    INT32 _dmsStorageData::_onOpened()
    {
       INT32 rc = SDB_OK ;
-      UINT32 clLID = DMS_INVALID_CLID ;
-      dmsMBContext *context = NULL ;
 
       PD_TRACE_ENTRY ( SDB__DMSSTORAGEDATA__ONOPENED ) ;
-      /*
-       * Check if the dictionary extent ID is valid. If yes, it means the
-       * dictionary has been created. Then load it from file into the dictionary
-       * cache.
-       */
+      /* Initialize compressor entries for collections. */
       for ( UINT16 i = 0; i < DMS_MME_SLOTS; ++i )
       {
-         if ( UTIL_COMPRESSOR_LZW == _mbStatInfo[i]._compressorType )
+         if ( -1 != _mbStatInfo[i]._compressorType )
          {
-            /*
-             * If _dictExtID is not invalid, the dictionary has been created.
-             * So just load it from file to cache. Otherwise, pass it to the
-             * dictionary creating job.
-             */
-            if ( DMS_INVALID_EXTENT != _mbStatInfo[i]._dictExtID )
-            {
-               rc = getMBContext( &context, i, clLID ) ;
-               SDB_ASSERT( SDB_OK == rc, "mb status is invalid" ) ;
-               rc = _loadClDictToCache( context ) ;
-               releaseMBContext( context ) ;
-               PD_RC_CHECK( rc, PDERROR, "Failed to load dictionary from file "
-                         "to cache for collection. Collection name: %s",
-                         _dmsMME->_mbList[i]._collectionName ) ;
-            }
+            rc = _initCompressorEntry( i ) ;
+            PD_RC_CHECK( rc, PDERROR,
+                         "Failed to initialize compressor entry for "
+                         "collection: %s, rc = %d",
+                         _dmsMME->_mbList[i]._collectionName, rc ) ;
          }
       }
 
@@ -1135,10 +1114,6 @@ namespace engine
       if ( DMS_INVALID_EXTENT != context->mb()->_dictExtentID
            && needChangeCLID )
       {
-         /*
-          * First remove the compressor, this will invalid the compressor entry.
-          */
-         rmCompressor( context ) ;
          dictExt
             = ( dmsDictExtent * )extentAddr( context->mb()->_dictExtentID ) ;
          _releaseSpace( context->mb()->_dictExtentID, dictExt->_blockSize ) ;
@@ -1508,7 +1483,7 @@ namespace engine
                                          UINT16 initPages,
                                          BOOLEAN sysCollection,
                                          BOOLEAN noIDIndex,
-                                         UTIL_COMPRESSOR_TYPE compressorType )
+                                         SINT8  compressionType )
    {
       INT32 rc                = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__DMSSTORAGEDATA_ADDCOLLECTION ) ;
@@ -1534,10 +1509,6 @@ namespace engine
       UINT32 mbExSize         = (( segNum << 3 ) >> pageSizeSquareRoot()) + 1 ;
       dmsExtentID mbExExtent  = DMS_INVALID_EXTENT ;
       dmsMetaExtent *mbExtent = NULL ;
-      pmdKRCB *krCB = pmdGetKRCB() ;
-      SDB_DMSCB *dmsCB = krCB->getDMSCB() ;
-
-      SINT8 compType = (SINT8)compressorType ;
 
       SDB_ASSERT( pName, "Collection name cat't be NULL" ) ;
 
@@ -1553,7 +1524,7 @@ namespace engine
       if ( dpscb )
       {
          rc = dpsCLCrt2Record( _clFullName(pName, fullName, sizeof(fullName)),
-                               attributes, compType, record ) ;
+                               attributes, compressionType, record ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to build record, rc: %d", rc ) ;
 
          rc = dpscb->checkSyncControl( record.alignedLen(), cb ) ;
@@ -1620,9 +1591,9 @@ namespace engine
       mb = &_dmsMME->_mbList[newCollectionID] ;
       // attribuites should contain the compress type.
       mb->reset( pName, newCollectionID, logicalID, attributes ) ;
-      if ( !isTempSU() && ( UTIL_COMPRESSOR_INVALID != compressorType ) )
+      if ( !isTempSU() && ( -1 != compressionType ) )
       {
-         mb->_compressorType = compType ;
+         mb->_compressorType = compressionType ;
       }
 
       _mbStatInfo[ newCollectionID ].reset() ;
@@ -1637,12 +1608,6 @@ namespace engine
          mbExtent->init( mbExSize, newCollectionID, segNum ) ;
          mb->_mbExExtentID = mbExExtent ;
          mbExExtent = DMS_INVALID_EXTENT ;
-
-         /* Only new supported compressors such as lzw need a dictionary. */
-         if ( UTIL_COMPRESSOR_LZW == compressorType )
-         {
-            dmsCB->pushToDictCreateCLList( CSID(), newCollectionID ) ;
-         }
       }
 
       // write dps log
@@ -1822,6 +1787,11 @@ namespace engine
                    "rc: %d", pName, rc ) ;
 
       // truncate the collection
+      if ( UTIL_COMPRESSOR_INVALID !=
+           (UTIL_COMPRESSOR_TYPE)context->mb()->_compressorType )
+      {
+         rmCompressor( context ) ;
+      }
       rc = _truncateCollection( context ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to truncate the collection[%s], rc: %d",
                    pName, rc ) ;
@@ -2009,6 +1979,17 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR, "Truncate collection[%s] indexes failed, "
                    "rc: %d", pName, rc ) ;
 
+      /*
+       * For LZW, the compressor and dictionary should be removed during
+       * truncate. In case of snappy, the compressor should be reserved.
+       */
+      if ( UTIL_COMPRESSOR_LZW ==
+           (UTIL_COMPRESSOR_TYPE)(context->mb()->_compressorType)
+           && _compressorEntry[context->mbID()].ready()
+           && needChangeCLID )
+      {
+         rmCompressor( context ) ;
+      }
       rc = _truncateCollection( context, needChangeCLID ) ;
       PD_RC_CHECK( rc, PDERROR, "Truncate collection[%s] data failed, rc: %d",
                    pName, rc ) ;
@@ -2263,14 +2244,11 @@ namespace engine
       ossValuePtr deletedRecordPtr  = 0 ;
       ossValuePtr insertedDataPtr   = 0 ;
       BSONObj insertObj ;
-      utilCompressor *compressor    = NULL ;
-      BOOLEAN compressorReady       = FALSE ;
       BOOLEAN dataModified          = FALSE ;
-      utilCompressorContext compressorContext = UTIL_INVALID_COMP_CTX ;
-      BOOLEAN dictCompress          = FALSE ;
+      _dmsCompressorEntry *compressorEntry = &_compressorEntry[context->mbID()] ;
 
       /* For concurrency protection with drop CL and set compresor. */
-      dmsCompressorGuard compGuard( _compressorEntry[context->mbID()], SHARED ) ;
+      dmsCompressorGuard compGuard( compressorEntry, SHARED ) ;
 
       // verify whether the record got "_id" inside
       BSONElement ele = record.getField ( DMS_ID_KEY_NAME ) ;
@@ -2297,45 +2275,9 @@ namespace engine
          goto error ;
       }
 
-      /*
-       * Check if the compressor is ready.
-       */
-      if ( UTIL_COMPRESSOR_LZW ==
-                     (UTIL_COMPRESSOR_TYPE)context->mb()->_compressorType )
+      if ( compressorEntry->ready() )
       {
-         /*
-          * _dictExtentID invalid means the dictionary has not been created,
-          * so the compressor is not ready.
-          */
-         compressorReady
-            = ( DMS_INVALID_EXTENT != context->mb()->_dictExtentID ) ?
-              TRUE : FALSE ;
-         if ( compressorReady )
-         {
-            compressor = _compressorEntry[context->mbID()].getCompressor() ;
-            if ( compressor )
-            {
-               rc = compressor->prepare( compressorContext ) ;
-               PD_RC_CHECK( rc, PDERROR,
-                            "Failed to prepare compressor, rc: %d", rc ) ;
-               dictCompress = TRUE ;
-            }
-         }
-      }
-      else if ( UTIL_COMPRESSOR_SNAPPY ==
-             (UTIL_COMPRESSOR_TYPE)context->mb()->_compressorType )
-      {
-         compressorReady = TRUE ;
-      }
-      else
-      {
-         compressorReady = FALSE ;
-      }
-
-      if ( compressorReady )
-      {
-         rc = dmsCompress( cb, compressor, compressorContext,
-                           record, ((CHAR*)(&oid)), oidLen,
+         rc = dmsCompress( cb, compressorEntry, record, ((CHAR*)(&oid)), oidLen,
                            &compressedData, &compressedDataSize ) ;
          if ( rc )
          {
@@ -2374,14 +2316,8 @@ namespace engine
       }
 
       /*
-       * Release the compressor context and guard to avoid deadlock with
-       * truncate/drop collection.
+       * Release the guard to avoid deadlock with truncate/drop collection.
        */
-      if ( UTIL_INVALID_COMP_CTX != compressorContext )
-      {
-         compressor->done( compressorContext ) ;
-         compressorContext = UTIL_INVALID_COMP_CTX ;
-      }
       compGuard.release() ;
 
       // add record metadata and oid
@@ -2483,20 +2419,8 @@ namespace engine
       {
          if ( dataModified )
          {
-            if ( dictCompress )
-            {
-               rc = compressor->prepare( compressorContext ) ;
-               PD_RC_CHECK( rc, PDERROR,
-                            "Failed to prepare compressor, rc: %d", rc ) ;
-            }
-
-            DMS_RECORD_EXTRACTDATA( compressor, compressorContext,
-                                    deletedRecordPtr, insertedDataPtr ) ;
-            if ( compressorContext )
-            {
-               compressor->done( compressorContext ) ;
-               compressorContext = UTIL_INVALID_COMP_CTX ;
-            }
+            DMS_RECORD_EXTRACTDATA( deletedRecordPtr, insertedDataPtr,
+                                    compressorEntry ) ;
             insertObj = BSONObj( ( const CHAR* )insertedDataPtr ) ;
             DMS_MON_OP_COUNT_INC( pMonAppCB, MON_DATA_READ, 1 ) ;
             DMS_MON_OP_COUNT_INC( pMonAppCB, MON_READ, 1 ) ;
@@ -2543,11 +2467,6 @@ namespace engine
       }
 
    done:
-      if ( UTIL_INVALID_COMP_CTX != compressorContext )
-      {
-         compressor->done( compressorContext ) ;
-      }
-
       // release the lock immediately if it is not transaction-operation,
       // the transaction-operation's lock will release in rollback or commit
       if ( isTransLocked && ( transID == DPS_INVALID_TRANS_ID || rc ) )
@@ -2725,8 +2644,6 @@ namespace engine
       DPS_LSN_OFFSET preLsn         = cb->getCurTransLsn() ;
       DPS_LSN_OFFSET relatedLSN     = cb->getRelatedTransLSN() ;
       CHAR recordState              = 0 ;
-      utilCompressor *compressor    = NULL ;
-      utilCompressorContext compContext = UTIL_INVALID_COMP_CTX ;
 
       if ( !extentPtr )
       {
@@ -2802,23 +2719,8 @@ namespace engine
       {
          if ( !deletedDataPtr )
          {
-            if ( DMS_INVALID_EXTENT != context->mb()->_dictExtentID )
-            {
-               compressor =  _compressorEntry[context->mbID()].getCompressor() ;
-               if ( compressor )
-               {
-                  rc = compressor->prepare( compContext ) ;
-                  PD_RC_CHECK( rc, PDERROR,
-                               "Failed to prepare compressor, rc: %d", rc ) ;
-               }
-            }
-            DMS_RECORD_EXTRACTDATA ( compressor, compContext,
-                                     realPtr, deletedDataPtr ) ;
-            if ( UTIL_INVALID_COMP_CTX != compContext )
-            {
-               compressor->done( compContext ) ;
-               compContext = UTIL_INVALID_COMP_CTX ;
-            }
+            DMS_RECORD_EXTRACTDATA ( realPtr, deletedDataPtr,
+                                     &_compressorEntry[context->mbID()] ) ;
 
             DMS_MON_OP_COUNT_INC( pMonAppCB, MON_DATA_READ, 1 ) ;
             DMS_MON_OP_COUNT_INC( pMonAppCB, MON_READ, 1 ) ;
@@ -2932,11 +2834,6 @@ namespace engine
       }
 
    done :
-      if ( UTIL_INVALID_COMP_CTX != compContext )
-      {
-         compressor->done( compContext ) ;
-      }
-
       if ( 0 != logRecSize )
       {
          pTransCB->releaseLogSpace( logRecSize, cb ) ;
@@ -3038,8 +2935,6 @@ namespace engine
       DPS_TRANS_ID transID = cb->getTransID() ;
       DPS_LSN_OFFSET preTransLsn = cb->getCurTransLsn() ;
       DPS_LSN_OFFSET relatedLSN = cb->getRelatedTransLSN() ;
-      utilCompressorContext compContext = UTIL_INVALID_COMP_CTX ;
-      utilCompressor *compressor = NULL ;
 
       _registerNewWriting() ;
       // first we need to locate the mem addr of the extent
@@ -3089,24 +2984,8 @@ namespace engine
             recordRealPtr = ovfExtentPtr + ovfRID._offset ;
          }
 
-         if ( DMS_INVALID_EXTENT != context->mb()->_dictExtentID )
-         {
-            compressor = _compressorEntry[context->mbID()].getCompressor() ;
-            if ( compressor )
-            {
-               rc = compressor->prepare( compContext ) ;
-               PD_RC_CHECK( rc, PDERROR,
-                            "Failed to prepare compressor, rc: %d", rc ) ;
-            }
-         }
-         DMS_RECORD_EXTRACTDATA( compressor, compContext,
-                                 recordRealPtr, updatedDataPtr ) ;
-         if ( UTIL_INVALID_COMP_CTX != compContext )
-         {
-            compressor->done( compContext ) ;
-            compContext = UTIL_INVALID_COMP_CTX ;
-         }
-
+         DMS_RECORD_EXTRACTDATA( recordRealPtr, updatedDataPtr,
+                                 &_compressorEntry[context->mbID()] ) ;
          DMS_MON_OP_COUNT_INC( pMonAppCB, MON_DATA_READ, 1 ) ;
          DMS_MON_OP_COUNT_INC( pMonAppCB, MON_READ, 1 ) ;
       }
@@ -3236,11 +3115,6 @@ namespace engine
       }
 
    done :
-      if ( UTIL_INVALID_COMP_CTX != compContext )
-      {
-         compressor->done( compContext ) ;
-      }
-
       if ( 0 != logRecSize )
       {
          pTransCB->releaseLogSpace( logRecSize, cb );
@@ -3274,10 +3148,7 @@ namespace engine
       dmsRecordID ovfRID ;
       PD_TRACE_ENTRY ( SDB__DMSSTORAGEDATA__EXTENTUPDATERECORD ) ;
       monAppCB * pMonAppCB         = cb ? cb->getMonAppCB() : NULL ;
-      utilCompressorContext compContext = UTIL_INVALID_COMP_CTX ;
-      dmsCompressorEntry *compEntry = &_compressorEntry[context->mbID()] ;
-      utilCompressor *compressor   = NULL ;
-      BOOLEAN needCompress         = FALSE ;
+      dmsCompressorEntry *compressorEntry = &_compressorEntry[context->mbID()] ;
 
       SDB_ASSERT ( 0 != recordDataPtr, "recordDataPtr can't be NULL" ) ;
 
@@ -3299,61 +3170,28 @@ namespace engine
       }
 
       // compress data
-      if ( OSS_BIT_TEST(context->mb()->_attributes, DMS_MB_ATTR_COMPRESSED ) )
+      //if ( OSS_BIT_TEST(context->mb()->_attributes, DMS_MB_ATTR_COMPRESSED ) )
+      if ( compressorEntry->ready() )
       {
-         if ( DMS_INVALID_EXTENT != context->mb()->_dictExtentID )
+         rc = dmsCompress( cb, compressorEntry, (const CHAR*)ptr,
+                           len, &compressedData, &compressedDataSize ) ;
+         if ( rc )
          {
-            compressor = compEntry->getCompressor() ;
-            if ( compressor )
-            {
-               rc = compressor->prepare( compContext ) ;
-               PD_RC_CHECK( rc, PDERROR,
-                            "Failed to prepare compressor, rc: %d", rc ) ;
-               needCompress = TRUE ;
-            }
-         }
-         else if ( UTIL_COMPRESSOR_SNAPPY ==
-              (UTIL_COMPRESSOR_TYPE)context->mb()->_compressorType )
-         {
-            needCompress = TRUE ;
+             dmsRecordSize = (UINT32)len ;
          }
          else
          {
-            needCompress = FALSE ;
-         }
-
-         if ( needCompress )
-         {
-            rc = dmsCompress( cb, compressor, compContext, (const CHAR*)ptr,
-                              len, &compressedData, &compressedDataSize ) ;
-            if ( UTIL_INVALID_COMP_CTX != compContext )
+            dmsRecordSize = compressedDataSize + sizeof(INT32) ;
+            // if we find the record size is greater than non-compression,
+            // let's save non-compressed version
+            if ( dmsRecordSize > (UINT32)len )
             {
-               compressor->done( compContext ) ;
-               compContext = UTIL_INVALID_COMP_CTX ;
-            }
-
-            if ( rc )
-            {
-                dmsRecordSize = (UINT32)len ;
+               dmsRecordSize = (UINT32)len ;
             }
             else
             {
-               dmsRecordSize = compressedDataSize + sizeof(INT32) ;
-               // if we find the record size is greater than non-compression,
-               // let's save non-compressed version
-               if ( dmsRecordSize > (UINT32)len )
-               {
-                  dmsRecordSize = (UINT32)len ;
-               }
-               else
-               {
-                  isCompressed = TRUE ;
-               }
+               isCompressed = TRUE ;
             }
-         }
-         else
-         {
-            dmsRecordSize = (UINT32)len ;
          }
       }
       else
@@ -3471,11 +3309,6 @@ namespace engine
       }
 
    done :
-      if ( UTIL_INVALID_COMP_CTX != compContext )
-      {
-         compressor->done( compContext ) ;
-      }
-
       PD_TRACE_EXITRC ( SDB__DMSSTORAGEDATA__EXTENTUPDATERECORD, rc ) ;
       return rc ;
    error :
@@ -3506,9 +3339,6 @@ namespace engine
       ossValuePtr recordPtr        = 0 ;
       CHAR flag                    = 0 ;
       monAppCB * pMonAppCB         = cb ? cb->getMonAppCB() : NULL ;
-      utilCompressor *compressor   = NULL ;
-      utilCompressorContext compContext = UTIL_INVALID_COMP_CTX ;
-
 
       PD_TRACE_ENTRY ( SDB__DMSSTORAGEDATA_FETCH ) ;
 
@@ -3588,24 +3418,8 @@ namespace engine
       try
       {
          ossValuePtr fetchedRecord = 0 ;
-         if ( DMS_INVALID_EXTENT != context->mb()->_dictExtentID )
-         {
-            compressor = _compressorEntry[context->mbID()].getCompressor() ;
-            if ( compressor )
-            {
-               rc = compressor->prepare( compContext ) ;
-               PD_RC_CHECK( rc, PDERROR,
-                            "Failed to prepare compressor, rc: %d", rc ) ;
-            }
-         }
-         DMS_RECORD_EXTRACTDATA( compressor, compContext,
-                                 recordPtr, fetchedRecord ) ;
-         if ( UTIL_INVALID_COMP_CTX != compContext )
-         {
-            compressor->done( compContext ) ;
-            compContext = UTIL_INVALID_COMP_CTX ;
-         }
-
+         DMS_RECORD_EXTRACTDATA( recordPtr, fetchedRecord,
+                                 &_compressorEntry[context->mbID()] ) ;
          BSONObj obj( (CHAR*)fetchedRecord ) ;
          DMS_MON_OP_COUNT_INC( pMonAppCB, MON_DATA_READ, 1 ) ;
          DMS_MON_OP_COUNT_INC( pMonAppCB, MON_READ, 1 ) ;
@@ -3627,11 +3441,6 @@ namespace engine
       }
 
    done :
-      if ( UTIL_INVALID_COMP_CTX != compContext )
-      {
-         compressor->done( compContext ) ;
-      }
-
       PD_TRACE_EXITRC ( SDB__DMSSTORAGEDATA_FETCH, rc ) ;
       return rc ;
    error :
@@ -3689,40 +3498,19 @@ namespace engine
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATA_PREPARECOMPRESSOR, "_dmsStorageData::prepareCompressor" )
-   INT32 _dmsStorageData::prepareCompressor( const _dmsMBContext *context,
-                                             const CHAR *dict, UINT32 dictLen )
+   INT32 _dmsStorageData::setCompressor( UINT16 mbID,
+                                         UTIL_COMPRESSOR_TYPE type )
    {
-      INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY( SDB__DMSSTORAGEDATA_PREPARECOMPRESSOR ) ;
-      utilCompressor *compressor = NULL ;
-      UTIL_COMPRESSOR_TYPE type  = (UTIL_COMPRESSOR_TYPE)
-                             ((dmsMBContext *)context)->mb()->_compressorType ;
-      dmsCompressorGuard compGuard( _compressorEntry[context->mbID()],
-                                    EXCLUSIVE ) ;
-
-      rc = _compressorFactory.createCompressor( type, compressor ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to create compressor, rc: %d", rc ) ;
-
-      rc = compressor->setDictionary( dict, dictLen ) ;
-      PD_RC_CHECK( rc, PDERROR,
-                   "Failed to set dictionary for compressor, rc: %d", rc ) ;
-
-      _compressorEntry[context->mbID()].setCompressor( compressor ) ;
-
-   done:
-      PD_TRACE_EXITRC( SDB__DMSSTORAGEDATA_PREPARECOMPRESSOR, rc ) ;
-      return rc ;
-   error:
-      _compressorFactory.destroyCompressor( compressor ) ;
-      goto done ;
+      dmsCompressorGuard guard( &_compressorEntry[ mbID ], EXCLUSIVE ) ;
+      _compressorEntry[mbID].setCompressor( getCompressorByType( type ) ) ;
+      return SDB_OK ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATA_RMCOMPRESSOR, "_dmsStorageData::rmCompressor" )
    void _dmsStorageData::rmCompressor( _dmsMBContext *context )
    {
       PD_TRACE_ENTRY( SDB__DMSSTORAGEDATA_RMCOMPRESSOR ) ;
-      dmsCompressorGuard compGuard( _compressorEntry[context->mbID()],
+      dmsCompressorGuard compGuard( &_compressorEntry[context->mbID()],
                                     EXCLUSIVE ) ;
       _compressorEntry[context->mbID()].reset() ;
       PD_TRACE_EXIT( SDB__DMSSTORAGEDATA_RMCOMPRESSOR ) ;
@@ -3738,6 +3526,7 @@ namespace engine
       dmsDictExtent *dictExtent = NULL ;
       dmsMBContext *context = NULL ;
       UINT32 currClLID = DMS_INVALID_CLID ;
+      dmsCompressorEntry *compressorEntry = &_compressorEntry[ mbID ] ;
 
       /* Number of pages to store the dictionary, including the extent header.*/
       UINT32 pageNum =
@@ -3781,6 +3570,15 @@ namespace engine
 
       /// Make sure the dict persist
       flushMME( TRUE ) ;
+
+      {
+         UTIL_COMPRESSOR_TYPE type  = (UTIL_COMPRESSOR_TYPE)
+                                   ( context->mb()->_compressorType ) ;
+         dmsCompressorGuard guard( compressorEntry, EXCLUSIVE ) ;
+         compressorEntry->setCompressor( getCompressorByType( type ) ) ;
+         compressorEntry->setDictionary(
+            (CHAR *)dictExtent + DMS_DICTEXTENT_HEADER_SZ ) ;
+      }
 
       PD_LOG( PDEVENT, "Compression dictionary created succesfully for "
               "collection[%s]", context->mb()->_collectionName ) ;
