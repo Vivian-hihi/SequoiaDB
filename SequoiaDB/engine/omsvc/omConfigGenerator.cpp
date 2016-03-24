@@ -1283,30 +1283,6 @@ namespace engine
       _nodeCounter.clear() ;
    }
 
-   omConfTemplate::omConfTemplate()
-                  :_businessType( "" ), _businessName( "" ), _clusterName( "" ),
-                   _deployMod( "" ), _replicaNum( -1 ), _dataNum( 0 ), 
-                   _catalogNum( -1 ), _dataGroupNum( -1 ), _coordNum( -1 )
-   {
-   }
-
-   omConfTemplate::~omConfTemplate()
-   {
-      clear() ;
-   }
-
-   /*
-   bsonTemplate:
-   {
-      "ClusterName":"c1","BusinessType":"sequoiadb", "BusinessName":"b1",
-      "DeployMod": "standalone", 
-      "Property":[{"Name":"replicanum", "Type":"int", "Default":"1", 
-                      "Valid":"1", "Display":"edit box", "Edit":"false", 
-                      "Desc":"", "WebName":"" }
-                      , ...
-                 ] 
-   }
-   */
    INT32 omConfTemplate::init( const BSONObj &confTemplate )
    {
       INT32 rc = SDB_OK ;
@@ -1345,7 +1321,6 @@ namespace engine
          goto error ;
       }
 
-
       {
          BSONElement propertyElement ;
          propertyElement = confTemplate.getField( OM_BSON_PROPERTY_ARRAY ) ;
@@ -1382,15 +1357,78 @@ namespace engine
          goto error ;
       }
 
-      _dataNum = _dataGroupNum * _replicaNum ;
+      rc = _afterInit() ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "_afterInit failed:rc=%d", rc ) ;
+         goto error ;
+      }
 
-   done:
-      return rc ;
-   error:
-      goto done ;
+      done:
+         return rc ;
+      error:
+         goto done ;
+   }
+
+   void omConfTemplate::reset()
+   {
+      _businessType = "" ;
+      _businessName = "" ;
+      _clusterName  = "" ;
+      _deployMod    = "" ;
+      _reset() ;
+   }
+
+   INT32 omConfTemplate::_afterInit()
+   {
+      return SDB_OK ;
+   }
+
+   void omConfTemplate::_reset()
+   {
+      return ;
+   }
+
+   BOOLEAN omConfTemplate::_isAllProperySet()
+   {
+      return TRUE ;
    }
 
    INT32 omConfTemplate::_setPropery( BSONObj &property )
+   {
+      return SDB_OK ;
+   }
+
+   omSdbConfTemplate::omSdbConfTemplate()
+                  :_replicaNum( -1 ), _dataNum( 0 ), 
+                   _catalogNum( -1 ), _dataGroupNum( -1 ), _coordNum( -1 )
+   {
+   }
+
+   omSdbConfTemplate::~omSdbConfTemplate()
+   {
+      reset() ;
+   }
+
+   INT32 omSdbConfTemplate::_afterInit()
+   {
+      _dataNum = _dataGroupNum * _replicaNum ;
+      return SDB_OK ;
+   }
+
+   /*
+   bsonTemplate:
+   {
+      "ClusterName":"c1","BusinessType":"sequoiadb", "BusinessName":"b1",
+      "DeployMod": "standalone", 
+      "Property":[{"Name":"replicanum", "Type":"int", "Default":"1", 
+                      "Valid":"1", "Display":"edit box", "Edit":"false", 
+                      "Desc":"", "WebName":"" }
+                      , ...
+                 ] 
+   }
+   */
+   INT32 omSdbConfTemplate::_setPropery( BSONObj &property )
    {
       INT32 rc = SDB_OK ;
       string itemName ;
@@ -1454,12 +1492,8 @@ namespace engine
       goto done ;
    }
 
-   void omConfTemplate::clear()
+   void omSdbConfTemplate::_reset()
    {
-      _businessType = "" ;
-      _businessName = "" ;
-      _clusterName  = "" ;
-      _deployMod    = "" ;
       _replicaNum   = -1 ;
       _dataNum      = -1 ;
       _dataGroupNum = -1 ;
@@ -1467,7 +1501,7 @@ namespace engine
       _coordNum     = -1 ;
    }
 
-   BOOLEAN omConfTemplate::_isAllProperySet()
+   BOOLEAN omSdbConfTemplate::_isAllProperySet()
    {
       if ( _replicaNum == -1 )
       {
@@ -1496,52 +1530,32 @@ namespace engine
       return TRUE ;
    }
 
-   string omConfTemplate::getBusinessType()
-   {
-      return _businessType ;
-   }
-
-   string omConfTemplate::getBusinessName()
-   {
-      return _businessName ;
-   }
-
-   string omConfTemplate::getClusterName()
-   {
-      return _clusterName ;
-   }
-
-   string omConfTemplate::getDeployMod()
-   {
-      return _deployMod ;
-   }
-
-   INT32 omConfTemplate::getReplicaNum()
+   INT32 omSdbConfTemplate::getReplicaNum()
    {
       return _replicaNum ;
    }
 
-   INT32 omConfTemplate::getDataNum()
+   INT32 omSdbConfTemplate::getDataNum()
    {
       return _dataNum ;
    }
 
-   INT32 omConfTemplate::getDataGroupNum()
+   INT32 omSdbConfTemplate::getDataGroupNum()
    {
       return _dataGroupNum ;
    }
 
-   INT32 omConfTemplate::getCatalogNum()
+   INT32 omSdbConfTemplate::getCatalogNum()
    {
       return _catalogNum ;
    }
 
-   INT32 omConfTemplate::getCoordNum()
+   INT32 omSdbConfTemplate::getCoordNum()
    {
       return _coordNum ;
    }
 
-   void omConfTemplate::setCoordNum( INT32 coordNum )
+   void omSdbConfTemplate::setCoordNum( INT32 coordNum )
    {
       _coordNum = coordNum ;
    }
@@ -2528,7 +2542,7 @@ namespace engine
    {
       _cluster.clear() ;
       _propertyContainer.clear() ;
-      _template.clear() ;
+      _template.reset() ;
 
       INT32 rc = _template.init( bsonTemplate ) ;
       if ( SDB_OK != rc )
@@ -2604,7 +2618,7 @@ namespace engine
    {
       _cluster.clear() ;
       _propertyContainer.clear() ;
-      _template.clear() ;
+      _template.reset() ;
 
       INT32 rc = SDB_OK ;
       rc = _parseProperties( confProperties ) ;
@@ -2986,126 +3000,13 @@ namespace engine
 
    //****************Zookeeper begin*********************************
    omZooConfTemplate::omZooConfTemplate()
-                     :_businessType( "" ), _businessName( "" ), 
-                      _clusterName( "" ), _deployMod( "" ), _zooNum( -1 )
+                     : _zooNum( -1 )
    {
    }
 
    omZooConfTemplate::~omZooConfTemplate()
    {
-      clear() ;
-   }
-
-   /*
-   bsonTemplate:
-   {
-      "ClusterName":"c1","BusinessType":"zookeeper", "BusinessName":"myzookeeper",
-      "DeployMod": "zookeeper", 
-      "Property":[{"Name":"zoonum", "Type":"int", "Default":"1", 
-                      "Valid":"1", "Display":"edit box", "Edit":"false", 
-                      "Desc":"", "WebName":"" }
-                      , ...
-                 ] 
-   }
-   */
-   INT32 omZooConfTemplate::init( const BSONObj &confTemplate )
-   {
-      INT32 rc = SDB_OK ;
-      rc = getValueAsString( confTemplate, OM_BSON_BUSINESS_TYPE, 
-                             _businessType ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG_MSG( PDERROR, "Template miss bson field[%s]", 
-                     OM_BSON_BUSINESS_TYPE ) ;
-         goto error ;
-      }
-
-      rc = getValueAsString( confTemplate, OM_BSON_BUSINESS_NAME, 
-                             _businessName ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG_MSG( PDERROR, "Template miss bson field[%s]", 
-                     OM_BSON_BUSINESS_NAME ) ;
-         goto error ;
-      }
-
-      rc = getValueAsString( confTemplate, OM_BSON_FIELD_CLUSTER_NAME, 
-                             _clusterName ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG_MSG( PDERROR, "Template miss bson field[%s]", 
-                     OM_BSON_FIELD_CLUSTER_NAME ) ;
-         goto error ;
-      }
-
-      rc = getValueAsString( confTemplate, OM_BSON_DEPLOY_MOD, _deployMod ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG_MSG( PDERROR, "Template miss bson field[%s]", 
-                     OM_BSON_DEPLOY_MOD ) ;
-         goto error ;
-      }
-
-      {
-         BSONElement propertyElement ;
-         propertyElement = confTemplate.getField( OM_BSON_PROPERTY_ARRAY ) ;
-         if ( propertyElement.eoo() || Array != propertyElement.type() )
-         {
-            rc = SDB_INVALIDARG ;
-            PD_LOG_MSG( PDERROR, "template's field is not Array:field=%s,"
-                        "type=%d", OM_BSON_PROPERTY_ARRAY, 
-                        propertyElement.type() ) ;
-            goto error ;
-         }
-
-         BSONObjIterator i( propertyElement.embeddedObject() ) ;
-         while ( i.more() )
-         {
-            BSONElement ele = i.next() ;
-            if ( ele.type() == Object )
-            {
-               BSONObj oneProperty = ele.embeddedObject() ;
-               rc = _setPropery( oneProperty ) ;
-               if ( SDB_OK != rc )
-               {
-                  PD_LOG( PDERROR, "_setPropery failed:rc=%d", rc ) ;
-                  goto error ;
-               }
-            }
-         }
-      }
-
-      if ( !_isAllProperySet() )
-      {
-         rc = SDB_INVALIDARG ;
-         PD_LOG( PDERROR, "miss template configur item" ) ;
-         goto error ;
-      }
-
-   done:
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   string omZooConfTemplate::getBusinessType()
-   {
-      return _businessType ;
-   }
-
-   string omZooConfTemplate::getBusinessName()
-   {
-      return _businessName ;
-   }
-
-   string omZooConfTemplate::getClusterName()
-   {
-      return _clusterName ;
-   }
-
-   string omZooConfTemplate::getDeployMod()
-   {
-      return _deployMod ;
+      reset() ;
    }
 
    INT32 omZooConfTemplate::getZooNum()
@@ -3113,12 +3014,8 @@ namespace engine
       return _zooNum ;
    }
 
-   void omZooConfTemplate::clear()
+   void omZooConfTemplate::_reset()
    {
-      _businessType = "" ;
-      _businessName = "" ;
-      _clusterName  = "" ;
-      _deployMod    = "" ;
       _zooNum       = -1 ;
    }
 
@@ -3134,6 +3031,18 @@ namespace engine
       return TRUE ;
    }
 
+   /*
+   bsonTemplate:
+   {
+      "ClusterName":"c1","BusinessType":"zookeeper", "BusinessName":"myzookeeper",
+      "DeployMod": "zookeeper", 
+      "Property":[{"Name":"zoonum", "Type":"int", "Default":"1", 
+                      "Valid":"1", "Display":"edit box", "Edit":"false", 
+                      "Desc":"", "WebName":"" }
+                      , ...
+                 ] 
+   }
+   */
    INT32 omZooConfTemplate::_setPropery( BSONObj &property )
    {
       INT32 rc = SDB_OK ;
@@ -4474,7 +4383,7 @@ namespace engine
    {
       _cluster.clear() ;
       _propertyContainer.clear() ;
-      _template.clear() ;
+      _template.reset() ;
 
       INT32 rc = _template.init( bsonTemplate ) ;
       if ( SDB_OK != rc )
@@ -4738,7 +4647,7 @@ namespace engine
    {
       _cluster.clear() ;
       _propertyContainer.clear() ;
-      _template.clear() ;
+      _template.reset() ;
 
       INT32 rc = SDB_OK ;
       rc = _parseProperties( confProperties ) ;

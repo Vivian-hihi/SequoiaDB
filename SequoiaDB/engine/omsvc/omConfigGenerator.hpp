@@ -371,18 +371,42 @@ namespace engine
          propertyContainer          *_propertyContainer ;
    } ;
 
-   class omConfTemplate : public SDBObject
+   class omConfTemplate: public SDBObject
    {
       public:
-         omConfTemplate() ;
-         ~omConfTemplate() ;
+         omConfTemplate() {}
+         virtual ~omConfTemplate() {}
 
       public:
+         public:
          INT32             init( const BSONObj &bsonTemplate ) ;
-         string            getBusinessType() ;
-         string            getBusinessName() ;
-         string            getClusterName() ;
-         string            getDeployMod() ;
+         void              reset() ;
+
+         string            getBusinessType() { return _businessType ; }
+         string            getBusinessName() { return _businessName ;}
+         string            getClusterName() { return _clusterName ; }
+         string            getDeployMod() { return _deployMod ; }
+
+      protected:
+         virtual INT32     _afterInit() ;
+         virtual void      _reset() ;
+         virtual BOOLEAN   _isAllProperySet() ;
+         virtual INT32     _setPropery( BSONObj &property ) ;
+
+      protected:
+         string            _businessType ;
+         string            _businessName ;
+         string            _clusterName ;
+         string            _deployMod ;
+   } ;
+
+   class omSdbConfTemplate : public omConfTemplate
+   {
+      public:
+         omSdbConfTemplate() ;
+         ~omSdbConfTemplate() ;
+
+      public:
          INT32             getReplicaNum() ;
          INT32             getDataNum() ;
          INT32             getDataGroupNum() ;
@@ -391,18 +415,13 @@ namespace engine
 
          void              setCoordNum( INT32 coordNum ) ;
 
-      public:
-         void              clear() ;
-
       private:
+         INT32             _afterInit() ;
+         void              _reset() ;
          BOOLEAN           _isAllProperySet() ;
          INT32             _setPropery( BSONObj &property ) ;
 
       private:
-         string            _businessType ;
-         string            _businessName ;
-         string            _clusterName ;
-         string            _deployMod ;
          INT32             _replicaNum ;
          INT32             _dataNum ;
          INT32             _catalogNum ;
@@ -479,7 +498,7 @@ namespace engine
          INT32       _parseNewBusiness( const BSONObj &newBusinessConf ) ;
 
       private:
-         omConfTemplate    _template ;
+         omSdbConfTemplate _template ;
          propertyContainer _propertyContainer ;
          omCluster         _cluster ;
          string            _errorDetail ;
@@ -489,32 +508,21 @@ namespace engine
    } ;
 
    //********************Zookeeper begin*******************************
-   class omZooConfTemplate : public SDBObject
+   class omZooConfTemplate : public omConfTemplate
    {
       public:
          omZooConfTemplate() ;
          ~omZooConfTemplate() ;
 
       public:
-         INT32             init( const BSONObj &confTemplate ) ;
-         string            getBusinessType() ;
-         string            getBusinessName() ;
-         string            getClusterName() ;
-         string            getDeployMod() ;
          INT32             getZooNum() ;
 
-      public:
-         void              clear() ;
-
       private:
+         void              _reset() ;
          BOOLEAN           _isAllProperySet() ;
          INT32             _setPropery( BSONObj &property ) ;
 
       private:
-         string            _businessType ;
-         string            _businessName ;
-         string            _clusterName ;
-         string            _deployMod ;
          INT32             _zooNum ;
    } ;
 
