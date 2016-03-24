@@ -378,7 +378,6 @@ namespace engine
          virtual ~omConfTemplate() {}
 
       public:
-         public:
          INT32             init( const BSONObj &bsonTemplate ) ;
          void              reset() ;
 
