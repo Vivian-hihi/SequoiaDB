@@ -388,7 +388,7 @@ namespace engine
          string            getDeployMod() { return _deployMod ; }
 
       protected:
-         virtual INT32     _afterInit() ;
+         virtual INT32     _init() ;
          virtual void      _reset() ;
          virtual BOOLEAN   _isAllProperySet() ;
          virtual INT32     _setPropery( BSONObj &property ) ;
@@ -416,7 +416,7 @@ namespace engine
          void              setCoordNum( INT32 coordNum ) ;
 
       private:
-         INT32             _afterInit() ;
+         INT32             _init() ;
          void              _reset() ;
          BOOLEAN           _isAllProperySet() ;
          INT32             _setPropery( BSONObj &property ) ;

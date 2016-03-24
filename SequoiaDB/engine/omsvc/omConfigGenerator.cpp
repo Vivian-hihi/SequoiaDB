@@ -1357,10 +1357,10 @@ namespace engine
          goto error ;
       }
 
-      rc = _afterInit() ;
+      rc = _init() ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "_afterInit failed:rc=%d", rc ) ;
+         PD_LOG( PDERROR, "_init failed:rc=%d", rc ) ;
          goto error ;
       }
 
@@ -1379,7 +1379,7 @@ namespace engine
       _reset() ;
    }
 
-   INT32 omConfTemplate::_afterInit()
+   INT32 omConfTemplate::_init()
    {
       return SDB_OK ;
    }
@@ -1410,7 +1410,7 @@ namespace engine
       reset() ;
    }
 
-   INT32 omSdbConfTemplate::_afterInit()
+   INT32 omSdbConfTemplate::_init()
    {
       _dataNum = _dataGroupNum * _replicaNum ;
       return SDB_OK ;
