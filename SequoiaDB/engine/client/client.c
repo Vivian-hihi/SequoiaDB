@@ -3348,6 +3348,7 @@ SDB_EXPORT INT32 sdbGetNodeByName ( sdbReplicaGroupHandle cHandle,
    INT32 rc           = SDB_OK ;
    CHAR *pHostName    = NULL ;
    CHAR *pServiceName = NULL ;
+   INT32 nodeNameLen  = 0 ;
    sdbRGStruct *r     = (sdbRGStruct*)cHandle ;
 
    HANDLE_CHECK( cHandle, r, SDB_HANDLE_TYPE_REPLICAGROUP ) ;
@@ -3357,13 +3358,15 @@ SDB_EXPORT INT32 sdbGetNodeByName ( sdbReplicaGroupHandle cHandle,
       goto error ;
    }
 
-   pHostName = (CHAR*)SDB_OSS_MALLOC ( ossStrlen ( pNodeName + 1 ) ) ;
+   nodeNameLen = ossStrlen ( pNodeName ) + 1 ;
+   pHostName = (CHAR*)SDB_OSS_MALLOC ( nodeNameLen ) ;
    if ( !pHostName )
    {
       rc = SDB_OOM ;
       goto error ;
    }
 
+   ossStrncpy(pHostName, pNodeName, nodeNameLen ) ;
    pServiceName = ossStrchr ( pHostName, NODE_NAME_SERVICE_SEPCHAR ) ;
    if ( !pServiceName )
    {
