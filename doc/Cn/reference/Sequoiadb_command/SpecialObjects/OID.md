@@ -20,7 +20,7 @@
 > db.foo.bar.find({"_id":{"$oid": "55713f7953e6769804000001"}})
 > db.foo.bar.find({_id:ObjectId("55713f7953e6769804000001")})</pre>
 
--   按照 OID 查询
+-   插入一个 OID 类型的数据
 
 <pre class="prettyprint lang-javascript">
 > db.foo.bar.insert({id:ObjectId()})</pre>
