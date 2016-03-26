@@ -1490,6 +1490,39 @@ int bson_append_string_base( bson *b, const char *name,
     return BSON_OK;
 }
 
+// for sdbimprt only
+int bson_append_string_not_utf8( bson *b, const char *name, const char *value, int len ) {
+
+    int sl = len + 1;
+
+    if ( bson_check_string( b, ( const char * )value, sl - 1 ) == BSON_ERROR ) {
+        int i;
+
+        // allow not-utf8 string
+        if ( !( b->err & BSON_NOT_UTF8 ) ) {
+            return BSON_ERROR;
+        }
+
+        // disallow '\0' in string
+        for ( i = 0; i < len; i++ ) {
+            if ( '\0' == value[i] ) {
+                return BSON_ERROR;
+            }
+        }
+
+        // erase BSON_NOT_UTF8
+        b->err &= ~BSON_NOT_UTF8;
+    }
+
+    if ( bson_append_estart( b, BSON_STRING, name, 4 + sl ) == BSON_ERROR ) {
+        return BSON_ERROR;
+    }
+    bson_append32( b , &sl );
+    bson_append( b , value , sl - 1 );
+    bson_append( b , "\0" , 1 );
+    return BSON_OK;
+}
+
 SDB_EXPORT int bson_append_string( bson *b, const char *name, const char *value ) {
     return bson_append_string_base( b, name, value, strlen ( value ), BSON_STRING );
 }

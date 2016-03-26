@@ -37,6 +37,8 @@
 #include <iostream>
 #include <sstream>
 
+extern "C" int bson_append_string_not_utf8( bson *b, const char *name, const char *value, int len );
+
 namespace import
 {
    /* csv type */
@@ -150,6 +152,7 @@ namespace import
    static STR_TRIM_TYPE _stringTrimType = STR_TRIM_NO;
    static BOOLEAN _cast = FALSE;
    static BOOLEAN _ignoreNull = FALSE;
+   static BOOLEAN _forceNotUTF8 = FALSE;
 
    static inline BOOLEAN _startWith(const CHAR* data, INT32 dataLen,
                                     const CHAR* str, INT32 strLen)
@@ -3173,8 +3176,16 @@ namespace import
          rc = bson_append_bool(&obj, field.name.c_str(), value->boolVal);
          break;
       case CSV_TYPE_STRING:
-         rc = bson_append_string_n(&obj, field.name.c_str(),
-                                   value->strVal.str, value->strVal.length);
+         if (!_forceNotUTF8)
+         {
+            rc = bson_append_string_n(&obj, field.name.c_str(),
+                                      value->strVal.str, value->strVal.length);
+         }
+         else
+         {
+            rc = bson_append_string_not_utf8(&obj, field.name.c_str(),
+                                             value->strVal.str, value->strVal.length);
+         }
          break;
       case CSV_TYPE_NULL:
          if (!_ignoreNull)
@@ -3267,7 +3278,8 @@ namespace import
                                     BOOLEAN autoAddValue,
                                     BOOLEAN hasHeaderLine,
                                     BOOLEAN cast,
-                                    BOOLEAN ignoreNull)
+                                    BOOLEAN ignoreNull,
+                                    BOOLEAN forceNotUTF8)
    : RecordParser(fieldDelimiter,
                   stringDelimiter,
                   autoAddField,
@@ -3280,6 +3292,7 @@ namespace import
       _stringTrimType = stringTrimType;
       _cast = cast;
       _ignoreNull = ignoreNull;
+      _forceNotUTF8 = forceNotUTF8;
    }
 
    CSVRecordParser::~CSVRecordParser()

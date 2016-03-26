@@ -65,7 +65,8 @@ namespace import
                                         options.autoCompletion(),
                                         options.hasHeaderLine(),
                                         options.cast(),
-                                        options.ignoreNull());
+                                        options.ignoreNull(),
+                                        options.force());
          if (NULL == csvParser)
          {
             rc = SDB_OOM;
