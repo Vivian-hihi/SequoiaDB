@@ -1902,7 +1902,7 @@ namespace engine
       {
          if ( inEndMap ||
               _lobFetcher.hitEnd() ||
-              extLID < _lobFetcher.toBeFetched() )
+              extLID <= _lobFetcher.toBeFetched() )
          {
             BOOLEAN need2Notify = FALSE ;
             const bson::OID *oid = NULL ;
