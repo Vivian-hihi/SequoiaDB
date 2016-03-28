@@ -62,6 +62,13 @@ public class JSONCallback extends BasicBSONCallback {
 				} else {
 					setRoot(o);
 				}
+                } else if (b.containsField("$numberLong")) {
+                     o = Long.valueOf((String) b.get("$numberLong"));
+                     if (!isStackEmpty()) {
+                        gotLong(name, (Long) o);
+                     } else {
+                        setRoot(o);
+                     }
 			} else if (b.containsField("$date")) {
 			    Object dateValue = b.get("$date");
 				if (dateValue instanceof Number) {
