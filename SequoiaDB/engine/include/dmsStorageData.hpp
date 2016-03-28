@@ -298,7 +298,7 @@ namespace engine
          _totalIndexFreeSpace    = 0 ;
          _totalLobPages          = 0 ;
          _totalLobs              = 0 ;
-         _compressorType         = -1 ; /* -1 -- UTIL_COMPRESSOR_INVALID */
+         _compressorType         = DMS_INVALID_COMPRESSOR_TYPE ;
          _dictExtentID           = DMS_INVALID_EXTENT ;
          _newDictExtentID        = DMS_INVALID_EXTENT ;
 

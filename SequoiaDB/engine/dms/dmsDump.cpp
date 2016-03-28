@@ -393,7 +393,7 @@ namespace engine
          {
             compressorType = "snappy" ;
          }
-         else if ( -1 == mb->_compressorType )
+         else if ( DMS_INVALID_COMPRESSOR_TYPE == mb->_compressorType )
          {
             compressorType = "none" ;
          }
