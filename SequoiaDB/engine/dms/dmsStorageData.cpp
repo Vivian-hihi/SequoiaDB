@@ -595,11 +595,9 @@ namespace engine
             if ( upgradeDictInfo
                  && !OSS_BIT_TEST( _dmsMME->_mbList[i]._attributes,
                                    DMS_MB_ATTR_COMPRESSED )
-                 && ( DMS_INVALID_COMPRESSOR_TYPE !=
-                      _dmsMME->_mbList[i]._compressorType ) )
+                 && ( -1 != _dmsMME->_mbList[i]._compressorType ) )
             {
-               _dmsMME->_mbList[i]._compressorType
-                  = DMS_INVALID_COMPRESSOR_TYPE ;
+               _dmsMME->_mbList[i]._compressorType = -1 ;
             }
 
             _mbStatInfo[i]._compressorType =
@@ -1593,7 +1591,7 @@ namespace engine
       mb = &_dmsMME->_mbList[newCollectionID] ;
       // attribuites should contain the compress type.
       mb->reset( pName, newCollectionID, logicalID, attributes ) ;
-      if ( !isTempSU() && ( DMS_INVALID_COMPRESSOR_TYPE != compressionType ) )
+      if ( !isTempSU() && ( -1 != compressionType ) )
       {
          mb->_compressorType = compressionType ;
       }
@@ -1814,10 +1812,10 @@ namespace engine
        * The space of dictionary has been release in _truncateCollection. In
        * drop case, the compression type should be set to invalid.
        */
-      if ( DMS_INVALID_COMPRESSOR_TYPE != context->mb()->_compressorType)
+      if ( -1 != context->mb()->_compressorType)
       {
-         context->mb()->_compressorType = DMS_INVALID_COMPRESSOR_TYPE ;
-         context->mbStat()->_compressorType = DMS_INVALID_COMPRESSOR_TYPE ;
+         context->mb()->_compressorType = -1 ;
+         context->mbStat()->_compressorType = -1 ;
       }
 
       // free meta extent
@@ -2023,8 +2021,7 @@ namespace engine
                       "rc: %d", rc ) ;
       }
 
-      if ( DMS_INVALID_COMPRESSOR_TYPE != context->mb()->_compressorType
-           && needChangeCLID )
+      if ( -1 != context->mb()->_compressorType && needChangeCLID )
       {
          /*
           * The original dictionary and compressor will be removed during
