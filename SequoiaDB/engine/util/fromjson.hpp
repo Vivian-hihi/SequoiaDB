@@ -66,7 +66,8 @@ namespace bson
 /** \fn INT32 fromjson ( const string &str, BSONObj &out ) ;
     \brief Convert from json to BSONObj.
     \param [in] str The json string to be converted
-    \param [out] out The CPP BSONObj
+    \param [out] out The CPP BSONObj object of first json in "str"
+    \param [in] isBatch Ignore the unnecessary things behind the first json or not
     \retval SDB_OK Connection Success
     \retval Others Connection Fail
 */
@@ -76,7 +77,8 @@ namespace bson
 /** \fn INT32 fromjson ( const CHAR *pStr, BSONObj &out ) ;
     \brief Convert from json to BSONObj.
     \param [in] pStr The C-style json charactor string to be converted
-    \param [out] out The CPP BSONObj
+    \param [out] out The CPP BSONObj object of first json in "str"
+    \param [in] isBatch Ignore the unnecessary things behind the first json or not 
     \retval SDB_OK Connection Success
     \retval Others Connection Fail
 */
