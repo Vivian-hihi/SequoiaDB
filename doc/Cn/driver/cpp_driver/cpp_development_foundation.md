@@ -118,7 +118,7 @@ collection.query ( cursor ) ;</pre>
 
 从游标中显示所有记录
 <pre class="prettyprint lang-javascript">
-while( !( rc=cursor.next( obj ) )
+while( !( rc=cursor.next( obj ) ) )
 {
   cout << obj.toString() << endl ;
 }</pre>
