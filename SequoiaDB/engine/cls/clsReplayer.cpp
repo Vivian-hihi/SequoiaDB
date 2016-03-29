@@ -238,7 +238,7 @@ namespace engine
       else
       {
          // wait bucket all complete
-         pBucket->waitQueEmpty() ;
+         pBucket->waitEmpty() ;
          // judge lsn valid
          if ( !pBucket->_expectLSN.invalid() &&
               0 != pBucket->_expectLSN.compareOffset( recordHeader->_lsn ) )
