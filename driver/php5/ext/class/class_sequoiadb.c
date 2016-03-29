@@ -216,7 +216,6 @@ PHP_METHOD( SequoiaDB, close )
                     SDB_HANDLE_NAME,
                     connectionDesc ) ;
    sdbDisconnect( connection ) ;
-   sdbReleaseConnection( connection ) ;
 }
 
 PHP_METHOD( SequoiaDB, isValid )
