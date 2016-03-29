@@ -73,6 +73,9 @@ public class XmlConfigReader {
         }
         // construct full edition
         String editionValue = "v" + majorRelease + "." + minorRelease;
+        
+        edition = majorRelease + "" + minorRelease + "0";
+        
         // construct edition id
         int id = Integer.parseInt(majorRelease) * 100 + Integer.parseInt(minorRelease);
         // 
