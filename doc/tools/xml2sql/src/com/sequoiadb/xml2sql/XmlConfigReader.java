@@ -26,7 +26,7 @@ public class XmlConfigReader {
 	private static XmlConfigReader instance = new XmlConfigReader("../../../doc/toc.xml");  
     private XmlConfig xmlconfig = new XmlConfig();
 	private String rootDir = new File("../../../doc/toc.xml").getParent();
-	private String edition = "210" ;
+	private String edition = "200" ;
     /**
      * initial configuration file
      * @param path
