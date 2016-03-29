@@ -245,7 +245,7 @@ namespace engine
       // For rebuild, a new dictionary will be created.
       dmsExtentID    _newDictExtentID ;
       // dictionary addreess;
-      SINT8          _compressorType ;
+      UINT8          _compressorType ;
       UINT8          _pad1[ 3 ] ;  // reserved
       // for stat
       UINT64         _totalLobs ;
@@ -298,7 +298,7 @@ namespace engine
          _totalIndexFreeSpace    = 0 ;
          _totalLobPages          = 0 ;
          _totalLobs              = 0 ;
-         _compressorType         = -1 ; /* -1 -- UTIL_COMPRESSOR_INVALID */
+         _compressorType         = DMS_INVALID_COMPRESSOR_TYPE ;
          _dictExtentID           = DMS_INVALID_EXTENT ;
          _newDictExtentID        = DMS_INVALID_EXTENT ;
 
@@ -401,7 +401,7 @@ namespace engine
       UINT64      _totalLobs ;
       UINT32      _uniqueIdxNum ;
       dmsExtentID _dictExtID ;
-      SINT8       _compressorType ;
+      UINT8       _compressorType ;
 
       void reset()
       {
@@ -414,7 +414,7 @@ namespace engine
          _totalLobs              = 0 ;
          _uniqueIdxNum           = 0 ;
          _dictExtID              = DMS_INVALID_EXTENT ;
-         _compressorType         = -1 ; /* -1 -- UTIL_COMPRESSOR_INVALID */
+         _compressorType         = DMS_INVALID_COMPRESSOR_TYPE ;
       }
       _dmsMBStatInfo ()
       {
@@ -621,7 +621,8 @@ namespace engine
                                UINT16 initPages = 0,
                                BOOLEAN sysCollection = FALSE,
                                BOOLEAN noIDIndex = FALSE,
-                               SINT8  compressionType = -1 ) ;
+                               UINT8 compressionType
+                                 = DMS_INVALID_COMPRESSOR_TYPE ) ;
 
          INT32 dropCollection ( const CHAR *pName,
                                 _pmdEDUCB *cb,
