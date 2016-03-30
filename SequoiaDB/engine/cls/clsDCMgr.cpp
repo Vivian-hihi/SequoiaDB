@@ -1283,9 +1283,9 @@ namespace engine
       }
 
       // clear all groups
-      _pNodeMgrAgent->lock_r() ;
+      _pNodeMgrAgent->lock_w() ;
       _pNodeMgrAgent->clearAll() ;
-      _pNodeMgrAgent->release_r() ;
+      _pNodeMgrAgent->release_w() ;
 
       // process query result
       rc = _processGrpQueryRes( cb, pRecvMsg ) ;

@@ -409,8 +409,14 @@ namespace engine
                                      INT16 w,
                                      INT64 *pContextID )
    {
+      sdbGetShardCB()->getCataAgent()->lock_w() ;
       sdbGetShardCB()->getCataAgent()->clearAll() ;
+      sdbGetShardCB()->getCataAgent()->release_w() ;
+
+      sdbGetShardCB()->getNodeMgrAgent()->lock_w() ;
       sdbGetShardCB()->getNodeMgrAgent()->clearAll() ;
+      sdbGetShardCB()->getNodeMgrAgent()->release_w() ;
+
       return  SDB_OK ;
    }
 
