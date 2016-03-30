@@ -1,5 +1,5 @@
 <?php
-class cl2Test extends PHPUnit_Framework_TestCase
+class cl_record_Test extends PHPUnit_Framework_TestCase
 {
    protected $hostname ;
    protected $port ;
