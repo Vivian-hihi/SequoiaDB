@@ -62,7 +62,7 @@ class cl_record_Test extends PHPUnit_Framework_TestCase
       }
       else
       {
-         $cl = $cs -> selectCL( 'test_bar', array( 'ReplSize' => -1 ) ) ;
+         $cl = $cs -> selectCL( 'test_bar', array( 'ReplSize' => 0 ) ) ;
       }
       $err = $db -> getError() ;
       $this -> assertEquals( 0, $err['errno'], '创建cl错误' ) ;
