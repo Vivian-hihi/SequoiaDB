@@ -50,6 +50,7 @@
 #include "rtnLob.hpp"
 #include "pmdStartup.hpp"
 #include "rtnContextLob.hpp"
+#include "msgMessageFormat.hpp"
 #include <set>
 
 using namespace bson ;
@@ -397,7 +398,7 @@ namespace engine
    {
       PD_TRACE_ENTRY ( SDB__CLSDSBS__CONSTINX );
       BSONObjBuilder builder ;
-      if ( 0 == _needData && _indexs.empty() )
+      if ( 0 == _needData || _indexs.empty() )
       {
          builder.appendBool( CLS_FS_NOMORE, TRUE ) ;
          obj = builder.obj() ;
@@ -505,7 +506,9 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSDSBS__GETCSNM, "_clsDataSrcBaseSession::_getCSName" )
-   INT32 _clsDataSrcBaseSession::_getCSName( const BSONObj &obj, CHAR *cs, UINT32 len )
+   INT32 _clsDataSrcBaseSession::_getCSName( const BSONObj &obj,
+                                             CHAR *cs,
+                                             UINT32 len )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__CLSDSBS__GETCSNM );
@@ -544,7 +547,8 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSDSBS__GETCL, "_clsDataSrcBaseSession::_getCollection" )
-   INT32 _clsDataSrcBaseSession::_getCollection( const BSONObj &obj, CHAR *collection,
+   INT32 _clsDataSrcBaseSession::_getCollection( const BSONObj &obj,
+                                                 CHAR *collection,
                                                  UINT32 len )
    {
       INT32 rc = SDB_OK ;
@@ -1132,7 +1136,7 @@ namespace engine
             goto error ;
          }
 
-         PD_LOG ( PDEVENT, "Session[%s]: begin collection[%s.%s]",
+         PD_LOG ( PDEVENT, "Session[%s]: Begin collection[%s.%s]",
                   sessionName(), cs, collection ) ;
 
          _curCollecitonName = cs ;
@@ -1303,12 +1307,15 @@ namespace engine
       /// prepare for the next sync.
       if ( CLS_FS_NOTIFY_TYPE_OVER == msg->type )
       {
-         PD_LOG( PDEVENT, "Session[%s]: notify end", sessionName() ) ;
+         PD_LOG( PDEVENT, "Session[%s]: Collection[%s] notify end",
+                 sessionName(), _curCollecitonName.c_str() ) ;
 
          _LSNlatch.get();
          _mapOveredCLs[_curCollection] = 0 ;
          _reset() ;
          _LSNlatch.release() ;
+
+         _onNotifyOver( _curCollecitonName.c_str() ) ;
 
          goto done ;
       }
@@ -1414,7 +1421,6 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__CLSFSSS_HNDBEGIN );
       SDB_ASSERT( NULL != header, "header should not be NULL" ) ;
-      PD_LOG( PDEVENT, "Session[%s] begin to full sync", sessionName() ) ;
 
       SDB_DPSCB *dpscb = pmdGetKRCB()->getDPSCB() ;
       MsgClsFSBeginRes msg ;
@@ -1486,6 +1492,10 @@ namespace engine
                                           (void *)obj.objdata(),
                                           obj.objsize() ) )
          {
+            PD_LOG( PDEVENT, "Session[%s]: Established the full sync session "
+                    "with node[%s]", sessionName(),
+                    routeID2String( header->routeID ).c_str() ) ;
+
             _init = TRUE ;
             _quit = FALSE ;
 
@@ -1522,7 +1532,8 @@ namespace engine
 
       if ( SDB_OK == _agent->syncSend( handle, &msg ) )
       {
-         PD_LOG( PDEVENT, "Session[%s]: end to full sync", sessionName() ) ;
+         PD_LOG( PDEVENT, "Session[%s]: Full sync has been done",
+                 sessionName() ) ;
          _quit = TRUE ;
       }
 
@@ -1706,6 +1717,10 @@ namespace engine
       return SDB_OK ;
    }
 
+   void _clsFSSrcSession::_onNotifyOver( const CHAR *clFullName )
+   {
+   }
+
    INT32 _clsFSSrcSession::_scanType() const
    {
       return TBSCAN ;
@@ -1785,6 +1800,7 @@ namespace engine
     _lsnSearchMB( 1024 )
    {
       _pCatAgent = sdbGetShardCB()->getCataAgent() ;
+      _pFreezingWindow = sdbGetShardCB()->getFreezingWindow() ;
       _cleanupJobID = PMD_INVALID_EDUID ;
 
       _hasShardingIndex = FALSE ;
@@ -1793,7 +1809,7 @@ namespace engine
       _partitionBit     = 0 ;
 
       _taskID           = 0 ;
-      _updateMetaTime   = 0 ;
+      _ntyOverTime      = 0 ;
       _lastEndNtyOffset = DPS_INVALID_LSN_OFFSET ;
       _getLastEndNtyOffset = FALSE ;
       _collectionW      = 1 ;
@@ -1803,6 +1819,7 @@ namespace engine
    _clsSplitSrcSession::~_clsSplitSrcSession()
    {
       _pCatAgent = NULL ;
+      _pFreezingWindow = NULL ;
    }
 
    SDB_SESSION_TYPE _clsSplitSrcSession::sessionType() const
@@ -2099,6 +2116,12 @@ namespace engine
       return rc ;
    }
 
+   void _clsSplitSrcSession::_onNotifyOver( const CHAR *clFullName )
+   {
+      _ntyOverTime = (UINT64)time( NULL ) ;
+      _pFreezingWindow->registerCL( clFullName ) ;
+   }
+
    INT32 _clsSplitSrcSession::_scanType() const
    {
       if ( !_hashShard && _hasShardingIndex )
@@ -2110,10 +2133,10 @@ namespace engine
 
    BOOLEAN _clsSplitSrcSession::_canSwitchWhenSyncLog()
    {
-      if ( _updateMetaTime > 0 )
+      if ( _ntyOverTime > 0 )
       {
          pmdEDUMgr *pEDUMgr = eduCB()->getEDUMgr() ;
-         if ( pEDUMgr->getWritingEDUCount( -1, _updateMetaTime ) > 0 )
+         if ( pEDUMgr->getWritingEDUCount( -1, _ntyOverTime ) > 0 )
          {
             return FALSE ;
          }
@@ -2202,6 +2225,9 @@ namespace engine
          msg.header.header.messageLength = sizeof( msg ) ;
          if ( SDB_OK == _agent->syncSend( handle, &(msg.header.header) ) )
          {
+            PD_LOG( PDEVENT, "Session[%s]: Established the split session "
+                    "with node[%s]", sessionName(),
+                    routeID2String( header->routeID ).c_str() ) ;
             _init = TRUE ;
             _quit = FALSE ;
          }
@@ -2341,7 +2367,8 @@ namespace engine
       if ( !pSet || !pSet->isKeyInGroup( _rangeKeyObj, groupID ) )
       {
          sendRsp = TRUE ;
-         _updateMetaTime = (UINT64)time( NULL ) ;
+         _pFreezingWindow->unregisterCL( _curCollecitonName.c_str() ) ;
+         _ntyOverTime = 0 ;
       }
       _pCatAgent->release_r() ;     //unlock
       if ( !mainCLName.empty() )
@@ -2627,6 +2654,11 @@ namespace engine
       if ( 0 != _taskID )
       {
          taskMgr->removeTask( _taskID ) ;
+      }
+
+      if ( !_curCollecitonName.empty() && _ntyOverTime > 0 )
+      {
+         _pFreezingWindow->unregisterCL( _curCollecitonName.c_str() ) ;
       }
 
       // wait cleanup done

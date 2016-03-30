@@ -132,6 +132,71 @@ namespace engine
       }
    }
 
+   /*
+      _clsFreezingWindow implement
+   */
+   _clsFreezingWindow::_clsFreezingWindow()
+   {
+      _clCount = 0 ;
+   }
+
+   _clsFreezingWindow::~_clsFreezingWindow()
+   {
+   }
+
+   void _clsFreezingWindow::registerCL( const CHAR *pName )
+   {
+      _latch.get() ;
+      ++_clCount ;
+      _setWindow.insert( pName ) ;
+      _latch.release() ;
+   }
+
+   void _clsFreezingWindow::unregisterCL( const CHAR *pName )
+   {
+      _latch.get() ;
+      _setWindow.erase( pName ) ;
+      --_clCount ;
+      _latch.release() ;
+      _event.signalAll() ;
+   }
+
+   INT32 _clsFreezingWindow::waitForOpr( const CHAR *pName,
+                                         _pmdEDUCB *cb,
+                                         BOOLEAN isWrite )
+   {
+      INT32 rc = SDB_OK ;
+
+      if ( isWrite && _clCount > 0 )
+      {
+         string clName = pName ;
+         BOOLEAN exist = TRUE ;
+
+         while( exist )
+         {
+            if ( cb->isInterrupted() )
+            {
+               rc = SDB_APP_INTERRUPT ;
+               break ;
+            }
+            _latch.get() ;
+            if ( _setWindow.find( clName ) == _setWindow.end() )
+            {
+               exist = FALSE ;
+            }
+            _latch.release() ;
+
+            if ( exist )
+            {
+               _event.reset() ;
+               _event.wait( OSS_ONE_SEC ) ;
+            }
+         }
+      }
+
+      return rc ;
+   }
+
    BEGIN_OBJ_MSG_MAP(_clsShardMgr, _pmdObjBase)
       ON_MSG ( MSG_CAT_CATGRP_RES, _onCatCatGroupRes )
       ON_MSG ( MSG_CAT_NODEGRP_RES, _onCatGroupRes )
@@ -147,6 +212,7 @@ namespace engine
       _requestID = 0 ;
       _pCatAgent = NULL ;
       _pNodeMgrAgent = NULL ;
+      _pFreezingWindow = NULL ;
       _pDCMgr = NULL ;
 
       _catVerion = 0 ;
@@ -162,6 +228,7 @@ namespace engine
 
       SAFE_DELETE ( _pCatAgent ) ;
       SAFE_DELETE ( _pNodeMgrAgent ) ;
+      SAFE_DELETE ( _pFreezingWindow ) ;
       SAFE_DELETE ( _pDCMgr ) ;
 
       //release event
@@ -244,6 +311,7 @@ namespace engine
 
       SAFE_NEW_GOTO_ERROR  ( _pCatAgent, _clsCatalogAgent ) ;
       SAFE_NEW_GOTO_ERROR  ( _pNodeMgrAgent, _clsNodeMgrAgent ) ;
+      SAFE_NEW_GOTO_ERROR  ( _pFreezingWindow, _clsFreezingWindow ) ;
 
    done:
       PD_TRACE_EXITRC ( SDB__CLSSHDMGR_INIT, rc );
@@ -335,6 +403,11 @@ namespace engine
    nodeMgrAgent* _clsShardMgr::getNodeMgrAgent ()
    {
       return _pNodeMgrAgent ;
+   }
+
+   clsFreezingWindow* _clsShardMgr::getFreezingWindow()
+   {
+      return _pFreezingWindow ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSHDMGR_SYNCSND, "_clsShardMgr::syncSend" )

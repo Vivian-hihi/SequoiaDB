@@ -95,6 +95,7 @@ namespace engine
       _pReplSet  = sdbGetReplCB () ;
       _pShdMgr   = sdbGetShardCB () ;
       _pCatAgent = pKRCB->getClsCB ()->getCatAgent () ;
+      _pFreezingWindow = _pShdMgr->getFreezingWindow() ;
       _pDmsCB    = pKRCB->getDMSCB () ;
       _pDpsCB    = pKRCB->getDPSCB () ;
       _pRtnCB    = pKRCB->getRTNCB () ;
@@ -110,6 +111,7 @@ namespace engine
       _pReplSet  = NULL ;
       _pShdMgr   = NULL ;
       _pCatAgent = NULL ;
+      _pFreezingWindow = NULL ;
       _pDmsCB    = NULL ;
       _pRtnCB    = NULL ;
       _pDpsCB    = NULL ;
@@ -1600,7 +1602,7 @@ namespace engine
                   msg2String( msg ).c_str(),
                   routeID2String( localRouteID ).c_str() ) ;
       }
-      else if ( msg->messageLength > sizeof( MsgComSessionInitReq ) )
+      else if ( (UINT32)msg->messageLength > sizeof( MsgComSessionInitReq ) )
       {
          /// set user name info
          try
@@ -3860,6 +3862,13 @@ namespace engine
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to check status of repl-set:%d", rc ) ;
+         goto error ;
+      }
+
+      rc = _pFreezingWindow->waitForOpr( name, eduCB(),
+                                         eduCB()->isWritingDB() ) ;
+      if ( rc )
+      {
          goto error ;
       }
 

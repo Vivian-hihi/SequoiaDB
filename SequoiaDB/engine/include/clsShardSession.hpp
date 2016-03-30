@@ -47,6 +47,7 @@ namespace engine
    class _SDB_RTNCB ;
    class _dpsLogWrapper ;
    class _clsCatalogAgent ;
+   class _clsFreezingWindow ;
    class _rtnContextBase ;
 
    struct _clsIdentifyInfo
@@ -286,6 +287,7 @@ namespace engine
          _clsReplicateSet       *_pReplSet ;
          _clsShardMgr           *_pShdMgr ;
          _clsCatalogAgent       *_pCatAgent ;
+         _clsFreezingWindow     *_pFreezingWindow ;
          _SDB_DMSCB             *_pDmsCB ;
          _SDB_RTNCB             *_pRtnCB ;
          _dpsLogWrapper         *_pDpsCB ;

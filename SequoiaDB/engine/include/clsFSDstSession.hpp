@@ -214,13 +214,15 @@ namespace engine
       enum SESSION_STEP
       {
          STEP_NONE      = 0,
-         STEP_START ,         // start notify to catalog
+         STEP_SYNC_DATA ,     // after sync data from peer node, and need to
+                              // sync the last log from peer node
+         STEP_POST_SYNC ,     // after sync the last log from peer node, and
+                              // need to notify meta change to catalog
          STEP_META ,          // when cleanup notify to catalog and catalog
                               // split the catalog and response, begin to
                               // update catalog in local, and check it
          STEP_END_NTY ,       // notify the peer node to update catalog and
                               // check it
-         STEP_END_LOG,        // get the last log
          STEP_FINISH,         // notify catalog get all data, will to clean
          STEP_CLEANUP ,       // notify the peer node to clean up data
          STEP_REMOVE,         // remove notify to catalog

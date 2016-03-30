@@ -324,6 +324,7 @@ namespace engine
          INT32   clear ( const CHAR* name ) ;
          INT32   clearBySpaceName ( const CHAR* name,
                                     vector< string > *pRelatedCLs = NULL ) ;
+         /// caller need to hold the write lock
          INT32   clearAll () ;
 
          INT32   lock_r ( INT32 millisec = -1 ) ;
@@ -486,6 +487,7 @@ namespace engine
          clsGroupItem* groupItem ( UINT32 id ) ;
          clsGroupItem* groupItem ( const CHAR* name ) ;
 
+         /// caller need to hold the write lock
          INT32       clearAll () ;
          INT32       clearGroup ( UINT32 id ) ;
 

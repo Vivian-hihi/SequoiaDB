@@ -61,6 +61,7 @@ namespace engine
    class _clsReplicateSet ;
    class _monIndex ;
    class _clsCatalogAgent ;
+   class _clsFreezingWindow ;
    class _clsSplitTask ;
    class _rtnContextData ;
 
@@ -90,6 +91,7 @@ namespace engine
          virtual const CHAR* _onObjFilter ( const CHAR* inBuff, INT32 inSize,
                                             INT32 &outSize ) = 0 ;
          virtual INT32     _onFSMeta ( const CHAR *clFullName ) = 0 ;
+         virtual void      _onNotifyOver( const CHAR *clFullName ) = 0 ;
          virtual INT32     _scanType () const = 0 ;
          virtual BOOLEAN   _canSwitchWhenSyncLog() = 0 ;
 
@@ -206,6 +208,7 @@ namespace engine
                                   UINT32 sequence,
                                   BOOLEAN &need2Send ) ;
       virtual INT32   _onFSMeta ( const CHAR *clFullName ) ;
+      virtual void    _onNotifyOver( const CHAR *clFullName ) ;
       virtual INT32   _scanType () const ;
       virtual BOOLEAN _canSwitchWhenSyncLog() ;
 
@@ -235,6 +238,7 @@ namespace engine
          virtual const CHAR* _onObjFilter ( const CHAR* inBuff, INT32 inSize,
                                             INT32 &outSize ) ;
          virtual INT32   _onFSMeta ( const CHAR *clFullName ) ;
+         virtual void    _onNotifyOver( const CHAR *clFullName ) ;
          virtual INT32   _scanType () const ;
          virtual BOOLEAN _canSwitchWhenSyncLog() ;
          virtual INT32   _onLobFilter( const bson::OID &oid,
@@ -262,6 +266,7 @@ namespace engine
          _dpsMessageBlock                 _lsnSearchMB ;
          BSONObj                          _shardingKey ;
          _clsCatalogAgent                 *_pCatAgent ;
+         _clsFreezingWindow               *_pFreezingWindow ;
          EDUID                            _cleanupJobID ;
 
          BOOLEAN                          _hasShardingIndex ;
@@ -270,7 +275,7 @@ namespace engine
          UINT32                           _partitionBit ;
 
          UINT64                           _taskID ;
-         UINT64                           _updateMetaTime ;
+         UINT64                           _ntyOverTime ;
          DPS_LSN_OFFSET                   _lastEndNtyOffset ;
          BOOLEAN                          _getLastEndNtyOffset ;
          UINT32                           _collectionW ;

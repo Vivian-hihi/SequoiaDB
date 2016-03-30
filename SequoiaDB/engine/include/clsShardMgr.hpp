@@ -98,6 +98,33 @@ namespace engine
    typedef _clsCSEventItem clsCSEventItem ;
 
    /*
+      _clsFreezingWindow define
+   */
+   class _clsFreezingWindow : public SDBObject
+   {
+      typedef std::set<std::string>                SET_WINDOW ;
+
+      public:
+         _clsFreezingWindow() ;
+         ~_clsFreezingWindow() ;
+
+         void registerCL( const CHAR *pName ) ;
+         void unregisterCL( const CHAR *pName ) ;
+
+         INT32 waitForOpr( const CHAR *pName,
+                           _pmdEDUCB *cb,
+                           BOOLEAN isWrite ) ;
+
+      private:
+         UINT32            _clCount ;
+         SET_WINDOW        _setWindow ;
+         ossSpinXLatch     _latch ;
+         ossEvent          _event ;
+
+   } ;
+   typedef _clsFreezingWindow clsFreezingWindow ;
+
+   /*
       _clsShardMgr define
    */
    class _clsShardMgr :  public _pmdObjBase
@@ -139,6 +166,7 @@ namespace engine
 
          catAgent* getCataAgent () ;
          nodeMgrAgent* getNodeMgrAgent () ;
+         clsFreezingWindow *getFreezingWindow() ;
 
          INT32 getAndLockCataSet( const CHAR *name, clsCatalogSet **ppSet,
                                   BOOLEAN noWithUpdate = TRUE,
@@ -224,6 +252,7 @@ namespace engine
          _netRouteAgent                *_pNetRtAgent ;
          _clsCatalogAgent              *_pCatAgent ;
          _clsNodeMgrAgent              *_pNodeMgrAgent ;
+         clsFreezingWindow             *_pFreezingWindow ;
          clsDCMgr                      *_pDCMgr ;
          ossSpinXLatch                 _catLatch ;
          MAP_CAT_EVENT                 _mapSyncCatEvent ;

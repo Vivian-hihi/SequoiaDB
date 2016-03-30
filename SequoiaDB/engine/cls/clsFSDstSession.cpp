@@ -176,12 +176,14 @@ namespace engine
    void _clsDataDstBaseSession::_disconnect ()
    {
       PD_TRACE_ENTRY ( SDB__CLSDATADBS__DISCONN );
-      PD_LOG( PDEVENT, "Session[%s]: disconnect session", sessionName() ) ;
+
       MsgHeader msg ;
       _quit = TRUE ;
 
       if ( _selector.src().value != MSG_INVALID_ROUTEID )
       {
+         PD_LOG( PDEVENT, "Session[%s]: Disconnect the session with node[%s]",
+                 sessionName(), routeID2String( _selector.src() ).c_str() ) ;
          msg.messageLength = sizeof( MsgHeader ) ;
          msg.TID = CLS_TID( _sessionID ) ;
          msg.routeID.value = MSG_INVALID_ROUTEID ;
@@ -227,8 +229,6 @@ namespace engine
          obj = builder.obj() ;
          msg.header.messageLength = sizeof( MsgClsFSMetaReq ) +
                                     obj.objsize() ;
-         PD_LOG( PDDEBUG, "Session[%s]: send meta: %s", sessionName(),
-                 obj.toString().c_str() ) ;
          // send the request to source
          _agent->syncSend( _selector.src(),
                            &( msg.header ), ( void * )obj.objdata(),
@@ -236,6 +236,9 @@ namespace engine
          fullName.replace( pos, 1, 1, '.' ) ;
          _timeout = 0 ;
          _needMoreDoc = TRUE ;
+
+         PD_LOG( PDDEBUG, "Session[%s]: Send collection[%s]'s meta: %s",
+                 sessionName(), fullName.c_str(), obj.toString().c_str() ) ;
       }
       catch ( std::exception &e )
       {
@@ -713,7 +716,7 @@ namespace engine
          _notify( CLS_FS_NOTIFY_TYPE_OVER ) ;
 
          //get next collection
-         _meta () ;
+         _meta() ;
          goto done ;
       }
 
@@ -859,7 +862,7 @@ namespace engine
          goto done ;
       }
 
-      rc = _onNotify () ;
+      rc = _onNotify() ;
       if ( rc )
       {
          goto done ;
@@ -883,7 +886,7 @@ namespace engine
       else if ( CLS_FS_STATUS_END == _status &&
                 CLS_FS_EOF == msg->eof )
       {
-         _endLog () ;
+         _endLog() ;
       }
       else if ( CLS_FS_NOTIFY_TYPE_DOC == msg->type )
       {
@@ -1023,7 +1026,8 @@ namespace engine
       const CHAR *data = NULL ;
       const CHAR *fullName = NULL ;
 
-      if ( ( UINT32 )msg->header.header.messageLength <= sizeof( MsgClsFSNotifyRes ) )
+      if ( ( UINT32 )msg->header.header.messageLength <=
+           sizeof( MsgClsFSNotifyRes ) )
       {
          PD_LOG( PDERROR, "invalid msg length:%d",
                  msg->header.header.messageLength ) ;
@@ -1356,8 +1360,9 @@ namespace engine
       }
 
       // disconnect all collection
-      PD_LOG( PDEVENT, "Session[%s] close all shard connections",
-              sessionName() ) ;
+      PD_LOG( PDEVENT, "Session[%s]: Established the full sync session with "
+              "node[%s], Then close all shard connections", sessionName(),
+              routeID2String( _selector.src() ).c_str() ) ;
       sdbGetClsCB()->getShardRouteAgent()->disconnectAll() ;
 
       //clear all catalog info
@@ -1446,8 +1451,8 @@ namespace engine
 
       _quit = TRUE ;
 
-      PD_LOG( PDEVENT, "Session[%s]: full sync has been done. expect lsn "
-              "is [%d][%lld]", sessionName(), lsn.version, lsn.offset ) ;
+      PD_LOG( PDEVENT, "Session[%s]: Full sync has been done, expect lsn:"
+              "[%u,%llu]", sessionName(), lsn.version, lsn.offset ) ;
 
    done:
       PD_TRACE_EXIT ( SDB__CLSFSDS_HNDENDRES );
@@ -1500,8 +1505,8 @@ namespace engine
 
       if ( STEP_TS_END == _tsStep )
       {
-         PD_LOG( PDEVENT, "Session[%s]: End to pull trans log",
-                 sessionName() ) ;
+         PD_LOG( PDEVENT, "Session[%s]: End to pull transaction log or "
+                 "cached log", sessionName() ) ;
          goto doend ;
       }
       else if ( STEP_TS_BEGIN == _tsStep )
@@ -1512,8 +1517,9 @@ namespace engine
             _tsStep = STEP_TS_END ;
             goto doend ;
          }
-         PD_LOG( PDEVENT, "Session[%s]: Begin to pull trans log",
-                 sessionName() ) ;
+         PD_LOG( PDEVENT, "Session[%s]: Begin to pull transaction log or"
+                 "cached log, expect lsn:[%u,%llu]", sessionName(),
+                 _expectLSN.version, _expectLSN.offset ) ;
       }
       else
       {
@@ -1945,7 +1951,7 @@ namespace engine
 
    void _clsSplitDstSession::_endLog ()
    {
-      _step = STEP_FINISH ;
+      _step = STEP_POST_SYNC ;
       _end () ;
    }
 
@@ -2055,7 +2061,12 @@ namespace engine
          }
          _step = STEP_REMOVE ;
       }
-      else if ( STEP_START == _step )
+      else if ( STEP_SYNC_DATA == _step )
+      {
+         // get the last log
+         _notify ( CLS_FS_NOTIFY_TYPE_LOG ) ;
+      }
+      else if ( STEP_POST_SYNC == _step )
       {
          _taskNotify( MSG_CAT_SPLIT_CHGMETA_REQ ) ;
       }
@@ -2110,12 +2121,7 @@ namespace engine
       }
       else if ( STEP_END_NTY == _step )
       {
-         _lend () ;
-      }
-      else if ( STEP_END_LOG == _step )
-      {
-         //get the last log
-         _notify ( CLS_FS_NOTIFY_TYPE_LOG ) ;
+         _lend() ;
       }
       else if ( STEP_FINISH == _step )
       {
@@ -2258,10 +2264,11 @@ namespace engine
       {
          case STEP_NONE :
             // go to begin to send a request to source, in order to start split
-            _step = STEP_START ;
+            _step = STEP_SYNC_DATA ;
             _begin () ;
             break ;
-         case STEP_START :
+         case STEP_SYNC_DATA :
+         case STEP_POST_SYNC :
             _step = STEP_META ;
             _end () ;
             break ;
@@ -2315,6 +2322,10 @@ namespace engine
          _selector.clearSrc () ;
          goto done ;
       }
+
+      PD_LOG( PDEVENT, "Session[%s]: Established the split session with "
+              "node[%s]", sessionName(),
+              routeID2String( _selector.src() ).c_str() ) ;
 
       // reset timer
       _selector.clearTime() ;
@@ -2387,8 +2398,8 @@ namespace engine
       }
       CHECK_REQUEST_ID ( msg->header.header, _requestID ) ;
 
-      _step = STEP_END_LOG ;
-      _end () ;
+      _step = STEP_FINISH ;
+      _end() ;
 
    done:
       PD_TRACE_EXIT ( SDB__CLSSPLDS_HNDENDRES2 );

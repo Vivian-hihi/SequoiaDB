@@ -50,7 +50,6 @@ namespace engine
    #define CLS_FS_END_KEYOBJ "endkeyobj"
    #define CLS_FS_NOMORE "nomore"
    #define CLS_FS_INDEXES "indexes"
-   #define CLS_FS_INDEX "index"
    #define CLS_FS_FULLNAME "fullname"
    #define CLS_FS_FULLNAMES "fullnames"
    #define CLS_FS_CSNAME    "csname"
