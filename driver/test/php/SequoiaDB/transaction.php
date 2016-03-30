@@ -65,6 +65,8 @@ class SequoiaDB_Transaction_Test extends PHPUnit_Framework_TestCase
       $this -> assertEquals( 0, $err['errno'], '获取cl错误' ) ;
       $this -> assertNotEmpty( $cl, '获取cl错误' ) ;
       
+      $cl -> remove() ;
+      
       $num = $cl -> count() ;
       $err = $db -> getError() ;
       $this -> assertEquals( 0, $err['errno'], 'count错误' ) ;
@@ -86,7 +88,7 @@ class SequoiaDB_Transaction_Test extends PHPUnit_Framework_TestCase
             $err = $db -> getError() ;
             $this -> assertEquals( 0, $err['errno'], 'count错误' ) ;
             
-            $this -> assertNotEquals( $num, $num2, 'transactionRollback错误' ) ;
+            $this -> assertEquals( $num, $num2, 'transactionRollback错误' ) ;
          }
       }
    }
