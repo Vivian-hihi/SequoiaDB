@@ -58,11 +58,11 @@ class cl2Test extends PHPUnit_Framework_TestCase
       $cl = array() ;
       if( $isStandlone )
       {
-         $cl = $cs -> createCL( 'test_bar' ) ;
+         $cl = $cs -> selectCL( 'test_bar' ) ;
       }
       else
       {
-         $cl = $cs -> createCL( 'test_bar', array( 'ReplSize' => -1 ) ) ;
+         $cl = $cs -> selectCL( 'test_bar', array( 'ReplSize' => -1 ) ) ;
       }
       $err = $db -> getError() ;
       $this -> assertEquals( 0, $err['errno'], '创建cl错误' ) ;
