@@ -108,14 +108,14 @@ sdbCursorHandle cursor = 0 ;
 // 查询所有记录，查询结果放在游标句柄中
 rc = sdbQuery(collection, NULL, NULL, NULL, NULL, 0, -1, &cursor ) ;
 // 从游标中显示所有记录
-bson_init(obj);
+bson_init( &obj );
 while( !( rc=sdbNext( cursor, &obj ) ) )
 {
   bson_print( &obj ) ;
-  bson_destroy(&obj) ;
-  bson_init(&obj);
+  bson_destroy( &obj ) ;
+  bson_init( &obj );
 }
-bson_destroy(obj) ;</pre>
+bson_destroy( &obj ) ;</pre>
 
 * 索引
 
