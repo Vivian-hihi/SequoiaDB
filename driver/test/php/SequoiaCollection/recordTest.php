@@ -56,13 +56,14 @@ class cl_record_Test extends PHPUnit_Framework_TestCase
    public function test_select_cl( $db, $cs, $isStandlone )
    {
       $cl = array() ;
+      $cs = $db -> selectCS( 'test_foo1111111' ) ;
       if( $isStandlone )
       {
          $cl = $cs -> selectCL( 'test_bar' ) ;
       }
       else
       {
-         $cl = $cs -> selectCL( 'test_bar', array( 'ReplSize' => 0 ) ) ;
+         $cl = $cs -> selectCL( 'test_bar', array( 'ReplSize' => -1 ) ) ;
       }
       $err = $db -> getError() ;
       $this -> assertEquals( 0, $err['errno'], '创建cl错误' ) ;
