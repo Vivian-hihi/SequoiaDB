@@ -23,61 +23,97 @@ class SequoiaDB_Group_Test extends PHPUnit_Framework_TestCase
    /**
     * @depends test_connect
     */
-   public function test_createGroup( $db )
+   public function test_isStandlone( $db )
    {
-      $err = $db -> createGroup( 'myGroup' ) ;
-      $this -> assertEquals( 0, $err['errno'], 'createGroup错误' ) ;
+      $cursor = $db -> list( SDB_LIST_SHARDS ) ;
+      $err = $db -> getError() ;
+      if( $err['errno'] == -159 )
+      {
+         return true ;
+      }
+      $this -> assertEquals( 0, $err['errno'], 'list错误' ) ;
+      $this -> assertNotEmpty( $cursor, 'list错误' ) ;
+      return false ;
    }
    
    /**
     * @depends test_connect
+    * @depends test_isStandlone
     */
-   public function test_createCataGroup( $db )
+   public function test_createGroup( $db, $isStandlone )
    {
-      $err = $db -> createCataGroup( '192.168.20.104', '20000', '/opt/sequoiadb/database/catalog/20000' ) ;
-      $this -> assertEquals( -200, $err['errno'], 'createCataGroup错误' ) ;
+      if( $isStandlone == false )
+      {
+         $err = $db -> createGroup( 'myGroup' ) ;
+         $this -> assertEquals( 0, $err['errno'], 'createGroup错误' ) ;
+      }
+   }
+   
+   /**
+    * @depends test_connect
+    * @depends test_isStandlone
+    */
+   public function test_createCataGroup( $db, $isStandlone )
+   {
+      if( $isStandlone == false )
+      {
+         $err = $db -> createCataGroup( '192.168.20.104', '20000', '/opt/sequoiadb/database/catalog/20000' ) ;
+         $this -> assertEquals( -200, $err['errno'], 'createCataGroup错误' ) ;
+      }
    }
 
    /**
     * @depends test_connect
+    * @depends test_isStandlone
     */
-   public function test_listGroup( $db )
+   public function test_listGroup( $db, $isStandlone )
    {
-      $cursor = $db -> listGroup() ;
-      $err = $db -> getError() ;
-      $this -> assertEquals( 0, $err['errno'], 'listGroup错误' ) ;
-      $this -> assertNotEmpty( $cursor, 'listGroup错误' ) ;
-      $num = 0 ;
-      while( $record = $cursor -> next() ) {
-         ++$num ;
+      if( $isStandlone == false )
+      {
+         $cursor = $db -> listGroup() ;
+         $err = $db -> getError() ;
+         $this -> assertEquals( 0, $err['errno'], 'listGroup错误' ) ;
+         $this -> assertNotEmpty( $cursor, 'listGroup错误' ) ;
+         $num = 0 ;
+         while( $record = $cursor -> next() ) {
+            ++$num ;
+         }
+         $this -> assertNotEquals( 0, $num, 'listGroup错误' ) ;
       }
-      $this -> assertNotEquals( 0, $num, 'listGroup错误' ) ;
    }
    
    /**
     * @depends test_connect
+    * @depends test_isStandlone
     */
-   public function test_getGroup( $db )
+   public function test_getGroup( $db, $isStandlone )
    {
-      $groupObj = $db -> getGroup( 'myGroup' ) ;
-      $err = $db -> getError() ;
-      $this -> assertEquals( 0, $err['errno'], 'getGroup错误' ) ;
-      $this -> assertNotEmpty( $groupObj, 'getGroup错误' ) ;
-      
-      //这个应该是不存在的
-      $groupObj = $db -> getGroup( 'myGroup1' ) ;
-      $err = $db -> getError() ;
-      $this -> assertNotEquals( 0, $err['errno'], 'getGroup错误' ) ;
-      $this -> assertEmpty( $groupObj, 'getGroup错误' ) ;
+      if( $isStandlone == false )
+      {
+         $groupObj = $db -> getGroup( 'myGroup' ) ;
+         $err = $db -> getError() ;
+         $this -> assertEquals( 0, $err['errno'], 'getGroup错误' ) ;
+         $this -> assertNotEmpty( $groupObj, 'getGroup错误' ) ;
+         
+         //这个应该是不存在的
+         $groupObj = $db -> getGroup( 'myGroup1' ) ;
+         $err = $db -> getError() ;
+         $this -> assertNotEquals( 0, $err['errno'], 'getGroup错误' ) ;
+         $this -> assertEmpty( $groupObj, 'getGroup错误' ) ;
+      }
    }
    
    /**
     * @depends test_connect
+    * @depends test_isStandlone
     */
-   public function test_removeGroup( $db )
+   public function test_removeGroup( $db, $isStandlone )
    {
-      $err = $db -> removeGroup( 'myGroup' ) ;
-      $this -> assertEquals( 0, $err['errno'], 'removeGroup错误' ) ;
+      if( $isStandlone == false )
+      {
+         $err = $db -> removeGroup( 'myGroup' ) ;
+         $this -> assertEquals( 0, $err['errno'], 'removeGroup错误' ) ;
+      }
    }
 }
 

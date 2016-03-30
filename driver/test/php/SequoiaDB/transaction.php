@@ -36,15 +36,17 @@ class SequoiaDB_Transaction_Test extends PHPUnit_Framework_TestCase
       $this -> assertNotEmpty( $cl, '获取cl错误' ) ;
 
       $err = $db -> transactionBegin() ;
-      $this -> assertEquals( 0, $err['errno'], 'transactionBegin错误' ) ;
-      
-      $err = $cl -> insert( array( 'a' => 1 ) ) ;
       if( $err['errno'] != -253 )
       {
-         $this -> assertEquals( 0, $err['errno'], 'insert错误' ) ;
-      
-         $err = $db -> transactionCommit() ;
-         $this -> assertEquals( 0, $err['errno'], 'transactionCommit错误' ) ;
+         $this -> assertEquals( 0, $err['errno'], 'transactionBegin错误' ) ;
+         $err = $cl -> insert( array( 'a' => 1 ) ) ;
+         if( $err['errno'] != -253 )
+         {
+            $this -> assertEquals( 0, $err['errno'], 'insert错误' ) ;
+         
+            $err = $db -> transactionCommit() ;
+            $this -> assertEquals( 0, $err['errno'], 'transactionCommit错误' ) ;
+         }
       }
    }
 
@@ -68,21 +70,24 @@ class SequoiaDB_Transaction_Test extends PHPUnit_Framework_TestCase
       $this -> assertEquals( 0, $err['errno'], 'count错误' ) ;
 
       $err = $db -> transactionBegin() ;
-      $this -> assertEquals( 0, $err['errno'], 'transactionBegin错误' ) ;
-      
-      $err = $cl -> insert( array( 'a' => 1 ) ) ;
       if( $err['errno'] != -253 )
       {
-         $this -> assertEquals( 0, $err['errno'], 'insert错误' ) ;
+         $this -> assertEquals( 0, $err['errno'], 'transactionBegin错误' ) ;
          
-         $err = $db -> transactionRollback() ;
-         $this -> assertEquals( 0, $err['errno'], 'transactionRollback错误' ) ;
-         
-         $num2 = $cl -> count() ;
-         $err = $db -> getError() ;
-         $this -> assertEquals( 0, $err['errno'], 'count错误' ) ;
-         
-         $this -> assertNotEquals( $num, $num2, 'transactionRollback错误' ) ;
+         $err = $cl -> insert( array( 'a' => 1 ) ) ;
+         if( $err['errno'] != -253 )
+         {
+            $this -> assertEquals( 0, $err['errno'], 'insert错误' ) ;
+            
+            $err = $db -> transactionRollback() ;
+            $this -> assertEquals( 0, $err['errno'], 'transactionRollback错误' ) ;
+            
+            $num2 = $cl -> count() ;
+            $err = $db -> getError() ;
+            $this -> assertEquals( 0, $err['errno'], 'count错误' ) ;
+            
+            $this -> assertNotEquals( $num, $num2, 'transactionRollback错误' ) ;
+         }
       }
    }
 }

@@ -23,39 +23,67 @@ class SequoiaDB_Task_Test extends PHPUnit_Framework_TestCase
    /**
     * @depends test_connect
     */
-   public function test_listTask( $db )
+   public function test_isStandlone( $db )
    {
-      $cursor = $db -> listTask() ;
+      $cursor = $db -> list( SDB_LIST_SHARDS ) ;
       $err = $db -> getError() ;
-      $this -> assertEquals( 0, $err['errno'], 'listTask错误' ) ;
-      $this -> assertNotEmpty( $cursor, 'listTask错误' ) ;
-      while( $record = $cursor -> next() ) {
-      }
-   }
-   
-   /**
-    * @depends test_connect
-    */
-   public function test_waitTask( $db )
-   {
-      $err = $db -> waitTask( array( 1, new SequoiaInt64( '2' ) ) ) ;
-      $this -> assertEquals( 0, $err['errno'], 'waitTask错误' ) ;
-      
-      $err = $db -> waitTask( 1 ) ;
-      $this -> assertEquals( 0, $err['errno'], 'waitTask错误' ) ;
-   }
-   
-   /**
-    * @depends test_connect
-    */
-   public function test_cancelTask( $db )
-   {
-      $err = $db -> cancelTask( 1, false ) ;
-      if( $err['errno'] == -173 )
+      if( $err['errno'] == -159 )
       {
-         return ;
+         return true ;
       }
-      $this -> assertEquals( 0, $err['errno'], 'cancelTask错误' ) ;
+      $this -> assertEquals( 0, $err['errno'], 'list错误' ) ;
+      $this -> assertNotEmpty( $cursor, 'list错误' ) ;
+      return false ;
+   }
+   
+   /**
+    * @depends test_connect
+    * @depends test_isStandlone
+    */
+   public function test_listTask( $db, $isStandlone )
+   {
+      if( $isStandlone == false )
+      {
+         $cursor = $db -> listTask() ;
+         $err = $db -> getError() ;
+         $this -> assertEquals( 0, $err['errno'], 'listTask错误' ) ;
+         $this -> assertNotEmpty( $cursor, 'listTask错误' ) ;
+         while( $record = $cursor -> next() ) {
+         }
+      }
+   }
+   
+   /**
+    * @depends test_connect
+    * @depends test_isStandlone
+    */
+   public function test_waitTask( $db, $isStandlone )
+   {
+      if( $isStandlone == false )
+      {
+         $err = $db -> waitTask( array( 1, new SequoiaInt64( '2' ) ) ) ;
+         $this -> assertEquals( 0, $err['errno'], 'waitTask错误' ) ;
+         
+         $err = $db -> waitTask( 1 ) ;
+         $this -> assertEquals( 0, $err['errno'], 'waitTask错误' ) ;
+      }
+   }
+   
+   /**
+    * @depends test_connect
+    * @depends test_isStandlone
+    */
+   public function test_cancelTask( $db, $isStandlone )
+   {
+      if( $isStandlone == false )
+      {
+         $err = $db -> cancelTask( 1, false ) ;
+         if( $err['errno'] == -173 )
+         {
+            return ;
+         }
+         $this -> assertEquals( 0, $err['errno'], 'cancelTask错误' ) ;
+      }
    }
 }
 

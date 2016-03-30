@@ -23,44 +23,76 @@ class SequoiaDB_Procedure_Test extends PHPUnit_Framework_TestCase
    /**
     * @depends test_connect
     */
-   public function test_createJsProcedure( $db )
+   public function test_isStandlone( $db )
    {
-      $err = $db -> createJsProcedure( 'function sum( a,b ){ return a + b ; }' ) ;
-      $this -> assertEquals( 0, $err['errno'], 'createJsProcedure错误' ) ;
-   }
-   
-   /**
-    * @depends test_connect
-    */
-   public function test_listProcedure( $db )
-   {
-      $cursor = $db -> listProcedure( array( 'name' => 'sum' ) ) ;
+      $cursor = $db -> list( SDB_LIST_SHARDS ) ;
       $err = $db -> getError() ;
-      $this -> assertEquals( 0, $err['errno'], 'listProcedure错误' ) ;
-      $this -> assertNotEmpty( $cursor, 'listProcedure错误' ) ;
-      $num = 0 ;
-      while( $record = $cursor -> next() ) {
-         ++$num ;
+      if( $err['errno'] == -159 )
+      {
+         return true ;
       }
-      $this -> assertEquals( 1, $num, 'listProcedure错误' ) ;
+      $this -> assertEquals( 0, $err['errno'], 'list错误' ) ;
+      $this -> assertNotEmpty( $cursor, 'list错误' ) ;
+      return false ;
    }
    
    /**
     * @depends test_connect
+    * @depends test_isStandlone
     */
-   public function test_evalJs( $db )
+   public function test_createJsProcedure( $db, $isStandlone )
    {
-      $result = $db -> evalJs( 'sum( 1, 2 );' ) ;
-      $this -> assertEquals( 3, $result, 'evalJs错误' ) ;
+      if( $isStandlone == false )
+      {
+         $err = $db -> createJsProcedure( 'function sum( a,b ){ return a + b ; }' ) ;
+         $this -> assertEquals( 0, $err['errno'], 'createJsProcedure错误' ) ;
+      }
    }
    
    /**
     * @depends test_connect
+    * @depends test_isStandlone
     */
-   public function test_removeProcedure( $db )
+   public function test_listProcedure( $db, $isStandlone )
    {
-      $err = $db -> removeProcedure( 'sum' ) ;
-      $this -> assertEquals( 0, $err['errno'], 'removeProcedure错误' ) ;
+      if( $isStandlone == false )
+      {
+         $cursor = $db -> listProcedure( array( 'name' => 'sum' ) ) ;
+         $err = $db -> getError() ;
+         $this -> assertEquals( 0, $err['errno'], 'listProcedure错误' ) ;
+         $this -> assertNotEmpty( $cursor, 'listProcedure错误' ) ;
+         $num = 0 ;
+         while( $record = $cursor -> next() ) {
+            ++$num ;
+         }
+         $this -> assertEquals( 1, $num, 'listProcedure错误' ) ;
+      }
+   }
+   
+   /**
+    * @depends test_connect
+    * @depends test_isStandlone
+    */
+   public function test_evalJs( $db, $isStandlone )
+   {
+      if( $isStandlone == false )
+      {
+         $result = $db -> evalJs( 'sum( 1, 2 );' ) ;
+         $this -> assertEquals( 3, $result, 'evalJs错误' ) ;
+      }
+   }
+   
+   /**
+    * @depends test_connect
+    * @depends test_isStandlone
+    */
+   public function test_removeProcedure( $db, $isStandlone )
+   {
+      if( $isStandlone == false )
+      {
+         $err = $db -> removeProcedure( 'sum' ) ;
+         $this -> assertEquals( 0, $err['errno'], 'removeProcedure错误' ) ;
+      }
    }
 }
 
