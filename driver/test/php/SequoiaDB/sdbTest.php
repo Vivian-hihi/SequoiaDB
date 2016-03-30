@@ -197,8 +197,14 @@ class SequoiaDB_Test extends PHPUnit_Framework_TestCase
       $new = $cursor -> next() ;
       $this -> assertNotEmpty( $new, 'reset后获取snapshot '.SDB_SNAP_DATABASE.' 错误' ) ;
       
-
-      $this -> assertLessThan( $old['replNetIn'], $new['replNetIn'], 'resetSnapshot没有生效' ) ;
+      if( array_key_exists( 'replNetIn', $old ) )
+      {
+         $this -> assertLessThan( $old['replNetIn'], $new['replNetIn'], 'resetSnapshot没有生效' ) ;
+      }
+      else
+      {
+         $this -> assertLessThan( $old['svcNetIn'], $new['svcNetIn'], 'resetSnapshot没有生效' ) ;
+      }
    }
 
 }

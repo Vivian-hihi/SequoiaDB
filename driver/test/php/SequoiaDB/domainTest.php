@@ -23,52 +23,84 @@ class SequoiaDB_Domain_Test extends PHPUnit_Framework_TestCase
    /**
     * @depends test_connect
     */
-   public function test_createDomain( $db )
+   public function test_isStandlone( $db )
    {
-      $err = $db -> createDomain( 'myDomain', array( 'Groups' => array( "db1", "db2" ), 'AutoSplit' => true ) ) ;
-      $this -> assertEquals( 0, $err['errno'], 'createDomain错误' ) ;
+      $cursor = $db -> list( SDB_LIST_SHARDS ) ;
+      $err = $db -> getError() ;
+      if( $err['errno'] == -159 )
+      {
+         return true ;
+      }
+      $this -> assertEquals( 0, $err['errno'], 'list错误' ) ;
+      $this -> assertNotEmpty( $cursor, 'list错误' ) ;
+      return false ;
+   }
+   
+   /**
+    * @depends test_connect
+    * @depends test_isStandlone
+    */
+   public function test_createDomain( $db, $isStandlone )
+   {
+      if( $isStandlone == false )
+      {
+         $err = $db -> createDomain( 'myDomain', array( 'Groups' => array( "db1", "db2" ), 'AutoSplit' => true ) ) ;
+         $this -> assertEquals( 0, $err['errno'], 'createDomain错误' ) ;
+      }
    }
 
    /**
     * @depends test_connect
+    * @depends test_isStandlone
     */
-   public function test_listDomain( $db )
+   public function test_listDomain( $db, $isStandlone )
    {
-      $cursor = $db -> listDomain() ;
-      $err = $db -> getError() ;
-      $this -> assertEquals( 0, $err['errno'], 'listDomain错误' ) ;
-      $this -> assertNotEmpty( $cursor, 'listDomain错误' ) ;
-      $num = 0 ;
-      while( $record = $cursor -> next() ) {
-         ++$num ;
+      if( $isStandlone == false )
+      {
+         $cursor = $db -> listDomain() ;
+         $err = $db -> getError() ;
+         $this -> assertEquals( 0, $err['errno'], 'listDomain错误' ) ;
+         $this -> assertNotEmpty( $cursor, 'listDomain错误' ) ;
+         $num = 0 ;
+         while( $record = $cursor -> next() ) {
+            ++$num ;
+         }
+         $this -> assertEquals( 1, $num, 'listDomain错误' ) ;
       }
-      $this -> assertEquals( 1, $num, 'listDomain错误' ) ;
    }
    
    /**
     * @depends test_connect
+    * @depends test_isStandlone
     */
-   public function test_getDomain( $db )
+   public function test_getDomain( $db, $isStandlone )
    {
-      $domainObj = $db -> getDomain( 'myDomain' ) ;
-      $err = $db -> getError() ;
-      $this -> assertEquals( 0, $err['errno'], 'getDomain错误' ) ;
-      $this -> assertNotEmpty( $domainObj, 'getDomain错误' ) ;
-      
-      //这个应该是不存在的
-      $domainObj = $db -> getDomain( 'myDomain1' ) ;
-      $err = $db -> getError() ;
-      $this -> assertNotEquals( 0, $err['errno'], 'getDomain错误' ) ;
-      $this -> assertEmpty( $domainObj, 'getDomain错误' ) ;
+      if( $isStandlone == false )
+      {
+         $domainObj = $db -> getDomain( 'myDomain' ) ;
+         $err = $db -> getError() ;
+         $this -> assertEquals( 0, $err['errno'], 'getDomain错误' ) ;
+         $this -> assertNotEmpty( $domainObj, 'getDomain错误' ) ;
+         
+         //这个应该是不存在的
+         $domainObj = $db -> getDomain( 'myDomain1' ) ;
+         $err = $db -> getError() ;
+         $this -> assertNotEquals( 0, $err['errno'], 'getDomain错误' ) ;
+         $this -> assertEmpty( $domainObj, 'getDomain错误' ) ;
+      }
    }
    
    /**
     * @depends test_connect
+    * @depends test_isStandlone
     */
-   public function test_dropDomain( $db )
+   public function test_dropDomain( $db, $isStandlone )
    {
-      $err = $db -> dropDomain( 'myDomain' ) ;
-      $this -> assertEquals( 0, $err['errno'], 'dropDomain错误' ) ;
+      if( $isStandlone == false )
+      {
+         $err = $db -> dropDomain( 'myDomain' ) ;
+         $this -> assertEquals( 0, $err['errno'], 'dropDomain错误' ) ;
+      }
    }
 }
 
