@@ -56,7 +56,6 @@ class cl_record_Test extends PHPUnit_Framework_TestCase
    public function test_select_cl( $db, $cs, $isStandlone )
    {
       $cl = array() ;
-      $cs = $db -> selectCS( 'test_foo1111111' ) ;
       if( $isStandlone )
       {
          $cl = $cs -> selectCL( 'test_bar' ) ;
