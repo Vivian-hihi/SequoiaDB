@@ -77,6 +77,8 @@
             <arg line=" ${append} " />
             <env key="LD_LIBRARY_PATH" path="${LD_LIBRARY_PATH}:/opt/sequoiadb/lib" />
         </exec>
+        <echo message="${screen.output}" />
+        <echo message="The result = ${ret.code} after exec ${test.case.name} testcase." /> 
     </target>
 </project>
 
