@@ -38,7 +38,7 @@ class cs_cl_Test extends PHPUnit_Framework_TestCase
     */
    public function test_selectCL( $db, $cs )
    {     
-      $cl = $cs -> selectCL( 'bar_compressed', array( 'Compressed' => true ) ) ;
+      $cl = $cs -> selectCL( 'bar_compressed', array( 'Compressed' => true, 'ReplSize' => -1 ) ) ;
       $err = $db -> getError() ;
       $this -> assertEquals( 0, $err['errno'], '创建cl错误' ) ;
       $this -> assertNotEmpty( $cl, '创建cl错误' ) ;
@@ -61,7 +61,7 @@ class cs_cl_Test extends PHPUnit_Framework_TestCase
     */
    public function test_createCL( $db, $cs )
    {     
-      $cl = $cs -> createCL( 'create_bar', array( 'Compressed' => true ) ) ;
+      $cl = $cs -> createCL( 'create_bar', array( 'Compressed' => true, 'ReplSize' => -1 ) ) ;
       $err = $db -> getError() ;
       $this -> assertEquals( 0, $err['errno'], '创建cl错误' ) ;
       $this -> assertNotEmpty( $cl, '创建cl错误' ) ;
@@ -81,7 +81,7 @@ class cs_cl_Test extends PHPUnit_Framework_TestCase
     */
    public function test_getCL( $db, $cs )
    {
-      $cl = $cs -> selectCL( 'bar' ) ;
+      $cl = $cs -> selectCL( 'bar', array( 'ReplSize' => -1 ) ) ;
       $err = $db -> getError() ;
       $this -> assertEquals( 0, $err['errno'], '创建cl错误' ) ;
       $this -> assertNotEmpty( $cl, '创建cl错误' ) ;
@@ -98,7 +98,7 @@ class cs_cl_Test extends PHPUnit_Framework_TestCase
     */
    public function test_dropCL( $db, $cs )
    {
-      $cl = $cs -> selectCL( 'bar' ) ;
+      $cl = $cs -> selectCL( 'bar', array( 'ReplSize' => -1 ) ) ;
       $err = $db -> getError() ;
       $this -> assertEquals( 0, $err['errno'], '创建cl错误' ) ;
       $this -> assertNotEmpty( $cl, '创建cl错误' ) ;
@@ -111,7 +111,7 @@ class cs_cl_Test extends PHPUnit_Framework_TestCase
       $this -> assertEquals( -23, $err['errno'], '创建cl错误' ) ;
       $this -> assertEmpty( $cl, '创建cl错误' ) ;
 
-      $cl = $cs -> selectCL( 'bar' ) ;
+      $cl = $cs -> selectCL( 'bar', array( 'ReplSize' => -1 ) ) ;
       $err = $db -> getError() ;
       $this -> assertEquals( 0, $err['errno'], '创建cl错误' ) ;
       $this -> assertNotEmpty( $cl, '创建cl错误' ) ;

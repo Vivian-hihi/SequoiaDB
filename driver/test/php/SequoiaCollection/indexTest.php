@@ -38,7 +38,7 @@ class cl_index_Test extends PHPUnit_Framework_TestCase
     */
    public function test_select_cl( $db, $cs )
    {
-      $cl = $cs -> selectCL( 'test_bar' ) ;
+      $cl = $cs -> selectCL( 'test_bar', array( 'ReplSize' => -1 ) ) ;
       $err = $db -> getError() ;
       $this -> assertEquals( 0, $err['errno'], '创建cl错误' ) ;
       $this -> assertNotEmpty( $cs, '创建cl错误' ) ;

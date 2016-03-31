@@ -44,7 +44,7 @@ class SequoiaDB_CL_Test extends PHPUnit_Framework_TestCase
       $this -> assertEquals( 0, $err['errno'], '创建cs错误' ) ;
       $this -> assertNotEmpty( $cs, '创建cs错误' ) ;
 
-      $cl = $cs -> selectCL( 'bar' ) ;
+      $cl = $cs -> selectCL( 'bar', array( 'ReplSize' => -1 ) ) ;
       $err = $db -> getError() ;
       $this -> assertEquals( 0, $err['errno'], '创建cl错误' ) ;
       $this -> assertNotEmpty( $cl, '创建cl错误' ) ;
@@ -65,7 +65,7 @@ class SequoiaDB_CL_Test extends PHPUnit_Framework_TestCase
       $this -> assertEquals( 0, $err['errno'], '创建cs错误' ) ;
       $this -> assertNotEmpty( $cs, '创建cs错误' ) ;
 
-      $cl = $cs -> selectCL( 'bar' ) ;
+      $cl = $cs -> selectCL( 'bar', array( 'ReplSize' => -1 ) ) ;
       $err = $db -> getError() ;
       $this -> assertEquals( 0, $err['errno'], '创建cl错误' ) ;
       $this -> assertNotEmpty( $cl, '创建cl错误' ) ;

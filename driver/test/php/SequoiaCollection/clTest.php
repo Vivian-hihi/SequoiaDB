@@ -276,14 +276,14 @@ class cl_Test extends PHPUnit_Framework_TestCase
    {
       if( $isStandlone == false )
       {        
-         $cl = $cs -> createCL( 'sub' ) ;
+         $cl = $cs -> createCL( 'sub', array( 'ReplSize' => -1 ) ) ;
          $err = $db -> getError() ;
          $this -> assertEquals( 0, $err['errno'], '创建cl错误' ) ;
          $this -> assertNotEmpty( $cl, '创建cl错误' ) ;
          $sub = $cl ;
          $subFullName = $sub -> getFullName() ;
          
-         $cl = $cs -> createCL( 'main', array( 'IsMainCL' => true, 'ShardingKey' => array( 'a' => 1 ) ) ) ;
+         $cl = $cs -> createCL( 'main', array( 'IsMainCL' => true, 'ShardingKey' => array( 'a' => 1 ), 'ReplSize' => -1 ) ) ;
          $err = $db -> getError() ;
          $this -> assertEquals( 0, $err['errno'], '创建cl错误' ) ;
          $this -> assertNotEmpty( $cl, '创建cl错误' ) ;

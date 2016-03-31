@@ -48,7 +48,7 @@ class cs_Test extends PHPUnit_Framework_TestCase
       $err = $cs -> drop() ;
       $this -> assertEquals( -34, $err['errno'], '删除cs错误' ) ;
 
-      $cl = $cs -> selectCL( 'bar' ) ;
+      $cl = $cs -> selectCL( 'bar', array( 'ReplSize' => -1 ) ) ;
       $err = $db -> getError() ;
       $this -> assertEquals( -34, $err['errno'], '创建cl错误' ) ;
       $this -> assertEmpty( $cl, '创建cl错误' ) ;
