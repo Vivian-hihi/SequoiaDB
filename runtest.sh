@@ -53,10 +53,8 @@ lastCmdStr=""
 needExit=0
 
 # define ignore path and file
-ignoredPaths=("vote")
+ignoredPaths=("vote" "dataCompress")
 ignoredFiles=("commlib.js")
-
-
 
 # print help information
 function showHelpInfo()
