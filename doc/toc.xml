@@ -805,6 +805,14 @@
                             <enabled>true</enabled>
                         </obj>
                         <obj>
+                            <id>1432190580</id>
+                            <cnname>C BSON使用</cnname>
+                            <enname>C BSON Usage</enname>
+                            <cnpath>SdbDoc_Cn/driver/c_bson.html</cnpath>
+                            <enpath>SdbDoc_En/driver/c_bson_en.html</enpath>
+                            <enabled>true</enabled>
+                        </obj>
+                        <obj>
                             <id>1432190722</id>
                             <cnname>SQL to SequoiaDB shell to C</cnname>
                             <enname>SQL to SequoiaDB shell to C</enname>
@@ -850,6 +858,14 @@
                             <enname>C++ Development Foundation</enname>
                             <cnpath>SdbDoc_Cn/driver/cpp_driver/cpp_development_foundation.html</cnpath>
                             <enpath>SdbDoc_En/driver/cpp_driver/cpp_development_foundation_en.html</enpath>
+                            <enabled>true</enabled>
+                        </obj>
+                        <obj>
+                            <id>1432190579</id>
+                            <cnname>C++ BSON使用</cnname>
+                            <enname>C++ BSON Usage</enname>
+                            <cnpath>SdbDoc_Cn/driver/cpp_bson.html</cnpath>
+                            <enpath>SdbDoc_En/driver/cpp_bson_en.html</enpath>
                             <enabled>true</enabled>
                         </obj>
                         <obj>
@@ -1101,22 +1117,6 @@
                             <enabled>true</enabled>
                         </obj>                  
                     </objlist>
-                </obj>
-                <obj>
-                    <id>1432190580</id>
-                    <cnname>C BSON</cnname>
-                    <enname>C BSON</enname>
-                    <cnpath>SdbDoc_Cn/driver/c_bson.html</cnpath>
-                    <enpath>SdbDoc_En/driver/c_bson_en.html</enpath>
-                    <enabled>true</enabled>
-                </obj>
-                <obj>
-                    <id>1432190579</id>
-                    <cnname>C++ BSON</cnname>
-                    <enname>C++ BSON</enname>
-                    <cnpath>SdbDoc_Cn/driver/cpp_bson.html</cnpath>
-                    <enpath>SdbDoc_En/driver/cpp_bson_en.html</enpath>
-                    <enabled>true</enabled>
                 </obj>
             </objlist>
         </obj>
