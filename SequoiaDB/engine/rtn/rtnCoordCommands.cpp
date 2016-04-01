@@ -527,17 +527,25 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       CoordCataInfoPtr cataInfo ;
+      UINT32 retryTimes = 0 ;
 
       rc = rtnCoordGetRemoteCata( cb, pCLName, cataInfo ) ;
       PD_RC_CHECK( rc, PDERROR, "Update collection[%s] catalog info failed, "
                    "rc: %d", pCLName, rc ) ;
 
+   retry:
       pMsg->version = cataInfo->getVersion() ;
 
       rc = executeOnCataGroup( (MsgHeader*)pMsg, cb, onPrimary, pIgnoreRC,
                                ppContext ) ;
       if ( rc )
       {
+         if ( rtnCoordCataReplyCheck( cb, rc, _canRetry( retryTimes ),
+                                      cataInfo, NULL, TRUE ) )
+         {
+            ++retryTimes ;
+            goto retry ;
+         }
          goto error ;
       }
 
