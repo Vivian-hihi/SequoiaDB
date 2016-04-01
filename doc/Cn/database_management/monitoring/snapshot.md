@@ -644,6 +644,10 @@ SDB_SNAP_DATABASE
   TotalMapped             长整型   mmap 的总数据量
   svcNetIn                长整型   本地服务端口收到的网络流量
   svcNetOut               长整型   本地服务端口发送的网络流量
+  shardNetIn              长整型   shard 平面端口收到的网络流量
+  shardNetOut             长整型   shard 平面端口发送的网络流量
+  replNetIn               长整型   数据同步平面端口收到的网络流量
+  replNetOut              长整型   数据同步平面端口发送的网络流量
 
 ###协调节点字段信息###
 
