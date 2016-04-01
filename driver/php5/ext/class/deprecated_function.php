@@ -90,7 +90,7 @@ class SequoiaDB
    public function listCSs(){}
 
    /**
-    * Delete $id index in collection.
+    * Drop the specified collection space.
     *
     * @see dropCS().
     *
