@@ -595,7 +595,7 @@ SDB_SNAP_DATABASE
   ----------------------- -------- -----------------------------------------------------------------------------------------------------------------
   HostName                字符串   数据库节点所在物理节点的主机名
   ServiceName             字符串   svcname 所指定的服务名，与 HostName 共同作为一个逻辑节点的标示
-  NodeName                字符串   节点名，为<HostName>:<ServiceName>
+  NodeName                字符串   节点名，为< HostName > : < ServiceName >
   GroupName               字符串   该逻辑节点所属的分区组名，standalone 模式下该字段为空字符串
   IsPrimary               布尔     该节点是否为主节点，standalone 模式下该字段为false
   ServiceStatus           布尔     是否为可提供服务状态。一些特殊状态，例如[全量同步](SdbDoc_Cn/infrastructure/replication/replicate.html)会使该状态为 false
