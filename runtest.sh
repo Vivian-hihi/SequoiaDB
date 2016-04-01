@@ -452,6 +452,9 @@ function mainRun()
    beginTime=`date`
    beginTimeSec=`date +%s`
    
+   # create msg db connection
+   $sdbRoot/sdb -s "try { var db = new Sdb('${coordhostname}', '${coordsvcname}' ) } catch( e ) {} "
+
    # before all test-cases running
    printStr="$(runJSFile "${libRoot}/all_prepare.js" 0 )"
    if [ "$printStr" != "" ] ; then
@@ -492,6 +495,9 @@ function mainRun()
    printToResultFile "$printStr"
    printToResultFile "--------------------------------------------------------"
    fi
+   
+   # destory db connection
+   $sdbRoot/sdb -s "try { db.close() ; } catch( e ) {} "
 }
 
 # ***************************************************************
