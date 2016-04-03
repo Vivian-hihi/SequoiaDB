@@ -35,6 +35,10 @@
 		<tstamp>
 			<format property="test_js_begintime" pattern="yyyy-MM-dd-hh.mm.ss a" />
 		</tstamp>
+		
+		<exec executable="${bin_dir}/sdb" dir="" timeout="2000" failonerror="false">
+			<arg line="-s &quot;var db = new Sdb('${host.NAME}', '${coord.service.port}');&quot;" />
+		</exec>
 
 		<exec command="/bin/sh -c 'eval echo $$$' " dir="" timeout="900000" outputproperty="pid" />
 		<sdbprefix prefixName="CHANGEDSTRING">
@@ -69,6 +73,10 @@
 			<arg line="${sdb.cmd.allClean}" />
 		</exec>
 		<echo message="${allClean.screen.output}" />
+		
+		<exec executable="${bin_dir}/sdb" dir="" timeout="2000" failonerror="false">
+			<arg line="-s &quot;db.close();&quot;" />
+		</exec>		
 
 		<tstamp>
 			<format property="test_js_endtime" pattern="yyyy-MM-dd-hh.mm.ss a" />
@@ -192,10 +200,16 @@
 		<property name="command" value="sdb${sdb.cmd.argument}" />
 		<echo message="Command:${command}" />
 		<echo message="The testcase ${test.case.fullname} path on ${testcases.path}" />
+		<exec executable="${bin_dir}/sdb" dir="" timeout="2000" failonerror="false">
+			<arg line="-s &quot;db.msg('Begin testcase[${test.case.fullname}]');&quot;" />
+		</exec>
 		<exec executable="${bin_dir}/sdb" dir="" timeout="3600000" outputproperty="screen.output" resultproperty="ret.code" failonerror="false">
 			<arg line="${sdb.cmd.argument}" />
-		</exec>
+		</exec>		
 		<echo message="${screen.output}" />
+		<exec executable="${bin_dir}/sdb" dir="" timeout="2000" failonerror="false">
+			<arg line="-s &quot;db.msg('End testcase[${test.case.fullname}]');&quot;" />
+		</exec>
 
 		<property name="sdb.cmd.afterTestcase" value=" -e &quot;var CHANGEDPREFIX='${CHANGEDSTRING}'; var COORDSVCNAME='${coord.service.port}' ;&quot; -f &quot;${testcases.path}/libs/func.js,${testcases.path}/libs/after_usecase.js&quot;" />
 		<echo message="Exec:sdb ${sdb.cmd.afterTestcase}" />

@@ -10,6 +10,7 @@
 
 <project name="Exec-Python-Testcases" default="Test-Driver-Python">
 	<property file="${ci.properties.path}" />
+	<property name="bin_dir" value="${install.path}/sequoiadb/bin" />
 	<taskdef resource="com/sequoiadb/ant/ant-sdbtasks.xml">
 		<classpath>
 			<fileset dir="${antTask.jar.path}" includes="*.jar" />
@@ -39,6 +40,11 @@
 		<hostinfo prefix="host" />
 		<echo message="Begin test driver python testcases..." />
 		<echo message="Perform the driver python testcases,with testcase.path=${python.testcase.path}" />
+		
+		<exec executable="${bin_dir}/sdb" dir="" timeout="2000" failonerror="false">
+			<arg line="-s &quot;var db = new Sdb('${host.NAME}', '${coord.service.port}');&quot;" />
+		</exec>
+				
 		<foreach target="test-one-suite" param="test.suite.fullname">
 			<path>
 				<dirset dir="${python.testcase.path}" includes="${includes.dir.patterns}" excludes="${excludes.dir.patterns}" />
@@ -48,6 +54,10 @@
 			<param name="includes.case.patterns" value="*.py" />
 			<param name="excludes.case.patterns" value="" />
 		</foreach>
+		
+		<exec executable="${bin_dir}/sdb" dir="" timeout="2000" failonerror="false">
+			<arg line="-s &quot;db.close();&quot;" />
+		</exec>	
 	</target>
 
 	<target name="test-one-suite" depends="">
@@ -89,6 +99,9 @@
 		<if>
 			<equals arg1="${test-type}" arg2="driver-python" />
 			<then>
+      		<exec executable="${bin_dir}/sdb" dir="" timeout="2000" failonerror="false">
+      			<arg line="-s &quot;db.msg('Begin testcase[${test.case.fullname}]');&quot;" />
+      		</exec>			   
 				<property name="command" value="python ${test.case.fullname} -H ${test.host.NAME} -p ${coord.service.port}" />
 				<echo message="Command:${command}" />
 				<echo message="The testcase ${test.case.name}.py path on ${testcases.path}" />
@@ -97,6 +110,9 @@
 				</exec>
 				<echo message="${screen.output}" />
 				<echo message="The result = ${ret.code} after exec ${test.case.fullname} testcase." />
+      		<exec executable="${bin_dir}/sdb" dir="" timeout="2000" failonerror="false">
+      			<arg line="-s &quot;db.msg('End testcase[${test.case.fullname}]');&quot;" />
+      		</exec>			
 			</then>
 			<else>
 				<property name="command" value="python ${test.case.fullname}" />

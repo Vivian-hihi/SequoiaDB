@@ -12,6 +12,7 @@
 
 <project name="Exec-Ant-Testcases" default="Test-Ant-Testcases">
 	<property file="${ci.properties.path}" />
+	<property name="bin_dir" value="${install.path}/sequoiadb/bin" />
 	<taskdef resource="com/sequoiadb/ant/ant-sdbtasks.xml">
 		<classpath>
 			<fileset dir="${antTask.jar.path}" includes="*.jar" />
@@ -29,6 +30,11 @@
 		<hostinfo prefix="host" />
 		<echo message="Begin test ant testcases..." />
 		<echo message="Perform the ant testcases,with testcase.path=${ant.testcase.path}" />
+		
+		<exec executable="${bin_dir}/sdb" dir="" timeout="2000" failonerror="false">
+			<arg line="-s &quot;var db = new Sdb('${host.NAME}', '${coord.service.port}');&quot;" />
+		</exec>
+				
 		<foreach target="test-one-suite" param="test.suite.fullname">
 			<path>
 				<dirset dir="${ant.testcase.path}/ant" includes="${includes.dir.patterns}" excludes="${excludes.dir.patterns}" />
@@ -37,6 +43,10 @@
 			<param name="includes.case.patterns" value="*.xml" />
 			<param name="excludes.case.patterns" value="query_and_create_delete_index.xml" />
 		</foreach>
+		
+		<exec executable="${bin_dir}/sdb" dir="" timeout="2000" failonerror="false">
+			<arg line="-s &quot;db.close();&quot;" />
+		</exec>	
 	</target>
 
 	<target name="test-one-suite" depends="">
@@ -78,6 +88,9 @@
 		</sdbprefix>
 		<echo message="Now testcase ${test.case.name}.xml begin with ${testcase.begin.time}"/>
 
+		<exec executable="${bin_dir}/sdb" dir="" timeout="2000" failonerror="false">
+			<arg line="-s &quot;db.msg('Begin testcase[${test.case.fullname}]');&quot;" />
+		</exec>
 		<trycatch property="e">
 			<try>
 				<property name="command" value=" -f ${test.case.fullname} test -Dhost.NAME=${host.NAME} -Dcoord.service.port=${coord.service.port} -DCS_PRIX=${CS_PRIX} -Dinstall.path=${install.path} -DantTask.jar.path=${antTask.jar.path}" />
@@ -93,7 +106,10 @@
 				<echo message="${error.msg}" />
 			</catch>
 		</trycatch>
-
+		<exec executable="${bin_dir}/sdb" dir="" timeout="2000" failonerror="false">
+			<arg line="-s &quot;db.msg('End testcase[${test.case.fullname}]');&quot;" />
+		</exec>
+		   
 		<if>
 			<not>
 				<equals arg1="${ret.code}" arg2="0" />

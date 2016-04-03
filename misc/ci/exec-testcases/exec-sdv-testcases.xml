@@ -34,6 +34,10 @@
          <format property="test.begin.time" pattern="yyyy-MM-dd-hh.mm.ss a" />
       </tstamp>
       
+		<exec executable="${bin.dir}/sdb" dir="" timeout="2000" failonerror="false">
+			<arg line="-s &quot;var db = new Sdb('${host.NAME}', '${coord.service.port}');&quot;" />
+		</exec>      
+      
       <!-- main -->
       <antcall target="Exec-allprepare" inheritAll="true"/> 
         
@@ -49,7 +53,11 @@
                 
       <antcall target="Exec-allclean" inheritAll="true"/> 
       <!-- end main -->
-           
+      
+      <exec executable="${bin.dir}/sdb" dir="" timeout="2000" failonerror="false">
+			<arg line="-s &quot;db.close();&quot;" />
+		</exec>	
+		     
       <tstamp>
          <format property="test.end.time" pattern="yyyy-MM-dd-hh.mm.ss a" />
       </tstamp>
@@ -143,6 +151,9 @@
       </exec>
       <echo message="${before.testcase.output}" />
 
+		<exec executable="${bin.dir}/sdb" dir="" timeout="2000" failonerror="false">
+			<arg line="-s &quot;db.msg('Begin testcase[${testcase.fullname}]');&quot;" />
+		</exec>
       <property name="testcase.cmd" value=" -e &quot;var CHANGEDPREFIX='${CHANGEDSTRING}';var COORDSVCNAME='${coord.service.port}';&quot; -f &quot;${testcase.path}/libs/func.js,${commlib.option},${testcase.fullname}&quot;" />
       <echo message="Exec: sdb${testcase.cmd}" />
       <exec executable="${bin.dir}/sdb"
@@ -152,6 +163,9 @@
          <arg line="${testcase.cmd}" />
       </exec>
       <echo message="${testcase.output}" />
+		<exec executable="${bin.dir}/sdb" dir="" timeout="2000" failonerror="false">
+			<arg line="-s &quot;db.msg('End testcase[${testcase.fullname}]');&quot;" />
+		</exec>      
 
       <property name="after.testcase.cmd" value=" -e &quot;var CHANGEDPREFIX='${CHANGEDSTRING}'; var COORDSVCNAME='${coord.service.port}' ;&quot; -f &quot;${testcase.path}/libs/func.js,${testcase.path}/libs/after_usecase.js&quot;" />
       <echo message="Exec: sdb${after.testcase.cmd}" />
