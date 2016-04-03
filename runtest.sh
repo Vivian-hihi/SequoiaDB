@@ -180,11 +180,11 @@ function procJSFile()
    runJSFile "${libRoot}/before_usecase.js"
 
    testcaseBTimeSec=`date +%s`
-   $sdbRoot/sdb -s "try{ db.msg('Begin test[$file]') ; } catch( e ) { } "
+   $sdbRoot/sdb -s "try{ db.msg('Begin testcase[$file]') ; } catch( e ) { } "
    runJSFile "$testFile"
    ret=$?
 #   runresult=$ret
-   $sdbRoot/sdb -s "try{ db.msg('End test[$file]') ; } catch( e ) {} "
+   $sdbRoot/sdb -s "try{ db.msg('End testcase[$file]') ; } catch( e ) {} "
    testcaseETimeSec=`date +%s`
    if [ $printOut -eq 1 ] ; then
       echo -n "<===[$shortFile]"
