@@ -114,8 +114,7 @@
       <echo message="**************************************************************************************************************************************************************" />     
    </target>
 
-   <target name="test-one-case" depends="">
-      <echo message="********************************************"/>
+   <target name="test-one-case" depends="">     
       <exec executable="${bin.dir}/sdb" timeout="100000" dir="" outputproperty="sdb.version">
          <arg line=" --version" />
       </exec>
@@ -152,6 +151,7 @@
       </exec>
       <echo message="${before.testcase.output}" />
 
+        <echo message="********************************************"/>
 		<exec executable="${bin.dir}/sdb" dir="" timeout="20000" failonerror="false">
 			<arg line="-s &quot;db.msg('Begin testcase[${testcase.fullname}]');&quot;" />
 		</exec>
@@ -167,7 +167,8 @@
 		<exec executable="${bin.dir}/sdb" dir="" timeout="2000" failonerror="false">
 			<arg line="-s &quot;db.msg('End testcase[${testcase.fullname}]');&quot;" />
 		</exec>      
-
+        <echo message="********************************************"/>
+        
       <property name="after.testcase.cmd" value=" -e &quot;var CHANGEDPREFIX='${CHANGEDSTRING}'; var COORDSVCNAME='${coord.service.port}' ;&quot; -f &quot;${testcase.path}/libs/func.js,${testcase.path}/libs/after_usecase.js&quot;" />
       <echo message="Exec: sdb${after.testcase.cmd}" />
       <exec executable="${bin.dir}/sdb"
