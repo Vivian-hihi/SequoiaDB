@@ -173,6 +173,7 @@
       <exec executable="${bin.dir}/sdb"
             outputproperty="after.testcase.output" 
             resultproperty="after.testcase.retcode"
+            failonerror="true"
             timeout="900000" >
          <arg line="${after.testcase.cmd}" />
       </exec>
