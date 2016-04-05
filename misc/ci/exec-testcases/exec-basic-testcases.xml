@@ -36,7 +36,7 @@
 			<format property="test_js_begintime" pattern="yyyy-MM-dd-hh.mm.ss a" />
 		</tstamp>
 		
-		<exec executable="${bin_dir}/sdb" dir="" timeout="2000" failonerror="false">
+		<exec executable="${bin_dir}/sdb" dir="" timeout="20000" failonerror="false">
 			<arg line="-s &quot;var db = new Sdb('${host.NAME}', '${coord.service.port}');&quot;" />
 		</exec>
 
@@ -163,6 +163,7 @@
 	</target>
 
 	<target name="test-one-case" depends="">
+	    <echo message="********************************************"/>
 		<exec executable="${bin_dir}/sdb" timeout="100000" dir="" outputproperty="SDB.VERSION.INFO" resultproperty="ret.sdb.version.exec">
 			<arg line=" --version" />
 		</exec>
@@ -243,5 +244,6 @@
 				<echo file="${reports.path}/TEST-${test.suite.class.name}.xml" append="true" message="&lt;testcase classname=&quot;${test.suite.class.name}&quot; name=&quot;${test.case.name}&quot; begin_time=&quot;${testcase.begin.time}&quot; end_time=&quot;${testcase.end.time}&quot; time=&quot;${testcase.timeOutput}&quot; path=&quot;${testcases.path}&quot; status=&quot;succ&quot;&gt;&#10;&lt;/testcase&gt;&#10;" />
 			</else>
 		</if>
+		<echo message="********************************************"/>
 	</target>
 </project>

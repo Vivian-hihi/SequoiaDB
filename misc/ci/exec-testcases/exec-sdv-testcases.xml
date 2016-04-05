@@ -115,6 +115,7 @@
    </target>
 
    <target name="test-one-case" depends="">
+      <echo message="********************************************"/>
       <exec executable="${bin.dir}/sdb" timeout="100000" dir="" outputproperty="sdb.version">
          <arg line=" --version" />
       </exec>
@@ -151,7 +152,7 @@
       </exec>
       <echo message="${before.testcase.output}" />
 
-		<exec executable="${bin.dir}/sdb" dir="" timeout="2000" failonerror="false">
+		<exec executable="${bin.dir}/sdb" dir="" timeout="20000" failonerror="false">
 			<arg line="-s &quot;db.msg('Begin testcase[${testcase.fullname}]');&quot;" />
 		</exec>
       <property name="testcase.cmd" value=" -e &quot;var CHANGEDPREFIX='${CHANGEDSTRING}';var COORDSVCNAME='${coord.service.port}';&quot; -f &quot;${testcase.path}/libs/func.js,${commlib.option},${testcase.fullname}&quot;" />
@@ -196,7 +197,8 @@
             <echo file="${reports.path}/${testsuite.report.name}.xml" append="true" 
                   message="&lt;testcase classname=&quot;${testsuite.class.name}&quot; name=&quot;${testcase.name}&quot; begin_time=&quot;${testcase.begin.time}&quot; end_time=&quot;${testcase.end.time}&quot; time=&quot;${testcase.cost.time}&quot; path=&quot;${testcase.path}&quot; status=&quot;fail&quot;&gt;&#10;&lt;failure&gt;&#10;&lt;![CDATA[&#10;COMMAND : sdb${testcase.cmd}&#10;RETURNCODE : ${testcase.retcode}&#10;SDB VERSION : &#10;${sdb.version}&#10;&#10;ERROR MESSAGE : &#10;${testcase.output}&#10;&#10;Download the test log :&#10;${URL.download.pre}/${test.log}.tar.gz]]&gt;&#10;&lt;/failure&gt;&#10;&lt;/testcase&gt;&#10;" />                             
          </else>
-      </if>           
+      </if>  
+      <echo message="********************************************"/>         
    </target>
 
    <target name="Exec-allprepare" >
