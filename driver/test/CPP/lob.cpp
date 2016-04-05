@@ -289,7 +289,7 @@ TEST( lob, lob_connection_was_destruct )
    rc = lob.close() ;
    CHECK_MSG("%s%d\n","rc = ",rc) ;
    ASSERT_EQ( SDB_NOT_CONNECTED, rc ) ;
-   
+   db.disconnect() ;
 }
 
 TEST( lob, lobWriteZeroSizeAndRead )
@@ -361,7 +361,7 @@ TEST( lob, lobWriteZeroSizeAndRead )
    ASSERT_EQ( SDB_OK, rc ) ;
    ASSERT_EQ( 0, retNum ) ;
 
-
+   db.disconnect() ;
 }
 
 TEST( lob, lob_write_not_close )
@@ -760,6 +760,7 @@ TEST( lob, lobWriteZeroSize )
    cout << "success to test write lob, which lob buffer equal ''" << endl ;
    db.disconnect() ;
    ASSERT_EQ( SDB_OK, rc ) ;
+   db.disconnect() ;
 }
 
 /*******************************************************************************
@@ -885,6 +886,7 @@ TEST( lob, lobApiBasicOperation )
    lobBuffer = NULL ;
    db.disconnect() ;
    ASSERT_EQ( SDB_OK, rc ) ;
+   db.disconnect() ;
 }
 
 /*******************************************************************************
