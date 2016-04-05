@@ -108,6 +108,33 @@ using namespace js::gc;
 
 JS_FRIEND_DATA(const JSObjectMap) JSObjectMap::sharedNonNative(JSObjectMap::SHAPELESS);
 
+static JSBool js_obj_numberlong_equality(JSContext *cx, JSObject *obj, const Value *vp, JSBool *bp)
+{
+   JSObject *robj ;
+   jsval cond ;
+   jsval val ;
+   
+   if ( !vp || !vp->isObject() )
+      return JS_FALSE ;
+   
+   robj = &vp->toObject() ;
+   val = OBJECT_TO_JSVAL(robj) ;
+
+   if ( JS_CallFunctionName(cx, obj, "_equality", 1, &val, &cond ) )
+   {
+      *bp =  JSVAL_TO_BOOLEAN( cond ) ;
+   }
+   else
+   {
+      *bp = robj == obj ;
+      if ( JS_IsExceptionPending(cx) )
+      {
+         JS_ClearPendingException(cx);
+      }
+   }
+   return JS_TRUE ;
+}
+
 Class js_ObjectClass = {
     js_Object_str,
     JSCLASS_HAS_CACHED_PROTO(JSProto_Object),
@@ -117,7 +144,16 @@ Class js_ObjectClass = {
     StrictPropertyStub,   /* setProperty */
     EnumerateStub,
     ResolveStub,
-    ConvertStub
+    ConvertStub,
+    NULL,
+    NULL,           /* reserved0   */
+    NULL,           /* checkAccess */
+    NULL,           /* call        */
+    NULL,           /* construct   */
+    NULL,           /* xdrObject   */
+    NULL,           /* hasInstance */
+    NULL,           /* mark        */
+    {(EqualityOp)js_obj_numberlong_equality,NULL,NULL,NULL,NULL}
 };
 
 JS_FRIEND_API(JSObject *)
