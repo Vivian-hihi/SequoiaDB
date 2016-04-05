@@ -51,7 +51,16 @@ public class CLBulkInsert {
 	
 	@AfterClass
 	public static void DropConnAfterClass() throws Exception {
-		sdb.dropCollectionSpace(Constants.TEST_CS_NAME_1);
+		try {
+			sdb.dropCollectionSpace(Constants.TEST_CS_NAME_1);
+		} catch(BaseException e) {
+			e.printStackTrace();
+			System.out.println("error message: " + e.getMessage() + ", error number is: " + e.getErrorCode());
+			DBCursor cur = sdb.getSnapshot(Sequoiadb.SDB_SNAP_CONTEXTS, "", "", "");
+			while(cur.hasNext()) {
+				System.out.println("snapshot(Sequoiadb.SDB_SNAP_CONTEXTS) is: " + cur.getNext().toString());
+			}
+		}
 		sdb.disconnect();
 	}
 	
