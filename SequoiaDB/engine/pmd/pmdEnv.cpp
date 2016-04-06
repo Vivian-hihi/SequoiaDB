@@ -183,19 +183,8 @@ namespace engine
 
       if ( signum == OSS_TEST_SIGNAL )
       {
-         std::set<pthread_t>::iterator it ;
-         std::set<pthread_t> tidList ;
-         pmdGetKRCB()->getEDUMgr()->getEDUThreadID ( tidList ) ;
-         for ( it = tidList.begin(); it != tidList.end(); ++it )
-         {
-            // threadID was initialized to 0 in constructor, and set to real
-            // thread id in pmdEDUEntryPoint
-            if ( 0 == (*it) )
-            {
-               continue ;
-            }
-            ossPThreadKill ( (*it), OSS_INTERNAL_TEST_SIGNAL ) ;
-         }
+         pmdEDUMgr *pMgr = pmdGetKRCB()->getEDUMgr() ;
+         pMgr->killByThreadID( OSS_INTERNAL_TEST_SIGNAL ) ;
       }
       amIIn = FALSE ;
 
@@ -239,25 +228,10 @@ namespace engine
       {
          PD_LOG ( PDEVENT, "Signal %d is received, "
                   "prepare to dump stack for all threads", signum ) ;
-         std::set<pthread_t>::iterator it ;
-         std::set<pthread_t> tidList ;
-         pmdGetKRCB()->getEDUMgr()->getEDUThreadID ( tidList ) ;
-         for ( it = tidList.begin(); it != tidList.end(); ++it )
-         {
-            // threadID was initialized to 0 in constructor, and set to real
-            // thread id in pmdEDUEntryPoint
-            if ( 0 == (*it) )
-            {
-               continue ;
-            }
-            rc = ossPThreadKill ( (*it), OSS_STACK_DUMP_SIGNAL_INTERNAL ) ;
-            if ( rc )
-            {
-               PD_LOG ( PDWARNING, "Failed to send signal %d to thread %llu, "
-                        "errno = %d", OSS_STACK_DUMP_SIGNAL_INTERNAL,
-                        (*it), ossGetLastError() ) ;
-            }
-         }
+
+         pmdEDUMgr *pMgr = pmdGetKRCB()->getEDUMgr() ;
+         pMgr->killByThreadID( OSS_STACK_DUMP_SIGNAL_INTERNAL ) ;
+
          ossMemTrace ( dumpPath ) ;
       }
       else if ( signum == OSS_STACK_DUMP_SIGNAL_INTERNAL )

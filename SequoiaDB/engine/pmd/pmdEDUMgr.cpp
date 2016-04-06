@@ -1201,6 +1201,55 @@ namespace engine
       }
       PD_TRACE_EXIT ( SDB__PMDEDUMGR_GETEDUTRDID );
    }
+
+   void _pmdEDUMgr::killByThreadID( INT32 signo )
+   {
+      INT32 rc = SDB_OK ;
+      try
+      {
+         std::map<EDUID, pmdEDUCB*>::iterator it ;
+         EDUMGR_SLOCK
+         for ( it = _runQueue.begin () ; it != _runQueue.end () ; it++ )
+         {
+            // threadID was initialized to 0 in constructor, and set to real
+            // thread id in pmdEDUEntryPoint
+            if ( 0 == (*it).second->getThreadID() ||
+                 ossPThreadSelf() == (*it).second->getThreadID() )
+            {
+               continue ;
+            }
+            rc = ossPThreadKill ( (*it).second->getThreadID (), signo ) ;
+            if ( rc )
+            {
+               PD_LOG ( PDWARNING, "Failed to send signal %d to thread %llu, "
+                        "errno = %d", signo, (*it).second->getTID(),
+                        ossGetLastError() ) ;
+            }
+         }
+         for ( it = _idleQueue.begin () ; it != _idleQueue.end () ; it++ )
+         {
+            // threadID was initialized to 0 in constructor, and set to real
+            // thread id in pmdEDUEntryPoint
+            if ( 0 == (*it).second->getThreadID() ||
+                 ossPThreadSelf() == (*it).second->getThreadID() )
+            {
+               continue ;
+            }
+            rc = ossPThreadKill ( (*it).second->getThreadID (), signo ) ;
+            if ( rc )
+            {
+               PD_LOG ( PDWARNING, "Failed to send signal %d to thread %llu, "
+                        "errno = %d", signo, (*it).second->getTID(),
+                        ossGetLastError() ) ;
+            }
+         }
+      }
+      catch ( std::exception &e )
+      {
+         PD_LOG ( PDERROR, "Failed to pthread_kill tid: %s", e.what() ) ;
+      }
+   }
+
 #endif
 }
 

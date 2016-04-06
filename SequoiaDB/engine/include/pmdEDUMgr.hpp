@@ -194,6 +194,7 @@ namespace engine
 
 #if defined (_LINUX)
       void getEDUThreadID ( std::set<pthread_t> &tidList ) ;
+      void killByThreadID ( INT32 signo ) ;
 #endif
 
    private :
