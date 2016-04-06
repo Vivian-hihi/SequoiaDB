@@ -571,7 +571,11 @@ static const char *parse_value(cJSON *item,const char *value,int isKey,int isMon
       else if( !strncmp ( value_temp, "$numberLong", 11 ) )
       {
          return parse_dollar_command ( item, value, cJSON_Number_Long ) ;
-      }      
+      }
+      else if ( !strncmp ( value_temp, "$decimal", 8 ) )
+      {
+         return parse_dollar_command ( item, value, cJSON_Decimal) ;
+      }
    }
    if (*value=='[')
    {
@@ -890,7 +894,18 @@ static const char *parse_first_command(cJSON *item,const char *value,int cj_type
       }
       value = skip ( value + 11 ) ;
       break ;
-   }   
+   }
+   case cJSON_Decimal:
+   {
+      /* not a dollar command! */
+      if ( strncmp ( value, "$decimal", 8 ) )
+      {
+         ep = value ;
+         return 0 ;
+      }
+      value = skip ( value + 8 ) ;
+      break ;
+   }
    }
    if ( *value == '\"' )
       value = skip ( value + 1 ) ;
@@ -1187,7 +1202,28 @@ static const char *parse_first_command(cJSON *item,const char *value,int cj_type
       item->valuestring [ len ] = 0 ;
       value = value_temp ;
       break ;
-   }   
+   }
+   case cJSON_Decimal:
+   {
+      const char *value_temp = value;
+      int len = 0;
+      while ( value_temp &&
+              *value_temp != '\"' &&
+              (unsigned char)*value_temp > 32 )
+      {
+         ++len ;
+         ++value_temp ;
+      }
+      if( !value_temp )
+         return 0 ;
+      item->precision   = -1 ;
+      item->scale       = -1 ;
+      item->valuestring = (char*)cJSON_malloc( len + 1 ) ;
+      strncpy ( item->valuestring, value, len ) ;
+      item->valuestring [ len ] = 0 ;
+      value = value_temp ;
+      break ;
+   }
    }
    if ( *value == ' ' || *value == '\"' )
       ++value ;
@@ -1244,6 +1280,44 @@ static const char *parse_second_command(cJSON *item,const char *value,int cj_typ
          return 0 ;
       }
       value = skip ( value + 8 ) ;
+      break ;
+   }
+   case cJSON_Decimal:
+   {
+      /* not an object! */
+      if (*value!=',')
+      {
+         ep = value ;
+         item->valuestring2 = (char*)cJSON_malloc( 1 ) ;
+         item->valuestring2 [ 0 ] = 0 ;
+         return value ;
+      }
+      value = skip ( value + 1 ) ;
+      /* not a json. */
+      if (*value=='}')
+      {
+         ep = value ;
+         return 0 ;
+      }
+
+      if ( *value == '\"' )
+      {
+         value = skip ( value + 1 ) ;
+      }
+      else
+         value = skip ( value ) ;
+      /* not a commond! */
+      if (*value!='$')
+      {
+         ep = value ;
+         return 0 ;
+      }
+      if ( strncmp ( value, "$precision", 10 ) )
+      {
+         ep = value ;
+         return 0 ;
+      }
+      value = skip ( value + 10 ) ;
       break ;
    }
    case cJSON_Binary:
@@ -1363,6 +1437,48 @@ static const char *parse_second_command(cJSON *item,const char *value,int cj_typ
       if ( *value == '\"' )
          ++value ;
       value = skip ( value ) ;
+      break ;
+   }
+   case cJSON_Decimal:
+   {
+      if ( *value == '[' )
+      {
+         value = skip ( value + 1 ) ;
+      }
+      else
+      {
+         ep = value ;
+         return 0 ;
+      }
+      value = parse_number ( item, value ) ;
+      if ( !value )
+      {
+         return 0 ;
+      }
+      item->precision = item->valueint ;
+
+      value = skip( value ) ;
+      if ( *value != ',' )
+      {
+         return 0 ;
+      }
+      value = skip( value + 1 ) ;
+
+      value = parse_number ( item, value ) ;
+      if ( !value )
+      {
+         return 0 ;
+      }
+      item->scale = item->valueint ;
+
+      value = skip( value ) ;
+      if ( *value != ']' )
+      {
+         return 0 ;
+      }
+
+      value = skip ( value + 1 ) ;
+      item->type = cj_type ;
       break ;
    }
    }

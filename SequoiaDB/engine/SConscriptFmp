@@ -57,13 +57,15 @@ utilFiles = [
       "client/bson/numbers.c",
       "client/bson/bson.c",
       "client/bson/encoding.c",
+      "client/bson/common_decimal.c",
       "client/base64c.c",
       "client/cJSON.c",
       "client/jstobs.c",
       "client/timestampParse.c",
       "client/timestampTm.c",
       "client/timestampValid.c",
-      "bson/md5.c"
+      "bson/md5.c",
+      "bson/bsonDecimal.cpp"
       ]
 
 clientCFiles = [

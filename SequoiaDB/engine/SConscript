@@ -26,6 +26,7 @@ bsonFiles = [
       "bson/base64.cpp",
       "bson/nonce.cpp",
       "bson/md5.c",
+      "bson/bsonDecimal.cpp",
       "util/utilBsongen.cpp"
       ]
 
@@ -125,6 +126,7 @@ utilFiles = [
       "client/bson/numbers.c",
       "client/bson/bson.c",
       "client/bson/encoding.c",
+      "client/bson/common_decimal.c",
       "client/base64c.c",
       "client/cJSON.c",
       "client/jstobs.c",

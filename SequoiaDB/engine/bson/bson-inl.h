@@ -503,6 +503,9 @@ namespace bson {
         case NumberLong:
             x = 8;
             break;
+        case NumberDecimal:
+            x = *reinterpret_cast< const int* >( value() ) ;
+            break;
         case jstOID:
             x = 12;
             break;
@@ -591,6 +594,9 @@ namespace bson {
         case NumberLong:
             x = 8;
             break;
+        case NumberDecimal:
+            x = *reinterpret_cast< const int* >( value() ) ;
+            break;
         case jstOID:
             x = 12;
             break;
@@ -631,6 +637,28 @@ namespace bson {
         totalSize =  x + fieldNameSize() + 1; // BSONType
 
         return totalSize;
+    }
+
+    inline string BSONElement::_numberDecimalStr() const
+    {
+        int rc = 0 ;
+        StringBuilder s;
+        bsonDecimal decimal ;
+        if ( type() != NumberDecimal )
+        {
+            return "" ;
+        }
+
+        decimal.init() ;
+        rc = decimal.fromBsonValue( value() ) ;
+        if ( 0 != rc )
+        {
+            return "" ;
+        }
+
+        s << decimal.toJsonString() ;
+
+        return s.str() ;
     }
 
     inline string BSONElement::toString( bool includeFieldName, bool full )
@@ -798,6 +826,9 @@ namespace bson {
         case NumberLong:
             s << "{ \"$numberLong\": \"";
             s << _numberLong() << "\" }";         
+            break;
+        case NumberDecimal:
+            s << _numberDecimalStr();
             break;
         case NumberInt:
             s << _numberInt();

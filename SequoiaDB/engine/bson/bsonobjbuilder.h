@@ -29,6 +29,7 @@
 //#include "bson-inl.h"
 #include "bsonmisc.h"
 #include "bsonnoncopyable.h"
+#include "bsonDecimal.h"
 using namespace std;
 /** \namespace bson
     \brief Include files for C++ BSON module
@@ -310,6 +311,16 @@ namespace bson {
             _b.appendNum(n);
             return *this;
         }
+
+        BSONObjBuilder& append( const StringData& fieldName, 
+                                const bsonDecimal& decimal ) ;
+
+        bool appendDecimal( const StringData& fieldName, 
+                            const StringData& strDecimal, 
+                            int precision, int scale ) ;
+
+        bool appendDecimal( const StringData& fieldName, 
+                            const StringData& strDecimal ) ;
 
         /** tries to append the data as a number
          * @return true if the data was able to be converted to a number

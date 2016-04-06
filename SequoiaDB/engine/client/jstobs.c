@@ -791,6 +791,33 @@ static BOOLEAN bsonConvertJson ( CHAR **pbuf,
          CHECK_LEFT ( left )
          break ;
       }
+      case BSON_DECIMAL:
+      {
+         bson_decimal decimal ;
+         CHAR *value   = NULL ;
+         int size      = 0 ;
+         decimal_init( &decimal ) ;
+
+         // get decimal 
+         bson_iterator_decimal( &i, &decimal ) ;
+
+         decimal_to_jsonstr_len( decimal.sign, decimal.weight, decimal.dscale, 
+                                 decimal.typemod, &size ) ;
+         value = malloc( size ) ;
+         if ( NULL == value )
+         {
+            decimal_free( &decimal ) ;
+            return FALSE ;
+         }
+
+         decimal_to_jsonstr( &decimal, value, size ) ;
+
+         bsonConvertJsonRawConcat ( pbuf, left, value, FALSE ) ;
+         decimal_free( &decimal ) ;
+         free( value ) ;
+         CHECK_LEFT ( left ) ;
+         break ;
+      }
       case BSON_TIMESTAMP:
       {
          /* for timestamp, it's yyyy-mm-dd-hh.mm.ss.uuuuuu */
@@ -931,6 +958,17 @@ static BOOLEAN jsonConvertBson ( cJSON *cj, bson *bs, BOOLEAN isObj )
                get_char_num ( num, i, INT_NUM_SIZE ) ;
                bson_append_long ( bs, num, cj->valuelongint ) ;
             }
+         }
+         break ;
+      }
+      case cJSON_Decimal:
+      {
+         int rc = 0 ;
+         rc = bson_append_decimal2( bs, cj->string, cj->valuestring, 
+                                    cj->precision, cj->scale ) ;
+         if ( 0 != rc )
+         {
+            return FALSE ;
          }
          break ;
       }
@@ -1499,6 +1537,58 @@ BOOLEAN bsonElementToChar ( CHAR **buffer, INT32 *bufsize, bson_iterator *in )
       }
       memset ( *buffer, 0, *bufsize ) ;
       *bufsize = sprintf ( *buffer, "{ \"$numberLong\": \"%lld\" }", ( unsigned long long )bson_iterator_long( in ) ) ;
+      return TRUE ;
+   }
+   case BSON_DECIMAL:
+   {
+      bson_decimal decimal ;
+      char *pTmp   = NULL ;
+      int size     = 0 ;
+
+      decimal_init( &decimal ) ;
+      decimal_from_bsonvalue( bson_iterator_value( in ), &decimal ) ;
+      decimal_to_str_get_len( &decimal, &size ) ;
+      pTmp = (char *)malloc( size ) ;
+      decimal_to_str( &decimal, pTmp, size ) ;
+
+      if ( decimal.typemod == -1 )
+      {
+         char part1[40] = "{\"$decimal\":\"" ;
+         char part2[10] = "\"}" ;
+         *bufsize = strlen( part1 ) + strlen( pTmp ) + strlen( part2 ) + 1 ;
+         *buffer = (CHAR *)malloc ( *bufsize ) ;
+         if ( !(*buffer) )
+         {
+            return FALSE ;
+         }
+         memset ( *buffer, 0, *bufsize ) ;
+         *bufsize = sprintf ( *buffer, "%s%s%s", part1, pTmp, part2 ) ;
+      }
+      else
+      {
+         char part1[40] = "{\"$decimal\":\"" ;
+         char part2[40] = "\",\"$precision\":[" ;
+         char part3[10] = "]}" ;
+         int precision ;
+         int scale ;
+         char prescale[20] ;
+         decimal_get_typemod( &decimal, &precision, &scale ) ;
+         sprintf( prescale, "%d,%d", precision, scale ) ;
+
+         *bufsize = strlen( part1 ) + strlen( pTmp ) + strlen( part2 ) 
+                    + strlen( prescale ) + strlen( part3 ) + 1 ;
+         *buffer = (CHAR *)malloc ( *bufsize ) ;
+         if ( !(*buffer) )
+         {
+            return FALSE ;
+         }
+         memset ( *buffer, 0, *bufsize ) ;
+         *bufsize = sprintf ( *buffer, "%s%s%s%s%s", part1, pTmp, part2, 
+                              prescale, part3 ) ;
+      }
+
+      decimal_free( &decimal ) ;
+      free( pTmp ) ;
       return TRUE ;
    }
    case BSON_DOUBLE:

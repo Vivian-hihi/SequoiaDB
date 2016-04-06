@@ -40,6 +40,8 @@
 #include "pdTrace.hpp"
 #include "mthTrace.hpp"
 
+using namespace bson ;
+
 namespace engine
 {
    PD_TRACE_DECLARE_FUNCTION ( SDB__MTHMACH__MTHELEMT__MTHELEMT, "_mthMatcher::_MatchElement::_MatchElement" )

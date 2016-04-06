@@ -249,6 +249,41 @@ static BOOLEAN bson_endian_convert ( CHAR *data, off_t *off, BOOLEAN l2r )
          *off += sizeof(INT64) ;
          break ;
       }
+      case BSON_DECIMAL :
+      {
+         INT32 size    = 0 ;
+         INT32 value4  = 0 ;
+         INT16 value2  = 0 ;
+         INT32 i       = 0 ;
+         INT32 ndigits = 0 ;
+         // size 
+         ossEndianConvert4 ( *(INT32*)&data[*off], size ) ;
+         *(INT32*)&data[*off] = size ;
+         *off += sizeof(INT32) ;
+
+         // typemod
+         ossEndianConvert4 ( *(INT32*)&data[*off], value4 ) ;
+         *(INT32*)&data[*off] = value4 ;
+         *off += sizeof(INT32) ;
+
+         // scale 
+         ossEndianConvert2 ( *(INT16*)&data[*off], value2 ) ;
+         *(INT16*)&data[*off] = value2 ;
+         *off += sizeof(INT16) ;
+
+         // weight 
+         ossEndianConvert2 ( *(INT16*)&data[*off], value2 ) ;
+         *(INT16*)&data[*off] = value2 ;
+         *off += sizeof(INT16) ;
+
+         ndigits = ( size - DECIMAL_HEADER_SIZE ) / ( sizeof( INT16 ) ) ;
+         for ( i = 0 ; i < ndigits; i++ )
+         {
+            ossEndianConvert2 ( *(INT16*)&data[*off], value2 ) ;
+            *(INT16*)&data[*off] = value2 ;
+            *off += sizeof(INT16) ;
+         }
+      }
       } // switch
    } // while ( BSON_EOO != data[*off] )
    // jump off BSON_EOO at end of bson

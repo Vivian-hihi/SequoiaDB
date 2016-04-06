@@ -220,6 +220,9 @@ namespace bson {
             s << "{ \"$numberLong\": ";
             s << '"' << _numberLong() << "\" }";         
             break;
+        case NumberDecimal:
+            s << _numberDecimalStr();
+            break ;
         case NumberInt:
         case NumberDouble:
             if ( number() >= -numeric_limits< double >::max() &&
@@ -490,6 +493,15 @@ namespace bson {
     int compareElementValues(const BSONElement& l, const BSONElement& r) {
         int f;
         double x;
+        if ( l.type() == NumberDecimal || r.type() == NumberDecimal )
+        {
+            bsonDecimal left ;
+            bsonDecimal right ;
+            left  = l.numberDecimal() ;
+            right = r.numberDecimal() ;
+
+            return left.compare( right ) ;
+        }
 
         switch ( l.type() ) {
         case EOO:
@@ -1417,6 +1429,85 @@ namespace bson {
         default:
             appendMinForType( fieldName , t + 1 );
         }
+    }
+
+    //storage detail define in bson.h  (BSON_DECIMAL)
+    BSONObjBuilder& BSONObjBuilder::append( const StringData& fieldName, 
+                                            const bsonDecimal& decimal )
+    {
+        int i        = 0 ;
+        int size     = 0 ;
+        short weight = 0 ;
+        int typemod  = 0 ;
+        short scale  = 0 ;
+        int ndigit   = 0 ;
+        const short *digits = NULL ;
+
+        weight  = decimal.getWeight() ;
+        typemod = decimal.getTypemod() ;
+        scale   = decimal.getStorageScale() ;
+        ndigit  = decimal.getNdigit() ;
+        digits  = decimal.getDigits() ;
+        size    = decimal.getSize() ;
+        
+        _b.appendNum((char) NumberDecimal);
+        _b.appendStr(fieldName);
+        _b.appendNum( size );         // size
+        _b.appendNum( typemod );      // typemod
+        _b.appendNum( scale );        // dscale
+        _b.appendNum( weight );       // weight
+        
+        for ( i = 0 ; i < ndigit ; i++ )
+        {
+            _b.appendNum( digits[i] ) ;
+        }
+
+        return *this;
+    }
+
+    bool BSONObjBuilder::appendDecimal( const StringData& fieldName, 
+                                        const StringData& strDecimal, 
+                                        int precision, int scale )
+    {
+        int rc = 0 ;
+        bsonDecimal decimal ;
+        rc = decimal.init( precision, scale ) ;
+        if ( 0 != rc )
+        {
+            return false ;
+        }
+
+        rc = decimal.fromString( strDecimal.data() ) ;
+        if ( 0 != rc )
+        {
+            return false ;
+        }
+
+        append( fieldName, decimal ) ;
+
+        return true ;
+    }
+
+    bool BSONObjBuilder::appendDecimal( const StringData& fieldName, 
+                                        const StringData& strDecimal )
+    {
+        int rc = 0 ;
+        bsonDecimal decimal ;
+        rc = decimal.init() ;
+        if ( 0 != rc )
+        {
+            return false ;
+        }
+
+        rc = decimal.fromString( strDecimal.data() ) ;
+        if ( 0 != rc )
+        {
+            return false ;
+        }
+
+        append( fieldName, decimal ) ;
+
+        return true ;
     }
 
     const string BSONObjBuilder::numStrs[] = {

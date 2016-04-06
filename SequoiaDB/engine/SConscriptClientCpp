@@ -31,6 +31,7 @@ clientCPPLibFiles = [
       "client/bson/numbers.c",
       "client/bson/bson.c",
       "client/bson/encoding.c",
+      "client/bson/common_decimal.c",
       "client/base64c.c",
       "client/cJSON.c",
       "client/jstobs.c",
@@ -45,7 +46,8 @@ clientCPPLibFiles = [
       "bson/oid.cpp",
       "bson/base64.cpp",
       "bson/md5.c",
-      "bson/nonce.cpp"
+      "bson/nonce.cpp",
+      "bson/bsonDecimal.cpp"
       ]
 
 #Shared Library

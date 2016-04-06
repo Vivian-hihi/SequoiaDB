@@ -53,6 +53,9 @@
 #define SPT_SPEOBJ_BINARY "$binary"
 #define SPT_SPEOBJ_TYPE "$type"
 #define SPT_SPEOBJ_OID "$oid"
+#define SPT_SPEOBJ_DECIMAL "$decimal"
+#define SPT_SPEOBJ_PRESICION "$precision"
+
 
 using namespace bson ;
 
@@ -124,6 +127,21 @@ done:
    return rc ;
 error:
    goto done ;
+}
+
+INT32 sptConvertor2::_getDecimalPrecision( const CHAR *precisionStr, 
+                                           INT32 *precision, INT32 *scale )
+{
+   //precisionStr:10,6
+
+   INT32 rc = SDB_OK ;
+   rc = sscanf ( precisionStr, "%d,%d", precision, scale ) ;
+   if ( 2 != rc )
+   {
+      return SDB_INVALIDARG ;
+   }
+
+   return SDB_OK ;
 }
 
 BOOLEAN sptConvertor2::_addSpecialObj( JSObject *obj,
@@ -414,6 +432,107 @@ BOOLEAN sptConvertor2::_addSpecialObj( JSObject *obj,
       {
          builder.appendBinData( key, 0,
                                 binType, "" ) ;
+      }
+   }
+   else if ( 0 == name.compare( SPT_SPEOBJ_DECIMAL ) )
+   {
+      std::string optionName ;
+      std::string strDecimal, strOption ;
+      jsval jsDecimal, jsOption ;
+      jsval optionValName ;
+      int precision ;
+      int scale ;
+      if ( 1 != properties->length && 2 != properties->length )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      if ( !_getProperty( obj, name.c_str(),
+                          JSTYPE_STRING, jsDecimal ))
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      rc = _toString( jsDecimal, strDecimal ) ;
+      if ( SDB_OK != rc )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      if ( 2 == properties->length )
+      {
+         // 2 == properties->length
+         jsid optionid = properties->vector[1] ;
+
+         if ( !JS_IdToValue( _cx, optionid, &optionValName ))
+         {
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+
+         rc = _toString( optionValName, optionName ) ;
+         if ( SDB_OK != rc )
+         {
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+
+         if ( 0 != optionName.compare( SPT_SPEOBJ_PRESICION ) )
+         {
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+
+         if ( !_getProperty( obj, optionName.c_str(),
+                             JSTYPE_OBJECT, jsOption ))
+         {
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+
+         rc = _toString( jsOption, strOption ) ;
+         if ( SDB_OK != rc )
+         {
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+
+         rc = _getDecimalPrecision( strOption.c_str(), &precision, &scale ) ;
+         if ( SDB_OK != rc )
+         {
+            rc = SDB_INVALIDARG ;
+            PD_LOG( PDERROR, "invalid precision %s", strOption.c_str() ) ;
+            goto error ;
+         }
+
+         rc = builder.appendDecimal( key, strDecimal, precision, scale ) ;
+         if ( SDB_OK != rc )
+         {
+            rc = SDB_INVALIDARG ;
+            PD_LOG( PDERROR, "invalid decimal[%s],precision[%s]", 
+                    strDecimal.c_str(), strOption.c_str() ) ;
+            goto error ;
+         }
+      }
+      else
+      {
+         // 1 == properties->length
+         rc = builder.appendDecimal( key, strDecimal ) ;
+         if ( SDB_OK != rc )
+         {
+            rc = SDB_INVALIDARG ;
+            PD_LOG( PDERROR, "invalid decimal %s", strDecimal.c_str() ) ;
+            goto error ;
+         }
+      }
+
+      if ( 0 != rc )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
       }
    }
    else

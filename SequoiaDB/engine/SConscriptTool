@@ -9,6 +9,7 @@ bsonFiles = [
       "bson/base64.cpp",
       "bson/nonce.cpp",
       "bson/md5.c",
+      "bson/bsonDecimal.cpp",
       "util/utilBsongen.cpp"
       ]
 
@@ -147,6 +148,7 @@ utilFiles = [
       "client/bson/numbers.c",
       "client/bson/bson.c",
       "client/bson/encoding.c",
+      "client/bson/common_decimal.c",
       "client/base64c.c",
       "client/cJSON.c",
       "client/jstobs.c",
@@ -537,15 +539,15 @@ sdbload2 = toolEnv.Program("sdbload2", sdbLoadMain,
          _LIBDEPS='$_LIBDEPS_OBJS' )
 
 sdbstart = toolEnv.Program("sdbstart", sdbStartMain,
-         LIBDEPS=["pd","oss","pmd", "util"],
+         LIBDEPS=["pd","oss","pmd","bson","util"],
          _LIBDEPS='$_LIBDEPS_OBJS' )
 
 sdbstop = toolEnv.Program("sdbstop", sdbStopMain,
-         LIBDEPS=["pd","oss", "util"],
+         LIBDEPS=["pd","oss","bson","util"],
          _LIBDEPS='$_LIBDEPS_OBJS' )
 
 sdblist = toolEnv.Program("sdblist", sdbListMain,
-         LIBDEPS=["pd","oss", "util","pmd"],
+         LIBDEPS=["pd","oss","bson", "util","pmd"],
          _LIBDEPS='$_LIBDEPS_OBJS' )
 
 sdbcm = toolEnv.Program("sdbcm", sdbcmMain,
@@ -557,26 +559,26 @@ sdbcmd = toolEnv.Program("sdbcmd", sdbcmDMNMain,
          _LIBDEPS='$_LIBDEPS_OBJS' )
 
 sdbcmart = toolEnv.Program("sdbcmart", sdbcmartMain,
-         LIBDEPS=["pd","oss", "util"],
+         LIBDEPS=["pd","oss","bson","util"],
          _LIBDEPS='$_LIBDEPS_OBJS' )
 
 sdbcmtop = toolEnv.Program("sdbcmtop", sdbcmtopMain,
-         LIBDEPS=["pd","oss", "util"],
+         LIBDEPS=["pd","oss", "bson", "util"],
          _LIBDEPS='$_LIBDEPS_OBJS' )
 
 sdblobtool = toolEnv.Program("sdblobtool", sdbLobToolMain,
-         LIBDEPS=["pd","oss", "util", "miglob","clientcpp"],
+         LIBDEPS=["pd","oss", "bson", "util", "miglob","clientcpp"],
          _LIBDEPS='$_LIBDEPS_OBJS' )
 if linux:
    sdbtop = toolEnv.Program("sdbtop", sdbtopMain,
-            LIBDEPS=["mig","oss","pd","util","client","clientcpp","ncurses"],
+            LIBDEPS=["mig","oss","pd","bson","util","client","clientcpp","ncurses"],
             _LIBDEPS='$_LIBDEPS_OBJS' )
 sdbmemcheck = toolEnv.Program("sdbmemcheck", sdbmemcheckFiles,
-          LIBDEPS=["oss","pd", "util"],
+          LIBDEPS=["oss","pd","bson","util"],
           _LIBDEPS='$_LIBDEPS_OBJS' )
 		  
 sdbrepair = toolEnv.Program("sdbrepair", sdbRepairMain,
-          LIBDEPS=["oss", "pd", "util"],
+          LIBDEPS=["oss", "pd","bson","util"],
           _LIBDEPS='$_LIBDEPS_OBJS' )
 
 sdbdpsdump = toolEnv.Program("sdbdpsdump", sdbdpsdumpFiles,
@@ -591,7 +593,7 @@ sdbinspect = toolEnv.Program("sdbinspect",
 if linux:         
    sdbomtool = toolEnv.Program("sdbomtool",
                sdbOmToolMain,
-               LIBDEPS=["pd", "oss", "util"],
+               LIBDEPS=["pd", "oss","bson", "util"],
                _LIBDEPS='$_LIBDEPS_OBJS' )
 
 toolEnv.Install( '#/bin', sdbimprt2 )

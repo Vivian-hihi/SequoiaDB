@@ -74,6 +74,8 @@ void LocalTime ( time_t *Time, struct tm *TM );
    READING
    ------------------------------ */
 
+static int bson_sprint_decimal_length_iterator ( const bson_iterator *i ) ;
+
 
 SDB_EXPORT bson* bson_create( void ) {
    bson *obj = (bson*)bson_malloc(sizeof(bson));
@@ -571,6 +573,32 @@ SDB_EXPORT int bson_sprint_iterator ( char **pbuf, int *left, bson_iterator *i,
          CHECK_LEFT ( left )
          break;
       }
+      case BSON_DECIMAL:
+      {
+         bson_decimal decimal ;
+         char *temp = NULL ;
+         int tmpSize = 0 ;
+         decimal_init( &decimal ) ;
+         bson_iterator_decimal( i, &decimal ) ;
+         decimal_to_jsonstr_len( decimal.sign, decimal.weight, decimal.dscale, 
+                                 decimal.typemod, &tmpSize ) ;
+
+         temp = (char *)malloc( tmpSize ) ;
+         if ( !temp )
+         {
+            decimal_free( &decimal ) ;
+            return 0 ;
+         }
+
+         memset( temp, 0, tmpSize ) ;
+         decimal_to_jsonstr( &decimal, temp, tmpSize ) ;
+
+         bson_sprint_raw_concat ( pbuf, left, temp ) ;
+         decimal_free( &decimal ) ;
+         free( temp ) ;
+         CHECK_LEFT ( left )
+         break;
+      }
       case BSON_TIMESTAMP:
       {
          bson_timestamp_t ts;
@@ -664,6 +692,27 @@ SDB_EXPORT int bson_sprint_raw ( char **pbuf, int *left, const char *data, int i
     return 1 ;
 }
 
+int bson_sprint_decimal_length_iterator ( const bson_iterator *i )
+{
+   int sign     = SDB_DECIMAL_POS ;
+   short weight = 0 ;
+   short scale  = 0 ;
+   int typemod  = 0 ;
+   int size     = 0 ;
+   if ( bson_iterator_type ( i ) != BSON_DECIMAL )
+   {
+      return 0 ;
+   }
+
+   bson_iterator_decimal_scale( i, &sign, &scale ) ;
+   bson_iterator_decimal_weight( i, &weight ) ;
+   bson_iterator_decimal_typemod( i, &typemod ) ;
+
+   decimal_to_jsonstr_len( sign, weight, scale, typemod, &size ) ;
+
+   return size ;
+}
+
 SDB_EXPORT int bson_sprint_length_iterator ( bson_iterator *i )
 {
    int total = 0 ;
@@ -725,6 +774,9 @@ SDB_EXPORT int bson_sprint_length_iterator ( bson_iterator *i )
    case BSON_LONG :
       /* { "$numberLong": "<long>" } */
       total += 57 ;
+      break ;
+   case BSON_DECIMAL :
+      total += bson_sprint_decimal_length_iterator( i ) ;
       break ;
    case BSON_TIMESTAMP :
       /* { "$timestamp": "YYYY-MM-DD-HH.MM.SS.mmmmmm" } */
@@ -992,6 +1044,9 @@ SDB_EXPORT bson_type bson_iterator_next( bson_iterator *i ) {
     case BSON_INT:
         ds = 4;
         break;
+    case BSON_DECIMAL:
+        bson_iterator_decimal_size( i, &ds ) ;
+        break;
     case BSON_LONG:
     case BSON_DOUBLE:
     case BSON_TIMESTAMP:
@@ -1054,6 +1109,11 @@ SDB_EXPORT const char *bson_iterator_value( const bson_iterator *i ) {
 }
 
 /* types */
+short bson_iterator_int16_raw( const bson_iterator *i ) {
+    short out;
+    bson_little_endian16( &out, bson_iterator_value( i ) );
+    return out;
+}
 
 int bson_iterator_int_raw( const bson_iterator *i ) {
     int out;
@@ -1105,6 +1165,122 @@ SDB_EXPORT double bson_iterator_double( const bson_iterator *i ) {
     default:
         return 0;
     }
+}
+
+SDB_EXPORT int bson_iterator_decimal_weight( const bson_iterator *i, 
+                                             short *weight )
+{
+   const char *value = NULL ;
+   if ( bson_iterator_type( i ) != BSON_DECIMAL )
+   {
+      return BSON_ERROR ;
+   }
+
+   value = bson_iterator_value( i ) ;
+
+   value += 4 ;   // size
+   value += 4 ;   // typemod
+   value += 2 ;   // scale
+   bson_little_endian16( weight, value ) ;
+
+   return BSON_OK ;
+}
+
+SDB_EXPORT int bson_iterator_decimal_size( const bson_iterator *i, 
+                                           int *size )
+{
+   const char *value = NULL ;
+   if ( bson_iterator_type( i ) != BSON_DECIMAL )
+   {
+      return BSON_ERROR ;
+   }
+
+   value = bson_iterator_value( i ) ;
+   bson_little_endian32( size, value ) ;
+
+   return BSON_OK ;
+}
+
+SDB_EXPORT int bson_iterator_decimal_typemod( const bson_iterator *i, 
+                                              int *typemod )
+{
+   const char *value = NULL ;
+   if ( bson_iterator_type( i ) != BSON_DECIMAL )
+   {
+      return BSON_ERROR ;
+   }
+
+   value = bson_iterator_value( i ) ;
+   value += 4 ;   // size
+
+   bson_little_endian32( typemod, value ) ;
+
+   return BSON_OK ;
+}
+
+
+SDB_EXPORT int bson_iterator_decimal_scale( const bson_iterator *i, 
+                                            int *sign, short *scale )
+{
+   const char *value = NULL ;
+   short tmpScale    = 0 ;
+   if ( bson_iterator_type( i ) != BSON_DECIMAL )
+   {
+      return BSON_ERROR ;
+   }
+
+   value = bson_iterator_value( i ) ;
+
+   value += 4 ;   // size
+   value += 4 ;   // typemod
+   bson_little_endian16( &tmpScale, value ) ;
+
+   *sign  = tmpScale & DECIMAL_SIGN_MASK ;
+   *scale = tmpScale & DECIMAL_DSCALE_MASK ;
+
+   return BSON_OK ;
+}
+
+SDB_EXPORT int bson_iterator_decimal( const bson_iterator *i, 
+                                      bson_decimal *decimal )
+{
+   bson_type type ;
+   int rc = 0 ;
+
+   decimal_free( decimal ) ;
+   type = bson_iterator_type( i ) ;
+   if ( BSON_INT == type )
+   {
+      int tmp = bson_iterator_int_raw( i ) ;
+      rc = decimal_from_int( tmp, decimal ) ;
+   }
+   else if ( BSON_LONG == type )
+   {
+      int64_t tmp = bson_iterator_long_raw( i ) ;
+      rc = decimal_from_long( tmp, decimal ) ;
+   }
+   else if ( BSON_DOUBLE == type )
+   {
+      double tmp = bson_iterator_double_raw( i ) ;
+      rc = decimal_from_double( tmp , decimal ) ;
+   }
+   else if ( BSON_DECIMAL == type )
+   {
+      rc = decimal_from_bsonvalue( bson_iterator_value( i ), decimal ) ;
+   }
+   else
+   {
+      rc = -1 ;
+   }
+
+   if ( 0 == rc )
+   {
+      return BSON_OK ;
+   }
+   else
+   {
+      return BSON_ERROR ;
+   }
 }
 
 SDB_EXPORT int64_t bson_iterator_long( const bson_iterator *i ) {
@@ -1283,6 +1459,12 @@ void bson_append( bson *b, const void *data, int len ) {
     b->cur += len;
 }
 
+void bson_append16( bson *b, const void *data ) {
+    bson_little_endian16( b->cur, data );
+    b->cur += 2;
+}
+
+
 void bson_append32( bson *b, const void *data ) {
     bson_little_endian32( b->cur, data );
     b->cur += 4;
@@ -1436,6 +1618,67 @@ SDB_EXPORT int bson_append_long( bson *b, const char *name, const int64_t i ) {
         return BSON_ERROR;
     bson_append64( b , &i );
     return BSON_OK;
+}
+
+SDB_EXPORT int bson_append_decimal( bson *b, const char *name, 
+                                    const bson_decimal *decimal )
+{
+   int i = 0 ;
+   int size = DECIMAL_HEADER_SIZE + decimal->ndigits * sizeof( short ) ;
+   int typemod  = decimal->typemod ;
+   short dscale = decimal->dscale | decimal->sign ;
+   short weight = decimal->weight ;
+   if ( bson_append_estart( b , BSON_DECIMAL, name, size ) == BSON_ERROR )
+        return BSON_ERROR;
+
+   bson_append32( b, &size ) ;
+   bson_append32( b, &typemod ) ;
+   bson_append16( b, &dscale ) ;
+   bson_append16( b, &weight ) ;
+   for ( i = 0 ; i < decimal->ndigits; i++ )
+   {
+      bson_append16( b, &decimal->digits[i] ) ;
+   }
+
+   return BSON_OK ;
+}
+
+SDB_EXPORT int bson_append_decimal3( bson *b, const char *name, 
+                                     const char *value )
+{
+   int rc = 0 ;
+   bson_decimal decimal ;
+   decimal_init( &decimal ) ;
+   rc = decimal_from_str( value, &decimal ) ;
+   if ( 0 != rc )
+   {
+      return BSON_ERROR ;
+   }
+
+   rc = bson_append_decimal( b, name, &decimal ) ;
+   decimal_free( &decimal ) ;
+
+   return rc ;
+}
+
+
+SDB_EXPORT int bson_append_decimal2( bson *b, const char *name, 
+                                     const char *value, int precision, 
+                                     int scale )
+{
+   int rc = 0 ;
+   bson_decimal decimal ;
+   decimal_init1( &decimal, precision, scale ) ;
+   rc = decimal_from_str( value, &decimal ) ;
+   if ( 0 != rc )
+   {
+      return BSON_ERROR ;
+   }
+
+   rc = bson_append_decimal( b, name, &decimal ) ;
+   decimal_free( &decimal ) ;
+
+   return rc ;
 }
 
 SDB_EXPORT int bson_append_double( bson *b, const char *name, const double d ) {
@@ -1838,6 +2081,14 @@ SDB_EXPORT void bson_swap_endian32( void *outp, const void *inp ) {
     out[1] = in[2];
     out[2] = in[1];
     out[3] = in[0];
+}
+
+SDB_EXPORT void bson_swap_endian16( void *outp, const void *inp ) {
+    const char *in = ( const char * )inp;
+    char *out = ( char * )outp;
+
+    out[0] = in[1];
+    out[1] = in[0];
 }
 
 void LocalTime ( time_t *Time, struct tm *TM )

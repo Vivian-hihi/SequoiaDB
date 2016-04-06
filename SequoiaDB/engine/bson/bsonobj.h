@@ -33,6 +33,7 @@
 #include "bsonelement.h"
 #include "bsonnoncopyable.h"
 #include "bsonintrusiveptr.h"
+#include "bsonDecimal.h"
 /** \namespace bson
     \brief Include files for C++ BSON module
 */

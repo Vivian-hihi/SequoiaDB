@@ -27,6 +27,7 @@
 #include "bsontypes.h"
 #include "bsonassert.h"
 #include "util/optime.h"
+#include "bsonDecimal.h"
 /** \namespace bson
     \brief Include files for C++ BSON module
 */
@@ -72,6 +73,7 @@ namespace bson {
         double Number()             const { return chk(isNumber()).number(); }
         double Double()             const { return chk(NumberDouble)._numberDouble(); }
         long long Long()            const { return chk(NumberLong)._numberLong(); }
+        bsonDecimal Decimal()       const { return chk(NumberDecimal).numberDecimal(); }
         int Int()                   const { return chk(NumberInt)._numberInt(); }
         bool Bool()                 const { return chk(bson::Bool).boolean(); }
         vector<BSONElement> Array() const; // see implementation for detailed comments
@@ -99,6 +101,7 @@ namespace bson {
         void Val(int& v)            const { v = Int(); }
         void Val(double& v)         const { v = Double(); }
         void Val(string& v)         const { v = String(); }
+        void Val(bsonDecimal& v)    const { v = Decimal(); }
 
         /** Use ok() to check if a value is assigned:
             if( myObj["foo"].ok() ) ...
@@ -212,6 +215,9 @@ namespace bson {
         /** Retrieve long value for the element safely.
             Zero returned if not a number. */
         long long numberLong() const;
+        /** Retrieve long value for the element safely.
+            Zero returned if not a number.*/
+        bsonDecimal numberDecimal() const;
         /** Retrieve the numeric value of the element.
             If not of a numeric type, returns 0.
             Note: casts to double, data loss may occur with large (>52 bit)
@@ -464,6 +470,8 @@ namespace bson {
               expr);
             return *this;
         }
+
+        inline string   _numberDecimalStr() const ;
     };
 
 
@@ -481,6 +489,7 @@ namespace bson {
         case NumberDouble:
         case NumberInt:
         case NumberLong:
+        case NumberDecimal:
             return 10;
         case bson::String:
         case Symbol:
@@ -539,6 +548,7 @@ namespace bson {
         case NumberLong:
         case NumberDouble:
         case NumberInt:
+        case NumberDecimal:
             return true;
         default:
             return false;
@@ -568,6 +578,15 @@ namespace bson {
             return *reinterpret_cast< const int* >( value() );
         case NumberLong:
             return (double) *reinterpret_cast< const long long* >( value() );
+        case NumberDecimal:
+            {
+               bsonDecimal decimal ;
+               double tempValue = 0.0 ;
+               decimal.init() ;
+               decimal.fromBsonValue( value() ) ;
+               decimal.toDouble( &tempValue ) ;
+               return tempValue ;
+            }
         default:
             return 0;
         }
@@ -583,6 +602,15 @@ namespace bson {
             return _numberInt();
         case NumberLong:
             return (int) _numberLong();
+        case NumberDecimal:
+            {
+               bsonDecimal decimal ;
+               int tempValue = 0 ;
+               decimal.init() ;
+               decimal.fromBsonValue( value() ) ;
+               decimal.toInt( &tempValue ) ;
+               return tempValue ;
+            }
         default:
             return 0;
         }
@@ -598,9 +626,42 @@ namespace bson {
             return _numberInt();
         case NumberLong:
             return _numberLong();
+        case NumberDecimal:
+            {
+               bsonDecimal decimal ;
+               long long tempValue = 0 ;
+               decimal.init() ;
+               decimal.fromBsonValue( value() ) ;
+               decimal.toLong( &tempValue ) ;
+               return tempValue ;
+            }
         default:
             return 0;
         }
+    }
+
+    inline bsonDecimal BSONElement::numberDecimal() const {
+        int rc = 0 ;
+        bsonDecimal decimal ;
+        decimal.init() ;
+        switch( type() ) {
+        case NumberDouble:
+            rc = decimal.fromDouble( _numberDouble() ) ;
+            break ;
+        case NumberInt:
+            rc = decimal.fromInt( _numberInt() ) ;
+            break ;
+        case NumberLong:
+            rc = decimal.fromLong( _numberLong() ) ;
+            break ;
+        case NumberDecimal:
+            rc = decimal.fromBsonValue( value() ) ;
+            break ;
+        default:
+            break ;
+        }
+
+        return decimal ;
     }
 
     inline BSONElement::BSONElement() {

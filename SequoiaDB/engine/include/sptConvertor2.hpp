@@ -71,6 +71,8 @@ private:
                         const jsval &val,
                         bson::BSONObjBuilder &builder ) ;
 
+   INT32 _getDecimalPrecision( const CHAR *precisionStr, 
+                               INT32 *precision, INT32 *scale ) ;
    BOOLEAN _addSpecialObj( JSObject *obj,
                            const CHAR *key,
                            bson::BSONObjBuilder &builder ) ;

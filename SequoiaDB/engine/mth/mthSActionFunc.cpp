@@ -381,6 +381,19 @@ namespace engine
          /// return -9223372036854775808 when v is -9223372036854775808
          builder.append( fieldName, 0 <= v ? ( INT64 )v : ( INT64 )( -v ) ) ;
       }
+      else if ( NumberDecimal == e.type() )
+      {
+         bsonDecimal decimal ;
+         decimal = e.numberDecimal() ;
+         rc = decimal.abs() ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to ceil decimal:%s,rc=%d", 
+                    decimal.toString().c_str(), rc ) ;
+            goto error ;
+         }
+         builder.append( fieldName, decimal ) ;
+      }
       else if ( !e.eoo() )
       {
          builder.appendNull( fieldName ) ;
@@ -389,8 +402,11 @@ namespace engine
       {
          /// do nothing.
       }
+   done:
       PD_TRACE_EXITRC( SDB__MTHABSBUILD, rc ) ;
       return rc ;
+   error:
+      goto done ;
    }
 
    ///PD_TRACE_DECLARE_FUNCTION ( SDB__MTHABSGET, "mthAbsGet" )
@@ -439,6 +455,20 @@ namespace engine
          builder.append( fieldName, ( INT64 )( -( in.Long() ) ) ) ;
          obj = builder.obj() ;
       }
+      else if ( NumberDecimal == in.type() )
+      {
+         bsonDecimal decimal ;
+         decimal = in.numberDecimal() ;
+         rc = decimal.abs() ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to abs decimal:%s,rc=%d", 
+                    decimal.toString().c_str(), rc ) ;
+            goto error ;
+         }
+         builder.append( fieldName, decimal ) ;
+         obj = builder.obj() ;
+      }
       else if ( !in.eoo() )
       {
          builder.appendNull( fieldName ) ;
@@ -457,6 +487,8 @@ namespace engine
    done:
       PD_TRACE_EXITRC( SDB__MTHABSGET, rc ) ;
       return rc ;
+   error:
+      goto done ;
    }
 
    ///PD_TRACE_DECLARE_FUNCTION ( SDB__MTHCEILINGBUILD, "mthCeilingBuild" )
@@ -483,13 +515,32 @@ namespace engine
          builder.append( fieldName,
                         ( FLOAT64 )ceil( e.numberDouble() ) ) ;      
       }
+      else if ( NumberDecimal == e.type() )
+      {
+         bsonDecimal decimal ;
+         bsonDecimal result ;
+         decimal = e.numberDecimal() ;
+         result.init() ;
+
+         rc = decimal.ceil( result ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to ceil decimal:%s,rc=%d", 
+                    decimal.toString().c_str(), rc ) ;
+            goto error ;
+         }
+         builder.append( fieldName, result ) ;
+      }
       else if ( !e.eoo() )
       {
          builder.appendNull( fieldName ) ;
       }
-      
+
+   done:
       PD_TRACE_EXITRC( SDB__MTHCEILINGBUILD, rc ) ;
       return rc ;
+   error:
+      goto done ;
    }
 
    ///PD_TRACE_DECLARE_FUNCTION ( SDB__MTHCEILINGGET, "mthCeilingGet" )
@@ -522,6 +573,23 @@ namespace engine
                         ( FLOAT64 )( ceil( in.Number() ) ) ) ;
          obj = builder.obj() ;
       }
+      else if ( NumberDecimal == in.type() )
+      {
+         bsonDecimal decimal ;
+         bsonDecimal result ;
+         decimal = in.numberDecimal() ;
+         result.init() ;
+
+         rc = decimal.ceil( result ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to ceil decimal:%s,rc=%d", 
+                    decimal.toString().c_str(), rc ) ;
+            goto error ;
+         }
+         builder.append( fieldName, result ) ;
+         obj = builder.obj() ;
+      }
       else if ( !in.eoo() )
       {
          builder.appendNull( fieldName ) ;
@@ -533,7 +601,10 @@ namespace engine
          action->setObj( obj ) ;
          out = action->getObj().getField( fieldName ) ;
       }
+   done:
       return rc ;
+   error:
+      goto done ;
    }
 
    ///PD_TRACE_DECLARE_FUNCTION ( SDB__MTHFLOORBUILD, "mthFloorBuild" )
@@ -560,12 +631,33 @@ namespace engine
          builder.append( fieldName,
                         ( FLOAT64 )floor( e.numberDouble() ) ) ;
       }
+      else if ( NumberDecimal == e.type() )
+      {
+         bsonDecimal decimal ;
+         bsonDecimal result ;
+         result.init() ;
+
+         decimal = e.numberDecimal() ;
+         rc = decimal.floor( result ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to floor decimal:%s,rc=%d", 
+                    decimal.toString().c_str(), rc ) ;
+            goto error ;
+         }
+
+         builder.append( fieldName, result ) ;
+      }
       else if ( !e.eoo() )
       {
          builder.appendNull( fieldName ) ;
       }
+
+   done:
       PD_TRACE_EXITRC( SDB__MTHFLOORBUILD, rc ) ;
       return rc ;
+   error:
+      goto done ;
    }
 
    ///PD_TRACE_DECLARE_FUNCTION ( SDB__MTHFLOORGET, "mthFloorGet" )
@@ -598,6 +690,24 @@ namespace engine
                         ( FLOAT64 )floor( in.numberDouble() ) ) ;
          obj = builder.obj() ;
       }
+      else if ( NumberDecimal == in.type() )
+      {
+         bsonDecimal decimal ;
+         bsonDecimal result ;
+         result.init() ;
+
+         decimal = in.numberDecimal() ;
+         rc = decimal.floor( result ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to floor decimal:%s,rc=%d", 
+                    decimal.toString().c_str(), rc ) ;
+            goto error ;
+         }
+
+         builder.append( fieldName, result ) ;
+         obj = builder.obj() ;
+      }
       else if ( !in.eoo() )
       {
          builder.appendNull( fieldName ) ;
@@ -608,9 +718,12 @@ namespace engine
       {
          action->setObj( obj ) ;
          out = action->getObj().getField( fieldName ) ;
-      }   
+      }
+   done:
       PD_TRACE_EXITRC( SDB__MTHFLOORGET, rc ) ;
       return rc ;
+   error:
+      goto done ;
    }
 
    ///PD_TRACE_DECLARE_FUNCTION ( SDB__MTHMODBUILD, "mthModBuild" )
@@ -628,9 +741,33 @@ namespace engine
       {
          /// do nothing.
       }
-      else if ( 0 == arg.numberLong() ||
-                !e.isNumber() ||
+      else if ( !e.isNumber() ||
                 !arg.isNumber() )
+      {
+         builder.appendNull( fieldName ) ;
+      }
+      else if ( NumberDecimal == e.type() || 
+                NumberDecimal == arg.type() ) 
+      {
+         bsonDecimal decimal ;
+         bsonDecimal decimalArg ;
+         bsonDecimal result ;
+         result.init() ;
+
+         decimal   = e.numberDecimal() ;
+         decimalArg = arg.numberDecimal() ;
+         rc = decimal.mod( decimalArg, result ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to mod decimal:%s mod %s,rc=%d", 
+                    decimal.toString().c_str(), 
+                    decimalArg.toString().c_str(), rc ) ;
+            goto error ;
+         }
+
+         builder.append( fieldName, result ) ;
+      }
+      else if ( 0 == arg.numberLong() )
       {
          builder.appendNull( fieldName ) ;
       }
@@ -659,9 +796,12 @@ namespace engine
       {
          INT64 v = e.numberLong() % arg.numberLong() ;
          builder.appendNumber( fieldName, v ) ;
-      } 
+      }
+   done:
       PD_TRACE_EXITRC( SDB__MTHMODBUILD, rc ) ;
       return rc ;
+   error:
+      goto done ;
    }
 
     ///PD_TRACE_DECLARE_FUNCTION ( SDB__MTHMODGET, "mthModGet" )
@@ -681,9 +821,33 @@ namespace engine
       {
          /// do nothing.
       }
-      else if ( 0 == argEle.numberLong() ||
-                !in.isNumber() ||
+      else if ( !in.isNumber() ||
                 !argEle.isNumber() )
+      {
+         builder.appendNull( fieldName ) ;
+      }
+      else if ( NumberDecimal == in.type() || 
+                NumberDecimal == argEle.type() ) 
+      {
+         bsonDecimal decimal ;
+         bsonDecimal decimalArg ;
+         bsonDecimal result ;
+         result.init() ;
+
+         decimal   = in.numberDecimal() ;
+         decimalArg = argEle.numberDecimal() ;
+         rc = decimal.mod( decimalArg, result ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to mod decimal:%s mod %s,rc=%d", 
+                    decimal.toString().c_str(), 
+                    decimalArg.toString().c_str(), rc ) ;
+            goto error ;
+         }
+
+         builder.append( fieldName, result ) ;
+      }
+      else if ( 0 == argEle.numberLong() )
       {
          builder.appendNull( fieldName ) ;
       }
@@ -720,8 +884,11 @@ namespace engine
          action->setObj( obj ) ;
          out = action->getObj().getField( fieldName ) ; 
       }
+   done:
       PD_TRACE_EXITRC( SDB__MTHMODBUILD, rc ) ;
       return rc ;
+   error:
+      goto done ;
    }
 
    static INT32 _mthCast( const CHAR *fieldName,
@@ -2074,6 +2241,27 @@ namespace engine
       {
          builder.appendNull( fieldName ) ;
       }
+      else if ( NumberDecimal == e.type() || 
+                NumberDecimal == arg.type() )
+      {
+         bsonDecimal decimalE ;
+         bsonDecimal decimalArg ;
+         bsonDecimal result ;
+         result.init() ;
+
+         decimalE   = e.numberDecimal() ;
+         decimalArg = arg.numberDecimal() ;
+         rc = decimalE.add( decimalArg, result ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to add decimal:%s+%s,rc=%d", 
+                    decimalE.toString().c_str(), 
+                    decimalArg.toString().c_str(), rc ) ;
+            goto error ;
+         }
+
+         builder.append( fieldName, result ) ;
+      }
       else if ( NumberDouble == e.type() ||
                 NumberDouble == arg.type() )
       {
@@ -2088,6 +2276,8 @@ namespace engine
    done:
       PD_TRACE_EXITRC( SDB__MTHADDBUILD, rc ) ;
       return rc ;
+   error:
+      goto done ;
    }
 
    ///PD_TRACE_DECLARE_FUNCTION ( SDB__MTHADDGET, "mthAddGet" )
@@ -2112,6 +2302,28 @@ namespace engine
          builder.appendNull( fieldName ) ;
          obj = builder.obj() ;
       }
+      else if ( NumberDecimal == in.type() || 
+                NumberDecimal == arg.type() )
+      {
+         bsonDecimal decimalE ;
+         bsonDecimal decimalArg ;
+         bsonDecimal result ;
+         result.init() ;
+
+         decimalE   = in.numberDecimal() ;
+         decimalArg = arg.numberDecimal() ;
+         rc = decimalE.add( decimalArg, result ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to add decimal:%s+%s,rc=%d", 
+                    decimalE.toString().c_str(), 
+                    decimalArg.toString().c_str(), rc ) ;
+            goto error ;
+         }
+
+         builder.append( fieldName, result ) ;
+         obj = builder.obj() ;
+      }
       else if ( NumberDouble == in.type() ||
                 NumberDouble == arg.type() )
       {
@@ -2131,8 +2343,11 @@ namespace engine
          action->setObj( obj ) ;
          out = action->getObj().getField( fieldName ) ;
       }
+   done:
       PD_TRACE_EXITRC( SDB__MTHADDGET, rc ) ;
       return rc ;
+   error:
+      goto done ;
    }
 
    ///PD_TRACE_DECLARE_FUNCTION ( SDB__MTHSUBTRACTBUILD, "mthSubtractBuild" )
@@ -2156,6 +2371,27 @@ namespace engine
       {
          builder.appendNull( fieldName ) ;
       }
+      else if ( NumberDecimal == e.type() || 
+                NumberDecimal == arg.type() )
+      {
+         bsonDecimal decimalE ;
+         bsonDecimal decimalArg ;
+         bsonDecimal result ;
+         result.init() ;
+
+         decimalE   = e.numberDecimal() ;
+         decimalArg = arg.numberDecimal() ;
+         rc = decimalE.sub( decimalArg, result ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to sub decimal:%s-%s,rc=%d", 
+                    decimalE.toString().c_str(), 
+                    decimalArg.toString().c_str(), rc ) ;
+            goto error ;
+         }
+
+         builder.append( fieldName, result ) ;
+      }
       else if ( NumberDouble == e.type() ||
                 NumberDouble == arg.type() )
       {
@@ -2170,6 +2406,8 @@ namespace engine
    done:
       PD_TRACE_EXITRC( SDB__MTHSUBTRACTBUILD, rc ) ;
       return rc ;
+   error:
+      goto done ;
    }
 
    ///PD_TRACE_DECLARE_FUNCTION ( SDB__MTHSUBTRACTGET, "mthSubtractGet" )
@@ -2194,6 +2432,28 @@ namespace engine
          builder.appendNull( fieldName ) ;
          obj = builder.obj() ;
       }
+      else if ( NumberDecimal == in.type() || 
+                NumberDecimal == arg.type() )
+      {
+         bsonDecimal decimalE ;
+         bsonDecimal decimalArg ;
+         bsonDecimal result ;
+         result.init() ;
+
+         decimalE   = in.numberDecimal() ;
+         decimalArg = arg.numberDecimal() ;
+         rc = decimalE.sub( decimalArg, result ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to sub decimal:%s-%s,rc=%d", 
+                    decimalE.toString().c_str(), 
+                    decimalArg.toString().c_str(), rc ) ;
+            goto error ;
+         }
+
+         builder.append( fieldName, result ) ;
+         obj = builder.obj() ;
+      }
       else if ( NumberDouble == in.type() ||
                 NumberDouble == arg.type() )
       {
@@ -2213,8 +2473,12 @@ namespace engine
          action->setObj( obj ) ;
          out = action->getObj().getField( fieldName ) ;
       }
+
+   done:
       PD_TRACE_EXITRC( SDB__MTHSUBTRACTGET, rc ) ;
       return rc ;
+   error:
+      goto done ;
    }
 
    ///PD_TRACE_DECLARE_FUNCTION ( SDB__MTHMULTIPLYBUILD, "mthMultiplyBuild" )
@@ -2237,6 +2501,27 @@ namespace engine
       {
          builder.appendNull( fieldName ) ;
       }
+      else if ( NumberDecimal == e.type() || 
+                NumberDecimal == arg.type() )
+      {
+         bsonDecimal decimal ;
+         bsonDecimal decimalArg ;
+         bsonDecimal result ;
+         result.init() ;
+
+         decimal    = e.numberDecimal() ;
+         decimalArg = arg.numberDecimal() ;
+         rc = decimal.mul( decimalArg, result ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to mul decimal:%s*%s,rc=%d", 
+                    decimal.toString().c_str(), 
+                    decimalArg.toString().c_str(), rc ) ;
+            goto error ;
+         }
+
+         builder.append( fieldName, result ) ;
+      }
       else if ( NumberDouble == e.type() ||
                 NumberDouble == arg.type() )
       {
@@ -2251,6 +2536,8 @@ namespace engine
    done:
       PD_TRACE_EXITRC( SDB__MTHMULTIPLYBUILD, rc ) ;
       return rc ;
+   error:
+      goto done ;
    }
 
    ///PD_TRACE_DECLARE_FUNCTION ( SDB__MTHMULTIPLYGET, "mthMultiplyGet" )
@@ -2275,6 +2562,28 @@ namespace engine
          builder.appendNull( fieldName ) ;
          obj = builder.obj() ;
       }
+      else if ( NumberDecimal == in.type() || 
+                NumberDecimal == arg.type() )
+      {
+         bsonDecimal decimal ;
+         bsonDecimal decimalArg ;
+         bsonDecimal result ;
+         result.init() ;
+
+         decimal    = in.numberDecimal() ;
+         decimalArg = arg.numberDecimal() ;
+         rc = decimal.mul( decimalArg, result ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to mul decimal:%s*%s,rc=%d", 
+                    decimal.toString().c_str(), 
+                    decimalArg.toString().c_str(), rc ) ;
+            goto error ;
+         }
+
+         builder.append( fieldName, result ) ;
+         obj = builder.obj() ;
+      }
       else if ( NumberDouble == in.type() ||
                 NumberDouble == arg.type() )
       {
@@ -2294,8 +2603,12 @@ namespace engine
          action->setObj( obj ) ;
          out = action->getObj().getField( fieldName ) ;
       }
+
+   done:
       PD_TRACE_EXITRC( SDB__MTHMULTIPLYGET, rc ) ;
       return rc ;
+   error:
+      goto done ;
    }
 
    ///PD_TRACE_DECLARE_FUNCTION ( SDB__MTHDIVIDEBUILD, "mthDivideBuild" )
@@ -2317,6 +2630,27 @@ namespace engine
       else if ( !e.isNumber() )
       {
          builder.appendNull( fieldName ) ;
+      }
+      else if ( NumberDecimal == e.type() || 
+                NumberDecimal == arg.type() )
+      {
+         bsonDecimal decimal ;
+         bsonDecimal decimalArg ;
+         bsonDecimal result ;
+         result.init() ;
+
+         decimal    = e.numberDecimal() ;
+         decimalArg = arg.numberDecimal() ;
+         rc = decimal.div( decimalArg, result ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to div decimal:%s/%s,rc=%d", 
+                    decimal.toString().c_str(), 
+                    decimalArg.toString().c_str(), rc ) ;
+            goto error ;
+         }
+
+         builder.append( fieldName, result ) ;
       }
       else if ( NumberDouble == e.type() ||
                 NumberDouble == arg.type() )
@@ -2373,7 +2707,34 @@ namespace engine
       {
          /// do nothing
       }
-      else if ( !in.isNumber() || 0 == arg.Number() )
+      else if ( !in.isNumber() )
+      {
+         builder.appendNull( fieldName ) ;
+         obj = builder.obj() ;
+      }
+      else if ( NumberDecimal == in.type() || 
+                NumberDecimal == arg.type() )
+      {
+         bsonDecimal decimal ;
+         bsonDecimal decimalArg ;
+         bsonDecimal result ;
+         result.init() ;
+
+         decimal    = in.numberDecimal() ;
+         decimalArg = arg.numberDecimal() ;
+         rc = decimal.div( decimalArg, result ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to div decimal:%s/%s,rc=%d", 
+                    decimal.toString().c_str(), 
+                    decimalArg.toString().c_str(), rc ) ;
+            goto error ;
+         }
+
+         builder.append( fieldName, result ) ;
+         obj = builder.obj() ;
+      }
+      else if ( 0 == arg.Number() )
       {
          builder.appendNull( fieldName ) ;
          obj = builder.obj() ;

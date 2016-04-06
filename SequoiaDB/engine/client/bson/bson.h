@@ -39,6 +39,8 @@
 #include <stdio.h>
 #include <stdarg.h>
 
+#include "common_decimal.h"
+
 #if defined(__GNUC__) || defined(__xlC__)
     #define SDB_EXPORT
 #else
@@ -81,8 +83,10 @@
 //#else
 #define bson_little_endian64(out, in) ( memcpy(out, in, 8) )
 #define bson_little_endian32(out, in) ( memcpy(out, in, 4) )
+#define bson_little_endian16(out, in) ( memcpy(out, in, 2) )
 #define bson_big_endian64(out, in) ( bson_swap_endian64(out, in) )
 #define bson_big_endian32(out, in) ( bson_swap_endian32(out, in) )
+#define bson_big_endian16(out, in) ( bson_swap_endian16(out, in) )
 //#endif
 
 SDB_EXTERN_C_START
@@ -133,8 +137,30 @@ typedef enum {
     BSON_INT = 16, /**< 32-bit integer. */
     BSON_TIMESTAMP = 17, /**< Timestamp. */
     BSON_LONG = 18, /**< 64-bit integer. */
+
+    BSON_DECIMAL = 100, /** decimal type */
     BSON_MAXKEY = 127 /**< Max key. */
 } bson_type;
+
+/*
+BSON_DECIMAL define:
+__decimal
+{
+  int32  size;    //total size of this value
+  
+  int32  typemod; //precision + scale
+                  //   precision = (typmod >> 16) & 0xffff
+                  //   scale     = typmod & 0xffff
+                  
+  int16  dscale;  //sign + dscale
+                  //   sign  = dscale & 0xC000
+                  //   scale = dscale & 0x3FFF
+                  
+  int16  weight;  //weight of this decimal (NBASE=10000)
+
+  int16  digitis[0]; //real data
+}
+*/
 
 typedef int bson_bool_t;
 
@@ -397,6 +423,57 @@ SDB_EXPORT int bson_iterator_int( const bson_iterator *i );
  * @return the value of the current BSON object.
  */
 SDB_EXPORT int64_t bson_iterator_long( const bson_iterator *i );
+
+/**
+ * Get the decimal's sign and scale of the BSON object currently pointed to by the iterator.
+ *
+ * @param i the bson_iterator
+ *
+ * @return BSON_OK or BSON_ERROR.
+ */
+SDB_EXPORT int bson_iterator_decimal_scale( const bson_iterator *i, 
+                                            int *sign, short *scale ) ;
+
+/**
+ * Get the decimal's typemod of the BSON object currently pointed to by the iterator.
+ *
+ * @param i the bson_iterator
+ *
+ * @return BSON_OK or BSON_ERROR.
+ */
+SDB_EXPORT int bson_iterator_decimal_typemod( const bson_iterator *i, 
+                                              int *typemod ) ;
+
+/**
+ * Get the decimal's weight of the BSON object currently pointed to by the iterator.
+ *
+ * @param i the bson_iterator
+ *
+ * @return BSON_OK or BSON_ERROR.
+ */
+SDB_EXPORT int bson_iterator_decimal_weight( const bson_iterator *i, 
+                                             short *weight ) ;
+
+/**
+ * Get the decimal's size of the BSON object currently pointed to by the iterator.
+ *
+ * @param i the bson_iterator
+ *
+ * @return BSON_OK or BSON_ERROR.
+ */
+SDB_EXPORT int bson_iterator_decimal_size( const bson_iterator *i, 
+                                           int *size ) ;
+
+/**
+ * Get the decimal value of the BSON object currently pointed to by the iterator.
+ *
+ * @param i the bson_iterator
+ *
+ * @return BSON_OK or BSON_ERROR.
+ */
+SDB_EXPORT int bson_iterator_decimal( const bson_iterator *i, 
+                                      bson_decimal *decimal ) ;
+
 
 /* return the bson timestamp as a whole or in parts */
 /**
@@ -802,6 +879,44 @@ SDB_EXPORT int bson_append_int( bson *b, const char *name, const int i );
  * @return BSON_OK or BSON_ERROR.
  */
 SDB_EXPORT int bson_append_long( bson *b, const char *name, const int64_t i );
+
+/**
+ * Append an decimal to a bson.
+ *
+ * @param b the bson to append to.
+ * @param name the key for the long.
+ * @param decimal the decimal to append.
+ *
+ * @return BSON_OK or BSON_ERROR.
+ */
+SDB_EXPORT int bson_append_decimal( bson *b, const char *name, 
+                                    const bson_decimal *decimal ) ;
+
+/**
+ * Append an decimal to a bson.
+ *
+ * @param b the bson to append to.
+ * @param name the key for the long.
+ * @param value the string format of the decimal to append.
+ * @param precision, the precision of decimal
+ * @param scale, the scale of decimal
+ *
+ * @return BSON_OK or BSON_ERROR.
+ */
+SDB_EXPORT int bson_append_decimal2( bson *b, const char *name, 
+                                     const char *value, int precision, 
+                                     int scale ) ;
+/**
+ * Append an decimal to a bson.
+ *
+ * @param b the bson to append to.
+ * @param name the key for the long.
+ * @param value the string format of the decimal to append.
+ *
+ * @return BSON_OK or BSON_ERROR.
+ */
+SDB_EXPORT int bson_append_decimal3( bson *b, const char *name, 
+                                     const char *value ) ;
 
 /**
  * Append an double to a bson.

@@ -65,6 +65,8 @@ extern "C"
 #define cJSON_Date_Number 15
 #define cJSON_Number_Long 16
 
+#define cJSON_Decimal  100
+
 #define cJSON_IsReference 256
 
 #define cJSON_INT32 0
@@ -148,6 +150,9 @@ typedef struct cJSON {
    double valuedouble;         /* The item's number, if type==cJSON_Number */
    long long valuelongint; /* The item's number, if type==cJSON_Number */
    int numType;
+
+   int precision;
+   int scale;
 
    char *string;            /* The item's name string, if this item is the child of, or is in the list of subitems of an object. */
 } cJSON;
