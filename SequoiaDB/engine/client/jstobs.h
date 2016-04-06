@@ -17,6 +17,9 @@
 /** \file Jstobs.h
     \brief Json and Bson convert to each other.
 */
+#ifndef JSTOBS__H
+#define JSTOBS__H
+
 #include "core.h"
 #include "time.h"
 #include "bson/bson.h"
@@ -94,8 +97,9 @@ SDB_EXPORT BOOLEAN jsonToBson2 ( bson *bs,
 */
 SDB_EXPORT BOOLEAN bsonToJson ( CHAR *buffer, INT32 bufsize, const bson *b,
                                 BOOLEAN toCSV, BOOLEAN skipUndefined ) ;
-
 SDB_EXPORT BOOLEAN bsonElementToChar ( CHAR **buffer, INT32 *bufsize,
                                        bson_iterator *in ) ;
 
 SDB_EXTERN_C_END
+
+#endif // end JSTOBS__H

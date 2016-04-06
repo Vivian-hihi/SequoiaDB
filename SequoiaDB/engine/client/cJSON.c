@@ -568,6 +568,10 @@ static const char *parse_value(cJSON *item,const char *value,int isKey,int isMon
       {
          return parse_dollar_command ( item, value, cJSON_Undefined ) ;
       }
+      else if( !strncmp ( value_temp, "$numberLong", 11 ) )
+      {
+         return parse_dollar_command ( item, value, cJSON_Number_Long ) ;
+      }      
    }
    if (*value=='[')
    {
@@ -876,6 +880,17 @@ static const char *parse_first_command(cJSON *item,const char *value,int cj_type
       value = skip ( value + 10 ) ;
       break ;
    }
+   case cJSON_Number_Long:
+   {
+      /* not a dollar command! */
+      if ( strncmp ( value, "$numberLong", 11 ) )
+      {
+         ep = value ;
+         return 0 ;
+      }
+      value = skip ( value + 11 ) ;
+      break ;
+   }   
    }
    if ( *value == '\"' )
       value = skip ( value + 1 ) ;
@@ -1145,6 +1160,34 @@ static const char *parse_first_command(cJSON *item,const char *value,int cj_type
       }
       return ++value ;
    }
+   case cJSON_Number_Long:
+   {
+      const char *value_temp = value;
+      int len = 0;
+      
+      if ( value_temp && *value_temp == '-' )
+      {
+         ++len ;
+         ++value_temp ; 
+      }
+         
+      while ( value_temp &&
+              *value_temp != '\"' &&
+              (unsigned char)*value_temp > 32 )
+      {
+         if ( !((*value_temp >= '0' && *value_temp <= '9') ) )
+             return 0 ;      
+         ++len ;
+         ++value_temp ;
+      }
+      if( !value_temp )
+         return 0 ;
+      item->valuestring = (char*)cJSON_malloc( len + 1 ) ;
+      strncpy ( item->valuestring, value, len ) ;
+      item->valuestring [ len ] = 0 ;
+      value = value_temp ;
+      break ;
+   }   
    }
    if ( *value == ' ' || *value == '\"' )
       ++value ;
@@ -1163,6 +1206,7 @@ static const char *parse_second_command(cJSON *item,const char *value,int cj_typ
    case cJSON_MaxKey:
    case cJSON_MinKey:
    case cJSON_Undefined:
+   case cJSON_Number_Long:
       return value ;
    case cJSON_Regex:
    {

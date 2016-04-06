@@ -83,6 +83,65 @@ function jsonFormat(pretty) {
 
 // end Global functions
 
+Object.defineProperty(Object.prototype,'_rawValueOf',{
+   enumerable:false,
+   value: Object.prototype.valueOf
+});
+
+Object.defineProperty(Object.prototype,'_rawToString',{
+   enumerable:false,
+   value: Object.prototype.toString
+});
+
+Object.defineProperty(Object.prototype,'_equality',{
+   enumerable:false,
+   value: function(rval) {
+      if ( this.$numberLong != undefined ) {
+         if ( rval.$numberLong != undefined ) {
+            return this.valueOf() == rval.valueOf() ;
+         }
+         return rval == this.valueOf() ;
+      }
+      if ( rval.$numberLong != undefined ) {
+         return this == rval.valueOf() ;
+      }
+
+      throw "condition not suitable for the function" ;
+   }
+});
+
+Object.prototype.valueOf = function() {
+   if (this.$numberLong != undefined) {
+      if ( typeof(this.$numberLong ) == "string" )
+      {
+         return parseInt(this.$numberLong) ;
+      }
+      else if ( typeof(this.$numberLong ) == "number" )
+      {
+         return this.$numberLong ;
+      }
+      else
+      {
+         throw "invalid $numberLong" ;
+      }
+   }
+
+   return this._rawValueOf() ;
+}
+
+Object.prototype.toString = function() {
+   if (this.$numberLong != undefined) {
+      try
+      {
+         return JSON.stringify ( this, undefined, 2 ) ;
+      }
+      catch ( e )
+      {
+      }
+   }
+   return this._rawToString() ;
+}
+
 // Bson
 function _numberLongRevier(key, value) {
    if ( "number" === typeof(value) ) {
@@ -189,6 +248,10 @@ SdbCursor.prototype.toString = function() {
 
 // CLCount
 CLCount.prototype.toString = function() {
+   this._exec() ;
+   return this._count ;
+}
+CLCount.prototype.valueOf = function() {
    this._exec() ;
    return this._count ;
 }
@@ -651,6 +714,14 @@ NumberLong.prototype.toString = function() {
       return "NumberLong(\"" + this._v + "\")" ;
    }
    return "NumberLong(" + this._v + ")" ;
+}
+
+NumberLong.prototype.valueOf = function() {
+   if ( typeof(this._v ) == "string" )
+   {
+      return parseInt(this._v) ;
+   }
+   return this._v ;
 }
 
 // end NumberLong

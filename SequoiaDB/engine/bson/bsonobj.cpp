@@ -217,7 +217,8 @@ namespace bson {
             s << '"' << escape( string(valuestr(), valuestrsize()-1) ) << '"';
             break;
         case NumberLong:
-            s << _numberLong();
+            s << "{ \"$numberLong\": ";
+            s << '"' << _numberLong() << "\" }";         
             break;
         case NumberInt:
         case NumberDouble:

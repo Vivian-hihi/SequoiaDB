@@ -1022,6 +1022,7 @@ namespace SequoiaDB.Bson.IO
                     case "$regex": _currentValue = ParseRegularExpressionExtendedJson(); return BsonType.RegularExpression;
                     case "$symbol": _currentValue = ParseSymbolExtendedJson(); return BsonType.Symbol;
                     case "$timestamp": _currentValue = ParseTimestampExtendedJson(); return BsonType.Timestamp;
+                    case "$numberLong": _currentValue = ParseNumberLongExtendedJson(); return BsonType.INT64;
                 }
             }
             PushToken(nameToken);
@@ -1388,6 +1389,17 @@ namespace SequoiaDB.Bson.IO
             }
             VerifyToken("}");
             return BsonTimestamp.Create(value);
+        }
+
+        private Long ParseNumberLongExtendedJson() {
+            VerifyToken(":");
+            var nameToken = PopToken();
+            if (nameToken.Type != JsonTokenType.String) {
+                var message = string.Format("JSON reader expected a string but found '{0}'.", nameToken.Lexeme);
+                throw new FileFormatException(message);
+            }
+            VerifyToken("}");
+            return BsonInt64.Create(nameToken.StringValue);
         }
 
         private BsonValue ParseUUIDConstructor(string uuidConstructorName)

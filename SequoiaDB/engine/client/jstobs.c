@@ -247,6 +247,30 @@ static INT32 strlen_a ( const CHAR *data )
    return len ;
 }
 
+static BOOLEAN is_valid_numberLong( const CHAR *value )
+{
+   UINT32 len = 0 ;
+   UINT32 i = 0;
+   if ( NULL == value  )
+      return FALSE ;
+   len = ossStrlen( value ) ;
+   if ( len > 0 )
+   {
+      if ( value[0] == '-' )
+      {
+         ++i ;
+      }
+   }
+   for ( ; i < len; ++i )
+   {
+      if ( ! ( value[i] >= '0' && value[i] <= '9' ) )
+      {
+         return FALSE ;
+      }
+   }
+   return TRUE ;
+}
+
 /*
  * copy data to pbuf
  * pbuf : output variable
@@ -748,18 +772,21 @@ static BOOLEAN bsonConvertJson ( CHAR **pbuf,
          /* for 64 bit integer, most likely it's more than 1000, so we always
           * snprintf */
          CHAR temp[ BSON_TEMP_SIZE_512 ] ;
+         CHAR *format ;
          memset ( temp, 0, BSON_TEMP_SIZE_512 ) ;
+         format = "{ \"$numberLong\": \"%lld\" }" ;
 #ifdef WIN32
          _snprintf ( temp,
                      BSON_TEMP_SIZE_512,
-                     "%lld",
+                     format,
                      ( unsigned long long )bson_iterator_long( &i ) ) ;
 #else
          snprintf ( temp,
                     BSON_TEMP_SIZE_512,
-                    "%lld",
+                     format,
                     ( unsigned long long )bson_iterator_long( &i ) ) ;
 #endif
+         
          bsonConvertJsonRawConcat ( pbuf, left, temp, FALSE ) ;
          CHECK_LEFT ( left )
          break ;
@@ -1190,6 +1217,24 @@ static BOOLEAN jsonConvertBson ( cJSON *cj, bson *bs, BOOLEAN isObj )
          }
          break ;
       }
+      case cJSON_Number_Long:
+      {
+         if ( !is_valid_numberLong(cj->valuestring) )
+         {
+            return FALSE ;
+         }
+         if ( isObj && cj->string )
+         {
+            bson_append_long( bs, cj->string, ossAtoll(cj->valuestring)) ;
+         }
+         else
+         {
+            CHAR num [ INT_NUM_SIZE ] = {0} ;
+            get_char_num ( num, i, INT_NUM_SIZE ) ;
+            bson_append_long( bs, num, ossAtoll(cj->valuestring)) ;
+         }
+         break ;
+      }
       case cJSON_Binary:
       {
          /* for binary type, user input base64 encoded string, which should be
@@ -1453,7 +1498,7 @@ BOOLEAN bsonElementToChar ( CHAR **buffer, INT32 *bufsize, bson_iterator *in )
          return FALSE ;
       }
       memset ( *buffer, 0, *bufsize ) ;
-      *bufsize = sprintf ( *buffer, "%lld", ( unsigned long long )bson_iterator_long( in ) ) ;
+      *bufsize = sprintf ( *buffer, "{ \"$numberLong\": \"%lld\" }", ( unsigned long long )bson_iterator_long( in ) ) ;
       return TRUE ;
    }
    case BSON_DOUBLE:

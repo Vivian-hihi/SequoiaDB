@@ -796,7 +796,8 @@ namespace bson {
             s.appendDoubleNice( number() );
             break;
         case NumberLong:
-            s << _numberLong();
+            s << "{ \"$numberLong\": \"";
+            s << _numberLong() << "\" }";         
             break;
         case NumberInt:
             s << _numberInt();

@@ -103,6 +103,7 @@ public class JSONSerializers {
 		serializer.addObjectSerializer(Pattern.class, new PatternSerializer(serializer));
 		serializer.addObjectSerializer(String.class, new StringSerializer());
 		serializer.addObjectSerializer(UUID.class, new UUIDSerializer(serializer));
+		serializer.addObjectSerializer(Long.class, new NumberLongSerializer(serializer));
 		serializer.addObjectSerializer(BasicBSONObject.class, new BasicBSONObjectSerializer(serializer));
 		return serializer;
 	}
@@ -337,6 +338,18 @@ public class JSONSerializers {
 		////@Override
 		public void serialize(Object obj, StringBuilder buf) {
 			serializer.serialize(new BasicBSONObject("$oid", obj.toString()), buf);
+		}
+	}
+
+	private static class NumberLongSerializer extends CompoundObjectSerializer {
+
+		NumberLongSerializer(ObjectSerializer serializer) {
+			super(serializer);
+		}
+
+		////@Override
+		public void serialize(Object obj, StringBuilder buf) {
+			serializer.serialize(new BasicBSONObject("$numberLong", obj.toString()), buf);
 		}
 	}
 

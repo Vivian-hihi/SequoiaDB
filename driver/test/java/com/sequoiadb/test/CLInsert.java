@@ -55,7 +55,7 @@ public class CLInsert {
 	
 	@Before
 	public void setUp() throws Exception {
-		
+		cl.truncate();
 	}
 
 	@After
@@ -139,4 +139,21 @@ public class CLInsert {
 	    // check
 	    assertEquals(1,i);
 	}
+	
+	@Test
+	public void insertNumberLong(){
+		System.out.println("begin to test insertNumberLong ...");
+
+        String json = "{a:{$numberLong:"10000000"}}" ;
+		String result = "\"a\" : { \"$numberLong\" : \"10000000\"}" ;
+		
+        cl.insert(json);
+        BSONObject qobj = new BasicBSONObject();
+        DBCursor cursor = cl.query(qobj, null, null, null);
+        while (cursor.hasNext()) {
+            BSONObject record = cursor.getNext();
+			// check
+			assertTrue(record.toString().indexOf(result) >= 0);
+        }
+	}	
 }

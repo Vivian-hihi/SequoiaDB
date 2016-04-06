@@ -127,6 +127,7 @@ private:
                       bson *bs) ;
 private:
    BOOLEAN _isValidOid( const CHAR *value ) ;
+   BOOLEAN _isValidNumberLong( const CHAR *value ) ;
 
 private:
    JSContext *_cx ;

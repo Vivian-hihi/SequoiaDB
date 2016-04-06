@@ -55,6 +55,7 @@
 #define SPT_SPEOBJ_BINARY "$binary"
 #define SPT_SPEOBJ_TYPE "$type"
 #define SPT_SPEOBJ_OID "$oid"
+#define SPT_SPEOBJ_NUMBERLONG "$numberLong"
 
 /*
 // check date type bounds
@@ -718,6 +719,32 @@ INT32 sptConvertor::_addSpecialObj( JSObject *obj,
       btm.i = usec ;
       bson_append_timestamp( bs, key, &btm ) ;
    }
+   else if ( 0 == name.compare( SPT_SPEOBJ_NUMBERLONG ) &&
+             1 == properties->length )
+   {
+      std::string strValue ;
+      jsval value ;
+      if ( !_getProperty( obj, name.c_str(), JSTYPE_STRING, value ))
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      rc = _toString( value, strValue ) ;
+      if ( SDB_OK != rc )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      if ( !_isValidNumberLong(strValue.c_str()) )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      bson_append_long( bs, key, ossAtoll(strValue.c_str()) ) ;
+   }   
    else if ( 0 == name.compare( SPT_SPEOBJ_DATE ) &&
              1 == properties->length )
    {
@@ -1290,3 +1317,28 @@ BOOLEAN sptConvertor::_isValidOid( const CHAR *value )
    }
    return TRUE ;
 }
+
+BOOLEAN sptConvertor::_isValidNumberLong( const CHAR *value )
+{
+   UINT32 len = 0 ;
+   UINT32 i = 0;
+   if ( NULL == value  )
+      return FALSE ;
+   len = ossStrlen( value ) ;
+   if ( len > 0 )
+   {
+      if ( value[0] == '-' )
+      {
+         ++i ;
+      }
+   }
+   for ( ; i < len; ++i )
+   {
+      if ( ! ( value[i] >= '0' && value[i] <= '9' ) )
+      {
+         return FALSE ;
+      }
+   }
+   return TRUE ;
+}
+

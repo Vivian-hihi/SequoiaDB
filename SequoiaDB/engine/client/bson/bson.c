@@ -565,8 +565,8 @@ SDB_EXPORT int bson_sprint_iterator ( char **pbuf, int *left, bson_iterator *i,
       }
       case BSON_LONG:
       {
-         char temp[32] = {0} ;
-         sprintf ( temp, "%lld", ( long long )bson_iterator_long( i ) ) ;
+         char temp[128] = {0} ;
+         sprintf ( temp, "{ \"$numberLong\": \"%lld\" }", ( long long )bson_iterator_long( i ) ) ;
          bson_sprint_raw_concat ( pbuf, left, temp ) ;
          CHECK_LEFT ( left )
          break;
@@ -723,7 +723,8 @@ SDB_EXPORT int bson_sprint_length_iterator ( bson_iterator *i )
       total += 16 ;
       break ;
    case BSON_LONG :
-      total += 32 ;
+      /* { "$numberLong": "<long>" } */
+      total += 57 ;
       break ;
    case BSON_TIMESTAMP :
       /* { "$timestamp": "YYYY-MM-DD-HH.MM.SS.mmmmmm" } */
