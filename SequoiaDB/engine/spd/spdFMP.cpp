@@ -128,7 +128,7 @@ namespace engine
                goto error ;
             }
          }
-         else if ( SDB_OK == rc )
+         else if ( SDB_OK == rc || SDB_INTERRUPT == rc )
          {
             _totalRead += read ;
             BOOLEAN extracted = FALSE ;
