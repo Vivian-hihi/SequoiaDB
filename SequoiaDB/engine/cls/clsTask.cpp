@@ -107,6 +107,53 @@ namespace engine
       return taskCount ;
    }
 
+   UINT32 _clsTaskMgr::taskCountByCL( const CHAR *pCLName )
+   {
+      UINT32 taskCount = 0 ;
+
+      ossScopedLock lock ( &_taskLatch, SHARED ) ;
+
+      std::map<UINT64, _clsTask*>::iterator it = _taskMap.begin() ;
+      while ( it != _taskMap.end() )
+      {
+         clsTask *pTask = it->second ;
+         if ( pTask->collectionName() &&
+              0 == ossStrcmp( pCLName, pTask->collectionName() ) )
+         {
+            ++taskCount ;
+         }
+         ++it ;
+      }
+
+      return taskCount ;
+   }
+
+   UINT32 _clsTaskMgr::taskCountByCS( const CHAR *pCSName )
+   {
+      UINT32 taskCount = 0 ;
+
+      ossScopedLock lock ( &_taskLatch, SHARED ) ;
+
+      std::map<UINT64, _clsTask*>::iterator it = _taskMap.begin() ;
+      while ( it != _taskMap.end() )
+      {
+         clsTask *pTask = it->second ;
+         if ( pTask->collectionSpaceName() &&
+              0 == ossStrcmp( pCSName, pTask->collectionSpaceName() ) )
+         {
+            ++taskCount ;
+         }
+         ++it ;
+      }
+
+      return taskCount ;
+   }
+
+   INT32 _clsTaskMgr::waitTaskEvent( INT64 millisec )
+   {
+      return _taskEvent.wait( millisec ) ;
+   }
+
    PD_TRACE_DECLARE_FUNCTION ( SDB__CLSTKMGR_ADDTK, "_clsTaskMgr::addTask" )
    INT32 _clsTaskMgr::addTask ( _clsTask * pTask, UINT64 taskID )
    {
@@ -159,6 +206,7 @@ namespace engine
       {
          SDB_OSS_DEL it->second ;
          _taskMap.erase ( it ) ;
+         _taskEvent.signal() ;
       }
 
       PD_TRACE_EXIT ( SDB__CLSTKMGR_RVTK1 ) ;
@@ -303,6 +351,16 @@ namespace engine
       return FALSE ;
    }
 
+   const CHAR* _clsDummyTask::collectionName() const
+   {
+      return "" ;
+   }
+
+   const CHAR* _clsDummyTask::collectionSpaceName() const
+   {
+      return "" ;
+   }
+
    /*
    _clsSplitTask : implement
    */
@@ -330,6 +388,10 @@ namespace engine
       _taskName += ", End:" ;
       _taskName += _splitEndKeyObj.toString() ;
       _taskName += " } " ;
+
+      /// cs name make
+      size_t npos = _clFullName.find( '.' ) ;
+      _csName = _clFullName.substr( 0, npos ) ;
    }
 
    INT32 _clsSplitTask::init ( const CHAR * clFullName, INT32 sourceID,
@@ -707,6 +769,16 @@ namespace engine
    const CHAR* _clsSplitTask::taskName () const
    {
       return _taskName.c_str() ;
+   }
+
+   const CHAR* _clsSplitTask::collectionName() const
+   {
+      return _clFullName.c_str() ;
+   }
+
+   const CHAR* _clsSplitTask::collectionSpaceName() const
+   {
+      return _csName.c_str() ;
    }
 
    PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSPLITTK_MXON, "_clsSplitTask::muteXOn" )

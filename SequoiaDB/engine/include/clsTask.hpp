@@ -86,6 +86,8 @@ namespace engine
       public:
          virtual CLS_TASK_TYPE   taskType () const = 0 ;
          virtual const CHAR*     taskName () const = 0 ;
+         virtual const CHAR*     collectionName() const = 0 ;
+         virtual const CHAR*     collectionSpaceName() const = 0 ;
 
          virtual BOOLEAN         muteXOn ( const _clsTask *pOther ) = 0 ;
 
@@ -102,6 +104,8 @@ namespace engine
          ~_clsDummyTask () ;
          virtual CLS_TASK_TYPE   taskType () const ;
          virtual const CHAR*     taskName () const ;
+         virtual const CHAR*     collectionName() const ;
+         virtual const CHAR*     collectionSpaceName() const ;
          virtual BOOLEAN         muteXOn ( const _clsTask *pOther ) ;
    };
 
@@ -117,6 +121,11 @@ namespace engine
       public:
          UINT32      taskCount () ;
          UINT32      taskCount( CLS_TASK_TYPE type ) ;
+
+         UINT32      taskCountByCL( const CHAR *pCLName ) ;
+         UINT32      taskCountByCS( const CHAR *pCSName ) ;
+         INT32       waitTaskEvent( INT64 millisec = OSS_ONE_SEC ) ;
+
          INT32       addTask ( _clsTask *pTask,
                                UINT64 taskID = CLS_INVALID_TASKID ) ;
          INT32       removeTask ( _clsTask *pTask ) ;
@@ -135,6 +144,7 @@ namespace engine
       private:
          std::map<UINT64, _clsTask*>         _taskMap ;
          ossSpinSLatch                       _taskLatch ;
+         ossAutoEvent                        _taskEvent ;
 
          std::map<string, UINT32>            _mapRegister ;
          ossSpinSLatch                       _regLatch ;
@@ -189,6 +199,8 @@ namespace engine
       public:
          virtual CLS_TASK_TYPE   taskType () const ;
          virtual const CHAR*     taskName () const ;
+         virtual const CHAR*     collectionName() const ;
+         virtual const CHAR*     collectionSpaceName() const ;
 
          virtual BOOLEAN         muteXOn ( const _clsTask *pOther ) ;
 
@@ -209,6 +221,7 @@ namespace engine
 
       protected:
          std::string             _clFullName ;
+         std::string             _csName ;
          std::string             _sourceName ;
          std::string             _dstName ;
          std::string             _shardingType ;

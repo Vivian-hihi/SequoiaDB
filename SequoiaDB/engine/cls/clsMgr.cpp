@@ -1644,6 +1644,7 @@ namespace engine
       INT32 startFrom = 0 ;
       INT32 numReturned = 0 ;
       vector<BSONObj> objList ;
+      MAPTASKQUERY::iterator it ;
 
       // need to update catalog group
       if ( SDB_CLS_NOT_PRIMARY == res->flags )
@@ -1658,6 +1659,21 @@ namespace engine
                 SDB_CAT_TASK_NOTFOUND == res->flags )
       {
          _clsLatch.get() ;
+         /// if is the last query and not { TargetID : groupID }, need to
+         /// query all( by { TargetID : groupID } )
+         it = _mapTaskQuery.find ( msg->requestID ) ;
+         if ( it != _mapTaskQuery.end() )
+         {
+            if ( 1 == _mapTaskQuery.size() )
+            {
+               BSONObj queryAll = BSON( CAT_TARGETID_NAME <<
+                                        _selfNodeID.columns.groupID ) ;
+               if ( 0 != queryAll.woCompare( it->second ) )
+               {
+                  _mapTaskQuery[ ++_taskID ] = queryAll ;
+               }
+            }
+         }
          _mapTaskQuery.erase ( msg->requestID ) ;
          _clsLatch.release() ;
          PD_LOG ( PDINFO, "The query task[%lld] has 0 jobs", msg->requestID ) ;
@@ -1680,7 +1696,7 @@ namespace engine
          // find the task query map, and remove it
          {
             ossScopedLock lock ( &_clsLatch, EXCLUSIVE ) ;
-            MAPTASKQUERY::iterator it = _mapTaskQuery.find ( msg->requestID ) ;
+            it = _mapTaskQuery.find ( msg->requestID ) ;
             if ( it == _mapTaskQuery.end() )
             {
                PD_LOG ( PDWARNING, "The query task response[%lld] is not exist",

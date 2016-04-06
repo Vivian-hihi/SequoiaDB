@@ -216,8 +216,8 @@ namespace engine
    {
       stringstream ss ;
 
-      ss << "IsOpened:" << _isOpened
-         << ",HitEnd:" << _hitEnd
+      ss << "IsOpened:" << ( _isOpened ? 1 : 0 )
+         << ",HitEnd:" << ( _hitEnd ? 1 : 0 )
          << ",BufferSize:" << _resultBufferSize ;
 
       if ( _totalRecords > 0 )
@@ -5054,7 +5054,7 @@ namespace engine
    INT32 _rtnContextDelCS::open( const CHAR *pCollectionName,
                                  _pmdEDUCB *cb )
    {
-      INT32 rc = SDB_OK;
+      INT32 rc = SDB_OK ;
       dpsMergeInfo info ;
       dpsLogRecord &record = info.getMergeBlock().record();
 
@@ -5133,6 +5133,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       clsCB *pClsCB = sdbGetClsCB() ;
       shardCB *pShdMgr = pClsCB->getShardCB() ;
+      clsTaskMgr *pTaskMgr = pmdGetKRCB()->getClsCB()->getTaskMgr() ;
       vector< string > subCLs ;
       vector< string >::iterator it ;
 
@@ -5173,6 +5174,12 @@ namespace engine
       /// close context
       _isOpened = FALSE ;
       rc = SDB_DMS_EOC ;
+
+      /// wait all collection space's task finished
+      while( pTaskMgr->taskCountByCS( _name ) > 0 )
+      {
+         pTaskMgr->waitTaskEvent() ;
+      }
 
    done:
       return rc;
@@ -5250,7 +5257,7 @@ namespace engine
    {
       _pDmsCB        = pmdGetKRCB()->getDMSCB() ;
       _pDpsCB        = pmdGetKRCB()->getDPSCB() ;
-      _pCatAgent     = pmdGetKRCB()->getClsCB ()->getCatAgent () ;
+      _pCatAgent     = pmdGetKRCB()->getClsCB()->getCatAgent () ;
       _pTransCB      = pmdGetKRCB()->getTransCB();
       _gotDmsCBWrite = FALSE ;
       _hasLock       = FALSE ;
@@ -5355,6 +5362,7 @@ namespace engine
                                     _pmdEDUCB *cb )
    {
       INT32 rc = SDB_OK ;
+      clsTaskMgr *pTaskMgr = pmdGetKRCB()->getClsCB()->getTaskMgr() ;
 
       if ( !isOpened() )
       {
@@ -5382,6 +5390,12 @@ namespace engine
       _clean( cb ) ;
       _isOpened = FALSE ;
       rc = SDB_DMS_EOC ;
+
+      /// wait all collection's task finished
+      while( pTaskMgr->taskCountByCL( _collectionName ) > 0 )
+      {
+         pTaskMgr->waitTaskEvent() ;
+      }
 
    done:
       return rc;
