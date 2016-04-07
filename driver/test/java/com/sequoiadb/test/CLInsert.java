@@ -144,7 +144,7 @@ public class CLInsert {
 	public void insertNumberLong(){
 		System.out.println("begin to test insertNumberLong ...");
 
-        String json = "{a:{$numberLong:"10000000"}}" ;
+        String json = "{a:{$numberLong:\"10000000\"}}" ;
 		String result = "\"a\" : { \"$numberLong\" : \"10000000\"}" ;
 		
         cl.insert(json);
@@ -153,7 +153,7 @@ public class CLInsert {
         while (cursor.hasNext()) {
             BSONObject record = cursor.getNext();
 			// check
-			assertTrue(record.toString().indexOf(result) >= 0);
+			assertTrue(record.toString().indexOf(result) >= 0);		
         }
 	}	
 }
