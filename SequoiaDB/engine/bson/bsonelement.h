@@ -641,21 +641,20 @@ namespace bson {
     }
 
     inline bsonDecimal BSONElement::numberDecimal() const {
-        int rc = 0 ;
         bsonDecimal decimal ;
         decimal.init() ;
         switch( type() ) {
         case NumberDouble:
-            rc = decimal.fromDouble( _numberDouble() ) ;
+            decimal.fromDouble( _numberDouble() ) ;
             break ;
         case NumberInt:
-            rc = decimal.fromInt( _numberInt() ) ;
+            decimal.fromInt( _numberInt() ) ;
             break ;
         case NumberLong:
-            rc = decimal.fromLong( _numberLong() ) ;
+            decimal.fromLong( _numberLong() ) ;
             break ;
         case NumberDecimal:
-            rc = decimal.fromBsonValue( value() ) ;
+            decimal.fromBsonValue( value() ) ;
             break ;
         default:
             break ;

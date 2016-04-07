@@ -252,13 +252,15 @@ static BOOLEAN bson_endian_convert ( CHAR *data, off_t *off, BOOLEAN l2r )
       case BSON_DECIMAL :
       {
          INT32 size    = 0 ;
+         INT32 newSize = 0 ;
          INT32 value4  = 0 ;
          INT16 value2  = 0 ;
          INT32 i       = 0 ;
          INT32 ndigits = 0 ;
          // size 
-         ossEndianConvert4 ( *(INT32*)&data[*off], size ) ;
-         *(INT32*)&data[*off] = size ;
+         size = *(INT32*)&data[*off] ;
+         ossEndianConvert4 ( size, newSize ) ;
+         *(INT32*)&data[*off] = newSize ;
          *off += sizeof(INT32) ;
 
          // typemod
@@ -276,7 +278,8 @@ static BOOLEAN bson_endian_convert ( CHAR *data, off_t *off, BOOLEAN l2r )
          *(INT16*)&data[*off] = value2 ;
          *off += sizeof(INT16) ;
 
-         ndigits = ( size - DECIMAL_HEADER_SIZE ) / ( sizeof( INT16 ) ) ;
+         ndigits = ( ( l2r?size:newSize ) - DECIMAL_HEADER_SIZE ) / 
+                   ( sizeof( INT16 ) ) ;
          for ( i = 0 ; i < ndigits; i++ )
          {
             ossEndianConvert2 ( *(INT16*)&data[*off], value2 ) ;

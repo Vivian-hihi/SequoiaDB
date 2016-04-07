@@ -576,8 +576,9 @@ SDB_EXPORT int bson_sprint_iterator ( char **pbuf, int *left, bson_iterator *i,
       case BSON_DECIMAL:
       {
          bson_decimal decimal ;
-         char *temp = NULL ;
+         char *temp  = NULL ;
          int tmpSize = 0 ;
+         int tmpRC   = 0 ;
          decimal_init( &decimal ) ;
          bson_iterator_decimal( i, &decimal ) ;
          decimal_to_jsonstr_len( decimal.sign, decimal.weight, decimal.dscale, 
@@ -591,7 +592,13 @@ SDB_EXPORT int bson_sprint_iterator ( char **pbuf, int *left, bson_iterator *i,
          }
 
          memset( temp, 0, tmpSize ) ;
-         decimal_to_jsonstr( &decimal, temp, tmpSize ) ;
+         tmpRC = decimal_to_jsonstr( &decimal, temp, tmpSize ) ;
+         if ( 0 != tmpRC )
+         {
+            decimal_free( &decimal ) ;
+            free( temp ) ;
+            return 0 ;
+         }
 
          bson_sprint_raw_concat ( pbuf, left, temp ) ;
          decimal_free( &decimal ) ;
