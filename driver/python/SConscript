@@ -60,7 +60,8 @@ clientLibFiles2 = [
    path + "SequoiaDB/engine/client/bson/encoding.h",
    path + "SequoiaDB/engine/client/bson/numbers.c",
    path + "SequoiaDB/engine/client/bson/bson.c",
-   path + "SequoiaDB/engine/client/bson/encoding.c"
+   path + "SequoiaDB/engine/client/bson/encoding.c",
+   path + "SequoiaDB/engine/client/bson/common_decimal.h"
    ]
 
 env.Execute(Mkdir(curPath + "/build/temp"))
