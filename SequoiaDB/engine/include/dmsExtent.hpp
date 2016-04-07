@@ -220,8 +220,8 @@ namespace engine
 
       void setDict( const CHAR *dict, UINT32 dictLen )
       {
-         SDB_ASSERT( dict && ( dictLen > 0 && dictLen <= DMS_DICT_MAX_SIZE),
-                     "Invalid argument value" ) ;
+         //SDB_ASSERT( dict && ( dictLen > 0 && dictLen <= DMS_DICT_MAX_SIZE),
+         //            "Invalid argument value" ) ;
          ossMemcpy((CHAR *)this + sizeof(_dmsDictExtent), dict, dictLen ) ;
          _dictLen = dictLen ;
       }

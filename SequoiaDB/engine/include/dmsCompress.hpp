@@ -32,7 +32,7 @@
 
    Last Changed =
 
-******************************************************************************/
+*******************************************************************************/
 
 #ifndef DMSCOMPRESS_HPP__
 #define DMSCOMPRESS_HPP__
@@ -48,6 +48,14 @@ namespace engine
 {
    class _pmdEDUCB ;
 
+   /*
+    * One collection has one compressor entry, in which the compressor and
+    * dictionary addresses are stored.
+    * Compressor and dictionary values:
+    * (1) No compression is configured for the collection, both are NULL.
+    * (2) Dictionary compression is configured, both are valid.
+    * (3) Otherwise( snappy ), compressor is valid while dictionary is NULL.
+    */
    class _dmsCompressorEntry
    {
       friend class _dmsCompressorGuard ;
@@ -55,21 +63,27 @@ namespace engine
       _dmsCompressorEntry() ;
 
       void setCompressor( utilCompressor *compressor ) ;
-      void setDictionary( const CHAR *dictionary ) ;
+      void setDictionary( const utilDictHandle dictionary ) ;
 
       OSS_INLINE utilCompressor* getCompressor() { return _compressor ; }
-      OSS_INLINE const CHAR* getDictionary() { return _dictionaryAddr ; }
+      OSS_INLINE const utilDictHandle getDictionary() { return _dictionary ; }
+
+      /*
+       * Whether the compressor is ready. Only then it's true the compression/
+       * decompression can be done.
+       */
       OSS_INLINE BOOLEAN ready() { return ( NULL != _compressor ) ; }
 
       void reset() ;
 
    private:
-      utilCompressor *_compressor ;
-      const CHAR *_dictionaryAddr ;
+      utilCompressor *_compressor ;    /* Global compressor address */
+      utilDictHandle _dictionary ;     /* For dictionary compression */
       ossRWMutex _lock ;
    } ;
    typedef _dmsCompressorEntry dmsCompressorEntry ;
 
+   /* Concurrence protection for collection compressor entry. */
    class _dmsCompressorGuard
    {
    public:

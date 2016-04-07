@@ -3,7 +3,7 @@
 
 #include "dmsStorageUnit.hpp"
 #include "rtnBackgroundJobBase.hpp"
-#include "utilLZW.hpp"
+#include "utilLZWDictionary.hpp"
 
 namespace engine
 {

@@ -317,13 +317,14 @@ namespace engine
       UINT32 dictBufLen = 0 ;
 
       _dictionary = _creator.getDictionary() ;
-      dictBufLen = _dictionary->getDictSize() ;
+      dictBufLen = _dictionary->getFinalSize() ;
       SDB_ASSERT( dictBufLen > 0, "Dictionary length is invalid" ) ;
 
       dictBuf = (CHAR*)SDB_OSS_MALLOC( dictBufLen ) ;
       PD_CHECK( dictBuf, SDB_OOM, error, PDERROR,
                 "Failed to allocate memory for dictionary, rc: %d", rc ) ;
-      rc = _dictionary->dumpToStream( dictBuf, dictBufLen ) ;
+
+      rc = _dictionary->finalize( dictBuf, dictBufLen ) ;
       PD_RC_CHECK( rc, PDERROR,
                    "Failed to dump dictionary into stream format, rc: %d", rc ) ;
 

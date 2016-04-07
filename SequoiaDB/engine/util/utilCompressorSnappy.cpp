@@ -1,3 +1,38 @@
+/*******************************************************************************
+
+
+   Copyright (C) 2011-2016 SequoiaDB Ltd.
+
+   This program is free software: you can redistribute it and/or modify
+   it under the term of the GNU Affero General Public License, version 3,
+   as published by the Free Software Foundation.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warrenty of
+   MARCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+   GNU Affero General Public License for more details.
+
+   You should have received a copy of the GNU Affero General Public License
+   along with this program. If not, see <http://www.gnu.org/license/>.
+
+   Source File Name = utilCompressorSnappy.hpp
+
+   Descriptive Name = Snappy compressor wrapper.
+
+   When/how to use:
+
+   Dependencies: N/A
+
+   Restrictions: N/A
+
+   Change Activity:
+   defect Date        Who Description
+   ====== =========== === ==============================================
+          04/01/2016  YSD Initial Draft
+
+   Last Changed =
+
+*******************************************************************************/
 #include "utilCompressorSnappy.hpp"
 #include "pd.hpp"
 #include "pdTrace.hpp"
@@ -5,38 +40,43 @@
 
 namespace engine
 {
+   _utilCompressorSnappy::_utilCompressorSnappy()
+   : _utilCompressor( UTIL_COMPRESSOR_SNAPPY )
+   {
+   }
+
    // PD_TRACE_DECLARE_FUNCTION( SDB__UTILCOMPRESSORSNAPPY_COMPRESSBOUND, "_utilCompressorSnappy::compressBound")
    INT32 _utilCompressorSnappy::compressBound( UINT32 srcLen,
                                               UINT32 &maxCompressedLen,
-                                              const CHAR *dictionary )
+                                              const utilDictHandle dictionary )
    {
       PD_TRACE_ENTRY( SDB__UTILCOMPRESSORSNAPPY_COMPRESSBOUND ) ;
       (void)dictionary ;
 
-      SDB_ASSERT( !dictionary, "snappy does not use any dictionary" ) ;
+      SDB_ASSERT( UTIL_INVALID_DICT != dictionary,
+                  "snappy does not use any dictionary" ) ;
       maxCompressedLen = ( UINT32 )snappy::MaxCompressedLength( srcLen ) ;
 
       PD_TRACE_EXIT( SDB__UTILCOMPRESSORSNAPPY_COMPRESSBOUND ) ;
+
       return SDB_OK ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION( SDB__UTILCOMPRESSORSNAPPY_COMPRESS, "_utilCompressorSnappy::compress")
    INT32 _utilCompressorSnappy::compress( const CHAR *source, UINT32 sourceLen,
                                           CHAR *dest, UINT32 &destLen,
-                                          const CHAR *dictionary )
+                                          const utilDictHandle dictionary )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__UTILCOMPRESSORSNAPPY_COMPRESS ) ;
       size_t resultLen = 0 ;
       (void)dictionary ;
 
-      SDB_ASSERT( !dictionary, "snappy does not use any dictionary" ) ;
-      if ( destLen < ( UINT32 )snappy::MaxCompressedLength( sourceLen ) )
-      {
-         PD_LOG( PDERROR, "Buffer for decompressed data is not big enough" ) ;
-         rc = SDB_INVALIDARG ;
-         goto error ;
-      }
+      SDB_ASSERT( UTIL_INVALID_DICT != dictionary,
+                  "snappy does not use any dictionary" ) ;
+      SDB_ASSERT( destLen >= (UINT32)snappy::MaxCompressedLength( sourceLen ),
+                  "Buffer for decompressed data is not big enough" ) ;
+
       snappy::RawCompress ( source, (size_t)sourceLen, dest, &resultLen ) ;
       destLen = ( UINT32 )resultLen ;
 
@@ -75,12 +115,13 @@ namespace engine
                                             UINT32 sourceLen,
                                             CHAR *dest,
                                             UINT32 &destLen,
-                                            const CHAR *dictionary )
+                                            const utilDictHandle dictionary )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__UTILCOMPRESSORSNAPPY_DECOMPRESS ) ;
 
-      SDB_ASSERT( !dictionary, "snappy does not use any dictionary" ) ;
+      SDB_ASSERT( UTIL_INVALID_DICT != dictionary,
+                 "snappy does not use any dictionary" ) ;
 
       if ( !snappy::RawUncompress ( source, (size_t)sourceLen, dest ) )
       {

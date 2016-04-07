@@ -1,8 +1,43 @@
+/*******************************************************************************
+
+
+   Copyright (C) 2011-2016 SequoiaDB Ltd.
+
+   This program is free software: you can redistribute it and/or modify
+   it under the term of the GNU Affero General Public License, version 3,
+   as published by the Free Software Foundation.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warrenty of
+   MARCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+   GNU Affero General Public License for more details.
+
+   You should have received a copy of the GNU Affero General Public License
+   along with this program. If not, see <http://www.gnu.org/license/>.
+
+   Source File Name = utilCompressorLZW.hpp
+
+   Descriptive Name = Implementation of LZW compression.
+
+   When/how to use:
+
+   Dependencies: N/A
+
+   Restrictions: N/A
+
+   Change Activity:
+   defect Date        Who Description
+   ====== =========== === ==============================================
+          07/12/2015  YSD Initial Draft
+
+   Last Changed =
+
+*******************************************************************************/
 #ifndef UTIL_COMPRESSOR_LZW__
 #define UTIL_COMPRESSOR_LZW__
 
 #include "utilCompressor.hpp"
-#include "utilLZW.hpp"
+#include "utilLZWDictionary.hpp"
 
 namespace engine
 {
@@ -10,24 +45,97 @@ namespace engine
    {
       public:
          _utilCompressorLZW();
-         ~_utilCompressorLZW();
-      public:
+
          INT32 compressBound( UINT32 srcLen,
                               UINT32 &maxCompressedLen,
-                              const CHAR *dictionary = NULL ) ;
+                              const utilDictHandle dictionary = NULL ) ;
+
          INT32 compress( const CHAR *source, UINT32 sourceLen,
                          CHAR *dest, UINT32 &destLen,
-                         const CHAR *dictionary = NULL ) ;
+                         const utilDictHandle dictionary = NULL ) ;
+
          INT32 getUncompressedLen( const CHAR *source, UINT32 sourceLen,
                                    UINT32 &length) ;
+
          INT32 decompress( const CHAR *source, UINT32 sourceLen,
                            CHAR *dest, UINT32 &destLen,
-                           const CHAR *dictionary = NULL ) ;
+                           const utilDictHandle dictionary = NULL ) ;
 
       private:
-         _utilLZW _lzw ;
+         OSS_INLINE LZW_CODE _readCode( _utilLZWContext *ctx ) ;
+         OSS_INLINE UINT8 _readByte( _utilLZWContext *ctx ) ;
+         OSS_INLINE void _writeCode( _utilLZWContext *ctx, LZW_CODE code ) ;
+         OSS_INLINE void _writeByte( _utilLZWContext *ctx, UINT8 ch ) ;
+         OSS_INLINE void _writeBits( _utilLZWContext *ctx,
+                                     UINT32 bits, UINT32 bitNum ) ;
+         OSS_INLINE void _flushBits( _utilLZWContext *ctx ) ;
    };
    typedef _utilCompressorLZW utilCompressorLZW ;
+
+   OSS_INLINE LZW_CODE _utilCompressorLZW::_readCode( _utilLZWContext *ctx )
+   {
+      UINT32 bits = 0 ;
+      UINT32 codeSize = ctx->getDictionary()->getCodeSize() ;
+
+      while ( ctx->_bitBuf._n < codeSize )
+      {
+         UINT8 ch = _readByte( ctx ) ;
+         ctx->_bitBuf._buf = ( ctx->_bitBuf._buf << 8 ) | ch ;
+         ctx->_bitBuf._n += 8 ;
+      }
+
+      ctx->_bitBuf._n -= codeSize ;
+      bits = ( ctx->_bitBuf._buf >> ctx->_bitBuf._n )
+             & (( 1 << codeSize ) - 1 ) ;
+
+      return bits ;
+   }
+
+   OSS_INLINE UINT8 _utilCompressorLZW::_readByte( _utilLZWContext *ctx )
+   {
+      return ctx->_stream[ctx->_streamPos++] ;
+   }
+
+   OSS_INLINE void _utilCompressorLZW::_writeCode( _utilLZWContext *ctx,
+                                                   LZW_CODE code )
+   {
+      _writeBits( ctx, code, ctx->getDictionary()->getCodeSize() ) ;
+   }
+
+   OSS_INLINE void _utilCompressorLZW::_writeByte( _utilLZWContext *ctx,
+                                                   UINT8 ch )
+   {
+      ctx->_stream[ctx->_streamPos++] = ch ;
+   }
+
+   OSS_INLINE void _utilCompressorLZW::_writeBits( _utilLZWContext *ctx,
+                                                   UINT32 bits,
+                                                   UINT32 bitNum)
+   {
+      ctx->_bitBuf._buf = ( ctx->_bitBuf._buf << bitNum )
+                          | ( bits & (( 1 << bitNum ) - 1 ) ) ;
+
+      bitNum += ctx->_bitBuf._n ;
+
+      while ( bitNum >= 8 )
+      {
+         UINT8 ch ;
+         bitNum -= 8 ;
+         ch = ctx->_bitBuf._buf >> bitNum ;
+         _writeByte( ctx, ch ) ;
+      }
+
+      ctx->_bitBuf._n = bitNum ;
+   }
+
+   OSS_INLINE void _utilCompressorLZW::_flushBits( _utilLZWContext *ctx )
+   {
+      if ( ctx->_bitBuf._n )
+      {
+         _writeBits( ctx, 0, 8 - ctx->_bitBuf._n ) ;
+      }
+   }
+
 }
 
 #endif /* UTIL_COMPRESSOR_LZW__ */
