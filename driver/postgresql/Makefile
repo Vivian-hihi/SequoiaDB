@@ -8,7 +8,7 @@ EXTERNAL_PATH = $(CURRENT_PATH)/external/client
 BSON_PATH = $(EXTERNAL_PATH)/sdbbson
 ENGINE_PATH = $(CURRENT_PATH)/../../SequoiaDB/engine
 
-BSON_SOURCE = $(BSON_PATH)/numbers.c $(BSON_PATH)/bson.c $(BSON_PATH)/encoding.c
+BSON_SOURCE = $(BSON_PATH)/numbers.c $(BSON_PATH)/bson.c $(BSON_PATH)/encoding.c $(BSON_PATH)/common_decimal.c
 
 MD5_SOURCE = $(MD5_PATH)/md5.c
 MD5_HEADER = $(MD5_HEADER_PATH)/md5.h
@@ -19,7 +19,7 @@ EXTERNAL_SOURCE = $(EXTERNAL_PATH)/client.c  $(EXTERNAL_PATH)/oss.c     $(EXTERN
                   $(EXTERNAL_PATH)/timestampParse.c                     $(EXTERNAL_PATH)/timestampTm.c \
                   $(EXTERNAL_PATH)/timestampValid.c
 
-BSON_HEADER = $(BSON_PATH)/sdbbson.h $(BSON_PATH)/encoding.h
+BSON_HEADER = $(BSON_PATH)/sdbbson.h $(BSON_PATH)/encoding.h $(BSON_PATH)/common_decimal.h 
 
 EXTERNAL_HEADER = $(EXTERNAL_PATH)/client.h   $(EXTERNAL_PATH)/jstobs.h  $(EXTERNAL_PATH)/base64c.h \
                   $(EXTERNAL_PATH)/core.h     $(EXTERNAL_PATH)/ossErr.h  $(EXTERNAL_PATH)/ossFeat.h \
@@ -35,6 +35,7 @@ $(MD5_HEADER_PATH)/md5.h:           $(ENGINE_PATH)/bson/lib/md5.h
 
 $(BSON_PATH)/numbers.c:             $(ENGINE_PATH)/client/bson/numbers.c
 $(BSON_PATH)/bson.c:                $(ENGINE_PATH)/client/bson/bson.c
+$(BSON_PATH)/common_decimal.c:      $(ENGINE_PATH)/client/bson/common_decimal.c
 $(BSON_PATH)/encoding.c:            $(ENGINE_PATH)/client/bson/encoding.c
 $(EXTERNAL_PATH)/client.c:          $(ENGINE_PATH)/client/client.c
 $(EXTERNAL_PATH)/oss.c:             $(ENGINE_PATH)/oss/oss.c
@@ -50,6 +51,7 @@ $(EXTERNAL_PATH)/timestampTm.c:     $(ENGINE_PATH)/client/timestampTm.c
 $(EXTERNAL_PATH)/timestampValid.c:  $(ENGINE_PATH)/client/timestampValid.c
 
 $(BSON_PATH)/sdbbson.h:             $(ENGINE_PATH)/client/bson/bson.h
+$(BSON_PATH)/common_decimal.h:      $(ENGINE_PATH)/client/bson/common_decimal.h
 $(BSON_PATH)/encoding.h:            $(ENGINE_PATH)/client/bson/encoding.h
 $(EXTERNAL_PATH)/client.h:          $(ENGINE_PATH)/client/client.h
 $(EXTERNAL_PATH)/jstobs.h:          $(ENGINE_PATH)/client/jstobs.h
