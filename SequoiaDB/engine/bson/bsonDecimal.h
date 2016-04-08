@@ -19,13 +19,11 @@
  */
 
 #pragma once
-#if defined (SDB_ENGINE) || defined (SDB_CLIENT)
-#include "core.hpp"
-#include "oss.hpp"
-#endif
+
+#include "ossTypes.h"
 #include <string>
 #include <cstring>
-#include "../client/bson/common_decimal.h"
+#include "common_decimal.h"
 
 using namespace std;
 /** \namespace bson
@@ -66,6 +64,7 @@ namespace bson {
       INT32          fromBsonValue( const CHAR *bsonValue ) ;
 
       INT32          compare( const bsonDecimal &right ) ;
+      INT32          compare( int right ) ;
 
    public:
       INT32          add( const bsonDecimal &right, bsonDecimal &result ) ;

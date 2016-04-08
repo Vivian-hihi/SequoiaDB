@@ -16,10 +16,9 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-#if defined (SDB_ENGINE) || defined (SDB_CLIENT)
-#include "core.hpp"
-#endif
 
+#include "ossErr.h"
+#include "ossMem.h"
 #include "bsonDecimal.h"
 #include "pd.hpp"
 
@@ -199,6 +198,22 @@ namespace bson {
    INT32 bsonDecimal::compare( const bsonDecimal &right )
    {
       return decimal_cmp( &_decimal, &( right._decimal ) ) ;
+   }
+
+   INT32 bsonDecimal::compare( int right )
+   {
+      INT32 rc = SDB_OK ;
+      bsonDecimal decimal ;
+      decimal.init() ;
+
+      rc = decimal.fromInt( right ) ;
+      if ( SDB_OK != rc )
+      {
+         // always bigger than error
+         return 1 ;
+      }
+
+      return compare( decimal ) ;
    }
 
    INT32 bsonDecimal::add( const bsonDecimal &right, bsonDecimal &result )

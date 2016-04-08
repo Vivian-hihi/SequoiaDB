@@ -1710,7 +1710,7 @@ int64_t decimal_to_long( const bson_decimal *decimal )
    * the loop assumes there are weight+1 digits before the decimal point.
    */
    weight = rounded.weight;
-   if ( weight >= 0 && ndigits <= weight + 1 )
+   if ( weight < 0 || ndigits > weight + 1 )
    {
       rc = -10 ;
       goto error ;

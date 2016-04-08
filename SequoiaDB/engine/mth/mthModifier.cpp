@@ -266,6 +266,34 @@ namespace engine
             }
          }
       }
+      else if ( NumberDecimal == a )
+      {
+         INT32 cmp = 0 ;
+         bsonDecimal inc ;
+         bsonDecimal decimal ;
+         inc.init() ;
+         decimal.init() ;
+
+         decimal = in.numberDecimal() ;
+         inc     = elt.numberDecimal() ;
+         cmp     = inc.compare( 0 ) ;
+         if ( 0 == cmp )
+         {
+            //not change, add the old element
+            bb.append ( in ) ;
+         }
+         else
+         {
+            bsonDecimal result ;
+            result.init() ;
+
+            ADD_CHG_ELEMENT_AS ( _srcChgBuilder, in, pRoot, "$set" ) ;
+
+            decimal.add( inc, result ) ;
+            bb.append ( in.fieldName(), result ) ;
+            ADD_CHG_NUMBER ( _dstChgBuilder, pRoot, result, "$set" ) ;
+         }
+      }
       else
       {
          //not change, add the old element

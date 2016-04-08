@@ -967,6 +967,24 @@ namespace engine
             }
             builder.append( fieldName, us.str() ) ;
          }
+         else if ( NumberDecimal == e.type() )
+         {
+            utilString us ;
+            bsonDecimal decimal ;
+            string value ;
+            decimal.init() ;
+
+            decimal = e.numberDecimal() ;
+            value   = decimal.toString() ;
+            rc      = us.append( value.c_str(), value.length() );
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "failed to append decimal=%s,rc=%d", 
+                       value.c_str(), rc ) ;
+               goto error ;
+            }
+            builder.append( fieldName, us.str() ) ;
+         }
          else if ( Date == e.type() )
          {
             CHAR buffer[64] = { 0 };
@@ -1130,6 +1148,13 @@ namespace engine
             }
             builder.appendNumber( fieldName, i ) ;
          }
+         else if ( NumberDecimal == e.type() )
+         {
+            INT32 i = 0 ;
+            e.numberDecimal().toInt( &i) ;
+
+            builder.appendNumber( fieldName, i ) ;
+         }
          else if ( NumberDouble == e.type() )
          {
             INT32 i = 0 ;
@@ -1248,7 +1273,51 @@ namespace engine
             }
          }
          break ;
-      } 
+      }
+      case NumberDecimal :
+      {
+         if ( Date == e.type() )
+         {
+            bsonDecimal decimal ;
+            decimal.init() ;
+            decimal.fromLong( ( INT64 )( e.date().millis ) ) ;
+            builder.append( fieldName, decimal ) ;
+         }
+         else if ( Timestamp == e.type() )
+         {
+            bsonDecimal decimal ;
+            UINT64 l = e.timestampTime().millis ;
+            l        += e.timestampInc() / 1000 ;
+
+            decimal.init() ;
+            decimal.fromLong( ( INT64 )l ) ;
+            builder.append( fieldName, decimal ) ;
+         }
+         else if ( Bool == e.type() )
+         {
+            bsonDecimal decimal ;
+            INT64 v = e.Bool() ? 1 : 0 ;
+
+            decimal.init() ;
+            decimal.fromLong( ( INT64 )v ) ;
+            builder.append( fieldName, decimal ) ;
+         }
+         else if ( String != e.type() )
+         {
+            bsonDecimal decimal ;
+            decimal.init() ;
+            decimal.fromLong( e.numberLong() ) ;
+            builder.append( fieldName, decimal ) ;
+         }
+         else
+         {
+            bsonDecimal decimal ;
+            decimal.init() ;
+            decimal.fromString( e.String().c_str() ) ;
+            builder.append( fieldName, decimal ) ;
+         }
+         break ;
+      }
       case MaxKey :
          builder.appendMaxKey( fieldName ) ;
          break ;

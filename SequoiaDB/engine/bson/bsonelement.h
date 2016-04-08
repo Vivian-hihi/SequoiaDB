@@ -525,6 +525,8 @@ namespace bson {
         switch( type() ) {
         case NumberLong:
             return *reinterpret_cast< const long long* >( value() ) != 0;
+        case NumberDecimal:
+            return ( numberDecimal().compare(0) ) != 0 ;
         case NumberDouble:
             return *reinterpret_cast< const double* >( value() ) != 0;
         case NumberInt:
