@@ -53,7 +53,7 @@ namespace engine
       PD_TRACE_ENTRY( SDB__UTILCOMPRESSORSNAPPY_COMPRESSBOUND ) ;
       (void)dictionary ;
 
-      SDB_ASSERT( UTIL_INVALID_DICT != dictionary,
+      SDB_ASSERT( UTIL_INVALID_DICT == dictionary,
                   "snappy does not use any dictionary" ) ;
       maxCompressedLen = ( UINT32 )snappy::MaxCompressedLength( srcLen ) ;
 
@@ -72,7 +72,7 @@ namespace engine
       size_t resultLen = 0 ;
       (void)dictionary ;
 
-      SDB_ASSERT( UTIL_INVALID_DICT != dictionary,
+      SDB_ASSERT( UTIL_INVALID_DICT == dictionary,
                   "snappy does not use any dictionary" ) ;
       SDB_ASSERT( destLen >= (UINT32)snappy::MaxCompressedLength( sourceLen ),
                   "Buffer for decompressed data is not big enough" ) ;
@@ -120,7 +120,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__UTILCOMPRESSORSNAPPY_DECOMPRESS ) ;
 
-      SDB_ASSERT( UTIL_INVALID_DICT != dictionary,
+      SDB_ASSERT( UTIL_INVALID_DICT == dictionary,
                  "snappy does not use any dictionary" ) ;
 
       if ( !snappy::RawUncompress ( source, (size_t)sourceLen, dest ) )
