@@ -31,6 +31,7 @@ clientLibFiles = [
    path + "SequoiaDB/engine/pd/pdFunctionList.cpp",
    path + "SequoiaDB/engine/client/bson/numbers.c",
    path + "SequoiaDB/engine/client/bson/bson.c",
+   path + "SequoiaDB/engine/client/bson/common_decimal.c",
    path + "SequoiaDB/engine/client/bson/encoding.c",
    path + "SequoiaDB/engine/client/common.c",
    path + "SequoiaDB/engine/client/cJSON.c",
@@ -61,6 +62,7 @@ clientLibFiles2 = [
    path + "SequoiaDB/engine/client/bson/numbers.c",
    path + "SequoiaDB/engine/client/bson/bson.c",
    path + "SequoiaDB/engine/client/bson/encoding.c",
+   path + "SequoiaDB/engine/client/bson/common_decimal.c",
    path + "SequoiaDB/engine/client/bson/common_decimal.h"
    ]
 
@@ -91,6 +93,7 @@ srcFiles = [
    curPath + "pdFunctionList.cpp",
    curPath + "bson/numbers.c",
    curPath + "bson/bson.c",
+   curPath + "bson/common_decimal.c",
    curPath + "bson/encoding.c",
    curPath + "common.c",
    curPath + "cJSON.c",
