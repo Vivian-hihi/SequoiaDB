@@ -359,7 +359,7 @@
 		<exec dir="${RELEASE_DIR}" executable="builder" failonerror="true">
 			<arg line="build sequoiadb_server.xml --setvars project.version=${projects.version}  --setvars platform=${os.and.platform} --setvars enterpriseversion=${version.name} --setvars project.outputDirectory=${RELEASE_DIR}" />
 		</exec>
-		<echo message="builder build sequoiadb_server.xml --setvars projects.version=${projects.version}  --setvars platform=${os.and.platform} --setvars enterpriseversion=${version.name} --setvars project.outputDirectory=${RELEASE_DIR}" />
+		<echo message="builder build sequoiadb_server.xml --setvars project.version=${projects.version}  --setvars platform=${os.and.platform} --setvars enterpriseversion=${version.name} --setvars project.outputDirectory=${RELEASE_DIR}" />
 		<!-- <echo message="Make relase package completed." />
 		<echo message="os.name=${os.name}, os.arch=${os.arch}" />
 		<if>
