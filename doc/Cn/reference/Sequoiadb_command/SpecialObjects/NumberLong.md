@@ -1,3 +1,7 @@
+##Json 格式##
+
+***{ "$numberLong" : &lt;使用字符串指定64位整数&gt; }***
+
 ##函数格式##
 
 +------------------------+------------------------+
@@ -17,5 +21,6 @@ NumerLong 中数字类型的参数类型为 double。当操作超过精度的值
 -   插入一个长整型
 
 <pre class="prettyprint lang-javascript">
+> db.foo.bar.insert({number:{$numberLong:"100"}})
 > db.foo.bar.insert({number:NumberLong(100)})
 > db.foo.bar.insert({number:NumberLong("100")})</pre>
