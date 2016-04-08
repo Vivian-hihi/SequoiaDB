@@ -151,7 +151,7 @@
       </exec>
       <echo message="${before.testcase.output}" />
 
-        <echo message="********************************************"/>
+        <echo message="--------------------begin testcase----------------------------"/>
 		<exec executable="${bin.dir}/sdb" dir="" timeout="20000" failonerror="false">
 			<arg line="-s &quot;db.msg('Begin testcase[${testcase.fullname}]');&quot;" />
 		</exec>
@@ -167,7 +167,7 @@
 		<exec executable="${bin.dir}/sdb" dir="" timeout="2000" failonerror="false">
 			<arg line="-s &quot;db.msg('End testcase[${testcase.fullname}]');&quot;" />
 		</exec>      
-        <echo message="********************************************"/>
+        <echo message="--------------------end testcase----------------------------"/>
         
       <property name="after.testcase.cmd" value=" -e &quot;var CHANGEDPREFIX='${CHANGEDSTRING}'; var COORDSVCNAME='${coord.service.port}' ;&quot; -f &quot;${testcase.path}/libs/func.js,${testcase.path}/libs/after_usecase.js&quot;" />
       <echo message="Exec: sdb${after.testcase.cmd}" />
@@ -199,8 +199,7 @@
             <echo file="${reports.path}/${testsuite.report.name}.xml" append="true" 
                   message="&lt;testcase classname=&quot;${testsuite.class.name}&quot; name=&quot;${testcase.name}&quot; begin_time=&quot;${testcase.begin.time}&quot; end_time=&quot;${testcase.end.time}&quot; time=&quot;${testcase.cost.time}&quot; path=&quot;${testcase.path}&quot; status=&quot;fail&quot;&gt;&#10;&lt;failure&gt;&#10;&lt;![CDATA[&#10;COMMAND : sdb${testcase.cmd}&#10;RETURNCODE : ${testcase.retcode}&#10;SDB VERSION : &#10;${sdb.version}&#10;&#10;ERROR MESSAGE : &#10;${testcase.output}&#10;&#10;Download the test log :&#10;${URL.download.pre}/${test.log}.tar.gz]]&gt;&#10;&lt;/failure&gt;&#10;&lt;/testcase&gt;&#10;" />                             
          </else>
-      </if>  
-      <echo message="********************************************"/>         
+      </if>          
    </target>
 
    <target name="Exec-allprepare" >
