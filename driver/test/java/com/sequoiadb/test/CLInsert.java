@@ -145,7 +145,7 @@ public class CLInsert {
 		System.out.println("begin to test insertNumberLong ...");
 
         String json = "{a:{$numberLong:\"10000000\"}}" ;
-		String result = "\"a\" : { \"$numberLong\" : \"10000000\"}" ;
+		String result = "10000000" ;
 		
         cl.insert(json);
         BSONObject qobj = new BasicBSONObject();

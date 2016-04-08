@@ -358,10 +358,8 @@ namespace SequoiaDB.Bson.IO
             {
                 case JsonOutputMode.Strict:
                 case JsonOutputMode.JavaScript:
-                    WriteStartDocument();
-                    WriteNameHelper("$numberLong");
-                    _textWriter.write("\"{0}\"", value));                    
-                    WriteEndDocument();
+                    WriteNameHelper(Name);
+                    _textWriter.Write(value);
                     break;
                 case JsonOutputMode.TenGen:
                 case JsonOutputMode.Shell:

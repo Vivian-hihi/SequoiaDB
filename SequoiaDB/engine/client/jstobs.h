@@ -56,6 +56,9 @@
 #define TIME_STAMP_TIMESTAMP_MIN (-2147483648LL)
 #define TIME_STAMP_TIMESTAMP_MAX  (2147483647LL)
 
+#define LONG_JS_MIN (-9007199254740991LL)
+#define LONG_JS_MAX  (9007199254740991LL)
+
 #define TIME_FORMAT "%d-%d-%d-%d.%d.%d.%d"
 #define TIME_FORMAT_IOS "%d-%d-%dT%d:%d:%d.%dZ"
 #define TIME_OUTPUT_CSV_FORMAT "%04d-%02d-%02d-%02d.%02d.%02d.%06d"

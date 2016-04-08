@@ -824,8 +824,7 @@ namespace bson {
             s.appendDoubleNice( number() );
             break;
         case NumberLong:
-            s << "{ \"$numberLong\": \"";
-            s << _numberLong() << "\" }";         
+            s << _numberLong();
             break;
         case NumberDecimal:
             s << _numberDecimalStr();

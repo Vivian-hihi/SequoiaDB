@@ -773,18 +773,25 @@ static BOOLEAN bsonConvertJson ( CHAR **pbuf,
           * snprintf */
          CHAR temp[ BSON_TEMP_SIZE_512 ] ;
          CHAR *format ;
+         int64_t val = bson_iterator_long( &i ) ;
          memset ( temp, 0, BSON_TEMP_SIZE_512 ) ;
-         format = "{ \"$numberLong\": \"%lld\" }" ;
+         if ( val < LONG_JS_MIN || val > LONG_JS_MAX )
+         {
+            format = "{ \"$numberLong\": \"%lld\" }" ;
+         }
+         else
+         {
+            format = "%lld" ;
+         }
+         
 #ifdef WIN32
          _snprintf ( temp,
                      BSON_TEMP_SIZE_512,
-                     format,
-                     ( unsigned long long )bson_iterator_long( &i ) ) ;
+                     format, val ) ;
 #else
          snprintf ( temp,
                     BSON_TEMP_SIZE_512,
-                     format,
-                    ( unsigned long long )bson_iterator_long( &i ) ) ;
+                     format, val ) ;
 #endif
          
          bsonConvertJsonRawConcat ( pbuf, left, temp, FALSE ) ;
