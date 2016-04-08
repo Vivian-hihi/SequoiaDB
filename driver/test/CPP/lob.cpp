@@ -284,12 +284,12 @@ TEST( lob, lob_connection_was_destruct )
    CHECK_MSG("%s%d\n","rc = ",rc) ;
    ASSERT_EQ( SDB_OK, rc ) ;
    cout << "Auto build lob's oid is: " << oid.str().c_str() << endl ;
+   db.disconnect() ;
    }
    // close
    rc = lob.close() ;
    CHECK_MSG("%s%d\n","rc = ",rc) ;
-   ASSERT_EQ( SDB_NOT_CONNECTED, rc ) ;
-   db.disconnect() ;
+   ASSERT_EQ( SDB_NOT_CONNECTED, rc ) ;   
 }
 
 TEST( lob, lobWriteZeroSizeAndRead )
