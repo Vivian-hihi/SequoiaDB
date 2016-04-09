@@ -204,7 +204,9 @@ namespace engine
       UINT32 getMaxNodeNum() { return _maxNodeNum ; }
       UINT32 getCodeSize() { return _head->_codeSize ; }
       UINT32 getMaxCode() { return _head->_maxCode ; }
-      UINT32 getFinalSize() { return _finalSize ; }
+
+      // TBD: Temporary solution, need to calculate the size
+      UINT32 getFinalSize() { return ( 10 << 20 ) ; }
 
       OSS_INLINE LZW_CODE addStr( LZW_CODE preCode, UINT8 ch ) ;
       OSS_INLINE LZW_CODE findStr( LZW_CODE preCode, UINT8 ch ) ;
