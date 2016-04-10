@@ -90,7 +90,7 @@ namespace engine
       UINT32 length = 0;
       UINT32 remainLen = sourceLen ;
       utilLZWContext context ;
-      LZW_CODE code = DICT_INVALID_NODE ;
+      LZW_CODE code = UTIL_INVALID_DICT_CODE ;
       utilLZWDictionary dictionary ;
 
       if ( UTIL_INVALID_DICT == dictHandle )
@@ -150,7 +150,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__UTILCOMPRESSORLZW_DECOMPRESS ) ;
       UINT32 strLen = 0 ;
-      LZW_CODE code = DICT_INVALID_NODE ;
+      LZW_CODE code = UTIL_INVALID_DICT_CODE ;
       UINT32 totalOut = 0 ;
       utilLZWContext context ;
       utilLZWDictionary dictionary ;

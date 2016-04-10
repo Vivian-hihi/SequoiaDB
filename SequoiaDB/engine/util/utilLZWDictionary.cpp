@@ -82,9 +82,9 @@ namespace engine
 
       for ( UINT32 i = 0; i < maxNodeNum; ++i )
       {
-         _nodes[i]._prev = DICT_INVALID_NODE ;
-         _nodes[i]._first = DICT_INVALID_NODE ;
-         _nodes[i]._next = DICT_INVALID_NODE ;
+         _nodes[i]._prev = UTIL_INVALID_DICT_CODE ;
+         _nodes[i]._first = UTIL_INVALID_DICT_CODE ;
+         _nodes[i]._next = UTIL_INVALID_DICT_CODE ;
          /*
           * 1 byte(8 bits) can represent 256 characters. Every search will start
           * with them.
@@ -145,7 +145,7 @@ namespace engine
       code = _codeMap[parentIdx] ;
       code = _nodes[code]._first ;
 
-      if ( DICT_INVALID_NODE == code )
+      if ( UTIL_INVALID_DICT_CODE == code )
       {
          CST_SET_CHILD( _cst[parentIdx], CST_INVALID_CHILD ) ;
          goto done ;
@@ -159,7 +159,7 @@ namespace engine
          CST_SET_CHAR( _cst[nextIdx], _nodes[code]._ch ) ;
          code = _nodes[code]._next ;
          nextIdx++ ;
-      } while ( DICT_INVALID_NODE != code ) ;
+      } while ( UTIL_INVALID_DICT_CODE != code ) ;
 
    done:
       return ;
@@ -176,7 +176,7 @@ namespace engine
        */
       #define DICT_MAX_STR_LEN 256
       UINT32 len = 0 ;
-      LZW_CODE matchCode = DICT_INVALID_NODE ;
+      LZW_CODE matchCode = UTIL_INVALID_DICT_CODE ;
       UINT32 matchLen = 0 ;
       BYTE buff[DICT_MAX_STR_LEN] = { 0 } ;
 
@@ -236,7 +236,7 @@ namespace engine
 
       /* Set all its substrings */
       preCode = _nodes[code]._prev ;
-      while ( DICT_INVALID_NODE != preCode )
+      while ( UTIL_INVALID_DICT_CODE != preCode )
       {
          item = &_dst[preCode] ;
          *item = 0 ;
@@ -274,7 +274,7 @@ namespace engine
        */
       for ( currCode = 0; currCode <= _head->_maxCode; ++currCode )
       {
-         if ( DICT_INVALID_NODE != _nodes[currCode]._first )
+         if ( UTIL_INVALID_DICT_CODE != _nodes[currCode]._first )
          {
             continue ;
          }
@@ -356,8 +356,9 @@ namespace engine
       UINT8 ch = 0 ;
       UINT32 pos = 0 ;
       UINT32 strLen = 0 ;
-      LZW_CODE code = DICT_INVALID_NODE ;
-      LZW_CODE nextCode = DICT_INVALID_NODE ;
+      BOOLEAN restart = FALSE ;
+      LZW_CODE code = UTIL_INVALID_DICT_CODE ;
+      LZW_CODE nextCode = UTIL_INVALID_DICT_CODE ;
       LZW_CODE maxCode = _dictionary.getMaxNodeNum() - 1 ;
 
       ch = source[0] ;
@@ -368,9 +369,24 @@ namespace engine
 
       for ( ; pos < sourceLen; ++pos )
       {
-         ch = source[pos] ;
+         if ( !restart )
+         {
+            ch = source[pos] ;
+         }
+         else
+         {
+            code = source[pos] ;
+            if ( pos + 1 == sourceLen )
+            {
+               break ;
+            }
+
+            ch = source[++pos] ;
+            restart = FALSE ;
+         }
+
          nextCode = _dictionary.findStr( code, ch ) ;
-         if ( DICT_INVALID_NODE == nextCode )
+         if ( UTIL_INVALID_DICT_CODE == nextCode )
          {
             nextCode = _dictionary.addStr( code, ch ) ;
             if ( nextCode == maxCode )
@@ -389,6 +405,10 @@ namespace engine
          {
             code = nextCode ;
             strLen++ ;
+            if ( UTIL_MAX_DICT_STR_LEN == strLen )
+            {
+               restart = TRUE ;
+            }
          }
       }
 

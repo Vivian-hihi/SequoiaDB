@@ -80,11 +80,8 @@ namespace engine
       snappy::RawCompress ( source, (size_t)sourceLen, dest, &resultLen ) ;
       destLen = ( UINT32 )resultLen ;
 
-   done:
       PD_TRACE_EXITRC( SDB__UTILCOMPRESSORSNAPPY_COMPRESS, rc ) ;
       return rc ;
-   error:
-      goto done ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION( SDB__UTILCOMPRESSORSNAPPY_GETUNCOMPRESSEDLEN, "_utilCompressorSnappy::getUncompressedLen")

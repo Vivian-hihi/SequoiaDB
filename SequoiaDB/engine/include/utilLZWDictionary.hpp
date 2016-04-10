@@ -44,21 +44,20 @@
 
 namespace engine
 {
-   #define DICT_INVALID_NODE         4294967295
-
    /*
-    * Internally we use a 32bit buffer to do continuous bits reading and,
+    * Internally we use a 32bit buffer to do continuous bits reading and
     * writting, so the maximum node code should be less than 2^24(16M).
     */
-   #define MAX_NODE_CODE        ( 1 << 24 - 1 )
+   #define UTIL_INVALID_DICT_CODE        16777215
+   #define UTIL_MAX_DICT_CODE            16777214
 
    /*
     * 0~255 represent 256 diffrent symbols(initial state of the dictionary),
     * duplicated strings can be handle only when more are added to the
     * dictionary.
     */
-   #define MIN_NODE_NUM         ( 256 + 1 )
-   #define MAX_STREAM_BUFF_SIZE 256
+   #define UTIL_MIN_DICT_ITEM_NUM         257
+   #define UTIL_MAX_DICT_STR_LEN        255
 
    typedef UINT32 LZW_CODE ;
 
@@ -257,7 +256,7 @@ namespace engine
     * _utilLZWDictionary as well as all the nodes will be stored together
     */
    #define MIN_DICT_SIZE \
-      ( sizeof( _utilLZWDictionary ) + sizeof( _utilLZWNode) * MIN_NODE_NUM )
+      ( sizeof( _utilLZWDictionary ) + sizeof( _utilLZWNode) * UTIL_MIN_DICT_ITEM_NUM )
 
    class _utilLZWContext : public SDBObject
    {
@@ -341,7 +340,7 @@ namespace engine
       if ( _head->_maxCode + 1 == _maxNodeNum )
       {
          /* Dictionary is full. */
-         return DICT_INVALID_NODE ;
+         return UTIL_INVALID_DICT_CODE ;
       }
 
       _head->_maxCode++ ;
@@ -355,17 +354,17 @@ namespace engine
       }
 
       _nodes[_head->_maxCode]._prev = preCode ;
-      _nodes[_head->_maxCode]._first = DICT_INVALID_NODE ;
+      _nodes[_head->_maxCode]._first = UTIL_INVALID_DICT_CODE ;
 
-      if ( DICT_INVALID_NODE == _nodes[preCode]._first )
+      if ( UTIL_INVALID_DICT_CODE == _nodes[preCode]._first )
       {
          _nodes[preCode]._first = _head->_maxCode ;
       }
       else
       {
-         currCode = DICT_INVALID_NODE ;
+         currCode = UTIL_INVALID_DICT_CODE ;
          nextCode = _nodes[preCode]._first ;
-         while ( ( DICT_INVALID_NODE != nextCode )
+         while ( ( UTIL_INVALID_DICT_CODE != nextCode )
                  && ( ch > _nodes[nextCode]._ch ) )
          {
             currCode = nextCode ;
@@ -373,7 +372,7 @@ namespace engine
          }
 
          _nodes[_head->_maxCode]._next = nextCode ;
-         if ( DICT_INVALID_NODE == currCode )
+         if ( UTIL_INVALID_DICT_CODE == currCode )
          {
             _nodes[preCode]._first = _head->_maxCode ;
          }
@@ -393,7 +392,7 @@ namespace engine
    {
       LZW_CODE nextCode ;
 
-      for ( nextCode = _nodes[preCode]._first; nextCode != DICT_INVALID_NODE;
+      for ( nextCode = _nodes[preCode]._first; nextCode != UTIL_INVALID_DICT_CODE;
             nextCode = _nodes[nextCode]._next )
       {
          if ( ch > _nodes[nextCode]._ch )
@@ -411,7 +410,7 @@ namespace engine
          }
       }
 
-      return DICT_INVALID_NODE ;
+      return UTIL_INVALID_DICT_CODE ;
    }
 
    OSS_INLINE UINT32 _utilLZWDictionary::getStr( LZW_CODE code, UINT8 *buff,
@@ -421,7 +420,7 @@ namespace engine
       UINT32 i = strLen ;
       SDB_ASSERT( bufSize >= strLen, "Invalid argument, bufSize too small" ) ;
 
-      while ( code != DICT_INVALID_NODE && i )
+      while ( code != UTIL_INVALID_DICT_CODE && i )
       {
          buff[--i] = _nodes[code]._ch ;
          code = _nodes[code]._prev ;
