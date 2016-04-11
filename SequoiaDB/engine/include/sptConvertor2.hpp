@@ -90,6 +90,8 @@ private:
 
    INT32 _toBoolean( const jsval &val, BOOLEAN &bL ) ;
 
+   BOOLEAN _isValidNumberLong( const CHAR *value ) ;
+
 private:
    JSContext *_cx ;
 } ;
