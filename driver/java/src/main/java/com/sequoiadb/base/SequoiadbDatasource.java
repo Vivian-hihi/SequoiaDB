@@ -197,7 +197,7 @@ public class SequoiadbDatasource extends SequoiadbDatasourceImpl
 	 * @param timeout the time for waiting for connection in millisecond. 0 for waiting until a connection is available.
 	 * @return Sequoiadb the connection for using
 	 * @exception com.sequoiadb.Exception.BaseException
-	 * @exception InterruptedException Actually, nothing happen, we 
+	 * @exception InterruptedException Actually, nothing happen. Throw this for compatibility reason.
 	 * @note When the pool runs out, a request will wait up to 5 seconds. When time is up, if the pool 
 	 * 		 still has no idle connection, it throws BaseException with the type of "SDB_DRIVER_DS_RUNOUT". 
 	 */
@@ -212,9 +212,10 @@ public class SequoiadbDatasource extends SequoiadbDatasourceImpl
 	 * @return Sequoiadb the connection for using
 	 * @exception com.sequoiadb.Exception.BaseException
 	 *            when connection pool run out, throws BaseException with the type of "SDB_DRIVER_DS_RUNOUT"
+	 * @exception InterruptedException Actually, nothing happen. Throw this for compatibility reason.
 	 * @since v1.12.6 & v2.2
 	 */
-	public Sequoiadb getConnection(long timeout) throws BaseException {
+	public Sequoiadb getConnection(long timeout) throws BaseException, InterruptedException {
 		return super.getConnection(timeout);
 	}
 	

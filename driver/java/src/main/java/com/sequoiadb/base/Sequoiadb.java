@@ -570,6 +570,8 @@ public class Sequoiadb {
 	 */
 	public CollectionSpace createCollectionSpace(String csName, BSONObject options)
 			throws BaseException {
+		if (csName == null || csName == "")
+			throw new BaseException("SDB_INVALIDARG", csName);
 		if (isCollectionSpaceExist(csName))
 			throw new BaseException("SDB_DMS_CS_EXIST", csName);
 		SDBMessage rtnSDBMessage = createCS(csName, options);

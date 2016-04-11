@@ -80,8 +80,6 @@ public class ConcreteBalanceStrategy implements IConnectStrategy {
 	private HashMap<String, LinkedList<ConnItem>> _idleConnItemMap = new HashMap<String, LinkedList<ConnItem>>();
 	private HashMap<String, CountInfo> _countInfoMap = new HashMap<String, CountInfo>();
 	private TreeSet<CountInfo> _countInfoSet = new TreeSet<CountInfo>();
-	//private ReentrantLock _lockForIdleConnItemMap = new ReentrantLock();
-	//private ReentrantLock _lockForCountInfo = new ReentrantLock();
 	private ReentrantLock _lock = new ReentrantLock();
 	private static CountInfo _dumpCountInfo = new CountInfo("", 0, false);
 	
