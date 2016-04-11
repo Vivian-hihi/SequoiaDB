@@ -8,7 +8,6 @@ Java 驱动的连接池提供给用户一个快速获取连接实例的途径。
 
 ## 例子##
 <pre class="prettyprint lang-javascript">
-
 package com.sequoiadb.samples;
 
 import java.util.ArrayList;
@@ -149,7 +148,6 @@ class QueryTask implements Runnable {
 }
 
 public class Datasource {
-
 	public static void main(String[] args) throws InterruptedException {
 		ArrayList<String> addrs = new ArrayList<String>();
 		String user = "";
@@ -157,6 +155,7 @@ public class Datasource {
 		ConfigOptions nwOpt = new ConfigOptions();
 		DatasourceOptions dsOpt = new DatasourceOptions();
 		SequoiadbDatasource ds = null;
+		
 		// 提供coord节点地址	
 		addrs.add("192.168.20.165:11810");
 		addrs.add("192.168.20.166:11810");
@@ -183,14 +182,17 @@ public class Datasource {
 		
 		// 建立连接池
 		ds = new SequoiadbDatasource(addrs, user, password, nwOpt, dsOpt);
+		
 		// 使用连接池运行任务
 		runTask(ds);
+		
 		// 任务结束后，关闭连接池
 		ds.close();
 	}
 	
 	static void runTask(SequoiadbDatasource ds) throws InterruptedException {
 		String clFullName = "mycs.mycl";
+		
 		// 准备任务
 		Thread createCLTask = new Thread(new CreateCLTask(ds, clFullName));
 		Thread insertTask = new Thread(new InsertTask(ds, clFullName));
@@ -199,9 +201,11 @@ public class Datasource {
 		// 创建集合
 		createCLTask.start();
 		createCLTask.join();
+		
 		// 往集合插记录
 		insertTask.start();
 		Thread.sleep(3000);
+		
 		// 从集合中查记录
 		queryTask.start();
 		
@@ -209,6 +213,4 @@ public class Datasource {
 		insertTask.join();
 		queryTask.join();
 	}
-}
-
-</pre>
+}</pre>
