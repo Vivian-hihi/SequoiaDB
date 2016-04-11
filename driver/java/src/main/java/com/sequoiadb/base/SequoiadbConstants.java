@@ -241,8 +241,7 @@ public class SequoiadbConstants {
 	public final static String BIG_ENDIAN = "BIG_ENDIAN";
 	public final static String SYSTEM_ENDIAN = LITTLE_ENDIAN;
 
-	public final static byte[] ZERO_NODEID = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-			0 };
+	public final static byte[] ZERO_NODEID = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 	
 	public final static int DEFAULT_VERSION    = 0;
 	public final static short DEFAULT_W        = 1;

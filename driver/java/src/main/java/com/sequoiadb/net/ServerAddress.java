@@ -115,4 +115,8 @@ public class ServerAddress {
 		host = addr.getHostName();
 		port = addr.getPort();
 	}
+	
+	public String toString() {
+		return hostAddress.toString().split("/")[1];
+	}
 }

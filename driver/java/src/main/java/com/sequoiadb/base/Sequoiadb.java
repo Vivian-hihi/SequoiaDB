@@ -53,10 +53,7 @@ import com.sequoiadb.util.SDBMessageHelper;
  */
 public class Sequoiadb {
 	private ServerAddress serverAddress;
-	// private CollectionSpace currentCollectionSpace;
 	private IConnection connection;
-	// private ConcurrentMap<String, CollectionSpace> collectionSpaces = new
-	// ConcurrentHashMap<String, CollectionSpace>();
 	private String userName;
 	private String password;
 	boolean endianConvert;
@@ -454,11 +451,25 @@ public class Sequoiadb {
 	}
 
 	/**
-	 * @fn boolean isClosed()
-	 * @brief Judge wether the connection is connected or not.
-	 * @return if the connection is connected, return true
+	 * @fn void releaseResource()
+	 * @brief Release the resource the connection contains.
+	 * @return void
+	 * @exception com.sequoiadb.exception.BaseException
+	 * @since v1.2.6 && v2.2
 	 */
-	private boolean isClosed(){
+	public void releaseResource(){
+		// let the receive buffer shrink to default value
+		closeAllCursors();
+		connection.shrinkBuffer();
+	}
+	
+	/**
+	 * @fn boolean isClosed()
+	 * @brief Judge whether the connection is connected or not.
+	 * @return return true for the connection has been closed
+	 * @since v1.2.6 && v2.2
+	 */
+	public boolean isClosed(){
 		if (connection == null)
 			return true;
 		return connection.isClosed();
@@ -466,7 +477,7 @@ public class Sequoiadb {
 	
 	/**
 	 * @fn boolean isValid()
-	 * @brief Judge wether the connection is valid or not.
+	 * @brief Judge whether the connection is valid or not.
 	 * @return if the connection is valid, return true
 	 * @exception com.sequoiadb.exception.BaseException
 	 */
@@ -1813,11 +1824,6 @@ public class Sequoiadb {
 		if (shardsCursor == null || !shardsCursor.hasNext())
 			return null;
 		return shardsCursor.getNext();
-	}
-
-	void releaseResource(){
-		// let the receive buffer shrink to default value
-		connection.shrinkBuffer();
 	}
 	
 	private void initConnection(ConfigOptions options) throws BaseException {
