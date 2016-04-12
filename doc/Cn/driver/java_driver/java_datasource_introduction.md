@@ -7,7 +7,7 @@ Java 驱动的连接池提供给用户一个快速获取连接实例的途径。
 详情请查看相关 [Java API](api/java/html/index.html) 介绍。
 
 ## 例子##
-<pre class="prettyprint lang-java">
+<pre><code>
 package com.sequoiadb.samples;
 
 import java.util.ArrayList;
@@ -211,4 +211,4 @@ class QueryTask implements Runnable {
 		// 将连接对象归还连接池
 		ds.releaseConnection(db);
 	}
-}</pre>
+}</code></pre>
