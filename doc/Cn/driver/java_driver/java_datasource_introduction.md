@@ -7,7 +7,7 @@ Java 驱动的连接池提供给用户一个快速获取连接实例的途径。
 详情请查看相关 [Java API](api/java/html/index.html) 介绍。
 
 ## 例子##
-<pre class="prettyprint lang-javascript">
+<pre class="prettyprint lang-java">
 package com.sequoiadb.samples;
 
 import java.util.ArrayList;
@@ -22,6 +22,72 @@ import com.sequoiadb.datasource.ConnectStrategy;
 import com.sequoiadb.datasource.DatasourceOptions;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.net.ConfigOptions;
+
+public class Datasource {
+	public static void main(String[] args) throws InterruptedException {
+		ArrayList<String> addrs = new ArrayList<String>();
+		String user = "";
+		String password = "";
+		ConfigOptions nwOpt = new ConfigOptions();
+		DatasourceOptions dsOpt = new DatasourceOptions();
+		SequoiadbDatasource ds = null;
+		// 提供coord节点地址	
+		addrs.add("192.168.20.165:11810");
+		addrs.add("192.168.20.166:11810");
+		addrs.add("ubuntu1504:11810");
+		
+		// 设置网络参数
+		nwOpt.setConnectTimeout(500);                      // 建连超时时间为500ms。
+		nwOpt.setMaxAutoConnectRetryTime(0);               // 建连失败后重试时间为0ms。
+		
+		// 设置连接池参数
+		dsOpt.setMaxCount(500);                            // 连接池最多能提供500个连接。
+		dsOpt.setDeltaIncCount(20);                        // 每次增加20个连接。
+		dsOpt.setMaxIdleCount(20);                         // 连接池空闲时，保留20个连接。
+		dsOpt.setKeepAliveTimeout(0);                      // 池中空闲连接存活时间。单位:毫秒。
+		                                                   // 0表示不关心连接隔多长时间没有收发消息。
+		dsOpt.setCheckInterval(60 * 1000);                 // 每隔60秒将连接池中多于
+		                                                   // MaxIdleCount限定的空闲连接关闭，
+		                                                   // 并将存活时间过长（连接已停止收发
+		                                                   // 超过keepAliveTimeout时间）的连接关闭。
+		dsOpt.setSyncCoordInterval(0);                     // 向catalog同步coord地址的周期。单位:毫秒。
+		                                                   // 0表示不同步。
+		dsOpt.setValidateConnection(false);                // 连接出池时，是否检测连接的可用性，默认不检测。
+		dsOpt.setConnectStrategy(ConnectStrategy.BALANCE); // 默认使用coord地址负载均衡的策略获取连接。
+		
+		// 建立连接池
+		ds = new SequoiadbDatasource(addrs, user, password, nwOpt, dsOpt);
+		
+		// 使用连接池运行任务
+		runTask(ds);
+		
+		// 任务结束后，关闭连接池
+		ds.close();
+	}
+	
+	static void runTask(SequoiadbDatasource ds) throws InterruptedException {
+		String clFullName = "mycs.mycl";
+		// 准备任务
+		Thread createCLTask = new Thread(new CreateCLTask(ds, clFullName));
+		Thread insertTask = new Thread(new InsertTask(ds, clFullName));
+		Thread queryTask = new Thread(new QueryTask(ds, clFullName));
+		
+		// 创建集合
+		createCLTask.start();
+		createCLTask.join();
+		
+		// 往集合插记录
+		insertTask.start();
+		Thread.sleep(3000);
+		
+		// 从集合中查记录
+		queryTask.start();
+		
+		// 等待任务结束
+		insertTask.join();
+		queryTask.join();
+	}
+}
 
 class CreateCLTask implements Runnable {
 	private SequoiadbDatasource ds;
@@ -144,73 +210,5 @@ class QueryTask implements Runnable {
 		}
 		// 将连接对象归还连接池
 		ds.releaseConnection(db);
-	}
-}
-
-public class Datasource {
-	public static void main(String[] args) throws InterruptedException {
-		ArrayList<String> addrs = new ArrayList<String>();
-		String user = "";
-		String password = "";
-		ConfigOptions nwOpt = new ConfigOptions();
-		DatasourceOptions dsOpt = new DatasourceOptions();
-		SequoiadbDatasource ds = null;
-		
-		// 提供coord节点地址	
-		addrs.add("192.168.20.165:11810");
-		addrs.add("192.168.20.166:11810");
-		addrs.add("ubuntu1504:11810");
-		
-		// 设置网络参数
-		nwOpt.setConnectTimeout(500);                      // 建连超时时间为500ms。
-		nwOpt.setMaxAutoConnectRetryTime(0);               // 建连失败后重试时间为0ms。
-		
-		// 设置连接池参数
-		dsOpt.setMaxCount(500);                            // 连接池最多能提供500个连接。
-		dsOpt.setDeltaIncCount(20);                        // 每次增加20个连接。
-		dsOpt.setMaxIdleCount(20);                         // 连接池空闲时，保留20个连接。
-		dsOpt.setKeepAliveTimeout(0);                      // 池中空闲连接存活时间。单位:毫秒。
-		                                                   // 0表示不关心连接隔多长时间没有收发消息。
-		dsOpt.setCheckInterval(60 * 1000);                 // 每隔60秒将连接池中多于
-		                                                   // MaxIdleCount限定的空闲连接关闭，
-		                                                   // 并将存活时间过长（连接已停止收发
-		                                                   // 超过keepAliveTimeout时间）的连接关闭。
-		dsOpt.setSyncCoordInterval(0);                     // 向catalog同步coord地址的周期。单位:毫秒。
-		                                                   // 0表示不同步。
-		dsOpt.setValidateConnection(false);                // 连接出池时，是否检测连接的可用性，默认不检测。
-		dsOpt.setConnectStrategy(ConnectStrategy.BALANCE); // 默认使用coord地址负载均衡的策略获取连接。
-		
-		// 建立连接池
-		ds = new SequoiadbDatasource(addrs, user, password, nwOpt, dsOpt);
-		
-		// 使用连接池运行任务
-		runTask(ds);
-		
-		// 任务结束后，关闭连接池
-		ds.close();
-	}
-	
-	static void runTask(SequoiadbDatasource ds) throws InterruptedException {
-		String clFullName = "mycs.mycl";
-		
-		// 准备任务
-		Thread createCLTask = new Thread(new CreateCLTask(ds, clFullName));
-		Thread insertTask = new Thread(new InsertTask(ds, clFullName));
-		Thread queryTask = new Thread(new QueryTask(ds, clFullName));
-		
-		// 创建集合
-		createCLTask.start();
-		createCLTask.join();
-		
-		// 往集合插记录
-		insertTask.start();
-		Thread.sleep(3000);
-		
-		// 从集合中查记录
-		queryTask.start();
-		
-		// 等待任务结束
-		insertTask.join();
-		queryTask.join();
 	}
 }</pre>
