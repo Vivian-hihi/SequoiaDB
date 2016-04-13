@@ -188,7 +188,7 @@ namespace engine
          ossSleep( OSS_ONE_SEC ) ;
          ++timeCounter ;
 
-         if ( interval > 0 && timeCounter >= (UINT32)interval )
+         if ( interval > 0 && timeCounter > (UINT32)interval )
          {
             ossPThreadKill( mainCB->getThreadID(), OSS_TEST_SIGNAL ) ;
             timeCounter = 0 ;

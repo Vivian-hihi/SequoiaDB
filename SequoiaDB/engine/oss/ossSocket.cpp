@@ -1232,9 +1232,17 @@ INT32 _ossSocket::_complete( INT32 timeout )
    fd_set wfd ;
    FD_ZERO( &wfd ) ;
    FD_SET( _fd, &wfd ) ;
+
+retry:
    if ( -1 == ::select( _fd + 1, NULL, &wfd, NULL, &tv ) )
    {
-      PD_LOG( PDERROR, "select(2) error: %d(%s)", errno, strerror(errno) ) ;
+      rc = SOCKET_GETLASTERROR ;
+      // if we failed due to interrupt, let's retry
+      if ( SOCKET_EINTR == rc )
+      {
+         goto retry ;
+      }
+      PD_LOG( PDERROR, "select(2) error: %d(%s)", rc, strerror(rc) ) ;
       rc = SDB_SYS ;
       goto error ;
    }
