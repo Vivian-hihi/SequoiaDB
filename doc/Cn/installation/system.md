@@ -160,7 +160,7 @@
 	vm.zone_reclaim_mode = 0
 	vm.overcommit_memory = 0</pre>
 
-	**Note: **
+	**Note:**
 		
 	当数据库可用物理内存不足 8GB 时不需使用 vm.swappiness = 0；上述 dirty 类参数只是建议值，具体系统设置时请按原则（控制系统的 flush 进程只采用脏页超时机制刷新脏页，而不采用脏页比例超支刷新脏页）进行设置。
 
