@@ -314,11 +314,9 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RTN_DICTCREATORJOB__TRANSFERDICT ) ;
       CHAR *dictBuf = NULL ;
-      UINT32 dictBufLen = 0 ;
+      UINT32 dictBufLen = DMS_DICT_MAX_SIZE ;
 
       _dictionary = _creator.getDictionary() ;
-      dictBufLen = _dictionary->getFinalSize() ;
-      SDB_ASSERT( dictBufLen > 0, "Dictionary length is invalid" ) ;
 
       dictBuf = (CHAR*)SDB_OSS_MALLOC( dictBufLen ) ;
       PD_CHECK( dictBuf, SDB_OOM, error, PDERROR,
@@ -426,7 +424,7 @@ namespace engine
       }
 
       /* Now, create the dictionary for the collection. */
-      rc = _creator.prepare( DMS_DICT_MAX_SIZE ) ;
+      rc = _creator.prepare() ;
       PD_RC_CHECK( rc, PDERROR,
                    "Failed to prepare dictionary creator, rc: %d", rc ) ;
 

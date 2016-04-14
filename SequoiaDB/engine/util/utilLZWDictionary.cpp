@@ -52,7 +52,6 @@ namespace engine
       _codeMap = NULL ;
       _dst = NULL ;
       _strArea = NULL ;
-      _strAreaSize = 0 ;
    }
 
    _utilLZWDictionary::~_utilLZWDictionary()
@@ -61,15 +60,13 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__UTILLZWDICTIONARY_INIT, "_utilLZWDictionary::init" )
-   INT32 _utilLZWDictionary::init( UINT32 maxSize )
+   INT32 _utilLZWDictionary::init()
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__UTILLZWDICTIONARY_INIT ) ;
 
-      // TBD: Need to calculate the maximum code number.
-      UINT32 maxNodeNum = 150000 ;
-      UINT32 totalSize =
-            sizeof( utilLZWDictHead ) + sizeof( utilLZWNode ) * maxNodeNum ;
+      UINT32 totalSize = sizeof( utilLZWDictHead )
+                         + sizeof( utilLZWNode ) * UTIL_MAX_DICT_ITEM_NUM ;
 
       _dictBuff = ( CHAR *)SDB_OSS_MALLOC( totalSize ) ;
       PD_CHECK( _dictBuff, SDB_OOM, error, PDERROR,
@@ -78,9 +75,9 @@ namespace engine
 
       _head = ( utilLZWDictHead *)_dictBuff ;
       _nodes = ( utilLZWNode *)( (CHAR *)_head + sizeof( utilLZWDictHead ) ) ;
-      _maxNodeNum = maxNodeNum ;
+      _maxNodeNum = UTIL_MAX_DICT_ITEM_NUM ;
 
-      for ( UINT32 i = 0; i < maxNodeNum; ++i )
+      for ( UINT32 i = 0; i < UTIL_MAX_DICT_ITEM_NUM; ++i )
       {
          _nodes[i]._prev = UTIL_INVALID_DICT_CODE ;
          _nodes[i]._first = UTIL_INVALID_DICT_CODE ;
@@ -128,13 +125,14 @@ namespace engine
       _codeMap = NULL ;
       _dst = NULL ;
       _strArea = NULL ;
-      _strAreaSize = 0 ;
 
       PD_TRACE_EXIT( SDB__UTILLZWDICTIONARY_RESET ) ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__UTILLZWDICTIONARY__FORMATONEGRP, "_utilLZWDictionary::_formatOneGrp" )
    void _utilLZWDictionary::_formatOneGrp( UINT32 parentIdx, UINT32 &nextIdx )
    {
+      PD_TRACE_ENTRY( SDB__UTILLZWDICTIONARY__FORMATONEGRP ) ;
       LZW_CODE code ;
 
       /*
@@ -162,6 +160,7 @@ namespace engine
       } while ( UTIL_INVALID_DICT_CODE != code ) ;
 
    done:
+      PD_TRACE_EXIT( SDB__UTILLZWDICTIONARY__FORMATONEGRP ) ;
       return ;
    }
 
@@ -191,9 +190,10 @@ namespace engine
    }
 #endif   /* _DEBUG */
 
-   INT32 _utilLZWDictionary::_initFinalEnv( CHAR *buff, UINT32 bufLen)
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__UTILLZWDICTIONARY__INITFINALENV, "_utilLZWDictionary::_initFinalEnv" )
+   void _utilLZWDictionary::_initFinalEnv( CHAR *buff, UINT32 bufLen)
    {
-      // TBD: Need to check the length.
+      PD_TRACE_ENTRY( SDB__UTILLZWDICTIONARY__INITFINALENV ) ;
       ossMemset( buff, 0, bufLen ) ;
       ossMemcpy( buff, _head, sizeof( utilLZWDictHead ) ) ;
 
@@ -203,92 +203,182 @@ namespace engine
        */
       _head = ( utilLZWDictHead * )buff ;
       attach( (utilDictHandle)_head ) ;
-      _strAreaSize = bufLen - ( _strArea - (CHAR*)_head ) ;
 
-      return SDB_OK ;
+      PD_TRACE_EXIT( SDB__UTILLZWDICTIONARY__INITFINALENV ) ;
    }
 
-   void _utilLZWDictionary::_formatOneCode( UINT32 &offset, LZW_CODE code )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__UTILLZWDICTIONARY__FORMATREMOTESTR, "_utilLZWDictionary::_formatRemoteStr" )
+   UINT32 _utilLZWDictionary::_formatRemoteStr( LZW_CODE code, UINT32 &offset )
    {
-      UINT32 len = _nodes[code]._len ;
-      DST_ITEM *item = &_dst[code] ;
-      CHAR buff[DST_MAX_LOCAL_LEN] = {0} ;
-      LZW_CODE preCode ;
-      BOOLEAN remote = FALSE ;
+      PD_TRACE_ENTRY( SDB__UTILLZWDICTIONARY__FORMATREMOTESTR ) ;
+      BYTE strBuff[UTIL_MAX_DICT_STR_LEN] = { 0 } ;
+      UINT32 preLen = 0 ;
+      BOOLEAN link = FALSE ;
+      UINT32 totalLen = 0 ;
+      DST_ITEM *currItem = &_dst[code] ;
+      LZW_CODE preCode = code ;
+      DST_ITEM *tmpItem = NULL ;
+      CHAR localStr[DST_MAX_LOCAL_LEN] = { 0 } ;
 
-      if ( len > DST_MAX_LOCAL_LEN )
+      UINT32 pos = UTIL_MAX_DICT_STR_LEN ;
+
+      while ( TRUE )
       {
-         *item = 0 ;
-         DST_SET_REMOTE_FLAG( *item ) ;
-         DST_SET_REMOTE_POS( *item, offset ) ;
-         getStr( code, (UINT8*)(_strArea + offset), _strAreaSize - offset ) ;
-         DST_SET_REMOTE_LEN( *item, len ) ;
-         remote = TRUE ;
-      }
-      else
-      {
-         *item = 0 ;
-         DST_UNSET_REMOTE_FLAG( *item ) ;
-         DST_SET_LOCAL_LEN( *item, _nodes[code]._len ) ;
-         getStr( code, (UINT8*)buff, DST_MAX_LOCAL_LEN ) ;
-         DST_SET_LOCAL_STR( *item, buff, _nodes[code]._len ) ;
+         strBuff[--pos] = _nodes[preCode]._ch ;
+         preCode = _nodes[preCode]._prev ;
+         if ( UTIL_INVALID_DICT_CODE == preCode )
+         {
+            /* The total string is now in the buffer */
+            break ;
+         }
+
+         if ( 0 != _dst[preCode] )
+         {
+            preLen = _nodes[preCode]._len ;
+            if ( preLen <= 4 )
+            {
+               /* Copy all the string */
+               continue ;
+            }
+            else
+            {
+               /* Set the link information */
+               pos -= 3 ;
+               strBuff[pos] = (BYTE)((preCode & 0x00ff0000) >> 16) ;
+               strBuff[pos + 1] = (BYTE)((preCode & 0x0000ff00) >> 8) ;
+               strBuff[pos + 2] = (BYTE)(preCode & 0x000000ff) ;
+               link = TRUE ;
+               DST_SET_LINK_FLAG( *currItem ) ;
+               break ;
+            }
+         }
       }
 
-      /* Set all its substrings */
+      totalLen = UTIL_MAX_DICT_STR_LEN - pos ;
+
+      ossMemcpy( _strArea + offset, &strBuff[pos], totalLen ) ;
+
+      DST_SET_REMOTE_FLAG( *currItem ) ;
+      DST_SET_REMOTE_POS( *currItem, offset ) ;
+      DST_SET_REMOTE_LEN( *currItem, totalLen ) ;
+
       preCode = _nodes[code]._prev ;
-      while ( UTIL_INVALID_DICT_CODE != preCode )
+      for ( INT32 i = 1; preCode != UTIL_INVALID_DICT_CODE; ++i )
       {
-         item = &_dst[preCode] ;
-         *item = 0 ;
+         tmpItem = &_dst[preCode] ;
+         if ( *tmpItem != 0 )
+         {
+            SDB_ASSERT( 0 != (*tmpItem) >> 29, "wrong value" ) ;
+            break ;
+         }
+
          if ( _nodes[preCode]._len > DST_MAX_LOCAL_LEN )
          {
-            DST_SET_REMOTE_FLAG( *item ) ;
-            DST_SET_REMOTE_POS( *item, offset ) ;
-            DST_SET_REMOTE_LEN( *item, _nodes[preCode]._len ) ;
+            DST_SET_REMOTE_FLAG( *tmpItem ) ;
+            if ( link )
+            {
+               DST_SET_LINK_FLAG( *tmpItem ) ;
+            }
+            DST_SET_REMOTE_POS( *tmpItem, offset ) ;
+            DST_SET_REMOTE_LEN( *tmpItem, totalLen - i ) ;
          }
          else
          {
-            DST_UNSET_REMOTE_FLAG( *item ) ;
-            DST_SET_LOCAL_LEN( *item, _nodes[preCode]._len ) ;
-            getStr( preCode, (UINT8*)buff, DST_MAX_LOCAL_LEN ) ;
-            DST_SET_LOCAL_STR( *item, buff, _nodes[preCode]._len ) ;
+            DST_SET_LOCAL_LEN( *tmpItem, _nodes[preCode]._len ) ;
+            {
+               UINT32 length = 0 ;
+               length = DST_GET_LOCAL_LEN( _dst[preCode] ) ;
+               SDB_ASSERT( 0 != length, "invalid length" ) ;
+            }
+            getStr( preCode, (UINT8*)localStr, DST_MAX_LOCAL_LEN ) ;
+            DST_SET_LOCAL_STR( *tmpItem, localStr, _nodes[preCode]._len ) ;
          }
 
          preCode = _nodes[preCode]._prev ;
       }
 
-      if ( remote )
-      {
-         offset += len ;
-      }
+      offset += totalLen ;
+
+      PD_TRACE_EXIT( SDB__UTILLZWDICTIONARY__FORMATREMOTESTR ) ;
+      return totalLen ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__UTILLZWDICTIONARY__FORMATONECODE, "_utilLZWDictionary::_formatOneCode" )
+   void _utilLZWDictionary::_formatOneCode( UINT32 &offset, LZW_CODE code )
+   {
+      PD_TRACE_ENTRY( SDB__UTILLZWDICTIONARY__FORMATONECODE ) ;
+      UINT32 len = _nodes[code]._len ;
+      DST_ITEM *item = &_dst[code] ;
+      CHAR buff[DST_MAX_LOCAL_LEN] = {0} ;
+      LZW_CODE preCode ;
+
+      SDB_ASSERT( 0 == *item, "dst item value should be init to 0" ) ;
+
+      if ( len > DST_MAX_LOCAL_LEN )
+      {
+         len = _formatRemoteStr( code, offset ) ;
+      }
+      else
+      {
+         DST_SET_LOCAL_LEN( *item, _nodes[code]._len ) ;
+         getStr( code, (UINT8*)buff, DST_MAX_LOCAL_LEN ) ;
+         DST_SET_LOCAL_STR( *item, buff, _nodes[code]._len ) ;
+
+         /* Set all its substrings */
+         preCode = _nodes[code]._prev ;
+         while ( UTIL_INVALID_DICT_CODE != preCode )
+         {
+            item = &_dst[preCode] ;
+            if ( 0 == *item )
+            {
+               if ( _nodes[preCode]._len > DST_MAX_LOCAL_LEN )
+               {
+                  SDB_ASSERT( false, "should not be here" ) ;
+                  DST_SET_REMOTE_FLAG( *item ) ;
+                  DST_SET_REMOTE_POS( *item, offset ) ;
+                  DST_SET_REMOTE_LEN( *item, _nodes[preCode]._len ) ;
+               }
+               else
+               {
+                  DST_SET_LOCAL_LEN( *item, _nodes[preCode]._len ) ;
+                  getStr( preCode, (UINT8*)buff, DST_MAX_LOCAL_LEN ) ;
+                  DST_SET_LOCAL_STR( *item, buff, _nodes[preCode]._len ) ;
+               }
+            }
+
+            preCode = _nodes[preCode]._prev ;
+         }
+      }
+
+      PD_TRACE_EXIT( SDB__UTILLZWDICTIONARY__FORMATONECODE ) ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__UTILLZWDICTIONARY__FORMATDST, "_utilLZWDictionary::_formatDst" )
    void _utilLZWDictionary::_formatDst()
    {
-      LZW_CODE currCode ;
+      PD_TRACE_ENTRY( SDB__UTILLZWDICTIONARY__FORMATDST ) ;
+      LZW_CODE currCode = _head->_maxCode + 1 ;
       UINT32 strOffset = 0 ;
 
-      /*
-       * Scan the nodes, find one longest string, format it and all its
-       * substrings and put them into the decompression part.
-       */
-      for ( currCode = 0; currCode <= _head->_maxCode; ++currCode )
+      do
       {
-         if ( UTIL_INVALID_DICT_CODE != _nodes[currCode]._first )
+         --currCode ;
+         if ( UTIL_INVALID_DICT_CODE == _nodes[currCode]._first )
          {
-            continue ;
+            _formatOneCode( strOffset, currCode ) ;
          }
-
-         _formatOneCode( strOffset, currCode ) ;
-      }
+      } while ( currCode > 0 ) ;
 
       _finalSize = _strArea - (CHAR *)_head + strOffset ;
+      PD_TRACE_EXIT( SDB__UTILLZWDICTIONARY__FORMATDST ) ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__UTILLZWDICTIONARY_FINALIZE, "_utilLZWDictionary::finalize" )
    INT32 _utilLZWDictionary::finalize( CHAR *stream, UINT32 &length )
    {
-      // format the original dictionary into the final structure.
+      /* format the original dictionary into the final structure */
       INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__UTILLZWDICTIONARY_FINALIZE ) ;
       UINT32 index = 0 ;
 
       _initFinalEnv( stream, length ) ;
@@ -304,29 +394,24 @@ namespace engine
       UINT32 nextIdx = 256 ;
       for ( index = 0; index < nextIdx; ++index )
       {
-          _formatOneGrp( index, nextIdx ) ;
+         _formatOneGrp( index, nextIdx ) ;
       }
 
       /* format the decompress part */
       _formatDst() ;
       length = _finalSize ;
 
-   done:
+      PD_TRACE_EXITRC( SDB__UTILLZWDICTIONARY_FINALIZE, rc ) ;
       return rc ;
-   error:
-      goto done ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__UTILLZWDICTCREATOR_PREPARE, "_utilLZWDictionary::prepare" )
-   INT32 _utilLZWDictCreator::prepare( UINT32 maxSize )
+   INT32 _utilLZWDictCreator::prepare()
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__UTILLZWDICTCREATOR_PREPARE ) ;
-      PD_CHECK( maxSize >= MIN_DICT_SIZE, SDB_INVALIDARG, error, PDERROR,
-                "Dictionary size provided is too small: %d. The mininum requred"
-                " size is: %d", maxSize, MIN_DICT_SIZE ) ;
 
-      rc = _dictionary.init( maxSize ) ;
+      rc = _dictionary.init() ;
       PD_RC_CHECK( rc, PDERROR,
                    "Failed to initialize dictionary, rc: %d", rc ) ;
 

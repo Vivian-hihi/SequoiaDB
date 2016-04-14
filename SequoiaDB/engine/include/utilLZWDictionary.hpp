@@ -49,7 +49,6 @@ namespace engine
     * writting, so the maximum node code should be less than 2^24(16M).
     */
    #define UTIL_INVALID_DICT_CODE        16777215
-   #define UTIL_MAX_DICT_CODE            16777214
 
    /*
     * 0~255 represent 256 diffrent symbols(initial state of the dictionary),
@@ -57,7 +56,8 @@ namespace engine
     * dictionary.
     */
    #define UTIL_MIN_DICT_ITEM_NUM         257
-   #define UTIL_MAX_DICT_STR_LEN        255
+   #define UTIL_MAX_DICT_ITEM_NUM         250000
+   #define UTIL_MAX_DICT_STR_LEN          255
 
    typedef UINT32 LZW_CODE ;
 
@@ -121,30 +121,40 @@ namespace engine
    /* Notice: When using the following macros, both item and child should be of
     * type UINT32
     */
-   #define CST_INVALID_CHILD              0x00FFFFFF
-   #define CST_GET_CHILD( item )          ( (item) >> 8 )
+   #define CST_INVALID_CHILD                 0x00FFFFFF
+   #define CST_GET_CHILD( item )             ( (item) >> 8 )
 
    #define CST_SET_CHILD( item, child )   \
-      ( (item) = ((item) & 0x000000FF) | (child<<8) )
+      ( (item) = ((item) & 0x000000FF) | ( (child) << 8 ) )
 
-   #define CST_GET_CHAR( item )           ( (item) & 0x000000FF )
+   #define CST_GET_CHAR( item )              ( (item) & 0x000000FF )
 
    #define CST_SET_CHAR( item, ch )       \
       ( (item) = ((item) & 0xFFFFFF00 ) | ch )
 
-
+   /*
+    * Length of item in DST is 4 bytes.
+    *
+    */
+   #define DST_MAX_LOCAL_LEN                 3
    #define DST_REMOTE_FLAG                   0x80000000
+   #define DST_LINK_FLAG                     0x40000000
    #define DST_LOCAL_LEN_MASK                0x60000000
-   #define DST_REMOTE_OFFSET_MASK            0x000000FF
+   #define DST_REMOTE_LEN_MASK               0x000000FF
    #define DST_IS_REMOTE( item )             ( (item) & DST_REMOTE_FLAG )
-   #define DST_SET_REMOTE_FLAG( item ) \
+   #define DST_SET_REMOTE_FLAG( item )    \
       ( (item) = ( (item) | DST_REMOTE_FLAG ) )
    #define DST_UNSET_REMOTE_FLAG( item )  \
       ( (item) = ( (item) & (~DST_REMOTE_FLAG) ) )
 
-   #define DST_MAX_LOCAL_LEN                 3
+   #define DST_SET_LINK_FLAG( item ) \
+      ( (item) = ( (item) | DST_LINK_FLAG ) )
+
+   #define DST_LOCAL_LEN_SHIFT_NUM           29
    #define DST_SET_LOCAL_LEN( item, len ) \
-      ( (item) = ( (item) | ( (len) << 29 ) ) )
+      ( (item) = ( (item) | ( (len) << DST_LOCAL_LEN_SHIFT_NUM ) ) )
+   #define DST_GET_LOCAL_LEN( item )  \
+      ( ( (item) & DST_LOCAL_LEN_MASK ) >> DST_LOCAL_LEN_SHIFT_NUM )
 
    #define DST_SET_LOCAL_STR( item, str, len ) \
    do \
@@ -159,9 +169,6 @@ namespace engine
       item |= value ;  \
    } while ( 0 )
 
-   #define DST_GET_LOCAL_LEN( item )  \
-      ( ( (item) & DST_LOCAL_LEN_MASK ) >> 29 )
-
    #define DST_GET_LOCAL_STR( item, buff )   \
    do { \
       UINT32 len = DST_GET_LOCAL_LEN( item ) ; \
@@ -173,24 +180,21 @@ namespace engine
       }  \
    } while ( 0 )
 
+   #define DST_REMOTE_POS_SHIFT_NUM          8
+   #define DST_REMOTE_POS_MASK               0x0fffff00
+
    #define DST_SET_REMOTE_POS( item, pos )   \
-      ( (item) = ( ( (item) & 0x800000FF ) | ( (pos) << 8 ) ) )
+      ( (item) = ( ( (item) & (~DST_REMOTE_POS_MASK) )   \
+                   | ( (pos) << DST_REMOTE_POS_SHIFT_NUM ) ) )
 
    #define DST_SET_REMOTE_LEN( item, len )   \
-      ( (item) = ( ( (item) & 0xFFFFFF00 ) | len ) )
+      ( (item) = ( ( (item) & (~DST_REMOTE_LEN_MASK) ) | ( len ) ) )
 
    #define DST_GET_REMOTE_POS( item )  \
-      ( ( (item) & 0x7fffffff) >> 8 )
+      ( ( (item) & DST_REMOTE_POS_MASK) >> DST_REMOTE_POS_SHIFT_NUM )
 
    #define DST_GET_REMOTE_LEN( item )  \
-      ( (item) & DST_REMOTE_OFFSET_MASK )
-
-   #define DST_GET_REMOTE_STR( item, buff ) \
-   do { \
-      UINT32 offset = DST_GET_REMOTE_POS( item ) ; \
-      UINT32 len = DST_GET_REMOTE_LEN( item ) ; \
-      ossMemcpy( buff, _strArea + offset, len ) ;  \
-   } while ( 0 )
+      ( (item) & DST_REMOTE_LEN_MASK )
 
    class _utilLZWDictionary : public SDBObject
    {
@@ -198,7 +202,7 @@ namespace engine
       _utilLZWDictionary() ;
       ~_utilLZWDictionary() ;
 
-      INT32 init( UINT32 maxSize ) ;
+      INT32 init() ;
       void reset() ;
       UINT32 getMaxNodeNum() { return _maxNodeNum ; }
       UINT32 getCodeSize() { return _head->_codeSize ; }
@@ -223,12 +227,14 @@ namespace engine
 #endif /* _DEBUG */
 
    private:
-      INT32 _initFinalEnv( CHAR *buff, UINT32 bufLen ) ;
+      void _initFinalEnv( CHAR *buff, UINT32 bufLen ) ;
+      UINT32 _formatRemoteStr( LZW_CODE code, UINT32 &offset ) ;
       void _formatOneCode( UINT32 &offset, LZW_CODE code ) ;
       void _formatDst() ;
       void _formatOneGrp( UINT32 parentIdx, UINT32 &nextIdx ) ;
 
       OSS_INLINE INT32 _cstBinSearch( UINT32 low, UINT32 high, BYTE ch ) ;
+      OSS_INLINE UINT32 _dstGetRemoteStr( DST_ITEM item, CHAR *buff ) ;
 
    private:
       /*
@@ -247,7 +253,6 @@ namespace engine
       LZW_CODE *_codeMap ;
       DST_ITEM *_dst ;
       CHAR *_strArea ;
-      UINT32 _strAreaSize ;
    } ;
    typedef _utilLZWDictionary utilLZWDictionary ;
 
@@ -305,8 +310,7 @@ namespace engine
    {
    public:
       /* The following member functions are used to handle the dictionary. */
-      /* Prepare for dictionary building, setting the maximum allowed size. */
-      INT32 prepare( UINT32 maxSize ) ;
+      INT32 prepare() ;
 
       void reset() ;
 
@@ -521,9 +525,7 @@ namespace engine
 
       if ( DST_IS_REMOTE( _dst[code] ) )
       {
-         len = DST_GET_REMOTE_LEN( _dst[code] ) ;
-         SDB_ASSERT( buffSize >= len, "buffer too small" ) ;
-         DST_GET_REMOTE_STR( _dst[code], buff ) ;
+         len = _dstGetRemoteStr( _dst[code], (CHAR*)buff ) ;
       }
       else
       {
@@ -552,6 +554,50 @@ namespace engine
       _strArea = (CHAR *)( (const CHAR*)dictionary + pos ) ;
 
       return SDB_OK ;
+   }
+
+   OSS_INLINE UINT32 _utilLZWDictionary::_dstGetRemoteStr( DST_ITEM item,
+                                                           CHAR *buff )
+   {
+      UINT32 pos ;
+      LZW_CODE preCode ;
+      UINT32 finalLen = 0 ;
+      UINT32 offset = DST_GET_REMOTE_POS( item ) ;
+      UINT32 len = DST_GET_REMOTE_LEN( item ) ;
+
+      if ( 0 == ( item & DST_LINK_FLAG ) )
+      {
+         finalLen = len ;
+         ossMemcpy( buff, _strArea + offset, finalLen ) ;
+      }
+      else
+      {
+         CHAR tmpBuff[256] = { 0 } ;
+         pos = 256 ;
+
+         do
+         {
+            pos = pos - len + 3 ;
+            ossMemcpy( &tmpBuff[pos], _strArea + offset + 3, len - 3 ) ;
+            preCode = (((UINT32)(BYTE)_strArea[offset]) << 16)
+                      | (((UINT32)(BYTE)_strArea[offset + 1]) << 8)
+                      | ((UINT32)(BYTE)_strArea[offset + 2]) ;
+            offset = DST_GET_REMOTE_POS( _dst[preCode] ) ;
+            len = DST_GET_REMOTE_LEN( _dst[preCode] ) ;
+            if ( 0 == ( _dst[preCode] & DST_LINK_FLAG ) )
+            {
+               /* No pre link, copy and break */
+               pos = pos - len ;
+               ossMemcpy( &tmpBuff[pos], _strArea + offset, len ) ;
+               break ;
+            }
+         } while ( TRUE ) ;
+
+         finalLen = 256 - pos ;
+         ossMemcpy( buff, &tmpBuff[pos], finalLen ) ;
+      }
+
+      return finalLen ;
    }
 }
 
