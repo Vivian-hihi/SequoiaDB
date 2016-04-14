@@ -145,6 +145,8 @@
 	> cat /proc/sys/vm/dirty_expire_centisecs
 	> cat /proc/sys/vm/vfs_cache_pressure
 	> cat /proc/sys/vm/min_free_kbytes</pre>
+	> cat /proc/sys/vm/zone_reclaim_mode
+	> cat /proc/sys/vm/overcommit_memory
 
 	2.  添加下列参数至 /etc/sysctl.conf 文件调整内核参数：
 
@@ -155,6 +157,8 @@
 	vm.dirty_expire_centisecs = 3000
 	vm.vfs_cache_pressure = 200
 	vm.min_free_kbytes = &lt;物理内存大小的8%，单位KB&gt;</pre>
+	vm.zone_reclaim_mode = 0
+	vm.overcommit_memory = 0
 
 	**Note: **
 		
@@ -164,6 +168,20 @@
 
 	<pre class="prettyprint lang-javascript">
 	/sbin/sysctl -p</pre>
+
+	4.	停用transparent_hugepage，编辑/etc/rc.local，在第一行“#!/bin/sh”的下一行重启一行添加如下内容：
+
+	<pre class="prettyprint lang-diy">
+	if test -f /sys/kernel/mm/transparent_hugepage/enabled; then
+	   echo never > /sys/kernel/mm/transparent_hugepage/enabled
+	   echo never > /sys/kernel/mm/transparent_hugepage/defrag
+	fi
+	
+	5.	重启系统，分别执行如下两条命令，输出结果中都有“[never]”则表示成功关闭了transparent_hugepage，如果是“never”并且有“[always]”或者“[madvise]”则关闭失败：
+
+	<pre class="prettyprint lang-javascript">
+	> cat /sys/kernel/mm/transparent_hugepage/enabled
+	> cat /sys/kernel/mm/transparent_hugepage/defrag
 
 	**Note:** 
 
