@@ -353,7 +353,7 @@ namespace engine
       MTH_S_COLUMNS array ;
       UINT32 number = 0 ;
 
-      rc = _subColumns.copy( array ) ;
+      rc = _subColumns.copyTo( array ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to copy array:%d", rc ) ;

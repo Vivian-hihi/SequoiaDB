@@ -39,34 +39,25 @@
 #include "ossMem.hpp"
 #include "ossUtil.hpp"
 
-#define UTIL_ARRAY_DEFAULT_SIZE 4 
+#define UTIL_ARRAY_DEFAULT_SIZE        4 
 
 namespace engine
 {
-   template <typename T>
+   template <typename T, UINT32 stackSize = UTIL_ARRAY_DEFAULT_SIZE >
    class _utilArray : public SDBObject
    {
    public:
       _utilArray( UINT32 size = 0 )
-      :_dynamicBuf( NULL ),
-       _eles( _staticBuf ),
-       _bufSize( UTIL_ARRAY_DEFAULT_SIZE ),
+      :_dynamicBuf( _staticBuf ),
+       _bufSize( stackSize ),
        _eleSize( 0 )
       {
-         if ( UTIL_ARRAY_DEFAULT_SIZE < size )
-         {
-            _dynamicBuf = ( T * )SDB_OSS_MALLOC( sizeof( T ) * size ) ;
-            if ( NULL != _dynamicBuf )
-            {
-               _eles = _dynamicBuf ;
-               _bufSize = size ;
-            }
-         }
+         resize( size ) ;
       }
 
       ~_utilArray()
       {
-         SAFE_OSS_FREE( _dynamicBuf ) ;
+         clear( TRUE ) ;
       }
 
    public:
@@ -77,7 +68,6 @@ namespace engine
          :_t( &t ),
           _now( 0 )
          {
-
          }
 
          ~iterator(){}
@@ -88,13 +78,14 @@ namespace engine
             return _now < _t->_eleSize ;
          }
 
-         void next( T &t )
+         BOOLEAN next( T &t )
          {
             if ( more() )
             {
-               t = _t->_eles[_now++] ;
+               t = _t->_dynamicBuf[_now++] ;
+               return TRUE ;
             }
-            return ;
+            return FALSE ;
          }
 
       private:
@@ -105,12 +96,12 @@ namespace engine
    public:
       OSS_INLINE const T &operator[]( UINT32 i ) const
       {
-         return _eles[i] ;
+         return _dynamicBuf[ i ] ;
       }
 
       OSS_INLINE T &operator[]( UINT32 i )
       {
-         return _eles[i] ;
+         return _dynamicBuf[ i ] ;
       }
 
       OSS_INLINE UINT32 size() const
@@ -118,84 +109,74 @@ namespace engine
          return _eleSize ;
       }
 
+      OSS_INLINE UINT32 capacity() const
+      {
+         return _bufSize ;
+      }
+
       OSS_INLINE BOOLEAN empty() const
       {
          return 0 == _eleSize ;
       }
 
-      OSS_INLINE void clear()
+      OSS_INLINE void clear( BOOLEAN resetMem = TRUE )
       {
+         if ( resetMem && _dynamicBuf != _staticBuf )
+         {
+            SDB_OSS_FREE( _dynamicBuf ) ;
+            _dynamicBuf = _staticBuf ;
+            _bufSize = stackSize ;
+         }
          _eleSize = 0 ;
-         return ;
       }
 
       OSS_INLINE INT32 append( const T &t )
       {
          INT32 rc = SDB_OK ;
-         if ( _eleSize < _bufSize )
+
+         if ( _eleSize >= _bufSize )
          {
-            _eles[_eleSize++] = t ;
-         }
-         else if ( UTIL_ARRAY_DEFAULT_SIZE == _bufSize )
-         {
-            _dynamicBuf = ( T * )SDB_OSS_MALLOC( sizeof( T ) * ( _bufSize * 2 ) ) ;
-            if ( NULL == _dynamicBuf )
+            /// resize by 2 mutiple
+            rc = resize( _bufSize << 1 ) ;
+            if ( rc )
             {
-               rc = SDB_OOM ;
                goto error ;
             }
-            _bufSize *= 2 ;
-            ossMemcpy( _dynamicBuf, _staticBuf, sizeof( T ) * UTIL_ARRAY_DEFAULT_SIZE ) ;
-            _eles = _dynamicBuf ;
-            _eles[_eleSize++] = t ;
          }
-         else
-         {
-            T *tmp = _dynamicBuf ;
-            _dynamicBuf = ( T * )SDB_OSS_REALLOC( _dynamicBuf,
-                                                  sizeof( T ) * _bufSize * 2 ) ;
-            if ( NULL == _dynamicBuf )
-            {
-               _dynamicBuf = tmp ;
-               rc = SDB_OOM ;
-               goto error ;
-            }
-            _bufSize *= 2 ;
-            _eles = _dynamicBuf ;
-            _eles[_eleSize++] = t ;
-         }
+         _dynamicBuf[ _eleSize++ ] = t ;
+
       done:
          return rc ;
       error:
          goto done ;
       }
 
-      /// TODO: merge public code
       INT32 resize( UINT32 size )
       {
          INT32 rc = SDB_OK ;
-         if ( size <= _bufSize ||
-              size <= _eleSize )
+         if ( size <= _bufSize )
          {
             goto done ;
          }
-         else if ( UTIL_ARRAY_DEFAULT_SIZE == _bufSize )
+         else if ( _dynamicBuf == _staticBuf )
          {
-            _dynamicBuf = ( T * )SDB_OSS_MALLOC( sizeof( T ) * size ) ;
-            if ( NULL == _dynamicBuf )
+            T* pTmp = (T*)SDB_OSS_MALLOC( sizeof( T ) * size ) ;
+            if ( !pTmp )
             {
                rc = SDB_OOM ;
                goto error ;
             }
+            /// copy data
+            ossMemcpy( pTmp, _dynamicBuf, sizeof( T ) * _eleSize ) ;
+            /// set pointer
+            _dynamicBuf = pTmp ;
             _bufSize = size ;
-            ossMemcpy( _dynamicBuf, _staticBuf, sizeof( T ) * UTIL_ARRAY_DEFAULT_SIZE ) ;
-            _eles = _dynamicBuf ;
          }
          else
          {
             T *tmp = _dynamicBuf ;
-            _dynamicBuf = ( T * )SDB_OSS_REALLOC( _dynamicBuf,
-                                                  sizeof( T ) * size ) ;
+            _dynamicBuf = (T*)SDB_OSS_REALLOC( _dynamicBuf,
+                                               sizeof( T ) * size ) ;
             if ( NULL == _dynamicBuf )
             {
                _dynamicBuf = tmp ;
@@ -203,38 +184,49 @@ namespace engine
                goto error ;
             }
             _bufSize = size ;
-            _eles = _dynamicBuf ;
-         } 
+         }
+
       done:
          return rc ;
       error:
          goto done ;
       }
 
-      OSS_INLINE INT32 copy( _utilArray<T> &arr )
+      OSS_INLINE _utilArray<T>& operator= ( const _utilArray<T> &rhs )
+      {
+         if ( SDB_OK == resize( rhs.size() ) )
+         {
+            ossMemcpy( _dynamicBuf, rhs._dynamicBuf, rhs.size() * sizeof(T) ) ;
+            _eleSize = rhs.size() ;
+         }
+         return *this ;
+      }
+
+      OSS_INLINE INT32 copyTo( _utilArray<T> &rhs )
       {
          INT32 rc = SDB_OK ;
-         rc = arr.resize( _eleSize ) ;
-         if ( SDB_OK != rc )
+
+         rc = rhs.resize( size() ) ;
+         if ( rc )
          {
             goto error ;
          }
+         ossMemcpy( rhs._dynamicBuf, _dynamicBuf, size() * sizeof(T) ) ;
+         rhs._eleSize = size() ;
 
-         ossMemcpy( arr._eles, _eles, _eleSize * sizeof( T ) ) ;
-         arr._eleSize = _eleSize ;
       done:
          return rc ;
       error:
          goto done ;
       }
+
    private:
-      T _staticBuf[UTIL_ARRAY_DEFAULT_SIZE] ;
+      T _staticBuf[ stackSize ] ;
       T *_dynamicBuf ;
-      T *_eles ;
       UINT32 _bufSize ;
       UINT32 _eleSize ;
    } ;
 }
 
-#endif
+#endif // UTIL_ARRAY_HPP_
 
