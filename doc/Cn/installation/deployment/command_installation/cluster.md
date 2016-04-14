@@ -28,15 +28,15 @@
 
 （3）sdb服务进程全部以 sdbadmin 用户运行，请确保所有数据库目录都赋予 sdbadmin 读写权限。
 
--   步骤一：检查 SequoiaDB 的配置服务状态在每台数据库服务器上检查 SequoiaDB 配置服务状态：
+-   步骤一：关闭自启动的sdbcm服务：
 
 <pre class="prettyprint lang-javascript">
-$ service sdbcm status</pre>
+$ service sdbcm stop</pre>
 
-确认系统提示“sdbcm is running”表示服务正在运行，否则请执行如下命令重新配置服务程序：
+以交叉内存分配策略启动sdbcm服务：
 
 <pre class="prettyprint lang-javascript">
-$ service sdbcm start</pre>
+$ numactl --interleave=all service sdbcm start</pre>
 
 -   步骤二：启动一个临时协调节点（该节点只是为了创建其它节点而临时使用，后面会删除）
 

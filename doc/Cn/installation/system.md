@@ -144,9 +144,9 @@
 	> cat /proc/sys/vm/dirty_background_ratio
 	> cat /proc/sys/vm/dirty_expire_centisecs
 	> cat /proc/sys/vm/vfs_cache_pressure
-	> cat /proc/sys/vm/min_free_kbytes</pre>
+	> cat /proc/sys/vm/min_free_kbytes
 	> cat /proc/sys/vm/zone_reclaim_mode
-	> cat /proc/sys/vm/overcommit_memory
+	> cat /proc/sys/vm/overcommit_memory</pre>
 
 	2.  添加下列参数至 /etc/sysctl.conf 文件调整内核参数：
 
@@ -181,7 +181,7 @@
 
 	<pre class="prettyprint lang-javascript">
 	> cat /sys/kernel/mm/transparent_hugepage/enabled
-	> cat /sys/kernel/mm/transparent_hugepage/defrag
+	> cat /sys/kernel/mm/transparent_hugepage/defrag</pre>
 
 	**Note:** 
 

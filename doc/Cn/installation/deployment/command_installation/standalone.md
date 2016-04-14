@@ -21,6 +21,16 @@
 	<pre class="prettyprint lang-javascript">
 	$ su sdbadmin</pre>
 
+-   关闭自启动的sdbcm服务
+
+	<pre class="prettyprint lang-javascript">
+	$ service sdbcm stop</pre>
+
+-   以交叉内存分配策略启动sdbcm服务
+
+	<pre class="prettyprint lang-javascript">
+	$ numactl --interleave=all service sdbcm start</pre>
+
 -   启动 SequoiaDB Shell 控制台（下文以默认安装路径 /opt/sequoiadb 为例）
 
 	<pre class="prettyprint lang-javascript">
