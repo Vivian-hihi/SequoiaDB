@@ -156,9 +156,9 @@
 	vm.dirty_background_ratio = 40
 	vm.dirty_expire_centisecs = 3000
 	vm.vfs_cache_pressure = 200
-	vm.min_free_kbytes = &lt;物理内存大小的8%，单位KB&gt;</pre>
+	vm.min_free_kbytes = &lt;物理内存大小的8%，单位KB&gt;
 	vm.zone_reclaim_mode = 0
-	vm.overcommit_memory = 0
+	vm.overcommit_memory = 0</pre>
 
 	**Note: **
 		
@@ -175,7 +175,7 @@
 	if test -f /sys/kernel/mm/transparent_hugepage/enabled; then
 	   echo never > /sys/kernel/mm/transparent_hugepage/enabled
 	   echo never > /sys/kernel/mm/transparent_hugepage/defrag
-	fi
+	fi</pre>
 	
 	5.	重启系统，分别执行如下两条命令，输出结果中都有“[never]”则表示成功关闭了transparent_hugepage，如果是“never”并且有“[always]”或者“[madvise]”则关闭失败：
 
