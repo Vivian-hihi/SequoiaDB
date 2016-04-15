@@ -24,6 +24,7 @@
 #include "nodes/makefuncs.h"
 #include "nodes/relation.h"
 #include "optimizer/cost.h"
+#include "optimizer/clauses.h"
 #include "optimizer/pathnode.h"
 #include "optimizer/plancat.h"
 #include "optimizer/planmain.h"
@@ -44,8 +45,8 @@
 /* Callback argument for ec_member_matches_indexcol */
 typedef struct
 {
-	IndexOptInfo *index;		/* index we're considering */
-	int			indexcol;		/* index column we want to match to */
+   IndexOptInfo *index;    /* index we're considering */
+   int         indexcol;      /* index column we want to match to */
 } sdb_ec_member_matches_arg;
 
 
@@ -56,18 +57,20 @@ static Oid sdb_select_equality_operator(EquivalenceClass *ec, Oid lefttype,
                                  Oid righttype) ;
 
 static RestrictInfo *sdb_create_join_clause(PlannerInfo *root,
-				   EquivalenceClass *ec, Oid opno,
-				   EquivalenceMember *leftem,
-				   EquivalenceMember *rightem,
-				   EquivalenceClass *parent_ec) ;
+               EquivalenceClass *ec, Oid opno,
+               EquivalenceMember *leftem,
+               EquivalenceMember *rightem,
+               EquivalenceClass *parent_ec) ;
 
 static List *sdbGenerateImpliedEqualitiesForColumn(PlannerInfo *root,
-									   RelOptInfo *rel, Oid tableID,
-									   sdbIndexInfo *indexInfo, int indexcol,
-									   Relids prohibited_rels) ;
+                              RelOptInfo *rel, Oid tableID,
+                              sdbIndexInfo *indexInfo, int indexcol,
+                              Relids prohibited_rels) ;
 
 static bool sdbMatchColumn(RelOptInfo *rel, Oid foreignID, Node *operand, 
                            sdbIndexInfo *indexInfo, int indexcol) ;
+
+static bool sdbIsVarNode( Node *node ) ;
 
 static double sdb_get_loop_count(PlannerInfo *root, Relids outer_relids) ;
 
@@ -109,17 +112,17 @@ void debugArgumentInfo( Oid tableID, Expr *node )
 
 void debugEqClause( PlannerInfo *root )
 {
-//	ListCell *lc1;
+// ListCell *lc1;
 //   foreach(lc1, root->eq_classes)
-//	{
-//		EquivalenceClass *cur_ec = (EquivalenceClass *) lfirst(lc1);
-//		ListCell   *lc2;
+// {
+//    EquivalenceClass *cur_ec = (EquivalenceClass *) lfirst(lc1);
+//    ListCell   *lc2;
 
-//		foreach(lc2, cur_ec->ec_members)
-//		{
-//			EquivalenceMember *cur_em = (EquivalenceMember *) lfirst(lc2);
-//			List *opfamilies = cur_ec->ec_opfamilies ;
-//		}
+//    foreach(lc2, cur_ec->ec_members)
+//    {
+//       EquivalenceMember *cur_em = (EquivalenceMember *) lfirst(lc2);
+//       List *opfamilies = cur_ec->ec_opfamilies ;
+//    }
 //   }
 }
 
@@ -200,116 +203,224 @@ void sdbGetIndexEqclause( PlannerInfo *root, RelOptInfo *baserel, Oid tableID,
    }
 
    for (indexcol = 0; indexcol < indexInfo->keyNum; indexcol++)
-	{
-		sdb_ec_member_matches_arg arg;
-		List	   *clauses;
+   {
+      sdb_ec_member_matches_arg arg;
+      List     *clauses;
 
-		/* Generate clauses, skipping any that join to lateral_referencers */
-		arg.index = NULL;
-		arg.indexcol = indexcol;
-		clauses = sdbGenerateImpliedEqualitiesForColumn(root, baserel, tableID,
-		                                           indexInfo, indexcol,
-											                baserel->lateral_referencers);
-      
-		if ( clauses )
-		{
-		   ListCell *lc ;
-		   foreach(lc, clauses)
-      	{
-      		RestrictInfo *rinfo = (RestrictInfo *) lfirst(lc);
+      /* Generate clauses, skipping any that join to lateral_referencers */
+      arg.index = NULL;
+      arg.indexcol = indexcol;
+      clauses = sdbGenerateImpliedEqualitiesForColumn(root, baserel, tableID,
+                                                 indexInfo, indexcol,
+                                                 baserel->lateral_referencers);
 
-      		Assert(IsA(rinfo, RestrictInfo));
-      		clauseset->indexclauses[indexcol] =
-				list_append_unique_ptr(clauseset->indexclauses[indexcol],
-									   rinfo);
-			   clauseset->nonempty = true;
-      	}
-		}
-	}
+      if ( clauses )
+      {
+         ListCell *lc ;
+         foreach(lc, clauses)
+         {
+            RestrictInfo *rinfo = (RestrictInfo *) lfirst(lc);
+
+            Assert(IsA(rinfo, RestrictInfo));
+            clauseset->indexclauses[indexcol] =
+            list_append_unique_ptr(clauseset->indexclauses[indexcol],
+                              rinfo);
+            clauseset->nonempty = true;
+         }
+      }
+   }
+}
+
+void sdbMatchJoinClausesToIndex( PlannerInfo *root, RelOptInfo *rel, 
+                                 Oid tableID, sdbIndexInfo *index,
+                                 sdbIndexClauseSet *clauseset )
+{
+   ListCell   *lc;
+
+   /* Scan the rel's join clauses */
+   foreach(lc, rel->joininfo)
+   {
+      RestrictInfo *rinfo = (RestrictInfo *) lfirst(lc);
+
+      /* Check if clause can be moved to this rel */
+      if (!join_clause_is_movable_to(rinfo, rel))
+         continue;
+
+      /* Potentially usable, so see if it matches the index or is an OR */
+      if (!restriction_is_or_clause(rinfo))
+      {
+         sdbMatchClauseToIndex(rel, tableID, index, rinfo, clauseset);
+      }
+   }
+}
+
+void sdbMatchClauseToIndex( RelOptInfo *rel, Oid tableID, sdbIndexInfo *index,
+                            RestrictInfo *rinfo, sdbIndexClauseSet *clauseset )
+{
+   int indexcol ;
+
+   for ( indexcol = 0 ; indexcol < index->keyNum ; indexcol++ )
+   {
+      if ( sdbMatchClauseToIndexcol(rel, tableID, index, indexcol, rinfo) )
+      {
+         clauseset->indexclauses[indexcol] =
+            list_append_unique_ptr(clauseset->indexclauses[indexcol], rinfo) ;
+         clauseset->nonempty = true ;
+         return ;
+      }
+   }
+}
+
+bool sdbIsVarNode( Node *node )
+{
+   if ( IsA(node, RelabelType) )
+   {
+      node = (Node *) ((RelabelType *) node)->arg ;
+   }
+
+   if ( IsA(node, Var) )
+   {
+      return true ;
+   }
+
+   return false ;
+}
+
+bool sdbMatchClauseToIndexcol( RelOptInfo *rel, Oid tableID, 
+                               sdbIndexInfo *index, int indexcol, 
+                               RestrictInfo *rinfo )
+{
+   Expr *clause      = rinfo->clause;
+   Index index_relid = rel->relid;
+   Node *leftop      = NULL ;
+   Node *rightop     = NULL ;
+   Relids left_relids ;
+   Relids right_relids ; 
+
+   if ( rinfo->pseudoconstant )
+   {
+      return false ;
+   }
+
+   if ( is_opclause(clause) )
+   {
+      leftop  = get_leftop(clause) ;
+      rightop = get_rightop(clause) ;
+      if ( !leftop || !rightop )
+      {
+         return false ;
+      }
+
+      left_relids  = rinfo->left_relids ;
+      right_relids = rinfo->right_relids ;
+   }
+   else
+   {
+      return false;
+   }
+
+   if ( !sdbIsVarNode( leftop ) || !sdbIsVarNode( rightop ) )
+   {
+      return false ;
+   }
+
+   if ( sdbMatchColumn( rel, tableID, leftop, index, indexcol ) &&
+        !bms_is_member( index_relid, right_relids ) )
+   {
+      return true ;
+   }
+
+   if ( sdbMatchColumn( rel, tableID, rightop, index, indexcol ) &&
+        !bms_is_member( index_relid, left_relids ) )
+   {
+      return true ;
+   }
+
+   return false;
 }
 
 List *sdbGenerateImpliedEqualitiesForColumn(PlannerInfo *root,
-									   RelOptInfo *rel,
-									   Oid tableID,
-									   sdbIndexInfo *indexInfo, int indexcol,
-									   Relids prohibited_rels)
+                              RelOptInfo *rel,
+                              Oid tableID,
+                              sdbIndexInfo *indexInfo, int indexcol,
+                              Relids prohibited_rels)
 {
-   List	   *result = NIL;
-	bool		is_child_rel = (rel->reloptkind == RELOPT_OTHER_MEMBER_REL);
-	Index		parent_relid;
-	ListCell *lc1;
+   List     *result = NIL;
+   bool     is_child_rel = (rel->reloptkind == RELOPT_OTHER_MEMBER_REL);
+   Index    parent_relid;
+   ListCell *lc1;
 
-	/* If it's a child rel, we'll need to know what its parent is */
-	if (is_child_rel)
-		parent_relid = sdb_find_childrel_appendrelinfo(root, rel)->parent_relid;
-	else
-		parent_relid = 0;		/* not used, but keep compiler quiet */
+   /* If it's a child rel, we'll need to know what its parent is */
+   if (is_child_rel)
+      parent_relid = sdb_find_childrel_appendrelinfo(root, rel)->parent_relid;
+   else
+      parent_relid = 0;    /* not used, but keep compiler quiet */
 
-	foreach(lc1, root->eq_classes)
-	{
-		EquivalenceClass *cur_ec = (EquivalenceClass *) lfirst(lc1);
-		EquivalenceMember *cur_em;
-		ListCell   *lc2;
+   foreach(lc1, root->eq_classes)
+   {
+      EquivalenceClass *cur_ec = (EquivalenceClass *) lfirst(lc1);
+      EquivalenceMember *cur_em;
+      ListCell   *lc2;
 
-		if (cur_ec->ec_has_const || list_length(cur_ec->ec_members) <= 1)
-			continue;
+      if (cur_ec->ec_has_const || list_length(cur_ec->ec_members) <= 1)
+         continue;
 
-		if (!is_child_rel &&
-			!bms_is_subset(rel->relids, cur_ec->ec_relids))
-			continue;
+      if (!is_child_rel &&
+         !bms_is_subset(rel->relids, cur_ec->ec_relids))
+         continue;
 
-		cur_em = NULL;
-		foreach(lc2, cur_ec->ec_members)
-		{
-			cur_em = (EquivalenceMember *) lfirst(lc2);
-			if (bms_equal(cur_em->em_relids, rel->relids) && 
-			    sdbMatchColumn(rel, tableID, (Node *) cur_em->em_expr, 
-			                   indexInfo, indexcol))
-				break;
-			cur_em = NULL;
-		}
+      cur_em = NULL;
+      foreach(lc2, cur_ec->ec_members)
+      {
+         cur_em = (EquivalenceMember *) lfirst(lc2);
+         if (bms_equal(cur_em->em_relids, rel->relids) && 
+             sdbMatchColumn(rel, tableID, (Node *) cur_em->em_expr, 
+                            indexInfo, indexcol))
+            break;
+         cur_em = NULL;
+      }
 
-		if (!cur_em)
-			continue;
+      if (!cur_em)
+         continue;
 
-		foreach(lc2, cur_ec->ec_members)
-		{
-			EquivalenceMember *other_em = (EquivalenceMember *) lfirst(lc2);
-			Oid			eq_op;
-			RestrictInfo *rinfo;
+      foreach(lc2, cur_ec->ec_members)
+      {
+         EquivalenceMember *other_em = (EquivalenceMember *) lfirst(lc2);
+         Oid         eq_op;
+         RestrictInfo *rinfo;
 
-			if (other_em->em_is_child)
-				continue;		/* ignore children here */
+         if (other_em->em_is_child)
+            continue;      /* ignore children here */
 
-			if (other_em == cur_em ||
-				bms_overlap(other_em->em_relids, rel->relids))
-				continue;
+         if (other_em == cur_em ||
+            bms_overlap(other_em->em_relids, rel->relids))
+            continue;
 
-			if (bms_overlap(other_em->em_relids, rel->lateral_referencers))
-				continue;
+         if (bms_overlap(other_em->em_relids, rel->lateral_referencers))
+            continue;
 
-			if (is_child_rel &&
-				bms_is_member(parent_relid, other_em->em_relids))
-				continue;
+         if (is_child_rel &&
+            bms_is_member(parent_relid, other_em->em_relids))
+            continue;
 
-			eq_op = sdb_select_equality_operator(cur_ec,
-											 cur_em->em_datatype,
-											 other_em->em_datatype);
-			if (!OidIsValid(eq_op))
-				continue;
+         eq_op = sdb_select_equality_operator(cur_ec,
+                                  cur_em->em_datatype,
+                                  other_em->em_datatype);
+         if (!OidIsValid(eq_op))
+            continue;
 
-			rinfo = sdb_create_join_clause(root, cur_ec, eq_op,
-									   cur_em, other_em,
-									   cur_ec);
+         rinfo = sdb_create_join_clause(root, cur_ec, eq_op,
+                              cur_em, other_em,
+                              cur_ec);
 
-			result = lappend(result, rinfo);
-		}
+         result = lappend(result, rinfo);
+      }
 
-		if (result)
-			break;
-	}
+      if (result)
+         break;
+   }
 
-	return result;
+   return result;
 }
 
 bool sdbMatchColumn(RelOptInfo *rel, Oid foreignID, Node *operand, 
@@ -338,115 +449,115 @@ bool sdbMatchColumn(RelOptInfo *rel, Oid foreignID, Node *operand,
 }
 
 RestrictInfo *sdb_create_join_clause(PlannerInfo *root,
-				   EquivalenceClass *ec, Oid opno,
-				   EquivalenceMember *leftem,
-				   EquivalenceMember *rightem,
-				   EquivalenceClass *parent_ec)
+               EquivalenceClass *ec, Oid opno,
+               EquivalenceMember *leftem,
+               EquivalenceMember *rightem,
+               EquivalenceClass *parent_ec)
 {
-	RestrictInfo *rinfo;
-	ListCell   *lc;
-	MemoryContext oldcontext;
+   RestrictInfo *rinfo;
+   ListCell   *lc;
+   MemoryContext oldcontext;
 
-	/*
-	 * Search to see if we already built a RestrictInfo for this pair of
-	 * EquivalenceMembers.	We can use either original source clauses or
-	 * previously-derived clauses.	The check on opno is probably redundant,
-	 * but be safe ...
-	 */
-	foreach(lc, ec->ec_sources)
-	{
-		rinfo = (RestrictInfo *) lfirst(lc);
-		if (rinfo->left_em == leftem &&
-			rinfo->right_em == rightem &&
-			rinfo->parent_ec == parent_ec &&
-			opno == ((OpExpr *) rinfo->clause)->opno)
-			return rinfo;
-	}
+   /*
+    * Search to see if we already built a RestrictInfo for this pair of
+    * EquivalenceMembers.  We can use either original source clauses or
+    * previously-derived clauses.   The check on opno is probably redundant,
+    * but be safe ...
+    */
+   foreach(lc, ec->ec_sources)
+   {
+      rinfo = (RestrictInfo *) lfirst(lc);
+      if (rinfo->left_em == leftem &&
+         rinfo->right_em == rightem &&
+         rinfo->parent_ec == parent_ec &&
+         opno == ((OpExpr *) rinfo->clause)->opno)
+         return rinfo;
+   }
 
-	foreach(lc, ec->ec_derives)
-	{
-		rinfo = (RestrictInfo *) lfirst(lc);
-		if (rinfo->left_em == leftem &&
-			rinfo->right_em == rightem &&
-			rinfo->parent_ec == parent_ec &&
-			opno == ((OpExpr *) rinfo->clause)->opno)
-			return rinfo;
-	}
+   foreach(lc, ec->ec_derives)
+   {
+      rinfo = (RestrictInfo *) lfirst(lc);
+      if (rinfo->left_em == leftem &&
+         rinfo->right_em == rightem &&
+         rinfo->parent_ec == parent_ec &&
+         opno == ((OpExpr *) rinfo->clause)->opno)
+         return rinfo;
+   }
 
-	/*
-	 * Not there, so build it, in planner context so we can re-use it. (Not
-	 * important in normal planning, but definitely so in GEQO.)
-	 */
-	oldcontext = MemoryContextSwitchTo(root->planner_cxt);
+   /*
+    * Not there, so build it, in planner context so we can re-use it. (Not
+    * important in normal planning, but definitely so in GEQO.)
+    */
+   oldcontext = MemoryContextSwitchTo(root->planner_cxt);
 
-	rinfo = build_implied_join_equality(opno,
-										ec->ec_collation,
-										leftem->em_expr,
-										rightem->em_expr,
-										bms_union(leftem->em_relids,
-												  rightem->em_relids),
-										bms_union(leftem->em_nullable_relids,
-											   rightem->em_nullable_relids));
+   rinfo = build_implied_join_equality(opno,
+                              ec->ec_collation,
+                              leftem->em_expr,
+                              rightem->em_expr,
+                              bms_union(leftem->em_relids,
+                                      rightem->em_relids),
+                              bms_union(leftem->em_nullable_relids,
+                                    rightem->em_nullable_relids));
 
-	/* Mark the clause as redundant, or not */
-	rinfo->parent_ec = parent_ec;
+   /* Mark the clause as redundant, or not */
+   rinfo->parent_ec = parent_ec;
 
-	/*
-	 * We know the correct values for left_ec/right_ec, ie this particular EC,
-	 * so we can just set them directly instead of forcing another lookup.
-	 */
-	rinfo->left_ec = ec;
-	rinfo->right_ec = ec;
+   /*
+    * We know the correct values for left_ec/right_ec, ie this particular EC,
+    * so we can just set them directly instead of forcing another lookup.
+    */
+   rinfo->left_ec = ec;
+   rinfo->right_ec = ec;
 
-	/* Mark it as usable with these EMs */
-	rinfo->left_em = leftem;
-	rinfo->right_em = rightem;
-	/* and save it for possible re-use */
-	ec->ec_derives = lappend(ec->ec_derives, rinfo);
+   /* Mark it as usable with these EMs */
+   rinfo->left_em = leftem;
+   rinfo->right_em = rightem;
+   /* and save it for possible re-use */
+   ec->ec_derives = lappend(ec->ec_derives, rinfo);
 
-	MemoryContextSwitchTo(oldcontext);
+   MemoryContextSwitchTo(oldcontext);
 
-	return rinfo;
+   return rinfo;
 }
 
 AppendRelInfo * sdb_find_childrel_appendrelinfo(PlannerInfo *root, 
                                                 RelOptInfo *rel)
 {
-	Index		relid = rel->relid;
-	ListCell   *lc;
+   Index    relid = rel->relid;
+   ListCell   *lc;
 
-	/* Should only be called on child rels */
-	Assert(rel->reloptkind == RELOPT_OTHER_MEMBER_REL);
+   /* Should only be called on child rels */
+   Assert(rel->reloptkind == RELOPT_OTHER_MEMBER_REL);
 
-	foreach(lc, root->append_rel_list)
-	{
-		AppendRelInfo *appinfo = (AppendRelInfo *) lfirst(lc);
+   foreach(lc, root->append_rel_list)
+   {
+      AppendRelInfo *appinfo = (AppendRelInfo *) lfirst(lc);
 
-		if (appinfo->child_relid == relid)
-			return appinfo;
-	}
-	/* should have found the entry ... */
-	elog(ERROR, "child rel %d not found in append_rel_list", relid);
-	return NULL;				/* not reached */
+      if (appinfo->child_relid == relid)
+         return appinfo;
+   }
+   /* should have found the entry ... */
+   elog(ERROR, "child rel %d not found in append_rel_list", relid);
+   return NULL;            /* not reached */
 }
 
 
 Oid sdb_select_equality_operator(EquivalenceClass *ec, Oid lefttype, 
                                  Oid righttype)
 {
-	ListCell   *lc;
+   ListCell   *lc;
 
-	foreach(lc, ec->ec_opfamilies)
-	{
-		Oid			opfamily = lfirst_oid(lc);
-		Oid			opno;
+   foreach(lc, ec->ec_opfamilies)
+   {
+      Oid         opfamily = lfirst_oid(lc);
+      Oid         opno;
 
-		opno = get_opfamily_member(opfamily, lefttype, righttype,
-								   BTEqualStrategyNumber);
-		if (OidIsValid(opno))
-			return opno;
-	}
-	return InvalidOid;
+      opno = get_opfamily_member(opfamily, lefttype, righttype,
+                           BTEqualStrategyNumber);
+      if (OidIsValid(opno))
+         return opno;
+   }
+   return InvalidOid;
 }
 
 
@@ -904,49 +1015,49 @@ SdbConnectionPool *sdbGetConnectionPool()
 
 IndexPath *sdb_create_index_path(PlannerInfo *root,
               RelOptInfo *rel, 
-				  IndexOptInfo *index,
-				  List *indexclauses,
-				  List *indexclausecols,
-				  List *indexorderbys,
-				  List *indexorderbycols,
-				  List *pathkeys,
-				  ScanDirection indexscandir,
-				  bool indexonly,
-				  Relids required_outer,
-				  double loop_count,
-				  SdbExecState *fdw_state)
+              IndexOptInfo *index,
+              List *indexclauses,
+              List *indexclausecols,
+              List *indexorderbys,
+              List *indexorderbycols,
+              List *pathkeys,
+              ScanDirection indexscandir,
+              bool indexonly,
+              Relids required_outer,
+              double loop_count,
+              SdbExecState *fdw_state)
 {
-	IndexPath  *pathnode = makeNode(IndexPath);
-	List *indexquals ;
-	List *indexqualcols;
-	INT32 rowWidth           = 0 ;
-	FLOAT64 selectivity      = 0.0 ;
+   IndexPath  *pathnode = makeNode(IndexPath);
+   List *indexquals ;
+   List *indexqualcols;
+   INT32 rowWidth           = 0 ;
+   FLOAT64 selectivity      = 0.0 ;
    FLOAT64 inputRowCount    = 0.0 ;
    FLOAT64 foreignTableSize = 0.0 ;
    FLOAT64 totalCPUCost     = 0.0 ;
    BlockNumber pageCount    = 0 ;
    FLOAT64 totalDiskCost    = 0.0 ;
 
-	pathnode->path.pathtype = indexonly ? T_IndexOnlyScan : T_IndexScan;
-	pathnode->path.parent = rel;
-	pathnode->path.param_info = get_baserel_parampathinfo(root, rel,
-														  required_outer);
-	pathnode->path.pathkeys = pathkeys;
+   pathnode->path.pathtype = indexonly ? T_IndexOnlyScan : T_IndexScan;
+   pathnode->path.parent = rel;
+   pathnode->path.param_info = get_baserel_parampathinfo(root, rel,
+                                            required_outer);
+   pathnode->path.pathkeys = pathkeys;
 
-	/* Convert clauses to indexquals the executor can handle */
-	sdb_expand_indexqual_conditions(indexclauses, indexclausecols,
-								&indexquals, &indexqualcols);
+   /* Convert clauses to indexquals the executor can handle */
+   sdb_expand_indexqual_conditions(indexclauses, indexclausecols,
+                        &indexquals, &indexqualcols);
 
-	/* Fill in the pathnode */
-	pathnode->indexinfo = index;
-	pathnode->indexclauses = indexclauses;
-	pathnode->indexquals = indexquals;
-	pathnode->indexqualcols = indexqualcols;
-	pathnode->indexorderbys = indexorderbys;
-	pathnode->indexorderbycols = indexorderbycols;
-	pathnode->indexscandir = indexscandir;
+   /* Fill in the pathnode */
+   pathnode->indexinfo = index;
+   pathnode->indexclauses = indexclauses;
+   pathnode->indexquals = indexquals;
+   pathnode->indexqualcols = indexqualcols;
+   pathnode->indexorderbys = indexorderbys;
+   pathnode->indexorderbycols = indexorderbycols;
+   pathnode->indexscandir = indexscandir;
 #ifdef SDB_USE_OWN_POSTGRES
-	pathnode->fdw_private = serializeSdbExecState( fdw_state ) ;
+   pathnode->fdw_private = serializeSdbExecState( fdw_state ) ;
 #endif /* SDB_USE_OWN_POSTGRES */
 
    /* calculate cost */
@@ -954,12 +1065,12 @@ IndexPath *sdb_create_index_path(PlannerInfo *root,
                                                0, JOIN_INNER, NULL ) ;
    inputRowCount    = 1 ;
    pathnode->path.rows = 1;
-	pathnode->path.startup_cost = rel->baserestrictcost.startup;
+   pathnode->path.startup_cost = rel->baserestrictcost.startup;
    totalCPUCost = cpu_tuple_cost * pathnode->path.rows +
                   ( SDB_TUPLE_COST_MULTIPLIER * cpu_index_tuple_cost +
                    rel->baserestrictcost.per_tuple ) * inputRowCount ;
 
-	rowWidth     = get_relation_data_width( fdw_state->tableID,
+   rowWidth     = get_relation_data_width( fdw_state->tableID,
                                            rel->attr_widths ) ;
    foreignTableSize = rowWidth * pathnode->path.rows ;
    pageCount =( BlockNumber )rint( foreignTableSize / BLCKSZ ) ;
@@ -968,147 +1079,147 @@ IndexPath *sdb_create_index_path(PlannerInfo *root,
 
    pathnode->path.startup_cost = 0.42749999999999999 ;
    pathnode->path.total_cost = 7.676907287504247 ;
-//	pathnode->path.total_cost = pathnode->path.startup_cost + totalDiskCost
-//	                            + totalCPUCost ;
+// pathnode->path.total_cost = pathnode->path.startup_cost + totalDiskCost
+//                             + totalCPUCost ;
 
-	return pathnode;
+   return pathnode;
 }
 
 void sdb_expand_indexqual_conditions(List *indexclauses, 
                      List *indexclausecols, List **indexquals_p, 
                      List **indexqualcols_p)
 {
-	List	   *indexquals = NIL;
-	List	   *indexqualcols = NIL;
-	ListCell   *lcc,
-			   *lci;
+   List     *indexquals = NIL;
+   List     *indexqualcols = NIL;
+   ListCell   *lcc,
+            *lci;
 
-	forboth(lcc, indexclauses, lci, indexclausecols)
-	{
-		RestrictInfo *rinfo = (RestrictInfo *) lfirst(lcc);
-		int			indexcol = lfirst_int(lci);
-		Expr	   *clause = rinfo->clause;
+   forboth(lcc, indexclauses, lci, indexclausecols)
+   {
+      RestrictInfo *rinfo = (RestrictInfo *) lfirst(lcc);
+      int         indexcol = lfirst_int(lci);
+      Expr     *clause = rinfo->clause;
 
-		/* First check for boolean cases */
+      /* First check for boolean cases */
 
-		/*
-		 * Else it must be an opclause (usual case), ScalarArrayOp,
-		 * RowCompare, or NullTest
-		 */
-		if ( clause!= NULL && IsA(clause, OpExpr) )
-		{
-			indexquals = list_concat(indexquals, list_make1(rinfo));
-			indexqualcols = lappend_int(indexqualcols, indexcol);
-		}
-	}
+      /*
+       * Else it must be an opclause (usual case), ScalarArrayOp,
+       * RowCompare, or NullTest
+       */
+      if ( clause!= NULL && IsA(clause, OpExpr) )
+      {
+         indexquals = list_concat(indexquals, list_make1(rinfo));
+         indexqualcols = lappend_int(indexqualcols, indexcol);
+      }
+   }
 
-	*indexquals_p = indexquals;
-	*indexqualcols_p = indexqualcols;
+   *indexquals_p = indexquals;
+   *indexqualcols_p = indexqualcols;
 }
 
 IndexPath *sdb_build_index_paths(PlannerInfo *root, RelOptInfo *rel,
-				  sdbIndexInfo *sdbIndex, sdbIndexClauseSet *clauses, 
-				  SdbExecState *fdw_state)
+              sdbIndexInfo *sdbIndex, sdbIndexClauseSet *clauses, 
+              SdbExecState *fdw_state)
 {
-	IndexPath  *ipath;
-	List	   *index_clauses;
-	List	   *clause_columns;
-	Relids		outer_relids;
-	double		loop_count;
-	List	   *orderbyclauses;
-	List	   *orderbyclausecols;
-	List	   *useful_pathkeys;
-	bool		index_only_scan;
-	int			indexcol;
+   IndexPath  *ipath;
+   List     *index_clauses;
+   List     *clause_columns;
+   Relids      outer_relids;
+   double      loop_count;
+   List     *orderbyclauses;
+   List     *orderbyclausecols;
+   List     *useful_pathkeys;
+   bool     index_only_scan;
+   int         indexcol;
 
-	index_clauses = NIL;
-	clause_columns = NIL;
-	outer_relids = bms_copy(rel->lateral_relids);
-	for (indexcol = 0; indexcol < sdbIndex->keyNum; indexcol++)
-	{
-		ListCell   *lc;
+   index_clauses = NIL;
+   clause_columns = NIL;
+   outer_relids = bms_copy(rel->lateral_relids);
+   for (indexcol = 0; indexcol < sdbIndex->keyNum; indexcol++)
+   {
+      ListCell   *lc;
 
-		foreach(lc, clauses->indexclauses[indexcol])
-		{
-			RestrictInfo *rinfo = (RestrictInfo *) lfirst(lc);
-			index_clauses = lappend(index_clauses, rinfo);
-			clause_columns = lappend_int(clause_columns, indexcol);
-			outer_relids = bms_add_members(outer_relids,
-										   rinfo->clause_relids);
-		}
-	}
+      foreach(lc, clauses->indexclauses[indexcol])
+      {
+         RestrictInfo *rinfo = (RestrictInfo *) lfirst(lc);
+         index_clauses = lappend(index_clauses, rinfo);
+         clause_columns = lappend_int(clause_columns, indexcol);
+         outer_relids = bms_add_members(outer_relids,
+                                 rinfo->clause_relids);
+      }
+   }
 
-	/* We do not want the index's rel itself listed in outer_relids */
-	outer_relids = bms_del_member(outer_relids, rel->relid);
-	/* Enforce convention that outer_relids is exactly NULL if empty */
-	if (bms_is_empty(outer_relids))
-		outer_relids = NULL;
+   /* We do not want the index's rel itself listed in outer_relids */
+   outer_relids = bms_del_member(outer_relids, rel->relid);
+   /* Enforce convention that outer_relids is exactly NULL if empty */
+   if (bms_is_empty(outer_relids))
+      outer_relids = NULL;
 
-	/* Compute loop_count for cost estimation purposes */
-	loop_count = sdb_get_loop_count(root, outer_relids);
+   /* Compute loop_count for cost estimation purposes */
+   loop_count = sdb_get_loop_count(root, outer_relids);
 
-	useful_pathkeys = NIL;
-	orderbyclauses = NIL;
-	orderbyclausecols = NIL;
+   useful_pathkeys = NIL;
+   orderbyclauses = NIL;
+   orderbyclausecols = NIL;
 
-	/*
-	 * 3. Check if an index-only scan is possible.	If we're not building
-	 * plain indexscans, this isn't relevant since bitmap scans don't support
-	 * index data retrieval anyway.
-	 */
-	index_only_scan = false;
+   /*
+    * 3. Check if an index-only scan is possible.  If we're not building
+    * plain indexscans, this isn't relevant since bitmap scans don't support
+    * index data retrieval anyway.
+    */
+   index_only_scan = false;
 
-	ipath = sdb_create_index_path(root, rel, NULL,
-								  index_clauses,
-								  clause_columns,
-								  orderbyclauses,
-								  orderbyclausecols,
-								  useful_pathkeys,
-								  NoMovementScanDirection,
-								  index_only_scan,
-								  outer_relids,
-								  loop_count, 
-								  fdw_state);
-	return ipath;
+   ipath = sdb_create_index_path(root, rel, NULL,
+                          index_clauses,
+                          clause_columns,
+                          orderbyclauses,
+                          orderbyclausecols,
+                          useful_pathkeys,
+                          NoMovementScanDirection,
+                          index_only_scan,
+                          outer_relids,
+                          loop_count, 
+                          fdw_state);
+   return ipath;
 }
 
 double sdb_get_loop_count(PlannerInfo *root, Relids outer_relids)
 {
-	double		result = 1.0;
+   double      result = 1.0;
 
-	/* For a non-parameterized path, just return 1.0 quickly */
-	if (outer_relids != NULL)
-	{
-		int			relid;
+   /* For a non-parameterized path, just return 1.0 quickly */
+   if (outer_relids != NULL)
+   {
+      int         relid;
 
-		/* Need a working copy since bms_first_member is destructive */
-		outer_relids = bms_copy(outer_relids);
-		while ((relid = bms_first_member(outer_relids)) >= 0)
-		{
-			RelOptInfo *outer_rel;
+      /* Need a working copy since bms_first_member is destructive */
+      outer_relids = bms_copy(outer_relids);
+      while ((relid = bms_first_member(outer_relids)) >= 0)
+      {
+         RelOptInfo *outer_rel;
 
-			/* Paranoia: ignore bogus relid indexes */
-			if (relid >= root->simple_rel_array_size)
-				continue;
-			outer_rel = root->simple_rel_array[relid];
-			if (outer_rel == NULL)
-				continue;
-			Assert(outer_rel->relid == relid);	/* sanity check on array */
+         /* Paranoia: ignore bogus relid indexes */
+         if (relid >= root->simple_rel_array_size)
+            continue;
+         outer_rel = root->simple_rel_array[relid];
+         if (outer_rel == NULL)
+            continue;
+         Assert(outer_rel->relid == relid);  /* sanity check on array */
 
-			/* Other relation could be proven empty, if so ignore */
-			if (IS_DUMMY_REL(outer_rel))
-				continue;
+         /* Other relation could be proven empty, if so ignore */
+         if (IS_DUMMY_REL(outer_rel))
+            continue;
 
-			/* Otherwise, rel's rows estimate should be valid by now */
-			Assert(outer_rel->rows > 0);
+         /* Otherwise, rel's rows estimate should be valid by now */
+         Assert(outer_rel->rows > 0);
 
-			/* Remember smallest row count estimate among the outer rels */
-			if (result == 1.0 || result > outer_rel->rows)
-				result = outer_rel->rows;
-		}
-		bms_free(outer_relids);
-	}
-	return result;
+         /* Remember smallest row count estimate among the outer rels */
+         if (result == 1.0 || result > outer_rel->rows)
+            result = outer_rel->rows;
+      }
+      bms_free(outer_relids);
+   }
+   return result;
 }
 
 EnumSdbArgType getArgumentType(List *arguments)

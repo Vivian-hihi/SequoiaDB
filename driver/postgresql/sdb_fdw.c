@@ -3108,10 +3108,28 @@ static void SdbGetForeignPaths( PlannerInfo *root,
             Path *idxpath;
             idxpath = (Path* )sdb_build_index_paths(root, baserel, pSdbIdx, 
                                                     &idxClauseSet,
-   				                                     fdw_state);
+                                                    fdw_state);
             if ( NULL != idxpath )
             {
                add_path(baserel, idxpath);   
+            }
+         }
+         else
+         {
+            sdbIndexClauseSet jcClauseSet ;
+            MemSet( &jcClauseSet, 0, sizeof(jcClauseSet) ) ;
+            sdbMatchJoinClausesToIndex( root, baserel, foreignTableId, pSdbIdx, 
+                                        &jcClauseSet ) ;
+            if ( jcClauseSet.nonempty )
+            {
+               Path *idxpath;
+               idxpath = (Path* )sdb_build_index_paths(root, baserel, pSdbIdx, 
+                                                       &jcClauseSet,
+                                                       fdw_state);
+               if ( NULL != idxpath )
+               {
+                  add_path(baserel, idxpath);   
+               }
             }
          }
       }

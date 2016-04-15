@@ -25,9 +25,9 @@ typedef struct
 
 typedef struct
 {
-	bool		nonempty;		/* True if lists are not all empty */
-	/* Lists of RestrictInfos, one per index column */
-	List	   *indexclauses[INDEX_MAX_KEYS];
+   bool     nonempty;      /* True if lists are not all empty */
+   /* Lists of RestrictInfos, one per index column */
+   List     *indexclauses[INDEX_MAX_KEYS];
 } sdbIndexClauseSet;
 
 
@@ -35,6 +35,17 @@ void sdbGetIndexEqclause( PlannerInfo *root, RelOptInfo *baserel, Oid tableID,
                           sdbIndexInfo *indexInfo, 
                           sdbIndexClauseSet *clauseset ) ;
 
+void sdbMatchJoinClausesToIndex( PlannerInfo *root, RelOptInfo *rel, 
+                                 Oid tableID, sdbIndexInfo *index,
+                                 sdbIndexClauseSet *clauseset ) ;
+
+void sdbMatchClauseToIndex( RelOptInfo *rel, Oid tableID, sdbIndexInfo *index,
+                            RestrictInfo *rinfo, 
+                            sdbIndexClauseSet *clauseset ) ;
+
+bool sdbMatchClauseToIndexcol( RelOptInfo *rel, Oid tableID, 
+                               sdbIndexInfo *index, int indexcol, 
+                               RestrictInfo *rinfo ) ;
 
 int sdbGetIndexInfo( SdbExecState *sdbState, sdbIndexInfo *indexInfo ) ;
 
@@ -61,16 +72,16 @@ int sdbSetConnectionPreference( sdbConnectionHandle hConnection,
 void sdbReleaseConnectionFromPool(int index) ;
 
 IndexPath *sdb_build_index_paths(PlannerInfo *root, RelOptInfo *rel,
-				  sdbIndexInfo *sdbIndex, sdbIndexClauseSet *clauses,
-				  SdbExecState *fdw_state);
+              sdbIndexInfo *sdbIndex, sdbIndexClauseSet *clauses,
+              SdbExecState *fdw_state);
 
 IndexPath *sdb_create_index_path(PlannerInfo *root, RelOptInfo *rel, 
-				                     IndexOptInfo *index, List *indexclauses,
-				                     List *indexclausecols, List *indexorderbys,
-				                     List *indexorderbycols, List *pathkeys,
-				                     ScanDirection indexscandir, bool indexonly,
-				                     Relids required_outer, double loop_count,
-				                     SdbExecState *fdw_state);
+                                 IndexOptInfo *index, List *indexclauses,
+                                 List *indexclausecols, List *indexorderbys,
+                                 List *indexorderbycols, List *pathkeys,
+                                 ScanDirection indexscandir, bool indexonly,
+                                 Relids required_outer, double loop_count,
+                                 SdbExecState *fdw_state);
 
 EnumSdbArgType getArgumentType(List *arguments);
 
