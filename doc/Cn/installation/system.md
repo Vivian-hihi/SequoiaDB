@@ -169,13 +169,11 @@
 	<pre class="prettyprint lang-javascript">
 	/sbin/sysctl -p</pre>
 
-	4.	停用transparent_hugepage，编辑/etc/rc.local，在第一行“#!/bin/sh”的下一行重启一行添加如下内容：
+	4.	停用transparent_hugepage，编辑/etc/rc.local，在第一行“#!/bin/sh”的下一行重启一行添加如下l两行内容：
 
 	<pre class="prettyprint lang-diy">
-	if test -f /sys/kernel/mm/transparent_hugepage/enabled; then
-	   echo never > /sys/kernel/mm/transparent_hugepage/enabled
-	   echo never > /sys/kernel/mm/transparent_hugepage/defrag
-	fi</pre>
+	echo never > /sys/kernel/mm/transparent_hugepage/enabled
+	echo never > /sys/kernel/mm/transparent_hugepage/defrag</pre>
 	
 	5.	重启系统，分别执行如下两条命令，输出结果中都有“[never]”则表示成功关闭了transparent_hugepage，如果是“never”并且有“[always]”或者“[madvise]”则关闭失败：
 
