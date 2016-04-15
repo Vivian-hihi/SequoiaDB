@@ -169,7 +169,7 @@
 	<pre class="prettyprint lang-javascript">
 	/sbin/sysctl -p</pre>
 
-	4.	停用transparent_hugepage，编辑/etc/rc.local，在第一行“#!/bin/sh”的下一行重启一行添加如下l两行内容：
+	4.	停用transparent_hugepage，编辑/etc/rc.local，在第一行“#!/bin/sh”的下一行重启一行添加如下两行内容：
 
 	<pre class="prettyprint lang-diy">
 	echo never > /sys/kernel/mm/transparent_hugepage/enabled
