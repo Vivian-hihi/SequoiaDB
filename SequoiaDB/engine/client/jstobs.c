@@ -801,6 +801,7 @@ static BOOLEAN bsonConvertJson ( CHAR **pbuf,
       case BSON_DECIMAL:
       {
          bson_decimal decimal ;
+         int rc        = 0 ;
          CHAR *value   = NULL ;
          int size      = 0 ;
          decimal_init( &decimal ) ;
@@ -817,7 +818,13 @@ static BOOLEAN bsonConvertJson ( CHAR **pbuf,
             return FALSE ;
          }
 
-         decimal_to_jsonstr( &decimal, value, size ) ;
+         rc = decimal_to_jsonstr( &decimal, value, size ) ;
+         if ( 0 != rc )
+         {
+            free( value ) ;
+            decimal_free( &decimal ) ;
+            return FALSE ;
+         }
 
          bsonConvertJsonRawConcat ( pbuf, left, value, FALSE ) ;
          decimal_free( &decimal ) ;
@@ -1551,12 +1558,35 @@ BOOLEAN bsonElementToChar ( CHAR **buffer, INT32 *bufsize, bson_iterator *in )
       bson_decimal decimal ;
       char *pTmp   = NULL ;
       int size     = 0 ;
+      int rc       = 0 ;
 
       decimal_init( &decimal ) ;
-      decimal_from_bsonvalue( bson_iterator_value( in ), &decimal ) ;
-      decimal_to_str_get_len( &decimal, &size ) ;
+      rc = decimal_from_bsonvalue( bson_iterator_value( in ), &decimal ) ;
+      if ( 0 != rc )
+      {
+         return FALSE ;
+      }
+
+      rc = decimal_to_str_get_len( &decimal, &size ) ;
+      if ( 0 != rc )
+      {
+         decimal_free( &decimal ) ;
+         return FALSE ;
+      }
       pTmp = (char *)malloc( size ) ;
-      decimal_to_str( &decimal, pTmp, size ) ;
+      if ( NULL == pTmp )
+      {
+         decimal_free( &decimal ) ;
+         return FALSE ;
+      }
+
+      rc = decimal_to_str( &decimal, pTmp, size ) ;
+      if ( 0 != rc )
+      {
+         decimal_free( &decimal ) ;
+         free( pTmp ) ;
+         return FALSE ;
+      }
 
       if ( decimal.typemod == -1 )
       {
@@ -1566,6 +1596,8 @@ BOOLEAN bsonElementToChar ( CHAR **buffer, INT32 *bufsize, bson_iterator *in )
          *buffer = (CHAR *)malloc ( *bufsize ) ;
          if ( !(*buffer) )
          {
+            decimal_free( &decimal ) ;
+            free( pTmp ) ;
             return FALSE ;
          }
          memset ( *buffer, 0, *bufsize ) ;
@@ -1576,9 +1608,9 @@ BOOLEAN bsonElementToChar ( CHAR **buffer, INT32 *bufsize, bson_iterator *in )
          char part1[40] = "{\"$decimal\":\"" ;
          char part2[40] = "\",\"$precision\":[" ;
          char part3[10] = "]}" ;
-         int precision ;
-         int scale ;
-         char prescale[20] ;
+         int precision  = 0 ;
+         int scale      = 0 ;
+         char prescale[20] = "" ;
          decimal_get_typemod( &decimal, &precision, &scale ) ;
          sprintf( prescale, "%d,%d", precision, scale ) ;
 
@@ -1587,6 +1619,8 @@ BOOLEAN bsonElementToChar ( CHAR **buffer, INT32 *bufsize, bson_iterator *in )
          *buffer = (CHAR *)malloc ( *bufsize ) ;
          if ( !(*buffer) )
          {
+            decimal_free( &decimal ) ;
+            free( pTmp ) ;
             return FALSE ;
          }
          memset ( *buffer, 0, *bufsize ) ;

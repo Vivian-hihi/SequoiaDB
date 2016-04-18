@@ -245,7 +245,7 @@ INT32 _appendValue( CHAR delChar, bson_iterator *pIt,
 
    if ( type == BSON_DOUBLE || type == BSON_BOOL ||
         type == BSON_NULL || type == BSON_INT ||
-        type == BSON_LONG )
+        type == BSON_LONG || type == BSON_DECIMAL )
    {
       rc = _appendNonString( delChar, pIt, ppBuffer, pCSVSize ) ;
       if ( rc )

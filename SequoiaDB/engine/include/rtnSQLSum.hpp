@@ -39,6 +39,7 @@
 #define RTNSQLSUM_HPP_
 
 #include "rtnSQLFunc.hpp"
+using namespace bson ;
 
 namespace engine
 {
@@ -57,6 +58,7 @@ namespace engine
 
    private:
       FLOAT64 _sum ;
+      bsonDecimal _decSum ;
       BOOLEAN _effective ;
    } ;
 

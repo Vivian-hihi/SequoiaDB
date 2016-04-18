@@ -37,6 +37,8 @@
 
 #include "rtnSQLSum.hpp"
 
+using namespace bson ;
+
 namespace engine
 {
    _rtnSQLSum::_rtnSQLSum( const CHAR *pName )
@@ -44,6 +46,7 @@ namespace engine
     _sum(0),
     _effective( FALSE )
    {
+      _decSum.init() ;
    }
 
    _rtnSQLSum::~_rtnSQLSum()
@@ -62,9 +65,35 @@ namespace engine
          }
          else
          {
-            builder.append( _alias.toString(), _sum ) ;
+            if ( _decSum.isZero() )
+            {
+               builder.append( _alias.toString(), _sum ) ;
+            }
+            else
+            {
+               bsonDecimal tmpDecimal ;
+               tmpDecimal.init() ;
+               rc = tmpDecimal.fromDouble( _sum ) ;
+               if ( SDB_OK != rc )
+               {
+                  PD_LOG( PDERROR, "from double failed:double=%f,rc=%d", 
+                          _sum, rc ) ;
+                  goto error ;
+               }
+
+               rc = _decSum.add( tmpDecimal ) ;
+               if ( SDB_OK != rc )
+               {
+                  PD_LOG( PDERROR, "decimal add failed:rc=%d", rc ) ;
+                  goto error ;
+               }
+
+               builder.append( _alias.toString(), _decSum ) ;
+            }
+
             _effective = FALSE ;
             _sum = 0 ;
+            _decSum.setZero() ;
          }
       }
       catch ( std::exception &e )
@@ -84,11 +113,20 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       const BSONElement &ele = *(param.begin()) ;
-      if ( !ele.eoo() && ele.isNumber() )
+      if ( ele.isNumber() )
       {
-         _sum += ele.Number() ;
+         if ( NumberDecimal == ele.type() )
+         {
+            _decSum.add( ele.numberDecimal() ) ;
+         }
+         else
+         {
+            _sum += ele.Number() ;
+         }
+
          _effective = TRUE ;
       }
+      
       return rc ;
    }
 }

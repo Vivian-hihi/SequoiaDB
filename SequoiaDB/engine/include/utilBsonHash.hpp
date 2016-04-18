@@ -76,6 +76,11 @@ namespace engine
       static UINT32 hash( const void *v, UINT32 size ) ;
 
       static UINT32 hashStr( const CHAR *str ) ;
+
+      static UINT32 hashFLoat64( UINT32 hashCode, FLOAT64 value ) ;
+
+      static UINT32 hashDecimal( UINT32 hashCode, 
+                                 const bson::bsonDecimal &decimal ) ;
    } ;
 
    typedef class _utilBSONHasher BSON_HASHER ;

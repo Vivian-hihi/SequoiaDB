@@ -47,30 +47,42 @@ namespace bson {
    public:
       INT32          init() ;
       INT32          init( INT32 precision, INT32 scale ) ;
+
+      void           setZero() ;
+      BOOLEAN        isZero() ;
+
+      void           setMin() ;
+      BOOLEAN        isMin() ;
+
+      void           setMax() ;
+      BOOLEAN        isMax() ;
+      
       INT32          fromInt( INT32 value ) ;
-      INT32          toInt( INT32 *value ) ;
+      INT32          toInt( INT32 *value ) const ;
 
       INT32          fromLong( INT64 value ) ;
-      INT32          toLong( INT64 *value ) ;
+      INT32          toLong( INT64 *value ) const ;
 
       INT32          fromDouble( FLOAT64 value ) ;
-      INT32          toDouble( FLOAT64 *value ) ;
+      INT32          toDouble( FLOAT64 *value ) const ;
 
       INT32          fromString( const CHAR *value ) ;
-      string         toString() ;
+      string         toString() const ;
 
       string         toJsonString() ;
 
       INT32          fromBsonValue( const CHAR *bsonValue ) ;
 
-      INT32          compare( const bsonDecimal &right ) ;
-      INT32          compare( int right ) ;
+      INT32          compare( const bsonDecimal &right ) const ;
+      INT32          compare( int right ) const ;
 
    public:
       INT32          add( const bsonDecimal &right, bsonDecimal &result ) ;
+      INT32          add( const bsonDecimal &right ) ;
       INT32          sub( const bsonDecimal &right, bsonDecimal &result ) ;
       INT32          mul( const bsonDecimal &right, bsonDecimal &result ) ;
       INT32          div( const bsonDecimal &right, bsonDecimal &result ) ;
+      INT32          div( INT64 right, bsonDecimal &result ) ;
       INT32          abs() ;
       INT32          ceil( bsonDecimal &result ) ;
       INT32          floor( bsonDecimal &result ) ;

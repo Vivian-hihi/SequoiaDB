@@ -70,13 +70,21 @@
 
 SDB_EXTERN_C_START
 
-#define DECIMAL_SIGN_MASK	             0xC000
-#define SDB_DECIMAL_POS                 0x0000
-#define SDB_DECIMAL_NEG                 0x4000
-#define SDB_DECIMAL_NAN                 0xC000
-#define SDB_DECIMAL_NULL                0xF000
+#define DECIMAL_SIGN_MASK	         0xC000
+#define SDB_DECIMAL_POS             0x0000
+#define SDB_DECIMAL_NEG             0x4000
+#define SDB_DECIMAL_SPECIAL_SIGN    0xC000
+
+#define SDB_DECIMAL_SPECIAL_NAN     0x0000
+#define SDB_DECIMAL_SPECIAL_MIN     0x0001
+#define SDB_DECIMAL_SPECIAL_MAX     0x0002
 
 #define DECIMAL_DSCALE_MASK			0x3FFF
+
+//sign + dscale
+//   sign  = dscale & 0xC000
+//   scale = dscale & 0x3FFF
+
 
 /*
  * Hardcoded precision limit - arbitrary, but must be small enough that
@@ -94,20 +102,40 @@ SDB_EXTERN_C_START
 #define DECIMAL_DIV_GUARD_DIGITS    4
 
 typedef struct {
-   int typemod;  /* precision & scale define:  
+   int typemod;    /* precision & scale define:  
                          precision = (typmod >> 16) & 0xffff
                          scale     = typmod & 0xffff */
-   int ndigits;  /* length of digits */
-   short sign;     /* the decimal's sign */
-   short dscale;   /* display scale */
-   short weight;   /* weight of first digit */
-   short isOwn;    /* is digits allocated self */
+   int ndigits;    /* length of digits */
+   int sign;       /* the decimal's sign */
+   int dscale;     /* display scale */
+   int weight;     /* weight of first digit */
+   int isOwn;      /* is digits allocated self */
    short *buff ;   /* start of palloc'd space for digits[] */
    short *digits;  /* real decimal data */
 } bson_decimal ;
 
 //storage detail define in bson.h  (BSON_DECIMAL)
 #define DECIMAL_HEADER_SIZE  12  /*size + typemod + dscale + weight*/
+
+#pragma pack(1)
+typedef struct 
+{
+  int    size;    //total size of this value
+
+  int    typemod; //precision + scale
+                  //   precision = (typmod >> 16) & 0xffff
+                  //   scale     = typmod & 0xffff
+
+  short  dscale;  //sign + dscale
+                  //   sign  = dscale & 0xC000
+                  //   scale = dscale & 0x3FFF
+
+  short  weight;  //weight of this decimal (NBASE=10000)
+
+  short  digitis[0]; //real data
+} __decimal ;
+
+#pragma pack()
 
 
 SDB_EXPORT void decimal_init( bson_decimal *decimal );
@@ -118,6 +146,18 @@ SDB_EXPORT int decimal_alloc( bson_decimal *decimal, int ndigits ) ;
 SDB_EXPORT void decimal_free( bson_decimal *decimal ) ;
 
 SDB_EXPORT void decimal_set_zero( bson_decimal *decimal ) ;
+SDB_EXPORT int decimal_is_zero( const bson_decimal *decimal ) ;
+
+SDB_EXPORT int decimal_is_speical( const bson_decimal *decimal ) ;
+
+SDB_EXPORT void decimal_set_nan( bson_decimal *decimal ) ;
+SDB_EXPORT int decimal_is_nan( const bson_decimal *decimal ) ;
+
+SDB_EXPORT void decimal_set_min( bson_decimal *decimal ) ;
+SDB_EXPORT int decimal_is_min( const bson_decimal *decimal ) ;
+
+SDB_EXPORT void decimal_set_max( bson_decimal *decimal ) ;
+SDB_EXPORT int decimal_is_max( const bson_decimal *decimal ) ;
 
 SDB_EXPORT int decimal_round( bson_decimal *decimal, int rscale ) ;
 

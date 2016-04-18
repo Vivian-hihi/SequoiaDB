@@ -26,12 +26,13 @@ namespace bson {
 
    bsonDecimal::bsonDecimal()
    {
+      init() ;
    }
 
    bsonDecimal::bsonDecimal( const bsonDecimal &right )
    {
       INT32 rc = SDB_OK ;
-      decimal_free( &_decimal ) ;
+      init() ;
       rc = decimal_copy( &( right._decimal ), &_decimal ) ;
       SDB_ASSERT( SDB_OK == rc , "out of memory" ) ;
    }
@@ -62,12 +63,42 @@ namespace bson {
       return SDB_OK ;
    }
 
+   void bsonDecimal::setZero()
+   {
+      decimal_set_zero( &_decimal ) ;
+   }
+
+   BOOLEAN bsonDecimal::isZero()
+   {
+      return decimal_is_zero( &_decimal ) ;
+   }
+
+   void bsonDecimal::setMin()
+   {
+      decimal_set_min( &_decimal ) ;
+   }
+
+   BOOLEAN bsonDecimal::isMin()
+   {
+      return decimal_is_min( &_decimal ) ;
+   }
+
+   void bsonDecimal::setMax()
+   {
+      decimal_set_max( &_decimal ) ;
+   }
+
+   BOOLEAN bsonDecimal::isMax()
+   {
+      return decimal_is_max( &_decimal ) ;
+   }
+
    INT32 bsonDecimal::fromInt( INT32 value )
    {
       return decimal_from_int( value, &_decimal ) ;
    }
 
-   INT32 bsonDecimal::toInt( INT32 *value )
+   INT32 bsonDecimal::toInt( INT32 *value ) const 
    {
       if ( NULL == value )
       {
@@ -83,7 +114,7 @@ namespace bson {
       return decimal_from_long( value, &_decimal ) ;
    }
 
-   INT32 bsonDecimal::toLong( INT64 *value )
+   INT32 bsonDecimal::toLong( INT64 *value ) const 
    {
       if ( NULL == value )
       {
@@ -99,7 +130,7 @@ namespace bson {
       return decimal_from_double( value, &_decimal ) ;
    }
 
-   INT32 bsonDecimal::toDouble( FLOAT64 *value )
+   INT32 bsonDecimal::toDouble( FLOAT64 *value ) const 
    {
       if ( NULL == value )
       {
@@ -115,7 +146,7 @@ namespace bson {
       return decimal_from_str( value, &_decimal ) ;
    }
 
-   string bsonDecimal::toString()
+   string bsonDecimal::toString() const 
    {
       INT32 rc       = SDB_OK ;
       CHAR *temp     = NULL ;
@@ -195,12 +226,12 @@ namespace bson {
       return decimal_from_bsonvalue( bsonValue, &_decimal ) ;
    }
 
-   INT32 bsonDecimal::compare( const bsonDecimal &right )
+   INT32 bsonDecimal::compare( const bsonDecimal &right ) const
    {
       return decimal_cmp( &_decimal, &( right._decimal ) ) ;
    }
 
-   INT32 bsonDecimal::compare( int right )
+   INT32 bsonDecimal::compare( int right ) const 
    {
       INT32 rc = SDB_OK ;
       bsonDecimal decimal ;
@@ -221,6 +252,20 @@ namespace bson {
       return decimal_add( &_decimal, &right._decimal, &result._decimal ) ;
    }
 
+   INT32 bsonDecimal::add( const bsonDecimal &right )
+   {
+      INT32 rc = SDB_OK ;
+      bsonDecimal result ;
+      result.init() ;
+      rc = add( right, result ) ;
+      if ( SDB_OK != rc )
+      {
+         return rc ;
+      }
+
+      return decimal_copy( &result._decimal, &_decimal ) ;
+   }
+
    INT32 bsonDecimal::sub( const bsonDecimal &right, bsonDecimal &result )
    {
       return decimal_sub( &_decimal, &right._decimal, &result._decimal ) ;
@@ -234,6 +279,20 @@ namespace bson {
    INT32 bsonDecimal::div( const bsonDecimal &right, bsonDecimal &result )
    {
       return decimal_div( &_decimal, &right._decimal, &result._decimal ) ;
+   }
+
+   INT32 bsonDecimal::div( INT64 right, bsonDecimal &result )
+   {
+      INT32 rc = SDB_OK ;
+      bsonDecimal tmpRight ;
+      tmpRight.init() ;
+      rc = tmpRight.fromLong( right ) ;
+      if ( SDB_OK != rc )
+      {
+         return rc ;
+      }
+
+      return div( tmpRight, result ) ;
    }
 
    INT32 bsonDecimal::abs()

@@ -37,6 +37,8 @@
 
 #include "rtnSQLAvg.hpp"
 
+using namespace bson ;
+
 namespace engine
 {
    _rtnSQLAvg::_rtnSQLAvg( const CHAR *pName )
@@ -44,6 +46,7 @@ namespace engine
     _total(0),
     _count(0)
    {
+      _decTotal.init() ;
    }
 
    _rtnSQLAvg::~_rtnSQLAvg()
@@ -62,8 +65,42 @@ namespace engine
          }
          else
          {
-            FLOAT64 avg = _total / _count ;
-            builder.append( _alias.toString(), avg ) ;
+            if ( _decTotal.isZero() )
+            {
+               FLOAT64 avg = _total / _count ;
+               builder.append( _alias.toString(), avg ) ;
+            }
+            else
+            {
+               bsonDecimal tmpTotal ;
+               bsonDecimal result ;
+               tmpTotal.init() ;
+               result.init() ;
+               rc = tmpTotal.fromDouble( _total ) ;
+               if ( SDB_OK != rc )
+               {
+                  PD_LOG( PDERROR, "from double failed:double=%f,rc=%d", 
+                          _total, rc ) ;
+                  goto error ;
+               }
+
+               rc = _decTotal.add( tmpTotal ) ;
+               if ( SDB_OK != rc )
+               {
+                  PD_LOG( PDERROR, "decimal add failed:rc=%d", rc ) ;
+                  goto error ;
+               }
+
+               rc = _decTotal.div( _count, result ) ;
+               if ( SDB_OK != rc )
+               {
+                  PD_LOG( PDERROR, "decimal div failed:rc=%d", rc ) ;
+                  goto error ;
+               }
+               builder.append( _alias.toString(), result ) ;
+            }
+
+            _decTotal.setZero() ;
             _total = 0 ;
             _count = 0 ;
          }
@@ -88,11 +125,20 @@ namespace engine
       try
       {
          const BSONElement &ele = *( param.begin() ) ;
-         if ( !ele.eoo() && ele.isNumber() )
+         if ( ele.isNumber() )
          {
-            _total += ele.Number() ;
+            if ( NumberDecimal == ele.type() )
+            {
+               _decTotal.add( ele.numberDecimal() ) ;
+            }
+            else 
+            {
+               _total += ele.Number() ;
+            }
+
             ++_count ;
          }
+         
       }
       catch ( std::exception &e )
       {

@@ -268,7 +268,6 @@ namespace engine
       }
       else if ( NumberDecimal == a )
       {
-         INT32 cmp = 0 ;
          bsonDecimal inc ;
          bsonDecimal decimal ;
          inc.init() ;
@@ -276,21 +275,28 @@ namespace engine
 
          decimal = in.numberDecimal() ;
          inc     = elt.numberDecimal() ;
-         cmp     = inc.compare( 0 ) ;
-         if ( 0 == cmp )
+         if ( inc.isZero() )
          {
             //not change, add the old element
             bb.append ( in ) ;
          }
          else
          {
+            INT32 rc = SDB_OK ;
             bsonDecimal result ;
             result.init() ;
 
-            ADD_CHG_ELEMENT_AS ( _srcChgBuilder, in, pRoot, "$set" ) ;
+            rc = decimal.add( inc, result ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "decimal add failed:v1=%s,v2=%s,rc=%d", 
+                       decimal.toString().c_str(),
+                       inc.toString().c_str(), rc ) ;
+               goto error ;
+            }
 
-            decimal.add( inc, result ) ;
             bb.append ( in.fieldName(), result ) ;
+            ADD_CHG_ELEMENT_AS ( _srcChgBuilder, in, pRoot, "$set" ) ;
             ADD_CHG_NUMBER ( _dstChgBuilder, pRoot, result, "$set" ) ;
          }
       }
@@ -299,8 +305,12 @@ namespace engine
          //not change, add the old element
          bb.append ( in ) ;
       }
+
+   done:
       PD_TRACE_EXIT ( SDB__MTHMDF__APPINCMDF ) ;
       return SDB_OK ;
+   error:
+      goto done ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__MTHMDF__APPSETMDF, "_mthModifier::_applySetModifier" )

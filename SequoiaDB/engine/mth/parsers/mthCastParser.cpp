@@ -57,6 +57,7 @@ namespace engine
       _tl["int32"] = NumberInt ;
       _tl["timestamp"] = Timestamp ;
       _tl["int64"] = NumberLong ;
+      _tl["decimal"] = NumberDecimal ;
       _tl["maxkey"] = MaxKey ;
    }
 
@@ -129,6 +130,7 @@ namespace engine
       case NumberInt :
       case Timestamp :
       case NumberLong :
+      case NumberDecimal :
       case MaxKey :
          break ;
       default:

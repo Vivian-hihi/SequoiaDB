@@ -496,6 +496,8 @@ namespace bson {
         {
             bsonDecimal left ;
             bsonDecimal right ;
+            left.init() ;
+            right.init() ;
             left  = l.numberDecimal() ;
             right = r.numberDecimal() ;
 
@@ -1359,6 +1361,14 @@ namespace bson {
         case NumberDouble:
         case NumberLong:
             append( fieldName , - numeric_limits<double>::max() ); return;
+        case NumberDecimal:
+        {
+            bsonDecimal decimal ;
+            decimal.init() ;
+            decimal.setMin() ;
+            append( fieldName, decimal ) ;
+            return ;
+        }
         case jstOID: {
             OID o;
             memset(&o, 0, sizeof(o));
@@ -1403,6 +1413,14 @@ namespace bson {
         case NumberLong:
             append( fieldName , numeric_limits<double>::max() );
             break;
+        case NumberDecimal:
+        {
+            bsonDecimal decimal ;
+            decimal.init() ;
+            decimal.setMax() ;
+            append( fieldName, decimal ) ;
+            break ;
+        }
         case BinData:
             appendMinForType( fieldName , jstOID );
             break;
@@ -1430,7 +1448,6 @@ namespace bson {
         }
     }
 
-    //storage detail define in bson.h  (BSON_DECIMAL)
     BSONObjBuilder& BSONObjBuilder::append( const StringData& fieldName, 
                                             const bsonDecimal& decimal )
     {
@@ -1448,13 +1465,14 @@ namespace bson {
         ndigit  = decimal.getNdigit() ;
         digits  = decimal.getDigits() ;
         size    = decimal.getSize() ;
-        
-        _b.appendNum((char) NumberDecimal);
-        _b.appendStr(fieldName);
-        _b.appendNum( size );         // size
-        _b.appendNum( typemod );      // typemod
-        _b.appendNum( scale );        // dscale
-        _b.appendNum( weight );       // weight
+
+        //define in common_decimal.h __decimal
+        _b.appendNum( (char) NumberDecimal ) ;
+        _b.appendStr( fieldName ) ;
+        _b.appendNum( size ) ;         // size
+        _b.appendNum( typemod ) ;      // typemod
+        _b.appendNum( scale ) ;        // dscale
+        _b.appendNum( weight ) ;       // weight
         
         for ( i = 0 ; i < ndigit ; i++ )
         {

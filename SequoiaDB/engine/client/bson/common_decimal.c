@@ -237,7 +237,8 @@ void _decimal_set_nan( bson_decimal *decimal )
 
    decimal->ndigits = 0 ;
    decimal->weight  = 0 ;
-   decimal->sign    = SDB_DECIMAL_NAN ;
+   decimal->sign    = SDB_DECIMAL_SPECIAL_SIGN ;
+   decimal->dscale  = SDB_DECIMAL_SPECIAL_NAN ;
 }
 
 int _decimal_is_digit( const char value )
@@ -1026,7 +1027,6 @@ int _decimal_mul( const bson_decimal *left, const bson_decimal *right,
    rc = decimal_alloc( result, res_ndigits ) ;
    if ( 0 != rc )
    {
-      rc = -2 ;
       goto error ;
    }
 
@@ -1060,7 +1060,11 @@ int _decimal_mul( const bson_decimal *left, const bson_decimal *right,
    result->sign   = res_sign ;
 
    /* Round to target rscale (and set result->dscale) */
-   decimal_round( result, rscale ) ;
+   rc = decimal_round( result, rscale ) ;
+   if ( 0 != rc )
+   {
+      goto error ;
+   }
 
    /* Strip leading and trailing zeroes */
    _decimal_strip( result ) ;
@@ -1422,7 +1426,11 @@ int _decimal_div( const bson_decimal *left, const bson_decimal *right,
    /* Round or truncate to target rscale (and set result->dscale) */
    if ( isRound )
    {
-      decimal_round( result, rscale ) ;
+      rc = decimal_round( result, rscale ) ;
+      if ( 0 != rc )
+      {
+         goto error ;
+      }
    }
    else
    {
@@ -1535,6 +1543,124 @@ void decimal_set_zero( bson_decimal *decimal )
    decimal->ndigits = 0 ;
    decimal->weight  = 0 ;           /* by convention; doesn't really matter */
    decimal->sign    = SDB_DECIMAL_POS ;
+}
+
+int decimal_is_zero( const bson_decimal *decimal )
+{
+   if ( NULL == decimal )
+   {
+      return 1 ;
+   }
+
+   if ( decimal_is_speical( decimal ) )
+   {
+      return 0 ;
+   }
+
+   if ( decimal->ndigits == 0 || decimal->digits[0] == 0 )
+   {
+      return 1 ;
+   }
+
+   return 0 ;
+}
+
+int decimal_is_speical( const bson_decimal *decimal )
+{
+   if ( NULL == decimal )
+   {
+      return 1 ;
+   }
+
+   if ( decimal->sign == SDB_DECIMAL_SPECIAL_SIGN )
+   {
+      return 1 ;
+   }
+
+   return 0 ;
+}
+
+void decimal_set_nan( bson_decimal *decimal )
+{
+   _decimal_set_nan( decimal ) ;
+}
+
+int decimal_is_nan( const bson_decimal *decimal )
+{
+   if ( NULL == decimal )
+   {
+      return 1 ;
+   }
+
+   if ( decimal_is_speical( decimal ) && 
+        decimal->dscale == SDB_DECIMAL_SPECIAL_NAN )
+   {
+      return 1 ;
+   }
+
+   return 0 ;
+}
+
+void decimal_set_min( bson_decimal *decimal )
+{
+   if ( NULL == decimal )
+   {
+      return ;
+   }
+
+   decimal_free( decimal ) ;
+
+   decimal->ndigits = 0 ;
+   decimal->weight  = 0 ;
+   decimal->sign    = SDB_DECIMAL_SPECIAL_SIGN ;
+   decimal->dscale  = SDB_DECIMAL_SPECIAL_MIN ;
+}
+
+int decimal_is_min( const bson_decimal *decimal )
+{
+   if ( NULL == decimal )
+   {
+      return 0 ;
+   }
+
+   if ( decimal_is_speical( decimal ) && 
+        decimal->dscale == SDB_DECIMAL_SPECIAL_MIN )
+   {
+      return 1 ;
+   }
+
+   return 0 ;
+}
+
+void decimal_set_max( bson_decimal *decimal )
+{
+   if ( NULL == decimal )
+   {
+      return ;
+   }
+
+   decimal_free( decimal ) ;
+
+   decimal->ndigits = 0 ;
+   decimal->weight  = 0 ;
+   decimal->sign    = SDB_DECIMAL_SPECIAL_SIGN ;
+   decimal->dscale  = SDB_DECIMAL_SPECIAL_MAX ;
+}
+
+int decimal_is_max( const bson_decimal *decimal ) 
+{
+   if ( NULL == decimal )
+   {
+      return 0 ;
+   }
+
+   if ( decimal_is_speical( decimal ) && 
+        decimal->dscale == SDB_DECIMAL_SPECIAL_MAX )
+   {
+      return 1 ;
+   }
+
+   return 0 ;
 }
 
 int decimal_round( bson_decimal *decimal, int rscale )
@@ -1675,7 +1801,7 @@ int64_t decimal_to_long( const bson_decimal *decimal )
       goto error ;
    }
 
-   if ( decimal->sign == SDB_DECIMAL_NAN )
+   if ( decimal_is_nan( decimal ) )
    {
       rc = -6 ;
       goto error ;
@@ -1808,10 +1934,21 @@ error:
 int decimal_sprint_len( int sign, int weight, int scale )
 {
    int tmpSize = 0 ;
-   if ( SDB_DECIMAL_NAN == sign )
+   if ( SDB_DECIMAL_SPECIAL_SIGN == sign && SDB_DECIMAL_SPECIAL_NAN == scale )
    {
       return ( 3 + 1 ) ;   // "NAN" + 1
    }
+
+   if ( SDB_DECIMAL_SPECIAL_SIGN == sign && SDB_DECIMAL_SPECIAL_MIN == scale )
+   {
+      return ( 3 + 1 ) ;   // "MIN" + 1
+   }
+
+   if ( SDB_DECIMAL_SPECIAL_SIGN == sign && SDB_DECIMAL_SPECIAL_MAX == scale )
+   {
+      return ( 3 + 1 ) ;   // "MAX" + 1
+   }
+
    /*
    * Allocate space for the result.
    *
@@ -1879,11 +2016,29 @@ int decimal_to_str( const bson_decimal *decimal, char *value, int value_size )
 
    cp = value ;
 
-   if ( decimal->sign == SDB_DECIMAL_NAN )
+   if ( decimal_is_nan( decimal ) )
    {
       *cp++ = 'N' ;
       *cp++ = 'a' ;
       *cp++ = 'N' ;
+      *cp   = '\0' ;
+      goto done ;
+   }
+
+   if ( decimal_is_min( decimal ) )
+   {
+      *cp++ = 'M' ;
+      *cp++ = 'I' ;
+      *cp++ = 'N' ;
+      *cp   = '\0' ;
+      goto done ;
+   }
+
+   if ( decimal_is_max( decimal ) )
+   {
+      *cp++ = 'M' ;
+      *cp++ = 'A' ;
+      *cp++ = 'X' ;
       *cp   = '\0' ;
       goto done ;
    }
@@ -2112,10 +2267,26 @@ int decimal_from_str( const char *value, bson_decimal *decimal )
    if ( strlen( cp ) >= 3 )
    {
       if ( ( cp[0] == 'n' || cp[0] == 'N' ) && 
-           ( cp[0] == 'a' || cp[0] == 'A' ) &&
-           ( cp[0] == 'n' || cp[0] == 'N' ) )
+           ( cp[1] == 'a' || cp[1] == 'A' ) &&
+           ( cp[2] == 'n' || cp[2] == 'N' ) )
       {
          _decimal_set_nan( decimal ) ;
+         goto done ;
+      }
+
+      if ( ( cp[0] == 'm' || cp[0] == 'M' ) && 
+           ( cp[1] == 'i' || cp[1] == 'I' ) &&
+           ( cp[2] == 'n' || cp[2] == 'N' ) )
+      {
+         decimal_set_min( decimal ) ;
+         goto done ;
+      }
+
+      if ( ( cp[0] == 'm' || cp[0] == 'M' ) && 
+           ( cp[1] == 'a' || cp[1] == 'A' ) &&
+           ( cp[2] == 'x' || cp[2] == 'X' ) )
+      {
+         decimal_set_max( decimal ) ;
          goto done ;
       }
    }
@@ -2174,7 +2345,7 @@ int decimal_from_str( const char *value, bson_decimal *decimal )
       {
          if ( have_dp )
          {
-            rc = -1 ;
+            rc = -6 ;
             goto error ;
          }
 
@@ -2195,12 +2366,27 @@ int decimal_from_str( const char *value, bson_decimal *decimal )
    if (*cp == 'e' || *cp == 'E' )
    {
       long exponent = 0 ;
-      cp++;
-      exponent = atoi( cp ) ;
+      char *pEndPtr = NULL ;
+
+      cp++ ;
+#if defined (_WIN32)
+      exponent = _strtoi64( cp, &pEndPtr, 10 ) ;
+#else
+      exponent = strtoll( cp, &pEndPtr, 10 ) ;
+#endif
+      if ( cp == pEndPtr )
+      {
+         //wrong format 
+         rc = -6 ;
+         goto error ;
+      }
+
+      cp = pEndPtr ;
       if ( exponent > DECIMAL_MAX_PRECISION || 
            exponent < -DECIMAL_MAX_PRECISION )
       {
-         rc = -1 ;
+         //meet the limit
+         rc = -6 ;
          goto error ;
       }
 
@@ -2210,6 +2396,13 @@ int decimal_from_str( const char *value, bson_decimal *decimal )
       {
          dscale = 0 ;
       }
+   }
+
+   if ( *cp != '\0' )
+   {
+      // exist not digits value
+      rc = -6 ;
+      goto error ;
    }
 
    /*
@@ -2230,7 +2423,11 @@ int decimal_from_str( const char *value, bson_decimal *decimal )
    offset  = (weight + 1) * DECIMAL_DEC_DIGITS - ( dweight + 1 ) ;
    ndigits = (ddigits + offset + DECIMAL_DEC_DIGITS - 1) / DECIMAL_DEC_DIGITS ;
 
-   decimal_alloc( decimal, ndigits ) ;
+   rc = decimal_alloc( decimal, ndigits ) ;
+   if ( 0 != rc )
+   {
+      goto error ;
+   }
    decimal->sign   = sign ;
    decimal->weight = weight ;
    decimal->dscale = dscale ;
@@ -2276,6 +2473,7 @@ int decimal_from_bsonvalue( const char *value, bson_decimal *decimal )
    int index    = 0 ;
    int rc       = 0 ;
 
+   //define in common_decimal.h __decimal
    bson_little_endian32( &size, value ) ;
    value += 4 ;
 
@@ -2433,7 +2631,11 @@ int decimal_to_jsonstr( const bson_decimal *decimal, char *value,
       goto error ;
    }
 
-   decimal_to_str_get_len( decimal, &simple_size ) ;
+   rc = decimal_to_str_get_len( decimal, &simple_size ) ;
+   if ( 0 != rc )
+   {
+      goto error ;
+   }
 
    memcpy( value, decimal_str_start, strlen( decimal_str_start ) ) ;
    value += strlen( decimal_str_start ) ;
@@ -2497,25 +2699,65 @@ int decimal_cmp( const bson_decimal *left, const bson_decimal *right )
       return 1 ;
    }
 
-   /*
-    * We consider all NANs to be equal and larger than any non-NAN. This is
-    * somewhat arbitrary; the important thing is to have a consistent sort
-    * order.
-    */
-   if ( left->sign == SDB_DECIMAL_NAN )
+   // min is equal min;  min is less than any non-min.
+   if ( decimal_is_min( left ) )
    {
-      if ( right->sign == SDB_DECIMAL_NAN )
+      if ( decimal_is_min( right ) )
+      {
+         return 0 ;
+      }
+      else
+      {
+         return -1 ;
+      }
+   }
+   else if ( decimal_is_min( right ) )
+   {
+      return 1 ;
+   }
+
+   // max is equal max;  max is larger than any non-max.
+   if ( decimal_is_max( left ) )
+   {
+      if ( decimal_is_max( right ) )
+      {
+         return 0 ;
+      }
+      else
+      {
+         return 1 ;
+      }
+   }
+   else if ( decimal_is_max( right ) )
+   {
+      return -1 ;
+   }
+
+   /*
+    * postgresql's define: 
+    *    We consider all NANs to be equal and larger than any non-NAN. This is
+    *    somewhat arbitrary; the important thing is to have a consistent sort
+    *    order.
+    * 
+    * while bson's define is the opposite:
+    *    NAN's is smaller than any non-NAN.  bsonobj.cpp:compareElementValues
+    * 
+    * conclusion:  we use bson's define!
+    */
+   if ( decimal_is_nan( left ) )
+   {
+      if ( decimal_is_nan( right ) )
       {
          return 0 ;       /* NAN = NAN */
       }
       else
       {
-         return 1 ;       /* NAN > non-NAN */
+         return -1 ;       /* NAN < non-NAN */
       }
    }
-   else if ( right->sign == SDB_DECIMAL_NAN )
+   else if ( decimal_is_nan( right ) )
    {
-      return -1 ;         /* non-NAN < NAN */
+      return 1 ;         /* non-NAN > NAN */
    }
 
    if ( left->ndigits == 0 )
@@ -2571,7 +2813,7 @@ SDB_EXPORT int decimal_add( const bson_decimal *left,
       goto error ;
    }
 
-   if ( left->sign == SDB_DECIMAL_NAN || right->sign == SDB_DECIMAL_NAN )
+   if ( decimal_is_speical( left ) || decimal_is_speical( right ) )
    {
       _decimal_set_nan( result ) ;
       goto done ;
@@ -2588,6 +2830,7 @@ SDB_EXPORT int decimal_add( const bson_decimal *left,
 done:
    return rc ;
 error:
+   //do not free result. result may point to left or right
    goto done ;
 }
 
@@ -2601,7 +2844,7 @@ SDB_EXPORT int decimal_sub( const bson_decimal *left,
       goto error ;
    }
 
-   if ( left->sign == SDB_DECIMAL_NAN || right->sign == SDB_DECIMAL_NAN )
+   if ( decimal_is_speical( left ) || decimal_is_speical( right ) )
    {
       _decimal_set_nan( result ) ;
       goto done ;
@@ -2617,6 +2860,7 @@ SDB_EXPORT int decimal_sub( const bson_decimal *left,
 done:
    return rc ;
 error:
+   //do not free result. result may point to left or right
    goto done ;
 }
 
@@ -2630,7 +2874,7 @@ SDB_EXPORT int decimal_mul( const bson_decimal *left,
       goto error ;
    }
 
-   if ( left->sign == SDB_DECIMAL_NAN || right->sign == SDB_DECIMAL_NAN )
+   if ( decimal_is_speical( left ) || decimal_is_speical( right ) )
    {
       _decimal_set_nan( result ) ;
       goto done ;
@@ -2659,7 +2903,7 @@ SDB_EXPORT int decimal_div( const bson_decimal *left,
       goto error ;
    }
 
-   if ( left->sign == SDB_DECIMAL_NAN || right->sign == SDB_DECIMAL_NAN )
+   if ( decimal_is_speical( left ) || decimal_is_speical( right ) )
    {
       _decimal_set_nan( result ) ;
       goto done ;
@@ -2682,7 +2926,7 @@ error:
 SDB_EXPORT int decimal_abs( bson_decimal *decimal ) 
 {
    int rc = 0 ;
-   if ( NULL == decimal || decimal->sign == SDB_DECIMAL_NAN )
+   if ( NULL == decimal || decimal_is_speical( decimal ) )
    {
       rc = -6 ;
       goto error ;
@@ -2708,7 +2952,7 @@ SDB_EXPORT int decimal_ceil( const bson_decimal *decimal,
       goto error ;
    }
 
-   if ( decimal->sign == SDB_DECIMAL_NAN )
+   if ( decimal_is_speical( decimal ) )
    {
       _decimal_set_nan( result ) ;
       goto done ;
@@ -2757,7 +3001,7 @@ SDB_EXPORT int decimal_floor( const bson_decimal *decimal,
       goto error ;
    }
 
-   if ( decimal->sign == SDB_DECIMAL_NAN )
+   if ( decimal_is_speical( decimal ) )
    {
       _decimal_set_nan( result ) ;
       goto done ;
@@ -2806,7 +3050,7 @@ SDB_EXPORT int decimal_mod( const bson_decimal *left,
       goto error ;
    }
 
-   if ( left->sign == SDB_DECIMAL_NAN || right->sign == SDB_DECIMAL_NAN )
+   if ( decimal_is_speical( left ) || decimal_is_speical( right ) )
    {
       _decimal_set_nan( result ) ;
       goto done ;

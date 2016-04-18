@@ -142,26 +142,6 @@ typedef enum {
     BSON_MAXKEY = 127 /**< Max key. */
 } bson_type;
 
-/*
-BSON_DECIMAL define:
-__decimal
-{
-  int32  size;    //total size of this value
-  
-  int32  typemod; //precision + scale
-                  //   precision = (typmod >> 16) & 0xffff
-                  //   scale     = typmod & 0xffff
-                  
-  int16  dscale;  //sign + dscale
-                  //   sign  = dscale & 0xC000
-                  //   scale = dscale & 0x3FFF
-                  
-  int16  weight;  //weight of this decimal (NBASE=10000)
-
-  int16  digitis[0]; //real data
-}
-*/
-
 typedef int bson_bool_t;
 
 typedef struct {
@@ -432,7 +412,7 @@ SDB_EXPORT int64_t bson_iterator_long( const bson_iterator *i );
  * @return BSON_OK or BSON_ERROR.
  */
 SDB_EXPORT int bson_iterator_decimal_scale( const bson_iterator *i, 
-                                            int *sign, short *scale ) ;
+                                            int *sign, int *scale ) ;
 
 /**
  * Get the decimal's typemod of the BSON object currently pointed to by the iterator.
@@ -452,7 +432,7 @@ SDB_EXPORT int bson_iterator_decimal_typemod( const bson_iterator *i,
  * @return BSON_OK or BSON_ERROR.
  */
 SDB_EXPORT int bson_iterator_decimal_weight( const bson_iterator *i, 
-                                             short *weight ) ;
+                                             int *weight ) ;
 
 /**
  * Get the decimal's size of the BSON object currently pointed to by the iterator.

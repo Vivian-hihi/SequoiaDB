@@ -291,8 +291,8 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__QGMSELECTOR__CREATEVALUEWITHEXPR ) ;
-      CHAR row[16] ;
-      _qgmValueTuple v( row, 16, TRUE ) ;
+      CHAR row[32] ;
+      _qgmValueTuple v( row, 32, TRUE ) ;
       INT16 vType = 0 ;
 
       if ( !e.isNumber() )
@@ -312,6 +312,19 @@ namespace engine
       if ( ( INT16 )bson::EOO == vType )
       {
          builder.appendNull( fieldName ) ;
+      }
+      else if ( ( INT16 )bson::NumberDecimal == vType )
+      {
+         bson::bsonDecimal decimal ;
+         decimal.init() ;
+         rc = decimal.fromBsonValue( (const CHAR *)v.getValue() ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to get decimal from bsonvalue:%d", rc ) ;
+            goto error ;
+         }
+
+         builder.append( fieldName, decimal ) ;
       }
       else if ( ( INT16 )bson::NumberLong == vType )
       {

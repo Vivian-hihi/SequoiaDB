@@ -113,17 +113,13 @@ namespace engine
       case NumberLong:
       case NumberInt:
       {
-         FLOAT64 dv = e.Number() ;
-         UINT64 uv = dv ;
-         UINT32 afp = ( dv - uv ) * 1000000 ;
-         UINT32 h1 = 0 ;
-         UINT32 h2 = 0 ;
+         hashCode = hashFLoat64( hashCode, e.Number() ) ;
+         break ;
+      }
 
-         h1 = hash( &uv, sizeof( uv ) ) ;
-         h2 = hash( &afp, sizeof( afp ) ) ;
-
-         HASH_COMBINE( hashCode, h1 ) ;
-         HASH_COMBINE( hashCode, h2 ) ;
+      case NumberDecimal:
+      {
+         hashCode = hashDecimal( hashCode, e.numberDecimal() ) ;
          break ;
       }
 
@@ -189,6 +185,66 @@ namespace engine
    UINT32 _utilBSONHasher::hashStr( const CHAR *str )
    {
       return hash( str, ossStrlen( str ) ) ;
+   }
+
+   UINT32 _utilBSONHasher::hashFLoat64( UINT32 hashCode, FLOAT64 dv )
+   {
+      UINT64 uv  = dv ;
+      UINT32 afp = ( dv - uv ) * 1000000 ;
+      UINT32 h1  = 0 ;
+      UINT32 h2  = 0 ;
+
+      h1 = hash( &uv, sizeof( uv ) ) ;
+      h2 = hash( &afp, sizeof( afp ) ) ;
+
+      HASH_COMBINE( hashCode, h1 ) ;
+      HASH_COMBINE( hashCode, h2 ) ;
+
+      return hashCode ;
+   }
+
+   UINT32 _utilBSONHasher::hashDecimal( UINT32 hashCode, 
+                                        const bson::bsonDecimal &decimal )
+   {
+      bsonDecimal maxFloat ;
+      bsonDecimal minFloat ;
+
+      maxFloat.init() ;
+      maxFloat.fromDouble( numeric_limits<double>::max() ) ;
+
+      minFloat.init() ;
+      minFloat.fromDouble( -numeric_limits<double>::max() ) ;
+
+      if ( decimal.compare( maxFloat ) > 0 || 
+           decimal.compare( minFloat ) < 0 )
+      {
+         INT16 sign          = 0 ;
+         INT16 weight        = 0 ;
+         INT32 ndigits       = 0 ;
+         INT32 i             = 0 ;
+         const INT16 *digits = NULL ;
+
+         sign    = decimal.getSign() ;
+         weight  = decimal.getWeight() ;
+         ndigits = decimal.getNdigit() ;
+         digits  = decimal.getDigits() ;
+
+         HASH_COMBINE( hashCode, hash( &sign, sizeof( sign ) ) ) ;
+         HASH_COMBINE( hashCode, hash( &weight, sizeof( weight ) ) ) ;
+         HASH_COMBINE( hashCode, hash( &ndigits, sizeof( ndigits ) ) ) ;
+         for ( i = 0 ; i < ndigits ; i++ )
+         {
+            HASH_COMBINE( hashCode, hash( &digits[i], sizeof( digits[i] ) ) ) ;
+         }
+      }
+      else
+      {
+         FLOAT64 dv = 0.0 ;
+         decimal.toDouble( &dv ) ;
+         hashCode = hashFLoat64( hashCode, dv ) ;
+      }
+
+      return hashCode ;
    }
 }
 

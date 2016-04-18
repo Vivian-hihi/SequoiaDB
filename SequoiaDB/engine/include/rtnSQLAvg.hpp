@@ -40,6 +40,8 @@
 
 #include "rtnSQLFunc.hpp"
 
+using namespace bson ;
+
 namespace engine
 {
    class _rtnSQLAvg : public _rtnSQLFunc
@@ -56,6 +58,7 @@ namespace engine
       virtual INT32 _push( const RTN_FUNC_PARAMS &param ) ;
 
    private:
+      bsonDecimal _decTotal ;
       FLOAT64 _total ;
       UINT64 _count ;
    } ;

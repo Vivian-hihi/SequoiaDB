@@ -1306,7 +1306,7 @@ namespace engine
          {
             bsonDecimal decimal ;
             decimal.init() ;
-            decimal.fromLong( e.numberLong() ) ;
+            decimal.fromDouble( e.numberDouble() ) ;
             builder.append( fieldName, decimal ) ;
          }
          else

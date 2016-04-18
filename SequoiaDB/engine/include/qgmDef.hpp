@@ -387,6 +387,7 @@ namespace engine
 
    public:
       INT32 setValue( UINT32 dataLen, const void *data, INT16 type ) ;
+      INT32 setValue( const bsonDecimal &decimal ) ;
 
       const void *getValue() const
       {
@@ -408,9 +409,23 @@ namespace engine
                 ( INT16 )bson::EOO :
                 ( ( _tuple * )_row )->type ;
       }
+
+   public:
+      INT32 add( const _qgmValueTuple &right, _qgmValueTuple &result ) const ;
+      INT32 sub( const _qgmValueTuple &right, _qgmValueTuple &result ) const ;
+      INT32 multiply( const _qgmValueTuple &right, 
+                      _qgmValueTuple &result ) const;
+      INT32 divide( const _qgmValueTuple &right, 
+                    _qgmValueTuple &result ) const ;
+      INT32 mod( const _qgmValueTuple &right, _qgmValueTuple &result ) const ;
+
+   private:
+      INT32 _ensureMem( UINT32 dataLen ) ;
+      INT32 _getDecimal( bsonDecimal &decimal ) const ;
    private:
       CHAR *_row ;
       UINT32 _len ;
+      BOOLEAN _isOwn ;
    } ;
 }
 

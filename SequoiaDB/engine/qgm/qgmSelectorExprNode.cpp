@@ -151,7 +151,16 @@ namespace engine
       }
       else if ( SQL_GRAMMAR::DBATTR == _type )
       {
-         if ( NumberDouble == e.type() )
+         if ( NumberDecimal == e.type() )
+         {
+            rc = v->setValue( e.numberDecimal() ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "failed to set value:%d", rc ) ;
+               goto error ;
+            }
+         }
+         else if ( NumberDouble == e.type() )
          {
             FLOAT64 f = e.numberDouble() ;
             rc = v->setValue( sizeof( FLOAT64 ), &f, bson::NumberDouble ) ;
@@ -175,10 +184,10 @@ namespace engine
       }
       else
       {
-         CHAR ld[16] ;
-         CHAR rd[16] ;
-         _qgmValueTuple lv( ld, 16, TRUE ) ;
-         _qgmValueTuple rv( rd, 16, TRUE ) ;
+         CHAR ld[32] ;
+         CHAR rd[32] ;
+         _qgmValueTuple lv( ld, 32, TRUE ) ;
+         _qgmValueTuple rv( rd, 32, TRUE ) ;
 
          if ( NULL == _left || NULL == _right )
          {
@@ -223,220 +232,53 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__QGMSELECTOREXPRNODE__CALCVALUE ) ;
 
-      if ( ( INT16 )bson::EOO == lv.getValueType() ||
-           ( INT16 )bson::EOO == rv.getValueType() )
+      if ( SQL_GRAMMAR::ADD == type )
       {
-         rc = v.setValue( 0, NULL, ( INT16 )bson::EOO ) ;
+         rc = lv.add( rv, v ) ;
          if ( SDB_OK != rc )
          {
-            PD_LOG( PDERROR, "failed to set value:%d", rc ) ;
+            PD_LOG( PDERROR, "failed to add qgmValueTuple:%d", rc ) ;
             goto error ;
          }
       }
-      else if ( ( INT16 )bson::NumberDouble == lv.getValueType() || 
-                ( INT16 )bson::NumberDouble == rv.getValueType() )
+      else if ( SQL_GRAMMAR::SUB == type )
       {
-         if ( SQL_GRAMMAR::ADD == type )
+         rc = lv.sub( rv, v ) ;
+         if ( SDB_OK != rc )
          {
-            FLOAT64 lNumber = ( INT16 )bson::NumberDouble == lv.getValueType() ?
-                              *(( FLOAT64* )( lv.getValue() ) ) :
-                              *(( INT64* )( lv.getValue() ) ) ;
-            FLOAT64 rNumber = ( INT16 )bson::NumberDouble == rv.getValueType() ?
-                              *(( FLOAT64* )( rv.getValue() ) ) :
-                              *(( INT64* )( rv.getValue() ) ) ;
-            FLOAT64 final = lNumber + rNumber ;
-            rc = v.setValue( sizeof( FLOAT64 ), &final, ( INT16 )bson::NumberDouble ) ;
-            if ( SDB_OK != rc )
-            {
-               PD_LOG( PDERROR, "failed to set value:%d", rc ) ;
-               goto error ;
-            }
+            PD_LOG( PDERROR, "failed to sub qgmValueTuple:%d", rc ) ;
+            goto error ;
          }
-         else if ( SQL_GRAMMAR::SUB == type )
+      }
+      else if ( SQL_GRAMMAR::MULTIPLY == type )
+      {
+         rc = lv.multiply( rv, v ) ;
+         if ( SDB_OK != rc )
          {
-            FLOAT64 lNumber = ( INT16 )bson::NumberDouble == lv.getValueType() ?
-                              *(( FLOAT64* )( lv.getValue() ) ) :
-                              *(( INT64* )( lv.getValue() ) ) ;
-            FLOAT64 rNumber = ( INT16 )bson::NumberDouble == rv.getValueType() ?
-                              *(( FLOAT64* )( rv.getValue() ) ) :
-                              *(( INT64* )( rv.getValue() ) ) ;
-            FLOAT64 final = lNumber - rNumber ;
-            rc = v.setValue( sizeof( FLOAT64 ), &final, ( INT16 )bson::NumberDouble ) ;
-            if ( SDB_OK != rc )
-            {
-               PD_LOG( PDERROR, "failed to set value:%d", rc ) ;
-               goto error ;
-            }
+            PD_LOG( PDERROR, "failed to multiply qgmValueTuple:%d", rc ) ;
+            goto error ;
          }
-         else if ( SQL_GRAMMAR::MULTIPLY == type )
+      }
+      else if ( SQL_GRAMMAR::DIVIDE == type )
+      {
+         rc = lv.divide( rv, v ) ;
+         if ( SDB_OK != rc )
          {
-            FLOAT64 lNumber = ( INT16 )bson::NumberDouble == lv.getValueType() ?
-                              *(( FLOAT64* )( lv.getValue() ) ) :
-                              *(( INT64* )( lv.getValue() ) ) ;
-            FLOAT64 rNumber = ( INT16 )bson::NumberDouble == rv.getValueType() ?
-                              *(( FLOAT64* )( rv.getValue() ) ) :
-                              *(( INT64* )( rv.getValue() ) ) ;
-            FLOAT64 final = lNumber * rNumber ;
-            rc = v.setValue( sizeof( FLOAT64 ), &final, ( INT16 )bson::NumberDouble ) ;
-            if ( SDB_OK != rc )
-            {
-               PD_LOG( PDERROR, "failed to set value:%d", rc ) ;
-               goto error ;
-            }
-         }
-         else if ( SQL_GRAMMAR::DIVIDE == type )
-         {
-            FLOAT64 rNumber = ( INT16 )bson::NumberDouble == rv.getValueType() ?
-                              *(( FLOAT64* )( rv.getValue() ) ) :
-                              *(( INT64* )( rv.getValue() ) ) ;
-            if ( fabs( rNumber ) < OSS_EPSILON )
-            {
-               rc = v.setValue( 0, NULL, ( INT16 )bson::EOO ) ;
-               if ( SDB_OK != rc )
-               {
-                  PD_LOG( PDERROR, "failed to set value:%d", rc ) ;
-                  goto error ;
-               }
-            }
-            else
-            {
-               FLOAT64 lNumber = ( INT16 )bson::NumberDouble == lv.getValueType() ?
-                                  *(( FLOAT64* )( lv.getValue() ) ) :
-                                  *(( INT64* )( lv.getValue() ) ) ;
-               FLOAT64 final = lNumber / rNumber ;
-               rc = v.setValue( sizeof( FLOAT64 ), &final, ( INT16 )bson::NumberDouble ) ;
-               if ( SDB_OK != rc )
-               {
-                  PD_LOG( PDERROR, "failed to set value:%d", rc ) ;
-                  goto error ;
-               }
-            }
-         }
-         else
-         {
-            FLOAT64 rNumber = ( INT16 )bson::NumberDouble == rv.getValueType() ?
-                              *(( FLOAT64* )( rv.getValue() ) ) :
-                              *(( INT64* )( rv.getValue() ) ) ;
-            if ( fabs( rNumber ) < OSS_EPSILON )
-            {
-               rc = v.setValue( 0, NULL, ( INT16 )bson::EOO ) ;
-               if ( SDB_OK != rc )
-               {
-                  PD_LOG( PDERROR, "failed to set value:%d", rc ) ;
-                  goto error ;
-               }
-            }
-            else
-            {
-               FLOAT64 lNumber = ( INT16 )bson::NumberDouble == lv.getValueType() ?
-                                  *(( FLOAT64* )( lv.getValue() ) ) :
-                                  *(( INT64* )( lv.getValue() ) ) ;
-               FLOAT64 final = lNumber - ( floor( lNumber / rNumber ) * rNumber ) ;
-               rc = v.setValue( sizeof( FLOAT64 ), &final, ( INT16 )bson::NumberDouble ) ;
-               if ( SDB_OK != rc )
-               {
-                  PD_LOG( PDERROR, "failed to set value:%d", rc ) ;
-                  goto error ;
-               }
-            }
+            PD_LOG( PDERROR, "failed to divide qgmValueTuple:%d", rc ) ;
+            goto error ;
          }
       }
       else
       {
-         if ( SQL_GRAMMAR::ADD == type )
+         //MOD
+         rc = lv.mod( rv, v ) ;
+         if ( SDB_OK != rc )
          {
-            INT64 l = *(( INT64 * )( lv.getValue() ) ) +
-                      *(( INT64 * )( rv.getValue() ) ) ;
-            rc = v.setValue( sizeof( INT64 ), &l, ( INT16 )bson::NumberLong ) ;
-            if ( SDB_OK != rc )
-            {
-               PD_LOG( PDERROR, "failed to set value:%d", rc ) ;
-               goto error ;
-            }
-         }
-         else if ( SQL_GRAMMAR::SUB == type )
-         {
-            INT64 l = *(( INT64 * )( lv.getValue() ) ) -
-                      *(( INT64 * )( rv.getValue() ) ) ;
-            rc = v.setValue( sizeof( INT64 ), &l, ( INT16 )bson::NumberLong ) ;
-            if ( SDB_OK != rc )
-            {
-               PD_LOG( PDERROR, "failed to set value:%d", rc ) ;
-               goto error ;
-            }
-         }
-         else if ( SQL_GRAMMAR::MULTIPLY == type )
-         {
-            INT64 l = *(( INT64 * )( lv.getValue() ) ) *
-                      *(( INT64 * )( rv.getValue() ) ) ;
-            rc = v.setValue( sizeof( INT64 ), &l, ( INT16 )bson::NumberLong ) ;
-            if ( SDB_OK != rc )
-            {
-               PD_LOG( PDERROR, "failed to set value:%d", rc ) ;
-               goto error ;
-            }
-         }
-         else if ( SQL_GRAMMAR::DIVIDE == type )
-         {
-            INT64 lNumber = *((INT64 *)(lv.getValue() ) ) ;
-            INT64 rNumber = *(( INT64 * )( rv.getValue() ) ) ;
-            if ( 0 == rNumber )
-            {
-               rc = v.setValue( 0, NULL, ( INT16 )bson::EOO ) ;
-               if ( SDB_OK != rc )
-               {
-                  PD_LOG( PDERROR, "failed to set value:%d", rc ) ;
-                  goto error ;
-               }
-            }
-            else if ( 0 == lNumber % rNumber )
-            {
-               INT64 final = lNumber / rNumber ;
-               rc = v.setValue( sizeof( INT64 ), &final, ( INT16 )bson::NumberLong ) ;
-               if ( SDB_OK != rc )
-               {
-                  PD_LOG( PDERROR, "failed to set value:%d", rc ) ;
-                  goto error ;
-               }
-            }
-            else
-            {
-               FLOAT64 final = lNumber ;
-               final /= rNumber ;
-               rc = v.setValue( sizeof( FLOAT64 ), &final, ( INT16 )bson::NumberDouble ) ;
-               if ( SDB_OK != rc )
-               {
-                  PD_LOG( PDERROR, "failed to set value:%d", rc ) ;
-                  goto error ;
-               }
-            }
-         }
-         else
-         {
-            INT64 lNumber = *((INT64 *)(lv.getValue() ) ) ;
-            INT64 rNumber = *(( INT64 * )( rv.getValue() ) ) ;
-            if ( 0 == rNumber )
-            {
-               rc = v.setValue( 0, NULL, ( INT16 )bson::EOO ) ;
-               if ( SDB_OK != rc )
-               {
-                  PD_LOG( PDERROR, "failed to set value:%d", rc ) ;
-                  goto error ;
-               }
-            }
-            else
-            {
-               INT64 final = lNumber % rNumber ;
-               rc = v.setValue( sizeof( INT64 ), &final, ( INT16 )bson::NumberLong ) ;
-               if ( SDB_OK != rc )
-               {
-                  PD_LOG( PDERROR, "failed to set value:%d", rc ) ;
-                  goto error ;
-               }
-            }
+            PD_LOG( PDERROR, "failed to mod qgmValueTuple:%d", rc ) ;
+            goto error ;
          }
       }
-      
+
    done:
       PD_TRACE_EXITRC( SDB__QGMSELECTOREXPRNODE__CALCVALUE, rc ) ;
       return rc ;
