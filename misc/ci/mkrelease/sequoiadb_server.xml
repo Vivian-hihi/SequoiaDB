@@ -2,483 +2,22 @@
     <shortName>sequoiadb</shortName>
     <fullName>SequoiaDB Server</fullName>
     <version>1.0</version>
-    <installerFilename>${product_shortname}-${product_version}-${platform}${enterpriseversion}-installer.${platform_exec_suffix}</installerFilename>
-    <allowLanguageSelection>1</allowLanguageSelection>
-    <componentList>
-        <component>
-            <name>SequoiaDB</name>
-            <description>SequoiaDB Component</description>
-            <canBeEdited>1</canBeEdited>
-            <selected>1</selected>
-            <show>1</show>
-            <customLanguageFileList>
-                <language>
-                    <code>en</code>
-                    <encoding>utf-8</encoding>
-                    <file>${build_project_directory}/sequoiadb_en.lng</file>
-                </language>
-                <language>
-                    <code>zh_CN</code>
-                    <encoding>utf-8</encoding>
-                    <file>${build_project_directory}/sequoiadb_zh.lng</file>
-                </language>
-            </customLanguageFileList>
-            <folderList>
-                <folder>
-                    <description>Program Files</description>
-                    <destination>${installdir}</destination>
-                    <name>programfiles</name>
-                    <platforms>all</platforms>
-                    <distributionFileList>
-                        <distributionDirectory>
-                            <allowWildcards>1</allowWildcards>
-                            <origin>${build_project_directory}/sequoiadb/*</origin>
-                        </distributionDirectory>
-                    </distributionFileList>
-                </folder>
-            </folderList>
-        </component>
-    </componentList>
-    <readyToInstallActionList>
-        <throwError>
-            <text>There is not enough disk space for installation.</text>
-            <ruleList>
-                <checkFreeDiskSpace>
-                    <logic>less_or_equal</logic>
-                    <path>${installdir}</path>
-                    <size>1300000</size>
-                </checkFreeDiskSpace>
-            </ruleList>
-        </throwError>
-        <throwError>
-            <text>The ROOT user is not allowed to create.</text>
-            <ruleList>
-                <compareValues>
-                    <logic>equals</logic>
-                    <value1>${username}</value1>
-                    <value2>root</value2>
-                </compareValues>
-            </ruleList>
-        </throwError>
-        <runProgram>
-            <abortOnError>0</abortOnError>
-            <customErrorMessage>${msg(Install.ErrorMsg.CreateGroup.error)}</customErrorMessage>
-            <program>groupadd</program>
-            <programArguments>${username}_group</programArguments>
-            <showMessageOnError>0</showMessageOnError>
-            <ruleList>
-                <platformTest>
-                    <type>linux</type>
-                </platformTest>
-                <userTest>
-                    <logic>not_exists</logic>
-                    <username>${username}</username>
-                </userTest>
-            </ruleList>
-        </runProgram>
-        <runProgram>
-            <abortOnError>0</abortOnError>
-            <customErrorMessage>${msg(Install.ErrorMsg.CreateGroup.error)}</customErrorMessage>
-            <program>useradd</program>
-            <programArguments> ${username} -m -p ${userpasswd} -g ${username}_group  -s /bin/bash </programArguments>
-            <useMSDOSPath>0</useMSDOSPath>
-            <ruleList>
-                <platformTest>
-                    <type>linux</type>
-                </platformTest>
-                <userTest>
-                    <logic>not_exists</logic>
-                    <username>${username}</username>
-                </userTest>
-            </ruleList>
-        </runProgram>
-        <runProgram>
-            <program>echo</program>
-            <programArguments> ${username}:${userpasswd} | chpasswd</programArguments>
-            <workingDirectory>/usr/sbin</workingDirectory>
-            <ruleList>
-                <platformTest>
-                    <type>linux</type>
-                </platformTest>
-            </ruleList>
-        </runProgram>
-        <runProgram>
-            <abortOnError>0</abortOnError>
-            <program>echo</program>
-            <programArguments>3 &gt; /proc/sys/net/ipv4/tcp_retries2</programArguments>
-            <ruleList>
-                <platformTest>
-                    <type>linux</type>
-                </platformTest>
-                <fileExists>
-                    <path>/proc/sys/net/ipv4/tcp_retries2</path>
-                </fileExists>
-            </ruleList>
-        </runProgram>
-        <changePermissions>
-            <files>/home</files>
-            <permissions>0755</permissions>
-            <ruleList>
-                <fileExists>
-                    <path>/home/${username}</path>
-                </fileExists>
-            </ruleList>
-        </changePermissions>
-        <createDirectory>
-            <path>~${username}</path>
-            <ruleList>
-                <fileExists>
-                    <negate>1</negate>
-                    <path>~${username}</path>
-                </fileExists>
-            </ruleList>
-        </createDirectory>
-        <touchFile>
-            <path>~${username}/.bashrc</path>
-            <ruleList>
-                <fileExists>
-                    <negate>1</negate>
-                    <path>~${username}/.bashrc</path>
-                </fileExists>
-            </ruleList>
-        </touchFile>
-        <runProgram>
-            <abortOnError>0</abortOnError>
-            <program>echo</program>
-            <programArguments>'export PATH=$PATH:${installdir}' &gt;&gt; ~${username}/.bashrc</programArguments>
-            <ruleEvaluationLogic>or</ruleEvaluationLogic>
-            <ruleList>
-                <fileContentTest>
-                    <encoding>utf-8</encoding>
-                    <logic>does_not_contain</logic>
-                    <path>~${username}/.bashrc</path>
-                    <text>${installdir}</text>
-                </fileContentTest>
-                <fileExists>
-                    <path>~${username}/.bashrc</path>
-                </fileExists>
-            </ruleList>
-        </runProgram>
-        <changeOwnerAndGroup>
-            <files>~${username}/*</files>
-            <group>${username}_group</group>
-            <owner>${username}</owner>
-            <ruleList>
-                <fileExists>
-                    <path>~${username}</path>
-                </fileExists>
-            </ruleList>
-        </changeOwnerAndGroup>
-        <exit>
-            <exitCode>1</exitCode>
-            <ruleList>
-                <userTest>
-                    <logic>not_exists</logic>
-                    <username>${username}</username>
-                </userTest>
-            </ruleList>
-        </exit>
-    </readyToInstallActionList>
-    <postInstallationActionList>
-        <createSymLink>
-            <linkName>${installdir}/tools/server/php/libxml2/lib/libxml2.so</linkName>
-            <target>${installdir}/tools/server/php/libxml2/lib/libxml2.so.2.9.0</target>
-        </createSymLink>
-        <createSymLink>
-            <linkName>${installdir}/tools/server/php/libxml2/lib/libxml2.so.2</linkName>
-            <target>${installdir}/tools/server/php/libxml2/lib/libxml2.so.2.9.0</target>
-        </createSymLink>
-        <createSymLink>
-            <linkName>${installdir}/tools/server/php/libxml2/lib/libz.so</linkName>
-            <target>${installdir}/tools/server/php/libxml2/lib/libz.so.1.2.5</target>
-        </createSymLink>
-        <createSymLink>
-            <linkName>${installdir}/tools/server/php/libxml2/lib/libz.so.1</linkName>
-            <target>${installdir}/tools/server/php/libxml2/lib/libz.so.1.2.5</target>
-        </createSymLink>
-        <changeOwnerAndGroup>
-            <files>${installdir}/tools/server/php/libxml2/lib</files>
-            <group>${username}_group</group>
-            <owner>${username}</owner>
-        </changeOwnerAndGroup>
-        <deleteFile>
-            <path>/etc/default/sequoiadb</path>
-            <ruleList>
-                <fileExists>
-                    <path>/etc/default/sequoiadb</path>
-                </fileExists>
-            </ruleList>
-        </deleteFile>
-        <propertiesFileSet>
-            <file>/etc/default/sequoiadb</file>
-            <key>NAME</key>
-            <value>sdbcm</value>
-        </propertiesFileSet>
-        <propertiesFileSet>
-            <file>/etc/default/sequoiadb</file>
-            <key>SDBADMIN_USER</key>
-            <value>${username}</value>
-        </propertiesFileSet>
-        <propertiesFileSet>
-            <file>/etc/default/sequoiadb</file>
-            <key>INSTALL_DIR</key>
-            <value>${installdir}</value>
-        </propertiesFileSet>
-        <changePermissions files="${installdir}/bin/{*,*/*}" permissions="0755">
-            <customErrorMessage>${msg(Install.ErrorMsg.ChangeInsallerPathPermissions.error)}</customErrorMessage>
-        </changePermissions>
-        <changePermissions>
-            <files>${installdir}/tools/server/php/bin/*</files>
-            <permissions>0755</permissions>
-        </changePermissions>
-        <changePermissions>
-            <files>${installdir}/www/shell/*</files>
-            <permissions>0755</permissions>
-        </changePermissions>
-        <changePermissions>
-            <files>${installdir}/install_om.sh</files>
-            <permissions>0755</permissions>
-        </changePermissions>
-        <dos2unix>
-            <files>${installdir}/tools/server/php/bin/php</files>
-        </dos2unix>
-        <iniFileSet>
-            <file>${installdir}/tools/server/php/lib/php.ini</file>
-            <key>extension_dir</key>
-            <section>PHP</section>
-            <value>${installdir}/lib/phplib</value>
-        </iniFileSet>
-        <changePermissions>
-            <files>${installdir}/java/jdk/bin/*</files>
-            <permissions>0755</permissions>
-        </changePermissions>
-        <propertiesFileSet>
-            <file>${installdir}/conf/sdbcm.conf</file>
-            <key>defaultPort</key>
-            <value>${port}</value>
-        </propertiesFileSet>
-        <addUnixService>
-            <customErrorMessage>${msg(Install.ErrorMsg.CreateLinuxService.error)}</customErrorMessage>
-            <description>SequoiaDB Cluster Manager</description>
-            <name>sdbcm</name>
-            <program>${installdir}/sequoiadb</program>
-            <ruleEvaluationLogic>or</ruleEvaluationLogic>
-            <ruleList>
-                <platformTest>
-                    <type>linux</type>
-                </platformTest>
-            </ruleList>
-        </addUnixService>
-        <propertiesFileSet>
-            <file>${installdir}/conf/sdbcm.conf</file>
-            <key>AutoStart</key>
-            <value>false</value>
-            <ruleList>
-                <isTrue>
-                    <negate>1</negate>
-                    <value>${processAutoStart}</value>
-                </isTrue>
-                <platformTest>
-                    <type>linux</type>
-                </platformTest>
-            </ruleList>
-        </propertiesFileSet>
-        <runProgram>
-            <program>service</program>
-            <programArguments> sdbcm start</programArguments>
-            <ruleList>
-                <platformTest>
-                    <type>linux</type>
-                </platformTest>
-            </ruleList>
-        </runProgram>
-        <runProgram>
-            <customErrorMessage>${msg(Install.ErrorMsg.IntallationOM.error)}</customErrorMessage>
-            <program>${installdir}/install_om.sh</program>
-            <programArguments>${installdir} ${port} ${svcname} ${dbpath} ${restname} ${installer_pathname}</programArguments>
-            <ruleEvaluationLogic>or</ruleEvaluationLogic>
-            <ruleList>
-                <isTrue>
-                    <value>${OM}</value>
-                </isTrue>
-                <isTrue>
-                    <value>${SMS}</value>
-                </isTrue>
-            </ruleList>
-        </runProgram>
-        <changePermissions>
-            <files>${installdir}/postgresql/*</files>
-            <permissions>0755</permissions>
-        </changePermissions>
-        <changePermissions>
-            <files>/tmp</files>
-            <permissions>0777</permissions>
-        </changePermissions>
-        <changeOwnerAndGroup>
-            <files>${installdir}/packet/*</files>
-            <group>${username}_group</group>
-            <owner>${username}</owner>
-        </changeOwnerAndGroup>
-        <changeOwnerAndGroup>
-            <files>${installdir}/bin/sdbomtool</files>
-            <group>root</group>
-            <owner>root</owner>
-        </changeOwnerAndGroup>
-        <changePermissions>
-            <files>${installdir}/bin/sdbomtool</files>
-            <permissions>6755</permissions>
-        </changePermissions>
-        <runProgram>
-            <program>echo</program>
-            <programArguments>'' &gt;&gt; /etc/default/sequoiadb</programArguments>
-        </runProgram>
-        <runProgram>
-            <program>echo</program>
-            <programArguments> -n MD5= &gt;&gt; /etc/default/sequoiadb</programArguments>
-        </runProgram>
-        <runProgram>
-            <program>/usr/bin/md5sum</program>
-            <programArguments>${installer_pathname} | cut -c 1-32 &gt;&gt; /etc/default/sequoiadb</programArguments>
-        </runProgram>
-        <runProgram>
-            <abortOnError>0</abortOnError>
-            <program>echo</program>
-            <programArguments>'export PATH=$PATH:${installdir}/bin' &gt;&gt; ~${username}/.bashrc</programArguments>
-            <ruleEvaluationLogic>or</ruleEvaluationLogic>
-            <ruleList>
-                <fileContentTest>
-                    <encoding>utf-8</encoding>
-                    <logic>does_not_contain</logic>
-                    <path>~${username}/.bashrc</path>
-                    <text>${installdir}/bin</text>
-                </fileContentTest>
-                <fileExists>
-                    <path>~${username}/.bashrc</path>
-                </fileExists>
-            </ruleList>
-        </runProgram>
-        <createSymLink>
-            <linkName>${installdir}/www/doc</linkName>
-            <target>${installdir}/doc</target>
-        </createSymLink>
-    </postInstallationActionList>
-    <preUninstallationActionList>
-        <runProgram>
-            <program>service</program>
-            <programArguments>sdbcm stop</programArguments>
-            <ruleList>
-                <platformTest>
-                    <type>linux</type>
-                </platformTest>
-            </ruleList>
-        </runProgram>
-        <removeUnixService>
-            <name>sdbcm</name>
-            <ruleEvaluationLogic>or</ruleEvaluationLogic>
-            <ruleList>
-                <platformTest>
-                    <type>linux</type>
-                </platformTest>
-            </ruleList>
-        </removeUnixService>
-        <runProgram>
-            <program>${installdir}/bin/sdbstop</program>
-            <programArguments>-t all</programArguments>
-            <ruleList>
-                <platformTest>
-                    <type>linux</type>
-                </platformTest>
-            </ruleList>
-        </runProgram>
-    </preUninstallationActionList>
-    <postUninstallationActionList>
-        <deleteFile>
-            <path>/etc/default/sequoiadb</path>
-            <ruleList>
-                <platformTest>
-                    <type>linux</type>
-                </platformTest>
-                <fileExists>
-                    <path>/etc/default/sequoiadb</path>
-                </fileExists>
-            </ruleList>
-        </deleteFile>
-        <removeDirectoryFromPath>
-            <path>${installdir}</path>
-            <scope>user</scope>
-        </removeDirectoryFromPath>
-        <removeDirectoryFromPath>
-            <path>${installdir}/bin</path>
-            <scope>user</scope>
-        </removeDirectoryFromPath>
-    </postUninstallationActionList>
-    <allowedLanguages>en zh_CN</allowedLanguages>
-    <debuggerPassword>sequoiadb</debuggerPassword>
-    <defaultUnixGroup>${username}_group</defaultUnixGroup>
-    <defaultUnixOwner>${username}</defaultUnixOwner>
-    <enableDebugger>1</enableDebugger>
-    <enableRollback>1</enableRollback>
-    <enableTimestamp>1</enableTimestamp>
-    <requireInstallationByRootUser>1</requireInstallationByRootUser>
-    <saveRelativePaths>1</saveRelativePaths>
-    <singleInstanceCheck>1</singleInstanceCheck>
-    <vendor>SequoiaDB</vendor>
-    <installationAbortedActionList>
-        <removeUnixService>
-            <name>sdbcm</name>
-            <ruleEvaluationLogic>or</ruleEvaluationLogic>
-            <ruleList>
-                <platformTest>
-                    <type>linux</type>
-                </platformTest>
-            </ruleList>
-        </removeUnixService>
-        <deleteFile>
-            <abortOnError>0</abortOnError>
-            <path>/etc/default/sequoiadb</path>
-            <ruleList>
-                <platformTest>
-                    <type>linux</type>
-                </platformTest>
-                <fileExists>
-                    <path>/etc/default/sequoiadb</path>
-                </fileExists>
-            </ruleList>
-        </deleteFile>
-        <runProgram>
-            <customErrorMessage>${msg(Install.ErrorMsg.DeleteUser.error)}</customErrorMessage>
-            <program>userdel</program>
-            <programArguments>${username}</programArguments>
-            <ruleList>
-                <userTest>
-                    <logic>exists</logic>
-                    <password>${username}</password>
-                    <username>${username}</username>
-                </userTest>
-                <platformTest>
-                    <type>linux</type>
-                </platformTest>
-                <isFalse>
-                    <value>$sig</value>
-                </isFalse>
-            </ruleList>
-        </runProgram>
-        <deleteGroup>
-            <groupname>${username}_group</groupname>
-            <ruleList>
-                <userTest>
-                    <logic>exists</logic>
-                    <username>${username}</username>
-                </userTest>
-                <platformTest>
-                    <type>linux</type>
-                </platformTest>
-                <isFalse>
-                    <value>$sig_group</value>
-                </isFalse>
-            </ruleList>
-        </deleteGroup>
-    </installationAbortedActionList>
+    <installationType>normal</installationType>
+    <overwritePolicy>always</overwritePolicy>
+    
+    <customLanguageFileList>
+        <language>
+            <code>en</code>
+            <encoding>utf-8</encoding>
+            <file>${build_project_directory}/sequoiadb_en.lng</file>
+        </language>
+        <language>
+            <code>zh_CN</code>
+            <encoding>utf-8</encoding>
+            <file>${build_project_directory}/sequoiadb_zh.lng</file>
+        </language>
+    </customLanguageFileList>
+    
     <licenseFileList>
         <licenseFile>
             <code>en</code>
@@ -490,7 +29,80 @@
             <file>${build_project_directory}/sequoiadb/license/license_zh.txt</file>
         </licenseFile>
     </licenseFileList>
+    
+    <initializationActionList>
+        <setInstallerVariable name="begin_normal_component" value="false"/>       
+    </initializationActionList>
+    
+    <!--exist installation?-->
+    <preInstallationActionList>         
+        <actionGroup> 
+            <actionList>
+                <throwError>
+                    <text>${msg(Upgrade.Paramers.Upgrade.Check)}</text> 
+                </throwError>                        
+            </actionList> 
+            <ruleEvaluationLogic>and</ruleEvaluationLogic>
+            <ruleList>
+                <compareText logic="does_not_equal" text="${is_upgrade_mode}" value="true"/>
+                <compareText logic="does_not_equal" text="${is_upgrade_mode}" value="false"/>
+            </ruleList>        
+        </actionGroup>              
+            
+        <setInstallerVariable name="sys_conf_file" value="/etc/default/sequoiadb"/>
+        <setInstallerVariable name="exist_installation" value="false"/>
+        <createTimeStamp>
+            <variable>time</variable>
+            <format>%Y-%m-%d-%H:%M:%S</format>
+        </createTimeStamp>                
+        <setInstallerVariable name="project.rollbackBackupDirectory" value="${installdir}/rollback/BackupDir_${time}"/>
+                                                                                                                                                     
+        <actionGroup> 
+            <actionList>
+                <propertiesFileGet>
+                    <file>${sys_conf_file}</file>            
+                    <key>INSTALL_DIR</key>
+                    <variable>installdir_inconf</variable>
+                    <abortOnError>0</abortOnError>
+                </propertiesFileGet>                     
+            </actionList> 
+            <ruleEvaluationLogic>and</ruleEvaluationLogic>
+            <ruleList>
+                <isFalse value="${is_upgrade_mode}"/>
+                <fileTest condition="exists" path="${sys_conf_file}"/>                
+            </ruleList>           
+        </actionGroup>
+        <actionGroup> 
+            <actionList>
+                <setInstallerVariable name="exist_installation" value="true"/>                       
+            </actionList> 
+            <ruleEvaluationLogic>and</ruleEvaluationLogic>
+            <ruleList>
+                 <isFalse value="${is_upgrade_mode}"/>
+                 <compareTextLength text="${installdir_inconf}" logic="greater" length="0"/>
+                 <fileTest condition="exists"       path="${installdir_inconf}"/> 
+                 <fileTest condition="is_not_empty" path="${installdir_inconf}"/>                                         
+            </ruleList>          
+        </actionGroup>        
+                                                                    
+    </preInstallationActionList> 
+    
     <parameterList>
+        
+        <stringParameter name="build_project_directory" value="" ask="0"/> 
+        <stringParameter name="sys_conf_file" value="" ask="0"/>    
+               
+        <booleanParameter>
+            <name>is_upgrade_mode</name>
+            <value></value>
+            <default>false</default>  
+            <cliOptionName>upgrade</cliOptionName>                                                           
+            <cliOptionText>${msg(Upgrade.Paramers.Upgrade.Explanation)}</cliOptionText>            
+            <ruleList>
+                <isTrue value="0"/>                                 
+            </ruleList>                                                                                       
+        </booleanParameter>
+        
         <choiceParameterGroup>
             <name>licenseRead</name>
             <description>Install.Paramers.LicenseRead.License.Information.Part</description>
@@ -524,13 +136,26 @@
                     </licenseFileList>
                 </licenseParameter>
             </parameterList>
-        </choiceParameterGroup>
+            <postShowPageActionList>
+                <showQuestion>
+                    <default>yes</default>
+                    <text>An existing installation has been detected in ${installdir_inconf}. Do you want to upgrade?</text>
+                    <variable>is_upgrade_mode</variable>
+                    <ruleEvaluationLogic>and</ruleEvaluationLogic>
+                    <ruleList>
+                        <isFalse value="${is_upgrade_mode}"/>    
+                        <isTrue value="${exist_installation}"/>                                                        
+                    </ruleList>
+                </showQuestion>    
+            </postShowPageActionList>
+        </choiceParameterGroup>        
+                                
         <parameterGroup>
-            <name>ActionGroup</name>
-            <explanation></explanation>
-            <value></value>
-            <default></default>
-            <parameterList>
+            <name>install_parameters</name>   
+            <ruleList>
+                <isFalse value="${is_upgrade_mode}"/>                  
+            </ruleList>        
+            <parameterList>                                            
                 <directoryParameter>
                     <name>installdir</name>
                     <description>Installer.Parameter.installdir.description</description>
@@ -579,9 +204,7 @@
                             <default>${username}</default>
                             <allowEmptyValue>0</allowEmptyValue>
                             <descriptionRetype>${msg(Install.Paramers.user.reentry_password.description)}</descriptionRetype>
-                            <width>20</width>
-
-                            <!-- throw an error if password is empty -->
+                            <width>20</width>                           
                             <validationActionList>
                                 <throwError>
                                     <text>${msg(Install.Paramers.user.password.error)}</text>
@@ -681,9 +304,101 @@
                             <value>${SMS}</value>
                         </isFalse>
                     </ruleList>
-                </booleanParameter>
+                </booleanParameter>                                              
             </parameterList>
         </parameterGroup>
+        
     </parameterList>
+    
+    <readyToInstallActionList> <!--select compoment-->
+        
+        <actionGroup> 
+            <actionList>
+                <setInstallerVariable name="project.installationType" value="upgrade"/>                             
+            </actionList>
+            <ruleList>
+                <isTrue value="${is_upgrade_mode}"/>               
+            </ruleList>
+        </actionGroup> 
+                                                                                                         
+        <componentSelection>
+            <select>upgrade_component</select>
+            <deselect>normal_component</deselect>
+            <ruleList>
+                <compareValues value1="${project.installationType}" value2="upgrade" logic="equals"/>
+            </ruleList>
+        </componentSelection> 
+        <componentSelection>
+            <select>normal_component</select>
+            <deselect>upgrade_component</deselect>
+            <ruleList>
+                <compareValues value1="${project.installationType}" value2="normal" logic="equals"/>
+            </ruleList>
+        </componentSelection>         
+                                          
+    </readyToInstallActionList>  
+                       
+    <componentList>
+        <include file="upgrade_component.xml" />
+        <include file="normal_component.xml" />    
+    </componentList>
+           
+    <preUninstallationActionList>
+        <runProgram>
+            <program>service</program>
+            <programArguments>sdbcm stop</programArguments>            
+        </runProgram>
+        <runProgram>
+            <program>${installdir}/bin/sdbstop</program>
+            <programArguments>-t all</programArguments>           
+        </runProgram>
+        <removeUnixService>
+            <name>sdbcm</name>            
+        </removeUnixService>
+        <deleteFile>
+            <path>${installdir}/packet/${installer_pathname}</path>
+            <ruleList>               
+                <fileExists path="${installdir}/packet/${installer_pathname}"/>
+            </ruleList>
+        </deleteFile>
+    </preUninstallationActionList>
+    
+    <postUninstallationActionList>
+        <deleteFile>
+            <path>/etc/default/sequoiadb</path>
+            <ruleList>               
+                <fileExists path="/etc/default/sequoiadb"/>
+            </ruleList>
+        </deleteFile>        
+        <deleteFile>
+            <path>${installdir}/upgrade.log</path>
+            <ruleList>               
+                <fileExists path="${installdir}/upgrade.log"/>
+            </ruleList>
+        </deleteFile>
+        <removeDirectoryFromPath>
+            <path>${installdir}</path>
+            <scope>user</scope>
+        </removeDirectoryFromPath>
+        <removeDirectoryFromPath>
+            <path>${installdir}/bin</path>
+            <scope>user</scope>
+        </removeDirectoryFromPath>
+    </postUninstallationActionList>            
+    
+    <installerFilename>${product_shortname}-${product_version}-${platform}${enterpriseversion}-installer.${platform_exec_suffix}</installerFilename>         
+    <allowLanguageSelection>1</allowLanguageSelection>   
+    <allowedLanguages>en zh_CN</allowedLanguages>
+    <debuggerPassword>sequoiadb</debuggerPassword>
+    <enableDebugger>1</enableDebugger>
+    <defaultUnixGroup>${username}_group</defaultUnixGroup>
+    <defaultUnixOwner>${username}</defaultUnixOwner>    
+    <enableRollback>1</enableRollback>
+    <enableTimestamp>1</enableTimestamp>
+    <requireInstallationByRootUser>1</requireInstallationByRootUser>
+    <saveRelativePaths>1</saveRelativePaths>
+    <singleInstanceCheck>1</singleInstanceCheck>
+    <vendor>SequoiaDB</vendor>      
+    
 </project>
 
