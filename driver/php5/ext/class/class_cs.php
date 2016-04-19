@@ -149,13 +149,7 @@ class SequoiaCS
     *
     * Example:
     * @code
-    * $db = new SequoiaDB() ;
-    * $err = $db -> connect( "192.168.1.10:11810" ) ;
-    * if( $err['errno'] != 0 ) {
-    *    echo "Failed to connect database, error code: ".$err['errno'] ;
-    *    return ;
-    * }
-    * $cl = $db -> getCL( 'bar' ) ;
+    * $cl = $cs -> getCL( 'bar' ) ;
     * if( empty( $cl ) ) {
     *    $err = $db -> getError() ;
     *    echo "Failed to call getCL, error code: ".$err['errno'] ;
