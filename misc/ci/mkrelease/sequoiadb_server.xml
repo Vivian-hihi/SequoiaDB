@@ -88,9 +88,9 @@
     </preInstallationActionList> 
     
     <parameterList>
-        
-        <stringParameter name="build_project_directory" value="" ask="0"/> 
+               
         <stringParameter name="sys_conf_file" value="" ask="0"/>    
+        <stringParameter name="enterpriseversion" value="" ask="0"/>
                
         <booleanParameter>
             <name>is_upgrade_mode</name>
@@ -371,9 +371,9 @@
             </ruleList>
         </deleteFile>        
         <deleteFile>
-            <path>${installdir}/upgrade.log</path>
+            <path>${installdir}/install/upgrade.log</path>
             <ruleList>               
-                <fileExists path="${installdir}/upgrade.log"/>
+                <fileExists path="${installdir}/install/upgrade.log"/>
             </ruleList>
         </deleteFile>
         <removeDirectoryFromPath>

@@ -1,3 +1,4 @@
+#!/bin/bash
 ######################################################################
 #@decript:  judge that old version can upgrade to new version or not
 #@author:   Ting YU 2016-04-13 
