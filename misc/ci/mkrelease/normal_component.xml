@@ -138,6 +138,7 @@
                 <distributionDirectory> 
                     <allowWildcards>1</allowWildcards>                       
                     <origin>${build_project_directory}/sequoiadb/*</origin>
+                    <excludeFiles>*/tmp</excludeFiles>
                 </distributionDirectory>
             </distributionFileList>
         </folder>
