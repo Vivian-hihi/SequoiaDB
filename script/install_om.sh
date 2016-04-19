@@ -1,37 +1,46 @@
 #!/bin/bash
 
-###########################################
+##########################################################
 # script parameter description:
-# $1 for rootPath, ex: /opt/sequoiadb
-# $2 for cm port
-# $3 om svcName
-# $4 om dbPath
-###########################################
+# $1 install mode, ex: normal, ex: upgrade
+# $2 root path of sdb, ex: /opt/sequoiadb
+# $3 path and name of package, ex:/opt/sequoiadb-2.0.run
+# $4 cm port
+# $5 om svcName
+# $6 om dbPath
+# $7 rest port
+##########################################################
 
-rootPath=$1
-cmPort=$2
-svcName=$3
-dbPath=$4
-restPort=$5
-installer_pathname=$6
+installMode=$1
+rootPath=$2
+installer_pathname=$3
+cmPort=$4
+svcName=$5
+dbPath=$6
+restPort=$7
 
-sdbFile=$1/bin/sdb
+sdbFile=$2/bin/sdb
 
-# first to start sdbcm
-# $rootPath/bin/sdbcmart
-# if [  $? != 0  ] ; then
-#    echo "Start sdbcm failed"
-#    exit 1
-# fi
+echo "installMode=" $1
+echo "rootPath=" $2
+echo "installer_pathname=" $3
+echo "cmPort=" $4
+echo "svcName=" $5
+echo "dbPath=" $6
+echo "restPort=" $7
 
-echo "rootPath=" $1
-echo "cmPort=" $2
-echo "svcName=" $3
-echo "dbPath=" $4
-echo "restPort=" $5
-echo "installer_pathname=" $6
+# upgrade mode: only copy install package
+if [  $installMode == "upgrade"  ] ; then
+   packageNum=0
+   packageNum=`find $rootPath/packet -name "*.run" | wc -l`
+   if [  $packageNum -gt 0  ] ; then
+      rm -rf $rootPath/packet/*
+      cp $installer_pathname  $rootPath/packet   
+   fi
+   exit 0
+fi
 
-# second to create om
+# normal mode: step 1 create om
 $sdbFile -s " var _svcName = '${svcName}' ;                                              \
               var _dbPath = '${dbPath}' ;                                                \
               var _restPort = '${restPort}' ;                                            \
@@ -74,7 +83,7 @@ $sdbFile -s " var _svcName = '${svcName}' ;                                     
                  throw e ;                                                               \
               } "
 
-#check whether om is ok or not
+# normal mode: step 2 check whether om is ok or not
 if [  $? != 0  ] ; 
 then
    echo "Create OM failed"
@@ -82,5 +91,5 @@ else
    echo "Create OM succeed"
 fi
 
-#copy installer file to packet dir
-cp $6  $1/packet
+# normal mode: step 3 copy install package
+cp $installer_pathname  $rootPath/packet
