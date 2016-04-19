@@ -88,7 +88,8 @@
     </preInstallationActionList> 
     
     <parameterList>
-               
+        
+        <!--stringParameter name="build_project_directory" value="" ask="0"/--> 
         <stringParameter name="sys_conf_file" value="" ask="0"/>    
         <stringParameter name="enterpriseversion" value="" ask="0"/>
                
@@ -139,7 +140,7 @@
             <postShowPageActionList>
                 <showQuestion>
                     <default>yes</default>
-                    <text>An existing installation has been detected in ${installdir_inconf}. Do you want to upgrade?</text>
+                    <text>${msg(Upgrade.NormalMsg.AskUpgrade)}</text>
                     <variable>is_upgrade_mode</variable>
                     <ruleEvaluationLogic>and</ruleEvaluationLogic>
                     <ruleList>
@@ -243,7 +244,7 @@
                     <allowEmptyValue>1</allowEmptyValue>
                     <ask>0</ask>
                     <cliOptionName>svcname</cliOptionName>
-                    <cliOptionText>${msg(Installer.Paramers.svcnamePort.explanation)}</cliOptionText>
+                    <cliOptionText>${msg(Install.Paramers.svcnamePort.explanation)}</cliOptionText>
                     <ruleEvaluationLogic>or</ruleEvaluationLogic>
                     <width>40</width>
                     <ruleList>
@@ -261,7 +262,7 @@
                     <allowEmptyValue>1</allowEmptyValue>
                     <ask>0</ask>
                     <cliOptionName>dbpath</cliOptionName>
-                    <cliOptionText>${msg(Installer.Paramers.dbpath.explanation)}</cliOptionText>
+                    <cliOptionText>${msg(Install.Paramers.dbpath.explanation)}</cliOptionText>
                     <mustBeWritable>0</mustBeWritable>
                     <mustExist>0</mustExist>
                     <ruleEvaluationLogic>or</ruleEvaluationLogic>
@@ -281,7 +282,7 @@
                     <allowEmptyValue>1</allowEmptyValue>
                     <ask>0</ask>
                     <cliOptionName>restname</cliOptionName>
-                    <cliOptionText>${msg(Installer.Paramers.restPort.explanation)}</cliOptionText>
+                    <cliOptionText>${msg(Install.Paramers.restPort.explanation)}</cliOptionText>
                     <ruleEvaluationLogic>or</ruleEvaluationLogic>
                     <width>40</width>
                     <ruleList>
@@ -292,12 +293,12 @@
                 </stringParameter>
                 <booleanParameter>
                     <name>SMS</name>
-                    <description>${msg(Installer.Paramers.sms.description)}</description>
+                    <description>${msg(Install.Paramers.sms.description)}</description>
                     <explanation></explanation>
                     <value></value>
                     <default>false</default>
                     <cliOptionName>SMS</cliOptionName>
-                    <cliOptionText>${msg(Installer.Paramers.installationType.explanation)}</cliOptionText>
+                    <cliOptionText>${msg(Install.Paramers.installationType.explanation)}</cliOptionText>
                     <ruleEvaluationLogic>or</ruleEvaluationLogic>
                     <ruleList>
                         <isFalse>
@@ -401,4 +402,3 @@
     <vendor>SequoiaDB</vendor>      
     
 </project>
-

@@ -9,18 +9,15 @@ Install.Paramers.port.Description=Port
 Install.Paramers.port.explanation=SequoiaDB Cluster Manager port
 Install.Paramers.processAutoStart.explanation=Do You Want To Start The Process When Machine Restart
 Install.Paramers.processAutoStart.Description=Process Auto Start
-Installer.Paramers.sms.description=Do You Want To Install OM Service
-Installer.Paramers.installationType.explanation=Do You Want To Install OM Service:true/false
-Installer.Paramers.svcnamePort.explanation=Svcname Port
-Installer.Paramers.dbpath.explanation=SMS data path
-Installer.Paramers.restPort.explanation=Restname Port
+Install.Paramers.sms.description=Do You Want To Install OM Service
+Install.Paramers.installationType.explanation=Do You Want To Install OM Service:true/false
+Install.Paramers.svcnamePort.explanation=Svcname Port
+Install.Paramers.dbpath.explanation=SMS data path
+Install.Paramers.restPort.explanation=Restname Port
 Install.Paramers.LicenseRead.Agree.Description=Agree The License
 Install.Paramers.LicenseRead.Agree.Explanation=For More License's Detail, Please Check The License File After Installation
 Install.Paramers.LicenseRead.Read.Description=Read The License
 Install.Paramers.LicenseRead.License.Information.Part=IMPORTANT: READ CAREFULLY\n\nTwo license agreements are presented below.\n\n1. SequoiaDB License Agreement for Evaluation of Programs\n\n2. SequoiaDB End-User License Agreement\n\nIf Licensee is obtaining the Program for purposes of productive use (other than evaluation, testing, trial "try or buy," or demonstration): By clicking on the "Accept" button below, Licensee accepts the SequoiaDB End-User License Agreement, without modification.\n\nIf Licensee is obtaining the Program for the purpose of evaluation, testing, trial "try or buy," or demonstration (collectively, an "Evaluation"): By clicking on the "Accept" button below, Licensee accepts both (i) the SequoiaDB License Agreement for Evaluation of Programs (the "Evaluation License"), without modification; and (ii) the SequoiaDB End-User License Agreement (the "SELA"), without modification.\n\nThe Evaluation License will apply during the term of Licensee's Evaluation.\n\nThe SELA will automatically apply if Licensee elects to retain the Program after the Evaluation (or obtain additional copies of the Program for use after the Evaluation) by entering into a procurement agreement.\n\nThe Evaluation License and the SELA are not in effect concurrently; neither modifies the other; and each is independent of the other.\n\nThe complete text of each of these two license agreements follow.\n\n\nLicense Agreement for Evaluation of Programs
-
-
-
 
 Install.ErrorMsg.CreateGroup.error=Warning:Group name exists already, skip create group action
 Install.ErrorMsg.CreateUser.error=Warning:User name exists already, skip create group action
@@ -36,6 +33,7 @@ Install.ErrorMsg.IntallationOM.error=Create OM failed
 Upgrade.Paramers.Upgrade.Explanation=Do You Want To Upgrade
 Upgrade.Paramers.Upgrade.Check=Invalid parameter value: --upgrade ${is_upgrade_mode}, should be true or false
 
+Upgrade.NormalMsg.AskUpgrade=An existing installation has been detected in ${installdir_inconf}. Do you want to upgrade? Y:upgrade, N:install
 Upgrade.NormalMsg.BeginUpgrade=Begin to upgrade package ......
 Upgrade.NormalMsg.CheckList=**************************  check list *************************************
 Upgrade.NormalMsg.SystemConfExist=Check configure file ${sys_conf_file} is exists ...... ok
@@ -48,9 +46,7 @@ Upgrade.NormalMsg.UserExist=Check user ${username} is exist ...... ok
 Upgrade.NormalMsg.StopProcess=Check relevant processes are stoped  ...... ok
 Upgrade.NormalMsg.RestoreFile=Upgrade aborted, begin to restore files ...
 
-
 Upgrade.WarnMsg.StartProcess=Warn: sdbcm or sdbcmd has not been started after service sdbcm start!!!
-
 
 Upgrade.ErrorMsg.SystemConfExist=File ${sys_conf_file} does not exist
 Upgrade.ErrorMsg.GetInstallDir=Can not get INSTALL_DIR from ${sys_conf_file}
@@ -66,5 +62,3 @@ Upgrade.ErrorMsg.DiskSpace=There is not enough disk space for installation.
 Upgrade.ErrorMsg.UserExist=User ${username} does not exist.
 Upgrade.ErrorMsg.StopProcess=Processes still exists after service sdbcm stop.
 Upgrade.ErrorMsg.StartProcess=sdbcm or sdbcmd has not been started.
-
-
