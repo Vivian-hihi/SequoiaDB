@@ -21,15 +21,7 @@
 	<pre class="prettyprint lang-javascript">
 	$ su sdbadmin</pre>
 
--   关闭自启动的sdbcm服务
-
-	<pre class="prettyprint lang-javascript">
-	$ service sdbcm stop</pre>
-
--   以交叉内存分配策略启动sdbcm服务
-
-	<pre class="prettyprint lang-javascript">
-	$ numactl --interleave=all service sdbcm start</pre>
+-   建议参看[Linux推荐配置](SdbDoc_Cn/installation/system.html)中关于NUMA的条目，NUMA对SequoiaDB的运行有影响，尤其是高负荷的生产环境，如果只是实验性使用，可以跳过本步骤。
 
 -   启动 SequoiaDB Shell 控制台（下文以默认安装路径 /opt/sequoiadb 为例）
 
