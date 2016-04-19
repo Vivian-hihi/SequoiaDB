@@ -55,6 +55,14 @@
                             </objlist>
                         </obj>
                         <obj>
+                            <id>1461056230</id>
+                            <cnname>命令行升级</cnname>
+                            <enname>Command Upgrade</enname>
+                            <cnpath>SdbDoc_Cn/installation/deployment/command_upgrade.html</cnpath>
+                            <enpath>SdbDoc_En/installation/deployment/command_upgrade_en.html</enpath>
+                            <enabled>true</enabled>
+                        </obj>
+                        <obj>
                             <id>1432190600</id>
                             <cnname>可视化安装</cnname>
                             <enname>Visualization Installation</enname>
