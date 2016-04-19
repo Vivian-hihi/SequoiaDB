@@ -12,9 +12,25 @@
                     <id>1432190595</id>
                     <cnname>系统要求</cnname>
                     <enname>System</enname>
-                    <cnpath>SdbDoc_Cn/installation/system.html</cnpath>
-                    <enpath>SdbDoc_En/installation/system_en.html</enpath>
                     <enabled>true</enabled>
+                    <objlist>
+                        <obj>
+                            <id>1461056740</id>
+                            <cnname>服务器软硬件要求</cnname>
+                            <enname>Server Software & Hardware Requirements</enname>
+                            <cnpath>SdbDoc_Cn/installation/system/system_requirement.html</cnpath>
+                            <enpath>SdbDoc_En/installation/system/system_requirement_en.html</enpath>
+                            <enabled>true</enabled>
+                        </obj>
+                        <obj>
+                            <id>1461057844</id>
+                            <cnname>Linux环境推荐配置</cnname>
+                            <enname>Linux System Suggest Settings</enname>
+                            <cnpath>SdbDoc_Cn/installation/system/linux_suggest_settings.html</cnpath>
+                            <enpath>SdbDoc_En/installation/system/linux_suggest_settings_en.html</enpath>
+                            <enabled>true</enabled>
+                        </obj>
+                    </objlist>
                 </obj>
                 <obj>
                     <id>1432190596</id>
