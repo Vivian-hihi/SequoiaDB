@@ -6,7 +6,9 @@
 
 -   独立模式的数据库中不存在编目信息。  
 
--   一般推荐在开发环境中使用独立模式，以减少对硬件资源的需求。  
+-   一般推荐在开发环境中使用独立模式，以减少对硬件资源的需求。
+
+-   参看[Linux推荐配置](SdbDoc_Cn/installation/system/linux_suggest_settings.html)中关于NUMA的条目，NUMA对SequoiaDB的运行有影响。尤其是高负荷的生产环境，建议关闭NUMA或者使用“numactl --interleave=all”启动数据库服务。
 
 **说明：**
 
@@ -20,8 +22,6 @@
 
 	<pre class="prettyprint lang-javascript">
 	$ su sdbadmin</pre>
-
--   建议参看[Linux推荐配置](SdbDoc_Cn/installation/system.html)中关于NUMA的条目，NUMA对SequoiaDB的运行有影响，尤其是高负荷的生产环境，如果只是实验性使用，可以跳过本步骤。
 
 -   启动 SequoiaDB Shell 控制台（下文以默认安装路径 /opt/sequoiadb 为例）
 
