@@ -17,7 +17,7 @@
                         <obj>
                             <id>1461056740</id>
                             <cnname>服务器软硬件要求</cnname>
-                            <enname>Server Software & Hardware Requirements</enname>
+                            <enname>Server Software and Hardware Requirements</enname>
                             <cnpath>SdbDoc_Cn/installation/system/system_requirement.html</cnpath>
                             <enpath>SdbDoc_En/installation/system/system_requirement_en.html</enpath>
                             <enabled>true</enabled>
