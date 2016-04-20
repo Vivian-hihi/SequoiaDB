@@ -138,8 +138,8 @@
                 <distributionDirectory> 
                     <allowWildcards>1</allowWildcards>                       
                     <origin>${build_project_directory}/sequoiadb/*</origin>
-                    <excludeFiles>*/tmp</excludeFiles>
-                </distributionDirectory>
+                    <excludeFiles>*/compatible.sh;*/version.conf</excludeFiles>
+                </distributionDirectory>               
             </distributionFileList>
         </folder>
     </folderList> 
@@ -149,20 +149,40 @@
             <linkName>${installdir}/tools/server/php/libxml2/lib/libxml2.so</linkName>
             <target>${installdir}/tools/server/php/libxml2/lib/libxml2.so.2.9.0</target>
         </createSymLink>
+        <runProgram>
+            <program>chown</program>
+            <programArguments>-h ${username}:${username}_group ${installdir}/tools/server/php/libxml2/lib/libxml2.so</programArguments>            
+        </runProgram>
+        
         <createSymLink>
             <linkName>${installdir}/tools/server/php/libxml2/lib/libxml2.so.2</linkName>
             <target>${installdir}/tools/server/php/libxml2/lib/libxml2.so.2.9.0</target>
         </createSymLink>
+        <runProgram>
+            <program>chown</program>
+            <programArguments>-h ${username}:${username}_group ${installdir}/tools/server/php/libxml2/lib/libxml2.so.2</programArguments>            
+        </runProgram>
+        
         <createSymLink>
             <linkName>${installdir}/tools/server/php/libxml2/lib/libz.so</linkName>
             <target>${installdir}/tools/server/php/libxml2/lib/libz.so.1.2.5</target>
         </createSymLink>
+        <runProgram>
+            <program>chown</program>
+            <programArguments>-h ${username}:${username}_group ${installdir}/tools/server/php/libxml2/lib/libz.so</programArguments>            
+        </runProgram>
+        
         <createSymLink>
             <linkName>${installdir}/tools/server/php/libxml2/lib/libz.so.1</linkName>
             <target>${installdir}/tools/server/php/libxml2/lib/libz.so.1.2.5</target>
         </createSymLink>
+        <runProgram>
+            <program>chown</program>
+            <programArguments>-h ${username}:${username}_group ${installdir}/tools/server/php/libxml2/lib/libz.so.1</programArguments>            
+        </runProgram>
+        
         <changeOwnerAndGroup>
-            <files>${installdir}/tools/server/php/libxml2/lib</files>
+            <files>${installdir}/tools/server/php/libxml2/lib/*</files>
             <group>${username}_group</group>
             <owner>${username}</owner>
         </changeOwnerAndGroup>
@@ -238,7 +258,30 @@
                     <value>${processAutoStart}</value>
                 </isTrue>                
             </ruleList>
-        </propertiesFileSet>
+        </propertiesFileSet>       
+        <changePermissions>
+            <files>${installdir}/postgresql/*</files>
+            <permissions>0755</permissions>
+        </changePermissions>
+        <changePermissions>
+            <files>/tmp</files>
+            <permissions>0777</permissions>
+        </changePermissions>        
+        <changeOwnerAndGroup>
+            <files>${project.rollbackBackupDirectory};${installdir}/rollback</files>
+            <group>${username}_group</group>
+            <owner>${username}</owner>
+        </changeOwnerAndGroup>        
+        <changeOwnerAndGroup>
+            <files>${installdir}/bin/sdbomtool</files>
+            <group>root</group>
+            <owner>root</owner>
+        </changeOwnerAndGroup>
+        <changePermissions>
+            <files>${installdir}/bin/sdbomtool</files>
+            <permissions>6755</permissions>
+        </changePermissions>
+        
         <runProgram>
             <program>service</program>
             <programArguments> sdbcm start</programArguments>            
@@ -257,28 +300,12 @@
                 </isTrue>
             </ruleList>
         </runProgram>
-        <changePermissions>
-            <files>${installdir}/postgresql/*</files>
-            <permissions>0755</permissions>
-        </changePermissions>
-        <changePermissions>
-            <files>/tmp</files>
-            <permissions>0777</permissions>
-        </changePermissions>
         <changeOwnerAndGroup>
-            <files>${installdir}/packet/*</files>
+            <files>${installdir}/packet/${installerFilename}</files>
             <group>${username}_group</group>
             <owner>${username}</owner>
         </changeOwnerAndGroup>
-        <changeOwnerAndGroup>
-            <files>${installdir}/bin/sdbomtool</files>
-            <group>root</group>
-            <owner>root</owner>
-        </changeOwnerAndGroup>
-        <changePermissions>
-            <files>${installdir}/bin/sdbomtool</files>
-            <permissions>6755</permissions>
-        </changePermissions>
+        
         <runProgram>
             <program>echo</program>
             <programArguments>'' &gt;&gt; /etc/default/sequoiadb</programArguments>
@@ -307,11 +334,16 @@
                     <path>~${username}/.bashrc</path>
                 </fileExists>
             </ruleList>
-        </runProgram>
+        </runProgram>       
+        
         <createSymLink>
             <linkName>${installdir}/www/doc</linkName>
             <target>${installdir}/doc</target>
-        </createSymLink>
+        </createSymLink> 
+        <runProgram>
+            <program>chown</program>
+            <programArguments>-h ${username}:${username}_group ${installdir}/www/doc</programArguments>            
+        </runProgram>     
     </postInstallationActionList>
     
     <installationAbortedActionList>

@@ -19,7 +19,7 @@ svcName=$5
 dbPath=$6
 restPort=$7
 
-sdbFile=$2/bin/sdb
+sdbFile=${rootPath}/bin/sdb
 
 echo "installMode=" $1
 echo "rootPath=" $2
@@ -35,7 +35,7 @@ if [  $installMode == "upgrade"  ] ; then
    packageNum=`find $rootPath/packet -name "*.run" | wc -l`
    if [  $packageNum -gt 0  ] ; then
       rm -rf $rootPath/packet/*
-      cp $installer_pathname  $rootPath/packet   
+      cp $installer_pathname  $rootPath/packet
    fi
    exit 0
 fi
@@ -93,3 +93,6 @@ fi
 
 # normal mode: step 3 copy install package
 cp $installer_pathname  $rootPath/packet
+
+# normal mode: step 4 remove sdbbp.log
+rm -f $rootPath/sdbbp.log

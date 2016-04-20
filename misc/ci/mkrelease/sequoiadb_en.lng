@@ -33,32 +33,36 @@ Install.ErrorMsg.IntallationOM.error=Create OM failed
 Upgrade.Paramers.Upgrade.Explanation=Do You Want To Upgrade
 Upgrade.Paramers.Upgrade.Check=Invalid parameter value: --upgrade ${is_upgrade_mode}, should be true or false
 
-Upgrade.NormalMsg.AskUpgrade=An existing installation has been detected in ${installdir_inconf}. Do you want to upgrade? Y:upgrade, N:install
+Upgrade.NormalMsg.AskUpgrade=An existing installation has been detected in ${installdir_inconf}. Change to upgrade mode?
 Upgrade.NormalMsg.BeginUpgrade=Begin to upgrade package ......
 Upgrade.NormalMsg.CheckList=**************************  check list *************************************
-Upgrade.NormalMsg.SystemConfExist=Check configure file ${sys_conf_file} is exists ...... ok
-Upgrade.NormalMsg.GetInstallDir.GetUser=Check INSTALL_DIR or SDBADMIN_USER is exists ...... ok
-Upgrade.NormalMsg.InstallationExist=Check install dir ${installdir} is not empty ...... ok
-Upgrade.NormalMsg.ComparePackage=Check new package is difference from old package ...... ok
-Upgrade.NormalMsg.JudgeComatible=Check compatibility between version  ${old_version} ${old_edition} and ${new_version} ${new_edition} ...... ok
-Upgrade.NormalMsg.DiskSpace=Check disk space is enough ...... ok
-Upgrade.NormalMsg.UserExist=Check user ${username} is exist ...... ok
-Upgrade.NormalMsg.StopProcess=Check relevant processes are stoped  ...... ok
-Upgrade.NormalMsg.RestoreFile=Upgrade aborted, begin to restore files ...
+Upgrade.NormalMsg.SystemConfExist=Check configure file ${sys_conf_file} is exists ...... 
+Upgrade.NormalMsg.GetInstallDir.GetUser=Check INSTALL_DIR or SDBADMIN_USER is exists ...... 
+Upgrade.NormalMsg.InstallationExist=Check install dir ${installdir} is not empty ...... 
+Upgrade.NormalMsg.JudgeComatible=Check compatibility between version ${old_version} ${old_edition_full} and ${new_version} ${new_edition_full} ...... 
+Upgrade.NormalMsg.DiskSpace=Check disk space is enough ...... 
+Upgrade.NormalMsg.UserExist=Check user ${username} is exist ......  
+Upgrade.NormalMsg.StopProcess=Check relevant processes are stoped ...... 
 
-Upgrade.WarnMsg.StartProcess=Warn: sdbcm or sdbcmd has not been started after service sdbcm start!!!
+Upgrade.NormalMsg.BeginRollback=Upgrade aborted for error, begin to rollback ...... 
+Upgrade.NormalMsg.Rollback.RestoreFile=Begin to restore files ......  
+Upgrade.NormalMsg.Rollbak.StartProcess=Begin to restart service ......   
+
+Upgrade.WarnMsg.StartProcess=Warn: sdbcm or sdbcmd has not been started after service sdbcm start
 
 Upgrade.ErrorMsg.SystemConfExist=File ${sys_conf_file} does not exist
 Upgrade.ErrorMsg.GetInstallDir=Can not get INSTALL_DIR from ${sys_conf_file}
 Upgrade.ErrorMsg.GetUser=Can not get SDBADMIN_USER from ${sys_conf_file}
 Upgrade.ErrorMsg.EmptyInstallDir.EmptyUser=Variable INSTALL_DIR or SDBADMIN_USER in ${sys_conf_file} is empty.
 Upgrade.ErrorMsg.InstallationExist=Install dir ${installdir} is empty or not-existed. You should install instead of upgrade.
-Upgrade.ErrorMsg.ComparePackage=Old package is the same as this package. You needn't upgrade
+
 Upgrade.ErrorMsg.SpecialVersion.0=Version 2.0 commutity is not support upgrade
 Upgrade.ErrorMsg.SpecialVersion.1=Version 2.1 commutity is not support upgrade
 Upgrade.ErrorMsg.excuteComatibleSh=Fail to execute compatible.sh, return code isn't 0
-Upgrade.ErrorMsg.JudgeComatible=You can't upgrade from version ${old_version} ${old_edition} to ${new_version} ${new_edition}, for the compatibility
+Upgrade.ErrorMsg.JudgeComatible=You can't upgrade from version ${old_version} ${old_edition_full} to ${new_version} ${new_edition_full}, for the compatibility
 Upgrade.ErrorMsg.DiskSpace=There is not enough disk space for installation.
 Upgrade.ErrorMsg.UserExist=User ${username} does not exist.
 Upgrade.ErrorMsg.StopProcess=Processes still exists after service sdbcm stop.
 Upgrade.ErrorMsg.StartProcess=sdbcm or sdbcmd has not been started.
+
+

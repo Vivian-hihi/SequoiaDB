@@ -5,15 +5,17 @@
                              
         <consoleWrite text="${msg(Upgrade.NormalMsg.BeginUpgrade)}&#xA;"/>        
         <consoleWrite text="${msg(Upgrade.NormalMsg.CheckList)}&#xA;"/>         
-                                
+        
+        <consoleWrite text="${msg(Upgrade.NormalMsg.SystemConfExist)}"/>                        
         <throwError>
             <text>${msg(Upgrade.ErrorMsg.SystemConfExist)}</text>
             <ruleList>
                 <fileTest condition="not_exists" path="${sys_conf_file}"/>                
             </ruleList>
         </throwError>
-        <consoleWrite text="${msg(Upgrade.NormalMsg.SystemConfExist)}&#xA;"/>
+        <consoleWrite text="ok&#xA;"/> 
         
+        <consoleWrite text="${msg(Upgrade.NormalMsg.GetInstallDir.GetUser)}"/>
         <setInstallerVariable name="installdir_inconf" value=""/>
         <setInstallerVariable name="username" value=""/>
         <propertiesFileGet>
@@ -36,10 +38,12 @@
                  <compareTextLength text="${installdir_inconf}" logic="equals" length="0"/>                                         
             </ruleList>
         </throwError>
-        <consoleWrite text="${msg(Upgrade.NormalMsg.GetInstallDir.GetUser)}&#xA;"/>
+        <consoleWrite text="ok&#xA;"/>
+        
         
         <setInstallerVariable name="installdir" value="${installdir_inconf}"/>
         <setInstallerVariable name="project.rollbackBackupDirectory" value="${installdir}/rollback/BackupDir_${time}"/>
+        <consoleWrite text="${msg(Upgrade.NormalMsg.InstallationExist)}"/>
         <throwError>
             <text>${msg(Upgrade.ErrorMsg.InstallationExist)}</text>            
             <ruleEvaluationLogic>or</ruleEvaluationLogic>
@@ -48,38 +52,24 @@
                 <fileTest condition="is_empty" path="${installdir}"/>                      
             </ruleList>
         </throwError>
-        <consoleWrite text="${msg(Upgrade.NormalMsg.InstallationExist)}&#xA;"/>
-        
-        <propertiesFileGet>
-            <file>${sys_conf_file}</file>
-            <key>MD5</key>
-            <variable>old_md5sum</variable> 
-            <abortOnError>0</abortOnError>
-            <showMessageOnError>0</showMessageOnError>
-        </propertiesFileGet>
-        <setInstallerVariable name="new_md5sum" value="0000"/>
-        <setInstallerVariableFromScriptOutput>
-            <exec>/usr/bin/md5sum</exec>
-            <execArgs>${installer_pathname} | cut -c 1-32 </execArgs>
-            <name>new_md5sum</name>
-        </setInstallerVariableFromScriptOutput>
-        <throwError>
-            <text>${msg(Upgrade.ErrorMsg.ComparePackage)}</text>            
-            <ruleList>
-                <compareValues value1="${new_md5sum}" logic="equals" value2="${old_md5sum}"/>                                                        
-            </ruleList>
-        </throwError>
-        <consoleWrite text="${msg(Upgrade.NormalMsg.ComparePackage)}&#xA;"/>
-                
+        <consoleWrite text="ok&#xA;"/>
+                        
         <setInstallerVariable name="old_version" value="0"/>
+        <setInstallerVariable name="old_svn"     value="0"/>
         <setInstallerVariable name="old_edition" value="C"/>
         <setInstallerVariable name="new_version" value="0"/>
+        <setInstallerVariable name="new_svn"     value="0"/>
         <setInstallerVariable name="new_edition" value="C"/>
                        
         <setInstallerVariableFromScriptOutput>
             <name>old_version</name>
             <exec>${installdir}/bin/sequoiadb</exec>
-            <execArgs> --version | grep "version" | awk '{print $3}'</execArgs>                    
+            <execArgs> --version | grep "version" | awk '{print $3}'</execArgs>
+        </setInstallerVariableFromScriptOutput>
+        <setInstallerVariableFromScriptOutput>
+            <name>old_svn</name>
+            <exec>${installdir}/bin/sequoiadb</exec>
+            <execArgs> --version | grep "Release" | awk '{print $2}'</execArgs>
         </setInstallerVariableFromScriptOutput> 
         <setInstallerVariableFromScriptOutput>
             <name>old_is_enterprise</name>
@@ -92,8 +82,7 @@
             <ruleList>
                 <compareValues value1="${old_is_enterprise}" logic="greater" value2="0"/> 
             </ruleList>    
-        </setInstallerVariable>  
-                                                                
+        </setInstallerVariable>                                                                 
         <setInstallerVariable name="new_version" value="${project.version}"/>
         <setInstallerVariable>
             <name>new_edition</name>
@@ -102,40 +91,37 @@
                 <compareValues value1="${enterpriseversion}" logic="equals" value2="-enterprise"/> 
             </ruleList>    
         </setInstallerVariable>
-                                    
-        <throwError>
-            <text>${msg(Upgrade.ErrorMsg.SpecialVersion.0)}</text>            
-            <ruleEvaluationLogic>and</ruleEvaluationLogic>
+        
+        <setInstallerVariable>
+            <name>old_edition_full</name>
+            <value>Community</value>
             <ruleList>
-                <compareValues value1="${old_version}" logic="equals" value2="2.0"/>
-                <compareValues value1="${old_edition}" logic="equals" value2="C"/>
+                <compareText logic="equals" text="${old_edition}" value="C"/>             
             </ruleList>
-        </throwError>        
-        <throwError>
-            <text>${msg(Upgrade.ErrorMsg.SpecialVersion.0)}</text>            
-            <ruleEvaluationLogic>and</ruleEvaluationLogic>
+        </setInstallerVariable>
+        <setInstallerVariable>
+            <name>old_edition_full</name>
+            <value>Enterprise</value>
             <ruleList>
-                <compareValues value1="${new_version}" logic="equals" value2="2.0"/>
-                <compareValues value1="${new_edition}" logic="equals" value2="C"/>
+                <compareText logic="equals" text="${old_edition}" value="E"/>             
             </ruleList>
-        </throwError>
-                <throwError>
-            <text>${msg(Upgrade.ErrorMsg.SpecialVersion.1)}</text>            
-            <ruleEvaluationLogic>and</ruleEvaluationLogic>
+        </setInstallerVariable>
+        <setInstallerVariable>
+            <name>new_edition_full</name>
+            <value>Community</value>
             <ruleList>
-                <compareValues value1="${old_version}" logic="equals" value2="2.1"/>
-                <compareValues value1="${old_edition}" logic="equals" value2="C"/>
+                <compareText logic="equals" text="${new_edition}" value="C"/>             
             </ruleList>
-        </throwError>        
-        <throwError>
-            <text>${msg(Upgrade.ErrorMsg.SpecialVersion.1)}</text>            
-            <ruleEvaluationLogic>and</ruleEvaluationLogic>
+        </setInstallerVariable>
+        <setInstallerVariable>
+            <name>new_edition_full</name>
+            <value>Enterprise</value>
             <ruleList>
-                <compareValues value1="${new_version}" logic="equals" value2="2.1"/>
-                <compareValues value1="${new_edition}" logic="equals" value2="C"/>
+                <compareText logic="equals" text="${new_edition}" value="E"/>             
             </ruleList>
-        </throwError>
-                                                                                  
+        </setInstallerVariable>                                    
+        
+        <consoleWrite text="${msg(Upgrade.NormalMsg.DiskSpace)}"/>                                                                          
         <throwError>
             <text>${msg(Upgrade.ErrorMsg.DiskSpace)}</text>
             <ruleList>
@@ -146,8 +132,9 @@
                 </checkFreeDiskSpace>
             </ruleList>
         </throwError>
-        <consoleWrite text="${msg(Upgrade.NormalMsg.DiskSpace)}&#xA;"/>
+        <consoleWrite text="ok&#xA;"/>
         
+        <consoleWrite text="${msg(Upgrade.NormalMsg.UserExist)}"/>
         <setInstallerVariable name="has_user" value="0"/>
         <setInstallerVariableFromScriptOutput>
             <exec>cat</exec>
@@ -155,14 +142,15 @@
             <name>has_user</name>
         </setInstallerVariableFromScriptOutput>
         <throwError>
-            <text>${msg(Upgrade.NormalMsg.UserExist)}</text>            
+            <text>${msg(Upgrade.ErrorMsg.UserExist)}</text>            
             <ruleList>
                 <compareValues value1="${has_user}" logic="equals" value2="0"/>                                                        
             </ruleList>
         </throwError>
-        <consoleWrite text="${msg(Upgrade.NormalMsg.UserExist)}&#xA;"/>  
+        <consoleWrite text="ok&#xA;"/>  
         
-        <!--before upgrade, stop service -->       
+        <!--before upgrade, stop service -->  
+        <consoleWrite text="${msg(Upgrade.NormalMsg.StopProcess)}"/>     
         <runProgram>
             <program>service</program>
             <programArguments> sdbcm status</programArguments> 
@@ -176,7 +164,7 @@
                     <program>service</program>
                     <programArguments> sdbcm stop</programArguments> 
                     <abortOnError>0</abortOnError>          
-                </runProgram> 
+                </runProgram>                
                 <runProgram>
                     <program>service</program>
                     <programArguments> sdbcm status</programArguments> 
@@ -189,7 +177,13 @@
                     <ruleList>
                         <compareValues value1="${service_status}" logic="equals" value2="0"/>
                     </ruleList>
-                </throwError>    
+                </throwError>  
+                <runProgram>
+                    <program>${installdir}/bin/sdbstop</program>
+                    <programArguments>-t all</programArguments> 
+                    <abortOnError>0</abortOnError> 
+                    <showMessageOnError>0</showMessageOnError>           
+                </runProgram>  
             </actionList>        
             <ruleList> 
                 <compareText logic="equals" text="${service_origin_status}" value="0"/>                                                                  
@@ -215,27 +209,26 @@
                  <fileTest condition="exists" path="${installdir}/bin/sdblist"/>                                        
             </ruleList>          
         </actionGroup>       
+        <consoleWrite text="ok&#xA;"/> 
                                                                                                                           
     </readyToInstallActionList>    
                    
     <folderList> 
         <folder>
             <name>check_compatible</name>
-            <destination>${installdir}/tmp</destination>
+            <destination>${installdir}</destination>
             <actionList>
                 <setInstallerVariable name="upgrade_component_done" value="begin"/>  
-               
-                <changePermissions>
-                    <files>${installdir}/tmp/compatible.sh</files>
-                    <permissions>0755</permissions>
-                </changePermissions>
                 
+                <consoleWrite text="${msg(Upgrade.NormalMsg.JudgeComatible)}"/> 
+                <changePermissions files="${installdir}/compatible.sh" permissions="0755"/>              
                 <setInstallerVariableFromScriptOutput>
                     <name>is_compatible</name>
-                    <exec>${installdir}/tmp/compatible.sh</exec>
-                    <execArgs>${old_version} ${old_edition} ${new_version} ${new_edition} ${installdir}/tmp/version.conf</execArgs>           
+                    <exec>${installdir}/compatible.sh</exec>
+                    <execArgs>${old_version} ${old_edition} ${new_version} ${new_edition} ${installdir}/version.conf</execArgs>           
                 </setInstallerVariableFromScriptOutput>                
-                <setInstallerVariable name="return_code" value="${program_exit_code}"/>        
+                <setInstallerVariable name="return_code" value="${program_exit_code}"/>
+                                                                                                    
                 <throwError>
                     <text>${msg(Upgrade.ErrorMsg.excuteComatibleSh)}</text>
                     <ruleList>
@@ -248,20 +241,15 @@
                         <isFalse value="${is_compatible}"/>
                     </ruleList>
                 </throwError>                                    
-                <consoleWrite text="${msg(Upgrade.NormalMsg.JudgeComatible)}&#xA;"/>                
-                <deleteFile>
-                    <abortOnError>0</abortOnError>
-                    <path>${installdir}/tmp</path>
-                    <ruleList>               
-                        <fileExists path="${installdir}/tmp"/>
-                    </ruleList>
-                </deleteFile>                                  
+                <consoleWrite text="ok&#xA;"/>                                                                  
             </actionList>                     
             <distributionFileList>
-                <distributionDirectory>
-                    <allowWildcards>1</allowWildcards> 
-                    <origin>${build_project_directory}/sequoiadb/tmp/*</origin>
-                </distributionDirectory>
+                <distributionFile>                   
+                    <origin>${build_project_directory}/sequoiadb/compatible.sh</origin>
+                </distributionFile>
+                <distributionFile>                   
+                    <origin>${build_project_directory}/sequoiadb/version.conf</origin>
+                </distributionFile>
             </distributionFileList>                                        
         </folder>             
         <folder>
@@ -271,7 +259,7 @@
                 <distributionDirectory>
                     <allowWildcards>1</allowWildcards> 
                     <origin>${build_project_directory}/sequoiadb/*</origin>
-                    <excludeFiles>*/conf;*/tmp</excludeFiles>
+                    <excludeFiles>*/conf;*/compatible.sh;*/version.conf</excludeFiles>
                 </distributionDirectory>
             </distributionFileList>                                        
         </folder>
@@ -292,28 +280,43 @@
     </folderList>
       
     <postInstallationActionList>       
-               
+        <!--change permission and create link-->        
         <createSymLink>
             <linkName>${installdir}/tools/server/php/libxml2/lib/libxml2.so</linkName>
             <target>${installdir}/tools/server/php/libxml2/lib/libxml2.so.2.9.0</target>
         </createSymLink>
+        <runProgram>
+            <program>chown</program>
+            <programArguments>-h ${username}:${username}_group ${installdir}/tools/server/php/libxml2/lib/libxml2.so</programArguments>            
+        </runProgram>
+        
         <createSymLink>
             <linkName>${installdir}/tools/server/php/libxml2/lib/libxml2.so.2</linkName>
             <target>${installdir}/tools/server/php/libxml2/lib/libxml2.so.2.9.0</target>
         </createSymLink>
+        <runProgram>
+            <program>chown</program>
+            <programArguments>-h ${username}:${username}_group ${installdir}/tools/server/php/libxml2/lib/libxml2.so.2</programArguments>            
+        </runProgram>
+        
         <createSymLink>
             <linkName>${installdir}/tools/server/php/libxml2/lib/libz.so</linkName>
             <target>${installdir}/tools/server/php/libxml2/lib/libz.so.1.2.5</target>
         </createSymLink>
+        <runProgram>
+            <program>chown</program>
+            <programArguments>-h ${username}:${username}_group ${installdir}/tools/server/php/libxml2/lib/libz.so</programArguments>            
+        </runProgram>
+        
         <createSymLink>
             <linkName>${installdir}/tools/server/php/libxml2/lib/libz.so.1</linkName>
             <target>${installdir}/tools/server/php/libxml2/lib/libz.so.1.2.5</target>
         </createSymLink>
-        <changeOwnerAndGroup>
-            <files>${installdir}/tools/server/php/libxml2/lib</files>
-            <group>${username}_group</group>
-            <owner>${username}</owner>
-        </changeOwnerAndGroup>               
+        <runProgram>
+            <program>chown</program>
+            <programArguments>-h ${username}:${username}_group ${installdir}/tools/server/php/libxml2/lib/libz.so.1</programArguments>            
+        </runProgram>  
+                     
         <changePermissions files="${installdir}/bin/{*,*/*}" permissions="0755">
             <customErrorMessage>${msg(Install.ErrorMsg.ChangeInsallerPathPermissions.error)}</customErrorMessage>
         </changePermissions>
@@ -342,23 +345,41 @@
             <files>${installdir}/java/jdk/bin/*</files>
             <permissions>0755</permissions>
         </changePermissions>
-        
-         <runProgram>           
-            <program>${installdir}/install_om.sh</program>
-            <programArguments>${project.installationType} ${installdir} ${installer_pathname}</programArguments>          
-        </runProgram> 
-        
+                                    
+        <changePermissions>
+            <files>${installdir}/postgresql/*</files>
+            <permissions>0755</permissions>
+        </changePermissions>
+        <changePermissions>
+            <files>/tmp</files>
+            <permissions>0777</permissions>
+        </changePermissions>
+        <changeOwnerAndGroup>
+            <files>${project.rollbackBackupDirectory};${installdir}/rollback</files>
+            <group>${username}_group</group>
+            <owner>${username}</owner>
+        </changeOwnerAndGroup>               
+        <changeOwnerAndGroup>
+            <files>${installdir}/bin/sdbomtool</files>
+            <group>root</group>
+            <owner>root</owner>
+        </changeOwnerAndGroup>
+        <changePermissions>
+            <files>${installdir}/bin/sdbomtool</files>
+            <permissions>6755</permissions>
+        </changePermissions>        
+                       
+        <!--after upgrade, start service--> 
         <addUnixService>
             <customErrorMessage>${msg(Install.ErrorMsg.CreateLinuxService.error)}</customErrorMessage>           
             <name>sdbcm</name>
             <program>${installdir}/sequoiadb</program>           
-        </addUnixService> 
-        
-        <!--after upgrade, start service-->       
+        </addUnixService>                     
         <runProgram>
             <program>service</program>
             <programArguments> sdbcm start</programArguments>            
-        </runProgram>       
+        </runProgram>     
+             
         <runProgram>
             <program>service</program>
             <programArguments> sdbcm status</programArguments>
@@ -371,70 +392,90 @@
             <ruleList>
                 <compareValues value1="${service_status}" logic="does_not_equal" value2="0"/>
             </ruleList>
-        </consoleWrite>    
-                        
-        <changePermissions>
-            <files>${installdir}/postgresql/*</files>
-            <permissions>0755</permissions>
-        </changePermissions>
-        <changePermissions>
-            <files>/tmp</files>
-            <permissions>0777</permissions>
-        </changePermissions>
+        </consoleWrite>
+        
+        <runProgram>           
+            <program>${installdir}/install_om.sh</program>
+            <programArguments>${project.installationType} ${installdir} ${installer_pathname}</programArguments>          
+        </runProgram> 
         <changeOwnerAndGroup>
-            <files>${installdir}/packet/*</files>
+            <files>${installdir}/packet;${installdir}/packet/${installerFilename}</files>
             <group>${username}_group</group>
             <owner>${username}</owner>
-        </changeOwnerAndGroup>
-        <changeOwnerAndGroup>
-            <files>${installdir}/bin/sdbomtool</files>
-            <group>root</group>
-            <owner>root</owner>
-        </changeOwnerAndGroup>
-        <changePermissions>
-            <files>${installdir}/bin/sdbomtool</files>
-            <permissions>6755</permissions>
-        </changePermissions>        
+        </changeOwnerAndGroup> 
+           
+        <deleteFile path="${installdir}/sdbbp.log"/>
         
+        <!--write log and configura-->
+        <setInstallerVariable name="new_md5sum" value="0000"/>
+        <setInstallerVariableFromScriptOutput>
+            <exec>/usr/bin/md5sum</exec>
+            <execArgs>${installer_pathname} | cut -c 1-32 </execArgs>
+            <name>new_md5sum</name>
+        </setInstallerVariableFromScriptOutput>        
         <propertiesFileSet>
             <file>/etc/default/sequoiadb</file>
             <key>MD5</key>
             <value>${new_md5sum}</value>
         </propertiesFileSet>               
-        
+                                   
         <runProgram>
             <program>echo</program>
             <programArguments>'time: ${time}' &gt;&gt; ${installdir}/upgrade.log</programArguments>
-        </runProgram>   
-        <setInstallerVariable name="log" value="upgrade from version ${old_version} ${old_edition} to ${new_version} ${new_edition} "/>
+        </runProgram>  
+        
+        <setInstallerVariableFromScriptOutput>
+            <name>new_svn</name>
+            <exec>${installdir}/bin/sequoiadb</exec>
+            <execArgs> --version | grep "Release" | awk '{print $2}'</execArgs>
+        </setInstallerVariableFromScriptOutput> 
+        <setInstallerVariable name="log" value="upgrade from version ${old_version} ${old_edition_full} (release ${old_svn}) to ${new_version} ${new_edition_full} (release ${new_svn})"/>
         <runProgram>
             <program>echo</program>
-            <programArguments> -e '${log}\n' &gt;&gt; ${installdir}/upgrade.log</programArguments>
+            <programArguments>'${log}' &gt;&gt; ${installdir}/upgrade.log</programArguments>
+        </runProgram>
+        <runProgram>
+            <program>echo</program>
+            <programArguments>' ' &gt;&gt; ${installdir}/upgrade.log</programArguments>
         </runProgram>
         <changeOwnerAndGroup>
             <files>${installdir}/upgrade.log</files>
             <group>${username}_group</group>
             <owner>${username}</owner>
-        </changeOwnerAndGroup>        
+        </changeOwnerAndGroup>               
+        
         <changeOwnerAndGroup>
-            <files>/etc/default/sequoiadb</files>
-            <group>root</group>
-            <owner>root</owner>
-        </changeOwnerAndGroup>
+            <files>${installdir}/uninstall.dat</files>
+            <group>${username}_group</group>
+            <owner>${username}</owner>
+        </changeOwnerAndGroup> 
         
-        
+        <runProgram>
+            <program>rm</program>
+            <programArguments>-f ${installdir}/www/doc</programArguments>            
+        </runProgram>        
+        <createSymLink>
+            <linkName>${installdir}/www/doc</linkName>
+            <target>${installdir}/doc</target>
+        </createSymLink>
+        <runProgram>
+            <program>chown</program>
+            <programArguments>-h ${username}:${username}_group ${installdir}/www/doc</programArguments>            
+        </runProgram>
     </postInstallationActionList>
         
-    <installationAbortedActionList>                                                          
+    <installationAbortedActionList>  
+        <consoleWrite text="&#xA;&#xA;${msg(Upgrade.NormalMsg.BeginRollback)}&#xA;"/>        
+                                                                
         <actionGroup> 
             <actionList>
-                <consoleWrite text="&#xA;${msg(Upgrade.NormalMsg.RestoreFile)}&#xA;"/>
-                 <runProgram>
+                <consoleWrite text="${msg(Upgrade.NormalMsg.Rollback.RestoreFile)}"/>
+                <runProgram>
                     <program>cp</program>
                     <programArguments>-rfp ${project.rollbackBackupDirectory}/* /</programArguments>                 
                 </runProgram>
                 <deleteFile path="${project.rollbackBackupDirectory}"/> 
-                <deleteFile path="${installdir}/tmp"/>                          
+                <consoleWrite text="ok&#xA;"/>                        
             </actionList>
             <ruleList>
                 <compareText logic="equals" text="${upgrade_component_done}" value="begin"/>            
@@ -444,6 +485,7 @@
         <!--when rollback, restart service-->                
         <actionGroup> 
             <actionList>
+                <consoleWrite text="${msg(Upgrade.NormalMsg.Rollbak.StartProcess)}"/>
                 <runProgram>
                     <program>service</program>
                     <programArguments> sdbcm start</programArguments>        
@@ -460,7 +502,14 @@
                     <ruleList>
                         <compareValues value1="${service_status}" logic="does_not_equal" value2="0"/>
                     </ruleList>
-                </consoleWrite>    
+                </consoleWrite>
+                <consoleWrite>
+                    <text>ok&#xA;</text>
+                    <ruleList>
+                        <compareValues value1="${service_status}" logic="equals" value2="0"/>
+                    </ruleList>
+                </consoleWrite>
+                    
             </actionList>        
             <ruleList> 
                 <compareText logic="equals" text="${service_origin_status}" value="0"/>                                                                  
