@@ -18,7 +18,7 @@
 
 **Note:**
 
--   在配置集群模式时，请先确保服务器与主机名的映射关系正确，详细请参考[系统配置需求](SdbDoc_Cn/installation/system/system_requirement.html) ，确保各节点之间能相互通信，将节点的防火墙关闭。
+-   在配置集群模式时，请先确保服务器与主机名的映射关系正确，详细请参考[Linux系统要求](SdbDoc_Cn/installation/system/system_requirement.html) ，确保各节点之间能相互通信，将节点的防火墙关闭。
 
 -   参看[Linux推荐配置](SdbDoc_Cn/installation/system/linux_suggest_settings.html)中关于NUMA的条目，NUMA对SequoiaDB的运行有影响。尤其是高负荷的生产环境，建议关闭NUMA或者使用“numactl --interleave=all”启动数据库服务。 
 

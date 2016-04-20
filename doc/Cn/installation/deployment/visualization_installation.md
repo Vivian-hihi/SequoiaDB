@@ -34,7 +34,7 @@ SequoiaDB 的安装向导需要的参数不接受非英文字符。
 
 （2）需要确保安装路径（见下文介绍）的每一级文件夹都具有可读和可执行权限。
 
--   参照[系统配置需求](SdbDoc_Cn/installation/system.html)配置好主机名以及修改系统内核参数
+-   参照[Linux系统要求](SdbDoc_Cn/installation/system/system_requirement.html)和[Linux推荐配置](SdbDoc_Cn/installation/system/linux_suggest_settings.html)配置好主机名以及修改系统内核参数
 
 -   运行安装程序
 
