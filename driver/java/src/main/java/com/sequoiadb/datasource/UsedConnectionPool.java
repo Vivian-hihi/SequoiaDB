@@ -1,7 +1,9 @@
 package com.sequoiadb.datasource;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 
 import java.util.concurrent.locks.ReentrantLock;
@@ -107,5 +109,20 @@ class UsedConnectionPool implements IConnectionPool{
 			_lockForConns.unlock();
 		}
 	}
-		
+
+	@Override
+	public List<ConnItem> clear() {
+		List<ConnItem> list = new ArrayList<ConnItem>();
+		_lockForConns.lock();
+		try {
+			for( ConnItem item : _conns.values() ) {
+				list.add(item);
+			}
+			_conns.clear();
+			return list;
+		} finally {
+			_lockForConns.unlock();
+		}
+	}
+	
 }

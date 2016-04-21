@@ -786,21 +786,6 @@ public class SequoiadbDatasourceImpl
 	 * @since v1.12.6 & v2.2
 	 */
 	public void releaseConnection(Sequoiadb sdb) throws BaseException {
-		close(sdb);
-	}
-	
-	/**
-	 * @fn void close(Sequoiadb sdb)
-	 * @brief Put the connection back to the connection pool.
-	 * @param sdb the connection to come back, can't be null 
-	 * @note  When the connection does not belong to current connection pool or
-	 *        the connection is idle for a long time,
-	 *        this API will destroy it directly.
-	 * @exception com.sequoiadb.Exception.BaseException
-	 * @deprecated
-	 * @see releaseConnection, use releaseConnection instead
-	 */
-	public void close(Sequoiadb sdb) throws BaseException {
 		Lock rlock = _rwLock.readLock();
 		rlock.lock(); 
 		try {
@@ -812,6 +797,13 @@ public class SequoiadbDatasourceImpl
 			}
 			try {
 				if (!_isDatasourceOn) {
+					if (_usedConnPool != null && _usedConnPool.contains(sdb)) {
+						ConnItem item = _usedConnPool.poll(sdb);
+						if (item == null)
+							throw new BaseException("SDB_SYS", 
+									"Point 1: connection pool does't have item for the coming back connection");
+						_connItemMgr.releaseItem(item);
+					}
 					sdb.disconnect();
 					return;
 				}
@@ -819,8 +811,11 @@ public class SequoiadbDatasourceImpl
 				// if the busy queue contains this connection
 				if (_usedConnPool.contains(sdb)) {
 					// remove it from busy queue
-					item = _usedConnPool.poll(sdb);
-					// tell the strategy one used connection is idle now
+					item = _usedConnPool.poll(sdb);//TODO:should check item == null or not
+					if (item == null)
+						throw new BaseException("SDB_SYS", 
+								"Point 2: connection pool does't have item for the coming back connection");
+					// tell the strategy there is used connection idle now
 					_strategy.update(ItemStatus.USED, item, -1);
 					// check whether the connection can put back to idle queue or not
 					if (_connIsValid(item, sdb)) {
@@ -847,6 +842,21 @@ public class SequoiadbDatasourceImpl
 				// do nothing or maybe we can write it to the log
 			}
 		} finally {rlock.unlock();}
+	}
+	
+	/**
+	 * @fn void close(Sequoiadb sdb)
+	 * @brief Put the connection back to the connection pool.
+	 * @param sdb the connection to come back, can't be null 
+	 * @note  When the connection does not belong to current connection pool or
+	 *        the connection is idle for a long time,
+	 *        this API will destroy it directly.
+	 * @exception com.sequoiadb.Exception.BaseException
+	 * @deprecated
+	 * @see releaseConnection, use releaseConnection instead
+	 */
+	public void close(Sequoiadb sdb) throws BaseException {
+		releaseConnection(sdb);
 	}
 	
 	/**
@@ -961,22 +971,31 @@ public class SequoiadbDatasourceImpl
 			usedConnPairs.add(itr.next());
 		}
 		_strategy = _createStrategy(_dsOpt.getConnectStrategy());
+		//TODO:maybe should use all the addresses
 		_strategy.init(_normalAddrs, idleConnPairs, usedConnPairs);
 	}
 	
 	private void _closePoolConnections(IConnectionPool pool) {
-		if (pool != null) {
-			Iterator<Pair> iter  = pool.getIterator();
-			while(iter.hasNext()) {
-			    Pair pair = iter.next();
-			    Sequoiadb sdb = pair.second();
-				try {
-					sdb.disconnect () ;
-				} catch(BaseException e) {
-					// do nothing
-				}
+		if (pool == null)
+			return;
+		// disconnect all the connections
+		Iterator<Pair> iter = pool.getIterator();
+		while(iter.hasNext()) {
+		    Pair pair = iter.next();
+		    Sequoiadb sdb = pair.second();
+			try {
+				sdb.disconnect();
+			} catch(BaseException e) {
+				// do nothing
 			}
 		}
+		// clear them from the pool
+		List<ConnItem> list = pool.clear();
+		for(ConnItem item : list)
+			_connItemMgr.releaseItem(item);
+		// we are not clear the info in strategy,
+		// for the strategy instance is abandoned,
+		// and we will create a new one next time
 	}
 	
 	private void _checkDatasourceOptions(DatasourceOptions originalOpt, 

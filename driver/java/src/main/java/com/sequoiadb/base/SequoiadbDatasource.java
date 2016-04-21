@@ -230,7 +230,7 @@ public class SequoiadbDatasource extends SequoiadbDatasourceImpl
 	 * @since v1.12.6 & v2.2
 	 */
 	public void releaseConnection(Sequoiadb sdb) throws BaseException {
-		super.close(sdb);
+		super.releaseConnection(sdb);
 	}
 	
 	/**
@@ -245,7 +245,7 @@ public class SequoiadbDatasource extends SequoiadbDatasourceImpl
 	 * @see releaseConnection, use releaseConnection instead
 	 */
 	public void close(Sequoiadb sdb) throws BaseException {
-		super.close(sdb);
+		super.releaseConnection(sdb);
 	}
 	
 	/**

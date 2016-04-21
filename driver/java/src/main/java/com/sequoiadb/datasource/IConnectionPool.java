@@ -1,6 +1,7 @@
 package com.sequoiadb.datasource;
 
 import java.util.Iterator;
+import java.util.List;
 
 import com.sequoiadb.base.Sequoiadb;
 
@@ -28,4 +29,5 @@ interface IConnectionPool {
 	public Iterator<Pair> getIterator();
 	public int count();
 	public boolean contains(Sequoiadb sdb);
+	public List<ConnItem> clear();
 }
