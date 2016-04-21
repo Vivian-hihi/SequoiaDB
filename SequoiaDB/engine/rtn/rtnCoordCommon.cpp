@@ -1673,7 +1673,7 @@ namespace engine
                PD_LOG ( PDWARNING, "Received invalid msg-event(data is null)" );
                continue ;
             }
-            if ( (UINT32)pMsg->opCode != MSG_CAT_GRP_RES ||
+            if ( pMsg->opCode != MSG_CAT_GRP_RES ||
                  pMsg->requestID != reqID )
             {
                if ( cb->getCoordSession()->isValidResponse( reqID ) )
