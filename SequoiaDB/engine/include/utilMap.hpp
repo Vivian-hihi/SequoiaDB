@@ -633,7 +633,45 @@ namespace engine
       {
          if ( _pMap )
          {
-            return (*_pMap).at( key ) ;
+            return _pMap->at( key ) ;
+         }
+         else
+         {
+            /// first to find
+            UINT32 pos = _findInStackBuf( key ) ;
+            if ( pos != this->npos )
+            {
+               return _staticBuf[ pos ].second ;
+            }
+            /// error
+            throw exception( "out-of-range" ) ;
+         }
+      }
+
+      OSS_INLINE const T& at( const Key& key ) const
+      {
+         if ( _pMap )
+         {
+            return _pMap->at( key ) ;
+         }
+         else
+         {
+            /// first to find
+            UINT32 pos = _findInStackBuf( key ) ;
+            if ( pos != this->npos )
+            {
+               return _staticBuf[ pos ].second ;
+            }
+            /// error
+            throw exception( "out-of-range" ) ;
+         }
+      }
+
+      OSS_INLINE T& operator[] ( const Key& key )
+      {
+         if ( _pMap )
+         {
+            return _pMap->operator[](key) ;
          }
          else
          {
@@ -647,11 +685,6 @@ namespace engine
             pair< iterator, BOOLEAN > ret = insert( value_type( key, T() ) ) ;
             return (ret.first)->second ;
          }
-      }
-
-      OSS_INLINE T& operator[] ( const Key& key )
-      {
-         return at( key ) ;
       }
 
       OSS_INLINE iterator find( const Key& key )
