@@ -17,12 +17,14 @@
 #define CLIENTIMPL_HPP__
 #include "core.hpp"
 #include "client.hpp"
+#include "common.h"
 #include "ossSocket.hpp"
 #include <set>
 #if defined CLIENT_THREAD_SAFE
 #include "ossLatch.hpp"
 #endif
 using namespace bson ;
+
 namespace sdbclient
 {
 #define CLIENT_COLLECTION_NAMESZ           127
@@ -926,6 +928,7 @@ namespace sdbclient
       std::set<ossValuePtr>    _domains ;
       std::set<ossValuePtr>    _dataCenters ;
       std::set<ossValuePtr>    _lobs ;
+      hashTable               *_tb ;
 
       void _disconnect () ;
       INT32 _send ( CHAR *pBuffer ) ;
@@ -1065,6 +1068,10 @@ namespace sdbclient
          _lobs.erase ( (ossValuePtr)lob ) ;
          unlock () ;
       }
+      hashTable* _getCachedContainer() const
+      {
+         return _tb ;
+      }
 
       INT32 _connect( const CHAR *pHostName,
                       UINT16 port ) ;
@@ -1102,6 +1109,10 @@ namespace sdbclient
 
       INT32 createUsr( const CHAR *pUsrName,
                        const CHAR *pPasswd ) ;
+
+      void initCacheStrategy( BOOLEAN enableCacheStrategy,
+                              const UINT32 cacheTimeInterval,
+                              const UINT32 maxCacheSlotCount ) ;
 
       INT32 removeUsr( const CHAR *pUsrName,
                        const CHAR *pPasswd ) ;

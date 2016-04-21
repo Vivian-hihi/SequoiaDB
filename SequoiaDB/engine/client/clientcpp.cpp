@@ -1010,6 +1010,12 @@ do                                                            \
       {
          goto error ;
       }
+      rc = updateCachedObject( rc, _connection->_getCachedContainer(),
+                               _collectionFullName ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
 
       // check return cursor
       if ( NULL == pCursor )
@@ -1041,6 +1047,7 @@ do                                                            \
             count = ele.numberLong() ;
          }
       }
+
    done:
       if ( NULL != pCursor )
       {
@@ -1110,8 +1117,15 @@ do                                                            \
       {
          goto error ;
       }
+
       // check return msg header
       CHECK_RET_MSGHEADER( _pSendBuffer, _pReceiveBuffer, _connection ) ;
+      rc = updateCachedObject( rc, _connection->_getCachedContainer(),
+                               _collectionFullName ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
    exit:
       PD_TRACE_EXITRC ( SDB_CLIENT_BULKINSERT, rc );
       return rc ;
@@ -1162,10 +1176,18 @@ do                                                            \
       }
       // check return msg header
       CHECK_RET_MSGHEADER( _pSendBuffer, _pReceiveBuffer, _connection ) ;
+      rc = updateCachedObject( rc, _connection->_getCachedContainer(),
+                               _collectionFullName ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
+
       if ( id )
       {
          *id = temp.getField ( CLIENT_RECORD_ID_FIELD ).__oid();
       }
+
    exit :
       PD_TRACE_EXITRC ( SDB_CLIENT_INSERT, rc );
       return rc ;
@@ -1264,6 +1286,13 @@ do                                                            \
       }
       // check return msg header
       CHECK_RET_MSGHEADER( _pSendBuffer, _pReceiveBuffer, _connection ) ;
+      rc = updateCachedObject( rc, _connection->_getCachedContainer(),
+                               _collectionFullName ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
+
    exit:
       PD_TRACE_EXITRC ( SDB_CLIENT__UPDATE, rc );
       return rc ;
@@ -1310,6 +1339,14 @@ do                                                            \
       }
       // check return msg header
       CHECK_RET_MSGHEADER( _pSendBuffer, _pReceiveBuffer, _connection ) ;
+      rc = updateCachedObject( rc, _connection->_getCachedContainer(),
+                               _collectionFullName ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
+
+
    exit:
       PD_TRACE_EXITRC ( SDB_CLIENT_DEL, rc );
       return rc ;
@@ -1361,6 +1398,13 @@ do                                                            \
          goto error ;
       }
 
+      rc = updateCachedObject( rc, _connection->_getCachedContainer(),
+                               _collectionFullName ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
+
       // check return cursor
       if ( NULL == pCursor )
       {
@@ -1382,7 +1426,6 @@ do                                                            \
 
       // return cursor
       *cursor = pCursor ;
-      
    done :
       PD_TRACE_EXITRC ( SDB_CLIENT_QUERY, rc );
       return rc ;
@@ -1551,6 +1594,13 @@ do                                                            \
       }
       // check return msg header
       CHECK_RET_MSGHEADER( _pSendBuffer, _pReceiveBuffer, _connection ) ;
+      rc = updateCachedObject( rc, _connection->_getCachedContainer(),
+                               _collectionFullName ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
+
       if ( *cursor )
       {
          delete *cursor ;
@@ -1569,6 +1619,12 @@ do                                                            \
       PD_TRACE_EXITRC ( SDB_CLIENT_GETQUERYMETA, rc );
       return rc ;
    error :
+      if ( NULL != *cursor )
+      {
+         delete *cursor ;
+         *cursor = NULL ;
+      }
+
       _connection->unlock () ;
       goto done;
    }
@@ -1720,6 +1776,13 @@ do                                                            \
       }
       // check return msg header
       CHECK_RET_MSGHEADER( _pSendBuffer, _pReceiveBuffer, _connection ) ;
+      rc = updateCachedObject( rc, _connection->_getCachedContainer(),
+                               _collectionFullName ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
+
    done :
       if ( locked )
          _connection->unlock () ;
@@ -1795,6 +1858,13 @@ do                                                            \
       }
       // check return msg header
       CHECK_RET_MSGHEADER( _pSendBuffer, _pReceiveBuffer, _connection ) ;
+      rc = updateCachedObject( rc, _connection->_getCachedContainer(),
+                               _collectionFullName ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
+
       if ( *cursor )
       {
          delete *cursor ;
@@ -1809,6 +1879,7 @@ do                                                            \
       ((_sdbCursorImpl*)*cursor)->_setCollection ( NULL ) ;
       ((_sdbCursorImpl*)*cursor)->_contextID = contextID ;
       ((_sdbCursorImpl*)*cursor)->_setConnection ( _connection ) ;
+
    exit:
       PD_TRACE_EXITRC ( SDB_CLIENT_GETINDEXES, rc );
       return rc ;
@@ -1816,6 +1887,12 @@ do                                                            \
       _connection->unlock () ;
       goto exit ;
    error :
+      if ( NULL != *cursor )
+      {
+         delete *cursor ;
+         *cursor = NULL ;
+      }
+      
       goto done ;
 
    }
@@ -1865,6 +1942,13 @@ do                                                            \
       }
       // check return msg header
       CHECK_RET_MSGHEADER( _pSendBuffer, _pReceiveBuffer, _connection ) ;
+      rc = updateCachedObject( rc, _connection->_getCachedContainer(),
+                               _collectionFullName ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
+
     done :
       if ( locked )
          _connection->unlock () ;
@@ -1914,6 +1998,13 @@ do                                                            \
       }
       // check return msg header
       CHECK_RET_MSGHEADER( _pSendBuffer, _pReceiveBuffer, _connection ) ;
+
+      rc = insertCachedObject( _connection->_getCachedContainer(),
+                               _collectionFullName ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
    done :
       if ( locked )
          _connection->unlock () ;
@@ -1964,6 +2055,13 @@ do                                                            \
       }
       // check return msg header
       CHECK_RET_MSGHEADER( _pSendBuffer, _pReceiveBuffer, _connection ) ;
+
+      rc = insertCachedObject( _connection->_getCachedContainer(),
+                               _collectionFullName ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
    done :
       if ( locked )
          _connection->unlock () ;
@@ -2023,6 +2121,13 @@ do                                                            \
       }
       // check return msg header
       CHECK_RET_MSGHEADER( _pSendBuffer, _pReceiveBuffer, _connection ) ;
+      rc = updateCachedObject( rc, _connection->_getCachedContainer(),
+                               _collectionFullName ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
+
    done :
       if ( locked )
          _connection->unlock () ;
@@ -2086,6 +2191,13 @@ do                                                            \
       }
       // check return msg header
       CHECK_RET_MSGHEADER( _pSendBuffer, _pReceiveBuffer, _connection ) ;
+      rc = updateCachedObject( rc, _connection->_getCachedContainer(),
+                               _collectionFullName ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
+
    done :
       if ( locked )
          _connection->unlock () ;
@@ -2156,8 +2268,16 @@ do                                                            \
       {
          goto error ;
       }
+
       // check return msg header
       CHECK_RET_MSGHEADER( _pSendBuffer, _pReceiveBuffer, _connection ) ;
+      rc = updateCachedObject( rc, _connection->_getCachedContainer(),
+                               _collectionFullName ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
+
       cursor = (_sdbCursor*) (new(std::nothrow) sdbCursorImpl () ) ;
       if ( !cursor  )
       {
@@ -2266,6 +2386,13 @@ do                                                            \
       }
       // check return msg header
       CHECK_RET_MSGHEADER( _pSendBuffer, _pReceiveBuffer, _connection ) ;
+      rc = updateCachedObject( rc, _connection->_getCachedContainer(),
+                               _collectionFullName ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
+
       cursor = (_sdbCursor*) (new(std::nothrow) sdbCursorImpl () ) ;
       if ( !cursor  )
       {
@@ -2353,6 +2480,13 @@ do                                                            \
       }
       // check return msg header
       CHECK_RET_MSGHEADER( _pSendBuffer, _pReceiveBuffer, _connection ) ;
+      rc = updateCachedObject( rc, _connection->_getCachedContainer(),
+                               _collectionFullName ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
+
       if ( *cursor )
       {
          delete *cursor ;
@@ -2367,6 +2501,7 @@ do                                                            \
       ((_sdbCursorImpl*)*cursor)->_setCollection( this ) ;
       ((_sdbCursorImpl*)*cursor)->_contextID = contextID ;
       ((_sdbCursorImpl*)*cursor)->_setConnection( _connection ) ;
+
    done:
       if ( locked )
       {
@@ -2374,7 +2509,13 @@ do                                                            \
       }
       PD_TRACE_EXITRC ( SDB_CLIENT_AGGREGATE, rc ) ;
       return rc ;
-   error:
+error:
+      if ( NULL != *cursor )
+      {
+         delete *cursor ;
+         *cursor = NULL ;
+      }
+
       goto done ;
    }
 
@@ -2436,6 +2577,13 @@ do                                                            \
       }
       // check return msg header
       CHECK_RET_MSGHEADER( _pSendBuffer, _pReceiveBuffer, _connection ) ;
+      rc = updateCachedObject( rc, _connection->_getCachedContainer(),
+                               _collectionFullName ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
+
    done:
       if ( locked )
       {
@@ -2497,6 +2645,13 @@ do                                                            \
       }
       // check return msg header
       CHECK_RET_MSGHEADER( _pSendBuffer, _pReceiveBuffer, _connection ) ;
+      rc = updateCachedObject( rc, _connection->_getCachedContainer(),
+                               _collectionFullName ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
+
    done:
       if ( locked )
       {
@@ -2569,6 +2724,13 @@ do                                                            \
          goto error ;
       }
 
+      rc = updateCachedObject( rc, _connection->_getCachedContainer(),
+                               _collectionFullName ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
+
    done :
       PD_TRACE_EXITRC ( SDB_CLIENT__ALTERCOLLECTION2, rc );
       return rc ;
@@ -2612,7 +2774,12 @@ do                                                            \
       {
          goto error ;
       }
-
+      rc = updateCachedObject( rc, _connection->_getCachedContainer(),
+                               _collectionFullName ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
    done :
       PD_TRACE_EXITRC ( SDB_CLIENT__ALTERCOLLECTION1, rc );
       return rc ;
@@ -2767,6 +2934,13 @@ do                                                            \
       }
       // check return msg header
       CHECK_RET_MSGHEADER( _pSendBuffer, _pReceiveBuffer, _connection ) ;
+      rc = updateCachedObject( rc, _connection->_getCachedContainer(),
+                               _collectionFullName ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
+
       // get reply bson from received msg
       bsonBuf = _pReceiveBuffer + sizeof( MsgOpReply ) ;
       try
@@ -2866,8 +3040,16 @@ do                                                            \
       {
          goto error ;
       }
+
       // check return msg header
       CHECK_RET_MSGHEADER( _pSendBuffer, _pReceiveBuffer, _connection ) ;
+      rc = updateCachedObject( rc, _connection->_getCachedContainer(),
+                               _collectionFullName ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
+
    done:
       if ( locked )
          _connection->unlock() ;
@@ -2935,6 +3117,13 @@ do                                                            \
       }
       // check return msg header
       CHECK_RET_MSGHEADER( _pSendBuffer, _pReceiveBuffer, _connection ) ;
+      rc = updateCachedObject( rc, _connection->_getCachedContainer(),
+                               _collectionFullName ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
+
       // get reply bson from received msg
       bsonBuf = _pReceiveBuffer + sizeof( MsgOpReply ) ;
       try
@@ -3102,6 +3291,13 @@ do                                                            \
       }
       // check return msg header
       CHECK_RET_MSGHEADER( _pSendBuffer, _pReceiveBuffer, _connection ) ;
+      rc = updateCachedObject( rc, _connection->_getCachedContainer(),
+                               _collectionFullName ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
+
       // build return cursor object
       if ( -1 != contextID )
       {
@@ -3185,6 +3381,12 @@ do                                                            \
       }
 
       CHECK_RET_MSGHEADER( _pSendBuffer, _pReceiveBuffer, _connection ) ;
+      rc = updateCachedObject( rc, _connection->_getCachedContainer(),
+                               _collectionFullName ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
    done:
       if ( locked )
       {
@@ -4296,17 +4498,31 @@ do                                                            \
 
       collectionS = string (_collectionSpaceName) + "." +
                     string (pCollectionName) ;
-      newObj = BSON ( FIELD_NAME_NAME << collectionS.c_str() ) ;
-
-      rc = _connection->_runCommand ( command.c_str(), result, &newObj ) ;
-      if ( rc )
+      if ( fetchCachedObject( _connection->_getCachedContainer(),
+                              collectionS.c_str() ) )
       {
-         goto error ;
+         // DO NOTHING
       }
-      if ( NULL != (*collection) )
+      else
       {
-         delete *collection ;
-         *collection = NULL ;
+         newObj = BSON ( FIELD_NAME_NAME << collectionS.c_str() ) ;
+
+         rc = _connection->_runCommand ( command.c_str(), result, &newObj ) ;
+         if ( rc )
+         {
+            goto error ;
+         }
+         if ( NULL != (*collection) )
+         {
+            delete *collection ;
+            *collection = NULL ;
+         }
+         rc = insertCachedObject( _connection->_getCachedContainer(),
+                                  collectionS.c_str() ) ;
+         if ( SDB_OK != rc )
+         {
+            goto error ;
+         }
       }
       *collection = (_sdbCollection*)( new(std::nothrow) sdbCollectionImpl () ) ;
       if ( !*collection )
@@ -4316,10 +4532,16 @@ do                                                            \
       }
       ((sdbCollectionImpl*)*collection)->_setConnection ( _connection ) ;
       ((sdbCollectionImpl*)*collection)->_setName ( collectionS.c_str() ) ;
+
    done :
       PD_TRACE_EXITRC ( SDB_CLIENT_GETCOLLECTIONINCS, rc );
       return rc ;
-   error :
+error :
+      if ( NULL != *collection )
+      {
+         delete *collection ;
+         *collection = NULL ;
+      }
       goto done ;
    }
 
@@ -4382,10 +4604,23 @@ do                                                            \
       }
       ((sdbCollectionImpl*)*collection)->_setConnection ( _connection ) ;
       ((sdbCollectionImpl*)*collection)->_setName ( collectionS.c_str() ) ;
+
+      rc = insertCachedObject( _connection->_getCachedContainer(),
+                               collectionS.c_str() ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
    done :
       PD_TRACE_EXITRC ( SDB_CLIENT_CREATECOLLECTION, rc );
       return rc ;
-   error :
+error :
+      if ( NULL == *collection )
+      {
+         delete *collection ;
+         *collection = NULL ;
+      }
+
       goto done ;
    }
 
@@ -4418,6 +4653,13 @@ do                                                            \
       {
          goto error ;
       }
+
+      rc = removeCachedObject( _connection->_getCachedContainer(),
+                               collectionS.c_str() ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
    done :
       PD_TRACE_EXITRC ( SDB_CLIENT_DROPCOLLECTION, rc );
       return rc ;
@@ -4445,6 +4687,13 @@ do                                                            \
       {
          goto error ;
       }
+
+      rc = insertCachedObject( _connection->_getCachedContainer(),
+                               _collectionSpaceName ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
    done :
       PD_TRACE_EXITRC ( SDB_CLIENT_CREATECS, rc );
       return rc ;
@@ -4468,6 +4717,13 @@ do                                                            \
       newObj = BSON ( FIELD_NAME_NAME << _collectionSpaceName ) ;
       rc = _connection->_runCommand ( command.c_str(), result, &newObj ) ;
       if ( rc )
+      {
+         goto error ;
+      }
+
+      rc = removeCachedObject( _connection->_getCachedContainer(),
+                               _collectionSpaceName ) ;
+      if ( SDB_OK != rc )
       {
          goto error ;
       }
@@ -5656,8 +5912,10 @@ do                                                            \
    _sendBufferSize ( 0 ),
    _pReceiveBuffer ( NULL ),
    _receiveBufferSize ( 0 ),
-   _useSSL ( useSSL )
+   _useSSL ( useSSL ),
+   _tb ( NULL )
    {
+      initHashTable( &_tb ) ;
    }
 
    _sdbImpl::~_sdbImpl ()
@@ -5696,6 +5954,10 @@ do                                                            \
       for ( it = _lobs.begin(); it != _lobs.end(); ++it )
       {
          ((_sdbLobImpl*)(*it))->_dropConnection () ;
+      }
+      if ( NULL != _tb )
+      {
+         releaseHashTable( &_tb ) ;
       }
       if ( _sock )
          _disconnect () ;
@@ -5955,6 +6217,7 @@ do                                                            \
       goto done ;
 
    }
+
 
    PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_CREATEUSR, "_sdbImpl::createUsr" )
    INT32 _sdbImpl::createUsr( const CHAR *pUsrName,
@@ -6722,12 +6985,26 @@ do                                                            \
          goto error ;
       }
 
-      newObj = BSON ( FIELD_NAME_NAME << pCollectionFullName ) ;
-      rc = _runCommand ( command.c_str(), result, &newObj ) ;
-      if ( rc )
+      if ( fetchCachedObject( _tb, pCollectionFullName ) )
       {
-         goto error ;
+         // DO NOTHING
       }
+      else
+      {
+         newObj = BSON ( FIELD_NAME_NAME << pCollectionFullName ) ;
+         rc = _runCommand ( command.c_str(), result, &newObj ) ;
+         if ( rc )
+         {
+            goto error ;
+         }
+
+         rc = insertCachedObject( _tb, pCollectionFullName ) ;
+         if ( SDB_OK != rc )
+         {
+            goto error ;
+         }
+      }
+      
       *collection = (_sdbCollection*)( new(std::nothrow) sdbCollectionImpl ()) ;
       if ( !*collection )
       {
@@ -6736,10 +7013,17 @@ do                                                            \
       }
       ((sdbCollectionImpl*)*collection)->_setConnection ( this ) ;
       ((sdbCollectionImpl*)*collection)->_setName ( pCollectionFullName ) ;
+
    done :
       PD_TRACE_EXITRC ( SDB_CLIENT_GETCOLLECTIONINSDB, rc );
       return rc ;
    error :
+      if ( NULL != *collection )
+      {
+         delete *collection ;
+         *collection = NULL ;
+      }
+
       goto done ;
    }
 
@@ -6764,12 +7048,26 @@ do                                                            \
          rc = SDB_INVALIDARG ;
          goto error ;
       }
-      newObj = BSON ( FIELD_NAME_NAME << pCollectionSpaceName ) ;
-      rc = _runCommand ( command.c_str(), result, &newObj ) ;
-      if ( rc )
+      if ( fetchCachedObject( _tb, pCollectionSpaceName ) )
       {
-         goto error ;
+         // DO NOTHING
       }
+      else
+      {
+         newObj = BSON ( FIELD_NAME_NAME << pCollectionSpaceName ) ;
+         rc = _runCommand ( command.c_str(), result, &newObj ) ;
+         if ( rc )
+         {
+            goto error ;
+         }
+
+         rc = insertCachedObject( _tb, pCollectionSpaceName ) ;
+         if ( SDB_OK != rc )
+         {
+            goto error ;
+         }
+      }
+
       *cs = (_sdbCollectionSpace*)( new(std::nothrow) sdbCollectionSpaceImpl());
       if ( !*cs )
       {
@@ -6778,10 +7076,17 @@ do                                                            \
       }
       ((sdbCollectionSpaceImpl*)*cs)->_setConnection ( this ) ;
       ((sdbCollectionSpaceImpl*)*cs)->_setName ( pCollectionSpaceName ) ;
+
    done :
       PD_TRACE_EXITRC ( SDB_CLIENT_GETCOLLECTIONSPACE, rc );
       return rc ;
    error :
+      if ( NULL != *cs )
+      {
+         delete *cs ;
+         *cs = NULL ;
+      }
+
       goto done ;
    }
 
@@ -6817,10 +7122,22 @@ do                                                            \
       }
       ((sdbCollectionSpaceImpl*)*cs)->_setConnection ( this ) ;
       ((sdbCollectionSpaceImpl*)*cs)->_setName ( pCollectionSpaceName ) ;
+
+      rc = insertCachedObject( _tb, pCollectionSpaceName ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
    done :
       PD_TRACE_ENTRY ( SDB_CLIENT_CREATECOLLECTIONSPACE ) ;
       return rc ;
-   error :
+error :
+      if ( NULL != *cs )
+      {
+         delete *cs ;
+         *cs = NULL ;
+      }
+
       goto done ;
    }
 
@@ -6878,6 +7195,12 @@ do                                                            \
       }
       ((sdbCollectionSpaceImpl*)*cs)->_setConnection ( this ) ;
       ((sdbCollectionSpaceImpl*)*cs)->_setName ( pCollectionSpaceName ) ;
+
+      rc = insertCachedObject( _tb, pCollectionSpaceName ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
    done :
       PD_TRACE_ENTRY ( SDB_CLIENT_CREATECOLLECTIONSPACE2 ) ;
       return rc ;
@@ -6907,6 +7230,13 @@ do                                                            \
       {
          goto error ;
       }
+
+      rc = removeCachedObject( _tb, pCollectionSpaceName ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
+
    done :
       PD_TRACE_EXITRC ( SDB_CLIENT_DROPCOLLECTIONSPACE, rc );
       return rc ;
@@ -8543,4 +8873,14 @@ do                                                            \
    {
       return (_sdb*)(new(std::nothrow) sdbImpl ( useSSL )) ;
    }
+
+    INT32 initClient( BOOLEAN enableCacheStrategy,
+                      const UINT32 cacheTimeInterval,
+                      const UINT32 maxCacheSlotCount )
+   {
+      return initCacheStrategy( enableCacheStrategy,
+                                cacheTimeInterval,
+                                maxCacheSlotCount ) ;
+   }
+
 }

@@ -34,6 +34,46 @@ SDB_EXTERN_C_START
 
 #define SDB_MD5_DIGEST_LENGTH 16
 
+typedef struct _htbNode
+{
+   UINT64 lastTime ;
+   CHAR *name ;
+} htbNode ;
+
+typedef struct _hashTable
+{
+   UINT32  capacity ;
+   htbNode **node ;
+} hashTable ;
+
+INT32 hash_table_create_node( const CHAR *key, htbNode **node ) ;
+
+INT32 hash_table_destory_node( htbNode **node ) ;
+
+INT32 hash_table_insert( hashTable *tb, htbNode *node ) ;
+
+INT32 hash_table_remove( hashTable *tb, const CHAR *key ) ;
+
+INT32 hash_table_fetch( hashTable *tb, const CHAR *key, htbNode **node ) ;
+
+INT32 hash_table_create( hashTable **tb, const UINT32 bucketSize ) ;
+
+INT32 hash_table_destroy( hashTable **tb ) ;
+
+INT32 insertCachedObject( hashTable *tb, const CHAR *key ) ;
+
+INT32 removeCachedObject( hashTable *tb, const CHAR *key ) ;
+
+BOOLEAN fetchCachedObject( hashTable *tb, const CHAR *key ) ;
+
+INT32 updateCachedObject( const INT32 code, hashTable *tb, const CHAR *key ) ;
+
+INT32 initCacheStrategy( BOOLEAN enableCacheStrategy,
+                         const UINT32 timeInterval,
+                         const UINT32 maxCachedCount ) ;
+INT32 initHashTable( hashTable **tb ) ;
+INT32 releaseHashTable( hashTable **tb ) ;
+
 INT32 clientCheckRetMsgHeader( const CHAR *pSendBuf, const CHAR *pRecvBuf,
                                BOOLEAN endianConvert ) ;
 

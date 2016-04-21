@@ -4818,6 +4818,11 @@ static INT32 _sdb_connect ( const CHAR *hostName, const CHAR *serviceName,
       ret = sdbConnect ( hostName, serviceName, userName, passwd, handle ) ;
    }
 
+   if ( SDB_OK == ret )
+   {
+      ret = initClient( FALSE, 0, 0 ) ;
+   }
+
    return ret ;
 }
 

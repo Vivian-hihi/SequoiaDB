@@ -2855,6 +2855,7 @@ namespace sdbclient
 
       virtual void disconnect () = 0 ;
 
+      
       virtual INT32 createUsr( const CHAR *pUsrName,
                                const CHAR *pPasswd ) = 0 ;
 
@@ -4388,6 +4389,21 @@ namespace sdbclient
       \brief Class sdb definition for sdb.
 */
    typedef class sdb sdb ;
+
+   /** \fn INT32 initClient( BOOLEAN enableCacheStrategy,
+                             const UINT32 cacheTimeInterval,
+                             const UINT32 maxCacheSlotCount ) ;
+       \brief open cache strategy to improve performance
+       \param [in] enableCacheStrategy The flag to OPEN the cache strategy, TURE is expectable
+       \param [in] cacheTimeInterval The life cycle of cached object
+       \param [in] maxCacheSlotCount The count of slot to cache objects, one slot holds an object
+       \retval SDB_OK Operation Success
+       \retval Others Operation Fail
+   */
+   SDB_EXPORT INT32 initClient( BOOLEAN enableCacheStrategy,
+                                const UINT32 cacheTimeInterval,
+                                const UINT32 maxCacheSlotCount ) ;
+
 }
 
 #endif

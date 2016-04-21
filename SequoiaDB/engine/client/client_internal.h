@@ -21,6 +21,7 @@
 #include "client.h"
 #include "network.h"
 #include "oss.h"
+#include "common.h"
 #define SDB_HANDLE_TYPE_INVALID      0
 #define SDB_HANDLE_TYPE_CONNECTION   1
 #define SDB_HANDLE_TYPE_COLLECTION   2
@@ -51,6 +52,7 @@ struct _sdbConnectionStruct
    BOOLEAN _endianConvert ;
    Node *_cursors ;
    Node *_sockets ;
+   hashTable *_tb ;
 
    UINT64 reserveSpace1 ;
    ossMutex _sockMutex ;

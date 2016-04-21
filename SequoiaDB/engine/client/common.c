@@ -44,11 +44,17 @@
 #ifndef offsetof
 #define offsetof(TYPE, MEMBER) ((size_t) &((TYPE *)0)->MEMBER)
 #endif
+#define CACHED_CHECK_TIME_INTERVAL 300
+#define MAX_CACHE_SLOT_NUMBER      1000
+#define CLINET_CS_NAME_SIZE        300
 
 static const INT32 clientDefaultVersion = 1 ;
 static const INT16 clientDefaultW = 0 ;
 static const UINT64 clientDefaultRouteID = 0 ;
 static const SINT32 clientDefaultFlags = 0 ;
+static BOOLEAN cacheStrategyTurnOn = FALSE ;
+static UINT32  cachedTimeInterval = 300 ;   // default is 300 milliseconds
+static UINT32  maxCachedSlotCount = 1000 ;
 static INT32 clientCheckBuffer ( CHAR **ppBuffer, INT32 *bufferSize,
                            INT32 packetLength )
 {
@@ -294,6 +300,540 @@ static BOOLEAN bson_endian_convert ( CHAR *data, off_t *off, BOOLEAN l2r )
    if ( *off - beginOff != objrealsize )
       return FALSE ;
    return TRUE ;
+}
+
+INT32 hash_table_create_node( const CHAR *key, htbNode **node )
+{
+   INT32 rc = SDB_OK ;
+   CHAR *ptr =  NULL ;
+
+   if ( NULL == key )
+   {
+      goto done ;
+   }
+
+   ptr = ( CHAR * )SDB_OSS_MALLOC( sizeof( htbNode ) ) ;
+   if ( NULL == ptr )
+   {
+      rc = SDB_OOM ;
+      goto error ;
+   }
+
+   *node = ( htbNode *)ptr ;
+
+   ptr = ( CHAR * )SDB_OSS_MALLOC( ossStrlen( key ) + 1 ) ;
+   if ( NULL == ptr )
+   {
+      rc = SDB_OOM ;
+      goto error ;
+   }
+   (*node)->name = ptr ;
+
+done:
+   return rc ;
+error:
+   if ( NULL != (*node)->name )
+   {
+      SDB_OSS_FREE( (*node)->name ) ;
+      (*node)->name = NULL ;
+   }
+   if ( NULL != *node )
+   {
+      SDB_OSS_FREE( *node ) ;
+      *node = NULL ;
+   }
+   goto done ;
+}
+
+INT32 hash_table_destroy_node( htbNode **node )
+{
+   if ( NULL == node || NULL == *node )
+   {
+      goto done ;
+   }
+
+   if ( NULL != (*node)->name )
+   {
+      SDB_OSS_FREE( (*node)->name ) ;
+      (*node)->name = NULL ;
+   }
+   SDB_OSS_FREE ( *node ) ;
+   *node = NULL ;
+
+done:
+   return SDB_OK ;
+}
+
+INT32 hash_table_insert( hashTable *tb, htbNode *node )
+{
+   UINT32 hashV = 0 ;
+   UINT32 locate = 0 ;
+
+   if ( NULL == tb || NULL == tb->node )
+   {
+      goto done ;
+   }
+
+   if ( NULL == node )
+   {
+      goto done ;
+   }
+
+   if ( NULL == node->name )
+   {
+      goto done ;
+   }
+
+   hashV = ossHash( node->name, ossStrlen( node->name ) ) ;
+   locate = hashV % tb->capacity ;
+
+   if ( NULL != tb->node[ locate ] )
+   {
+      htbNode *toFree = tb->node[ locate ] ;
+      hash_table_destroy_node( &toFree ) ;
+   }
+
+   tb->node[ locate ] = node ;
+
+done:
+   return SDB_OK ;
+}
+
+INT32 hash_table_remove( hashTable *tb, const CHAR *key )
+{
+   UINT32 hashV = 0 ;
+   UINT32 locate = 0 ;
+
+   if ( NULL == tb || NULL == tb->node )
+   {
+      goto done ;
+   }
+
+   if ( NULL == key )
+   {
+      goto done ;
+   }
+
+   hashV = ossHash( key, strlen( key ) ) ;
+   locate = hashV % tb->capacity ;
+
+   if ( NULL != tb->node[ locate ] )
+   {
+      htbNode *toFree = tb->node[ locate ] ;
+      if ( NULL == tb->node[ locate ]->name ||
+           0 == ossStrncmp( toFree->name, key, ossStrlen( key ) ) )
+      {
+         hash_table_destroy_node( &toFree ) ;
+         tb->node[ locate ] = NULL ;
+      }
+   }
+
+done:
+   return SDB_OK ;
+}
+
+INT32 hash_table_fetch( hashTable *tb, const CHAR *key, htbNode **node )
+{
+   UINT32 hashV = 0 ;
+   UINT32 locate = 0 ;
+
+   if ( NULL == tb || NULL == tb->node )
+   {
+      goto done ;
+   }
+
+   if ( NULL == key )
+   {
+      goto done ;
+   }
+
+   hashV = ossHash( key, strlen( key ) ) ;
+   locate = hashV % tb->capacity ;
+
+   if (   NULL != tb->node[ locate ] &&
+        ( NULL != tb->node[ locate ]->name &&
+          0 == ossStrncmp( tb->node[ locate ]->name, key, strlen( key ) ) ) )
+   {
+      *node = tb->node[ locate ] ;
+   }
+   else
+   {
+      *node = NULL ;
+   }
+
+done:
+   return SDB_OK ;
+}
+
+INT32 hash_table_create( hashTable **tb, const UINT32 bucketSize )
+{
+   INT32 rc = SDB_OK ;
+   CHAR *ptr = NULL ;
+
+   if ( !cacheStrategyTurnOn )
+   {
+      goto done ;
+   }
+
+   if ( NULL == tb )
+   {
+      goto error ;
+   }
+
+   ptr = ( CHAR * )SDB_OSS_MALLOC( sizeof(hashTable) ) ;
+   if ( NULL == ptr )
+   {
+      rc = SDB_OOM ;
+      goto error ;
+   }
+   *tb = ( hashTable * )ptr ;
+   (*tb)->capacity = bucketSize ;
+
+   ptr = ( CHAR * )SDB_OSS_MALLOC( sizeof(htbNode *) * bucketSize ) ;
+   if ( NULL == ptr )
+   {
+      rc = SDB_OOM ;
+      goto error ;
+   }
+   ossMemset( ptr, 0, sizeof(htbNode *) * maxCachedSlotCount ) ;
+   (*tb)->node = (htbNode **)ptr ;
+
+done:
+   return rc ;
+error:
+   if ( NULL != (*tb)->node )
+   {
+      SDB_OSS_FREE( (*tb)->node ) ;
+      (*tb)->node = NULL ;
+   }
+
+   if ( NULL != (*tb) )
+   {
+      SDB_OSS_FREE( *tb ) ;
+      *tb = NULL ;
+   }
+
+   goto done ;
+}
+
+INT32 hash_table_destroy( hashTable **tb )
+{
+   INT32 rc = SDB_OK ;
+   UINT32 idx = 0 ;
+   if ( !cacheStrategyTurnOn )
+   {
+      goto done ;
+   }
+
+   if ( NULL == tb )
+   {
+      goto error ;
+   }
+
+   if ( NULL == *tb )
+   {
+      goto done ;
+   }
+
+   for ( ; idx < (*tb)->capacity ; ++idx )
+   {
+      htbNode *node = ( htbNode * )( (*tb)->node[ idx ] ) ;
+      if ( NULL != node )
+      {
+         hash_table_destroy_node( &node ) ;
+      }
+   }
+
+   SDB_OSS_FREE( (*tb)->node ) ;
+   SDB_OSS_FREE( *tb ) ;
+   (*tb) = NULL ;
+
+done:
+   return rc ;
+error:
+   goto done ;
+}
+
+INT32 insertCachedObject( hashTable *tb, const CHAR *key )
+{
+   INT32 rc       = SDB_OK ;
+   htbNode *node  = NULL ;
+   UINT64 curTime = 0 ;
+
+   if ( !cacheStrategyTurnOn )
+   {
+      goto done ;
+   }
+
+   if ( NULL == tb )
+   {
+      goto done ;
+   }
+
+   if ( NULL == key )
+   {
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+
+   rc = hash_table_create_node( key, &node ) ;
+   if ( SDB_OK != rc )
+   {
+      goto error ;
+   }
+
+   if ( NULL == node )
+   {
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+
+   ossMemcpy( node->name, key, ossStrlen( key ) + 1 ) ;
+   curTime = (UINT64)time( NULL ) ;
+   node->lastTime = curTime ;
+
+   rc = hash_table_insert( tb, node ) ;
+   if ( SDB_OK != rc )
+   {
+      goto error ;
+   }
+
+done:
+   return rc ;
+error:
+   if ( NULL == node )
+   {
+      hash_table_destroy_node( &node ) ;
+   }
+   goto done ;
+}
+
+INT32 removeCachedObject( hashTable *tb, const CHAR *key )
+{
+   INT32 rc = SDB_OK ;
+
+   if ( !cacheStrategyTurnOn )
+   {
+      goto done ;
+   }
+
+   if ( NULL == tb )
+   {
+      goto done ;
+   }
+
+   if ( NULL == key )
+   {
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+
+   rc = hash_table_remove( tb, key ) ;
+   if ( SDB_OK != rc )
+   {
+      goto error ;
+   }
+
+done:
+   return rc ;
+error:
+   goto done ;
+}
+
+BOOLEAN fetchCachedObject( hashTable *tb, const CHAR *key )
+{
+   INT32 rc       = SDB_OK ;
+   htbNode *node  = NULL ;
+   UINT64 curTime = 0 ;
+
+   if ( !cacheStrategyTurnOn )
+   {
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+
+   if ( NULL == tb )
+   {
+      goto done ;
+   }
+
+   if ( NULL == key )
+   {
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+
+   rc = hash_table_fetch( tb, key, &node ) ;
+   if ( SDB_OK != rc )
+   {
+      goto error ;
+   }
+
+   curTime = (UINT64)time( NULL ) ;
+   if ( NULL != node && curTime - node->lastTime < cachedTimeInterval )
+   {
+
+   }
+   else
+   {
+      rc = SDB_INVALIDARG ;
+   }
+
+done:
+   return ( SDB_OK == rc ) ;
+error:
+   goto done ;
+}
+
+INT32 updateCachedObject( const INT32 code, hashTable *tb, const CHAR *key )
+{
+   INT32 rc       = SDB_OK ;
+   UINT32 idx     = 0 ;
+   htbNode *node  = NULL ;
+   UINT64 curTime = 0 ;
+   CHAR *pos      = NULL ;
+   CHAR csName[ CLINET_CS_NAME_SIZE ] = { 0 } ;
+
+   if ( !cacheStrategyTurnOn )
+   {
+      goto done ;
+   }
+
+   if ( NULL == tb )
+   {
+      goto done ;
+   }
+
+   if ( NULL == key )
+   {
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+
+   if ( SDB_DMS_NOTEXIST == code )
+   {
+      removeCachedObject( tb, key ) ;
+   }
+   else if ( SDB_DMS_CS_NOTEXIST == code )
+   {
+      pos = ossStrchr( key, '.' ) ;
+      if ( NULL != pos )
+      {
+         ossMemcpy( csName, key, pos - key ) ;
+      }
+      else
+      {
+         ossMemcpy( csName, key, ossStrlen( key ) + 1 ) ;
+      }
+      for ( ; idx < tb->capacity ; ++idx )
+      {
+         htbNode *node = ( htbNode * )( tb->node[ idx ] ) ;
+         if ( NULL != node )
+         {
+            if ( 0 == ossStrncmp( csName, node->name, ossStrlen( csName ) ) )
+            {
+               hash_table_destroy_node( &node ) ;
+            }
+         }
+      }
+   }
+   else if ( SDB_OK == rc )
+   {
+      rc = hash_table_fetch( tb, key, &node ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
+
+      if ( NULL == node )
+      {
+         rc = insertCachedObject( tb, key ) ;
+      }
+      else
+      {
+         curTime = (UINT64)time( NULL ) ;
+         node->lastTime = curTime ;
+      }
+   }
+
+done:
+   return rc ;
+error:
+   goto done ;
+}
+
+INT32 initCacheStrategy( BOOLEAN enableCacheStrategy,
+                         const UINT32 timeInterval,
+                         const UINT32 maxCachedCount )
+{
+   if ( enableCacheStrategy )
+   {
+      cacheStrategyTurnOn = TRUE ;
+      cachedTimeInterval = ( ( 0 != timeInterval ) ?
+                             timeInterval : CACHED_CHECK_TIME_INTERVAL ) ;
+      maxCachedSlotCount = ( ( 0 != maxCachedCount ) ?
+                             maxCachedCount : MAX_CACHE_SLOT_NUMBER ) ;
+   }
+   else
+   {
+      cacheStrategyTurnOn = FALSE ;
+      cachedTimeInterval  = CACHED_CHECK_TIME_INTERVAL ;
+      maxCachedSlotCount  = MAX_CACHE_SLOT_NUMBER ;
+   }
+
+done:
+   return SDB_OK ;
+}
+
+INT32 initHashTable( hashTable **tb )
+{
+   INT32 rc = SDB_OK ;
+   if ( !cacheStrategyTurnOn )
+   {
+      goto done ;
+   }
+
+   if ( NULL == tb )
+   {
+      goto done ;
+   }
+
+   if ( NULL != *tb )
+   {
+      hash_table_destroy( tb ) ;
+   }
+
+   rc = hash_table_create( tb, maxCachedSlotCount ) ;
+   if ( SDB_OK != rc )
+   {
+      goto error ;
+   }
+
+done:
+   return rc ;
+error:
+   goto done ;
+}
+
+INT32 releaseHashTable( hashTable **tb )
+{
+   INT32 rc = SDB_OK ;
+
+   if ( NULL == tb )
+   {
+      goto done ;
+   }
+
+   rc = hash_table_destroy( tb ) ;
+   if ( SDB_OK != rc )
+   {
+      goto error ;
+   }
+
+done:
+   return rc ;
+error:
+   goto done ;
 }
 
 static void clientEndianConvertHeader ( MsgHeader *pHeader )
