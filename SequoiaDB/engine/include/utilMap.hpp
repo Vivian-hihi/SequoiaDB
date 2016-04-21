@@ -62,12 +62,13 @@ namespace engine
       }
 
    public:
-      typedef pair< const Key, T >  value_type ;
-      typedef pair< Key, T >        i_value_type ;
+      typedef pair< const Key, T >           value_type ;
+      typedef pair< const Key, const T >     const_value_type ;
+      typedef pair< Key, T >                 i_value_type ;
 
       class iterator
       {
-         friend class _utilMap< Key, T > ;
+         friend class _utilMap< Key, T, stackSize > ;
          public:
             iterator()
             {
@@ -122,7 +123,7 @@ namespace engine
             {
                if ( _pData )
                {
-                  return reinterpret_cast< value_type* >( _pData ) ;
+                  return _pData ;
                }
                else
                {
@@ -206,8 +207,8 @@ namespace engine
             iterator( i_value_type* pData, i_value_type *pSrc,
                       UINT32 *pEleSize )
             {
-               _pData         = pData ;
-               _pSrc          = pSrc ;
+               _pData         = reinterpret_cast< value_type* >( pData ) ;
+               _pSrc          = reinterpret_cast< value_type* >( pSrc ) ;
                _pEleSize      = pEleSize ;
             }
             iterator( typename map<Key,T>::iterator &it )
@@ -219,10 +220,170 @@ namespace engine
             }
 
          private:
-            i_value_type*                 _pData ;
-            i_value_type*                 _pSrc ;
+            value_type*                   _pData ;
+            value_type*                   _pSrc ;
             UINT32*                       _pEleSize ;
             typename map<Key,T>::iterator _it ;
+      } ;
+
+      class const_iterator
+      {
+         friend class _utilMap< Key, T, stackSize > ;
+         public:
+            const_iterator()
+            {
+               _pData      = NULL ;
+               _pSrc       = NULL ;
+               _pEleSize   = NULL ;
+            }
+            const_iterator( const const_iterator &rhs )
+            {
+               _pData      = rhs._pData ;
+               _pSrc       = rhs._pSrc ;
+               _pEleSize   = rhs._pEleSize ;
+               _it         = rhs._it ;
+            }
+            BOOLEAN operator== ( const const_iterator &rhs ) const
+            {
+               if ( _pData && rhs._pData )
+               {
+                  /// left, right is end
+                  BOOLEAN leftEnd = _pData >= _pSrc + *_pEleSize ?
+                                    TRUE : FALSE ;
+                  BOOLEAN rightEnd = rhs._pData > rhs._pSrc + *(rhs._pEleSize) ?
+                                     TRUE : FALSE ;
+                  /// both end,equal
+                  if ( leftEnd && rightEnd &&
+                       _pSrc == rhs._pSrc &&
+                       _pEleSize == rhs._pEleSize )
+                  {
+                     return TRUE ;
+                  }
+                  return _pData == rhs._pData ? TRUE : FALSE ;
+               }
+               else if ( !_pData && !rhs._pData )
+               {
+                  return _it == rhs._it ? TRUE : FALSE ;
+               }
+               return FALSE ;
+            }
+            BOOLEAN operator!= ( const const_iterator &rhs ) const
+            {
+               return this->operator==( rhs ) ? FALSE : TRUE ;
+            }
+            const_iterator& operator= ( const const_iterator &rhs )
+            {
+               _pData         = rhs._pData ;
+               _pSrc          = rhs._pSrc ;
+               _pEleSize      = rhs._pEleSize ;
+               _it            = rhs._it ;
+               return *this ;
+            }
+            const_value_type* operator-> ()
+            {
+               if ( _pData )
+               {
+                  return _pData ;
+               }
+               else
+               {
+                  return _it.operator->() ;
+               }
+            }
+            const_iterator& operator++ ()
+            {
+               if ( _pData )
+               {
+                  ++_pData ;
+               }
+               else
+               {
+                  ++_it ;
+               }
+               return *this ;
+            }
+            const_iterator& operator++ ( int )
+            {
+               if ( _pData )
+               {
+                  _pData++ ;
+               }
+               else
+               {
+                  _it++ ;
+               }
+               return *this ;
+            }
+            const_iterator& operator-- ()
+            {
+               if ( _pData )
+               {
+                  --_pData ;
+               }
+               else
+               {
+                  --_it ;
+               }
+               return *this ;
+            }
+            const_iterator& operator-- ( int )
+            {
+               if ( _pData )
+               {
+                  _pData-- ;
+               }
+               else
+               {
+                  _it-- ;
+               }
+               return *this ;
+            }
+            const_iterator& operator+ ( UINT32 step )
+            {
+               if ( _pData )
+               {
+                  _pData += step ;
+               }
+               else
+               {
+                  _it += step ;
+               }
+               return *this ;
+            }
+            const_iterator& operator- ( UINT32 step )
+            {
+               if ( _pData )
+               {
+                  _pData -= step ;
+               }
+               else
+               {
+                  _it -= step ;
+               }
+               return *this ;
+            }
+
+         protected:
+            const_iterator( const i_value_type* pData, const i_value_type *pSrc,
+                            const UINT32 *pEleSize )
+            {
+               _pData         = reinterpret_cast< const_iterator*>( pData ) ;
+               _pSrc          = reinterpret_cast< const_iterator*>( pSrc ) ;
+               _pEleSize      = pEleSize ;
+            }
+            const_iterator( typename map<Key,T>::const_iterator &it )
+            {
+               _pData         = NULL ;
+               _pSrc          = NULL ;
+               _pEleSize      = NULL ;
+               _it            = it ;
+            }
+
+         private:
+            const_value_type*                      _pData ;
+            const_value_type*                      _pSrc ;
+            const UINT32*                          _pEleSize ;
+            typename map<Key,T>::const_iterator    _it ;
       } ;
 
    public:
@@ -253,6 +414,24 @@ namespace engine
          return iterator( _staticBuf, _staticBuf, &_eleSize ) ;
       }
 
+      OSS_INLINE const_iterator begin() const
+      {
+         if ( _pMap )
+         {
+            return const_iterator( _pMap->begin() ) ;
+         }
+         return const_iterator( _staticBuf, _staticBuf, &_eleSize ) ;
+      }
+
+      OSS_INLINE const_iterator cbegin() const
+      {
+         if ( _pMap )
+         {
+            return const_iterator( _pMap->begin() ) ;
+         }
+         return const_iterator( _staticBuf, _staticBuf, &_eleSize ) ;
+      }
+
       OSS_INLINE iterator end()
       {
          if ( _pMap )
@@ -260,6 +439,26 @@ namespace engine
             return iterator( _pMap->end() ) ;
          }
          return iterator( &_staticBuf[ stackSize ], _staticBuf, &_eleSize ) ;
+      }
+
+      OSS_INLINE const_iterator end() const
+      {
+         if ( _pMap )
+         {
+            return const_iterator( _pMap->end() ) ;
+         }
+         return const_iterator( &_staticBuf[ stackSize ], _staticBuf,
+                                &_eleSize ) ;
+      }
+
+      OSS_INLINE const_iterator cend() const
+      {
+         if ( _pMap )
+         {
+            return const_iterator( _pMap->end() ) ;
+         }
+         return const_iterator( &_staticBuf[ stackSize ], _staticBuf,
+                                &_eleSize ) ;
       }
 
       OSS_INLINE void erase( iterator position )
@@ -572,6 +771,7 @@ namespace engine
             {
                return i ;
             }
+            ++i ;
          }
          return this->npos ;
       }
