@@ -4809,6 +4809,11 @@ static INT32 _sdb_connect ( const CHAR *hostName, const CHAR *serviceName,
 {
    INT32 ret ;
 
+   if ( SDB_OK == ret )
+   {
+      ret = initClient( FALSE, 0, 0 ) ;
+   }
+
    if ( secure )
    {
       ret = sdbSecureConnect ( hostName, serviceName, userName, passwd, handle ) ;
@@ -4816,11 +4821,6 @@ static INT32 _sdb_connect ( const CHAR *hostName, const CHAR *serviceName,
    else
    {
       ret = sdbConnect ( hostName, serviceName, userName, passwd, handle ) ;
-   }
-
-   if ( SDB_OK == ret )
-   {
-      ret = initClient( FALSE, 0, 0 ) ;
    }
 
    return ret ;
