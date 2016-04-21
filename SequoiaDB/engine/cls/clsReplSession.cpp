@@ -1219,7 +1219,7 @@ namespace engine
       _logger->getLsnWindow( fLsn, mLsn, eLsn, NULL, NULL ) ;
       PD_LOG( PDEVENT, "Session[%s]: Recv a consult req. "
               "[remote offset:%lld, remote ver:%d, local foffset:%lld, "
-              "local fver:%d], local eoffset:%lld, local ever:%d]",
+              "local fver:%d, local eoffset:%lld, local ever:%d]",
               sessionName(), msg->current.offset, msg->current.version,
               fLsn.offset, fLsn.version, eLsn.offset, eLsn.version ) ;
 
