@@ -111,7 +111,7 @@ namespace engine
             {
                return this->operator==( rhs ) ? FALSE : TRUE ;
             }
-            iterator& operator= ( const iterator &rhs )
+            const iterator& operator= ( const iterator &rhs )
             {
                _pData         = rhs._pData ;
                _pSrc          = rhs._pSrc ;
@@ -561,7 +561,8 @@ namespace engine
 
          if ( _pMap )
          {
-            pair< map< Key,T >::iterator, bool > tmp = _pMap->insert( val ) ;
+            pair< map< Key, T, stackSize >::iterator, bool > tmp =
+               _pMap->insert( val ) ;
             return pair<iterator, BOOLEAN>( iterator( tmp.first ),
                                             tmp.second ? TRUE : FALSE ) ;
          }
