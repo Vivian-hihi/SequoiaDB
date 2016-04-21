@@ -63,7 +63,7 @@ namespace engine
 
    public:
       typedef pair< const Key, T >           value_type ;
-      typedef pair< const Key, const T >     const_value_type ;
+      typedef const pair< const Key, T >     const_value_type ;
       typedef pair< Key, T >                 i_value_type ;
 
       class iterator
@@ -111,7 +111,7 @@ namespace engine
             {
                return this->operator==( rhs ) ? FALSE : TRUE ;
             }
-            const iterator& operator= ( const iterator &rhs )
+            iterator& operator= ( const iterator &rhs )
             {
                _pData         = rhs._pData ;
                _pSrc          = rhs._pSrc ;
@@ -204,14 +204,14 @@ namespace engine
             }
 
          protected:
-            iterator( i_value_type* pData, i_value_type *pSrc,
-                      UINT32 *pEleSize )
+            iterator( i_value_type* pData, const i_value_type *pSrc,
+                      const UINT32 *pEleSize )
             {
                _pData         = reinterpret_cast< value_type* >( pData ) ;
-               _pSrc          = reinterpret_cast< value_type* >( pSrc ) ;
+               _pSrc          = reinterpret_cast< const value_type* >( pSrc ) ;
                _pEleSize      = pEleSize ;
             }
-            iterator( typename map<Key,T>::iterator &it )
+            iterator( typename map< Key, T >::iterator it )
             {
                _pData         = NULL ;
                _pSrc          = NULL ;
@@ -220,14 +220,12 @@ namespace engine
             }
 
          private:
-            value_type*                   _pData ;
-            value_type*                   _pSrc ;
-            UINT32*                       _pEleSize ;
-            typename map<Key,T>::iterator _it ;
+            value_type*                         _pData ;
+            const value_type*                   _pSrc ;
+            const UINT32*                       _pEleSize ;
+            typename map< Key, T >::iterator    _it ;
       } ;
 
-      typedef const iterator  const_iterator ;
-/*
       class const_iterator
       {
          friend class _utilMap< Key, T, stackSize > ;
@@ -239,6 +237,13 @@ namespace engine
                _pEleSize   = NULL ;
             }
             const_iterator( const const_iterator &rhs )
+            {
+               _pData      = rhs._pData ;
+               _pSrc       = rhs._pSrc ;
+               _pEleSize   = rhs._pEleSize ;
+               _it         = rhs._it ;
+            }
+            const_iterator( const iterator &rhs )
             {
                _pData      = rhs._pData ;
                _pSrc       = rhs._pSrc ;
@@ -369,11 +374,11 @@ namespace engine
             const_iterator( const i_value_type* pData, const i_value_type *pSrc,
                             const UINT32 *pEleSize )
             {
-               _pData         = reinterpret_cast< const_iterator*>( pData ) ;
-               _pSrc          = reinterpret_cast< const_iterator*>( pSrc ) ;
+               _pData         = reinterpret_cast< const_value_type*>( pData ) ;
+               _pSrc          = reinterpret_cast< const_value_type*>( pSrc ) ;
                _pEleSize      = pEleSize ;
             }
-            const_iterator( typename map<Key,T>::const_iterator &it )
+            const_iterator( typename map< Key, T >::const_iterator it )
             {
                _pData         = NULL ;
                _pSrc          = NULL ;
@@ -385,9 +390,9 @@ namespace engine
             const_value_type*                      _pData ;
             const_value_type*                      _pSrc ;
             const UINT32*                          _pEleSize ;
-            typename map<Key,T>::const_iterator    _it ;
+            typename map< Key, T >::const_iterator _it ;
       } ;
-*/
+
    public:
       OSS_INLINE UINT32 size() const
       {
@@ -420,19 +425,19 @@ namespace engine
       {
          if ( _pMap )
          {
-            return iterator( _pMap->begin() ) ;
+            return const_iterator( iterator( _pMap->begin() ) ) ;
          }
-         return iterator( _staticBuf, _staticBuf, &_eleSize ) ;
+         return const_iterator( _staticBuf, _staticBuf, &_eleSize ) ;
       }
 
-      OSS_INLINE const_iterator cbegin() const
+      /*OSS_INLINE const_iterator cbegin() const
       {
          if ( _pMap )
          {
-            return iterator( _pMap->begin() ) ;
+            return const_iterator( _pMap->cbegin() ) ;
          }
-         return iterator( _staticBuf, _staticBuf, &_eleSize ) ;
-      }
+         return const_iterator( _staticBuf, _staticBuf, &_eleSize ) ;
+      }*/
 
       OSS_INLINE iterator end()
       {
@@ -447,21 +452,21 @@ namespace engine
       {
          if ( _pMap )
          {
-            return iterator( _pMap->end() ) ;
+            return const_iterator( iterator( _pMap->end() ) ) ;
          }
-         return iterator( &_staticBuf[ stackSize ], _staticBuf,
-                          &_eleSize ) ;
+         return const_iterator( &_staticBuf[ stackSize ], _staticBuf,
+                                &_eleSize ) ;
       }
 
-      OSS_INLINE const_iterator cend() const
+      /*OSS_INLINE const_iterator cend() const
       {
          if ( _pMap )
          {
-            return iterator( _pMap->end() ) ;
+            return const_iterator( _pMap->cend() ) ;
          }
-         return iterator( &_staticBuf[ stackSize ], _staticBuf,
-                          &_eleSize ) ;
-      }
+         return const_iterator( &_staticBuf[ stackSize ], _staticBuf,
+                                &_eleSize ) ;
+      }*/
 
       OSS_INLINE void erase( iterator position )
       {
@@ -561,8 +566,7 @@ namespace engine
 
          if ( _pMap )
          {
-            pair< map< Key, T, stackSize >::iterator, bool > tmp =
-               _pMap->insert( val ) ;
+            pair< typename map< Key, T >::iterator, bool > tmp = _pMap->insert( val ) ;
             return pair<iterator, BOOLEAN>( iterator( tmp.first ),
                                             tmp.second ? TRUE : FALSE ) ;
          }
@@ -709,9 +713,10 @@ namespace engine
       {
          if ( _pMap )
          {
-            pair< map< Key,T >::iterator, map< Key, T >::iterator > tmp =
+            pair< typename map< Key, T >::iterator, typename map< Key, T >::iterator > tmp =
                _pMap->equal_range( key ) ;
-            return pair( iterator( tmp->first ), iterator( tmp->second ) ) ;
+            return pair< iterator, iterator >( iterator( tmp->first ),
+                                               iterator( tmp->second ) ) ;
          }
          else
          {
@@ -733,7 +738,7 @@ namespace engine
                   break ;
                }
             }
-            return pair( itBegin, itEnd ) ;
+            return pair< iterator, iterator >( itBegin, itEnd ) ;
          }
       }
 
@@ -750,7 +755,7 @@ namespace engine
             {
                /// copy data to stack
                _eleSize = 0 ;
-               map< Key, T >::iterator it = _pMap->begin() ;
+               typename map< Key, T >::iterator it = _pMap->begin() ;
                for ( ; it != _pMap->end() ; ++it )
                {
                   _staticBuf[ _eleSize ].first = it->first ;
@@ -794,7 +799,7 @@ namespace engine
 
          if ( !_pMap && size > stackSize )
          {
-            _pMap = new (std::nothrow) map< Key,T > ;
+            _pMap = new (std::nothrow) map< Key, T >() ;
             if ( !_pMap )
             {
                rc = SDB_OOM ;
@@ -816,7 +821,7 @@ namespace engine
 
    private:
       i_value_type            _staticBuf[ stackSize ] ;
-      map<Key,T>*             _pMap ;
+      map< Key, T >*          _pMap ;
       UINT32                  _eleSize ;
 
    public:
