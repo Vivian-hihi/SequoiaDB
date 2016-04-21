@@ -2967,7 +2967,7 @@ namespace engine
       EMPTY_CONTEXT_MAP::iterator iter ;
       coordSubContext *pSubContext = NULL ;
 
-      if ( (UINT32)pReply->header.opCode != MSG_BS_GETMORE_RES ||
+      if ( pReply->header.opCode != MSG_BS_GETMORE_RES ||
            (UINT32)pReply->header.messageLength < sizeof( MsgOpReply ) )
       {
          rc = SDB_UNKNOWN_MESSAGE ;
