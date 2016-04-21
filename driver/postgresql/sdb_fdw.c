@@ -1027,7 +1027,7 @@ CHAR *changeToRegexFormat( CHAR *likeStr )
    INT32 regexj = 0 ;
    CHAR *regexStr  = NULL ;
    INT32 oldlength = strlen( likeStr ) ;
-   INT32 newLength = 2 * oldlength + 2 ;
+   INT32 newLength = 2 * oldlength + 2 + 1 ;
 
    regexStr = palloc0( newLength ) ;
    regexStr[regexj] = '^' ;
