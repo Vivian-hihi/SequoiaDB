@@ -226,6 +226,8 @@ namespace engine
             typename map<Key,T>::iterator _it ;
       } ;
 
+      typedef const iterator  const_iterator ;
+/*
       class const_iterator
       {
          friend class _utilMap< Key, T, stackSize > ;
@@ -385,7 +387,7 @@ namespace engine
             const UINT32*                          _pEleSize ;
             typename map<Key,T>::const_iterator    _it ;
       } ;
-
+*/
    public:
       OSS_INLINE UINT32 size() const
       {
@@ -418,18 +420,18 @@ namespace engine
       {
          if ( _pMap )
          {
-            return const_iterator( _pMap->begin() ) ;
+            return iterator( _pMap->begin() ) ;
          }
-         return const_iterator( _staticBuf, _staticBuf, &_eleSize ) ;
+         return iterator( _staticBuf, _staticBuf, &_eleSize ) ;
       }
 
       OSS_INLINE const_iterator cbegin() const
       {
          if ( _pMap )
          {
-            return const_iterator( _pMap->begin() ) ;
+            return iterator( _pMap->begin() ) ;
          }
-         return const_iterator( _staticBuf, _staticBuf, &_eleSize ) ;
+         return iterator( _staticBuf, _staticBuf, &_eleSize ) ;
       }
 
       OSS_INLINE iterator end()
@@ -445,20 +447,20 @@ namespace engine
       {
          if ( _pMap )
          {
-            return const_iterator( _pMap->end() ) ;
+            return iterator( _pMap->end() ) ;
          }
-         return const_iterator( &_staticBuf[ stackSize ], _staticBuf,
-                                &_eleSize ) ;
+         return iterator( &_staticBuf[ stackSize ], _staticBuf,
+                          &_eleSize ) ;
       }
 
       OSS_INLINE const_iterator cend() const
       {
          if ( _pMap )
          {
-            return const_iterator( _pMap->end() ) ;
+            return iterator( _pMap->end() ) ;
          }
-         return const_iterator( &_staticBuf[ stackSize ], _staticBuf,
-                                &_eleSize ) ;
+         return iterator( &_staticBuf[ stackSize ], _staticBuf,
+                          &_eleSize ) ;
       }
 
       OSS_INLINE void erase( iterator position )
