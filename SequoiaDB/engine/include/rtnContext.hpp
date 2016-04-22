@@ -59,8 +59,7 @@
 #include "rtnContextBuff.hpp"
 #include "rtnQueryModifier.hpp"
 #include "dpsTransCB.hpp"
-
-#include <map>
+#include "utilMap.hpp"
 
 using namespace bson ;
 
@@ -637,7 +636,7 @@ namespace engine
 
    typedef std::multimap< coordOrderKey, coordSubContext* > SUB_CONTEXT_MAP ;
    typedef std::map< UINT64, coordSubContext* >             EMPTY_CONTEXT_MAP ;
-   typedef std::map<UINT64, MsgRouteID>                     PREPARE_NODES_MAP ;
+   typedef  _utilMap< UINT64, MsgRouteID, 20 >              PREPARE_NODES_MAP ;
 
    /*
       _rtnContextCoord define
