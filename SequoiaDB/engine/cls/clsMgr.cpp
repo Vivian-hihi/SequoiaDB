@@ -1071,7 +1071,7 @@ namespace engine
       // the msg is not mine, dispatch to sub object
       // restore the type
       INT32 type = (INT32) msg->TID ;
-      UINT32 opCode = (UINT32)(msg->opCode) ;
+      INT32 opCode = msg->opCode ;
       msg->TID = 0 ;
 
       if ( CLS_REPL == type ||
