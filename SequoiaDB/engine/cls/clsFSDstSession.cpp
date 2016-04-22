@@ -163,7 +163,7 @@ namespace engine
       // set the net handle, when peer socket close, the session will to be
       // delete auto
       PD_TRACE_ENTRY ( SDB__CLSDATADBS_ONRECV );
-      if ( MSG_CLS_FULL_SYNC_BEGIN_RES == (UINT32)msg->opCode &&
+      if ( MSG_CLS_FULL_SYNC_BEGIN_RES == msg->opCode &&
            NET_INVALID_HANDLE == _netHandle )
       {
          _netHandle = netHandle ;
