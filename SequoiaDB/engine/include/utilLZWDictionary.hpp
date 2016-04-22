@@ -59,6 +59,7 @@ namespace engine
    #define UTIL_MAX_DICT_INIT_CODE        255
    #define UTIL_MIN_DICT_ITEM_NUM         257
    #define UTIL_MAX_DICT_ITEM_NUM         250000
+   #define UTIL_MAX_DICT_CODE_SIZE        18
    #define UTIL_MAX_DICT_STR_LEN          255
 
    typedef UINT32 LZW_CODE ;
@@ -244,11 +245,12 @@ namespace engine
       void _formatOneGrp( UINT32 parentIdx, UINT32 &nextIdx,
                           std::map<UINT32, UINT32> &indexMap ) ;
       void _adjust( const CHAR* str, UINT32 strLen,
-                    const std::map<UINT32, UINT32> &indexMap ) ;
+                    std::map<UINT32, UINT32> &indexMap ) ;
+      UINT32 _calcCodeSize( UINT32 code ) ;
 
       OSS_INLINE INT32 _cstBinSearch( UINT32 low, UINT32 high, BYTE ch ) ;
       OSS_INLINE UINT32 _dstGetRemoteStr( DST_ITEM item, CHAR *buff ) ;
-
+      OSS_INLINE UINT32 _findStrIdx( const BYTE *str, UINT32 &length ) ;
       struct _codeWeight
       {
          _codeWeight()
@@ -348,7 +350,7 @@ namespace engine
        * size.
        * This function should be called after buildDictPrepare.
        */
-      INT32 build( const CHAR *src, UINT32 srcLen, BOOLEAN &full ) ;
+      void build( const CHAR *src, UINT32 srcLen, BOOLEAN &full ) ;
 
       _utilLZWDictionary* getDictionary() { return &_dictionary ; }
 
@@ -555,6 +557,62 @@ namespace engine
       SDB_ASSERT( _codeMap[matchIdx] <= _head->_maxValidCode,
                   "Code out of range" ) ;
       return _codeMap[matchIdx] ;
+   }
+
+   OSS_INLINE UINT32 _utilLZWDictionary::_findStrIdx( const BYTE *str,
+                                                      UINT32 &length )
+   {
+      INT32 low = 0 ;
+      INT32 high = 0 ;
+      UINT32 currIdx = str[0] ;
+      INT32 nextIdx = 0 ;
+      UINT32 curPos = 1 ;
+      UINT32 matchLen = 1 ;
+      UINT32 i = 0 ;
+      UINT32 upBound = _head->_maxCode - 1 ;
+
+      while ( currIdx < upBound && curPos < length )
+      {
+         /* Get the begin and end indexes of the next level. */
+         low = CST_GET_CHILD( _cst[currIdx] ) ;
+         if ( CST_INVALID_CHILD == low )
+         {
+            /* If no child, this is the leaf. */
+            break ;
+         }
+
+         i = 1 ;
+         high = CST_INVALID_CHILD ;
+         while ( currIdx + i < _head->_maxCode
+                 && ( CST_INVALID_CHILD ==
+                      ( high = CST_GET_CHILD( _cst[currIdx + i] ) ) ) )
+         {
+            ++i ;
+         }
+
+         if ( CST_INVALID_CHILD == high )
+         {
+            high = _head->_maxCode ;   /* Reached the end. */
+         }
+         else
+         {
+            high-- ;
+         }
+
+         nextIdx = _cstBinSearch( low, high, str[curPos] ) ;
+         if ( CST_INVALID_CHILD == nextIdx )
+         {
+            break ;
+         }
+
+         currIdx = nextIdx ;
+         matchLen++ ;
+         curPos++ ;
+      }
+
+      length = matchLen ;
+      SDB_ASSERT( currIdx <= _head->_maxCode, "Code out of range" ) ;
+      return currIdx ;
    }
 
    OSS_INLINE UINT32 _utilLZWDictionary::getStrExt( LZW_CODE code, UINT8 *buff,

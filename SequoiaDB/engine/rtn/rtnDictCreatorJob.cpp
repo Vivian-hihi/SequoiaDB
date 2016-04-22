@@ -231,8 +231,7 @@ namespace engine
                /* If the dictionary is not full, use the last batch of data. */
                if ( srcDataLen && !dictFull )
                {
-                  rc = _creator.build( _srcDataBuf, srcDataLen, dictFull ) ;
-                  PD_RC_CHECK( rc, PDERROR, "Failed to build dictionary, rc: %d", rc ) ;
+                  _creator.build( _srcDataBuf, srcDataLen, dictFull ) ;
                }
 
                noMoreRecord = TRUE ;
@@ -258,8 +257,7 @@ namespace engine
             }
             else
             {
-               rc = _creator.build( _srcDataBuf, srcDataLen, dictFull ) ;
-               PD_RC_CHECK( rc, PDERROR, "Failed to build dictionary, rc: %d", rc ) ;
+               _creator.build( _srcDataBuf, srcDataLen, dictFull ) ;
                if ( dictFull )
                {
                   break ;

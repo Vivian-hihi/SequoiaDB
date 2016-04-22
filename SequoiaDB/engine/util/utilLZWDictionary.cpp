@@ -168,19 +168,85 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__UTILLZWDICTIONARY__ADJUST, "_utilLZWDictionary::_adjust" )
    void _utilLZWDictionary::_adjust( const CHAR* str, UINT32 strLen,
-                                     const std::map<UINT32, UINT32> &indexMap )
+                                     std::map<UINT32, UINT32> &indexMap )
    {
       PD_TRACE_ENTRY( SDB__UTILLZWDICTIONARY__ADJUST ) ;
-      /* TBD: Need to sort the nodes. Currently set all nodes valid. */
-      for ( LZW_CODE code = 0; code <= _head->_maxCode; ++code )
+      const CHAR *strPtr = str ;
+      UINT32 length = 0 ;
+      UINT32 remainLen = strLen ;
+      UINT32 nodeIdx = 0 ;
+      BOOLEAN lookAhead = FALSE ;
+      LZW_CODE code = 0 ;
+      UINT32 codeSize = 0 ;
+      UINT32 maxValidCode = 0 ;
+      std::vector<codeWeight> weightVec( _head->_maxCode + 1 ) ;
+      std::vector<codeWeight>::iterator itr ;
+
+      #define MIN_REF_NUM  1
+
+      /*
+       * Initialize the weight vector. The initial nodes' weights should always
+       * be greater than 0. They should always be valid in the final dictionary.
+       */
+      for ( UINT32 index = 0; index <= _head->_maxCode; ++index )
       {
-         _nodes[code]._code = code ;
-         _codeMap[code] = indexMap.at(code) ;
-         CST_SET_VALID_CODE_FLAG( _cst[code] ) ;
+         weightVec[index]._code = index ;
+         if ( index <= UTIL_MAX_DICT_INIT_CODE )
+         {
+            weightVec[index]._weight = MIN_REF_NUM ;
+         }
       }
 
-      _head->_maxValidCode = _head->_maxCode ;
-      _head->_codeSize = 18 ;
+      /*
+       * Currently, take reference numbers as weight.
+       * Re-scan the sample data to get the final reference numbers.
+       */
+      while ( remainLen > 0 )
+      {
+         length = remainLen ;
+         nodeIdx = _findStrIdx( ( const BYTE* )strPtr, length ) ;
+         /* Find the original code, and increase its weight. */
+         weightVec[nodeIdx]._weight++ ;
+         strPtr += length ;
+         remainLen -= length ;
+      }
+
+      std::sort( weightVec.begin(), weightVec.end(), _sortNodeByWeight ) ;
+
+      /* Only those codes with weight at least MIN_REF_NUM are marked as valid*/
+      for ( itr = weightVec.begin(); itr != weightVec.end(); ++itr )
+      {
+         if ( !lookAhead && ( itr->_weight < MIN_REF_NUM ) )
+         {
+            codeSize = _calcCodeSize( code ) ;
+            maxValidCode = ( 1 << codeSize ) - 1 ;
+            if ( maxValidCode > _head->_maxCode )
+            {
+               maxValidCode = _head->_maxCode ;
+            }
+
+            lookAhead = TRUE ;
+         }
+
+         _nodes[indexMap[itr->_code]]._code = code ;
+         _codeMap[itr->_code] = code ;
+         if ( !lookAhead || code <= maxValidCode )
+         {
+            CST_SET_VALID_CODE_FLAG( _cst[itr->_code] ) ;
+         }
+         code++ ;
+      }
+
+      _head->_maxValidCode = maxValidCode ;
+      _head->_codeSize = codeSize ;
+
+      SDB_ASSERT( _head->_maxValidCode <= _head->_maxCode,
+                  "Code out of range" ) ;
+      SDB_ASSERT( _head->_codeSize <= UTIL_MAX_DICT_CODE_SIZE,
+                  "Code size out of range" ) ;
+      PD_LOG( PDDEBUG, "Dictionary max code: %u, max valid code: %u, "
+              "code size: %u", _head->_maxCode, maxValidCode, codeSize ) ;
+
       PD_TRACE_EXIT( SDB__UTILLZWDICTIONARY__ADJUST ) ;
    }
 
@@ -361,6 +427,20 @@ namespace engine
       return left._weight > right._weight ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__UTILLZWDICTIONARY__CALCCODESIZE, "_utilLZWDictionary::_calcCodeSize" )
+   UINT32 _utilLZWDictionary::_calcCodeSize( UINT32 code )
+   {
+      PD_TRACE_ENTRY( SDB__UTILLZWDICTIONARY__CALCCODESIZE ) ;
+      UINT32 codeSize = 1 ;
+      while ( 0 != ( code >>= 1 ) )
+      {
+         codeSize++ ;
+      }
+
+      PD_TRACE_EXIT( SDB__UTILLZWDICTIONARY__CALCCODESIZE ) ;
+      return codeSize ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB__UTILLZWDICTIONARY_FINALIZE, "_utilLZWDictionary::finalize" )
    INT32 _utilLZWDictionary::finalize( const CHAR *source, UINT32 sourceLen,
                                        CHAR *buffer, UINT32 &length )
@@ -435,10 +515,9 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__UTILLZWDICTCREATOR_BUILD, "_utilLZWDictionary::build" )
-   INT32 _utilLZWDictCreator::build( const CHAR *source, UINT32 sourceLen,
-                                     BOOLEAN &full )
+   void _utilLZWDictCreator::build( const CHAR *source, UINT32 sourceLen,
+                                    BOOLEAN &full )
    {
-      INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__UTILLZWDICTCREATOR_BUILD ) ;
       UINT8 ch = 0 ;
       UINT32 pos = 0 ;
@@ -497,9 +576,7 @@ namespace engine
          }
       }
 
-   done:
-      PD_TRACE_EXITRC( SDB__UTILLZWDICTCREATOR_BUILD, rc ) ;
-      return rc ;
+      PD_TRACE_EXIT( SDB__UTILLZWDICTCREATOR_BUILD ) ;
    }
 }
 
