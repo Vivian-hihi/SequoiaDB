@@ -561,7 +561,7 @@ namespace engine
       {
          if ( SDB_OK != _ensureSpace( _eleSize + 1 ) )
          {
-            throw exception( "out-of-memory" ) ;
+            throw std::out_of_range( "out-of-memory" ) ;
          }
 
          if ( _pMap )
@@ -644,7 +644,7 @@ namespace engine
                return _staticBuf[ pos ].second ;
             }
             /// error
-            throw exception( "out-of-range" ) ;
+            throw std::out_of_range( "out-of-range" ) ;
          }
       }
 
@@ -663,7 +663,7 @@ namespace engine
                return _staticBuf[ pos ].second ;
             }
             /// error
-            throw exception( "out-of-range" ) ;
+            throw std::out_of_range( "out-of-range" ) ;
          }
       }
 
@@ -811,9 +811,9 @@ namespace engine
             return this->npos ;
          }
 
-         UINT32 l = 0 ;
-         UINT32 h = _eleSize - 1 ;
-         UINT32 m = 0 ;
+         INT32 l = 0 ;
+         INT32 h = _eleSize - 1 ;
+         INT32 m = 0 ;
 
          while( l <= h )
          {
