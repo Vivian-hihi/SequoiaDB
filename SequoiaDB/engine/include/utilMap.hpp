@@ -39,7 +39,7 @@
 #include "ossMem.hpp"
 #include "ossUtil.hpp"
 #include <map>
-#include <exception>
+#include <stdexcept>
 
 using namespace std ;
 
