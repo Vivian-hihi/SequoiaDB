@@ -362,7 +362,7 @@ namespace engine
             break ;
          }
          /// max time check
-         if ( maxTime > 0 && time( NULL ) - bTime >= maxTime )
+         if ( maxTime > 0 && time( NULL ) - bTime >= (UINT64)maxTime )
          {
             break ;
          }
