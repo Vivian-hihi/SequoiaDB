@@ -563,7 +563,7 @@ namespace engine
             UINT32 pos = _eleSize ;
             while( pos > 0 )
             {
-               if ( _staticBuf[ pos - 1 ].first > val.first )
+               if ( val.first < _staticBuf[ pos - 1 ].first )
                {
                   _staticBuf[ pos ] = _staticBuf[ pos - 1 ] ;
                   --pos ;
