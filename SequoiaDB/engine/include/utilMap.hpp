@@ -143,17 +143,18 @@ namespace engine
                }
                return *this ;
             }
-            iterator& operator++ ( int )
+            iterator operator++ ( int )
             {
+               iterator tmp( *this ) ;
                if ( _pData )
                {
-                  _pData++ ;
+                  ++_pData ;
                }
                else
                {
                   _it++ ;
                }
-               return *this ;
+               return tmp ;
             }
             iterator& operator-- ()
             {
@@ -167,8 +168,9 @@ namespace engine
                }
                return *this ;
             }
-            iterator& operator-- ( int )
+            iterator operator-- ( int )
             {
+               iterator tmp( *this ) ;
                if ( _pData )
                {
                   _pData-- ;
@@ -177,7 +179,7 @@ namespace engine
                {
                   _it-- ;
                }
-               return *this ;
+               return tmp ;
             }
             iterator& operator+ ( UINT32 step )
             {
