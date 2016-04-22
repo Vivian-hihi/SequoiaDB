@@ -822,7 +822,7 @@ namespace engine
             {
                return m ;
             }
-            else if ( _staticBuf[ i ].first < key )
+            else if ( _staticBuf[ m ].first < key )
             {
                l = m + 1 ;
             }
