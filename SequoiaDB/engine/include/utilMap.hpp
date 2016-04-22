@@ -146,14 +146,7 @@ namespace engine
             iterator operator++ ( int )
             {
                iterator tmp( *this ) ;
-               if ( _pData )
-               {
-                  ++_pData ;
-               }
-               else
-               {
-                  _it++ ;
-               }
+               ++(*this) ;
                return tmp ;
             }
             iterator& operator-- ()
@@ -171,14 +164,7 @@ namespace engine
             iterator operator-- ( int )
             {
                iterator tmp( *this ) ;
-               if ( _pData )
-               {
-                  _pData-- ;
-               }
-               else
-               {
-                  _it-- ;
-               }
+               --(*this) ;
                return tmp ;
             }
             iterator& operator+ ( UINT32 step )
@@ -312,17 +298,11 @@ namespace engine
                }
                return *this ;
             }
-            const_iterator& operator++ ( int )
+            const_iterator operator++ ( int )
             {
-               if ( _pData )
-               {
-                  _pData++ ;
-               }
-               else
-               {
-                  _it++ ;
-               }
-               return *this ;
+               const_iterator tmp( *this ) ;
+               ++(*this) ;
+               return tmp ;
             }
             const_iterator& operator-- ()
             {
@@ -336,17 +316,11 @@ namespace engine
                }
                return *this ;
             }
-            const_iterator& operator-- ( int )
+            const_iterator operator-- ( int )
             {
-               if ( _pData )
-               {
-                  _pData-- ;
-               }
-               else
-               {
-                  _it-- ;
-               }
-               return *this ;
+               const_iterator tmp( *this ) ;
+               ++(*this) ;
+               return tmp ;
             }
             const_iterator& operator+ ( UINT32 step )
             {
