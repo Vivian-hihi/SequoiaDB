@@ -478,7 +478,7 @@ namespace engine
          else if ( _eleSize > 0 )
          {
             --_eleSize ;
-            UINT32 pos = ( position._pData - _staticBuf ) / sizeof( T ) ;
+            UINT32 pos = ( position._pData - position._pSrc ) / sizeof( T ) ;
             for ( UINT32 i = pos ; i < _eleSize ; ++i )
             {
                _staticBuf[ i ] = _staticBuf[ i + 1 ] ;
@@ -522,8 +522,8 @@ namespace engine
          }
          else if ( _eleSize > 0 )
          {
-            UINT32 b = ( first._pData - _staticBuf ) / sizeof( T ) ;
-            UINT32 e = ( last._pData - _staticBuf ) / sizeof( T ) ;
+            UINT32 b = ( first._pData - first._pSrc ) / sizeof( T ) ;
+            UINT32 e = ( last._pData - last._pSrc ) / sizeof( T ) ;
 
             UINT32 i = b ;
             UINT32 j = b ;
