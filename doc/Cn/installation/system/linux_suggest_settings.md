@@ -54,7 +54,9 @@
 	> cat /proc/sys/vm/vfs_cache_pressure
 	> cat /proc/sys/vm/min_free_kbytes
 	> cat /proc/sys/vm/zone_reclaim_mode
-	> cat /proc/sys/vm/overcommit_memory</pre>
+	> cat /proc/sys/vm/overcommit_memory
+	> cat /proc/sys/vm/panic_on_oom
+	> cat /proc/sys/vm/oom_kill_allocating_task</pre>
 
 	2.  添加下列参数至 /etc/sysctl.conf 文件调整内核参数：
 
@@ -64,9 +66,11 @@
 	vm.dirty_background_ratio = 40
 	vm.dirty_expire_centisecs = 3000
 	vm.vfs_cache_pressure = 200
-	vm.min_free_kbytes = &lt;物理内存大小的8%，单位KB&gt;
+	vm.min_free_kbytes = &lt;物理内存大小的8%，但不要超过4GB即4194304KB，单位KB&gt;
 	vm.zone_reclaim_mode = 0
-	vm.overcommit_memory = 0</pre>
+	vm.overcommit_memory = 1
+    vm.panic_on_oom = 1
+    vm.oom_kill_allocating_task = 0</pre>
 
 	**Note:**
 		
@@ -93,6 +97,25 @@
 	<pre class="prettyprint lang-javascript">
 	> cat /sys/kernel/mm/transparent_hugepage/enabled
 	> cat /sys/kernel/mm/transparent_hugepage/defrag</pre>
+
+-   关闭SWAP
+    
+    当数据库可用物理内存不足 8GB 时不需要关闭swap。
+    
+    1.  执行命令停用所有swap：
+    
+    <pre class="prettyprint lang-javascript">
+    > swapoff -a</pre>
+
+    2.  开机不挂载swap分区，编辑/etc/fstab，在swap分区的一行前面添加'#'注释掉，swap分区所在行一般形似如下，该行中间必有"swap"字符串：
+    
+    <pre class="prettyprint lang-diy">
+    UUID=ad7b0efc-9c48-4699-885c-666ad7a3a106 none            swap    sw              0       0</pre>
+
+    
+    
+    
+    
 
 -   NUMA的影响
     
