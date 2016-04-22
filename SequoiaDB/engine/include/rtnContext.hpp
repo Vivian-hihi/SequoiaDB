@@ -635,8 +635,8 @@ namespace engine
    typedef _coordSubContext coordSubContext ;
 
    typedef std::multimap< coordOrderKey, coordSubContext* > SUB_CONTEXT_MAP ;
-   typedef std::map< UINT64, coordSubContext* >             EMPTY_CONTEXT_MAP ;
-   typedef  _utilMap< UINT64, MsgRouteID, 20 >              PREPARE_NODES_MAP ;
+   typedef _utilMap< UINT64, coordSubContext*, 20 >         EMPTY_CONTEXT_MAP ;
+   typedef _utilMap< UINT64, MsgRouteID, 20 >               PREPARE_NODES_MAP ;
 
    /*
       _rtnContextCoord define
@@ -763,7 +763,7 @@ namespace engine
    public:
       _rtnSubCLBuf();
       _rtnSubCLBuf( BSONObj &orderBy,
-                  _ixmIndexKeyGen *keyGen );
+                    _ixmIndexKeyGen *keyGen );
       virtual ~_rtnSubCLBuf();
       const CHAR *front();
       INT32 pop();
@@ -788,7 +788,8 @@ namespace engine
    */
    class _rtnContextMainCL : public _rtnContextBase
    {
-   typedef std::map< SINT64, _rtnSubCLBuf >    SubCLBufList;
+   typedef _utilMap< SINT64, _rtnSubCLBuf, 20 >    SubCLBufList ;
+
    public:
       _rtnContextMainCL( SINT64 contextID, UINT64 eduID ) ;
       ~_rtnContextMainCL();
@@ -964,7 +965,8 @@ namespace engine
    class _SDB_RTNCB;
    class _rtnContextDelMainCL : public _rtnContextBase
    {
-      typedef std::map< std::string, SINT64 > SUBCL_CONTEXT_LIST;
+   typedef _utilMap< std::string, SINT64, 20 >  SUBCL_CONTEXT_LIST ;
+
    public:
       _rtnContextDelMainCL( SINT64 contextID, UINT64 eduID );
       ~_rtnContextDelMainCL();
