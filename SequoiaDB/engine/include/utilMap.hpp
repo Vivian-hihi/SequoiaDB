@@ -430,15 +430,6 @@ namespace engine
          return const_iterator( _staticBuf, _staticBuf, &_eleSize ) ;
       }
 
-      /*OSS_INLINE const_iterator cbegin() const
-      {
-         if ( _pMap )
-         {
-            return const_iterator( _pMap->cbegin() ) ;
-         }
-         return const_iterator( _staticBuf, _staticBuf, &_eleSize ) ;
-      }*/
-
       OSS_INLINE iterator end()
       {
          if ( _pMap )
@@ -457,16 +448,6 @@ namespace engine
          return const_iterator( &_staticBuf[ stackSize ], _staticBuf,
                                 &_eleSize ) ;
       }
-
-      /*OSS_INLINE const_iterator cend() const
-      {
-         if ( _pMap )
-         {
-            return const_iterator( _pMap->cend() ) ;
-         }
-         return const_iterator( &_staticBuf[ stackSize ], _staticBuf,
-                                &_eleSize ) ;
-      }*/
 
       OSS_INLINE void erase( iterator position )
       {
@@ -701,6 +682,20 @@ namespace engine
          return iterator( &_staticBuf[ pos ], _staticBuf, &_eleSize ) ;
       }
 
+      OSS_INLINE const_iterator find( const Key& key ) const
+      {
+         if ( _pMap )
+         {
+            return const_iterator( iterator( _pMap->find( key ) ) ) ;
+         }
+         INT32 pos = _findInStackBuf( key ) ;
+         if ( -1 == pos )
+         {
+            return end() ;
+         }
+         return const_iterator( &_staticBuf[ pos ], _staticBuf, &_eleSize ) ;
+      }
+
       OSS_INLINE UINT32 count( const Key& key ) const
       {
          if ( _pMap )
@@ -710,11 +705,11 @@ namespace engine
          return _findInStackBuf( key ) == -1 ? 0 : 1 ;
       }
 
-      OSS_INLINE iterator lower_bound( const Key& key ) const
+      OSS_INLINE iterator lower_bound( const Key& key )
       {
          if ( _pMap )
          {
-            return iterator( _pMap->low_bound( key ) ) ;
+            return iterator( _pMap->lower_bound( key ) ) ;
          }
          else
          {
@@ -727,7 +722,25 @@ namespace engine
          }
       }
 
-      OSS_INLINE iterator upper_bound( const Key& key ) const
+      OSS_INLINE const_iterator lower_bound( const Key& key ) const
+      {
+         if ( _pMap )
+         {
+            return const_iterator( iterator( _pMap->lower_bound( key ) ) ) ;
+         }
+         else
+         {
+            INT32 pos = _findBoundInStackBuf( key, TRUE ) ;
+            if ( -1 != pos )
+            {
+               return const_iterator( &_staticBuf[ pos ], _staticBuf,
+                                      &_eleSize ) ;
+            }
+            return end() ;
+         }
+      }
+
+      OSS_INLINE iterator upper_bound( const Key& key )
       {
          if ( _pMap )
          {
@@ -744,14 +757,32 @@ namespace engine
          }
       }
 
-      OSS_INLINE pair<iterator, iterator> equal_range( const Key& key ) const
+      OSS_INLINE const_iterator upper_bound( const Key& key ) const
+      {
+         if ( _pMap )
+         {
+            return const_iterator( iterator( _pMap->upper_bound( key ) ) ) ;
+         }
+         else
+         {
+            INT32 pos = _findBoundInStackBuf( key, FALSE ) ;
+            if ( -1 != pos )
+            {
+               return const_iterator( &_staticBuf[ pos ], _staticBuf,
+                                      &_eleSize ) ;
+            }
+            return end() ;
+         }
+      }
+
+      OSS_INLINE pair<iterator, iterator> equal_range( const Key& key )
       {
          if ( _pMap )
          {
             pair< typename map< Key, T >::iterator, typename map< Key, T >::iterator > tmp =
                _pMap->equal_range( key ) ;
-            return pair< iterator, iterator >( iterator( tmp->first ),
-                                               iterator( tmp->second ) ) ;
+            return pair< iterator, iterator >( iterator( tmp.first ),
+                                               iterator( tmp.second ) ) ;
          }
          else
          {
@@ -765,7 +796,7 @@ namespace engine
                itBegin = iterator( &_staticBuf[ pos ], _staticBuf,
                                    &_eleSize ) ;
                /// back to calc itEnd
-               for ( INT32 i = pos + 1 ; i < _eleSize ; ++i )
+               for ( UINT32 i = pos + 1 ; i < _eleSize ; ++i )
                {
                   if ( _staticBuf[ i ].first != key )
                   {
@@ -776,6 +807,41 @@ namespace engine
                }
             }
             return pair< iterator, iterator >( itBegin, itEnd ) ;
+         }
+      }
+
+      OSS_INLINE pair<const_iterator, const_iterator> equal_range( const Key& key ) const
+      {
+         if ( _pMap )
+         {
+            pair< typename map< Key, T >::const_iterator, typename map< Key, T >::const_iterator > tmp =
+               _pMap->equal_range( key ) ;
+            return pair< const_iterator, const_iterator >( const_iterator( tmp.first ),
+                                                           const_iterator( tmp.second ) ) ;
+         }
+         else
+         {
+            const_iterator itBegin = end() ;
+            const_iterator itEnd = end() ;
+
+            BOOLEAN equal = FALSE ;
+            INT32 pos = _findBoundInStackBuf( key, TRUE, &equal ) ;
+            if ( -1 != pos && equal )
+            {
+               itBegin = const_iterator( &_staticBuf[ pos ], _staticBuf,
+                                         &_eleSize ) ;
+               /// back to calc itEnd
+               for ( UINT32 i = pos + 1 ; i < _eleSize ; ++i )
+               {
+                  if ( _staticBuf[ i ].first != key )
+                  {
+                     itEnd = const_iterator( &_staticBuf[ i ], _staticBuf,
+                                             &_eleSize ) ;
+                     break ;
+                  }
+               }
+            }
+            return pair< const_iterator, const_iterator >( itBegin, itEnd ) ;
          }
       }
 
@@ -886,7 +952,7 @@ namespace engine
             }
          }
          /// not found
-         return l >= _eleSize ? -1 : l ;
+         return (UINT32)l >= _eleSize ? -1 : l ;
       }
 
       OSS_INLINE UINT32 _capacity() const
@@ -928,7 +994,6 @@ namespace engine
       i_value_type            _staticBuf[ stackSize ] ;
       map< Key, T >*          _pMap ;
       UINT32                  _eleSize ;
-
 
    } ;
 
