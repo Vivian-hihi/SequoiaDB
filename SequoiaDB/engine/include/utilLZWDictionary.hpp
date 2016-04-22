@@ -41,6 +41,7 @@
 #include "ossMem.hpp"
 #include "ossUtil.h"
 #include "pd.hpp"
+#include <map>
 
 namespace engine
 {
@@ -55,6 +56,7 @@ namespace engine
     * duplicated strings can be handle only when more are added to the
     * dictionary.
     */
+   #define UTIL_MAX_DICT_INIT_CODE        255
    #define UTIL_MIN_DICT_ITEM_NUM         257
    #define UTIL_MAX_DICT_ITEM_NUM         250000
    #define UTIL_MAX_DICT_STR_LEN          255
@@ -85,22 +87,27 @@ namespace engine
     */
    struct _utilLZWNode
    {
+      LZW_CODE  _code ;
       LZW_CODE  _prev ;   // Code of the previous part of the string
                           // (the last character excluded)
       LZW_CODE  _first ;  // first 'child'
       LZW_CODE  _next ;   // first 'brother'
       UINT32    _len ;    // Length of the string.
-      UINT8     _ch ;     // Last character of the string this node represents.
+      BYTE      _ch ;     // Last character of the string this node represents.
       UINT8     _pad[3] ;
    } ;
    typedef _utilLZWNode utilLZWNode ;
 
+   /* Codes in the dictionary are divided into two parts.
+    * The preceding part contains the codes(0~x) which are really finally used
+    * in the compressed data. The remaining codes are used for the searching
+    * during compression and get the final string during decompression.
+    */
    struct _utilLZWDictHead
    {
       UINT32 _codeSize ;       /* Bit number to represent a code. */
       UINT32 _maxCode ;        /* Maximum code in the dictionary. */
-      UINT32 _totalSize ;
-      // CRC ?
+      UINT32 _maxValidCode ;
    } ;
    typedef _utilLZWDictHead utilLZWDictHead ;
 
@@ -116,22 +123,30 @@ namespace engine
     *  __________________________________
     * |_______|________|________|________|
     *
-    * |----index of child item--|- char -|
+    * |-|--index of child item--|- char -|
     */
    /* Notice: When using the following macros, both item and child should be of
     * type UINT32
     */
-   #define CST_INVALID_CHILD                 0x00FFFFFF
-   #define CST_GET_CHILD( item )             ( (item) >> 8 )
+
+   /* First bit of the CST item. It indicates whether this is a valid code. */
+   #define CST_VALID_CODE_FLAG               0x80000000
+   #define CST_INVALID_CHILD                 0x007FFFFF
+   #define CST_GET_CHILD( item )   \
+      ( (item & (~CST_VALID_CODE_FLAG) ) >> 8 )
 
    #define CST_SET_CHILD( item, child )   \
-      ( (item) = ((item) & 0x000000FF) | ( (child) << 8 ) )
+      ( (item) = ((item) & 0x800000FF) | ( (child) << 8 ) )
 
    #define CST_GET_CHAR( item )              ( (item) & 0x000000FF )
 
    #define CST_SET_CHAR( item, ch )       \
       ( (item) = ((item) & 0xFFFFFF00 ) | ch )
 
+   #define CST_SET_VALID_CODE_FLAG( item ) \
+      ((item)  = (item) | CST_VALID_CODE_FLAG )
+
+   #define CST_IS_VALID_CODE( item ) ( ( item ) & CST_VALID_CODE_FLAG )
    /*
     * Length of item in DST is 4 bytes.
     *
@@ -205,16 +220,15 @@ namespace engine
       INT32 init() ;
       void reset() ;
       UINT32 getMaxNodeNum() { return _maxNodeNum ; }
-      UINT32 getCodeSize() { return _head->_codeSize ; }
+      UINT32 getCodeSize() { return _head->_codeSize; }
       UINT32 getMaxCode() { return _head->_maxCode ; }
-
-      // TBD: Temporary solution, need to calculate the size
-      UINT32 getFinalSize() { return ( 10 << 20 ) ; }
 
       OSS_INLINE LZW_CODE addStr( LZW_CODE preCode, UINT8 ch ) ;
       OSS_INLINE LZW_CODE findStr( LZW_CODE preCode, UINT8 ch ) ;
-      OSS_INLINE UINT32 getStr( LZW_CODE code, UINT8 *buff, UINT32 bufSize ) ;
-      INT32 finalize( CHAR *stream, UINT32 &length ) ;
+      OSS_INLINE UINT32 getStr( LZW_CODE code, BYTE *buff, UINT32 bufSize ) ;
+
+      INT32 finalize( const CHAR *source, UINT32 sourceLen,
+                      CHAR *buffer, UINT32 &length ) ;
 
       /* Interfaces used by compression/decompression */
       OSS_INLINE INT32 attach( const utilDictHandle dictionary ) ;
@@ -222,20 +236,34 @@ namespace engine
       OSS_INLINE UINT32 getStrExt( LZW_CODE code, UINT8 *buff,
                                    UINT32 buffSize ) ;
 
-#ifdef _DEBUG
-      void healthCheck() ;
-#endif /* _DEBUG */
-
    private:
       void _initFinalEnv( CHAR *buff, UINT32 bufLen ) ;
       UINT32 _formatRemoteStr( LZW_CODE code, UINT32 &offset ) ;
       void _formatOneCode( UINT32 &offset, LZW_CODE code ) ;
       void _formatDst() ;
-      void _formatOneGrp( UINT32 parentIdx, UINT32 &nextIdx ) ;
+      void _formatOneGrp( UINT32 parentIdx, UINT32 &nextIdx,
+                          std::map<UINT32, UINT32> &indexMap ) ;
+      void _adjust( const CHAR* str, UINT32 strLen,
+                    const std::map<UINT32, UINT32> &indexMap ) ;
 
       OSS_INLINE INT32 _cstBinSearch( UINT32 low, UINT32 high, BYTE ch ) ;
       OSS_INLINE UINT32 _dstGetRemoteStr( DST_ITEM item, CHAR *buff ) ;
 
+      struct _codeWeight
+      {
+         _codeWeight()
+         {
+            _code = 0 ;
+            _weight = 0 ;
+         }
+
+         LZW_CODE _code ;
+         INT32 _weight ;
+      } ;
+      typedef _codeWeight codeWeight ;
+
+      static BOOLEAN _sortNodeByWeight( const codeWeight &left,
+                                        const codeWeight &right ) ;
    private:
       /*
        * The following members are mainly used during the creation of the
@@ -417,7 +445,7 @@ namespace engine
       return UTIL_INVALID_DICT_CODE ;
    }
 
-   OSS_INLINE UINT32 _utilLZWDictionary::getStr( LZW_CODE code, UINT8 *buff,
+   OSS_INLINE UINT32 _utilLZWDictionary::getStr( LZW_CODE code, BYTE *buff,
                                                  UINT32 bufSize )
    {
       UINT32 strLen = _nodes[code]._len ;
@@ -473,6 +501,8 @@ namespace engine
       UINT32 matchLen = 1 ;
       UINT32 i = 0 ;
       UINT32 upBound = _head->_maxCode - 1 ;
+      UINT32 matchIdx = currIdx ;
+      UINT32 finalMatchLen = 1 ;
 
       while ( currIdx < upBound && curPos < length )
       {
@@ -511,11 +541,20 @@ namespace engine
          currIdx = nextIdx ;
          matchLen++ ;
          curPos++ ;
+
+         if ( _cst[nextIdx] & CST_VALID_CODE_FLAG )
+         {
+            SDB_ASSERT( _codeMap[nextIdx] <= _head->_maxValidCode,
+                        "Code out of range" ) ;
+            matchIdx = nextIdx ;
+            finalMatchLen = matchLen ;
+         }
       }
 
-      length = matchLen ;
-
-      return _codeMap[ currIdx ] ;
+      length = finalMatchLen ;
+      SDB_ASSERT( _codeMap[matchIdx] <= _head->_maxValidCode,
+                  "Code out of range" ) ;
+      return _codeMap[matchIdx] ;
    }
 
    OSS_INLINE UINT32 _utilLZWDictionary::getStrExt( LZW_CODE code, UINT8 *buff,

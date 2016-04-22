@@ -3583,8 +3583,6 @@ namespace engine
             (CHAR *)dictExtent + DMS_DICTEXTENT_HEADER_SZ ) ;
       }
 
-      PD_LOG( PDEVENT, "Compression dictionary created succesfully for "
-              "collection[%s]", context->mb()->_collectionName ) ;
    done:
       if ( context )
       {

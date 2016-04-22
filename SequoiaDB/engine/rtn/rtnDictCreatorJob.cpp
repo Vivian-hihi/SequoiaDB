@@ -26,7 +26,8 @@ namespace engine
    _rtnDictCreatorJob::_rtnDictCreatorJob( UINT32 scanInterval )
       : _dictionary( NULL ) ,
         _scanInterval( scanInterval ),
-        _srcDataBuf( NULL )
+        _srcDataBuf( NULL ),
+        _srcDataLen( 0 )
    {
    }
 
@@ -299,6 +300,8 @@ namespace engine
          goto error ;
       }
 
+      _srcDataLen = fetchSize ;
+
    done:
       PD_TRACE_EXITRC( SDB__RTN_DICTCREATORJOB__CREATEDICT, rc ) ;
       return rc ;
@@ -322,7 +325,8 @@ namespace engine
       PD_CHECK( dictBuf, SDB_OOM, error, PDERROR,
                 "Failed to allocate memory for dictionary, rc: %d", rc ) ;
 
-      rc = _dictionary->finalize( dictBuf, dictBufLen ) ;
+      rc = _dictionary->finalize( _srcDataBuf, _srcDataLen,
+                                  dictBuf, dictBufLen ) ;
       PD_RC_CHECK( rc, PDERROR,
                    "Failed to dump dictionary into stream format, rc: %d", rc ) ;
 
@@ -424,6 +428,7 @@ namespace engine
       }
 
       /* Now, create the dictionary for the collection. */
+      _creator.reset() ;
       rc = _creator.prepare() ;
       PD_RC_CHECK( rc, PDERROR,
                    "Failed to prepare dictionary creator, rc: %d", rc ) ;
@@ -434,6 +439,10 @@ namespace engine
       rc = _transferDict( su->data(), mbContext ) ;
       PD_RC_CHECK( rc, PDERROR,
                    "Failed to pass dictionary to dms, rc: %d", rc ) ;
+
+      PD_LOG( PDEVENT, "Compression dictionary created succesfully for "
+              "collection[%s]",
+              mbContext->mb()->_collectionName ) ;
 
    done:
       if ( mbContext )

@@ -38,6 +38,9 @@
 #include "utilTrace.hpp"
 #include "utilCompressor.hpp"
 #include "utilLZWDictionary.hpp"
+#include <algorithm>
+
+using namespace std ;
 
 namespace engine
 {
@@ -130,18 +133,18 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__UTILLZWDICTIONARY__FORMATONEGRP, "_utilLZWDictionary::_formatOneGrp" )
-   void _utilLZWDictionary::_formatOneGrp( UINT32 parentIdx, UINT32 &nextIdx )
+   void _utilLZWDictionary::_formatOneGrp( UINT32 parentIdx, UINT32 &nextIdx,
+                                           std::map<UINT32, UINT32> &indexMap )
    {
       PD_TRACE_ENTRY( SDB__UTILLZWDICTIONARY__FORMATONEGRP ) ;
-      LZW_CODE code ;
+      LZW_CODE code = UTIL_INVALID_DICT_CODE ;
 
       /*
        * Set parent's child as nextIdx, if it does has child.
        * Copy all nodes of parent to the position starts from nextIdx.
        * Insert the code into the code map at the same time.
        */
-      code = _codeMap[parentIdx] ;
-      code = _nodes[code]._first ;
+      code = _nodes[indexMap[parentIdx]]._first ;
 
       if ( UTIL_INVALID_DICT_CODE == code )
       {
@@ -153,7 +156,7 @@ namespace engine
 
       do
       {
-         _codeMap[nextIdx] = code ;
+         indexMap[nextIdx] = code ;
          CST_SET_CHAR( _cst[nextIdx], _nodes[code]._ch ) ;
          code = _nodes[code]._next ;
          nextIdx++ ;
@@ -161,34 +164,25 @@ namespace engine
 
    done:
       PD_TRACE_EXIT( SDB__UTILLZWDICTIONARY__FORMATONEGRP ) ;
-      return ;
    }
 
-#ifdef _DEBUG
-   void _utilLZWDictionary::healthCheck()
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__UTILLZWDICTIONARY__ADJUST, "_utilLZWDictionary::_adjust" )
+   void _utilLZWDictionary::_adjust( const CHAR* str, UINT32 strLen,
+                                     const std::map<UINT32, UINT32> &indexMap )
    {
-      /* Check the dictionary for possible errors.
-       * 1. Get the string from the decompression table;
-       * 2. Find the string in the compression table, and get the code from code
-       *    map.
-       * 3. Compare if the codes are the same.
-       */
-      #define DICT_MAX_STR_LEN 256
-      UINT32 len = 0 ;
-      LZW_CODE matchCode = UTIL_INVALID_DICT_CODE ;
-      UINT32 matchLen = 0 ;
-      BYTE buff[DICT_MAX_STR_LEN] = { 0 } ;
-
+      PD_TRACE_ENTRY( SDB__UTILLZWDICTIONARY__ADJUST ) ;
+      /* TBD: Need to sort the nodes. Currently set all nodes valid. */
       for ( LZW_CODE code = 0; code <= _head->_maxCode; ++code )
       {
-         len = getStrExt( code, buff, DICT_MAX_STR_LEN ) ;
-         matchLen = len ;
-         matchCode = findStrExt( buff, matchLen ) ;
-         SDB_ASSERT( len == matchLen, "Length not match" ) ;
-         SDB_ASSERT( matchCode == code, "Code not match" ) ;
+         _nodes[code]._code = code ;
+         _codeMap[code] = indexMap.at(code) ;
+         CST_SET_VALID_CODE_FLAG( _cst[code] ) ;
       }
+
+      _head->_maxValidCode = _head->_maxCode ;
+      _head->_codeSize = 18 ;
+      PD_TRACE_EXIT( SDB__UTILLZWDICTIONARY__ADJUST ) ;
    }
-#endif   /* _DEBUG */
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__UTILLZWDICTIONARY__INITFINALENV, "_utilLZWDictionary::_initFinalEnv" )
    void _utilLZWDictionary::_initFinalEnv( CHAR *buff, UINT32 bufLen)
@@ -215,10 +209,11 @@ namespace engine
       UINT32 preLen = 0 ;
       BOOLEAN link = FALSE ;
       UINT32 totalLen = 0 ;
-      DST_ITEM *currItem = &_dst[code] ;
+      DST_ITEM *currItem = &_dst[_nodes[code]._code] ;
       LZW_CODE preCode = code ;
       DST_ITEM *tmpItem = NULL ;
       CHAR localStr[DST_MAX_LOCAL_LEN] = { 0 } ;
+      LZW_CODE realCode = UTIL_INVALID_DICT_CODE ;
 
       UINT32 pos = UTIL_MAX_DICT_STR_LEN ;
 
@@ -232,7 +227,9 @@ namespace engine
             break ;
          }
 
-         if ( 0 != _dst[preCode] )
+         realCode = _nodes[preCode]._code ;
+
+         if ( 0 != _dst[realCode] )
          {
             preLen = _nodes[preCode]._len ;
             if ( preLen <= 4 )
@@ -244,9 +241,9 @@ namespace engine
             {
                /* Set the link information */
                pos -= 3 ;
-               strBuff[pos] = (BYTE)((preCode & 0x00ff0000) >> 16) ;
-               strBuff[pos + 1] = (BYTE)((preCode & 0x0000ff00) >> 8) ;
-               strBuff[pos + 2] = (BYTE)(preCode & 0x000000ff) ;
+               strBuff[pos] = (BYTE)((realCode & 0x00ff0000) >> 16) ;
+               strBuff[pos + 1] = (BYTE)((realCode & 0x0000ff00) >> 8) ;
+               strBuff[pos + 2] = (BYTE)(realCode & 0x000000ff) ;
                link = TRUE ;
                DST_SET_LINK_FLAG( *currItem ) ;
                break ;
@@ -265,7 +262,7 @@ namespace engine
       preCode = _nodes[code]._prev ;
       for ( INT32 i = 1; preCode != UTIL_INVALID_DICT_CODE; ++i )
       {
-         tmpItem = &_dst[preCode] ;
+         tmpItem = &_dst[_nodes[preCode]._code] ;
          if ( *tmpItem != 0 )
          {
             SDB_ASSERT( 0 != (*tmpItem) >> 29, "wrong value" ) ;
@@ -285,12 +282,7 @@ namespace engine
          else
          {
             DST_SET_LOCAL_LEN( *tmpItem, _nodes[preCode]._len ) ;
-            {
-               UINT32 length = 0 ;
-               length = DST_GET_LOCAL_LEN( _dst[preCode] ) ;
-               SDB_ASSERT( 0 != length, "invalid length" ) ;
-            }
-            getStr( preCode, (UINT8*)localStr, DST_MAX_LOCAL_LEN ) ;
+            getStr( preCode, (BYTE*)localStr, DST_MAX_LOCAL_LEN ) ;
             DST_SET_LOCAL_STR( *tmpItem, localStr, _nodes[preCode]._len ) ;
          }
 
@@ -308,7 +300,7 @@ namespace engine
    {
       PD_TRACE_ENTRY( SDB__UTILLZWDICTIONARY__FORMATONECODE ) ;
       UINT32 len = _nodes[code]._len ;
-      DST_ITEM *item = &_dst[code] ;
+      DST_ITEM *item = &_dst[_nodes[code]._code] ;
       CHAR buff[DST_MAX_LOCAL_LEN] = {0} ;
       LZW_CODE preCode ;
 
@@ -321,29 +313,19 @@ namespace engine
       else
       {
          DST_SET_LOCAL_LEN( *item, _nodes[code]._len ) ;
-         getStr( code, (UINT8*)buff, DST_MAX_LOCAL_LEN ) ;
+         getStr( code, (BYTE*)buff, DST_MAX_LOCAL_LEN ) ;
          DST_SET_LOCAL_STR( *item, buff, _nodes[code]._len ) ;
 
          /* Set all its substrings */
          preCode = _nodes[code]._prev ;
          while ( UTIL_INVALID_DICT_CODE != preCode )
          {
-            item = &_dst[preCode] ;
+            item = &_dst[_nodes[preCode]._code] ;
             if ( 0 == *item )
             {
-               if ( _nodes[preCode]._len > DST_MAX_LOCAL_LEN )
-               {
-                  SDB_ASSERT( false, "should not be here" ) ;
-                  DST_SET_REMOTE_FLAG( *item ) ;
-                  DST_SET_REMOTE_POS( *item, offset ) ;
-                  DST_SET_REMOTE_LEN( *item, _nodes[preCode]._len ) ;
-               }
-               else
-               {
-                  DST_SET_LOCAL_LEN( *item, _nodes[preCode]._len ) ;
-                  getStr( preCode, (UINT8*)buff, DST_MAX_LOCAL_LEN ) ;
-                  DST_SET_LOCAL_STR( *item, buff, _nodes[preCode]._len ) ;
-               }
+               DST_SET_LOCAL_LEN( *item, _nodes[preCode]._len ) ;
+               getStr( preCode, (BYTE*)buff, DST_MAX_LOCAL_LEN ) ;
+               DST_SET_LOCAL_STR( *item, buff, _nodes[preCode]._len ) ;
             }
 
             preCode = _nodes[preCode]._prev ;
@@ -373,29 +355,49 @@ namespace engine
       PD_TRACE_EXIT( SDB__UTILLZWDICTIONARY__FORMATDST ) ;
    }
 
+   BOOLEAN _utilLZWDictionary::_sortNodeByWeight( const codeWeight &left,
+                                                  const codeWeight &right )
+   {
+      return left._weight > right._weight ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB__UTILLZWDICTIONARY_FINALIZE, "_utilLZWDictionary::finalize" )
-   INT32 _utilLZWDictionary::finalize( CHAR *stream, UINT32 &length )
+   INT32 _utilLZWDictionary::finalize( const CHAR *source, UINT32 sourceLen,
+                                       CHAR *buffer, UINT32 &length )
    {
       /* format the original dictionary into the final structure */
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__UTILLZWDICTIONARY_FINALIZE ) ;
-      UINT32 index = 0 ;
 
-      _initFinalEnv( stream, length ) ;
+      /*
+       * indexMap is used to maintain the index in CST and the original index
+       * (code) in the initial dicitonary. As the nodes are put into the final
+       * dictionary CST level by level, their new indexes are different.
+       */
+      std::map<UINT32, UINT32> indexMap ;
+      UINT32 nextIdx = UTIL_MAX_DICT_INIT_CODE + 1 ;
 
-      // fill the node in cst, and put its code in the code map at the same time
-      /* 1. fill the first 256 codes */
-      for ( LZW_CODE code = 0; code < 256; ++code, ++index )
+      _initFinalEnv( buffer, length ) ;
+
+      /*
+       * Fill the node in cst, and put its code in the code map at the same time
+       * 1. fill the first 256 codes. They should alway be in the dictionary,
+       * and contain valid codes.
+       */
+      for ( LZW_CODE code = 0; code <= UTIL_MAX_DICT_INIT_CODE; ++code )
       {
-         CST_SET_CHAR( _cst[index], _nodes[code]._ch ) ;
-         _codeMap[index] = code ;
+         CST_SET_VALID_CODE_FLAG( _cst[code] ) ;
+         CST_SET_CHAR( _cst[code], _nodes[code]._ch ) ;
+         /* Remember the original index, for formatting its children. */
+         indexMap[code] = code ;
       }
 
-      UINT32 nextIdx = 256 ;
-      for ( index = 0; index < nextIdx; ++index )
+      for ( UINT32 index = 0; index < nextIdx; ++index )
       {
-         _formatOneGrp( index, nextIdx ) ;
+         _formatOneGrp( index, nextIdx, indexMap ) ;
       }
+
+      _adjust( source, sourceLen, indexMap ) ;
 
       /* format the decompress part */
       _formatDst() ;
@@ -478,9 +480,7 @@ namespace engine
             {
                /* Dictionary is full */
                full = TRUE ;
-               //_dictionary.healthCheck() ;
-
-               goto done ;
+               break ;
             }
 
             code = ch ;
