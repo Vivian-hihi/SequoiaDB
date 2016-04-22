@@ -48,8 +48,8 @@
 #include "ossEvent.hpp"
 #include "catCatalogManager.hpp"
 #include "catNodeManager.hpp"
+#include "utilMap.hpp"
 
-#include <map>
 #include <vector>
 
 namespace engine
@@ -66,8 +66,8 @@ namespace engine
    class catMainController : public _pmdObjBase, public _netMsgHandler,
                              public _netTimeoutHandler
    {
-   typedef std::map< SINT64, UINT64 >  CONTEXT_LIST ;
-   typedef std::vector< pmdEDUEvent >  VEC_EVENT ;
+   typedef _utilMap< SINT64, UINT64, 20 >    CONTEXT_LIST ;
+   typedef std::vector< pmdEDUEvent >        VEC_EVENT ;
 
    DECLARE_OBJ_MSG_MAP()
 

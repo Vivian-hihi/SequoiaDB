@@ -56,7 +56,7 @@ namespace engine
       _var.clear() ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION( SDB__QGMPARAMTABLE_ADDCONST, "_qgmParamTable::addConst" )
+   // PD_TRACE_DECLARE_FUNCTION( SDB__QGMPARAMTABLE_ADDCONST, "_qgmParamTable::addConst" )
    INT32 _qgmParamTable::addConst( const qgmOpField &value,
                                    const BSONElement *&out )
    {
@@ -130,7 +130,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION( SDB__QGMPARAMTABLE_ADDCONST2, "_qgmParamTable::addConst2" )
+   // PD_TRACE_DECLARE_FUNCTION( SDB__QGMPARAMTABLE_ADDCONST2, "_qgmParamTable::addConst2" )
    INT32 _qgmParamTable::addConst( const BSONObj &obj,
                                    const BSONElement *&out )
    {
@@ -159,7 +159,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION( SDB__QGMPARATABLE_ADDVAR, "_qgmParamTable::addVar" )
+   // PD_TRACE_DECLARE_FUNCTION( SDB__QGMPARATABLE_ADDVAR, "_qgmParamTable::addVar" )
    INT32 _qgmParamTable::addVar( const qgmDbAttr &key,
                                  const BSONElement *&out,
                                  BOOLEAN *pExisted )
@@ -184,7 +184,7 @@ namespace engine
       return rc ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION( SDB__QGMPARAMTABLE_SETVAR, "_qgmParamTable::setVar" )
+   // PD_TRACE_DECLARE_FUNCTION( SDB__QGMPARAMTABLE_SETVAR, "_qgmParamTable::setVar" )
    INT32 _qgmParamTable::setVar( const varItem &item,
                                  const BSONObj &obj )
    {

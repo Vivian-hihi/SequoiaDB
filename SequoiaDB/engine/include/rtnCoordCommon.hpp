@@ -37,7 +37,7 @@
 #include "rtnContext.hpp"
 #include "../bson/bson.h"
 #include <vector>
-#include <map>
+#include "utilMap.hpp"
 #include <queue>
 #include <string>
 #include <set>
@@ -47,9 +47,9 @@ using namespace bson ;
 namespace engine
 {
    typedef std::queue<CHAR *>                         REPLY_QUE ;
-   typedef std::map< UINT64, INT32 >                  ROUTE_RC_MAP ;
-   typedef std::map< UINT64, MsgHeader* >             ROUTE_REPLY_MAP ;
-   typedef std::map< UINT32, netIOVec >               GROUP_2_IOVEC ;
+   typedef _utilMap< UINT64, INT32, 20 >              ROUTE_RC_MAP ;
+   typedef _utilMap< UINT64, MsgHeader*, 20 >         ROUTE_REPLY_MAP ;
+   typedef _utilMap< UINT32, netIOVec, 20 >           GROUP_2_IOVEC ;
    typedef std::set< INT32 >                          SET_RC ;
 
    INT32 rtnCoordGetReply ( pmdEDUCB *cb, REQUESTID_MAP &requestIdMap,

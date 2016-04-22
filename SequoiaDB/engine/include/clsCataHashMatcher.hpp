@@ -36,6 +36,7 @@
 #include <string>
 #include "ossTypes.h"
 #include "clsCatalogPredicate.hpp"
+#include "utilMap.hpp"
 
 namespace engine
 {
@@ -45,8 +46,8 @@ namespace engine
    */
    class clsCataHashPredTree : public SDBObject
    {
-   typedef std::vector< clsCataHashPredTree * >       VEC_CLSCATAHASHPREDSET ;
-   typedef std::map< std::string, bson::BSONElement > MAP_CLSCATAHASHPREDFIELDS ;
+   typedef std::vector< clsCataHashPredTree * >             VEC_CLSCATAHASHPREDSET ;
+   typedef _utilMap< std::string, bson::BSONElement, 10 >   MAP_CLSCATAHASHPREDFIELDS ;
    public:
       clsCataHashPredTree( bson::BSONObj shardingKey );
 

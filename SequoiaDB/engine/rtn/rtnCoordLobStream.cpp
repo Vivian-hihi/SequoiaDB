@@ -44,7 +44,7 @@ using namespace bson ;
 #define RTN_COORD_LOB_GET_SUBSTREAM( groupID, s ) \
         do\
         {\
-           SUB_STREAMS::const_iterator itr = _subs.find( groupID ) ;\
+           SUB_STREAMS::iterator itr = _subs.find( groupID ) ;\
            if ( _subs.end() == itr )\
            {\
               PD_LOG( PDERROR, "group:%d is not in sub streams", groupID ) ;\

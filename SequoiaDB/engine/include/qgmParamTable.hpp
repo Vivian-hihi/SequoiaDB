@@ -39,7 +39,7 @@
 #define QGMPARAMTABLE_HPP_
 
 #include "qgmDef.hpp"
-#include <map>
+#include "utilMap.hpp"
 #include <vector>
 
 namespace engine
@@ -50,8 +50,8 @@ namespace engine
       BSONElement ele ;
    } ;
 
-   typedef std::list<_qgmBsonPair> QGM_CONST_TABLE ;
-   typedef std::map<qgmDbAttr, BSONElement> QGM_VAR_TABLE ;
+   typedef std::list<_qgmBsonPair>                 QGM_CONST_TABLE ;
+   typedef _utilMap<qgmDbAttr, BSONElement, 8 >    QGM_VAR_TABLE ;
 
    class _qgmParamTable : public SDBObject
    {

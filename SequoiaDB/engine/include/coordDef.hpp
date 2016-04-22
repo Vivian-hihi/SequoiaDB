@@ -37,20 +37,21 @@
 #define COORDDEF_HPP__
 
 #include "clsCatalogAgent.hpp"
+#include "utilMap.hpp"
 
 namespace engine
 {
-   typedef std::map< UINT32, UINT32 >        CoordGroupList ;
-   typedef clsNodeItem                       CoordNodeInfo ;
-   typedef VEC_NODE_INFO                     CoordVecNodeInfo ;
+   typedef _utilMap< UINT32, UINT32, 20 >             CoordGroupList ;
+   typedef clsNodeItem                                CoordNodeInfo ;
+   typedef VEC_NODE_INFO                              CoordVecNodeInfo ;
 
-   typedef clsGroupItem                      CoordGroupInfo ;
+   typedef clsGroupItem                               CoordGroupInfo ;
 
-   typedef boost::shared_ptr<CoordGroupInfo>    CoordGroupInfoPtr;
-   typedef std::map<UINT32, CoordGroupInfoPtr>  CoordGroupMap;
-   typedef std::vector< CoordGroupInfoPtr >     GROUP_VEC ;
-   typedef std::vector<std::string>             CoordSubCLlist;
-   typedef std::map<UINT32, CoordSubCLlist>     CoordGroupSubCLMap;
+   typedef boost::shared_ptr<CoordGroupInfo>          CoordGroupInfoPtr;
+   typedef _utilMap< UINT32, CoordGroupInfoPtr, 20 >  CoordGroupMap;
+   typedef std::vector< CoordGroupInfoPtr >           GROUP_VEC ;
+   typedef std::vector<std::string>                   CoordSubCLlist;
+   typedef _utilMap< UINT32, CoordSubCLlist, 20 >     CoordGroupSubCLMap;
 
    class _CoordCataInfo : public SDBObject
    {

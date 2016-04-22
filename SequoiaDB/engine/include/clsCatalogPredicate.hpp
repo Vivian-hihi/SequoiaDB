@@ -38,14 +38,15 @@
 #define CLSCATALOGPREDICATE_HPP_
 
 #include "rtnPredicate.hpp"
+#include "utilMap.hpp"
 
 namespace engine
 {
    class clsCatalogPredicateTree;
    class _clsCatalogItem;
 
-   typedef std::map< std::string , rtnStartStopKey * >  MAP_CLSCATAPREDICATEFIELD ;
-   typedef std::vector< clsCatalogPredicateTree * >     VEC_CLSCATAPREDICATESET ;
+   typedef _utilMap< std::string, rtnStartStopKey*, 10 > MAP_CLSCATAPREDICATEFIELD ;
+   typedef std::vector< clsCatalogPredicateTree * >      VEC_CLSCATAPREDICATESET ;
 
    /*
       _CLS_CATA_LOGIC_TYPE define

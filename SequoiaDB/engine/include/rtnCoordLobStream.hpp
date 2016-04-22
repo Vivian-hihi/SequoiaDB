@@ -39,6 +39,7 @@
 #include "coordDef.hpp"
 #include "msg.h"
 #include "netMultiRouteAgent.hpp"
+#include "utilMap.hpp"
 
 namespace engine
 {
@@ -160,9 +161,9 @@ namespace engine
          RETRY_TAG_REOPEN = 0x00002,
       } ;
 
-      typedef std::map<UINT32, subStream> SUB_STREAMS ;
-      typedef std::set<ossValuePtr> DONE_LST ;
-      typedef std::map<UINT32, dataGroup> DATA_GROUPS ;
+      typedef _utilMap<UINT32, subStream, 20 >  SUB_STREAMS ;
+      typedef std::set<ossValuePtr>             DONE_LST ;
+      typedef _utilMap<UINT32, dataGroup, 20 >  DATA_GROUPS ;
 
    private:
       INT32 _openSubStreams( const CHAR *fullName,

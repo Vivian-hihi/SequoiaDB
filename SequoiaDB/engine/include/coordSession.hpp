@@ -40,6 +40,7 @@
 #include "oss.hpp"
 #include "pmdEDU.hpp"
 #include "netMultiRouteAgent.hpp"
+#include "utilMap.hpp"
 
 namespace engine
 {
@@ -58,8 +59,8 @@ namespace engine
       }
    } subSessionInfo ;
 
-   typedef std::map<UINT64, subSessionInfo>     COORD_SUBSESSION_MAP ;
-   typedef std::map<UINT32, MsgRouteID>         COORD_LASTNODE_MAP ;
+   typedef _utilMap<UINT64, subSessionInfo, 20 >   COORD_SUBSESSION_MAP ;
+   typedef _utilMap<UINT32, MsgRouteID, 20 >       COORD_LASTNODE_MAP ;
 
    /*
       coordRequestInfo define
@@ -80,8 +81,8 @@ namespace engine
          _handle = handle ;
       }
    } ;
-   typedef std::map<UINT64, coordRequestInfo>   COORD_REQINFO_MAP ;
-   typedef COORD_REQINFO_MAP::iterator          COORD_REQINFO_MAP_IT ;
+   typedef _utilMap<UINT64, coordRequestInfo, 20 >    COORD_REQINFO_MAP ;
+   typedef COORD_REQINFO_MAP::iterator                COORD_REQINFO_MAP_IT ;
 
    /*
       CoordSession define
