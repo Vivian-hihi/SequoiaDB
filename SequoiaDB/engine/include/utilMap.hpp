@@ -561,7 +561,7 @@ namespace engine
       {
          if ( SDB_OK != _ensureSpace( _eleSize + 1 ) )
          {
-            return pair<iterator, BOOLEAN>( end(), FALSE ) ;
+            throw exception( "out-of-memory" ) ;
          }
 
          if ( _pMap )
@@ -805,15 +805,33 @@ namespace engine
    protected:
       OSS_INLINE UINT32 _findInStackBuf( const Key& key ) const
       {
-         UINT32 i = 0 ;
-         while( i < _eleSize )
+         if ( 0 == _eleSize )
          {
-            if ( _staticBuf[ i ].first == key )
-            {
-               return i ;
-            }
-            ++i ;
+            /// not found
+            return this->npos ;
          }
+
+         UINT32 l = 0 ;
+         UINT32 h = _eleSize - 1 ;
+         UINT32 m = 0 ;
+
+         while( l <= h )
+         {
+            m = ( l + h ) / 2 ;
+            if ( _staticBuf[ m ].first == key ) /// find
+            {
+               return m ;
+            }
+            else if ( _staticBuf[ i ].first < key )
+            {
+               l = m + 1 ;
+            }
+            else
+            {
+               h = m - 1 ;
+            }
+         }
+         /// not found
          return this->npos ;
       }
 
