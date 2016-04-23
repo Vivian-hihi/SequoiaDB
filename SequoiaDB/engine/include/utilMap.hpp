@@ -433,7 +433,7 @@ namespace engine
             _pMap->erase( position._it ) ;
             shift2Stack() ;
          }
-         else if ( _eleSize > 0 )
+         else if ( (UINT32)(position._pData - position._pSrc) < _eleSize )
          {
             --_eleSize ;
             UINT32 pos = ( position._pData - position._pSrc ) ;
