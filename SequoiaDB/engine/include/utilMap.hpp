@@ -38,6 +38,7 @@
 #include "oss.hpp"
 #include "ossMem.hpp"
 #include "ossUtil.hpp"
+#include "pd.hpp"
 #include <map>
 #include <stdexcept>
 
