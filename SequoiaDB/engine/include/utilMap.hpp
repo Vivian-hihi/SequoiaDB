@@ -941,7 +941,7 @@ namespace engine
       {
          INT32 rc = SDB_OK ;
 
-         if ( !_pMap && /*size > stackSize*/ )
+         if ( !_pMap /* && size > stackSize */ )
          {
             _pMap = new (std::nothrow) map< Key, T >() ;
             if ( !_pMap )
