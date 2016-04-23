@@ -1206,7 +1206,7 @@ PHP_METHOD( SequoiaCL, count )
    bson_init( &condition ) ;
    bson_init( &hint ) ;
    PHP_SET_ERRNO_OK( FALSE, pThisObj ) ;
-   if ( PHP_GET_PARAMETERS( "|zz", &pCondition, pHint ) == FAILURE )
+   if ( PHP_GET_PARAMETERS( "|zz", &pCondition, &pHint ) == FAILURE )
    {
       rc = SDB_INVALIDARG ;
       goto error ;
