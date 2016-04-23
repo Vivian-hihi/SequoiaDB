@@ -44,6 +44,7 @@
 using namespace std ;
 
 #define UTIL_MAP_DEFAULT_STACK_SIZE          4
+#define UTIL_MAP_MAX_STACK_SIZE              64
 
 namespace engine
 {
@@ -55,6 +56,8 @@ namespace engine
       :_pMap( NULL ),
        _eleSize( 0 )
       {
+         SDB_ASSERT( stackSize <= UTIL_MAP_MAX_STACK_SIZE,
+                     "stackSize must <= UTIL_MAP_MAX_STACK_SIZE" ) ;
       }
 
       ~_utilMap()
@@ -938,7 +941,7 @@ namespace engine
       {
          INT32 rc = SDB_OK ;
 
-         if ( !_pMap && size > stackSize )
+         if ( !_pMap && /*size > stackSize*/ )
          {
             _pMap = new (std::nothrow) map< Key, T >() ;
             if ( !_pMap )
