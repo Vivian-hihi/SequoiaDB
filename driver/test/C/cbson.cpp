@@ -14,6 +14,23 @@ TEST(cbson, empty)
    ASSERT_EQ( rc, SDB_OK ) ;
 }
 
+TEST(cbson, test)
+{
+   bson obj ;
+   const char *pStr = "{\"_id\":{\"$oid\":\"0123456789abcdef01234567\"}}" ;
+   BOOLEAN flag = jsonToBson( &obj, pStr ) ;
+   if ( TRUE == flag )
+   {
+      printf( "Success, bson is: \n" ) ;
+      bson_print( &obj ) ;
+   }
+   else
+   {
+      printf( "Failed\n" ) ;
+   }
+}
+
+
 TEST(cbson, binary)
 {
    INT32 rc = SDB_OK ;
@@ -312,3 +329,241 @@ TEST( cbson, base64Decode )
    ASSERT_EQ( 0, strcmp(str2, out ) ) ;
    free ( out ) ;
 }
+
+TEST( cbson, bsonArray )
+{
+   INT32 rc = SDB_OK ;
+   bson obj ;
+   bson_init( &obj ) ;
+   bson_append_long( &obj, "a", 1 ) ;
+   bson_append_start_array( &obj, "b" ) ;
+   bson_append_int( &obj, "0", 6 ) ;
+   bson_append_string( &obj, "1", "7" ) ;
+   bson_append_start_object( &obj, "c" ) ;
+   bson_append_string( &obj, "key", "value" ) ;
+   bson_append_finish_object( &obj ) ;
+   bson_append_finish_array( &obj ) ;
+   bson_append_string( &obj, "d", "str" ) ;
+   rc = bson_finish( &obj ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   bson_destroy( &obj ) ;
+}
+
+TEST(cbson, dateType)
+{
+   sdbConnectionHandle    db = 0 ;
+   sdbCollectionHandle    cl = 0 ;
+   sdbCursorHandle cursor    = 0 ;
+   INT32 rc                  = SDB_OK ;
+
+   // normal
+   const CHAR* ppNormalDate[] = {
+      // the dates which are in the [1900-01-01, 9999-12-31]
+      "{ \"myDate1\": { \"$date\": \"1900-01-01\" } }",
+      "{ \"myDate2\": { \"$date\": \"9999-12-31\" } }",
+      // the dates which are in the [0001-01-01T00:00:00.000000Z, 9999-12-31T23:59:59.999999Z]
+      "{ \"myDate3\": { \"$date\": \"1900-01-01T00:00:00.000000Z\" } }",
+      "{ \"myDate4\": { \"$date\": \"9999-12-31T12:59:59.999999Z\" } }",
+      "{ \"myDate5\": { \"$date\": \"1900-01-01T00:00:00.000000-0100\" } }",
+      "{ \"myDate6\": { \"$date\": \"1900-01-01T00:00:00.000000+0100\" } }",
+      "{ \"myDate7\": { \"$date\": \"9999-12-31T23:59:59.999999-0100\" } }",
+      "{ \"myDate8\": { \"$date\": \"9999-12-31T12:59:59.999999+0100\" } }",
+      "{ \"myDate11\": { \"$date\": {\"$numberLong\":\"-30610339200000\" } } }", // 999-12-31
+      "{ \"myDate12\": { \"$date\": {\"$numberLong\":\"-30610252800000\" } } }", // 1000-01-01
+      "{ \"myDate13\": { \"$date\": {\"$numberLong\":\"-30610224000000\" } } }", // 1000-01-01T08:00:00:000000Z
+      "{ \"myDate14\": { \"$date\": {\"$numberLong\":\"-2209017600000\" } } }", // 1899-01-01
+      "{ \"myDate15\": { \"$date\": {\"$numberLong\":\"-2240553600000\" } } }", // 1900-01-01
+      "{ \"myDate16\": { \"$date\": {\"$numberLong\":\"-2208988800000\" } } }", // 1900-01-01T08:00:00:000000Z
+      "{ \"myDate17\": { \"$date\": {\"$numberLong\":\"0\" } } }", // 1970-01-01T08:00:00.000000Z
+      "{ \"myDate18\": { \"$date\": {\"$numberLong\":\"946656000000\" } } }", // 2000-01-01
+      "{ \"myDate19\": { \"$date\": {\"$numberLong\":\"253402185600000\" } } }", // 9999-12-31
+      "{ \"myDate20\": { \"$date\": {\"$numberLong\":\"253402275599000\" } } }" // 9999-12-31T00:00:00:000000Z
+   } ;
+
+   const CHAR* ppAbnormalDate[] = {
+      // the dates which are not in [1900-01-01, 9999-12-31]
+      "{ \"myDate1\": { \"$date\": \"1899-12-31\" } }",
+      "{ \"myDate2\": { \"$date\": \"10000-01-01\" } }",
+      // the dates which are not in [0001-01-01T00:00:00.000000Z, 9999-12-31T23:59:59.999999Z]
+      "{ \"myDate1\": { \"$date\": \"0000-01-01T00:00:00.000000Z\" } }",
+      "{ \"myDate2\": { \"$date\": \"0000-01-01T23:59:59.999999-0100\" } }",
+      "{ \"myDate3\": { \"$date\": \"-0001-01-01T00:00:00.000000Z\" } }",
+      "{ \"myDate4\": { \"$date\": \"10000-01-01T00:00:00.000000Z\" } }",
+      "{ \"myDate5\": { \"$date\": \"10000-01-01T00:00:00.000000+0100\" } }"
+   } ;
+   /// case1: test abnormal dates
+#define bufsize 1024
+   CHAR buffer[ bufsize ] = { 0 } ;
+   bson obj ;
+   INT32 i = 0 ;
+   INT32 num = 10;
+   bson_init( &obj ) ;
+
+   // connect to database
+   rc = sdbConnect ( HOST, SERVER, USER, PASSWD, &db ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   // get cl
+   rc = getCollection ( db, "foo.bar", &cl ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   rc = sdbDelete( cl, NULL, NULL ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+
+   // check abnormal type
+   for( i = 0; i < sizeof(ppAbnormalDate)/sizeof(const CHAR*); i++ )
+   {
+      bson_destroy( &obj ) ;
+      if ( TRUE == jsonToBson( &obj, ppAbnormalDate[i] ) )
+      {
+         rc = SDB_INVALIDARG ;
+         ASSERT_EQ( SDB_OK, rc ) << "i is: " << i << ", record is: " << ppAbnormalDate[i] ;
+      }
+   }
+
+   /// case2
+   {
+   // insert
+   printf( "The inserted records are as below: \n" ) ;
+   for ( i = 0; i < sizeof(ppNormalDate)/sizeof(const CHAR*); i++ )
+   {
+      printf( "%s\n", ppNormalDate[i] ) ;
+      if ( !jsonToBson( &obj, ppNormalDate[i] ) )
+      {
+         rc = SDB_INVALIDARG ;
+         ASSERT_EQ( SDB_OK, rc ) ;
+      }
+      rc = sdbInsert( cl, &obj ) ;
+      ASSERT_EQ( SDB_OK, rc ) ;
+      bson_destroy( &obj ) ;
+   }
+
+   rc = sdbQuery ( cl, NULL, NULL,
+                   NULL, NULL, 0, -1, &cursor ) ;
+   ASSERT_TRUE( rc == SDB_OK ) ;
+   printf( "The records queried are as below:" OSS_NEWLINE ) ;
+   bson_init ( &obj ) ;
+   i = 0 ;
+   while( SDB_OK == ( rc = sdbNext( cursor, &obj ) ) )
+   {
+      i++ ;
+      bson_iterator it ;
+      bson_iterator_init( &it, &obj ) ;
+      bson_iterator_next( &it ) ;
+      bson_type type = bson_iterator_next( &it ) ;
+
+      if ( !bsonToJson( buffer, bufsize, &obj, false ,false ) )
+      {
+         rc = SDB_SYS ;
+         ASSERT_EQ( SDB_OK, rc ) ;
+      }
+      printf( "Type is: %d, record is: %s\n", (int)type, buffer ) ;
+      bson_destroy( &obj ) ;
+   }
+   }
+
+   sdbDisconnect ( db ) ;
+   sdbReleaseCursor ( cursor ) ;
+   sdbReleaseCollection ( cl ) ;
+   sdbReleaseConnection ( db ) ;
+}
+
+TEST(debug, timestampType)
+{
+   sdbConnectionHandle    db = 0 ;
+   sdbCollectionHandle    cl = 0 ;
+   sdbCursorHandle cursor    = 0 ;
+   INT32 rc                  = SDB_OK ;
+
+   // normal
+   const CHAR* ppNormalTimestamp[] = {
+      "{ \"myTimestamp2\": { \"$timestamp\": \"2038-01-19-11.14.07.999999\" } }",
+      "{ \"myTimestamp3\": { \"$timestamp\": \"1901-12-13T20:45:52.000000Z\" } }",
+      "{ \"myTimestamp4\": { \"$timestamp\": \"1901-12-14T04:45:52.000000+0800\" } }",
+      "{ \"myTimestamp5\": { \"$timestamp\": \"2038-01-19T03:14:07.999999Z\" } }",
+      "{ \"myTimestamp6\": { \"$timestamp\": \"2038-01-19T11:14:07.999999+0800\" } }"
+   } ;
+
+   const CHAR* ppAbnormalTimestamp[] = {
+      "{ \"myTimestamp0\": { \"$timestamp\": \"1901-12-14-04.45.52.000000\" } }", // should be ok, but now it's not, maybe we should add another 352s
+      "{ \"myTimestamp1\": { \"$timestamp\": \"1901-12-14-04.45.51.000000\" } }",
+      "{ \"myTimestamp2\": { \"$timestamp\": \"2038-01-19-11.14.08.000000\" } }",
+      "{ \"myTimestamp3\": { \"$timestamp\": \"1901-12-13T20:45:51.999999Z\" } }",
+      "{ \"myTimestamp4\": { \"$timestamp\": \"1901-12-14T04:45:51.999999+0800\" } }",
+      "{ \"myTimestamp5\": { \"$timestamp\": \"2038-01-19T03:14:08.000000Z\" } }",
+      "{ \"myTimestamp6\": { \"$timestamp\": \"2038-01-19T11:14:08.000000+0800\" } }"
+   } ;
+
+   // abnormal
+#define bufsize 1024
+   CHAR buffer[ bufsize ] = { 0 } ;
+   bson obj ;
+   INT32 i = 0 ;
+   INT32 num = 10;
+   bson_init( &obj ) ;
+
+   // connect to database
+   rc = sdbConnect ( HOST, SERVER, USER, PASSWD, &db ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   // get cl
+   rc = getCollection ( db, "foo.bar", &cl ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   rc = sdbDelete( cl, NULL, NULL ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+
+   // check abnormal type
+   for( i = 0; i < sizeof(ppAbnormalTimestamp)/sizeof(const CHAR*); i++ )
+   {
+      bson_destroy( &obj ) ;
+      if ( jsonToBson( &obj, ppAbnormalTimestamp[i] ) )
+      {
+         rc = SDB_INVALIDARG ;
+         ASSERT_EQ( SDB_OK, rc ) ;
+      }
+   }
+
+   /// case1
+   {
+   // insert
+   printf( "The inserted records are as below: \n" ) ;
+   for ( i = 0; i < sizeof(ppNormalTimestamp)/sizeof(const CHAR*); i++ )
+   {
+      printf( "%s\n", ppNormalTimestamp[i] ) ;
+      if ( !jsonToBson( &obj, ppNormalTimestamp[i] ) )
+      {
+         rc = SDB_INVALIDARG ;
+         ASSERT_EQ( SDB_OK, rc ) ;
+      }
+      rc = sdbInsert( cl, &obj ) ;
+      ASSERT_EQ( SDB_OK, rc ) ;
+      bson_destroy( &obj ) ;
+   }
+
+   rc = sdbQuery ( cl, NULL, NULL,
+                   NULL, NULL, 0, -1, &cursor ) ;
+   ASSERT_TRUE( rc == SDB_OK ) ;
+   printf( "The records queried are as below:" OSS_NEWLINE ) ;
+   bson_init ( &obj ) ;
+   i = 0 ;
+   while( SDB_OK == ( rc = sdbNext( cursor, &obj ) ) )
+   {
+      i++ ;
+      bson_iterator it ;
+      bson_iterator_init( &it, &obj ) ;
+      bson_iterator_next( &it ) ;
+      bson_type type = bson_iterator_next( &it ) ;
+
+      if ( !bsonToJson( buffer, bufsize, &obj, false ,false ) )
+      {
+         rc = SDB_SYS ;
+         ASSERT_EQ( SDB_OK, rc ) ;
+      }
+      printf( "Type is: %d, record is: %s\n", (int)type, buffer ) ;
+      bson_destroy( &obj ) ;
+   }
+   }
+
+   sdbDisconnect ( db ) ;
+   sdbReleaseCursor ( cursor ) ;
+   sdbReleaseCollection ( cl ) ;
+   sdbReleaseConnection ( db ) ;
+}
+
