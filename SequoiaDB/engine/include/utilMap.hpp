@@ -61,6 +61,23 @@ namespace engine
                      "stackSize must <= UTIL_MAP_MAX_STACK_SIZE" ) ;
       }
 
+      _utilMap( const _utilMap& rhs )
+      {
+         _pMap = NULL ;
+         _eleSize = 0 ;
+
+         UINT32 rSize = rhs.size() ;
+         /// alloc space
+         _ensureSpace( rSize ) ;
+         /// copy all elements
+         const_iterator it = rhs.begin() ;
+         while( it != rhs.end() )
+         {
+            insert( value_type( it->first, it->second ) ) ;
+            ++it ;
+         }
+      }
+
       ~_utilMap()
       {
          clear( TRUE ) ;
@@ -566,7 +583,7 @@ namespace engine
          }
       }
 
-      OSS_INLINE _utilMap<Key,T>& operator= ( const _utilMap<Key,T> &rhs )
+      OSS_INLINE _utilMap<Key,T,stackSize>& operator= ( const _utilMap<Key,T,stackSize> &rhs )
       {
          UINT32 rSize = rhs.size() ;
 
@@ -575,7 +592,7 @@ namespace engine
          /// alloc space
          _ensureSpace( rSize ) ;
          /// copy all elements
-         iterator it = rhs.begin() ;
+         const_iterator it = rhs.begin() ;
          while( it != rhs.end() )
          {
             insert( value_type( it->first, it->second ) ) ;
