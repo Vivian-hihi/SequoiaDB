@@ -300,7 +300,7 @@ INT32 fetchRecords ( sdbCollection &collection,
 
 string toJson( const BSONObj &b )
 {
-   return b.toString() ;
+   return b.toString( true, true ) ;
 }
 
 /* initialize environment */
@@ -629,6 +629,19 @@ void getDataPath ( CHAR* buffer, INT32 len, const CHAR *dp1, const CHAR *dp2 )
    getHostName ( host, namelen ) ;
    strcpy ( buffer,strncmp( host, "ubuntu-dev1", strlen("ubuntu-dev1") )
             == 0 ? dp1 : dp2 ) ;
+}
+
+INT32 delete_space( string &dest, const CHAR *src )
+{
+   if ( 0 == src )
+      return SDB_INVALIDARG ;
+   while( *src != '\0' )
+   {
+      if (*src != ' ' )
+         dest = dest + *src ;
+      src++ ;
+   }
+   return SDB_OK ;
 }
 
 /*******************************************************************************

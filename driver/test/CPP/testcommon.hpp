@@ -28,8 +28,7 @@
 #define _DATAPATH2          "/home/users/tanzhaobo/data/node2"
 #define _DATAPATH3          "/home/users/tanzhaobo/data/node3"
 
-//#define HOST                "192.168.30.120"
-//#define SERVER              "50000"
+#define SERVER              "50000"
 #define HOST                "localhost"
 #define SERVER              "11810"
 #define SERVER1             "58000"
@@ -131,6 +130,8 @@ SINT64 getRecordNum ( sdbCursor &cursor ) ;
 
 /* display record */
 void displayRecord( sdbCursor &cursor ) ;
+
+INT32 delete_space( string &dest, const CHAR *src ) ;
 
 
 /******************************************************

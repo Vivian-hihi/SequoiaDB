@@ -169,6 +169,7 @@ TEST ( cpp_bson_base_type, bool )
 // date
 TEST ( cpp_bson_base_type, date )
 {
+   /// case 1 : testing cpp bson
 //   obj = BSON( "" ) ??
    BSONObj obj ;
    BSONObjBuilder ob ;
@@ -183,11 +184,99 @@ TEST ( cpp_bson_base_type, date )
    cout<<obj.toString ()<<endl ;
    ASSERT_TRUE ( obj.toString()=="{ \"date\": {\"$date\": \"2013-09-17\"} }" ) ;
 
+   /// case 2 : 
+   INT32 rc = SDB_OK ;
+   INT32 i = 0 ;
+
+   // normal
+   const CHAR* ppNormalDate[] = {
+      // the dates which are in the [1900-01-01, 9999-12-31]
+      "{ \"myDate1\": { \"$date\": \"1900-01-01\" } }",
+      "{ \"myDate2\": { \"$date\": \"9999-12-31\" } }",
+      // the dates which are in the [0001-01-01T00:00:00.000000Z, 9999-12-31T23:59:59.999999Z]
+      "{ \"myDate3\": { \"$date\": \"1900-01-01T00:00:00.000000Z\" } }",
+      "{ \"myDate4\": { \"$date\": \"9999-12-31T12:59:59.999999Z\" } }",
+      "{ \"myDate5\": { \"$date\": \"1900-01-01T00:00:00.000000-0100\" } }",
+      "{ \"myDate6\": { \"$date\": \"1900-01-01T00:00:00.000000+0100\" } }",
+      "{ \"myDate7\": { \"$date\": \"9999-12-31T23:59:59.999999-0100\" } }",
+      "{ \"myDate8\": { \"$date\": \"9999-12-31T12:59:59.999999+0100\" } }",
+      "{ \"myDate11\": { \"$date\": {\"$numberLong\":\"-30610339200000\" } } }", // 999-12-31
+      "{ \"myDate12\": { \"$date\": {\"$numberLong\":\"-30610252800000\" } } }", // 1000-01-01
+      "{ \"myDate13\": { \"$date\": {\"$numberLong\":\"-30610224000000\" } } }", // 1000-01-01T08:00:00:000000Z
+      "{ \"myDate14\": { \"$date\": {\"$numberLong\":\"-2209017600000\" } } }", // 1899-01-01
+      "{ \"myDate15\": { \"$date\": {\"$numberLong\":\"-2240553600000\" } } }", // 1900-01-01
+      "{ \"myDate16\": { \"$date\": {\"$numberLong\":\"-2208988800000\" } } }", // 1900-01-01T08:00:00:000000Z
+      "{ \"myDate17\": { \"$date\": {\"$numberLong\":\"0\" } } }", // 1970-01-01T08:00:00.000000Z
+      "{ \"myDate18\": { \"$date\": {\"$numberLong\":\"946656000000\" } } }", // 2000-01-01
+      "{ \"myDate19\": { \"$date\": {\"$numberLong\":\"253402185600000\" } } }", // 9999-12-31
+      "{ \"myDate20\": { \"$date\": {\"$numberLong\":\"253402275599000\" } } }" // 9999-12-31T00:00:00:000000Z
+   } ;
+
+   const CHAR* ppExportResult[] = {
+      "{ \"myDate1\": {\"$date\": \"1900-01-01\"} }",
+      "{ \"myDate2\": {\"$date\": \"9999-12-31\"} }",
+      "{ \"myDate3\": {\"$date\": \"1900-01-01\"} }",
+      "{ \"myDate4\": {\"$date\": \"9999-12-31\"} }",
+      "{ \"myDate5\": {\"$date\": \"1900-01-01\"} }",
+      "{ \"myDate6\": {\"$date\": \"1900-01-01\"} }",
+      "{ \"myDate7\": { \"$date\": 253402304399999 } }",
+      "{ \"myDate8\": {\"$date\": \"9999-12-31\"} }",
+      "{ \"myDate11\": { \"$date\": -30610339200000 } }",
+      "{ \"myDate12\": { \"$date\": -30610252800000 } }",
+      "{ \"myDate13\": { \"$date\": -30610224000000 } }",
+      "{ \"myDate14\": {\"$date\": \"1900-01-01\"} }",
+      "{ \"myDate15\": {\"$date\": -2240553600000 } }",
+      "{ \"myDate16\": {\"$date\": \"1900-01-01\"} }",
+      "{ \"myDate17\": {\"$date\": \"1970-01-01\"} }",
+      "{ \"myDate18\": {\"$date\": \"2000-01-01\"} }",
+      "{ \"myDate19\": {\"$date\": \"9999-12-31\"} }",
+      "{ \"myDate20\": { \"$date\": 253402275599000 } }"
+   } ;
+
+   const CHAR* ppAbnormalDate[] = {
+      // the dates which are not in [1900-01-01, 9999-12-31]
+      "{ \"myDate1\": { \"$date\": \"1899-12-31\" } }",
+      "{ \"myDate2\": { \"$date\": \"10000-01-01\" } }",
+      // the dates which are not in [0001-01-01T00:00:00.000000Z, 9999-12-31T23:59:59.999999Z]
+      "{ \"myDate1\": { \"$date\": \"0000-01-01T00:00:00.000000Z\" } }",
+      "{ \"myDate2\": { \"$date\": \"0000-01-01T23:59:59.999999-0100\" } }",
+      "{ \"myDate3\": { \"$date\": \"-0001-01-01T00:00:00.000000Z\" } }",
+      "{ \"myDate4\": { \"$date\": \"10000-01-01T00:00:00.000000Z\" } }",
+      "{ \"myDate5\": { \"$date\": \"10000-01-01T00:00:00.000000+0100\" } }"
+   } ;
+
+
+   // check normal type
+   cout << "testing the normal date records: " << endl ;
+   for( i = 0; i < sizeof(ppNormalDate)/sizeof(const CHAR*); i++ )
+   {
+      BSONObj obj ;
+      cout << "the record is: " << ppNormalDate[i] << endl ;
+      rc = fromjson( ppNormalDate[i], obj ) ;
+      ASSERT_EQ( SDB_OK, rc ) ;
+      cout << "transform to : " << obj.toString(false,true) << endl ;
+      string expect ;
+      string actual ;
+      rc = delete_space( expect, ppExportResult[i] ) ;
+      ASSERT_EQ( SDB_OK, rc ) ;
+      rc = delete_space( actual, obj.toString(false,true).c_str() ) ;
+      ASSERT_EQ( SDB_OK, rc ) ;
+      ASSERT_EQ( expect, actual ) ; 
+   }
+   cout << "testing the abnormal date records: " << endl ;
+   for( i = 0; i < sizeof(ppAbnormalDate)/sizeof(const CHAR*); i++ )
+   {
+      BSONObj obj ;
+      cout << "the record is: " << ppAbnormalDate[i] << endl ;
+      rc = fromjson( ppAbnormalDate[i], obj ) ;
+      ASSERT_EQ( SDB_INVALIDARG, rc ) ;
+   }
 }
 
 // timestamp
 TEST ( cpp_bson_base_type, timestamp )
 {
+   /// case 1 : testing cpp bson
    BSONObj obj ;
    BSONObjBuilder ob ;
    BSONObjBuilder ob1 ;
@@ -205,6 +294,66 @@ TEST ( cpp_bson_base_type, timestamp )
    obj = ob1.obj () ;
    cout<<"timestamp2 is: "<<obj.toString()<<endl ;
    ASSERT_TRUE ( obj.toString() == "{ \"timestamp\": {\"$timestamp\": \"2013-09-16-17.24.01.000001\"} }" ) ;
+
+   /// case 2 : testing fromjson
+   INT32 rc = SDB_OK ;
+   INT32 i  = 0 ;
+
+   // normal
+   const CHAR* ppNormalTimestamp[] = {
+      //"{ \"myTimestamp1\": { \"$timestamp\": \"1901-12-14-04.45.52.000000\" } }", // should be ok, but now it's not, maybe we should add another 352s
+      "{ \"myTimestamp2\": { \"$timestamp\": \"2038-01-19-11.14.07.999999\" } }",
+      "{ \"myTimestamp3\": { \"$timestamp\": \"1901-12-13T20:45:52.000000Z\" } }",
+      "{ \"myTimestamp4\": { \"$timestamp\": \"1901-12-14T04:45:52.000000+0800\" } }",
+      "{ \"myTimestamp5\": { \"$timestamp\": \"2038-01-19T03:14:07.999999Z\" } }",
+      "{ \"myTimestamp6\": { \"$timestamp\": \"2038-01-19T11:14:07.999999+0800\" } }"
+   } ;
+
+   const CHAR* ppExportResult[] = {
+      "{ \"myTimestamp2\": {\"$timestamp\": \"2038-01-19-11.14.07.999999\"} }",
+      "{ \"myTimestamp3\": {\"$timestamp\": \"1901-12-14-04.51.44.000000\"} }",
+      "{ \"myTimestamp4\": {\"$timestamp\": \"1901-12-14-04.51.44.000000\"} }",
+      "{ \"myTimestamp5\": {\"$timestamp\": \"2038-01-19-11.14.07.999999\"} }",
+      "{ \"myTimestamp6\": {\"$timestamp\": \"2038-01-19-11.14.07.999999\"} }"
+   } ;
+
+   const CHAR* ppAbnormalTimestamp[] = {
+      "{ \"myTimestamp1\": { \"$timestamp\": \"1901-12-14-04.45.51.000000\" } }",
+      "{ \"myTimestamp2\": { \"$timestamp\": \"2038-01-19-11.14.08.000000\" } }",
+      "{ \"myTimestamp3\": { \"$timestamp\": \"1901-12-13T20:45:51.999999Z\" } }",
+      "{ \"myTimestamp4\": { \"$timestamp\": \"1901-12-14T04:45:51.999999+0800\" } }",
+      "{ \"myTimestamp5\": { \"$timestamp\": \"2038-01-19T03:14:08.000000Z\" } }",
+      "{ \"myTimestamp6\": { \"$timestamp\": \"2038-01-19T11:14:08.000000+0800\" } }"
+   } ;
+
+   // check normal type
+   cout << "testing the normal timestamp records: " << endl ;
+   for( i = 0; i < sizeof(ppNormalTimestamp)/sizeof(const CHAR*); i++ )
+   {
+      BSONObj obj ;
+      cout << "the record is: " << ppNormalTimestamp[i] << endl ;
+      rc = fromjson( ppNormalTimestamp[i], obj ) ;
+      ASSERT_EQ( SDB_OK, rc ) ;
+      cout << "transform to : " << obj.toString(false,true) << endl ;
+      string expect ;
+      string actual ;
+      rc = delete_space( expect, ppExportResult[i] ) ;
+      ASSERT_EQ( SDB_OK, rc ) ;
+      rc = delete_space( actual, obj.toString(false,true).c_str() ) ;
+      ASSERT_EQ( SDB_OK, rc ) ;
+      ASSERT_EQ( expect, actual ) ;
+   }
+
+   // check abnormal type
+   cout << "testing the abnormal timestamp records: " << endl ;
+   for( i = 0; i < sizeof(ppAbnormalTimestamp)/sizeof(const CHAR*); i++ )
+   {
+      BSONObj obj ;
+      cout << "the record is: " << ppAbnormalTimestamp[i] << endl ;
+      rc = fromjson( ppAbnormalTimestamp[i], obj ) ;
+      ASSERT_EQ( SDB_INVALIDARG, rc ) ;
+      //cout << "transform to: " << obj.toString(false,true) << endl ;
+   }
 }
 
 // binary
