@@ -431,7 +431,6 @@ namespace engine
          if ( _pMap )
          {
             _pMap->erase( position._it ) ;
-            shift2Stack() ;
          }
          else if ( (UINT32)(position._pData - position._pSrc) < _eleSize )
          {
@@ -448,12 +447,7 @@ namespace engine
       {
          if ( _pMap )
          {
-            UINT32 count = (UINT32)_pMap->erase( key ) ;
-            if ( count > 0 )
-            {
-               shift2Stack() ;
-            }
-            return count ;
+            return (UINT32)_pMap->erase( key ) ;
          }
          else if ( _eleSize > 0 )
          {
@@ -476,7 +470,6 @@ namespace engine
          if ( _pMap )
          {
             _pMap->erase( first._it, last._it ) ;
-            shift2Stack() ;
          }
          else if ( _eleSize > 0 )
          {
