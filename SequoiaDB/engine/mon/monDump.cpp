@@ -1210,7 +1210,8 @@ namespace engine
                   {
                      ob1.append ( FIELD_NAME_COMPRESSIONTYPE, "" ) ;
                   }
-                  ob1.appendBool( FIELD_NAME_HAS_DICT, detail._hasDict ) ;
+                  ob1.appendBool( FIELD_NAME_DICT_CREATED, detail._dictCreated ) ;
+                  ob1.append( FIELD_NAME_DICT_VERSION, detail._dictVersion ) ;
                   ob1.append ( FIELD_NAME_PAGE_SIZE, detail._pageSize ) ;
                   ob1.append ( FIELD_NAME_LOB_PAGE_SIZE, detail._lobPageSize ) ;
                   /// Stat info
@@ -1228,6 +1229,8 @@ namespace engine
                                (long long)(detail._totalDataFreeSpace )) ;
                   ob1.append ( FIELD_NAME_TOTAL_INDEX_FREESPACE,
                                (long long)(detail._totalIndexFreeSpace )) ;
+                  ob1.append ( FIELD_NAME_CURR_COMPRESS_RATIO,
+                               detail._currCompressRatio / 100.0 ) ;
                   if ( addInfo )
                   {
                      monAppendSystemInfo( ob1, MON_MASK_NODE_NAME ) ;
@@ -1582,7 +1585,7 @@ namespace engine
                          rc ) ;
 
             builder.append( FIELD_NAME_SCANTYPE, VALUE_NAME_TBSCAN ) ;
-            // add datablocks         
+            // add datablocks
             std::vector<dmsExtentID>::iterator it = datablocks.begin() ;
             while ( it != datablocks.end() &&
                     datablockNum < MAX_DATABLOCK_A_RECORD_NUM )
@@ -1653,7 +1656,7 @@ namespace engine
             builder.append( FIELD_NAME_INDEXNAME, indexName ) ;
             builder.append( FIELD_NAME_INDEXLID, indexLID ) ;
             builder.append( FIELD_NAME_DIRECTION, direction ) ;
-            // add indexblocks         
+            // add indexblocks
             while ( ( ( 1 == direction && indexPos + 1 < idxBlocks.size() ) ||
                       ( -1 == direction && indexPos > 0 ) ) &&
                     indexblockNum < MAX_INDEXBLOCK_A_RECORD_NUM )
@@ -2722,7 +2725,7 @@ namespace engine
             {
                sub.append ( FIELD_NAME_COMPRESSIONTYPE, "" ) ;
             }
-            sub.appendBool( FIELD_NAME_HAS_DICT, detail._hasDict ) ;
+            sub.appendBool( FIELD_NAME_DICT_CREATED, detail._dictCreated ) ;
             sub.append ( FIELD_NAME_PAGE_SIZE, detail._pageSize ) ;
             sub.append ( FIELD_NAME_LOB_PAGE_SIZE, detail._lobPageSize ) ;
 

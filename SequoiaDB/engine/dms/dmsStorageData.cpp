@@ -581,7 +581,6 @@ namespace engine
             if ( upgradeDictInfo && ( 0 == _dmsMME->_mbList[i]._dictExtentID ) )
             {
                _dmsMME->_mbList[i]._dictExtentID = DMS_INVALID_EXTENT ;
-               _dmsMME->_mbList[i]._newDictExtentID = DMS_INVALID_EXTENT ;
             }
 
             _mbStatInfo[i]._dictExtID = _dmsMME->_mbList[i]._dictExtentID ;
@@ -1121,6 +1120,7 @@ namespace engine
          _releaseSpace( context->mb()->_dictExtentID, dictExt->_blockSize ) ;
          dictExt->_flag = DMS_EXTENT_FLAG_FREED ;
          context->mb()->_dictExtentID = DMS_INVALID_EXTENT ;
+         context->mb()->_dictVersion = 0 ;
          context->mbStat()->_dictExtID = DMS_INVALID_EXTENT ;
       }
 
@@ -2248,6 +2248,7 @@ namespace engine
       ossValuePtr insertedDataPtr   = 0 ;
       BSONObj insertObj ;
       BOOLEAN dataModified          = FALSE ;
+      UINT8 compressRatio           = 0 ;
       _dmsCompressorEntry *compressorEntry = &_compressorEntry[context->mbID()] ;
 
       /* For concurrency protection with drop CL and set compresor. */
@@ -2281,7 +2282,8 @@ namespace engine
       if ( compressorEntry->ready() )
       {
          rc = dmsCompress( cb, compressorEntry, record, ((CHAR*)(&oid)), oidLen,
-                           &compressedData, &compressedDataSize ) ;
+                           &compressedData, &compressedDataSize,
+                           compressRatio ) ;
          if ( rc )
          {
             // If compression failed, store the record in its original format.
@@ -2408,7 +2410,7 @@ namespace engine
                                                 record.objsize(),
                                 foundDeletedID._extent,
                                 addOID ? &oidEle : NULL, cb, isCompressed,
-                                TRUE ) ;
+                                compressRatio, TRUE ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to append record, rc: %d", rc ) ;
 
       // update totalInsert monitor counter
@@ -2514,6 +2516,7 @@ namespace engine
                                                BSONElement *extraOID,
                                                pmdEDUCB *cb,
                                                BOOLEAN compressed,
+                                               UINT8 compressRatio,
                                                BOOLEAN addIntoList )
    {
       INT32 rc                         = SDB_OK ;
@@ -2612,6 +2615,8 @@ namespace engine
             extent->_firstRecordOffset = deletedRecordOffset ;
          }
       }
+
+      _mbStatInfo[context->mbID()]._compressionRatio = compressRatio ;
 
    done :
       PD_TRACE_EXITRC ( SDB__DMSSTORAGEDATA__EXTENTINSERTRECORD, rc ) ;
@@ -3151,6 +3156,7 @@ namespace engine
       dmsRecordID ovfRID ;
       PD_TRACE_ENTRY ( SDB__DMSSTORAGEDATA__EXTENTUPDATERECORD ) ;
       monAppCB * pMonAppCB         = cb ? cb->getMonAppCB() : NULL ;
+      UINT8 compressRatio          = 0 ;
       dmsCompressorEntry *compressorEntry = &_compressorEntry[context->mbID()] ;
 
       SDB_ASSERT ( 0 != recordDataPtr, "recordDataPtr can't be NULL" ) ;
@@ -3291,7 +3297,7 @@ namespace engine
                                                  (ossValuePtr)ptr,
                                     isCompressed?compressedDataSize:len,
                                     foundDeletedID._extent, NULL, cb,
-                                    isCompressed, FALSE ) ;
+                                    isCompressed, compressRatio, FALSE ) ;
          if ( rc )
          {
             PD_LOG ( PDERROR, "Failed to append record due to %d", rc ) ;
@@ -3570,6 +3576,7 @@ namespace engine
        * successfully flushed to disk.
        */
       context->mb()->_dictExtentID = dictExtID ;
+      context->mbStat()->_dictExtID = dictExtID ;
 
       /// Make sure the dict persist
       flushMME( TRUE ) ;

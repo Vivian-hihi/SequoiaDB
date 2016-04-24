@@ -135,13 +135,13 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_DMSCOMPRESS, "dmsCompress" )
    INT32 dmsCompress ( _pmdEDUCB *cb, _dmsCompressorEntry *compressorEntry,
-                       const BSONObj &obj,
-                       const CHAR* pOIDPtr, INT32 oidLen,
-                       const CHAR **ppData, INT32 *pDataSize )
+                       const BSONObj &obj, const CHAR* pOIDPtr, INT32 oidLen,
+                       const CHAR **ppData, INT32 *pDataSize, UINT8 &ratio  )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB_DMSCOMPRESS ) ;
       CHAR *pTmpBuff = NULL ;
+      INT32 objSize = 0 ;
 
       SDB_ASSERT( compressorEntry, "Compressor entry can't be NULL" ) ;
 
@@ -164,19 +164,22 @@ namespace engine
 
          DMS_RECORD_SETDATA_OID ( pTmpBuff, obj.objdata(), obj.objsize(),
                                   BSONElement(pOIDPtr) ) ;
-
+         objSize = BSONObj(pObjData).objsize() ;
          rc = dmsCompress ( cb, compressorEntry, pObjData,
-                            BSONObj(pObjData).objsize(), ppData, pDataSize ) ;
+                            objSize, ppData, pDataSize ) ;
       }
       else
       {
+         objSize = obj.objsize() ;
          rc = dmsCompress( cb, compressorEntry, obj.objdata(),
-                           obj.objsize(), ppData, pDataSize ) ;
+                           objSize, ppData, pDataSize ) ;
       }
       if ( rc )
       {
          goto error ;
       }
+
+      ratio = (UINT8)( (*pDataSize) * 100 / objSize ) ;
 
    done :
       if ( pTmpBuff )

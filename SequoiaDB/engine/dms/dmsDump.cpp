@@ -417,6 +417,7 @@ namespace engine
                              " Total index pages : %u"OSS_NEWLINE
                              " Total idx free sp : %llu"OSS_NEWLINE
                              " Dictionary extent ID: 0x%08lx (%d)"OSS_NEWLINE
+                             " Dictionary version: %u"OSS_NEWLINE
                              " Compression Type  : %s"OSS_NEWLINE,
                              mb->_firstExtentID, mb->_firstExtentID,
                              mb->_lastExtentID, mb->_lastExtentID,
@@ -430,6 +431,7 @@ namespace engine
                              mb->_totalDataFreeSpace, mb->_totalIndexPages,
                              mb->_totalIndexFreeSpace,
                              mb->_dictExtentID, mb->_dictExtentID,
+                             mb->_dictVersion,
                              compressorType ) ;
          // Delete list
          len += ossSnprintf( outBuf + len, outSize - len,

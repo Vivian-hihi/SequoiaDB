@@ -38,6 +38,7 @@
 #include "utilTrace.hpp"
 #include "utilCompressor.hpp"
 #include "utilLZWDictionary.hpp"
+#include "msgDef.h"
 #include <algorithm>
 
 using namespace std ;
@@ -50,11 +51,11 @@ namespace engine
       _head = NULL ;
       _nodes = NULL ;
       _maxNodeNum = 0 ;
-      _finalSize = 0 ;
       _cst = NULL ;
       _codeMap = NULL ;
       _dst = NULL ;
       _strArea = NULL ;
+      _additionalInfo = NULL ;
    }
 
    _utilLZWDictionary::~_utilLZWDictionary()
@@ -100,6 +101,8 @@ namespace engine
          }
       }
 
+      _head->_basic._type = UTIL_DICT_LZW ;
+      _head->_basic._version = UTIL_LZW_VERSION ;
       _head->_maxCode = 255 ;
       _head->_codeSize = 8 ;
 
@@ -123,11 +126,11 @@ namespace engine
       _head = NULL ;
       _nodes = NULL ;
       _maxNodeNum = 0 ;
-      _finalSize = 0 ;
       _cst = NULL ;
       _codeMap = NULL ;
       _dst = NULL ;
       _strArea = NULL ;
+      _additionalInfo = NULL ;
 
       PD_TRACE_EXIT( SDB__UTILLZWDICTIONARY_RESET ) ;
    }
@@ -177,7 +180,7 @@ namespace engine
       UINT32 nodeIdx = 0 ;
       BOOLEAN lookAhead = FALSE ;
       LZW_CODE code = 0 ;
-      UINT32 codeSize = 0 ;
+      UINT8 codeSize = 0 ;
       UINT32 maxValidCode = 0 ;
       std::vector<codeWeight> weightVec( _head->_maxCode + 1 ) ;
       std::vector<codeWeight>::iterator itr ;
@@ -402,11 +405,12 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__UTILLZWDICTIONARY__FORMATDST, "_utilLZWDictionary::_formatDst" )
-   void _utilLZWDictionary::_formatDst()
+   UINT32 _utilLZWDictionary::_formatDst()
    {
       PD_TRACE_ENTRY( SDB__UTILLZWDICTIONARY__FORMATDST ) ;
       LZW_CODE currCode = _head->_maxCode + 1 ;
       UINT32 strOffset = 0 ;
+      UINT32 size = 0 ;
 
       do
       {
@@ -417,8 +421,9 @@ namespace engine
          }
       } while ( currCode > 0 ) ;
 
-      _finalSize = _strArea - (CHAR *)_head + strOffset ;
+      size = _strArea - (CHAR*)_dst + strOffset ;
       PD_TRACE_EXIT( SDB__UTILLZWDICTIONARY__FORMATDST ) ;
+      return size ;
    }
 
    BOOLEAN _utilLZWDictionary::_sortNodeByWeight( const codeWeight &left,
@@ -441,6 +446,18 @@ namespace engine
       return codeSize ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__UTILLZWDICTIONARY__ADDADDITIONALINFO, "_utilLZWDictionary::_addAdditionalInfo" )
+   void _utilLZWDictionary::_addAdditionalInfo( BSONObj &obj )
+   {
+      PD_TRACE_ENTRY( SDB__UTILLZWDICTIONARY__ADDADDITIONALINFO ) ;
+      BSONObjBuilder builder ;
+
+      builder.appendBool( FIELD_NAME_VAR_COMP_ENABLE, TRUE ) ;
+      obj = builder.obj() ;
+
+      PD_TRACE_EXIT( SDB__UTILLZWDICTIONARY__ADDADDITIONALINFO ) ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB__UTILLZWDICTIONARY_FINALIZE, "_utilLZWDictionary::finalize" )
    INT32 _utilLZWDictionary::finalize( const CHAR *source, UINT32 sourceLen,
                                        CHAR *buffer, UINT32 &length )
@@ -456,6 +473,9 @@ namespace engine
        */
       std::map<UINT32, UINT32> indexMap ;
       UINT32 nextIdx = UTIL_MAX_DICT_INIT_CODE + 1 ;
+      UINT32 dstSize = 0 ;
+      BSONObj addInfo ;
+      UINT32 writePos = 0 ;
 
       _initFinalEnv( buffer, length ) ;
 
@@ -480,11 +500,26 @@ namespace engine
       _adjust( source, sourceLen, indexMap ) ;
 
       /* format the decompress part */
-      _formatDst() ;
-      length = _finalSize ;
+      dstSize = _formatDst() ;
+      writePos = (CHAR*)_dst - (CHAR*)_head + dstSize ;
 
+      _addAdditionalInfo( addInfo ) ;
+
+      if ( length < writePos + addInfo.objsize() )
+      {
+         PD_LOG( PDERROR, "Input buffer size too small, size: %u", length ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      ossMemcpy( buffer + writePos, addInfo.objdata(), addInfo.objsize() ) ;
+      length =  writePos + addInfo.objsize() ;
+
+   done:
       PD_TRACE_EXITRC( SDB__UTILLZWDICTIONARY_FINALIZE, rc ) ;
       return rc ;
+   error:
+      goto done ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__UTILLZWDICTCREATOR_PREPARE, "_utilLZWDictionary::prepare" )

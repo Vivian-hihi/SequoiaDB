@@ -41,10 +41,15 @@
 #include "ossMem.hpp"
 #include "ossUtil.h"
 #include "pd.hpp"
+#include "utilDictionary.hpp"
+#include "../bson/bson.h"
 #include <map>
+
+using namespace bson ;
 
 namespace engine
 {
+   #define UTIL_LZW_VERSION              1
    /*
     * Internally we use a 32bit buffer to do continuous bits reading and
     * writting, so the maximum node code should be less than 2^24(16M).
@@ -106,9 +111,11 @@ namespace engine
     */
    struct _utilLZWDictHead
    {
-      UINT32 _codeSize ;       /* Bit number to represent a code. */
+      utilDictHead _basic ;
       UINT32 _maxCode ;        /* Maximum code in the dictionary. */
       UINT32 _maxValidCode ;
+      UINT8 _codeSize ;        /* Bit number to represent a code. */
+      CHAR _reserve[3] ;
    } ;
    typedef _utilLZWDictHead utilLZWDictHead ;
 
@@ -221,7 +228,7 @@ namespace engine
       INT32 init() ;
       void reset() ;
       UINT32 getMaxNodeNum() { return _maxNodeNum ; }
-      UINT32 getCodeSize() { return _head->_codeSize; }
+      UINT8 getCodeSize() { return _head->_codeSize; }
       UINT32 getMaxCode() { return _head->_maxCode ; }
 
       OSS_INLINE LZW_CODE addStr( LZW_CODE preCode, UINT8 ch ) ;
@@ -241,12 +248,13 @@ namespace engine
       void _initFinalEnv( CHAR *buff, UINT32 bufLen ) ;
       UINT32 _formatRemoteStr( LZW_CODE code, UINT32 &offset ) ;
       void _formatOneCode( UINT32 &offset, LZW_CODE code ) ;
-      void _formatDst() ;
+      UINT32 _formatDst() ;
       void _formatOneGrp( UINT32 parentIdx, UINT32 &nextIdx,
                           std::map<UINT32, UINT32> &indexMap ) ;
       void _adjust( const CHAR* str, UINT32 strLen,
                     std::map<UINT32, UINT32> &indexMap ) ;
       UINT32 _calcCodeSize( UINT32 code ) ;
+      void _addAdditionalInfo( BSONObj &obj ) ;
 
       OSS_INLINE INT32 _cstBinSearch( UINT32 low, UINT32 high, BYTE ch ) ;
       OSS_INLINE UINT32 _dstGetRemoteStr( DST_ITEM item, CHAR *buff ) ;
@@ -276,13 +284,13 @@ namespace engine
       _utilLZWDictHead *_head ;
       _utilLZWNode *_nodes ;
       UINT32 _maxNodeNum ;
-      UINT32 _finalSize ;
 
    private:
       CST_ITEM *_cst ;
       LZW_CODE *_codeMap ;
       DST_ITEM *_dst ;
       CHAR *_strArea ;
+      BSONObj *_additionalInfo ;
    } ;
    typedef _utilLZWDictionary utilLZWDictionary ;
 

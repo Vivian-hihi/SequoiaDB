@@ -64,7 +64,8 @@ namespace engine
 
       UINT32 _attribute ;
       UINT8  _compressType ;
-      UINT32 _hasDict ;
+      UINT32 _dictCreated ;
+      UINT8  _dictVersion ;
 
       UINT32 _pageSize ;
       UINT32 _lobPageSize ;
@@ -77,6 +78,7 @@ namespace engine
       UINT32 _totalLobPages ;
       UINT64 _totalDataFreeSpace ;
       UINT64 _totalIndexFreeSpace ;
+      UINT32 _currCompressRatio ;
       // end
 
       _detailedInfo ()
@@ -89,7 +91,8 @@ namespace engine
 
          _attribute           = 0 ;
          _compressType        = 0 ;
-         _hasDict             = FALSE ;
+         _dictCreated         = FALSE ;
+         _dictVersion         = 0 ;
 
          _pageSize            = 0 ;
          _lobPageSize         = 0 ;
@@ -101,6 +104,7 @@ namespace engine
          _totalLobPages       = 0 ;
          _totalDataFreeSpace  = 0 ;
          _totalIndexFreeSpace = 0 ;
+         _currCompressRatio   = 0 ;
       }
    } ;
    typedef class _detailedInfo detailedInfo ;

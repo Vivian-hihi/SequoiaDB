@@ -134,7 +134,7 @@ namespace engine
 
    INT32 dmsCompress ( _pmdEDUCB *cb, _dmsCompressorEntry *compressorEntry,
                        const BSONObj &obj, const CHAR* pOIDPtr, INT32 oidLen,
-                       const CHAR **ppData, INT32 *pDataSize ) ;
+                       const CHAR **ppData, INT32 *pDataSize, UINT8 &ratio ) ;
 
    /*
       ppData: output data pointer, not need release

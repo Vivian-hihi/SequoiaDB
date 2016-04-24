@@ -396,6 +396,7 @@ namespace engine
       BOOLEAN isCompressed         = FALSE ;
       const CHAR *compressedData   = NULL ;
       INT32 compressedDataSize     = 0 ;
+      UINT8 compressRatio          = 0 ;
 
       // sanity size check
       if ( obj.objsize() + DMS_RECORD_METADATA_SZ >
@@ -408,8 +409,8 @@ namespace engine
       // compression
       if ( compressorEntry->ready() )
       {
-         rc = dmsCompress ( cb, compressorEntry, obj, NULL, 0,
-                            &compressedData, &compressedDataSize ) ;
+         rc = dmsCompress ( cb, compressorEntry, obj, NULL, 0, &compressedData,
+                            &compressedDataSize, compressRatio ) ;
          if ( rc )
          {
             // In case of compression failure, store the record in original format.

@@ -238,19 +238,16 @@ namespace engine
       UINT32         _totalLobPages ;
       // end
 
-
       // This extent is used to store dictionary of the collection. If the
       // dictionary has not been created, the value should be DMS_INVALID_EXTENT.
       dmsExtentID    _dictExtentID ;
-      // For rebuild, a new dictionary will be created.
-      dmsExtentID    _newDictExtentID ;
-      // dictionary addreess;
+      UINT8          _dictVersion ;
       UINT8          _compressorType ;
-      UINT8          _pad1[ 3 ] ;  // reserved
+      UINT8          _pad1[ 2 ] ;  // reserved
       // for stat
       UINT64         _totalLobs ;
       // end stat
-      CHAR           _pad [ 384 ] ;
+      CHAR           _pad [ 388 ] ;
 
 
       void reset ( const CHAR *clName = NULL,
@@ -299,8 +296,8 @@ namespace engine
          _totalLobPages          = 0 ;
          _totalLobs              = 0 ;
          _compressorType         = DMS_INVALID_COMPRESSOR_TYPE ;
+         _dictVersion            = 0 ;
          _dictExtentID           = DMS_INVALID_EXTENT ;
-         _newDictExtentID        = DMS_INVALID_EXTENT ;
 
          // pad
          ossMemset( _pad1, 0, sizeof( _pad1 ) ) ;
@@ -402,6 +399,7 @@ namespace engine
       UINT32      _uniqueIdxNum ;
       dmsExtentID _dictExtID ;
       UINT8       _compressorType ;
+      UINT8       _compressionRatio ;
 
       void reset()
       {
@@ -767,6 +765,7 @@ namespace engine
                                               BSONElement *extraOID,
                                               _pmdEDUCB *cb,
                                               BOOLEAN compressed,
+                                              UINT8 compressRatio = 0,
                                               BOOLEAN addIntoList = TRUE ) ;
 
          INT32          _extentRemoveRecord ( dmsMB *mb,

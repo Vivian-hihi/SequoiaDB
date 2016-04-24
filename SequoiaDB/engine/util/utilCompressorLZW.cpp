@@ -59,6 +59,7 @@ namespace engine
        * 4 more bytes are reserved at the beginning to store the original length
        */
       INT32 rc = SDB_OK ;
+      UINT64 size = 0 ;
       PD_TRACE_ENTRY( SDB__UTILCOMPRESSORLZW_COMPRESSBOUND ) ;
 
       if ( UTIL_INVALID_DICT == dictionary )
@@ -68,9 +69,18 @@ namespace engine
          goto error ;
       }
 
-      maxCompressedLen =
-         ( (( utilLZWDictHead *)dictionary)->_codeSize * srcLen  + 7 ) / 8
-         + sizeof( UINT32 ) ;
+      size = ( (( utilLZWDictHead *)dictionary)->_codeSize * srcLen  + 7 ) / 8
+             + sizeof( UINT32 ) ;
+      /* Overflow check */
+      if ( 0 != ( size >> 32 ) )
+      {
+         PD_LOG( PDERROR, "Input length too big: %u", srcLen ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      maxCompressedLen = size ;
+
    done:
       PD_TRACE_EXITRC( SDB__UTILCOMPRESSORLZW_COMPRESSBOUND, rc ) ;
       return rc ;
