@@ -1696,7 +1696,7 @@ namespace sdbclient
       sdbReplicaGroup& operator=( const sdbReplicaGroup& ) ;
    public :
 /** \var pReplicaGroup
-    \breif A pointer of virtual base class _sdbReplicaGroup
+    \brief A pointer of virtual base class _sdbReplicaGroup
 
      Class sdbReplicaGroup is a shell for _sdbReplicaGroup. We use pCursor to
      call the methods in class _sdbReplicaGroup.
