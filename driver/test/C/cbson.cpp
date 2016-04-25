@@ -466,7 +466,7 @@ TEST(cbson, dateType)
    sdbReleaseConnection ( db ) ;
 }
 
-TEST(debug, timestampType)
+TEST(cbson, timestampType)
 {
    sdbConnectionHandle    db = 0 ;
    sdbCollectionHandle    cl = 0 ;
