@@ -516,7 +516,7 @@ TEST(cbson, timestampType)
       if ( jsonToBson( &obj, ppAbnormalTimestamp[i] ) )
       {
          rc = SDB_INVALIDARG ;
-         ASSERT_EQ( SDB_OK, rc ) ;
+         ASSERT_EQ( SDB_OK, rc ) << ppAbnormalTimestamp[i] ;
       }
    }
 
