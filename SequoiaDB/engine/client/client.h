@@ -126,7 +126,7 @@ typedef sdbNodeHandle             sdbReplicaNodeHandle ;
                            const UINT32 cacheTimeInterval,
                            const UINT32 maxCacheSlotCount ) ;
     \brief open cache strategy to improve performance
-    \param [in] enableCacheStrategy The flag to OPEN the cache strategy, TURE is expectable
+    \param [in] enableCacheStrategy The flag to OPEN the cache strategy
     \param [in] cacheTimeInterval The life cycle of cached object
     \param [in] maxCacheSlotCount The count of slot to cache objects, one slot holds an object
     \retval SDB_OK open cache strategy Success
