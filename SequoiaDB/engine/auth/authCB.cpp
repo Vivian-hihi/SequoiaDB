@@ -362,6 +362,7 @@ namespace engine
       if ( !_authEnabled )
       {
          need = FALSE ;
+         goto done ;
       }
 
       rc = rtnResolveCollectionNameAndLock( AUTH_USR_COLLECTION,
