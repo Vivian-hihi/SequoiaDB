@@ -1140,6 +1140,30 @@ __METHOD_IMP(sdb_get_version)
    return MAKE_RETURN_INT_INT_INT_INT_STRING( version, sub_version, fixed, release, build ) ;
 }
 
+__METHOD_IMP(sdb_init_client)
+{
+   INT32 rc           = 0 ;
+   BOOLEAN turnOn     = FALSE ;
+   INT32 timeInterval = 0 ;
+   INT32 maxCacheSlot = 0 ;
+
+   if ( !PARSE_PYTHON_ARGS( args, "iii", &turnOn,
+                            &timeInterval, &maxCacheSlot ) )
+   {
+      rc = SDB_INVALIDARGS ;
+      goto done ;
+   }
+
+   rc = initClient( turnOn, timeInterval, maxCacheSlot ) ;
+   if ( rc )
+   {
+      goto done ;
+   }
+
+done:
+   return MAKE_RETURN_INT( rc ) ;
+}
+
 __METHOD_IMP(sdb_get_datacenter)
 {
    INT32 rc               = 0 ;
@@ -3679,6 +3703,7 @@ static PyMethodDef sequoiadb_methods[] = {
    {"sdb_close_all_cursors",           sdb_close_all_cursors,           METH_VARARGS},
    {"sdb_is_valid",                    sdb_is_valid,                    METH_VARARGS},
    {"sdb_get_version",                 sdb_get_version,                 METH_VARARGS},
+   {"sdb_init_client",                 sdb_init_client,                 METH_VARARGS},
    {"sdb_get_datacenter",              sdb_get_datacenter,              METH_VARARGS},
    
    /** cs */

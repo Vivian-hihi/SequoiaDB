@@ -116,3 +116,9 @@ def _raise_if_error(msg, rc):
          raise SDBSystemError(msg, rc)
       else:
          raise SDBError(msg, rc)
+
+def init_client(on, cache_time_interval = 0, max_cache_slot = 0):
+   '''enable cache strategy to improve performance
+   '''
+   enable = on and 1 or 0
+   sdb.sdb_init_client( enable, cache_time_interval, max_cache_slot)
