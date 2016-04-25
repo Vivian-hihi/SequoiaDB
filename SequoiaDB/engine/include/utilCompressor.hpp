@@ -59,7 +59,7 @@ namespace engine
    typedef void * utilDictHandle ;
 
    #define UTIL_COMPRESSOR_DFT_MIN_RATIO     80
-   #define UTIL_COMPRESSOR_DFT_LEVEL         UTIL_COMP_BALANCE
+   #define UTIL_COMPRESSOR_DFT_LEVEL         UTIL_COMP_BEST_COMPRESSION
 
    struct _utilCompressStrategy
    {

@@ -69,7 +69,6 @@ namespace engine
 
    typedef UINT32 LZW_CODE ;
 
-   #define UTIL_CODE_SPLIT_NUM            4
    #define DICT_BITS_UPBOUND( bits )     ( ( 1 << bits ) - 1 )
 
    /*
@@ -382,9 +381,28 @@ namespace engine
    } ;
    typedef _utilLZWDictCreator utilLZWDictCreator ;
 
-   struct _utilLZWHeader
+   #define UTIL_VAR_LEN_FLAG           0x80000000
+   #define UTIL_VAR_LEN_LENGTH_MASK    0x00FFFFFF
+   class _utilLZWHeader
    {
-      UINT32 _uncompressedLen ;
+   public:
+      _utilLZWHeader()
+      : _value( 0 )
+      {
+      }
+
+      void setVarLenFlag()   { _value |= UTIL_VAR_LEN_FLAG ; }
+      BOOLEAN isVarLenCode() { return ( 0 != (_value & UTIL_VAR_LEN_FLAG ) ) ; }
+      void setLength( UINT32 len )
+      {
+         _value = ( ( _value & UTIL_VAR_LEN_FLAG ) | len ) ;
+      }
+      UINT32 getLength()
+      {
+         return ( _value & UTIL_VAR_LEN_LENGTH_MASK ) ;
+      }
+   private:
+      UINT32 _value ;
    } ;
    typedef _utilLZWHeader utilLZWHeader ;
 
@@ -726,7 +744,7 @@ namespace engine
    {
       for ( UINT8 i = 0; i < UTIL_MAX_DICT_SPLIT_NUM; ++i )
       {
-         if ( code < DICT_BITS_UPBOUND( _head->_splitInfo[ i ] ) )
+         if ( code < ( LZW_CODE )DICT_BITS_UPBOUND( _head->_splitInfo[ i ] ) )
          {
             lenIdx = i ;
             splitSize = _head->_splitInfo[ i ] ;

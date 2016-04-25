@@ -74,14 +74,13 @@ namespace engine
          INT32 _compressLevelThree( utilLZWContext &context,
                                     const CHAR* source,
                                     UINT32 sourceLen,
-                                    UINT32 maxSize ) ;
+                                    UINT32 maxSize,
+                                    BOOLEAN &varLenCode ) ;
 
-         void _decompressLevelOne( utilLZWContext &context,
-                                   CHAR *dest, UINT32 &destLen ) ;
-         void _decompressLevelTwo( utilLZWContext &context,
-                                   CHAR *dest, UINT32 &destLen ) ;
-         void _decompressLevelThree( utilLZWContext &context,
-                                   CHAR *dest, UINT32 &destLen ) ;
+         void _decodeFixLenCode( utilLZWContext &context,
+                                 CHAR *dest, UINT32 &destLen ) ;
+         void _decodeVarLenCode( utilLZWContext &context,
+                                 CHAR *dest, UINT32 &destLen ) ;
 
          OSS_INLINE LZW_CODE _readCode( _utilLZWContext *ctx ) ;
          OSS_INLINE LZW_CODE _readVarLenCode( _utilLZWContext *ctx ) ;

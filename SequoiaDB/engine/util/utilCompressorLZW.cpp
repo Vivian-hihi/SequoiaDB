@@ -68,13 +68,13 @@ namespace engine
       {
          length = remainLen ;
          code = dictionary->findStrExt( (BYTE*)(source + currPos), length ) ;
+         _writeCode( &context, code ) ;
          if ( ++codeNum > maxCodeNum )
          {
             rc = SDB_UTIL_COMPRESS_ABORT ;
             goto error ;
          }
 
-         _writeCode( &context, code ) ;
          currPos += length ;
          remainLen -= length ;
       } while ( remainLen > 0 ) ;
@@ -130,10 +130,72 @@ namespace engine
    INT32 _utilCompressorLZW::_compressLevelThree( utilLZWContext &context,
                                                   const CHAR* source,
                                                   UINT32 sourceLen,
-                                                  UINT32 maxSize )
+                                                  UINT32 maxSize,
+                                                  BOOLEAN &varLenCode )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__UTILCOMPRESSORLZW__COMPRESSLEVELTHREE ) ;
+      UINT32 length = 0 ;
+      UINT32 remainLen = sourceLen ;
+      UINT32 currPos = 0 ;
+      LZW_CODE code = UTIL_INVALID_DICT_CODE ;
+      UINT8 lenIdx = 0 ;
+      UINT8 splitSize = 0 ;
+      UINT32 varLenTotalBits = 0 ;
+      BOOLEAN useVarLenComp = FALSE ;
+      UINT32 fixLenTotalBits = 0 ;
+      utilLZWDictionary *dictionary = context.getDictionary() ;
+      SDB_ASSERT( dictionary, "Dictionary should not be NULL" ) ;
+      vector<LZW_CODE> codeVec ;
+
+      do
+      {
+         length = remainLen ;
+         code = dictionary->findStrExt( (BYTE*)(source + currPos ), length ) ;
+         dictionary->getVarLenInfo( code, lenIdx, splitSize ) ;
+         codeVec.push_back( code ) ;
+         varLenTotalBits += splitSize + UTIL_VAR_LEN_FLAG_SIZE ;
+         currPos += length ;
+         remainLen -= length ;
+      } while ( remainLen > 0 ) ;
+
+      fixLenTotalBits = codeVec.size() * dictionary->getCodeSize() ;
+
+      useVarLenComp = ( ( varLenTotalBits * 100 / fixLenTotalBits ) <= 95 ) ?
+                      TRUE : FALSE ;
+
+      if ( useVarLenComp )
+      {
+         if ( varLenTotalBits > ( maxSize * 8 ) )
+         {
+            rc = SDB_UTIL_COMPRESS_ABORT ;
+            goto error ;
+         }
+
+         for ( vector<LZW_CODE>::iterator itr = codeVec.begin();
+               itr != codeVec.end(); ++itr )
+         {
+            _writeVarLenCode( &context, *itr ) ;
+         }
+      }
+      else
+      {
+         if ( fixLenTotalBits > ( maxSize * 8 ) )
+         {
+            rc = SDB_UTIL_COMPRESS_ABORT ;
+            goto error ;
+         }
+
+         for ( vector<LZW_CODE>::iterator itr = codeVec.begin();
+               itr != codeVec.end(); ++itr )
+         {
+            _writeCode( &context, *itr ) ;
+         }
+      }
+
+      _flushBits( &context ) ;
+
+      varLenCode = useVarLenComp ;
 
    done:
       PD_TRACE_EXITRC( SDB__UTILCOMPRESSORLZW__COMPRESSLEVELTHREE, rc ) ;
@@ -142,19 +204,18 @@ namespace engine
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__UTILCOMPRESSORLZW__DECOMPRESSLEVELONE, "_utilCompressorLZW::_decompressLevelOne" )
-   void _utilCompressorLZW::_decompressLevelOne( utilLZWContext &context,
-                                                 CHAR *dest,
-                                                 UINT32 &destLen )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__UTILCOMPRESSORLZW__DECODEFIXLENCODE, "_utilCompressorLZW::_decodeFixLenCode" )
+   void _utilCompressorLZW::_decodeFixLenCode( utilLZWContext &context,
+                                               CHAR *dest, UINT32 &destLen )
    {
-      PD_TRACE_ENTRY( SDB__UTILCOMPRESSORLZW__DECOMPRESSLEVELONE ) ;
+      PD_TRACE_ENTRY( SDB__UTILCOMPRESSORLZW__DECODEFIXLENCODE ) ;
       UINT32 strLen = 0 ;
       UINT32 totalOut = 0 ;
       LZW_CODE code = UTIL_INVALID_DICT_CODE ;
       utilLZWDictionary *dictionary = context.getDictionary() ;
       SDB_ASSERT( dictionary, "Dictionary should not be NULL" ) ;
 
-      for( ; context._streamPos < context._streamLen; )
+      while ( context._streamPos < context._streamLen )
       {
          code = _readCode( &context ) ;
          strLen = dictionary->getStrExt( code, (UINT8*)(dest + totalOut),
@@ -163,22 +224,22 @@ namespace engine
       }
 
       destLen = totalOut ;
-      PD_TRACE_EXIT( SDB__UTILCOMPRESSORLZW__DECOMPRESSLEVELONE ) ;
+      PD_TRACE_EXIT( SDB__UTILCOMPRESSORLZW__DECODEFIXLENCODE ) ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__UTILCOMPRESSORLZW__DECOMPRESSLEVELTWO, "_utilCompressorLZW::_decompressLevelTwo" )
-   void _utilCompressorLZW::_decompressLevelTwo( utilLZWContext &context,
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__UTILCOMPRESSORLZW__DECODEVARLENCODE, "_utilCompressorLZW::_decodeVarLenCode" )
+   void _utilCompressorLZW::_decodeVarLenCode( utilLZWContext &context,
                                                  CHAR *dest,
                                                  UINT32 &destLen)
    {
-      PD_TRACE_ENTRY( SDB__UTILCOMPRESSORLZW__DECOMPRESSLEVELTWO ) ;
+      PD_TRACE_ENTRY( SDB__UTILCOMPRESSORLZW__DECODEVARLENCODE ) ;
       UINT32 strLen = 0 ;
       UINT32 totalOut = 0 ;
       LZW_CODE code = UTIL_INVALID_DICT_CODE ;
       utilLZWDictionary *dictionary = context.getDictionary() ;
       SDB_ASSERT( dictionary, "Dictionary should not be NULL" ) ;
 
-      for( ; context._streamPos < context._streamLen; )
+      while ( context._streamPos < context._streamLen )
       {
          code = _readVarLenCode( &context ) ;
          strLen = dictionary->getStrExt( code, (UINT8*)(dest + totalOut),
@@ -187,14 +248,7 @@ namespace engine
       }
 
       destLen = totalOut ;
-      PD_TRACE_EXIT( SDB__UTILCOMPRESSORLZW__DECOMPRESSLEVELTWO ) ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__UTILCOMPRESSORLZW__DECOMPRESSLEVELTHREE, "_utilCompressorLZW::_decompressLevelThree" )
-   void _utilCompressorLZW::_decompressLevelThree( utilLZWContext &context,
-                                                   CHAR *dest,
-                                                   UINT32 &destLen)
-   {
+      PD_TRACE_EXIT( SDB__UTILCOMPRESSORLZW__DECODEVARLENCODE ) ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__UTILCOMPRESSORLZW_COMPRESSBOUND, "_utilCompressorLZW::compressBound" )
@@ -252,6 +306,8 @@ namespace engine
       UINT8 minRatio = 0 ;
       UTIL_COMPRESSION_LEVEL level = UTIL_COMPRESSOR_DFT_LEVEL ;
       UINT32 maxSize = 0 ;
+      BOOLEAN varLenCode = FALSE ;
+      _utilLZWHeader head ;
 
       if ( UTIL_INVALID_DICT == dictHandle )
       {
@@ -278,8 +334,7 @@ namespace engine
       context._stream = (BYTE* )dest ;
       context._streamLen = destLen ;
 
-      /* Store the header at the beginning. */
-      (( _utilLZWHeader * )( context._stream ))->_uncompressedLen = sourceLen ;
+      head.setLength( sourceLen );
       context._streamPos += sizeof( _utilLZWHeader ) ;
 
       switch( level )
@@ -291,11 +346,19 @@ namespace engine
             rc = _compressLevelTwo( context, source, sourceLen, maxSize ) ;
             break ;
          default:
-            rc = _compressLevelThree( context, source, sourceLen, maxSize ) ;
+            rc = _compressLevelThree( context, source, sourceLen,
+                                      maxSize, varLenCode ) ;
             break ;
       }
 
       PD_RC_CHECK( rc, PDERROR, "Failed to compress data, rc: %d", rc ) ;
+
+      if ( varLenCode )
+      {
+         head.setVarLenFlag() ;
+      }
+
+      ossMemcpy( dest, &head, sizeof( _utilLZWHeader ) ) ;
 
       destLen = context._streamPos ;
 
@@ -312,7 +375,7 @@ namespace engine
                                                  UINT32 &length )
    {
       PD_TRACE_ENTRY( SDB__UTILCOMPRESSORLZW_GETUNCOMPRESSLEN ) ;
-      length = ((_utilLZWHeader *)source)->_uncompressedLen ;
+      length = ((_utilLZWHeader *)source)->getLength() ;
 
       PD_TRACE_EXIT( SDB__UTILCOMPRESSORLZW_GETUNCOMPRESSLEN) ;
 
@@ -328,7 +391,7 @@ namespace engine
       PD_TRACE_ENTRY( SDB__UTILCOMPRESSORLZW_DECOMPRESS ) ;
       utilLZWContext context ;
       utilLZWDictionary dictionary ;
-      UINT32 level = UTIL_COMPRESSOR_DFT_LEVEL ;
+      utilLZWHeader *head = NULL ;
 
       if ( UTIL_INVALID_DICT == dictHandle )
       {
@@ -344,18 +407,15 @@ namespace engine
       context._streamLen = sourceLen ;
       /* Skip the length at the beginning. */
       context._streamPos = sizeof( UINT32 ) ;
+      head = ( utilLZWHeader * )source ;
 
-      switch( level )
+      if ( head->isVarLenCode() )
       {
-         case UTIL_COMP_BEST_SPEED:
-            _decompressLevelOne( context, dest, destLen );
-            break ;
-         case UTIL_COMP_BALANCE:
-            _decompressLevelTwo( context, dest, destLen ) ;
-            break ;
-         default:
-            _decompressLevelThree( context, dest, destLen ) ;
-            break ;
+         _decodeVarLenCode( context, dest, destLen ) ;
+      }
+      else
+      {
+         _decodeFixLenCode( context, dest, destLen );
       }
 
    done:
