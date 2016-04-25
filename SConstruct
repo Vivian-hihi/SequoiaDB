@@ -325,10 +325,11 @@ hasTool = has_option( "tool" )
 hasShell = has_option( "shell" )
 hasFmp = has_option("fmp")
 hasAll = has_option( "all" )
+hasFap = False
 if guess_os == "win32":
     hasFap = False
 else:
-   hasFap = has_option("fap")
+    hasFap = has_option("fap")
 hasEnterprise = has_option("enterprise")
 hasGProf = has_option("gprof")
 hasSSL = False
