@@ -898,7 +898,7 @@ namespace engine
                  ( !ctrlParam._role[ SDB_ROLE_COORD ] &&
                    COORD_GROUPID == itGrp->second ) )
             {
-               itGrp++ ;
+               ++itGrp ;
                continue ;
             }
             expectGrpLst[ itGrp->first ] = itGrp->second ;

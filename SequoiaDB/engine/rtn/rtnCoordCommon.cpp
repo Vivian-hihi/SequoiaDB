@@ -2808,7 +2808,7 @@ namespace engine
       while( iterMap != sendNodes.end() )
       {
          cb->getCoordSession()->delRequest( iterMap->first );
-         sendNodes.erase( iterMap++ );
+         iterMap = sendNodes.erase( iterMap );
       }
    }
 

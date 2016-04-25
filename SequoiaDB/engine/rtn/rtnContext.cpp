@@ -2750,7 +2750,7 @@ namespace engine
          if ( -1 == emptyIter->second->getContextID() )
          {
             SDB_OSS_DEL emptyIter->second ;
-            _emptyContextMap.erase( emptyIter++ ) ;
+            emptyIter = _emptyContextMap.erase( emptyIter ) ;
             continue ;
          }
 
@@ -2771,7 +2771,7 @@ namespace engine
          }
          _prepareContextMap.insert( EMPTY_CONTEXT_MAP::value_type(
                                     emptyIter->first, emptyIter->second ) ) ;
-         _emptyContextMap.erase( emptyIter++ ) ;
+         emptyIter = _emptyContextMap.erase( emptyIter ) ;
       }
 
       return rc;
@@ -4543,7 +4543,7 @@ namespace engine
                if ( rc )
                {
                   pRtncb->contextDelete( iterSubCTXCur->first, cb );
-                  _subCLBufList.erase( iterSubCTXCur++ );
+                  iterSubCTXCur = _subCLBufList.erase( iterSubCTXCur );
                   if ( rc != SDB_DMS_EOC )
                   {
                      goto error;
@@ -5470,7 +5470,7 @@ namespace engine
          {
             _pRtncb->contextDelete( iter->second, cb );
          }
-         _subContextList.erase( iter++ );
+         iter = _subContextList.erase( iter );
       }
    }
 
@@ -5578,7 +5578,7 @@ namespace engine
                    "Failed to del sub-collection, rc: %d",
                    rc ) ;
          rc = SDB_OK ;
-         _subContextList.erase( iterCtx++ ) ;
+         iterCtx = _subContextList.erase( iterCtx ) ;
       }
 
       /// clear main collection's catalog info

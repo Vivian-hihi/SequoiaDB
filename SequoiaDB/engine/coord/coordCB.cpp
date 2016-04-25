@@ -535,7 +535,7 @@ namespace engine
                   _groupNameMap.erase( itName ) ;
                }
                /// erase
-               _nodeGroupInfo.erase( it++ ) ;
+               it = _nodeGroupInfo.erase( it ) ;
             }
             else
             {
