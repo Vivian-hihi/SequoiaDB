@@ -164,12 +164,12 @@ namespace engine
                }
                return *this ;
             }
-            iterator operator++ ( int )
+            /*iterator operator++ ( int )
             {
                iterator tmp( *this ) ;
                ++(*this) ;
                return tmp ;
-            }
+            }*/
             iterator& operator-- ()
             {
                if ( _pData )
@@ -182,12 +182,12 @@ namespace engine
                }
                return *this ;
             }
-            iterator operator-- ( int )
+            /*iterator operator-- ( int )
             {
                iterator tmp( *this ) ;
                --(*this) ;
                return tmp ;
-            }
+            }*/
             iterator& operator+ ( UINT32 step )
             {
                if ( _pData )
@@ -319,12 +319,12 @@ namespace engine
                }
                return *this ;
             }
-            const_iterator operator++ ( int )
+            /*const_iterator operator++ ( int )
             {
                const_iterator tmp( *this ) ;
                ++(*this) ;
                return tmp ;
-            }
+            }*/
             const_iterator& operator-- ()
             {
                if ( _pData )
@@ -337,12 +337,12 @@ namespace engine
                }
                return *this ;
             }
-            const_iterator operator-- ( int )
+            /*const_iterator operator-- ( int )
             {
                const_iterator tmp( *this ) ;
                ++(*this) ;
                return tmp ;
-            }
+            }*/
             const_iterator& operator+ ( UINT32 step )
             {
                if ( _pData )
@@ -447,11 +447,11 @@ namespace engine
                                 &_eleSize ) ;
       }
 
-      OSS_INLINE void erase( iterator position )
+      OSS_INLINE iterator erase( iterator position )
       {
          if ( _pMap )
          {
-            _pMap->erase( position._it ) ;
+            _pMap->erase( position._it++ ) ;
          }
          else if ( (UINT32)(position._pData - position._pSrc) < _eleSize )
          {
@@ -462,6 +462,7 @@ namespace engine
                _staticBuf[ i ] = _staticBuf[ i + 1 ] ;
             }
          }
+         return position ;
       }
 
       OSS_INLINE UINT32 erase( const Key& key )
