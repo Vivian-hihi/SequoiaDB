@@ -52,7 +52,7 @@ static const INT32 clientDefaultVersion = 1 ;
 static const INT16 clientDefaultW = 0 ;
 static const UINT64 clientDefaultRouteID = 0 ;
 static const SINT32 clientDefaultFlags = 0 ;
-static BOOLEAN cacheStrategyTurnOn = FALSE ;
+static BOOLEAN cacheEnabled = FALSE ;
 static UINT32  cachedTimeInterval = 300 ;   // default is 300 milliseconds
 static UINT32  maxCachedSlotCount = 1000 ;
 static INT32 clientCheckBuffer ( CHAR **ppBuffer, INT32 *bufferSize,
@@ -470,7 +470,7 @@ INT32 hash_table_create( hashTable **tb, const UINT32 bucketSize )
    INT32 rc = SDB_OK ;
    CHAR *ptr = NULL ;
 
-   if ( !cacheStrategyTurnOn )
+   if ( !cacheEnabled )
    {
       goto done ;
    }
@@ -520,7 +520,7 @@ INT32 hash_table_destroy( hashTable **tb )
 {
    INT32 rc = SDB_OK ;
    UINT32 idx = 0 ;
-   if ( !cacheStrategyTurnOn )
+   if ( !cacheEnabled )
    {
       goto done ;
    }
@@ -560,7 +560,7 @@ INT32 insertCachedObject( hashTable *tb, const CHAR *key )
    htbNode *node  = NULL ;
    UINT64 curTime = 0 ;
 
-   if ( !cacheStrategyTurnOn )
+   if ( !cacheEnabled )
    {
       goto done ;
    }
@@ -612,7 +612,7 @@ INT32 removeCachedObject( hashTable *tb, const CHAR *key )
 {
    INT32 rc = SDB_OK ;
 
-   if ( !cacheStrategyTurnOn )
+   if ( !cacheEnabled )
    {
       goto done ;
    }
@@ -646,7 +646,7 @@ BOOLEAN fetchCachedObject( hashTable *tb, const CHAR *key )
    htbNode *node  = NULL ;
    UINT64 curTime = 0 ;
 
-   if ( !cacheStrategyTurnOn )
+   if ( !cacheEnabled )
    {
       rc = SDB_INVALIDARG ;
       goto error ;
@@ -694,7 +694,7 @@ INT32 updateCachedObject( const INT32 code, hashTable *tb, const CHAR *key )
    CHAR *pos      = NULL ;
    CHAR csName[ CLINET_CS_NAME_SIZE ] = { 0 } ;
 
-   if ( !cacheStrategyTurnOn )
+   if ( !cacheEnabled )
    {
       goto done ;
    }
@@ -768,7 +768,7 @@ INT32 initCacheStrategy( BOOLEAN enableCacheStrategy,
 {
    if ( enableCacheStrategy )
    {
-      cacheStrategyTurnOn = TRUE ;
+      cacheEnabled = TRUE ;
       cachedTimeInterval = ( ( 0 != timeInterval ) ?
                              timeInterval : CACHED_CHECK_TIME_INTERVAL ) ;
       maxCachedSlotCount = ( ( 0 != maxCachedCount ) ?
@@ -776,7 +776,7 @@ INT32 initCacheStrategy( BOOLEAN enableCacheStrategy,
    }
    else
    {
-      cacheStrategyTurnOn = FALSE ;
+      cacheEnabled = FALSE ;
       cachedTimeInterval  = CACHED_CHECK_TIME_INTERVAL ;
       maxCachedSlotCount  = MAX_CACHE_SLOT_NUMBER ;
    }
@@ -788,7 +788,7 @@ done:
 INT32 initHashTable( hashTable **tb )
 {
    INT32 rc = SDB_OK ;
-   if ( !cacheStrategyTurnOn )
+   if ( !cacheEnabled )
    {
       goto done ;
    }
