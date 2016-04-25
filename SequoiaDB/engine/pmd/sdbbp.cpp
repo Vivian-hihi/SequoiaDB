@@ -122,13 +122,7 @@ void monitor_thread ( const OSSPID  shpid ,
    PD_TRACE_ENTRY ( SDB_MONITOR_THREAD );
    while ( ossIsProcessRunning ( shpid ) )
    {
-      try
-      {
-         boost::this_thread::sleep ( boost::posix_time::seconds(1) ) ;
-      }
-      catch ( boost::thread_interrupted &  )
-      {
-      }
+      ossSleep( OSS_ONE_SEC ) ;
    }
 
    // shell has exited, so just clean up and exit the whole program
