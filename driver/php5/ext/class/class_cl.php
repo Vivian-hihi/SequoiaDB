@@ -496,6 +496,12 @@ class SequoiaCL
     * @param $numToReturn	an integer argument. Only return numToReturn records, return all if this parameter is -1.
     *
     * @param $flag	an integer argument. The query flag, default to be 0.
+    *                                   @code
+    *                                   FLG_QUERY_FORCE_HINT(0x00000080)      : Force to use specified hint to query, if database have no index assigned by the hint, fail to query
+    *                                   FLG_QUERY_PARALLED(0x00000100)        : Enable paralled sub query
+    *                                   FLG_QUERY_WITH_RETURNDATA(0x00000200) : In general, query won't return data until cursor get from database,
+    *                                                                           when add this flag, return data in query response, it will be more high-performance
+    *                                   @endcode
     *
     * @return Returns a new SequoiaCursor object.
     *
@@ -536,6 +542,12 @@ class SequoiaCL
     * @param $numToReturn	an integer argument.	Only return numToReturn records, return all if this parameter is -1.
     *
     * @param $flag	an integer argument.	The query flag, default to be 0.
+    *                                   @code
+    *                                   FLG_QUERY_FORCE_HINT(0x00000080)      : Force to use specified hint to query, if database have no index assigned by the hint, fail to query
+    *                                   FLG_QUERY_PARALLED(0x00000100)        : Enable paralled sub query
+    *                                   FLG_QUERY_WITH_RETURNDATA(0x00000200) : In general, query won't return data until cursor get from database,
+    *                                                                           when add this flag, return data in query response, it will be more high-performance
+    *                                   @endcode
     *
     * @return Returns a new SequoiaCursor object.
     *
@@ -572,6 +584,12 @@ class SequoiaCL
     * @param $numToReturn	an integer argument.	Only return numToReturn records, return all if this parameter is -1.
     *
     * @param $flag	an integer argument.	The query flag, default to be 0.
+    *                                   @code
+    *                                   FLG_QUERY_FORCE_HINT(0x00000080)      : Force to use specified hint to query, if database have no index assigned by the hint, fail to query
+    *                                   FLG_QUERY_PARALLED(0x00000100)        : Enable paralled sub query
+    *                                   FLG_QUERY_WITH_RETURNDATA(0x00000200) : In general, query won't return data until cursor get from database,
+    *                                                                           when add this flag, return data in query response, it will be more high-performance
+    *                                   @endcode
     *
     * @return Returns a new SequoiaCursor object.
     *
@@ -617,6 +635,12 @@ class SequoiaCL
     * @param $numToReturn	an integer argument.	Only return numToReturn records, return all if this parameter is -1.
     *
     * @param $flag	an integer argument.	The query flag, default to be 0.
+    *                                   @code
+    *                                   FLG_QUERY_FORCE_HINT(0x00000080)      : Force to use specified hint to query, if database have no index assigned by the hint, fail to query
+    *                                   FLG_QUERY_PARALLED(0x00000100)        : Enable paralled sub query
+    *                                   FLG_QUERY_WITH_RETURNDATA(0x00000200) : In general, query won't return data until cursor get from database,
+    *                                                                           when add this flag, return data in query response, it will be more high-performance
+    *                                   @endcode
     *
     * @return Returns a new SequoiaCursor object.
     *
