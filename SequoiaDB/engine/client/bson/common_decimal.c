@@ -2777,7 +2777,7 @@ int decimal_cmp( const bson_decimal *left, const bson_decimal *right )
 
    if ( right->ndigits == 0 )
    {
-      if ( left->ndigits == SDB_DECIMAL_POS )
+      if ( left->sign == SDB_DECIMAL_POS )
       {
          return 1 ;
       }
