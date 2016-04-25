@@ -46,7 +46,7 @@ namespace engine
         do\
         {\
            QGM_EXTEND_TABLE::iterator itr = _table.begin() ;\
-           for ( ; itr != _table.end(); itr++ )\
+           for ( ; itr != _table.end(); ++itr )\
            {\
               if ( _local != itr->second )\
               {\
@@ -85,7 +85,7 @@ namespace engine
       }
       {
       QGM_EXTEND_TABLE::iterator itr = _table.begin() ;
-      for ( ; itr != _table.end(); itr++ )
+      for ( ; itr != _table.end(); ++itr )
       {
          if ( NULL == itr->second )
          {
