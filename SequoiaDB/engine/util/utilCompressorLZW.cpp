@@ -134,30 +134,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__UTILCOMPRESSORLZW__COMPRESSLEVELTHREE ) ;
-      LZW_CODE code = 0 ;
-      UINT32 length = 0 ;
-      UINT32 remainLen = sourceLen ;
-      UINT32 currPos = 0 ;
-      UINT32 maxBitNum = maxSize * 8 ;
-      UINT32 totalBitNum = 0 ;
-      utilLZWDictionary *dictionary = context.getDictionary() ;
-      SDB_ASSERT( dictionary, "Dictionary should not be NULL" ) ;
 
-      do
-      {
-         length = remainLen ;
-         code = dictionary->findStrExt( (BYTE*)(source + currPos), length ) ;
-         totalBitNum += _writeVarLenCode( &context, code ) ;
-         if ( totalBitNum > maxBitNum )
-         {
-            rc = SDB_UTIL_COMPRESS_ABORT ;
-            goto error ;
-         }
-         currPos += length ;
-         remainLen -= length ;
-      } while ( remainLen > 0 ) ;
-
-      _flushBits( &context ) ;
    done:
       PD_TRACE_EXITRC( SDB__UTILCOMPRESSORLZW__COMPRESSLEVELTHREE, rc ) ;
       return rc ;
