@@ -52,7 +52,8 @@ namespace engine
 
       INT32 compress( const CHAR *source, UINT32 sourceLen,
                       CHAR *dest, UINT32 &destLen,
-                      const utilDictHandle dictionary = NULL ) ;
+                      const utilDictHandle dictionary = NULL,
+                      const utilCompressStrategy *strategy = NULL ) ;
 
       INT32 getUncompressedLen( const CHAR *source, UINT32 sourceLen,
                                 UINT32 &length) ;

@@ -52,7 +52,8 @@ namespace engine
 
          INT32 compress( const CHAR *source, UINT32 sourceLen,
                          CHAR *dest, UINT32 &destLen,
-                         const utilDictHandle dictionary = NULL ) ;
+                         const utilDictHandle dictionary = NULL,
+                         const utilCompressStrategy *strategy = NULL ) ;
 
          INT32 getUncompressedLen( const CHAR *source, UINT32 sourceLen,
                                    UINT32 &length) ;
@@ -62,11 +63,32 @@ namespace engine
                            const utilDictHandle dictionary = NULL ) ;
 
       private:
+         INT32 _compressLevelOne( utilLZWContext &context,
+                                  const CHAR* source,
+                                  UINT32 sourceLen,
+                                  UINT32 maxSize ) ;
+         INT32 _compressLevelTwo( utilLZWContext &context,
+                                  const CHAR* source,
+                                  UINT32 sourceLen,
+                                  UINT32 maxSize ) ;
+         INT32 _compressLevelThree( utilLZWContext &context,
+                                    const CHAR* source,
+                                    UINT32 sourceLen,
+                                    UINT32 maxSize ) ;
+
+         void _decompressLevelOne( utilLZWContext &context,
+                                   CHAR *dest, UINT32 &destLen ) ;
+         void _decompressLevelTwo( utilLZWContext &context,
+                                   CHAR *dest, UINT32 &destLen ) ;
+         void _decompressLevelThree( utilLZWContext &context,
+                                   CHAR *dest, UINT32 &destLen ) ;
+
          OSS_INLINE LZW_CODE _readCode( _utilLZWContext *ctx ) ;
-         OSS_INLINE LZW_CODE _readCodeExt( _utilLZWContext *ctx ) ;
+         OSS_INLINE LZW_CODE _readVarLenCode( _utilLZWContext *ctx ) ;
          OSS_INLINE UINT8 _readByte( _utilLZWContext *ctx ) ;
          OSS_INLINE void _writeCode( _utilLZWContext *ctx, LZW_CODE code ) ;
-         OSS_INLINE void _writeCodeExt( _utilLZWContext *ctx, LZW_CODE code ) ;
+         OSS_INLINE UINT8 _writeVarLenCode( _utilLZWContext *ctx,
+                                            LZW_CODE code ) ;
          OSS_INLINE void _writeByte( _utilLZWContext *ctx, UINT8 ch ) ;
          OSS_INLINE void _writeBits( _utilLZWContext *ctx,
                                      UINT32 bits, UINT32 bitNum ) ;
@@ -98,7 +120,7 @@ namespace engine
       return bits ;
    }
 
-   OSS_INLINE LZW_CODE _utilCompressorLZW::_readCodeExt( _utilLZWContext *ctx )
+   OSS_INLINE LZW_CODE _utilCompressorLZW::_readVarLenCode( _utilLZWContext *ctx )
    {
       UINT8 ch ;
       UINT32 bits = 0 ;
@@ -150,13 +172,15 @@ namespace engine
       _writeBits( ctx, code, ctx->getDictionary()->getCodeSize() ) ;
    }
 
-   OSS_INLINE void _utilCompressorLZW::_writeCodeExt( _utilLZWContext *ctx,
-                                                      LZW_CODE code )
+   OSS_INLINE UINT8 _utilCompressorLZW::_writeVarLenCode( _utilLZWContext *ctx,
+                                                          LZW_CODE code )
    {
       UINT8 lenIndex = 0 ;
       UINT8 splitSize = 0 ;
       ctx->getDictionary()->getVarLenInfo( code, lenIndex, splitSize ) ;
       _writeBitsExt( ctx, code, splitSize, lenIndex ) ;
+
+      return splitSize ;
    }
 
    OSS_INLINE void _utilCompressorLZW::_writeByte( _utilLZWContext *ctx,

@@ -70,7 +70,7 @@ namespace engine
    typedef UINT32 LZW_CODE ;
 
    #define UTIL_CODE_SPLIT_NUM            4
-   #define DICT_BITS_UPBOUND( bits ) ( ( 1 << bits ) - 1 )
+   #define DICT_BITS_UPBOUND( bits )     ( ( 1 << bits ) - 1 )
 
    /*
     * Used to perform byte(bits) reading and writting of compressed stream data.

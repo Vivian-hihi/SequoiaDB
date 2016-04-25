@@ -48,9 +48,25 @@ namespace engine
       UTIL_COMPRESSOR_SNAPPY = 0,
       UTIL_COMPRESSOR_LZW = 1
    } ;
+   enum UTIL_COMPRESSION_LEVEL
+   {
+      UTIL_COMP_BEST_SPEED = 1,
+      UTIL_COMP_BALANCE,
+      UTIL_COMP_BEST_COMPRESSION,
+   } ;
 
-   #define UTIL_INVALID_DICT           NULL
+   #define UTIL_INVALID_DICT                 NULL
    typedef void * utilDictHandle ;
+
+   #define UTIL_COMPRESSOR_DFT_MIN_RATIO     80
+   #define UTIL_COMPRESSOR_DFT_LEVEL         UTIL_COMP_BALANCE
+
+   struct _utilCompressStrategy
+   {
+      UINT8 _minRatio ;
+      UTIL_COMPRESSION_LEVEL _level ;
+   } ;
+   typedef _utilCompressStrategy utilCompressStrategy ;
 
    /* This class provides compressor interfaces. */
    class _utilCompressor : public SDBObject
@@ -68,7 +84,8 @@ namespace engine
 
       virtual INT32 compress( const CHAR *source, UINT32 sourceLen,
                               CHAR *dest, UINT32 &destLen,
-                              const utilDictHandle dictionary = NULL ) = 0 ;
+                              const utilDictHandle dictionary = NULL,
+                              const utilCompressStrategy *strategy = NULL ) = 0 ;
 
       virtual INT32 getUncompressedLen( const CHAR *source, UINT32 sourceLen,
                                         UINT32 &length) = 0 ;

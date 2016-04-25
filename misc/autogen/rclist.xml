@@ -2417,7 +2417,13 @@
             <cn>用户不存在或密码错误</cn>
          </description>
       </code>
-
+      <code>
+         <name>SDB_UTIL_COMPRESS_ABORT</name>
+         <description>
+            <en>Compression abort</en>
+            <cn>压缩中断</cn>
+         </description>
+      </code>
 
    </codelist>
 </rclist>

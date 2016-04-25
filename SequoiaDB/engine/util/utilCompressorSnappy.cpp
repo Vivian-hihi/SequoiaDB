@@ -65,12 +65,14 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION( SDB__UTILCOMPRESSORSNAPPY_COMPRESS, "_utilCompressorSnappy::compress")
    INT32 _utilCompressorSnappy::compress( const CHAR *source, UINT32 sourceLen,
                                           CHAR *dest, UINT32 &destLen,
-                                          const utilDictHandle dictionary )
+                                          const utilDictHandle dictionary,
+                                          const utilCompressStrategy *strategy )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__UTILCOMPRESSORSNAPPY_COMPRESS ) ;
       size_t resultLen = 0 ;
       (void)dictionary ;
+      (void)strategy ;
 
       SDB_ASSERT( UTIL_INVALID_DICT == dictionary,
                   "snappy does not use any dictionary" ) ;
