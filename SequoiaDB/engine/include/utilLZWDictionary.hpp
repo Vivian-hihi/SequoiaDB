@@ -69,6 +69,9 @@ namespace engine
 
    typedef UINT32 LZW_CODE ;
 
+   #define UTIL_CODE_SPLIT_NUM            4
+   #define DICT_BITS_UPBOUND( bits ) ( ( 1 << bits ) - 1 )
+
    /*
     * Used to perform byte(bits) reading and writting of compressed stream data.
     * As code of each dictionary node will be stored as part of the dictionary,
@@ -104,6 +107,8 @@ namespace engine
    } ;
    typedef _utilLZWNode utilLZWNode ;
 
+   #define UTIL_VAR_LEN_FLAG_SIZE      2
+   #define UTIL_MAX_DICT_SPLIT_NUM     4
    /* Codes in the dictionary are divided into two parts.
     * The preceding part contains the codes(0~x) which are really finally used
     * in the compressed data. The remaining codes are used for the searching
@@ -114,8 +119,11 @@ namespace engine
       utilDictHead _basic ;
       UINT32 _maxCode ;        /* Maximum code in the dictionary. */
       UINT32 _maxValidCode ;
+      UINT8 _varLenEnable ;
       UINT8 _codeSize ;        /* Bit number to represent a code. */
-      CHAR _reserve[3] ;
+      UINT8 _varLenFlagSize ;
+      CHAR _reserve[2] ;
+      UINT8 _splitInfo[ UTIL_MAX_DICT_SPLIT_NUM ] ;
    } ;
    typedef _utilLZWDictHead utilLZWDictHead ;
 
@@ -229,7 +237,6 @@ namespace engine
       void reset() ;
       UINT32 getMaxNodeNum() { return _maxNodeNum ; }
       UINT8 getCodeSize() { return _head->_codeSize; }
-      UINT32 getMaxCode() { return _head->_maxCode ; }
 
       OSS_INLINE LZW_CODE addStr( LZW_CODE preCode, UINT8 ch ) ;
       OSS_INLINE LZW_CODE findStr( LZW_CODE preCode, UINT8 ch ) ;
@@ -243,6 +250,13 @@ namespace engine
       OSS_INLINE LZW_CODE findStrExt( const BYTE *str, UINT32 &length ) ;
       OSS_INLINE UINT32 getStrExt( LZW_CODE code, UINT8 *buff,
                                    UINT32 buffSize ) ;
+      OSS_INLINE UINT8 getVarLenFlagSize() { return _head->_varLenFlagSize ; }
+      OSS_INLINE void getVarLenInfo( LZW_CODE code, UINT8 &lenIdx,
+                                     UINT8 &splitSize ) ;
+      OSS_INLINE UINT8 getVarLenSize( UINT8 lenIdx )
+      {
+         return _head->_splitInfo[lenIdx];
+      }
 
    private:
       void _initFinalEnv( CHAR *buff, UINT32 bufLen ) ;
@@ -255,6 +269,7 @@ namespace engine
                     std::map<UINT32, UINT32> &indexMap ) ;
       UINT32 _calcCodeSize( UINT32 code ) ;
       void _addAdditionalInfo( BSONObj &obj ) ;
+      void _setVarLenSplitInfo() ;
 
       OSS_INLINE INT32 _cstBinSearch( UINT32 low, UINT32 high, BYTE ch ) ;
       OSS_INLINE UINT32 _dstGetRemoteStr( DST_ITEM item, CHAR *buff ) ;
@@ -703,6 +718,21 @@ namespace engine
       }
 
       return finalLen ;
+   }
+
+   OSS_INLINE void _utilLZWDictionary::getVarLenInfo( LZW_CODE code,
+                                                      UINT8 &lenIdx,
+                                                      UINT8 &splitSize )
+   {
+      for ( UINT8 i = 0; i < UTIL_MAX_DICT_SPLIT_NUM; ++i )
+      {
+         if ( code < DICT_BITS_UPBOUND( _head->_splitInfo[ i ] ) )
+         {
+            lenIdx = i ;
+            splitSize = _head->_splitInfo[ i ] ;
+            break ;
+         }
+      }
    }
 }
 

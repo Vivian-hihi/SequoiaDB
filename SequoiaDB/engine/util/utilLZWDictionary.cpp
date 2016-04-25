@@ -242,13 +242,15 @@ namespace engine
 
       _head->_maxValidCode = maxValidCode ;
       _head->_codeSize = codeSize ;
+      _setVarLenSplitInfo() ;
 
       SDB_ASSERT( _head->_maxValidCode <= _head->_maxCode,
                   "Code out of range" ) ;
       SDB_ASSERT( _head->_codeSize <= UTIL_MAX_DICT_CODE_SIZE,
                   "Code size out of range" ) ;
       PD_LOG( PDDEBUG, "Dictionary max code: %u, max valid code: %u, "
-              "code size: %u", _head->_maxCode, maxValidCode, codeSize ) ;
+              "code size: %u", _head->_maxCode,
+              _head->_maxValidCode, _head->_codeSize ) ;
 
       PD_TRACE_EXIT( SDB__UTILLZWDICTIONARY__ADJUST ) ;
    }
@@ -456,6 +458,19 @@ namespace engine
       obj = builder.obj() ;
 
       PD_TRACE_EXIT( SDB__UTILLZWDICTIONARY__ADDADDITIONALINFO ) ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__UTILLZWDICTIONARY__SETVARLENSPLITINFO, "_utilLZWDictionary::_setVarLenSplitInfo" )
+   void _utilLZWDictionary::_setVarLenSplitInfo()
+   {
+      PD_TRACE_ENTRY( SDB__UTILLZWDICTIONARY__SETVARLENSPLITINFO ) ;
+      _head->_varLenEnable = TRUE ;
+      _head->_varLenFlagSize = UTIL_VAR_LEN_FLAG_SIZE ;
+      _head->_splitInfo[ UTIL_MAX_DICT_SPLIT_NUM - 1 ] = _head->_codeSize ;
+      _head->_splitInfo[ UTIL_MAX_DICT_SPLIT_NUM - 2 ] = _head->_codeSize - 3 ;
+      _head->_splitInfo[ UTIL_MAX_DICT_SPLIT_NUM - 3 ] = _head->_codeSize - 5 ;
+      _head->_splitInfo[ UTIL_MAX_DICT_SPLIT_NUM - 4 ] = _head->_codeSize - 7 ;
+      PD_TRACE_EXIT( SDB__UTILLZWDICTIONARY__SETVARLENSPLITINFO ) ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__UTILLZWDICTIONARY_FINALIZE, "_utilLZWDictionary::finalize" )

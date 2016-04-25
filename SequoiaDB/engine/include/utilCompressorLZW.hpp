@@ -63,11 +63,18 @@ namespace engine
 
       private:
          OSS_INLINE LZW_CODE _readCode( _utilLZWContext *ctx ) ;
+         OSS_INLINE LZW_CODE _readCodeExt( _utilLZWContext *ctx ) ;
          OSS_INLINE UINT8 _readByte( _utilLZWContext *ctx ) ;
          OSS_INLINE void _writeCode( _utilLZWContext *ctx, LZW_CODE code ) ;
+         OSS_INLINE void _writeCodeExt( _utilLZWContext *ctx, LZW_CODE code ) ;
          OSS_INLINE void _writeByte( _utilLZWContext *ctx, UINT8 ch ) ;
          OSS_INLINE void _writeBits( _utilLZWContext *ctx,
                                      UINT32 bits, UINT32 bitNum ) ;
+
+         OSS_INLINE void _writeBitsExt( _utilLZWContext *ctx,
+                                        UINT32 bits,
+                                        UINT32 bitNum,
+                                        UINT32 codeLen ) ;
          OSS_INLINE void _flushBits( _utilLZWContext *ctx ) ;
    };
    typedef _utilCompressorLZW utilCompressorLZW ;
@@ -91,6 +98,47 @@ namespace engine
       return bits ;
    }
 
+   OSS_INLINE LZW_CODE _utilCompressorLZW::_readCodeExt( _utilLZWContext *ctx )
+   {
+      UINT8 ch ;
+      UINT32 bits = 0 ;
+      UINT32 codeSize = 0 ;
+      UINT32 lenIdx = 0 ;
+      UINT8 varLenFlagSize = ctx->getDictionary()->getVarLenFlagSize() ;
+
+      if ( ctx->_bitBuf._n < varLenFlagSize )
+      {
+         /* fetch one one more character to get the length of the next code */
+         ch = _readByte( ctx ) ;
+         ctx->_bitBuf._buf = ( ctx->_bitBuf._buf << 8 ) | ch ;
+         ctx->_bitBuf._n += 8 ;
+      }
+
+      /* The first 2 bits the buffer is the length of the next code. */
+      lenIdx = ( UINT32 )
+               ( ( ctx->_bitBuf._buf >> ( ctx->_bitBuf._n - varLenFlagSize ) )
+               & ( ( 1 << varLenFlagSize ) - 1 ) ) ;
+      codeSize = ctx->getDictionary()->getVarLenSize( lenIdx ) ;
+      /*
+       * Once get the length of the next code, shift the length flag out of the
+       * buffer, and get the remaining bits of the code, if they are not in the
+       * buffer yet.
+       */
+      ctx->_bitBuf._n -= varLenFlagSize ;
+      while ( ctx->_bitBuf._n < codeSize )
+      {
+         ch = _readByte( ctx ) ;
+         ctx->_bitBuf._buf = ( ctx->_bitBuf._buf << 8 ) | ch ;
+         ctx->_bitBuf._n += 8 ;
+      }
+
+      ctx->_bitBuf._n -= codeSize ;
+      bits = ( ctx->_bitBuf._buf >> ctx->_bitBuf._n )
+             & (( 1 << codeSize ) - 1 ) ;
+
+      return bits ;
+   }
+
    OSS_INLINE UINT8 _utilCompressorLZW::_readByte( _utilLZWContext *ctx )
    {
       return ctx->_stream[ctx->_streamPos++] ;
@@ -100,6 +148,15 @@ namespace engine
                                                    LZW_CODE code )
    {
       _writeBits( ctx, code, ctx->getDictionary()->getCodeSize() ) ;
+   }
+
+   OSS_INLINE void _utilCompressorLZW::_writeCodeExt( _utilLZWContext *ctx,
+                                                      LZW_CODE code )
+   {
+      UINT8 lenIndex = 0 ;
+      UINT8 splitSize = 0 ;
+      ctx->getDictionary()->getVarLenInfo( code, lenIndex, splitSize ) ;
+      _writeBitsExt( ctx, code, splitSize, lenIndex ) ;
    }
 
    OSS_INLINE void _utilCompressorLZW::_writeByte( _utilLZWContext *ctx,
@@ -116,6 +173,31 @@ namespace engine
                           | ( bits & (( 1 << bitNum ) - 1 ) ) ;
 
       bitNum += ctx->_bitBuf._n ;
+
+      while ( bitNum >= 8 )
+      {
+         UINT8 ch ;
+         bitNum -= 8 ;
+         ch = ctx->_bitBuf._buf >> bitNum ;
+         _writeByte( ctx, ch ) ;
+      }
+
+      ctx->_bitBuf._n = bitNum ;
+   }
+
+   OSS_INLINE void _utilCompressorLZW::_writeBitsExt(
+                                                _utilLZWContext *ctx,
+                                                UINT32 bits,
+                                                UINT32 bitNum,
+                                                UINT32 codeLen )
+   {
+      UINT8 varLenFlagSize = ctx->getDictionary()->getVarLenFlagSize() ;
+      ctx->_bitBuf._buf =
+         ( ctx->_bitBuf._buf << ( bitNum + varLenFlagSize ) )
+         | ( codeLen << bitNum )
+         | ( bits & (( 1 << bitNum ) - 1 ) ) ;
+
+      bitNum = ctx->_bitBuf._n + bitNum + varLenFlagSize ;
 
       while ( bitNum >= 8 )
       {

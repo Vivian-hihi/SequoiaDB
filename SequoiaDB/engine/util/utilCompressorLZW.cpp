@@ -124,7 +124,8 @@ namespace engine
       {
          length = remainLen ;
          code = dictionary.findStrExt( (BYTE*)(source + curPos), length ) ;
-         _writeCode( &context, code ) ;
+         //_writeCode( &context, code ) ;
+         _writeCodeExt( &context, code ) ;
          curPos += length ;
          remainLen -= length ;
       } while ( remainLen > 0 ) ;
@@ -182,7 +183,8 @@ namespace engine
 
       for( ; context._streamPos < context._streamLen; )
       {
-         code = _readCode( &context ) ;
+         //code = _readCode( &context ) ;
+         code = _readCodeExt( &context ) ;
          strLen = dictionary.getStrExt( code, (UINT8*)(dest + totalOut),
                                         destLen - totalOut ) ;
          totalOut += strLen ;
