@@ -53,7 +53,6 @@ namespace engine
    {
       UTIL_DICT_TYPE _type ;
       UINT8 _version ;
-      CHAR _reserve[20] ;
    } ;
    typedef _utilDictHead utilDictHead ;
 }

@@ -72,28 +72,5 @@ namespace engine
             return "Invalid" ;
       }
    }
-
-   INT32 getDictionaryDetail( utilDictHandle handle,
-                              utilDictionaryDetail &detail )
-   {
-      INT32 rc = SDB_OK ;
-
-      utilDictHead *head = (utilDictHead*)handle ;
-      utilLZWDictionary dictionary ;
-
-      SDB_ASSERT( UTIL_DICT_LZW == head->_type, "Dictionary type invalid" ) ;
-      SDB_ASSERT( UTIL_LZW_DICT_VERSION == head->_version,
-                  "Ditionary version is invalid" ) ;
-
-      dictionary.attach( handle ) ;
-
-      detail._maxCode = dictionary.getMaxValidCode();
-      detail._codeSize = dictionary.getCodeSize();
-      detail._varLenCompEnable = 1 ;
-   done:
-      return rc ;
-   error:
-      goto done ;
-   }
 } /* engine */
 

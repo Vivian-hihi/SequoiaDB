@@ -60,14 +60,6 @@ namespace engine
 
    typedef void * utilDictHandle ;
 
-   struct _utilDictionaryDetail
-   {
-      UINT32 _maxCode ;
-      UINT8 _codeSize ;
-      UINT8 _varLenCompEnable ;
-   } ;
-   typedef _utilDictionaryDetail utilDictionaryDetail ;
-
    #define UTIL_COMPRESSOR_DFT_MIN_RATIO     80
    #define UTIL_COMPRESSOR_DFT_LEVEL         UTIL_COMP_BEST_COMPRESSION
 
@@ -116,9 +108,6 @@ namespace engine
 
    /* Get the name of the compressor in string format. */
    const CHAR *utilCompressType2String( UINT8 type ) ;
-
-   INT32 getDictionaryDetail( utilDictHandle handle,
-                              utilDictionaryDetail &detail ) ;
 }
 
 #endif /* UTIL_COMPRESSOR__ */

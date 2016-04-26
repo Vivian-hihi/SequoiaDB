@@ -464,6 +464,7 @@ namespace engine
    void _utilLZWDictionary::_setVarLenSplitInfo()
    {
       PD_TRACE_ENTRY( SDB__UTILLZWDICTIONARY__SETVARLENSPLITINFO ) ;
+      _head->_varLenEnable = TRUE ;
       _head->_varLenFlagSize = UTIL_VAR_LEN_FLAG_SIZE ;
       _head->_splitInfo[ UTIL_MAX_DICT_SPLIT_NUM - 1 ] = _head->_codeSize ;
       _head->_splitInfo[ UTIL_MAX_DICT_SPLIT_NUM - 2 ] = _head->_codeSize - 3 ;
