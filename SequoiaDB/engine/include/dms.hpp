@@ -55,6 +55,7 @@ namespace engine
 #define DMS_PAGE_SIZE32K       32768   // 32K
 #define DMS_PAGE_SIZE64K       65536   // 64K
 
+/* Maximum dictionary size. Should be the same with DMS_DICT_MAX_SIZE. */
 #define DMS_DICT_MAX_SIZE ( 4 * 1024 * 1024 )
 
 /// for lob

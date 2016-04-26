@@ -397,8 +397,6 @@ namespace engine
       UINT32      _totalLobPages ;
       UINT64      _totalLobs ;
       UINT32      _uniqueIdxNum ;
-      dmsExtentID _dictExtID ;
-      UINT8       _compressorType ;
       UINT8       _compressionRatio ;
 
       void reset()
@@ -411,8 +409,6 @@ namespace engine
          _totalLobPages          = 0 ;
          _totalLobs              = 0 ;
          _uniqueIdxNum           = 0 ;
-         _dictExtID              = DMS_INVALID_EXTENT ;
-         _compressorType         = DMS_INVALID_COMPRESSOR_TYPE ;
       }
       _dmsMBStatInfo ()
       {

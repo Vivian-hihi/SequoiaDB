@@ -50,6 +50,10 @@ using namespace bson ;
 namespace engine
 {
    #define UTIL_LZW_VERSION              1
+
+   /* Maximum dictionary size. Should be the same with DMS_DICT_MAX_SIZE. */
+   #define UTIL_DICT_MAX_SIZE            ( 4 * 1024 * 1024 )
+
    /*
     * Internally we use a 32bit buffer to do continuous bits reading and
     * writting, so the maximum node code should be less than 2^24(16M).

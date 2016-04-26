@@ -1213,8 +1213,8 @@ namespace engine
                                                       mbStat->_totalDataFreeSpace,
                                                       mbStat->_totalIndexFreeSpace ) ;
          info._attribute = mb->_attributes ;
-         info._compressType = mbStat->_compressorType ;
-         info._dictCreated = mbStat->_dictExtID != DMS_INVALID_EXTENT ? 1 : 0 ;
+         info._compressType = mb->_compressorType ;
+         info._dictCreated = mb->_dictExtentID != DMS_INVALID_EXTENT ? 1 : 0 ;
          info._dictVersion = mb->_dictVersion ;
          info._totalLobs = mbStat->_totalLobs ;
 

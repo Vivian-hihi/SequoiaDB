@@ -489,9 +489,9 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__DMSSTORAGEDATA__INITCOMPRESSORENTRY ) ;
       dmsDictExtent *dictExtent = NULL ;
-      dmsExtentID dictExtID = _mbStatInfo[mbID]._dictExtID ;
+      dmsExtentID dictExtID = _dmsMME->_mbList[mbID]._dictExtentID ;
       UTIL_COMPRESSOR_TYPE type =
-         ( UTIL_COMPRESSOR_TYPE)_mbStatInfo[mbID]._compressorType;
+         ( UTIL_COMPRESSOR_TYPE )_dmsMME->_mbList[mbID]._compressorType ;
       utilCompressor *compressor = NULL ;
 
       dmsCompressorGuard compGuard( &_compressorEntry[mbID], EXCLUSIVE ) ;
@@ -583,8 +583,6 @@ namespace engine
                _dmsMME->_mbList[i]._dictExtentID = DMS_INVALID_EXTENT ;
             }
 
-            _mbStatInfo[i]._dictExtID = _dmsMME->_mbList[i]._dictExtentID ;
-
             /*
              * In version before 2.0, the byte _compressorType is taking now was
              * set to 0. But in the new version, 0 means using snappy to
@@ -600,9 +598,6 @@ namespace engine
                _dmsMME->_mbList[i]._compressorType
                   = DMS_INVALID_COMPRESSOR_TYPE ;
             }
-
-            _mbStatInfo[i]._compressorType =
-               _dmsMME->_mbList[i]._compressorType ;
          }
       }
 
@@ -622,7 +617,7 @@ namespace engine
       /* Initialize compressor entries for collections. */
       for ( UINT16 i = 0; i < DMS_MME_SLOTS; ++i )
       {
-         if ( DMS_INVALID_COMPRESSOR_TYPE != _mbStatInfo[i]._compressorType )
+         if ( DMS_INVALID_COMPRESSOR_TYPE != _dmsMME->_mbList[i]._compressorType )
          {
             rc = _initCompressorEntry( i ) ;
             PD_RC_CHECK( rc, PDERROR,
@@ -1121,7 +1116,6 @@ namespace engine
          dictExt->_flag = DMS_EXTENT_FLAG_FREED ;
          context->mb()->_dictExtentID = DMS_INVALID_EXTENT ;
          context->mb()->_dictVersion = 0 ;
-         context->mbStat()->_dictExtID = DMS_INVALID_EXTENT ;
       }
 
       context->mbStat()->_totalDataFreeSpace = 0 ;
@@ -1817,7 +1811,6 @@ namespace engine
       if ( DMS_INVALID_COMPRESSOR_TYPE != context->mb()->_compressorType)
       {
          context->mb()->_compressorType = DMS_INVALID_COMPRESSOR_TYPE ;
-         context->mbStat()->_compressorType = DMS_INVALID_COMPRESSOR_TYPE ;
       }
 
       // free meta extent
@@ -3576,7 +3569,6 @@ namespace engine
        * successfully flushed to disk.
        */
       context->mb()->_dictExtentID = dictExtID ;
-      context->mbStat()->_dictExtID = dictExtID ;
 
       /// Make sure the dict persist
       flushMME( TRUE ) ;

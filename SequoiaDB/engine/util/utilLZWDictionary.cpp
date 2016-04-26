@@ -492,6 +492,13 @@ namespace engine
       BSONObj addInfo ;
       UINT32 writePos = 0 ;
 
+      if ( length < UTIL_DICT_MAX_SIZE )
+      {
+         PD_LOG( PDERROR, "Buffer for dictionary is too small" ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
       _initFinalEnv( buffer, length ) ;
 
       /*
