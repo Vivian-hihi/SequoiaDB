@@ -1418,7 +1418,7 @@ PHP_METHOD( SequoiaCL, getIndex )
    sdbCollectionHandle cl = SDB_INVALID_HANDLE ;
    sdbCursorHandle cursor = SDB_INVALID_HANDLE ;
    PHP_SET_ERRNO_OK( FALSE, pThisObj ) ;
-   if ( PHP_GET_PARAMETERS( "s", &pIndexName, &indexNameLen ) == FAILURE )
+   if ( PHP_GET_PARAMETERS( "|s", &pIndexName, &indexNameLen ) == FAILURE )
    {
       rc = SDB_INVALIDARG ;
       goto error ;
@@ -1428,7 +1428,14 @@ PHP_METHOD( SequoiaCL, getIndex )
                     sdbCollectionHandle,
                     SDB_CL_HANDLE_NAME,
                     clDesc ) ;
-   rc = sdbGetIndexes( cl, pIndexName, &cursor ) ;
+   if( pIndexName && ossStrlen( pIndexName ) == 0 )
+   {
+      rc = sdbGetIndexes( cl, NULL, &cursor ) ;
+   }
+   else
+   {
+      rc = sdbGetIndexes( cl, pIndexName, &cursor ) ;
+   }
    if( rc )
    {
       goto error ;
