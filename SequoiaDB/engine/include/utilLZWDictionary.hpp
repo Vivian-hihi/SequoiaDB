@@ -120,7 +120,6 @@ namespace engine
       utilDictHead _basic ;
       UINT32 _maxCode ;        /* Maximum code in the dictionary. */
       UINT32 _maxValidCode ;
-      UINT8 _varLenEnable ;
       UINT8 _codeSize ;        /* Bit number to represent a code. */
       UINT8 _varLenFlagSize ;
       CHAR _reserve[2] ;
@@ -237,6 +236,7 @@ namespace engine
       INT32 init() ;
       void reset() ;
       UINT32 getMaxNodeNum() { return _maxNodeNum ; }
+      UINT32 getMaxValidCode() { return _head->_maxValidCode ; }
       UINT8 getCodeSize() { return _head->_codeSize; }
 
       OSS_INLINE LZW_CODE addStr( LZW_CODE preCode, UINT8 ch ) ;
@@ -247,7 +247,7 @@ namespace engine
                       CHAR *buffer, UINT32 &length ) ;
 
       /* Interfaces used by compression/decompression */
-      OSS_INLINE INT32 attach( const utilDictHandle dictionary ) ;
+      OSS_INLINE void attach( const utilDictHandle dictionary ) ;
       OSS_INLINE LZW_CODE findStrExt( const BYTE *str, UINT32 &length ) ;
       OSS_INLINE UINT32 getStrExt( LZW_CODE code, UINT8 *buff,
                                    UINT32 buffSize ) ;
@@ -677,7 +677,7 @@ namespace engine
       return len ;
    }
 
-   OSS_INLINE INT32 _utilLZWDictionary::attach( const utilDictHandle dictionary )
+   OSS_INLINE void _utilLZWDictionary::attach( const utilDictHandle dictionary )
    {
       UINT32 pos = 0 ;
       UINT32 itemNum = 0 ;
@@ -697,8 +697,6 @@ namespace engine
       _dst = ( DST_ITEM* )( (const CHAR*)dictionary + pos ) ;
       pos += sizeof( DST_ITEM ) * itemNum ;
       _strArea = (CHAR *)( (const CHAR*)dictionary + pos ) ;
-
-      return SDB_OK ;
    }
 
    OSS_INLINE UINT32 _utilLZWDictionary::_dstGetRemoteStr( DST_ITEM item,
