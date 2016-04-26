@@ -527,8 +527,6 @@ class SequoiaCL
     *
     * @param $rule	an array or the string argument. The update rule, can't be null.
     *
-    * @param $returnNew	a boolean argument. When TRUE, returns the updated record rather than the original.
-    *
     * @param $condition	an array or the string argument. The matching rule, return all the record if null.
     *
     * @param $selector	an array or the string argument. The selective rule, return the whole record if null.
@@ -549,6 +547,8 @@ class SequoiaCL
     *                                                                           when add this flag, return data in query response, it will be more high-performance
     *                                   @endcode
     *
+    * @param $returnNew	a boolean argument. When TRUE, returns the updated record rather than the original.
+    *
     * @return Returns a new SequoiaCursor object.
     *
     * @retval SequoiaCursor Object
@@ -566,7 +566,7 @@ class SequoiaCL
     * } 
     * @endcode
    */
-   public function findAndUpdate( array|string $rule, boolean $returnNew = false, array|string $condition = null, array|string $selector = null, array|string $orderBy = null, array|string $hint = null, integer $numToSkip = 0, integer $numToReturn = -1, integer $flag = 0 ){}
+   public function findAndUpdate( array|string $rule, array|string $condition = null, array|string $selector = null, array|string $orderBy = null, array|string $hint = null, integer $numToSkip = 0, integer $numToReturn = -1, integer $flag = 0, boolean $returnNew = false ){}
 
    /**
     * Get the matching documents in current collection and remove.
