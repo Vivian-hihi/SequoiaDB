@@ -626,7 +626,7 @@ class SequoiaCL
     *
     * @param $selector	an array or the string argument. The selective rule, return the whole record if null.
     *
-    * @param $orderBy	an array or the string argument. The The ordered rule, never sort if null.
+    * @param $orderBy	an array or the string argument. The ordered rule, never sort if null.
     *
     * @param $hint	an array or the string argument. The hint, automatically match the optimal hint if null.
     *
