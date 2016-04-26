@@ -216,9 +216,8 @@ namespace engine
       ossMemset( _srcDataBuf, 0, RTN_DICT_BUF_SIZE ) ;
 
       /*
-       * Inorder to improve performance, call build for a batch records(64M)
-       * instead of one every time. The loop will end either all records have
-       * been fetched, or the dictionary is full.
+       * The loop will end either all records have been fetched, or the
+       * dictionary is full.
        */
       do
       {
@@ -229,11 +228,6 @@ namespace engine
             if ( SDB_DMS_EOC == rc )
             {
                /* If the dictionary is not full, use the last batch of data. */
-               if ( srcDataLen && !dictFull )
-               {
-                  _creator.build( _srcDataBuf, srcDataLen, dictFull ) ;
-               }
-
                noMoreRecord = TRUE ;
                rc = SDB_OK ;
                break ;
@@ -246,30 +240,21 @@ namespace engine
          try
          {
             BSONObj bs( (const CHAR*)recordDataPtr ) ;
+            _creator.build( bs.objdata(), bs.objsize(), dictFull ) ;
+            if ( dictFull )
+            {
+               break ;
+            }
+
+            fetchNum++ ;
+            fetchSize += bs.objsize() ;
+
             if ( (UINT32)bs.objsize() <= bufFreeLen )
             {
                ossMemcpy( _srcDataBuf + srcDataLen, bs.objdata(), bs.objsize() ) ;
                bufFreeLen -= bs.objsize() ;
                srcDataLen += bs.objsize() ;
-               fetchNum++ ;
-               fetchSize += bs.objsize() ;
-               continue ;
-            }
-            else
-            {
-               _creator.build( _srcDataBuf, srcDataLen, dictFull ) ;
-               if ( dictFull )
-               {
-                  break ;
-               }
-
-               srcDataLen = 0 ;
-               bufFreeLen = RTN_DICT_BUF_SIZE ;
-               ossMemcpy( _srcDataBuf + srcDataLen, bs.objdata(), bs.objsize() ) ;
-               bufFreeLen -= bs.objsize() ;
-               srcDataLen += bs.objsize() ;
-               fetchNum++ ;
-               fetchSize += bs.objsize() ;
+               continue ;
             }
          }
          catch ( std::exception &e )
@@ -359,6 +344,8 @@ namespace engine
       UINT32 clLID = DMS_INVALID_CLID ;
       pmdKRCB *krCB = pmdGetKRCB() ;
       SDB_DMSCB *dmsCB = krCB->getDMSCB() ;
+      ossTimestamp begin ;
+      ossTimestamp end ;
 
       /*
        * If the su is not there, the original storage unit(cs) was dropped. So
@@ -425,6 +412,7 @@ namespace engine
          goto error ;
       }
 
+      ossGetCurrentTime( begin ) ;
       /* Now, create the dictionary for the collection. */
       _creator.reset() ;
       rc = _creator.prepare() ;
@@ -437,10 +425,13 @@ namespace engine
       rc = _transferDict( su->data(), mbContext ) ;
       PD_RC_CHECK( rc, PDERROR,
                    "Failed to pass dictionary to dms, rc: %d", rc ) ;
+      ossGetCurrentTime( end ) ;
 
       PD_LOG( PDEVENT, "Compression dictionary created succesfully for "
-              "collection[%s]",
-              mbContext->mb()->_collectionName ) ;
+              "collection[%s]. Time: %llums",
+              mbContext->mb()->_collectionName,
+              end.time * 1000 + end.microtm / 1000 -
+              (begin.time * 1000 + begin.microtm / 1000) ) ;
 
    done:
       if ( mbContext )

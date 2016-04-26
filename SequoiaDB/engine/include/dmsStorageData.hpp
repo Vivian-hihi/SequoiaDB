@@ -243,7 +243,8 @@ namespace engine
       dmsExtentID    _dictExtentID ;
       UINT8          _dictVersion ;
       UINT8          _compressorType ;
-      UINT8          _pad1[ 2 ] ;  // reserved
+      UINT8          _compressionRatio ;
+      UINT8          _pad1[ 1 ] ;  // reserved
       // for stat
       UINT64         _totalLobs ;
       // end stat
@@ -298,6 +299,7 @@ namespace engine
          _compressorType         = DMS_INVALID_COMPRESSOR_TYPE ;
          _dictVersion            = 0 ;
          _dictExtentID           = DMS_INVALID_EXTENT ;
+         _compressionRatio       = 0 ;
 
          // pad
          ossMemset( _pad1, 0, sizeof( _pad1 ) ) ;

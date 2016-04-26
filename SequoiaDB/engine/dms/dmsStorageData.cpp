@@ -382,6 +382,12 @@ namespace engine
                _dmsMME->_mbList[i]._totalLobs =
                   _mbStatInfo[i]._totalLobs ;
             }
+            if ( _dmsMME->_mbList[i]._compressionRatio !=
+                 _mbStatInfo[i]._compressionRatio )
+            {
+               _dmsMME->_mbList[i]._compressionRatio =
+                  _mbStatInfo[i]._compressionRatio ;
+            }
          }
       }
       PD_TRACE_EXIT ( SDB__DMSSTORAGEDATA_SYNCMEMTOMMAP ) ;
@@ -567,6 +573,8 @@ namespace engine
                _dmsMME->_mbList[i]._totalLobPages ;
             _mbStatInfo[i]._totalLobs =
                _dmsMME->_mbList[i]._totalLobs ;
+            _mbStatInfo[i]._compressionRatio =
+               _dmsMME->_mbList[i]._compressionRatio ;
             /*
              * The following branch is for using newer program(SequoiaDB 2.0 or
              * later) with data of elder versions(Before 2.0). As dictionary
@@ -3569,6 +3577,7 @@ namespace engine
        * successfully flushed to disk.
        */
       context->mb()->_dictExtentID = dictExtID ;
+      context->mb()->_dictVersion = UTIL_LZW_DICT_VERSION ;
 
       /// Make sure the dict persist
       flushMME( TRUE ) ;

@@ -102,7 +102,7 @@ namespace engine
       }
 
       _head->_basic._type = UTIL_DICT_LZW ;
-      _head->_basic._version = UTIL_LZW_VERSION ;
+      _head->_basic._version = UTIL_LZW_DICT_VERSION ;
       _head->_maxCode = 255 ;
       _head->_codeSize = 8 ;
 
@@ -449,7 +449,7 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__UTILLZWDICTIONARY__ADDADDITIONALINFO, "_utilLZWDictionary::_addAdditionalInfo" )
-   void _utilLZWDictionary::_addAdditionalInfo( BSONObj &obj )
+   void _utilLZWDictionary::_formatAdditionalInfo( BSONObj &obj )
    {
       PD_TRACE_ENTRY( SDB__UTILLZWDICTIONARY__ADDADDITIONALINFO ) ;
       BSONObjBuilder builder ;
@@ -525,7 +525,7 @@ namespace engine
       dstSize = _formatDst() ;
       writePos = (CHAR*)_dst - (CHAR*)_head + dstSize ;
 
-      _addAdditionalInfo( addInfo ) ;
+      _formatAdditionalInfo( addInfo ) ;
 
       if ( length < writePos + addInfo.objsize() )
       {

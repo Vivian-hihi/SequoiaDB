@@ -49,8 +49,6 @@ using namespace bson ;
 
 namespace engine
 {
-   #define UTIL_LZW_VERSION              1
-
    /* Maximum dictionary size. Should be the same with DMS_DICT_MAX_SIZE. */
    #define UTIL_DICT_MAX_SIZE            ( 4 * 1024 * 1024 )
 
@@ -271,7 +269,7 @@ namespace engine
       void _adjust( const CHAR* str, UINT32 strLen,
                     std::map<UINT32, UINT32> &indexMap ) ;
       UINT32 _calcCodeSize( UINT32 code ) ;
-      void _addAdditionalInfo( BSONObj &obj ) ;
+      void _formatAdditionalInfo( BSONObj &obj ) ;
       void _setVarLenSplitInfo() ;
 
       OSS_INLINE INT32 _cstBinSearch( UINT32 low, UINT32 high, BYTE ch ) ;
@@ -685,6 +683,11 @@ namespace engine
       UINT32 itemNum = 0 ;
 
       _head = ( utilLZWDictHead *)dictionary ;
+      SDB_ASSERT( UTIL_DICT_LZW == _head->_basic._type,
+                  "Dictionary type invalid" ) ;
+      SDB_ASSERT( UTIL_LZW_DICT_VERSION == _head->_basic._version,
+                  "Dictionary version invalid" ) ;
+
       itemNum = _head->_maxCode + 1 ;
       pos += sizeof( utilLZWDictHead ) ;
       _cst = ( CST_ITEM *)( (const CHAR*)dictionary + pos ) ;

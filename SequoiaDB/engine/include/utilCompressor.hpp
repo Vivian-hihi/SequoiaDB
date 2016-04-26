@@ -56,6 +56,8 @@ namespace engine
    } ;
 
    #define UTIL_INVALID_DICT                 NULL
+   #define UTIL_LZW_DICT_VERSION             1
+
    typedef void * utilDictHandle ;
 
    #define UTIL_COMPRESSOR_DFT_MIN_RATIO     80
