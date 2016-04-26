@@ -62,11 +62,6 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__OSSEVN_WAIT );
 
-      if ( millisec < 0 )
-      {
-         millisec = 0x7FFFFFFF ;
-      }
-
       boost::chrono::milliseconds timeout
          = boost::chrono::milliseconds(millisec) ;
       boost::mutex::scoped_lock lock ( _mutex ) ;
