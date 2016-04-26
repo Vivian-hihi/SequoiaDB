@@ -869,12 +869,12 @@ PHP_METHOD( SequoiaCL, findAndUpdate )
    bson_init( &hint ) ;
    bson_init( &update ) ;
    PHP_SET_ERRNO_OK( FALSE, pThisObj ) ;
-   if ( PHP_GET_PARAMETERS( "|zzzzzzzzz",
+   if ( PHP_GET_PARAMETERS( "z|zzzzzzzz",
+                            &pUpdate,
                             &pCondition,
                             &pSelector,
                             &pOrderBy,
                             &pHint,
-                            &pUpdate,
                             &pNumToSkip,
                             &pNumToReturn,
                             &pFlag,

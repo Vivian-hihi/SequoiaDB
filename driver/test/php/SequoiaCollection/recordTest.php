@@ -413,7 +413,7 @@ class cl_record_Test extends PHPUnit_Framework_TestCase
          $this -> assertEquals( 0, $err['errno'], '插入记录失败' ) ;
       }
       
-      $cursor = $cl -> findAndUpdate( array( 'a' => array( '$gt' => 0 ) ), null, null, null, array( '$set' => array( 'a' => 0 ) ), 0, -1, 0, false ) ;
+      $cursor = $cl -> findAndUpdate( array( '$set' => array( 'a' => 0 ) ), array( 'a' => array( '$gt' => 0 ) ) ) ;
       $this -> assertNotEmpty( $cursor, 'findAndUpdate失败' ) ;
       $err = $db -> getError() ;
       $this -> assertEquals( 0, $err['errno'], 'findAndUpdate失败' ) ;
@@ -430,7 +430,7 @@ class cl_record_Test extends PHPUnit_Framework_TestCase
          $err = $cl -> insert( array( 'a' => $i ) ) ;
          $this -> assertEquals( 0, $err['errno'], '插入记录失败' ) ;
       }
-      $cursor = $cl -> findAndUpdate( array( 'a' => array( '$gt' => 0 ) ), null, null, null, array( '$set' => array( 'a' => 0 ) ), 0, -1, 0, true ) ;
+      $cursor = $cl -> findAndUpdate( array( '$set' => array( 'a' => 0 ) ), array( 'a' => array( '$gt' => 0 ) ), null, null, null, 0, -1, 0, true ) ;
       $this -> assertNotEmpty( $cursor, 'findAndUpdate失败' ) ;
       $err = $db -> getError() ;
       $this -> assertEquals( 0, $err['errno'], 'findAndUpdate失败' ) ;
