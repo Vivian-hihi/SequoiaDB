@@ -92,6 +92,10 @@ public :
 
    BOOLEAN timed_wait_and_pop ( Data& value, INT64 millsec )
    {
+      if ( millsec < 0 )
+      {
+         millsec = 0x7FFFFFFF ;
+      }
       boost::chrono::milliseconds timeout
          = boost::chrono::milliseconds(millsec) ;
       boost::mutex::scoped_lock lock ( _mutex ) ;
