@@ -1178,6 +1178,7 @@ namespace engine
    {
       dmsMB *mb = NULL ;
       dmsMBStatInfo *mbStat = NULL ;
+      utilDictionaryDetail dictDetail ;
 
       PD_TRACE_ENTRY ( SDB__DMSSU_DUMPINFO1 ) ;
       // lock meta
@@ -1212,10 +1213,27 @@ namespace engine
                                                       mbStat->_totalLobPages,
                                                       mbStat->_totalDataFreeSpace,
                                                       mbStat->_totalIndexFreeSpace ) ;
+         if ( DMS_INVALID_EXTENT != mb->_dictExtentID )
+         {
+            (void)getDictionaryDetail(
+                        _pDataSu->_compressorEntry[it->second].getDictionary(),
+                        dictDetail ) ;
+            info._codeSize = dictDetail._codeSize ;
+            info._varLenCompEnable = dictDetail._varLenCompEnable ;
+            info._maxCode = dictDetail._maxCode ;
+         }
+         else
+         {
+            info._codeSize = 0 ;
+            info._varLenCompEnable = 0 ;
+            info._maxCode = 0 ;
+         }
+
          info._attribute = mb->_attributes ;
-         info._compressType = mb->_compressorType ;
          info._dictCreated = mb->_dictExtentID != DMS_INVALID_EXTENT ? 1 : 0 ;
+         info._compressType = mb->_compressorType ;
          info._dictVersion = mb->_dictVersion ;
+
          info._totalLobs = mbStat->_totalLobs ;
 
          info._pageSize = getPageSize() ;

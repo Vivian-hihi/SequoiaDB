@@ -167,6 +167,8 @@
 #define FIELD_NAME_STATUS                    "Status"
 #define FIELD_NAME_DICT_CREATED              "DictionaryCreated"
 #define FIELD_NAME_DICT_VERSION              "DictionaryVersion"
+#define FIELD_NAME_DICT_MAX_CODE             "DictionaryMaxCode"
+#define FIELD_NAME_DICT_CODE_SIZE            "DictionaryCodeSize"
 #define FIELD_NAME_VAR_COMP_ENABLE           "VarLengthCompressEnable"
 #define FIELD_NAME_TYPE                      "Type"
 #define FIELD_NAME_TOTAL_RECORDS             "TotalRecords"
