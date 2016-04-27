@@ -1283,7 +1283,7 @@ namespace engine
           */
          if ( UTIL_COMPRESSOR_LZW == compressorType )
          {
-            dmsCB->pushToDictCreateCLList( suID, collectionID ) ;
+            dmsCB->pushDictJob( suID, collectionID ) ;
          }
          else
          {
@@ -1666,6 +1666,8 @@ namespace engine
       dmsStorageUnit *su               = NULL ;
       const CHAR *pCollectionShortName = NULL ;
       BOOLEAN writable                 = FALSE ;
+      dmsMBContext *context            = NULL ;
+      UINT16 clID                      = DMS_INVALID_CLID ;
 
       rc = rtnResolveCollectionNameAndLock ( pCollection, dmsCB, &su,
                                              &pCollectionShortName, suID ) ;
@@ -1688,7 +1690,30 @@ namespace engine
          goto error ;
       }
 
+      /*
+       * The original dictionary and compressor will be removed during
+       * truncation. So it should be pushed to the dictionary creating list
+       * again after truncation.
+       */
+      rc = su->data()->getMBContext( &context, pCollectionShortName ) ;
+      PD_RC_CHECK( rc, PDERROR,
+                   "Failed to get mb context of collection %s, rc: %d",
+                   pCollection, rc ) ;
+
+      if ( UTIL_COMPRESSOR_LZW ==
+           (UTIL_COMPRESSOR_TYPE)context->mb()->_compressorType )
+      {
+         rc = su->data()->findCollection( pCollectionShortName, clID ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to find collection %s, rc: %d",
+                      pCollection, rc ) ;
+         dmsCB->pushDictJob( suID, clID ) ;
+      }
+
    done :
+      if ( context )
+      {
+         su->data()->releaseMBContext( context ) ;
+      }
       if ( DMS_INVALID_CS != suID )
       {
          dmsCB->suUnlock ( suID ) ;

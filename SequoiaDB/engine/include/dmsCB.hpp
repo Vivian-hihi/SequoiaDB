@@ -238,14 +238,10 @@ namespace engine
                                     SDB_DPSCB *dpsCB );
 
       _dmsStorageUnit *dispatchPageCleanSU ( dmsStorageUnitID *suID ) ;
-      void dispatchDictCreateCL ( BOOLEAN &empty, dmsStorageUnitID &suID,
-                                  UINT16 &mbID ) ;
-      void dictCreateResumeWaitCL() ;
-      void pushToDictCreateCLList( dmsStorageUnitID suID, UINT16 mbID ) ;
-      void popFromDictCreateCLList() ;
-      void skipCurrentDictCreateCL() ;
-
       INT32 joinPageCleanSU ( dmsStorageUnitID suID ) ;
+
+      BOOLEAN dispatchDictJob( dmsStorageUnitID &suID, UINT16 &mbID ) ;
+      void pushDictJob( UINT32 suID, UINT32 mbID, BOOLEAN delay = FALSE ) ;
 
       void setIxmKeySorterCreator( dmsIxmKeySorterCreator* creator ) ;
       dmsIxmKeySorterCreator* getIxmKeySorterCreator() ;

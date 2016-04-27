@@ -1566,63 +1566,50 @@ namespace engine
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__SDB_DMSCB_DISPATCHDICTCREATECL, "_SDB_DMSCB::dispatchDictCreateCL" )
-   void _SDB_DMSCB::dispatchDictCreateCL ( BOOLEAN &empty,
-                                           dmsStorageUnitID &suID, UINT16 &mbID )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__SDB_DMSCB_DISPATCHDICTJOB, "_SDB_DMSCB::dispatchDictJob" )
+   BOOLEAN _SDB_DMSCB::dispatchDictJob( dmsStorageUnitID &suID, UINT16 &mbID )
    {
-      PD_TRACE_ENTRY ( SDB__SDB_DMSCB_DISPATCHDICTCREATECL ) ;
+      PD_TRACE_ENTRY( SDB__SDB_DMSCB_DISPATCHDICTJOB ) ;
+      BOOLEAN empty = FALSE ;
+
       if ( _dictWaitClList.size() > 0 )
       {
          suID = _dictWaitClList.front().first ;
          mbID = _dictWaitClList.front().second ;
+         _dictWaitClList.pop_front() ;
          empty = FALSE ;
       }
       else
       {
+         /*
+          * Resume all the ones which skipped before, and start the next
+          * round.
+          */
          empty = TRUE ;
+         if ( _dictWaitClListTrans.size() > 0 )
+         {
+            _dictWaitClList.merge( _dictWaitClListTrans ) ;
+         }
       }
 
-      PD_TRACE_EXIT( SDB__SDB_DMSCB_DISPATCHDICTCREATECL ) ;
+      return empty ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__SDB_DMSCB_DICTCREATERESUMEWAITCL, "_SDB_DMSCB::dictCreateResumeWaitCL" )
-   void _SDB_DMSCB::dictCreateResumeWaitCL()
+    // PD_TRACE_DECLARE_FUNCTION ( SDB__SDB_DMSCB_PUSHDICTJOB, "_SDB_DMSCB::pushDictJob" )
+   void _SDB_DMSCB::pushDictJob( UINT32 suID, UINT32 mbID, BOOLEAN delay )
    {
-      PD_TRACE_ENTRY( SDB__SDB_DMSCB_DICTCREATERESUMEWAITCL ) ;
-      if ( _dictWaitClListTrans.size() > 0 )
+      PD_TRACE_ENTRY( SDB__SDB_DMSCB_PUSHDICTJOB ) ;
+
+      if ( delay )
       {
-         _dictWaitClList.merge( _dictWaitClListTrans ) ;
+         _dictWaitClListTrans.push_back( make_pair( suID, mbID ) ) ;
       }
-      PD_TRACE_EXIT( SDB__SDB_DMSCB_DICTCREATERESUMEWAITCL ) ;
-   }
+      else
+      {
+         _dictWaitClList.push_back( make_pair( suID, mbID ) ) ;
+      }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__SDB_DMSCB_PUSHTODICTCREATECLLIST, "_SDB_DMSCB::pushToDictCreateCLList" )
-   void _SDB_DMSCB::pushToDictCreateCLList( dmsStorageUnitID suID, UINT16 mbID )
-   {
-      PD_TRACE_ENTRY( SDB__SDB_DMSCB_PUSHTODICTCREATECLLIST ) ;
-      _dictWaitClList.push_back( make_pair( suID, mbID ) ) ;
-      PD_TRACE_EXIT( SDB__SDB_DMSCB_PUSHTODICTCREATECLLIST ) ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__SDB_DMSCB_POPFROMDICTCREATECLLIST, "_SDB_DMSCB::popFromDictCreateCLList" )
-   void _SDB_DMSCB::popFromDictCreateCLList()
-   {
-      PD_TRACE_ENTRY( SDB__SDB_DMSCB_POPFROMDICTCREATECLLIST ) ;
-      _dictWaitClList.pop_front() ;
-      PD_TRACE_EXIT( SDB__SDB_DMSCB_POPFROMDICTCREATECLLIST ) ;
-   }
-
-   /*
-    * Skip the current means it will wait for next round to build the
-    * dictionary.
-    */
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__SDB_DMSCB_SKIPCURRENTDICTCREATECL, "_SDB_DMSCB::skipCurrentDictCreateCL" )
-   void _SDB_DMSCB::skipCurrentDictCreateCL()
-   {
-      PD_TRACE_ENTRY( SDB__SDB_DMSCB_SKIPCURRENTDICTCREATECL ) ;
-      _dictWaitClListTrans.push_back( _dictWaitClList.front() ) ;
-      _dictWaitClList.pop_front() ;
-      PD_TRACE_EXIT( SDB__SDB_DMSCB_SKIPCURRENTDICTCREATECL ) ;
+      PD_TRACE_EXIT( SDB__SDB_DMSCB_PUSHDICTJOB ) ;
    }
 
    void _SDB_DMSCB::aquireCSMutex( const CHAR *pCSName )

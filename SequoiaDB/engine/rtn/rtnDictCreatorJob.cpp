@@ -75,7 +75,7 @@ namespace engine
       pmdEDUEvent event ;
       dmsStorageUnitID suID = DMS_INVALID_SUID ;
       UINT16 mbID = DMS_INVALID_MBID ;
-      BOOLEAN listEmpty = FALSE ;
+      BOOLEAN noJob = FALSE ;
       UINT64 lastStartTime = pmdGetDBTick() ;
 
       _srcDataBuf = ( CHAR * )SDB_OSS_MALLOC( RTN_DICT_BUF_SIZE ) ;
@@ -90,8 +90,8 @@ namespace engine
           */
          eduMgr->waitEDU( cb->getID() ) ;
          /* Get the first item in the dictionary waiting list. */
-         dmsCB->dispatchDictCreateCL( listEmpty, suID, mbID ) ;
-         if ( listEmpty )
+         noJob = dmsCB->dispatchDictJob( suID, mbID ) ;
+         if ( noJob )
          {
             /* If no colleciton is waitting for dictionary creating, wait... */
             while ( pmdGetTickSpanTime( lastStartTime ) < _scanInterval )
@@ -99,11 +99,6 @@ namespace engine
                cb->waitEvent( event, OSS_ONE_SEC ) ;
             }
 
-            /*
-             * Resume all the ones which skipped before, and start the next
-             * round.
-             */
-            dmsCB->dictCreateResumeWaitCL() ;
             lastStartTime = pmdGetDBTick() ;
             continue ;
          }
@@ -118,11 +113,7 @@ namespace engine
           */
          if ( SDB_OK != _checkAndCreateDictForCL( suID, mbID ) )
          {
-            dmsCB->skipCurrentDictCreateCL() ;
-         }
-         else
-         {
-            dmsCB->popFromDictCreateCLList() ;
+            dmsCB->pushDictJob( suID, mbID, TRUE ) ;
          }
 
          cb->incEventCount() ;
@@ -254,7 +245,7 @@ namespace engine
                ossMemcpy( _srcDataBuf + srcDataLen, bs.objdata(), bs.objsize() ) ;
                bufFreeLen -= bs.objsize() ;
                srcDataLen += bs.objsize() ;
-               continue ;
+               continue ;
             }
          }
          catch ( std::exception &e )

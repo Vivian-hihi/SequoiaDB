@@ -2024,17 +2024,6 @@ namespace engine
                       "rc: %d", rc ) ;
       }
 
-      if ( DMS_INVALID_COMPRESSOR_TYPE != context->mb()->_compressorType
-           && needChangeCLID )
-      {
-         /*
-          * The original dictionary and compressor will be removed during
-          * truncation. So it should be pushed to the dictionary creating list
-          * again after truncation.
-          */
-         dmsCB->pushToDictCreateCLList( CSID() , context->mbID() ) ;
-      }
-
    done:
       if ( isTransLocked )
       {
