@@ -223,9 +223,9 @@ public class SequoiadbDatasource extends SequoiadbDatasourceImpl
 	 * @fn void releaseConnection(Sequoiadb sdb)
 	 * @brief Put the connection back to the connection pool.
 	 * @param sdb the connection to come back, can't be null 
-	 * @note  When the connection does not belong to current connection pool or
-	 *        the connection is idle for a long time,
-	 *        this API will destroy it directly.
+	 * @note When the data source is enable, we can't double release
+	 *       one connection, and we can't offer a connection which is
+	 *       not belong to the pool.
 	 * @exception com.sequoiadb.Exception.BaseException
 	 * @since v1.12.6 & v2.2
 	 */
@@ -237,9 +237,9 @@ public class SequoiadbDatasource extends SequoiadbDatasourceImpl
 	 * @fn void close(Sequoiadb sdb)
 	 * @brief Put the connection back to the connection pool.
 	 * @param sdb the connection to come back, can't be null 
-	 * @note  When the connection does not belong to current connection pool or
-	 *        the connection is idle for a long time,
-	 *        this API will destroy it directly.
+	 * @note When the data source is enable, we can't double release
+	 *       one connection, and we can't offer a connection which is
+	 *       not belong to the pool.
 	 * @exception com.sequoiadb.Exception.BaseException
 	 * @deprecated
 	 * @see releaseConnection, use releaseConnection instead

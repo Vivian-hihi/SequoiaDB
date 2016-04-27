@@ -1,5 +1,7 @@
 package com.sequoiadb.datasource;
 
+import java.util.Iterator;
+import java.util.List;
 import java.util.TreeSet;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -34,17 +36,27 @@ class ConnItem implements Comparable<ConnItem> {
 }
 
 public class ConnectionItemMgr {
-	private int _capacity ;
+	private int _capacity;
 	private static long _sequenceNumber = -1;
 	private TreeSet<ConnItem> _idleItem = null;
 	private TreeSet<ConnItem> _usedItem = null;
 	private ReentrantLock _lock = new ReentrantLock();
 	
-	public ConnectionItemMgr(int capacity) {
+	public ConnectionItemMgr(int capacity, List<ConnItem> usedItems) {
 		_capacity = capacity;
 		_idleItem = new TreeSet<ConnItem>();
 		_usedItem = new TreeSet<ConnItem>();
-		for (int i = 0; i < _capacity; i++) {
+		int initNum = 0;
+		if (usedItems != null) {
+			Iterator<ConnItem> itr = usedItems.iterator();
+			while(itr.hasNext()) {
+				_usedItem.add(itr.next());
+			}
+			initNum = (capacity > _usedItem.size()) ? (capacity - _usedItem.size()) : 0;
+		} else {
+			initNum = capacity;
+		}
+		for (int i = 0; i < initNum; i++) {
 			// we must give a sequence number to the instance of ConnItem,
 			// for _idleItem is TreeSet, it won't save two instances with
 			// the same content
@@ -99,7 +111,7 @@ public class ConnectionItemMgr {
 			} else {
 				// decrease items
 				int deltaNum = _capacity - capacity;
-				while(0 != deltaNum--) {
+				while(deltaNum-- != 0) {
 					ConnItem connItem = _idleItem.pollFirst();
 					if (connItem == null) {
 						break;
@@ -132,7 +144,8 @@ public class ConnectionItemMgr {
 		_lock.lock();
 		try {
 			_usedItem.remove(item);
-			if (_usedItem.size() < _capacity) {
+			// _usedItem has remove one, so we must use "<" here
+			if (_usedItem.size() + _idleItem.size() < _capacity) {
 				item.setAddr("");
 				_idleItem.add(item);
 			}

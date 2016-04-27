@@ -19,7 +19,7 @@ abstract class AbstractStrategy implements IConnectStrategy{
 	@Override
 	public void init(List<String> addresses, List<Pair> _idleConnPairs, List<Pair> _usedConnPairs) {
 		// Notice that, we won't depend on the address in used queue, for
-		// some addresses may have been removed, but, they may be still in used queue.
+		// some addresses may have been removed, but, they may be still in used pool.
 		
 		// get addresses to local
 		Iterator<String> itr1 = addresses.iterator();
@@ -30,7 +30,7 @@ abstract class AbstractStrategy implements IConnectStrategy{
 			}
 		}
 		// get idle connections information
-		if (null != _idleConnPairs) {
+		if (_idleConnPairs != null) {
 			Iterator<Pair> itr2 = _idleConnPairs.iterator();
 			while(itr2.hasNext()) {
 				Pair pair = itr2.next();

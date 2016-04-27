@@ -78,6 +78,7 @@ public class SequoiadbDatasourceImpl
 	private boolean _hasClosed = false;
 	// for thread safe
 	private ReentrantReadWriteLock _rwLock = new ReentrantReadWriteLock();
+	private Object _objForReleaseConn = new Object();
 	// for others
 	private Random _rand = new Random(47);
 	private double MULTIPLE = 1.2;
@@ -391,7 +392,10 @@ public class SequoiadbDatasourceImpl
 	 * @brief Get the current idle connection amount.
 	 */
 	public int getIdleConnNum() {
-		return _idleConnPool.count();
+		if (_idleConnPool == null)
+			return 0;
+		else
+			return _idleConnPool.count();
 	}
 	
 	/**
@@ -399,7 +403,10 @@ public class SequoiadbDatasourceImpl
 	 * @brief Get the current used connection amount.
 	 */
 	public int getUsedConnNum() {
-		return _usedConnPool.count();
+		if (_usedConnPool == null)
+			return 0;
+		else
+			return _usedConnPool.count();
 	}
 	
 	/**
@@ -545,8 +552,12 @@ public class SequoiadbDatasourceImpl
 			if (!_isDatasourceOn) {
 				return;
 			}
-			// check need to adjust the capacity of connection pool or not
+			// check need to adjust the capacity of connection pool or not.
+			// when the data source is disable, we can't change the "_currentSequenceNumber"
+			// to the value we want, that's a problem, so we will change "_currentSequenceNumber"
+			// in "_enableDatasource()"
 			if (previousMaxCount != _dsOpt.getMaxCount()) {
+				// when "_enableDatasource()" is not called, "_connItemMgr" will be null
 				if (_connItemMgr != null) {
 					_connItemMgr.resetCapacity(_dsOpt.getMaxCount());
 					if (_dsOpt.getMaxCount() < previousMaxCount) {
@@ -779,9 +790,9 @@ public class SequoiadbDatasourceImpl
 	 * @fn void releaseConnection(Sequoiadb sdb)
 	 * @brief Put the connection back to the connection pool.
 	 * @param sdb the connection to come back, can't be null 
-	 * @note  When the connection does not belong to current connection pool or
-	 *        the connection is idle for a long time,
-	 *        this API will destroy it directly.
+	 * @note When the data source is enable, we can't double release
+	 *       one connection, and we can't offer a connection which is
+	 *       not belong to the pool.
 	 * @exception com.sequoiadb.Exception.BaseException
 	 * @since v1.12.6 & v2.2
 	 */
@@ -789,57 +800,64 @@ public class SequoiadbDatasourceImpl
 		Lock rlock = _rwLock.readLock();
 		rlock.lock(); 
 		try {
-			if (null == sdb) {
+			if (sdb == null) {
 				throw new BaseException("SDB_INVALIDARG", "connection can't be null");
 			}
 			if (_hasClosed) {
 				throw new BaseException("SDB_SYS", "connection pool has closed");
 			}
-			try {
-				if (!_isDatasourceOn) {
+			// in case the data source is disable
+			if (!_isDatasourceOn) {
+				// when we disable data source, we should try to remove 
+				// the connections left in used connection pool
+				synchronized(_objForReleaseConn) {
 					if (_usedConnPool != null && _usedConnPool.contains(sdb)) {
 						ConnItem item = _usedConnPool.poll(sdb);
 						if (item == null)
+							// multi-thread may let item to be null,   
+							// and it should never happen
 							throw new BaseException("SDB_SYS", 
 									"Point 1: connection pool does't have item for the coming back connection");
 						_connItemMgr.releaseItem(item);
 					}
-					sdb.disconnect();
-					return;
 				}
-				ConnItem item = null;
-				// if the busy queue contains this connection
+				sdb.disconnect();
+				return;
+			}
+			// in case the data source is enable
+			ConnItem item = null;
+			synchronized(_objForReleaseConn) {
+				// if the busy pool contains this connection
 				if (_usedConnPool.contains(sdb)) {
 					// remove it from busy queue
-					item = _usedConnPool.poll(sdb);//TODO:should check item == null or not
+					item = _usedConnPool.poll(sdb);
 					if (item == null)
 						throw new BaseException("SDB_SYS", 
 								"Point 2: connection pool does't have item for the coming back connection");
-					// tell the strategy there is used connection idle now
-					_strategy.update(ItemStatus.USED, item, -1);
-					// check whether the connection can put back to idle queue or not
-					if (_connIsValid(item, sdb)) {
-						// release the resource contains in connection
-						sdb.releaseResource();
-						// let the connection come back to connection pool
-						_idleConnPool.insert(item, sdb);
-						// tell the strategy one connection is add to idle pool now
-						_strategy.update(ItemStatus.IDLE, item, 1);
-						// notify the people who waits
-						synchronized(this) {
-							notifyAll();
-						}
-					} else {
-						// let the item come back to item pool, and destroy the connection 
-						_connItemMgr.releaseItem(item);
-						_destroyConnQueue.add(sdb);
-					}
 				} else {
-					_destroyConnQueue.add(sdb);
-					return;
+					// throw exception to let user know current connection does't contained in the pool
+					throw new BaseException("SDB_INVALIDARG", 
+							"the connection pool doesn't contain the offered connection");
 				}
-			} catch(BaseException e) {
-				// do nothing or maybe we can write it to the log
+			}
+			// tell the strategy there is a connection returning now
+			_strategy.update(ItemStatus.USED, item, -1);
+			// check whether the connection can put back to idle pool or not
+			if (_connIsValid(item, sdb)) {
+				// release the resource contains in connection
+				sdb.releaseResource();
+				// let the connection come back to connection pool
+				_idleConnPool.insert(item, sdb);
+				// tell the strategy one connection is add to idle pool now
+				_strategy.update(ItemStatus.IDLE, item, 1);
+				// notify the people who waits
+				synchronized(this) {
+					notifyAll();
+				}
+			} else {
+				// let the item come back to item pool, and destroy the connection 
+				_connItemMgr.releaseItem(item);
+				_destroyConnQueue.add(sdb);
 			}
 		} finally {rlock.unlock();}
 	}
@@ -848,9 +866,9 @@ public class SequoiadbDatasourceImpl
 	 * @fn void close(Sequoiadb sdb)
 	 * @brief Put the connection back to the connection pool.
 	 * @param sdb the connection to come back, can't be null 
-	 * @note  When the connection does not belong to current connection pool or
-	 *        the connection is idle for a long time,
-	 *        this API will destroy it directly.
+	 * @note When the data source is enable, we can't double release
+	 *       one connection, and we can't offer a connection which is
+	 *       not belong to the pool.
 	 * @exception com.sequoiadb.Exception.BaseException
 	 * @deprecated
 	 * @see releaseConnection, use releaseConnection instead
@@ -938,7 +956,8 @@ public class SequoiadbDatasourceImpl
 		_timerExec = Executors.newScheduledThreadPool(1);
 		if (_dsOpt.getSyncCoordInterval() > 0)
 			_timerExec.scheduleAtFixedRate(new SynchronizeAddressTask(), 0, _dsOpt.getSyncCoordInterval(), TimeUnit.MILLISECONDS);
-		_timerExec.scheduleAtFixedRate(new CheckConnectionTask(), 10* 1000, _dsOpt.getCheckInterval(), TimeUnit.MILLISECONDS);
+		_timerExec.scheduleAtFixedRate(new CheckConnectionTask(), _dsOpt.getCheckInterval(), 
+				_dsOpt.getCheckInterval(), TimeUnit.MILLISECONDS);
 		_timerExec.scheduleAtFixedRate(new RetrieveAddressTask(), 60, 60, TimeUnit.SECONDS);
 	}
 
@@ -971,7 +990,9 @@ public class SequoiadbDatasourceImpl
 			usedConnPairs.add(itr.next());
 		}
 		_strategy = _createStrategy(_dsOpt.getConnectStrategy());
-		//TODO:maybe should use all the addresses
+		// here we don't need to offer abnormal address, for "RetrieveAddressTask"
+		// will here us to add those addresses to strategy when those addresses
+		// can be use again
 		_strategy.init(_normalAddrs, idleConnPairs, usedConnPairs);
 	}
 	
@@ -1068,7 +1089,7 @@ public class SequoiadbDatasourceImpl
 					addr = _normalAddrs.get(_rand.nextInt(size));
 				}
 			}
-			if (null != addr) {
+			if (addr != null) {
 				try {
 					sdb = new Sequoiadb(addr, _username, _password, _nwOpt);
 					break;
@@ -1152,8 +1173,9 @@ public class SequoiadbDatasourceImpl
 	
 	private void _createConnections() {
 		int count = _dsOpt.getDeltaIncCount();
-		Sequoiadb sdb = null;
 		while(count > 0) {
+			// never let "sdb" defined out of current scope 
+			Sequoiadb sdb = null;
 			String addr = null;
 			// get item for new connection
 			ConnItem item = _connItemMgr.getItem();
@@ -1245,14 +1267,26 @@ public class SequoiadbDatasourceImpl
 	}
 	
 	private void _enableDatasource(ConnectStrategy strategy) {
-		// initialize connection item manager
-		_connItemMgr = new ConnectionItemMgr(_dsOpt.getMaxCount());
-		// initialize connection pools
+		// initialize idle connection pool
 		_idleConnPool = new IdleConnectionPool();
+		// initialize used connection pool
 		if (_usedConnPool == null) {
 			// when we disable data source, we won't clean
 			// the connections in used pool.
 			_usedConnPool = new UsedConnectionPool();
+			// initialize connection item manager without anything
+			_connItemMgr = new ConnectionItemMgr(_dsOpt.getMaxCount(), null);
+		} else {
+			// update the version, so, all the outdated caching connections in used pool 
+			// can not go back to idle pool any more.
+			// initialize connection item manager with used items
+			List<ConnItem> list = new ArrayList<ConnItem>();
+			Iterator<Pair> itr = _usedConnPool.getIterator();
+			while(itr.hasNext()) {
+				list.add(itr.next().first());
+			}
+			_connItemMgr = new ConnectionItemMgr(_dsOpt.getMaxCount(), list);
+			_currentSequenceNumber = _connItemMgr.getCurrentSequenceNumber();
 		}
 		// initialize strategy
 		Iterator<String> itr = _normalAddrs.iterator();
@@ -1272,10 +1306,10 @@ public class SequoiadbDatasourceImpl
 	private void _reduceIdleConnections(int count) {
 		while(count-- > 0) {
 			// Once we poll a connection out by Operation.DELETE mode,
-			// we don't need to update strategy again, pollConnection 
+			// we don't need to update strategy again, pollConnItem 
 			// had already help us to do this.
 			ConnItem item = _strategy.pollConnItem(Operation.DELETE);
-			if (null == item) {
+			if (item == null) {
 				// Actually, should never come here.
 				// When it happen, just let it go.
 				break;

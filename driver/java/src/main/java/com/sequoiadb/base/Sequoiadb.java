@@ -29,13 +29,10 @@ import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
-import org.bson.BSONEncoder;
 import org.bson.BSONObject;
-import org.bson.BasicBSONEncoder;
 import org.bson.BasicBSONObject;
 import org.bson.types.BasicBSONList;
 import org.bson.types.Code;
-import org.bson.types.CodeWScope;
 import org.bson.util.JSON;
 
 import com.sequoiadb.base.SequoiadbConstants.Operation;
@@ -58,7 +55,7 @@ public class Sequoiadb {
 	private String password;
 	boolean endianConvert;
 	private long requestID = 0;
-
+	
 	public final static int SDB_PAGESIZE_4K = 4096;
 	public final static int SDB_PAGESIZE_8K = 8192;
 	public final static int SDB_PAGESIZE_16K = 16384;

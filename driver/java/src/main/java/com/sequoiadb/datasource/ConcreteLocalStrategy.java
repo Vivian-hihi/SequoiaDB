@@ -68,6 +68,7 @@ public class ConcreteLocalStrategy extends AbstractStrategy{
 	
 	static List<String> getNetCardIPs() {
 		List<String> localIPs = new ArrayList<String>();
+		localIPs.add("127.0.0.1");
 		try {
 			Enumeration<NetworkInterface> netcards = NetworkInterface.getNetworkInterfaces();
 			if (null == netcards) {
