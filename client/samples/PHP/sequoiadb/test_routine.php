@@ -6,7 +6,7 @@
 
 // create a new connection object
 echo '<p>1. connect to server</p>' ;
-$sdb = new SequoiaDB ("192.168.20.104:50000") ;
+$sdb = new SequoiaDB( 'localhost:11810' ) ;
 $errno = $sdb->getError() ;
 var_dump ( $errno ) ;
 
