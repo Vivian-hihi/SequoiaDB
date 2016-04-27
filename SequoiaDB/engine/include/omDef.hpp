@@ -384,7 +384,7 @@ namespace engine
    #define  OM_BSON_FIELD_SDB_USER           OM_CLUSTER_FIELD_SDBUSER
    #define  OM_BSON_FIELD_SDB_PASSWD         OM_CLUSTER_FIELD_SDBPASSWD
    #define  OM_BSON_FIELD_SDB_USERGROUP      OM_CLUSTER_FIELD_SDBUSERGROUP
-   #define  OM_BSON_FIELD_INSTALL_PATH        OM_CLUSTER_FIELD_INSTALLPATH
+   #define  OM_BSON_FIELD_INSTALL_PATH       OM_CLUSTER_FIELD_INSTALLPATH
    #define  OM_REST_HEAD_SESSIONID           "SdbSessionID"
    #define  OM_REST_HEAD_LANGUAGE            "SdbLanguage"
    #define  OM_REST_FIELD_LOGIN_NAME         "User"
@@ -399,6 +399,7 @@ namespace engine
    #define  OM_REST_FIELD_IPS                "IPs"
    #define  OM_REST_FIELD_NICE               "Nice"
 
+   #define  OM_BSON_FIELD_BUSINESS_INFO      "BusinessInfo"
    #define  OM_BSON_FIELD_HOST_INFO          OM_REST_FIELD_HOST_INFO
    #define  OM_BSON_FIELD_HOST_IP            OM_HOST_FIELD_IP
    #define  OM_BSON_FIELD_HOST_NAME          OM_HOST_FIELD_NAME

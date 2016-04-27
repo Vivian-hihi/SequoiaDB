@@ -34,7 +34,7 @@
 #include "omDef.hpp"
 #include "rtn.hpp"
 #include "omManager.hpp"
-#include "omConfigGenerator.hpp"
+#include "omConfigBuilder.hpp"
 #include "omTaskManager.hpp"
 #include "omStrategyMgr.hpp"
 #include "../bson/lib/md5.hpp"
@@ -4235,69 +4235,48 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       BSONObjBuilder builder ;
-      BSONObj tmpConf ;
-      string businessType ;
-      businessType = bsonTemplate.getStringField( OM_REST_BUSINESS_TYPE ) ;
-      if ( businessType == OM_BUSINESS_ZOOKEEPER )
+      BSONObj conf ;
+      BSONObj clusterBusinessInfo ;
+      OmConfigBuilder* confBuilder = NULL ;
+      OmBusinessInfo businessInfo ;
+
+      rc = _getBusinessInfoOfCluster( _clusterName, clusterBusinessInfo ) ;
+      if ( SDB_OK != rc )
       {
-         omZooConfigGenerator zooConfGenerator ;
-         /* tmpConf:
-            {
-               "Config":
-               [
-                 {"HostName":"host1","zooid":"1",
-                  "datapath": "/home/data/zookeeper/z1/data/", 
-                  "clientport": "2181", ... 
-                 }, ...
-               ]
-            }
-         */
-         rc = zooConfGenerator.generateConfig( bsonTemplate, bsonConfigItem, 
-                                               bsonHostInfo, tmpConf ) ;
-         if ( SDB_OK != rc )
-         {
-            PD_LOG_MSG( PDERROR, "%s", 
-                        zooConfGenerator.getErrorDetail().c_str() ) ;
-            goto error ;
-         } 
-      }
-      else if ( businessType == OM_BUSINESS_SEQUOIADB )
-      {
-         omConfigGenerator confGenerator ;
-         /* tmpConf:
-            {
-               "Config":
-               [
-                 {"HostName":"host1","DataGroupName":"",
-                  "DBPath": "/home/db2/coord/11830", "SvcName": "11830", ... 
-                 }, ...
-               ]
-            }
-         */
-         rc = confGenerator.generateSDBConfig( bsonTemplate, bsonConfigItem, 
-                                               bsonHostInfo, tmpConf ) ;
-         if ( SDB_OK != rc )
-         {
-            PD_LOG_MSG( PDERROR, "%s", confGenerator.getErrorDetail().c_str() ) ;
-            goto error ;
-         }         
-      }
-      else
-      {
-         rc = SDB_INVALIDARG ;
-         PD_LOG_MSG( PDERROR, "unreconigzed business:type=%s", 
-                     businessType.c_str() ) ;
+         PD_LOG_MSG( PDERROR, "failed to get business info of cluster [%s]",
+                     _clusterName.c_str() ) ;
          goto error ;
       }
 
-      builder.appendElements( tmpConf ) ;
-      builder.append( OM_BSON_FIELD_CLUSTER_NAME, _clusterName ) ;
+      businessInfo.clusterName = _clusterName ;
+      businessInfo.businessType = _businessType ;
+      businessInfo.businessName = _businessName ;
+      businessInfo.deployMode = _deployMod ;
+
+      rc = OmConfigBuilder::createInstance( businessInfo, confBuilder ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to create builder: rc=%d", rc ) ;
+         goto error ;
+      }
+
+      rc = confBuilder->generateConfig( bsonTemplate, bsonConfigItem,
+                                        bsonHostInfo, clusterBusinessInfo, conf ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG_MSG( PDERROR, "failed to generate config: %s",
+                     confBuilder->getErrorDetail().c_str() ) ;
+         goto error ;
+      }
+
+      builder.appendElements( conf ) ;
       _addProperties( builder, bsonTemplate, bsonConfigItem ) ;
       bsonConfig = builder.obj() ;
 
    done:
       return rc ;
    error:
+      SAFE_OSS_DELETE( confBuilder ) ;
       goto done ;
    }
 
@@ -5016,6 +4995,7 @@ namespace engine
       BSONObj bsonConfValue ;
       BSONObj bsonHostInfo ;
       BSONObj bsonAllConf ;
+      BSONObj clusterBusinessInfo ;
       INT64 taskID ;
 
       _setFileLanguageSep() ;
@@ -5063,33 +5043,43 @@ namespace engine
          goto error ;
       }
 
-      if ( _businessType == OM_BUSINESS_SEQUOIADB )
+      rc = _getBusinessInfoOfCluster( _clusterName, clusterBusinessInfo ) ;
+      if ( SDB_OK != rc )
       {
-         omConfigGenerator confGenerator ;
-         rc = confGenerator.checkSDBConfig( bsonConfValue, bsonAllConf, 
-                                            bsonHostInfo ) ;
+         PD_LOG_MSG( PDERROR, "failed to get business info of cluster [%s]",
+                     _clusterName.c_str() ) ;
+         goto error ;
+      }
+
+      {
+         OmConfigBuilder* confBuilder = NULL ;
+         OmBusinessInfo businessInfo ;
+
+         businessInfo.clusterName = _clusterName ;
+         businessInfo.businessType = _businessType ;
+         businessInfo.businessName = _businessName ;
+         businessInfo.deployMode = _deployMod ;
+
+         rc = OmConfigBuilder::createInstance( businessInfo, confBuilder ) ;
          if ( SDB_OK != rc )
          {
-            _errorDetail = confGenerator.getErrorDetail() ;
-            PD_LOG( PDERROR, "%s", _errorDetail.c_str() ) ;
+            _errorDetail = omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ;
+            PD_LOG( PDERROR, "failed to create config builder: rc=%d", rc ) ;
             goto error ;
          }
-      }
-      else if ( _businessType == OM_BUSINESS_ZOOKEEPER )
-      {
-         omZooConfigGenerator confGenerator ;
-         rc = confGenerator.checkConfig( bsonConfValue, bsonAllConf, 
-                                         bsonHostInfo ) ;
+
+         rc = confBuilder->checkConfig( bsonAllConf, bsonHostInfo,
+                                        clusterBusinessInfo, bsonConfValue ) ;
          if ( SDB_OK != rc )
          {
-            _errorDetail = confGenerator.getErrorDetail() ;
-            PD_LOG( PDERROR, "%s", _errorDetail.c_str() ) ;
+            _errorDetail = confBuilder->getErrorDetail() ;
+            PD_LOG( PDERROR, "check config failed: rc=%d, detail: %s",
+                    rc, _errorDetail.c_str() ) ;
+            SDB_OSS_DEL( confBuilder ) ;
             goto error ;
          }
-      }
-      else
-      {
-         SDB_ASSERT( FALSE, _businessType.c_str() ) ;
+
+         SDB_OSS_DEL( confBuilder ) ;
       }
 
       rc = _compeleteConfValue( bsonHostInfo, bsonConfValue ) ;

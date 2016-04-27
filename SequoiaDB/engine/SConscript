@@ -396,7 +396,6 @@ dpsFiles = [
 omsvcFiles = [
       "omsvc/omManager.cpp",
       "omsvc/omGetFileCommand.cpp",
-      "omsvc/omConfigGenerator.cpp",
       "omsvc/omCommandInterface.cpp",
       "omsvc/omMsgEventHandler.cpp",
       "omsvc/omManagerJob.cpp",
@@ -406,7 +405,11 @@ omsvcFiles = [
       "omsvc/omContextTransfer.cpp",
       "omsvc/omSdbConnector.cpp",
       "omsvc/omStrategyMgr.cpp",
-      "omsvc/omStrategyDef.cpp"
+      "omsvc/omStrategyDef.cpp",
+      "omsvc/omConfigModel.cpp",
+      "omsvc/omConfigBuilder.cpp",
+      "omsvc/omConfigSdb.cpp",
+      "omsvc/omConfigZoo.cpp",
       ]
 
 barFiles = [

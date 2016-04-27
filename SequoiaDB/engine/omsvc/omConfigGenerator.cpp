@@ -168,23 +168,6 @@ namespace engine
       return str ;
    }
 
-   const CHAR *omGetMyEDUInfoSafe( EDU_INFO_TYPE type )
-   {
-      return omGetEDUInfoSafe( pmdGetThreadEDUCB(), type ) ;
-   }
-
-   const CHAR *omGetEDUInfoSafe( _pmdEDUCB *cb, EDU_INFO_TYPE type )
-   {
-      SDB_ASSERT( NULL != cb, "cb can't be null" ) ;
-      const CHAR *info = cb->getInfo( type ) ;
-      if ( NULL == info )
-      {
-         return "" ;
-      }
-
-      return info ;
-   }
-
    nodeCounter::nodeCounter()
    {
    }
@@ -2104,6 +2087,7 @@ namespace engine
    done:
       return rc ;
    error:
+      SAFE_OSS_DELETE( pConfProperty ) ;
       goto done ;
    }
 

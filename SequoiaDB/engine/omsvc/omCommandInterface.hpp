@@ -115,6 +115,8 @@ namespace engine
 
          INT32             _getBusinessInfo( const string &business, 
                                              BSONObj &businessInfo ) ;
+         INT32             _getBusinessInfoOfCluster( const string &clusterName,
+                                                      BSONObj &clusterBusinessInfo ) ;
          INT32             _deleteHost( const string &hostName ) ;
          INT32             _getClusterInfo( const string &clusterName, 
                                             BSONObj &clusterInfo ) ;
@@ -178,6 +180,9 @@ namespace engine
          BSONObj          _request ;
          BSONObj          _response ;
    } ;
+
+   const CHAR *omGetEDUInfoSafe( _pmdEDUCB *cb, EDU_INFO_TYPE type ) ;
+   const CHAR *omGetMyEDUInfoSafe( EDU_INFO_TYPE type ) ;
 }
 
 #endif /* OM_COMMANDINTERFACE_HPP_ */

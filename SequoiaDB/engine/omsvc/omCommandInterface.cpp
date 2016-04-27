@@ -235,6 +235,64 @@ namespace engine
       goto done ;
    }
 
+   INT32 omRestCommandBase::_getBusinessInfoOfCluster( const string &clusterName,
+                                                       BSONObj &clusterBusinessInfo )
+   {
+      BSONObjBuilder bsonBuilder ;
+      BSONArrayBuilder arrayBuilder ;
+      BSONObj selector ;
+      BSONObj matcher ;
+      BSONObj order ;
+      BSONObj hint ;
+      BSONObj result ;
+      SINT64 contextID = -1 ;
+      INT32 rc         = SDB_OK ;
+
+      matcher = BSON( OM_BUSINESS_FIELD_CLUSTERNAME << clusterName ) ;
+      rc = rtnQuery( OM_CS_DEPLOY_CL_BUSINESS, selector, matcher, order, hint, 
+                     0, _cb, 0, -1, _pDMSCB, _pRTNCB, contextID );
+      if ( rc )
+      {
+         PD_LOG_MSG( PDERROR, "fail to query table:%s,rc=%d",
+                     OM_CS_DEPLOY_CL_BUSINESS, rc ) ;
+         goto error ;
+      }
+
+      while ( TRUE )
+      {
+         rtnContextBuf buffObj ;
+         rc = rtnGetMore ( contextID, 1, buffObj, _cb, _pRTNCB ) ;
+         if ( rc )
+         {
+            if ( SDB_DMS_EOC == rc )
+            {
+               rc = SDB_OK ;
+               break ;
+            }
+
+            contextID = -1 ;
+            PD_LOG_MSG( PDERROR, "failed to get record from table:%s,rc=%d", 
+                        OM_CS_DEPLOY_CL_BUSINESS, rc ) ;
+            goto error ;
+         }
+
+         BSONObj result( buffObj.data() ) ;
+         arrayBuilder.append( result ) ;
+      }
+
+      bsonBuilder.append( OM_BSON_FIELD_BUSINESS_INFO, arrayBuilder.arr() ) ;
+      clusterBusinessInfo = bsonBuilder.obj() ;
+
+   done:
+      if ( -1 != contextID )
+      {
+         _pRTNCB->contextDelete ( contextID, _cb ) ;
+      }
+      return rc ;
+   error:
+      goto done ;
+   }
+
    INT32 omRestCommandBase::_getHostInfo( string hostName, 
                                           BSONObj &hostInfo )
    {
@@ -937,5 +995,21 @@ namespace engine
       _response = response ;
    }
 
+   const CHAR *omGetMyEDUInfoSafe( EDU_INFO_TYPE type )
+   {
+      return omGetEDUInfoSafe( pmdGetThreadEDUCB(), type ) ;
+   }
+
+   const CHAR *omGetEDUInfoSafe( _pmdEDUCB *cb, EDU_INFO_TYPE type )
+   {
+      SDB_ASSERT( NULL != cb, "cb can't be null" ) ;
+      const CHAR *info = cb->getInfo( type ) ;
+      if ( NULL == info )
+      {
+         return "" ;
+      }
+
+      return info ;
+   }
 }
 
