@@ -395,7 +395,7 @@ dpsFiles = [
 
 omsvcFiles = [
       "omsvc/omManager.cpp",
-      "omsvc/omGetFileCommand.cpp",
+      "omsvc/omCommand.cpp",
       "omsvc/omCommandInterface.cpp",
       "omsvc/omMsgEventHandler.cpp",
       "omsvc/omManagerJob.cpp",

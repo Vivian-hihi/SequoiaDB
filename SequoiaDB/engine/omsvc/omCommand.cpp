@@ -15,7 +15,7 @@
    You should have received a copy of the GNU Affero General Public License
    along with this program. If not, see <http://www.gnu.org/license/>.
 
-   Source File Name = omGetFileCommand.cpp
+   Source File Name = omCommand.cpp
 
    Dependencies: N/A
 
@@ -30,7 +30,7 @@
 
 *******************************************************************************/
 
-#include "omGetFileCommand.hpp"
+#include "omCommand.hpp"
 #include "omDef.hpp"
 #include "rtn.hpp"
 #include "omManager.hpp"

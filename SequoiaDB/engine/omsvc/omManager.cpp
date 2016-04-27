@@ -43,7 +43,7 @@
 #include "rtnBackgroundJob.hpp"
 #include "pmdController.hpp"
 #include "omManagerJob.hpp"
-#include "../omsvc/omGetFileCommand.hpp"
+#include "omCommand.hpp"
 #include "ossVer.h"
 #include "omStrategyMgr.hpp"
 

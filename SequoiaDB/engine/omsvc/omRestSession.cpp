@@ -38,7 +38,7 @@
 #include "utilCommon.hpp"
 #include "ossMem.hpp"
 #include "rtnCommand.hpp"
-#include "../omsvc/omGetFileCommand.hpp"
+#include "omCommand.hpp"
 #include "omTransferProcessor.hpp"
 #include "rtn.hpp"
 #include "msgAuth.hpp"
