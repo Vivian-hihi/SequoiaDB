@@ -301,18 +301,23 @@ TEST ( cpp_bson_base_type, timestamp )
 
    // normal
    const CHAR* ppNormalTimestamp[] = {
-      //"{ \"myTimestamp1\": { \"$timestamp\": \"1901-12-14-04.45.52.000000\" } }", // should be ok, but now it's not, maybe we should add another 352s
-      "{ \"myTimestamp2\": { \"$timestamp\": \"2038-01-19-11.14.07.999999\" } }",
-      "{ \"myTimestamp3\": { \"$timestamp\": \"1901-12-13T20:45:52.000000Z\" } }",
-      "{ \"myTimestamp4\": { \"$timestamp\": \"1901-12-14T04:45:52.000000+0800\" } }",
+      "{ \"myTimestamp1\": { \"$timestamp\": \"1901-12-14-04.45.52.000000\" } }", // if you find it can't pass,
+                                                                                  // please check your system,
+                                                                                  // whether it is "+0800 in Beijing",
+                                                                                  // but not "+0800 in Shanghai" or the
+                                                                                  // other place
+      "{ \"myTimestamp2\": { \"$timestamp\": \"1901-12-13T20:45:52.000000Z\" } }",
+      "{ \"myTimestamp3\": { \"$timestamp\": \"1901-12-14T04:45:52.000000+0800\" } }",
+      "{ \"myTimestamp4\": { \"$timestamp\": \"2038-01-19-11.14.07.999999\" } }",
       "{ \"myTimestamp5\": { \"$timestamp\": \"2038-01-19T03:14:07.999999Z\" } }",
       "{ \"myTimestamp6\": { \"$timestamp\": \"2038-01-19T11:14:07.999999+0800\" } }"
    } ;
 
    const CHAR* ppExportResult[] = {
-      "{ \"myTimestamp2\": {\"$timestamp\": \"2038-01-19-11.14.07.999999\"} }",
-      "{ \"myTimestamp3\": {\"$timestamp\": \"1901-12-14-04.51.44.000000\"} }",
-      "{ \"myTimestamp4\": {\"$timestamp\": \"1901-12-14-04.51.44.000000\"} }",
+      "{ \"myTimestamp1\": {\"$timestamp\": \"1901-12-14-04.45.52.000000\"} }",
+      "{ \"myTimestamp2\": {\"$timestamp\": \"1901-12-14-04.45.52.000000\"} }",
+      "{ \"myTimestamp3\": {\"$timestamp\": \"1901-12-14-04.45.52.000000\"} }",
+      "{ \"myTimestamp4\": {\"$timestamp\": \"2038-01-19-11.14.07.999999\"} }",
       "{ \"myTimestamp5\": {\"$timestamp\": \"2038-01-19-11.14.07.999999\"} }",
       "{ \"myTimestamp6\": {\"$timestamp\": \"2038-01-19-11.14.07.999999\"} }"
    } ;
