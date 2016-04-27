@@ -354,7 +354,7 @@ int _decimal_sub_abs( const bson_decimal *left, const bson_decimal *right,
       res_ndigits = 1 ;
    }
 
-   res_buf = bson_malloc( res_ndigits + 1 ) ;
+   res_buf = bson_malloc( ( res_ndigits + 1 ) * sizeof( short ) ) ;
    if ( NULL == res_buf )
    {
       rc = -2 ;
@@ -466,7 +466,7 @@ int _decimal_add_abs( const bson_decimal *left, const bson_decimal *right,
       res_ndigits = 1 ;
    }
 
-   res_buf = bson_malloc( res_ndigits + 1 ) ;
+   res_buf = bson_malloc( ( res_ndigits + 1 ) * sizeof( short ) ) ;
    if ( NULL == res_buf )
    {
       rc = -2 ;
@@ -505,7 +505,6 @@ int _decimal_add_abs( const bson_decimal *left, const bson_decimal *right,
 
    if ( carry != 0 )
    {
-      //TODO: check
       /* else we failed to allow for carry out */
       rc = -6 ;
       goto error ;
@@ -2221,14 +2220,14 @@ error:
 // the caller is responsible for freeing this decimal( decimal_free )
 int decimal_from_double( double value, bson_decimal *decimal )
 {
-   char buf[ DBL_DIG + 100 ] = "" ;
+   char buf[ SDB_DECIMAL_DBL_DIG + 100 ] = "" ;
 
    if ( NULL == decimal )
    {
       return -6 ;
    }
 
-   bson_sprintf( buf, "%.*g", DBL_DIG, value ) ;
+   bson_sprintf( buf, "%.*g", SDB_DECIMAL_DBL_DIG, value ) ;
 
   return decimal_from_str( buf, decimal ) ;
 }
@@ -2538,6 +2537,16 @@ done:
    return rc ;
 error:
    goto done ;
+}
+
+int decimal_get_typemod2( const bson_decimal *decimal )
+{
+   if ( NULL == decimal )
+   {
+      return -1 ;
+   }
+
+   return decimal->typemod ;
 }
 
 int decimal_copy( const bson_decimal *source, bson_decimal *target )
@@ -3088,5 +3097,108 @@ done:
 error:
    goto done ;
 }
+
+int decimal_is_out_of_precision( bson_decimal *decimal, int typemod )
+{
+   int precision = 0 ;
+   int scale     = 0 ;
+   int maxdigits = 0 ;
+   int ddigits   = 0 ;
+   int i         = 0 ;
+   int out_of_precision = 0 ;
+
+   if ( typemod == -1 )
+   {
+      /* return false if we have a default typmod (-1) */
+      goto done ;
+   }
+
+   precision = ( typemod >> 16 ) & 0xffff ;
+   scale     = typemod & 0xffff ;
+   maxdigits = precision - scale ;
+
+   if ( decimal->dscale > scale )
+   {
+      out_of_precision = 1 ;
+      goto done ;
+   }
+
+   /*
+   * Check for overflow - note we can't do this before rounding, because
+   * rounding could raise the weight.  Also note that the var's weight could
+   * be inflated by leading zeroes, which will be stripped before storage
+   * but perhaps might not have been yet. In any case, we must recognize a
+   * true zero, whose weight doesn't mean anything.
+   */
+   ddigits = ( decimal->weight + 1) * DECIMAL_DEC_DIGITS ;
+   if ( ddigits > maxdigits )
+   {
+      /* Determine true weight; and check for all-zero result */
+      for ( i = 0 ; i < decimal->ndigits ; i++ )
+      {
+         short dig = decimal->digits[i] ;
+         if ( dig )
+         {
+            /* Adjust for any high-order decimal zero digits */
+            if ( dig < 10 )
+            {
+               ddigits -= 3 ;
+            }
+            else if ( dig < 100 )
+            {
+               ddigits -= 2 ;
+            }
+            else if (dig < 1000)
+            {
+               ddigits -= 1 ;
+            }
+
+            if ( ddigits > maxdigits )
+            {
+               out_of_precision = 1 ;
+               goto done ;
+            }
+            break ;
+         }
+
+         ddigits -= DECIMAL_DEC_DIGITS ;
+      }
+   }
+
+done:
+   return out_of_precision ;
+}
+
+int decimal_update_typemod( bson_decimal *decimal, int typemod )
+{
+   int rc         = 0 ;
+   if ( NULL == decimal )
+   {
+      rc = -6 ;
+      goto error ;
+   }
+
+   if ( decimal_is_out_of_precision( decimal, typemod ) )
+   {
+      //if out of precision define. remove the precision define
+      decimal->typemod = -1 ;
+      goto done ;
+   }
+
+   rc = _decimal_apply_typmod( decimal, typemod ) ;
+   if ( 0 != rc )
+   {
+      goto error ;
+   }
+
+   decimal->typemod = typemod ;
+
+done:
+   return rc ;
+error:
+   goto done ;
+}
+
+
 
 

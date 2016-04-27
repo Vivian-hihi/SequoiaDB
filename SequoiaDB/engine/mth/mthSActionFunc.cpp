@@ -1143,6 +1143,7 @@ namespace engine
             {
                i = 0 ;
             }
+            else
             {
                i = ( INT32 )l ;
             }
@@ -1151,7 +1152,16 @@ namespace engine
          else if ( NumberDecimal == e.type() )
          {
             INT32 i = 0 ;
-            e.numberDecimal().toInt( &i) ;
+            INT64 l = 0 ;
+            e.numberDecimal().toLong( &l) ;
+            if ( l > 2147483647LL || l < -2147483648LL )
+            {
+               i = 0 ;
+            }
+            else
+            {
+               i = ( INT32 )l ;
+            }
 
             builder.appendNumber( fieldName, i ) ;
          }

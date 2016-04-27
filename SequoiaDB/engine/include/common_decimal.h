@@ -81,6 +81,9 @@ SDB_EXTERN_C_START
 
 #define DECIMAL_DSCALE_MASK			0x3FFF
 
+
+#define SDB_DECIMAL_DBL_DIG        ( DBL_DIG )
+
 //sign + dscale
 //   sign  = dscale & 0xC000
 //   scale = dscale & 0x3FFF
@@ -186,6 +189,7 @@ SDB_EXPORT int decimal_from_str( const char *value, bson_decimal *decimal ) ;
 
 SDB_EXPORT int decimal_get_typemod( const bson_decimal *decimal, int *precision, 
                                     int *scale ) ;
+SDB_EXPORT int decimal_get_typemod2( const bson_decimal *decimal ) ;
 SDB_EXPORT int decimal_copy( const bson_decimal *source, 
                              bson_decimal *target ) ;
 
@@ -223,6 +227,9 @@ SDB_EXPORT int decimal_floor( const bson_decimal *decimal,
 SDB_EXPORT int decimal_mod( const bson_decimal *left, const bson_decimal *right, 
                             bson_decimal *result ) ;
 
+SDB_EXPORT int decimal_update_typemod( bson_decimal *decimal, int typemod ) ;
+
+int decimal_is_out_of_precision( bson_decimal *decimal, int typemod ) ;
 
 SDB_EXTERN_C_END
 

@@ -651,7 +651,7 @@ namespace engine
       *( INT32 *)pData = decimal.getTypemod() ;
       pData += sizeof( INT32 ) ;
 
-      // scale 
+      // sign + scale 
       *( INT16 *)pData = decimal.getStorageScale() ;
       pData += sizeof( INT16 ) ;
 

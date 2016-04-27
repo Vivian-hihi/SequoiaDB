@@ -1471,7 +1471,7 @@ namespace bson {
         _b.appendStr( fieldName ) ;
         _b.appendNum( size ) ;         // size
         _b.appendNum( typemod ) ;      // typemod
-        _b.appendNum( scale ) ;        // dscale
+        _b.appendNum( scale ) ;        // sign + dscale
         _b.appendNum( weight ) ;       // weight
         
         for ( i = 0 ; i < ndigit ; i++ )

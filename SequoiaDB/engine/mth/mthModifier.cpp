@@ -226,9 +226,10 @@ namespace engine
                                            ModifierElement &me )
    {
       PD_TRACE_ENTRY ( SDB__MTHMDF__APPINCMDF );
+      INT32 rc        = SDB_OK ;
       BSONElement elt = me._toModify ;
-      BSONType a = in.type() ;
-      BSONType b = elt.type() ;
+      BSONType a      = in.type() ;
+      BSONType b      = elt.type() ;
 
       if ( ( NumberLong == a && 0 != elt.numberLong() ) ||
            ( NumberInt == a && 0 != elt.numberInt() ) ||
@@ -282,7 +283,6 @@ namespace engine
          }
          else
          {
-            INT32 rc = SDB_OK ;
             bsonDecimal result ;
             result.init() ;
 
@@ -292,6 +292,15 @@ namespace engine
                PD_LOG( PDERROR, "decimal add failed:v1=%s,v2=%s,rc=%d", 
                        decimal.toString().c_str(),
                        inc.toString().c_str(), rc ) ;
+               goto error ;
+            }
+
+            rc = result.updateTypemod( decimal.getTypemod() ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "result is out of precision:result=%s,"
+                       "precision=%d,scale=%d,rc=%d", result.toString().c_str(),
+                       decimal.getPrecision(), decimal.getScale(), rc ) ;
                goto error ;
             }
 
@@ -308,7 +317,7 @@ namespace engine
 
    done:
       PD_TRACE_EXIT ( SDB__MTHMDF__APPINCMDF ) ;
-      return SDB_OK ;
+      return rc ;
    error:
       goto done ;
    }

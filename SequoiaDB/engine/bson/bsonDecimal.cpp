@@ -254,7 +254,8 @@ namespace bson {
 
    INT32 bsonDecimal::add( const bsonDecimal &right )
    {
-      INT32 rc = SDB_OK ;
+      INT32 rc      = SDB_OK ;
+      INT32 typemod = -1 ;
       bsonDecimal result ;
       result.init() ;
       rc = add( right, result ) ;
@@ -263,7 +264,15 @@ namespace bson {
          return rc ;
       }
 
-      return decimal_copy( &result._decimal, &_decimal ) ;
+      typemod = decimal_get_typemod2( &_decimal );
+
+      rc = decimal_copy( &result._decimal, &_decimal ) ;
+      if ( SDB_OK != rc )
+      {
+         return rc ;
+      }
+      
+      return decimal_update_typemod( &_decimal, typemod ) ;
    }
 
    INT32 bsonDecimal::sub( const bsonDecimal &right, bsonDecimal &result )
@@ -315,6 +324,11 @@ namespace bson {
       return decimal_mod( &_decimal, &(right._decimal), &(result._decimal) ) ;
    }
 
+   INT32 bsonDecimal::updateTypemod( INT32 typemod )
+   {
+      return decimal_update_typemod( &_decimal, typemod ) ;
+   }
+
    INT16 bsonDecimal::getWeight() const
    {
       return _decimal.weight ;
@@ -330,6 +344,21 @@ namespace bson {
       return decimal_get_typemod( &_decimal, precision, scale ) ;
    }
 
+   INT32 bsonDecimal::getPrecision() const 
+   {
+      INT32 rc        = SDB_OK ;
+      INT32 precision = -1 ;
+      INT32 scale     = -1 ;
+
+      rc = decimal_get_typemod( &_decimal, &precision, &scale ) ;
+      if ( SDB_OK != rc )
+      {
+         return -1 ;
+      }
+
+      return precision ;
+   }
+
    // decimal->dscale | decimal->sign ;
    INT16 bsonDecimal::getStorageScale() const
    {
@@ -338,7 +367,17 @@ namespace bson {
 
    INT16 bsonDecimal::getScale() const
    {
-      return _decimal.dscale ;
+      INT32 rc        = SDB_OK ;
+      INT32 precision = -1 ;
+      INT32 scale     = -1 ;
+
+      rc = decimal_get_typemod( &_decimal, &precision, &scale ) ;
+      if ( SDB_OK != rc )
+      {
+         return -1 ;
+      }
+
+      return scale ;
    }
 
    INT16 bsonDecimal::getSign() const

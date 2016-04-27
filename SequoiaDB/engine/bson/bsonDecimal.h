@@ -87,7 +87,7 @@ namespace bson {
       INT32          ceil( bsonDecimal &result ) ;
       INT32          floor( bsonDecimal &result ) ;
       INT32          mod( bsonDecimal &right, bsonDecimal &result ) ;
-      
+      INT32          updateTypemod( INT32 typemod ) ;
 
    public:
       /* getter */
@@ -95,8 +95,11 @@ namespace bson {
       INT32          getTypemod() const ;
       INT32          getPrecision( INT32 *precision, INT32 *scale ) const ;
 
+      INT32          getPrecision() const ;
+
       // decimal->dscale | decimal->sign ;
       INT16          getStorageScale() const ;
+
       INT16          getScale() const ;
       INT16          getSign() const ;
 
