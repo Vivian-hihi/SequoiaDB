@@ -4386,7 +4386,8 @@ namespace engine
       SubCLBufList::iterator iterSubCTX = _subCLBufList.find( contextID ) ;
       if ( _subCLBufList.end() == iterSubCTX )
       {
-         PD_LOG( PDERROR, "can not find context[%lld] in local context buf" ) ;
+         PD_LOG( PDERROR, "can not find context[%lld] in local context buf",
+                 contextID ) ;
          rc = SDB_SYS ;
          goto error ;
       }
