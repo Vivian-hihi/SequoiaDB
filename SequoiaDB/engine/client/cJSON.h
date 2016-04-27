@@ -146,6 +146,7 @@ extern "C"
 #define CJSON_OP_LTRIM     "$ltrim"
 #define CJSON_OP_RTRIM     "$rtrim"
 #define CJSON_OP_TRIM      "$trim"
+#define CJSON_OP_COUNT     "$count"
 
 #define CJSON_INNER_META         "$Meta"
 #define CJSON_INNER_AGGR         "$Aggr"
