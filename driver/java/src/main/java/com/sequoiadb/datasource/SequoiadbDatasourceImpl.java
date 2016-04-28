@@ -92,7 +92,7 @@ public class SequoiadbDatasourceImpl
 	    	} catch(Exception e){}
 	    }
 	}
-	
+
 	class CreateConnectionTask implements Runnable {
 		public void run() {
 			try {

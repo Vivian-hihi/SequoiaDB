@@ -248,59 +248,58 @@ public class ConcreteBalanceStrategy implements IConnectStrategy {
 		_lock.lock();
 		try {
 			if (ItemStatus.IDLE == status) {
-				if (_idleConnItemMap.containsKey(addr)) {
-					if (change > 0) {
-						/// in this case, we are adding connections to idle pool
-						info = _countInfoMap.get(addr);				
-						if (info == null) {
-							// should never happen
-							throw new BaseException("SDB_SYS", "Point1: the pool has no information about address: " + addr);
-						}
-						// update the countInfo which is in the state of unavailable
-						if (info.getAvailable() == false) {
-							_countInfoSet.remove(info);
-							info.setAvailable(true);
-							_countInfoSet.add(info);
-						}
-		
-						// push connItem into list
-						list = _idleConnItemMap.get(addr);
-						if (list == null) {
-							// should never happen
-							throw new BaseException("SDB_SYS", "Point2: the pool has no information about address: " + addr);
-						}
-						list.add(item);
-					} else if (change < 0) {
-						/// in this case, we are removing connections from idle pool
-						/// when we come here, we the CLEAN TASK is working.
-						list = _idleConnItemMap.get(addr);
-						if (null == list) {
-							// should never happen
-							throw new BaseException("SDB_SYS", "Point3: the pool has no information about address: " + addr);
-						}
-						if (list.size() == 0) {
-							// should never happen
-							throw new BaseException("SDB_SYS", "Point4: the pool has no information about address: " + addr);
-						}
-						if (list.remove(item) == false) {
-							// should never happen
-							throw new BaseException("SDB_SYS", "Point5: the pool has no information about address: " + addr);
-						}
-						// when current list has not connItem any more, let's set current address unusable.
-						if (0 == list.size()) {
-							info = _countInfoMap.get(addr);
-							_countInfoSet.remove(info);
-							info.setAvailable(false);
-							_countInfoSet.add(info);
-						}
-					} else {
-						throw new BaseException("SDB_SYS", "Point1: invalid change in idle pool");
+				if (!_idleConnItemMap.containsKey(addr)) {
+					// maybe the information of this address was remove by "removeAddress()"
+					// so let's rebuild those information
+					_restoreIdleConnItemInfo(addr);
+				}
+				if (change > 0) {
+					/// in this case, we are adding connections to idle pool
+					info = _countInfoMap.get(addr);				
+					if (info == null) {
+						// should never happen
+						throw new BaseException("SDB_SYS", "Point1: the pool has no information about address: " + addr);
+					}
+					// update the countInfo which is in the state of unavailable
+					if (info.getAvailable() == false) {
+						_countInfoSet.remove(info);
+						info.setAvailable(true);
+						_countInfoSet.add(info);
+					}
+	
+					// push connItem into list
+					list = _idleConnItemMap.get(addr);
+					if (list == null) {
+						// should never happen
+						throw new BaseException("SDB_SYS", "Point2: the pool has no information about address: " + addr);
+					}
+					list.add(item);
+				} else if (change < 0) {
+					/// in this case, we are removing connections from idle pool
+					/// when we come here, we the CLEAN TASK is working.
+					list = _idleConnItemMap.get(addr);
+					if (list == null) {
+						// should never happen
+						throw new BaseException("SDB_SYS", "Point3: the pool has no information about address: " + addr);
+					}
+					if (list.size() == 0) {
+						// should never happen
+						throw new BaseException("SDB_SYS", "Point4: the pool has no information about address: " + addr);
+					}
+					if (list.remove(item) == false) {
+						// should never happen
+						throw new BaseException("SDB_SYS", "Point5: the pool has no information about address: " + addr);
+					}
+					// when current list has not connItem any more, let's set current address unusable.
+					if (list.size() == 0) {
+						info = _countInfoMap.get(addr);
+						_countInfoSet.remove(info);
+						info.setAvailable(false);
+						_countInfoSet.add(info);
 					}
 				} else {
-					// it's impossible for having no address in _connItemMap
-					throw new BaseException("SDB_SYS", "Point6: the pool has no information about address: " + addr);
-				} 
-					
+					throw new BaseException("SDB_SYS", "Point1: invalid change in idle pool");
+				}
 			} else if (ItemStatus.USED == status) {
 				// when _countInfoMap does not contain this address, 
 				// this address may be remove by user. 
@@ -364,6 +363,10 @@ public class ConcreteBalanceStrategy implements IConnectStrategy {
 			_lock.unlock();
 		}
 		return list;
+	}
+	
+	private void _restoreIdleConnItemInfo(String addr) {
+		addAddress(addr);
 	}
 	
 }
