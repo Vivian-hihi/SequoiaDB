@@ -383,7 +383,7 @@ PHP_METHOD( SequoiaDB, list )
    bson_init( &selector ) ;
    bson_init( &orderBy ) ;
    PHP_SET_ERRNO_OK( TRUE, pThisObj ) ;
-   if ( PHP_GET_PARAMETERS( "z|zzz",
+   if ( PHP_GET_PARAMETERS( "z|zzzz",
                             &pType,
                             &pCondition,
                             &pSelector,
