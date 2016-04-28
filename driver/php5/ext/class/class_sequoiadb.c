@@ -372,6 +372,7 @@ PHP_METHOD( SequoiaDB, list )
    zval *pCondition = NULL ;
    zval *pSelector  = NULL ;
    zval *pOrderBy   = NULL ;
+   zval *pHint      = NULL ;
    zval *pThisObj   = getThis() ;
    sdbConnectionHandle connection = SDB_INVALID_HANDLE ;
    sdbCursorHandle cursor         = SDB_INVALID_HANDLE ;
@@ -386,7 +387,8 @@ PHP_METHOD( SequoiaDB, list )
                             &pType,
                             &pCondition,
                             &pSelector,
-                            &pOrderBy ) == FAILURE )
+                            &pOrderBy,
+                            &pHint ) == FAILURE )
    {
       rc = SDB_INVALIDARG ;
       goto error ;
