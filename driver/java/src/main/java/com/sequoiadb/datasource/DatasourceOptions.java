@@ -75,9 +75,6 @@ public class DatasourceOptions implements Cloneable
 	 * @brief Set the capacity of the connection pool. 
 	 * @param  maxCount Default to be 500.
 	 * @note When maxCount is set to 0, the connection pool will be disabled.
-	 *       This value can be set to 0 only in the very beginning. After that, 
-	 *       when it is changed, it should be greater than 0. And if you want to 
-	 *       disable connection pool, use Sequoiadb::disableDatasource() instead.
 	 * @see Sequoiadb::disableDatasource() 
 	 * @since v1.12.6 and 1.12.6
 	 */

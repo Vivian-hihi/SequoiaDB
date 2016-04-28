@@ -166,6 +166,7 @@ public class SequoiadbDatasource extends SequoiadbDatasourceImpl
 	/**
 	 * @fn void enableDatasource()
 	 * @brief Enable data source.
+	 * @note When maxCount is 0, set it to be the default value(500).
 	 * @return void
 	 * @exception com.sequoiadb.Exception.BaseException
 	 * @exception InterruptedException

@@ -535,7 +535,7 @@ public class SequoiadbDatasourceImpl
 				throw new BaseException("SDB_SYS", "connection pool has closed");
 			}
 			// check options
-			_checkDatasourceOptions(_dsOpt, dsOpt);
+			_checkDatasourceOptions(dsOpt);
 			// save previous values
 			int previousMaxCount = _dsOpt.getMaxCount();
 			int previousCheckInterval = _dsOpt.getCheckInterval();
@@ -550,6 +550,11 @@ public class SequoiadbDatasourceImpl
 			}
 			// when data source is disable, return directly
 			if (!_isDatasourceOn) {
+				return;
+			}
+			// when _maxCount is set to 0, disable data source and return
+			if (_dsOpt.getMaxCount() == 0) {
+				disableDatasource();
 				return;
 			}
 			// check need to adjust the capacity of connection pool or not.
@@ -601,6 +606,7 @@ public class SequoiadbDatasourceImpl
 	/**
 	 * @fn void enableDatasource()
 	 * @brief Enable data source.
+	 * @note When maxCount is 0, set it to be the default value(500).
 	 * @return void
 	 * @exception com.sequoiadb.Exception.BaseException
 	 * @exception InterruptedException
@@ -616,6 +622,8 @@ public class SequoiadbDatasourceImpl
 			if (_isDatasourceOn) {
 				return;
 			}
+			if (_dsOpt.getMaxCount() ==0)
+				_dsOpt.setMaxCount(500);
 			_enableDatasource(_dsOpt.getConnectStrategy());
 		} finally {
 			wlock.unlock();
@@ -940,7 +948,7 @@ public class SequoiadbDatasourceImpl
 		_localAddrs.addAll(localCoordList);
 		
 		// check options
-		_checkDatasourceOptions(null, _dsOpt);
+		_checkDatasourceOptions(_dsOpt);
 		
 		// if connection is shutdown, return directly
 		if (0 == _dsOpt.getMaxCount()) {
@@ -1019,14 +1027,11 @@ public class SequoiadbDatasourceImpl
 		// and we will create a new one next time
 	}
 	
-	private void _checkDatasourceOptions(DatasourceOptions originalOpt, 
-			DatasourceOptions newOpt) throws BaseException {
+	private void _checkDatasourceOptions(DatasourceOptions newOpt) throws BaseException {
 		if (null == newOpt) {
 			throw new BaseException("SDB_INVALIDARG", "the offering datasource options can't be null");
 		}
-		int originalMaxCount = 0;
-		if (null != originalOpt)
-			originalMaxCount = originalOpt.getMaxCount();
+
     	int deltaIncCount = newOpt.getDeltaIncCount();
     	int maxIdleCount = newOpt.getMaxIdleCount();
     	int maxCount = newOpt.getMaxCount();
@@ -1037,12 +1042,10 @@ public class SequoiadbDatasourceImpl
 		// 1. maxCount
 		if (maxCount < 0)
 			throw new BaseException("SDB_INVALIDARG", "maxCount can't be less then 0");
-		if (0 == maxCount && 0 != originalMaxCount)
-			throw new BaseException("SDB_INVALIDARG", "maxCount can't be set to 0 any more");
 		
 		// 2. deltaIncCount
-		if (deltaIncCount < 0)
-			throw new BaseException("SDB_INVALIDARG", "deltaIncCount can't be less then 0");
+		if (deltaIncCount <= 0)
+			throw new BaseException("SDB_INVALIDARG", "deltaIncCount should be more then 0");
 		
 		// 3. maxIdleCount
 		if (maxIdleCount < 0)
