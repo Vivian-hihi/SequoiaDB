@@ -253,6 +253,7 @@ PHP_METHOD( SequoiaDB, snapshot )
    zval *pCondition = NULL ;
    zval *pSelector  = NULL ;
    zval *pOrderBy   = NULL ;
+   zval *pHint      = NULL ;
    zval *pThisObj   = getThis() ;
    sdbConnectionHandle connection = SDB_INVALID_HANDLE ;
    sdbCursorHandle cursor         = SDB_INVALID_HANDLE ;
@@ -263,11 +264,12 @@ PHP_METHOD( SequoiaDB, snapshot )
    bson_init( &selector ) ;
    bson_init( &orderBy ) ;
    PHP_SET_ERRNO_OK( TRUE, pThisObj ) ;
-   if ( PHP_GET_PARAMETERS( "|zzzz",
+   if ( PHP_GET_PARAMETERS( "|zzzzz",
                             &pType,
                             &pCondition,
                             &pSelector,
-                            &pOrderBy ) == FAILURE )
+                            &pOrderBy,
+                            &pHint ) == FAILURE )
    {
       rc = SDB_INVALIDARG ;
       goto error ;
