@@ -1312,6 +1312,13 @@ namespace engine
             decimal.fromLong( ( INT64 )v ) ;
             builder.append( fieldName, decimal ) ;
          }
+         else if ( NumberLong == e.type() )
+         {
+            bsonDecimal decimal ;
+            decimal.init() ;
+            decimal.fromLong( e.numberLong() ) ;
+            builder.append( fieldName, decimal ) ;
+         }
          else if ( String != e.type() )
          {
             bsonDecimal decimal ;

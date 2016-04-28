@@ -309,7 +309,7 @@ namespace engine
       }
 #endif
       if ( !e.isNumber() ||
-           0 == e.Number() )
+           ( e.type() != NumberDecimal && 0 == e.Number() ))
       {
          PD_LOG( PDERROR, "invalid element:%s",
                  e.toString( TRUE, TRUE ).c_str() ) ;
