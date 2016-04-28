@@ -1089,7 +1089,17 @@ namespace engine
       {
          BSONElement itemEle = itemIter.next() ;
          string fieldName    = itemEle.fieldName() ;
-         string value        = itemEle.String() ;
+         string value ;
+
+         if ( String != itemEle.type() )
+         {
+            rc = SDB_INVALIDARG ;
+            PD_LOG_MSG( PDERROR, "the type of field[%s] should be \"String\"",
+                        fieldName.c_str() ) ;
+            goto error ;
+         }
+
+         value = itemEle.String() ;
 
          if ( OM_BSON_FIELD_HOST_NAME == fieldName )
          {
@@ -1115,7 +1125,7 @@ namespace engine
                {
                   rc = SDB_INVALIDARG ;
                   PD_LOG_MSG( PDERROR, "db path has been used: host=%s, path=%s", 
-                       hostName.c_str(), value.c_str() ) ;
+                              hostName.c_str(), value.c_str() ) ;
                   goto error ;
                }
 
