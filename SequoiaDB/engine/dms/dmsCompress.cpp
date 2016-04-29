@@ -114,7 +114,13 @@ namespace engine
 
       rc = compressor->compress( pInputData, inputSize, pBuff,
                                  compressedLen, dictionary ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to compress data, rc: %d", rc ) ;
+      if ( rc )
+      {
+         PDLEVEL level ;
+         level = ( SDB_UTIL_COMPRESS_ABORT == rc ) ? PDDEBUG : PDERROR ;
+         PD_LOG( level, "Failed to compress data, rc: %d", rc ) ;
+         goto error ;
+      }
 
       // assign the output buffer pointer
       if ( ppData )

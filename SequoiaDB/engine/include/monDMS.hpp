@@ -66,9 +66,6 @@ namespace engine
       UINT32 _dictCreated ;
       UINT8  _compressType ;
       UINT8  _dictVersion ;
-      UINT8 _codeSize ;
-      UINT8 _varLenCompEnable ;
-      UINT32 _maxCode ;
 
       UINT32 _pageSize ;
       UINT32 _lobPageSize ;
@@ -96,9 +93,6 @@ namespace engine
          _dictCreated         = FALSE ;
          _compressType        = 0 ;
          _dictVersion         = 0 ;
-         _codeSize            = 0 ;
-         _varLenCompEnable    = 0 ;
-         _maxCode             = 0 ;
 
          _pageSize            = 0 ;
          _lobPageSize         = 0 ;

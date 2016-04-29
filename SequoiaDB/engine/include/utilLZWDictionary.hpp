@@ -249,7 +249,7 @@ namespace engine
       /* Interfaces used by compression/decompression */
       OSS_INLINE void attach( const utilDictHandle dictionary ) ;
       OSS_INLINE LZW_CODE findStrExt( const BYTE *str, UINT32 &length ) ;
-      OSS_INLINE UINT32 getStrExt( LZW_CODE code, UINT8 *buff,
+      OSS_INLINE UINT32 getStrExt( LZW_CODE code, BYTE *buff,
                                    UINT32 buffSize ) ;
       OSS_INLINE UINT8 getVarLenFlagSize() { return _head->_varLenFlagSize ; }
       OSS_INLINE void getVarLenInfo( LZW_CODE code, UINT8 &lenIdx,
@@ -271,6 +271,11 @@ namespace engine
       UINT32 _calcCodeSize( UINT32 code ) ;
       void _formatAdditionalInfo( BSONObj &obj ) ;
       void _setVarLenSplitInfo() ;
+
+      void _cstCheck() ;
+      void _codeMapCheck() ;
+      void _dstCheck() ;
+      void _healthCheck() ;
 
       OSS_INLINE INT32 _cstBinSearch( UINT32 low, UINT32 high, BYTE ch ) ;
       OSS_INLINE UINT32 _dstGetRemoteStr( DST_ITEM item, CHAR *buff ) ;
@@ -658,7 +663,7 @@ namespace engine
       return currIdx ;
    }
 
-   OSS_INLINE UINT32 _utilLZWDictionary::getStrExt( LZW_CODE code, UINT8 *buff,
+   OSS_INLINE UINT32 _utilLZWDictionary::getStrExt( LZW_CODE code, BYTE *buff,
                                                     UINT32 buffSize )
    {
       UINT32 len = 0 ;

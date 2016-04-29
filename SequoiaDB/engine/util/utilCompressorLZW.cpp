@@ -63,15 +63,40 @@ namespace engine
       utilLZWDictionary *dictionary = context.getDictionary() ;
       SDB_ASSERT( dictionary, "Dictionary should not be NULL" ) ;
 
+#ifdef _DEBUG
+      UINT32 strLen = 0 ;
+      CHAR strBuf[ UTIL_MAX_DICT_STR_LEN ] = { 0 } ;
+      vector<LZW_CODE> codeVec ;
+      LZW_CODE compareCode = UTIL_INVALID_DICT_CODE ;
+      utilLZWContext compareCtx ;
+      compareCtx._stream = context._stream ;
+      compareCtx._streamLen = context._streamLen ;
+      compareCtx._streamPos = context._streamPos ;
+      compareCtx._dictionary = context._dictionary ;
+#endif /* _DEBUG */
+
       maxCodeNum = maxSize * 8 / dictionary->getCodeSize() ;
       do
       {
          length = remainLen ;
          code = dictionary->findStrExt( (BYTE*)(source + currPos), length ) ;
+         SDB_ASSERT( code <= dictionary->getMaxValidCode(),
+                     "Code out of range" ) ;
+#ifdef _DEBUG
+         strLen = dictionary->getStrExt( code, (BYTE*)strBuf,
+                                         UTIL_MAX_DICT_STR_LEN ) ;
+         SDB_ASSERT( strLen == length, "Length not match" ) ;
+         SDB_ASSERT( 0 == ossMemcmp( strBuf, source + currPos, length ),
+                     "String not match" ) ;
+         codeVec.push_back( code ) ;
+#endif /* _DEBUG */
+
          _writeCode( &context, code ) ;
          if ( ++codeNum > maxCodeNum )
          {
             rc = SDB_UTIL_COMPRESS_ABORT ;
+            PD_LOG( PDDEBUG, "Compression abort as it is not up to the ratio "
+                    "requirement, rc: %d", rc ) ;
             goto error ;
          }
 
@@ -80,6 +105,16 @@ namespace engine
       } while ( remainLen > 0 ) ;
 
       _flushBits( &context ) ;
+
+#ifdef _DEBUG
+      for ( vector<LZW_CODE>::iterator itr = codeVec.begin();
+            itr != codeVec.end(); ++itr )
+      {
+         compareCode = _readCode( &compareCtx ) ;
+         SDB_ASSERT( *itr == compareCode, "Code not match" ) ;
+      }
+#endif /* _DEBUG */
+
    done:
       PD_TRACE_EXITRC( SDB__UTILCOMPRESSORLZW__COMPRESSLEVELONE, rc ) ;
       return rc ;
@@ -104,14 +139,39 @@ namespace engine
       utilLZWDictionary *dictionary = context.getDictionary() ;
       SDB_ASSERT( dictionary, "Dictionary should not be NULL" ) ;
 
+#ifdef _DEBUG
+      UINT32 strLen = 0 ;
+      CHAR strBuf[ UTIL_MAX_DICT_STR_LEN ] = { 0 } ;
+      vector<LZW_CODE> codeVec ;
+      LZW_CODE compareCode = UTIL_INVALID_DICT_CODE ;
+      utilLZWContext compareCtx ;
+      compareCtx._stream = context._stream ;
+      compareCtx._streamLen = context._streamLen ;
+      compareCtx._streamPos = context._streamPos ;
+      compareCtx._dictionary = context._dictionary ;
+#endif /* _DEBUG */
+
       do
       {
          length = remainLen ;
          code = dictionary->findStrExt( (BYTE*)(source + currPos), length ) ;
+         SDB_ASSERT( code <= dictionary->getMaxValidCode(),
+                     "Code out of range" ) ;
+#ifdef _DEBUG
+         strLen = dictionary->getStrExt( code, (BYTE*)strBuf,
+                                         UTIL_MAX_DICT_STR_LEN ) ;
+         SDB_ASSERT( strLen == length, "Length not match" ) ;
+         SDB_ASSERT( 0 == ossMemcmp( strBuf, source + currPos, length ),
+                     "String not match" ) ;
+         codeVec.push_back( code ) ;
+#endif /* _DEBUG */
+
          totalBitNum += _writeVarLenCode( &context, code ) ;
          if ( totalBitNum > maxBitNum )
          {
             rc = SDB_UTIL_COMPRESS_ABORT ;
+            PD_LOG( PDDEBUG, "Compression abort as it is not up to the ratio "
+                    "requirement, rc: %d", rc ) ;
             goto error ;
          }
          currPos += length ;
@@ -119,6 +179,16 @@ namespace engine
       } while ( remainLen > 0 ) ;
 
       _flushBits( &context ) ;
+
+#ifdef _DEBUG
+      for ( vector<LZW_CODE>::iterator itr = codeVec.begin();
+            itr != codeVec.end(); ++itr )
+      {
+         compareCode = _readCode( &compareCtx ) ;
+         SDB_ASSERT( *itr == compareCode, "Code not match" ) ;
+      }
+#endif /* _DEBUG */
+
    done:
       PD_TRACE_EXITRC( SDB__UTILCOMPRESSORLZW__COMPRESSLEVELTWO, rc ) ;
       return rc ;
@@ -148,10 +218,35 @@ namespace engine
       SDB_ASSERT( dictionary, "Dictionary should not be NULL" ) ;
       vector<LZW_CODE> codeVec ;
 
+#ifdef _DEBUG
+      UINT32 strLen = 0 ;
+      CHAR strBuf[ UTIL_MAX_DICT_STR_LEN ] = { 0 } ;
+      vector<LZW_CODE> compareCodeVec ;
+      LZW_CODE actualCode = UTIL_INVALID_DICT_CODE ;
+      LZW_CODE compareCode = UTIL_INVALID_DICT_CODE ;
+      utilLZWContext compareCtx ;
+      compareCtx._stream = context._stream ;
+      compareCtx._streamLen = context._streamLen ;
+      compareCtx._streamPos = context._streamPos ;
+      compareCtx._dictionary = context._dictionary ;
+#endif /* _DEBUG */
+
       do
       {
          length = remainLen ;
          code = dictionary->findStrExt( (BYTE*)(source + currPos ), length ) ;
+         SDB_ASSERT( code <= dictionary->getMaxValidCode(),
+                     "Code out of range" ) ;
+
+#ifdef _DEBUG
+         strLen = dictionary->getStrExt( code, (BYTE*)strBuf,
+                                         UTIL_MAX_DICT_STR_LEN ) ;
+         SDB_ASSERT( strLen == length, "Length not match" ) ;
+         SDB_ASSERT( 0 == ossMemcmp( strBuf, source + currPos, length ),
+                     "String not match" ) ;
+         compareCodeVec.push_back( code ) ;
+#endif /* _DEBUG */
+
          dictionary->getVarLenInfo( code, lenIdx, splitSize ) ;
          codeVec.push_back( code ) ;
          varLenTotalBits += splitSize + UTIL_VAR_LEN_FLAG_SIZE ;
@@ -197,6 +292,23 @@ namespace engine
 
       varLenCode = useVarLenComp ;
 
+#ifdef _DEBUG
+      for ( vector<LZW_CODE>::iterator itr = codeVec.begin();
+            itr != codeVec.end(); ++itr )
+      {
+         if ( useVarLenComp )
+         {
+            compareCode = _readVarLenCode( &compareCtx ) ;
+         }
+         else
+         {
+            compareCode = _readCode( &compareCtx ) ;
+         }
+         actualCode = *itr ;
+         SDB_ASSERT( *itr == compareCode, "Code not match" ) ;
+      }
+#endif /* _DEBUG */
+
    done:
       PD_TRACE_EXITRC( SDB__UTILCOMPRESSORLZW__COMPRESSLEVELTHREE, rc ) ;
       return rc ;
@@ -218,6 +330,8 @@ namespace engine
       while ( context._streamPos < context._streamLen )
       {
          code = _readCode( &context ) ;
+         SDB_ASSERT( code <= dictionary->getMaxValidCode(),
+                     "Code out of range" ) ;
          strLen = dictionary->getStrExt( code, (UINT8*)(dest + totalOut),
                                          destLen - totalOut ) ;
          totalOut += strLen ;
@@ -242,6 +356,8 @@ namespace engine
       while ( context._streamPos < context._streamLen )
       {
          code = _readVarLenCode( &context ) ;
+         SDB_ASSERT( code <= dictionary->getMaxValidCode(),
+                     "Code out of range" ) ;
          strLen = dictionary->getStrExt( code, (UINT8*)(dest + totalOut),
                                          destLen - totalOut ) ;
          totalOut += strLen ;
@@ -319,7 +435,7 @@ namespace engine
       if ( !strategy )
       {
          minRatio = UTIL_COMPRESSOR_DFT_MIN_RATIO ;
-         level = UTIL_COMPRESSOR_DFT_LEVEL ;
+         level = UTIL_COMP_BEST_SPEED ;
       }
       else
       {
@@ -351,7 +467,12 @@ namespace engine
             break ;
       }
 
-      PD_RC_CHECK( rc, PDERROR, "Failed to compress data, rc: %d", rc ) ;
+      if ( rc )
+      {
+         PDLEVEL level = ( SDB_UTIL_COMPRESS_ABORT == rc ) ? PDDEBUG : PDERROR ;\
+         PD_LOG( level, "Failed to compress data, rc: %d", rc ) ;
+         goto error ;
+      }
 
       if ( varLenCode )
       {

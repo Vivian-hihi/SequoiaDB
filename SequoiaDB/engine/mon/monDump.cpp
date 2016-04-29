@@ -1212,11 +1212,6 @@ namespace engine
                   }
                   ob1.appendBool( FIELD_NAME_DICT_CREATED, detail._dictCreated ) ;
                   ob1.append( FIELD_NAME_DICT_VERSION, detail._dictVersion ) ;
-                  ob1.append( FIELD_NAME_DICT_MAX_CODE, detail._maxCode );
-                  ob1.append( FIELD_NAME_DICT_CODE_SIZE, detail._codeSize ) ;
-                  ob1.appendBool( FIELD_NAME_VAR_COMP_ENABLE,
-                                  detail._varLenCompEnable ) ;
-
                   ob1.append ( FIELD_NAME_PAGE_SIZE, detail._pageSize ) ;
                   ob1.append ( FIELD_NAME_LOB_PAGE_SIZE, detail._lobPageSize ) ;
                   /// Stat info

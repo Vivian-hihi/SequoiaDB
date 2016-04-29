@@ -1213,21 +1213,6 @@ namespace engine
                                                       mbStat->_totalLobPages,
                                                       mbStat->_totalDataFreeSpace,
                                                       mbStat->_totalIndexFreeSpace ) ;
-         if ( DMS_INVALID_EXTENT != mb->_dictExtentID )
-         {
-            (void)getDictionaryDetail(
-                        _pDataSu->_compressorEntry[it->second].getDictionary(),
-                        dictDetail ) ;
-            info._codeSize = dictDetail._codeSize ;
-            info._varLenCompEnable = dictDetail._varLenCompEnable ;
-            info._maxCode = dictDetail._maxCode ;
-         }
-         else
-         {
-            info._codeSize = 0 ;
-            info._varLenCompEnable = 0 ;
-            info._maxCode = 0 ;
-         }
 
          info._attribute = mb->_attributes ;
          info._dictCreated = mb->_dictExtentID != DMS_INVALID_EXTENT ? 1 : 0 ;

@@ -208,11 +208,10 @@ namespace engine
       ctx->_bitBuf._n = bitNum ;
    }
 
-   OSS_INLINE void _utilCompressorLZW::_writeBitsExt(
-                                                _utilLZWContext *ctx,
-                                                UINT32 bits,
-                                                UINT32 bitNum,
-                                                UINT32 codeLen )
+   OSS_INLINE void _utilCompressorLZW::_writeBitsExt( _utilLZWContext *ctx,
+                                                      UINT32 bits,
+                                                      UINT32 bitNum,
+                                                      UINT32 codeLen )
    {
       UINT8 varLenFlagSize = ctx->getDictionary()->getVarLenFlagSize() ;
       ctx->_bitBuf._buf =

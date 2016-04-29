@@ -472,6 +472,97 @@ namespace engine
       PD_TRACE_EXIT( SDB__UTILLZWDICTIONARY__SETVARLENSPLITINFO ) ;
    }
 
+   void _utilLZWDictionary::_cstCheck()
+   {
+      UINT32 low = 0 ;
+      UINT32 high = 0 ;
+      UINT32 index = 0 ;
+      UINT32 i = 0 ;
+      UINT32 compIndex = 0 ;
+
+      while ( index <= UTIL_MAX_DICT_INIT_CODE )
+      {
+         SDB_ASSERT( index == (UINT32)CST_GET_CHAR( _cst[index] ),
+                     "Wrong code in CST" ) ;
+         index++ ;
+      }
+
+      for ( index = 0; index <= _head->_maxCode; ++index )
+      {
+         low = CST_GET_CHILD( _cst[index] ) ;
+         if ( CST_INVALID_CHILD == low )
+         {
+            continue ;
+         }
+
+         i = 1 ;
+         high = CST_INVALID_CHILD ;
+         while ( index + i < _head->_maxCode
+                 && ( CST_INVALID_CHILD ==
+                      ( high = CST_GET_CHILD( _cst[index + i] ) ) ) )
+         {
+            ++i ;
+         }
+
+         if ( CST_INVALID_CHILD == high )
+         {
+            high = _head->_maxCode ;   /* Reached the end. */
+         }
+         else
+         {
+            high-- ;
+         }
+
+         for ( compIndex = low; compIndex < high; ++compIndex )
+         {
+            SDB_ASSERT( CST_GET_CHAR( _cst[compIndex] )
+                        < CST_GET_CHAR( _cst[compIndex + 1] ),
+                        "Wrong character in _cst" ) ;
+         }
+      }
+   }
+
+   void _utilLZWDictionary::_codeMapCheck()
+   {
+      CST_ITEM item  = 0 ;
+      std::set<LZW_CODE> codeSet ;
+      std::set<LZW_CODE>::iterator itr ;
+
+      for ( UINT32 index = 0; index <= _head->_maxCode; ++index )
+      {
+         item = _cst[index] ;
+         if ( CST_IS_VALID_CODE( item ) )
+         {
+            SDB_ASSERT( _codeMap[index] <= _head->_maxValidCode,
+                        "Code out of valid range" ) ;
+         }
+         else
+         {
+            SDB_ASSERT( ( _codeMap[index] > _head->_maxValidCode )
+                        && ( _codeMap[index] <= _head->_maxCode ),
+                        "Code in wrong range" ) ;
+         }
+
+         itr = codeSet.find( _codeMap[index] ) ;
+         SDB_ASSERT( itr == codeSet.end(), "Duplicated code found" ) ;
+         codeSet.insert( _codeMap[index] ) ;
+      }
+   }
+
+   void _utilLZWDictionary::_dstCheck()
+   {
+
+   }
+
+   void _utilLZWDictionary::_healthCheck()
+   {
+      _cstCheck() ;
+      _codeMapCheck() ;
+      _dstCheck() ;
+
+      PD_LOG( PDEVENT, "Dictioanry health check pass" ) ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB__UTILLZWDICTIONARY_FINALIZE, "_utilLZWDictionary::finalize" )
    INT32 _utilLZWDictionary::finalize( const CHAR *source, UINT32 sourceLen,
                                        CHAR *buffer, UINT32 &length )
@@ -535,6 +626,10 @@ namespace engine
 
       ossMemcpy( buffer + writePos, addInfo.objdata(), addInfo.objsize() ) ;
       length =  writePos + addInfo.objsize() ;
+
+#ifdef _DEBUG
+      _healthCheck() ;
+#endif /* _DEBUG */
 
    done:
       PD_TRACE_EXITRC( SDB__UTILLZWDICTIONARY_FINALIZE, rc ) ;
