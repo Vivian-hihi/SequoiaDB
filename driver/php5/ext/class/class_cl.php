@@ -34,8 +34,12 @@ class SequoiaCL
    /** In general, query won't return data until cursor get from database, when add this flag, return data in query response, it will be more high-performance. */
    define( "SDB_FLG_FIND_WITH_RETURNDATA", 0x00000200 ) ;
    
-   /** Explain query. */
-   define( "SDB_FLG_QUERY_EXPLAIN", 0x00000400 ) ;
+   /* Force to use specified hint to query, if database have no index assigned by the hint, fail to query */
+   define( "SDB_FLG_QUERY_FORCE_HINT"      0x00000080 ) ;
+   /* Enable paralled sub query */
+   define( "SDB_FLG_QUERY_PARALLED"        0x00000100 ) ;
+   /* In general, query won't return data until cursor get from database, when add this flag, return data in query response, it will be more high-performance */
+   define( "SDB_FLG_QUERY_WITH_RETURNDATA" 0x00000200 ) ;
 
    /** Open a new lob only. */
    define( "SDB_LOB_CREATEONLY",           0x00000001 ) ;
@@ -616,15 +620,6 @@ class SequoiaCL
    /**
     * Get access plan of query
     *
-    * @param $options	an array or the string argument. The rules of explain, the options are as below:
-    *                              @code
-    *                              Run: Whether execute query explain or not, true for excuting query explain then get
-    *                                   the data and time information; false for not excuting query explain but get the
-    *                                   query explain information only.
-    *                                   e.g.
-    *                                        array( 'run' => true )
-    *                              @endcode
-    *
     * @param $condition	an array or the string argument. The matching rule, return all the record if null.
     *
     * @param $selector	an array or the string argument. The selective rule, return the whole record if null.
@@ -643,7 +638,14 @@ class SequoiaCL
     *                                   SDB_FLG_QUERY_PARALLED(0x00000100)        : Enable paralled sub query
     *                                   SDB_FLG_QUERY_WITH_RETURNDATA(0x00000200) : In general, query won't return data until cursor get from database,
     *                                                                               when add this flag, return data in query response, it will be more high-performance
-    *                                   SDB_FLG_QUERY_EXPLAIN(0x00000400)         : Explain query
+    *                                   @endcode
+    *
+    * @param $options	an array or the string argument. The rules of explain, the options are as below:
+    *                                   @code
+    *                                   Run: Whether execute query explain or not, true for excuting query explain then get
+    *                                        the data and time information; false for not excuting query explain but get the
+    *                                        query explain information only.
+    *                                   e.g. array( 'run' => true )
     *                                   @endcode
     *
     * @return Returns a new SequoiaCursor object.
@@ -663,7 +665,7 @@ class SequoiaCL
     * }
     * @endcode
    */
-   public function explain( array|string $options, array|string $condition = null, array|string $selector = null, array|string $orderBy = null, array|string $hint = null, integer $numToSkip = 0, integer $numToReturn = -1, integer $flag = 0 ){}
+   public function explain( array|string $condition = null, array|string $selector = null, array|string $orderBy = null, array|string $hint = null, integer $numToSkip = 0, integer $numToReturn = -1, integer $flag = 0, array|string $options = null ){}
 
    /**
     * Get the count of records in specified collection.
