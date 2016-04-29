@@ -33,6 +33,9 @@ class SequoiaCL
    define( "SDB_FLG_FIND_PARALLED",        0x00000100 ) ;
    /** In general, query won't return data until cursor get from database, when add this flag, return data in query response, it will be more high-performance. */
    define( "SDB_FLG_FIND_WITH_RETURNDATA", 0x00000200 ) ;
+   
+   /** Explain query. */
+   define( "SDB_FLG_QUERY_EXPLAIN", 0x00000400 ) ;
 
    /** Open a new lob only. */
    define( "SDB_LOB_CREATEONLY",           0x00000001 ) ;
@@ -497,10 +500,10 @@ class SequoiaCL
     *
     * @param $flag	an integer argument. The query flag, default to be 0.
     *                                   @code
-    *                                   FLG_QUERY_FORCE_HINT(0x00000080)      : Force to use specified hint to query, if database have no index assigned by the hint, fail to query
-    *                                   FLG_QUERY_PARALLED(0x00000100)        : Enable paralled sub query
-    *                                   FLG_QUERY_WITH_RETURNDATA(0x00000200) : In general, query won't return data until cursor get from database,
-    *                                                                           when add this flag, return data in query response, it will be more high-performance
+    *                                   SDB_FLG_QUERY_FORCE_HINT(0x00000080)      : Force to use specified hint to query, if database have no index assigned by the hint, fail to query
+    *                                   SDB_FLG_QUERY_PARALLED(0x00000100)        : Enable paralled sub query
+    *                                   SDB_FLG_QUERY_WITH_RETURNDATA(0x00000200) : In general, query won't return data until cursor get from database,
+    *                                                                               when add this flag, return data in query response, it will be more high-performance
     *                                   @endcode
     *
     * @return Returns a new SequoiaCursor object.
@@ -541,10 +544,10 @@ class SequoiaCL
     *
     * @param $flag	an integer argument.	The query flag, default to be 0.
     *                                   @code
-    *                                   FLG_QUERY_FORCE_HINT(0x00000080)      : Force to use specified hint to query, if database have no index assigned by the hint, fail to query
-    *                                   FLG_QUERY_PARALLED(0x00000100)        : Enable paralled sub query
-    *                                   FLG_QUERY_WITH_RETURNDATA(0x00000200) : In general, query won't return data until cursor get from database,
-    *                                                                           when add this flag, return data in query response, it will be more high-performance
+    *                                   SDB_FLG_QUERY_FORCE_HINT(0x00000080)      : Force to use specified hint to query, if database have no index assigned by the hint, fail to query
+    *                                   SDB_FLG_QUERY_PARALLED(0x00000100)        : Enable paralled sub query
+    *                                   SDB_FLG_QUERY_WITH_RETURNDATA(0x00000200) : In general, query won't return data until cursor get from database,
+    *                                                                               when add this flag, return data in query response, it will be more high-performance
     *                                   @endcode
     *
     * @param $returnNew	a boolean argument. When TRUE, returns the updated record rather than the original.
@@ -585,9 +588,9 @@ class SequoiaCL
     *
     * @param $flag	an integer argument.	The query flag, default to be 0.
     *                                   @code
-    *                                   FLG_QUERY_FORCE_HINT(0x00000080)      : Force to use specified hint to query, if database have no index assigned by the hint, fail to query
-    *                                   FLG_QUERY_PARALLED(0x00000100)        : Enable paralled sub query
-    *                                   FLG_QUERY_WITH_RETURNDATA(0x00000200) : In general, query won't return data until cursor get from database,
+    *                                   SDB_FLG_QUERY_FORCE_HINT(0x00000080)      : Force to use specified hint to query, if database have no index assigned by the hint, fail to query
+    *                                   SDB_FLG_QUERY_PARALLED(0x00000100)        : Enable paralled sub query
+    *                                   SDB_FLG_QUERY_WITH_RETURNDATA(0x00000200) : In general, query won't return data until cursor get from database,
     *                                                                           when add this flag, return data in query response, it will be more high-performance
     *                                   @endcode
     *
@@ -636,10 +639,11 @@ class SequoiaCL
     *
     * @param $flag	an integer argument.	The query flag, default to be 0.
     *                                   @code
-    *                                   FLG_QUERY_FORCE_HINT(0x00000080)      : Force to use specified hint to query, if database have no index assigned by the hint, fail to query
-    *                                   FLG_QUERY_PARALLED(0x00000100)        : Enable paralled sub query
-    *                                   FLG_QUERY_WITH_RETURNDATA(0x00000200) : In general, query won't return data until cursor get from database,
-    *                                                                           when add this flag, return data in query response, it will be more high-performance
+    *                                   SDB_FLG_QUERY_FORCE_HINT(0x00000080)      : Force to use specified hint to query, if database have no index assigned by the hint, fail to query
+    *                                   SDB_FLG_QUERY_PARALLED(0x00000100)        : Enable paralled sub query
+    *                                   SDB_FLG_QUERY_WITH_RETURNDATA(0x00000200) : In general, query won't return data until cursor get from database,
+    *                                                                               when add this flag, return data in query response, it will be more high-performance
+    *                                   SDB_FLG_QUERY_EXPLAIN(0x00000400)         : Explain query
     *                                   @endcode
     *
     * @return Returns a new SequoiaCursor object.
