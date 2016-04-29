@@ -66,7 +66,7 @@ class cl_record_Test extends PHPUnit_Framework_TestCase
       }
       $err = $db -> getError() ;
       $this -> assertEquals( 0, $err['errno'], '创建cl错误' ) ;
-      $this -> assertNotEmpty( $cs, '创建cl错误' ) ;
+      $this -> assertNotEmpty( $cl, '创建cl错误' ) ;
       return $cl ;
    }
 

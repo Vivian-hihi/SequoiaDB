@@ -34,12 +34,12 @@ class SequoiaCL
    /** In general, query won't return data until cursor get from database, when add this flag, return data in query response, it will be more high-performance. */
    define( "SDB_FLG_FIND_WITH_RETURNDATA", 0x00000200 ) ;
    
-   /* Force to use specified hint to query, if database have no index assigned by the hint, fail to query */
-   define( "SDB_FLG_QUERY_FORCE_HINT"      0x00000080 ) ;
-   /* Enable paralled sub query */
-   define( "SDB_FLG_QUERY_PARALLED"        0x00000100 ) ;
-   /* In general, query won't return data until cursor get from database, when add this flag, return data in query response, it will be more high-performance */
-   define( "SDB_FLG_QUERY_WITH_RETURNDATA" 0x00000200 ) ;
+   /** Force to use specified hint to query, if database have no index assigned by the hint, fail to query */
+   define( "SDB_FLG_QUERY_FORCE_HINT",     0x00000080 ) ;
+   /** Enable paralled sub query */
+   define( "SDB_FLG_QUERY_PARALLED",       0x00000100 ) ;
+   /** In general, query won't return data until cursor get from database, when add this flag, return data in query response, it will be more high-performance */
+   define( "SDB_FLG_QUERY_WITH_RETURNDATA",0x00000200 ) ;
 
    /** Open a new lob only. */
    define( "SDB_LOB_CREATEONLY",           0x00000001 ) ;

@@ -66,8 +66,12 @@ INT32 lobDesc ;
 INT32 dateDesc ;
 INT32 timestampDesc ;
 
+PHP_FUNCTION( sdbInitClient ) ;
+
 //Sdb object function
 const zend_function_entry sdbFun[] = {
+   //driver function
+   PHP_FE( sdbInitClient, NULL )
    //driver
    PHP_ME( SequoiaDB, __construct,        NULL, ZEND_ACC_PUBLIC|ZEND_ACC_CTOR )
    PHP_ME( SequoiaDB, install,            NULL, ZEND_ACC_PUBLIC )
@@ -558,4 +562,51 @@ PHP_MINFO_FUNCTION(sequoiadb)
    php_info_print_table_start();
    php_info_print_table_header(2, "SequoiaDB support", "enabled");
    php_info_print_table_end();
+}
+
+PHP_FUNCTION( sdbInitClient )
+{
+   INT32 rc = SDB_OK ;
+   BOOLEAN enableCacheStrategy = FALSE ;
+   INT32 cacheTimeInterval     = 0 ;
+   INT32 maxCacheSlotCount     = 0 ;
+   zval *pTimeInterVal = NULL ;
+   zval *pMaxCache     = NULL ;
+   zval *pThisObj      = getThis() ;
+   if( PHP_GET_PARAMETERS( "b|zz",
+                           &enableCacheStrategy,
+                           &pTimeInterVal,
+                           &pMaxCache ) == FAILURE )
+   {
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+   rc = php_zval2Int( pTimeInterVal, &cacheTimeInterval TSRMLS_CC ) ;
+   if( rc )
+   {
+      goto error ;
+   }
+   rc = php_zval2Int( pMaxCache, &maxCacheSlotCount TSRMLS_CC ) ;
+   if( rc )
+   {
+      goto error ;
+   }
+   if( cacheTimeInterval < 0 || maxCacheSlotCount < 0 )
+   {
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+   rc = initClient( enableCacheStrategy,
+                    (UINT32)cacheTimeInterval,
+                    (UINT32)maxCacheSlotCount ) ;
+                             
+   if( rc )
+   {
+      goto error ;
+   }
+done:
+   RETVAL_LONG( rc ) ;
+   return ;
+error:
+   goto done ;
 }

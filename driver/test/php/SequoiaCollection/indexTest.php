@@ -65,6 +65,11 @@ class cl_index_Test extends PHPUnit_Framework_TestCase
       $this -> assertEquals( 0, $err['errno'], '获取索引错误' ) ;
       $this -> assertNotEmpty( $cursor, '获取索引错误' ) ;
       
+      $cursor = $cl -> getIndex( '$id' ) ;
+      $err = $db -> getError() ;
+      $this -> assertEquals( 0, $err['errno'], '获取索引错误' ) ;
+      $this -> assertNotEmpty( $cursor, '获取索引错误' ) ;
+      
       $cursor = $cl -> getIndex( 'a' ) ;
       $err = $db -> getError() ;
       $this -> assertEquals( 0, $err['errno'], '获取索引错误' ) ;

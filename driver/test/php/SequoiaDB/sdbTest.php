@@ -89,6 +89,57 @@ class SequoiaDB_Test extends PHPUnit_Framework_TestCase
       $this -> assertEquals( -6, $err['errno'] ) ;
    }
    
+   public function test_initClient()
+   {
+      $db1 = new SequoiaDB();
+      $err = $db1 -> connect( $this->address ) ;
+      $this -> assertEquals( 0, $err['errno'], '数据库连接错误( 参数: '.$this->address.' )' ) ;
+      
+      $time1 = 0 ;
+      $time2 = 0 ;
+      
+      $start = microtime( true ) ;
+      for( $i = 0; $i < 10000; ++$i )
+      {
+         $cs = $db1 -> selectCS( 'test_init_client' ) ;
+         $err = $db1 -> getError() ;
+         $this -> assertEquals( 0, $err['errno'], '创建cs错误' ) ;
+         $this -> assertNotEmpty( $cs, '创建cs错误' ) ;
+         
+         $cl = $cs -> selectCL( 'test_init_client' ) ;
+         $err = $db1 -> getError() ;
+         $this -> assertEquals( 0, $err['errno'], '创建cs错误' ) ;
+         $this -> assertNotEmpty( $cl, '创建cs错误' ) ;
+      }
+      $end = microtime( true ) ;
+      $time1 = round( $end - $start, 3 ) ;
+      
+      $err = sdbInitClient( true ) ;
+      $this -> assertEquals( 0, $err, '设置驱动缓存失败' ) ;
+      
+      $db2 = new SequoiaDB();
+      $err = $db2 -> connect( $this->address ) ;
+      $this -> assertEquals( 0, $err['errno'], '数据库连接错误( 参数: '.$this->address.' )' ) ;
+      
+      $start = microtime( true ) ;
+      for( $i = 0; $i < 10000; ++$i )
+      {
+         $cs = $db2 -> selectCS( 'test_init_client' ) ;
+         $err = $db2 -> getError() ;
+         $this -> assertEquals( 0, $err['errno'], '创建cs错误' ) ;
+         $this -> assertNotEmpty( $cs, '创建cs错误' ) ;
+         
+         $cl = $cs -> selectCL( 'test_init_client' ) ;
+         $err = $db2 -> getError() ;
+         $this -> assertEquals( 0, $err['errno'], '创建cs错误' ) ;
+         $this -> assertNotEmpty( $cl, '创建cs错误' ) ;
+      }
+      $end = microtime( true ) ;
+      $time2 = round( $end - $start, 3 ) ;
+      
+      $this -> assertLessThan( $time1, $time2, 'sdbInitCLient没有生效' ) ;
+   }
+   
    /**
     * @depends test_connect
     */
