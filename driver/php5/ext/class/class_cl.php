@@ -136,7 +136,7 @@ class SequoiaCL
     * }
     * @endcode
    */
-   public function split( string $sourceGroup, string $targetGroup, array|string $condition, array|string $endCondition ){}
+   public function split( string $sourceGroup, string $targetGroup, array|string $condition, array|string $endCondition = null ){}
 
    /**
     * Split the specified collection from source replica group to target by range.
@@ -190,7 +190,7 @@ class SequoiaCL
     * echo "Task id is: ".$err['taskID'] ;
     * @endcode
    */
-   public function splitAsync( string $sourceGroup, string $targetGroup, array|string $condition, array|string $endCondition ){}
+   public function splitAsync( string $sourceGroup, string $targetGroup, array|string $condition, array|string $endCondition = null ){}
 
    /**
     * Get the specified collection full name.
