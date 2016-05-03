@@ -16,7 +16,7 @@
 	<property name="properties.dir" value="${basedir}/../ci.test.properties" />
 	<property file="${properties.dir}" />
 	<if>
-	   	<equals arg1="${isTrunk}" arg2="true" />
+	   <equals arg1="${isTrunk}" arg2="true" />
 		<then>
 		    <property name="machineList" value="${trunk_machine}" />
 		    <property name="machine_control" value="${trunk_machine_control}" />
@@ -27,7 +27,7 @@
 		</else>
 	</if>
 
-	<target name="deploySoftwareInHost">
+	<target name="install-package">
         <property name="addrTemp" value="tmp" />
         <for list="${machineList}" param="hostnames">
             <sequential>
@@ -45,60 +45,34 @@
     </target>
 
 	<target name="Deploy-Software" depends="">
-		<if>
-		   	<equals arg1="${os.arch}" arg2="amd64" />
-			<then>
-			    <property name="fap.value" value="fapmongo" />
-			</then>
-			<else>
-			    <property name="fap.value" value="" />
-			</else>
-		</if>
-
-		<property name="is.coord.master" value="true" />
-		<for list="${machineList}" param="hostname">
-            <sequential>
-                <antcall target="deploySoftwareInHost" inheritAll="true" >
-                    <param name="hostname" value="@{hostname}" />
-                    <param name="machineList" value="${machineList}" />
-                    <param name="is.coord.master" value="${is.coord.master}" />
-                </antcall>
-                <var name="is.coord.master" value="false" />
-            </sequential>
-        </for>
-
-        <for list="${machineList}" param="hostname">
-    		<sequential>
-		    	<sdbdeploy host="${machine_control}" coordport="${coord.service.port}">
-		    		<catagroup name="cata1">
-        				<node host="@{hostname}" baseport="${cata.service.port}" dbpath="${install.path}/sequoiadb/database/cata/${cata.service.port}">
-							<confitem name="diaglevel" value="5" />
-							<confitem name="transactionon" value="false" />
-							<confitem name="sharingbreak" value="30000" />
-							<confitem name="fap" value="${fap.value}" />
-							<confitem name="optimeout" value="60000" />
-						</node>
-		    		</catagroup>
-		    	</sdbdeploy>
-        	</sequential>
-		</for>
-
-		<for list="${machineList}" param="hostname">
-    		<sequential>
-				<sdbdeploy host="${machine_control}" coordport="${coord.service.port}">
-					<datagroup name="group1">			
-						<node host="@{hostname}" baseport="21100" dbpath="${install.path}/sequoiadb/database/data/21100">
-							<confitem name="diaglevel" value="5" />
-							<confitem name="transactionon" value="false" />
-							<confitem name="sharingbreak" value="30000" />
-							<confitem name="diagnum" value="80" />
-							<confitem name="fap" value="${fap.value}" />
-							<confitem name="optimeout" value="60000" />
-						</node>
-					</datagroup>
-				</sdbdeploy>
-			</sequential>
-		</for>
+	   <for list="${machineList}" param="hostname">
+         <sequential>
+            <antcall target="install-package" inheritAll="true" >
+               <param name="hostname" value="@{hostname}" />
+               <param name="machineList" value="${machineList}" />
+               <param name="is.coord.master" value="false" />
+            </antcall>
+            <var name="is.coord.master" value="false" />need to be delete
+         </sequential>
+      </for>
+      
+      <scp file="${basedir}/deploy-config/deploy.js" 
+           todir="${remote.user}:${remote.password}@${machine_control}:${test.machine.deploy.path}/" 
+           trust="true" 
+           failonerror="true" />
+      <propertyregex
+         property="hostList"
+         input="${machineList}"
+         regexp=","
+         replace="','"/>  
+	   <property name="deploy.cmd" value=" -f '${test.machine.deploy.path}/deploy.js' -e &quot;var hostList=['${hostList}'];var installDir='${install.path}/sequoiadb';var mode='h3g1d3';var osArch='${os.arch}';&quot;" />	   
+      <sshexec host="${machine_control}" 
+               username="${remote.user}" 
+               password="${remote.password}" 
+               command="${install.path}/sequoiadb/bin/sdb ${deploy.cmd}" 
+               trust="true" 
+               failonerror="true" />      
+		
 	</target>
 
 	<target name="execTest">
