@@ -5177,6 +5177,7 @@ namespace engine
       rc = SDB_DMS_EOC ;
 
       /// wait all collection space's task finished
+      cb->writingDB( FALSE ) ;
       while( pTaskMgr->taskCountByCS( _name ) > 0 )
       {
          pTaskMgr->waitTaskEvent() ;
@@ -5393,6 +5394,7 @@ namespace engine
       rc = SDB_DMS_EOC ;
 
       /// wait all collection's task finished
+      cb->writingDB( FALSE ) ;
       while( pTaskMgr->taskCountByCL( _collectionName ) > 0 )
       {
          pTaskMgr->waitTaskEvent() ;
