@@ -3182,21 +3182,21 @@ namespace engine
       if ( ( CAT_MASK_SHDKEY & mask ) &&
            catSet.isSharding() )
       {
-         rc = SDB_INVALIDARG ;
+         rc = SDB_OPTION_NOT_SUPPORT ;
          PD_LOG( PDERROR, "can not alter a sharding collection's shardingkey" ) ;
          goto error ;
       }
 
       if ( CAT_MASK_ISMAINCL & mask )
       {
-         rc = SDB_INVALIDARG ;
+         rc = SDB_OPTION_NOT_SUPPORT ;
          PD_LOG( PDERROR, "can not change a collection to a main cl" ) ;
          goto error ;
       }
 
      if ( CAT_MASK_COMPRESSED & mask )
      {
-        rc = SDB_INVALIDARG ;
+        rc = SDB_OPTION_NOT_SUPPORT ;
         PD_LOG( PDERROR, "can not alter attribute \"compressed\"" ) ;
         goto error ;
      }
