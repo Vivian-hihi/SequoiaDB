@@ -126,8 +126,6 @@ namespace engine
                 sizeof( _dmsStorageUnitHeader ) + offset ;
       }
 
-      INT32 _reopen() ;
-
       INT32 _extend( INT64 len ) ;
 
    private:
@@ -135,7 +133,6 @@ namespace engine
       CHAR              _fullPath[ OSS_MAX_PATHSIZE + 1 ] ;
       OSSFILE           _file ;
       INT64             _fileSz ;
-      INT64             _lastSz ;
       UINT32            _pageSz ;
       UINT32            _logarithmic ;
       UINT32            _flags ; 

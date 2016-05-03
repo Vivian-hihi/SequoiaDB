@@ -56,7 +56,6 @@ namespace engine
    */
    _dmsStorageLobData::_dmsStorageLobData( const CHAR *fileName )
    :_fileSz( 0 ),
-    _lastSz( 0 ),
     _pageSz( 0 ),
     _logarithmic( 0 ),
     _flags( DMS_LOBD_FLAG_NULL )
@@ -177,44 +176,6 @@ namespace engine
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_DMSSTORAGELOBDATA__REOPEN, "_dmsStorageLobData::_reopen" )
-   INT32 _dmsStorageLobData::_reopen()
-   {
-      INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY( SDB_DMSSTORAGELOBDATA__REOPEN ) ;
-      INT64 tmpSz = _fileSz ;
-      INT32 mode = OSS_READWRITE | OSS_SHAREREAD ;
-
-      if ( OSS_BIT_TEST( _flags, DMS_LOBD_FLAG_DIRECT ) )
-      {
-         mode |= OSS_DIRECTIO ;
-      }
-
-      rc = close() ;
-      if( rc )
-      {
-         PD_LOG( PDERROR, "Close file[%s] failed, rc: %d",
-                 _fileName.c_str(), rc ) ;
-         goto error ;
-      }
-
-      rc = ossOpen( _fullPath, mode,
-                    OSS_RU|OSS_WU|OSS_RG, _file ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "failed to reopen file:%s, rc:%d",
-                 _fullPath, rc ) ;
-         goto error ;
-      }
-      _lastSz = tmpSz ;
-
-   done:
-      PD_TRACE_EXITRC( SDB_DMSSTORAGELOBDATA__REOPEN, rc ) ;
-      return rc ;
-   error:
-      goto done ;
-   }
-
    BOOLEAN _dmsStorageLobData::isOpened()const
    {
       return _file.isOpened() ;
@@ -267,18 +228,6 @@ namespace engine
                  "file[%s]", writeOffset, _fileSz, _fileName.c_str() ) ;
          rc = SDB_SYS ;
          goto error ;
-      }
-
-      // reopen when the offset grater than lastSz
-      if ( writeOffset + len > _lastSz )
-      {
-         rc = _reopen() ;
-         if ( rc )
-         {
-            PD_LOG( PDERROR, "Failed to reopen file[%s], rc: %d",
-                    _fileName.c_str(), rc ) ;
-            goto error ;
-         }
       }
 
       /// file is locked, do not need to use seekAndWriteN
@@ -364,18 +313,6 @@ namespace engine
          goto error ;
       }
 
-      // reopen when the offset grater than lastSz
-      if ( readOffset + len > _lastSz )
-      {
-         rc = _reopen() ;
-         if ( rc )
-         {
-            PD_LOG( PDERROR, "Failed to reopen file[%s], rc: %d",
-                    _fileName.c_str(), rc ) ;
-            goto error ;
-         }
-      }
-
       rc = ossSeekAndReadN( &_file, readOffset,
                             t.size, ( CHAR * )( t.buf ),
                             readFromFile ) ;
@@ -437,18 +374,6 @@ namespace engine
                  "file[%s]", t.offset, _fileSz, _fileName.c_str() ) ;
          rc = SDB_SYS ;
          goto error ;
-      }
-
-      // reopen when the offset grater than lastSz
-      if ( ( SINT64 )(t.offset + t.size) > _lastSz )
-      {
-         rc = _reopen() ;
-         if ( rc )
-         {
-            PD_LOG( PDERROR, "Failed to reopen file[%s], rc: %d",
-                    _fileName.c_str(), rc ) ;
-            goto error ;
-         }
       }
 
       rc = ossSeekAndReadN( &_file, t.offset,
@@ -891,7 +816,6 @@ namespace engine
                  _fileName.c_str(), rc ) ;
          goto error ;
       }
-      _lastSz = _fileSz ;
 
       if ( ( _fileSz - sizeof( header ) ) % getSegmentSize() != 0 )
       {
