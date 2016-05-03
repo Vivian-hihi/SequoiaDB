@@ -1126,7 +1126,7 @@ namespace engine
          }
          else if ( Timestamp == e.type() )
          {
-            INT32 l = e.timestampTime().millis ;
+            UINT64 l = e.timestampTime().millis ;
             l += e.timestampInc() / 1000 ;
             builder.appendNumber( fieldName, ( INT32 )l ) ;
          }
