@@ -52,7 +52,7 @@
                <param name="machineList" value="${machineList}" />
                <param name="is.coord.master" value="false" />
             </antcall>
-            <var name="is.coord.master" value="false" />need to be delete
+            <var name="is.coord.master" value="false" />
          </sequential>
       </for>
       
