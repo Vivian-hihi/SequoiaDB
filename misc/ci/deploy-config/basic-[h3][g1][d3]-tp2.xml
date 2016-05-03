@@ -45,14 +45,13 @@
     </target>
 
 	<target name="Deploy-Software" depends="">
-	   <for list="${machineList}" param="hostname">
+      <for list="${machineList}" param="hostname">
          <sequential>
             <antcall target="install-package" inheritAll="true" >
                <param name="hostname" value="@{hostname}" />
-               <param name="machineList" value="${machineList}" />
-               <param name="is.coord.master" value="false" />
-            </antcall>
-            <var name="is.coord.master" value="false" />
+               <param name="machineList" value="${machineList}" /> 
+               <param name="is.coord.master" value="false" />              
+            </antcall>                       
          </sequential>
       </for>
       

@@ -27,7 +27,7 @@
       </else>
    </if>
 
-   <target name="deploySoftwareInHost">
+   <target name="install-package">
         <property name="addrTemp" value="tmp" />
         <for list="${machineList}" param="hostnames">
             <sequential>
@@ -44,16 +44,35 @@
       </ant>
     </target>
 
-   <target name="Deploy-Software" depends="">
+	<target name="Deploy-Software" depends="">
       <for list="${machineList}" param="hostname">
-            <sequential>
-                <antcall target="deploySoftwareInHost" inheritAll="true" >
-                    <param name="hostname" value="@{hostname}" />
-                    <param name="machineList" value="${machineList}" />
-                </antcall>
-            </sequential>
-        </for>
-   </target>
+         <sequential>
+            <antcall target="install-package" inheritAll="true" >
+               <param name="hostname" value="@{hostname}" />
+               <param name="machineList" value="${machineList}" />
+               <param name="is.coord.master" value="false" />              
+            </antcall>           
+         </sequential>
+      </for>
+      
+      <scp file="${basedir}/deploy-config/deploy.js" 
+           todir="${remote.user}:${remote.password}@${machine_control}:${test.machine.deploy.path}/" 
+           trust="true" 
+           failonerror="true" />
+      <propertyregex
+         property="hostList"
+         input="${machineList}"
+         regexp=","
+         replace="','"/>  
+	   <property name="deploy.cmd" value=" -f '${test.machine.deploy.path}/deploy.js' -e &quot;var hostList=['${hostList}'];var installDir='${install.path}/sequoiadb';var mode='standalone';var osArch='${os.arch}';&quot;" />	   
+      <sshexec host="${machine_control}" 
+               username="${remote.user}" 
+               password="${remote.password}" 
+               command="${install.path}/sequoiadb/bin/sdb ${deploy.cmd}" 
+               trust="true" 
+               failonerror="true" />      
+		
+	</target>
 
    <target name="execTest">
       <for list="${testList}" param="Test-Type">
