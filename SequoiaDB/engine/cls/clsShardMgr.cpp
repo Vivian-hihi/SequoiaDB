@@ -172,6 +172,8 @@ namespace engine
          string clName = pName ;
          BOOLEAN exist = TRUE ;
 
+         /// first set the cb non-write
+         cb->writingDB( FALSE ) ;
          while( exist )
          {
             if ( cb->isInterrupted() )
@@ -192,6 +194,8 @@ namespace engine
                _event.wait( OSS_ONE_SEC ) ;
             }
          }
+         /// restore the cb write status
+         cb->writingDB( TRUE ) ;
       }
 
       return rc ;
