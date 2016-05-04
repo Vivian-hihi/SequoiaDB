@@ -195,8 +195,20 @@
                 <setInstallerVariableFromScriptOutput>
                     <name>process_num</name>
                     <exec>${installdir}/bin/sdblist</exec>
-                    <execArgs> | grep -v "Total" | wc -l</execArgs> 
+                    <execArgs> -t all | grep -v "Total" | wc -l</execArgs> 
                     <abortOnError>0</abortOnError>          
+                </setInstallerVariableFromScriptOutput>                      
+                <setInstallerVariableFromScriptOutput>
+                    <name>process_num</name>
+                    <exec>${installdir}/bin/sdblist</exec>
+                    <execArgs> | grep -v "Total" | wc -l</execArgs>                    
+                    <ruleList>
+                        <compareValues>
+                            <value1>${program_exit_code}</value1> 
+                            <logic>does_not_equal</logic> 
+                            <value2>0</value2>
+                        </compareValues>      
+                    </ruleList>         
                 </setInstallerVariableFromScriptOutput>
                 <throwError>
                     <text>${msg(Upgrade.ErrorMsg.StopProcess)}</text>            
