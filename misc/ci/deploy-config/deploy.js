@@ -131,9 +131,14 @@ function deployClster( mode )
    var coordRG = db.createCoordRG();
    for( var i in hostList )
    {
+      var config = {  diaglevel:5,                      
+                      diagnum:30,
+                      optimeout:60000,
+                      fap:fapValue 
+                   };
       coordRG.createNode( hostList[i], coordPort, 
                           databaseDir+"/coord/"+coordPort,
-                          {diaglevel:5,optimeout:60000,diagnum:30} );
+                          config );
    }
    coordRG.start();  
    
