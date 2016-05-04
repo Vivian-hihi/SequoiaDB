@@ -55,7 +55,7 @@ class SequoiaDB_CS_Test extends PHPUnit_Framework_TestCase
       $err = $cs -> drop() ;
       $this -> assertEquals( 0, $err['errno'], '删除cs错误' ) ;
 
-      $cs = $db -> selectCS( 'foo_16384', array( 'PageSize' => 16384 ) ) ;
+      $cs = $db -> selectCS( 'foo_16384', 16384 ) ;
       $err = $db -> getError() ;
       $this -> assertEquals( 0, $err['errno'], '创建cs错误' ) ;
       $this -> assertNotEmpty( $cs, '创建cs错误' ) ;

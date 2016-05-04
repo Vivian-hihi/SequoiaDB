@@ -504,15 +504,26 @@ PHP_METHOD( SequoiaDB, selectCS )
    rc = sdbGetCollectionSpace( connection, pCsName, &cs ) ;
    if( rc == SDB_DMS_CS_NOTEXIST )
    {
-      rc = php_auto2Bson( pOptions, &options TSRMLS_CC ) ;
-      if( rc )
+      if( pOptions && Z_TYPE_P( pOptions ) == IS_LONG )
       {
-         goto error ;
+         rc = sdbCreateCollectionSpace( connection, pCsName, Z_LVAL_P( pOptions ), &cs ) ;
+         if( rc )
+         {
+            goto error ;
+         }
       }
-      rc = sdbCreateCollectionSpaceV2( connection, pCsName, &options, &cs ) ;
-      if( rc )
+      else
       {
-         goto error ;
+         rc = php_auto2Bson( pOptions, &options TSRMLS_CC ) ;
+         if( rc )
+         {
+            goto error ;
+         }
+         rc = sdbCreateCollectionSpaceV2( connection, pCsName, &options, &cs ) ;
+         if( rc )
+         {
+            goto error ;
+         }
       }
    }
    else if( rc )
