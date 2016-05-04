@@ -66,6 +66,7 @@ namespace engine
    #define UTIL_MAX_DICT_INIT_CODE        255
    #define UTIL_MIN_DICT_ITEM_NUM         257
    #define UTIL_MAX_DICT_ITEM_NUM         250000
+   #define UTIL_MAX_DICT_BUILD_ITEM_NUM   ( UTIL_MAX_DICT_ITEM_NUM * 4 )
    #define UTIL_MAX_DICT_CODE_SIZE        18
    #define UTIL_MAX_DICT_STR_LEN          255
 
@@ -103,6 +104,7 @@ namespace engine
       LZW_CODE  _first ;  // first 'child'
       LZW_CODE  _next ;   // first 'brother'
       UINT32    _len ;    // Length of the string.
+      UINT32    _refNum ; // Reference number, used during dictionary creation.
       BYTE      _ch ;     // Last character of the string this node represents.
       UINT8     _pad[3] ;
    } ;
@@ -243,11 +245,11 @@ namespace engine
       OSS_INLINE LZW_CODE findStr( LZW_CODE preCode, UINT8 ch ) ;
       OSS_INLINE UINT32 getStr( LZW_CODE code, BYTE *buff, UINT32 bufSize ) ;
 
-      INT32 finalize( const CHAR *source, UINT32 sourceLen,
-                      CHAR *buffer, UINT32 &length ) ;
+      INT32 finalize( CHAR *buff, UINT32 &length ) ;
 
       /* Interfaces used by compression/decompression */
       OSS_INLINE void attach( const utilDictHandle dictionary ) ;
+
       OSS_INLINE LZW_CODE findStrExt( const BYTE *str, UINT32 &length ) ;
       OSS_INLINE UINT32 getStrExt( LZW_CODE code, BYTE *buff,
                                    UINT32 buffSize ) ;
@@ -266,8 +268,6 @@ namespace engine
       UINT32 _formatDst() ;
       void _formatOneGrp( UINT32 parentIdx, UINT32 &nextIdx,
                           std::map<UINT32, UINT32> &indexMap ) ;
-      void _adjust( const CHAR* str, UINT32 strLen,
-                    std::map<UINT32, UINT32> &indexMap ) ;
       UINT32 _calcCodeSize( UINT32 code ) ;
       void _formatAdditionalInfo( BSONObj &obj ) ;
       void _setVarLenSplitInfo() ;
@@ -280,21 +280,9 @@ namespace engine
       OSS_INLINE INT32 _cstBinSearch( UINT32 low, UINT32 high, BYTE ch ) ;
       OSS_INLINE UINT32 _dstGetRemoteStr( DST_ITEM item, CHAR *buff ) ;
       OSS_INLINE UINT32 _findStrIdx( const BYTE *str, UINT32 &length ) ;
-      struct _codeWeight
-      {
-         _codeWeight()
-         {
-            _code = 0 ;
-            _weight = 0 ;
-         }
 
-         LZW_CODE _code ;
-         INT32 _weight ;
-      } ;
-      typedef _codeWeight codeWeight ;
-
-      static BOOLEAN _sortNodeByWeight( const codeWeight &left,
-                                        const codeWeight &right ) ;
+      static BOOLEAN _sortNodeByRef( const _utilLZWNode *left,
+                                     const _utilLZWNode *right ) ;
    private:
       /*
        * The following members are mainly used during the creation of the
@@ -305,6 +293,7 @@ namespace engine
       _utilLZWDictHead *_head ;
       _utilLZWNode *_nodes ;
       UINT32 _maxNodeNum ;
+      vector<_utilLZWNode*> _nodeSortVec ;
 
    private:
       CST_ITEM *_cst ;
@@ -370,18 +359,16 @@ namespace engine
    public:
       /* The following member functions are used to handle the dictionary. */
       INT32 prepare() ;
-
       void reset() ;
 
       /*
        * Use the source data to build the dictionary for LZW. It can be called
        * multiple times, and the dictionary will grow until reaching the maximum
        * size.
-       * This function should be called after buildDictPrepare.
+       * This function should be called after prepare.
        */
       void build( const CHAR *src, UINT32 srcLen, BOOLEAN &full ) ;
-
-      _utilLZWDictionary* getDictionary() { return &_dictionary ; }
+      INT32 finalize( CHAR *buff, UINT32 &size ) ;
 
    private:
       _utilLZWDictionary _dictionary ;
@@ -466,6 +453,8 @@ namespace engine
 
       _nodes[_head->_maxCode]._ch = ch ;
       _nodes[_head->_maxCode]._len = _nodes[preCode]._len + 1 ;
+      _nodes[_head->_maxCode]._refNum = 0 ;
+      _nodeSortVec.push_back( &_nodes[_head->_maxCode] ) ;
 
       return _head->_maxCode ;
    }
@@ -473,6 +462,11 @@ namespace engine
    OSS_INLINE LZW_CODE _utilLZWDictionary::findStr( LZW_CODE preCode, UINT8 ch )
    {
       LZW_CODE nextCode ;
+
+      if ( preCode <= UTIL_MAX_DICT_INIT_CODE )
+      {
+         _nodes[preCode]._refNum++ ;
+      }
 
       for ( nextCode = _nodes[preCode]._first; nextCode != UTIL_INVALID_DICT_CODE;
             nextCode = _nodes[nextCode]._next )
@@ -484,6 +478,7 @@ namespace engine
 
          if ( preCode == _nodes[nextCode]._prev && ch == _nodes[nextCode]._ch )
          {
+            _nodes[nextCode]._refNum++ ;
             return nextCode ;
          }
          else
@@ -550,9 +545,7 @@ namespace engine
       UINT32 curPos = 1 ;
       UINT32 matchLen = 1 ;
       UINT32 i = 0 ;
-      UINT32 upBound = _head->_maxCode - 1 ;
-      UINT32 matchIdx = currIdx ;
-      UINT32 finalMatchLen = 1 ;
+      UINT32 upBound = _head->_maxValidCode - 1 ;
 
       while ( currIdx < upBound && curPos < length )
       {
@@ -566,7 +559,7 @@ namespace engine
 
          i = 1 ;
          high = CST_INVALID_CHILD ;
-         while ( currIdx + i < _head->_maxCode
+         while ( currIdx + i < _head->_maxValidCode
                  && ( CST_INVALID_CHILD ==
                       ( high = CST_GET_CHILD( _cst[currIdx + i] ) ) ) )
          {
@@ -575,7 +568,7 @@ namespace engine
 
          if ( CST_INVALID_CHILD == high )
          {
-            high = _head->_maxCode ;   /* Reached the end. */
+            high = _head->_maxValidCode ;  /* Reached the end. */
          }
          else
          {
@@ -591,20 +584,12 @@ namespace engine
          currIdx = nextIdx ;
          matchLen++ ;
          curPos++ ;
-
-         if ( _cst[nextIdx] & CST_VALID_CODE_FLAG )
-         {
-            SDB_ASSERT( _codeMap[nextIdx] <= _head->_maxValidCode,
-                        "Code out of range" ) ;
-            matchIdx = nextIdx ;
-            finalMatchLen = matchLen ;
-         }
       }
 
-      length = finalMatchLen ;
-      SDB_ASSERT( _codeMap[matchIdx] <= _head->_maxValidCode,
+      length = matchLen ;
+      SDB_ASSERT( _codeMap[currIdx] <= _head->_maxValidCode,
                   "Code out of range" ) ;
-      return _codeMap[matchIdx] ;
+      return _codeMap[currIdx] ;
    }
 
    OSS_INLINE UINT32 _utilLZWDictionary::_findStrIdx( const BYTE *str,
@@ -693,7 +678,7 @@ namespace engine
       SDB_ASSERT( UTIL_LZW_DICT_VERSION == _head->_basic._version,
                   "Dictionary version invalid" ) ;
 
-      itemNum = _head->_maxCode + 1 ;
+      itemNum = _head->_maxValidCode + 1 ;
       pos += sizeof( utilLZWDictHead ) ;
       _cst = ( CST_ITEM *)( (const CHAR*)dictionary + pos ) ;
       pos += sizeof( CST_ITEM ) * itemNum ;

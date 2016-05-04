@@ -24,10 +24,7 @@ namespace engine
    #define RTN_DICT_LOAD_TO_CACHE_MAX_TRY 3
 
    _rtnDictCreatorJob::_rtnDictCreatorJob( UINT32 scanInterval )
-      : _dictionary( NULL ) ,
-        _scanInterval( scanInterval ),
-        _srcDataBuf( NULL ),
-        _srcDataLen( 0 )
+   : _scanInterval( scanInterval )
    {
    }
 
@@ -78,10 +75,6 @@ namespace engine
       BOOLEAN noJob = FALSE ;
       UINT64 lastStartTime = pmdGetDBTick() ;
 
-      _srcDataBuf = ( CHAR * )SDB_OSS_MALLOC( RTN_DICT_BUF_SIZE ) ;
-      PD_CHECK( _srcDataBuf, SDB_OOM, error, PDERROR,
-                "Failed to allocate buffer memory for creating dictionary, "
-                "requested size: %d", RTN_DICT_BUF_SIZE ) ;
       while ( !PMD_IS_DB_DOWN() && !cb->isForced() )
       {
          /*
@@ -120,11 +113,6 @@ namespace engine
       }
 
    done:
-      if ( _srcDataBuf )
-      {
-         SDB_OSS_FREE( _srcDataBuf ) ;
-         _srcDataBuf = NULL ;
-      }
       PD_TRACE_EXIT( SDB__RTN_DICTCREATORJOB_DOIT ) ;
       return rc;
    error:
@@ -197,14 +185,11 @@ namespace engine
       UINT32 fetchNum = 0 ;
       UINT64 fetchSize = 0 ;
       BOOLEAN noMoreRecord = FALSE ;
-      UINT32 srcDataLen = 0 ;
-      UINT32 bufFreeLen = RTN_DICT_BUF_SIZE ;
       BOOLEAN dictFull = FALSE ;
 
       SDB_ASSERT( sd && context, "Invalid argument value" ) ;
 
       dmsExtScanner scanner( sd, context, NULL, context->mb()->_firstExtentID ) ;
-      ossMemset( _srcDataBuf, 0, RTN_DICT_BUF_SIZE ) ;
 
       /*
        * The loop will end either all records have been fetched, or the
@@ -239,14 +224,6 @@ namespace engine
 
             fetchNum++ ;
             fetchSize += bs.objsize() ;
-
-            if ( (UINT32)bs.objsize() <= bufFreeLen )
-            {
-               ossMemcpy( _srcDataBuf + srcDataLen, bs.objdata(), bs.objsize() ) ;
-               bufFreeLen -= bs.objsize() ;
-               srcDataLen += bs.objsize() ;
-               continue ;
-            }
          }
          catch ( std::exception &e )
          {
@@ -274,8 +251,6 @@ namespace engine
          goto error ;
       }
 
-      _srcDataLen = fetchSize ;
-
    done:
       PD_TRACE_EXITRC( SDB__RTN_DICTCREATORJOB__CREATEDICT, rc ) ;
       return rc ;
@@ -293,16 +268,13 @@ namespace engine
       CHAR *dictBuf = NULL ;
       UINT32 dictBufLen = DMS_DICT_MAX_SIZE ;
 
-      _dictionary = _creator.getDictionary() ;
-
       dictBuf = (CHAR*)SDB_OSS_MALLOC( dictBufLen ) ;
       PD_CHECK( dictBuf, SDB_OOM, error, PDERROR,
                 "Failed to allocate memory for dictionary, rc: %d", rc ) ;
-
-      rc = _dictionary->finalize( _srcDataBuf, _srcDataLen,
-                                  dictBuf, dictBufLen ) ;
+
+      rc = _creator.finalize( dictBuf, dictBufLen ) ;
       PD_RC_CHECK( rc, PDERROR,
-                   "Failed to dump dictionary into stream format, rc: %d", rc ) ;
+                   "Failed to finalize dictionary, rc: %d", rc ) ;
 
       if ( context->isMBLock() )
       {

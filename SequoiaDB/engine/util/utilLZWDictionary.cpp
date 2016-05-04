@@ -70,7 +70,7 @@ namespace engine
       PD_TRACE_ENTRY( SDB__UTILLZWDICTIONARY_INIT ) ;
 
       UINT32 totalSize = sizeof( utilLZWDictHead )
-                         + sizeof( utilLZWNode ) * UTIL_MAX_DICT_ITEM_NUM ;
+                       + sizeof( utilLZWNode ) * UTIL_MAX_DICT_BUILD_ITEM_NUM ;
 
       _dictBuff = ( CHAR *)SDB_OSS_MALLOC( totalSize ) ;
       PD_CHECK( _dictBuff, SDB_OOM, error, PDERROR,
@@ -79,10 +79,12 @@ namespace engine
 
       _head = ( utilLZWDictHead *)_dictBuff ;
       _nodes = ( utilLZWNode *)( (CHAR *)_head + sizeof( utilLZWDictHead ) ) ;
-      _maxNodeNum = UTIL_MAX_DICT_ITEM_NUM ;
+      _maxNodeNum = UTIL_MAX_DICT_BUILD_ITEM_NUM ;
+      _nodeSortVec.reserve( UTIL_MAX_DICT_BUILD_ITEM_NUM ) ;
 
-      for ( UINT32 i = 0; i < UTIL_MAX_DICT_ITEM_NUM; ++i )
+      for ( UINT32 i = 0; i < UTIL_MAX_DICT_BUILD_ITEM_NUM; ++i )
       {
+         _nodes[i]._code = UTIL_INVALID_DICT_CODE ;
          _nodes[i]._prev = UTIL_INVALID_DICT_CODE ;
          _nodes[i]._first = UTIL_INVALID_DICT_CODE ;
          _nodes[i]._next = UTIL_INVALID_DICT_CODE ;
@@ -94,10 +96,13 @@ namespace engine
          {
             _nodes[i]._ch = i ;
             _nodes[i]._len = 1 ;
+            _nodes[i]._refNum = 1 ;
+            _nodeSortVec.push_back( &_nodes[i] ) ;
          }
          else
          {
             _nodes[i]._len = 0 ;
+            _nodes[i]._refNum = 0 ;
          }
       }
 
@@ -126,6 +131,7 @@ namespace engine
       _head = NULL ;
       _nodes = NULL ;
       _maxNodeNum = 0 ;
+      _nodeSortVec.clear() ;
       _cst = NULL ;
       _codeMap = NULL ;
       _dst = NULL ;
@@ -141,6 +147,9 @@ namespace engine
    {
       PD_TRACE_ENTRY( SDB__UTILLZWDICTIONARY__FORMATONEGRP ) ;
       LZW_CODE code = UTIL_INVALID_DICT_CODE ;
+      UINT32 index = 0 ;
+      UINT32 nextPos = nextIdx ;
+      BOOLEAN posSet = FALSE ;
 
       /*
        * Set parent's child as nextIdx, if it does has child.
@@ -155,104 +164,32 @@ namespace engine
          goto done ;
       }
 
-      CST_SET_CHILD( _cst[parentIdx], nextIdx ) ;
+      index = code ;
 
       do
       {
-         indexMap[nextIdx] = code ;
-         CST_SET_CHAR( _cst[nextIdx], _nodes[code]._ch ) ;
-         code = _nodes[code]._next ;
-         nextIdx++ ;
-      } while ( UTIL_INVALID_DICT_CODE != code ) ;
+         if ( UTIL_INVALID_DICT_CODE != _nodes[index]._code )
+         {
+            indexMap[nextIdx] = index ;
+            CST_SET_CHAR( _cst[nextIdx], _nodes[index]._ch ) ;
+            _codeMap[nextIdx] = _nodes[index]._code ;
+            nextIdx++ ;
+            if ( !posSet )
+            {
+               CST_SET_CHILD( _cst[parentIdx], nextPos ) ;
+               posSet = TRUE ;
+            }
+         }
+         index = _nodes[index]._next ;
+      } while ( UTIL_INVALID_DICT_CODE != index ) ;
+
+      if ( !posSet )
+      {
+         CST_SET_CHILD( _cst[parentIdx], CST_INVALID_CHILD ) ;
+      }
 
    done:
       PD_TRACE_EXIT( SDB__UTILLZWDICTIONARY__FORMATONEGRP ) ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__UTILLZWDICTIONARY__ADJUST, "_utilLZWDictionary::_adjust" )
-   void _utilLZWDictionary::_adjust( const CHAR* str, UINT32 strLen,
-                                     std::map<UINT32, UINT32> &indexMap )
-   {
-      PD_TRACE_ENTRY( SDB__UTILLZWDICTIONARY__ADJUST ) ;
-      const CHAR *strPtr = str ;
-      UINT32 length = 0 ;
-      UINT32 remainLen = strLen ;
-      UINT32 nodeIdx = 0 ;
-      BOOLEAN lookAhead = FALSE ;
-      LZW_CODE code = 0 ;
-      UINT8 codeSize = 0 ;
-      UINT32 maxValidCode = 0 ;
-      std::vector<codeWeight> weightVec( _head->_maxCode + 1 ) ;
-      std::vector<codeWeight>::iterator itr ;
-
-      #define MIN_REF_NUM  1
-
-      /*
-       * Initialize the weight vector. The initial nodes' weights should always
-       * be greater than 0. They should always be valid in the final dictionary.
-       */
-      for ( UINT32 index = 0; index <= _head->_maxCode; ++index )
-      {
-         weightVec[index]._code = index ;
-         if ( index <= UTIL_MAX_DICT_INIT_CODE )
-         {
-            weightVec[index]._weight = MIN_REF_NUM ;
-         }
-      }
-
-      /*
-       * Currently, take reference numbers as weight.
-       * Re-scan the sample data to get the final reference numbers.
-       */
-      while ( remainLen > 0 )
-      {
-         length = remainLen ;
-         nodeIdx = _findStrIdx( ( const BYTE* )strPtr, length ) ;
-         /* Find the original code, and increase its weight. */
-         weightVec[nodeIdx]._weight++ ;
-         strPtr += length ;
-         remainLen -= length ;
-      }
-
-      std::sort( weightVec.begin(), weightVec.end(), _sortNodeByWeight ) ;
-
-      /* Only those codes with weight at least MIN_REF_NUM are marked as valid*/
-      for ( itr = weightVec.begin(); itr != weightVec.end(); ++itr )
-      {
-         if ( !lookAhead && ( itr->_weight < MIN_REF_NUM ) )
-         {
-            codeSize = _calcCodeSize( code ) ;
-            maxValidCode = ( 1 << codeSize ) - 1 ;
-            if ( maxValidCode > _head->_maxCode )
-            {
-               maxValidCode = _head->_maxCode ;
-            }
-
-            lookAhead = TRUE ;
-         }
-
-         _nodes[indexMap[itr->_code]]._code = code ;
-         _codeMap[itr->_code] = code ;
-         if ( !lookAhead || code <= maxValidCode )
-         {
-            CST_SET_VALID_CODE_FLAG( _cst[itr->_code] ) ;
-         }
-         code++ ;
-      }
-
-      _head->_maxValidCode = maxValidCode ;
-      _head->_codeSize = codeSize ;
-      _setVarLenSplitInfo() ;
-
-      SDB_ASSERT( _head->_maxValidCode <= _head->_maxCode,
-                  "Code out of range" ) ;
-      SDB_ASSERT( _head->_codeSize <= UTIL_MAX_DICT_CODE_SIZE,
-                  "Code size out of range" ) ;
-      PD_LOG( PDDEBUG, "Dictionary max code: %u, max valid code: %u, "
-              "code size: %u", _head->_maxCode,
-              _head->_maxValidCode, _head->_codeSize ) ;
-
-      PD_TRACE_EXIT( SDB__UTILLZWDICTIONARY__ADJUST ) ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__UTILLZWDICTIONARY__INITFINALENV, "_utilLZWDictionary::_initFinalEnv" )
@@ -375,7 +312,10 @@ namespace engine
       CHAR buff[DST_MAX_LOCAL_LEN] = {0} ;
       LZW_CODE preCode ;
 
-      SDB_ASSERT( 0 == *item, "dst item value should be init to 0" ) ;
+      if ( 0 != *item )
+      {
+         return ;
+      }
 
       if ( len > DST_MAX_LOCAL_LEN )
       {
@@ -417,7 +357,7 @@ namespace engine
       do
       {
          --currCode ;
-         if ( UTIL_INVALID_DICT_CODE == _nodes[currCode]._first )
+         if ( UTIL_INVALID_DICT_CODE != _nodes[currCode]._code )
          {
             _formatOneCode( strOffset, currCode ) ;
          }
@@ -428,10 +368,10 @@ namespace engine
       return size ;
    }
 
-   BOOLEAN _utilLZWDictionary::_sortNodeByWeight( const codeWeight &left,
-                                                  const codeWeight &right )
+   BOOLEAN _utilLZWDictionary::_sortNodeByRef( const _utilLZWNode *left,
+                                               const _utilLZWNode *right )
    {
-      return left._weight > right._weight ;
+      return left->_refNum > right->_refNum ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__UTILLZWDICTIONARY__CALCCODESIZE, "_utilLZWDictionary::_calcCodeSize" )
@@ -564,43 +504,45 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__UTILLZWDICTIONARY_FINALIZE, "_utilLZWDictionary::finalize" )
-   INT32 _utilLZWDictionary::finalize( const CHAR *source, UINT32 sourceLen,
-                                       CHAR *buffer, UINT32 &length )
+   INT32 _utilLZWDictionary::finalize( CHAR *buff, UINT32 &length )
    {
       /* format the original dictionary into the final structure */
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__UTILLZWDICTIONARY_FINALIZE ) ;
-
+      LZW_CODE code = 0 ;
+      UINT32 nextIdx = UTIL_MAX_DICT_INIT_CODE + 1 ;
       /*
        * indexMap is used to maintain the index in CST and the original index
        * (code) in the initial dicitonary. As the nodes are put into the final
        * dictionary CST level by level, their new indexes are different.
        */
       std::map<UINT32, UINT32> indexMap ;
-      UINT32 nextIdx = UTIL_MAX_DICT_INIT_CODE + 1 ;
       UINT32 dstSize = 0 ;
       BSONObj addInfo ;
       UINT32 writePos = 0 ;
 
-      if ( length < UTIL_DICT_MAX_SIZE )
+      sort( _nodeSortVec.begin(), _nodeSortVec.end(), _sortNodeByRef ) ;
+
+      for ( vector<_utilLZWNode*>::iterator itr = _nodeSortVec.begin();
+            itr != _nodeSortVec.end(); ++itr )
       {
-         PD_LOG( PDERROR, "Buffer for dictionary is too small" ) ;
-         rc = SDB_INVALIDARG ;
-         goto error ;
+         (*itr)->_code = code ;
+         _head->_maxValidCode = code ;
+         code++ ;
+         if ( UTIL_MAX_DICT_ITEM_NUM == code )
+         {
+            break ;
+         }
       }
 
-      _initFinalEnv( buffer, length ) ;
+      _head->_codeSize = _calcCodeSize( _head->_maxValidCode ) ;
 
-      /*
-       * Fill the node in cst, and put its code in the code map at the same time
-       * 1. fill the first 256 codes. They should alway be in the dictionary,
-       * and contain valid codes.
-       */
+      _initFinalEnv( buff, length ) ;
+
       for ( LZW_CODE code = 0; code <= UTIL_MAX_DICT_INIT_CODE; ++code )
       {
-         CST_SET_VALID_CODE_FLAG( _cst[code] ) ;
          CST_SET_CHAR( _cst[code], _nodes[code]._ch ) ;
-         /* Remember the original index, for formatting its children. */
+         _codeMap[code] = _nodes[code]._code ;
          indexMap[code] = code ;
       }
 
@@ -609,9 +551,6 @@ namespace engine
          _formatOneGrp( index, nextIdx, indexMap ) ;
       }
 
-      _adjust( source, sourceLen, indexMap ) ;
-
-      /* format the decompress part */
       dstSize = _formatDst() ;
       writePos = (CHAR*)_dst - (CHAR*)_head + dstSize ;
 
@@ -624,11 +563,11 @@ namespace engine
          goto error ;
       }
 
-      ossMemcpy( buffer + writePos, addInfo.objdata(), addInfo.objsize() ) ;
+      ossMemcpy( buff + writePos, addInfo.objdata(), addInfo.objsize() ) ;
       length =  writePos + addInfo.objsize() ;
 
 #ifdef _DEBUG
-      _healthCheck() ;
+      //_healthCheck() ;
 #endif /* _DEBUG */
 
    done:
@@ -728,6 +667,21 @@ namespace engine
       }
 
       PD_TRACE_EXIT( SDB__UTILLZWDICTCREATOR_BUILD ) ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__UTILLZWDICTCREATOR_FINALIZE, "_utilLZWDictionary::finalize" )
+   INT32 _utilLZWDictCreator::finalize( CHAR *buff, UINT32 &size )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__UTILLZWDICTCREATOR_FINALIZE ) ;
+      rc = _dictionary.finalize( buff, size ) ;
+      PD_RC_CHECK( rc, PDERROR,
+                   "Failed to finalize dictionary, rc: %d", rc ) ;
+   done:
+      PD_TRACE_EXITRC( SDB__UTILLZWDICTCREATOR_FINALIZE, rc ) ;
+      return rc ;
+   error:
+      goto done ;
    }
 }
 
