@@ -574,6 +574,35 @@ class SequoiaDB
     * @endcode
    */
    public function selectCS( string $name, array|string $options = null ){}
+   
+   /**
+    * Get the specified collection space, if is not exist,will auto create.
+    *
+    * @param $name	the string argument. The collection space name.
+    *
+    * @param $pageSize an integer argument. Assign the pagesize of the collection space.
+    *
+    * @return Returns a new SequoiaCS object.
+    *
+    * @retval SequoiaCS Object
+    *
+    * Example:
+    * @code
+    * $db = new SequoiaDB() ;
+    * $err = $db -> connect( "192.168.1.10:11810" ) ;
+    * if( $err['errno'] != 0 ) {
+    *    echo "Failed to connect database, error code: ".$err['errno'] ;
+    *    return ;
+    * }
+    * $cs = $db -> selectCS( 'foo', 4096 ) ;
+    * if( empty( $cs ) ) {
+    *    $err = $db -> getError() ;
+    *    echo "Failed to call selectCS, error code: ".$err['errno'] ;
+    *    return ;
+    * }
+    * @endcode
+   */
+   public function selectCS( string $name, integer $pageSize = null ){}
 
    /**
     * Create the specified collection space.
