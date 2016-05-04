@@ -63,5 +63,5 @@ Upgrade.ErrorMsg.excuteComatibleSh=执行compatible.sh失败，返回码不为0
 Upgrade.ErrorMsg.JudgeComatible=因为不兼容，导致版本不能从 ${old_version} ${old_edition_full} 升级到 ${new_version} ${new_edition_full}
 Upgrade.ErrorMsg.DiskSpace=磁盘空间不够
 Upgrade.ErrorMsg.UserExist=用户${username}不存在
-Upgrade.ErrorMsg.StopProcess=执行service sdbcm stop后，sdbcm或者sdbcmd未停止
+Upgrade.ErrorMsg.StopProcess=数据库相关进程未停止
 Upgrade.ErrorMsg.StartProcess=sdbcm或者sdbcmd未启动

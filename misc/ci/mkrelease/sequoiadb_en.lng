@@ -62,7 +62,5 @@ Upgrade.ErrorMsg.excuteComatibleSh=Fail to execute compatible.sh, return code is
 Upgrade.ErrorMsg.JudgeComatible=You can't upgrade from version ${old_version} ${old_edition_full} to ${new_version} ${new_edition_full}, for the compatibility
 Upgrade.ErrorMsg.DiskSpace=There is not enough disk space for installation.
 Upgrade.ErrorMsg.UserExist=User ${username} does not exist.
-Upgrade.ErrorMsg.StopProcess=Processes still exists after service sdbcm stop.
+Upgrade.ErrorMsg.StopProcess=Revelant processes still exists.
 Upgrade.ErrorMsg.StartProcess=sdbcm or sdbcmd has not been started.
-
-
