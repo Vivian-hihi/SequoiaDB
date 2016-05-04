@@ -159,8 +159,8 @@
             <parameterList>                                            
                 <directoryParameter>
                     <name>installdir</name>
-                    <description>Install.Parameter.installdir.description</description>
-                    <explanation>Install.Parameter.installdir.explanation</explanation>
+                    <description>Installer.Parameter.installdir.description</description>
+                    <explanation>Installer.Parameter.installdir.explanation</explanation>
                     <value></value>
                     <default>${platform_install_prefix}/${product_shortname}</default>
                     <allowEmptyValue>0</allowEmptyValue>
