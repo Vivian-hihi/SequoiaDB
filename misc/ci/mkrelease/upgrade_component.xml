@@ -477,8 +477,10 @@
                 <deleteFile path="${project.rollbackBackupDirectory}"/> 
                 <consoleWrite text="ok&#xA;"/>                        
             </actionList>
+            <ruleEvaluationLogic>and</ruleEvaluationLogic>
             <ruleList>
                 <compareText logic="equals" text="${upgrade_component_done}" value="begin"/>            
+                <fileTest condition="is_not_empty" path="${project.rollbackBackupDirectory}"/>  
             </ruleList>
         </actionGroup>        
         
