@@ -705,7 +705,7 @@ public class DBCollection {
 	 * @param flags 
 	 *            the query flags, default to be 0. Please see the definition 
 	 *            of follow flags for more detail. Usage: 
-	 *            e.g. set ( QUERY_FLG_FORCE_HINT | QUERY_FLG_WITH_RETURNDATA ) to param flags  
+	 *            e.g. set ( DBQuery.FLG_QUERY_FORCE_HINT | DBQuery.FLG_QUERY_WITH_RETURNDATA ) to param flags  
      * <ul>
      * <li>DBQuery.FLG_QUERY_STRINGOUT
      * <li>DBQuery.FLG_QUERY_FORCE_HINT 
@@ -801,7 +801,7 @@ public class DBCollection {
 	 * @param flags 
 	 *            the query flags, default to be 0. Please see the definition 
 	 *            of follow flags for more detail. Usage: 
-	 *            e.g. set ( QUERY_FLG_FORCE_HINT | QUERY_FLG_WITH_RETURNDATA ) to param flags  
+	 *            e.g. set ( DBQuery.FLG_QUERY_FORCE_HINT | DBQuery.FLG_QUERY_WITH_RETURNDATA ) to param flags  
      * <ul>
      * <li>DBQuery.FLG_QUERY_STRINGOUT
      * <li>DBQuery.FLG_QUERY_FORCE_HINT 
@@ -850,7 +850,7 @@ public class DBCollection {
 	 * @param flags 
 	 *            the query flags, default to be 0. Please see the definition 
 	 *            of follow flags for more detail. Usage: 
-	 *            e.g. set ( QUERY_FLG_FORCE_HINT | QUERY_FLG_WITH_RETURNDATA ) to param flags  
+	 *            e.g. set ( DBQuery.FLG_QUERY_FORCE_HINT | DBQuery.FLG_QUERY_WITH_RETURNDATA ) to param flags  
      * <ul>
      * <li>DBQuery.FLG_QUERY_STRINGOUT
      * <li>DBQuery.FLG_QUERY_FORCE_HINT 
@@ -1016,7 +1016,7 @@ public class DBCollection {
 	 * @param flags 
 	 *            the query flags, default to be 0. Please see the definition 
 	 *            of follow flags for more detail. Usage: 
-	 *            e.g. set ( QUERY_FLG_FORCE_HINT | QUERY_FLG_WITH_RETURNDATA ) to param flags  
+	 *            e.g. set ( DBQuery.FLG_QUERY_FORCE_HINT | DBQuery.FLG_QUERY_WITH_RETURNDATA ) to param flags  
      * <ul>
      * <li>DBQuery.FLG_QUERY_STRINGOUT
      * <li>DBQuery.FLG_QUERY_FORCE_HINT 
@@ -1136,7 +1136,7 @@ public class DBCollection {
 	 * @param flags 
 	 *            the query flags, default to be 0. Please see the definition 
 	 *            of follow flags for more detail. Usage: 
-	 *            e.g. set ( QUERY_FLG_FORCE_HINT | QUERY_FLG_WITH_RETURNDATA ) to param flags  
+	 *            e.g. set ( DBQuery.FLG_QUERY_FORCE_HINT | DBQuery.FLG_QUERY_WITH_RETURNDATA ) to param flags  
      * <ul>
      * <li>DBQuery.FLG_QUERY_STRINGOUT
      * <li>DBQuery.FLG_QUERY_FORCE_HINT 
@@ -1179,7 +1179,7 @@ public class DBCollection {
 	 * @param flags 
 	 *            the query flags, default to be 0. Please see the definition 
 	 *            of follow flags for more detail. Usage: 
-	 *            e.g. set ( QUERY_FLG_FORCE_HINT | QUERY_FLG_WITH_RETURNDATA ) to param flags  
+	 *            e.g. set ( DBQuery.FLG_QUERY_FORCE_HINT | DBQuery.FLG_QUERY_WITH_RETURNDATA ) to param flags  
      * <ul>
      * <li>DBQuery.FLG_QUERY_STRINGOUT
      * <li>DBQuery.FLG_QUERY_FORCE_HINT 
