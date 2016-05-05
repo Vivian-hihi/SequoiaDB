@@ -100,11 +100,11 @@
 #define activateReplicaGroup   activateReplicaGroup
 
 /** Force to use specified hint to query, if database have no index assigned by the hint, fail to query. */
-#define QUERY_FLG_FORCE_HINT          0x00000080
-/** Enable paralled sub query, each sub query will finish scanning diffent part of the data. */
-#define QUERY_FLG_PARALLED            0x00000100
+#define QUERY_FORCE_HINT          0x00000080
+/** Enable parallel sub query, each sub query will finish scanning diffent part of the data. */
+#define QUERY_PARALLED            0x00000100
 /** In general, query won't return data until cursor gets from database, when add this flag, return data in query response, it will be more high-performance */
-#define QUERY_FLG_WITH_RETURNDATA     0x00000200
+#define QUERY_WITH_RETURNDATA     0x00000200
 
 enum _SDB_LOB_OPEN_MODE
 {
@@ -785,11 +785,11 @@ namespace sdbclient
     \param [in] hint The hint, automatically match the optimal hint if not provided
     \param [in] numToSkip Skip the first numToSkip documents, default is 0
     \param [in] numToReturn Only return numToReturn documents, default is -1 for returning all results
-    \param [in] flags The query flags, default to be 0. Please see the definition of follow flags for more detail. Usage: e.g. set ( QUERY_FLG_FORCE_HINT | QUERY_FLG_WITH_RETURNDATA ) to param flags
+    \param [in] flags The query flags, default to be 0. Please see the definition of follow flags for more detail. Usage: e.g. set ( QUERY_FORCE_HINT | QUERY_WITH_RETURNDATA ) to param flags
 
-        QUERY_FLG_FORCE_HINT
-        QUERY_FLG_PARALLED
-        QUERY_FLG_WITH_RETURNDATA
+        QUERY_FORCE_HINT
+        QUERY_PARALLED
+        QUERY_WITH_RETURNDATA
       
     \param [out] cursor The cursor of current query
     \retval SDB_OK Operation Success
@@ -827,11 +827,11 @@ namespace sdbclient
     \param [in] hint The hint, automatically match the optimal hint if not provided
     \param [in] numToSkip Skip the first numToSkip documents, default is 0
     \param [in] numToReturn Only return numToReturn documents, default is -1 for returning all results
-    \param [in] flags The query flags, default to be 0. Please see the definition of follow flags for more detail. Usage: e.g. set ( QUERY_FLG_FORCE_HINT | QUERY_FLG_WITH_RETURNDATA ) to param flags
+    \param [in] flags The query flags, default to be 0. Please see the definition of follow flags for more detail. Usage: e.g. set ( QUERY_FORCE_HINT | QUERY_WITH_RETURNDATA ) to param flags
 
-        QUERY_FLG_FORCE_HINT
-        QUERY_FLG_PARALLED
-        QUERY_FLG_WITH_RETURNDATA
+        QUERY_FORCE_HINT
+        QUERY_PARALLED
+        QUERY_WITH_RETURNDATA
       
     \param [out] cursor The cursor of current query
     \retval SDB_OK Operation Success
@@ -867,11 +867,11 @@ namespace sdbclient
     \param [in] orderBy The ordered rule, result set is unordered if not provided
     \param [in] hint The hint, automatically match the optimal hint if not provided
     \param [in] numToSkip Skip the first numToSkip documents, default is 0
-    \param [in] flags The query flags, default to be 0. Please see the definition of follow flags for more detail. Usage: e.g. set ( QUERY_FLG_FORCE_HINT | QUERY_FLG_WITH_RETURNDATA ) to param flags
+    \param [in] flags The query flags, default to be 0. Please see the definition of follow flags for more detail. Usage: e.g. set ( QUERY_FORCE_HINT | QUERY_WITH_RETURNDATA ) to param flags
 
-        QUERY_FLG_FORCE_HINT
-        QUERY_FLG_PARALLED
-        QUERY_FLG_WITH_RETURNDATA
+        QUERY_FORCE_HINT
+        QUERY_PARALLED
+        QUERY_WITH_RETURNDATA
       
     \param [out] obj The first matching object
     \retval SDB_OK Operation Success
@@ -910,11 +910,11 @@ namespace sdbclient
     \param [in] hint The hint, automatically match the optimal hint if not provided
     \param [in] numToSkip Skip the first numToSkip documents, default is 0
     \param [in] numToReturn Only return numToReturn documents, default is -1 for returning all results
-    \param [in] flags The query flags, default to be 0. Please see the definition of follow flags for more detail. Usage: e.g. set ( QUERY_FLG_FORCE_HINT | QUERY_FLG_WITH_RETURNDATA ) to param flags
+    \param [in] flags The query flags, default to be 0. Please see the definition of follow flags for more detail. Usage: e.g. set ( QUERY_FORCE_HINT | QUERY_WITH_RETURNDATA ) to param flags
 
-        QUERY_FLG_FORCE_HINT
-        QUERY_FLG_PARALLED
-        QUERY_FLG_WITH_RETURNDATA
+        QUERY_FORCE_HINT
+        QUERY_PARALLED
+        QUERY_WITH_RETURNDATA
       
     \param [in] returnNew When TRUE, returns the updated document rather than the original
     \param [out] cursor The cursor of current query
@@ -956,11 +956,11 @@ namespace sdbclient
     \param [in] hint The hint, automatically match the optimal hint if not provided
     \param [in] numToSkip Skip the first numToSkip documents, default is 0
     \param [in] numToReturn Only return numToReturn documents, default is -1 for returning all results
-    \param [in] flags The query flags, default to be 0. Please see the definition of follow flags for more detail. Usage: e.g. set ( QUERY_FLG_FORCE_HINT | QUERY_FLG_WITH_RETURNDATA ) to param flags
+    \param [in] flags The query flags, default to be 0. Please see the definition of follow flags for more detail. Usage: e.g. set ( QUERY_FORCE_HINT | QUERY_WITH_RETURNDATA ) to param flags
 
-        QUERY_FLG_FORCE_HINT
-        QUERY_FLG_PARALLED
-        QUERY_FLG_WITH_RETURNDATA
+        QUERY_FORCE_HINT
+        QUERY_PARALLED
+        QUERY_WITH_RETURNDATA
       
     \param [out] cursor The cursor of current query
     \retval SDB_OK Operation Success
@@ -1292,11 +1292,11 @@ namespace sdbclient
     \param [in] hint The hint, automatically match the optimal hint if null
     \param [in] numToSkip Skip the first numToSkip documents, never skip if this parameter is 0
     \param [in] numToReturn Only return numToReturn documents, return all if this parameter is -1
-    \param [in] flags The query flags, default to be 0. Please see the definition of follow flags for more detail. Usage: e.g. set ( QUERY_FLG_FORCE_HINT | QUERY_FLG_WITH_RETURNDATA ) to param flags
+    \param [in] flags The query flags, default to be 0. Please see the definition of follow flags for more detail. Usage: e.g. set ( QUERY_FORCE_HINT | QUERY_WITH_RETURNDATA ) to param flags
 
-        QUERY_FLG_FORCE_HINT
-        QUERY_FLG_PARALLED
-        QUERY_FLG_WITH_RETURNDATA
+        QUERY_FORCE_HINT
+        QUERY_PARALLED
+        QUERY_WITH_RETURNDATA
       
     \param [in] options the rules of explain, the options are as below:
 
