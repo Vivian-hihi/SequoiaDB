@@ -61,6 +61,11 @@ testFiles10 = [
         "../../../../../../client/lib/libstaticsdbc.a"
       ]
 
+testFiles11 = [
+        "testTrunOncache.cpp",
+        "../../../../../../client/lib/libstaticsdbc.a"
+      ]
+
 #Google Test
 gtestall = env.StaticLibrary('gtest', gtestFiles)
 gtestMainObj = env.Object('gtestMainObj', gtestMainFile)
@@ -82,6 +87,6 @@ shard = env.Program("shard_static", [testFiles7, gtestMainObj])
 debug = env.Program("debug_static", [testFiles8, gtestMainObj])
 cbson = env.Program("cbson_static", [testFiles9, gtestMainObj])
 domain = env.Program("domain_static", [testFiles10, gtestMainObj])
-
+turnon_cache = env.Program("turnon_cache", [testFiles11, gtestMainObj])
 env.Install( '#/build_test', [collection,collectionspace,cursor,sdb,snapshot,concurrent,
-                              shard, debug, cbson, domain] )
+                              shard, debug, cbson, domain, turnon_cache] )

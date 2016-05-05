@@ -77,6 +77,10 @@ testFiles16 = [
         "../../testcommon.c",
         "bson_test.cpp"
       ]
+      
+testFiles17 = [
+        "testTrunOncache.cpp.cpp"
+      ]
 
 #Google Test
 gtestall = env.StaticLibrary('gtest', gtestFiles)
@@ -105,9 +109,11 @@ rg = env.Program("rg", [testFiles13, gtestMainObj])
 mutex = env.Program("mutex", [testFiles14, gtestMainObj])
 dc = env.Program("dc", [testFiles15, gtestMainObj])
 bson_test = env.Program("bson_test", [testFiles16, gtestMainObj])
+turnon_cache = env.Program("turnon_cache", [testFiles17, gtestMainObj])
 
 #env.Install( '#/build_test', [collection,collectionspace,cursor,sdb,snapshot,concurrent,
 #                              shard, debug, cbson, domain, lob, selector, mutex, rg, dc] )
                               
 env.Install( '#/build_test', [collection,collectionspace,cursor,sdb,snapshot,concurrent,
-                              shard, debug, cbson, domain, lob, selector, bson_test] )
+                              shard, debug, cbson, domain, lob, selector, bson_test,
+                              turnon_cache] )
