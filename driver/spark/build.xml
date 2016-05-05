@@ -1,0 +1,20 @@
+<!-- @param ${SPARK_VERSION} : when build sdb_spark_conenctor, choise the spark version , default is 1.6.1 -->
+<!-- @param ${spark_connector_root_dir} : where is the sdb_spark_connector src dir -->
+
+<project name="spark_connector" default="package">
+   <property name="SPARK_VERSION" value="1.6.1" />
+   <property name="SBT" value="/var/lib/jenkins/sbt/bin/sbt" />
+   
+   <target name="package" depends="">
+      <echo message="Begin to build sdb_spark_connector, spark version is ${SPARK_VERSION}" />
+      <echo message="exec in ${spark_connector_root_dir}/spark-${SPARK_VERSION}" />
+      <echo message="exec : ${SBT} compile package" />
+      <exec executable="${SBT}" dir="${spark_connector_root_dir}/spark-${SPARK_VERSION}" failonerror="true">
+         <arg line="compile package" />
+      </exec>
+      <echo message="sdb_spark_conenctor build over" />
+      <echo message="spark-sequoiadb_2.10-1.12.jar is in ${spark_connector_root_dir}/spark-${SPARK_VERSION}/target/scala-2.10" />
+     
+   </target>
+
+</project>
