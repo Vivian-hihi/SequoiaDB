@@ -5158,6 +5158,8 @@ namespace engine
       SINT64 contextID = -1 ;
 
       const CHAR *pFilter = NULL ;
+      const CHAR *pSelector = NULL ;
+      const CHAR *pOrder = NULL ;
       BSONObj filter ;
 
       _restAdaptor->getQuery( _restSession, FIELD_NAME_FILTER, &pFilter ) ;
@@ -5171,11 +5173,35 @@ namespace engine
             goto error ;
          }
       }
-
-      selector = BSON( OM_TASKINFO_FIELD_TASKID << 1 
-                       << OM_TASKINFO_FIELD_TYPE << 1
-                       << OM_TASKINFO_FIELD_TYPE_DESC << 1
-                       << OM_TASKINFO_FIELD_NAME << 1 ) ;
+      _restAdaptor->getQuery( _restSession, FIELD_NAME_SELECTOR, &pSelector ) ;
+      if( NULL != pSelector )
+      {
+         rc = fromjson( pSelector, selector ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG_MSG( PDERROR, "change rest field to BSONObj failed:src=%s,"
+                        "rc=%d", pSelector, rc ) ;
+            goto error ;
+         }
+      }
+      else
+      {
+         selector = BSON( OM_TASKINFO_FIELD_TASKID << 1 
+                          << OM_TASKINFO_FIELD_TYPE << 1
+                          << OM_TASKINFO_FIELD_TYPE_DESC << 1
+                          << OM_TASKINFO_FIELD_NAME << 1 ) ;
+      }
+      _restAdaptor->getQuery( _restSession, FIELD_NAME_SORT, &pOrder ) ;
+      if ( NULL != pOrder )
+      {
+         rc = fromjson( pOrder, order ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG_MSG( PDERROR, "change rest field to BSONObj failed:src=%s,"
+                        "rc=%d", pOrder, rc ) ;
+            goto error ;
+         }
+      }
       rc = rtnQuery( OM_CS_DEPLOY_CL_TASKINFO, selector, filter, order, hint, 
                      0, _cb, 0, -1, _pDMSCB, _pRTNCB, contextID );
       if ( rc )
