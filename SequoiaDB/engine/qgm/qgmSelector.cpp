@@ -276,7 +276,20 @@ namespace engine
       {
          if ( !itr->value.attr().empty() )
          {
-            builder.appendNull( itr->value.attr().toString()) ;
+            string name = itr->value.attr().toString() ;
+
+            /// do not pass name like 'a.$[1]' to query
+            const CHAR *dollarArray = ossStrstr( name.c_str(), ".$[" ) ;
+            if ( NULL == dollarArray )
+            {
+               builder.appendNull( name ) ;
+            }
+            else
+            {
+               INT32 at = INT32(dollarArray - name.c_str()) ;
+               name.at( at ) = '\0';
+               builder.appendNull( StringData( name.c_str(), UINT32(at) ) ) ;
+            }
          }
       }
 
