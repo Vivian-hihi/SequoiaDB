@@ -75,7 +75,7 @@ function deployStandalone()
       var oma = new Oma( hostname, cmPort );
       oma.createData( standalonePort, 
                       databaseDir+"/standalone/"+standalonePort,
-                      {diaglevel:5} );
+                      {diaglevel:5, fap:fapValue} );
       oma.startNode( standalonePort );     
    }
    
