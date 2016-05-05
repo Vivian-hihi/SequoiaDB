@@ -1365,13 +1365,13 @@ do                                                            \
                                      const BSONObj &hint,
                                      INT64 numToSkip,
                                      INT64 numToReturn,
-                                     INT32 flag )
+                                     INT32 flags )
    {
       PD_TRACE_ENTRY ( SDB_CLIENT_QUERY ) ;
       PD_TRACE3 ( SDB_CLIENT_QUERY,
                   PD_PACK_LONG(numToSkip),
                   PD_PACK_LONG(numToReturn),
-                  PD_PACK_INT( flag ) );
+                  PD_PACK_INT( flags ) );
       INT32 rc              = SDB_OK ;
       _sdbCursor *pCursor   = NULL ;
       
@@ -1384,14 +1384,14 @@ do                                                            \
       // try to set flag to be find one
       if ( 1 == numToReturn )
       {
-         flag |= FLG_QUERY_WITH_RETURNDATA ;
+         flags |= FLG_QUERY_WITH_RETURNDATA ;
       }
 
       // run command
       rc = _connection->_runCommand( _collectionFullName,
                                      &condition, &selected,
                                      &orderBy, &hint,
-                                     flag, 0, numToSkip, numToReturn,
+                                     flags, 0, numToSkip, numToReturn,
                                      &pCursor ) ;
       if ( SDB_OK != rc )
       {
@@ -1439,7 +1439,7 @@ do                                                            \
                                        const bson::BSONObj &orderBy,
                                        const bson::BSONObj &hint,
                                        INT64 numToSkip,
-                                       INT32 flag )
+                                       INT32 flags )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB_CLIENT_QUERYONE ) ;
@@ -1452,7 +1452,7 @@ do                                                            \
                   hint,
                   numToSkip,
                   1,
-                  flag | FLG_QUERY_WITH_RETURNDATA ) ;
+                  flags | FLG_QUERY_WITH_RETURNDATA ) ;
       if ( SDB_OK != rc )
       {
          goto error ;
@@ -1480,7 +1480,7 @@ do                                                            \
                                                 const BSONObj &update,
                                                 INT64 numToSkip,
                                                 INT64 numToReturn,
-                                                INT32 flag,
+                                                INT32 flags,
                                                 BOOLEAN isUpdate,
                                                 BOOLEAN returnNew )
    {
@@ -1530,10 +1530,10 @@ do                                                            \
          goto error ;
       }
 
-      flag |= FLG_QUERY_MODIFY ;
+      flags |= FLG_QUERY_MODIFY ;
 
       rc = query( cursor, condition, selected, orderBy, newHint,
-                  numToSkip, numToReturn, flag ) ;
+                  numToSkip, numToReturn, flags ) ;
 
    done:
       PD_TRACE_EXITRC ( SDB_CLIENT__QUERYANDMODIFY, rc );

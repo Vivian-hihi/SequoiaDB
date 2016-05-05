@@ -140,7 +140,7 @@ namespace sdbclient
                                const BSONObj &update,
                                INT64 numToSkip,
                                INT64 numToReturn,
-                               INT32 flag,
+                               INT32 flags,
                                BOOLEAN isUpdate,
                                BOOLEAN returnNew ) ;
 
@@ -234,7 +234,7 @@ namespace sdbclient
                      const BSONObj &hint      = _sdbStaticObject,
                      INT64 numToSkip          = 0,
                      INT64 numToReturn        = -1,
-                     INT32 flag               = 0
+                     INT32 flags              = 0
                    ) ;
 
       INT32 query  ( sdbCursor &cursor,
@@ -244,12 +244,12 @@ namespace sdbclient
                      const BSONObj &hint      = _sdbStaticObject,
                      INT64 numToSkip          = 0,
                      INT64 numToReturn        = -1,
-                     INT32 flag               = 0
+                     INT32 flags              = 0
                    )
       {
          return query ( &cursor.pCursor,
                         condition, selected, orderBy, hint,
-                        numToSkip, numToReturn, flag ) ;
+                        numToSkip, numToReturn, flags ) ;
       }
 
       INT32 queryOne( bson::BSONObj &obj,
@@ -258,7 +258,7 @@ namespace sdbclient
                       const bson::BSONObj &orderBy   = _sdbStaticObject,
                       const bson::BSONObj &hint      = _sdbStaticObject,
                       INT64 numToSkip    = 0,
-                      INT32 flag = 0 ) ;
+                      INT32 flags = 0 ) ;
 
       // query objects from current collection and update
       // given:
@@ -267,7 +267,7 @@ namespace sdbclient
       // query selected def ( optional )
       // query orderby ( optional )
       // hint ( optional )
-      // flag ( optional )
+      // flags( optional )
       // returnNew ( optioinal )
       // output: sdbCursor ( required )
       INT32 queryAndUpdate  ( _sdbCursor **cursor,
@@ -278,12 +278,12 @@ namespace sdbclient
                               const BSONObj &hint      = _sdbStaticObject,
                               INT64 numToSkip          = 0,
                               INT64 numToReturn        = -1,
-                              INT32 flag               = 0,
+                              INT32 flags              = 0,
                               BOOLEAN returnNew        = FALSE )
       {
          return _queryAndModify( cursor, condition, selected, orderBy,
                                  hint, update, numToSkip, numToReturn,
-                                 flag, TRUE, returnNew ) ;
+                                 flags, TRUE, returnNew ) ;
       }
 
       // query objects from current collection and remove
@@ -301,11 +301,11 @@ namespace sdbclient
                               const BSONObj &hint      = _sdbStaticObject,
                               INT64 numToSkip          = 0,
                               INT64 numToReturn        = -1,
-                              INT32 flag               = 0 )
+                              INT32 flags              = 0 )
       {
          return _queryAndModify( cursor, condition, selected, orderBy,
                                  hint, _sdbStaticObject, numToSkip, numToReturn,
-                                 flag, FALSE, FALSE ) ;
+                                 flags, FALSE, FALSE ) ;
       }
 
       //INT32 rename ( const CHAR *pNewName ) ;

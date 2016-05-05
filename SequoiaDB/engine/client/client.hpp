@@ -99,6 +99,13 @@
 
 #define activateReplicaGroup   activateReplicaGroup
 
+/** Force to use specified hint to query, if database have no index assigned by the hint, fail to query. */
+#define QUERY_FLG_FORCE_HINT          0x00000080
+/** Enable paralled sub query, each sub query will finish scanning diffent part of the data. */
+#define QUERY_FLG_PARALLED            0x00000100
+/** In general, query won't return data until cursor gets from database, when add this flag, return data in query response, it will be more high-performance */
+#define QUERY_FLG_WITH_RETURNDATA     0x00000200
+
 enum _SDB_LOB_OPEN_MODE
 {
    SDB_LOB_CREATEONLY = 0x00000001, /**< Open a new lob only */
@@ -309,7 +316,7 @@ namespace sdbclient
                              const bson::BSONObj &hint      = _sdbStaticObject,
                              INT64 numToSkip    = 0,
                              INT64 numToReturn  = -1,
-                             INT32 flag         = 0
+                             INT32 flags        = 0
                            ) = 0 ;
 
       virtual INT32 query  ( sdbCursor &cursor,
@@ -319,7 +326,7 @@ namespace sdbclient
                              const bson::BSONObj &hint      = _sdbStaticObject,
                              INT64 numToSkip    = 0,
                              INT64 numToReturn  = -1,
-                             INT32 flag         = 0
+                             INT32 flags        = 0
                            ) = 0 ;
 
       virtual INT32 queryOne( bson::BSONObj &obj,
@@ -328,7 +335,7 @@ namespace sdbclient
                               const bson::BSONObj &orderBy   = _sdbStaticObject,
                               const bson::BSONObj &hint      = _sdbStaticObject,
                               INT64 numToSkip    = 0,
-                              INT32 flag         = 0 ) = 0 ;
+                              INT32 flags        = 0 ) = 0 ;
 
       // query objects from current collection and update
       // given:
@@ -337,7 +344,7 @@ namespace sdbclient
       // query selected def ( optional )
       // query orderby ( optional )
       // hint ( optional )
-      // flag ( optional )
+      // flags( optional )
       // returnNew ( optioinal )
       // output: sdbCursor ( required )
       virtual INT32 queryAndUpdate  ( _sdbCursor **cursor,
@@ -348,7 +355,7 @@ namespace sdbclient
                                       const bson::BSONObj &hint      = _sdbStaticObject,
                                       INT64 numToSkip                = 0,
                                       INT64 numToReturn              = -1,
-                                      INT32 flag                     = 0,
+                                      INT32 flags                    = 0,
                                       BOOLEAN returnNew              = FALSE 
                                    ) = 0 ;
 
@@ -358,7 +365,7 @@ namespace sdbclient
       // query selected def ( optional )
       // query orderby ( optional )
       // hint ( optional )
-      // flag ( optional )
+      // flags( optional )
       // output: sdbCursor ( required )
       virtual INT32 queryAndRemove  ( _sdbCursor **cursor,
                                       const bson::BSONObj &condition = _sdbStaticObject,
@@ -367,7 +374,7 @@ namespace sdbclient
                                       const bson::BSONObj &hint      = _sdbStaticObject,
                                       INT64 numToSkip                = 0,
                                       INT64 numToReturn              = -1,
-                                      INT32 flag                     = 0 
+                                      INT32 flags                    = 0 
                                    ) = 0 ;
 
       //virtual INT32 rename ( const CHAR *pNewName ) = 0 ;
@@ -769,7 +776,7 @@ namespace sdbclient
                      const bson::BSONObj &hint,
                      INT64 numToSkip,
                      INT64 numToReturn,
-                     INT32 flag
+                     INT32 flags
                     )
     \brief Get the matching documents in current collection
     \param [in] condition The matching rule, return all the documents if not provided
@@ -778,13 +785,12 @@ namespace sdbclient
     \param [in] hint The hint, automatically match the optimal hint if not provided
     \param [in] numToSkip Skip the first numToSkip documents, default is 0
     \param [in] numToReturn Only return numToReturn documents, default is -1 for returning all results
-    \param [in] flag The query flag, default to be 0
+    \param [in] flags The query flags, default to be 0. Please see the definition of follow flags for more detail. Usage: e.g. set ( QUERY_FLG_FORCE_HINT | QUERY_FLG_WITH_RETURNDATA ) to param flags
 
-        FLG_QUERY_FORCE_HINT(0x00000080)      : Force to use specified hint to query, if database have no index assigned by the hint, fail to query
-        FLG_QUERY_PARALLED(0x00000100)        : Enable paralled sub query
-        FLG_QUERY_WITH_RETURNDATA(0x00000200) : In general, query won't return data until cursor get from database,
-                                                when add this flag, return data in query response, it will be more high-performance
-        
+        QUERY_FLG_FORCE_HINT
+        QUERY_FLG_PARALLED
+        QUERY_FLG_WITH_RETURNDATA
+      
     \param [out] cursor The cursor of current query
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
@@ -796,13 +802,13 @@ namespace sdbclient
                      const bson::BSONObj &hint      = _sdbStaticObject,
                      INT64 numToSkip          = 0,
                      INT64 numToReturn        = -1,
-                     INT32 flag               = 0
+                     INT32 flags              = 0
                    )
       {
          if ( !pCollection )
             return SDB_NOT_CONNECTED ;
          return pCollection->query ( cursor, condition, selected, orderBy,
-                                     hint, numToSkip, numToReturn, flag ) ;
+                                     hint, numToSkip, numToReturn, flags ) ;
       }
 
 /** \fn INT32 query  ( sdbCursor &cursor,
@@ -812,7 +818,7 @@ namespace sdbclient
                      const bson::BSONObj &hint,
                      INT64 numToSkip,
                      INT64 numToReturn,
-                     INT32 flag
+                     INT32 flags
                    )
     \brief Get the matching documents in current collection
     \param [in] condition The matching rule, return all the documents if not provided
@@ -821,13 +827,12 @@ namespace sdbclient
     \param [in] hint The hint, automatically match the optimal hint if not provided
     \param [in] numToSkip Skip the first numToSkip documents, default is 0
     \param [in] numToReturn Only return numToReturn documents, default is -1 for returning all results
-    \param [in] flag The query flag, defalt to be 0
+    \param [in] flags The query flags, default to be 0. Please see the definition of follow flags for more detail. Usage: e.g. set ( QUERY_FLG_FORCE_HINT | QUERY_FLG_WITH_RETURNDATA ) to param flags
 
-        FLG_QUERY_FORCE_HINT(0x00000080)      : Force to use specified hint to query, if database have no index assigned by the hint, fail to query
-        FLG_QUERY_PARALLED(0x00000100)        : Enable paralled sub query
-        FLG_QUERY_WITH_RETURNDATA(0x00000200) : In general, query won't return data until cursor get from database,
-                                                when add this flag, return data in query response, it will be more high-performance
-        
+        QUERY_FLG_FORCE_HINT
+        QUERY_FLG_PARALLED
+        QUERY_FLG_WITH_RETURNDATA
+      
     \param [out] cursor The cursor of current query
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
@@ -839,13 +844,13 @@ namespace sdbclient
                      const bson::BSONObj &hint      = _sdbStaticObject,
                      INT64 numToSkip          = 0,
                      INT64 numToReturn        = -1,
-                     INT32 flag               = 0
+                     INT32 flags              = 0
                    )
       {
          if ( !pCollection )
             return SDB_NOT_CONNECTED ;
          return pCollection->query ( cursor, condition, selected, orderBy,
-                                     hint, numToSkip, numToReturn, flag ) ;
+                                     hint, numToSkip, numToReturn, flags ) ;
       }
 
 /** \fn INT32 queryOne( BSONObj &obj,
@@ -854,7 +859,7 @@ namespace sdbclient
                         const bson::BSONObj &orderBy,
                         const bson::BSONObj &hint,
                         INT64 numToSkip,
-                        INT32 flag
+                        INT32 flags
                        )
     \brief Get the first matching documents in current collection
     \param [in] condition The matching rule, return all the documents if not provided
@@ -862,13 +867,12 @@ namespace sdbclient
     \param [in] orderBy The ordered rule, result set is unordered if not provided
     \param [in] hint The hint, automatically match the optimal hint if not provided
     \param [in] numToSkip Skip the first numToSkip documents, default is 0
-    \param [in] flag The query flag, defalt to be 0
+    \param [in] flags The query flags, default to be 0. Please see the definition of follow flags for more detail. Usage: e.g. set ( QUERY_FLG_FORCE_HINT | QUERY_FLG_WITH_RETURNDATA ) to param flags
 
-        FLG_QUERY_FORCE_HINT(0x00000080)      : Force to use specified hint to query, if database have no index assigned by the hint, fail to query
-        FLG_QUERY_PARALLED(0x00000100)        : Enable paralled sub query
-        FLG_QUERY_WITH_RETURNDATA(0x00000200) : In general, query won't return data until cursor get from database,
-                                                when add this flag, return data in query response, it will be more high-performance
-
+        QUERY_FLG_FORCE_HINT
+        QUERY_FLG_PARALLED
+        QUERY_FLG_WITH_RETURNDATA
+      
     \param [out] obj The first matching object
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
@@ -879,12 +883,12 @@ namespace sdbclient
                       const bson::BSONObj &orderBy   = _sdbStaticObject,
                       const bson::BSONObj &hint      = _sdbStaticObject,
                       INT64 numToSkip    = 0,
-                      INT32 flag         = 0 )
+                      INT32 flags        = 0 )
       {
          if ( !pCollection )
             return SDB_NOT_CONNECTED ;
          return pCollection->queryOne( obj, condition, selected, orderBy,
-                                       hint, numToSkip, flag ) ;
+                                       hint, numToSkip, flags ) ;
       }
 
 /** \fn INT32 queryAndUpdate ( sdbCursor &cursor,
@@ -895,7 +899,7 @@ namespace sdbclient
                                const bson::BSONObj &hint,
                                INT64 numToSkip,
                                INT64 numToReturn,
-                               INT32 flag,
+                               INT32 flags,
                                BOOLEAN returnNew
                             )
     \brief Get the matching documents in current collection and update
@@ -906,12 +910,12 @@ namespace sdbclient
     \param [in] hint The hint, automatically match the optimal hint if not provided
     \param [in] numToSkip Skip the first numToSkip documents, default is 0
     \param [in] numToReturn Only return numToReturn documents, default is -1 for returning all results
-    \param [in] flag The query flag, defalt to be 0
+    \param [in] flags The query flags, default to be 0. Please see the definition of follow flags for more detail. Usage: e.g. set ( QUERY_FLG_FORCE_HINT | QUERY_FLG_WITH_RETURNDATA ) to param flags
 
-        FLG_QUERY_FORCE_HINT(0x00000080)      : Force to use specified hint to query, if database have no index assigned by the hint, fail to query
-        FLG_QUERY_PARALLED(0x00000100)        : Enable paralled sub query
-        FLG_QUERY_WITH_RETURNDATA(0x00000200) : In general, query won't return data until cursor get from database,
-                                                when add this flag, return data in query response, it will be more high-performance
+        QUERY_FLG_FORCE_HINT
+        QUERY_FLG_PARALLED
+        QUERY_FLG_WITH_RETURNDATA
+      
     \param [in] returnNew When TRUE, returns the updated document rather than the original
     \param [out] cursor The cursor of current query
     \retval SDB_OK Operation Success
@@ -925,7 +929,7 @@ namespace sdbclient
                              const bson::BSONObj &hint      = _sdbStaticObject,
                              INT64 numToSkip                = 0,
                              INT64 numToReturn              = -1,
-                             INT32 flag                     = 0,
+                             INT32 flags                    = 0,
                              BOOLEAN returnNew              = FALSE
                           )
       {
@@ -933,7 +937,7 @@ namespace sdbclient
             return SDB_NOT_CONNECTED ;
          return pCollection->queryAndUpdate( &cursor.pCursor , update, condition,
                                              selected, orderBy, hint,
-                                             numToSkip, numToReturn, flag, returnNew ) ;
+                                             numToSkip, numToReturn, flags, returnNew ) ;
       }
 
 /** \fn INT32 queryAndRemove ( sdbCursor &cursor,
@@ -943,7 +947,7 @@ namespace sdbclient
                                const bson::BSONObj &hint,
                                INT64 numToSkip,
                                INT64 numToReturn,
-                               INT32 flag
+                               INT32 flags
                             )
     \brief Get the matching documents in current collection and remove
     \param [in] condition The matching rule, return all the documents if not provided
@@ -952,12 +956,12 @@ namespace sdbclient
     \param [in] hint The hint, automatically match the optimal hint if not provided
     \param [in] numToSkip Skip the first numToSkip documents, default is 0
     \param [in] numToReturn Only return numToReturn documents, default is -1 for returning all results
-    \param [in] flag The query flag, defalt to be 0
+    \param [in] flags The query flags, default to be 0. Please see the definition of follow flags for more detail. Usage: e.g. set ( QUERY_FLG_FORCE_HINT | QUERY_FLG_WITH_RETURNDATA ) to param flags
 
-        FLG_QUERY_FORCE_HINT(0x00000080)      : Force to use specified hint to query, if database have no index assigned by the hint, fail to query
-        FLG_QUERY_PARALLED(0x00000100)        : Enable paralled sub query
-        FLG_QUERY_WITH_RETURNDATA(0x00000200) : In general, query won't return data until cursor get from database,
-                                                when add this flag, return data in query response, it will be more high-performance
+        QUERY_FLG_FORCE_HINT
+        QUERY_FLG_PARALLED
+        QUERY_FLG_WITH_RETURNDATA
+      
     \param [out] cursor The cursor of current query
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
@@ -969,14 +973,14 @@ namespace sdbclient
                              const bson::BSONObj &hint      = _sdbStaticObject,
                              INT64 numToSkip                = 0,
                              INT64 numToReturn              = -1,
-                             INT32 flag                     = 0
+                             INT32 flags                    = 0
                           )
       {
          if ( !pCollection )
             return SDB_NOT_CONNECTED ;
          return pCollection->queryAndRemove( &cursor.pCursor , condition,
                                              selected, orderBy, hint,
-                                             numToSkip, numToReturn, flag ) ;
+                                             numToSkip, numToReturn, flags ) ;
       }
 
 /* \fn INT32 rename ( const CHAR *pNewName )
@@ -1279,7 +1283,7 @@ namespace sdbclient
                     const bson::BSONObj &hint,
                     INT64 numToSkip,
                     INT64 numToReturn,
-                    INT32 flag,
+                    INT32 flags,
                     const bson::BSONObj &options )
     \brief Get access plan of query.
     \param [in] condition The matching rule, return all the documents if null
@@ -1288,12 +1292,18 @@ namespace sdbclient
     \param [in] hint The hint, automatically match the optimal hint if null
     \param [in] numToSkip Skip the first numToSkip documents, never skip if this parameter is 0
     \param [in] numToReturn Only return numToReturn documents, return all if this parameter is -1
+    \param [in] flags The query flags, default to be 0. Please see the definition of follow flags for more detail. Usage: e.g. set ( QUERY_FLG_FORCE_HINT | QUERY_FLG_WITH_RETURNDATA ) to param flags
+
+        QUERY_FLG_FORCE_HINT
+        QUERY_FLG_PARALLED
+        QUERY_FLG_WITH_RETURNDATA
+      
     \param [in] options the rules of explain, the options are as below:
 
         Run     : Whether execute query explain or not, true for excuting query explain then get
                   the data and time information; false for not excuting query explain but get the
                   query explain information only. e.g. {Run:true}
-    \param [in] flags The flags of query
+
     \param [out] cursor The cursor of current query
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
@@ -1305,13 +1315,13 @@ namespace sdbclient
                     const bson::BSONObj &hint      = _sdbStaticObject,
                     INT64 numToSkip                = 0,
                     INT64 numToReturn              = -1,
-                    INT32 flag                     = 0,
+                    INT32 flags                    = 0,
                     const bson::BSONObj &options   = _sdbStaticObject )
     {
        if ( !pCollection )
          return SDB_NOT_CONNECTED ;
        return pCollection->explain( cursor, condition, select, orderBy, hint,
-                                    numToSkip, numToReturn, flag, options ) ;
+                                    numToSkip, numToReturn, flags, options ) ;
     }
 
 /** \fn INT32 createLob( sdbLob &lob, const bson::OID *oid = NULL )

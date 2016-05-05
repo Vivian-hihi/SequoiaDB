@@ -122,6 +122,14 @@ typedef sdbNodeHandle             sdbReplicaNodeHandle ;
 /** sdbReleaseReplicaNode will be deprecated in version 2.x, use sdbReleaseNode instead of it. */
 #define sdbReleaseReplicaNode     sdbReleaseNode
 
+/** Force to use specified hint to query, if database have no index assigned by the hint, fail to query. */
+#define QUERY_FLG_FORCE_HINT          0x00000080
+/** Enable paralled sub query, each sub query will finish scanning diffent part of the data. */
+#define QUERY_FLG_PARALLED            0x00000100
+/** In general, query won't return data until cursor gets from database, when add this flag, return data in query response, it will be more high-performance */
+#define QUERY_FLG_WITH_RETURNDATA     0x00000200
+
+
 /** \fn INT32 initClient ( BOOLEAN enableCacheStrategy,
                            const UINT32 cacheTimeInterval,
                            const UINT32 maxCacheSlotCount ) ;
@@ -1391,7 +1399,7 @@ SDB_EXPORT INT32 sdbDelete ( sdbCollectionHandle cHandle,
                           bson *hint,
                           INT64 numToSkip,
                           INT64 numToReturn,
-                          INT32 flag,
+                          INT32 flags,
                           sdbCursorHandle *handle )
     \brief Get the matching documents in current collection
     \param [in] cHandle The collection handle
@@ -1401,12 +1409,11 @@ SDB_EXPORT INT32 sdbDelete ( sdbCollectionHandle cHandle,
     \param [in] hint The hint, automatically match the optimal hint if null
     \param [in] numToSkip Skip the first numToSkip documents, never skip if this parameter is 0
     \param [in] numToReturn Only return numToReturn documents, return all if this parameter is -1
-    \param [in] flag The query flag, default to be 0
+    \param [in] flags The query flags, default to be 0. Please see the definition of follow flags for more detail. Usage: e.g. set ( QUERY_FLG_FORCE_HINT | QUERY_FLG_WITH_RETURNDATA ) to param flags
 
-        FLG_QUERY_FORCE_HINT(0x00000080)      : Force to use specified hint to query, if database have no index assigned by the hint, fail to query
-        FLG_QUERY_PARALLED(0x00000100)        : Enable paralled sub query
-        FLG_QUERY_WITH_RETURNDATA(0x00000200) : In general, query won't return data until cursor get from database,
-                                                when add this flag, return data in query response, it will be more high-performance
+        QUERY_FLG_FORCE_HINT
+        QUERY_FLG_PARALLED
+        QUERY_FLG_WITH_RETURNDATA
         
     \param [out] handle The cursor handle of current query
     \retval SDB_OK Operation Success
@@ -1419,7 +1426,7 @@ SDB_EXPORT INT32 sdbQuery1 ( sdbCollectionHandle cHandle,
                              bson *hint,
                              INT64 numToSkip,
                              INT64 numToReturn,
-                             INT32 flag,
+                             INT32 flags,
                              sdbCursorHandle *handle ) ;
 
 
@@ -1460,7 +1467,7 @@ SDB_EXPORT INT32 sdbQuery ( sdbCollectionHandle cHandle,
                                   bson *update,
                                   INT64 numToSkip,
                                   INT64 numToReturn,
-                                  INT32 flag,
+                                  INT32 flags,
                                   BOOLEAN returnNew,
                                   sdbCursorHandle *handle )
     \brief Get the matching documents in current collection and update
@@ -1472,12 +1479,11 @@ SDB_EXPORT INT32 sdbQuery ( sdbCollectionHandle cHandle,
     \param [in] update The update rule, can't be null
     \param [in] numToSkip Skip the first numToSkip documents, never skip if this parameter is 0
     \param [in] numToReturn Only return numToReturn documents, return all if this parameter is -1
-    \param [in] flag The query flag, default to be 0
+    \param [in] flags The query flags, default to be 0. Please see the definition of follow flags for more detail. Usage: e.g. set ( QUERY_FLG_FORCE_HINT | QUERY_FLG_WITH_RETURNDATA ) to param flags
 
-        FLG_QUERY_FORCE_HINT(0x00000080)      : Force to use specified hint to query, if database have no index assigned by the hint, fail to query
-        FLG_QUERY_PARALLED(0x00000100)        : Enable paralled sub query
-        FLG_QUERY_WITH_RETURNDATA(0x00000200) : In general, query won't return data until cursor get from database,
-                                                when add this flag, return data in query response, it will be more high-performance
+        QUERY_FLG_FORCE_HINT
+        QUERY_FLG_PARALLED
+        QUERY_FLG_WITH_RETURNDATA
 
     \param [in] returnNew When TRUE, returns the updated document rather than the original
     \param [out] handle The cursor handle of current query
@@ -1492,7 +1498,7 @@ SDB_EXPORT INT32 sdbQueryAndUpdate ( sdbCollectionHandle cHandle,
                                      bson *update,
                                      INT64 numToSkip,
                                      INT64 numToReturn,
-                                     INT32 flag,
+                                     INT32 flags,
                                      BOOLEAN returnNew,
                                      sdbCursorHandle *handle ) ;
 
@@ -1503,7 +1509,7 @@ SDB_EXPORT INT32 sdbQueryAndUpdate ( sdbCollectionHandle cHandle,
                                   bson *hint,
                                   INT64 numToSkip,
                                   INT64 numToReturn,
-                                  INT32 flag,
+                                  INT32 flags,
                                   sdbCursorHandle *handle )
     \brief Get the matching documents in current collection and remove
     \param [in] cHandle The collection handle
@@ -1513,12 +1519,11 @@ SDB_EXPORT INT32 sdbQueryAndUpdate ( sdbCollectionHandle cHandle,
     \param [in] hint The hint, automatically match the optimal hint if null
     \param [in] numToSkip Skip the first numToSkip documents, never skip if this parameter is 0
     \param [in] numToReturn Only return numToReturn documents, return all if this parameter is -1
-    \param [in] flag The query flag, default to be 0
+    \param [in] flags The query flags, default to be 0. Please see the definition of follow flags for more detail. Usage: e.g. set ( QUERY_FLG_FORCE_HINT | QUERY_FLG_WITH_RETURNDATA ) to param flags
 
-        FLG_QUERY_FORCE_HINT(0x00000080)      : Force to use specified hint to query, if database have no index assigned by the hint, fail to query
-        FLG_QUERY_PARALLED(0x00000100)        : Enable paralled sub query
-        FLG_QUERY_WITH_RETURNDATA(0x00000200) : In general, query won't return data until cursor get from database,
-                                                when add this flag, return data in query response, it will be more high-performance
+        FLG_QUERY_FORCE_HINT
+        FLG_QUERY_PARALLED
+        FLG_QUERY_WITH_RETURNDATA
 
     \param [out] handle The cursor handle of current query
     \retval SDB_OK Operation Success
@@ -1531,7 +1536,7 @@ SDB_EXPORT INT32 sdbQueryAndRemove ( sdbCollectionHandle cHandle,
                                      bson *hint,
                                      INT64 numToSkip,
                                      INT64 numToReturn,
-                                     INT32 flag,
+                                     INT32 flags,
                                      sdbCursorHandle *handle ) ;
 
 /** \fn INT32 sdbExplain ( sdbCollectionHandle cHandle,
@@ -1550,7 +1555,12 @@ SDB_EXPORT INT32 sdbQueryAndRemove ( sdbCollectionHandle cHandle,
     \param [in] select The selective rule, return the whole document if null
     \param [in] orderBy The ordered rule, never sort if null
     \param [in] hint The hint, automatically match the optimal hint if null
-    \param [in] flags The flags of query
+    \param [in] flags The query flags, default to be 0. Please see the definition of follow flags for more detail. Usage: e.g. set ( QUERY_FLG_FORCE_HINT | QUERY_FLG_WITH_RETURNDATA ) to param flags
+
+        QUERY_FLG_FORCE_HINT
+        QUERY_FLG_PARALLED
+        QUERY_FLG_WITH_RETURNDATA
+
     \param [in] numToSkip Skip the first numToSkip documents, never skip if this parameter is 0
     \param [in] numToReturn Only return numToReturn documents, return all if this parameter is -1
     \param [in] options the rules of explain, the options are as below:
