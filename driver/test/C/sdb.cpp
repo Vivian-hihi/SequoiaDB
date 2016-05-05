@@ -390,6 +390,11 @@ TEST(sdb,sdbTransactionBegin)
    // connect to database
    rc = sdbConnect ( HOST, SERVER, USER, PASSWD, &connection ) ;
    ASSERT_EQ( SDB_OK, rc ) ;
+   if ( false == isCluster(connection) )
+   {
+      printf( "it's not in cluster environment\n" ) ;
+      return ;
+   }
    rc = isTranOn( connection, &isTranOnFlag ) ;
    ASSERT_EQ( SDB_OK, rc ) ;
    if ( FALSE == isTranOnFlag )
@@ -456,6 +461,11 @@ TEST(sdb,sdbTransactionCommit)
    // connect to database
    rc = sdbConnect ( HOST, SERVER, USER, PASSWD, &connection ) ;
    ASSERT_EQ( SDB_OK, rc ) ;
+   if ( false == isCluster(connection) )
+   {
+      printf( "it's not in cluster environment\n" ) ;
+      return ;
+   }
    rc = isTranOn( connection, &isTranOnFlag ) ;
    ASSERT_EQ( SDB_OK, rc ) ;
    if ( FALSE == isTranOnFlag )
@@ -525,6 +535,11 @@ TEST(sdb,sdbTransactionRollback)
    // connect to database
    rc = sdbConnect ( HOST, SERVER, USER, PASSWD, &connection ) ;
    ASSERT_EQ( SDB_OK, rc ) ;
+   if ( false == isCluster(connection) )
+   {
+      printf( "it's not in cluster environment\n" ) ;
+      return ;
+   }
    rc = isTranOn( connection, &isTranOnFlag ) ;
    ASSERT_EQ( SDB_OK, rc ) ;
    if ( FALSE == isTranOnFlag )
