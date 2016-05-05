@@ -52,7 +52,7 @@ static const INT32 clientDefaultVersion = 1 ;
 static const INT16 clientDefaultW = 0 ;
 static const UINT64 clientDefaultRouteID = 0 ;
 static const SINT32 clientDefaultFlags = 0 ;
-static BOOLEAN cacheEnabled = FALSE ;
+static BOOLEAN cacheEnabled = TRUE ;
 static UINT32  cachedTimeInterval = 300 ;   // default is 300 milliseconds
 static UINT32  maxCachedSlotCount = 1000 ;
 static INT32 clientCheckBuffer ( CHAR **ppBuffer, INT32 *bufferSize,
@@ -781,7 +781,6 @@ INT32 initCacheStrategy( BOOLEAN enableCacheStrategy,
       maxCachedSlotCount  = MAX_CACHE_SLOT_NUMBER ;
    }
 
-done:
    return SDB_OK ;
 }
 
@@ -853,7 +852,7 @@ INT32 clientCheckRetMsgHeader( const CHAR *pSendBuf, const CHAR *pRecvBuf,
    INT32 rc          = SDB_OK ;
    INT32 tmpOpCode   = 0 ;
    INT32 sendOpCode  = 0 ;
-   UINT32 recvOpCode = 0 ;
+   INT32 recvOpCode = 0 ;
    if ( NULL == pSendBuf || NULL == pRecvBuf )
    {
       rc = SDB_INVALIDARG ;
@@ -861,7 +860,7 @@ INT32 clientCheckRetMsgHeader( const CHAR *pSendBuf, const CHAR *pRecvBuf,
    }
    tmpOpCode = ((MsgHeader*)pSendBuf)->opCode ;
    ossEndianConvertIf ( tmpOpCode, sendOpCode, endianConvert ) ;
-   recvOpCode = (UINT32)(((MsgHeader*)pRecvBuf)->opCode) ;
+   recvOpCode = (((MsgHeader*)pRecvBuf)->opCode) ;
    if ( MAKE_REPLY_TYPE( sendOpCode ) != recvOpCode )
    {
       rc = SDB_UNEXPECTED_RESULT ;
