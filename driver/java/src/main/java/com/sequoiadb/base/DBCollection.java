@@ -956,13 +956,15 @@ public class DBCollection {
 	 *            skip the first numToSkip documents, never skip if this parameter is 0
 	 * @param returnRows
 	 *            only return returnRows documents, return all if this parameter is -1
-	 * @param flag the flag is used to choose the way to query, the optional options are as below:  
+	 * @param flags 
+	 *            the query flags, default to be 0. Please see the definition 
+	 *            of follow flags for more detail. Usage: 
+	 *            e.g. set ( DBQuery.FLG_QUERY_FORCE_HINT | DBQuery.FLG_QUERY_WITH_RETURNDATA ) to param flags  
      * <ul>
      * <li>DBQuery.FLG_QUERY_STRINGOUT
      * <li>DBQuery.FLG_QUERY_FORCE_HINT 
      * <li>DBQuery.FLG_QUERY_PARALLED
      * <li>DBQuery.FLG_QUERY_WITH_RETURNDATA
-     * <li>DBQuery.FLG_QUERY_EXPLAIN
      * </ul>  
 	 * @return a DBCursor instance of the result or null if no any matched document
 	 * @exception com.sequoiadb.exception.BaseException

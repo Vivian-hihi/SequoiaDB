@@ -44,7 +44,7 @@ public class DBQuery {
 	public static final int FLG_QUERY_STRINGOUT = 0x00000001;
 	
 	/**
-	 * @memberof FLG_INSERT_CONTONDUP 0x00000080
+	 * @memberof FLG_QUERY_FORCE_HINT 0x00000080
 	 * @brief Force to use specified hint to query,
 	 *        if database have no index assigned by the hint, fail to query.
 	 */
