@@ -121,6 +121,43 @@
             </ruleList>
         </setInstallerVariable>                                    
         
+        <unpackFile>
+            <component>upgrade_component</component>
+            <folder>files_except_conf</folder>
+            <origin>compatible.sh</origin>
+            <destination>${installdir}</destination>
+        </unpackFile> 
+        <unpackFile>
+            <component>upgrade_component</component>
+            <folder>files_except_conf</folder>
+            <origin>version.conf</origin>
+            <destination>${installdir}</destination>
+        </unpackFile>
+                
+        <consoleWrite text="${msg(Upgrade.NormalMsg.JudgeComatible)}"/> 
+        <changePermissions files="${installdir}/compatible.sh" permissions="0755"/>              
+        <setInstallerVariableFromScriptOutput>
+            <name>is_compatible</name>
+            <exec>${installdir}/compatible.sh</exec>
+            <execArgs>${old_version} ${old_edition} ${new_version} ${new_edition} ${installdir}/version.conf</execArgs>           
+        </setInstallerVariableFromScriptOutput>                
+        <setInstallerVariable name="return_code" value="${program_exit_code}"/>
+                                                                                            
+        <throwError>
+            <text>${msg(Upgrade.ErrorMsg.excuteComatibleSh)}</text>
+            <ruleList>
+                <compareValues value1="${return_code}" logic="does_not_equal" value2="0"/>
+            </ruleList>
+        </throwError>
+        <throwError>
+            <text>${msg(Upgrade.ErrorMsg.JudgeComatible)}</text>
+            <ruleList>
+                <isFalse value="${is_compatible}"/>
+            </ruleList>
+        </throwError>                                    
+        <consoleWrite text="ok&#xA;"/>                                                                  
+                   
+                          
         <consoleWrite text="${msg(Upgrade.NormalMsg.DiskSpace)}"/>                                                                          
         <throwError>
             <text>${msg(Upgrade.ErrorMsg.DiskSpace)}</text>
@@ -164,20 +201,7 @@
                     <program>service</program>
                     <programArguments> sdbcm stop</programArguments> 
                     <abortOnError>0</abortOnError>          
-                </runProgram>                
-                <runProgram>
-                    <program>service</program>
-                    <programArguments> sdbcm status</programArguments> 
-                    <abortOnError>0</abortOnError> 
-                    <showMessageOnError>0</showMessageOnError>         
-                </runProgram>               
-                <setInstallerVariable name="service_status" value="${program_exit_code}"/>       
-                <throwError>
-                    <text>${msg(Upgrade.ErrorMsg.StopProcess)}</text>
-                    <ruleList>
-                        <compareValues value1="${service_status}" logic="equals" value2="0"/>
-                    </ruleList>
-                </throwError>  
+                </runProgram>                                
                 <runProgram>
                     <program>${installdir}/bin/sdbstop</program>
                     <programArguments>-t all</programArguments> 
@@ -188,28 +212,23 @@
             <ruleList> 
                 <compareText logic="equals" text="${service_origin_status}" value="0"/>                                                                  
             </ruleList>          
-        </actionGroup>                  
+        </actionGroup>
+        
+        <!--check process stop or not -->                  
         <actionGroup> 
-            <actionList>
-                <setInstallerVariable name="process_num" value="-1"/>        
+            <actionList>                
+                <setInstallerVariable name="process_num" value="-1"/>                   
                 <setInstallerVariableFromScriptOutput>
                     <name>process_num</name>
                     <exec>${installdir}/bin/sdblist</exec>
-                    <execArgs> -t all | grep -v "Total" | wc -l</execArgs> 
-                    <abortOnError>0</abortOnError>          
-                </setInstallerVariableFromScriptOutput>                      
-                <setInstallerVariableFromScriptOutput>
-                    <name>process_num</name>
-                    <exec>${installdir}/bin/sdblist</exec>
-                    <execArgs> | grep -v "Total" | wc -l</execArgs>                    
+                    <execArgs>-t all | grep "Total" | awk '{print $2}'</execArgs>                             
+                </setInstallerVariableFromScriptOutput> 
+                <throwError>
+                    <text>${msg(Upgrade.ErrorMsg.ExecSdblist)}</text>            
                     <ruleList>
-                        <compareValues>
-                            <value1>${program_exit_code}</value1> 
-                            <logic>does_not_equal</logic> 
-                            <value2>0</value2>
-                        </compareValues>      
-                    </ruleList>         
-                </setInstallerVariableFromScriptOutput>
+                        <compareValues value1="${process_num}" logic="equals" value2="-1"/>                                                        
+                    </ruleList>
+                </throwError>                                                     
                 <throwError>
                     <text>${msg(Upgrade.ErrorMsg.StopProcess)}</text>            
                     <ruleList>
@@ -225,58 +244,23 @@
                                                                                                                           
     </readyToInstallActionList>    
                    
-    <folderList> 
+    <folderList>                            
         <folder>
-            <name>check_compatible</name>
-            <destination>${installdir}</destination>
+            <name>files_except_conf</name>
             <actionList>
                 <setInstallerVariable name="upgrade_component_done" value="begin"/>  
-                
-                <consoleWrite text="${msg(Upgrade.NormalMsg.JudgeComatible)}"/> 
-                <changePermissions files="${installdir}/compatible.sh" permissions="0755"/>              
-                <setInstallerVariableFromScriptOutput>
-                    <name>is_compatible</name>
-                    <exec>${installdir}/compatible.sh</exec>
-                    <execArgs>${old_version} ${old_edition} ${new_version} ${new_edition} ${installdir}/version.conf</execArgs>           
-                </setInstallerVariableFromScriptOutput>                
-                <setInstallerVariable name="return_code" value="${program_exit_code}"/>
-                                                                                                    
-                <throwError>
-                    <text>${msg(Upgrade.ErrorMsg.excuteComatibleSh)}</text>
-                    <ruleList>
-                        <compareValues value1="${return_code}" logic="does_not_equal" value2="0"/>
-                    </ruleList>
-                </throwError>
-                <throwError>
-                    <text>${msg(Upgrade.ErrorMsg.JudgeComatible)}</text>
-                    <ruleList>
-                        <isFalse value="${is_compatible}"/>
-                    </ruleList>
-                </throwError>                                    
-                <consoleWrite text="ok&#xA;"/>                                                                  
-            </actionList>                     
-            <distributionFileList>
-                <distributionFile>                   
-                    <origin>${build_project_directory}/sequoiadb/compatible.sh</origin>
-                </distributionFile>
-                <distributionFile>                   
-                    <origin>${build_project_directory}/sequoiadb/version.conf</origin>
-                </distributionFile>
-            </distributionFileList>                                        
-        </folder>             
-        <folder>
-            <name>copy_files_except_conf_1</name>
+            </actionList> 
             <destination>${installdir}</destination>                      
             <distributionFileList>
                 <distributionDirectory>
                     <allowWildcards>1</allowWildcards> 
                     <origin>${build_project_directory}/sequoiadb/*</origin>
-                    <excludeFiles>*/conf;*/compatible.sh;*/version.conf</excludeFiles>
-                </distributionDirectory>
+                    <excludeFiles>*/conf</excludeFiles>
+                    </distributionDirectory>
             </distributionFileList>                                        
         </folder>
         <folder>
-            <name>copy_files_except_conf_2</name>
+            <name>conf_files</name>
             <destination>${installdir}/conf</destination>                    
             <distributionFileList>
                 <distributionDirectory>
@@ -477,8 +461,13 @@
     </postInstallationActionList>
         
     <installationAbortedActionList>  
-        <consoleWrite text="&#xA;&#xA;${msg(Upgrade.NormalMsg.BeginRollback)}&#xA;"/>        
-                                                                
+        <consoleWrite text="&#xA;&#xA;${msg(Upgrade.NormalMsg.BeginRollback)}&#xA;"/> 
+        
+        <!--delete compatible files-->       
+        <deleteFile path="${installdir}/compatible.sh"/>
+        <deleteFile path="${installdir}/version.conf"/>
+        
+        <!--restore files-->                                                         
         <actionGroup> 
             <actionList>
                 <consoleWrite text="${msg(Upgrade.NormalMsg.Rollback.RestoreFile)}"/>

@@ -56,7 +56,7 @@ Upgrade.ErrorMsg.GetInstallDir=从${sys_conf_file}文件中获取不到INSTALL_D
 Upgrade.ErrorMsg.GetUser=从${sys_conf_file}文件中获取不到SDBADMIN_USER
 Upgrade.ErrorMsg.EmptyInstallDir.EmptyUser=在${sys_conf_file}文件中SDBADMIN_USER/INSTALL_DIR为空
 Upgrade.ErrorMsg.InstallationExist=安装路径${installdir}为空或者不存在，请使用安装模式
-
+Upgrade.ErrorMsg.ExecSdblist=执行bin/sdblist失败
 Upgrade.ErrorMsg.SpecialVersion.0=2.0社区版不支持升级
 Upgrade.ErrorMsg.SpecialVersion.1=2.1社区版不支持升级
 Upgrade.ErrorMsg.excuteComatibleSh=执行compatible.sh失败，返回码不为0

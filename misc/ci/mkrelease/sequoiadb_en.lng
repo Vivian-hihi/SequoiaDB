@@ -55,7 +55,7 @@ Upgrade.ErrorMsg.GetInstallDir=Can not get INSTALL_DIR from ${sys_conf_file}
 Upgrade.ErrorMsg.GetUser=Can not get SDBADMIN_USER from ${sys_conf_file}
 Upgrade.ErrorMsg.EmptyInstallDir.EmptyUser=Variable INSTALL_DIR or SDBADMIN_USER in ${sys_conf_file} is empty.
 Upgrade.ErrorMsg.InstallationExist=Install dir ${installdir} is empty or not-existed. You should install instead of upgrade.
-
+Upgrade.ErrorMsg.ExecSdblist=Excute bin/sdblist fail
 Upgrade.ErrorMsg.SpecialVersion.0=Version 2.0 commutity is not support upgrade
 Upgrade.ErrorMsg.SpecialVersion.1=Version 2.1 commutity is not support upgrade
 Upgrade.ErrorMsg.excuteComatibleSh=Fail to execute compatible.sh, return code isn't 0
