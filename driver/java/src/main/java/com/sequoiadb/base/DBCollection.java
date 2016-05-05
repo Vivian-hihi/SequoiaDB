@@ -688,7 +688,7 @@ public class DBCollection {
 	/**
      * @fn DBCursor explain(BSONObject matcher, BSONObject selector,
             BSONObject orderBy, BSONObject hint, long skipRows, long returnRows,
-            int flag, BSONObject options)
+            int flags, BSONObject options)
      * @brief Get explain of current collection.
      * @param matcher 
      *            the matching rule, return all the documents if null
@@ -702,14 +702,16 @@ public class DBCollection {
      *            skip the first numToSkip documents, never skip if this parameter is 0
      * @param returnRows
      *            only return returnRows documents, return all if this parameter is -1
-     * @param flag the flag is used to choose the way to query, the optional options are as below:
-     *<ul>
+	 * @param flags 
+	 *            the query flags, default to be 0. Please see the definition 
+	 *            of follow flags for more detail. Usage: 
+	 *            e.g. set ( QUERY_FLG_FORCE_HINT | QUERY_FLG_WITH_RETURNDATA ) to param flags  
+     * <ul>
      * <li>DBQuery.FLG_QUERY_STRINGOUT
      * <li>DBQuery.FLG_QUERY_FORCE_HINT 
      * <li>DBQuery.FLG_QUERY_PARALLED
      * <li>DBQuery.FLG_QUERY_WITH_RETURNDATA
-     * <li>DBQuery.FLG_QUERY_EXPLAIN
-     *</ul>
+     * </ul>  
      * @param options The rules of query explain, the options are as below:
      *<ul>
      *<li>Run     : Whether execute query explain or not, true for excuting query explain then get
@@ -721,9 +723,9 @@ public class DBCollection {
      */
     public DBCursor explain(BSONObject matcher, BSONObject selector,
             BSONObject orderBy, BSONObject hint, long skipRows, long returnRows,
-            int flag, BSONObject options) throws BaseException {
+            int flags, BSONObject options) throws BaseException {
         
-        flag |= DBQuery.FLG_QUERY_EXPLAIN;
+        flags |= DBQuery.FLG_QUERY_EXPLAIN;
         BSONObject innerHint = new BasicBSONObject();
         if ( null != hint ){
             innerHint.put(SequoiadbConstants.FIELD_NAME_HINT, hint);
@@ -734,7 +736,7 @@ public class DBCollection {
         }
         
         return query(matcher, selector, orderBy, innerHint, skipRows, 
-                returnRows, flag);
+                returnRows, flags);
     }
 
 	/**
@@ -786,7 +788,7 @@ public class DBCollection {
 
 	/**
 	 * @fn DBCursor query(BSONObject matcher, BSONObject selector, BSONObject
-	 *     orderBy, BSONObject hint, int flag)
+	 *     orderBy, BSONObject hint, int flags)
 	 * @brief Get the matching documents in current collection. 
      * @param matcher 
      *            the matching rule, return all the documents if null
@@ -796,19 +798,22 @@ public class DBCollection {
 	 *            the ordered rule, never sort if null
 	 * @param hint
 	 *            the hint, automatically match the optimal hint if null
-	 * @param flag 
-	 *            the flag is used to choose the way to query, the optional options are as below:  
+	 * @param flags 
+	 *            the query flags, default to be 0. Please see the definition 
+	 *            of follow flags for more detail. Usage: 
+	 *            e.g. set ( QUERY_FLG_FORCE_HINT | QUERY_FLG_WITH_RETURNDATA ) to param flags  
      * <ul>
-     * <li>BDQuery.FLG_QUERY_STRINGOUT
-     * <li>BDQuery.FLG_QUERY_FORCE_HINT 
-     * <li>BDQuery.FLG_QUERY_PARALLED
+     * <li>DBQuery.FLG_QUERY_STRINGOUT
+     * <li>DBQuery.FLG_QUERY_FORCE_HINT 
+     * <li>DBQuery.FLG_QUERY_PARALLED
+     * <li>DBQuery.FLG_QUERY_WITH_RETURNDATA
      * </ul>  
 	 * @return a DBCursor instance of the result or null if no any matched document
 	 * @exception com.sequoiadb.exception.BaseException
 	 */
 	public DBCursor query(BSONObject matcher, BSONObject selector,
-			BSONObject orderBy, BSONObject hint, int flag) throws BaseException {
-		return query(matcher, selector, orderBy, hint, 0, -1, flag);
+			BSONObject orderBy, BSONObject hint, int flags) throws BaseException {
+		return query(matcher, selector, orderBy, hint, 0, -1, flags);
 	}
 	
 	/**
@@ -832,7 +837,7 @@ public class DBCollection {
 	}
 	/**
 	 * @fn DBCursor query(String matcher, String selector, String orderBy, String
-	 *     hint, int flag)
+	 *     hint, int flags)
 	 * @brief Get the matching documents in current collection. 
      * @param matcher 
      *            the matching rule, return all the documents if null
@@ -842,18 +847,21 @@ public class DBCollection {
 	 *            the ordered rule, never sort if null
 	 * @param hint
 	 *            the hint, automatically match the optimal hint if null
-	 * @param flag 
-	 *            the flag is used to choose the way to query, the optional options are as below:  
+	 * @param flags 
+	 *            the query flags, default to be 0. Please see the definition 
+	 *            of follow flags for more detail. Usage: 
+	 *            e.g. set ( QUERY_FLG_FORCE_HINT | QUERY_FLG_WITH_RETURNDATA ) to param flags  
      * <ul>
-     * <li>BDQuery.FLG_QUERY_STRINGOUT
-     * <li>BDQuery.FLG_QUERY_FORCE_HINT 
-     * <li>BDQuery.FLG_QUERY_PARALLED
+     * <li>DBQuery.FLG_QUERY_STRINGOUT
+     * <li>DBQuery.FLG_QUERY_FORCE_HINT 
+     * <li>DBQuery.FLG_QUERY_PARALLED
+     * <li>DBQuery.FLG_QUERY_WITH_RETURNDATA
      * </ul>  
 	 * @return a DBCursor instance of the result or null if no any matched document
 	 * @exception com.sequoiadb.exception.BaseException
 	 */
 	public DBCursor query(String matcher, String selector, String orderBy,
-			String hint, int flag) throws BaseException {
+			String hint, int flags) throws BaseException {
 		BSONObject ma = null;
 		BSONObject se = null;
 		BSONObject or = null;
@@ -866,7 +874,7 @@ public class DBCollection {
 			or = (BSONObject) JSON.parse(orderBy);
 		if (hint != null)
 			hi = (BSONObject) JSON.parse(hint);
-		return query(ma, se, or, hi, 0, -1, flag);
+		return query(ma, se, or, hi, 0, -1, flags);
 	}
 
 	/**
@@ -934,7 +942,7 @@ public class DBCollection {
 	 * @fn DBCursor query(BSONObject matcher, BSONObject selector,
 	 *		              BSONObject orderBy, BSONObject hint,
 	 *		              long skipRows, long returnRows,
-	 *		              int flag)
+	 *		              int flags)
 	 * @brief Get the matching documents in current collection. 
      * @param matcher 
      *            the matching rule, return all the documents if null
@@ -962,7 +970,7 @@ public class DBCollection {
 	public DBCursor query(BSONObject matcher, BSONObject selector,
 			              BSONObject orderBy, BSONObject hint,
 			              long skipRows, long returnRows,
-			              int flag) throws BaseException {
+			              int flags) throws BaseException {
 		BSONObject dummy = new BasicBSONObject();
 		if (matcher == null)
 			matcher = dummy;
@@ -975,17 +983,17 @@ public class DBCollection {
 		if (returnRows == 0)
 			returnRows = -1;
 		if ( returnRows == 1) {
-		    flag = flag | DBQuery.FLG_QUERY_WITH_RETURNDATA;
+		    flags = flags | DBQuery.FLG_QUERY_WITH_RETURNDATA;
 		}
 		SDBMessage rtnSDBMessage = adminCommand(collectionFullName, matcher,
-				selector, orderBy, hint, skipRows, returnRows, flag);
+				selector, orderBy, hint, skipRows, returnRows, flags);
 		DBCursor cursor = null;
-		int flags = rtnSDBMessage.getFlags();
-		if (flags != 0) {
-			if (flags == SequoiadbConstants.SDB_DMS_EOC) {
+		int flag = rtnSDBMessage.getFlags();
+		if (flag != 0) {
+			if (flag == SequoiadbConstants.SDB_DMS_EOC) {
 				return null;
 			} else {
-				throw new BaseException(flags, matcher, selector, orderBy, hint,
+				throw new BaseException(flag, matcher, selector, orderBy, hint,
 						skipRows, returnRows);
 			}
 		}
@@ -995,7 +1003,7 @@ public class DBCollection {
 
 	/**
 	 * @fn BSONObject queryOne(BSONObject matcher, BSONObject selector, BSONObject
-	 *     orderBy, BSONObject hint, int flag)
+	 *     orderBy, BSONObject hint, int flags)
 	 * @brief Returns one matched document from current collection.
      * @param matcher 
      *            the matching rule, return all the documents if null
@@ -1005,22 +1013,26 @@ public class DBCollection {
 	 *            the ordered rule, never sort if null
 	 * @param hint
 	 *            the hint, automatically match the optimal hint if null
-	 * @param flag the flag is used to choose the way to query, the optional options are as below:  
+	 * @param flags 
+	 *            the query flags, default to be 0. Please see the definition 
+	 *            of follow flags for more detail. Usage: 
+	 *            e.g. set ( QUERY_FLG_FORCE_HINT | QUERY_FLG_WITH_RETURNDATA ) to param flags  
      * <ul>
-     * <li>BDQuery.FLG_QUERY_STRINGOUT
-     * <li>BDQuery.FLG_QUERY_FORCE_HINT 
-     * <li>BDQuery.FLG_QUERY_PARALLED
-     * </ul>
+     * <li>DBQuery.FLG_QUERY_STRINGOUT
+     * <li>DBQuery.FLG_QUERY_FORCE_HINT 
+     * <li>DBQuery.FLG_QUERY_PARALLED
+     * <li>DBQuery.FLG_QUERY_WITH_RETURNDATA
+     * </ul>  
 	 * @return the matched document or null if no such document
 	 * @exception com.sequoiadb.exception.BaseException
 	 */
 	public BSONObject queryOne(BSONObject matcher, BSONObject selector,
 			                   BSONObject orderBy, BSONObject hint,
-			                   int flag) throws BaseException {
-	    flag = flag | DBQuery.FLG_QUERY_WITH_RETURNDATA;
+			                   int flags) throws BaseException {
+	    flags = flags | DBQuery.FLG_QUERY_WITH_RETURNDATA;
 		DBCursor cursor = null;
 		try {
-			cursor = query(matcher, selector, orderBy, hint, 0, 1, flag);
+			cursor = query(matcher, selector, orderBy, hint, 0, 1, flags);
 		} catch (BaseException e) {
 			throw e;
 		}
@@ -1103,7 +1115,7 @@ public class DBCollection {
 	 * @fn DBCursor queryAndUpdate(BSONObject matcher, BSONObject selector,
 	 *                             BSONObject orderBy, BSONObject hint, BSONObject update,
 	 *                             long skipRows, long returnRows,
-	 *                             int flag, boolean returnNew)
+	 *                             int flags, boolean returnNew)
 	 * @brief Get the matching documents in current collection and update.
 	 *        in order to make the update take effect, user must travel 
 	 *        the DBCursor returned by this function.
@@ -1121,14 +1133,16 @@ public class DBCollection {
 	 *            skip the first numToSkip documents, never skip if this parameter is 0
 	 * @param returnRows
 	 *            only return returnRows documents, return all if this parameter is -1
-	 * @param flag the flag is used to choose the way to query, the optional options are as below:  
+	 * @param flags 
+	 *            the query flags, default to be 0. Please see the definition 
+	 *            of follow flags for more detail. Usage: 
+	 *            e.g. set ( QUERY_FLG_FORCE_HINT | QUERY_FLG_WITH_RETURNDATA ) to param flags  
      * <ul>
      * <li>DBQuery.FLG_QUERY_STRINGOUT
      * <li>DBQuery.FLG_QUERY_FORCE_HINT 
      * <li>DBQuery.FLG_QUERY_PARALLED
      * <li>DBQuery.FLG_QUERY_WITH_RETURNDATA
-     * <li>DBQuery.FLG_QUERY_EXPLAIN
-     * </ul>
+     * </ul>  
      * @param returnNew
 	 *            When true, returns the updated document rather than the original
 	 * @return a DBCursor instance of the result or null if no any matched document
@@ -1136,17 +1150,17 @@ public class DBCollection {
 	 */
 	public DBCursor queryAndUpdate(BSONObject matcher, BSONObject selector,
 								   BSONObject orderBy, BSONObject hint, BSONObject update,
-								   long skipRows, long returnRows, int flag, boolean returnNew)
+								   long skipRows, long returnRows, int flags, boolean returnNew)
 								   throws BaseException {
 		return _queryAndModify(matcher, selector, orderBy, hint, update,
-							   skipRows, returnRows, flag, true, returnNew);
+							   skipRows, returnRows, flags, true, returnNew);
 	}
 
 	/**
 	 * @fn DBCursor queryAndRemove(BSONObject matcher, BSONObject selector,
 	 *                             BSONObject orderBy, BSONObject hint,
 	 *                             long skipRows, long returnRows,
-	 *                             int flag)
+	 *                             int flags)
 	 * @brief Get the matching documents in current collection and remove.
 	 *        in order to make the remove take effect, user must travel 
      *        the DBCursor returned by this function.
@@ -1162,23 +1176,25 @@ public class DBCollection {
 	 *            skip the first numToSkip documents, never skip if this parameter is 0
 	 * @param returnRows
 	 *            only return returnRows documents, return all if this parameter is -1
-	 * @param flag the flag is used to choose the way to query, the optional options are as below:  
+	 * @param flags 
+	 *            the query flags, default to be 0. Please see the definition 
+	 *            of follow flags for more detail. Usage: 
+	 *            e.g. set ( QUERY_FLG_FORCE_HINT | QUERY_FLG_WITH_RETURNDATA ) to param flags  
      * <ul>
      * <li>DBQuery.FLG_QUERY_STRINGOUT
      * <li>DBQuery.FLG_QUERY_FORCE_HINT 
      * <li>DBQuery.FLG_QUERY_PARALLED
      * <li>DBQuery.FLG_QUERY_WITH_RETURNDATA
-     * <li>DBQuery.FLG_QUERY_EXPLAIN
-     * </ul>
+     * </ul>  
 	 * @return a DBCursor instance of the result or null if no any matched document
 	 * @exception com.sequoiadb.exception.BaseException
 	 */
 	public DBCursor queryAndRemove(BSONObject matcher, BSONObject selector,
 								   BSONObject orderBy, BSONObject hint,
-								   long skipRows, long returnRows, int flag)
+								   long skipRows, long returnRows, int flags)
 								   throws BaseException {
 		return _queryAndModify(matcher, selector, orderBy, hint, null,
-							   skipRows, returnRows, flag, false, false);
+							   skipRows, returnRows, flags, false, false);
 	}
 
 	/**
