@@ -4655,7 +4655,7 @@ error :
       }
 
       rc = removeCachedObject( _connection->_getCachedContainer(),
-                               collectionS.c_str() ) ;
+                               collectionS.c_str(), FALSE ) ;
       if ( SDB_OK != rc )
       {
          goto error ;
@@ -4722,7 +4722,7 @@ error :
       }
 
       rc = removeCachedObject( _connection->_getCachedContainer(),
-                               _collectionSpaceName ) ;
+                               _collectionSpaceName, TRUE ) ;
       if ( SDB_OK != rc )
       {
          goto error ;
@@ -7231,7 +7231,7 @@ error :
          goto error ;
       }
 
-      rc = removeCachedObject( _tb, pCollectionSpaceName ) ;
+      rc = removeCachedObject( _tb, pCollectionSpaceName, TRUE ) ;
       if ( SDB_OK != rc )
       {
          goto error ;

@@ -2984,7 +2984,7 @@ SDB_EXPORT INT32 sdbDropCollectionSpace ( sdbConnectionHandle cHandle,
       goto error ;
    }
 
-   rc = removeCachedObject( connection->_tb, pCollectionSpaceName ) ;
+   rc = removeCachedObject( connection->_tb, pCollectionSpaceName, TRUE ) ;
    if ( SDB_OK != rc )
    {
       goto error ;
@@ -3919,6 +3919,10 @@ SDB_EXPORT INT32 sdbGetCollection1 ( sdbCSHandle cHandle,
       goto error ;
    }
 
+   ossStrncpy ( fullCollectionName, cs->_CSName, sizeof(cs->_CSName) ) ;
+   ossStrncat ( fullCollectionName, ".", 1 ) ;
+   ossStrncat ( fullCollectionName, pCollectionName, CLIENT_COLLECTION_NAMESZ );
+
    if ( fetchCachedObject( connection->_tb, fullCollectionName ) )
    {
       // DO NOTHING
@@ -3927,9 +3931,6 @@ SDB_EXPORT INT32 sdbGetCollection1 ( sdbCSHandle cHandle,
    {
       BSON_INIT( newObj ) ;
 
-      ossStrncpy ( fullCollectionName, cs->_CSName, sizeof(cs->_CSName) ) ;
-      ossStrncat ( fullCollectionName, ".", 1 ) ;
-      ossStrncat ( fullCollectionName, pCollectionName, CLIENT_COLLECTION_NAMESZ );
       BSON_APPEND( newObj, pName, fullCollectionName, string ) ;
       BSON_FINISH ( newObj ) ;
 
@@ -4302,7 +4303,7 @@ SDB_EXPORT INT32 sdbDropCollection ( sdbCSHandle cHandle,
       goto error ;
    }
 
-   rc = removeCachedObject( connection->_tb, fullCollectionName ) ;
+   rc = removeCachedObject( connection->_tb, fullCollectionName, FALSE ) ;
    if ( SDB_OK != rc )
    {
       goto error ;

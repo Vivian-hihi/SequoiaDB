@@ -399,10 +399,11 @@ done:
    return SDB_OK ;
 }
 
-INT32 hash_table_remove( hashTable *tb, const CHAR *key )
+INT32 hash_table_remove( hashTable *tb, const CHAR *key, BOOLEAN dropCS )
 {
    UINT32 hashV = 0 ;
    UINT32 locate = 0 ;
+   UINT32 index = 0 ;
 
    if ( NULL == tb || NULL == tb->node )
    {
@@ -414,17 +415,33 @@ INT32 hash_table_remove( hashTable *tb, const CHAR *key )
       goto done ;
    }
 
-   hashV = ossHash( key, strlen( key ) ) ;
-   locate = hashV % tb->capacity ;
-
-   if ( NULL != tb->node[ locate ] )
+   if ( !dropCS )
    {
-      htbNode *toFree = tb->node[ locate ] ;
-      if ( NULL == tb->node[ locate ]->name ||
-           0 == ossStrncmp( toFree->name, key, ossStrlen( key ) ) )
+      hashV = ossHash( key, strlen( key ) ) ;
+      locate = hashV % tb->capacity ;
+
+      if ( NULL != tb->node[ locate ] )
       {
-         hash_table_destroy_node( &toFree ) ;
-         tb->node[ locate ] = NULL ;
+         htbNode *toFree = tb->node[ locate ] ;
+         if ( NULL == tb->node[ locate ]->name ||
+              0 == ossStrncmp( toFree->name, key, ossStrlen( key ) ) )
+         {
+            hash_table_destroy_node( &toFree ) ;
+            tb->node[ locate ] = NULL ;
+         }
+      }
+   }
+   else
+   {
+      for ( ; index < tb->capacity ; ++index )
+      {
+         htbNode *toFree = tb->node[ locate ] ;
+         if ( NULL == tb->node[ locate ]->name ||
+              0 == ossStrncmp( toFree->name, key, ossStrlen( key ) ) )
+         {
+            hash_table_destroy_node( &toFree ) ;
+            tb->node[ locate ] = NULL ;
+         }
       }
    }
 
@@ -608,7 +625,7 @@ error:
    goto done ;
 }
 
-INT32 removeCachedObject( hashTable *tb, const CHAR *key )
+INT32 removeCachedObject( hashTable *tb, const CHAR *key, BOOLEAN dropCS )
 {
    INT32 rc = SDB_OK ;
 
@@ -628,7 +645,7 @@ INT32 removeCachedObject( hashTable *tb, const CHAR *key )
       goto error ;
    }
 
-   rc = hash_table_remove( tb, key ) ;
+   rc = hash_table_remove( tb, key, dropCS ) ;
    if ( SDB_OK != rc )
    {
       goto error ;
@@ -712,7 +729,7 @@ INT32 updateCachedObject( const INT32 code, hashTable *tb, const CHAR *key )
 
    if ( SDB_DMS_NOTEXIST == code )
    {
-      removeCachedObject( tb, key ) ;
+      removeCachedObject( tb, key, FALSE ) ;
    }
    else if ( SDB_DMS_CS_NOTEXIST == code )
    {
@@ -725,17 +742,7 @@ INT32 updateCachedObject( const INT32 code, hashTable *tb, const CHAR *key )
       {
          ossMemcpy( csName, key, ossStrlen( key ) + 1 ) ;
       }
-      for ( ; idx < tb->capacity ; ++idx )
-      {
-         htbNode *node = ( htbNode * )( tb->node[ idx ] ) ;
-         if ( NULL != node )
-         {
-            if ( 0 == ossStrncmp( csName, node->name, ossStrlen( csName ) ) )
-            {
-               hash_table_destroy_node( &node ) ;
-            }
-         }
-      }
+      removeCachedObject( tb, key, TRUE ) ;
    }
    else if ( SDB_OK == rc )
    {

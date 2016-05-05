@@ -52,7 +52,7 @@ INT32 hash_table_destory_node( htbNode **node ) ;
 
 INT32 hash_table_insert( hashTable *tb, htbNode *node ) ;
 
-INT32 hash_table_remove( hashTable *tb, const CHAR *key ) ;
+INT32 hash_table_remove( hashTable *tb, const CHAR *key, BOOLEAN dropCS ) ;
 
 INT32 hash_table_fetch( hashTable *tb, const CHAR *key, htbNode **node ) ;
 
@@ -62,7 +62,7 @@ INT32 hash_table_destroy( hashTable **tb ) ;
 
 INT32 insertCachedObject( hashTable *tb, const CHAR *key ) ;
 
-INT32 removeCachedObject( hashTable *tb, const CHAR *key ) ;
+INT32 removeCachedObject( hashTable *tb, const CHAR *key, BOOLEAN dropCS ) ;
 
 BOOLEAN fetchCachedObject( hashTable *tb, const CHAR *key ) ;
 
