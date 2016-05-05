@@ -39,6 +39,9 @@ testFiles7 = [
 testFiles8 = [
         "domain.cpp"
       ]
+testFiles9 = [
+        "testTrunOncache.cpp"
+      ]      
 
 
 
@@ -70,8 +73,10 @@ debug = env.Program("debug_static", [testFiles7, gtestMainObj, testCommonFiles],
 domain = env.Program("domain_static", [testFiles8, gtestMainObj, testCommonFiles],
                      LIBDEPS=["testCommonLib"],
                      _LIBDEPS='$_LIBDEPS_OBJS')
-
+turnon_cache = env.Program("turnon_cache", [testFiles9, gtestMainObj, testCommonFiles],
+                     LIBDEPS=["testCommonLib"],
+                     _LIBDEPS='$_LIBDEPS_OBJS')
 
 
 env.Install( '#/build_test',[collection,collectionspace,cursor,
-                             sdb,cppbson, debug, domain] )
+                             sdb,cppbson, debug, domain, turnon_cache] )
