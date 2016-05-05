@@ -222,7 +222,6 @@ namespace engine
       UINT32 strLen = 0 ;
       CHAR strBuf[ UTIL_MAX_DICT_STR_LEN ] = { 0 } ;
       vector<LZW_CODE> compareCodeVec ;
-      LZW_CODE actualCode = UTIL_INVALID_DICT_CODE ;
       LZW_CODE compareCode = UTIL_INVALID_DICT_CODE ;
       utilLZWContext compareCtx ;
       compareCtx._stream = context._stream ;
@@ -304,7 +303,6 @@ namespace engine
          {
             compareCode = _readCode( &compareCtx ) ;
          }
-         actualCode = *itr ;
          SDB_ASSERT( *itr == compareCode, "Code not match" ) ;
       }
 #endif /* _DEBUG */
@@ -445,7 +443,7 @@ namespace engine
 
       maxSize = sourceLen * minRatio / 100 ;
 
-      dictionary.attach( dictHandle ) ;
+      dictionary.attach( (void *)dictHandle ) ;
       context.setDictionary( &dictionary ) ;
       context._stream = (BYTE* )dest ;
       context._streamLen = destLen ;
@@ -521,7 +519,7 @@ namespace engine
          goto error ;
       }
 
-      dictionary.attach( dictHandle ) ;
+      dictionary.attach( (void *)dictHandle ) ;
       context.setDictionary( &dictionary ) ;
 
       context._stream = (BYTE *)source ;

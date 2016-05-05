@@ -141,6 +141,7 @@ utilFiles = [
       "util/utilLinenoiseWrapper.cpp",
       "util/utilString.cpp",
       "util/utilBsonHashObsolete.cpp",
+      "util/utilDictionary.cpp",
       "util/utilLZWDictionary.cpp",
       "util/utilCompressor.cpp",
       "util/utilCompressorLZW.cpp",

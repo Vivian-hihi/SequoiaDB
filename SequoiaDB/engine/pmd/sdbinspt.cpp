@@ -47,6 +47,7 @@
 #include "ixmExtent.hpp"
 #include "ossVer.h"
 #include "pmdOptionsMgr.hpp"
+#include "utilLZWDictionary.hpp"
 
 #include <boost/program_options.hpp>
 #include <boost/program_options/parsers.hpp>
@@ -3288,14 +3289,14 @@ INT32 main ( INT32 argc, CHAR **argv )
    }
    ossMemset( gMMEBuff, 0, DMS_MME_SZ ) ;
 
-   gDictBuffer = (CHAR*)SDB_OSS_MALLOC( DMS_DICT_MAX_SIZE ) ;
+   gDictBuffer = (CHAR*)SDB_OSS_MALLOC( UTIL_MAX_DICT_TOTAL_SIZE ) ;
    if ( !gDictBuffer )
    {
       dumpPrintf( "Error: Failed to allocate dictionary buffer, "
                   "exit"OSS_NEWLINE ) ;
       goto done ;
    }
-   ossMemset( gDictBuffer, 0, DMS_DICT_MAX_SIZE ) ;
+   ossMemset( gDictBuffer, 0, UTIL_MAX_DICT_TOTAL_SIZE ) ;
 
    // allocate some buffer initially
    rc = reallocBuffer () ;

@@ -618,7 +618,8 @@ namespace engine
                                BOOLEAN sysCollection = FALSE,
                                BOOLEAN noIDIndex = FALSE,
                                UINT8 compressionType
-                                 = DMS_INVALID_COMPRESSOR_TYPE ) ;
+                                 = DMS_INVALID_COMPRESSOR_TYPE,
+                               UINT32 *logicID = NULL ) ;
 
          INT32 dropCollection ( const CHAR *pName,
                                 _pmdEDUCB *cb,
@@ -677,7 +678,7 @@ namespace engine
          virtual INT32 tryToFlush( BOOLEAN ignoreTick, BOOLEAN &failed ) ;
 
          /* Create the compressor, and set the dictionry for it. */
-         INT32 setCompressor( UINT16 mbID, UTIL_COMPRESSOR_TYPE type ) ;
+         void setCompressor( UINT16 mbID, UTIL_COMPRESSOR_TYPE type ) ;
          void rmCompressor( _dmsMBContext *context ) ;
          INT32 dictPersist( UINT16 mbID, UINT32 clLID,
                             const CHAR *dict, UINT32 dictLen ) ;

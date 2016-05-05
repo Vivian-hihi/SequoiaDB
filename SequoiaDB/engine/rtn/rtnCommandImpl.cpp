@@ -1201,6 +1201,7 @@ namespace engine
       const CHAR *pCollectionShortName = NULL ;
       BOOLEAN writable      = FALSE ;
       UINT16 collectionID = DMS_INVALID_MBID ;
+      UINT32 logicalID = DMS_INVALID_CLID ;
 
       rc = rtnResolveCollectionNameAndLock ( pCollection, dmsCB, &su,
                                              &pCollectionShortName, suID ) ;
@@ -1240,7 +1241,7 @@ namespace engine
 
       rc = su->data()->addCollection ( pCollectionShortName, &collectionID,
                                        attributes, cb, dpsCB, 0, sysCall, FALSE,
-                                       compressorType ) ;
+                                       compressorType, &logicalID ) ;
       if ( rc )
       {
          PD_LOG ( PDERROR, "Failed to create collection %s, rc: %d",
@@ -1283,7 +1284,8 @@ namespace engine
           */
          if ( UTIL_COMPRESSOR_LZW == compressorType )
          {
-            dmsCB->pushDictJob( suID, collectionID ) ;
+            dmsCB->pushDictJob( dmsDictJob( suID, su->LogicalCSID(),
+                                            collectionID, logicalID ) ) ;
          }
          else
          {
@@ -1667,7 +1669,6 @@ namespace engine
       const CHAR *pCollectionShortName = NULL ;
       BOOLEAN writable                 = FALSE ;
       dmsMBContext *context            = NULL ;
-      UINT16 clID                      = DMS_INVALID_CLID ;
 
       rc = rtnResolveCollectionNameAndLock ( pCollection, dmsCB, &su,
                                              &pCollectionShortName, suID ) ;
@@ -1703,10 +1704,8 @@ namespace engine
       if ( UTIL_COMPRESSOR_LZW ==
            (UTIL_COMPRESSOR_TYPE)context->mb()->_compressorType )
       {
-         rc = su->data()->findCollection( pCollectionShortName, clID ) ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to find collection %s, rc: %d",
-                      pCollection, rc ) ;
-         dmsCB->pushDictJob( suID, clID ) ;
+         dmsCB->pushDictJob( dmsDictJob( suID, su->LogicalCSID(),
+                             context->mbID(), context->clLID() ) ) ;
       }
 
    done :

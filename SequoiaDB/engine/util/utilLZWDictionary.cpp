@@ -204,7 +204,8 @@ namespace engine
        * new position.
        */
       _head = ( utilLZWDictHead * )buff ;
-      attach( (utilDictHandle)_head ) ;
+      _setVarLenSplitInfo() ;
+      attach( (void *)_head ) ;
 
       PD_TRACE_EXIT( SDB__UTILLZWDICTIONARY__INITFINALENV ) ;
    }
@@ -393,8 +394,13 @@ namespace engine
    {
       PD_TRACE_ENTRY( SDB__UTILLZWDICTIONARY__ADDADDITIONALINFO ) ;
       BSONObjBuilder builder ;
+      ossTimestamp createTime ;
+      CHAR timestampStr[ OSS_TIMESTAMP_STRING_LEN + 1 ] = { 0 } ;
 
-      builder.appendBool( FIELD_NAME_VAR_COMP_ENABLE, TRUE ) ;
+      ossGetCurrentTime( createTime ) ;
+      ossTimestampToString( createTime, timestampStr ) ;
+      builder.append( FIELD_NAME_DICT_CREATE_TIME, timestampStr ) ;
+
       obj = builder.obj() ;
 
       PD_TRACE_EXIT( SDB__UTILLZWDICTIONARY__ADDADDITIONALINFO ) ;

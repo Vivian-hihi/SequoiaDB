@@ -1178,7 +1178,6 @@ namespace engine
    {
       dmsMB *mb = NULL ;
       dmsMBStatInfo *mbStat = NULL ;
-      utilDictionaryDetail dictDetail ;
 
       PD_TRACE_ENTRY ( SDB__DMSSU_DUMPINFO1 ) ;
       // lock meta

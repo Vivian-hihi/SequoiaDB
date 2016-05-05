@@ -55,9 +55,6 @@ namespace engine
 #define DMS_PAGE_SIZE32K       32768   // 32K
 #define DMS_PAGE_SIZE64K       65536   // 64K
 
-/* Maximum dictionary size. Should be the same with DMS_DICT_MAX_SIZE. */
-#define DMS_DICT_MAX_SIZE ( 4 * 1024 * 1024 )
-
 /// for lob
 #define DMS_PAGE_SIZE256B      256
 
@@ -130,7 +127,8 @@ namespace engine
       DMS_ACCESS_TYPE_DELETE,
       DMS_ACCESS_TYPE_TRUNCATE,
       DMS_ACCESS_TYPE_CRT_INDEX,
-      DMS_ACCESS_TYPE_DROP_INDEX
+      DMS_ACCESS_TYPE_DROP_INDEX,
+      DMS_ACCESS_TYPE_CRT_DICT
    } ;
    typedef enum _DMS_ACCESS_TYPE DMS_ACCESS_TYPE ;
 

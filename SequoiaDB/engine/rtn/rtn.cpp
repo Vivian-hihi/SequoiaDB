@@ -513,7 +513,8 @@ namespace engine
                  && ( UTIL_COMPRESSOR_LZW == mb->_compressorType )
                  && ( DMS_INVALID_EXTENT == mb->_dictExtentID ) )
             {
-               dmsCB->pushDictJob( su->CSID(), context->mbID() ) ;
+               dmsCB->pushDictJob( dmsDictJob( su->CSID(), su->LogicalCSID(),
+                                   context->mbID(), context->clLID() ) ) ;
             }
          }
          su->data()->releaseMBContext( context ) ;

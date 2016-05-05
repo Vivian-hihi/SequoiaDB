@@ -167,7 +167,7 @@
 #define FIELD_NAME_STATUS                    "Status"
 #define FIELD_NAME_DICT_CREATED              "DictionaryCreated"
 #define FIELD_NAME_DICT_VERSION              "DictionaryVersion"
-#define FIELD_NAME_VAR_COMP_ENABLE           "VarLengthCompressEnable"
+#define FIELD_NAME_DICT_CREATE_TIME          "DictionaryCreateTime"
 #define FIELD_NAME_TYPE                      "Type"
 #define FIELD_NAME_TOTAL_RECORDS             "TotalRecords"
 #define FIELD_NAME_TOTAL_LOBS                "TotalLobs"

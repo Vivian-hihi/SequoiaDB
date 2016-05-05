@@ -46,7 +46,6 @@
 #include "ixm.hpp"
 #include "pdTrace.hpp"
 #include "dmsTrace.hpp"
-#include "dmsCB.hpp"
 #include "pd.hpp"
 #include "utilCompressor.hpp"
 
@@ -1487,7 +1486,8 @@ namespace engine
                                          UINT16 initPages,
                                          BOOLEAN sysCollection,
                                          BOOLEAN noIDIndex,
-                                         UINT8  compressionType )
+                                         UINT8  compressionType,
+                                         UINT32 *logicID )
    {
       INT32 rc                = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__DMSSTORAGEDATA_ADDCOLLECTION ) ;
@@ -1664,6 +1664,11 @@ namespace engine
          rc = _pIdxSU->createIndex( context, s_idKeyObj, cb, NULL, TRUE ) ;
          PD_RC_CHECK( rc, PDERROR, "Create $id index failed in collection[%s], "
                       "rc: %d", pName, rc ) ;
+      }
+
+      if ( logicID )
+      {
+         *logicID = logicalID ;
       }
 
    done:
@@ -1899,7 +1904,6 @@ namespace engine
       UINT32 logRecSize       = 0;
       dpsTransCB *pTransCB    = pmdGetKRCB()->getTransCB() ;
       BOOLEAN isTransLocked   = FALSE ;
-      SDB_DMSCB *dmsCB = pmdGetKRCB()->getDMSCB() ;
 
       SDB_ASSERT( pName, "Collection name cat't be NULL" ) ;
 
@@ -3497,12 +3501,14 @@ namespace engine
       goto done ;
    }
 
-   INT32 _dmsStorageData::setCompressor( UINT16 mbID,
-                                         UTIL_COMPRESSOR_TYPE type )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATA_SETCOMPRESSOR, "_dmsStorageData::setCompressor" )
+   void _dmsStorageData::setCompressor( UINT16 mbID,
+                                        UTIL_COMPRESSOR_TYPE type )
    {
+      PD_TRACE_ENTRY( SDB__DMSSTORAGEDATA_SETCOMPRESSOR ) ;
       dmsCompressorGuard guard( &_compressorEntry[ mbID ], EXCLUSIVE ) ;
       _compressorEntry[mbID].setCompressor( getCompressorByType( type ) ) ;
-      return SDB_OK ;
+      PD_TRACE_EXIT( SDB__DMSSTORAGEDATA_SETCOMPRESSOR ) ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATA_RMCOMPRESSOR, "_dmsStorageData::rmCompressor" )
@@ -3515,7 +3521,7 @@ namespace engine
       PD_TRACE_EXIT( SDB__DMSSTORAGEDATA_RMCOMPRESSOR ) ;
    }
 
-    // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATA_DICTPERSIST, "_dmsStorageData::dictPersist" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATA_DICTPERSIST, "_dmsStorageData::dictPersist" )
    INT32 _dmsStorageData::dictPersist( UINT16 mbID, UINT32 clLID,
                                        const CHAR *dict, UINT32 dictLen )
    {
@@ -3541,6 +3547,15 @@ namespace engine
           * been dropped.
           */
          rc = SDB_DMS_NOTEXIST ;
+         goto error ;
+      }
+
+      if ( !dmsAccessAndFlagCompatiblity( context->mb()->_flag,
+                                          DMS_ACCESS_TYPE_CRT_DICT ) )
+      {
+         PD_LOG( PDERROR, "Incompatible collection mode: %d",
+                 context->mb()->_flag ) ;
+         rc = SDB_DMS_INCOMPATIBLE_MODE ;
          goto error ;
       }
 

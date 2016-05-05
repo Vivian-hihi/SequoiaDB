@@ -44,6 +44,7 @@
 #include "dmsCompress.hpp"
 #include "pdTrace.hpp"
 #include "dmsTrace.hpp"
+#include "utilDictionary.hpp"
 
 using namespace bson ;
 
@@ -584,6 +585,36 @@ namespace engine
       return len ;
    }
 
+   UINT32 _dmsDump::_dumpDictDetail( void *inBuf, UINT32 inSize,
+                                     CHAR *outBuf, UINT32 outSize )
+   {
+      UINT32 len = 0 ;
+      utilDictionaryDetail detail ;
+
+      utilDictHead *head
+         = (utilDictHead *)( (CHAR*)inBuf + sizeof( dmsDictExtent ) ) ;
+      if ( UTIL_DICT_LZW == head->_type )
+      {
+         getDictionaryDetail( (void *)head, detail ) ;
+         len += ossSnprintf( outBuf + len, outSize - len,
+                             "Dictionary detail:"OSS_NEWLINE ) ;
+         len += ossSnprintf( outBuf + len, outSize - len,
+                             "   Type: %s"OSS_NEWLINE,
+                             VALUE_NAME_LZW ) ;
+         len += ossSnprintf( outBuf + len, outSize - len,
+                             "   Version: %u"OSS_NEWLINE,
+                             detail._version ) ;
+         len += ossSnprintf( outBuf + len, outSize - len,
+                             "   Maximum code: %u"OSS_NEWLINE,
+                             detail._maxCode ) ;
+         len += ossSnprintf( outBuf + len, outSize - len,
+                             "   Code size: %u"OSS_NEWLINE,
+                             detail._codeSize ) ;
+      }
+
+      return len ;
+   }
+
    UINT32 _dmsDump::dumpDictExtent( void * inBuf, UINT32 inSize, CHAR * outBuf,
                                     UINT32 outSize, CHAR * addrPrefix,
                                     UINT32 options, dmsExtentID extID )
@@ -640,9 +671,10 @@ namespace engine
                                 "Error: Extent is not in use"OSS_NEWLINE ) ;
             goto exit ;
          }
+
+         len += _dumpDictDetail( inBuf, inSize, outBuf + len, outSize - len ) ;
       }
 
-      // TBD: validate the dictionary
       len += ossSnprintf ( outBuf + len, outSize - len, OSS_NEWLINE ) ;
    exit:
       return len ;

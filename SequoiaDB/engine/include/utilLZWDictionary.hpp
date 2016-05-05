@@ -69,6 +69,15 @@ namespace engine
    #define UTIL_MAX_DICT_BUILD_ITEM_NUM   ( UTIL_MAX_DICT_ITEM_NUM * 4 )
    #define UTIL_MAX_DICT_CODE_SIZE        18
    #define UTIL_MAX_DICT_STR_LEN          255
+   #define UTIL_MAX_DICT_ADD_INFO_SIZE    1024
+
+   /*
+    * 16 = 4( cst item size) + 4( code map item size ) + 4( dst item size )
+    *      + 4( max average length in string area )
+    */
+   #define UTIL_MAX_DICT_TOTAL_SIZE \
+      ( sizeof( _utilLZWDictHead ) + UTIL_MAX_DICT_ITEM_NUM * 16 \
+        + UTIL_MAX_DICT_ADD_INFO_SIZE )
 
    typedef UINT32 LZW_CODE ;
 
@@ -111,7 +120,7 @@ namespace engine
    typedef _utilLZWNode utilLZWNode ;
 
    #define UTIL_VAR_LEN_FLAG_SIZE      2
-   #define UTIL_MAX_DICT_SPLIT_NUM     4
+   #define UTIL_MAX_DICT_SPLIT_NUM     ( 1 << UTIL_VAR_LEN_FLAG_SIZE )
    /* Codes in the dictionary are divided into two parts.
     * The preceding part contains the codes(0~x) which are really finally used
     * in the compressed data. The remaining codes are used for the searching
@@ -248,7 +257,7 @@ namespace engine
       INT32 finalize( CHAR *buff, UINT32 &length ) ;
 
       /* Interfaces used by compression/decompression */
-      OSS_INLINE void attach( const utilDictHandle dictionary ) ;
+      OSS_INLINE void attach( const void *dictionary ) ;
 
       OSS_INLINE LZW_CODE findStrExt( const BYTE *str, UINT32 &length ) ;
       OSS_INLINE UINT32 getStrExt( LZW_CODE code, BYTE *buff,
@@ -354,9 +363,15 @@ namespace engine
    } ;
    typedef _utilLZWContext utilLZWContext ;
 
-   class _utilLZWDictCreator : public SDBObject
+   class _utilLZWDictCreator : public _utilDictCreator
    {
    public:
+      _utilLZWDictCreator() {}
+      ~_utilLZWDictCreator()
+      {
+         reset() ;
+      }
+
       /* The following member functions are used to handle the dictionary. */
       INT32 prepare() ;
       void reset() ;
@@ -667,7 +682,7 @@ namespace engine
       return len ;
    }
 
-   OSS_INLINE void _utilLZWDictionary::attach( const utilDictHandle dictionary )
+   OSS_INLINE void _utilLZWDictionary::attach( const void *dictionary )
    {
       UINT32 pos = 0 ;
       UINT32 itemNum = 0 ;

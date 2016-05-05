@@ -209,6 +209,9 @@ namespace engine
       private:
          static UINT32 _dumpExtentHeaderComm( const dmsExtent *extent,
                                               CHAR *outBuf, UINT32 outSize ) ;
+
+         static UINT32 _dumpDictDetail( void *inBuf, UINT32 inSize,
+                                        CHAR *outBuf, UINT32 outSize ) ;
    } ;
    typedef _dmsDump dmsDump ;
 

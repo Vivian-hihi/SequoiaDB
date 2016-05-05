@@ -1567,49 +1567,34 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__SDB_DMSCB_DISPATCHDICTJOB, "_SDB_DMSCB::dispatchDictJob" )
-   BOOLEAN _SDB_DMSCB::dispatchDictJob( dmsStorageUnitID &suID, UINT16 &mbID )
+   BOOLEAN _SDB_DMSCB::dispatchDictJob( dmsDictJob &job )
    {
       PD_TRACE_ENTRY( SDB__SDB_DMSCB_DISPATCHDICTJOB ) ;
-      BOOLEAN empty = FALSE ;
+      BOOLEAN foundJob = FALSE ;
 
       if ( _dictWaitClList.size() > 0 )
       {
-         suID = _dictWaitClList.front().first ;
-         mbID = _dictWaitClList.front().second ;
+         dmsDictJob firstJob = _dictWaitClList.front() ;
          _dictWaitClList.pop_front() ;
-         empty = FALSE ;
-      }
-      else
-      {
-         /*
-          * Resume all the ones which skipped before, and start the next
-          * round.
-          */
-         empty = TRUE ;
-         if ( _dictWaitClListTrans.size() > 0 )
+         if ( pmdGetTickSpanTime( firstJob._createTime ) > OSS_ONE_SEC * 5 )
          {
-            _dictWaitClList.merge( _dictWaitClListTrans ) ;
+            job = firstJob ;
+            foundJob = TRUE ;
+         }
+         else
+         {
+            _dictWaitClList.push_back( firstJob ) ;
          }
       }
 
-      return empty ;
+      return foundJob ;
    }
 
     // PD_TRACE_DECLARE_FUNCTION ( SDB__SDB_DMSCB_PUSHDICTJOB, "_SDB_DMSCB::pushDictJob" )
-   void _SDB_DMSCB::pushDictJob( UINT32 suID, UINT32 mbID, BOOLEAN delay )
+   void _SDB_DMSCB::pushDictJob( dmsDictJob job )
    {
-      PD_TRACE_ENTRY( SDB__SDB_DMSCB_PUSHDICTJOB ) ;
-
-      if ( delay )
-      {
-         _dictWaitClListTrans.push_back( make_pair( suID, mbID ) ) ;
-      }
-      else
-      {
-         _dictWaitClList.push_back( make_pair( suID, mbID ) ) ;
-      }
-
-      PD_TRACE_EXIT( SDB__SDB_DMSCB_PUSHDICTJOB ) ;
+      job._createTime = pmdGetDBTick() ;
+      _dictWaitClList.push_back( job ) ;
    }
 
    void _SDB_DMSCB::aquireCSMutex( const CHAR *pCSName )

@@ -24,7 +24,8 @@ namespace engine
    #define RTN_DICT_LOAD_TO_CACHE_MAX_TRY 3
 
    _rtnDictCreatorJob::_rtnDictCreatorJob( UINT32 scanInterval )
-   : _scanInterval( scanInterval )
+   : _creator( NULL ),
+     _scanInterval( scanInterval )
    {
    }
 
@@ -70,10 +71,9 @@ namespace engine
       SDB_DMSCB *dmsCB = krcb->getDMSCB() ;
       pmdEDUCB *cb = eduCB() ;
       pmdEDUEvent event ;
-      dmsStorageUnitID suID = DMS_INVALID_SUID ;
-      UINT16 mbID = DMS_INVALID_MBID ;
-      BOOLEAN noJob = FALSE ;
+      BOOLEAN foundJob = FALSE ;
       UINT64 lastStartTime = pmdGetDBTick() ;
+      dmsDictJob job ;
 
       while ( !PMD_IS_DB_DOWN() && !cb->isForced() )
       {
@@ -83,8 +83,8 @@ namespace engine
           */
          eduMgr->waitEDU( cb->getID() ) ;
          /* Get the first item in the dictionary waiting list. */
-         noJob = dmsCB->dispatchDictJob( suID, mbID ) ;
-         if ( noJob )
+         foundJob = dmsCB->dispatchDictJob( job ) ;
+         if ( !foundJob )
          {
             /* If no colleciton is waitting for dictionary creating, wait... */
             while ( pmdGetTickSpanTime( lastStartTime ) < _scanInterval )
@@ -104,19 +104,18 @@ namespace engine
           * time, and try again in the next round. If everything goes fine,
           * remove it from the list, and never check it again.
           */
-         if ( SDB_OK != _checkAndCreateDictForCL( suID, mbID ) )
+         rc = _checkAndCreateDictForCL( job ) ;
+         if ( ( SDB_OK != rc ) && ( SDB_DMS_CS_NOTEXIST != rc )
+              && ( SDB_DMS_NOTEXIST != rc ) )
          {
-            dmsCB->pushDictJob( suID, mbID, TRUE ) ;
+            dmsCB->pushDictJob( job ) ;
          }
 
          cb->incEventCount() ;
       }
 
-   done:
-      PD_TRACE_EXIT( SDB__RTN_DICTCREATORJOB_DOIT ) ;
+      PD_TRACE_EXITRC( SDB__RTN_DICTCREATORJOB_DOIT, rc ) ;
       return rc;
-   error:
-      goto done ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_STARTDICTCREATORJOB, "startDictCreatorJob" )
@@ -216,7 +215,7 @@ namespace engine
          try
          {
             BSONObj bs( (const CHAR*)recordDataPtr ) ;
-            _creator.build( bs.objdata(), bs.objsize(), dictFull ) ;
+            _creator->build( bs.objdata(), bs.objsize(), dictFull ) ;
             if ( dictFull )
             {
                break ;
@@ -255,26 +254,17 @@ namespace engine
       PD_TRACE_EXITRC( SDB__RTN_DICTCREATORJOB__CREATEDICT, rc ) ;
       return rc ;
    error:
-      _creator.reset() ;
       goto done ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTN_DICTCREATORJOB__TRANSFERDICT, "_rtnDictCreatorJob::_transferDict" )
    INT32 _rtnDictCreatorJob::_transferDict( dmsStorageData *sd,
-                                            dmsMBContext *context )
+                                            dmsMBContext *context,
+                                            CHAR *dictStream,
+                                            UINT32 dictSize )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RTN_DICTCREATORJOB__TRANSFERDICT ) ;
-      CHAR *dictBuf = NULL ;
-      UINT32 dictBufLen = DMS_DICT_MAX_SIZE ;
-
-      dictBuf = (CHAR*)SDB_OSS_MALLOC( dictBufLen ) ;
-      PD_CHECK( dictBuf, SDB_OOM, error, PDERROR,
-                "Failed to allocate memory for dictionary, rc: %d", rc ) ;
-
-      rc = _creator.finalize( dictBuf, dictBufLen ) ;
-      PD_RC_CHECK( rc, PDERROR,
-                   "Failed to finalize dictionary, rc: %d", rc ) ;
 
       if ( context->isMBLock() )
       {
@@ -282,14 +272,11 @@ namespace engine
       }
 
       rc = sd->dictPersist( context->mbID(), context->clLID(),
-                            dictBuf, dictBufLen ) ;
+                            dictStream, dictSize ) ;
       PD_RC_CHECK( rc, PDERROR,
                    "Failed to store dictionary in colleciton, rc: %d", rc ) ;
+
    done:
-      if ( dictBuf )
-      {
-         SDB_OSS_FREE( dictBuf ) ;
-      }
       PD_TRACE_EXITRC( SDB__RTN_DICTCREATORJOB__TRANSFERDICT, rc ) ;
       return rc ;
    error:
@@ -297,8 +284,7 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTN_DICTCREATORJOB__CHECKANDCREATEDICTFORCL, "_rtnDictCreatorJob::_checkAndCreateDictForCL" )
-   INT32 _rtnDictCreatorJob::_checkAndCreateDictForCL( dmsStorageUnitID suID,
-                                                       UINT16 mbID )
+   INT32 _rtnDictCreatorJob::_checkAndCreateDictForCL( dmsDictJob job )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RTN_DICTCREATORJOB__CHECKANDCREATEDICTFORCL ) ;
@@ -307,30 +293,34 @@ namespace engine
       UINT32 clLID = DMS_INVALID_CLID ;
       pmdKRCB *krCB = pmdGetKRCB() ;
       SDB_DMSCB *dmsCB = krCB->getDMSCB() ;
+      UINT32 dictBufLen = UTIL_MAX_DICT_TOTAL_SIZE ;
+      CHAR *dictBuf = NULL ;
       ossTimestamp begin ;
       ossTimestamp end ;
 
       /*
-       * If the su is not there, the original storage unit(cs) was dropped. So
-       * just remove the item from the list.
+       * If the su is not there, the original storage unit(cs) was dropped.
        */
-      su = dmsCB->suLock( suID ) ;
-      if ( NULL == su )
+      su = dmsCB->suLock( job._suID ) ;
+      if ( ( NULL == su ) || ( su->LogicalCSID() != job._suLID ) )
       {
-         goto done ;
+         rc = SDB_DMS_CS_NOTEXIST ;
+         goto error ;
       }
 
-      rc = su->data()->getMBContext( &mbContext, mbID, clLID ) ;
-      if ( (UINT32)DMS_INVALID_CLID == mbContext->clLID() )
+      rc = su->data()->getMBContext( &mbContext, job._clID, clLID ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to get mb[%u] context, rc: %d",
+                   job._clID, rc ) ;
+      if ( mbContext->clLID() != job._clLID )
       {
          /*
-          * The corresponding collection has been dropped. So return success
-          * here and the item will be removed from the list.
+          * The corresponding collection has been dropped.
           */
-         goto done ;
+         rc = SDB_DMS_NOTEXIST ;
+         goto error ;
       }
       PD_RC_CHECK( rc, PDERROR, "Failed to get mb context, rc: %d, mb ID: %d",
-                   rc, mbID ) ;
+                   rc, job._clID ) ;
 
       if ( DMS_INVALID_EXTENT !=  mbContext->mb()->_dictExtentID )
       {
@@ -369,7 +359,7 @@ namespace engine
          goto done ;
       }
 
-      if ( !_conditionMatch( su, mbID ) )
+      if ( !_conditionMatch( su, job._clID ) )
       {
          rc = RTN_DICT_CREATE_COND_NOT_MATCH ;
          goto error ;
@@ -377,15 +367,29 @@ namespace engine
 
       ossGetCurrentTime( begin ) ;
       /* Now, create the dictionary for the collection. */
-      _creator.reset() ;
-      rc = _creator.prepare() ;
+      _creator = SDB_OSS_NEW _utilLZWDictCreator ;
+      PD_CHECK( _creator, SDB_OOM, error, PDERROR,
+                "Failed to allocate memory for dictionary creator, size: %u",
+                sizeof( _utilLZWDictCreator ) ) ;
+      rc = _creator->prepare() ;
       PD_RC_CHECK( rc, PDERROR,
                    "Failed to prepare dictionary creator, rc: %d", rc ) ;
 
       rc = _createDict( su->data(), mbContext ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to create dictionary, rc: %d", rc ) ;
 
-      rc = _transferDict( su->data(), mbContext ) ;
+      dictBuf = (CHAR*)SDB_OSS_MALLOC( dictBufLen ) ;
+      PD_CHECK( dictBuf, SDB_OOM, error, PDERROR,
+                "Failed to allocate memory for dictionary, rc: %d", rc ) ;
+
+      rc = _creator->finalize( dictBuf, dictBufLen ) ;
+      PD_RC_CHECK( rc, PDERROR,
+                   "Failed to finalize dictionary, rc: %d", rc ) ;
+
+      rc = dmsCB->writable( pmdGetKRCB()->getEDUMgr()->getEDU() ) ;
+      PD_RC_CHECK( rc, PDERROR, "Database is not writable, rc: %d", rc ) ;
+
+      rc = _transferDict( su->data(), mbContext, dictBuf, dictBufLen ) ;
       PD_RC_CHECK( rc, PDERROR,
                    "Failed to pass dictionary to dms, rc: %d", rc ) ;
       ossGetCurrentTime( end ) ;
@@ -404,9 +408,19 @@ namespace engine
 
       if ( su )
       {
-         dmsCB->suUnlock( suID ) ;
+         dmsCB->suUnlock( job._suID ) ;
       }
-      _creator.reset() ;
+
+      if ( dictBuf )
+      {
+         SDB_OSS_FREE( dictBuf ) ;
+      }
+
+      if ( _creator )
+      {
+         SDB_OSS_DEL _creator ;
+         _creator = NULL ;
+      }
 
       PD_TRACE_EXITRC( SDB__RTN_DICTCREATORJOB__CHECKANDCREATEDICTFORCL, rc ) ;
       return rc ;

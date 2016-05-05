@@ -93,6 +93,34 @@ namespace engine
    #define DMS_STATE_REBUILD 2
    #define DMS_CHANGESTATE_WAIT_LOOP 500
 
+   struct _dmsDictJob
+   {
+      dmsStorageUnitID _suID ;
+      UINT32 _suLID ;
+      UINT16 _clID ;
+      UINT32 _clLID ;
+      UINT64 _createTime ;
+
+      _dmsDictJob()
+      : _suID( DMS_INVALID_SUID ),
+        _suLID( DMS_INVALID_SUID ),
+        _clID( DMS_INVALID_CLID ),
+        _clLID( DMS_INVALID_CLID )
+      {
+      }
+
+      _dmsDictJob( dmsStorageUnitID suID, UINT32 suLID, UINT16 clID,
+                   UINT32 clLID )
+      : _suID( suID ),
+        _suLID( suLID ),
+        _clID( clID ),
+        _clLID( clLID ),
+        _createTime( 0 )
+      {
+      }
+   } ;
+   typedef _dmsDictJob dmsDictJob ;
+
    /*
       _SDB_DMSCB define
    */
@@ -134,9 +162,8 @@ namespace engine
        * Everytime we are about to create a dictionary, we should check if a
        * dictionary is there already. If yes, just remove the item from the list.
        */
-      typedef std::pair<dmsStorageUnitID, UINT16>  _dictWaitCl ;
-      std::list<_dictWaitCl>                       _dictWaitClList ;
-      std::list<_dictWaitCl>                       _dictWaitClListTrans ;
+      typedef std::list<dmsDictJob>::iterator     DICT_WAIT_LIST_ITR ;
+      std::list<dmsDictJob>                       _dictWaitClList ;
 
       ossSpinXLatch           _stateMtx;
       ossEvent                _backEvent ;
@@ -240,8 +267,8 @@ namespace engine
       _dmsStorageUnit *dispatchPageCleanSU ( dmsStorageUnitID *suID ) ;
       INT32 joinPageCleanSU ( dmsStorageUnitID suID ) ;
 
-      BOOLEAN dispatchDictJob( dmsStorageUnitID &suID, UINT16 &mbID ) ;
-      void pushDictJob( UINT32 suID, UINT32 mbID, BOOLEAN delay = FALSE ) ;
+      BOOLEAN dispatchDictJob( dmsDictJob &job ) ;
+      void pushDictJob( dmsDictJob job ) ;
 
       void setIxmKeySorterCreator( dmsIxmKeySorterCreator* creator ) ;
       dmsIxmKeySorterCreator* getIxmKeySorterCreator() ;

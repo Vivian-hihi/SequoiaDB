@@ -21,13 +21,13 @@ namespace engine
       virtual BOOLEAN muteXOn ( const _rtnBaseJob *pOther ) ;
       virtual INT32 doit () ;
    private:
-      INT32 _checkAndCreateDictForCL( dmsStorageUnitID suID, UINT16 mbID );
+      INT32 _checkAndCreateDictForCL( dmsDictJob job );
       BOOLEAN _conditionMatch( dmsStorageUnit *su, UINT16 mbID ) ;
       INT32 _createDict( dmsStorageData *sd, dmsMBContext *context ) ;
-      INT32 _transferDict( dmsStorageData *sd, dmsMBContext *context ) ;
+      INT32 _transferDict( dmsStorageData *sd, dmsMBContext *context,
+                           CHAR *dictStream, UINT32 dictSize ) ;
    private:
-      utilLZWDictCreator _creator ;
-      utilLZWDictionary *_dictionary ;
+      utilDictCreator *_creator ;
       UINT32 _scanInterval ;
    } ;
    typedef _rtnDictCreatorJob rtnDictCreatorJob ;
