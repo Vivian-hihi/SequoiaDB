@@ -241,6 +241,8 @@ namespace engine
       // This extent is used to store dictionary of the collection. If the
       // dictionary has not been created, the value should be DMS_INVALID_EXTENT.
       dmsExtentID    _dictExtentID ;
+      dmsExtentID    _newDictExtentID ;
+      SINT32         _dictStatPageID ;
       UINT8          _dictVersion ;
       UINT8          _compressorType ;
       UINT8          _compressionRatio ;
@@ -248,7 +250,7 @@ namespace engine
       // for stat
       UINT64         _totalLobs ;
       // end stat
-      CHAR           _pad [ 388 ] ;
+      CHAR           _pad [ 380 ] ;
 
 
       void reset ( const CHAR *clName = NULL,
@@ -299,6 +301,8 @@ namespace engine
          _compressorType         = DMS_INVALID_COMPRESSOR_TYPE ;
          _dictVersion            = 0 ;
          _dictExtentID           = DMS_INVALID_EXTENT ;
+         _newDictExtentID        = DMS_INVALID_EXTENT ;
+         _dictStatPageID         = DMS_INVALID_EXTENT ;
          _compressionRatio       = 0 ;
 
          // pad
