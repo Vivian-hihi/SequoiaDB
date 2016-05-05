@@ -429,7 +429,7 @@ TEST( turnonCache, testUpdateTimeStamp)
    sdbCollectionHandle cl;
    char csName[127];
    char clName[127];
-   UINT64 csTimeStamp, clTimeStamp;
+   UINT64 csTimeStamp=time(NULL), clTimeStamp=time(NULL);
      
    //初始化客户端，启用缓存
    ASSERT_EQ(SDB_OK, connect(&conn, 1, 10)); 
@@ -443,7 +443,7 @@ TEST( turnonCache, testUpdateTimeStamp)
    for (int i = 0; i<10; ++i){
       htbNode *Node = ht->node[i];
       if (Node != NULL){
-         if (strncmp(Node->name, csName, sizeof(csName)))
+         if (0 == strncmp(Node->name, csName, strlen(Node->name)))
          {
             csTimeStamp = Node->lastTime;   
          }else{
@@ -463,11 +463,11 @@ TEST( turnonCache, testUpdateTimeStamp)
    for (int i = 0; i<10; ++i){
       htbNode *Node = ht->node[i];
       if (Node != NULL){
-         if (strncmp(Node->name, csName, sizeof(csName)))
+         if (0 == strncmp(Node->name, csName, strlen(Node->name)))
          {
-            ASSERT_LE(csTimeStamp, Node->lastTime); 
+            ASSERT_LT(csTimeStamp, Node->lastTime); 
          }else{
-            ASSERT_LE(clTimeStamp, Node->lastTime);  
+            ASSERT_LT(clTimeStamp, Node->lastTime);  
          }
       }
    } 
