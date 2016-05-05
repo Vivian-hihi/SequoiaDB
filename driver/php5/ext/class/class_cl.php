@@ -66,7 +66,7 @@ class SequoiaCL
    public function drop(){}
 
    /**
-    * Alert collection options.
+    * Alter collection options.
     *
     * @param $options an array or the string argument. New collection options.
     *
@@ -75,11 +75,11 @@ class SequoiaCL
     * @retval array   array( 'errno' => 0 )
     * @retval string  { "errno": 0 }
     *
-    * Example: Alert collection option ReplSize
+    * Example: Alter collection option ReplSize
     * @code
-    * $err = $cl -> alert( array( 'ReplSize' => -1 ) ) ;
+    * $err = $cl -> alter( array( 'ReplSize' => -1 ) ) ;
     * if( $err['errno'] != 0 ) {
-    *    echo "Failed to alert collection options, error code: ".$err['errno'] ;
+    *    echo "Failed to alter collection options, error code: ".$err['errno'] ;
     *    return ;
     * }
     * @endcode
