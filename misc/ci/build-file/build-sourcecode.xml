@@ -2,6 +2,7 @@
 <!-- @param ${CPU.version}: The CPU name -->
 <!-- @param ${compile.debug}: The flag whether debug version -->
 <!-- @param ${choise.jdk5} : choise the jdk version , default is jdk6 , if you choise jdk5,enter true-->
+<!-- @param ${SPARK_VERSION} : when build sdb_spark_conenctor, choise the spark version , default is 1.6.1 -->
 
 <project name="build-srccode" default="mk-release">
 	<property name="CODE_DIR" value="${WORKSPACE}/sequoiadb" />
@@ -87,6 +88,11 @@
 			<property name="root.dir" value="${WORKSPACE}/sequoiadb/driver/hadoop/hive/"/>
 			<property name="open.source.hive_connector.filename" value="${open.source.hive_connector.filename}" />
 			<property name="cdh.hive_connector.filename" value="${cdh.hive_connector.filename}" />
+		</ant>
+		
+		<ant antfile="${WORKSPACE}/sequoiadb/driver/spark/build.xml">
+		  <property name="SPARK_VERSION" value="${SPARK_VERSION}" />
+		  <property name="spark_connector_root_dir" value="${WORKSPACE}/sequoiadb/driver/spark" />
 		</ant>
 
 		<ant antfile="${WORKSPACE}/sequoiadb/driver/hadoop/hadoop-connector/build.xml">
