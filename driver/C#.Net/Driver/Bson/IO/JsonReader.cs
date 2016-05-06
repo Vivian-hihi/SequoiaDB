@@ -1022,7 +1022,7 @@ namespace SequoiaDB.Bson.IO
                     case "$regex": _currentValue = ParseRegularExpressionExtendedJson(); return BsonType.RegularExpression;
                     case "$symbol": _currentValue = ParseSymbolExtendedJson(); return BsonType.Symbol;
                     case "$timestamp": _currentValue = ParseTimestampExtendedJson(); return BsonType.Timestamp;
-                    case "$numberLong": _currentValue = ParseNumberLongExtendedJson(); return BsonType.INT64;
+                    case "$numberLong": _currentValue = ParseNumberLongExtendedJson(); return BsonType.Int64;
                 }
             }
             PushToken(nameToken);
@@ -1391,7 +1391,8 @@ namespace SequoiaDB.Bson.IO
             return BsonTimestamp.Create(value);
         }
 
-        private Long ParseNumberLongExtendedJson() {
+        private BsonInt64 ParseNumberLongExtendedJson()
+        {
             VerifyToken(":");
             var nameToken = PopToken();
             if (nameToken.Type != JsonTokenType.String) {

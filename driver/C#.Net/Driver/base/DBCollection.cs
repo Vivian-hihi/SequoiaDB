@@ -590,7 +590,7 @@ namespace SequoiaDB
                 flags = flags | DBQuery.FLG_QUERY_WITH_RETURNDATA;
             }
             SDBMessage rtnSDBMessage = AdminCommand(collectionFullName, query, selector,
-                                                    orderBy, hint, skipRows, returnRows, flag);
+                                                    orderBy, hint, skipRows, returnRows, flags);
             int flag = rtnSDBMessage.Flags;
             if (flag != 0)
                 if (flag == SequoiadbConstants.SDB_DMS_EOC)

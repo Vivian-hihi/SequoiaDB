@@ -36,12 +36,12 @@ namespace SequoiaDB
 	    /** \memberof FLG_QUERY_EXPLAIN 0x00000400
 	     *  \brief Query explain
 	     */
-        public const int FLG_QUERY_EXPLAIN = 0x00000400;
+        internal const int FLG_QUERY_EXPLAIN = 0x00000400;
 
         /** \memberof FLG_QUERY_MODIFY 0x00001000
 	     *  \brief Query and modify
 	     */
-        public const int FLG_QUERY_MODIFY = 0x00001000;
+        internal const int FLG_QUERY_MODIFY = 0x00001000;
 
        /** \property Matcher
         *  \brief Matching rule
