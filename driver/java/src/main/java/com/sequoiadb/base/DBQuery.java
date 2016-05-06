@@ -66,13 +66,13 @@ public class DBQuery {
 	 * @memberof FLG_QUERY_EXPLAIN 0x00000400
 	 * @brief Query explain.
 	 */
-	public static final int FLG_QUERY_EXPLAIN  = 0x00000400;
+	static final int FLG_QUERY_EXPLAIN  = 0x00000400;
 
 	/**
 	 * @memberof FLG_QUERY_MODIFY 0x00001000
 	 * @brief Query and modify.
 	 */
-	public static final int FLG_QUERY_MODIFY  = 0x00001000;
+	static final int FLG_QUERY_MODIFY  = 0x00001000;
 	
 	public DBQuery() {
 		matcher = null;
