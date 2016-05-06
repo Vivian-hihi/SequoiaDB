@@ -96,6 +96,10 @@ static int _decimal_get_div_scale( const bson_decimal *left,
 static int _decimal_div( const bson_decimal *left, const bson_decimal *right, 
                          bson_decimal *result, int rscale, int isRound ) ;
 
+static int _decimal_sprint_len( int sign, int weight, int scale ) ;
+
+static int _decimal_alloc( bson_decimal *decimal, int ndigits ) ;
+
 void _decimal_free_buff( bson_decimal *decimal )
 {
    if ( NULL == decimal )
@@ -317,7 +321,7 @@ void _decimal_trunc( bson_decimal *decimal, int rscale )
  * ABS(left) MUST BE GREATER OR EQUAL ABS(right) !!!
  */
 int _decimal_sub_abs( const bson_decimal *left, const bson_decimal *right, 
-                     bson_decimal *result )
+                      bson_decimal *result )
 {
    short *res_buf    = NULL ;
    short *res_digits = NULL ;
@@ -1023,7 +1027,7 @@ int _decimal_mul( const bson_decimal *left, const bson_decimal *right,
     * this is still done at full precision w/guard digits.
     */
    decimal_free( result ) ;
-   rc = decimal_alloc( result, res_ndigits ) ;
+   rc = _decimal_alloc( result, res_ndigits ) ;
    if ( 0 != rc )
    {
       goto error ;
@@ -1250,7 +1254,7 @@ int _decimal_div( const bson_decimal *left, const bson_decimal *right,
    /*
     * Now we can realloc the result to hold the generated quotient digits.
     */
-   rc = decimal_alloc( result, res_ndigits ) ;
+   rc = _decimal_alloc( result, res_ndigits ) ;
    if ( 0 != rc )
    {
       goto error ;
@@ -1449,6 +1453,42 @@ error:
    goto done ;
 }
 
+int _decimal_sprint_len( int sign, int weight, int scale )
+{
+   int tmpSize = 0 ;
+   if ( SDB_DECIMAL_SPECIAL_SIGN == sign && SDB_DECIMAL_SPECIAL_NAN == scale )
+   {
+      return ( 3 + 1 ) ;   // "NAN" + 1
+   }
+
+   if ( SDB_DECIMAL_SPECIAL_SIGN == sign && SDB_DECIMAL_SPECIAL_MIN == scale )
+   {
+      return ( 3 + 1 ) ;   // "MIN" + 1
+   }
+
+   if ( SDB_DECIMAL_SPECIAL_SIGN == sign && SDB_DECIMAL_SPECIAL_MAX == scale )
+   {
+      return ( 3 + 1 ) ;   // "MAX" + 1
+   }
+
+   /*
+   * Allocate space for the result.
+   *
+   * tmpSize is set to the # of decimal digits before decimal point. dscale is the
+   * # of decimal digits we will print after decimal point. We may generate
+   * as many as DEC_DIGITS-1 excess digits at the end, and in addition we
+   * need room for sign, decimal point, null terminator.
+   */
+   tmpSize = ( weight + 1 ) * DECIMAL_DEC_DIGITS ;
+   if ( tmpSize <= 0 )
+   {
+      tmpSize = 1 ;
+   }
+
+   tmpSize += scale + DECIMAL_DEC_DIGITS + 2 ;
+
+   return tmpSize ;
+}
 
 void decimal_init( bson_decimal *decimal )
 {
@@ -1492,7 +1532,7 @@ error:
    goto done ;
 }
 
-int decimal_alloc( bson_decimal *decimal, int ndigits )
+int _decimal_alloc( bson_decimal *decimal, int ndigits )
 {
    int rc = 0 ;
    if ( NULL == decimal )
@@ -1800,7 +1840,7 @@ int64_t decimal_to_long( const bson_decimal *decimal )
       goto error ;
    }
 
-   if ( decimal_is_nan( decimal ) )
+   if ( decimal_is_speical( decimal ) )
    {
       rc = -6 ;
       goto error ;
@@ -1930,43 +1970,6 @@ error:
    goto done ;
 }
 
-int decimal_sprint_len( int sign, int weight, int scale )
-{
-   int tmpSize = 0 ;
-   if ( SDB_DECIMAL_SPECIAL_SIGN == sign && SDB_DECIMAL_SPECIAL_NAN == scale )
-   {
-      return ( 3 + 1 ) ;   // "NAN" + 1
-   }
-
-   if ( SDB_DECIMAL_SPECIAL_SIGN == sign && SDB_DECIMAL_SPECIAL_MIN == scale )
-   {
-      return ( 3 + 1 ) ;   // "MIN" + 1
-   }
-
-   if ( SDB_DECIMAL_SPECIAL_SIGN == sign && SDB_DECIMAL_SPECIAL_MAX == scale )
-   {
-      return ( 3 + 1 ) ;   // "MAX" + 1
-   }
-
-   /*
-   * Allocate space for the result.
-   *
-   * tmpSize is set to the # of decimal digits before decimal point. dscale is the
-   * # of decimal digits we will print after decimal point. We may generate
-   * as many as DEC_DIGITS-1 excess digits at the end, and in addition we
-   * need room for sign, decimal point, null terminator.
-   */
-   tmpSize = ( weight + 1 ) * DECIMAL_DEC_DIGITS ;
-   if ( tmpSize <= 0 )
-   {
-      tmpSize = 1 ;
-   }
-
-   tmpSize += scale + DECIMAL_DEC_DIGITS + 2 ;
-
-   return tmpSize ;
-}
-
 int decimal_to_str_get_len( const bson_decimal *decimal, int *size )
 {
    int rc      = 0 ;
@@ -1976,8 +1979,8 @@ int decimal_to_str_get_len( const bson_decimal *decimal, int *size )
       goto error ;
    }
 
-   *size = decimal_sprint_len( decimal->sign, decimal->weight, 
-                               decimal->dscale ) ;
+   *size = _decimal_sprint_len( decimal->sign, decimal->weight, 
+                                decimal->dscale ) ;
 
 done:
    return rc ;
@@ -2164,7 +2167,7 @@ int decimal_from_long( int64_t value, bson_decimal *decimal )
    }
 
    /* int8 can require at most 19 decimal digits; add one for safety */
-   rc = decimal_alloc( decimal, 20 / DECIMAL_DEC_DIGITS ) ;
+   rc = _decimal_alloc( decimal, 20 / DECIMAL_DEC_DIGITS ) ;
    if ( 0 != rc )
    {
       goto error ;
@@ -2422,7 +2425,7 @@ int decimal_from_str( const char *value, bson_decimal *decimal )
    offset  = (weight + 1) * DECIMAL_DEC_DIGITS - ( dweight + 1 ) ;
    ndigits = (ddigits + offset + DECIMAL_DEC_DIGITS - 1) / DECIMAL_DEC_DIGITS ;
 
-   rc = decimal_alloc( decimal, ndigits ) ;
+   rc = _decimal_alloc( decimal, ndigits ) ;
    if ( 0 != rc )
    {
       goto error ;
@@ -2486,7 +2489,7 @@ int decimal_from_bsonvalue( const char *value, bson_decimal *decimal )
    value += 2 ;
 
    ndig = ( size - DECIMAL_HEADER_SIZE ) / sizeof( short ) ;
-   rc = decimal_alloc( decimal, ndig ) ;
+   rc = _decimal_alloc( decimal, ndig ) ;
    if ( 0 != rc )
    {
       goto error ;
@@ -2599,7 +2602,7 @@ int decimal_to_jsonstr_len( int sign, int weight, int dscale,
    }
 
    // get the simple decimal string len.  like "123.45678"
-   simpleSize = decimal_sprint_len( sign, weight, dscale ) ;
+   simpleSize = _decimal_sprint_len( sign, weight, dscale ) ;
 
    tmpSize = strlen( decimal_str_start ) + simpleSize + 
              strlen( decimal_str_end ) + strlen( json_str_end ) + 1 ;
@@ -3182,6 +3185,17 @@ int decimal_update_typemod( bson_decimal *decimal, int typemod )
    {
       //if out of precision define. remove the precision define
       decimal->typemod = -1 ;
+      goto done ;
+   }
+
+   if ( decimal_is_speical( decimal ) )
+   {
+      goto done ;
+   }
+
+   if ( decimal_is_zero( decimal ) )
+   {
+      decimal->typemod = typemod ;
       goto done ;
    }
 

@@ -311,17 +311,38 @@ namespace bson {
 
    INT32 bsonDecimal::ceil( bsonDecimal &result )
    {
-      return decimal_ceil( &_decimal, &( result._decimal ) ) ;
+      INT32 rc = SDB_OK ;
+      rc = decimal_ceil( &_decimal, &(result._decimal) ) ;
+      if ( SDB_OK != rc )
+      {
+         return rc ;
+      }
+
+      return decimal_update_typemod( &(result._decimal), -1 ) ;
    }
 
    INT32 bsonDecimal::floor( bsonDecimal &result )
    {
-      return decimal_floor( &_decimal, &(result._decimal) ) ;
+      INT32 rc = SDB_OK ;
+      rc = decimal_floor( &_decimal, &(result._decimal) ) ;
+      if ( SDB_OK != rc )
+      {
+         return rc ;
+      }
+
+      return decimal_update_typemod( &(result._decimal), -1 ) ;
    }
 
    INT32 bsonDecimal::mod( bsonDecimal &right, bsonDecimal &result )
    {
-      return decimal_mod( &_decimal, &(right._decimal), &(result._decimal) ) ;
+      INT32 rc = SDB_OK ;
+      rc = decimal_mod( &_decimal, &(right._decimal), &(result._decimal) ) ;
+      if ( SDB_OK != rc )
+      {
+         return rc ;
+      }
+
+      return decimal_update_typemod( &(result._decimal), -1 ) ;
    }
 
    INT32 bsonDecimal::updateTypemod( INT32 typemod )

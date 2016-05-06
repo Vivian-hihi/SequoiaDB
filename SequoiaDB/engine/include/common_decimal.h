@@ -145,7 +145,6 @@ SDB_EXPORT void decimal_init( bson_decimal *decimal );
 SDB_EXPORT int decimal_init1( bson_decimal *decimal, int precision, 
                               int scale ) ;
 
-SDB_EXPORT int decimal_alloc( bson_decimal *decimal, int ndigits ) ;
 SDB_EXPORT void decimal_free( bson_decimal *decimal ) ;
 
 SDB_EXPORT void decimal_set_zero( bson_decimal *decimal ) ;
@@ -167,8 +166,6 @@ SDB_EXPORT int decimal_round( bson_decimal *decimal, int rscale ) ;
 SDB_EXPORT int decimal_to_int( const bson_decimal *decimal ) ;
 SDB_EXPORT double decimal_to_double( const bson_decimal *decimal ) ;
 SDB_EXPORT int64_t decimal_to_long( const bson_decimal *decimal ) ;
-
-int decimal_sprint_len( int sign, int weight, int scale ) ;
 
 SDB_EXPORT int decimal_to_str_get_len( const bson_decimal *decimal, 
                                        int *size ) ;
@@ -227,7 +224,7 @@ SDB_EXPORT int decimal_floor( const bson_decimal *decimal,
 SDB_EXPORT int decimal_mod( const bson_decimal *left, const bson_decimal *right, 
                             bson_decimal *result ) ;
 
-SDB_EXPORT int decimal_update_typemod( bson_decimal *decimal, int typemod ) ;
+int decimal_update_typemod( bson_decimal *decimal, int typemod ) ;
 
 int decimal_is_out_of_precision( bson_decimal *decimal, int typemod ) ;
 
