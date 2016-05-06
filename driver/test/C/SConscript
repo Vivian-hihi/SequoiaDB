@@ -79,7 +79,7 @@ testFiles16 = [
       ]
       
 testFiles17 = [
-        "testTrunOncache.cpp.cpp"
+        "testTrunOncache.cpp"
       ]
 
 #Google Test
