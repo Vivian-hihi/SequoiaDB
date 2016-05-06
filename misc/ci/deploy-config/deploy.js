@@ -116,6 +116,7 @@ function deployClster( mode )
    db.createCataRG( controlHost, cataPort, 
                     databaseDir+"/cata/"+cataPort,
                     config  );
+   sleep(2000);         //wait for cata group to select primary node                    
    var cataRG = db.getRG("SYSCatalogGroup");
    var node1 = cataRG.createNode( hostList[1], cataPort, 
                                   databaseDir+"/cata/"+cataPort,
