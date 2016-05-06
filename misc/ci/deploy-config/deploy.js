@@ -115,9 +115,22 @@ function deployClster( mode )
                 };
    db.createCataRG( controlHost, cataPort, 
                     databaseDir+"/cata/"+cataPort,
-                    config  );
-   sleep(2000);         //wait for cata group to select primary node                    
-   var cataRG = db.getRG("SYSCatalogGroup");
+                    config  ); 
+                                     
+   for(var i = 0; i < 600; i++ )  //wait for cata group to select primary node 
+   {  
+      try
+      {
+         sleep(100); 
+         var cataRG = db.getRG("SYSCatalogGroup"); 
+         break;       
+      } 
+      catch(e)
+      {
+         if( e !== -71 ) throw e;         
+      }   
+   }                                              
+   
    var node1 = cataRG.createNode( hostList[1], cataPort, 
                                   databaseDir+"/cata/"+cataPort,
                                   config );
