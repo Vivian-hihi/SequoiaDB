@@ -295,6 +295,8 @@ namespace engine
       SDB_DMSCB *dmsCB = krCB->getDMSCB() ;
       UINT32 dictBufLen = UTIL_MAX_DICT_TOTAL_SIZE ;
       CHAR *dictBuf = NULL ;
+      BOOLEAN writable = FALSE ;
+      pmdEDUCB *cb = pmdGetKRCB()->getEDUMgr()->getEDU() ;
       ossTimestamp begin ;
       ossTimestamp end ;
 
@@ -386,8 +388,9 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR,
                    "Failed to finalize dictionary, rc: %d", rc ) ;
 
-      rc = dmsCB->writable( pmdGetKRCB()->getEDUMgr()->getEDU() ) ;
+      rc = dmsCB->writable( cb ) ;
       PD_RC_CHECK( rc, PDERROR, "Database is not writable, rc: %d", rc ) ;
+      writable = TRUE ;
 
       rc = _transferDict( su->data(), mbContext, dictBuf, dictBufLen ) ;
       PD_RC_CHECK( rc, PDERROR,
@@ -409,6 +412,11 @@ namespace engine
       if ( su )
       {
          dmsCB->suUnlock( job._suID ) ;
+      }
+
+      if ( writable )
+      {
+         dmsCB->writeDown( cb ) ;
       }
 
       if ( dictBuf )
