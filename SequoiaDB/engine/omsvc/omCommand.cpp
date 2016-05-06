@@ -5152,15 +5152,20 @@ namespace engine
    INT32 omListTaskCommand::_getTaskList( list<BSONObj> &taskList )
    {
       INT32 rc = SDB_OK ;
+      SINT64 numToSkip   = 0 ;
+      SINT64 numToReturn = -1 ;
+      SINT64 contextID   = -1 ;
+
+      const CHAR *pFilter    = NULL ;
+      const CHAR *pSelector  = NULL ;
+      const CHAR *pOrder     = NULL ;
+      const CHAR *pSkip      = NULL ;
+      const CHAR *pReturnNum = NULL ;
+
+      BSONObj filter ;
       BSONObj selector ;
       BSONObj order ;
       BSONObj hint ;
-      SINT64 contextID = -1 ;
-
-      const CHAR *pFilter = NULL ;
-      const CHAR *pSelector = NULL ;
-      const CHAR *pOrder = NULL ;
-      BSONObj filter ;
 
       _restAdaptor->getQuery( _restSession, FIELD_NAME_FILTER, &pFilter ) ;
       if ( NULL != pFilter )
@@ -5202,8 +5207,18 @@ namespace engine
             goto error ;
          }
       }
+      _restAdaptor->getQuery( _restSession, FIELD_NAME_SKIP, &pSkip ) ;
+      if ( NULL != pSkip )
+      {
+         numToSkip = ossAtoll( pSkip ) ;
+      }
+      _restAdaptor->getQuery( _restSession, FIELD_NAME_RETURN_NUM, &pReturnNum ) ;
+      if ( NULL != pReturnNum )
+      {
+         numToReturn = ossAtoll( pReturnNum ) ;
+      }
       rc = rtnQuery( OM_CS_DEPLOY_CL_TASKINFO, selector, filter, order, hint, 
-                     0, _cb, 0, -1, _pDMSCB, _pRTNCB, contextID );
+                     0, _cb, numToSkip, numToReturn, _pDMSCB, _pRTNCB, contextID );
       if ( rc )
       {
          PD_LOG_MSG( PDERROR, "failed to query table[%s],rc=%d", 
