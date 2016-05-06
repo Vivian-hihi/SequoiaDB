@@ -35,7 +35,8 @@
     </initializationActionList>
     
     <!--exist installation?-->
-    <preInstallationActionList>         
+    <preInstallationActionList>
+        <!--upgrde parameter check-->         
         <actionGroup> 
             <actionList>
                 <throwError>
@@ -46,9 +47,11 @@
             <ruleList>
                 <compareText logic="does_not_equal" text="${is_upgrade_mode}" value="true"/>
                 <compareText logic="does_not_equal" text="${is_upgrade_mode}" value="false"/>
+                <compareText logic="does_not_equal" text="${is_upgrade_mode}" value="null"/>
             </ruleList>        
         </actionGroup>              
-            
+        
+        <!--init variable-->    
         <setInstallerVariable name="sys_conf_file" value="/etc/default/sequoiadb"/>
         <setInstallerVariable name="exist_installation" value="false"/>
         <createTimeStamp>
@@ -56,7 +59,8 @@
             <format>%Y-%m-%d-%H:%M:%S</format>
         </createTimeStamp>                
         <setInstallerVariable name="project.rollbackBackupDirectory" value="${installdir}/rollback/BackupDir_${time}"/>
-                                                                                                                                                     
+        
+        <!--if no pass upgrade parameter in commandline-->                                                                                                                                                       
         <actionGroup> 
             <actionList>
                 <propertiesFileGet>
@@ -68,7 +72,7 @@
             </actionList> 
             <ruleEvaluationLogic>and</ruleEvaluationLogic>
             <ruleList>
-                <isFalse value="${is_upgrade_mode}"/>
+                <compareValues value1="${is_upgrade_mode}" logic="equals" value2="null"/>                
                 <fileTest condition="exists" path="${sys_conf_file}"/>                
             </ruleList>           
         </actionGroup>
@@ -84,19 +88,18 @@
                  <fileTest condition="is_not_empty" path="${installdir_inconf}"/>                                         
             </ruleList>          
         </actionGroup>        
-                                                                    
+                                                                       
     </preInstallationActionList> 
     
     <parameterList>
-        
-        <!--stringParameter name="build_project_directory" value="" ask="0"/--> 
-        <stringParameter name="sys_conf_file" value="" ask="0"/>    
+        <!--keep variable in both running time and building time-->
+        <stringParameter name="sys_conf_file"     value="" ask="0"/>    
         <stringParameter name="enterpriseversion" value="" ask="0"/>
                
         <booleanParameter>
             <name>is_upgrade_mode</name>
             <value></value>
-            <default>false</default>  
+            <default>null</default>  
             <cliOptionName>upgrade</cliOptionName>                                                           
             <cliOptionText>${msg(Upgrade.Paramers.Upgrade.Explanation)}</cliOptionText>            
             <ruleList>
@@ -137,20 +140,21 @@
                     </licenseFileList>
                 </licenseParameter>
             </parameterList>
-            <postShowPageActionList>
+            <postShowPageActionList><!--unattended mode do not excute this action-->
                 <showQuestion>
                     <default>yes</default>
                     <text>${msg(Upgrade.NormalMsg.AskUpgrade)}</text>
                     <variable>is_upgrade_mode</variable>
                     <ruleEvaluationLogic>and</ruleEvaluationLogic>
                     <ruleList>
-                        <isFalse value="${is_upgrade_mode}"/>    
+                        <compareValues value1="${is_upgrade_mode}" logic="equals" value2="null"/>                          
                         <isTrue value="${exist_installation}"/>                                                        
                     </ruleList>
                 </showQuestion>    
             </postShowPageActionList>
         </choiceParameterGroup>        
-                                
+        
+        <!--normal mode parameter-->                        
         <parameterGroup>
             <name>install_parameters</name>   
             <ruleList>
@@ -312,8 +316,24 @@
     </parameterList>
     
     <!--select compoment-->
-    <readyToInstallActionList> 
-        
+    <readyToInstallActionList>                        
+        <!--when unattended mode, execute postShowPageActionList-->
+        <actionGroup> 
+            <actionList>
+                <setInstallerVariable name="is_upgrade_mode" value="yes"/>                             
+            </actionList>
+            <ruleEvaluationLogic>and</ruleEvaluationLogic>
+            <ruleList>                                  
+                <compareValues value1="${is_upgrade_mode}" logic="equals" value2="null"/>                          
+                <isTrue value="${exist_installation}"/>                  
+                <compareText>
+                    <text>${installer_interactivity}</text>
+                    <logic>does_not_equal</logic>
+                    <value>normal</value>
+                </compareText>               
+            </ruleList>
+        </actionGroup>             
+          
         <actionGroup> 
             <actionList>
                 <setInstallerVariable name="project.installationType" value="upgrade"/>                             
@@ -322,7 +342,7 @@
                 <isTrue value="${is_upgrade_mode}"/>               
             </ruleList>
         </actionGroup> 
-                                                                                                         
+                                                                                                        
         <componentSelection>
             <select>upgrade_component</select>
             <deselect>normal_component</deselect>
