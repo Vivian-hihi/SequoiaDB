@@ -1283,6 +1283,69 @@ TEST(collection, sdbQuery_with_flag256)
    sdbReleaseConnection ( connection ) ;
 }
 
+TEST(collection, sdbQuery_with_some_flags)
+{
+   sdbConnectionHandle connection = 0 ;
+   sdbCSHandle cs                 = 0 ;
+   sdbCollectionHandle cl         = 0 ;
+   sdbCursorHandle cursor         = 0 ;
+   INT32 rc                       = SDB_OK ;
+   bson obj ;
+   bson index ;
+   bson condition ;
+   bson select ;
+   bson orderBy ;
+   bson hint ;
+   int num = 10;
+
+   rc = initEnv( HOST, SERVER, USER, PASSWD ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   // connect to database
+   rc = sdbConnect ( HOST, SERVER, USER, PASSWD, &connection ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   // get cl
+   rc = getCollection ( connection, COLLECTION_FULL_NAME , &cl ) ;
+   CHECK_MSG("%s%d\n","rc = ", rc) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   //create indexes
+   bson_init( &hint );
+   bson_append_string( &hint, "", "indexForNotExist" );
+   bson_finish( &hint );
+   // insert some records
+
+   insertRecords( cl, num ) ;
+   printf( "query the specifeed record :" OSS_NEWLINE ) ;
+   // execute query
+   rc = sdbQuery1 ( cl, NULL, NULL,
+                    NULL, NULL, 0, -1, 0, &cursor ) ;
+   CHECK_MSG("%s%d\n","rc = ", rc) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   // execute query
+   rc = sdbQuery1 ( cl, NULL, NULL,
+                    NULL, NULL, 0, -1, QUERY_FORCE_HINT, &cursor ) ;
+   CHECK_MSG("%s%d\n","rc = ", rc) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   // execute query
+   rc = sdbQuery1 ( cl, NULL, NULL,
+                    NULL, NULL, 0, -1, QUERY_WITH_RETURNDATA, &cursor ) ;
+   CHECK_MSG("%s%d\n","rc = ", rc) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   // execute query
+   rc = sdbQuery1 ( cl, NULL, NULL,
+                    NULL, NULL, 0, -1, QUERY_FORCE_HINT | QUERY_WITH_RETURNDATA, &cursor ) ;
+   CHECK_MSG("%s%d\n","rc = ", rc) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   // execute query
+   rc = sdbQuery1 ( cl, NULL, NULL,
+                    NULL, NULL, 0, -1, QUERY_FORCE_HINT | QUERY_PARALLED | QUERY_WITH_RETURNDATA, &cursor ) ;
+   CHECK_MSG("%s%d\n","rc = ", rc) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+
+   sdbDisconnect ( connection ) ;
+   sdbReleaseCursor ( cursor ) ;
+   sdbReleaseCollection ( cl ) ;
+   sdbReleaseConnection ( connection ) ;
+}
 
 TEST(collection, sdbGetCount_with_condition)
 {
