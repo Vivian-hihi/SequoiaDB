@@ -851,9 +851,9 @@ struct _QueryFlagStat
 typedef struct _QueryFlagStat QueryFlagStat ;
 
 static QueryFlagStat stats[] = {
-   (QueryFlagStat){ _QUERY_FORCE_HINT, _QUERY_FORCE_HINT },
-   (QueryFlagStat){ _QUERY_PARALLED, _QUERY_PARALLED },
-   (QueryFlagStat){_QUERY_WITH_RETURNDATA,_QUERY_WITH_RETURNDATA }
+   { _QUERY_FORCE_HINT, _QUERY_FORCE_HINT },
+   { _QUERY_PARALLED, _QUERY_PARALLED },
+   {_QUERY_WITH_RETURNDATA,_QUERY_WITH_RETURNDATA }
 } ;
 
 static const QueryFlagStat* _getQueryFlagPair( const INT32 flag )
