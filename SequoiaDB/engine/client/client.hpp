@@ -101,7 +101,7 @@
 
 /** Force to use specified hint to query, if database have no index assigned by the hint, fail to query. */
 #define QUERY_FORCE_HINT          0x00000080
-/** Enable parallel sub query, each sub query will finish scanning diffent part of the data. */
+/** Enable parallel sub query, each sub query will finish scanning different part of the data. */
 #define QUERY_PARALLED            0x00000100
 /** In general, query won't return data until cursor gets from database, when add this flag, return data in query response, it will be more high-performance */
 #define QUERY_WITH_RETURNDATA     0x00000200

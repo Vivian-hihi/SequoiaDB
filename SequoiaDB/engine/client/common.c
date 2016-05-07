@@ -436,11 +436,14 @@ INT32 hash_table_remove( hashTable *tb, const CHAR *key, BOOLEAN dropCS )
       for ( ; index < tb->capacity ; ++index )
       {
          htbNode *toFree = tb->node[ locate ] ;
-         if ( NULL == tb->node[ locate ]->name ||
-              0 == ossStrncmp( toFree->name, key, ossStrlen( key ) ) )
+         if ( NULL != toFree )
          {
-            hash_table_destroy_node( &toFree ) ;
-            tb->node[ locate ] = NULL ;
+            if ( NULL == tb->node[ locate ]->name ||
+                 0 == ossStrncmp( toFree->name, key, ossStrlen( key ) ) )
+            {
+               hash_table_destroy_node( &toFree ) ;
+               tb->node[ locate ] = NULL ;
+            }
          }
       }
    }
@@ -738,10 +741,32 @@ INT32 updateCachedObject( const INT32 code, hashTable *tb, const CHAR *key )
       {
          ossMemcpy( csName, key, ossStrlen( key ) + 1 ) ;
       }
-      removeCachedObject( tb, key, TRUE ) ;
+      removeCachedObject( tb, csName, TRUE ) ;
    }
    else if ( SDB_OK == rc )
    {
+      pos = ossStrchr( key, '.' ) ;
+      if ( NULL != pos )
+      {
+         // update collection space in cache
+         ossMemcpy( csName, key, pos - key ) ;
+         rc = hash_table_fetch( tb, csName, &node ) ;
+         if ( SDB_OK != rc )
+         {
+            goto error ;
+         }
+
+         if ( NULL == node )
+         {
+            rc = insertCachedObject( tb, csName ) ;
+         }
+         else
+         {
+            curTime = (UINT64)time( NULL ) ;
+            node->lastTime = curTime ;
+         }
+      }
+      // update collection in cache
       rc = hash_table_fetch( tb, key, &node ) ;
       if ( SDB_OK != rc )
       {

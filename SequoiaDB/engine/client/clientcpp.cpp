@@ -2066,8 +2066,8 @@ do                                                            \
       // check return msg header
       CHECK_RET_MSGHEADER( _pSendBuffer, _pReceiveBuffer, _connection ) ;
 
-      rc = insertCachedObject( _connection->_getCachedContainer(),
-                               _collectionFullName ) ;
+      rc = removeCachedObject( _connection->_getCachedContainer(),
+                               _collectionFullName, FALSE ) ;
       if ( SDB_OK != rc )
       {
          goto error ;
