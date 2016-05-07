@@ -44,7 +44,21 @@ class SequoiaDB_Domain_Test extends PHPUnit_Framework_TestCase
    {
       if( $isStandlone == false )
       {
-         $err = $db -> createDomain( 'myDomain', array( 'Groups' => array( "db1", "db2" ), 'AutoSplit' => true ) ) ;
+         $groupList = array() ;
+         $cursor = $db -> list( SDB_LIST_GROUPS, '{ $and: [ { GroupName:{ $ne: "SYSCatalogGroup" } }, { GroupName: { $ne: "SYSCoord" } } ] }', array( 'GroupName' => 1 ) ) ;
+         $err = $db -> getError() ;
+         $this -> assertEquals( 0, $err['errno'], '获取group列表错误' ) ;
+         $this -> assertNotEmpty( $cursor, '获取group列表错误' ) ;
+         while( $record = $cursor -> next() )
+         {
+            array_push( $groupList, $record['GroupName'] ) ;
+         }
+         
+         if( count( $groupList ) < 2 )
+         {
+            return ;
+         }
+         $err = $db -> createDomain( 'myDomain', array( 'Groups' => $groupList, 'AutoSplit' => true ) ) ;
          $this -> assertEquals( 0, $err['errno'], 'createDomain错误' ) ;
       }
    }
