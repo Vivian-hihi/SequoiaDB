@@ -35,6 +35,7 @@
 #include "sptObjDesc.hpp"
 #include "ossUtil.hpp"
 #include "sptCommon.hpp"
+#include "../client/common.h"
 
 namespace engine
 {
@@ -42,7 +43,7 @@ namespace engine
 
    _sptScope::_sptScope()
    {
-
+      initCacheStrategy( FALSE, 0, 0 ) ;
    }
 
    _sptScope::~_sptScope()

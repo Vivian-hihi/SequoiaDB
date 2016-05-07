@@ -49,6 +49,7 @@
 #define VERIFY(cond) if ( ! (cond) ) goto error
 
 #include "js_in_cpp.hpp"
+#include "../client/common.h"
 
 namespace engine {
 
@@ -168,6 +169,8 @@ namespace engine {
       VERIFY( InitDbClasses( _context, _global ) ) ;
 
       VERIFY ( SDB_OK == evalInitScripts ( this ) ) ;
+
+      VERIFY ( SDB_OK == initCacheStrategy( FALSE, 0, 0 ) ) ;
 
       ret = TRUE ;
 
