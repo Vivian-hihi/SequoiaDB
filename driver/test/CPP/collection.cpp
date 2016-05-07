@@ -570,6 +570,55 @@ TEST(collection,query)
    connection.disconnect() ;
 }
 
+TEST(collection, query_with_flags)
+{
+   // initialize local variables
+   const CHAR *pHostName                    = HOST ;
+   const CHAR *pPort                        = SERVER ;
+   const CHAR *pUsr                         = USER ;
+   const CHAR *pPasswd                      = PASSWD ;
+   INT32 rc = SDB_OK ;
+
+   rc = initEnv() ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   BSONObj obj ;
+   sdbclient::sdb connection ;
+   rc = connection.connect( pHostName, pPort, pUsr, pPasswd ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   sdbclient::sdbCollectionSpace cs ;
+   rc = getCollectionSpace( connection, COLLECTION_SPACE_NAME, cs ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   sdbclient::sdbCollection cl ;
+   rc = getCollection( cs, COLLECTION_NAME, cl ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   sdbclient::sdbCursor cursor ;
+
+   // flag is 0
+   rc = cl.query( cursor, obj, obj, obj, obj, 0, -1, 0 ) ;
+   CHECK_MSG("%s%d\n","rc = ",rc) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   // flag
+   rc = cl.query( cursor, obj, obj, obj, obj, 0, -1, QUERY_FORCE_HINT ) ;
+   CHECK_MSG("%s%d\n","rc = ",rc) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   // flag
+   rc = cl.query( cursor, obj, obj, obj, obj, 0, -1, QUERY_WITH_RETURNDATA ) ;
+   CHECK_MSG("%s%d\n","rc = ",rc) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   // flag
+   rc = cl.query( cursor, obj, obj, obj, obj, 0, -1,
+                  QUERY_PARALLED | QUERY_WITH_RETURNDATA ) ;
+   CHECK_MSG("%s%d\n","rc = ",rc) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   // flag
+   rc = cl.query( cursor, obj, obj, obj, obj, 0, -1,
+                  QUERY_WITH_RETURNDATA | QUERY_FORCE_HINT | QUERY_PARALLED ) ;
+   CHECK_MSG("%s%d\n","rc = ",rc) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+
+   connection.disconnect() ;
+}
+
 TEST(collection,queryOne)
 {
    // initialize local variables
