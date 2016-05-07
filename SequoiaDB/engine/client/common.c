@@ -494,7 +494,7 @@ INT32 hash_table_create( hashTable **tb, const UINT32 bucketSize )
 
    if ( NULL == tb )
    {
-      goto error ;
+      goto done ;
    }
 
    ptr = ( CHAR * )SDB_OSS_MALLOC( sizeof(hashTable) ) ;
@@ -512,7 +512,7 @@ INT32 hash_table_create( hashTable **tb, const UINT32 bucketSize )
       rc = SDB_OOM ;
       goto error ;
    }
-   ossMemset( ptr, 0, sizeof(htbNode *) * maxCachedSlotCount ) ;
+   ossMemset( ptr, 0, sizeof(htbNode *) * bucketSize ) ;
    (*tb)->node = (htbNode **)ptr ;
 
 done:
@@ -535,7 +535,6 @@ error:
 
 INT32 hash_table_destroy( hashTable **tb )
 {
-   INT32 rc = SDB_OK ;
    UINT32 idx = 0 ;
    if ( !cacheEnabled )
    {
@@ -544,7 +543,7 @@ INT32 hash_table_destroy( hashTable **tb )
 
    if ( NULL == tb )
    {
-      goto error ;
+      goto done ;
    }
 
    if ( NULL == *tb )
@@ -566,9 +565,7 @@ INT32 hash_table_destroy( hashTable **tb )
    (*tb) = NULL ;
 
 done:
-   return rc ;
-error:
-   goto done ;
+   return SDB_OK ;
 }
 
 INT32 insertCachedObject( hashTable *tb, const CHAR *key )
@@ -705,7 +702,6 @@ error:
 INT32 updateCachedObject( const INT32 code, hashTable *tb, const CHAR *key )
 {
    INT32 rc       = SDB_OK ;
-   UINT32 idx     = 0 ;
    htbNode *node  = NULL ;
    UINT64 curTime = 0 ;
    CHAR *pos      = NULL ;
@@ -842,6 +838,82 @@ error:
    goto done ;
 }
 
+/// for regulate query flag
+#define _QUERY_FORCE_HINT          0x00000080
+#define _QUERY_PARALLED            0x00000100
+#define _QUERY_WITH_RETURNDATA     0x00000200
+
+struct _QueryFlagStat
+{
+   UINT32 _original ;
+   UINT32 _new ;
+} ;
+typedef struct _QueryFlagStat QueryFlagStat ;
+
+static QueryFlagStat stats[] = {
+   (QueryFlagStat){ _QUERY_FORCE_HINT, _QUERY_FORCE_HINT },
+   (QueryFlagStat){ _QUERY_PARALLED, _QUERY_PARALLED },
+   (QueryFlagStat){_QUERY_WITH_RETURNDATA,_QUERY_WITH_RETURNDATA }
+} ;
+
+static const QueryFlagStat* _getQueryFlagPair( const INT32 flag )
+{
+   QueryFlagStat *pRet = NULL ;
+   INT32 num = sizeof(stats) / sizeof(QueryFlagStat) ;
+   INT32 i = 0 ;
+   for ( ; i < num; i++ )
+   {
+      if ( flag == (INT32)(stats[i]._original) )
+      {
+         pRet = &(stats[i]) ;
+         break ;
+      }
+   }
+   return pRet ;
+}
+INT32 regulateQueryFlags( INT32 *newFlags, const INT32 flags )
+{
+   INT32 rc = SDB_OK ;
+   const QueryFlagStat* pPair = NULL ;
+   INT32 tmpFlags = flags ;
+   if ( NULL == newFlags )
+   {
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+   if ( flags & _QUERY_FORCE_HINT )
+   {
+      pPair = _getQueryFlagPair( _QUERY_FORCE_HINT ) ;
+      if ( NULL != pPair && pPair->_original != pPair->_new )
+      {
+         tmpFlags &= ~(pPair->_original) ;
+         tmpFlags |= pPair->_new ;
+      }
+   }
+   if ( flags & _QUERY_PARALLED )
+   {
+      pPair = _getQueryFlagPair( _QUERY_PARALLED ) ;
+      if ( NULL != pPair && pPair->_original != pPair->_new )
+      {
+         tmpFlags &= ~(pPair->_original) ;
+         tmpFlags |= pPair->_new ;
+      }
+   }
+   if ( flags & _QUERY_WITH_RETURNDATA )
+   {
+      pPair = _getQueryFlagPair( _QUERY_WITH_RETURNDATA ) ;
+      if ( NULL != pPair && pPair->_original != pPair->_new )
+      {
+         tmpFlags &= ~(pPair->_original) ;
+         tmpFlags |= pPair->_new ;
+      }
+   }
+   *newFlags = tmpFlags ;
+done:
+   return rc ;
+error:
+   goto done ;
+}
 static void clientEndianConvertHeader ( MsgHeader *pHeader )
 {
    MsgHeader newheader ;

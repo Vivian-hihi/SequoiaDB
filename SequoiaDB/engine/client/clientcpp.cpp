@@ -1373,6 +1373,7 @@ do                                                            \
                   PD_PACK_LONG(numToReturn),
                   PD_PACK_INT( flags ) );
       INT32 rc              = SDB_OK ;
+      INT32 newFlags        = flags ;
       _sdbCursor *pCursor   = NULL ;
       
       // check
@@ -1381,17 +1382,26 @@ do                                                            \
          rc = SDB_INVALIDARG ;
          goto done;
       }
-      // try to set flag to be find one
+      // try to regulate query flags
+      if ( 0 != flags )
+      {
+         rc = regulateQueryFlags( &newFlags, flags ) ;
+         if ( SDB_OK != rc )
+         {
+            goto error ;
+         }
+      }
+      // try to set flag to be find one      
       if ( 1 == numToReturn )
       {
-         flags |= FLG_QUERY_WITH_RETURNDATA ;
+         newFlags |= FLG_QUERY_WITH_RETURNDATA ;
       }
 
       // run command
       rc = _connection->_runCommand( _collectionFullName,
                                      &condition, &selected,
                                      &orderBy, &hint,
-                                     flags, 0, numToSkip, numToReturn,
+                                     newFlags, 0, numToSkip, numToReturn,
                                      &pCursor ) ;
       if ( SDB_OK != rc )
       {
@@ -2827,7 +2837,7 @@ error:
                               const bson::BSONObj &hint,
                               INT64 numToSkip,
                               INT64 numToReturn,
-                              INT32 flag,
+                              INT32 flags,
                               const bson::BSONObj &options )
    {
       PD_TRACE_ENTRY ( SDB_CLIENT_EXPLAIN ) ;
@@ -2855,11 +2865,11 @@ error:
       }
       // get query explain
       rc = query( cursor, condition, select, orderBy, newObj,
-                  numToSkip, numToReturn, flag | FLG_QUERY_EXPLAIN ) ;
+                  numToSkip, numToReturn, flags | FLG_QUERY_EXPLAIN ) ;
       if ( rc )
       {
          goto error ;
-      }  
+      }
 
    done:
       PD_TRACE_EXITRC ( SDB_CLIENT_EXPLAIN, rc ) ;

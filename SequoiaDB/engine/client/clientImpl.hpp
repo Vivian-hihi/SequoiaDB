@@ -403,7 +403,7 @@ namespace sdbclient
                               const bson::BSONObj &hint      = _sdbStaticObject,
                               INT64 numToSkip                = 0,
                               INT64 numToReturn              = -1,
-                              INT32 flag                     = 0,
+                              INT32 flags                    = 0,
                               const bson::BSONObj &options   = _sdbStaticObject ) ;
 
       virtual INT32 explain ( sdbCursor &cursor,
@@ -413,11 +413,11 @@ namespace sdbclient
                               const bson::BSONObj &hint      = _sdbStaticObject,
                               INT64 numToSkip                = 0,
                               INT64 numToReturn              = -1,
-                              INT32 flag                     = 0,
+                              INT32 flags                    = 0,
                               const bson::BSONObj &options   = _sdbStaticObject )
       {
          return explain( &cursor.pCursor, condition, select, orderBy, hint,
-                         numToSkip, numToReturn, flag, options ) ;
+                         numToSkip, numToReturn, flags, options ) ;
       }
 
       /// lob

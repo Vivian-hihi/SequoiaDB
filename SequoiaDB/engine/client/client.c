@@ -5681,6 +5681,7 @@ SDB_EXPORT INT32 sdbQuery1 ( sdbCollectionHandle cHandle,
                              sdbCursorHandle *handle )
 {
    INT32 rc                = SDB_OK ;
+   INT32 newFlags          = flags ;
    sdbCursorHandle cursor  = SDB_INVALID_HANDLE ;
    sdbCollectionStruct *cs = (sdbCollectionStruct*)cHandle ;
    sdbConnectionStruct *connection = (sdbConnectionStruct*)(cs->_connection) ;
@@ -5692,16 +5693,25 @@ SDB_EXPORT INT32 sdbQuery1 ( sdbCollectionHandle cHandle,
       goto error ;
    }
 
+   if ( 0 != flags )
+   {
+      rc = regulateQueryFlags( &newFlags, flags ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
+   }
+
    if ( 1 == numToReturn )
    {
-      flags |= FLG_QUERY_WITH_RETURNDATA ;
+      newFlags |= FLG_QUERY_WITH_RETURNDATA ;
    }
 
    rc = _runCommand2( cs->_connection,
                       &cs->_pSendBuffer, &cs->_sendBufferSize,
                       &cs->_pReceiveBuffer, &cs->_receiveBufferSize,
                       cs->_collectionFullName,
-                      flags, 0, numToSkip, numToReturn,
+                      newFlags, 0, numToSkip, numToReturn,
                       condition, select, orderBy, hint,
                       &cursor ) ;
    if ( SDB_OK != rc )
