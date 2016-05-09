@@ -550,7 +550,7 @@ namespace SequoiaDB
         }
 
         /** \fn DBCursor Query(BsonDocument query, BsonDocument selector, BsonDocument orderBy, BsonDocument hint, 
-         *                     long skipRows, long returnRows, int flags) 
+         *                     long skipRows, long returnRows, int flag) 
          *  \brief Find documents of current collection
          *  \param query The matching condition
          *  \paramselector The selective rule
@@ -559,7 +559,7 @@ namespace SequoiaDB
          *           eg:{"":"ageIndex"}
          *  \param skipRows Skip the first numToSkip documents, default is 0
          *  \param returnRows Only return numToReturn documents, default is -1 for returning all results
-         *  \param flags The query flags, default to be 0. Please see the definition of follow flags for more detail. Usage: e.g. set ( DBQuery.FLG_QUERY_FORCE_HINT | DBQuery.FLG_QUERY_WITH_RETURNDATA ) to param flags
+         *  \param flag The query flag, default to be 0. Please see the definition of follow flags for more detail. Usage: e.g. set ( DBQuery.FLG_QUERY_FORCE_HINT | DBQuery.FLG_QUERY_WITH_RETURNDATA ) to param flag
          *
          *      DBQuery.FLG_QUERY_FORCE_HINT
          *      DBQuery.FLG_QUERY_PARALLED
@@ -570,8 +570,9 @@ namespace SequoiaDB
          *  \exception System.Exception
          */
         public DBCursor Query(BsonDocument query, BsonDocument selector, BsonDocument orderBy, BsonDocument hint,
-                              long skipRows, long returnRows, int flags)
+                              long skipRows, long returnRows, int flag)
         {
+            int newFlags = DBQuery.RegulateFlag(flag);
             BsonDocument dummyObj = new BsonDocument();
             if (query == null)
                 query = dummyObj;
@@ -587,24 +588,24 @@ namespace SequoiaDB
             }
             if (returnRows == 1)
             {
-                flags = flags | DBQuery.FLG_QUERY_WITH_RETURNDATA;
+                newFlags = newFlags | DBQuery.FLG_QUERY_WITH_RETURNDATA;
             }
             SDBMessage rtnSDBMessage = AdminCommand(collectionFullName, query, selector,
-                                                    orderBy, hint, skipRows, returnRows, flags);
-            int flag = rtnSDBMessage.Flags;
-            if (flag != 0)
-                if (flag == SequoiadbConstants.SDB_DMS_EOC)
+                                                    orderBy, hint, skipRows, returnRows, newFlags);
+            int flags = rtnSDBMessage.Flags;
+            if (flags != 0)
+                if (flags == SequoiadbConstants.SDB_DMS_EOC)
                     return null;
                 else
                 {
-                    throw new BaseException(flag);
+                    throw new BaseException(flags);
                 }
 
             return new DBCursor(rtnSDBMessage, this);
         }
 
         private DBCursor _queryAndModify(BsonDocument query, BsonDocument selector, BsonDocument orderBy, BsonDocument hint,
-                                         BsonDocument update, long skipRows, long returnRows, int flags, bool isUpdate, bool returnNew)
+                                         BsonDocument update, long skipRows, long returnRows, int flag, bool isUpdate, bool returnNew)
         {
             BsonDocument modify = new BsonDocument();
             if (isUpdate)
@@ -631,8 +632,8 @@ namespace SequoiaDB
             }
             newHint.Add(SequoiadbConstants.FIELD_MODIFY, modify);
 
-            flags |= DBQuery.FLG_QUERY_MODIFY;
-            return Query(query, selector, orderBy, newHint, skipRows, returnRows, flags);
+            flag |= DBQuery.FLG_QUERY_MODIFY;
+            return Query(query, selector, orderBy, newHint, skipRows, returnRows, flag);
         }
 
         /** \fn DBCursor QueryAndUpdate(BsonDocument query, BsonDocument selector, BsonDocument orderBy, BsonDocument hint, 
@@ -646,7 +647,7 @@ namespace SequoiaDB
          *  \param update The update rule
          *  \param skipRows Skip the first numToSkip documents, default is 0
          *  \param returnRows Only return numToReturn documents, default is -1 for returning all results
-         *  \param flags The query flags, default to be 0. Please see the definition of follow flags for more detail. Usage: e.g. set ( DBQuery.FLG_QUERY_FORCE_HINT | DBQuery.FLG_QUERY_WITH_RETURNDATA ) to param flags
+         *  \param flag The query flag, default to be 0. Please see the definition of follow flags for more detail. Usage: e.g. set ( DBQuery.FLG_QUERY_FORCE_HINT | DBQuery.FLG_QUERY_WITH_RETURNDATA ) to param flag
          *
          *      DBQuery.FLG_QUERY_FORCE_HINT
          *      DBQuery.FLG_QUERY_PARALLED
@@ -658,13 +659,13 @@ namespace SequoiaDB
          *  \exception System.Exception
          */
         public DBCursor QueryAndUpdate(BsonDocument query, BsonDocument selector, BsonDocument orderBy, BsonDocument hint,
-                                       BsonDocument update, long skipRows, long returnRows, int flags, bool returnNew)
+                                       BsonDocument update, long skipRows, long returnRows, int flag, bool returnNew)
         {
-            return _queryAndModify(query, selector, orderBy, hint, update, skipRows, returnRows, flags, true, returnNew);
+            return _queryAndModify(query, selector, orderBy, hint, update, skipRows, returnRows, flag, true, returnNew);
         }
 
         /** \fn DBCursor QueryAndRemove(BsonDocument query, BsonDocument selector, BsonDocument orderBy, BsonDocument hint, 
-         *                              long skipRows, long returnRows, int flags) 
+         *                              long skipRows, long returnRows, int flag) 
          *  \brief Find documents of current collection and remove
          *  \param query The matching condition
          *  \paramselector The selective rule
@@ -673,7 +674,7 @@ namespace SequoiaDB
          *           eg:{"":"ageIndex"}
          *  \param skipRows Skip the first numToSkip documents, default is 0
          *  \param returnRows Only return numToReturn documents, default is -1 for returning all results
-         *  \param flags The query flags, default to be 0. Please see the definition of follow flags for more detail. Usage: e.g. set ( DBQuery.FLG_QUERY_FORCE_HINT | DBQuery.FLG_QUERY_WITH_RETURNDATA ) to param flags
+         *  \param flag The query flag, default to be 0. Please see the definition of follow flags for more detail. Usage: e.g. set ( DBQuery.FLG_QUERY_FORCE_HINT | DBQuery.FLG_QUERY_WITH_RETURNDATA ) to param flag
          *
          *      DBQuery.FLG_QUERY_FORCE_HINT
          *      DBQuery.FLG_QUERY_PARALLED
@@ -684,13 +685,13 @@ namespace SequoiaDB
          *  \exception System.Exception
          */
         public DBCursor QueryAndRemove(BsonDocument query, BsonDocument selector, BsonDocument orderBy, BsonDocument hint,
-                                       long skipRows, long returnRows, int flags)
+                                       long skipRows, long returnRows, int flag)
         {
-            return _queryAndModify(query, selector, orderBy, hint, null, skipRows, returnRows, flags, false, false);
+            return _queryAndModify(query, selector, orderBy, hint, null, skipRows, returnRows, flag, false, false);
         }
 
         /** \fn DBCursor Explain(BsonDocument query, BsonDocument selector, BsonDocument orderBy, BsonDocument hint,
-         *                       long skipRows, long returnRows, int flags, BsonDocument options) 
+         *                       long skipRows, long returnRows, int flag, BsonDocument options) 
          *  \brief Find documents of current collection
          *  \param query The matching condition
          *  \paramselector The selective rule
@@ -699,7 +700,7 @@ namespace SequoiaDB
          *           eg:{"":"ageIndex"}
          *  \param skipRows Skip the first numToSkip documents, default is 0
          *  \param returnRows Only return numToReturn documents, default is -1 for returning all results
-         *  \param flags The query flags, default to be 0. Please see the definition of follow flags for more detail. Usage: e.g. set ( DBQuery.FLG_QUERY_FORCE_HINT | DBQuery.FLG_QUERY_WITH_RETURNDATA ) to param flags
+         *  \param flag The query flag, default to be 0. Please see the definition of follow flags for more detail. Usage: e.g. set ( DBQuery.FLG_QUERY_FORCE_HINT | DBQuery.FLG_QUERY_WITH_RETURNDATA ) to param flag
          *
          *      DBQuery.FLG_QUERY_FORCE_HINT
          *      DBQuery.FLG_QUERY_PARALLED
@@ -715,7 +716,7 @@ namespace SequoiaDB
          *  \exception System.Exception
          */
         public DBCursor Explain(BsonDocument query, BsonDocument selector, BsonDocument orderBy, BsonDocument hint,
-                                long skipRows, long returnRows, int flags, BsonDocument options)
+                                long skipRows, long returnRows, int flag, BsonDocument options)
         {
             BsonDocument newObj = new BsonDocument();
             if (null != hint)
@@ -727,7 +728,7 @@ namespace SequoiaDB
                 newObj.Add(SequoiadbConstants.FIELD_OPTIONS, options);
             }
 
-            return Query(query, selector, orderBy, newObj, skipRows, returnRows, flags | DBQuery.FLG_QUERY_EXPLAIN);
+            return Query(query, selector, orderBy, newObj, skipRows, returnRows, flag | DBQuery.FLG_QUERY_EXPLAIN);
         }
 
         /** \fn DBCursor GetIndexes()

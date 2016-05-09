@@ -1,4 +1,5 @@
 ﻿using SequoiaDB.Bson;
+using System.Collections.Generic;
 
 /** \namespace SequoiaDB
  *  \brief SequoiaDB Driver for C#.Net
@@ -42,6 +43,12 @@ namespace SequoiaDB
 	     *  \brief Query and modify
 	     */
         internal const int FLG_QUERY_MODIFY = 0x00001000;
+
+        internal static readonly Dictionary<int, int> flagsDir = new Dictionary<int, int>() {
+            {FLG_QUERY_FORCE_HINT, FLG_QUERY_FORCE_HINT},
+            {FLG_QUERY_PARALLED, FLG_QUERY_PARALLED},
+            {FLG_QUERY_WITH_RETURNDATA, FLG_QUERY_WITH_RETURNDATA}
+        };
 
        /** \property Matcher
         *  \brief Matching rule
@@ -93,6 +100,40 @@ namespace SequoiaDB
         {
             get { return flag; }
             set { flag = value; }
+        }
+
+	    private static int _Regulate(int newFlags, int originalFlag) 
+        {
+		    int retFlags = newFlags;
+            int tmpFlag = 0;
+            if (flagsDir.ContainsKey(originalFlag))
+            {
+                tmpFlag = flagsDir[originalFlag];
+                if (tmpFlag != originalFlag)
+                {
+                    retFlags &= ~originalFlag;
+                    retFlags |= tmpFlag;
+                }
+            }
+		    return retFlags;
+	    }
+
+        internal static int RegulateFlag(int flags)
+        {
+            int newFlags = flags;
+            if ((flags & FLG_QUERY_FORCE_HINT) != 0)
+            {
+                newFlags = _Regulate(newFlags, FLG_QUERY_FORCE_HINT);
+            }
+            if ((flags & FLG_QUERY_PARALLED) != 0)
+            {
+                newFlags = _Regulate(newFlags, FLG_QUERY_PARALLED);
+            }
+            if ((flags & FLG_QUERY_WITH_RETURNDATA) != 0)
+            {
+                newFlags = _Regulate(newFlags, FLG_QUERY_WITH_RETURNDATA);
+            }
+            return newFlags;
         }
 
    }
