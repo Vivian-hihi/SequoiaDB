@@ -896,17 +896,17 @@ static const QueryFlagStat* _getQueryFlagPair( const INT32 flag )
    }
    return pRet ;
 }
-INT32 regulateQueryFlags( INT32 *newFlags, const INT32 flags )
+INT32 regulateQueryFlags( INT32 *newFlags, const INT32 flag )
 {
    INT32 rc = SDB_OK ;
    const QueryFlagStat* pPair = NULL ;
-   INT32 tmpFlags = flags ;
+   INT32 tmpFlags = flag ;
    if ( NULL == newFlags )
    {
       rc = SDB_INVALIDARG ;
       goto error ;
    }
-   if ( flags & _QUERY_FORCE_HINT )
+   if ( flag & _QUERY_FORCE_HINT )
    {
       pPair = _getQueryFlagPair( _QUERY_FORCE_HINT ) ;
       if ( NULL != pPair && pPair->_original != pPair->_new )
@@ -915,7 +915,7 @@ INT32 regulateQueryFlags( INT32 *newFlags, const INT32 flags )
          tmpFlags |= pPair->_new ;
       }
    }
-   if ( flags & _QUERY_PARALLED )
+   if ( flag& _QUERY_PARALLED )
    {
       pPair = _getQueryFlagPair( _QUERY_PARALLED ) ;
       if ( NULL != pPair && pPair->_original != pPair->_new )
@@ -924,7 +924,7 @@ INT32 regulateQueryFlags( INT32 *newFlags, const INT32 flags )
          tmpFlags |= pPair->_new ;
       }
    }
-   if ( flags & _QUERY_WITH_RETURNDATA )
+   if ( flag & _QUERY_WITH_RETURNDATA )
    {
       pPair = _getQueryFlagPair( _QUERY_WITH_RETURNDATA ) ;
       if ( NULL != pPair && pPair->_original != pPair->_new )

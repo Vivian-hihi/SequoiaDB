@@ -316,7 +316,7 @@ namespace sdbclient
                              const bson::BSONObj &hint      = _sdbStaticObject,
                              INT64 numToSkip    = 0,
                              INT64 numToReturn  = -1,
-                             INT32 flags        = 0
+                             INT32 flag         = 0
                            ) = 0 ;
 
       virtual INT32 query  ( sdbCursor &cursor,
@@ -326,7 +326,7 @@ namespace sdbclient
                              const bson::BSONObj &hint      = _sdbStaticObject,
                              INT64 numToSkip    = 0,
                              INT64 numToReturn  = -1,
-                             INT32 flags        = 0
+                             INT32 flag         = 0
                            ) = 0 ;
 
       virtual INT32 queryOne( bson::BSONObj &obj,
@@ -335,7 +335,7 @@ namespace sdbclient
                               const bson::BSONObj &orderBy   = _sdbStaticObject,
                               const bson::BSONObj &hint      = _sdbStaticObject,
                               INT64 numToSkip    = 0,
-                              INT32 flags        = 0 ) = 0 ;
+                              INT32 flag         = 0 ) = 0 ;
 
       // query objects from current collection and update
       // given:
@@ -355,7 +355,7 @@ namespace sdbclient
                                       const bson::BSONObj &hint      = _sdbStaticObject,
                                       INT64 numToSkip                = 0,
                                       INT64 numToReturn              = -1,
-                                      INT32 flags                    = 0,
+                                      INT32 flag                     = 0,
                                       BOOLEAN returnNew              = FALSE 
                                    ) = 0 ;
 
@@ -374,7 +374,7 @@ namespace sdbclient
                                       const bson::BSONObj &hint      = _sdbStaticObject,
                                       INT64 numToSkip                = 0,
                                       INT64 numToReturn              = -1,
-                                      INT32 flags                    = 0 
+                                      INT32 flag                     = 0 
                                    ) = 0 ;
 
       //virtual INT32 rename ( const CHAR *pNewName ) = 0 ;
@@ -818,7 +818,7 @@ namespace sdbclient
                      const bson::BSONObj &hint,
                      INT64 numToSkip,
                      INT64 numToReturn,
-                     INT32 flags
+                     INT32 flag
                    )
     \brief Get the matching documents in current collection
     \param [in] condition The matching rule, return all the documents if not provided
@@ -827,7 +827,7 @@ namespace sdbclient
     \param [in] hint The hint, automatically match the optimal hint if not provided
     \param [in] numToSkip Skip the first numToSkip documents, default is 0
     \param [in] numToReturn Only return numToReturn documents, default is -1 for returning all results
-    \param [in] flags The query flags, default to be 0. Please see the definition of follow flags for more detail. Usage: e.g. set ( QUERY_FORCE_HINT | QUERY_WITH_RETURNDATA ) to param flags
+    \param [in] flag The query flag, default to be 0. Please see the definition of follow flags for more detail. Usage: e.g. set ( QUERY_FORCE_HINT | QUERY_WITH_RETURNDATA ) to param flag
 
         QUERY_FORCE_HINT
         QUERY_PARALLED
@@ -844,13 +844,13 @@ namespace sdbclient
                      const bson::BSONObj &hint      = _sdbStaticObject,
                      INT64 numToSkip          = 0,
                      INT64 numToReturn        = -1,
-                     INT32 flags              = 0
+                     INT32 flag               = 0
                    )
       {
          if ( !pCollection )
             return SDB_NOT_CONNECTED ;
          return pCollection->query ( cursor, condition, selected, orderBy,
-                                     hint, numToSkip, numToReturn, flags ) ;
+                                     hint, numToSkip, numToReturn, flag ) ;
       }
 
 /** \fn INT32 queryOne( BSONObj &obj,
@@ -859,7 +859,7 @@ namespace sdbclient
                         const bson::BSONObj &orderBy,
                         const bson::BSONObj &hint,
                         INT64 numToSkip,
-                        INT32 flags
+                        INT32 flag
                        )
     \brief Get the first matching documents in current collection
     \param [in] condition The matching rule, return all the documents if not provided
@@ -867,7 +867,7 @@ namespace sdbclient
     \param [in] orderBy The ordered rule, result set is unordered if not provided
     \param [in] hint The hint, automatically match the optimal hint if not provided
     \param [in] numToSkip Skip the first numToSkip documents, default is 0
-    \param [in] flags The query flags, default to be 0. Please see the definition of follow flags for more detail. Usage: e.g. set ( QUERY_FORCE_HINT | QUERY_WITH_RETURNDATA ) to param flags
+    \param [in] flag The query flag, default to be 0. Please see the definition of follow flags for more detail. Usage: e.g. set ( QUERY_FORCE_HINT | QUERY_WITH_RETURNDATA ) to param flag
 
         QUERY_FORCE_HINT
         QUERY_PARALLED
@@ -883,12 +883,12 @@ namespace sdbclient
                       const bson::BSONObj &orderBy   = _sdbStaticObject,
                       const bson::BSONObj &hint      = _sdbStaticObject,
                       INT64 numToSkip    = 0,
-                      INT32 flags        = 0 )
+                      INT32 flag         = 0 )
       {
          if ( !pCollection )
             return SDB_NOT_CONNECTED ;
          return pCollection->queryOne( obj, condition, selected, orderBy,
-                                       hint, numToSkip, flags ) ;
+                                       hint, numToSkip, flag ) ;
       }
 
 /** \fn INT32 queryAndUpdate ( sdbCursor &cursor,
@@ -899,7 +899,7 @@ namespace sdbclient
                                const bson::BSONObj &hint,
                                INT64 numToSkip,
                                INT64 numToReturn,
-                               INT32 flags,
+                               INT32 flag,
                                BOOLEAN returnNew
                             )
     \brief Get the matching documents in current collection and update
@@ -910,7 +910,7 @@ namespace sdbclient
     \param [in] hint The hint, automatically match the optimal hint if not provided
     \param [in] numToSkip Skip the first numToSkip documents, default is 0
     \param [in] numToReturn Only return numToReturn documents, default is -1 for returning all results
-    \param [in] flags The query flags, default to be 0. Please see the definition of follow flags for more detail. Usage: e.g. set ( QUERY_FORCE_HINT | QUERY_WITH_RETURNDATA ) to param flags
+    \param [in] flag The query flag, default to be 0. Please see the definition of follow flags for more detail. Usage: e.g. set ( QUERY_FORCE_HINT | QUERY_WITH_RETURNDATA ) to param flag
 
         QUERY_FORCE_HINT
         QUERY_PARALLED
@@ -929,7 +929,7 @@ namespace sdbclient
                              const bson::BSONObj &hint      = _sdbStaticObject,
                              INT64 numToSkip                = 0,
                              INT64 numToReturn              = -1,
-                             INT32 flags                    = 0,
+                             INT32 flag                     = 0,
                              BOOLEAN returnNew              = FALSE
                           )
       {
@@ -937,7 +937,7 @@ namespace sdbclient
             return SDB_NOT_CONNECTED ;
          return pCollection->queryAndUpdate( &cursor.pCursor , update, condition,
                                              selected, orderBy, hint,
-                                             numToSkip, numToReturn, flags, returnNew ) ;
+                                             numToSkip, numToReturn, flag, returnNew ) ;
       }
 
 /** \fn INT32 queryAndRemove ( sdbCursor &cursor,
@@ -947,7 +947,7 @@ namespace sdbclient
                                const bson::BSONObj &hint,
                                INT64 numToSkip,
                                INT64 numToReturn,
-                               INT32 flags
+                               INT32 flag
                             )
     \brief Get the matching documents in current collection and remove
     \param [in] condition The matching rule, return all the documents if not provided
@@ -956,7 +956,7 @@ namespace sdbclient
     \param [in] hint The hint, automatically match the optimal hint if not provided
     \param [in] numToSkip Skip the first numToSkip documents, default is 0
     \param [in] numToReturn Only return numToReturn documents, default is -1 for returning all results
-    \param [in] flags The query flags, default to be 0. Please see the definition of follow flags for more detail. Usage: e.g. set ( QUERY_FORCE_HINT | QUERY_WITH_RETURNDATA ) to param flags
+    \param [in] flag The query flag, default to be 0. Please see the definition of follow flags for more detail. Usage: e.g. set ( QUERY_FORCE_HINT | QUERY_WITH_RETURNDATA ) to param flag
 
         QUERY_FORCE_HINT
         QUERY_PARALLED
@@ -973,14 +973,14 @@ namespace sdbclient
                              const bson::BSONObj &hint      = _sdbStaticObject,
                              INT64 numToSkip                = 0,
                              INT64 numToReturn              = -1,
-                             INT32 flags                    = 0
+                             INT32 flag                     = 0
                           )
       {
          if ( !pCollection )
             return SDB_NOT_CONNECTED ;
          return pCollection->queryAndRemove( &cursor.pCursor , condition,
                                              selected, orderBy, hint,
-                                             numToSkip, numToReturn, flags ) ;
+                                             numToSkip, numToReturn, flag ) ;
       }
 
 /* \fn INT32 rename ( const CHAR *pNewName )
@@ -1283,7 +1283,7 @@ namespace sdbclient
                     const bson::BSONObj &hint,
                     INT64 numToSkip,
                     INT64 numToReturn,
-                    INT32 flags,
+                    INT32 flag,
                     const bson::BSONObj &options )
     \brief Get access plan of query.
     \param [in] condition The matching rule, return all the documents if null
@@ -1292,7 +1292,7 @@ namespace sdbclient
     \param [in] hint The hint, automatically match the optimal hint if null
     \param [in] numToSkip Skip the first numToSkip documents, never skip if this parameter is 0
     \param [in] numToReturn Only return numToReturn documents, return all if this parameter is -1
-    \param [in] flags The query flags, default to be 0. Please see the definition of follow flags for more detail. Usage: e.g. set ( QUERY_FORCE_HINT | QUERY_WITH_RETURNDATA ) to param flags
+    \param [in] flag The query flag, default to be 0. Please see the definition of follow flags for more detail. Usage: e.g. set ( QUERY_FORCE_HINT | QUERY_WITH_RETURNDATA ) to param flag
 
         QUERY_FORCE_HINT
         QUERY_PARALLED
@@ -1315,13 +1315,13 @@ namespace sdbclient
                     const bson::BSONObj &hint      = _sdbStaticObject,
                     INT64 numToSkip                = 0,
                     INT64 numToReturn              = -1,
-                    INT32 flags                    = 0,
+                    INT32 flag                     = 0,
                     const bson::BSONObj &options   = _sdbStaticObject )
     {
        if ( !pCollection )
          return SDB_NOT_CONNECTED ;
        return pCollection->explain( cursor, condition, select, orderBy, hint,
-                                    numToSkip, numToReturn, flags, options ) ;
+                                    numToSkip, numToReturn, flag, options ) ;
     }
 
 /** \fn INT32 createLob( sdbLob &lob, const bson::OID *oid = NULL )

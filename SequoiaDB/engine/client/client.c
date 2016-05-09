@@ -5611,7 +5611,7 @@ SDB_EXPORT INT32 sdbExplain ( sdbCollectionHandle cHandle,
                               bson *selector,
                               bson *orderBy,
                               bson *hint,
-                              INT32 flags,
+                              INT32 flag,
                               INT64 numToSkip,
                               INT64 numToReturn,
                               bson *options,
@@ -5643,7 +5643,7 @@ SDB_EXPORT INT32 sdbExplain ( sdbCollectionHandle cHandle,
    BSON_FINISH ( newObj ) ;
 
    rc = sdbQuery1( cHandle, condition, selector, orderBy, &newObj,
-                   numToSkip, numToReturn, flags | FLG_QUERY_EXPLAIN,
+                   numToSkip, numToReturn, flag | FLG_QUERY_EXPLAIN,
                    handle ) ;
    if ( rc )
    {
@@ -5677,11 +5677,11 @@ SDB_EXPORT INT32 sdbQuery1 ( sdbCollectionHandle cHandle,
                              bson *hint,
                              INT64 numToSkip,
                              INT64 numToReturn,
-                             INT32 flags,
+                             INT32 flag,
                              sdbCursorHandle *handle )
 {
    INT32 rc                = SDB_OK ;
-   INT32 newFlags          = flags ;
+   INT32 newFlags          = flag ;
    sdbCursorHandle cursor  = SDB_INVALID_HANDLE ;
    sdbCollectionStruct *cs = (sdbCollectionStruct*)cHandle ;
    sdbConnectionStruct *connection = (sdbConnectionStruct*)(cs->_connection) ;
@@ -5693,9 +5693,9 @@ SDB_EXPORT INT32 sdbQuery1 ( sdbCollectionHandle cHandle,
       goto error ;
    }
 
-   if ( 0 != flags )
+   if ( 0 != flag )
    {
-      rc = regulateQueryFlags( &newFlags, flags ) ;
+      rc = regulateQueryFlags( &newFlags, flag ) ;
       if ( SDB_OK != rc )
       {
          goto error ;
@@ -5849,12 +5849,12 @@ SDB_EXPORT INT32 sdbQueryAndUpdate ( sdbCollectionHandle cHandle,
                              bson *update,
                              INT64 numToSkip,
                              INT64 numToReturn,
-                             INT32 flags,
+                             INT32 flag,
                              BOOLEAN returnNew,
                              sdbCursorHandle *handle )
 {
    return _sdbQueryAndModify( cHandle, condition, select, orderBy, hint, update,
-                           numToSkip, numToReturn, flags, returnNew, TRUE, handle ) ;
+                           numToSkip, numToReturn, flag, returnNew, TRUE, handle ) ;
 }
 
 SDB_EXPORT INT32 sdbQueryAndRemove ( sdbCollectionHandle cHandle,
@@ -5864,11 +5864,11 @@ SDB_EXPORT INT32 sdbQueryAndRemove ( sdbCollectionHandle cHandle,
                              bson *hint,
                              INT64 numToSkip,
                              INT64 numToReturn,
-                             INT32 flags,
+                             INT32 flag,
                              sdbCursorHandle *handle )
 {
    return _sdbQueryAndModify( cHandle, condition, select, orderBy, hint, NULL,
-                           numToSkip, numToReturn, flags, FALSE, FALSE, handle ) ;
+                           numToSkip, numToReturn, flag, FALSE, FALSE, handle ) ;
 }
 
 SDB_EXPORT INT32 sdbNext ( sdbCursorHandle cHandle,

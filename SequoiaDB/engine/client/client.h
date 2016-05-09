@@ -1399,7 +1399,7 @@ SDB_EXPORT INT32 sdbDelete ( sdbCollectionHandle cHandle,
                           bson *hint,
                           INT64 numToSkip,
                           INT64 numToReturn,
-                          INT32 flags,
+                          INT32 flag,
                           sdbCursorHandle *handle )
     \brief Get the matching documents in current collection
     \param [in] cHandle The collection handle
@@ -1409,7 +1409,7 @@ SDB_EXPORT INT32 sdbDelete ( sdbCollectionHandle cHandle,
     \param [in] hint The hint, automatically match the optimal hint if null
     \param [in] numToSkip Skip the first numToSkip documents, never skip if this parameter is 0
     \param [in] numToReturn Only return numToReturn documents, return all if this parameter is -1
-    \param [in] flags The query flags, default to be 0. Please see the definition of follow flags for more detail. Usage: e.g. set ( QUERY_FORCE_HINT | QUERY_WITH_RETURNDATA ) to param flags
+    \param [in] flag The query flag, default to be 0. Please see the definition of follow flags for more detail. Usage: e.g. set ( QUERY_FORCE_HINT | QUERY_WITH_RETURNDATA ) to param flag
 
         QUERY_FORCE_HINT
         QUERY_PARALLED
@@ -1467,7 +1467,7 @@ SDB_EXPORT INT32 sdbQuery ( sdbCollectionHandle cHandle,
                                   bson *update,
                                   INT64 numToSkip,
                                   INT64 numToReturn,
-                                  INT32 flags,
+                                  INT32 flag,
                                   BOOLEAN returnNew,
                                   sdbCursorHandle *handle )
     \brief Get the matching documents in current collection and update
@@ -1479,7 +1479,7 @@ SDB_EXPORT INT32 sdbQuery ( sdbCollectionHandle cHandle,
     \param [in] update The update rule, can't be null
     \param [in] numToSkip Skip the first numToSkip documents, never skip if this parameter is 0
     \param [in] numToReturn Only return numToReturn documents, return all if this parameter is -1
-    \param [in] flags The query flags, default to be 0. Please see the definition of follow flags for more detail. Usage: e.g. set ( QUERY_FORCE_HINT | QUERY_WITH_RETURNDATA ) to param flags
+    \param [in] flag The query flag, default to be 0. Please see the definition of follow flags for more detail. Usage: e.g. set ( QUERY_FORCE_HINT | QUERY_WITH_RETURNDATA ) to param flag
 
         QUERY_FORCE_HINT
         QUERY_PARALLED
@@ -1498,7 +1498,7 @@ SDB_EXPORT INT32 sdbQueryAndUpdate ( sdbCollectionHandle cHandle,
                                      bson *update,
                                      INT64 numToSkip,
                                      INT64 numToReturn,
-                                     INT32 flags,
+                                     INT32 flag,
                                      BOOLEAN returnNew,
                                      sdbCursorHandle *handle ) ;
 
@@ -1509,7 +1509,7 @@ SDB_EXPORT INT32 sdbQueryAndUpdate ( sdbCollectionHandle cHandle,
                                   bson *hint,
                                   INT64 numToSkip,
                                   INT64 numToReturn,
-                                  INT32 flags,
+                                  INT32 flag,
                                   sdbCursorHandle *handle )
     \brief Get the matching documents in current collection and remove
     \param [in] cHandle The collection handle
@@ -1519,7 +1519,7 @@ SDB_EXPORT INT32 sdbQueryAndUpdate ( sdbCollectionHandle cHandle,
     \param [in] hint The hint, automatically match the optimal hint if null
     \param [in] numToSkip Skip the first numToSkip documents, never skip if this parameter is 0
     \param [in] numToReturn Only return numToReturn documents, return all if this parameter is -1
-    \param [in] flags The query flags, default to be 0. Please see the definition of follow flags for more detail. Usage: e.g. set ( QUERY_FORCE_HINT | QUERY_WITH_RETURNDATA ) to param flags
+    \param [in] flag The query flag, default to be 0. Please see the definition of follow flags for more detail. Usage: e.g. set ( QUERY_FORCE_HINT | QUERY_WITH_RETURNDATA ) to param flag
 
         FLG_QUERY_FORCE_HINT
         FLG_QUERY_PARALLED
@@ -1536,7 +1536,7 @@ SDB_EXPORT INT32 sdbQueryAndRemove ( sdbCollectionHandle cHandle,
                                      bson *hint,
                                      INT64 numToSkip,
                                      INT64 numToReturn,
-                                     INT32 flags,
+                                     INT32 flag,
                                      sdbCursorHandle *handle ) ;
 
 /** \fn INT32 sdbExplain ( sdbCollectionHandle cHandle,
@@ -1544,7 +1544,7 @@ SDB_EXPORT INT32 sdbQueryAndRemove ( sdbCollectionHandle cHandle,
                            bson *select,
                            bson *orderBy,
                            bson *hint,
-                           INT32 flags,
+                           INT32 flag,
                            INT64 numToSkip,
                            INT64 numToReturn,
                            bson *options,                          
@@ -1555,7 +1555,7 @@ SDB_EXPORT INT32 sdbQueryAndRemove ( sdbCollectionHandle cHandle,
     \param [in] select The selective rule, return the whole document if null
     \param [in] orderBy The ordered rule, never sort if null
     \param [in] hint The hint, automatically match the optimal hint if null
-    \param [in] flags The query flags, default to be 0. Please see the definition of follow flags for more detail. Usage: e.g. set ( QUERY_FORCE_HINT | QUERY_WITH_RETURNDATA ) to param flags
+    \param [in] flag The query flag, default to be 0. Please see the definition of follow flags for more detail. Usage: e.g. set ( QUERY_FORCE_HINT | QUERY_WITH_RETURNDATA ) to param flag
 
         QUERY_FORCE_HINT
         QUERY_PARALLED
@@ -1577,7 +1577,7 @@ SDB_EXPORT INT32 sdbExplain ( sdbCollectionHandle cHandle,
                               bson *select,
                               bson *orderBy,
                               bson *hint,
-                              INT32 flags,
+                              INT32 flag,
                               INT64 numToSkip,
                               INT64 numToReturn,
                               bson *options,
