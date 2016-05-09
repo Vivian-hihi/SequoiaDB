@@ -465,9 +465,9 @@ TEST( turnonCache, testUpdateTimeStamp)
       if (Node != NULL){
          if (0 == strncmp(Node->name, csName, strlen(Node->name)))
          {
-            ASSERT_LT(csTimeStamp, Node->lastTime); 
+            ASSERT_LE(csTimeStamp, Node->lastTime); 
          }else{
-            ASSERT_LT(clTimeStamp, Node->lastTime);  
+            ASSERT_LE(clTimeStamp, Node->lastTime);  
          }
       }
    } 
