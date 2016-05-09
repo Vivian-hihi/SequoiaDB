@@ -14,6 +14,8 @@ class cs_Test extends PHPUnit_Framework_TestCase
 
    public function test_Connect()
    {
+      $err = sdbInitClient( false ) ;
+      $this -> assertEquals( 0, $err, '设置驱动缓存失败' ) ;
       $db = new SequoiaDB();
       $err = $db -> connect( $this->address ) ;
       $this -> assertEquals( 0, $err['errno'], '数据库连接错误( 数组参数: '.$this->address.' )' ) ;

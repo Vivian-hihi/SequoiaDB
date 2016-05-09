@@ -91,6 +91,9 @@ class SequoiaDB_Test extends PHPUnit_Framework_TestCase
    
    public function test_initClient()
    {
+      $err = sdbInitClient( false ) ;
+      $this -> assertEquals( 0, $err, '设置驱动缓存失败' ) ;
+      
       $db1 = new SequoiaDB();
       $err = $db1 -> connect( $this->address ) ;
       $this -> assertEquals( 0, $err['errno'], '数据库连接错误( 参数: '.$this->address.' )' ) ;
@@ -138,6 +141,9 @@ class SequoiaDB_Test extends PHPUnit_Framework_TestCase
       $time2 = round( $end - $start, 3 ) ;
       
       $this -> assertLessThan( $time1, $time2, 'sdbInitCLient没有生效' ) ;
+      
+      $err = sdbInitClient( false ) ;
+      $this -> assertEquals( 0, $err, '设置驱动缓存失败' ) ;
    }
    
    /**
