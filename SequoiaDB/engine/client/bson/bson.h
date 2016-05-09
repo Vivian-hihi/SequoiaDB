@@ -864,7 +864,7 @@ SDB_EXPORT int bson_append_long( bson *b, const char *name, const int64_t i );
  * Append an decimal to a bson.
  *
  * @param b the bson to append to.
- * @param name the key for the long.
+ * @param name the key for the decimal.
  * @param decimal the decimal to append.
  *
  * @return BSON_OK or BSON_ERROR.
@@ -876,7 +876,7 @@ SDB_EXPORT int bson_append_decimal( bson *b, const char *name,
  * Append an decimal to a bson.
  *
  * @param b the bson to append to.
- * @param name the key for the long.
+ * @param name the key for the decimal.
  * @param value the string format of the decimal to append.
  * @param precision, the precision of decimal
  * @param scale, the scale of decimal
@@ -890,7 +890,7 @@ SDB_EXPORT int bson_append_decimal2( bson *b, const char *name,
  * Append an decimal to a bson.
  *
  * @param b the bson to append to.
- * @param name the key for the long.
+ * @param name the key for the decimal.
  * @param value the string format of the decimal to append.
  *
  * @return BSON_OK or BSON_ERROR.

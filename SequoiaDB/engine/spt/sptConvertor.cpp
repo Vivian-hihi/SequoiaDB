@@ -594,15 +594,51 @@ INT32 sptConvertor::_getDecimalPrecision( const CHAR *precisionStr,
                                           INT32 *precision, INT32 *scale )
 {
    //precisionStr:10,6
+   BOOLEAN isFirst = TRUE ;
+   INT32 rc        = SDB_OK ;
+   const CHAR *p   = precisionStr ;
+   while ( NULL != p && '\0' != *p )
+   {
+      if ( ' ' == *p )
+      {
+         p++ ;
+         continue ;
+      }
 
-   INT32 rc = SDB_OK ;
+      if ( ',' == *p )
+      {
+         if ( !isFirst )
+         {
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+
+         isFirst = FALSE ;
+         p++ ;
+         continue ;
+      }
+
+      if ( *p < '0' || *p > '9' )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+      p++ ;
+   }
+
    rc = sscanf ( precisionStr, "%d,%d", precision, scale ) ;
    if ( 2 != rc )
    {
-      return SDB_INVALIDARG ;
+      rc = SDB_INVALIDARG ;
+      goto error ;
    }
 
-   return SDB_OK ;
+   rc = SDB_OK ;
+
+done:
+   return rc ;
+error:
+   goto done ;
 }
 
 INT32 sptConvertor::_addSpecialObj( JSObject *obj,
