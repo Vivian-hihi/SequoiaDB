@@ -20,6 +20,9 @@
  */
 package com.sequoiadb.base;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.bson.BSONObject;
 
 /**
@@ -34,7 +37,7 @@ public class DBQuery {
 	private BSONObject modifier;
 	private Long skipRowsCount;
 	private Long returnRowsCount;
-	private int flag;
+	private int flag;	
 
 	/**
 	 * @memberof FLG_QUERY_STRINGOUT 0x00000001
@@ -73,6 +76,14 @@ public class DBQuery {
 	 * @brief Query and modify.
 	 */
 	static final int FLG_QUERY_MODIFY  = 0x00001000;
+	
+	final static Map<Integer, Integer> flagsMap = new HashMap<Integer, Integer>();
+	static {
+		flagsMap.put(FLG_QUERY_STRINGOUT, FLG_QUERY_STRINGOUT);
+		flagsMap.put(FLG_QUERY_FORCE_HINT, FLG_QUERY_FORCE_HINT); 
+		flagsMap.put(FLG_QUERY_PARALLED, FLG_QUERY_PARALLED);
+		flagsMap.put(FLG_QUERY_WITH_RETURNDATA, FLG_QUERY_WITH_RETURNDATA);
+	}
 	
 	public DBQuery() {
 		matcher = null;
@@ -227,11 +238,40 @@ public class DBQuery {
 	 * @param The query flag as below:
 	 *  	  DBQuery.FLG_QUERY_STRINGOUT
      *        DBQuery.FLG_QUERY_FORCE_HINT
-     *        DBQuery.LG_QUERY_PARALLED  
+     *        DBQuery.LG_QUERY_PARALLED
+     *        DBQuery.FLG_QUERY_WITH_RETURNDATA  
      * @see com.sequoiadb.base.DBCollection.query
 	 */
 	public void setFlag(int flag) {
 		this.flag = flag;
 	}
 	
+	private static int _regulate(final int newFlags, final int flag) {
+		int retFlags = newFlags;
+		Integer tmpFlag = flagsMap.get((Integer)flag);
+		if (tmpFlag == null)
+			return retFlags;
+		if (tmpFlag != flag) {
+			retFlags &= ~flag;
+			retFlags |= tmpFlag;
+		}
+		return retFlags;
+	}
+	
+	static int regulateFlag(final int flag) {
+		int newFlags = flag;
+		if ((flag & FLG_QUERY_STRINGOUT) != 0) {
+			newFlags = _regulate(newFlags, FLG_QUERY_STRINGOUT);
+		}
+		if ((flag & FLG_QUERY_FORCE_HINT) != 0) {
+			newFlags = _regulate(newFlags, FLG_QUERY_FORCE_HINT);
+		}
+		if ((flag & FLG_QUERY_PARALLED) != 0) {
+			newFlags = _regulate(newFlags, FLG_QUERY_PARALLED);
+		}
+		if ((flag & FLG_QUERY_WITH_RETURNDATA) != 0) {
+			newFlags = _regulate(newFlags, FLG_QUERY_WITH_RETURNDATA);
+		}
+		return newFlags;
+	}
 }
