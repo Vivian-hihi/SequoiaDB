@@ -551,4 +551,21 @@ public class CLQuery {
             // record.toString());
         }
     }
+    
+    @Test
+    public void testQueryWithFlags() {
+    	BSONObject dummy = new BasicBSONObject();
+    	BSONObject hint = new BasicBSONObject("", "$id");
+    	DBCursor cursor = null;
+    	// case 1
+    	cursor = cl.query(dummy, dummy, dummy, dummy,
+    			DBQuery.FLG_QUERY_STRINGOUT);
+    	// case 2
+    	cursor = cl.query(dummy, dummy, dummy, hint,
+    			DBQuery.FLG_QUERY_STRINGOUT | DBQuery.FLG_QUERY_FORCE_HINT);
+    	// case 3
+    	cursor = cl.query(dummy, dummy, dummy, hint,
+    			DBQuery.FLG_QUERY_STRINGOUT | DBQuery.FLG_QUERY_FORCE_HINT |
+    			DBQuery.FLG_QUERY_PARALLED | DBQuery.FLG_QUERY_WITH_RETURNDATA);
+    }
 }
