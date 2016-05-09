@@ -39,6 +39,7 @@
 #include "ossUtil.h"
 #include "msgCatalogDef.h"
 #include "oss.h"
+#include "msg.h"
 #include "../bson/lib/md5.h"
 
 #ifndef offsetof
@@ -876,9 +877,9 @@ struct _QueryFlagStat
 typedef struct _QueryFlagStat QueryFlagStat ;
 
 static QueryFlagStat stats[] = {
-   { _QUERY_FORCE_HINT, _QUERY_FORCE_HINT },
-   { _QUERY_PARALLED, _QUERY_PARALLED },
-   {_QUERY_WITH_RETURNDATA,_QUERY_WITH_RETURNDATA }
+   { _QUERY_FORCE_HINT, FLG_QUERY_FORCE_HINT },
+   { _QUERY_PARALLED, FLG_QUERY_PARALLED },
+   {_QUERY_WITH_RETURNDATA, FLG_QUERY_WITH_RETURNDATA }
 } ;
 
 static const QueryFlagStat* _getQueryFlagPair( const INT32 flag )
@@ -899,6 +900,8 @@ static const QueryFlagStat* _getQueryFlagPair( const INT32 flag )
 INT32 regulateQueryFlags( INT32 *newFlags, const INT32 flag )
 {
    INT32 rc = SDB_OK ;
+   INT32 bit = 1 ;
+   INT32 i = 0 ;
    const QueryFlagStat* pPair = NULL ;
    INT32 tmpFlags = flag ;
    if ( NULL == newFlags )
@@ -906,32 +909,21 @@ INT32 regulateQueryFlags( INT32 *newFlags, const INT32 flag )
       rc = SDB_INVALIDARG ;
       goto error ;
    }
-   if ( flag & _QUERY_FORCE_HINT )
+   for( ; i < 32; i++ )
    {
-      pPair = _getQueryFlagPair( _QUERY_FORCE_HINT ) ;
-      if ( NULL != pPair && pPair->_original != pPair->_new )
+      if ( bit & flag )
       {
-         tmpFlags &= ~(pPair->_original) ;
-         tmpFlags |= pPair->_new ;
+         pPair = NULL ;
+         pPair = _getQueryFlagPair( bit ) ;
+         if ( NULL != pPair && pPair->_original != pPair->_new )
+         {
+            tmpFlags &= ~(pPair->_original) ;
+            tmpFlags |= pPair->_new ;
+         }
       }
-   }
-   if ( flag& _QUERY_PARALLED )
-   {
-      pPair = _getQueryFlagPair( _QUERY_PARALLED ) ;
-      if ( NULL != pPair && pPair->_original != pPair->_new )
-      {
-         tmpFlags &= ~(pPair->_original) ;
-         tmpFlags |= pPair->_new ;
-      }
-   }
-   if ( flag & _QUERY_WITH_RETURNDATA )
-   {
-      pPair = _getQueryFlagPair( _QUERY_WITH_RETURNDATA ) ;
-      if ( NULL != pPair && pPair->_original != pPair->_new )
-      {
-         tmpFlags &= ~(pPair->_original) ;
-         tmpFlags |= pPair->_new ;
-      }
+      if ( (UINT32)bit >= (UINT32)flag )
+         break ;
+      bit = bit << 1 ;
    }
    *newFlags = tmpFlags ;
 done:
