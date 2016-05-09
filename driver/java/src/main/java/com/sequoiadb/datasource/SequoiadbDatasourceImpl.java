@@ -1067,9 +1067,9 @@ public class SequoiadbDatasourceImpl
 			
     	if (0 != maxCount) {
 			if (deltaIncCount > maxCount)
-				throw new BaseException("SDB_INVALIDARG", "deltaIncCount should be less then maxCount" );
+				throw new BaseException("SDB_INVALIDARG", "deltaIncCount can't be great then maxCount" );
 			if (maxIdleCount > maxCount)
-				throw new BaseException("SDB_INVALIDARG", "maxIdleCount should be less then maxCount" );
+				throw new BaseException("SDB_INVALIDARG", "maxIdleCount can't be great then maxCount" );
     	}
 	}
 	
