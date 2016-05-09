@@ -201,18 +201,33 @@
                     <program>service</program>
                     <programArguments> sdbcm stop</programArguments> 
                     <abortOnError>0</abortOnError>          
-                </runProgram>                                
-                <runProgram>
-                    <program>${installdir}/bin/sdbstop</program>
-                    <programArguments>-t all</programArguments> 
-                    <abortOnError>0</abortOnError> 
-                    <showMessageOnError>0</showMessageOnError>           
-                </runProgram>  
+                </runProgram>                                                  
             </actionList>        
             <ruleList> 
                 <compareText logic="equals" text="${service_origin_status}" value="0"/>                                                                  
             </ruleList>          
         </actionGroup>
+        <setInstallerVariable name="process_num" value="-1"/>
+        <setInstallerVariableFromScriptOutput>
+            <name>process_num</name>
+            <exec>${installdir}/bin/sdblist</exec>
+            <execArgs>-t all | grep "Total" | awk '{print $2}'</execArgs>
+            <abortOnError>0</abortOnError> 
+            <showMessageOnError>0</showMessageOnError>                             
+        </setInstallerVariableFromScriptOutput>
+        <setInstallerVariable>
+            <name>service_origin_status</name>
+            <value>0</value>
+            <ruleList>
+                <compareValues value1="${process_num}" logic="greater" value2="0"/>             
+            </ruleList>
+        </setInstallerVariable>       
+        <runProgram>
+            <program>${installdir}/bin/sdbstop</program>
+            <programArguments>-t all</programArguments> 
+            <abortOnError>0</abortOnError> 
+            <showMessageOnError>0</showMessageOnError>           
+        </runProgram>
         
         <!--check process stop or not -->                  
         <actionGroup> 
@@ -511,8 +526,7 @@
                     <ruleList>
                         <compareValues value1="${service_status}" logic="equals" value2="0"/>
                     </ruleList>
-                </consoleWrite>
-                    
+                </consoleWrite>                   
             </actionList>        
             <ruleList> 
                 <compareText logic="equals" text="${service_origin_status}" value="0"/>                                                                  
