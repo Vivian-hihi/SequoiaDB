@@ -435,14 +435,14 @@ INT32 hash_table_remove( hashTable *tb, const CHAR *key, BOOLEAN dropCS )
    {
       for ( ; index < tb->capacity ; ++index )
       {
-         htbNode *toFree = tb->node[ locate ] ;
+         htbNode *toFree = tb->node[ index ] ;
          if ( NULL != toFree )
          {
-            if ( NULL == tb->node[ locate ]->name ||
+            if ( NULL == tb->node[ index ]->name ||
                  0 == ossStrncmp( toFree->name, key, ossStrlen( key ) ) )
             {
                hash_table_destroy_node( &toFree ) ;
-               tb->node[ locate ] = NULL ;
+               tb->node[ index ] = NULL ;
             }
          }
       }
