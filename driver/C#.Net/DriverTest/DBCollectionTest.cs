@@ -315,6 +315,23 @@ namespace DriverTest
         }
 
         [TestMethod()]
+        public void QueryWithFlagsTest()
+        {
+            DBCursor cursor = null;
+            BsonDocument hint = new BsonDocument();
+            hint.Add("", "$id");
+            // case 1
+            cursor = coll.Query(null, null, null, null, 0, -1, 
+                DBQuery.FLG_QUERY_WITH_RETURNDATA);
+            // case 2
+            cursor = coll.Query(null, null, null, hint, 0, -1, 
+                DBQuery.FLG_QUERY_WITH_RETURNDATA | DBQuery.FLG_QUERY_FORCE_HINT);
+            // case 3
+            cursor = coll.Query(null, null, null, hint, 0, -1, 
+                DBQuery.FLG_QUERY_WITH_RETURNDATA | DBQuery.FLG_QUERY_FORCE_HINT | DBQuery.FLG_QUERY_PARALLED);
+        }
+
+        [TestMethod()]
         public void QueryOneTest()
         {
             for (int i = 0; i < 10; ++i)
