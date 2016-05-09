@@ -114,7 +114,7 @@ SequoiaDB 的升级向导需要的参数不接受非英文字符。
     开始升级 ......
     **************************  检查列表 *************************************
     检查：系统配置文件/etc/default/sequoiadb存在 ...... ok
-    检查：INSTALL_DI、SDBADMIN_USER存在 ...... ok
+    检查：在/etc/default/sequoiadb中获取安装路径和用户名 ...... ok
     检查：安装目录/opt/sequoiadb不为空 ...... ok
     检查：旧版本 1.12.5 Enterprise 与新版本 2.1 Enterprise 兼容 ...... ok
     检查：磁盘空间足够 ...... ok
