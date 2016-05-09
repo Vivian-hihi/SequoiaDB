@@ -125,7 +125,7 @@ public class SequoiadbDatasource extends SequoiadbDatasourceImpl
 	
 	/**
 	 * @fn void addCoord(String url)
-	 * @brief Add coord address.
+	 * @brief Add coord address with the format "hostname:port" or "ip:port".
 	 * @exception com.sequoiadb.Exception.BaseException
 	 */
 	public void addCoord(String url) throws BaseException {
@@ -134,7 +134,7 @@ public class SequoiadbDatasource extends SequoiadbDatasourceImpl
 
 	/**
 	 * @fn void removeCoord(String url)
-	 * @brief Remove coord address.
+	 * @brief Remove coord address with the format "hostname:port" or "ip:port".
 	 * @since v1.12.6 & v2.2
 	 */
 	public void removeCoord(String url) throws BaseException {

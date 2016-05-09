@@ -1339,17 +1339,21 @@ public class SequoiadbDatasourceImpl
 	private String _parseCoordAddr(String coordAddr) {
 		String retCoordAddr = null;
 		if (coordAddr.indexOf(":") > 0) {
+			String host = "";
+			int port = 0;
 			String[] tmp = coordAddr.split(":");
-			String host = tmp[0].trim();
+			if (tmp.length < 2)
+				throw new BaseException("SDB_INVALIDARG", "Point 1: invalid format coord address: " + coordAddr);
+			host = tmp[0].trim();
 			try {
 				host = InetAddress.getByName(host).toString().split("/")[1];
 			} catch (Exception e) {
 				throw new BaseException("SDB_INVALIDARG", e);
 			}
-			int port = Integer.parseInt(tmp[1].trim());
+			port = Integer.parseInt(tmp[1].trim());
 			retCoordAddr = host + ":" + port;
 		} else {
-			throw new BaseException("SDB_INVALIDARG", "invalid format coord address: " + coordAddr);
+			throw new BaseException("SDB_INVALIDARG", "Point 2: invalid format coord address: " + coordAddr);
 		}
 		return retCoordAddr;
 	}
