@@ -77,7 +77,7 @@ $(EXTERNAL_PATH)/msgCatalogDef.h:   $(ENGINE_PATH)/include/msgCatalogDef.h
 
 # Compile flags
 ALL_DEFINES=$(DEFINES)
-DYN_FLAGS:=-fPIC -DSDB_DLL_BUILD
+DYN_FLAGS:=-fPIC -DSDB_DLL_BUILD -pthread
 # Endianess Check
 endian := $(shell sh -c 'echo "ab" | od -x | grep "6261" >/dev/null && echo little || echo big')
 ifeq ($(endian),big)
@@ -103,7 +103,7 @@ DATA = sdb_fdw--1.0.sql
 MODULE_big = sdb_fdw
 OBJS = sdb_fdw_util.o sdb_fdw.o $(OBJECTS)
 #SHLIB_LINK = -lcrypto
-SHLIB_LINK = 
+SHLIB_LINK = -pthread
 
 # Procedures
 local: $(BSON_PATH) $(MD5_HEADER_PATH) $(MD5_PATH) $(COPY_FILES) $(COMPILEOBJECTS) 

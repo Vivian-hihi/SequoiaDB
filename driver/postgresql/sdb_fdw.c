@@ -36,6 +36,8 @@
 #include "utils/rel.h"
 #include "utils/timestamp.h"
 
+#include <pthread.h>
+
 #define SDB_COLLECTIONSPACE_NAME_LEN 128
 #define SDB_COLLECTION_NAME_LEN      128
 #define SDB_COLUMNA_ID_NAME          "_id"
@@ -102,6 +104,13 @@ static List *SdbPlanForeignModify ( PlannerInfo *root,
                                     INT32 subplan_index ) ;
 
 static void sdb_slot_deform_tuple( TupleTableSlot *slot, int natts ) ;
+
+static void sdbStartInterruptCheck() ;
+
+static void *thr_check_interrupt( void * arg ) ;
+
+static void sdbInterruptAllConnection() ;
+
 
 /* module initialization */
 void _PG_init (  ) ;
@@ -1842,6 +1851,18 @@ static void sdbUninitConnectionPool (  )
       sdbReleaseConnection( conn->hConnection ) ;
    }
    free( pool->connList ) ;
+}
+
+static void sdbInterruptAllConnection()
+{
+   INT32 count             = 0 ;
+   SdbConnectionPool *pool = sdbGetConnectionPool() ;
+   for( count = 0 ; count < pool->numConnections ; ++count )
+   {
+      SdbConnection *conn = &pool->connList[count] ;
+      sdbDisconnect( conn->hConnection ) ;
+      //sdbCloseAllCursors( conn->hConnection ) ;
+   }
 }
 
 //void sdbPrintDocument( const char *documentData, INT32 documentSize, 
@@ -3668,6 +3689,34 @@ error :
    goto done ;
 }
 
+static void sdbStartInterruptCheck()
+{
+   int rc = 0 ;
+   pthread_t ntid ;
+   rc = pthread_create(&ntid, NULL, thr_check_interrupt, NULL) ;
+   if ( 0 != rc )
+   {
+      elog( ERROR, "create interrrupt check thread failed:rc=%d", rc ) ;
+   }
+}
+
+extern bool QueryCancelPending ;
+
+static void *thr_check_interrupt( void * arg )
+{
+   while ( true )
+   {
+      if ( QueryCancelPending )
+      {
+         elog( ERROR, "QueryCancelPending interrupt received!" ) ;
+         sdbInterruptAllConnection() ;
+         elog( ERROR, "interrupt all connections" ) ;
+      }
+
+      pg_usleep(1000000); //1 second
+   }
+}
+
 #if PG_VERSION_NUM>90300
 
 static INT32 SdbIsForeignRelUpdatable( Relation rel )
@@ -4363,6 +4412,7 @@ static void SdbDestroyCLStatistics( SdbCLStatistics *clStat, bool freeObj )
 void _PG_init (  )
 {
    sdbInitConnectionPool (  ) ;
+   sdbStartInterruptCheck() ;
    SdbInitCLStatisticsCache( SdbGetStatisticsCache() ) ;
    /* we may lose the the pointer of record if it is temporary, so we must
       keep it in global */
