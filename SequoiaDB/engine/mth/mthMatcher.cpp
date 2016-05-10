@@ -2497,20 +2497,70 @@ namespace engine
          switch ( _me->_op )
          {
          case BSONObj::Equality :
-            b.appendAs( ele, "$et" ) ;
+         {  
+            if ( !_isFieldCom )
+            { 
+               b.appendAs( ele, "$et" ) ;
+            }
+            else
+            {
+               BSONObj fieldObj = BSON( "$field" << ele ) ;
+               b.append( "$et", fieldObj ) ;
+            }
             break ;
+         }
          case BSONObj::LT :
-            b.appendAs( ele, "$lt" ) ;
+         {
+            if ( !_isFieldCom )
+            {
+               b.appendAs( ele, "$lt" ) ;
+            }
+            else
+            {
+               BSONObj fieldObj = BSON( "$field" << ele ) ;
+               b.append( "$lt", fieldObj ) ;
+            }
             break ;
+         }
          case BSONObj::LTE :
-            b.appendAs( ele, "$lte" ) ;
+         {
+            if ( !_isFieldCom )
+            {
+               b.appendAs( ele, "$lte" ) ;
+            }
+            else
+            {
+               BSONObj fieldObj = BSON( "$field" << ele ) ;
+               b.append( "$lte", fieldObj ) ;
+            }
             break ;
+         }
          case BSONObj::GTE :
-            b.appendAs( ele, "$gte" ) ;
+         {
+            if ( !_isFieldCom )
+            {
+               b.appendAs( ele, "$gte" ) ;
+            }
+            else
+            {
+               BSONObj fieldObj = BSON( "$field" << ele ) ;
+               b.append( "$gte", fieldObj ) ;
+            }
             break ;
+         }
          case BSONObj::GT :
-            b.appendAs( ele, "$gt" ) ;
+         {
+            if ( !_isFieldCom )
+            {
+               b.appendAs( ele, "$gt" ) ;
+            }
+            else
+            {
+               BSONObj fieldObj = BSON( "$field" << ele ) ;
+               b.append( "$gt", fieldObj ) ;
+            }
             break ;
+         }
          case BSONObj::opIN :
             break ;
          case BSONObj::NE :
