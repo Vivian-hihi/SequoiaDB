@@ -449,7 +449,7 @@ public class Sequoiadb {
 
 	/**
 	 * @fn void releaseResource()
-	 * @brief Release the resource the connection contains.
+	 * @brief Release the resource of the connection.
 	 * @return void
 	 * @exception com.sequoiadb.exception.BaseException
 	 * @since v1.2.6 && v2.2
@@ -462,8 +462,8 @@ public class Sequoiadb {
 	
 	/**
 	 * @fn boolean isClosed()
-	 * @brief Judge whether the connection is connected or not.
-	 * @return return true for the connection has been closed
+	 * @brief Whether the socket has been closed or not.
+	 * @return return true when the socket has been
 	 * @since v1.2.6 && v2.2
 	 */
 	public boolean isClosed(){
@@ -474,7 +474,7 @@ public class Sequoiadb {
 	
 	/**
 	 * @fn boolean isValid()
-	 * @brief Judge whether the connection is valid or not.
+	 * @brief Send a test message to database to test whether the connection is valid or not.
 	 * @return if the connection is valid, return true
 	 * @exception com.sequoiadb.exception.BaseException
 	 */
