@@ -2903,14 +2903,15 @@ SDB_EXPORT INT32 sdbCreateCollectionSpaceV2 ( sdbConnectionHandle cHandle,
    {
       goto error ;
    }
-   _regSocket( cHandle, &s->_sock ) ;
-   *handle = (sdbCSHandle)s ;
 
    rc = insertCachedObject( connection->_tb, pCollectionSpaceName ) ;
    if ( SDB_OK != rc )
    {
       goto error ;
    }
+
+   _regSocket( cHandle, &s->_sock ) ;
+   *handle = (sdbCSHandle)s ;
 
 done:
    BSON_DESTROY( newObj ) ;
@@ -4040,14 +4041,15 @@ SDB_EXPORT INT32 sdbCreateCollection1 ( sdbCSHandle cHandle,
    {
       goto error ;
    }
-   _regSocket( cs->_connection, &s->_sock ) ;
-   *handle = (sdbCollectionHandle)s ;
 
    rc = insertCachedObject( connection->_tb, fullCollectionName ) ;
    if ( SDB_OK != rc )
    {
       goto error ;
    }
+
+   _regSocket( cs->_connection, &s->_sock ) ;
+   *handle = (sdbCollectionHandle)s ;
 
 done :
    BSON_DESTROY( newObj ) ;
