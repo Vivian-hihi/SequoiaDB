@@ -2418,12 +2418,46 @@
          </description>
       </code>
       <code>
+         <name>SDB_UTIL_COMPRESS_INIT_FAIL</name>
+         <description>
+            <en>Compression initialization failed</en>
+            <cn>压缩初始化失败</cn>
+         </description>
+      </code>
+      <code>
+         <name>SDB_UTIL_COMPRESS_FAIL</name>
+         <description>
+            <en>Compression failed</en>
+            <cn>压缩算法执行压缩失败</cn>
+         </description>
+      </code>
+      <code>
+         <name>SDB_UTIL_DECOMPRESS_FAIL</name>
+         <description>
+            <en>Decompression failed</en>
+            <cn>压缩算法执行解压缩失败</cn>
+         </description>
+      </code>
+      <code>
          <name>SDB_UTIL_COMPRESS_ABORT</name>
          <description>
             <en>Compression abort</en>
             <cn>压缩中断</cn>
          </description>
       </code>
-
+      <code>
+         <name>SDB_UTIL_COMPRESS_BUFF_SMALL</name>
+         <description>
+            <en>Buffer for compression is too small</en>
+            <cn>压缩缓存过小</cn>
+         </description>
+      </code>
+      <code>
+         <name>SDB_UTIL_DECOMPRESS_BUFF_SMALL</name>
+         <description>
+            <en>Buffer for decompression is too small</en>
+            <cn>解压缓存过小</cn>
+         </description>
+      </code>
    </codelist>
 </rclist>
