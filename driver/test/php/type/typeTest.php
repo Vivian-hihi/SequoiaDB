@@ -32,6 +32,18 @@ class typeTest extends PHPUnit_Framework_TestCase
       
       $max   = new SequoiaMaxKey() ;
       $this -> assertTrue( is_object( $max ) && is_a( $max, 'SequoiaMaxKey' ), 'MaxKey错误' ) ;
+      
+      $decimal1 = new SequoiaDecimal( '10.00000000000000000000000001' ) ;
+      $this -> assertTrue( is_object( $decimal1 ) && is_a( $decimal1, 'SequoiaDecimal' ), 'Decimal错误' ) ;
+      $this -> assertEquals( '10.00000000000000000000000001', $decimal1 -> __toString(), 'Decimal错误' ) ;
+      
+      $decimal2 = new SequoiaDecimal( 100, 6, 3 ) ;
+      $this -> assertTrue( is_object( $decimal2 ) && is_a( $decimal2, 'SequoiaDecimal' ), 'Decimal错误' ) ;
+      $this -> assertEquals( '100.000', $decimal2 -> __toString(), 'Decimal错误' ) ;
+      
+      $decimal3 = new SequoiaDecimal( 100.01, 5, 2 ) ;
+      $this -> assertTrue( is_object( $decimal3 ) && is_a( $decimal3, 'SequoiaDecimal' ), 'Decimal错误' ) ;
+      $this -> assertEquals( '100.01', $decimal3 -> __toString(), 'Decimal错误' ) ;
    }
 }
 ?>

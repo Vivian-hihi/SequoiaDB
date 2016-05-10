@@ -78,7 +78,14 @@ class cl_record_Test extends PHPUnit_Framework_TestCase
    public function test_insert( $db, $cs, $cl )
    {
       $id = '' ;
-      $err = $cl -> insert( array( 'bool' => true, 'null' => null, 'int' => 2147483647, 'long' => new SequoiaINT64( '214748364800' ), 'double' => 1.1, 'string' => 'hello', 'array' => array( 1, 2, 3 ), 'object' => array( 'a' => 1, 'b' => 2 ) ) ) ;
+      $err = $cl -> insert( array( 'bool' => true,
+                                   'null' => null,
+                                   'int' => 2147483647,
+                                   'long' => new SequoiaINT64( '214748364800' ),
+                                   'double' => 1.1,
+                                   'string' => 'hello',
+                                   'array' => array( 1, 2, 3 ),
+                                   'object' => array( 'a' => 1, 'b' => 2 ) ) ) ;
       $this -> assertEquals( 0, $err['errno'], '插入记录失败' ) ;
       $id = $err['_id'] ;
       $this -> assertEquals( 24, strlen( $id ), '插入记录失败' ) ;
@@ -101,7 +108,14 @@ class cl_record_Test extends PHPUnit_Framework_TestCase
       $err = $cl -> insert( $record ) ;
       $this -> assertEquals( -38, $err['errno'], '插入记录失败' ) ;
 
-      $err = $cl -> insert( array( '_id' => new SequoiaID( '123456789012345678901234' ), 'date' => new SequoiaDate( '1991-11-27' ), 'timestamp' => new SequoiaTimestamp( '1991-11-27-12.30.20.123456' ), 'regex' => new SequoiaRegex( 'a', 'i' ), 'binary' => new SequoiaBinary( 'aGVsbG8=', '1' ), 'minKey' => new SequoiaMinKey(), 'maxKey' => new SequoiaMaxKey() ) ) ;
+      $err = $cl -> insert( array( '_id' => new SequoiaID( '123456789012345678901234' ),
+                                   'date' => new SequoiaDate( '1991-11-27' ),
+                                   'timestamp' => new SequoiaTimestamp( '1991-11-27-12.30.20.123456' ),
+                                   'regex' => new SequoiaRegex( 'a', 'i' ),
+                                   'binary' => new SequoiaBinary( 'aGVsbG8=', '1' ),
+                                   'minKey' => new SequoiaMinKey(),
+                                   'maxKey' => new SequoiaMaxKey(),
+                                   'decimal' => new SequoiaDecimal( '10.000000109', 10, 8 ) ) ) ;
       $this -> assertEquals( 0, $err['errno'], '插入记录失败' ) ;
       $id = $err['_id'] ;
       $this -> assertEquals( 24, strlen( $id ), '插入记录失败' ) ;
@@ -117,11 +131,13 @@ class cl_record_Test extends PHPUnit_Framework_TestCase
       $this -> assertTrue( is_object( $record['binary'] )    && is_a( $record['binary'],    'SequoiaBinary' ), '插入记录失败' ) ;
       $this -> assertTrue( is_object( $record['minKey'] )    && is_a( $record['minKey'],    'SequoiaMinKey' ), '插入记录失败' ) ;
       $this -> assertTrue( is_object( $record['maxKey'] )    && is_a( $record['maxKey'],    'SequoiaMaxKey' ), '插入记录失败' ) ;
+      $this -> assertTrue( is_object( $record['decimal'] )   && is_a( $record['decimal'],   'SequoiaDecimal' ), '插入记录失败' ) ;
       $this -> assertEquals( $id, $record['_id'] -> __toString(), '插入记录失败' ) ;
       $this -> assertEquals( '1991-11-27', $record['date'] -> __toString(), '插入记录失败' ) ;
       $this -> assertEquals( '1991-11-27-12.30.20.123456', $record['timestamp'] -> __toString(), '插入记录失败' ) ;
       $this -> assertEquals( '/a/i', $record['regex'] -> __toString(), '插入记录失败' ) ;
       $this -> assertEquals( '(1)aGVsbG8=', $record['binary'] -> __toString(), '插入记录失败' ) ;
+      $this -> assertEquals( '10.00000011', $record['decimal'] -> __toString(), '插入记录失败' ) ;
       
       $dollCmd = array( '{ a : { $addtoset : 1 } }',
                         '{ a : { $all : 1 } }',
