@@ -978,8 +978,15 @@ static BOOLEAN jsonConvertBson ( cJSON *cj, bson *bs, BOOLEAN isObj )
       case cJSON_Decimal:
       {
          int rc = 0 ;
-         rc = bson_append_decimal2( bs, cj->string, cj->valuestring, 
-                                    cj->precision, cj->scale ) ;
+         if( cj->precision == -1 && cj->scale == -1 )
+         {
+            rc = bson_append_decimal3( bs, cj->string, cj->valuestring ) ;
+         }
+         else
+         {
+            rc = bson_append_decimal2( bs, cj->string, cj->valuestring, 
+                                       cj->precision, cj->scale ) ;
+         }
          if ( 0 != rc )
          {
             return FALSE ;
