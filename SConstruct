@@ -569,7 +569,7 @@ if guess_os == "linux":
     env.Append( LIBS=['snappy'] )
     zlib_lib = join(zlib_lib_dir_platform, 'libzlib.a')
     lz4_lib = join(lz4_lib_dir_platform, 'liblz4.a')
-    snappy_lib = join(snappy_lib_dir_platform, 'snappy.a')
+    snappy_lib = join(snappy_lib_dir_platform, 'libsnappy.a')
 
     nix = True
 
@@ -760,7 +760,7 @@ elif guess_os == 'aix':
    env.Append( LIBS=['snappy'] )
    zlib_lib = join(zlib_lib_dir_platform, 'libzlib.a')
    lz4_lib = join(lz4_lib_dir_platform, 'liblz4.a')
-   snappy_lib = join(snappy_lib_dir_platform, 'snappy.a')
+   snappy_lib = join(snappy_lib_dir_platform, 'libsnappy.a')
 else:
     print( "No special config for [" + os.sys.platform + "] which probably means it won't work" )
 
