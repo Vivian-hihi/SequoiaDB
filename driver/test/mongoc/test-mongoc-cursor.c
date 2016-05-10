@@ -165,6 +165,7 @@ test_invalid_query (void)
    char *str;
    str = gen_collection_name ("test");
    col = create_collection(str, database);
+   ASSERT_CMPPTR(col, !=, NULL);
    free(str);
    q = BCON_NEW ("foo", BCON_INT32 (1), "$orderby", "{", "}");
 
