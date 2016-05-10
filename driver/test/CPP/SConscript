@@ -98,7 +98,7 @@ dc = env.Program("dc", [testFiles14, gtestMainObj, testCommonFiles])
 turnon_cache = env.Program("turnon_cache", [testFiles15, gtestMainObj, testCommonFiles])
 
 env.Install( '#/build_test',[collection,collectionspace,cursor,query,
-                             sdb,cppbson, debug, domain, lob, selectQuery, procedure ] )
+                             sdb,cppbson, debug, domain, lob, selectQuery, procedure,turnon_cache ] )
 
 #env.Install( '#/build_test',[collection,collectionspace,cursor,query,
 #                             sdb,cppbson, debug, domain, lob, selectQuery, procedure, rg, dc, turnon_cache ] )
