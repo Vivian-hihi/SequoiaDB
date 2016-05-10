@@ -22,7 +22,8 @@ phpFiles = [
       "ext/class/class_timestamp.c",
       "ext/class/class_int64.c",
       "ext/class/class_regex.c",
-      "ext/class/class_binary.c"
+      "ext/class/class_binary.c",
+      "ext/class/class_decimal.c"
       ]
 clientFiles = [
       root_dir + "/../../SequoiaDB/engine/client/client.c"

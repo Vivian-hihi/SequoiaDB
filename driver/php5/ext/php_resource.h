@@ -94,6 +94,7 @@
 #define SDB_LOB_HANDLE_NAME  "SequoiaDB Lob Handle"
 #define SDB_DATE_HANDLE_NAME  "SequoiaDB Date Handle"
 #define SDB_TIMESTAMP_HANDLE_NAME  "SequoiaDB Timestamp Handle"
+#define SDB_DECIMAL_HANDLE_NAME  "SequoiaDB Decimal Handle"
 
 //resource destroy
 void php_sdb_destroy( zend_rsrc_list_entry *pRsrc TSRMLS_DC ) ;
@@ -106,5 +107,6 @@ void php_domain_destroy( zend_rsrc_list_entry *pRsrc TSRMLS_DC ) ;
 void php_lob_destroy( zend_rsrc_list_entry *pRsrc TSRMLS_DC ) ;
 void php_date_destroy( zend_rsrc_list_entry *pRsrc TSRMLS_DC ) ;
 void php_timestamp_destroy( zend_rsrc_list_entry *pRsrc TSRMLS_DC ) ;
+void php_decimal_destroy( zend_rsrc_list_entry *pRsrc TSRMLS_DC ) ;
 
 #endif

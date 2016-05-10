@@ -77,3 +77,13 @@ void php_timestamp_destroy( zend_rsrc_list_entry *pRsrc TSRMLS_DC )
    struct phpTimestamp *pTimestamp = (struct phpTimestamp *)pRsrc->ptr ;
    efree( pTimestamp ) ;
 }
+
+void php_decimal_destroy( zend_rsrc_list_entry *pRsrc TSRMLS_DC )
+{
+   bson_decimal *pBsonDecimal = (bson_decimal *)pRsrc->ptr ;
+   if( pBsonDecimal )
+   {
+      decimal_free( pBsonDecimal ) ;
+   }
+   efree( pBsonDecimal ) ;
+}

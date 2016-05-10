@@ -30,6 +30,7 @@
 #include "class_timestamp.h"
 #include "class_regex.h"
 #include "class_binary.h"
+#include "class_decimal.h"
 
 /* ========== PHP entry pointer ========== */
 
@@ -53,6 +54,7 @@ zend_class_entry *pSequoiadbRegex ;
 zend_class_entry *pSequoiadbBinary ;
 zend_class_entry *pSequoiadbMinKey ;
 zend_class_entry *pSequoiadbMaxKey ;
+zend_class_entry *pSequoiadbDecimal ;
 
 //resource id
 INT32 connectionDesc ;
@@ -65,6 +67,7 @@ INT32 domainDesc ;
 INT32 lobDesc ;
 INT32 dateDesc ;
 INT32 timestampDesc ;
+INT32 decimalDesc ;
 
 PHP_FUNCTION( sdbInitClient ) ;
 
@@ -317,6 +320,12 @@ const zend_function_entry maxKeyFun[] = {
    PHP_FE_END
 };
 
+const zend_function_entry decimalFun[] = {
+   PHP_ME( SequoiaDecimal, __construct, NULL, ZEND_ACC_PUBLIC )
+   PHP_ME( SequoiaDecimal, __toString,  NULL, ZEND_ACC_PUBLIC )
+   PHP_FE_END
+};
+
 zend_module_entry sequoiadb_module_entry = {
 #if ZEND_MODULE_API_NO >= 20010901
    STANDARD_MODULE_HEADER,
@@ -350,8 +359,8 @@ PHP_MINIT_FUNCTION(sequoiadb)
    zend_class_entry entryLob ;
    zend_class_entry entryGroup ;
    zend_class_entry entryNode ;
-   zend_class_entry entryINT64 ;
 
+   zend_class_entry entryINT64 ;
    zend_class_entry entryID ;
    zend_class_entry entryDate ;
    zend_class_entry entryTimeStamp ;
@@ -359,6 +368,7 @@ PHP_MINIT_FUNCTION(sequoiadb)
    zend_class_entry entryBinary ;
    zend_class_entry entryMinKey ;
    zend_class_entry entryMaxKey ;
+   zend_class_entry entryDecimal ;
 
 
    //Register resource
@@ -386,10 +396,15 @@ PHP_MINIT_FUNCTION(sequoiadb)
    //lob
    PHP_REGISTER_RESOURCE( php_lob_destroy, NULL,
                           SDB_LOB_HANDLE_NAME, lobDesc ) ;
+   //date
    PHP_REGISTER_RESOURCE( php_date_destroy, NULL,
                           SDB_DATE_HANDLE_NAME, dateDesc ) ;
+   //timestamp
    PHP_REGISTER_RESOURCE( php_timestamp_destroy, NULL,
                           SDB_TIMESTAMP_HANDLE_NAME, timestampDesc ) ;
+   //decimal
+   PHP_REGISTER_RESOURCE( php_decimal_destroy, NULL,
+                          SDB_DECIMAL_HANDLE_NAME, decimalDesc ) ;
 
    //Init php class entry
    //Sdb object entry
@@ -411,6 +426,7 @@ PHP_MINIT_FUNCTION(sequoiadb)
    INIT_CLASS_ENTRY( entryBinary,    "SequoiaBinary",    binaryFun ) ;
    INIT_CLASS_ENTRY( entryMinKey,    "SequoiaMinKey",    minKeyFun ) ;
    INIT_CLASS_ENTRY( entryMaxKey,    "SequoiaMaxKey",    maxKeyFun ) ;
+   INIT_CLASS_ENTRY( entryDecimal,   "SequoiaDecimal",   decimalFun ) ;
 
 
    //Register internal
@@ -435,6 +451,7 @@ PHP_MINIT_FUNCTION(sequoiadb)
    PHP_REGISTER_INTERNAL( entryBinary,    pSequoiadbBinary ) ;
    PHP_REGISTER_INTERNAL( entryMinKey,    pSequoiadbMinKey ) ;
    PHP_REGISTER_INTERNAL( entryMaxKey,    pSequoiadbMaxKey ) ;
+   PHP_REGISTER_INTERNAL( entryDecimal,   pSequoiadbDecimal ) ;
 
    //declare class property variable
    //Sdb
@@ -479,9 +496,11 @@ PHP_MINIT_FUNCTION(sequoiadb)
    //binary
    PHP_DECLARE_PUBLIC_STRING( pSequoiadbBinary, "$binary", "" ) ;
    PHP_DECLARE_PROPERTY_LONG( pSequoiadbBinary, "$type", 0 ) ;
-
+   //minKey maxKey
    PHP_DECLARE_PROPERTY_LONG( pSequoiadbMinKey, "$minKey", 1 ) ;
    PHP_DECLARE_PROPERTY_LONG( pSequoiadbMaxKey, "$maxKey", 1 ) ;
+   //decimal
+   PHP_DECLARE_PROPERTY_NULL( pSequoiadbDecimal, "$decimal" ) ;
 
    //register constant variable
    //snapshot

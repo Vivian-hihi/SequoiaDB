@@ -24,9 +24,11 @@ extern zend_class_entry *pSequoiadbRegex ;
 extern zend_class_entry *pSequoiadbBinary ;
 extern zend_class_entry *pSequoiadbMinKey ;
 extern zend_class_entry *pSequoiadbMaxKey ;
+extern zend_class_entry *pSequoiadbDecimal ;
 
 extern INT32 dateDesc ;
 extern INT32 timestampDesc ;
+extern INT32 decimalDesc ;
 
 #define FUN_CONST_STR_COPY_NEW( pStrSource, pStrDest )\
 {\
@@ -480,6 +482,27 @@ INT32 _object2Bson( const CHAR *pKey, zval *pValue, bson *pBson TSRMLS_DC )
          goto error ;
       }
    }
+   else if( IS_CLASS( pValue, pSequoiadbDecimal ) )
+   {
+      bson_decimal *pBsonDecimal = NULL ;
+      PHP_READ_RESOURCE( pValue,
+                         "$decimal",
+                         pBsonDecimal,
+                         bson_decimal*,
+                         SDB_DECIMAL_HANDLE_NAME,
+                         decimalDesc ) ;
+      if( pBsonDecimal )
+      {
+         rc = bson_append_decimal( pBson,
+                                   pKey,
+                                   (const bson_decimal *)pBsonDecimal ) ;
+         if( rc != BSON_OK )
+         {
+            rc = SDB_DRIVER_BSON_ERROR ;
+            goto error ;
+         }
+      }
+   }
 done:
    return rc ;
 error:
@@ -885,6 +908,7 @@ INT32 _bson2Array( const CHAR *pBsonBuf,
    zval *pClass = NULL ;
    struct phpDate *pDriverDate = NULL ;
    struct phpTimestamp *pDriverTimestamp = NULL ;
+   bson_decimal *pDecimal = NULL ;
    bson_timestamp_t ts ;
    bson_type bsonType ;
    bson_iterator item ;
@@ -1107,6 +1131,31 @@ INT32 _bson2Array( const CHAR *pBsonBuf,
       case BSON_MAXKEY:
          PHP_NEW_CLASS( pClass, pSequoiadbMaxKey ) ;
          PHP_SAVE_VAR_INT( pClass, "$maxKey", 1 ) ;
+         if( isObj )
+         {
+            add_assoc_zval( pArray, pKey, pClass ) ;
+         }
+         else
+         {
+            add_next_index_zval( pArray, pClass ) ;
+         }
+         break ;
+      case BSON_DECIMAL:
+         PHP_NEW_CLASS( pClass, pSequoiadbDecimal ) ;
+         pDecimal = (bson_decimal *)emalloc( sizeof( bson_decimal ) ) ;
+         if( !pDecimal )
+         {
+            rc = SDB_OOM ;
+            goto error ;
+         }
+         decimal_init( pDecimal ) ;
+         rc = bson_iterator_decimal( &item, pDecimal ) ;
+         if( rc != BSON_OK )
+         {
+            rc = SDB_DRIVER_BSON_ERROR ;
+            goto error ;
+         }
+         PHP_SAVE_RESOURCE( pClass, "$decimal", pDecimal, decimalDesc ) ;
          if( isObj )
          {
             add_assoc_zval( pArray, pKey, pClass ) ;
