@@ -37,7 +37,7 @@
 #define UTIL_COMPRESSOR_SNAPPY__
 
 #include "utilCompressor.hpp"
-#include <../snappy/snappy.h>
+#include "snappy.h"
 
 namespace engine
 {

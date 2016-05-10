@@ -187,6 +187,8 @@ namespace engine
       BOOLEAN dictFull = FALSE ;
 
       SDB_ASSERT( sd && context, "Invalid argument value" ) ;
+      SDB_ASSERT( FALSE == context->isMBLock(),
+                  "mb should not have been locked" ) ;
 
       dmsExtScanner scanner( sd, context, NULL, context->mb()->_firstExtentID ) ;
 
@@ -251,6 +253,11 @@ namespace engine
       }
 
    done:
+      if ( context->isMBLock() )
+      {
+         context->mbUnlock() ;
+      }
+
       PD_TRACE_EXITRC( SDB__RTN_DICTCREATORJOB__CREATEDICT, rc ) ;
       return rc ;
    error:
@@ -266,10 +273,8 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RTN_DICTCREATORJOB__TRANSFERDICT ) ;
 
-      if ( context->isMBLock() )
-      {
-         context->mbUnlock() ;
-      }
+      SDB_ASSERT( FALSE == context->isMBLock(),
+                  "mb should not have been locked" ) ;
 
       rc = sd->dictPersist( context->mbID(), context->clLID(),
                             dictStream, dictSize ) ;

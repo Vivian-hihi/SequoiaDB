@@ -35,27 +35,39 @@
 *******************************************************************************/
 #include "utilCompressorSnappy.hpp"
 #include "utilCompressorLZW.hpp"
+#include "utilCompressorLZ4.hpp"
+#include "utilCompressorZlib.hpp"
 #include "msgDef.hpp"
 
 namespace engine
 {
    utilCompressor* getCompressorByType( UTIL_COMPRESSOR_TYPE type )
    {
+      utilCompressor *compressor = NULL ;
+
       static utilCompressorSnappy snappyCompressor ;
       static utilCompressorLZW lzwCompressor ;
+      static utilCompressorLZ4 lz4Compressor ;
+      static utilCompressorZlib zlibCompressor ;
+      switch ( type )
+      {
+         case UTIL_COMPRESSOR_LZW:
+            compressor = &lzwCompressor ;
+            break ;
+         case UTIL_COMPRESSOR_SNAPPY:
+            compressor = &snappyCompressor ;
+            break;
+         case UTIL_COMPRESSOR_LZ4:
+            compressor = &lz4Compressor ;
+            break;
+         case UTIL_COMPRESSOR_ZLIB:
+            compressor = &zlibCompressor ;
+            break;
+         default:
+            compressor = NULL ;
+      }
 
-      if ( UTIL_COMPRESSOR_LZW == type )
-      {
-         return &lzwCompressor ;
-      }
-      else if ( UTIL_COMPRESSOR_SNAPPY == type )
-      {
-         return &snappyCompressor ;
-      }
-      else
-      {
-         return NULL ;
-      }
+      return compressor ;
    }
 
    const CHAR *utilCompressType2String( UINT8 type )
