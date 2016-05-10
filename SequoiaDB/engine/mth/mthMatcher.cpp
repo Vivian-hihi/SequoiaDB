@@ -2294,6 +2294,10 @@ namespace engine
          {
             _totallyConverted = FALSE ;
          }
+         else if ( lme->_isFieldCom )
+         {
+            _totallyConverted = FALSE ;
+         }
       }
       else
       {
