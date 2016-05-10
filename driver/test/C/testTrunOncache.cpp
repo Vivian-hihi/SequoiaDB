@@ -577,7 +577,7 @@ TEST( turnonCache, getMulCLAfterDropCS)
    {
       snprintf(fullName, sizeof(fullName), "%s.cl_%d_%d", csName,i, getpid());
       rc = sdbGetCollection(conn, fullName, &cl1[i]);
-      ASSERT_EQ(-23, rc);
+      ASSERT_EQ(-34, rc);
    }
  
    for (int i = 0; i <5; ++i)
