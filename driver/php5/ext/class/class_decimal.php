@@ -27,11 +27,11 @@ class SequoiaDecimal
    /**
     * Constructor.
     *
-    * @param string $decimal is decimal string
+    * @param string|integer|double $decimal decimal number
     *
-    * @param string $precision is the precision of decimal, if not limit precision, then $precision $scale is -1.
+    * @param integer $precision is the precision of decimal, if not limit precision, then $precision $scale is -1.
     *
-    * @param string $scale is the scale of decimal, if not limit precision, then $precision $scale is -1.
+    * @param integer $scale is the scale of decimal, if not limit precision, then $precision $scale is -1.
     *
     * @code
     * $decimalObj = new SequoiaDecimal( '1000.123456', 20, 6 ) ;
@@ -43,7 +43,7 @@ class SequoiaDecimal
    /**
     * PHP Magic Methods, the class as string output.
     *
-    * @return timestamp string
+    * @return decimal string
     *
     * @code
     * $decimalObj = new SequoiaDecimal( '1000.123456' ) ;
