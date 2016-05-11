@@ -25,8 +25,8 @@
  * @param $config an array argument. The configuration, the options as below:
  *                                     @code
  *                                     enableCacheStrategy : a boolean argument. The flag to open the cache strategy.
- *                                     cacheTimeInterval   : a integer argument. The life cycle of cached object.
- *                                     maxCacheSlotCount   : a integer argument. The count of slot to cache objects, one slot holds an object.
+ *                                     cacheTimeInterval   : an integer argument. The life cycle of cached object.
+ *                                     maxCacheSlotCount   : an integer argument. The count of slot to cache objects, one slot holds an object.
  *                                     @endcode
  *
  * @return Returns the number of errno.
