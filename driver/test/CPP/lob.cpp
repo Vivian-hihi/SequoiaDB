@@ -286,6 +286,7 @@ TEST( lob, lob_connection_was_destruct )
    cout << "Auto build lob's oid is: " << oid.str().c_str() << endl ;
    db.disconnect() ;
    }
+   sleep( 5 ) ;
    // close
    rc = lob.close() ;
    CHECK_MSG("%s%d\n","rc = ",rc) ;
