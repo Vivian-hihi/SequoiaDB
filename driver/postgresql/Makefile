@@ -28,7 +28,7 @@ EXTERNAL_HEADER = $(EXTERNAL_PATH)/client.h   $(EXTERNAL_PATH)/jstobs.h  $(EXTER
                   $(EXTERNAL_PATH)/msgDef.h   $(EXTERNAL_PATH)/network.h $(EXTERNAL_PATH)/common.h \
                   $(EXTERNAL_PATH)/pmdOptions.h                          $(EXTERNAL_PATH)/msgCatalogDef.h \
                   $(EXTERNAL_PATH)/fmpDef.h   $(EXTERNAL_PATH)/oss.h     $(EXTERNAL_PATH)/cJSON.h \
-                  $(EXTERNAL_PATH)/timestamp.h
+                  $(EXTERNAL_PATH)/timestamp.h                           $(EXTERNAL_PATH)/clientDef.h
 
 $(MD5_PATH)/md5.c:                  $(ENGINE_PATH)/bson/md5.c
 $(MD5_HEADER_PATH)/md5.h:           $(ENGINE_PATH)/bson/lib/md5.h
@@ -74,6 +74,7 @@ $(EXTERNAL_PATH)/msgDef.h:          $(ENGINE_PATH)/include/msgDef.h
 $(EXTERNAL_PATH)/fmpDef.h:          $(ENGINE_PATH)/include/fmpDef.h
 $(EXTERNAL_PATH)/pmdOptions.h:      $(ENGINE_PATH)/include/pmdOptions.h
 $(EXTERNAL_PATH)/msgCatalogDef.h:   $(ENGINE_PATH)/include/msgCatalogDef.h
+$(EXTERNAL_PATH)/clientDef.h:       $(ENGINE_PATH)/client/clientDef.h
 
 # Compile flags
 ALL_DEFINES=$(DEFINES)
