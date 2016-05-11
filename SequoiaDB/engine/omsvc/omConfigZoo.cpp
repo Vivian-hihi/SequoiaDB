@@ -239,57 +239,14 @@ namespace engine
                  ] 
    }
    */
-   INT32 OmZooConfTemplate::_setPropery( BSONObj &property )
+   INT32 OmZooConfTemplate::_setPropery( const string& name, const string& value )
    {
-      INT32 rc = SDB_OK ;
-      string itemName ;
-      string itemValue ;
-
-      rc = getValueAsString( property, OM_BSON_PROPERTY_NAME, itemName ) ;
-      if ( SDB_OK != rc )
+      if ( name.compare( OM_TEMPLATE_ZOO_NUM ) == 0 )
       {
-         PD_LOG_MSG( PDERROR, "property miss bson field=%s", 
-                     OM_BSON_PROPERTY_NAME ) ;
-         goto error ;
+         _zooNum = ossAtoi( value.c_str() ) ;
       }
 
-      rc = getValueAsString( property, OM_BSON_PROPERTY_VALUE, 
-                             itemValue ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG_MSG( PDERROR, "property miss bson field=%s", 
-                     OM_BSON_PROPERTY_VALUE ) ;
-         goto error ;
-      }
-
-      if ( itemName.compare( OM_TEMPLATE_ZOO_NUM ) == 0 )
-      {
-         _zooNum = ossAtoi( itemValue.c_str() ) ;
-      }
-
-      {
-         OmConfProperty oneProperty ;
-         rc = oneProperty.init( property ) ;
-         if ( SDB_OK != rc )
-         {
-            PD_LOG( PDERROR, "init property failed:rc=%d", rc ) ;
-            goto error ;
-         }
-
-         if ( !oneProperty.isValid( itemValue ) )
-         {
-            rc = SDB_INVALIDARG ;
-            PD_LOG_MSG( PDERROR, "Template value is invalid:item=%s,value=%s,"
-                        "valid=%s", itemName.c_str(), itemValue.c_str(), 
-                        oneProperty.getValidString().c_str() ) ;
-            goto error ;
-         }
-      }
-
-   done:
-      return rc ;
-   error:
-      goto done ;
+      return SDB_OK ;
    }
 
    OmZooConfProperties::OmZooConfProperties()                  
@@ -795,7 +752,7 @@ namespace engine
       goto done ;
    }
 
-   INT32 OmZooConfigBuilder::_check( const BSONObj& bsonConfig )
+   INT32 OmZooConfigBuilder::_check( BSONObj& bsonConfig )
    {
       INT32 rc = SDB_OK ;
       BSONElement configEle ;

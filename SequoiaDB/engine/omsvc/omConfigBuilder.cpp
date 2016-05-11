@@ -32,11 +32,13 @@
 #include "omConfigBuilder.hpp"
 #include "omConfigSdb.hpp"
 #include "omConfigZoo.hpp"
+#include "omConfigSsqlOlap.hpp"
 #include "omDef.hpp"
 #include "ossSocket.hpp"
 #include "pmd.hpp"
 #include "pd.hpp"
 #include <sstream>
+#include <algorithm>
 
 namespace engine
 {
@@ -60,6 +62,13 @@ namespace engine
       ossItoa( right, result, OM_INT32_LENGTH ) ;
 
       return ( left + result ) ;
+   }
+
+   string strLower( const string& str )
+   {
+      string lower = str ;
+      transform( lower.begin(), lower.end(), lower.begin(), ::tolower ) ;
+      return lower ;
    }
 
    string trimLeft( string &str, const string &trimer )
@@ -200,7 +209,46 @@ namespace engine
             if ( ele.type() == Object )
             {
                BSONObj oneProperty = ele.embeddedObject() ;
-               rc = _setPropery( oneProperty ) ;
+               string itemName ;
+               string itemValue ;
+
+               rc = getValueAsString( oneProperty, OM_BSON_PROPERTY_NAME, itemName ) ;
+               if ( SDB_OK != rc )
+               {
+                  PD_LOG_MSG( PDERROR, "property miss bson field=%s", 
+                              OM_BSON_PROPERTY_NAME ) ;
+                  goto error ;
+               }
+
+               rc = getValueAsString( oneProperty, OM_BSON_PROPERTY_VALUE, 
+                                      itemValue ) ;
+               if ( SDB_OK != rc )
+               {
+                  PD_LOG_MSG( PDERROR, "property miss bson field=%s", 
+                              OM_BSON_PROPERTY_VALUE ) ;
+                  goto error ;
+               }
+
+               {
+                  OmConfProperty confProperty ;
+                  rc = confProperty.init( oneProperty ) ;
+                  if ( SDB_OK != rc )
+                  {
+                     PD_LOG( PDERROR, "init property failed:rc=%d", rc ) ;
+                     goto error ;
+                  }
+
+                  if ( !confProperty.isValid( itemValue ) )
+                  {
+                     rc = SDB_INVALIDARG ;
+                     PD_LOG_MSG( PDERROR, "Template value is invalid:item=%s,value=%s,"
+                                 "valid=%s", itemName.c_str(), itemValue.c_str(), 
+                                 confProperty.getValidString().c_str() ) ;
+                     goto error ;
+                  }
+               }
+
+               rc = _setPropery( itemName, itemValue ) ;
                if ( SDB_OK != rc )
                {
                   PD_LOG( PDERROR, "_setPropery failed:rc=%d", rc ) ;
@@ -254,7 +302,7 @@ namespace engine
       return true ;
    }
 
-   INT32 OmConfTemplate::_setPropery( BSONObj &property )
+   INT32 OmConfTemplate::_setPropery( const string& name, const string& value )
    {
       return SDB_OK ;
    }
@@ -723,6 +771,19 @@ namespace engine
       {
          _builder = SDB_OSS_NEW OmSdbConfigBuilder( businessInfo ) ;
       }
+      else if ( businessInfo.businessType == OM_BUSINESS_SEQUOIASQL )
+      {
+         if ( OM_SEQUOIASQL_DEPLOY_OLAP == businessInfo.deployMode )
+         {
+            _builder = SDB_OSS_NEW OmSsqlOlapConfigBuilder( businessInfo ) ;
+         }
+         else
+         {
+            rc = SDB_INVALIDARG ;
+            PD_LOG_MSG( PDERROR, "invalid deploy mode: %s", businessInfo.deployMode.c_str() ) ;
+            goto error ;
+         }
+      }
       else if ( businessInfo.businessType == OM_BUSINESS_ZOOKEEPER )
       {
          _builder = SDB_OSS_NEW OmZooConfigBuilder( businessInfo ) ;
@@ -976,7 +1037,7 @@ namespace engine
    INT32 OmConfigBuilder::checkConfig( const BSONObj &confProperties, 
                                        const BSONObj &bsonHostInfo,
                                        const BSONObj &bsonBusinessInfo,
-                                       const BSONObj &newBusinessConfig )
+                                       BSONObj &newBusinessConfig )
    {
       INT32 rc = SDB_OK ;
       OmBusiness* business = NULL ;
@@ -1029,6 +1090,38 @@ namespace engine
       {
          PD_LOG( PDERROR, "failed to check config: rc=%d", rc ) ;
          goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      _errorDetail = omGetCurrentErrorInfo() ;
+      goto done ;
+   }
+
+   INT32 OmConfigBuilder::getHostNames( const BSONObj& bsonConfig, set<string>& hostNames )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj config ;
+
+      config = bsonConfig.getObjectField( OM_BSON_FIELD_CONFIG ) ;
+
+      {
+         BSONObjIterator iter( config ) ;
+         while ( iter.more() )
+         {
+            BSONObj oneNode ;
+            BSONElement ele = iter.next() ;
+            if ( ele.type() != Object )
+            {
+               rc = SDB_INVALIDARG ;
+               PD_LOG_MSG( PDERROR, "field's element is not Object:field=%s"
+                           ",type=%d", OM_BSON_FIELD_CONFIG, ele.type() ) ;
+               goto error ;
+            }
+            oneNode = ele.embeddedObject() ;
+            hostNames.insert( oneNode.getStringField( OM_BSON_FIELD_HOST_NAME ) ) ;
+         }
       }
 
    done:

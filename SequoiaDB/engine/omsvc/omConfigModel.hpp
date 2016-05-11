@@ -89,7 +89,9 @@ namespace engine
    public:
       OmNode() ;
       virtual ~OmNode() ;
-      static INT32 createObject( const string& businessType, OmNode*& node ) ;
+      static INT32 createObject( const string& businessType,
+                                 const string& deployMode,
+                                 OmNode*& node ) ;
 
    public:
       INT32 init( const BSONObj& bsonNode, OmHost& host, OmCluster& cluster ) ;
@@ -315,6 +317,9 @@ namespace engine
       template<class Predicate>
       OmHost* chooseHost( Predicate pred ) const ;
 
+      template<class Predicate, class Excludes>
+      OmHost* chooseHost( Predicate pred, Excludes excludes ) const ;
+
    private:
       INT32 _initBusiness( const BSONObj& bsonBusiness ) ;
       INT32 _initHostAndNode( const BSONObj& bsonHost ) ;
@@ -349,6 +354,35 @@ namespace engine
          OmHost* tmp = it->second ;
 
          if ( it == _hosts.begin() || pred( host, tmp ) < 0 )
+         {
+            host = tmp ;
+         }
+      }
+
+   done:
+      return host ;
+   }
+
+   template<class Predicate, class Exclude>
+   OmHost* OmCluster::chooseHost( Predicate pred, Exclude exclude ) const
+   {
+      OmHost* host = NULL ;
+
+      if ( _hosts.size() == 0 )
+      {
+         goto done ;
+      }
+
+      for ( OmHostsConstIterator it = _hosts.begin() ; it != _hosts.end() ; it++ )
+      {
+         OmHost* tmp = it->second ;
+
+         if ( exclude(tmp) )
+         {
+            continue ;
+         }
+
+         if ( NULL == host || pred( host, tmp ) < 0 )
          {
             host = tmp ;
          }

@@ -84,6 +84,22 @@ namespace engine
    #define OM_ZOO_CONF_DETAIL_INITLIMIT      "initlimit"
    #define OM_ZOO_CONF_DETAIL_TICKTIME       "ticktime"
 
+   // sequoiasql olap
+   #define OM_SEQUOIASQL_DEPLOY_OLAP            "olap"
+   #define OM_SSQL_OLAP_DEPLOY_STANDBY          "deploy_standby"
+   #define OM_SSQL_OLAP_SEGMENT_NUM             "segment_num"
+   #define OM_SSQL_OLAP_CONF_MASTER_HOST        "master_host"
+   #define OM_SSQL_OLAP_CONF_MASTER_PORT        "master_port"
+   #define OM_SSQL_OLAP_CONF_STANDBY_HOST       "standby_host"
+   #define OM_SSQL_OLAP_CONF_MASTER_DIR         "master_dir"
+   #define OM_SSQL_OLAP_CONF_MASTER_TEMP_DIR    "master_temp_dir"
+   #define OM_SSQL_OLAP_CONF_HDFS_URL           "hdfs_url"
+   #define OM_SSQL_OLAP_CONF_SEGMENT_HOSTS      "segment_hosts"
+   #define OM_SSQL_OLAP_CONF_SEGMENT_PORT       "segment_port"
+   #define OM_SSQL_OLAP_CONF_SEGMENT_DIR        "segment_dir"
+   #define OM_SSQL_OLAP_CONF_SEGMENT_TEMP_DIR   "segment_temp_dir"
+   #define OM_SSQL_OLAP_CONF_ROLE               "role"
+
    /*
       OM Field Define
    */

@@ -84,7 +84,7 @@ namespace engine
       private:
          void              _reset() ;
          bool              _isAllProperySet() ;
-         INT32             _setPropery( BSONObj &property ) ;
+         INT32             _setPropery( const string& name, const string& value ) ;
 
       private:
          INT32             _zooNum ;
@@ -120,7 +120,7 @@ namespace engine
       INT32 _getDataPath( OmHost& host, const string& diskPath,
                            const string& businessType, const string& businessName,
                            const string& dataPort, string& dataPath ) ;
-      INT32 _check( const BSONObj& bsonConfig ) ;
+      INT32 _check( BSONObj& bsonConfig ) ;
       INT32 _checkAndAddNode( const BSONObj& bsonNode ) ;
 
    private:

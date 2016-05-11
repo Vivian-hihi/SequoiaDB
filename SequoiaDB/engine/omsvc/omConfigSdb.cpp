@@ -206,68 +206,26 @@ namespace engine
                  ] 
    }
    */
-   INT32 OmSdbConfTemplate::_setPropery( BSONObj &property )
+   INT32 OmSdbConfTemplate::_setPropery( const string& name, const string& value )
    {
-      INT32 rc = SDB_OK ;
-      string itemName ;
-      string itemValue ;
-      rc = getValueAsString( property, OM_BSON_PROPERTY_NAME, itemName ) ;
-      if ( SDB_OK != rc )
+      if ( name.compare( OM_TEMPLATE_REPLICA_NUM ) == 0 )
       {
-         PD_LOG_MSG( PDERROR, "property miss bson field=%s", 
-                     OM_BSON_PROPERTY_NAME ) ;
-         goto error ;
+         _replicaNum = ossAtoi( value.c_str() ) ;
+      }
+      else if ( name.compare( OM_TEMPLATE_DATAGROUP_NUM ) == 0 )
+      {
+         _dataGroupNum = ossAtoi( value.c_str() ) ;
+      }
+      else if ( name.compare( OM_TEMPLATE_CATALOG_NUM ) == 0 )
+      {
+         _catalogNum = ossAtoi( value.c_str() ) ;
+      }
+      else if ( name.compare( OM_TEMPLATE_COORD_NUM ) == 0 )
+      {
+         _coordNum = ossAtoi( value.c_str() ) ;
       }
 
-      rc = getValueAsString( property, OM_BSON_PROPERTY_VALUE, 
-                             itemValue ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG_MSG( PDERROR, "property miss bson field=%s", 
-                     OM_BSON_PROPERTY_VALUE ) ;
-         goto error ;
-      }
-
-      if ( itemName.compare( OM_TEMPLATE_REPLICA_NUM ) == 0 )
-      {
-         _replicaNum = ossAtoi( itemValue.c_str() ) ;
-      }
-      else if ( itemName.compare( OM_TEMPLATE_DATAGROUP_NUM ) == 0 )
-      {
-         _dataGroupNum = ossAtoi( itemValue.c_str() ) ;
-      }
-      else if ( itemName.compare( OM_TEMPLATE_CATALOG_NUM ) == 0 )
-      {
-         _catalogNum = ossAtoi( itemValue.c_str() ) ;
-      }
-      else if ( itemName.compare( OM_TEMPLATE_COORD_NUM ) == 0 )
-      {
-         _coordNum = ossAtoi( itemValue.c_str() ) ;
-      }
-
-      {
-         OmConfProperty oneProperty ;
-         rc = oneProperty.init( property ) ;
-         if ( SDB_OK != rc )
-         {
-            PD_LOG( PDERROR, "init property failed:rc=%d", rc ) ;
-            goto error ;
-         }
-
-         if ( !oneProperty.isValid( itemValue ) )
-         {
-            rc = SDB_INVALIDARG ;
-            PD_LOG_MSG( PDERROR, "Template value is invalid:item=%s,value=%s,"
-                        "valid=%s", itemName.c_str(), itemValue.c_str(), 
-                        oneProperty.getValidString().c_str() ) ;
-            goto error ;
-         }
-      }
-
-   done:
-      return rc ;
-   error:
-      goto done ;
+      return SDB_OK ;
    }
 
    void OmSdbConfTemplate::_reset()
@@ -909,7 +867,7 @@ namespace engine
       goto done ;
    }
 
-   INT32 OmSdbConfigBuilder::_check( const BSONObj& bsonConfig )
+   INT32 OmSdbConfigBuilder::_check( BSONObj& bsonConfig )
    {
       INT32 rc = SDB_OK ;
       BSONElement configEle ;

@@ -33,6 +33,7 @@
 #include "omDef.hpp"
 #include "omConfigSdb.hpp"
 #include "omConfigZoo.hpp"
+#include "omConfigSsqlOlap.hpp"
 #include "pd.hpp"
 #include <sstream>
 
@@ -46,7 +47,9 @@ namespace engine
    {
    }
 
-   INT32 OmNode::createObject( const string& businessType, OmNode*& node )
+   INT32 OmNode::createObject( const string& businessType,
+                               const string& deployMode,
+                               OmNode*& node )
    {
       INT32 rc = SDB_OK ;
       OmNode* _node = NULL ;
@@ -58,6 +61,20 @@ namespace engine
       else if ( businessType == OM_BUSINESS_ZOOKEEPER )
       {
          _node = SDB_OSS_NEW OmZooNode() ;
+      }
+      else if ( businessType == OM_BUSINESS_SEQUOIASQL )
+      {
+         if ( deployMode == OM_SEQUOIASQL_DEPLOY_OLAP )
+         {
+            _node = SDB_OSS_NEW OmSsqlOlapNode() ;
+         }
+         else
+         {
+            rc = SDB_INVALIDARG ;
+            PD_LOG_MSG( PDERROR, "invalid deploy mode of sequoiasql: %s", 
+                        deployMode.c_str() ) ;
+            goto error ;
+         }
       }
       else
       {
@@ -957,12 +974,14 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       string businessType ;
+      string deployMode ;
       OmNode* node = NULL ;
       OmBusiness* business = NULL ;
 
       businessType = bsonNode.getStringField( OM_BUSINESS_FIELD_TYPE ) ;
+      deployMode = bsonNode.getStringField( OM_BUSINESS_FIELD_DEPLOYMOD ) ;
 
-      rc = OmNode::createObject( businessType, node ) ;
+      rc = OmNode::createObject( businessType, deployMode, node ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to create OmNode object: rc=%d", rc ) ;

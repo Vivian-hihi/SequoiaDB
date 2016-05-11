@@ -4384,7 +4384,7 @@ namespace engine
                 ]
    }
    */
-   INT32 omInstallBusinessReq::_extractHostInfo( BSONObj &bsonConfValue, 
+   INT32 omInstallBusinessReq::_extractHostInfo( set<string>& hostNames, 
                                                  BSONObj &bsonHostInfo )
    {
       INT32 rc = SDB_OK ;
@@ -4392,31 +4392,10 @@ namespace engine
       BSONObjBuilder builder ;
       BSONArrayBuilder arrayBuilder ;
       BSONObj config ;
-      set<string> tmpHost ;
       set<string>::iterator iterSet ;
 
-      condition = BSON( OM_BSON_FIELD_HOST_NAME << "" ) ;
-      config    = bsonConfValue.getObjectField( OM_BSON_FIELD_CONFIG ) ;
-      {
-         BSONObjIterator iter( config ) ;
-         while ( iter.more() )
-         {
-            BSONElement ele = iter.next() ;
-            if ( ele.type() != Object )
-            {
-               rc = SDB_INVALIDARG ;
-               PD_LOG_MSG( PDERROR, "field's element is not Object:field=%s"
-                           ",type=%d", OM_BSON_FIELD_CONFIG, ele.type() ) ;
-               goto error ;
-            }
-            BSONObj oneNode = ele.embeddedObject() ;
-            BSONObj host    = oneNode.filterFieldsUndotted(condition, true );
-            tmpHost.insert( host.getStringField( OM_BSON_FIELD_HOST_NAME ) ) ;
-         }
-      }
-
-      iterSet = tmpHost.begin() ;
-      while( iterSet != tmpHost.end() )
+      iterSet = hostNames.begin() ;
+      while( iterSet != hostNames.end() )
       {
          BSONObj host = BSON( OM_BSON_FIELD_HOST_NAME << *iterSet ) ;
          arrayBuilder.append( host ) ;
@@ -4937,10 +4916,14 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       string businessType ;
+      string deployMode ;
       taskInfo = bsonConfValue.copy() ;
       BSONArrayBuilder arrayBuilder ;
       BSONObj condition ;
+
       businessType = bsonConfValue.getStringField( OM_BSON_BUSINESS_TYPE ) ;
+      deployMode = bsonConfValue.getStringField( OM_BSON_DEPLOY_MOD ) ;
+
       if ( businessType == OM_BUSINESS_SEQUOIADB )
       {
          condition = BSON( OM_BSON_FIELD_HOST_NAME << "" 
@@ -4952,6 +4935,12 @@ namespace engine
       {
          condition = BSON( OM_BSON_FIELD_HOST_NAME << "" 
                            << OM_ZOO_CONF_DETAIL_ZOOID << "" ) ;
+      }
+      else if ( businessType == OM_BUSINESS_SEQUOIASQL &&
+                deployMode == OM_SEQUOIASQL_DEPLOY_OLAP )
+      {
+         condition = BSON( OM_BSON_FIELD_HOST_NAME << "" 
+                           << OM_SSQL_OLAP_CONF_ROLE << "" ) ;
       }
       else
       {
@@ -5035,14 +5024,6 @@ namespace engine
          goto error ;
       }
 
-      rc = _extractHostInfo( bsonConfValue, bsonHostInfo ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "get host info failed:rc=%d", rc ) ;
-         _errorDetail = omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ;
-         goto error ;
-      }
-
       rc = _getBusinessInfoOfCluster( _clusterName, clusterBusinessInfo ) ;
       if ( SDB_OK != rc )
       {
@@ -5054,6 +5035,7 @@ namespace engine
       {
          OmConfigBuilder* confBuilder = NULL ;
          OmBusinessInfo businessInfo ;
+         set<string> hostNames ;
 
          businessInfo.clusterName = _clusterName ;
          businessInfo.businessType = _businessType ;
@@ -5065,6 +5047,22 @@ namespace engine
          {
             _errorDetail = omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ;
             PD_LOG( PDERROR, "failed to create config builder: rc=%d", rc ) ;
+            goto error ;
+         }
+
+         rc = confBuilder->getHostNames( bsonConfValue, hostNames ) ;
+         if ( SDB_OK != rc )
+         {
+            _errorDetail = omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ;
+            PD_LOG( PDERROR, "failed to get host names: rc=%d", rc ) ;
+            goto error ;
+         }
+
+         rc = _extractHostInfo( hostNames, bsonHostInfo ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "get host info failed:rc=%d", rc ) ;
+            _errorDetail = omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ;
             goto error ;
          }
 

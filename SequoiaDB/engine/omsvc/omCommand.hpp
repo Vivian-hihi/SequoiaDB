@@ -522,7 +522,7 @@ namespace engine
          INT32          _combineConfDetail( string businessType, 
                                             string clusterType, 
                                             BSONObj &bsonConfDetail ) ;
-         INT32          _extractHostInfo( BSONObj &bsonConfValue, 
+         INT32          _extractHostInfo( set<string>& hostNames,
                                           BSONObj &bsonHostInfo ) ;
 
          INT32          _applyInstallRequest( const BSONObj &bsonConfValue, 

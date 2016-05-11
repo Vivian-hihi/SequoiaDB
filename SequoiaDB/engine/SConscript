@@ -410,6 +410,7 @@ omsvcFiles = [
       "omsvc/omConfigBuilder.cpp",
       "omsvc/omConfigSdb.cpp",
       "omsvc/omConfigZoo.cpp",
+      "omsvc/omConfigSsqlOlap.cpp",
       ]
 
 barFiles = [

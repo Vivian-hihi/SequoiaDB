@@ -41,6 +41,7 @@ namespace engine
 
    string strPlus( const string &addend, INT32 augend ) ;
    string strConnect( const string &left, INT32 right ) ;
+   string strLower( const string& str ) ;
    INT32 getValueAsString( const BSONObj &bsonTemplate, 
                            const string &fieldName, string &value ) ;
 
@@ -63,7 +64,7 @@ namespace engine
       virtual INT32     _init() ;
       virtual void      _reset() ;
       virtual bool      _isAllProperySet() ;
-      virtual INT32     _setPropery( BSONObj &property ) ;
+      virtual INT32     _setPropery( const string& name, const string& value ) ;
 
    protected:
       string            _businessType ;
@@ -191,7 +192,9 @@ namespace engine
       INT32 checkConfig( const BSONObj& confProperties, 
                          const BSONObj& bsonHostInfo,
                          const BSONObj& bsonBusinessInfo,
-                         const BSONObj& newBusinessConfig ) ;
+                         BSONObj& newBusinessConfig ) ;
+
+      virtual INT32 getHostNames( const BSONObj& bsonConfig, set<string>& hostNames ) ;
 
       const string& getErrorDetail() const { return _errorDetail ; }
 
@@ -202,7 +205,7 @@ namespace engine
       virtual OmConfTemplate&    _getConfTemplate() = 0 ;
       virtual OmConfProperties&  _getConfProperties() = 0 ;
       virtual INT32 _build( BSONArray& bsonConfig ) = 0 ;
-      virtual INT32 _check( const BSONObj& bsonConfig ) = 0 ;
+      virtual INT32 _check( BSONObj& bsonConfig ) = 0 ;
 
    protected:
       OmBusinessInfo    _businessInfo ;

@@ -1,0 +1,132 @@
+<Property type="array">
+	<FILLER>
+		<Name>master_host</Name>
+		<WebName>主节点主机</WebName>
+		<Type>string</Type>
+		<Default></Default>
+		<Valid></Valid>
+		<Display>edit box</Display>
+		<Edit>true</Edit>
+		<Desc>主节点主机</Desc>
+		<Level>0</Level>
+		<DynamicEdit>false</DynamicEdit>
+		<BatchEdit>false</BatchEdit>
+	</FILLER>
+	<FILLER>
+		<Name>master_port</Name>
+		<WebName>主节点端口号</WebName>
+		<Type>port</Type>
+		<Default>5432</Default>
+		<Valid>1000-65535</Valid>
+		<Display>edit box</Display>
+		<Edit>true</Edit>
+		<Desc>主节点端口号</Desc>
+		<Level>0</Level>
+		<DynamicEdit>false</DynamicEdit>
+		<BatchEdit>false</BatchEdit>
+	</FILLER>
+	<FILLER>
+		<Name>standby_host</Name>
+		<WebName>备节点主机</WebName>
+		<Type>string</Type>
+		<Default></Default>
+		<Valid></Valid>
+		<Display>edit box</Display>
+		<Edit>true</Edit>
+		<Desc>备节点主机</Desc>
+		<Level>0</Level>
+		<DynamicEdit>false</DynamicEdit>
+		<BatchEdit>false</BatchEdit>
+	</FILLER>
+	<FILLER>
+		<Name>master_dir</Name>
+		<WebName>主节点数据目录</WebName>
+		<Type>string</Type>
+		<Default></Default>
+		<Valid></Valid>
+		<Display>edit box</Display>
+		<Edit>true</Edit>
+		<Desc>主节点数据目录</Desc>
+		<Level>0</Level>
+		<DynamicEdit>false</DynamicEdit>
+		<BatchEdit>false</BatchEdit>
+	</FILLER>
+	<FILLER>
+		<Name>master_temp_dir</Name>
+		<WebName>主节点临时目录</WebName>
+		<Type>string</Type>
+		<Default></Default>
+		<Valid></Valid>
+		<Display>edit box</Display>
+		<Edit>true</Edit>
+		<Desc>主节点临时目录</Desc>
+		<Level>0</Level>
+		<DynamicEdit>false</DynamicEdit>
+		<BatchEdit>false</BatchEdit>
+	</FILLER>
+	<FILLER>
+		<Name>hdfs_url</Name>
+		<WebName>HDFS URL</WebName>
+		<Type>string</Type>
+		<Default></Default>
+		<Valid></Valid>
+		<Display>edit box</Display>
+		<Edit>true</Edit>
+		<Desc>HDFS URL</Desc>
+		<Level>0</Level>
+		<DynamicEdit>false</DynamicEdit>
+		<BatchEdit>true</BatchEdit>
+	</FILLER>
+	<FILLER>
+		<Name>segment_hosts</Name>
+		<WebName>Segment主机</WebName>
+		<Type>string</Type>
+		<Default></Default>
+		<Valid></Valid>
+		<Display>edit box</Display>
+		<Edit>true</Edit>
+		<Desc>Segment主机</Desc>
+		<Level>0</Level>
+		<DynamicEdit>false</DynamicEdit>
+		<BatchEdit>true</BatchEdit>
+	</FILLER>
+	<FILLER>
+		<Name>segment_port</Name>
+		<WebName>Segment端口号</WebName>
+		<Type>port</Type>
+		<Default>40000</Default>
+		<Valid>1000-65535</Valid>
+		<Display>edit box</Display>
+		<Edit>true</Edit>
+		<Desc>Segment端口号</Desc>
+		<Level>0</Level>
+		<DynamicEdit>false</DynamicEdit>
+		<BatchEdit>false</BatchEdit>
+	</FILLER>
+	<FILLER>
+		<Name>segment_dir</Name>
+		<WebName>Segment数据目录</WebName>
+		<Type>string</Type>
+		<Default></Default>
+		<Valid></Valid>
+		<Display>edit box</Display>
+		<Edit>true</Edit>
+		<Desc>Segment数据目录</Desc>
+		<Level>0</Level>
+		<DynamicEdit>false</DynamicEdit>
+		<BatchEdit>false</BatchEdit>
+	</FILLER>
+	<FILLER>
+		<Name>segment_temp_dir</Name>
+		<WebName>Segment临时目录</WebName>
+		<Type>string</Type>
+		<Default></Default>
+		<Valid></Valid>
+		<Display>edit box</Display>
+		<Edit>true</Edit>
+		<Desc>Segment临时目录</Desc>
+		<Level>0</Level>
+		<DynamicEdit>false</DynamicEdit>
+		<BatchEdit>false</BatchEdit>
+	</FILLER>
+</Property>
