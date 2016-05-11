@@ -33,6 +33,10 @@ from pysequoiadb.error import (SDBBaseError,
                                SDBSystemError,
                                SDBEndOfCursor)
 
+QUERY_FLG_WITH_RETURNDATA = 0x00000080
+QUERY_FLG_PARALLED        = 0x00000100
+QUERY_FLG_FORCE_HINT      = 0x00000200
+
 class collection(object):
    """Collection for SequoiaDB
 
@@ -521,11 +525,19 @@ class collection(object):
          - num_to_return   long     Only return numToReturn documents,
                                           default is -1L for returning
                                           all results.
+         - flags           int      The query flags, default to be 0. Please see
+                                          the definition of follow flags for 
+                                          more detail. See Info as below.
       Return values:
          a cursor object of query
       Exceptions:
          pysequoiadb.error.SDBTypeError
          pysequoiadb.error.SDBBaseError
+      Info:
+         query flags:
+         QUERY_FLG_WITH_RETURNDATA : Force to use specified hint to query, if database have no index assigned by the hint, fail to query
+         QUERY_FLG_PARALLED        : Enable parallel sub query, each sub query will finish scanning different part of the data
+         QUERY_FLG_FORCE_HINT      : In general, query won't return data until cursor gets from database, when add this flag, return data in query response, it will be more high-performance
       """
 
       bson_condition = None
@@ -535,6 +547,7 @@ class collection(object):
 
       num_to_skip = 0L
       num_to_return = -1L
+      flags = 0
 
       if "condition" in kwargs:
          if not isinstance(kwargs.get("condition"), dict):
@@ -562,13 +575,18 @@ class collection(object):
             raise SDBTypeError("num_to_return must be an instance of long")
          else:
             num_to_return = kwargs.get("num_to_return")
+      if "flags" in kwargs:
+         if not isinstance(kwargs.get("flags"), int):
+            raise SDBTypeError("flags must be an instance of int")
+         else:
+            num_to_skip = kwargs.get("flags")
 
       try:
          result = cursor()
          rc = sdb.cl_query(self._cl, result._cursor,
-                          bson_condition, bson_selector,
-                          bson_order_by, bson_hint,
-                          num_to_skip, num_to_return)
+                           bson_condition, bson_selector,
+                           bson_order_by, bson_hint,
+                           num_to_skip, num_to_return, flag)
          pysequoiadb._raise_if_error("Failed to query", rc)
       except SDBBaseError:
          del result
@@ -577,7 +595,7 @@ class collection(object):
 
       return result
 
-   def query_and_update(self, update, condition = None, selector = None, order_by = None, hint = None, num_to_skip = 0, num_to_return = -1, return_new = False):
+   def query_and_update(self, update, condition = None, selector = None, order_by = None, hint = None, num_to_skip = 0, num_to_return = -1, flags = 0, return_new = False):
       """Get the matching documents in current collection and update.
 
       Parameters:
@@ -596,12 +614,21 @@ class collection(object):
          num_to_return   long     Only return numToReturn documents,
                                           default is -1L for returning
                                           all results.
+         flags           int      The query flags, default to be 0. Please see
+                                          the definition of follow flags for 
+                                          more detail. See Info as below.
          return_new      bool     When True, returns the updated document rather than the original
+         
       Return values:
          a cursor object of query
       Exceptions:
          pysequoiadb.error.SDBTypeError
          pysequoiadb.error.SDBBaseError
+      Info:
+         query flags:
+         QUERY_FLG_WITH_RETURNDATA : Force to use specified hint to query, if database have no index assigned by the hint, fail to query
+         QUERY_FLG_PARALLED        : Enable parallel sub query, each sub query will finish scanning different part of the data
+         QUERY_FLG_FORCE_HINT      : In general, query won't return data until cursor gets from database, when add this flag, return data in query response, it will be more high-performance
       """
 
       bson_condition = None
@@ -647,7 +674,7 @@ class collection(object):
          rc = sdb.cl_query_and_update(self._cl, result._cursor,
                                       bson_condition, bson_selector,
                                       bson_order_by, bson_hint,
-                                      num_to_skip, num_to_return, return_new, bson_update)
+                                      num_to_skip, num_to_return, return_new, flags, bson_update)
          pysequoiadb._raise_if_error("Failed to query", rc)
       except SDBBaseError:
          del result
@@ -656,7 +683,7 @@ class collection(object):
 
       return result
 
-   def query_and_remove(self, condition = None, selector = None, order_by = None, hint = None, num_to_skip = 0, num_to_return = -1):
+   def query_and_remove(self, condition = None, selector = None, order_by = None, hint = None, num_to_skip = 0, num_to_return = -1, flags = 0):
       """Get the matching documents in current collection and remove.
 
       Parameters:
@@ -674,11 +701,19 @@ class collection(object):
          num_to_return   long     Only return numToReturn documents,
                                           default is -1L for returning
                                           all results.
+         flags           int      The query flags, default to be 0. Please see
+                                          the definition of follow flags for 
+                                          more detail. See Info as below.
       Return values:
          a cursor object of query
       Exceptions:
          pysequoiadb.error.SDBTypeError
          pysequoiadb.error.SDBBaseError
+      Info:
+         query flags:
+         QUERY_FLG_WITH_RETURNDATA : Force to use specified hint to query, if database have no index assigned by the hint, fail to query
+         QUERY_FLG_PARALLED        : Enable parallel sub query, each sub query will finish scanning different part of the data
+         QUERY_FLG_FORCE_HINT      : In general, query won't return data until cursor gets from database, when add this flag, return data in query response, it will be more high-performance
       """
 
       bson_condition = None
@@ -1135,11 +1170,19 @@ class collection(object):
                                           hint if not provided.
          - num_to_skip     long     Skip the first numToSkip documents,
                                           default is 0L.
+         - flags           int      The query flags, default to be 0. Please see
+                                          the definition of follow flags for 
+                                          more detail. See Info as below.
       Return values:
          a record of json/dict
       Exceptions:
          pysequoiadb.error.SDBTypeError
          pysequoiadb.error.SDBBaseError
+      Info:
+         query flags:
+         QUERY_FLG_WITH_RETURNDATA : Force to use specified hint to query, if database have no index assigned by the hint, fail to query
+         QUERY_FLG_PARALLED        : Enable parallel sub query, each sub query will finish scanning different part of the data
+         QUERY_FLG_FORCE_HINT      : In general, query won't return data until cursor gets from database, when add this flag, return data in query response, it will be more high-performance
       """
       bson_condition = None
       bson_selector = None
@@ -1147,6 +1190,7 @@ class collection(object):
       bson_hint = None
 
       num_to_skip = 0L
+      flags = 0
 
       if "condition" in kwargs:
          if not isinstance(kwargs.get("condition"), dict):
@@ -1169,13 +1213,18 @@ class collection(object):
             raise SDBTypeError("num_to_skip must be an instance of long")
          else:
             num_to_skip = kwargs.get("num_to_skip")
+      if "flags" in kwargs:
+         if not isinstance(kwargs.get("flags"), int):
+            raise SDBTypeError("flags must be an instance of int")
+         else:
+            num_to_skip = kwargs.get("flags")
 
       try:
          result = cursor()
          rc = sdb.cl_query(self._cl, result._cursor,
                           bson_condition, bson_selector,
                           bson_order_by, bson_hint,
-                          num_to_skip, 1L)
+                          num_to_skip, 1L, flags)
          pysequoiadb._raise_if_error("Failed to query one", rc)
       except SDBBaseError:
          del result
@@ -1212,13 +1261,20 @@ class collection(object):
          - num_to_return   long     Only return numToReturn documents,
                                           default is -1L for returning
                                           all results.
-         - flag            int
-         - options         json
+         - flags           int      The query flags, default to be 0. Please see
+                                          the definition of follow flags for 
+                                          more detail. See Info as below.
+         - options         dict
       Return values:
          a cursor object of query
       Exceptions:
          pysequoiadb.error.SDBTypeError
          pysequoiadb.error.SDBBaseError
+      Info:
+         query flags:
+         QUERY_FLG_WITH_RETURNDATA : Force to use specified hint to query, if database have no index assigned by the hint, fail to query
+         QUERY_FLG_PARALLED        : Enable parallel sub query, each sub query will finish scanning different part of the data
+         QUERY_FLG_FORCE_HINT      : In general, query won't return data until cursor gets from database, when add this flag, return data in query response, it will be more high-performance
       """
 
       bson_condition = None

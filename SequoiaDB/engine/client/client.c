@@ -1698,14 +1698,17 @@ SDB_EXPORT INT32 sdbSecureConnect ( const CHAR *pHostName, const CHAR *pServiceN
    return _sdbConnect ( pHostName, pServiceName, pUsrName, pPasswd, TRUE, handle ) ;
 }
 
-SDB_EXPORT INT32 initClient( BOOLEAN enableCacheStrategy,
-                             const UINT32 cacheTimeInterval,
-                             const UINT32 maxCacheSlotCount )
+SDB_EXPORT INT32 initClient( sdbClientConf* config )
 {
    INT32 rc = SDB_OK ;
-   rc = initCacheStrategy( enableCacheStrategy,
-                           cacheTimeInterval,
-                           maxCacheSlotCount ) ;
+   if ( NULL == config )
+   {
+      goto done ;
+   }
+   
+   rc = initCacheStrategy( config->enableCacheStrategy,
+                           config->cacheTimeInterval,
+                           config->maxCacheSlotCount ) ;
    if ( SDB_OK != rc )
    {
       goto error ;
@@ -1718,9 +1721,9 @@ error:
 
 //address[i] == "192.168.20.40:12345"
 static INT32 _sdbConnect1 ( const CHAR **pConnAddrs, INT32 arrSize,
-                               const CHAR *pUsrName, const CHAR *pPasswd,
-                               BOOLEAN useSSL,
-                               sdbConnectionHandle *handle )
+                            const CHAR *pUsrName, const CHAR *pPasswd,
+                            BOOLEAN useSSL,
+                            sdbConnectionHandle *handle )
 {
    INT32 rc                 = SDB_OK ;
    const CHAR *pHostName    = NULL ;

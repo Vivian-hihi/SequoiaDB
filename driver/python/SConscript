@@ -50,7 +50,7 @@ clientLibFiles = [
    path + "SequoiaDB/engine/util/json2rawbson.h",
    path + "SequoiaDB/engine/include/utilStr.hpp",
    path + "SequoiaDB/engine/client/base64c.h",
-
+   path + "SequoiaDB/engine/client/clientDef.h",
    path + "SequoiaDB/engine/client/timestamp.h",
    path + "SequoiaDB/engine/client/timestampParse.c",
    path + "SequoiaDB/engine/client/timestampTm.c",

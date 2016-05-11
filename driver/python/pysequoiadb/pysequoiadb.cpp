@@ -1154,7 +1154,11 @@ __METHOD_IMP(sdb_init_client)
       goto done ;
    }
 
-   rc = initClient( turnOn, timeInterval, maxCacheSlot ) ;
+   sdbClientConf config ;
+   config.enableCacheStrategy = turnOn ;
+   config.cacheTimeInterval = timeInterval ;
+   config.maxCacheSlotCount = maxCacheSlot ;
+   rc = initClient( &config ) ;
    if ( rc )
    {
       goto done ;
@@ -1715,6 +1719,7 @@ done:
 __METHOD_IMP(cl_query)
 {
    INT32 rc                       = 0 ;
+   INT32 flag                     = 0 ;
    INT64 num_to_skip              = 0 ;
    INT64 num_to_return            = -1 ;
    PYOBJECT *obj                  = NULL ;
@@ -1730,9 +1735,9 @@ __METHOD_IMP(cl_query)
    const bson::BSONObj *order_by  = NULL ;
    const bson::BSONObj *hint      = NULL ;
 
-   if ( !PARSE_PYTHON_ARGS( args, "OOOOOOLL", &obj, &cursor_object,
+   if ( !PARSE_PYTHON_ARGS( args, "OOOOOOLLi", &obj, &cursor_object,
       &bson_condition,  &bson_selector, &bson_order_by,
-      &bson_hint, &num_to_skip, &num_to_return ) )
+      &bson_hint, &num_to_skip, &num_to_return, &flag ) )
    {
       rc = SDB_INVALIDARGS ;
       goto done ;
@@ -1746,7 +1751,7 @@ __METHOD_IMP(cl_query)
    CAST_PYBSON_TO_CPPBSON( bson_hint, hint ) ;
 
    rc = cl->query( *cursor, *condition, *selector, *order_by, *hint,
-      num_to_skip, num_to_return ) ;
+      num_to_skip, num_to_return, flag ) ;
    if ( rc )
    {
       goto done ;
@@ -1764,6 +1769,7 @@ __METHOD_IMP(cl_query_and_update)
 {
    INT32 rc                       = 0 ;
    INT32 return_new_num           = 0 ;
+   INT32 flag                     = 0 ;
    BOOLEAN return_new             = FALSE ;
    INT64 num_to_skip              = 0 ;
    INT64 num_to_return            = -1 ;
@@ -1784,7 +1790,7 @@ __METHOD_IMP(cl_query_and_update)
 
    if ( !PARSE_PYTHON_ARGS( args, "OOOOOOLLiO", &obj, &cursor_object,
         &bson_condition,  &bson_selector, &bson_order_by,
-        &bson_hint, &num_to_skip, &num_to_return, &return_new_num, &bson_update ) )
+        &bson_hint, &num_to_skip, &num_to_return, &return_new_num, &flag, &bson_update ) )
    {
       rc = SDB_INVALIDARGS ;
       goto done ;
@@ -1799,8 +1805,9 @@ __METHOD_IMP(cl_query_and_update)
    CAST_PYBSON_TO_CPPBSON( bson_update, update ) ;
    return_new = return_new_num != 0 ? TRUE : FALSE ;
 
-   rc = cl->queryAndUpdate( *cursor, *update, *condition, *selector, *order_by, *hint,
-      num_to_skip, num_to_return, 0, return_new ) ;
+   rc = cl->queryAndUpdate( *cursor,
+                            *update, *condition, *selector, *order_by, *hint,
+                            num_to_skip, num_to_return, flag, return_new ) ;
    if ( rc )
    {
       goto done ;
@@ -1818,6 +1825,7 @@ done:
 __METHOD_IMP(cl_query_and_remove)
 {
    INT32 rc                       = 0 ;
+   INT32 flag                     = 0 ;
    INT64 num_to_skip              = 0 ;
    INT64 num_to_return            = -1 ;
    PYOBJECT *obj                  = NULL ;
@@ -1835,7 +1843,7 @@ __METHOD_IMP(cl_query_and_remove)
 
    if ( !PARSE_PYTHON_ARGS( args, "OOOOOOLL", &obj, &cursor_object,
       &bson_condition,  &bson_selector, &bson_order_by,
-      &bson_hint, &num_to_skip, &num_to_return ) )
+      &bson_hint, &num_to_skip, &num_to_return, &flag ) )
    {
       rc = SDB_INVALIDARGS ;
       goto done ;
@@ -1849,7 +1857,7 @@ __METHOD_IMP(cl_query_and_remove)
    CAST_PYBSON_TO_CPPBSON( bson_hint, hint ) ;
 
    rc = cl->queryAndRemove( *cursor, *condition, *selector, *order_by, *hint,
-      num_to_skip, num_to_return, 0 ) ;
+      num_to_skip, num_to_return, flag ) ;
    if ( rc )
    {
       goto done ;

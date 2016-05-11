@@ -25,6 +25,7 @@
 #ifndef CLIENT_HPP__
 #define CLIENT_HPP__
 #include "core.hpp"
+#include "clientDef.h"
 #if defined (SDB_ENGINE) || defined (SDB_CLIENT)
 #include "../bson/bson.h"
 #include "../util/fromjson.hpp"
@@ -4400,19 +4401,13 @@ namespace sdbclient
 */
    typedef class sdb sdb ;
 
-   /** \fn INT32 initClient( BOOLEAN enableCacheStrategy,
-                             const UINT32 cacheTimeInterval,
-                             const UINT32 maxCacheSlotCount ) ;
-       \brief open cache strategy to improve performance
-       \param [in] enableCacheStrategy The flag to OPEN the cache strategy
-       \param [in] cacheTimeInterval The life cycle of cached object
-       \param [in] maxCacheSlotCount The count of slot to cache objects, one slot holds an object
+   /** \fn INT32 initClient( sdbClientConf* config ) ;
+       \brief set client global configuration such as cache strategy to improve performance
+       \param [in] config The configuration struct, see detail of sdbClientConf
        \retval SDB_OK Operation Success
        \retval Others Operation Fail
    */
-   SDB_EXPORT INT32 initClient( BOOLEAN enableCacheStrategy,
-                                const UINT32 cacheTimeInterval,
-                                const UINT32 maxCacheSlotCount ) ;
+   SDB_EXPORT INT32 initClient( sdbClientConf* config ) ;
 
 }
 

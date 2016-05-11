@@ -299,3 +299,4 @@
 -298 = cluster do not exist
 -299 = business do not exist
 -300 = user specified is not exist or password is invalid
+-301 = Compression abort
