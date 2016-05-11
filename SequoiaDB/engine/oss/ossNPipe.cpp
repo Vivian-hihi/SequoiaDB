@@ -1025,8 +1025,7 @@ INT32 ossCreateNamedPipe ( const CHAR *name,
    handle._state = action ;
    ossMemset ( handle._name, 0, sizeof(handle._name) ) ;
    ossStrncpy ( handle._name, pathName.c_str(), OSS_NPIPE_MAX_NAME_LEN + 1 ) ;
-   handle._handle = mkfifo ( pathName.c_str(),
-                             (S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH ) ) ;
+   handle._handle = mkfifo ( pathName.c_str(), OSS_DEFAULTDIR ) ;
    if ( -1 == handle._handle )
    {
       rc = ossGetLastError () ;
