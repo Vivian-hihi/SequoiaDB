@@ -36,6 +36,7 @@
 #include "rawbson2csv.h"
 #include "ossUtil.h"
 #include "../client/bson/bson.h"
+#include "common_decimal.h"
 #include "../client/base64c.h"
 #include "time.h"
 
@@ -232,20 +233,25 @@ INT32 _appendValue( CHAR delChar, bson_iterator *pIt,
                     BOOLEAN includeRegex )
 {
    INT32 rc = SDB_OK ;
-   bson_type type = bson_iterator_type( pIt ) ;
-   INT32 tempSize = 0 ;
-   INT32 base64Size = 0 ;
-   INT32 binType = 0 ;
-   CHAR temp[128] = { 0 } ;
+   bson_type type    = bson_iterator_type( pIt ) ;
+   INT32 tempSize    = 0 ;
+   INT32 base64Size  = 0 ;
+   INT32 binType     = 0 ;
+   INT32 decimalSize = 0 ;
    const CHAR *pTemp = NULL ;
-   CHAR *pBase64 = NULL ;
+   CHAR *pBase64     = NULL ;
+   CHAR *pDecimalStr = NULL ;
+   CHAR temp[128]    = { 0 } ;
    bson_timestamp_t ts;
    time_t timer ;
    struct tm psr;
+   bson_decimal decimal ;
+
+   decimal_init( &decimal ) ;
 
    if ( type == BSON_DOUBLE || type == BSON_BOOL ||
         type == BSON_NULL || type == BSON_INT ||
-        type == BSON_LONG || type == BSON_DECIMAL )
+        type == BSON_LONG )
    {
       rc = _appendNonString( delChar, pIt, ppBuffer, pCSVSize ) ;
       if ( rc )
@@ -483,6 +489,49 @@ INT32 _appendValue( CHAR delChar, bson_iterator *pIt,
             goto error ;
          }
       }
+      else if ( type == BSON_DECIMAL )
+      {
+         if( bson_iterator_decimal( pIt, &decimal ) == BSON_ERROR )
+         {
+            rc = SDB_SYS ;
+            UTIL_RAW2BSON_PRINTF_LOG( "Failed to call bson_iterator_decimal" ) ;
+            goto error ;
+         }
+         rc = decimal_to_str_get_len( &decimal, &decimalSize ) ;
+         if ( rc )
+         {
+            UTIL_RAW2BSON_PRINTF_LOG( "Failed to get decimal size, rc=%d", rc ) ;
+            goto error ;
+         }
+         pDecimalStr = (CHAR *)SDB_OSS_MALLOC( decimalSize ) ;
+         if( pDecimalStr == NULL )
+         {
+            rc = SDB_OOM ;
+            UTIL_RAW2BSON_PRINTF_LOG( "Failed to malloc memory, size=%d, rc=%d",
+                                      decimalSize,
+                                      rc ) ;
+            goto error ;
+         }
+         ossMemset( pDecimalStr, 0, decimalSize ) ;
+         rc = decimal_to_str( &decimal, pDecimalStr, decimalSize ) ;
+         if( rc )
+         {
+            UTIL_RAW2BSON_PRINTF_LOG( "Failed to call decimal_to_str, rc=%d",
+                                      rc ) ;
+            goto error ;
+         }
+         rc = _appendString( delChar,
+                             pDecimalStr,
+                             ossStrlen( pDecimalStr ),
+                             ppBuffer,
+                             pCSVSize ) ;
+         if ( rc )
+         {
+            UTIL_RAW2BSON_PRINTF_LOG( "Failed to call appendString, rc=%d",
+                                      rc ) ;
+            goto error ;
+         }
+      }
       else
       {
          rc = _appendObj( delChar, pIt, ppBuffer, pCSVSize ) ;
@@ -500,7 +549,9 @@ INT32 _appendValue( CHAR delChar, bson_iterator *pIt,
       }
    }
 done:
+   decimal_free( &decimal ) ;
    SAFE_OSS_FREE( pBase64 ) ;
+   SAFE_OSS_FREE( pDecimalStr ) ;
    return rc ;
 error:
    goto done ;
