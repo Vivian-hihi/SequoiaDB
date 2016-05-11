@@ -549,9 +549,9 @@ if guess_os == "linux":
                 env.Append( CPPPATH=join(js_dir,'lib/release/ppclinux64/include') )
                 env.Append( EXTRALIBPATH=[smlib_dir] )
         ssllib_dir = join(ssl_dir,'lib/ppclinux64')
-        zlib_lib_dir_platform = join(zlib_lib_dir, 'ppclinux32') 
-        lz4_lib_dir_platform = join(lz4_lib_dir, 'ppclinux32')
-        snappy_lib_dir_platform = join(snappy_lib_dir, 'ppclinux32')
+        zlib_lib_dir_platform = join(zlib_lib_dir, 'ppclinux64') 
+        lz4_lib_dir_platform = join(lz4_lib_dir, 'ppclinux64')
+        snappy_lib_dir_platform = join(snappy_lib_dir, 'ppclinux64')
     # spider monkey
     if usesm:
         smlib_file = join(smlib_dir, 'libmozjs185.so')
