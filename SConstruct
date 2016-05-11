@@ -608,7 +608,6 @@ elif "win32" == guess_os:
         ssllib_dir = join(ssl_dir,'lib/win64')
         zlib_lib_dir_platform = join(zlib_lib_dir, 'win64') 
         lz4_lib_dir_platform = join(lz4_lib_dir, 'win64')
-        lz4_lib_dir_platform = join(snappy_lib_dir, 'win64')
         snappy_lib_dir_platform = join(snappy_lib_dir, 'win64')
     else:
         boost_lib_dir = join(boost_lib_dir,'win32')
