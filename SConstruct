@@ -646,8 +646,8 @@ elif "win32" == guess_os:
     env.Append( LIBS=['lz4'] )
     env.Append( LIBS=['zlib'] )
     env.Append( LIBS=['snappy'] )
-    zlib_lib = join(zlib_lib_dir_platform, 'libzlib.lib')
-    lz4_lib = join(lz4_lib_dir_platform, 'liblz4.lib')
+    zlib_lib = join(zlib_lib_dir_platform, 'zlib.lib')
+    lz4_lib = join(lz4_lib_dir_platform, 'lz4.lib')
     snappy_lib = join(snappy_lib_dir_platform, 'snappy.lib')
 	
     # UNICODE
