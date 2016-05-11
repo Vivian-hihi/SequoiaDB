@@ -22,11 +22,12 @@
 /**
  * Open cache strategy to improve performance
  *
- * @param $enableCacheStrategy The flag to OPEN the cache strategy
- *
- * @param $cacheTimeInterval The life cycle of cached object
- *
- * @param $maxCacheSlotCount The count of slot to cache objects, one slot holds an object
+ * @param $config an array argument. The configuration, the options as below:
+ *                                     @code
+ *                                     enableCacheStrategy : a boolean argument. The flag to open the cache strategy.
+ *                                     cacheTimeInterval   : a integer argument. The life cycle of cached object.
+ *                                     maxCacheSlotCount   : a integer argument. The count of slot to cache objects, one slot holds an object.
+ *                                     @endcode
  *
  * @return Returns the number of errno.
  *
@@ -34,7 +35,7 @@
  *
  * Example: open cache
  * @code
- * $rc = sdbInitClient( true, 200, 800 ) ;
+ * $rc = sdbInitClient( array( 'enableCacheStrategy' => true, 'cacheTimeInterval' => 200, 'maxCacheSlotCount' => 800 ) ) ;
  * if( $rc != 0 )
  * {
  *    echo "Failed to open cache, error code: ".$rc ;
@@ -55,4 +56,4 @@
  * @endcode
  *
 */
-function sdbInitClient( boolean $enableCacheStrategy, integer $cacheTimeInterval = 300, integer $maxCacheSlotCount = 1000 ){}
+function sdbInitClient( $config ){}

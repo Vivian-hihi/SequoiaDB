@@ -14,7 +14,7 @@ class SequoiaDB_CS_Test extends PHPUnit_Framework_TestCase
 
    public function test_connect()
    {
-      $err = sdbInitClient( false ) ;
+      $err = sdbInitClient( array( 'enableCacheStrategy' => false ) ) ;
       $this -> assertEquals( 0, $err, '设置驱动缓存失败' ) ;
       $db = new SequoiaDB();
       $err = $db -> connect( $this->address ) ;

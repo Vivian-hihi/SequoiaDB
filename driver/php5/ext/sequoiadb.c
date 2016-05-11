@@ -587,17 +587,41 @@ PHP_FUNCTION( sdbInitClient )
 {
    INT32 rc = SDB_OK ;
    BOOLEAN enableCacheStrategy = FALSE ;
-   INT32 cacheTimeInterval     = 0 ;
-   INT32 maxCacheSlotCount     = 0 ;
-   zval *pTimeInterVal = NULL ;
-   zval *pMaxCache     = NULL ;
-   zval *pThisObj      = getThis() ;
-   if( PHP_GET_PARAMETERS( "b|zz",
-                           &enableCacheStrategy,
-                           &pTimeInterVal,
-                           &pMaxCache ) == FAILURE )
+   INT32 cacheTimeInterval     = 300 ;
+   INT32 maxCacheSlotCount     = 1000 ;
+   zval *pConfigure     = NULL ;
+   zval *pCacheStrategy = NULL ;
+   zval *pTimeInterVal  = NULL ;
+   zval *pMaxCache      = NULL ;
+   zval *pThisObj       = getThis() ;
+   sdbClientConf sdbConf ;
+   if( PHP_GET_PARAMETERS( "z", &pConfigure ) == FAILURE )
    {
       rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+   if( php_getArrayType( pConfigure TSRMLS_CC ) != PHP_ASSOCIATIVE_ARRAY )
+   {
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+   if( php_assocArrayFind( pConfigure,
+                           "enableCacheStrategy",
+                           &pCacheStrategy TSRMLS_CC ) == FAILURE )
+   {
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+   php_assocArrayFind( pConfigure,
+                       "cacheTimeInterval",
+                       &pTimeInterVal TSRMLS_CC ) ;
+   php_assocArrayFind( pConfigure,
+                       "maxCacheSlotCount",
+                       &pMaxCache TSRMLS_CC ) ;
+
+   rc = php_zval2Bool( pCacheStrategy, &enableCacheStrategy TSRMLS_CC ) ;
+   if( rc )
+   {
       goto error ;
    }
    rc = php_zval2Int( pTimeInterVal, &cacheTimeInterval TSRMLS_CC ) ;
@@ -615,9 +639,10 @@ PHP_FUNCTION( sdbInitClient )
       rc = SDB_INVALIDARG ;
       goto error ;
    }
-   rc = initClient( enableCacheStrategy,
-                    (UINT32)cacheTimeInterval,
-                    (UINT32)maxCacheSlotCount ) ;
+   sdbConf.enableCacheStrategy = enableCacheStrategy ;
+   sdbConf.cacheTimeInterval = (UINT32)cacheTimeInterval ;
+   sdbConf.maxCacheSlotCount = (UINT32)maxCacheSlotCount ;
+   rc = initClient( &sdbConf ) ;
                              
    if( rc )
    {

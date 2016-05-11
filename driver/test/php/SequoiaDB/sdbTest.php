@@ -91,7 +91,7 @@ class SequoiaDB_Test extends PHPUnit_Framework_TestCase
    
    public function test_initClient()
    {
-      $err = sdbInitClient( false ) ;
+      $err = sdbInitClient( array( 'enableCacheStrategy' => false ) ) ;
       $this -> assertEquals( 0, $err, '设置驱动缓存失败' ) ;
       
       $db1 = new SequoiaDB();
@@ -117,7 +117,7 @@ class SequoiaDB_Test extends PHPUnit_Framework_TestCase
       $end = microtime( true ) ;
       $time1 = round( $end - $start, 3 ) ;
       
-      $err = sdbInitClient( true ) ;
+      $err = sdbInitClient( array( 'enableCacheStrategy' => true, 'cacheTimeInterval' => 300, 'maxCacheSlotCount' => 1000 ) ) ;
       $this -> assertEquals( 0, $err, '设置驱动缓存失败' ) ;
       
       $db2 = new SequoiaDB();
@@ -141,9 +141,6 @@ class SequoiaDB_Test extends PHPUnit_Framework_TestCase
       $time2 = round( $end - $start, 3 ) ;
       
       $this -> assertLessThan( $time1, $time2, 'sdbInitCLient没有生效' ) ;
-      
-      $err = sdbInitClient( false ) ;
-      $this -> assertEquals( 0, $err, '设置驱动缓存失败' ) ;
    }
    
    /**
