@@ -1332,6 +1332,7 @@ static const char *parse_second_command(cJSON *item,const char *value,int cj_typ
 
       if ( *value == '\"' )
       {
+         isString = 1 ;
          value = skip ( value + 1 ) ;
       }
       else
