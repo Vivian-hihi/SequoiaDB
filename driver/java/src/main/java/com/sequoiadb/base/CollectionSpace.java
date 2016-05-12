@@ -69,7 +69,7 @@ public class CollectionSpace {
 	 *            Collection space name
 	 */
 	CollectionSpace(Sequoiadb sequoiadb, String name) {
-		this.name = name;
+		this.name = name.trim();
 		this.sequoiadb = sequoiadb;
 	}
 
@@ -78,14 +78,24 @@ public class CollectionSpace {
 	 * @brief Get the named collection
 	 * @param collectionName
 	 *            The collection name
-	 * @return The DBCollection handle or null for not exist
+	 * @return The collection object or null for collection not exist
 	 * @exception com.sequoiadb.exception.BaseException
 	 */
 	public DBCollection getCollection(String collectionName)
 			throws BaseException {
+		// get cl from cache
+		String collectionFullName = name + "." + collectionName;
+		if (sequoiadb.fetchCache(collectionFullName)) {
+			return new DBCollection(sequoiadb, this, collectionName);
+		}
+		// no need to upsert/remove cache here, 
+		// for "isCollectionExist" has do that
+		// get cl from database
 		if (isCollectionExist(collectionName)) {
-			return new DBCollection(sequoiadb, this, collectionName.trim());
+			return new DBCollection(sequoiadb, this, collectionName);
 		} else {
+			// TODO: 
+			//throw new BaseException("SDB_DMS_NOTEXIST", collectionName);
 			return null;
 		}
 	}
@@ -107,10 +117,14 @@ public class CollectionSpace {
 		obj.put(SequoiadbConstants.FIELD_NAME_NAME, collectionFullName);
 		SDBMessage rtn = adminCommand(commandString, obj, null, null, null);
 		int flags = rtn.getFlags();
-		if ( flags == 0 )
+		if ( flags == 0 ) {
+			sequoiadb.upsertCache(collectionFullName);
 			return true;
-		else if ( flags == new BaseException("SDB_DMS_NOTEXIST").getErrorCode())
+		}
+		else if ( flags == new BaseException("SDB_DMS_NOTEXIST").getErrorCode()) {
+			sequoiadb.removeCache(collectionFullName);
 			return false;
+		}
 	    else
 			throw new BaseException(flags);
 	}
@@ -118,17 +132,17 @@ public class CollectionSpace {
 	/**
 	 * @fn List<String> getCollectionNames()
 	 * @brief Get all the collection names of current collection space
-	 * @return A list of collection names or null
+	 * @return A list of collection names
 	 * @exception com.sequoiadb.exception.BaseException
 	 */
 	public List<String> getCollectionNames() throws BaseException {
-		List<String> colNames = sequoiadb.getCollectionNames();
-		if (colNames == null || colNames.size() == 0)
-			return null;
 		List<String> collectionNames = new ArrayList<String>();
-		for (String col : colNames) {
-			if (col.startsWith(name + ".")) {
-				collectionNames.add(col);
+		List<String> colNames = sequoiadb.getCollectionNames();
+		if ((colNames != null) && (colNames.size() != 0)) {
+			for (String col : colNames) {
+				if (col.startsWith(name + ".")) {
+					collectionNames.add(col);
+				}
 			}
 		}
 		return collectionNames;
@@ -188,6 +202,7 @@ public class CollectionSpace {
 		if (flags != 0) {
 			throw new BaseException(flags, collectionFullName, options);
 		}
+		sequoiadb.upsertCache(collectionFullName);
 		return getCollection(collectionName);
 	}
 
@@ -225,6 +240,8 @@ public class CollectionSpace {
 		if (flags != 0) {
 			throw new BaseException(flags, collectionName);
 		}
+		// remove cache
+		sequoiadb.removeCache(collectionFullName);
 	}
 
 	private SDBMessage adminCommand(String commandString, BSONObject arg1,

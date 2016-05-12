@@ -21,10 +21,12 @@
 package com.sequoiadb.base;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.Set;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -55,6 +57,77 @@ public class Sequoiadb {
 	private String password;
 	boolean endianConvert;
 	private long requestID = 0;
+	
+	/// for caching cs/cl name
+	private Map<String, Long> nameCache = new HashMap<String, Long>();
+	private static boolean enableCache = true;
+	private static long cacheInterval = 300 * 1000;
+	
+	public static void initClient(ClientOptions options) {
+		enableCache = (options != null) ? options.getEnalbeCache() : true;
+		cacheInterval = (options != null && options.getCacheInterval() >= 0) ? options.getCacheInterval() : 300 * 1000;
+	}
+	
+	void upsertCache(String name) {
+		if (name == null)
+			return;
+		if (enableCache) {
+			long current = System.currentTimeMillis();
+			nameCache.put(name, current);
+			String[] arr = name.split("\\.");
+			if (arr.length > 1) {
+				// extract cs name from cl full name and that
+				// upsert cs name  
+				nameCache.put(arr[0], current);
+			}
+		}
+	}
+	
+	void removeCache(String name) {
+		if (name == null)
+			return;
+		String[] arr = name.split("\\.");
+		if (arr.length == 1) {
+			// we are going to remove the cache of the cs 
+			// and the cache of the cls
+			
+			// remove cs cache
+			nameCache.remove(name);
+			Set<String> keySet = nameCache.keySet();
+			List<String> list = new ArrayList<String>();
+			for(String str : keySet) {
+				String[] nameArr = str.split("\\."); 
+				if(nameArr.length > 1 && nameArr[0].equals(name))
+					list.add(str);
+			}
+			if(list.size() != 0) {
+				for(String str : list)
+					nameCache.remove(str);
+			}
+		} else {
+			// we are going to remove the cache of the cl
+			nameCache.remove(name);
+		}
+	}
+	
+	boolean fetchCache(String name) {
+		if (enableCache) {
+			if (nameCache.containsKey(name)) {
+				long lastUpdatedTime = nameCache.get(name);
+				if ((System.currentTimeMillis() - lastUpdatedTime) > cacheInterval ) {
+					nameCache.remove(name);
+					return false;
+				}
+				else {
+					return true;
+				}
+			} else {
+				return false;
+			}
+		} else {
+			return false;
+		}
+	}
 	
 	public final static int SDB_PAGESIZE_4K = 4096;
 	public final static int SDB_PAGESIZE_8K = 8192;
@@ -534,20 +607,6 @@ public class Sequoiadb {
 	 */
 	public CollectionSpace createCollectionSpace(String csName, int pageSize)
 			throws BaseException {
-/*
-		if (isCollectionSpaceExist(csName))
-			throw new BaseException("SDB_DMS_CS_EXIST", csName);
-		if (pageSize != SDB_PAGESIZE_4K && pageSize != SDB_PAGESIZE_8K
-				&& pageSize != SDB_PAGESIZE_16K && pageSize != SDB_PAGESIZE_32K
-				&& pageSize != SDB_PAGESIZE_64K && pageSize != SDB_PAGESIZE_DEFAULT) {
-			throw new BaseException("SDB_INVALIDARG", pageSize);
-		}
-		SDBMessage rtnSDBMessage = createCS(csName, pageSize);
-		int flags = rtnSDBMessage.getFlags();
-		if (flags != 0)
-			throw new BaseException(flags);
-		return getCollectionSpace(csName);
-*/
 		BSONObject options = new BasicBSONObject();
 		options.put("PageSize", pageSize);
 		return createCollectionSpace(csName, options);
@@ -575,6 +634,7 @@ public class Sequoiadb {
 		int flags = rtnSDBMessage.getFlags();
 		if (flags != 0)
 			throw new BaseException(flags);
+		upsertCache(csName);
 		return getCollectionSpace(csName);
 	}
 	
@@ -599,6 +659,8 @@ public class Sequoiadb {
 		if (flags != 0) {
 			throw new BaseException(flags);
 		}
+		// remove cache
+		removeCache(csName);
 	}
 
 	/**
@@ -606,14 +668,21 @@ public class Sequoiadb {
 	 * @brief Get the named collection space.
 	 * @param csName
 	 *            The collection space name.
-	 * @return The CollecionSpace handle.
+	 * @return The collection space object.
 	 * @note If the collection space not exit, throw BaseException "SDB_DMS_CS_NOTEXIST".
 	 * @exception com.sequoiadb.exception.BaseException
 	 */
 	public CollectionSpace getCollectionSpace(String csName)
 			throws BaseException {
+		// get cs object from cache
+		if (fetchCache(csName)) {
+			return new CollectionSpace(this, csName);
+		}
+		// get cs object from database
+		// we don't need to update or remove cache here,
+		// for "isCollectionSpaceExist" has do that
 		if (isCollectionSpaceExist(csName)) {
-			return new CollectionSpace(this, csName.trim());
+			return new CollectionSpace(this, csName);
 		} else {
 			throw new BaseException("SDB_DMS_CS_NOTEXIST", csName);
 		}
@@ -635,11 +704,15 @@ public class Sequoiadb {
 		SDBMessage rtn = adminCommand(commandString, 0, 0, -1, -1, matcher,
 				null, null, null);
 		int flags = rtn.getFlags();
-		if (flags == 0)
+		if (flags == 0) {
+			upsertCache(csName);
 			return true;
+		}
 		else if (flags == new BaseException("SDB_DMS_CS_NOTEXIST")
-				.getErrorCode())
+				.getErrorCode()) {
+			removeCache(csName);
 			return false;
+		}
 		else
 			throw new BaseException(flags, csName);
 	}

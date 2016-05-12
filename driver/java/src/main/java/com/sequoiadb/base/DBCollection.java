@@ -155,11 +155,11 @@ public class DBCollection {
 	 *            Collection name
 	 */
 	DBCollection(Sequoiadb sequoiadb, CollectionSpace cs, String name) {
-		this.name = name;
+		this.name = name.trim();
 		this.sequoiadb = sequoiadb;
 		this.collectionSpace = cs;
 		this.csName = cs.getName();
-		this.collectionFullName = csName + "." + name;
+		this.collectionFullName = csName + "." + name.trim();
 		this.connection = sequoiadb.getConnection();
 		this.insert_buffer = null;
 		this.mainKeys = new HashSet<String>();
@@ -191,11 +191,11 @@ public class DBCollection {
 			insert_buffer.clear();
 		}
 		
-		Object tmp = insertor.get(SequoiadbConstants.OID);
-		if (tmp == null) {
+		Object retObj = insertor.get(SequoiadbConstants.OID);
+		if (retObj == null) {
 			ObjectId objId = ObjectId.get();
 			insertor.put(SequoiadbConstants.OID, objId);
-			tmp = objId;
+			retObj = objId;
 		}
 		
 		int message_length = SDBMessageHelper.buildInsertRequest(insert_buffer, 
@@ -213,7 +213,9 @@ public class DBCollection {
 		if (flags != 0) {
 			throw new BaseException(flags, insertor.toString());
 		}
-		return tmp;
+		// upsert cache
+		sequoiadb.upsertCache(collectionFullName);
+		return retObj;
 	}
 
 	/**
@@ -468,6 +470,8 @@ public class DBCollection {
 		int flags = rtnSDBMessage.getFlags();
 		if (flags != 0)
 			throw new BaseException(flags, insertor);
+		// upsert cache
+		sequoiadb.upsertCache(collectionFullName);
 		// shrink the memory
 		/*
 		int capacity = insert_buffer.capacity();
@@ -572,6 +576,8 @@ public class DBCollection {
 		if (flags != 0) {
 			throw new BaseException(flags, matcher, hint);
 		}
+		// upsert cache
+		sequoiadb.upsertCache(collectionFullName);
 	}
 
 	/**
@@ -1002,6 +1008,8 @@ public class DBCollection {
 						skipRows, returnRows);
 			}
 		}
+		// upsert cache
+		sequoiadb.upsertCache(collectionFullName);
 		cursor = new DBCursor(rtnSDBMessage, this);
 		return cursor;
 	}
@@ -1079,6 +1087,8 @@ public class DBCollection {
 				throw new BaseException(flags);
 			}
 		}
+		// upsert cache
+		sequoiadb.upsertCache(collectionFullName);
 		cursor = new DBCursor(rtn, sequoiadb);
 		return cursor;
 	}
@@ -1233,6 +1243,8 @@ public class DBCollection {
 				throw new BaseException(flags);
 			}
 		}
+		// upsert cache
+		sequoiadb.upsertCache(collectionFullName);
 		return new DBCursor(rtn, this);
 	}
 
@@ -1280,6 +1292,8 @@ public class DBCollection {
 		if (flags != 0) {
 			throw new BaseException(flags, name, key, isUnique);
 		}
+		// upsert cache
+		sequoiadb.upsertCache(collectionFullName);
 	}
 	
 	/**
@@ -1417,6 +1431,8 @@ public class DBCollection {
 		if (flags != 0) {
 			throw new BaseException(flags, name);
 		}
+		// upsert cache
+		sequoiadb.upsertCache(collectionFullName);
 	}
 	
 	/**
@@ -1463,7 +1479,8 @@ public class DBCollection {
 		int flags = rtnSDBMessage.getFlags();
 		if (flags != 0)
 			throw new BaseException(flags, matcher);
-
+		// upsert cache
+		sequoiadb.upsertCache(collectionFullName);
 		List<BSONObject> rtn = getMoreCommand(rtnSDBMessage);
 		return Long.valueOf(rtn.get(0).get(SequoiadbConstants.FIELD_TOTAL)
 				.toString());
@@ -1497,7 +1514,8 @@ public class DBCollection {
 		int flags = rtnSDBMessage.getFlags();
 		if (flags != 0)
 			throw new BaseException(flags, condition, hint);
-
+		// upsert cache
+		sequoiadb.upsertCache(collectionFullName);
 		List<BSONObject> rtn = getMoreCommand(rtnSDBMessage);
 		return Long.valueOf(rtn.get(0).get(SequoiadbConstants.FIELD_TOTAL)
 				.toString());
@@ -1573,6 +1591,8 @@ public class DBCollection {
 			throw new BaseException(flags, sourceGroupName, destGroupName,
 					splitCondition, splitEndCondition);
 		}
+		// upsert cache
+		sequoiadb.upsertCache(collectionFullName);
 	}
 
 	/**
@@ -1610,6 +1630,8 @@ public class DBCollection {
 			throw new BaseException(flags, sourceGroupName, destGroupName,
 					percent);
 		}
+		// upsert cache
+		sequoiadb.upsertCache(collectionFullName);
 	}
 	
 	/**
@@ -1670,6 +1692,8 @@ public class DBCollection {
 		boolean flag = result.containsField(SequoiadbConstants.FIELD_NAME_TASKID);
 		if (!flag)
 			throw new BaseException("SDB_CAT_TASK_NOTFOUND");
+		// upsert cache
+		sequoiadb.upsertCache(collectionFullName);
 		long taskid = (Long)result.get(SequoiadbConstants.FIELD_NAME_TASKID);
 		return taskid;
 	}
@@ -1721,6 +1745,8 @@ public class DBCollection {
 		boolean flag = result.containsField(SequoiadbConstants.FIELD_NAME_TASKID);
 		if (!flag)
 			throw new BaseException("SDB_CAT_TASK_NOTFOUND");
+		// upsert cache
+		sequoiadb.upsertCache(collectionFullName);
 		long taskid = (Long)result.get(SequoiadbConstants.FIELD_NAME_TASKID);
 		return taskid;
 	}
@@ -1770,6 +1796,8 @@ public class DBCollection {
 				throw new BaseException(flags, obj);
 			}
 		}
+		// upsert cache
+		sequoiadb.upsertCache(collectionFullName);
 		cursor = new DBCursor(rtnSDBMessage, this);
 		return cursor;
 	}
@@ -1825,6 +1853,8 @@ public class DBCollection {
 						skipRows, returnRows);
 			}
 		}
+		// upsert cache
+		sequoiadb.upsertCache(collectionFullName);
 		cursor = new DBCursor(rtnSDBMessage, this);
 		return cursor;
 	}
@@ -1863,6 +1893,8 @@ public class DBCollection {
 		if (0 != flags){
 			throw new BaseException(flags, subClFullName, options);
 		}
+		// upsert cache
+		sequoiadb.upsertCache(collectionFullName);
 	}
 	
 	/**
@@ -1891,6 +1923,8 @@ public class DBCollection {
 		if (0 != flags){
 			throw new BaseException(flags, subClFullName);
 		}
+		// upsert cache
+		sequoiadb.upsertCache(collectionFullName);
 	}
 	
 	/**
@@ -1954,6 +1988,8 @@ public class DBCollection {
 		if (0 != flags){
 			throw new BaseException(flags, options);
 		}
+		// upsert cache
+		sequoiadb.upsertCache(collectionFullName);
 	}
 	
 	private SDBMessage adminCommand(String commandString, BSONObject query,
@@ -2075,6 +2111,8 @@ public class DBCollection {
 		int flags = rtnSDBMessage.getFlags();
 		if (flags != 0)
 			throw new BaseException(flags, matcher, modifier, hint);
+		// upsert cache
+		sequoiadb.upsertCache(collectionFullName);
 	}
 	
 	/**
@@ -2101,6 +2139,8 @@ public class DBCollection {
                 throw new BaseException(flags);
             }
         }
+		// upsert cache
+		sequoiadb.upsertCache(collectionFullName);
         cursor = new DBCursor(rtn, sequoiadb);
         return cursor;
     }
@@ -2126,6 +2166,8 @@ public class DBCollection {
     public DBLob createLob( ObjectId id ) throws BaseException {
         DBLobConcrete lob = new DBLobConcrete( this );
         lob.open( id, DBLobConcrete.SDB_LOB_CREATEONLY );
+		// upsert cache
+		sequoiadb.upsertCache(collectionFullName);
         return lob;
     }
     
@@ -2139,6 +2181,8 @@ public class DBCollection {
     public DBLob openLob( ObjectId id ) throws BaseException {
         DBLobConcrete lob = new DBLobConcrete( this );
         lob.open( id, DBLobConcrete.SDB_LOB_READ );
+		// upsert cache
+		sequoiadb.upsertCache(collectionFullName);
         return lob;
     }
     
@@ -2168,6 +2212,8 @@ public class DBCollection {
         if ( 0 != flag ) {
             throw new BaseException( flag, removeObj );
         }
+		// upsert cache
+		sequoiadb.upsertCache(collectionFullName);
     }
     
     /**
@@ -2187,5 +2233,7 @@ public class DBCollection {
         int flags = rtnSDBMessage.getFlags();
         if (flags != 0)
             throw new BaseException(flags, query);
+		// upsert cache
+		sequoiadb.upsertCache(collectionFullName);
     }
 }
