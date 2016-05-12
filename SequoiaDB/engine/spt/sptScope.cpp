@@ -43,7 +43,7 @@ namespace engine
 
    _sptScope::_sptScope()
    {
-      initCacheStrategy( FALSE, 0, 0 ) ;
+      initCacheStrategy( FALSE, 0 ) ;
    }
 
    _sptScope::~_sptScope()

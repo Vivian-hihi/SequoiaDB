@@ -31,7 +31,6 @@ typedef struct _sdbClientConf
    // used for cache strategy
    BOOLEAN enableCacheStrategy ; // The flag to OPEN the cache strategy
    UINT32  cacheTimeInterval ;   // The life cycle of cached object
-   UINT32  maxCacheSlotCount ;   // The count of slot to cache objects, one slot holds an object
 } sdbClientConf ;
 
 #endif

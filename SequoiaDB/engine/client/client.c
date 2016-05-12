@@ -1707,8 +1707,7 @@ SDB_EXPORT INT32 initClient( sdbClientConf* config )
    }
    
    rc = initCacheStrategy( config->enableCacheStrategy,
-                           config->cacheTimeInterval,
-                           config->maxCacheSlotCount ) ;
+                           config->cacheTimeInterval ) ;
    if ( SDB_OK != rc )
    {
       goto error ;

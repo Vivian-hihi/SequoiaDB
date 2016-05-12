@@ -69,8 +69,7 @@ BOOLEAN fetchCachedObject( hashTable *tb, const CHAR *key ) ;
 INT32 updateCachedObject( const INT32 code, hashTable *tb, const CHAR *key ) ;
 
 INT32 initCacheStrategy( BOOLEAN enableCacheStrategy,
-                         const UINT32 timeInterval,
-                         const UINT32 maxCachedCount ) ;
+                         const UINT32 timeInterval ) ;
 INT32 initHashTable( hashTable **tb ) ;
 INT32 releaseHashTable( hashTable **tb ) ;
 

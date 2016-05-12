@@ -8892,8 +8892,7 @@ error :
       }
       
       return initCacheStrategy( config->enableCacheStrategy,
-                                config->cacheTimeInterval,
-                                config->maxCacheSlotCount ) ;
+                                config->cacheTimeInterval ) ;
    }
 
 }

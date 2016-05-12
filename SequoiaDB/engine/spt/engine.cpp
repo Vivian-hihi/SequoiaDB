@@ -170,7 +170,7 @@ namespace engine {
 
       VERIFY ( SDB_OK == evalInitScripts ( this ) ) ;
 
-      VERIFY ( SDB_OK == initCacheStrategy( FALSE, 0, 0 ) ) ;
+      VERIFY ( SDB_OK == initCacheStrategy( FALSE, 0 ) ) ;
 
       ret = TRUE ;
 

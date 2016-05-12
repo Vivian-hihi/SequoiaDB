@@ -792,22 +792,18 @@ error:
 }
 
 INT32 initCacheStrategy( BOOLEAN enableCacheStrategy,
-                         const UINT32 timeInterval,
-                         const UINT32 maxCachedCount )
+                         const UINT32 timeInterval )
 {
    if ( enableCacheStrategy )
    {
       cacheEnabled = TRUE ;
       cachedTimeInterval = ( ( 0 != timeInterval ) ?
                              timeInterval : CACHED_CHECK_TIME_INTERVAL ) ;
-      maxCachedSlotCount = ( ( 0 != maxCachedCount ) ?
-                             maxCachedCount : MAX_CACHE_SLOT_NUMBER ) ;
    }
    else
    {
       cacheEnabled = FALSE ;
       cachedTimeInterval  = CACHED_CHECK_TIME_INTERVAL ;
-      maxCachedSlotCount  = MAX_CACHE_SLOT_NUMBER ;
    }
 
    return SDB_OK ;
