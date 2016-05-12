@@ -63,72 +63,6 @@ public class Sequoiadb {
 	private static boolean enableCache = true;
 	private static long cacheInterval = 300 * 1000;
 	
-	public static void initClient(ClientOptions options) {
-		enableCache = (options != null) ? options.getEnalbeCache() : true;
-		cacheInterval = (options != null && options.getCacheInterval() >= 0) ? options.getCacheInterval() : 300 * 1000;
-	}
-	
-	void upsertCache(String name) {
-		if (name == null)
-			return;
-		if (enableCache) {
-			long current = System.currentTimeMillis();
-			nameCache.put(name, current);
-			String[] arr = name.split("\\.");
-			if (arr.length > 1) {
-				// extract cs name from cl full name and that
-				// upsert cs name  
-				nameCache.put(arr[0], current);
-			}
-		}
-	}
-	
-	void removeCache(String name) {
-		if (name == null)
-			return;
-		String[] arr = name.split("\\.");
-		if (arr.length == 1) {
-			// we are going to remove the cache of the cs 
-			// and the cache of the cls
-			
-			// remove cs cache
-			nameCache.remove(name);
-			Set<String> keySet = nameCache.keySet();
-			List<String> list = new ArrayList<String>();
-			for(String str : keySet) {
-				String[] nameArr = str.split("\\."); 
-				if(nameArr.length > 1 && nameArr[0].equals(name))
-					list.add(str);
-			}
-			if(list.size() != 0) {
-				for(String str : list)
-					nameCache.remove(str);
-			}
-		} else {
-			// we are going to remove the cache of the cl
-			nameCache.remove(name);
-		}
-	}
-	
-	boolean fetchCache(String name) {
-		if (enableCache) {
-			if (nameCache.containsKey(name)) {
-				long lastUpdatedTime = nameCache.get(name);
-				if ((System.currentTimeMillis() - lastUpdatedTime) > cacheInterval ) {
-					nameCache.remove(name);
-					return false;
-				}
-				else {
-					return true;
-				}
-			} else {
-				return false;
-			}
-		} else {
-			return false;
-		}
-	}
-	
 	public final static int SDB_PAGESIZE_4K = 4096;
 	public final static int SDB_PAGESIZE_8K = 8192;
 	public final static int SDB_PAGESIZE_16K = 16384;
@@ -168,6 +102,82 @@ public class Sequoiadb {
 	
 	public final static String CATALOG_GROUP_NAME = "SYSCatalogGroup";
 
+	void upsertCache(String name) {
+		if (name == null)
+			return;
+		if (enableCache) {
+			long current = System.currentTimeMillis();
+			nameCache.put(name, current);
+			String[] arr = name.split("\\.");
+			if (arr.length > 1) {
+				// extract cs name from cl full name and that
+				// upsert cs name  
+				nameCache.put(arr[0], current);
+			}
+		}
+	}
+	
+	void removeCache(String name) {
+		if (name == null)
+			return;
+		String[] arr = name.split("\\.");
+		if (arr.length == 1) {
+			// when we come here, "name" is a cs name, so 
+			// we are going to remove the cache of the cs 
+			// and the cache of the cls
+			
+			// remove cs cache
+			// name may be "foo.", it's a invalid name, 
+			// we don't want to remove anything, 
+			// so we use "name" but not "arr[0]" here
+			nameCache.remove(name);
+			Set<String> keySet = nameCache.keySet();
+			List<String> list = new ArrayList<String>();
+			for(String str : keySet) {
+				String[] nameArr = str.split("\\."); 
+				if(nameArr.length > 1 && nameArr[0].equals(name))
+					list.add(str);
+			}
+			if(list.size() != 0) {
+				for(String str : list)
+					nameCache.remove(str);
+			}
+		} else {
+			// we are going to remove the cache of the cl
+			nameCache.remove(name);
+		}
+	}
+	
+	boolean fetchCache(String name) {
+		if (enableCache) {
+			if (nameCache.containsKey(name)) {
+				long lastUpdatedTime = nameCache.get(name);
+				if ((System.currentTimeMillis() - lastUpdatedTime) > cacheInterval ) {
+					nameCache.remove(name);
+					return false;
+				}
+				else {
+					return true;
+				}
+			} else {
+				return false;
+			}
+		} else {
+			return false;
+		}
+	}
+	
+	/**
+	 * @fn initClient(ClientOptions options)
+	 * @brief Initialize the configuration options for client.
+	 * @param options the configuration options for client
+	 * @return void
+	 */
+	public static void initClient(ClientOptions options) {
+		enableCache = (options != null) ? options.getEnableCache() : true;
+		cacheInterval = (options != null && options.getCacheInterval() >= 0) ? options.getCacheInterval() : 300 * 1000;
+	}
+	
 	/**
 	 * @fn IConnection getConnection()
 	 * @brief Get the current connection to remote server.

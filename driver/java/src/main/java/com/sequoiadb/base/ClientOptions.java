@@ -11,11 +11,11 @@ public class ClientOptions {
 	}
 	
 	/**
-	 * @fn boolean getEnalbeCache()
+	 * @fn boolean getEnableCache()
 	 * @brief Get the value of "enableCache".
 	 * @return The value of "enableCache".
 	 */
-	public boolean getEnalbeCache() {
+	public boolean getEnableCache() {
 		return enableCache;
 	}
 	
