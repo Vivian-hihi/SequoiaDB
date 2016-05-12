@@ -107,7 +107,7 @@ namespace engine
 
    protected:
       virtual INT32 _init( const BSONObj& bsonNode, OmHost& host, OmCluster& cluster ) = 0 ;
-      INT32 _addPath( const string& path, OmHost& host ) ;
+      INT32 _addPath( const string& path, OmHost& host, bool ignoreDisk = false ) ;
       INT32 _addUsedDisk( const string& diskName ) ;
       INT32 _addUsedPort( const string& port ) ;
       INT32 _addUsedPath( const string& path ) ;

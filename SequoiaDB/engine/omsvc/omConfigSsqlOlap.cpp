@@ -146,11 +146,11 @@ namespace engine
       goto done ;
    }
    
-   INT32 OmSsqlOlapNode::_setDataDir( const string& dataDir, OmHost& host )
+   INT32 OmSsqlOlapNode::_setDataDir( const string& dataDir, OmHost& host, bool ignoreDisk )
    {
       INT32 rc = SDB_OK ;
 
-      rc = _addPath( dataDir, host ) ;
+      rc = _addPath( dataDir, host, ignoreDisk ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to add db path to node" );
@@ -855,7 +855,7 @@ namespace engine
             goto error ;
          }
 
-         rc = standbyNode->_setDataDir( dataDir, *standbyHost ) ;
+         rc = standbyNode->_setDataDir( dataDir, *standbyHost, true ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG_MSG( PDERROR, "failed to set data dir for standby node" ) ;

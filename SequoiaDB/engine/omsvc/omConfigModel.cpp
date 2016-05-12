@@ -142,27 +142,31 @@ namespace engine
       return _ports.end() != _ports.find( port ) ;
    }
 
-   INT32 OmNode::_addPath( const string& path, OmHost& host )
+   INT32 OmNode::_addPath( const string& path, OmHost& host, bool ignoreDisk )
    {
       INT32 rc = SDB_OK ;
-      string diskName ;
 
       const simpleDiskInfo* disk = host.getDisk( path ) ;
       if ( NULL == disk )
       {
-         rc = SDB_INVALIDARG ;
-         PD_LOG_MSG( PDERROR, "failed to get disk of path[%s]", path.c_str() ) ;
-         goto error ;
+         if ( !ignoreDisk )
+         {
+            rc = SDB_INVALIDARG ;
+            PD_LOG_MSG( PDERROR, "failed to get disk of path[%s]", path.c_str() ) ;
+            goto error ;
+         }
       }
-
-      diskName = disk->diskName ;
-      SDB_ASSERT( diskName != "", "empty disk name" ) ;
-
-      rc = _addUsedDisk( diskName ) ;
-      if ( SDB_OK != rc )
+      else
       {
-         PD_LOG( PDERROR, "failed to add used disk to node" );
-         goto error ;
+         string diskName = disk->diskName ;
+         SDB_ASSERT( diskName != "", "empty disk name" ) ;
+
+         rc = _addUsedDisk( diskName ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to add used disk to node" );
+            goto error ;
+         }
       }
 
       rc = _addUsedPath( path ) ;

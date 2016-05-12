@@ -58,7 +58,7 @@ namespace engine
       INT32 _init( const BSONObj& bsonNode, OmHost& host, OmCluster& cluster ) ;
       void  _setRole( const string& role ) ;
       INT32 _setPort( const string& port ) ;
-      INT32 _setDataDir( const string& dataDir, OmHost& host ) ;
+      INT32 _setDataDir( const string& dataDir, OmHost& host, bool ignoreDisk = false ) ;
       INT32 _setTempDir( const string& tempDir, OmHost& host ) ;
 
    private:
