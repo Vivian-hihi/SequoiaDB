@@ -170,6 +170,7 @@ namespace engine
       {
          if ( UTIL_INVALID_DICT_CODE != _nodes[index]._code )
          {
+            SDB_ASSERT( nextIdx <= _head->_maxValidCode, "Index out of range" ) ;
             indexMap[nextIdx] = index ;
             CST_SET_CHAR( _cst[nextIdx], _nodes[index]._ch ) ;
             _codeMap[nextIdx] = _nodes[index]._code ;
@@ -526,20 +527,47 @@ namespace engine
       UINT32 dstSize = 0 ;
       BSONObj addInfo ;
       UINT32 writePos = 0 ;
+      INT32 remainInitNode = 256 ;
+      INT32 remainCode = UTIL_MAX_DICT_ITEM_NUM ;
+      INT32 currentIdx = 0 ;
+      #define GET_NODE_IDX(nodePtr) \
+         ( ( (CHAR*)(nodePtr) - (CHAR*)_nodes ) / sizeof( _utilLZWNode ) )
 
       sort( _nodeSortVec.begin(), _nodeSortVec.end(), _sortNodeByRef ) ;
 
       for ( vector<_utilLZWNode*>::iterator itr = _nodeSortVec.begin();
             itr != _nodeSortVec.end(); ++itr )
       {
+         currentIdx = GET_NODE_IDX( *itr ) ;
+         if ( currentIdx <= UTIL_MAX_DICT_INIT_CODE )
+         {
+            remainInitNode-- ;
+         }
+         else
+         {
+            if ( remainCode <= remainInitNode )
+            {
+               continue ;
+            }
+         }
+
          (*itr)->_code = code ;
          _head->_maxValidCode = code ;
+         remainCode-- ;
          code++ ;
          if ( UTIL_MAX_DICT_ITEM_NUM == code )
          {
             break ;
          }
       }
+
+#ifdef _DEBUG
+      for ( LZW_CODE tmpCode = 0; tmpCode <= UTIL_MAX_DICT_INIT_CODE; ++tmpCode )
+      {
+         SDB_ASSERT( UTIL_INVALID_DICT_CODE != _nodes[tmpCode]._code,
+                     "Invalid code of initial node" ) ;
+      }
+#endif /* _DEBUG */
 
       _head->_codeSize = _calcCodeSize( _head->_maxValidCode ) ;
 
