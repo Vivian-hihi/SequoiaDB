@@ -3260,7 +3260,7 @@ INT32 main ( INT32 argc, CHAR **argv )
    rc = resolveArgument ( desc, argc, argv ) ;
    if ( rc )
    {
-      if ( SDB_PMD_HELP_ONLY != rc )
+      if ( SDB_PMD_HELP_ONLY != rc && SDB_PMD_VERSION_ONLY != rc )
       {
          dumpPrintf ( "Error: Invalid arguments"OSS_NEWLINE ) ;
          displayArg ( desc ) ;
