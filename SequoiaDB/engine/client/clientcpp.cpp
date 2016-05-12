@@ -8884,13 +8884,16 @@ error :
       return (_sdb*)(new(std::nothrow) sdbImpl ( useSSL )) ;
    }
 
-    INT32 initClient( BOOLEAN enableCacheStrategy,
-                      const UINT32 cacheTimeInterval,
-                      const UINT32 maxCacheSlotCount )
+   INT32 initClient( sdbClientConf* config )
    {
-      return initCacheStrategy( enableCacheStrategy,
-                                cacheTimeInterval,
-                                maxCacheSlotCount ) ;
+      if ( NULL == config )
+      {
+         return SDB_OK ;
+      }
+      
+      return initCacheStrategy( config->enableCacheStrategy,
+                                config->cacheTimeInterval,
+                                config->maxCacheSlotCount ) ;
    }
 
 }
