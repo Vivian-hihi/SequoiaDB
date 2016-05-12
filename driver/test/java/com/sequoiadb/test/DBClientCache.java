@@ -401,5 +401,67 @@ public class DBClientCache {
 	}
 	
 	/// case4： cache开启/关闭时，使用连接池跑业务
+	
+	/// case5: cache开启时，尝试异常场景
+	// 需要手工
+	@Test
+	public void testInvalidSituaction() throws SecurityException, NoSuchFieldException, IllegalArgumentException, IllegalAccessException
+	{
+		ClientOptions options = new ClientOptions();
+		options.setEnableCache(true);
+		Sequoiadb.initClient(options);
+		Sequoiadb db = new Sequoiadb(Constants.COOR_NODE_CONN,"","");
+		// 获取缓存的map
+		Class<?> c = db.getClass();
+		Field f_nameCache = c.getDeclaredField("nameCache");
+		boolean accessFlag = f_nameCache.isAccessible();
+		f_nameCache.setAccessible(true);
+		@SuppressWarnings("unchecked")
+		Map<String, Long> map = (Map<String, Long>)(f_nameCache.get(db));
+		
+		String csName = "foo_java.";
+		String clName = "bar_java.";
+		try {
+			db.dropCollectionSpace(csName);
+		} catch(BaseException e) {
+		}
+		try {
+			db.createCollectionSpace(csName);
+			Assert.fail();
+		} catch(BaseException e) {
+			csName = "foo_java";
+		}
+		try {
+			db.dropCollectionSpace(csName);
+		} catch(BaseException e) {
+		}
+		// check
+		Assert.assertEquals(0, map.size());
+		CollectionSpace cs = db.createCollectionSpace(csName);
+		// check
+		Assert.assertEquals(1, map.size());
+		Assert.assertTrue(map.containsKey(csName));
+		try {
+			cs.createCollection(clName);
+			Assert.fail();
+		} catch(BaseException e) {
+			clName = "bar_java";
+		}
+		// check
+		Assert.assertEquals(1, map.size());
+		Assert.assertTrue(map.containsKey(csName));
+		cs.createCollection(clName);
+		// check
+		Assert.assertEquals(2, map.size());
+		Assert.assertTrue(map.containsKey(csName + "." + clName));
+		Assert.assertTrue(map.containsKey(csName));
+		
+		db.dropCollectionSpace(csName);
+		// check
+		Assert.assertEquals(0, map.size());
+		
+		f_nameCache.setAccessible(accessFlag);
+		db.disconnect();
+	}
 
 }
