@@ -8,7 +8,10 @@ using namespace sdbclient ;
 INT32 init(sdb &db, INT32 timeLen=0, INT32 size=0)
 {
    INT32 rc = SDB_OK;
-   rc = initClient(TRUE, timeLen, size);
+   sdbClientConf conf;
+   conf.enableCacheStrategy = TRUE;
+   conf.cacheTimeInterval = timeLen
+   rc = initClient(&conf);
    if (SDB_OK != rc)
    {
       return rc;
