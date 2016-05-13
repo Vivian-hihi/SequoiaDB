@@ -49,6 +49,7 @@ namespace import
    #define CSV_STR_BOOL             "bool"
    #define CSV_STR_BOOLEAN          "boolean"
    #define CSV_STR_DOUBLE           "double"
+   #define CSV_STR_DECIMAL          "decimal"
    #define CSV_STR_STRING           "string"
    #define CSV_STR_TIMESTAMP        "timestamp"
    #define CSV_STR_AUTO_TIMESTAMP   "autotimestamp"
@@ -87,6 +88,7 @@ namespace import
    #define CSV_STR_BOOL_SIZE           (sizeof(CSV_STR_BOOL) - 1)
    #define CSV_STR_BOOLEAN_SIZE        (sizeof(CSV_STR_BOOLEAN) - 1)
    #define CSV_STR_DOUBLE_SIZE         (sizeof(CSV_STR_DOUBLE) - 1)
+   #define CSV_STR_DECIMAL_SIZE        (sizeof(CSV_STR_DECIMAL) - 1)
    #define CSV_STR_STRING_SIZE         (sizeof(CSV_STR_STRING) - 1)
    #define CSV_STR_TIMESTAMP_SIZE      (sizeof(CSV_STR_TIMESTAMP) - 1)
    #define CSV_STR_AUTO_TIMESTAMP_SIZE (sizeof(CSV_STR_AUTO_TIMESTAMP) - 1)
@@ -143,6 +145,16 @@ namespace import
    #define DATE_MAX_NUM       ((INT64)253402271999)
    #define DATE_MIN_NUM       ((INT64)-377705145943)
 
+   #define DOUBLE_PRECISION       (15)
+   #define DOUBLE_FRACT_PRECISION (6)
+   #define DOUBLE_MAN             (1.79)
+   #define DOUBLE_MAX_EXP         (308)
+   #define DOUBLE_MIN_EXP         (-308)
+
+   #define LEFT_BRACKET           ('(')
+   #define RIGHT_BRACKET          (')')
+   #define COMMA                  (',')
+
    #define CSV_MAX_STRING_SIZE (1024 * 1024 * 16)
 
    #define RECORD_ID_NAME "_id"
@@ -153,6 +165,9 @@ namespace import
    static BOOLEAN _cast = FALSE;
    static BOOLEAN _ignoreNull = FALSE;
    static BOOLEAN _forceNotUTF8 = FALSE;
+
+   static inline INT32 _str2i(CHAR* data, INT32 dataLength,
+                              INT32& value, INT32& valueLength);
 
    static inline BOOLEAN _startWith(const CHAR* data, INT32 dataLen,
                                     const CHAR* str, INT32 strLen)
@@ -294,6 +309,8 @@ namespace import
          return CSV_STR_NUMBER;
       case CSV_TYPE_DOUBLE:
          return CSV_STR_DOUBLE;
+      case CSV_TYPE_DECIMAL:
+         return CSV_STR_DECIMAL ;
       case CSV_TYPE_BOOL:
          return CSV_STR_BOOL;
       case CSV_TYPE_STRING:
@@ -321,9 +338,170 @@ namespace import
       }
    }
 
+   static inline string _CSVTypeToString(CSV_TYPE type, CSVFieldOpt& opt)
+   {
+      stringstream ss;
+
+      ss << _CSVTypeToString(type);
+
+      if (CSV_TYPE_DECIMAL == type && opt.hasOpt)
+      {
+         ss << LEFT_BRACKET
+            << opt.opt.decimalOpt.precision
+            << COMMA
+            << opt.opt.decimalOpt.scale
+            << RIGHT_BRACKET;
+      }
+
+      return ss.str();
+   }
+
+   static INT32 _parseDecimalPrecision(const CHAR* data,
+                                       INT32 length,
+                                       CSVFieldOpt& opt)
+   {
+      CHAR* str = (CHAR*)data;
+      INT32 len = length;
+      INT32 precision = 0;
+      INT32 scale = 0;
+      INT32 numLen = 0;
+      INT32 rc = SDB_OK;
+
+      if (LEFT_BRACKET != *str)
+      {
+         rc = SDB_INVALIDARG;
+         goto error;
+      }
+
+      str++;
+      len--;
+
+      _skipSpace(&str, len);
+
+      if (0 == len)
+      {
+         rc = SDB_INVALIDARG;
+         goto error;
+      }
+
+      if (!isdigit(*str))
+      {
+         rc = SDB_INVALIDARG;
+         goto error;
+      }
+
+      rc = _str2i(str, len, precision, numLen);
+      if (SDB_OK != rc)
+      {
+         PD_LOG(PDERROR, "invalid decimal precision");
+         goto error;
+      }
+
+      if (precision < 1 || precision > DECIMAL_MAX_PRECISION)
+      {
+         rc = SDB_INVALIDARG;
+         PD_LOG(PDERROR, "invalid decimal precision");
+         goto error;
+      }
+
+      str += numLen;
+      len -= numLen;
+
+      if (0 == len)
+      {
+         rc = SDB_INVALIDARG;
+         goto error;
+      }
+
+      _skipSpace(&str, len);
+
+      if (0 == len)
+      {
+         rc = SDB_INVALIDARG;
+         goto error;
+      }
+
+      if (COMMA != *str)
+      {
+         rc = SDB_INVALIDARG;
+         goto error;
+      }
+
+      str++;
+      len--;
+
+      _skipSpace(&str, len);
+
+      if (0 == len)
+      {
+         rc = SDB_INVALIDARG;
+         goto error;
+      }
+
+      numLen = 0;
+      rc = _str2i(str, len, scale, numLen);
+      if (SDB_OK != rc)
+      {
+         PD_LOG(PDERROR, "invalid decimal scale");
+         goto error;
+      }
+
+      if (scale < 0)
+      {
+         rc = SDB_INVALIDARG;
+         PD_LOG(PDERROR, "invalid decimal scale");
+         goto error;
+      }
+
+      str += numLen;
+      len -= numLen;
+
+      _skipSpace(&str, len);
+
+      if (0 == len)
+      {
+         rc = SDB_INVALIDARG;
+         goto error;
+      }
+
+      if (RIGHT_BRACKET != *str)
+      {
+         rc = SDB_INVALIDARG;
+         goto error;
+      }
+
+      str++;
+      len--;
+
+      _skipSpace(&str, len);
+
+      if (0 != len)
+      {
+         rc = SDB_INVALIDARG;
+         goto error;
+      }
+
+      if (scale > precision)
+      {
+         rc = SDB_INVALIDARG;
+         PD_LOG(PDERROR, "decimal scale can't be greater than precision");
+         goto error;
+      }
+
+      opt.opt.decimalOpt.precision = precision;
+      opt.opt.decimalOpt.scale = scale;
+      opt.hasOpt = TRUE;
+
+   done:
+      return rc;
+   error:
+      goto done;
+   }
+
    static inline INT32 _convertToCSVType(const CHAR* data,
                                          INT32 length,
-                                         CSV_TYPE& type)
+                                         CSV_TYPE& type,
+                                         CSVFieldOpt& opt)
    {
       CHAR* str = (CHAR*)data;
       INT32 rc = SDB_OK;
@@ -374,6 +552,7 @@ namespace import
       case 'D':
          // date
          // double
+         // decimal
          if (CSV_STR_TYPE_EQ(CSV_STR_DATE, str, length))
          {
             type = CSV_TYPE_DATE;
@@ -381,6 +560,24 @@ namespace import
          else if (CSV_STR_TYPE_EQ(CSV_STR_DOUBLE, str, length))
          {
             type = CSV_TYPE_DOUBLE;
+         }
+         else if (CSV_STR_TYPE_EQ(CSV_STR_DECIMAL, str, length))
+         {
+            type = CSV_TYPE_DECIMAL;
+         }
+         else if (length > (INT32)CSV_STR_DECIMAL_SIZE &&
+                  ossStrncasecmp(str, CSV_STR_DECIMAL, CSV_STR_DECIMAL_SIZE) == 0)
+         {
+            // decimal(10, 2)
+            rc = _parseDecimalPrecision(data + CSV_STR_DECIMAL_SIZE,
+                                        length - CSV_STR_DECIMAL_SIZE,
+                                        opt);
+            if (SDB_OK != rc)
+            {
+               PD_LOG(PDERROR, "invalid decimal type");
+               goto error;
+            }
+            type = CSV_TYPE_DECIMAL;
          }
          break;
       case 'i':
@@ -587,22 +784,14 @@ namespace import
       goto done;
    }
 
-   static inline INT32 _stringToRawNumber(const CHAR* data, INT32 length,
-                                          CSV_TYPE& type, CSVFieldValue& value,
-                                          INT32& valueLength)
+   static INT32 _stringToRawDecimal(const CHAR* data, INT32 length,
+                                    bson_decimal& value, INT32& valueLength)
    {
+      INT32 rc = SDB_OK;
       CHAR* str = (CHAR*)data;
       INT32 len = length;
-      INT32 rc = SDB_OK;
-      FLOAT64 decimal;
-      FLOAT64 exponent;
-      INT32 intLen;
-      INT32 decLen;
-      INT32 expLen;
-      FLOAT64 num;
-      BOOLEAN neg = FALSE;
-      CSV_TYPE tmpType = CSV_TYPE_AUTO;
-      CSVFieldValue tmpValue;
+      CHAR* start;
+      CHAR end;
 
       SDB_ASSERT(NULL != data, "data can't be NULL");
       SDB_ASSERT(length > 0, "length must be greater than 0");
@@ -613,11 +802,118 @@ namespace import
          len--;
       }
 
+      start = str;
+
+      if ('+' == *str || '-' == *str)
+      {
+         str++;
+         len--;
+      }
+
+      while (isdigit(*str) && len > 0)
+      {
+         str++;
+         len--;
+      }
+
+      if (0 == len)
+      {
+         goto decimal;
+      }
+
+      if ('E' == *str || 'e' == *str)
+      {
+         goto exp;
+      }
+
+      if ('.' == *str)
+      {
+         str++;
+         len--;
+      }
+
+      while (isdigit(*str) && len > 0)
+      {
+         str++;
+         len--;
+      }
+
+      if ('E' != *str && 'e' != *str)
+      {
+         goto decimal;
+      }
+
+      str++;
+      len--;
+
+   exp:
+      while (isdigit(*str) && len > 0)
+      {
+         str++;
+         len--;
+      }
+
+   decimal:
+      end = *str;
+      *str = '\0';
+
+      rc = decimal_from_str( start, &value);
+      if (0 != rc)
+      {
+         *str = end;
+         rc = SDB_INVALIDARG;
+         goto error;
+      }
+
+      *str = end;
+      valueLength = str - data;
+
+   done:
+      return rc;
+   error:
+      goto done;
+   }
+
+   static inline INT32 _stringToRawNumber(const CHAR* data, INT32 length,
+                                          CSV_TYPE& type, CSVFieldValue& value,
+                                          INT32& valueLength)
+   {
+      CHAR* str = (CHAR*)data;
+      INT32 len = length;
+      INT32 rc = SDB_OK;
+      FLOAT64 fract;
+      FLOAT64 exponent;
+      INT32 intLen;
+      INT32 fractLen;
+      INT32 expLen;
+      FLOAT64 num;
+      BOOLEAN neg = FALSE;
+      CSV_TYPE tmpType = CSV_TYPE_AUTO;
+      CSVFieldValue tmpValue;
+      CHAR* start;
+
+      SDB_ASSERT(NULL != data, "data can't be NULL");
+      SDB_ASSERT(length > 0, "length must be greater than 0");
+
+      if ('#' == *str)
+      {
+         str++;
+         len--;
+      }
+
+      start = str;
+
       // integer part
       rc = _stringToRawNum(str, len, tmpType, tmpValue, intLen, TRUE);
       if (SDB_OK != rc)
       {
          goto error;
+      }
+
+      // overflow
+      if (CSV_TYPE_DOUBLE == tmpType && 0 != intLen)
+      {
+         goto decimal ;
       }
 
       if ('-' == *str)
@@ -691,31 +987,51 @@ namespace import
       {
          num = tmpValue.doubleVal;
       }
-      rc = _stringToRawNum(str, len, tmpType, tmpValue, decLen);
+
+      rc = _stringToRawNum(str, len, tmpType, tmpValue, fractLen);
       if (SDB_OK != rc)
       {
          goto error;
       }
 
-      if (CSV_TYPE_LONG == tmpType)
+      if ('-' == *start || '+' == *start)
       {
-         decimal = (FLOAT64)tmpValue.longVal;
-      }
-      else
-      {
-         decimal = tmpValue.doubleVal;
+         intLen--;
       }
 
-      str += decLen;
-      len -= decLen;
-      valueLength += decLen;
-      if (!neg)
       {
-         num = num + decimal / pow(10.0, decLen);
+         INT32 fLen = fractLen ;
+
+         while ('0' == str[fLen - 1])
+         {
+            fLen--;
+         }
+
+         if (fLen > DOUBLE_FRACT_PRECISION || fLen + intLen > DOUBLE_PRECISION)
+         {
+            goto decimal;
+         }
+      }
+
+      if (CSV_TYPE_LONG == tmpType)
+      {
+         fract = (FLOAT64)tmpValue.longVal;
       }
       else
       {
-         num = num - decimal / pow(10.0, decLen);
+         fract = tmpValue.doubleVal;
+      }
+
+      str += fractLen;
+      len -= fractLen;
+      valueLength += fractLen;
+      if (!neg)
+      {
+         num = num + fract / pow(10.0, fractLen);
+      }
+      else
+      {
+         num = num - fract / pow(10.0, fractLen);
       }
 
       if ('E' != *str && 'e' != *str)
@@ -752,6 +1068,21 @@ namespace import
          exponent = tmpValue.doubleVal;
       }
 
+      if (exponent > DOUBLE_MAX_EXP || exponent < DOUBLE_MIN_EXP)
+      {
+         goto decimal;
+      }
+
+      if (DOUBLE_MAX_EXP == exponent && num > DOUBLE_MAN)
+      {
+         goto decimal;
+      }
+
+      if (DOUBLE_MIN_EXP == exponent && num < -DOUBLE_MAN)
+      {
+         goto decimal;
+      }
+
       str += expLen;
       len -= expLen;
       valueLength += expLen;
@@ -759,6 +1090,16 @@ namespace import
 
       value.doubleVal = num;
       valueLength = length - len;
+      goto done;
+
+   decimal:
+      type = CSV_TYPE_DECIMAL;
+      decimal_init(&(value.decimalVal));
+      rc = _stringToRawDecimal( data, length, value.decimalVal, valueLength);
+      if (SDB_OK != rc)
+      {
+         goto error;
+      }
 
    done:
       return rc;
@@ -773,34 +1114,40 @@ namespace import
       CHAR* str = (CHAR*)data;
       INT32 len = length;
       INT32 rc = SDB_OK;
-      CSV_TYPE type;
-      CSVFieldValue tmpValue;
+      CSVFieldData tmpField;
 
       SDB_ASSERT(NULL != data, "data can't be NULL");
       SDB_ASSERT(length > 0, "length must be greater than 0");
 
-      rc = _stringToRawNumber(str, len, type, tmpValue, valueLength);
+      rc = _stringToRawNumber(str, len, tmpField.type, tmpField.value, valueLength);
       if (SDB_OK != rc)
       {
          goto error;
       }
 
-      switch(type)
+      switch(tmpField.type)
       {
       case CSV_TYPE_INT:
-         value = tmpValue.intVal;
+         value = tmpField.value.intVal;
          break;
       case CSV_TYPE_LONG:
          if (_cast)
          {
-            value = tmpValue.longVal;
+            value = tmpField.value.longVal;
             break;
          }
          // passthrough
       case CSV_TYPE_DOUBLE:
          if (_cast)
          {
-            value = tmpValue.doubleVal;
+            value = tmpField.value.doubleVal;
+            break;
+         }
+         // passthrough
+      case CSV_TYPE_DECIMAL:
+         if (_cast)
+         {
+            value = decimal_to_int(&(tmpField.value.decimalVal));
             break;
          }
          // passthrough
@@ -822,30 +1169,36 @@ namespace import
       CHAR* str = (CHAR*)data;
       INT32 len = length;
       INT32 rc = SDB_OK;
-      CSV_TYPE type;
-      CSVFieldValue tmpValue;
+      CSVFieldData tmpField;
 
       SDB_ASSERT(NULL != data, "data can't be NULL");
       SDB_ASSERT(length > 0, "length must be greater than 0");
 
-      rc = _stringToRawNumber(str, len, type, tmpValue, valueLength);
+      rc = _stringToRawNumber(str, len, tmpField.type, tmpField.value, valueLength);
       if (SDB_OK != rc)
       {
          goto error;
       }
 
-      switch(type)
+      switch(tmpField.type)
       {
       case CSV_TYPE_INT:
-         value = tmpValue.intVal;
+         value = tmpField.value.intVal;
          break;
       case CSV_TYPE_LONG:
-         value = tmpValue.longVal;
+         value = tmpField.value.longVal;
          break;
       case CSV_TYPE_DOUBLE:
          if (_cast)
          {
-            value = tmpValue.doubleVal;
+            value = tmpField.value.doubleVal;
+            break;
+         }
+         // passthrough
+      case CSV_TYPE_DECIMAL:
+         if (_cast)
+         {
+            value = decimal_to_long(&(tmpField.value.decimalVal));
             break;
          }
          // passthrough
@@ -866,33 +1219,35 @@ namespace import
                                           FLOAT64& value, INT32& valueLength)
    {
       INT32 rc = SDB_OK;
-      CSV_TYPE subType = CSV_TYPE_AUTO;
-      CSVFieldValue subValue;
+      CSVFieldData subField;
 
       SDB_ASSERT(NULL != data, "data can't be NULL");
       SDB_ASSERT(length > 0, "length must be greater than 0");
 
-      rc = _stringToRawNumber(data, length, subType, subValue, valueLength);
+      rc = _stringToRawNumber(data, length, subField.type, subField.value, valueLength);
       if (SDB_OK != rc)
       {
          //PD_LOG(PDERROR, "failed to convert to number, rc=%d", rc);
          goto error;
       }
 
-      switch(subType)
+      switch(subField.type)
       {
       case CSV_TYPE_DOUBLE:
-         value = subValue.doubleVal;
+         value = subField.value.doubleVal;
          break;
       case CSV_TYPE_INT:
-         value = subValue.intVal;
+         value = subField.value.intVal;
          break;
       case CSV_TYPE_LONG:
-         value = subValue.longVal;
+         value = subField.value.longVal;
+         break;
+      case CSV_TYPE_DECIMAL:
+         value = decimal_to_double(&(subField.value.decimalVal));
          break;
       default:
          rc = SDB_INVALIDARG;
-         PD_LOG(PDERROR, "invalid subtype: %d", subType);
+         //PD_LOG(PDERROR, "invalid subtype: %d", subField.type);
          goto error;
       }
 
@@ -1574,6 +1929,107 @@ namespace import
 
       // find out double in string
       rc = _stringToRawDouble(str, len, value, tmpLen);
+      if (SDB_OK != rc)
+      {
+         goto error;
+      }
+
+      str += tmpLen;
+      len -= tmpLen;
+
+      _skipSpace(&str, len);
+      if (0 != len)
+      {
+         rc = SDB_INVALIDARG;
+         goto error;
+      }
+
+   done:
+      return rc;
+   error:
+      goto done;
+   }
+
+   static INT32 _stringToDecimal(const CHAR* data, INT32 length,
+                                 const CHAR* strDel, INT32 strDelLen,
+                                 const CHAR* fieldDel, INT32 fieldDelLen,
+                                 const CSVFieldOpt& opt,
+                                 bson_decimal& value, INT32& valueLength,
+                                 BOOLEAN& fieldEnd)
+   {
+      CHAR* str = (CHAR*)data;
+      INT32 len = length;
+      INT32 tmpLen = 0;
+      CSVString csvStr;
+      INT32 rc = SDB_OK;
+
+      SDB_ASSERT(NULL != data, "data can't be NULL");
+      SDB_ASSERT(length > 0, "length must be greater than 0");
+
+      if (opt.hasOpt)
+      {
+         rc = decimal_init1(&value, opt.opt.decimalOpt.precision, opt.opt.decimalOpt.scale);
+         if (0 != rc)
+         {
+            rc = SDB_INVALIDARG;
+            goto error;
+         }
+      }
+      else
+      {
+         decimal_init(&value);
+      }
+      rc = _stringToRawDecimal(data, length, value, valueLength);
+      if (SDB_OK == rc)
+      {
+         str += valueLength;
+         len -= valueLength;
+
+         if (!_isValidFieldEnd(str, len, fieldDel, fieldDelLen, tmpLen, fieldEnd))
+         {
+            rc = SDB_INVALIDARG;
+            goto error;
+         }
+
+         valueLength += tmpLen;
+         goto done;
+      }
+
+      rc = _stringToString(data, length,
+                           strDel, strDelLen,
+                           fieldDel, fieldDelLen,
+                           csvStr, valueLength, fieldEnd);
+      if (SDB_OK != rc || data == csvStr.str)
+      {
+         rc = SDB_INVALIDARG;
+         goto error;
+      }
+
+      tmpLen = 0;
+      str = csvStr.str;
+      len = csvStr.length;
+      _skipSpace(&str, len);
+      if (0 == len)
+      {
+         rc = SDB_INVALIDARG;
+         goto error;
+      }
+
+      // find out decimal in string
+      if (opt.hasOpt)
+      {
+         rc = decimal_init1(&value, opt.opt.decimalOpt.precision, opt.opt.decimalOpt.scale);
+         if (0 != rc)
+         {
+            rc = SDB_INVALIDARG;
+            goto error;
+         }
+      }
+      else
+      {
+         decimal_init(&value);
+      }
+      rc = _stringToRawDecimal(str, len, value, tmpLen);
       if (SDB_OK != rc)
       {
          goto error;
@@ -2601,10 +3057,10 @@ namespace import
 
       ss << "id:" << field.id
          << ", name:" << field.name
-         << ", type:" << _CSVTypeToString(type);
+         << ", type:" << _CSVTypeToString(type, field.opt);
       if (CSV_TYPE_NUMBER == type)
       {
-         ss << ", subtype:" << _CSVTypeToString(field.subType);
+         ss << ", subtype:" << _CSVTypeToString(field.subType, field.opt);
       }
       ss << ", hasDefault:" << field.hasDefault;
       if (field.hasDefault)
@@ -2629,6 +3085,25 @@ namespace import
             break;
          case CSV_TYPE_DOUBLE:
             ss << field.defaultValue.doubleVal;
+            break;
+         case CSV_TYPE_DECIMAL:
+            {
+               INT32 len = 0;
+               CHAR* buf = NULL;
+
+               decimal_to_str_get_len(&(field.defaultValue.decimalVal), &len);
+
+               buf = (CHAR*)SDB_OSS_MALLOC(len);
+               if (NULL == buf)
+               {
+                  break;
+               }
+               ossMemset(buf, 0, len);
+
+               decimal_to_str(&(field.defaultValue.decimalVal), buf, len);
+               ss << buf;
+               SDB_OSS_FREE(buf);
+            }
             break;
          case CSV_TYPE_NUMBER:
             break;
@@ -2691,7 +3166,7 @@ namespace import
                                         const CHAR* fieldDel, INT32 fieldDelLen,
                                         const CHAR* strDel, INT32 strDelLen,
                                         CSV_TYPE& type, CSV_TYPE& subType,
-                                        CSVFieldValue& fieldValue,
+                                        CSVFieldOpt& opt, CSVFieldValue& fieldValue,
                                         INT32& valueLength, BOOLEAN& fieldEnd)
    {
       CHAR* str = (CHAR*)data;
@@ -2735,6 +3210,12 @@ namespace import
          rc = _stringToDouble(data, length, strDel, strDelLen,
                               fieldDel, fieldDelLen, fieldValue.doubleVal,
                               valueLength, fieldEnd);
+         break;
+      case CSV_TYPE_DECIMAL:
+         rc = _stringToDecimal(data, length, strDel, strDelLen,
+                               fieldDel, fieldDelLen,
+                               opt, fieldValue.decimalVal,
+                               valueLength, fieldEnd);
          break;
       case CSV_TYPE_BOOL:
          rc = _stringToBool(data, length, strDel, strDelLen,
@@ -2892,7 +3373,7 @@ namespace import
       {
          string field(data, length);
          PD_LOG(PDERROR, "failed to parse field value, type=%s, value=[%s]",
-                _CSVTypeToString(type), field.c_str());
+                _CSVTypeToString(type, opt).c_str(), field.c_str());
       }
       goto done;
    }
@@ -2990,11 +3471,13 @@ namespace import
                                              INT32 fieldDelLen,
                                              CSV_TYPE& fieldType,
                                              INT32& fieldTypeLength,
+                                             CSVFieldOpt& opt,
                                              BOOLEAN& fieldEnd)
    {
       CHAR* str = (CHAR*)data;
       INT32 len = length;
       INT32 rc = SDB_OK;
+      BOOLEAN inBracket = FALSE;
       fieldEnd = FALSE;
 
       SDB_ASSERT(NULL != data, "data can't be NULL");
@@ -3004,7 +3487,25 @@ namespace import
 
       while (len > 0)
       {
-         if (isspace(*str))
+         if (inBracket)
+         {
+            if (LEFT_BRACKET == *str)
+            {
+               rc = SDB_INVALIDARG;
+               PD_LOG(PDERROR, "duplicate left bracket");
+               goto error;
+            }
+
+            if (RIGHT_BRACKET == *str)
+            {
+               inBracket = FALSE;
+            }
+         }
+         else if (LEFT_BRACKET == *str)
+         {
+            inBracket = TRUE;
+         }
+         else if (isspace(*str))
          {
             break;
          }
@@ -3025,9 +3526,16 @@ namespace import
          goto error;
       }
 
+      if (inBracket)
+      {
+         rc = SDB_INVALIDARG;
+         PD_LOG(PDERROR, "bracket is not closed");
+         goto error;
+      }
+
       fieldTypeLength = length - len;
 
-      rc = _convertToCSVType(data, fieldTypeLength, fieldType);
+      rc = _convertToCSVType(data, fieldTypeLength, fieldType, opt);
       if (SDB_OK != rc)
       {
          string s(data, fieldTypeLength);
@@ -3108,7 +3616,7 @@ namespace import
                             fieldDel, fieldDelLen,
                             strDel, strDelLen,
                             field.type, field.subType,
-                            field.defaultValue,
+                            field.opt, field.defaultValue,
                             valueLen, fieldEnd);
       if (SDB_OK != rc)
       {
@@ -3171,6 +3679,9 @@ namespace import
          break;
       case CSV_TYPE_DOUBLE:
          rc = bson_append_double(&obj, field.name.c_str(), value->doubleVal);
+         break;
+      case CSV_TYPE_DECIMAL:
+         rc = bson_append_decimal(&obj, field.name.c_str(), &(value->decimalVal));
          break;
       case CSV_TYPE_BOOL:
          rc = bson_append_bool(&obj, field.name.c_str(), value->boolVal);
@@ -3409,9 +3920,10 @@ namespace import
             INT32 fieldTypeLen = 0;
             BOOLEAN fieldEnd = FALSE;
             CSV_TYPE fieldType = CSV_TYPE_AUTO;
+            CSVFieldOpt opt;
 
             rc = _parseFieldTypeString(str, len, fieldDel, fieldDelLen,
-                                 fieldType, fieldTypeLen, fieldEnd);
+                                       fieldType, fieldTypeLen, opt, fieldEnd);
             if (SDB_OK != rc)
             {
                PD_LOG(PDERROR, "failed to parse field type, rc=%d", rc);
@@ -3419,6 +3931,11 @@ namespace import
             }
 
             field->type = fieldType;
+
+            if (opt.hasOpt)
+            {
+               field->opt = opt;
+            }
 
             str += fieldTypeLen;
             len -= fieldTypeLen;
@@ -3601,7 +4118,8 @@ namespace import
                                fieldDel, fieldDelLen,
                                strDel, strDelLen,
                                fieldData.type, fieldData.subType,
-                               fieldData.value, valueLength, fieldEnd);
+                               field->opt, fieldData.value,
+                               valueLength, fieldEnd);
          if (SDB_OK != rc)
          {
             PD_LOG(PDERROR, "failed to parse field, rc=%d", rc);
@@ -3681,7 +4199,8 @@ namespace import
                                      fieldDel, fieldDelLen,
                                      strDel, strDelLen,
                                      fieldData.type, fieldData.subType,
-                                     fieldData.value, valueLength, fieldEnd);
+                                     tmpField.opt, fieldData.value,
+                                     valueLength, fieldEnd);
                if (SDB_OK != rc)
                {
                   PD_LOG(PDERROR, "failed to parse field, rc=%d", rc);

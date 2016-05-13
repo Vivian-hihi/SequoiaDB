@@ -47,6 +47,7 @@ namespace import
       CSV_TYPE_LONG,
       CSV_TYPE_NUMBER,
       CSV_TYPE_DOUBLE,
+      CSV_TYPE_DECIMAL,
       CSV_TYPE_BOOL,
       CSV_TYPE_STRING,
       CSV_TYPE_TIMESTAMP,
@@ -96,6 +97,7 @@ namespace import
       INT32          intVal;
       INT64          longVal;
       FLOAT64        doubleVal;
+      bson_decimal   decimalVal;
       BOOLEAN        boolVal;
       CSVString      strVal;
       CSVTimestamp   timestampVal;
@@ -110,12 +112,33 @@ namespace import
       }
    };
 
+   struct CSVDecimalOpt
+   {
+      INT32 precision;
+      INT32 scale;
+   };
+
+   struct CSVFieldOpt
+   {
+      BOOLEAN hasOpt;
+      union {
+         CSVDecimalOpt decimalOpt;
+      } opt;
+
+      CSVFieldOpt()
+      {
+         ossMemset(&opt, 0, sizeof(CSVFieldOpt));
+         hasOpt = FALSE;
+      }
+   };
+
    struct CSVField: public SDBObject
    {
       INT32          id;
       CSV_TYPE       type;
       CSV_TYPE       subType;
       string         name;
+      CSVFieldOpt    opt;
       BOOLEAN        hasDefault;
       CSVFieldValue  defaultValue;
 
@@ -143,6 +166,11 @@ namespace import
                {
                   SAFE_OSS_FREE(defaultValue.strVal.str);
                }
+            }
+            else if (CSV_TYPE_DECIMAL == type ||
+                     (CSV_TYPE_NUMBER == type && CSV_TYPE_DECIMAL == subType))
+            {
+               decimal_free(&(defaultValue.decimalVal));
             }
          }
       }
@@ -177,6 +205,11 @@ namespace import
             value.strVal.hasEscape = FALSE;
             value.strVal.escaped = FALSE;
             value.strVal.length = 0;
+         }
+         else if (CSV_TYPE_DECIMAL == type ||
+                  (CSV_TYPE_NUMBER == type && CSV_TYPE_DECIMAL == subType))
+         {
+            decimal_free(&(value.decimalVal));
          }
 
          type = CSV_TYPE_AUTO;
