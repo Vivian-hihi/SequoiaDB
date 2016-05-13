@@ -117,7 +117,7 @@ class SequoiaDB_Test extends PHPUnit_Framework_TestCase
       $end = microtime( true ) ;
       $time1 = round( $end - $start, 3 ) ;
       
-      $err = sdbInitClient( array( 'enableCacheStrategy' => true, 'cacheTimeInterval' => 300, 'maxCacheSlotCount' => 1000 ) ) ;
+      $err = sdbInitClient( array( 'enableCacheStrategy' => true, 'cacheTimeInterval' => 300 ) ) ;
       $this -> assertEquals( 0, $err, '设置驱动缓存失败' ) ;
       
       $db2 = new SequoiaDB();
