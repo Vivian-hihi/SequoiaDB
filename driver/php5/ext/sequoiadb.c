@@ -588,7 +588,6 @@ PHP_FUNCTION( sdbInitClient )
    INT32 rc = SDB_OK ;
    BOOLEAN enableCacheStrategy = FALSE ;
    INT32 cacheTimeInterval     = 300 ;
-   INT32 maxCacheSlotCount     = 1000 ;
    zval *pConfigure     = NULL ;
    zval *pCacheStrategy = NULL ;
    zval *pTimeInterVal  = NULL ;
@@ -615,9 +614,6 @@ PHP_FUNCTION( sdbInitClient )
    php_assocArrayFind( pConfigure,
                        "cacheTimeInterval",
                        &pTimeInterVal TSRMLS_CC ) ;
-   php_assocArrayFind( pConfigure,
-                       "maxCacheSlotCount",
-                       &pMaxCache TSRMLS_CC ) ;
 
    rc = php_zval2Bool( pCacheStrategy, &enableCacheStrategy TSRMLS_CC ) ;
    if( rc )
@@ -629,19 +625,13 @@ PHP_FUNCTION( sdbInitClient )
    {
       goto error ;
    }
-   rc = php_zval2Int( pMaxCache, &maxCacheSlotCount TSRMLS_CC ) ;
-   if( rc )
-   {
-      goto error ;
-   }
-   if( cacheTimeInterval < 0 || maxCacheSlotCount < 0 )
+   if( cacheTimeInterval < 0 )
    {
       rc = SDB_INVALIDARG ;
       goto error ;
    }
    sdbConf.enableCacheStrategy = enableCacheStrategy ;
    sdbConf.cacheTimeInterval = (UINT32)cacheTimeInterval ;
-   sdbConf.maxCacheSlotCount = (UINT32)maxCacheSlotCount ;
    rc = initClient( &sdbConf ) ;
                              
    if( rc )
