@@ -24,7 +24,7 @@
 #ifndef CLIENT_DEFINITION_H__
 #define CLIENT_DEFINITION_H__
 
-#include "oss.h"
+#include "ossTypes.h"
 
 typedef struct _sdbClientConf
 {
