@@ -85,7 +85,10 @@ INT32 connect(sdbConnectionHandle* conn, INT32 timeLen=0, INT32 size=0)
    INT32 rc = SDB_OK;
    
    // 初始化客户端，开启缓存
-   rc = initClient(TRUE, timeLen, size);
+   sdbClientConf conf;
+   conf.enableCacheStrategy = TRUE;
+   conf.cacheTimeInterval = timeLen;
+   rc = initClient(&conf);
    if (SDB_OK != rc)
    {
       return rc;
@@ -440,7 +443,7 @@ TEST( turnonCache, testUpdateTimeStamp)
    
    strConn = (sdbConnectionStruct*)conn;
    hashTable *ht = strConn->_tb;
-   for (int i = 0; i<10; ++i){
+   for (int i = 0; i<ht->capacity; ++i){
       htbNode *Node = ht->node[i];
       if (Node != NULL){
          if (0 == strncmp(Node->name, csName, strlen(Node->name)))
@@ -460,7 +463,7 @@ TEST( turnonCache, testUpdateTimeStamp)
    rc = sdbInsert(cl, &obj);
    ASSERT_EQ(SDB_OK, rc);
    
-   for (int i = 0; i<10; ++i){
+   for (int i = 0; i<ht->capacity; ++i){
       htbNode *Node = ht->node[i];
       if (Node != NULL){
          if (0 == strncmp(Node->name, csName, strlen(Node->name)))
@@ -577,7 +580,7 @@ TEST( turnonCache, getMulCLAfterDropCS)
    {
       snprintf(fullName, sizeof(fullName), "%s.cl_%d_%d", csName,i, getpid());
       rc = sdbGetCollection(conn, fullName, &cl1[i]);
-      ASSERT_EQ(-34, rc);
+      ASSERT_EQ(-23, rc);
    }
  
    for (int i = 0; i <5; ++i)
