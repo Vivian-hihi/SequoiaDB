@@ -20,11 +20,19 @@ import shutil
 
 if 'win32' == sys.platform:
    dlls = './pysequoiadb/*.dll'
+   bson = './bson/*.dll'
    for file in glob.glob(dlls):
       if file.startswith('lib'):
          newname = file[3:]
       newname = file[:-3] + 'pyd'
       shutil.copy(file, newname)
+
+   for file in glob.glob(dlls):
+      if file.startswith('lib'):
+         newname = file[3:]
+      newname = file[:-3] + 'pyd'
+      shutil.copy(file, newname)
+
    modules = ['err.prop','*.pyd'] #, '*.exp', '*.lib', 
 else:
    modules = ['err.prop', '*.so']

@@ -586,7 +586,7 @@ class collection(object):
          rc = sdb.cl_query(self._cl, result._cursor,
                            bson_condition, bson_selector,
                            bson_order_by, bson_hint,
-                           num_to_skip, num_to_return, flag)
+                           num_to_skip, num_to_return, flags)
          pysequoiadb._raise_if_error("Failed to query", rc)
       except SDBBaseError:
          del result
@@ -595,29 +595,30 @@ class collection(object):
 
       return result
 
-   def query_and_update(self, update, condition = None, selector = None, order_by = None, hint = None, num_to_skip = 0, num_to_return = -1, flags = 0, return_new = False):
+   def query_and_update(self, update, **kwargs):
       """Get the matching documents in current collection and update.
 
       Parameters:
          Name            Type     Info:
-         update          dict     The update rule, can't be null.
-         condition       dict     The matching rule, update all the
+         update          dict     The update rule, can't be None.
+         **kwargs                 Useful options are below
+         - condition     dict     The matching rule, update all the
                                           documents if not provided.
-         selector        dict     The selective rule, return the whole
+         - selector      dict     The selective rule, return the whole
                                           document if not provided.
-         order_by        dict     The ordered rule, result set is unordered
+         - order_by      dict     The ordered rule, result set is unordered
                                           if not provided.
-         hint            dict     The hint, automatically match the optimal
+         - hint          dict     The hint, automatically match the optimal
                                           hint if not provided.
-         num_to_skip     long     Skip the first numToSkip documents,
+         - num_to_skip   long     Skip the first numToSkip documents,
                                           default is 0L.
-         num_to_return   long     Only return numToReturn documents,
+         - num_to_return long     Only return numToReturn documents,
                                           default is -1L for returning
                                           all results.
-         flags           int      The query flags, default to be 0. Please see
+         - flags         int      The query flags, default to be 0. Please see
                                           the definition of follow flags for 
                                           more detail. See Info as below.
-         return_new      bool     When True, returns the updated document rather than the original
+         - return_new    bool     When True, returns the updated document rather than the original
          
       Return values:
          a cursor object of query
@@ -637,37 +638,61 @@ class collection(object):
       bson_hint = None
       bson_update = None
 
-      if update != None:
+      if update is not None:
          if not isinstance(update, dict):
             raise SDBTypeError("update must be an instance of dict")
          bson_update = bson.BSON.encode(update)
       else:
          raise SDBTypeError("update can't be None")
-      if condition != None:
+
+      condition = kwargs.get('condition')
+      if condition is not None:
          if not isinstance(condition, dict):
             raise SDBTypeError("condition must be an instance of dict")
          bson_condition = bson.BSON.encode(condition)
-      if selector != None:
+
+      selector = kwargs.get('selector')
+      if selector is not None:
          if not isinstance(selector, dict):
             raise SDBTypeError("selector must be an instance of dict")
          bson_selector = bson.BSON.encode(selector)
-      if order_by != None:
+
+      order_by = kwargs.get('order_by')
+      if order_by is not None:
          if not isinstance(order_by, dict):
             raise SDBTypeError("order_by must be an instance of dict")
          bson_order_by = bson.BSON.encode(order_by)
-      if hint != None:
+
+      hint = kwargs.get('hint')
+      if hint is not None:
          if not isinstance(hint, dict):
             raise SDBTypeError("hint must be an instance of dict")
          bson_hint = bson.BSON.encode(hint)
-      if num_to_skip != None:
-         if not isinstance(num_to_skip, int):
+
+      num_to_skip = 0
+      if kwargs.get('num_to_skip') is not None:
+         if not isinstance(kwargs.get('num_to_skip'), int):
             raise SDBTypeError("num_to_skip must be an instance of int")
-      if num_to_return != None:
-         if not isinstance(num_to_return, int):
+         num_to_skip = kwargs.get('num_to_skip')
+
+      num_to_return = -1
+      if kwargs.get('num_to_return') != None:
+         if not isinstance(kwargs.get('num_to_return'), int):
             raise SDBTypeError("num_to_return must be an instance of int")
-      if return_new != None:
-         if not isinstance(return_new, bool):
+         num_to_return = kwargs.get('num_to_return')
+
+      return_new = False
+      if kwargs.get('return_new') != None:
+         if not isinstance(kwargs.get('return_new'), bool):
             raise SDBTypeError("return_new must be an instance of bool")
+         return_new = kwargs.get('return_new')
+
+      flags = 0
+      if kwargs.get('flags') != None:
+         if kwargs.get('flags') not in ( QUERY_FLG_WITH_RETURNDATA,
+                                         QUERY_FLG_PARALLED,
+                                         QUERY_FLG_FORCE_HINT ):
+            raise SDBTypeError("invalid flags value")
 
       try:
          result = cursor()
@@ -683,25 +708,26 @@ class collection(object):
 
       return result
 
-   def query_and_remove(self, condition = None, selector = None, order_by = None, hint = None, num_to_skip = 0, num_to_return = -1, flags = 0):
+   def query_and_remove(self, **kwargs):
       """Get the matching documents in current collection and remove.
 
       Parameters:
          Name            Type     Info:
-         condition       dict     The matching rule, update all the
+         **kwargs                 Useful options are below
+         - condition     dict     The matching rule, update all the
                                           documents if not provided.
-         selector        dict     The selective rule, return the whole
+         - selector      dict     The selective rule, return the whole
                                           document if not provided.
-         order_by        dict     The ordered rule, result set is unordered
+         - order_by      dict     The ordered rule, result set is unordered
                                           if not provided.
-         hint            dict     The hint, automatically match the optimal
+         - hint          dict     The hint, automatically match the optimal
                                           hint if not provided.
-         num_to_skip     long     Skip the first numToSkip documents,
+         - num_to_skip   long     Skip the first numToSkip documents,
                                           default is 0L.
-         num_to_return   long     Only return numToReturn documents,
+         - num_to_return long     Only return numToReturn documents,
                                           default is -1L for returning
                                           all results.
-         flags           int      The query flags, default to be 0. Please see
+         - flags         int      The query flags, default to be 0. Please see
                                           the definition of follow flags for 
                                           more detail. See Info as below.
       Return values:
@@ -721,35 +747,55 @@ class collection(object):
       bson_order_by = None
       bson_hint = None
 
-      if condition != None:
+      condition = kwargs.get('condition')
+      if condition is not None:
          if not isinstance(condition, dict):
             raise SDBTypeError("condition must be an instance of dict")
          bson_condition = bson.BSON.encode(condition)
-      if selector != None:
+
+      selector = kwargs.get('selector')
+      if selector is not None:
          if not isinstance(selector, dict):
             raise SDBTypeError("selector must be an instance of dict")
          bson_selector = bson.BSON.encode(selector)
-      if order_by != None:
+
+      order_by = kwargs.get('order_by')
+      if order_by is not None:
          if not isinstance(order_by, dict):
             raise SDBTypeError("order_by must be an instance of dict")
          bson_order_by = bson.BSON.encode(order_by)
-      if hint != None:
+
+      hint = kwargs.get('hint')
+      if hint is not None:
          if not isinstance(hint, dict):
             raise SDBTypeError("hint must be an instance of dict")
          bson_hint = bson.BSON.encode(hint)
-      if num_to_skip != None:
-         if not isinstance(num_to_skip, int):
+
+      num_to_skip = 0
+      if kwargs.get('num_to_skip') is not None:
+         if not isinstance(kwargs.get('num_to_skip'), int):
             raise SDBTypeError("num_to_skip must be an instance of int")
-      if num_to_return != None:
-         if not isinstance(num_to_return, int):
+         num_to_skip = kwargs.get('num_to_skip')
+
+      num_to_return = -1
+      if kwargs.get('num_to_return') != None:
+         if not isinstance(kwargs.get('num_to_return'), int):
             raise SDBTypeError("num_to_return must be an instance of int")
+         num_to_return = kwargs.get('num_to_return')
+
+      flags = 0
+      if kwargs.get('flags') != None:
+         if kwargs.get('flags') not in ( QUERY_FLG_WITH_RETURNDATA,
+                                         QUERY_FLG_PARALLED,
+                                         QUERY_FLG_FORCE_HINT ):
+            raise SDBTypeError("invalid flags value")
 
       try:
          result = cursor()
          rc = sdb.cl_query_and_remove(self._cl, result._cursor,
                                       bson_condition, bson_selector,
                                       bson_order_by, bson_hint,
-                                      num_to_skip, num_to_return)
+                                      num_to_skip, num_to_return, flags)
          pysequoiadb._raise_if_error("Failed to query", rc)
       except SDBBaseError:
          del result

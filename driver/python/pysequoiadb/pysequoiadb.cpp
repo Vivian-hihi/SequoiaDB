@@ -1157,7 +1157,6 @@ __METHOD_IMP(sdb_init_client)
    sdbClientConf config ;
    config.enableCacheStrategy = turnOn ;
    config.cacheTimeInterval = timeInterval ;
-   config.maxCacheSlotCount = maxCacheSlot ;
    rc = initClient( &config ) ;
    if ( rc )
    {
@@ -1788,7 +1787,7 @@ __METHOD_IMP(cl_query_and_update)
    const bson::BSONObj *hint      = NULL ;
    const bson::BSONObj *update    = NULL ;
 
-   if ( !PARSE_PYTHON_ARGS( args, "OOOOOOLLiO", &obj, &cursor_object,
+   if ( !PARSE_PYTHON_ARGS( args, "OOOOOOLLiiO", &obj, &cursor_object,
         &bson_condition,  &bson_selector, &bson_order_by,
         &bson_hint, &num_to_skip, &num_to_return, &return_new_num, &flag, &bson_update ) )
    {
@@ -1841,7 +1840,7 @@ __METHOD_IMP(cl_query_and_remove)
    const bson::BSONObj *order_by  = NULL ;
    const bson::BSONObj *hint      = NULL ;
 
-   if ( !PARSE_PYTHON_ARGS( args, "OOOOOOLL", &obj, &cursor_object,
+   if ( !PARSE_PYTHON_ARGS( args, "OOOOOOLLi", &obj, &cursor_object,
       &bson_condition,  &bson_selector, &bson_order_by,
       &bson_hint, &num_to_skip, &num_to_return, &flag ) )
    {

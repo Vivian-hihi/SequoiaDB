@@ -9,6 +9,10 @@ driverFiles = [
    "pysequoiadb/pysequoiadb.cpp"
    ]
 
+decimalFiles = [
+   "pysequoiadb/pydecimal.cpp"
+   ]
+
 clientFiles = [
    path + "SequoiaDB/engine/client/clientcpp.cpp"
       ]
@@ -114,10 +118,12 @@ srcFiles = [
    curPath + "timestampValid.c",
 ]
 
-driver   = env.SharedLibrary("sdb",   [driverFiles, srcFiles])
+driver  = env.SharedLibrary("sdb",   [driverFiles, srcFiles])
+#decimal = env.SharedLibrary("decimal", [decimalFiles])
 
 base = []
 base.append(env.Install("#/pysequoiadb", driver))
+#base.append(env.Install("#/bson", decimal))
 
 if sys.platform == 'win32':
    pass
