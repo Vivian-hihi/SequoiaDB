@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<testcases xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+	<testcase name="使用$not查询，走索引查询">
+		<summary>$not 是一个逻辑“非”操作</summary>
+		<preconditions>已创建CS、CL，已插入待查询的记录</preconditions>
+		<execution_type>1</execution_type>
+		<importance>2</importance>
+		<steps>
+			<step>
+				<step_number>1</step_number>
+				<actions>1、find({$not:[{&lt;表达式1&gt;}，{&lt;表达式2&gt;},...,{&lt;表达式N&gt;}]})查询，目标字段覆盖所有数据类型（覆盖多层嵌套数组），取值个数覆盖：1个、多个
+2、检查查询结果正确性</actions>
+				<expectedresults>1、查询成功，返回与匹配条件匹配的记录</expectedresults>
+				<execution_type>1</execution_type>
+			</step>
+		</steps>
+	</testcase>
+	<testcase name="使用$not查询，不走索引查询">
+		<preconditions>已创建CS、CL，已插入待查询的记录</preconditions>
+		<execution_type>1</execution_type>
+		<importance>2</importance>
+		<steps>
+			<step>
+				<step_number>1</step_number>
+				<actions>1、find({&lt;字段名&gt;:{$not:[&lt;值1&gt;,&lt;值2&gt;,...&lt;值N&gt;]}})查询，目标字段为索引字段，且目标字段需要覆盖所有数据类型（覆盖多层嵌套数组），取值个数覆盖：1个、多个
+2、检查查询结果正确性</actions>
+				<expectedresults>1、查询成功，返回与匹配条件匹配的记录</expectedresults>
+				<execution_type>1</execution_type>
+			</step>
+		</steps>
+	</testcase>
+	<testcase name="使用$not查询，指定多个不同数据类型的值">
+		<preconditions>已创建CS、CL，已插入待查询的记录</preconditions>
+		<execution_type>1</execution_type>
+		<importance>2</importance>
+		<steps>
+			<step>
+				<step_number>1</step_number>
+				<actions>1、find({&lt;字段名&gt;:{$not:[&lt;值1&gt;,&lt;值2&gt;,...&lt;值N&gt;]}})查询，$not指定多个值，且为不同类型的值
+2、检查查询结果正确性</actions>
+				<expectedresults>1、查询成功，返回与匹配条件匹配的记录</expectedresults>
+				<execution_type>1</execution_type>
+			</step>
+		</steps>
+	</testcase>
+	<testcase name="使用$not查询，给定值为空（如{$not:[]}）">
+		<preconditions>已创建CS、CL，已插入待查询的记录</preconditions>
+		<execution_type>1</execution_type>
+		<importance>2</importance>
+		<steps>
+			<step>
+				<step_number>1</step_number>
+				<actions>1、find({&lt;字段名&gt;:{$not:[&lt;值1&gt;,&lt;值2&gt;,...&lt;值N&gt;]}})查询，$not指定值为空，如{$not:[]}
+2、检查查询结果正确性</actions>
+				<expectedresults>1、查询成功，查看结果集包含所有记录</expectedresults>
+				<execution_type>1</execution_type>
+			</step>
+		</steps>
+	</testcase>
+</testcases>
