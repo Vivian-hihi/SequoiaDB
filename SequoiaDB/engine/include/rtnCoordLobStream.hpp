@@ -79,7 +79,7 @@ namespace engine
       virtual INT32 _readv( const RTN_LOB_TUPLES &tuples,
                             _pmdEDUCB *cb ) ;
 
-      virtual INT32 _completeLob( const _dmsLobMeta &meta,
+      virtual INT32 _completeLob( const _rtnLobTuple &tuple,
                                   _pmdEDUCB *cb ) ;
  
       virtual INT32 _rollback( _pmdEDUCB *cb ) ;
@@ -182,7 +182,8 @@ namespace engine
                                _pmdEDUCB *cb ) ;
 
       INT32 _extractMeta( const MsgOpReply *header,
-                          bson::BSONObj &obj ) ;
+                          bson::BSONObj &obj,
+                          BOOLEAN &takeOver ) ;
 
       INT32 _closeSubStreams( _pmdEDUCB *cb, BOOLEAN exceptMeta ) ;
 
@@ -228,9 +229,6 @@ namespace engine
                          UINT32 len,
                          netIOVec &iov ) ;
 
-      INT32 _getPageSizeFromCatalog( _pmdEDUCB *cb,
-                                     INT32 &size ) ;
-
       void _initHeader( MsgOpLob &header,
                         INT32 opCode,
                         INT32 bsonLen,
@@ -239,6 +237,7 @@ namespace engine
    private:
       CoordCataInfoPtr _cataInfo ;
       CoordGroupMap    _mapGroupInfo ;
+      UINT32           _pageSize ;
 
       std::vector<MsgOpReply *> _results ;
       REQUESTID_MAP     _sendMap ;

@@ -54,11 +54,13 @@ namespace engine
 
    public:
       INT32 open( const bson::BSONObj &lob,
+                  SINT32 flag,
                   SINT32 version,
                   SINT16 w,
                   SDB_DPSCB *dpsCB,
                   _pmdEDUCB *cb,
-                  bson::BSONObj &meta ) ;
+                  const CHAR **data,
+                  UINT32 &read ) ;
 
       INT32 write( UINT32 sequence,
                    UINT32 offset,
@@ -114,7 +116,9 @@ namespace engine
       virtual void  _toString( stringstream &ss ) ;
 
    private:
-      INT32 _open( _pmdEDUCB *cb ) ;
+      INT32 _open( _pmdEDUCB *cb,
+                   const CHAR **data,
+                   UINT32 &read ) ;
 
       void _meta2Obj( bson::BSONObj &obj ) ;
 
@@ -127,6 +131,7 @@ namespace engine
       bson::OID      _oid ;
       BSONObj        _metaObj ;
       INT32          _mode ;
+      INT32          _flags ;
       BOOLEAN        _isMainShd ;
       SINT16         _w ;
       SINT32         _version ;
@@ -135,6 +140,9 @@ namespace engine
       BOOLEAN        _closeWithException ;
       CHAR           *_buf ;
       UINT32         _bufLen ;
+      const CHAR*    _pData ;
+      UINT32         _dataLen ;
+      INT64          _offset ;
       std::set<UINT32> _written ;
 
       _dmsStorageUnit   *_su ;

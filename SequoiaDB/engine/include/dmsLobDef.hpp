@@ -58,27 +58,32 @@ namespace engine
    #define DMS_LOB_COMPLETE                  1
    #define DMS_LOB_UNCOMPLETE                0
 
-   #define RTN_LOB_GET_SEQUENCE( offset, log ) \
-     (( (offset) >> (log))+1)
+   /*
+      Lob meta fixed size, 1K
+   */
+   #define DMS_LOB_META_LENGTH               ( 1024 )
 
-   #define RTN_LOB_GET_OFFSET_IN_SEQUENCE( offset, pagesize ) \
-     ((offset) & ((pagesize)-1))
+   #define RTN_LOB_GET_SEQUENCE( offset, isMerge, log ) \
+     ( (isMerge) ? ( ( (INT64)(offset)+DMS_LOB_META_LENGTH) >> (log) ) : \
+                   ( ( ( (INT64)offset) >> (log) ) + 1 ) )
 
-   #define RTN_LOB_GET_SEQUENCE_NUM( len, pagesize, num )\
+   #define RTN_LOB_GET_OFFSET_IN_SEQUENCE( offset, isMerge, pagesize ) \
+     ( (isMerge) ? ( ((INT64)(offset)+DMS_LOB_META_LENGTH) & ((pagesize)-1) ) : \
+                   ( (INT64)(offset) & ((pagesize)-1) ) )
+
+   #define RTN_LOB_GET_SEQUENCE_NUM( len, pagesize, isMerge, num )\
      do\
      {\
-       if ( 0 == ((len) & ((pagesize)-1)) )\
-       {\
-          num = (len) / (pagesize) + 1;\
-       }\
-       else\
-       {\
-          num = (len) / (pagesize) + 2 ;\
-       }\
+       INT64 tmpLen = (isMerge) ? ( (len) + DMS_LOB_META_LENGTH ) : \
+                                  ( (len) + (pagesize) ) ; \
+       num = ( tmpLen + (pagesize) - 1 ) / (pagesize) ; \
      } while ( FALSE )
 
-   #define RTN_LOB_GET_OFFSET_OF_LOB( pageSz, sequence, offsetInSeq )\
-      ( ( (SINT64)( sequence ) - 1 ) * (SINT64)( pageSz ) + (SINT64)( offsetInSeq ) )
+   #define RTN_LOB_GET_OFFSET_OF_LOB( pageSz, sequence, offsetInSeq, isMerge ) \
+      ( (isMerge) ? ( (SINT64)(sequence)*(SINT64)(pageSz)+ \
+                      (SINT64)(offsetInSeq)-DMS_LOB_META_LENGTH ) : \
+                    ( ((SINT64)(sequence)-1)*(SINT64)(pageSz)+ \
+                      (SINT64)(offsetInSeq) ) )
 
    /*
       _dmsLobRecord define
@@ -134,11 +139,26 @@ namespace engine
          _data = data ;
          return ;
       }
+
+      string toString() const
+      {
+         stringstream ss ;
+         if ( _oid )
+         {
+            ss << "oid:" << _oid->str() << ", " ;
+         }
+         ss << "sequence:" << _sequence
+            << ", offset:" << _offset
+            << ", len:" << _dataLen
+            << endl ;
+         return ss.str() ;
+      }
    } ;
    typedef struct _dmsLobRecord dmsLobRecord ;
 
    #pragma pack(1)
 
+   #define DMS_LOB_CURRENT_VERSION           ( 2 )
    /*
       _dmsLobMeta define
    */
@@ -147,20 +167,25 @@ namespace engine
       SINT64      _lobLen ;
       UINT64      _createTime ;
       UINT8       _status ;
-      CHAR        _pad[495] ;
+      UINT8       _version ;
+      CHAR        _pad[494] ;
 
       _dmsLobMeta()
       :_lobLen( 0 ),
        _createTime( 0 ),
-       _status( DMS_LOB_UNCOMPLETE )
+       _status( DMS_LOB_UNCOMPLETE ),
+       _version( DMS_LOB_CURRENT_VERSION )
       {
          ossMemset( _pad, 0, sizeof( _pad ) ) ;
+         SDB_ASSERT( sizeof( _dmsLobMeta ) <= DMS_LOB_META_LENGTH,
+                     "Lob meta size must <= DMS_LOB_META_LENGTH" ) ;
       }
 
       void clear()
       {
          _lobLen = 0 ;
          _createTime = 0 ;
+         _version = DMS_LOB_CURRENT_VERSION ;
          _status = DMS_LOB_UNCOMPLETE ;
          ossMemset( _pad, 0, sizeof( _pad ) ) ;
       }

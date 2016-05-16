@@ -93,6 +93,7 @@ namespace engine
                               const bson::OID &oid,
                               INT32 mode,
                               INT32 flags,
+                              _rtnContextBase *context,
                               _pmdEDUCB *cb )
    {
       INT32 rc = SDB_OK ;
@@ -106,8 +107,8 @@ namespace engine
       rc = _prepare( fullName, oid, mode, cb ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "failed to prepare to open lob[%s]"
-                 " in cl[%s], rc:%d",
+         PD_LOG( PDERROR, "Failed to prepare to open lob[%s]"
+                 " in collection[%s], rc:%d",
                  oid.str().c_str(), fullName, rc ) ;
          goto error ;
       }
@@ -139,22 +140,58 @@ namespace engine
 
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "failed to open lob[%s], rc:%d",
+         PD_LOG( PDERROR, "Failed to open lob[%s], rc:%d",
                  oid.str().c_str(), rc ) ;
          goto error ;
       }
 
+      /// get page size, must call before _meta2Obj
       rc = _getLobPageSize( _lobPageSz ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "failed to get page size of lob:%d", rc ) ;
+         PD_LOG( PDERROR, "Failed to get page size of lob, rc:%d", rc ) ;
          goto error ;
       }
 
-      rc = _lw.init( _lobPageSz ) ;
+      /// if has context, need copy metaObj and data to context
+      if ( context )
+      {
+         _metaObj = _meta2Obj( _meta ) ;
+         rc = context->append( _metaObj ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Failed to append meta data, rc:%d", rc ) ;
+            goto error ;
+         }
+         /// add the date
+         if ( _pool.getLastDataSize() > 0 &&
+              ( _flags & FLG_LOBOPEN_WITH_RETURNDATA ) )
+         {
+            UINT32 readLen = 0 ;
+            /// bson size align
+            UINT32 poolSize = _pool.getLastDataSize() ;
+            UINT32 alignSize = ossAlign4( poolSize ) ;
+            if ( poolSize != alignSize )
+            {
+               CHAR fix[ 4 ] = { 0 } ;
+               context->appendObjs( fix, alignSize - poolSize, 0, FALSE ) ;
+            }
+            rc = _readFromPool( poolSize, context, cb, readLen ) ;
+            if ( rc )
+            {
+               PD_LOG( PDERROR, "Failed to read from pool, rc:%d", rc ) ;
+               goto error ;
+            }
+            _offset += readLen ;
+         }
+      }
+
+      rc = _lw.init( _lobPageSz,
+                     _meta._version >= DMS_LOB_CURRENT_VERSION ?
+                     TRUE : FALSE ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "failed to init stream window:%d", rc ) ;
+         PD_LOG( PDERROR, "Failed to init stream window, rc:%d", rc ) ;
          goto error ;
       }
 
@@ -170,6 +207,17 @@ namespace engine
       goto done ;
    }
 
+   BSONObj _rtnLobStream::_meta2Obj( const _dmsLobMeta &meta ) const
+   {
+      BSONObjBuilder builder ;
+      /// we can get nothing when mode is create.
+      builder.append( FIELD_NAME_LOB_SIZE, (long long)meta._lobLen ) ;
+      builder.append( FIELD_NAME_LOB_PAGE_SIZE, _lobPageSz ) ;
+      builder.append( FIELD_NAME_VERSION, (INT32)meta._version ) ;
+      builder.append( FIELD_NAME_LOB_CREATTIME, (long long)meta._createTime ) ;
+      return builder.obj() ;
+   }
+
    INT32 _rtnLobStream::getMetaData( bson::BSONObj &meta )
    {
       INT32 rc = SDB_OK ;
@@ -181,12 +229,7 @@ namespace engine
 
       if ( _metaObj.isEmpty() )
       {
-         BSONObjBuilder builder ;
-         /// we can get nothing when mode is create.
-         builder.append( FIELD_NAME_LOB_SIZE, (long long)_meta._lobLen ) ;
-         builder.append( FIELD_NAME_LOB_PAGE_SIZE, _lobPageSz ) ;
-         builder.append( FIELD_NAME_LOB_CREATTIME, (long long)_meta._createTime ) ;
-         _metaObj = builder.obj() ;
+         _metaObj = _meta2Obj( _meta ) ;
       }
 
       meta = _metaObj ;
@@ -208,6 +251,7 @@ namespace engine
       {
          ossTimestamp t ;
          _rtnLobTuple tuple ;
+         /// write last data
          if ( _lw.getCachedData( tuple ) )
          {
             rc = _write( tuple, cb ) ;
@@ -218,13 +262,24 @@ namespace engine
                 goto error ;
             }
          }
-
+         /// write meta data
          ossGetCurrentTime( t ) ;
          _meta._lobLen = _offset ;
          _meta._createTime = t.time * 1000 + t.microtm / 1000 ;
          _meta._status = DMS_LOB_COMPLETE ;
-
-         rc = _completeLob( _meta, cb ) ;
+         if ( _lw.getMetaPageData( tuple ) )
+         {
+            ossMemcpy( (CHAR*)tuple.data, (const CHAR*)&_meta,
+                       sizeof( _meta ) ) ;
+         }
+         else
+         {
+            tuple.tuple.columns.len = sizeof( _meta ) ;
+            tuple.tuple.columns.sequence = DMS_LOB_META_SEQUENCE ;
+            tuple.tuple.columns.offset = 0 ;
+            tuple.data = ( const CHAR* )&_meta ;
+         }
+         rc = _completeLob( tuple, cb ) ;
          /// AUDIT
          PD_AUDIT_OP_WITHNAME( AUDIT_DML, "LOB CREATE", AUDIT_OBJ_CL,
                                getFullName(), rc, "OID:%s, Length:%llu",
@@ -324,7 +379,7 @@ namespace engine
          goto error ;
       }
 
-      if ( !SDB_LOB_MODE_CREATEONLY & _mode )
+      if ( !( SDB_LOB_MODE_CREATEONLY & _mode ) )
       {
          PD_LOG( PDERROR, "open mode[%d] does not support this operation",
                  _mode ) ;
@@ -336,7 +391,7 @@ namespace engine
       rc = _lw.prepare2Write( _offset, len, buf ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "failed to add piece to window:%d", rc ) ;
+         PD_LOG( PDERROR, "Failed to add piece to window, rc:%d", rc ) ;
          goto error ;
       }
 
@@ -408,10 +463,14 @@ namespace engine
          read = 0 ;
       }
 
-      if ( _meta._lobLen == _offset )
+      if ( _meta._lobLen <= _offset )
       {
          rc = SDB_EOF ;
          goto error ;
+      }
+      else if ( _offset + len > _meta._lobLen )
+      {
+         len = _meta._lobLen - _offset ;
       }
 
       /// data may be cached.
@@ -511,7 +570,9 @@ namespace engine
       UINT32 pieceNum = 0 ;
       UINT32 oneLoopNum = 0 ;
 
-      RTN_LOB_GET_SEQUENCE_NUM( _meta._lobLen, _lobPageSz, pieceNum ) ;
+      RTN_LOB_GET_SEQUENCE_NUM( _meta._lobLen, _lobPageSz,
+                                _meta._version >= DMS_LOB_CURRENT_VERSION,
+                                pieceNum ) ;
       while ( 1 < pieceNum-- )
       {
          tuples.push_back( _rtnLobTuple( 0, pieceNum, 0, NULL ) ) ;
@@ -597,7 +658,7 @@ namespace engine
       rc = context->appendObjs( NULL, 0, 1 ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "failed to append data to context%d", rc ) ;
+         PD_LOG( PDERROR, "failed to append data to context, rc:%d", rc ) ;
          goto error ;
       }
 
@@ -617,7 +678,7 @@ namespace engine
       rc = _queryLobMeta( cb, _meta ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "failed to open lob[%s] in collection[%s], rc:%d",
+         PD_LOG( PDERROR, "Failed to open lob[%s] in collection[%s], rc:%d",
                  _oid.str().c_str(), _fullName, rc ) ;
          goto error ;
       }
@@ -637,21 +698,22 @@ namespace engine
       rc = _ensureLob( cb, _meta, isNew ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "failed to open lob[%s] in collection[%s], rc:%d",
+         PD_LOG( PDERROR, "Failed to open lob[%s] in collection[%s], rc:%d",
                  _oid.str().c_str(), _fullName, rc ) ;
          goto error ;
       }
 
       if ( !isNew )
       {
-         PD_LOG( PDERROR, "lob[%s] exists in collection[%s]",
+         PD_LOG( PDERROR, "Lob[%s] exists in collection[%s]",
                  _oid.str().c_str(), _fullName ) ;
          rc = SDB_FE ;
          goto error ;
       }
 
-      PD_LOG( PDDEBUG, "lob[%s] in [%s] is created, wait to be completed",
+      PD_LOG( PDDEBUG, "Lob[%s] in [%s] is created, wait to be completed",
               getOID().str().c_str(), _fullName ) ;
+
    done:
       PD_TRACE_EXITRC( SDB_RTNLOBSTREAM__OPEN4CREATE, rc ) ;
       return rc ;

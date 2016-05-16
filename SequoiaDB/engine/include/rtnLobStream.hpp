@@ -61,6 +61,7 @@ namespace engine
                   const bson::OID &oid,
                   INT32 mode,
                   INT32 flags,
+                  _rtnContextBase *context,
                   _pmdEDUCB *cb ) ;
 
       INT32 close( _pmdEDUCB *cb ) ;
@@ -179,7 +180,7 @@ namespace engine
       virtual INT32 _readv( const RTN_LOB_TUPLES &tuples,
                             _pmdEDUCB *cb ) = 0 ;
 
-      virtual INT32 _completeLob( const _dmsLobMeta &meta,
+      virtual INT32 _completeLob( const _rtnLobTuple &tuple,
                                   _pmdEDUCB *cb ) = 0 ;
 
       virtual INT32 _close( _pmdEDUCB *cb ) = 0 ;
@@ -204,20 +205,22 @@ namespace engine
 
       INT32 _open4Remove( _pmdEDUCB *cb ) ;
 
+      bson::BSONObj _meta2Obj( const _dmsLobMeta &meta ) const ;
+
    private:
-      CHAR _fullName[ DMS_COLLECTION_SPACE_NAME_SZ +
-                      DMS_COLLECTION_NAME_SZ + 2 ] ;
-      _dpsLogWrapper *_dpsCB ;
-      bson::OID _oid ;
-      _dmsLobMeta _meta ;
-      bson::BSONObj _metaObj ;
-      _rtnLobDataPool _pool ;
-      BOOLEAN _opened ;
-      _rtnLobWindow _lw ;
-      UINT32 _mode ;
-      INT32  _flags ;
-      SINT32 _lobPageSz ;
-      SINT64 _offset ;
+      CHAR                 _fullName[ DMS_COLLECTION_SPACE_NAME_SZ +
+                                      DMS_COLLECTION_NAME_SZ + 2 ] ;
+      _dpsLogWrapper       *_dpsCB ;
+      bson::OID            _oid ;
+      _dmsLobMeta          _meta ;
+      bson::BSONObj        _metaObj ;
+      _rtnLobDataPool      _pool ;
+      BOOLEAN              _opened ;
+      _rtnLobWindow        _lw ;
+      UINT32               _mode ;
+      INT32                _flags ;
+      SINT32               _lobPageSz ;
+      SINT64               _offset ;
    } ;
    typedef class _rtnLobStream rtnLobStream ;
 }

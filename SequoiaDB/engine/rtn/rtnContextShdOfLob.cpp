@@ -44,6 +44,7 @@ namespace engine
    _rtnContextShdOfLob::_rtnContextShdOfLob( INT64 contextID, UINT64 eduID )
    :_rtnContextBase( contextID, eduID ),
     _mode( SDB_LOB_MODE_R ),
+    _flags( 0 ),
     _isMainShd( FALSE ),
     _w( 1 ),
     _version( 0 ),
@@ -56,6 +57,9 @@ namespace engine
     _dmsCB( NULL ),
     _writeDMS( FALSE )
    {
+      _pData = NULL ;
+      _dataLen = 0 ;
+      _offset = 0 ;
    }
 
    _rtnContextShdOfLob::~_rtnContextShdOfLob()
@@ -81,11 +85,13 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNCONTEXTSHDOFLOB_OPEN, "_rtnContextShdOfLob::open" )
    INT32 _rtnContextShdOfLob::open( const BSONObj &lob,
+                                    SINT32 flag,
                                     SINT32 version,
                                     SINT16 w,
                                     SDB_DPSCB *dpsCB,
                                     _pmdEDUCB *cb,
-                                    BSONObj &meta )
+                                    const CHAR **data,
+                                    UINT32 &read )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RTNCONTEXTSHDOFLOB_OPEN ) ;
@@ -95,7 +101,7 @@ namespace engine
       BSONElement ele = lob.getField( FIELD_NAME_COLLECTION ) ;
       if ( String != ele.type() )
       {
-         PD_LOG( PDERROR, "invalid full name type:%d", ele.type() ) ;
+         PD_LOG( PDERROR, "Invalid full name type:%d", ele.type() ) ;
          rc = SDB_INVALIDARG ;
          goto error ;
       }
@@ -132,7 +138,7 @@ namespace engine
       ele = lob.getField( FIELD_NAME_LOB_OID ) ;
       if ( jstOID != ele.type() )
       {
-         PD_LOG( PDERROR, "invalid oid type:%d", ele.type() ) ;
+         PD_LOG( PDERROR, "Invalid oid type:%d", ele.type() ) ;
          rc = SDB_INVALIDARG ;
          goto error ;
       }
@@ -141,7 +147,7 @@ namespace engine
       ele = lob.getField( FIELD_NAME_LOB_IS_MAIN_SHD ) ;
       if ( Bool != ele.type() )
       {
-         PD_LOG( PDERROR, "invalid \"isMainShd\" type:%d", ele.type() ) ;
+         PD_LOG( PDERROR, "Invalid \"isMainShd\" type:%d", ele.type() ) ;
          rc = SDB_INVALIDARG ;
          goto error ;
       }
@@ -158,14 +164,11 @@ namespace engine
          rc = SDB_INVALIDARG ;
          goto error ;
       }
-      else
-      {
-         /// do nothing.
-      }
 
       _w = w ;
       _dpsCB = dpsCB ;
       _version = version ;
+      _flags = flag ;
 
       if ( SDB_LOB_MODE_R != _mode )
       {
@@ -178,14 +181,12 @@ namespace engine
          _writeDMS = TRUE ;
       }
 
-      rc = _open( cb ) ;
+      rc = _open( cb, data, read ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to open lob:%d", rc ) ;
          goto error ;
       }
-
-      meta = _metaObj ;
       _isOpened = TRUE ;
       _hitEnd = FALSE ;
 
@@ -264,18 +265,72 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNCONTEXTSHDOFLOB__OPEN, "_rtnContextShdOfLob::_open" )
-   INT32 _rtnContextShdOfLob::_open( _pmdEDUCB *cb )
+   INT32 _rtnContextShdOfLob::_open( _pmdEDUCB *cb,
+                                     const CHAR **data,
+                                     UINT32 &read )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RTNCONTEXTSHDOFLOB__OPEN ) ;
       if ( _isMainShd && SDB_LOB_MODE_R == _mode )
       {
-         rc = rtnGetLobMetaData( _fullName.c_str(),
-                                 _oid, cb, _meta,
-                                 _su, _mbContext ) ;
-         if ( SDB_OK != rc )
+         UINT32 readLen = 0 ;
+         UINT32 len = _su->getLobPageSize() ;
+         dmsLobRecord record ;
+
+         record.set( &_oid, DMS_LOB_META_SEQUENCE, 0, len, NULL ) ;
+
+         rc = _extendBuf( len * 2 ) ;
+         if ( rc )
          {
-            PD_LOG( PDERROR, "failed to get meta data of lob:%d", rc ) ;
+            PD_LOG( PDERROR, "Failed to extend buf[%u], rc:%d", len * 2, rc ) ;
+            goto error ;
+         }
+         /// read the whole page
+         rc = _su->lob()->read( record, _mbContext, cb, _buf + len, readLen ) ;
+         if ( SDB_OK == rc )
+         {
+            if ( readLen < sizeof( _meta ) )
+            {
+               PD_LOG( PDERROR, "Read lob[%s]'s meta page len is less than "
+                       "meta size[%u]", getOID().str().c_str(),
+                       sizeof( _meta ) ) ;
+               rc = SDB_SYS ;
+               goto error ;
+            }
+            /// copy data
+            ossMemcpy( (void*)&_meta, _buf + len, sizeof( _meta ) ) ;
+            if ( !_meta.isDone() )
+            {
+               rc = SDB_LOB_IS_NOT_AVAILABLE ;
+               goto error ;
+            }
+            /// if meta page has data
+            if ( _meta._version >= DMS_LOB_CURRENT_VERSION &&
+                 _meta._lobLen > 0 &&
+                 readLen > DMS_LOB_META_LENGTH )
+            {
+               _pData = _buf + len + DMS_LOB_META_LENGTH ;
+               _dataLen = readLen - DMS_LOB_META_LENGTH ;
+               if ( _dataLen > _meta._lobLen )
+               {
+                  _dataLen = _meta._lobLen ;
+               }
+               _offset = 0 ;
+               /// add msg tuple
+               _pData -= sizeof( MsgLobTuple ) ;
+               _dataLen += sizeof( MsgLobTuple ) ;
+               MsgLobTuple *rt = (MsgLobTuple*)_pData ;
+               rt->columns.sequence = DMS_LOB_META_SEQUENCE ;
+               rt->columns.len = _dataLen - sizeof( MsgLobTuple ) ;
+               rt->columns.offset = DMS_LOB_META_LENGTH ;
+            }
+         }
+         else
+         {
+            if ( SDB_FNE != rc )
+            {
+               PD_LOG( PDERROR, "Failed to get meta of lob, rc:%d", rc ) ;
+            }
             goto error ;
          }
       }
@@ -304,17 +359,41 @@ namespace engine
             goto error ;
          }
       }
-      else
-      {
-         /// do nothing.
-      }
 
       if ( _isMainShd )
       {
-         /// we need to send back pagesize when this node
-         ///  is not the main shard.
          _meta2Obj( _metaObj ) ;
+
+         if ( _pData )
+         {
+            if ( _flags & FLG_LOBOPEN_WITH_RETURNDATA )
+            {
+               UINT32 tmpLen = _metaObj.objsize() ;
+               tmpLen = ossAlign4( tmpLen ) ;
+               _pData -= tmpLen ;
+               _dataLen += tmpLen ;
+               ossMemcpy( (CHAR*)_pData, _metaObj.objdata(),
+                          _metaObj.objsize() ) ;
+               *data = _pData ;
+               read = _dataLen ;
+
+               _pData = NULL ;
+               _dataLen = 0 ;
+               goto done ;
+            }
+            else
+            {
+                ossMemmove( _buf, _pData, _dataLen ) ;
+                _pData = _buf ;
+            }
+         }
       }
+
+      /// we need to send back pagesize when this node
+      ///  is not the main shard.
+      *data = _metaObj.objdata() ;
+      read = _metaObj.objsize() ;
+
    done:
       PD_TRACE_EXITRC( SDB__RTNCONTEXTSHDOFLOB__OPEN, rc ) ;
       return rc ;
@@ -333,39 +412,62 @@ namespace engine
       PD_TRACE_ENTRY( SDB__RTNCONTEXTSHDOFLOB_READV ) ;
       SDB_ASSERT( NULL != tuples && 0 < cnt, "can not be null" ) ;
       UINT32 totalRead = 0 ;
+      UINT32 i = 0 ;
+      UINT32 len = 0 ;
 
-      for ( UINT32 i = 0; i < cnt; ++i )
+      /// calc total buff size
+      for ( i = 0 ; i < cnt ; ++i )
+      {
+         const MsgLobTuple &t = tuples[i] ;
+         len += sizeof( MsgLobTuple ) ;
+         len += t.columns.len ;
+      }
+
+      /// extend buf
+      rc = _extendBuf( len ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Failed to extend buf[%u], rc: %d", len, rc ) ;
+         goto error ;
+      }
+
+      /// read all tuples
+      for ( i = 0; i < cnt; ++i )
       {
          UINT32 onceRead = 0 ;
          CHAR *dataOfTuple = NULL ;
          MsgLobTuple *rt = NULL ;
          const MsgLobTuple &t = tuples[i] ;
-         rc = _extendBuf( sizeof( MsgLobTuple ) + t.columns.len + totalRead ) ;
-         if ( SDB_OK != rc )
-         {
-            PD_LOG( PDERROR, "failed to extend buf:%d", rc ) ;
-            goto error ;
-         }
 
          dataOfTuple = _buf + totalRead ;
          rt = ( MsgLobTuple * )dataOfTuple ;
          dataOfTuple += sizeof( MsgLobTuple ) ;
 
-         rc = rtnReadLob( _fullName.c_str(),
-                          _oid, t.columns.sequence,
-                          t.columns.offset, t.columns.len,
-                          cb, dataOfTuple, onceRead,
-                          _su, _mbContext ) ;
-         if ( SDB_OK != rc )
+         if ( _pData && _dataLen > 0 &&
+              rt->columns.sequence == t.columns.sequence &&
+              rt->columns.offset == t.columns.offset )
          {
-            PD_LOG( PDERROR, "failed to read lob[%s:%d]:%d",
-                    _oid.str().c_str(), t.columns.sequence, rc ) ;
-            goto error ;
+            onceRead = rt->columns.len ;
          }
-
-         rt->columns.sequence = t.columns.sequence ;
-         rt->columns.offset = t.columns.offset ;
-         rt->columns.len = onceRead ;
+         else
+         {
+            rc = rtnReadLob( _fullName.c_str(),
+                             _oid, t.columns.sequence,
+                             t.columns.offset, t.columns.len,
+                             cb, dataOfTuple, onceRead,
+                             _su, _mbContext ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "failed to read lob[%s:%d], rc:%d",
+                       _oid.str().c_str(), t.columns.sequence, rc ) ;
+               goto error ;
+            }
+            rt->columns.sequence = t.columns.sequence ;
+            rt->columns.offset = t.columns.offset ;
+            rt->columns.len = onceRead ;
+         }
+         _pData = NULL ;
+         _dataLen = 0 ;
          onceRead += sizeof( MsgLobTuple ) ; /// | tuple | data | tuple | data |
          totalRead += onceRead ;
       }
@@ -459,11 +561,10 @@ namespace engine
       BSONObjBuilder builder ;
       builder.append( FIELD_NAME_LOB_SIZE, (long long)_meta._lobLen ) ;
       builder.append( FIELD_NAME_LOB_PAGE_SIZE,
-                      NULL != _su ?
-                     _su->getLobPageSize() : 0 ) ;
+                      NULL != _su ? _su->getLobPageSize() : 0 ) ;
+      builder.append( FIELD_NAME_VERSION, (INT32)_meta._version ) ;
       builder.append( FIELD_NAME_LOB_CREATTIME, (long long)_meta._createTime ) ;
       obj = builder.obj() ;
-      return ;
    }
 
    INT32 _rtnContextShdOfLob::_extendBuf( UINT32 len )
@@ -471,6 +572,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       if ( _bufLen < len )
       {
+         len = ossRoundUpToMultipleX( len, _su->getLobPageSize() ) ;
          CHAR *buf = _buf ;
          _buf = ( CHAR * )SDB_OSS_REALLOC( _buf, len ) ;
          if ( NULL == _buf )

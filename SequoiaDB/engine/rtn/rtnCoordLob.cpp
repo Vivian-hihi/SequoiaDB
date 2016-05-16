@@ -52,7 +52,6 @@ namespace engine
       SDB_ASSERT( NULL != buf, "can not be null" ) ;
       const MsgOpLob *header = NULL ;
       BSONObj obj ;
-      BSONObj meta ;
       contextID = -1 ;
 
       rc = msgExtractOpenLobRequest( (const CHAR*)pMsg, &header, obj ) ;
@@ -67,8 +66,7 @@ namespace engine
                           "Option:%s", obj.toString().c_str() ) ;
 
       rc = rtnOpenLob( obj, header->flags, FALSE, cb,
-                       NULL, 0, contextID,
-                       meta ) ;
+                       NULL, 0, contextID, *buf ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to open lob:%s, rc:%d",
@@ -76,7 +74,6 @@ namespace engine
          goto error ;
       }
 
-      *buf = rtnContextBuf( meta ) ;
    done:
       PD_TRACE_EXITRC( SDB_RTNCOORDOPENLOB_EXECUTE, rc ) ;
       return rc ;
@@ -255,6 +252,7 @@ namespace engine
       rc = stream.open( fullName,
                         ele.__oid(), SDB_LOB_MODE_REMOVE,
                         header->flags,
+                        NULL,
                         cb ) ;
       if ( SDB_OK != rc )
       {

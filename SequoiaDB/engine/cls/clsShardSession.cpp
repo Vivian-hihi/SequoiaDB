@@ -2940,11 +2940,12 @@ namespace engine
       INT32 rc = SDB_OK ;
       const MsgOpLob *header = NULL ;
       BSONObj lob ;
-      BSONObj meta ;
       BSONElement fullName ;
       BSONElement mode ;
       INT16 w = 0 ;
       INT16 replSize = 0 ;
+      const CHAR *pData = NULL ;
+      UINT32 dataLen = 0 ;
       _rtnContextShdOfLob *context = NULL ;
       SDB_RTNCB *rtnCB = sdbGetRTNCB() ;
 
@@ -3022,8 +3023,8 @@ namespace engine
          goto error ;
       }
 
-      rc = context->open( lob, header->version, w,
-                          _pDpsCB, _pEDUCB, meta ) ;
+      rc = context->open( lob, header->flags, header->version, w,
+                          _pDpsCB, _pEDUCB, &pData, dataLen ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to open lob context:%d", rc ) ;
@@ -3031,11 +3032,9 @@ namespace engine
       }
 
       /// if sequence 0 is not on this node, we have nothing to send back.
-      if ( !meta.isEmpty() )
+      if ( pData && dataLen > 0 )
       {
-         buffObj = rtnContextBuf( meta.objdata(),
-                                  meta.objsize(),
-                                  1 ) ;
+         buffObj = rtnContextBuf( pData, dataLen, 1 ) ;
       }
    done:
       return rc ;

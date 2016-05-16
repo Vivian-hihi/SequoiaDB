@@ -127,27 +127,69 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB_RTNLOCALLOBSTREAM__QUERYLOBMETA ) ;
-      rc = _su->lob()->getLobMeta( getOID(), _mbContext,
-                                   cb, meta ) ;
+      UINT32 len = _su->getLobPageSize() ;
+      UINT32 readLen = 0 ;
+      CHAR *buf = NULL ;
+      dmsLobRecord record ;
+
+      _getPool().clear() ;
+
+      rc = _getPool().allocate( len, &buf ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Failed to alloc buffer[%u], rc: %d",
+                 len, rc ) ;
+         goto error ;
+      }
+
+      record.set( &getOID(), DMS_LOB_META_SEQUENCE, 0, len, NULL ) ;
+
+      /// read whole the meta page
+      rc = _su->lob()->read( record, _mbContext, cb, buf, readLen ) ;
       if ( SDB_OK == rc )
       {
+         if ( readLen < sizeof( _dmsLobMeta ) )
+         {
+            PD_LOG( PDERROR, "Read lob[%s]'s meta page len is less than "
+                    "meta size[%u]", getOID().str().c_str(),
+                    sizeof( _dmsLobMeta ) ) ;
+            rc = SDB_SYS ;
+            goto error ;
+         }
+         /// copy data
+         ossMemcpy( (void*)&meta, buf, sizeof( meta ) ) ;
          if ( !meta.isDone() )
          {
             rc = SDB_LOB_IS_NOT_AVAILABLE ;
             goto error ;
          }
-
+         /// if meta page has data, push the data to pool
+         if ( meta._version >= DMS_LOB_CURRENT_VERSION &&
+              meta._lobLen > 0 &&
+              readLen > DMS_LOB_META_LENGTH )
+         {
+            rc = _getPool().push( buf + DMS_LOB_META_LENGTH,
+                                  ( meta._lobLen <= readLen-DMS_LOB_META_LENGTH ?
+                                  meta._lobLen : readLen-DMS_LOB_META_LENGTH ),
+                                  0 ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "Failed to push data to pool, rc:%d", rc ) ;
+               goto error ;
+            }
+            _getPool().pushDone() ;
+         }
          goto done ;
-      }
-      else if ( SDB_FNE != rc )
-      {
-         PD_LOG( PDERROR, "failed to get meta of lob:%d", rc ) ;
-         goto error ;
       }
       else
       {
+         if ( SDB_FNE != rc )
+         {
+            PD_LOG( PDERROR, "Failed to get meta of lob, rc:%d", rc ) ;
+         }
          goto error ;
       }
+
    done:
       PD_TRACE_EXITRC( SDB_RTNLOCALLOBSTREAM__QUERYLOBMETA, rc ) ;
       return rc ;
@@ -180,7 +222,7 @@ namespace engine
       }
       else if ( SDB_FNE != rc )
       {
-         PD_LOG( PDERROR, "failed to get meta of lob:%d", rc ) ;
+         PD_LOG( PDERROR, "Failed to get meta of lob, rc:%d", rc ) ;
          goto error ;
       }
       else
@@ -200,10 +242,9 @@ namespace engine
                                         cb, meta, TRUE, _getDPSCB() ) ;
          if ( SDB_OK != rc )
          {
-            PD_LOG( PDERROR, "failed to ensure meta:%d", rc ) ;
+            PD_LOG( PDERROR, "Failed to write lob meta, rc:%d", rc ) ;
             goto error ;
          }
-
          isNew = TRUE ;
       }
 
@@ -217,16 +258,16 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNLOCALLOBSTREAM__COMPLETELOB, "_rtnLocalLobStream::_completeLob" )
-   INT32 _rtnLocalLobStream::_completeLob( const _dmsLobMeta &meta,
+   INT32 _rtnLocalLobStream::_completeLob( const _rtnLobTuple &tuple,
                                            _pmdEDUCB *cb )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB_RTNLOCALLOBSTREAM__COMPLETELOB ) ;
-      SDB_ASSERT( meta.isDone(), "impossible" ) ;
       dmsLobRecord record ;
+      const MsgLobTuple &t = tuple.tuple ;
 
-      record.set( &getOID(), DMS_LOB_META_SEQUENCE, 0,
-                  sizeof( dmsLobMeta ), ( const CHAR * )( &meta ) ) ;
+      record.set( &getOID(), t.columns.sequence, t.columns.offset,
+                  t.columns.len, ( const CHAR * )tuple.data ) ;
 
       rc = _su->lob()->update( record, _mbContext, cb, _getDPSCB() ) ;
       if ( SDB_OK != rc )
@@ -355,7 +396,8 @@ namespace engine
                             RTN_LOB_GET_OFFSET_OF_LOB(
                                 pageSize,
                                 tuples.begin()->tuple.columns.sequence,
-                                tuples.begin()->tuple.columns.offset ) ) ;
+                                tuples.begin()->tuple.columns.offset,
+                                _getMeta()._version >= DMS_LOB_CURRENT_VERSION ) ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to push data to pool:%d", rc ) ;
@@ -406,7 +448,9 @@ namespace engine
       dmsLobRecord piece ;
       INT32 num = 0 ;
 
-      RTN_LOB_GET_SEQUENCE_NUM( curOffset(), _getPageSz(), num ) ;
+      RTN_LOB_GET_SEQUENCE_NUM( curOffset(), _getPageSz(),
+                                _getMeta()._version >= DMS_LOB_CURRENT_VERSION,
+                                num ) ;
 
       while ( 0 < num )
       {

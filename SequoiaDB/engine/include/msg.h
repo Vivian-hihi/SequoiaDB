@@ -710,6 +710,8 @@ typedef struct _MsgOpAggregate
 
 /// read on primary node( use only in inner)
 #define FLG_LOBREAD_PRIMARY               0x00000001
+/// open with return data( when mode = read )
+#define FLG_LOBOPEN_WITH_RETURNDATA       0X00000002
 
 /// when it is open reg |MsgOpLob|bsonobj|
 /// when it is open res |MsgOpReply|bsonobj|

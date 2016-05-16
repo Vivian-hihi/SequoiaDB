@@ -39,6 +39,8 @@
 #include "rtnTrace.hpp"
 #include "rtnLocalLobStream.hpp"
 
+using namespace bson ;
+
 namespace engine
 {
 
@@ -208,7 +210,7 @@ namespace engine
                      SDB_DPSCB *dpsCB,
                      SINT16 w,
                      SINT64 &contextID,
-                     BSONObj &meta )
+                     rtnContextBuf &buffObj )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB_RTNOPENLOB ) ;
@@ -220,7 +222,7 @@ namespace engine
                               contextID, cb ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "failed to open lob context:%d", rc ) ;
+         PD_LOG( PDERROR, "Failed to open lob context, rc:%d", rc ) ;
          goto error ;
       }
 
@@ -228,14 +230,15 @@ namespace engine
       rc = lobContext->open( lob, isLocal, flags, cb, dpsCB ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "failed to open lob context:%d", rc ) ;
+         PD_LOG( PDERROR, "Failed to open lob context, rc:%d", rc ) ;
          goto error ;
       }
 
-      rc = lobContext->getLobMetaData( meta ) ;
-      if ( SDB_OK != rc )
+      /// get data
+      rc = lobContext->getMore( -1, buffObj, cb ) ;
+      if ( rc )
       {
-         PD_LOG( PDERROR, "failed to get meta data:%d", rc ) ;
+         PD_LOG( PDERROR, "Failed to get more from context, rc: %d", rc ) ;
          goto error ;
       }
 
@@ -287,7 +290,7 @@ namespace engine
 
       if ( RTN_CONTEXT_LOB != context->getType() )
       {
-         PD_LOG( PDERROR, "it is not a lob context, invalid context type:%d"
+         PD_LOG( PDERROR, "It is not a lob context, invalid context type:%d"
                  ", contextID:%lld", context->getType(), contextID ) ;
          rc = SDB_SYS ;
          goto error ;
@@ -299,7 +302,7 @@ namespace engine
       {
          if ( SDB_EOF != rc )
          {
-            PD_LOG( PDERROR, "failed to read lob:%d", rc ) ;
+            PD_LOG( PDERROR, "Failed to read lob, rc:%d", rc ) ;
          }
 
          goto error ;
@@ -308,7 +311,7 @@ namespace engine
       rc = lobContext->getMore( -1, contextBuf, cb ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "failed to get more from context:%d", rc ) ;
+         PD_LOG( PDERROR, "Failed to get more from context, rc:%d", rc ) ;
          goto error ;
       }
 
@@ -353,7 +356,7 @@ namespace engine
 
       if ( RTN_CONTEXT_LOB != context->getType() )
       {
-         PD_LOG( PDERROR, "it is not a lob context, invalid context type:%d"
+         PD_LOG( PDERROR, "It is not a lob context, invalid context type:%d"
                  ", contextID:%lld", context->getType(), contextID ) ;
          rc = SDB_SYS ;
          goto error ;
@@ -365,7 +368,7 @@ namespace engine
       {
          if ( SDB_EOF != rc )
          {
-            PD_LOG( PDERROR, "failed to write lob:%d", rc ) ;
+            PD_LOG( PDERROR, "Failed to write lob, rc:%d", rc ) ;
          }
 
          goto error ;
@@ -407,7 +410,7 @@ namespace engine
 
       if ( RTN_CONTEXT_LOB != context->getType() )
       {
-         PD_LOG( PDERROR, "it is not a lob context, invalid context type:%d"
+         PD_LOG( PDERROR, "It is not a lob context, invalid context type:%d"
                  ", contextID:%lld", context->getType(), contextID ) ;
          rc = SDB_SYS ;
          goto error ;
@@ -419,7 +422,7 @@ namespace engine
       {
          if ( SDB_EOF != rc )
          {
-            PD_LOG( PDERROR, "failed to close lob:%d", rc ) ;
+            PD_LOG( PDERROR, "Failed to close lob, rc:%d", rc ) ;
          }
 
          goto error ;
@@ -450,18 +453,18 @@ namespace engine
       bson::OID oid ;
 
       fullName = meta.getField( FIELD_NAME_COLLECTION ) ;
-      if ( String != fullName.type() )
+      if ( bson::String != fullName.type() )
       {
-         PD_LOG( PDERROR, "invalid type of full name:%s",
+         PD_LOG( PDERROR, "Invalid type of full name:%s",
                  meta.toString( FALSE, TRUE ).c_str() ) ;
          rc = SDB_SYS ;
          goto error ;
       }
 
       oidEle = meta.getField( FIELD_NAME_LOB_OID ) ;
-      if ( jstOID != oidEle.type() )
+      if ( bson::jstOID != oidEle.type() )
       {
-         PD_LOG( PDERROR, "invalid type of full oid:%s",
+         PD_LOG( PDERROR, "Invalid type of full oid:%s",
                  meta.toString( FALSE, TRUE ).c_str() ) ;
          rc = SDB_SYS ;
          goto error ;
@@ -470,10 +473,10 @@ namespace engine
 
       rc = stream.open( fullName.valuestr(),
                         oid, SDB_LOB_MODE_REMOVE,
-                        flags, cb ) ;
+                        flags, NULL, cb ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "failed to remove lob:%s, rc:%d",
+         PD_LOG( PDERROR, "Failed to remove lob:%s, rc:%d",
                  oid.str().c_str(), rc ) ;
          goto error ;
       }
@@ -485,14 +488,14 @@ namespace engine
       rc = stream.truncate( 0, cb ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "faield to truncate lob:%d", rc ) ;
+         PD_LOG( PDERROR, "Faield to truncate lob, rc:%d", rc ) ;
          goto error ;
       }
 
       rc = stream.close( cb ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "failed to remove lob:%d", rc ) ;
+         PD_LOG( PDERROR, "Failed to remove lob, rc:%d", rc ) ;
          goto error ;
       }
    done:
@@ -529,7 +532,7 @@ namespace engine
 
       if ( RTN_CONTEXT_LOB != context->getType() )
       {
-         PD_LOG( PDERROR, "it is not a lob context, invalid context type:%d"
+         PD_LOG( PDERROR, "It is not a lob context, invalid context type:%d"
                  ", contextID:%lld", context->getType(), contextID ) ;
          rc = SDB_SYS ;
          goto error ;
@@ -541,7 +544,7 @@ namespace engine
       {
          if ( SDB_EOF != rc )
          {
-            PD_LOG( PDERROR, "failed to get lob meta data:%d", rc ) ;
+            PD_LOG( PDERROR, "Failed to get lob meta data, rc:%d", rc ) ;
          }
 
          goto error ;
@@ -575,7 +578,7 @@ namespace engine
       rc = lobEnv.prepareOpr( EXCLUSIVE ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "failed to prepare to write lob:%d", rc ) ;
+         PD_LOG( PDERROR, "Failed to prepare to write lob, rc:%d", rc ) ;
          goto error ;
       }
 
@@ -588,28 +591,29 @@ namespace engine
       }
       else if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "failed to get meta data of lob:%d", rc ) ;
+         PD_LOG( PDERROR, "Failed to get meta data of lob, rc:%d", rc ) ;
          goto error ;
       }
       else if ( meta.isDone() )
       {
-         PD_LOG( PDERROR, "lob[%s] exists", oid.str().c_str() ) ;
+         PD_LOG( PDERROR, "Lob[%s] exists", oid.str().c_str() ) ;
          rc = SDB_FE ;
          goto error ;
       }
       else
       {
-         PD_LOG( PDERROR, "lob[%s] is not available",
+         PD_LOG( PDERROR, "Lob[%s] is not available",
                  oid.str().c_str() ) ;
          rc = SDB_LOB_IS_NOT_AVAILABLE ;
          goto error ;
       }
 
+      meta.clear() ;
       rc = lobEnv.getSU()->lob()->writeLobMeta( oid, lobEnv.getMBContext(),
                                                 cb, meta, TRUE, dpsCB ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "failed to ensure meta data:%d", rc ) ;
+         PD_LOG( PDERROR, "Failed to write lob meta data, rc:%d", rc ) ;
          goto error ;
       }
 
@@ -648,7 +652,7 @@ namespace engine
       rc = lobEnv.prepareOpr( -1 ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "failed to prepare to write lob:%d", rc ) ;
+         PD_LOG( PDERROR, "Failed to prepare to write lob, rc:%d", rc ) ;
          goto error ;
       }
 
@@ -658,7 +662,7 @@ namespace engine
 
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "failed to write lob:%d", rc ) ;
+         PD_LOG( PDERROR, "Failed to write lob, rc:%d", rc ) ;
          goto error ;
       }
 
@@ -692,7 +696,7 @@ namespace engine
       rc = lobEnv.prepareOpr( -1 ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "failed to prepare to write lob:%d", rc ) ;
+         PD_LOG( PDERROR, "Failed to prepare to write lob, rc:%d", rc ) ;
          goto error ;
       }
 
@@ -700,7 +704,7 @@ namespace engine
                                                 cb, meta, FALSE, dpsCB ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "failed to write meta data of lob:%d", rc ) ;
+         PD_LOG( PDERROR, "Failed to write meta data of lob, rc:%d", rc ) ;
          goto error ;
       }
 
@@ -732,7 +736,7 @@ namespace engine
       rc = lobEnv.prepareOpr( -1, FALSE ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "failed to prepare to read lob:%d", rc ) ;
+         PD_LOG( PDERROR, "Failed to prepare to read lob, rc:%d", rc ) ;
          goto error ;
       }
 
@@ -740,14 +744,14 @@ namespace engine
                                               cb, meta ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "failed to read lob[%s] in collection[%s], rc:%d",
+         PD_LOG( PDERROR, "Failed to read lob[%s] in collection[%s], rc:%d",
                  oid.str().c_str(), fullName, rc ) ;
          goto error ;
       }
 
       if ( !meta.isDone() )
       {
-         PD_LOG( PDERROR, "lob[%s] is not available",
+         PD_LOG( PDERROR, "Lob[%s] is not available",
                  oid.str().c_str() ) ;
          rc = SDB_LOB_IS_NOT_AVAILABLE ;
          goto error ;
@@ -782,7 +786,7 @@ namespace engine
       rc = lobEnv.prepareOpr( -1, FALSE ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "failed to prepare to read lob:%d", rc ) ;
+         PD_LOG( PDERROR, "Failed to prepare to read lob, rc:%d", rc ) ;
          goto error ;
       }
 
@@ -791,7 +795,7 @@ namespace engine
                                         data, read ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "failed to read lob:%d", rc ) ;
+         PD_LOG( PDERROR, "Failed to read lob, rc:%d", rc ) ;
          goto error ;
       }
 
@@ -820,7 +824,7 @@ namespace engine
       rc = lobEnv.prepareOpr( -1 ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "failed to prepare to write lob:%d", rc ) ;
+         PD_LOG( PDERROR, "Failed to prepare to write lob, rc:%d", rc ) ;
          goto error ;
       }
 
@@ -829,7 +833,7 @@ namespace engine
                                           dpsCB ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "failed to remove lob[%s],"
+         PD_LOG( PDERROR, "Failed to remove lob[%s],"
                  "sequence:%d, rc:%d", oid.str().c_str(),
                  sequence, rc ) ;
          goto error ;
@@ -865,7 +869,7 @@ namespace engine
       rc = lobEnv.prepareOpr( EXCLUSIVE ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "failed to prepare to write lob:%d", rc ) ;
+         PD_LOG( PDERROR, "Failed to prepare to write lob, rc:%d", rc ) ;
          goto error ;
       }
 
@@ -873,7 +877,7 @@ namespace engine
                                               lobMeta ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "failed to get lob meta[%s], rc:%d",
+         PD_LOG( PDERROR, "Failed to get lob meta[%s], rc:%d",
                  oid.str().c_str(), rc ) ;
          goto error ;
       }
@@ -891,7 +895,7 @@ namespace engine
                                                 lobMeta, FALSE, dpsCB ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "failed to invalidate lob[%s], rc:%d",
+         PD_LOG( PDERROR, "Failed to invalidate lob[%s], rc:%d",
                  oid.str().c_str(), rc ) ;
          goto error ;
       }
@@ -925,7 +929,7 @@ namespace engine
       rc = lobEnv.prepareOpr( -1 ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "failed to prepare to write lob:%d", rc ) ;
+         PD_LOG( PDERROR, "Failed to prepare to write lob, rc:%d", rc ) ;
          goto error ;
       }
 
@@ -937,7 +941,7 @@ namespace engine
 
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "failed to update lob:%d", rc ) ;
+         PD_LOG( PDERROR, "Failed to update lob, rc:%d", rc ) ;
          goto error ;
       }
 

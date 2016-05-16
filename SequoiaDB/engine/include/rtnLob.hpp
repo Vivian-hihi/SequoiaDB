@@ -47,7 +47,7 @@ namespace engine
                      SDB_DPSCB *dpsCB,
                      SINT16 w,
                      SINT64 &contextID,
-                     bson::BSONObj &meta ) ;
+                     rtnContextBuf &buffObj ) ;
 
    INT32 rtnWriteLob( SINT64 contextID,
                       pmdEDUCB *cb,

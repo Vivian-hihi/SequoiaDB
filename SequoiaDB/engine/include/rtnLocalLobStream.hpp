@@ -43,7 +43,7 @@ namespace engine
    class _dpsLogWrapper ;
    class _SDB_DMSCB ;
 
-   class _rtnLocalLobStream : public rtnLobStream
+   class _rtnLocalLobStream : public _rtnLobStream
    {
    public:
       _rtnLocalLobStream() ;
@@ -75,7 +75,7 @@ namespace engine
       virtual INT32 _writev( const RTN_LOB_TUPLES &tuples,
                              _pmdEDUCB *cb ) ;
 
-      virtual INT32 _completeLob( const _dmsLobMeta &meta,
+      virtual INT32 _completeLob( const _rtnLobTuple &tuple,
                                   _pmdEDUCB *cb ) ;
 
       virtual INT32 _rollback( _pmdEDUCB *cb ) ;

@@ -73,6 +73,7 @@ namespace engine
    :_metaGroup( 0 ),
     _alignBuf( 0 )
    {
+      _pageSize = 0 ;
    }
 
    _rtnCoordLobStream::~_rtnCoordLobStream()
@@ -336,6 +337,7 @@ namespace engine
       BSONObjBuilder builder ;
       netIOVec iov ;
       UINT32 retryTime = 0 ;
+      BOOLEAN takeOver = FALSE ;
 
       builder.append( FIELD_NAME_COLLECTION, fullName )
              .append( FIELD_NAME_LOB_OID, oid )
@@ -388,7 +390,11 @@ namespace engine
       _add2Subs( reply->header.routeID.columns.groupID,
                  reply->contextID, reply->header.routeID ) ;
 
-      rc = _extractMeta( reply, _metaObj ) ;
+      rc = _extractMeta( reply, _metaObj, takeOver ) ;
+      if ( takeOver )
+      {
+         _results.erase( _results.begin() ) ;
+      }
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to extract meta data from reply msg:%d",
@@ -433,6 +439,12 @@ namespace engine
          }
          meta._createTime = ele.Long() ;
 
+         ele = _metaObj.getField( FIELD_NAME_VERSION ) ;
+         if ( NumberInt == ele.type() )
+         {
+            meta._version = (UINT8)ele.numberInt() ;
+         }
+
          meta._status = DMS_LOB_COMPLETE ;
       }
       catch ( std::exception &e )
@@ -464,25 +476,30 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB_RTNCOORDLOBSTREAM__GETLOBPAGESIZE ) ;
 
-      try
+      if ( 0 == _pageSize )
       {
-         BSONElement ele = _metaObj.getField( FIELD_NAME_LOB_PAGE_SIZE ) ;
-         if ( NumberInt != ele.type() )
+         try
          {
-            PD_LOG( PDERROR, "invalid meta obj:%s",
-                    _metaObj.toString( FALSE, TRUE ).c_str() ) ;
+            BSONElement ele = _metaObj.getField( FIELD_NAME_LOB_PAGE_SIZE ) ;
+            if ( NumberInt != ele.type() )
+            {
+               PD_LOG( PDERROR, "invalid meta obj:%s",
+                       _metaObj.toString( FALSE, TRUE ).c_str() ) ;
+               rc = SDB_SYS ;
+               goto error ;
+            }
+
+            _pageSize = ele.Int() ;
+         }
+         catch ( std::exception &e )
+         {
+            PD_LOG( PDERROR, "unexpected err happened:%s", e.what() ) ;
             rc = SDB_SYS ;
             goto error ;
          }
+      }
+      pageSize = _pageSize ;
 
-         pageSize = ele.Int() ;
-      }
-      catch ( std::exception &e )
-      {
-         PD_LOG( PDERROR, "unexpected err happened:%s", e.what() ) ;
-         rc = SDB_SYS ;
-         goto error ;
-      }
    done:
       PD_TRACE_EXITRC( SDB_RTNCOORDLOBSTREAM__GETLOBPAGESIZE, rc ) ;
       return rc ;
@@ -809,7 +826,8 @@ namespace engine
          }
          else if ( got )
          {
-            if ( 0 == curTuple->columns.sequence )
+            if ( _getMeta()._version <  DMS_LOB_CURRENT_VERSION &&
+                 0 == curTuple->columns.sequence )
             {
                PD_LOG( PDERROR, "we should not get sequence 0" ) ;
                rc = SDB_SYS ;
@@ -820,7 +838,8 @@ namespace engine
                                   RTN_LOB_GET_OFFSET_OF_LOB(
                                          pageSz,
                                          curTuple->columns.sequence,
-                                         curTuple->columns.offset ) ) ;
+                                         curTuple->columns.offset,
+                                         _getMeta()._version >= DMS_LOB_CURRENT_VERSION ) ) ;
             if ( SDB_OK != rc )
             {
                PD_LOG( PDERROR, "failed to push data to pool:%d", rc ) ;
@@ -840,15 +859,12 @@ namespace engine
    }
 
    //PD_TRACE_DECLARE_FUNCTION( SDB_RTNCOORDLOBSTREAM__COMPLETELOB, "_rtnCoordLobStream::_completeLob" )
-   INT32 _rtnCoordLobStream::_completeLob( const _dmsLobMeta &meta,
+   INT32 _rtnCoordLobStream::_completeLob( const _rtnLobTuple &tuple,
                                            _pmdEDUCB *cb )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB_RTNCOORDLOBSTREAM__COMPLETELOB ) ;
-      _MsgLobTuple tuple ;
-      tuple.columns.len = sizeof( meta ) ;
-      tuple.columns.sequence = DMS_LOB_META_SEQUENCE ;
-      tuple.columns.offset = 0 ; /// offset in piece
+      const _MsgLobTuple &t = tuple.tuple ;
       const subStream *sub = NULL ;
       netIOVec iov ;
       netMultiRouteAgent *routeAgent = pmdGetKRCB()->getCoordCB(
@@ -859,11 +875,11 @@ namespace engine
                    MSG_BS_LOB_UPDATE_REQ,
                    0, -1,
                    sizeof( header ) +
-                   sizeof( tuple ) +
-                   sizeof( meta )) ;
+                   sizeof( _MsgLobTuple ) +
+                   t.columns.len ) ;
       _pushLobHeader( &header, BSONObj(), iov ) ;
-      _pushLobData( &tuple, sizeof( tuple ), iov ) ;
-      _pushLobData( &meta, sizeof( meta ), iov ) ;
+      _pushLobData( &t, sizeof( _MsgLobTuple ), iov ) ;
+      _pushLobData( tuple.data, t.columns.len, iov ) ;
 
       do
       {
@@ -1069,11 +1085,15 @@ namespace engine
 
    //PD_TRACE_DECLARE_FUNCTION( SDB_RTNCOORDLOBSTREAM__EXTRACTMETA, "_rtnCoordLobStream::_extractMeta" )   
    INT32 _rtnCoordLobStream::_extractMeta( const MsgOpReply *header,
-                                           bson::BSONObj &metaObj )
+                                           bson::BSONObj &metaObj,
+                                           BOOLEAN &takeOver )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB_RTNCOORDLOBSTREAM__EXTRACTMETA ) ;
       const CHAR *metaRaw = NULL ;
+      UINT32 dataOffset = sizeof( MsgOpReply ) ;
+
+      takeOver = FALSE ;
 
       if ( NULL == header )
       {
@@ -1083,7 +1103,7 @@ namespace engine
       }
 
       if ( ( UINT32 )header->header.messageLength <
-           ( sizeof( MsgOpReply ) + 5 ) )
+           sizeof( MsgOpReply ) + 5 )
       {
          PD_LOG( PDERROR, "invalid msg length:%d",
                  header->header.messageLength ) ;
@@ -1095,6 +1115,7 @@ namespace engine
       try
       {
          metaObj = BSONObj( metaRaw ).getOwned() ;
+         dataOffset += ossAlign4( (UINT32)metaObj.objsize() ) ;
       }
       catch ( std::exception &e )
       {
@@ -1103,11 +1124,34 @@ namespace engine
          goto error ;
       }
 
-      
+      /// If have data, need add to pool
+      if ( (UINT32)header->header.messageLength >
+           dataOffset + sizeof( MsgLobTuple ) )
+      {
+         MsgLobTuple *rt = ( MsgLobTuple* )( (const CHAR*)header+dataOffset ) ;
+         dataOffset += sizeof( MsgLobTuple ) ;
+
+         SDB_ASSERT( DMS_LOB_META_SEQUENCE == rt->columns.sequence &&
+                     DMS_LOB_META_LENGTH == rt->columns.offset,
+                     "Must be the first sequence page" ) ;
+
+         rc = _getPool().push( (const CHAR*)header + dataOffset,
+                               rt->columns.len,
+                               0 ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Push data to pool failed, rc:%d", rc ) ;
+            goto error ;
+         }
+         _getPool().pushDone() ;
+         takeOver = TRUE ;
+      }
+
    done:
       PD_TRACE_EXITRC( SDB_RTNCOORDLOBSTREAM__EXTRACTMETA, rc ) ;
       return rc ;
    error:
+      _getPool().clear() ;
       goto done ;
    }
 
@@ -1173,8 +1217,8 @@ namespace engine
             if ( SDB_OK != rc )
             {
                PD_LOG( PDERROR, "failed to send msg to node[%d:%hd], rc:%d",
-                    dg.id.columns.groupID,
-                    dg.id.columns.nodeID, rc ) ;
+                       dg.id.columns.groupID,
+                       dg.id.columns.nodeID, rc ) ;
                goto error ;
             }      
          }

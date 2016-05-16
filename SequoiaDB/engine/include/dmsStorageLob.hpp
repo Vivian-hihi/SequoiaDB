@@ -144,6 +144,10 @@ namespace engine
 
       INT32 _calcCount() ;
 
+      OSS_INLINE const CHAR*   _clFullName ( const CHAR *clName,
+                                             CHAR *clFullName,
+                                             UINT32 fullNameLen ) ;
+
    private:
       virtual INT32  _onCreate( OSSFILE *file, UINT64 curOffSet ) ;
       virtual INT32  _onMapMeta( UINT64 curOffSet ) ;
@@ -212,6 +216,20 @@ namespace engine
 
    } ;
    typedef class _dmsStorageLob dmsStorageLob ;
+
+   OSS_INLINE const CHAR* _dmsStorageLob::_clFullName( const CHAR *clName,
+                                                       CHAR * clFullName,
+                                                       UINT32 fullNameLen )
+   {
+      SDB_ASSERT( fullNameLen > DMS_COLLECTION_FULL_NAME_SZ,
+                  "Collection full name len error" ) ;
+      ossStrncat( clFullName, getSuName(), DMS_COLLECTION_SPACE_NAME_SZ ) ;
+      ossStrncat( clFullName, ".", 1 ) ;
+      ossStrncat( clFullName, clName, DMS_COLLECTION_NAME_SZ ) ;
+      clFullName[ DMS_COLLECTION_FULL_NAME_SZ ] = 0 ;
+
+      return clFullName ;
+   }
 
 }
 

@@ -737,7 +737,6 @@ namespace engine
       INT32 rc = SDB_OK ;
       const MsgOpLob *header = NULL ;
       BSONObj lob ;
-      BSONObj meta ;
       rc = msgExtractOpenLobRequest( ( const CHAR * )msg, &header, lob ) ;
       if ( SDB_OK != rc )
       {
@@ -752,14 +751,14 @@ namespace engine
                              "Option:%s", lob.toString().c_str() ) ;
 
          rc = rtnOpenLob( lob, header->flags, TRUE, eduCB(),
-                          dpsCB, header->w, contextID, meta ) ;
+                          dpsCB, header->w, contextID,
+                          buffObj ) ;
          /// Jduge
          if ( SDB_OK != rc )
          {
             PD_LOG( PDERROR, "failed to open lob:%d", rc ) ;
             goto error ;
          }
-         buffObj = rtnContextBuf( meta.objdata(), meta.objsize(), 1 ) ;
       }
       catch( std::exception &e )
       {

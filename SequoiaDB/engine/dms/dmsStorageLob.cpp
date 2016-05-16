@@ -317,7 +317,6 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__DMSSTORAGELOB_WRITE ) ;
       SDB_ASSERT( NULL != mbContext && NULL != cb, "can not be null" ) ;
-      SDB_ASSERT( 0 == record._offset, "must be zero" ) ;
       DMS_LOB_PAGEID page = DMS_LOB_INVALID_PAGEID ;
       dpsMergeInfo info ;
       dpsLogRecord &logRecord = info.getMergeBlock().record() ;
@@ -325,7 +324,7 @@ namespace engine
       DPS_TRANS_ID transID = DPS_INVALID_TRANS_ID ;
       DPS_LSN_OFFSET preTransLsn = DPS_INVALID_LSN_OFFSET ;
       DPS_LSN_OFFSET relatedLsn = DPS_INVALID_LSN_OFFSET ;
-      CHAR fullName[DMS_SU_FILENAME_SZ + DMS_COLLECTION_NAME_SZ + 2] ;
+      CHAR fullName[ DMS_COLLECTION_FULL_NAME_SZ + 1 ] = { 0 } ;
       BOOLEAN locked = mbContext->isMBLock() ;
       _dmsLobDataMapBlk *blk = NULL ;
       BOOLEAN pageFilled = FALSE ;
@@ -335,18 +334,13 @@ namespace engine
          rc = _delayOpen() ;
          PD_RC_CHECK( rc, PDERROR, "Delay open failed in write, rc: %d", rc ) ;
       }
+      /// make full name
+      _clFullName( mbContext->mb()->_collectionName, fullName,
+                   sizeof( fullName ) ) ;
 
       _registerNewWriting() ;
       if ( NULL != dpscb )
       {
-         UINT32 csNameLen = ossStrlen( getSuName() ) ;
-         UINT32 clNameLen = ossStrlen( mbContext->mb()->_collectionName ) ;
-         ossMemcpy( fullName, getSuName(), csNameLen ) ;
-         fullName[csNameLen] = '.' ;
-         ossMemcpy( fullName + csNameLen + 1,
-                    mbContext->mb()->_collectionName,
-                    clNameLen + 1 ) ;  /// +1 for '\0'
-         
          rc = dpsLobW2Record( fullName,
                               record._oid,
                               record._sequence,
@@ -361,7 +355,7 @@ namespace engine
                               logRecord ) ;
          if ( SDB_OK != rc )
          {
-            PD_LOG( PDERROR, "failed to build dps log:%d", rc ) ;
+            PD_LOG( PDERROR, "Failed to build dps log, rc:%d", rc ) ;
             goto error ;
          }
 
@@ -375,8 +369,8 @@ namespace engine
          rc = transCB->reservedLogSpace( logRecord.head()._length, cb ) ;
          if ( rc )
          {
-            PD_LOG( PDERROR, "failed to reserved log space(length=%u)",
-                    logRecord.head()._length ) ;
+            PD_LOG( PDERROR, "Failed to reserved log space(length=%u), rc: %d",
+                    logRecord.head()._length, rc ) ;
             info.clear() ;
             goto error ;
          }
@@ -394,6 +388,13 @@ namespace engine
          PD_LOG( PDERROR, "File[%s] is not open in write", getSuName() ) ;
          goto error ;
       }
+      else if ( record._offset + record._dataLen > getLobdPageSize() )
+      {
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "Write record[%s] length more than page size[%u]",
+                 record.toString().c_str(), getLobdPageSize() ) ;
+         goto error ;
+      }
 
       if ( !dmsAccessAndFlagCompatiblity ( mbContext->mb()->_flag,
                                            DMS_ACCESS_TYPE_INSERT ) )
@@ -407,14 +408,15 @@ namespace engine
       rc = _find( record, mbContext->clLID(), page, blk ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "failed to find piece:%d", rc ) ;
+         PD_LOG( PDERROR, "Failed to find piece[%s], rc: %d",
+                 record.toString().c_str(), rc ) ;
          goto error ;
       }
 
       if ( DMS_LOB_INVALID_PAGEID != page )
       {
-         PD_LOG( PDERROR, "lob piece found, piece[%s], sequence[%d], page:%d",
-                 record._oid->str().c_str(), record._sequence, page ) ;
+         PD_LOG( PDERROR, "Lob piece found, piece[%s], page:%d",
+                 record.toString().c_str(), page ) ;
          rc = SDB_LOB_SEQUENCE_EXISTS ;
          page = DMS_LOB_INVALID_PAGEID ;
          goto error ;
@@ -423,8 +425,8 @@ namespace engine
       rc = _allocatePage( record, mbContext, page ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "failed to allocate page in cl:%s, rc:%d",
-                 _suFileName, rc ) ;
+         PD_LOG( PDERROR, "Failed to allocate page in collection:%s, rc:%d",
+                 fullName, rc ) ;
          goto error ;
       }
 
@@ -436,15 +438,15 @@ namespace engine
                         record._offset, cb ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "failed to write data to cl:%s, rc:%d",
-                 _suFileName, rc ) ;
+         PD_LOG( PDERROR, "Failed to write data to collection:%s, rc:%d",
+                 fullName, rc ) ;
          goto error ;
       }
 
       rc = _fillPage( record, page, mbContext ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "failed to fill page:%d", rc ) ;
+         PD_LOG( PDERROR, "Failed to fill page, rc:%d", rc ) ;
          goto error ;
       }
       pageFilled = TRUE ;
@@ -456,7 +458,7 @@ namespace engine
          rc = dpscb->prepare( info ) ;
          if ( SDB_OK != rc )
          {
-            PD_LOG( PDERROR, "failed to prepare dps log:%d", rc ) ;
+            PD_LOG( PDERROR, "Failed to prepare dps log, rc:%d", rc ) ;
             goto error ;
          }
 
@@ -489,8 +491,8 @@ namespace engine
    error:
       if ( SDB_LOB_SEQUENCE_EXISTS != rc && DMS_LOB_INVALID_PAGEID != page )
       {
-         PD_LOG( PDEVENT, "rollback lob piece[oid:%s, sequence:%d, page:%d]",
-                 record._oid->str().c_str(), record._sequence, page ) ;
+         PD_LOG( PDEVENT, "Rollback lob piece[%s]",
+                 record.toString().c_str(), page ) ;
          _rollback( page, mbContext, pageFilled ) ;
       }
       goto done ;
@@ -505,7 +507,6 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__DMSSTORAGELOB_UPDATE ) ;
       SDB_ASSERT( NULL != mbContext && NULL != cb, "can not be null" ) ;
-      SDB_ASSERT( 0 == record._offset, "must be zero" ) ;
       SDB_ASSERT( _dmsHeader->_lobdPageSize <= DMS_PAGE_SIZE512K,
                   "can not over 512 KB" ) ;
       SDB_ASSERT( record._offset + record._dataLen <= _dmsHeader->_lobdPageSize,
@@ -518,9 +519,9 @@ namespace engine
       DPS_LSN_OFFSET preTransLsn = DPS_INVALID_LSN_OFFSET ;
       DPS_LSN_OFFSET relatedLsn = DPS_INVALID_LSN_OFFSET ;
       dpsTransCB *transCB = pmdGetKRCB()->getTransCB() ;
-      CHAR oldData[DMS_PAGE_SIZE512K] ;
+      CHAR oldData[DMS_PAGE_SIZE512K] = { 0 } ;
       UINT32 oldLen = 0 ;
-      CHAR fullName[DMS_SU_FILENAME_SZ + DMS_COLLECTION_NAME_SZ + 2] ;
+      CHAR fullName[ DMS_COLLECTION_FULL_NAME_SZ + 1 ] = { 0 } ;
       BOOLEAN locked = mbContext->isMBLock() ;
 
       if ( _needDelayOpen )
@@ -528,6 +529,10 @@ namespace engine
          rc = _delayOpen() ;
          PD_RC_CHECK( rc, PDERROR, "Delay open failed in update, rc: %d", rc ) ;
       }
+
+      /// make full name
+      _clFullName( mbContext->mb()->_collectionName, fullName,
+                   sizeof( fullName ) ) ;
 
       _registerNewWriting() ;
       if ( !locked )
@@ -540,6 +545,13 @@ namespace engine
       {
          rc = SDB_SYS ;
          PD_LOG( PDERROR, "File[%s] is not open in update", getSuName() ) ;
+         goto error ;
+      }
+      else if ( record._offset + record._dataLen > getLobdPageSize() )
+      {
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "Update record[%s] length more than page size[%u]",
+                 record.toString().c_str(), getLobdPageSize() ) ;
          goto error ;
       }
 
@@ -555,32 +567,25 @@ namespace engine
       rc = _find( record, mbContext->clLID(), page, blk ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "failed to find piece:%d", rc ) ;
+         PD_LOG( PDERROR, "Failed to find piece[%s], rc:%d",
+                 record.toString().c_str(), rc ) ;
          goto error ;
       }
 
       if ( DMS_LOB_INVALID_PAGEID == page )
       {
-         PD_LOG( PDERROR, "can not find piece[%s], sequence[%d]",
-                 record._oid->str().c_str(), record._sequence ) ;
+         PD_LOG( PDERROR, "Can not find piece[%s]",
+                 record.toString().c_str() ) ;
          rc = SDB_LOB_SEQUENCE_NOT_EXIST ;
          goto error ;
       }
 
       if ( NULL != dpscb )
       {
-         UINT32 csNameLen = ossStrlen( getSuName() ) ;
-         UINT32 clNameLen = ossStrlen( mbContext->mb()->_collectionName ) ;
-         ossMemcpy( fullName, getSuName(), csNameLen ) ;
-         fullName[csNameLen] = '.' ;
-         ossMemcpy( fullName + csNameLen + 1,
-                    mbContext->mb()->_collectionName,
-                    clNameLen + 1 ) ; /// +1 for '\0'
-
          rc = _data.read( page, blk->_dataLen, 0, cb, oldData, oldLen ) ;
          if ( SDB_OK != rc )
          {
-            PD_LOG( PDERROR, "failed to read data from file:%d", rc ) ;
+            PD_LOG( PDERROR, "Failed to read data from file, rc:%d", rc ) ;
             goto error ;
          }
 
@@ -602,7 +607,7 @@ namespace engine
                               logRecord ) ;
          if ( SDB_OK != rc )
          {
-            PD_LOG( PDERROR, "failed to build dps log:%d", rc ) ;
+            PD_LOG( PDERROR, "Failed to build dps log, rc:%d", rc ) ;
             goto error ;
          }
 
@@ -616,8 +621,8 @@ namespace engine
          rc = transCB->reservedLogSpace( logRecord.head()._length, cb ) ;
          if ( rc )
          {
-            PD_LOG( PDERROR, "failed to reserved log space(length=%u)",
-                    logRecord.head()._length ) ;
+            PD_LOG( PDERROR, "Failed to reserved log space(length=%u), rc: %d",
+                    logRecord.head()._length, rc ) ;
             info.clear() ;
             goto error ;
          }
@@ -627,12 +632,15 @@ namespace engine
                         record._offset, cb ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "failed to write data to cl:%s, rc:%d",
-                 _suFileName, rc ) ;
+         PD_LOG( PDERROR, "Failed to write data to collection:%s, rc:%d",
+                 fullName, rc ) ;
          goto error ;
       }
 
-      blk->_dataLen = record._dataLen ;
+      if ( record._dataLen + record._offset > blk->_dataLen )
+      {
+         blk->_dataLen = record._dataLen + record._offset ;
+      }
 
       if ( NULL != dpscb )
       {
@@ -641,7 +649,7 @@ namespace engine
          rc = dpscb->prepare( info ) ;
          if ( SDB_OK != rc )
          {
-            PD_LOG( PDERROR, "failed to prepare dps log:%d", rc ) ;
+            PD_LOG( PDERROR, "Failed to prepare dps log, rc:%d", rc ) ;
             goto error ;
          }
 
@@ -706,13 +714,20 @@ namespace engine
          PD_LOG( PDERROR, "File[%s] is not open in read", getSuName() ) ;
          goto error ;
       }
+      else if ( record._offset + record._dataLen > getLobdPageSize() )
+      {
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "Read record[%s] length more than page size[%u]",
+                 record.toString().c_str(), getLobdPageSize() ) ;
+         goto error ;
+      }
 
       rc = _find( record, mbContext->clLID(), page, blk ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "failed to find page of oid:%s, sequence:%d, rc:%d",
-                 record._oid->str().c_str(), record._sequence, rc ) ;
-         goto error ;              
+         PD_LOG( PDERROR, "Failed to find page of record[%s], rc:%d",
+                 record.toString().c_str(), rc ) ;
+         goto error ;
       }
 
       if ( DMS_LOB_INVALID_PAGEID == page )
@@ -729,7 +744,7 @@ namespace engine
                        cb, buf, readLen ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "failed to read data from file:%d", rc ) ;
+         PD_LOG( PDERROR, "Failed to read data from file, rc:%d", rc ) ;
          goto error ;
       }
    done:
@@ -751,13 +766,13 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__DMSSTORAGELOB__ALLOCATEPAGE ) ;
       SDB_ASSERT( NULL != record._oid && 0 <= record._sequence &&
-                  record._dataLen <= getLobdPageSize() &&
+                  record._dataLen + record._offset <= getLobdPageSize() &&
                   0 == record._offset, "invalid lob record" ) ;
 
       rc = _findFreeSpace( 1, page, context ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "failed to find free space:%d", rc ) ;
+         PD_LOG( PDERROR, "Failed to find free space, rc:%d", rc ) ;
          goto error ;
       }
       context->mbStat()->_totalLobPages += 1 ;
@@ -792,7 +807,7 @@ namespace engine
       ossMemset( blk->_pad2, 0, sizeof( blk->_pad2 ) ) ;
       ossMemcpy( blk->_oid, record._oid, DMS_LOB_OID_LEN ) ;
       blk->_sequence = record._sequence ;
-      blk->_dataLen = record._dataLen ;
+      blk->_dataLen = record._dataLen + record._offset ;
       blk->_clLogicalID = context->clLID() ;
       blk->_mbID = context->mbID() ;
       blk->_prevPageInBucket = DMS_LOB_INVALID_PAGEID ;
@@ -802,8 +817,8 @@ namespace engine
                          page, *blk ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "failed to push page[%d] to bucket[%d]",
-                 page, _getBucket( record._hash ) ) ;
+         PD_LOG( PDERROR, "Failed to push page[%d] to bucket[%d], rc: %d",
+                 page, _getBucket( record._hash ), rc ) ;
          goto error ;
       }
 
@@ -837,9 +852,9 @@ namespace engine
       DPS_LSN_OFFSET preTransLsn = DPS_INVALID_LSN_OFFSET ;
       DPS_LSN_OFFSET relatedLsn = DPS_INVALID_LSN_OFFSET ;
       dpsTransCB *transCB = pmdGetKRCB()->getTransCB() ;
-      CHAR oldData[DMS_PAGE_SIZE512K] ;
+      CHAR oldData[DMS_PAGE_SIZE512K] = { 0 } ;
       UINT32 oldLen = 0 ;
-      CHAR fullName[DMS_SU_FILENAME_SZ + DMS_COLLECTION_NAME_SZ + 2] ;
+      CHAR fullName[ DMS_COLLECTION_FULL_NAME_SZ + 1 ] = { 0 } ;
       BOOLEAN locked = mbContext->isMBLock() ;
 
       if ( _needDelayOpen )
@@ -847,6 +862,10 @@ namespace engine
          rc = _delayOpen() ;
          PD_RC_CHECK( rc, PDERROR, "Delay open failed in remove, rc: %d", rc ) ;
       }
+
+      /// make full name
+      _clFullName( mbContext->mb()->_collectionName, fullName,
+                   sizeof( fullName ) ) ;
 
       _registerNewWriting() ;
       if ( !locked )
@@ -874,8 +893,8 @@ namespace engine
       rc = _find( record, mbContext->clLID(), page, blk, &bucketNumber ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "failed to find oid[%s] sequence[%d], rc:%d",
-                 record._oid->str().c_str(), record._sequence, rc ) ;
+         PD_LOG( PDERROR, "Failed to find record[%s], rc:%d",
+                 record.toString().c_str(), rc ) ;
          goto error ;
       }
 
@@ -886,19 +905,11 @@ namespace engine
 
       if ( NULL != dpscb )
       {
-         UINT32 csNameLen = ossStrlen( getSuName() ) ;
-         UINT32 clNameLen = ossStrlen( mbContext->mb()->_collectionName ) ;
-         ossMemcpy( fullName, getSuName(), csNameLen ) ;
-         fullName[csNameLen] = '.' ;
-         ossMemcpy( fullName + csNameLen + 1,
-                    mbContext->mb()->_collectionName,
-                    clNameLen + 1 ) ;
-
          rc = _data.read( page, blk->_dataLen, 0,
                           cb, oldData, oldLen ) ;
          if ( SDB_OK != rc )
          {
-            PD_LOG( PDERROR, "failed to read data from file:%d", rc ) ;
+            PD_LOG( PDERROR, "Failed to read data from file, rc:%d", rc ) ;
             goto error ;
          }
 
@@ -918,7 +929,7 @@ namespace engine
                                logRecord ) ;
          if ( SDB_OK != rc )
          {
-            PD_LOG( PDERROR, "failed to build dps log:%d", rc ) ;
+            PD_LOG( PDERROR, "Failed to build dps log, rc:%d", rc ) ;
             goto error ;
          }
 
@@ -932,8 +943,8 @@ namespace engine
          rc = transCB->reservedLogSpace( logRecord.head()._length, cb ) ;
          if ( rc )
          {
-            PD_LOG( PDERROR, "failed to reserved log space(length=%u)",
-                    logRecord.head()._length ) ;
+            PD_LOG( PDERROR, "Failed to reserved log space(length=%u), rc: %d",
+                    logRecord.head()._length, rc ) ;
             info.clear() ;
             goto error ;
          }
@@ -942,7 +953,7 @@ namespace engine
       rc = _removePage( page, blk, &bucketNumber ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "failed to remove page:%d, rc:%d", page, rc ) ;
+         PD_LOG( PDERROR, "Failed to remove page:%d, rc:%d", page, rc ) ;
          goto error ;
       }
 
@@ -953,7 +964,7 @@ namespace engine
          rc = dpscb->prepare( info ) ;
          if ( SDB_OK != rc )
          {
-            PD_LOG( PDERROR, "failed to prepare dps log:%d", rc ) ;
+            PD_LOG( PDERROR, "Failed to prepare dps log, rc:%d", rc ) ;
             goto error ;
          }
 

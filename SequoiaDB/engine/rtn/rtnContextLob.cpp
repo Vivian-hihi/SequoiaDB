@@ -129,6 +129,7 @@ namespace engine
                           oid.OID(),
                           mode.Int(),
                           flags,
+                          this,
                           cb ) ;
       if ( SDB_OK != rc )
       {
