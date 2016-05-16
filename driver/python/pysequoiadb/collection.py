@@ -689,7 +689,7 @@ class collection(object):
 
       flags = 0
       if kwargs.get('flags') != None:
-         if kwargs.get('flags') not in ( QUERY_FLG_WITH_RETURNDATA,
+         if kwargs.get('flags') not in ( 0, QUERY_FLG_WITH_RETURNDATA,
                                          QUERY_FLG_PARALLED,
                                          QUERY_FLG_FORCE_HINT ):
             raise SDBTypeError("invalid flags value")
@@ -785,7 +785,7 @@ class collection(object):
 
       flags = 0
       if kwargs.get('flags') != None:
-         if kwargs.get('flags') not in ( QUERY_FLG_WITH_RETURNDATA,
+         if kwargs.get('flags') not in ( 0, QUERY_FLG_WITH_RETURNDATA,
                                          QUERY_FLG_PARALLED,
                                          QUERY_FLG_FORCE_HINT ):
             raise SDBTypeError("invalid flags value")
