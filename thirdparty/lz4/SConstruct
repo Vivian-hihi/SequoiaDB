@@ -102,6 +102,7 @@ def printLocalInfo():
 
 printLocalInfo()
 
+linux = False
 aix = False
 xlc = False
 
@@ -249,7 +250,6 @@ elif guess_os == 'aix':
    if xlc:
       env.Replace( CC=" xlC_r -qtls " )
       env.Replace( CXX=" xlC_r -qtls " )
-   if xlc:
       env.Append( CPPFLAGS=" -q64 " )
       env.Append( LINKFLAGS=" -q64 " )
       env.Replace( SHLINKFLAGS=" -q64 -qmkshrobj " )
@@ -262,6 +262,23 @@ else:
     print( "No special config for [" + os.sys.platform + "] which probably means it won't work" )
 
 if nix:
+    if xlc:
+        env.Append( CPPFLAGS=" -qpic=large -qalias=noansi -g " )
+    else:
+        env.Append( CPPFLAGS="-fPIC -fno-strict-aliasing -ggdb -pthread -Wno-write-strings -Wall -Wsign-compare -Wno-unknown-pragmas -Winvalid-pch -Wno-address" )
+        env.Append( CXXFLAGS=" -Wnon-virtual-dtor " )
+        if aix:
+            env.Append( LINKFLAGS=" -fPIC -pthread " )
+        else:
+            env.Append( LINKFLAGS=" -fPIC -pthread -rdynamic" )
+    if linux:
+        env.Append( CPPFLAGS=" -pipe " )
+        env.Append( CPPFLAGS=" -fno-builtin-memcmp " )
+    env.Append( CPPDEFINES="_FILE_OFFSET_BITS=64" )
+    env.Append( LIBS=[] )
+    env['ENV']['HOME'] = os.environ['HOME']
+    env['ENV']['TERM'] = os.environ['TERM']
+
     if debugBuild:
         env.Append( CPPFLAGS=" -O0 " )
         if not aix:
