@@ -5,7 +5,7 @@
 namespace SequoiaDB
 {
     /** \class ConfigOptions
-     *  \brief Database Connection Configuration Option
+     *  \brief Database Connection Configuration Options
      */
     public class ConfigOptions
     {

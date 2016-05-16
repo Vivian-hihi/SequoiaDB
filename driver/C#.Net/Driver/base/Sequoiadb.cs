@@ -22,8 +22,113 @@ namespace SequoiaDB
         private string userName = "";
         private string password = "";
         internal bool isBigEndian = false ;
+        private Dictionary<String, DateTime> nameCache = new Dictionary<String, DateTime>();
+        private static bool enableCache = true;
+        private static long cacheInterval = 300 * 1000;
         //private static readonly Logger logger = new Logger("Sequoiadb");
 
+        internal void UpsertCache(String name)
+        {
+            if (name == null)
+                return;
+            if (enableCache)
+            {
+                DateTime now = DateTime.Now;
+                // never use "nameCache.Add(name, now);"
+                // for it will throw exception when key exist
+                nameCache[name] = now;
+                // here we find String::Split will take "foo."
+                // as 2 parts, so arr.Lenght is 2
+                // it's differet from java
+                String[] arr = name.Split(new Char[] { '.' });
+                if (arr.Length > 1)
+                    nameCache[arr[0]] = now;
+            }
+        }
+
+        internal void RemoveCache(String name)
+        {
+            if (name == null)
+                return;
+            String[] arr = name.Split(new Char[] { '.' });
+            // here we find String::Split will take "foo."
+            // as 2 parts, so arr.Lenght is 2
+            // it's differet from java
+            if (arr.Length == 1)
+            {
+                // when we come here, "name" is a cs name, so 
+                // we are going to remove the cache of the cs 
+                // and the cache of the cls
+                nameCache.Remove(name);
+                List<String> list = new List<String>();
+                foreach (KeyValuePair<String, DateTime> kvp in nameCache)
+                {
+                    String[] nameArr = kvp.Key.Split(new Char[] { '.' });
+                    if (nameArr.Length > 1 && nameArr[0] == name)
+                    {
+                        list.Add(kvp.Key);
+                    }
+                }
+                foreach (String str in list)
+                {
+                    nameCache.Remove(str);
+                }
+            }
+            else 
+            {
+                // we are going to remove the cache of the cl
+                nameCache.Remove(name);
+            }
+        }
+
+        internal bool FetchCache(String name)
+        {
+            if (enableCache)
+            {
+                if (nameCache.ContainsKey(name))
+                {
+                    DateTime value;
+                    // when name does not exist, value is "0001-01-01 00:00:00"
+                    if (!nameCache.TryGetValue(name, out value))
+                    {
+                        nameCache.Remove(name);
+                        return false;
+                    }
+                    if ((DateTime.Now - value).TotalMilliseconds > cacheInterval)
+                    {
+                        nameCache.Remove(name);
+                        return false;
+                    }
+                    else
+                    {
+                        return true;
+                    }
+                }
+                else
+                {
+                    return false;
+                }
+            }
+            else
+            {
+                return false;
+            }
+        }
+
+        /** \fn InitClient(ClientOptions options)
+         *  \brief Initialize the configuration options for client
+         *  \param options The configuration options for client
+         */
+        public static void InitClient(ClientOptions options)
+        {
+            enableCache = (options != null) ? options.EnableCache : true;
+            cacheInterval = (options != null && options.CacheInterval >= 0) ? options.CacheInterval : 300 * 1000;
+        }
+
+        /** \property Connection
+         *  \brief Return the connection object
+         *  \return The Connection
+         */
         public IConnection Connection
         {
             get { return connection; }
@@ -447,12 +552,7 @@ namespace SequoiaDB
 
             BsonDocument options = new BsonDocument();
             options.Add(SequoiadbConstants.FIELD_PAGESIZE, pageSize);
-            SDBMessage rtn = CreateCS(csName, options);
-            int flags = rtn.Flags;
-            if (flags != 0)
-                throw new BaseException(flags);
-
-            return new CollectionSpace(this, csName.Trim());
+            return CreateCollectionSpace(csName, options);
         }
 
         /** \fn CollectionSpace CreateCollectionSpace(string csName, BsonDocument options)
@@ -477,8 +577,8 @@ namespace SequoiaDB
             int flags = rtn.Flags;
             if (flags != 0)
                 throw new BaseException(flags);
-
-            return new CollectionSpace(this, csName.Trim());
+            UpsertCache(csName);
+            return new CollectionSpace(this, csName);
         }
 
         /** \fn void DropCollectionSpace(string csName)
@@ -493,6 +593,7 @@ namespace SequoiaDB
             int flags = rtn.Flags;
             if (flags != 0)
                 throw new BaseException(flags);
+            RemoveCache(csName);
         }
 
         /** \fn CollectionSpace GetCollecitonSpace(string csName)
@@ -505,8 +606,14 @@ namespace SequoiaDB
          */
         public CollectionSpace GetCollecitonSpace(string csName) 
         {
+            // create cs from cache
+            if (FetchCache(csName))
+                return new CollectionSpace(this, csName);
+            // create cs from database
+            // we don't need to update or remove cache here,
+            // for "isCollectionSpaceExist" has do that
             if (IsCollectionSpaceExist(csName))
-                return new CollectionSpace(this, csName.Trim());
+                return new CollectionSpace(this, csName);
             else
                 throw new BaseException("SDB_DMS_CS_NOTEXIST") ;
         }
@@ -528,9 +635,15 @@ namespace SequoiaDB
             SDBMessage rtn = AdminCommand(command, condition, dummyObj, dummyObj, dummyObj);
             int flags = rtn.Flags;
             if (flags == 0)
+            {
+                UpsertCache(csName);
                 return true;
+            }
             else if (flags == (int)Errors.errors.SDB_DMS_CS_NOTEXIST)
+            {
+                RemoveCache(csName);
                 return false;
+            }
             else
                 throw new BaseException(flags);
         }
@@ -1536,7 +1649,7 @@ namespace SequoiaDB
             SDBMessage sdbMessage = new SDBMessage();
 
             cObj.Add(SequoiadbConstants.FIELD_NAME, csName);
-            cObj.Add(options);
+            cObj.Add((options != null) ? options : dummyObj);
             sdbMessage.OperationCode = Operation.OP_QUERY;
             sdbMessage.Matcher = cObj;
             sdbMessage.CollectionFullName = commandString;

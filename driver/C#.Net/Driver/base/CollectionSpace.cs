@@ -50,8 +50,13 @@ namespace SequoiaDB
          */
         public DBCollection GetCollection(string collectionName)
         {
+            // get cl from cache
+            string fullName = this.Name + "." + collectionName;
+            if (sdb.FetchCache(fullName))
+                return new DBCollection(this, collectionName);
+            // get cl from database
             if (IsCollectionExist(collectionName))
-                return new DBCollection(this, collectionName.Trim());
+                return new DBCollection(this, collectionName);
             else
                 throw new BaseException("SDB_DMS_NOTEXIST");
         }
@@ -69,13 +74,20 @@ namespace SequoiaDB
                              + SequoiadbConstants.COLLECTION;
             BsonDocument condition = new BsonDocument();
             BsonDocument dummyObj = new BsonDocument();
-            condition.Add(SequoiadbConstants.FIELD_NAME, this.name + "." + colName);
+            string fullName = this.Name + "." + colName;
+            condition.Add(SequoiadbConstants.FIELD_NAME, fullName);
             SDBMessage rtn = AdminCommand(command, condition, dummyObj, dummyObj, dummyObj);
             int flags = rtn.Flags;
             if (flags == 0)
+            {
+                sdb.UpsertCache(fullName);
                 return true;
+            }
             else if (flags == (int)Errors.errors.SDB_DMS_NOTEXIST)
+            {
+                sdb.RemoveCache(fullName);
                 return false;
+            }
             else
                 throw new BaseException(flags);
         }
@@ -89,13 +101,7 @@ namespace SequoiaDB
          */
         public DBCollection CreateCollection(string collectionName) 
         {
-            SDBMessage rtn = AdminCommand(SequoiadbConstants.CREATE_CMD, SequoiadbConstants.COLLECTION,
-                name + "." + collectionName);
-            int flags = rtn.Flags;
-            if (flags != 0)
-                throw new BaseException(flags);
-
-            return new DBCollection(this, collectionName.Trim());
+            return CreateCollection(collectionName, null);
         }
 
         /** \fn DBCollection CreateCollection(string collectionName, BsonDocument options)
@@ -113,7 +119,8 @@ namespace SequoiaDB
             BsonDocument cObj = new BsonDocument();
             BsonDocument dummyObj = new BsonDocument();
 
-            cObj.Add(SequoiadbConstants.FIELD_NAME, name + "." + collectionName);
+            string fullName = this.Name + "." + collectionName;
+            cObj.Add(SequoiadbConstants.FIELD_NAME, fullName);
             if ( options != null && options.ElementCount !=0 )
             {
                 foreach (string key in options.Names)
@@ -127,8 +134,8 @@ namespace SequoiaDB
             int flags = rtn.Flags;
             if (flags != 0)
                 throw new BaseException(flags);
-
-            return new DBCollection(this, collectionName.Trim());
+            sdb.UpsertCache(fullName);
+            return new DBCollection(this, collectionName);
         }
 
         /** \fn void DropCollection(string collectionName)
@@ -139,11 +146,13 @@ namespace SequoiaDB
          */
         public void DropCollection(string collectionName)
         {
+            string fullName = this.Name + "." + collectionName;
             SDBMessage rtn = AdminCommand(SequoiadbConstants.DROP_CMD, SequoiadbConstants.COLLECTION,
-                name + "." + collectionName);
+                fullName);
             int flags = rtn.Flags;
             if (flags != 0)
                 throw new BaseException(flags);
+            sdb.RemoveCache(fullName);
         }
 
         private SDBMessage AdminCommand(string cmdType, string contextType, string contextName)

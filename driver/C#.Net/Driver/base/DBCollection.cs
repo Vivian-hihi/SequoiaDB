@@ -15,6 +15,7 @@ namespace SequoiaDB
    {
         private string name;
         private string collectionFullName;
+        private Sequoiadb sdb;
         private CollectionSpace collSpace;
         private IConnection connection;
         private bool ensureOID = true;
@@ -62,6 +63,7 @@ namespace SequoiaDB
         internal DBCollection(CollectionSpace cs, string name)
         {
             this.name = name;
+            this.sdb = cs.SequoiaDB;
             this.collSpace = cs;
             this.collectionFullName = cs.Name + "." + name;
             this.connection = cs.SequoiaDB.Connection;
@@ -134,6 +136,8 @@ namespace SequoiaDB
             int flags = rtn.Flags;
             if (flags != 0)
                 throw new BaseException(flags);
+            // upsert cache
+            sdb.UpsertCache(collectionFullName);
         }
 
         /** \fn void Split(string sourceGroupName, string destGroupName, double percent)
@@ -165,6 +169,8 @@ namespace SequoiaDB
             int flags = rtn.Flags;
             if (flags != 0)
                 throw new BaseException(flags);
+            // upsert cache
+            sdb.UpsertCache(collectionFullName);
         }
 
         /** \fn long SplitAsync(String sourceGroupName,
@@ -223,6 +229,8 @@ namespace SequoiaDB
             bool flag = result.Contains(SequoiadbConstants.FIELD_TASKID);
             if (!flag)
                 throw new BaseException("SDB_CAT_TASK_NOTFOUND");
+            // upsert cache
+            sdb.UpsertCache(collectionFullName);
             long taskid = result.GetValue(SequoiadbConstants.FIELD_TASKID).AsInt64;
             return taskid;
         }
@@ -273,6 +281,8 @@ namespace SequoiaDB
             bool flag = result.Contains(SequoiadbConstants.FIELD_TASKID);
             if (!flag)
                 throw new BaseException("SDB_CAT_TASK_NOTFOUND");
+            // upsert cache
+            sdb.UpsertCache(collectionFullName);
             long taskid = result.GetValue(SequoiadbConstants.FIELD_TASKID).AsInt64;
             return taskid;
         }
@@ -300,16 +310,16 @@ namespace SequoiaDB
             sdbMessage.Insertor = insertor;
 
             ObjectId objId;
-            BsonValue tmp;
+            BsonValue retVal;
             //if (insertor.
-            if (insertor.TryGetValue(SequoiadbConstants.OID, out tmp))
+            if (insertor.TryGetValue(SequoiadbConstants.OID, out retVal))
             {
                 ;
             }
             else
             {
                 objId = ObjectId.GenerateNewId();
-                tmp = objId;
+                retVal = objId;
                 insertor.Add(SequoiadbConstants.OID, objId);
             }
 
@@ -320,8 +330,9 @@ namespace SequoiaDB
             int flags = rtnSDBMessage.Flags;
             if (flags != 0)
                 throw new BaseException(flags);
-
-            return tmp;
+            // upsert cache
+            sdb.UpsertCache(collectionFullName);
+            return retVal;
         }
 
         /** \fn void BulkInsert(List<BsonDocument> insertor, int flag)
@@ -360,6 +371,8 @@ namespace SequoiaDB
             int flags = rtnSDBMessage.Flags;
             if (flags != 0)
                 throw new BaseException(flags);
+            // upsert cache
+            sdb.UpsertCache(collectionFullName);
         }
 
         /** \fn void Delete(BsonDocument matcher)
@@ -410,6 +423,8 @@ namespace SequoiaDB
             {
                 throw new BaseException(flags);
             }
+            // upsert cache
+            sdb.UpsertCache(collectionFullName);
        }
 
         /** \fn void Update(DBQuery query)
@@ -600,7 +615,8 @@ namespace SequoiaDB
                 {
                     throw new BaseException(flags);
                 }
-
+            // upsert cache
+            sdb.UpsertCache(collectionFullName);
             return new DBCursor(rtnSDBMessage, this);
         }
 
@@ -754,7 +770,8 @@ namespace SequoiaDB
                 {
                     throw new BaseException(flags);
                 }
-
+            // upsert cache
+            sdb.UpsertCache(collectionFullName);
             return new DBCursor(rtn, this);
         }
 
@@ -787,7 +804,8 @@ namespace SequoiaDB
                 {
                     throw new BaseException(flags);
                 }
-
+            // upsert cache
+            sdb.UpsertCache(collectionFullName);
             return new DBCursor(rtn, this);
         }
 
@@ -842,6 +860,8 @@ namespace SequoiaDB
             int flags = rtn.Flags;
             if (flags != 0)
                 throw new BaseException(flags);
+            // upsert cache
+            sdb.UpsertCache(collectionFullName);
         }
 
         /** \fn long GetCount(BsonDocument condition)
@@ -863,11 +883,13 @@ namespace SequoiaDB
             int flags = rtnSDBMessage.Flags;
             if (flags != 0)
                 throw new BaseException(flags);
-
+            // upsert cache
+            sdb.UpsertCache(collectionFullName);
             List<BsonDocument> rtn = GetMoreCommand(rtnSDBMessage);
             return rtn[0][SequoiadbConstants.FIELD_TOTAL].AsInt64;
         }
-		
+		// TODO: add GetCount with hint
+
         /** \fn DBCursor Aggregate(List<BsonDocument> obj)
          *  \brief Execute aggregate operation in specified collection
          *  \param insertor The array of bson objects, can't be null
@@ -907,7 +929,8 @@ namespace SequoiaDB
                 {
                     throw new BaseException(flags);
                 }
-
+            // upsert cache
+            sdb.UpsertCache(collectionFullName);
             return new DBCursor(rtnSDBMessage, this);
         }
 
@@ -950,6 +973,8 @@ namespace SequoiaDB
                 {
                     throw new BaseException(flags);
                 }
+            // upsert cache
+            sdb.UpsertCache(collectionFullName);
             return new DBCursor(rtnSDBMessage, this);
         }
 
@@ -987,6 +1012,8 @@ namespace SequoiaDB
             int flags = rtnSDBMessage.Flags;
             if (flags != 0)
                 throw new BaseException(flags);
+            // upsert cache
+            sdb.UpsertCache(collectionFullName);
         }
 
         /** \fn void DetachCollection(string subClFullName)
@@ -1017,6 +1044,8 @@ namespace SequoiaDB
             int flags = rtnSDBMessage.Flags;
             if (flags != 0)
                 throw new BaseException(flags);
+            // upsert cache
+            sdb.UpsertCache(collectionFullName);
         }
 
         private void _Alter1(BsonDocument options)
@@ -1039,6 +1068,8 @@ namespace SequoiaDB
             int flags = rtnSDBMessage.Flags;
             if (flags != 0)
                 throw new BaseException(flags);
+            // upsert cache
+            sdb.UpsertCache(collectionFullName);
         }
 
         private void _Alter2(BsonDocument options)
@@ -1089,6 +1120,8 @@ namespace SequoiaDB
             int flags = rtnSDBMessage.Flags;
             if (flags != 0)
                 throw new BaseException(flags);
+            // upsert cache
+            sdb.UpsertCache(collectionFullName);
         }
 
         /** \fn void Alter(BsonDocument options)
@@ -1157,6 +1190,8 @@ namespace SequoiaDB
                     throw new BaseException(flags);
                 }
             }
+            // upsert cache
+            sdb.UpsertCache(collectionFullName);
             cursor = new DBCursor(rtnSDBMessage, this);
             return cursor;
         }
@@ -1182,6 +1217,8 @@ namespace SequoiaDB
         {
             DBLob lob = new DBLob(this);
             lob.Open(id, DBLob.SDB_LOB_CREATEONLY);
+            // upsert cache
+            sdb.UpsertCache(collectionFullName);
             return lob;
         }
 
@@ -1195,6 +1232,8 @@ namespace SequoiaDB
         {
             DBLob lob = new DBLob(this);
             lob.Open(id, DBLob.SDB_LOB_READ);
+            // upsert cache
+            sdb.UpsertCache(collectionFullName);
             return lob;
         }
 
@@ -1234,7 +1273,8 @@ namespace SequoiaDB
             {
                 throw new BaseException(flags);
             }
-
+            // upsert cache
+            sdb.UpsertCache(collectionFullName);
         }
 
         /** \fn void Truncate()
@@ -1257,6 +1297,8 @@ namespace SequoiaDB
             int flags = rtnSDBMessage.Flags;
             if (flags != 0)
                 throw new BaseException(flags);
+            // upsert cache
+            sdb.UpsertCache(collectionFullName);
         }
 
         /** \fn void CreateIdIndex(BsonDocument options)
@@ -1354,6 +1396,8 @@ namespace SequoiaDB
             int flags = rtnSDBMessage.Flags;
             if (flags != 0)
                 throw new BaseException(flags);
+            // upsert cache
+            sdb.UpsertCache(collectionFullName);
         }
 
         private void _CreateIndex(string name, BsonDocument key, bool isUnique, bool isEnforced, int sortBufferSize)
@@ -1379,6 +1423,8 @@ namespace SequoiaDB
             int flags = rtn.Flags;
             if (flags != 0)
                 throw new BaseException(flags);
+            // upsert cache
+            sdb.UpsertCache(collectionFullName);
         }
 
         private SDBMessage AdminCommand(string command, BsonDocument query, BsonDocument selector, BsonDocument orderBy,
