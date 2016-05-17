@@ -3,7 +3,7 @@
 #include "testcommon.h"
 #include "client.h"
 
-TEST(lob,sdbNext)
+TEST(lob, lob_global_test)
 {
    INT32 rc = SDB_OK ;
    // initialize the word environment
