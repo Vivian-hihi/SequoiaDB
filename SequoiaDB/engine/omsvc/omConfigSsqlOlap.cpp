@@ -970,7 +970,7 @@ namespace engine
             goto error ;
          }
 
-         rc = node->_setDataDir( dataDir, *host ) ;
+         rc = node->_setDataDir( dataDir, *host, true ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG_MSG( PDERROR, "failed to set data dir for segment node" ) ;
@@ -1525,7 +1525,14 @@ namespace engine
       INT32 rc = SDB_OK ;
 
       BSONElement ele = bsonConfig.getField( OM_SSQL_OLAP_CONF_SEGMENT_HOSTS ) ;
-      BSONObjIterator it( ele.embeddedObject() ) ;
+      if ( ele.eoo() )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG_MSG( PDERROR, "the config property [%s] is missed",
+                     OM_SSQL_OLAP_CONF_SEGMENT_HOSTS ) ;
+         goto error ;
+      }
+
       if ( Array != ele.type() )
       {
          rc = SDB_INVALIDARG ;
@@ -1534,36 +1541,39 @@ namespace engine
          goto error ;
       }
 
-      while ( it.more() )
       {
-         string hostName ;
-         BSONElement e = it.next();
-         if ( String != e.type() )
+         BSONObjIterator it( ele.embeddedObject() ) ;
+         while ( it.more() )
          {
-            rc = SDB_INVALIDARG ;
-            PD_LOG_MSG( PDERROR, "the element of config property [%s] must be String",
-                        OM_SSQL_OLAP_CONF_SEGMENT_HOSTS ) ;
-            goto error ;
-         }
+            string hostName ;
+            BSONElement e = it.next();
+            if ( String != e.type() )
+            {
+               rc = SDB_INVALIDARG ;
+               PD_LOG_MSG( PDERROR, "the element of config property [%s] must be String",
+                           OM_SSQL_OLAP_CONF_SEGMENT_HOSTS ) ;
+               goto error ;
+            }
 
-         hostName = e.String() ;
-         if ( "" == hostName )
-         {
-            rc = SDB_INVALIDARG ;
-            PD_LOG_MSG( PDERROR, "the element of config property [%s] can't be empty",
-                        OM_SSQL_OLAP_CONF_SEGMENT_HOSTS ) ;
-            goto error ;
-         }
+            hostName = e.String() ;
+            if ( "" == hostName )
+            {
+               rc = SDB_INVALIDARG ;
+               PD_LOG_MSG( PDERROR, "the element of config property [%s] can't be empty",
+                           OM_SSQL_OLAP_CONF_SEGMENT_HOSTS ) ;
+               goto error ;
+            }
 
-         if ( hostNames.end() != hostNames.find( hostName ) )
-         {
-            rc = SDB_INVALIDARG ;
-            PD_LOG_MSG( PDERROR, "duplicate host name [%s] of config property [%s]",
-                        hostName.c_str(), OM_SSQL_OLAP_CONF_SEGMENT_HOSTS ) ;
-            goto error ;
-         }
+            if ( hostNames.end() != hostNames.find( hostName ) )
+            {
+               rc = SDB_INVALIDARG ;
+               PD_LOG_MSG( PDERROR, "duplicate host name [%s] of config property [%s]",
+                           hostName.c_str(), OM_SSQL_OLAP_CONF_SEGMENT_HOSTS ) ;
+               goto error ;
+            }
 
-         hostNames.insert( hostName ) ;
+            hostNames.insert( hostName ) ;
+         }
       }
 
    done:
