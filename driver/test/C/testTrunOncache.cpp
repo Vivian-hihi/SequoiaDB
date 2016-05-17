@@ -30,6 +30,13 @@ struct _Node
    struct _Node *next ;
 } ;
 typedef struct _Node Node ;
+typedef INT32 BOOL;
+
+enum BOOLEANVAL
+{
+    BOOLEAN_FALSE = 0,
+    BOOLEAN_TRUE
+};
 
 #define ossMutex                  pthread_mutex_t
 struct _sdbConnectionStruct
@@ -555,6 +562,18 @@ TEST( turnonCache, getCSOfTimeOutandDropbyOtherConn)
    closeConnection(conn1);
 }
 
+BOOL isStandalone(sdbConnectionHandle conn)
+{
+   sdbCursorHandle cursor;
+   INT32 rc = sdbGetList(conn, SDB_LIST_GROUPS, NULL, NULL, NULL, &cursor);
+   if (rc == -159){
+      return BOOLEAN_TRUE;
+   }else
+   {
+      return BOOLEAN_FALSE;
+   }
+}
+
 TEST( turnonCache, getMulCLAfterDropCS)
 {
    INT32 rc = SDB_OK ;
@@ -576,11 +595,17 @@ TEST( turnonCache, getMulCLAfterDropCS)
    }
    
    ASSERT_EQ(SDB_OK, dropCollectionSpace(conn, cs, csName));
+   
+   int expectRes = -23;
+   if (isStandalone(conn)){
+      expectRes = -34;
+   }
+   
    for (int i = 0; i <5; ++i)
    {
       snprintf(fullName, sizeof(fullName), "%s.cl_%d_%d", csName,i, getpid());
       rc = sdbGetCollection(conn, fullName, &cl1[i]);
-      ASSERT_EQ(-23, rc);
+      ASSERT_EQ(expectRes, rc);
    }
  
    for (int i = 0; i <5; ++i)
