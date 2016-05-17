@@ -297,5 +297,4 @@ snappyFiles = [
       "src/snappy-stubs-internal.cc"
       ]
 
-env.StaticLibrary( targetLibPath + '/snappy', snappyFiles)
-   
+env.StaticLibrary( targetLibPath + '/libsnappy', snappyFiles)

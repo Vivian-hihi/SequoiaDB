@@ -643,12 +643,12 @@ elif "win32" == guess_os:
     ssllib_file1 = join(ssllib_dir, 'ssleay32.lib')
 
     # lz4, zlib and snappy
-    env.Append( LIBS=['lz4'] )
-    env.Append( LIBS=['zlib'] )
-    env.Append( LIBS=['snappy'] )
-    zlib_lib = join(zlib_lib_dir_platform, 'zlib.lib')
-    lz4_lib = join(lz4_lib_dir_platform, 'lz4.lib')
-    snappy_lib = join(snappy_lib_dir_platform, 'snappy.lib')
+    env.Append( LIBS=['liblz4'] )
+    env.Append( LIBS=['libzlib'] )
+    env.Append( LIBS=['libsnappy'] )
+    zlib_lib = join(zlib_lib_dir_platform, 'libzlib.lib')
+    lz4_lib = join(lz4_lib_dir_platform, 'liblz4.lib')
+    snappy_lib = join(snappy_lib_dir_platform, 'libsnappy.lib')
 	
     # UNICODE
     env.Append( CPPDEFINES=[ "_UNICODE" ] )

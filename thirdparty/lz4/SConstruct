@@ -297,5 +297,4 @@ lz4Files = [
       "src/xxhash.c"
       ]
 
-env.StaticLibrary( targetLibPath + '/lz4', lz4Files )
-   
+env.StaticLibrary( targetLibPath + '/liblz4', lz4Files )

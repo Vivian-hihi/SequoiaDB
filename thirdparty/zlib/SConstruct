@@ -308,5 +308,4 @@ zlibFiles = [
       "gzwrite.c"
       ]
 
-env.StaticLibrary( targetLibPath + '/zlib', zlibFiles )
-   
+env.StaticLibrary( targetLibPath + '/libzlib', zlibFiles )
