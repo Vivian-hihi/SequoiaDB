@@ -20,7 +20,17 @@
 #include "ossErr.h"
 #include "ossMem.h"
 #include "bsonDecimal.h"
+
+#ifdef SDB_ENGINE
 #include "pd.hpp"
+#else
+   #ifdef _DEBUG
+      #include <assert.h>
+      #define SDB_ASSERT(cond,str)  assert(cond)
+   #else
+      #define SDB_ASSERT(cond,str)  
+   #endif // _DEBUG
+#endif
 
 namespace bson {
 
