@@ -4,6 +4,8 @@
 
 using namespace std ;
 using namespace sdbclient ;
+typedef INT32 BOOL;
+
 
 INT32 init(sdb &db, INT32 timeLen=0, INT32 size=0)
 {
@@ -363,6 +365,17 @@ TEST( turnonCache, getCSOfTimeOutandDropbyOtherConn)
    fini(db);
 }
 
+BOOL isStandalone(sdb &db)
+{
+   sdbCursor cursor;
+   INT32 rc = db.getList(cursor, SDB_LIST_GROUPS); 
+   if (rc == -159){
+      return TRUE;
+   }else{
+      return FALSE;
+   }
+}
+
 TEST( turnonCache, getMulCLAfterDropCS)
 {
    sdb db;
@@ -387,12 +400,18 @@ TEST( turnonCache, getMulCLAfterDropCS)
     
    ASSERT_EQ(SDB_OK, dropCS(db, csName));
   
+   int expectRes = -23;
+   if (isStandalone(db))
+   {
+      expectRes = -34;
+   }
    for (int i =0; i<5; ++i)
    {
       snprintf(clName, sizeof(clName), "cl_%d_%d", i, getpid());
-      ASSERT_EQ(-23, getTimeOfgetCL(cs, clName, diff1));
-      ASSERT_EQ(-23, getTimeOfgetCLByFullName(db, csName, clName, diff2));
+      ASSERT_EQ(expectRes, getTimeOfgetCL(cs, clName, diff1));
+      ASSERT_EQ(expectRes, getTimeOfgetCLByFullName(db, csName, clName, diff2));
    }
 
    fini(db); 
 }
+
