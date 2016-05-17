@@ -31,7 +31,8 @@ CSV(Comma Separated Value)格式以逗号分隔数值。默认情况下记录以
  | int | integer | 十进制整型，取值范围为-2147483648~2147483647 | 
  | long | - | 十进制长整型，取值范围-9223372036854775808~9223372036854775807 | 
  | double | - | 双精度浮点型，取值范围为-1.7E+308~1.7E+308 | 
- | number | - | 数值类型，自动判断数值的具体类型(int, long, double) | 
+ | decimal | - | 高精度数，范围为小数点前最高131072位;小数点后最高16383位。可以指定精度，如"decimal(18, 6)" |
+ | number | - | 数值类型，自动判断数值的具体类型(int, long, double, decimal) | 
  | bool | boolean | 布尔型，取值为true/false/t/f/yes/no/y/n，不区分大小写 | 
  | string | - | 字符串 | 
  | null | - | 空值 | 
@@ -49,6 +50,7 @@ CSV(Comma Separated Value)格式以逗号分隔数值。默认情况下记录以
 - int、long、double支持以‘#’开头的数字，例如#123.456。
 - double支持科学计数法，例如1.23e-4，-1.23E+4。
 - double支持忽略小数点前的‘0’，例如.123。
+- 在自动判断类型时，整数超过long的范围，浮点数超过double的范围，以及浮点数总位数超过15位或小数位超过6位时，类型判断为decimal。
 - autodate类型支持使用整数，表示自1970-01-01-00.00.00.000000以来的秒数, 取值范围为-377705145943~253402271999。
 - autotimestamp类型支持使用整数，表示自1970-01-01-00.00.00.000000以来的毫秒数，取值范围为-2147414400000~2147443199000。
 
@@ -69,7 +71,7 @@ CSV(Comma Separated Value)格式以逗号分隔数值。默认情况下记录以
  | 2147483648 | long | 2147483648 | 
  | 123.1 | double | 123.1 | 
  | .123 | double | 0.123 | 
- | 9223372036854775808 | double | 9.223372036854776e+18 | 
+ | 9223372036854775808 | decimal | 9223372036854775808 | 
  | true | bool | true | 
  | false | bool | false | 
  | "123" | string | "123" | 
@@ -83,20 +85,21 @@ CSV(Comma Separated Value)格式以逗号分隔数值。默认情况下记录以
 
 在指定CSV字段类型时，导入工具会将字段转换为指定的类型。如果字段的实际类型不是指定的类型，则转换可能失败。具体参考下表，最左边一列是指定的类型，Y表示可以转换，N表示不能转换。
 
- | 指定类型\\实际类型 | int | long | double | bool | string | null | oid | date | timestamp | binary | regex | 
+ | 指定类型\\实际类型 | int | long | double | decimal | bool | string | null | oid | date | timestamp | binary | regex | 
  | - | --- | ---- | ------ | ------ | ---- | ------ | ---- | --- | ---- | --------- | ------ | ----- | 
- | int | Y | 可能溢出 | 可能丢失精度 | Y | 支持数值字符串 | N | N | N | N | N | N | 
- | long | Y | Y | 可能丢失精度 | Y | 支持数值字符串 | N | N | N | N | N | N | 
- | double | Y | Y | Y | N | 支持数值字符串 | N | N | N | N | N | N | 
- | number | Y | Y | Y | Y | 支持数值字符串 | N | N | N | N | N | N | 
- | bool | Y | Y | N | Y | 支持bool字符串 | N | N | N | N | N | N | 
- | string | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | 
- | null | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | 
- | oid | N | N | N | N | 支持OID字符串 | N | Y | N | N | N | N | 
- | date | Y | Y | N | N | 支持date字符串 | N | N | Y | Y | N | N | 
- | timestamp | Y | Y | N | N | 支持timestamp字符串 | N | N | Y | Y | N | N | 
- | binary | N | N | N | N | 支持binary字符串 | N | N | N | N | Y | N | 
- | regex | N | N | N | N | 支持regex字符串 | N | N | N | N | N | Y | 
+ | int | Y | 可能溢出 | 可能丢失精度 | 可能丢失精度 | Y | 支持数值字符串 | N | N | N | N | N | N | 
+ | long | Y | Y | 可能丢失精度 | 可能丢失精度 | Y | 支持数值字符串 | N | N | N | N | N | N | 
+ | double | Y | Y | Y | 可能丢失精度 | N | 支持数值字符串 | N | N | N | N | N | N | 
+ | decimal | Y | Y | Y | Y | N | 支持数值字符串 | N | N | N | N | N | N | 
+ | number | Y | Y | Y | Y | Y | 支持数值字符串 | N | N | N | N | N | N | 
+ | bool | Y | Y | N | N | Y | 支持bool字符串 | N | N | N | N | N | N | 
+ | string | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | 
+ | null | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | 
+ | oid | N | N | N | N | N | 支持OID字符串 | N | Y | N | N | N | N | 
+ | date | Y | Y | N | N | N | 支持date字符串 | N | N | Y | Y | N | N | 
+ | timestamp | Y | Y | N | N | N | 支持timestamp字符串 | N | N | Y | Y | N | N | 
+ | binary | N | N | N | N | N | 支持binary字符串 | N | N | N | N | Y | N | 
+ | regex | N | N | N | N | N | 支持regex字符串 | N | N | N | N | N | Y | 
 
 注意：
 
@@ -160,6 +163,7 @@ CSV(Comma Separated Value)格式以逗号分隔数值。默认情况下记录以
 	- type可不写，由导入工具自动判断
 	- 指定字段可以用命令行指定，也可以在导入文件的首行指定。如果在命令行指定了--fields，并且--headerline设为true，导入工具将会优先使用命令行指定字段并且跳过导入文件的首行
 	- 字段名不能以'$'开头，中间不能有'.'，不能有不可见字符，包含空格时需要将字段名用单引号或双引号引起来
+	- decimal类型可以指定精度，如"decimal(18, 6)"
 	- 例如：--fields='name string default "Jack", age int default 18, phone'
 - datefmt格式包括年、月、日、通配符以及特定字符
 	- 年：YYYY
