@@ -66,8 +66,8 @@
 |                                |      4.  按 : wq 保存退出；                                 |                                                    |
 +--------------------------------+-------------------------------------------------------------+----------------------------------------------------+
 | 配置物理机之间通过主机名可连接 |                                                             |                                                    |
-|                                | -   使用 root 权限，打开 /etc/hosts 文件<br>                | 1.ping sdbserver1（本机主机名）可以 ping 通      |
-|                                |     vi /etc/hosts<br>                                       | 2.ping sdbserver2（远端主机名）可以 ping 通      |
+|                                | -   使用 root 权限，打开 /etc/hosts 文件<br>                | 1.ping sdbserver1（本机主机名）可以 ping 通        |
+|                                |     vi /etc/hosts<br>                                       | 2.ping sdbserver2（远端主机名）可以 ping 通        |
 |                                | -   修改 /etc/hosts，将服务器节点的主机名与IP映射关系配置到 |                                                    |
 |                                |     该文件中<br>                                            |                                                    |
 |                                |     192.168.20.200 sdbserver1<br>                           |                                                    |
@@ -76,14 +76,14 @@
 |                                | -   保存退出                                                |                                                    |
 +--------------------------------+-------------------------------------------------------------+----------------------------------------------------+
 | 关闭防火墙 (需要管理员权限)    |                                                             | -   对于 SUSE：                                    |
-|                                | 	-   对于 SUSE：                                            | 		chkconfig -list &#124 grep fire；           |
-|                                | 		1.  SuSEfirewall2 stop；                               | -   对于 RedHat：                                  |
-|                                | 		2.  chkconfig SuSEfirewall2\_setup；                   | 		service iptables status；                   |
+|                                | 	-   对于 SUSE：                                            | 		chkconfig -list|grep fire；                      |
+|                                | 		1.  SuSEfirewall2 stop；                                  | -   对于 RedHat：                                  |
+|                                | 		2.  chkconfig SuSEfirewall2\_setup；                      | 		service iptables status；                        |
 |                                | 	-   对于 RedHat：                                          | -   对于 Ubuntu：                                  |
-|                                | 		1.  service iptables stop；                            | 		ufw status；                                |
-|                                | 		2.  chkconfig iptables off；                           |                                                    |
+|                                | 		1.  service iptables stop；                               | 		ufw status；                                     |
+|                                | 		2.  chkconfig iptables off；                              |                                                    |
 |                                | 	-   对于 Ubuntu：                                          |                                                    |
-|                                | 		1.  ufw disable；                                      |                                                    |
+|                                | 		1.  ufw disable；                                         |                                                    |
 +--------------------------------+-------------------------------------------------------------+----------------------------------------------------+
 
 **Note: **
