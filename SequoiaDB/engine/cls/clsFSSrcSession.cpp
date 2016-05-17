@@ -2635,10 +2635,13 @@ namespace engine
       // add empty split task to start timmer
       _clsTaskMgr *taskMgr = pmdGetKRCB()->getClsCB()->getTaskMgr() ;
       _clsDummyTask *pTask = SDB_OSS_NEW _clsDummyTask ( taskMgr->getTaskID() ) ;
-      if ( pTask )
+      if ( pTask && SDB_OK == taskMgr->addTask( pTask ) )
       {
          _taskID = pTask->taskID() ;
-         taskMgr->addTask( pTask ) ;
+      }
+      else
+      {
+         _quit = TRUE ;
       }
       PD_TRACE_EXIT ( SDB__CLSSPLSS__ONATH );
    }

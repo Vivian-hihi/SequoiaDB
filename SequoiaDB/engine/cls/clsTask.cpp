@@ -172,7 +172,6 @@ namespace engine
       while ( it != _taskMap.end() )
       {
          indexTask = it->second ;
-         ++it ;
 
          if ( taskID == it->first ||
               ( pTask->taskType() == indexTask->taskType() &&
@@ -185,6 +184,7 @@ namespace engine
             rc = SDB_CLS_MUTEX_TASK_EXIST ;
             goto error ;
          }
+         ++it ;
       }
       // add to map
       _taskMap[ taskID ] = pTask ;
