@@ -59,6 +59,23 @@ Windows32:
 		nmake -f ms\ntdll.mak
 		copy the following files to crypto\openssl-1.0.1c\lib\win32:
 			libeay32.dll  libeay32.exp  libeay32.lib  libeay32.pdb  ssleay32.dll  ssleay32.exp  ssleay32.lib  ssleay32.pdb
+	
+	snappy 1.1.0:
+		cd snappy
+		scons
+		
+	lz4 1.7.1:
+		cd lz4
+		scons
+		
+	zlib 1.2.8:
+		cd zlib
+		nmake -f win32\Makefile.msc
+		copy the following file to zlib\lib\win32
+			libzlib.lib
+	The second way to build:
+		cd zlib
+		scons
 
 Windows64:
         Building Prerequisites:
@@ -111,6 +128,23 @@ Windows64:
                 copy the following files to crypto\openssl-1.0.1c\lib\win64:
                         libeay32.dll  libeay32.exp  libeay32.lib  libeay32.pdb  ssleay32.dll  ssleay32.exp  ssleay32.lib  ssleay32.pdb
 
+		snappy 1.1.0:
+			cd snappy
+			scons
+			
+		lz4 1.7.1:
+			cd lz4
+			scons
+			
+		zlib 1.2.8:
+			cd zlib
+			nmake -f win32\Makefile.msc
+			copy the following file to zlib\lib\win64
+				libzlib.lib
+		The second way to build:
+			cd zlib
+			scons
+
 Linux32:
         Building Prerequisites:
 		g++ 4.6.3
@@ -148,6 +182,24 @@ Linux32:
 		make
                 copy libcrypto.a and libssl.a to crypto/openssl-1.0.1c/lib/linux32/
 
+		snappy 1.1.0:
+			cd snappy
+			scons
+			
+		lz4 1.7.1:
+			cd lz4
+			scons
+			
+		zlib 1.2.8:
+			cd zlib
+			./configure
+			make
+			copy the following file to zlib\lib\linux32
+				libzlib.a
+		The second way to build:
+			cd zlib
+			scons
+			
 Linux64:
         Building Prerequisites:
                 g++ 4.6.3
@@ -184,6 +236,24 @@ Linux64:
                 ./configure
                 make
                 copy libcrypto.a and libssl.a to crypto/openssl-1.0.1c/lib/linux64/
+				
+		snappy 1.1.0:
+			cd snappy
+			scons
+
+		lz4 1.7.1:
+			cd lz4
+			scons
+			
+		zlib 1.2.8:
+			cd zlib
+			./configure
+			make
+			copy the following file to zlib\lib\linux64
+				libzlib.a
+		The second way to build:
+			cd zlib
+			scons
 
 PowerLinux64:
         Building Prerequisites:
@@ -225,6 +295,24 @@ PowerLinux64:
                 make
                 copy libcrypto.a and libssl.a to crypto/openssl-1.0.1c/lib/ppclinux64/
 
+    	snappy 1.1.0:
+			cd snappy
+			scons
+
+		lz4 1.7.1:
+			cd lz4
+			scons
+			
+		zlib 1.2.8:
+			cd zlib
+			./configure
+			make
+			copy the following file to zlib\lib\ppclinux64
+				libzlib.a
+		The second way to build:
+			cd zlib
+			scons
+			
 Aix64:
         Building Prerequisites:
                 g++ 4.6.3
@@ -247,3 +335,21 @@ Aix64:
                 make
                 make test
                 copy libcrypto.a and libssl.a to crypto/openssl-1.0.1c/lib/aix64/
+
+		snappy 1.1.0:
+			cd snappy
+			scons
+
+		lz4 1.7.1:
+			cd lz4
+			scons
+			
+		zlib 1.2.8:
+			cd zlib
+			./configure
+			make
+			copy the following file to zlib\lib\aix64
+				libzlib.a
+		The second way to build:
+			cd zlib
+			scons
