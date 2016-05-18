@@ -327,7 +327,11 @@ namespace engine
          }
          else
          {
-            if ( SDB_FNE != rc )
+            if ( SDB_LOB_SEQUENCE_NOT_EXIST == rc )
+            {
+               rc = SDB_FNE ;
+            }
+            else if ( SDB_FNE != rc )
             {
                PD_LOG( PDERROR, "Failed to get meta of lob, rc:%d", rc ) ;
             }
