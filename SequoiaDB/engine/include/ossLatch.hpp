@@ -455,7 +455,7 @@ public :
    }
    ~_ossSpinSLatch()
    {
-      SDB_ASSERT( 0 == pthread_rwlock_destory( &_lock ),
+      SDB_ASSERT( 0 == pthread_rwlock_destroy( &_lock ),
                   "destory rwlock failed" ) ;
    }
    void get ()
