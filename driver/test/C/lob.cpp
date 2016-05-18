@@ -18,13 +18,18 @@ TEST(lob, lob_global_test)
    SINT64 count                      = 0 ;
    bson_oid_t oid ;
    bson obj ;
-   INT32 bufSize = 1000 ;
+   #define BUFSIZE1 (1024 * 1024 * 3)
+   //#define BUFSIZE1 ( 1024 * 2 )
+   #define BUFSIZE2 (1024 * 1024 * 2)
    SINT64 lobSize = -1 ;
    UINT64 createTime = -1 ;
-   CHAR buf[bufSize] ;
-   for ( INT32 i = 0; i < bufSize; i++ )
+   CHAR buf[BUFSIZE1] = { 0 } ;
+   CHAR readBuf[BUFSIZE2] = { 0 } ;
+   UINT32 readCount = 0 ;
+   CHAR c = 'a' ;
+   for ( INT32 i = 0; i < BUFSIZE1; i++ )
    {
-      buf[i] = 'a' ;
+      buf[i] = c ;
    }
    // connect to database
    rc = sdbConnect ( HOST, SERVER, USER, PASSWD, &db ) ;
@@ -47,23 +52,47 @@ TEST(lob, lob_global_test)
    ASSERT_EQ( 0, createTime ) ;
    ASSERT_EQ( 0, createTime ) ;
    // write lob 
-   rc = sdbWriteLob( lob, buf, bufSize ) ;
+   rc = sdbWriteLob( lob, buf, BUFSIZE1 ) ;
    ASSERT_EQ( SDB_OK, rc ) ;
    // get lob size 
    rc = sdbGetLobSize( lob, &lobSize ) ;
    ASSERT_EQ( SDB_OK, rc ) ;
-   ASSERT_EQ( bufSize, lobSize ) ;
+   ASSERT_EQ( BUFSIZE1, lobSize ) ;
    // write lob
-   rc = sdbWriteLob( lob, buf, bufSize ) ;
+   rc = sdbWriteLob( lob, buf, BUFSIZE1 ) ;
    ASSERT_EQ( SDB_OK, rc ) ;
    // get lob size
    rc = sdbGetLobSize( lob, &lobSize ) ;
    ASSERT_EQ( SDB_OK, rc ) ;
-   ASSERT_EQ( 2 * bufSize, lobSize ) ;
+   ASSERT_EQ( 2 * BUFSIZE1, lobSize ) ;
    // get lob create time
    rc = sdbGetLobCreateTime( lob, &createTime ) ;
    ASSERT_EQ( SDB_OK, rc ) ;
    ASSERT_EQ( 0, createTime ) ;
+   // close lob
+   rc = sdbCloseLob ( &lob ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   // open lob with the mode SDB_LOB_READ
+   rc = sdbOpenLob( cl, &oid, SDB_LOB_READ, &lob ) ; 
+   ASSERT_EQ( SDB_OK, rc ) ;
+   // read lob
+   rc = sdbReadLob( lob, 1000, readBuf, &readCount ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   ASSERT_TRUE( readCount > 0 ) ;
+   for ( INT32 i = 0; i < readCount; i++ )
+   {
+      ASSERT_EQ( c, readBuf[i] ) ;
+   }
+   // read lob
+   rc = sdbReadLob( lob, BUFSIZE2, readBuf, &readCount ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   ASSERT_TRUE( readCount > 0 ) ;
+   for ( INT32 i = 0; i < readCount; i++ )
+   {
+      ASSERT_EQ( c, readBuf[i] ) << "readCount is: " << readCount 
+         << ", c is: " << c << ", i is: " 
+         << i << ", readBuf[i] is: " << readBuf[i] ;
+   }
    // close lob
    rc = sdbCloseLob ( &lob ) ;
    ASSERT_EQ( SDB_OK, rc ) ;
