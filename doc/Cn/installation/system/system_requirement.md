@@ -76,7 +76,7 @@
 |                                | -   保存退出                                                |                                                    |
 +--------------------------------+-------------------------------------------------------------+----------------------------------------------------+
 | 关闭防火墙 (需要管理员权限)    |                                                             | -  对于 SUSE:                                      |
-|                                | 	-   对于 SUSE：                                            | 		chkconfig -list|grep fire;                       |
+|                                | 	-   对于 SUSE：                                            | 		chkconfig -list &#124; grep fire;                |
 |                                | 		1.  SuSEfirewall2 stop；                                  | -  对于 RedHat:                                    |
 |                                | 		2.  chkconfig SuSEfirewall2\_setup；                      | 		service iptables status;                         |
 |                                | 	-   对于 RedHat：                                          | -  对于 Ubuntu:                                    |
