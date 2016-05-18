@@ -1,7 +1,6 @@
 #include "core.hpp"
 #include "ossUtil.h"
 #include "tracegen.h"
-#include "pdTrace.hpp"
 #include <stdio.h>
 #include "boost/filesystem.hpp"
 #include "boost/filesystem/operations.hpp"

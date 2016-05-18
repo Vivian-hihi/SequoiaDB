@@ -40,12 +40,11 @@
 #include "msgCatalogDef.h"
 #include "msgDef.h"
 #include "pmdOptions.h"
-#include <string>
-#include <vector>
-#include "pdTrace.hpp"
-#include "clientTrace.hpp"
+#include "pd.hpp"
 #include "fmpDef.hpp"
 #include "../bson/lib/md5.hpp"
+#include <string>
+#include <vector>
 #ifdef SDB_SSL
 #include "ossSSLWrapper.h"
 #endif
@@ -209,29 +208,21 @@ do                                                            \
       }
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT__SETCOLLECTIONINCUR, "_sdbCursorImpl::_setCollection" )
    void _sdbCursorImpl::_setCollection ( _sdbCollectionImpl *collection )
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT__SETCOLLECTIONINCUR ) ;
       _collection = collection ;
       if ( _collection )
          _collection->_regCursor ( this ) ;
-      PD_TRACE_EXIT ( SDB_CLIENT__SETCOLLECTIONINCUR ) ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CURSORIMPL__SETCONNECTIONINCUR, "_sdbCursorImpl::_setConnection" )
    void _sdbCursorImpl::_setConnection ( _sdb *connection )
    {
-      PD_TRACE_ENTRY ( SDB_CURSORIMPL__SETCONNECTIONINCUR ) ;
       _connection = (_sdbImpl*)connection ;
       _connection->_regCursor ( this ) ;
-      PD_TRACE_EXIT ( SDB_CURSORIMPL__SETCONNECTIONINCUR ) ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT__KILLCURSOR, "_sdbCursorImpl::_killCursor" )
    void _sdbCursorImpl::_killCursor ()
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT__KILLCURSOR ) ;
       INT32 rc         = SDB_OK ;
       SINT64 contextID = 0 ;
       BOOLEAN result   = FALSE ;
@@ -272,16 +263,13 @@ do                                                            \
       {
          _connection->unlock () ;
       }
-      PD_TRACE_EXIT ( SDB_CLIENT__KILLCURSOR ) ;
       return ;
    error :
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT__READNEXTBUF, "_sdbCursorImpl::_readNextBuffer" )
    INT32 _sdbCursorImpl::_readNextBuffer ()
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT__READNEXTBUF ) ;
       INT32 rc = SDB_OK ;
       BOOLEAN result = FALSE ;
       BOOLEAN locked  = FALSE ;
@@ -327,7 +315,6 @@ do                                                            \
       {
          _connection->unlock () ;
       }
-      PD_TRACE_EXITRC ( SDB_CLIENT__READNEXTBUF, rc ) ;
       return rc ;
    error :
       // release resource kept in cursor
@@ -351,10 +338,8 @@ do                                                            \
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_NEXT, "_sdbCursorImpl::next" )
    INT32 _sdbCursorImpl::next ( BSONObj &obj )
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT_NEXT ) ;
       INT32 rc = SDB_OK ;
       BSONObj localobj ;
       MsgOpReply *pReply = NULL ;
@@ -429,16 +414,13 @@ do                                                            \
       ++ _totalRead ;
    done :
       _isDeleteCurrent = FALSE ;
-      PD_TRACE_EXITRC ( SDB_CLIENT_NEXT, rc ) ;
       return rc ;
    error :
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_CURRENT, "_sdbCursorImpl::current" )
    INT32 _sdbCursorImpl::current ( BSONObj &obj )
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT_CURRENT ) ;
       INT32 rc = SDB_OK ;
       MsgOpReply *pReply = NULL ;
       BSONObj localobj ;
@@ -514,16 +496,13 @@ do                                                            \
       obj = localobj.copy () ;
 
    done :
-      PD_TRACE_EXITRC ( SDB_CLIENT_CURRENT, rc ) ;
       return rc ;
    error :
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_CLOSECURSOR, "_sdbCursorImpl::close" )
    INT32 _sdbCursorImpl::close()
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT_CLOSECURSOR ) ;
       INT32 rc = SDB_OK ;
       BOOLEAN locked = FALSE ;
       BOOLEAN result ;
@@ -577,7 +556,6 @@ do                                                            \
       {
          _connection->unlock () ;
       }
-      PD_TRACE_EXITRC ( SDB_CLIENT_CLOSECURSOR, rc );
       return rc ;
    error :
       goto done ;
@@ -816,10 +794,8 @@ do                                                            \
       }
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIMPL__SETNAME, "_sdbCollectionImpl::_setName" )
    INT32 _sdbCollectionImpl::_setName ( const CHAR *pCollectionFullName )
    {
-      PD_TRACE_ENTRY ( SDB_CLIMPL__SETNAME ) ;
       INT32 rc                 = SDB_OK ;
       INT32 collectionSpaceLen = 0 ;
       INT32 collectionLen      = 0 ;
@@ -867,7 +843,6 @@ do                                                            \
          goto error ;
       }
    done :
-      PD_TRACE_EXITRC ( SDB_CLIMPL__SETNAME, rc );
       return rc ;
    error :
       goto done ;
@@ -926,7 +901,6 @@ do                                                            \
    } ;
    typedef class _idToInsert _idToInsert ;
 #pragma pack()
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIMPL__APPENDOID, "_sdbCollectionImpl::_appendOID" )
    INT32 _sdbCollectionImpl::_appendOID ( const BSONObj &input, BSONObj &output )
    {
       INT32 rc = SDB_OK ;
@@ -976,28 +950,20 @@ do                                                            \
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIMPL__SETCONNECTIONINCL, "_sdbCollectionImpl::_setConnection" )
    void _sdbCollectionImpl::_setConnection ( _sdb *connection )
    {
-      PD_TRACE_ENTRY ( SDB_CLIMPL__SETCONNECTIONINCL ) ;
       _connection = (_sdbImpl*)connection ;
       _connection->_regCollection ( this ) ;
-      PD_TRACE_EXIT ( SDB_CLIMPL__SETCONNECTIONINCL );
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIMPL__GETCONNECTIONINCL, "_sdbCollectionImpl::_getConnection" )
    void* _sdbCollectionImpl::_getConnection ()
    {
-      PD_TRACE_ENTRY ( SDB_CLIMPL__GETCONNECTIONINCL ) ;
       return _connection ;
-      PD_TRACE_EXIT ( SDB_CLIMPL__GETCONNECTIONINCL );
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_GETCOUNT, "_sdbCollectionImpl::getCount" )
    INT32 _sdbCollectionImpl::getCount ( SINT64 &count,
                                         const BSONObj &condition )
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT_GETCOUNT ) ;
       INT32 rc            = SDB_OK ;
       _sdbCursor *pCursor = NULL ;
       BSONObj newObj = BSON ( FIELD_NAME_COLLECTION << _collectionFullName ) ;
@@ -1053,18 +1019,15 @@ do                                                            \
       {
          delete( pCursor ) ;
       }
-      PD_TRACE_EXITRC ( SDB_CLIENT_GETCOUNT, rc );
       return rc ;
    error :
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_BULKINSERT, "_sdbCollectionImpl::bulkInsert" )
    INT32 _sdbCollectionImpl::bulkInsert ( SINT32 flags,
                                           vector<BSONObj> &obj
                                         )
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT_BULKINSERT ) ;
       INT32 rc = SDB_OK ;
       SINT64 contextID = 0 ;
       BOOLEAN result ;
@@ -1127,7 +1090,6 @@ do                                                            \
          goto error ;
       }
    exit:
-      PD_TRACE_EXITRC ( SDB_CLIENT_BULKINSERT, rc );
       return rc ;
    done :
       _connection->unlock () ;
@@ -1136,10 +1098,8 @@ do                                                            \
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_INSERT, "_sdbCollectionImpl::insert" )
    INT32 _sdbCollectionImpl::insert ( const BSONObj &obj, OID *id )
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT_INSERT ) ;
       INT32 rc = SDB_OK ;
       SINT64 contextID = 0 ;
       BOOLEAN result ;
@@ -1189,7 +1149,6 @@ do                                                            \
       }
 
    exit :
-      PD_TRACE_EXITRC ( SDB_CLIENT_INSERT, rc );
       return rc ;
    done :
       _connection->unlock () ;
@@ -1233,8 +1192,6 @@ do                                                            \
       }
       catch ( std::exception &e )
       {
-         PD_LOG ( PDWARNING, "Failed to create new hint, %s",
-                  e.what() ) ;
          rc = SDB_SYS ;
          goto error ;
       }
@@ -1247,13 +1204,11 @@ do                                                            \
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT__UPDATE, "_sdbCollectionImpl::_update" )
    INT32 _sdbCollectionImpl::_update ( const BSONObj &rule,
                                        const BSONObj &condition,
                                        const BSONObj &hint,
                                        INT32 flag )
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT__UPDATE ) ;
       INT32 rc = SDB_OK ;
       SINT64 contextID = 0 ;
       BOOLEAN result ;
@@ -1294,7 +1249,6 @@ do                                                            \
       }
 
    exit:
-      PD_TRACE_EXITRC ( SDB_CLIENT__UPDATE, rc );
       return rc ;
    done :
       _connection->unlock () ;
@@ -1303,11 +1257,9 @@ do                                                            \
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_DEL, "_sdbCollectionImpl::del" )
    INT32 _sdbCollectionImpl::del ( const BSONObj &condition,
                                    const BSONObj &hint )
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT_DEL ) ;
       INT32 rc = SDB_OK ;
       BOOLEAN result ;
       SINT64 contextID = 0 ;
@@ -1348,7 +1300,6 @@ do                                                            \
 
 
    exit:
-      PD_TRACE_EXITRC ( SDB_CLIENT_DEL, rc );
       return rc ;
    done :
       _connection->unlock () ;
@@ -1357,7 +1308,6 @@ do                                                            \
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_QUERY, "_sdbCollectionImpl::query" )
    INT32 _sdbCollectionImpl::query ( _sdbCursor **cursor,
                                      const BSONObj &condition,
                                      const BSONObj &selected,
@@ -1367,11 +1317,6 @@ do                                                            \
                                      INT64 numToReturn,
                                      INT32 flag )
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT_QUERY ) ;
-      PD_TRACE3 ( SDB_CLIENT_QUERY,
-                  PD_PACK_LONG(numToSkip),
-                  PD_PACK_LONG(numToReturn),
-                  PD_PACK_INT( flag ) );
       INT32 rc              = SDB_OK ;
       INT32 newFlags        = flag ;
       _sdbCursor *pCursor   = NULL ;
@@ -1437,12 +1382,11 @@ do                                                            \
       // return cursor
       *cursor = pCursor ;
    done :
-      PD_TRACE_EXITRC ( SDB_CLIENT_QUERY, rc );
       return rc ;
    error :
       goto done;
    }
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_QUERYONE, "queryOne" )
+
    INT32 _sdbCollectionImpl::queryOne( bson::BSONObj &obj,
                                        const bson::BSONObj &condition,
                                        const bson::BSONObj &selected,
@@ -1452,7 +1396,6 @@ do                                                            \
                                        INT32 flag )
    {
       INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY( SDB_CLIENT_QUERYONE ) ;
       sdbCursor cursor ;
 
       rc = query( cursor,
@@ -1475,13 +1418,11 @@ do                                                            \
       }
    done:
       cursor.close() ;
-      PD_TRACE_EXITRC( SDB_CLIENT_QUERYONE, rc ) ;
       return rc ;
    error:
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT__QUERYANDMODIFY, "_sdbCollectionImpl::_queryAndModify" )
    INT32 _sdbCollectionImpl::_queryAndModify  ( _sdbCursor **cursor,
                                                 const BSONObj &condition,
                                                 const BSONObj &selected,
@@ -1494,7 +1435,6 @@ do                                                            \
                                                 BOOLEAN isUpdate,
                                                 BOOLEAN returnNew )
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT__QUERYANDMODIFY ) ;
       INT32 rc = SDB_OK ;
       BSONObj newHint ;
 
@@ -1534,8 +1474,6 @@ do                                                            \
       }
       catch ( std::exception &e )
       {
-         PD_LOG ( PDWARNING, "Failed to create $Modify, %s",
-                  e.what() ) ;
          rc = SDB_SYS ;
          goto error ;
       }
@@ -1546,13 +1484,11 @@ do                                                            \
                   numToSkip, numToReturn, flag ) ;
 
    done:
-      PD_TRACE_EXITRC ( SDB_CLIENT__QUERYANDMODIFY, rc );
       return rc ;
    error:
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_GETQUERYMETA, "_sdbCollectionImpl::getQueryMeta" )
    INT32 _sdbCollectionImpl::getQueryMeta ( _sdbCursor **cursor,
                                      const BSONObj &condition,
                                      const BSONObj &orderBy,
@@ -1560,10 +1496,6 @@ do                                                            \
                                      INT64 numToSkip,
                                      INT64 numToReturn )
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT_GETQUERYMETA ) ;
-      PD_TRACE2 ( SDB_CLIENT_GETQUERYMETA,
-                  PD_PACK_LONG(numToSkip),
-                  PD_PACK_LONG(numToReturn) );
       INT32 rc = SDB_OK ;
       const CHAR *p = NULL ;
       BOOLEAN result ;
@@ -1626,7 +1558,6 @@ do                                                            \
       ((_sdbCursorImpl*)*cursor)->_contextID = contextID ;
       ((_sdbCursorImpl*)*cursor)->_setConnection ( _connection ) ;
    done :
-      PD_TRACE_EXITRC ( SDB_CLIENT_GETQUERYMETA, rc );
       return rc ;
    error :
       if ( NULL != *cursor )
@@ -1722,14 +1653,12 @@ do                                                            \
 
    }*/
 
-//   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT__CREATEINDEX, "_sdbCollectionImpl::_createIndex" )
    INT32 _sdbCollectionImpl::_createIndex ( const BSONObj &indexDef,
                                             const CHAR *pName,
                                             BOOLEAN isUnique,
                                             BOOLEAN isEnforced,
                                             INT32 sortBufferSize )
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT__CREATEINDEX ) ;
       INT32 rc = SDB_OK ;
       BOOLEAN result ;
       SINT64 contextID = 0 ;
@@ -1796,7 +1725,6 @@ do                                                            \
    done :
       if ( locked )
          _connection->unlock () ;
-      PD_TRACE_EXITRC ( SDB_CLIENT__CREATEINDEX, rc );
       return rc ;
    error :
       goto done ;
@@ -1820,11 +1748,9 @@ do                                                            \
       return _createIndex ( indexDef, pName, isUnique, isEnforced, sortBufferSize ) ;
    }
 
-//   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_GETINDEXES, "_sdbCollectionImpl::getIndexes" )
    INT32 _sdbCollectionImpl::getIndexes ( _sdbCursor **cursor,
                                           const CHAR *pName )
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT_GETINDEXES ) ;
       INT32 rc = SDB_OK ;
       BOOLEAN result ;
       SINT64 contextID = 0 ;
@@ -1891,7 +1817,6 @@ do                                                            \
       ((_sdbCursorImpl*)*cursor)->_setConnection ( _connection ) ;
 
    exit:
-      PD_TRACE_EXITRC ( SDB_CLIENT_GETINDEXES, rc );
       return rc ;
    done :
       _connection->unlock () ;
@@ -1907,10 +1832,8 @@ do                                                            \
 
    }
 
-//   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_DROPINDEX, "_sdbCollectionImpl::dropIndex" )
    INT32 _sdbCollectionImpl::dropIndex ( const CHAR *pName )
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT_DROPINDEX ) ;
       INT32 rc = SDB_OK ;
       BOOLEAN result ;
       SINT64 contextID = 0 ;
@@ -1962,16 +1885,13 @@ do                                                            \
     done :
       if ( locked )
          _connection->unlock () ;
-      PD_TRACE_EXITRC ( SDB_CLIENT_DROPINDEX, rc );
       return rc ;
    error :
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_CREATEINCL, "_sdbCollectionImpl::create" )
    INT32 _sdbCollectionImpl::create ()
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT_CREATEINCL ) ;
       INT32 rc = SDB_OK ;
       BOOLEAN result ;
       SINT64 contextID = 0 ;
@@ -2018,16 +1938,13 @@ do                                                            \
    done :
       if ( locked )
          _connection->unlock () ;
-      PD_TRACE_EXITRC ( SDB_CLIENT_CREATEINCL, rc );
       return rc ;
    error :
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_DROPINCL, "_sdbCollectionImpl::drop" )
    INT32 _sdbCollectionImpl::drop ()
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT_DROPINCL ) ;
       INT32 rc = SDB_OK ;
       BOOLEAN result ;
       SINT64 contextID = 0 ;
@@ -2075,19 +1992,16 @@ do                                                            \
    done :
       if ( locked )
          _connection->unlock () ;
-      PD_TRACE_EXITRC ( SDB_CLIENT_DROPINCL, rc );
       return rc ;
    error :
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_SPLIT, "_sdbCollectionImpl::split" )
    INT32 _sdbCollectionImpl::split ( const CHAR *pSourceGroupName,
                                      const CHAR *pTargetGroupName,
                                      const BSONObj &splitCondition,
                                      const BSONObj &splitEndCondition)
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT_SPLIT ) ;
       INT32 rc = SDB_OK ;
       BOOLEAN result ;
       SINT64 contextID = 0 ;
@@ -2141,18 +2055,15 @@ do                                                            \
    done :
       if ( locked )
          _connection->unlock () ;
-      PD_TRACE_EXITRC ( SDB_CLIENT_SPLIT, rc );
       return rc ;
    error :
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_SPLIT2, "_sdbCollectionImpl::split" )
    INT32 _sdbCollectionImpl::split ( const CHAR *pSourceGroupName,
                                      const CHAR *pTargetGroupName,
                                      double percent )
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT_SPLIT2 ) ;
       INT32 rc = SDB_OK ;
       BOOLEAN result ;
       SINT64 contextID = 0 ;
@@ -2211,20 +2122,17 @@ do                                                            \
    done :
       if ( locked )
          _connection->unlock () ;
-      PD_TRACE_EXITRC ( SDB_CLIENT_SPLIT2, rc );
       return rc ;
    error :
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_SPLITASYNC, "_sdbCollectionImpl::splitAsync" )
    INT32 _sdbCollectionImpl::splitAsync ( SINT64 &taskID,
                     const CHAR *pSourceGroupName,
                     const CHAR *pTargetGroupName,
                     const bson::BSONObj &splitCondition,
                     const bson::BSONObj &splitEndCondition )
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT_SPLITASYNC ) ;
       INT32 rc                 = SDB_OK ;
       BOOLEAN result ;
       SINT64 contextID    = 0 ;
@@ -2323,19 +2231,16 @@ do                                                            \
    done :
       if ( locked )
          _connection->unlock () ;
-      PD_TRACE_EXITRC ( SDB_CLIENT_SPLITASYNC, rc ) ;
       return rc ;
    error :
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_SPLITASYNC2, "_sdbCollectionImpl::splitAsync2" )
    INT32 _sdbCollectionImpl::splitAsync ( const CHAR *pSourceGroupName,
                                           const CHAR *pTargetGroupName,
                                           FLOAT64 percent,
                                           SINT64 &taskID )
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT_SPLITASYNC2 ) ;
       INT32 rc                 = SDB_OK ;
       BOOLEAN result ;
       SINT64 contextID    = 0 ;
@@ -2438,17 +2343,14 @@ do                                                            \
    done :
       if ( locked )
          _connection->unlock () ;
-      PD_TRACE_EXITRC ( SDB_CLIENT_SPLITASYNC2, rc ) ;
    return rc ;
    error :
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_AGGREGATE,"_sdbCollectionImpl::aggregate" )
    INT32 _sdbCollectionImpl::aggregate ( _sdbCursor **cursor,
                             std::vector<bson::BSONObj> &obj )
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT_AGGREGATE ) ;
       INT32 rc = SDB_OK ;
       BOOLEAN locked = FALSE ;
       BOOLEAN result ;
@@ -2517,7 +2419,6 @@ do                                                            \
       {
          _connection->unlock () ;
       }
-      PD_TRACE_EXITRC ( SDB_CLIENT_AGGREGATE, rc ) ;
       return rc ;
 error:
       if ( NULL != *cursor )
@@ -2529,11 +2430,9 @@ error:
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_ATTACHCOLLECTION,"_sdbCollectionImpl::attachCollection" )
    INT32 _sdbCollectionImpl::attachCollection ( const CHAR *subClFullName,
                                                 const bson::BSONObj &options)
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT_ATTACHCOLLECTION ) ;
       INT32 rc         = SDB_OK ;
       BOOLEAN locked   = FALSE ;
       SINT64 contextID = 0 ;
@@ -2599,16 +2498,13 @@ error:
       {
          _connection->unlock () ;
       }
-      PD_TRACE_EXITRC ( SDB_CLIENT_ATTACHCOLLECTION, rc ) ;
       return rc ;
    error:
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_DETACHCOLLECTION,"_sdbCollectionImpl::detachCollection" )
    INT32 _sdbCollectionImpl::detachCollection ( const CHAR *subClFullName)
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT_DETACHCOLLECTION ) ;
       INT32 rc         = SDB_OK ;
       BOOLEAN locked   = FALSE ;
       SINT64 contextID = 0 ;
@@ -2667,16 +2563,13 @@ error:
       {
          _connection->unlock () ;
       }
-      PD_TRACE_EXITRC ( SDB_CLIENT_DETACHCOLLECTION, rc ) ;
       return rc ;
    error:
       goto done ;
    }
 
-//    PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT__ALTERCOLLECTION2, "_sdbCollectionImpl::_alterCollection2" )
    INT32 _sdbCollectionImpl::_alterCollection2 ( const bson::BSONObj &options )
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT__ALTERCOLLECTION2 ) ;
       INT32 rc            = SDB_OK ;
       BOOLEAN result      = FALSE ;
       BSONObjBuilder bob ;
@@ -2742,17 +2635,14 @@ error:
       }
 
    done :
-      PD_TRACE_EXITRC ( SDB_CLIENT__ALTERCOLLECTION2, rc );
       return rc ;
    error :
       goto done ;
 
    }
 
-//    PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT__ALTERCOLLECTION1, "_sdbCollectionImpl::_alterCollection1" )
    INT32 _sdbCollectionImpl::_alterCollection1 ( const bson::BSONObj &options )
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT__ALTERCOLLECTION1 ) ;
       INT32 rc            = SDB_OK ;
       BOOLEAN result      = FALSE ;
       BSONObjBuilder bob ;
@@ -2791,17 +2681,14 @@ error:
          goto error ;
       }
    done :
-      PD_TRACE_EXITRC ( SDB_CLIENT__ALTERCOLLECTION1, rc );
       return rc ;
    error :
       goto done ;
 
    }
 
-//    PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_ALTERCOLLECTION, "_sdbCollectionImpl::alterCollection" )
    INT32 _sdbCollectionImpl::alterCollection ( const bson::BSONObj &options )
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT_ALTERCOLLECTION ) ;
       INT32 rc            = SDB_OK ;
       BSONElement ele ;
 
@@ -2821,14 +2708,12 @@ error:
       }
 
    done :
-      PD_TRACE_EXITRC ( SDB_CLIENT_ALTERCOLLECTION, rc );
       return rc ;
    error :
       goto done ;
 
    }
 
-//    PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_EXPLAIN, "_sdbCollectionImpl::explain" )
    INT32 _sdbCollectionImpl::explain ( 
                               _sdbCursor **cursor,
                               const bson::BSONObj &condition,
@@ -2840,7 +2725,6 @@ error:
                               INT32 flags,
                               const bson::BSONObj &options )
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT_EXPLAIN ) ;
       INT32 rc = SDB_OK ;
       BSONObjBuilder bob ;
       BSONObj newObj ;
@@ -2872,16 +2756,13 @@ error:
       }
 
    done:
-      PD_TRACE_EXITRC ( SDB_CLIENT_EXPLAIN, rc ) ;
       return rc ;
    error:
       goto done ;
    }
 
-   //PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_CREATELOB, "_sdbCollectionImpl::createLob" )
    INT32 _sdbCollectionImpl::createLob( _sdbLob **lob, const bson::OID *oid )
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT_CREATELOB ) ;
       INT32 rc = SDB_OK ;
       BSONObjBuilder bob ;
       BSONObj obj ;
@@ -2987,7 +2868,6 @@ error:
    done:
       if ( locked )
          _connection->unlock () ;
-      PD_TRACE_EXITRC ( SDB_CLIENT_CREATELOB, rc ) ;
       return rc ;
    error:
       if ( *lob )
@@ -2998,10 +2878,8 @@ error:
       goto done ;
    }
 
-   //PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_REMOVELOB, "_sdbCollectionImpl::removeLob" )
    INT32 _sdbCollectionImpl::removeLob( const bson::OID &oid )
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT_REMOVELOB ) ;
       INT32 rc = SDB_OK ;
       SINT64 contextID = -1 ;
       BOOLEAN result = FALSE ;
@@ -3063,16 +2941,13 @@ error:
    done:
       if ( locked )
          _connection->unlock() ;
-      PD_TRACE_EXITRC ( SDB_CLIENT_REMOVELOB, rc ) ;
       return rc ;
    error:
       goto done ;
    }
 
-   //PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_OPENLOB, "_sdbCollectionImpl::openLob" )
    INT32 _sdbCollectionImpl::openLob( _sdbLob **lob, const bson::OID &oid )
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT_OPENLOB ) ;
       INT32 rc = SDB_OK ;
       BSONObjBuilder bob ;
       BSONObj obj ;
@@ -3205,7 +3080,6 @@ error:
    done:
       if ( locked )
          _connection->unlock () ;
-      PD_TRACE_EXITRC ( SDB_CLIENT_OPENLOB, rc ) ;
       return rc ;
    error:
       if ( *lob )
@@ -3216,10 +3090,8 @@ error:
       goto done ;
    }
 
-   //PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_LISTLOBS, "_sdbCollectionImpl::listLobs" )
    INT32 _sdbCollectionImpl::listLobs ( _sdbCursor **cursor )
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT_REMOVELOB ) ;
       INT32 rc = SDB_OK ;
       BSONObjBuilder bob ;
       BSONObj obj ;
@@ -3248,17 +3120,14 @@ error:
          goto error ;
       }
    done:
-      PD_TRACE_EXITRC ( SDB_CLIENT_REMOVELOB, rc ) ;
       return rc ;
    error:
       goto done ;
    }
 
-   //PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_RUNCMDOFLOB, "_sdbCollectionImpl::_runCmdOfLob" )
    INT32 _sdbCollectionImpl::_runCmdOfLob ( const CHAR *cmd, const BSONObj &obj,
                                             _sdbCursor **cursor )
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT_RUNCMDOFLOB ) ;
       INT32 rc = SDB_OK ;
       BOOLEAN result = FALSE ;
       BOOLEAN locked = FALSE ;
@@ -3330,7 +3199,6 @@ error:
    done:
       if ( locked )
          _connection->unlock() ;
-      PD_TRACE_EXITRC ( SDB_CLIENT_RUNCMDOFLOB, rc ) ;
       return rc ;
    error:
       goto done ;
@@ -3349,11 +3217,9 @@ error:
    }
 */
 
-   //PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_TRUNCATE, "_sdbCollectionImpl::truncate" )
    INT32 _sdbCollectionImpl::truncate()
    {
       INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY( SDB_CLIENT_TRUNCATE ) ;
       BSONObj obj ;
       BOOLEAN locked = FALSE ;
       BOOLEAN result = TRUE ;
@@ -3402,16 +3268,13 @@ error:
       {
          _connection->unlock () ;
       }
-      PD_TRACE_EXITRC( SDB_CLIENT_TRUNCATE, rc ) ;
       return rc ;
    error:
       goto done ;
    }
 
-//PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_CREATEIDINDEX, "_sdbCollectionImpl::createIdIndex" )
    INT32 _sdbCollectionImpl::createIdIndex( const bson::BSONObj &options )
    {
-      PD_TRACE_ENTRY( SDB_CLIENT_CREATEIDINDEX ) ;
       INT32 rc = SDB_OK ;
       BSONObjBuilder bob ;
       BSONObj obj ;
@@ -3436,16 +3299,13 @@ error:
       }
 
    done:
-      PD_TRACE_EXITRC( SDB_CLIENT_CREATEIDINDEX, rc ) ;    
       return rc ;
    error:
       goto done ;
    }
 
-//PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_DROPIDINDEX, "_sdbCollectionImpl::dropIdIndex" )
    INT32 _sdbCollectionImpl::dropIdIndex()
    {
-      PD_TRACE_ENTRY( SDB_CLIENT_DROPIDINDEX ) ;
       INT32 rc = SDB_OK ;
       BSONObjBuilder bob ;
       BSONObj obj ;
@@ -3462,7 +3322,6 @@ error:
       }
       
    done:
-      PD_TRACE_EXITRC( SDB_CLIENT_DROPIDINDEX, rc ) ;    
       return rc ;
    error:
       goto done ;
@@ -3489,10 +3348,8 @@ error:
       }
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_CONNECTINRN, "_sdbNodeImpl::connect" )
    INT32 _sdbNodeImpl::connect ( _sdb **dbConn )
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT_CONNECTINRN ) ;
       INT32 rc = SDB_OK ;
       _sdbImpl *connection = NULL ;
       if ( !_connection || !dbConn || ossStrlen ( _hostName ) == 0 ||
@@ -3514,7 +3371,6 @@ error:
       }
       *dbConn = connection ;
    done :
-      PD_TRACE_EXITRC ( SDB_CLIENT_CONNECTINRN, rc );
       return rc ;
    error :
       if ( connection )
@@ -3522,10 +3378,8 @@ error:
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_GETSTATUS, "_sdbNodeImpl::getStatus" )
    sdbNodeStatus _sdbNodeImpl::getStatus ( )
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT_GETSTATUS ) ;
       sdbNodeStatus sns     = SDB_NODE_UNKNOWN ;
       INT32 rc              = SDB_OK ;
       SINT64 contextID      = 0 ;
@@ -3574,16 +3428,13 @@ error:
       {
          SDB_OSS_FREE ( _pReceiveBuffer ) ;
       }
-      PD_TRACE_EXITRC ( SDB_CLIENT_GETSTATUS, sns );
       return sns ;
    error :
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT__STOPSTART, "_sdbNodeImpl::_stopStart" )
    INT32 _sdbNodeImpl::_stopStart ( BOOLEAN start )
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT__STOPSTART ) ;
       INT32 rc = SDB_OK ;
       BOOLEAN result = FALSE ;
       BSONObj configuration ;
@@ -3605,7 +3456,6 @@ error:
          goto error ;
       }
    done :
-      PD_TRACE_EXITRC ( SDB_CLIENT__STOPSTART, rc );
       return rc ;
    error :
       goto done ;
@@ -3647,10 +3497,8 @@ error:
       }
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_GETNODENUM, "_sdbReplicaGroupImpl::getNodeNum" )
    INT32 _sdbReplicaGroupImpl::getNodeNum ( sdbNodeStatus status, INT32 *num )
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT_GETNODENUM ) ;
       INT32 rc = SDB_OK ;
       BSONObj result ;
       BSONElement ele ;
@@ -3678,7 +3526,6 @@ error:
       }
       *num = totalCount ;
    exit:
-      PD_TRACE_EXITRC ( SDB_CLIENT_GETNODENUM, rc );
       return rc ;
    done :
       goto exit ;
@@ -3686,13 +3533,11 @@ error:
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_CREATENODE2, "_sdbReplicaGroupImpl::createNode" )
    INT32 _sdbReplicaGroupImpl::createNode ( const CHAR *pHostName,
                                             const CHAR *pServiceName,
                                             const CHAR *pDatabasePath,
                                             const bson::BSONObj &options )
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT_CREATENODE ) ;
       INT32 rc = SDB_OK ;
       BSONObj configuration ;
       BSONObj pattern ;
@@ -3736,19 +3581,16 @@ error:
       }
 
    done :
-      PD_TRACE_EXITRC ( SDB_CLIENT_CREATENODE, rc );
       return rc ;
    error :
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_CREATENODE, "_sdbReplicaGroupImpl::createNode" )
    INT32 _sdbReplicaGroupImpl::createNode ( const CHAR *pHostName,
                                             const CHAR *pServiceName,
                                             const CHAR *pDatabasePath,
                                             map<string,string> &config )
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT_CREATENODE ) ;
       INT32 rc = SDB_OK ;
       BSONObj configuration ;
       BSONObjBuilder ob ;
@@ -3793,18 +3635,15 @@ error:
       }
 
    done :
-      PD_TRACE_EXITRC ( SDB_CLIENT_CREATENODE, rc );
       return rc ;
    error :
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_REMOVENODE, "_sdbReplicaGroupImpl::removeNode" )
    INT32 _sdbReplicaGroupImpl::removeNode ( const CHAR *pHostName,
                                                    const CHAR *pServiceName,
                                                    const BSONObj &configure )
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT_REMOVENODE ) ;
       INT32 rc = SDB_OK ;
       BSONObj removeInfo ;
       BSONObjBuilder ob ;
@@ -3850,16 +3689,13 @@ error:
       }
 
    done :
-      PD_TRACE_EXITRC ( SDB_CLIENT_REMOVENODE, rc );
       return rc ;
    error :
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_GETDETAIL, "_sdbReplicaGroupImpl::getDetail" )
    INT32 _sdbReplicaGroupImpl::getDetail ( BSONObj &result )
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT_GETDETAIL ) ;
       INT32 rc = SDB_OK ;
       BSONObj newObj ;
       sdbCursor cursor ;
@@ -3880,17 +3716,14 @@ error:
          goto error ;
       }
    done :
-      PD_TRACE_EXITRC ( SDB_CLIENT_GETDETAIL, rc );
       return rc ;
    error :
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT__EXTRACTNODE, "_sdbReplicaGroupImpl::_extractNode" )
    INT32 _sdbReplicaGroupImpl::_extractNode ( _sdbNode **node,
                                             const CHAR *primaryData )
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT__EXTRACTNODE ) ;
       INT32 rc = SDB_OK ;
       _sdbNodeImpl *pNode = NULL ;
       if ( !_connection || !node || !primaryData )
@@ -3926,7 +3759,6 @@ error:
                    OSS_MAX_SERVICENAME ) ;
    done :
       *node = pNode ;
-      PD_TRACE_EXITRC ( SDB_CLIENT__EXTRACTNODE, rc );
       return rc ;
    error :
       if ( pNode )
@@ -3938,10 +3770,8 @@ error:
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_GETMASETER, "_sdbReplicaGroupImpl::getMaster" )
    INT32 _sdbReplicaGroupImpl::getMaster ( _sdbNode **node )
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT_GETMASETER ) ;
       INT32 rc = SDB_OK ;
       INT32 primaryNode = -1 ;
       const CHAR *primaryData = NULL ;
@@ -4020,17 +3850,14 @@ error:
       }
       // Build sdbNode based on hostname and service name
    done :
-      PD_TRACE_EXITRC ( SDB_CLIENT_GETMASETER, rc );
       return rc ;
    error :
       goto done ;
    }
 
    // attempt to get slave, if no slave exist, return primary
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_GETSLAVE, "_sdbReplicaGroupImpl::getSlave" )
    INT32 _sdbReplicaGroupImpl::getSlave ( _sdbNode **node )
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT_GETSLAVE ) ;
       INT32 rc = SDB_OK ;
       INT32 primaryNode = -1 ;
       const CHAR *primaryData = NULL ;
@@ -4123,18 +3950,15 @@ error:
          goto error ;
       }
    done :
-      PD_TRACE_EXITRC ( SDB_CLIENT_GETSLAVE, rc ); 
       return rc ;
    error :
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_GETNODE1, "_sdbReplicaGroupImpl::getNode" )
    INT32 _sdbReplicaGroupImpl::getNode ( const CHAR *pHostName,
                                          const CHAR *pServiceName,
                                          _sdbNode **node )
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT_GETNODE1 ) ;
       INT32 rc = SDB_OK ;
       BSONObj result ;
       BSONElement ele ;
@@ -4193,7 +4017,6 @@ error:
          goto error ;
       }
    done :
-      PD_TRACE_EXITRC ( SDB_CLIENT_GETNODE1, rc );
       return rc ;
    error :
       if ( node && *node )
@@ -4204,11 +4027,9 @@ error:
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_GETNODE2, "_sdbReplicaGroupImpl::getNode" )
    INT32 _sdbReplicaGroupImpl::getNode ( const CHAR *pNodeName,
                                   _sdbNode **node )
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT_GETNODE2 ) ;
       INT32 rc = SDB_OK ;
       CHAR *pHostName = NULL ;
       CHAR *pServiceName = NULL ;
@@ -4243,16 +4064,13 @@ error:
    done :
       if ( pHostName )
          SDB_OSS_FREE ( pHostName ) ;
-      PD_TRACE_EXITRC ( SDB_CLIENT_GETNODE2, rc );
       return rc ;
    error :
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_STARTRS, "_sdbReplicaGroupImpl::start" )
    INT32 _sdbReplicaGroupImpl::start ()
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT_STARTRS ) ;
       INT32 rc = SDB_OK ;
       BSONObj replicaGroupName ;
       BOOLEAN result = FALSE ;
@@ -4269,16 +4087,13 @@ error:
          goto error ;
       }
    done :
-      PD_TRACE_EXITRC ( SDB_CLIENT_STARTRS, rc );
       return rc ;
    error :
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_STOPRS, "_sdbReplicaGroupImpl::stop" )
    INT32 _sdbReplicaGroupImpl::stop ()
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT_STOPRS ) ;
       INT32 rc = SDB_OK ;
       BOOLEAN result = FALSE ;
       BSONObj configuration ;
@@ -4296,18 +4111,15 @@ error:
          goto error ;
       }
    done :
-      PD_TRACE_EXITRC ( SDB_CLIENT_STOPRS, rc );
       return rc ;
    error :
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_ATTACHNODE, "_sdbReplicaGroupImpl::attachNode" )
    INT32 _sdbReplicaGroupImpl::attachNode( const CHAR *pHostName,
                                            const CHAR *pSvcName,
                                            const bson::BSONObj &options )
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT_ATTACHNODE ) ;
       INT32 rc = SDB_OK ;
       BSONObjBuilder bob ;
       BSONElement ele ;
@@ -4353,18 +4165,15 @@ error:
       }
 
    done :
-      PD_TRACE_EXITRC ( SDB_CLIENT_ATTACHNODE, rc );
       return rc ;
    error :
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_DETACHNODE, "_sdbReplicaGroupImpl::detachNode" ) 
    INT32 _sdbReplicaGroupImpl::detachNode( const CHAR *pHostName,
                                            const CHAR *pSvcName,
                                            const bson::BSONObj &options )
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT_DETACHNODE ) ;
       INT32 rc = SDB_OK ;
       BSONObjBuilder bob ;
       BSONElement ele ;
@@ -4410,16 +4219,13 @@ error:
       }
 
    done :
-      PD_TRACE_EXITRC ( SDB_CLIENT_DETACHNODE, rc );
       return rc ;
    error :
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT__SETNAME, "_sdbCollectionSpaceImpl::_setName" )
    INT32 _sdbCollectionSpaceImpl::_setName ( const CHAR *pCollectionSpaceName )
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT__SETNAME ) ;
       INT32 rc = SDB_OK ;
       INT32 nameLength = ossStrlen ( pCollectionSpaceName ) ;
       if ( nameLength > CLIENT_CS_NAMESZ )
@@ -4430,7 +4236,6 @@ error:
       ossMemset ( _collectionSpaceName, 0, sizeof ( _collectionSpaceName ) ) ;
       ossMemcpy ( _collectionSpaceName, pCollectionSpaceName, nameLength );
    exit:
-      PD_TRACE_EXITRC ( SDB_CLIENT__SETNAME, rc );
       return rc ;
    }
 
@@ -4475,20 +4280,15 @@ error:
       }
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_SDBCSIMPL__SETCONNECTIONINCS, "_sdbCollectionSpaceImpl::_setConnection" )
    void _sdbCollectionSpaceImpl::_setConnection ( _sdb *connection )
    {
-      PD_TRACE_ENTRY ( SDB_SDBCSIMPL__SETCONNECTIONINCS ) ;
       _connection = (_sdbImpl*)connection ;
       _connection->_regCollectionSpace ( this ) ;
-      PD_TRACE_EXIT ( SDB_SDBCSIMPL__SETCONNECTIONINCS );
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_GETCOLLECTIONINCS, "_sdbCollectionSpaceImpl::getCollection" )
    INT32 _sdbCollectionSpaceImpl::getCollection ( const CHAR *pCollectionName,
                                                   _sdbCollection **collection )
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT_GETCOLLECTIONINCS ) ;
       INT32 rc            = SDB_OK ;
       BOOLEAN result      = FALSE ;
       BSONObj newObj ;
@@ -4544,7 +4344,6 @@ error:
       ((sdbCollectionImpl*)*collection)->_setName ( collectionS.c_str() ) ;
 
    done :
-      PD_TRACE_EXITRC ( SDB_CLIENT_GETCOLLECTIONINCS, rc );
       return rc ;
 error :
       if ( NULL != *collection )
@@ -4561,12 +4360,10 @@ error :
       return createCollection ( pCollectionName, _sdbStaticObject, collection ) ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_CREATECOLLECTION, "_sdbCollectionSpaceImpl::createCollection" )
    INT32 _sdbCollectionSpaceImpl::createCollection ( const CHAR *pCollectionName,
                                                      const BSONObj &options,
                                                      _sdbCollection **collection )
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT_CREATECOLLECTION ) ;
       INT32 rc            = SDB_OK ;
       BOOLEAN result      = FALSE ;
       BSONObj newObj ;
@@ -4622,7 +4419,6 @@ error :
          goto error ;
       }
    done :
-      PD_TRACE_EXITRC ( SDB_CLIENT_CREATECOLLECTION, rc );
       return rc ;
 error :
       if ( NULL == *collection )
@@ -4634,10 +4430,8 @@ error :
       goto done ;
    }
 
-//   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_DROPCOLLECTION, "_sdbCollectionSpaceImpl::dropCollection" )
    INT32 _sdbCollectionSpaceImpl::dropCollection ( const CHAR *pCollectionName )
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT_DROPCOLLECTION ) ;
       INT32 rc            = SDB_OK ;
       BOOLEAN result      = FALSE ;
       BSONObj newObj ;
@@ -4671,16 +4465,13 @@ error :
          goto error ;
       }
    done :
-      PD_TRACE_EXITRC ( SDB_CLIENT_DROPCOLLECTION, rc );
       return rc ;
    error :
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_CREATECS, "_sdbCollectionSpaceImpl::create" )
    INT32 _sdbCollectionSpaceImpl::create ()
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT_CREATECS ) ;
       INT32 rc            = SDB_OK ;
       BOOLEAN result      = FALSE ;
       BSONObj newObj ;
@@ -4705,16 +4496,13 @@ error :
          goto error ;
       }
    done :
-      PD_TRACE_EXITRC ( SDB_CLIENT_CREATECS, rc );
       return rc ;
    error :
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_DROPCS, "_sdbCollectionSpaceImpl::drop" )
    INT32 _sdbCollectionSpaceImpl::drop ()
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT_DROPCS ) ;
       INT32 rc            = SDB_OK ;
       BOOLEAN result      = FALSE ;
       BSONObj newObj ;
@@ -4738,7 +4526,6 @@ error :
          goto error ;
       }
    done :
-      PD_TRACE_EXITRC ( SDB_CLIENT_DROPCS, rc );
       return rc ;
    error :
       goto done ;
@@ -4784,19 +4571,14 @@ error :
       }
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT__DOMAINSETCONNECTION, "_sdbDomainImpl::_setConnection" )
    void _sdbDomainImpl::_setConnection ( _sdb *connection )
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT__DOMAINSETCONNECTION ) ;
       _connection = (_sdbImpl*)connection ;
       _connection->_regDomain ( this ) ;
-      PD_TRACE_EXIT ( SDB_CLIENT__DOMAINSETCONNECTION );
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT__DOMAINSETNAME, "_sdbDomainImpl::_setName" )
    INT32 _sdbDomainImpl::_setName ( const CHAR *pDomainName )
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT__DOMAINSETNAME ) ;
       INT32 rc = SDB_OK ;
       INT32 nameLength = ossStrlen ( pDomainName ) ;
       if ( nameLength > CLIENT_DOMAIN_NAMESZ )
@@ -4807,16 +4589,13 @@ error :
       ossMemset ( _domainName, 0, sizeof(_domainName) ) ;
       ossMemcpy ( _domainName, pDomainName, nameLength ) ;
    done :
-      PD_TRACE_EXITRC ( SDB_CLIENT__DOMAINSETNAME, rc );
       return rc ;
    error :
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_ALTERDOMAIN, "_sdbDomainImpl::alterDomain" )
    INT32 _sdbDomainImpl::alterDomain ( const bson::BSONObj &options )
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT_ALTERDOMAIN ) ;
       INT32 rc       = SDB_OK ;
       BOOLEAN result = FALSE ;
       BSONObj newObj ;
@@ -4847,16 +4626,13 @@ error :
       }
 
    done :
-      PD_TRACE_EXITRC ( SDB_CLIENT_ALTERDOMAIN, rc );
       return rc ;
    error :
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_LISTCSINDOMAIN, "_sdbDomainImpl::listCollectionSpacesInDomain" )
    INT32 _sdbDomainImpl::listCollectionSpacesInDomain ( _sdbCursor **cursor )
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT_LISTCSINDOMAIN ) ;
       INT32 rc = SDB_OK ;
       BSONObj condition ;
       BSONObj selector ;
@@ -4887,16 +4663,13 @@ error :
          goto error ;
       }
    done :
-      PD_TRACE_EXITRC ( SDB_CLIENT_LISTCSINDOMAIN, rc );
       return rc ;
    error :
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_LISTCLINDOMAIN, "_sdbDomainImpl::listCollectionsInDomain" )
    INT32 _sdbDomainImpl::listCollectionsInDomain ( _sdbCursor **cursor )
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT_LISTCLINDOMAIN ) ;
       INT32 rc = SDB_OK ;
       BSONObj condition ;
       BSONObj selector ;
@@ -4927,7 +4700,6 @@ error :
          goto error ;
       }
    done :
-      PD_TRACE_EXITRC ( SDB_CLIENT_LISTCLINDOMAIN, rc );
       return rc ;
    error :
       goto done ;
@@ -4963,11 +4735,9 @@ error :
       }
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT__DCSETNAME, "_sdbDataCenterImpl::_setName" )
    INT32 _sdbDataCenterImpl::_setName ( const CHAR *pClusterName,
                                         const CHAR *pBusinessName )
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT__DCSETNAME ) ;
       INT32 rc = SDB_OK ;
       INT32 nameLength = ossStrlen( pClusterName ) + 
                          ossStrlen( pBusinessName ) + 1 ;
@@ -4983,25 +4753,19 @@ error :
       ossMemcpy( _dcName + ossStrlen(pClusterName) + 1, pBusinessName,
                  ossStrlen(pBusinessName) ) ;
    done :
-      PD_TRACE_EXITRC ( SDB_CLIENT__DCSETNAME, rc );
       return rc ;
    error :
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT__DCSETCONNECTION, "_sdbDataCenterImpl::_setConnection" )
    void _sdbDataCenterImpl::_setConnection ( _sdb *connection )
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT__DCSETCONNECTION ) ;
       _connection = (_sdbImpl*)connection ;
       _connection->_regDataCenter( this ) ;
-      PD_TRACE_EXIT ( SDB_CLIENT__DCSETCONNECTION );
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT__DCCOMMON, "_sdbDataCenterImpl::_DCCommon" )
    INT32 _sdbDataCenterImpl::_DCCommon( const CHAR *pValue, const bson::BSONObj *pInfo )
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT__DCCOMMON ) ;
       INT32 rc            = SDB_OK ;
       const CHAR *pCommand = CMD_ADMIN_PREFIX CMD_NAME_ALTER_DC ;
       BSONObjBuilder bob ;
@@ -5036,16 +4800,13 @@ error :
       }
 
    done :
-      PD_TRACE_EXITRC ( SDB_CLIENT__DCCOMMON, rc ) ;
       return rc ;
    error :
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_DCGETDETAIL, "_sdbDataCenterImpl::getDetail" )
    INT32 _sdbDataCenterImpl::getDetail( bson::BSONObj &retInfo )
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT_DCGETDETAIL ) ;
       INT32 rc                  = SDB_OK ;
       const CHAR *pCommand      = CMD_ADMIN_PREFIX CMD_NAME_GET_DCINFO ;
       _sdbCursor *retInfoCursor = NULL ;
@@ -5083,34 +4844,25 @@ error :
       {
          delete retInfoCursor ;
       }
-      PD_TRACE_EXITRC ( SDB_CLIENT_DCGETDETAIL, rc ) ;
       return rc ;
    error :
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_ACTIVATEDC, "_sdbDataCenterImpl::activateDC" )
    INT32 _sdbDataCenterImpl::activateDC()
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT_ACTIVATEDC ) ;
       INT32 rc = _DCCommon( CMD_VALUE_NAME_ACTIVATE, NULL ) ;
-      PD_TRACE_EXITRC ( SDB_CLIENT_ACTIVATEDC, rc ) ;
       return rc ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_DEACTIVATEDC, "_sdbDataCenterImpl::deactivateDC" )
    INT32 _sdbDataCenterImpl::deactivateDC()
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT_DEACTIVATEDC ) ;
       INT32 rc = _DCCommon( CMD_VALUE_NAME_DEACTIVATE, NULL ) ;
-      PD_TRACE_EXITRC ( SDB_CLIENT_DEACTIVATEDC, rc ) ;
       return rc ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_ENABLEREADONLY, "_sdbDataCenterImpl::enableReadOnly" )
    INT32 _sdbDataCenterImpl::enableReadOnly( BOOLEAN isReadOnly )
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT_ENABLEREADONLY ) ;
       INT32 rc = SDB_OK ;
       if ( TRUE == isReadOnly )
       {  
@@ -5120,14 +4872,11 @@ error :
       {
          rc = _DCCommon( CMD_VALUE_NAME_DISABLE_READONLY, NULL ) ;
       }
-      PD_TRACE_EXITRC ( SDB_CLIENT_ENABLEREADONLY, rc ) ;
       return rc ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_CREATEIMAGE, "_sdbDataCenterImpl::createImage" )
    INT32 _sdbDataCenterImpl::createImage( const CHAR *pCataAddrList )
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT_CREATEIMAGE ) ;
       INT32 rc = SDB_OK ;
       BSONObj newObj ;
 
@@ -5148,54 +4897,38 @@ error :
          goto error ;
       }
    done:
-      PD_TRACE_EXITRC ( SDB_CLIENT_CREATEIMAGE, rc ) ;
       return rc ;
    error:
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_REMOVEIMAGE, "_sdbDataCenterImpl::removeImage" )
    INT32 _sdbDataCenterImpl::removeImage()
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT_REMOVEIMAGE ) ;
       INT32 rc = _DCCommon( CMD_VALUE_NAME_REMOVE, NULL ) ;
-      PD_TRACE_EXITRC ( SDB_CLIENT_REMOVEIMAGE, rc ) ;
       return rc ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_ENABLEIMAGE, "_sdbDataCenterImpl::enableImage" )
    INT32 _sdbDataCenterImpl::enableImage()
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT_ENABLEIMAGE ) ;
       INT32 rc = _DCCommon( CMD_VALUE_NAME_ENABLE, NULL ) ;
-      PD_TRACE_EXITRC ( SDB_CLIENT_ENABLEIMAGE, rc ) ;
       return rc ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_DISABLEIMAGE, "_sdbDataCenterImpl::disableImage" )
    INT32 _sdbDataCenterImpl::disableImage()
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT_DISABLEIMAGE ) ;
       INT32 rc = _DCCommon( CMD_VALUE_NAME_DISABLE, NULL ) ;
-      PD_TRACE_EXITRC ( SDB_CLIENT_DISABLEIMAGE, rc ) ;
       return rc ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_ATTACHGROUPS, "_sdbDataCenterImpl::attachGroups" )
    INT32 _sdbDataCenterImpl::attachGroups( const bson::BSONObj &info )
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT_ATTACHGROUPS ) ;
       INT32 rc = _DCCommon( CMD_VALUE_NAME_ATTACH, &info ) ;
-      PD_TRACE_EXITRC ( SDB_CLIENT_ATTACHGROUPS, rc ) ;
       return rc ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_DETACHGROUPS, "_sdbDataCenterImpl::detachGroups" )
    INT32 _sdbDataCenterImpl::detachGroups( const bson::BSONObj &info )
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT_DETACHGROUPS ) ;
       INT32 rc = _DCCommon( CMD_VALUE_NAME_DETACH, &info ) ;
-      PD_TRACE_EXITRC ( SDB_CLIENT_DETACHGROUPS, rc ) ;
       return rc ;
    }
       
@@ -5246,24 +4979,18 @@ error :
       }
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT__SETCONNECTIONINLOB, "_setLobImpl::_setConnection" )
    void _sdbLobImpl::_setConnection ( _sdb *connection )
    {
-      PD_TRACE_ENTRY ( SDB_SDBCSIMPL__SETCONNECTIONINCS ) ;
       _connection = (_sdbImpl*)connection ;
       if ( _connection )
       {
          _connection->_regLob ( this ) ;
       }
-      PD_TRACE_EXIT ( SDB_SDBCSIMPL__SETCONNECTIONINCS );
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT__SETCOLLECTIONINLOB, "_sdbLobImpl::_setCollection" )
    void _sdbLobImpl::_setCollection ( _sdbCollectionImpl *collection )
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT__SETCOLLECTIONINLOB ) ;
       _collection = collection ;
-      PD_TRACE_EXIT ( SDB_CLIENT__SETCOLLECTIONINLOB ) ;
    }
 
    void _sdbLobImpl::_cleanup()
@@ -5301,10 +5028,8 @@ error :
                _currentOffset < ( _cachedOffset + _cachedSize ) ) ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT__READINCACHE, "_setLobImpl::_readInCache" )
    void _sdbLobImpl::_readInCache( void *buf, UINT32 len, UINT32 *read )
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT__READINCACHE ) ;
       const CHAR *cache = NULL ;
       UINT32 readInCache = _cachedOffset + _cachedSize - _currentOffset ;
       readInCache = readInCache <= len ?
@@ -5325,14 +5050,11 @@ error :
       }
 
       *read = readInCache ;
-      PD_TRACE_EXIT ( SDB_CLIENT__READINCACHE );
       return ;                        
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT__REVISEREADLEN, "_setLobImpl::_reviseReadLen" )
    UINT32 _sdbLobImpl::_reviseReadLen( UINT32 needLen )
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT__REVISEREADLEN ) ;
       UINT32 pageSize = _pageSize ;
       UINT32 mod = _currentOffset & ( pageSize - 1 ) ;
       UINT32 alignedLen = ossRoundUpToMultipleX( needLen,
@@ -5342,14 +5064,11 @@ error :
       {
          alignedLen += LOB_ALIGNED_LEN ;
       }
-      PD_TRACE_EXIT ( SDB_CLIENT__REVISEREADLEN );
       return alignedLen ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT__ONCEREAD, "_setLobImpl::_onceRead" )
    INT32 _sdbLobImpl::_onceRead( CHAR *buf, UINT32 len, UINT32 *read )
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT__ONCEREAD ) ;
       INT32 rc = SDB_OK ;
       BOOLEAN locked ;
       UINT32 needRead = len ;
@@ -5449,17 +5168,14 @@ error :
    done:
       if ( locked )
          _connection->unlock() ;
-      PD_TRACE_EXIT ( SDB_CLIENT__ONCEREAD );
       return rc ;
    error:
       goto done ;
    }
 
-   //PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_CLOSE, "_sdbLobImpl::close" )
    INT32 _sdbLobImpl::close ()
    {
       INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY ( SDB_CLIENT_CLOSE ) ;
       SINT64 contextID = -1 ;
       BOOLEAN result = FALSE ;
       BOOLEAN locked = FALSE ;
@@ -5515,16 +5231,13 @@ error :
       {
          _connection->unlock() ;
       }
-      PD_TRACE_EXITRC ( SDB_CLIENT_CLOSE, rc );
       return rc ;
    error:
       goto done ;
    }
 
-   //PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_READ, "_sdbLobImpl::read" )
    INT32 _sdbLobImpl::read ( UINT32 len, CHAR *buf, UINT32 *read )
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT_READ ) ;
       INT32 rc = SDB_OK ;
       UINT32 needRead = len ;
       CHAR *localBuf = buf ;
@@ -5602,17 +5315,14 @@ error :
    done:
       if ( locked )
          _connection->unlock() ;
-      PD_TRACE_EXITRC ( SDB_CLIENT_READ, rc );
       return rc ;
    error:
       *read = 0 ;
       goto done ;
    }
 
-   //PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_WRITE, "_sdbLobImpl::write" )
    INT32 _sdbLobImpl::write ( const CHAR *buf, UINT32 len )
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT_WRITE ) ;
       INT32 rc = SDB_OK ;
       SINT64 contextID = -1 ;
       BOOLEAN result = FALSE ;
@@ -5693,16 +5403,13 @@ error :
    done:
       if ( locked )
          _connection->unlock() ;
-      PD_TRACE_EXITRC ( SDB_CLIENT_WRITE, rc );
       return rc ;
    error:
       goto done ;
    }
 
-   //PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_SEEK, "_sdbLobImpl::seek" )
    INT32 _sdbLobImpl::seek ( SINT64 size, SDB_LOB_SEEK whence )
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT_SEEK ) ;
       INT32 rc = SDB_OK ;
       BOOLEAN locked = FALSE ;
       
@@ -5764,26 +5471,20 @@ error :
    done:
       if ( locked )
          _connection->unlock() ;
-      PD_TRACE_EXITRC ( SDB_CLIENT_SEEK, rc );
       return rc ;
    error:
       goto done ;
    }
 
-   //PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_ISCLOSED2, "_sdbLobImpl::isClosed" )
     INT32 _sdbLobImpl::isClosed( BOOLEAN &flag )
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT_ISCLOSED2 ) ;
       INT32 rc = SDB_OK ;
       flag = isClosed();
-      PD_TRACE_EXIT ( SDB_CLIENT_ISCLOSED2 );
       return rc ;
    }
 
-   //PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_GETOID2, "_sdbLobImpl::getOid" )
    INT32 _sdbLobImpl::getOid( bson::OID &oid )
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT_GETOID2 ) ;
       INT32 rc = SDB_OK ;
 
       // check
@@ -5794,16 +5495,13 @@ error :
       }
       oid = getOid() ;
    done:
-      PD_TRACE_EXITRC ( SDB_CLIENT_GETOID2, rc );
       return rc ;
    error:
       goto done ;
    }
    
-   //PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_GETSIZE2, "_sdbLobImpl::getSize" )
    INT32 _sdbLobImpl::getSize( SINT64 *size )
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT_GETSIZE2 ) ;
       INT32 rc = SDB_OK ;
 
       // check
@@ -5815,16 +5513,13 @@ error :
       // get size
       *size = getSize() ;
    done:
-      PD_TRACE_EXITRC ( SDB_CLIENT_GETSIZE2, rc );
       return rc ;
    error:
       goto done ;
    }
 
-   //PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_GETCREATETIME2, "_sdbLobImpl::getCreateTime" )
    INT32 _sdbLobImpl::getCreateTime ( UINT64 *millis )
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT_GETCREATETIME2 ) ;
       INT32 rc = SDB_OK ;
 
       // check
@@ -5835,16 +5530,13 @@ error :
       }
       *millis = getCreateTime() ;
    done:
-      PD_TRACE_EXITRC ( SDB_CLIENT_GETCREATETIME2, rc );
       return rc ;
    error:
       goto done ;
    }
 
-   //PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_ISCLOSED, "_sdbLobImpl::isClosed" )
     BOOLEAN _sdbLobImpl::isClosed()
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT_ISCLOSED ) ;
       BOOLEAN flag = TRUE ;
       if ( NULL == _connection )
       {
@@ -5853,14 +5545,11 @@ error :
       _connection->lock() ;
       flag = !_isOpen ;
       _connection->unlock() ;
-      PD_TRACE_EXIT ( SDB_CLIENT_ISCLOSED ) ;
       return flag ;
    }
 
-   //PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_GETOID, "_sdbLobImpl::getOid" )
    bson::OID _sdbLobImpl::getOid()
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT_GETOID ) ;
       bson::OID oid = bson::OID() ;
       // check
       if (  !_connection )
@@ -5871,14 +5560,11 @@ error :
       // get oid
       oid = _oid ;
       _connection->unlock() ;
-      PD_TRACE_EXIT ( SDB_CLIENT_GETOID ) ;
       return oid ;
    }
    
-   //PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_GETSIZE, "_sdbLobImpl::getSize" )
    SINT64 _sdbLobImpl::getSize()
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT_GETSIZE ) ;
       SINT64 size = 0 ;
 
       // check
@@ -5890,14 +5576,11 @@ error :
       // get size
       size = _lobSize ;
       _connection->unlock() ;
-      PD_TRACE_EXIT ( SDB_CLIENT_GETSIZE );
       return size ;
    }
 
-   //PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_GETCREATETIME, "_sdbLobImpl::getCreateTime" )
    UINT64 _sdbLobImpl::getCreateTime ()
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT_GETCREATETIME ) ;
       UINT64 millis = 0 ;
       // check
       if ( !_connection )
@@ -5908,7 +5591,6 @@ error :
       // get time
       millis = _createTime ;
       _connection->unlock() ;
-      PD_TRACE_EXIT ( SDB_CLIENT_GETCREATETIME );
       return millis ;
    }
 
@@ -5977,10 +5659,8 @@ error :
          SDB_OSS_FREE ( _pReceiveBuffer ) ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT__DISCONNECT, "_sdbImpl::_disconnect" )
    void _sdbImpl::_disconnect ()
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT__DISCONNECT ) ;
       INT32 rc = SDB_OK ;
       CHAR buffer [ sizeof ( MsgOpDisconnect ) ] ;
       CHAR *pBuffer = &buffer[0] ;
@@ -6001,14 +5681,11 @@ error :
          delete _sock ;
          _sock = NULL ;
       }
-      PD_TRACE_EXIT ( SDB_CLIENT__DISCONNECT );
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT__CONNECT, "_sdbImpl::_connect" )
    INT32 _sdbImpl::_connect ( const CHAR *pHostName,
                              UINT16 port )
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT__CONNECT ) ;
       INT32 rc = SDB_OK ;
       if ( _sock )
       {
@@ -6045,13 +5722,11 @@ error :
          goto done;
 #endif
          // do not support SSL
-         PD_LOG( PDERROR, "SSL feature not available in this build" ) ;
          rc = SDB_INVALIDARG ;
          goto error;
       }
 
    done :
-      PD_TRACE_EXITRC ( SDB_CLIENT__CONNECT, rc );
       return rc ;
    error :
       if ( _sock )
@@ -6101,13 +5776,11 @@ error :
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_CONNECTWITHPORT, "_sdbImpl::connect" )
    INT32 _sdbImpl::connect ( const CHAR *pHostName,
                              UINT16 port,
                              const CHAR *pUsrName,
                              const CHAR *pPasswd )
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT_CONNECTWITHPORT ) ;
       INT32 rc = SDB_OK ;
       BOOLEAN locked = FALSE ;
       CHAR md5[SDB_MD5_DIGEST_LENGTH*2+1] ;
@@ -6159,19 +5832,16 @@ error :
       {
          unlock () ;
       }
-      PD_TRACE_EXITRC ( SDB_CLIENT_CONNECTWITHPORT, rc );
       return rc ;
    error :
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_CONNECTWITHSERVALADDR, "_sdbImpl::connect" )
    INT32 _sdbImpl::connect ( const CHAR **pConnAddrs,
                              INT32 arrSize,
                              const CHAR *pUsrName,
                              const CHAR *pPasswd )
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT_CONNECTWITHSERVALADDR ) ;
       INT32 rc = SDB_OK ;
       const CHAR *pHostName = NULL ;
       const CHAR *pServiceName = NULL ;
@@ -6221,19 +5891,15 @@ error :
       // if we go here, means no valid addresses
       rc = SDB_NET_CANNOT_CONNECT ;
    done :
-      PD_TRACE_EXITRC ( SDB_CLIENT_CONNECTWITHSERVALADDR, rc );
       return rc ;
    error :
       goto done ;
 
    }
 
-
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_CREATEUSR, "_sdbImpl::createUsr" )
    INT32 _sdbImpl::createUsr( const CHAR *pUsrName,
                               const CHAR *pPasswd )
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT_CREATEUSR ) ;
       INT32 rc = SDB_OK ;
       BOOLEAN locked = FALSE ;
       CHAR md5[SDB_MD5_DIGEST_LENGTH*2+1] ;
@@ -6281,17 +5947,14 @@ error :
       {
          unlock () ;
       }
-      PD_TRACE_EXITRC ( SDB_CLIENT_CREATEUSR, rc );
       return rc ;
    error :
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_REMOVEUSR, "_sdbImpl::removeUsr" )
    INT32 _sdbImpl::removeUsr( const CHAR *pUsrName,
                               const CHAR *pPasswd )
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT_REMOVEUSR ) ;
       INT32 rc = SDB_OK ;
       BOOLEAN locked = FALSE ;
       CHAR md5[SDB_MD5_DIGEST_LENGTH*2+1] ;
@@ -6339,13 +6002,11 @@ error :
       {
          unlock () ;
       }
-      PD_TRACE_EXITRC ( SDB_CLIENT_REMOVEUSR, rc );
       return rc ;
    error :
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_GETSNAPSHOT, "_sdbImpl::getSnapshot" )
    INT32 _sdbImpl::getSnapshot ( _sdbCursor **result,
                                  INT32 snapType,
                                  const BSONObj &condition,
@@ -6353,7 +6014,6 @@ error :
                                  const BSONObj &orderBy
                                )
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT_GETSNAPSHOT ) ;
       INT32 rc                        = SDB_OK ;
       const CHAR *p                   = NULL ;
       SINT64 contextID                = 0 ;
@@ -6435,7 +6095,6 @@ error :
       ((_sdbCursorImpl*)*result)->_contextID = contextID ;
       ((_sdbCursorImpl*)*result)->_setConnection ( this ) ;
    exit :
-      PD_TRACE_EXITRC ( SDB_CLIENT_GETSNAPSHOT, rc );
       return rc ;
    done :
       unlock () ;
@@ -6444,10 +6103,8 @@ error :
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_RESETSNAPSHOT, "_sdbImpl::resetSnapshot" )
    INT32 _sdbImpl::resetSnapshot ( const BSONObj &condition )
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT_RESETSNAPSHOT ) ;
       INT32 rc                = SDB_OK ;
       BOOLEAN r               = FALSE ;
       const CHAR *p           = CMD_ADMIN_PREFIX CMD_NAME_SNAPSHOT_RESET ;
@@ -6465,13 +6122,11 @@ error :
       }
    done :
       unlock () ;
-      PD_TRACE_EXITRC ( SDB_CLIENT_RESETSNAPSHOT, rc );
       return rc ;
    error :
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_GETLIST, "_sdbImpl::getList" )
    INT32 _sdbImpl::getList ( _sdbCursor **result,
                              INT32 listType,
                              const BSONObj &condition,
@@ -6479,7 +6134,6 @@ error :
                              const BSONObj &orderBy
                            )
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT_GETLIST ) ;
       INT32 rc                        = SDB_OK ;
       const CHAR *p                   = NULL ;
       SINT64 contextID                = 0 ;
@@ -6576,8 +6230,7 @@ error :
       ((_sdbCursorImpl*)*result)->_contextID = contextID ;
       ((_sdbCursorImpl*)*result)->_setConnection ( this ) ;
    exit:
-      PD_TRACE_EXITRC ( SDB_CLIENT_GETLIST, rc );
-   return rc ;
+      return rc ;
    done :
       unlock () ;
       goto exit ;
@@ -6592,13 +6245,11 @@ error :
       return connect( pHostName, pServiceName, "", "" ) ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_CONNECTWITHSERVERNAME, "_sdbImpl::connect" )
    INT32 _sdbImpl::connect( const CHAR *pHostName,
                             const CHAR *pServiceName,
                             const CHAR *pUsrName,
                             const CHAR *pPasswd )
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT_CONNECTWITHSERVERNAME ) ;
       INT32 rc = SDB_OK ;
       UINT16 port ;
       rc = ossSocket::getPort ( pServiceName, port ) ;
@@ -6612,28 +6263,22 @@ error :
          goto error ;
       }
    done :
-      PD_TRACE_EXITRC ( SDB_CLIENT_CONNECTWITHSERVERNAME, rc );
       return rc ;
    error :
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_DISCONNECT, "_sdbImpl::disconnect" )
    void _sdbImpl::disconnect ()
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT_DISCONNECT ) ;
       if ( _sock )
       {
          _disconnect () ;
       }
-      PD_TRACE_EXIT ( SDB_CLIENT_DISCONNECT );
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT__REALLOCBUFFER, "_sdbImpl::_reallocBuffer" )
    INT32 _sdbImpl::_reallocBuffer ( CHAR **ppBuffer, INT32 *buffersize,
                                     INT32 newSize )
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT__REALLOCBUFFER ) ;
       INT32 rc = SDB_OK ;
       CHAR *pOriginalBuffer = NULL ;
       if ( !ppBuffer || !buffersize )
@@ -6654,16 +6299,13 @@ error :
          *buffersize = newSize ;
       }
    done :
-      PD_TRACE_EXITRC ( SDB_CLIENT__REALLOCBUFFER, rc );
       return rc ;
    error :
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT__SEND, "_sdbImpl::_send" )
    INT32 _sdbImpl::_send ( CHAR *pBuffer )
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT__SEND ) ;
       INT32 rc = SDB_OK ;
       INT32 len = 0 ;
       if ( !isConnected() )
@@ -6678,16 +6320,13 @@ error :
          goto error ;
       }
    done :
-      PD_TRACE_EXITRC ( SDB_CLIENT__SEND, rc );
       return rc ;
    error :
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT__RECV, "_sdbImpl::_recv" )
    INT32 _sdbImpl::_recv ( CHAR **ppBuffer, INT32 *size )
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT__RECV ) ;
       INT32 rc = SDB_OK ;
       INT32 length = 0 ;
       INT32 realLen = 0 ;
@@ -6722,7 +6361,6 @@ error :
          goto error ;
       }
    done :
-      PD_TRACE_EXITRC ( SDB_CLIENT__RECV, rc );
       return rc ;
    error :
       if ( SDB_NETWORK_CLOSE == rc )
@@ -6733,12 +6371,10 @@ error :
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT__RECVEXTRACT, "_sdbImpl::_recvExtract" )
    INT32 _sdbImpl::_recvExtract ( CHAR **ppBuffer, INT32 *size,
                                   SINT64 &contextID,
                                   BOOLEAN &result )
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT__RECVEXTRACT ) ;
       INT32 rc          = SDB_OK ;
       INT32 replyFlag   = -1 ;
       INT32 numReturned = -1 ;
@@ -6763,18 +6399,15 @@ error :
 
       result = TRUE ;
    done :
-      PD_TRACE_EXITRC ( SDB_CLIENT__RECVEXTRACT, rc );
       return rc ;
    error :
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT__GETRETINFO, "_sdbImpl::_getRetInfo" )
    INT32 _sdbImpl::_getRetInfo ( CHAR **ppBuffer, INT32 *size,
                                  SINT64 contextID,
                                  _sdbCursor **ppCursor )
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT__GETRETINFO ) ;
       INT32 rc           = SDB_OK ;
       _sdbCursor *cursor = NULL ;
 
@@ -6825,20 +6458,17 @@ error :
       *ppCursor = cursor ;
       
    done :
-      PD_TRACE_EXITRC ( SDB_CLIENT__GETRETINFO, rc );
       return rc ;
    error :
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT__RUNCOMMAND, "_sdbImpl::_runCommand" )
    INT32 _sdbImpl::_runCommand ( const CHAR *pString, BOOLEAN &result,
                                  const BSONObj *arg1,
                                  const BSONObj *arg2,
                                  const BSONObj *arg3,
                                  const BSONObj *arg4 )
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT__RUNCOMMAND ) ;
       INT32 rc            = SDB_OK ;
       SINT64 contextID    = 0 ;
       lock () ;
@@ -6868,14 +6498,12 @@ error :
       CHECK_RET_MSGHEADER( _pSendBuffer, _pReceiveBuffer, this ) ;
    done :
       unlock () ;
-      PD_TRACE_EXITRC ( SDB_CLIENT__RUNCOMMAND, rc );
       return rc ;
    error :
       goto done ;
 
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT__RUNCOMMAND2, "_sdbImpl::_runCommand" )
    INT32 _sdbImpl::_runCommand ( const CHAR *pString,
                                  const BSONObj *arg1,
                                  const BSONObj *arg2,
@@ -6887,7 +6515,6 @@ error :
                                  SINT64 numToReturn,
                                  _sdbCursor **ppCursor )
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT__RUNCOMMAND2 ) ;
       INT32 rc            = SDB_OK ;
       BOOLEAN result      = FALSE ;
       SINT64 contextID    = -1 ;
@@ -6938,17 +6565,14 @@ error :
       }
    done :
       unlock () ;
-      PD_TRACE_EXITRC ( SDB_CLIENT__RUNCOMMAND2, rc );
       return rc ;
    error :
       // TODO: maybe need to handle error msg caused by driver
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT__BUILDEMPTYCURSOR, "_sdbImpl::_buildEmptyCursor" )
    INT32 _sdbImpl::_buildEmptyCursor( _sdbCursor **ppCursor )
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT__BUILDEMPTYCURSOR ) ;
       INT32 rc           = SDB_OK ;
       _sdbCursor *cursor = NULL ;
 
@@ -6966,18 +6590,15 @@ error :
       *ppCursor = cursor ;
 
    done:
-      PD_TRACE_EXITRC ( SDB_CLIENT__BUILDEMPTYCURSOR, rc );      
       return rc ;
    error:
       goto done ;
    }
    
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_GETCOLLECTIONINSDB, "_sdbImpl::getCollection" )
    INT32 _sdbImpl::getCollection ( const CHAR *pCollectionFullName,
                                    _sdbCollection **collection )
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT_GETCOLLECTIONINSDB ) ;
       INT32 rc            = SDB_OK ;
       BOOLEAN result      = FALSE ;
       INT32 nameLength    = ossStrlen ( pCollectionFullName ) ;
@@ -7025,7 +6646,6 @@ error :
       ((sdbCollectionImpl*)*collection)->_setName ( pCollectionFullName ) ;
 
    done :
-      PD_TRACE_EXITRC ( SDB_CLIENT_GETCOLLECTIONINSDB, rc );
       return rc ;
    error :
       if ( NULL != *collection )
@@ -7037,11 +6657,9 @@ error :
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_GETCOLLECTIONSPACE, "_sdbImpl::getCollectionSpace" )
    INT32 _sdbImpl::getCollectionSpace ( const CHAR *pCollectionSpaceName,
                                         _sdbCollectionSpace **cs )
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT_GETCOLLECTIONSPACE ) ;
       INT32 rc            = SDB_OK ;
       BOOLEAN result      = FALSE ;
       INT32 nameLength = ossStrlen ( pCollectionSpaceName ) ;
@@ -7088,7 +6706,6 @@ error :
       ((sdbCollectionSpaceImpl*)*cs)->_setName ( pCollectionSpaceName ) ;
 
    done :
-      PD_TRACE_EXITRC ( SDB_CLIENT_GETCOLLECTIONSPACE, rc );
       return rc ;
    error :
       if ( NULL != *cs )
@@ -7100,12 +6717,10 @@ error :
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_CREATECOLLECTIONSPACE, "_sdbImpl::createCollectionSpace" )
    INT32 _sdbImpl::createCollectionSpace ( const CHAR *pCollectionSpaceName,
                                            INT32 iPageSize,
                                            _sdbCollectionSpace **cs )
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT_CREATECOLLECTIONSPACE ) ;
       INT32 rc            = SDB_OK ;
       BOOLEAN result      = FALSE ;
       INT32 nameLength = ossStrlen ( pCollectionSpaceName ) ;
@@ -7139,7 +6754,6 @@ error :
          goto error ;
       }
    done :
-      PD_TRACE_ENTRY ( SDB_CLIENT_CREATECOLLECTIONSPACE ) ;
       return rc ;
 error :
       if ( NULL != *cs )
@@ -7151,12 +6765,10 @@ error :
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_CREATECOLLECTIONSPACE2, "_sdbImpl::createCollectionSpace" )
    INT32 _sdbImpl::createCollectionSpace ( const CHAR *pCollectionSpaceName,
                                            const bson::BSONObj &options,
                                            _sdbCollectionSpace **cs )
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT_CREATECOLLECTIONSPACE2 ) ;
       INT32 rc            = SDB_OK ;
       BOOLEAN result      = FALSE ;
       INT32 nameLength = ossStrlen ( pCollectionSpaceName ) ;
@@ -7212,17 +6824,14 @@ error :
          goto error ;
       }
    done :
-      PD_TRACE_ENTRY ( SDB_CLIENT_CREATECOLLECTIONSPACE2 ) ;
       return rc ;
    error :
       goto done ;
    }
 
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_DROPCOLLECTIONSPACE, "_sdbImpl::dropCollectionSpace" )
    INT32 _sdbImpl::dropCollectionSpace ( const CHAR *pCollectionSpaceName )
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT_DROPCOLLECTIONSPACE ) ;
       INT32 rc            = SDB_OK ;
       BOOLEAN result      = FALSE ;
       INT32 nameLength = ossStrlen ( pCollectionSpaceName ) ;
@@ -7248,7 +6857,6 @@ error :
       }
 
    done :
-      PD_TRACE_EXITRC ( SDB_CLIENT_DROPCOLLECTIONSPACE, rc );
       return rc ;
    error :
       goto done ;
@@ -7269,10 +6877,8 @@ error :
       return getList ( result, SDB_LIST_GROUPS ) ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_GETRGWITHNAME, "_sdbImpl::getReplicaGroup" )
    INT32 _sdbImpl::getReplicaGroup ( const CHAR *pName, _sdbReplicaGroup **result )
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT_GETRGWITHNAME ) ;
       INT32 rc = SDB_OK ;
       sdbCursor resultCursor ;
       BOOLEAN found = FALSE ;
@@ -7325,16 +6931,13 @@ error :
          goto error ;
       }
    done :
-      PD_TRACE_EXITRC ( SDB_CLIENT_GETRGWITHNAME, rc );
       return rc ;
    error :
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_GETRGWITHID, "_sdbImpl::getReplicaGroup" )
    INT32 _sdbImpl::getReplicaGroup ( SINT32 id, _sdbReplicaGroup **result )
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT_GETRGWITHID ) ;
       INT32 rc = SDB_OK ;
       sdbCursor resultCursor ;
       BOOLEAN found = FALSE ;
@@ -7389,17 +6992,14 @@ error :
          goto error ;
       }
    done :
-      PD_TRACE_EXITRC ( SDB_CLIENT_GETRGWITHID, rc );
       return rc ;
    error :
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_CREATERG, "_sdbImpl::createReplicaGroup" )
    INT32 _sdbImpl::createReplicaGroup ( const CHAR *pName,
                                         _sdbReplicaGroup **rg )
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT_CREATERG ) ;
       INT32 rc = SDB_OK ;
       BSONObj replicaGroupName ;
       BOOLEAN result = FALSE ;
@@ -7433,16 +7033,13 @@ error :
       }
       *rg = replset ;
    done :
-      PD_TRACE_EXITRC ( SDB_CLIENT_CREATERG, rc );
       return rc ;
    error :
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_REMOVERG, "_sdbImpl::removeReplicaGroup" )
    INT32 _sdbImpl::removeReplicaGroup ( const CHAR *pReplicaGroupName )
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT_REMOVERG ) ;
       INT32 rc = SDB_OK ;
       BOOLEAN result = FALSE ;
       INT32 nameLength = 0 ;
@@ -7469,19 +7066,16 @@ error :
          goto error ;
       }
    done:
-      PD_TRACE_EXITRC ( SDB_CLIENT_REMOVERG, rc );
       return rc ;
    error :
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_CREATECATARG, "_sdbImpl::createReplicaCataGroup" )
    INT32 _sdbImpl::createReplicaCataGroup (  const CHAR *pHostName,
                                         const CHAR *pServiceName,
                                         const CHAR *pDatabasePath,
                                         const BSONObj &configure )
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT_CREATECATARG ) ;
       INT32 rc = SDB_OK ;
       BSONObj configuration ;
       BSONObjBuilder ob ;
@@ -7529,17 +7123,14 @@ error :
       }
 
    done :
-      PD_TRACE_EXITRC ( SDB_CLIENT_CREATECATARG, rc );
       return rc ;
    error :
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_ACTIVATERG, "_sdbImpl::activateReplicaGroup" )
    INT32 _sdbImpl::activateReplicaGroup ( const CHAR *pName,
                                    _sdbReplicaGroup **rg )
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT_ACTIVATERG ) ;
       INT32 rc = SDB_OK ;
       BSONObj replicaGroupName ;
       BOOLEAN result = FALSE ;
@@ -7573,16 +7164,13 @@ error :
       }
       *rg = replset ;
    done :
-      PD_TRACE_EXITRC ( SDB_CLIENT_ACTIVATERG, rc );
       return rc ;
    error :
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_EXECUPDATE, "_sdbImpl::execUpdate" )
    INT32 _sdbImpl::execUpdate( const CHAR *sql )
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT_EXECUPDATE ) ;
       INT32 rc = SDB_OK ;
       BOOLEAN locked = FALSE ;
       BOOLEAN result ;
@@ -7620,17 +7208,14 @@ error :
       {
          unlock () ;
       }
-      PD_TRACE_EXITRC ( SDB_CLIENT_EXECUPDATE, rc );
       return rc ;
    error :
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_EXEC, "_sdbImpl::exec" )
    INT32 _sdbImpl::exec( const CHAR *sql,
                          _sdbCursor **result )
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT_EXEC ) ;
       INT32 rc = SDB_OK ;
       BOOLEAN locked = FALSE ;
       BOOLEAN r ;
@@ -7683,16 +7268,13 @@ error :
       {
          unlock () ;
       }
-      PD_TRACE_EXITRC ( SDB_CLIENT_EXEC, rc );
       return rc ;
    error :
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_TRANSBEGIN, "_sdbImpl::transactionBegin" )
    INT32 _sdbImpl:: transactionBegin()
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT_TRANSBEGIN ) ;
       INT32 rc = SDB_OK ;
       BOOLEAN locked = FALSE ;
       BOOLEAN result ;
@@ -7723,16 +7305,13 @@ error :
       {
          unlock () ;
       }
-      PD_TRACE_EXITRC ( SDB_CLIENT_TRANSBEGIN, rc );
       return rc ;
    error :
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_TRANSCOMMIT, "_sdbImpl::transactionCommit" )
    INT32 _sdbImpl:: transactionCommit()
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT_TRANSCOMMIT ) ;
       INT32 rc = SDB_OK ;
       BOOLEAN locked = FALSE ;
       BOOLEAN result ;
@@ -7763,15 +7342,13 @@ error :
       {
          unlock () ;
       }
-      PD_TRACE_EXITRC ( SDB_CLIENT_TRANSCOMMIT, rc );
       return rc ;
    error :
       goto done ;
    }
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_TRANSROLLBACK, "_sdbImpl::transactionRollback" )
+
    INT32 _sdbImpl:: transactionRollback()
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT_TRANSROLLBACK ) ;
       INT32 rc = SDB_OK ;
       BOOLEAN locked = FALSE ;
       BOOLEAN result ;
@@ -7802,16 +7379,13 @@ error :
       {
          unlock () ;
       }
-      PD_TRACE_EXITRC ( SDB_CLIENT_TRANSROLLBACK, rc );
       return rc ;
    error :
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION( SDB_CLIENT_FLUSHCONGIGURE, "_sdbImpl::flushConfigure" )
    INT32 _sdbImpl::flushConfigure( const bson::BSONObj &options )
    {
-      PD_TRACE_ENTRY( SDB_CLIENT_FLUSHCONGIGURE ) ;
       INT32 rc = SDB_OK ;
       BOOLEAN locked = FALSE ;
       BOOLEAN r ;
@@ -7845,16 +7419,13 @@ error :
       {
          unlock () ;
       }
-      PD_TRACE_EXITRC ( SDB_CLIENT_FLUSHCONGIGURE, rc ) ;
       return rc ;
    error:
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION( SDB_CLIENT_CRTJSPROCEDURE, "_sdbImpl::crtJSProcedure" )
    INT32 _sdbImpl::crtJSProcedure ( const CHAR *code )
    {
-      PD_TRACE_ENTRY( SDB_CLIENT_CRTJSPROCEDURE ) ;
       INT32 rc = SDB_OK ;
       BOOLEAN locked = FALSE ;
       BOOLEAN r ;
@@ -7899,16 +7470,13 @@ error :
       {
          unlock () ;
       }
-      PD_TRACE_EXITRC ( SDB_CLIENT_CRTJSPROCEDURE, rc ) ;
       return rc ;
    error:
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION( SDB_CLIENT_RMPROCEDURE, "_sdbImpl::rmProcedure" )
    INT32 _sdbImpl::rmProcedure( const CHAR *spName )
    {
-      PD_TRACE_ENTRY( SDB_CLIENT_RMPROCEDURE ) ;
       INT32 rc = SDB_OK ;
       BOOLEAN locked = FALSE ;
       BOOLEAN r ;
@@ -7948,25 +7516,21 @@ error :
       {
          unlock () ;
       }
-      PD_TRACE_EXITRC ( SDB_CLIENT_RMPROCEDURE, rc ) ;
       return rc ;
    error:
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION( SDB_CLIENT_LISTPROCEDURES, "_sdbImpl::listProcedures" )
    INT32 _sdbImpl::listProcedures( _sdbCursor **cursor, const bson::BSONObj &condition )
    {
       return getList ( cursor, SDB_LIST_STOREPROCEDURES, condition ) ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION( SDB_CLIENT_EVALJS, "_sdbImpl::evalJS" )
    INT32 _sdbImpl::evalJS( const CHAR *code,
                            SDB_SPD_RES_TYPE &type,
                            _sdbCursor **cursor,
                            bson::BSONObj &errmsg )
    {
-      PD_TRACE_ENTRY( SDB_CLIENT_EVALJS ) ;
       INT32 rc = SDB_OK ;
       BOOLEAN locked = FALSE ;
       BOOLEAN r ;
@@ -8050,16 +7614,13 @@ error :
       {
          unlock () ;
       }
-      PD_TRACE_EXITRC ( SDB_CLIENT_EVALJS, rc ) ;
       return rc ;
    error:
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION( SDB_CLIENT_BACKUPOFFLINE, "_sdbImpl::backupOffline" )
    INT32 _sdbImpl::backupOffline ( const bson::BSONObj &options)
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT_BACKUPOFFLINE ) ;
       INT32 rc          = SDB_OK ;
       BOOLEAN result    = FALSE ;
       SINT64 contextID  = 0 ;
@@ -8097,21 +7658,18 @@ error :
       // check return msg header
       CHECK_RET_MSGHEADER( _pSendBuffer, _pReceiveBuffer, this ) ;
    done :
-      PD_TRACE_EXITRC ( SDB_CLIENT_BACKUPOFFLINE, rc ) ;
       return rc ;
    error :
       unlock () ;
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION( SDB_CLIENT_LISTBACKUP, "_sdbImpl::listBackup" )
    INT32 _sdbImpl::listBackup ( _sdbCursor **cursor,
                                  const bson::BSONObj &options,
                                  const bson::BSONObj &condition,
                                  const bson::BSONObj &selector,
                               const bson::BSONObj &orderBy)
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT_LISTBACKUP ) ;
       INT32 rc          = SDB_OK ;
       BOOLEAN result    = FALSE ;
       BOOLEAN locked    = FALSE ;
@@ -8168,16 +7726,13 @@ error :
    done :
       if ( locked )
           unlock () ;
-      PD_TRACE_EXITRC ( SDB_CLIENT_LISTBACKUP, rc ) ;
       return rc ;
    error :
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION( SDB_CLIENT_REMOVEBACKUP, "_sdbImpl::removeBackup" )
    INT32 _sdbImpl::removeBackup ( const bson::BSONObj &options )
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT_REMOVEBACKUP ) ;
       INT32 rc          = SDB_OK ;
       BOOLEAN result    = FALSE ;
       SINT64 contextID  = 0 ;
@@ -8215,14 +7770,12 @@ error :
       // check return msg header
       CHECK_RET_MSGHEADER( _pSendBuffer, _pReceiveBuffer, this ) ;
    done :
-      PD_TRACE_EXITRC ( SDB_CLIENT_REMOVEBACKUP, rc ) ;
       return rc ;
    error :
       unlock () ;
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION( SDB_CLIENT_LISTTASKS, "_sdbImpl::listTasks" )
    INT32 _sdbImpl::listTasks ( _sdbCursor **cursor,
                            const bson::BSONObj &condition,
                            const bson::BSONObj &selector,
@@ -8233,11 +7786,9 @@ error :
       return getList ( cursor, SDB_LIST_TASKS, condition, selector, orderBy ) ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION( SDB_CLIENT_WAITTASKS, "_sdbImpl::waitTasks" )
    INT32 _sdbImpl::waitTasks ( const SINT64 *taskIDs,
                          SINT32 num )
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT_WAITTASKS ) ;
       INT32 rc = SDB_OK ;
       BOOLEAN locked = FALSE ;
       BOOLEAN result ;
@@ -8306,17 +7857,14 @@ error :
       {
          unlock () ;
       }
-      PD_TRACE_EXITRC ( SDB_CLIENT_WAITTASKS, rc );
       return rc ;
    error :
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION( SDB_CLIENT_CANCELTASK, "_sdbImpl::cancelTask" )
    INT32 _sdbImpl::cancelTask ( SINT64 taskID,
                             BOOLEAN isAsync )
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT_CANCELTASK ) ;
       INT32 rc = SDB_OK ;
       BOOLEAN locked = FALSE ;
       BOOLEAN result ;
@@ -8373,16 +7921,13 @@ error :
       {
          unlock () ;
       }
-      PD_TRACE_EXITRC ( SDB_CLIENT_CANCELTASK, rc );
       return rc ;
    error :
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION( SDB_CLIENT_SETSESSIONATTR, "_sdbImpl::setSessionAttr" )
    INT32 _sdbImpl::setSessionAttr ( const bson::BSONObj &options )
    {
-      PD_TRACE_ENTRY( SDB_CLIENT_SETSESSIONATTR ) ;
       INT32 rc         = SDB_OK ;
       BOOLEAN result   = FALSE ;
       BOOLEAN locked   = FALSE ;
@@ -8498,16 +8043,13 @@ error :
    done :
       if ( locked )
          unlock() ;
-      PD_TRACE_EXITRC( SDB_CLIENT_SETSESSIONATTR, rc ) ;
       return rc ;
    error :
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_CLOSE_ALL_CURSORS, "_sdbImpl::closeAllCursors" )
    INT32 _sdbImpl::closeAllCursors()
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT_CLOSE_ALL_CURSORS ) ;
       INT32 rc = SDB_OK ;
 
       // set all the cursors' status to be closed
@@ -8521,16 +8063,13 @@ error :
          }
       }
    done :
-      PD_TRACE_EXITRC ( SDB_CLIENT_CLOSE_ALL_CURSORS, rc );
       return rc ;
    error :
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_IS_VALID2, "_sdbImpl::isValid" )
    INT32 _sdbImpl::isValid( BOOLEAN *result )
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT_IS_VALID2 ) ;
       INT32 rc = SDB_OK ;
       // check argument
       if ( result == NULL )
@@ -8540,16 +8079,13 @@ error :
       }
       *result = isValid() ;
    done :
-      PD_TRACE_EXITRC ( SDB_CLIENT_IS_VALID2, rc );
       return rc ;
    error :
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_IS_VALID, "_sdbImpl::isValid" )
    BOOLEAN _sdbImpl::isValid()
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT_IS_VALID ) ;
       BOOLEAN flag = FALSE ;
       // if client don't connect to database or
       // it had closed the connection
@@ -8561,16 +8097,13 @@ error :
       {
          flag =  _sock->isConnected() ;
       }
-      PD_TRACE_EXIT ( SDB_CLIENT_IS_VALID );
       return flag ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_CREATEDOMAIN, "_sdbImpl::createDomain" )
    INT32 _sdbImpl::createDomain ( const CHAR *pDomainName,
                                   const bson::BSONObj &options,
                                   _sdbDomain **domain )
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT_CREATEDOMAIN ) ;
       INT32 rc       = SDB_OK ;
       BOOLEAN result = FALSE ;
       BSONObj newObj ;
@@ -8614,16 +8147,13 @@ error :
       ((sdbDomainImpl*)*domain)->_setConnection ( this ) ;
       ((sdbDomainImpl*)*domain)->_setName ( pDomainName ) ;
    done :
-      PD_TRACE_EXITRC ( SDB_CLIENT_CREATEDOMAIN, rc );
       return rc ;
    error :
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_DROPDOMAIN, "_sdbImpl::dropDomain" )
    INT32 _sdbImpl::dropDomain ( const CHAR *pDomainName )
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT_DROPDOMAIN ) ;
       INT32 rc       = SDB_OK ;
       BOOLEAN result = FALSE ;
       BSONObj newObj ;
@@ -8653,17 +8183,14 @@ error :
          goto error ;
       }
    done :
-      PD_TRACE_EXITRC ( SDB_CLIENT_DROPDOMAIN, rc );
       return rc ;
    error :
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_GETDOMAIN, "_sdbImpl::getDomain" )
    INT32 _sdbImpl::getDomain ( const CHAR *pDomainName,
                                _sdbDomain **domain )
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT_GETDOMAIN ) ;
       INT32 rc       = SDB_OK ;
       BSONObj result ;
       BSONObj newObj ;
@@ -8717,13 +8244,11 @@ error :
       }
 
    done :
-      PD_TRACE_EXITRC ( SDB_CLIENT_GETDOMAIN, rc );
       return rc ;
    error :
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_LISTDOMAINS, "_sdbImpl::listDomains" )
    INT32 _sdbImpl::listDomains ( _sdbCursor **cursor,
                        const bson::BSONObj &condition,
                        const bson::BSONObj &selector,
@@ -8731,7 +8256,6 @@ error :
                        const bson::BSONObj &hint
                       )
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT_LISTDOMAINS ) ;
       INT32 rc = SDB_OK ;
       // todo: add hint
       rc = getList ( cursor, SDB_LIST_DOMAINS,
@@ -8739,16 +8263,13 @@ error :
       if ( rc )
          goto error ;
    done :
-      PD_TRACE_EXITRC ( SDB_CLIENT_LISTDOMAINS, rc );
       return rc ;
    error :
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_GETDC, "_sdbImpl::getDC" )
    INT32 _sdbImpl::getDC( _sdbDataCenter **dc )
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT_GETDC ) ;
       INT32 rc                  = SDB_OK ;
       const CHAR *pClusterName  = NULL ;
       const CHAR *pBusinessName = NULL ;
@@ -8816,7 +8337,6 @@ error :
       *dc = pDC ;
 
    done :
-      PD_TRACE_EXITRC ( SDB_CLIENT_GETDC, rc );
       return rc ;
    error :
       if ( NULL != pDC )

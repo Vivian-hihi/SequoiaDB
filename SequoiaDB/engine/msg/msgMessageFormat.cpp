@@ -41,6 +41,7 @@
 #include "utilStr.hpp"
 #include "pdTrace.hpp"
 #include "msgTrace.hpp"
+#include <stddef.h>
 
 using namespace engine;
 using namespace bson ;

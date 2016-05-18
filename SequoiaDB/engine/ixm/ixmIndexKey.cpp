@@ -41,6 +41,7 @@
 #include "ossMem.hpp"
 #include "pdTrace.hpp"
 #include "ixmTrace.hpp"
+#include "ossLatch.hpp"
 
 using namespace bson ;
 

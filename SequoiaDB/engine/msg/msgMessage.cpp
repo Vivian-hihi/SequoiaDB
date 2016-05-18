@@ -42,6 +42,7 @@
 #include "msgDef.h"
 #include "pdTrace.hpp"
 #include "msgTrace.hpp"
+#include <stddef.h>
 
 using namespace engine;
 

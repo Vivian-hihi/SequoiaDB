@@ -55,6 +55,7 @@
 #endif
 #include "pdTrace.hpp"
 #include "ossTrace.hpp"
+#include <iostream>
 
 #if defined (_LINUX)
 // PD_TRACE_DECLARE_FUNCTION ( SDB_OSSISPROCRUNNING, "ossIsProcessRunning" )

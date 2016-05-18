@@ -48,14 +48,23 @@
 
 #define PD_LOG_STRINGMAX            ( 4096 )
 
-#ifdef _DEBUG
-#define SDB_ASSERT(cond,str)  \
-   do { \
-      if( !(cond) ) { pdassert(str,__FUNC__,__FILE__,__LINE__) ; } \
-      } while ( 0 )
+#ifdef SDB_CLIENT
+   #ifdef _DEBUG
+      #include <assert.h>
+      #define SDB_ASSERT(cond,str)  assert(cond)
+   #else
+      #define SDB_ASSERT(cond,str)  do{ if( !(cond)) {} } while ( 0 )
+   #endif // _DEBUG
 #else
-#define SDB_ASSERT(cond,str)  do{ if( !(cond)) {} } while ( 0 )
-#endif // _DEBUG
+   #ifdef _DEBUG
+      #define SDB_ASSERT(cond,str)  \
+      do { \
+         if( !(cond) ) { pdassert(str,__FUNC__,__FILE__,__LINE__) ; } \
+      } while ( 0 )
+   #else
+      #define SDB_ASSERT(cond,str)  do{ if( !(cond)) {} } while ( 0 )
+   #endif // _DEBUG
+#endif // SDB_CLIENT
 
 #define SDB_VALIDATE_GOTOERROR(cond, ret, str) \
    do { \

@@ -33,7 +33,10 @@
 #include "utilLinenoiseWrapper.hpp"
 #include <boost/algorithm/string/trim.hpp>
 #include "utilTrace.h"
+#include "ossUtil.hpp"
+#include "pd.hpp"
 #include "pdTrace.hpp"
+#include <sstream>
 
 using namespace std ;
 

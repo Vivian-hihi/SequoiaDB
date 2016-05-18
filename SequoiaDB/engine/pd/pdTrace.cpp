@@ -36,13 +36,17 @@
 #include "oss.hpp"
 #include "ossUtil.hpp"
 #include "pdTrace.hpp"
+#include "pd.hpp"
 #if defined (SDB_ENGINE)
 #include "pmd.hpp"
 #include "pmdDef.hpp"
 #include "pmdEDU.hpp"
 #include "pmdEDUMgr.hpp"
 #endif
+#include "ossLatch.hpp"
 #include "ossPrimitiveFileOp.hpp"
+#include <math.h>
+
 using namespace engine ;
 
 ossSpinXLatch gPDTraceMutex;

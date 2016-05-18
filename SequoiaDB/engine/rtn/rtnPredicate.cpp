@@ -43,6 +43,8 @@
 #include "rtnTrace.hpp"
 #include <sstream>
 #include "../bson/util/builder.h"
+#include <boost/noncopyable.hpp>
+
 namespace bson
 {
    extern BSONObj staticNull ;

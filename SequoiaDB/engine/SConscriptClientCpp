@@ -26,8 +26,6 @@ clientCPPLibFiles = [
       "oss/ossSocket.cpp",
       "oss/ossPrimitiveFileOp.cpp",
       "pd/pd.cpp",
-      "pd/pdTrace.cpp",
-      "pd/pdFunctionList.cpp",
       "client/bson/numbers.c",
       "client/bson/bson.c",
       "client/bson/encoding.c",

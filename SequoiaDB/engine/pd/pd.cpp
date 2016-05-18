@@ -403,7 +403,6 @@ void pdLog( PDLEVEL level, const CHAR* func, const CHAR* file,
 void pdLog( PDLEVEL level, const CHAR* func, const CHAR* file,
             UINT32 line, const CHAR* format, ...)
 {
-   INT32 rc = SDB_OK ;
    if ( getPDLevel() < level )
       return ;
    va_list ap;
@@ -452,7 +451,7 @@ void pdLog( PDLEVEL level, const CHAR* func, const CHAR* file,
 
    pdLogRaw( level, sysInfo ) ;
 
-   PD_TRACE_EXITRC ( SDB_PDLOG, rc ) ;
+   PD_TRACE_EXIT( SDB_PDLOG ) ;
    return ;
 }
 
@@ -907,7 +906,6 @@ void pdAudit( AUDIT_TYPE type, const CHAR *pUserName,
               const CHAR* func, const CHAR* file,
               UINT32 line, const CHAR* format, ... )
 {
-   INT32 rc = SDB_OK ;
    if ( !( getCurAuditMask() & pdAuditType2Mask( type ) ) )
       return ;
    va_list ap;
@@ -971,7 +969,7 @@ void pdAudit( AUDIT_TYPE type, const CHAR *pUserName,
 
    pdAuditRaw( type, sysInfo ) ;
 
-   PD_TRACE_EXITRC ( SDB_PDAUDIT, rc ) ;
+   PD_TRACE_EXIT( SDB_PDAUDIT ) ;
    return ;
 }
 

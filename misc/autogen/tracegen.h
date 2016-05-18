@@ -30,4 +30,8 @@ private :
                           std::ofstream &fout1,
                           INT32 compid ) ;
 } ;
+
+const INT32 _pdTraceComponentNum = 28 ;
+const CHAR *pdGetTraceComponent ( UINT32 id ) ;
+
 #endif

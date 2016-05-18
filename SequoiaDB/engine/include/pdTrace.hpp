@@ -37,13 +37,15 @@
 #define PDTRACE_HPP__
 
 #include "core.hpp"
-#include "ossUtil.hpp"
-#include "ossLatch.hpp"
-#include "ossAtomic.hpp"
 #include "oss.hpp"
+#include "ossUtil.hpp"
+#include "ossAtomic.hpp"
 #include "pdTrace.h"
 #include <list>
 #include <vector>
+#ifdef SDB_ENGINE
+#include "ossLatch.hpp"
+#endif
 
 #define PD_TRACE_MAX_BP_NUM         10
 /*
@@ -151,11 +153,6 @@ const INT32 _pdTraceComponentNum = 28 ;
 // query graph manger
 #define PD_TRACE_COMPONENT_QGM     0x08000000
 
-// dummy macro declare, this just defines an macro perform nothing activities.
-// The autogen component will scan all .C/.cpp/.h/.hpp and pickup this keyword
-// and generate unique id for each function
-#define PD_TRACE_DECLARE_FUNCTION(x,y) \
-
 enum _pdTraceFormatType
 {
    PD_TRACE_FORMAT_TYPE_FLOW = 0,
@@ -193,6 +190,8 @@ typedef class _pdTraceArgument pdTraceArgument ;
 #define PD_TRACE_RECORD_FLAG_NORMAL 0
 #define PD_TRACE_RECORD_FLAG_ENTRY  1
 #define PD_TRACE_RECORD_FLAG_EXIT   2
+
+#define PD_TRACE_MAX_ARG_NUM 9
 
 class _pdTraceRecord : public SDBObject
 {
@@ -312,6 +311,43 @@ struct _pdTraceArgTuple
 } ;
 typedef struct _pdTraceArgTuple pdTraceArgTuple ;
 
+#ifndef SDB_ENGINE
+
+#define PD_TRACE_DECLARE_FUNCTION(x,y) 
+#define PD_TRACE_ENTRY(funcCode) 
+#define PD_TRACE_EXIT(funcCode) 
+#define PD_TRACE_EXITRC(funcCode,rc) 
+#define PD_TRACE1(funcCode,pack0) 
+#define PD_TRACE2(funcCode,pack0,pack1) 
+#define PD_TRACE3(funcCode,pack0,pack1,pack2) 
+#define PD_TRACE4(funcCode,pack0,pack1,pack2,pack3) 
+#define PD_TRACE5(funcCode,pack0,pack1,pack2,pack3,pack4) 
+#define PD_TRACE6(funcCode,pack0,pack1,pack2,pack3,pack4,pack5) 
+#define PD_TRACE7(funcCode,pack0,pack1,pack2,pack3,pack4,pack5,pack6) 
+#define PD_TRACE8(funcCode,pack0,pack1,pack2,pack3,pack4,pack5,pack6,pack7) 
+#define PD_TRACE9(funcCode,pack0,pack1,pack2,pack3,pack4,pack5,pack6,pack7,pack8) 
+
+#define PD_PACK_NONE 
+#define PD_PACK_NULL 
+#define PD_PACK_CHAR(x) 
+#define PD_PACK_BYTE(x) 
+#define PD_PACK_SHORT(x) 
+#define PD_PACK_USHORT(x) 
+#define PD_PACK_INT(x) 
+#define PD_PACK_UINT(x) 
+#define PD_PACK_LONG(x) 
+#define PD_PACK_ULONG(x) 
+#define PD_PACK_FLOAT(x) 
+#define PD_PACK_DOUBLE(x) 
+#define PD_PACK_STRING(x) 
+
+#else
+
+// dummy macro declare, this just defines an macro perform nothing activities.
+// The autogen component will scan all .C/.cpp/.h/.hpp and pickup this keyword
+// and generate unique id for each function
+#define PD_TRACE_DECLARE_FUNCTION(x,y) \
+
 #define PD_PACK_NONE      _pdTraceArgTuple ( PD_TRACE_ARGTYPE_NONE, NULL, 0 )
 #define PD_PACK_NULL      _pdTraceArgTuple ( PD_TRACE_ARGTYPE_NULL, NULL, 0 )
 #define PD_PACK_CHAR(x)   _pdTraceArgTuple ( PD_TRACE_ARGTYPE_CHAR, &x, 1 )
@@ -326,8 +362,6 @@ typedef struct _pdTraceArgTuple pdTraceArgTuple ;
 #define PD_PACK_DOUBLE(x) _pdTraceArgTuple ( PD_TRACE_ARGTYPE_DOUBLE, &x, 8 )
 #define PD_PACK_STRING(x) _pdTraceArgTuple ( PD_TRACE_ARGTYPE_STRING, x, ossStrlen(x)+1 )
 #define PD_PACK_RAW(x,y)  _pdTraceArgTuple ( PD_TRACE_ARGTYPE_RAW, x, y )
-
-#define PD_TRACE_MAX_ARG_NUM 9
 
 #define PD_TRACE_ENTRY(funcCode)                                    \
    do {                                                             \
@@ -522,6 +556,8 @@ typedef struct _pdTraceArgTuple pdTraceArgTuple ;
                       pack7,                              \
                       pack8 ) ;                           \
    } while ( FALSE )
+
+#endif // SDB_ENGINE
 
 const CHAR *pdGetTraceFunction ( UINT64 id ) ;
 const CHAR *pdGetTraceComponent ( UINT32 id ) ;
