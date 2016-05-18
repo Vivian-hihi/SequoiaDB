@@ -48,7 +48,10 @@
 #include "ossPrimitiveFileOp.hpp"
 #include "utilStr.hpp"
 #include "ossIO.hpp"
+
+#ifndef SDB_CLIENT
 #include "ossPath.hpp"
+#endif //SDB_CLIENT
 
 #include "pdTrace.hpp"
 
