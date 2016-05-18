@@ -17,7 +17,7 @@ snapshot(SDB_SNAP_SYSTEM,{ GroupName: "group1" } )</pre>
 要获取指定节点的快照信息，如：
 
 <pre class="prettyprint lang-javascript">
-snapshot(SDB_SNAP_SYSTEM,{ HostName: "host1", svcname: "11820' } )</pre>
+snapshot(SDB_SNAP_SYSTEM,{ HostName: "host1", svcname: "11820" } )</pre>
 
 ##快照##
 
