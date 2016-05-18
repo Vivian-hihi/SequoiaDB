@@ -46,6 +46,8 @@
 #elif defined (_WINDOWS)
 #include "Psapi.h"
 #endif
+#include <sstream>
+
 // Wrapper of localtime, convert a time value and correct for the local time
 // zone. The input pTime represents the seconds elapsed since the Epoch,
 // midnight (00:00:00), January 1, 1970, UTC
