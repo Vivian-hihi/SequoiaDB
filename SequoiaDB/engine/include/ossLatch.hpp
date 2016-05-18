@@ -38,13 +38,13 @@
 #define OSS_SPINLOCK_HPP_
 
 #include "core.hpp"
-#include <boost/thread/shared_mutex.hpp>
+//#include <boost/thread/shared_mutex.hpp>
 // include core.hpp first to get _WINDOWS macro defines
 #include "oss.hpp"
 #include "pd.hpp"
 #if defined (_WINDOWS)
 #include <WinBase.h>
-#include <boost/thread/mutex.hpp>
+//#include <boost/thread/mutex.hpp>
 #else
 #include <unistd.h>
 #include <pthread.h>
@@ -261,30 +261,38 @@ class _ossSpinXLatch : public ossXLatch
 // _WIN64 is only for 64 bit windows
 #if defined(_WIN32)
 private :
-   boost::mutex _lock ;
+   //boost::mutex _lock ;
    //CRITICAL_SECTION _cs ;
+   HANDLE _lock ;
 public:
    _ossSpinXLatch ()
    {
+      _lock = CreateEvent( NULL, FALSE, TRUE, NULL ) ;
+      SDB_ASSERT( !_lock, "CreateEvent failed" ) ;
       //InitializeCriticalSectionAndSpinCount( &_cs, 4000 ) ;
    }
    ~_ossSpinXLatch ()
    {
+      CloseHandle( _lock ) ;
       //DeleteCriticalSection ( &_cs ) ;
    }
    void get ()
    {
-      _lock.lock () ;
+      SDB_ASSERT( WAIT_OBJECT_0 == WaitForSingleObject( _lock, INFINITE ),
+                  "Wait Single Object failed" ) ;
+      //_lock.lock () ;
       //EnterCriticalSection ( &_cs ) ;
    }
    void release ()
    {
-      _lock.unlock () ;
+      SetEvent( _lock ) ;
+      //_lock.unlock () ;
       //LeaveCriticalSection ( &_cs ) ;
    }
    BOOLEAN try_get ()
    {
-      return (BOOLEAN) _lock.try_lock () ;
+      return ( WAIT_OBJECT_0 == WaitForSingleObject( _lock, 0 ) ) ? TRUE : FALSE ;
+      //return (BOOLEAN) _lock.try_lock () ;
       //return TryEnterCriticalSection ( &_cs ) ;
    }
 /*#elif defined (__USE_XOPEN2K)
@@ -400,7 +408,7 @@ typedef class _ossSpinXLatch ossSpinXLatch ;
 
 class _ossSpinSLatch : public ossSLatch
 {
-#if defined (_WINDOWS) && defined (USE_SRW)
+#if defined (_WINDOWS) //&& defined (USE_SRW)
 // SRW functions only available in Windows Vista
 // and above, so can't use in Windows XP mode
 private :
@@ -427,21 +435,34 @@ public:
    {
       ReleaseSRWLockShared ( &_lock ) ;
    }
-   BOOLEAN try_lock_shared ()
+   BOOLEAN try_get_shared ()
    {
       return TryAcquireSRWLockShared ( &_lock ) ;
    }
-   BOOLEAN try_lock ()
+   BOOLEAN try_get ()
    {
       return TryAcquireSRWLockExclusive ( &_lock ) ;
    }
 #else
-   // by default let's use boost library
 private :
-   boost::shared_mutex _m;
+   // boost::shared_mutex _m ;
+   pthread_rwlock_t  _lock ;
 public :
+   _ossSpinSLatch ()
+   {
+      SDB_ASSERT( 0 == pthread_rwlock_init( &_lock, NULL ),
+                  "init rwlock failed" ) ;
+   }
+   ~_ossSpinSLatch()
+   {
+      SDB_ASSERT( 0 == pthread_rwlock_destory( &_lock ),
+                  "destory rwlock failed" ) ;
+   }
    void get ()
    {
+      SDB_ASSERT( 0 == pthread_rwlock_wrlock( &_lock ),
+                  "write rwlock failed" ) ;
+      /*
       try
       {
          _m.lock() ;
@@ -450,9 +471,13 @@ public :
       {
          SDB_ASSERT ( FALSE, "SLatch get failed" ) ;
       }
+      */
    }
    void release ()
    {
+      SDB_ASSERT( 0 == pthread_rwlock_unlock( &_lock ),
+                  "release write rwlock failed" ) ;
+      /*
       try
       {
          _m.unlock() ;
@@ -461,9 +486,13 @@ public :
       {
          SDB_ASSERT ( FALSE, "SLatch release failed" ) ;
       }
+      */
    }
    void get_shared ()
    {
+      SDB_ASSERT( 0 == pthread_rwlock_rdlock( &_lock ),
+                  "read rwlock failed" ) ;
+      /*
       try
       {
          _m.lock_shared () ;
@@ -472,9 +501,13 @@ public :
       {
          SDB_ASSERT ( FALSE, "SLatch get shared failed" ) ;
       }
+      */
    }
    void release_shared ()
    {
+      SDB_ASSERT( 0 == pthread_rwlock_unlock( &_lock ),
+                  "release read rwlock failed" ) ;
+      /*
       try
       {
          _m.unlock_shared() ;
@@ -483,9 +516,12 @@ public :
       {
          SDB_ASSERT ( FALSE, "SLatch release shared failed" ) ;
       }
+      */
    }
    BOOLEAN try_get ()
    {
+      return ( 0 == pthread_rwlock_trywrlock( &_lock ) ) ? TRUE : FALSE ;
+      /*
       try
       {
          return _m.try_lock_for( boost::chrono::milliseconds ( 0 ) ) ;
@@ -495,9 +531,12 @@ public :
          SDB_ASSERT ( FALSE, "SLatch try get failed" ) ;
       }
       return FALSE ;
+      */
    }
    BOOLEAN try_get_shared()
    {
+      return ( 0 == pthread_rwlock_tryrdlock( &_lock ) ) ? TRUE : FALSE ;
+      /*
       try
       {
          return _m.try_lock_shared_for( boost::chrono::milliseconds ( 0 ) ) ;
@@ -507,6 +546,7 @@ public :
          SDB_ASSERT ( FALSE, "SLatch try get shared failed" ) ;
       }
       return FALSE ;
+      */
    }
 #endif
 } ;
@@ -577,4 +617,5 @@ public :
    }
 } ;
 typedef class _ossScopedLock ossScopedLock;
-#endif
+
+#endif //OSS_SPINLOCK_HPP_

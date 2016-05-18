@@ -7883,7 +7883,9 @@ BOOLEAN isValidOIDHex( const CHAR *hex )
 
    for ( UINT32 i = 0; i < 24; ++i )
    {
-      if ( !std::isxdigit(hex[i]) )
+      if ( ! ( ( hex[i] >= '0' && hex[i] <= '9' ) ||
+               ( hex[i] >= 'a' && hex[i] <= 'f' ) ||
+               ( hex[i] >= 'A' && hex[i] <= 'F' ) ) )
       {
          return FALSE ;
       }
