@@ -34,12 +34,14 @@
 *******************************************************************************/
 #include "ossMem.hpp"
 #include "ossMem.c"
+
+// in C++, we keep track of memory allocation
+#if defined (__cplusplus) && defined (SDB_ENGINE)
+
 #include "ossLatch.hpp"
 #include "ossPrimitiveFileOp.hpp"
 #include <set>
 
-// in C++, we keep track of memory allocation
-#if defined (__cplusplus) && defined (SDB_ENGINE)
 static BOOLEAN ossMemTrackCBInit = FALSE ;
 struct _ossMemTrackCB
 {
