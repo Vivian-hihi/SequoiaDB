@@ -599,6 +599,104 @@ TEST( lob, lob_write_getSize_getCreateTime_then_close )
    db.disconnect() ;
 }
 
+TEST( lob, lobWithReturnData )
+{
+   sdb db ;
+   sdbCollectionSpace cs ;
+   sdbCollection cl ;
+   sdbCursor cur ;
+   sdbLob lob ;
+   // initialize local variables
+   const CHAR *pHostName                    = HOST ;
+   const CHAR *pPort                        = SERVER ;
+   const CHAR *pUsr                         = USER ;
+   const CHAR *pPasswd                      = PASSWD ;
+   INT32 rc                                 = SDB_OK ;
+   BSONObj obj ;
+   #define BUFSIZE1 (1024 * 1024 * 3)
+   #define BUFSIZE2 (1024 * 1024 * 2)
+   CHAR buf[BUFSIZE1] = { 0 } ;
+   CHAR readBuf[BUFSIZE2] = { 0 } ;
+   BOOLEAN flag = FALSE ;
+   CHAR c = 'a' ;
+
+   // initialize the work environment
+   rc = initEnv() ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   // connect to database
+   rc = db.connect( pHostName, pPort, pUsr, pPasswd ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   // get cs
+   rc = getCollectionSpace( db, COLLECTION_SPACE_NAME, cs );
+   ASSERT_EQ( SDB_OK, rc ) ;
+   // get cl
+   rc = getCollection( cs, COLLECTION_NAME, cl ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+
+   /// case 1: create a new lob
+
+   // createLob
+   rc = cl.createLob( lob ) ;
+   CHECK_MSG("%s%d\n","rc = ",rc) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   // write
+   memset( buf, c, BUFSIZE1 ) ;
+   rc = lob.write( buf, BUFSIZE1 ) ;
+   CHECK_MSG("%s%d\n","rc = ",rc) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   // write
+   rc = lob.write( buf, BUFSIZE1 ) ;
+   CHECK_MSG("%s%d\n","rc = ",rc) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   // get oid
+   bson::OID oid ;
+   rc = lob.getOid( oid ) ;
+   CHECK_MSG("%s%d\n","rc = ",rc) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+
+   // close
+   rc = lob.close() ;
+   CHECK_MSG("%s%d\n","rc = ",rc) ;
+   ASSERT_EQ( rc, SDB_OK ) ;
+
+   // open lob
+   sdbLob lob2 ;
+   rc = cl.openLob( lob2, oid ) ;
+   CHECK_MSG("%s%d\n","rc = ",rc) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   // read
+   UINT32 readNum = 1000 ;
+   UINT32 retNum = 0 ;
+   rc = lob2.read( readNum, readBuf, &retNum ) ;
+   CHECK_MSG("%s%d\n","rc = ",rc) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   ASSERT_EQ( readNum, retNum ) ;
+   for ( INT32 i = 0; i < retNum; i++ )
+   {
+      ASSERT_EQ( c, readBuf[i] ) ;
+   }
+   // read
+   readNum = BUFSIZE2 ;
+   rc = lob2.read( readNum, readBuf, &retNum ) ;
+   CHECK_MSG("%s%d\n","rc = ",rc) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   ASSERT_EQ( readNum, retNum ) ;
+   for ( INT32 i = 0; i < retNum; i++ )
+   {
+      ASSERT_EQ( c, readBuf[i] ) ;
+   }
+   // close lob
+   rc = lob.close() ;
+   CHECK_MSG("%s%d\n","rc = ",rc) ;
+   ASSERT_EQ( rc, SDB_OK ) ;
+   // remove lob
+   rc = cl.removeLob( oid ) ;
+   CHECK_MSG("%s%d\n","rc = ",rc) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+
+   db.disconnect() ;
+}
+
 // Nest function for Create Data
 static INT32 putData( UINT32 putSize, CHAR *buffer )
 {
