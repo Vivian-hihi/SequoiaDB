@@ -171,7 +171,7 @@ error :
 INT32 ossOnceRun(ossOnce* control, void (*func)(void))
 {
 #ifdef _WINDOWS
-   if ( !InterlockedExchange ( &control->value, 1 ) )
+   if ( !InterlockedExchange ( control, 1 ) )
    {
       func() ;
    }

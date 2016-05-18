@@ -115,12 +115,8 @@ void ossPanic () ;
 #define ossMutexUnlock            LeaveCriticalSection
 #define ossMutexDestroy           DeleteCriticalSection
 
-typedef struct ossOnce
-{
-   long value;
-} ossOnce;
-
-#define OSS_ONCE_INIT {0}
+typedef long ossOnce ;
+#define OSS_ONCE_INIT 0
 
 #else /* Posix */
 #include <pthread.h>

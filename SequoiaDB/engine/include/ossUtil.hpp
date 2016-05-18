@@ -428,31 +428,10 @@ class ossTickConversionFactor : public SDBObject
 {
 protected :
    friend class ossTickDelta ;
-
    UINT64 factor ;
-
-   // save the timestamp conversion factor for the running machine
-   void oneTimeInitialization(void)
-   {
-   #if defined (_WINDOWS)
-      LARGE_INTEGER countsPerSecond ;
-      if ( ! QueryPerformanceFrequency(&countsPerSecond) )
-      {
-         countsPerSecond.QuadPart = 1 ;
-      }
-      factor = countsPerSecond.QuadPart ;
-   #elif defined (_LINUX) || defined (_AIX)
-      factor = 1 ;
-   #endif
-   }
-   void initialize(void) ;
 public :
-   ossTickConversionFactor ()
-   {
-      initialize () ;
-   }
+   ossTickConversionFactor() ;
 } ;
-
 
 ossTickDelta operator - (const ossTick      &x, const ossTick      &y) ;
 ossTickDelta operator - (const ossTickDelta &x, const ossTickDelta &y) ;

@@ -37,7 +37,6 @@
 *******************************************************************************/
 #include "ossUtil.c"
 #include "ossUtil.hpp"
-#include "ossLatch.hpp"
 #include "pd.hpp"
 #include "pdTrace.hpp"
 #include "ossTrace.hpp"
@@ -523,52 +522,70 @@ INT32 ossGetOSInfo( ossOSInfo &info )
    return SDB_OK ;
 }
 
-static SINT32 g_tickConversionFactorInitialized = 0 ;
-static ossSpinXLatch g_tickConversionFactorLatch ;
-static ossTickConversionFactor g_tickConversionFactor ;
-
-// PD_TRACE_DECLARE_FUNCTION ( SDB_OSSTCF_INIT, "ossTickConversionFactor::initialize" )
-void ossTickConversionFactor::initialize(void)
+/// Tick initialize
+static UINT64 g_tickFactor = 1 ;
+static void ossInitTickFactor()
 {
-   PD_TRACE_ENTRY ( SDB_OSSTCF_INIT );
-   if ( 0 == g_tickConversionFactorInitialized )
-   {
-      g_tickConversionFactorLatch.get() ;
-      if ( 0 == g_tickConversionFactorInitialized )
+   #if defined (_WINDOWS)
+      LARGE_INTEGER countsPerSecond ;
+      if ( ! QueryPerformanceFrequency(&countsPerSecond) )
       {
-         g_tickConversionFactor.oneTimeInitialization() ;
-         g_tickConversionFactorInitialized = 1 ;
+         g_tickFactor = 1 ;
       }
-      g_tickConversionFactorLatch.release() ;
-   }
-   else
-   {
-      *this = g_tickConversionFactor ;
-   }
-   PD_TRACE_EXIT ( SDB_OSSTCF_INIT );
+      g_tickFactor = countsPerSecond.QuadPart ;
+   #elif defined (_LINUX) || defined (_AIX)
+      g_tickFactor = 1 ;
+   #endif
 }
 
-static BOOLEAN g_isSrand = FALSE ;
-static ossSpinXLatch g_randLatch ;
+ossTickConversionFactor::ossTickConversionFactor()
+{
+   static ossOnce s_control = OSS_ONCE_INIT ;
+   ossOnceRun( &s_control, ossInitTickFactor ) ;
+   factor = g_tickFactor ;
+}
+
+/// Rand initialize
 #if defined (_LINUX) || defined (_AIX)
 static UINT32 g_randSeed = 0 ;
+static ossMutex g_randMutex ;
 #endif
+
 // PD_TRACE_DECLARE_FUNCTION ( SDB_OSSSRAND, "ossSrand" )
 static void ossSrand()
 {
-   PD_TRACE_ENTRY ( SDB_OSSSRAND );
-   g_randLatch.get() ;
-   if ( !g_isSrand )
-   {
+   PD_TRACE_ENTRY ( SDB_OSSSRAND ) ;
 #if defined (_WINDOWS)
       srand ( (UINT32) time ( NULL ) ) ;
 #elif defined (_LINUX) || defined (_AIX)
       g_randSeed = time ( NULL ) ;
 #endif
-      g_isSrand = TRUE ;
-   }
-   g_randLatch.release() ;
    PD_TRACE_EXIT ( SDB_OSSSRAND );
+}
+
+class ossRandAssit
+{
+   public:
+      ossRandAssit()
+      {
+         ossSrand() ;
+#if defined (_LINUX) || defined (_AIX)
+         ossMutexInit( &g_randMutex ) ;
+#endif
+      }
+      ~ossRandAssit()
+      {
+#if defined (_LINUX) || defined (_AIX)
+         ossMutexDestroy( &g_randMutex ) ;
+#endif
+      }
+      void done() {}
+} ;
+
+static ossRandAssit* _ossGetRandAssit()
+{
+   static ossRandAssit s_randAssit ;
+   return &s_randAssit ;
 }
 
 // PD_TRACE_DECLARE_FUNCTION ( SDB_OSSRAND, "ossRand" )
@@ -576,14 +593,15 @@ UINT32 ossRand ()
 {
    PD_TRACE_ENTRY ( SDB_OSSRAND );
    UINT32 randVal = 0 ;
-   if ( !g_isSrand )
-      ossSrand () ;
+
+   _ossGetRandAssit()->done() ;
+
 #if defined (_WINDOWS)
    rand_s ( &randVal ) ;
 #elif defined (_LINUX) || defined (_AIX)
-   g_randLatch.get() ;
+   ossMutexLock( &g_randMutex ) ;
    randVal = rand_r ( &g_randSeed ) ;
-   g_randLatch.release() ;
+   ossMutexUnlock( &g_randMutex ) ;
 #endif
    PD_TRACE_EXIT ( SDB_OSSRAND );
    return randVal ;
