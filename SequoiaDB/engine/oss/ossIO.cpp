@@ -52,6 +52,7 @@
 #include "../util/text.h"
 #include "pdTrace.hpp"
 #include "ossTrace.hpp"
+#include <iostream>
 
 #if defined (_LINUX)
    #include <sys/statfs.h>
