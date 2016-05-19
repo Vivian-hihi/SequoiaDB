@@ -2979,8 +2979,8 @@ error:
       }
       // build msg
       rc = clientBuildOpenLobMsgCpp( &_pSendBuffer, &_sendBufferSize,
-                                     obj.objdata(), 0, 1, 0,
-                                     _connection->_endianConvert ) ;
+                                     obj.objdata(), FLG_LOBOPEN_WITH_RETURNDATA,
+                                     1, 0, _connection->_endianConvert ) ;
       if ( SDB_OK != rc )
       {
          goto error ;
@@ -3039,6 +3039,10 @@ error:
       ((_sdbLobImpl*)*lob)->_contextID = contextID ;
       ((_sdbLobImpl*)*lob)->_isOpen = TRUE ;
       ((_sdbLobImpl*)*lob)->_mode = SDB_LOB_READ ;
+      ((_sdbLobImpl*)*lob)->_currentOffset = 0 ;
+      ((_sdbLobImpl*)*lob)->_cachedOffset = -1 ;
+      ((_sdbLobImpl*)*lob)->_cachedSize =0 ;
+      ((_sdbLobImpl*)*lob)->_dataCache = 0 ;
       // set another info received from engine
       // lobSize
       ele = obj.getField( FIELD_NAME_LOB_SIZE ) ;
@@ -3075,6 +3079,50 @@ error:
       {
          rc = SDB_SYS ;
          goto error ;
+      }
+      /// prepare cache from return data 
+      {
+      // the return message format is as below:
+      // "MsgOpReply  |  Meta Object  |  _MsgLobTuple   | Data"
+      const MsgLobTuple *tuple = NULL ;
+      const CHAR *body = NULL ;
+      UINT32 retMsgLen = 
+         (UINT32)(((MsgHeader*)_pReceiveBuffer)->messageLength);
+      UINT32 tupleOffset = 
+         ossRoundUpToMultipleX( sizeof( MsgOpReply ) + obj.objsize(), 4 ) ;
+      if ( retMsgLen > tupleOffset )
+      {
+         // let lob's receive buffer pointer points to the cl's receive buffer
+         ((_sdbLobImpl*)*lob)->_pReceiveBuffer = _pReceiveBuffer ;
+         _pReceiveBuffer = NULL ;
+         ((_sdbLobImpl*)*lob)->_receiveBufferSize = _receiveBufferSize ;
+         _receiveBufferSize = 0 ;
+         // initialize lob with the return data
+         tuple = (MsgLobTuple *)(((_sdbLobImpl*)*lob)->_pReceiveBuffer + 
+                                  tupleOffset) ;
+         // "tuple->columns.offset" is the offset of lob content
+         // in engine, at the very beginning, the offset must be 0,
+         // for we have not read anything yet
+         if ( 0 != tuple->columns.offset )
+         {
+            rc = SDB_SYS ;
+            goto error ;
+         }
+         else if ( retMsgLen < 
+                   ( tupleOffset + sizeof( MsgLobTuple ) + tuple->columns.len )
+                 )
+         {
+            rc = SDB_SYS ;
+            goto error ;
+         }
+         body = (CHAR*)tuple + sizeof( MsgLobTuple ) ;
+         ((_sdbLobImpl*)*lob)->_currentOffset = 0 ;
+         ((_sdbLobImpl*)*lob)->_cachedOffset = 0 ;
+         // "tuple->columns.len" is the length of lob content return
+         // by engine
+         ((_sdbLobImpl*)*lob)->_cachedSize = tuple->columns.len ;
+         ((_sdbLobImpl*)*lob)->_dataCache = body ;
+      }
       }
 
    done:

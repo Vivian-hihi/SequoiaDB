@@ -178,6 +178,9 @@ if ( handle )                        \
            lob->_offset = -1 ; \
            lob->_endianConvert = handle->_endianConvert ;\
            lob->_cachedOffset = -1 ;\
+           lob->_currentOffset = 0 ;\
+           lob->_dataCache = NULL ;\
+           lob->_cachedSize = 0 ;\
         } while ( FALSE )
 
 #define LOB_ALIGNED_LEN 524288
@@ -8401,6 +8404,7 @@ SDB_EXPORT INT32 sdbOpenLob( sdbCollectionHandle cHandle,
    INT32 rc = SDB_OK ;
    bson obj ;
    SINT64 contextID = -1 ;
+   SINT32 flags = 0;
    BOOLEAN result = TRUE ;
    sdbLobStruct *lobStruct = NULL ;
    const CHAR *bsonBuf = NULL ;
@@ -8458,8 +8462,15 @@ SDB_EXPORT INT32 sdbOpenLob( sdbCollectionHandle cHandle,
       goto error ;
    }
 
+   // when we open lob for reading, set the flag with returning data
+   if ( SDB_LOB_READ & mode )
+   {
+      flags |= FLG_LOBOPEN_WITH_RETURNDATA;
+   }
+
    rc = clientBuildOpenLobMsg( &cs->_pSendBuffer, &cs->_sendBufferSize,
-                               &obj, 0, 1, 0, cs->_endianConvert ) ;
+                               &obj, flags,
+                               1, 0, cs->_endianConvert ) ;
    if ( SDB_OK != rc )
    {
       goto error ;
@@ -8512,6 +8523,7 @@ SDB_EXPORT INT32 sdbOpenLob( sdbCollectionHandle cHandle,
 
    if ( SDB_LOB_READ & mode )
    {
+      // get meta info from the return object
       bType = bson_find( &bsonItr, &obj, FIELD_NAME_LOB_SIZE ) ;
       if ( BSON_INT == bType || BSON_LONG == bType )
       {
@@ -8543,6 +8555,50 @@ SDB_EXPORT INT32 sdbOpenLob( sdbCollectionHandle cHandle,
       {
          rc = SDB_SYS ;
          goto error ;
+      }
+      {
+      // when mode is SDB_LOB_READ, we add flag "FLG_LOBOPEN_WITH_RETURNDATA"
+      // to the message send for engine, so, when open lob, the data will be 
+      // return at the same time, the return message format is as below:
+      // "MsgOpReply  |  Meta Object  |  _MsgLobTuple   | Data"
+      const MsgLobTuple *tuple = NULL ;
+      const CHAR *body = NULL ;
+      UINT32 retMsgLen = 
+         (UINT32)(((MsgHeader*)(cs->_pReceiveBuffer))->messageLength);
+      UINT32 tupleOffset = 
+         ossRoundUpToMultipleX( sizeof( MsgOpReply ) + bson_size( &obj ), 4 ) ;
+      if ( retMsgLen > tupleOffset )
+      {
+         // let lob's receive buffer pointer points to the cl's receive buffer
+         lobStruct->_pReceiveBuffer = cs->_pReceiveBuffer ;
+         cs->_pReceiveBuffer = NULL ;
+         lobStruct->_receiveBufferSize = cs->_receiveBufferSize ;
+         cs->_receiveBufferSize = 0 ;
+         // initialize lob with the return data
+         tuple = (MsgLobTuple *)(lobStruct->_pReceiveBuffer + tupleOffset) ;
+         // "tuple->columns.offset" is the offset of lob content
+         // in engine, at the very beginning, the offset must be 0,
+         // for we have not read anything yet
+         if ( 0 != tuple->columns.offset )
+         {
+            rc = SDB_SYS ;
+            goto error ;
+         }
+         else if ( retMsgLen < 
+                   ( tupleOffset + sizeof( MsgLobTuple ) + tuple->columns.len )
+                 )
+         {
+            rc = SDB_SYS ;
+            goto error ;
+         }
+         body = (CHAR*)tuple + sizeof( MsgLobTuple ) ;
+         lobStruct->_currentOffset = 0 ;
+         lobStruct->_cachedOffset = lobStruct->_currentOffset ;
+         // "tuple->columns.len" is the length of lob content return
+         // by engine
+         lobStruct->_cachedSize = tuple->columns.len ;
+         lobStruct->_dataCache = body ;
+      }
       }
    }
    *lobHandle = (sdbLobHandle)lobStruct ;
@@ -8650,10 +8706,12 @@ static void sdbReadInCache( sdbLobStruct *lob,
                             UINT32 *read )
 {
    const CHAR *cache = NULL ;
+   // "lob->_cachedOffset + lob->_cachedSize" is "tuple->len"
    UINT32 readInCache = lob->_cachedOffset + lob->_cachedSize -
                         lob->_currentOffset ;
    readInCache = readInCache <= len ?
                  readInCache : len ;
+   // why we don't use "cache = lob->_dataCache ;"
    cache = lob->_dataCache +
            lob->_currentOffset -
            lob->_cachedOffset ;
@@ -8752,6 +8810,8 @@ static INT32 sdbOnceRead( sdbLobStruct *lob,
    // check return msg header
    CHECK_RET_MSGHEADER( lob->_pSendBuffer, lob->_pReceiveBuffer,
                         lob->_connection ) ;
+   // when it is read res, the struct of the 
+   // return message is |MsgOpReply|_MsgLobTuple|data|
    reply = ( const MsgOpReply * )( lob->_pReceiveBuffer ) ;
    if ( ( UINT32 )( reply->header.messageLength ) <
         ( sizeof( MsgOpReply ) + sizeof( MsgLobTuple ) ) )
@@ -8777,6 +8837,8 @@ static INT32 sdbOnceRead( sdbLobStruct *lob,
 
    body = lob->_pReceiveBuffer + sizeof( MsgOpReply ) + sizeof( MsgLobTuple ) ;
 
+   // if what we got is more than what we expect,
+   // let cache some for next reading request.
    if ( needRead < tuple->columns.len )
    {
       ossMemcpy( localBuf, body, needRead ) ;
@@ -8788,6 +8850,7 @@ static INT32 sdbOnceRead( sdbLobStruct *lob,
    }
    else
    {
+      // else, no need to cache anything
       ossMemcpy( localBuf, body, tuple->columns.len ) ;
       totalRead += tuple->columns.len ;
       lob->_currentOffset += tuple->columns.len ;
