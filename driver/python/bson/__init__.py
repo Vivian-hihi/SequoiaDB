@@ -294,7 +294,7 @@ def __get_decimal(data, position, as_class, tz_aware, uuid_subtype, compile_re):
    value = str(d)
    position += l
 
-   return value, position
+   return d, position
 
 
 _element_getter = {
