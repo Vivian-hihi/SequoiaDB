@@ -460,8 +460,8 @@ public :
    }
    void get ()
    {
-      SDB_ASSERT( 0 == pthread_rwlock_wrlock( &_lock ),
-                  "write rwlock failed" ) ;
+      INT32 rc = pthread_rwlock_wrlock( &_lock ) ;
+      SDB_ASSERT( 0 == rc, "write rwlock failed" ) ;
       /*
       try
       {
@@ -475,8 +475,8 @@ public :
    }
    void release ()
    {
-      SDB_ASSERT( 0 == pthread_rwlock_unlock( &_lock ),
-                  "release write rwlock failed" ) ;
+      INT32 rc = pthread_rwlock_unlock( &_lock ) ;
+      SDB_ASSERT( 0 == rc, "release write rwlock failed" ) ;
       /*
       try
       {
@@ -490,8 +490,8 @@ public :
    }
    void get_shared ()
    {
-      SDB_ASSERT( 0 == pthread_rwlock_rdlock( &_lock ),
-                  "read rwlock failed" ) ;
+      INT32 rc = pthread_rwlock_rdlock( &_lock ) ;
+      SDB_ASSERT( 0 == rc, "read rwlock failed" ) ;
       /*
       try
       {
@@ -505,8 +505,8 @@ public :
    }
    void release_shared ()
    {
-      SDB_ASSERT( 0 == pthread_rwlock_unlock( &_lock ),
-                  "release read rwlock failed" ) ;
+      INT32 rc = pthread_rwlock_unlock( &_lock ) ;
+      SDB_ASSERT( 0 == rc, "release read rwlock failed" ) ;
       /*
       try
       {
@@ -520,7 +520,8 @@ public :
    }
    BOOLEAN try_get ()
    {
-      return ( 0 == pthread_rwlock_trywrlock( &_lock ) ) ? TRUE : FALSE ;
+      INT32 rc = pthread_rwlock_trywrlock( &_lock ) ;
+      return 0 == rc ? TRUE : FALSE ;
       /*
       try
       {
@@ -535,7 +536,8 @@ public :
    }
    BOOLEAN try_get_shared()
    {
-      return ( 0 == pthread_rwlock_tryrdlock( &_lock ) ) ? TRUE : FALSE ;
+      INT32 rc = pthread_rwlock_tryrdlock( &_lock ) ;
+      return 0 == rc ? TRUE : FALSE ;
       /*
       try
       {
