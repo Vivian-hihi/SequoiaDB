@@ -19,6 +19,8 @@
 
 #include "php_driver.h"
 
+PHP_METHOD( SequoiaCursor, __construct ) ;
+
 //e.g. Rename getNext
 PHP_METHOD( SequoiaCursor, next ) ;
 PHP_METHOD( SequoiaCursor, current ) ;

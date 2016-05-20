@@ -19,6 +19,8 @@
 
 #include "php_driver.h"
 
+PHP_METHOD( SequoiaLob, __construct ) ;
+
 PHP_METHOD( SequoiaLob, close ) ;
 PHP_METHOD( SequoiaLob, getSize ) ;
 PHP_METHOD( SequoiaLob, getCreateTime ) ;

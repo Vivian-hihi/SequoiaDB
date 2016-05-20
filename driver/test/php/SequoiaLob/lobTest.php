@@ -75,7 +75,6 @@ class lob_Test extends PHPUnit_Framework_TestCase
     */
    public function test_closeLob1( $db, $lob )
    {
-      $err = $lob -> write( "123456" ) ;
       $err = $lob -> close() ;
       $this -> assertEquals( 0, $err['errno'], 'Lob close错误' ) ;
    }

@@ -19,6 +19,8 @@
 
 #include "php_driver.h"
 
+PHP_METHOD( SequoiaCS, __construct ) ;
+
 //cs
 PHP_METHOD( SequoiaCS, drop ) ;
 PHP_METHOD( SequoiaCS, getName ) ;

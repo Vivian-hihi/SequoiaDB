@@ -11,7 +11,7 @@ class cs_Test extends PHPUnit_Framework_TestCase
       $this -> port = empty( $_POST['port'] ) ? '11810' : $_POST['port'] ;
       $this -> address = $this -> hostname.':'.$this -> port ;
    }
-
+   
    public function test_Connect()
    {
       $err = sdbInitClient( array( 'enableCacheStrategy' => false ) ) ;

@@ -20,7 +20,7 @@
  */
 
 /**
- * Class for create an object of the node
+ * SequoiaNode Class. To get this Class object must be call SequoiaGroup::getMaster or SequoiaGroup::getNode or SequoiaGroup::getSlave.
  */
 class SequoiaNode
 {

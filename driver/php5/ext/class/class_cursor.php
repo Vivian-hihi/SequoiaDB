@@ -20,7 +20,7 @@
  */
 
 /**
- * Class for create an object of the cursor
+ * SequoiaCursor Class. To get this Class object must be call SequoiaDB::list or SequoiaDB::snapshot or SequoiaCL::find, and so on.
  */
 class SequoiaCursor
 {

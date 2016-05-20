@@ -20,7 +20,7 @@
  */
 
 /**
- * Class for create an object of the domain
+ * SequoiaDomain Class. To get this Class object must be call SequoiaDB::getDomain.
  */
 class SequoiaDomain
 {

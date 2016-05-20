@@ -25,6 +25,10 @@ extern INT32 clDesc ;
 extern INT32 cursorDesc ;
 extern INT32 lobDesc ;
 
+PHP_METHOD( SequoiaCL, __construct )
+{
+}
+
 //cl
 PHP_METHOD( SequoiaCL, drop )
 {

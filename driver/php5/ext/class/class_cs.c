@@ -22,6 +22,10 @@ extern INT32 connectionDesc ;
 extern INT32 csDesc ;
 extern INT32 clDesc ;
 
+PHP_METHOD( SequoiaCS, __construct )
+{
+}
+
 //cs
 PHP_METHOD( SequoiaCS, drop )
 {

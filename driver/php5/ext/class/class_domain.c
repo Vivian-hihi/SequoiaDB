@@ -21,6 +21,10 @@ extern zend_class_entry *pSequoiadbCursor ;
 extern INT32 cursorDesc ;
 extern INT32 domainDesc ;
 
+PHP_METHOD( SequoiaDomain, __construct )
+{
+}
+
 PHP_METHOD( SequoiaDomain, alter )
 {
    INT32 rc = SDB_OK ;

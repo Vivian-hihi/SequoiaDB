@@ -21,6 +21,10 @@ extern zend_class_entry *pSequoiadbSdb ;
 extern INT32 connectionDesc ;
 extern INT32 nodeDesc ;
 
+PHP_METHOD( SequoiaNode, __construct )
+{
+}
+
 PHP_METHOD( SequoiaNode, getName )
 {
    zval *pNodeName = NULL ;

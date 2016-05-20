@@ -20,7 +20,7 @@
  */
 
 /**
- * Class for create an object of the lob
+ * SequoiaLob Class. To get this Class object must be call SequoiaCL::openLob.
  */
 class SequoiaLob
 {

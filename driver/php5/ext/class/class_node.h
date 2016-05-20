@@ -19,6 +19,8 @@
 
 #include "php_driver.h"
 
+PHP_METHOD( SequoiaNode, __construct ) ;
+
 //e.g. Rename getNodeName
 PHP_METHOD( SequoiaNode, getName ) ;
 PHP_METHOD( SequoiaNode, getHostName ) ;

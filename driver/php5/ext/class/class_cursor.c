@@ -18,6 +18,10 @@
 
 extern INT32 cursorDesc ;
 
+PHP_METHOD( SequoiaCursor, __construct )
+{
+}
+
 //e.g. Rename getNext
 PHP_METHOD( SequoiaCursor, next )
 {

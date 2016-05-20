@@ -22,6 +22,10 @@ extern INT32 connectionDesc ;
 extern INT32 groupDesc ;
 extern INT32 nodeDesc ;
 
+PHP_METHOD( SequoiaGroup, __construct )
+{
+}
+
 //group
 PHP_METHOD( SequoiaGroup, isCatalog )
 {

@@ -19,6 +19,8 @@
 
 #include "php_driver.h"
 
+PHP_METHOD( SequoiaDomain, __construct ) ;
+
 PHP_METHOD( SequoiaDomain, alter ) ;
 PHP_METHOD( SequoiaDomain, listCS ) ;
 PHP_METHOD( SequoiaDomain, listCL ) ;

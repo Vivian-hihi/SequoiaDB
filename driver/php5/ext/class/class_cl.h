@@ -19,6 +19,8 @@
 
 #include "php_driver.h"
 
+PHP_METHOD( SequoiaCL, __construct ) ;
+
 //cl
 PHP_METHOD( SequoiaCL, drop ) ;
 PHP_METHOD( SequoiaCL, alter ) ;

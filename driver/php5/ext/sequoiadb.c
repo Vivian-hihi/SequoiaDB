@@ -162,6 +162,7 @@ const zend_function_entry secureFun[] = {
 };
 
 const zend_function_entry csFun[] = {
+   PHP_ME( SequoiaCS, __construct,     NULL, ZEND_ACC_PRIVATE|ZEND_ACC_CTOR )
    //cs
    PHP_ME( SequoiaCS, drop,            NULL, ZEND_ACC_PUBLIC )
    PHP_ME( SequoiaCS, getName,         NULL, ZEND_ACC_PUBLIC )
@@ -178,6 +179,7 @@ const zend_function_entry csFun[] = {
 };
 
 const zend_function_entry clFun[] = {
+   PHP_ME( SequoiaCL, __construct,    NULL, ZEND_ACC_PRIVATE|ZEND_ACC_CTOR )
    //cl
    PHP_ME( SequoiaCL, drop,           NULL, ZEND_ACC_PUBLIC )
    PHP_ME( SequoiaCL, alter,          NULL, ZEND_ACC_PUBLIC )
@@ -219,13 +221,15 @@ const zend_function_entry clFun[] = {
 };
 
 const zend_function_entry cursorFun[] = {
-   PHP_ME( SequoiaCursor, next,    NULL, ZEND_ACC_PUBLIC )
-   PHP_ME( SequoiaCursor, current, NULL, ZEND_ACC_PUBLIC )
+   PHP_ME( SequoiaCursor, __construct,    NULL, ZEND_ACC_PRIVATE|ZEND_ACC_CTOR )
+   PHP_ME( SequoiaCursor, next,           NULL, ZEND_ACC_PUBLIC )
+   PHP_ME( SequoiaCursor, current,        NULL, ZEND_ACC_PUBLIC )
    PHP_MALIAS( SequoiaCursor, getNext, next, NULL, ZEND_ACC_PUBLIC )
    PHP_FE_END
 };
 
 const zend_function_entry groupFun[] = {
+   PHP_ME( SequoiaGroup, __construct,  NULL, ZEND_ACC_PRIVATE|ZEND_ACC_CTOR )
    //group
    PHP_ME( SequoiaGroup, isCatalog,    NULL, ZEND_ACC_PUBLIC )
    PHP_ME( SequoiaGroup, getName,      NULL, ZEND_ACC_PUBLIC )
@@ -246,6 +250,7 @@ const zend_function_entry groupFun[] = {
 };
 
 const zend_function_entry nodeFun[] = {
+   PHP_ME( SequoiaNode, __construct,    NULL, ZEND_ACC_PRIVATE|ZEND_ACC_CTOR )
    PHP_ME( SequoiaNode, getName,        NULL, ZEND_ACC_PUBLIC )
    PHP_ME( SequoiaNode, getHostName,    NULL, ZEND_ACC_PUBLIC )
    PHP_ME( SequoiaNode, getServiceName, NULL, ZEND_ACC_PUBLIC )
@@ -258,14 +263,16 @@ const zend_function_entry nodeFun[] = {
 };
 
 const zend_function_entry domainFun[] = {
-   PHP_ME( SequoiaDomain, alter,     NULL, ZEND_ACC_PUBLIC )
-   PHP_ME( SequoiaDomain, listCS,    NULL, ZEND_ACC_PUBLIC )
-   PHP_ME( SequoiaDomain, listCL,    NULL, ZEND_ACC_PUBLIC )
-   PHP_ME( SequoiaDomain, listGroup, NULL, ZEND_ACC_PUBLIC )
+   PHP_ME( SequoiaDomain, __construct,  NULL, ZEND_ACC_PRIVATE|ZEND_ACC_CTOR )
+   PHP_ME( SequoiaDomain, alter,        NULL, ZEND_ACC_PUBLIC )
+   PHP_ME( SequoiaDomain, listCS,       NULL, ZEND_ACC_PUBLIC )
+   PHP_ME( SequoiaDomain, listCL,       NULL, ZEND_ACC_PUBLIC )
+   PHP_ME( SequoiaDomain, listGroup,    NULL, ZEND_ACC_PUBLIC )
    PHP_FE_END
 };
 
 const zend_function_entry lobFun[] = {
+   PHP_ME( SequoiaLob, __construct,   NULL, ZEND_ACC_PRIVATE|ZEND_ACC_CTOR )
    PHP_ME( SequoiaLob, close,         NULL, ZEND_ACC_PUBLIC )
    PHP_ME( SequoiaLob, getSize,       NULL, ZEND_ACC_PUBLIC )
    PHP_ME( SequoiaLob, getCreateTime, NULL, ZEND_ACC_PUBLIC )

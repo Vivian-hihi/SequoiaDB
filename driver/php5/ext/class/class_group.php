@@ -20,7 +20,7 @@
  */
 
 /**
- * Class for create an object of the group
+ * SequoiaGroup Class. To get this Class object must be call SequoiaDB::getGroup.
  */
 class SequoiaGroup
 {

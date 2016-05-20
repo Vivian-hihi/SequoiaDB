@@ -19,6 +19,8 @@
 
 #include "php_driver.h"
 
+PHP_METHOD( SequoiaGroup, __construct ) ;
+
 //group
 PHP_METHOD( SequoiaGroup, isCatalog ) ;
 PHP_METHOD( SequoiaGroup, getName ) ;

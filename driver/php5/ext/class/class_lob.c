@@ -20,6 +20,10 @@ extern zend_class_entry *pSequoiadbInt64 ;
 
 extern INT32 lobDesc ;
 
+PHP_METHOD( SequoiaLob, __construct )
+{
+}
+
 PHP_METHOD( SequoiaLob, close )
 {
    INT32 rc = SDB_OK ;

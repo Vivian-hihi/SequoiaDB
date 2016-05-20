@@ -20,7 +20,7 @@
  */
 
 /**
- * Class for create an object of the collection space
+ * SequoiaCS Class. To get this Class object must be call SequoiaDB::selectCS or SequoiaDB::getCS.
  */
 class SequoiaCS
 {
