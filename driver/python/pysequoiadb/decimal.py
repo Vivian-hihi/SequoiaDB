@@ -59,7 +59,7 @@ class Decimal(object):
       _, zero_ = decimal.isZero(self.__decimal)
       if _ != 0:
          raise Exception("invalid parameter, code: %d" % _)
-      return True if zero_ == 0 else False
+      return ( True if zero_ != 0 else False )
 
    def set_min(self):
       _ = decimal.setMin(self.__decimal)
@@ -70,7 +70,7 @@ class Decimal(object):
       _, min_ = decimal.isMin(self.__decimal)
       if _ != 0:
          raise Exception("invalid parameter, code: %d" % _)
-      return True if min_ == 0 else False
+      return ( True if min_ != 0 else False )
 
    def set_max(self):
       _ = decimal.setMax(self.__decimal)
@@ -78,10 +78,10 @@ class Decimal(object):
          raise Exception("invalid parameter, code: %d" % _)
 
    def is_max(self):
-      _, max_, decimal.isMax(self.__decimal)
+      _, max_ = decimal.isMax(self.__decimal)
       if _ != 0:
          raise Exception("invalid parameter, code: %d" % _)
-      return True if max_ == 0 else False
+      return ( True if max_ != 0 else False )
 
    def __from_int(self, value):
       _ = decimal.fromInt(self.__decimal, value)
