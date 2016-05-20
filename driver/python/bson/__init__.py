@@ -36,7 +36,7 @@ from bson.regex import Regex
 from bson.son import SON, RE_TYPE
 from bson.timestamp import Timestamp
 from bson.tz_util import utc
-
+from bson.decimal import Decimal
 
 try:
     from bson import _cbson
@@ -88,6 +88,7 @@ BSONTIM = b("\x11") # Timestamp
 BSONLON = b("\x12") # 64bit int
 BSONMIN = b("\xFF") # Min key
 BSONMAX = b("\x7F") # Max key
+BSONDECIMAL = b("\x64") # Decimal type
 
 
 def _get_int(data, position, as_class=None,
@@ -287,6 +288,14 @@ def _get_long(data, position, as_class, tz_aware, uuid_subtype, compile_re):
     position += 8
     return value, position
 
+def __get_decimal(data, position, as_class, tz_aware, uuid_subtype, compile_re):
+   d = Decimal()
+   l = d.parse_from_bson_string(data[position:])
+   value = str(d)
+   position += l
+
+   return value, position
+
 
 _element_getter = {
     BSONNUM: _get_number,
@@ -308,7 +317,8 @@ _element_getter = {
     BSONTIM: _get_timestamp,
     BSONLON: _get_long, # Same as _get_int after 2to3 runs.
     BSONMIN: lambda u, v, w, x, y, z: (MinKey(), v),
-    BSONMAX: lambda u, v, w, x, y, z: (MaxKey(), v)}
+    BSONMAX: lambda u, v, w, x, y, z: (MaxKey(), v),
+    BSONDECIMAL: __get_decimal }
 
 
 def _element_to_dict(
@@ -468,6 +478,8 @@ def _element_to_bson(key, value, check_keys, uuid_subtype):
         return BSONMIN + name
     if isinstance(value, MaxKey):
         return BSONMAX + name
+    if isinstance(value, Decimal):
+        return BSONDECIMAL + name + value.to_bson_element_value() #struct.pack(fmt, a) #value.to_bson_element_value()
 
     raise InvalidDocument("cannot convert value of type %s to bson" %
                           type(value))

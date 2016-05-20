@@ -299,4 +299,9 @@
 -298 = cluster do not exist
 -299 = business do not exist
 -300 = user specified is not exist or password is invalid
--301 = Compression abort
+-301 = Compression initialization failed
+-302 = Compression failed
+-303 = Decompression failed
+-304 = Compression abort
+-305 = Buffer for compression is too small
+-306 = Buffer for decompression is too small

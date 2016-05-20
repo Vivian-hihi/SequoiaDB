@@ -7,15 +7,16 @@ import os
 
 driverFiles = [
    "pysequoiadb/pysequoiadb.cpp"
-   ]
+]
 
 decimalFiles = [
    "pysequoiadb/pydecimal.cpp"
-   ]
+]
 
 clientFiles = [
    path + "SequoiaDB/engine/client/clientcpp.cpp"
-      ]
+]
+
 clientLibFiles = [
    path + "SequoiaDB/engine/oss/ossSSLCertificate.c",
    path + "SequoiaDB/engine/oss/ossSSLWrapper.c",
@@ -31,8 +32,6 @@ clientLibFiles = [
    path + "SequoiaDB/engine/oss/ossSocket.cpp",
    path + "SequoiaDB/engine/oss/ossPrimitiveFileOp.cpp",
    path + "SequoiaDB/engine/pd/pd.cpp",
-   path + "SequoiaDB/engine/pd/pdTrace.cpp",
-   path + "SequoiaDB/engine/pd/pdFunctionList.cpp",
    path + "SequoiaDB/engine/client/bson/numbers.c",
    path + "SequoiaDB/engine/client/bson/bson.c",
    path + "SequoiaDB/engine/client/bson/common_decimal.c",
@@ -49,6 +48,7 @@ clientLibFiles = [
    path + "SequoiaDB/engine/bson/md5.c",
    path + "SequoiaDB/engine/bson/base64.cpp",
    path + "SequoiaDB/engine/bson/nonce.cpp",
+   path + "SequoiaDB/engine/bson/bsontypes.h",
    path + "SequoiaDB/engine/bson/bsonDecimal.cpp",
    path + "SequoiaDB/engine/util/fromjson.hpp",
    path + "SequoiaDB/engine/util/json2rawbson.h",
@@ -87,15 +87,13 @@ srcFiles = [
    curPath + "ossSSLCertificate.c",
    curPath + "ossSSLWrapper.c",
    curPath + "ossSSLContext.c",
-   curPath + "oss.cpp",
+   curPath + "oss.c",
    curPath + "ossUtil.cpp",
    curPath + "ossMem.cpp",
    curPath + "ossSocket.cpp",
    curPath + "ossVer.cpp",
    curPath + "ossPrimitiveFileOp.cpp",
    curPath + "pd.cpp",
-   curPath + "pdTrace.cpp",
-   curPath + "pdFunctionList.cpp",
    curPath + "bson/numbers.c",
    curPath + "bson/bson.c",
    curPath + "bson/common_decimal.c",
@@ -118,18 +116,43 @@ srcFiles = [
    curPath + "timestampValid.c",
 ]
 
+bsonFiles = [
+      curPath + "bsonobj.cpp",
+      curPath + "oid.cpp",
+      curPath + "base64.cpp",
+      curPath + "nonce.cpp",
+      curPath + "md5.c",
+      curPath + "bsonDecimal.cpp",
+      curPath + "bson/numbers.c",
+      curPath + "bson/bson.c",
+      curPath + "bson/common_decimal.c",
+      curPath + "bson/encoding.c",
+      curPath + "ossMem.cpp",
+      curPath + "base64c.c",
+      curPath + "ossUtil.cpp",
+      curPath + "oss.c",
+      curPath + "pd.cpp",
+      curPath + "ossPrimitiveFileOp.cpp",
+      curPath + "utilStr.cpp",
+      curPath + "timestampParse.c",
+      curPath + "timestampTm.c",
+      curPath + "timestampValid.c",
+]
+
 driver  = env.SharedLibrary("sdb",   [driverFiles, srcFiles])
-#decimal = env.SharedLibrary("decimal", [decimalFiles])
+decimal = env.SharedLibrary("decimal", [decimalFiles, bsonFiles])
 
 base = []
 base.append(env.Install("#/pysequoiadb", driver))
-#base.append(env.Install("#/bson", decimal))
+base.append(env.Install("#/bson", decimal))
+base.append(env.Install("#/bson", "pysequoiadb/decimal.py")) 
 
 if sys.platform == 'win32':
    pass
 else:
    act = []
    act.append("mv ./pysequoiadb/libsdb.so ./pysequoiadb/sdb.so")
+   act.append("mv ./bson/libdecimal.so ./bson/bsondecimal.so")
    act.append("tar -zcvf pysequoiadb.tar.gz   \
                ./bson ./pysequoiadb ./setup.py \
                --exclude-vcs")

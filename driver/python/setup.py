@@ -50,7 +50,8 @@ extra_opts['package_data'] = { 'pysequoiadb':modules,
                                         'time64.h',
                                         'time64.c',
                                         'time64_config.h',
-                                        'time64_limits.h', ],}
+                                        'time64_limits.h',
+                                        'bsondecimal.so'],}
 #extra_opts['ext_modules'] = ext_modules
 setup(name = 'pysequoiadb',
       version = '1.0',
