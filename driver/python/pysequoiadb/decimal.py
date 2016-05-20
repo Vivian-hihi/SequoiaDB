@@ -59,7 +59,7 @@ class Decimal(object):
       _, zero_ = decimal.isZero(self.__decimal)
       if _ != 0:
          raise Exception("invalid parameter, code: %d" % _)
-      return zero_
+      return True if zero_ == 0 else False
 
    def set_min(self):
       _ = decimal.setMin(self.__decimal)
@@ -70,7 +70,7 @@ class Decimal(object):
       _, min_ = decimal.isMin(self.__decimal)
       if _ != 0:
          raise Exception("invalid parameter, code: %d" % _)
-      return min_
+      return True if min_ == 0 else False
 
    def set_max(self):
       _ = decimal.setMax(self.__decimal)
@@ -81,7 +81,7 @@ class Decimal(object):
       _, max_, decimal.isMax(self.__decimal)
       if _ != 0:
          raise Exception("invalid parameter, code: %d" % _)
-      return max_
+      return True if max_ == 0 else False
 
    def __from_int(self, value):
       _ = decimal.fromInt(self.__decimal, value)
@@ -132,7 +132,7 @@ class Decimal(object):
          raise Exception("invalid parameter, code: %d" % _)
       return v
 
-   def parse_from_bson_string(self, value):
+   def from_bson_element_value(self, value):
       _, l = decimal.fromBsonValue(self.__decimal, value)
       if _ != 0:
          raise Exception("invalid parameter, code: %d" % _)

@@ -290,7 +290,7 @@ def _get_long(data, position, as_class, tz_aware, uuid_subtype, compile_re):
 
 def __get_decimal(data, position, as_class, tz_aware, uuid_subtype, compile_re):
    d = Decimal()
-   l = d.parse_from_bson_string(data[position:])
+   l = d.from_bson_element_value(data[position:])
    value = str(d)
    position += l
 
