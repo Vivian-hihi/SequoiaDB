@@ -197,17 +197,19 @@
 		</exec>
 		<echo message="${beforeTestcase.screen.output}" />
 
-		<property name="sdb.cmd.argument" value=" -e &quot;var CHANGEDPREFIX='${CHANGEDSTRING}';var COORDSVCNAME='${coord.service.port}';&quot; -f &quot;${testcases.path}/libs/func.js,${commlib.option},${test.case.fullname}&quot;" />
-		<property name="command" value="sdb${sdb.cmd.argument}" />
-		<echo message="Command:${command}" />
-		<echo message="The testcase ${test.case.fullname} path on ${testcases.path}" />
-		<exec executable="${bin_dir}/sdb" dir="" timeout="2000" failonerror="false">
+      <exec executable="${bin_dir}/sdb" dir="" timeout="2000" failonerror="false">
 			<arg line="-s &quot;db.msg('Begin testcase[${test.case.fullname}]');&quot;" />
 		</exec>
+		
+		<echo message="--------------------begin testcase----------------------------"/>
+		<property name="sdb.cmd.argument" value=" -e &quot;var CHANGEDPREFIX='${CHANGEDSTRING}';var COORDSVCNAME='${coord.service.port}';&quot; -f &quot;${testcases.path}/libs/func.js,${commlib.option},${test.case.fullname}&quot;" />
+		<echo message="Exec: ${bin_dir}/sdb${sdb.cmd.argument}" />				
 		<exec executable="${bin_dir}/sdb" dir="" timeout="3600000" outputproperty="screen.output" resultproperty="ret.code" failonerror="false">
 			<arg line="${sdb.cmd.argument}" />
 		</exec>		
 		<echo message="${screen.output}" />
+		<echo message="--------------------end testcase----------------------------"/>
+		
 		<exec executable="${bin_dir}/sdb" dir="" timeout="2000" failonerror="false">
 			<arg line="-s &quot;db.msg('End testcase[${test.case.fullname}]');&quot;" />
 		</exec>

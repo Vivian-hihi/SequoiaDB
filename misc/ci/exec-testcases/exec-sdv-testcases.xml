@@ -150,13 +150,14 @@
          <arg line="${before.testcase.cmd}" />
       </exec>
       <echo message="${before.testcase.output}" />
-
-        <echo message="--------------------begin testcase----------------------------"/>
+       
 		<exec executable="${bin.dir}/sdb" dir="" timeout="20000" failonerror="false">
 			<arg line="-s &quot;db.msg('Begin testcase[${testcase.fullname}]');&quot;" />
 		</exec>
+		
       <property name="testcase.cmd" value=" -e &quot;var CHANGEDPREFIX='${CHANGEDSTRING}';var COORDSVCNAME='${coord.service.port}';&quot; -f &quot;${testcase.path}/libs/func.js,${commlib.option},${testcase.fullname}&quot;" />
-      <echo message="Exec: sdb${testcase.cmd}" />
+      <echo message="--------------------begin testcase----------------------------"/>
+      <echo message="Exec: ${bin.dir}/sdb${testcase.cmd}" />
       <exec executable="${bin.dir}/sdb"
             outputproperty="testcase.output" 
             resultproperty="testcase.retcode"
@@ -164,10 +165,12 @@
          <arg line="${testcase.cmd}" />
       </exec>
       <echo message="${testcase.output}" />
+      <echo message="--------------------end testcase----------------------------"/>
+      
 		<exec executable="${bin.dir}/sdb" dir="" timeout="2000" failonerror="false">
 			<arg line="-s &quot;db.msg('End testcase[${testcase.fullname}]');&quot;" />
 		</exec>      
-        <echo message="--------------------end testcase----------------------------"/>
+        
         
       <property name="after.testcase.cmd" value=" -e &quot;var CHANGEDPREFIX='${CHANGEDSTRING}'; var COORDSVCNAME='${coord.service.port}' ;&quot; -f &quot;${testcase.path}/libs/func.js,${testcase.path}/libs/after_usecase.js&quot;" />
       <echo message="Exec: sdb${after.testcase.cmd}" />
