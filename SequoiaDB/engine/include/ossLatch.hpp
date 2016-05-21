@@ -38,19 +38,24 @@
 #define OSS_SPINLOCK_HPP_
 
 #include "core.hpp"
-//#include <boost/thread/shared_mutex.hpp>
 // include core.hpp first to get _WINDOWS macro defines
 #include "oss.hpp"
 #include "pd.hpp"
+
+#if defined (SDB_ENGINE)
+#include <boost/thread/shared_mutex.hpp>
+#include <boost/thread/mutex.hpp>
+#endif //SDB_ENGINE
+
 #if defined (_WINDOWS)
 #include <WinBase.h>
-//#include <boost/thread/mutex.hpp>
 #else
 #include <unistd.h>
 #include <pthread.h>
-#endif
+#endif //_WINDOWS
 
 #include "ossAtomicBase.hpp"
+
 typedef SINT32 ossLockType ;
 typedef volatile ossLockType ossLock ;
 #define OSS_LOCK_LOCKED   1
@@ -242,10 +247,7 @@ public :
 
    void get()
    {
-      //if ( ! ossLockTestGet( &lock ) )
-      //{
-         ossLockGet( &lock ) ;
-      //}
+      ossLockGet( &lock ) ;
    }
 
    void release()
@@ -255,6 +257,9 @@ public :
 } ;
 typedef class _ossAtomicXLatch ossAtomicXLatch ;
 
+/*
+   _ossSpinXLatch define
+*/
 class _ossSpinXLatch : public ossXLatch
 {
 // _WIN32 is for both 32/64 bit windows
@@ -268,7 +273,7 @@ public:
    _ossSpinXLatch ()
    {
       _lock = CreateEvent( NULL, FALSE, TRUE, NULL ) ;
-      SDB_ASSERT( !_lock, "CreateEvent failed" ) ;
+      SDB_ASSERT( _lock, "CreateEvent failed" ) ;
       //InitializeCriticalSectionAndSpinCount( &_cs, 4000 ) ;
    }
    ~_ossSpinXLatch ()
@@ -406,6 +411,9 @@ public :
 } ;
 typedef class _ossSpinXLatch ossSpinXLatch ;
 
+/*
+   _ossSpinSLatch define
+*/
 class _ossSpinSLatch : public ossSLatch
 {
 #if defined (_WINDOWS) //&& defined (USE_SRW)
@@ -443,9 +451,88 @@ public:
    {
       return TryAcquireSRWLockExclusive ( &_lock ) ;
    }
+
+#elif define (SDB_ENGINE)
+private :
+   boost::shared_mutex _lock ;
+public :
+   _ossSpinSLatch ()
+   {
+   }
+   ~_ossSpinSLatch()
+   {
+   }
+   void get ()
+   {
+      try
+      {
+         _lock.lock() ;
+      }
+      catch(...)
+      {
+         SDB_ASSERT ( FALSE, "SLatch get failed" ) ;
+      }
+   }
+   void release ()
+   {
+      try
+      {
+         _lock.unlock() ;
+      }
+      catch(...)
+      {
+         SDB_ASSERT ( FALSE, "SLatch release failed" ) ;
+      }
+   }
+   void get_shared ()
+   {
+      try
+      {
+         _lock.lock_shared () ;
+      }
+      catch(...)
+      {
+         SDB_ASSERT ( FALSE, "SLatch get shared failed" ) ;
+      }
+   }
+   void release_shared ()
+   {
+      try
+      {
+         _lock.unlock_shared() ;
+      }
+      catch(...)
+      {
+         SDB_ASSERT ( FALSE, "SLatch release shared failed" ) ;
+      }
+   }
+   BOOLEAN try_get ()
+   {
+      try
+      {
+         return _lock.try_lock_for( boost::chrono::milliseconds ( 0 ) ) ;
+      }
+      catch(...)
+      {
+         SDB_ASSERT ( FALSE, "SLatch try get failed" ) ;
+      }
+      return FALSE ;
+   }
+   BOOLEAN try_get_shared()
+   {
+      try
+      {
+         return _lock.try_lock_shared_for( boost::chrono::milliseconds ( 0 ) ) ;
+      }
+      catch(...)
+      {
+         SDB_ASSERT ( FALSE, "SLatch try get shared failed" ) ;
+      }
+      return FALSE ;
+   }
+
 #else
 private :
-   // boost::shared_mutex _m ;
    pthread_rwlock_t  _lock ;
 public :
    _ossSpinSLatch ()
@@ -462,93 +549,31 @@ public :
    {
       INT32 rc = pthread_rwlock_wrlock( &_lock ) ;
       SDB_ASSERT( 0 == rc, "write rwlock failed" ) ;
-      /*
-      try
-      {
-         _m.lock() ;
-      }
-      catch(...)
-      {
-         SDB_ASSERT ( FALSE, "SLatch get failed" ) ;
-      }
-      */
    }
    void release ()
    {
       INT32 rc = pthread_rwlock_unlock( &_lock ) ;
       SDB_ASSERT( 0 == rc, "release write rwlock failed" ) ;
-      /*
-      try
-      {
-         _m.unlock() ;
-      }
-      catch(...)
-      {
-         SDB_ASSERT ( FALSE, "SLatch release failed" ) ;
-      }
-      */
    }
    void get_shared ()
    {
       INT32 rc = pthread_rwlock_rdlock( &_lock ) ;
       SDB_ASSERT( 0 == rc, "read rwlock failed" ) ;
-      /*
-      try
-      {
-         _m.lock_shared () ;
-      }
-      catch(...)
-      {
-         SDB_ASSERT ( FALSE, "SLatch get shared failed" ) ;
-      }
-      */
    }
    void release_shared ()
    {
       INT32 rc = pthread_rwlock_unlock( &_lock ) ;
       SDB_ASSERT( 0 == rc, "release read rwlock failed" ) ;
-      /*
-      try
-      {
-         _m.unlock_shared() ;
-      }
-      catch(...)
-      {
-         SDB_ASSERT ( FALSE, "SLatch release shared failed" ) ;
-      }
-      */
    }
    BOOLEAN try_get ()
    {
       INT32 rc = pthread_rwlock_trywrlock( &_lock ) ;
       return 0 == rc ? TRUE : FALSE ;
-      /*
-      try
-      {
-         return _m.try_lock_for( boost::chrono::milliseconds ( 0 ) ) ;
-      }
-      catch(...)
-      {
-         SDB_ASSERT ( FALSE, "SLatch try get failed" ) ;
-      }
-      return FALSE ;
-      */
    }
    BOOLEAN try_get_shared()
    {
       INT32 rc = pthread_rwlock_tryrdlock( &_lock ) ;
       return 0 == rc ? TRUE : FALSE ;
-      /*
-      try
-      {
-         return _m.try_lock_shared_for( boost::chrono::milliseconds ( 0 ) ) ;
-      }
-      catch(...)
-      {
-         SDB_ASSERT ( FALSE, "SLatch try get shared failed" ) ;
-      }
-      return FALSE ;
-      */
    }
 #endif
 } ;
