@@ -452,7 +452,7 @@ public:
       return TryAcquireSRWLockExclusive ( &_lock ) ;
    }
 
-#elif define (SDB_ENGINE)
+#elif defined (SDB_ENGINE)
 private :
    boost::shared_mutex _lock ;
 public :
