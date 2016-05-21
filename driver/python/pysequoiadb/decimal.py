@@ -22,7 +22,40 @@ except:
    raise Exception("failed to import extension: decimal")
 
 class Decimal(object):
+   """Decimal type for SequoiaDB
+   decimal is an type of element of bson, for the seak of double(IEEE)
+   usage:
+
+   >>> import bson
+   >>> from bson import Decimal
+   >>> obj =  Decimal(1000, 100) // precision 1000, scale 100
+   >>> obj.parse("12345.67890987654321012345678909876543210123")
+      
+   # use a decimal into bson as blow:
+   >>> doc = { 'rest':obj }
+
+   >>> print (doc)
+   { "$decimal": "12345.6789098765", "$precision": [1000, 10] }
+
+   >>> doc = { "decimal": doc }
+
+   when a doc with decimal element encoded to an bson obj, it can be used to insert into SequoiaDB
+   and it also can be decoded into an decimal object from bson object
+
+   >>> bobj = bson.BSON.encode(doc)
+   >>> dd = bson.BSON.decode(bobj)
+   >>> v = dd['decimal']
+   >>> v
+   { "$decimal": "12345.6789098765", "$precision": [1000, 10] }
+   >>> type(v)
+   <class 'bson.decimal.Decimal'>
+
+   methods can be listed by using dir(obj) 
+   """
    def __init__(self, precision = None, scale = None):
+      """ create an decimal object, precision and scale are 0 by default
+      and precision is limited under 1000
+      """
       if ( precision is None and scale is not None ) or ( precision is not None and scale is None ):
          raise TypeError("precision and scale should be set both or neither")
       if precision is not None and not isinstance(precision, int):
@@ -51,33 +84,45 @@ class Decimal(object):
       return self.__to_json_string()
 
    def set_zero(self):
+      """set the decimal object as an instance initalized by 0
+      """
       _ = decimal.setZero(self.__decimal)
       if 0 != _:
          raise Exception("invalid parameter, code: %d" % _)
 
    def is_zero(self):
+      """charge the value of decimal is zero ir not
+      """
       _, zero_ = decimal.isZero(self.__decimal)
       if _ != 0:
          raise Exception("invalid parameter, code: %d" % _)
       return ( True if zero_ != 0 else False )
 
    def set_min(self):
+      """set the value of decimal is the min value
+      """
       _ = decimal.setMin(self.__decimal)
       if _ != 0:
          raise Exception("invalid parameter, code: %d" % _)
 
    def is_min(self):
+      """charge the value of decimal is min value or not
+      """
       _, min_ = decimal.isMin(self.__decimal)
       if _ != 0:
          raise Exception("invalid parameter, code: %d" % _)
       return ( True if min_ != 0 else False )
 
    def set_max(self):
+      """set the value of decimal is the max value
+      """
       _ = decimal.setMax(self.__decimal)
       if _ != 0:
          raise Exception("invalid parameter, code: %d" % _)
 
    def is_max(self):
+      """charge the value of decimal is min value or not
+      """
       _, max_ = decimal.isMax(self.__decimal)
       if _ != 0:
          raise Exception("invalid parameter, code: %d" % _)
@@ -89,6 +134,8 @@ class Decimal(object):
          raise Exception("invalid parameter, code: %d" % _)
 
    def to_int(self):
+      """force the decimal to be an int(long), and show it regulared by scale
+      """
       _, v = decimal.toInt(self.__decimal)
       if _ != 0:
          raise Exception("invalid parameter, code: %d" % _)
@@ -100,6 +147,8 @@ class Decimal(object):
          raise Exception("invalid parameter, code: %d" % _)
 
    def to_float(self):
+      """force the decimal to be an float(double is supported), and show it regulared by scale
+      """
       _, v = decimal.toFloat(self.__decimal)
       if _ != 0:
          raise Exception("invalid parameter, code: %d" % _)
@@ -111,12 +160,16 @@ class Decimal(object):
          raise Exception("invalid parameter, code: %d" % _)
 
    def to_string(self):
+      """force the decimal to be an string, and show it regulared by scale
+      """
       _, v = decimal.toString(self.__decimal)
       if _ != 0:
          raise Exception("invalid parameter, code: %d" % _)
       return v
 
    def parse(self, value):
+      """set the value of decimal, only int(long)/float(double)/str is accepted
+      """
       if isinstance(value, int):
          return self.__from_int(value)
       elif isinstance(value, float):
@@ -133,12 +186,17 @@ class Decimal(object):
       return v
 
    def from_bson_element_value(self, value):
+      """the method is used by bson.BSON.decode to decode the binary string(an bson element value) into an decimal value
+      """
       _, l = decimal.fromBsonValue(self.__decimal, value)
       if _ != 0:
          raise Exception("invalid parameter, code: %d" % _)
       return l
 
    def compare(self, rhs):
+      """compare between two decimal object.
+      if int is specified, int value will be converted to an decimal object, then compare
+      """
       if isinstance(rhs, int):
          _ = decimal.compareInt(self.__decimal, rhs)
       elif isinstance(rhs, Decimal):
@@ -151,6 +209,8 @@ class Decimal(object):
       return _
 
    def to_bson_element_value(self):
+      """the method is used to encode an decimal object into the value of bson element
+      """
       _, s = decimal.toBsonElement(self.__decimal)
       if _ != 0:
          raise Exception("invalid parameter, code: %d" % _)
