@@ -31,7 +31,7 @@
 		<echo message="Begin test ant testcases..." />
 		<echo message="Perform the ant testcases,with testcase.path=${ant.testcase.path}" />
 		
-		<exec executable="${bin_dir}/sdb" dir="" timeout="2000" failonerror="false">
+		<exec executable="${bin_dir}/sdb" dir="" timeout="20000" failonerror="false">
 			<arg line="-s &quot;var db = new Sdb('${host.NAME}', '${coord.service.port}');&quot;" />
 		</exec>
 				
@@ -44,7 +44,7 @@
 			<param name="excludes.case.patterns" value="query_and_create_delete_index.xml" />
 		</foreach>
 		
-		<exec executable="${bin_dir}/sdb" dir="" timeout="2000" failonerror="false">
+		<exec executable="${bin_dir}/sdb" dir="" timeout="20000" failonerror="false">
 			<arg line="-s &quot;db.close();&quot;" />
 		</exec>	
 	</target>
@@ -88,7 +88,7 @@
 		</sdbprefix>
 		<echo message="Now testcase ${test.case.name}.xml begin with ${testcase.begin.time}"/>
 
-		<exec executable="${bin_dir}/sdb" dir="" timeout="2000" failonerror="false">
+		<exec executable="${bin_dir}/sdb" dir="" timeout="20000" failonerror="false">
 			<arg line="-s &quot;db.msg('Begin testcase[${test.case.fullname}]');&quot;" />
 		</exec>
 		<trycatch property="e">
@@ -106,7 +106,7 @@
 				<echo message="${error.msg}" />
 			</catch>
 		</trycatch>
-		<exec executable="${bin_dir}/sdb" dir="" timeout="2000" failonerror="false">
+		<exec executable="${bin_dir}/sdb" dir="" timeout="20000" failonerror="false">
 			<arg line="-s &quot;db.msg('End testcase[${test.case.fullname}]');&quot;" />
 		</exec>
 		   

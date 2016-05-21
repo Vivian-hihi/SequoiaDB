@@ -29,7 +29,7 @@
 		<echo message="Begin test driver php testcases..." />
 		<echo message="Perform the driver php testcases,with testcase.path=${php.testcase.path}" />
 		
-		<exec executable="${bin_dir}/sdb" dir="" timeout="2000" failonerror="false">
+		<exec executable="${bin_dir}/sdb" dir="" timeout="20000" failonerror="false">
 			<arg line="-s &quot;var db = new Sdb('${host.NAME}', '${coord.service.port}');&quot;" />
 		</exec>
 				
@@ -43,7 +43,7 @@
 			<param name="excludes.case.patterns" value="" />
 		</foreach>
 		
-		<exec executable="${bin_dir}/sdb" dir="" timeout="2000" failonerror="false">
+		<exec executable="${bin_dir}/sdb" dir="" timeout="20000" failonerror="false">
 			<arg line="-s &quot;db.close();&quot;" />
 		</exec>			
 	</target>
@@ -76,14 +76,14 @@
 		</exec>
 		<echo message="Now testcase ${test.case.name}.php begin with ${testcase.begin.time} on ${testcases.path}" />
 
-		<exec executable="${bin_dir}/sdb" dir="" timeout="2000" failonerror="false">
+		<exec executable="${bin_dir}/sdb" dir="" timeout="20000" failonerror="false">
 			<arg line="-s &quot;db.msg('Begin testcase[${test.case.fullname}]');&quot;" />
 		</exec>      
 		<exec executable="${php-bin.dir}/php-bin" dir="${php-bin.dir}" timeout="1200000" outputproperty="screen.output" resultproperty="ret.code" failonerror="false" >
 			<arg line="${phpunit.phar.dir} --log-junit ${reports.path}/${test.suite.class.name}.xml ${test.case.fullname}"/>
 		</exec>
 		<echo message="${screen.output}" />
-		<exec executable="${bin_dir}/sdb" dir="" timeout="2000" failonerror="false">
+		<exec executable="${bin_dir}/sdb" dir="" timeout="20000" failonerror="false">
 			<arg line="-s &quot;db.msg('End testcase[${test.case.fullname}]');&quot;" />
 		</exec>		
 		

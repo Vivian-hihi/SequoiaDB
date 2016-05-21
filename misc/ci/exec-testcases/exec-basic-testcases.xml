@@ -36,7 +36,7 @@
 			<format property="test_js_begintime" pattern="yyyy-MM-dd-hh.mm.ss a" />
 		</tstamp>
 		
-		<exec executable="${bin_dir}/sdb" dir="" timeout="30000" failonerror="false">
+		<exec executable="${bin_dir}/sdb" dir="" timeout="20000" failonerror="false">
 			<arg line="-s &quot;var db = new Sdb('${host.NAME}', '${coord.service.port}');&quot;" />
 		</exec>
 
@@ -74,7 +74,7 @@
 		</exec>
 		<echo message="${allClean.screen.output}" />
 		
-		<exec executable="${bin_dir}/sdb" dir="" timeout="2000" failonerror="false">
+		<exec executable="${bin_dir}/sdb" dir="" timeout="20000" failonerror="false">
 			<arg line="-s &quot;db.close();&quot;" />
 		</exec>		
 
@@ -197,7 +197,7 @@
 		</exec>
 		<echo message="${beforeTestcase.screen.output}" />
 
-      <exec executable="${bin_dir}/sdb" dir="" timeout="2000" failonerror="false">
+      <exec executable="${bin_dir}/sdb" dir="" timeout="20000" failonerror="false">
 			<arg line="-s &quot;db.msg('Begin testcase[${test.case.fullname}]');&quot;" />
 		</exec>
 		
@@ -210,7 +210,7 @@
 		<echo message="${screen.output}" />
 		<echo message="--------------------end testcase----------------------------"/>
 		
-		<exec executable="${bin_dir}/sdb" dir="" timeout="2000" failonerror="false">
+		<exec executable="${bin_dir}/sdb" dir="" timeout="20000" failonerror="false">
 			<arg line="-s &quot;db.msg('End testcase[${test.case.fullname}]');&quot;" />
 		</exec>
 

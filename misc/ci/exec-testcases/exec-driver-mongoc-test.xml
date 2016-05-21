@@ -19,7 +19,7 @@
       <basename property="deploy.name" file="${deploy.case.fullname}" suffix=".xml" />
       <property name="test.suite.class.name" value="testcases-driver-mongoc.${deploy.name}-${host.NAME}-${parallel.num}" />
 
-		<exec executable="${bin_dir}/sdb" dir="" timeout="2000" failonerror="false">
+		<exec executable="${bin_dir}/sdb" dir="" timeout="20000" failonerror="false">
 			<arg line="-s &quot;var db = new Sdb('${host.NAME}', '${coord.service.port}');&quot;" />
 		</exec>
 		
@@ -55,7 +55,7 @@
       <echo message="Env:LD_LIBRARY_PATH=${mongoc.testcase.libpath}" />
       <echo message="The testcases path on ${testcases.path}" />
       
-		<exec executable="${bin_dir}/sdb" dir="" timeout="2000" failonerror="false">
+		<exec executable="${bin_dir}/sdb" dir="" timeout="20000" failonerror="false">
 			<arg line="-s &quot;db.msg('Begin testcase[${mongoc.testcase.path}/test-mongo]');&quot;" />
 		</exec>      
       <exec executable="./test-mongo" dir="${mongoc.testcase.path}" timeout="60000" outputproperty="mongo.screen.output" resultproperty="mongo.ret.code" failonerror="false">
@@ -66,11 +66,11 @@
       </exec>
       <echo message="${mongo.screen.output}" />
       <echo message="The result = ${mongo.ret.code} after exec parallel testcase." />
-		<exec executable="${bin_dir}/sdb" dir="" timeout="2000" failonerror="false">
+		<exec executable="${bin_dir}/sdb" dir="" timeout="20000" failonerror="false">
 			<arg line="-s &quot;db.msg('End testcase[${mongoc.testcase.path}/test-mongo]');&quot;" />
 		</exec>
 		      
-      <exec executable="${bin_dir}/sdb" dir="" timeout="2000" failonerror="false">
+      <exec executable="${bin_dir}/sdb" dir="" timeout="20000" failonerror="false">
 			<arg line="-s &quot;db.close();&quot;" />
 		</exec>	
    </target>        
