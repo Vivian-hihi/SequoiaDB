@@ -16,6 +16,8 @@
 #include "bsontypes.h"
 #include "bsonobj.h"
 #include "bsonobjbuilder.h"
+#include "bsonobjiterator.h"
+#include "bson-inl.h"
 
 __METHOD_IMPLEMENT(create)
 {

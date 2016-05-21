@@ -48,14 +48,10 @@ clientLibFiles = [
    path + "SequoiaDB/engine/bson/md5.c",
    path + "SequoiaDB/engine/bson/base64.cpp",
    path + "SequoiaDB/engine/bson/nonce.cpp",
-   path + "SequoiaDB/engine/bson/bsontypes.h",
    path + "SequoiaDB/engine/bson/bsonDecimal.cpp",
    path + "SequoiaDB/engine/util/fromjson.hpp",
    path + "SequoiaDB/engine/util/json2rawbson.h",
    path + "SequoiaDB/engine/include/utilStr.hpp",
-   path + "SequoiaDB/engine/client/base64c.h",
-   path + "SequoiaDB/engine/client/clientDef.h",
-   path + "SequoiaDB/engine/client/timestamp.h",
    path + "SequoiaDB/engine/client/timestampParse.c",
    path + "SequoiaDB/engine/client/timestampTm.c",
    path + "SequoiaDB/engine/client/timestampValid.c",
@@ -68,7 +64,6 @@ clientLibFiles2 = [
    path + "SequoiaDB/engine/client/bson/bson.c",
    path + "SequoiaDB/engine/client/bson/encoding.c",
    path + "SequoiaDB/engine/client/bson/common_decimal.c",
-   path + "SequoiaDB/engine/include/common_decimal.h"
    ]
 
 env.Execute(Mkdir(curPath + "/build/temp"))
