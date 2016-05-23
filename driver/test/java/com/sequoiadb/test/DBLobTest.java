@@ -2,6 +2,10 @@ package com.sequoiadb.test;
 
 import static org.junit.Assert.assertEquals;
 
+import java.util.Arrays;
+
+import junit.framework.Assert;
+
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
 import org.bson.types.ObjectId;
@@ -152,6 +156,8 @@ public class DBLobTest {
         len = rLob.read(b);
         assertEquals( 5, len );
         rData = new String( b, 0, len );
+        System.out.println("rData is: " + rData);
+        System.out.println("data.substring( 15, 20 ) is: " + data.substring( 15, 20 ));
         assertEquals( true, rData.equals( data.substring( 15, 20 ) ) );
         
         rLob.close();
@@ -395,7 +401,7 @@ public class DBLobTest {
 	}
 	
 	@Test
-  public void testRemoveFalseLob(){
+	public void testRemoveFalseLob(){
 		//1024 bits
 		String s1 = "1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234";
 		
@@ -423,7 +429,7 @@ public class DBLobTest {
 	}
 	
 	@Test
-  public void testWriteAndDisconnect(){
+	public void testWriteAndDisconnect(){
 		//1024 bits
 		String s1 = "1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234";
 		byte[] tmp = new byte[s1.getBytes().length + 1];
@@ -484,4 +490,131 @@ public class DBLobTest {
 			System.out.println("can't remove unavailable lob");
 		}
 	}
+	
+	@Test
+	public void testOpenWithReturnData(){
+		int off = 50;
+		int len1 = 99;
+		int len2 = 2 * 1024 * 1024;
+		int len3 = 3 * 1024 * 1024;
+		int totalLen = len1 + len2 + len3;
+		byte[] arr1 = new byte[len1 + 2*off];
+		byte[] arr2 = new byte[len2 + 2*off];
+		byte[] arr3 = new byte[len3 + 2*off];
+		byte[] out1 = new byte[len1 + 2*off];
+		byte[] out2 = new byte[len2 + 2*off];
+		byte[] out3 = new byte[len3 + 2*off];
+		Arrays.fill(arr1, off, len1+off, (byte)'a' );
+		Arrays.fill(arr2, off, len2+off, (byte)'a' );
+		Arrays.fill(arr3, off, len3+off, (byte)'a' );
+		
+		DBLob lob = cl.createLob();
+        lob.write(arr1, off, len1);
+        lob.write(arr2, off, len2);
+        lob.write(arr3, off, len3);
+        lob.close();
+        
+        // run
+        ObjectId id     = lob.getID();
+        DBLob lob2 = cl.openLob(id);
+        long createTime = lob2.getCreateTime();
+        System.out.println("lob's create time is: " + createTime);
+        long size       = lob.getSize();
+        Assert.assertEquals(totalLen, size);
+        lob2.read(out1, off, len1);
+        lob2.read(out2, off, len2);
+        lob2.read(out3, off, len3);
+        // check
+        for (int i = 0; i < out1.length; i++) {
+        	if (i < off) 
+        		Assert.assertEquals(0, out1[i]);
+        	else if (i < len1 + off) 
+        		Assert.assertEquals('a', out1[i]);
+        	else
+        		Assert.assertEquals(0, out1[i]);
+        }
+        for (int i = 0; i < out2.length; i++) {
+        	if (i < off) 
+        		Assert.assertEquals(0, out2[i]);
+        	else if (i < len2 + off) 
+        		Assert.assertEquals("i is: " + i, 'a', out2[i]);
+        	else
+        		Assert.assertEquals(0, out2[i]);
+        }
+        for (int i = 0; i < out3.length; i++) {
+        	if (i < off) 
+        		Assert.assertEquals(0, out3[i]);
+        	else if (i < len3 + off) 
+        		Assert.assertEquals('a', out3[i]);
+        	else
+        		Assert.assertEquals(0, out3[i]);
+        }
+        
+        lob.close();
+	}
+	
+	@Test
+	public void testReadAndSeek() {
+		int size = 12 * 1024 * 1024;
+		byte[] arr = new byte[size];
+		for (int i = 0; i < size; i++) {
+			arr[i] = (byte)(i % 10);
+		}
+		
+		DBLob lob = cl.createLob();
+        lob.write(arr);
+        lob.close();
+        
+        // run
+        ObjectId id     = lob.getID();
+        DBLob lob2 = cl.openLob(id);
+        // case 1: seek "SDB_LOB_SEEK_SET", len is: 10000
+        int len = 10000;
+        lob2.seek(len, DBLob.SDB_LOB_SEEK_SET);
+        byte[] out = new byte[(int)len];
+        lob2.read(out);
+        // check
+        for (int i = 0; i < len; i++) {
+        	Assert.assertEquals("i is: " + i + ", out[i] is: " + out[i], i%10, (int)(out[i]) );
+        }
+        // case 2: seek "SDB_LOB_SEEK_CUR", len is: 1024 * 1024 * 3 - 1000
+        len = 1024 * 1024 * 3 - 1000;
+        out = new byte[(int)len];
+        lob2.seek(len, DBLob.SDB_LOB_SEEK_CUR);
+        lob2.read(out);
+        // check
+        for (int i = 0; i < len; i++) {
+        	Assert.assertEquals("i is: " + i + ", out[i] is: " + out[i], 
+        			(i%10 + len%10)%10, (int)(out[i]) );
+        }
+
+        // case 3: seek "SDB_LOB_SEEK_END", len is: 10000
+        len = 10000;
+        lob2.seek(len, DBLob.SDB_LOB_SEEK_END);
+        out = new byte[(int)len];
+        lob2.read(out);
+        int tmp = size - len;
+        // check
+        for (int i = 0; i < len; i++) {
+        	Assert.assertEquals("i is: " + i + ", out[i] is: " + out[i], (i%10 + tmp%10)%10, (int)(out[i]) );
+        }
+
+        lob2.close();
+	}
+	
+	@Test
+	public void testEOF() {
+        byte[] arr = new byte[10];
+        byte[] out = new byte[10];
+        DBLob lob = cl.createLob();
+        //lob.write(arr);
+        lob.close();
+        
+        ObjectId id     = lob.getID();
+        DBLob rLob = cl.openLob(id);
+        int len = rLob.read(out);
+        assertEquals( "len is" + len, -1, len );
+        lob.close();
+	}
+
 }
