@@ -286,12 +286,15 @@ namespace engine
    }
 
    INT32 omAuthCommand::_getQueryPara( BSONObj &selector,  BSONObj &matcher,
-                                       BSONObj &order, BSONObj &hint )
+                                       BSONObj &order, BSONObj &hint, 
+                                       SINT64 &numSkip, SINT64 &numReturn )
    {
       const CHAR *pSelector = NULL ;
       const CHAR *pMatcher  = NULL ;
       const CHAR *pOrder    = NULL ;
       const CHAR *pHint     = NULL ;
+      const CHAR *pSkip     = NULL ;
+      const CHAR *pReturn   = NULL ;
       INT32 rc = SDB_OK ;
       _restAdaptor->getQuery( _restSession, FIELD_NAME_SELECTOR, &pSelector ) ;
       if ( NULL != pSelector )
@@ -339,6 +342,20 @@ namespace engine
                         "rc=%d", pHint, rc ) ;
             goto error ;
          }
+      }
+
+      numSkip = 0 ;
+      _restAdaptor->getQuery(_restSession, FIELD_NAME_SKIP, &pSkip ) ;
+      if ( NULL != pSkip )
+      {
+         numSkip = ossAtoll( pSkip ) ;
+      }
+
+      numReturn = -1 ;
+      _restAdaptor->getQuery(_restSession, FIELD_NAME_RETURN_NUM, &pReturn ) ;
+      if ( NULL != pReturn )
+      {
+         numReturn = ossAtoll( pReturn ) ;
       }
 
    done:
@@ -814,11 +831,13 @@ namespace engine
       BSONObj order ;
       BSONObj hint ;
       BSONObj result ;
+      SINT64 skip      = 0 ;
+      SINT64 returnNum = -1 ;
       INT32 rc         = SDB_OK ;
       list<BSONObj> records ;
       list<BSONObj>::iterator iter ;
 
-      rc = _getQueryPara( selector, matcher, order, hint ) ;
+      rc = _getQueryPara( selector, matcher, order, hint, skip, returnNum ) ;
       if ( SDB_OK != rc )
       {
          _errorDetail = omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ;
@@ -828,7 +847,7 @@ namespace engine
       }
 
       rc = _queryTable( OM_CS_DEPLOY_CL_CLUSTER, selector, matcher, order, 
-                        hint, 0, 0, -1, records ) ;
+                        hint, 0, skip, returnNum, records ) ;
       if ( SDB_OK != rc )
       {
          _errorDetail = omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ;
@@ -3056,9 +3075,11 @@ namespace engine
       BSONObj matcher ;
       BSONObj order ;
       BSONObj hint ;
+      SINT64 skip      = 0 ;
+      SINT64 returnNum = -1 ;
       list<BSONObj> hosts ;
 
-      rc = _getQueryPara( selector, matcher, order, hint ) ;
+      rc = _getQueryPara( selector, matcher, order, hint, skip, returnNum ) ;
       if ( SDB_OK != rc )
       {
          _errorDetail = omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ;
@@ -3068,7 +3089,7 @@ namespace engine
       }
 
       rc = _queryTable( OM_CS_DEPLOY_CL_HOST, selector, matcher, order, hint, 
-                        0, 0, -1, hosts ) ;
+                        0, skip, returnNum, hosts ) ;
       if ( SDB_OK != rc )
       {
          _errorDetail = omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ;
@@ -5573,9 +5594,11 @@ namespace engine
       BSONObj matcher ;
       BSONObj order ;
       BSONObj hint ;
+      SINT64 skip      = 0 ;
+      SINT64 returnNum = -1 ;
       list<BSONObj> tasks ;
 
-      rc = _getQueryPara( selector, matcher, order, hint ) ;
+      rc = _getQueryPara( selector, matcher, order, hint, skip, returnNum ) ;
       if ( SDB_OK != rc )
       {
          _errorDetail = omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ;
@@ -5585,7 +5608,7 @@ namespace engine
       }
 
       rc = _queryTable( OM_CS_DEPLOY_CL_TASKINFO, selector, matcher, order, 
-                        hint, 0, 0, -1, tasks ) ;
+                        hint, 0, skip, returnNum, tasks ) ;
       if ( SDB_OK != rc )
       {
          _errorDetail = omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ;
@@ -6038,9 +6061,11 @@ namespace engine
       BSONObj matcher ;
       BSONObj order ;
       BSONObj hint ;
+      SINT64 skip      = 0 ;
+      SINT64 returnNum = -1 ;
       list<BSONObj> businessInfo ;
 
-      rc = _getQueryPara( selector, matcher, order, hint ) ;
+      rc = _getQueryPara( selector, matcher, order, hint, skip, returnNum ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "get query parameter failed:rc=%d", rc ) ;
@@ -6050,7 +6075,7 @@ namespace engine
       }
 
       rc = _queryTable( OM_CS_DEPLOY_CL_BUSINESS, selector, matcher, order, 
-                        hint, 0, 0, -1, businessInfo ) ;
+                        hint, 0, skip, returnNum, businessInfo ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "query table failed:table=%s,rc=%d", 
@@ -8438,9 +8463,11 @@ namespace engine
       BSONObj matcher ;
       BSONObj order ;
       BSONObj hint ;
+      SINT64 skip      = 0 ;
+      SINT64 returnNum = -1 ;
       list<BSONObj> authInfo ;
 
-      rc = _getQueryPara( selector, matcher, order, hint ) ;
+      rc = _getQueryPara( selector, matcher, order, hint, skip, returnNum ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "get query parameter failed:rc=%d", rc ) ;
@@ -8448,7 +8475,7 @@ namespace engine
       }
 
       rc = _queryTable( OM_CS_DEPLOY_CL_BUSINESS_AUTH, selector, matcher, order, 
-                        hint, 0, 0, -1, authInfo ) ;
+                        hint, 0, skip, returnNum, authInfo ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "query table failed:table=%s,rc=%d", 

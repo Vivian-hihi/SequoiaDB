@@ -94,7 +94,8 @@ namespace engine
                                          string &sdbUserGroup ) ;
 
          INT32           _getQueryPara( BSONObj &selector, BSONObj &matcher,
-                                        BSONObj &order, BSONObj &hint) ;
+                                        BSONObj &order, BSONObj &hint, 
+                                        SINT64 &numSkip, SINT64 &numReturn ) ;
          string          _getLanguage() ;
          void            _setFileLanguageSep() ;
 
