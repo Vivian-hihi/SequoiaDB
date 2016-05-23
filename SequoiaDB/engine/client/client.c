@@ -8711,6 +8711,9 @@ error:
 static BOOLEAN sdbDataCached( const sdbLobStruct *lob,
                               UINT32 len )
 {
+   // generally, "lob->_currentOffset" should alway be increased,
+   // however,it may be changed by sdbSeekLob(),
+   // so take care of it
    return ( NULL != lob->_dataCache && 0 < lob->_cachedSize &&
             0 <= lob->_cachedOffset &&
             lob->_cachedOffset <= lob->_currentOffset &&
@@ -8729,7 +8732,11 @@ static void sdbReadInCache( sdbLobStruct *lob,
                         lob->_currentOffset ;
    readInCache = readInCache <= len ?
                  readInCache : len ;
-   // why we don't use "cache = lob->_dataCache ;"
+   // when we can read data from cache, 
+   // "lob->_currentOffset >= lob->_cachedOffset" will be true,
+   // if we never use "sdbSeekLob()" to adjust "lob->_currentOffset"
+   // "lob->_currentOffset == lob->_cachedOffset", otherwise,
+   // "lob->_currentOffset > lob->_cachedOffset"
    cache = lob->_dataCache +
            lob->_currentOffset -
            lob->_cachedOffset ;

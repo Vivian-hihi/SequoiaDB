@@ -5070,6 +5070,8 @@ error :
 
    BOOLEAN _sdbLobImpl::_dataCached()
    {
+      // "lob->_currentOffset" may be changed by seek(),
+      // so take care of it
       return ( NULL != _dataCache && 0 < _cachedSize &&
                0 <= _cachedOffset &&
                _cachedOffset <= _currentOffset &&

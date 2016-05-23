@@ -87,6 +87,8 @@ error :
    goto done ;
 }
 
+// "l2r" means "local to remote", when the bson is send to engine, l2r should
+// be true, when we receive get a bson from engine, 12r should be false.
 static BOOLEAN bson_endian_convert ( CHAR *data, off_t *off, BOOLEAN l2r )
 {
    // object size after conversion
