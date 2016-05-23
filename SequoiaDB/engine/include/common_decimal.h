@@ -150,7 +150,7 @@ SDB_EXPORT void decimal_free( bson_decimal *decimal ) ;
 SDB_EXPORT void decimal_set_zero( bson_decimal *decimal ) ;
 SDB_EXPORT int decimal_is_zero( const bson_decimal *decimal ) ;
 
-SDB_EXPORT int decimal_is_speical( const bson_decimal *decimal ) ;
+SDB_EXPORT int decimal_is_special( const bson_decimal *decimal ) ;
 
 SDB_EXPORT void decimal_set_nan( bson_decimal *decimal ) ;
 SDB_EXPORT int decimal_is_nan( const bson_decimal *decimal ) ;

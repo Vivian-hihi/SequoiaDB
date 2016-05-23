@@ -1591,7 +1591,7 @@ int decimal_is_zero( const bson_decimal *decimal )
       return 1 ;
    }
 
-   if ( decimal_is_speical( decimal ) )
+   if ( decimal_is_special( decimal ) )
    {
       return 0 ;
    }
@@ -1604,7 +1604,7 @@ int decimal_is_zero( const bson_decimal *decimal )
    return 0 ;
 }
 
-int decimal_is_speical( const bson_decimal *decimal )
+int decimal_is_special( const bson_decimal *decimal )
 {
    if ( NULL == decimal )
    {
@@ -1631,7 +1631,7 @@ int decimal_is_nan( const bson_decimal *decimal )
       return 1 ;
    }
 
-   if ( decimal_is_speical( decimal ) && 
+   if ( decimal_is_special( decimal ) && 
         decimal->dscale == SDB_DECIMAL_SPECIAL_NAN )
    {
       return 1 ;
@@ -1662,7 +1662,7 @@ int decimal_is_min( const bson_decimal *decimal )
       return 0 ;
    }
 
-   if ( decimal_is_speical( decimal ) && 
+   if ( decimal_is_special( decimal ) && 
         decimal->dscale == SDB_DECIMAL_SPECIAL_MIN )
    {
       return 1 ;
@@ -1693,7 +1693,7 @@ int decimal_is_max( const bson_decimal *decimal )
       return 0 ;
    }
 
-   if ( decimal_is_speical( decimal ) && 
+   if ( decimal_is_special( decimal ) && 
         decimal->dscale == SDB_DECIMAL_SPECIAL_MAX )
    {
       return 1 ;
@@ -1840,7 +1840,7 @@ int64_t decimal_to_long( const bson_decimal *decimal )
       goto error ;
    }
 
-   if ( decimal_is_speical( decimal ) )
+   if ( decimal_is_special( decimal ) )
    {
       rc = -6 ;
       goto error ;
@@ -2825,7 +2825,7 @@ SDB_EXPORT int decimal_add( const bson_decimal *left,
       goto error ;
    }
 
-   if ( decimal_is_speical( left ) || decimal_is_speical( right ) )
+   if ( decimal_is_special( left ) || decimal_is_special( right ) )
    {
       _decimal_set_nan( result ) ;
       goto done ;
@@ -2856,7 +2856,7 @@ SDB_EXPORT int decimal_sub( const bson_decimal *left,
       goto error ;
    }
 
-   if ( decimal_is_speical( left ) || decimal_is_speical( right ) )
+   if ( decimal_is_special( left ) || decimal_is_special( right ) )
    {
       _decimal_set_nan( result ) ;
       goto done ;
@@ -2886,7 +2886,7 @@ SDB_EXPORT int decimal_mul( const bson_decimal *left,
       goto error ;
    }
 
-   if ( decimal_is_speical( left ) || decimal_is_speical( right ) )
+   if ( decimal_is_special( left ) || decimal_is_special( right ) )
    {
       _decimal_set_nan( result ) ;
       goto done ;
@@ -2915,7 +2915,7 @@ SDB_EXPORT int decimal_div( const bson_decimal *left,
       goto error ;
    }
 
-   if ( decimal_is_speical( left ) || decimal_is_speical( right ) )
+   if ( decimal_is_special( left ) || decimal_is_special( right ) )
    {
       _decimal_set_nan( result ) ;
       goto done ;
@@ -2938,7 +2938,7 @@ error:
 SDB_EXPORT int decimal_abs( bson_decimal *decimal ) 
 {
    int rc = 0 ;
-   if ( NULL == decimal || decimal_is_speical( decimal ) )
+   if ( NULL == decimal || decimal_is_special( decimal ) )
    {
       rc = -6 ;
       goto error ;
@@ -2964,7 +2964,7 @@ SDB_EXPORT int decimal_ceil( const bson_decimal *decimal,
       goto error ;
    }
 
-   if ( decimal_is_speical( decimal ) )
+   if ( decimal_is_special( decimal ) )
    {
       _decimal_set_nan( result ) ;
       goto done ;
@@ -3013,7 +3013,7 @@ SDB_EXPORT int decimal_floor( const bson_decimal *decimal,
       goto error ;
    }
 
-   if ( decimal_is_speical( decimal ) )
+   if ( decimal_is_special( decimal ) )
    {
       _decimal_set_nan( result ) ;
       goto done ;
@@ -3062,7 +3062,7 @@ SDB_EXPORT int decimal_mod( const bson_decimal *left,
       goto error ;
    }
 
-   if ( decimal_is_speical( left ) || decimal_is_speical( right ) )
+   if ( decimal_is_special( left ) || decimal_is_special( right ) )
    {
       _decimal_set_nan( result ) ;
       goto done ;
@@ -3188,7 +3188,7 @@ int decimal_update_typemod( bson_decimal *decimal, int typemod )
       goto done ;
    }
 
-   if ( decimal_is_speical( decimal ) )
+   if ( decimal_is_special( decimal ) )
    {
       goto done ;
    }
