@@ -352,7 +352,7 @@ namespace engine
       }
 
       numReturn = -1 ;
-      _restAdaptor->getQuery(_restSession, FIELD_NAME_RETURN_NUM, &pReturn ) ;
+      _restAdaptor->getQuery(_restSession, REST_KEY_NAME_LIMIT, &pReturn ) ;
       if ( NULL != pReturn )
       {
          numReturn = ossAtoll( pReturn ) ;

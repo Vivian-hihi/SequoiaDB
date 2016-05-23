@@ -230,22 +230,6 @@ namespace engine
    #define REST_CMD_NAME_LISTINDEXES   "list indexes"
    #define REST_CMD_NAME_ATTACH_COLLECTION "attach collection"
 
-   #define REST_KEY_NAME_COLLECTIONSPACE "Collectionspace"
-   #define REST_KEY_NAME_COLLECTION    "Collectionname"
-   #define REST_KEY_NAME_SUBCLNAME     "Subclname"
-   #define REST_KEY_NAME_ORDERBY       "Orderby"
-   #define REST_KEY_NAME_LIMIT         "Limit"
-   #define REST_KEY_NAME_MATCHER       "Matcher"
-   #define REST_KEY_NAME_FLAG          "Flag"
-   #define REST_KEY_NAME_INSERTOR      "Insertor"
-   #define REST_KEY_NAME_UPDATOR       "Updator"
-   #define REST_KEY_NAME_DELETOR       "Deletor"
-   #define REST_KEY_NAME_SET_ON_INSERT "Setoninsert"
-   #define REST_KEY_NAME_SQL           "Sql"
-   #define REST_KEY_NAME_LOWBOUND      "Lowbound"
-   #define REST_KEY_NAME_UPBOUND       "Upbound"
-
-
    class RestToMSGTransfer ;   
    typedef INT32 ( RestToMSGTransfer::*restTransFunc )( restAdaptor *pAdaptor, 
                                                         MsgHeader **msg ) ;
