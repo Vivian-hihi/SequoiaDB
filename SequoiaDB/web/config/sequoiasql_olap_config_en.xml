@@ -129,4 +129,17 @@
 		<DynamicEdit>false</DynamicEdit>
 		<BatchEdit>false</BatchEdit>
 	</FILLER>
+	<FILLER>
+		<Name>install_dir</Name>
+		<WebName>Install Directory</WebName>
+		<Type>string</Type>
+		<Default>/opt/sequoiasql/olap</Default>
+		<Valid></Valid>
+		<Display>edit box</Display>
+		<Edit>true</Edit>
+		<Desc>Install Directory</Desc>
+		<Level>0</Level>
+		<DynamicEdit>false</DynamicEdit>
+		<BatchEdit>false</BatchEdit>
+	</FILLER>
 </Property>

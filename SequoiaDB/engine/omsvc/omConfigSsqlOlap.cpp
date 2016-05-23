@@ -33,6 +33,7 @@
 #include "omDef.hpp"
 #include <set>
 #include <sstream>
+#include <boost/filesystem/fstream.hpp>
 
 namespace engine
 {
@@ -51,6 +52,17 @@ namespace engine
       OM_SSQL_OLAP_CONF_SEGMENT_TEMP_DIR,
       OM_SSQL_OLAP_CONF_HDFS_URL,
    } ;
+
+   bool _isValidDirectory( const string& dir )
+   {
+      boost::filesystem::path p(dir) ;
+      if ( !p.is_complete() )
+      {
+         return false ;
+      }
+
+      return true ;
+   }
    
    OmSsqlOlapNode::OmSsqlOlapNode()
    {
@@ -68,9 +80,12 @@ namespace engine
       string port ;
       string dataDir ;
       string tempDir ;
+      string installDir ;
+      string isSingle ;
 
       hostName = bsonNode.getStringField( OM_BSON_FIELD_HOST_NAME ) ;
       role = bsonNode.getStringField( OM_SSQL_OLAP_CONF_ROLE ) ;
+      installDir = bsonNode.getStringField( OM_SSQL_OLAP_CONF_INSTALL_DIR ) ;
 
       SDB_ASSERT( _hostName == hostName, "invalid host name") ;
 
@@ -79,12 +94,15 @@ namespace engine
          port = bsonNode.getStringField( OM_SSQL_OLAP_CONF_MASTER_PORT ) ;
          dataDir = bsonNode.getStringField( OM_SSQL_OLAP_CONF_MASTER_DIR ) ;
          tempDir = bsonNode.getStringField( OM_SSQL_OLAP_CONF_MASTER_TEMP_DIR ) ;
+         isSingle = "true" ;
       }
       else if ( OM_SSQL_OLAP_SEGMENT == role )
       {
          port = bsonNode.getStringField( OM_SSQL_OLAP_CONF_SEGMENT_PORT ) ;
          dataDir = bsonNode.getStringField( OM_SSQL_OLAP_CONF_SEGMENT_DIR ) ;
          tempDir = bsonNode.getStringField( OM_SSQL_OLAP_CONF_SEGMENT_TEMP_DIR ) ;
+         isSingle = bsonNode.getStringField( OM_SSQL_OLAP_CONF_IS_SINGLE ) ;
+         SDB_ASSERT( "true" == isSingle || "false" == isSingle, "invalid is_single") ;
       }
       else
       {
@@ -102,18 +120,28 @@ namespace engine
          goto error ;
       }
 
-      rc = _setDataDir( dataDir, host ) ;
+      rc = _setDataDir( dataDir, host, true ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG_MSG( PDERROR, "failed to set data dir of %s node", role.c_str() ) ;
          goto error ;
       }
 
-      rc = _setTempDir( tempDir, host ) ;
+      rc = _setTempDir( tempDir, host, true ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG_MSG( PDERROR, "failed to set temp dir of %d node", role.c_str() ) ;
          goto error ;
+      }
+
+      if ( "true" == isSingle )
+      {
+         rc = _setInstallDir( installDir, host, true ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG_MSG( PDERROR, "failed to set install dir of %s node", role.c_str() ) ;
+            goto error ;
+         }
       }
 
    done:
@@ -153,7 +181,7 @@ namespace engine
       rc = _addPath( dataDir, host, ignoreDisk ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "failed to add db path to node" );
+         PD_LOG( PDERROR, "failed to add data dir to node" );
          goto error ;
       }
 
@@ -165,11 +193,11 @@ namespace engine
       goto done ;
    }
 
-   INT32 OmSsqlOlapNode::_setTempDir( const string& tempDir, OmHost& host )
+   INT32 OmSsqlOlapNode::_setTempDir( const string& tempDir, OmHost& host, bool ignoreDisk )
    {
       INT32 rc = SDB_OK ;
 
-      if ( NULL == host.getDisk( tempDir ) )
+      if ( !ignoreDisk && NULL == host.getDisk( tempDir ) )
       {
          rc = SDB_INVALIDARG ;
          PD_LOG_MSG( PDERROR, "failed to get disk of path[%s]", tempDir.c_str() ) ;
@@ -177,6 +205,25 @@ namespace engine
       }
 
       _tempDir = tempDir ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 OmSsqlOlapNode::_setInstallDir( const string& installDir, OmHost& host, bool ignoreDisk )
+   {
+      INT32 rc = SDB_OK ;
+
+      rc = _addPath( installDir, host, ignoreDisk ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to add install dir to node" );
+         goto error ;
+      }
+
+      _installDir = installDir ;
 
    done:
       return rc ;
@@ -280,7 +327,8 @@ namespace engine
          OM_SSQL_OLAP_CONF_SEGMENT_HOSTS,
          OM_SSQL_OLAP_CONF_SEGMENT_PORT,
          OM_SSQL_OLAP_CONF_SEGMENT_DIR,
-         OM_SSQL_OLAP_CONF_SEGMENT_TEMP_DIR
+         OM_SSQL_OLAP_CONF_SEGMENT_TEMP_DIR,
+         OM_SSQL_OLAP_CONF_INSTALL_DIR
       } ;
       const INT32 num = sizeof( properties ) / sizeof ( properties[0] ) ;
 
@@ -1207,6 +1255,17 @@ namespace engine
                               fieldName.c_str() ) ;
                   goto error ;
                }
+               else if ( OM_SSQL_OLAP_CONF_INSTALL_DIR == fieldName )
+               {
+                  if ( !_isValidDirectory( value ) )
+                  {
+                     rc = SDB_INVALIDARG ;
+                     PD_LOG_MSG( PDERROR, "the value of field [%s] "
+                                 "should be a valid absolute path",
+                                 OM_SSQL_OLAP_CONF_INSTALL_DIR ) ;
+                     goto error ;
+                  }
+               }
 
                rc = _properties.checkValue( fieldName, value ) ;
                if ( SDB_OK != rc )
@@ -1254,6 +1313,7 @@ namespace engine
       string masterDataDir ;
       string masterTempDir ;
       string standbyHostName ;
+      string installDir ;
       string hostNames[2] ;
       OmSsqlOlapNode* node = NULL ;
       INT32 num ;
@@ -1263,12 +1323,43 @@ namespace engine
       masterDataDir = bsonConfig.getStringField( OM_SSQL_OLAP_CONF_MASTER_DIR ) ;
       masterTempDir = bsonConfig.getStringField( OM_SSQL_OLAP_CONF_MASTER_TEMP_DIR ) ;
       standbyHostName = bsonConfig.getStringField( OM_SSQL_OLAP_CONF_STANDBY_HOST ) ;
+      installDir = bsonConfig.getStringField( OM_SSQL_OLAP_CONF_INSTALL_DIR ) ;
 
       if ( masterHostName == standbyHostName )
       {
          rc = SDB_INVALIDARG ;
          PD_LOG_MSG( PDERROR, "master and standby can't be deployed in the same host [%s]",
                      masterHostName.c_str() ) ;
+         goto error ;
+      }
+
+      if ( !_isValidDirectory( masterDataDir ) )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG_MSG( PDERROR, "master_data_dir [%s] is invalid",
+                     masterDataDir.c_str() ) ;
+         goto error ;
+      }
+
+      if ( !_isValidDirectory( masterTempDir ) )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG_MSG( PDERROR, "master_temp_dir [%s] is invalid",
+                     masterTempDir.c_str() ) ;
+         goto error ;
+      }
+
+      if ( masterDataDir == masterTempDir )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG_MSG( PDERROR, "master_temp_dir can't be same as master_data_dir" ) ;
+         goto error ;
+      }
+
+      if ( !_isValidDirectory( installDir ) )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG_MSG( PDERROR, "install_dir [%s] is invalid", installDir.c_str() ) ;
          goto error ;
       }
 
@@ -1319,19 +1410,11 @@ namespace engine
             goto error ;
          }
 
-         if ( NULL == host->getDisk( masterDataDir ) )
+         if ( host->isPathUsed( installDir ) )
          {
             rc = SDB_INVALIDARG ;
-            PD_LOG_MSG( PDERROR, "master_data_dir [%s] is invalid in host [%s]",
-                        masterDataDir.c_str(), hostNames[i].c_str() ) ;
-            goto error ;
-         }
-
-         if ( NULL == host->getDisk( masterTempDir ) )
-         {
-            rc = SDB_INVALIDARG ;
-            PD_LOG_MSG( PDERROR, "master_temp_dir [%s] is invalid in host [%s]",
-                        masterTempDir.c_str(), hostNames[i].c_str() ) ;
+            PD_LOG_MSG( PDERROR, "install_dir [%s] is used in host [%s]",
+                        installDir.c_str(), hostNames[i].c_str() ) ;
             goto error ;
          }
 
@@ -1355,7 +1438,7 @@ namespace engine
             goto error ;
          }
 
-         rc = node->_setDataDir( masterDataDir, *host ) ;
+         rc = node->_setDataDir( masterDataDir, *host, true ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG_MSG( PDERROR, "failed to set data dir of %s node",
@@ -1363,10 +1446,18 @@ namespace engine
             goto error ;
          }
 
-         rc = node->_setTempDir( masterTempDir, *host ) ;
+         rc = node->_setTempDir( masterTempDir, *host, true ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG_MSG( PDERROR, "failed to set temp dir of %s node",
+                        node->getRole().c_str() ) ;
+            goto error ;
+         }
+
+         rc = node->_setInstallDir( installDir, *host, true ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG_MSG( PDERROR, "failed to set install dir of %s node",
                         node->getRole().c_str() ) ;
             goto error ;
          }
@@ -1393,15 +1484,20 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       string masterHostName ;
+      string standbyHostName ;
       string segmentPort ;
       string segmentDataDir ;
       string segmentTempDir ;
+      string installDir ;
       set<string> hostNames ;
       OmSsqlOlapNode* node = NULL ;
 
       segmentPort = bsonConfig.getStringField( OM_SSQL_OLAP_CONF_SEGMENT_PORT ) ;
       segmentDataDir = bsonConfig.getStringField( OM_SSQL_OLAP_CONF_SEGMENT_DIR ) ;
       segmentTempDir = bsonConfig.getStringField( OM_SSQL_OLAP_CONF_SEGMENT_TEMP_DIR ) ;
+      installDir = bsonConfig.getStringField( OM_SSQL_OLAP_CONF_INSTALL_DIR ) ;
+      masterHostName = bsonConfig.getStringField( OM_SSQL_OLAP_CONF_MASTER_HOST ) ;
+      standbyHostName = bsonConfig.getStringField( OM_SSQL_OLAP_CONF_STANDBY_HOST ) ;
 
       rc = _getSegmentHostNames( bsonConfig, hostNames ) ;
       if ( SDB_OK != rc )
@@ -1414,6 +1510,29 @@ namespace engine
       {
          rc = SDB_INVALIDARG ;
          PD_LOG_MSG( PDERROR, "there is no host for segment" ) ;
+         goto error ;
+      }
+
+      if ( !_isValidDirectory( segmentDataDir ) )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG_MSG( PDERROR, "segment_data_dir [%s] should be valid absolute path",
+                     segmentDataDir.c_str() ) ;
+         goto error ;
+      }
+
+      if ( !_isValidDirectory( segmentTempDir ) )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG_MSG( PDERROR, "segment_temp_dir [%s] should be valid absolute path",
+                     segmentTempDir.c_str() ) ;
+         goto error ;
+      }
+
+      if ( segmentDataDir == segmentTempDir )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG_MSG( PDERROR, "segment_temp_dir can't be same as segment_data_dir" ) ;
          goto error ;
       }
 
@@ -1448,24 +1567,8 @@ namespace engine
          if ( host->isPathUsed( segmentDataDir ) )
          {
             rc = SDB_INVALIDARG ;
-            PD_LOG_MSG( PDERROR, "master_data_dir [%s] is used in host [%s]",
+            PD_LOG_MSG( PDERROR, "segment_data_dir [%s] is used in host [%s]",
                         segmentDataDir.c_str(), hostName.c_str() ) ;
-            goto error ;
-         }
-
-         if ( NULL == host->getDisk( segmentDataDir ) )
-         {
-            rc = SDB_INVALIDARG ;
-            PD_LOG_MSG( PDERROR, "master_data_dir [%s] is invalid in host [%s]",
-                        segmentDataDir.c_str(), hostName.c_str() ) ;
-            goto error ;
-         }
-
-         if ( NULL == host->getDisk( segmentTempDir ) )
-         {
-            rc = SDB_INVALIDARG ;
-            PD_LOG_MSG( PDERROR, "master_temp_dir [%s] is invalid in host [%s]",
-                        segmentTempDir.c_str(), hostName.c_str() ) ;
             goto error ;
          }
 
@@ -1488,18 +1591,38 @@ namespace engine
             goto error ;
          }
 
-         rc = node->_setDataDir( segmentDataDir, *host ) ;
+         rc = node->_setDataDir( segmentDataDir, *host, true ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG_MSG( PDERROR, "failed to set data dir of segment node" ) ;
             goto error ;
          }
 
-         rc = node->_setTempDir( segmentTempDir, *host ) ;
+         rc = node->_setTempDir( segmentTempDir, *host, true ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG_MSG( PDERROR, "failed to set temp dir of segment node" ) ;
             goto error ;
+         }
+
+         if ( hostName != masterHostName && hostName != standbyHostName )
+         {
+            // only one segment in this host, no master or standby
+
+            if ( host->isPathUsed( installDir ) )
+            {
+               rc = SDB_INVALIDARG ;
+               PD_LOG_MSG( PDERROR, "install_dir [%s] is used in host [%s]",
+                           installDir.c_str(), hostName.c_str() ) ;
+               goto error ;
+            }
+
+            rc = node->_setInstallDir( installDir, *host, true ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG_MSG( PDERROR, "failed to set install dir of segment node" ) ;
+               goto error ;
+            }
          }
 
          rc = _cluster.addNode( node ) ;
@@ -1639,6 +1762,14 @@ namespace engine
          BSONObjBuilder builder ;
          builder.append( OM_BSON_FIELD_HOST_NAME, segmentHostName ) ;
          builder.append( OM_SSQL_OLAP_CONF_ROLE, OM_SSQL_OLAP_SEGMENT ) ;
+         if ( segmentHostName != masterHostName && segmentHostName != standbyHostName )
+         {
+            builder.append( OM_SSQL_OLAP_CONF_IS_SINGLE, "true" ) ;
+         }
+         else
+         {
+            builder.append( OM_SSQL_OLAP_CONF_IS_SINGLE, "false" ) ;
+         }
          builder.appendElements( config ) ;
 
          newConfigArray.append( builder.obj() ) ;

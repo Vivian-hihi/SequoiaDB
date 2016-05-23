@@ -99,6 +99,11 @@ namespace engine
    #define OM_SSQL_OLAP_CONF_SEGMENT_DIR        "segment_dir"
    #define OM_SSQL_OLAP_CONF_SEGMENT_TEMP_DIR   "segment_temp_dir"
    #define OM_SSQL_OLAP_CONF_ROLE               "role"
+   #define OM_SSQL_OLAP_CONF_IS_SINGLE          "is_single"
+   #define OM_SSQL_OLAP_CONF_INSTALL_DIR        "install_dir"
+   #define OM_SSQL_OLAP_MASTER                  "master"
+   #define OM_SSQL_OLAP_STANDBY                 "standby"
+   #define OM_SSQL_OLAP_SEGMENT                 "segment"
 
    /*
       OM Field Define

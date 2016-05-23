@@ -36,10 +36,6 @@
 
 namespace engine
 {
-   #define OM_SSQL_OLAP_MASTER       "master"
-   #define OM_SSQL_OLAP_STANDBY      "standby"
-   #define OM_SSQL_OLAP_SEGMENT      "segment"
-   
    class OmSsqlOlapConfigBuilder ;
 
    class OmSsqlOlapNode: public OmNode
@@ -53,19 +49,22 @@ namespace engine
       const string& getPort() const { return _port ; }
       const string& getDataDir() const { return _dataDir ; }
       const string& getTempDir() const { return _tempDir ; }
+      const string& getInstallDir() const { return _installDir ; }
 
    private:
       INT32 _init( const BSONObj& bsonNode, OmHost& host, OmCluster& cluster ) ;
       void  _setRole( const string& role ) ;
       INT32 _setPort( const string& port ) ;
       INT32 _setDataDir( const string& dataDir, OmHost& host, bool ignoreDisk = false ) ;
-      INT32 _setTempDir( const string& tempDir, OmHost& host ) ;
+      INT32 _setTempDir( const string& tempDir, OmHost& host, bool ignoreDisk = false ) ;
+      INT32 _setInstallDir( const string& installDir, OmHost& host, bool ignoreDisk = false ) ;
 
    private:
       string _role ;
       string _port ;
       string _dataDir ;
       string _tempDir ;
+      string _installDir ;
 
       friend class OmSsqlOlapConfigBuilder ;
    } ;

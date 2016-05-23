@@ -4850,7 +4850,7 @@ namespace engine
 
       valueBuilder.append( OM_BSON_FIELD_CONFIG, arrayBuilder.arr() ) ;
       valueBuilder.appendElements( commons ) ;
-      if ( businessType == OM_BUSINESS_ZOOKEEPER )
+      if ( businessType != OM_BUSINESS_SEQUOIADB )
       {
          string packetPath ;
          rc = getPacketFile( businessType, packetPath ) ;
