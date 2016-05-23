@@ -45,6 +45,7 @@ struct Socket
 #ifdef SDB_SSL
    SSLHandle*  sslHandle ;
 #endif
+   socketInterruptFunc isInterruptFunc ;
 } ;
 
 #if defined (_WINDOWS)
@@ -151,6 +152,7 @@ INT32 clientConnect ( const CHAR *pHostName,
 #ifdef SDB_SSL
    s->sslHandle = NULL ;
 #endif
+   s->isInterruptFunc = NULL ;
 
    if ( useSSL )
    {
@@ -456,8 +458,15 @@ INT32 clientSend ( Socket* sock, const CHAR *pMsg, INT32 len, INT32 timeout )
 #endif
             == rc )
          {
-            // if we failed due to interrupt, let's continue
-            continue ;
+            if ( NULL == sock->isInterruptFunc || !sock->isInterruptFunc() )
+            {
+               continue ;
+            }
+            else
+            {
+               rc = SDB_APP_INTERRUPT ;
+               goto error ;
+            }
          }
          rc = SDB_NETWORK ;
          goto error ;
@@ -590,7 +599,15 @@ INT32 clientRecv ( Socket* sock, CHAR *pMsg, INT32 len, INT32 timeout )
 #endif
                == rc )
          {
-            continue ;
+            if ( NULL == sock->isInterruptFunc || !sock->isInterruptFunc() )
+            {
+               continue ;
+            }
+            else
+            {
+               rc = SDB_APP_INTERRUPT ;
+               goto error ;
+            }
          }
          rc = SDB_NETWORK ;
          goto error ;
@@ -652,4 +669,15 @@ done :
 error :
    goto done ;
 }
+
+void clientSetInterruptFunc( Socket* sock, socketInterruptFunc func )
+{
+   if ( !sock )
+   {
+      return ;
+   }
+
+   sock->isInterruptFunc = func ;
+}
+
 

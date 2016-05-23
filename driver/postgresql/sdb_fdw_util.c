@@ -767,6 +767,18 @@ error:
 }
 
 
+extern bool QueryCancelPending ;
+
+BOOLEAN sdbIsInterrupt()
+{
+   if ( QueryCancelPending )
+   {
+      return TRUE ;
+   }
+
+   return FALSE ;
+}
+
 sdbConnectionHandle sdbGetConnectionHandle( const char **serverList, 
                                             int serverNum, 
                                             const char *usr, 
@@ -858,6 +870,8 @@ sdbConnectionHandle sdbGetConnectionHandle( const char **serverList,
                           errhint( "Make sure the OPTION_NAME_PREFEREDINSTANCE " 
                                    "are valid" ) ) ) ;
    }
+
+   sdbSetConnectionInterruptFunc( hConnection, sdbIsInterrupt ) ;
 
    /* add connection into pool */
    if ( pool->poolSize <= pool->numConnections )
@@ -1005,6 +1019,8 @@ int sdbSetConnectionPreference( sdbConnectionHandle hConnection,
 
    return rc ;
 }
+
+
 
 /* connection pool */
 SdbConnectionPool *sdbGetConnectionPool()

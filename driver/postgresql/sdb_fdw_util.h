@@ -30,7 +30,6 @@ typedef struct
    List     *indexclauses[INDEX_MAX_KEYS];
 } sdbIndexClauseSet;
 
-
 void sdbGetIndexEqclause( PlannerInfo *root, RelOptInfo *baserel, Oid tableID,
                           sdbIndexInfo *indexInfo, 
                           sdbIndexClauseSet *clauseset ) ;
@@ -68,6 +67,8 @@ SdbConnectionPool *sdbGetConnectionPool() ;
 
 int sdbSetConnectionPreference( sdbConnectionHandle hConnection, 
                                 const CHAR *preference_instance ) ;
+
+BOOLEAN sdbIsInterrupt() ;
 
 void sdbReleaseConnectionFromPool(int index) ;
 

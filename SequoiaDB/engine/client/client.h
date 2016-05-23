@@ -27,6 +27,7 @@
 #include "jstobs.h"
 #include "spd.h"
 #include "clientDef.h"
+
 SDB_EXTERN_C_START
 
 #define SDB_PAGESIZE_4K           4096
@@ -2453,6 +2454,17 @@ SDB_EXPORT INT32 sdbDetachGroups( sdbDCHandle cHandle, bson *info ) ;
 SDB_EXPORT INT32 sdbSyncDB( sdbConnectionHandle cHandle,
                             bson *options,
                             bson *info ) ;
+
+
+/** \fn void sdbSetConnectionInterruptFunc( sdbConnectionHandle cHandle,
+ *                                          socketInterruptFunc func )
+ *  \param [in] cHandle The handle of connection.
+ *  \param [in] func The function that check the app is interrupt or not
+ *  \retval void
+ */
+SDB_EXPORT void sdbSetConnectionInterruptFunc( 
+                                          sdbConnectionHandle cHandle, 
+                                          socketInterruptFunc func ) ;
 
 SDB_EXTERN_C_END
 #endif

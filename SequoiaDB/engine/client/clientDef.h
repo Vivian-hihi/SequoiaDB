@@ -26,6 +26,8 @@
 
 #include "ossTypes.h"
 
+typedef BOOLEAN (*socketInterruptFunc)(void) ;
+
 typedef struct _sdbClientConf
 {
    // used for cache strategy

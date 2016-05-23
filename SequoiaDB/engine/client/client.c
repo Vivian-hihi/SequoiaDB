@@ -7843,6 +7843,24 @@ error :
    goto done ;
 }
 
+SDB_EXPORT void sdbSetConnectionInterruptFunc( 
+                                          sdbConnectionHandle cHandle, 
+                                          socketInterruptFunc func )
+{
+   INT32 rc = SDB_OK ;
+   sdbConnectionStruct *connection = (sdbConnectionStruct*) cHandle ;
+   // check handle
+   HANDLE_CHECK( cHandle, connection, SDB_HANDLE_TYPE_CONNECTION ) ;
+
+   clientSetInterruptFunc( connection->_sock, func ) ;
+
+done :
+   return ;
+error :
+   goto done ;
+
+}
+
 SDB_EXPORT INT32 sdbSetSessionAttr ( sdbConnectionHandle cHandle,
                                      bson *options )
 {

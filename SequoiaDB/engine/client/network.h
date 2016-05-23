@@ -18,6 +18,7 @@
 #define NETWORK_H__
 
 #include "core.h"
+#include "clientDef.h"
 SDB_EXTERN_C_START
 
 typedef struct Socket Socket ;
@@ -38,5 +39,8 @@ INT32 disableNagle( Socket* sock ) ;
 SOCKET clientGetRawSocket( Socket* sock ) ;
 INT32 setKeepAlive( SOCKET sock, INT32 keepAlive, INT32 keepIdle,
                     INT32 keepInterval, INT32 keepCount ) ;
+
+void clientSetInterruptFunc( Socket* sock, socketInterruptFunc func ) ;
+
 SDB_EXTERN_C_END
 #endif

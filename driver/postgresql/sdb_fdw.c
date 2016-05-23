@@ -105,7 +105,20 @@ static List *SdbPlanForeignModify ( PlannerInfo *root,
 
 static void sdb_slot_deform_tuple( TupleTableSlot *slot, int natts ) ;
 
+
+typedef struct  
+{
+   pthread_t checkThreadID ;
+   int running ;
+} sdbCheckThreadInfo;
+
+
+static sdbCheckThreadInfo *sdbGetCheckThreadInfo() ;
+
 static void sdbStartInterruptCheck() ;
+
+static void sdbJoinInterruptThread() ;
+
 
 static void *thr_check_interrupt( void * arg ) ;
 
@@ -3689,32 +3702,57 @@ error :
    goto done ;
 }
 
+
+static sdbCheckThreadInfo *sdbGetCheckThreadInfo()
+{
+   static sdbCheckThreadInfo info ;
+   return &info ;
+}
+
 static void sdbStartInterruptCheck()
 {
    int rc = 0 ;
-   pthread_t ntid ;
-   rc = pthread_create(&ntid, NULL, thr_check_interrupt, NULL) ;
+   sdbCheckThreadInfo *threadInfo = sdbGetCheckThreadInfo() ;
+   threadInfo->checkThreadID = 0 ;
+   threadInfo->running       = 1 ;
+   rc = pthread_create( &threadInfo->checkThreadID, NULL, thr_check_interrupt, 
+                        NULL ) ;
    if ( 0 != rc )
    {
+      threadInfo->running = 0 ;
       elog( ERROR, "create interrrupt check thread failed:rc=%d", rc ) ;
    }
+
+   atexit( sdbJoinInterruptThread ) ;
 }
 
-extern bool QueryCancelPending ;
+static void sdbJoinInterruptThread()
+{
+   sdbCheckThreadInfo *threadInfo = sdbGetCheckThreadInfo() ;
+   threadInfo->running = 0 ;
+   //fprintf(stderr, "ERROR: cccccccccccccccc\n");
+   pthread_join( threadInfo->checkThreadID, NULL ) ;
+   //fprintf(stderr, "ERROR: dddddddddddddddd\n");
+}
 
 static void *thr_check_interrupt( void * arg )
 {
-   while ( true )
+   sdbCheckThreadInfo *threadInfo = sdbGetCheckThreadInfo() ;
+   while ( threadInfo->running )
    {
-      if ( QueryCancelPending )
+      if ( sdbIsInterrupt() )
       {
+         threadInfo->running = 0 ;
+         fprintf(stderr, "ERROR: aaaaaaaaaaaaaaaa\n");
          elog( ERROR, "QueryCancelPending interrupt received!" ) ;
-         sdbInterruptAllConnection() ;
-         elog( ERROR, "interrupt all connections" ) ;
+         //fprintf(stderr, "ERROR: bbbbbbbbbbbbbbbb\n");
+         return NULL ;
       }
 
-      pg_usleep(1000000); //1 second
+      pg_usleep(1000000); // 1 second
    }
+
+   return NULL ;
 }
 
 #if PG_VERSION_NUM>90300
@@ -4412,7 +4450,7 @@ static void SdbDestroyCLStatistics( SdbCLStatistics *clStat, bool freeObj )
 void _PG_init (  )
 {
    sdbInitConnectionPool (  ) ;
-   sdbStartInterruptCheck() ;
+   //sdbStartInterruptCheck() ;
    SdbInitCLStatisticsCache( SdbGetStatisticsCache() ) ;
    /* we may lose the the pointer of record if it is temporary, so we must
       keep it in global */
@@ -4422,6 +4460,7 @@ void _PG_init (  )
 
 void _PG_fini (  )
 {
+   //sdbJoinInterruptThread() ;
    SdbFiniCLStatisticsCache( SdbGetStatisticsCache() ) ;
    sdbUninitConnectionPool (  ) ;
    SdbFiniRecordCache() ;
