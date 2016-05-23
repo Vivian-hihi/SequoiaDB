@@ -233,7 +233,7 @@
 				<echo message="The result code is ${ret.code} and it's fail ..." />
 				<echo message="The testcase ${test.case.name}.js end with ${testcase.failure.end.time} and cost ${testcase.failure.timeOutput} s in total..." />
 
-				<echo file="${reports.path}/TEST-${test.suite.class.name}.xml" append="true" message="&lt;testcase classname=&quot;${test.suite.class.name}&quot; name=&quot;${test.case.name}&quot; begin_time=&quot;${testcase.begin.time}&quot; end_time=&quot;${testcase.failure.end.time}&quot; time=&quot;${testcase.failure.timeOutput}&quot; path=&quot;${testcases.path}&quot; status=&quot;fail&quot;&gt;&#10;&lt;failure&gt;&#10;&lt;![CDATA[&#10;COMMAND : ${command}&#10;RETURNCODE : ${ret.code}&#10;SDB VERSION : &#10; ${SDB.VERSION.INFO}&#10;&#10;ERROR MESSAGE : &#10;${screen.output}&#10;&#10;Download the test log :&#10;${URL.download.pre}/${test.log}.tar.gz]]&gt;&#10;&lt;/failure&gt;&#10;&lt;/testcase&gt;&#10;" />
+				<echo file="${reports.path}/TEST-${test.suite.class.name}.xml" append="true" message="&lt;testcase classname=&quot;${test.suite.class.name}&quot; name=&quot;${test.case.name}&quot; begin_time=&quot;${testcase.begin.time}&quot; end_time=&quot;${testcase.failure.end.time}&quot; time=&quot;${testcase.failure.timeOutput}&quot; path=&quot;${testcases.path}&quot; status=&quot;fail&quot;&gt;&#10;&lt;failure&gt;&#10;&lt;![CDATA[&#10;COMMAND : ${bin_dir}/sdb${sdb.cmd.argument}&#10;RETURNCODE : ${ret.code}&#10;SDB VERSION : &#10; ${SDB.VERSION.INFO}&#10;&#10;ERROR MESSAGE : &#10;${screen.output}&#10;&#10;Download the test log :&#10;${URL.download.pre}/${test.log}.tar.gz]]&gt;&#10;&lt;/failure&gt;&#10;&lt;/testcase&gt;&#10;" />
 			</then>
 			<else>
 				<tstamp>
