@@ -190,6 +190,7 @@ public class SequoiadbConstants {
 	public final static String FIELD_NAME_LOB_OID = "Oid";
 	public final static String FIELD_NAME_LOB_SIZE = "Size";
     public final static String FIELD_NAME_LOB_CREATTIME = "CreateTime";
+    public final static String FIELD_NAME_LOB_PAGESIZE = "LobPageSize";
 
 	public final static String FIELD_NAME_MODIFY = "$Modify";
 	public final static String FIELD_NAME_OP = "OP";

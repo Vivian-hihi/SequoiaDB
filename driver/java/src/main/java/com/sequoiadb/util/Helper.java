@@ -36,6 +36,7 @@ public class Helper {
 		int inLength = byteArray.length;
 		int newLength = inLength % multipler == 0 ? inLength : inLength
 				+ multipler - inLength % multipler;
+		// warning: data copy happen here
 		ByteBuffer buf = ByteBuffer.allocate(newLength);
 		buf.put(byteArray);
 

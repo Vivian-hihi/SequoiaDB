@@ -84,7 +84,10 @@ public class SDBMessageHelper {
 	
 	// msg.h - struct _MsgLobTuple
     public final static int MESSAGE_LOBTUPLE_LENGTH = 16;
-	
+    
+    // msg.h - struct _MsgOpReply
+    public final static int MESSAGE_OPREPLY_LENGTH = 48 ;
+    
 	private final static Byte BTYE_FILL = 0;
 
 	public static byte[] buildSysInfoRequest() {
@@ -117,6 +120,8 @@ public class SDBMessageHelper {
 			byte[] hint = bsonObjectToByteArray(sdbMessage.getHint());
 			byte[] nodeID = sdbMessage.getNodeID();
 	
+			// TODO: why we should convert here? 
+			// please add the comment here, if you know.
 			if (!endianConvert) {
 				bsonEndianConvert(query, 0, query.length, true);
 				bsonEndianConvert(fieldSelector, 0, fieldSelector.length, true);
@@ -685,7 +690,7 @@ public class SDBMessageHelper {
 		sdbMessage.setNumReturned(numReturned);
 
 		if (numReturned > 0) {
-			List<BSONObject> objList = extractBSONObject(byteBuffer);
+			List<BSONObject> objList = extractBSONObjectList(byteBuffer);
 			sdbMessage.setObjectList(objList);
 		} else {
 			sdbMessage.setObjectList(null);
@@ -766,15 +771,18 @@ public class SDBMessageHelper {
             throws BaseException {
 
         SDBMessage sdbMessage = new SDBMessage();
+        /// when disable open with data return, the open response is |MsgOpReply|bsonobj|
+        /// however, when enable open with data return, the open response is 
+        /// MsgOpReply  |  Meta Object  |  _MsgLobTuple   | Data
+        int messageLength = byteBuffer.getInt();
 
-        int MessageLength = byteBuffer.getInt();
-
-        if (MessageLength < MESSAGE_HEADER_LENGTH) {
-            throw new BaseException("SDB_INVALIDSIZE", MessageLength);
+        if (messageLength < MESSAGE_HEADER_LENGTH) {
+            throw new BaseException("SDB_SYS", 
+            		"receive invalid message lengthe: " + messageLength);
         }
 
         // Request message length
-        sdbMessage.setRequestLength(MessageLength);
+        sdbMessage.setRequestLength(messageLength);
 
         // Action code
         sdbMessage.setOperationCode(Operation.getByValue(byteBuffer.getInt()));
@@ -802,26 +810,55 @@ public class SDBMessageHelper {
         int numReturned = byteBuffer.getInt();
         sdbMessage.setNumReturned(numReturned);
 
-        List<BSONObject> objList = extractBSONObject(byteBuffer);
+        // get meta info message from ByteBuffer
+		int metaObjStartPos = byteBuffer.position();
+		int metaObjLen = byteBuffer.getInt();
+		byteBuffer.position(metaObjStartPos);
+		
+		if (byteBuffer.order() == ByteOrder.BIG_ENDIAN) {
+			bsonEndianConvert(byteBuffer.array(), byteBuffer.position(),
+					metaObjLen, false);
+		}
+		BSONObject metaInfoObj = byteArrayToBSONObject(byteBuffer);
+        List<BSONObject> objList = new ArrayList<BSONObject>();
+        objList.add(metaInfoObj);
         sdbMessage.setObjectList(objList);
+        
+        // get return data from ByteBuffer
+        if (sdbMessage.getFlags() == 0) {
+        	int tupleInfoStartPos = metaObjStartPos + 
+        			Helper.roundToMultipleXLength(metaObjLen, 4);
+        	// check whether there is any data behind meta info object or not
+        	if (messageLength > tupleInfoStartPos) {
+        		byteBuffer.position(tupleInfoStartPos);
+        		// _MsgLobTuple
+                sdbMessage.setLobLen(byteBuffer.getInt());
+                sdbMessage.setLobSequence(byteBuffer.getInt());
+                sdbMessage.setLobOffset(byteBuffer.getLong());
+                // lob data
+                // to avoid copy, we save byteBuffer directly
+                sdbMessage.setLobCachedDataBuf(byteBuffer);
+        	}
+        }
 
         return sdbMessage;
     }
 	
 	public static SDBMessage msgExtractLobRemoveReply(ByteBuffer byteBuffer)
             throws BaseException {
-	    return msgExtractLobOpenReply(byteBuffer);
+	    //return msgExtractLobOpenReply(byteBuffer);
+		return msgExtractReply(byteBuffer);
     }
 	
 	public static SDBMessage msgExtractLobReadReply(ByteBuffer byteBuffer)
             throws BaseException {
-
+		/// when it is read res |MsgOpReply|_MsgLobTuple|data|
         SDBMessage sdbMessage = new SDBMessage();
 
         int MessageLength = byteBuffer.getInt();
 
         if (MessageLength < MESSAGE_HEADER_LENGTH) {
-            throw new BaseException("SDB_INVALIDSIZE", MessageLength);
+            throw new BaseException("SDB_SYS", MessageLength);
         }
 
         // Request message length
@@ -860,10 +897,8 @@ public class SDBMessageHelper {
             sdbMessage.setLobLen(byteBuffer.getInt());
             sdbMessage.setLobSequence(byteBuffer.getInt());
             sdbMessage.setLobOffset(byteBuffer.getLong());
-            
-            byte[] buff   = new byte[sdbMessage.getLobLen()];
-            byteBuffer.get(buff);
-            sdbMessage.setLobBuff(buff);
+            // to avoid copy, we save byteBuffer directly 
+            sdbMessage.setLobCachedDataBuf(byteBuffer);
         }
 
         return sdbMessage;
@@ -910,7 +945,7 @@ public class SDBMessageHelper {
 		sdbMessage.setNumReturned(returnType);
 		// Get the extract the error message
 		if ((sdbMessage.getFlags() != 0)) {
-			List<BSONObject> objList = extractBSONObject(byteBuffer);
+			List<BSONObject> objList = extractBSONObjectList(byteBuffer);
 			sdbMessage.setObjectList(objList);
 		} else {
 			sdbMessage.setObjectList(null);
@@ -1052,7 +1087,7 @@ public class SDBMessageHelper {
 		return rawList;
 	}
 
-	private static List<BSONObject> extractBSONObject(ByteBuffer byteBuffer)
+	private static List<BSONObject> extractBSONObjectList(ByteBuffer byteBuffer)
 			throws BaseException {
 
 		List<BSONObject> objList = new ArrayList<BSONObject>();
@@ -1111,8 +1146,7 @@ public class SDBMessageHelper {
 		BSONDecoder d = new BasicBSONDecoder();
 		BSONCallback cb = new BasicBSONCallback();
 		try {
-			// TODO: need process BIGEND
-
+			// TODO: shall we must offer the bson code which is in little-endian? 
 			int s = d.decode(new ByteArrayInputStream(byteBuffer.array(),
 					byteBuffer.position(), byteBuffer.remaining()), cb);
 			BSONObject o1 = (BSONObject) cb.get();

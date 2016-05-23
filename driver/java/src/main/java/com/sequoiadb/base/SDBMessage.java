@@ -15,6 +15,7 @@
  */
 package com.sequoiadb.base;
 
+import java.nio.ByteBuffer;
 import java.util.List;
 
 import org.bson.BSONObject;
@@ -57,7 +58,7 @@ public class SDBMessage {
 	private int lobLen;
     private long lobOffset;
     private int lobSequence;
-    byte[] lobBuff;
+    private ByteBuffer cachedData;
 	
     public int getLobLen() {
         return lobLen;
@@ -83,15 +84,13 @@ public class SDBMessage {
         this.lobSequence = lobSequence;
     }
 
-    public byte[] getLobBuff() {
-        return lobBuff;
+    public ByteBuffer getLobCachedDataBuf() {
+    	return cachedData;
     }
 
-    public void setLobBuff(byte[] lobBuff) {
-        this.lobBuff = lobBuff;
+    public void setLobCachedDataBuf(ByteBuffer buf) {
+    	cachedData = buf;
     }
-
-
 	
 	public SDBMessage() {
 	}

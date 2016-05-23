@@ -90,16 +90,41 @@ public interface DBLob {
     public void write( byte[] b ) throws BaseException;
     
     /**
+     * @fn          write( byte[] b, int off, int len )
+     * @brief       Writes <code>len</code> bytes from the specified 
+     *              byte array starting at offset <code>off</code> to this lob. 
+     * @param       b   the data.
+     * @param       off the start offset in the data.
+     * @param       len the number of bytes to write.
+     * @exception   com.sequoiadb.exception.BaseException
+     */
+    public void write( byte[] b, int off, int len ) throws BaseException;
+    
+    /**
      * @fn          int read( byte[] b )
-     * @brief       Reads up to b.length bytes of data from this lob into 
+     * @brief       Reads up to <code>b.length</code> bytes of data from this lob into 
      *              an array of bytes. 
      * @param       b   the buffer into which the data is read.
-     * @return      the total number of bytes read into the buffer, or-1 if 
+     * @return      the total number of bytes read into the buffer, or <code>-1</code> if 
      *              there is no more data because the end of the file has been 
-     *              reached, or 0 if b.length is Zero.
+     *              reached, or <code>0</code> if <code>b.length</code> is Zero.
      * @exception   com.sequoiadb.exception.BaseException
      */
     public int read( byte[] b ) throws BaseException;
+    
+    /**
+     * @fn          int read( byte[] b, int off, int len )
+     * @brief       Reads up to <code>len</code> bytes of data from this lob into 
+     *              an array of bytes.
+     * @param       b   the buffer into which the data is read.
+     * @param       off the start offset in the destination array <code>b</code>.
+     * @param       len the maximum number of bytes read.
+     * @return      the total number of bytes read into the buffer, or <code>-1</code> if 
+     *              there is no more data because the end of the file has been 
+     *              reached, or <code>0</code> if <code>len</code> is Zero.
+     * @exception   com.sequoiadb.exception.BaseException
+     */
+    public int read( byte[] b, int off, int len ) throws BaseException;
     
     /**
      * @fn          seek( long size, int seekType )
@@ -130,19 +155,24 @@ class DBLobConcrete implements DBLob {
     
     // the max lob data size to send for one message
     private final static int SDB_LOB_MAX_DATA_LENGTH  = 1024 * 1024;
-//    private final static int SDB_LOB_MAX_DATA_LENGTH = 1024 * 1024;
     
     private final static long SDB_LOB_DEFAULT_OFFSET  = -1;
     private final static int SDB_LOB_DEFAULT_SEQ      = 0;
     
+    private final static int SDB_LOB_ALIGNED_LEN = 524288; // 512k
+    private final static int FLG_LOBOPEN_WITH_RETURNDATA = 0X00000002;
+    
     private DBCollection _cl;
     private ObjectId     _id;
     private int          _mode;
+    private int          _pageSize;
     private long         _size;
     private long         _createTime;
     private long         _readOffset = 0;
-    private boolean      _endianConvert;
+    private long         _cachedOffset = -1;
+    private ByteBuffer   _cachedDataBuff = null;
     private boolean      _isOpen = false;
+    private boolean      _endianConvert;
     
     /* when first open/create DBLob, sequoiadb return the contextID for the
      * further reading/writing/close
@@ -233,7 +263,10 @@ class DBLobConcrete implements DBLob {
         openLob.put( SequoiadbConstants.FIELD_NAME_LOB_OID, _id );
         openLob.put( SequoiadbConstants.FIELD_NAME_LOB_OPEN_MODE, _mode );
         
-        byte[] request = generateOpenLobRequest( openLob );
+        int flags = (_mode == SDB_LOB_READ) ? FLG_LOBOPEN_WITH_RETURNDATA : 
+        	SequoiadbConstants.DEFAULT_FLAGS;
+        
+        byte[] request = generateOpenLobRequest( openLob, flags );
         ByteBuffer res = sendRequest( request, request.length );
         
         SDBMessage resMessage = SDBMessageHelper.msgExtractLobOpenReply( res );
@@ -246,7 +279,6 @@ class DBLobConcrete implements DBLob {
         if ( 0 != flag ) {
             throw new BaseException( flag, openLob );
         }
-        
         List<BSONObject> objList = resMessage.getObjectList();
         if ( objList.size() != 1 ) {
             throw new BaseException( "SDB_NET_BROKEN_MSG", 
@@ -257,6 +289,14 @@ class DBLobConcrete implements DBLob {
         _size = (Long) obj.get( SequoiadbConstants.FIELD_NAME_LOB_SIZE );
         _createTime = (Long) obj.get( 
                                 SequoiadbConstants.FIELD_NAME_LOB_CREATTIME );
+        _pageSize = (Integer)obj.get( 
+                SequoiadbConstants.FIELD_NAME_LOB_PAGESIZE );
+        _cachedDataBuff = resMessage.getLobCachedDataBuf();
+        if ( _cachedDataBuff != null ) {
+        	_readOffset = 0;
+        	_cachedOffset = _readOffset;
+        }
+        resMessage.setLobCachedDataBuf(null);
         _contextID = resMessage.getContextIDList().get(0);
     }
     
@@ -332,6 +372,19 @@ class DBLobConcrete implements DBLob {
      * @exception   com.sequoiadb.exception.BaseException.
      */
     public void write( byte[] b ) throws BaseException {
+    	write( b, 0, b.length );
+    }
+    
+    /**
+     * @fn          write( byte[] b, int off, int len )
+     * @brief       Writes <code>len</code> bytes from the specified 
+     *              byte array starting at offset <code>off</code> to this lob. 
+     * @param       b   the data.
+     * @param       off the start offset in the data.
+     * @param       len the number of bytes to write.
+     * @exception   com.sequoiadb.exception.BaseException
+     */
+    public void write( byte[] b, int off, int len ) throws BaseException {
         if ( !_isOpen ) {
             throw new BaseException( "SDB_LOB_NOT_OPEN", "lob is not open" );
         }
@@ -340,33 +393,36 @@ class DBLobConcrete implements DBLob {
             throw new BaseException( "SDB_INVALIDARG", "input is null" );
         }
         
-        if ( b.length <= SDB_LOB_MAX_DATA_LENGTH ) {
-            _write( b );
-            return;
+        if ( len < 0 || len > b.length ) {
+        	throw new BaseException( "SDB_INVALIDARG", "invalid len" );
         }
         
-        /* if b.length is more then SDB_LOB_MAX_DATA_LENGTH. we will split 
-         * the data to pieces with length=SDB_LOB_MAX_DATA_LENGTH. 
-         * besides, data copy is a must in this case.
-         */
-        int offset = 0;
-        while ( b.length > offset ) {
-            int leftLen  = b.length - offset;
+        if ( off < 0 || off > b.length ) {
+            throw new BaseException( "SDB_INVALIDARG", "invalid off" );        	
+        }
+        
+        if ( off + len > b.length ) {
+        	throw new BaseException( "SDB_INVALIDARG", "off + len is great than b.length" );
+        }
+        
+        int offset = off;
+        int leftLen = len;
+        ByteBuffer byteBuf = ByteBuffer.wrap(b, off, len);
+        while ( leftLen > 0 ) {
+            /* if b.length is more then SDB_LOB_MAX_DATA_LENGTH. we will split 
+             * the data to pieces with length=SDB_LOB_MAX_DATA_LENGTH. 
+             */
             int writeLen = leftLen > SDB_LOB_MAX_DATA_LENGTH ? 
                                              SDB_LOB_MAX_DATA_LENGTH : leftLen;
-            
-            //_write( Arrays.copyOfRange( b, offset, offset + writeLen ) );
-            // just for compatible jdk 5
-            byte[] tempb = new byte[writeLen];
-            int j=0;
-            for (int i=offset; i<(offset + writeLen); ++i)
-            {
-            	tempb[j] = b[i];
-            	j++;
-            }
-            _write (tempb);
-            
+            // set the correct position for next reading
+            byteBuf.position( offset );
+            byteBuf.limit( offset + writeLen );
+            // TODO: we should avoid copy here
+            byte[] tmpBuf = new byte[writeLen];
+            byteBuf.get(tmpBuf);
+            _write( tmpBuf );
             offset += writeLen;
+            leftLen -= writeLen;
         }
     }
     
@@ -382,6 +438,22 @@ class DBLobConcrete implements DBLob {
      * @exception   com.sequoiadb.exception.BaseException.
      */
     public int read( byte[] b ) throws BaseException {
+    	return read( b, 0, b.length );
+    }
+    
+    /**
+     * @fn          int read( byte[] b, int off, int len )
+     * @brief       Reads up to <code>len</code> bytes of data from this lob into 
+     *              an array of bytes.
+     * @param       b   the buffer into which the data is read.
+     * @param       off the start offset in the destination array <code>b</code>.
+     * @param       len the maximum number of bytes read.
+     * @return      the total number of bytes read into the buffer, or <code>-1</code> if 
+     *              there is no more data because the end of the file has been 
+     *              reached, or <code>0</code> if <code>len</code> is Zero.
+     * @exception   com.sequoiadb.exception.BaseException
+     */
+    public int read( byte[] b, int off, int len ) throws BaseException {
         if ( !_isOpen ) {
             throw new BaseException( "SDB_LOB_NOT_OPEN", "lob is not open" );
         }
@@ -390,11 +462,23 @@ class DBLobConcrete implements DBLob {
             throw new BaseException( "SDB_INVALIDARG", "b is null" );
         }
         
+        if ( len < 0 || len > b.length ) {
+        	throw new BaseException( "SDB_INVALIDARG", "invalid len" );
+        }
+        
+        if ( off < 0 || off > b.length ) {
+            throw new BaseException( "SDB_INVALIDARG", "invalid off" );        	
+        }
+        
+        if ( off + len > b.length ) {
+        	throw new BaseException( "SDB_INVALIDARG", "off + len is great than b.length" );
+        }
+        
         if ( b.length == 0 ) {
             return 0;
         }
 
-        return _read( b );
+        return _read( b, off, len );
     }
     
     /**
@@ -447,36 +531,170 @@ class DBLobConcrete implements DBLob {
         }
     }
     
-    private int _read( byte[] b ) {
-        byte[] request = generateReadLobRequest( b.length );
+    private int _reviseReadLen( int needLen ) {
+    	int mod = (int)(_readOffset & ( _pageSize - 1 ));
+    	// when "needLen" is great than (2^31 - 1) - 3,
+    	// alignedLen" will be less than 0, but we should not worry
+    	// about this, because before we finish using the cached data,
+    	// we won't come here, at that moment, "alignedLen" will be not be less
+    	// than "needLen"
+    	int alignedLen = Helper.roundToMultipleXLength(needLen, SDB_LOB_ALIGNED_LEN);
+    	if ( alignedLen < needLen ) {
+    		alignedLen = SDB_LOB_ALIGNED_LEN;
+    	}
+    	alignedLen -= mod;
+    	if ( alignedLen < SDB_LOB_ALIGNED_LEN ) {
+    		alignedLen += SDB_LOB_ALIGNED_LEN;
+    	}
+    	return alignedLen;
+    }
+    
+    private boolean _hasDataCached() {
+    	int remaining = (_cachedDataBuff != null) ? _cachedDataBuff.remaining() : 0;
+    	return ( _cachedDataBuff != null && 0 < remaining &&
+    			 0 <= _cachedOffset &&
+    			 _cachedOffset <= _readOffset &&
+    			 _readOffset < ( _cachedOffset + remaining ) );
+    }
+    
+    private int _readInCache( byte[] buf, int off, int needRead ) {
+    	if ( needRead > buf.length - off ) {
+    		throw new BaseException( "SDB_SYS", "buf size is to small" );
+    	}
+    	int readInCache = (int)(_cachedOffset + _cachedDataBuff.remaining() - _readOffset);
+    	readInCache = readInCache <= needRead ? readInCache : needRead;
+    	// if we had used "lobSeek" to adjust "_readOffset", 
+    	// let's adjust the right place to copy data
+    	if ( _readOffset > _cachedOffset ) {
+    		int currentPos = _cachedDataBuff.position();
+    		int newPos = currentPos + (int)(_readOffset - _cachedOffset);  
+    		_cachedDataBuff.position(newPos);
+    	}
+    	// copy the data from cache out to the buf for user
+    	_cachedDataBuff.get( buf, off, readInCache );
+    	if ( _cachedDataBuff.remaining() == 0 ) {
+    		// TODO: shell we need to reuse the ByteBuffer ?
+    		_cachedDataBuff = null;
+    	} else {
+    		_cachedOffset = _readOffset + readInCache;
+    	}
+    	return readInCache;
+    }
+    
+    private int _onceRead( byte[] buf, int off, int len ) {
+    	int needRead = len; 
+    	int totalRead = 0;
+    	int onceRead = 0;
+    	int alignedLen = 0;
+    	
+    	// try to get data from local cache
+    	if ( _hasDataCached() ) {
+    		onceRead = _readInCache( buf, off, needRead );
+    		totalRead += onceRead;
+    		needRead -= onceRead;
+    		_readOffset += onceRead;
+    		return totalRead;
+    	}
+    	
+    	// get data from database
+    	_cachedOffset = -1;
+    	_cachedDataBuff = null;
+    	
+    	// page align 
+    	alignedLen = _reviseReadLen( needRead );
+    	// build read message
+        byte[] request = generateReadLobRequest( alignedLen );
+        // seed message to engine
         ByteBuffer res = sendRequest( request, request.length );
-        
+        // receive and extract return message
         SDBMessage resMessage = SDBMessageHelper.msgExtractLobReadReply( res );
+        /// check the return contents and make sure no error had happen
         displayResponse( resMessage );
         if ( resMessage.getOperationCode() != Operation.MSG_BS_LOB_READ_RES) {
             throw new BaseException("SDB_UNKNOWN_MESSAGE", 
                     resMessage.getOperationCode());
         }
-        int flag = resMessage.getFlags();
-        
+        int rc = resMessage.getFlags();
         // meet the end of the lob
-        if ( SequoiadbConstants.SDB_EOF == flag ) {
+        if ( rc == SequoiadbConstants.SDB_EOF ) {
             return -1;
         }
-        
-        if ( 0 != flag ) {
-            throw new BaseException( flag );
+        if ( rc != 0 ) {
+            throw new BaseException( rc );
         }
-        
-        byte[] lobData = resMessage.getLobBuff();
-        for ( int i = 0; i < lobData.length; i++ ) {
-            b[i] = lobData[i];
+        // sanity check
+        // return message is |MsgOpReply|_MsgLobTuple|data|
+        int retMsgLen = resMessage.getRequestLength();
+        if ( retMsgLen < SDBMessageHelper.MESSAGE_OPREPLY_LENGTH + 
+        		SDBMessageHelper.MESSAGE_LOBTUPLE_LENGTH ) {
+        	throw new BaseException( "SDB_SYS", 
+        			"invalid message's length: " + retMsgLen );
         }
-        
-        _readOffset += lobData.length;
-        return lobData.length;
+        long offsetInEngine = resMessage.getLobOffset();
+        if ( _readOffset != offsetInEngine ) {
+        	throw new BaseException( "SDB_SYS", 
+        			"local read offset(" + _readOffset + 
+        			") is not equal with what we expect(" + offsetInEngine + ")" );        	
+        }
+        int retLobLen = resMessage.getLobLen();
+        if ( retMsgLen < SDBMessageHelper.MESSAGE_OPREPLY_LENGTH + 
+        		SDBMessageHelper.MESSAGE_LOBTUPLE_LENGTH + retLobLen )
+        {
+        	throw new BaseException( "SDB_SYS", 
+        			"invalid message's length: " + retMsgLen );        	
+        }	
+        /// get return data
+        _cachedDataBuff = resMessage.getLobCachedDataBuf();
+        resMessage.setLobCachedDataBuf(null);
+        // sanity check 
+        int remainLen = _cachedDataBuff.remaining();
+        if ( remainLen != retLobLen ) {
+        	throw new BaseException( "SDB_SYS", "the remaining in buffer(" + remainLen + 
+        			") is not equal with what we expect(" + retLobLen + ")" );
+        }
+        // if what we got is more than what we expect,
+        // let's cache some for next reading request.
+        if ( needRead < retLobLen ) {
+        	_cachedDataBuff.get( buf, off, needRead);
+        	totalRead += needRead;
+        	_readOffset += needRead;
+        	_cachedOffset = _readOffset;
+        } else {
+        	_cachedDataBuff.get( buf, off, retLobLen);
+        	totalRead += retLobLen;
+        	_readOffset += retLobLen;
+        	_cachedOffset = -1;
+        	_cachedDataBuff = null;
+        }
+        return totalRead;
     }
-
+    
+    private int _read( byte[] b, int off, int len ) {
+    	int offset = off;
+    	int needRead = len;
+    	int onceRead = 0;
+    	int totalRead = 0;
+    	// when no data for return
+    	if ( _readOffset == _size ) {
+    		return -1;
+    	}
+    	while( needRead > 0 && _readOffset < _size ) {
+    		onceRead = _onceRead( b, offset, needRead );
+    		if ( onceRead == -1 ) {
+    			if ( totalRead == 0 ) {
+    				totalRead = -1;
+    			}
+    			// when we finish read, let's stop
+    			break;
+    		}
+    		offset += onceRead;
+    		needRead -= onceRead;
+    		totalRead += onceRead;
+    		onceRead = 0;
+    	}
+    	return totalRead;
+    }
+ 
     private byte[] generateReadLobRequest( int length ) {
         int totalLen = SDBMessageHelper.MESSAGE_OPLOB_LENGTH 
                 + SDBMessageHelper.MESSAGE_LOBTUPLE_LENGTH;
@@ -557,6 +775,7 @@ class DBLobConcrete implements DBLob {
         
         List<byte[]> buffList = new ArrayList<byte[]>();
         buffList.add( buff.array() );
+        // TODO: roundToMultipleX will copy data
         buffList.add( Helper.roundToMultipleX( input, 4 ) );
         
         return Helper.concatByteArray( buffList );
@@ -595,7 +814,7 @@ class DBLobConcrete implements DBLob {
         return buff.array();
     }
     
-    private byte[] generateOpenLobRequest( BSONObject openLob ) {
+    private byte[] generateOpenLobRequest( BSONObject openLob, int flags ) {
         
         byte bOpenLob[] = SDBMessageHelper.bsonObjectToByteArray( openLob );
         int totalLen = SDBMessageHelper.MESSAGE_OPLOB_LENGTH 
@@ -624,7 +843,7 @@ class DBLobConcrete implements DBLob {
         //*******************_MsgOpLob**********************
         SDBMessageHelper.addLobOpMsg( buff, SequoiadbConstants.DEFAULT_VERSION, 
                    SequoiadbConstants.DEFAULT_W, (short)0, 
-                   SequoiadbConstants.DEFAULT_FLAGS, 
+                   flags, 
                    SequoiadbConstants.DEFAULT_CONTEXTID, bOpenLob.length );
         
         List<byte[]> buffList = new ArrayList<byte[]>();
