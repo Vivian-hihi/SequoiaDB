@@ -413,7 +413,7 @@ class DBLobConcrete implements DBLob {
              * the data to pieces with length=SDB_LOB_MAX_DATA_LENGTH. 
              */
             int writeLen = leftLen > SDB_LOB_MAX_DATA_LENGTH ? 
-                                             SDB_LOB_MAX_DATA_LENGTH : leftLen;
+            		SDB_LOB_MAX_DATA_LENGTH : leftLen;
             // set the correct position for next reading
             byteBuf.position( offset );
             byteBuf.limit( offset + writeLen );
