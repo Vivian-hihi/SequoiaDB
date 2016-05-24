@@ -11,10 +11,6 @@ class Group_node_Test extends PHPUnit_Framework_TestCase
       $this -> port = empty( $_POST['port'] ) ? '11810' : $_POST['port'] ;
       $this -> address = $this -> hostname.':'.$this -> port ;
       $this -> isLocal = empty( $_POST['islocal'] ) ? false : $_POST['islocal'] ;
-      if( $this -> isLocal != true )
-      {
-         exit( 0 ) ;
-      }
    }
 
    public function test_connect()
