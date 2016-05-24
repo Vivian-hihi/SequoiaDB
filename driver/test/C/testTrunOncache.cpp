@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include <time.h>
 #include <sys/time.h>
+#include <testcommon.h>
 #define SOCKET int
 struct Socket
 {
@@ -102,7 +103,7 @@ INT32 connect(sdbConnectionHandle* conn, INT32 timeLen=0, INT32 size=0)
    }
    
    //建立连接,判断hashtable是否为空
-   rc = sdbConnect("localhost", "11810", "", "", conn);
+   rc = sdbConnect(HOST, SERVER, "", "", conn);
    if (SDB_OK != rc)
    {
       return rc;
@@ -225,7 +226,7 @@ TEST( turnonCache, getCollectionSpace )
    ASSERT_EQ(SDB_OK, connect(&conn, 0));
    ASSERT_EQ(SDB_OK, createCollectionSpace(conn, csName, sizeof(csName), &cs));
   
-   rc = sdbConnect("localhost", "11810", "", "", &conn2);
+   rc = sdbConnect(HOST, SERVER, "", "", &conn2);
    ASSERT_EQ(SDB_OK, rc);
    
    ASSERT_EQ(SDB_OK, getTimeofGetCS(conn2, csName, &cs1, &diff1));
@@ -257,7 +258,7 @@ TEST( turnonCache, getCollection)
    ASSERT_EQ(SDB_OK, createCollectionSpace(conn, csName, sizeof(csName), &cs));
    ASSERT_EQ(SDB_OK, createCollection(cs, clName, sizeof(clName), &cl));
    
-   rc = sdbConnect("localhost", "11810", "", "", &conn2);
+   rc = sdbConnect(HOST, SERVER, "", "", &conn2);
    ASSERT_EQ(SDB_OK, rc);
    
    rc = getTimeofGetCLByFullName(conn2, csName, clName, &cl1, &diff1);
@@ -292,7 +293,7 @@ TEST( turnonCache, getCollection1)
    ASSERT_EQ(SDB_OK, createCollection(cs, clName, sizeof(clName), &cl));
    
    // 创建另一连接
-   rc = sdbConnect("localhost", "11810", "", "", &conn2);
+   rc = sdbConnect(HOST, SERVER, "", "", &conn2);
    ASSERT_EQ(SDB_OK, rc);
    
    // 在新连接上获取CS
@@ -509,7 +510,7 @@ TEST( turnonCache, getCLOfTimeOutandDropbyOtherConn)
    ASSERT_EQ(SDB_OK, createCollection(cs, clName, sizeof(clName), &cl));
    
    //新建连接，删除上述cl
-   rc = sdbConnect("localhost", "11810", "", "", &conn1);
+   rc = sdbConnect(HOST, SERVER, "", "", &conn1);
    ASSERT_EQ(SDB_OK, rc);
    
    rc = sdbGetCollectionSpace(conn, csName, &cs1);
@@ -544,7 +545,7 @@ TEST( turnonCache, getCSOfTimeOutandDropbyOtherConn)
    ASSERT_EQ(SDB_OK, createCollectionSpace(conn, csName, sizeof(csName), &cs));
    
    //新建连接，删除上述cl
-   rc = sdbConnect("localhost", "11810", "", "", &conn1);
+   rc = sdbConnect(HOST, SERVER, "", "", &conn1);
    ASSERT_EQ(SDB_OK, rc);
   
    ASSERT_EQ(SDB_OK, dropCollectionSpace(conn1, cs, csName));
