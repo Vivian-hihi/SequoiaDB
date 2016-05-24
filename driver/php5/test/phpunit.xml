@@ -3,5 +3,6 @@
       <includePath>.</includePath>
       <post name="hostname" value="192.168.20.104" />
       <post name="port" value="50000" />
+      <post name="islocal" value="true" />
    </php>
 </phpunit>
