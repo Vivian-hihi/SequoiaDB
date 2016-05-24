@@ -73,6 +73,24 @@ namespace engine
       string role ;
    } ;
 
+   class omContextAssist
+   {
+      public:
+         omContextAssist( SINT64 contextID, pmdEDUCB *cb, SDB_RTNCB *rtncb) ;
+         ~omContextAssist() ;
+
+      public:
+         INT32 init( const BSONObj &selector, const BSONObj &matcher, 
+                     INT64 numToSkip, INT64 numToReturn ) ;
+         INT32 getNext( BSONObj &data ) ;
+
+      private:
+         pmdEDUCB    *_cb ;
+         SDB_RTNCB   *_rtncb ;
+         SINT64      _orgContextID ;
+         SINT64      _contextID ;
+   } ;
+
    class omAuthCommand : public omRestCommandBase
    {
       public:

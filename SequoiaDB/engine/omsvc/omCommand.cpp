@@ -252,6 +252,146 @@ namespace engine
       }
    }
 
+   // *****************omContextAssist *****************************
+   omContextAssist::omContextAssist( SINT64 contextID, pmdEDUCB *cb, 
+                                     SDB_RTNCB *rtncb )
+   {
+      SDB_ASSERT( NULL != cb, "cb can't be null" ) ;
+      SDB_ASSERT( NULL != rtncb, "rtncb can't be null" ) ;
+      SDB_ASSERT( -1 != contextID, "contextID can't be -1" ) ;
+      _cb           = cb ;
+      _rtncb        = rtncb ;
+      _orgContextID = contextID ;
+      _contextID    = -1 ;
+   }
+
+   omContextAssist::~omContextAssist()
+   {
+      if ( NULL != _rtncb && NULL != _cb )
+      {
+         if ( -1 != _orgContextID )
+         {
+            _rtncb->contextDelete( _orgContextID, _cb ) ;
+            _orgContextID = -1 ;
+         }
+
+         if ( -1 != _contextID )
+         {
+            _rtncb->contextDelete( _contextID, _cb ) ;
+            _contextID = -1 ;
+         }
+      }
+
+      _rtncb = NULL ;
+      _cb    = NULL ;
+   }
+
+   INT32 omContextAssist::init( const BSONObj &selector, const BSONObj &matcher, 
+                                INT64 numToSkip, INT64 numToReturn )
+   {
+      INT32 rc                 = SDB_OK ;
+      rtnContextDump *pContext = NULL ;
+      if ( -1 == _orgContextID )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG_MSG( PDERROR, "org context is invalid" ) ;
+         goto error ;
+      }
+
+      rc = _rtncb->contextNew ( RTN_CONTEXT_DUMP, (rtnContext**)&pContext,
+                                _contextID, _cb ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "Failed to create new dump context" ) ;
+         goto error ;
+      }
+
+      rc = pContext->open( selector, matcher, numToReturn, numToSkip ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "Failed to open dump context" ) ;
+         goto error ;
+      }
+
+      while ( TRUE )
+      {
+         rtnContextBuf buffObj ;
+         rc = rtnGetMore ( _orgContextID, 1, buffObj, _cb, _rtncb ) ;
+         if ( rc )
+         {
+            if ( SDB_DMS_EOC == rc )
+            {
+               rc = SDB_OK ;
+               break ;
+            }
+
+            _orgContextID = -1 ;
+            PD_LOG( PDERROR, "failed to get more,rc=%d", rc ) ;
+            goto error ;
+         }
+
+         BSONObj record( buffObj.data() ) ;
+         rc = pContext->monAppend( record ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "append record failed:rc=%d", rc ) ;
+            goto error ;
+         }
+      }
+
+   done:
+      if ( -1 != _orgContextID )
+      {
+         _rtncb->contextDelete( _orgContextID, _cb ) ;
+         _orgContextID = -1 ;
+      }
+
+      return rc ;
+   error:
+      if ( -1 != _contextID )
+      {
+         _rtncb->contextDelete( _contextID, _cb ) ;
+         _contextID = -1 ;
+      }
+      goto done ;
+   }
+
+   INT32 omContextAssist::getNext( BSONObj &data )
+   {
+      INT32 rc = SDB_OK ;
+      rtnContextBuf buffObj ;
+      rc = rtnGetMore ( _contextID, 1, buffObj, _cb, _rtncb ) ;
+      if ( rc )
+      {
+         if ( SDB_DMS_EOC == rc )
+         {
+            goto error ;
+         }
+
+         _contextID = -1 ;
+         PD_LOG( PDERROR, "failed to get more,rc=%d", rc ) ;
+         goto error ;
+      }
+
+      rc = buffObj.nextObj( data ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "failed to get next obj,rc=%d", rc ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      if ( -1 != _contextID )
+      {
+         _rtncb->contextDelete( _contextID, _cb ) ;
+         _contextID = -1 ;
+      }
+
+      goto done ;
+   }
+
    // *****************omAuthCommand *****************************
    omAuthCommand::omAuthCommand( restAdaptor *pRestAdaptor, 
                                  pmdRestSession *pRestSession )
@@ -5174,70 +5314,29 @@ namespace engine
       SINT64 numToSkip   = 0 ;
       SINT64 numToReturn = -1 ;
       SINT64 contextID   = -1 ;
-
-      const CHAR *pFilter    = NULL ;
-      const CHAR *pSelector  = NULL ;
-      const CHAR *pOrder     = NULL ;
-      const CHAR *pSkip      = NULL ;
-      const CHAR *pReturnNum = NULL ;
-
       BSONObj filter ;
       BSONObj selector ;
       BSONObj order ;
       BSONObj hint ;
+      BSONObj innerSelector ;
 
-      _restAdaptor->getQuery( _restSession, FIELD_NAME_FILTER, &pFilter ) ;
-      if ( NULL != pFilter )
+      rc = _getQueryPara( selector, filter, order, hint, numToSkip, 
+                          numToReturn ) ;
+      if ( SDB_OK != rc )
       {
-         rc = fromjson( pFilter, filter ) ;
-         if ( SDB_OK != rc )
-         {
-            PD_LOG_MSG( PDERROR, "change rest field to BSONObj failed:src=%s,"
-                        "rc=%d", pFilter, rc ) ;
-            goto error ;
-         }
+         PD_LOG( PDERROR, "_getQueryPara failed:rc=%d", rc ) ;
+         goto error ;
       }
-      _restAdaptor->getQuery( _restSession, FIELD_NAME_SELECTOR, &pSelector ) ;
-      if( NULL != pSelector )
-      {
-         rc = fromjson( pSelector, selector ) ;
-         if ( SDB_OK != rc )
-         {
-            PD_LOG_MSG( PDERROR, "change rest field to BSONObj failed:src=%s,"
-                        "rc=%d", pSelector, rc ) ;
-            goto error ;
-         }
-      }
-      else
-      {
-         selector = BSON( OM_TASKINFO_FIELD_TASKID << 1 
-                          << OM_TASKINFO_FIELD_TYPE << 1
-                          << OM_TASKINFO_FIELD_TYPE_DESC << 1
-                          << OM_TASKINFO_FIELD_NAME << 1 ) ;
-      }
-      _restAdaptor->getQuery( _restSession, FIELD_NAME_SORT, &pOrder ) ;
-      if ( NULL != pOrder )
-      {
-         rc = fromjson( pOrder, order ) ;
-         if ( SDB_OK != rc )
-         {
-            PD_LOG_MSG( PDERROR, "change rest field to BSONObj failed:src=%s,"
-                        "rc=%d", pOrder, rc ) ;
-            goto error ;
-         }
-      }
-      _restAdaptor->getQuery( _restSession, FIELD_NAME_SKIP, &pSkip ) ;
-      if ( NULL != pSkip )
-      {
-         numToSkip = ossAtoll( pSkip ) ;
-      }
-      _restAdaptor->getQuery( _restSession, FIELD_NAME_RETURN_NUM, &pReturnNum ) ;
-      if ( NULL != pReturnNum )
-      {
-         numToReturn = ossAtoll( pReturnNum ) ;
-      }
-      rc = rtnQuery( OM_CS_DEPLOY_CL_TASKINFO, selector, filter, order, hint, 
-                     0, _cb, numToSkip, numToReturn, _pDMSCB, _pRTNCB, contextID );
+
+      innerSelector = BSON( OM_TASKINFO_FIELD_TASKID << 1 
+                            << OM_TASKINFO_FIELD_TYPE << 1
+                            << OM_TASKINFO_FIELD_TYPE_DESC << 1
+                            << OM_TASKINFO_FIELD_NAME << 1
+                            << OM_TASKINFO_FIELD_STATUS << 1 
+                            << OM_TASKINFO_FIELD_STATUS_DESC << 1 ) ;
+      rc = rtnQuery( OM_CS_DEPLOY_CL_TASKINFO, innerSelector, filter, order, 
+                     hint, 0, _cb, numToSkip, numToReturn, 
+                     _pDMSCB, _pRTNCB, contextID );
       if ( rc )
       {
          PD_LOG_MSG( PDERROR, "failed to query table[%s],rc=%d", 
@@ -5245,33 +5344,38 @@ namespace engine
          goto error ;
       }
 
-      while ( TRUE )
       {
-         rtnContextBuf buffObj ;
-         rc = rtnGetMore ( contextID, 1, buffObj, _cb, _pRTNCB ) ;
-         if ( rc )
+         BSONObj empty ;
+         omContextAssist contextAssistor( contextID, _cb, _pRTNCB ) ;
+         rc = contextAssistor.init( selector, empty, 0, -1 ) ;
+         if ( SDB_OK != rc )
          {
-            if ( SDB_DMS_EOC == rc )
-            {
-               rc = SDB_OK ;
-               break ;
-            }
-
-            contextID = -1 ;
-            PD_LOG_MSG( PDERROR, "failed to get record from table[%s],rc=%d", 
-                        OM_CS_DEPLOY_CL_TASKINFO, rc ) ;
+            PD_LOG_MSG( PDERROR, "initial context failed:rc=%d", rc ) ;
             goto error ;
          }
 
-         BSONObj record( buffObj.data() ) ;
-         taskList.push_back( record.copy() ) ;
+         while ( TRUE )
+         {
+            BSONObj data ;
+            rc = contextAssistor.getNext( data ) ;
+            if ( rc )
+            {
+               if ( SDB_DMS_EOC == rc )
+               {
+                  rc = SDB_OK ;
+                  break ;
+               }
+
+               PD_LOG_MSG( PDERROR, "failed to get record from table[%s],rc=%d", 
+                           OM_CS_DEPLOY_CL_TASKINFO, rc ) ;
+               goto error ;
+            }
+
+            taskList.push_back( data.copy() ) ;
+         }
       }
+
    done:
-      if ( -1 != contextID )
-      {
-         _pRTNCB->contextDelete ( contextID, _cb ) ;
-         contextID = -1 ;
-      }
       return rc ;
    error:
       goto done ;

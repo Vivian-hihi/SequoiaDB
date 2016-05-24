@@ -69,6 +69,8 @@ namespace engine
 
    _pmdSubSession::~_pmdSubSession()
    {
+      clearReplyInfo() ;
+      clearRequestInfo() ;
       _parent = NULL ;
    }
 
