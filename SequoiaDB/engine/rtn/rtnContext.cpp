@@ -5066,6 +5066,8 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR, "Invalid cs name(name:%s)",
                    pCollectionName );
 
+      ossStrncpy( _name, pCollectionName, DMS_COLLECTION_SPACE_NAME_SZ ) ;
+
       /// test collection space exist
       rc = rtnTestCollectionSpaceCommand( pCollectionName, _pDmsCB ) ;
       if ( SDB_DMS_CS_NOTEXIST == rc )
@@ -5074,7 +5076,6 @@ namespace engine
          PD_LOG( PDINFO, "Ignored error[%d] when drop collection space[%s]",
                  rc, pCollectionName ) ;
          rc = SDB_OK ;
-         ossStrncpy( _name, pCollectionName, DMS_COLLECTION_SPACE_NAME_SZ ) ;
          _isOpened = TRUE ;
          goto done ;
       }
@@ -5213,7 +5214,6 @@ namespace engine
          PD_RC_CHECK( rc, PDERROR,
                       "Get transaction-lock of CS(%s) failed(rc=%d)",
                       pCollectionName, rc ) ;
-         ossStrcpy( _name, pCollectionName ) ;
          _logicCSID = logicCSID ;
       }
    done:
@@ -5228,7 +5228,6 @@ namespace engine
       if ( cb && getDPSCB() && ( _logicCSID != DMS_INVALID_LOGICCSID ) )
       {
          _pTransCB->transLockRelease( cb, _logicCSID );
-         ossMemset( _name, 0, DMS_COLLECTION_SPACE_NAME_SZ );
          _logicCSID = DMS_INVALID_LOGICCSID;
       }
       return rc;
