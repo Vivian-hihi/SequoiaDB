@@ -97,7 +97,7 @@
 					<param name="antTask.jar.path" value="${test.machine.deploy.path}/deploy/ant-sdbtasks" />
 					<param name="php.testcase.path" value="${testcase.path}/drivers_testcases/php" />
 					<param name="deploy.case.fullname" value="${deploy.case.fullname}" />
-					<param name="excludes.dir.patterns" value="tools" />
+					<param name="excludes.dir.patterns" value="tools,SequoiaGroup,SequoiaNode" />
 					<param name="includes.dir.patterns" value="*" />
 					<param name="php-bin.dir" value="/opt/sequoiadb/tools/server/php/bin" />
 					<param name="phpunit.phar.dir" value="${testcase.path}/drivers_testcases/php/tools/phpunit.phar" />
