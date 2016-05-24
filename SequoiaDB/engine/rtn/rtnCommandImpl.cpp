@@ -1138,6 +1138,8 @@ namespace engine
          {
             PD_LOG ( PDERROR, "Failed to add collection space, rc = %d", rc ) ;
          }
+         /// need to remove the files
+         su->remove() ;
          goto error ;
       }
 

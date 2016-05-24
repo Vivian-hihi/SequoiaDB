@@ -326,6 +326,7 @@ namespace engine
       dpsTransCB *pTransCB = pmdGetKRCB()->getTransCB();
       BOOLEAN isTransLocked = FALSE;
       BOOLEAN isReserved = FALSE;
+      BOOLEAN isLocked = FALSE ;
       UINT32 logRecSize = 0;
       dpsMergeInfo info ;
       dpsLogRecord &record = info.getMergeBlock().record();
@@ -362,8 +363,8 @@ namespace engine
          logRecSize = record.alignedLen() ;
          rc = pTransCB->reservedLogSpace( logRecSize, cb );
          PD_RC_CHECK( rc, PDERROR,
-                     "failed to reserved log space(length=%u)",
-                     logRecSize );
+                      "Failed to reserved log space(length=%u)",
+                      logRecSize ) ;
          isReserved = TRUE ;
       }
 
@@ -381,7 +382,7 @@ namespace engine
          _latchVec[suID]->release_w () ;
          goto retry ;
       }
-
+      isLocked = TRUE ;
       _latchVec[suID]->release_w () ;
 
       // there is a small timing hole before getting the latch, so we have
@@ -391,8 +392,6 @@ namespace engine
       {
          // if we no longer able to find the collectionspace, or the same
          // name maps to another suID, then let's get out of here
-         //_latchVec[suID]->release () ;
-         _mutex.release () ;
          rc = SDB_DMS_CS_NOTEXIST ;
          goto error ;
       }
@@ -414,7 +413,6 @@ namespace engine
          // if only for empty
          if ( onlyEmpty && 0 != pCSCB->_su->data()->getCollectionNum() )
          {
-            _mutex.release () ;
             rc = SDB_DMS_CS_NOT_EMPTY ;
             goto error ;
          }
@@ -425,8 +423,8 @@ namespace engine
             rc = pTransCB->transLockTryX( cb, csLID );
             if ( rc )
             {
-               _mutex.release () ;
-               PD_LOG ( PDERROR, "Failed to lock collection-space(rc=%d)", rc ) ;
+               PD_LOG ( PDERROR, "Failed to lock collection-space, rc:%d",
+                        rc ) ;
                goto error ;
             }
             isTransLocked = TRUE ;
@@ -444,16 +442,21 @@ namespace engine
          rc = dpsCB->prepare ( info ) ;
          if ( rc )
          {
-            _mutex.release () ;
+            
             PD_LOG ( PDERROR, "Failed to insert cscrt into log, rc = %d", rc ) ;
             goto error ;
          }
+         _mutex.release() ;
+         isLocked = FALSE ;
+
          dpsCB->writeData( info ) ;
       }
 
-      _mutex.release () ;
-
    done :
+      if ( isLocked )
+      {
+         _mutex.release () ;
+      }
       if ( isTransLocked )
       {
          pTransCB->transLockRelease( cb, csLID );
@@ -939,6 +942,7 @@ namespace engine
       dmsStorageUnitID suID ;
       SDB_DMS_CSCB *cscb = NULL ;
       BOOLEAN isReserved = FALSE;
+      BOOLEAN isLocked = FALSE ;
       UINT32 logRecSize = 0;
       dpsMergeInfo info ;
       dpsLogRecord &record = info.getMergeBlock().record();
@@ -947,32 +951,22 @@ namespace engine
       dpsTransCB *pTransCB = pmdGetKRCB()->getTransCB();
       PD_TRACE_ENTRY ( SDB__SDB_DMSCB_ADDCS );
 
-      ossScopedLock _lock(&_mutex, EXCLUSIVE) ;
       if ( !pName || !su )
       {
          rc = SDB_INVALIDARG ;
          goto error ;
       }
-      rc = _CSCBNameLookup( pName, &cscb ) ;
-      if ( SDB_OK == rc )
-      {
-         rc = SDB_DMS_CS_EXIST;
-         goto error;
-      }
-      else if ( rc != SDB_DMS_CS_NOTEXIST )
-      {
-         goto error;
-      }
 
       pageSize = su->getPageSize() ;
       lobPageSz = su->getLobPageSize() ;
+
       if ( NULL != dpsCB )
       {
          // reserved log-size
          rc = dpsCSCrt2Record( pName, pageSize, lobPageSz, record ) ;
          if ( SDB_OK != rc )
          {
-            PD_LOG( PDERROR, "failed to build record:%d",rc ) ;
+            PD_LOG( PDERROR, "Failed to build record:%d", rc ) ;
             goto error ;
          }
          rc = dpsCB->checkSyncControl( record.alignedLen(), cb ) ;
@@ -984,6 +978,20 @@ namespace engine
                      "failed to reserved log space(length=%u)",
                      logRecSize );
          isReserved = TRUE ;
+      }
+
+      _mutex.get() ;
+      isLocked = TRUE ;
+
+      rc = _CSCBNameLookup( pName, &cscb ) ;
+      if ( SDB_OK == rc )
+      {
+         rc = SDB_DMS_CS_EXIST;
+         goto error;
+      }
+      else if ( rc != SDB_DMS_CS_NOTEXIST )
+      {
+         goto error;
       }
 
       rc = _CSCBNameInsert ( pName, topSequence, su, suID ) ;
@@ -1013,9 +1021,16 @@ namespace engine
             PD_LOG ( PDERROR, "Failed to insert cscrt into log, rc = %d", rc ) ;
             goto error ;
          }
+         _mutex.release() ;
+         isLocked = FALSE ;
          dpsCB->writeData( info ) ;
       }
+
    done :
+      if ( isLocked )
+      {
+         _mutex.release() ;
+      }
       if ( isReserved )
       {
          pTransCB->releaseLogSpace( logRecSize, cb );
