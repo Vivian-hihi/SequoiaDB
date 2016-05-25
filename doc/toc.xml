@@ -475,6 +475,14 @@
                             <enabled>true</enabled>
                         </obj>
                         <obj>
+                            <id>1464169220</id>
+                            <cnname>数据库日志dump工具</cnname>
+                            <enname>Database replicalog dump Tool</enname>
+                            <cnpath>SdbDoc_Cn/database_management/tools/sdbdpsdump.html</cnpath>
+                            <enpath>SdbDoc_En/database_management/tools/sdbdpsdump_en.html</enpath>
+                            <enabled>true</enabled>
+                        </obj>
+                        <obj>
                             <id>1432190656</id>
                             <cnname>数据库性能工具</cnname>
                             <enname>Database Performance Monitoring Tool</enname>
