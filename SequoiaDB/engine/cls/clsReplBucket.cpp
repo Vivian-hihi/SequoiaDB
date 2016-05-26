@@ -475,6 +475,7 @@ namespace engine
       }
 
       _dataBucket[ index ]->push( pNewData, newLen ) ;
+      _counterLock.lock_w() ;
       _totalCount.inc() ;
       _emptyEvent.reset() ;
       if ( incAllCount )
@@ -482,6 +483,8 @@ namespace engine
          _allCount.inc() ;
          _allEmptyEvent.reset() ;
       }
+
+      _counterLock.release_w() ;
 
       // no cb attach in and no push to que, need to push to nty quque
       if ( !_dataBucket[ index ]->isAttached() &&
@@ -712,6 +715,7 @@ namespace engine
       }
       _latchBucket[ unitID ]->release() ;
 
+      _counterLock.lock_r() ;
       if ( _totalCount.compare( 0 ) )
       {
          _emptyEvent.signalAll() ;
@@ -720,6 +724,7 @@ namespace engine
       {
          _allEmptyEvent.signalAll() ;
       }
+      _counterLock.release_r() ;
 
    done:
       return rc ;

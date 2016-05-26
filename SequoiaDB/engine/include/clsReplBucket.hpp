@@ -224,6 +224,7 @@ namespace engine
          ossAtomic32                      _totalCount ;
          ossAtomic32                      _idleUnitCount ;
          ossAtomic32                      _allCount ;
+         ossRWMutex                       _counterLock ;
 
          ossEvent                         _emptyEvent ;
          ossEvent                         _allEmptyEvent ;
