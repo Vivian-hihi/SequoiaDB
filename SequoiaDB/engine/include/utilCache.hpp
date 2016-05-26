@@ -1,0 +1,510 @@
+/*******************************************************************************
+
+   Copyright (C) 2011-2014 SequoiaDB Ltd.
+
+   This program is free software: you can redistribute it and/or modify
+   it under the term of the GNU Affero General Public License, version 3,
+   as published by the Free Software Foundation.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warrenty of
+   MARCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+   GNU Affero General Public License for more details.
+
+   You should have received a copy of the GNU Affero General Public License
+   along with this program. If not, see <http://www.gnu.org/license/>.
+
+   Source File Name = utilCache.hpp
+
+   Descriptive Name =
+
+   Dependencies: N/A
+
+   Restrictions: N/A
+
+   Change Activity:
+   defect Date        Who Description
+   ====== =========== === ==============================================
+          26/04/2016  XJH Initial Draft
+
+   Last Changed =
+
+*******************************************************************************/
+
+#ifndef UTIL_CACHE_HPP_
+#define UTIL_CACHE_HPP_
+
+#include "oss.hpp"
+#include "ossLatch.hpp"
+#include "ossRWMutex.hpp"
+#include "utilMap.hpp"
+#include "ossEvent.hpp"
+#include "sdbInterface.hpp"
+#include <vector>
+
+using namespace std ;
+
+namespace engine
+{
+
+   #define UTIL_PAGE_SLOT_BEGIN_SIZE            ( 1024 )
+   #define UTIL_PAGE_SLOT_SIZE                  ( 20 )   /// 512M
+
+   class _utilCacheMgr ;
+
+   /*
+      _utilCacheBlock define
+   */
+   struct _utilCacheBlock
+   {
+      CHAR*       _pBuff ;
+      UINT32      _size ;
+
+      _utilCacheBlock()
+      {
+         _pBuff      = NULL ;
+         _size       = 0 ;
+      }
+      _utilCacheBlock( CHAR *pBuff, UINT32 size )
+      {
+         _pBuff      = pBuff ;
+         _size       = size ;
+      }
+      BOOLEAN empty() const
+      {
+         return ( NULL == _pBuff || 0 == _size ) ? TRUE : FALSE ;
+      }
+   } ;
+   typedef _utilCacheBlock                   utilCacheBlock ;
+   typedef vector< utilCacheBlock >          utilCacheBlockSuit ;
+
+   #define UTIL_CACHE_PAGE_DIRTY_FLAG        0x01
+   #define UTIL_CACHE_PAGE_INVALID_FLAG      0x02
+   #define UTIL_CACHE_PAGE_LOCKED_FLAG       0x04
+
+   /*
+      _utilCachePage define
+   */
+   class _utilCachePage : public SDBObject
+   {
+      friend class _utilCacheMgr ;
+      public:
+         _utilCachePage() ;
+         _utilCachePage( const _utilCachePage& right ) ;
+         ~_utilCachePage() ;
+
+         void        clearDataInfo() ;
+
+         BOOLEAN     isDataEmpty() const ;
+
+         UINT32      size() const ;
+         UINT32      start() const { return _start ; }
+         UINT32      length() const { return _length ; }
+         UINT64      lastTime() const { return _lastTime ; }
+         UINT64      lastWriteTime() const { return _lastWriteTime ; }
+         UINT32      readTimes() const { return _readTimes ; }
+         UINT32      writeTimes() const { return _writeTimes ; }
+
+         void        makeDirty()
+         {
+            OSS_BIT_SET( _status, UTIL_CACHE_PAGE_DIRTY_FLAG ) ;
+         }
+         void        clearDirty()
+         {
+            OSS_BIT_CLEAR( _status, UTIL_CACHE_PAGE_DIRTY_FLAG ) ;
+         }
+         BOOLEAN     isDirty() const
+         {
+            return OSS_BIT_TEST( _status, UTIL_CACHE_PAGE_DIRTY_FLAG ) ?
+                   TRUE : FALSE ;
+         }
+         void        invalidate()
+         {
+            OSS_BIT_SET( _status, UTIL_CACHE_PAGE_INVALID_FLAG ) ;
+         }
+         void        validate()
+         {
+            OSS_BIT_CLEAR( _status, UTIL_CACHE_PAGE_INVALID_FLAG ) ;
+         }
+         BOOLEAN     isInvalid() const
+         {
+            return OSS_BIT_TEST( _status, UTIL_CACHE_PAGE_INVALID_FLAG ) ?
+                   TRUE : FALSE ;
+         }
+         void        lock()
+         {
+            OSS_BIT_SET( _status, UTIL_CACHE_PAGE_LOCKED_FLAG ) ;
+         }
+         void        unlock()
+         {
+            OSS_BIT_CLEAR( _status, UTIL_CACHE_PAGE_LOCKED_FLAG ) ;
+         }
+         BOOLEAN     isLocked() const
+         {
+            return OSS_BIT_TEST( _status, UTIL_CACHE_PAGE_LOCKED_FLAG ) ?
+                   TRUE : FALSE ;
+         }
+         void        addLSN( UINT64 lsn ) ;
+
+         UINT64      beginLSN() const { return _beginLSN ; }
+         UINT64      endLSN() const { return _endLSN ; }
+         UINT32      lsnNum() const { return _lsnNum ; }
+
+         UINT32      blockNum() const ;
+         BOOLEAN     isEmpty() const { return 0 == blockNum() ? TRUE : FALSE ; }
+
+         INT32       write( const CHAR* pBuf, UINT32 offset, UINT32 len ) ;
+         UINT32      read( CHAR* pBuf, UINT32 offset, UINT32 len ) ;
+         INT32       copy( const _utilCachePage &right ) ;
+
+         _utilCachePage& operator= ( const _utilCachePage& rhs ) ;
+
+         UINT32      beginBlock() const ;
+         CHAR*       nextBlock( UINT32 &size, UINT32 &pos ) const ;
+
+      protected:
+         INT32       addPage( CHAR* pPage, UINT32 size ) ;
+         void        clear() ;
+
+      private:
+         utilCacheBlock             _first ;
+         utilCacheBlockSuit         _next ;
+         UINT32                     _start ;
+         UINT32                     _length ;
+         UINT64                     _lastTime ;
+         UINT64                     _lastWriteTime ;
+         UINT32                     _readTimes ;
+         UINT32                     _writeTimes ;
+         UINT8                      _status ;
+         UINT64                     _beginLSN ;
+         UINT64                     _endLSN ;
+         UINT32                     _lsnNum ;
+
+   } ;
+   typedef _utilCachePage utilCachePage ;
+
+   /*
+      _utilCacheMgr define
+   */
+   class _utilCacheMgr : public SDBObject
+   {
+      typedef ossSpinXLatch blkLatch ;
+      public:
+         _utilCacheMgr() ;
+         ~_utilCacheMgr() ;
+
+         /*
+            cacheSize unit MB
+         */
+         INT32    init( UINT64 cacheSize = 0 ) ;
+         void     fini() ;
+
+         UINT64   maxCacheSize() const { return _maxCacheSize ; }
+         UINT64   totalSize() { return _totalSize.peek() ; }
+         UINT64   freeSize() { return _freeSize.peek() ; }
+
+         INT32    alloc( UINT32 size, utilCachePage &item ) ;
+         INT32    allocWholePage( UINT32 size, utilCachePage &item,
+                                  BOOLEAN keepData = FALSE ) ;
+
+         INT32    alloc( UINT32 size, utilCachePage &item,
+                         BOOLEAN wholePage,
+                         BOOLEAN keepData = FALSE ) ;
+         void     release( utilCachePage &item ) ;
+
+         INT32    waitEvent( INT64 millisec = OSS_ONE_SEC ) ;
+         void     resetEvent() ;
+
+      protected:
+         UINT32   _roundUp2PageSizeSqrt( UINT32 size ) const
+         {
+            if ( size <= UTIL_PAGE_SLOT_BEGIN_SIZE )
+            {
+               return _beginPageSizeSqrt ;
+            }
+            UINT32 tmpSize = ( size - 1 ) >> _beginPageSizeSqrt ;
+            UINT32 tmpSqrt = 0 ;
+            while( tmpSize != 0 )
+            {
+               tmpSize = tmpSize >> 1 ;
+               ++tmpSqrt ;
+            }
+            return tmpSqrt + _beginPageSizeSqrt ;
+         }
+
+         UINT32   _size2Slot( UINT32 size ) const
+         {
+            return _roundUp2PageSizeSqrt( size ) - _beginPageSizeSqrt ;
+         }
+
+         UINT32   _size2PageSize( UINT32 size ) const
+         {
+            return (UINT32)1 << _roundUp2PageSizeSqrt( size ) ;
+         }
+
+         UINT32   _slot2PageSize( UINT32 slot ) const
+         {
+            return (UINT32)1 << ( slot + _beginPageSizeSqrt ) ;
+         }
+
+         INT32    _allocMem( UINT32 size, UINT32 pageNum = 1 ) ;
+
+      private:
+         UINT32               _beginPageSizeSqrt ;
+         UINT64               _maxCacheSize ;
+         ossAtomic64          _freeSize ;
+         ossAtomic64          _totalSize ;
+
+         vector< CHAR* >      _slot[ UTIL_PAGE_SLOT_SIZE ] ;
+         vector< blkLatch* >  _latch ;
+         ossEvent             _releaseEvent ;
+
+   } ;
+   typedef _utilCacheMgr utilCacheMgr ;
+
+   /*
+      _utilCacheBucket
+   */
+   class _utilCacheBucket : public SDBObject
+   {
+      public:
+         typedef _utilMap< INT32, utilCachePage >        MAP_BLK_PAGE ;
+
+         _utilCacheBucket( UINT32 blkID ) ;
+         ~_utilCacheBucket() ;
+
+         UINT32            getID() const { return _blkID ; }
+
+         /*
+            Caller must hold the lock
+         */
+         utilCachePage*    getPage( INT32 pageID ) ;
+         /*
+            Caller must hold the lock
+         */
+         utilCachePage*    addPage( INT32 pageID,
+                                    const utilCachePage& page ) ;
+         /*
+            Caller must hold the lock
+         */
+         utilCachePage*    delPage( INT32 pageID ) ;
+
+         void              incDirty() { ++_dirtyPages ; }
+         void              decDirty() { --_dirtyPages ; }
+         UINT64            dirtyPages() const { return _dirtyPages ; }
+         UINT64            totalPages() const { return _pages.size() ; }
+
+         MAP_BLK_PAGE*     getPages() { return &_pages ; }
+
+         INT32             lock( OSS_LATCH_MODE mode,
+                                 INT32 millisec = -1 ) ;
+         void              unlock( OSS_LATCH_MODE mode ) ;
+
+      private:
+         MAP_BLK_PAGE               _pages ;
+         UINT32                     _blkID ;
+         ossRWMutex                 _rwMutex ;
+         UINT64                     _dirtyPages ;
+
+   } ;
+   typedef _utilCacheBucket utilCacheBucket ;
+
+   class _utilCacheUnit ;
+   /*
+      _utilCacheContext define
+   */
+   class _utilCacheContext : public SDBObject
+   {
+      friend class _utilCacheUnit ;
+
+      public:
+         _utilCacheContext()
+         {
+            _pData = NULL ;
+            _offset = 0 ;
+            _len = 0 ;
+            _pageID = 0 ;
+            _makeDirty = FALSE ;
+            _pPage = NULL ;
+            _pBucket = NULL ;
+            _pUnit = NULL ;
+            _mode = -1 ;
+            _isWrite = FALSE ;
+         }
+
+         ~_utilCacheContext()
+         {
+            release() ;
+         }
+
+         BOOLEAN valid() const
+         {
+            return ( _pPage && _pBucket && _pUnit ) ? TRUE : FALSE ;
+         }
+
+         void     write( IExecutor *cb )
+         {
+            if ( valid() )
+            {
+               _pPage->write( _pData, _offset, _len ) ;
+               if ( _makeDirty && !_pPage->isDirty() )
+               {
+                  _pPage->makeDirty() ;
+                  _pUnit->incDirtyPages( _pBucket ) ;
+               }
+               if( cb )
+               {
+                  _pPage->addLSN( cb->getEndLSN() ) ;
+               }
+               _pBucket->unlock( (OSS_LATCH_MODE)_mode ) ;
+            }
+            _pPage = NULL ;
+         }
+
+         void    read( UINT32 &readLen )
+         {
+            if ( valid() )
+            {
+               readLen = _pPage->read( _pData, _offset, _len ) ;
+               _pBucket->unlock( (OSS_LATCH_MODE)_mode ) ;
+            }
+            _pPage = NULL ;
+         }
+
+         void     release()
+         {
+            if ( valid() )
+            {
+               _pBucket->unlock( (OSS_LATCH_MODE)_mode ) ;
+
+               _pPage = NULL ;
+               _pBucket = NULL ;
+            }
+            _pPage = NULL ;
+         }
+
+      private:
+         CHAR*             _pData ;
+         UINT32            _offset ;
+         UINT32            _len ;
+         INT32             _pageID ;
+         BOOLEAN           _makeDirty ;
+
+         utilCachePage*    _pPage ;
+         utilCacheBucket*  _pBucket ;
+         _utilCacheUnit*   _pUnit ;
+         INT32             _mode ;
+         BOOLEAN           _isWrite ;
+
+   } ;
+   typedef _utilCacheContext utilCacheContext ;
+
+   /*
+      _utilCachFileBase define
+   */
+   class _utilCachFileBase : public SDBObject
+   {
+      public:
+         _utilCachFileBase() {}
+         virtual ~_utilCachFileBase() {}
+
+         virtual const CHAR*     getFileName() const = 0 ;
+
+      public:
+         virtual INT32  write( INT32 pageID, const CHAR *pData,
+                               UINT32 len, UINT32 offset,
+                               IExecutor *cb ) = 0 ;
+
+         virtual INT32  read( INT32 pageID, CHAR *pData,
+                              UINT32 len, UINT32 offset,
+                              UINT32 &readLen,
+                              IExecutor *cb ) = 0 ;
+
+   } ;
+   typedef _utilCachFileBase utilCachFileBase ;
+
+   #define UTIL_CACHEUNIT_BUCKET_SZ                ( 2048 )
+   #define UTIL_CACHEUNIT_PAGE_TIMEOUT             ( 100 )
+   /*
+      _utilCacheUnit define
+   */
+   class _utilCacheUnit : public SDBObject
+   {
+      public:
+         _utilCacheUnit() ;
+         ~_utilCacheUnit() ;
+
+         UINT64         recyclePages( UINT32 timeout, INT64 exceptSize = -1 ) ;
+         UINT64         syncPages() ;
+
+         INT32          init( utilCacheMgr *pMgr,
+                              utilCachFileBase *pFile,
+                              UINT32 pageSize,
+                              UINT32 bucketSize = UTIL_CACHEUNIT_BUCKET_SZ,
+                              BOOLEAN wholePage = FALSE,
+                              UINT32 pageTimeout = UTIL_CACHEUNIT_PAGE_TIMEOUT ) ;
+         void           fini() ;
+
+         UINT32         calcBucketID( INT32 pageID ) const ;
+         UINT32         bucketSize() const { return _bucketSize ; }
+
+         utilCacheBucket* getBucket( UINT32 index ) ;
+
+         UINT64         totalPages() ;
+         UINT64         dirtyPages() ;
+
+         void           decDirtyPages( utilCacheBucket *pBucket ) ;
+         void           incDirtyPages( utilCacheBucket *pBucket ) ;
+
+         INT32          write( INT32 pageID, const CHAR *pData,
+                               UINT32 offset, UINT32 len,
+                               IExecutor *cb,
+                               utilCacheContext &context ) ;
+
+         INT32          read( INT32 pageID, CHAR *pBuff,
+                              UINT32 offset, UINT32 len,
+                              IExecutor *cb,
+                              UINT32 &readLen,
+                              dmsCacheContext &context ) ;
+
+      protected:
+         utilCachePage* getAndLock( INT32 pageID, UINT32 size,
+                                    utilCacheBucket **ppBucket,
+                                    OSS_LATCH_MODE mode,
+                                    BOOLEAN alloc,
+                                    IExecutor *cb ) ;
+
+         INT32          _syncPage( utilCacheBucket *pBucket,
+                                   utilCachePage *pPage,
+                                   INT32 pageID,
+                                   IExecutor *cb ) ;
+
+         INT32          _loadPage( utilCacheBucket *pBucket,
+                                   utilCachePage *pPage,
+                                   INT32 pageID,
+                                   UINT32 offset,
+                                   UINT32 len,
+                                   IExecutor *cb ) ;
+
+      private:
+         utilCacheMgr*              _pMgr ;
+         utilCachFileBase*          _pCacheFile ;
+         UINT32                     _bucketSize ;
+         UINT32                     _pageSize ;
+         BOOLEAN                    _wholePage ;
+         UINT32                     _pageTimeout ;
+         vector< dmsCacheBucket* >  _vecBucket ;
+         BOOLEAN                    _closed ;
+
+         ossAtomic64                _dirtySize ;
+         ossAtomic64                _totalPage ;
+
+         UINT64                     _lastRecycle ;
+
+   } ;
+   typedef _dmsCacheUnit dmsCacheUnit ;
+
+}
+
+#endif // UTIL_CACHE_HPP_
+
