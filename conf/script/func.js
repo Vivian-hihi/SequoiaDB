@@ -26,6 +26,85 @@ var errMsg         = "" ;
 var rc             = SDB_OK ;
 
 /* *****************************************************************************
+SdbError Class, inherits Error
+@description: sequoiadb error object
+@author: David Li
+@date: 2016/5/26
+usage:
+    new SdbError(Error);
+    new SdbError(Error, message);
+    new SdbError(errcode, message);
+    SdbError.toString();
+    SdbError.getErrCode();
+    SdbError.getErrMsg();
+examples:
+    try {
+        // ...
+    } catch(e) {
+        // throw new SdbError(e);
+        // throw new SdbError(e, "error message");
+        // throw new SdbError(SDB_SYS, "error message");
+    }
+
+    try {
+        // ...
+    } catch(e) {
+        var err = new SdbError(e);
+        logger.log(PDERROR, err);
+        throw err;
+    }
+***************************************************************************** */
+var SdbError = function(err, errmsg) {
+    this.errcode = SDB_OK;
+    this.message = "";
+
+    if (err == undefined) {
+        throw "invalid err";
+    }
+
+    if (errmsg != undefined) {
+        if (typeof(errmsg) != "string") {
+            throw "invalid errmsg";
+        } else {
+            this.message = errmsg;
+        }
+    }
+
+    if (typeof(err) == "number") {
+        this.errcode = err;
+    } else if (err instanceof Error) {
+        if (err instanceof SdbError) {
+            this.errcode = err.errcode;
+        } else {
+            this.errcode = SDB_SYS;
+        }
+        if (this.message != "") {
+            this.message += ", " + err.message;
+        } else {
+            this.message = err.message;
+        }
+    }
+
+    setLastError(this.errcode);
+    setLastErrMsg(this.message);
+};
+
+SdbError.prototype = new Error();
+SdbError.prototype.constructor = SdbError;
+
+SdbError.prototype.toString = function() {
+    return "SdbError: " + this.message + ", errcode=" +this.errcode;
+};
+
+SdbError.prototype.getErrCode = function() {
+    return this.errcode;
+};
+
+SdbError.prototype.getErrMsg = function() {
+    return this.message;
+};
+
+/* *****************************************************************************
 @discretion: handle system exception
 @author: Tanzhaobo
 @parameter
