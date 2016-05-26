@@ -34,6 +34,7 @@ usage:
     new SdbError(Error);
     new SdbError(Error, message);
     new SdbError(errcode, message);
+    new SdbError(message);
     SdbError.toString();
     SdbError.getErrCode();
     SdbError.getErrMsg();
@@ -44,6 +45,7 @@ examples:
         // throw new SdbError(e);
         // throw new SdbError(e, "error message");
         // throw new SdbError(SDB_SYS, "error message");
+        // throw new SdbError("error message");
     }
 
     try {
@@ -72,6 +74,9 @@ var SdbError = function(err, errmsg) {
 
     if (typeof(err) == "number") {
         this.errcode = err;
+    } else if (typeof(err) == "string") {
+        this.errcode = SDB_SYS;
+        this.message = err;
     } else if (err instanceof Error) {
         if (err instanceof SdbError) {
             this.errcode = err.errcode;
@@ -83,6 +88,8 @@ var SdbError = function(err, errmsg) {
         } else {
             this.message = err.message;
         }
+    } else {
+        throw "invalid arguments for SdbError";
     }
 
     setLastError(this.errcode);
