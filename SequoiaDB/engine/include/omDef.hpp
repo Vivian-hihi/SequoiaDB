@@ -183,6 +183,7 @@ namespace engine
    #define OM_BUSINESS_FIELD_LOCATION        "Location"
 
    #define OM_BUSINESS_ADDTYPE_DISCOVERY     1
+   #define OM_BUSINESS_ADDTYPE_INSTALL       0
 
    #define OM_CS_DEPLOY_CL_BUSINESSIDX1      "{name:\"SYSDEPLOY_BUSINESS_IDX1\",key: {"\
                                              OM_BUSINESS_FIELD_NAME":1}, unique: true, enforced: true } "
@@ -191,6 +192,8 @@ namespace engine
    #define OM_CS_DEPLOY_CL_CONFIGURE         OM_CS_DEPLOY".SYSCONFIGURE"
    #define OM_CONFIGURE_FIELD_HOSTNAME       OM_HOST_FIELD_NAME
    #define OM_CONFIGURE_FIELD_BUSINESSNAME   OM_BUSINESS_FIELD_NAME
+   #define OM_CONFIGURE_FIELD_BUSINESSTYPE   OM_BUSINESS_FIELD_TYPE
+   #define OM_CONFIGURE_FIELD_CLUSTERNAME    OM_BUSINESS_FIELD_CLUSTERNAME
    #define OM_CONFIGURE_FIELD_CONFIG         "Config"
 
    // deploy.business_auth
@@ -375,6 +378,7 @@ namespace engine
    #define  OM_LIST_NODE_REQ                 "list nodes"
    #define  OM_GET_NODE_CONF_REQ             "get node configure"
    #define  OM_LIST_BUSINESS_REQ             "list businesses"
+   #define  OM_LIST_HOST_BUSINESS_REQ        "list host businesses"
    #define  OM_QUERY_BUSINESS_REQ            "query business"
    #define  OM_REMOVE_CLUSTER_REQ            "remove cluster"
    #define  OM_REMOVE_HOST_REQ               "remove host"

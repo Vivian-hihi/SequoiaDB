@@ -117,6 +117,11 @@ namespace engine
          INT32             authUpdatePasswd( string user, string oldPasswd,
                                              string newPasswd, pmdEDUCB *cb ) ;
 
+         INT32             getBizHostInfo( const string &businessName, 
+                                           list <string> &hostsList ) ;
+         INT32             appendBizHostInfo( const string &businessName, 
+                                              list <string> &hostsList ) ;
+
          string            getLocalAgentPort() ;
 
          INT32             refreshVersions() ;
@@ -131,6 +136,18 @@ namespace engine
          MsgRouteID        _incNodeID() ;
 
          INT32             _initOmTables() ;
+
+         INT32             _appendBusinessInfo( const string &businessName, 
+                                                const string &businessType, 
+                                                const string &clusterName ) ;
+
+         INT32             _getBussinessInfo( const string &businessName, 
+                                              string &businessType, 
+                                              string &clusterName ) ;
+
+         INT32             _updateConfTable() ;
+         INT32             _updateBusinessTable() ;
+         INT32             _updateTable() ;
 
          INT32             _createJobs() ;
 

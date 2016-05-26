@@ -670,6 +670,20 @@ namespace engine
          void           _sendBusinessList2Web( list<BSONObj> &businessList ) ;
    };
 
+   class omListHostBusinessCommand : public omAuthCommand
+   {
+      public:
+         omListHostBusinessCommand( restAdaptor *pRestAdaptor, 
+                                    pmdRestSession *pRestSession ) ;
+         virtual ~omListHostBusinessCommand() ;
+
+      public:
+         virtual INT32  doCommand() ;
+
+      private:
+         void           _sendHostBusiness2Web( list<BSONObj> &businessList ) ;
+   };
+
    class omStartBusinessCommand : public omScanHostCommand
    {
       public:

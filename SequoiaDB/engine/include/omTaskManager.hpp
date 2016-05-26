@@ -138,8 +138,12 @@ namespace engine
                                              BSONObj &oneNode ) ;
 
          INT32             _insertConfigure( const string &hostName,
-                                             const string &businessName ,
+                                             const string &businessName,
+                                             const string &businessType,
+                                             const string &clusterName,
                                              BSONObj &oneNode ) ;
+
+         INT32             _updateBizHostInfo( const string &businessName ) ;
 
          void              _updateHostOMVersion( const string &hostName ) ;
 

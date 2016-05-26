@@ -724,7 +724,9 @@ namespace engine
    }
 
    INT32 omAddBusinessTask::_insertConfigure( const string &hostName,
-                                              const string &businessName ,
+                                              const string &businessName,
+                                              const string &businessType,
+                                              const string &clusterName,
                                               BSONObj &oneNode )
    {
       pmdEDUCB *cb = pmdGetThreadEDUCB() ;
@@ -738,6 +740,8 @@ namespace engine
       arrayBuilder.append( oneConf ) ;
       BSONObj obj = BSON( OM_CONFIGURE_FIELD_BUSINESSNAME << businessName 
                           << OM_CONFIGURE_FIELD_HOSTNAME << hostName 
+                          << OM_CONFIGURE_FIELD_BUSINESSTYPE << businessType
+                          << OM_CONFIGURE_FIELD_CLUSTERNAME << clusterName
                           << OM_CONFIGURE_FIELD_CONFIG << arrayBuilder.arr() ) ;
       rc = rtnInsert( OM_CS_DEPLOY_CL_CONFIGURE, obj, 1, 0, cb );
       if ( rc )
@@ -766,6 +770,8 @@ namespace engine
       string clusterName ;
       BSONObj obj ;
       BSONObj configs ;
+      BSONObjBuilder builder ;
+      time_t now = time( NULL ) ;
       pmdEDUCB *cb  = pmdGetThreadEDUCB() ;
 
       businessName  = taskInfoValue.getStringField( OM_BSON_BUSINESS_NAME );
@@ -773,10 +779,14 @@ namespace engine
       businessType  = taskInfoValue.getStringField( OM_BSON_BUSINESS_TYPE );
       clusterName   = taskInfoValue.getStringField( OM_BSON_FIELD_CLUSTER_NAME ) ;
 
-      obj = BSON( OM_BUSINESS_FIELD_NAME << businessName 
-                  << OM_BUSINESS_FIELD_TYPE << businessType 
-                  << OM_BUSINESS_FIELD_DEPLOYMOD << deployMod
-                  << OM_BUSINESS_FIELD_CLUSTERNAME << clusterName ) ;
+      builder.append( OM_BUSINESS_FIELD_NAME, businessName ) ;
+      builder.append( OM_BUSINESS_FIELD_TYPE, businessType ) ;
+      builder.append( OM_BUSINESS_FIELD_DEPLOYMOD, deployMod ) ;
+      builder.append( OM_BUSINESS_FIELD_CLUSTERNAME, clusterName ) ;
+      builder.appendTimestamp( OM_BUSINESS_FIELD_TIME, now * 1000, 0 ) ;
+      builder.append( OM_BUSINESS_FIELD_ADDTYPE, OM_BUSINESS_ADDTYPE_INSTALL ) ;
+      
+      obj = builder.obj() ;
       rc = rtnInsert( OM_CS_DEPLOY_CL_BUSINESS, obj, 1, 0, cb );
       if ( rc )
       {
@@ -798,9 +808,14 @@ namespace engine
    INT32 omAddBusinessTask::_storeConfigInfo( BSONObj &taskInfoValue )
    {
       string businessName ;
+      string businessType ;
+      string clusterName ;
       BSONObj configs ;
       INT32 rc      = SDB_OK ;
       businessName  = taskInfoValue.getStringField( OM_BSON_BUSINESS_NAME ) ;
+      businessType  = taskInfoValue.getStringField( OM_BSON_BUSINESS_TYPE ) ;
+      clusterName   = taskInfoValue.getStringField( 
+                                                 OM_BSON_FIELD_CLUSTER_NAME ) ;
       configs       = taskInfoValue.getObjectField( OM_BSON_FIELD_CONFIG ) ;
       {
          BSONObjIterator iter( configs ) ;
@@ -824,7 +839,8 @@ namespace engine
             }
             else
             {
-               rc = _insertConfigure( hostName, businessName, oneNode ) ;
+               rc = _insertConfigure( hostName, businessName, businessType, 
+                                      clusterName, oneNode ) ;
                if ( SDB_OK != rc )
                {
                   PD_LOG( PDERROR, "insert configure failed:host=%s,"
@@ -844,9 +860,26 @@ namespace engine
       goto done ;
    }
 
+   INT32 omAddBusinessTask::_updateBizHostInfo( const string &businessName )
+   {
+      INT32 rc = SDB_OK ;
+      list <string> hostsList ;
+      rc = sdbGetOMManager()->getBizHostInfo( businessName, hostsList ) ;
+      PD_RC_CHECK( rc, PDERROR, "get business host info failed:rc=%d", rc ) ;
+
+      rc = sdbGetOMManager()->appendBizHostInfo( businessName, hostsList ) ;
+      PD_RC_CHECK( rc, PDERROR, "get business host info failed:rc=%d", rc ) ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
    INT32 omAddBusinessTask::finish( BSONObj &resultInfo )
    {
       INT32 rc = SDB_OK ;
+      string businessName ;
       BSONObj selector ;
       BSONObj matcher ;
       BSONObj orderBy ;
@@ -857,28 +890,21 @@ namespace engine
       selector = BSON( OM_TASKINFO_FIELD_INFO << 1 ) ;
       matcher  = BSON( OM_TASKINFO_FIELD_TASKID << _taskID ) ;
       rc = queryOneTask( selector, matcher, orderBy, hint, taskInfo ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "get task info failed:taskID="OSS_LL_PRINT_FORMAT
-                 ",rc=%d", _taskID, rc ) ;
-         goto error ;
-      }
+      PD_RC_CHECK( rc, PDERROR, "get task info failed:taskID="
+                   OSS_LL_PRINT_FORMAT",rc=%d", _taskID, rc ) ;
 
       taskInfoValue = taskInfo.getObjectField( OM_TASKINFO_FIELD_INFO ) ;
 
       rc = _storeBusinessInfo( taskInfoValue ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "store business info failed:rc=%d", rc ) ;
-         goto error ;
-      }
+      PD_RC_CHECK( rc, PDERROR, "store business info failed:rc=%d", rc ) ;
 
       rc = _storeConfigInfo( taskInfoValue ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "store configure info failed:rc=%d", rc ) ;
-         goto error ;
-      }
+      PD_RC_CHECK( rc, PDERROR, "store configure info failed:rc=%d", rc ) ;
+
+      businessName = taskInfoValue.getStringField( OM_BSON_BUSINESS_NAME );
+      rc = _updateBizHostInfo( businessName ) ;
+      PD_RC_CHECK( rc, PDERROR, "update business host info failed:rc=%d", rc ) ;
+
    done:
       return rc ;
    error:

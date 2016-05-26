@@ -123,6 +123,10 @@ namespace engine
       PD_RC_CHECK ( rc, PDERROR, "Failed to initial the om tables rc = %d", 
                     rc ) ;
 
+      rc = _updateTable() ;
+      PD_RC_CHECK ( rc, PDERROR, "Failed to update om tables rc = %d", 
+                    rc ) ;
+
       rc = omStrategyMgrInst.init( pmdGetThreadEDUCB() ) ;
       PD_RC_CHECK ( rc, PDERROR, "Failed to init strategy manager, rc:%d",
                     rc) ;
@@ -387,6 +391,298 @@ namespace engine
          rc = SDB_SYS ;
          goto error ;
       }
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _omManager::_getBussinessInfo( const string &businessName, 
+                                        string &businessType, 
+                                        string &clusterName )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj empty ;
+      BSONObj matcher ;
+      pmdEDUCB *cb       = pmdGetThreadEDUCB() ;
+      pmdKRCB *pKRCB     = pmdGetKRCB() ;
+      _SDB_DMSCB *pdmsCB = pKRCB->getDMSCB() ;
+      _SDB_RTNCB *pRtnCB = pKRCB->getRTNCB() ;
+      SINT64 contextID   = -1 ;
+
+      matcher = BSON( OM_BUSINESS_FIELD_NAME << businessName ) ;
+      rc = rtnQuery( OM_CS_DEPLOY_CL_BUSINESS, empty, matcher, empty, 
+                     empty, 0, cb, 0, 1, pdmsCB, pRtnCB, contextID ) ;
+      PD_RC_CHECK( rc, PDERROR, "query table failed:table=%s,rc=%d",
+                   OM_CS_DEPLOY_CL_BUSINESS, rc ) ;
+      {
+         rtnContextBuf buffObj ;
+         rc = rtnGetMore( contextID, 1, buffObj, cb, pRtnCB ) ;
+         PD_RC_CHECK( rc, PDERROR, "get record failed:table=%s,rc=%d",
+                      OM_CS_DEPLOY_CL_BUSINESS, rc ) ;
+
+         BSONObj result( buffObj.data() ) ;
+         businessType = result.getStringField( OM_BUSINESS_FIELD_TYPE ) ;
+         clusterName  = result.getStringField( OM_BUSINESS_FIELD_CLUSTERNAME ) ;
+      }
+
+      if ( "" == businessType || "" == clusterName )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG( PDERROR, "business info is invalid:name=%s,type=%s,cluster=%s",
+                 businessName.c_str(), businessType.c_str(), 
+                 clusterName.c_str() ) ;
+         goto error ;
+      }
+   done:
+      if ( -1 != contextID )
+      {
+         pRtnCB->contextDelete( contextID, cb ) ;
+         contextID = -1 ;
+      }
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _omManager::getBizHostInfo( const string &businessName, 
+                                     list <string> &hostsList )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj empty ;
+      BSONObj matcher ;
+      pmdEDUCB *cb       = pmdGetThreadEDUCB() ;
+      pmdKRCB *pKRCB     = pmdGetKRCB() ;
+      _SDB_DMSCB *pdmsCB = pKRCB->getDMSCB() ;
+      _SDB_RTNCB *pRtnCB = pKRCB->getRTNCB() ;
+      SINT64 contextID   = -1 ;
+
+      matcher = BSON( OM_CONFIGURE_FIELD_BUSINESSNAME << businessName ) ;
+      rc = rtnQuery( OM_CS_DEPLOY_CL_CONFIGURE, empty, matcher, empty, 
+                     empty, 0, cb, 0, 1, pdmsCB, pRtnCB, contextID ) ;
+      PD_RC_CHECK( rc, PDERROR, "query table failed:table=%s,rc=%d",
+                   OM_CS_DEPLOY_CL_CONFIGURE, rc ) ;
+      while( TRUE )
+      {
+         rtnContextBuf buffObj ;
+         rc = rtnGetMore( contextID, 1, buffObj, cb, pRtnCB ) ;
+         if ( SDB_DMS_EOC == rc )
+         {
+            rc = SDB_OK ;
+            break ;
+         }
+
+         PD_RC_CHECK( rc, PDERROR, "get record failed:table=%s,rc=%d",
+                      OM_CS_DEPLOY_CL_CONFIGURE, rc ) ;
+
+         BSONObj result( buffObj.data() ) ;
+         hostsList.push_back( result.getStringField( 
+                                             OM_CONFIGURE_FIELD_HOSTNAME ) ) ;
+      }
+
+      if ( hostsList.size() == 0 )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG( PDERROR, "business have not host info:business=%s",
+                 businessName.c_str() ) ;
+         goto error ;
+      }
+   done:
+      if ( -1 != contextID )
+      {
+         pRtnCB->contextDelete( contextID, cb ) ;
+         contextID = -1 ;
+      }
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _omManager::_appendBusinessInfo( const string &businessName, 
+                                          const string &businessType, 
+                                          const string &clusterName )
+   {
+      pmdEDUCB *cb = pmdGetThreadEDUCB() ;
+      INT32 rc     = SDB_OK ;
+      BSONObj matcher ;
+      BSONObj tmp ;
+      BSONObj updator ;
+      BSONObj hint ;
+      matcher = BSON( OM_CONFIGURE_FIELD_BUSINESSNAME << businessName ) ;
+      tmp     = BSON( OM_CONFIGURE_FIELD_BUSINESSTYPE << businessType
+                      << OM_CONFIGURE_FIELD_CLUSTERNAME << clusterName ) ;
+      updator = BSON( "$set" << tmp ) ;
+      rc = rtnUpdate( OM_CS_DEPLOY_CL_CONFIGURE, matcher, updator, hint,
+                      0, cb ) ;
+      PD_RC_CHECK( rc, PDERROR, "update table failed:table=%s,business=%s,"
+                   "rc=%d", OM_CS_DEPLOY_CL_CONFIGURE, businessName.c_str(),
+                   rc ) ;
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _omManager::appendBizHostInfo( const string &businessName, 
+                                        list <string> &hostsList )
+   {
+      pmdEDUCB *cb = pmdGetThreadEDUCB() ;
+      INT32 rc     = SDB_OK ;
+      BSONObj matcher ;
+      BSONObj tmp ;
+      BSONObj updator ;
+      BSONObj hint ;
+      BSONArrayBuilder arrayBuilder ;
+      list <string>::iterator iter ;
+      matcher = BSON( OM_BUSINESS_FIELD_NAME << businessName ) ;
+
+      iter = hostsList.begin() ;
+      while ( iter != hostsList.end() )
+      {
+         BSONObj oneHost = BSON( OM_CONFIGURE_FIELD_HOSTNAME << *iter ) ;
+         arrayBuilder.append( oneHost ) ;
+         iter++ ;
+      }
+
+      tmp     = BSON( OM_BUSINESS_FIELD_LOCATION << arrayBuilder.arr() ) ;
+      updator = BSON( "$set" << tmp ) ;
+      rc = rtnUpdate( OM_CS_DEPLOY_CL_BUSINESS, matcher, updator, hint,
+                      0, cb ) ;
+      PD_RC_CHECK( rc, PDERROR, "update table failed:table=%s,business=%s,"
+                   "updator=%s,rc=%d", OM_CS_DEPLOY_CL_BUSINESS, 
+                   businessName.c_str(), updator.toString().c_str(), rc ) ;
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _omManager::_updateConfTable()
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj empty ;
+      BSONObj isNull ;
+      BSONObj matcher ;
+      pmdEDUCB *cb       = pmdGetThreadEDUCB() ;
+      pmdKRCB *pKRCB     = pmdGetKRCB() ;
+      _SDB_DMSCB *pdmsCB = pKRCB->getDMSCB() ;
+      _SDB_RTNCB *pRtnCB = pKRCB->getRTNCB() ;
+      SINT64 contextID   = -1 ;
+      
+      isNull  = BSON( "$isnull" << 1 ) ;
+      matcher = BSON( OM_CONFIGURE_FIELD_BUSINESSTYPE << isNull ) ;
+      rc = rtnQuery( OM_CS_DEPLOY_CL_CONFIGURE, empty, matcher, empty, 
+                     empty, 0, cb, 0, 1, pdmsCB, pRtnCB, contextID ) ;
+      PD_RC_CHECK( rc, PDERROR, "query table failed:table=%s,rc=%d",
+                   OM_CS_DEPLOY_CL_CONFIGURE, rc ) ;
+      while ( TRUE )
+      {
+         string businessName ;
+         string businessType ;
+         string clusterName ;
+         rtnContextBuf buffObj ;
+         rc = rtnGetMore( contextID, 1, buffObj, cb, pRtnCB ) ;
+         if ( rc )
+         {
+            if ( SDB_DMS_EOC == rc )
+            {
+               rc = SDB_OK ;
+               break ;
+            }
+
+            PD_RC_CHECK( rc, PDERROR, "get record failed:table=%s,rc=%d",
+                         OM_CS_DEPLOY_CL_CONFIGURE, rc ) ;
+         }
+
+         BSONObj result( buffObj.data() ) ;
+         businessName = result.getStringField(OM_CONFIGURE_FIELD_BUSINESSNAME) ;
+         rc = _getBussinessInfo( businessName, businessType, clusterName ) ;
+         PD_RC_CHECK( rc, PDERROR, "get business info failed:business=%s,rc=%d",
+                      businessName.c_str(), rc ) ;
+         rc = _appendBusinessInfo( businessName, businessType, clusterName ) ;
+         PD_RC_CHECK( rc, PDERROR, "append business info failed:business=%s,"
+                      "rc=%d", businessName.c_str(), rc ) ;
+      }
+
+   done:
+      if ( -1 != contextID )
+      {
+         pRtnCB->contextDelete ( contextID, cb ) ;
+      }
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _omManager::_updateBusinessTable()
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj empty ;
+      BSONObj isNull ;
+      BSONObj matcher ;
+      pmdEDUCB *cb       = pmdGetThreadEDUCB() ;
+      pmdKRCB *pKRCB     = pmdGetKRCB() ;
+      _SDB_DMSCB *pdmsCB = pKRCB->getDMSCB() ;
+      _SDB_RTNCB *pRtnCB = pKRCB->getRTNCB() ;
+      SINT64 contextID   = -1 ;
+      list <string> hostsList ;
+      
+      isNull  = BSON( "$isnull" << 1 ) ;
+      matcher = BSON( OM_BUSINESS_FIELD_LOCATION << isNull ) ;
+      rc = rtnQuery( OM_CS_DEPLOY_CL_BUSINESS, empty, matcher, empty, 
+                     empty, 0, cb, 0, 1, pdmsCB, pRtnCB, contextID ) ;
+      PD_RC_CHECK( rc, PDERROR, "query table failed:table=%s,rc=%d",
+                   OM_CS_DEPLOY_CL_BUSINESS, rc ) ;
+      while ( TRUE )
+      {
+         string businessName ;
+         string businessType ;
+         string clusterName ;
+         rtnContextBuf buffObj ;
+         rc = rtnGetMore( contextID, 1, buffObj, cb, pRtnCB ) ;
+         if ( rc )
+         {
+            if ( SDB_DMS_EOC == rc )
+            {
+               rc = SDB_OK ;
+               break ;
+            }
+
+            PD_RC_CHECK( rc, PDERROR, "get record failed:table=%s,rc=%d",
+                         OM_CS_DEPLOY_CL_BUSINESS, rc ) ;
+         }
+
+         BSONObj result( buffObj.data() ) ;
+         businessName = result.getStringField( OM_BUSINESS_FIELD_NAME ) ;
+         rc = getBizHostInfo( businessName, hostsList ) ;
+         PD_RC_CHECK( rc, PDERROR, "get business host info failed:business=%s,"
+                      "rc=%d", businessName.c_str(), rc ) ;
+         rc = appendBizHostInfo( businessName, hostsList ) ;
+         PD_RC_CHECK( rc, PDERROR, "append business host info failed:"
+                      "business=%s,rc=%d", businessName.c_str(), rc ) ;
+      }
+
+   done:
+      if ( -1 != contextID )
+      {
+         pRtnCB->contextDelete ( contextID, cb ) ;
+      }
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _omManager::_updateTable()
+   {
+      INT32 rc = SDB_OK ;
+      //OM_CS_DEPLOY_CL_CONFIGURE
+      rc = _updateConfTable() ;
+      PD_RC_CHECK( rc, PDERROR, "update table failed:table=%s,rc=%d", 
+                   OM_CS_DEPLOY_CL_CONFIGURE, rc ) ;
+
+      rc = _updateBusinessTable() ;
+      PD_RC_CHECK( rc, PDERROR, "update table failed:table=%s,rc=%d", 
+                   OM_CS_DEPLOY_CL_BUSINESS, rc ) ;
    done:
       return rc ;
    error:

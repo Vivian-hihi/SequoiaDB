@@ -6047,75 +6047,178 @@ namespace engine
 
    INT32 omListBusinessCommand::doCommand()
    {
-      INT32 rc                  = SDB_OK ;
-      const CHAR *pClusterName  = NULL ;
-      const CHAR *pHostName     = NULL ;
       list<BSONObj> businessList ;
+      INT32 rc = SDB_OK ;
+      SINT64 numToSkip   = 0 ;
+      SINT64 numToReturn = -1 ;
+      SINT64 contextID   = -1 ;
+      BSONObj filter ;
+      BSONObj selector ;
       BSONObj order ;
       BSONObj hint ;
-      BSONObj selector ;
-      BSONObj matcher ;
+      BSONObj innerSelector ;
 
-      _restAdaptor->getQuery( _restSession, OM_REST_CLUSTER_NAME, 
-                              &pClusterName ) ;
-      _restAdaptor->getQuery( _restSession, OM_REST_HOST_NAME, &pHostName ) ;
-      if ( NULL != pClusterName )
-      {
-         selector = BSON( OM_BUSINESS_FIELD_NAME << 1 
-                          << OM_BUSINESS_FIELD_TYPE << 1 ) ;
-         matcher = BSON( OM_BUSINESS_FIELD_CLUSTERNAME << pClusterName ) ;
-         rc = _queryTable( OM_CS_DEPLOY_CL_BUSINESS, selector, matcher, order,
-                           hint, 0, 0, -1, businessList ) ;
-      }
-      else if ( NULL != pHostName )
-      {
-         list<BSONObj> tmpRecords ;
-         selector = BSON( OM_CONFIGURE_FIELD_BUSINESSNAME << 1 ) ;
-         matcher  = BSON( OM_CONFIGURE_FIELD_HOSTNAME << pHostName ) ;
-         rc = _queryTable( OM_CS_DEPLOY_CL_CONFIGURE, selector, matcher, order,
-                           hint, 0, 0, -1, tmpRecords ) ;
-         if ( SDB_OK == rc && tmpRecords.size() > 0 )
-         {
-            BSONArrayBuilder arrBuilder ;
-            list<BSONObj>::iterator iter = tmpRecords.begin() ;
-            while ( iter != tmpRecords.end() )
-            {
-               arrBuilder.append( *iter ) ;
-               iter++ ;
-            }
-
-            selector = BSON( OM_BUSINESS_FIELD_NAME << 1 
-                             << OM_BUSINESS_FIELD_TYPE << 1 ) ;
-            matcher  = BSON( "$or" << arrBuilder.arr() ) ;
-            rc = _queryTable( OM_CS_DEPLOY_CL_BUSINESS, selector, matcher, 
-                              order, hint, 0, 0, -1, businessList ) ;
-         }
-      }
-      else
-      {
-         selector = BSON( OM_BUSINESS_FIELD_NAME << 1 
-                          << OM_BUSINESS_FIELD_TYPE << 1) ;
-         rc = _queryTable( OM_CS_DEPLOY_CL_BUSINESS, selector, matcher, order,
-                           hint, 0, 0, -1, businessList ) ;
-      }
-
+      rc = _getQueryPara( selector, filter, order, hint, numToSkip, 
+                          numToReturn ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "list business failed:rc=%d", rc ) ;
-         _errorDetail = omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ;
-         _sendErrorRes2Web( rc, _errorDetail ) ;
+         PD_LOG( PDERROR, "_getQueryPara failed:rc=%d", rc ) ;
          goto error ;
+      }
+
+      innerSelector = BSON( OM_BUSINESS_FIELD_NAME << 1 
+                            << OM_BUSINESS_FIELD_TYPE << 1
+                            << OM_BUSINESS_FIELD_CLUSTERNAME << 1
+                            << OM_BUSINESS_FIELD_LOCATION << 1 ) ;
+      rc = rtnQuery( OM_CS_DEPLOY_CL_BUSINESS, innerSelector, filter, order, 
+                     hint, 0, _cb, numToSkip, numToReturn, 
+                     _pDMSCB, _pRTNCB, contextID );
+      PD_RC_CHECK( rc, PDERROR, "failed to query table[%s],rc=%d", 
+                   OM_CS_DEPLOY_CL_BUSINESS, rc ) ;
+      {
+         BSONObj empty ;
+         omContextAssist contextAssistor( contextID, _cb, _pRTNCB ) ;
+         rc = contextAssistor.init( selector, empty, 0, -1 ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG_MSG( PDERROR, "initial context failed:rc=%d", rc ) ;
+            goto error ;
+         }
+
+         while ( TRUE )
+         {
+            BSONObj data ;
+            rc = contextAssistor.getNext( data ) ;
+            if ( rc )
+            {
+               if ( SDB_DMS_EOC == rc )
+               {
+                  rc = SDB_OK ;
+                  break ;
+               }
+
+               PD_LOG_MSG( PDERROR, "failed to get record from table[%s],rc=%d", 
+                           OM_CS_DEPLOY_CL_BUSINESS, rc ) ;
+               goto error ;
+            }
+
+            businessList.push_back( data.copy() ) ;
+         }
       }
 
       _sendBusinessList2Web( businessList ) ;
    done:
       return rc ;
    error:
+       PD_LOG( PDERROR, "list business failed:rc=%d", rc ) ;
+      _errorDetail = omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ;
+      _sendErrorRes2Web( rc, _errorDetail ) ;
       goto done ;
    }
 
    void omListBusinessCommand::_sendBusinessList2Web( 
                                                    list<BSONObj> &businessList )
+   {
+      BSONObjBuilder opBuilder ;
+      list<BSONObj>::iterator iter = businessList.begin() ;
+      while ( iter != businessList.end() )
+      {
+         _restAdaptor->appendHttpBody( _restSession, iter->objdata(), 
+                                       iter->objsize(), 1 ) ;
+         iter++ ;
+      }
+
+      _sendOKRes2Web() ;
+
+      return ;
+   }
+
+   // *****************omListHostBusinessCommand***************************
+   omListHostBusinessCommand::omListHostBusinessCommand( 
+                                                 restAdaptor *pRestAdaptor, 
+                                                 pmdRestSession *pRestSession )
+                             :omAuthCommand( pRestAdaptor, pRestSession )
+   {
+      
+   }
+
+   omListHostBusinessCommand::~omListHostBusinessCommand()
+   {
+   }
+
+   INT32 omListHostBusinessCommand::doCommand()
+   {
+      list<BSONObj> businessList ;
+      INT32 rc = SDB_OK ;
+      SINT64 numToSkip   = 0 ;
+      SINT64 numToReturn = -1 ;
+      SINT64 contextID   = -1 ;
+      BSONObj filter ;
+      BSONObj selector ;
+      BSONObj order ;
+      BSONObj hint ;
+      BSONObj innerSelector ;
+
+      rc = _getQueryPara( selector, filter, order, hint, numToSkip, 
+                          numToReturn ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "_getQueryPara failed:rc=%d", rc ) ;
+         goto error ;
+      }
+
+      innerSelector = BSON( OM_CONFIGURE_FIELD_BUSINESSNAME << 1 
+                            << OM_CONFIGURE_FIELD_BUSINESSTYPE << 1
+                            << OM_CONFIGURE_FIELD_CLUSTERNAME << 1
+                            << OM_CONFIGURE_FIELD_HOSTNAME << 1 ) ;
+      rc = rtnQuery( OM_CS_DEPLOY_CL_CONFIGURE, innerSelector, filter, order, 
+                     hint, 0, _cb, numToSkip, numToReturn, 
+                     _pDMSCB, _pRTNCB, contextID );
+      PD_RC_CHECK( rc, PDERROR, "failed to query table[%s],rc=%d", 
+                   OM_CS_DEPLOY_CL_CONFIGURE, rc ) ;
+      {
+         BSONObj empty ;
+         omContextAssist contextAssistor( contextID, _cb, _pRTNCB ) ;
+         rc = contextAssistor.init( selector, empty, 0, -1 ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG_MSG( PDERROR, "initial context failed:rc=%d", rc ) ;
+            goto error ;
+         }
+
+         while ( TRUE )
+         {
+            BSONObj data ;
+            rc = contextAssistor.getNext( data ) ;
+            if ( rc )
+            {
+               if ( SDB_DMS_EOC == rc )
+               {
+                  rc = SDB_OK ;
+                  break ;
+               }
+
+               PD_LOG_MSG( PDERROR, "failed to get record from table[%s],rc=%d", 
+                           OM_CS_DEPLOY_CL_CONFIGURE, rc ) ;
+               goto error ;
+            }
+
+            businessList.push_back( data.copy() ) ;
+         }
+      }
+
+      _sendHostBusiness2Web( businessList ) ;
+   done:
+      return rc ;
+   error:
+       PD_LOG( PDERROR, "list business failed:rc=%d", rc ) ;
+      _errorDetail = omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ;
+      _sendErrorRes2Web( rc, _errorDetail ) ;
+      goto done ;
+   }
+
+   void omListHostBusinessCommand::_sendHostBusiness2Web( 
+                                                  list<BSONObj> &businessList )
    {
       BSONObjBuilder opBuilder ;
       list<BSONObj>::iterator iter = businessList.begin() ;
