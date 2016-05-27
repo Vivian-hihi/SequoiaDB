@@ -1039,18 +1039,18 @@ namespace engine
          _len = len ;
          _isWrite = FALSE ;
          _makeDirty = FALSE ;
+         _usePage = TRUE ;
+         _writeBack = FALSE ;
       }
       else
       {
-         utilCachFileBase* pFile = _pUnit->getCacheFile() ;
-         rc = pFile->read( _pageID, pBuff, len, offset, _len, cb ) ;
-         if ( rc )
-         {
-            PD_LOG( PDERROR, "Read page[ID:%d,Off:%u,Len:%u] from file[%s] "
-                    "failed, rc: %d", _pageID, offset, len,
-                    pFile->getFileName(), rc ) ;
-            goto error ;
-         }
+         _pData = (CHAR*)pBuff ;
+         _offset = offset ;
+         _len = len ;
+         _isWrite = FALSE ;
+         _makeDirty = FALSE ;
+         _usePage = FALSE ;
+         _writeBack = FALSE ;
       }
 
    done:
@@ -1071,16 +1071,7 @@ namespace engine
       {
          goto error ;
       }
-      /// only read from file(done is ok) and page is valid,
-      /// need to write data to page
-      else if ( isDone() && isPageValid() )
-      {
-         _pData = (CHAR*)pBuff ;
-         _offset = offset ;
-         /// _len is already valid, can't value
-         _isWrite = TRUE ;
-         _makeDirty = FALSE ;
-      }
+      _writeBack = TRUE ;
 
    done:
       return rc ;
@@ -1090,7 +1081,7 @@ namespace engine
 
    UINT32 _utilCacheContext::submit( IExecutor *cb )
    {
-      UINT32 len = _len ;
+      UINT32 len = 0 ;
 
       if ( _pData )
       {
@@ -1122,22 +1113,48 @@ namespace engine
                   PD_LOG( PDERROR, "Write page[ID:%d,Off:%u,Len:%u] to "
                           "file[%s] failed, rc: %d", _pageID, _offset, _len,
                           pFile->getFileName(), rc ) ;
-                  ossPanic() ;
                }
             }
          }
          else
          {
-            len = _pPage->read( _pData, _offset, _len ) ;
+            if ( _usePage )
+            {
+               /// read from page
+               len = _pPage->read( _pData, _offset, _len ) ;
+            }
+            else
+            {
+               /// read from file
+               utilCachFileBase* pFile = _pUnit->getCacheFile() ;
+               rc = pFile->read( _pageID, _pData, _len, _offset, len, cb ) ;
+               if ( rc )
+               {
+                  PD_LOG( PDERROR, "Read page[ID:%d,Off:%u,Len:%u] from "
+                          "file[%s] failed, rc: %d", _pageID, _offset,
+                          _len, pFile->getFileName(), rc ) ;
+               }
+               /// write to cache page
+               if ( _writeBack && _pPage )
+               {
+                  _pPage->write( _pData, _offset, len ) ;
+               }
+            }
+         }
+
+         if ( rc )
+         {
+            ossPanic() ;
          }
 
          /// clear data info
          _pData = NULL ;
+         _len = 0 ;
          _offset = 0 ;
          _isWrite = FALSE ;
          _makeDirty = FALSE ;
+         _writeBack = FALSE ;
       }
-      _len = 0 ;
 
       return len ;
    }
@@ -1151,6 +1168,7 @@ namespace engine
          _len = 0 ;
          _isWrite = FALSE ;
          _makeDirty = FALSE ;
+         _writeBack = FALSE ;
       }
    }
 

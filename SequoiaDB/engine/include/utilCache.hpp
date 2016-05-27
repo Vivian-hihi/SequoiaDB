@@ -330,6 +330,7 @@ namespace engine
          BOOLEAN isLockWrite() const ;
          void    unLock() ;
          BOOLEAN isDone() const ;
+         BOOLEAN isUsePage() const { return _usePage ; }
 
          BOOLEAN  isInCache( UINT32 offset, UINT32 len ) const ;
          void     discardPage() ;
