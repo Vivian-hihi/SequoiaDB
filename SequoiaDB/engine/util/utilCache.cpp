@@ -98,6 +98,11 @@ namespace engine
       _readTimes = 0 ;
       _writeTimes = 0 ;
 
+      clearLSNInfo() ;
+   }
+
+   void _utilCachePage::clearLSNInfo()
+   {
       _beginLSN = ~0 ;
       _endLSN = ~0 ;
       _lsnNum = 0 ;
@@ -792,6 +797,385 @@ namespace engine
    }
 
    /*
+      _utilCacheContext implement
+   */
+   _utilCacheContext::_utilCacheContext()
+   {
+      _pData = NULL ;
+      _offset = 0 ;
+      _len = 0 ;
+      _pageID = 0 ;
+      _makeDirty = FALSE ;
+      _pPage = NULL ;
+      _pBucket = NULL ;
+      _pUnit = NULL ;
+      _mode = -1 ;
+      _isWrite = FALSE ;
+      _size = 0 ;
+      _writeBack = FALSE ;
+      _usePage = FALSE ;
+   }
+
+   _utilCacheContext::~_utilCacheContext()
+   {
+      release() ;
+   }
+
+   BOOLEAN _utilCacheContext::isValid() const
+   {
+      return ( _pBucket && _pUnit && _pageID > 0 ) ? TRUE : FALSE ;
+   }
+
+   BOOLEAN _utilCacheContext::isPageValid() const
+   {
+      return ( _pPage && isValid() ) ? TRUE : FALSE ;
+   }
+
+   BOOLEAN _utilCacheContext::isLocked() const
+   {
+      return ( EXCLUSIVE == _mode || SHARED == _mode ) ? TRUE : FALSE ;
+   }
+
+   BOOLEAN _utilCacheContext::isLockRead() const
+   {
+      return SHARED == _mode ? TRUE : FALSE ;
+   }
+
+   BOOLEAN _utilCacheContext::isLockWrite() const
+   {
+      return EXCLUSIVE == _mode ? TRUE : FALSE ;
+   }
+
+   void _utilCacheContext::unLock()
+   {
+      if ( _pBucket && isLocked() )
+      {
+         _pBucket->unlock( (OSS_LATCH_MODE)_mode ) ;
+      }
+      _mode = -1 ;
+   }
+
+   BOOLEAN _utilCacheContext::isDone() const
+   {
+      return _pData ? FALSE : TRUE ;
+   }
+
+   void _utilCacheContext::discardPage()
+   {
+      if ( isPageValid() && _pPage->isDirty() )
+      {
+         _pPage->clearDirty() ;
+         _pPage->clearDataInfo() ;
+      }
+   }
+
+   BOOLEAN _utilCacheContext::isInCache( UINT32 offset, UINT32 len ) const
+   {
+      if ( _pPage && offset >= _pPage->start() &&
+           offset + len <= _pPage->length() )
+      {
+         return TRUE ;
+      }
+      return FALSE ;
+   }
+
+   INT32 _utilCacheContext::write( const CHAR *pData,
+                                   UINT32 offset,
+                                   UINT32 len,
+                                   IExecutor *cb )
+   {
+      INT32 rc = SDB_OK ;
+
+      if ( !isValid() )
+      {
+         SDB_ASSERT( FALSE, "Context is invalid" ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+      else if ( offset + len > _size )
+      {
+         SDB_ASSERT( FALSE, "offset + len must <= _size" ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      if ( !isDone() )
+      {
+         SDB_ASSERT( FALSE, "Must done before next write" ) ;
+         submit( cb ) ;
+      }
+
+      if ( isPageValid() )
+      {
+         /// the page
+         /// -----------|<start>-------|<end>-----------------
+         ///  |--A--|-C-|              |---D--|--B--|
+         /// when write in A, need to load the data C
+         /// when write in B, need to load the data D
+         if ( !_pPage->isDataEmpty() &&
+              ( offset + len < _pPage->start() ||
+                _pPage->length() < offset ) )
+         {
+            if ( !_pPage->isDirty() )
+            {
+               _pPage->clearDataInfo() ;
+            }
+            else
+            {
+               rc = _loadPage( offset, len, cb ) ;
+               if( rc )
+               {
+                  PD_LOG( PDERROR, "Load page[ID:%d,Off:%u,Len:%u] failed, "
+                          "rc: %d", _pageID, offset, len, rc ) ;
+                  goto error ;
+               }
+            }
+         }
+
+         _pData = (CHAR*)pData ;
+         _offset = offset ;
+         _len = len ;
+         _isWrite = TRUE ;
+         _makeDirty = TRUE ;
+         _usePage = TRUE ;
+         _writeBack = FALSE ;
+      }
+      else
+      {
+         _pData = (CHAR*)pData ;
+         _offset = offset ;
+         _len = len ;
+         _isWrite = TRUE ;
+         _makeDirty = TRUE ;
+         _usePage = FALSE ;
+         _writeBack = FALSE ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _utilCacheContext::read( CHAR *pBuff,
+                                  UINT32 offset,
+                                  UINT32 len,
+                                  IExecutor *cb )
+   {
+      INT32 rc = SDB_OK ;
+      BOOLEAN readPage = FALSE ;
+
+      if ( !isValid() )
+      {
+         SDB_ASSERT( FALSE, "Context is invalid" ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+      else if ( offset + len > _size )
+      {
+         SDB_ASSERT( FALSE, "offset + len must <= _size" ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      if ( !isDone() )
+      {
+         SDB_ASSERT( FALSE, "Must done before next read" ) ;
+         submit( cb ) ;
+      }
+
+      if ( isPageValid() )
+      {
+         /// the page
+         /// -----------|<start>-------|<end>-----------------
+         ///  |--A----------|     |------B--|
+         /// when read in A, need to load the data
+         /// when read in B, need to load the data
+         if ( offset >= _pPage->start() &&
+              offset + len <= _pPage->length() )
+         {
+            readPage = TRUE ;
+         }
+         else if ( offset + len <= _pPage->start() ||
+                   _pPage->length() <= offset )
+         {
+            /// read from file
+            readPage = FALSE ;
+         }
+         else if ( _pPage->isDirty() )
+         {
+            /// load the data
+            if ( offset < _pPage->start() )
+            {
+               rc = _loadPage( offset, _pPage->start() - offset, cb ) ;
+               if ( rc )
+               {
+                  PD_LOG( PDERROR, "Load page[ID:%d,Off:%u,Len:%u] data "
+                          "failed, rc: %d", _pageID, offset,
+                          _pPage->start() - offset, rc ) ;
+                  goto error ;
+               }
+            }
+            if ( offset + len > _pPage->length() )
+            {
+               rc = _loadPage( _pPage->length(),
+                               offset + len - _pPage->length(), cb ) ;
+               if ( rc )
+               {
+                  PD_LOG( PDERROR, "Load page[ID:%d,Off:%u,Len:%u] data "
+                          "failed, rc: %d", _pageID, _pPage->length(),
+                          offset + len - _pPage->length(), rc ) ;
+                  goto error ;
+               }
+            }
+            readPage = TRUE ;
+         }
+      }
+
+      if ( readPage )
+      {
+         _pData = (CHAR*)pBuff ;
+         _offset = offset ;
+         _len = len ;
+         _isWrite = FALSE ;
+         _makeDirty = FALSE ;
+      }
+      else
+      {
+         utilCachFileBase* pFile = _pUnit->getCacheFile() ;
+         rc = pFile->read( _pageID, pBuff, len, offset, _len, cb ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Read page[ID:%d,Off:%u,Len:%u] from file[%s] "
+                    "failed, rc: %d", _pageID, offset, len,
+                    pFile->getFileName(), rc ) ;
+            goto error ;
+         }
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _utilCacheContext::readAndCache( CHAR *pBuff,
+                                          UINT32 offset,
+                                          UINT32 len,
+                                          IExecutor *cb )
+   {
+      INT32 rc = SDB_OK ;
+
+      rc = read( pBuff, offset, len, cb ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+      /// only read from file(done is ok) and page is valid,
+      /// need to write data to page
+      else if ( isDone() && isPageValid() )
+      {
+         _pData = (CHAR*)pBuff ;
+         _offset = offset ;
+         /// _len is already valid, can't value
+         _isWrite = TRUE ;
+         _makeDirty = FALSE ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   UINT32 _utilCacheContext::submit( IExecutor *cb )
+   {
+      UINT32 len = _len ;
+
+      if ( _pData )
+      {
+         INT32 rc = SDB_OK ;
+
+         if ( _isWrite )
+         {
+            if ( _usePage )
+            {
+               /// write to page
+               rc = _pPage->write( _pData, _offset, _len ) ;
+               if ( _makeDirty && !_pPage->isDirty() )
+               {
+                  _pPage->makeDirty() ;
+                  _pUnit->incDirtyPages( _pBucket ) ;
+               }
+               if( cb && _makeDirty )
+               {
+                  _pPage->addLSN( cb->getEndLSN() ) ;
+               }
+            }
+            else
+            {
+               /// write to file
+               utilCachFileBase* pFile = _pUnit->getCacheFile() ;
+               rc = pFile->write( _pageID, _pData, _len, _offset, cb ) ;
+               if ( rc )
+               {
+                  PD_LOG( PDERROR, "Write page[ID:%d,Off:%u,Len:%u] to "
+                          "file[%s] failed, rc: %d", _pageID, _offset, _len,
+                          pFile->getFileName(), rc ) ;
+                  ossPanic() ;
+               }
+            }
+         }
+         else
+         {
+            len = _pPage->read( _pData, _offset, _len ) ;
+         }
+
+         /// clear data info
+         _pData = NULL ;
+         _offset = 0 ;
+         _isWrite = FALSE ;
+         _makeDirty = FALSE ;
+      }
+      _len = 0 ;
+
+      return len ;
+   }
+
+   void _utilCacheContext::rollback()
+   {
+      if ( _pData )
+      {
+         _pData = NULL ;
+         _offset = 0 ;
+         _len = 0 ;
+         _isWrite = FALSE ;
+         _makeDirty = FALSE ;
+      }
+   }
+
+   void _utilCacheContext::release()
+   {
+      rollback() ;
+      unLock() ;
+      _pPage = NULL ;
+      _pBucket = NULL ;
+      _pUnit = NULL ;
+   }
+
+   INT32 _utilCacheContext::_loadPage( UINT32 offset,
+                                       UINT32 len,
+                                       IExecutor *cb )
+   {
+      INT32 rc = SDB_OK ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   /*
       _utilCacheUnit implement
    */
    _utilCacheUnit::_utilCacheUnit()
@@ -835,20 +1219,17 @@ namespace engine
       _closed = FALSE ;
       _pageTimeout = pageTimeout ;
 
-      if ( _pMgr->maxCacheSize() >= _pageSize )
+      for ( UINT32 i = 0 ; i < bucketSize ; ++i )
       {
-         for ( UINT32 i = 0 ; i < bucketSize ; ++i )
+         pBucket = SDB_OSS_NEW utilCacheBucket( i ) ;
+         if ( !pBucket )
          {
-            pBucket = SDB_OSS_NEW utilCacheBucket( i ) ;
-            if ( !pBucket )
-            {
-               PD_LOG( PDERROR, "Alloc bucket[%u] failed", i ) ;
-               rc = SDB_OOM ;
-               goto error ;
-            }
-            _vecBucket.push_back( pBucket ) ;
-            ++_bucketSize ;
+            PD_LOG( PDERROR, "Alloc bucket[%u] failed", i ) ;
+            rc = SDB_OOM ;
+            goto error ;
          }
+         _vecBucket.push_back( pBucket ) ;
+         ++_bucketSize ;
       }
 
    done:
@@ -872,6 +1253,7 @@ namespace engine
       for ( UINT32 i = 0 ; i < _bucketSize ; ++i )
       {
          pBucket = _vecBucket[ i ] ;
+
          pPages = pBucket->getPages() ;
 
          utilCacheBucket::MAP_BLK_PAGE::iterator it = pPages->begin() ;
@@ -930,7 +1312,7 @@ namespace engine
       utilCacheBucket* pBucket = NULL ;
       BOOLEAN locked = FALSE ;
 
-      if ( 0 == _bucketSize || _pMgr->maxCacheSize() < size || _closed )
+      if ( _pMgr->maxCacheSize() < size || _closed )
       {
          goto done ;
       }
@@ -1017,6 +1399,7 @@ namespace engine
                      ossPanic() ;
                   }
                }
+               pPage->clearDataInfo() ;
                pPage = NULL ;
                goto done ;
             }
@@ -1113,7 +1496,7 @@ namespace engine
                                UINT32 offset, UINT32 len,
                                IExecutor *cb,
                                UINT32 &readLen,
-                               dmsCacheContext &context )
+                               utilCacheContext &context )
    {
       INT32 rc = SDB_OK ;
       utilCachePage* pPage = NULL ;

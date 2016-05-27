@@ -94,6 +94,7 @@ namespace engine
          ~_utilCachePage() ;
 
          void        clearDataInfo() ;
+         void        clearLSNInfo() ;
 
          BOOLEAN     isDataEmpty() const ;
 
@@ -120,6 +121,7 @@ namespace engine
          }
          void        invalidate()
          {
+            SDB_ASSERT( !isDirty(), "Can't be dirty" ) ;
             OSS_BIT_SET( _status, UTIL_CACHE_PAGE_INVALID_FLAG ) ;
          }
          void        validate()
@@ -318,83 +320,71 @@ namespace engine
       friend class _utilCacheUnit ;
 
       public:
-         _utilCacheContext()
-         {
-            _pData = NULL ;
-            _offset = 0 ;
-            _len = 0 ;
-            _pageID = 0 ;
-            _makeDirty = FALSE ;
-            _pPage = NULL ;
-            _pBucket = NULL ;
-            _pUnit = NULL ;
-            _mode = -1 ;
-            _isWrite = FALSE ;
-         }
+         _utilCacheContext() ;
+         ~_utilCacheContext() ;
 
-         ~_utilCacheContext()
-         {
-            release() ;
-         }
+         BOOLEAN isValid() const ;
+         BOOLEAN isPageValid() const ;
+         BOOLEAN isLocked() const ;
+         BOOLEAN isLockRead() const ;
+         BOOLEAN isLockWrite() const ;
+         void    unLock() ;
+         BOOLEAN isDone() const ;
 
-         BOOLEAN valid() const
-         {
-            return ( _pPage && _pBucket && _pUnit ) ? TRUE : FALSE ;
-         }
+         BOOLEAN  isInCache( UINT32 offset, UINT32 len ) const ;
+         void     discardPage() ;
 
-         void     write( IExecutor *cb )
-         {
-            if ( valid() )
-            {
-               _pPage->write( _pData, _offset, _len ) ;
-               if ( _makeDirty && !_pPage->isDirty() )
-               {
-                  _pPage->makeDirty() ;
-                  _pUnit->incDirtyPages( _pBucket ) ;
-               }
-               if( cb )
-               {
-                  _pPage->addLSN( cb->getEndLSN() ) ;
-               }
-               _pBucket->unlock( (OSS_LATCH_MODE)_mode ) ;
-            }
-            _pPage = NULL ;
-         }
+         /*
+            Need call submit or rollback to done
+         */
+         INT32    write( const CHAR *pData,
+                         UINT32 offset,
+                         UINT32 len,
+                         IExecutor *cb ) ;
 
-         void    read( UINT32 &readLen )
-         {
-            if ( valid() )
-            {
-               readLen = _pPage->read( _pData, _offset, _len ) ;
-               _pBucket->unlock( (OSS_LATCH_MODE)_mode ) ;
-            }
-            _pPage = NULL ;
-         }
+         /*
+            Need call submit or rollback to done
+         */
+         INT32    read( CHAR *pBuff,
+                        UINT32 offset,
+                        UINT32 len,
+                        IExecutor *cb ) ;
 
-         void     release()
-         {
-            if ( valid() )
-            {
-               _pBucket->unlock( (OSS_LATCH_MODE)_mode ) ;
+         /*
+            Need call submit or rollback to done
+         */
+         INT32    readAndCache( CHAR *pBuff,
+                                UINT32 offset,
+                                UINT32 len,
+                                IExecutor *cb ) ;
 
-               _pPage = NULL ;
-               _pBucket = NULL ;
-            }
-            _pPage = NULL ;
-         }
+         UINT32   submit( IExecutor *cb ) ;
+
+         void     rollback() ;
+
+         void     release() ;
+
+      protected:
+         INT32    _loadPage( UINT32 offset,
+                             UINT32 len,
+                             IExecutor *cb ) ;
 
       private:
          CHAR*             _pData ;
          UINT32            _offset ;
          UINT32            _len ;
-         INT32             _pageID ;
+         BOOLEAN           _isWrite ;
          BOOLEAN           _makeDirty ;
+         BOOLEAN           _writeBack ;
+         BOOLEAN           _usePage ;
 
+         /// should value in cache unit
+         INT32             _pageID ;
          utilCachePage*    _pPage ;
          utilCacheBucket*  _pBucket ;
          _utilCacheUnit*   _pUnit ;
          INT32             _mode ;
-         BOOLEAN           _isWrite ;
+         UINT32            _size ;
 
    } ;
    typedef _utilCacheContext utilCacheContext ;
@@ -425,6 +415,7 @@ namespace engine
 
    #define UTIL_CACHEUNIT_BUCKET_SZ                ( 2048 )
    #define UTIL_CACHEUNIT_PAGE_TIMEOUT             ( 100 )
+
    /*
       _utilCacheUnit define
    */
@@ -448,7 +439,9 @@ namespace engine
          UINT32         calcBucketID( INT32 pageID ) const ;
          UINT32         bucketSize() const { return _bucketSize ; }
 
-         utilCacheBucket* getBucket( UINT32 index ) ;
+         utilCacheBucket*     getBucket( UINT32 index ) ;
+         utilCachFileBase*    getCacheFile() { return _pCacheFile ; }
+         utilCacheMgr*        getCacheMgr() { return _pMgr ; }
 
          UINT64         totalPages() ;
          UINT64         dirtyPages() ;
@@ -465,7 +458,7 @@ namespace engine
                               UINT32 offset, UINT32 len,
                               IExecutor *cb,
                               UINT32 &readLen,
-                              dmsCacheContext &context ) ;
+                              utilCacheContext &context ) ;
 
       protected:
          utilCachePage* getAndLock( INT32 pageID, UINT32 size,
@@ -493,7 +486,7 @@ namespace engine
          UINT32                     _pageSize ;
          BOOLEAN                    _wholePage ;
          UINT32                     _pageTimeout ;
-         vector< dmsCacheBucket* >  _vecBucket ;
+         vector< utilCacheBucket* > _vecBucket ;
          BOOLEAN                    _closed ;
 
          ossAtomic64                _dirtySize ;
@@ -502,7 +495,7 @@ namespace engine
          UINT64                     _lastRecycle ;
 
    } ;
-   typedef _dmsCacheUnit dmsCacheUnit ;
+   typedef _utilCacheUnit utilCacheUnit ;
 
 }
 
