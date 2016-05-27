@@ -677,8 +677,16 @@ INT32 _dpsDumper::process( const po::options_description &desc,
    rc = dump();
    if ( SDB_OK != rc )
    {
-      std::cout << "error occurs when processing, rc = " << rc << std::endl;
-      goto error;
+      if ( DPS_LOG_REACH_HEAD == rc )
+      {
+         std::cout << "over the valid log lsn" << std::endl ;
+         goto done ;
+      }
+      else
+      {
+         std::cout << "error occurs when processing, rc = " << rc << std::endl;
+         goto error;
+      }
    }
 
 done:
@@ -751,7 +759,7 @@ INT32 _dpsDumper::dump()
    {
       if( SDB_LOG_FILTER_LAST == _filter->getType() )
       {
-         LogError( "a file path need when using --last/-e, "
+         LogError( "a file path is needed when using --last/-e, "
                    "current: %s is a directory", srcPath );
          rc = SDB_INVALIDARG ;
          goto error ;
