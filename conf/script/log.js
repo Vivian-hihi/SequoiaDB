@@ -626,10 +626,6 @@ Logger.prototype.log = function (level, message) {
 };
 
 Logger.prototype.logComm = function (level, message) {
-    if (undefined == this.taskId || "number" != typeof(this.taskId)) {
-        throw "taskId unavailable in Logger.logTask()";
-    }
-
     var funcName = "";
     if (Logger.prototype.logComm.caller) {
         funcName = Logger.prototype.logComm.caller.name;
