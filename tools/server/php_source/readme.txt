@@ -1,13 +1,14 @@
 ##build the php tool by source
 
-##mkdir /opt/sequoiadb/tools/server/php
+##make output path
 mkdir -p /opt/sequoiadb/tools/server/php
 
 
 PS: 如果执行configure时，报检查系统识别错误的问题，可以使用config.guess和config.sub替换到configure的目录，然后重新执行
 
 ##build the zlib first
-
+tar -jxvf zlib-1.2.5.tar.bz2  -C /opt/sequoiadb/tools/server
+cd /opt/sequoiadb/tools/server/zlib-1.2.5
 ./configure --prefix=/opt/sequoiadb/tools/server/php/zlib
 make
 make install
