@@ -204,12 +204,13 @@ namespace engine
          vector<REMatchElement> _myregex ;
          // for type compare
          BSONType _type ;
-         // for mod operator
-         INT32 _mod ;
-         INT32 _modm ;
 
          // for opELEM_MATCH
          _mthMatcher *_subMatcher ;
+
+         // for opMOD
+         BSONElement _mod ;
+         BSONElement _modm ;
 
          _MatchElement ( const BSONElement &e, BSONObj::MatchType op ) ;
          _MatchElement ( const BSONElement &e, BSONObj::MatchType op,
@@ -365,6 +366,7 @@ namespace engine
                            const MatchElement &bm,
                            vector<INT64> *dollarList
                          ) ;
+      INT32 _valuesMatchMod( const BSONElement &l, const MatchElement &bm ) ;
       BOOLEAN _regexMatches ( const REMatchElement &me, const BSONElement& e ) ;
       void _deleteLME ( LogicMatchElement *lme ) ;
       void _setWeight ( LogicMatchElement *lme ) ;
@@ -451,6 +453,8 @@ namespace engine
       }
    } ;
    typedef class _mthMatcher mthMatcher ;
+
+   BOOLEAN isModValid( const BSONElement &modmEle ) ;
 }
 
 #endif

@@ -44,9 +44,6 @@
 
 using namespace bson ;
 
-#define MTH_MOD(x,y)\
-        ( (x) - ( floor((x) / (y)) * (y) ) )
-
 namespace engine
 {
    ///PD_TRACE_DECLARE_FUNCTION ( SDB__MTHINCLUDEBUILD, "mthIncludeBuild" )
@@ -868,7 +865,7 @@ namespace engine
       else if ( NumberDouble == in.type () &&
                 NumberDouble != argEle.type() )
       {
-        FLOAT64 v = MTH_MOD( in.numberDouble(),
+         FLOAT64 v = MTH_MOD( in.numberDouble(),
                               argEle.numberLong() ) ;
          builder.append( fieldName, v ) ;
       }

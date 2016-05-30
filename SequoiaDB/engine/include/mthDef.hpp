@@ -90,6 +90,9 @@ namespace engine
 
    #define MTH_ATTR_IS_PROJECTION( attribute ) \
            ( MTH_ATTR_IS_INCLUDE(attribute) && OSS_BIT_TEST(attribute, MTH_S_ATTR_PROJECTION_BIT))
+
+   #define MTH_MOD(x,y)\
+        ( (x) - ( floor((x) / (y)) * (y) ) )
 }
 
 #endif

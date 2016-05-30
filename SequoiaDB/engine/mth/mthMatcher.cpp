@@ -39,6 +39,7 @@
 #include "ossUtil.hpp"
 #include "pdTrace.hpp"
 #include "mthTrace.hpp"
+#include "mthDef.hpp"
 
 using namespace bson ;
 
@@ -69,13 +70,23 @@ namespace engine
             throw pdGeneralException (
                   "Two elements are expceted for MOD" );
          }
-         _mod = o["0"].numberInt() ;
-         _modm = o["1"].numberInt() ;
-         if ( 0 == _mod )
+
+         if ( !o["0"].isNumber() || !o["1"].isNumber() )
          {
-            PD_LOG ( PDERROR, "Modulo can't be 0" ) ;
-            throw pdGeneralException ( "Modulo can't be 0" ) ;
+            PD_LOG ( PDERROR, "Modulo is invalid:Modulo1=%s,Modulo2=%s", 
+                     o["0"].toString().c_str(), o["1"].toString().c_str() ) ;
+            throw pdGeneralException ( "Modulo is invalid" ) ;
          }
+
+         if ( !isModValid( o["0"] ) )
+         {
+            PD_LOG ( PDERROR, "Modulo is invalid:Modulo=%s", 
+                     o["0"].toString().c_str() ) ;
+            throw pdGeneralException ( "Modulo is invalid" ) ;
+         }
+
+         _mod  = o["0"] ;
+         _modm = o["1"] ;
       }
       else if ( op == BSONObj::opELEM_MATCH )
       {
@@ -1195,6 +1206,66 @@ namespace engine
       }
    }
 
+   INT32 _mthMatcher::_valuesMatchMod( const BSONElement &l, 
+                                       const MatchElement &bm )
+   {
+      if ( !l.isNumber() )
+      {
+         return FALSE ;
+      }
+      else
+      {
+         if ( NumberDecimal == l.type() || NumberDecimal == bm._mod.type() )
+         {
+            INT32 rcTmp = SDB_OK ;
+            bsonDecimal decimal ;
+            bsonDecimal decimalMod ;
+            bsonDecimal decimalModm ;
+            bsonDecimal result ;
+            result.init() ;
+            decimal    = l.numberDecimal() ;
+            decimalMod = bm._mod.numberDecimal() ;
+            rcTmp      = decimal.mod( decimalMod, result ) ;
+            if ( SDB_OK != rcTmp )
+            {
+               PD_LOG( PDERROR, "failed to mod decimal:%s mod %s,rc=%d", 
+                       decimal.toString().c_str(), 
+                       decimalMod.toString().c_str(), rcTmp ) ;
+               return FALSE ;
+            }
+
+            decimalModm = bm._modm.numberDecimal() ;
+            return ( 0 == result.compare( decimalModm ) ) ;
+         }
+         else if ( NumberDouble == l.type() 
+                   && NumberDouble == bm._mod.type() )
+         {
+            FLOAT64 v = MTH_MOD( l.numberDouble(),
+                                 bm._mod.numberDouble() ) ;
+            return fabs( v - bm._modm.numberDouble() ) <= OSS_EPSILON ;
+         }
+         else if ( NumberDouble != l.type() 
+                   && NumberDouble == bm._mod.type() )
+         {
+            FLOAT64 v = MTH_MOD( l.numberLong(),
+                                 bm._mod.numberDouble() ) ;
+            return fabs( v - bm._modm.numberDouble() ) <= OSS_EPSILON ;
+         }
+         else if ( NumberDouble == l.type() 
+                   && NumberDouble != bm._mod.type())
+         {
+            FLOAT64 v = MTH_MOD( l.numberDouble(),
+                                 bm._mod.numberLong() ) ;
+            return fabs( v - bm._modm.numberDouble() ) <= OSS_EPSILON ;
+         }
+         else
+         {
+            return ( l.numberLong() % bm._mod.numberLong() ) 
+                                                   == bm._modm.numberLong() ;
+         }
+      }
+   }
+
    OSS_INLINE INT32 _mthMatcher::_valuesMatch ( const BSONElement &l,
                                                 const BSONElement &r,
                                                 BSONObj::MatchType op,
@@ -1320,9 +1391,7 @@ namespace engine
       }
       if ( BSONObj::opMOD == op )
       {
-         if ( !l.isNumber() )
-            return FALSE ;
-         return l.numberLong() % bm._mod == bm._modm ;
+         return _valuesMatchMod( l, bm ) ;
       }
       else if ( BSONObj::opTYPE == op )
       {
@@ -2818,6 +2887,36 @@ namespace engine
       return rc ;
    error:
       goto done ;
+   }
+
+   BOOLEAN isModValid( const BSONElement &modmEle )
+   {
+      if ( modmEle.type() == NumberDecimal )
+      {
+         bsonDecimal modmDecimal = modmEle.numberDecimal() ;
+         if ( modmDecimal.isZero() )
+         {
+            return FALSE ;
+         }
+      }
+      else if ( modmEle.type() == NumberDouble )
+      {
+         FLOAT64 f = modmEle.numberDouble() ;
+         if ( fabs( f ) <= OSS_EPSILON )
+         {
+            return FALSE ;
+         }
+      }
+      else
+      {
+         INT64 modm = modmEle.numberLong() ;
+         if ( 0 == modm )
+         {
+            return FALSE ;
+         }
+      }
+
+      return TRUE ;
    }
 }
 
