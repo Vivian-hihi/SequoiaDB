@@ -41,10 +41,10 @@
 	<FILLER>
 		<Name>master_dir</Name>
 		<WebName>主节点数据目录</WebName>
-		<Type>string</Type>
+		<Type>path</Type>
 		<Default></Default>
 		<Valid></Valid>
-		<Display>edit box</Display>
+		<Display>text box</Display>
 		<Edit>true</Edit>
 		<Desc>主节点数据目录</Desc>
 		<Level>0</Level>
@@ -54,10 +54,10 @@
 	<FILLER>
 		<Name>master_temp_dir</Name>
 		<WebName>主节点临时目录</WebName>
-		<Type>string</Type>
-		<Default></Default>
+		<Type>path</Type>
+		<Default>/tmp</Default>
 		<Valid></Valid>
-		<Display>edit box</Display>
+		<Display>text box</Display>
 		<Edit>true</Edit>
 		<Desc>主节点临时目录</Desc>
 		<Level>0</Level>
@@ -83,8 +83,8 @@
 		<Type>string</Type>
 		<Default></Default>
 		<Valid></Valid>
-		<Display>edit box</Display>
-		<Edit>true</Edit>
+		<Display>text box</Display>
+		<Edit>false</Edit>
 		<Desc>Segment主机</Desc>
 		<Level>0</Level>
 		<DynamicEdit>false</DynamicEdit>
@@ -106,10 +106,10 @@
 	<FILLER>
 		<Name>segment_dir</Name>
 		<WebName>Segment数据目录</WebName>
-		<Type>string</Type>
+		<Type>path</Type>
 		<Default></Default>
 		<Valid></Valid>
-		<Display>edit box</Display>
+		<Display>text box</Display>
 		<Edit>true</Edit>
 		<Desc>Segment数据目录</Desc>
 		<Level>0</Level>
@@ -119,10 +119,10 @@
 	<FILLER>
 		<Name>segment_temp_dir</Name>
 		<WebName>Segment临时目录</WebName>
-		<Type>string</Type>
-		<Default></Default>
+		<Type>path</Type>
+		<Default>/tmp</Default>
 		<Valid></Valid>
-		<Display>edit box</Display>
+		<Display>text box</Display>
 		<Edit>true</Edit>
 		<Desc>Segment临时目录</Desc>
 		<Level>0</Level>
