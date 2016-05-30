@@ -4,6 +4,8 @@
 mkdir -p /opt/sequoiadb/tools/server/php
 
 
+PS: 如果执行configure时，报检查系统识别错误的问题，可以使用config.guess和config.sub替换到configure的目录，然后重新执行
+
 ##build the zlib first
 
 ./configure --prefix=/opt/sequoiadb/tools/server/php/zlib
@@ -20,7 +22,7 @@ make && make install
 ##build the php tool
 tar -jxvf php-5.4.13.tar.bz2 -C /opt/sequoiadb/tools/server
 cd /opt/sequoiadb/tools/server/php-5.4.13
-./configure --prefix=/opt/sequoiadb/tools/server/php --with-libxml2-dir=/opt/sequoiadb/tools/server/php/libxml2
+./configure --prefix=/opt/sequoiadb/tools/server/php --with-libxml-dir=/opt/sequoiadb/tools/server/php/libxml2
 make && make install
 
 ##cp the php.ini to php build path
