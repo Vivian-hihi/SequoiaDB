@@ -101,7 +101,7 @@ function pad( num, n, chars )
    var len = num.toString().length;
    while( len < n )
    {
-      num = '0' + num ;
+      num = chars + num ;
       ++len ;
    }
    return num ;
@@ -148,8 +148,12 @@ function timeFormat( date, fmt )
 
 //删除两端空格
 function trim( str )
-{　　
-   return str.replace( /(^\s*)|(\s*$)/g, '' ) ; 
+{
+   if( typeof( str ) == 'string' )
+   {
+      return str.replace( /(^\s*)|(\s*$)/g, '' ) ;
+   }
+   return str ;
 }
 
 //判断是不是数组
@@ -187,15 +191,15 @@ function autoTypeConvert( val, hasQuotes )
          {
             val = false ;
          }
-         else if( val == 'minKey' )
+         else if( val.toLowerCase() == '$minkey' )
          {
-            val = { '$minkey': 1 } ;
+            val = { '$minKey': 1 } ;
          }
-         else if( val == 'maxKey' )
+         else if( val.toLowerCase() == '$maxkey' )
          {
-            val = { '$maxkey': 1 } ;
+            val = { '$maxKey': 1 } ;
          }
-         else if( val == 'undefined' )
+         else if( val.toLowerCase() == '$undefined' )
          {
             val = { '$undefined': 1 } ;
          }
@@ -206,6 +210,127 @@ function autoTypeConvert( val, hasQuotes )
       }
    }
    return val ;
+}
+
+//解析decimal类型的字符串
+function parseDecimal( str )
+{
+   var decimal = trim( str ) ;
+   var precision = null ;
+   var left = decimal.indexOf( '(' ) ;
+   var right = decimal.indexOf( ')' )
+   if( left > 0 && right > 0 && left < right && decimal.length - 1 == right )
+   {
+      precision = decimal.substring( left + 1, right ) ;
+      precision = precision.split( ',' ) ;
+      if( precision.length == 2 && isNaN( precision[0] ) == false && isNaN( precision[1] ) == false )
+      {
+         precision = [ parseInt( precision[0] ), parseInt( precision[1] ) ] ;
+         decimal = decimal.substring( 0, left ) ;
+      }
+      else
+      {
+         precision = null ;
+      }
+   }
+   if( precision == null )
+   {
+      return { '$decimal': decimal } ;
+   }
+   else
+   {
+      return { '$decimal': decimal, '$precision': precision } ;
+   }
+}
+
+//解析regex类型的字符串
+function parseRegex( str )
+{
+   var regex = trim( str ) ;
+   var options = '' ;
+   if( regex.charAt(0) == '/' && regex.indexOf( '/', 1 ) > 0 )
+   {
+      var right = regex.indexOf( '/', 1 ) ;
+      options = regex.substr( right + 1 ) ;
+      regex = regex.substr( 1, right - 1 ) ;
+   }
+   return { '$regex': regex, '$options': options } ;
+}
+
+//解析binary类型的字符串
+function parseBinary( str )
+{
+   var binary = trim( str ) ;
+   var binType = '' ;
+   if( binary.length > 0 && binary.charAt(0) == '(' && binary.indexOf( ')' ) >= 0 )
+   {
+      var right = binary.indexOf( ')' ) ;
+      binType = binary.substr( 1, right - 1 ) ;
+      binary = binary.substr( right + 1 ) ;
+   }
+   return { '$binary': binary, '$type': binType } ;
+}
+
+//指定类型转换
+function specifyTypeConvert( val, type )
+{
+   var retval = null ;
+   switch( type )
+   {
+   case 'Auto':
+      retval = autoTypeConvert( val, true ) ;
+      break ;
+   case 'Bool':
+      if( val.toLowerCase() == 'true' )
+      {
+         retval = true ;
+      }
+      else if( val.toLowerCase() == 'false' )
+      {
+         retval = false ;
+      }
+      else
+      {
+         retval = val ? true : false ;
+      }
+      break ;
+   case 'Number':
+      if( isNaN( val ) == false )
+      {
+         retval = Number( val ) ;
+      }
+      else
+      {
+         retval = parseInt( val ) ;
+      }
+      break ;
+   case 'Decimal':
+      retval = parseDecimal( field['val'] ) ;
+      break ;
+   case 'String':
+      retval = val ;
+      break ;
+   case 'ObjectId':
+      val = pad( val, 24, '0' ) ;
+      retval = { '$oid': val } ;
+      break ;
+   case 'Regex':
+      retval = parseRegex( val ) ;
+      break ;
+   case 'Binary':
+      retval = parseBinary( val ) ;
+      break ;
+   case 'Timestamp':
+      retval = { '$timestamp': val } ;
+      break ;
+   case 'Date':
+      retval = { '$date': val } ;
+      break ;
+   default:
+      retval = val ;
+      break ;
+   }
+   return retval ;
 }
 
 /*
@@ -292,21 +417,13 @@ function array2Json( array, parentType )
       }
       else if( field['type'] == 'Binary' )
       {
-         var binary = trim( field['val'] ) ;
-         var binType = '' ;
-         if( binary.length > 0 && binary.charAt(0) == '(' && binary.indexOf( ')' ) >= 0 )
-         {
-            var right = binary.indexOf( ')' ) ;
-            binType = binary.substr( 1, right - 1 ) ;
-            binary = binary.substr( right + 1 ) ;
-         }
          if( parentType == 'Object' )
          {
-            json[ field['key'] ] = { '$binary': binary, '$type': binType } ;
+            json[ field['key'] ] = parseBinary( field['val'] ) ;
          }
          else
          {
-            json.push( { '$binary': binary, '$type': binType } ) ;
+            json.push( parseBinary( field['val'] ) ) ;
          }
       }
       else if( field['type'] == 'Timestamp' )
@@ -348,21 +465,24 @@ function array2Json( array, parentType )
       }
       else if( field['type'] == 'Regex' )
       {
-         var regex = trim( field['val'] ) ;
-         var options = '' ;
-         if( regex.charAt(0) == '/' && regex.indexOf( '/', 1 ) > 0 )
-         {
-            var right = regex.indexOf( '/', 1 ) ;
-            options = regex.substr( right + 1 ) ;
-            regex = regex.substr( 1, right - 1 ) ;
-         }
          if( parentType == 'Object' )
          {
-            json[ field['key'] ] = { '$regex': regex, '$options': options } ;
+            json[ field['key'] ] = parseRegex( field['val'] ) ;
          }
          else
          {
-            json.push( { '$regex': regex, '$options': options } ) ;
+            json.push( parseRegex( field['val'] ) ) ;
+         }
+      }
+      else if( field['type'] == 'Decimal' )
+      {
+         if( parentType == 'Object' )
+         {
+            json[ field['key'] ] = parseDecimal( field['val'] ) ;
+         }
+         else
+         {
+            json.push( parseDecimal( field['val'] ) ) ;
          }
       }
    } ) ;
@@ -491,6 +611,16 @@ function json2Array( json, level, exact )
          {
             value = '/' + value['$regex'] + '/' + value['$options'] ;
             valueType = 'Regex' ;
+         }
+         else if( typeof( value['$decimal'] ) == 'string' )
+         {
+            var precision = value['$precision'] ;
+            value = value['$decimal'] ;
+            if( isArray( precision ) )
+            {
+               value = value + '(' + precision[0] + ',' + precision[1] + ')' ;
+            }
+            valueType = 'Decimal' ;
          }
          else
          {
@@ -1146,4 +1276,493 @@ function sqlEscape( sql )
 {
    sql = sql.replace( /\\/g, "\\\\" ) ;
    return "'" + sql.replace( /'/g, "\\'" ) + "'" ;
+}
+
+//判断IP地址
+function IsIPAddress( ip )
+{
+   if( typeof( ip ) != 'string' )
+   {
+      return false ;
+   }
+   if( ip.indexOf( '.' ) <= 0 )
+   {
+      return false ;
+   }
+   var ipArr = ip.split( '.' ) ;
+   if( ipArr.length != 4 )
+   {
+      return false ;
+   }
+   if( isNaN( ipArr[0] ) == true || parseInt( ipArr[0] ) < 0 || parseInt( ipArr[0] ) > 255 )
+   {
+      return false ;
+   }
+   if( isNaN( ipArr[1] ) == true || parseInt( ipArr[1] ) < 0 || parseInt( ipArr[1] ) > 255 )
+   {
+      return false ;
+   }
+   if( isNaN( ipArr[2] ) == true || parseInt( ipArr[2] ) < 0 || parseInt( ipArr[2] ) > 255 )
+   {
+      return false ;
+   }
+   if( isNaN( ipArr[3] ) == true || parseInt( ipArr[3] ) < 0 || parseInt( ipArr[3] ) > 255 )
+   {
+      return false ;
+   }
+   return true ;
+}
+
+/*
+ * 解析ip ip段 hostname  hostname段
+ * 返回数组  [ { 'HostName': 'xxx' }, { 'IP': 'xxx' } ]
+ */
+function parseAddress( address )
+{
+	var link_search = [] ;
+	var splitAddress = address.split( /[,\s;]/ ) ;
+	var splitLen = splitAddress.length ;
+	
+	for( var strNum = 0; strNum < splitLen; ++strNum )
+	{
+		var str = $.trim( splitAddress[ strNum ] ) ;
+		var host_search = [] ;
+		var matches = new Array() ;
+		//识别主机字符串，扫描主机
+		var reg = new RegExp(/^((.*)(\[[ ]*(\d+)[ ]*\-[ ]*(\d+)[ ]*\])(.*))$/) ;
+		if ( ( matches = reg.exec( str ) ) != null )
+		{
+			host_search.push( matches[2] ) ;
+			host_search.push( matches[4] ) ;
+			host_search.push( matches[5] ) ;
+			host_search.push( matches[6] ) ;
+		}
+		else
+		{
+			host_search = str ;
+		}
+	
+		if ( host_search.length > 0 )
+		{
+			//转换hostname
+			if ( isArray( host_search ) )
+			{
+				var str_start = host_search[0] ;
+				var str_end   = host_search[3] ;
+				var strlen_num = host_search[1].length ;
+				var strlen_temp  = parseInt(host_search[1]).toString().length ;
+				var need_add_zero = false ;
+				if ( strlen_num > strlen_temp )
+				{
+					need_add_zero = true ;
+				}
+            var startNum = parseInt( host_search[1] ) ;
+            var endNum   = parseInt( host_search[2] ) ;
+            if( startNum > endNum )
+            {
+               startNum = endNum ;
+               endNum   = parseInt( host_search[1] ) ;
+            }
+				for ( var i = startNum; i <= endNum ; ++i )
+				{
+               if( IsIPAddress( str_start + i + str_end ) )
+               {
+                  //IP地址
+                  if ( need_add_zero && i.toString().length <= strlen_num )
+					   {
+						   link_search.push( { 'IP': str_start + pad(i,strlen_num) + str_end } ) ;
+					   }
+					   else
+					   {
+						   link_search.push( { 'IP': str_start + i + str_end } ) ;
+					   }
+               }
+               else
+               {
+					   if ( need_add_zero && i.toString().length <= strlen_num )
+					   {
+						   link_search.push( { 'HostName': str_start + pad(i,strlen_num) + str_end } ) ;
+					   }
+					   else
+					   {
+						   link_search.push( { 'HostName': str_start + i + str_end } ) ;
+					   }
+               }
+				}
+			}
+			else
+			{
+            if( IsIPAddress( host_search ) == true )
+            {
+               link_search.push( { 'IP': host_search } ) ;
+            }
+            else
+            {
+               link_search.push( { 'HostName': host_search } ) ;
+            }
+			}
+		}
+	}
+	return link_search ;
+}
+
+//解析主机列表
+function parseHostString( hostStr )
+{
+	var i = 0 ;
+	var tempHostList = [] ;
+	var hostList = [] ;
+	if( hostStr.indexOf( ',' ) >= 0 )
+   {
+      addressList = hostStr.split( ',' ) ;
+   }
+	else if( hostStr.indexOf( "\n" ) >= 0 )
+   {
+      addressList = hostStr.split( "\n" ) ;
+   }
+   else
+   {
+      addressList = [ hostStr ] ;
+   }
+	$.each( addressList, function( index, address ){
+		var temp = parseAddress( address ) ;
+		$.each( temp, function( index2, hostInfo ){
+			tempHostList.push( hostInfo ) ;
+			++i ;
+			if( i === 5 )
+			{
+				hostList.push( tempHostList ) ;
+				tempHostList = [] ;
+				i = 0 ;
+			}
+		} ) ;
+	} ) ;
+	if( tempHostList.length > 0 )
+	{
+		hostList.push( tempHostList ) ;
+	}
+	return hostList ;
+}
+
+//检查列表中是否存在主机或IP
+//-1 不存在  -2 存在,并且重复  >= 0 存在，返回下标
+function checkHostIsExist( _hostList, hostName, IP )
+{
+	var rc = -1 ;
+	$.each( _hostList, function( index, hostInfo ){
+		if( ( hostInfo['HostName'] !== '' && hostName !== '' &&
+				hostInfo['HostName'] === hostName ) ||
+			 ( hostInfo['IP'] !== '' && IP !== '' &&
+				hostInfo['IP'] === IP ) )
+		{
+			if( ( hostInfo['HostName'] !== '' && hostName !== '' &&
+				   hostInfo['HostName'] === hostName ) &&
+				 ( hostInfo['IP'] !== '' && IP !== '' &&
+				   hostInfo['IP'] !== IP ) )
+			{
+				rc = -2 ;
+				return true ;
+			}
+			if( ( hostInfo['HostName'] !== '' && hostName !== '' &&
+				   hostInfo['HostName'] !== hostName ) &&
+				 ( hostInfo['IP'] !== '' && IP !== '' &&
+				   hostInfo['IP'] === IP ) )
+			{
+				rc = -2 ;
+				return true ;
+			}
+			rc = index ;
+			return false ;
+		}
+	} ) ;
+	return rc ;
+}
+
+//保留两位小数
+function twoDecimalPlaces( num )
+{
+	return ( Math.round( num * 100 ) / 100 ) ;
+}
+
+//自动换算容量
+function sizeConvert( num )
+{
+	var rn = '0 MB' ;
+	if ( num < 1 && num > 0 )
+	{
+		rn = ( num * 1024 ) + ' KB' ;
+	}
+	if( num >= 1 && num < 1024 )
+	{
+		rn = num+ ' MB' ;
+	}
+	if( num >= 1024 && num < 1048576 )
+	{
+		rn = twoDecimalPlaces( num / 1024 ) + ' GB' ;
+	}
+	else if ( num >= 1048576 && num < 1073741824 )
+	{
+		rn = twoDecimalPlaces( num / 1048576 ) + ' TB' ;
+	}
+	else if ( num >= 1073741824 )
+	{
+		rn = twoDecimalPlaces( num / 1073741824 ) + ' PB' ;
+	}
+	return rn ;
+}
+
+//检测端口
+function checkPort( str )
+{
+	var len = str.length ;
+	if ( len <= 0 )
+	{
+		return false ;
+	}
+	if ( str.charAt( 0 ) == '0' )
+	{
+		return false ;
+	}
+	for ( var i = 0; i < len; ++i )
+	{
+		var char = str.charAt( i ) ;
+		if ( char < '0' || char > '9' )
+		{
+			return false ;
+		}
+	}
+	var port = parseInt( str ) ;
+	if ( port <= 0 || port > 65535 )
+	{
+		return false ;
+	}
+	return true ;
+}
+
+//解析布尔值
+function parseBoolean( val )
+{
+   var newVal = false ;
+   if( val == 'true' )
+   {
+      newVal = true ;
+   }
+   else if( val == 'false' )
+   {
+      newVal = false ;
+   }
+   return newVal ;
+}
+
+//从路径去除 role svcname groupname hostname
+function selectDBPath( dbpath, role, svcname, groupname, hostname )
+{
+	if( 'role' === groupname || 'role' === hostname || 'svcname' === groupname || 'svcname' === hostname || 'groupname' === groupname || 'groupname' === hostname || 'hostname' === groupname || 'hostname' === hostname )
+	{
+		return dbpath ;
+	}
+	var replaceTemp = '' ;
+	function filterSlash( str )
+	{
+		var len = str.length ;
+		var replaceTemp2 = replaceTemp ;
+		replaceTemp2 = '/' + replaceTemp2 ;
+		if( str.charAt( len - 1 ) === '/' )
+		{
+			replaceTemp2 = replaceTemp2 + '/' ;
+		}
+		return replaceTemp2 ;
+	}
+	if( role !== null && role !== '' )
+	{
+		var reg = new RegExp( '/' + role + '/|/' + role + '$', 'g' ) ;
+		replaceTemp = '[role]' ;
+		dbpath = dbpath.replace( reg, filterSlash ) ;
+	}
+	if( svcname !== null && svcname !== '' )
+	{
+		var reg = new RegExp( '/' + svcname + '/|/' + svcname + '$', 'g' ) ;
+		replaceTemp = '[svcname]' ;
+		dbpath = dbpath.replace( reg, filterSlash ) ;
+	}
+	if( groupname !== null && groupname !== '' )
+	{
+		var reg = new RegExp( '/' + groupname + '/|/' + groupname + '$', 'g' ) ;
+		replaceTemp = '[groupname]' ;
+		dbpath = dbpath.replace( reg, filterSlash ) ;
+	}
+	if( hostname !== null && hostname !== '' )
+	{
+		var reg = new RegExp( '/' + hostname + '/|/' + hostname + '$', 'g' ) ;
+		replaceTemp = '[hostname]' ;
+		dbpath = dbpath.replace( reg, filterSlash ) ;
+	}
+	return dbpath ;
+}
+
+/*
+ * 数据路径转义
+ * 参数1 路径字符串，例子 /opt/sequoiadb/[role]/[svcname]/[groupname]/[hostname] 可用的特殊命令就是 [role] [svcname] [groupname] [hostname]
+ * 参数2 主机名
+ * 参数3 端口
+ * 参数4 角色
+ * 参数5 分区组名
+ */
+function dbpathEscape( str, hostname, svcname, role, groupname )
+{
+	var newPath = '' ;
+	while( true )
+	{
+		var leftNum = str.indexOf( '[' ) ;
+		var rightNum = -1 ;
+		if( leftNum >= 0 )
+		{
+			newPath += str.substring( 0, leftNum ) ;
+			str = str.substring( leftNum ) ;
+			rightNum = str.indexOf( ']' ) ;
+			if( rightNum >= 0 )
+			{
+				var order = str.substring( 1, rightNum ) ;
+				if( order == 'hostname' )
+				{
+					newPath += hostname + '' ;
+				}
+				else if( order == 'svcname' )
+				{
+					newPath += svcname + '' ;
+				}
+				else if( order == 'role' )
+				{
+					newPath += role + '' ;
+				}
+				else if( order == 'groupname' )
+				{
+					newPath += groupname + '' ;
+				}
+				else
+				{
+					newPath += str.substring( 0, rightNum + 1 ) ;
+				}
+				str = str.substring( rightNum + 1 ) ;
+			}
+			else
+			{
+				newPath += str ;
+				break ;
+			}
+		}
+		else
+		{
+			newPath += str ;
+			break ;
+		}
+	}
+	return newPath ;
+}
+
+/*
+ * 端口转义
+ * 参数1 端口字符串，例子 '11810[+10]'
+ * 参数2 第几个节点 最小值 0
+ */
+function portEscape( str, num )
+{
+	var newPort = null ;
+	str = str + '' ;
+	if( str == '' )
+	{
+		return str ;
+	}
+	if( str.indexOf( '[' ) > 0 )
+	{
+		var portStr = str.substring( 0, str.indexOf( '[' ) ) ;
+		var escapeStr = str.substring( str.indexOf( '[' ) ) ;
+		var n = 1 ;
+		if( escapeStr.charAt(0) == '[' && escapeStr.charAt(escapeStr.length - 1) == ']' )
+		{
+			if( escapeStr.charAt(1) == '+' )
+			{
+				n = 1 ;
+			}
+			else if( escapeStr.charAt(1) == '-' )
+			{
+				n = -1 ;
+			}
+			else
+			{
+				return null ;
+			}
+         if( isNaN( escapeStr.substring( 2, escapeStr.length - 1 ) ) == true )
+         {
+            return null ;
+         }
+         if( isNaN( portStr ) == true )
+         {
+            return null ;
+         }
+			var tempNum = parseInt( escapeStr.substring( 2, escapeStr.length - 1 ) ) * num * n ;
+			newPort = '' + ( parseInt( portStr ) + tempNum ) ;
+		}
+		else
+		{
+			return null ;
+		}
+	}
+	else
+	{
+		newPort = str ;
+	}
+	if( checkPort( newPort ) )
+	{
+		return newPort ;
+	}
+	else
+	{
+		return null ;
+	}
+}
+
+//删除json对象里面指定字段
+function deleteJson( json, keys )
+{
+   var newJson = {} ;
+   $.each( json, function( key, value ){
+      var isFind = false ;
+      $.each( keys, function( index ){
+         if( key == keys[index] )
+         {
+            isFind = true ;
+            return false ;
+         }
+      } ) ;
+      if( isFind == false )
+      {
+         newJson[key] = value ;
+      }
+   } ) ;
+   return newJson ;
+}
+
+//设置json的值都为字符串
+function convertJsonValueString( json )
+{
+   $.each( json, function( key, value ){
+      if( typeof( value ) == "string" )
+      {
+         return true ;
+      }
+      else if( typeof( value ) == "number" )
+      {
+         json[key] = '' + value ;
+      }
+      else if( typeof( value ) == "boolean" )
+      {
+         json[key] = value ? 'true' : 'false' ;
+      }
+      else
+      {
+         json[key] = value ;
+      }
+   } ) ;
+   return json ;
 }

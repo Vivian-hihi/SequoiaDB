@@ -27,10 +27,10 @@
       <textarea class="form-control" style="height:95px;line-height:initial;font-family:inherit;" rows="5" spellcheck="false" ng-model="sqlcmd"></textarea>
    </div>
    <div ng-container="{marginTop:5,height:25}">
-      <button ng-click="explain()" class="btn btn-default" style="width:80px;height:24px;border-radius:2px;">{{autoLanguage("访问计划")}}</button>
-      <button ng-click="execSQL()" class="btn btn-primary" style="width:80px;height:24px;border-radius:2px;">{{autoLanguage("执行")}}</button>
+      <button ng-click="explain()" class="btn btn-default">{{autoLanguage("访问计划")}}</button>
+      <button ng-click="execSQL()" class="btn btn-primary">{{autoLanguage("执行")}}</button>
    </div>
-   <div id="codeDiv" style="position:relative;border:1px solid #C8D2DC;padding:5px 10px;overflow-x:hidden;overflow-y:auto;word-break:break-all;word-wrap:break-word;" scroll-bottom ng-container="{marginTop:10,offsetY:-285}">
+   <div id="codeDiv" style="position:relative;border:1px solid #C8D2DC;padding:5px 10px;overflow:auto;word-break:break-all;word-wrap:break-word;" scroll-bottom ng-container="{marginTop:10,offsetY:-285}">
       <pre style="margin:0;" ng-repeat="line in result track by $index"><span style="color:green;">{{pad($index,4,0)}}</span>&nbsp;{{line}}</pre>
    </div>
 </div>

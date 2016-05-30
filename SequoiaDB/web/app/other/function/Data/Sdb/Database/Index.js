@@ -54,6 +54,7 @@ _DataDatabaseIndex.buildClList = function( $scope, clList ){
       if( clListIndex >= 0 )
       {
          $scope.clList[clListIndex]['Record']                      += clInfo['TotalRecords'] ;
+         $scope.clList[clListIndex]['Info']['TotalLobs']           += clInfo['TotalLobs'] ;
          $scope.clList[clListIndex]['Info']['TotalRecords']        += clInfo['TotalRecords'] ;
          $scope.clList[clListIndex]['Info']['TotalDataPages']      += clInfo['TotalDataPages'] ;
          $scope.clList[clListIndex]['Info']['TotalIndexPages']     += clInfo['TotalIndexPages'] ;
@@ -119,6 +120,7 @@ _DataDatabaseIndex.buildClList = function( $scope, clList ){
             'GroupName': ( clInfo['GroupName'] == null ? [] : [ { 'value': index, 'key': clInfo['GroupName'] } ] ),
             'Lob': clInfo['IsMainCL'] ? null : 0,
             'Record': clInfo['TotalRecords'],
+            'TotalLobs': clInfo['IsMainCL'] ? null : clInfo['TotalLobs'],
             'Index': clInfo['Indexes'],
             'IsMainCL': clInfo['IsMainCL'],
             'hide': isHide,
@@ -139,6 +141,7 @@ _DataDatabaseIndex.buildClList = function( $scope, clList ){
                'Status':              clInfo['Status'],
                'Indexes':             clInfo['Indexes'],
                'TotalRecords':        clInfo['TotalRecords'],
+               'TotalLobs':           clInfo['TotalLobs'],
                'TotalDataPages':      clInfo['TotalDataPages'],
                'TotalIndexPages':     clInfo['TotalIndexPages'],
                'TotalLobPages':       clInfo['TotalLobPages'],
@@ -332,30 +335,18 @@ _DataDatabaseIndex.getCSInfo = function( $scope, SdbRest ){
          $scope.$apply() ;
          _DataDatabaseIndex.getCLInfo( $scope, SdbRest ) ;
       }, function( errorInfo ){
-         $scope.Components.Confirm.isShow = true ;
-         $scope.Components.Confirm.type = 1 ;
-         $scope.Components.Confirm.title = $scope.autoLanguage( '获取数据失败' ) ;
-         $scope.Components.Confirm.okText = $scope.autoLanguage( '重试' ) ;
-         $scope.Components.Confirm.closeText = $scope.autoLanguage( '取消' ) ;
-         $scope.Components.Confirm.context = sprintf( $scope.autoLanguage( '错误码: ?, ?。需要重试吗?' ), errorInfo['errno'], errorInfo['description'] ) ;
-         $scope.Components.Confirm.ok = function(){
-            $scope.Components.Confirm.isShow = false ;
+         _IndexPublic.createRetryModel( $scope, errorInfo, function(){
             _DataDatabaseIndex.getCSInfo( $scope, SdbRest ) ;
-         }
+            return true ;
+         } ) ;
       }, function(){
          _IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
       } ) ;
    }, function( errorInfo ){
-      $scope.Components.Confirm.isShow = true ;
-      $scope.Components.Confirm.type = 1 ;
-      $scope.Components.Confirm.title = $scope.autoLanguage( '获取数据失败' ) ;
-      $scope.Components.Confirm.okText = $scope.autoLanguage( '重试' ) ;
-      $scope.Components.Confirm.closeText = $scope.autoLanguage( '取消' ) ;
-      $scope.Components.Confirm.context = sprintf( $scope.autoLanguage( '错误码: ?, ?。需要重试吗?' ), errorInfo['errno'], errorInfo['description'] ) ;
-      $scope.Components.Confirm.ok = function(){
-         $scope.Components.Confirm.isShow = false ;
+      _IndexPublic.createRetryModel( $scope, errorInfo, function(){
          _DataDatabaseIndex.getCSInfo( $scope, SdbRest ) ;
-      }
+         return true ;
+      } ) ;
    }, function(){
       _IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
    } ) ;
@@ -369,11 +360,11 @@ _DataDatabaseIndex.getCLInfo = function( $scope, SdbRest )
    var sql ;
    if( $scope.moduleMode == 'standalone' )
    {
-      sql = 'SELECT t1.Name, t1.Details.ID, t1.Details.LogicalID, t1.Details.Sequence, t1.Details.GroupName, t1.Details.Status,t1.Details.Attribute, t1.Details.CompressionType, t1.Details.HasDict, t1.Details.Indexes, t1.Details.TotalRecords, t1.Details.TotalDataPages, t1.Details.TotalIndexPages, t1.Details.TotalLobPages, t1.Details.TotalDataFreeSpace/1048576, t1.Details.TotalIndexFreeSpace/1048576 FROM (SELECT * FROM $SNAPSHOT_CL split BY Details) AS t1 ORDER BY t1.Name' ;
+      sql = 'SELECT t1.Name, t1.Details.ID, t1.Details.LogicalID, t1.Details.Sequence, t1.Details.GroupName, t1.Details.Status,t1.Details.Attribute, t1.Details.Status,t1.Details.AttributeDesc, t1.Details.CompressionType, t1.Details.CompressionTypeDesc, t1.Details.HasDict, t1.Details.Indexes, t1.Details.TotalRecords, t1.Details.TotalLobs, t1.Details.TotalDataPages, t1.Details.TotalIndexPages, t1.Details.TotalLobPages, t1.Details.TotalDataFreeSpace/1048576, t1.Details.TotalIndexFreeSpace/1048576 FROM (SELECT * FROM $SNAPSHOT_CL split BY Details) AS t1 ORDER BY t1.Name' ;
    }
    else
    {
-      sql = 'SELECT t1.Name, t1.Details.ID, t1.Details.LogicalID, t1.Details.Sequence, t1.Details.GroupName, t1.Details.Status, t1.Details.Indexes, t1.Details.TotalRecords, t1.Details.TotalDataPages, t1.Details.HasDict, t1.Details.TotalIndexPages, t1.Details.TotalLobPages, t1.Details.TotalDataFreeSpace/1048576, t1.Details.TotalIndexFreeSpace/1048576, t1.IsMainCL, t1.MainCLName, t1.ShardingKey, t1.ShardingType FROM (SELECT * FROM $SNAPSHOT_CL WHERE NodeSelect="master" split BY Details) AS t1 ORDER BY t1.Name' ;
+      sql = 'SELECT t1.Name, t1.Details.ID, t1.Details.LogicalID, t1.Details.Sequence, t1.Details.GroupName, t1.Details.Status, t1.Details.Indexes, t1.Details.TotalRecords, t1.Details.TotalLobs, t1.Details.TotalDataPages, t1.Details.HasDict, t1.Details.TotalIndexPages, t1.Details.TotalLobPages, t1.Details.TotalDataFreeSpace/1048576, t1.Details.TotalIndexFreeSpace/1048576, t1.IsMainCL, t1.MainCLName, t1.ShardingKey, t1.ShardingType FROM (SELECT * FROM $SNAPSHOT_CL WHERE NodeSelect="master" split BY Details) AS t1 ORDER BY t1.Name' ;
    }
 
    //合并cl数据
@@ -458,6 +449,36 @@ _DataDatabaseIndex.getCLInfo = function( $scope, SdbRest )
    //查询成功执行的
    function success( clList ){
       _DataDatabaseIndex.buildClList( $scope, clList ) ;
+      var clNum = $scope.clList.length ;
+      var csNum = $scope.csList.length ;
+      var test = 0 ;
+      var boxHeight = 0 ;
+      if( csNum > 0 && $scope.clList.length > 0 && $scope.moduleMode == 'distribution' && $scope.partitionCLNum > 0 && $scope.clList.length > $scope.mainCLNum + $scope.subCLNum && $scope.mainCLNum > 0 )
+      {
+         boxHeight = -263 ;
+      }
+      else if( csNum > 0 && $scope.clList.length > 0 && $scope.moduleMode == 'distribution' && $scope.partitionCLNum > 0 )
+      {
+         boxHeight = -235 ;
+      }
+      else if( csNum > 0 && $scope.clList.length > 0 && $scope.moduleMode == 'distribution' && $scope.clList.length > $scope.mainCLNum + $scope.subCLNum && $scope.mainCLNum > 0 )
+      {
+         boxHeight = -235 ;
+      }
+      else if(  csNum > 0 && clNum > 0  )
+      {
+         boxHeight = -207 ;
+      }
+      else if( csNum > 0 )
+      {
+         boxHeight = -123 ;
+      }
+      else if( csNum == 0 )
+      {
+         boxHeight = -67 ;
+      }
+      $scope.boxHeight = {'offsetY': boxHeight } ;
+      
    }
 
    //获取cl信息
@@ -473,31 +494,19 @@ _DataDatabaseIndex.getCLInfo = function( $scope, SdbRest )
             var newList = mergedData( clList, cataList ) ;
             success( newList ) ;
          }, function( errorInfo ){
-            $scope.Components.Confirm.isShow = true ;
-            $scope.Components.Confirm.type = 1 ;
-            $scope.Components.Confirm.title = $scope.autoLanguage( '获取数据失败' ) ;
-            $scope.Components.Confirm.okText = $scope.autoLanguage( '重试' ) ;
-            $scope.Components.Confirm.closeText = $scope.autoLanguage( '取消' ) ;
-            $scope.Components.Confirm.context = sprintf( $scope.autoLanguage( '错误码: ?, ?。需要重试吗?' ), errorInfo['errno'], errorInfo['description'] ) ;
-            $scope.Components.Confirm.ok = function(){
-               $scope.Components.Confirm.isShow = false ;
+            _IndexPublic.createRetryModel( $scope, errorInfo, function(){
                _DataDatabaseIndex.getCLInfo( $scope, SdbRest ) ;
-            }
+               return true ;
+            } ) ;
          }, function(){
             _IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
          } ) ;
       }
    }, function( errorInfo ){
-      $scope.Components.Confirm.isShow = true ;
-      $scope.Components.Confirm.type = 1 ;
-      $scope.Components.Confirm.title = $scope.autoLanguage( '获取数据失败' ) ;
-      $scope.Components.Confirm.okText = $scope.autoLanguage( '重试' ) ;
-      $scope.Components.Confirm.closeText = $scope.autoLanguage( '取消' ) ;
-      $scope.Components.Confirm.context = sprintf( $scope.autoLanguage( '错误码: ?, ?。需要重试吗?' ), errorInfo['errno'], errorInfo['description'] ) ;
-      $scope.Components.Confirm.ok = function(){
-         $scope.Components.Confirm.isShow = false ;
+      _IndexPublic.createRetryModel( $scope, errorInfo, function(){
          _DataDatabaseIndex.getCLInfo( $scope, SdbRest ) ;
-      }
+         return true ;
+      } ) ;
    }, function(){
       _IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
    } ) ;
@@ -545,6 +554,8 @@ _DataDatabaseIndex.init = function( $scope, clusterName, moduleName, moduleMode,
    $scope.subCLNum = 0 ;
    //分区表数量
    $scope.partitionCLNum = 0 ;
+   //右侧高度偏移量
+   $scope.boxHeight = {'offsetY': -263 } ;
 }
 
 //获取分区组列表
@@ -562,16 +573,10 @@ _DataDatabaseIndex.getGroupList = function( $scope, SdbRest ){
                }
             } ) ;
          }, function( errorInfo ){
-            $scope.Components.Confirm.isShow = true ;
-            $scope.Components.Confirm.type = 1 ;
-            $scope.Components.Confirm.title = $scope.autoLanguage( '获取数据失败' ) ;
-            $scope.Components.Confirm.okText = $scope.autoLanguage( '重试' ) ;
-            $scope.Components.Confirm.closeText = $scope.autoLanguage( '取消' ) ;
-            $scope.Components.Confirm.context = sprintf( $scope.autoLanguage( '错误码: ?, ?。需要重试吗?' ), errorInfo['errno'], errorInfo['description'] ) ;
-            $scope.Components.Confirm.ok = function(){
-               $scope.Components.Confirm.isShow = false ;
+            _IndexPublic.createRetryModel( $scope, errorInfo, function(){
                exec() ;
-            }
+               return true ;
+            } ) ;
          }, function(){
             _IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
          } ) ;
@@ -725,7 +730,7 @@ _DataDatabaseIndex.searchCSAndCL = function( $scope, fullName ){
          {
             var num = parseInt( fullName ) ;
             $.each( $scope.clList, function( index, clInfo ){
-               if( clInfo['Lob'] == num || clInfo['Record'] == num || clInfo['Index'] == num )
+               if( clInfo['TotalLobs'] == num || clInfo['Record'] == num || clInfo['Index'] == num )
                {
                   clInfo.hide = false ;
                   $.each( $scope.csList, function( index, csInfo ){
@@ -894,16 +899,10 @@ _DataDatabaseIndex.showCreateCS = function( $scope, SdbRest ){
             SdbRest.DataOperation( data, function( json ){
                _DataDatabaseIndex.getCSInfo( $scope, SdbRest ) ;
             }, function( errorInfo ){
-               $scope.Components.Confirm.isShow = true ;
-               $scope.Components.Confirm.type = 1 ;
-               $scope.Components.Confirm.title = $scope.autoLanguage( '创建集合空间失败' ) ;
-               $scope.Components.Confirm.okText = $scope.autoLanguage( '重试' ) ;
-               $scope.Components.Confirm.closeText = $scope.autoLanguage( '取消' ) ;
-               $scope.Components.Confirm.context = sprintf( $scope.autoLanguage( '错误码: ?, ?。需要重试吗?' ), errorInfo['errno'], errorInfo['description'] ) ;
-               $scope.Components.Confirm.ok = function(){
-                  $scope.Components.Confirm.isShow = false ;
+               _IndexPublic.createRetryModel( $scope, errorInfo, function(){
                   exec() ;
-               }
+                  return true ;
+               } ) ;
             }, function(){
                _IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
             } ) ;
@@ -967,16 +966,10 @@ _DataDatabaseIndex.showRemoveCS = function( $scope, SdbRest ){
                }
                _DataDatabaseIndex.getCSInfo( $scope, SdbRest ) ;
             }, function( errorInfo ){
-               $scope.Components.Confirm.isShow = true ;
-               $scope.Components.Confirm.type = 1 ;
-               $scope.Components.Confirm.title = $scope.autoLanguage( '删除集合空间失败' ) ;
-               $scope.Components.Confirm.okText = $scope.autoLanguage( '重试' ) ;
-               $scope.Components.Confirm.closeText = $scope.autoLanguage( '取消' ) ;
-               $scope.Components.Confirm.context = sprintf( $scope.autoLanguage( '错误码: ?, ?。需要重试吗?' ), errorInfo['errno'], errorInfo['description'] ) ;
-               $scope.Components.Confirm.ok = function(){
-                  $scope.Components.Confirm.isShow = false ;
+               _IndexPublic.createRetryModel( $scope, errorInfo, function(){
                   exec() ;
-               }
+                  return true ;
+               } ) ;
             }, function(){
                _IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
             } ) ;
@@ -1100,16 +1093,10 @@ _DataDatabaseIndex.showCreateCL = function( $scope, SdbRest ){
       SdbRest.DataOperation( data, function( json ){
          _DataDatabaseIndex.getCSInfo( $scope, SdbRest ) ;
       }, function( errorInfo ){
-         $scope.Components.Confirm.isShow = true ;
-         $scope.Components.Confirm.type = 1 ;
-         $scope.Components.Confirm.title = $scope.autoLanguage( '创建集合失败' ) ;
-         $scope.Components.Confirm.okText = $scope.autoLanguage( '重试' ) ;
-         $scope.Components.Confirm.closeText = $scope.autoLanguage( '取消' ) ;
-         $scope.Components.Confirm.context = sprintf( $scope.autoLanguage( '错误码: ?, ?。需要重试吗?' ), errorInfo['errno'], errorInfo['description'] ) ;
-         $scope.Components.Confirm.ok = function(){
-            $scope.Components.Confirm.isShow = false ;
+         _IndexPublic.createRetryModel( $scope, errorInfo, function(){
             createCLExec( data ) ;
-         }
+            return true ;
+         } ) ;
          _DataDatabaseIndex.getCLInfo( $scope, SdbRest ) ;
       }, function(){
          _IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
@@ -1810,16 +1797,10 @@ _DataDatabaseIndex.showRemoveCL = function( $scope, SdbRest ){
                }
                _DataDatabaseIndex.getCSInfo( $scope, SdbRest ) ;
             }, function( errorInfo ){
-               $scope.Components.Confirm.isShow = true ;
-               $scope.Components.Confirm.type = 1 ;
-               $scope.Components.Confirm.title = $scope.autoLanguage( '删除集合失败' ) ;
-               $scope.Components.Confirm.okText = $scope.autoLanguage( '重试' ) ;
-               $scope.Components.Confirm.closeText = $scope.autoLanguage( '取消' ) ;
-               $scope.Components.Confirm.context = sprintf( $scope.autoLanguage( '错误码: ?, ?。需要重试吗?' ), errorInfo['errno'], errorInfo['description'] ) ;
-               $scope.Components.Confirm.ok = function(){
-                  $scope.Components.Confirm.isShow = false ;
+               _IndexPublic.createRetryModel( $scope, errorInfo, function(){
                   exec() ;
-               }
+                  return true ;
+               } ) ;
             }, function(){
                _IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
             } ) ;
@@ -1951,16 +1932,10 @@ _DataDatabaseIndex.showAttachCL = function( $scope, SdbRest ){
             SdbRest.DataOperation( data, function( json ){
                _DataDatabaseIndex.getCSInfo( $scope, SdbRest ) ;
             }, function( errorInfo ){
-               $scope.Components.Confirm.isShow = true ;
-               $scope.Components.Confirm.type = 1 ;
-               $scope.Components.Confirm.title = $scope.autoLanguage( '挂载失败' ) ;
-               $scope.Components.Confirm.okText = $scope.autoLanguage( '重试' ) ;
-               $scope.Components.Confirm.closeText = $scope.autoLanguage( '取消' ) ;
-               $scope.Components.Confirm.context = sprintf( $scope.autoLanguage( '错误码: ?, ?。需要重试吗?' ), errorInfo['errno'], errorInfo['description'] ) ;
-               $scope.Components.Confirm.ok = function(){
-                  $scope.Components.Confirm.isShow = false ;
+               _IndexPublic.createRetryModel( $scope, errorInfo, function(){
                   exec() ;
-               }
+                  return true ;
+               } ) ;
             }, function(){
                _IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
             } ) ;
@@ -2191,6 +2166,25 @@ _DataDatabaseIndex.showSplit = function( $scope, SdbRest ){
                      }
                   },
                   {
+                     "name": "type",
+                     "webName": $scope.autoLanguage( "类型" ),
+                     "placeholder": $scope.autoLanguage( "类型" ),
+                     "type": "select",
+                     "value": "Auto",
+                     "valid": [
+                        { "key": "Auto",      "value": "Auto" },
+                        { "key": "Bool",      "value": "Bool" },
+                        { "key": "Number",    "value": "Number" },
+                        { "key": "Decimal",   "value": "Decimal" },
+                        { "key": "String",    "value": "String" },
+                        { "key": "ObjectId",  "value": "ObjectId" },
+                        { "key": "Regex",     "value": "Regex" },
+                        { "key": "Binary",    "value": "Binary" },
+                        { "key": "Timestamp", "value": "Timestamp" },
+                        { "key": "Date",      "value": "Date" }
+                     ]
+                  },
+                  {
                      "name": "start",
                      "webName": $scope.autoLanguage( "起始范围" ),
                      "placeholder": $scope.autoLanguage( "起始范围" ),
@@ -2261,21 +2255,29 @@ _DataDatabaseIndex.showSplit = function( $scope, SdbRest ){
             var splitendquery = {} ;
             $.each( value['condition'], function( index, conditionInfo ){
                var fieldName = conditionInfo['field'] ;
-               if( conditionInfo['start'] == '$minKey' )
+               if( conditionInfo['type'] == 'Auto' )
                {
-                  splitquery[ fieldName ] = { '$minKey': 1 } ;
-               }
-               else
-               {
-                  splitquery[ fieldName ] = autoTypeConvert( conditionInfo['start'], true ) ;
-               }
-               if( conditionInfo['end'] == '$maxKey' )
-               {
-                  splitendquery[ fieldName ] = { '$maxKey': 1 } ;
-               }
-               else
-               {
+                  splitquery[ fieldName ]    = autoTypeConvert( conditionInfo['start'], true ) ;
                   splitendquery[ fieldName ] = autoTypeConvert( conditionInfo['end'], true ) ;
+               }
+               else
+               {
+                  if( conditionInfo['start'].toLowerCase() == '$minkey' )
+                  {
+                     splitquery[ fieldName ] = { '$minKey': 1 } ;
+                  }
+                  else
+                  {
+                     splitquery[ fieldName ]    = specifyTypeConvert( conditionInfo['start'], conditionInfo['type'] ) ;
+                  }
+                  if( conditionInfo['end'].toLowerCase() == '$maxkey' )
+                  {
+                     splitendquery[ fieldName ] = { '$maxKey': 1 } ;
+                  }
+                  else
+                  {
+                     splitendquery[ fieldName ] = specifyTypeConvert( conditionInfo['end'], conditionInfo['type'] ) ;
+                  }
                }
             } ) ;
             data['splitquery'] = JSON.stringify( splitquery ) ;
@@ -2285,16 +2287,10 @@ _DataDatabaseIndex.showSplit = function( $scope, SdbRest ){
             SdbRest.DataOperation( data, function( json ){
                _DataDatabaseIndex.getCSInfo( $scope, SdbRest ) ;
             }, function( errorInfo ){
-               $scope.Components.Confirm.isShow = true ;
-               $scope.Components.Confirm.type = 1 ;
-               $scope.Components.Confirm.title = $scope.autoLanguage( '切分失败' ) ;
-               $scope.Components.Confirm.okText = $scope.autoLanguage( '重试' ) ;
-               $scope.Components.Confirm.closeText = $scope.autoLanguage( '取消' ) ;
-               $scope.Components.Confirm.context = sprintf( $scope.autoLanguage( '错误码: ?, ?。需要重试吗?' ), errorInfo['errno'], errorInfo['description'] ) ;
-               $scope.Components.Confirm.ok = function(){
-                  $scope.Components.Confirm.isShow = false ;
+               _IndexPublic.createRetryModel( $scope, errorInfo, function(){
                   exec() ;
-               }
+                  return true ;
+               } ) ;
             }, function(){
                _IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
             } ) ;
@@ -2376,16 +2372,10 @@ _DataDatabaseIndex.showCreateIndex = function( $scope, SdbRest ){
             SdbRest.DataOperation( data, function( json ){
                _DataDatabaseIndex.getCLInfo( $scope, SdbRest ) ;
             }, function( errorInfo ){
-               $scope.Components.Confirm.isShow = true ;
-               $scope.Components.Confirm.type = 1 ;
-               $scope.Components.Confirm.title = $scope.autoLanguage( '创建索引失败' ) ;
-               $scope.Components.Confirm.okText = $scope.autoLanguage( '重试' ) ;
-               $scope.Components.Confirm.closeText = $scope.autoLanguage( '取消' ) ;
-               $scope.Components.Confirm.context = sprintf( $scope.autoLanguage( '错误码: ?, ?。需要重试吗?' ), errorInfo['errno'], errorInfo['description'] ) ;
-               $scope.Components.Confirm.ok = function(){
-                  $scope.Components.Confirm.isShow = false ;
+               _IndexPublic.createRetryModel( $scope, errorInfo, function(){
                   exec() ;
-               }
+                  return true ;
+               } ) ;
             }, function(){
                _IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
             } ) ;
@@ -2442,16 +2432,10 @@ _DataDatabaseIndex.showRemoveIndex = function( $scope, SdbRest ){
                      $scope.Components.Modal.form['inputList'][1]['value'] = 0 ;
                      $scope.Components.Modal.form['inputList'][1]['valid'] = indexValid ;
                   }, function( errorInfo ){
-                     $scope.Components.Confirm.isShow = true ;
-                     $scope.Components.Confirm.type = 1 ;
-                     $scope.Components.Confirm.title = $scope.autoLanguage( '获取索引信息失败' ) ;
-                     $scope.Components.Confirm.okText = $scope.autoLanguage( '重试' ) ;
-                     $scope.Components.Confirm.closeText = $scope.autoLanguage( '取消' ) ;
-                     $scope.Components.Confirm.context = sprintf( $scope.autoLanguage( '错误码: ?, ?。需要重试吗?' ), errorInfo['errno'], errorInfo['description'] ) ;
-                     $scope.Components.Confirm.ok = function(){
-                        $scope.Components.Confirm.isShow = false ;
+                     _IndexPublic.createRetryModel( $scope, errorInfo, function(){
                         exec() ;
-                     }
+                        return true ;
+                     } ) ;
                   }, function(){
                      _IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
                   } ) ;
@@ -2503,16 +2487,10 @@ _DataDatabaseIndex.showRemoveIndex = function( $scope, SdbRest ){
                SdbRest.DataOperation( data, function( json ){
                   _DataDatabaseIndex.getCLInfo( $scope, SdbRest ) ;
                }, function( errorInfo ){
-                  $scope.Components.Confirm.isShow = true ;
-                  $scope.Components.Confirm.type = 1 ;
-                  $scope.Components.Confirm.title = $scope.autoLanguage( '删除索引失败' ) ;
-                  $scope.Components.Confirm.okText = $scope.autoLanguage( '重试' ) ;
-                  $scope.Components.Confirm.closeText = $scope.autoLanguage( '取消' ) ;
-                  $scope.Components.Confirm.context = sprintf( $scope.autoLanguage( '错误码: ?, ?。需要重试吗?' ), errorInfo['errno'], errorInfo['description'] ) ;
-                  $scope.Components.Confirm.ok = function(){
-                     $scope.Components.Confirm.isShow = false ;
+                  _IndexPublic.createRetryModel( $scope, errorInfo, function(){
                      exec() ;
-                  }
+                     return true ;
+                  } ) ;
                }, function(){
                   _IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
                } ) ;
@@ -2523,16 +2501,10 @@ _DataDatabaseIndex.showRemoveIndex = function( $scope, SdbRest ){
       }   
       $scope.$apply() ;
    }, function( errorInfo ){
-      $scope.Components.Confirm.isShow = true ;
-      $scope.Components.Confirm.type = 1 ;
-      $scope.Components.Confirm.title = $scope.autoLanguage( '获取索引信息失败' ) ;
-      $scope.Components.Confirm.okText = $scope.autoLanguage( '重试' ) ;
-      $scope.Components.Confirm.closeText = $scope.autoLanguage( '取消' ) ;
-      $scope.Components.Confirm.context = sprintf( $scope.autoLanguage( '错误码: ?, ?。需要重试吗?' ), errorInfo['errno'], errorInfo['description'] ) ;
-      $scope.Components.Confirm.ok = function(){
-         $scope.Components.Confirm.isShow = false ;
+      _IndexPublic.createRetryModel( $scope, errorInfo, function(){
          exec() ;
-      }
+         return true ;
+      } ) ;
    }, function(){
       _IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
    } ) ;
@@ -2589,16 +2561,10 @@ _DataDatabaseIndex.showIndex = function( $scope, SdbRest, csIndex, clIndex ){
 </tr>\
 </table>' ;
    }, function( errorInfo ){
-      $scope.Components.Confirm.isShow = true ;
-      $scope.Components.Confirm.type = 1 ;
-      $scope.Components.Confirm.title = $scope.autoLanguage( '获取索引信息失败' ) ;
-      $scope.Components.Confirm.okText = $scope.autoLanguage( '重试' ) ;
-      $scope.Components.Confirm.closeText = $scope.autoLanguage( '取消' ) ;
-      $scope.Components.Confirm.context = sprintf( $scope.autoLanguage( '错误码: ?, ?。需要重试吗?' ), errorInfo['errno'], errorInfo['description'] ) ;
-      $scope.Components.Confirm.ok = function(){
-         $scope.Components.Confirm.isShow = false ;
+      _IndexPublic.createRetryModel( $scope, errorInfo, function(){
          exec() ;
-      }
+         return true ;
+      }, $scope.autoLanguage( '获取索引信息失败' ) ) ;
    }, function(){
       _IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
    } ) ;

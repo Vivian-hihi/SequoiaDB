@@ -1,7 +1,7 @@
 (function(){
    var sacApp = window.SdbSacManagerModule ;
    var GridId ;
-   sacApp.controllerProvider.register( 'Data.Lob.Lobs.Ctrl', function( $scope, $compile, $location, SdbRest, InheritSize, SdbFunction, FormModal){
+   sacApp.controllerProvider.register( 'Data.Lob.Lobs.Ctrl', function( $scope, $compile, $location, SdbRest, SdbFunction ){
       var clusterName = SdbFunction.LocalData( 'SdbClusterName' ) ;
       var moduleType = SdbFunction.LocalData( 'SdbModuleType' ) ;
       var moduleMode = SdbFunction.LocalData( 'SdbModuleMode' ) ;

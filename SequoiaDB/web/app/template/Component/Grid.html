@@ -12,6 +12,10 @@
          <div class="GridTd Ellipsis" ng-repeat="title in data['title'] track by $index" ng-style="{'width':Setting.titleWidth[$index]}">{{title.text}}</div>
          <div class="clear-float"></div>
       </div>
+      <div class="GridTr" ng-if="data['subtitle']">
+         <div class="GridTd Ellipsis" style="height:auto;" ng-repeat="title in data['subtitle'] track by $index" ng-style="{'width':Setting.titleWidth[$index]}"></div>
+         <div class="clear-float"></div>
+      </div>
    </div>
    <div class="GridBody">
       <div class="GridTr" ng-repeat="tr in data.body track by $index">

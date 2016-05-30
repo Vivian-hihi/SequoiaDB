@@ -12,9 +12,9 @@
          </tbody>
       </table>
    </div>
-   <div class="body" ng-style="Setting.BodyStyle">{{Setting.Context}}</div>
+   <div class="body" style="+zoom:1;" ng-style="Setting.BodyStyle">{{Setting.Context}}</div>
    <div class="foot">
-      <button class="btn btn-primary" ng-if="data.noOK != true" ng-click="ok()">{{Setting.Text.OK}}</button>&nbsp;&nbsp;<button class="btn btn-default" ng-click="closeModal()">{{Setting.Text.Close}}</button>
+      <button class="btn btn-primary" ng-if="data.noOK != true" ng-click="ok()">{{Setting.Text.OK}}</button>&nbsp;&nbsp;<button class="btn btn-default" ng-click="close()">{{Setting.Text.Close}}</button>
    </div>
    <div class="sizeBtn" ng-mousedown="startSetSize()"></div>
 </div>

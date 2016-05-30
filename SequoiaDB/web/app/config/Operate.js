@@ -43,6 +43,7 @@ _operate.condition = function( $scope, webName ){
                      "name": "logic",
                      "type": "select",
                      "value": ">",
+                     "default": ">",
                      "valid": [
                         { "key": ">", "value": ">" },
                         { "key": ">=", "value": ">=" },
@@ -56,7 +57,8 @@ _operate.condition = function( $scope, webName ){
                         { "key": "IS NULL", "value": "null" },
                         { "key": "IS NOT NULL", "value": "notnull" },
                         { "key": "IS EXISTS", "value": "exists" },
-                        { "key": "IS NOT EXISTS", "value": "notexists" }                           ]
+                        { "key": "IS NOT EXISTS", "value": "notexists" }
+                     ]
                   },
                   {
                      "name": "value",

@@ -3,7 +3,6 @@
       <ul class="right">
          <li class="text Ellipsis" style="width:350px;">
             <b><a class="linkButton" href="#/Data/SDB-Database/Index">{{autoLanguage("数据库")}}</a> <span style="font-size:80%; color:#666;">></span> <span style="color:#555;">{{fullName}}</span></b>
-           
          </li>
          <li ng-if="clType != 'main'">
             <a href="#/Data/SDB-Operate/Lobs">{{autoLanguage("大对象操作")}}</a>
@@ -24,8 +23,10 @@
       {{execResult}}
    </div>
    <div style="position:relative;" ng-container="{marginTop:13,offsetY:-145}">
-      <div ng-show="GridData['body'].length > 0" create-grid="GridData" ng-container="{}"></div>
-      <div ng-show="GridData['body'].length == 0" ng-container="{}">
+      <div ng-show="records.length > 0 && showType == 1" create-grid="GridData1" ng-container="{}"></div>
+      <div ng-show="records.length > 0 && showType == 2" create-grid="GridData2" ng-container="{}"></div>
+      <div ng-show="records.length > 0 && showType == 3" create-grid="GridData3" ng-container="{}"></div>
+      <div ng-show="records.length == 0" ng-container="{}">
          <div class="data_empty">
             <div class="title">{{autoLanguage("集合没有数据")}}</div>
             <div class="tips">{{autoLanguage("使用\"插入\"操作添加数据。")}}</div>

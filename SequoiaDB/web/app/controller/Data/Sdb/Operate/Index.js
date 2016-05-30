@@ -1,7 +1,7 @@
 (function(){
    var sacApp = window.SdbSacManagerModule ;
    var GridId ;
-   sacApp.controllerProvider.register( 'Data.Operate.Index.Ctrl', function( $scope, $compile, $location, SdbRest, InheritSize, SdbFunction ){
+   sacApp.controllerProvider.register( 'Data.Operate.Index.Ctrl', function( $scope, $compile, $location, SdbRest, SdbFunction ){
       var clusterName = SdbFunction.LocalData( 'SdbClusterName' ) ;
       var moduleType = SdbFunction.LocalData( 'SdbModuleType' ) ;
       var moduleMode = SdbFunction.LocalData( 'SdbModuleMode' ) ;
@@ -14,12 +14,6 @@
 
       printfDebug( 'Cluster: ' + clusterName + ', Type: ' + moduleType + ', Module: ' + moduleName + ', Mode: ' + moduleMode ) ;
       
-      //修正宽高
-      InheritSize.append( $( '#OperateIndex' ) ) ;
-      $( '#OperateIndex > div' ).each( function( index, ele ){
-         InheritSize.append( ele ) ;
-      } ) ;
-
       //初始化
       _DataOperateIndex.init( $scope, moduleName, moduleMode ) ;
 

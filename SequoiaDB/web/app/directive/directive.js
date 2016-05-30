@@ -1,18 +1,6 @@
 (function(){
    var sacApp = window.SdbSacManagerModule ;
 
-   //渲染结束指令
-   sacApp.directive( 'endRepeat', function( SdbFunction ){
-      return {
-         link: function( scope, element ){
-            setTimeout(function(){
-               var name = $( element ).attr( 'data-name' ) ;
-               SdbFunction.checkEndOfRepeat( name, element ) ;
-            } ) ;
-         }
-      }
-   } ) ;
-
    //创建网格的指令(免html构造)
    sacApp.directive( 'createGrid', function( $filter, $compile, $window, $rootScope, SdbFunction ){
       var dire = {
@@ -219,6 +207,11 @@
                      scope.Setting.grid.height = 'auto' ;
                      scope.Setting.grid.maxHeight = height + 'px' ;
                   }
+                  else if( gridModel == 'maxHeight' )
+                  {
+                     scope.Setting.grid.height = 'auto' ;
+                     scope.Setting.grid.maxHeight = scope.data.options.grid.maxHeight + 'px' ;
+                  }
                   else
                   {
                      //gridModel = fixed
@@ -227,9 +220,39 @@
                   }
                } ) ;
             }
+            //网格副标题追加html代码和事件
+            function setGridSubTitle( scope, parentEle )
+            {
+               if( typeof( scope.data['subtitle'] ) == 'object' )
+               {
+                  var rowNum = scope.data['subtitle'].length ;
+                  var tdEle = $( '> .Grid:first > .GridHeader:first > .GridTr:last > .GridTd', parentEle ) ;
+                  for( var index = 0; index < rowNum; ++index )
+                  {
+                     if( typeof( scope.data['subtitle'][index]['html'] ) == 'string' )
+                     {
+                        var newEle = $compile( scope.data['subtitle'][index]['html'] )( scope ) ;
+                        $( tdEle[ index ] ).append( newEle ) ;
+                     }
+                     else if( typeof( scope.data['subtitle'][index]['html'] ) == 'object' )
+                     {
+                        $( tdEle[ index ] ).append( scope.data['subtitle'][index]['html'] ) ;
+                     }
+                     else
+                     {
+                        $( tdEle[ index ] ).text( scope.data['subtitle'][index]['text'] ) ;
+                     }
+                  }
+               }
+            }
             //网格内容追加html代码和事件
             function setGridBody( scope, parentEle )
             {
+               if( typeof( scope.data['subtitle'] ) == 'object' )
+               {
+                  var marTop = $( '> .Grid:first > .GridHeader:first', parentEle ).height() ;
+                  $( '> .Grid:first > .GridBody:first', parentEle ).css( 'marginTop', marTop ) ;
+               }
                var rowNum = scope.data['body'].length ;
                var columnNum = 0 ;
                var tdEle = $( '> .Grid:first > .GridBody:first > .GridTr > .GridTd', parentEle ) ;
@@ -337,18 +360,44 @@
                      //响应事件
                      onResize( scope ) ;
                   } ;
-                  angular.element( $window ).bind( 'resize', function () {
-                     gridOnResize() ;
-                  } ) ;
-                  $rootScope.$watch( 'onResize', function(){
-                     setTimeout( gridOnResize ) ;
-                  } ) ;
                   if( scope.data )
                   {
                      scope.data.onResize = gridOnResize ;
                   }
+                  angular.element( $window ).bind( 'resize', gridOnResize ) ;
+                  var listener1 = $rootScope.$watch( 'onResize', function(){
+                     setTimeout( gridOnResize ) ;
+                  } ) ;
                   var browserInfo = SdbFunction.getBrowserInfo() ;
-                  scope.$watch( 'data', function(){
+                  var listener2 = scope.$watch( 'data', function(){
+                     //清除网格内容
+                     if( typeof( scope.data ) == 'object' )
+                     {
+                        scope.data.onResize = gridOnResize ;
+                        clearup( scope, element ) ;
+                        $( '> .Grid:first', element ).css( 'visibility', 'hidden' ) ;
+                        $( '> .GridTool:first', element ).css( 'visibility', 'hidden' ) ;
+                        setTimeout( function(){
+                           //网格副标题追加html代码和事件
+                           setGridSubTitle( scope, element ) ;
+                           //网格内容追加html代码和事件
+                           setGridBody( scope, element ) ;
+                           //网格工具栏追加html代码和事件
+                           setGridTool( scope, element ) ;
+                           //设置列宽
+                           setColumnWidth( scope, element, ( browserInfo[0] == 'firefox' ) ) ;
+                           //设置行高
+                           setRowHeight( scope, element ) ;
+                           //设置总高度
+                           setGridHeight( scope, element ) ;
+                           //响应事件
+                           onResize( scope ) ;
+                           $( '> .Grid:first', element ).css( 'visibility', 'visible' ) ;
+                           $( '> .GridTool:first', element ).css( 'visibility', 'visible' ) ;
+                        } ) ;
+                     }
+                  } ) ;
+                  var listener3 = scope.$watch( 'data.body', function(){
                      //清除网格内容
                      if( typeof( scope.data ) == 'object' )
                      {
@@ -374,15 +423,22 @@
                         } ) ;
                      }
                   } ) ;
+                  scope.$on( '$destroy', function(){
+                     angular.element( $window ).unbind( 'resize', gridOnResize ) ;
+                     listener1() ;
+                     listener2() ;
+                     listener3() ;
+                  } ) ;
                },
                post: function postLink( scope, element, attributes ){
                   //添加排序事件
                   var removeWatch = scope.$watch( 'data', function(){
                      if( typeof( scope.data ) == 'object' )
                      {
-                        removeWatch() ;
                         setTimeout( function(){
-                           if( typeof( scope.data['options']['order'] ) != 'undefined' && scope.data['options']['order']['active'] == true )
+                           if( typeof( scope.data['options'] ) == 'object' &&
+                               typeof( scope.data['options']['order'] ) != 'undefined' &&
+                               scope.data['options']['order']['active'] == true )
                            {
                               var GridHeaderTd = [] ;
                               $.each( scope.data['title'], function( index ){
@@ -428,6 +484,9 @@
                         } ) ;
                      }
                   } ) ;
+                  scope.$on( '$destroy', function(){
+                     removeWatch() ;
+                  } ) ;
                }
             } ;
          }
@@ -435,8 +494,8 @@
       return dire ;
    });
   
-   //创建网格的指令(需要html构造,目前不建议使用)
-   sacApp.directive( 'ngGrid', function( $filter, $compile, $window, SdbFunction ){
+   //创建网格的指令(需要html构造)
+   sacApp.directive( 'ngGrid', function( $filter, $compile, $window, $rootScope, SdbFunction ){
       var browserInfo = SdbFunction.getBrowserInfo() ;
       var dire = {
          restrict: 'A',
@@ -458,6 +517,7 @@
             {
                var bodyEle    = $( '> .GridBody:first', gridEle ) ;
                var titleTdEle = $( '> .GridHeader:first > .GridTr:first > .GridTd', gridEle ) ;
+               var subTitleTdEle = $( '> .GridHeader:first > .GridTr:last > .GridTd', gridEle ) ;
                var tdBorder   = numberCarry( $( titleTdEle[0] ).outerWidth() - $( titleTdEle[0] ).width() ) ;
                var titleNum   = titleTdEle.length ;
                var width      = parseInt( $( gridEle ).outerWidth() - numberCarry( $( gridEle ).outerWidth() - $( gridEle ).width() ) - titleNum * tdBorder ) ;
@@ -487,6 +547,10 @@
                   for( var c = 0; c < titleNum; ++c )
                   {
                      $( titleTdEle[c] ).width( cursorTitleWidth[c] ) ;
+                     if( subTitleTdEle.length == titleNum )
+                     {
+                        $( subTitleTdEle[c] ).width( cursorTitleWidth[c] ) ;
+                     }
                   }
                }
                else
@@ -536,6 +600,10 @@
                   for( var c = 0; c < titleNum; ++c )
                   {
                      $( titleTdEle[c] ).width( cursorTitleWidth[c] ) ;
+                     if( subTitleTdEle.length == titleNum )
+                     {
+                        $( subTitleTdEle[c] ).width( cursorTitleWidth[c] ) ;
+                     }
                   }
                }
             }
@@ -669,6 +737,7 @@
                      var maxHeight = 0 ;
                      for( var index2 = 0; index2 < columnNum; ++index2 )
                      {
+                        $( bodyTdEle[ index * columnNum + index2 ] ).css( 'height', 'auto' ) ;
                         var tdHeight = $( bodyTdEle[ index * columnNum + index2 ] ).height() ;
                         if( tdHeight > maxHeight )
                         {
@@ -697,15 +766,16 @@
                      //设置行高
                      setRowHeight( scope, element ) ;
                   } ;
-                  angular.element( $window ).bind( 'resize', function () {
-                     gridOnResize() ;
-                  } ) ;
                   if( scope.data )
                   {
                      scope.data.onResize = gridOnResize ;
                   }
                   setHeader( scope, element ) ;
-                  scope.$watch( 'data', function(){
+                  angular.element( $window ).bind( 'resize', gridOnResize ) ;
+                  var listener1 = $rootScope.$watch( 'onResize', function(){
+                     setTimeout( gridOnResize ) ;
+                  } ) ;
+                  var listener2 = scope.$watch( 'data', function(){
                      //清除网格内容
                      if( typeof( scope.data ) == 'object' )
                      {
@@ -723,6 +793,32 @@
                         } ) ;
                      }
                   } ) ;
+                  var listener3 = scope.$watch( 'data.titleWidth', function(){
+                     //清除网格内容
+                     if( typeof( scope.data ) == 'object' )
+                     {
+                        $( element ).css( 'visibility', 'hidden' ) ;
+                        setTimeout( function(){
+                           //设置表格头
+                           setHeader( scope, element ) ;
+                           //设置列宽
+                           setColumnWidth( scope, element, ( browserInfo[0] == 'firefox' ) ) ;
+                           //设置行高
+                           setRowHeight( scope, element ) ;
+                           if( scope.data.isShow )
+                           {
+                              $( '> .GridBody:first', element ).css( 'visibility', 'visible' ) ;
+                           }
+                           $( element ).css( 'visibility', 'visible' ) ;
+                        } ) ;
+                     }
+                  } ) ;
+                  scope.$on( '$destroy', function(){
+                     angular.element( $window ).unbind( 'resize', gridOnResize ) ;
+                     listener1() ;
+                     listener2() ;
+                     listener3() ;
+                  } ) ;
                },
                post: function postLink( scope, element, attributes ){}
             } ;
@@ -730,6 +826,243 @@
       } ;
       return dire ;
    });
+
+   /*
+   <div class="Grid" style="border-bottom:1px solid #E3E7E8;" ng-grid="NodeGridOptions" ng-container="{offsetY:-212}">
+      <div class="GridHeader">
+         <table style="width:100%;" cellspacing="0">
+            <tbody>
+               <tr>
+                  <td>xxxxx</td>
+               </tr>
+            </tbody>
+         </table>
+      </div>
+      <table class="GridBody" style="width:100%;" cellspacing="0">
+         <colgroup>
+            <col />
+         </colgroup>
+         <tbody>
+            <tr>
+               <td>xxxxx</td>
+            </tr>
+         </tbody>
+      </table>
+   </div>
+   <div class="GridTool">
+      <div class="ToolLeft">xxxxx</div>
+   </div>
+   */
+   //创建网格的指令(需要html构造)
+   sacApp.directive( 'ngGrid2', function( $window, $rootScope, SdbFunction ){
+      var dire = {
+         restrict: 'A',
+         scope: {
+            data: '=ngGrid2'
+         },
+         replace: false,
+         // 专用控制器
+         controller: function( $scope, $element ){
+         },
+         // 编译
+         compile: function( element, attributes ){
+            //设置表格头列宽高
+            function setHeader( scope, gridEle, isFirefox )
+            {
+               var bodyEle    = $( '> .GridBody:first', gridEle ) ;
+               var titleTdEle = $( '> .GridHeader:first > .GridTr:first > .GridTd', gridEle ) ;
+               var subTitleTdEle = $( '> .GridHeader:first > .GridTr:last > .GridTd', gridEle ) ;
+               var tdBorder   = numberCarry( $( titleTdEle[0] ).outerWidth() - $( titleTdEle[0] ).width() ) ;
+               var titleNum   = titleTdEle.length ;
+               var width      = parseInt( $( gridEle ).outerWidth() - numberCarry( $( gridEle ).outerWidth() - $( gridEle ).width() ) - titleNum * tdBorder ) ;
+               var titleWidth = scope.data ? scope.data.titleWidth : undefined ;
+               var bodyWidth = parseInt( $( bodyEle ).outerWidth() - titleNum * tdBorder ) ;
+               if( isFirefox == true  && scope.isFirst_firefox < 2 )
+               {
+                  bodyWidth -= 17 ;
+               }
+               var scrollWidth = width - bodyWidth ;
+               var sumWidth = 0 ;
+               var cursorTitleWidth = [] ;
+               if( typeof( titleWidth ) == 'undefined' || titleWidth == 'auto' )
+               {
+                  var aveWidth = parseInt( width / titleNum ) ;
+                  for( var i = 0; i < titleNum; ++i )
+                  {
+                     //标题
+                     var tmpTdWidth = aveWidth ;
+                     if( i + 1 == titleNum )
+                     {
+                        tmpTdWidth = width - sumWidth - scrollWidth ;
+                     }
+                     cursorTitleWidth.push( tmpTdWidth ) ;
+                     sumWidth += tmpTdWidth ;
+                  }
+                  for( var c = 0; c < titleNum; ++c )
+                  {
+                     $( titleTdEle[c] ).width( cursorTitleWidth[c] ) ;
+                     if( subTitleTdEle.length == titleNum )
+                     {
+                        $( subTitleTdEle[c] ).width( cursorTitleWidth[c] ) ;
+                     }
+                  }
+               }
+               else
+               {
+                  for( var index = 0; index < titleNum; ++index )
+                  {
+                     cursorTitleWidth.push( 0 ) ;
+                  }
+                  var lastIndex = 0 ;
+                  for( var index = 0; index < titleNum; ++index )
+                  {
+                     if( typeof( titleWidth[index] ) == 'string' )
+                     {
+                        //标题
+                        var tmpTdWidth = parseInt( titleWidth[index] ) ;
+                        var bodyTdWidth = tmpTdWidth ;
+                        if( index + 1 == titleNum )
+                        {
+                           tmpTdWidth += scrollWidth ;
+                        }
+                        cursorTitleWidth[index] = ( tmpTdWidth + 'px' ) ;
+                        sumWidth += tmpTdWidth ;
+                     }
+                     else if( typeof( titleWidth[index] ) == 'number' )
+                     {
+                        lastIndex = index ;
+                     }
+                  }
+                  var lastSumWidth = width - sumWidth ;
+                  for( var index = 0; index < titleNum; ++index )
+                  {
+                     if( typeof( titleWidth[index] ) == 'number' )
+                     {
+                        //标题
+                        var tmpTdWidth = 0 ;
+                        tmpTdWidth = parseInt( titleWidth[index] * lastSumWidth * 0.01 ) ;
+                        var bodyTdWidth = tmpTdWidth ;
+                        if( index == lastIndex )
+                        {
+                           tmpTdWidth = width - sumWidth - scrollWidth ;
+                        }
+                        if( tmpTdWidth < 0 ) tmpTdWidth = 0 ;
+                        cursorTitleWidth[index] = ( tmpTdWidth + 'px' ) ;
+                        sumWidth += tmpTdWidth ;
+                     }
+                  }
+                  for( var c = 0; c < titleNum; ++c )
+                  {
+                     $( titleTdEle[c] ).width( cursorTitleWidth[c] ) ;
+                     if( subTitleTdEle.length == titleNum )
+                     {
+                        $( subTitleTdEle[c] ).width( cursorTitleWidth[c] ) ;
+                     }
+                  }
+               }
+            }
+            //设置列宽
+            function setColumnWidth( scope, gridEle, isFirefox )
+            {
+               var bodyEle    = $( '> .GridBody:first', gridEle ) ;
+               var titleTdEle = $( '> .GridHeader:first > .GridTr:first > .GridTd', gridEle ) ;
+               var bodyTrEle  = $( '> .GridTr', bodyEle ) ;
+               var bodyTdEle  = $( '> .GridTd', bodyTrEle ) ;
+               var tdBorder   = numberCarry( $( titleTdEle[0] ).outerWidth() - $( titleTdEle[0] ).width() ) ;
+               var titleNum   = titleTdEle.length ;
+               var rowNum     = bodyTrEle.length ;
+               var width      = parseInt( $( gridEle ).outerWidth() - numberCarry( $( gridEle ).outerWidth() - $( gridEle ).width() ) - titleNum * tdBorder ) ;
+               var bodyWidth = parseInt( $( bodyEle ).outerWidth() - titleNum * tdBorder ) ;
+               if( isFirefox == true  && scope.isFirst_firefox < 2 )
+               {
+                  ++scope.isFirst_firefox ;
+                  bodyWidth -= 17 ;
+               }
+               var scrollWidth = width - bodyWidth ;
+               var titleWidth = scope.data.titleWidth ;
+               var sumWidth = 0 ;
+               var sumBodyWidth = 0 ;
+               var cursorBodyWidth  = [] ;
+               if( typeof( titleWidth ) == 'undefined' || titleWidth == 'auto' )
+               {
+                  var aveWidth = parseInt( width / titleNum ) ;
+                  for( var i = 0; i < titleNum; ++i )
+                  {
+                     //内容
+                     tmpTdWidth = aveWidth ;
+                     if( i + 1 == titleNum )
+                     {
+                        tmpTdWidth = bodyWidth - sumBodyWidth ;
+                     }
+                     cursorBodyWidth.push( tmpTdWidth + 'px' ) ;
+                     sumBodyWidth += tmpTdWidth ;
+                  }
+                  for( var r = 0; r < rowNum; ++r )
+                  {
+                     for( var c = 0; c < titleNum; ++c )
+                     {
+                        $( bodyTdEle[ r * titleNum + c ] ).width( cursorBodyWidth[c] ) ;
+                     }
+                  }
+               }
+               else
+               {
+                  var titleWidthLen = titleWidth.length ;
+                  for( var index = 0; index < titleWidthLen; ++index )
+                  {
+                     cursorBodyWidth.push( 0 ) ;
+                  }
+                  var lastIndex = 0 ;
+                  for( var index = 0; index < titleWidthLen; ++index )
+                  {
+                     if( typeof( titleWidth[index] ) == 'string' )
+                     {
+                        tmpTdWidth = parseInt( titleWidth[index] ) ;
+                        sumBodyWidth += tmpTdWidth ;
+                        cursorBodyWidth[index] = tmpTdWidth ;
+                        sumWidth += tmpTdWidth ;
+                     }
+                     else if( typeof( titleWidth[index] ) == 'number' )
+                     {
+                        lastIndex = index ;
+                     }
+                  }
+                  var lastSumWidth = width - sumWidth ;
+                  for( var index = 0; index < titleWidthLen; ++index )
+                  {
+                     if( typeof( titleWidth[index] ) == 'number' )
+                     {
+                        tmpTdWidth = parseInt( titleWidth[index] * lastSumWidth * 0.01 ) ;
+                        if( index == lastIndex )
+                        {
+                           tmpTdWidth = bodyWidth - sumBodyWidth ;
+                        }
+                        if( tmpTdWidth < 0 ) tmpTdWidth = 0 ;
+                        cursorBodyWidth[index] = tmpTdWidth ;
+                        sumBodyWidth += tmpTdWidth ;
+                     }
+                  }
+                  for( var r = 0; r < rowNum; ++r )
+                  {
+                     for( var c = 0; c < titleNum; ++c )
+                     {
+                        $( bodyTdEle[ r * titleNum + c ] ).width( cursorBodyWidth[c] ) ;
+                     }
+                  }
+               }
+            }
+            return {
+               pre: function preLink( scope, element, attributes ){
+                  //scope的一些初始化或者运算
+               },
+               post: function postLink( scope, element, attributes ){
+                  //绑定事件等
+               }
+            } ;
+         }
+      } ;
+      return dire ;
+   } ) ;
 
    //弹窗
    sacApp.directive( 'createModal', function( $compile, $window, $rootScope, Tip ){
@@ -776,7 +1109,6 @@
          compile: function( element, attributes ){
             function modalResize( scope )
             {
-               
                if( typeof( scope.data.Style ) == 'function' )
                {
                   function setResize()
@@ -828,14 +1160,7 @@
             }
             return {
                pre: function preLink( scope, element, attributes ){
-                  //更新弹窗宽度高度坐标
-                  scope.$watch( 'data', function(){
-                     if( typeof( scope.data ) == 'object' )
-                     {
-                        modalResize( scope ) ;
-                     }
-                  } ) ;
-                  angular.element( $window ).bind( 'resize', function () {
+                  var onResize = function () {
                      modalResize( scope ) ;
                      if( scope.Setting.Status == 2 )
                      {
@@ -855,7 +1180,22 @@
                            scope.recoveryModal() ;
                         }
                      } ) ;
-                     
+                  }
+                  //更新弹窗宽度高度坐标
+                  var listener1 = scope.$watch( 'data', function(){
+                     if( typeof( scope.data ) == 'object' )
+                     {
+                        modalResize( scope ) ;
+                     }
+                  } ) ;
+                  angular.element( $window ).bind( 'resize', onResize ) ;
+                  var listener2 = $rootScope.$on( '$locationChangeStart', function(){
+                     scope.data.isShow = false ;
+                  } ) ;
+                  scope.$on( '$destroy', function(){
+                     angular.element( $window ).unbind( 'resize', onResize ) ;
+                     listener1() ;
+                     listener2() ;
                   } ) ;
                },
                post: function postLink( scope, element, attributes ){
@@ -870,9 +1210,13 @@
                               $( document.body ).append( $compile( scope.Setting.Mask )( scope ) ) ;
                               var bodyEle = $( '> .modal2 > .body', element ) ;
                               var contextType = typeof( scope.data.Context ) ;
-                              if( contextType == 'string' || contextType == 'object' )
+                              if( contextType == 'string' )
                               {
-                                 bodyEle.append( $compile( scope.data.Context )( scope ) ) ;
+                                 bodyEle.html( $compile( scope.data.Context )( scope ) ) ;
+                              }
+                              else if( contextType == 'object' )
+                              {
+                                 bodyEle.html( scope.data.Context ) ;
                               }
                               else if( contextType == 'function' )
                               {
@@ -883,6 +1227,7 @@
                                  scope.data.onResize( parseInt( scope.Setting.BodyStyle.width ), parseInt( scope.Setting.BodyStyle.height ) ) ;
                               }
                               modalResize( scope ) ;
+                              scope.$apply() ;
                            } ) ;
                         }
                         else
@@ -1043,6 +1388,7 @@
                      {
                         scope.data.onResize( parseInt( scope.Setting.BodyStyle.width ), parseInt( scope.Setting.BodyStyle.height ) ) ;
                      }
+                     Tip.auto() ;
                   }
 
                   //关闭弹窗
@@ -1070,7 +1416,7 @@
                      var bodyWidth = $( window ).width() ;
                      var bodyHeight = $( window ).height() ;
                      var width = bodyWidth - 12 ;
-                     var height = bodyHeight - 12 ;
+                     var height = bodyHeight - 16 ;
                      if( width < 600 ) width = 600 ;
                      if( height < 450 ) height = 450 ;
                      var left = 6 ;
@@ -1110,6 +1456,20 @@
                      if( typeof( scope.data.ok ) == 'function' )
                      {
                         if( scope.data.ok() )
+                        {
+                           scope.closeModal() ;
+                        }
+                     }
+                     else
+                     {
+                        scope.closeModal() ;
+                     }
+                  }
+
+                  scope.close = function(){
+                     if( typeof( scope.data.close ) == 'function' )
+                     {
+                        if( scope.data.close() )
                         {
                            scope.closeModal() ;
                         }
@@ -1163,7 +1523,7 @@
                Search: ''
             } ;
             $scope.Setting.View[0]['isOpen'] = true ;
-            $scope.$watch( 'data.Height', function(){
+            var listener = $scope.$watch( 'data.Height', function(){
                var value = parseInt( $scope.data.Height ) ;
                if( !isNaN( value ) )
                {
@@ -1176,6 +1536,9 @@
                      $scope.Setting.Height = 0 ;
                   }
                }
+            } ) ;
+            $scope.$on( '$destroy', function(){
+               listener() ;
             } ) ;
             $scope.data['Callback'] = {} ;
             $scope.data['Callback']['getJson'] = function(){
@@ -1510,353 +1873,476 @@
          templateUrl: './app/template/Component/Form.html',
          replace: false,
          controller: function( $scope, $element ){
-            $.each( $scope.data.inputList, function( index ){
-               $scope.data.inputList[index]['isClick'] = false ;
-               if( $scope.data.inputList[index]['type'] == 'list' )
+            var init = function(){
+               if( typeof( $scope.data ) == 'object' )
                {
-                  $.each( $scope.data.inputList[index]['child'], function( index2 ){
-                     $.each( $scope.data.inputList[index]['child'][index2], function( index3 ){
-                        $scope.data.inputList[index]['child'][index2][index3]['default'] = $scope.data.inputList[index]['child'][index2][index3]['value'] ;
-                     } ) ;
-                  } ) ;
-               }
-            } ) ;
-            $scope.browserInfo = SdbFunction.getBrowserInfo() ;
-            $scope.Setting = {
-               Type: $scope.data.type,
-               GridTitle: $scope.data.gridTitle,
-               Grid: $scope.data.grid,
-               Text: {
-                  'string': {
-                     min: $rootScope.autoLanguage( '?长度不能小于?。' ),
-                     max: $rootScope.autoLanguage( '?长度不能大于?。' ),
-                     regex: $rootScope.autoLanguage( '?格式错误。' ),
-                     ban: $rootScope.autoLanguage( '?不能有?字符。' )
-                  },
-                  'int': {
-                     min: $rootScope.autoLanguage( '?的值不能小于?。' ),
-                     max: $rootScope.autoLanguage( '?的值不能大于?。' ),
-                     ban: $rootScope.autoLanguage( '?的值不能取?。' ),
-                     step: $rootScope.autoLanguage( '?的值必须是?的倍数。' ),
-                     format: $rootScope.autoLanguage( '?的值必须是整数。' )
-                  },
-                  'double': {
-                     min: $rootScope.autoLanguage( '?的值不能小于?。' ),
-                     max: $rootScope.autoLanguage( '?的值不能大于?。' ),
-                     ban: $rootScope.autoLanguage( '?的值不能取?。' ),
-                     step: $rootScope.autoLanguage( '?的值必须是?的倍数。' ),
-                     format: $rootScope.autoLanguage( '?的值必须是数字。' )
-                  },
-                  list: $rootScope.autoLanguage( '?参数错误。' )
-               },
-               inputList: $scope.data.inputList,
-               checkString: function( name, value, valid ){
-                  var rc = true ;
-                  var error = '' ;
-                  if( typeof( valid ) == 'object' )
-                  {
-                     var min = valid.min ;
-                     var max = valid.max ;
-                     var reg = valid.regex ;
-                     var rer = valid.regexError ;
-                     var ban = valid.ban ;
-                     var len = typeof( value ) == 'string' ? value.length : 0 ;
-                     if( typeof( min ) == 'number' && len < min )
+                  $.each( $scope.data.inputList, function( index ){
+                     $scope.data.inputList[index]['isClick'] = false ;
+                     if( $scope.data.inputList[index]['type'] == 'list' )
                      {
-                        error = sprintf( $scope.Setting.Text.string.min, name, min ) ;
-                        rc = false ;
-                     }
-                     else if( typeof( max ) == 'number' && len > max )
-                     {
-                        error = sprintf( $scope.Setting.Text.string.max, name, max ) ;
-                        rc = false ;
-                     }
-                     else if( typeof( ban ) == 'string' && value.indexOf( ban ) >= 0 )
-                     {
-                        error = sprintf( $scope.Setting.Text.string.ban, name, ban ) ;
-                        rc = false ;
-                     }
-                     else if( isArray( ban ) )
-                     {
-                        $.each( ban, function( index, banChar ){
-                           if( value.indexOf( banChar ) >= 0 )
-                           {
-                              error = sprintf( $scope.Setting.Text.string.ban, name, banChar ) ;
-                              rc = false ;
-                              return false ;
-                           }
+                        $.each( $scope.data.inputList[index]['child'], function( index2 ){
+                           $.each( $scope.data.inputList[index]['child'][index2], function( index3 ){
+                              if( typeof( $scope.data.inputList[index]['child'][index2][index3]['default'] ) == 'undefined' )
+                              {
+                                 $scope.data.inputList[index]['child'][index2][index3]['default'] = $scope.data.inputList[index]['child'][index2][index3]['value'] ;
+                              }
+                           } ) ;
                         } ) ;
                      }
-                     else if( typeof( reg ) == 'string' )
-                     {
-                        var patt = new RegExp( reg, 'g' ) ;
-                        if( patt.test( value ) == false )
+                  } ) ;
+                  $scope.browserInfo = SdbFunction.getBrowserInfo() ;
+                  $scope.Setting = {
+                     Type: $scope.data.type,
+                     GridTitle: $scope.data.gridTitle,
+                     Grid: $scope.data.grid,
+                     KeyWidth: $scope.data.keyWidth ? $scope.data.keyWidth : '130px',
+                     Text: {
+                        'string': {
+                           min: $rootScope.autoLanguage( '?长度不能小于?。' ),
+                           max: $rootScope.autoLanguage( '?长度不能大于?。' ),
+                           regex: $rootScope.autoLanguage( '?格式错误。' ),
+                           ban: $rootScope.autoLanguage( '?不能有?字符。' )
+                        },
+                        'int': {
+                           min: $rootScope.autoLanguage( '?的值不能小于?。' ),
+                           max: $rootScope.autoLanguage( '?的值不能大于?。' ),
+                           ban: $rootScope.autoLanguage( '?的值不能取?。' ),
+                           step: $rootScope.autoLanguage( '?的值必须是?的倍数。' ),
+                           format: $rootScope.autoLanguage( '?的值必须是整数。' )
+                        },
+                        'double': {
+                           min: $rootScope.autoLanguage( '?的值不能小于?。' ),
+                           max: $rootScope.autoLanguage( '?的值不能大于?。' ),
+                           ban: $rootScope.autoLanguage( '?的值不能取?。' ),
+                           step: $rootScope.autoLanguage( '?的值必须是?的倍数。' ),
+                           format: $rootScope.autoLanguage( '?的值必须是数字。' )
+                        },
+                        'port':{
+                           min: $rootScope.autoLanguage( '?不能小于?。' ),
+                           max: $rootScope.autoLanguage( '?不能大于?。' ),
+                           empty: $rootScope.autoLanguage( '?不能为空。' ),
+                           format: $rootScope.autoLanguage( '?格式错误。' )
+                        },
+                        'multiple': {
+                           min: $rootScope.autoLanguage( '?至少选择?个。' ),
+                           max: $rootScope.autoLanguage( '?不能多于?个。' ),
+                           empty: $rootScope.autoLanguage( '?不能为空。' )
+                        },
+                        'list': $rootScope.autoLanguage( '?参数错误。' )
+                     },
+                     inputList: $scope.data.inputList,
+                     checkString: function( name, value, valid ){
+                        var rc = true ;
+                        var error = '' ;
+                        if( typeof( valid ) == 'object' )
                         {
-                           if( typeof( rer ) == 'string' )
+                           var min = valid.min ;
+                           var max = valid.max ;
+                           var reg = valid.regex ;
+                           var rer = valid.regexError ;
+                           var ban = valid.ban ;
+                           var len = typeof( value ) == 'string' ? value.length : 0 ;
+                           if( typeof( min ) == 'number' && len < min )
                            {
-                              error = rer ;
+                              error = sprintf( $scope.Setting.Text.string.min, name, min ) ;
+                              rc = false ;
                            }
-                           else
+                           else if( typeof( max ) == 'number' && len > max )
                            {
-                              error = sprintf( $scope.Setting.Text.string.regex, name ) ;
+                              error = sprintf( $scope.Setting.Text.string.max, name, max ) ;
+                              rc = false ;
                            }
+                           else if( typeof( ban ) == 'string' && value.indexOf( ban ) >= 0 )
+                           {
+                              error = sprintf( $scope.Setting.Text.string.ban, name, ban ) ;
+                              rc = false ;
+                           }
+                           else if( isArray( ban ) )
+                           {
+                              $.each( ban, function( index, banChar ){
+                                 if( value.indexOf( banChar ) >= 0 )
+                                 {
+                                    error = sprintf( $scope.Setting.Text.string.ban, name, banChar ) ;
+                                    rc = false ;
+                                    return false ;
+                                 }
+                              } ) ;
+                           }
+                           else if( typeof( reg ) == 'string' )
+                           {
+                              var patt = new RegExp( reg, 'g' ) ;
+                              if( patt.test( value ) == false )
+                              {
+                                 if( typeof( rer ) == 'string' )
+                                 {
+                                    error = rer ;
+                                 }
+                                 else
+                                 {
+                                    error = sprintf( $scope.Setting.Text.string.regex, name ) ;
+                                 }
+                                 rc = false ;
+                              }
+                           }
+                        }
+                        return { rc: rc, error: error } ;
+                     },
+                     checkInt: function ( name, value, valid ){
+                        var rc = true ;
+                        var error = '' ;
+                        if( value.length == 0 && typeof( valid ) == 'object' && valid.empty == true )
+                        {
+                           return { rc: rc, error: error } ;
+                        }
+                        if( isNaN( value ) || parseInt( value ) != value )
+                        {
+                           error = sprintf( $scope.Setting['Text']['int']['format'], name ) ;
                            rc = false ;
                         }
-                     }
-                  }
-                  return { rc: rc, error: error } ;
-               },
-               checkInt: function ( name, value, valid ){
-                  var rc = true ;
-                  var error = '' ;
-                  if( value.length == 0 && typeof( valid ) == 'object' && valid.empty == true )
-                  {
-                     return { rc: rc, error: error } ;
-                  }
-                  if( isNaN( value ) || parseInt( value ) != value )
-                  {
-                     error = sprintf( $scope.Setting['Text']['int']['format'], name ) ;
-                     rc = false ;
-                  }
-                  else if( typeof( valid ) == 'object' )
-                  {
-                     var min = valid.min ;
-                     var max = valid.max ;
-                     var ban = valid.ban ;
-                     var step = valid.step ;
-                     if( typeof( min ) == 'number' && value < min )
-                     {
-                        error = sprintf( $scope.Setting['Text']['int']['min'], name, min ) ;
-                        rc = false ;
-                     }
-                     else if( typeof( max ) == 'number' && value > max )
-                     {
-                        error = sprintf( $scope.Setting['Text']['int']['max'], name, max ) ;
-                        rc = false ;
-                     }
-                     else if( typeof( ban ) == 'number' && value == ban )
-                     {
-                        error = sprintf( $scope.Setting['Text']['int']['ban'], name, ban ) ;
-                        rc = false ;
-                     }
-                     else if( isArray( ban ) )
-                     {
-                        $.each( ban, function( index, banInt ){
-                           if( value == banInt )
-                           {
-                              error = sprintf( $scope.Setting['Text']['int']['ban'], name, banInt ) ;
-                              rc = false ;
-                              return false ;
-                           }
-                        } ) ;
-                     }
-                     else if( typeof( step ) == 'number' && value % step != 0 )
-                     {
-                        error = sprintf( $scope.Setting['Text']['int']['step'], name, step ) ;
-                        rc = false ;
-                     }
-                  }
-                  return { rc: rc, error: error } ;
-               },
-               checkDouble: function ( name, value, valid ){
-                  var rc = true ;
-                  var error = '' ;
-                  if( isNaN( value ) )
-                  {
-                     error = sprintf( $scope.Setting['Text']['double']['format'], name ) ;
-                     rc = false ;
-                  }
-                  else if( typeof( valid ) == 'object' )
-                  {
-                     var min = valid.min ;
-                     var max = valid.max ;
-                     var ban = valid.ban ;
-                     var step = valid.step ;
-                     if( typeof( min ) == 'number' && value < min )
-                     {
-                        error = sprintf( $scope.Setting['Text']['double']['min'], name, min ) ;
-                        rc = false ;
-                     }
-                     else if( typeof( max ) == 'number' && value > max )
-                     {
-                        error = sprintf( $scope.Setting['Text']['double']['max'], name, max ) ;
-                        rc = false ;
-                     }
-                     else if( typeof( ban ) == 'number' && value == ban )
-                     {
-                        error = sprintf( $scope.Setting['Text']['double']['ban'], name, ban ) ;
-                        rc = false ;
-                     }
-                     else if( isArray( ban ) )
-                     {
-                        $.each( ban, function( index, banInt ){
-                           if( value == banInt )
-                           {
-                              error = sprintf( $scope.Setting['Text']['double']['ban'], name, banInt ) ;
-                              rc = false ;
-                              return false ;
-                           }
-                        } ) ;
-                     }
-                     else if( typeof( step ) == 'number' && value % step != 0 )
-                     {
-                        error = sprintf( $scope.Setting['Text']['int']['step'], name, step ) ;
-                        rc = false ;
-                     }
-                  }
-                  return { rc: rc, error: error } ;
-               },
-               checkInput: function( inputList, customCheckFun ){
-                  var isAllClear = true ;
-                  $.each( inputList, function( index, inputInfo ){
-                     inputInfo.error = '' ;
-                     var rv = { rc: true, error: '' } ;
-                     switch( inputInfo.type )
-                     {
-                     case 'string':
-                        rv = $scope.Setting.checkString( inputInfo.webName, inputInfo.value, inputInfo.valid ) ;
-                        break ;
-                     case 'password':
-                        rv = $scope.Setting.checkString( inputInfo.webName, inputInfo.value, inputInfo.valid ) ;
-                        break ;
-                     case 'text':
-                        rv = $scope.Setting.checkString( inputInfo.webName, inputInfo.value, inputInfo.valid ) ;
-                        break ;
-                     case 'int':
-                        rv = $scope.Setting.checkInt( inputInfo.webName, inputInfo.value, inputInfo.valid ) ;
-                        break ;
-                     case 'double':
-                        rv = $scope.Setting.checkDouble( inputInfo.webName, inputInfo.value, inputInfo.valid ) ;
-                        break ;
-                     case 'group':
-                        isAllClear = $scope.Setting.checkInput( inputInfo.child ) ;
-                        break ;
-                     case 'list':
-                        if( inputInfo.valid && inputInfo.valid.min == 0 && inputInfo.child.length == 1 )
+                        else if( typeof( valid ) == 'object' )
                         {
+                           var min = valid.min ;
+                           var max = valid.max ;
+                           var ban = valid.ban ;
+                           var step = valid.step ;
+                           if( typeof( min ) == 'number' && value < min )
+                           {
+                              error = sprintf( $scope.Setting['Text']['int']['min'], name, min ) ;
+                              rc = false ;
+                           }
+                           else if( typeof( max ) == 'number' && value > max )
+                           {
+                              error = sprintf( $scope.Setting['Text']['int']['max'], name, max ) ;
+                              rc = false ;
+                           }
+                           else if( typeof( ban ) == 'number' && value == ban )
+                           {
+                              error = sprintf( $scope.Setting['Text']['int']['ban'], name, ban ) ;
+                              rc = false ;
+                           }
+                           else if( isArray( ban ) )
+                           {
+                              $.each( ban, function( index, banInt ){
+                                 if( value == banInt )
+                                 {
+                                    error = sprintf( $scope.Setting['Text']['int']['ban'], name, banInt ) ;
+                                    rc = false ;
+                                    return false ;
+                                 }
+                              } ) ;
+                           }
+                           else if( typeof( step ) == 'number' && value % step != 0 )
+                           {
+                              error = sprintf( $scope.Setting['Text']['int']['step'], name, step ) ;
+                              rc = false ;
+                           }
                         }
-                        else
+                        return { rc: rc, error: error } ;
+                     },
+                     checkDouble: function ( name, value, valid ){
+                        var rc = true ;
+                        var error = '' ;
+                        if( isNaN( value ) )
                         {
-                           var hasError = false ;
-                           $.each( inputInfo.child, function( index2 ){
-                              var rc = $scope.Setting.checkInput( inputInfo.child[index2] ) ;
-                              if( rc == false )
+                           error = sprintf( $scope.Setting['Text']['double']['format'], name ) ;
+                           rc = false ;
+                        }
+                        else if( typeof( valid ) == 'object' )
+                        {
+                           var min = valid.min ;
+                           var max = valid.max ;
+                           var ban = valid.ban ;
+                           var step = valid.step ;
+                           if( typeof( min ) == 'number' && value < min )
+                           {
+                              error = sprintf( $scope.Setting['Text']['double']['min'], name, min ) ;
+                              rc = false ;
+                           }
+                           else if( typeof( max ) == 'number' && value > max )
+                           {
+                              error = sprintf( $scope.Setting['Text']['double']['max'], name, max ) ;
+                              rc = false ;
+                           }
+                           else if( typeof( ban ) == 'number' && value == ban )
+                           {
+                              error = sprintf( $scope.Setting['Text']['double']['ban'], name, ban ) ;
+                              rc = false ;
+                           }
+                           else if( isArray( ban ) )
+                           {
+                              $.each( ban, function( index, banInt ){
+                                 if( value == banInt )
+                                 {
+                                    error = sprintf( $scope.Setting['Text']['double']['ban'], name, banInt ) ;
+                                    rc = false ;
+                                    return false ;
+                                 }
+                              } ) ;
+                           }
+                           else if( typeof( step ) == 'number' && value % step != 0 )
+                           {
+                              error = sprintf( $scope.Setting['Text']['int']['step'], name, step ) ;
+                              rc = false ;
+                           }
+                        }
+                        return { rc: rc, error: error } ;
+                     },
+                     checkPort: function ( name, value, valid ){
+                        var rc = true ;
+                        var error = '' ;
+                        if( value.length == 0 && typeof( valid ) == 'object' && valid.empty == true )
+                        {
+                           return { rc: rc, error: error } ;
+                        }
+                        if( value.length == 0 )
+                        {
+                           rc = false ;
+                           error = sprintf( $scope.Setting.Text.port.empty, name ) ;
+                        }
+                        else if( checkPort( value ) == false )
+                        {
+                           rc = false ;
+                           error = sprintf( $scope.Setting.Text.port.format, name ) ;
+                        }
+                        else if( typeof( valid ) == 'object' )
+                        {
+                           var min = valid.min ;
+                           var max = valid.max ;
+                           var ban = valid.ban ;
+                           var step = valid.step ;
+                           if( typeof( min ) == 'number' && value < min )
+                           {
+                              error = sprintf( $scope.Setting['Text']['port']['min'], name, min ) ;
+                              rc = false ;
+                           }
+                           else if( typeof( max ) == 'number' && value > max )
+                           {
+                              error = sprintf( $scope.Setting['Text']['port']['max'], name, max ) ;
+                              rc = false ;
+                           }
+                        }
+                        return { rc: rc, error: error } ;
+                     },
+                     checkMultiple: function ( name, value, valid ){
+                        var rc = true ;
+                        var error = '' ;
+                        if( typeof( valid ) == 'object' )
+                        {
+                           var min = valid.min ;
+                           var max = valid.max ;
+                           if( value.length == 0 && valid.empty == false )
+                           {
+                              rc = false ;
+                              error = sprintf( $scope.Setting.Text.multiple.empty, name ) ;
+                           }
+                           else if( typeof( min ) == 'number' && value.length < min )
+                           {
+                              rc = false ;
+                              error = sprintf( $scope.Setting.Text.multiple.min, name, min ) ;
+                           }
+                           else if( typeof( max ) == 'number' && value.length > max )
+                           {
+                              rc = false ;
+                              error = sprintf( $scope.Setting.Text.multiple.max, name, max ) ;
+                           }
+                        }
+                        return { rc: rc, error: error } ;
+                     },
+                     checkInput: function( inputList, customCheckFun ){
+                        var isAllClear = true ;
+                        $.each( inputList, function( index, inputInfo ){
+                           inputInfo.error = '' ;
+                           var rv = { rc: true, error: '' } ;
+                           switch( inputInfo.type )
+                           {
+                           case 'string':
+                              rv = $scope.Setting.checkString( inputInfo.webName, trim( inputInfo.value ), inputInfo.valid ) ;
+                              break ;
+                           case 'password':
+                              rv = $scope.Setting.checkString( inputInfo.webName, inputInfo.value, inputInfo.valid ) ;
+                              break ;
+                           case 'text':
+                              rv = $scope.Setting.checkString( inputInfo.webName, trim( inputInfo.value ), inputInfo.valid ) ;
+                              break ;
+                           case 'int':
+                              rv = $scope.Setting.checkInt( inputInfo.webName, trim( inputInfo.value ), inputInfo.valid ) ;
+                              break ;
+                           case 'double':
+                              rv = $scope.Setting.checkDouble( inputInfo.webName, trim( inputInfo.value ), inputInfo.valid ) ;
+                              break ;
+                           case 'port':
+                              rv = $scope.Setting.checkPort( inputInfo.webName, trim( inputInfo.value ), inputInfo.valid ) ;
+                              break ;
+                           case 'multiple':
+                              rv = $scope.Setting.checkMultiple( inputInfo.webName, trim( inputInfo.value ), inputInfo.valid ) ;
+                              break ;
+                           case 'group':
+                              isAllClear = $scope.Setting.checkInput( inputInfo.child ) ;
+                              break ;
+                           case 'list':
+                              if( inputInfo.valid && inputInfo.valid.min == 0 && inputInfo.child.length == 1 )
                               {
-                                 hasError = true ;
                               }
-                           } ) ;
-                           if( hasError == true )
+                              else
+                              {
+                                 var hasError = false ;
+                                 $.each( inputInfo.child, function( index2 ){
+                                    var rc = $scope.Setting.checkInput( inputInfo.child[index2] ) ;
+                                    if( rc == false )
+                                    {
+                                       hasError = true ;
+                                    }
+                                 } ) ;
+                                 if( hasError == true )
+                                 {
+                                    isAllClear = false ;
+                                    inputInfo.error = sprintf( $scope.Setting.Text.list, inputInfo.webName ) ;
+                                 }
+                              }
+                              break ;
+                           }
+                           if( rv.rc == false )
                            {
                               isAllClear = false ;
-                              inputInfo.error = sprintf( $scope.Setting.Text.list, inputInfo.webName ) ;
+                              inputInfo.error = rv.error ;
+                           }
+                        } ) ;
+                        if( typeof( customCheckFun ) == 'function' )
+                        {
+                           var rvs = customCheckFun( $scope.Setting.getValue( $scope.Setting.inputList ) ) ;
+                           if( rvs.length > 0 )
+                           {
+                              $.each( rvs, function( index2, errInfo ){
+                                 $.each( inputList, function( index3, inputInfo ){
+                                    if( inputInfo.name == errInfo.name )
+                                    {
+                                       inputInfo.error = errInfo.error ;
+                                       return false ;
+                                    }
+                                 } ) ;
+                              } ) ;
+                              isAllClear = false ;
                            }
                         }
-                        break ;
-                     }
-                     if( rv.rc == false )
-                     {
-                        isAllClear = false ;
-                        inputInfo.error = rv.error ;
-                     }
-                  } ) ;
-                  if( typeof( customCheckFun ) == 'function' )
-                  {
-                     var rvs = customCheckFun( $scope.Setting.getValue( $scope.Setting.inputList ) ) ;
-                     if( rvs.length > 0 )
-                     {
-                        $.each( rvs, function( index2, errInfo ){
-                           $.each( inputList, function( index3, inputInfo ){
-                              if( inputInfo.name == errInfo.name )
+                        return isAllClear ;
+                     },
+                     getValue: function( inputList ){
+                        var returnValue = {} ;
+                        $.each( inputList, function( index, inputInfo ){
+                           switch( inputInfo.type )
+                           {
+                           case 'string':
+                              returnValue[ inputInfo.name ] = trim( inputInfo.value ) ;
+                              break ;
+                           case 'password':
+                              returnValue[ inputInfo.name ] = inputInfo.value ;
+                              break ;
+                           case 'text':
+                              returnValue[ inputInfo.name ] = trim( inputInfo.value ) ;
+                              break ;
+                           case 'int':
+                              returnValue[ inputInfo.name ] = parseInt( trim( inputInfo.value ) ) ;
+                              break ;
+                           case 'double':
+                              returnValue[ inputInfo.name ] = parseFloat( trim( inputInfo.value ) ) ;
+                              break ;
+                           case 'port':
+                              returnValue[ inputInfo.name ] = trim( inputInfo.value ) ;
+                              break ;
+                           case 'multiple':
+                              returnValue[ inputInfo.name ] = inputInfo.value ;
+                              break ;
+                           case 'select':
+                              returnValue[ inputInfo.name ] = inputInfo.value ;
+                              break ;
+                           case 'checkbox':
+                              returnValue[ inputInfo.name ] = inputInfo.value ;
+                              break ;
+                           case 'group':
+                              returnValue[ inputInfo.name ] = $scope.Setting.getValue( inputInfo.child ) ;
+                              break ;
+                           case 'list':
+                              var listValue = [] ;
+                              $.each( inputInfo.child, function( index2, items ){
+                                 listValue.push( $scope.Setting.getValue( items ) ) ;
+                              } ) ;
+                              returnValue[ inputInfo.name ] = listValue ;
+                              break ;
+                           }
+                        } ) ;
+                        return returnValue ;
+                     },
+                     getValue2: function( inputList ){
+                        var returnValue = [] ;
+                        $.each( inputList, function( index, inputLine ){
+                           var returnLine = [] ;
+                           $.each( inputLine, function( index2, inputInfo ){
+                              switch( inputInfo.type )
                               {
-                                 inputInfo.error = errInfo.error ;
-                                 return false ;
+                              case 'textual':
+                              case 'string':
+                              case 'select':
+                              case 'checkbox':
+                                 returnLine.push( inputInfo.value ) ;
+                                 break ;
                               }
                            } ) ;
+                           returnValue.push( returnLine ) ;
                         } ) ;
-                        isAllClear = false ;
+                        return returnValue ;
                      }
+                  } ;
+                  $scope.data.check = function( customCheckFun ){
+                     return $scope.Setting.checkInput( $scope.Setting.inputList, customCheckFun ) ;
                   }
-                  return isAllClear ;
-               },
-               getValue: function( inputList ){
-                  var returnValue = {} ;
-                  $.each( inputList, function( index, inputInfo ){
-                     switch( inputInfo.type )
-                     {
-                     case 'string':
-                        returnValue[ inputInfo.name ] = inputInfo.value ;
-                        break ;
-                     case 'password':
-                        returnValue[ inputInfo.name ] = inputInfo.value ;
-                        break ;
-                     case 'text':
-                        returnValue[ inputInfo.name ] = inputInfo.value ;
-                        break ;
-                     case 'int':
-                        returnValue[ inputInfo.name ] = parseInt( inputInfo.value ) ;
-                        break ;
-                     case 'double':
-                        returnValue[ inputInfo.name ] = parseFloat( inputInfo.value ) ;
-                        break ;
-                     case 'select':
-                        returnValue[ inputInfo.name ] = inputInfo.value ;
-                        break ;
-                     case 'checkbox':
-                        returnValue[ inputInfo.name ] = inputInfo.value ;
-                        break ;
-                     case 'group':
-                        returnValue[ inputInfo.name ] = $scope.Setting.getValue( inputInfo.child ) ;
-                        break ;
-                     case 'list':
-                        var listValue = [] ;
-                        $.each( inputInfo.child, function( index2, items ){
-                           listValue.push( $scope.Setting.getValue( items ) ) ;
-                        } ) ;
-                        returnValue[ inputInfo.name ] = listValue ;
-                        break ;
-                     }
-                  } ) ;
-                  return returnValue ;
-               },
-               getValue2: function( inputList ){
-                  var returnValue = [] ;
-                  $.each( inputList, function( index, inputLine ){
-                     var returnLine = [] ;
-                     $.each( inputLine, function( index2, inputInfo ){
-                        switch( inputInfo.type )
-                        {
-                        case 'textual':
-                        case 'string':
-                        case 'select':
-                        case 'checkbox':
-                           returnLine.push( inputInfo.value ) ;
-                           break ;
-                        }
-                     } ) ;
-                     returnValue.push( returnLine ) ;
-                  } ) ;
-                  return returnValue ;
+                  $scope.data.getValue = function(){
+                  if( $scope.Setting.Type == 'grid' )
+                  {
+                     return $scope.Setting.getValue2( $scope.Setting.inputList ) ;
+                  }
+                  else
+                  {
+                     return $scope.Setting.getValue( $scope.Setting.inputList ) ;
+                  }
                }
-            } ;
-            $scope.data.check = function( customCheckFun ){
-               return $scope.Setting.checkInput( $scope.Setting.inputList, customCheckFun ) ;
-            }
-            $scope.data.getValue = function(){
-               if( $scope.Setting.Type == 'grid' )
-               {
-                  return $scope.Setting.getValue2( $scope.Setting.inputList ) ;
-               }
-               else
-               {
-                  return $scope.Setting.getValue( $scope.Setting.inputList ) ;
                }
             }
+            var listener = $scope.$watch( 'data', function(){
+               //清除网格内容
+               if( typeof( $scope.data ) == 'object' )
+               {
+                  init() ;
+               }
+            } ) ;
+            $scope.$on( '$destroy', function(){
+               listener() ;
+            } ) ;
+            init() ;
          },
          compile: function( element, attributes ){
             return {
                pre: function preLink( scope, element, attributes ){
                },
                post: function postLink( scope, element, attributes ){
+                  scope.multipleCheck = function( item, list ){
+                     list.checked = !list.checked ;
+                     if( list.checked )
+                     {
+                        item.value.push( list.value ) ;
+                     }
+                     else
+                     {
+                        var index = item.value.indexOf( list.value ) ;
+                        if( index >= 0 )
+                        {
+                           item.value.splice( index, 1 ) ;
+                        }
+                     }
+                     if( typeof( item.onChange ) == 'function' )
+                     {
+                        item.onChange( item.name, item.value ) ;
+                     }
+                  }
                   scope.listAppend = function( items, item ){
                      var index = items.indexOf( item ) ;
                      var newItem = [] ;
@@ -1877,15 +2363,22 @@
                   scope.onChange = function( inputInfo ){
                      if( typeof( inputInfo.onChange ) == 'function' )
                      {
-                        var inputKey = '' ;
-                        $.each( inputInfo.valid, function( index, item ){
-                           if( inputInfo.value == item.value )
-                           {
-                              inputKey = item.key ;
-                              return false ;
-                           }
-                        } ) ;
-                        inputInfo.onChange( inputInfo.name, inputKey, inputInfo.value ) ;
+                        if( inputInfo['type'] == 'select' )
+                        {
+                           var inputKey = '' ;
+                           $.each( inputInfo.valid, function( index, item ){
+                              if( inputInfo.value == item.value )
+                              {
+                                 inputKey = item.key ;
+                                 return false ;
+                              }
+                           } ) ;
+                           inputInfo.onChange( inputInfo.name, inputKey, inputInfo.value ) ;
+                        }
+                        else
+                        {
+                           inputInfo.onChange( inputInfo.name, inputInfo.value ) ;
+                        }
                      }
                   }
                   scope.showMenu = function( inputInfo ){
@@ -1937,11 +2430,14 @@
             return {
                pre: function preLink( scope, element, attributes ){
                   $( element ).addClass( 'jsonTree' ) ;
-                  scope.$watch( 'data.width', function(){
+                  var listener = scope.$watch( 'data.width', function(){
                      if( scope.data && typeof( scope.data.width ) == 'number' )
                      {
                         scope.Setting.width = scope.data.width ;
                      }
+                  } ) ;
+                  scope.$on( '$destroy', function(){
+                     listener() ;
                   } ) ;
                },
                post: function postLink( scope, element, attributes ){
@@ -1978,11 +2474,15 @@
             return {
                pre: function preLink( scope, element, attributes ){
                   $( element ).addClass( 'jsonTreeValue' ) ;
-                  scope.$watch( 'data.width', function(){
+                  var listener = scope.$watch( 'data.width', function(){
                      if( scope.data && typeof( scope.data.width ) == 'number' )
                      {
                         scope.Setting.width = scope.data.width ;
-                     }                  } ) ;
+                     }
+                  } ) ;
+                  scope.$on( '$destroy', function(){
+                     listener() ;
+                  } ) ;
                },
                post: function postLink( scope, element, attributes ){
                }
@@ -2034,11 +2534,15 @@
             ngModel.$render = function(){
                return element.text( ngModel.$viewValue ) ;
             } ;
-            element.bind( 'keyup', function(){
+            var keyupEvent = function(){
                if( ngModel.$viewValue !== element.text() )
                {
                   return scope.$apply( read ) ;
                }
+            }
+            element.bind( 'keyup', keyupEvent ) ;
+            scope.$on( '$destroy', function(){
+               $( element ).unbind( 'keyup', keyupEvent ) ;
             } ) ;
             return read = function() {
                return ngModel.$setViewValue( element.text() ) ;
@@ -2057,8 +2561,11 @@
             return {
                pre: function( scope, element, attrs ){
                   scope.$target = element ;
-                  scope.$watch( attrs.ngEval, function(){
+                  var lintener = scope.$watch( attrs.ngEval, function(){
                      scope.$eval( attrs.ngEval ) ;
+                  } ) ;
+                  scope.$on( '$destroy', function(){
+                     lintener() ;
                   } ) ;
                }
             } ;
@@ -2079,11 +2586,14 @@
          compile: function( element, attributes ){
             return {
                pre: function preLink( scope, element, attributes ){
-                  scope.$watch( attributes.ngPlaceholder, function ngPlaceholderAction( placeholder ){
+                  var lintener = scope.$watch( attributes.ngPlaceholder, function ngPlaceholderAction( placeholder ){
                      if( typeof( placeholder ) == 'string' )
                      {
                         $( element ).attr( 'placeholder', placeholder ) ;
                      }
+                  } ) ;
+                  scope.$on( '$destroy', function(){
+                     lintener() ;
                   } ) ;
                },
                post: function postLink( scope, element, attributes ){
@@ -2134,91 +2644,101 @@
             pre: function preLink( scope, element, attributes ){
                scope.data.okText = $rootScope.autoLanguage( '确定' ) ;
                scope.data.closeText = $rootScope.autoLanguage( '取消' ) ;
-               scope.data.contentType1 = 'You will delete this record and can not be recovered.' ; 
-               scope.data.contentType3 = 'Disconnected with the system, please try to reconnect.' ;
                //更新弹窗宽度高度坐标
-               scope.$watch( 'data', function(){
+               var listener1 = scope.$watch( 'data', function(){
                   if( typeof( scope.data ) == 'object' )
                   {
                      confirmResize( scope ) ;
                   }
                } ) ;
-               angular.element( $window ).bind( 'resize', function () {
+               var onResize = function () {
                   confirmResize( scope ) ;
+               }
+               angular.element( $window ).bind( 'resize', onResize ) ;
+               var listener2 = $rootScope.$on( '$locationChangeStart', function(){
+                  scope.data.isShow = false ;
+               } ) ;
+               scope.$on( '$destroy', function(){
+                  angular.element( $window ).bind( 'resize', onResize ) ;
+                  listener1() ;
+                  listener2() ;
                } ) ;
             },
-               post: function postLink( scope, element, attributes ){
-                  //编译内容
-                  scope.$watch( 'data.isShow', function(){
-                     if( typeof( scope.data ) == 'object' )
+            post: function postLink( scope, element, attributes ){
+               //编译内容
+               var listener = scope.$watch( 'data.isShow', function(){
+                  if( typeof( scope.data ) == 'object' )
+                  {
+                     if( scope.data.isShow == true )
                      {
-                        if( scope.data.isShow == true )
-                        {
-                           setTimeout( function(){
-                              $( document.body ).append( $compile( scope.Setting.Mask )( scope ) ) ;
-                              confirmResize( scope ) ;
-                           } ) ;
-                        }
-                        else
-                        {
-                           scope.Setting.Mask.detach() ;
-                        }
-                     }
-                  } ) ;
-                  //提示框阴影效果
-                  scope.prompt = function(){
-                     var counter = 0 ;
-                     var bodyEle = $( '> .confirm ', element ) ;
-                     var timer = setInterval( function(){
-                        ++counter ;
-                        if( counter == 1 )
-                        {
-                           $( bodyEle ).css( 'box-shadow','none' );
-                        }
-                        else if( counter == 2 )
-                        {
-                           $( bodyEle ).css( 'box-shadow',' 0px 2px 8px rgba(0,0,0,0.5)' );
-                        }
-                        if( counter == 3 )
-                        {
-                           $( bodyEle ).css( 'box-shadow','none' );
-                        }
-                        else if( counter == 4 )
-                        {
-                           $( bodyEle ).css( 'box-shadow',' 0px 2px 8px rgba(0,0,0,0.5)' );
-                        }
-                        if( counter == 5 )
-                        {
-                           $( bodyEle ).css( 'box-shadow','none' );
-                        }
-                        else if( counter == 6 )
-                        {
-                           $( bodyEle ).css( 'box-shadow',' 0px 2px 8px rgba(0,0,0,0.5)' );
-                           counter = 0 ;
-                           clearInterval( timer );
-                        }
-                     }, 90 ) ;
-                  }
-
-                  //确定
-                  scope.ok = function(){
-                     if( typeof( scope.data.ok ) == 'function' )
-                     {  
-                        if( scope.data.ok() )
-                        {
-                           scope.close() ;
-                        }
+                        setTimeout( function(){
+                           $( document.body ).append( $compile( scope.Setting.Mask )( scope ) ) ;
+                           confirmResize( scope ) ;
+                        } ) ;
                      }
                      else
                      {
+                        scope.Setting.Mask.detach() ;
+                     }
+                  }
+               } ) ;
+               scope.$on( '$destroy', function(){
+                  listener() ;
+               } ) ;
+               //提示框阴影效果
+               scope.prompt = function(){
+                  var counter = 0 ;
+                  var bodyEle = $( '> .confirm ', element ) ;
+                  var timer = setInterval( function(){
+                     ++counter ;
+                     if( counter == 1 )
+                     {
+                        $( bodyEle ).css( 'box-shadow','none' );
+                     }
+                     else if( counter == 2 )
+                     {
+                        $( bodyEle ).css( 'box-shadow',' 0px 2px 8px rgba(0,0,0,0.5)' );
+                     }
+                     if( counter == 3 )
+                     {
+                        $( bodyEle ).css( 'box-shadow','none' );
+                     }
+                     else if( counter == 4 )
+                     {
+                        $( bodyEle ).css( 'box-shadow',' 0px 2px 8px rgba(0,0,0,0.5)' );
+                     }
+                     if( counter == 5 )
+                     {
+                        $( bodyEle ).css( 'box-shadow','none' );
+                     }
+                     else if( counter == 6 )
+                     {
+                        $( bodyEle ).css( 'box-shadow',' 0px 2px 8px rgba(0,0,0,0.5)' );
+                        counter = 0 ;
+                        clearInterval( timer );
+                     }
+                  }, 90 ) ;
+               }
+
+               //确定
+               scope.ok = function(){
+                  if( typeof( scope.data.ok ) == 'function' )
+                  {  
+                     if( scope.data.ok() )
+                     {
                         scope.close() ;
                      }
-                  } ;
-                  //关闭
-                  scope.close = function(){
-                     scope.data.isShow = false ;
-                  } ;
-               }
+                  }
+                  else
+                  {
+                     scope.close() ;
+                  }
+               } ;
+               //关闭
+               scope.close = function(){
+                  scope.data.isShow = false ;
+               } ;
+            }
          } ;
       }
    } ;
@@ -2241,11 +2761,14 @@
             return {
                pre: function preLink( scope, element, attributes ){},
                post: function postLink( scope, element, attributes ){
-                  scope.$watch( 'data', function(){
+                  var lintener = scope.$watch( 'data', function(){
                      if( scope.data == true )
                      {
                         $( element ).get(0).focus() ;
                      }
+                  } ) ;
+                  scope.$on( '$destroy', function(){
+                     lintener() ;
                   } ) ;
                }
             } ;
@@ -2257,77 +2780,158 @@
    //容器(自动设置宽高)
    sacApp.directive( 'ngContainer', function( $window, $rootScope ){
       var list = [] ;
+      var listSize = 0 ;
+      var maxLevel = 0 ;
+      function _arratInsert( eleInfo )
+      {
+         var level = eleInfo[0] ;
+         if( level >= maxLevel )
+         {
+            list.push( eleInfo ) ;
+            ++listSize ;
+            maxLevel = level ;
+         }
+         else
+         {
+            for( var i = 0; i < listSize; ++i )
+            {
+               if( list[i][0] > level )
+               {
+                  list.splice( i, 0, eleInfo ) ;
+                  ++listSize ;
+                  break ;
+               }
+            }
+         }
+      }
       function _renderWidth( scope, ele, width )
-      {  
+      {
          var marginLeft  = scope.data.marginLeft ;
          var marginRight = scope.data.marginRight ;
          var offsetX     = scope.data.offsetX ;
-         marginLeft  = ( isNaN( marginLeft ) ? 0 : parseInt( marginLeft ) ) ;
-         marginRight = ( isNaN( marginRight ) ? 0 : parseInt( marginRight ) ) ;
-         offsetX = ( isNaN( offsetX ) ? 0 : parseInt( offsetX ) ) ;
+         marginLeft  = ( typeof( marginLeft ) != 'number' ? 0 : marginLeft ) ;
+         marginRight  = ( typeof( marginRight ) != 'number' ? 0 : marginRight ) ;
+         offsetX  = ( typeof( offsetX ) != 'number' ? 0 : offsetX ) ;
          width += offsetX ;
-         $( ele ).outerWidth( width ).css( { marginLeft: marginLeft, marginRight: marginRight } ) ;
+         ele.outerWidth( width ).css( { marginLeft: marginLeft, marginRight: marginRight } ) ;
       }
       function _renderHeight( scope, ele, height )
       {
          var marginTop    = scope.data.marginTop ;
          var marginBottom = scope.data.marginBottom ;
          var offsetY      = scope.data.offsetY ;
-         marginTop    = ( isNaN( marginTop ) ? 0 : parseInt( marginTop ) ) ;
-         marginBottom = ( isNaN( marginBottom ) ? 0 : parseInt( marginBottom ) ) ;
-         offsetY = ( isNaN( offsetY ) ? 0 : parseInt( offsetY ) ) ;
+         marginTop  = ( typeof( marginTop ) != 'number' ? 0 : marginTop ) ;
+         marginBottom  = ( typeof( marginBottom ) != 'number' ? 0 : marginBottom ) ;
+         offsetY  = ( typeof( offsetY ) != 'number' ? 0 : offsetY ) ;
          height += offsetY ;
-         $( ele ).outerHeight( height ).css( { marginTop: marginTop, marginBottom: marginBottom } ) ;
+         ele.outerHeight( height ).css( { marginTop: marginTop, marginBottom: marginBottom } ) ;
       }
-      function _render( scope, ele )
+      function _renderMaxHeight( scope, ele, maxheight )
+      {
+         var marginTop    = scope.data.marginTop ;
+         var marginBottom = scope.data.marginBottom ;
+         var offsetY      = scope.data.offsetY ;
+         marginTop  = ( typeof( marginTop ) != 'number' ? 0 : marginTop ) ;
+         marginBottom  = ( typeof( marginBottom ) != 'number' ? 0 : marginBottom ) ;
+         offsetY  = ( typeof( offsetY ) != 'number' ? 0 : offsetY ) ;
+         maxheight += offsetY ;
+         ele.css( { 'marginTop': marginTop, 'marginBottom': marginBottom, 'maxHeight': maxheight } ) ;
+      }
+      function _render( scope, ele, parent )
       {
          $( document.body ).css( 'overflow', 'hidden' ) ;
          var width  = scope.data.width ;
          var height = scope.data.height ;
-         width  = ( isNaN( width )  ? $( ele ).parent().width()  : parseInt( width  ) ) ;
-         height = ( isNaN( height ) ? $( ele ).parent().height() : parseInt( height ) ) ;
+         var maxHeight = scope.data.maxHeight ;
+         var widthType = typeof( width ) ;
+         var heightType = typeof( height ) ;
+         var maxHeightType = typeof( maxHeight ) ;
+         if( widthType == 'string' )
+         {
+            var length = width.length ;
+            if( width.charAt( length - 1 ) == '%' )
+            {
+               width = parseInt( parent.width() * parseInt( width ) * 0.01 ) ;
+            }
+            else
+            {
+               width  = parent.width() ;
+            }
+         }
+         else if( widthType != 'number' )
+         {
+            width  = parent.width() ;
+         }
          _renderWidth( scope, ele, width ) ;
-         _renderHeight( scope, ele, height ) ;
+         if( maxHeightType == 'string' )
+         {
+            var length = maxHeight.length ;
+            if( maxHeight.charAt( length - 1 ) == '%' )
+            {  
+               maxHeight = parseInt( parent.height() * parseInt( maxHeight ) * 0.01 ) ;
+            }
+            _renderMaxHeight( scope, ele, maxHeight ) ;
+         }
+         else
+         {
+            if( heightType == 'string' )
+            {
+               var length = height.length ;
+               if( height.charAt( length - 1 ) == '%' )
+               {  
+                  height = parseInt( parent.height() * parseInt( height ) * 0.01 ) ;
+               }
+               else if( height.charAt( length - 1 ) == 'w' )
+               {
+                  height = parseInt( width * parseInt( height ) * 0.01 ) ;
+               }
+               else
+               {
+                  height  = parent.height() ;
+               }
+            }
+            else if( heightType != 'number' )
+            {
+               height  = parent.height() ;
+            }
+            _renderHeight( scope, ele, height ) ;
+         }
          $( document.body ).css( 'overflow', 'auto' ) ;
       }
       function _renderAll( rootLevel )
       {
-         var isStart = false ;
-         if( rootLevel == -1 )
-         {
-            isStart = true ;
+         for( var index = ( rootLevel == -1 ? 0 : rootLevel ); index < listSize; ++index ){
+            _render( list[index][1], list[index][2], list[index][3] ) ;
          }
-         $.each( list, function( index ){
-            var level   = list[index][0] ;
-            var scope   = list[index][1] ;
-            var element = list[index][2] ;
-            if( !isStart && rootLevel == level )
-            {
-               isStart = true ;
-            }
-            if( isStart )
-            {
-               _render( scope, element ) ;
-            }
-         } ) ;
       }
+      $rootScope.$watch( 'onResize', function(){
+         setTimeout( function(){
+            _renderAll( -1 ) ;
+         } ) ;
+      } ) ;
+      angular.element( $window ).bind( 'resize', function () {
+         _renderAll( -1 ) ;
+      } ) ;
       $rootScope.$on( '$locationChangeStart', function( event, newUrl, oldUrl ){
          var newList = [] ;
-         var length = list.length ;
+         var length = listSize ;
+         listSize = 0 ;
          for(var i = 0; i < length; ++i )
          {
             var element = list[i][2] ;
             if( $( element ).is( ':hidden' ) == false )
             {
                newList.push( list[i] ) ;
+               ++listSize ;
+               maxLevel = list[i][0] ;
             }
          }
          list = newList ;
       } ) ;
-      function _append( scope, element )
+      function _append( scope, element, parent )
       {
          var level = 0 ;
-         var root = $( element ) ;
+         var root = element ;
          for( ; ; ++level )
          {
             if( root.get(0) == document.body || root.get(0) == document )
@@ -2337,12 +2941,8 @@
             root = root.parent() ;
          }
          scope.level = level ;
-         list.push( [ level, scope, element ] ) ;
-         list.sort() ;
+         _arratInsert( [ level, scope, element, parent ] ) ;
       }
-      angular.element( $window ).bind( 'resize', function () {
-         _renderAll( -1 ) ;
-      } ) ;
       var dire = {
          restrict: 'A',
          scope: true,
@@ -2358,8 +2958,10 @@
                pre: function preLink( scope, element, attributes ){},
                post: function postLink( scope, element, attributes ){
                   scope.data = scope.$eval( attributes.ngContainer ) ;
-                  _render( scope, element ) ;
-                  _append( scope, element ) ;
+                  var current = $( element ) ;
+                  var parent = $( element ).parent() ;
+                  _render( scope, current, parent ) ;
+                  _append( scope, current, parent ) ;
                   scope.$watch( attributes.ngContainer, function ngContainerAction( data ){
                      scope.data = data ;
                      _renderAll( scope.level ) ;
@@ -2384,12 +2986,15 @@
          compile: function( element, attributes ){
             return {
                pre: function preLink( scope, element, attributes ){
-                  scope.$watch( attributes.ngAttr, function ngAttrAction( attr ){
+                  var lintener = scope.$watch( attributes.ngAttr, function ngAttrAction( attr ){
                      if( typeof( attr ) != 'undefined' )
                      {
                         $( element ).attr( attr ) ;
                      }
                   }, true ) ;
+                  scope.$on( '$destroy', function(){
+                     lintener() ;
+                  } ) ;
                },
                post: function postLink( scope, element, attributes ){}
             } ;
@@ -2478,11 +3083,14 @@
                borderColor: '#F0F0F0',
                data: []
             } ;
-            $scope.$watch( 'data', function(){
+            var lintener = $scope.$watch( 'data', function(){
                if( isArray( $scope.data ) && $scope.data.length > 0 )
                {
                   getAllCoord( $scope ) ;
                }
+            } ) ;
+            scope.$on( '$destroy', function(){
+               lintener() ;
             } ) ;
          },
          compile: function( element, attributes ){
@@ -2504,12 +3112,12 @@
       return dire ;
    } );
 
-   //创建折线图
-   sacApp.directive( 'createLineChart', function(){
+   //创建echart图
+   sacApp.directive( 'createChart', function( $rootScope, $window ){
       var dire = {
          restrict: 'A',
          scope: {
-            data: '=para'
+            data: '=createChart'
          },
          replace: false,
          //专用控制器
@@ -2517,56 +3125,55 @@
             $scope.Setting = {
                'element': null
             } ;
-            $scope.$watch( 'data', function(){
-               if( typeof( $scope.data ) == 'object' && typeof( $scope.data.options ) == 'object' && isArray( $scope.data.value ) )
+            var lintener1 = $scope.$watch( 'data', function(){
+               if( typeof( $scope.data ) == 'object' && typeof( $scope.data.options ) == 'object' )
                {
                   if( $scope.Setting.element == null )
                   {
                      $scope.Setting.element = echarts.init( $( $element ).get(0) ).setOption( $scope.data.options ) ;
                   }
-                  $scope.Setting.element.addData( $scope.data.value ) ;
-               }
-            } ) ;
-         },
-         //编译
-         compile: function( element, attributes ){
-            return {
-               pre: function preLink( scope, element, attributes ){},
-               post: function postLink( scope, element, attributes ){}
-            } ;
-         }
-      } ;
-      return dire ;
-   });
-
-   //创建饼图
-   sacApp.directive( 'createPieChart', function(){
-      var dire = {
-         restrict: 'A',
-         scope: {
-            data: '=para'
-         },
-         replace: false,
-         //专用控制器
-         controller: function( $scope, $element ){
-            $scope.Setting = {
-               'element': null
-            } ;
-            $scope.$watch( 'data', function(){
-               if( typeof( $scope.data ) == 'object' && typeof( $scope.data.options ) == 'object' && isArray( $scope.data.value ) )
-               {
-                  if( $scope.Setting.element == null )
+                  else
                   {
-                     $scope.Setting.element = echarts.init( $( $element ).get(0) ).setOption( $scope.data.options ) ;
+                     $scope.Setting.element.setOption( $scope.data.options ) ;
                   }
-                  $scope.Setting.element.addData( $scope.data.value ) ;
                }
+            } ) ;
+            var lintener2 = $scope.$watch( 'data.value', function(){
+               if( typeof( $scope.data ) == 'object' && typeof( $scope.data.options ) == 'object' )
+               {
+                  if( $scope.Setting.element != null && isArray( $scope.data.value ) )
+                  {
+                     $scope.Setting.element.addData( $scope.data.value ) ;
+                  }
+               }
+            } ) ;
+            $scope.$on( '$destroy', function(){
+               lintener1() ;
+               lintener2() ;
             } ) ;
          },
          //编译
          compile: function( element, attributes ){
             return {
-               pre: function preLink( scope, element, attributes ){},
+               pre: function preLink( scope, element, attributes ){
+                  function resize()
+                  {
+                     if( scope.Setting.element != null )
+                     {
+                        scope.Setting.element.resize() ;
+                     }
+                  }
+                  angular.element( $window ).bind( 'resize', resize ) ;
+                  var lintener = $rootScope.$watch( 'onResize', function(){
+                     setTimeout( function(){
+                        resize() ;
+                     } ) ;
+                  } ) ;
+                  scope.$on( '$destroy', function(){
+                     angular.element( $window ).unbind( 'resize', resize ) ;
+                     lintener() ;
+                  } ) ;
+               },
                post: function postLink( scope, element, attributes ){}
             } ;
          }
@@ -2575,30 +3182,48 @@
    });
 
    //创建动态框架
-   sacApp.directive( 'createResponse', function( $window ){
+   sacApp.directive( 'createResponse', function( $window, $rootScope ){
       //计算一个的宽度
-      function getLineWidth( parentWidth, eleSum, min, max )
+      function getLineWidth( parentWidth, len, column, min, max )
       {
-         //计算得到的宽度
-         var newWidth = 0 ;
-         //一行能有多少列
-         var num = parseInt( parentWidth / min ) ;
-         //计算得到的列数比实际的多
-         if( num > eleSum )
+         //步进
+         var step = 0 ;
+         //希望得到的列宽
+         var dWidth = parseInt( parentWidth / column ) ;
+         if( dWidth < min )
          {
-            newWidth = parseInt( parentWidth / eleSum ) ;
-            if( max > 0 && newWidth > max )
-            {
-               newWidth = max ;
-            }
+            step = -1 ;
+         }
+         else if( dWidth > max )
+         {
+            step = 1 ;
          }
          else
          {
-            //计算得到的列数比实际的少或者相同
-            //剩余多少空间
-            newWidth = parentWidth / num ;
+            return dWidth ;
          }
-         return newWidth ;
+         while( true )
+         {
+            column += step ;
+            dWidth = parseInt( parentWidth / column ) ;
+            if( step == -1 && dWidth > min )
+            {
+               break ;
+            }
+            else if( step == 1 && dWidth < max )
+            {
+               break ;
+            }
+            else if( column == 0 )
+            {
+               dWidth = parentWidth ;
+            }
+            else if( column == len )
+            {
+               dWidth = max ;
+            }
+         }
+         return dWidth ;
       }
       var dire = {
          restrict: 'A',
@@ -2606,23 +3231,42 @@
             data: '=createResponse'
          },
          replace: false,
+         priority: 2,
          controller: function( $scope, $element ){
          },
          compile: function( element, attributes ){
             return {
                pre: function preLink( scope, element, attributes ){
-                  angular.element( $window ).bind( 'resize', function () {
+                  function onResize()
+                  {
                      if( typeof( scope.data.max ) == 'undefined' ) scope.data.max = 0 ;
-                     var newWidth = getLineWidth( $( element ).parent().width(), scope.data.len, scope.data.min, scope.data.max ) ;
+                     var parent = $( element ).parent() ;
+                     if( parent.width() == 0 )
+                     {
+                        return ;
+                     }
+                     var newWidth = getLineWidth( parent.width() - parseInt( parent.css( 'padding-left' ) ) - parseInt( parent.css( 'padding-right' ) ),
+                                                  scope.data.len,
+                                                  scope.data.column,
+                                                  scope.data.min,
+                                                  scope.data.max ) ;
+                     newWidth = newWidth - parseInt( $( element ).css( 'margin-left' ) ) - parseInt( $( element ).css( 'margin-right' ) ) ;
                      $( element ).css( 'float', 'left' ).outerWidth( newWidth ) ;
+                  }
+                  angular.element( $window ).bind( 'resize', onResize ) ;
+                  var listener2 = $rootScope.$watch( 'onResize', function(){
+                     setTimeout( onResize ) ;
+                  } ) ;
+                  var listener3 = scope.$watch( 'data', function(){
+                     onResize() ;
+                  } ) ;
+                  scope.$on( '$destroy', function(){
+                     angular.element( $window ).unbind( 'resize', onResize ) ;
+                     listener2() ;
+                     listener3() ;
                   } ) ;
                },
                post: function postLink( scope, element, attributes ){
-                  scope.$watch( 'data', function(){
-                     if( typeof( scope.data.max ) == 'undefined' ) scope.data.max = 0 ;
-                     var newWidth = getLineWidth( $( element ).parent().width(), scope.data.len, scope.data.min, scope.data.max ) ;
-                     $( element ).css( 'float', 'left' ).outerWidth( newWidth ) ;
-                  } ) ;
                }
             } ;
          }
@@ -2706,7 +3350,7 @@
                activationState.setValue(direction.isAttached(el));
             }
 
-            scope.$watch(scrollIfGlued);
+            scope.$watch( scrollIfGlued ) ;
 
             $timeout(scrollIfGlued, 0, false);
 
@@ -2731,6 +3375,454 @@
          }
       } ;
    } ) ;
+
+   //进度条
+   sacApp.directive( 'progressBar', function( $window, $rootScope ){
+      var dire = {
+         restrict: 'A',
+         scope: {
+            data: '=progressBar'
+         },
+         templateUrl: './app/template/Component/ProgressBar.html',
+         replace: false,
+         controller: function( $scope, $element ){
+            $scope.Setting = {
+               'style': {
+                  'box':      { 'height': '20px', 'background': '#CDD7E1' },
+                  'progress': { 'height': '20px', 'background': '#188FF1', 'width': '0%' },
+                  'context':  { 'height': '16px', 'padding-top': '4px', 'color': '#fff', 'text-shadow': '#aaa 0 1px 2px' }
+               },
+               'context': '0%'
+            } ;
+         },
+         compile: function( element, attributes ){
+            return {
+               pre: function preLink( scope, element, attributes ){
+                  var lintener = scope.$watch( 'data', function(){
+                     if( typeof( scope.data ) == 'object' )
+                     {
+                        if( typeof( scope.data.percent ) == 'number' )
+                        {
+                           scope.Setting.style.progress.width = scope.data.percent + '%' ;
+                           if( typeof( scope.data.text ) == 'string' )
+                           {
+                              scope.Setting.context = scope.data.text ;
+                           }
+                           else
+                           {
+                              scope.Setting.context = scope.data.percent + '%' ;
+                           }
+                        }
+                        if( typeof( scope.data.style ) == 'object' )
+                        {
+                           if( typeof( scope.data.style.box ) == 'object' )
+                           {
+                              $.each( scope.data.style.box, function( key, val ){
+                                 scope.Setting.style.box[key] = val ;
+                              } ) ;
+                           }
+                           if( typeof( scope.data.style.progress ) == 'object' )
+                           {
+                              $.each( scope.data.style.progress, function( key, val ){
+                                 scope.Setting.style.progress[key] = val ;
+                              } ) ;
+                           }
+                           if( typeof( scope.data.style.context ) == 'object' )
+                           {
+                              $.each( scope.data.style.context, function( key, val ){
+                                 scope.Setting.style.context[key] = val ;
+                              } ) ;
+                           }
+                        }
+                     }
+                  } ) ;
+                  scope.$on( '$destroy', function(){
+                     lintener() ;
+                  } ) ;
+               },
+               post: function postLink( scope, element, attributes ){
+               }
+            } ;
+         }
+      } ;
+      return dire ;
+   });
+
+   //步骤条
+   sacApp.directive( 'stepChart', function( $window, $rootScope ){
+      var dire = {
+         restrict: 'A',
+         scope: {
+            data: '=stepChart'
+         },
+         templateUrl: './app/template/Component/StepChart.html',
+         replace: false,
+         controller: function( $scope, $element ){
+            $scope.Setting = {
+               'bar': [],
+               'text': []
+            } ;
+            $scope.onclick = function( index ){
+               if( typeof( $scope.data ) == 'object' && typeof( $scope.data['info'][index]['click'] ) == 'function' )
+               {
+                  $scope.data['info'][index]['click']( index + 1 ) ;
+               }
+            } ;
+         },
+         compile: function( element, attributes ){
+            return {
+               pre: function preLink( scope, element, attributes ){
+                  function setChart()
+                  {
+                     scope.Setting.bar = [] ;
+                     if( typeof( scope.data ) == 'object' )
+                     {
+                        var step = scope.data.step ;
+                        var width = $( element ).width() - 170 ;
+                        var txtNum = scope.Setting.text.length ;
+                        var barNum = txtNum - 1 ;
+                        var barWidth = parseInt( width / barNum ) ;
+                        for( var i = 0; i < barNum; ++i )
+                        {
+                           scope.Setting.bar.push( { 'width': barWidth + 'px' } ) ;
+                           if( i + 1 >= step )
+                           {
+                              scope.Setting.bar[i]['background'] = '#ddd' ;
+                           }
+                        }
+                        for( var i = 0; i < txtNum; ++i )
+                        {
+                           var currentLeft = barWidth * i - 14 ;
+                           scope.Setting.text[i]['style'] = { 'left': currentLeft + 'px' } ;
+                           if( i + 1 > step )
+                           {
+                              scope.Setting.text[i]['style']['background'] = '#ddd' ;
+                           }
+                        }
+                     }
+                  }
+                  var lintener1 = scope.$watch( 'data', function(){
+                     if( typeof( scope.data ) == 'object' )
+                     {
+                        $.each( scope.data.info, function( index, info ){
+                           scope.Setting.text.push( { 'text': info.text } ) ;
+                        } ) ;
+                        setChart() ;
+                     }
+                  } ) ;
+                  angular.element( $window ).bind( 'resize', setChart ) ;
+                  var lintener2 = $rootScope.$watch( 'onResize', function(){
+                     setTimeout( setChart ) ;
+                  } ) ;
+                  scope.$on( '$destroy', function(){
+                     angular.element( $window ).unbind( 'resize', setChart ) ;
+                     lintener1() ;
+                     lintener2() ;
+                  } ) ;
+               },
+               post: function postLink( scope, element, attributes ){
+               }
+            } ;
+         }
+      } ;
+      return dire ;
+   });
+
+   //下拉菜单
+   sacApp.directive( 'dropdownMenu', function( $window, $rootScope, $compile ){
+      var menu = $( '<ul></ul>' ).addClass( 'dropdown-menu' ).appendTo( $( 'body' ) ) ;
+      var mask = $( '<div></div>' ).addClass( 'mask-screen unalpha' ).appendTo( $( 'body' ) ).hide().on( 'click', function(){
+         $( mask ).hide() ;
+         $( menu ).hide() ;
+      } ) ;
+      var dire = {
+         restrict: 'A',
+         scope: {
+            data: '=dropdownMenu'
+         },
+         replace: false,
+         controller: function( $scope, $element ){
+         },
+         compile: function( element, attributes ){
+            var menuHide = function(){
+               $( menu ).hide() ;
+            }
+            var maskHide = function(){
+               $( mask ).hide() ;
+            }
+            var onClickEvent = function( scope, index ){
+               if( typeof( scope.data[index]['onClick'] ) == 'function' )
+               {
+                  scope.data[index]['onClick'](  menuHide, maskHide) ;
+               }
+               else
+               {
+                  $( mask ).hide() ;
+                  $( menu ).hide() ;
+               }
+            }
+            var onMove = function( ele ){
+               var bodyWidth  = $( 'body' ).outerWidth() ;
+               var bodyHeight = $( 'body' ).outerHeight() ;
+               var eleWidth   = $( ele ).outerWidth() ;
+               var eleHeight  = $( ele ).outerHeight() ;
+               var menuWidth  = $( menu ).outerWidth() ;
+               var menuHeight = $( menu ).outerHeight() ;
+               var left = $( ele ).offset().left ;
+               var top  = $( ele ).offset().top ;
+               if( left + menuWidth > bodyWidth )
+               {
+                  left = bodyWidth - menuWidth ;
+               }
+               left = left <= 0 ? 0 : left ;
+               if( top + eleHeight + menuHeight > bodyHeight )
+               {
+                  top = top - menuHeight - 3 ;
+                  top = top <= 0 ? 0 : top ;
+               }
+               else
+               {
+                  top = top + eleHeight ;
+               }
+               $( menu ).css( { 'left': left, 'top': top } )  ;
+            }
+            return {
+               pre: function preLink( scope, element, attributes ){
+                  $( element ).on( 'click', function(){
+                     $( menu ).empty() ;
+                     if( typeof( scope.data ) == 'object' )
+                     {
+                        var rowNum = scope.data.length ;
+                        for( var index = 0; index < rowNum; ++index )
+                        {
+                           if( typeof( scope.data[index]['html'] ) == 'object' )
+                           {
+                              if( scope.data[index]['disabled'] == true )
+                              {
+                                 $( '<li></li>' ).addClass( 'drop-disabled' ).append( scope.data[index]['html'] ).appendTo( menu ) ;
+                              }
+                              else
+                              {
+                                 (function( index ){
+                                    $( '<li></li>' ).addClass( 'event' ).append( scope.data[index]['html'] ).appendTo( menu ).on( 'click', function(){
+                                       onClickEvent( scope, index ) ;
+                                    } ) ;
+                                 })( index ) ;
+                              }
+                           }
+                           else
+                           {
+                              $( '<li></li>' ).addClass( 'divider' ).appendTo( menu ) ;
+                           }
+                        }
+                        $( mask ).show() ;
+                        $( menu ).show().css( { 'left': 0, 'top': 0 } )  ;
+                        onMove( element ) ;
+                     }
+                  } ) ;
+                  var onResize = function () {
+                     if( $( menu ).is( ':hidden' ) == false )
+                     {
+                        onMove( element ) ;
+                     }
+                  }
+                  angular.element( $window ).bind( 'resize', onResize ) ;
+                  var lintener = $rootScope.$watch( 'onResize', onResize ) ;
+                  scope.$on( '$destroy', function(){
+                     angular.element( $window ).unbind( 'resize', onResize ) ;
+                     lintener() ;
+                  } ) ;
+               },
+               post: function postLink( scope, element, attributes ){
+               }
+            } ;
+         }
+      } ;
+      return dire ;
+   });
+
+   //落地窗
+   sacApp.directive( 'frenchWindow', function( $rootScope, $window, $compile ){
+      var mask = $( '<div></div>' ).addClass( 'mask-screen unalpha' ) ;
+      var boxOffset  = 94 ;
+      var bodyOffset = boxOffset + 47 ;
+      var dire = {
+         restrict: 'A',
+         scope: {
+            data: '=frenchWindow'
+         },
+         templateUrl: './app/template/Component/FrenchWindow.html',
+         replace: false,
+         controller: function( $scope, $element ){
+            $( $element ).addClass( 'frenchWindow' ) ;
+         },
+         compile: function( element, attributes ){
+            var headEle = $( '> .header', element ) ;
+            var bodyEle = $( '> .body', element ) ;
+            var resize = function(){
+               var bodyHeight = $( 'body' ).outerHeight() ;
+               bodyEle.height( bodyHeight - bodyOffset ) ;
+               $( element ).height( bodyHeight - boxOffset ) ;
+            }
+            return {
+               pre: function preLink( scope, element, attributes ){
+                  mask.on( 'click', function(){
+                     scope.data.isShow = false ;
+                     scope.$apply() ;
+                  } ) ;
+               },
+               post: function postLink( scope, element, attributes ){
+                  var onResize = function () {
+                     if( scope.data.isShow == true )
+                     {
+                        resize() ;
+                     }
+                  }
+                  var lintener1 = scope.$watch( 'data.isShow', function(){
+                     if( typeof( scope.data ) != 'undefined' && scope.data.isShow == true )
+                     {
+                        headEle.text( scope.data.title ) ;
+                        if( scope.data.Context == null )
+                        {
+                           var bodyHeight = $( 'body' ).outerHeight() ;
+                           bodyEle.text( scope.data.empty ) ;
+                           bodyEle.css( { 'line-height': ( bodyHeight - bodyOffset ) + 'px', 'text-align': 'center', 'color': '#666' } ) ;
+                        }
+                        else if( typeof( scope.data.Context ) == 'object' )
+                        {
+                           bodyEle.css( { 'line-height': 'normal', 'text-align': 'left', 'color': '#000' } ) ;
+                           bodyEle.html( scope.data.Context ) ;
+                        }
+                        else if( typeof( scope.data.Context ) == 'string' )
+                        {
+                           bodyEle.css( { 'line-height': 'normal', 'text-align': 'left', 'color': '#000' } ) ;
+                           bodyEle.html( $compile( scope.data.Context )( scope ) ) ;
+                        }
+                        resize() ;
+                        $( element ).show() ;
+                        $( mask ).appendTo( $( 'body' ) ) ;
+                     }
+                     else
+                     {
+                        $( element ).hide() ;
+                        $( mask ).detach() ;
+                     }
+                  } ) ;
+                  angular.element( $window ).bind( 'resize', onResize ) ;
+                  var lintener2 = $rootScope.$watch( 'onResize', onResize ) ;
+                  scope.$on( '$destroy', function(){
+                     angular.element( $window ).unbind( 'resize', onResize ) ;
+                     lintener1() ;
+                     lintener2() ;
+                  } ) ;
+               }
+            } ;
+         }
+      } ;
+      return dire ;
+   });
+
+   //定时器
+   sacApp.directive( 'createTimer', function(){
+      var dire = {
+         restrict: 'A',
+         scope: {
+            data: '=createTimer'
+         },
+         template: '<div ng-style="{\'width\':Setting.options.width,\'background\':Setting.options.backgroundColor,\'height\':Setting.options.height}"></div>',
+         replace: true,
+         controller: function( $scope, $element ){
+            $scope.Setting = {
+               options: {
+                  width: '0%',
+                  height: '2px',
+                  backgroundColor: '#00B8E6'
+               },
+               status: 'stop',
+               interval: 5,
+               currentTimer: 0,
+               complete: false
+            }
+         },
+         compile: function( element, attributes ){
+            return {
+               pre: function preLink( scope, element, attributes ){},
+               post: function postLink( scope, element, attributes ){
+                  var timer = function(){
+                     if( scope.Setting.status == 'start' )
+                     {
+                        scope.Setting.currentTimer += 0.01 ;
+                        var percent = ( scope.Setting.currentTimer / scope.Setting.interval * 100 ) ;
+                        scope.Setting.options.width =　percent > 100 ? 100 : percent + '%' ;
+                        if( scope.Setting.currentTimer >= scope.Setting.interval )
+                        {
+                           if( typeof( scope.data.fn ) == 'function' )
+                           {
+                              scope.data.fn() ;
+                           }
+                        }
+                        else
+                        {
+                           setTimeout( timer, 10 ) ;
+                        }
+                     }
+                     else
+                     {
+                        scope.Setting.options.width = '0%' ;
+                        scope.Setting.currentTimer = 0 ;
+                     }
+                     scope.$apply() ;
+                  }
+                  var listener1 = scope.$watch( 'data.options', function(){
+                     if( typeof( scope.data.options ) == 'object' )
+                     {
+                        scope.Setting.options = scope.data.options ;
+                     }
+                  } ) ;
+                  var listener2 = scope.$watch( 'data.interval', function(){
+                     if( isNaN( scope.data.interval ) == false && scope.data.interval >= 1 )
+                     {
+                        scope.Setting.interval = scope.data.interval ;
+                     }
+                     else
+                     {
+                        scope.Setting.interval = 1 ;
+                     }
+                  } ) ;
+                  var listener3 = scope.$watch( 'data.status', function(){
+                     scope.Setting.status = scope.data.status ;
+                     if( scope.Setting.status == 'start' )
+                     {
+                        scope.data.complete = false ;
+                        scope.Setting.complete = false ;
+                        scope.Setting.currentTimer = 0 ;
+                        scope.Setting.options.width = '0%' ;
+                        setTimeout( timer, 10 ) ;
+                     }
+                  } ) ;
+                  var listener4 = scope.$watch( 'data.complete', function(){
+                     scope.Setting.complete = scope.data.complete ;
+                     if( scope.Setting.complete == true && scope.Setting.status == 'start' )
+                     {
+                        scope.data.complete = false ;
+                        scope.Setting.complete = false ;
+                        scope.Setting.currentTimer = 0 ;
+                        scope.Setting.options.width = '0%' ;
+                        setTimeout( timer, 10 ) ;
+                     }
+                  } ) ;
+                  scope.$on( '$destroy', function(){
+                     listener1() ;
+                     listener2() ;
+                     listener3() ;
+                     listener4() ;
+                  } ) ;
+               }
+            } ;
+         }
+      } ;
+      return dire ;
+   });
 }());
 
 /*

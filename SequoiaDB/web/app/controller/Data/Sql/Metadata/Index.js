@@ -1,7 +1,7 @@
 ﻿(function(){
    var sacApp = window.SdbSacManagerModule ;
    //控制器
-   sacApp.controllerProvider.register( 'Data.SQL.Metadata.Ctrl', function( $scope, $compile, $location, SdbFunction, SdbRest, InheritSize, FormModal ){
+   sacApp.controllerProvider.register( 'Data.SQL.Metadata.Ctrl', function( $scope, $compile, $location, SdbFunction, SdbRest ){
       var clusterName = SdbFunction.LocalData( 'SdbClusterName' ) ;
       var moduleType = SdbFunction.LocalData( 'SdbModuleType' ) ;
       var moduleMode = SdbFunction.LocalData( 'SdbModuleMode' ) ;
@@ -32,16 +32,10 @@
          SdbRest.SequoiaSQL( data, function( taskInfo, isEnd ){
             success( taskInfo, isEnd ) ;
          }, function( errorInfo ){
-            $scope.Components.Confirm.isShow = true ;
-            $scope.Components.Confirm.type = 1 ;
-            $scope.Components.Confirm.title = $scope.autoLanguage( '获取数据失败' ) ;
-            $scope.Components.Confirm.okText = $scope.autoLanguage( '重试' ) ;
-            $scope.Components.Confirm.closeText = $scope.autoLanguage( '取消' ) ;
-            $scope.Components.Confirm.context = sprintf( $scope.autoLanguage( '错误码: ?, ?。需要重试吗?' ), errorInfo['errno'], errorInfo['description'] ) ;
-            $scope.Components.Confirm.ok = function(){
-               $scope.Components.Confirm.isShow = false ;
+            _IndexPublic.createRetryModel( $scope, errorInfo, function(){
                sequoiasqlOperate( db, user, pwd, sql, success ) ;
-            }
+               return true ;
+            } ) ;
          }, function(){
             _IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
          } ) ;
@@ -74,16 +68,10 @@
             }
             if( isEnd == true && state['rc'] == false )
             {
-               $scope.Components.Confirm.isShow = true ;
-               $scope.Components.Confirm.type = 1 ;
-               $scope.Components.Confirm.title = $scope.autoLanguage( '获取数据库列表失败' ) ;
-               $scope.Components.Confirm.okText = $scope.autoLanguage( '重试' ) ;
-               $scope.Components.Confirm.closeText = $scope.autoLanguage( '取消' ) ;
-               $scope.Components.Confirm.context = state['result'] ;
-               $scope.Components.Confirm.ok = function(){
-                  $scope.Components.Confirm.isShow = false ;
+               _IndexPublic.createRetryModel( $scope, null, function(){
                   queryDbList( needQueryTable ) ;
-               }
+                  return true ;
+               }, $scope.autoLanguage( '获取数据库列表失败' ), state['result'] ) ;
             }
             else if( isEnd == true && isFindDb == false && $scope.databaseList.length > 0 )
             {
@@ -154,16 +142,10 @@
             $scope.GridData = gridData ;
             if( isEnd == true && state['rc'] == false )
             {
-               $scope.Components.Confirm.isShow = true ;
-               $scope.Components.Confirm.type = 1 ;
-               $scope.Components.Confirm.title = $scope.autoLanguage( '获取数据表失败' ) ;
-               $scope.Components.Confirm.okText = $scope.autoLanguage( '重试' ) ;
-               $scope.Components.Confirm.closeText = $scope.autoLanguage( '取消' ) ;
-               $scope.Components.Confirm.context = state['result'] ;
-               $scope.Components.Confirm.ok = function(){
-                  $scope.Components.Confirm.isShow = false ;
+               _IndexPublic.createRetryModel( $scope, errorInfo, function(){
                   queryTable() ;
-               }
+                  return true ;
+               }, null, state['result'] ) ;
             }
             if( isEnd == true )
             {
@@ -198,16 +180,10 @@
                $location.path( '/Transfer' ) ;
             }
          }, function( errorInfo ){
-            $scope.Components.Confirm.isShow = true ;
-            $scope.Components.Confirm.type = 1 ;
-            $scope.Components.Confirm.title = $scope.autoLanguage( '获取数据失败' ) ;
-            $scope.Components.Confirm.okText = $scope.autoLanguage( '重试' ) ;
-            $scope.Components.Confirm.closeText = $scope.autoLanguage( '取消' ) ;
-            $scope.Components.Confirm.context = sprintf( $scope.autoLanguage( '错误码: ?, ?。需要重试吗?' ), errorInfo['errno'], errorInfo['description'] ) ;
-            $scope.Components.Confirm.ok = function(){
-               $scope.Components.Confirm.isShow = false ;
+            _IndexPublic.createRetryModel( $scope, errorInfo, function(){
                queryModuleInfo() ;
-            }
+               return true ;
+            } ) ;
          }, function(){
             _IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
          } ) ;
@@ -233,16 +209,10 @@
             }
             else if( isEnd == true && state['rc'] == false )
             {
-               $scope.Components.Confirm.isShow = true ;
-               $scope.Components.Confirm.type = 1 ;
-               $scope.Components.Confirm.title = $scope.autoLanguage( '创建数据库失败' ) ;
-               $scope.Components.Confirm.okText = $scope.autoLanguage( '重试' ) ;
-               $scope.Components.Confirm.closeText = $scope.autoLanguage( '取消' ) ;
-               $scope.Components.Confirm.context = state['result'] ;
-               $scope.Components.Confirm.ok = function(){
-                  $scope.Components.Confirm.isShow = false ;
+               _IndexPublic.createRetryModel( $scope, errorInfo, function(){
                   createDatabase( newDBName ) ;
-               }
+                  return true ;
+               }, null, state['result'] ) ;
             }
          } ) ;
       }
@@ -271,16 +241,10 @@
             }
             else if( isEnd == true && state['rc'] == false )
             {
-               $scope.Components.Confirm.isShow = true ;
-               $scope.Components.Confirm.type = 1 ;
-               $scope.Components.Confirm.title = $scope.autoLanguage( '删除数据库失败' ) ;
-               $scope.Components.Confirm.okText = $scope.autoLanguage( '重试' ) ;
-               $scope.Components.Confirm.closeText = $scope.autoLanguage( '取消' ) ;
-               $scope.Components.Confirm.context = state['result'] ;
-               $scope.Components.Confirm.ok = function(){
-                  $scope.Components.Confirm.isShow = false ;
+               _IndexPublic.createRetryModel( $scope, errorInfo, function(){
                   dropDatabase( dropDBName ) ;
-               }
+                  return true ;
+               }, $scope.autoLanguage( '删除数据库失败' ), state['result'] ) ;
             }
          } ) ;
       }
@@ -308,16 +272,10 @@
             }
             else if( isEnd == true && state['rc'] == false )
             {
-               $scope.Components.Confirm.isShow = true ;
-               $scope.Components.Confirm.type = 1 ;
-               $scope.Components.Confirm.title = $scope.autoLanguage( '创建数据表失败' ) ;
-               $scope.Components.Confirm.okText = $scope.autoLanguage( '重试' ) ;
-               $scope.Components.Confirm.closeText = $scope.autoLanguage( '取消' ) ;
-               $scope.Components.Confirm.context = state['result'] ;
-               $scope.Components.Confirm.ok = function(){
-                  $scope.Components.Confirm.isShow = false ;
+               _IndexPublic.createRetryModel( $scope, errorInfo, function(){
                   createTable( sql, index ) ;
-               }
+                  return true ;
+               }, $scope.autoLanguage( '创建数据表失败' ), state['result'] ) ;
             }
          } ) ;
       }
@@ -342,16 +300,10 @@
             }
             else if( isEnd == true && state['rc'] == false )
             {
-               $scope.Components.Confirm.isShow = true ;
-               $scope.Components.Confirm.type = 1 ;
-               $scope.Components.Confirm.title = $scope.autoLanguage( '删除数据表失败' ) ;
-               $scope.Components.Confirm.okText = $scope.autoLanguage( '重试' ) ;
-               $scope.Components.Confirm.closeText = $scope.autoLanguage( '取消' ) ;
-               $scope.Components.Confirm.context = state['result'] ;
-               $scope.Components.Confirm.ok = function(){
-                  $scope.Components.Confirm.isShow = false ;
+               _IndexPublic.createRetryModel( $scope, errorInfo, function(){
                   dropTable( dropTBName ) ;
-               }
+                  return true ;
+               }, $scope.autoLanguage( '删除数据表失败' ), state['result'] ) ;
             }
          } ) ;
       }
@@ -606,16 +558,10 @@
          var databaseIndex = $scope.databaseIndex ;
          var databaseName = $scope.databaseList[databaseIndex]["Name"] ;
          var tableName = $scope.tableList[index]['Name'] ;
-         $scope.Components.Confirm.isShow = true ;
-         $scope.Components.Confirm.type = 1 ;
-         $scope.Components.Confirm.okText = $scope.autoLanguage( '是的，删除' ) ;
-         $scope.Components.Confirm.closeText = $scope.autoLanguage( '取消' ) ;
-         $scope.Components.Confirm.title = $scope.autoLanguage( '确定要删除该表吗？' ) ;
-         $scope.Components.Confirm.context = $scope.autoLanguage( '数据表名' ) + ':' + tableName ;
-         $scope.Components.Confirm.ok = function(){
+         _IndexPublic.createRetryModel( $scope, null, function(){
             dropTable( tableName ) ;
-            $scope.Components.Confirm.isShow = false ;         
-         }
+            return true ;
+         }, $scope.autoLanguage( '确定要删除该表吗？' ), $scope.autoLanguage( '数据表名' ) + ':' + tableName, $scope.autoLanguage( '是的，删除' ) ) ;
       }
 
       //进入数据操作页面

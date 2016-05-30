@@ -1,7 +1,7 @@
 (function(){
    var sacApp = window.SdbSacManagerModule ;
    //控制器
-   sacApp.controllerProvider.register( 'Data.Overview.Index.Ctrl', function( $scope, $location, SdbRest, SdbFunction, InheritSize ){
+   sacApp.controllerProvider.register( 'Data.Overview.Index.Ctrl', function( $scope, $location, SdbRest, SdbFunction ){
 
       var clusterName = SdbFunction.LocalData( 'SdbClusterName' ) ;
       if( clusterName == null )
@@ -17,11 +17,6 @@
       {
          window.location.href = '/deployment/index.html' ;
       }
-
-      InheritSize.append( $( '#ModuleBox' ) ) ;
-      $( '#ModuleBox > div' ).each( function( index, ele ){
-         InheritSize.append( ele ) ;
-      } ) ;
 
       //业务模板列表
       $scope.moduleTemplate = [] ;

@@ -1,7 +1,7 @@
 ﻿(function(){
    var sacApp = window.SdbSacManagerModule ;
    //控制器
-   sacApp.controllerProvider.register( 'Data.SQL.Index.Ctrl', function( $scope, $location, $compile, SdbFunction, SdbRest, InheritSize ){
+   sacApp.controllerProvider.register( 'Data.SQL.Index.Ctrl', function( $scope, $location, $compile, SdbFunction, SdbRest ){
       var clusterName = SdbFunction.LocalData( 'SdbClusterName' ) ;
       var moduleType = SdbFunction.LocalData( 'SdbModuleType' ) ;
       var moduleName = SdbFunction.LocalData( 'SdbModuleName' ) ;
@@ -31,8 +31,8 @@
             'grid': { 'tdModel': 'auto', 'tool': true, 'gridModel': 'fixed', titleWidth: [ '60px', '200px', 100, '70px' ] } 
          }
       } ;
-      /*
-      SdbRest.getTaskList( '', function( taskList ){
+      //SdbRest.getTaskList( '', function( taskList ){
+         var taskList = [ { 'TaskID': 1, 'TaskName': 'aaa', 'Nice': 100 } ] ;
          $.each( taskList, function( index, taskInfo){
             fieldGridData['body'].push( [
                { 'text': index + 1 },
@@ -43,9 +43,7 @@
          } ) ;
          fieldGridData['tool']['left'][0]['text'] = $scope.sprintf( $scope.autoLanguage( '一共?个任务' ), fieldGridData['body'].length ) ;
          $scope.fieldGridData = fieldGridData ;
-         $scope.$apply() ;
-      } ) ;
-      */
-
+         //$scope.$apply() ;
+      //} ) ;
    } ) ;
 }());

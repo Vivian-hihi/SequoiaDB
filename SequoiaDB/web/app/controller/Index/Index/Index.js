@@ -1,12 +1,7 @@
 (function(){
    var sacApp = window.SdbSacManagerModule ;
    //控制器
-   sacApp.controllerProvider.register( 'Index.Index.Index.Ctrl', function( $scope, SdbRest, InheritSize ){
-
-      InheritSize.append( $( '#ClusterBox' ) ) ;
-      $( '#ClusterBox > div' ).each( function( index, ele ){
-         InheritSize.append( ele ) ;
-      } ) ;
+   sacApp.controllerProvider.register( 'Index.Index.Index.Ctrl', function( $scope, SdbRest ){
 
       function getCLusterList(){
          var data = { 'cmd': 'query cluster' } ;

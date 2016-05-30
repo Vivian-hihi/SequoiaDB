@@ -17,7 +17,7 @@
       }
 
       //发送请求
-      g._post = function( data, before, success, failed, error, complete, showLoading ){
+      g._post = function( data, before, success, failed, error, complete, showLoading, errJson ){
          if( typeof( showLoading ) == 'undefined' ) showLoading = true ;
          if( showLoading )
          {
@@ -32,7 +32,7 @@
             }
             else
             {
-               var jsonArr = g._parseJsons( json ) ;
+               var jsonArr = g._parseJsons( json, errJson ) ;
                if( jsonArr.length == 0 )
                {
                   //有数据，但是没有记录，理论上不会发生
@@ -40,6 +40,10 @@
                }
                else if( jsonArr[0]['errno'] === 0 && typeof( success ) == 'function' )
                {
+                  if( isArray( errJson ) )
+                  {
+                     errJson.splice( 0, 1 ) ;
+                  }
                   jsonArr.splice( 0, 1 ) ;
                   success( jsonArr, textStatus, jqXHR ) ;
                }
@@ -126,7 +130,7 @@
       //测试发送
       g._postTest = function( url, success, failed, error )
       {
-         Loading.create() ;
+         //Loading.create() ;
          g.getFile( url, true, function( jsons ){
             var jsonList = g._parseJsons( jsons ) ;
             if( jsonList[0]['errno'] == 0 )
@@ -144,22 +148,42 @@
                   failed( jsonList[0] ) ;
                }
             }
-            Loading.cancel() ;
+            //Loading.cancel() ;
          } ) ;
       }
 
+      //过滤不可见字符
+      g._filterInviChart = function( str ){
+         var i = 0, len = str.length ;
+         var newStr = '' ;
+         var chars, code ;
+         while( i < len )
+         {
+            chars = str.charAt( i ) ;
+            code = chars.charCodeAt() ;
+            if( code < 0x20 || code == 0x7F ){
+               chars = '?' ;
+            }
+            newStr += chars ;
+            ++i ;
+         }
+         return newStr ;
+      }
+
       //解析响应的Json
-      g._parseJsons = function( str )
+      g._parseJsons = function( str, errJson )
       {
 	      var json_array = [] ;
 	      var i = 0, len = str.length ;
-	      var chars, level, isEsc, isString, start, end, subStr, json ;
+	      var chars, level, isEsc, isString, start, end, subStr, json, errType ;
+         errType = isArray( errJson ) ;
 	      while( i < len )
 	      {
 		      while( i < len ){	chars = str.charAt( i ) ;	if( chars === '{' ){	break ;	}	++i ;	}
 		      level = 0, isEsc = false, isString = false, start = i ;
 		      while( i < len )
 		      {
+               var isJson = true ;
 			      chars = str.charAt( i ) ;
 			      if( isEsc ){	isEsc = false ;	}
 			      else
@@ -181,8 +205,18 @@
                            try{
                               json = JSON.parse( subStr ) ;
                            }catch(e){
-                              break;
+                              isJson = false ;
+                              try{
+                                 subStr = g._filterInviChart( subStr ) ;
+                                 json = JSON.parse( subStr ) ;
+                              }catch(e){
+                                 json = { " ": subStr } ;
+                              }
                            }
+                        }
+                        if( errType == true )
+                        {
+                           errJson.push( !isJson ) ;
                         }
 						      json_array.push( json ) ;
 						      break ;
@@ -236,7 +270,7 @@
       }
 
       //数据操作
-      g.DataOperation = function( data, success, failed, error, complete ){
+      g.DataOperation = function( data, success, failed, error, complete, errJson ){
          g._post( data, function( jqXHR ){
 	         var clusterName = SdbFunction.LocalData( 'SdbClusterName' ) ;
 	         if( clusterName !== null )
@@ -248,7 +282,7 @@
 	         {
 		         jqXHR.setRequestHeader( 'SdbBusinessName', businessName ) ;
 	         }
-         }, success, failed, error, complete ) ;
+         }, success, failed, error, complete, true, errJson ) ;
       }
 
       //sequoiasql操作
@@ -284,10 +318,34 @@
                   }
                   success( taskInfo[0]['ResultInfo'], false ) ;
                   setTimeout( queryTask, 100 ) ;
-               }, failed, error, complete, false ) ;
+               }, function( errorInfo ){
+                  Loading.cancel() ;
+                  if( typeof( failed ) == 'function')
+                  {
+                     failed( errorInfo ) ;
+                  }
+               }, function( XMLHttpRequest, textStatus, errorThrown ){
+                  Loading.cancel() ;
+                  if( typeof( error ) === 'function' )
+                  {
+                     error( XMLHttpRequest, textStatus, errorThrown ) ;
+                  }
+               }, complete, false ) ;
             }
             queryTask() ;
-         }, failed, error, complete ) ;
+         }, function( errorInfo ){
+            Loading.cancel() ;
+            if( typeof( failed ) == 'function')
+            {
+               failed( errorInfo ) ;
+            }
+         }, function( XMLHttpRequest, textStatus, errorThrown ){
+            Loading.cancel() ;
+            if( typeof( error ) === 'function' )
+            {
+               error( XMLHttpRequest, textStatus, errorThrown ) ;
+            }
+         }, complete ) ;
       }
 
       //SQL(自动获取cluster和module)
@@ -349,5 +407,25 @@
          } ) ;
       }
 
+      g.GetLog = function( data, success, error, complete, showLoading ){
+         if( typeof( showLoading ) == 'undefined' ) showLoading = true ;
+         if( showLoading )
+         {
+            Loading.create() ;
+         }
+         $.ajax( { 'type': 'POST', 'url': '/', 'data': data, 'success': function( text, textStatus, jqXHR ){
+            if( typeof( success ) === 'function' ) success( text, textStatus, jqXHR ) ;
+         }, 'error': function( XMLHttpRequest, textStatus, errorThrown ) {
+            if( typeof( error ) === 'function' ) error( XMLHttpRequest, textStatus, errorThrown ) ;
+         }, 'complete': function ( XMLHttpRequest, textStatus ) {
+            if( typeof( complete ) == 'function' ) complete( XMLHttpRequest, textStatus ) ;
+            if( showLoading )
+            {
+               Loading.cancel() ;
+            }
+         }, 'beforeSend': function( XMLHttpRequest ){
+            restBeforeSend( XMLHttpRequest ) ;
+         } } ) ;
+      }
    } ) ;
 }());

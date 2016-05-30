@@ -19,7 +19,7 @@
                         <span>:</span>
                      </td>
                      <td ng-style="{ 'true': { background: '#FFFFAB' } }[Setting.Search.length > 0&&field.val.toLowerCase().indexOf(Setting.Search.toLowerCase()) >= 0]">
-                        <div ng-if="field.type != 'Object' && field.type != 'Array'" class="fontBox valueBox" spellcheck="false" contenteditable="true" ng-class="{ 'String': 'string', 'Auto': 'auto', 'ObjectId': 'objectid', 'Regex': 'regex', 'Binary': 'binary', 'Code': 'code', 'Timestamp': 'time', 'Date': 'time' }[field.type]" ng-model="field.val" ng-style="{ 'true': { background: '#DDD' } }[field.val.length == 0]"></div>
+                        <div ng-if="field.type != 'Object' && field.type != 'Array'" class="fontBox valueBox" spellcheck="false" contenteditable="true" ng-class="{ 'String': 'string', 'Auto': 'auto', 'ObjectId': 'objectid', 'Regex': 'regex', 'Binary': 'binary', 'Code': 'code', 'Timestamp': 'time', 'Date': 'time', 'Decimal': 'decimal' }[field.type]" ng-model="field.val" ng-style="{ 'true': { background: '#DDD' } }[field.val.length == 0]"></div>
                         <span class="fontBox valueBox" ng-if="field.type == 'Object'" ng-bind="'{' + field.val.length + '}'"></span>
                         <span class="fontBox valueBox" ng-if="field.type == 'Array'" ng-bind="'[' + field.val.length + ']'"></span>
                      </td>
@@ -38,6 +38,7 @@
                <button class="treeBtn" ng-attr="{'data-desc':'Binary'}"   ng-switch-when="Binary" ng-click="showMenu($event)" style="font-size:80%">01</button>
                <button class="treeBtn" ng-attr="{'data-desc':'Timestamp'}" ng-switch-when="Timestamp" ng-click="showMenu($event)"><i class="fa fa-calendar"></i></button>
                <button class="treeBtn" ng-attr="{'data-desc':'Date'}"     ng-switch-when="Date" ng-click="showMenu($event)"><i class="fa fa-calendar"></i></button>
+               <button class="treeBtn" ng-attr="{'data-desc':'Decimal'}"  ng-switch-when="Decimal" ng-click="showMenu($event)">D</button>
                <button class="treeBtn" ng-attr="{'data-desc':'Undefined'}" ng-switch-when="Undefined" ng-click="showMenu($event)">U</button>
             </div>
             <div ng-if="field.level > 0" class="treeMenu">
@@ -51,6 +52,7 @@
                   <li><button class="treeBtn" ng-attr="{'data-desc':'Binary'}" ng-click="changeType($event,field,'Binary')">01</button></li>
                   <li><button class="treeBtn" ng-attr="{'data-desc':'Timestamp'}" ng-click="changeType($event,field,'Timestamp')"><i class="fa fa-calendar"></i></button></li>
                   <li><button class="treeBtn" ng-attr="{'data-desc':'Date'}"   ng-click="changeType($event,field,'Date')"><i class="fa fa-calendar"></i></button></li>
+                  <li><button class="treeBtn" ng-attr="{'data-desc':'Decimal'}" ng-click="changeType($event,field,'Decimal')">D</button></li>
                </ul>
             </div>
             <div ng-if="field.level == 0">

@@ -13,9 +13,9 @@
       </ul>
    </div>
    <div id="MetadataList" class="relativeBox" style="padding:0 15px 10px 15px;" ng-container="{offsetY:-55}">
-      <div class="previewLeft" ng-container="{offsetX:-290}">
+      <div class="previewLeft" ng-container="{offsetX:-280}">
          <div ng-show="csList.length > 0" style="margin-bottom:20px;" ng-repeat="csInfo in csList track by $index" ng-if="csInfo['hide'] == false">
-            <div ng-class="csInfo.color" class="MetadataListBox" style="overflow:hidden;">
+            <div ng-class="csInfo.color" class="colorfulListBox" style="overflow:hidden;">
                <div style="max-width:600px;" class="Ellipsis">
                   {{autoLanguage("集合空间")}}: <a class="linkButton" ng-style="{true:{'font-weight':'bold','color':'#FF7547'} }[showType == 'cs'&&csID == $index]" ng-click="showCSInfo($index)">{{csInfo.Name}}</a>
                </div>
@@ -40,7 +40,7 @@
                            </td>
                            <td ng-if="moduleMode == 'distribution'"><span class="badge badge-info" ng-attr="{'data-desc':clInfo.typeDesc}">{{clInfo.type}}</span></td>
                            <td ng-if="moduleMode == 'distribution' && isHideSubCl != true"><span>{{clInfo.MainCLName}}</span></td>
-                           <td><a class="linkButton" ng-click="gotoLob($parent.$parent.$index,$index)"><span ng-if="clInfo.Lob != null" >-</span></a></td>
+                           <td><a class="linkButton" ng-click="gotoLob($parent.$parent.$index,$index)">{{clInfo.TotalLobs}}</a></td>
                            <td><a class="linkButton" ng-click="gotoRecord($parent.$parent.$index,$index)">{{clInfo.Record}}</a></td>
                            <td><a class="linkButton" ng-click='showIndex($parent.$parent.$index,$index)'>{{clInfo.Index}}</a></td>
                         </tr>
@@ -81,8 +81,8 @@
          </div>
       </div>
       <div class="previewMove" ng-container="{width:10}"></div>
-      <div class="previewRight" ng-container="{width:280}">
-         <div style="font-size:90%;">
+      <div class="previewRight" style="font-size:90%;" ng-container="{width:270}">
+         <div style="overflow-y:auto;padding:10px;border:1px solid #DDD;" ng-container="boxHeight">
             <div style="padding-bottom:5px;">
                <b ng-if="showType == 'cs'">{{autoLanguage("集合空间属性")}}:</b>
                <b ng-if="showType == 'cl'">{{autoLanguage("集合属性")}}:</b>
@@ -121,40 +121,40 @@
                   </tbody>
                </table>
             </div>
+         </div>
 
-            <div style="padding:20px 0 0 0;">
-               <table class="table loosen border">
-                  <tbody>
-                     <tr>
-                        <td style="background-color:#F1F4F5;"><b>{{autoLanguage("操作")}}</b></td>
-                     </tr>
-                     <tr>
-                        <td><a class="linkButton" ng-click="showCreateCS()">{{autoLanguage("创建集合空间")}}</a></td>
-                     </tr>
-                     <tr ng-if="csList.length > 0">
-                        <td><a class="linkButton" ng-click="showRemoveCS()">{{autoLanguage("删除集合空间")}}</a></td>
-                     </tr>
-                     <tr ng-if="csList.length > 0">
-                        <td><a class="linkButton" ng-click="showCreateCL()">{{autoLanguage("创建集合")}}</a></td>
-                     </tr>
-                     <tr ng-if="csList.length > 0 && clList.length > 0">
-                        <td><a class="linkButton" ng-click="showRemoveCL()">{{autoLanguage("删除集合")}}</a></td>
-                     </tr>
-                     <tr ng-if="csList.length > 0 && clList.length > 0 && moduleMode == 'distribution' && clList.length > mainCLNum + subCLNum && mainCLNum > 0">
-                        <td><a class="linkButton" ng-click="showAttachCL()">{{autoLanguage("挂载集合")}}</a></td>
-                     </tr>
-                     <tr ng-if="csList.length > 0 && clList.length > 0 && moduleMode == 'distribution' && partitionCLNum > 0">
-                        <td><a class="linkButton" ng-click="showSplit()">{{autoLanguage("切分数据")}}</a></td>
-                     </tr>
-                     <tr ng-if="csList.length > 0 && clList.length > 0">
-                        <td><a class="linkButton" ng-click="showCreateIndex()">{{autoLanguage("创建索引")}}</a></td>
-                     </tr>
-                     <tr ng-if="csList.length > 0 && clList.length > 0">
-                        <td><a class="linkButton" ng-click="showRemoveIndex()">{{autoLanguage("删除索引")}}</a></td>
-                     </tr>
-                  </tbody>
-               </table>
-            </div>
+         <div style="width:100%;margin-top:10px;">
+            <table class="table loosen border">
+               <tbody>
+                  <tr>
+                     <td style="background-color:#F1F4F5;"><b>{{autoLanguage("操作")}}</b></td>
+                  </tr>
+                  <tr>
+                     <td><a class="linkButton" ng-click="showCreateCS()">{{autoLanguage("创建集合空间")}}</a></td>
+                  </tr>
+                  <tr ng-if="csList.length > 0">
+                     <td><a class="linkButton" ng-click="showRemoveCS()">{{autoLanguage("删除集合空间")}}</a></td>
+                  </tr>
+                  <tr ng-if="csList.length > 0">
+                     <td><a class="linkButton" ng-click="showCreateCL()">{{autoLanguage("创建集合")}}</a></td>
+                  </tr>
+                  <tr ng-if="csList.length > 0 && clList.length > 0">
+                     <td><a class="linkButton" ng-click="showRemoveCL()">{{autoLanguage("删除集合")}}</a></td>
+                  </tr>
+                  <tr ng-if="csList.length > 0 && clList.length > 0 && moduleMode == 'distribution' && clList.length > mainCLNum + subCLNum && mainCLNum > 0">
+                     <td><a class="linkButton" ng-click="showAttachCL()">{{autoLanguage("挂载集合")}}</a></td>
+                  </tr>
+                  <tr ng-if="csList.length > 0 && clList.length > 0 && moduleMode == 'distribution' && partitionCLNum > 0">
+                     <td><a class="linkButton" ng-click="showSplit()">{{autoLanguage("切分数据")}}</a></td>
+                  </tr>
+                  <tr ng-if="csList.length > 0 && clList.length > 0">
+                     <td><a class="linkButton" ng-click="showCreateIndex()">{{autoLanguage("创建索引")}}</a></td>
+                  </tr>
+                  <tr ng-if="csList.length > 0 && clList.length > 0">
+                     <td><a class="linkButton" ng-click="showRemoveIndex()">{{autoLanguage("删除索引")}}</a></td>
+                  </tr>
+               </tbody>
+            </table>
          </div>
       </div>
    </div>

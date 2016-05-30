@@ -15,7 +15,7 @@
 	<FILLER>
 		<Name>svcname</Name>
 		<WebName>服务名</WebName>
-		<Type>port</Type>
+		<Type>string</Type>
 		<Default>11810</Default>
 		<Valid></Valid>
 		<Display>edit box</Display>

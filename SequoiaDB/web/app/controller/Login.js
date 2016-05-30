@@ -30,17 +30,17 @@ function loginTransfer( $scope, SdbRest, SdbFunction ){
          }
          else
          {
-            window.location.href = '/deployment/index.html' ;
+            window.location.href = '/' ;
          }
       }
       else
       {
-         window.location.href = '/deployment/index.html' ;
+         window.location.href = '/' ;
       }
    }, function( errorInfo ){
-      window.location.href = '/deployment/index.html' ;
+      window.location.href = '/' ;
    }, function(){
-      window.location.href = '/deployment/index.html' ;
+      window.location.href = '/' ;
    } ) ;
 }
 
