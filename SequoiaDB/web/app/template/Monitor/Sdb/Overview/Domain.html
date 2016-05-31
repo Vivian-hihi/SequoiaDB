@@ -1,0 +1,74 @@
+﻿<div style="padding:10px 15px;" ng-controller="Monitor.SdbOverview.Domain.Ctrl" ng-container="{}">
+   <div style="border-bottom:3px solid #ddd;padding-top:10px;" ng-container="{height:70}">
+      <div style="float:left;color:#808080;">
+         <div style="height:50px;width:45px;float:left;">
+            <i style="color:#ccc;padding-top:8px;font-size:218%;" class="fa fa-cubes"></i>
+         </div>
+         <div style="height:50px;float:left;max-width:200px;">
+            <div style="font-size:90%;">集群</div>
+            <div class="Ellipsis" style="font-size:140%;color:#666;width:160px;"><a href="#/Deploy/Index" class="linkButton">{{clusterName}}</a></div>
+         </div>
+         <div class="clear-float"></div>
+      </div>
+      <div style="float:left;color:#808080;">
+         <div style="height:50px;width:45px;float:left;">
+            <i style="color:#ccc;padding-top:8px;font-size:218%;" class="fa fa-tasks"></i>
+         </div>
+         <div style="height:50px;float:left;max-width:200px;">
+            <div style="font-size:90%;">{{moduleType}}</div>
+            <div class="Ellipsis" style="font-size:140%;width:160px;">
+               <a href="#/Monitor/Index" class="linkButton">{{moduleName}}</a>
+            </div>
+         </div>
+         <div class="clear-float"></div>
+      </div>
+      <div style="float:left;color:#808080;">
+         <div style="height:50px;width:45px;float:left;">
+            <i style="color:#ccc;padding-top:8px;font-size:218%;" class="fa fa-sitemap"></i>
+         </div>
+         <div style="height:50px;float:left;">
+            <div style="font-size:90%;">分区组数</div>
+            <div class="Ellipsis" style="font-size:140%;width:160px;"><a href="#/Monitor/SDB-Overview/Index" class="linkButton">20</a></div>
+         </div>
+         <div class="clear-float"></div>
+      </div>
+      <div class="clear-float"></div>
+   </div>
+
+   <div class="underlineTab" ng-container="{height:40,marginTop:10}">
+      <ul class="left">
+         <li>
+            <a href="#/Monitor/SDB-Overview/Index">{{autoLanguage("分区组列表")}}</a>
+         </li>
+         <li>
+            <a href="#Monitor/SDB-Overview/Node">{{autoLanguage("节点列表")}}</a>
+         </li>
+         <li>
+            <a href="#/Monitor/SDB-Overview/Charts">{{autoLanguage("图表")}}</a>
+         </li>
+         <li class="active">
+            <a href="#Monitor/SDB-Overview/Domain">{{autoLanguage(" 域 ")}}</a>
+         </li>
+         <li>
+            <a href="#Monitor/SDB-Overview/Session">{{autoLanguage("会话")}}</a>
+         </li>
+         <li>
+            <a href="#Monitor/SDB-Overview/Resource">{{autoLanguage("资源")}}</a>
+         </li>
+      </ul>
+   </div>
+   <div ng-container="{height:30,marginTop:10}">
+      <button class="btn btn-default" ng-click="addDomian()">新增域</button>
+      <button class="btn btn-default" ng-click="deleteDomain()">删除域</button>
+      <button class="btn btn-default" ng-click="editDomain()">编辑域</button>
+   </div>
+   <div class="borderBox" style="padding:10px;overflow-y:auto;" ng-container ="{offsetY:-180,marginTop:10}">
+      <div class="DataListBox" style="height:190px;padding:10px;border-top-width:5px;border-left-width:1px;margin:0 10px 10px 0;" ng-repeat="domainName in domainList track by $index" ng-class="{'0':'green','1':'yellow','2':'blue','3':'violet'}[$index%4]" create-response="{max:900,min:600,len:domainList.length,column:2}">
+         <div>
+            <a class="linkButton" ng-click="showDomain()"><b>{{domainName}}</b></a>
+         </div>
+         <div style="font-size:90%;height:160px;margin-top:10px;" create-grid="GridData[$index]"></div>
+      </div>
+      <div class="clear-float"></div>
+   </div>
+</div>

@@ -1,0 +1,93 @@
+﻿<div style="padding:10px 15px;" ng-controller="Performance.Memory.Index.Ctrl" ng-container="{}">
+   <div style="border-bottom:3px solid #ddd;padding-top:10px;" ng-container="{height:70}">
+      <div style="float:left;color:#808080;">
+         <div style="height:50px;width:45px;float:left;">
+            <i style="color:#ccc;padding-top:8px;font-size:218%;" class="fa fa-cubes"></i>
+         </div>
+         <div style="height:50px;float:left;max-width:200px;">
+            <div style="font-size:90%;">集群</div>
+            <div class="Ellipsis" style="font-size:140%;color:#666;width:160px;"><a href="#/Deploy/Index" class="linkButton">{{clusterName}}</a></div>
+         </div>
+         <div class="clear-float"></div>
+      </div>
+      <div style="float:left;color:#808080;">
+         <div style="height:50px;width:45px;float:left;">
+            <i style="color:#ccc;padding-top:8px;font-size:218%;" class="fa fa-tasks"></i>
+         </div>
+         <div style="height:50px;float:left;max-width:200px;">
+            <div style="font-size:90%;">{{moduleType}}</div>
+            <div class="Ellipsis" style="font-size:140%;width:160px;"><a href="#/Monitor/Index" class="linkButton">{{moduleName}}</a></div>
+         </div>
+         <div class="clear-float"></div>
+      </div>
+      <div style="float:left;color:#808080;">
+         <div style="height:50px;width:45px;float:left;">
+            <i style="color:#ccc;padding-top:8px;font-size:218%;" class="fa fa-laptop"></i>
+         </div>
+         <div style="height:50px;float:left;">
+            <div style="font-size:90%;">主机数</div>
+            <div class="Ellipsis" style="font-size:140%;width:160px;"><a href="#/Monitor/Host-List/Index" class="linkButton">48</a></div>
+            <div class="clear-float"></div>
+         </div>
+      </div>
+      <div class="clear-float"></div>
+   </div>
+
+   <div style="margin-top:10px;" class="well Ellipsis">
+      <i class="fa fa-circle" style="color:#00CC66;"></i>
+      <span style="font-weight:bold;color:#006699;">&nbsp;{{hostName}}</span>
+   </div>
+
+   <div class="underlineTab" ng-container="{height:34,marginTop:10}">
+      <ul class="left">
+         <li>
+            <a href="#/Monitor/Host-Info/Index">{{autoLanguage("主机信息")}}</a>
+         </li>
+         <li>
+            <a href="#/Monitor/Host-Info/CPU">{{autoLanguage("处理器")}}</a>
+         </li>
+         <li class="active">
+            <a href="#/Monitor/Host-Info/Memory">{{autoLanguage("内存")}}</a>
+         </li>
+         <li>
+            <a href="#/Monitor/Host-Info/Disk">{{autoLanguage("磁盘")}}</a>
+         </li>
+         <li>
+            <a href="#/Monitor/Host-Info/Network">{{autoLanguage("网卡")}}</a>
+         </li>
+      </ul>
+   </div>
+
+   <div class="content" style="border: 1px solid #E3E7E8;" ng-container="{offsetY:-185,marginTop:10}">
+      <!--图表-->
+      <div ng-container="{offsetY:-95,offsetX:-20}" style="padding:10px 20px 0 20px;" create-chart="charts.Memory"></div>
+      <!--底部描述-->
+      <div style="border-top:1px solid #ddd;height:90px;">
+         <!--横条-->
+         <div style="height:45px;width:80%;padding-left:10px;" create-chart="charts.MemoryBar"></div>
+         <div style="padding:5px 0 0 20px;">
+            <div style="float:left;width:100px;color:#666;">
+               <div style="height:20px;font-size:100%;font-weight:bold;"><i class="fa fa-stop"></i>&nbsp;{{autoLanguage("总量")}}</div>
+               <div style="height:20px;">8192MB</div>
+            </div>
+            <div style="float:left;width:100px;color:#A47FAE;">
+               <div style="height:20px;font-size:100%;font-weight:bold;"><i class="fa fa-stop"></i>&nbsp;{{autoLanguage("系统占用")}}</div>
+               <div style="height:20px;">454MB</div>
+            </div>
+            <div style="float:left;width:100px;color:#18bc9a;">
+               <div style="height:20px;font-size:100%;font-weight:bold;"><i class="fa fa-stop"></i>&nbsp;{{autoLanguage("已使用")}}</div>
+               <div style="height:20px;">2332MB</div>
+            </div>
+            <div style="float:left;width:100px;color:#FF7F50;">
+               <div style="height:20px;font-size:100%;font-weight:bold;"><i class="fa fa-stop"></i>&nbsp;{{autoLanguage("缓存")}}</div>
+               <div style="height:20px;">2605MB</div>
+            </div>
+            <div style="float:left;width:100px;color:#21bbee;">
+               <div style="height:20px;font-size:100%;font-weight:bold;"><i class="fa fa-stop"></i>&nbsp;{{autoLanguage("可用")}}</div>
+               <div style="height:20px;">3255MB</div>
+            </div>
+            <div class="clear-float"></div>
+         </div>
+      </div>
+   </div>
+</div>

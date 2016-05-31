@@ -1,0 +1,61 @@
+﻿<div style="padding:10px 15px;" ng-controller="Monitor.SdbGroup.Charts.Ctrl" ng-container="{}">
+   <div style="border-bottom:3px solid #ddd;padding-top:10px;" ng-container="{height:70}">
+      <div style="float:left;color:#808080;">
+         <div style="height:50px;width:45px;float:left;">
+            <i style="color:#ccc;padding-top:8px;font-size:218%;" class="fa fa-cubes"></i>
+         </div>
+         <div style="height:50px;float:left;max-width:200px;">
+            <div style="font-size:90%;">集群</div>
+            <div class="Ellipsis" style="font-size:140%;color:#666;width:160px;"><a href="#/Deploy/Index" class="linkButton">{{clusterName}}</a></div>
+         </div>
+         <div class="clear-float"></div>
+      </div>
+      <div style="float:left;color:#808080;">
+         <div style="height:50px;width:45px;float:left;">
+            <i style="color:#ccc;padding-top:8px;font-size:218%;" class="fa fa-tasks"></i>
+         </div>
+         <div style="height:50px;float:left;max-width:200px;">
+            <div style="font-size:90%;">{{moduleType}}</div>
+            <div class="Ellipsis" style="font-size:140%;width:160px;">
+               <a href="#/Monitor/Index" class="linkButton">{{moduleName}}</a>
+            </div>
+         </div>
+         <div class="clear-float"></div>
+      </div>
+      <div style="float:left;color:#808080;">
+         <div style="height:50px;width:45px;float:left;">
+            <i style="color:#ccc;padding-top:8px;font-size:218%;" class="fa fa-sitemap"></i>
+         </div>
+         <div style="height:50px;float:left;">
+            <div style="font-size:90%;">分区组数</div>
+            <div class="Ellipsis" style="font-size:140%;width:160px;"><a href="#/Monitor/SDB-Overview/Index" class="linkButton">20</a></div>
+         </div>
+         <div class="clear-float"></div>
+      </div>
+      <div class="clear-float"></div>
+   </div>
+
+   <div class="underlineTab" ng-container="{height:40,marginTop:10}">
+      <ul class="left">
+         <li>
+            <a href="#/Monitor/SDB-Group/Index">{{autoLanguage("分区组信息")}}</a>
+         </li>
+         <li class="active">
+            <a href="#/Monitor/SDB-Group/Charts">{{autoLanguage("图表")}}</a>
+         </li>
+      </ul>
+   </div>
+
+   <div ng-container="{offsetY:-165,marginTop:10}">
+      <div ng-container="{offsetX:-10,height:'50%'}">
+         <div style="border:1px solid #ddd;float:left;" ng-container="{offsetX:-10,width:'50%'}" create-chart="charts.Insert"></div>
+         <div style="border:1px solid #ddd;float:left;" ng-container="{offsetX:-10,width:'50%',marginLeft:16}" create-chart="charts.Update"></div>
+         <div class="clear-float"></div>
+      </div>
+      <div ng-container="{offsetX:-10,marginTop:20,height:'50%'}">
+         <div style="border:1px solid #ddd;float:left;" ng-container="{offsetX:-10,width:'50%'}" create-chart="charts.Delete"></div>
+         <div style="border:1px solid #ddd;float:left;" ng-container="{offsetX:-10,width:'50%',marginLeft:16}" create-chart="charts.Read"></div>
+         <div class="clear-float"></div>
+      </div>
+   </div>
+</div>

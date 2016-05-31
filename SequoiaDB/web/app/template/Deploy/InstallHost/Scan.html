@@ -1,0 +1,85 @@
+<div ng-controller="Deploy.Scan.Ctrl" ng-container="{}">
+
+   <div style="border-bottom:1px solid #eee;" step-chart="stepList"></div>
+   <div style="padding:10px 15px;"  ng-container="{offsetY:-70}">
+
+      <div class="alert alert-info" style="margin-bottom:10px;font-size:90%;">
+         {{autoLanguage("提示：使用主机名范围或IP地址范围可以批量添加主机, 详情请点击")}}<a class="linkButton" ng-click="Helper()">{{autoLanguage("帮助")}}</a>
+      </div>
+
+      <div ng-container="{offsetY:-95}">
+         <div class="pull-left" ng-container="{width:400}">
+            <div style="height:30px;font-size:110%;font-weight:bold;">{{autoLanguage("扫描主机")}}</div>
+
+            <div class="borderBox" style="padding:10px;overflow:auto;" ng-container="{offsetY:-30}">
+
+               <div form-create para="ScanForm"></div>
+
+               <div style="margin-top:10px;text-align:right;">
+                  <button class="btn btn-default" ng-click="ClearInput()">{{autoLanguage("清空")}}</button>&nbsp;
+                  <button class="btn btn-primary" ng-click="ScanHost()">{{autoLanguage("扫描")}}</button>
+               </div>
+
+            </div>
+         </div>
+         <div class="pull-left" ng-container="{offsetX:-410,marginLeft:10}">
+            <div style="height:30px;font-size:110%;font-weight:bold;">{{autoLanguage("主机列表")}}</div>
+
+            <button class="btn btn-default" ng-click="SelectAll()">{{autoLanguage("全选")}}</button>&nbsp;<button class="btn btn-default" ng-click="Unselected()">{{autoLanguage("反选")}}</button>&nbsp;<button class="btn btn-default" ng-click="ClearErrorHost()">{{autoLanguage("清除失败的主机")}}</button>
+            
+            <div class="Grid" style="border-bottom:1px solid #E3E7E8;" ng-grid="HostGridOptions" ng-container="{offsetY:-95,marginTop:10}">
+               <div class="GridHeader">
+                  <div class="GridTr">
+                     <div class="GridTd Ellipsis"></div>
+                     <div class="GridTd Ellipsis">{{autoLanguage("状态")}}</div>
+                     <div class="GridTd Ellipsis">{{autoLanguage("主机名")}}</div>
+                     <div class="GridTd Ellipsis">{{autoLanguage("IP地址")}}</div>
+                     <div class="GridTd Ellipsis">{{autoLanguage("用户名")}}</div>
+                     <div class="GridTd Ellipsis">{{autoLanguage("密码")}}</div>
+                     <div class="GridTd Ellipsis">{{autoLanguage("SSH端口")}}</div>
+                     <div class="GridTd Ellipsis">{{autoLanguage("代理端口")}}</div>
+                     <div class="clear-float"></div>
+                  </div>
+               </div>
+               <div class="GridBody">
+                  <div class="GridTr linkButton" ng-repeat="hostInfo in HostList track by $index">
+                     <div class="GridTd Ellipsis" style="word-break:break-all;">
+                        <input type="checkbox" ng-model="hostInfo['checked']" ng-click="CountCheckedHostNum();" ng-disabled="hostInfo['Status']!='success'"/>
+                     </div>
+                     <div class="GridTd Ellipsis" style="word-break:break-all;" ng-click="ChangeHostInfo($index)">
+                        <i class="fa fa-circle" ng-style="{'true':{'color':'#00CC66'},'false':{'color':'#ff4444'}}[hostInfo['Status']=='success']"></i> <span ng-if="hostInfo['Status']=='ping'">{{autoLanguage("连接主机失败")}}</span><span ng-if="hostInfo['Status']=='ssh'">{{autoLanguage("SSH鉴权失败")}}</span><span ng-if="hostInfo['Status']=='exist'">{{autoLanguage("主机已经安装")}}</span><span ng-if="hostInfo['Status']=='success'">{{autoLanguage("连接成功")}}</span>
+                     </div>
+                     <div class="GridTd Ellipsis" style="word-break:break-all;" ng-click="ChangeHostInfo($index)">
+                        {{hostInfo['HostName']}}
+                     </div>
+                     <div class="GridTd Ellipsis" style="word-break:break-all;" ng-click="ChangeHostInfo($index)">
+                        {{hostInfo['IP']}}
+                     </div>
+                     <div class="GridTd Ellipsis" style="word-break:break-all;" ng-click="ChangeHostInfo($index)">{{hostInfo['User']}}</div>
+                     <div class="GridTd Ellipsis" style="word-break:break-all;" ng-click="ChangeHostInfo($index)">***</div>
+                     <div class="GridTd Ellipsis" style="word-break:break-all;" ng-click="ChangeHostInfo($index)">{{hostInfo['SSH']}}</div>
+                     <div class="GridTd Ellipsis" style="word-break:break-all;" ng-click="ChangeHostInfo($index)">{{hostInfo['Proxy']}}</div>
+                     <div class="clear-float"></div>
+                  </div>
+               </div>
+            </div>
+            <div class="GridTool">
+               <div class="ToolLeft">
+                  <span>{{HostGridTool}}</span>
+               </div>
+            </div>
+
+
+         </div>
+         <div class="clear-float"></div>
+      </div>
+
+      <div style="text-align:center;" ng-container="{height:30,marginTop:20}">
+         <button class="btn btn-default" ng-click="GotoDeploy()">{{autoLanguage("返 回")}}</button>
+         &nbsp;&nbsp;&nbsp;
+         <button class="btn" ng-class="{'true':'btn-primary','false':'btn-danger'}[checkedHostNum>0]" ng-click="GotoAddHost()">{{autoLanguage("下一步")}} <i class="fa fa-chevron-right"></i></button>
+      </div>
+
+   </div>
+
+</div>

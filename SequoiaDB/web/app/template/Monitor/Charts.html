@@ -1,0 +1,76 @@
+<div style="padding:10px 15px;" ng-controller="Monitor.Charts.Index.Ctrl" ng-container="{}">
+   <div style="border-bottom:3px solid #ddd;padding-top:10px;" ng-container="{height:70}">
+      <div style="float:left;color:#808080;margin-right:10px;">
+         <div style="height:50px;width:57px;float:left;">
+            <i style="color:#ccc;padding:5px;padding-top:8px;font-size:218%;" class="fa fa-cubes"></i>
+         </div>
+         <div class="Ellipsis" style="height:50px;max-width:200px;float:left;">
+            <span style="font-size:80%;">所属集群</span><br />
+            <span style="font-size:160%;color:#666;">myCluster</span>
+         </div>
+         <div class="clear-float"></div>
+      </div>
+      <div style="float:left;color:#808080;margin-right:20px;">
+         <div style="height:50px;width:57px;float:left;">
+            <i style="color:#ccc;padding:5px;padding-top:8px;font-size:218%;" class="fa fa-tasks"></i>
+         </div>
+         <div class="Ellipsis" style="height:50px;max-width:200px;float:left;">
+            <span style="font-size:80%;">SequoiaDB</span><br />
+            <a style="font-size:160%;">myModule</a>
+         </div>
+         <div class="clear-float"></div>
+      </div>
+      <div style="float:left;color:#808080;margin-right:20px;">
+         <div style="height:50px;width:57px;float:left;">
+            <i style="color:#ccc;padding:5px;font-size:218%;" class="fa fa-laptop"></i>
+         </div>
+         <div class="Ellipsis" style="height:50px;max-width:200px;float:left;">
+            <span style="font-size:80%;">主机数</span><br />
+            <a href="#/Monitor/Host-List/Index" class="linkButton" style="font-size:160%;text-align:center;">48</a>
+         </div>
+         <div class="clear-float"></div>
+      </div>
+      <div class="clear-float"></div>
+   </div>
+   <div class="underlineTab" ng-container="{height:40,marginTop:15}">
+      <ul class="right">
+         <li class="ng-scope" style="float:left;">
+            <a href="#/Monitor/Index" class="ng-binding">{{autoLanguage("业务预览")}}</a>
+         </li>
+         <li class="active" style="float:left;">
+            <a href="#/Monitor/Charts" class="ng-binding">{{autoLanguage("性能图表")}}</a>
+         </li>
+      </ul>
+   </div>
+   <div ng-container="{marginTop:10,marginBottom:10,height:40}">
+      <div class="result Ellipsis ng-binding failed" style="height:38px;">
+         2016-03-15 15:59 - coord 的节点 ubuntu-test-02:11810 连接失败
+      </div>
+   </div>
+   <div ng-container="{offsetY:-205}">
+      <div class=" " ng-container="{offsetX:-10}">
+         <div style="float:left;max-width:1280px;" ng-container="{offsetX:-10,height:230}">
+            <div style="height:100%; width:50%; border:1px solid #ddd; float:left;">
+               <div style="color:#666; font-size:12px; font-weight:bold; padding:20px 0 0 20px;">{{autoLanguage("Insert")}}</div>
+               <div style="height:90%; width:90%; float:left;" create-chart="charts.Insert"></div>
+            </div>
+            <div style="height:100%; width:48%; border:1px solid #ddd; float:left; margin:0 0 0 15px;">
+               <div style="color:#666; font-size:12px; font-weight:bold; padding:20px 0 0 20px;">{{autoLanguage("Update")}}</div>
+               <div style="height:90%; width:90%; float:left;" create-chart="charts.Update"></div>
+            </div>
+         </div>
+         <div style="float:left;max-width:1280px;" ng-container="{offsetX:-10,height:230,marginTop:20}">
+            <div style="height:100%; width:50%; border:1px solid #ddd; float:left;">
+               <div style="color:#666; font-size:12px; font-weight:bold; padding:20px 0 0 20px;">{{autoLanguage("Delete")}}</div>
+               <div style="height:90%; width:90%; float:left;" create-chart="charts.Delete"></div>
+            </div>
+            <div style="height:100%; width:48%; border:1px solid #ddd; float:left; margin:0 0 0 15px;">
+               <div style="color:#666; font-size:12px; font-weight:bold; padding:20px 0 0 20px;">{{autoLanguage("Read")}}</div>
+               <div style="height:90%; width:90%; float:left;" create-chart="charts.Read"></div>
+            </div>
+            <div class="clear-float"></div>
+         </div>
+         <div class="clear-float"></div>
+      </div>
+   </div>
+</div>

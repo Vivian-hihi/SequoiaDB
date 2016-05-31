@@ -1,0 +1,168 @@
+<div style="padding:10px 15px;" ng-controller="Monitor.SdbOverview.Index.Ctrl" ng-container="{}">
+   <div style="border-bottom:3px solid #ddd;padding-top:10px;" ng-container="{height:70}">
+      <div style="float:left;color:#808080;">
+         <div style="height:50px;width:45px;float:left;">
+            <i style="color:#ccc;padding-top:8px;font-size:218%;" class="fa fa-cubes"></i>
+         </div>
+         <div style="height:50px;float:left;max-width:200px;">
+            <div style="font-size:90%;">集群</div>
+            <div class="Ellipsis" style="font-size:140%;color:#666;width:160px;"><a href="#/Deploy/Index" class="linkButton">{{clusterName}}</a></div>
+         </div>
+         <div class="clear-float"></div>
+      </div>
+      <div style="float:left;color:#808080;">
+         <div style="height:50px;width:45px;float:left;">
+            <i style="color:#ccc;padding-top:8px;font-size:218%;" class="fa fa-tasks"></i>
+         </div>
+         <div style="height:50px;float:left;max-width:200px;">
+            <div style="font-size:90%;">{{moduleType}}</div>
+            <div class="Ellipsis" style="font-size:140%;width:160px;">
+               <a href="#/Monitor/Index" class="linkButton">{{moduleName}}</a>
+            </div>
+         </div>
+         <div class="clear-float"></div>
+      </div>
+      <div style="float:left;color:#808080;">
+         <div style="height:50px;width:45px;float:left;">
+            <i style="color:#ccc;padding-top:8px;font-size:218%;" class="fa fa-sitemap"></i>
+         </div>
+         <div style="height:50px;float:left;">
+            <div style="font-size:90%;">分区组数</div>
+            <div class="Ellipsis" style="font-size:140%;width:160px;"><a href="#/Monitor/SDB-Overview/Index" class="linkButton">20</a></div>
+         </div>
+         <div class="clear-float"></div>
+      </div>
+      <div class="clear-float"></div>
+   </div>
+
+   <div class="underlineTab" ng-container="{height:40,marginTop:10}">
+      <ul class="left">
+         <li class="active">
+            <a href="#/Monitor/SDB-Overview/Index">{{autoLanguage("分区组列表")}}</a>
+         </li>
+         <li>
+            <a href="#/Monitor/SDB-Overview/Node">{{autoLanguage("节点列表")}}</a>
+         </li>
+         <li>
+            <a href="#/Monitor/SDB-Overview/Charts">{{autoLanguage("图表")}}</a>
+         </li>
+         <li>
+            <a href="#/Monitor/SDB-Overview/Domain">{{autoLanguage(" 域 ")}}</a>
+         </li>
+         <li>
+            <a href="#/Monitor/SDB-Overview/Session">{{autoLanguage("会话")}}</a>
+         </li>
+         <li>
+            <a href="#/Monitor/SDB-Overview/Resource">{{autoLanguage("资源")}}</a>
+         </li>
+      </ul>
+   </div>
+
+   <div ng-container="{height:30,marginTop:10}">
+      <button class="btn btn-default" ng-click="addGroup()">创建分区组</button>
+      <button class="btn btn-default" ng-click="deleteGroup()">删除分区组</button>
+      <button class="btn btn-default" ng-click="startGroup()">启动分区组</button>
+      <button class="btn btn-default" ng-click="stopGroup()">停止分区组</button>
+   </div>
+
+   <div ng-container="{marginTop:10,marginBottom:10,height:40}">
+      <div class="result failed Ellipsis" style="height:38px;">
+         2016-03-15 15:59 - coord 的节点 ubuntu-test-02:11810 连接失败
+      </div>
+   </div>
+   <div ng-container="{offsetY:-230,marginTop:10}">
+      <div style="float:left;" ng-container="{width:270}">
+         <div ng-container="{height:'50%',offsetY:-5}">
+            <div class="Ellipsis" style="height:25px;font-weight:bold;font-size:100%;">协调组</div>
+            <div style="border:1px solid #ddd;padding:10px;overflow-y:auto;font-size:90%;" ng-container="{offsetY:-25}">
+
+               <div>
+                  <table class="table">
+                     <tr>
+                        <td style="width:75px;font-weight:bold;">状态</td>
+                        <td class="Ellipsis"><i class="fa fa-circle" style="padding-top:2px;color:#00CC66;"></i>&nbsp;运行中</td>
+                     </tr>
+                  </table>
+               </div>
+
+               <div style="margin-top:10px;">
+                  <table class="table">
+                     <tr>
+                        <td style="width:75px;font-weight:bold;">分区组名</td>
+                        <td class="Ellipsis"><a href="#/Monitor/SDB-Group/Index" class="linkButton">{{coordInfo[0]['GroupName']}}</a></td>
+                     </tr>
+                  </table>
+               </div>
+
+               <div style="margin-top:10px;">
+                  <table class="table">
+                     <tr>
+                        <td style="width:75px;font-weight:bold;">节点数</td>
+                        <td class="Ellipsis">{{coordInfo[0]['NodeNumber']}}</td>
+                     </tr>
+                  </table>
+               </div>
+
+               <div style="margin-top:10px;">
+                  <table class="table">
+                     <tr>
+                        <td style="width:75px;font-weight:bold;">连接数</td>
+                        <td class="Ellipsis">{{coordInfo[0]['TotalNumConnects']}}</td>
+                     </tr>
+                  </table>
+               </div>
+
+            </div>
+         </div>
+         <div ng-container="{height:'50%',offsetY:-5,marginTop:10}">
+            <div class="Ellipsis" style="height:25px;font-weight:bold;font-size:100%;">编目组</div>
+            <div style="border:1px solid #ddd;padding:10px;overflow-y:auto;font-size:90%;" ng-container="{offsetY:-25}">
+               
+               <div>
+                  <table class="table">
+                     <tr>
+                        <td style="width:75px;font-weight:bold;">状态</td>
+                        <td class="Ellipsis"><i class="fa fa-circle" style="padding-top:2px;color:#00CC66;"></i>&nbsp;运行中</td>
+                     </tr>
+                  </table>
+               </div>
+
+               <div style="margin-top:10px;">
+                  <table class="table">
+                     <tr>
+                        <td style="width:75px;font-weight:bold;">分区组名</td>
+                        <td class="Ellipsis"><a href="#/Monitor/SDB-Group/Index" class="linkButton">{{catalogInfo[0]['GroupName']}}</a></td>
+                     </tr>
+                  </table>
+               </div>
+
+               <div style="margin-top:10px;">
+                  <table class="table">
+                     <tr>
+                        <td style="width:75px;font-weight:bold;">节点数</td>
+                        <td class="Ellipsis">{{coordInfo[0]['NodeNumber']}}</td>
+                     </tr>
+                  </table>
+               </div>
+
+               <div style="margin-top:10px;">
+                  <table class="table">
+                     <tr>
+                        <td style="width:75px;font-weight:bold;">主节点</td>
+                        <td class="Ellipsis"><a href="#/Monitor/SDB-Node/Index" class="linkButton">{{catalogInfo[0]['PrimaryNode']}}</a></td>
+                     </tr>
+                  </table>
+               </div>
+
+            </div>
+         </div>
+      </div>
+      <div style="float:left;" ng-container="{offsetX:-280,marginLeft:10}">
+         <div class="Ellipsis" style="height:25px;font-weight:bold;font-size:100%;">数据组</div>
+         <div create-grid="GridData" ng-container="{offsetY:-25}"></div>       
+      </div>
+      <div class="clear-float"></div>
+   </div>
+</div>
+
+

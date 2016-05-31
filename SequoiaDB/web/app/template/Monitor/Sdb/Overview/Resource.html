@@ -1,0 +1,95 @@
+﻿<div style="padding:10px 15px;" ng-controller="Monitor.SdbOverview.Resource.Ctrl" ng-container="{}">
+   <style type="text/css">
+      .confirm > .foot > .confirmOk:active{color:#FFF;background-color:#F27D7D;border-color:#F27D7D;}
+      .dropdown-menu{padding-bottom:0px;}
+   </style>
+   <div style="border-bottom:3px solid #ddd;padding-top:10px;" ng-container="{height:70}">
+      <div style="float:left;color:#808080;">
+         <div style="height:50px;width:45px;float:left;">
+            <i style="color:#ccc;padding-top:8px;font-size:218%;" class="fa fa-cubes"></i>
+         </div>
+         <div style="height:50px;float:left;max-width:200px;">
+            <div style="font-size:90%;">集群</div>
+            <div class="Ellipsis" style="font-size:140%;color:#666;width:160px;"><a href="#/Deploy/Index" class="linkButton">{{clusterName}}</a></div>
+         </div>
+         <div class="clear-float"></div>
+      </div>
+      <div style="float:left;color:#808080;">
+         <div style="height:50px;width:45px;float:left;">
+            <i style="color:#ccc;padding-top:8px;font-size:218%;" class="fa fa-tasks"></i>
+         </div>
+         <div style="height:50px;float:left;max-width:200px;">
+            <div style="font-size:90%;">{{moduleType}}</div>
+            <div class="Ellipsis" style="font-size:140%;width:160px;">
+               <a href="#/Monitor/Index" class="linkButton">{{moduleName}}</a>
+            </div>
+         </div>
+         <div class="clear-float"></div>
+      </div>
+      <div style="float:left;color:#808080;">
+         <div style="height:50px;width:45px;float:left;">
+            <i style="color:#ccc;padding-top:8px;font-size:218%;" class="fa fa-sitemap"></i>
+         </div>
+         <div style="height:50px;float:left;">
+            <div style="font-size:90%;">分区组数</div>
+            <div class="Ellipsis" style="font-size:140%;width:160px;"><a href="#/Monitor/SDB-Overview/Index" class="linkButton">20</a></div>
+         </div>
+         <div class="clear-float"></div>
+      </div>
+      <div class="clear-float"></div>
+   </div>
+
+   <div class="underlineTab" ng-container="{height:40,marginTop:10}">
+      <ul class="left">
+         <li>
+            <a href="#/Monitor/SDB-Overview/Index">{{autoLanguage("分区组列表")}}</a>
+         </li>
+         <li>
+            <a href="#Monitor/SDB-Overview/Node">{{autoLanguage("节点列表")}}</a>
+         </li>
+         <li>
+            <a href="#/Monitor/SDB-Overview/Charts">{{autoLanguage("图表")}}</a>
+         </li>
+         <li>
+            <a href="#Monitor/SDB-Overview/Domain">{{autoLanguage(" 域 ")}}</a>
+         </li>
+         <li>
+            <a href="#Monitor/SDB-Overview/Session">{{autoLanguage("会话")}}</a>
+         </li>
+         <li class="active">
+            <a href="#Monitor/SDB-Overview/Resource">{{autoLanguage("资源")}}</a>
+         </li>
+      </ul>
+   </div>
+   <div ng-container="{height:30,marginTop:10}">
+      <div style="float:left;margin-right:15px;">
+         <button class="btn btn-default btn-lg" dropdown-menu="ResourceMenu">
+            资源类型
+            <span class="caret caret-bottom"></span>
+         </button>
+      </div>
+      <div>
+         <button class="btn btn-default btn-lg" dropdown-menu="ScreenMenu">
+            条件筛选
+            <span class="caret caret-bottom"></span>
+         </button>
+      </div>
+      <div class="clear-float"></div>
+   </div>
+   <div ng-container="{offsetY:-180,marginTop:10}">
+      <div create-grid="GridData" ng-container="{}"></div>
+   </div>
+      <!--
+      中断操作   
+      会话ID 
+      上下文ID 
+      上下文类型
+      上下文描述信息
+      所读数据
+      所读索引
+      查询总时间
+      创建时间
+      占用内存大小
+      -->
+
+</div>

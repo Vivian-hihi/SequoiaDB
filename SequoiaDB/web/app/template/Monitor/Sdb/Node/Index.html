@@ -1,0 +1,118 @@
+﻿<div style="padding:10px 15px;" ng-controller="Monitor.SdbNode.Index.Ctrl" ng-container="{}">
+   <div style="border-bottom:3px solid #ddd;padding-top:10px;" ng-container="{height:70}">
+      <div style="float:left;color:#808080;">
+         <div style="height:50px;width:45px;float:left;">
+            <i style="color:#ccc;padding-top:8px;font-size:218%;" class="fa fa-cubes"></i>
+         </div>
+         <div style="height:50px;float:left;max-width:200px;">
+            <div style="font-size:90%;">集群</div>
+            <div class="Ellipsis" style="font-size:140%;color:#666;width:160px;"><a href="#/Deploy/Index" class="linkButton">{{clusterName}}</a></div>
+         </div>
+         <div class="clear-float"></div>
+      </div>
+      <div style="float:left;color:#808080;">
+         <div style="height:50px;width:45px;float:left;">
+            <i style="color:#ccc;padding-top:8px;font-size:218%;" class="fa fa-tasks"></i>
+         </div>
+         <div style="height:50px;float:left;max-width:200px;">
+            <div style="font-size:90%;">{{moduleType}}</div>
+            <div class="Ellipsis" style="font-size:140%;width:160px;">
+               <a href="#/Monitor/Index" class="linkButton">{{moduleName}}</a>
+            </div>
+         </div>
+         <div class="clear-float"></div>
+      </div>
+      <div style="float:left;color:#808080;">
+         <div style="height:50px;width:45px;float:left;">
+            <i style="color:#ccc;padding-top:8px;font-size:218%;" class="fa fa-sitemap"></i>
+         </div>
+         <div style="height:50px;float:left;">
+            <div style="font-size:90%;">分区组数</div>
+            <div class="Ellipsis" style="font-size:140%;width:160px;"><a href="#/Monitor/SDB-Overview/Index" class="linkButton">20</a></div>
+         </div>
+         <div class="clear-float"></div>
+      </div>
+      <div class="clear-float"></div>
+   </div>
+
+   <div class="underlineTab" ng-container="{height:40,marginTop:10}">
+      <ul class="left">
+         <li class="active">
+            <a href="#/Monitor/SDB-Node/Index">{{autoLanguage("节点信息")}}</a>
+         </li>
+         <li>
+            <a href="#/Monitor/SDB-Node/Session">{{autoLanguage("会话")}}</a>
+         </li>
+         <li>
+            <a href="#/Monitor/SDB-Node/Resource">{{autoLanguage("资源")}}</a>
+         </li>
+      </ul>
+   </div>
+
+   <div ng-container="{height:40,marginTop:10}" class="well Ellipsis">
+      <i class="fa fa-circle" style="color:#00CC66;"></i> <span style="font-weight:bold;color:#006699;">{{nodeInfo['NodeName']}}</span>
+   </div>
+
+   <div ng-container="{offsetY:-190,marginTop:10}">
+      <div style="float:left;border:1px solid #ddd;padding:10px;overflow-y:auto;font-size:90%;color:#666;" ng-container="{width:300}">
+
+         <div style="margin-bottom:10px;">
+            <div style="float:left;width:75px;font-weight:bold;">分区组</div>
+            <div style="float:left;width:186px;" class="Ellipsis"><a href="#/Monitor/SDB-Group/Index" class="linkButton">{{nodeInfo['GroupName']}}</a></div>
+            <div class="clear-float"></div>
+         </div>
+
+         <div style="margin-bottom:10px;">
+            <div style="float:left;width:75px;font-weight:bold;">角色</div>
+            <div style="float:left;width:186px;" class="Ellipsis">{{nodeInfo['Role']}}</div>
+            <div class="clear-float"></div>
+         </div>
+
+         <div style="margin-bottom:10px;">
+            <div style="float:left;width:75px;font-weight:bold;">类型</div>
+            <div style="float:left;width:186px;" class="Ellipsis" ng-if="nodeInfo['IsPrimary'] == true">主节点</div>
+            <div style="float:left;width:186px;" class="Ellipsis" ng-if="nodeInfo['IsPrimary'] == false">备节点</div>
+            <div class="clear-float"></div>
+         </div>
+
+         <div style="margin-bottom:10px;">
+            <div style="float:left;width:75px;font-weight:bold;">集合数</div>
+            <div style="float:left;width:186px;" class="Ellipsis">{{nodeInfo['TotalCollection']}}</div>
+            <div class="clear-float"></div>
+         </div>
+
+         <div style="margin-bottom:10px;">
+            <div style="float:left;width:75px;font-weight:bold;">记录数</div>
+            <div style="float:left;width:186px;" class="Ellipsis">{{nodeInfo['TotalData']}}</div>
+            <div class="clear-float"></div>
+         </div>
+
+         <div style="margin-bottom:10px;">
+            <div style="float:left;width:75px;font-weight:bold;">LSN</div>
+            <div style="float:left;width:186px;" class="Ellipsis">{{nodeInfo['BeginLSN']['Version']}}</div>
+            <div class="clear-float"></div>
+         </div>
+
+         <div style="margin-bottom:10px;">
+            <div style="float:left;width:75px;font-weight:bold;">主机</div>
+            <div style="float:left;width:186px;" class="Ellipsis"><a class="linkButton" href="#/Monitor/Host-Info/Index">{{nodeInfo['HostName']}}</a></div>
+            <div class="clear-float"></div>
+         </div>
+
+         <div style="margin-bottom:10px;">
+            <div style="float:left;width:75px;font-weight:bold;">路径</div>
+            <div style="float:left;width:186px;word-break:break-all;">{{nodeInfo['Disk']['DatabasePath']}}</div>
+            <div class="clear-float"></div>
+         </div>
+
+      </div>
+      <div style="float:left;overflow-y:auto;border:1px solid #ddd;padding-top:10px;" ng-container="{offsetX:-320,offsetY:0,marginLeft:10}">
+         <div style="min-width:350px;float:left;padding:10px 0 0 10px;" ng-container="{height:230,width:'50%',offsetX:-20}" create-chart="charts.Insert"></div>
+         <div style="min-width:350px;float:left;padding:10px 0 0 10px;" ng-container="{height:230,width:'50%',offsetX:-20}" create-chart="charts.Update"></div>
+         <div style="min-width:350px;float:left;padding:10px 0 0 10px;" ng-container="{height:230,width:'50%',offsetX:-20}" create-chart="charts.Delete"></div>
+         <div style="min-width:350px;float:left;padding:10px 0 0 10px;" ng-container="{height:230,width:'50%',offsetX:-20}" create-chart="charts.Query"></div>
+         <div class="clear-float"></div>
+      </div>
+      <div class="clear-float"></div>
+   </div>
+</div>

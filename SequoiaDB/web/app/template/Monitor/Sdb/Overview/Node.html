@@ -1,0 +1,105 @@
+﻿<div style="padding:10px 15px;" ng-controller="Monitor.SdbOverview.Node.Ctrl" ng-container="{}">
+   <div style="border-bottom:3px solid #ddd;padding-top:10px;" ng-container="{height:70}">
+      <div style="float:left;color:#808080;">
+         <div style="height:50px;width:45px;float:left;">
+            <i style="color:#ccc;padding-top:8px;font-size:218%;" class="fa fa-cubes"></i>
+         </div>
+         <div style="height:50px;float:left;max-width:200px;">
+            <div style="font-size:90%;">集群</div>
+            <div class="Ellipsis" style="font-size:140%;color:#666;width:160px;"><a href="#/Deploy/Index" class="linkButton">{{clusterName}}</a></div>
+         </div>
+         <div class="clear-float"></div>
+      </div>
+      <div style="float:left;color:#808080;">
+         <div style="height:50px;width:45px;float:left;">
+            <i style="color:#ccc;padding-top:8px;font-size:218%;" class="fa fa-tasks"></i>
+         </div>
+         <div style="height:50px;float:left;max-width:200px;">
+            <div style="font-size:90%;">{{moduleType}}</div>
+            <div class="Ellipsis" style="font-size:140%;width:160px;">
+               <a href="#/Monitor/Index" class="linkButton">{{moduleName}}</a>
+            </div>
+         </div>
+         <div class="clear-float"></div>
+      </div>
+      <div style="float:left;color:#808080;">
+         <div style="height:50px;width:45px;float:left;">
+            <i style="color:#ccc;padding-top:8px;font-size:218%;" class="fa fa-sitemap"></i>
+         </div>
+         <div style="height:50px;float:left;">
+            <div style="font-size:90%;">分区组数</div>
+            <div class="Ellipsis" style="font-size:140%;width:160px;"><a href="#/Monitor/SDB-Overview/Index" class="linkButton">20</a></div>
+         </div>
+         <div class="clear-float"></div>
+      </div>
+      <div class="clear-float"></div>
+   </div>
+
+   <div class="underlineTab" ng-container="{height:40,marginTop:10}">
+      <ul class="left">
+         <li>
+            <a href="#/Monitor/SDB-Overview/Index">{{autoLanguage("分区组列表")}}</a>
+         </li>
+         <li class="active">
+            <a href="#Monitor/SDB-Overview/Node">{{autoLanguage("节点列表")}}</a>
+         </li>
+         <li>
+            <a href="#/Monitor/SDB-Overview/Charts">{{autoLanguage("图表")}}</a>
+         </li>
+         <li>
+            <a href="#Monitor/SDB-Overview/Domain">{{autoLanguage(" 域 ")}}</a>
+         </li>
+         <li>
+            <a href="#Monitor/SDB-Overview/Session">{{autoLanguage("会话")}}</a>
+         </li>
+         <li>
+            <a href="#Monitor/SDB-Overview/Resource">{{autoLanguage("资源")}}</a>
+         </li>
+      </ul>
+   </div>
+
+   <div style="height:30px;margin:10px 0;">
+      <button class="btn btn-default" ng-click="CreatePlayIntervalModel()">实时刷新设置</button>&nbsp;<button class="btn btn-default" dropdown-menu="SelectMenu" ng-click="OpenSelecMenu()">选择显示列&nbsp;<i class="fa fa-caret-down"></i></button>
+   </div>
+
+   <div create-timer="Timer"></div>
+   <div class="Grid2" ng-grid2="NodeGridOptions" ng-container="{offsetY:-212}">
+      <div class="Grid2Header">
+         <table class="">
+            <tbody>
+               <tr>
+                  <td class="Ellipsis">{{autoLanguage("状态")}}</td>
+                  <td class="Ellipsis" ng-repeat="fieldName in ShowKeyList track by $index" ng-click="SetOrderField(fieldName)">
+                     <i class="fa fa-caret-up" ng-if="OrderByField.indexOf(fieldName) >= 0"></i><i class="fa fa-caret-down" ng-if="OrderByField.indexOf('-'+fieldName) >= 0"></i>&nbsp;{{fieldName}}
+                  </td>
+               </tr>
+            </tbody>
+         </table>
+      </div>
+      <div style="margin-top:30px;">
+         <table class="">
+            <colgroup>
+               <col />
+               <col ng-repeat="nodeName in ShowKeyList track by $index" />
+            </colgroup>
+            <tbody>
+               <tr class="" ng-repeat="nodeInfo in NodeList | orderBy:OrderByField">
+                  <td class="Ellipsis">
+                     <i class="fa fa-circle" style="color:#00CC66;" ng-if="nodeInfo['Status'] == 'Running'" data-desc="正常运行中"></i>
+                     <i class="fa fa-circle" style="color:#F9A937;" ng-if="nodeInfo['Status'] == 'Waiting'" data-desc="该节点处于waiting状态"></i>
+                  </td>
+                  <td class="Ellipsis" ng-repeat="nodeName in ShowKeyList track by $index">
+                     {{nodeInfo[nodeName]}}
+                  </td>
+               </tr>
+            </tbody>
+         </table>
+      </div>
+   </div>
+   <div class="GridTool">
+      <div class="ToolLeft">
+         <span>一共有 {{NodeList.length}} 个节点</span>
+      </div>
+   </div>
+
+</div>

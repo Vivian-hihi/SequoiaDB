@@ -1,0 +1,136 @@
+<div style="padding:10px 15px;" ng-controller="Host.Performance.Index.Ctrl" ng-container="{}">
+   <div style="border-bottom:3px solid #ddd;padding-top:10px;" ng-container="{height:70}">
+      <div style="float:left;color:#808080;">
+         <div style="height:50px;width:45px;float:left;">
+            <i style="color:#ccc;padding-top:8px;font-size:218%;" class="fa fa-cubes"></i>
+         </div>
+         <div style="height:50px;float:left;max-width:200px;">
+            <div style="font-size:90%;">集群</div>
+            <div class="Ellipsis" style="font-size:140%;color:#666;width:160px;"><a href="#/Deploy/Index" class="linkButton">{{clusterName}}</a></div>
+         </div>
+         <div class="clear-float"></div>
+      </div>
+      <div style="float:left;color:#808080;">
+         <div style="height:50px;width:45px;float:left;">
+            <i style="color:#ccc;padding-top:8px;font-size:218%;" class="fa fa-tasks"></i>
+         </div>
+         <div style="height:50px;float:left;max-width:200px;">
+            <div style="font-size:90%;">{{moduleType}}</div>
+            <div class="Ellipsis" style="font-size:140%;width:160px;"><a href="#/Monitor/Index" class="linkButton">{{moduleName}}</a></div>
+         </div>
+         <div class="clear-float"></div>
+      </div>
+      <div style="float:left;color:#808080;">
+         <div style="height:50px;width:45px;float:left;">
+            <i style="color:#ccc;padding-top:8px;font-size:218%;" class="fa fa-laptop"></i>
+         </div>
+         <div style="height:50px;float:left;">
+            <div style="font-size:90%;">主机数</div>
+            <div class="Ellipsis" style="font-size:140%;width:160px;"><a href="#/Monitor/Host-List/Index" class="linkButton">48</a></div>
+            <div class="clear-float"></div>
+         </div>
+      </div>
+      <div class="clear-float"></div>
+   </div>
+
+   <div style="margin-top:10px;" class="well Ellipsis">
+      <i class="fa fa-circle" style="color:#00CC66;"></i>
+      <span style="font-weight:bold;color:#006699;">&nbsp;{{hostInfo['HostName']}}</span>
+   </div>
+
+   <div class="underlineTab" ng-container="{height:34,marginTop:10}">
+      <ul class="left">
+         <li class="active">
+            <a href="#/Monitor/Host-Info/Index">{{autoLanguage("主机信息")}}</a>
+         </li>
+         <li>
+            <a href="#/Monitor/Host-Info/CPU">{{autoLanguage("处理器")}}</a>
+         </li>
+         <li>
+            <a href="#/Monitor/Host-Info/Memory">{{autoLanguage("内存")}}</a>
+         </li>
+         <li>
+            <a href="#/Monitor/Host-Info/Disk">{{autoLanguage("磁盘")}}</a>
+         </li>
+         <li>
+            <a href="#/Monitor/Host-Info/Network">{{autoLanguage("网卡")}}</a>
+         </li>
+      </ul>
+   </div>
+   <div class="content" ng-container="{offsetY:-185,marginTop:10}">
+      <div class="leftTable" style="float:left;" ng-container="{width:300}">
+         <div style="font-size:110%;font-weight:bold;height:26px;">主机信息</div>
+         <div style="font-size:90%;height:147px;border:1px solid #ddd;padding:10px;">
+            <div style="float:left;width:100px;">主机名</div>
+            <div style="float:left;width:160px;" class="Ellipsis">{{hostInfo['HostName']}}</div>
+            <div class="clear-float"></div>
+
+            <div style="float:left;margin-top:5px;width:100px;">IP地址</div>
+            <div style="float:left;margin-top:5px;width:160px;" class="Ellipsis">{{hostInfo['IPAddress']}}</div>
+            <div class="clear-float"></div>
+
+            <div style="float:left;margin-top:5px;width:100px;">操作系统</div>
+            <div style="float:left;margin-top:5px;width:160px;" class="Ellipsis">{{hostInfo['OS']}}</div>
+            <div class="clear-float"></div>
+
+            <div style="margin:10px 0 5px 0;border-top:1px solid #ddd;"></div>
+
+            <div style="float:left;margin-top:5px;width:100px;">处理器</div>
+            <div style="float:left;margin-top:5px;width:160px;" class="Ellipsis">{{hostInfo['CPU'][0]['Name']}}</div>
+            <div class="clear-float"></div>
+
+            <div style="float:left;margin-top:5px;width:100px;">内存</div>
+            <div style="float:left;margin-top:5px;width:160px;" class="Ellipsis">{{hostInfo['Memory']['Capacity']}}</div>
+            <div class="clear-float"></div>
+
+            <div style="float:left;margin-top:5px;width:100px;">存储容量</div>
+            <div style="float:left;margin-top:5px;width:160px;" class="Ellipsis">{{hostInfo['Disk'][0]['Capacity']}}</div>
+
+         </div>
+         <div style="font-size:110%;font-weight:bold;height:26px;margin-top:10px;">业务信息</div>
+         <div ng-container="{offsetY:-231}" style="border:1px solid #ddd;padding:10px;font-size:90%;overflow-y:auto;">
+            <div ng-if="hostInfo['Module']['coord'] !== undefined">
+               <div ng-repeat="nodeInfo in hostInfo['Module']['coord']">
+                  <div style="float:left;margin-top:5px;width:100px;">协调节点</div>
+                  <div style="float:left;margin-top:5px;width:160px;" class="Ellipsis"><a class="linkButton" href="#/Monitor/SDB-Node/Index">{{nodeInfo}}</a></div>
+                  <div class="clear-float"></div>
+               </div>
+               <div style="margin:10px 0 5px 0;border-bottom:1px solid #ddd;"></div>
+            </div>
+
+            <div ng-if="hostInfo['Module']['catalog'] !== undefined">
+               <div ng-repeat="nodeInfo in hostInfo['Module']['catalog']">
+                  <div style="float:left;margin-top:5px;width:100px;">编目节点</div>
+                  <div style="float:left;margin-top:5px;width:160px;" class="Ellipsis"><a class="linkButton" href="#/Monitor/SDB-Node/Index">{{nodeInfo}}</a></div>
+                  <div class="clear-float"></div>
+               </div>
+               <div style="margin:10px 0 5px 0;border-bottom:1px solid #ddd;"></div>
+            </div>
+
+            <div ng-if="hostInfo['Module']['data'] !== undefined">
+               <div ng-repeat="nodeInfo in hostInfo['Module']['data']">
+                  <div style="float:left;margin-top:5px;width:100px;">数据节点</div>
+                  <div style="float:left;margin-top:5px;width:160px;" class="Ellipsis"><a class="linkButton" href="#/Monitor/SDB-Node/Index">{{nodeInfo}}</a></div>
+                  <div class="clear-float"></div>
+               </div>
+               <div style="margin:10px 0 5px 0;border-bottom:1px solid #ddd;"></div>
+            </div>
+         </div>
+      </div>
+      <div style="float:left;" ng-container="{offsetX:-310,marginLeft:10}">
+         <div style="font-size:110%;font-weight:bold;height:26px;">图表</div>
+         <div style="overflow-y:auto;border:1px solid #ddd;padding-top:10px;" ng-container="{offsetY:-26}">
+            <!--CPU-->
+            <div style="min-width:365px;min-height:178px;float:left;" ng-container="{height:'50%',width:'50%',offsetX:-20}" create-chart="charts.Cpu"></div>
+            <!--内存-->
+            <div style="min-width:365px;min-height:178px;float:left;" ng-container="{height:'50%',width:'50%',offsetX:-20}" create-chart="charts.memory"></div>
+            <!--网络-->
+            <div style="min-width:365px;min-height:178px;float:left;" ng-container="{height:'50%',width:'50%',offsetX:-20}" create-chart="charts.network"></div>
+            <!--硬盘-->
+            <div style="min-width:365px;min-height:178px;float:left;" ng-container="{height:'50%',width:'50%',offsetX:-20}" create-chart="charts.Storage"></div>
+            <div class="clear-float"></div>
+         </div>
+      </div>
+      <div class="clear-float"></div>
+   </div>
+</div>

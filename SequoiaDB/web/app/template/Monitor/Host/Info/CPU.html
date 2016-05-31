@@ -1,0 +1,112 @@
+<div style="padding:10px 15px;" ng-controller="Performance.CPU.Index.Ctrl" ng-container="{}">
+   <div style="border-bottom:3px solid #ddd;padding-top:10px;" ng-container="{height:70}">
+      <div style="float:left;color:#808080;">
+         <div style="height:50px;width:45px;float:left;">
+            <i style="color:#ccc;padding-top:8px;font-size:218%;" class="fa fa-cubes"></i>
+         </div>
+         <div style="height:50px;float:left;max-width:200px;">
+            <div style="font-size:90%;">集群</div>
+            <div class="Ellipsis" style="font-size:140%;color:#666;width:160px;"><a href="#/Deploy/Index" class="linkButton">{{clusterName}}</a></div>
+         </div>
+         <div class="clear-float"></div>
+      </div>
+      <div style="float:left;color:#808080;">
+         <div style="height:50px;width:45px;float:left;">
+            <i style="color:#ccc;padding-top:8px;font-size:218%;" class="fa fa-tasks"></i>
+         </div>
+         <div style="height:50px;float:left;max-width:200px;">
+            <div style="font-size:90%;">{{moduleType}}</div>
+            <div class="Ellipsis" style="font-size:140%;width:160px;"><a href="#/Monitor/Index" class="linkButton">{{moduleName}}</a></div>
+         </div>
+         <div class="clear-float"></div>
+      </div>
+      <div style="float:left;color:#808080;">
+         <div style="height:50px;width:45px;float:left;">
+            <i style="color:#ccc;padding-top:8px;font-size:218%;" class="fa fa-laptop"></i>
+         </div>
+         <div style="height:50px;float:left;">
+            <div style="font-size:90%;">主机数</div>
+            <div class="Ellipsis" style="font-size:140%;width:160px;"><a href="#/Monitor/Host-List/Index" class="linkButton">48</a></div>
+            <div class="clear-float"></div>
+         </div>
+      </div>
+      <div class="clear-float"></div>
+   </div>
+
+   <div style="margin-top:10px;" class="well Ellipsis">
+      <i class="fa fa-circle" style="color:#00CC66;"></i>
+      <span style="font-weight:bold;color:#006699;">&nbsp;{{hostName}}</span>
+   </div>
+
+   <div class="underlineTab" ng-container="{height:34,marginTop:10}">
+      <ul class="left">
+         <li>
+            <a href="#/Monitor/Host-Info/Index">{{autoLanguage("主机信息")}}</a>
+         </li>
+         <li class="active">
+            <a href="#/Monitor/Host-Info/CPU">{{autoLanguage("处理器")}}</a>
+         </li>
+         <li>
+            <a href="#/Monitor/Host-Info/Memory">{{autoLanguage("内存")}}</a>
+         </li>
+         <li>
+            <a href="#/Monitor/Host-Info/Disk">{{autoLanguage("磁盘")}}</a>
+         </li>
+         <li>
+            <a href="#/Monitor/Host-Info/Network">{{autoLanguage("网卡")}}</a>
+         </li>
+      </ul>
+   </div>
+
+   <div class="content" style="overflow-y:auto;border: 1px solid #E3E7E8;padding:10px;" ng-container="{offsetY:-185,marginTop:10}">
+      <div style="overflow-y:auto;" class="colorfulListBox" ng-container="{height:270,marginBottom:15,offsetX:-20}" ng-repeat="CPUInfo in hostInfo" ng-class="{'0':'green','1':'yellow','2':'blue','3':'violet'}[$index%4]">
+         <div ng-container="{height:20,offsetX:-30}" style="color:#666;font-size:100%;font-weight:bold;">
+            {{CPUInfo['Name']}}
+         </div>
+         <div ng-container="{marginTop:15,offsetX:-30,offsetY:-35}">
+            <div style="float:left;font-size:90%;color:#666;font-weight:bold;min-width:370px;" ng-container="{width:'50%',offsetX:-35,marginLeft:15}">
+               <div style="float:left;margin-top:5px;width:100px;height:18px;">主频</div>
+               <div style="float:left;font-size:90%;" class="Ellipsis" ng-container="{offsetX:-105,height:18,marginTop:5}">
+                  {{CPUInfo['Frequency']}}
+               </div>
+               <div class="clear-float"></div>
+               <div style="float:left;margin-top:5px;width:100px;height:18px;">内核</div>
+               <div style="float:left;font-size:90%;" class="Ellipsis" ng-container="{offsetX:-105,height:18,marginTop:5}">
+                  {{CPUInfo['Cores']}}
+               </div>
+               <div class="clear-float"></div>
+               <div style="float:left;margin-top:5px;width:100px;height:18px;">逻辑处理器</div>
+               <div style="float:left;font-size:90%;" class="Ellipsis" ng-container="{offsetX:-105,height:18,marginTop:5}">
+                  {{CPUInfo['LogicalProcessor']}}
+               </div>
+               <div class="clear-float"></div>
+               <div style="float:left;margin-top:5px;width:100px;height:18px;">L1缓存</div>
+               <div style="float:left;font-size:90%;" class="Ellipsis" ng-container="{offsetX:-105,height:18,marginTop:5}">
+                  {{CPUInfo['L1Cache']}}
+               </div>
+               <div class="clear-float"></div>
+               <div style="float:left;margin-top:5px;width:100px;height:18px;">L2缓存</div>
+               <div style="float:left;font-size:90%;" class="Ellipsis" ng-container="{offsetX:-105,height:18,marginTop:5}">
+                  {{CPUInfo['L2Cache']}}
+               </div>
+               <div class="clear-float"></div>
+               <div style="float:left;margin-top:5px;width:100px;height:18px;">L3缓存</div>
+               <div style="float:left;font-size:90%;" class="Ellipsis" ng-container="{offsetX:-105,height:18,marginTop:5}">
+                  {{CPUInfo['L3Cache']}}
+               </div>
+               <div class="clear-float"></div>
+               <div style="float:left;margin-top:5px;width:100px;height:18px;">进程数</div>
+               <div style="float:left;font-size:90%;" class="Ellipsis" ng-container="{offsetX:-105,height:18,marginTop:5}">
+                  {{CPUInfo['ProcessNumber']}}
+               </div>
+               <div class="clear-float"></div>
+            </div>
+            <div style="float:left;" ng-container="{width:'50%',offsetX:-20}">
+               <div style="height:220px;float:left;min-width:400px;" ng-container="{}" create-chart="charts.Cpu"></div>
+               <div class="clear-float"></div>
+            </div>
+            <div class="clear-float"></div>
+         </div>
+      </div>
+   </div>
+</div>

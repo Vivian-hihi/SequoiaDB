@@ -1,0 +1,160 @@
+﻿<div ng-controller="Deploy.Sdb.Mod.Ctrl" ng-container="{}">
+   <div style="border-bottom:1px solid #eee;" step-chart="stepList"></div>
+   <div style="padding:10px 15px;" ng-container="{offsetY:-70}">
+
+      <div ng-container="{offsetY:-45}" ng-if="Configure['DeployMod'] == 'distribution'">
+         <div class="pull-left" ng-container="{width:400}">
+
+            <div style="height:30px;font-size:110%;font-weight:bold;">{{autoLanguage("业务")}}: {{ModuleName}}</div>
+
+            <div class="borderBox" style="padding:10px;font-size:90%;" ng-container="{offsetY:-30}">
+
+               <div class="alert alert-info" style="height:32px;" ng-style="{'zh-CN':{'line-height':'32px'}}[Language]">
+                  {{autoLanguage("提示：批量配置节点信息说明。详情请点击")}}<a class="linkButton" ng-click="Helper()">{{autoLanguage("帮助")}}</a>
+               </div>
+
+               <div style="margin:10px 0;">
+                  <button class="btn btn-default" ng-click="CreateGroupModel()"><i class="fa fa-plus"></i>&nbsp;{{autoLanguage("创建分区组")}}</button>
+               </div>
+
+               <div class="borderBox" style="overflow-y:auto;" ng-container="{maxHeight:'100%',offsetY:-105}">
+
+                  <div style="height:55px;border-top:1px solid;" ng-repeat="groupInfo in GroupList track by $index" ng-style="{'true':{'border-color':'#fff'},'false':{'border-color':'#E3E7E8'}}[$index==0]">
+
+                     <div style="height:47px;margin:1px;border:3px solid #fff;" ng-style="{'true':{'border-color':'#80c0ff'},'false':{'border-color':'#fff'}}[groupInfo['checked']==true]">
+
+                        <table class="table" style="margin-top:5px;">
+                           <tr>
+                              <td style="padding-left:10px;cursor:pointer;" ng-click="SwitchGroup($index)">
+                                 <div class="Ellipsis" style="font-weight:bold;">
+                                    <span ng-if="groupInfo['role'] == 'coord'">SYSCoord</span>
+                                    <span ng-if="groupInfo['role'] == 'catalog'">SYSCatalogGroup</span>
+                                    <span ng-if="groupInfo['role'] == 'data'">{{groupInfo['groupName']}}</span>
+                                 </div>
+                                 <div class="Ellipsis" style="font-size:90%;color:#888;padding-top:3px;">{{autoLanguage("节点数")}}: {{groupInfo['nodeNum']}}</div>
+                              </td>
+                              <td style="padding-left:10px;width:50px;">
+                                 <button class="btn btn-default btn-lg" dropdown-menu="groupInfo['DropdownMenu']">
+                                    <span class="caret caret-bottom"></span>
+                                 </button>
+                              </td>
+                           </tr>
+                        </table>
+
+                     </div>
+
+                  </div>
+
+               </div>
+
+            </div>
+
+         </div>
+         <div class="pull-left" ng-container="{offsetX:-410,marginLeft:10}">
+
+            <div style="height:30px;font-size:110%;font-weight:bold;">{{autoLanguage("节点列表")}}</div>
+
+            <div class="borderBox" style="padding:10px;" ng-container="{offsetY:-30}">
+
+               <div>
+                  <button class="btn btn-default" ng-click="SelectAll()">{{autoLanguage("全选")}}</button>
+                  <button class="btn btn-default" ng-click="Unselect()">{{autoLanguage("反选")}}</button>
+                  <button class="btn btn-default" ng-click="CreateSetNodeConfModel(4,-1,-1,-1)">{{autoLanguage("批量修改节点")}}</button>
+               </div>
+
+               <div class="Grid" style="border-bottom:1px solid #E3E7E8;" ng-grid="NodeListOptions" ng-container="{offsetY:-70,marginTop:10}">
+                  <div class="GridHeader">
+                     <div class="GridTr">
+                        <div class="GridTd Ellipsis"></div>
+                        <div class="GridTd Ellipsis">{{autoLanguage("主机名")}}</div>
+                        <div class="GridTd Ellipsis">{{autoLanguage("服务名")}}</div>
+                        <div class="GridTd Ellipsis">{{autoLanguage("数据路径")}}</div>
+                        <div class="GridTd Ellipsis">{{autoLanguage("角色")}}</div>
+                        <div class="GridTd Ellipsis">{{autoLanguage("分区组")}}</div>
+                        <div class="clear-float"></div>
+                     </div>
+                     <div class="GridTr">
+                        <div class="GridTd Ellipsis" style="height:28px;"></div>
+                        <div class="GridTd Ellipsis" style="height:28px;"><input class="form-control" type="text" ng-model="search_hostname.text"></div>
+                        <div class="GridTd Ellipsis" style="height:28px;"><input class="form-control" type="text" ng-model="search_port.text"></div>
+                        <div class="GridTd Ellipsis" style="height:28px;"><input class="form-control" type="text" ng-model="search_path.text"></div>
+                        <div class="GridTd Ellipsis" style="height:28px;">
+                           <select class="form-control" ng-model="search_role.text" ng-options="roleInfo.value as roleInfo.key for roleInfo in search_roleList">
+                              <option value="">{{autoLanguage("全部")}}</option>
+                           </select>
+                        </div>
+                        <div class="GridTd Ellipsis" style="height:28px;">
+                           <select class="form-control" ng-model="search_group.text" ng-disabled="search_group_disabled" ng-options="groupInfo.value as groupInfo.key for groupInfo in search_groupList">
+                              <option value="">{{autoLanguage("全部")}}</option>
+                           </select>
+                        </div>
+                        <div class="clear-float"></div>
+                     </div>
+                  </div>
+                  <div class="GridBody" style="margin-top:73px;">
+                     <div class="GridTr" ng-repeat="nodeInfo in NodeList track by $index" ng-hide="nodeInfo['show'] == false">
+                        <div class="GridTd">
+                           <input type="checkbox" ng-model="nodeInfo['checked']" />
+                        </div>
+                        <div class="GridTd Ellipsis linkButton" ng-click="CreateSetNodeConfModel(3,-1,-1,$index)">
+                           {{nodeInfo['HostName']}}
+                        </div>
+                        <div class="GridTd Ellipsis linkButton" ng-click="CreateSetNodeConfModel(3,-1,-1,$index)">
+                           {{nodeInfo['svcname']}}
+                        </div>
+                        <div class="GridTd Ellipsis linkButton" ng-click="CreateSetNodeConfModel(3,-1,-1,$index)">
+                           {{nodeInfo['dbpath']}}
+                        </div>
+                        <div class="GridTd Ellipsis linkButton" ng-click="CreateSetNodeConfModel(3,-1,-1,$index)">
+                           {{nodeInfo['role']}}
+                        </div>
+                        <div class="GridTd Ellipsis linkButton" ng-click="CreateSetNodeConfModel(3,-1,-1,$index)">
+                           {{nodeInfo['datagroupname']}}
+                        </div>
+                        <div class="clear-float"></div>
+                     </div>
+                  </div>
+               </div>
+               <div class="GridTool">
+                  <div class="ToolLeft">
+                     <span>{{NodeGridTool}}</span>
+                  </div>
+               </div>
+
+            </div>
+
+         </div>
+         <div class="clear-float"></div>
+      </div>
+
+      <div ng-container="{offsetY:-45}" ng-if="Configure['DeployMod'] == 'standalone'">
+         <div style="height:30px;font-size:110%;font-weight:bold;">{{autoLanguage("业务")}}: {{ModuleName}}</div>
+         <div class="underlineTab" style="height:50px;">
+            <ul class="left">
+               <li ng-class="{true:'active'}[StandaloneShow == 1]">
+                  <a class="linkButton" ng-click="SwitchParam(1)">{{autoLanguage("普通")}}</a>
+               </li>
+               <li ng-class="{true:'active'}[StandaloneShow == 2]">
+                  <a class="linkButton" ng-click="SwitchParam(2)">{{autoLanguage("高级")}}</a>
+               </li>
+               <li ng-class="{true:'active'}[StandaloneShow == 3]">
+                  <a class="linkButton" ng-click="SwitchParam(3)">{{autoLanguage("自定义")}}</a>
+               </li>
+            </ul>
+         </div>
+         <div class="borderBox" style="padding:10px;overflow-y:auto;position:relative;" ng-container="{offsetY:-80}">
+            <div form-create para="StandaloneForm1" ng-show="StandaloneShow == 1"></div>
+            <div form-create para="StandaloneForm2" ng-show="StandaloneShow == 2"></div>
+            <div form-create para="StandaloneForm3" ng-show="StandaloneShow == 3"></div>
+         </div>
+      </div>
+
+      <div style="text-align:center;" ng-container="{height:30,marginTop:20}">
+         <button class="btn btn-default" ng-click="GotoConf()"><i class="fa fa-chevron-left"></i> {{autoLanguage("上一步")}}</button>
+         &nbsp;&nbsp;&nbsp;
+         <button class="btn btn-primary" ng-click="GotoInstall()">{{autoLanguage("下一步")}} <i class="fa fa-chevron-right"></i></button>
+      </div>
+
+   </div>
+
+</div>
