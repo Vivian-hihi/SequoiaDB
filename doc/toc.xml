@@ -2283,6 +2283,14 @@
                                     <enpath>SdbDoc_En/reference/Sequoiadb_command/SpecialObjects/NumberLong_en.html</enpath>
                                     <enabled>true</enabled>
                                 </obj>
+                                <obj>
+                                    <id>1464671059</id>
+                                    <cnname>NumberDecimal</cnname>
+                                    <enname>NumberDecimal</enname>
+                                    <cnpath>SdbDoc_Cn/reference/Sequoiadb_command/SpecialObjects/NumberDecimal.html</cnpath>
+                                    <enpath>SdbDoc_En/reference/Sequoiadb_command/SpecialObjects/NumberDecimal_en.html</enpath>
+                                    <enabled>true</enabled>
+                                </obj>
                             </objlist>
                         </obj>
                     </objlist>
