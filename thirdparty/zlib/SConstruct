@@ -205,7 +205,6 @@ if guess_os == "linux":
         # use big endian
         env.Append( CPPDEFINES=[ "SDB_BIG_ENDIAN" ] )
 
-
     nix = True
 
 elif "win32" == guess_os:
@@ -241,22 +240,25 @@ elif "win32" == guess_os:
         env.Append( CPPFLAGS= " /O2 /Gy " )
         env.Append( CPPFLAGS= " /MT /Zi /errorReport:none " )
         env.Append( CPPFLAGS= " /GL " )
-        env.Append( LINKFLAGS=" /LTCG " )
-        env.Append( LINKFLAGS=" /DEBUG " )
     else:
         env.Append( CPPFLAGS=" /RTC1 /MDd /Z7 /errorReport:none " )
 
         if debugBuild:
-            env.Append( LINKFLAGS=" /debug " )
             env.Append( CPPFLAGS=" /Od " )
             env.Append( CPPDEFINES=[ "_DEBUG" ] )
 
     if guess_arch == "ia64":
         env.Append( EXTRALIBPATH=[ winSDKHome + "/Lib/x64" ] )
-        targetLibPath = "win64"
+        if release:
+            targetLibPath = "win64/release"
+        else:
+            targetLibPath = "win64/debug"
     else:
         env.Append( EXTRALIBPATH=[ winSDKHome + "/Lib" ] )
-        targetLibPath = "win32"
+        if release:
+            targetLibPath = "win32/release"
+        else:
+            targetLibPath = "win32/debug"
 
     if release:
         env.Append( LINKFLAGS=" /NODEFAULTLIB:MSVCPRT  " )

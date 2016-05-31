@@ -592,9 +592,6 @@ elif "win32" == guess_os:
         env.Append( EXTRALIBPATH=boost_lib_dir )
         # use project-related ssl library
         env.Append( EXTRALIBPATH=join(ssl_dir,'lib/win64') )
-        env.Append( EXTRALIBPATH=join(zlib_lib_dir,'win64') )
-        env.Append( EXTRALIBPATH=join(lz4_lib_dir,'win64') )
-        env.Append( EXTRALIBPATH=join(snappy_lib_dir,'win64') )
         # use 64 bit spidermonkey
         if usesm:
             if debugBuild:
@@ -606,9 +603,20 @@ elif "win32" == guess_os:
                 env.Append( CPPPATH=join(js_dir,'lib/release/win64/include') )
                 env.Append( EXTRALIBPATH=[smlib_dir] )
         ssllib_dir = join(ssl_dir,'lib/win64')
-        zlib_lib_dir_platform = join(zlib_lib_dir, 'win64') 
-        lz4_lib_dir_platform = join(lz4_lib_dir, 'win64')
-        snappy_lib_dir_platform = join(snappy_lib_dir, 'win64')
+        if debugBuild:
+            env.Append( EXTRALIBPATH=join(zlib_lib_dir,'win64/debug') )
+            env.Append( EXTRALIBPATH=join(lz4_lib_dir,'win64/debug') )
+            env.Append( EXTRALIBPATH=join(snappy_lib_dir,'win64/debug') )
+            zlib_lib_dir_platform = join(zlib_lib_dir, 'win64/debug') 
+            lz4_lib_dir_platform = join(lz4_lib_dir, 'win64/debug')
+            snappy_lib_dir_platform = join(snappy_lib_dir, 'win64/debug')
+        else:
+            env.Append( EXTRALIBPATH=join(zlib_lib_dir,'win64/release') )
+            env.Append( EXTRALIBPATH=join(lz4_lib_dir,'win64/release') )
+            env.Append( EXTRALIBPATH=join(snappy_lib_dir,'win64/release') )
+            zlib_lib_dir_platform = join(zlib_lib_dir, 'win64/release') 
+            lz4_lib_dir_platform = join(lz4_lib_dir, 'win64/release')
+            snappy_lib_dir_platform = join(snappy_lib_dir, 'win64/release')
     else:
         boost_lib_dir = join(boost_lib_dir,'win32')
         # we are 32 bit
@@ -628,9 +636,20 @@ elif "win32" == guess_os:
                 env.Append( CPPPATH=join(js_dir,'lib/release/win32/include') )
                 env.Append( EXTRALIBPATH=[smlib_dir] )
         ssllib_dir = join(ssl_dir,'lib/win32')
-        zlib_lib_dir_platform = join(zlib_lib_dir, 'win32') 
-        lz4_lib_dir_platform = join(lz4_lib_dir, 'win32')
-        snappy_lib_dir_platform = join(snappy_lib_dir, 'win32')
+        if debugBuild:
+            env.Append( EXTRALIBPATH=join(zlib_lib_dir,'win32/debug') )
+            env.Append( EXTRALIBPATH=join(lz4_lib_dir,'win32/debug') )
+            env.Append( EXTRALIBPATH=join(snappy_lib_dir,'win32/debug') )
+            zlib_lib_dir_platform = join(zlib_lib_dir, 'win32/debug') 
+            lz4_lib_dir_platform = join(lz4_lib_dir, 'win32/debug')
+            snappy_lib_dir_platform = join(snappy_lib_dir, 'win32/debug')
+        else:
+            env.Append( EXTRALIBPATH=join(zlib_lib_dir,'win32/release') )
+            env.Append( EXTRALIBPATH=join(lz4_lib_dir,'win32/release') )
+            env.Append( EXTRALIBPATH=join(snappy_lib_dir,'win32/release') )
+            zlib_lib_dir_platform = join(zlib_lib_dir, 'win32/release') 
+            lz4_lib_dir_platform = join(lz4_lib_dir, 'win32/release')
+            snappy_lib_dir_platform = join(snappy_lib_dir, 'win32/release')
     if usesm:
         smlib_file = join(smlib_dir, 'mozjs185-1.0.dll')
         env.Append( CPPDEFINES=[ "XP_WIN" ] )
