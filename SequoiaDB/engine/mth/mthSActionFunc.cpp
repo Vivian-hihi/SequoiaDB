@@ -912,7 +912,12 @@ namespace engine
          }
          else if ( String != e.type() )
          {
-            builder.appendNumber( fieldName, e.numberDouble() ) ;
+            FLOAT64 f = e.numberDouble() ;
+            if ( isInf( f ) )
+            {
+               f = 0.0 ;
+            }
+            builder.appendNumber( fieldName, f ) ;
          }
          else
          {

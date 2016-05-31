@@ -231,43 +231,7 @@ namespace engine
       BSONType a      = in.type() ;
       BSONType b      = elt.type() ;
 
-      if ( ( NumberLong == a && 0 != elt.numberLong() ) ||
-           ( NumberInt == a && 0 != elt.numberInt() ) ||
-           ( NumberDouble == a && 0 != elt.numberDouble() ) )
-      {
-         ADD_CHG_ELEMENT_AS ( _srcChgBuilder, in, pRoot, "$set" ) ;
-
-         if ( NumberDouble == a || NumberDouble == b )
-         {
-            bb.append ( in.fieldName(), in.numberDouble()+elt.numberDouble()) ;
-            ADD_CHG_NUMBER ( _dstChgBuilder, pRoot,
-                             in.numberDouble()+elt.numberDouble(), "$set" ) ;
-         }
-         else if ( NumberLong == a || NumberLong == b )
-         {
-            bb.append ( in.fieldName(), in.numberLong() + elt.numberLong()) ;
-            ADD_CHG_NUMBER ( _dstChgBuilder, pRoot,
-                             in.numberLong() + elt.numberLong(), "$set" ) ;
-         }
-         else
-         {
-            INT32 result = in.numberInt() + elt.numberInt() ;
-            INT64 result64 = (INT64)in.numberInt() + (INT64)elt.numberInt() ;
-            if ( result64 != (INT64)result )
-            {
-               //32 bit overflow or underflow happened
-               bb.append ( in.fieldName(), in.numberLong() + elt.numberLong()) ;
-               ADD_CHG_NUMBER ( _dstChgBuilder, pRoot,
-                                in.numberLong() + elt.numberLong(), "$set" ) ;
-            }
-            else
-            {
-               bb.append ( in.fieldName(), result ) ;
-               ADD_CHG_NUMBER ( _dstChgBuilder, pRoot, result, "$set" ) ;
-            }
-         }
-      }
-      else if ( NumberDecimal == a )
+      if ( NumberDecimal == a || NumberDecimal == b )
       {
          bsonDecimal inc ;
          bsonDecimal decimal ;
@@ -307,6 +271,42 @@ namespace engine
             bb.append ( in.fieldName(), result ) ;
             ADD_CHG_ELEMENT_AS ( _srcChgBuilder, in, pRoot, "$set" ) ;
             ADD_CHG_NUMBER ( _dstChgBuilder, pRoot, result, "$set" ) ;
+         }
+      }
+      else if ( ( NumberLong == a && 0 != elt.numberLong() ) ||
+           ( NumberInt == a && 0 != elt.numberInt() ) ||
+           ( NumberDouble == a && 0 != elt.numberDouble() ) )
+      {
+         ADD_CHG_ELEMENT_AS ( _srcChgBuilder, in, pRoot, "$set" ) ;
+
+         if ( NumberDouble == a || NumberDouble == b )
+         {
+            bb.append ( in.fieldName(), in.numberDouble()+elt.numberDouble()) ;
+            ADD_CHG_NUMBER ( _dstChgBuilder, pRoot,
+                             in.numberDouble()+elt.numberDouble(), "$set" ) ;
+         }
+         else if ( NumberLong == a || NumberLong == b )
+         {
+            bb.append ( in.fieldName(), in.numberLong() + elt.numberLong()) ;
+            ADD_CHG_NUMBER ( _dstChgBuilder, pRoot,
+                             in.numberLong() + elt.numberLong(), "$set" ) ;
+         }
+         else
+         {
+            INT32 result = in.numberInt() + elt.numberInt() ;
+            INT64 result64 = (INT64)in.numberInt() + (INT64)elt.numberInt() ;
+            if ( result64 != (INT64)result )
+            {
+               //32 bit overflow or underflow happened
+               bb.append ( in.fieldName(), in.numberLong() + elt.numberLong()) ;
+               ADD_CHG_NUMBER ( _dstChgBuilder, pRoot,
+                                in.numberLong() + elt.numberLong(), "$set" ) ;
+            }
+            else
+            {
+               bb.append ( in.fieldName(), result ) ;
+               ADD_CHG_NUMBER ( _dstChgBuilder, pRoot, result, "$set" ) ;
+            }
          }
       }
       else
