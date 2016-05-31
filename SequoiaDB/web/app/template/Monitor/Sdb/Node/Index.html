@@ -69,6 +69,12 @@
          </div>
 
          <div style="margin-bottom:10px;">
+            <div style="float:left;width:75px;font-weight:bold;">节点ID</div>
+            <div style="float:left;width:186px;" class="Ellipsis">123</div>
+            <div class="clear-float"></div>
+         </div>
+
+         <div style="margin-bottom:10px;">
             <div style="float:left;width:75px;font-weight:bold;">类型</div>
             <div style="float:left;width:186px;" class="Ellipsis" ng-if="nodeInfo['IsPrimary'] == true">主节点</div>
             <div style="float:left;width:186px;" class="Ellipsis" ng-if="nodeInfo['IsPrimary'] == false">备节点</div>
@@ -88,10 +94,29 @@
          </div>
 
          <div style="margin-bottom:10px;">
-            <div style="float:left;width:75px;font-weight:bold;">LSN</div>
+            <div style="float:left;width:75px;font-weight:bold;">Lob数</div>
+            <div style="float:left;width:186px;" class="Ellipsis">0</div>
+            <div class="clear-float"></div>
+         </div>
+
+         <div style="margin-bottom:10px;">
+            <div style="float:left;width:75px;font-weight:bold;">LSN</div> 
             <div style="float:left;width:186px;" class="Ellipsis">{{nodeInfo['BeginLSN']['Version']}}</div>
             <div class="clear-float"></div>
          </div>
+
+         <div style="margin-bottom:10px;">
+            <div style="float:left;width:75px;font-weight:bold;">完成LSN</div>
+            <div style="float:left;width:186px;" class="Ellipsis">0</div>
+            <div class="clear-float"></div>
+         </div>
+
+         <div style="margin-bottom:10px;">
+            <div style="float:left;width:75px;font-weight:bold;">LSN队列数</div>
+            <div style="float:left;width:186px;" class="Ellipsis">0</div>
+            <div class="clear-float"></div>
+         </div>
+
 
          <div style="margin-bottom:10px;">
             <div style="float:left;width:75px;font-weight:bold;">主机</div>

@@ -29,12 +29,13 @@
       sql = 'SELECT Name, PageSize/1024, LobPageSize/1024, GroupName, TotalRecords, FreeDataSize/1048576, FreeIndexSize/1048576, FreeLobSize/1048576, FreeSize/1048576, MaxDataCapSize/1073741824, MaxIndexCapSize/1073741824, MaxLobCapSize/1073741824, TotalDataSize/1048576, TotalIndexSize/1048576, TotalLobSize/1048576, TotalSize/1048576 FROM $SNAPSHOT_CS WHERE NodeSelect="master" ORDER BY Name' ;
 
       var queryHost = function(){
-         var data = { 
-            'cmd': 'query host', 
-            'HostInfo': JSON.stringify( {"HostInfo":[ {"HostName":"ubuntu-test-02"},{"HostName":"ubuntu-test-03"}]} )
+         var data = {
+            'cmd': 'query host status',
+            'HostInfo': JSON.stringify( {"HostInfo":[ {"HostName":"ubuntu-test-02"} ] } )
          } ;
          SdbRest.OmOperation( data, function( hostList ){
             $scope.HostList = hostList ;
+            alert(JSON.stringify($scope.HostList))
          }, function( errorInfo ){
                
          }, function(){

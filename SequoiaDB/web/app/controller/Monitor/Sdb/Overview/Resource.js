@@ -6,73 +6,197 @@
       var clusterName = SdbFunction.LocalData( 'SdbClusterName' ) ;
       var moduleType = SdbFunction.LocalData( 'SdbModuleType' ) ;
       var moduleName = SdbFunction.LocalData( 'SdbModuleName' ) ;
+      var isOpenSelectMenu = false ;
       $scope.clusterName = clusterName ;
       $scope.moduleName = moduleName ;
       $scope.moduleType =  moduleType ;
-      var statusIcon = {} ;
-      var gridData = {
-         'title': [ 
-            { "text": $scope.autoLanguage( '状态' ) },
-            { "text": $scope.autoLanguage( '会话ID' ) },
-            { "text": $scope.autoLanguage( '上下文ID' ) },
-            { "text": $scope.autoLanguage( '上下文类型' ) },
-            { "text": $scope.autoLanguage( '所属' ) },
-            { "text": $scope.autoLanguage( '所读数据' ) },
-            { "text": $scope.autoLanguage( '所读索引' ) },
-            { "text": $scope.autoLanguage( '查询时间' ) },
-            { "text": $scope.autoLanguage( '缓存' ) },
-            { "text": $scope.autoLanguage( '操作' ) }
-         ],
-         'body': [],
-         'tool': {
-            'position': 'bottom',
-            'left': [ { 'text': '一共有20个会话，48个上下文' } ],
-            'right': [ ]
-         },
-         'options': {
-            'grid': {  'tdModel': 'fixed', 'gridModel': 'fixed', 'tdHeight': '19px', 'titleWidth': [ 4, 21, 8, 8, 24, 7, 8, 6, 6, 6 ] },
-            'order': {
-               'active': true
+
+      $scope.SelectMenu = [] ;
+
+      $scope.ResourceList = [] ;
+      $scope.ResourceGridOptions = { 'titleWidth': [] } ;
+      $scope.ShowKeyList = [ 'SessionID', 'Status' ] ;
+      $scope.ShowKey = [] ;
+      $scope.SelectMenu = [] ;
+      $scope.OrderByField = [] ;
+
+      //创建 设置实时刷新 的弹窗
+      $scope.CreatePlayIntervalModel = function(){
+         $scope.Components.Modal.icon = '' ;
+         $scope.Components.Modal.title = $scope.autoLanguage( '实时刷新设置' ) ;
+         $scope.Components.Modal.isShow = true ;
+         $scope.Components.Modal.form = {
+            inputList: [
+               {
+                  "name": "play",
+                  "webName": $scope.autoLanguage( '自动刷新' ),
+                  "type": "select",
+                  "value": $scope.Timer.status == 'start',
+                  "valid": [
+                     { 'key': '开启', 'value': true },
+                     { 'key': '停止', 'value': false }
+                  ]
+               },
+               {
+                  "name": "interval",
+                  "webName": $scope.autoLanguage( '刷新间距(秒)' ),
+                  "type": "int",
+                  "value": $scope.Timer.interval,
+                  "valid": {
+                     'min': 1
+                  }
+               }
+            ]
+         } ;
+         $scope.Components.Modal.Context = '<div form-create para="data.form"></div>' ;
+         $scope.Components.Modal.ok = function(){
+            var isAllClear = $scope.Components.Modal.form.check() ;
+            if( isAllClear )
+            {
+               var formVal = $scope.Components.Modal.form.getValue() ;
+               $scope.Timer.interval = formVal['interval'] ;
+               if( formVal['play'] == true )
+               {
+                  $scope.Timer.status = 'start' ;
+               }
+               else
+               {
+                  $scope.Timer.status = 'stop' ;
+               }
             }
+            return isAllClear ;
          }
-      } ; 
-      $scope.GridData = $.extend( true, {}, gridData ) ;
+      }
       
 
-      $scope.queryList = function( data, success, failed, error, complete )
-      {
+      $scope.queryList = function( data, success, failed, error, complete ){
          SdbRest._postTest( './test/resourceList', success, failed, error ) ;
       }
+
+      //设置排序字段
+      $scope.SetOrderField = function( fieldName ){
+         var normal  = $scope.OrderByField.indexOf( fieldName ) ;
+         var reverse = $scope.OrderByField.indexOf( '-' + fieldName ) ;
+         if( normal == -1 && reverse == -1 )
+         {
+            $scope.OrderByField.push( fieldName ) ;
+         }
+         else if( normal >= 0 )
+         {
+            $scope.OrderByField[normal] = '-' + fieldName ;
+         }
+         else if( reverse >= 0 )
+         {
+            $scope.OrderByField.splice( reverse, 1 ) ;
+         }
+      }
+
+      //创建 设置实时刷新 的弹窗
+      $scope.CreatePlayIntervalModel = function(){
+         $scope.Components.Modal.icon = '' ;
+         $scope.Components.Modal.title = $scope.autoLanguage( '实时刷新设置' ) ;
+         $scope.Components.Modal.isShow = true ;
+         $scope.Components.Modal.form = {
+            inputList: [
+               {
+                  "name": "play",
+                  "webName": $scope.autoLanguage( '自动刷新' ),
+                  "type": "select",
+                  "value": $scope.Timer.status == 'start',
+                  "valid": [
+                     { 'key': '开启', 'value': true },
+                     { 'key': '停止', 'value': false }
+                  ]
+               },
+               {
+                  "name": "interval",
+                  "webName": $scope.autoLanguage( '刷新间距(秒)' ),
+                  "type": "int",
+                  "value": $scope.Timer.interval,
+                  "valid": {
+                     'min': 1
+                  }
+               }
+            ]
+         } ;
+         $scope.Components.Modal.Context = '<div form-create para="data.form"></div>' ;
+         $scope.Components.Modal.ok = function(){
+            var isAllClear = $scope.Components.Modal.form.check() ;
+            if( isAllClear )
+            {
+               var formVal = $scope.Components.Modal.form.getValue() ;
+               $scope.Timer.interval = formVal['interval'] ;
+               if( formVal['play'] == true )
+               {
+                  $scope.Timer.status = 'start' ;
+               }
+               else
+               {
+                  $scope.Timer.status = 'stop' ;
+               }
+            }
+            return isAllClear ;
+         }
+      }
+      
+      //打开 网格显示列 的下拉菜单
+      $scope.OpenSelecMenu = function(){
+         if( $scope.Timer.status == 'start' )
+         {
+            isOpenSelectMenu = true ;
+            $scope.Timer.status = 'stop' ;
+         }
+      }
+
+      //渲染网格显示的列
+      var gridShowColumn = function(){
+         $scope.ResourceGridOptions['titleWidth'] = [] ;
+         $scope.ResourceGridOptions['titleWidth'].push( '50px' ) ;
+         var widthPercent = 100 / $scope.ShowKeyList.length ;
+         $.each( $scope.ShowKeyList, function( index, keyName ){
+            $scope.ResourceGridOptions['titleWidth'].push( widthPercent ) ;
+         } ) ;
+         $scope.ResourceGridOptions.onResize() ;
+      }
+
+      //保存显示列
+      $scope.SaveShowKeyList = function(){
+         if( isOpenSelectMenu == true && $scope.Timer.status == 'stop' )
+         {
+            isOpenSelectMenu = false ;
+            $scope.Timer.status = 'start' ;
+         }
+         $scope.ShowKeyList = [] ;
+         $.each( $scope.ShowKey, function( index, keyInfo ){
+            if( keyInfo['show'] == true )
+            {
+               $scope.ShowKeyList.push( keyInfo['key'] ) ;
+            }
+         } ) ;
+         gridShowColumn() ;
+      }
+
       $scope.getResourceList = function(){
          $scope.queryList( {}, function( test ){
-            $scope.test = test ;
-            $scope.GridData = $.extend( true, {}, gridData ) ;
-            $.each( test, function( index, value ){
-               if( value['Status'] == 'Running' )
-               {
-                  statusIcon = { 'html': $compile( '<i class="fa fa-circle" style="color:#00CC66;" data-desc="正常运行中"></i>' )( $scope ) } ;
-               }
-               else if( value['Status'] == 'Waiting' )
-               {
-                  statusIcon = { 'html': $compile( '<i class="fa fa-circle" style="color:#F9A937;" data-desc="该会话处于waiting状态"></i>' )( $scope ) } ;
-               }
-               else if( value['Status'] == 'Destroying' )
-               {
-                  statusIcon = { 'html': $compile( '<i class="fa fa-circle" style="color:#D9534F;" data-desc="该会话处于销毁状态"></i>' )( $scope ) } ;
-               }
-               $scope.GridData['body'].push( [
-                  statusIcon,
-                  { 'html': $compile( '<a class="linkButton" ng-click="showContext()">' + value['SessionID'] + '</a>' )( $scope ) },
-                  { 'text': value['Contexts'][0]['ContextID'] },
-                  { 'text': value['Contexts'][0]['Type'] },
-                  { 'html': $compile( '<a class="linkButton" href="#/Monitor/SDB-Node/Index">group1:Host-test-11810</a>' )( $scope ) },
-                  { 'text': value['Contexts'][0]['DataRead'] },
-                  { 'text': value['Contexts'][0]['IndexRead'] },
-                  { 'text': value['Contexts'][0]['QueryTimeSpent'] },
-                  { 'text': '' },
-                  { 'html': $compile( '<div class="linkButton Ellipsis" ng-click="stopContext()" style="font-size:80%;"><i class="fa fa-stop" style="font-size:90%;padding-right:3px;"></i>中断上下文</div>' )( $scope ) }
-               ] ) ;
+            $scope.ResourceList = test ;
+            var keyList = [] ;
+            $.each( $scope.ResourceList, function( index, value ){
+               keyList = SdbFunction.getJsonKeys( value, 0, keyList ) ;
             } ) ;
+            $scope.ShowKey = [] ;
+            $scope.SelectMenu = [] ;
+            $.each( keyList, function( index, key ){
+               $scope.ShowKey.push( { 'key': key, 'show': $scope.ShowKeyList.indexOf( key ) >= 0 } ) ;
+               $scope.SelectMenu.push( { 
+                  'html': $compile( '<label><div class="Ellipsis" style="padding:5px 10px"><input type="checkbox" ng-model="ShowKey[\'' + index + '\'][\'show\']"/>&nbsp;' + key + '</div></label>' )( $scope ),
+                  'onClick': function(){}
+               } ) ;
+            } ) ;
+            $scope.SelectMenu.push( { 
+               'html': $compile( '<button class="btn btn-primary" ng-click="SaveShowKeyList()" style="width:100%;">确定</button>' )( $scope )
+            } ) ;
+            gridShowColumn() ;
+            $scope.Timer.complete = true ;
          } ) ;
       }
       $scope.getResourceList() ;
@@ -237,6 +361,14 @@
             'html': $compile( '<button class="btn btn-primary" ng-click="changeScreen()" style="width:100%;">确定</button>' )( $scope )
          }
       ] ;
+
+      $scope.Timer = {
+         status: 'stop',
+         interval: 5,
+         currentTimer: 0,
+         complete: false,
+         fn: $scope.getResourceList
+      } ;
 
       
    } ) ;

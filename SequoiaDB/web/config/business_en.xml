@@ -3,12 +3,4 @@
       <BusinessType>sequoiadb</BusinessType>
       <BusinessDesc>SequoiaDB Database</BusinessDesc>
    </FILLER>
-   <FILLER>
-      <BusinessType>sequoiasql</BusinessType>
-      <BusinessDesc>SequoiaSQL Engine</BusinessDesc>
-   </FILLER>
-   <FILLER>
-      <BusinessType>zookeeper</BusinessType>
-      <BusinessDesc>ZooKeeper Service</BusinessDesc>
-   </FILLER>
 </BusinessList>

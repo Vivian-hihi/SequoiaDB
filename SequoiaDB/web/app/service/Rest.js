@@ -1,6 +1,6 @@
 (function(){
    var sacApp = window.SdbSacManagerModule ;
-   sacApp.service( 'SdbRest', function( $q, Loading, SdbFunction ){
+   sacApp.service( 'SdbRest', function( $q, $rootScope, Loading, SdbFunction ){
       var g = this ;
       function restBeforeSend( jqXHR )
       {
@@ -28,7 +28,21 @@
             if( json.length == 0 && typeof( failed ) === 'function' )
             {
                //收到响应，但是没有任何数据
-               failed( { "errno": -10, "description": "System error", "detail": "No rest response data." } ) ;
+               try
+               {
+                  failed( { "errno": -10, "description": "System error", "detail": "No rest response data." } ) ;
+               }
+               catch( e )
+               {
+                  $rootScope.Components.Confirm.isShow = true ;
+                  $rootScope.Components.Confirm.type = 1 ;
+                  $rootScope.Components.Confirm.title = 'System error' ;
+                  $rootScope.Components.Confirm.context = 'Javascript error: ' + e.message ;
+                  $rootScope.Components.Confirm.ok = function(){
+                     Loading.close() ;
+                     $rootScope.Components.Confirm.isShow = false ;
+                  }
+               }
             }
             else
             {
@@ -36,7 +50,24 @@
                if( jsonArr.length == 0 )
                {
                   //有数据，但是没有记录，理论上不会发生
-                  if( typeof( failed ) === 'function' ) failed( { "errno": -10, "description": "System error", "detail": "Rest response data error." } ) ;
+                  if( typeof( failed ) === 'function' )
+                  {
+                     try
+                     {
+                        failed( { "errno": -10, "description": "System error", "detail": "Rest response data error." } ) ;
+                     }
+                     catch( e )
+                     {
+                        $rootScope.Components.Confirm.isShow = true ;
+                        $rootScope.Components.Confirm.type = 1 ;
+                        $rootScope.Components.Confirm.title = 'System error' ;
+                        $rootScope.Components.Confirm.context = 'Javascript error: ' + e.message ;
+                        $rootScope.Components.Confirm.ok = function(){
+                           Loading.close() ;
+                           $rootScope.Components.Confirm.isShow = false ;
+                        }
+                     }
+                  }
                }
                else if( jsonArr[0]['errno'] === 0 && typeof( success ) == 'function' )
                {
@@ -45,7 +76,21 @@
                      errJson.splice( 0, 1 ) ;
                   }
                   jsonArr.splice( 0, 1 ) ;
-                  success( jsonArr, textStatus, jqXHR ) ;
+                  try
+                  {
+                     success( jsonArr, textStatus, jqXHR ) ;
+                  }
+                  catch( e )
+                  {
+                     $rootScope.Components.Confirm.isShow = true ;
+                     $rootScope.Components.Confirm.type = 1 ;
+                     $rootScope.Components.Confirm.title = 'System error' ;
+                     $rootScope.Components.Confirm.context = 'Javascript error: ' + e.message ;
+                     $rootScope.Components.Confirm.ok = function(){
+                        Loading.close() ;
+                        $rootScope.Components.Confirm.isShow = false ;
+                     }
+                  }
                }
                else if( jsonArr[0]['errno'] === -62 )
                {
@@ -55,13 +100,61 @@
                else if( typeof( failed ) === 'function' )
                {
                   //其他错误
-                  failed( jsonArr[0] ) ;
+                  try
+                  {
+                     failed( jsonArr[0] ) ;
+                  }
+                  catch( e )
+                  {
+                     $rootScope.Components.Confirm.isShow = true ;
+                     $rootScope.Components.Confirm.type = 1 ;
+                     $rootScope.Components.Confirm.title = 'System error' ;
+                     $rootScope.Components.Confirm.context = 'Javascript error: ' + e.message ;
+                     $rootScope.Components.Confirm.ok = function(){
+                        Loading.close() ;
+                        $rootScope.Components.Confirm.isShow = false ;
+                     }
+                  }
                }
             }
          }, 'error': function( XMLHttpRequest, textStatus, errorThrown ) {
-            if( typeof( error ) === 'function' ) error( XMLHttpRequest, textStatus, errorThrown ) ;
+            if( typeof( error ) === 'function' )
+            {
+               try
+               {
+                  error( XMLHttpRequest, textStatus, errorThrown ) ;
+               }
+               catch( e )
+               {
+                  $rootScope.Components.Confirm.isShow = true ;
+                  $rootScope.Components.Confirm.type = 1 ;
+                  $rootScope.Components.Confirm.title = 'System error' ;
+                  $rootScope.Components.Confirm.context = 'Javascript error: ' + e.message ;
+                  $rootScope.Components.Confirm.ok = function(){
+                     Loading.close() ;
+                     $rootScope.Components.Confirm.isShow = false ;
+                  }
+               }
+            }
          }, 'complete': function ( XMLHttpRequest, textStatus ) {
-            if( typeof( complete ) == 'function' ) complete( XMLHttpRequest, textStatus ) ;
+            if( typeof( complete ) == 'function' )
+            {
+               try
+               {
+                  complete( XMLHttpRequest, textStatus ) ;
+               }
+               catch( e )
+               {
+                  $rootScope.Components.Confirm.isShow = true ;
+                  $rootScope.Components.Confirm.type = 1 ;
+                  $rootScope.Components.Confirm.title = 'System error' ;
+                  $rootScope.Components.Confirm.context = 'Javascript error: ' + e.message ;
+                  $rootScope.Components.Confirm.ok = function(){
+                     Loading.close() ;
+                     $rootScope.Components.Confirm.isShow = false ;
+                  }
+               }
+            }
             if( showLoading )
             {
                Loading.cancel() ;
@@ -70,7 +163,21 @@
             restBeforeSend( XMLHttpRequest ) ;
             if( typeof( before ) === 'function' )
             {
-               before( XMLHttpRequest ) ;
+               try
+               {
+                  before( XMLHttpRequest ) ;
+               }
+               catch( e )
+               {
+                  $rootScope.Components.Confirm.isShow = true ;
+                  $rootScope.Components.Confirm.type = 1 ;
+                  $rootScope.Components.Confirm.title = 'System error' ;
+                  $rootScope.Components.Confirm.context = 'Javascript error: ' + e.message ;
+                  $rootScope.Components.Confirm.ok = function(){
+                     Loading.close() ;
+                     $rootScope.Components.Confirm.isShow = false ;
+                  }
+               }
             }
          } } ) ;
       }

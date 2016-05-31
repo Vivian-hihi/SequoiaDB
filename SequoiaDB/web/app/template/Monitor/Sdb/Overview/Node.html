@@ -65,31 +65,41 @@
    <div create-timer="Timer"></div>
    <div class="Grid2" ng-grid2="NodeGridOptions" ng-container="{offsetY:-212}">
       <div class="Grid2Header">
-         <table class="">
-            <tbody>
-               <tr>
-                  <td class="Ellipsis">{{autoLanguage("状态")}}</td>
-                  <td class="Ellipsis" ng-repeat="fieldName in ShowKeyList track by $index" ng-click="SetOrderField(fieldName)">
-                     <i class="fa fa-caret-up" ng-if="OrderByField.indexOf(fieldName) >= 0"></i><i class="fa fa-caret-down" ng-if="OrderByField.indexOf('-'+fieldName) >= 0"></i>&nbsp;{{fieldName}}
-                  </td>
-               </tr>
-            </tbody>
-         </table>
-      </div>
-      <div style="margin-top:30px;">
-         <table class="">
+         <table>
             <colgroup>
                <col />
                <col ng-repeat="nodeName in ShowKeyList track by $index" />
             </colgroup>
             <tbody>
-               <tr class="" ng-repeat="nodeInfo in NodeList | orderBy:OrderByField">
-                  <td class="Ellipsis">
-                     <i class="fa fa-circle" style="color:#00CC66;" ng-if="nodeInfo['Status'] == 'Running'" data-desc="正常运行中"></i>
-                     <i class="fa fa-circle" style="color:#F9A937;" ng-if="nodeInfo['Status'] == 'Waiting'" data-desc="该节点处于waiting状态"></i>
+               <tr>
+                  <td>
+                     <div class="Ellipsis">{{autoLanguage("状态")}}</div>
                   </td>
-                  <td class="Ellipsis" ng-repeat="nodeName in ShowKeyList track by $index">
-                     {{nodeInfo[nodeName]}}
+                  <td style="cursor:pointer;" ng-repeat="fieldName in ShowKeyList track by $index" ng-click="SetOrderField(fieldName)">
+                     <div class="Ellipsis">
+                        <i class="fa fa-caret-up" ng-if="OrderByField.indexOf(fieldName) >= 0"></i><i class="fa fa-caret-down" ng-if="OrderByField.indexOf('-'+fieldName) >= 0"></i>&nbsp;{{fieldName}}
+                     </div>
+                  </td>
+               </tr>
+            </tbody>
+         </table>
+      </div>
+      <div class="Grid2Body">
+         <table>
+            <colgroup>
+               <col />
+               <col ng-repeat="nodeName in ShowKeyList track by $index" />
+            </colgroup>
+            <tbody>
+               <tr ng-repeat="nodeInfo in NodeList | orderBy:OrderByField">
+                  <td>
+                     <div class="Ellipsis">
+                        <i class="fa fa-circle" style="color:#00CC66;" ng-if="nodeInfo['Status'] == 'Running'" data-desc="正常运行中"></i>
+                        <i class="fa fa-circle" style="color:#F9A937;" ng-if="nodeInfo['Status'] == 'Waiting'" data-desc="该节点处于waiting状态"></i>
+                     </div>
+                  </td>
+                  <td ng-repeat="fieldName in ShowKeyList track by $index">
+                     <div class="Ellipsis">{{nodeInfo[fieldName]}}</div>
                   </td>
                </tr>
             </tbody>

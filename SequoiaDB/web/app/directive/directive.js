@@ -828,26 +828,37 @@
    });
 
    /*
-   <div class="Grid" style="border-bottom:1px solid #E3E7E8;" ng-grid="NodeGridOptions" ng-container="{offsetY:-212}">
-      <div class="GridHeader">
-         <table style="width:100%;" cellspacing="0">
+   <div class="Grid2" ng-grid2="xxx" ng-container="{}">
+      <div class="Grid2Header">
+         <table>
+            <colgroup>
+               <col />
+            </colgroup>
             <tbody>
                <tr>
-                  <td>xxxxx</td>
+                  <td>
+                     <div class="Ellipsis">xxxxx</div>
+                  </td>
                </tr>
             </tbody>
          </table>
       </div>
-      <table class="GridBody" style="width:100%;" cellspacing="0">
-         <colgroup>
-            <col />
-         </colgroup>
-         <tbody>
-            <tr>
-               <td>xxxxx</td>
-            </tr>
-         </tbody>
-      </table>
+      <div class="Grid2Body">
+         <table>
+            <colgroup>
+               <col />
+            </colgroup>
+            <tbody>
+               <tr>
+                  <td>
+                     <div class="Ellipsis">
+                        xxxx
+                     </div>
+                  </td>
+               </tr>
+            </tbody>
+         </table>
+      </div>
    </div>
    <div class="GridTool">
       <div class="ToolLeft">xxxxx</div>
@@ -855,6 +866,7 @@
    */
    //创建网格的指令(需要html构造)
    sacApp.directive( 'ngGrid2', function( $window, $rootScope, SdbFunction ){
+      var browserInfo = SdbFunction.getBrowserInfo() ;
       var dire = {
          restrict: 'A',
          scope: {
@@ -866,49 +878,35 @@
          },
          // 编译
          compile: function( element, attributes ){
-            //设置表格头列宽高
-            function setHeader( scope, gridEle, isFirefox )
+            //设置表格列宽
+            function setColumn( scope, gridEle, isFirefox )
             {
-               var bodyEle    = $( '> .GridBody:first', gridEle ) ;
-               var titleTdEle = $( '> .GridHeader:first > .GridTr:first > .GridTd', gridEle ) ;
-               var subTitleTdEle = $( '> .GridHeader:first > .GridTr:last > .GridTd', gridEle ) ;
-               var tdBorder   = numberCarry( $( titleTdEle[0] ).outerWidth() - $( titleTdEle[0] ).width() ) ;
-               var titleNum   = titleTdEle.length ;
-               var width      = parseInt( $( gridEle ).outerWidth() - numberCarry( $( gridEle ).outerWidth() - $( gridEle ).width() ) - titleNum * tdBorder ) ;
-               var titleWidth = scope.data ? scope.data.titleWidth : undefined ;
-               var bodyWidth = parseInt( $( bodyEle ).outerWidth() - titleNum * tdBorder ) ;
-               if( isFirefox == true  && scope.isFirst_firefox < 2 )
-               {
-                  bodyWidth -= 17 ;
-               }
-               var scrollWidth = width - bodyWidth ;
-               var sumWidth = 0 ;
-               var cursorTitleWidth = [] ;
+               var bodyDiv        = $( '> .Grid2Body', gridEle ) ;
+               var headerTable    = $( '> .Grid2Header > table', gridEle ) ;
+               var headerTd       = $( '> tbody:first > tr:first > td:first', headerTable ) ;
+               var bodyTable      = $( '> table', bodyDiv ).hide() ;
+               var headerTableCol = $( '> colgroup > col', headerTable ) ;
+               var bodyTableCol   = $( '> colgroup > col', bodyTable ) ;
+               var width          = bodyDiv.width() ;
+               var titleWidth     = scope.data ? scope.data.titleWidth : undefined ;
+               var titleNum       = headerTableCol.length ;
+               var tdBorder       = numberCarry( $( headerTd ).outerWidth() - $( headerTd ).width() ) ;
+               var borderWidth    = parseInt( $( bodyDiv ).outerWidth() - titleNum * tdBorder ) ;
+               //设置header表格的宽度
+               headerTable.width( width ) ;
+               //设置body表格的宽度
+               bodyTable.width( width ).show() ;
+               width = borderWidth ;
                if( typeof( titleWidth ) == 'undefined' || titleWidth == 'auto' )
                {
                   var aveWidth = parseInt( width / titleNum ) ;
-                  for( var i = 0; i < titleNum; ++i )
-                  {
-                     //标题
-                     var tmpTdWidth = aveWidth ;
-                     if( i + 1 == titleNum )
-                     {
-                        tmpTdWidth = width - sumWidth - scrollWidth ;
-                     }
-                     cursorTitleWidth.push( tmpTdWidth ) ;
-                     sumWidth += tmpTdWidth ;
-                  }
-                  for( var c = 0; c < titleNum; ++c )
-                  {
-                     $( titleTdEle[c] ).width( cursorTitleWidth[c] ) ;
-                     if( subTitleTdEle.length == titleNum )
-                     {
-                        $( subTitleTdEle[c] ).width( cursorTitleWidth[c] ) ;
-                     }
-                  }
+                  $( headerTableCol ).width( aveWidth ) ;
+                  $( bodyTableCol ).width( aveWidth ) ;
                }
                else
                {
+                  var sumWidth = 0 ;
+                  var cursorTitleWidth = [] ;
                   for( var index = 0; index < titleNum; ++index )
                   {
                      cursorTitleWidth.push( 0 ) ;
@@ -921,10 +919,6 @@
                         //标题
                         var tmpTdWidth = parseInt( titleWidth[index] ) ;
                         var bodyTdWidth = tmpTdWidth ;
-                        if( index + 1 == titleNum )
-                        {
-                           tmpTdWidth += scrollWidth ;
-                        }
                         cursorTitleWidth[index] = ( tmpTdWidth + 'px' ) ;
                         sumWidth += tmpTdWidth ;
                      }
@@ -944,7 +938,7 @@
                         var bodyTdWidth = tmpTdWidth ;
                         if( index == lastIndex )
                         {
-                           tmpTdWidth = width - sumWidth - scrollWidth ;
+                           tmpTdWidth = width - sumWidth ;
                         }
                         if( tmpTdWidth < 0 ) tmpTdWidth = 0 ;
                         cursorTitleWidth[index] = ( tmpTdWidth + 'px' ) ;
@@ -953,110 +947,57 @@
                   }
                   for( var c = 0; c < titleNum; ++c )
                   {
-                     $( titleTdEle[c] ).width( cursorTitleWidth[c] ) ;
-                     if( subTitleTdEle.length == titleNum )
-                     {
-                        $( subTitleTdEle[c] ).width( cursorTitleWidth[c] ) ;
-                     }
-                  }
-               }
-            }
-            //设置列宽
-            function setColumnWidth( scope, gridEle, isFirefox )
-            {
-               var bodyEle    = $( '> .GridBody:first', gridEle ) ;
-               var titleTdEle = $( '> .GridHeader:first > .GridTr:first > .GridTd', gridEle ) ;
-               var bodyTrEle  = $( '> .GridTr', bodyEle ) ;
-               var bodyTdEle  = $( '> .GridTd', bodyTrEle ) ;
-               var tdBorder   = numberCarry( $( titleTdEle[0] ).outerWidth() - $( titleTdEle[0] ).width() ) ;
-               var titleNum   = titleTdEle.length ;
-               var rowNum     = bodyTrEle.length ;
-               var width      = parseInt( $( gridEle ).outerWidth() - numberCarry( $( gridEle ).outerWidth() - $( gridEle ).width() ) - titleNum * tdBorder ) ;
-               var bodyWidth = parseInt( $( bodyEle ).outerWidth() - titleNum * tdBorder ) ;
-               if( isFirefox == true  && scope.isFirst_firefox < 2 )
-               {
-                  ++scope.isFirst_firefox ;
-                  bodyWidth -= 17 ;
-               }
-               var scrollWidth = width - bodyWidth ;
-               var titleWidth = scope.data.titleWidth ;
-               var sumWidth = 0 ;
-               var sumBodyWidth = 0 ;
-               var cursorBodyWidth  = [] ;
-               if( typeof( titleWidth ) == 'undefined' || titleWidth == 'auto' )
-               {
-                  var aveWidth = parseInt( width / titleNum ) ;
-                  for( var i = 0; i < titleNum; ++i )
-                  {
-                     //内容
-                     tmpTdWidth = aveWidth ;
-                     if( i + 1 == titleNum )
-                     {
-                        tmpTdWidth = bodyWidth - sumBodyWidth ;
-                     }
-                     cursorBodyWidth.push( tmpTdWidth + 'px' ) ;
-                     sumBodyWidth += tmpTdWidth ;
-                  }
-                  for( var r = 0; r < rowNum; ++r )
-                  {
-                     for( var c = 0; c < titleNum; ++c )
-                     {
-                        $( bodyTdEle[ r * titleNum + c ] ).width( cursorBodyWidth[c] ) ;
-                     }
-                  }
-               }
-               else
-               {
-                  var titleWidthLen = titleWidth.length ;
-                  for( var index = 0; index < titleWidthLen; ++index )
-                  {
-                     cursorBodyWidth.push( 0 ) ;
-                  }
-                  var lastIndex = 0 ;
-                  for( var index = 0; index < titleWidthLen; ++index )
-                  {
-                     if( typeof( titleWidth[index] ) == 'string' )
-                     {
-                        tmpTdWidth = parseInt( titleWidth[index] ) ;
-                        sumBodyWidth += tmpTdWidth ;
-                        cursorBodyWidth[index] = tmpTdWidth ;
-                        sumWidth += tmpTdWidth ;
-                     }
-                     else if( typeof( titleWidth[index] ) == 'number' )
-                     {
-                        lastIndex = index ;
-                     }
-                  }
-                  var lastSumWidth = width - sumWidth ;
-                  for( var index = 0; index < titleWidthLen; ++index )
-                  {
-                     if( typeof( titleWidth[index] ) == 'number' )
-                     {
-                        tmpTdWidth = parseInt( titleWidth[index] * lastSumWidth * 0.01 ) ;
-                        if( index == lastIndex )
-                        {
-                           tmpTdWidth = bodyWidth - sumBodyWidth ;
-                        }
-                        if( tmpTdWidth < 0 ) tmpTdWidth = 0 ;
-                        cursorBodyWidth[index] = tmpTdWidth ;
-                        sumBodyWidth += tmpTdWidth ;
-                     }
-                  }
-                  for( var r = 0; r < rowNum; ++r )
-                  {
-                     for( var c = 0; c < titleNum; ++c )
-                     {
-                        $( bodyTdEle[ r * titleNum + c ] ).width( cursorBodyWidth[c] ) ;
-                     }
+                     $( headerTableCol[c] ).outerWidth( cursorTitleWidth[c] ) ;
+                     $( bodyTableCol[c] ).outerWidth( cursorTitleWidth[c] ) ;
                   }
                }
             }
             return {
                pre: function preLink( scope, element, attributes ){
-                  //scope的一些初始化或者运算
+                  $( element ).parent().css( 'position', 'relative' ) ;
                },
                post: function postLink( scope, element, attributes ){
                   //绑定事件等
+                  var gridOnResize = function ( width, height ) {
+                     if( typeof( height ) == 'number' )
+                     {
+                        $( element ).css( 'height', height ) ;
+                     }
+                     setColumn( scope, element, ( browserInfo[0] == 'firefox' ) ) ;
+                  } ;
+                  if( scope.data )
+                  {
+                     scope.data.onResize = gridOnResize ;
+                  }
+                  setColumn( scope, element ) ;
+                  angular.element( $window ).bind( 'resize', gridOnResize ) ;
+                  var listener1 = $rootScope.$watch( 'onResize', function(){
+                     setTimeout( gridOnResize ) ;
+                  } ) ;
+                  var listener2 = scope.$watch( 'data', function(){
+                     //清除网格内容
+                     if( typeof( scope.data ) == 'object' )
+                     {
+                        setTimeout( function(){
+                           setColumn( scope, element ) ;
+                        } ) ;
+                     }
+                  } ) ;
+                  var listener3 = scope.$watch( 'data.titleWidth', function(){
+                     //清除网格内容
+                     if( typeof( scope.data ) == 'object' )
+                     {
+                        setTimeout( function(){
+                           setColumn( scope, element ) ;
+                        } ) ;
+                     }
+                  } ) ;
+                  scope.$on( '$destroy', function(){
+                     angular.element( $window ).unbind( 'resize', gridOnResize ) ;
+                     listener1() ;
+                     listener2() ;
+                     listener3() ;
+                  } ) ;
                }
             } ;
          }
@@ -3533,7 +3474,7 @@
       var menu = $( '<ul></ul>' ).addClass( 'dropdown-menu' ).appendTo( $( 'body' ) ) ;
       var mask = $( '<div></div>' ).addClass( 'mask-screen unalpha' ).appendTo( $( 'body' ) ).hide().on( 'click', function(){
          $( mask ).hide() ;
-         $( menu ).hide() ;
+         $( menu ).hide().css( { 'overflow-y': 'visible', 'height': 'auto' } ) ;
       } ) ;
       var dire = {
          restrict: 'A',
@@ -3545,7 +3486,7 @@
          },
          compile: function( element, attributes ){
             var menuHide = function(){
-               $( menu ).hide() ;
+               $( menu ).hide().css( { 'overflow-y': 'visible', 'height': 'auto' } ) ;
             }
             var maskHide = function(){
                $( mask ).hide() ;
@@ -3558,7 +3499,7 @@
                else
                {
                   $( mask ).hide() ;
-                  $( menu ).hide() ;
+                  $( menu ).hide().css( { 'overflow-y': 'visible', 'height': 'auto' } ) ;
                }
             }
             var onMove = function( ele ){
@@ -3577,8 +3518,26 @@
                left = left <= 0 ? 0 : left ;
                if( top + eleHeight + menuHeight > bodyHeight )
                {
-                  top = top - menuHeight - 3 ;
-                  top = top <= 0 ? 0 : top ;
+                  //判断按钮在页面的上面还是下面
+                  var isTop = top + parseInt( eleHeight * 0.5 ) <= ( bodyHeight * 0.5 ) ;
+                  if( isTop == true )
+                  {
+                     top = top + eleHeight ;
+                     $( menu ).css('overflow-y', 'auto').height( parseInt( ( bodyHeight - top - 20 ) * 0.8 ) ) ;
+                  }
+                  else
+                  {
+                     if( top - menuHeight - 3 > 0 )
+                     {
+                        top = top - menuHeight - 3 ;
+                     }
+                     else
+                     {
+                        menuHeight = parseInt( ( top - 20 ) * 0.8 ) ;
+                        $( menu ).css('overflow-y', 'auto').height( menuHeight ) ;
+                        top = top - menuHeight - 13 ;
+                     }
+                  }
                }
                else
                {
@@ -3753,7 +3712,7 @@
                      {
                         scope.Setting.currentTimer += 0.01 ;
                         var percent = ( scope.Setting.currentTimer / scope.Setting.interval * 100 ) ;
-                        scope.Setting.options.width =　percent > 100 ? 100 : percent + '%' ;
+                        scope.Setting.options.width =　percent > 100 ? 100 + '%' : percent + '%' ;
                         if( scope.Setting.currentTimer >= scope.Setting.interval )
                         {
                            if( typeof( scope.data.fn ) == 'function' )

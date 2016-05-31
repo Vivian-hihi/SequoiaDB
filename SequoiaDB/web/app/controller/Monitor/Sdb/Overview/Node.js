@@ -11,15 +11,17 @@
       $scope.moduleType =  moduleType ;
 
       $scope.NodeList = [] ;
-      $scope.NodeGridOptions = { 'titleWidth': [], 'order': true } ;
+      $scope.NodeGridOptions = { 'titleWidth': [] } ;
       $scope.ShowKeyList = [ 'NodeName', 'GroupName', 'IsPrimary', 'Role', 'TotalRecord', 'TotalLob', 'LSN' ] ;
       $scope.ShowKey = [] ;
       $scope.SelectMenu = [] ;
+      $scope.OrderByField = [] ;
 
       $scope.queryList = function( data, success, failed, error, complete ){
          SdbRest._postTest( './test/nodeList', success, failed, error ) ;
       }
-      $scope.OrderByField = [] ;
+      
+      //设置排序字段
       $scope.SetOrderField = function( fieldName ){
          var normal  = $scope.OrderByField.indexOf( fieldName ) ;
          var reverse = $scope.OrderByField.indexOf( '-' + fieldName ) ;
@@ -97,12 +99,12 @@
       //渲染网格显示的列
       var gridShowColumn = function(){
          $scope.NodeGridOptions['titleWidth'] = [] ;
-         $scope.NodeGridOptions['titleWidth'].push( '50px' ) ;
+         $scope.NodeGridOptions['titleWidth'].push( '40px' ) ;
          var widthPercent = 100 / $scope.ShowKeyList.length ;
          $.each( $scope.ShowKeyList, function( index, keyName ){
             $scope.NodeGridOptions['titleWidth'].push( widthPercent ) ;
          } ) ;
-         //$scope.NodeGridOptions.onResize() ;
+         $scope.NodeGridOptions.onResize() ;
       }
 
       //保存显示列
@@ -134,7 +136,7 @@
             $.each( keyList, function( index, key ){
                $scope.ShowKey.push( { 'key': key, 'show': $scope.ShowKeyList.indexOf( key ) >= 0 } ) ;
                $scope.SelectMenu.push( { 
-                  'html': $compile( '<label><div style="padding:5px 10px"><input type="checkbox" ng-model="ShowKey[\'' + index + '\'][\'show\']"/>&nbsp;' + key + '</div></label>' )( $scope ),
+                  'html': $compile( '<label><div class="Ellipsis" style="padding:5px 10px"><input type="checkbox" ng-model="ShowKey[\'' + index + '\'][\'show\']"/>&nbsp;' + key + '</div></label>' )( $scope ),
                   'onClick': function(){}
                } ) ;
             } ) ;

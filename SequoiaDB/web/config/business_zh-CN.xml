@@ -3,12 +3,4 @@
 		<BusinessType>sequoiadb</BusinessType>
 		<BusinessDesc>SequoiaDB数据库</BusinessDesc>
 	</FILLER>
-   <FILLER>
-      <BusinessType>sequoiasql</BusinessType>
-      <BusinessDesc>SequoiaSQL引擎</BusinessDesc>
-   </FILLER>
-   <FILLER>
-      <BusinessType>zookeeper</BusinessType>
-      <BusinessDesc>ZooKeeper分布式服务框架</BusinessDesc>
-   </FILLER>
 </BusinessList>

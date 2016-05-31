@@ -279,6 +279,14 @@
          }
       }
 
+      g.close = function(){
+         counter = 0 ;
+         clearInterval( timer ) ;
+         timer = null ;
+         icon.detach() ;
+         mask.detach() ;
+      }
+
       angular.element( $window ).bind( 'resize', function(){
          g.resize() ;
       } ) ;

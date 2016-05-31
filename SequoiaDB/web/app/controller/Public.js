@@ -279,7 +279,7 @@
                      'list': []
                   }
                ]
-            },
+            },/*
             {
                'text': $scope.autoLanguage( '监控' ),
                'module': 'Monitor',
@@ -290,7 +290,7 @@
                      'list': []
                   }
                ]
-            },
+            },*/
             {
                'text': $scope.autoLanguage( '部署' ),
                'module': 'Deploy',
