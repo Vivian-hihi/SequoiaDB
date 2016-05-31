@@ -62,11 +62,13 @@ Windows32:
 	
 	snappy 1.1.0:
 		cd snappy
-		scons
+        scons [--dd|--release]
+        By default it will compile in release mode.
 		
 	lz4 1.7.1:
 		cd lz4
-		scons
+        scons [--dd|--release]
+        By default it will compile in release mode.
 		
 	zlib 1.2.8:
 		cd zlib
@@ -75,7 +77,8 @@ Windows32:
 			libzlib.lib
 	The second way to build:
 		cd zlib
-		scons
+        scons [--dd|--release]
+        By default it will compile in release mode.
 
 Windows64:
         Building Prerequisites:
@@ -129,12 +132,14 @@ Windows64:
                         libeay32.dll  libeay32.exp  libeay32.lib  libeay32.pdb  ssleay32.dll  ssleay32.exp  ssleay32.lib  ssleay32.pdb
 
 		snappy 1.1.0:
-			cd snappy
-			scons
+            cd snappy
+            scons [--dd|--release]
+            By default it will compile in release mode.
 			
 		lz4 1.7.1:
 			cd lz4
-			scons
+            scons [--dd|--release]
+            By default it will compile in release mode.
 			
 		zlib 1.2.8:
 			cd zlib
@@ -143,7 +148,8 @@ Windows64:
 				libzlib.lib
 		The second way to build:
 			cd zlib
-			scons
+            scons [--dd|--release]
+            By default it will compile in release mode.
 
 Linux32:
         Building Prerequisites:
