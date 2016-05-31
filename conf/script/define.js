@@ -84,6 +84,7 @@ var InstallHostName                        = "InstallHostName" ;
 var InstallPacket                          = "InstallPacket" ;
 var InstallPath                            = "InstallPath" ;
 var InstallSvcName                         = "InstallSvcName" ;
+var Olap                                   = "olap";
 var OS                                     = "OS" ;
 var OM                                     = "OM" ;
 var OMA                                    = "OMA" ;
@@ -99,10 +100,12 @@ var Rc                                     = "Rc" ;
 var Reachable                              = "Reachable" ;
 var Result                                 = "Result" ;
 var Release                                = "Release" ;
+var Role                                   = "role" ;
 var Safety                                 = "Safety" ;
 var SdbUserGroup                           = "SdbUserGroup" ;
 var SdbPasswd                              = "SdbPasswd" ;
 var SdbUser                                = "SdbUser" ;
+var Sequoiasql                             = "sequoiasql";
 var Service                                = "Service" ;
 var ServiceName                            = "ServiceName" ;
 var DbName                                 = "DbName" ;
@@ -137,6 +140,7 @@ var Other                                  = "Other" ;
 var CalendarTime                           = "CalendarTime" ;
 var NetCards                               = "NetCards" ;
 var ClusterName                            = "ClusterName" ;
+var BusinessType                           = "BusinessType";
 var BusinessName                           = "BusinessName" ;
 var UserTag                                = "UserTag" ;
 
@@ -182,6 +186,23 @@ var BusinessName3                          = "businessname" ;
 var UserTag3                               = "usertag" ;
 
 var DefaultPort2                           = "defaultPort" ;
+
+// SequoiaSQL OLAP
+var Master                                 = "master";
+var Standby                                = "standby";
+var Segment                                = "segment";
+var MasterHost                             = "master_host";
+var MasterPort                             = "master_port";
+var MasterDir                              = "master_dir";
+var StandbyHost                            = "standby_host";
+var SegmentPort                            = "segment_port";
+var SegmentDir                             = "segment_dir";
+var SegmentHosts                           = "segment_hosts";
+var HdfsUrl                                = "hdfs_url";
+var MasterTempDir                          = "master_temp_dir";
+var SegmentTempDir                         = "segment_temp_dir";
+var InstallDir                             = "install_dir";
+var IsSingle                               = "is_single";
 
 // deploy mode
 var  OMA_DEPLOY_CLUSTER                    = "distribution" ;

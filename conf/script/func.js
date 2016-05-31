@@ -74,6 +74,13 @@ var SdbError = function(err, errmsg) {
 
     if (typeof(err) == "number") {
         this.errcode = err;
+        if (err < 0) {
+            if (this.message != "") {
+                this.message += ", " + getErr(err);
+            } else {
+                this.message = getErr(err);
+            }
+        }
     } else if (typeof(err) == "string") {
         this.errcode = SDB_SYS;
         this.message = err;
@@ -1637,3 +1644,246 @@ function getPacketName( packet )
    }
    return packetname ;
 }
+
+/******************************************************************************
+type assert series
+@description: judge type of the obj
+@author: David Li
+@date: 2016/5/27
+@return: true if obj is instance of the type, otherwise false
+******************************************************************************/
+function isTypeOf(obj, type) {
+    if (obj != undefined && typeof(obj) == type) {
+        return true;
+    }
+    return false;
+};
+
+function isString(obj) {
+    return isTypeOf(obj, "string");
+};
+
+function isNumber(obj) {
+    return isTypeOf(obj, "number");
+};
+
+function isBool(obj) {
+    return isTypeOf(obj, "boolean");
+};
+
+function isObject(obj) {
+    return isTypeOf(obj, "object");
+};
+
+function isArray(obj) {
+    return isObject(obj) && (obj instanceof Array);
+};
+
+function isNotNullString(obj) {
+    if (isString(obj) && obj != "") {
+        return true;
+    }
+    return false;
+};
+
+/******************************************************************************
+Extension methods for Ssh
+@description: 
+@author: David Li
+@date: 2016/5/27
+usage:
+    Ssh.isPathExist(path);              // true if path exists, false if not exists, throw SdbError if other error
+    Ssh.isFile(path);                   // true if path is file, false if not file, throw SdbError if path not exists or other error
+    Ssh.isDirectory(path);              // true if path is directory, false if not directory, throw SdbError if path not exists or other error
+    Ssh.isEmptyDirectory(path);         // true if path is empty directory, false if not empty directory, throw SdbError if path not exists or other error
+    Ssh.mkdir(path);                    // throw SdbError if failed
+    Ssh.remove(path, force, recursive); // throw SdbError if failed
+    Ssh.chmod(path, mode, recursive)    // throw SdbError if failed
+******************************************************************************/
+Ssh.prototype.isPathExist = function Ssh_isPathExist(path) {
+    if (SYS_TYPE != SYS_LINUX) {
+        throw new SdbError(SDB_SYS, "unsupported system");
+    }
+
+    var shell = "ls " + path;
+    try { this.exec(shell); } catch(e) {}
+
+    if (this.getLastRet() == 0) {
+        return true;
+    } else {
+        var msg = this.getLastOut();
+        if (msg.indexOf("No such file or directory") != -1) {
+            return false;
+        }
+
+        var cr = msg.lastIndexOf("\n");
+        if (cr != -1) {
+            msg = msg.substring(0, cr);
+        }
+        throw new SdbError(SDB_SYS, msg);
+    }
+};
+
+Ssh.prototype.isFile = function Ssh_isFile(path) {
+    if (SYS_TYPE != SYS_LINUX) {
+        throw new SdbError(SDB_SYS, "unsupported system");
+    }
+
+    if (!this.isPathExist(path)) {
+        throw new SdbError(SDB_SYS, "No such file or directory");
+    }
+
+    var shell = "ls " + path + "/";
+    try { this.exec(shell); } catch(e) {}
+
+    if (this.getLastRet() == 0) {
+        return false; // directory
+    } else {
+        var msg = this.getLastOut();
+        if (msg.indexOf("Not a directory") != -1) {
+            return true;
+        }
+
+        var cr = msg.lastIndexOf("\n");
+        if (cr != -1) {
+            msg = msg.substring(0, cr);
+        }
+        throw new SdbError(SDB_SYS, msg);
+    }
+};
+
+Ssh.prototype.isDirectory = function Ssh_isDirectory(path) {
+    if (SYS_TYPE != SYS_LINUX) {
+        throw new SdbError(SDB_SYS, "unsupported system");
+    }
+
+    if (!this.isPathExist(path)) {
+        throw new SdbError(SDB_SYS, "No such file or directory");
+    }
+
+    var shell = "ls " + path + "/";
+    try { this.exec(shell); } catch(e) {}
+
+    if (this.getLastRet() == 0) {
+        return true; // directory
+    } else {
+        var msg = this.getLastOut();
+        if (msg.indexOf("Not a directory") != -1) {
+            return false;
+        }
+
+        var cr = msg.lastIndexOf("\n");
+        if (cr != -1) {
+            msg = msg.substring(0, cr);
+        }
+        throw new SdbError(SDB_SYS, msg);
+    }
+};
+
+Ssh.prototype.isEmptyDirectory = function Ssh_isEmptyDirectory(path) {
+    if (SYS_TYPE != SYS_LINUX) {
+        throw new SdbError(SDB_SYS, "unsupported system");
+    }
+
+    if (!this.isDirectory(path)) {
+        return false;
+    }
+
+    var shell = "ls " + path + "/*";
+    try { this.exec(shell); } catch(e) {}
+
+    if (this.getLastRet() == 0) {
+        return false;
+    } else {
+        var msg = this.getLastOut();
+        if (msg.indexOf("No such file or directory") != -1) {
+            return true;
+        }
+
+        var cr = msg.lastIndexOf("\n");
+        if (cr != -1) {
+            msg = msg.substring(0, cr);
+        }
+        throw new SdbError(SDB_SYS, msg);
+    }
+};
+
+Ssh.prototype.mkdir = function Ssh_mkdir(path) {
+    if (SYS_TYPE != SYS_LINUX) {
+        throw new SdbError(SDB_SYS, "unsupported system");
+    }
+
+    var shell = "mkdir -p " + path;
+    try { this.exec(shell); } catch(e) {}
+
+    if (this.getLastRet() == 0) {
+        return;
+    } else {
+        var msg = this.getLastOut();
+        var cr = msg.lastIndexOf("\n");
+        if (cr != -1) {
+            msg = msg.substring(0, cr);
+        }
+        throw new SdbError(SDB_SYS, msg);
+    }
+};
+
+Ssh.prototype.remove = function Ssh_remove(path, force, recursive) {
+    if (SYS_TYPE != SYS_LINUX) {
+        throw new SdbError(SDB_SYS, "unsupported system");
+    }
+
+    var shell = "rm ";
+    if (isBool(force) && force) {
+        shell += " -f ";
+    }
+    if (isBool(recursive) && recursive) {
+        shell += " -r ";
+    }
+    shell += path;
+
+    try { this.exec(shell); } catch(e) {}
+
+    if (this.getLastRet() == 0) {
+        return;
+    } else {
+        var msg = this.getLastOut();
+        var cr = msg.lastIndexOf("\n");
+        if (cr != -1) {
+            msg = msg.substring(0, cr);
+        }
+        throw new SdbError(SDB_SYS, msg);
+    }
+};
+
+Ssh.prototype.chmod = function Ssh_chmod(path, mode, recursive) {
+    if (SYS_TYPE != SYS_LINUX) {
+        throw new SdbError(SDB_SYS, "unsupported system");
+    }
+
+    if (!isNotNullString(path)) {
+        throw new SdbError(SDB_INVALIDARG, "invalid path: " + path);
+    }
+
+    if (!isNumber(mode)) {
+        throw new SdbError(SDB_INVALIDARG, "mode should be number");
+    }
+
+    var shell = "chmod ";
+    if (isBool(recursive) && recursive) {
+        shell += "-R ";
+    }
+    shell += mode + " " + path;
+    try { this.exec(shell); } catch(e) {}
+
+    if (this.getLastRet() == 0) {
+        return;
+    } else {
+        var msg = this.getLastOut();
+        var cr = msg.lastIndexOf("\n");
+        if (cr != -1) {
+            msg = msg.substring(0, cr);
+        }
+        throw new SdbError(SDB_SYS, msg);
+    }
+};
