@@ -75,7 +75,6 @@ namespace engine
    INT32 OmSsqlOlapNode::_init( const BSONObj& bsonNode, OmHost& host, OmCluster& cluster )
    {
       INT32 rc = SDB_OK ;
-      string hostName ;
       string role ;
       string port ;
       string dataDir ;
@@ -83,11 +82,8 @@ namespace engine
       string installDir ;
       string isSingle ;
 
-      hostName = bsonNode.getStringField( OM_BSON_FIELD_HOST_NAME ) ;
       role = bsonNode.getStringField( OM_SSQL_OLAP_CONF_ROLE ) ;
       installDir = bsonNode.getStringField( OM_SSQL_OLAP_CONF_INSTALL_DIR ) ;
-
-      SDB_ASSERT( _hostName == hostName, "invalid host name") ;
 
       if ( OM_SSQL_OLAP_MASTER == role || OM_SSQL_OLAP_STANDBY == role )
       {

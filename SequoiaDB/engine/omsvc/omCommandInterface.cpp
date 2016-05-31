@@ -817,7 +817,8 @@ namespace engine
    }
 
    INT32 omRestCommandBase::_getBusinessType( const string &businessName,
-                                              string &businessType ) 
+                                              string &businessType,
+                                              string &deployMode ) 
    {
       INT32 rc = SDB_OK ;
       BSONObj selector ;
@@ -826,7 +827,8 @@ namespace engine
       BSONObj hint ;
       SINT64 contextID = -1 ;
 
-      selector = BSON( OM_BUSINESS_FIELD_TYPE << 1 ) ;
+      selector = BSON( OM_BUSINESS_FIELD_TYPE << 1 
+                    << OM_BUSINESS_FIELD_DEPLOYMOD << 1) ;
       matcher = BSON( OM_BUSINESS_FIELD_NAME << businessName ) ;
       rc = rtnQuery( OM_CS_DEPLOY_CL_BUSINESS, selector, matcher, order, hint, 
                      0, _cb, 0, -1, _pDMSCB, _pRTNCB, contextID );
@@ -851,6 +853,7 @@ namespace engine
 
          BSONObj record( buffObj.data() ) ;
          businessType = record.getStringField( OM_BUSINESS_FIELD_TYPE ) ;
+         deployMode = record.getStringField( OM_BUSINESS_FIELD_DEPLOYMOD ) ;
          break ;
       }
    done:

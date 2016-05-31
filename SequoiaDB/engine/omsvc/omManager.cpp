@@ -399,7 +399,8 @@ namespace engine
 
    INT32 _omManager::_getBussinessInfo( const string &businessName, 
                                         string &businessType, 
-                                        string &clusterName )
+                                        string &clusterName,
+                                        string &deployMode )
    {
       INT32 rc = SDB_OK ;
       BSONObj empty ;
@@ -424,14 +425,16 @@ namespace engine
          BSONObj result( buffObj.data() ) ;
          businessType = result.getStringField( OM_BUSINESS_FIELD_TYPE ) ;
          clusterName  = result.getStringField( OM_BUSINESS_FIELD_CLUSTERNAME ) ;
+         deployMode   = result.getStringField( OM_BUSINESS_FIELD_DEPLOYMOD ) ;
       }
 
-      if ( "" == businessType || "" == clusterName )
+      if ( "" == businessType || "" == clusterName || "" == deployMode )
       {
          rc = SDB_INVALIDARG ;
-         PD_LOG( PDERROR, "business info is invalid:name=%s,type=%s,cluster=%s",
+         PD_LOG( PDERROR, "business info is invalid:name=%s,type=%s,cluster=%s,"
+                 "deployMode=%s",
                  businessName.c_str(), businessType.c_str(), 
-                 clusterName.c_str() ) ;
+                 clusterName.c_str(), deployMode.c_str() ) ;
          goto error ;
       }
    done:
@@ -500,7 +503,8 @@ namespace engine
 
    INT32 _omManager::_appendBusinessInfo( const string &businessName, 
                                           const string &businessType, 
-                                          const string &clusterName )
+                                          const string &clusterName,
+                                          const string &deployMode )
    {
       pmdEDUCB *cb = pmdGetThreadEDUCB() ;
       INT32 rc     = SDB_OK ;
@@ -510,7 +514,8 @@ namespace engine
       BSONObj hint ;
       matcher = BSON( OM_CONFIGURE_FIELD_BUSINESSNAME << businessName ) ;
       tmp     = BSON( OM_CONFIGURE_FIELD_BUSINESSTYPE << businessType
-                      << OM_CONFIGURE_FIELD_CLUSTERNAME << clusterName ) ;
+                      << OM_CONFIGURE_FIELD_CLUSTERNAME << clusterName
+                      << OM_CONFIGURE_FIELD_DEPLOYMODE << deployMode ) ;
       updator = BSON( "$set" << tmp ) ;
       rc = rtnUpdate( OM_CS_DEPLOY_CL_CONFIGURE, matcher, updator, hint,
                       0, cb ) ;
@@ -580,6 +585,7 @@ namespace engine
          string businessName ;
          string businessType ;
          string clusterName ;
+         string deployMode ;
          rtnContextBuf buffObj ;
          rc = rtnGetMore( contextID, 1, buffObj, cb, pRtnCB ) ;
          if ( rc )
@@ -596,10 +602,10 @@ namespace engine
 
          BSONObj result( buffObj.data() ) ;
          businessName = result.getStringField(OM_CONFIGURE_FIELD_BUSINESSNAME) ;
-         rc = _getBussinessInfo( businessName, businessType, clusterName ) ;
+         rc = _getBussinessInfo( businessName, businessType, clusterName, deployMode ) ;
          PD_RC_CHECK( rc, PDERROR, "get business info failed:business=%s,rc=%d",
                       businessName.c_str(), rc ) ;
-         rc = _appendBusinessInfo( businessName, businessType, clusterName ) ;
+         rc = _appendBusinessInfo( businessName, businessType, clusterName, deployMode ) ;
          PD_RC_CHECK( rc, PDERROR, "append business info failed:business=%s,"
                       "rc=%d", businessName.c_str(), rc ) ;
       }

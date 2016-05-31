@@ -140,7 +140,8 @@ namespace engine
                                              const string &businessName ) ;
 
          INT32             _getBusinessType( const string &businessName ,
-                                             string &businessType ) ;
+                                             string &businessType,
+                                             string &deployMode ) ;
 
          BOOLEAN           _isClusterExist( const string &clusterName ) ;
          BOOLEAN           _isBusinessExist( const string &clusterName, 

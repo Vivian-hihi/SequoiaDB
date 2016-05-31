@@ -139,11 +139,13 @@ namespace engine
 
          INT32             _appendBusinessInfo( const string &businessName, 
                                                 const string &businessType, 
-                                                const string &clusterName ) ;
+                                                const string &clusterName,
+                                                const string &deployMode ) ;
 
          INT32             _getBussinessInfo( const string &businessName, 
                                               string &businessType, 
-                                              string &clusterName ) ;
+                                              string &clusterName,
+                                              string &deployMode ) ;
 
          INT32             _updateConfTable() ;
          INT32             _updateBusinessTable() ;

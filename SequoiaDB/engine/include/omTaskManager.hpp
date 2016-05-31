@@ -141,6 +141,7 @@ namespace engine
                                              const string &businessName,
                                              const string &businessType,
                                              const string &clusterName,
+                                             const string &deployMode,
                                              BSONObj &oneNode ) ;
 
          INT32             _updateBizHostInfo( const string &businessName ) ;

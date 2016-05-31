@@ -727,6 +727,7 @@ namespace engine
                                               const string &businessName,
                                               const string &businessType,
                                               const string &clusterName,
+                                              const string &deployMode,
                                               BSONObj &oneNode )
    {
       pmdEDUCB *cb = pmdGetThreadEDUCB() ;
@@ -742,6 +743,7 @@ namespace engine
                           << OM_CONFIGURE_FIELD_HOSTNAME << hostName 
                           << OM_CONFIGURE_FIELD_BUSINESSTYPE << businessType
                           << OM_CONFIGURE_FIELD_CLUSTERNAME << clusterName
+                          << OM_CONFIGURE_FIELD_DEPLOYMODE << deployMode
                           << OM_CONFIGURE_FIELD_CONFIG << arrayBuilder.arr() ) ;
       rc = rtnInsert( OM_CS_DEPLOY_CL_CONFIGURE, obj, 1, 0, cb );
       if ( rc )
@@ -810,12 +812,13 @@ namespace engine
       string businessName ;
       string businessType ;
       string clusterName ;
+      string deployMode ;
       BSONObj configs ;
       INT32 rc      = SDB_OK ;
       businessName  = taskInfoValue.getStringField( OM_BSON_BUSINESS_NAME ) ;
       businessType  = taskInfoValue.getStringField( OM_BSON_BUSINESS_TYPE ) ;
-      clusterName   = taskInfoValue.getStringField( 
-                                                 OM_BSON_FIELD_CLUSTER_NAME ) ;
+      clusterName   = taskInfoValue.getStringField( OM_BSON_FIELD_CLUSTER_NAME ) ;
+      deployMode    = taskInfoValue.getStringField( OM_BSON_DEPLOY_MOD ) ;
       configs       = taskInfoValue.getObjectField( OM_BSON_FIELD_CONFIG ) ;
       {
          BSONObjIterator iter( configs ) ;
@@ -840,7 +843,7 @@ namespace engine
             else
             {
                rc = _insertConfigure( hostName, businessName, businessType, 
-                                      clusterName, oneNode ) ;
+                                      clusterName, deployMode, oneNode ) ;
                if ( SDB_OK != rc )
                {
                   PD_LOG( PDERROR, "insert configure failed:host=%s,"

@@ -3847,11 +3847,12 @@ namespace engine
             while ( iter.more() )
             {  
                string businessType ;
+               string deployMode ;
                BSONObjBuilder innerBuilder ;
                BSONElement ele     = iter.next() ;
 
                innerBuilder.appendElements( ele.embeddedObject() ) ;
-               rc = _getBusinessType( businessName, businessType ) ;
+               rc = _getBusinessType( businessName, businessType, deployMode ) ;
                if ( SDB_OK != rc )
                {
                   PD_LOG( PDERROR, "failed to get businessType:businessName=%s",
@@ -3859,6 +3860,7 @@ namespace engine
                   goto error ;
                }
                innerBuilder.append( OM_BSON_BUSINESS_TYPE, businessType ) ;
+               innerBuilder.append( OM_BUSINESS_FIELD_DEPLOYMOD, deployMode ) ;
                innerBuilder.append( OM_BSON_BUSINESS_NAME, businessName ) ;
                arrayBuilder.append( innerBuilder.obj() ) ;
             }
@@ -6406,6 +6408,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       string businessName ;
       string businessType ;
+      string deployMode ;
       string hostName ;
       simpleHostInfo hostInfo ;
       BOOLEAN isHostExist = FALSE ;
@@ -6421,7 +6424,7 @@ namespace engine
       }
 
       businessName = record.getStringField( OM_CONFIGURE_FIELD_BUSINESSNAME ) ;
-      rc = _getBusinessType( businessName, businessType ) ;
+      rc = _getBusinessType( businessName, businessType, deployMode ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "get businessType failed:business=%s,rc=%d", 
