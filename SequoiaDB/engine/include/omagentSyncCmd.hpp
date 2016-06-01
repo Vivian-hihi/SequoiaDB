@@ -127,7 +127,9 @@ namespace engine
       public:
          _omaUpdateHostsInfo () ;
          ~_omaUpdateHostsInfo () ;
-         
+
+         virtual BOOLEAN needCheckBusiness() const { return FALSE ; }
+
       public:
          virtual const CHAR * name () { return OMA_CMD_UPDATE_HOSTS ; }
          virtual INT32 init ( const CHAR *pInstallInfo ) ;
