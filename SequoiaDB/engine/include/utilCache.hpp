@@ -474,7 +474,7 @@ namespace engine
                                           UTIL_CACHEUNIT_PAGE_TIMEOUT ) ;
 
          UINT32         getBGDirtyRatio() const { return _bgDirtyRatio ; }
-         UINT32         getDirtyTimeout() const { return _dirtyTimeout } ;
+         UINT32         getDirtyTimeout() const { return _dirtyTimeout ; }
          UINT32         getBGFreeRatio() const { return _bgFreeRatio ; }
          UINT32         getPageTimeout() const { return _pageTimeout ; }
 

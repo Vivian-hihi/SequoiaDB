@@ -74,7 +74,7 @@ namespace engine
       _endLSN = right._endLSN ;
       _lsnNum = right._lsnNum ;
 
-      _first.size = 0 ;
+      _first._size = 0 ;
       _first._pBuff = NULL ;
 
       UINT32 pos = right.beginBlock() ;
@@ -331,7 +331,7 @@ namespace engine
       UINT32 rightPos = right.beginBlock() ;
       while( NULL != ( pData = right.nextBlock( blockSz, rightPos ) ) )
       {
-         rc = write( pData, offset, blockSz ) ;
+         rc = load( pData, offset, blockSz ) ;
          if ( rc )
          {
             PD_LOG( PDERROR, "Copy data failed, rc: %d", rc ) ;
@@ -425,7 +425,7 @@ namespace engine
       _maxCacheSize = 0 ;
    }
 
-   _utilCacheMgr::_utilCacheMgr()
+   _utilCacheMgr::~_utilCacheMgr()
    {
       fini() ;
    }
@@ -1244,7 +1244,7 @@ namespace engine
          goto error ;
       }
       /// write to page
-      rc = _pPage->write( pBuff, 0, readLen ) ;
+      rc = _pPage->load( pBuff, offset, readLen ) ;
       if ( rc )
       {
          PD_LOG( PDERROR, "Write data to page failed, rc: %d", rc ) ;
@@ -1659,6 +1659,10 @@ namespace engine
 
       for ( UINT32 i = 0 ; i < _bucketSize ; ++i )
       {
+         if ( _closed )
+         {
+            break ;
+         }
          pBucket = _vecBucket[ i ] ;
          pBucket->lock( SHARED ) ;
          utilCacheBucket::MAP_BLK_PAGE* pPages = pBucket->getPages() ;
@@ -1724,6 +1728,7 @@ namespace engine
          totalPages += ( hasSync ? 1 : 0 ) ;
          ++it ;
       }
+      pageMap.clear() ;
 
       return totalPages ;
    }
@@ -1744,6 +1749,10 @@ namespace engine
 
       for ( UINT32 i = 0 ; i < _bucketSize ; ++i )
       {
+         if ( _closed )
+         {
+            break ;
+         }
          pBucket = _vecBucket[ i ] ;
          pBucket->lock( EXCLUSIVE ) ;
          pPages = pBucket->getPages() ;
