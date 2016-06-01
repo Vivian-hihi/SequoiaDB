@@ -38,14 +38,14 @@ db.collectionspace.collection.update(&lt;rule&gt;,[cond],[hint])</pre>
     使用 [$unset](SdbDoc_Cn/reference/operator/update_operator/unset.html) 删除记录的字段名。下面的操作是删除集合 bar 中所有含有 age 字段的记录，如果记录中没有 age 字段，跳过。
 
     <pre class="prettyprint lang-javascript">
-    > db.foo.bar.update({[$unset](SdbDoc_Cn/reference/operator/update_operator/unset.html):{age:""}})</pre>
+    > db.foo.bar.update({$unset:{age:""}})</pre>
 
 -   数组元素更新
 
     如果需要更新数组中的元素，SequoiaDB使用点操作符（.），数组下标从0开始。下面的操作是修改数组字段 arr 的第二个元素的值，将它的值添加为5：
 
     <pre class="prettyprint lang-javascript">
-    > db.foo.bar.update({[$inc](SdbDoc_Cn/reference/operator/update_operator/inc.html):{"arr.1":5}})</pre>
+    > db.foo.bar.update({$inc:{"arr.1":5}})</pre>
 
 -   hint 参数
 
