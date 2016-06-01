@@ -140,7 +140,6 @@ namespace engine
       PD_TRACE_EXITRC ( SDB_STARTDICTCREATORJOB, rc ) ;
       return rc ;
    error :
-      SDB_OSS_DEL pJob ;
       goto done ;
    }
 
