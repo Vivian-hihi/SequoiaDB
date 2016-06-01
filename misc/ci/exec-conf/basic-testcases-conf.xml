@@ -1,6 +1,6 @@
 <shell>
     <machine1>
-        <testsuite>collectionAlter</testsuite>
+        <testsuite>alterCL</testsuite>
         <testsuite>domain</testsuite>
         <testsuite>createIndex</testsuite>
     </machine1>
