@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project name="hadoop-connector" default="jar" >
+<project name="hadoop-connector" default="jar" basedir=".">
 	<property name="build.dir"  value="${basedir}/build"/>
 	<property name="java.driver.jar" value="${basedir}/../../java/sequoiadb.jar"/>		
 	
