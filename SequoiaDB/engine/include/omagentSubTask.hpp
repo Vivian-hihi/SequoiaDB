@@ -48,9 +48,10 @@
 using namespace std ;
 using namespace bson ;
 
-#define OMA_TASK_NAME_ADD_HOST_SUB              "add host sub task"
-#define OMA_TASK_NAME_INSTALL_DB_BUSINESS_SUB   "install db business sub task"
-#define OMA_TASK_NAME_INSTALL_ZN_BUSINESS_SUB   "install zookeeper business sub task"
+#define OMA_TASK_NAME_ADD_HOST_SUB                    "add host sub task"
+#define OMA_TASK_NAME_INSTALL_DB_BUSINESS_SUB         "install db business sub task"
+#define OMA_TASK_NAME_INSTALL_ZN_BUSINESS_SUB         "install zookeeper business sub task"
+#define OMA_TASK_NAME_INSTALL_SSQL_OLAP_BUSINESS_SUB  "install sequoiasql olap business sub task"
 
 namespace engine
 {
@@ -125,7 +126,20 @@ namespace engine
          _omaInstZNBusTask    *_pTask ;
    } ;
    typedef _omaInstZNBusSubTask omaInstZNBusSubTask ;
-   
+
+   class _omaInstallSsqlOlapBusSubTask: public _omaTask
+   {
+      public:
+         _omaInstallSsqlOlapBusSubTask( INT64 taskID ) ;
+         virtual ~_omaInstallSsqlOlapBusSubTask() ;
+
+      public:
+         INT32 init( const BSONObj &info, void *ptr = NULL ) ;
+         INT32 doit() ;
+
+      private:
+         _omaInstallSsqlOlapBusTask* _mainTask ;
+   } ;
 }
 
 

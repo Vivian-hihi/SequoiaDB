@@ -429,6 +429,7 @@ function createTmpDir( ssh )
         {
            str = "mkdir -p " + dirs[i] ;
            ssh.exec( str ) ;
+           ssh.exec("chmod -R 777 " + dirs[i]);
         }
       }
       else

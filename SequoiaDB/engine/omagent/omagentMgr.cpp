@@ -1326,7 +1326,8 @@ namespace engine
       OMA_TASK_TYPE taskType = OMA_TASK_END ;
       BSONObj infoObj ;
       const CHAR *pBusinessType = NULL ;
-      
+      const CHAR *pDeployMode = NULL ;
+
       // get task type
       rc = omaGetIntElement( obj, OMA_FIELD_TASKTYPE, num ) ;
       PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
@@ -1353,6 +1354,13 @@ namespace engine
          PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
                    "Get field[%s] failed, rc: %d",
                    OMA_FIELD_BUSINESSTYPE, rc ) ;
+         // deploy mode
+         rc = omaGetStringElement( infoObj, OMA_FIELD_DEPLOYMOD,
+                                   &pDeployMode ) ;
+         PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
+                   "Get field[%s] failed, rc: %d",
+                   OMA_FIELD_DEPLOYMOD, rc ) ;
+
          if ( OMA_TASK_ADD_BUS == taskType )
          {
             if ( string(OMA_BUS_TYPE_SEQUOIADB) == string(pBusinessType) )
@@ -1363,6 +1371,12 @@ namespace engine
             else if ( string(OMA_BUS_TYPE_ZOOKEEPER) == string(pBusinessType) )
             {
                *type = OMA_TASK_INSTALL_ZN ;
+               goto done ;
+            }
+            else if ( string(OMA_BUS_TYPE_SEQUOIASQL) == string(pBusinessType) &&
+                      string(OM_SEQUOIASQL_DEPLOY_OLAP) == string(pDeployMode) )
+            {
+               *type = OMA_TASK_INSTALL_SSQL_OLAP ;
                goto done ;
             }
             else
@@ -1383,6 +1397,12 @@ namespace engine
             else if ( string(OMA_BUS_TYPE_ZOOKEEPER) == string(pBusinessType) )
             {
                *type = OMA_TASK_REMOVE_ZN ;
+               goto done ;
+            }
+            else if ( OMA_BUS_TYPE_SEQUOIASQL == string(pBusinessType) &&
+                      OM_SEQUOIASQL_DEPLOY_OLAP == string(pDeployMode) )
+            {
+               *type = OMA_TASK_REMOVE_SSQL_OLAP ;
                goto done ;
             }
             else

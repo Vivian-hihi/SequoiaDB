@@ -203,6 +203,15 @@ namespace engine
          case OMA_TASK_REMOVE_ZN :
             pTask = SDB_OSS_NEW _omaRemoveZNBusTask( taskID ) ;
             break ;
+         case OMA_TASK_INSTALL_SSQL_OLAP :
+            pTask = SDB_OSS_NEW _omaInstallSsqlOlapBusTask( taskID ) ;
+            break ;
+         case OMA_TASK_REMOVE_SSQL_OLAP :
+            pTask = SDB_OSS_NEW _omaRemoveSsqlOlapBusTask( taskID ) ;
+            break ;
+         case OMA_TASK_INSTALL_SSQL_OLAP_SUB :
+            pTask = SDB_OSS_NEW _omaInstallSsqlOlapBusSubTask( taskID ) ;
+            break ;
          // ssql exec
          case OMA_TASK_SSQL_EXEC :
             pTask = SDB_OSS_NEW _omaSsqlExecTask( taskID ) ;

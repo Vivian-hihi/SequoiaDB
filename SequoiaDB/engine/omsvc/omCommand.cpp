@@ -6463,6 +6463,7 @@ namespace engine
             builder.append( OM_BSON_FIELD_HOST_NAME, hostInfo.hostName ) ;
             builder.append( OM_BSON_FIELD_HOST_USER, hostInfo.user ) ;
             builder.append( OM_BSON_FIELD_HOST_PASSWD, hostInfo.passwd ) ;
+            builder.append( OM_BSON_FIELD_HOST_SSHPORT, hostInfo.sshPort ) ;
             if ( businessType == OM_BUSINESS_ZOOKEEPER )
             {
                builder.append( OM_BSON_FIELD_HOST_SSHPORT, hostInfo.sshPort ) ;
@@ -7164,6 +7165,31 @@ namespace engine
                                     sdbUserGroup ) ;
             condition = BSON( OM_BSON_FIELD_HOST_NAME << "" 
                               << OM_ZOO_CONF_DETAIL_ZOOID << "" ) ;
+         }
+         else if ( type == OM_BUSINESS_SEQUOIASQL &&
+                   deployMod == OM_SEQUOIASQL_DEPLOY_OLAP )
+         {
+            string sdbUser ;
+            string sdbPasswd ;
+            string sdbUserGroup ;
+            BSONObj clusterInfo ;
+            rc = _getClusterInfo( clusterName, clusterInfo ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "get cluster info failed:cluster=%s", 
+                       clusterName.c_str() ) ;
+               goto error ;
+            }
+
+            sdbUser = clusterInfo.getStringField( OM_CLUSTER_FIELD_SDBUSER ) ;
+            sdbPasswd = clusterInfo.getStringField( OM_CLUSTER_FIELD_SDBPASSWD ) ;
+            sdbUserGroup = clusterInfo.getStringField( OM_CLUSTER_FIELD_SDBUSERGROUP ) ;
+            taskInfoBuilder.append( OM_CLUSTER_FIELD_SDBUSER, sdbUser ) ;
+            taskInfoBuilder.append( OM_CLUSTER_FIELD_SDBPASSWD, sdbPasswd ) ;
+            taskInfoBuilder.append( OM_CLUSTER_FIELD_SDBUSERGROUP, sdbUserGroup ) ;
+
+            condition = BSON( OM_BSON_FIELD_HOST_NAME << ""
+                              << OM_SSQL_OLAP_CONF_ROLE << "" ) ;
          }
          else
          {

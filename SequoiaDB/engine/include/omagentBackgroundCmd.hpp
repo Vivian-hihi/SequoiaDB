@@ -448,6 +448,32 @@ namespace engine
          virtual INT32 init ( const CHAR *pInstallInfo ) ;
    } ;
 
+   class _omaInstallSsqlOlap : public _omaCommand
+   {
+      public:
+         _omaInstallSsqlOlap( const BSONObj& config, const BSONObj& sysInfo ) ;
+         ~_omaInstallSsqlOlap() ;
+         virtual const CHAR * name() { return OMA_CMD_INSTALL_SEQUOIASQL_OLAP ; }
+         virtual INT32 init( const CHAR *pInstallInfo ) ;
+
+      private:
+         BSONObj _config ;
+         BSONObj _sysInfo ;
+   } ;
+
+   class _omaRemoveSsqlOlap : public _omaCommand
+   {
+      public:
+         _omaRemoveSsqlOlap( const BSONObj& config, const BSONObj& sysInfo ) ;
+         ~_omaRemoveSsqlOlap() ;
+         virtual const CHAR * name() { return OMA_CMD_REMOVE_SEQUOIASQL_OLAP ; }
+         virtual INT32 init( const CHAR *pInstallInfo ) ;
+
+      private:
+         BSONObj _config ;
+         BSONObj _sysInfo ;
+   } ;
+
    /*
       _omaRunPsqlCmd
    */

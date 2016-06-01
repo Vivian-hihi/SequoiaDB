@@ -688,4 +688,227 @@ namespace engine
       goto done ;
    }
 
+   _omaInstallSsqlOlapBusSubTask::_omaInstallSsqlOlapBusSubTask( INT64 taskID )
+      : _omaTask( taskID )
+   {
+      _taskType = OMA_TASK_INSTALL_SSQL_OLAP_SUB ;
+      _taskName = OMA_TASK_NAME_INSTALL_SSQL_OLAP_BUSINESS_SUB ;
+   }
+
+   _omaInstallSsqlOlapBusSubTask::~_omaInstallSsqlOlapBusSubTask()
+   {
+   }
+
+   INT32 _omaInstallSsqlOlapBusSubTask::init( const BSONObj &info, void *ptr )
+   {
+      INT32 rc = SDB_OK ;
+
+      _mainTask = (_omaInstallSsqlOlapBusTask*)ptr ;
+      if ( NULL == _mainTask )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG_MSG( PDERROR, "No task information for "
+                     "installing sequoiasql olap business sub task" ) ;
+         goto error ;
+      }
+
+      {
+         stringstream ss ;
+         ss << _taskName << "[" << _mainTask->getSubTaskSerialNum() << "]" ;
+         _taskName = ss.str() ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _omaInstallSsqlOlapBusSubTask::doit()
+   {
+      INT32 rc = SDB_OK ;
+      INT32 tmpRc = SDB_OK ;
+      string detail ;
+
+      // set current sub task to be running
+      _mainTask->setSubTaskStatus( _taskName, OMA_TASK_STATUS_RUNNING ) ;
+
+      while( TRUE )
+      {
+         omaSsqlOlapNodeInfo* nodeInfo = NULL ;
+         string hostName ;
+         string role ;
+         INT32 errNum = 0 ;
+         BSONObj retObj ;
+
+         // judge whether program had been interrupted
+         if ( pmdGetThreadEDUCB()->isInterrupted() )
+         {
+            PD_LOG( PDEVENT, "program has been interrupted, stop task[%s]",
+                    _taskName.c_str() ) ;
+            goto done ;
+         }
+
+         // judge whether task has failed
+         if ( _mainTask->isTaskFailed() )
+         {
+            PD_LOG( PDEVENT, "installing sequoiasql olap business task has been failed, "
+                    "sub task[%s] exits", _taskName.c_str() ) ;
+            goto done ;
+         }
+
+         // get a node to install
+         // if no node item needs to install, then exit
+         nodeInfo = _mainTask->getNodeInfo() ;
+         if ( NULL == nodeInfo )
+         {
+            PD_LOG( PDEVENT, "no sequoiasql olap node needs to install now, sub task[%s] exits",
+                    _taskName.c_str() ) ;
+            goto done ;
+         }
+
+         hostName = nodeInfo->hostName ;
+         role = nodeInfo->role ;
+
+         // before install this node, update the progress
+         {
+            stringstream ss ;
+            ss << "installing " << hostName << ":" << role ;
+            nodeInfo->status = OMA_TASK_STATUS_RUNNING ;
+            nodeInfo->statusDesc = OMA_TASK_STATUS_DESC_RUNNING ;
+            nodeInfo->flow.push_back( ss.str() ) ;
+            INT32 tmpRc = _mainTask->updateProgressToTask() ;
+            if ( SDB_OK != tmpRc )
+            {
+               PD_LOG( PDWARNING, "failed to update installing sequoiasql olap[%s:%s]'s progress, "
+                       "rc = %d", hostName.c_str(), role.c_str(), tmpRc ) ;
+            }
+         }
+
+         // install
+         _omaInstallSsqlOlap runCmd( nodeInfo->config, _mainTask->getSysInfo() ) ;
+         rc = runCmd.init( NULL ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to init for installing sequioasql olap[%s:%s], "
+                    "rc = %d", hostName.c_str(), role.c_str(), rc ) ;
+            detail = string( pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ) ;
+            if ( "" == detail )
+            {
+               detail = "failed to init for installing sequioasql olap" ;
+            }
+            goto build_error_result ;
+         }
+
+         // doit may return error before execute js file
+         // so, when rc != SDB_OK, we need to ensure where
+         // error happen
+         // a. rc != SDB_OK && retObj == {}, error happen before executing js
+         // b. rc == SDB_OK && retObj == { errno:xxx, detail:"xxx" }, error
+         // happen in js
+         rc = runCmd.doit( retObj ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to do installing sequoiasql olap[%s:%s], "
+                    "rc = %d", hostName.c_str(), role.c_str(), rc ) ;
+            // if we can't get field "detail", it means we failed in CPP,
+            // we had not executed js file yet
+            tmpRc = omaGetStringElement ( retObj, OMA_FIELD_DETAIL, detail ) ;
+            if ( SDB_OK != tmpRc )
+            {
+               detail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+               if ( "" == detail )
+               {
+                  detail = "not exeute js file yet" ;
+               }
+            }
+            goto build_error_result ;
+         }
+
+         // extract "errno"
+         rc = omaGetIntElement( retObj, OMA_FIELD_ERRNO, errNum ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "failed to get errno from js after "
+                    "installing sequoiasql olap[%s:%s], rc = %d",
+                    hostName.c_str(), role.c_str(), rc ) ;
+            stringstream ss ;
+            ss << "failed to get errno from js after installing sequoiasql olap[" <<
+               hostName << ":" << role << "]" ;
+            detail = ss.str() ;
+            goto build_error_result ;
+         }
+
+         // to see whether execute js successfully or not
+         if ( SDB_OK != errNum )
+         {
+            // get error detail
+            rc = omaGetStringElement ( retObj, OMA_FIELD_DETAIL, detail ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "failed to get error detail from js after "
+                       "installing sequoiasql olap[%s:%s], rc = %d",
+                       hostName.c_str(), role.c_str(), rc ) ;
+               stringstream ss ;
+               ss << "failed to get error detail from js after installing "
+                     "sequoiasql olap[" << hostName << ":" << role << "]" ;
+               detail = ss.str() ;
+               goto build_error_result ;
+            }
+            rc = errNum ;
+            goto build_error_result ;
+         }
+         else
+         {
+            stringstream ss ;
+            ss << "finish installing sequoiasql olap["
+               << hostName << ":" << role << "]" ;
+            PD_LOG ( PDEVENT, "successfully install sequoiasql olap[%s:%s]",
+                     hostName.c_str(), role.c_str() ) ;
+
+            nodeInfo->status = OMA_TASK_STATUS_FINISH ;
+            nodeInfo->statusDesc = OMA_TASK_STATUS_DESC_FINISH ;
+            nodeInfo->flow.push_back( ss.str() ) ;
+            tmpRc = _mainTask->updateProgressToTask() ;
+            if ( SDB_OK != tmpRc )
+            {
+               PD_LOG( PDWARNING, "failed to update installing sequoiasql olap[%s:%s]'s "
+                       "progress, rc = %d", hostName.c_str(), role.c_str(), tmpRc ) ;
+            }
+         }
+         continue ; // if we success, nerver go to "build_error_result"
+
+      build_error_result:
+         {
+            stringstream ss ;
+            ss << "failed to install sequoiasql olap["
+               << hostName << ":" << role << "]" ;
+            nodeInfo->status = OMA_TASK_STATUS_ROLLBACK ;
+            nodeInfo->statusDesc = OMA_TASK_STATUS_DESC_ROLLBACK ;
+            nodeInfo->errcode = rc ;
+            nodeInfo->detail = detail ;
+            nodeInfo->flow.push_back( ss.str() ) ;
+            tmpRc = _mainTask->updateProgressToTask() ;
+            if ( SDB_OK != tmpRc )
+            {
+               PD_LOG( PDWARNING, "failed to update installing sequoiasql olap[%s:%s]'s "
+                       "progress, rc = %d", hostName.c_str(), role.c_str(), tmpRc ) ;
+            }
+         }
+         goto error ;
+
+      } // while
+
+   done:
+      // set current sub task to finish
+      _mainTask->setSubTaskStatus( _taskName, OMA_TASK_STATUS_FINISH ) ;
+      _mainTask->notifyUpdateProgress() ;
+      return rc ;
+
+   error:
+      _mainTask->setTaskFailed() ;
+      _mainTask->setErrInfo( rc, detail ) ;
+      goto done ;
+   }
+
 }  // namespace engine

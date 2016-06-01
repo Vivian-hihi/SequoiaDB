@@ -6668,6 +6668,974 @@ namespace engine
       goto done ;
    }
 
+   _omaSsqlOlapBusBase::_omaSsqlOlapBusBase( INT64 taskID )
+      : _omaTask( taskID )
+   {
+      _eventID = 0 ;
+      _isTaskFailed = FALSE ;
+      _progress = 0 ;
+      _errno = SDB_OK ;
+   }
+
+   _omaSsqlOlapBusBase::~_omaSsqlOlapBusBase()
+   {
+   }
+
+   INT32 _omaSsqlOlapBusBase::_initInfo( const BSONObj &info, BOOLEAN install )
+   {
+      string clusterName ;
+      string businessType ;
+      string businessName ;
+      string deployMode ;
+      string sdbUser ;
+      string sdbPasswd ;
+      string sdbUserGroup ;
+      string installPacket ;
+      BSONObj infoObj ;
+      BSONElement ele ;
+      INT32 rc = SDB_OK ;
+
+      _rawInfo = info.copy() ;
+
+      // task id
+      ele = info.getField( OMA_FIELD_TASKID ) ;
+      if ( NumberInt != ele.type() && NumberLong != ele.type() )
+      {
+         PD_LOG_MSG ( PDERROR, "Receive invalid task id from omsvc" ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+       }
+      _taskID = ele.numberLong() ;
+
+      // task status
+      ele = info.getField( OMA_FIELD_STATUS ) ;
+      if ( NumberInt != ele.type() && NumberLong != ele.type() )
+      {
+         PD_LOG_MSG ( PDERROR, "Receive invalid task status from omsvc" ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+      _taskStatus = (OMA_TASK_STATUS)ele.numberInt() ;
+
+      // info
+      rc = omaGetObjElement( info, OMA_FIELD_INFO, infoObj ) ;
+      PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
+                "Get field[%s] failed, rc: %d", OMA_FIELD_INFO, rc ) ;
+
+      rc = omaGetStringElement( infoObj, OMA_FIELD_CLUSTERNAME, clusterName ) ;
+      PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
+                "Get field[%s] failed, rc: %d", OMA_FIELD_CLUSTERNAME, rc ) ;
+
+      rc = omaGetStringElement( infoObj, OMA_FIELD_BUSINESSTYPE, businessType) ;
+      PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
+                "Get field[%s] failed, rc: %d", OMA_FIELD_BUSINESSTYPE, rc ) ;
+
+      rc = omaGetStringElement( infoObj, OMA_FIELD_BUSINESSNAME, businessName ) ;
+      PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
+                "Get field[%s] failed, rc: %d", OMA_FIELD_BUSINESSNAME, rc ) ;
+
+      rc = omaGetStringElement( infoObj, OMA_FIELD_DEPLOYMOD, deployMode ) ;
+      PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
+                "Get field[%s] failed, rc: %d", OMA_FIELD_DEPLOYMOD, rc ) ;
+
+      rc = omaGetStringElement( infoObj, OMA_FIELD_SDBUSER, sdbUser ) ;
+      PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
+                "Get field[%s] failed, rc: %d", OMA_FIELD_SDBUSER, rc ) ;
+
+      rc = omaGetStringElement( infoObj, OMA_FIELD_SDBPASSWD, sdbPasswd ) ;
+      PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
+                "Get field[%s] failed, rc: %d", OMA_FIELD_SDBPASSWD, rc ) ;
+
+      rc = omaGetStringElement( infoObj, OMA_FIELD_SDBUSERGROUP, sdbUserGroup ) ;
+      PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
+                "Get field[%s] failed, rc: %d", OMA_FIELD_SDBUSERGROUP, rc ) ;
+
+      if ( install )
+      {
+         rc = omaGetStringElement( infoObj, OMA_FIELD_INSTALLPACKET, installPacket ) ;
+         PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
+                   "Get field[%s] failed, rc: %d", OMA_FIELD_INSTALLPACKET, rc ) ;
+      }
+      else
+      {
+         installPacket = "no need";
+      }
+
+      try
+      {
+         _sysInfo = BSON( OMA_FIELD_TASKID << _taskID <<
+                          OMA_FIELD_CLUSTERNAME << clusterName << 
+                          OMA_FIELD_BUSINESSTYPE << businessType <<
+                          OMA_FIELD_BUSINESSNAME << businessName <<
+                          OMA_FIELD_DEPLOYMOD << deployMode <<
+                          OMA_FIELD_SDBUSER << sdbUser <<
+                          OMA_FIELD_SDBPASSWD << sdbPasswd <<
+                          OMA_FIELD_SDBUSERGROUP << sdbUserGroup <<
+                          OMA_FIELD_INSTALLPACKET << installPacket ) ;
+      }
+      catch( exception& e )
+      {
+         rc = SDB_SYS ;
+         PD_LOG_MSG ( PDERROR, "unexpected exception happened: %s", e.what() ) ;
+         goto error ;
+      }
+
+      ele = infoObj.getField( OMA_FIELD_CONFIG ) ;
+      if ( Array != ele.type() )
+      {
+         PD_LOG_MSG ( PDERROR, "Receive wrong format add business"
+                      "info from omsvc" ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+      else
+      {
+         BSONObjIterator it( ele.embeddedObject() ) ;
+         while( it.more() )
+         {
+            BSONObj item ;
+            string hostName ;
+            string role ;
+            omaSsqlOlapNodeInfo nodeInfo ;
+            ele = it.next() ;
+            if ( Object != ele.type() )
+            {
+               rc = SDB_INVALIDARG ;
+               PD_LOG_MSG ( PDERROR, "Receive wrong format bson from omsvc" ) ;
+               goto error ;
+            }
+
+            item = ele.embeddedObject() ;
+            nodeInfo.config = item.copy() ;
+
+            // HostName
+            rc = omaGetStringElement( item, OMA_FIELD_HOSTNAME, hostName ) ;
+            PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
+                      "Get field[%s] failed, rc: %d",
+                      OMA_FIELD_HOSTNAME, rc ) ;
+
+            // role
+            rc = omaGetStringElement( item, OMA_FIELD_ROLE, role ) ;
+            PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
+                      "Get field[%s] failed, rc: %d",
+                      OMA_FIELD_HOSTNAME, rc ) ;
+
+            nodeInfo.hostName = hostName ;
+            nodeInfo.role = role ;
+
+            _nodeInfos.push_back( nodeInfo ) ;
+         }
+
+         if ( _nodeInfos.size() == 0 )
+         {
+            rc = SDB_INVALIDARG ;
+            PD_LOG_MSG ( PDERROR, "Receive wrong format bson from omsvc, "
+                         "no node config info" ) ;
+            goto error ;
+         }
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   void _omaSsqlOlapBusBase::_buildUpdateTaskObj( BSONObj &retObj )
+   {
+      BSONObjBuilder bob ;
+      BSONArrayBuilder bab ;
+      vector<omaSsqlOlapNodeInfo>::iterator it ;
+
+      /*
+      {
+        TaskID:
+        errno:
+        detail:
+        Status:
+        StatusDesc:
+        Progress:
+        ResultInfo:
+      }
+      */
+
+      for ( it = _nodeInfos.begin(); it != _nodeInfos.end(); it++ )
+      {
+         BSONObjBuilder builder ;
+         BSONArrayBuilder arrBuilder ;
+         BSONObj obj ;
+
+         omaSsqlOlapNodeInfo& nodeInfo = *it ;
+
+         vector<string>::iterator itr = nodeInfo.flow.begin() ;
+         for ( ; itr != nodeInfo.flow.end(); itr++ )
+         {
+            arrBuilder.append( *itr ) ;
+         }
+
+         builder.append( OMA_FIELD_HOSTNAME, nodeInfo.hostName ) ;
+         builder.append( OMA_FIELD_ROLE, nodeInfo.role ) ;
+         builder.append( OMA_FIELD_STATUS, nodeInfo.status ) ;
+         builder.append( OMA_FIELD_STATUSDESC, nodeInfo.statusDesc ) ;
+         builder.append( OMA_FIELD_ERRNO, nodeInfo.errcode ) ;
+         builder.append( OMA_FIELD_DETAIL, nodeInfo.detail ) ;
+         builder.append( OMA_FIELD_FLOW, arrBuilder.arr() ) ;
+         obj = builder.obj() ;
+         bab.append( obj ) ;
+      }
+
+      bob.appendNumber( OMA_FIELD_TASKID, _taskID ) ;
+      bob.appendNumber( OMA_FIELD_ERRNO, _errno ) ;
+      bob.append( OMA_FIELD_DETAIL, _detail ) ;
+      bob.appendNumber( OMA_FIELD_STATUS, _taskStatus ) ;
+      bob.append( OMA_FIELD_STATUSDESC, getTaskStatusDesc( _taskStatus ) ) ;
+      bob.appendNumber( OMA_FIELD_PROGRESS, _progress ) ;
+      bob.appendArray( OMA_FIELD_RESULTINFO, bab.arr() ) ;
+
+      retObj = bob.obj() ;
+   }
+
+   INT32 _omaSsqlOlapBusBase::_updateProgressToOM()
+   {
+      INT32 rc            = SDB_OK ;
+      INT32 retRc         = SDB_OK ;
+      UINT64 reqID        = 0 ;
+      omAgentMgr *pOmaMgr = sdbGetOMAgentMgr() ;
+      _pmdEDUCB *cb       = pmdGetThreadEDUCB () ;
+      ossAutoEvent updateEvent ;
+      BSONObj obj ;
+
+      // 1. build update task object
+      _buildUpdateTaskObj( obj ) ;
+
+      // 2. get request id from omagentMgr
+      reqID = pOmaMgr->getRequestID() ;
+      pOmaMgr->registerTaskEvent( reqID, &updateEvent ) ;
+
+      // 3. send message to omsvc
+      while( !cb->isInterrupted() )
+      {
+         pOmaMgr->sendUpdateTaskReq( reqID, &obj ) ;
+         while ( !cb->isInterrupted() )
+         {
+            if ( SDB_OK != updateEvent.wait( OMA_WAIT_OMSVC_RES_TIMEOUT, &retRc ) )
+            {
+               // try to send update task request again
+               break ;
+            }
+            else
+            {
+               if ( SDB_OM_TASK_NOT_EXIST == retRc )
+               {
+                  PD_LOG( PDERROR, "Failed to update task[%s]'s progress "
+                          "with requestID[%lld], rc = %d",
+                          _taskName.c_str(), reqID, retRc ) ;
+                  pOmaMgr->unregisterTaskEvent( reqID ) ;
+                  rc = retRc ;
+                  goto error ;
+               }
+               else if ( SDB_OK != retRc )
+               {
+                  PD_LOG( PDWARNING, "Retry to update task[%s]'s progress "
+                          "with requestID[%lld], rc = %d",
+                          _taskName.c_str(), reqID, retRc ) ;
+                  break ;
+               }
+               else
+               {
+                  PD_LOG( PDDEBUG, "Success to update task[%s]'s progress "
+                          "with requestID[%lld]", _taskName.c_str(), reqID ) ;
+                  pOmaMgr->unregisterTaskEvent( reqID ) ;
+                  goto done ;
+               }
+            }
+         }
+      }
+
+      PD_LOG( PDERROR, "Receive interrupt when update "
+         "business task's progress to omsvc" ) ;
+      rc = SDB_APP_INTERRUPT ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   void _omaSsqlOlapBusBase::setTaskFailed()
+   {
+      ossScopedLock lock ( &_taskLatch, EXCLUSIVE ) ;
+      _isTaskFailed = TRUE ;
+   }
+
+   BOOLEAN _omaSsqlOlapBusBase::isTaskFailed()
+   {
+      ossScopedLock lock ( &_taskLatch, EXCLUSIVE ) ;
+      return _isTaskFailed ;
+   }
+
+   void _omaSsqlOlapBusBase::setErrInfo( INT32 errcode, const string& detail )
+   {
+      ossScopedLock lock ( &_taskLatch, EXCLUSIVE ) ;
+
+      if ( SDB_OK == errcode )
+      {
+         return ;
+      }
+
+      if ( "" == detail )
+      {
+         PD_LOG( PDWARNING, "error detail is empty" ) ;
+         return ;
+      }
+
+      if ( SDB_OK != _errno && "" != _detail )
+      {
+         return ;
+      }
+
+      _errno = errcode ;
+      _detail = detail ;
+   }
+
+   void _omaSsqlOlapBusBase::notifyUpdateProgress()
+   {
+      ossScopedLock lock ( &_taskLatch, EXCLUSIVE ) ;
+      _eventID++ ;
+      _taskEvent.signal() ;
+   }
+
+   INT32 _omaSsqlOlapBusBase::updateProgressToTask()
+   {
+      INT32 rc            = SDB_OK ;
+
+      ossScopedLock lock ( &_taskLatch, EXCLUSIVE ) ;
+
+      rc = _calculateProgress() ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "Failed to calculate progress, rc = %d", rc ) ;
+         goto error ;
+      }
+
+      _eventID++ ;
+      _taskEvent.signal() ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   omaSsqlOlapNodeInfo* _omaSsqlOlapBusBase::getNodeInfo()
+   {
+      omaSsqlOlapNodeInfo* node = NULL ;
+      vector<omaSsqlOlapNodeInfo>::iterator it ;
+
+      ossScopedLock lock ( &_taskLatch, EXCLUSIVE ) ;
+
+      for( it = _nodeInfos.begin() ; it != _nodeInfos.end(); it++ )
+      {
+         omaSsqlOlapNodeInfo& nodeInfo = *it ;
+         if ( !nodeInfo.handled )
+         {
+            nodeInfo.handled = TRUE ;
+            node = &nodeInfo ;
+            break ;
+         }
+      }
+
+      return node ;
+   }
+
+   void _omaSsqlOlapBusBase::_setRetErr( INT32 errcode )
+   {
+      string detail ;
+
+      if ( SDB_OK != _errno && "" != _detail )
+      {
+         return ;
+      }
+
+      _errno = errcode ;
+      // set error detail
+      detail = string( pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ) ;
+      if ( "" != detail )
+      {
+         _detail = detail ;
+      }
+      else
+      {
+         detail = getErrDesp( errcode ) ;
+         if ( "" != detail )
+         {
+            _detail = detail ;
+         }
+         else
+         {
+            PD_LOG( PDERROR, "failed to get error message" ) ;
+         }
+      }
+   }
+
+   INT32 _omaSsqlOlapBusBase::_waitAndUpdateProgress()
+   {
+      INT32 rc = SDB_OK ;
+      BOOLEAN flag = FALSE ;
+      UINT64 subTaskEventID = 0 ;
+      _pmdEDUCB *cb = pmdGetThreadEDUCB () ;
+
+      while ( !cb->isInterrupted() )
+      {
+         // 1. waiting for sub task's notify of update progress
+         if ( SDB_OK != _taskEvent.wait ( OMA_WAIT_SUB_TASK_NOTIFY_TIMEOUT ) )
+         {
+            continue ;
+         }
+         else
+         {
+            // 2. update task progress until no new info need to update
+            while( TRUE )
+            {
+               _taskLatch.get() ;
+               _taskEvent.reset() ;
+               flag = ( subTaskEventID < _eventID ) ? TRUE : FALSE ;
+               subTaskEventID = _eventID ;
+               _taskLatch.release() ;
+               if ( TRUE == flag )
+               {
+                  rc = _updateProgressToOM() ;
+                  if ( SDB_APP_INTERRUPT == rc )
+                  {
+                     PD_LOG( PDERROR, "Failed to update installing sequoiasql olap's "
+                             "progress to omsvc, rc = %d", rc ) ;
+                     goto error ;
+                  }
+                  else if ( SDB_OK != rc )
+                  {
+                     PD_LOG( PDERROR, "Failed to update installing sequoiasql olap's "
+                             "progress to omsvc, rc = %d", rc ) ;
+                  }
+               }
+               else
+               {
+                  break ;
+               }
+            }
+            // when we come here, all the old signal had been handled,
+            // no need to worry about missing any untreated signal
+            // 2. check whether add host task has finished or not
+            if ( _isTaskFinish() )
+            {
+               PD_LOG( PDEVENT, "All the installing sequoiasql's sub tasks"
+                       "had finished" ) ;
+               goto done ;
+            }
+
+         }
+      }
+
+      PD_LOG( PDERROR, "Receive interrupt when running installing "
+              "sequoiasql's sub task" ) ;
+      rc = SDB_APP_INTERRUPT ;
+
+   done:
+      return rc ;
+   error:
+      goto done ; 
+   }
+
+   BOOLEAN _omaSsqlOlapBusBase::_isTaskFinish()
+   {
+      INT32 runNum    = 0 ;
+      INT32 finishNum = 0 ;
+      INT32 failNum   = 0 ;
+      INT32 otherNum  = 0 ;
+      BOOLEAN flag    = TRUE ;
+      ossScopedLock lock( &_latch, EXCLUSIVE ) ;
+
+      map< string, OMA_TASK_STATUS >::iterator it = _subTaskStatus.begin() ;
+      for ( ; it != _subTaskStatus.end(); it++ )
+      {
+         switch ( it->second )
+         {
+         case OMA_TASK_STATUS_FINISH :
+            finishNum++ ;
+            break ;
+         case OMA_TASK_STATUS_FAIL :            
+            failNum++ ;
+            break ;
+         case OMA_TASK_STATUS_RUNNING :
+            runNum++ ;
+            flag = FALSE ;
+            break ;
+         default :
+            otherNum++ ;
+            flag = FALSE ;
+            break ;
+         }
+      }
+      PD_LOG( PDDEBUG, "In task[%s], the amount of sub tasks is [%d]: "
+              "[%d]running, [%d]finish, [%d]in the other status",
+              _taskName.c_str(),
+              _subTaskStatus.size(), runNum, finishNum, otherNum ) ;
+
+      return flag ;
+   }
+
+   INT32 _omaSsqlOlapBusBase::_calculateProgress()
+   {
+      INT32 rc = SDB_OK ;
+      INT32 totalNum = 0 ;
+      INT32 finishNum = 0 ;
+      vector<omaSsqlOlapNodeInfo>::iterator it  ;
+
+      totalNum = _nodeInfos.size() ;
+      if ( 0 == totalNum )
+      {
+         rc = SDB_SYS ;
+         PD_LOG_MSG( PDERROR, "sequoiasql node number is zero" ) ;
+         goto error ;
+      }
+
+      for( it = _nodeInfos.begin() ; it != _nodeInfos.end(); it++ )
+      {
+         if ( OMA_TASK_STATUS_FINISH == it->status )
+         {
+            finishNum++ ;
+         }
+      }
+
+      _progress = ( finishNum * 100 ) / totalNum ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   void _omaSsqlOlapBusBase::_setResultToFail()
+   {
+      vector<omaSsqlOlapNodeInfo>::iterator iter ;
+
+      for ( iter = _nodeInfos.begin() ; iter != _nodeInfos.end(); iter++ )
+      {
+         if ( SDB_OK == iter->errcode )
+         {
+            iter->errcode = SDB_OMA_TASK_FAIL ;
+            iter->detail = getErrDesp( SDB_OMA_TASK_FAIL ) ;
+         }
+      }
+   }
+
+   INT32 _omaSsqlOlapBusBase::_removeNode( omaSsqlOlapNodeInfo& nodeInfo )
+   {
+      INT32 rc = SDB_OK ;
+      INT32 tmpRc = SDB_OK ;
+      INT32 errNum = 0 ;
+      string detail ;
+      BSONObj retObj ;
+      string hostName = nodeInfo.hostName ;
+      string role = nodeInfo.role ;
+
+#define REMOVE_BEGIN  "Removing "
+#define REMOVE_FINISH "Finish removing "
+#define REMOVE_FAIL   "Failed to remove "
+
+      nodeInfo.errcode = SDB_OK ;
+      nodeInfo.status = OMA_TASK_STATUS_RUNNING ;
+      nodeInfo.statusDesc = REMOVE_BEGIN ;
+      nodeInfo.flow.push_back( REMOVE_BEGIN ) ;
+      updateProgressToTask() ;
+
+      _omaRemoveSsqlOlap runCmd( nodeInfo.config, _sysInfo ) ;
+
+      rc = runCmd.init( NULL ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Failed to init to remove sequoiasql olap[%s:%s], "
+                 "rc = %d", hostName.c_str(), role.c_str(), rc ) ;
+         detail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+         if ( "" == detail )
+         {
+            detail = "Failed to init to remove sequoiasql olap" ;
+         }
+         goto error ;
+      }
+
+      rc = runCmd.doit( retObj ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Failed to remove sequoiasql olap[%s:%s], rc = %d",
+                 hostName.c_str(), role.c_str(), rc ) ;
+         // if we can't get field "detail", it means we failed in CPP,
+         // we had not executed js file yet
+         tmpRc = omaGetStringElement ( retObj, OMA_FIELD_DETAIL, detail ) ;
+         if ( tmpRc )
+         {
+            detail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+            if ( "" == detail )
+            {
+               detail = "Not exeute js file yet" ;
+            }
+         }
+         goto error ;
+      }
+
+      // extract "errno"
+      rc = omaGetIntElement ( retObj, OMA_FIELD_ERRNO, errNum ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Failed to get errno from js after "
+                 "removing sequoiasql olap[%s:%s], rc = %d",
+                 hostName.c_str(), role.c_str(), rc ) ;
+         detail = "Failed to get errno from js after removing sequoiasql olap" ;
+         goto error ;
+      }
+
+      // to see whether execute js successfully or not
+      if ( SDB_OK != errNum )
+      {
+         rc = errNum ;
+         tmpRc = omaGetStringElement ( retObj, OMA_FIELD_DETAIL, detail ) ;
+         if ( SDB_OK != tmpRc )
+         {
+            PD_LOG( PDERROR, "Failed to get error detail from js after "
+                    "removing sequoiasql olap[%s:%S], rc = %d",
+                    hostName.c_str(), role.c_str(), tmpRc ) ;
+            detail = "Failed to get error detail from js after "
+                      "removing sequoiasql olap" ;
+         }
+         goto error ;
+      }
+      else
+      {
+         PD_LOG ( PDEVENT, "Successfully remove sequoiasql olap[%s:%s]",
+                  hostName.c_str(), role.c_str() ) ;
+      }
+
+      nodeInfo.errcode = SDB_OK ;
+      nodeInfo.status = OMA_TASK_STATUS_FINISH ;
+      nodeInfo.statusDesc = OMA_TASK_STATUS_DESC_FINISH ;
+      nodeInfo.flow.push_back( REMOVE_FINISH ) ;
+      updateProgressToTask() ;
+
+   done:
+      return rc ;
+   error:
+      PD_LOG_MSG( PDERROR, "Failed to remove sequoiasql olap[%s:%s], rc = %d",
+                  hostName.c_str(), role.c_str(), rc ) ;
+      nodeInfo.errcode = rc ;
+      nodeInfo.status = OMA_TASK_STATUS_END ;
+      nodeInfo.statusDesc = detail;
+      nodeInfo.flow.push_back( REMOVE_FAIL ) ;
+      updateProgressToTask() ;
+      goto done ;
+   }
+
+   _omaInstallSsqlOlapBusTask::_omaInstallSsqlOlapBusTask( INT64 taskID )
+      : _omaSsqlOlapBusBase( taskID )
+   {
+      _taskType = OMA_TASK_INSTALL_SSQL_OLAP ;
+      _taskName = OMA_TASK_NAME_INSTALL_SSQL_OLAP_BUSINESS ;
+   }
+
+   _omaInstallSsqlOlapBusTask::~_omaInstallSsqlOlapBusTask()
+   {
+   }
+
+   INT32 _omaInstallSsqlOlapBusTask::init( const BSONObj &info, void *ptr )
+   {
+      INT32 rc = SDB_OK ;
+
+      rc = _initInfo( info ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to init install info" ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      setErrInfo( rc, "failed to init install sequoiasql olap" ) ;
+      // set task's status to be finished
+      setTaskStatus( OMA_TASK_STATUS_FINISH ) ;
+
+      // update to om the last time
+      {
+         INT32 tmpRc = _updateProgressToOM() ;
+         if ( SDB_OK != tmpRc )
+         {
+            PD_LOG( PDERROR, "failed to update install sequoiasql olap progress "
+                    "to omsvc, tmpRc = %d", tmpRc ) ;
+         }
+      }
+
+      // submit task info to omagent mgr
+      sdbGetOMAgentMgr()->submitTaskInfo( _taskID ) ;
+      goto done ;
+   }
+
+   INT32 _omaInstallSsqlOlapBusTask::doit()
+   {
+      INT32 rc = SDB_OK ;
+      BOOLEAN needRollback = TRUE ;
+
+      if ( OMA_TASK_STATUS_ROLLBACK == _taskStatus )
+      {
+         _rollback( TRUE ) ;
+         setErrInfo( SDB_OMA_TASK_FAIL, "Task failed" ) ;
+         _setResultToFail() ;
+         goto done ;
+      }
+
+      setTaskStatus( OMA_TASK_STATUS_RUNNING ) ;
+
+      // install sequoiasql olap ( check/install/config )
+      rc = _install() ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to install sequoiasql olap, rc = %d", rc ) ;
+         goto error ;
+      }
+
+      // 4. update the task's progress and
+      //    waiting for all the sub tasks to be finished
+      rc = _waitAndUpdateProgress() ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "failed to wait and update install sequoiasql olap "
+                  "business progress, rc = %d", rc ) ;
+         goto error ;
+      }
+
+      // establish trust
+
+      // start sequoiasql olap
+
+   done:
+      // . set task's status to be finished
+      setTaskStatus( OMA_TASK_STATUS_FINISH ) ;
+
+      // . update to om the last time
+      rc = _updateProgressToOM() ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "Failed to update install sequoiasql olap business progress "
+                 "to omsvc, rc = %d", rc ) ;
+      }
+
+      // .submit task info to omagent mgr
+      sdbGetOMAgentMgr()->submitTaskInfo( _taskID ) ;
+      PD_LOG( PDEVENT, "Omagent finish running install sequoiasql olap business "
+              "task[%lld]", _taskID ) ;
+      return SDB_OK ;
+
+   error:
+      _setRetErr( rc ) ;
+      if ( TRUE == needRollback )
+      {
+         // rollback
+         setTaskStatus( OMA_TASK_STATUS_ROLLBACK ) ;
+         rc = _rollback( FALSE ) ;
+         if ( SDB_OK != rc )
+         {
+            // TODO: let user know rollback failed
+            PD_LOG( PDERROR, "Failed to rollback install sequoiasql business "
+                    "task[%lld]", _taskID ) ;
+         }
+      }
+      // . set task to be failing
+      _setResultToFail() ;
+      goto done ;
+   }
+
+   INT32 _omaInstallSsqlOlapBusTask::_install()
+   {
+      INT32 jobNum ;
+      INT32 nodeNum = _nodeInfos.size() ;
+      INT32 rc = SDB_OK ;
+
+      jobNum = nodeNum < MAX_THREAD_NUM ? nodeNum : MAX_THREAD_NUM ;
+
+      for( INT32 i = 0 ; i < jobNum ; i++ )
+      {
+         ossScopedLock lock( &_taskLatch, EXCLUSIVE ) ;
+
+         // judge whether program had been interrupted
+         if ( pmdGetThreadEDUCB()->isInterrupted() )
+         {
+            PD_LOG( PDEVENT, "Program has been interrupted, stop task[%s]",
+                    _taskName.c_str() ) ;
+            goto done ;
+         }
+
+         // run sub tasks
+         if ( OMA_TASK_STATUS_RUNNING == _taskStatus )
+         {
+            omaTaskPtr taskPtr ;
+            rc = startOmagentJob( OMA_TASK_INSTALL_SSQL_OLAP_SUB, _taskID,
+                                  BSONObj(), taskPtr, (void *)this ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG_MSG ( PDERROR, "Failed to run install znodes' sub task "
+                            "with the type[%d], rc = %d",
+                            OMA_TASK_INSTALL_ZN_SUB, rc ) ;
+               goto error ;
+            }
+         }
+      }
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _omaInstallSsqlOlapBusTask::_rollback( BOOLEAN isRestart )
+   {
+      INT32 rc = SDB_OK ;
+      vector<omaSsqlOlapNodeInfo>::iterator it ;
+
+      setTaskStatus( OMA_TASK_STATUS_ROLLBACK ) ;
+      rc = _updateProgressToOM() ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDWARNING, "Failed to update task's progress to om" ) ;
+      }
+
+      for( it = _nodeInfos.begin(); it != _nodeInfos.end() ; it++ )
+      {
+         if ( isRestart || it->handled )
+         {
+            rc = _removeNode( *it ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "Failed to rollback sequoiasql olap[%s:%s], rc = %d",
+                       it->hostName.c_str(), it->role.c_str(), rc ) ;
+               continue ;
+            }
+         }
+      }
+
+      return SDB_OK ;
+   }
+
+   _omaRemoveSsqlOlapBusTask::_omaRemoveSsqlOlapBusTask( INT64 taskID )
+      : _omaSsqlOlapBusBase( taskID )
+   {
+      _taskType = OMA_TASK_REMOVE_SSQL_OLAP ;
+      _taskName = OMA_TASK_NAME_REMOVE_SSQL_OLAP_BUSINESS ;
+   }
+
+   _omaRemoveSsqlOlapBusTask::~_omaRemoveSsqlOlapBusTask()
+   {
+   }
+
+   INT32 _omaRemoveSsqlOlapBusTask::init( const BSONObj &info, void *ptr )
+   {
+      INT32 rc = SDB_OK ;
+
+      rc = _initInfo( info, FALSE ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to init remove info" ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _omaRemoveSsqlOlapBusTask::doit()
+   {
+      INT32 rc = SDB_OK ;
+
+      /// in case of installing
+      // set task's status to be running
+      setTaskStatus( OMA_TASK_STATUS_RUNNING ) ;
+
+      rc = _remove() ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Failed to remove sequoiasql olap, rc = %d", rc ) ;
+         goto error ;
+      }
+
+      // check whether task fail or not
+      if ( isTaskFailed() )
+      {
+         rc = SDB_OMA_TASK_FAIL ;
+         PD_LOG ( PDERROR, "Failed to remove sequoiasql olap" ) ;
+         goto error ;
+      }
+
+   done:
+      // set task's status to be finished
+      setTaskStatus( OMA_TASK_STATUS_FINISH ) ;
+
+      // update to om the last time
+      rc = _updateProgressToOM() ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "Failed to update remove sequoiasql olap business progress "
+                 "to omsvc, rc = %d", rc ) ;
+      }
+
+      // submit task info to omagent mgr
+      sdbGetOMAgentMgr()->submitTaskInfo( _taskID ) ;
+
+      PD_LOG( PDEVENT, "Omagent finish running remove sequoiasql olap business "
+              "task[%lld]", _taskID ) ;
+      return SDB_OK ;
+
+   error:
+      _setRetErr( rc ) ;
+
+      // set task to be failing
+      _setResultToFail() ;
+      goto done ;
+   }
+
+   INT32 _omaRemoveSsqlOlapBusTask::_remove()
+   {
+      INT32 rc = SDB_OK ;
+      INT32 nodeNum = _nodeInfos.size() ;
+      omaSsqlOlapNodeInfo* nodeInfo = NULL ;
+
+      if ( 0 == nodeNum )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG_MSG ( PDERROR, "No information for removing sequoiasql olap" ) ;
+         goto error ;
+      }
+
+      for( ;; )
+      {
+         nodeInfo = getNodeInfo() ;
+         if ( NULL == nodeInfo )
+         {
+            PD_LOG( PDEVENT, "No sequoiasql olap node need to remove now" ) ;
+            goto done ;
+         }
+         rc = _removeNode( *nodeInfo ) ;
+         if ( SDB_OK != rc )
+         {
+            setTaskFailed() ;
+            PD_LOG( PDERROR, "Failed to remove sequoiasql olap[%s:%s], rc = %d",
+                    nodeInfo->hostName.c_str(), nodeInfo->role.c_str(), rc ) ;
+            continue ;
+         }
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
    /*
       ssql exec task
    */

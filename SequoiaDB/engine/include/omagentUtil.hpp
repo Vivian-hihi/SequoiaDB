@@ -61,6 +61,8 @@ namespace engine
 
    INT32 omaGetStringElement ( const BSONObj &obj, const CHAR *fieldName,
                                const CHAR **value ) ;
+   INT32 omaGetStringElement ( const BSONObj &obj, const CHAR *fieldName,
+                               string& value ) ;
 
    INT32 omaGetObjElement ( const BSONObj &obj, const CHAR *fieldName,
                             BSONObj &value ) ;

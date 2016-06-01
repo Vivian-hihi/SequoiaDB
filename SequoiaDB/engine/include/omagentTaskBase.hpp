@@ -66,14 +66,17 @@ namespace engine
       OMA_TASK_REMOVE_DB          = 11,
       OMA_TASK_INSTALL_ZN         = 12, // install zookeeper business
       OMA_TASK_REMOVE_ZN          = 13, // remove zookeeper business
+      OMA_TASK_INSTALL_SSQL_OLAP  = 14,
+      OMA_TASK_REMOVE_SSQL_OLAP   = 15,
       OMA_TASK_SUB_TYPE_END,
       
 
 
       OMA_TASK_TYPE_AGENT_BEGIN,
-      OMA_TASK_ADD_HOST_SUB       = 20, // add host sub task
-      OMA_TASK_INSTALL_DB_SUB     = 21, // install db business sub task
-      OMA_TASK_INSTALL_ZN_SUB     = 22, // install zookeeper sub task
+      OMA_TASK_ADD_HOST_SUB          = 20, // add host sub task
+      OMA_TASK_INSTALL_DB_SUB        = 21, // install db business sub task
+      OMA_TASK_INSTALL_ZN_SUB        = 22, // install zookeeper sub task
+      OMA_TASK_INSTALL_SSQL_OLAP_SUB = 23, // install sequoiasql olap sub task
       OMA_TASK_TYPE_AGENT_END,
 
       OMA_TASK_END

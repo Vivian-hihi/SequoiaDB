@@ -1686,6 +1686,133 @@ namespace engine
       goto done ;
    }
 
+   _omaInstallSsqlOlap::_omaInstallSsqlOlap( const BSONObj& config,
+                                             const BSONObj& sysInfo )
+   {
+      _config = config ;
+      _sysInfo = sysInfo ;
+   }
+
+   _omaInstallSsqlOlap::~_omaInstallSsqlOlap()
+   {
+   }
+
+   INT32 _omaInstallSsqlOlap::init( const CHAR *pInstallInfo )
+   {
+      INT32 rc = SDB_OK ;
+      try
+      {
+         stringstream ss ;
+
+         // build js file arguments
+         ss << "var " << JS_ARG_BUS << " = " 
+            << _config.toString(FALSE, TRUE).c_str() << " ; "
+            << "var " << JS_ARG_SYS << " = "
+            << _sysInfo.toString(FALSE, TRUE).c_str() << " ; " ;
+         _jsFileArgs = ss.str() ;
+         PD_LOG ( PDDEBUG, "Installing sequoiasql olap passes argument: %s",
+                  _jsFileArgs.c_str() ) ;
+
+         // add common file
+         rc = addJsFile( FILE_SEQUOIASQL_OLAP_COMMON ) ;
+         if ( rc )
+         {
+            PD_LOG ( PDERROR, "Failed to add js file[%s], rc = %d ",
+                     FILE_SEQUOIASQL_OLAP_COMMON, rc ) ;
+            goto error ;
+         }
+
+         // add config file
+         rc = addJsFile( FILE_SEQUOIASQL_OLAP_CONFIG ) ;
+         if ( rc )
+         {
+            PD_LOG ( PDERROR, "Failed to add js file[%s], rc = %d ",
+                     FILE_SEQUOIASQL_OLAP_CONFIG, rc ) ;
+            goto error ;
+         }
+
+         // add install file
+         rc = addJsFile( FILE_SEQUOIASQL_OLAP_INSTALL, _jsFileArgs.c_str() ) ;
+         if ( rc )
+         {
+            PD_LOG ( PDERROR, "Failed to add js file[%s], rc = %d ",
+                     FILE_SEQUOIASQL_OLAP_INSTALL, rc ) ;
+            goto error ;
+         }
+      }
+      catch ( std::exception &e )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG ( PDERROR, "Failed to build bson, exception is: %s",
+                  e.what() ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error :
+      goto done ;
+   }
+
+   _omaRemoveSsqlOlap::_omaRemoveSsqlOlap( const BSONObj& config, 
+                                           const BSONObj& sysInfo )
+   {
+      _config = config ;
+      _sysInfo = sysInfo ;
+   }
+
+   _omaRemoveSsqlOlap::~_omaRemoveSsqlOlap()
+   {
+   }
+
+   INT32 _omaRemoveSsqlOlap::init( const CHAR *pInstallInfo )
+   {
+      INT32 rc = SDB_OK ;
+      try
+      {
+         stringstream ss ;
+
+         // build js file arguments
+         ss << "var " << JS_ARG_BUS << " = " 
+            << _config.toString(FALSE, TRUE).c_str() << " ; "
+            << "var " << JS_ARG_SYS << " = "
+            << _sysInfo.toString(FALSE, TRUE).c_str() << " ; " ;
+         _jsFileArgs = ss.str() ;
+         PD_LOG ( PDDEBUG, "Installing sequoiasql olap passes argument: %s",
+                  _jsFileArgs.c_str() ) ;
+
+         // add common file
+         rc = addJsFile( FILE_SEQUOIASQL_OLAP_COMMON ) ;
+         if ( rc )
+         {
+            PD_LOG ( PDERROR, "Failed to add js file[%s], rc = %d ",
+                     FILE_SEQUOIASQL_OLAP_COMMON, rc ) ;
+            goto error ;
+         }
+
+         // add remove file
+         rc = addJsFile( FILE_SEQUOIASQL_OLAP_REMOVE, _jsFileArgs.c_str() ) ;
+         if ( rc )
+         {
+            PD_LOG ( PDERROR, "Failed to add js file[%s], rc = %d ",
+                     FILE_SEQUOIASQL_OLAP_REMOVE, rc ) ;
+            goto error ;
+         }
+      }
+      catch ( std::exception &e )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG ( PDERROR, "Failed to build bson, exception is: %s",
+                  e.what() ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error :
+      goto done ;
+   }
+
    /*
       _omaRunPsqlCmd
    */
