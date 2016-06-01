@@ -47,6 +47,8 @@ namespace engine
    {
       _start = 0 ;
       _length = 0 ;
+      _dirtyStart = 0 ;
+      _dirtyLength = 0 ;
       _lastTime = 0 ;
       _lastWriteTime = 0 ;
       _readTimes = 0 ;
@@ -61,6 +63,8 @@ namespace engine
    {
       _start = right._start ;
       _length = right._length ;
+      _dirtyStart = right._dirtyStart ;
+      _dirtyLength = right._dirtyLength ;
       _lastTime = right._lastTime ;
       _lastWriteTime = right._lastWriteTime ;
       _readTimes = right._readTimes ;
@@ -92,6 +96,8 @@ namespace engine
    {
       _start = 0 ;
       _length = 0 ;
+      _dirtyStart = 0 ;
+      _dirtyLength = 0 ;
 
       _lastTime = 0 ;
       _lastWriteTime = 0 ;
@@ -122,6 +128,8 @@ namespace engine
       _next.clear() ;
       _start = 0 ;
       _length = 0 ;
+      _dirtyStart = 0 ;
+      _dirtyLength = 0 ;
       _first._size = 0 ;
       _first._pBuff = NULL ;
       _lastTime = 0 ;
@@ -152,6 +160,8 @@ namespace engine
 
       _start = rhs._start ;
       _length = rhs._length ;
+      _dirtyStart = rhs._dirtyStart ;
+      _dirtyLength = rhs._dirtyLength ;
       _lastTime = rhs._lastTime ;
       _lastWriteTime = rhs._lastWriteTime ;
       _readTimes = rhs._readTimes ;
@@ -181,7 +191,8 @@ namespace engine
       return 1 + _next.size() ;
    }
 
-   INT32 _utilCachePage::write( const CHAR *pBuf, UINT32 offset, UINT32 len )
+   INT32 _utilCachePage::_write( const CHAR *pBuf, UINT32 offset,
+                                 UINT32 len, BOOLEAN dirty )
    {
       INT32 rc = SDB_OK ;
       ossTimestamp t ;
@@ -221,10 +232,22 @@ namespace engine
       SDB_ASSERT( lastLen == 0, "Last len must be 0" ) ;
 
       /// update meta
-      ++_writeTimes ;
       ossGetCurrentTime( t ) ;
       _lastTime = t.time * 1000 + t.microtm / 1000 ;
-      _lastWriteTime = _lastTime ;
+      if ( dirty )
+      {
+         ++_writeTimes ;
+         _lastWriteTime = _lastTime ;
+
+         if ( 0 == _dirtyStart || offset < _dirtyStart )
+         {
+            _dirtyStart = offset ;
+         }
+         if ( offset + len > _dirtyLength )
+         {
+            _dirtyLength = offset + len ;
+         }
+      }
 
       if ( 0 == _start || offset < _start )
       {
@@ -239,6 +262,24 @@ namespace engine
       return rc ;
    error:
       goto done ;
+   }
+
+   INT32 _utilCachePage::write( const CHAR *pBuf, UINT32 offset,
+                                UINT32 len, BOOLEAN &setDirty )
+   {
+      setDirty = FALSE ;
+      INT32 rc = _write( pBuf, offset, len, TRUE ) ;
+      if ( SDB_OK == rc && !isDirty() )
+      {
+         makeDirty() ;
+         setDirty = TRUE ;         
+      }
+      return rc ;      
+   }
+
+   INT32 _utilCachePage::load( const CHAR *pBuf, UINT32 offset, UINT32 len )
+   {
+      return _write( pBuf, offset, len, FALSE ) ;
    }
 
    UINT32 _utilCachePage::read( CHAR *pBuf, UINT32 offset, UINT32 len )
@@ -805,7 +846,6 @@ namespace engine
       _offset = 0 ;
       _len = 0 ;
       _pageID = 0 ;
-      _makeDirty = FALSE ;
       _pPage = NULL ;
       _pBucket = NULL ;
       _pUnit = NULL ;
@@ -936,7 +976,6 @@ namespace engine
          _offset = offset ;
          _len = len ;
          _isWrite = TRUE ;
-         _makeDirty = TRUE ;
          _usePage = TRUE ;
          _writeBack = FALSE ;
       }
@@ -946,7 +985,6 @@ namespace engine
          _offset = offset ;
          _len = len ;
          _isWrite = TRUE ;
-         _makeDirty = TRUE ;
          _usePage = FALSE ;
          _writeBack = FALSE ;
       }
@@ -1038,7 +1076,6 @@ namespace engine
          _offset = offset ;
          _len = len ;
          _isWrite = FALSE ;
-         _makeDirty = FALSE ;
          _usePage = TRUE ;
          _writeBack = FALSE ;
       }
@@ -1048,7 +1085,6 @@ namespace engine
          _offset = offset ;
          _len = len ;
          _isWrite = FALSE ;
-         _makeDirty = FALSE ;
          _usePage = FALSE ;
          _writeBack = FALSE ;
       }
@@ -1091,14 +1127,14 @@ namespace engine
          {
             if ( _usePage )
             {
+               BOOLEAN setDirty = FALSE ;
                /// write to page
-               rc = _pPage->write( _pData, _offset, _len ) ;
-               if ( _makeDirty && !_pPage->isDirty() )
+               rc = _pPage->write( _pData, _offset, _len, setDirty ) ;
+               if ( setDirty )
                {
-                  _pPage->makeDirty() ;
                   _pUnit->incDirtyPages( _pBucket ) ;
                }
-               if( cb && _makeDirty )
+               if( cb )
                {
                   _pPage->addLSN( cb->getEndLSN() ) ;
                }
@@ -1137,7 +1173,7 @@ namespace engine
                /// write to cache page
                if ( _writeBack && _pPage )
                {
-                  _pPage->write( _pData, _offset, len ) ;
+                  _pPage->load( _pData, _offset, len ) ;
                }
             }
          }
@@ -1152,7 +1188,6 @@ namespace engine
          _len = 0 ;
          _offset = 0 ;
          _isWrite = FALSE ;
-         _makeDirty = FALSE ;
          _writeBack = FALSE ;
       }
 
@@ -1167,7 +1202,6 @@ namespace engine
          _offset = 0 ;
          _len = 0 ;
          _isWrite = FALSE ;
-         _makeDirty = FALSE ;
          _writeBack = FALSE ;
       }
    }
@@ -1186,8 +1220,43 @@ namespace engine
                                        IExecutor *cb )
    {
       INT32 rc = SDB_OK ;
+      utilCachFileBase* pFile = NULL ;
+      CHAR *pBuff = NULL ;
+      UINT32 buffSize = 0 ;
+      UINT32 readLen = 0 ;
+
+      SDB_ASSERT( _pPage && _pPage->size() >= offset + len,
+                  "Page size must grater than offset + len" ) ;
+
+      rc = cb->allocBuff( len, &pBuff, buffSize ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Alloc buff from cb failed, rc: %d", rc ) ;
+         goto error ;
+      }
+
+      /// read from file
+      rc = pFile->read( _pageID, pBuff, len, offset, readLen, cb ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Read from file[%s] failed, rc: %d",
+                 pFile->getFileName(), rc ) ;
+         goto error ;
+      }
+      /// write to page
+      rc = _pPage->write( pBuff, 0, readLen ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Write data to page failed, rc: %d", rc ) ;
+         goto error ;
+      }
 
    done:
+      if ( pBuff )
+      {
+         cb->releaseBuff( pBuff ) ;
+         pBuff = NULL ;
+      }
       return rc ;
    error:
       goto done ;
@@ -1196,6 +1265,12 @@ namespace engine
    /*
       _utilCacheUnit implement
    */
+
+   /*
+      Max sync pages number for once time
+   */
+   #define UTIL_CACHE_SYNC_ONCE_NUM          ( 3000 )
+
    _utilCacheUnit::_utilCacheUnit()
    :_dirtySize( 0 ), _totalPage( 0 )
    {
@@ -1204,22 +1279,26 @@ namespace engine
       _bucketSize = 0 ;
       _pageSize = 0 ;
       _closed = FALSE ;
-      _lastRecycle = 0 ;
       _wholePage = FALSE ;
-      _pageTimeout = 0 ;
+      _lastRecycleTime = 0 ;
+      _lastSyncTime = 0 ;
+
+      _bgDirtyRatio = UTIL_CACHEUNIT_BG_DIRTY_RATIO ;
+      _dirtyTimeout = UTIL_CACHEUNIT_DIRTY_TIMEOUT ;
+      _bgFreeRatio = UTIL_CACHEUNIT_BG_FREE_RATIO ;
+      _pageTimeout = UTIL_CACHEUNIT_PAGE_TIMEOUT ;
    }
 
    _utilCacheUnit::~_utilCacheUnit()
    {
-      fini() ;
+      SDB_ASSERT( 0 == _bucketSize, "Must call fini before this function" ) ;
    }
 
    INT32 _utilCacheUnit::init ( utilCacheMgr *pMgr,
                                 utilCachFileBase *pFile,
                                 UINT32 pageSize,
                                 UINT32 bucketSize,
-                                BOOLEAN wholePage,
-                                UINT32 pageTimeout )
+                                BOOLEAN wholePage )
    {
       INT32 rc = SDB_OK ;
       utilCacheBucket* pBucket = NULL ;
@@ -1235,7 +1314,6 @@ namespace engine
       _pageSize = pageSize ;
       _wholePage = wholePage ;
       _closed = FALSE ;
-      _pageTimeout = pageTimeout ;
 
       for ( UINT32 i = 0 ; i < bucketSize ; ++i )
       {
@@ -1256,16 +1334,38 @@ namespace engine
       goto done ;
    }
 
-   void _utilCacheUnit::fini()
+   void _utilCacheUnit::setDirtyConfig( UINT32 bgDirtyRatio,
+                                        UINT32 dirtyTimeout )
+   {
+      _bgDirtyRatio = bgDirtyRatio ;
+      _dirtyTimeout = dirtyTimeout ;
+   }
+
+   void _utilCacheUnit::setRecycleConfig( UINT32 bgFreeRatio,
+                                          UINT32 pageTimeout )
+   {
+      _bgFreeRatio = bgFreeRatio ;
+      _pageTimeout = pageTimeout ;
+   }
+
+   void _utilCacheUnit::fini( IExecutor *cb )
    {
       utilCacheBucket* pBucket = NULL ;
       utilCacheBucket::MAP_BLK_PAGE* pPages = NULL ;
 
       _closed = TRUE ;
+
+      /// wait the sync
+      _syncMutex.lock_w() ;
+      _syncMutex.release_w() ;
+      /// wait the recycle
+      _recycleMutex.lock_w() ;
+      _recycleMutex.release_w() ;
+
       /// wait all dirty page flushed to file
       while( dirtyPages() > 0 )
       {
-         syncPages() ;
+         syncPages( cb, TRUE ) ;
       }
 
       for ( UINT32 i = 0 ; i < _bucketSize ; ++i )
@@ -1328,33 +1428,30 @@ namespace engine
       utilCachePage* pPage = NULL ;
       UINT32 bucketID = calcBucketID( pageID ) ;
       utilCacheBucket* pBucket = NULL ;
-      BOOLEAN locked = FALSE ;
 
-      if ( _pMgr->maxCacheSize() < size || _closed )
-      {
-         goto done ;
-      }
-      else if ( pageID < 0 )
+      pBucket = _vecBucket[ bucketID ] ;
+      pBucket->lock( mode ) ;
+      *ppBucket = pBucket ;
+
+      if ( pageID < 0 )
       {
          PD_LOG( PDERROR, "Page id[%d] is invalid", pageID ) ;
          SDB_ASSERT( pageID >= 0, "Page must >= 0" ) ;
          goto done ;
       }
 
-      pBucket = _vecBucket[ bucketID ] ;
-      pBucket->lock( mode ) ;
-      locked = TRUE ;
-
-      if ( ppBucket )
-      {
-         *ppBucket = pBucket ;
-      }
-
       pPage = pBucket->getPage( pageID ) ;
       if ( !pPage && alloc )
       {
          utilCachePage tmpPage ;
-         INT32 rc = _pMgr->alloc( size, tmpPage, _wholePage ) ;
+         INT32 rc = SDB_OK ;
+
+         /// check the size and whether closed
+         if ( _pMgr->maxCacheSize() < size || _closed )
+         {
+            goto done ;
+         }
+         rc = _pMgr->alloc( size, tmpPage, _wholePage ) ;
          if ( SDB_OK == rc )
          {
             /// add to bucket
@@ -1384,13 +1481,11 @@ namespace engine
                lockPage = TRUE ;
             }
             pBucket->unlock( mode ) ;
-            locked = FALSE ;
 
             /// recycle and try again
-            recyclePages( 0, size ) ;
+            recyclePages( TRUE, size ) ;
 
             pBucket->lock( mode ) ;
-            locked = TRUE ;
 
             if( lockPage )
             {
@@ -1425,10 +1520,6 @@ namespace engine
       }
 
    done:
-      if ( !pPage && pBucket && locked )
-      {
-         pBucket->unlock( mode ) ;
-      }
       return pPage ;
    }
 
@@ -1441,219 +1532,259 @@ namespace engine
       return _vecBucket[ index ] ;
    }
 
-   INT32 _utilCacheUnit::write( INT32 pageID, const CHAR *pData,
-                                UINT32 offset, UINT32 len,
-                                IExecutor *cb,
-                                utilCacheContext &context )
+   void _utilCacheUnit::prepareWrite( INT32 pageID,
+                                      UINT32 offset,
+                                      UINT32 len,
+                                      IExecutor *cb,
+                                      utilCacheContext &context )
+   {
+      context.release() ;
+      context._pageID = pageID ;
+      context._pUnit = this ;
+      context._mode = EXCLUSIVE ;
+      context._size = offset + len ;
+      context._pPage = getAndLock( pageID, offset + len,
+                                   &context._pBucket,
+                                   EXCLUSIVE, TRUE, cb ) ;
+   }
+
+   void _utilCacheUnit::prepareRead( INT32 pageID,
+                                     UINT32 offset,
+                                     UINT32 len,
+                                     IExecutor *cb,
+                                     utilCacheContext &context )
+   {
+      context.release() ;
+      context._pageID = pageID ;
+      context._pUnit = this ;
+      context._mode = SHARED ;
+      context._size = offset + len ;
+      context._pPage = getAndLock( pageID, offset + len,
+                                   &context._pBucket,
+                                   SHARED, FALSE, cb ) ;
+   }
+
+   INT32 _utilCacheUnit::_syncPage( utilCacheBucket *pBucket,
+                                    utilCachePage *pPage,
+                                    INT32 pageID,
+                                    IExecutor *cb,
+                                    BOOLEAN *pSync )
    {
       INT32 rc = SDB_OK ;
-      utilCachePage* pPage = NULL ;
-      utilCacheBucket* pBucket = NULL ;
+      UINT32 pos = 0 ;
+      UINT32 len = 0 ;
+      CHAR *pBuff = NULL ;
+      UINT32 offset = 0 ;
+      UINT32 lastLen = pPage->dirtyLength() ;
+      BOOLEAN hasSync = FALSE ;
 
-      pPage = getAndLock( pageID, offset + len, &pBucket,
-                          EXCLUSIVE, TRUE, cb ) ;
-      if ( pPage )
+      if ( !pPage->isDirty() )
       {
-         /// the page
-         /// -----------|<start>-------|<end>-----------------
-         ///  |--A--|-C-|              |---D--|--B--|
-         /// when write in A, need to load the data C
-         /// when write in B, need to load the data D
-         if ( !pPage->isDataEmpty() &&
-              ( offset + len < pPage->start() ||
-                pPage->length() < offset ) )
+         goto done ;
+      }
+      else if ( pPage->isDirtyEmpty() )
+      {
+         hasSync = TRUE ;
+         pPage->clearDirty() ;
+         decDirtyPages( pBucket ) ;
+         goto done ;
+      }
+
+      pos = pPage->beginBlock() ;
+      while( NULL != ( pBuff = pPage->nextBlock( len, pos ) ) )
+      {
+         if ( pPage->dirtyStart() > offset + len )
          {
-            if ( !pPage->isDirty() )
-            {
-               pPage->clearDataInfo() ;
-            }
-            else
-            {
-               rc = _loadPage( pBucket, pPage, pageID, offset, len, cb ) ;
-               if( rc )
-               {
-                  pBucket->unlock( EXCLUSIVE ) ;
-                  PD_LOG( PDERROR, "Load page[ID:%d,Off:%u,Len:%u] failed, "
-                          "rc: %d", pageID, offset, len, rc ) ;
-                  goto error ;
-               }
-            }
+            offset += len ;
+            lastLen -= len ;
+            continue ;
+         }
+         else if ( pPage->dirtyStart() > offset )
+         {
+            UINT32 pageOffset = pPage->dirtyStart() - offset ;
+            pBuff += pageOffset ;
+            lastLen -= pageOffset ;
+            offset += pageOffset ;
+            len -= pageOffset ;
          }
 
-         /// create context
-         context._pPage = pPage ;
-         context._isWrite = TRUE ;
-         context._len = len ;
-         context._makeDirty = TRUE ;
-         context._mode = EXCLUSIVE ;
-         context._offset = offset ;
-         context._pageID = pageID ;
-         context._pData = ( CHAR* )pData ;
-         context._pUnit = this ;
-      }
-      else
-      {
-         /// write to file directly
-         rc = _pCacheFile->write( pageID, pData, len, offset, cb ) ;
+         if ( lastLen < len )
+         {
+            len = lastLen ;
+         }
+         rc = _pCacheFile->write( pageID, pBuff, len, offset, cb ) ;
          if ( rc )
          {
-            PD_LOG( PDERROR, "Write page[ID:%d,Off:%u,Len:%u] to "
+            PD_LOG( PDERROR, "Sync dirty page[ID:%d,Offset:%u,Len:%u] to "
                     "file[%s] failed, rc: %d", pageID, offset, len,
                     _pCacheFile->getFileName(), rc ) ;
             goto error ;
          }
+         offset += len ;
+         lastLen -= len ;
+         if ( 0 == lastLen )
+         {
+            break ;
+         }
       }
 
+      /// clear the dirty
+      hasSync = TRUE ;
+      pPage->clearDirty() ;
+      decDirtyPages( pBucket ) ;
+
    done:
+      if ( pSync )
+      {
+         *pSync = hasSync ;
+      }
       return rc ;
    error:
       goto done ;
    }
 
-   INT32 _utilCacheUnit::read( INT32 pageID, CHAR *pBuff,
-                               UINT32 offset, UINT32 len,
-                               IExecutor *cb,
-                               UINT32 &readLen,
-                               utilCacheContext &context )
+   UINT32 _utilCacheUnit::syncPages( IExecutor *cb, BOOLEAN force )
+   {
+      UINT32 totalPages = 0 ;
+      utilCacheBucket* pBucket = NULL ;
+      ossTimestamp t ;
+      MAP_ID_2_PAGE_PRT tmpPages ;
+
+      /// lock the sync mutex in the begin
+      _syncMutex.lock_r() ;
+
+      /// get current time
+      ossGetCurrentTime( t ) ;
+      _lastSyncTime = t.time * 1000 + t.microtm / 1000 ;
+
+      for ( UINT32 i = 0 ; i < _bucketSize ; ++i )
+      {
+         pBucket = _vecBucket[ i ] ;
+         pBucket->lock( SHARED ) ;
+         utilCacheBucket::MAP_BLK_PAGE* pPages = pBucket->getPages() ;
+         utilCacheBucket::MAP_BLK_PAGE::iterator it = pPages->begin() ;
+         while( it != pPages->end() )
+         {
+            utilCachePage &tmpPage = it->second ;
+
+            /// un-dirty page, ignored
+            if ( !tmpPage.isDirty() )
+            {
+               ++it ;
+               continue ;
+            }
+            /// add to tmp map, and sort
+            else if ( force || _lastSyncTime - tmpPage.lastWriteTime() >=
+                      _dirtyTimeout )
+            {
+               tmpPages[ it->first ] = &tmpPage ;
+            }
+            ++it ;
+         }
+         pBucket->unlock( SHARED ) ;
+
+         if ( tmpPages.size() >= UTIL_CACHE_SYNC_ONCE_NUM )
+         {
+            /// sync pages
+            totalPages += _syncPages( tmpPages, cb ) ;
+            tmpPages.clear() ;
+         }
+      }
+
+      totalPages += _syncPages( tmpPages, cb ) ;
+
+      /// release the sync mutex in the end
+      _syncMutex.release_r() ;
+
+      return totalPages ;
+   }
+
+   UINT32 _utilCacheUnit::_syncPages( _utilCacheUnit::MAP_ID_2_PAGE_PRT &pageMap,
+                                      IExecutor *cb )
    {
       INT32 rc = SDB_OK ;
-      utilCachePage* pPage = NULL ;
-      utilCacheBucket* pBucket = NULL ;
+      UINT32 totalPages = 0 ;
+      BOOLEAN hasSync = FALSE ;
+      utilCacheBucket *pBucket = NULL ;
+      MAP_ID_2_PAGE_PRT_IT it = pageMap.begin() ;
 
-      pPage = getAndLock( pageID, offset + len, &pBucket,
-                          SHARED, FALSE, cb ) ;
-      if ( pPage )
+      while( it != pageMap.end() )
       {
-         /// the page
-         /// -----------|<start>-------|<end>-----------------
-         ///  |--A----------|     |------B--|
-         /// when read in A, need to load the data
-         /// when read in B, need to load the data
-         if ( pPage->isDataEmpty() ||
-              offset + len <= pPage->start() ||
-              pPage->length() <= offset )
-         {
-            pBucket->unlock( SHARED ) ;
-            /// read from file
-            pPage = NULL ;
-         }
-         else if ( offset >= pPage->start() &&
-                   offset + len <= pPage->length() )
-         {
-            /// in the data window, do nothing
-         }
-         else
-         {
-            if ( !pPage->isDirty() )
-            {
-               pBucket->unlock( SHARED ) ;
-               pPage = NULL ;
-            }
-            else
-            {
-               /// load the data
-               if ( offset < pPage->start() )
-               {
-                  rc = _loadPage( pBucket, pPage, pageID, offset,
-                                  pPage->start() - offset, cb ) ;
-                  if ( rc )
-                  {
-                     PD_LOG( PDERROR, "Load page[ID:%d,Off:%u,Len:%u] data "
-                             "failed, rc: %d", pageID, offset,
-                             pPage->start() - offset, rc ) ;
-                     pBucket->unlock( SHARED ) ;
-                     goto error ;
-                  }
-               }
-               if ( offset + len > pPage->length() )
-               {
-                  rc = _loadPage( pBucket, pPage, pageID, pPage->length(),
-                                  offset + len - pPage->length(), cb ) ;
-                  if ( rc )
-                  {
-                     PD_LOG( PDERROR, "Load page[ID:%d,Off:%u,Len:%u] data "
-                             "failed, rc: %d", pageID, pPage->length(),
-                             offset + len - pPage->length(), rc ) ;
-                     pBucket->unlock( SHARED ) ;
-                     goto error ;
-                  }
-               }
-            }
-         }
-      }
+         pBucket = getBucket( calcBucketID( it->first ) ) ;
+         pBucket->lock( SHARED ) ;
+         rc = _syncPage( pBucket, it->second, it->first, cb, &hasSync ) ;
+         pBucket->unlock( SHARED ) ;
 
-      if ( pPage )
-      {
-         /// create context
-         context._pPage = pPage ;
-         context._isWrite = FALSE ;
-         context._len = len ;
-         context._makeDirty = FALSE ;
-         context._mode = SHARED ;
-         context._offset = offset ;
-         context._pageID = pageID ;
-         context._pData = pBuff ;
-         context._pUnit = this ;
-      }
-      else
-      {
-         rc = _pCacheFile->read( pageID, pBuff, len, offset, readLen, cb ) ;
          if ( rc )
          {
-            PD_LOG( PDERROR, "Read page[ID:%d,Off:%u,Len:%u] from file[%s] "
-                    "failed, rc: %d", pageID, offset, len,
-                    _pCacheFile->getFileName(), rc ) ;
-            goto error ;
+            PD_LOG( PDERROR, "Sync page[%d] failed, rc: %d",
+                    it->first, rc ) ;
+            ossPanic() ;
          }
+         totalPages += ( hasSync ? 1 : 0 ) ;
+         ++it ;
       }
 
-   done:
-      return rc ;
-   error:
-      goto done ;
+      return totalPages ;
    }
 
-   UINT32 _utilCacheUnit::recyclePages( UINT32 timeout )
+   UINT64 _utilCacheUnit::recyclePages( BOOLEAN force, INT64 exceptSize )
    {
-      UINT32 count = 0 ;
-      dmsCacheBucket* pBucket = NULL ;
-      dmsCacheBucket::MAP_BLK_PAGE* pPages = NULL ;
+      UINT64 totalSize = 0 ;
+      ossTimestamp t ;
+      utilCacheBucket* pBucket = NULL ;
+      utilCacheBucket::MAP_BLK_PAGE* pPages = NULL ;
 
-      UINT64 curTime = time( NULL ) ;
-      if ( _lastRecycle == curTime )
-      {
-         goto done ;
-      }
-      _lastRecycle = curTime ;
+      /// lock the recycle mutex in the begin
+      _recycleMutex.lock_r() ;
+
+      /// get current time
+      ossGetCurrentTime( t ) ;
+      _lastRecycleTime = t.time * 1000 + t.microtm / 1000 ;
 
       for ( UINT32 i = 0 ; i < _bucketSize ; ++i )
       {
          pBucket = _vecBucket[ i ] ;
          pBucket->lock( EXCLUSIVE ) ;
          pPages = pBucket->getPages() ;
-         dmsCacheBucket::MAP_BLK_PAGE::iterator it = pPages->begin() ;
+         utilCacheBucket::MAP_BLK_PAGE::iterator it = pPages->begin() ;
          while ( it != pPages->end() )
          {
-            dmsCachePage& page = it->second ;
-            if ( page.isDirty() || time( NULL ) - page.lastTime() <= timeout )
+            utilCachePage& page = it->second ;
+
+            /// dirty page and locked page, ignored
+            if ( page.isDirty() || page.isLocked() )
             {
                ++it ;
-               break ;
+               continue ;
             }
-            else
+            /// not-force and time is not up to the limit, ignored
+            if ( !force && _lastRecycleTime - page.lastTime() < _pageTimeout )
             {
-               page.invalidate() ;
-               _pMgr->release( page ) ;
-               it = pPages->erase( it ) ;
-               _totalPage.dec() ;
-               ++count ;
+               ++it ;
+               continue ;
             }
+
+            /// release the page
+            totalSize += page.size() ;
+            _pMgr->release( page ) ;
+            it = pPages->erase( it ) ;
+            /// update the meta
+            _totalPage.dec() ;
          }
          pBucket->unlock( EXCLUSIVE ) ;
+
+         /// when up to the size, break
+         if ( exceptSize > 0 && totalSize > ( ( UINT64 )exceptSize << 1 ) )
+         {
+            break ;
+         }
       }
 
-   done:
-      return count ;
+      /// release the recycle mutex in the end
+      _recycleMutex.release_r() ;
+
+      return totalSize ;
    }
 
 }

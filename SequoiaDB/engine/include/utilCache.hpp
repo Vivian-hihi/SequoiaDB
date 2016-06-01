@@ -101,6 +101,8 @@ namespace engine
          UINT32      size() const ;
          UINT32      start() const { return _start ; }
          UINT32      length() const { return _length ; }
+         UINT32      dirtyStart() const { return _dirtyStart ; }
+         UINT32      dirtyLength() const { return _dirtyLength ; }
          UINT64      lastTime() const { return _lastTime ; }
          UINT64      lastWriteTime() const { return _lastWriteTime ; }
          UINT32      readTimes() const { return _readTimes ; }
@@ -113,6 +115,8 @@ namespace engine
          void        clearDirty()
          {
             OSS_BIT_CLEAR( _status, UTIL_CACHE_PAGE_DIRTY_FLAG ) ;
+            _dirtyStart = 0 ;
+            _dirtyLength = 0 ;
          }
          BOOLEAN     isDirty() const
          {
@@ -153,9 +157,12 @@ namespace engine
          UINT32      lsnNum() const { return _lsnNum ; }
 
          UINT32      blockNum() const ;
-         BOOLEAN     isEmpty() const { return 0 == blockNum() ? TRUE : FALSE ; }
+         BOOLEAN     isEmpty() const { return 0 == _length ? TRUE : FALSE ; }
+         BOOLEAN     isDirtyEmpty() const { return 0 == _dirtyLength ? TRUE : FALSE ; }
 
-         INT32       write( const CHAR* pBuf, UINT32 offset, UINT32 len ) ;
+         INT32       write( const CHAR* pBuf, UINT32 offset,
+                            UINT32 len, BOOLEAN &setDirty ) ;
+         INT32       load( const CHAR* pBuf, UINT32 offset, UINT32 len ) ;
          UINT32      read( CHAR* pBuf, UINT32 offset, UINT32 len ) ;
          INT32       copy( const _utilCachePage &right ) ;
 
@@ -169,10 +176,16 @@ namespace engine
          void        clear() ;
 
       private:
+         INT32       _write( const CHAR* pBuf, UINT32 offset,
+                             UINT32 len, BOOLEAN dirty ) ;
+
+      private:
          utilCacheBlock             _first ;
          utilCacheBlockSuit         _next ;
          UINT32                     _start ;
          UINT32                     _length ;
+         UINT32                     _dirtyStart ;
+         UINT32                     _dirtyLength ;
          UINT64                     _lastTime ;
          UINT64                     _lastWriteTime ;
          UINT32                     _readTimes ;
@@ -375,7 +388,6 @@ namespace engine
          UINT32            _offset ;
          UINT32            _len ;
          BOOLEAN           _isWrite ;
-         BOOLEAN           _makeDirty ;
          BOOLEAN           _writeBack ;
          BOOLEAN           _usePage ;
 
@@ -415,27 +427,56 @@ namespace engine
    typedef _utilCachFileBase utilCachFileBase ;
 
    #define UTIL_CACHEUNIT_BUCKET_SZ                ( 2048 )
-   #define UTIL_CACHEUNIT_PAGE_TIMEOUT             ( 100 )
+   #define UTIL_CACHEUNIT_PAGE_TIMEOUT             ( 1000 ) /// ms
+   #define UTIL_CACHEUNIT_DIRTY_TIMEOUT            ( 1000 ) /// ms
+   #define UTIL_CACHEUNIT_BG_DIRTY_RATIO           ( 40 )   /// 40%
+   #define UTIL_CACHEUNIT_BG_FREE_RATIO            ( 50 )   /// 50%
 
    /*
       _utilCacheUnit define
    */
    class _utilCacheUnit : public SDBObject
    {
+      typedef std::map< INT32, utilCachePage* >       MAP_ID_2_PAGE_PRT ;
+      typedef MAP_ID_2_PAGE_PRT::iterator             MAP_ID_2_PAGE_PRT_IT ;
+
       public:
          _utilCacheUnit() ;
          ~_utilCacheUnit() ;
 
-         UINT64         recyclePages( UINT32 timeout, INT64 exceptSize = -1 ) ;
-         UINT64         syncPages() ;
+         /*
+            Return the recycle total size
+         */
+         UINT64         recyclePages( BOOLEAN force, INT64 exceptSize = -1 ) ;
+         /*
+            Return the sync pages
+         */
+         UINT32         syncPages( IExecutor *cb,
+                                   BOOLEAN force = TRUE ) ;
 
          INT32          init( utilCacheMgr *pMgr,
                               utilCachFileBase *pFile,
                               UINT32 pageSize,
                               UINT32 bucketSize = UTIL_CACHEUNIT_BUCKET_SZ,
-                              BOOLEAN wholePage = FALSE,
-                              UINT32 pageTimeout = UTIL_CACHEUNIT_PAGE_TIMEOUT ) ;
-         void           fini() ;
+                              BOOLEAN wholePage = FALSE ) ;
+         void           fini( IExecutor *cb ) ;
+
+         /*
+            Set and Get dirty/recycle configs
+         */
+         void           setDirtyConfig( UINT32 bgDirtyRatio =
+                                        UTIL_CACHEUNIT_BG_DIRTY_RATIO,
+                                        UINT32 dirtyTimeout =
+                                        UTIL_CACHEUNIT_DIRTY_TIMEOUT ) ;
+         void           setRecycleConfig( UINT32 bgFreeRatio =
+                                          UTIL_CACHEUNIT_BG_FREE_RATIO,
+                                          UINT32 pageTimeout =
+                                          UTIL_CACHEUNIT_PAGE_TIMEOUT ) ;
+
+         UINT32         getBGDirtyRatio() const { return _bgDirtyRatio ; }
+         UINT32         getDirtyTimeout() const { return _dirtyTimeout } ;
+         UINT32         getBGFreeRatio() const { return _bgFreeRatio ; }
+         UINT32         getPageTimeout() const { return _pageTimeout ; }
 
          UINT32         calcBucketID( INT32 pageID ) const ;
          UINT32         bucketSize() const { return _bucketSize ; }
@@ -450,16 +491,17 @@ namespace engine
          void           decDirtyPages( utilCacheBucket *pBucket ) ;
          void           incDirtyPages( utilCacheBucket *pBucket ) ;
 
-         INT32          write( INT32 pageID, const CHAR *pData,
-                               UINT32 offset, UINT32 len,
-                               IExecutor *cb,
-                               utilCacheContext &context ) ;
+         void           prepareWrite( INT32 pageID,
+                                      UINT32 offset,
+                                      UINT32 len,
+                                      IExecutor *cb,
+                                      utilCacheContext &context ) ;
 
-         INT32          read( INT32 pageID, CHAR *pBuff,
-                              UINT32 offset, UINT32 len,
-                              IExecutor *cb,
-                              UINT32 &readLen,
-                              utilCacheContext &context ) ;
+         void           prepareRead( INT32 pageID,
+                                     UINT32 offset,
+                                     UINT32 len,
+                                     IExecutor *cb,
+                                     utilCacheContext &context ) ;
 
       protected:
          utilCachePage* getAndLock( INT32 pageID, UINT32 size,
@@ -468,17 +510,17 @@ namespace engine
                                     BOOLEAN alloc,
                                     IExecutor *cb ) ;
 
+         /*
+            Caller must hold the bucket lock
+         */
          INT32          _syncPage( utilCacheBucket *pBucket,
                                    utilCachePage *pPage,
                                    INT32 pageID,
-                                   IExecutor *cb ) ;
+                                   IExecutor *cb,
+                                   BOOLEAN *pSync = NULL ) ;
 
-         INT32          _loadPage( utilCacheBucket *pBucket,
-                                   utilCachePage *pPage,
-                                   INT32 pageID,
-                                   UINT32 offset,
-                                   UINT32 len,
-                                   IExecutor *cb ) ;
+         UINT32         _syncPages( MAP_ID_2_PAGE_PRT &pageMap,
+                                    IExecutor *cb ) ;
 
       private:
          utilCacheMgr*              _pMgr ;
@@ -486,14 +528,28 @@ namespace engine
          UINT32                     _bucketSize ;
          UINT32                     _pageSize ;
          BOOLEAN                    _wholePage ;
-         UINT32                     _pageTimeout ;
          vector< utilCacheBucket* > _vecBucket ;
          BOOLEAN                    _closed ;
+
+         /*
+            Dirty page configs
+         */
+         UINT32                     _bgDirtyRatio ;   /// background dirty ratio
+         UINT32                     _dirtyTimeout ;   /// ms
+
+         /*
+            Page recycle config
+         */
+         UINT32                     _bgFreeRatio ;    /// background free ratio
+         UINT32                     _pageTimeout ;    /// ms
 
          ossAtomic64                _dirtySize ;
          ossAtomic64                _totalPage ;
 
-         UINT64                     _lastRecycle ;
+         UINT64                     _lastRecycleTime ;
+         UINT64                     _lastSyncTime ;
+         ossRWMutex                 _syncMutex ;
+         ossRWMutex                 _recycleMutex ;
 
    } ;
    typedef _utilCacheUnit utilCacheUnit ;
