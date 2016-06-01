@@ -58,12 +58,12 @@
     <pre class="prettyprint lang-javascript">
     > db.foo.bar.find({age:23})</pre>
 
--   使用匹配符
+-   使用[匹配符](SdbDoc_Cn/reference/operator/match_operator/overview.html)
 
     下面操作返回集合 bar 中 age 字段值大于20的记录
 
     <pre class="prettyprint lang-javascript">
-    > db.foo.bar.find({age:{$gt:20}})</pre>
+    > db.foo.bar.find({age:{[$gt](SdbDoc_Cn/reference/operator/match_operator/gt.html):20}})</pre>
 
 -   嵌套数组匹配
 
@@ -178,9 +178,9 @@
 -   使用游标控制 find() 返回的记录
 
     <pre class="prettyprint lang-javascript">
-    > db.foo.bar.find().current()   //返回当前游标指向的记录
-    > db.foo.bar.find().next()      //返回当前游标指向的下一条记录
-    > db.foo.bar.find().close()     //关闭当前游标，当前游标不再可用
-    > db.foo.bar.find().count()     //返回当前游标的记录总数
-    > db.foo.bar.find().size()      //返回当前游标到最终游标的距离
-    > db.foo.bar.find().toArray()   //以数组形式返回结果集</pre>
+    > [db.foo.bar.find().current()](SdbDoc_Cn/reference/Sequoiadb_command/SdbCursor/current.html)   //返回当前游标指向的记录
+    > [db.foo.bar.find().next()](SdbDoc_Cn/reference/Sequoiadb_command/SdbCursor/next.html)      //返回当前游标指向的下一条记录
+    > [db.foo.bar.find().close()](SdbDoc_Cn/reference/Sequoiadb_command/SdbCursor/close.html)     //关闭当前游标，当前游标不再可用
+    > [db.foo.bar.find().count()](SdbDoc_Cn/reference/Sequoiadb_command/SdbQuery/count.html)     //返回当前游标的记录总数
+    > [db.foo.bar.find().size()](SdbDoc_Cn/reference/Sequoiadb_command/SdbQuery/size.html)      //返回当前游标到最终游标的距离
+    > [db.foo.bar.find().toArray()](SdbDoc_Cn/reference/Sequoiadb_command/SdbQuery/toArray.html)   //以数组形式返回结果集</pre>

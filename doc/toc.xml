@@ -2308,6 +2308,14 @@
                             <enabled>true</enabled>
                             <objlist>
                                 <obj>
+                                    <id>1464770442</id>
+                                    <cnname>概述</cnname>
+                                    <enname>Overview</enname>
+                                    <cnpath>SdbDoc_Cn/reference/operator/match_operator/overview.html</cnpath>
+                                    <enpath>SdbDoc_En/reference/operator/match_operator/overview_en.html</enpath>
+                                    <enabled>true</enabled>
+                                </obj>
+                                <obj>
                                     <id>1432190900</id>
                                     <cnname>$gt</cnname>
                                     <enname>$gt</enname>
@@ -2747,6 +2755,14 @@
                             <enname>Aggregate Operator</enname>
                             <enabled>true</enabled>
                             <objlist>
+                                <obj>
+                                    <id>1464770465</id>
+                                    <cnname>概述</cnname>
+                                    <enname>Overview</enname>
+                                    <cnpath>SdbDoc_Cn/reference/operator/aggregate_operator/overview.html</cnpath>
+                                    <enpath>SdbDoc_En/reference/operator/aggregate_operator/overview_en.html</enpath>
+                                    <enabled>true</enabled>
+                                </obj>
                                 <obj>
                                     <id>1432190934</id>
                                     <cnname>$project</cnname>
