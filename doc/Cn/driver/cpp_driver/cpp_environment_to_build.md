@@ -35,7 +35,7 @@ error while loading shared libraries: libsdbcpp.so: cannot open shared object fi
 使用 lib 目录下的 libstaticsdbc.a 静态库，g++ 编译参数形式如：
 
 <pre class="prettyprint lang-javascript">
-$ g++ main.c -o test -I &lt;path&gt;/sdbdriver/include –L &lt;path&gt;/sdbdriver/lib/libstaticsdbcpp.a –lm -lpthread -ldl</pre>
+$ g++ main.c -o test -I &lt;path&gt;/sdbdriver/include –L &lt;path&gt;/sdbdriver/lib/ -lstaticsdbcpp –lm -lpthread -ldl</pre>
 
 * Windows
 
