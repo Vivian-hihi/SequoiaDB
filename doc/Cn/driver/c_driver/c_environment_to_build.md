@@ -33,7 +33,7 @@ error while loading shared libraries: libsdbc.so: cannot open shared object file
 
 使用 lib 目录下的 libstaticsdbc.a 静态库，gcc 编译参数形式如：
 <pre class="prettyprint lang-javascript">
-$ gcc testClient.c -o testClientC -I < PATH >/sdbdriver/include –L < PATH >/sdbdriver/lib/libstaticsdbc.a -lm -ldl -lpthread</pre >
+$ gcc testClient.c -o testClientC -I < PATH >/sdbdriver/include –L < PATH >/sdbdriver/lib/ -lstaticsdbc -lm -ldl -lpthread</pre >
 
 * Windows
 
