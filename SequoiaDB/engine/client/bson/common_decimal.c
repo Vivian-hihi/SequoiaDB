@@ -68,8 +68,8 @@ static const char json_str_end[]          = " }" ;
       }\
    } while ( 0 )
 
-#define Max(x, y)				((x) > (y) ? (x) : (y))
-#define Min(x, y)				((x) < (y) ? (x) : (y))
+#define Max(x, y)          ((x) > (y) ? (x) : (y))
+#define Min(x, y)          ((x) < (y) ? (x) : (y))
 
 static void _decimal_free_buff( bson_decimal *decimal ) ;
 static void _decimal_strip( bson_decimal *decimal ) ;
@@ -2971,28 +2971,28 @@ SDB_EXPORT int decimal_ceil( const bson_decimal *decimal,
    }
 
    decimal_init( &tmp ) ;
-	rc = decimal_copy( decimal, &tmp ) ;
-	if ( 0 != rc )
-	{
-	   goto error ;
-	}
+   rc = decimal_copy( decimal, &tmp ) ;
+   if ( 0 != rc )
+   {
+      goto error ;
+   }
 
-	_decimal_trunc( &tmp, 0 ) ;
+   _decimal_trunc( &tmp, 0 ) ;
 
-	if ( decimal->sign == SDB_DECIMAL_POS && decimal_cmp( decimal, &tmp ) != 0 )
-	{
-	   rc = decimal_add( &tmp, &const_one, &tmp ) ;
-	   if ( 0 != rc )
-	   {
-	      goto error ;
-	   }
-	}
+   if ( decimal->sign == SDB_DECIMAL_POS && decimal_cmp( decimal, &tmp ) != 0 )
+   {
+      rc = decimal_add( &tmp, &const_one, &tmp ) ;
+      if ( 0 != rc )
+      {
+         goto error ;
+      }
+   }
 
-	rc = decimal_copy( &tmp, result ) ;
-	if ( 0 != rc )
-	{
-	   goto error ;
-	}
+   rc = decimal_copy( &tmp, result ) ;
+   if ( 0 != rc )
+   {
+      goto error ;
+   }
 
 done:
    decimal_free( &tmp ) ;
@@ -3068,31 +3068,31 @@ SDB_EXPORT int decimal_mod( const bson_decimal *left,
       goto done ;
    }
 
-	decimal_init( &tmp ) ;
+   decimal_init( &tmp ) ;
 
-	/* ---------
-	 * We do this using the equation
-	 *		mod(x,y) = x - trunc(x/y)*y
-	 * div_var can be persuaded to give us trunc(x/y) directly.
-	 * ----------
-	 */
-	rc = _decimal_div( left, right, &tmp, 0, 0 ) ;
-	if ( 0 != rc )
-	{
-	   goto error ;
-	}
+   /* ---------
+    * We do this using the equation
+    *    mod(x,y) = x - trunc(x/y)*y
+    * div_var can be persuaded to give us trunc(x/y) directly.
+    * ----------
+    */
+   rc = _decimal_div( left, right, &tmp, 0, 0 ) ;
+   if ( 0 != rc )
+   {
+      goto error ;
+   }
 
-	rc = _decimal_mul( right, &tmp, &tmp, right->dscale ) ;
-	if ( 0 != rc )
-	{
-	   goto error ;
-	}
+   rc = _decimal_mul( right, &tmp, &tmp, right->dscale ) ;
+   if ( 0 != rc )
+   {
+      goto error ;
+   }
 
-	rc = _decimal_sub( left, &tmp, result ) ;
-	if ( 0 != rc )
-	{
-	   goto error ;
-	}
+   rc = _decimal_sub( left, &tmp, result ) ;
+   if ( 0 != rc )
+   {
+      goto error ;
+   }
 
 done:
    decimal_free( &tmp ) ;
