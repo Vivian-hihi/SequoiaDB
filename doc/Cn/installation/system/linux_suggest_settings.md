@@ -53,10 +53,8 @@
 	> cat /proc/sys/vm/dirty_expire_centisecs
 	> cat /proc/sys/vm/vfs_cache_pressure
 	> cat /proc/sys/vm/min_free_kbytes
-	> cat /proc/sys/vm/zone_reclaim_mode
 	> cat /proc/sys/vm/overcommit_memory
-	> cat /proc/sys/vm/panic_on_oom
-	> cat /proc/sys/vm/oom_kill_allocating_task</pre>
+	> cat /proc/sys/vm/overcommit_ratio</pre>
 
 	2.  添加下列参数至 /etc/sysctl.conf 文件调整内核参数：
 
@@ -66,11 +64,9 @@
 	vm.dirty_background_ratio = 40
 	vm.dirty_expire_centisecs = 3000
 	vm.vfs_cache_pressure = 200
-	vm.min_free_kbytes = &lt;物理内存大小的8%，但不要超过4GB即4194304KB，单位KB&gt;
-	vm.zone_reclaim_mode = 0
-	vm.overcommit_memory = 1
-    vm.panic_on_oom = 1
-    vm.oom_kill_allocating_task = 0</pre>
+	vm.min_free_kbytes = &lt;物理内存大小的8%，单位KB&gt;
+	vm.overcommit_memory = 2
+    vm.overcommit_ratio = 85</pre>
 
 	**Note:**
 		
@@ -96,26 +92,7 @@
 
 	<pre class="prettyprint lang-javascript">
 	> cat /sys/kernel/mm/transparent_hugepage/enabled
-	> cat /sys/kernel/mm/transparent_hugepage/defrag</pre>
-
--   关闭SWAP
-    
-    当数据库可用物理内存不足 8GB 时不需要关闭swap。
-    
-    1.  执行命令停用所有swap：
-    
-    <pre class="prettyprint lang-javascript">
-    > swapoff -a</pre>
-
-    2.  开机不挂载swap分区，编辑/etc/fstab，在swap分区的一行前面添加'#'注释掉，swap分区所在行一般形似如下，该行中间必有"swap"字符串：
-    
-    <pre class="prettyprint lang-diy">
-    UUID=ad7b0efc-9c48-4699-885c-666ad7a3a106 none            swap    sw              0       0</pre>
-
-    
-    
-    
-    
+	> cat /sys/kernel/mm/transparent_hugepage/defrag</pre>    
 
 -   NUMA的影响
     
@@ -123,7 +100,7 @@
 
 -   关闭NUMA
     
-    关闭Linux系统的NUMA的方法主要有两种，一种是通过BIOS禁用NUMA；另一种是通过修改gurb的配置文件，CentOS、SUSE、Ubuntu的grub配置文件有差异，同一款Linux的不同版本配置也略有不同，此处会介绍CentOS6.4和Ubuntu12.04的配置方法以供参考，SUSE和CentOS修改方法类似。
+    关闭Linux系统的NUMA的方法主要有两种，一种是通过BIOS禁用NUMA；另一种是通过修改gurb的配置文件，CentOS、SUSE、Ubuntu的grub配置文件有差异，同一款Linux的不同版本配置也略有不同，此处会介绍CentOS6.4和Ubuntu12.04的配置方法以供参考，SUSE和CentOS修改方法类似。建议通过设置BIOS来禁用NUMA。
 
     1.  开机按快捷键进入BIOS设置界面，关闭NUMA。不同品牌的主板或服务器，具体操作略有差异，此处不作详细介绍。
     
@@ -147,60 +124,6 @@
     > numastat</pre>
 
     如果输出结果中只有node0，则表示成功禁用了NUMA，如果有node1出现则失败。
-
--   通过numactl以全交叉内存分配策略启动数据库
-
-    当您安装好SequoiaDB后，可以通过numactl以全交叉内存分配策略来启动数据库服务，这样就可以在不关闭NUMA的情况下，避免在高负荷运转时系统卡死甚至崩溃。
-    
-    以全交叉内存分配策略启动程序的命令形式：
-
-    <pre class="prettyprint lang-javascript">
-    > numactl --interleave=all &lt;command&gt;</pre>
-    
-    以全交叉内存分配策略启动sdbcm服务的命令形式。请先检查sdbcm服务是否正在运行，如果正在运行，请先关闭再使用
-    numactl --interleave=all的方式启动服务：
-
-    检查sdbcm服务是否正在运行：    
-    <pre class="prettyprint lang-javascript">
-    > service sdbcm status</pre>
-    
-    关闭sdbcm服务：
-    <pre class="prettyprint lang-javascript">
-    > service sdbcm stop</pre>
-    
-    以全交叉内存分配策略启动sdbcm服务：
-    <pre class="prettyprint lang-javascript">
-    > numactl --interleave=all service sdbcm start</pre>
-    
-    确认sdb相关进程的内存分配策略是否为全交叉的方法，示例：
-    
-    1.   找到sdb先关的进程号：
-    
-    <pre class="prettyprint lang-javascript">
-    > ps -ef | grep sdb</pre>
-    
-    2.   根据进程号来查看该进程的内存分配策略，假设进程号为8888：
-    
-    <pre class="prettyprint lang-javascript">
-    > cat /proc/8888/numa_maps</pre>
-    
-    3.   上一步骤中的输出结果如果每一行的第一个空格后面是“interleave”则表示设置成功。
-
--   关闭影响服务器硬件性能发挥的Linux服务
-    
-    Linux系统自启动了一些自认为节能环保的服务，这些服务是为移动设备设计的并不适合服务器，尤其是运行数据库的服务器。这些服务的运行在一定程度上会使得系统不能完全发挥出硬件具有的性能。如：用于优化中断分配的irqbalance，用于cpu自动降频的cpuspeed、cpufreqd、powerd等。建议关闭这些服务。当系统允许效率低于预期时，请使用“top”和“ps -ef | grep xxx”命令检查这些服务是否占用过多的资源。
-
-    临时关闭irqbalance和cpuspeed：
-
-    <pre class="prettyprint lang-javascript">
-    > service irqbalance stop
-    > service irqbalance stop</pre>
-    
-    永远关闭irqbalance和cpuspeed（该方法要重启系统才能生效，如不能重启，先执行上文中的临时关闭的命令）：
-
-    <pre class="prettyprint lang-javascript">
-    > chkconfig irqbalance off
-    > chkconfig cpuspeed off</pre>
 
 
 	**Note:** 
