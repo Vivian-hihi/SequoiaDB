@@ -102,7 +102,7 @@
     
     关闭Linux系统的NUMA的方法主要有两种，一种是通过BIOS禁用NUMA；另一种是通过修改gurb的配置文件，CentOS、SUSE、Ubuntu的grub配置文件有差异，同一款Linux的不同版本配置也略有不同，此处会介绍CentOS6.4和Ubuntu12.04的配置方法以供参考，SUSE和CentOS修改方法类似。建议通过设置BIOS来禁用NUMA。
 
-    1.  开机按快捷键进入BIOS设置界面，关闭NUMA。不同品牌的主板或服务器，具体操作略有差异，此处不作详细介绍。
+    1.  开机按快捷键进入BIOS设置界面，关闭NUMA，保存设置并重启。不同品牌的主板或服务器，具体操作略有差异，此处不作详细介绍。
     
     2.  修改grub的配置文件，关闭NUMA：
     
@@ -119,6 +119,8 @@
         linux   /boot/vmlinuz-3.2.0-31-generic root=UUID=92191cd8-3690-4cd4-9f42-95d392c9d828 ro</pre>
 
         在Linux引导行的末尾，空格再添加“numa=off”，如果有多个Linux引导行，则每个Linux引导行都要添加。
+      
+        3）  修改后保存，再重启系统。
 
     3.   验证NUMA是否成功关闭，shell执行如下命令：
     
