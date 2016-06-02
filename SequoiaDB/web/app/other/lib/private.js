@@ -371,21 +371,22 @@ _Deploy.BuildSdbStep = function( $scope, $location, deployModel, action, deployM
       switch( action )
       {
       case 'SDB-Conf':
-      case 'SSQL-Mod':
+      case 'SSQL-Conf':
          stepList['step'] = 1 ;
          break ;
       case 'SDB-Mod':
+      case 'SSQL-Mod':
          stepList['step'] = 2 ;
          break ;
       case 'ZKP-Mod':
          stepList['step'] = 1 ;
          break ;
       case 'InstallModule':
-         if( deployModule == 'sequoiadb' )
+         if( deployModule == 'sequoiadb' || deployModule == 'sequoiasql' )
          {
             stepList['step'] = 3 ;
          }
-         else if( deployModule == 'zookeeper' || deployModule == 'sequoiasql' )
+         else if( deployModule == 'zookeeper' )
          {
             stepList['step'] = 2 ;
          }
@@ -398,6 +399,7 @@ _Deploy.BuildSdbStep = function( $scope, $location, deployModel, action, deployM
       }
       else if( deployModule == 'sequoiasql' )
       {
+         stepList['info'].push( { 'text': $scope.autoLanguage( '配置业务' ), 'click': function(){ _Deploy.GotoStep( $location, 'SSQL-Conf' ); } } ) ;
          stepList['info'].push( { 'text': $scope.autoLanguage( '修改业务' ), 'click': function(){ _Deploy.GotoStep( $location, 'SSQL-Mod'  ); } } ) ;
       }
       else if( deployModule == 'zookeeper' )
@@ -421,14 +423,15 @@ _Deploy.BuildSdbStep = function( $scope, $location, deployModel, action, deployM
          stepList['step'] = 3 ;
          break ;
       case 'SDB-Conf':
-      case 'SSQL-Mod':
+      case 'SSQL-Conf':
          stepList['step'] = 4 ;
          break ;
       case 'SDB-Mod':
+      case 'SSQL-Mod':
          stepList['step'] = 5 ;
          break ;
       case 'InstallModule':
-         if( deployModule == 'zookeeper' || deployModule == 'sequoiassql' )
+         if( deployModule == 'zookeeper' )
          {
             stepList['step'] = 5 ;
          }
@@ -448,6 +451,7 @@ _Deploy.BuildSdbStep = function( $scope, $location, deployModel, action, deployM
       }
       else if( deployModule == 'sequoiasql' )
       {
+         stepList['info'].push( { 'text': $scope.autoLanguage( '配置业务' ), 'click': function(){ _Deploy.GotoStep( $location, 'SSQL-Conf' ); } } ) ;
          stepList['info'].push( { 'text': $scope.autoLanguage( '修改业务' ), 'click': function(){ _Deploy.GotoStep( $location, 'SSQL-Mod'  ); } } ) ;
       }
       else if( deployModule == 'zookeeper' )

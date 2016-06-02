@@ -184,7 +184,7 @@ html,body{ width:100%; height:100%; /*overflow:hidden; */ }
 .form-danger { border:#FF8C8C solid 1px; background:#FFF0F0; color:#a94442; }
 
 /* 面板 */
-.well { border:#E3E3E3 solid 1px; background:#F5F5F5; width:auto; padding:10px; box-sizing:border-box; -moz-box-sizing:border-box; -webkit-box-sizing:border-box; }
+.well { border:#E3E3E3 solid 1px; background:#F5F5F5; width:auto; padding:10px; box-sizing:border-box; -moz-box-sizing:border-box; -webkit-box-sizing:border-box; -moz-user-select:text; -webkit-user-select:text; -ms-user-select:text; -khtml-user-select:text; user-select:text; }
 
 /* 警告框 */
 .alert { border-radius:0; min-height:20px; padding:10px 15px; word-wrap:break-word; z-index:1; }

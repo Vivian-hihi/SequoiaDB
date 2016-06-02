@@ -9,8 +9,8 @@
       $scope.Conf2 = {} ;
       $scope.HostList = [] ;
       $scope.templateList = [] ;
-      $scope.ConfForm1 = { 'inputList': [] } ;
-      $scope.ConfForm2 = { 'inputList': [] } ;
+      $scope.ConfForm1 = { 'keyWidth': '160px', 'inputList': [] } ;
+      $scope.ConfForm2 = { 'keyWidth': '160px', 'inputList': [] } ;
       $scope.currentTemplate  = {} ;
       $scope.RedundancyChart = {} ;
       $scope.RedundancyChart['options'] = $.extend( true, {}, window.SdbSacManagerConf.RedundancyChart ) ;
@@ -39,88 +39,10 @@
          return ;
       }
 
-      //计算冗余等信息
-      var predictCapacity = function(){
-         var isAllClear = $scope.ConfForm2.check() ;
-         if( isAllClear )
-         {
-            var DeployMod = $scope.ConfForm1.getValue() ;
-            var formVal = $scope.ConfForm2.getValue() ;
-            $scope.currentTemplate = {
-               'ClusterName':  clusterName,
-               'BusinessName': $scope.ModuleName,
-               'DeployMod':    DeployMod['type'],
-               'BusinessType': 'sequoiasql',
-               'Property': [
-                  { "Name": "deploy_standby", "Value": formVal['deploy_standby'] + '' },
-                  { "Name": "segment_num",    "Value": formVal['segment_num'] + '' }
-               ],
-               'HostInfo':[]
-            } ;
-            $scope.Conf1['DiskNum'] = 0 ;
-            $scope.Conf1['HostNum'] = 0 ;
-            $.each( $scope.HostList, function( index ){
-               if( $scope.HostList[index]['checked'] == true )
-               {
-                  $scope.currentTemplate['HostInfo'].push( { 'HostName': $scope.HostList[index]['HostName'] } ) ;
-                  ++$scope.Conf1['HostNum'] ;
-                  $.each( $scope.HostList[index]['Disk'], function( index2, diskInfo ){
-                     if( diskInfo['IsLocal'] == true )
-                     {
-                        ++$scope.Conf1['DiskNum'] ;
-                     }
-                  } ) ;
-               }
-            } ) ;
-            if( $scope.Conf1['HostNum'] == 0 )
-            {
-               $scope.Conf1['HostNum'] = $scope.HostList.length ;
-               $.each( $scope.HostList, function( index ){
-                  $scope.currentTemplate['HostInfo'].push( { 'HostName': $scope.HostList[index]['HostName'] } ) ;
-                  $.each( $scope.HostList[index]['Disk'], function( index2, diskInfo ){
-                     if( diskInfo['IsLocal'] == true )
-                     {
-                        ++$scope.Conf1['DiskNum'] ;
-                     }
-                  } ) ;
-               } ) ;
-            }
-            //计算总节点数
-            $scope.Conf1['SumNode'] = parseInt( formVal['replicanum'] ) * parseInt( formVal['datagroupnum'] ) + parseInt( formVal['catalognum'] ) + ( formVal['coordnum'] == 0 ? $scope.Conf1['HostNum'] : parseInt( formVal['coordnum'] ) ) ;
-            //计算节点利用率
-            $scope.Conf1['nodeSpread'] = twoDecimalPlaces( $scope.Conf1['SumNode'] / $scope.Conf1['DiskNum'] ) ;
-	         $scope.Conf1['nodeSpread'] = $scope.Conf1['nodeSpread'] < 1 ? 1 : $scope.Conf1['nodeSpread'] ;
-            //获取冗余信息
-            var data = { 'cmd': 'predict capacity', 'TemplateInfo': JSON.stringify( $scope.currentTemplate ) } ;
-            SdbRest.OmOperation( data, function( conf2 ){
-               var newConf = {} ;
-               newConf['TotalSize'] = sizeConvert( conf2[0]['TotalSize'] ) ;
-               newConf['ValidSize'] = sizeConvert( conf2[0]['ValidSize'] ) ;
-               newConf['RedundancySize'] = sizeConvert( conf2[0]['TotalSize'] - conf2[0]['ValidSize'] ) ;
-               newConf['Redundancy'] = ( conf2[0]['RedundancyRate'] * 100 ) + '%'
-               $scope.Conf2 = newConf ;
-               $scope.RedundancyChart = {} ;
-               $scope.RedundancyChart['options'] = $.extend( true, {}, window.SdbSacManagerConf.RedundancyChart ) ;
-               $scope.RedundancyChart['options']['series'][0]['name'] = $scope.autoLanguage( '总容量' ) + sizeConvert( conf2[0]['TotalSize'] ) ;
-               $scope.RedundancyChart['options']['series'][0]['data'][0]['value'] = conf2[0]['ValidSize'] ;
-               $scope.RedundancyChart['options']['series'][0]['data'][1]['value'] = conf2[0]['TotalSize'] - conf2[0]['ValidSize'] ;
-               $scope.$apply() ;
-            }, function( errorInfo ){
-               _IndexPublic.createRetryModel( $scope, errorInfo, function(){
-                  predictCapacity() ;
-                  return true ;
-               } ) ;
-            }, function(){
-               _IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
-            } ) ;
-         }
-         $scope.IsAllClear = isAllClear ;
-      }
-
       //获取主机列表
       var getHostList = function(){
          var filter = { "ClusterName": clusterName } ;
-         var data = { 'cmd': 'query host', 'TemplateInfo': JSON.stringify( filter ) } ;
+         var data = { 'cmd': 'query host', 'filter': JSON.stringify( filter ) } ;
          SdbRest.OmOperation( data, function( hostList ){
             $scope.HostList = hostList ;
             $scope.Conf1['DiskNum'] = 0 ;
@@ -153,28 +75,14 @@
                templateList[index]['Property'] = _Deploy.ConvertTemplate( templateList[index]['Property'] ) ;
             } ) ;
             var confForm = {
+               'keyWidth': '160px',
                'inputList': [
                   {
                      "name": "type",
                      "webName": $scope.autoLanguage( '部署模式' ),
                      "type": "select",
                      "value": "",
-                     "valid": [],
-                     "onChange": function( name, key, value ){
-                        $.each( $scope.templateList, function( index, template ){
-                           if( template['DeployMod'] == value )
-                           {
-                              $.each( template['Property'], function( index2 ){
-                                 template['Property'][index2]['onChange'] = function(){
-                                    predictCapacity() ;
-                                 }
-                              } ) ;
-                              $scope.ConfForm2 = { 'inputList': template['Property'] } ;
-                              return false ;
-                           }
-                        } ) ;
-                        setTimeout( predictCapacity ) ;
-                     }
+                     "valid": []
                   }
                ]
             } ;
@@ -182,19 +90,13 @@
                if( index == 0 )
                {
                   confForm['inputList'][0]['value'] = template['DeployMod'] ;
-                  $.each( template['Property'], function( index2 ){
-                     template['Property'][index2]['onChange'] = function(){
-                        predictCapacity() ;
-                     }
-                  } ) ;
-                  $scope.ConfForm2 = { 'inputList': template['Property'] } ;
+                  $scope.ConfForm2 = { 'keyWidth': '160px', 'inputList': template['Property'] } ;
                }
                confForm['inputList'][0]['valid'].push( { 'key': template['WebName'], 'value': template['DeployMod'] } ) ;
             } ) ;
             $scope.templateList = templateList ;
             $scope.ConfForm1 = confForm ;
             $scope.$apply() ;
-            setTimeout( predictCapacity ) ;
          }, function( errorInfo ){
             _IndexPublic.createRetryModel( $scope, errorInfo, function(){
                getBusinessTemplate() ;
@@ -215,12 +117,50 @@
          $location.path( '/Deploy/Install' ) ;
       }
 
+      //获取配置
+      var getModuleConfig = function( Configure ){
+         var data = { 'cmd': 'get business config', 'TemplateInfo': JSON.stringify( Configure ) } ;
+         SdbRest.OmOperation( data, function(){
+            $rootScope.tempData( 'Deploy', 'ModuleConfig', Configure ) ;
+            $location.path( '/Deploy/SSQL-Mod' ) ;
+         }, function( errorInfo ){
+            _IndexPublic.createRetryModel( $scope, errorInfo, function(){
+               getModuleConfig() ;
+               return true ;
+            } ) ;
+         }, function(){
+            _IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
+         } ) ;
+      }
+
       //下一步
-      $scope.GotoModSdb = function(){
-         if( $scope.IsAllClear == true )
+      $scope.GotoModSsql = function(){
+         var isAllClear1 = $scope.ConfForm1.check() ;
+         var isAllClear2 = $scope.ConfForm2.check() ;
+         $scope.IsAllClear = isAllClear1 && isAllClear2 ;
+         if( isAllClear1 && isAllClear2 )
          {
-            $rootScope.tempData( 'Deploy', 'ModuleConfig', $scope.currentTemplate ) ;
-            $location.path( '/Deploy/SDB-Mod' ) ;
+            var formVal1 = $scope.ConfForm1.getValue() ;
+            var formVal2 = $scope.ConfForm2.getValue() ;
+            var tempHostInfo = [] ;
+			   $.each( $scope.HostList, function( index, value ){
+               if( value['checked'] == true )
+               {
+				      tempHostInfo.push( { 'HostName': value['HostName'] } ) ;
+               }
+			   } ) ;
+            var businessConf = {} ;
+            businessConf['ClusterName']  = clusterName ;
+            businessConf['BusinessName'] = $scope.ModuleName ;
+            businessConf['BusinessType'] = 'sequoiasql' ;
+            businessConf['DeployMod'] = formVal1['type'] ;
+            businessConf['Property'] = [
+               { "Name": "deploy_standby", "Value": formVal2['deploy_standby'] },
+               { "Name": "segment_num", "Value": formVal2['segment_num'] + '' }
+            ] ;
+            businessConf['HostInfo'] = tempHostInfo ;
+            //$rootScope.tempData( 'Deploy', 'ModuleConfig', businessConf ) ;
+            getModuleConfig( businessConf ) ;
          }
       }
 
@@ -287,7 +227,6 @@
             $scope.bindResize() ;
          }
          $scope.Components.Modal.ok = function(){
-            predictCapacity() ;
             return true ;
          }
          $scope.Components.Modal.close = function(){

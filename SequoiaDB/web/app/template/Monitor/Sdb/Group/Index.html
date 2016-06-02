@@ -74,7 +74,7 @@
 
          <div style="height:16px;margin-bottom:10px;">
             <div style="float:left;height:16px;width:75px;font-weight:bold;">主节点</div>
-            <div style="float:left;height:16px;width:186px;" class="Ellipsis"><a href="#/Monitor/SDB-Node/Index" class="linkButton">{{groupInfo['PrimaryNode']}}</a></div>
+            <div style="float:left;height:16px;width:186px;" class="Ellipsis"><a href="#/Monitor/SDB-Node/Index" class="linkButton">{{PrimaryNode}}</a></div>
             <div class="clear-float"></div>
          </div>
 
@@ -91,20 +91,28 @@
       </div>
       <div style="float:left;overflow-y:auto;border: 1px solid #E3E7E8;padding:10px;" ng-container="{offsetX:-310,marginLeft:10}">
 
-         <div class="colorfulListBox" style="overflow-y:auto;" ng-container="{height:210,offsetX:-20}" ng-repeat="node in groupInfo['Group'] track by $index" ng-class="{'0':'green','1':'yellow','2':'blue','3':'violet'}[$index%4]" ng-style="{false:{'border-bottom':0}}[$last]">
+         <div class="colorfulListBox" style="overflow-y:auto;" ng-container="{height:225,offsetX:-20}" ng-repeat="node in groupInfo['Group'] track by $index" ng-class="{'0':'green','1':'yellow','2':'blue','3':'violet'}[$index%4]" ng-style="{false:{'border-bottom':0}}[$last]">
             <div style="color:#666;font-weight:bold;height:20px;" ng-if="node['Status'] == 1">
                <i class="fa fa-circle" style="padding-top:2px;color:#00CC66;"></i>&nbsp;运行中
             </div>
             <div style="color:#666;font-weight:bold;height:20px;" ng-if="node['Status'] == 0">
                <i class="fa fa-circle" style="padding-top:2px;color:#F9A937;"></i>&nbsp;等待中
             </div>
-            <div style="color:#666;height:154px;margin-top:5px;">
+            <div style="color:#666;height:164px;margin-top:5px;">
 
                <div style="float:left;" ng-container="{width:'50%',offsetX:-5}">
                   <div class="Ellipsis" style="font-weight:bold;height:20px;margin-top:5px;">
                      <a href="#/Monitor/SDB-Node/Index" class="linkButton">{{node['HostName']}}:{{node['Service'][0]['Name']}}</a>
                   </div>
                   <div style="height:20px;margin-top:20px;">
+                     <table class="table">
+                        <tr>
+                           <td style="font-weight:bold;width:120px;">节点ID</td>
+                           <td class="Ellipsis">{{node['NodeID']}}</td>
+                        </tr>
+                     </table>
+                  </div>
+                  <div style="height:20px;margin-top:5px;">
                      <table class="table">
                         <tr>
                            <td style="font-weight:bold;width:120px;">LSN</td>

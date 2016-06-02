@@ -277,7 +277,7 @@
             if( isFind == false )
             {
                $.each( $rootScope.OmTaskList, function( index, taskInfo ){
-                  if( defaultName == taskInfo['Info']['BusinessName'] )
+                  if( taskInfo['Status'] != 4 && defaultName == taskInfo['Info']['BusinessName'] )
                   {
                      isFind = true ;
                      return false ;
@@ -327,6 +327,7 @@
                }
                else if( $scope.moduleType[ formVal['moduleType'] ]['BusinessType'] == 'sequoiasql' )
                {
+                  /*
                   var tempHostInfo = [] ;
 			         $.each( $scope.HostList, function( index, value ){
                      if( $scope.clusterList[$scope.currentCluster]['ClusterName'] == value['ClusterName'] )
@@ -346,6 +347,8 @@
                   businessConf['HostInfo'] = tempHostInfo ;
                   $rootScope.tempData( 'Deploy', 'ModuleConfig', businessConf ) ;
                   $location.path( '/Deploy/SSQL-Mod' ) ;
+                  */
+                  $location.path( '/Deploy/SSQL-Conf' ) ;
                }
                else if( $scope.moduleType[ formVal['moduleType'] ]['BusinessType'] == 'zookeeper' )
                {
@@ -1029,7 +1032,7 @@
             if( isFind == false )
             {
                $.each( $rootScope.OmTaskList, function( index, taskInfo ){
-                  if( defaultName == taskInfo['Info']['BusinessName'] )
+                  if( taskInfo['Status'] != 4 && defaultName == taskInfo['Info']['BusinessName'] )
                   {
                      isFind = true ;
                      return false ;

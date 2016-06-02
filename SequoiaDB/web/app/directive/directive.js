@@ -1173,6 +1173,7 @@
                         }
                         else
                         {
+                           scope.recoveryModal() ;
                            scope.Setting.Mask.detach() ;
                            scope.data.noOK = false ;
                         }
@@ -1334,6 +1335,7 @@
 
                   //关闭弹窗
                   scope.closeModal = function(){
+                     scope.recoveryModal() ;
                      scope.data.isShow = false ;
                      scope.data.onResize = null ;
                   }
@@ -1672,21 +1674,28 @@
                      }
                      else
                      {
-                        var json = array2Json( scope.Setting.View ) ;
-                        scope.Setting.Json = JSON.stringify( json, function( key, value ){
-                           if( value == Number.POSITIVE_INFINITY )
-                           {
-                              return 1.7976931348623157e+308 ;
-                           }
-                           else if( value == Number.NEGATIVE_INFINITY )
-                           {
-                              return -1.7976931348623157e+308 ;
-                           }
-                           else
-                           {
-                              return value ;
-                           }
-                        }, 3 ) ;
+                        //var json = array2Json( scope.Setting.View ) ;
+                        try{
+                           var json = JSON.parse( scope.Setting.Json ) ;
+                           scope.Setting.Json = JSON.stringify( json, function( key, value ){
+                              if( value == Number.POSITIVE_INFINITY )
+                              {
+                                 return 1.7976931348623157e+308 ;
+                              }
+                              else if( value == Number.NEGATIVE_INFINITY )
+                              {
+                                 return -1.7976931348623157e+308 ;
+                              }
+                              else
+                              {
+                                 return value ;
+                              }
+                           }, 3 ) ;
+                        }
+                        catch( e )
+                        {
+                           alert( e.message ) ;
+                        }
                      }
                   }
                   //收起
@@ -1708,21 +1717,28 @@
                      }
                      else
                      {
-                        var json = array2Json( scope.Setting.View ) ;
-                        scope.Setting.Json = JSON.stringify( json, function( key, value ){
-                           if( value == Number.POSITIVE_INFINITY )
-                           {
-                              return 1.7976931348623157e+308 ;
-                           }
-                           else if( value == Number.NEGATIVE_INFINITY )
-                           {
-                              return -1.7976931348623157e+308 ;
-                           }
-                           else
-                           {
-                              return value ;
-                           }
-                        } ) ;
+                        //var json = array2Json( scope.Setting.View ) ;
+                        try{
+                           var json = JSON.parse( scope.Setting.Json ) ;
+                           scope.Setting.Json = JSON.stringify( json, function( key, value ){
+                              if( value == Number.POSITIVE_INFINITY )
+                              {
+                                 return 1.7976931348623157e+308 ;
+                              }
+                              else if( value == Number.NEGATIVE_INFINITY )
+                              {
+                                 return -1.7976931348623157e+308 ;
+                              }
+                              else
+                              {
+                                 return value ;
+                              }
+                           } ) ;
+                        }
+                        catch( e )
+                        {
+                           alert( e.message ) ;
+                        }
                      }
                   }
                   //修改类型
@@ -2278,6 +2294,27 @@
                         {
                            item.value.splice( index, 1 ) ;
                         }
+                     }
+                     if( typeof( item.onChange ) == 'function' )
+                     {
+                        item.onChange( item.name, item.value ) ;
+                     }
+                  }
+                  scope.multipleCheckAll = function( item, status ){
+                     if( status )
+                     {
+                        item.value = [] ;
+                        $.each( item.valid.list, function( index ){
+                           item.valid.list[index]['checked'] = true ;
+                           item.value.push( item.valid.list[index]['value'] ) ;
+                        } ) ;
+                     }
+                     else
+                     {
+                        $.each( item.valid.list, function( index ){
+                           item.valid.list[index]['checked'] = false ;
+                        } ) ;
+                        item.value = [] ;
                      }
                      if( typeof( item.onChange ) == 'function' )
                      {

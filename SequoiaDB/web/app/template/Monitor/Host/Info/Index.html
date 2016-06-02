@@ -55,40 +55,57 @@
          <li>
             <a href="#/Monitor/Host-Info/Network">{{autoLanguage("网卡")}}</a>
          </li>
+         <li>
+            <a href="#/Monitor/Host-Info/Config">{{autoLanguage("系统配置")}}</a>
+         </li>
       </ul>
    </div>
    <div class="content" ng-container="{offsetY:-185,marginTop:10}">
       <div class="leftTable" style="float:left;" ng-container="{width:300}">
          <div style="font-size:110%;font-weight:bold;height:26px;">主机信息</div>
-         <div style="font-size:90%;height:147px;border:1px solid #ddd;padding:10px;">
-            <div style="float:left;width:100px;">主机名</div>
-            <div style="float:left;width:160px;" class="Ellipsis">{{hostInfo['HostName']}}</div>
-            <div class="clear-float"></div>
-
-            <div style="float:left;margin-top:5px;width:100px;">IP地址</div>
-            <div style="float:left;margin-top:5px;width:160px;" class="Ellipsis">{{hostInfo['IPAddress']}}</div>
-            <div class="clear-float"></div>
-
-            <div style="float:left;margin-top:5px;width:100px;">操作系统</div>
-            <div style="float:left;margin-top:5px;width:160px;" class="Ellipsis">{{hostInfo['OS']}}</div>
-            <div class="clear-float"></div>
+         <div style="font-size:90%;height:207px;border:1px solid #ddd;padding:10px;color:#666;">
+            <table class="table loosen" style="width:278px;">
+               <tr>
+                  <td style="width:40%;font-weight:bold;">主机名</td>
+                  <td style="width:60%;" class="Ellipsis">{{hostInfo['HostName']}}</td>
+               </tr>
+               <tr>
+                  <td style="width:40%;font-weight:bold;">IP地址</td>
+                  <td style="width:60%;" class="Ellipsis">{{hostInfo['IPAddress']}}</td>
+               </tr>
+               <tr>
+                  <td style="width:40%;font-weight:bold;">操作系统</td>
+                  <td style="width:60%;" class="Ellipsis">{{hostInfo['OS']}}</td>
+               </tr>
+            </table>
 
             <div style="margin:10px 0 5px 0;border-top:1px solid #ddd;"></div>
 
-            <div style="float:left;margin-top:5px;width:100px;">处理器</div>
-            <div style="float:left;margin-top:5px;width:160px;" class="Ellipsis">{{hostInfo['CPU'][0]['Name']}}</div>
-            <div class="clear-float"></div>
-
-            <div style="float:left;margin-top:5px;width:100px;">内存</div>
-            <div style="float:left;margin-top:5px;width:160px;" class="Ellipsis">{{hostInfo['Memory']['Capacity']}}</div>
-            <div class="clear-float"></div>
-
-            <div style="float:left;margin-top:5px;width:100px;">存储容量</div>
-            <div style="float:left;margin-top:5px;width:160px;" class="Ellipsis">{{hostInfo['Disk'][0]['Capacity']}}</div>
-
+            <table class="table loosen" style="width:278px;">
+               <colgroup>
+                  <col style="width:111px;" />
+                  <col style="width:167px;" />
+               </colgroup>
+               <tr>
+                  <td style="font-weight:bold;">处理器</td>
+                  <td><div class="Ellipsis">{{hostInfo['CPU'][0]['Name']}}</div></td>
+               </tr>
+               <tr>
+                  <td style="font-weight:bold;">进程数</td>
+                  <td class="Ellipsis">123</td>
+               </tr>
+               <tr>
+                  <td style="font-weight:bold;">内存</td>
+                  <td class="Ellipsis">{{hostInfo['Memory']['Capacity']}}</td>
+               </tr>
+               <tr>
+                  <td style="font-weight:bold;">存储容量</td>
+                  <td class="Ellipsis">{{hostInfo['Disk'][0]['Capacity']}}</td>
+               </tr>
+            </table>
          </div>
          <div style="font-size:110%;font-weight:bold;height:26px;margin-top:10px;">业务信息</div>
-         <div ng-container="{offsetY:-231}" style="border:1px solid #ddd;padding:10px;font-size:90%;overflow-y:auto;">
+         <div ng-container="{offsetY:-291}" style="border:1px solid #ddd;padding:10px;font-size:90%;overflow-y:auto;">
             <div ng-if="hostInfo['Module']['coord'] !== undefined">
                <div ng-repeat="nodeInfo in hostInfo['Module']['coord']">
                   <div style="float:left;margin-top:5px;width:100px;">协调节点</div>

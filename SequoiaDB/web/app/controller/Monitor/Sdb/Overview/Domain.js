@@ -62,7 +62,8 @@
             "集合空间数":"21",
             "集合数":"162",
             "记录数":"6549874",
-            "是否自动切分":"true"
+            "是否自动切分":"true",
+            "集合空间":"foo,foo1,foo2,foo3,foo4,foo5,foo1,foo2,foo3,foo4,foo5,foo1,foo2,foo3,foo4,foo5"
          }
          $scope.Components.Modal.icon = '' ;
          $scope.Components.Modal.title = '域详细' ;

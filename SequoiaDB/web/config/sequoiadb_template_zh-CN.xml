@@ -33,7 +33,7 @@
             <Valid>1,3,5,7</Valid>
             <Display>select box</Display>
             <Edit>true</Edit>
-            <Desc>编码节点的数量</Desc>
+            <Desc>编目节点的数量</Desc>
             <Level>0</Level>
             <WebName>编目节点数</WebName>
          </FILLER>

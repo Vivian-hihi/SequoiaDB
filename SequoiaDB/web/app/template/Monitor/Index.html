@@ -37,86 +37,92 @@
          <!--主机信息-->
          <div style="float:left;" ng-container="{width:360,offsetY:-10}">
             <div style="padding:0 10px 10px 0;font-weight:bold;">主机信息</div>
-            <div style="padding:10px;border:1px solid #ddd;overflow-y:auto;" ng-container="{offsetY:-27}">
-               <div style="height:30px;">
-                  <div style="float:left;width:140px;height:30px;color:#808080;font-weight:bold;">主机数</div>
-                  <div style="float:left;"><a href="#/Monitor/Host-List/Index" class="linkButton">{{HostList.length}}</a></div>
-                  <div class="clear-float"></div>
-               </div>
-               <div style="height:30px;">
-                  <div style="float:left;width:140px;height:30px;color:#808080;font-weight:bold;">磁盘数</div>
-                  <div style="float:left;">{{DiskNum}}</div>
-                  <div class="clear-float"></div>
-               </div>
-               <div style="height:40px;">
-                  <div style="float:left;width:140px;height:25px;color:#808080;font-weight:bold;">CPU使用</div>
-                  <div style="float:left;margin-bottom:15px;">
-                     <div style="width:180px;height:40px" progress-bar="charts.Host.CPU"></div>
-                  </div>
-                  <div class="clear-float"></div>
-               </div>
-               <div style="height:55px;">
-                  <div style="float:left;width:140px;height:25px;color:#808080;font-weight:bold;">内存使用</div>
-                  <div style="float:left;margin-bottom:15px;">
-                     <div style="width:180px;height:40px" progress-bar="charts.Host.Memory"></div>
-                     <div class="clear-float"></div>
-                  </div>
-                  <div class="clear-float"></div>
-               </div>
-               <div style="height:55px;">
-                  <div style="float:left;width:140px;height:25px;color:#808080;font-weight:bold;">磁盘使用</div>
-                  <div style="float:left;margin-bottom:15px;">
-                     <div style="width:180px;height:40px" progress-bar="charts.Host.Disk"></div>
-                  </div>
-                  <div class="clear-float"></div>
-               </div>
+            <div style="padding:10px;border:1px solid #ddd;overflow-y:auto;color:#666;" ng-container="{offsetY:-27}">
+               <table class="table loosen">
+                  <tr>
+                     <td style="width:40%;font-weight:bold;">主机数</td>
+                     <td style="width:60%;">
+                        <a href="#/Monitor/Host-List/Index" class="linkButton">{{HostList.length}}</a>
+                     </td>
+                  </tr>
+                  <tr>
+                     <td style="width:40%;font-weight:bold;">磁盘数</td>
+                     <td style="width:60%;">{{DiskNum}}</td>
+                  </tr>
+                  <tr>
+                     <td style="width:40%;font-weight:bold;">CPU使用</td>
+                     <td style="width:60%;">
+                        <div style="width:180px;height:40px" progress-bar="charts.Host.CPU"></div>
+                     </td>
+                  </tr>
+                  <tr>
+                     <td style="width:40%;font-weight:bold;">内存使用</td>
+                     <td style="width:60%;">
+                        <div style="width:180px;height:40px" progress-bar="charts.Host.Memory"></div>
+                     </td>
+                  </tr>
+                  <tr>
+                     <td style="width:40%;font-weight:bold;">磁盘使用</td>
+                     <td style="width:60%;">
+                        <div style="width:180px;height:40px" progress-bar="charts.Host.Disk"></div>
+                     </td>
+                  </tr>
+               </table>
             </div>
          </div>
          <!--业务信息-->
          <div style="float:left;" ng-container="{offsetX:-370,offsetY:-10,marginLeft:10}">
             <div style="padding:0 10px 10px 0;font-weight:bold;">业务信息</div>
-            <div style="padding:10px;border:1px solid #ddd;overflow-y:auto;" ng-container="{offsetY:-27}">
+            <div style="padding:10px;border:1px solid #ddd;overflow-y:auto;color:#666;" ng-container="{offsetY:-27}">
                <div style="float:left;width:250px;">
-                  <div style="height:28px;">
-                     <div style="float:left;width:140px;height:28px;color:#808080;font-weight:bold;">数据库版本</div>
-                     <div style="float:left;">{{moduleInfo['version']}}</div>
-                     <div class="clear-float"></div>
-                  </div>
-                  <div style="height:28px;">
-                     <div style="float:left;width:140px;height:28px;color:#808080;font-weight:bold;">会话数</div>
-                     <div style="float:left;"><a href="#/Monitor/SDB-Overview/Session" class="linkButton">{{moduleInfo['sessions']}}</a></div>
-                     <div class="clear-float"></div>
-                  </div>
-                  <div style="height:28px;">
-                     <div style="float:left;width:140px;height:28px;color:#808080;font-weight:bold;">域</div>
-                     <div style="float:left;"><a href="#/Monitor/SDB-Overview/Domain" class="linkButton">{{moduleInfo['domains']}}</a></div>
-                     <div class="clear-float"></div>
-                  </div>
-                  <div style="height:28px;">
-                     <div style="float:left;width:140px;height:28px;color:#808080;font-weight:bold;">分区组数</div>
-                     <div style="float:left;"><a href="#/Monitor/SDB-Overview/Index" class="linkButton">{{moduleInfo['groups']}}</a></div>
-                     <div class="clear-float"></div>
-                  </div>
-                  <div style="height:28px;">
-                     <div style="float:left;width:140px;height:28px;color:#808080;font-weight:bold;">节点数</div>
-                     <div style="float:left;"><a href="#/Monitor/SDB-Overview/Node" class="linkButton">{{moduleInfo['nodes']}}</a></div>
-                     <div class="clear-float"></div>
-                  </div>
-                  <div style="height:28px;">
-                     <div style="float:left;width:140px;height:28px;color:#808080;font-weight:bold;">集合数</div>
-                     <div style="float:left;"><a href="#/Data/SDB-Database/Index" class="linkButton">{{moduleInfo['cl']}}</a></div>
-                     <div class="clear-float"></div>
-                  </div>
-                  <div style="height:28px;">
-                     <div style="float:left;width:140px;height:28px;color:#808080;font-weight:bold;">记录数</div>
-                     <div style="float:left;"><a href="#/Data/SDB-Database/Index" class="linkButton">{{moduleInfo['records']}}</a></div>
-                     <div class="clear-float"></div>
-                  </div>
-                  <div style="height:28px;">
-                     <div style="float:left;width:140px;height:28px;color:#808080;font-weight:bold;">lob数</div>
-                     <div style="float:left;"><a href="#/Data/SDB-Database/Index" class="linkButton">{{moduleInfo['lobs']}}</a></div>
-                     <div class="clear-float"></div>
-                  </div>
+                  <table class="table loosen" style="width:250px;">
+                     <tr>
+                        <td style="width:40%;font-weight:bold;">数据库版本</td>
+                        <td style="width:60%;" class="Ellipsis">{{moduleInfo['version']}}</td>
+                     </tr>
+                     <tr>
+                        <td style="width:40%;font-weight:bold;">会话数</td>
+                        <td style="width:60%;" class="Ellipsis">
+                           <a href="#/Monitor/SDB-Overview/Session" class="linkButton">{{moduleInfo['sessions']}}</a>
+                        </td>
+                     </tr>
+                     <tr>
+                        <td style="width:40%;font-weight:bold;">域</td>
+                        <td style="width:60%;" class="Ellipsis">
+                           <a href="#/Monitor/SDB-Overview/Domain" class="linkButton">{{moduleInfo['domains']}}</a>
+                        </td>
+                     </tr>
+                     <tr>
+                        <td style="width:40%;font-weight:bold;">分区组数</td>
+                        <td style="width:60%;" class="Ellipsis">
+                           <a href="#/Monitor/SDB-Overview/Index" class="linkButton">{{moduleInfo['groups']}}</a>
+                        </td>
+                     </tr>
+                     <tr>
+                        <td style="width:40%;font-weight:bold;">节点数</td>
+                        <td style="width:60%;" class="Ellipsis">
+                           <a href="#/Monitor/SDB-Overview/Node" class="linkButton">{{moduleInfo['nodes']}}</a>
+                        </td>
+                     </tr>
+                     <tr>
+                        <td style="width:40%;font-weight:bold;">集合数</td>
+                        <td style="width:60%;" class="Ellipsis">
+                           <a href="#/Data/SDB-Database/Index" class="linkButton">{{moduleInfo['cl']}}</a>
+                        </td>
+                     </tr>
+                     <tr>
+                        <td style="width:40%;font-weight:bold;">记录数</td>
+                        <td style="width:60%;" class="Ellipsis">
+                           <a href="#/Data/SDB-Database/Index" class="linkButton">{{moduleInfo['records']}}</a>
+                        </td>
+                     </tr>
+                     <tr>
+                        <td style="width:40%;font-weight:bold;">lob数</td>
+                        <td style="width:60%;" class="Ellipsis">
+                           <a href="#/Data/SDB-Database/Index" class="linkButton">{{moduleInfo['lobs']}}</a>
+                        </td>
+                     </tr>
+                  </table>
                </div>
                <!--图表选择-->
                <div style="min-width:320px;float:left;" ng-container="{height:'90%',offsetX:-305}">

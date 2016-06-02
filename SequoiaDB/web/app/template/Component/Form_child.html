@@ -50,15 +50,25 @@
    <div ng-switch-when="multiple">
       <table class="table noSelect" ng-attr="{'data-desc':inputInfo.error}">
          <tr>
-            <td style="width:50%;padding-right:5px;">
-               <div class="borderBox" style="height:160px;overflow-y:auto;font-size:90%;padding:4px;" ng-class="{true:'alert-danger'}[inputInfo.error.length > 0]">
-                  <div class="Ellipsis noSelect" style="cursor:pointer;padding:6px 10px;" ng-if="childInfo['checked']!=true" ng-click="multipleCheck(inputInfo,childInfo)" ng-repeat="childInfo in inputInfo.valid.list track by $index">
+            <td style="width:35%;padding-right:10px;">
+               <div>待选列表</div>
+               <div class="borderBox" style="height:160px;overflow-y:auto;font-size:90%;padding:4px;margin-top:5px;" ng-class="{true:'alert-danger'}[inputInfo.error.length > 0]">
+                  <div class="Ellipsis noSelect linkButton" style="cursor:pointer;padding:6px 10px;" ng-if="childInfo['checked']!=true" ng-click="multipleCheck(inputInfo,childInfo)" ng-repeat="childInfo in inputInfo.valid.list track by $index">
                      <span>{{childInfo['key']}}</span>
                   </div>
                </div>
             </td>
-            <td style="width:50%;padding-left:5px;">
-               <div class="borderBox" style="height:160px;overflow-y:scroll;font-size:90%;padding:4px;" ng-class="{true:'alert-danger'}[inputInfo.error.length > 0]">
+            <td style="width:90px;padding:0 5px;">
+               <div>
+                  <button class="btn btn-default" style="font-weight:bold;" ng-click="multipleCheckAll(inputInfo,true);">&nbsp;&gt;&gt;&nbsp;</button>
+               </div>
+               <div style="margin-top:15px;">
+                  <button class="btn btn-default" style="font-weight:bold;" ng-click="multipleCheckAll(inputInfo,false);">&nbsp;&lt;&lt;&nbsp;</button>
+               </div>
+            </td>
+            <td style="padding-left:10px;">
+               <div>选中列表</div>
+               <div class="borderBox" style="height:160px;overflow-y:scroll;font-size:90%;padding:4px;margin-top:5px;" ng-class="{true:'alert-danger'}[inputInfo.error.length > 0]">
                   <span class="alert alert-info Ellipsis" style="float:left;border-radius:4px;padding:5px;margin:0 5px 5px 0;" ng-if="childInfo['checked']==true" ng-repeat="childInfo in inputInfo.valid.list track by $index">{{childInfo['key']}}&nbsp;<i class="fa fa-times" style="cursor:pointer;" ng-click="multipleCheck(inputInfo,childInfo)"></i></span>
                   <div class="clear-float"></div>
                </div>

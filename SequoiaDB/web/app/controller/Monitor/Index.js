@@ -31,11 +31,11 @@
       var queryHost = function(){
          var data = {
             'cmd': 'query host status',
-            'HostInfo': JSON.stringify( {"HostInfo":[ {"HostName":"ubuntu-test-02"} ] } )
+            'HostInfo': JSON.stringify( {"HostInfo":[ {"HostName":"ubuntu-test-02"},{"HostName":"ubuntu-test-03"} ] } )
          } ;
          SdbRest.OmOperation( data, function( hostList ){
             $scope.HostList = hostList ;
-            alert(JSON.stringify($scope.HostList))
+            //alert(JSON.stringify($scope.HostList[0]['HostInfo'][0]['Memory']))
          }, function( errorInfo ){
                
          }, function(){

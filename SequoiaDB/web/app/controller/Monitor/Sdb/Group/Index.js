@@ -10,6 +10,7 @@
       $scope.moduleName = moduleName ;
       $scope.moduleType = moduleType ;
       $scope.hostList = [] ;
+      $scope.PrimaryNode = '' ;
       var i = 0 ;
 
       $scope.queryList = function( data, success, failed, error, complete ){
@@ -38,10 +39,14 @@
             } ) ;
             $.each( $scope.groupInfo['Group'], function( index, value ){
                $scope.hostList.push( { "key": value['HostName'] + ':' + value['Service'][0]['Name'], "value": index } ) ;
+               //获取主节点节点名
+               if( $scope.groupInfo['PrimaryNode'] == value['NodeID'] )
+               {
+                  $scope.PrimaryNode = value['HostName'] + ':' + value['Service'][0]['Name'] ;
+               }
             } ) ;
          } ) ;
-
-       }
+      }
       
       $scope.getGroupInfo() ;
 

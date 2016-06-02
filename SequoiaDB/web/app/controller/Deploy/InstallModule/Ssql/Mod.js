@@ -18,11 +18,12 @@
 
       $scope.Configure   = $rootScope.tempData( 'Deploy', 'ModuleConfig' ) ;
       var deployType     = $rootScope.tempData( 'Deploy', 'Model' ) ;
+      
       /*
-      deployType = "Install_Module" ;
+      deployType = "Module" ;
       $scope.Configure = {
-         "ClusterName": "myCluster1",
-         "BusinessName": "myModule2",
+         "ClusterName": "myCluster2",
+         "BusinessName": "myModule4",
          "DeployMod": "olap",
          "BusinessType": "sequoiasql",
          "Property": [
@@ -30,11 +31,11 @@
             { "Name": "segment_num", "Value": "1" }
          ],
          "HostInfo": [
-            { "HostName": "ubuntu-test-02" },
-            { "HostName": "ubuntu-test-03" }
+            { "HostName": "ubuntu-test-05" }
          ]
-      } ; 
+      } ;
       */
+      
       if( deployType == null || $scope.Configure == null )
       {
          $location.path( '/Deploy/Index' ) ;
@@ -193,9 +194,9 @@
          }
       }
 
-      //返回
-      $scope.GotoDeploy = function(){
-         $location.path( '/Deploy/Index' ) ;
+      //上一步
+      $scope.GotoConf = function(){
+         $location.path( '/Deploy/SSQL-Conf' ) ;
       }
 
    } ) ;
