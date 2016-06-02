@@ -66,7 +66,7 @@
 	vm.vfs_cache_pressure = 200
 	vm.min_free_kbytes = &lt;物理内存大小的8%，单位KB&gt;
 	vm.overcommit_memory = 2
-    vm.overcommit_ratio = 85</pre>
+	vm.overcommit_ratio = 85</pre>
 
 	**Note:**
 		
@@ -77,7 +77,7 @@
 	<pre class="prettyprint lang-javascript">
 	> /sbin/sysctl -p</pre>
 
-	4.	停用transparent_hugepage，编辑/etc/rc.local，在第一行“#!/bin/sh”的下一行重启一行添加如下两行内容：
+	4.	停用transparent_hugepage，编辑/etc/rc.local，在第一行“#!/bin/sh”的下一行添加如下两行内容：
 
 	<pre class="prettyprint lang-diy">
 	echo never > /sys/kernel/mm/transparent_hugepage/enabled
@@ -96,7 +96,7 @@
 
 -   NUMA的影响
     
-    Linux系统默认开启NUMA，NUMA默认的内存分配策略是优先在进程所在CPU的本地内存中分配，会导致CPU节点之间内存分配不均衡，当某个CPU节点的内存不足时，会导致swap产生，而不是从远程节点分配内存。这种内存分配策略的初衷是好的，为了内存更接近需要它的线程，但不适合数据库这种大规模内存使用的应用场景。我们建议用户在使用SequoiaDB时关闭NUMA或者调整NUMA的内存分配策略。
+    Linux系统默认开启NUMA，NUMA默认的内存分配策略是优先在进程所在CPU的本地内存中分配，会导致CPU节点之间内存分配不均衡，当某个CPU节点的内存不足时，会导致swap产生，而不是从远程节点分配内存。这种内存分配策略的初衷是好的，为了内存更接近需要它的线程，但不适合数据库这种大规模内存使用的应用场景。我们建议用户在使用SequoiaDB时关闭NUMA。
 
 -   关闭NUMA
     
@@ -104,21 +104,23 @@
 
     1.  开机按快捷键进入BIOS设置界面，关闭NUMA。不同品牌的主板或服务器，具体操作略有差异，此处不作详细介绍。
     
-    2.  CentOS6.4的grub配置文件修改，以root权限编辑/etc/grub.conf，找到kernel行，该行类似如下（不同的版本内容略有差异，但开头一定有“kernel /vmlinuz-”）：
+    2.  修改grub的配置文件，关闭NUMA：
     
-    <pre class="prettyprint lang-diy">
-    kernel /vmlinuz-2.6.32-358.el6.x86_64 ro root=/dev/mapper/vg_centos64001-lv_root rd_NO_LUKS rd_LVM_LV=vg_centos64001/lv_root rd_NO_MD rd_LVM_LV=vg_centos64001/lv_swap crashkernel=128M LANG=zh_CN.UTF-8  KEYBOARDTYPE=pc KEYTABLE=us rd_NO_DM rhgb quiet</pre>
-
-    在kernel行的末尾，空格再添加“numa=off”，如果有多个kernel行，则每个kernel行都要添加。
-
-    3.  Ubuntu12.04的grub文件修改，以root权限编辑/boot/grub/grub.cfg，找到Linux引导行，该行类似如下（不同版本内容略有差异，但开头一定有“linux   /boot/vmlinuz-”）：
+        1）  CentOS6.4的grub配置文件修改，以root权限编辑/etc/grub.conf，找到kernel行，该行类似如下（不同的版本内容略有差异，但开头有“kernel /vmlinuz-”）：
     
-    <pre class="prettyprint lang-diy">
-    linux   /boot/vmlinuz-3.2.0-31-generic root=UUID=92191cd8-3690-4cd4-9f42-95d392c9d828 ro</pre>
+        <pre class="prettyprint lang-diy">
+        kernel /vmlinuz-2.6.32-358.el6.x86_64 ro root=/dev/mapper/vg_centos64001-lv_root rd_NO_LUKS rd_LVM_LV=vg_centos64001/lv_root rd_NO_MD rd_LVM_LV=vg_centos64001/lv_swap crashkernel=128M LANG=zh_CN.UTF-8  KEYBOARDTYPE=pc KEYTABLE=us rd_NO_DM rhgb quiet</pre>
 
-    在Linux引导行的末尾，空格再添加“numa=off”，如果有多个Linux引导行，则每个Linux引导行都要添加。
+        在kernel行的末尾，空格再添加“numa=off”，如果有多个kernel行，则每个kernel行都要添加。
 
-    4.   验证NUMA是否成功关闭，shell执行如下命令：
+        2）  Ubuntu12.04的grub文件修改，以root权限编辑/boot/grub/grub.cfg，找到Linux引导行，该行类似如下（不同版本内容略有差异，但开头有“linux   /boot/vmlinuz-”）：
+    
+        <pre class="prettyprint lang-diy">
+        linux   /boot/vmlinuz-3.2.0-31-generic root=UUID=92191cd8-3690-4cd4-9f42-95d392c9d828 ro</pre>
+
+        在Linux引导行的末尾，空格再添加“numa=off”，如果有多个Linux引导行，则每个Linux引导行都要添加。
+
+    3.   验证NUMA是否成功关闭，shell执行如下命令：
     
     <pre class="prettyprint lang-javascript">
     > numastat</pre>
