@@ -7392,6 +7392,14 @@ namespace engine
 
       setTaskStatus( OMA_TASK_STATUS_RUNNING ) ;
 
+      rc = _checkEnv() ;
+      if ( SDB_OK != rc )
+      {
+         needRollback = FALSE ;
+         PD_LOG( PDERROR, "failed to check sequoiasql olap, rc = %d", rc ) ;
+         goto error ;
+      }
+
       // install sequoiasql olap ( check/install/config )
       rc = _install() ;
       if ( SDB_OK != rc )
@@ -7448,6 +7456,147 @@ namespace engine
       }
       // . set task to be failing
       _setResultToFail() ;
+      goto done ;
+   }
+
+   INT32 _omaInstallSsqlOlapBusTask::_checkNodeEnv( omaSsqlOlapNodeInfo& nodeInfo )
+   {
+      INT32 rc = SDB_OK ;
+      INT32 tmpRc = SDB_OK ;
+      INT32 errNum = 0 ;
+      string detail ;
+      BSONObj retObj ;
+      string hostName = nodeInfo.hostName ;
+      string role = nodeInfo.role ;
+
+#define CHECK_BEGIN  "Checking "
+#define CHECK_FINISH "Finish checking "
+#define CHECK_FAIL   "Failed to check "
+
+      nodeInfo.errcode = SDB_OK ;
+      nodeInfo.status = OMA_TASK_STATUS_RUNNING ;
+      nodeInfo.statusDesc = CHECK_BEGIN ;
+      nodeInfo.flow.push_back( CHECK_BEGIN ) ;
+      updateProgressToTask() ;
+
+      _omaCheckSsqlOlap runCmd( nodeInfo.config, _sysInfo ) ;
+
+      rc = runCmd.init( NULL ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Failed to init to check sequoiasql olap[%s:%s], "
+                 "rc = %d", hostName.c_str(), role.c_str(), rc ) ;
+         detail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+         if ( "" == detail )
+         {
+            detail = "Failed to init to check sequoiasql olap" ;
+         }
+         goto error ;
+      }
+
+      rc = runCmd.doit( retObj ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Failed to check sequoiasql olap[%s:%s], rc = %d",
+                 hostName.c_str(), role.c_str(), rc ) ;
+         // if we can't get field "detail", it means we failed in CPP,
+         // we had not executed js file yet
+         tmpRc = omaGetStringElement ( retObj, OMA_FIELD_DETAIL, detail ) ;
+         if ( tmpRc )
+         {
+            detail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+            if ( "" == detail )
+            {
+               detail = "Not exeute js file yet" ;
+            }
+         }
+         goto error ;
+      }
+
+      // extract "errno"
+      rc = omaGetIntElement ( retObj, OMA_FIELD_ERRNO, errNum ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Failed to get errno from js after "
+                 "checking sequoiasql olap[%s:%s], rc = %d",
+                 hostName.c_str(), role.c_str(), rc ) ;
+         detail = "Failed to get errno from js after checking sequoiasql olap" ;
+         goto error ;
+      }
+
+      // to see whether execute js successfully or not
+      if ( SDB_OK != errNum )
+      {
+         rc = errNum ;
+         tmpRc = omaGetStringElement ( retObj, OMA_FIELD_DETAIL, detail ) ;
+         if ( SDB_OK != tmpRc )
+         {
+            PD_LOG( PDERROR, "Failed to get error detail from js after "
+                    "checking sequoiasql olap[%s:%S], rc = %d",
+                    hostName.c_str(), role.c_str(), tmpRc ) ;
+            detail = "Failed to get error detail from js after "
+                      "checking sequoiasql olap" ;
+         }
+         goto error ;
+      }
+      else
+      {
+         PD_LOG ( PDEVENT, "Successfully checking sequoiasql olap[%s:%s]",
+                  hostName.c_str(), role.c_str() ) ;
+      }
+
+      nodeInfo.errcode = SDB_OK ;
+      nodeInfo.status = OMA_TASK_STATUS_RUNNING ;
+      nodeInfo.statusDesc = CHECK_FINISH ;
+      nodeInfo.flow.push_back( CHECK_FINISH ) ;
+      updateProgressToTask() ;
+
+   done:
+      return rc ;
+   error:
+      PD_LOG_MSG( PDERROR, "Failed to remove sequoiasql olap[%s:%s], rc = %d",
+                  hostName.c_str(), role.c_str(), rc ) ;
+      nodeInfo.errcode = rc ;
+      nodeInfo.status = OMA_TASK_STATUS_END ;
+      nodeInfo.statusDesc = detail;
+      nodeInfo.flow.push_back( CHECK_FAIL ) ;
+      updateProgressToTask() ;
+      goto done ;
+   }
+
+   INT32 _omaInstallSsqlOlapBusTask::_checkEnv()
+   {
+      INT32 rc = SDB_OK ;
+      vector<omaSsqlOlapNodeInfo>::iterator it ;
+
+      rc = _updateProgressToOM() ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDWARNING, "Failed to update task's progress to om" ) ;
+         rc = SDB_OK ;
+      }
+
+      for( it = _nodeInfos.begin(); it != _nodeInfos.end() ; it++ )
+      {
+         rc = _checkNodeEnv( *it ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "Failed to check sequoiasql olap[%s:%s], rc = %d",
+                    it->hostName.c_str(), it->role.c_str(), rc ) ;
+            goto error ;
+         }
+
+         rc = _updateProgressToOM() ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDWARNING, "Failed to update task's progress to om" ) ;
+            rc = SDB_OK ;
+         }
+      }
+
+   done:
+      return rc ;
+   error:
       goto done ;
    }
 
@@ -7514,6 +7663,12 @@ namespace engine
                PD_LOG( PDERROR, "Failed to rollback sequoiasql olap[%s:%s], rc = %d",
                        it->hostName.c_str(), it->role.c_str(), rc ) ;
                continue ;
+            }
+
+            rc = _updateProgressToOM() ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDWARNING, "Failed to update task's progress to om" ) ;
             }
          }
       }

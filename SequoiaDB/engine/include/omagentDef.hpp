@@ -148,6 +148,7 @@ namespace engine
    #define OMA_CMD_CHECK_ZOOKEEPER_ENV                "check install zookeeper env"
    #define OMA_CMD_INSTALL_SEQUOIASQL_OLAP            "install sequoiasql olap"
    #define OMA_CMD_REMOVE_SEQUOIASQL_OLAP             "remove sequoiasql olap"
+   #define OMA_CMD_CHECK_SEQUOIASQL_OLAP              "check sequoiasql olap"
 
    #define OMA_CMD_SSQL_EXEC                          "sequoiasql exec"
    #define OMA_CMD_CLEAN_SSQL_EXEC                    "clean sequoiasql exec"
@@ -207,6 +208,7 @@ namespace engine
    #define FILE_CHECK_ZOOKEEPER_ENV         "checkZNEnv.js"
 
    #define FILE_SEQUOIASQL_OLAP_COMMON      "ssqlOlapCommon.js"
+   #define FILE_SEQUOIASQL_OLAP_CHECK       "ssqlOlapCheck.js"
    #define FILE_SEQUOIASQL_OLAP_CONFIG      "ssqlOlapConfig.js"
    #define FILE_SEQUOIASQL_OLAP_INSTALL     "ssqlOlapInstall.js"
    #define FILE_SEQUOIASQL_OLAP_REMOVE      "ssqlOlapRemove.js"

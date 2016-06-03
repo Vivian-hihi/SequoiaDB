@@ -496,6 +496,8 @@ namespace engine
          INT32 doit() ;
 
       private:
+         INT32 _checkNodeEnv( omaSsqlOlapNodeInfo& nodeInfo ) ;
+         INT32 _checkEnv() ;
          INT32 _install() ;
          INT32 _rollback( BOOLEAN isRestart ) ;
    } ;
