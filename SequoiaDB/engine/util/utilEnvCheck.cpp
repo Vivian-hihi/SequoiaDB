@@ -263,7 +263,7 @@ namespace engine
       vmIdealValVec[7] = 85 ;
 
       
-      INT32 i = 0 ;
+      UINT32 i = 0 ;
       BOOLEAN goodStat = TRUE ;
       for(   ; i < vmPathVec.size() ; i++ )
       {
@@ -395,11 +395,11 @@ namespace engine
    {//return TRUE if all the envrionment settings are rightly set for SequoiaDB
       BOOLEAN goodEnv = TRUE ;
       
-      ret &= utilCheckIs64BitSys() ;
-      ret &= !utilCheckIsOpenVZ() ;
-      ret &= !utilCheckNumaStatus() ;
-      ret &= utilCheckVmStatus() ;
-      ret &= utilCheckThpStatus() ;
+      goodEnv &= utilCheckIs64BitSys() ;
+      goodEnv &= !utilCheckIsOpenVZ() ;
+      goodEnv &= !utilCheckNumaStatus() ;
+      goodEnv &= utilCheckVmStatus() ;
+      goodEnv &= utilCheckThpStatus() ;
       
       return goodEnv ;
    }
