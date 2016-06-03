@@ -151,7 +151,8 @@ utilFiles = [
       "util/utilCompressorLZW.cpp",
       "util/utilCompressorSnappy.cpp",
       "util/utilCompressorLZ4.cpp",
-      "util/utilCompressorZlib.cpp"
+      "util/utilCompressorZlib.cpp",
+      "util/utilEnvCheck.cpp"
       ]
 
 rtnFiles = [
@@ -617,6 +618,12 @@ clientCPPFiles = [
       "client/clientcpp.cpp",
       "client/common.c"
       ]
+#utilEnvCheckTestFiles = [
+#      "test/utilEnvCheckTest/utilEnvCheckTest.cpp"
+#      ]
+#tableScanTest1Files = [
+#      "test/tableScanTest/TableScanTestCCC_1.cpp"
+#      ]
 #sqlclientFiles= [
 #      "test/sql/main.cpp"
 #      ]
@@ -753,6 +760,12 @@ if hasTestcase:
    clienttest = env.Program("clienttest", clientTestFiles,
           LIBDEPS=["qgm","bar","rest","dps","cat","coord","gtest",snappy_lib,"cls","bps","pcre","oss","pd","pmd","mig","util","rtn","ixm","msg","dms","mth","opt","bson","mon","net","sql","auth", "aggr", "spd", "omsvc"],
           _LIBDEPS='$_LIBDEPS_OBJS' )
+#   utilEnvCheckTest = env.Program("utilEnvCheckTest", utilEnvCheckTestFiles,
+#          LIBDEPS=["qgm","bar","rest","dps","cat","coord","gtest",snappy_lib,"cls","bps","pcre","oss","pd","pmd","mig","util","rtn","ixm","msg","dms","mth","opt","bson","mon","net","sql","auth", "aggr", "spd", "omsvc"],
+#          _LIBDEPS='$_LIBDEPS_OBJS' )
+#   tableScanTest1 = env.Program("tableScanTest1", tableScanTest1Files,
+#          LIBDEPS=["qgm","bar","rest","dps","cat","coord","gtest",snappy_lib,"cls","bps","pcre","oss","pd","pmd","mig","util","rtn","ixm","msg","dms","mth","opt","bson","mon","net","sql","auth", "aggr", "spd", "omsvc","clientcpp"],
+#          _LIBDEPS='$_LIBDEPS_OBJS' )
 #   ixmtest = env.Program("ixmtest", ixmTestFiles,
 #          LIBDEPS=["qgm","bar","rest","dps","cat","coord","gtest",snappy_lib,"cls","pcre","oss","pd","pmd","mig","rtn","msg","ixm","dms","bps","bson","mth","opt","util","mon","net", "sql","auth", "aggr", "spd", "omsvc"],
 #          _LIBDEPS='$_LIBDEPS_OBJS' )
