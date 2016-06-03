@@ -39,6 +39,7 @@ namespace engine
 {
 
    #define UTIL_MAX_EXCEED_SLOT_SIZE            ( 3 )
+   #define UTIL_MIN_EXCEED_SLOT_SIZE            ( 5 )
 
    /*
       _utilCachePage implement
@@ -372,6 +373,18 @@ namespace engine
       goto done ;
    }
 
+   const CHAR* _utilCachePage::str() const
+   {
+      SDB_ASSERT( 1 == blockNum(), "Block number must be 1" ) ;
+      return _first._pBuff ;
+   }
+
+   CHAR* _utilCachePage::str()
+   {
+      SDB_ASSERT( 1 == blockNum(), "Block number must be 1" ) ;
+      return _first._pBuff ;
+   }
+
    UINT32 _utilCachePage::beginBlock() const
    {
       return 0 ;
@@ -423,6 +436,7 @@ namespace engine
    {
       _beginPageSizeSqrt = 0 ;
       _maxCacheSize = 0 ;
+      _pStat = NULL ;
    }
 
    _utilCacheMgr::~_utilCacheMgr()
@@ -457,6 +471,19 @@ namespace engine
          }
       }
 
+      _pStat = new (std::nothrow) vector< utilCacheStat >[ UTIL_PAGE_SLOT_SIZE ] ;
+      if ( !_pStat )
+      {
+         PD_LOG( PDERROR, "Failed to alloc stat vector" ) ;
+         rc = SDB_OOM ;
+         goto error ;
+      }
+
+      for ( UINT32 i = 0 ; i < UTIL_PAGE_SLOT_SIZE ; ++i )
+      {
+         _getBucketCache( i )._pageSize = _slot2PageSize( i ) ;
+      }
+
    done:
       return rc ;
    error:
@@ -483,6 +510,12 @@ namespace engine
       {
          SDB_OSS_DEL _latch[ i ] ;
       }
+
+      if ( _pStat )
+      {
+         delete _pStat ;
+         _pStat = NULL ;
+      }
       _latch.clear() ;
    }
 
@@ -494,6 +527,19 @@ namespace engine
    INT32 _utilCacheMgr::waitEvent( INT64 millisec )
    {
       return _releaseEvent.wait( millisec ) ;
+   }
+
+   void _utilCacheMgr::getCacheStat( UINT32 bucketID,
+                                     utilCacheStat &stat ) const
+   {
+      if ( _pStat && bucketID < UTIL_PAGE_SLOT_SIZE )
+      {
+         stat = (*_pStat)[ bucketID ] ;
+      }
+      else
+      {
+         stat.reset() ;
+      }
    }
 
    INT32 _utilCacheMgr::alloc( UINT32 size, utilCachePage &item )
@@ -513,12 +559,13 @@ namespace engine
       lastSize = size - item.size() ;
 
    retry:
-      beginSlot = _size2Slot( lastSize ) ;
+      beginSlot = _sizeUp2Slot( lastSize ) ;
       exceedSlot = 0 ;
 
       /// first to alloc a whole page
       while( beginSlot < UTIL_PAGE_SLOT_SIZE &&
-             exceedSlot < UTIL_MAX_EXCEED_SLOT_SIZE )
+             exceedSlot < UTIL_MAX_EXCEED_SLOT_SIZE &&
+             _freeSize.peek() >= lastSize )
       {
          pLatch = _latch[ beginSlot ] ;
          pLatch->get() ;
@@ -529,6 +576,10 @@ namespace engine
             item.addPage( slotItem.back(), pageSize ) ;
             slotItem.pop_back() ;
             _freeSize.sub( pageSize ) ;
+            /// update the bucket stat
+            _getBucketCache( beginSlot )._freeSize -= pageSize ;
+            _getBucketCache( beginSlot )._useTimes += 1 ;
+            /// release the bucket latch
             pLatch->release() ;
             goto done ;
          }
@@ -537,14 +588,19 @@ namespace engine
          ++exceedSlot ;
       }
 
+      beginSlot = _sizeUp2Slot( lastSize ) ;
+      exceedSlot = 0 ;
       /// then not alloc, but freeSize is more than lastSize, merge the pages
       if ( beginSlot >= UTIL_PAGE_SLOT_SIZE )
       {
          beginSlot = UTIL_PAGE_SLOT_SIZE - 1 ;
       }
-      while ( beginSlot > 0 && _freeSize.peek() >= lastSize )
+      while ( beginSlot > 0 &&
+              exceedSlot < UTIL_MIN_EXCEED_SLOT_SIZE &&
+              _freeSize.peek() >= lastSize )
       {
          --beginSlot ;
+         ++exceedSlot ;
          pageSize = _slot2PageSize( beginSlot ) ;
          pLatch = _latch[ beginSlot ] ;
          pLatch->get() ;
@@ -554,6 +610,10 @@ namespace engine
             item.addPage( slotItem.back(), pageSize ) ;
             slotItem.pop_back() ;
             _freeSize.sub( pageSize ) ;
+
+            /// update the bucket stat
+            _getBucketCache( beginSlot )._freeSize -= pageSize ;
+            _getBucketCache( beginSlot )._useTimes += 1 ;
 
             if ( lastSize > pageSize )
             {
@@ -569,14 +629,14 @@ namespace engine
       }
 
       /// no space for the lastSize, alloc and retry
-      if ( _size2Slot( lastSize ) >= UTIL_PAGE_SLOT_SIZE )
+      if ( _sizeUp2Slot( lastSize ) >= UTIL_PAGE_SLOT_SIZE )
       {
          pageSize = _slot2PageSize( UTIL_PAGE_SLOT_SIZE - 1 ) ;
          extendNum = ( lastSize + pageSize - 1 ) / pageSize ;
       }
       else
       {
-         pageSize = _size2PageSize( lastSize ) ;
+         pageSize = _sizeUp2PageSize( lastSize ) ;
          extendNum = 1 ;
       }
       rc = _allocMem( pageSize, extendNum ) ;
@@ -610,12 +670,13 @@ namespace engine
       }
 
    retry:
-      beginSlot = _size2Slot( size ) ;
+      beginSlot = _sizeUp2Slot( size ) ;
       exceedSlot = 0 ;
 
       /// first to alloc a whole page
       while( beginSlot < UTIL_PAGE_SLOT_SIZE &&
-             exceedSlot < UTIL_MAX_EXCEED_SLOT_SIZE )
+             exceedSlot < UTIL_MAX_EXCEED_SLOT_SIZE &&
+             _freeSize.peek() >= size )
       {
          _latch[ beginSlot ]->get() ;
          vector< CHAR* > &slotItem = _slot[ beginSlot ] ;
@@ -625,8 +686,12 @@ namespace engine
             tmpPage.addPage( slotItem.back(), pageSize ) ;
             slotItem.pop_back() ;
             _freeSize.sub( pageSize ) ;
+            /// update the bucket stat
+            _getBucketCache( beginSlot )._freeSize -= pageSize ;
+            _getBucketCache( beginSlot )._useTimes += 1 ;
+            /// release the bucket latch
             _latch[ beginSlot ]->release() ;
-            goto done ;
+            goto done_assign ;
          }
          _latch[ beginSlot ]->release() ;
          ++beginSlot ;
@@ -644,6 +709,7 @@ namespace engine
          goto error ;
       }
 
+   done_assign:
       /// copy data from source page
       if ( keepData && !item.isEmpty() )
       {
@@ -680,11 +746,15 @@ namespace engine
 
       while( NULL != ( pPage = item.nextBlock( pageSize, pos ) ) )
       {
-         slot = _size2Slot( pageSize ) ;
+         slot = _sizeDown2Slot( pageSize ) ;
+         SDB_ASSERT( pageSize == _slot2PageSize( slot ),
+                     "PageSize is not invalid" ) ;
          _latch[ slot ]->get() ;
          _slot[ slot ].push_back( pPage ) ;
+         /// update the bucket stat
+         _getBucketCache( slot )._freeSize += _slot2PageSize( slot ) ;
          _latch[ slot ]->release() ;
-         _freeSize.add( pageSize ) ;
+         _freeSize.add( _slot2PageSize( slot ) ) ;
       }
       _releaseEvent.signalAll() ;
 
@@ -701,6 +771,156 @@ namespace engine
       return allocWholePage( size, item, keepData ) ;
    }
 
+   CHAR* _utilCacheMgr::allocBlock( UINT32 size, UINT32 &blockSize )
+   {
+      CHAR *pBlock      = NULL ;
+      UINT32 beginSlot  = 0 ;
+      UINT32 pageSize   = 0 ;
+      UINT32 exceedSlot = 0 ;
+
+      blockSize = 0 ;
+
+   retry:
+      beginSlot = _sizeUp2Slot( size ) ;
+      exceedSlot = 0 ;
+
+      /// first to alloc a whole page
+      while( beginSlot < UTIL_PAGE_SLOT_SIZE &&
+             exceedSlot < UTIL_MAX_EXCEED_SLOT_SIZE &&
+             _freeSize.peek() >= size )
+      {
+         _latch[ beginSlot ]->get() ;
+         vector< CHAR* > &slotItem = _slot[ beginSlot ] ;
+         if ( !slotItem.empty() )
+         {
+            pageSize = _slot2PageSize( beginSlot ) ;
+            pBlock = slotItem.back() ;
+            blockSize = pageSize ;
+            slotItem.pop_back() ;
+            _freeSize.sub( pageSize ) ;
+            /// update the bucket stat
+            _getBucketCache( beginSlot )._freeSize -= pageSize ;
+            _getBucketCache( beginSlot )._useTimes += 1 ;
+            /// release the bucket latch
+            _latch[ beginSlot ]->release() ;
+            goto done ;
+         }
+         _latch[ beginSlot ]->release() ;
+         ++beginSlot ;
+         ++exceedSlot ;
+      }
+
+      /// no space for the size, alloc and retry
+      if ( SDB_OK == _allocMem( size ) )
+      {
+         goto retry ;
+      }
+      else
+      {
+         goto done ;
+      }
+
+   done:
+      return pBlock ;
+   }
+
+   CHAR* _utilCacheMgr::reallocBlock( UINT32 size, CHAR *pBlock,
+                                      UINT32 &blockSize )
+   {
+      CHAR *pTmpBlock   = NULL ;
+      UINT32 tmpBlockSize = 0 ;
+      UINT32 beginSlot  = 0 ;
+      UINT32 pageSize   = 0 ;
+      UINT32 exceedSlot = 0 ;
+
+      if ( blockSize >= size )
+      {
+         goto done ;
+      }
+
+   retry:
+      beginSlot = _sizeUp2Slot( size ) ;
+      exceedSlot = 0 ;
+
+      /// first to alloc a whole page
+      while( beginSlot < UTIL_PAGE_SLOT_SIZE &&
+             exceedSlot < UTIL_MAX_EXCEED_SLOT_SIZE &&
+             _freeSize.peek() >= size )
+      {
+         _latch[ beginSlot ]->get() ;
+         vector< CHAR* > &slotItem = _slot[ beginSlot ] ;
+         if ( !slotItem.empty() )
+         {
+            pageSize = _slot2PageSize( beginSlot ) ;
+            /// save the pBlock first
+            pTmpBlock = pBlock ;
+            tmpBlockSize = blockSize ;
+            /// assign the new block
+            pBlock = slotItem.back() ;
+            blockSize = pageSize ;
+            slotItem.pop_back() ;
+            _freeSize.sub( pageSize ) ;
+            /// update the bucket stat
+            _getBucketCache( beginSlot )._freeSize -= pageSize ;
+            _getBucketCache( beginSlot )._useTimes += 1 ;
+            /// release the bucket latch
+            _latch[ beginSlot ]->release() ;
+            goto done_assign ;
+         }
+         _latch[ beginSlot ]->release() ;
+         ++beginSlot ;
+         ++exceedSlot ;
+      }
+
+      /// no space for the size, alloc and retry
+      if ( SDB_OK == _allocMem( size ) )
+      {
+         goto retry ;
+      }
+      else
+      {
+         /// error, need to release the orignal data
+         releaseBlock( pBlock, blockSize ) ;
+         goto done ;
+      }
+
+   done_assign:
+      if ( pTmpBlock )
+      {
+         /// copy the orignal data
+         ossMemcpy( pBlock, pTmpBlock, tmpBlockSize ) ;
+         /// release the orignal data
+         releaseBlock( pTmpBlock, tmpBlockSize ) ;
+      }
+
+   done:
+      return pBlock ;
+   }
+
+   void _utilCacheMgr::releaseBlock( CHAR *&pBlock, UINT32 &blockSize )
+   {
+      UINT32 slot = 0 ;
+
+      if ( pBlock && blockSize > 0 )
+      {
+         slot = _sizeDown2Slot( blockSize ) ;
+         SDB_ASSERT( blockSize == _slot2PageSize( slot ),
+                     "BlockSize is not invalid" ) ;
+
+         _latch[ slot ]->get() ;
+         _slot[ slot ].push_back( pBlock ) ;
+         /// update the bucket stat
+         _getBucketCache( slot )._freeSize += _slot2PageSize( slot ) ;
+         _latch[ slot ]->release() ;
+         _freeSize.add( _slot2PageSize( slot ) ) ;
+
+         _releaseEvent.signalAll() ;
+      }
+
+      pBlock = NULL ;
+      blockSize = 0 ;
+   }
+
    INT32 _utilCacheMgr::_allocMem( UINT32 size, UINT32 pageNum )
    {
       INT32 rc = SDB_OK ;
@@ -714,8 +934,8 @@ namespace engine
          goto done ;
       }
 
-      pageSize = _size2PageSize( size ) ;
-      slot = _size2Slot( size ) ;
+      pageSize = _sizeUp2PageSize( size ) ;
+      slot = _sizeUp2Slot( size ) ;
 
       if ( slot >= UTIL_PAGE_SLOT_SIZE )
       {
@@ -745,6 +965,8 @@ namespace engine
          _latch[ slot ]->get() ;
          /// push to vector
          _slot[ slot ].push_back( pPage ) ;
+         _getBucketCache( slot )._totalSize += pageSize ;
+         _getBucketCache( slot )._freeSize += pageSize ;
          _latch[ slot ]->release() ;
          /// update the meta
          _totalSize.add( pageSize ) ;
@@ -756,6 +978,144 @@ namespace engine
       return rc ;
    error:
       goto done ;
+   }
+
+   void _utilCacheMgr::registerUnit( _utilCacheUnit *pUnit )
+   {
+      ossTimestamp t ;
+      UINT64 curTime = 0 ;
+
+      ossScopedLock lock( &_unitLatch ) ;
+
+      ossGetCurrentTime( &t ) ;
+      curTime = t.time * 1000 + t.microtm / 1000 ;
+
+      _syncUnitList.push_back( std::make_pair( curTime, pUnit ) ) ;
+      _recycleUnitList.push_back( std::make_pair( curTime, pUnit ) ) ;
+   }
+
+   void _utilCacheMgr::pushBackSyncUnit( _utilCacheUnit *pUnit )
+   {
+      ossTimestamp t ;
+      UINT64 curTime = 0 ;
+
+      ossScopedLock lock( &_unitLatch ) ;
+
+      if ( !pUnit->isClosed() )
+      {
+         ossGetCurrentTime( &t ) ;
+         curTime = t.time * 1000 + t.microtm / 1000 ;
+         _syncUnitList.push_back( std::make_pair( curTime, pUnit ) ) ;
+      }
+      /// release the page cleaner
+      pUnit->unlockPageCleaner() ;
+   }
+
+   void _utilCacheMgr::pushBackRecycleUnit( _utilCacheUnit *pUnit )
+   {
+      ossTimestamp t ;
+      UINT64 curTime = 0 ;
+
+      ossScopedLock lock( &_unitLatch ) ;
+
+      if ( !pUnit->isClosed() )
+      {
+         ossGetCurrentTime( &t ) ;
+         curTime = t.time * 1000 + t.microtm / 1000 ;
+         _recycleUnitList.push_back( std::make_pair( curTime, pUnit ) ) ;
+      }
+      /// release the page cleaner
+      pUnit->unlockPageCleaner() ;
+   }
+
+   _utilCacheUnit* _utilCacheMgr::dispatchSyncUnit( UINT64 interval )
+   {
+      UNIT_INFO info ;
+
+      ossScopedLock lock( &_unitLatch ) ;
+
+      if ( _syncUnitList.empty() )
+      {
+         return NULL ;
+      }
+      info = _syncUnitList.front() ;
+      if ( interval > 0 )
+      {
+         ossTimestamp t ;
+         ossGetCurrentTime( t ) ;
+         UINT64 curTime = t.time * 1000 + t.microtm / 1000 ;
+
+         if ( ( curTime >= info.first && curTime - info.first <= interval ) ||
+              ( curTime < info.first && info.first - curTime <= interval ) )
+         {
+            return NULL ;
+         }
+      }
+      /// lock the unit
+      info.second->lockPageCleaner() ;
+      _syncUnitList.pop_front() ;
+
+      return info.second ;
+   }
+
+   _utilCacheUnit* _utilCacheMgr::dispatchRecycleUnit( UINT64 interval )
+   {
+      UNIT_INFO info ;
+
+      ossScopedLock lock( &_unitLatch ) ;
+
+      if ( _recycleUnitList.empty() )
+      {
+         return NULL ;
+      }
+      info = _recycleUnitList.front() ;
+      if ( interval > 0 )
+      {
+         ossTimestamp t ;
+         ossGetCurrentTime( t ) ;
+         UINT64 curTime = t.time * 1000 + t.microtm / 1000 ;
+
+         if ( ( curTime >= info.first && curTime - info.first <= interval ) ||
+              ( curTime < info.first && info.first - curTime <= interval ) )
+         {
+            return NULL ;
+         }
+      }
+      /// lock the unit
+      info.second->lockPageCleaner() ;
+      _recycleUnitList.pop_front() ;
+
+      return info.second ;
+   }
+
+   void _utilCacheMgr::unregUnit( _utilCacheUnit *pUnit )
+   {
+      LIST_UNIT::iterator it ;
+
+      ossScopedLock lock( &_unitLatch ) ;
+
+      /// remove from _syncUnitList
+      it = _syncUnitList.begin() ;
+      while( it != _syncUnitList.end() )
+      {
+         if ( (*it)->second == pUnit )
+         {
+            _syncUnitList.erase( it ) ;
+            break ;
+         }
+         ++it ;
+      }
+      /// remove from _recycleUnitList
+      it = _recycleUnitList.begin() ;
+      while( it != _recycleUnitList.end() )
+      {
+         if ( (*it)->second == pUnit )
+         {
+            _recycleUnitList.erase( it ) ;
+            break ;
+         }
+         ++it ;
+      }
    }
 
    /*
@@ -854,6 +1214,7 @@ namespace engine
       _size = 0 ;
       _writeBack = FALSE ;
       _usePage = FALSE ;
+      _hasDiscard = FALSE ;
    }
 
    _utilCacheContext::~_utilCacheContext()
@@ -905,8 +1266,19 @@ namespace engine
       if ( isPageValid() && _pPage->isDirty() )
       {
          _pPage->clearDirty() ;
-         _pPage->clearDataInfo() ;
+         _pUnit->decDirtyPages( _pBucket ) ;
+         _hasDiscard = TRUE ;
       }
+   }
+
+   void _utilCacheContext::restorePage()
+   {
+      if ( isPageValid() && _hasDiscard && !_pPage->isDirty() )
+      {
+         _pPage->makeDirty() ;
+         _pUnit->incDirtyPages( _pBucket ) ;
+      }
+      _hasDiscard = FALSE ;
    }
 
    BOOLEAN _utilCacheContext::isInCache( UINT32 offset, UINT32 len ) const
@@ -1190,6 +1562,7 @@ namespace engine
          _isWrite = FALSE ;
          _writeBack = FALSE ;
       }
+      _hasDiscard = FALSE ;
 
       return len ;
    }
@@ -1213,6 +1586,7 @@ namespace engine
       _pPage = NULL ;
       _pBucket = NULL ;
       _pUnit = NULL ;
+      _hasDiscard = FALSE ;
    }
 
    INT32 _utilCacheContext::_loadPage( UINT32 offset,
@@ -1278,10 +1652,11 @@ namespace engine
       _pCacheFile = NULL ;
       _bucketSize = 0 ;
       _pageSize = 0 ;
-      _closed = FALSE ;
+      _closed = TRUE ;
       _wholePage = FALSE ;
       _lastRecycleTime = 0 ;
       _lastSyncTime = 0 ;
+      _useCache = TRUE ;
 
       _bgDirtyRatio = UTIL_CACHEUNIT_BG_DIRTY_RATIO ;
       _dirtyTimeout = UTIL_CACHEUNIT_DIRTY_TIMEOUT ;
@@ -1298,6 +1673,7 @@ namespace engine
                                 utilCachFileBase *pFile,
                                 UINT32 pageSize,
                                 UINT32 bucketSize,
+                                BOOLEAN useCache,
                                 BOOLEAN wholePage )
    {
       INT32 rc = SDB_OK ;
@@ -1312,8 +1688,8 @@ namespace engine
       _pMgr = pMgr ;
       _pCacheFile = pFile ;
       _pageSize = pageSize ;
+      _useCache = useCache ;
       _wholePage = wholePage ;
-      _closed = FALSE ;
 
       for ( UINT32 i = 0 ; i < bucketSize ; ++i )
       {
@@ -1327,6 +1703,10 @@ namespace engine
          _vecBucket.push_back( pBucket ) ;
          ++_bucketSize ;
       }
+
+      /// register the unit
+      _pMgr->registerUnit( this ) ;
+      _closed = FALSE ;
 
    done:
       return rc ;
@@ -1355,12 +1735,15 @@ namespace engine
 
       _closed = TRUE ;
 
-      /// wait the sync
-      _syncMutex.lock_w() ;
-      _syncMutex.release_w() ;
-      /// wait the recycle
-      _recycleMutex.lock_w() ;
-      _recycleMutex.release_w() ;
+      /// unregister self must be after set closed
+      if ( _pMgr )
+      {
+         _pMgr->unregUnit( this ) ;
+      }
+
+      /// wait the page cleaner
+      _pageCleaner.lock_w() ;
+      _pageCleaner.release_w() ;
 
       /// wait all dirty page flushed to file
       while( dirtyPages() > 0 )
@@ -1439,9 +1822,13 @@ namespace engine
          SDB_ASSERT( pageID >= 0, "Page must >= 0" ) ;
          goto done ;
       }
+      if ( !_useCache )
+      {
+         goto done ;
+      }
 
       pPage = pBucket->getPage( pageID ) ;
-      if ( !pPage && alloc )
+      if ( !pPage && alloc && size > 0 )
       {
          utilCachePage tmpPage ;
          INT32 rc = SDB_OK ;
@@ -1643,15 +2030,22 @@ namespace engine
       goto done ;
    }
 
+   void _utilCacheUnit::lockPageCleaner()
+   {
+      _pageCleaner.lock_r() ;
+   }
+
+   void _utilCacheUnit::unlockPageCleaner()
+   {
+      _pageCleaner.release_r() ;
+   }
+
    UINT32 _utilCacheUnit::syncPages( IExecutor *cb, BOOLEAN force )
    {
       UINT32 totalPages = 0 ;
       utilCacheBucket* pBucket = NULL ;
       ossTimestamp t ;
       MAP_ID_2_PAGE_PRT tmpPages ;
-
-      /// lock the sync mutex in the begin
-      _syncMutex.lock_r() ;
 
       /// get current time
       ossGetCurrentTime( t ) ;
@@ -1697,9 +2091,6 @@ namespace engine
 
       totalPages += _syncPages( tmpPages, cb ) ;
 
-      /// release the sync mutex in the end
-      _syncMutex.release_r() ;
-
       return totalPages ;
    }
 
@@ -1739,9 +2130,6 @@ namespace engine
       ossTimestamp t ;
       utilCacheBucket* pBucket = NULL ;
       utilCacheBucket::MAP_BLK_PAGE* pPages = NULL ;
-
-      /// lock the recycle mutex in the begin
-      _recycleMutex.lock_r() ;
 
       /// get current time
       ossGetCurrentTime( t ) ;
@@ -1789,9 +2177,6 @@ namespace engine
             break ;
          }
       }
-
-      /// release the recycle mutex in the end
-      _recycleMutex.release_r() ;
 
       return totalSize ;
    }

@@ -41,16 +41,18 @@
 #include "ossEvent.hpp"
 #include "sdbInterface.hpp"
 #include <vector>
+#include <list>
 
 using namespace std ;
 
 namespace engine
 {
 
-   #define UTIL_PAGE_SLOT_BEGIN_SIZE            ( 1024 )
-   #define UTIL_PAGE_SLOT_SIZE                  ( 20 )   /// 512M
+   #define UTIL_PAGE_SLOT_BEGIN_SIZE            ( 256 )  /// BYTE
+   #define UTIL_PAGE_SLOT_SIZE                  ( 22 )   /// 512M
 
    class _utilCacheMgr ;
+   class _utilCacheUnit ;
 
    /*
       _utilCacheBlock define
@@ -157,8 +159,14 @@ namespace engine
          UINT32      lsnNum() const { return _lsnNum ; }
 
          UINT32      blockNum() const ;
-         BOOLEAN     isEmpty() const { return 0 == _length ? TRUE : FALSE ; }
-         BOOLEAN     isDirtyEmpty() const { return 0 == _dirtyLength ? TRUE : FALSE ; }
+         BOOLEAN     isEmpty() const
+         {
+            return _start == _length ? TRUE : FALSE ;
+         }
+         BOOLEAN     isDirtyEmpty() const
+         {
+            return _dirtyStart == _dirtyLength ? TRUE : FALSE ;
+         }
 
          INT32       write( const CHAR* pBuf, UINT32 offset,
                             UINT32 len, BOOLEAN &setDirty ) ;
@@ -170,6 +178,12 @@ namespace engine
 
          UINT32      beginBlock() const ;
          CHAR*       nextBlock( UINT32 &size, UINT32 &pos ) const ;
+
+         /*
+            Used only when the 1 == blockNum()
+         */
+         const CHAR* str() const ;
+         CHAR*       str() ;
 
       protected:
          INT32       addPage( CHAR* pPage, UINT32 size ) ;
@@ -199,11 +213,42 @@ namespace engine
    typedef _utilCachePage utilCachePage ;
 
    /*
+      _utilCacheStat define
+   */
+   struct _utilCacheStat
+   {
+      UINT32      _pageSize ;
+      UINT64      _totalSize ;
+      UINT64      _freeSize ;
+      UINT64      _useTimes ;
+
+      _utilCacheStat()
+      {
+         _pageSize = 0 ;
+         _totalSize = 0 ;
+         _freeSize = 0 ;
+         _useTimes = 0 ;
+      }
+
+      void reset()
+      {
+         _pageSize = 0 ;
+         _totalSize = 0 ;
+         _freeSize = 0 ;
+         _useTimes = 0 ;
+      }
+   } ;
+   typedef _utilCacheStat utilCacheStat ;
+
+   /*
       _utilCacheMgr define
    */
    class _utilCacheMgr : public SDBObject
    {
-      typedef ossSpinXLatch blkLatch ;
+      typedef ossSpinXLatch                     blkLatch ;
+      typedef pair<UINT64,_utilCacheUnit*>      UNIT_INFO ;
+      typedef list<UNIT_INFO>                   LIST_UNIT ;
+
       public:
          _utilCacheMgr() ;
          ~_utilCacheMgr() ;
@@ -218,6 +263,13 @@ namespace engine
          UINT64   totalSize() { return _totalSize.peek() ; }
          UINT64   freeSize() { return _freeSize.peek() ; }
 
+         /// Get the detail info of the specified bucket
+         void     getCacheStat( UINT32 bucketID,
+                                utilCacheStat &stat ) const ;
+
+         /*
+            CachePage alloc/release
+         */
          INT32    alloc( UINT32 size, utilCachePage &item ) ;
          INT32    allocWholePage( UINT32 size, utilCachePage &item,
                                   BOOLEAN keepData = FALSE ) ;
@@ -227,8 +279,30 @@ namespace engine
                          BOOLEAN keepData = FALSE ) ;
          void     release( utilCachePage &item ) ;
 
+         /*
+            Block alloc/release
+         */
+         CHAR*    allocBlock( UINT32 size, UINT32 &blockSize ) ;
+         /*
+            When return NULL, the orignal pBlock will be released
+         */
+         CHAR*    reallocBlock( UINT32 size, CHAR *pBlock, UINT32 &blockSize ) ;
+         void     releaseBlock( CHAR *&pBlock, UINT32 &blockSize ) ;
+
          INT32    waitEvent( INT64 millisec = OSS_ONE_SEC ) ;
          void     resetEvent() ;
+
+         /*
+            CacheUnit Management Functions
+         */
+         void     registerUnit( _utilCacheUnit *pUnit ) ;
+         void     unregUnit( _utilCacheUnit *pUnit ) ;
+
+         /// interval = 0, not check the time
+         _utilCacheUnit* dispatchSyncUnit( UINT64 interval ) ;
+         _utilCacheUnit* dispatchRecycleUnit( UINT64 interval ) ;
+         void     pushBackSyncUnit( _utilCacheUnit *pUnit ) ;
+         void     pushBackRecycleUnit( _utilCacheUnit *pUnit ) ;
 
       protected:
          UINT32   _roundUp2PageSizeSqrt( UINT32 size ) const
@@ -247,12 +321,33 @@ namespace engine
             return tmpSqrt + _beginPageSizeSqrt ;
          }
 
-         UINT32   _size2Slot( UINT32 size ) const
+         INT32    _roundDown2PageSizeSqrt( UINT32 size ) const
+         {
+            if ( size < UTIL_PAGE_SLOT_BEGIN_SIZE )
+            {
+               return _beginPageSizeSqrt - 1 ;
+            }
+            UINT32 tmpSize = size >> _beginPageSizeSqrt ;
+            UINT32 tmpSqrt = 0 ;
+            while( tmpSize != 0 )
+            {
+               tmpSize = tmpSize >> 1 ;
+               ++tmpSqrt ;
+            }
+            return tmpSqrt - 1 + _beginPageSizeSqrt ;
+         }
+
+         UINT32   _sizeUp2Slot( UINT32 size ) const
          {
             return _roundUp2PageSizeSqrt( size ) - _beginPageSizeSqrt ;
          }
 
-         UINT32   _size2PageSize( UINT32 size ) const
+         INT32    _sizeDown2Slot( UINT32 size ) const
+         {
+            return _roundDown2PageSizeSqrt( size ) - _beginPageSizeSqrt ;
+         }
+
+         UINT32   _sizeUp2PageSize( UINT32 size ) const
          {
             return (UINT32)1 << _roundUp2PageSizeSqrt( size ) ;
          }
@@ -265,6 +360,13 @@ namespace engine
          INT32    _allocMem( UINT32 size, UINT32 pageNum = 1 ) ;
 
       private:
+         utilCacheStat&       _getBucketCache( UINT32 id )
+         {
+            SDB_ASSERT( id < UTIL_PAGE_SLOT_SIZE, "Invalid id" ) ;
+            return (*_pStat)[ id ] ;
+         }
+
+      private:
          UINT32               _beginPageSizeSqrt ;
          UINT64               _maxCacheSize ;
          ossAtomic64          _freeSize ;
@@ -272,7 +374,15 @@ namespace engine
 
          vector< CHAR* >      _slot[ UTIL_PAGE_SLOT_SIZE ] ;
          vector< blkLatch* >  _latch ;
+         vector< utilCacheStat >* _pStat ;
          ossEvent             _releaseEvent ;
+
+         /*
+            Unit Management Members
+         */
+         LIST_UNIT            _syncUnitList ;
+         LIST_UNIT            _recycleUnitList ;
+         ossSpinXLatch        _unitLatch ;
 
    } ;
    typedef _utilCacheMgr utilCacheMgr ;
@@ -324,7 +434,6 @@ namespace engine
    } ;
    typedef _utilCacheBucket utilCacheBucket ;
 
-   class _utilCacheUnit ;
    /*
       _utilCacheContext define
    */
@@ -347,6 +456,7 @@ namespace engine
 
          BOOLEAN  isInCache( UINT32 offset, UINT32 len ) const ;
          void     discardPage() ;
+         void     restorePage() ;
 
          /*
             Need call submit or rollback to done
@@ -390,6 +500,7 @@ namespace engine
          BOOLEAN           _isWrite ;
          BOOLEAN           _writeBack ;
          BOOLEAN           _usePage ;
+         BOOLEAN           _hasDiscard ;
 
          /// should value in cache unit
          INT32             _pageID ;
@@ -454,12 +565,18 @@ namespace engine
          UINT32         syncPages( IExecutor *cb,
                                    BOOLEAN force = TRUE ) ;
 
+         void           lockPageCleaner() ;
+         void           unlockPageCleaner() ;
+
          INT32          init( utilCacheMgr *pMgr,
                               utilCachFileBase *pFile,
                               UINT32 pageSize,
                               UINT32 bucketSize = UTIL_CACHEUNIT_BUCKET_SZ,
+                              BOOLEAN useCache = TRUE,
                               BOOLEAN wholePage = FALSE ) ;
          void           fini( IExecutor *cb ) ;
+
+         BOOLEAN        isClosed() const { return _closed ; }
 
          /*
             Set and Get dirty/recycle configs
@@ -487,6 +604,7 @@ namespace engine
 
          UINT64         totalPages() ;
          UINT64         dirtyPages() ;
+         BOOLEAN        isUseCache() const { return _useCache ; }
 
          void           decDirtyPages( utilCacheBucket *pBucket ) ;
          void           incDirtyPages( utilCacheBucket *pBucket ) ;
@@ -530,6 +648,7 @@ namespace engine
          BOOLEAN                    _wholePage ;
          vector< utilCacheBucket* > _vecBucket ;
          BOOLEAN                    _closed ;
+         BOOLEAN                    _useCache ;
 
          /*
             Dirty page configs
@@ -548,8 +667,7 @@ namespace engine
 
          UINT64                     _lastRecycleTime ;
          UINT64                     _lastSyncTime ;
-         ossRWMutex                 _syncMutex ;
-         ossRWMutex                 _recycleMutex ;
+         ossRWMutex                 _pageCleaner ;
 
    } ;
    typedef _utilCacheUnit utilCacheUnit ;
