@@ -1051,6 +1051,18 @@ INT32 ossCreateNamedPipe ( const CHAR *name,
       }
       goto error ;
    }
+   /// set the permission, because mkfifo can't make the group_write and
+   /// other write permission
+   try
+   {
+      fs::permissions( fs::path( pathName ),
+                       fs::owner_all | fs::group_all | fs::others_all ) ;
+   }
+   catch( std::exception &e )
+   {
+      /// ignored the error
+   }
+
 done :
    PD_TRACE_EXITRC ( SDB_OSSCRTNP, rc );
    return rc ;
