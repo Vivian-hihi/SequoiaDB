@@ -474,6 +474,19 @@ namespace engine
          BSONObj _sysInfo ;
    } ;
 
+   class _omaTrustSsqlOlap : public _omaCommand
+   {
+      public:
+         _omaTrustSsqlOlap( const BSONObj& config, const BSONObj& sysInfo ) ;
+         ~_omaTrustSsqlOlap() ;
+         virtual const CHAR * name() { return OMA_CMD_TRUST_SEQUOIASQL_OLAP ; }
+         virtual INT32 init( const CHAR *pInstallInfo ) ;
+
+      private:
+         BSONObj _config ;
+         BSONObj _sysInfo ;
+   } ;
+
    class _omaRemoveSsqlOlap : public _omaCommand
    {
       public:

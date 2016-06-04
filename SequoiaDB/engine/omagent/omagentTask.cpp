@@ -7005,7 +7005,7 @@ namespace engine
       _taskEvent.signal() ;
    }
 
-   INT32 _omaSsqlOlapBusBase::updateProgressToTask()
+   INT32 _omaSsqlOlapBusBase::updateProgressToTask( BOOLEAN notify )
    {
       INT32 rc            = SDB_OK ;
 
@@ -7018,8 +7018,11 @@ namespace engine
          goto error ;
       }
 
-      _eventID++ ;
-      _taskEvent.signal() ;
+      if ( notify )
+      {
+         _eventID++ ;
+         _taskEvent.signal() ;
+      }
 
    done:
       return rc ;
@@ -7214,6 +7217,28 @@ namespace engine
       goto done ;
    }
 
+   void _omaSsqlOlapBusBase::_setAllNodesStatus( OMA_TASK_STATUS status,
+                                                 const string& statusDesc,
+                                                 INT32 errcode,
+                                                 const string& detail,
+                                                 const string& flow )
+   {
+      vector<omaSsqlOlapNodeInfo>::iterator iter ;
+
+      for ( iter = _nodeInfos.begin() ; iter != _nodeInfos.end(); iter++ )
+      {
+         omaSsqlOlapNodeInfo& node = *iter ;
+         node.status = status ;
+         node.statusDesc = statusDesc ;
+         node.errcode = errcode ;
+         node.detail = detail ;
+         if ( flow != "" )
+         {
+            node.flow.push_back( flow ) ;
+         }
+      }
+   }
+
    void _omaSsqlOlapBusBase::_setResultToFail()
    {
       vector<omaSsqlOlapNodeInfo>::iterator iter ;
@@ -7321,12 +7346,16 @@ namespace engine
       updateProgressToTask() ;
 
    done:
+      if ( SDB_OK != _updateProgressToOM() )
+      {
+         PD_LOG( PDWARNING, "Failed to update task's progress to om" ) ;
+      }
       return rc ;
    error:
       PD_LOG_MSG( PDERROR, "Failed to remove sequoiasql olap[%s:%s], rc = %d",
                   hostName.c_str(), role.c_str(), rc ) ;
       nodeInfo.errcode = rc ;
-      nodeInfo.status = OMA_TASK_STATUS_END ;
+      nodeInfo.status = OMA_TASK_STATUS_FINISH ;
       nodeInfo.statusDesc = detail;
       nodeInfo.flow.push_back( REMOVE_FAIL ) ;
       updateProgressToTask() ;
@@ -7338,6 +7367,9 @@ namespace engine
    {
       _taskType = OMA_TASK_INSTALL_SSQL_OLAP ;
       _taskName = OMA_TASK_NAME_INSTALL_SSQL_OLAP_BUSINESS ;
+      _checked = FALSE ;
+      _trusted = FALSE ;
+      _started = FALSE ;
    }
 
    _omaInstallSsqlOlapBusTask::~_omaInstallSsqlOlapBusTask()
@@ -7400,7 +7432,7 @@ namespace engine
          goto error ;
       }
 
-      // install sequoiasql olap ( check/install/config )
+      // install sequoiasql olap ( install/config )
       rc = _install() ;
       if ( SDB_OK != rc )
       {
@@ -7408,17 +7440,22 @@ namespace engine
          goto error ;
       }
 
-      // 4. update the task's progress and
-      //    waiting for all the sub tasks to be finished
+      // update the task's progress and
+      // waiting for all the sub tasks to be finished
       rc = _waitAndUpdateProgress() ;
-      if ( rc )
+      if ( SDB_OK != rc )
       {
          PD_LOG ( PDERROR, "failed to wait and update install sequoiasql olap "
                   "business progress, rc = %d", rc ) ;
          goto error ;
       }
 
-      // establish trust
+      rc = _establishTrust() ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to establish trust for sequoiasql olap, rc = %d", rc ) ;
+         goto error ;
+      }
 
       // start sequoiasql olap
 
@@ -7456,6 +7493,50 @@ namespace engine
       }
       // . set task to be failing
       _setResultToFail() ;
+      goto done ;
+   }
+
+   INT32 _omaInstallSsqlOlapBusTask::_calculateProgress()
+   {
+      INT32 rc = SDB_OK ;
+      INT32 totalNum = 0 ;
+      INT32 finishNum = 0 ;
+      INT32 progress = 0 ;
+      vector<omaSsqlOlapNodeInfo>::iterator it  ;
+
+      totalNum = _nodeInfos.size() ;
+      if ( 0 == totalNum )
+      {
+         rc = SDB_SYS ;
+         PD_LOG_MSG( PDERROR, "sequoiasql node number is zero" ) ;
+         goto error ;
+      }
+
+      if ( _checked )
+      {
+          progress = 10 ;
+      }
+
+      for( it = _nodeInfos.begin() ; it != _nodeInfos.end(); it++ )
+      {
+         if ( OMA_TASK_STATUS_FINISH == it->status )
+         {
+            finishNum++ ;
+         }
+      }
+
+      progress += ( finishNum * 70 ) / totalNum ;
+
+      if ( _trusted )
+      {
+         progress = 100 ;
+      }
+
+      _progress = progress ;
+
+   done:
+      return rc ;
+   error:
       goto done ;
    }
 
@@ -7557,8 +7638,8 @@ namespace engine
       PD_LOG_MSG( PDERROR, "Failed to remove sequoiasql olap[%s:%s], rc = %d",
                   hostName.c_str(), role.c_str(), rc ) ;
       nodeInfo.errcode = rc ;
-      nodeInfo.status = OMA_TASK_STATUS_END ;
-      nodeInfo.statusDesc = detail;
+      nodeInfo.status = OMA_TASK_STATUS_FINISH ;
+      nodeInfo.statusDesc = detail ;
       nodeInfo.flow.push_back( CHECK_FAIL ) ;
       updateProgressToTask() ;
       goto done ;
@@ -7569,11 +7650,10 @@ namespace engine
       INT32 rc = SDB_OK ;
       vector<omaSsqlOlapNodeInfo>::iterator it ;
 
-      rc = _updateProgressToOM() ;
-      if ( SDB_OK != rc )
+      updateProgressToTask() ;
+      if ( SDB_OK != _updateProgressToOM() )
       {
          PD_LOG( PDWARNING, "Failed to update task's progress to om" ) ;
-         rc = SDB_OK ;
       }
 
       for( it = _nodeInfos.begin(); it != _nodeInfos.end() ; it++ )
@@ -7585,13 +7665,13 @@ namespace engine
                     it->hostName.c_str(), it->role.c_str(), rc ) ;
             goto error ;
          }
+      }
 
-         rc = _updateProgressToOM() ;
-         if ( SDB_OK != rc )
-         {
-            PD_LOG( PDWARNING, "Failed to update task's progress to om" ) ;
-            rc = SDB_OK ;
-         }
+      _checked = TRUE ;
+      updateProgressToTask() ;
+      if ( SDB_OK != _updateProgressToOM() )
+      {
+         PD_LOG( PDWARNING, "Failed to update task's progress to om" ) ;
       }
 
    done:
@@ -7641,14 +7721,145 @@ namespace engine
       goto done ;
    }
 
+   INT32 _omaInstallSsqlOlapBusTask::_establishTrust()
+   {
+      INT32 rc = SDB_OK ;
+      INT32 tmpRc = SDB_OK ;
+      INT32 errNum = 0 ;
+      string detail ;
+      BSONObj retObj ;
+      vector<omaSsqlOlapNodeInfo>::iterator it ;
+      omaSsqlOlapNodeInfo* masterNode = NULL ;
+      string hostName ;
+      string role ;
+
+#define TRUST_BEGIN  "Establishing trust"
+#define TRUST_FINISH "Finish establishing trust "
+#define TRUST_FAIL   "Failed to establish trust "
+
+      for( it = _nodeInfos.begin(); it != _nodeInfos.end() ; it++ )
+      {
+         omaSsqlOlapNodeInfo& node = *it ;
+         if (node.role == OM_SSQL_OLAP_MASTER)
+         {
+            masterNode = &node ;
+            break ;
+         }
+      }
+
+      if ( masterNode == NULL )
+      {
+         PD_LOG( PDERROR, "failed to find master node" ) ;
+         goto error ;
+      }
+
+      hostName = masterNode->hostName ;
+      role = masterNode->role ;
+
+      _setAllNodesStatus( OMA_TASK_STATUS_FINISH, OMA_TASK_STATUS_DESC_FINISH,
+                          SDB_OK, "", TRUST_BEGIN ) ;
+      updateProgressToTask() ;
+      if ( SDB_OK != _updateProgressToOM() )
+      {
+         PD_LOG( PDWARNING, "Failed to update task's progress to om" ) ;
+      }
+
+      {
+         _omaTrustSsqlOlap runCmd( masterNode->config, _sysInfo ) ;
+
+         rc = runCmd.init( NULL ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Failed to init to establish trust for sequoiasql olap[%s:%s], "
+                    "rc = %d", hostName.c_str(), role.c_str(), rc ) ;
+            detail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+            if ( "" == detail )
+            {
+               detail = "Failed to init to establish trust for sequoiasql olap" ;
+            }
+            goto error ;
+         }
+
+         rc = runCmd.doit( retObj ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Failed to establish trust sequoiasql olap[%s:%s], rc = %d",
+                    hostName.c_str(), role.c_str(), rc ) ;
+            // if we can't get field "detail", it means we failed in CPP,
+            // we had not executed js file yet
+            tmpRc = omaGetStringElement ( retObj, OMA_FIELD_DETAIL, detail ) ;
+            if ( tmpRc )
+            {
+               detail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+               if ( "" == detail )
+               {
+                  detail = "Not exeute js file yet" ;
+               }
+            }
+            goto error ;
+         }
+
+         // extract "errno"
+         rc = omaGetIntElement ( retObj, OMA_FIELD_ERRNO, errNum ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Failed to get errno from js after "
+                    "establishing trust for sequoiasql olap[%s:%s], rc = %d",
+                    hostName.c_str(), role.c_str(), rc ) ;
+            detail = "Failed to get errno from js after establishing trust for sequoiasql olap" ;
+            goto error ;
+         }
+
+         // to see whether execute js successfully or not
+         if ( SDB_OK != errNum )
+         {
+            rc = errNum ;
+            tmpRc = omaGetStringElement ( retObj, OMA_FIELD_DETAIL, detail ) ;
+            if ( SDB_OK != tmpRc )
+            {
+               PD_LOG( PDERROR, "Failed to get error detail from js after "
+                       "establishing trust for sequoiasql olap[%s:%S], rc = %d",
+                       hostName.c_str(), role.c_str(), tmpRc ) ;
+               detail = "Failed to get error detail from js after "
+                         "establishing trust for sequoiasql olap" ;
+            }
+            goto error ;
+         }
+         else
+         {
+            PD_LOG ( PDEVENT, "Successfully establishing trust for sequoiasql olap[%s:%s]",
+                     hostName.c_str(), role.c_str() ) ;
+         }
+      }
+
+      _trusted = TRUE ;
+      _setAllNodesStatus( OMA_TASK_STATUS_FINISH, OMA_TASK_STATUS_DESC_FINISH,
+                          SDB_OK, "", TRUST_FINISH ) ;
+      updateProgressToTask() ;
+
+   done:
+      if ( SDB_OK != _updateProgressToOM() )
+      {
+         PD_LOG( PDWARNING, "Failed to update task's progress to om" ) ;
+      }
+      return rc ;
+   error:
+      PD_LOG_MSG( PDERROR, "Failed to establish trust for sequoiasql olap, rc = %d",
+                  rc ) ;
+      _setAllNodesStatus( OMA_TASK_STATUS_FINISH, TRUST_FAIL,
+                          rc, detail, TRUST_FAIL ) ;
+      updateProgressToTask() ;
+      goto done ;
+   }
+
    INT32 _omaInstallSsqlOlapBusTask::_rollback( BOOLEAN isRestart )
    {
       INT32 rc = SDB_OK ;
       vector<omaSsqlOlapNodeInfo>::iterator it ;
 
       setTaskStatus( OMA_TASK_STATUS_ROLLBACK ) ;
-      rc = _updateProgressToOM() ;
-      if ( SDB_OK != rc )
+      updateProgressToTask() ;
+      if ( SDB_OK != _updateProgressToOM() )
       {
          PD_LOG( PDWARNING, "Failed to update task's progress to om" ) ;
       }
@@ -7665,8 +7876,8 @@ namespace engine
                continue ;
             }
 
-            rc = _updateProgressToOM() ;
-            if ( SDB_OK != rc )
+            updateProgressToTask() ;
+            if ( SDB_OK != _updateProgressToOM() )
             {
                PD_LOG( PDWARNING, "Failed to update task's progress to om" ) ;
             }
@@ -7731,9 +7942,8 @@ namespace engine
       // set task's status to be finished
       setTaskStatus( OMA_TASK_STATUS_FINISH ) ;
 
-      // update to om the last time
-      rc = _updateProgressToOM() ;
-      if ( SDB_OK != rc )
+      // update to om at the last time
+      if ( SDB_OK != _updateProgressToOM() )
       {
          PD_LOG( PDERROR, "Failed to update remove sequoiasql olap business progress "
                  "to omsvc, rc = %d", rc ) ;

@@ -382,6 +382,6 @@ try {
 } catch(e) {
     var error = new SdbError(e);
     installer.logger.log(PDERROR, error);
-    installer.logger.log(PDEVENT, sprintf("failed to install sequoiasql olap[?:?]", this.config[HostName], this.config[Role]));
+    installer.logger.log(PDERROR, sprintf("failed to install sequoiasql olap[?:?]", this.config[HostName], this.config[Role]));
     throw error;
 }

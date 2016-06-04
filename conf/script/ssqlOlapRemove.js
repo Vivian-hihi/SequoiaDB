@@ -263,6 +263,6 @@ try {
 } catch(e) {
     var error = new SdbError(e);
     remover.logger.log(PDERROR, error);
-    remover.logger.log(PDEVENT, sprintf("failed to remove sequoiasql olap[?:?]", this.config[HostName], this.config[Role]));
+    remover.logger.log(PDERROR, sprintf("failed to remove sequoiasql olap[?:?]", this.config[HostName], this.config[Role]));
     throw error;
 }

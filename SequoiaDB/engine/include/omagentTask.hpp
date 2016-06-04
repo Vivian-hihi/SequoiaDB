@@ -451,20 +451,25 @@ namespace engine
          void    setTaskFailed() ;
          BOOLEAN isTaskFailed() ;
          void    setErrInfo( INT32 errcode, const string& detail ) ;
-         void    notifyUpdateProgress() ;
-         INT32   updateProgressToTask() ;
+         void    notifyUpdateProgress( ) ;
+         INT32   updateProgressToTask( BOOLEAN notify = FALSE ) ;
          omaSsqlOlapNodeInfo* getNodeInfo() ;
          const BSONObj& getSysInfo() const { return _sysInfo ; }
 
       protected:
+         virtual INT32 _calculateProgress() ;
          INT32   _initInfo( const BSONObj& info, BOOLEAN install = TRUE ) ;
          void    _buildUpdateTaskObj( BSONObj &retObj ) ; 
          INT32   _updateProgressToOM() ;
+         void    _setAllNodesStatus( OMA_TASK_STATUS status,
+                                     const string& statusDesc,
+                                     INT32 errcode,
+                                     const string& detail,
+                                     const string& flow );
          void    _setResultToFail() ;
          void    _setRetErr( INT32 errcode ) ;
          INT32   _waitAndUpdateProgress() ;
          BOOLEAN _isTaskFinish() ;
-         INT32   _calculateProgress() ;
          INT32   _removeNode( omaSsqlOlapNodeInfo& nodeInfo ) ;
          INT32   _start() ;
          INT32   _stop() ;
@@ -496,10 +501,17 @@ namespace engine
          INT32 doit() ;
 
       private:
+         virtual INT32 _calculateProgress() ;
          INT32 _checkNodeEnv( omaSsqlOlapNodeInfo& nodeInfo ) ;
          INT32 _checkEnv() ;
          INT32 _install() ;
+         INT32 _establishTrust() ;
          INT32 _rollback( BOOLEAN isRestart ) ;
+
+      private:
+         BOOLEAN _checked ;
+         BOOLEAN _trusted ;
+         BOOLEAN _started ;
    } ;
 
    class _omaRemoveSsqlOlapBusTask: public _omaSsqlOlapBusBase

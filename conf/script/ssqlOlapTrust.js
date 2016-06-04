@@ -16,7 +16,7 @@
 
 *******************************************************************************/
 /*
-@description: check SequoiaSQL OLAP
+@description: establish trust between SequoiaSQL OLAP hosts
 @author:
     2016-6-3 David Li  Init
 @parameter
@@ -96,17 +96,17 @@ var SYS_JSON = {
 setLogLevel(PDDEBUG);
 */
 
-var SSQL_OLAP_CHECK_FILE_NAME = "ssqlOlapCheck.js";
+var SSQL_OLAP_TRUST_FILE_NAME = "ssqlOlapTrust.js";
 
-var SsqlOlapChecker = function(config, sysInfo) {
+var SsqlOlapTruster = function(config, sysInfo) {
     this.config = config;
     this.sysInfo = sysInfo;
     this.base = new SsqlOlapCommon();
-    this.logger = new Logger(SSQL_OLAP_CHECK_FILE_NAME);
+    this.logger = new Logger(SSQL_OLAP_TRUST_FILE_NAME);
     this.retVal = new SsqlOlapReturnValue();
 };
 
-SsqlOlapChecker.prototype._checkConfig = function SsqlOlapChecker__checkConfig (config) {
+SsqlOlapTruster.prototype._checkConfig = function SsqlOlapTruster__checkConfig (config) {
     try {
         this.base.checkConfig(config);
     } catch(e) {
@@ -116,7 +116,7 @@ SsqlOlapChecker.prototype._checkConfig = function SsqlOlapChecker__checkConfig (
     }
 };
 
-SsqlOlapChecker.prototype._checkSysInfo = function SsqlOlapChecker__checkSysInfo(sysInfo) {
+SsqlOlapTruster.prototype._checkSysInfo = function SsqlOlapTruster__checkSysInfo(sysInfo) {
     try {
         this.base.checkSysInfo(sysInfo);
     } catch(e) {
@@ -126,7 +126,7 @@ SsqlOlapChecker.prototype._checkSysInfo = function SsqlOlapChecker__checkSysInfo
     }
 };
 
-SsqlOlapChecker.prototype.init = function SsqlOlapChecker_init() {
+SsqlOlapTruster.prototype.init = function SsqlOlapTruster_init() {
     if (!isTypeOf(this.sysInfo[TaskID], "number")) {
         var error = new SdbError(SDB_INVALIDARG, "TaskID is missed or invalid in sysInfo");
         this.logger.log(PDERROR, error);
@@ -139,129 +139,150 @@ SsqlOlapChecker.prototype.init = function SsqlOlapChecker_init() {
     this._checkConfig(this.config);
     this._checkSysInfo(this.sysInfo);
 
+    if (this.config[HostName] != this.config[MasterHost]) {
+        var msg = sprintf("establish trust should be in master host [?], but actually [?]", this.config[MasterHost], this.config[HostName]);
+        var error = new SdbError(SDB_INVALIDARG, msg);
+        this.logger.log(PDERROR, error);
+        throw error;
+    }
+
     this.retVal[HostName] = this.config[HostName];
     this.retVal[Role] = this.config[Role];
     this.retVal[TaskID] = this.sysInfo[TaskID];
 };
 
-SsqlOlapChecker.prototype._connectToHost = function SsqlOlapChecker__connectToHost() {
+SsqlOlapTruster.prototype._connectToHost = function SsqlOlapTruster__connectToHost() {
     var hostName = this.config[HostName];
-    var user = this.config[User];
-    var passwd = this.config[Passwd];
     var sshPort = parseInt(this.config[SshPort]);
-    var userSsh;
+    var sdbUser = this.sysInfo[SdbUser];
+    var sdbPasswd = this.sysInfo[SdbPasswd];
+    var sdbSsh;
 
     try {
-        userSsh = this.base.connectToHost(hostName, user, passwd, sshPort);
+        sdbSsh = this.base.connectToHost(hostName, sdbUser, sdbPasswd, sshPort);
     } catch(e) {
         this.logger.log(PDERROR, e);
         throw e;
     }
 
-    this.userSsh = userSsh;
+    this.sdbSsh = sdbSsh;
 };
 
-SsqlOlapChecker.prototype._disconnectFromHost = function SsqlOlapChecker__disconnectFromHost() {
-    if (this.userSsh != undefined) {
-        try { this.userSsh.close(); } catch(e) {}
-        this.userSsh = null;
+SsqlOlapTruster.prototype._disconnectFromHost = function SsqlOlapTruster__disconnectFromHost() {
+    if (this.sdbSsh != undefined) {
+        try { this.sdbSsh.close(); } catch(e) {}
+        this.sdbSsh = null;
     }
 };
 
-SsqlOlapChecker.prototype._needCheckInstallDir = function SsqlOlapChecker__needCheckInstallDir() {
-    try {
-        return this.base.needInstall(this.config);
-    } catch(e) {
-        this.logger.log(PDERROR, e);
-        throw e;
+SsqlOlapTruster.prototype._getAllHosts = function SsqlOlapTruster__getAllHosts() {
+    var hosts = new Array();
+    var map = new Object(); // use Object as map
+
+    hosts.push(this.config[MasterHost]);
+    map[this.config[MasterHost]] = 1;
+    if (this.config[StandbyHost] != "" && this.config[StandbyHost] != "none") {
+        hosts.push(this.config[StandbyHost]);
+        map[this.config[StandbyHost]] = 1;
     }
+
+    var segmentHosts = this.config[SegmentHosts];
+    for (var i in segmentHosts) {
+        var host = segmentHosts[i];
+        if (map[host] != undefined) {
+            hosts.push(host);
+            map[host] = 1;
+        }
+    }
+
+    return hosts;
 };
 
-SsqlOlapChecker.prototype._checkInstallDir = function SsqlOlapChecker__checkInstallDir() {
-    if (!this._needCheckInstallDir()) {
-        var msg = sprintf("no need to check install dir for [?:?]", this.config[HostName], this.config[Role]);
-        this.logger.log(PDDEBUG, msg);
-        return;
+SsqlOlapTruster.prototype._establishTrust = function SsqlOlapTruster__establishTrust() {
+    var role = this.config[Role];
+    if (role != Master) {
+        var error = new SdbError(SDB_SYS, sprintf("establish trust should be in master host, but given ?", role));
+        this.logger.log(PDERROR, error);
+        throw error;
     }
 
+    var hostName = this.config[HostName];
     var installDir = this.config[InstallDir];
 
-    if (!this.userSsh.isPathExist(installDir)) {
-        return;
-    }
-    
-    if (!this.userSsh.isDirectory(installDir)) {
-        var error = new SdbError(e, sprintf("sequoiasql olap install directory[?] is not directory in host[?]", installDir, this.config[HostName]));
+    if (!this.sdbSsh.isPathExist(installDir)) {
+        var error = new SdbError(SDB_SYS, sprintf("the directory [?] does not exist in host [?]", installDir, hostName));
         this.logger.log(PDERROR, error);
         throw error;
     }
 
-    if (!this.userSsh.isEmptyDirectory(installDir)) {
-        var error = new SdbError(e, sprintf("sequoiasql olap install directory[?] is not empty in host[?]", installDir, this.config[HostName]));
+    var binDir = adaptPath(installDir) + "bin";
+    if (!this.sdbSsh.isPathExist(binDir)) {
+        var error = new SdbError(SDB_SYS, sprintf("the directory [?] does not exist in host [?]", binDir, hostName));
+        this.logger.log(PDERROR, error);
+        throw error;
+    }
+
+    var env = adaptPath(installDir) + "sequoiasql_path.sh";
+    var ssql = adaptPath(binDir) + "ssql";
+    if (!this.sdbSsh.isPathExist(ssql)) {
+        var error = new SdbError(SDB_SYS, sprintf("the file [?] does not exist in host [?]", ssql, hostName));
+        this.logger.log(PDERROR, error);
+        throw error;
+    }
+    if (!this.sdbSsh.isFile(ssql)) {
+        var error = new SdbError(SDB_SYS, sprintf("the path [?] is not file in host [?]", ssql, hostName));
+        this.logger.log(PDERROR, error);
+        throw error;
+    }
+
+    var shell = "source " + env + "; ";
+    shell += ssql + " ssh-exkeys ";
+    var hosts = this._getAllHosts();
+    for (var i in hosts) {
+        shell += " -h " + hosts[i];
+    }
+    shell += " -p " + this.sysInfo[SdbPasswd];
+    shell += " -v";
+    this.logger.log(PDDEBUG, "establish trust cmd: " + shell);
+
+    try {
+        this.sdbSsh.exec(shell);
+    } catch(e) {
+    }
+
+    if (this.sdbSsh.getLastRet() != 0) {
+        var msg = this.sdbSsh.getLastOut();
+        var error = new SdbError(SDB_SYS, msg);
         this.logger.log(PDERROR, error);
         throw error;
     }
 };
 
-SsqlOlapChecker.prototype._checkDataDir = function SsqlOlapChecker__checkDataDir() {
-    var hostName = this.config[HostName];
-    var role = this.config[Role];
-    var dataDir;
-    var tempDir;
-
-    if (role == Master || role == Standby) {
-        dataDir = this.config[MasterDir];
-        tempDir = this.config[MasterTempDir];
-    } else if (role == Segment) {
-        dataDir = this.config[SegmentDir];
-        tempDir = this.config[SegmentTempDir];
-    } else {
-        throw new SdbError(SDB_INVALIDARG, sprintf("invalid role: ?", role));
-    }
-    
-    if (!this.userSsh.isPathExist(dataDir)) {
-        return;
-    }
-    
-    if (!this.userSsh.isDirectory(dataDir)) {
-        var error = new SdbError(e, sprintf("sequoiasql olap data directory[?] is not directory in host[?]", dataDir, this.config[HostName]));
-        this.logger.log(PDERROR, error);
-        throw error;
-    }
-
-    if (!this.userSsh.isEmptyDirectory(dataDir)) {
-        var error = new SdbError(e, sprintf("sequoiasql olap data directory[?] is not empty in host[?]", dataDir, this.config[HostName]));
-        this.logger.log(PDERROR, error);
-        throw error;
-    }
-};
-
-SsqlOlapChecker.prototype.check = function SsqlOlapChecker_check() {
-    this.logger.log(PDEVENT, sprintf("begin to check sequoiasql olap[?:?]", this.config[HostName], this.config[Role]));
+SsqlOlapTruster.prototype.trust = function SsqlOlapTruster_trust() {
+    this.logger.log(PDEVENT, "begin to establish trust for sequoiasql olap");
     try {
         this._connectToHost();
-        this._checkInstallDir();
-        this._checkDataDir();
+        this._establishTrust();
     } catch(e) {
         throw e;
     } finally {
         this._disconnectFromHost();
     }
-    this.logger.log(PDEVENT, sprintf("finsh checking sequoiasql olap[?:?]", this.config[HostName], this.config[Role]));
+    this.logger.log(PDEVENT, "finsh establishing trust for sequoiasql olap");
 };
 
-SsqlOlapChecker.prototype.finalize = function SsqlOlapChecker_finalize() {
+SsqlOlapTruster.prototype.finalize = function SsqlOlapTruster_finalize() {
     return this.retVal;
 };
 
 try {
-    var checker = new SsqlOlapChecker(BUS_JSON, SYS_JSON);
-    checker.init();
-    checker.check();
-    checker.finalize();
+    var truster = new SsqlOlapTruster(BUS_JSON, SYS_JSON);
+    truster.init();
+    truster.trust();
+    truster.finalize();
 } catch(e) {
     var error = new SdbError(e);
-    checker.logger.log(PDERROR, error);
-    checker.logger.log(PDERROR, sprintf("failed to check sequoiasql olap[?:?]", this.config[HostName], this.config[Role]));
+    truster.logger.log(PDERROR, error);
+    truster.logger.log(PDERROR, "failed to establish trust for sequoiasql olap");
     throw error;
 }

@@ -777,7 +777,7 @@ namespace engine
             nodeInfo->status = OMA_TASK_STATUS_RUNNING ;
             nodeInfo->statusDesc = OMA_TASK_STATUS_DESC_RUNNING ;
             nodeInfo->flow.push_back( ss.str() ) ;
-            INT32 tmpRc = _mainTask->updateProgressToTask() ;
+            INT32 tmpRc = _mainTask->updateProgressToTask( TRUE ) ;
             if ( SDB_OK != tmpRc )
             {
                PD_LOG( PDWARNING, "failed to update installing sequoiasql olap[%s:%s]'s progress, "
@@ -869,7 +869,7 @@ namespace engine
             nodeInfo->status = OMA_TASK_STATUS_FINISH ;
             nodeInfo->statusDesc = OMA_TASK_STATUS_DESC_FINISH ;
             nodeInfo->flow.push_back( ss.str() ) ;
-            tmpRc = _mainTask->updateProgressToTask() ;
+            tmpRc = _mainTask->updateProgressToTask( TRUE ) ;
             if ( SDB_OK != tmpRc )
             {
                PD_LOG( PDWARNING, "failed to update installing sequoiasql olap[%s:%s]'s "
@@ -888,7 +888,7 @@ namespace engine
             nodeInfo->errcode = rc ;
             nodeInfo->detail = detail ;
             nodeInfo->flow.push_back( ss.str() ) ;
-            tmpRc = _mainTask->updateProgressToTask() ;
+            tmpRc = _mainTask->updateProgressToTask( TRUE ) ;
             if ( SDB_OK != tmpRc )
             {
                PD_LOG( PDWARNING, "failed to update installing sequoiasql olap[%s:%s]'s "
