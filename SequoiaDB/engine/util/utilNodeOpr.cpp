@@ -646,6 +646,20 @@ namespace engine
    }
 
 #if defined (_LINUX)
+   static BOOLEAN _isDigitalStr( const CHAR *pStr )
+   {
+      INT32 len = 0 ;
+      INT32 i   = 0 ;
+      if ( NULL == pStr ) return FALSE ;
+      len = ossStrlen( pStr ) ;
+      for ( ; i < len; i++ )
+      {
+         CHAR c = pStr[i] ;
+         if ( c < '0' || c > '9' ) return FALSE ;
+      }
+      return TRUE ;
+   }
+
    INT32 utilListNodes( UTIL_VEC_NODES & nodes,
                         INT32 typeFilter,
                         const CHAR * svcnameFilter,
@@ -672,7 +686,7 @@ namespace engine
 
       while( (pDirent = readdir( pDir )) != NULL )
       {
-         if ( 0 == ossStrcmp( pDirent->d_name, "self" ) )
+         if ( !_isDigitalStr( pDirent->d_name ) )
          {
             continue ;
          }
