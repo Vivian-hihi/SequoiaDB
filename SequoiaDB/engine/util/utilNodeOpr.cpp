@@ -648,13 +648,10 @@ namespace engine
 #if defined (_LINUX)
    static BOOLEAN _isDigitalStr( const CHAR *pStr )
    {
-      INT32 len = 0 ;
-      INT32 i   = 0 ;
       if ( NULL == pStr ) return FALSE ;
-      len = ossStrlen( pStr ) ;
-      for ( ; i < len; i++ )
+      while ( *pStr )
       {
-         CHAR c = pStr[i] ;
+         CHAR c = *pStr++ ;
          if ( c < '0' || c > '9' ) return FALSE ;
       }
       return TRUE ;
