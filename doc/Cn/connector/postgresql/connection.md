@@ -25,7 +25,7 @@ foo=# create foreign table test (name text, id numeric) server sdb_server option
 
 集合空间与集合必须已经存在于SequoiaDB，否则查询出错。
 
-如果需要对接SequoiaDB的decimal字段，则需要明确打开options中指定 decimal 'on' 。
+如果需要对接SequoiaDB的decimal字段，则需要在options中指定 decimal 'on' 。
 
 默认情况下，表的字段映射到SequoiaDB中为小写字符，如果强制指定字段为大写字符，创建方式参考注意事项1。
 
