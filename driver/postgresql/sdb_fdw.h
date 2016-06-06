@@ -19,6 +19,7 @@
 /* Table related options */
 #define OPTION_NAME_COLLECTIONSPACE  "collectionspace"
 #define OPTION_NAME_COLLECTION       "collection"
+#define OPTION_NAME_USEDECIMAL       "decimal"
 #define OPTION_NAME_PREFEREDINSTANCE "preferedinstance"
 
 #define DEFAULT_PREFEREDINSTANCE     "A"
@@ -32,6 +33,10 @@
 #define SDB_TRANSACTION_ON          "on"
 #define SDB_TRANSACTION_OFF         "off"
 #define DEFAULT_TRANSACTION         SDB_TRANSACTION_OFF
+
+#define SDB_DECIMAL_ON              "on"
+#define SDB_DECIMAL_OFF             "off"
+#define DEFAULT_DECIMAL             SDB_DECIMAL_OFF
 
 #define INITIAL_ARRAY_CAPACITY         8
 #define SDB_TUPLE_COST_MULTIPLIER      5
@@ -62,7 +67,8 @@ static const SdbInputOption SdbInputOptionList[] =
    { OPTION_NAME_TRANSACTION,      ForeignServerRelationId },
 
    { OPTION_NAME_COLLECTIONSPACE,  ForeignTableRelationId },
-   { OPTION_NAME_COLLECTION,       ForeignTableRelationId }
+   { OPTION_NAME_COLLECTION,       ForeignTableRelationId },
+   { OPTION_NAME_USEDECIMAL,       ForeignTableRelationId }
 } ;
 
 struct SdbInputOptions
@@ -75,6 +81,7 @@ struct SdbInputOptions
    CHAR  *collection ;
    CHAR  *preference_instance ;
    CHAR  *transaction ;
+   INT32 isUseDecimal ;                         /* use decimal in sdb */
 } ;
 typedef struct SdbInputOptions SdbInputOptions ;
 
@@ -121,6 +128,8 @@ typedef struct SdbExprTreeState_s
    INT32 total_unsupport_count;
    INT32 and_unsupport_count ;  /* AND's child node, just impact NOT node*/
    INT32 or_unsupport_count ;   /* OR/NOT 's child node, impact OR/NOT node*/
+
+   INT32 is_use_decimal ;       /* use decimal in sdb */
 }SdbExprTreeState;
 
 typedef struct PgTableDesc_s
@@ -151,6 +160,8 @@ struct SdbExecState
 
    char *sdbcs;
    char *sdbcl;
+
+   int isUseDecimal;                          /* use decimal in sdb */
 
    Oid tableID ;
    Index relid ;
@@ -214,7 +225,7 @@ INT32 sdbRecurExprTree( Node *node, SdbExprTreeState *expr_state,
                         sdbbson *condition, ExprContext *exprContext ) ;
 
 int sdbSetBsonValue( sdbbson *bsonObj, const char *name, Datum valueDatum, 
-                     Oid columnType, INT32 columnTypeMod ) ;
+                     Oid columnType, INT32 columnTypeMod, INT32 isUseDecimal ) ;
 
 List *serializeSdbExecState( SdbExecState *fdwState ) ;
 

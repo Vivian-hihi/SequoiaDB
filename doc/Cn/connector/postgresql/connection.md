@@ -19,11 +19,13 @@ foo=# create server sdb_server foreign data wrapper sdb_fdw options(address '127
 3) 关联SequoiaDB的集合空间与集合
 
 <pre class="prettyprint lang-javascript">
-foo=# create foreign table test (name text, id numeric) server sdb_server options ( collectionspace 'chen', collection 'test' ) ;</pre>
+foo=# create foreign table test (name text, id numeric) server sdb_server options ( collectionspace 'chen', collection 'test', decimal 'on' ) ;</pre>
 
 **Note:**
 
 集合空间与集合必须已经存在于SequoiaDB，否则查询出错。
+
+如果需要对接SequoiaDB的decimal字段，则需要明确打开options中指定 decimal 'on' 。
 
 默认情况下，表的字段映射到SequoiaDB中为小写字符，如果强制指定字段为大写字符，创建方式参考注意事项1。
 

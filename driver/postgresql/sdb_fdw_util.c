@@ -98,7 +98,7 @@ void debugArgumentInfo( Oid tableID, Expr *node )
 
       sdbbson_init(&obj) ;
       sdbSetBsonValue( &obj, "const", con->constvalue, 
-                       con->consttype, con->consttypmod ) ;
+                       con->consttype, con->consttypmod, 0 ) ;
 
       elog(DEBUG1, "const()");
       sdbPrintBson( &obj, DEBUG1, "Const" ) ;

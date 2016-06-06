@@ -222,7 +222,7 @@ static Oid deserializeOid( Const *constant ) ;
 static SdbExecState *deserializeSdbExecState( List *sdbExecStateList ) ;
 
 static INT32 sdbAppendConstantValue( sdbbson *bsonObj, const char *keyName, 
-                                     Const *constant ) ;
+                                     Const *constant, INT32 isUseDecimal ) ;
 
 
 static UINT64 sdbCreateBsonRecordAddr(  ) ;
@@ -252,7 +252,7 @@ static INT32 sdbRecurBoolExpr( BoolExpr *boolexpr, SdbExprTreeState *expr_state,
                                sdbbson *condition, ExprContext *exprContext ) ;
 
 static INT32 sdbGenerateFilterCondition( Oid foreign_id, RelOptInfo *baserel,
-                                         sdbbson *condition ) ;
+                                         INT32 isUseDecimal, sdbbson *condition ) ;
 
 static const CHAR *sdbOperatorName( const CHAR *operatorName, 
                                     BOOLEAN isVarFirst ) ;
@@ -334,6 +334,7 @@ int sdbGetSdbServerOptions( Oid foreignTableId, SdbExecState *sdbExecState )
    sdbExecState->passwd        = options.password ;
    sdbExecState->preferenceInstance = options.preference_instance ;
    sdbExecState->transaction   = options.transaction ;
+   sdbExecState->isUseDecimal  = options.isUseDecimal ;
 
    return 0 ;
 }
@@ -462,6 +463,9 @@ List *serializeSdbExecState( SdbExecState *fdwState )
    /* _id_addr */
    result = lappend( result, serializeUint64( fdwState->bson_record_addr ) ) ;
 
+   /* isUseDecimal */
+   result = lappend( result, serializeInt( fdwState->isUseDecimal ) ) ;
+
    /* tableID */
    result = lappend( result, serializeOid( fdwState->tableID ) ) ;
 
@@ -552,6 +556,10 @@ SdbExecState *deserializeSdbExecState( List *sdbExecStateList )
    fdwState->bson_record_addr = deserializeUint64( lfirst( cell ) ) ;
    cell = lnext( cell ) ;
 
+   /* isUseDecimal */
+   fdwState->isUseDecimal = ( int )DatumGetInt32( ( ( Const * )lfirst( cell ) )->constvalue ) ;
+   cell = lnext( cell ) ;
+
    /* tableID */
    fdwState->tableID = deserializeOid( lfirst( cell ) ) ;
    cell = lnext( cell ) ;
@@ -601,7 +609,7 @@ Oid deserializeOid( Const *constant )
 }*/
 
 int sdbSetBsonValue( sdbbson *bsonObj, const char *name, Datum valueDatum, 
-         Oid columnType, INT32 columnTypeMod )
+         Oid columnType, INT32 columnTypeMod, INT32 isUseDecimal )
 {
    INT32 rc = SDB_OK ;
    switch( columnType )
@@ -646,13 +654,28 @@ int sdbSetBsonValue( sdbbson *bsonObj, const char *name, Datum valueDatum,
          char *value ;
          Datum formatted ;
          Datum NumericStr ;
-//         tmp_typmod = columnTypeMod - VARHDRSZ ;
-//         precision  = (tmp_typmod >> 16) & 0xffff ;
-//         scale      = tmp_typmod & 0xffff ;
          formatted  = DirectFunctionCall2( numeric, valueDatum, columnTypeMod ) ;
          NumericStr = DirectFunctionCall1( numeric_out, formatted ) ;
          value      = DatumGetCString( NumericStr ) ;
-         sdbbson_append_string( bsonObj, name, value ) ;
+         if ( isUseDecimal )
+         {
+            if (columnTypeMod < (int32) (VARHDRSZ))
+            {
+               sdbbson_append_decimal3( bsonObj, name, value ) ;
+            }
+            else
+            {
+               int32 tmp_typmod = columnTypeMod - VARHDRSZ;
+               int precision    = (tmp_typmod >> 16) & 0xffff;
+               int scale        = tmp_typmod & 0xffff;
+               sdbbson_append_decimal2( bsonObj, name, value, precision, scale ) ;
+            }
+         }
+         else
+         {
+            sdbbson_append_string( bsonObj, name, value ) ;
+         }
+
          break ;
       }
 
@@ -776,7 +799,7 @@ int sdbSetBsonValue( sdbbson *bsonObj, const char *name, Datum valueDatum,
             CHAR arrayIndex[SDB_MAX_KEY_COLUMN_LENGTH + 1] = "" ;
             sprintf( arrayIndex, "%d", i ) ;
             rc = sdbSetBsonValue( bsonObj, arrayIndex, datumTmp, 
-                                  element_type, 0 ) ;
+                                  element_type, 0, isUseDecimal ) ;
             if ( SDB_OK != rc )
             {
                break ;
@@ -1131,7 +1154,7 @@ INT32 sdbOperExprParamVar( OpExpr *expr, SdbExprTreeState *expr_state,
             goto error ;
          }
 
-         if ( NUMERICOID == var->vartype )
+         if ( NUMERICOID == var->vartype && !expr_state->is_use_decimal )
          {
             rc = SDB_INVALIDARG ;
             elog( DEBUG1, "exist decimal condition" ) ;
@@ -1183,7 +1206,8 @@ INT32 sdbOperExprParamVar( OpExpr *expr, SdbExprTreeState *expr_state,
    //TODO: check null data
    sdbbson_append_start_object( condition, columnName ) ;
    rc = sdbSetBsonValue( condition, sdbOpName, paramData->value, 
-                         var->vartype, var->vartypmod ) ;
+                         var->vartype, var->vartypmod, 
+                         expr_state->is_use_decimal ) ;
    sdbbson_append_finish_object( condition ) ;
    if ( SDB_OK != rc )
    {
@@ -1227,7 +1251,7 @@ INT32 sdbOperExprTwoVar( OpExpr *opr_two_argument, SdbExprTreeState *expr_state,
             goto error ;
          }
 
-         if ( NUMERICOID == argument1->vartype )
+         if ( NUMERICOID == argument1->vartype && !expr_state->is_use_decimal )
          {
             rc = SDB_INVALIDARG ;
             elog( DEBUG1, "exist decimal condition" ) ;
@@ -1247,7 +1271,7 @@ INT32 sdbOperExprTwoVar( OpExpr *opr_two_argument, SdbExprTreeState *expr_state,
             goto error ;
          }
 
-         if ( NUMERICOID == argument2->vartype )
+         if ( NUMERICOID == argument2->vartype && !expr_state->is_use_decimal )
          {
             rc = SDB_INVALIDARG ;
             elog( DEBUG1, "exist decimal condition" ) ;
@@ -1357,7 +1381,7 @@ INT32 sdbOperExpr( OpExpr *opr, SdbExprTreeState *expr_state,
          goto error ;
       }
 
-      if ( NUMERICOID == var->vartype )
+      if ( NUMERICOID == var->vartype && !expr_state->is_use_decimal )
       {
          rc = SDB_INVALIDARG ;
          elog( DEBUG1, "exist decimal condition" ) ;
@@ -1389,7 +1413,8 @@ INT32 sdbOperExpr( OpExpr *opr, SdbExprTreeState *expr_state,
       }
 
       sdbbson_append_start_object( condition, columnName ) ;
-      rc = sdbAppendConstantValue( condition, sdbOpName, const_val ) ;
+      rc = sdbAppendConstantValue( condition, sdbOpName, const_val,
+                                   expr_state->is_use_decimal ) ;
       if ( SDB_OK != rc )
       {
          rc = SDB_INVALIDARG ;
@@ -1471,7 +1496,7 @@ INT32 sdbScalarArrayOpExpr( ScalarArrayOpExpr *scalaExpr,
       goto error ;
    }
 
-   if ( NUMERICOID == var->vartype )
+   if ( NUMERICOID == var->vartype && !expr_state->is_use_decimal )
    {
       rc = SDB_INVALIDARG ;
       elog( DEBUG1, "exist decimal condition" ) ;
@@ -1489,7 +1514,8 @@ INT32 sdbScalarArrayOpExpr( ScalarArrayOpExpr *scalaExpr,
          Const *const_val = ( Const * )oprarg ;
          sdbbson_init( &temp ) ;
          rc = sdbSetBsonValue( &temp, keyName, const_val->constvalue, 
-                               const_val->consttype, const_val->consttypmod ) ;
+                               const_val->consttype, const_val->consttypmod,
+                               expr_state->is_use_decimal ) ;
          if ( SDB_OK != rc )
          {
             sdbbson_destroy( &temp ) ;
@@ -1773,7 +1799,7 @@ error:
 }
 
 INT32 sdbGenerateFilterCondition ( Oid foreign_id, RelOptInfo *baserel, 
-                                   sdbbson *condition )
+                                   INT32 isUseDecimal, sdbbson *condition )
 {
    ListCell *cell = NULL ;
    INT32 rc       = SDB_OK ;
@@ -1783,6 +1809,8 @@ INT32 sdbGenerateFilterCondition ( Oid foreign_id, RelOptInfo *baserel,
    memset( &expr_state, 0, sizeof( SdbExprTreeState ) ) ;
    expr_state.foreign_table_index = baserel->relid ;
    expr_state.foreign_table_id    = foreign_id ;
+   expr_state.is_use_decimal      = isUseDecimal ;
+   
 
    sdbbson_destroy( condition ) ;
    sdbbson_init( condition ) ;
@@ -2027,7 +2055,7 @@ Expr *sdbFindArgumentOfType( List *argumentList, NodeTag argumentType,
 
 /* sdbAppendConstantValue appends to query document with key and value */
 INT32 sdbAppendConstantValue ( sdbbson *bsonObj, const char *keyName, 
-                               Const *constant )
+                               Const *constant, INT32 isUseDecimal )
 {
    int rc = SDB_OK ;
 
@@ -2039,7 +2067,8 @@ INT32 sdbAppendConstantValue ( sdbbson *bsonObj, const char *keyName,
    }
 
    rc = sdbSetBsonValue( bsonObj, keyName, constant->constvalue, 
-                         constant->consttype, constant->consttypmod ) ;
+                         constant->consttype, constant->consttypmod, 
+                         isUseDecimal ) ;
    if ( SDB_OK != rc )
    {
       ereport ( WARNING, ( errcode( ERRCODE_FDW_INVALID_DATA_TYPE ),
@@ -2221,6 +2250,8 @@ void sdbGetOptions( Oid foreignTableId, SdbInputOptions *options )
    CHAR *collectionName      = NULL ;
    CHAR *preferedInstance    = NULL ;
    CHAR *transaction         = NULL ;
+   CHAR *pUseDecimal       = NULL ;
+   INT32 isUseDecimal        = 0 ;
    if( NULL == options )
       goto done ;
    /* address name */
@@ -2291,6 +2322,21 @@ void sdbGetOptions( Oid foreignTableId, SdbInputOptions *options )
       transaction = pstrdup( DEFAULT_TRANSACTION ) ;
    }
 
+   /* OPTION_NAME_USEDECIMAL */
+   pUseDecimal = sdbGetOptionValue( foreignTableId, OPTION_NAME_USEDECIMAL ) ;
+   if ( NULL == pUseDecimal )
+   {
+      pUseDecimal = pstrdup( DEFAULT_DECIMAL ) ;
+   }
+   if ( strcmp( pUseDecimal, SDB_DECIMAL_ON ) == 0 )
+   {
+      isUseDecimal = 1 ;
+   }
+   else
+   {
+      isUseDecimal = 0 ;
+   }
+
    /* fill up the result structure */
    SdbSetNodeAddressInfo( options, addressName, serviceName ) ;
 
@@ -2300,6 +2346,7 @@ void sdbGetOptions( Oid foreignTableId, SdbInputOptions *options )
    options->collection          = collectionName ;
    options->preference_instance = preferedInstance ;
    options->transaction         = transaction ;
+   options->isUseDecimal        = isUseDecimal ;
 
 done :
    return ;
@@ -2422,7 +2469,8 @@ error :
 }
 
 /* sdbColumnTypesCompatible checks if a sdbbson type is compatible with PG type */
-static BOOLEAN sdbColumnTypesCompatible( sdbbson_type sdbbsonType, Oid columnTypeId )
+static BOOLEAN sdbColumnTypesCompatible( sdbbson_type sdbbsonType, 
+                                         Oid columnTypeId, INT32 isUseDecimal )
 {
    BOOLEAN compatibleType = FALSE ;
    switch( columnTypeId )
@@ -2450,11 +2498,22 @@ static BOOLEAN sdbColumnTypesCompatible( sdbbson_type sdbbsonType, Oid columnTyp
    }
    case NUMERICOID :
    {
-      if( BSON_STRING == sdbbsonType || BSON_DOUBLE == sdbbsonType ||
-          BSON_INT == sdbbsonType || BSON_LONG == sdbbsonType )
+      if ( !isUseDecimal )
       {
-         compatibleType = TRUE ;
+         if( BSON_STRING == sdbbsonType || BSON_DOUBLE == sdbbsonType ||
+             BSON_INT == sdbbsonType || BSON_LONG == sdbbsonType )
+         {
+            compatibleType = TRUE ;
+         }
       }
+      else
+      {
+         if ( BSON_DECIMAL == sdbbsonType )
+         {
+            compatibleType = TRUE ;
+         }
+      }
+
       break ;
    }
    case BPCHAROID :
@@ -2507,7 +2566,7 @@ static BOOLEAN sdbColumnTypesCompatible( sdbbson_type sdbbsonType, Oid columnTyp
 /* sdbColumnValue converts sdbbson value into PG datum
  */
 static Datum sdbColumnValue( sdbbson_iterator *sdbbsonIterator, Oid columnTypeId,
-                              INT32 columnTypeMod )
+                             INT32 columnTypeMod )
 {
    Datum columnValue = 0 ;
    switch( columnTypeId )
@@ -2550,17 +2609,61 @@ static Datum sdbColumnValue( sdbbson_iterator *sdbbsonIterator, Oid columnTypeId
          const char *value = sdbbson_iterator_string( sdbbsonIterator ) ;
          Datum valueStr    = CStringGetDatum( value ) ;
          columnValue       = DirectFunctionCall3( numeric_in,
-								     valueStr, ObjectIdGetDatum(InvalidOid), 
-								     Int32GetDatum(columnTypeMod) );
+                             valueStr, ObjectIdGetDatum(InvalidOid), 
+                             Int32GetDatum(columnTypeMod) );
+      }
+      else if ( bsonType == BSON_DECIMAL )
+      {
+         INT32 rc    = SDB_OK ;
+         INT32 size  = 0 ;
+         char *value = NULL ;
+         Datum valueStr ;
+         sdbbson_decimal decimal ;
+         decimal_init( &decimal ) ;
+         rc = sdbbson_iterator_decimal( sdbbsonIterator, &decimal ) ;
+         if ( SDB_OK != rc )
+         {
+            elog( ERROR, "get decimal faild:rc=%d", rc ) ;
+            break ;
+         }
+
+         decimal_to_str_get_len( &decimal, &size ) ;
+         value = palloc( size + 1 );
+         rc    = decimal_to_str( &decimal, value, size ) ;
+         if ( SDB_OK != rc )
+         {
+            elog( ERROR, "decimal to str faild:rc=%d", rc ) ;
+            break ;
+         }
+
+         if (columnTypeMod >= (int32) (VARHDRSZ))
+         {
+            int tmpTypeMod = columnTypeMod - VARHDRSZ ;
+            if ( decimal_is_out_of_precision( &decimal, tmpTypeMod ) )
+            {
+               decimal_free( &decimal ) ;
+               int precision = (tmpTypeMod >> 16) & 0xffff;
+            	int scale     = tmpTypeMod & 0xffff;
+               elog( ERROR, "value[%s] is out of precision[%d,%d]",
+                     value, precision, scale ) ;
+               break ;
+            }
+         }
+
+         decimal_free( &decimal ) ;
+         valueStr    = CStringGetDatum( value ) ;
+         columnValue = DirectFunctionCall3( numeric_in,
+                                         valueStr, ObjectIdGetDatum(InvalidOid), 
+                                         Int32GetDatum(columnTypeMod) );
       }
       else
       {
          Datum numberNoTypeMode;
-         FLOAT64 value = sdbbson_iterator_double( sdbbsonIterator ) ;
+         FLOAT64 value    = sdbbson_iterator_double( sdbbsonIterator ) ;
          Datum valueDatum = Float8GetDatum( value ) ;
          numberNoTypeMode = DirectFunctionCall1( float8_numeric, valueDatum ) ;
-         columnValue = DirectFunctionCall2( numeric, numberNoTypeMode, 
-                                            columnTypeMod ) ;
+         columnValue      = DirectFunctionCall2( numeric, numberNoTypeMode, 
+                                                 columnTypeMod ) ;
       }
       
       break ;
@@ -2720,7 +2823,7 @@ done :
 /* sdbColumnValueArray build array
  */
 static Datum sdbColumnValueArray( sdbbson_iterator *sdbbsonIterator,
-                                   Oid valueTypeId )
+                                   Oid valueTypeId, INT32 isUseDecimal )
 {
    UINT32 arrayCapacity          = INITIAL_ARRAY_CAPACITY ;
    UINT32 arrayGrowthFactor      = 2 ;
@@ -2754,7 +2857,8 @@ static Datum sdbColumnValueArray( sdbbson_iterator *sdbbsonIterator,
       }
       else
       {
-         compatibleTypes = sdbColumnTypesCompatible( sdbbsonType, valueTypeId ) ;
+         compatibleTypes = sdbColumnTypesCompatible( sdbbsonType, valueTypeId,
+                                                     isUseDecimal ) ;
       }
       /* skip the element if it's not compatible */
       if( BSON_NULL == sdbbsonType || !compatibleTypes )
@@ -2801,10 +2905,11 @@ error :
  * documentKey: if we want to find things in nested sdbbson object
  */
 static void sdbFillTupleSlot( const sdbbson *sdbbsonDocument,
-                               const CHAR *documentKey,
-                               HTAB *columnMappingHash,
-                               Datum *columnValues,
-                               bool *columnNulls )
+                              const CHAR *documentKey,
+                              HTAB *columnMappingHash,
+                              INT32 isUseDecimal,
+                              Datum *columnValues,
+                              bool *columnNulls )
 {
    sdbbson_iterator sdbbsonIterator = { NULL, 0 } ;
    sdbbson_iterator_init( &sdbbsonIterator, sdbbsonDocument ) ;
@@ -2858,7 +2963,7 @@ static void sdbFillTupleSlot( const sdbbson *sdbbsonDocument,
                                                        &handleFound ) ;
       if ( NULL != columnMapping )
       {
-         columnTypeId = columnMapping->columnTypeId ;
+         columnTypeId      = columnMapping->columnTypeId ;
          columnArrayTypeId = columnMapping->columnArrayTypeId ;
       }
 
@@ -2868,8 +2973,8 @@ static void sdbFillTupleSlot( const sdbbson *sdbbsonDocument,
          sdbbson subObject ;
          sdbbson_init( &subObject ) ;
          sdbbson_iterator_subobject( &sdbbsonIterator, &subObject ) ;
-         sdbFillTupleSlot( &subObject, sdbbsonFullKey,
-                           columnMappingHash, columnValues, columnNulls ) ;
+         sdbFillTupleSlot( &subObject, sdbbsonFullKey, columnMappingHash, 
+                           isUseDecimal, columnValues, columnNulls ) ;
          sdbbson_destroy( &subObject ) ;
          continue ;
       }
@@ -2888,7 +2993,8 @@ static void sdbFillTupleSlot( const sdbbson *sdbbsonDocument,
       }
       else
       {
-         compatibleTypes = sdbColumnTypesCompatible( sdbbsonType, columnTypeId ) ;
+         compatibleTypes = sdbColumnTypesCompatible( sdbbsonType, columnTypeId,
+                                                     isUseDecimal ) ;
       }
 
       /* if types are incompatible, leave this column null */
@@ -2901,7 +3007,8 @@ static void sdbFillTupleSlot( const sdbbson *sdbbsonDocument,
       {
          INT32 columnIndex = columnMapping->columnIndex ;
          columnValues[columnIndex] = sdbColumnValueArray( &sdbbsonIterator,
-                                                           columnArrayTypeId ) ;
+                                                          columnArrayTypeId,
+                                                          isUseDecimal ) ;
          columnNulls[columnIndex] = false ;
       }
       else
@@ -2909,8 +3016,8 @@ static void sdbFillTupleSlot( const sdbbson *sdbbsonDocument,
          INT32 columnIndex = columnMapping->columnIndex ;
          Oid columnTypeMod = columnMapping->columnTypeMod ;
          columnValues[columnIndex] = sdbColumnValue( &sdbbsonIterator,
-                                                      columnTypeId,
-                                                      columnTypeMod ) ;
+                                                     columnTypeId,
+                                                     columnTypeMod ) ;
          columnNulls[columnIndex] = false ;
       }
    }
@@ -3076,7 +3183,8 @@ static void SdbGetForeignPaths( PlannerInfo *root,
    /* rows estimation after applying predicates */
    sdbbson_init( &condition ) ;
    sdbbson_finish( &condition ) ;
-   rc = sdbGenerateFilterCondition(foreignTableId, baserel, &condition);
+   rc = sdbGenerateFilterCondition(foreignTableId, baserel, 
+                                   fdw_state->isUseDecimal, &condition);
    sdbbson_destroy(&condition) ;
    if ( SDB_OK == rc )
    {
@@ -3130,7 +3238,7 @@ static void SdbGetForeignPaths( PlannerInfo *root,
       sdbbson_init(&condition) ;
       //if exist unsupported operation, do not create IndexPath!
       rcTmp = sdbGenerateFilterCondition(foreignTableId, baserel, 
-                                         &condition) ;
+                                         fdw_state->isUseDecimal, &condition) ;
       sdbbson_destroy(&condition) ;
       if ( SDB_OK == rcTmp )
       {
@@ -3204,7 +3312,8 @@ static ForeignScan *SdbGetForeignPlan( PlannerInfo *root,
    restrictionClauses = extract_actual_clauses( restrictionClauses, FALSE ) ;
    /* construct the query sdbbson document */
 
-   sdbGenerateFilterCondition( foreignTableId, baserel, &fdw_state->queryDocument ) ;
+   sdbGenerateFilterCondition( foreignTableId, baserel, fdw_state->isUseDecimal,
+                               &fdw_state->queryDocument ) ;
    sdbPrintBson( &fdw_state->queryDocument, DEBUG1, "foreignplan" ) ;
 
    fdw_state->bson_record_addr = sdbCreateBsonRecordAddr() ;
@@ -3380,8 +3489,9 @@ static TupleTableSlot * SdbIterateForeignScan( ForeignScanState *scanState )
 
    //sdbPrintBson( recordObj ) ;
    sdbFillTupleSlot( recordObj, sdbbsonDocumentKey,
-                      executionState->columnMappingHash,
-                      columnValues, columnNulls ) ;
+                     executionState->columnMappingHash, 
+                     executionState->isUseDecimal, 
+                     columnValues, columnNulls ) ;
 
    ExecStoreVirtualTuple( tupleSlot ) ;
 done :
@@ -3597,8 +3707,8 @@ static INT32 sdbAcquireSampleRows( Relation relation, INT32 errorLevel,
       /* if we can read the next record */
       MemoryContextReset( tupleContext ) ;
       MemoryContextSwitchTo( tupleContext ) ;
-      sdbFillTupleSlot( &recordObj, NULL, columnMappingHash,
-                         columnValues, columnNulls ) ;
+      sdbFillTupleSlot( &recordObj, NULL, columnMappingHash, 
+                        fdw_state->isUseDecimal, columnValues, columnNulls ) ;
       MemoryContextSwitchTo( oldContext ) ;
 
       if( sampleRowCount < targetRowCount )
@@ -3989,7 +4099,8 @@ TupleTableSlot *SdbExecForeignInsert( EState *estate, ResultRelInfo *rinfo,
       rc = sdbSetBsonValue( &insert, tableDesc->cols[attnum].pgname, 
                             slot->tts_values[attnum], 
                             tableDesc->cols[attnum].pgtype, 
-                            tableDesc->cols[attnum].pgtypmod ) ;
+                            tableDesc->cols[attnum].pgtypmod, 
+                            fdw_state->isUseDecimal ) ;
       if ( SDB_OK != rc )
       {
          ereport ( WARNING, ( errcode( ERRCODE_FDW_INVALID_DATA_TYPE ),
@@ -4089,7 +4200,8 @@ TupleTableSlot *SdbExecForeignUpdate( EState *estate, ResultRelInfo *rinfo,
          rc = sdbSetBsonValue( &sdbbsonTempValue, 
                                fdw_state->pgTableDesc->cols[i].pgname, 
                                datum, fdw_state->pgTableDesc->cols[i].pgtype, 
-                               fdw_state->pgTableDesc->cols[i].pgtypmod ) ;
+                               fdw_state->pgTableDesc->cols[i].pgtypmod,
+                               fdw_state->isUseDecimal ) ;
          if ( SDB_OK != rc )
          {
             ereport ( WARNING, ( errcode( ERRCODE_FDW_INVALID_DATA_TYPE ),
