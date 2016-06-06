@@ -54,10 +54,10 @@ namespace engine
    #define UTIL_VM_MINFREE_KBYTES_PERCENTAGE 8
 
    static BOOLEAN _isIdealValue( const string &result, 
-                                       const string &idealValue, 
-                                       const string &seperator1, 
-                                       const string &seperator2, 
-                                       const string &path ) ;
+                                 const string &idealValue, 
+                                 const string &seperator1, 
+                                 const string &seperator2, 
+                                 const string &path ) ;
 
    static BOOLEAN _thpCheck( const string &path ) ;
 
@@ -78,11 +78,12 @@ namespace engine
    }
    
    BOOLEAN utilCheckIsOpenVZ()
-   {//return TRUE means system is running on openVZ, suggest DO NOT run sequoiadb on openVZ 
+   {//return TRUE means system is running on openVZ, 
+    //suggest DO NOT run sequoiadb on openVZ 
       BOOLEAN isOpenVZ = FALSE ; 
       
       if( ( SDB_OK == ossAccess( "/proc/vz" ) ) && 
-          ( SDB_OK != ossAccess( "/proc/bc"  ) ) )
+          ( SDB_OK != ossAccess( "/proc/bc" ) ) )
       {
          PD_LOG( PDWARNING, "Your system is running on openVZ. "
                  "Even though it will still work, but SequoiaDB "
@@ -104,9 +105,9 @@ namespace engine
       }
 
       /*
-         /proc/self/numa_maps: the process's numa_maps who is accessing the file
+       * /proc/self/numa_maps: the process's numa_maps who is accessing the file
       */
-      f.open( "/sys/devices/system/node/node1", std::ios_base::in ) ;
+      f.open( "/proc/self/numa_maps", std::ios_base::in ) ;
       if( f.is_open() )
       {
          std::string::size_type spaceLoc ;
@@ -158,7 +159,7 @@ namespace engine
    }
 
    INT64 utilCheckVmParamVal( const CHAR *pathPtr, 
-                                      const INT64 &idealValue )
+                              const INT64 &idealValue )
    {
       BOOLEAN isVmParamOK = TRUE ;
       INT64 val ;
@@ -238,7 +239,8 @@ namespace engine
    }
    
    BOOLEAN utilCheckVmStatus()
-   {//return TRUE means all of the linux kernel vm parameters are best for SequoiaDB ; 
+   {//return TRUE means all of the linux kernel vm parameters are best 
+    //for SequoiaDB ; 
       vector<CHAR *> vmPathVec( 8 ) ;
       vector<INT64> vmIdealValVec( 8 ) ;
           
@@ -283,10 +285,10 @@ namespace engine
    }
    
    static BOOLEAN _isIdealValue( const string &result, 
-                                      const string &idealValue, 
-                                      const string &seperator1, 
-                                      const string &seperator2, 
-                                      const string &path )
+                                 const string &idealValue, 
+                                 const string &seperator1, 
+                                 const string &seperator2, 
+                                 const string &path )
    {
       BOOLEAN isIdeal = TRUE ;
       string opMode ;
@@ -367,14 +369,17 @@ namespace engine
    
    BOOLEAN utilCheckThpStatus() //thp : transparent_hugepage
    {
-      BOOLEAN isThpClosed = TRUE ;
+      BOOLEAN isThpClosed  = TRUE ;
       const string thpPath = "/sys/kernel/mm/transparent_hugepage" ;
-      const string thpEnabledPath = "/sys/kernel/mm/transparent_hugepage/enabled" ;
-      const string thpDefragPath = "/sys/kernel/mm/transparent_hugepage/defrag" ;
+      const string thpEnabledPath = 
+                                 "/sys/kernel/mm/transparent_hugepage/enabled" ;
+      const string thpDefragPath  = 
+                                 "/sys/kernel/mm/transparent_hugepage/defrag" ;
       
       if( SDB_OK != ossAccess( thpPath.c_str() ) )
       {
-         PD_LOG( PDWARNING, "%s not exist or can not open. ", thpPath.c_str() ) ;         
+         PD_LOG( PDWARNING, "%s not exist or can not open. ", 
+                 thpPath.c_str() ) ;         
          goto error ;
       }
          
