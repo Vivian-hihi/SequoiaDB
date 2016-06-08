@@ -11,7 +11,8 @@
         <testsuite>dropIndex</testsuite>
         <testsuite>insert</testsuite>
         <testsuite>listCL</testsuite>
-        <testsuite>operators</testsuite>         
+        <testsuite>operators</testsuite>  
+        <testsuite>numberLong</testsuite>        
     </machine1>
     <machine2>
         <testsuite>procedures</testsuite>
