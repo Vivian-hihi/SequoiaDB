@@ -454,6 +454,7 @@ namespace engine
          void    notifyUpdateProgress( ) ;
          INT32   updateProgressToTask( BOOLEAN notify = FALSE ) ;
          omaSsqlOlapNodeInfo* getNodeInfo() ;
+         omaSsqlOlapNodeInfo* getMasterNodeInfo() ;
          const BSONObj& getSysInfo() const { return _sysInfo ; }
 
       protected:
@@ -465,7 +466,7 @@ namespace engine
                                      const string& statusDesc,
                                      INT32 errcode,
                                      const string& detail,
-                                     const string& flow );
+                                     const string& flow ) ;
          void    _setResultToFail() ;
          void    _setRetErr( INT32 errcode ) ;
          INT32   _waitAndUpdateProgress() ;
@@ -507,6 +508,7 @@ namespace engine
          INT32 _install() ;
          INT32 _establishTrust() ;
          INT32 _rollback( BOOLEAN isRestart ) ;
+         INT32 _checkHdfs() ;
 
       private:
          BOOLEAN _checked ;

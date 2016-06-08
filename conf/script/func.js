@@ -1714,6 +1714,8 @@ Ssh.prototype.isPathExist = function Ssh_isPathExist(path) {
     } else {
         var msg = this.getLastOut();
         if (msg.indexOf("No such file or directory") != -1) {
+            setLastError(SDB_OK);
+            setLastErrMsg("");
             return false;
         }
 
@@ -1742,6 +1744,8 @@ Ssh.prototype.isFile = function Ssh_isFile(path) {
     } else {
         var msg = this.getLastOut();
         if (msg.indexOf("Not a directory") != -1) {
+            setLastError(SDB_OK);
+            setLastErrMsg("");
             return true;
         }
 
@@ -1770,6 +1774,8 @@ Ssh.prototype.isDirectory = function Ssh_isDirectory(path) {
     } else {
         var msg = this.getLastOut();
         if (msg.indexOf("Not a directory") != -1) {
+            setLastError(SDB_OK);
+            setLastErrMsg("");
             return false;
         }
 
@@ -1798,6 +1804,8 @@ Ssh.prototype.isEmptyDirectory = function Ssh_isEmptyDirectory(path) {
     } else {
         var msg = this.getLastOut();
         if (msg.indexOf("No such file or directory") != -1) {
+            setLastError(SDB_OK);
+            setLastErrMsg("");
             return true;
         }
 

@@ -487,6 +487,19 @@ namespace engine
          BSONObj _sysInfo ;
    } ;
 
+   class _omaCheckHdfsSsqlOlap : public _omaCommand
+   {
+      public:
+         _omaCheckHdfsSsqlOlap( const BSONObj& config, const BSONObj& sysInfo ) ;
+         ~_omaCheckHdfsSsqlOlap() ;
+         virtual const CHAR * name() { return OMA_CMD_CHECK_HDFS_SEQUOIASQL_OLAP ; }
+         virtual INT32 init( const CHAR *pInstallInfo ) ;
+
+      private:
+         BSONObj _config ;
+         BSONObj _sysInfo ;
+   } ;
+
    class _omaRemoveSsqlOlap : public _omaCommand
    {
       public:

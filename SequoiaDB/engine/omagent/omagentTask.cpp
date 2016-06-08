@@ -7051,6 +7051,24 @@ namespace engine
       return node ;
    }
 
+   omaSsqlOlapNodeInfo* _omaSsqlOlapBusBase::getMasterNodeInfo()
+   {
+      vector<omaSsqlOlapNodeInfo>::iterator it ;
+      omaSsqlOlapNodeInfo* masterNode = NULL ;
+
+      for( it = _nodeInfos.begin(); it != _nodeInfos.end() ; it++ )
+      {
+         omaSsqlOlapNodeInfo& node = *it ;
+         if (node.role == OM_SSQL_OLAP_MASTER)
+         {
+            masterNode = &node ;
+            break ;
+         }
+      }
+
+      return masterNode ;
+   }
+
    void _omaSsqlOlapBusBase::_setRetErr( INT32 errcode )
    {
       string detail ;
@@ -7457,6 +7475,13 @@ namespace engine
          goto error ;
       }
 
+      rc = _checkHdfs() ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to check HDFS for sequoiasql olap, rc = %d", rc ) ;
+         goto error ;
+      }
+
       // start sequoiasql olap
 
    done:
@@ -7728,7 +7753,6 @@ namespace engine
       INT32 errNum = 0 ;
       string detail ;
       BSONObj retObj ;
-      vector<omaSsqlOlapNodeInfo>::iterator it ;
       omaSsqlOlapNodeInfo* masterNode = NULL ;
       string hostName ;
       string role ;
@@ -7737,16 +7761,7 @@ namespace engine
 #define TRUST_FINISH "Finish establishing trust "
 #define TRUST_FAIL   "Failed to establish trust "
 
-      for( it = _nodeInfos.begin(); it != _nodeInfos.end() ; it++ )
-      {
-         omaSsqlOlapNodeInfo& node = *it ;
-         if (node.role == OM_SSQL_OLAP_MASTER)
-         {
-            masterNode = &node ;
-            break ;
-         }
-      }
-
+      masterNode = getMasterNodeInfo() ;
       if ( masterNode == NULL )
       {
          PD_LOG( PDERROR, "failed to find master node" ) ;
@@ -7885,6 +7900,127 @@ namespace engine
       }
 
       return SDB_OK ;
+   }
+
+   INT32 _omaInstallSsqlOlapBusTask::_checkHdfs()
+   {
+      INT32 rc = SDB_OK ;
+      INT32 tmpRc = SDB_OK ;
+      INT32 errNum = 0 ;
+      string detail ;
+      BSONObj retObj ;
+      omaSsqlOlapNodeInfo* masterNode = NULL ;
+      string hostName ;
+      string role ;
+
+#define CHECK_HDFS_BEGIN  "Checking HDFS"
+#define CHECK_HDFS_FINISH "Finish checking HDFS"
+#define CHECK_HDFS_FAIL   "Failed to check HDFS"
+
+      masterNode = getMasterNodeInfo() ;
+      if ( masterNode == NULL )
+      {
+         PD_LOG( PDERROR, "failed to find master node" ) ;
+         goto error ;
+      }
+
+      hostName = masterNode->hostName ;
+      role = masterNode->role ;
+
+      _setAllNodesStatus( OMA_TASK_STATUS_FINISH, OMA_TASK_STATUS_DESC_FINISH,
+                          SDB_OK, "", CHECK_HDFS_BEGIN ) ;
+      updateProgressToTask() ;
+      if ( SDB_OK != _updateProgressToOM() )
+      {
+         PD_LOG( PDWARNING, "Failed to update task's progress to om" ) ;
+      }
+
+      {
+         _omaCheckHdfsSsqlOlap runCmd( masterNode->config, _sysInfo ) ;
+
+         rc = runCmd.init( NULL ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Failed to init to check HDFS for sequoiasql olap[%s:%s], "
+                    "rc = %d", hostName.c_str(), role.c_str(), rc ) ;
+            detail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+            if ( "" == detail )
+            {
+               detail = "Failed to init to check HDFS for sequoiasql olap" ;
+            }
+            goto error ;
+         }
+
+         rc = runCmd.doit( retObj ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Failed to check HDFS sequoiasql olap[%s:%s], rc = %d",
+                    hostName.c_str(), role.c_str(), rc ) ;
+            // if we can't get field "detail", it means we failed in CPP,
+            // we had not executed js file yet
+            tmpRc = omaGetStringElement ( retObj, OMA_FIELD_DETAIL, detail ) ;
+            if ( tmpRc )
+            {
+               detail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+               if ( "" == detail )
+               {
+                  detail = "Not exeute js file yet" ;
+               }
+            }
+            goto error ;
+         }
+
+         // extract "errno"
+         rc = omaGetIntElement ( retObj, OMA_FIELD_ERRNO, errNum ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Failed to get errno from js after "
+                    "checking HDFS for sequoiasql olap[%s:%s], rc = %d",
+                    hostName.c_str(), role.c_str(), rc ) ;
+            detail = "Failed to get errno from js after checking HDFS for sequoiasql olap" ;
+            goto error ;
+         }
+
+         // to see whether execute js successfully or not
+         if ( SDB_OK != errNum )
+         {
+            rc = errNum ;
+            tmpRc = omaGetStringElement ( retObj, OMA_FIELD_DETAIL, detail ) ;
+            if ( SDB_OK != tmpRc )
+            {
+               PD_LOG( PDERROR, "Failed to get error detail from js after "
+                       "checking HDFS for sequoiasql olap[%s:%S], rc = %d",
+                       hostName.c_str(), role.c_str(), tmpRc ) ;
+               detail = "Failed to get error detail from js after "
+                         "checking HDFS for sequoiasql olap" ;
+            }
+            goto error ;
+         }
+         else
+         {
+            PD_LOG ( PDEVENT, "Successfully checking HDFS for sequoiasql olap[%s:%s]",
+                     hostName.c_str(), role.c_str() ) ;
+         }
+      }
+
+      _trusted = TRUE ;
+      _setAllNodesStatus( OMA_TASK_STATUS_FINISH, OMA_TASK_STATUS_DESC_FINISH,
+                          SDB_OK, "", CHECK_HDFS_FINISH ) ;
+      updateProgressToTask() ;
+
+   done:
+      if ( SDB_OK != _updateProgressToOM() )
+      {
+         PD_LOG( PDWARNING, "Failed to update task's progress to om" ) ;
+      }
+      return rc ;
+   error:
+      PD_LOG_MSG( PDERROR, "Failed to check HDFS for sequoiasql olap, rc = %d",
+                  rc ) ;
+      _setAllNodesStatus( OMA_TASK_STATUS_FINISH, CHECK_HDFS_FAIL,
+                          rc, detail, CHECK_HDFS_FAIL ) ;
+      updateProgressToTask() ;
+      goto done ;
    }
 
    _omaRemoveSsqlOlapBusTask::_omaRemoveSsqlOlapBusTask( INT64 taskID )
