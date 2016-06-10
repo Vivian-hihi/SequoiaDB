@@ -51,6 +51,42 @@ var FIELD_ROOT_PASSWD          = "_root_passwd" ;
 var FIELD_SSH_PORT             = "_ssh_port" ;
 var FIELD_INSTALL_PATH         = "_install_path" ;
 
+var FIELD_COORD_INFO_HOSTNAME  = "HostName" ;
+var FIELD_COORD_INFO_DBPATH    = "dbpath" ;
+var FIELD_COORD_INFO_SERVICE   = "Service" ;
+var FIELD_COORD_INFO_TYPE      = "Type" ;
+var FIELD_COORD_INFO_NAME      = "Name" ;
+var FIELD_COORD_INFO_NODEID    = "NodeID" ;
+var FIELD_COORD_INFO_STATUS    = "Status" ;
+
+
+var CoordInfo = function() {
+   this.HostName = null ;
+	this.dbpath   = null ;
+	this.Service  = [ { "Type" : 0, "Name" : "" }, 
+		               { "Type" : 1, "Name" : "" }, 
+		               { "Type" : 2, "Name" : "" } ] ;
+	this.NodeID   = null ;
+	this.Status   = null ;
+
+	CoordInfo.prototype.toString = function() {
+      return JSON.stringify( this ) ;
+	} ;
+} ;
+
+var FIELD_CONF_DBPATH          = "dbpath" ;
+var FIELD_CONF_HOST_NAME       = "hostname" ;
+var FIELD_CONF_IP              = "ip" ;
+var FIELD_CONF_SVC_NAME        = "svcname" ;
+var FIELD_CONF_REPL_NAME       = "replname" ;
+var FIELD_CONF_CATALOG_NAME    = "catalogname" ;
+var FIELD_CONF_SHARD_NAME      = "shardname" ;
+var FIELD_CONF_HTTP_NAME       = "httpname" ;
+var FIELD_CONF_ROLE            = "coord" ;
+var FIELD_CONF_CATALOG_ADDR    = "catalogaddr" ;
+//var FIELD_CONF_
+//var FIELD_CONF_
+
 var ts                         = null ;
 
 var ClusterInfo = function() {
@@ -61,7 +97,11 @@ var ClusterInfo = function() {
    this.sdbPassword         = null ;
    this.sdbUserGroupName    = null ;
 	this.sdbInstallPath      = null ;
-
+	
+	ClusterInfo.prototype.toString = function() {
+      return JSON.stringify( this ) ;
+	}
+   /*
 	ClusterInfo.prototype.toString = function() {
 		return "cluster info[ name: " + this.clusterName + 
 			", description: " + this.clusterDescription + 
@@ -69,9 +109,51 @@ var ClusterInfo = function() {
 			", sdb password: " + this.sdbPassword +
 			", sdb user group: " + this.sdbUserGroupName +
 			", sdb install path: " + this.sdbInstallPath ;
-	}
-}
+	} ;
+	*/
+} ;
 
+var HostInfo = function() {
+   // host info
+   // TODO: merge "address" and "hostName"
+   this.address             = null ;
+   this.hostName            = null ;   
+   this.ip                  = null ;
+   this.rootUserName        = null ;
+   this.rootPassword        = null ;
+   this.sshPort             = null ;
+   this.installPath         = null ;
+
+   // root ssh obj
+   this.rootSshObj          = null ;
+	
+   // sdb account info
+   this.sdbUserName         = null ;
+   this.sdbPassword         = null ;
+   this.sdbUserGroupName    = null ;
+   
+   // remote installed info
+   this.installedInfo       = null ;
+
+	HostInfo.prototype.toString = function() {
+      return JSON.stringify( this ) ;
+	} ;
+} ;
+/*
+var CoordInfo = function() {
+   this.HostName = null ;
+	this.dbpath   = null ;
+	this.Service  = [ { "Type" : 0, "Name" : "" }, 
+		               { "Type" : 1, "Name" : "" }, 
+		               { "Type" : 2, "Name" : "" } ] ;
+	this.NodeID   = null ;
+	this.Status   = 1 ;
+
+	CoordInfo.prototype.toString = function() {
+      return JSON.stringify( this ) ;
+	} ;
+} ;
+*/
 function isIP( strIP ) {
    if ( strIP == undefined ) return false ;
    var re = /^(\d+)\.(\d+)\.(\d+)\.(\d+)$/g ;
@@ -103,47 +185,12 @@ function removeQuotes( inputStr ) {
    return outputStr ;
 }
 
-var HostInfo = function() {
-   // host info
-   // TODO: merge "address" and "hostName"
-   this.address             = null ;
-   this.hostName            = null ;   
-   this.ip                  = null ;
-   this.rootUserName        = null ;
-   this.rootPassword        = null ;
-   this.sshPort             = null ;
-   this.installPath         = null ;
-
-   // root ssh obj
-   this.rootSshObj          = null ;
-	
-   // sdb account info
-   this.sdbUserName         = null ;
-   this.sdbPassword         = null ;
-   this.sdbUserGroupName    = null ;
-   
-   // remote installed info
-   this.installedInfo       = null ;
-} ;
-
-HostInfo.prototype.toString = function() {
-    return "host info[ address: " + this.address + 
-      ", hostName: " + this.hostName + 
-      ", ip: " + this.ip + "]" +
-	 	", rootUserName: " + this.rootUserName +
-      ", rootPassword: " + this.rootPassword + 
-      ", sshPort: " + this.sshPort + 
-      ", installPath: " + this.installPath ;
-} ;
-
-function _init()
-{
+function _init() {
    logger.log( PDEVENT, "Begin to rebuild om" ) ;
    ts = genTimeStamp() ;
 }
 
-function _final()
-{
+function _final() {
    logger.log( PDEVENT, "Finish rebuilding om" ) ;
 }
 
@@ -516,7 +563,7 @@ function _connectToDB( omConfObj ) {
       sdb = new Sdb( coordHostName, coordPort, dbAuthUser, dbAuthPasswd ) ;
    } catch( e ) {
       errMsg = "failed to connect to coord[" + 
-         coordHostName + ":" + coordPort + "], " + GETLASTERRMSG() ;
+         coordHostName + ":" + coordPort + "]" ;
       exp = new SdbError( GETLASTERROR(), errMsg ) ;
       logger.log( PDERROR, exp ) ;
       throw exp ;
@@ -595,11 +642,445 @@ function _thirdlyCheck( hostInfoArr, rgInfoArr ) {
 	logger.log( PDEVENT, "finishing thirdly check" ) ;
 }
 
+var AddCoordInfo = function( rgInfoArr ) {
+	this._rgInfoArr = rgInfoArr ;
+} ;
 
+AddCoordInfo.prototype._getUsedNodeIDFromDB = 
+	function AddCoordInfo__getUsedNodeIDFromDB() {
+   var retArr  = [] ;
+	var nodeArr = [] ;
+	var rgArr   = [] ;
+   var exp     = null ;
+   var len     = this._rgInfoArr.length ;
+	
+   // get catalog and coord rg's info
+	for ( var i = 0; i < len; i++ ) {
+		var info = this._rgInfoArr[i] ;
+      if ( info[GroupName] == "SYSCatalogGroup" || 
+			  info[GroupName] == "SYSCoord" ) {
+         rgArr.push( info ) ;
+		}
+	}
+	if ( rgArr.lenth == 0 ) {
+      exp = new SdbError( SDB_SYS, "no catalog or coord group's info" ) ;
+		logger.log( PDERROR, exp ) ;
+		throw exp ;
+	}
+	// TODO: debug
+	logger.log( PDDEBUG, "catalog or coord rg info size is: " + rgArr.length ) ;
+	for ( var i = 0 ; i < rgArr.length; i++ ) {
+      logger.log( PDDEBUG, JSON.stringify(rgArr[i]) ) ;
+	}
+	// get catalog or coord node id
+	for ( var i = 0; i < rgArr.length; i++ ) {
+		var rgInfo = rgArr[i] ;
+		nodeArr = rgInfo[Group] ;
+		if ( nodeArr == null ) {
+			if ( rgInfo[GroupName] == "SYSCatalogGroup" ) {
+		      exp = new SdbError( SDB_SYS, "no node's info in catalog group" ) ;
+				logger.log( PDERROR, exp ) ;
+				throw exp ;      
+			} else {
+			   // coord group may have no node's info, let's skip
+            continue ;
+			}
+		}
+		for ( var j = 0; j < nodeArr.length; j++ ) {
+         var nodeID = nodeArr[j][FIELD_COORD_INFO_NODEID] ;
+			if ( !isNumber(nodeID) ) {
+		      exp = new SdbError( SDB_SYS, 
+					"get invalid node id[" + nodeID + 
+					"] from group " + rgInfo[GroupName] ) ;
+				logger.log( PDERROR, exp ) ;
+				throw exp ;
+			}
+         retArr.push( nodeID ) ;
+		}
+	}
 
+	logger.log( PDDEBUG, 
+		"the used node id of coord or catalog group are as below: " + retArr ) ;
+	return retArr ;
+} ;
 
-function main() 
-{
+AddCoordInfo.prototype._genNodeID = function AddCoordInfo__genNodeID( num ) {
+	var retArr        = [] ;
+	var exp           = null ;
+	var usedNodeIDArr = this._getUsedNodeIDFromDB() ;
+	var id            = 1 ;
+	var maxID         = 1000 ;
+
+	for ( var i = 0, id = 1; i < num && id < maxID; i++ ) {
+		var isMatch = false ;
+		for ( var j = 0; j < usedNodeIDArr.length; j++ ) {
+	      if ( id == usedNodeIDArr[j] ) {
+				isMatch = true ;
+				break ;
+	      }
+		}
+		if ( !isMatch ) {
+         retArr.push(id) ;
+			usedNodeIDArr.push(id) ;
+	   } else {
+         i-- ;
+		}
+		id++ ;
+	}
+	logger.log( PDDEBUG, 
+		sprintf( "expect ? node id(s), actually get ?, " + 
+		         "the return nodeID array is: ?", 
+		         num, retArr.length, retArr.toString() ) ) ;
+	if ( retArr.length != num ) {
+      exp = new SdbError( "SDB_SYS", 
+			"no invalid node id for the coord nodes" ) ;
+		logger.log( PDERROR, exp ) ;
+	}
+	return retArr ;
+} ;
+
+AddCoordInfo.prototype._getNodeAddrFromDB = 
+	function AddCoordInfo__getNodeAddrFromDB( role ) {
+   var retArr   = [] ;
+	var nodeArr  = null ;
+   var exp      = null ;
+	var rgInfo   = null ;
+	var rgName   = null ;
+	var portType = null ;
+	
+	if ( role == "catalog" ) {
+		rgName   = "SYSCatalogGroup" ;
+		portType = 3 ; 
+	} else if ( role == "coord" ) {
+		rgName   = "SYSCoord" ;
+		portType = 0 ;
+	} else {
+		throw new SdbError( PDERROR, "invalid role: " + role ) ;
+	}
+	
+   // get rg's info
+	for ( var i = 0; i < this._rgInfoArr.length; i++ ) {
+		var info = this._rgInfoArr[i] ;
+      if ( rgName == info[GroupName] ) {
+         rgInfo = info ;
+			break ;
+		}
+	}
+	if ( rgInfo == null ) {
+		logger.log( PDWARNING, 
+			role + " group's info does not exist in catalog" ) ;
+		return retArr ;
+	}
+	// get node's info
+	nodeArr = rgInfo[Group] ;
+	if ( nodeArr == null ) {
+		logger.log( PDWARNING, 
+			role + " group does not contain any nodes" ) ;
+		return retArr ;
+	}
+	for ( var i = 0; i < nodeArr.length; i++ ) {
+		var node     = nodeArr[i] ;
+      var hostName = node[HostName] ;
+		var svcArr   = node[Service] ;
+		var nodeInfo = null ;
+		for ( var j = 0; j < svcArr.length; j++ ) {
+         var svc  = svcArr[j] ;
+			var type = svc[Type] ;
+			if ( portType == type ) {
+				nodeInfo = hostName + ":" + svc[Name] ;
+				break ;
+			}
+		}
+		if ( nodeInfo != null ) {
+         retArr.push( nodeInfo ) ;
+		}
+	}
+	logger.log( PDEVENT, role + " group has " + retArr.length + 
+		" node(s) as below: " + retArr ) ;
+	return retArr ;  
+} ;
+
+AddCoordInfo.prototype._getCataAddrFromDB = 
+	function AddCoordInfo__getCataAddrFromDB() {
+   var exp         = null ;
+   var cataAddrArr = this._getNodeAddrFromDB( "catalog" ) ;
+	if ( cataAddrArr == null || cataAddrArr.length == 0 ) {
+   	exp = new SdbError( SDB_SYS, 
+			"can not get any info about catalog group from database" ) ;
+		logger.log( PDERROR, exp ) ;
+		throw exp ;
+	}
+	logger.log( PDDEBUG, "_getCoordAddrFromDB returns: " + cataAddrArr ) ;
+	return cataAddrArr ;
+} ;
+
+AddCoordInfo.prototype._getCoordAddrFromDB = 
+	function AddCoordInfo__getCoordAddrFromDB() {
+   var retArr = this._getNodeAddrFromDB( "coord" ) ;
+	logger.log( PDDEBUG, "_getCoordAddrFromDB returns: " + retArr ) ;
+	return retArr ;
+} ;
+
+AddCoordInfo.prototype._collectCoordInfoFromHost = 
+	function AddCoorInfo__collectCoordInfoFromHost( hostInfoArr ) {
+	var retArr = [] ;
+   var exp    = null ;
+	var str1   = "\' var arr = Sdbtool.listNodes({type:\"db\", role:\"coord\", mode:\"local\", expand:true}); \'" ;
+	var str2   = "\' arr.next(); \'" ;
+	var str3   = "\' quit \'" ;
+
+   for ( var i = 0; i < hostInfoArr.length; i++ ) {
+      var host        = hostInfoArr[i] ;
+      var ssh         = host.rootSshObj ;
+      var sdbExecFile = adaptPath(host.installPath) + OMA_PROG_BIN_SDB ;
+		var cmd1        = sdbExecFile + " -s " + str1 ;
+		var cmd2        = sdbExecFile + " -s " + str2 ;
+		var cmd3        = sdbExecFile + " -s " + str3 ;
+		var retStr      = null ;
+		logger.log( PDDEBUG, 
+			"cmd to get coord info at host[" + host.hostName + "] is: " ) ;
+		logger.log( PDDEBUG, cmd1 ) ;
+		// get coord node's info from remote host
+		try {
+			ssh.exec( cmd1 ) ;
+		} catch( e ) {
+			exp = new SdbError( PDERROR, "failed to execute command[" + cmd1 + 
+				"] in host[" + host.hostName + "], for " + ssh.getLastOut() + 
+				", errno: " + ssh.getLastRet() ) ;
+			logger.log( PDERROR, exp ) ;
+			throw exp ;
+		} finally {
+		   if ( exp != null ) {
+				try { ssh.exec( cmd3 ); } catch(e) {}
+		   }
+		}
+		// extract the info back to local
+		while( true ) {
+			var obj = null ;
+  			try {
+				retStr = ssh.exec( cmd2 ) ;
+			} catch( e ) {
+				exp = new SdbError( PDERROR, "failed to execute command[" + cmd2 + 
+					"] in host[" + host.hostName + "], for " + ssh.getLastOut() + 
+					", errno: " + ssh.getLastRet() ) ;
+				logger.log( PDERROR, exp ) ;
+				throw exp ;
+			} finally {
+			   if ( exp != null ) {
+					try { ssh.exec( cmd3 ); } catch(e) {}
+			   }
+			}
+			try {
+				obj = eval( '(' + retStr + ')' ) ;
+				if ( !isObject(obj) ) {
+					logger.log( PDWARNING, 
+						"the string[" + retStr + "] return by executing command[" + 
+						cmd2 + "] in host [" + host.hostName + 
+						"] can not be eval to an object"  ) ;
+					continue ;
+				}
+			} catch(e) {
+			   // TODO: get error msg
+				logger.log( PDWARNING, "we get exception[" + e + 
+					"], we take it end of traversal cursor" ) ;
+				try { ssh.exec( cmd3 ); } catch(e) {}
+				break ;
+			}
+			obj[FIELD_CONF_HOST_NAME] = host.hostName ;
+			obj[FIELD_CONF_IP]        = host.ip ;
+		   retArr.push( obj ) ;
+		}
+   }
+	logger.log( PDDEBUG, 
+		"the number of collecting coord's info from host is: " + retArr.length + 
+		", they are as below: " ) ;
+	for ( var i = 0; i < retArr.length; i++ ) {
+		 logger.log( PDDEBUG, JSON.stringify(retArr[i]) ) ;
+	}
+	return retArr ;
+} ;
+
+var CoordInfo = function() {
+   this.HostName = null ;
+	this.dbpath   = null ;
+	this.Service  = [ { "Type" : 0, "Name" : "" }, 
+		               { "Type" : 1, "Name" : "" }, 
+		               { "Type" : 2, "Name" : "" } ] ;
+	this.NodeID   = null ;
+	this.Status   = 1 ;
+
+	CoordInfo.prototype.toString = function() {
+      return JSON.stringify( this ) ;
+	} ;
+} ;
+
+var CoordInfoWrapper = function() {
+	this.ip          = null ;
+	this.catalogAddr = null ;
+   this.infoObj     = null ;
+
+	CoordInfoWrapper.prototype.toString = function() {
+      return JSON.stringigy( this ) ;
+	} ;
+} ;
+
+AddCoordInfo.prototype._extractCoordInfo = 
+	function AddCoordInfo__extractCoordInfo( coordInfoObjArr ) {
+   var retArr = [] ;
+	var len    = coordInfoObjArr.length ;
+
+	for ( var i = 0; i < len; i++ ) {
+		var wapper          = new CoordInfoWrapper() ;
+		var obj             = new CoordInfo() ;
+      var coordInfoObj    = coordInfoObjArr[i] ;
+		obj.HostName        = coordInfoObj[FIELD_CONF_HOST_NAME] ;
+      obj.dbpath          = coordInfoObj[FIELD_CONF_DBPATH] ;
+		obj.Service[0].Name = coordInfoObj[FIELD_CONF_SVC_NAME] ;
+		obj.Service[1].Name = coordInfoObj[FIELD_CONF_REPL_NAME] ;
+		obj.Service[2].Name = coordInfoObj[FIELD_CONF_CATALOG_NAME] ;
+		wapper.ip           = coordInfoObj[FIELD_CONF_IP] ;
+		wapper.catalogAddr  = coordInfoObj[FIELD_CONF_CATALOG_ADDR] ;
+		wapper.infoObj      = obj ;
+		retArr.push( wapper ) ;
+	}
+	logger.log( PDDEBUG, "the number of extract coord info is: " + 
+		retArr.length + ", they are as below: " ) ;
+	for ( var i = 0 ; i < retArr.length; i++ ) {
+   	logger.log( PDDEBUG, JSON.stringify(retArr[i]) ) ;
+	}
+	return retArr ;
+} ;
+
+AddCoordInfo.prototype._filterCoordInfo = 
+	function AddCoordInfo__filterCoordInfo( hostCoordInfoWrapperArr, 
+	                                        dbCoordAddrArr, 
+	                                        dbCatalogAddrArr ) {
+	var exp           = null ;
+   var retArr        = [] ;
+
+	if ( !isArray(dbCatalogAddrArr) || dbCatalogAddrArr.length == 0 ) {
+      exp = new SdbError( SDB_SYS, 
+			"no catalog address for comparing, dbCatalogAddrArr is: " + 
+			dbCatalogAddrArr ) ;
+		logger.log( SDB_SYS, exp ) ;
+		throw exp ;
+	}
+	for ( var i = 0; i < hostCoordInfoWrapperArr.length; i++ ) {
+		var hostCoordInfo = hostCoordInfoWrapperArr[i].infoObj ;
+		var hostName     = hostCoordInfo[FIELD_COORD_INFO_HOSTNAME] ;
+		var svcName      = null ;
+		var needRestart  = false ;
+		for ( var j = 0; j < 2; j++ ) {
+			var type = 
+				hostCoordInfo[FIELD_COORD_INFO_SERVICE][j][FIELD_COORD_INFO_TYPE] ;
+			if ( type == 0 ) {
+				svcName = 
+					hostCoordInfo[FIELD_COORD_INFO_SERVICE][j][FIELD_COORD_INFO_NAME] ;
+				break ;
+			}
+		}
+		var hostCoordAddr = hostName + ":" + svcName ;
+		// filter the coord which info has been in catalog
+		for ( var j = 0; j < dbCoordAddrArr.length; j++ ) {
+         var dbCoordAddr = dbCoordAddrArr[j] ;
+			if ( hostCoordAddr == dbCoordAddr ) {
+				needRestart = true ;
+				break ;
+			}
+		}
+		if ( needRestart ) continue ;
+		// filter the coord which is not below to the specified catalog
+		var hostCataAddrArr = 
+			hostCoordInfoWrapperArr[i].catalogAddr.split( ',' ) ;
+		if ( !isArray(hostCataAddrArr) || hostCataAddrArr.length == 0 ) {
+         logger.log( PDWARNING, "no catalog info in coord node[" +
+				hostCoordAddr + "], hostCataAddrArr is: " + hostCataAddrArr ) ;
+			continue ;
+		}
+		for ( var m = 0; m < hostCataAddrArr.length; m++ ) {
+			var hostCataAddr = hostCataAddrArr[m] ;
+			var isMatch      = false ;
+			for ( var n = 0; n < dbCatalogAddrArr.length; n++ ) {
+	         var dbCatalogAddr = dbCatalogAddrArr[n] ;
+				if ( hostCataAddr == dbCatalogAddr ) {
+					isMatch = true ;
+					break ;
+				}
+			}
+			if ( isMatch ) {
+            retArr.push( hostCoordInfo ) ;
+				break ;
+			}
+		}
+	}
+   logger.log( PDDEBUG, 
+		"the number of matched coord for inserting into catalog is: " + 
+		retArr.length + ", they are as below: " ) ;
+	for ( var i = 0; i < retArr.length; i++ ) {
+   	logger.log( PDDEBUG, JSON.stringify(retArr[i]) ) ;
+	}
+	return retArr ;
+} ;
+
+AddCoordInfo.prototype._appendNodeID =
+	function AddCoordInfo__appendNodeID( matchedCoordInfoArr ) {
+	var retArr    = [] ;
+	var nodeIDArr = [] ;
+	// get usable node id
+	nodeIDArr = this._genNodeID( matchedCoordInfoArr.length ) ;
+   // generate inserted records
+	for ( var i = 0; i < matchedCoordInfoArr.length; i++ ) {
+      var obj                      = matchedCoordInfoArr[i] ;
+		// TODO: append node id
+		obj[FIELD_COORD_INFO_NODEID] = nodeIDArr[i] ;
+		retArr.push( obj ) ;
+	}
+	logger.log( PDDEBUG, "the number of inserted coord info is " + retArr.length + 
+		", the info are as below: " ) ;
+	for ( var i = 0; i < retArr.length; i++ ) {
+      logger.log( PDDEBUG, JSON.stringify(retArr[i]) ) ;
+	}
+	return retArr ;
+} ;
+
+AddCoordInfo.prototype._init = function AddCoordInfo__init() {
+   if ( !isArray(this._rgInfoArr) || this._rgInfoArr.length == 0 ) {
+		var exp = new SdbError( SDB_SYS, 
+			"no replica group's info in catalog, AddCoordInfo::_rgInfoArr is: " + 
+			this._rgInfoArr ) ;
+      logger.log( PDERROR, exp ) ;
+		throw exp ;
+	}
+} ;
+
+AddCoordInfo.prototype._doit = 
+	function AddCoordInfo__doit( hostInfoArr ) {
+   var retArr = [] ;
+
+   // 
+   this._init() ;
+
+	// 1. ssh to remote to get all the coord's info to local
+	var coordInfoObjArr = this._collectCoordInfoFromHost( hostInfoArr ) ;
+
+	var hostCoordInfoArr = this._extractCoordInfo( coordInfoObjArr ) ;
+
+	// . get existing coord's info from database
+   var dbCoordAddrArr = this._getCoordAddrFromDB() ;
+
+	// . get catalog's info from database
+   var dbCatalogAddrArr = this._getCataAddrFromDB() ;
+
+	// . filter the existed coords
+	var matchedCoordInfoArr = 
+		this._filterCoordInfo( hostCoordInfoArr, dbCoordAddrArr, dbCatalogAddrArr ) ;
+   // . gen inserted coord info
+   retArr = this._appendNodeID( matchedCoordInfoArr ) ;
+
+	return retArr ;
+} ;
+
+function main() {
    var omConfObj = null ;
    var hostInfoArr = [] ;
 	var clusterInfo = null ;
@@ -608,6 +1089,13 @@ function main()
    var errMsg      = null ;
    var debugMsg    = null ;
    var exp         = null ;
+
+	if ( SYS_LINUX != SYS_TYPE ) {
+      exp = new SdbError( SDB_SYS, 
+			"not support current operating system[" + SYS_TYPE + "]" ) ;
+		logger.log( PDERROR, exp ) ;
+		throw exp ;
+	}
 	
    // 1. check file exist or not
    if ( !File.exist(OM_CONF_FILE) ) {
@@ -652,6 +1140,10 @@ function main()
 	// TODO:
 	//println( "cluster info is: " + clusterInfo ) ;
 
+	// 4. get coord info
+	var addCoord = new AddCoordInfo( rgInfoArr ) ;
+   println( addCoord._doit(hostInfoArr) ) ;
+   
 	
 }
 
