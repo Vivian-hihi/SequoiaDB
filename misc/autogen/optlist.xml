@@ -1040,5 +1040,41 @@
       <typeofweb>str</typeofweb>
    </opt>
 
+   <opt>
+      <name>PMD_OPTION_MAX_CACHE_SIZE</name>
+      <long>maxcachesize</long>
+      <description>
+         <en>The node's max cache size, default:0, unit:MB</en>
+         <cn>节点缓存层最大大小，默认为0，单位为MB</cn>
+      </description>
+      <detail>
+         <en>The node's max cache size, unit is MB, default is 0</en>
+         <cn>节点层缓层最大大小，单位为MB，默认值为0</cn>
+      </detail>
+      <type>int</type>
+      <default>0</default>
+      <typeofweb>num</typeofweb>
+   </opt>
+
+   <opt>
+      <name>PMD_OPTION_MAX_CACHE_JOB</name>
+      <long>maxcachejob</long>
+      <description>
+         <en>The maximum number of cache threads, default:10, value range:[2, 200]</en>
+         <cn>后台缓存任务线程的最大数量，默认值为10，取值范围为[2, 200]</cn>
+      </description>
+      <detail>
+         <en>1.The maximum number of cache threads, default:10, value range:[2, 200].<fig></fig>
+             2.Cache threads will synchronize the dirty pages to file, and drop the invalid pages.<fig></fig>
+             3.Cache threads auto start and exit according to the cache workload.</en>
+         <cn>1.后台缓存任务线程的最大数量，默认值为10，取值范围为[2, 200]。<fig></fig>
+             2.后台缓存任务线程主要执行同步脏页至文件，回收和释放空闲内存页。<fig></fig>
+             3.后台缓存任务线程根据缓存的负载情况自动启动和退出。</cn>
+      </detail>
+      <type>int</type>
+      <default>10</default>
+      <typeofweb>num</typeofweb>
+   </opt>
+
 </optlist>
 
