@@ -2417,6 +2417,7 @@
             <cn>用户不存在或密码错误</cn>
          </description>
       </code>
+
       <code>
          <name>SDB_UTIL_COMPRESS_INIT_FAIL</name>
          <description>
@@ -2459,5 +2460,13 @@
             <cn>解压缓存过小</cn>
          </description>
       </code>
+      <code>
+         <name>SDB_OSS_UP_TO_LIMIT</name>
+         <description>
+            <en>Up to the limit</en>
+            <cn>达到最大或最小限制</cn>
+         </description>
+      </code>
+
    </codelist>
 </rclist>
