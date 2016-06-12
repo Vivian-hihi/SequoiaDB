@@ -243,8 +243,8 @@ namespace engine
       BSONObj newQuery ;
 
       CHAR *pBuff             = NULL ;
-      INT32 buffLen           = 0 ;
-      INT32 buffPos           = 0 ;
+      UINT32 buffLen          = 0 ;
+      UINT32 buffPos          = 0 ;
       vector<CHAR*> *pBlock   = NULL ;
 
       outPtr                  = (ossValuePtr)0 ;
@@ -310,13 +310,13 @@ namespace engine
          // 2. new query vec
          newQuery = _buildNewQuery( objQuery, subCLLst ) ;
          // 2.1 add to buff
-         INT32 roundLen = ossRoundUpToMultipleX( newQuery.objsize(), 4 ) ;
+         UINT32 roundLen = ossRoundUpToMultipleX( newQuery.objsize(), 4 ) ;
          if ( buffPos + roundLen > buffLen )
          {
-            INT32 alignLen = ossRoundUpToMultipleX( roundLen,
-                                                    DMS_PAGE_SIZE4K ) ;
-            rc = cb->allocBuff( alignLen, &pBuff, buffLen ) ;
-            PD_RC_CHECK( rc, PDERROR, "Alloc buff[%d] failed, rc: %d",
+            UINT32 alignLen = ossRoundUpToMultipleX( roundLen,
+                                                     DMS_PAGE_SIZE4K ) ;
+            rc = cb->allocBuff( alignLen, &pBuff, &buffLen ) ;
+            PD_RC_CHECK( rc, PDERROR, "Alloc buff[%u] failed, rc: %d",
                          alignLen, rc ) ;
             pBlock->push_back( pBuff ) ;
             buffPos = 0 ;

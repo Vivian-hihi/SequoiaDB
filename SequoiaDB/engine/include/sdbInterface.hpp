@@ -304,6 +304,94 @@ namespace engine
    typedef _ISession ISession ;
 
    /*
+      _IExecutor define
+   */
+   class _IExecutor : public SDBObject
+   {
+      public:
+         _IExecutor() {}
+         virtual ~_IExecutor() {}
+
+      public:
+
+         /*
+            Base Function
+         */
+         virtual EDUID     getID() const = 0 ;
+         virtual UINT32    getTID() const = 0 ;
+
+         /*
+            Session Related
+         */
+         virtual ISession* getSession() = 0 ;
+
+         /*
+            Status and Control
+         */
+         virtual BOOLEAN   isInterrupted ( BOOLEAN onlyFlag = FALSE ) = 0 ;
+         virtual BOOLEAN   isDisconnected () = 0 ;
+         virtual BOOLEAN   isForced () = 0 ;
+
+         virtual BOOLEAN   isWritingDB() const = 0 ;
+         virtual UINT64    getWritingTime() const = 0 ;
+         virtual void      writingDB( BOOLEAN writing ) = 0 ;
+
+         virtual UINT32    getProcessedNum() const = 0 ;
+         virtual void      incEventCount( UINT32 step = 1 ) = 0 ;
+
+         virtual UINT32    getQueSize() = 0 ;
+
+         /*
+            Buffer Manager
+         */
+         virtual INT32     allocBuff( UINT32 len,
+                                      CHAR **ppBuff,
+                                      UINT32 *pRealSize = NULL ) = 0 ;
+
+         virtual INT32     reallocBuff( UINT32 len,
+                                        CHAR **ppBuff,
+                                        UINT32 *pRealSize = NULL ) = 0 ;
+
+         virtual void      releaseBuff( CHAR *pBuff ) = 0 ;
+
+         virtual void*     getAlignedBuff( UINT32 size,
+                                           UINT32 *pRealSize = NULL,
+                                           UINT32 alignment =
+                                           OSS_FILE_DIRECT_IO_ALIGNMENT ) = 0 ;
+
+         virtual void      releaseAlignedBuff() = 0 ;
+
+         /*
+            Operation Related
+         */
+         /// for read
+         virtual UINT64    getBeginLsn () const = 0 ;
+         virtual UINT64    getEndLsn() const = 0 ;
+         virtual UINT32    getLsnCount () const = 0 ;
+         /// for write
+         virtual void      resetLsn() = 0 ;
+         virtual void      insertLsn( UINT64 lsn ) = 0 ;
+
+   } ;
+   typedef _IExecutor IExecutor ;
+
+   /*
+      _IContext define
+   */
+   class _IContext : public SDBObject
+   {
+      public:
+         _IContext() {}
+         virtual ~_IContext() {}
+
+      public:
+         virtual INT32 pause() = 0 ;
+         virtual INT32 resume() = 0 ;
+
+   } ;
+   typedef _IContext IContext ;
+
+   /*
       _IControlBlock define
    */
    class _IControlBlock : public SDBObject, public _ISDBRoot

@@ -80,6 +80,11 @@ namespace engine
       close() ;   
    }
 
+   const CHAR* _dmsStorageLobData::getFileName() const
+   {
+      return _fileName.c_str() ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB_DMSSTORAGELOBDATA_OPEN, "_dmsStorageLobData::open" )
    INT32 _dmsStorageLobData::open( const CHAR *path,
                                    BOOLEAN createNew,
@@ -205,23 +210,21 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_DMSSTORAGELOBDATA_WRITE, "_dmsStorageLobData::write" )
-   INT32 _dmsStorageLobData::write( DMS_LOB_PAGEID page,
-                                    const CHAR *data,
-                                    UINT32 len,
-                                    UINT32 offset,
-                                    _pmdEDUCB *cb )
+   INT32 _dmsStorageLobData::write( INT32 pageID, const CHAR *pData,
+                                    UINT32 len, UINT32 offset,
+                                    IExecutor *cb )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB_DMSSTORAGELOBDATA_WRITE ) ;
-      SDB_ASSERT( DMS_LOB_INVALID_PAGEID != page &&
-                  NULL != data &&
+      SDB_ASSERT( DMS_LOB_INVALID_PAGEID != pageID &&
+                  NULL != pData &&
                   0 == offset &&
                   len <= _pageSz, "invalid operation" ) ;
 
-      _dmsLobDirectOutBuffer buffer( data, len, cb ) ;
+      _dmsLobDirectOutBuffer buffer( pData, len, cb ) ;
       _dmsLobDirectBuffer::tuple t ;
 
-      INT64 writeOffset = getSeek( page, offset ) ;
+      INT64 writeOffset = getSeek( pageID, offset ) ;
       if ( writeOffset + len > _fileSz )
       {
          PD_LOG( PDERROR, "Offset[%lld] grater than file size[%lld] in "
@@ -241,7 +244,7 @@ namespace engine
 
       if ( !OSS_BIT_TEST( _flags, DMS_LOBD_FLAG_DIRECT ) )
       {
-         t.buf = ( void * )data ;
+         t.buf = ( void * )pData ;
          t.size = len ;
       }
       else
@@ -258,7 +261,7 @@ namespace engine
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to write data, page:%d, rc:%d",
-                 page, rc ) ;
+                 pageID, rc ) ;
          goto error ; 
       }
 
@@ -270,26 +273,24 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_DMSSTORAGELOBDATA_READ, "_dmsStorageLobData::read" )
-   INT32 _dmsStorageLobData::read( DMS_LOB_PAGEID page,
-                                   UINT32 len,
-                                   UINT32 offset,
-                                   _pmdEDUCB *cb,
-                                   CHAR *buf,
-                                   UINT32 &readLen )
+   INT32 _dmsStorageLobData::read( INT32 pageID, CHAR *pData,
+                                   UINT32 len, UINT32 offset,
+                                   UINT32 &readLen,
+                                   IExecutor *cb )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB_DMSSTORAGELOBDATA_READ ) ;
-      SDB_ASSERT( DMS_LOB_INVALID_PAGEID != page &&
-                  NULL != buf &&
+      SDB_ASSERT( DMS_LOB_INVALID_PAGEID != pageID &&
+                  NULL != pData &&
                   len + offset <= _pageSz, "invalid operation" ) ;
       SINT64 readFromFile = 0 ;
-      dmsLobDirectInBuffer buffer( buf, len, offset, cb ) ;
+      dmsLobDirectInBuffer buffer( pData, len, offset, cb ) ;
       dmsLobDirectBuffer::tuple t ;
       INT64 readOffset = 0 ;
       
       if ( !OSS_BIT_TEST( _flags, DMS_LOBD_FLAG_DIRECT ) )
       {
-         t.buf = buf ;
+         t.buf = pData ;
          t.size = len ;
          t.offset = offset ;
       }
@@ -303,7 +304,7 @@ namespace engine
          }
       }
 
-      readOffset = getSeek( page, t.offset ) ;
+      readOffset = getSeek( pageID, t.offset ) ;
 
       if ( readOffset + t.size > _fileSz )
       {
@@ -318,8 +319,8 @@ namespace engine
                             readFromFile ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "failed to read page[%d], rc: %d",
-                 page, rc ) ;
+         PD_LOG( PDERROR, "Failed to read page[%d], rc: %d",
+                 pageID, rc ) ;
          goto error ;
       }
 

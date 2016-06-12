@@ -49,6 +49,7 @@
 #include "msgDef.hpp"
 #include "pmdEnv.hpp"
 #include "sdbInterface.hpp"
+#include "pmdMemPool.hpp"
 
 #if defined ( SDB_ENGINE )
 #include "monCB.hpp"
@@ -162,6 +163,9 @@ namespace engine
 
       INT32             registerCB( IControlBlock *pCB, void *pOrg ) ;
 
+      /*
+         _IConfigHandle Interface
+      */
       virtual void      onConfigChange ( UINT32 changeID ) ;
       virtual INT32     onConfigInit () ;
       virtual void      onConfigSave () ;
@@ -190,6 +194,7 @@ namespace engine
       BOOLEAN        _isRestore ;
 
       _pmdEDUMgr     _eduMgr ;
+      pmdBuffPool    _buffPool ;
 
       _pmdOptionsMgr _optioncb ;
       ossTick        _curTime ;
@@ -202,9 +207,13 @@ namespace engine
 #endif // SDB_ENGINE
 
    public :
-      pmdEDUMgr *getEDUMgr ()
+      pmdEDUMgr* getEDUMgr ()
       {
          return &_eduMgr ;
+      }
+      pmdBuffPool* getBuffPool()
+      {
+         return &_buffPool ;
       }
       CHAR *getGroupName ( CHAR *pBuffer, UINT32 size ) const
       {
@@ -358,8 +367,8 @@ namespace engine
          ossStrncpy ( _hostName, hostName, sizeof(_hostName) - 1 );
       }
 
-      ossTick getCurTime() ;
-      void syncCurTime() ;
+      ossTick  getCurTime() ;
+      void     syncCurTime() ;
 
    } ;
    typedef _SDB_KRCB pmdKRCB ;
@@ -376,6 +385,10 @@ namespace engine
    OSS_INLINE pmdOptionsCB* pmdGetOptionCB()
    {
       return pmdGetKRCB()->getOptionCB() ;
+   }
+   OSS_INLINE pmdBuffPool* pmdGetBuffPool()
+   {
+      return pmdGetKRCB()->getBuffPool() ;
    }
 
 }

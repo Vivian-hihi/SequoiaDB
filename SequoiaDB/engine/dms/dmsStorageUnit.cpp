@@ -40,7 +40,6 @@
 #include "dmsScanner.hpp"
 #include "mthModifier.hpp"
 #include "pmd.hpp"
-#include "pmdCB.hpp"
 #include "pdTrace.hpp"
 #include "dmsTrace.hpp"
 #include "dmsStorageLob.hpp"
@@ -48,12 +47,17 @@
 namespace engine
 {
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU, "_dmsStorageUnit::_dmsStorageUnit" )
-   _dmsStorageUnit::_dmsStorageUnit ( const CHAR *pSUName, UINT32 sequence,
-                                      INT32 pageSize, INT32 lobPageSize )
+   _dmsStorageUnit::_dmsStorageUnit ( const CHAR *pSUName,
+                                      UINT32 sequence,
+                                      utilCacheMgr *pMgr,
+                                      INT32 pageSize,
+                                      INT32 lobPageSize )
    :_apm(this),
+    _pMgr( pMgr ),
     _pDataSu( NULL ),
     _pIndexSu( NULL ),
-    _pLobSu( NULL )
+    _pLobSu( NULL ),
+    _pCacheUnit( NULL )
    {
       PD_TRACE_ENTRY ( SDB__DMSSU ) ;
       SDB_ASSERT ( pSUName, "name can't be null" ) ;
@@ -96,7 +100,10 @@ namespace engine
                                                   _pDataSu ) ;
       }
 
-      if ( NULL != _pDataSu && NULL != _pIndexSu )
+      /// alloc cache unit
+      _pCacheUnit = SDB_OSS_NEW utilCacheUnit() ;
+
+      if ( NULL != _pDataSu && NULL != _pIndexSu && NULL != _pCacheUnit )
       {
          /// reuse buf for lob
          ossMemset( dataFileName, 0, sizeof( dataFileName ) ) ;
@@ -109,7 +116,8 @@ namespace engine
                       DMS_LOB_DATA_SU_EXT_NAME ) ;
 
          _pLobSu = SDB_OSS_NEW dmsStorageLob( dataFileName, idxFileName,
-                                              &_storageInfo, _pDataSu ) ;
+                                              &_storageInfo, _pDataSu,
+                                              _pCacheUnit ) ;
       }
 
       PD_TRACE_EXIT ( SDB__DMSSU ) ;
@@ -131,6 +139,11 @@ namespace engine
          SDB_OSS_DEL _pLobSu ;
          _pLobSu = NULL ;
       }
+      if ( _pCacheUnit )
+      {
+         SDB_OSS_DEL _pCacheUnit ;
+         _pCacheUnit = NULL ;
+      }
       // _pDataSu must be delete at the last
       if ( _pDataSu )
       {
@@ -147,10 +160,18 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__DMSSU_OPEN ) ;
-      if ( !_pDataSu || !_pIndexSu || !_pLobSu )
+      if ( !_pDataSu || !_pIndexSu || !_pLobSu || !_pCacheUnit )
       {
          rc = SDB_OOM ;
          PD_LOG( PDERROR, "Alloc memory failed" ) ;
+         goto error ;
+      }
+
+      rc = _pCacheUnit->init( _pMgr, _pLobSu->getLobData(),
+                              _storageInfo._lobdPageSize ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Init cache unit failed, rc: %d", rc ) ;
          goto error ;
       }
 
@@ -226,6 +247,10 @@ namespace engine
    void _dmsStorageUnit::close ()
    {
       PD_TRACE_ENTRY ( SDB__DMSSU_CLOSE ) ;
+      if ( _pCacheUnit )
+      {
+         _pCacheUnit->fini( pmdGetThreadEDUCB() ) ;
+      }
       if ( _pIndexSu )
       {
          _pIndexSu->closeStorage() ;

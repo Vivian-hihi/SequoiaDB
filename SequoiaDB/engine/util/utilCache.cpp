@@ -432,11 +432,12 @@ namespace engine
       _utilCacheMgr implement
    */
    _utilCacheMgr::_utilCacheMgr()
-   :_freeSize( 0 ), _totalSize( 0 )
+   :_freeSize( 0 ), _totalSize( 0 ), _totalUseTimes( 0 )
    {
       _beginPageSizeSqrt = 0 ;
       _maxCacheSize = 0 ;
       _pStat = NULL ;
+      _lastRecycleTime = 0 ;
    }
 
    _utilCacheMgr::~_utilCacheMgr()
@@ -534,7 +535,9 @@ namespace engine
    {
       if ( _pStat && bucketID < UTIL_PAGE_SLOT_SIZE )
       {
+         _latch[ bucketID ]->get() ;
          stat = (*_pStat)[ bucketID ] ;
+         _latch[ bucketID ]->release() ;
       }
       else
       {
@@ -581,6 +584,7 @@ namespace engine
             _getBucketCache( beginSlot )._useTimes += 1 ;
             /// release the bucket latch
             pLatch->release() ;
+            _totalUseTimes.inc() ;
             goto done ;
          }
          pLatch->release() ;
@@ -614,6 +618,7 @@ namespace engine
             /// update the bucket stat
             _getBucketCache( beginSlot )._freeSize -= pageSize ;
             _getBucketCache( beginSlot )._useTimes += 1 ;
+            _totalUseTimes.inc() ;
 
             if ( lastSize > pageSize )
             {
@@ -691,6 +696,7 @@ namespace engine
             _getBucketCache( beginSlot )._useTimes += 1 ;
             /// release the bucket latch
             _latch[ beginSlot ]->release() ;
+            _totalUseTimes.inc() ;
             goto done_assign ;
          }
          _latch[ beginSlot ]->release() ;
@@ -803,6 +809,7 @@ namespace engine
             _getBucketCache( beginSlot )._useTimes += 1 ;
             /// release the bucket latch
             _latch[ beginSlot ]->release() ;
+            _totalUseTimes.inc() ;
             goto done ;
          }
          _latch[ beginSlot ]->release() ;
@@ -865,6 +872,7 @@ namespace engine
             _getBucketCache( beginSlot )._useTimes += 1 ;
             /// release the bucket latch
             _latch[ beginSlot ]->release() ;
+            _totalUseTimes.inc() ;
             goto done_assign ;
          }
          _latch[ beginSlot ]->release() ;
@@ -982,140 +990,113 @@ namespace engine
 
    void _utilCacheMgr::registerUnit( _utilCacheUnit *pUnit )
    {
-      ossTimestamp t ;
-      UINT64 curTime = 0 ;
-
-      ossScopedLock lock( &_unitLatch ) ;
-
-      ossGetCurrentTime( &t ) ;
-      curTime = t.time * 1000 + t.microtm / 1000 ;
-
-      _syncUnitList.push_back( std::make_pair( curTime, pUnit ) ) ;
-      _recycleUnitList.push_back( std::make_pair( curTime, pUnit ) ) ;
-   }
-
-   void _utilCacheMgr::pushBackSyncUnit( _utilCacheUnit *pUnit )
-   {
-      ossTimestamp t ;
-      UINT64 curTime = 0 ;
-
-      ossScopedLock lock( &_unitLatch ) ;
-
-      if ( !pUnit->isClosed() )
-      {
-         ossGetCurrentTime( &t ) ;
-         curTime = t.time * 1000 + t.microtm / 1000 ;
-         _syncUnitList.push_back( std::make_pair( curTime, pUnit ) ) ;
-      }
-      /// release the page cleaner
-      pUnit->unlockPageCleaner() ;
-   }
-
-   void _utilCacheMgr::pushBackRecycleUnit( _utilCacheUnit *pUnit )
-   {
-      ossTimestamp t ;
-      UINT64 curTime = 0 ;
-
-      ossScopedLock lock( &_unitLatch ) ;
-
-      if ( !pUnit->isClosed() )
-      {
-         ossGetCurrentTime( &t ) ;
-         curTime = t.time * 1000 + t.microtm / 1000 ;
-         _recycleUnitList.push_back( std::make_pair( curTime, pUnit ) ) ;
-      }
-      /// release the page cleaner
-      pUnit->unlockPageCleaner() ;
-   }
-
-   _utilCacheUnit* _utilCacheMgr::dispatchSyncUnit( UINT64 interval )
-   {
-      UNIT_INFO info ;
-
-      ossScopedLock lock( &_unitLatch ) ;
-
-      if ( _syncUnitList.empty() )
-      {
-         return NULL ;
-      }
-      info = _syncUnitList.front() ;
-      if ( interval > 0 )
-      {
-         ossTimestamp t ;
-         ossGetCurrentTime( t ) ;
-         UINT64 curTime = t.time * 1000 + t.microtm / 1000 ;
-
-         if ( ( curTime >= info.first && curTime - info.first <= interval ) ||
-              ( curTime < info.first && info.first - curTime <= interval ) )
-         {
-            return NULL ;
-         }
-      }
-      /// lock the unit
-      info.second->lockPageCleaner() ;
-      _syncUnitList.pop_front() ;
-
-      return info.second ;
-   }
-
-   _utilCacheUnit* _utilCacheMgr::dispatchRecycleUnit( UINT64 interval )
-   {
-      UNIT_INFO info ;
-
-      ossScopedLock lock( &_unitLatch ) ;
-
-      if ( _recycleUnitList.empty() )
-      {
-         return NULL ;
-      }
-      info = _recycleUnitList.front() ;
-      if ( interval > 0 )
-      {
-         ossTimestamp t ;
-         ossGetCurrentTime( t ) ;
-         UINT64 curTime = t.time * 1000 + t.microtm / 1000 ;
-
-         if ( ( curTime >= info.first && curTime - info.first <= interval ) ||
-              ( curTime < info.first && info.first - curTime <= interval ) )
-         {
-            return NULL ;
-         }
-      }
-      /// lock the unit
-      info.second->lockPageCleaner() ;
-      _recycleUnitList.pop_front() ;
-
-      return info.second ;
    }
 
    void _utilCacheMgr::unregUnit( _utilCacheUnit *pUnit )
    {
-      LIST_UNIT::iterator it ;
+   }
 
-      ossScopedLock lock( &_unitLatch ) ;
-
-      /// remove from _syncUnitList
-      it = _syncUnitList.begin() ;
-      while( it != _syncUnitList.end() )
+   BOOLEAN _utilCacheMgr::canRecycle()
+   {
+      if ( totalSize() <= 0 )
       {
-         if ( (*it)->second == pUnit )
+         return FALSE ;
+      }
+      /// when free ratio over the threshold
+      else if ( totalSize() * 100 / maxCacheSize() >= UTIL_CACHE_RATIO &&
+                freeSize() * 100 / totalSize() >=
+                UTIL_BLOCK_RECYCLE_FREE_RATIO )
+      {
+         return TRUE ;
+      }
+      /// when page dirty timeout
+      else
+      {
+         ossTimestamp t ;
+         ossGetCurrentTime( t ) ;
+         UINT64 curTime = t.time * 1000 + t.microtm / 1000 ;
+
+         if ( ( curTime >= _lastRecycleTime &&
+                curTime - _lastRecycleTime > UTIL_BLOCK_TIMEOUT ) ||
+              ( curTime < _lastRecycleTime &&
+                _lastRecycleTime - curTime > UTIL_BLOCK_TIMEOUT ) )
          {
-            _syncUnitList.erase( it ) ;
+            return TRUE ;
+         }
+      }
+      return FALSE ;
+   }
+
+   UINT64 _utilCacheMgr::recycleBlocks()
+   {
+      UINT64 recycleSize = 0 ;
+      UINT64 tmpTimes = 0 ;
+      blkLatch *pLatch = NULL ;
+      
+      ossTimestamp t ;
+      ossGetCurrentTime( t ) ;
+      _lastRecycleTime = t.time * 1000 + t.microtm / 1000 ;
+
+      /// for every bucket, is the bucket useTime < average, recycle 1/2
+      /// if free/totalSize > special ratio, recycle 1/2
+      for ( UINT32 i = 0 ; i < UTIL_PAGE_SLOT_SIZE ; ++i )
+      {
+         vector< CHAR* > &slotItem = _slot[ i ] ;
+         pLatch = _latch[ i ] ;
+         utilCacheStat &statItem = (*_pStat)[ i ] ;
+
+         pLatch->get() ;
+
+         if ( ( statItem._totalSize > 0 &&
+                statItem._freeSize * 100 / statItem._totalSize >=
+                UTIL_BLOCK_RECYCLE_FREE_RATIO ) ||
+              ( totalUseTimes() > 0 &&
+                statItem._useTimes * UTIL_PAGE_SLOT_SIZE < totalUseTimes() ) )
+         {
+            /// recycle the bucket
+            recycleSize += _recycleBucket( slotItem, &statItem ) ;
+            /// clear the use times
+            tmpTimes += statItem._useTimes ;
+            statItem._useTimes = 0 ;
+         }
+
+         pLatch->release() ;
+      }
+      _totalUseTimes.sub( tmpTimes ) ;
+
+      PD_LOG( PDDEBUG, "Recycle %lld blocks", recycleSize ) ;
+
+      return recycleSize ;
+   }
+
+   UINT64 _utilCacheMgr::_recycleBucket( vector<CHAR *> &slotItem,
+                                         utilCacheStat *pStat )
+   {
+      UINT64 recycleSize = 0 ;
+      UINT32 size = slotItem.size() / 2 ;
+      CHAR *pBuff = NULL ;
+
+      for ( UINT32 i = 0 ; i < size ; ++i )
+      {
+         /// release block memory
+         pBuff = slotItem.back() ;
+         SDB_OSS_FREE( pBuff ) ;
+         slotItem.pop_back() ;
+
+         recycleSize += pStat->_pageSize ;
+
+         if ( slotItem.empty() )
+         {
             break ;
          }
-         ++it ;
       }
-      /// remove from _recycleUnitList
-      it = _recycleUnitList.begin() ;
-      while( it != _recycleUnitList.end() )
-      {
-         if ( (*it)->second == pUnit )
-         {
-            _recycleUnitList.erase( it ) ;
-            break ;
-         }
-         ++it ;
-      }
+      /// update meta data
+      pStat->_freeSize -= recycleSize ;
+      pStat->_totalSize -= recycleSize ;
+      _freeSize.sub( recycleSize ) ;
+      _totalSize.sub( recycleSize ) ;
+
+      return recycleSize ;
    }
 
    /*
@@ -1261,22 +1242,34 @@ namespace engine
       return _pData ? FALSE : TRUE ;
    }
 
-   void _utilCacheContext::discardPage()
+   void _utilCacheContext::discardPage( UINT64 &beginLSN, UINT64 &endLSN )
    {
       if ( isPageValid() && _pPage->isDirty() )
       {
+         beginLSN = _pPage->beginLSN() ;
+         endLSN = _pPage->endLSN() ;
+
          _pPage->clearDirty() ;
          _pUnit->decDirtyPages( _pBucket ) ;
          _hasDiscard = TRUE ;
       }
    }
 
-   void _utilCacheContext::restorePage()
+   void _utilCacheContext::restorePage( UINT64 beginLSN, UINT64 endLSN )
    {
       if ( isPageValid() && _hasDiscard && !_pPage->isDirty() )
       {
          _pPage->makeDirty() ;
          _pUnit->incDirtyPages( _pBucket ) ;
+
+         if ( 0 == _pPage->lsnNum() && ~0 != beginLSN )
+         {
+            _pPage->addLSN( beginLSN ) ;
+            if ( endLSN != beginLSN )
+            {
+               _pPage->addLSN( endLSN ) ;
+            }
+         }
       }
       _hasDiscard = FALSE ;
    }
@@ -1508,7 +1501,7 @@ namespace engine
                }
                if( cb )
                {
-                  _pPage->addLSN( cb->getEndLSN() ) ;
+                  _pPage->addLSN( cb->getEndLsn() ) ;
                }
             }
             else
@@ -1596,13 +1589,12 @@ namespace engine
       INT32 rc = SDB_OK ;
       utilCachFileBase* pFile = NULL ;
       CHAR *pBuff = NULL ;
-      UINT32 buffSize = 0 ;
       UINT32 readLen = 0 ;
 
       SDB_ASSERT( _pPage && _pPage->size() >= offset + len,
                   "Page size must grater than offset + len" ) ;
 
-      rc = cb->allocBuff( len, &pBuff, buffSize ) ;
+      rc = cb->allocBuff( len, &pBuff, NULL ) ;
       if ( rc )
       {
          PD_LOG( PDERROR, "Alloc buff from cb failed, rc: %d", rc ) ;
@@ -2040,6 +2032,38 @@ namespace engine
       _pageCleaner.release_r() ;
    }
 
+   BOOLEAN _utilCacheUnit::canSync( BOOLEAN &force )
+   {
+      if ( dirtyPages() <= 0 )
+      {
+         return FALSE ;
+      }
+      /// when dirty ratio over the threshold
+      else if ( dirtyPages() * 100 / totalPages() >= _bgDirtyRatio )
+      {
+         force = TRUE ;
+         return TRUE ;
+      }
+      /// when page dirty timeout
+      else
+      {
+         ossTimestamp t ;
+         ossGetCurrentTime( t ) ;
+         UINT64 curTime = t.time * 1000 + t.microtm / 1000 ;
+
+         force = FALSE ;
+
+         if ( ( curTime >= _lastSyncTime &&
+                curTime - _lastSyncTime > _dirtyTimeout ) ||
+              ( curTime < _lastSyncTime &&
+                _lastSyncTime - curTime > _dirtyTimeout ) )
+         {
+            return TRUE ;
+         }
+      }
+      return FALSE ;
+   }
+
    UINT32 _utilCacheUnit::syncPages( IExecutor *cb, BOOLEAN force )
    {
       UINT32 totalPages = 0 ;
@@ -2091,6 +2115,8 @@ namespace engine
 
       totalPages += _syncPages( tmpPages, cb ) ;
 
+      PD_LOG( PDDEBUG, "Sync %d pages", totalPages ) ;
+
       return totalPages ;
    }
 
@@ -2122,6 +2148,41 @@ namespace engine
       pageMap.clear() ;
 
       return totalPages ;
+   }
+
+   BOOLEAN _utilCacheUnit::canRecycle( BOOLEAN &force )
+   {
+      if ( totalPages() <= 0 )
+      {
+         return FALSE ;
+      }
+      /// when free ratio over the threshold
+      else if ( _pMgr->totalSize() * 100 / _pMgr->maxCacheSize() >=
+                UTIL_CACHE_RATIO &&
+                _pMgr->freeSize() * 100 / _pMgr->totalSize() <=
+                 _bgFreeRatio )
+      {
+         force = TRUE ;
+         return TRUE ;
+      }
+      /// when page dirty timeout
+      else
+      {
+         ossTimestamp t ;
+         ossGetCurrentTime( t ) ;
+         UINT64 curTime = t.time * 1000 + t.microtm / 1000 ;
+
+         force = FALSE ;
+
+         if ( ( curTime >= _lastRecycleTime &&
+                curTime - _lastRecycleTime > _pageTimeout ) ||
+              ( curTime < _lastRecycleTime &&
+                _lastRecycleTime - curTime > _pageTimeout ) )
+         {
+            return TRUE ;
+         }
+      }
+      return FALSE ;
    }
 
    UINT64 _utilCacheUnit::recyclePages( BOOLEAN force, INT64 exceptSize )
@@ -2177,6 +2238,8 @@ namespace engine
             break ;
          }
       }
+
+      PD_LOG( PDDEBUG, "Recycle %lld pages", totalSize ) ;
 
       return totalSize ;
    }

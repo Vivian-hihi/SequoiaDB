@@ -38,22 +38,25 @@
 
 namespace engine
 {
+   /*
+      _dmsLobDirectOutBuffer define
+   */
    class _dmsLobDirectOutBuffer : public _dmsLobDirectBuffer 
    {
    public:
       _dmsLobDirectOutBuffer( const void *buf,
                               UINT32 size,
-                              _pmdEDUCB *cb ) ;
+                              IExecutor *cb ) ;
       virtual ~_dmsLobDirectOutBuffer() ;
    public:
       virtual INT32 getAlignedTuple( tuple &t ) ;
 
    private:
-      const void *_usrBuf ;
-      UINT32 _size ;
+      const void  *_usrBuf ;
+      UINT32      _size ;
    } ;
    typedef class _dmsLobDirectOutBuffer dmsLobDirectOutBuffer ;
 }
 
-#endif
+#endif //DMS_LOBDIRECTOUTBUFFER_HPP_
 

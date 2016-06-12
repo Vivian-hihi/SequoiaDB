@@ -38,6 +38,7 @@
 #include "dmsStorageLobData.hpp"
 #include "dmsStorageData.hpp"
 #include "ossLatch.hpp"
+#include "utilCache.hpp"
 
 namespace engine
 {
@@ -76,10 +77,12 @@ namespace engine
       _dmsStorageLob( const CHAR *lobmFileName,
                       const CHAR *lobdFileName,
                       dmsStorageInfo *info,
-                      dmsStorageData *pDataSu ) ;
+                      dmsStorageData *pDataSu,
+                      utilCacheUnit* pCacheUnit ) ;
       virtual ~_dmsStorageLob() ;
 
-      _dmsStorageLobData*  getLobData() { return &_data ; }
+      _dmsStorageLobData* getLobData() { return &_data ; }
+      utilCacheUnit* getCacheUnit() { return _pCacheUnit ; }
 
    public:
       INT32 open( const CHAR *path,
@@ -199,7 +202,9 @@ namespace engine
       /// release space of page and change other meta data.
       INT32 _removePage( DMS_LOB_PAGEID page,
                          const _dmsLobDataMapBlk *blk,
-                         const UINT32 *bucket ) ;
+                         const UINT32 *bucket,
+                         dmsMBContext *mbContext,
+                         BOOLEAN needRelease = TRUE ) ;
 
       INT32 _rollback( DMS_LOB_PAGEID page,
                        dmsMBContext *mbContext,
@@ -213,6 +218,8 @@ namespace engine
       CHAR                          _path[ OSS_MAX_PATHSIZE + 1 ] ;
       BOOLEAN                       _needDelayOpen ;
       ossSpinXLatch                 _delayOpenLatch ;
+
+      utilCacheUnit*                _pCacheUnit ;
 
    } ;
    typedef class _dmsStorageLob dmsStorageLob ;

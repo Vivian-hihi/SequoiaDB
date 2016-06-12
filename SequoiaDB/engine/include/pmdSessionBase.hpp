@@ -84,12 +84,14 @@ namespace engine
 
          _dpsLogWrapper* getDPSCB() { return _pDPSCB ; }
 
-         CHAR*       getBuff( INT32 len ) ;
+         CHAR*       getBuff( UINT32 len ) ;
          INT32       getBuffLen () const { return _buffLen ; }
 
-         INT32       allocBuff( INT32 len, CHAR **ppBuff, INT32 &buffLen ) ;
-         void        releaseBuff( CHAR *pBuff, INT32 buffLen ) ;
-         INT32       reallocBuff( INT32 len, CHAR **ppBuff, INT32 &buffLen ) ;
+         INT32       allocBuff( UINT32 len, CHAR **ppBuff,
+                                UINT32 *pRealSize = NULL ) ;
+         void        releaseBuff( CHAR *pBuff ) ;
+         INT32       reallocBuff( UINT32 len, CHAR **ppBuff,
+                                  UINT32 *pRealSize = NULL ) ;
 
          void        disconnect() ;
          INT32       sendData( const CHAR *pData, INT32 size,
@@ -128,7 +130,7 @@ namespace engine
 
       protected:
          CHAR                             *_pBuff ;
-         INT32                            _buffLen ;
+         UINT32                           _buffLen ;
 
    } ;
    typedef _pmdSession pmdSession ;

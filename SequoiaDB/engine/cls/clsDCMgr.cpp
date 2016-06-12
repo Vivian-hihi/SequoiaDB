@@ -1213,8 +1213,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       MsgCatCatGroupReq *pReq = NULL ;
       CHAR *pBuff = NULL ;
-      INT32 bufflen = 0 ;
-      INT32 msgSize = 0 ;
+      UINT32 msgSize = 0 ;
       UINT32 groupID = 0 ;
 
       SDB_ASSERT( groupName, "Group name can't be NULL" ) ;
@@ -1234,7 +1233,7 @@ namespace engine
       msgSize += sizeof( MsgCatGroupReq ) ;
 
       // alloc buff
-      rc = cb->allocBuff( msgSize, &pBuff, bufflen ) ;
+      rc = cb->allocBuff( msgSize, &pBuff, NULL ) ;
       if ( rc )
       {
          goto error ;

@@ -237,7 +237,7 @@ namespace engine
                                             INT32 &buffLen )
    {
       INT32 rc = SDB_OK ;
-      INT32 recvSize = (INT32)sizeof(MsgSysInfoRequest) ;
+      UINT32 recvSize = sizeof(MsgSysInfoRequest) ;
 
       *ppBuff = getBuff( recvSize ) ;
       if ( !*ppBuff )

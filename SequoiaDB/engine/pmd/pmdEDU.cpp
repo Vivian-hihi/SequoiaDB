@@ -141,20 +141,18 @@ namespace engine
       _pmdEDUCB implement
    */
    _pmdEDUCB::_pmdEDUCB( _pmdEDUMgr *mgr, EDU_TYPES type )
-   : _tid( 0 ),
-   _processEventCount( 0 ),
-   _eduMgr( mgr ),
-   _eduType( type ),
-   _ctrlFlag( 0 ),
-   _writingDB( FALSE ),
-   _writingTime( 0 ),
-   _threadHdl( 0 ),
-#if defined (_LINUX)
-   _threadID( 0 ),
-#endif
-   _pClientSock( NULL )
    {
-      _Name[0]          = 0 ;
+      _eduMgr           = mgr ;
+      _eduID            = PMD_INVALID_EDUID ;
+      _tid              = 0 ;
+      _status           = PMD_EDU_UNKNOW ;
+      _eduType          = type ;
+      _ctrlFlag         = 0 ;
+      _writingDB        = FALSE ;
+      _writingTime      = 0 ;
+      _processEventCount= 0 ;
+      _name[0]          = 0 ;
+      _threadHdl        = 0 ;
       _pSession         = NULL ;
       _pCompressBuff    = NULL ;
       _compressBuffLen  = 0 ;
@@ -163,20 +161,26 @@ namespace engine
       _totalCatchSize   = 0 ;
       _totalMemSize     = 0 ;
       _isDoRollback     = FALSE ;
+      _pClientSock      = NULL ;
 
-#if defined ( SDB_ENGINE )
-      _pCoordSession    = NULL ;
+      _alignedMem       = NULL ;
+      _alignedMemSize   = 0 ;
+
       _beginLsn         = 0 ;
       _endLsn           = 0 ;
       _lsnNumber        = 0 ;
+
+#if defined (_LINUX)
+      _threadID         = 0 ;
+#endif // _LINUX
+
+#if defined ( SDB_ENGINE )
+      _pCoordSession    = NULL ;
       _relatedTransLSN  = DPS_INVALID_LSN_OFFSET ;
       _curTransLSN      = DPS_INVALID_LSN_OFFSET ;
       _curTransID       = DPS_INVALID_TRANS_ID ;
       _pTransNodeMap    = NULL ;
       _transRC          = SDB_OK ;
-
-      _alignedMem       = NULL ;
-      _alignedMemSize   = 0 ;
 
       _curRequestID     = 1 ;
       _dmsLockLevel     = 0 ;
@@ -232,14 +236,17 @@ namespace engine
          pmdEduEventRelase( data, this ) ;
       }
       _processEventCount = 0 ;
-      _Name[0] = 0 ;
+      _name[0] = 0 ;
       _userName = "" ;
       _passWord = "" ;
 
+      _ctrlFlag = 0 ;
+      resetLsn() ;
+      writingDB( FALSE ) ;
+      releaseAlignedBuff() ;
+
 #if defined ( SDB_ENGINE )
       clearTransInfo() ;
-      releaseAlignedMemory() ;
-      resetLsn() ;
 #endif // SDB_ENGINE
 
       // release buff
@@ -294,6 +301,12 @@ namespace engine
       return ss.str() ;
    }
 
+   const CHAR* _pmdEDUCB::getName ()
+   {
+      ossScopedLock _lock ( &_mutex, SHARED ) ;
+      return _name ;
+   }
+
    void _pmdEDUCB::attachSession( ISession *pSession )
    {
       _pSession = pSession ;
@@ -337,67 +350,6 @@ namespace engine
       PD_TRACE_EXIT ( SDB__PMDEDUCB_FORCE );
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDEDUCB_ISINT, "_pmdEDUCB::isInterrupted" )
-   BOOLEAN _pmdEDUCB::isInterrupted ( BOOLEAN onlyFlag )
-   {
-      PD_TRACE_ENTRY ( SDB__PMDEDUCB_ISINT );
-      BOOLEAN ret = FALSE ;
-
-      // mask interrupt while doing rollback
-      if ( !onlyFlag && _isDoRollback )
-      {
-         goto done;
-      }
-      if ( _ctrlFlag & EDU_CTRL_INTERRUPTED )
-      {
-         ret = TRUE ;
-         goto done ;
-      }
-      else if ( !onlyFlag && _pClientSock )
-      {
-         if ( _pClientSock->isClosed() )
-         {
-            _ctrlFlag |= ( EDU_CTRL_INTERRUPTED | EDU_CTRL_DISCONNECTED ) ;
-            ret = TRUE ;
-         }
-         else
-         {
-            INT32 receivedLen ;
-            MsgHeader header ;
-            INT32 rc = _pClientSock->recv( (CHAR*)&header , sizeof(header),
-                                           receivedLen, 0, MSG_PEEK, TRUE, TRUE ) ;
-            if ( ( rc >= (INT32)sizeof(header)
-                   && MSG_BS_DISCONNECT == header.opCode )
-                 || SDB_NETWORK_CLOSE == rc || SDB_NETWORK == rc )
-            {
-               _ctrlFlag |= ( EDU_CTRL_INTERRUPTED | EDU_CTRL_DISCONNECTED ) ;
-               ret = TRUE ;
-            }
-            else if ( rc >= (INT32)sizeof(header) &&
-                      ( MSG_BS_INTERRUPTE == header.opCode ||
-                        MSG_BS_INTERRUPTE_SELF == header.opCode ) )
-            {
-               _ctrlFlag |= EDU_CTRL_INTERRUPTED ;
-               ret = TRUE ;
-            }
-         }
-      }
-   done :
-      PD_TRACE1 ( SDB__PMDEDUCB_ISINT, PD_PACK_INT(ret) );
-      PD_TRACE_EXIT ( SDB__PMDEDUCB_ISINT );
-      return ret ;
-   }
-
-   BOOLEAN _pmdEDUCB::isDisconnected ()
-   {
-      return ( _ctrlFlag & EDU_CTRL_DISCONNECTED ) ? TRUE : FALSE ;
-   }
-
-   BOOLEAN _pmdEDUCB::isForced ()
-   {
-      return ( _ctrlFlag & EDU_CTRL_FORCED ) ? TRUE : FALSE ;
-   }
-
    void _pmdEDUCB::resetInterrupt ()
    {
       _ctrlFlag &= ~EDU_CTRL_INTERRUPTED ;
@@ -419,8 +371,8 @@ namespace engine
    void _pmdEDUCB::setName ( const CHAR * name )
    {
       ossScopedLock _lock ( &_mutex, EXCLUSIVE ) ;
-      ossStrncpy ( _Name, name, PMD_EDU_NAME_LENGTH ) ;
-      _Name[PMD_EDU_NAME_LENGTH] = 0 ;
+      ossStrncpy ( _name, name, PMD_EDU_NAME_LENGTH ) ;
+      _name[PMD_EDU_NAME_LENGTH] = 0 ;
    }
 
    CHAR *_pmdEDUCB::_getBuffInfo ( EDU_INFO_TYPE type, UINT32 & size )
@@ -503,144 +455,26 @@ namespace engine
       PD_TRACE_EXIT ( SDB__PMDEDUCB_RESETINFO );
    }
 
-   BOOLEAN _pmdEDUCB::_allocFromCatch( INT32 len, CHAR **ppBuff,
-                                       INT32 &buffLen )
+   BOOLEAN _pmdEDUCB::_allocFromCatch( UINT32 len, CHAR **ppBuff,
+                                       UINT32 *buffLen )
    {
+      UINT32 tmpLen = 0 ;
       CATCH_MAP_IT it = _catchMap.lower_bound( len ) ;
       if ( it != _catchMap.end() )
       {
          *ppBuff = it->second ;
-         buffLen = it->first ;
+         tmpLen = it->first ;
          _catchMap.erase( it ) ;
-         _allocMap[ *ppBuff ] = buffLen ;
-         _totalCatchSize -= buffLen ;
+         _allocMap[ *ppBuff ] = tmpLen ;
+         _totalCatchSize -= tmpLen ;
+
+         if ( buffLen )
+         {
+            *buffLen = tmpLen ;
+         }
          return TRUE ;
       }
       return FALSE ;
-   }
-
-   INT32 _pmdEDUCB::allocBuff( INT32 len, CHAR **ppBuff, INT32 &buffLen )
-   {
-      INT32 rc = SDB_OK ;
-
-      // first alloc from catch
-      if ( _totalCatchSize >= len && _allocFromCatch( len, ppBuff, buffLen ) )
-      {
-         goto done ;
-      }
-
-      // malloc
-      len = ossRoundUpToMultipleX( len, EDU_MEM_ALIGMENT_SIZE ) ;
-      *ppBuff = ( CHAR* )SDB_OSS_MALLOC( len ) ;
-      if( !*ppBuff )
-      {
-         rc = SDB_OOM ;
-         PD_LOG( PDERROR, "Edu[%s] malloc memory[size: %d] failed",
-                 toString().c_str(), len ) ;
-         goto error ;
-      }
-      buffLen = len ;
-
-      // update meta info
-      _totalMemSize += buffLen ;
-      _allocMap[ *ppBuff ] = buffLen ;
-
-   done:
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   void _pmdEDUCB::releaseBuff( CHAR *pBuff )
-   {
-      ALLOC_MAP_IT itAlloc = _allocMap.find( pBuff ) ;
-      if ( itAlloc == _allocMap.end() )
-      {
-         SDB_OSS_FREE( pBuff ) ;
-         return ;
-      }
-      INT32 buffLen = itAlloc->second ;
-      _allocMap.erase( itAlloc ) ;
-
-      if ( (UINT32)buffLen > EDU_MAX_CATCH_SIZE )
-      {
-         SDB_OSS_FREE( pBuff ) ;
-         _totalMemSize -= buffLen ;
-      }
-      else
-      {
-         // add to catch
-         _catchMap.insert( std::make_pair( buffLen, pBuff ) ) ;
-         _totalCatchSize += buffLen ;
-
-         // re-org catch
-         while ( _totalCatchSize > EDU_MAX_CATCH_SIZE )
-         {
-            CATCH_MAP_IT it = _catchMap.begin() ;
-            SDB_OSS_FREE( it->second ) ;
-            _totalMemSize -= it->first ;
-            _totalCatchSize -= it->first ;
-            _catchMap.erase( it ) ;
-         }
-      }
-   }
-
-   INT32 _pmdEDUCB::reallocBuff( INT32 len, CHAR **ppBuff, INT32 &buffLen )
-   {
-      INT32 rc = SDB_OK ;
-      CHAR *pOld = *ppBuff ;
-      INT32 oldLen = buffLen ;
-
-      ALLOC_MAP_IT itAlloc = _allocMap.find( *ppBuff ) ;
-      if ( itAlloc != _allocMap.end() )
-      {
-         buffLen = itAlloc->second ;
-         oldLen = buffLen ;
-      }
-      else if ( *ppBuff != NULL || buffLen != 0 )
-      {
-         PD_LOG( PDERROR, "EDU[%s] realloc input buffer error",
-                 toString().c_str() ) ;
-         rc = SDB_SYS ;
-         goto error ;
-      }
-
-      if ( buffLen >= len )
-      {
-         goto done ;
-      }
-      len = ossRoundUpToMultipleX( len, EDU_MEM_ALIGMENT_SIZE ) ;
-      *ppBuff = ( CHAR* )SDB_OSS_REALLOC( *ppBuff, len ) ;
-      if ( !*ppBuff )
-      {
-         rc = SDB_OOM ;
-         PD_LOG( PDERROR, "Failed to realloc memory, size: %d", len ) ;
-         goto error ;
-      }
-
-      buffLen = len ;
-
-      if ( pOld != *ppBuff )
-      {
-         /// the old pointer has release, so need del from map
-         _allocMap.erase( pOld ) ;
-      }
-
-      // update meta info
-      _totalMemSize += ( len - oldLen ) ;
-
-      _allocMap[ *ppBuff ] = buffLen ;
-
-   done:
-      return rc ;
-   error:
-      if ( pOld )
-      {
-         releaseBuff( pOld ) ;
-         *ppBuff = NULL ;
-         buffLen = 0 ;
-      }
-      goto done ;
    }
 
    void _pmdEDUCB::restoreBuffs( _pmdEDUCB::CATCH_MAP &catchMap )
@@ -695,7 +529,7 @@ namespace engine
       _catchMap.clear() ;
    }
 
-   CHAR* _pmdEDUCB::getCompressBuff( INT32 len )
+   CHAR* _pmdEDUCB::getCompressBuff( UINT32 len )
    {
       if ( _compressBuffLen < len )
       {
@@ -706,13 +540,13 @@ namespace engine
          }
          _compressBuffLen = 0 ;
 
-         allocBuff( len, &_pCompressBuff, _compressBuffLen ) ;
+         allocBuff( len, &_pCompressBuff, &_compressBuffLen ) ;
       }
 
       return _pCompressBuff ;
    }
 
-   CHAR* _pmdEDUCB::getUncompressBuff( INT32 len )
+   CHAR* _pmdEDUCB::getUncompressBuff( UINT32 len )
    {
       if ( _uncompressBuffLen < len )
       {
@@ -723,10 +557,289 @@ namespace engine
          }
          _uncompressBuffLen = 0 ;
 
-         allocBuff( len, &_pUncompressBuff, _uncompressBuffLen ) ;
+         allocBuff( len, &_pUncompressBuff, &_uncompressBuffLen ) ;
       }
 
       return _pUncompressBuff ;
+   }
+
+   /*
+      Interface impelent
+   */
+   void *_pmdEDUCB::getAlignedBuff( UINT32 size,
+                                    UINT32 *pRealSize,
+                                    UINT32 alignment )
+   {
+      SDB_ASSERT( alignment == OSS_FILE_DIRECT_IO_ALIGNMENT,
+                  "rewrite this function if u want to use new alignment" ) ;
+      if ( _alignedMemSize < size )
+      {
+         if ( NULL != _alignedMem )
+         {
+            SDB_OSS_ORIGINAL_FREE( _alignedMem ) ;
+            _alignedMemSize = 0 ;
+            _alignedMem = NULL ; 
+         }
+
+         _alignedMem = ossAlignedAlloc( alignment, size ) ;
+         if ( NULL != _alignedMem )
+         {
+            _alignedMemSize = size ;
+         }
+      }
+
+      if ( pRealSize )
+      {
+         *pRealSize = _alignedMemSize ;
+      }
+
+      return _alignedMem ;
+   }
+
+   void _pmdEDUCB::releaseAlignedBuff()
+   {
+      if ( NULL != _alignedMem )
+      {
+         SDB_OSS_ORIGINAL_FREE( _alignedMem ) ;
+         _alignedMem = NULL ;
+         _alignedMemSize = 0 ;
+      }
+   }
+
+   INT32 _pmdEDUCB::allocBuff( UINT32 len,
+                               CHAR **ppBuff,
+                               UINT32 *pRealSize )
+   {
+      INT32 rc = SDB_OK ;
+
+      // first alloc from catch
+      if ( _totalCatchSize >= len &&
+           _allocFromCatch( len, ppBuff, pRealSize ) )
+      {
+         goto done ;
+      }
+
+      // malloc
+      len = ossRoundUpToMultipleX( len, EDU_MEM_ALIGMENT_SIZE ) ;
+      *ppBuff = ( CHAR* )SDB_OSS_MALLOC( len ) ;
+      if( !*ppBuff )
+      {
+         rc = SDB_OOM ;
+         PD_LOG( PDERROR, "Edu[%s] malloc memory[size: %u] failed",
+                 toString().c_str(), len ) ;
+         goto error ;
+      }
+
+      // update meta info
+      _totalMemSize += len ;
+      _allocMap[ *ppBuff ] = len ;
+
+      if ( pRealSize )
+      {
+         *pRealSize = len ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _pmdEDUCB::reallocBuff( UINT32 len,
+                                 CHAR **ppBuff,
+                                 UINT32 *pRealSize )
+   {
+      INT32 rc = SDB_OK ;
+      CHAR *pOld = *ppBuff ;
+      UINT32 oldLen = 0 ;
+
+      ALLOC_MAP_IT itAlloc = _allocMap.find( *ppBuff ) ;
+      if ( itAlloc != _allocMap.end() )
+      {
+         oldLen = itAlloc->second ;
+         if ( pRealSize )
+         {
+            *pRealSize = oldLen ;
+         }
+      }
+      else if ( *ppBuff != NULL )
+      {
+         PD_LOG( PDERROR, "EDU[%s] realloc input buffer error",
+                 toString().c_str() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      if ( oldLen >= len )
+      {
+         goto done ;
+      }
+      len = ossRoundUpToMultipleX( len, EDU_MEM_ALIGMENT_SIZE ) ;
+      *ppBuff = ( CHAR* )SDB_OSS_REALLOC( *ppBuff, len ) ;
+      if ( !*ppBuff )
+      {
+         rc = SDB_OOM ;
+         PD_LOG( PDERROR, "Failed to realloc memory, size: %d", len ) ;
+         goto error ;
+      }
+
+      if ( pOld != *ppBuff )
+      {
+         /// the old pointer has release, so need del from map
+         _allocMap.erase( pOld ) ;
+      }
+
+      // update meta info
+      _totalMemSize += ( len - oldLen ) ;
+
+      _allocMap[ *ppBuff ] = len ;
+
+      if ( pRealSize )
+      {
+         *pRealSize = len ;
+      }
+
+   done:
+      return rc ;
+   error:
+      if ( pOld )
+      {
+         releaseBuff( pOld ) ;
+         *ppBuff = NULL ;
+         if ( pRealSize )
+         {
+            *pRealSize = 0 ;
+         }
+      }
+      goto done ;
+   }
+
+   void _pmdEDUCB::releaseBuff( CHAR *pBuff )
+   {
+      ALLOC_MAP_IT itAlloc = _allocMap.find( pBuff ) ;
+      if ( itAlloc == _allocMap.end() )
+      {
+         SDB_OSS_FREE( pBuff ) ;
+         return ;
+      }
+      INT32 buffLen = itAlloc->second ;
+      _allocMap.erase( itAlloc ) ;
+
+      if ( (UINT32)buffLen > EDU_MAX_CATCH_SIZE )
+      {
+         SDB_OSS_FREE( pBuff ) ;
+         _totalMemSize -= buffLen ;
+      }
+      else
+      {
+         // add to catch
+         _catchMap.insert( std::make_pair( buffLen, pBuff ) ) ;
+         _totalCatchSize += buffLen ;
+
+         // re-org catch
+         while ( _totalCatchSize > EDU_MAX_CATCH_SIZE )
+         {
+            CATCH_MAP_IT it = _catchMap.begin() ;
+            SDB_OSS_FREE( it->second ) ;
+            _totalMemSize -= it->first ;
+            _totalCatchSize -= it->first ;
+            _catchMap.erase( it ) ;
+         }
+      }
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDEDUCB_ISINT, "_pmdEDUCB::isInterrupted" )
+   BOOLEAN _pmdEDUCB::isInterrupted ( BOOLEAN onlyFlag )
+   {
+      PD_TRACE_ENTRY ( SDB__PMDEDUCB_ISINT );
+      BOOLEAN ret = FALSE ;
+
+      // mask interrupt while doing rollback
+      if ( !onlyFlag && _isDoRollback )
+      {
+         goto done;
+      }
+      if ( _ctrlFlag & EDU_CTRL_INTERRUPTED )
+      {
+         ret = TRUE ;
+         goto done ;
+      }
+      else if ( !onlyFlag && _pClientSock )
+      {
+         if ( _pClientSock->isClosed() )
+         {
+            _ctrlFlag |= ( EDU_CTRL_INTERRUPTED | EDU_CTRL_DISCONNECTED ) ;
+            ret = TRUE ;
+         }
+         else
+         {
+            INT32 receivedLen ;
+            MsgHeader header ;
+            INT32 rc = _pClientSock->recv( (CHAR*)&header , sizeof(header),
+                                           receivedLen, 0, MSG_PEEK, TRUE, TRUE ) ;
+            if ( ( rc >= (INT32)sizeof(header)
+                   && MSG_BS_DISCONNECT == header.opCode )
+                 || SDB_NETWORK_CLOSE == rc || SDB_NETWORK == rc )
+            {
+               _ctrlFlag |= ( EDU_CTRL_INTERRUPTED | EDU_CTRL_DISCONNECTED ) ;
+               ret = TRUE ;
+            }
+            else if ( rc >= (INT32)sizeof(header) &&
+                      ( MSG_BS_INTERRUPTE == header.opCode ||
+                        MSG_BS_INTERRUPTE_SELF == header.opCode ) )
+            {
+               _ctrlFlag |= EDU_CTRL_INTERRUPTED ;
+               ret = TRUE ;
+            }
+         }
+      }
+   done :
+      PD_TRACE1 ( SDB__PMDEDUCB_ISINT, PD_PACK_INT(ret) );
+      PD_TRACE_EXIT ( SDB__PMDEDUCB_ISINT );
+      return ret ;
+   }
+
+   BOOLEAN _pmdEDUCB::isDisconnected ()
+   {
+      return ( _ctrlFlag & EDU_CTRL_DISCONNECTED ) ? TRUE : FALSE ;
+   }
+
+   BOOLEAN _pmdEDUCB::isForced ()
+   {
+      return ( _ctrlFlag & EDU_CTRL_FORCED ) ? TRUE : FALSE ;
+   }
+
+   void _pmdEDUCB::writingDB( BOOLEAN writing )
+   {
+      _writingDB = writing ;
+      _writingTime = writing ? (UINT64)time( NULL ) : 0 ;
+   }
+
+   void _pmdEDUCB::resetLsn()
+   {
+      _beginLsn = ~0 ;
+      _endLsn = ~0 ;
+      _lsnNumber = 0 ;
+   }
+
+   void _pmdEDUCB::insertLsn( UINT64 lsn )
+   {
+      if ( _beginLsn == (UINT64)~0 )
+      {
+         _beginLsn = lsn ;
+      }
+      _endLsn = lsn ;
+      _lsnNumber++ ;
+   }
+
+   void _pmdEDUCB::incEventCount( UINT32 step )
+   {
+      _processEventCount += step ;
+   }
+
+   UINT32 _pmdEDUCB::getQueSize()
+   {
+      return _queue.size() ;
    }
 
 #if defined ( SDB_ENGINE )
@@ -783,7 +896,7 @@ namespace engine
       ossStrncpy ( simple._eduStatus, getEDUStatusDesp(_status),
                    MON_EDU_STATUS_SZ ) ;
       ossStrncpy ( simple._eduType, getEDUName (_eduType), MON_EDU_TYPE_SZ ) ;
-      ossStrncpy ( simple._eduName, _Name, MON_EDU_NAME_SZ ) ;
+      ossStrncpy ( simple._eduName, _name, MON_EDU_NAME_SZ ) ;
       if ( _pSession )
       {
          simple._relatedNID = _pSession->identifyID() ;
@@ -812,7 +925,7 @@ namespace engine
       ossStrncpy ( full._eduStatus, getEDUStatusDesp(_status),
                    MON_EDU_STATUS_SZ ) ;
       ossStrncpy ( full._eduType, getEDUName (_eduType), MON_EDU_TYPE_SZ ) ;
-      ossStrncpy ( full._eduName, _Name, MON_EDU_NAME_SZ ) ;
+      ossStrncpy ( full._eduName, _name, MON_EDU_NAME_SZ ) ;
 
       full._monApplCB = _monApplCB ;
       full._threadHdl = _threadHdl ;
@@ -828,11 +941,6 @@ namespace engine
          full._relatedNID = 0 ;
       }
       PD_TRACE_EXIT ( SDB___PMDEDUCB_DUMPINFO2 );
-   }
-
-   UINT32 _pmdEDUCB::getQueSize()
-   {
-      return _queue.size() ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDEDUCB_GETTRANSLOCK, "_pmdEDUCB::getTransLock" )
@@ -999,40 +1107,6 @@ namespace engine
          return TRUE;
       }
       return FALSE;
-   }
-
-   void *_pmdEDUCB::getAlignedMemory( UINT32 alignment, UINT32 size )
-   {
-      SDB_ASSERT( alignment == OSS_FILE_DIRECT_IO_ALIGNMENT,
-                  "rewrite this function if u want to use new alignment" ) ;
-      if ( _alignedMemSize < size )
-      {
-         if ( NULL != _alignedMem )
-         {
-            SDB_OSS_ORIGINAL_FREE( _alignedMem ) ;
-            _alignedMemSize = 0 ;
-            _alignedMem = NULL ; 
-         }
-
-         _alignedMem = ossAlignedAlloc( alignment, size ) ;
-         if ( NULL != _alignedMem )
-         {
-            _alignedMemSize = size ;
-         }
-      }
-      return _alignedMem ;
-   }
-
-   void _pmdEDUCB::releaseAlignedMemory()
-   {
-      if ( NULL != _alignedMem )
-      {
-         SDB_OSS_ORIGINAL_FREE( _alignedMem ) ;
-         _alignedMem = NULL ;
-         _alignedMemSize = 0 ;
-      }
-
-      return ;
    }
 
    void _pmdEDUCB::dumpTransInfo( monTransInfo &transInfo )
@@ -1394,9 +1468,8 @@ namespace engine
                          INT32 timeout, INT32 forceTimeout )
    {
       INT32 rc = SDB_OK ;
-      INT32 msgLen = 0 ;
+      UINT32 msgLen = 0 ;
       CHAR *pRecvBuf = NULL ;
-      INT32 buffLen = 0 ;
       rc = pmdSend( (const CHAR *)pMsg, pMsg->messageLength, sock,
                     cb, timeout ) ;
       if ( rc )
@@ -1410,9 +1483,9 @@ namespace engine
       {
          goto error ;
       }
-      if ( msgLen < (INT32)sizeof( MsgHeader ) || msgLen > SDB_MAX_MSG_LENGTH )
+      if ( msgLen < sizeof( MsgHeader ) || msgLen > SDB_MAX_MSG_LENGTH )
       {
-         PD_LOG( PDERROR, "Recieve msg size[%d] less than msg header or more "
+         PD_LOG( PDERROR, "Recieve msg size[%u] less than msg header or more "
                  "than max size", msgLen ) ;
          rc = SDB_INVALIDARG ;
          sock->close() ;
@@ -1421,7 +1494,7 @@ namespace engine
       // alloc memory
       if ( useCBMem )
       {
-         rc = cb->allocBuff( msgLen, &pRecvBuf, buffLen ) ;
+         rc = cb->allocBuff( msgLen, &pRecvBuf, NULL ) ;
          if ( rc )
          {
             goto error ;
@@ -1432,7 +1505,7 @@ namespace engine
          pRecvBuf = ( CHAR* )SDB_OSS_MALLOC( msgLen ) ;
          if ( !pRecvBuf )
          {
-            PD_LOG( PDERROR, "Alloc memory failed, size: %d", msgLen ) ;
+            PD_LOG( PDERROR, "Alloc memory failed, size: %u", msgLen ) ;
             rc = SDB_OOM ;
             goto error ;
          }

@@ -306,6 +306,14 @@ namespace engine
 
       _init = TRUE ;
 
+      /// Init the cache manager
+      rc = _buffPool.init( _optioncb.getMaxCacheSize() ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Init cache buffer failed, rc: %d", rc ) ;
+         goto error ;
+      }
+
       // Init all registered cb
       for ( index = 0 ; index < SDB_CB_MAX ; ++index )
       {
@@ -397,6 +405,9 @@ namespace engine
                     pCB->cbType(), pCB->cbName(), rc ) ;
          }
       }
+
+      /// fini cache manager
+      _buffPool.fini() ;
 
       pmdUndeclareEDUCB() ;
    }

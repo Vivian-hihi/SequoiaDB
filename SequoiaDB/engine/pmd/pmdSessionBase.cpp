@@ -86,7 +86,7 @@ namespace engine
       // release buff
       if ( _pBuff )
       {
-         releaseBuff( _pBuff, _buffLen ) ;
+         releaseBuff( _pBuff ) ;
          _pBuff = NULL ;
       }
       _buffLen = 0 ;
@@ -173,7 +173,7 @@ namespace engine
       return 0 ;
    }
 
-   INT32 _pmdSession::allocBuff( INT32 len, CHAR **ppBuff, INT32 &buffLen )
+   INT32 _pmdSession::allocBuff( UINT32 len, CHAR **ppBuff, UINT32 *pRealSize )
    {
       INT32 rc = SDB_OK ;
 
@@ -182,7 +182,7 @@ namespace engine
          rc = SDB_SYS ;
          goto error ;
       }
-      rc = _pEDUCB->allocBuff( len, ppBuff, buffLen ) ;
+      rc = _pEDUCB->allocBuff( len, ppBuff, pRealSize ) ;
 
    done:
       return rc ;
@@ -190,7 +190,7 @@ namespace engine
       goto done ;
    }
 
-   void _pmdSession::releaseBuff( CHAR *pBuff, INT32 buffLen )
+   void _pmdSession::releaseBuff( CHAR *pBuff )
    {
       SDB_ASSERT( _pEDUCB, "EDUCB can't be NULL" ) ;
 
@@ -200,7 +200,8 @@ namespace engine
       }
    }
 
-   INT32 _pmdSession::reallocBuff( INT32 len, CHAR **ppBuff, INT32 &buffLen )
+   INT32 _pmdSession::reallocBuff( UINT32 len, CHAR **ppBuff,
+                                   UINT32 *pRealSize )
    {
       INT32 rc = SDB_OK ;
 
@@ -209,7 +210,7 @@ namespace engine
          rc = SDB_SYS ;
          goto error ;
       }
-      rc = _pEDUCB->reallocBuff( len, ppBuff, buffLen ) ;
+      rc = _pEDUCB->reallocBuff( len, ppBuff, pRealSize ) ;
 
    done:
       return rc ;
@@ -217,18 +218,18 @@ namespace engine
       goto done ;
    }
 
-   CHAR* _pmdSession::getBuff( INT32 len )
+   CHAR* _pmdSession::getBuff( UINT32 len )
    {
       if ( _buffLen < len )
       {
          if ( _pBuff )
          {
-            releaseBuff( _pBuff, _buffLen ) ;
+            releaseBuff( _pBuff ) ;
             _pBuff = NULL ;
          }
          _buffLen = 0 ;
 
-         allocBuff( len, &_pBuff, _buffLen ) ;
+         allocBuff( len, &_pBuff, &_buffLen ) ;
       }
 
       return _pBuff ;

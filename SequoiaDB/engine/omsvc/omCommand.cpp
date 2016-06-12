@@ -8402,7 +8402,6 @@ namespace engine
       INT32 rc               = SDB_OK ;
       INT64 fileSize         = 0 ;
       SINT64 realFileSize    = 0 ;
-      INT32 buffSize         = 0 ;
       bool isFileOpened      = false ;
       bool isAllocBuff       = false ;
 
@@ -8417,7 +8416,7 @@ namespace engine
                     "Failed to get file size:file=%s, rc = %d", 
                     filePath.c_str(), rc ) ;
 
-      rc = _restSession->allocBuff( fileSize, pFileContent, buffSize ) ;
+      rc = _restSession->allocBuff( fileSize, pFileContent, NULL ) ;
       PD_RC_CHECK ( rc, PDERROR, 
                     "Failed to alloc buff:buff_size=%I64d, rc = %d", 
                     fileSize, rc ) ;
@@ -8440,7 +8439,7 @@ namespace engine
    error:
       if ( isAllocBuff )
       {
-         _restSession->releaseBuff( *pFileContent, buffSize ) ;
+         _restSession->releaseBuff( *pFileContent ) ;
       }
       goto done ;
    }
@@ -8489,7 +8488,7 @@ namespace engine
    done:
       if ( NULL != pContent )
       {
-         _restSession->releaseBuff( pContent, contentLength ) ;
+         _restSession->releaseBuff( pContent ) ;
       }
       return rc ;
    error:
@@ -10027,7 +10026,7 @@ namespace engine
    done:
       if ( NULL != pContent )
       {
-         _restSession->releaseBuff( pContent, contentLength ) ;
+         _restSession->releaseBuff( pContent ) ;
       }
       return rc ;
    error:

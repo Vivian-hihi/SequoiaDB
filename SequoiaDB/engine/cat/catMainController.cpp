@@ -157,10 +157,9 @@ namespace engine
          else
          {
             CHAR *pData = NULL ;
-            INT32 buffLen = 0 ;
             MsgHeader *pMsg = ( MsgHeader* )last->_Data ;
-            if ( SDB_OK == _pEDUCB->allocBuff( pMsg->messageLength,
-                                               &pData, buffLen ) )
+            if ( SDB_OK == _pEDUCB->allocBuff( (UINT32)pMsg->messageLength,
+                                               &pData, NULL ) )
             {
                ossMemcpy( pData, last->_Data, pMsg->messageLength ) ;
                event._Data = pData ;

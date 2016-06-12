@@ -38,7 +38,10 @@
 
 namespace engine
 {
-   _dmsLobDirectBuffer::_dmsLobDirectBuffer( _pmdEDUCB *cb )
+   /*
+      _dmsLobDirectBuffer implement
+   */
+   _dmsLobDirectBuffer::_dmsLobDirectBuffer( IExecutor *cb )
    :_cb( cb ),
     _buf( NULL ),
     _bufSize( 0 )
@@ -56,16 +59,18 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__DMS_LOBDIRECTBUF__EXTENDBUF ) ;
+      UINT32 realSize = 0 ;
 
-      _buf = _cb->getAlignedMemory( OSS_FILE_DIRECT_IO_ALIGNMENT, size ) ;
+      _buf = _cb->getAlignedBuff( size, &realSize,
+                                  OSS_FILE_DIRECT_IO_ALIGNMENT ) ;
       if ( NULL == _buf )
       {
          _bufSize = 0 ;
-         PD_LOG( PDERROR, "failed to allocate mem" ) ;
+         PD_LOG( PDERROR, "Failed to allocate mem" ) ;
          rc = SDB_OOM ;
          goto error ;
       }
-      _bufSize = size ;
+      _bufSize = realSize ;
 
    done:
       PD_TRACE_EXITRC( SDB__DMS_LOBDIRECTBUF__EXTENDBUF, rc ) ;
@@ -73,5 +78,6 @@ namespace engine
    error:
       goto done ;
    }
+
 }
 

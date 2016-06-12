@@ -44,6 +44,7 @@
 #include "dmsStorageLob.hpp"
 #include "rtnAPM.hpp"
 #include "monDMS.hpp"
+#include "utilCache.hpp"
 
 using namespace bson ;
 
@@ -89,7 +90,9 @@ namespace engine
       friend class _SDB_DMSCB ;
 
       public:
-         _dmsStorageUnit ( const CHAR *pSUName, UINT32 sequence,
+         _dmsStorageUnit ( const CHAR *pSUName,
+                           UINT32 sequence,
+                           utilCacheMgr *pMgr,
                            INT32 pageSize = DMS_PAGE_SIZE_DFT,
                            INT32 lobPageSize = DMS_DEFAULT_LOB_PAGE_SZ ) ;
          ~_dmsStorageUnit() ;
@@ -262,6 +265,9 @@ namespace engine
          dmsStorageIndex                     *_pIndexSu ;
          dmsStorageInfo                      _storageInfo ;
          dmsStorageLob                       *_pLobSu ;
+
+         utilCacheMgr                        *_pMgr ;
+         utilCacheUnit                       *_pCacheUnit ;
 
    } ;
    typedef _dmsStorageUnit dmsStorageUnit ;

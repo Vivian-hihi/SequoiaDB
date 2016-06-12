@@ -80,6 +80,7 @@ namespace engine
    #define PMD_DFT_TRANS_TIMEOUT       (60)  // 1 minute
    #define PMD_DFT_OVERFLOW_RETIO      (12)
    #define PMD_DFT_EXTEND_THRESHOLD    (32)
+   #define PMD_DFT_MAX_CACHE_JOB       (10)
 
    /*
       _pmdCfgExchange implement
@@ -1322,6 +1323,8 @@ namespace engine
       _overflowRatio       = PMD_DFT_OVERFLOW_RETIO ;
       _extendThreshold     = PMD_DFT_EXTEND_THRESHOLD ;
       _signalInterval      = 0 ;
+      _maxCacheSize        = 0 ;
+      _maxCacheJob         = 0 ;
 
 #ifdef SDB_ENTERPRISE
 
@@ -1563,6 +1566,13 @@ namespace engine
       // --signalinterval
       rdxInt( pEX, PMD_OPTION_SIGNAL_INTERVAL, _signalInterval, FALSE, TRUE,
               0, TRUE ) ;
+      // --maxcachesize
+      rdxUInt( pEX, PMD_OPTION_MAX_CACHE_SIZE, _maxCacheSize, FALSE, TRUE,
+               0, FALSE ) ;
+      /// --maxcachejob
+      rdxUInt( pEX, PMD_OPTION_MAX_CACHE_JOB, _maxCacheJob, FALSE, TRUE,
+               PMD_DFT_MAX_CACHE_JOB, FALSE ) ;
+      rdvMinMax( pEX, _maxCacheJob, 2, 200, TRUE ) ;
 
       // --omaddr
       rdxString( pEX, PMD_OPTION_OM_ADDR, _omAddrLine,

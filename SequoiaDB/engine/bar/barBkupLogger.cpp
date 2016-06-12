@@ -1180,7 +1180,7 @@ namespace engine
       BSONObjBuilder builder ;
       builder.append( BAR_SU_NAME, pLobSU->getSuName() ) ;
       builder.append( BAR_SU_FILE_NAME,
-                      pLobSU->getLobData()->getFileName().c_str() ) ;
+                      pLobSU->getLobData()->getFileName() ) ;
       builder.append( BAR_SU_FILE_OFFSET, (long long)_curOffset ) ;
       builder.append( BAR_SU_SEQUENCE, (INT32)_curSequence ) ;
       if ( BAR_DATA_TYPE_RAW_DATA == _curDataType )
@@ -1435,7 +1435,7 @@ namespace engine
                if ( rc )
                {
                   PD_LOG( PDERROR, "Read lob file[%s, offset: %lld, len: %lld] "
-                          "failed, rc: %d", pLobData->getFileName().c_str(),
+                          "failed, rc: %d", pLobData->getFileName(),
                           _curOffset, pHeader->_dataSize, rc ) ;
                   goto error ;
                }
@@ -1444,7 +1444,7 @@ namespace engine
                   rc = SDB_SYS ;
                   PD_LOG( PDERROR, "Read lob file[%s, offset: %lld, len: %lld] "
                           "failed[readLen: %d], rc: %d",
-                          pLobData->getFileName().c_str(), _curOffset,
+                          pLobData->getFileName(), _curOffset,
                           pHeader->_dataSize, readLen, rc ) ;
                   goto error ;
                }
@@ -1485,7 +1485,7 @@ namespace engine
                if ( rc )
                {
                   PD_LOG( PDERROR, "Read lob file[%s, offset: %lld, len: %lld] "
-                          "failed, rc: %d", pLobData->getFileName().c_str(),
+                          "failed, rc: %d", pLobData->getFileName(),
                           _curOffset, pHeader->_dataSize, rc ) ;
                   goto error ;
                }
@@ -1494,7 +1494,7 @@ namespace engine
                   rc = SDB_SYS ;
                   PD_LOG( PDERROR, "Read lob file[%s, offset: %lld, len: %lld] "
                           "failed[readLen: %d], rc: %d",
-                          pLobData->getFileName().c_str(), _curOffset,
+                          pLobData->getFileName(), _curOffset,
                           pHeader->_dataSize, readLen, rc ) ;
                   goto error ;
                }

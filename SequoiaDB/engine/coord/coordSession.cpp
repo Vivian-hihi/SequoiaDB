@@ -127,7 +127,6 @@ namespace engine
       SDB_ASSERT( _pEduCB, "_pEduCB can't be NULL!" ) ;
       BSONObj objInfo ;
       CHAR *pBuff = NULL ;
-      INT32 buffLen = 0 ;
       MsgComSessionInitReq *pInitReq = NULL ;
       UINT32 msgLength = sizeof( MsgComSessionInitReq ) ;
 
@@ -153,10 +152,10 @@ namespace engine
       }
 
       /// allocate memory
-      rc = _pEduCB->allocBuff( msgLength, &pBuff, buffLen ) ;
+      rc = _pEduCB->allocBuff( msgLength, &pBuff, NULL ) ;
       if ( rc )
       {
-         PD_LOG( PDERROR, "Alloc memory failed, size: %d, rc: %d",
+         PD_LOG( PDERROR, "Alloc memory failed, size: %u, rc: %d",
                  msgLength, rc ) ;
          goto error ;
       }
@@ -210,7 +209,6 @@ namespace engine
       {
          _pEduCB->releaseBuff( pBuff ) ;
          pBuff = NULL ;
-         buffLen = 0 ;
       }
       PD_TRACE_EXIT ( SDB_COORDSN_SESSIONINIT );
       return rc ;

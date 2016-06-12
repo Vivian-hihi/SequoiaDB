@@ -152,7 +152,8 @@ utilFiles = [
       "util/utilCompressorSnappy.cpp",
       "util/utilCompressorLZ4.cpp",
       "util/utilCompressorZlib.cpp",
-      "util/utilEnvCheck.cpp"
+      "util/utilEnvCheck.cpp",
+      "util/utilCache.cpp"
       ]
 
 rtnFiles = [

@@ -38,17 +38,31 @@
 #include "ossIO.hpp"
 #include "dmsStorageBase.hpp"
 #include "pmdEDU.hpp"
+#include "utilCache.hpp"
 
 namespace engine
 {
    /*
       _dmsStorageLobData define
    */
-   class _dmsStorageLobData : public SDBObject
+   class _dmsStorageLobData : public utilCachFileBase
    {
    public:
       _dmsStorageLobData( const CHAR *fileName ) ;
       virtual ~_dmsStorageLobData() ;
+
+   /// Base class functions
+   public:
+      virtual const CHAR*     getFileName() const ;
+
+      virtual INT32  write( INT32 pageID, const CHAR *pData,
+                            UINT32 len, UINT32 offset,
+                            IExecutor *cb ) ;
+
+      virtual INT32  read( INT32 pageID, CHAR *pData,
+                           UINT32 len, UINT32 offset,
+                           UINT32 &readLen,
+                           IExecutor *cb ) ;
 
    public:
       OSS_INLINE INT64 getFileSz() const
@@ -59,11 +73,6 @@ namespace engine
       OSS_INLINE INT64 getDataSz() const
       {
          return getFileSz() - sizeof( _dmsStorageUnitHeader ) ;
-      }
-
-      OSS_INLINE const std::string &getFileName() const
-      {
-         return _fileName ;
       }
 
       OSS_INLINE UINT32 pageSize() const { return _pageSz ; }
@@ -84,19 +93,6 @@ namespace engine
       INT32 close() ;
 
       INT32 remove() ;
-
-      INT32 write( DMS_LOB_PAGEID page,
-                   const CHAR *data,
-                   UINT32 len,
-                   UINT32 offset,
-                   _pmdEDUCB *cb ) ;
-
-      INT32 read( DMS_LOB_PAGEID page,
-                  UINT32 len,
-                  UINT32 offset,
-                  _pmdEDUCB *cb,
-                  CHAR *buf,
-                  UINT32 &readLen ) ;
 
       INT32 extend( INT64 len ) ;
 

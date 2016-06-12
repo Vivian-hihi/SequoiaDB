@@ -131,7 +131,6 @@ pdFiles = [
       ]
 
 pmdFiles = [
-      "pmd/pmdMemPool.cpp",
       "pmd/pmdDaemon.cpp",
       "pmd/pmdWinService.cpp",
       "pmd/pmdProc.cpp",
@@ -172,7 +171,8 @@ utilFiles = [
       "util/utilSdb.cpp",
       "util/csv2rawbson.cpp",
       "util/rawbson2csv.c",
-      "util/utilDecodeRawbson.cpp"
+      "util/utilDecodeRawbson.cpp",
+      "util/utilCache.cpp"
       ]
 
 dpsFiles = [
@@ -436,6 +436,7 @@ sdbListMain = [
 
 sdbcmMain = [
       "rtn/rtnBackgroundJobBase.cpp",
+      "pmd/pmdMemPool.cpp",
       "pmd/pmd.cpp",
       "pmd/pmdEDU.cpp",
       "pmd/pmdEDUMgr.cpp",

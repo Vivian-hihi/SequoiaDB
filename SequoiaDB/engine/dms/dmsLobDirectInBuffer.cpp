@@ -38,10 +38,13 @@
 
 namespace engine
 {
+   /*
+      _dmsLobDirectInBuffer implement
+   */
    _dmsLobDirectInBuffer::_dmsLobDirectInBuffer( void *usrBuf,
                                                  UINT32 size,
                                                  UINT32 offset,
-                                                 _pmdEDUCB *cb )
+                                                 IExecutor *cb )
    :_dmsLobDirectBuffer( cb ),
     _usrBuf( usrBuf ),
     _usrSize( size ),
@@ -52,7 +55,6 @@ namespace engine
 
    _dmsLobDirectInBuffer::~_dmsLobDirectInBuffer()
    {
-
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DMS_LOBDIRECTINBUF_GETALIGNEDTUPLE, "_dmsLobDirectInBuffer::getAlignedTuple" )
@@ -69,16 +71,15 @@ namespace engine
       }
 
       SDB_ASSERT( newOffset <= _usrOffset, "impossible" ) ;
-      newSize += _usrOffset - newOffset ;
+      newSize += ( _usrOffset - newOffset ) ;
       newSize = ossRoundUpToMultipleX( newSize,
                                        OSS_FILE_DIRECT_IO_ALIGNMENT ) ;
-
       if ( _bufSize < newSize )
       {
          rc = _extendBuf( newSize ) ;
          if ( SDB_OK != rc )
          {
-            PD_LOG( PDERROR, "failed to extend buf:%d", rc ) ;
+            PD_LOG( PDERROR, "Failed to extend buf:%d", rc ) ;
             goto error ;
          }
       }
@@ -86,6 +87,7 @@ namespace engine
       t.buf = _buf ;
       t.size = newSize ;
       t.offset = newOffset ;
+
    done:
       PD_TRACE_EXITRC( SDB__DMS_LOBDIRECTINBUF_GETALIGNEDTUPLE, rc ) ;
       return rc ;
@@ -105,7 +107,6 @@ namespace engine
                  _usrSize ) ;
 
       PD_TRACE_EXIT( SDB__DMS_LOBDIRECTINBUF_CP2USRBUF ) ;
-      return ;
    }
 }
 

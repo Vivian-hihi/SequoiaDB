@@ -154,15 +154,14 @@ namespace engine
       // if we want to append OID, then
       if ( oidLen && pOIDPtr )
       {
-         INT32 tmpBuffLen = 0 ;
          const CHAR *pObjData = NULL ;
 
          // get the requested size by adding object size and oid size
-         INT32 requestedSize = obj.objsize() + oidLen + DMS_RECORD_METADATA_SZ ;
-         rc = cb->allocBuff( requestedSize, &pTmpBuff, tmpBuffLen ) ;
+         UINT32 requestedSize = obj.objsize() + oidLen + DMS_RECORD_METADATA_SZ ;
+         rc = cb->allocBuff( requestedSize, &pTmpBuff, NULL ) ;
          if ( rc )
          {
-            PD_LOG( PDERROR, "Failed to alloc tmp buffer, size: %d",
+            PD_LOG( PDERROR, "Failed to alloc tmp buffer, size: %u",
                     requestedSize ) ;
             goto error ;
          }

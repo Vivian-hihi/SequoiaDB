@@ -516,9 +516,8 @@ namespace engine
       PD_TRACE_ENTRY( SDB__RESTADP_CONVERTMSG );
       SDB_ASSERT ( pSession, "pSession is NULL" ) ;
       SDB_ASSERT ( ppMsg, "pMsg is NULL" ) ;
-      INT32 pathSize = 0 ;
-      INT32 tempSize = 0 ;
-      INT32 extenSize = 0 ;
+      UINT32 pathSize = 0 ;
+      UINT32 extenSize = 0 ;
       const CHAR *pFileName = NULL ;
       const CHAR *pExtension = NULL ;
       CHAR *pMsg = NULL ;
@@ -563,10 +562,10 @@ namespace engine
       if( pHttpCon->_pPath )
       {
          pathSize = ossStrlen( pHttpCon->_pPath ) ;
-         rc = pSession->allocBuff( pathSize + 1, &pMsg, tempSize ) ;
+         rc = pSession->allocBuff( pathSize + 1, &pMsg, NULL ) ;
          if ( rc )
          {
-            PD_LOG ( PDERROR, "Unable to allocate %d bytes memory, rc=%d",
+            PD_LOG ( PDERROR, "Unable to allocate %u bytes memory, rc=%d",
                      pathSize, rc ) ;
             goto error ;
          }
@@ -576,10 +575,10 @@ namespace engine
       else
       {
          pathSize = 1 ;
-         rc = pSession->allocBuff( pathSize + 1, &pMsg, tempSize ) ;
+         rc = pSession->allocBuff( pathSize + 1, &pMsg, NULL ) ;
          if ( rc )
          {
-            PD_LOG ( PDERROR, "Unable to allocate %d bytes memory, rc=%d",
+            PD_LOG ( PDERROR, "Unable to allocate %u bytes memory, rc=%d",
                      pathSize, rc ) ;
             goto error ;
          }
@@ -692,7 +691,6 @@ namespace engine
       INT32 receivedSize = 0 ;
       INT32 bodyOffset = 0 ;
       INT32 urlSize = 0 ;
-      INT32 tempSize = 0 ;
       UINT32 recvSize = 0 ;
 
       _paraInit( pHttpCon ) ;
@@ -766,7 +764,7 @@ namespace engine
       if( pHttpCon->_pQuery != NULL )
       {
          urlSize = urlDecodeSize( pHttpCon->_pQuery, pHttpCon->_querySize ) ;
-         rc = pSession->allocBuff( urlSize + 1, &pUrl, tempSize ) ;
+         rc = pSession->allocBuff( urlSize + 1, &pUrl, NULL ) ;
          if ( rc )
          {
             PD_LOG ( PDERROR, "Unable to allocate %d bytes memory, rc=%d",
@@ -802,10 +800,8 @@ namespace engine
       const CHAR *pContentLength = NULL ;
       CHAR *pUrl = NULL ;
       INT32 bodySize = 0 ;
-      INT32 sumBodySize = 0 ;
       INT32 curRecvSize  = 0 ;
       INT32 receivedSize = 0 ;
-      INT32 tempSize = 0 ;
       INT32 urlSize = 0 ;
 
       rc = getHttpHeader( pSession, REST_STRING_CONLEN, &pContentLength ) ;
@@ -832,7 +828,7 @@ namespace engine
 
             rc = pSession->allocBuff( bodySize + 1,
                                       &(pHttpCon->_pBodyBuf),
-                                      sumBodySize ) ;
+                                      NULL ) ;
             if ( rc )
             {
                PD_LOG ( PDERROR, "Unable to allocate %d bytes memory, rc=%d",
@@ -864,7 +860,7 @@ namespace engine
             receivedSize += curRecvSize ;
 
             urlSize = urlDecodeSize( pBuffer, receivedSize ) ;
-            rc = pSession->allocBuff( urlSize + 1, &pUrl, tempSize ) ;
+            rc = pSession->allocBuff( urlSize + 1, &pUrl, NULL ) ;
             if ( rc )
             {
                PD_LOG ( PDERROR, "Unable to allocate %d bytes memory, rc=%d",
@@ -935,9 +931,8 @@ namespace engine
          else
          {
             CHAR *pBuffer = NULL ;
-            INT32 tempSize = 0 ;
             httpResponse httpRe ;
-            rc = pSession->allocBuff( bufferSize + 1, &pBuffer, tempSize ) ;
+            rc = pSession->allocBuff( bufferSize + 1, &pBuffer, NULL ) ;
             if ( rc )
             {
                PD_LOG ( PDERROR, "Unable to allocate %d bytes memory, rc=%d",
@@ -1056,7 +1051,6 @@ namespace engine
       INT32 keySize = ossStrlen( pKey ) ;
       INT32 valueSize = ossStrlen( pValue ) ;
       INT32 newHeaderSize = keySize + valueSize + 2 ;
-      INT32 tempSize = 0 ;
       CHAR *pNewHeaderBuf = NULL ;
       CHAR *pNewKey = NULL ;
       CHAR *pNewValue = NULL ;
@@ -1076,7 +1070,7 @@ namespace engine
       it = pHttpCon->_responseHeaders.find( pKey ) ;
       if ( it == pHttpCon->_responseHeaders.end() )
       {
-         rc = pSession->allocBuff( newHeaderSize, &pNewHeaderBuf, tempSize ) ;
+         rc = pSession->allocBuff( newHeaderSize, &pNewHeaderBuf, NULL ) ;
          if ( rc )
          {
             PD_LOG ( PDERROR, "Unable to allocate %d bytes memory, rc=%d",
@@ -1095,7 +1089,7 @@ namespace engine
       }
       else
       {
-         rc = pSession->allocBuff( valueSize + 1, &pNewValue, tempSize ) ;
+         rc = pSession->allocBuff( valueSize + 1, &pNewValue, NULL ) ;
          if ( rc )
          {
             PD_LOG ( PDERROR, "Unable to allocate %d bytes memory, rc=%d",
@@ -1347,7 +1341,6 @@ namespace engine
       SDB_ASSERT ( pSession, "pSession is NULL" ) ;
       SDB_ASSERT ( pBuffer, "pBuffer is NULL" ) ;
       httpConnection *pHttpCon = pSession->getRestConn() ;
-      INT32 tempSize = 0 ;
       httpResponse httpRe ;
 
       if( TRUE == pHttpCon->_isChunk )
@@ -1438,7 +1431,7 @@ namespace engine
 
                str = record.toString( FALSE, TRUE ) ;
                jsonSize = ossStrlen( str.c_str() ) ;
-               rc = pSession->allocBuff( jsonSize + 1, &pJson, tempSize ) ;
+               rc = pSession->allocBuff( jsonSize + 1, &pJson, NULL ) ;
                if ( rc )
                {
                   PD_LOG ( PDERROR, "Unable to allocate %d bytes memory, rc=%d",
@@ -1458,7 +1451,7 @@ namespace engine
          else
          {
             CHAR *pFileText = NULL ;
-            rc = pSession->allocBuff( length + 1, &pFileText, tempSize ) ;
+            rc = pSession->allocBuff( length + 1, &pFileText, NULL ) ;
             if ( rc )
             {
                PD_LOG ( PDERROR, "Unable to allocate %d bytes memory, rc=%d",

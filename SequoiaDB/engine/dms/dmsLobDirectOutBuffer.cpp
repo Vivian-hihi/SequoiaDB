@@ -38,9 +38,12 @@
 
 namespace engine
 {
+   /*
+      _dmsLobDirectOutBuffer implement
+   */
    _dmsLobDirectOutBuffer::_dmsLobDirectOutBuffer( const void *buf,
                                                    UINT32 size,
-                                                   _pmdEDUCB *cb )
+                                                   IExecutor *cb )
    :_dmsLobDirectBuffer( cb ),
     _usrBuf( buf ),
     _size( size )
@@ -50,7 +53,6 @@ namespace engine
 
    _dmsLobDirectOutBuffer::~_dmsLobDirectOutBuffer()
    {
-
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DMS_LOBDIRECTOUTBUF_GETALIGNEDTUPLE, "_dmsLobDirectOutBuffer::getAlignedTuple" )
@@ -65,7 +67,7 @@ namespace engine
          rc = _extendBuf( aligned ) ;
          if ( SDB_OK != rc )
          {
-            PD_LOG( PDERROR, "failed to extend buf:%d", rc ) ;
+            PD_LOG( PDERROR, "Failed to extend buf:%d", rc ) ;
             goto error ;
          }
       }
@@ -79,11 +81,13 @@ namespace engine
 
       t.buf = _buf ;
       t.size = aligned ;
+
    done:
       PD_TRACE_EXITRC( SDB__DMS_LOBDIRECTOUTBUF_GETALIGNEDTUPLE, rc ) ;
       return rc ;
    error:
       goto done ;
    }
+
 }
 

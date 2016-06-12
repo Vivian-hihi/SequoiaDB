@@ -315,7 +315,7 @@ namespace engine
          // release body msg
          if ( pFilePath )
          {
-            releaseBuff( pFilePath, bodySize ) ;
+            releaseBuff( pFilePath ) ;
             pFilePath = NULL ;
          }
          rc = SDB_OK ;
@@ -324,7 +324,7 @@ namespace engine
    done:
       if ( pFilePath )
       {
-         releaseBuff( pFilePath, bodySize ) ;
+         releaseBuff( pFilePath ) ;
       }
       disconnect() ;
       return rc ;

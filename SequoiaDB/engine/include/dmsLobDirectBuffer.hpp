@@ -36,15 +36,18 @@
 
 #include "oss.hpp"
 #include "core.hpp"
+#include "sdbInterface.hpp"
 
 namespace engine
 {
-   class _pmdEDUCB ;
 
+   /*
+      _dmsLobDirectBuffer define
+   */
    class _dmsLobDirectBuffer : public SDBObject
    {
    public:
-      _dmsLobDirectBuffer( _pmdEDUCB *cb ) ;
+      _dmsLobDirectBuffer( IExecutor *cb ) ;
       virtual ~_dmsLobDirectBuffer() ;
    public:
        struct tuple
@@ -57,7 +60,6 @@ namespace engine
           size( 0 ),
           offset( 0 )
          {
-
          }
        } ;
    public:
@@ -67,12 +69,12 @@ namespace engine
       INT32 _extendBuf( UINT32 size ) ;
 
    protected:
-      _pmdEDUCB *_cb ;
-      void *_buf ;
-      UINT32 _bufSize ;
+      IExecutor   *_cb ;
+      void        *_buf ;
+      UINT32      _bufSize ;
    } ;
    typedef class _dmsLobDirectBuffer dmsLobDirectBuffer ;
 }
 
-#endif
+#endif //DMS_LOBDIRECTBUFFER_HPP_
 

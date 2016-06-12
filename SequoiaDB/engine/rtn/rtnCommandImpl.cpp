@@ -1105,7 +1105,9 @@ namespace engine
       }
 
       // new storage unit, will insert into dmsCB->addCollectionSpace
-      su = SDB_OSS_NEW dmsStorageUnit ( pCollectionSpace, 1, pageSize,
+      su = SDB_OSS_NEW dmsStorageUnit ( pCollectionSpace, 1,
+                                        pmdGetBuffPool(),
+                                        pageSize,
                                         lobPageSize ) ;
       if ( !su )
       {
