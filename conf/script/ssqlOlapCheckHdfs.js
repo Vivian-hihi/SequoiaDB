@@ -146,25 +146,25 @@ SsqlOlapHdfsChecker.prototype.init = function SsqlOlapHdfsChecker_init() {
 
 SsqlOlapHdfsChecker.prototype._connectToHost = function SsqlOlapHdfsChecker__connectToHost() {
     var hostName = this.config[HostName];
-    var user = this.config[User];
-    var passwd = this.config[Passwd];
+    var sdbUser = this.sysInfo[SdbUser];
+    var sdbPasswd = this.sysInfo[SdbPasswd];
     var sshPort = parseInt(this.config[SshPort]);
-    var userSsh;
+    var sdbSsh;
 
     try {
-        userSsh = this.base.connectToHost(hostName, user, passwd, sshPort);
+        sdbSsh = this.base.connectToHost(hostName, sdbUser, sdbPasswd, sshPort);
     } catch(e) {
         this.logger.log(PDERROR, e);
         throw e;
     }
 
-    this.userSsh = userSsh;
+    this.sdbSsh = sdbSsh;
 };
 
 SsqlOlapHdfsChecker.prototype._disconnectFromHost = function SsqlOlapHdfsChecker__disconnectFromHost() {
-    if (this.userSsh != undefined) {
-        try { this.userSsh.close(); } catch(e) {}
-        this.userSsh = null;
+    if (this.sdbSsh != undefined) {
+        try { this.sdbSsh.close(); } catch(e) {}
+        this.sdbSsh = null;
     }
 };
 
@@ -173,14 +173,14 @@ SsqlOlapHdfsChecker.prototype._checkHdfs = function SsqlOlapHdfsChecker__checkHd
     var installDir = this.config[InstallDir];
     var hdfsUrl = this.config[HdfsUrl];
 
-    if (!this.userSsh.isPathExist(installDir)) {
+    if (!this.sdbSsh.isPathExist(installDir)) {
         var error = new SdbError(SDB_SYS, sprintf("the directory [?] does not exist in host [?]", installDir, hostName));
         this.logger.log(PDERROR, error);
         throw error;
     }
 
     var binDir = adaptPath(installDir) + "bin";
-    if (!this.userSsh.isPathExist(binDir)) {
+    if (!this.sdbSsh.isPathExist(binDir)) {
         var error = new SdbError(SDB_SYS, sprintf("the directory [?] does not exist in host [?]", binDir, hostName));
         this.logger.log(PDERROR, error);
         throw error;
@@ -188,12 +188,12 @@ SsqlOlapHdfsChecker.prototype._checkHdfs = function SsqlOlapHdfsChecker__checkHd
 
     var env = adaptPath(installDir) + "sequoiasql_path.sh";
     var check = adaptPath(binDir) + "gpcheckhdfs";
-    if (!this.userSsh.isPathExist(check)) {
+    if (!this.sdbSsh.isPathExist(check)) {
         var error = new SdbError(SDB_SYS, sprintf("the file [?] does not exist in host [?]", check, hostName));
         this.logger.log(PDERROR, error);
         throw error;
     }
-    if (!this.userSsh.isFile(check)) {
+    if (!this.sdbSsh.isFile(check)) {
         var error = new SdbError(SDB_SYS, sprintf("the path [?] is not file in host [?]", check, hostName));
         this.logger.log(PDERROR, error);
         throw error;
@@ -206,12 +206,12 @@ SsqlOlapHdfsChecker.prototype._checkHdfs = function SsqlOlapHdfsChecker__checkHd
     this.logger.log(PDDEBUG, "check hdfs cmd: " + shell);
 
     try {
-        this.userSsh.exec(shell);
+        this.sdbSsh.exec(shell);
     } catch(e) {
     }
 
-    if (this.userSsh.getLastRet() != 0) {
-        var msg = this.userSsh.getLastOut();
+    if (this.sdbSsh.getLastRet() != 0) {
+        var msg = this.sdbSsh.getLastOut();
         var error = new SdbError(SDB_SYS, msg);
         this.logger.log(PDERROR, error);
         throw error;
@@ -219,7 +219,7 @@ SsqlOlapHdfsChecker.prototype._checkHdfs = function SsqlOlapHdfsChecker__checkHd
 };
 
 SsqlOlapHdfsChecker.prototype.check = function SsqlOlapHdfsChecker_check() {
-    this.logger.log(PDEVENT, sprintf("begin to check sequoiasql olap[?:?]", this.config[HostName], this.config[Role]));
+    this.logger.log(PDEVENT, sprintf("begin to check HDFS for sequoiasql olap[?:?]", this.config[HostName], this.config[Role]));
     try {
         this._connectToHost();
         this._checkHdfs();
@@ -228,7 +228,7 @@ SsqlOlapHdfsChecker.prototype.check = function SsqlOlapHdfsChecker_check() {
     } finally {
         this._disconnectFromHost();
     }
-    this.logger.log(PDEVENT, sprintf("finsh checking sequoiasql olap[?:?]", this.config[HostName], this.config[Role]));
+    this.logger.log(PDEVENT, sprintf("finsh checking HDFS for sequoiasql olap[?:?]", this.config[HostName], this.config[Role]));
 };
 
 SsqlOlapHdfsChecker.prototype.finalize = function SsqlOlapHdfsChecker_finalize() {
