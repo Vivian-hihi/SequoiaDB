@@ -79,6 +79,7 @@ namespace engine
       _unitLatch.get() ;
 
       --_curAgent ;
+      --_idleAgent ;
       if ( isControl )
       {
          _startCtrlJob = FALSE ;
