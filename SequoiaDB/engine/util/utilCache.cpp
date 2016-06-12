@@ -472,7 +472,7 @@ namespace engine
          }
       }
 
-      _pStat = new (std::nothrow) vector< utilCacheStat >[ UTIL_PAGE_SLOT_SIZE ] ;
+      _pStat = new (std::nothrow) vector< utilCacheStat >( UTIL_PAGE_SLOT_SIZE ) ;
       if ( !_pStat )
       {
          PD_LOG( PDERROR, "Failed to alloc stat vector" ) ;
