@@ -171,7 +171,6 @@ namespace engine
       while( it != _unitList.end() )
       {
          pUnit = *it ;
-         ++it ;
 
          if ( pUnit->canSync( force ) || pUnit->canRecycle( force ) )
          {
@@ -186,6 +185,7 @@ namespace engine
          {
             pUnit = NULL ;
          }
+         ++it ;
       }
 
       return pUnit ;
