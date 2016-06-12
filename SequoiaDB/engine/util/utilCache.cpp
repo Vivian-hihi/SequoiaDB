@@ -1205,7 +1205,7 @@ namespace engine
 
    BOOLEAN _utilCacheContext::isValid() const
    {
-      return ( _pBucket && _pUnit && _pageID > 0 ) ? TRUE : FALSE ;
+      return ( _pBucket && _pUnit && _pageID >= 0 ) ? TRUE : FALSE ;
    }
 
    BOOLEAN _utilCacheContext::isPageValid() const
