@@ -440,7 +440,7 @@ namespace engine
       _pCacheUnit->prepareWrite( page, record._offset,
                                  record._dataLen, cb,
                                  cContext ) ;
-      rc = cContext.write( record._data, record._offset, record._offset, cb ) ;
+      rc = cContext.write( record._data, record._offset, record._dataLen, cb ) ;
       if ( rc )
       {
          PD_LOG( PDERROR, "Failed to write data to collection:%s, rc:%d",
