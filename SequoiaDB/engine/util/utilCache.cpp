@@ -442,7 +442,6 @@ namespace engine
 
    _utilCacheMgr::~_utilCacheMgr()
    {
-      fini() ;
    }
 
    INT32 _utilCacheMgr::init( UINT64 cacheSize )

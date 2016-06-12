@@ -60,9 +60,6 @@ namespace engine
 
    _pmdBuffPool::~_pmdBuffPool()
    {
-      SDB_ASSERT( 0 == _unitList.size(), "List size must be 0" ) ;
-      SDB_ASSERT( 0 == _curAgent && 0 == _idleAgent,
-                  "Agent must be 0" ) ;
    }
 
    void _pmdBuffPool::setMaxCacheJob( UINT32 maxCacheJob )
@@ -102,6 +99,15 @@ namespace engine
       return rc ;
    error:
       goto done ;
+   }
+
+   void _pmdBuffPool::fini()
+   {
+      _utilCacheMgr::fini() ;
+
+      SDB_ASSERT( 0 == _unitList.size(), "List size must be 0" ) ;
+      SDB_ASSERT( 0 == _curAgent && 0 == _idleAgent,
+                  "Agent must be 0" ) ;
    }
 
    void _pmdBuffPool::_checkAndStartJob( BOOLEAN needLock )

@@ -56,6 +56,7 @@ namespace engine
          virtual ~_pmdBuffPool() ;
 
          virtual INT32     init( UINT64 cacheSize = 0 ) ;
+         virtual void      fini() ;
          void              setMaxCacheJob( UINT32 maxCacheJob ) ;
 
          void              exitJob( BOOLEAN isControl ) ;
