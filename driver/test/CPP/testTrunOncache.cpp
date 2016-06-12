@@ -146,7 +146,7 @@ TEST( turnonCache, getCollectionSpace )
    
    rc = db1.connect(HOST, SERVER);
    ASSERT_EQ(SDB_OK, rc);
-   ASSERT_EQ(SDB_OK, getTimeOfgetCS(db, csName, diff1));
+   ASSERT_EQ(SDB_OK, getTimeOfgetCS(db1, csName, diff1));
    ASSERT_EQ(SDB_OK, getTimeOfgetCS(db, csName, diff2));
    ASSERT_LT(diff2, diff1);
   
