@@ -51,6 +51,9 @@ namespace engine
    #define UTIL_PAGE_SLOT_BEGIN_SIZE            ( 256 )  /// BYTE
    #define UTIL_PAGE_SLOT_SIZE                  ( 22 )   /// 512M
 
+   /// totalSize / maxCacheSize
+   #define UTIL_CACHE_RATIO                     ( 20 )   /// >=20%
+
    class _utilCacheMgr ;
    class _utilCacheUnit ;
 
@@ -119,6 +122,7 @@ namespace engine
             OSS_BIT_CLEAR( _status, UTIL_CACHE_PAGE_DIRTY_FLAG ) ;
             _dirtyStart = 0 ;
             _dirtyLength = 0 ;
+            clearLSNInfo() ;
          }
          BOOLEAN     isDirty() const
          {
@@ -240,28 +244,30 @@ namespace engine
    } ;
    typedef _utilCacheStat utilCacheStat ;
 
+   #define UTIL_BLOCK_RECYCLE_FREE_RATIO              ( 60 )   /// >=60%
+   #define UTIL_BLOCK_TIMEOUT                         ( 5000 )
+
    /*
       _utilCacheMgr define
    */
    class _utilCacheMgr : public SDBObject
    {
       typedef ossSpinXLatch                     blkLatch ;
-      typedef pair<UINT64,_utilCacheUnit*>      UNIT_INFO ;
-      typedef list<UNIT_INFO>                   LIST_UNIT ;
 
       public:
          _utilCacheMgr() ;
-         ~_utilCacheMgr() ;
+         virtual ~_utilCacheMgr() ;
 
          /*
             cacheSize unit MB
          */
-         INT32    init( UINT64 cacheSize = 0 ) ;
-         void     fini() ;
+         virtual INT32     init( UINT64 cacheSize = 0 ) ;
+         virtual void      fini() ;
 
          UINT64   maxCacheSize() const { return _maxCacheSize ; }
          UINT64   totalSize() { return _totalSize.peek() ; }
          UINT64   freeSize() { return _freeSize.peek() ; }
+         UINT64   totalUseTimes() { return _totalUseTimes.peek() ; }
 
          /// Get the detail info of the specified bucket
          void     getCacheStat( UINT32 bucketID,
@@ -292,17 +298,14 @@ namespace engine
          INT32    waitEvent( INT64 millisec = OSS_ONE_SEC ) ;
          void     resetEvent() ;
 
+         UINT64   recycleBlocks() ;
+         BOOLEAN  canRecycle() ;
+
          /*
             CacheUnit Management Functions
          */
-         void     registerUnit( _utilCacheUnit *pUnit ) ;
-         void     unregUnit( _utilCacheUnit *pUnit ) ;
-
-         /// interval = 0, not check the time
-         _utilCacheUnit* dispatchSyncUnit( UINT64 interval ) ;
-         _utilCacheUnit* dispatchRecycleUnit( UINT64 interval ) ;
-         void     pushBackSyncUnit( _utilCacheUnit *pUnit ) ;
-         void     pushBackRecycleUnit( _utilCacheUnit *pUnit ) ;
+         virtual void   registerUnit( _utilCacheUnit *pUnit ) ;
+         virtual void   unregUnit( _utilCacheUnit *pUnit ) ;
 
       protected:
          UINT32   _roundUp2PageSizeSqrt( UINT32 size ) const
@@ -365,24 +368,22 @@ namespace engine
             SDB_ASSERT( id < UTIL_PAGE_SLOT_SIZE, "Invalid id" ) ;
             return (*_pStat)[ id ] ;
          }
+         UINT64               _recycleBucket( vector< CHAR* > &slotItem,
+                                              utilCacheStat *pStat ) ;
 
-      private:
+      protected:
          UINT32               _beginPageSizeSqrt ;
          UINT64               _maxCacheSize ;
          ossAtomic64          _freeSize ;
          ossAtomic64          _totalSize ;
+         ossAtomic64          _totalUseTimes ;
 
          vector< CHAR* >      _slot[ UTIL_PAGE_SLOT_SIZE ] ;
          vector< blkLatch* >  _latch ;
          vector< utilCacheStat >* _pStat ;
          ossEvent             _releaseEvent ;
 
-         /*
-            Unit Management Members
-         */
-         LIST_UNIT            _syncUnitList ;
-         LIST_UNIT            _recycleUnitList ;
-         ossSpinXLatch        _unitLatch ;
+         UINT64               _lastRecycleTime ;
 
    } ;
    typedef _utilCacheMgr utilCacheMgr ;
@@ -455,8 +456,8 @@ namespace engine
          BOOLEAN isUsePage() const { return _usePage ; }
 
          BOOLEAN  isInCache( UINT32 offset, UINT32 len ) const ;
-         void     discardPage() ;
-         void     restorePage() ;
+         void     discardPage( UINT64 &beginLSN, UINT64 &endLSN ) ;
+         void     restorePage( UINT64 beginLSN, UINT64 endLSN ) ;
 
          /*
             Need call submit or rollback to done
@@ -540,8 +541,8 @@ namespace engine
    #define UTIL_CACHEUNIT_BUCKET_SZ                ( 2048 )
    #define UTIL_CACHEUNIT_PAGE_TIMEOUT             ( 1000 ) /// ms
    #define UTIL_CACHEUNIT_DIRTY_TIMEOUT            ( 1000 ) /// ms
-   #define UTIL_CACHEUNIT_BG_DIRTY_RATIO           ( 40 )   /// 40%
-   #define UTIL_CACHEUNIT_BG_FREE_RATIO            ( 50 )   /// 50%
+   #define UTIL_CACHEUNIT_BG_DIRTY_RATIO           ( 40 )   /// >=40%
+   #define UTIL_CACHEUNIT_BG_FREE_RATIO            ( 30 )   /// <=30%
 
    /*
       _utilCacheUnit define
@@ -559,11 +560,13 @@ namespace engine
             Return the recycle total size
          */
          UINT64         recyclePages( BOOLEAN force, INT64 exceptSize = -1 ) ;
+         BOOLEAN        canRecycle( BOOLEAN &force ) ;
          /*
             Return the sync pages
          */
          UINT32         syncPages( IExecutor *cb,
                                    BOOLEAN force = TRUE ) ;
+         BOOLEAN        canSync( BOOLEAN &force ) ;
 
          void           lockPageCleaner() ;
          void           unlockPageCleaner() ;
