@@ -218,8 +218,7 @@ namespace engine
       PD_TRACE_ENTRY( SDB_DMSSTORAGELOBDATA_WRITE ) ;
       SDB_ASSERT( DMS_LOB_INVALID_PAGEID != pageID &&
                   NULL != pData &&
-                  0 == offset &&
-                  len <= _pageSz, "invalid operation" ) ;
+                  len + offset <= _pageSz, "invalid operation" ) ;
 
       _dmsLobDirectOutBuffer buffer( pData, len, cb ) ;
       _dmsLobDirectBuffer::tuple t ;
