@@ -212,8 +212,7 @@ namespace engine
    void _pmdBuffPool::checkLoad()
    {
       LIST_UNIT::iterator it ;
-      BOOLEAN readyNum = 0 ;
-      BOOLEAN needStartJob = FALSE ;
+      UINT32 readyNum = 0 ;
       BOOLEAN force = FALSE ;
 
       ossScopedLock lock( &_unitLatch ) ;
@@ -335,7 +334,7 @@ namespace engine
                   timeout += 100 ;
                }
 
-               if ( timeout >= _timeout )
+               if ( timeout >= (UINT32)_timeout )
                {
                   /// over _timeout millsecs, donothing, qiut the job
                   break ;
