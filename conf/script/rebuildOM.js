@@ -26,179 +26,55 @@
 */
 
 // TODO:
-setLogLevel( PDDEBUG ) ;
+//setLogLevel( PDDEBUG ) ;
+setLogLevel( PDWARNING ) ;
 
 var FILE_NAME_REBUILD_OM = "rebuildOM.js" ;
 var logger = new Logger(FILE_NAME_REBUILD_OM) ;
 
-var FIELD_HOST_NAME            = "host_name" ;
-var FIELD_DEFAULT_ROOT_USER    = "default_root_user" ;
-var FIELD_DEFAULT_ROOT_PASSWD  = "default_root_passwd" ;
-var FIELD_DEFAULT_SSH_PORT     = "default_ssh_port" ;
-var FIELD_COORD_HOST_NAME      = "coord_host_name" ;
-var FIELD_COORD_PORT           = "coord_port" ;
-var FIELD_DB_AUTH_USER         = "db_auth_user" ;
-var FIELD_DB_AUTH_PASSWD       = "db_auth_passwd" ;
-var FIELD_CLUSTER_NAME         = "cluster_name" ;
-var FIELD_CLUSTER_DESCRIPTION  = "cluster_description" ;
-var FIELD_SDB_USER_NAME        = "sdb_user_name" ;
-var FIELD_SDB_PASSWORD         = "sdb_password" ;
-var FIELD_SDB_USER_GROUP_NAME  = "sdb_user_group_name" ;
-var FIELD_SDB_INSTALL_PATH     = "sdb_install_path" ;
-
-var FIELD_ROOT_USER            = "_root_user" ;
-var FIELD_ROOT_PASSWD          = "_root_passwd" ;
-var FIELD_SSH_PORT             = "_ssh_port" ;
-var FIELD_INSTALL_PATH         = "_install_path" ;
-
-var FIELD_COORD_INFO_HOSTNAME  = "HostName" ;
-var FIELD_COORD_INFO_DBPATH    = "dbpath" ;
-var FIELD_COORD_INFO_SERVICE   = "Service" ;
-var FIELD_COORD_INFO_TYPE      = "Type" ;
-var FIELD_COORD_INFO_NAME      = "Name" ;
-var FIELD_COORD_INFO_NODEID    = "NodeID" ;
-var FIELD_COORD_INFO_STATUS    = "Status" ;
-
-
-var CoordInfo = function() {
-   this.HostName = null ;
-	this.dbpath   = null ;
-	this.Service  = [ { "Type" : 0, "Name" : "" }, 
-		               { "Type" : 1, "Name" : "" }, 
-		               { "Type" : 2, "Name" : "" } ] ;
-	this.NodeID   = null ;
-	this.Status   = null ;
-
-	CoordInfo.prototype.toString = function() {
-      return JSON.stringify( this ) ;
-	} ;
-} ;
-
-var FIELD_CONF_DBPATH          = "dbpath" ;
-var FIELD_CONF_HOST_NAME       = "hostname" ;
-var FIELD_CONF_IP              = "ip" ;
-var FIELD_CONF_SVC_NAME        = "svcname" ;
-var FIELD_CONF_REPL_NAME       = "replname" ;
-var FIELD_CONF_CATALOG_NAME    = "catalogname" ;
-var FIELD_CONF_SHARD_NAME      = "shardname" ;
-var FIELD_CONF_HTTP_NAME       = "httpname" ;
-var FIELD_CONF_ROLE            = "coord" ;
-var FIELD_CONF_CATALOG_ADDR    = "catalogaddr" ;
-//var FIELD_CONF_
-//var FIELD_CONF_
-
-var ts                         = null ;
-
-var ClusterInfo = function() {
-   // cluster common info
-   this.clusterName         = null ;
-	this.clusterDescription  = null ;
-   this.sdbUserName         = null ;
-   this.sdbPassword         = null ;
-   this.sdbUserGroupName    = null ;
-	this.sdbInstallPath      = null ;
-	
-	ClusterInfo.prototype.toString = function() {
-      return JSON.stringify( this ) ;
-	}
-   /*
-	ClusterInfo.prototype.toString = function() {
-		return "cluster info[ name: " + this.clusterName + 
-			", description: " + this.clusterDescription + 
-			", sdb user name: " + this.sdbUserName + 
-			", sdb password: " + this.sdbPassword +
-			", sdb user group: " + this.sdbUserGroupName +
-			", sdb install path: " + this.sdbInstallPath ;
-	} ;
-	*/
-} ;
-
-var HostInfo = function() {
-   // host info
-   // TODO: merge "address" and "hostName"
-   this.address             = null ;
-   this.hostName            = null ;   
-   this.ip                  = null ;
-   this.rootUserName        = null ;
-   this.rootPassword        = null ;
-   this.sshPort             = null ;
-   this.installPath         = null ;
-
-   // root ssh obj
-   this.rootSshObj          = null ;
-	
-   // sdb account info
-   this.sdbUserName         = null ;
-   this.sdbPassword         = null ;
-   this.sdbUserGroupName    = null ;
-   
-   // remote installed info
-   this.installedInfo       = null ;
-
-	HostInfo.prototype.toString = function() {
-      return JSON.stringify( this ) ;
-	} ;
-} ;
-/*
-var CoordInfo = function() {
-   this.HostName = null ;
-	this.dbpath   = null ;
-	this.Service  = [ { "Type" : 0, "Name" : "" }, 
-		               { "Type" : 1, "Name" : "" }, 
-		               { "Type" : 2, "Name" : "" } ] ;
-	this.NodeID   = null ;
-	this.Status   = 1 ;
-
-	CoordInfo.prototype.toString = function() {
-      return JSON.stringify( this ) ;
-	} ;
-} ;
-*/
-function isIP( strIP ) {
-   if ( strIP == undefined ) return false ;
-   var re = /^(\d+)\.(\d+)\.(\d+)\.(\d+)$/g ;
-   if( re.test(strIP) ) {
-      if ( RegExp.$1 < 256 && RegExp.$2 < 256 && 
-           RegExp.$3 < 256 && RegExp.$4 < 256 ) {
-           return true;
-      }
-   }
-   return false;
-}
-
-function removeQuotes( inputStr ) {
-   var exp = null ;
-   if ( !isString( inputStr ) ) {
-      exp = new SdbError( SDB_INVALIDARG, 
-         "the input argument[" + inputStr + "] is not a string" ) ;
-      logger.log( PDERROR, err ) ;
-      throw err ;
-   }
-   var len = inputStr.length ;
-   var outputStr = '' ;
-   for ( var i = 0; i < len; i++ ) {
-      var c = inputStr.charAt( i ) ;
-      if ( c != '\'' && c != '\"' ) {
-         outputStr += c ;
-      }
-   }
-   return outputStr ;
-}
+var ts = null ;
 
 function _init() {
    logger.log( PDEVENT, "Begin to rebuild om" ) ;
    ts = genTimeStamp() ;
-}
+} ;
 
 function _final() {
    logger.log( PDEVENT, "Finish rebuilding om" ) ;
-}
+} ;
 
-function _getFiled( omConfObj, fieldName ) {
+var ConfigMgr = function ( omConfigFile ) {
+   this._configFile  = omConfigFile ;
+   this._omConfObj   = null ;
+   this._sdb         = null ;
+   this._clusterInfo = null ;
+   this._rgInfoArr   = [] ;
+   this._hostInfoArr = [] ;
+
+} ;
+
+ConfigMgr.prototype._getRGInfoArr = function ConfigMgr__getRGInfoArr() {
+   return this._rgInfoArr ;
+} ;
+
+ConfigMgr.prototype._getHostInfoArr = function ConfigMgr__getHostInfoArr() {
+   return this._hostInfoArr ;
+} ;
+
+ConfigMgr.prototype._getSdbObj = function ConfigMgr__getSdbObj() {
+   return this._sdb ;
+} ;
+
+ConfigMgr.prototype._getCluterInfo = function ConfigMgr__getClusterInfo() {
+   return this._clusterInfo ;
+} ;
+
+ConfigMgr.prototype._getField = 
+   function ConfigMgr__getField( fieldName ) {
    var ret    = null ;
    var errMsg = null ;
    var err    = null ;
-   var field  = omConfObj[fieldName] ;
+   var field  = this._omConfObj[fieldName] ;
    if ( "" == field || null == field || "undefined" == typeof(field) ) {
       errMsg = "can not get value according to field name [" + fieldName + "]" ;
       err = new SdbError( SDB_INVALIDARG, errMsg ) ;
@@ -207,36 +83,39 @@ function _getFiled( omConfObj, fieldName ) {
    }
    ret = removeQuotes( field ) ;
    return ret ;
-}
+} ;
 
-function _getClusterInfo( omConfObj ) {
+ConfigMgr.prototype._getClusterInfo = 
+   function ConfigMgr__getClusterInfo() {
 	var retObj = new ClusterInfo() ;
-	retObj.clusterName         = _getFiled( omConfObj, FIELD_CLUSTER_NAME ) ;
-	retObj.clusterDescription  = _getFiled( omConfObj, FIELD_CLUSTER_DESCRIPTION ) ;
-   retObj.sdbUserName         = _getFiled( omConfObj, FIELD_SDB_USER_NAME ) ;
-   retObj.sdbPassword         = _getFiled( omConfObj, FIELD_SDB_PASSWORD ) ;
-   retObj.sdbUserGroupName    = _getFiled( omConfObj, FIELD_SDB_USER_GROUP_NAME ) ;
-	retObj.sdbInstallPath      = _getFiled( omConfObj, FIELD_SDB_INSTALL_PATH ) ;
+	retObj.clusterName         = this._getField( FIELD_CLUSTER_NAME ) ;
+	retObj.clusterDescription  = this._getField( FIELD_CLUSTER_DESCRIPTION ) ;
+   retObj.sdbUserName         = this._getField( FIELD_SDB_USER_NAME ) ;
+   retObj.sdbPassword         = this._getField( FIELD_SDB_PASSWORD ) ;
+   retObj.sdbUserGroupName    = this._getField( FIELD_SDB_USER_GROUP_NAME ) ;
+	retObj.sdbInstallPath      = this._getField( FIELD_SDB_INSTALL_PATH ) ;
 	return retObj ;
-}
+} ;
 
-function _appendHostName( omConfObj, hostInfoArr ) {
-   var value   = _getFiled( omConfObj, FIELD_HOST_NAME ) ;
+ConfigMgr.prototype._appendHostName = 
+   function ConfigMgr__appendHostName() {
+   var value   = this._getField( FIELD_HOST_NAME ) ;
    var nameArr = value.split( ',' ) ;
    var len     = nameArr.length ;
    for ( var i = 0; i < len; i++ ) {
       var hostInfo = new HostInfo() ;
       hostInfo.address  = strTrim( nameArr[i] ) ;
-		hostInfoArr.push( hostInfo ) ;
+		this._hostInfoArr.push( hostInfo ) ;
    }	
-}
+} ;
 
-function _appendRootInfo( omConfObj, hostInfoArr ) {
-   var defaultRootUserName  = _getFiled( omConfObj, FIELD_DEFAULT_ROOT_USER ) ;
-   var defaultRootPassword  = _getFiled( omConfObj, FIELD_DEFAULT_ROOT_PASSWD ) ;
-   var len = hostInfoArr.length ;
+ConfigMgr.prototype._appendRootInfo = 
+   function ConfigMgr__appendRootInfo() {
+   var defaultRootUserName  = this._getField( FIELD_DEFAULT_ROOT_USER ) ;
+   var defaultRootPassword  = this._getField( FIELD_DEFAULT_ROOT_PASSWD ) ;
+   var len = this._hostInfoArr.length ;
    for ( var i = 0; i < len; i++ ) {
-		var hostInfo      = hostInfoArr[i] ;
+		var hostInfo      = this._hostInfoArr[i] ;
       var rootUserName  = null ;
       var rootPassword  = null ;
       var field         = null ;
@@ -244,71 +123,75 @@ function _appendRootInfo( omConfObj, hostInfoArr ) {
       
       // get specific root info
       field          = hostInfo.address + FIELD_ROOT_USER ;
-      value          = omConfObj[field] ;
+      value          = this._omConfObj[field] ;
       rootUserName   = ( value == undefined ) ? defaultRootUserName : 
          removeQuotes( value ) ;
       field          = hostInfo.address + FIELD_ROOT_PASSWD ;
-      value          = omConfObj[field] ;
+      value          = this._omConfObj[field] ;
       rootPassword   = ( value == undefined ) ? defaultRootPassword : 
          removeQuotes( value ) ;
       // append root info
       hostInfo.rootUserName  = rootUserName ;
       hostInfo.rootPassword  = rootPassword ;
    }
-}
+} ;
 
-function _appendSshPort( omConfObj, hostInfoArr ) {
-   var value          = _getFiled( omConfObj, FIELD_DEFAULT_SSH_PORT ) ;
+ConfigMgr.prototype._appendSshPort = 
+   function ConfigMgr__appendSshPort() {
+   var value          = this._getField( FIELD_DEFAULT_SSH_PORT ) ;
    var defaultSshPort = parseInt( value ) ;
-   var len            = hostInfoArr.length ;
+   var len            = this._hostInfoArr.length ;
    for ( var i = 0; i < len; i++ ) {
-      var hostInfo = hostInfoArr[i] ;
+      var hostInfo = this._hostInfoArr[i] ;
       var sshPort     = null ;
       var field       = null ;
       var value       = null ;
       // get specific ssh port
       field        = hostInfo.address + FIELD_SSH_PORT ;
-      value        = omConfObj[field] ;
+      value        = this._omConfObj[field] ;
       sshPort      = ( value == undefined ) ? defaultSshPort : 
          parseInt( removeQuotes( value ) ) ;
 		// append ssh info
       hostInfo.sshPort = sshPort ;
    }
-}
+} ;
 
-function _appendInstallPath( omConfObj, hostInfoArr ) {
-   var sdbInstallPath = _getFiled( omConfObj, FIELD_SDB_INSTALL_PATH ) ;
-   var len            = hostInfoArr.length ;
+ConfigMgr.prototype._appendInstallPath =
+   function ConfigMgr__appendInstallPath() {
+   var sdbInstallPath = this._getField( FIELD_SDB_INSTALL_PATH ) ;
+   var len            = this._hostInfoArr.length ;
    for ( var i = 0; i < len; i++ ) {
-      var hostInfo = hostInfoArr[i] ;
+      var hostInfo = this._hostInfoArr[i] ;
 		var installPath = null ;
       var field       = null ;
       var value       = null ;
       // get specific install path
       field        = hostInfo.address + FIELD_INSTALL_PATH ;
-      value        = omConfObj[field] ;
+      value        = this._omConfObj[field] ;
       installPath  = ( value == undefined ) ? sdbInstallPath : 
          removeQuotes( value ) ;
       // append install path
       hostInfo.installPath = installPath ;
    }
-}
+} ;
 
-function _appendAdminInfo( omConfObj, hostInfoArr ) {
-   var sdbUserName       = _getFiled( omConfObj, FIELD_SDB_USER_NAME ) ;
-   var sdbPassword       = _getFiled( omConfObj, FIELD_SDB_PASSWORD ) ;
-   var sdbUserGroupName  = _getFiled( omConfObj, FIELD_SDB_USER_GROUP_NAME ) ;
-   var len               = hostInfoArr.length ;
+ConfigMgr.prototype._appendAdminInfo = 
+   function ConfigMgr__appendAdminInfo() {
+   var sdbUserName       = this._getField( FIELD_SDB_USER_NAME ) ;
+   var sdbPassword       = this._getField( FIELD_SDB_PASSWORD ) ;
+   var sdbUserGroupName  = this._getField( FIELD_SDB_USER_GROUP_NAME ) ;
+   var len               = this._hostInfoArr.length ;
    for ( var i = 0; i < len; i++ ) {
-      var hostInfo = hostInfoArr[i] ;
+      var hostInfo = this._hostInfoArr[i] ;
 		// append admin info
       hostInfo.sdbUserName      = sdbUserName ;
       hostInfo.sdbPassword      = sdbPassword ;      
       hostInfo.sdbUserGroupName = sdbUserGroupName ;
    }
-}
+} ;
 
-function _checkSsh( hostInfoArr, account ) {
+ConfigMgr.prototype._checkSsh = 
+   function ConfigMgr__checkSsh( account ) {
 	var errMsg    = null ;
 	var errMsgArr = null ;
 	var exp       = null ;
@@ -316,23 +199,23 @@ function _checkSsh( hostInfoArr, account ) {
 	var user      = null ;
  	var passwd    = null ;
  	var sshPort   = null ;
-   for ( var i = 0; i < hostInfoArr.length; i++ ) {
-		address = hostInfoArr[i].address ;
-		sshPort = hostInfoArr[i].sshPort ;
+   for ( var i = 0; i < this._hostInfoArr.length; i++ ) {
+		address = this._hostInfoArr[i].address ;
+		sshPort = this._hostInfoArr[i].sshPort ;
 		if ( account == "root" ) {
-			user   = hostInfoArr[i].rootUserName ;
-	 		passwd = hostInfoArr[i].rootPassword ;
+			user   = this._hostInfoArr[i].rootUserName ;
+	 		passwd = this._hostInfoArr[i].rootPassword ;
 		} else {
-			user   = hostInfoArr[i].sdbUserName ;
-	 		passwd = hostInfoArr[i].sdbPassword ;
+			user   = this._hostInfoArr[i].sdbUserName ;
+	 		passwd = this._hostInfoArr[i].sdbPassword ;
 		}
 	 	
       try {
          var ssh = new Ssh( address, user, passwd, sshPort ) ;
       } catch( e ) {
          errMsg = "can not use account[" + user + 
-				"] to ssh to host[" + address + "], " + GETLASTERRMSG() ;
-         errMsgArr.push( errMsg ) ;
+				"] to ssh to host[" + address + "]" ;
+         errMsgArr.push( new SdbError( e, errMsg ).toString() ) ;
          if ( exp == null ) exp = new SdbError( SDB_INVALIDARG ) ;
          logger.log( PDERROR, errMsg ) ;
       }
@@ -340,17 +223,18 @@ function _checkSsh( hostInfoArr, account ) {
    if ( exp != null ) {
       throw new SdbError( SDB_INVALIDARG, errMsgArr.toString() ) ;
    }
-}
+} ;
 
-function _firstlyCheck( hostInfoArr ) {
+ConfigMgr.prototype._firstlyCheck = 
+   function ConfigMgr_firstlyCheck() {
    var errMsg    = null ;
    var errMsgArr = [] ;
    var exp       = null ;
 	var address   = null ;
 	logger.log( PDEVENT, "begin to firstly check" ) ;
 	// 1. host is ip or not
-   for ( var i = 0; i < hostInfoArr.length; i++ ) {
-		address = hostInfoArr[i].address ;
+   for ( var i = 0; i < this._hostInfoArr.length; i++ ) {
+		address = this._hostInfoArr[i].address ;
 		errMsg  = null ;
       if ( isIP(address) ) {
          errMsg = "should offer hostname but not ip[" + address + "]" ;
@@ -368,13 +252,12 @@ function _firstlyCheck( hostInfoArr ) {
    }
 
 	// 2. can ping or not
-   for ( var i = 0; i < hostInfoArr.length; i++ ) {
-		address = hostInfoArr[i].address ;
+   for ( var i = 0; i < this._hostInfoArr.length; i++ ) {
+		address = this._hostInfoArr[i].address ;
       var result = eval( '(' + System.ping( address ) + ')' ) ;
       if ( result[Reachable] != true ) {
-         errMsg = "host [" + address + 
-            "] is unreachable, " + GETLASTERRMSG() ;
-         errMsgArr.push( errMsg ) ;
+         errMsg = "host [" + address + "] is unreachable" ;
+         errMsgArr.push( new SdbError( e, errMsg ).toString() ) ;
          if ( exp == null ) exp = new SdbError( SDB_INVALIDARG ) ;
          logger.log( PDERROR, errMsg ) ;
       }
@@ -384,40 +267,41 @@ function _firstlyCheck( hostInfoArr ) {
    }
 
 	// 3. root account can ssh or not
-	_checkSsh( hostInfoArr, "root" ) ;
+	this._checkSsh( "root" ) ;
 
 	// 4. admin account can ssh or not
-	_checkSsh( hostInfoArr, "admin" ) ;
+	this._checkSsh( "admin" ) ;
    logger.log( PDEVENT, "finishing firstly check" ) ;
-}
+} ;
 
-function _appendRootSshObj( hostInfoArr ) {
+ConfigMgr.prototype._appendRootSshObj = 
+   function ConfigMgr__appendRootSshObj() {
 	var errMsg  = null ;
 	var exp     = null ;
 	var address = null ;
-   for ( var i = 0; i < hostInfoArr.length; i++ ) {
-		address = hostInfoArr[i].address ;
+   for ( var i = 0; i < this._hostInfoArr.length; i++ ) {
+		address = this._hostInfoArr[i].address ;
       try {
-         var ssh = new Ssh( address, hostInfoArr[i].rootUserName, 
-         	hostInfoArr[i].rootPassword, hostInfoArr[i].sshPort ) ;
-			hostInfoArr[i].rootSshObj = ssh ;
+         var ssh = new Ssh( address, this._hostInfoArr[i].rootUserName, 
+         	this._hostInfoArr[i].rootPassword, this._hostInfoArr[i].sshPort ) ;
+			this._hostInfoArr[i].rootSshObj = ssh ;
       } catch( e ) {
          errMsg = "can not use root account to ssh to host[" + address + 
-				"], " + GETLASTERRMSG() ;
-			exp = new SdbError( GETLASTERROR(), errMsg )
+				"]" ;
+			exp = new SdbError( e, errMsg )
          logger.log( PDERROR, exp ) ;
     		throw exp ;	
       }
    }
-}
+} ;
 
-function _appendIP( hostInfoArr ) {
+ConfigMgr.prototype._appendIP = function ConfigMgr__appendIP() {
    var errMsg    = null ;
    var errMsgArr = [] ;
    var exp       = null ;
-   for ( var i = 0; i < hostInfoArr.length; i++ ) {
-		var address = hostInfoArr[i].address ;
-      var ssh = hostInfoArr[i].rootSshObj ;
+   for ( var i = 0; i < this._hostInfoArr.length; i++ ) {
+		var address = this._hostInfoArr[i].address ;
+      var ssh = this._hostInfoArr[i].rootSshObj ;
       try {
          var ip = ssh.getPeerIP() ;
          if ( "string" != typeof(ip) ) {
@@ -429,11 +313,11 @@ function _appendIP( hostInfoArr ) {
             continue ;
          }
 	      // append host name and ip info
-         hostInfoArr[i].hostName = address ;
-         hostInfoArr[i].ip       = removeLineBreak( ip ) ;
+         this._hostInfoArr[i].hostName = address ;
+         this._hostInfoArr[i].ip       = removeLineBreak( ip ) ;
       } catch( e ) {
-         errMsg = "failed to get host[" + address + "]'ip, " + GETLASTERRMSG() ;
-         errMsgArr.push( errMsg ) ;
+         errMsg = "failed to get host[" + address + "]'ip" ;
+         errMsgArr.push( new SdbError( e, errMsg ).toString() ) ;
          if ( exp == null ) exp = new SdbError( SDB_INVALIDARG ) ;
          logger.log( PDERROR, errMsg ) ;
       }
@@ -441,17 +325,18 @@ function _appendIP( hostInfoArr ) {
    if ( exp != null ) {
       throw new SdbError( SDB_SYS, errMsgArr.toString() ) ;
    }
-}
+} ;
 
-function _appendRemoteInstalledInfo( hostInfoArr ) {
+ConfigMgr.prototype._appendRemoteInstalledInfo = 
+   function ConfigMgr__appendRemoteInstalledInfo() {
    var errMsg    = null ;
    var errMsgArr = [] ;
    var exp       = null ;
    
-   for ( var i = 0; i < hostInfoArr.length; i++ ) {
+   for ( var i = 0; i < this._hostInfoArr.length; i++ ) {
       var infoObj        = new Object() ;
-      var ssh            = hostInfoArr[i].rootSshObj ;
-      var address        = hostInfoArr[i].address ;
+      var ssh            = this._hostInfoArr[i].rootSshObj ;
+      var address        = this._hostInfoArr[i].address ;
       var localFileName  = address + "_" + ts ;
       var remoteFileName = OMA_FILE_INSTALL_INFO ;
 		logger.log( PDDEBUG, "localFileName is: " + localFileName + 
@@ -468,8 +353,8 @@ function _appendRemoteInstalledInfo( hostInfoArr ) {
          ssh.pull( remoteFileName, localFileName ) ;
       } catch( e ) {
          errMsg = "failed to pull file[" + remoteFileName + 
-            "] from host[" + address + "] to local, " + GETLASTERRMSG() ;
-         errMsgArr.push( errMsg ) ;
+            "] from host[" + address + "] to local" ;
+         errMsgArr.push( new SdbError( e, errMsg ).toString() ) ;
          if ( exp == null ) exp = new SdbError( SDB_INVALIDARG ) ;
          logger.log( PDERROR, errMsg ) ;
          continue ;
@@ -478,22 +363,23 @@ function _appendRemoteInstalledInfo( hostInfoArr ) {
          infoObj = eval( '(' + Oma.getOmaConfigs(localFileName) + ')' ) ;
       } catch( e ) {
          errMsg = "failed to extract installed info from file[" + localFileName + 
-            "], " + GETLASTERRMSG() ;
-         errMsgArr.push( errMsg ) ;
+            "]" ;
+         errMsgArr.push( new SdbError( e, errMsg ).toString() ) ;
          if ( exp == null ) exp = new SdbError( SDB_INVALIDARG ) ;
          logger.log( PDERROR, errMsg ) ;
          continue ;
       } finally {
          try { File.remove(localFileName) ; } catch(e) {}
       }
-      hostInfoArr[i].installedInfo = infoObj ;
+      this._hostInfoArr[i].installedInfo = infoObj ;
    }
    if ( exp != null ) {
       throw new SdbError( SDB_SYS, errMsgArr.toString() ) ;
    }
-}
+} ;
 
-function _secondlyCheck( hostInfoArr ) {
+ConfigMgr.prototype._secondlyCheck = 
+   function ConfigMgr__secondlyCheck() {
    var errMsg    = null ;
    var errMsgArr = [] ;
    var exp       = null ;
@@ -501,8 +387,8 @@ function _secondlyCheck( hostInfoArr ) {
 	logger.log( PDEVENT, "begin to secondly check" ) ;
 	// 1. check the specified admin accounts are the same with 
 	// the one in remote or not
-   for ( var i = 0; i < hostInfoArr.length; i++ ) {
-		var host        = hostInfoArr[i] ;
+   for ( var i = 0; i < this._hostInfoArr.length; i++ ) {
+		var host        = this._hostInfoArr[i] ;
 		// check the sdb admin user is the same with the one in remote or not
 		if ( host.installedInfo[SDBADMIN_USER] != host.sdbUserName ) {
          errMsg = "the offered sdb admin account is different from " + 
@@ -519,8 +405,8 @@ function _secondlyCheck( hostInfoArr ) {
 	
 	// 2. check the specified install paths are the same with
 	// the one in remote or not
-   for ( var i = 0; i < hostInfoArr.length; i++ ) {
-		var host = hostInfoArr[i] ;
+   for ( var i = 0; i < this._hostInfoArr.length; i++ ) {
+		var host = this._hostInfoArr[i] ;
       var path = host.installPath ;
       var ssh  = host.rootSshObj ;
 		// install path exist or not
@@ -547,58 +433,16 @@ function _secondlyCheck( hostInfoArr ) {
       throw new SdbError( SDB_INVALIDARG, errMsgArr.toString() ) ;
    }
    logger.log( PDEVENT, "finishing secondly check" ) ;
-}
+} ;
 
-function _connectToDB( omConfObj ) {
-   var errMsg = null ;
-   var exp    = null ;
-	var sdb    = null ;
-
-   var coordHostName = _getFiled( omConfObj, FIELD_COORD_HOST_NAME ) ;
-   var coordPort     = _getFiled( omConfObj, FIELD_COORD_PORT ) ;
-   var dbAuthUser    = _getFiled( omConfObj, FIELD_DB_AUTH_USER ) ;
-   var dbAuthPasswd  = _getFiled( omConfObj, FIELD_DB_AUTH_PASSWD ) ;   
-
-   try {
-      sdb = new Sdb( coordHostName, coordPort, dbAuthUser, dbAuthPasswd ) ;
-   } catch( e ) {
-      errMsg = "failed to connect to coord[" + 
-         coordHostName + ":" + coordPort + "]" ;
-      exp = new SdbError( GETLASTERROR(), errMsg ) ;
-      logger.log( PDERROR, exp ) ;
-      throw exp ;
-   }
-	return sdb ;
-}
-
-function _getRGInfo( sdb ) {
-   var errMsg = null ;
-   var exp    = null ;
-	var retArr = [] ;
-	var cur    = null ;
-	var record = null ;
-	try {
-		cur = sdb.listReplicaGroups() ;
-	} catch ( e ) {
-		errMsg = "failed to get repplica group's info, " + GETLASTERRMSG() ;
-		exp    = new SdbError( GETLASTERROR(), errMsg ) ;
-		logger.log( PDERROR, exp ) ;
-		throw exp ;
-	}
-	while ( (record = cur.next()) != undefined ) {
-		var obj = record.toObj() ;
-		retArr.push( obj ) ;
-	}
-	return retArr ;
-}
-
-function _getHostNameFromRGInfo( rgInfoArr ) {
+ConfigMgr.prototype._getHostNameFromRGInfo = 
+   function ConfigMgr__getHostNameFromRGInfo() {
    var errMsg       = null ;
    var exp          = null ;
 	var retArr       = [] ;
 
-	for ( var i = 0; i < rgInfoArr.length; i++ ) {
-		var obj      = rgInfoArr[i] ;
+	for ( var i = 0; i < this._rgInfoArr.length; i++ ) {
+		var obj      = this._rgInfoArr[i] ;
 		var arr      = obj[Group] ;
 		for ( var j = 0; j < arr.length; j++ ) {
 			var subObj   = arr[j] ;
@@ -607,19 +451,22 @@ function _getHostNameFromRGInfo( rgInfoArr ) {
 		}
 	}
 	return retArr ;
-}
+} ;
 
-function _thirdlyCheck( hostInfoArr, rgInfoArr ) {
+ConfigMgr.prototype._thirdlyCheck = 
+   function ConfigMgr__thirdlyCheck() {
    var errMsg    = null ;
    var errMsgArr = [] ;
    var exp       = null ;
+
 	logger.log( PDEVENT, "begin to thirdly check" ) ;
-	var rgHostArr = _getHostNameFromRGInfo( rgInfoArr ) ;
-	for ( var i = 0; i < rgHostArr.length; i++ ) {
+   // get the host from the return rg info
+	var rgHostArr = this._getHostNameFromRGInfo() ;
+	for ( var i = 0; i < rgHostArr.length; i++ ) {
 		var hostName = rgHostArr[i] ;
 	   var isMatch  = false ;
-		for ( var j = 0; j < hostInfoArr.length; j++ ) {
-      	if ( hostName == hostInfoArr[j].hostName ) {
+		for ( var j = 0; j < this._hostInfoArr.length; j++ ) {
+      	if ( hostName == this._hostInfoArr[j].hostName ) {
 				isMatch = true ;
 				break ;
 			}
@@ -640,14 +487,115 @@ function _thirdlyCheck( hostInfoArr, rgInfoArr ) {
 		throw exp ;
 	}
 	logger.log( PDEVENT, "finishing thirdly check" ) ;
-}
-
-var AddCoordInfo = function( rgInfoArr ) {
-	this._rgInfoArr = rgInfoArr ;
 } ;
 
-AddCoordInfo.prototype._getUsedNodeIDFromDB = 
-	function AddCoordInfo__getUsedNodeIDFromDB() {
+ConfigMgr.prototype._init = function ConfigMgr__init() {
+   var errMsg      = null ;
+   var exp         = null ;
+
+	if ( SYS_LINUX != SYS_TYPE ) {
+      exp = new SdbError( SDB_SYS, 
+			"not support current operating system[" + SYS_TYPE + "]" ) ;
+		logger.log( PDERROR, exp ) ;
+		throw exp ;
+	}
+	
+   // 1. check file exist or not
+   if ( !File.exist( this._configFile ) ) {
+      errMsg = "OM configure file[" + this._configFile + "] does not exist" ;
+      exp = new SdbError( SDB_INVALIDARG, errMsg ) ;
+      logger.log( PDERROR, exp ) ;
+      throw exp ;
+   }
+
+   // 2. get om configure info
+   try {
+      this._omConfObj = 
+         eval( '(' + Oma.getOmaConfigs( this._configFile ) + ')' ) ;
+	   logger.log( PDEVENT, 
+         "om config info is: " + JSON.stringify( this._omConfObj ) ) ;
+   } catch( e ) {
+      errMsg = 
+         "failed to get om configure info from file[" + this._configFile + "]" ;
+      exp = new SdbError( SDB_INVALIDARG, errMsg ) ;
+      logger.log( PDERROR, exp ) ;
+      throw exp ;
+   }
+
+   // 3. get info for creating db obj
+   var coordHostName  = this._getField( FIELD_COORD_HOST_NAME ) ;
+   var coordSvcName   = this._getField( FIELD_COORD_PORT ) ;
+   var dbAuthUser     = this._getField( FIELD_DB_AUTH_USER ) ;
+   var dbAuthPassword = this._getField( FIELD_DB_AUTH_PASSWD ) ;
+   
+   try {
+      this._sdb = new Sdb( coordHostName, coordSvcName, 
+			                  dbAuthUser, dbAuthPassword ) ;
+   } catch( e ) {
+      errMsg = "failed to connect to coord[" + 
+         coordHostName + ":" + coordPort + "]" ;
+      exp = new SdbError( e, errMsg ) ;
+      logger.log( PDERROR, exp ) ;
+      throw exp ;
+   }
+
+	var cur    = null ;
+	var record = null ;
+	try {
+		cur = this._sdb.listReplicaGroups() ;
+	} catch ( e ) {
+		var exp = new SdbError( e, "failed to get replica group's info" ) ;
+		logger.log( PDERROR, exp ) ;
+		throw exp ;
+	}
+	while ( (record = cur.next()) != undefined ) {
+		var obj = record.toObj() ;
+		this._rgInfoArr.push( obj ) ;
+	}
+   
+	// get cluster info
+	this._clusterInfo = this._getClusterInfo() ;
+   
+} ;
+
+ConfigMgr.prototype._doit = function ConfigMgr__doit() {
+   this._init() ;
+
+	// append host info and check
+	this._appendHostName() ;
+   this._appendRootInfo() ;
+   this._appendSshPort()	;
+	this._appendInstallPath() ;
+	this._appendAdminInfo() ;
+	// checking
+	this._firstlyCheck() ;
+	this._appendRootSshObj() ;
+	this._appendIP() ;
+	this._appendRemoteInstalledInfo() ;
+	// checking
+	this._secondlyCheck() ; 
+   // checking
+   this._thirdlyCheck() ;
+   
+} ;
+
+var RGInfoHelper = function( rgInfoArr ) {
+   this._rgInfoArr = rgInfoArr ;
+	this._init() ;
+} ;
+
+RGInfoHelper.prototype._init = function RGInfoHelper__init() {
+   if ( !isArray(this._rgInfoArr) || this._rgInfoArr.length == 0 ) {
+		var exp = new SdbError( SDB_SYS, 
+			"no replica group's info in catalog, RGInfoHelper::_rgInfoArr is: " + 
+			this._rgInfoArr ) ;
+      logger.log( PDERROR, exp ) ;
+		throw exp ;
+	}
+} ;
+
+RGInfoHelper.prototype._getUsedNodeIDFromDB = 
+	function RGInfoHelper__getUsedNodeIDFromDB() {
    var retArr  = [] ;
 	var nodeArr = [] ;
 	var rgArr   = [] ;
@@ -667,8 +615,6 @@ AddCoordInfo.prototype._getUsedNodeIDFromDB =
 		logger.log( PDERROR, exp ) ;
 		throw exp ;
 	}
-	// TODO: debug
-	logger.log( PDDEBUG, "catalog or coord rg info size is: " + rgArr.length ) ;
 	for ( var i = 0 ; i < rgArr.length; i++ ) {
       logger.log( PDDEBUG, JSON.stringify(rgArr[i]) ) ;
 	}
@@ -704,7 +650,7 @@ AddCoordInfo.prototype._getUsedNodeIDFromDB =
 	return retArr ;
 } ;
 
-AddCoordInfo.prototype._genNodeID = function AddCoordInfo__genNodeID( num ) {
+RGInfoHelper.prototype._genNodeID = function RGInfoHelper__genNodeID( num ) {
 	var retArr        = [] ;
 	var exp           = null ;
 	var usedNodeIDArr = this._getUsedNodeIDFromDB() ;
@@ -739,21 +685,22 @@ AddCoordInfo.prototype._genNodeID = function AddCoordInfo__genNodeID( num ) {
 	return retArr ;
 } ;
 
-AddCoordInfo.prototype._getNodeAddrFromDB = 
-	function AddCoordInfo__getNodeAddrFromDB( role ) {
+RGInfoHelper.prototype._getNodeAddrFromDB = 
+	function RGInfoHelper__getNodeAddrFromDB( role, type ) {
    var retArr   = [] ;
 	var nodeArr  = null ;
    var exp      = null ;
 	var rgInfo   = null ;
 	var rgName   = null ;
 	var portType = null ;
+
+	if ( type == "local" ) portType = 0 ;
+	else if ( type == "catalog" ) portType = 3 ;
 	
 	if ( role == "catalog" ) {
 		rgName   = "SYSCatalogGroup" ;
-		portType = 3 ; 
 	} else if ( role == "coord" ) {
 		rgName   = "SYSCoord" ;
-		portType = 0 ;
 	} else {
 		throw new SdbError( PDERROR, "invalid role: " + role ) ;
 	}
@@ -795,42 +742,83 @@ AddCoordInfo.prototype._getNodeAddrFromDB =
          retArr.push( nodeInfo ) ;
 		}
 	}
-	logger.log( PDEVENT, role + " group has " + retArr.length + 
-		" node(s) as below: " + retArr ) ;
+   logger.log( PDEVENT, sprintf( "group[?] has ? node(s) which type" +
+   						   	" is [?] as below: ? ", role, retArr.length,
+   						   	portType, retArr ) ) ;
 	return retArr ;  
 } ;
 
-AddCoordInfo.prototype._getCataAddrFromDB = 
-	function AddCoordInfo__getCataAddrFromDB() {
+RGInfoHelper.prototype._getCataAddrFromDB = 
+	function RGInfoHelper__getCataAddrFromDB( type ) {
    var exp         = null ;
-   var cataAddrArr = this._getNodeAddrFromDB( "catalog" ) ;
+   var cataAddrArr = this._getNodeAddrFromDB( "catalog", type ) ;
 	if ( cataAddrArr == null || cataAddrArr.length == 0 ) {
    	exp = new SdbError( SDB_SYS, 
 			"can not get any info about catalog group from database" ) ;
 		logger.log( PDERROR, exp ) ;
 		throw exp ;
 	}
-	logger.log( PDDEBUG, "_getCoordAddrFromDB returns: " + cataAddrArr ) ;
+	logger.log( PDDEBUG, 
+		"the catalog address with the type[" + type + "] is: " + cataAddrArr ) ;
 	return cataAddrArr ;
 } ;
 
-AddCoordInfo.prototype._getCoordAddrFromDB = 
-	function AddCoordInfo__getCoordAddrFromDB() {
-   var retArr = this._getNodeAddrFromDB( "coord" ) ;
-	logger.log( PDDEBUG, "_getCoordAddrFromDB returns: " + retArr ) ;
+RGInfoHelper.prototype._getCoordAddrFromDB = 
+	function RGInfoHelper__getCoordAddrFromDB( type ) {
+   var retArr = this._getNodeAddrFromDB( "coord", type ) ;
+	logger.log( PDDEBUG, 
+		"the coord address with the type[" + type + "] is: " + retArr ) ;
 	return retArr ;
 } ;
 
-AddCoordInfo.prototype._collectCoordInfoFromHost = 
-	function AddCoorInfo__collectCoordInfoFromHost( hostInfoArr ) {
+RGInfoHelper.prototype._getOriginalCoordRGInfo = 
+	function RGInfoHelper__getOriginalCoordRGInfo() {
+	var retObj = null ;
+   // get coord rg
+	for ( var i = 0; i < this._rgInfoArr.length; i++ ) {
+		var info = this._rgInfoArr[i] ;
+      if ( "SYSCoord" == info[GroupName] ) {
+         retObj = info ;
+			break ;
+		}
+	}
+	if ( retObj == null ) {
+		logger.log( PDWARNING, "database has no coord group" ) ;
+	}
+	return retObj ;
+} ;
+
+RGInfoHelper.prototype._getOriginalCoordNodes = 
+	function RGInfoHelper__getOriginalCoordRGNodes() {
+	var retArr     = [] ;
+	var coordRGObj = this._getOriginalCoordRGInfo() ;
+	
+	if ( coordRGObj == null || coordRGObj[Group] == null ) {
+		logger.log( PDWARNING, "there has no any coord nodes" ) ;
+		return retArr ;
+	}
+	var nodeArr = coordRGObj[Group] ;
+	for ( var i = 0; i < nodeArr.length; i++ ) {
+      retArr.push( nodeArr[i] ) ;
+	}
+	return retArr ;
+} ;
+
+var FilterCoordInfo = function( hostInfoArr, rgInfoHelper ) {
+   this._hostInfoArr  = hostInfoArr ;
+	this._rgInfoHelper = rgInfoHelper ;
+} ;
+
+FilterCoordInfo.prototype._collectCoordInfoFromHost = 
+	function FilterCoordInfo__collectCoordInfoFromHost() {
 	var retArr = [] ;
    var exp    = null ;
 	var str1   = "\' var arr = Sdbtool.listNodes({type:\"db\", role:\"coord\", mode:\"local\", expand:true}); \'" ;
 	var str2   = "\' arr.next(); \'" ;
 	var str3   = "\' quit \'" ;
 
-   for ( var i = 0; i < hostInfoArr.length; i++ ) {
-      var host        = hostInfoArr[i] ;
+   for ( var i = 0; i < this._hostInfoArr.length; i++ ) {
+      var host        = this._hostInfoArr[i] ;
       var ssh         = host.rootSshObj ;
       var sdbExecFile = adaptPath(host.installPath) + OMA_PROG_BIN_SDB ;
 		var cmd1        = sdbExecFile + " -s " + str1 ;
@@ -880,7 +868,7 @@ AddCoordInfo.prototype._collectCoordInfoFromHost =
 					continue ;
 				}
 			} catch(e) {
-			   // TODO: get error msg
+			   // TODO: lost of error msg here, find out the reason
 				logger.log( PDWARNING, "we get exception[" + e + 
 					"], we take it end of traversal cursor" ) ;
 				try { ssh.exec( cmd3 ); } catch(e) {}
@@ -900,32 +888,8 @@ AddCoordInfo.prototype._collectCoordInfoFromHost =
 	return retArr ;
 } ;
 
-var CoordInfo = function() {
-   this.HostName = null ;
-	this.dbpath   = null ;
-	this.Service  = [ { "Type" : 0, "Name" : "" }, 
-		               { "Type" : 1, "Name" : "" }, 
-		               { "Type" : 2, "Name" : "" } ] ;
-	this.NodeID   = null ;
-	this.Status   = 1 ;
-
-	CoordInfo.prototype.toString = function() {
-      return JSON.stringify( this ) ;
-	} ;
-} ;
-
-var CoordInfoWrapper = function() {
-	this.ip          = null ;
-	this.catalogAddr = null ;
-   this.infoObj     = null ;
-
-	CoordInfoWrapper.prototype.toString = function() {
-      return JSON.stringigy( this ) ;
-	} ;
-} ;
-
-AddCoordInfo.prototype._extractCoordInfo = 
-	function AddCoordInfo__extractCoordInfo( coordInfoObjArr ) {
+FilterCoordInfo.prototype._extractCoordInfo = 
+	function FilterCoordInfo__extractCoordInfo( coordInfoObjArr ) {
    var retArr = [] ;
 	var len    = coordInfoObjArr.length ;
 
@@ -951,8 +915,8 @@ AddCoordInfo.prototype._extractCoordInfo =
 	return retArr ;
 } ;
 
-AddCoordInfo.prototype._filterCoordInfo = 
-	function AddCoordInfo__filterCoordInfo( hostCoordInfoWrapperArr, 
+FilterCoordInfo.prototype._filterCoordInfo = 
+	function FilterCoordInfo__filterCoordInfo( hostCoordInfoWrapperArr, 
 	                                        dbCoordAddrArr, 
 	                                        dbCatalogAddrArr ) {
 	var exp           = null ;
@@ -1022,16 +986,15 @@ AddCoordInfo.prototype._filterCoordInfo =
 	return retArr ;
 } ;
 
-AddCoordInfo.prototype._appendNodeID =
-	function AddCoordInfo__appendNodeID( matchedCoordInfoArr ) {
+FilterCoordInfo.prototype._appendNodeID =
+	function FilterCoordInfo__appendNodeID( matchedCoordInfoArr ) {
 	var retArr    = [] ;
 	var nodeIDArr = [] ;
 	// get usable node id
-	nodeIDArr = this._genNodeID( matchedCoordInfoArr.length ) ;
+	nodeIDArr = this._rgInfoHelper._genNodeID( matchedCoordInfoArr.length ) ;
    // generate inserted records
 	for ( var i = 0; i < matchedCoordInfoArr.length; i++ ) {
       var obj                      = matchedCoordInfoArr[i] ;
-		// TODO: append node id
 		obj[FIELD_COORD_INFO_NODEID] = nodeIDArr[i] ;
 		retArr.push( obj ) ;
 	}
@@ -1043,109 +1006,319 @@ AddCoordInfo.prototype._appendNodeID =
 	return retArr ;
 } ;
 
-AddCoordInfo.prototype._init = function AddCoordInfo__init() {
-   if ( !isArray(this._rgInfoArr) || this._rgInfoArr.length == 0 ) {
-		var exp = new SdbError( SDB_SYS, 
-			"no replica group's info in catalog, AddCoordInfo::_rgInfoArr is: " + 
-			this._rgInfoArr ) ;
-      logger.log( PDERROR, exp ) ;
-		throw exp ;
-	}
+FilterCoordInfo.prototype._init = function FilterCoordInfo__init() {
 } ;
 
-AddCoordInfo.prototype._doit = 
-	function AddCoordInfo__doit( hostInfoArr ) {
+FilterCoordInfo.prototype._doit = 
+	function FilterCoordInfo__doit() {
    var retArr = [] ;
 
-   // 
    this._init() ;
 
-	// 1. ssh to remote to get all the coord's info to local
-	var coordInfoObjArr = this._collectCoordInfoFromHost( hostInfoArr ) ;
-
+	// ssh to remote to get all the coord's info to local
+	var coordInfoObjArr = this._collectCoordInfoFromHost() ;
+   // extract some useful info of the coord to an array
 	var hostCoordInfoArr = this._extractCoordInfo( coordInfoObjArr ) ;
-
-	// . get existing coord's info from database
-   var dbCoordAddrArr = this._getCoordAddrFromDB() ;
-
-	// . get catalog's info from database
-   var dbCatalogAddrArr = this._getCataAddrFromDB() ;
-
-	// . filter the existed coords
-	var matchedCoordInfoArr = 
+	// get existing coord's info from database
+   var dbCoordAddrArr = this._rgInfoHelper._getCoordAddrFromDB( "local" ) ;
+	// get catalog's info from database
+   var dbCatalogAddrArr = this._rgInfoHelper._getCataAddrFromDB( "catalog" ) ;
+	// pick up the coord info which should be in current cluster but 
+	// have not been included in
+	var filteredCoordInfoArr = 
 		this._filterCoordInfo( hostCoordInfoArr, dbCoordAddrArr, dbCatalogAddrArr ) ;
-   // . gen inserted coord info
-   retArr = this._appendNodeID( matchedCoordInfoArr ) ;
-
+   // append node id for those coords
+   var retArr = this._appendNodeID( filteredCoordInfoArr ) ;
+	
 	return retArr ;
 } ;
 
-function main() {
-   var omConfObj = null ;
-   var hostInfoArr = [] ;
-	var clusterInfo = null ;
-	var sdb         = null ;
-   var rgInfoArr   = null ;
-   var errMsg      = null ;
-   var debugMsg    = null ;
-   var exp         = null ;
+var UpdateCoordInfo = function( sdb, rgInfoHelper, coordInfoArr ) {
+	this._sdb          = sdb ;
+	this._rgInfoHelper = rgInfoHelper ;
+	this._infoArr      = coordInfoArr ;
+	this._originalCoordRGInfo = null ;
+} ;
 
-	if ( SYS_LINUX != SYS_TYPE ) {
-      exp = new SdbError( SDB_SYS, 
-			"not support current operating system[" + SYS_TYPE + "]" ) ;
+UpdateCoordInfo.prototype._closeConnections = 
+	function UpdateCoordInfo__closeConnections( connArr ) {
+	for ( var i = 0; i < connArr.length; i++ ) {
+      try { connArr[i].close() ; } catch( e ) {}
+	}
+} ;
+
+UpdateCoordInfo.prototype._buildUpdateRule = 
+	function UpdateCoordInfo__buildUpdateRule( type ) {
+	var retObj = null ;
+	try {
+	   var recordObj          = new Object() ;
+      var subObj             = new Object() ;
+		if ( type == "rebuild" ) {
+			subObj[Group]       = this._addExistedCoordInfo() ; ;
+	   	recordObj["$set"]   = subObj ;
+			retObj              = recordObj ;
+		} else if ( type == "rollback" ) {
+			if ( this._originalCoordRGInfo != null ) {
+			   recordObj["$set"] = this._originalCoordRGInfo ;
+				retObj            = recordObj ;
+			} else {
+			   // in this case, that means the original coord rg does not exist
+			   // so we don't need to build update rule
+ 				retObj            = null ;
+			}
+		}
+	} catch( e ) {
+      var exp = new SdbError( e, 
+			sprintf( "failed to build update coord rule with the type \'?\'",
+				type ) ) ;
 		logger.log( PDERROR, exp ) ;
 		throw exp ;
 	}
+	logger.log( PDEVENT, sprintf( "the update rule for [?] is: ", 
+		type ) + JSON.stringify( retObj ) ) ;
+	return retObj ;
+} ;
+
+UpdateCoordInfo.prototype._buildCond =
+	function UpdateCoordInfo__buildCond() {
+	var retObj = null ;
+	var exp    = null ;
+	var obj    = new Object() ;
+	var subObj = new Object() ;
+	subObj["$et"]  = "SYSCoord" ;
+	obj[GroupName] = subObj ;
+   retObj = obj ;
+	return retObj ;
+} ;
+
+UpdateCoordInfo.prototype._buildUpdateCond =
+	function UpdateCoordInfo__buildUpdateCond() {
+	var retObj = null ;
+	try {
+   	retObj = this._buildCond() ;
+	} catch( e ) {
+      var exp = new SdbError( e,
+			"failed to build update coord info's condition" ) ;
+		logger.log( PDERROR, exp ) ;
+		throw exp ;
+	}
+	logger.log( PDEVENT, "update coord info's condition is: " + 
+		JSON.stringify( retObj ) ) ;
+	return retObj ;
+} ;
+
+UpdateCoordInfo.prototype._buildQueryCond =
+	function UpdateCoordInfo__buildQueryCond() {
+	var retObj = null ;
+	try {
+    	retObj = this._buildCond() ;
+	} catch( e ) {
+      var exp = new SdbError( e,
+			"failed to build query coord info's condition" ) ;
+		logger.log( PDERROR, exp ) ;
+		throw exp ;
+	}
+	logger.log( PDEVENT, "query coord info's condition is: " + 
+		JSON.stringify( retObj ) ) ;
+	return retObj ;
+} ;
+
+UpdateCoordInfo.prototype._addExistedCoordInfo = 
+	function UpdateCoordInfo__addExistedCoordInfo() {
+	var retArr             = this._infoArr ;
+   var originalCoordNodes = this._rgInfoHelper._getOriginalCoordNodes() ;
+	logger.log( PDDEBUG, 
+		"the original coord info is: " + JSON.stringify(originalCoordNodes) ) ;
+	logger.log( PDDEBUG, 
+		"the new coord info is: " + JSON.stringify(this._infoArr) ) ;
+	for ( var i = 0; i < originalCoordNodes.length; i++ ) {
+		retArr.push( originalCoordNodes[i] ) ;
+	}
+	logger.log( PDDEBUG, 
+		"the total coord info is: " + JSON.stringify(retArr) ) ;
+	return retArr ;
+} ;
+
+UpdateCoordInfo.prototype._rollback = 
+		function UpdateCoordInfo__rollback( rollbackCLArr, rule, cond ) {
+	var exp       = null ;
+	var errMsg    = null ;
+	var errMsgArr = [] ;
+
+	for ( var i = 0; i < rollbackCLArr.length; i++ ) {
+		var cl = null ;
+		try {
+      	cl = rollbackCLArr[i] ;
+		   logger.log( PDEVENT, 
+				sprintf( "begin to restore coord info to table[?]", cl ) ) ;
+			if ( rule != null ) {
+				cl.update( rule, cond ) ;
+			} else {
+			   // in this case, "SYSCoord" does not exist in catalog group
+			   // so, let's remove the inserted coord info
+            cl.remove( cond ) ; 
+			}
+		   logger.log( PDEVENT, 
+				sprintf( "succeed to restore coord info to table[?]", cl ) ) ;
+		} catch( e ) {
+         exp = new SdbError( e, 
+				sprintf( "failed to restore the original coord info in [?] with " + 
+					"the rule [?] and condition [?]", cl, 
+					JSON.stringify( rule ), JSON.stringify( cond ) ) ) ;
+			errMsg = exp.toString() ;
+			errMsgArr.push( errMsg ) ;
+			logger.log( PDERROR, errMsg ) ;
+			println( errMsg ) ;
+		}
+	}
+} ;
+
+UpdateCoordInfo.prototype._prepareCoordRG = 
+	function UpdateCoordInfo__prepareCoordRG() {
+	var num = null ;
+	var exp = null ;
+
+	try {
+      var cur = this._sdb.list( SDB_LIST_GROUPS, this._buildQueryCond() ) ;
+		num     = cur.size() ;
+	} catch( e ) {
+		exp = new SdbError( e, 
+			"failed to check whether coord group existed or not" ) ;
+		logger.log( PDERROR, exp ) ;
+		throw exp ;
+	}
+   if ( num == 0 ) {
+      logger.log( PDEVENT, 
+			"there is no coord group in current cluster, let's build one" ) ;
+		try {
+			this._sdb.createRG( "SYSCoord" ) ;
+		} catch ( e ) {
+			exp = new SdbError( e, "failed to build coord group" ) ;
+			logger.log( PDERROR, exp ) ;
+			throw exp ;
+		}
+      logger.log( PDEVENT, "finish building coord group" ) ;
+	} else if ( num != 1 ) {
+	   exp = SdbError( SDB_SYS, "invalid amount of coord group: " + num ) ;
+		logger.log( PDERROR, exp ) ;
+		throw exp ;
+	}
+} ;
+
+UpdateCoordInfo.prototype._updateCoordInfo = 
+	function UpdateCoordInfo__updateCoordInfo() {
+	var exp           = null ;
+   var cdbArr        = [] ;
+	var clArr         = [] ;
+	var rollbackCLArr = [] ;
+
+	var cataAddrArr = this._rgInfoHelper._getCataAddrFromDB( "local" ) ;
+	var rule1       = this._buildUpdateRule( "rebuild" ) ;
+	var rule2       = this._buildUpdateRule( "rollback" ) ;
+	var cond        = this._buildUpdateCond() ;
+
+	for ( var i = 0; i < cataAddrArr.length; i++ ) {
+		try {
+	      var cdb = new Sdb( cataAddrArr[i] ) ;
+			cdbArr.push( cdb ) ;
+      	var cl  = cdb.getCS( "SYSCAT" ).getCL( "SYSNODES" ) ;
+			clArr.push( cl ) ;
+		} catch( e ) {
+			exp = new SdbError( e, 
+				"failed to get system table 'SYSCAT.SYSNODES' from catalog[" + 
+				cataAddrArr[i] + "]" ) ;
+			logger.log( PDERROR, exp ) ;
+			// disconnect
+			this._closeConnections( cdbArr ) ;
+			throw exp ;
+		}
+	}
+	for ( var i = 0; i < clArr.length; i++ ) {	
+		var cl = clArr[i] ;
+		// update
+		try {
+		   logger.log( PDEVENT, 
+				sprintf( "begin to update coord info to catalog[?]", 
+					cataAddrArr[i] ) ) ;
+			cl.update( rule1, cond ) ;
+		   logger.log( PDEVENT, 
+				sprintf( "succeed to update coord info to catalog[?]", 
+					cataAddrArr[i] ) ) ;
+		} catch( e ) {
+			exp = new SdbError( e, 
+				"failed to update coord info to table 'SYSCAT.SYSNODES' " + 
+				"in catalog[" + cataAddrArr[i] + "]" ) ;
+			logger.log( PDERROR, exp ) ;
+         rollbackCLArr.push( cl ) ;
+			// rollback
+			this._rollback( rollbackCLArr, rule2, cond ) ;
+			// disconnect
+			this._closeConnections( cdbArr ) ;
+			throw exp ;
+		}
+		rollbackCLArr.push( cl ) ;
+	}
+	// disconnect
+	this._closeConnections( cdbArr ) ;
 	
-   // 1. check file exist or not
-   if ( !File.exist(OM_CONF_FILE) ) {
-      errMsg = "OM configure file[" + OM_CONF_FILE + "] does not exist" ;
-      exp = new SdbError( SDB_INVALIDARG, errMsg ) ;
-      logger.log( PDERROR, exp ) ;
-      throw exp ;
-   }
+} ;
 
-   // 2. get om configure info
-   try {
-      omConfObj = eval( '(' + Oma.getOmaConfigs(OM_CONF_FILE) + ')' ) ;
-		// TODO:
-	   //println( "omConfObj is: " + JSON.stringify(omConfObj) ) ;
-	   logger.log( PDEVENT, "omConfObj is: " + JSON.stringify(omConfObj) ) ;
-   } catch( e ) {
-      errMsg = "failed to get om configure info from file[" + OM_CONF_FILE + "]" ;
-      exp = new SdbError( SDB_INVALIDARG, errMsg ) ;
-      logger.log( PDERROR, exp ) ;
-      throw exp ;
-   }
+UpdateCoordInfo.prototype._init = function UpdateCoordInfo__doit() {
+	if ( !isArray(this._infoArr) ) {
+      var exp = new SdbError( SDB_SYS, 
+			sprintf( "the coord info array[?] for updating is invalid", 
+				this._infoArr ) ) ;
+		logger.log( PDERROR, exp ) ;
+		throw exp ;
+	}
+	this._originalCoordRGInfo = this._rgInfoHelper._getOriginalCoordRGInfo()
+   // should set the log level to event,
+   // we want the original coord group info is recorded in log
+	logger.log( PDEVENT, 
+		"the original coord group info is: " + 
+		JSON.stringify( this._originalCoordRGInfo ) ) ;
+} ;
 
-	// 3. append host info and check
-	_appendHostName( omConfObj, hostInfoArr ) ;
-   _appendRootInfo( omConfObj, hostInfoArr ) ;
-   _appendSshPort( omConfObj, hostInfoArr )	;
-	_appendInstallPath( omConfObj, hostInfoArr ) ;
-	_appendAdminInfo( omConfObj, hostInfoArr ) ;
-	// checking
-	_firstlyCheck( hostInfoArr ) ;
-	_appendRootSshObj( hostInfoArr ) ;
-	_appendIP( hostInfoArr ) ;
-	_appendRemoteInstalledInfo( hostInfoArr ) ;
-	// checking
-	_secondlyCheck( hostInfoArr ) ; 
-   sdb = _connectToDB( omConfObj ) ;
-   rgInfoArr = _getRGInfo( sdb ) ;
-   _thirdlyCheck( hostInfoArr, rgInfoArr ) ;
+UpdateCoordInfo.prototype._doit = function UpdateCoordInfo__doit() {
+	// init
+	this._init() ;
+	if ( this._infoArr.length == 0 ) {
+		logger.log( PDEVENT, "no new coord info for updating" ) ;
+      return ;
+	} else {
+      logger.log( PDEVENT, "the new coord info for updating is: " + 
+			JSON.stringify( this._infoArr ) ) ;
+	}
+	this._prepareCoordRG() ;
+	this._updateCoordInfo() ;
+} ;
 
-	// get cluster info
-	clusterInfo = _getClusterInfo( omConfObj ) ;
-	// TODO:
-	//println( "cluster info is: " + clusterInfo ) ;
 
-	// 4. get coord info
-	var addCoord = new AddCoordInfo( rgInfoArr ) ;
-   println( addCoord._doit(hostInfoArr) ) ;
+function main() {
+   var errMsg      = null ;
+   var debugMsg    = null ;
+   var exp         = null ;
+   
+   var hostInfoArr = null ;
+   var rgInfoArr   = null ;
+   var sdb         = null ;
+  
+   var configMgr = new ConfigMgr( OM_CONF_FILE ) ;
+   configMgr._doit() ;
+   
+   var hostInfoArr  = configMgr._getHostInfoArr() ;
+   var rgInfoArr    = configMgr._getRGInfoArr() ;
+   var sdb          = configMgr._getSdbObj() ;
+   var rgInfoHelper = new RGInfoHelper( rgInfoArr ) ;
+
+	var filterCoordInfo = new FilterCoordInfo( hostInfoArr, rgInfoHelper ) ;
+	var updateCoordInfoArr = filterCoordInfo._doit() ;
+	var updateCoord = new UpdateCoordInfo( sdb, rgInfoHelper, updateCoordInfoArr ) ;
+	updateCoord._doit() ;
    
 	
 }
+
 
 
 

@@ -55,6 +55,7 @@ var Description                            = "Description" ;
 var Free                                   = "Free" ;
 var Freq                                   = "Freq" ;
 var Filesystem                             = "Filesystem" ;
+var Group                                  = "Group" ;
 var GroupName                              = "GroupName" ;
 var HostName                               = "HostName" ;
 var HasInstall                             = "HasInstall" ;
@@ -123,6 +124,7 @@ var TaskID                                 = "TaskID" ;
 var TmpCoordHostName                       = "TmpCoordHostName" ;
 var TmpCoordSvcName                        = "TmpCoordSvcName" ;
 var Time                                   = "Time" ;
+var Type                                   = "Type" ;
 var VCoordHostName                         = "TmpCoordHostName" ;
 var VCoordSvcName                          = "TmpCoordSvcName" ;
 var Usable                                 = "Usable" ;
@@ -245,6 +247,7 @@ var OMA_FILE_INSTALL_INFO                  = "/etc/default/sequoiadb" ;
 
 // program in linux
 var OMA_PROG_BIN_SDBCM                     = "bin/sdbcm" ;
+var OMA_PROG_BIN_SDB                       = "bin/sdb" ;
 var OMA_PROG_SDBCMD                        = "sdbcmd" ;
 var OMA_PROG_SDBCMART                      = "sdbcmart" ;
 var OMA_PROG_SDBCMTOP                      = "sdbcmtop" ;
