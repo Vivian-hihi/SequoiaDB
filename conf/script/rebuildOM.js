@@ -833,7 +833,7 @@ FilterCoordInfo.prototype._collectCoordInfoFromHost =
       try {
          ssh.exec( cmd1 ) ;
       } catch( e ) {
-         exp = new SdbError( PDERROR, "failed to execute command[" + cmd1 + 
+         exp = new SdbError( e, "failed to execute command[" + cmd1 + 
             "] in host[" + host.hostName + "], for " + ssh.getLastOut() + 
             ", errno: " + ssh.getLastRet() ) ;
          logger.log( PDERROR, exp ) ;
@@ -849,31 +849,36 @@ FilterCoordInfo.prototype._collectCoordInfoFromHost =
          try {
             retStr = ssh.exec( cmd2 ) ;
          } catch( e ) {
-            exp = new SdbError( PDERROR, "failed to execute command[" + cmd2 + 
+            exp = new SdbError( e, "failed to execute command[" + cmd2 + 
                "] in host[" + host.hostName + "], for " + ssh.getLastOut() + 
                ", errno: " + ssh.getLastRet() ) ;
             logger.log( PDERROR, exp ) ;
+            try { ssh.exec( cmd3 ); } catch(e) {}
             throw exp ;
-         } finally {
-            if ( exp != null ) {
-               try { ssh.exec( cmd3 ); } catch(e) {}
-            }
+         }
+         if ( retStr == "" ) {
+            // in this case, cursor hit the end, let's stop
+            try { ssh.exec( cmd3 ); } catch(e) {}
+            break ;
          }
          try {
             obj = eval( '(' + retStr + ')' ) ;
-            if ( !isObject(obj) ) {
-               logger.log( PDWARNING, 
-                  "the string[" + retStr + "] return by executing command[" + 
-                  cmd2 + "] in host [" + host.hostName + 
-                  "] can not be eval to an object"  ) ;
-               continue ;
-            }
          } catch(e) {
-            // TODO: lost of error msg here, find out the reason
-            logger.log( PDWARNING, "we get exception[" + e + 
-               "], we take it end of traversal cursor" ) ;
+            exp = new SdbError( e, 
+               "the string[" + retStr + "] return by executing command[" + 
+               cmd2 + "] in host [" + host.hostName + 
+               "] can not be eval to an object"  ) ;
+            logger.log( PDERROR, exp ) ;
             try { ssh.exec( cmd3 ); } catch(e) {}
-            break ;
+            throw exp ;
+         }
+         if ( !isObject(obj) ) {
+            exp = new SdbError( SDB_SYS, 
+                                sprintf( "the eval result of [?] is not " + 
+                                   "an object", retStr ) ) ;
+            logger.log( PDERROR, exp ) ;
+            try { ssh.exec( cmd3 ); } catch(e) {}
+            throw exp ;
          }
          obj[FIELD_CONF_HOST_NAME] = host.hostName ;
          obj[FIELD_CONF_IP]        = host.ip ;
@@ -1305,7 +1310,7 @@ function main() {
    var configMgr = new ConfigMgr( OM_CONF_FILE ) ;
    configMgr._doit() ;
    
-   ///*
+   /*
    var hostInfoArr  = configMgr._getHostInfoArr() ;
    var rgInfoArr    = configMgr._getRGInfoArr() ;
    var sdb          = configMgr._getSdbObj() ;
@@ -1315,9 +1320,9 @@ function main() {
    var updateCoordInfoArr = filterCoordInfo._doit() ;
    var updateCoord = new UpdateCoordInfo( sdb, rgInfoHelper, updateCoordInfoArr ) ;
    updateCoord._doit() ;
-   //*/
+   */
 
-   // get the info about the host in current cluster
+   // get the info about the hosts in current cluster
    // those info will be saved in "SYSDEPLOY.SYSHOST" table in OM
    
    
