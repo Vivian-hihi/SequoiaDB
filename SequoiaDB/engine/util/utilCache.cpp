@@ -1600,6 +1600,7 @@ namespace engine
          goto error ;
       }
 
+      pFile = _pUnit->getCacheFile() ;
       /// read from file
       rc = pFile->read( _pageID, pBuff, len, offset, readLen, cb ) ;
       if ( rc )
