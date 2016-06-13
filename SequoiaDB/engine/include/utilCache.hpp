@@ -565,8 +565,11 @@ namespace engine
             Return the sync pages
          */
          UINT32         syncPages( IExecutor *cb,
-                                   BOOLEAN force = TRUE ) ;
+                                   BOOLEAN force = TRUE,
+                                   BOOLEAN ignoreClose = FALSE ) ;
          BOOLEAN        canSync( BOOLEAN &force ) ;
+
+         UINT32         dropDirty() ;
 
          void           lockPageCleaner() ;
          void           unlockPageCleaner() ;

@@ -228,6 +228,7 @@ namespace engine
          onceWrite = lastLen < blockSize ? lastLen : blockSize ;
          ossMemcpy( pPage, pBuf, onceWrite ) ;
          lastLen -= onceWrite ;
+         pBuf += onceWrite ;
       }
 
       SDB_ASSERT( lastLen == 0, "Last len must be 0" ) ;
@@ -1740,7 +1741,7 @@ namespace engine
       /// wait all dirty page flushed to file
       while( dirtyPages() > 0 )
       {
-         syncPages( cb, TRUE ) ;
+         syncPages( cb, TRUE, TRUE ) ;
       }
 
       for ( UINT32 i = 0 ; i < _bucketSize ; ++i )
@@ -2064,7 +2065,8 @@ namespace engine
       return FALSE ;
    }
 
-   UINT32 _utilCacheUnit::syncPages( IExecutor *cb, BOOLEAN force )
+   UINT32 _utilCacheUnit::syncPages( IExecutor *cb, BOOLEAN force,
+                                     BOOLEAN ignoreClose )
    {
       UINT32 totalPages = 0 ;
       utilCacheBucket* pBucket = NULL ;
@@ -2077,7 +2079,7 @@ namespace engine
 
       for ( UINT32 i = 0 ; i < _bucketSize ; ++i )
       {
-         if ( _closed )
+         if ( _closed && !ignoreClose )
          {
             break ;
          }
@@ -2115,7 +2117,45 @@ namespace engine
 
       totalPages += _syncPages( tmpPages, cb ) ;
 
-      PD_LOG( PDDEBUG, "Sync %d pages", totalPages ) ;
+      PD_LOG( PDINFO, "Sync %d pages", totalPages ) ;
+
+      return totalPages ;
+   }
+
+   UINT32 _utilCacheUnit::dropDirty()
+   {
+      UINT32 totalPages = 0 ;
+      utilCacheBucket* pBucket = NULL ;
+      utilCacheBucket::MAP_BLK_PAGE* pPages = NULL ;
+
+      for ( UINT32 i = 0 ; i < _bucketSize ; ++i )
+      {
+         pBucket = _vecBucket[ i ] ;
+         pBucket->lock( EXCLUSIVE ) ;
+         pPages = pBucket->getPages() ;
+         utilCacheBucket::MAP_BLK_PAGE::iterator it = pPages->begin() ;
+         while ( it != pPages->end() )
+         {
+            utilCachePage& page = it->second ;
+
+            /// locked page, ignored
+            if ( page.isLocked() )
+            {
+               ++it ;
+               continue ;
+            }
+            else if ( page.isDirty() )
+            {
+               page.clearDirty() ;
+               ++totalPages ;
+               decDirtyPages( pBucket ) ;
+            }
+            ++it ;
+         }
+         pBucket->unlock( EXCLUSIVE ) ;
+      }
+
+      PD_LOG( PDINFO, "Dropped %lld pages", totalPages ) ;
 
       return totalPages ;
    }
@@ -2239,7 +2279,7 @@ namespace engine
          }
       }
 
-      PD_LOG( PDDEBUG, "Recycle %lld pages", totalSize ) ;
+      PD_LOG( PDINFO, "Recycle %lld pages", totalSize ) ;
 
       return totalSize ;
    }

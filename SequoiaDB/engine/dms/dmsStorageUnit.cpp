@@ -285,6 +285,11 @@ namespace engine
                       "index file, rc: %d", CSName(), rc ) ;
       }
 
+      if ( _pCacheUnit )
+      {
+         _pCacheUnit->dropDirty() ;
+      }
+
       if ( _pLobSu )
       {
          _pLobSu->removeStorageFiles() ;
