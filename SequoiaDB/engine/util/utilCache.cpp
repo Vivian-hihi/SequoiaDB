@@ -608,7 +608,7 @@ namespace engine
          pLatch = _latch[ beginSlot ] ;
          pLatch->get() ;
          vector< CHAR* > &slotItem = _slot[ beginSlot ] ;
-         while( slotItem.empty() )
+         while( !slotItem.empty() )
          {
             item.addPage( slotItem.back(), pageSize ) ;
             slotItem.pop_back() ;
