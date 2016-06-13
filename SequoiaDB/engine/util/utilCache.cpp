@@ -1637,6 +1637,7 @@ namespace engine
       Max sync pages number for once time
    */
    #define UTIL_CACHE_SYNC_ONCE_NUM          ( 3000 )
+   #define UTIL_CACHE_SYNC_TOTAL_THRESHOLD   ( 100 )
 
    _utilCacheUnit::_utilCacheUnit()
    :_dirtySize( 0 ), _totalPage( 0 )
@@ -2040,8 +2041,11 @@ namespace engine
          return FALSE ;
       }
       /// when dirty ratio over the threshold
-      else if ( dirtyPages() * 100 / totalPages() >= _bgDirtyRatio )
+      else if ( totalPages() > UTIL_CACHE_SYNC_TOTAL_THRESHOLD &&
+                dirtyPages() * 100 / totalPages() >= _bgDirtyRatio )
       {
+         PD_LOG( PDDEBUG, "Dirty pages: %u, Total pages: %u, Dirty ratio: %u",
+                 dirtyPages(), totalPages(), _bgDirtyRatio ) ;
          force = TRUE ;
          return TRUE ;
       }
@@ -2059,6 +2063,9 @@ namespace engine
               ( curTime < _lastSyncTime &&
                 _lastSyncTime - curTime > _dirtyTimeout ) )
          {
+            PD_LOG( PDDEBUG, "Cur time: %llu, Last sync time: %llu, "
+                    "Dirty timeout: %u", curTime, _lastSyncTime,
+                    _dirtyTimeout ) ;
             return TRUE ;
          }
       }
@@ -2117,7 +2124,7 @@ namespace engine
 
       totalPages += _syncPages( tmpPages, cb ) ;
 
-      PD_LOG( PDINFO, "Sync %d pages", totalPages ) ;
+      PD_LOG( PDDEBUG, "Sync %d pages", totalPages ) ;
 
       return totalPages ;
    }
@@ -2155,7 +2162,7 @@ namespace engine
          pBucket->unlock( EXCLUSIVE ) ;
       }
 
-      PD_LOG( PDINFO, "Dropped %lld pages", totalPages ) ;
+      PD_LOG( PDDEBUG, "Dropped %lld pages", totalPages ) ;
 
       return totalPages ;
    }
@@ -2202,6 +2209,8 @@ namespace engine
                 _pMgr->freeSize() * 100 / _pMgr->totalSize() <=
                  _bgFreeRatio )
       {
+         PD_LOG( PDDEBUG, "Total size: %u, Free size: %u, Free ratio: %u",
+                 _pMgr->totalSize(), _pMgr->freeSize(), _bgFreeRatio ) ;
          force = TRUE ;
          return TRUE ;
       }
@@ -2219,6 +2228,9 @@ namespace engine
               ( curTime < _lastRecycleTime &&
                 _lastRecycleTime - curTime > _pageTimeout ) )
          {
+            PD_LOG( PDDEBUG, "Cur time: %llu, Last recycle time: %llu, "
+                    "Page timeout: %u", curTime, _lastRecycleTime,
+                    _pageTimeout ) ;
             return TRUE ;
          }
       }
@@ -2279,7 +2291,7 @@ namespace engine
          }
       }
 
-      PD_LOG( PDINFO, "Recycle %lld pages", totalSize ) ;
+      PD_LOG( PDDEBUG, "Recycled %lld bytes", totalSize ) ;
 
       return totalSize ;
    }
