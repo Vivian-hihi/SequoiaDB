@@ -410,6 +410,20 @@ namespace engine
          // the same with: 0 == i % segmentPages
          if ( 0 == ( i & ( ( 1 << segmentPagesSqure ) - 1 ) ) )
          {
+            /// process the last space
+            if ( newspace && !inUse )
+            {
+               rc = newspace->releasePages( releaseBegin, i - releaseBegin,
+                                            FALSE ) ;
+               if ( rc )
+               {
+                  PD_LOG ( PDERROR, "Failed to release pages, rc = %d", rc ) ;
+                  goto error ;
+               }
+               _totalFree.add( i - releaseBegin ) ;
+            }
+
+            /// the new space
             newspace = SDB_OSS_NEW dmsSegmentSpace( i, segmentPages, this ) ;
             if ( NULL == newspace )
             {
