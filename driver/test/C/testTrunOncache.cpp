@@ -325,7 +325,7 @@ TEST( turnonCache, getCollectionSpaceOfTimeOut)
    clock_t diff1, diff2;
    
    //初始化客户端，启用缓存
-   ASSERT_EQ(SDB_OK, connect(&conn, 0, 0)); 
+   ASSERT_EQ(SDB_OK, connect(&conn, 1, 0)); 
    // 以进程ID为后缀，创建CS
    ASSERT_EQ(SDB_OK, createCollectionSpace(conn, csName, sizeof(csName), &cs));
    
