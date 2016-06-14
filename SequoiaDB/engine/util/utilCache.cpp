@@ -46,7 +46,7 @@ namespace engine
    */
    _utilCachePage::_utilCachePage()
    {
-      _start = 0 ;
+      _start = ~0 ;
       _length = 0 ;
       _dirtyStart = 0 ;
       _dirtyLength = 0 ;
@@ -95,7 +95,7 @@ namespace engine
 
    void _utilCachePage::clearDataInfo()
    {
-      _start = 0 ;
+      _start = ~0 ;
       _length = 0 ;
       _dirtyStart = 0 ;
       _dirtyLength = 0 ;
@@ -117,7 +117,7 @@ namespace engine
 
    BOOLEAN _utilCachePage::isDataEmpty() const
    {
-      if ( _start == _length )
+      if ( (UINT32)~0 == _start || 0 == _length )
       {
          return TRUE ;
       }
@@ -127,7 +127,7 @@ namespace engine
    void _utilCachePage::clear()
    {
       _next.clear() ;
-      _start = 0 ;
+      _start = ~0 ;
       _length = 0 ;
       _dirtyStart = 0 ;
       _dirtyLength = 0 ;
@@ -251,7 +251,7 @@ namespace engine
          }
       }
 
-      if ( 0 == _start || offset < _start )
+      if ( (UINT32)~0 == _start || offset < _start )
       {
          _start = offset ;
       }
@@ -417,7 +417,7 @@ namespace engine
 
    void _utilCachePage::addLSN( UINT64 lsn )
    {
-      if ( ~0 == _beginLSN )
+      if ( (UINT64)~0 == _beginLSN )
       {
          _beginLSN = lsn ;
          _endLSN = lsn ;
@@ -1262,7 +1262,7 @@ namespace engine
          _pPage->makeDirty() ;
          _pUnit->incDirtyPages( _pBucket ) ;
 
-         if ( 0 == _pPage->lsnNum() && ~0 != beginLSN )
+         if ( 0 == _pPage->lsnNum() && (UINT64)~0 != beginLSN )
          {
             _pPage->addLSN( beginLSN ) ;
             if ( endLSN != beginLSN )
@@ -1943,6 +1943,8 @@ namespace engine
       context._pPage = getAndLock( pageID, offset + len,
                                    &context._pBucket,
                                    SHARED, FALSE, cb ) ;
+      PD_LOG( PDEVENT, "Prepare read, pageid: %d, pPage: %d",
+              pageID, context._pPage ? 1 : 0 ) ;
    }
 
    INT32 _utilCacheUnit::_syncPage( utilCacheBucket *pBucket,
@@ -1958,6 +1960,8 @@ namespace engine
       UINT32 offset = 0 ;
       UINT32 lastLen = pPage->dirtyLength() ;
       BOOLEAN hasSync = FALSE ;
+
+      PD_LOG( PDEVENT, "Begin to sync page: %d", pageID ) ;
 
       if ( !pPage->isDirty() )
       {
