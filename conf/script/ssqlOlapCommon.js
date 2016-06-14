@@ -99,6 +99,18 @@ SsqlOlapCommon.prototype.checkConfig = function SsqlOlapCommon_checkConfig(confi
         throw new SdbError(SDB_INVALIDARG, "install_dir is missed or invalid in config");
     }
 
+    if (!isNotNullString(config[LogDir])) {
+        throw new SdbError(SDB_INVALIDARG, "log_dir is missed or invalid in config");
+    }
+
+    if (!isNotNullString(config[MaxConnections])) {
+        throw new SdbError(SDB_INVALIDARG, "max_connections is missed or invalid in config");
+    }
+
+    if (!isNotNullString(config[SharedBuffers])) {
+        throw new SdbError(SDB_INVALIDARG, "shared_buffers is missed or invalid in config");
+    }
+
     if (!isNotNullString(config[User])) {
         throw new SdbError(SDB_INVALIDARG, "User is missed or invalid in config");
     }
@@ -193,3 +205,106 @@ SsqlOlapCommon.prototype.needInstall = function SsqlOlapCommon_needInstall(confi
     }
 };
 
+var ObjCluster = "cluster";
+var ObjMaster = "master";
+var ObjSegment = "segment";
+var ObjStandby = "standby";
+var ObjAllSegments = "allsegments";
+
+SsqlOlapCommon.prototype.start = function SsqlOlapCommon_start(sdbSsh, config, object) {
+    if (!(isObject(sdbSsh) && (sdbSsh instanceof Ssh))) {
+        throw new SdbError(SDB_INVALIDARG, "sdbSsh should be instance of Ssh");
+    }
+
+    if (object != ObjCluster &&
+        object != ObjMaster &&
+        object != ObjSegment &&
+        object != ObjStandby &&
+        object != ObjAllSegments) {
+        throw new SdbError(SDB_INVALIDARG, sprintf("invalid object: ?", object));
+    }
+
+    var hostName = config[HostName];
+    var installDir = config[InstallDir];
+
+    if (!sdbSsh.isPathExist(installDir)) {
+        throw new SdbError(SDB_SYS, sprintf("the directory [?] does not exist in host [?]", installDir, hostName));
+    }
+
+    var binDir = adaptPath(installDir) + "bin";
+    if (!sdbSsh.isPathExist(binDir)) {
+        throw new SdbError(SDB_SYS, sprintf("the directory [?] does not exist in host [?]", binDir, hostName));
+    }
+
+    var env = adaptPath(installDir) + "sequoiasql_path.sh";
+    var ssql = adaptPath(binDir) + "ssql";
+    if (!sdbSsh.isPathExist(ssql)) {
+        throw new SdbError(SDB_SYS, sprintf("the file [?] does not exist in host [?]", ssql, hostName));
+    }
+    if (!sdbSsh.isFile(ssql)) {
+        throw new SdbError(SDB_SYS, sprintf("the path [?] is not file in host [?]", ssql, hostName));
+    }
+
+    var shell = "source " + env + "; ";
+    shell += ssql + " start " + object;
+    shell += " -a -v";
+
+    try {
+        sdbSsh.exec(shell);
+    } catch(e) {
+    }
+
+    if (sdbSsh.getLastRet() != 0) {
+        var msg = sdbSsh.getLastOut();
+        throw new SdbError(SDB_SYS, msg);
+    }
+};
+
+SsqlOlapCommon.prototype.stop = function SsqlOlapCommon_stop(sdbSsh, config, object) {
+    if (!(isObject(sdbSsh) && (sdbSsh instanceof Ssh))) {
+        throw new SdbError(SDB_INVALIDARG, "sdbSsh should be instance of Ssh");
+    }
+
+    if (object != ObjCluster &&
+        object != ObjMaster &&
+        object != ObjSegment &&
+        object != ObjStandby &&
+        object != ObjAllSegments) {
+        throw new SdbError(SDB_INVALIDARG, sprintf("invalid object: ?", object));
+    }
+
+    var hostName = config[HostName];
+    var installDir = config[InstallDir];
+
+    if (!sdbSsh.isPathExist(installDir)) {
+        throw new SdbError(SDB_SYS, sprintf("the directory [?] does not exist in host [?]", installDir, hostName));
+    }
+
+    var binDir = adaptPath(installDir) + "bin";
+    if (!sdbSsh.isPathExist(binDir)) {
+        throw new SdbError(SDB_SYS, sprintf("the directory [?] does not exist in host [?]", binDir, hostName));
+    }
+
+    var env = adaptPath(installDir) + "sequoiasql_path.sh";
+    var ssql = adaptPath(binDir) + "ssql";
+    if (!sdbSsh.isPathExist(ssql)) {
+        throw new SdbError(SDB_SYS, sprintf("the file [?] does not exist in host [?]", ssql, hostName));
+    }
+    if (!sdbSsh.isFile(ssql)) {
+        throw new SdbError(SDB_SYS, sprintf("the path [?] is not file in host [?]", ssql, hostName));
+    }
+
+    var shell = "source " + env + "; ";
+    shell += ssql + " stop " + object;
+    shell += " -a -v";
+
+    try {
+        sdbSsh.exec(shell);
+    } catch(e) {
+    }
+
+    if (sdbSsh.getLastRet() != 0) {
+        var msg = sdbSsh.getLastOut();
+        throw new SdbError(SDB_SYS, msg);
+    }
+};

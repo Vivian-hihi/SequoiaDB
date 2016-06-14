@@ -190,6 +190,7 @@ var UserTag3                               = "usertag" ;
 var DefaultPort2                           = "defaultPort" ;
 
 // SequoiaSQL OLAP
+var Cluster                                = "cluster";
 var Master                                 = "master";
 var Standby                                = "standby";
 var Segment                                = "segment";
@@ -204,6 +205,9 @@ var HdfsUrl                                = "hdfs_url";
 var MasterTempDir                          = "master_temp_dir";
 var SegmentTempDir                         = "segment_temp_dir";
 var InstallDir                             = "install_dir";
+var LogDir                                 = "log_dir";
+var MaxConnections                         = "max_connections";
+var SharedBuffers                          = "shared_buffers";
 var IsSingle                               = "is_single";
 
 // deploy mode

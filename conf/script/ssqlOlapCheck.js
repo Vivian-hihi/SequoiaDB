@@ -191,13 +191,13 @@ SsqlOlapChecker.prototype._checkInstallDir = function SsqlOlapChecker__checkInst
     }
     
     if (!this.userSsh.isDirectory(installDir)) {
-        var error = new SdbError(e, sprintf("sequoiasql olap install directory[?] is not directory in host[?]", installDir, this.config[HostName]));
+        var error = new SdbError(SDB_SYS, sprintf("sequoiasql olap install directory[?] is not directory in host[?]", installDir, this.config[HostName]));
         this.logger.log(PDERROR, error);
         throw error;
     }
 
     if (!this.userSsh.isEmptyDirectory(installDir)) {
-        var error = new SdbError(e, sprintf("sequoiasql olap install directory[?] is not empty in host[?]", installDir, this.config[HostName]));
+        var error = new SdbError(SDB_SYS, sprintf("sequoiasql olap install directory[?] is not empty in host[?]", installDir, this.config[HostName]));
         this.logger.log(PDERROR, error);
         throw error;
     }
@@ -224,13 +224,13 @@ SsqlOlapChecker.prototype._checkDataDir = function SsqlOlapChecker__checkDataDir
     }
     
     if (!this.userSsh.isDirectory(dataDir)) {
-        var error = new SdbError(e, sprintf("sequoiasql olap data directory[?] is not directory in host[?]", dataDir, this.config[HostName]));
+        var error = new SdbError(SDB_SYS, sprintf("sequoiasql olap data directory[?] is not directory in host[?]", dataDir, this.config[HostName]));
         this.logger.log(PDERROR, error);
         throw error;
     }
 
     if (!this.userSsh.isEmptyDirectory(dataDir)) {
-        var error = new SdbError(e, sprintf("sequoiasql olap data directory[?] is not empty in host[?]", dataDir, this.config[HostName]));
+        var error = new SdbError(SDB_SYS, sprintf("sequoiasql olap data directory[?] is not empty in host[?]", dataDir, this.config[HostName]));
         this.logger.log(PDERROR, error);
         throw error;
     }

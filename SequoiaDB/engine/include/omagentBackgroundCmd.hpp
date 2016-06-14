@@ -500,6 +500,19 @@ namespace engine
          BSONObj _sysInfo ;
    } ;
 
+   class _omaInitClusterSsqlOlap : public _omaCommand
+   {
+      public:
+         _omaInitClusterSsqlOlap( const BSONObj& config, const BSONObj& sysInfo ) ;
+         ~_omaInitClusterSsqlOlap() ;
+         virtual const CHAR * name() { return OMA_CMD_INIT_CLUSTER_SEQUOIASQL_OLAP ; }
+         virtual INT32 init( const CHAR *pInstallInfo ) ;
+
+      private:
+         BSONObj _config ;
+         BSONObj _sysInfo ;
+   } ;
+
    class _omaRemoveSsqlOlap : public _omaCommand
    {
       public:

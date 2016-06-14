@@ -354,6 +354,50 @@ SsqlOlapInstaller.prototype._config = function SsqlOlapInstaller__config() {
     File.remove(tmpConf);
 };
 
+SsqlOlapInstaller.prototype._ensureDirs = function SsqlOlapInstaller__ensureDirs() {
+    var hostName = this.config[HostName];
+    var role = this.config[Role];
+    var dataDir;
+    var tempDir;
+    var logDir;
+
+    if (role == Master || role == Standby) {
+        dataDir = this.config[MasterDir];
+        tempDir = this.config[MasterTempDir];
+    } else if (role == Segment) {
+        dataDir = this.config[SegmentDir];
+        tempDir = this.config[SegmentTempDir];
+    } else {
+        throw new SdbError(SDB_INVALIDARG, sprintf("invalid role: ?", role));
+    }
+    logDir = this.config[LogDir];
+
+    this.logger.log(PDDEBUG, "ensure dir: " + hostName + ":" + dataDir);
+    this.logger.log(PDDEBUG, "ensure dir: " + hostName + ":" + tempDir);
+    this.logger.log(PDDEBUG, "ensure dir: " + hostName + ":" + logDir);
+
+    if (this.userSsh.isPathExist(dataDir)) {
+        if (!this.userSsh.isEmptyDirectory(dataDir)) {
+            var error = new SdbError(SDB_SYS, sprintf("the path [?] is not empty", dataDir, hostName));
+            this.logger.log(PDERROR, error);
+            throw error;
+        }
+    } else {
+        this.userSsh.mkdir(dataDir);
+        this.userSsh.chown(dataDir, this.sysInfo[SdbUser], this.sysInfo[SdbUserGroup], true);
+    }
+
+    if (!this.userSsh.isPathExist(tempDir)) {
+        this.userSsh.mkdir(tempDir);
+        this.userSsh.chmod(tempDir, 777, true);
+    }
+
+    if (!this.userSsh.isPathExist(logDir)) {
+        this.userSsh.mkdir(logDir);
+        this.userSsh.chown(logDir, this.sysInfo[SdbUser], this.sysInfo[SdbUserGroup], true);
+    }
+};
+
 SsqlOlapInstaller.prototype.install = function SsqlOlapInstaller_install() {
     this.logger.log(PDEVENT, sprintf("begin to install sequoiasql olap[?:?]", this.config[HostName], this.config[Role]));
     try {
@@ -362,6 +406,7 @@ SsqlOlapInstaller.prototype.install = function SsqlOlapInstaller_install() {
         this._checkHost();
         this._installPackage();
         this._config();
+        this._ensureDirs();
     } catch(e) {
         throw e;
     } finally {

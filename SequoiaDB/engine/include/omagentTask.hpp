@@ -472,8 +472,6 @@ namespace engine
          INT32   _waitAndUpdateProgress() ;
          BOOLEAN _isTaskFinish() ;
          INT32   _removeNode( omaSsqlOlapNodeInfo& nodeInfo ) ;
-         INT32   _start() ;
-         INT32   _stop() ;
 
       protected:
          BSONObj                       _rawInfo ;
@@ -509,8 +507,10 @@ namespace engine
          INT32 _establishTrust() ;
          INT32 _rollback( BOOLEAN isRestart ) ;
          INT32 _checkHdfs() ;
+         INT32 _initCluster() ;
 
       private:
+         BOOLEAN _removeIfFailed ;
          BOOLEAN _checked ;
          BOOLEAN _trusted ;
          BOOLEAN _started ;

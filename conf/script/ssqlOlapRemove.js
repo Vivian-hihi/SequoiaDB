@@ -161,10 +161,32 @@ SsqlOlapRemover.prototype._connectToHost = function SsqlOlapRemover__connectToHo
     this.userSsh = userSsh;
 };
 
+SsqlOlapRemover.prototype._connectToHostBySdb = function SsqlOlapRemover__connectToHostBySdb() {
+    var hostName = this.config[HostName];
+    var sshPort = parseInt(this.config[SshPort]);
+    var sdbUser = this.sysInfo[SdbUser];
+    var sdbPasswd = this.sysInfo[SdbPasswd];
+    var sdbSsh;
+
+    try {
+        sdbSsh = this.base.connectToHost(hostName, sdbUser, sdbPasswd, sshPort);
+    } catch(e) {
+        this.logger.log(PDERROR, e);
+        throw e;
+    }
+
+    this.sdbSsh = sdbSsh;
+};
+
 SsqlOlapRemover.prototype._disconnectFromHost = function SsqlOlapRemover__disconnectFromHost() {
     if (this.userSsh != undefined) {
         try { this.userSsh.close(); } catch(e) {}
         this.userSsh = null;
+    }
+
+    if (this.sdbSsh != undefined) {
+        try { this.sdbSsh.close(); } catch(e) {}
+        this.sdbSsh = null;
     }
 };
 
@@ -198,10 +220,66 @@ SsqlOlapRemover.prototype._needUninstall = function SsqlOlapRemover__needUninsta
     }
 };
 
+SsqlOlapRemover.prototype._stopProcesses = function SsqlOlapRemover__stopProcesses() {
+    if (!this._needUninstall()) {
+        var msg = sprintf("no need to stop processes for [?:?]", this.config[HostName], this.config[Role]);
+        this.logger.log(PDDEBUG, msg);
+        return;
+    }
+
+    var stopMaster = false;
+    var stopStandby = false;
+    var stopSegment = false;
+    var hostName = this.config[HostName];
+    var segments = this.config[SegmentHosts];
+
+    if (hostName == this.config[MasterHost]) {
+        stopMaster = true;
+    }
+    if (hostName == this.config[StandbyHost]) {
+        stopStandby = true;
+    }
+    for (var i in segments) {
+        if (hostName == segments[i]) {
+            stopSegment = true;
+            break;
+        }
+    }
+
+    try {
+        if (stopSegment) {
+            this.logger.log(PDDEBUG, "stop segment at " + hostName);
+            this.base.stop(this.sdbSsh, this.config, ObjSegment);
+        }
+        if (stopStandby) {
+            this.logger.log(PDDEBUG, "stop standby at " + hostName);
+            this.base.stop(this.sdbSsh, this.config, ObjStandby);
+        }
+        if (stopMaster) {
+            this.logger.log(PDDEBUG, "stop master at " + hostName);
+            this.base.stop(this.sdbSsh, this.config, ObjMaster);
+        }
+    } catch(e) {
+        if (e instanceof SdbError) {
+            this.logger.log(PDWARNING, e);
+        } else {
+            var error = new SdbError(e);
+            this.logger.log(PDERROR, error);
+            throw error;
+        }
+    }
+
+    var shell = "killall sequoiasql";
+    try { this.sdbSsh.exec(shell); } catch(e) {}
+
+    //shell = "killall gpcheck";
+    //try { this.sdbSsh.exec(shell); } catch(e) {}
+};
+
 SsqlOlapRemover.prototype._uninstallPackage = function SsqlOlapRemover__uninstallPackage() {
     if (!this._needUninstall()) {
         var msg = sprintf("no need to uninstall package for [?:?]", this.config[HostName], this.config[Role]);
-        this.logger.log(PDEVENT, msg);
+        this.logger.log(PDDEBUG, msg);
         return;
     }
 
@@ -241,6 +319,8 @@ SsqlOlapRemover.prototype.remove = function SsqlOlapRemover_remove() {
     this.logger.log(PDEVENT, sprintf("begin to remove sequoiasql olap[?:?]", this.config[HostName], this.config[Role]));
     try {
         this._connectToHost();
+        this._connectToHostBySdb();
+        this._stopProcesses();
         this._uninstallPackage();
         this._removeData();
     } catch(e) {

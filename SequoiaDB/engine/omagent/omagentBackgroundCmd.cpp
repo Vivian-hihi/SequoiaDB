@@ -1872,7 +1872,7 @@ namespace engine
    }
 
    _omaCheckHdfsSsqlOlap::_omaCheckHdfsSsqlOlap( const BSONObj& config,
-                                                      const BSONObj& sysInfo )
+                                                 const BSONObj& sysInfo )
    {
       _config = config ;
       _sysInfo = sysInfo ;
@@ -1913,6 +1913,65 @@ namespace engine
          {
             PD_LOG ( PDERROR, "Failed to add js file[%s], rc = %d ",
                      FILE_SEQUOIASQL_OLAP_CHECK_HDFS, rc ) ;
+            goto error ;
+         }
+      }
+      catch ( std::exception &e )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG ( PDERROR, "Failed to build bson, exception is: %s",
+                  e.what() ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error :
+      goto done ;
+   }
+
+   _omaInitClusterSsqlOlap::_omaInitClusterSsqlOlap( const BSONObj& config,
+                                                     const BSONObj& sysInfo )
+   {
+      _config = config ;
+      _sysInfo = sysInfo ;
+   }
+
+   _omaInitClusterSsqlOlap::~_omaInitClusterSsqlOlap()
+   {
+   }
+
+   INT32 _omaInitClusterSsqlOlap::init( const CHAR *pInstallInfo )
+   {
+      INT32 rc = SDB_OK ;
+      try
+      {
+         stringstream ss ;
+
+         // build js file arguments
+         ss << "var " << JS_ARG_BUS << " = " 
+            << _config.toString(FALSE, TRUE).c_str() << " ; "
+            << "var " << JS_ARG_SYS << " = "
+            << _sysInfo.toString(FALSE, TRUE).c_str() << " ; " ;
+         _jsFileArgs = ss.str() ;
+         PD_LOG ( PDDEBUG, "Init cluster for sequoiasql olap passes argument: %s",
+                  _jsFileArgs.c_str() ) ;
+
+         // add common file
+         rc = addJsFile( FILE_SEQUOIASQL_OLAP_COMMON ) ;
+         if ( rc )
+         {
+            PD_LOG ( PDERROR, "Failed to add js file[%s], rc = %d ",
+                     FILE_SEQUOIASQL_OLAP_COMMON, rc ) ;
+            goto error ;
+         }
+
+         // add init file
+         rc = addJsFile( FILE_SEQUOIASQL_OLAP_INIT, _jsFileArgs.c_str() ) ;
+         if ( rc )
+         {
+            PD_LOG ( PDERROR, "Failed to add js file[%s], rc = %d ",
+                     FILE_SEQUOIASQL_OLAP_INIT, rc ) ;
             goto error ;
          }
       }

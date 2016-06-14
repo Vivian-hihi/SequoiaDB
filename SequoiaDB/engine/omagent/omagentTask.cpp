@@ -38,9 +38,9 @@
 #include "pmdEDU.hpp"
 #include "omagentBackgroundCmd.hpp"
 #include "omagentMgr.hpp"
+#include "ossUtil.h"
 #include <set>
 #include <sstream>
-
 
 using namespace bson ;
 
@@ -7385,6 +7385,7 @@ namespace engine
    {
       _taskType = OMA_TASK_INSTALL_SSQL_OLAP ;
       _taskName = OMA_TASK_NAME_INSTALL_SSQL_OLAP_BUSINESS ;
+      _removeIfFailed = FALSE ;
       _checked = FALSE ;
       _trusted = FALSE ;
       _started = FALSE ;
@@ -7397,12 +7398,39 @@ namespace engine
    INT32 _omaInstallSsqlOlapBusTask::init( const BSONObj &info, void *ptr )
    {
       INT32 rc = SDB_OK ;
+      BSONObj infoObj ;
+      BSONElement ele ;
+      string removeIfFailed ;
 
       rc = _initInfo( info ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to init install info" ) ;
          goto error ;
+      }
+
+      rc = omaGetObjElement( info, OMA_FIELD_INFO, infoObj ) ;
+      PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
+                "Get field[%s] failed, rc: %d", OMA_FIELD_INFO, rc ) ;
+
+      ele = infoObj.getField( OMA_FIELD_CONFIG ) ;
+      if ( Array != ele.type() )
+      {
+         PD_LOG_MSG ( PDERROR, "Receive wrong format add business"
+                      "info from omsvc" ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      {
+         BSONObjIterator it( ele.embeddedObject() ) ;
+         BSONObj item = it.next().embeddedObject();
+
+         rc = omaGetStringElement( item, OM_SSQL_OLAP_CONF_REMOVE_IF_FAILED, removeIfFailed ) ;
+         PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
+                   "Get field[%s] failed, rc: %d", OM_SSQL_OLAP_CONF_REMOVE_IF_FAILED, rc ) ;
+
+         ossStrToBoolean( removeIfFailed.c_str(), &_removeIfFailed ) ;
       }
 
    done:
@@ -7482,6 +7510,13 @@ namespace engine
          goto error ;
       }
 
+      rc = _initCluster() ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to init cluster for sequoiasql olap, rc = %d", rc ) ;
+         goto error ;
+      }
+
       // start sequoiasql olap
 
    done:
@@ -7504,7 +7539,7 @@ namespace engine
 
    error:
       _setRetErr( rc ) ;
-      if ( TRUE == needRollback )
+      if ( needRollback && _removeIfFailed )
       {
          // rollback
          setTaskStatus( OMA_TASK_STATUS_ROLLBACK ) ;
@@ -7553,6 +7588,11 @@ namespace engine
       progress += ( finishNum * 70 ) / totalNum ;
 
       if ( _trusted )
+      {
+         progress = 90 ;
+      }
+
+      if ( _started )
       {
          progress = 100 ;
       }
@@ -8019,6 +8059,127 @@ namespace engine
                   rc ) ;
       _setAllNodesStatus( OMA_TASK_STATUS_FINISH, CHECK_HDFS_FAIL,
                           rc, detail, CHECK_HDFS_FAIL ) ;
+      updateProgressToTask() ;
+      goto done ;
+   }
+
+   INT32 _omaInstallSsqlOlapBusTask::_initCluster()
+   {
+      INT32 rc = SDB_OK ;
+      INT32 tmpRc = SDB_OK ;
+      INT32 errNum = 0 ;
+      string detail ;
+      BSONObj retObj ;
+      omaSsqlOlapNodeInfo* masterNode = NULL ;
+      string hostName ;
+      string role ;
+
+#define INIT_CLUSTER_BEGIN  "Init cluster"
+#define INIT_CLUSTER_FINISH "Finish initializing cluster"
+#define INIT_CLUSTER_FAIL   "Failed to init cluster"
+
+      masterNode = getMasterNodeInfo() ;
+      if ( masterNode == NULL )
+      {
+         PD_LOG( PDERROR, "failed to find master node" ) ;
+         goto error ;
+      }
+
+      hostName = masterNode->hostName ;
+      role = masterNode->role ;
+
+      _setAllNodesStatus( OMA_TASK_STATUS_FINISH, OMA_TASK_STATUS_DESC_FINISH,
+                          SDB_OK, "", INIT_CLUSTER_BEGIN ) ;
+      updateProgressToTask() ;
+      if ( SDB_OK != _updateProgressToOM() )
+      {
+         PD_LOG( PDWARNING, "Failed to update task's progress to om" ) ;
+      }
+
+      {
+         _omaInitClusterSsqlOlap runCmd( masterNode->config, _sysInfo ) ;
+
+         rc = runCmd.init( NULL ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Failed to init to init cluster for sequoiasql olap[%s:%s], "
+                    "rc = %d", hostName.c_str(), role.c_str(), rc ) ;
+            detail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+            if ( "" == detail )
+            {
+               detail = "Failed to init to init cluster for sequoiasql olap" ;
+            }
+            goto error ;
+         }
+
+         rc = runCmd.doit( retObj ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Failed to init cluster for sequoiasql olap[%s:%s], rc = %d",
+                    hostName.c_str(), role.c_str(), rc ) ;
+            // if we can't get field "detail", it means we failed in CPP,
+            // we had not executed js file yet
+            tmpRc = omaGetStringElement ( retObj, OMA_FIELD_DETAIL, detail ) ;
+            if ( tmpRc )
+            {
+               detail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+               if ( "" == detail )
+               {
+                  detail = "Not exeute js file yet" ;
+               }
+            }
+            goto error ;
+         }
+
+         // extract "errno"
+         rc = omaGetIntElement ( retObj, OMA_FIELD_ERRNO, errNum ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Failed to get errno from js after "
+                    "initializing cluster for sequoiasql olap[%s:%s], rc = %d",
+                    hostName.c_str(), role.c_str(), rc ) ;
+            detail = "Failed to get errno from js after initializing cluster for sequoiasql olap" ;
+            goto error ;
+         }
+
+         // to see whether execute js successfully or not
+         if ( SDB_OK != errNum )
+         {
+            rc = errNum ;
+            tmpRc = omaGetStringElement ( retObj, OMA_FIELD_DETAIL, detail ) ;
+            if ( SDB_OK != tmpRc )
+            {
+               PD_LOG( PDERROR, "Failed to get error detail from js after "
+                       "initializing cluster for sequoiasql olap[%s:%S], rc = %d",
+                       hostName.c_str(), role.c_str(), tmpRc ) ;
+               detail = "Failed to get error detail from js after "
+                         "initializing cluster for sequoiasql olap" ;
+            }
+            goto error ;
+         }
+         else
+         {
+            PD_LOG ( PDEVENT, "Successfully initializing cluster for sequoiasql olap[%s:%s]",
+                     hostName.c_str(), role.c_str() ) ;
+         }
+      }
+
+      _started = TRUE ;
+      _setAllNodesStatus( OMA_TASK_STATUS_FINISH, OMA_TASK_STATUS_DESC_FINISH,
+                          SDB_OK, "", INIT_CLUSTER_FINISH ) ;
+      updateProgressToTask() ;
+
+   done:
+      if ( SDB_OK != _updateProgressToOM() )
+      {
+         PD_LOG( PDWARNING, "Failed to update task's progress to om" ) ;
+      }
+      return rc ;
+   error:
+      PD_LOG_MSG( PDERROR, "Failed to init cluster for sequoiasql olap, rc = %d",
+                  rc ) ;
+      _setAllNodesStatus( OMA_TASK_STATUS_FINISH, INIT_CLUSTER_FAIL,
+                          rc, detail, INIT_CLUSTER_FAIL ) ;
       updateProgressToTask() ;
       goto done ;
    }

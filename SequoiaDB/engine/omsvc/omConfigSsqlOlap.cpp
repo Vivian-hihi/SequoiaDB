@@ -324,7 +324,11 @@ namespace engine
          OM_SSQL_OLAP_CONF_SEGMENT_PORT,
          OM_SSQL_OLAP_CONF_SEGMENT_DIR,
          OM_SSQL_OLAP_CONF_SEGMENT_TEMP_DIR,
-         OM_SSQL_OLAP_CONF_INSTALL_DIR
+         OM_SSQL_OLAP_CONF_INSTALL_DIR,
+         OM_SSQL_OLAP_CONF_LOG_DIR,
+         OM_SSQL_OLAP_CONF_MAX_CONNECTIONS,
+         OM_SSQL_OLAP_CONF_SHARED_BUFFERS,
+         OM_SSQL_OLAP_CONF_REMOVE_IF_FAILED
       } ;
       const INT32 num = sizeof( properties ) / sizeof ( properties[0] ) ;
 
@@ -1251,14 +1255,15 @@ namespace engine
                               fieldName.c_str() ) ;
                   goto error ;
                }
-               else if ( OM_SSQL_OLAP_CONF_INSTALL_DIR == fieldName )
+               else if ( OM_SSQL_OLAP_CONF_INSTALL_DIR == fieldName || 
+                         OM_SSQL_OLAP_CONF_LOG_DIR == fieldName )
                {
                   if ( !_isValidDirectory( value ) )
                   {
                      rc = SDB_INVALIDARG ;
                      PD_LOG_MSG( PDERROR, "the value of field [%s] "
                                  "should be a valid absolute path",
-                                 OM_SSQL_OLAP_CONF_INSTALL_DIR ) ;
+                                 fieldName.c_str() ) ;
                      goto error ;
                   }
                }

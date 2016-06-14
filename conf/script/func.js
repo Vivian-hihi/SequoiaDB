@@ -1693,13 +1693,14 @@ Extension methods for Ssh
 @author: David Li
 @date: 2016/5/27
 usage:
-    Ssh.isPathExist(path);              // true if path exists, false if not exists, throw SdbError if other error
-    Ssh.isFile(path);                   // true if path is file, false if not file, throw SdbError if path not exists or other error
-    Ssh.isDirectory(path);              // true if path is directory, false if not directory, throw SdbError if path not exists or other error
-    Ssh.isEmptyDirectory(path);         // true if path is empty directory, false if not empty directory, throw SdbError if path not exists or other error
-    Ssh.mkdir(path);                    // throw SdbError if failed
-    Ssh.remove(path, force, recursive); // throw SdbError if failed
-    Ssh.chmod(path, mode, recursive)    // throw SdbError if failed
+    Ssh.isPathExist(path);                      // true if path exists, false if not exists, throw SdbError if other error
+    Ssh.isFile(path);                           // true if path is file, false if not file, throw SdbError if path not exists or other error
+    Ssh.isDirectory(path);                      // true if path is directory, false if not directory, throw SdbError if path not exists or other error
+    Ssh.isEmptyDirectory(path);                 // true if path is empty directory, false if not empty directory, throw SdbError if path not exists or other error
+    Ssh.mkdir(path);                            // throw SdbError if failed
+    Ssh.remove(path, force, recursive);         // throw SdbError if failed
+    Ssh.chmod(path, mode, recursive)            // throw SdbError if failed
+    Ssh.chown(path, user, group, recursive);    // throw SdbError if failed
 ******************************************************************************/
 Ssh.prototype.isPathExist = function Ssh_isPathExist(path) {
     if (SYS_TYPE != SYS_LINUX) {
@@ -1883,6 +1884,42 @@ Ssh.prototype.chmod = function Ssh_chmod(path, mode, recursive) {
         shell += "-R ";
     }
     shell += mode + " " + path;
+    try { this.exec(shell); } catch(e) {}
+
+    if (this.getLastRet() == 0) {
+        return;
+    } else {
+        var msg = this.getLastOut();
+        var cr = msg.lastIndexOf("\n");
+        if (cr != -1) {
+            msg = msg.substring(0, cr);
+        }
+        throw new SdbError(SDB_SYS, msg);
+    }
+};
+
+Ssh.prototype.chown = function Ssh_chown(path, user, group, recursive) {
+    if (SYS_TYPE != SYS_LINUX) {
+        throw new SdbError(SDB_SYS, "unsupported system");
+    }
+
+    if (!isNotNullString(path)) {
+        throw new SdbError(SDB_INVALIDARG, "invalid path: " + path);
+    }
+
+    if (!isNotNullString(user)) {
+        throw new SdbError(SDB_INVALIDARG, "user should be string and not empty");
+    }
+
+    var shell = "chown ";
+    if (isBool(recursive) && recursive) {
+        shell += "-R ";
+    }
+    shell += user;
+    if (isNotNullString(group)) {
+        shell += ":" + group;
+    }
+    shell += " " + path;
     try { this.exec(shell); } catch(e) {}
 
     if (this.getLastRet() == 0) {

@@ -151,6 +151,7 @@ namespace engine
    #define OMA_CMD_CHECK_SEQUOIASQL_OLAP              "check sequoiasql olap"
    #define OMA_CMD_TRUST_SEQUOIASQL_OLAP              "trust sequoiasql olap"
    #define OMA_CMD_CHECK_HDFS_SEQUOIASQL_OLAP         "check HDFS for sequoiasql olap"
+   #define OMA_CMD_INIT_CLUSTER_SEQUOIASQL_OLAP       "init cluster for sequoiasql olap"
 
    #define OMA_CMD_SSQL_EXEC                          "sequoiasql exec"
    #define OMA_CMD_CLEAN_SSQL_EXEC                    "clean sequoiasql exec"
@@ -215,6 +216,7 @@ namespace engine
    #define FILE_SEQUOIASQL_OLAP_TRUST       "ssqlOlapTrust.js"
    #define FILE_SEQUOIASQL_OLAP_CONFIG      "ssqlOlapConfig.js"
    #define FILE_SEQUOIASQL_OLAP_INSTALL     "ssqlOlapInstall.js"
+   #define FILE_SEQUOIASQL_OLAP_INIT        "ssqlOlapInit.js"
    #define FILE_SEQUOIASQL_OLAP_REMOVE      "ssqlOlapRemove.js"
 
    #define FILE_RUN_PSQL                    "runPsql.js"
