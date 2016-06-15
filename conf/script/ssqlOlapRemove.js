@@ -311,7 +311,8 @@ SsqlOlapRemover.prototype._uninstallPackage = function SsqlOlapRemover__uninstal
     try {
         this.userSsh.remove(installDir, true, true);
     } catch(e) {
-        this.logger.log(PDWARNING, e);
+        this.logger.log(PDERROR, e);
+        throw e;
     }
 };
 
