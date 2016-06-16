@@ -46,7 +46,7 @@ namespace engine
    */
    _utilCachePage::_utilCachePage()
    {
-      _start = ~0 ;
+      _start = 0 ;
       _length = 0 ;
       _dirtyStart = 0 ;
       _dirtyLength = 0 ;
@@ -95,7 +95,7 @@ namespace engine
 
    void _utilCachePage::clearDataInfo()
    {
-      _start = ~0 ;
+      _start = 0 ;
       _length = 0 ;
       _dirtyStart = 0 ;
       _dirtyLength = 0 ;
@@ -117,17 +117,13 @@ namespace engine
 
    BOOLEAN _utilCachePage::isDataEmpty() const
    {
-      if ( (UINT32)~0 == _start || 0 == _length )
-      {
-         return TRUE ;
-      }
-      return FALSE ;
+      return 0 == _length ? TRUE : FALSE ;
    }
 
    void _utilCachePage::clear()
    {
       _next.clear() ;
-      _start = ~0 ;
+      _start = 0 ;
       _length = 0 ;
       _dirtyStart = 0 ;
       _dirtyLength = 0 ;
@@ -241,7 +237,7 @@ namespace engine
          ++_writeTimes ;
          _lastWriteTime = _lastTime ;
 
-         if ( 0 == _dirtyStart || offset < _dirtyStart )
+         if ( 0 == _dirtyLength || offset < _dirtyStart )
          {
             _dirtyStart = offset ;
          }
@@ -251,7 +247,7 @@ namespace engine
          }
       }
 
-      if ( (UINT32)~0 == _start || offset < _start )
+      if ( 0 == _length || offset < _start )
       {
          _start = offset ;
       }
@@ -282,6 +278,39 @@ namespace engine
    INT32 _utilCachePage::load( const CHAR *pBuf, UINT32 offset, UINT32 len )
    {
       return _write( pBuf, offset, len, FALSE ) ;
+   }
+
+   INT32 _utilCachePage::loadWithoutData( UINT32 offset, UINT32 len )
+   {
+      INT32 rc = SDB_OK ;
+      ossTimestamp t ;
+
+      SDB_ASSERT( isNewest(), "Page should be newest" ) ;
+
+      if ( size() < offset + len )
+      {
+         /// no space for write data
+         rc = SDB_NOSPC ;
+         goto error ;
+      }
+
+      /// update meta
+      ossGetCurrentTime( t ) ;
+      _lastTime = t.time * 1000 + t.microtm / 1000 ;
+
+      if ( ~0 == _length || offset < _start )
+      {
+         _start = offset ;
+      }
+      if ( offset + len > _length )
+      {
+         _length = offset + len ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 
    UINT32 _utilCachePage::read( CHAR *pBuf, UINT32 offset, UINT32 len )
@@ -717,7 +746,7 @@ namespace engine
 
    done_assign:
       /// copy data from source page
-      if ( keepData && !item.isEmpty() )
+      if ( keepData && !item.isDataEmpty() )
       {
          rc = tmpPage.copy( item ) ;
          if ( rc )
@@ -1242,6 +1271,22 @@ namespace engine
       return _pData ? FALSE : TRUE ;
    }
 
+   void _utilCacheContext::makeNewest()
+   {
+      if ( _pPage )
+      {
+         _pPage->makeNewest() ;
+      }
+   }
+
+   void _utilCacheContext::clearNewest()
+   {
+      if ( _pPage )
+      {
+         _pPage->clearNewest() ;
+      }
+   }
+
    void _utilCacheContext::discardPage( UINT64 &beginLSN, UINT64 &endLSN )
    {
       if ( isPageValid() && _pPage->isDirty() )
@@ -1594,28 +1639,40 @@ namespace engine
       SDB_ASSERT( _pPage && _pPage->size() >= offset + len,
                   "Page size must grater than offset + len" ) ;
 
-      rc = cb->allocBuff( len, &pBuff, NULL ) ;
-      if ( rc )
+      if ( _pPage->isNewest() )
       {
-         PD_LOG( PDERROR, "Alloc buff from cb failed, rc: %d", rc ) ;
-         goto error ;
+         rc = _pPage->loadWithoutData( offset, len ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Load without data in page failed, rc: %d", rc ) ;
+            goto error ;
+         }
       }
+      else
+      {
+         rc = cb->allocBuff( len, &pBuff, NULL ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Alloc buff from cb failed, rc: %d", rc ) ;
+            goto error ;
+         }
 
-      pFile = _pUnit->getCacheFile() ;
-      /// read from file
-      rc = pFile->read( _pageID, pBuff, len, offset, readLen, cb ) ;
-      if ( rc )
-      {
-         PD_LOG( PDERROR, "Read from file[%s] failed, rc: %d",
-                 pFile->getFileName(), rc ) ;
-         goto error ;
-      }
-      /// write to page
-      rc = _pPage->load( pBuff, offset, readLen ) ;
-      if ( rc )
-      {
-         PD_LOG( PDERROR, "Write data to page failed, rc: %d", rc ) ;
-         goto error ;
+         pFile = _pUnit->getCacheFile() ;
+         /// read from file
+         rc = pFile->read( _pageID, pBuff, len, offset, readLen, cb ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Read from file[%s] failed, rc: %d",
+                    pFile->getFileName(), rc ) ;
+            goto error ;
+         }
+         /// write to page
+         rc = _pPage->load( pBuff, offset, readLen ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Write data to page failed, rc: %d", rc ) ;
+            goto error ;
+         }
       }
 
    done:
@@ -1820,6 +1877,11 @@ namespace engine
       {
          goto done ;
       }
+      /// min for the _pageSize
+      if ( size > 0 && size < _pageSize )
+      {
+         size = _pageSize ;
+      }
 
       pPage = pBucket->getPage( pageID ) ;
       if ( !pPage && alloc && size > 0 )
@@ -1943,8 +2005,6 @@ namespace engine
       context._pPage = getAndLock( pageID, offset + len,
                                    &context._pBucket,
                                    SHARED, FALSE, cb ) ;
-      PD_LOG( PDEVENT, "Prepare read, pageid: %d, pPage: %d",
-              pageID, context._pPage ? 1 : 0 ) ;
    }
 
    INT32 _utilCacheUnit::_syncPage( utilCacheBucket *pBucket,
@@ -1960,8 +2020,6 @@ namespace engine
       UINT32 offset = 0 ;
       UINT32 lastLen = pPage->dirtyLength() ;
       BOOLEAN hasSync = FALSE ;
-
-      PD_LOG( PDEVENT, "Begin to sync page: %d", pageID ) ;
 
       if ( !pPage->isDirty() )
       {
