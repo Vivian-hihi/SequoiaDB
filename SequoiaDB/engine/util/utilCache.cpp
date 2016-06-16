@@ -1560,6 +1560,8 @@ namespace engine
                           "file[%s] failed, rc: %d", _pageID, _offset, _len,
                           pFile->getFileName(), rc ) ;
                }
+               PD_LOG( PDEVENT, "TEST: write page[%u] to file, offset: %u, len: %u",
+                       _pageID, _offset, _len ) ;
             }
          }
          else
@@ -1580,6 +1582,8 @@ namespace engine
                           "file[%s] failed, rc: %d", _pageID, _offset,
                           _len, pFile->getFileName(), rc ) ;
                }
+               PD_LOG( PDEVENT, "TEST: read page[%u] from file, offset: %u, len: %u",
+                       _pageID, _offset, _len ) ;
                /// write to cache page
                if ( _writeBack && _pPage )
                {
