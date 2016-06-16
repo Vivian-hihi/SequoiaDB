@@ -602,8 +602,8 @@ namespace engine
       }
       else
       {
-         PD_LOG( PDERROR, "Lob[%s] is not available",
-                 oid.str().c_str() ) ;
+         PD_LOG( PDINFO, "Lob[%s] meta[%s] is not available",
+                 oid.str().c_str(), meta.toString().c_str() ) ;
          rc = SDB_LOB_IS_NOT_AVAILABLE ;
          goto error ;
       }
@@ -751,8 +751,8 @@ namespace engine
 
       if ( !meta.isDone() )
       {
-         PD_LOG( PDERROR, "Lob[%s] is not available",
-                 oid.str().c_str() ) ;
+         PD_LOG( PDINFO, "Lob[%s] meta[%s] is not available",
+                 oid.str().c_str(), meta.toString().c_str() ) ;
          rc = SDB_LOB_IS_NOT_AVAILABLE ;
          goto error ;
       }
@@ -884,6 +884,8 @@ namespace engine
 
       if ( !lobMeta.isDone() )
       {
+         PD_LOG( PDINFO, "Lob[%s] meta[%s] is not available",
+                 oid.str().c_str(), meta.toString().c_str() ) ;
          rc = SDB_LOB_IS_NOT_AVAILABLE ;
          goto error ;
       }

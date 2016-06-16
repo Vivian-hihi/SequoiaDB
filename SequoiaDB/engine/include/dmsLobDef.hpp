@@ -194,6 +194,17 @@ namespace engine
       {
          return ( DMS_LOB_COMPLETE == _status ) ? TRUE : FALSE ;
       }
+
+      string toString() const
+      {
+         stringstream ss ;
+         ss << "Len:" << _lobLen
+            << ", CreateTime:" << _createTime
+            << ", Status:" << _status
+            << ", Version:" << _version
+            << endl ;
+         return ss.str() ;
+      }
    } ;
    typedef struct _dmsLobMeta dmsLobMeta ;
 

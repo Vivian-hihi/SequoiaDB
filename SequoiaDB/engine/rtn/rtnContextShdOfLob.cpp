@@ -301,6 +301,8 @@ namespace engine
             ossMemcpy( (void*)&_meta, _buf + len, sizeof( _meta ) ) ;
             if ( !_meta.isDone() )
             {
+               PD_LOG( PDINFO, "Lob[%s] meta[%s] is not available",
+                       getOID().str().c_str(), _meta.toString().c_str() ) ;
                rc = SDB_LOB_IS_NOT_AVAILABLE ;
                goto error ;
             }
