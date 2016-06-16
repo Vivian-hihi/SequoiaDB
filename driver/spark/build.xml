@@ -3,7 +3,7 @@
 
 <project name="spark_connector" default="package">
    <property name="SPARK_VERSION" value="1.6.1" />
-   <property name="SBT" value="~jenkins/sbt/bin/sbt" />
+   <property name="SBT" value="~/jenkins/sbt/bin/sbt" />
    
    <target name="package" depends="">
       <echo message="Begin to build sdb_spark_connector, spark version is ${SPARK_VERSION}" />
