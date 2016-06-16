@@ -483,6 +483,8 @@ namespace engine
       }
       /// submit the data
       cContext.submit( cb ) ;
+      /// when write, set the page is newest( now not support part write lob )
+      cContext.makeNewest() ;
 
       if ( 0 != logRecord.head()._length )
       {
@@ -694,6 +696,8 @@ namespace engine
       }
       /// submit the data
       cContext.submit( cb ) ;
+      /// when update, set the page is newest
+      cContext.makeNewest() ;
 
       if ( 0 != logRecord.head()._length )
       {

@@ -86,6 +86,7 @@ namespace engine
    #define UTIL_CACHE_PAGE_DIRTY_FLAG        0x01
    #define UTIL_CACHE_PAGE_INVALID_FLAG      0x02
    #define UTIL_CACHE_PAGE_LOCKED_FLAG       0x04
+   #define UTIL_CACHE_PAGE_NEWEST_FLAG       0x08
 
    /*
       _utilCachePage define
@@ -156,6 +157,19 @@ namespace engine
             return OSS_BIT_TEST( _status, UTIL_CACHE_PAGE_LOCKED_FLAG ) ?
                    TRUE : FALSE ;
          }
+         void        makeNewest()
+         {
+            OSS_BIT_SET( _status, UTIL_CACHE_PAGE_NEWEST_FLAG ) ;
+         }
+         void        clearNewest()
+         {
+            OSS_BIT_CLEAR( _status, UTIL_CACHE_PAGE_NEWEST_FLAG ) ;
+         }
+         BOOLEAN     isNewest() const
+         {
+            return OSS_BIT_TEST( _status, UTIL_CACHE_PAGE_NEWEST_FLAG ) ?
+                   TRUE : FALSE ;
+         }
          void        addLSN( UINT64 lsn ) ;
 
          UINT64      beginLSN() const { return _beginLSN ; }
@@ -165,16 +179,17 @@ namespace engine
          UINT32      blockNum() const ;
          BOOLEAN     isEmpty() const
          {
-            return _start == _length ? TRUE : FALSE ;
+            return 0 == blockNum() ? TRUE : FALSE ;
          }
          BOOLEAN     isDirtyEmpty() const
          {
-            return _dirtyStart == _dirtyLength ? TRUE : FALSE ;
+            return 0 == _dirtyLength ? TRUE : FALSE ;
          }
 
          INT32       write( const CHAR* pBuf, UINT32 offset,
                             UINT32 len, BOOLEAN &setDirty ) ;
          INT32       load( const CHAR* pBuf, UINT32 offset, UINT32 len ) ;
+         INT32       loadWithoutData( UINT32 offset, UINT32 len ) ;
          UINT32      read( CHAR* pBuf, UINT32 offset, UINT32 len ) ;
          INT32       copy( const _utilCachePage &right ) ;
 
@@ -459,6 +474,9 @@ namespace engine
          void     discardPage( UINT64 &beginLSN, UINT64 &endLSN ) ;
          void     restorePage( UINT64 beginLSN, UINT64 endLSN ) ;
 
+         void     makeNewest() ;
+         void     clearNewest() ;
+
          /*
             Need call submit or rollback to done
          */
@@ -540,7 +558,7 @@ namespace engine
 
    #define UTIL_CACHEUNIT_BUCKET_SZ                ( 2048 )
    #define UTIL_CACHEUNIT_PAGE_TIMEOUT             ( 1000 ) /// ms
-   #define UTIL_CACHEUNIT_DIRTY_TIMEOUT            ( 2000 ) /// ms
+   #define UTIL_CACHEUNIT_DIRTY_TIMEOUT            ( 3000 ) /// ms
    #define UTIL_CACHEUNIT_BG_DIRTY_RATIO           ( 40 )   /// >=40%
    #define UTIL_CACHEUNIT_BG_FREE_RATIO            ( 30 )   /// <=30%
 
