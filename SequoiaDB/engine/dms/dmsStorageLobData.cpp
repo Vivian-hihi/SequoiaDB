@@ -222,6 +222,7 @@ namespace engine
 
       _dmsLobDirectOutBuffer buffer( pData, len, cb ) ;
       _dmsLobDirectBuffer::tuple t ;
+      SINT64 written = 0 ;
 
       INT64 writeOffset = getSeek( pageID, offset ) ;
       if ( writeOffset + len > _fileSz )
@@ -229,15 +230,6 @@ namespace engine
          PD_LOG( PDERROR, "Offset[%lld] grater than file size[%lld] in "
                  "file[%s]", writeOffset, _fileSz, _fileName.c_str() ) ;
          rc = SDB_SYS ;
-         goto error ;
-      }
-
-      /// file is locked, do not need to use seekAndWriteN
-      rc = ossSeek( &_file, writeOffset, OSS_SEEK_SET ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "failed to seek file[%lld], rc: %d",
-                 writeOffset, rc ) ;
          goto error ;
       }
 
@@ -256,7 +248,9 @@ namespace engine
          }
       }
 
-      rc = ossWriteN( &_file, ( const CHAR * )( t.buf ), t.size ) ;
+      rc = ossSeekAndWriteN( &_file, writeOffset,
+                             ( const CHAR * )( t.buf ), t.size,
+                             written ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to write data, page:%d, rc:%d",
