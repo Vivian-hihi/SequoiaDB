@@ -8,8 +8,8 @@ remote.password=jenkins
 test.machine.deploy.path=/tmp/sequoiadb_test
 test.machine.software.path=/tmp/sequoiadb_tools
 
-save.testLog.hostname=powersuse1
-deploy_tar_hostname=powersuse1
+save.testLog.hostname=ci-cmpl-ppc
+deploy_tar_hostname=ci-cmpl-ppc
 save.testLog.dir=/opt/apache-tomcat-6.0.37/webapps/ROOT
 
 trunkTarPath=/test_tar
