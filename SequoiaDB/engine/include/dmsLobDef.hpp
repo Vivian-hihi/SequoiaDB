@@ -200,8 +200,8 @@ namespace engine
          stringstream ss ;
          ss << "Len:" << _lobLen
             << ", CreateTime:" << _createTime
-            << ", Status:" << _status
-            << ", Version:" << _version
+            << ", Status:" << (UINT32)_status
+            << ", Version:" << (UINT32)_version
             << endl ;
          return ss.str() ;
       }
