@@ -60,9 +60,10 @@
 	</target>
 
 	<target name="copy_offline_doc">
+        <property environment="env"/>
 		<delete dir="${root_dir}/out" failonerror="false" />
 		<delete file="${root_dir}/${project.name}-document-${projects.version}-linux.tar.gz" failonerror="false" />
-		<stafTools workType="copy" workHost="${target_offlinedoc_tar_ip}" fileName="${copy_tar}/${project.name}-document-${projects.version}-linux.tar.gz" saveDir="${root_dir}" toHost="${target.deploy_tar_gz.ip}" failonerror="true"/>
+		<stafTools workType="copy" workHost="${target_offlinedoc_tar_ip}" fileName="${copy_tar}/${project.name}-document-${projects.version}-linux.tar.gz" saveDir="${root_dir}"  toHost="${env.HOSTNAME}" failonerror="true"/>
 		<untar src="${root_dir}/${project.name}-document-${projects.version}-linux.tar.gz" dest="${root_dir}/out" compression="gzip" />
 	</target>
 </project>
