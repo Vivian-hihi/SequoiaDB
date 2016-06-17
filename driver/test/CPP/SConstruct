@@ -198,7 +198,7 @@ elif guess_os == "linux":
 
 
     #winLibString = "boost_program_options boost_thread boost_system boost_filesystem gtest pthread"
-    winLibString = "gtest pthread dl"
+    winLibString = "gtest pthread"
     env.Append( LIBS=Split(winLibString) )
     if debugBuild:
         env.Append( CPPFLAGS=" -O0 -fstack-protector")
@@ -218,7 +218,7 @@ elif guess_os == 'aix':
     env.Append( LIBPATH="/lib" )
     # use project-related boost library
     #env.Append( LIBPATH=[join(boost_lib_dir,'aix64')] )
-    winLibString = "gtest pthread dl"
+    winLibString = "gtest pthread"
     env.Append( LIBS=Split(winLibString) )
     if debugBuild:
         env.Append( CPPFLAGS=" -O0 ")
@@ -240,11 +240,11 @@ if guess_os == "win32":
     #TODO
     print( "Not add any libs at windows yet" )
 elif guess_os == "linux":
-    dllBuildEnv.Append( LIBS=['sdbcpp'] )
-    staticBuildEnv.Append( LIBS=['staticsdbcpp'] )
+    dllBuildEnv.Append( LIBS=['sdbcpp', 'dl'] )
+    staticBuildEnv.Append( LIBS=['staticsdbcpp', 'dl'] )
 elif guess_os == 'aix':
-    dllBuildEnv.Append( LIBS=['sdbcpp'] )
-    staticBuildEnv.Append( LIBS=['staticsdbcpp'] )
+    dllBuildEnv.Append( LIBS=['sdbcpp', 'dl'] )
+    staticBuildEnv.Append( LIBS=['staticsdbcpp', 'dl'] )
 else:
     print( "No special config for [" + os.sys.platform + "] which probably means it won't work" )
 

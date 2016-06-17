@@ -118,7 +118,7 @@ turnon_cache.static = staticBuildEnv.Program("turnon_cache.static", [testFiles15
 env.Install( '#/build_test',[collection,collectionspace,cursor,query,
                              sdb,cppbson, debug, domain, lob, selectQuery, procedure,turnon_cache ] )
 
-# dll compile, "rg, dc" don't run in ci
+# static compile, "rg, dc" don't run in ci
 env.Install( '#/build_test',[collection.static, collectionspace.static, cursor.static, query.static,
                              sdb.static, cppbson.static, debug.static, domain.static, lob.static,
                              selectQuery.static, procedure.static, turnon_cache.static] )
