@@ -1,7 +1,7 @@
 ﻿(function(){
    var sacApp = window.SdbSacManagerModule ;
    //控制器
-   sacApp.controllerProvider.register( 'Monitor.SdbOverview.Domain.Ctrl', function( $scope, $compile, SdbRest, SdbFunction ){
+   sacApp.controllerProvider.register( 'Monitor.SdbOverview.Domain.Ctrl', function( $scope, $compile, $location, SdbRest, SdbFunction ){
 
       var clusterName = SdbFunction.LocalData( 'SdbClusterName' ) ;
       var moduleType = SdbFunction.LocalData( 'SdbModuleType' ) ;
@@ -41,11 +41,11 @@
                }
                $.each( domainList['Groups'], function( key, value ){
                   gridData['body'].push( [
-                     { 'html': $compile( '<a class="linkButton" href="#/Monitor/SDB-Group/Index">' + value['GroupName'] + '</a>' )( $scope ) },
+                     { 'html': $compile( '<span class="linkButton" ng-click="GotoGroup()">' + value['GroupName'] + '</span>' )( $scope ) },
                      { 'text': value['GroupID'] },
                      { 'text': value['TotalCS'] },
                      { 'text': value['NodeNumber'] },
-                     { 'html': $compile( '<a class="linkButton" href="#/Monitor/SDB-Node/Index">' + value['PrimaryNode'] + '</a>' )( $scope ) }
+                     { 'html': $compile( '<span class="linkButton" ng-click="GotoNode()">' + value['PrimaryNode'] + '</span>' )( $scope ) }
                   ] )
                } )
                $scope.GridData.push(gridData) ;
@@ -76,10 +76,10 @@
 <td style="width:60%;background-color:#F1F4F5;"><b>Value</b></td>\
 </tr>\
 <tr>\
-<td>会话ID</td>\
+<td>域名</td>\
 <td>{{data.domainInfo["域名"]}}</td>\
 </tr>\
-<tr ng-repeat="(key, value) in data.domainInfo">\
+<tr ng-repeat="(key, value) in data.domainInfo" ng-if="key != \'域名\'">\
 <td>{{key}}</td>\
 <td>{{value}}</td>\
 </tr>\
@@ -221,6 +221,31 @@
             $scope.Components.Modal.isShow = false ;
          }
       }
+
+      //跳转至部署
+      $scope.GotoDeploy = function(){
+         $location.path( '/Deploy/Index' ) ;
+      } ;
+
+      //跳转至监控主页
+      $scope.GotoModule = function(){
+         $location.path( '/Monitor/Index' ) ;
+      } ;
+
+      //跳转至分区组列表
+      $scope.GotoGroups = function(){
+         $location.path( '/Monitor/SDB-Overview/Index' ) ;
+      } ;
+      
+      //跳转至节点信息
+      $scope.GotoGroup = function(){
+         $location.path( '/Monitor/SDB-Group/Index' ) ;
+      } ;
+
+      //跳转至节点信息
+      $scope.GotoNode = function(){
+         $location.path( '/Monitor/SDB-Node/Index' ) ;
+      } ;
 
    } ) ;
 }());

@@ -6,7 +6,9 @@
          </div>
          <div style="height:50px;float:left;">
             <div style="font-size:90%;" ng-click="moduleInfo()">集群</div>
-            <div class="Ellipsis" style="font-size:140%;color:#666;width:160px;"><a href="#/Deploy/Index" class="linkButton">{{clusterName}}</a></div>
+            <div style="font-size:140%;width:160px;">
+               <span class="Ellipsis linkButton" ng-click="GotoDeploy()">{{clusterName}}</span>
+            </div>
          </div>
       </div>
       <div style="float:left;color:#808080;">
@@ -15,7 +17,9 @@
          </div>
          <div style="height:50px;float:left;">
             <div style="font-size:90%;">&nbsp;</div>
-            <div class="Ellipsis" style="font-size:120%;width:80px;font-weight:bold;"><a href="#/Monitor/SDB-Overview/Index" class="linkButton">分区组</a></div>
+            <div style="font-size:120%;width:80px;font-weight:bold;">
+               <span class="Ellipsis linkButton" ng-click="GotoGroups()">分区组</span>
+            </div>
          </div>
       </div>
       <div style="float:left;color:#808080;">
@@ -24,7 +28,9 @@
          </div>
          <div class="Ellipsis" style="height:50px;max-width:200px;float:left;">
             <div style="font-size:90%;">&nbsp;</div>
-            <div class="Ellipsis" style="font-size:120%;width:160px;font-weight:bold;"><a href="#/Monitor/Host-List/Index" class="linkButton">主机列表</a></div>
+            <div style="font-size:120%;width:160px;font-weight:bold;">
+               <span class="Ellipsis linkButton" ng-click="GotoHosts()">主机列表</span>
+            </div>
          </div>
       </div>
    </div>
@@ -42,7 +48,9 @@
                   <tr>
                      <td style="width:40%;font-weight:bold;">主机数</td>
                      <td style="width:60%;">
-                        <a href="#/Monitor/Host-List/Index" class="linkButton">{{HostList.length}}</a>
+                        <span class="Ellipsis linkButton" ng-click="GotoHosts()">
+                           {{HostList.length}}
+                        </span>
                      </td>
                   </tr>
                   <tr>
@@ -83,43 +91,57 @@
                      <tr>
                         <td style="width:40%;font-weight:bold;">会话数</td>
                         <td style="width:60%;" class="Ellipsis">
-                           <a href="#/Monitor/SDB-Overview/Session" class="linkButton">{{moduleInfo['sessions']}}</a>
+                           <span class="Ellipsis linkButton" ng-click="GotoSessions()">
+                              {{moduleInfo['sessions']}}
+                           </span>
                         </td>
                      </tr>
                      <tr>
                         <td style="width:40%;font-weight:bold;">域</td>
                         <td style="width:60%;" class="Ellipsis">
-                           <a href="#/Monitor/SDB-Overview/Domain" class="linkButton">{{moduleInfo['domains']}}</a>
+                           <span class="Ellipsis linkButton" ng-click="GotoDomains()">
+                              {{moduleInfo['domains']}}
+                           </span>
                         </td>
                      </tr>
                      <tr>
                         <td style="width:40%;font-weight:bold;">分区组数</td>
                         <td style="width:60%;" class="Ellipsis">
-                           <a href="#/Monitor/SDB-Overview/Index" class="linkButton">{{moduleInfo['groups']}}</a>
+                           <span class="Ellipsis linkButton" ng-click="GotoGroups()">
+                              {{moduleInfo['groups']}}
+                           </span>
                         </td>
                      </tr>
                      <tr>
                         <td style="width:40%;font-weight:bold;">节点数</td>
                         <td style="width:60%;" class="Ellipsis">
-                           <a href="#/Monitor/SDB-Overview/Node" class="linkButton">{{moduleInfo['nodes']}}</a>
+                           <span class="Ellipsis linkButton" ng-click="GotoNodes()">
+                              {{moduleInfo['nodes']}}
+                           </span>
                         </td>
                      </tr>
                      <tr>
                         <td style="width:40%;font-weight:bold;">集合数</td>
                         <td style="width:60%;" class="Ellipsis">
-                           <a href="#/Data/SDB-Database/Index" class="linkButton">{{moduleInfo['cl']}}</a>
+                           <span class="Ellipsis linkButton" ng-click="GotoDatabase()">
+                              {{moduleInfo['cl']}}
+                           </span>
                         </td>
                      </tr>
                      <tr>
                         <td style="width:40%;font-weight:bold;">记录数</td>
                         <td style="width:60%;" class="Ellipsis">
-                           <a href="#/Data/SDB-Database/Index" class="linkButton">{{moduleInfo['records']}}</a>
+                           <span class="Ellipsis linkButton" ng-click="GotoDatabase()">
+                              {{moduleInfo['records']}}
+                           </span>
                         </td>
                      </tr>
                      <tr>
                         <td style="width:40%;font-weight:bold;">lob数</td>
                         <td style="width:60%;" class="Ellipsis">
-                           <a href="#/Data/SDB-Database/Index" class="linkButton">{{moduleInfo['lobs']}}</a>
+                           <span class="Ellipsis linkButton" ng-click="GotoDatabase()">
+                              {{moduleInfo['lobs']}}
+                           </span>
                         </td>
                      </tr>
                   </table>

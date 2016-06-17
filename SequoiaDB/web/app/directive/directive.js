@@ -882,7 +882,7 @@
             function setColumn( scope, gridEle, isFirefox )
             {
                var bodyDiv        = $( '> .Grid2Body', gridEle ) ;
-               var headerTable    = $( '> .Grid2Header > table', gridEle ) ;
+               var headerTable    = $( '> .Grid2Header > table', gridEle ).css( 'width', 'auto' ) ;
                var headerTd       = $( '> tbody:first > tr:first > td:first', headerTable ) ;
                var bodyTable      = $( '> table', bodyDiv ).hide() ;
                var headerTableCol = $( '> colgroup > col', headerTable ) ;

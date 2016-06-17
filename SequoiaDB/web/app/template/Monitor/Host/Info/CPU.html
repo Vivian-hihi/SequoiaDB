@@ -67,8 +67,57 @@
             {{CPUInfo['Name']}}
          </div>
          <div ng-container="{marginTop:15,offsetX:-30,offsetY:-35}">
-            <div style="float:left;font-size:90%;color:#666;font-weight:bold;min-width:370px;" ng-container="{width:'50%',offsetX:-35,marginLeft:15}">
-               <div style="float:left;margin-top:5px;width:100px;height:18px;">主频</div>
+            
+            <div style="float:left;font-size:90%;color:#666;font-weight:bold;" ng-container="{width:'50%',offsetX:-35,marginLeft:15}">
+               <table class="table loosen" style="width:100%;word-wrap:normal;">
+                  <colgroup>
+                     <col style="width:100px;" />
+                     <col style="width:70%"/>
+                  </colgroup>
+                  <tr>
+                     <td>主频</td>
+                     <td>
+                        <div class="Ellipsis">{{CPUInfo['Frequency']}}</div>
+                     </td>
+                  </tr>
+                  <tr>  
+                     <td>内核</td>
+                     <td>
+                        <div class="Ellipsis">{{CPUInfo['Cores']}}</div>
+                     </td>
+                  </tr>
+                  <tr>
+                     <td>逻辑处理器</td>
+                     <td>
+                        <div class="Ellipsis">{{CPUInfo['LogicalProcessor']}}</div>
+                     </td>
+                  </tr>
+                  <tr>
+                     <td>L1缓存</td>
+                     <td>
+                        <div class="Ellipsis">{{CPUInfo['L1Cache']}}</div>
+                     </td>
+                  </tr>
+                  <tr>
+                     <td>L2缓存</td>
+                     <td>
+                        <div class="Ellipsis">{{CPUInfo['L2Cache']}}</div>
+                     </td>
+                  </tr>
+                  <tr>
+                     <td>L3缓存</td>
+                     <td>
+                        <div class="Ellipsis">{{CPUInfo['L3Cache']}}</div>
+                     </td>
+                  </tr>
+                  <tr>
+                     <td>进程数</td>
+                     <td>
+                        <div class="Ellipsis">{{CPUInfo['ProcessNumber']}}</div>
+                     </td>
+                  </tr>
+               </table>
+               <!--<div style="float:left;margin-top:5px;width:100px;height:18px;">主频</div>
                <div style="float:left;font-size:90%;" class="Ellipsis" ng-container="{offsetX:-105,height:18,marginTop:5}">
                   {{CPUInfo['Frequency']}}
                </div>
@@ -102,10 +151,10 @@
                <div style="float:left;font-size:90%;" class="Ellipsis" ng-container="{offsetX:-105,height:18,marginTop:5}">
                   {{CPUInfo['ProcessNumber']}}
                </div>
-               <div class="clear-float"></div>
+               <div class="clear-float"></div>-->
             </div>
             <div style="float:left;" ng-container="{width:'50%',offsetX:-20}">
-               <div style="height:220px;float:left;min-width:400px;" ng-container="{}" create-chart="charts.Cpu"></div>
+               <div style="height:220px;float:left;min-width:350px;" ng-container="{}" create-chart="charts.Cpu"></div>
                <div class="clear-float"></div>
             </div>
             <div class="clear-float"></div>

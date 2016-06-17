@@ -492,7 +492,10 @@
                var formVal3 = $scope.Components.Modal.form3.getValue() ;
                var formVal = $.extend( true, formVal1, formVal2 ) ;
                $.each( formVal3['other'], function( index, configInfo ){
-                  formVal[ configInfo['name'] ] = configInfo['value'] ;
+                  if( configInfo['name'] != '' )
+                  {
+                     formVal[ configInfo['name'] ] = configInfo['value'] ;
+                  }
                } ) ;
                if( type == 0 || type == 1 || type == 2 )
                {
@@ -1165,7 +1168,10 @@
                var formVal3 = $scope.StandaloneForm3.getValue() ;
                var formVal = $.extend( true, formVal1, formVal2 ) ;
                $.each( formVal3['other'], function( index, configInfo ){
-                  formVal[ configInfo['name'] ] = configInfo['value'] ;
+                  if( configInfo['name'] != '' )
+                  {
+                     formVal[ configInfo['name'] ] = configInfo['value'] ;
+                  }
                } ) ;
                configure['Config'] = [ {} ] ;
                $.each( formVal, function( key, value ){

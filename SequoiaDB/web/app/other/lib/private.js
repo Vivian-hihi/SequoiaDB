@@ -107,6 +107,10 @@ _IndexLeft.updateNav = function( $scope, $rootScope, SdbRest, callBack )
                             'type': moduleInfo['BusinessType'],
                             'mode': moduleInfo['DeployMod'],
                             'cluster': moduleInfo['ClusterName'] } ;
+         if( thisModule['type'] == 'spark' )
+         {
+            thisModule['href'] = 'http://' + moduleInfo['BusinessInfo']['HostName'] + ':' + moduleInfo['BusinessInfo']['WebServicePort'] ;
+         }
          for( var i = 0; i < navMenuLength; ++i )
          {
             if( isArray( $scope.Left.navMenu[i]['list'] ) == true )

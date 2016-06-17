@@ -39,6 +39,20 @@
       $scope.charts['Query'] = {} ;
       $scope.charts['Query']['options'] = window.SdbSacManagerConf.RecordReadEchart ;
 
+      //跳转至部署
+      $scope.GotoDeploy = function(){
+         $location.path( '/Deploy/Index' ) ;
+      } ;
+
+      //跳转至监控主页
+      $scope.GotoModule = function(){
+         $location.path( '/Monitor/Index' ) ;
+      } ;
+
+      //跳转至分区组列表
+      $scope.GotoGroups = function(){
+         $location.path( '/Monitor/SDB-Overview/Index' ) ;
+      } ;
    } ) ;
 
 }());

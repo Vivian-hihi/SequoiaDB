@@ -1,16 +1,14 @@
 ﻿<div style="padding:10px 15px;" ng-controller="Monitor.SdbOverview.Resource.Ctrl" ng-container="{}">
-   <style type="text/css">
-      .confirm > .foot > .confirmOk:active{color:#FFF;background-color:#F27D7D;border-color:#F27D7D;}
-      .dropdown-menu{padding-bottom:0px;}
-   </style>
    <div style="border-bottom:3px solid #ddd;padding-top:10px;" ng-container="{height:70}">
       <div style="float:left;color:#808080;">
          <div style="height:50px;width:45px;float:left;">
             <i style="color:#ccc;padding-top:8px;font-size:218%;" class="fa fa-cubes"></i>
          </div>
-         <div style="height:50px;float:left;max-width:200px;">
-            <div style="font-size:90%;">集群</div>
-            <div class="Ellipsis" style="font-size:140%;color:#666;width:160px;"><a href="#/Deploy/Index" class="linkButton">{{clusterName}}</a></div>
+         <div style="height:50px;float:left;">
+            <div style="font-size:90%;" ng-click="moduleInfo()">集群</div>
+            <div style="font-size:140%;width:160px;">
+               <span class="Ellipsis linkButton" ng-click="GotoDeploy()">{{clusterName}}</span>
+            </div>
          </div>
          <div class="clear-float"></div>
       </div>
@@ -20,8 +18,8 @@
          </div>
          <div style="height:50px;float:left;max-width:200px;">
             <div style="font-size:90%;">{{moduleType}}</div>
-            <div class="Ellipsis" style="font-size:140%;width:160px;">
-               <a href="#/Monitor/Index" class="linkButton">{{moduleName}}</a>
+            <div style="font-size:140%;width:160px;">
+               <span class="Ellipsis linkButton" ng-click="GotoModule()">{{moduleName}}</span>
             </div>
          </div>
          <div class="clear-float"></div>
@@ -32,7 +30,9 @@
          </div>
          <div style="height:50px;float:left;">
             <div style="font-size:90%;">分区组数</div>
-            <div class="Ellipsis" style="font-size:140%;width:160px;"><a href="#/Monitor/SDB-Overview/Index" class="linkButton">20</a></div>
+            <div class="Ellipsis" style="font-size:140%;width:160px;">
+               <span class="Ellipsis linkButton" ng-click="GotoGroups()">20</span>
+            </div>
          </div>
          <div class="clear-float"></div>
       </div>
@@ -99,6 +99,7 @@
                      <div class="Ellipsis">
                         <i class="fa fa-circle" style="color:#00CC66;" ng-if="resourceInfo['Status'] == 'Running'" data-desc="正常运行中"></i>
                         <i class="fa fa-circle" style="color:#F9A937;" ng-if="resourceInfo['Status'] == 'Waiting'" data-desc="该节点处于waiting状态"></i>
+                        <i class="fa fa-circle" style="color:#D9534F;" ng-if="resourceInfo['Status'] == 'Destroying'" data-desc="该节点处于Destroying状态"></i>
                      </div>
                   </td>
                   <td ng-repeat="fieldName in ShowKeyList track by $index">

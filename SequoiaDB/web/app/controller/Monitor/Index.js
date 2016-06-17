@@ -1,7 +1,7 @@
 (function(){
    var sacApp = window.SdbSacManagerModule ;
    //控制器
-   sacApp.controllerProvider.register( 'Monitor.Preview.Index.Ctrl', function( $scope, $compile, SdbRest, SdbFunction ){
+   sacApp.controllerProvider.register( 'Monitor.Preview.Index.Ctrl', function( $scope, $compile, $location, SdbRest, SdbFunction ){
      
       var clusterName = SdbFunction.LocalData( 'SdbClusterName' ) ;
       var moduleType = SdbFunction.LocalData( 'SdbModuleType' ) ;
@@ -30,34 +30,41 @@
 
       var queryHost = function(){
          var data = {
-            'cmd': 'query host status',
-            'HostInfo': JSON.stringify( {"HostInfo":[ {"HostName":"ubuntu-test-02"},{"HostName":"ubuntu-test-03"} ] } )
+            'cmd': 'query host',
+            'HostInfo': JSON.stringify( {"HostInfo":[ {"HostName":"ubuntu-test-02"} ] } )
          } ;
          SdbRest.OmOperation( data, function( hostList ){
             $scope.HostList = hostList ;
-            //alert(JSON.stringify($scope.HostList[0]['HostInfo'][0]['Memory']))
          }, function( errorInfo ){
-               
+            _IndexPublic.createRetryModel( $scope, errorInfo, function(){
+               queryHost() ;
+               return true ;
+            } ) ;
          }, function(){
-
+            _IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
          } ) ;
       }
 
-      $scope.queryModule = function( data, success, failed, error, complete )
+      var queryModule = function( data, success, failed, error, complete )
       {
          SdbRest._postTest( './test/moduleInfo', success, failed, error ) ;
          SdbRest.Exec( sql, function( csList ){
+
+         }, function( errorInfo ){
+            _IndexPublic.createRetryModel( $scope, errorInfo, function(){
+               queryModule() ;
+               return true ;
+            } ) ;
+         }, function(){
+            _IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
          } ) ;
       }
       
 
-      $scope.moduleList = function(){
+      var moduleList = function(){
          queryHost() ;
-
-         $scope.queryModule( {}, function( test ){
-
+         queryModule( {}, function( test ){
             $scope.moduleInfo = test[0] ;
-
             $scope.charts['Host']['CPU'] = { 'percent': $scope.moduleInfo['cpuUse'], 'style': { 'progress': { 'background': '#FF9933' } } } ;   
             $scope.charts['Host']['Memory'] = { 'percent': $scope.moduleInfo['memoryUse'], 'style': { 'progress': { 'background': '#D9534F' } } } ;   
             $scope.charts['Host']['Disk'] = { 'percent': $scope.moduleInfo['diskUse'] } ;
@@ -95,7 +102,7 @@
             $scope.chartName = 'Record Update' ;
             $scope.charts['Module']['options'] = window.SdbSacManagerConf.RecordUpdateEchart ;
          }
-      }
+      } ;
 
       //图表下拉选项
       $scope.DropdownMenu = [ 
@@ -103,9 +110,9 @@
          { 'html': $compile( '<div style="padding:5px 10px" ng-click="changeCharts(\'Read\')">Record Read</div>' )( $scope ) },
          { 'html': $compile( '<div style="padding:5px 10px" ng-click="changeCharts(\'Delete\')">Record Delete</div>' )( $scope ) },
          { 'html': $compile( '<div style="padding:5px 10px" ng-click="changeCharts(\'Update\')">Record Update</div>' )( $scope ) }
-      ]
+      ] ;
 
-      $scope.moduleList() ;
+      moduleList() ;
       
       $scope.result = {} ;
       var result = [] ;
@@ -114,9 +121,45 @@
          result.push( 
              '2016-05-23 10:06:22 [Error] - 主机Ubuntu-12-02连接失败'
          )
-      }
+      } ;
 
       $scope.result = result ;
+      
+      //跳转至部署
+      $scope.GotoDeploy = function(){
+         $location.path( '/Deploy/Index' ) ;
+      } ;
+
+      //跳转至分区组列表
+      $scope.GotoGroups = function(){
+         $location.path( '/Monitor/SDB-Overview/Index' ) ;
+      } ;
+
+      //跳转至主机列表
+      $scope.GotoHosts = function(){
+         $location.path( '/Monitor/Host-List/Index' ) ;
+      } ;
+
+      //跳转至会话列表
+      $scope.GotoSessions = function(){
+         $location.path( '/Monitor/SDB-Overview/Session' ) ;
+      } ;
+
+      //跳转至域列表
+      $scope.GotoDomains = function(){
+         $location.path( '/Monitor/SDB-Overview/Domain' ) ;
+      } ;
+
+      //跳转至节点列表
+      $scope.GotoNodes = function(){
+         $location.path( '/Monitor/SDB-Overview/Node' ) ;
+      } ;
+
+      //跳转至数据库操作
+      $scope.GotoDatabase = function(){
+         $location.path( '/Data/SDB-Database/Index' ) ;
+      } ;
+
    } ) ;
 
 }());

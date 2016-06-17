@@ -1,7 +1,7 @@
 ﻿(function(){
    var sacApp = window.SdbSacManagerModule ;
    //控制器
-   sacApp.controllerProvider.register( 'Monitor.SdbGroup.Charts.Ctrl', function( $scope, SdbRest, SdbFunction ){
+   sacApp.controllerProvider.register( 'Monitor.SdbGroup.Charts.Ctrl', function( $scope, SdbRest, $location, SdbFunction ){
       var clusterName = SdbFunction.LocalData( 'SdbClusterName' ) ;
       var moduleType = SdbFunction.LocalData( 'SdbModuleType' ) ;
       var moduleName = SdbFunction.LocalData( 'SdbModuleName' ) ;
@@ -38,6 +38,20 @@
 
       $scope.charts['Read'] = {} ;
       $scope.charts['Read']['options'] = window.SdbSacManagerConf.RecordReadEchart ;
+      //跳转至部署
+      $scope.GotoDeploy = function(){
+         $location.path( '/Deploy/Index' ) ;
+      } ;
+
+      //跳转至监控主页
+      $scope.GotoModule = function(){
+         $location.path( '/Monitor/Index' ) ;
+      } ;
+
+      //跳转至分区组列表
+      $scope.GotoGroups = function(){
+         $location.path( '/Monitor/SDB-Overview/Index' ) ;
+      } ;
    } ) ;
 
 }());

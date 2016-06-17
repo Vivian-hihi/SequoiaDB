@@ -1,7 +1,7 @@
 ﻿(function(){
    var sacApp = window.SdbSacManagerModule ;
    //控制器
-   sacApp.controllerProvider.register( 'Monitor.SdbOverview.Session.Ctrl', function( $scope, $compile, SdbRest, SdbFunction ){
+   sacApp.controllerProvider.register( 'Monitor.SdbOverview.Session.Ctrl', function( $scope, $compile, SdbRest, $location, SdbFunction ){
       var clusterName = SdbFunction.LocalData( 'SdbClusterName' ) ;
       var moduleType = SdbFunction.LocalData( 'SdbModuleType' ) ;
       var moduleName = SdbFunction.LocalData( 'SdbModuleName' ) ;
@@ -155,34 +155,34 @@
    
 
       //显示会话详细
-      $scope.showSession = function(){
+      $scope.ShowSession = function(){
          $scope.Components.Modal.sessionInfo = {
-         '会话ID' : 'Host-test-02:11810:10' ,
-         '对应系统线程ID': 854 ,
-         '会话状态' : 'Running' ,
-         'EDU类型' : 'Agent' ,
-         '等待请求的队列长度' : 0 ,
-         '已经处理请求的数量' : 150 ,
-         '上下文ID数组' : 199 ,
-         '数据记录读' : 0 ,
-         '索引读' : 0 ,
-         '数据记录写' : 0 ,
-         '索引写' : 0 ,
-         '总更新记录数量' : 0 ,
-         '总删除记录数量' : 0 ,
-         '总插入记录数量' : 0 ,
-         '总读取记录数量' : 0 ,
-         '总数据读' : 0 ,
-         '总数据读时间' : 0 ,
-         '总数据写时间' : 0 ,
-         '读取记录的时间' : 0 ,
-         '写入记录的时间' : 0 ,
-         '连接发起时间' : "2016-04-07-19.19.42.932665",
-         '最后一次操作类型' : 'COMMAND',
-         'LastOpInfo' : 'Command:$SNAPSHOT_SESSION_CUR, Collection:, Match:{}, Selector:{}, OrderBy:{ \"SessionID\": 1 }, Hint:{}, Skip:0, Limit:-1, Flag:0x00000000(0)',
-         "UserCPU" : 0.03 ,
-         "SysCPU" : 0.02
-      } ;
+            '会话ID' : 'Host-test-02:11810:10' ,
+            '对应系统线程ID': 854 ,
+            '会话状态' : 'Running' ,
+            'EDU类型' : 'Agent' ,
+            '等待请求的队列长度' : 0 ,
+            '已经处理请求的数量' : 150 ,
+            '上下文ID数组' : 199 ,
+            '数据记录读' : 0 ,
+            '索引读' : 0 ,
+            '数据记录写' : 0 ,
+            '索引写' : 0 ,
+            '总更新记录数量' : 0 ,
+            '总删除记录数量' : 0 ,
+            '总插入记录数量' : 0 ,
+            '总读取记录数量' : 0 ,
+            '总数据读' : 0 ,
+            '总数据读时间' : 0 ,
+            '总数据写时间' : 0 ,
+            '读取记录的时间' : 0 ,
+            '写入记录的时间' : 0 ,
+            '连接发起时间' : "2016-04-07-19.19.42.932665",
+            '最后一次操作类型' : 'COMMAND',
+            'LastOpInfo' : 'Command:$SNAPSHOT_SESSION_CUR, Collection:, Match:{}, Selector:{}, OrderBy:{ \"SessionID\": 1 }, Hint:{}, Skip:0, Limit:-1, Flag:0x00000000(0)',
+            "UserCPU" : 0.03 ,
+            "SysCPU" : 0.02
+         } ;
          $scope.Components.Modal.icon = '' ;
          $scope.Components.Modal.title = '会话详细' ;
          $scope.Components.Modal.noOK = true ;
@@ -202,8 +202,8 @@
 <td>{{key}}</td>\
 <td>{{value}}</td>\
 </tr>\
-</table>';
-      }
+</table>' ;
+      } 
 
       $scope.changeSelect = function( $event ){
          if( $( $event.target ).attr( 'class' ) == 'pull-left fa fa-check-square-o' )
@@ -324,5 +324,19 @@
          fn: $scope.getSessionList
       } ;
 
+      //跳转至部署
+      $scope.GotoDeploy = function(){
+         $location.path( '/Deploy/Index' ) ;
+      } ;
+
+      //跳转至监控主页
+      $scope.GotoModule = function(){
+         $location.path( '/Monitor/Index' ) ;
+      } ;
+
+      //跳转至分区组列表
+      $scope.GotoGroups = function(){
+         $location.path( '/Monitor/SDB-Overview/Index' ) ;
+      } ;
    } ) ;
 }());

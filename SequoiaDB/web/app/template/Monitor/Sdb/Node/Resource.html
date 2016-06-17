@@ -47,16 +47,58 @@
          </li>
       </ul>
    </div>
-   <div ng-container="{height:30,marginTop:10}">
-      <div>
-         <button class="btn btn-default btn-lg" dropdown-menu="ScreenMenu">
-            条件筛选
-            <span class="caret caret-bottom"></span>
-         </button>
+   <div style="color:#606060;font-size:90%;height:30px;margin:10px 0;">
+      <button class="btn btn-default" ng-click="CreatePlayIntervalModel()">实时刷新设置</button>&nbsp;<button class="btn btn-default" dropdown-menu="SelectMenu" ng-click="OpenSelecMenu()">选择显示列&nbsp;<i class="fa fa-caret-down"></i></button>&nbsp;<button class="btn btn-default" dropdown-menu="ResourceMenu">资源类型&nbsp;<i class="fa fa-caret-down"></i></button>&nbsp;<button class="btn btn-default" dropdown-menu="ScreenMenu">条件筛选&nbsp;<i class="fa fa-caret-down"></i></button>
+   </div>
+   <div create-timer="Timer"></div>
+   <div class="Grid2" ng-grid2="ResourceGridOptions" ng-container="{offsetY:-212}">
+      <div class="Grid2Header">
+         <table>
+            <colgroup>
+               <col />
+               <col ng-repeat="nodeName in ShowKeyList track by $index" />
+            </colgroup>
+            <tbody>
+               <tr>
+                  <td>
+                     <div class="Ellipsis">{{autoLanguage("状态")}}</div>
+                  </td>
+                  <td style="cursor:pointer;" ng-repeat="fieldName in ShowKeyList track by $index" ng-click="SetOrderField(fieldName)">
+                     <div class="Ellipsis">
+                        <i class="fa fa-caret-up" ng-if="OrderByField.indexOf(fieldName) >= 0"></i><i class="fa fa-caret-down" ng-if="OrderByField.indexOf('-'+fieldName) >= 0"></i>&nbsp;{{fieldName}}
+                     </div>
+                  </td>
+               </tr>
+            </tbody>
+         </table>
+      </div>
+      <div class="Grid2Body">
+         <table>
+            <colgroup>
+               <col />
+               <col ng-repeat="nodeName in ShowKeyList track by $index" />
+            </colgroup>
+            <tbody>
+               <tr ng-repeat="resourceInfo in ResourceList | orderBy:OrderByField">
+                  <td>
+                     <div class="Ellipsis">
+                        <i class="fa fa-circle" style="color:#00CC66;" ng-if="resourceInfo['Status'] == 'Running'" data-desc="正常运行中"></i>
+                        <i class="fa fa-circle" style="color:#F9A937;" ng-if="resourceInfo['Status'] == 'Waiting'" data-desc="该节点处于waiting状态"></i>
+                        <i class="fa fa-circle" style="color:#D9534F;" ng-if="resourceInfo['Status'] == 'Destroying'" data-desc="该节点处于Destroying状态"></i>
+                     </div>
+                  </td>
+                  <td ng-repeat="fieldName in ShowKeyList track by $index">
+                     <div class="Ellipsis">{{resourceInfo[fieldName]}}</div>
+                  </td>
+               </tr>
+            </tbody>
+         </table>
       </div>
    </div>
-   <div ng-container="{offsetY:-180,marginTop:10}">
-      <div create-grid="GridData" ng-container="{}"></div>
+   <div class="GridTool">
+      <div class="ToolLeft">
+         <span>一共有 {{NodeList.length}} 个节点</span>
+      </div>
    </div>
 
 

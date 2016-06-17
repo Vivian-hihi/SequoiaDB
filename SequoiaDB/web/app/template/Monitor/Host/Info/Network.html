@@ -65,31 +65,47 @@
          <div ng-container="{height:20,offsetX:-30}" style="color:#666;font-size:100%;font-weight:bold;">网卡{{$index + 1}} - {{networkInfo['Name']}}</div>
          <div ng-container="{marginTop:15,offsetX:-30,offsetY:-35}">
             <div style="float:left;font-size:90%;color:#666;font-weight:bold;" ng-container="{width:350}">
-
-               <div style="float:left;margin-top:5px;width:100px;height:18px;">传输速率</div>
-               <div style="float:left;margin-top:5px;width:225px;height:18px;font-size:90%;" class="Ellipsis">{{networkInfo['Rate']}}</div>
-               <div class="clear-float"></div>
-
-               <div style="float:left;margin-top:5px;width:100px;height:18px;">已发送流量</div>
-               <div style="float:left;margin-top:5px;width:225px;height:18px;font-size:90%;" class="Ellipsis">{{networkInfo['SendTraffic']}}</div>
-               <div class="clear-float"></div>
-
-               <div style="float:left;margin-top:5px;width:100px;height:18px;">已发送数据包</div>
-               <div style="float:left;margin-top:5px;width:225px;height:18px;font-size:90%;" class="Ellipsis">{{networkInfo['SendPackets']}}</div>
-               <div class="clear-float"></div>
-
-               <div style="float:left;margin-top:5px;width:100px;height:18px;">已接收流量</div>
-               <div style="float:left;margin-top:5px;width:225px;height:18px;font-size:90%;" class="Ellipsis">{{networkInfo['receivedTraffic']}}</div>
-               <div class="clear-float"></div>
-
-               <div style="float:left;margin-top:5px;width:100px;height:18px;">已接收数据包</div>
-               <div style="float:left;margin-top:5px;width:225px;height:18px;font-size:90%;" class="Ellipsis">{{networkInfo['receivedpacket']}}</div>
-               <div class="clear-float"></div>
+               <table class="table loosen" style="word-wrap:normal;">
+                  <colgroup>
+                     <col style="width:100px;" />
+                     <col style="width:225px;" />
+                  </colgroup>
+                  <tr>
+                     <td>传输速率</td>
+                     <td>
+                        <div class="Ellipsis">{{networkInfo['Rate']}}</div>
+                     </td>
+                  </tr>
+                  <tr>
+                     <td>已发送流量</td>
+                     <td>
+                        <div class="Ellipsis">{{networkInfo['SendTraffic']}}</div>
+                     </td>
+                  </tr>
+                  <tr>
+                     <td>已发送数据包</td>
+                     <td>
+                        <div class="Ellipsis">{{networkInfo['SendPackets']}}</div>
+                     </td>
+                  </tr>
+                  <tr>
+                     <td>已接收流量</td>
+                     <td>
+                        <div class="Ellipsis">{{networkInfo['receivedTraffic']}}</div>
+                     </td>
+                  </tr>
+                  <tr>
+                     <td>已接收数据包</td>
+                     <td>
+                        <div class="Ellipsis">{{networkInfo['receivedpacket']}}</div>
+                     </td>
+                  </tr>
+               </table>
 
             </div>
             <div style="float:left;" ng-container="{offsetX:-370}">
-               <div style="height:220px;float:left;min-width:400px;" ng-container="{width:'50%',offsetX:-10}" create-chart="charts.output"></div>
-               <div style="height:220px;float:left;min-width:400px;" ng-container="{width:'50%',offsetX:-10}" create-chart="charts.input"></div>
+               <div style="height:220px;float:left;min-width:320px;" ng-container="{width:'50%'}" create-chart="charts.output"></div>
+               <div style="height:220px;float:left;min-width:320px;" ng-container="{width:'50%'}" create-chart="charts.input"></div>
                <div class="clear-float"></div>
             </div>
             <div class="clear-float"></div>

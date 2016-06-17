@@ -160,6 +160,7 @@
             $scope.showType = 2 ;
             if( isRender == true || $scope.GridData2['title'].length == 0 )
             {
+               $scope.jsonTree = [] ;
                var gridData = {
                   'title': [
                      { 'text': 'Key' }, { 'text': 'Value' }, { 'text': 'Type' }
@@ -183,7 +184,7 @@
                            if( column == 0 )
                            {
                               var id = line ;
-                              gridData['data'][id]['width'] = parseInt( width ) ;
+                             $scope.jsonTree[id]['width'] = parseInt( width ) ;
                            }
                         }
                      }
@@ -201,13 +202,13 @@
                   gridData.tool.left.push( { 'html': $compile( '<i class="fa fa-play" ng-show="current < total" ng-click="nextPage()"></i>' )( $scope ) } ) ;
                }
                $.each( $scope.records, function( index, record ){
-                  var index2 = gridData['data'].length ;
+                  var index2 =$scope.jsonTree.length ;
                   var line = json2Array( record, 0, true ) ;
-                  gridData['data'].push( { 'Json': line, 'index': index + 1, width: 100 } ) ;
+                  $scope.jsonTree.push( { 'Json': line, 'index': index + 1, width: 100 } ) ;
                   gridData['body'].push( [
-                     { 'html': '<div tree-key para="data.data[' + index2 + ']"></div>' },
-                     { 'html': '<div tree-value para="data.data[' + index2 + ']"></div>' },
-                     { 'html': '<div tree-type para="data.data[' + index2 + ']"></div>' }
+                     { 'html':  $compile( '<div tree-key para="jsonTree[' + index2 + ']"></div>' )( $scope ) },
+                     { 'html':  $compile( '<div tree-value para="jsonTree[' + index2 + ']"></div>' )( $scope ) },
+                     { 'html':  $compile( '<div tree-type para="jsonTree[' + index2 + ']"></div>' )( $scope ) }
                   ] ) ;
                } ) ;
                $scope.GridData2 = gridData ;

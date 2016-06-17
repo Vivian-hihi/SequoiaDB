@@ -1,7 +1,7 @@
 ﻿(function(){
    var sacApp = window.SdbSacManagerModule ;
    //控制器
-   sacApp.controllerProvider.register( 'Monitor.SdbGroup.Index.Ctrl', function( $scope, $compile, SdbRest, SdbFunction ){
+   sacApp.controllerProvider.register( 'Monitor.SdbGroup.Index.Ctrl', function( $scope, $compile, $location, SdbRest, SdbFunction ){
       
       var clusterName = SdbFunction.LocalData( 'SdbClusterName' ) ;
       var moduleType = SdbFunction.LocalData( 'SdbModuleType' ) ;
@@ -18,13 +18,6 @@
       }
 
       $scope.getGroupInfo = function(){
-         //var data = { 
-         //   'cmd': 'get node configure',
-         //   'HostName':'ubuntu-test-02',
-         //   "ServiceName":11820 } ;
-         //SdbRest.OmOperation( data, function( test ){
-         //   alert(JSON.stringify(test))
-         //} ) ;
          $scope.queryList( {}, function( test ){
             $.each( test, function( index, value ){
                if( value['Role'] == 0 )
@@ -69,7 +62,7 @@
                      { "key":"ubuntu-test-03", "value": "2" },
                      { "key":"ubuntu-test-04", "value": "3" },
                      { "key":"ubuntu-test-05", "value": "4" }
-                  ]                  
+                  ]
                },
                {
                   "name": "svcname",
@@ -84,7 +77,7 @@
                   }
                },
                {
-                  "name": "svcname",
+                  "name": "path",
                   "webName": $scope.autoLanguage( '节点路径' ),
                   "type": "string",
                   "required": true,
@@ -124,15 +117,15 @@
          $scope.Components.Modal.form = {
             inputList: [
                {
-                  "name": "hostName",
+                  "name": "nodeName",
                   "webName": $scope.autoLanguage( '选择节点' ),
                   "type": "select",
                   "required": true,
                   "value": 0,
-                  "valid": $scope.hostList             
+                  "valid": $scope.hostList
                }
             ]
-         };
+         } ;
          $scope.Components.Modal.Context = '<div form-create para="data.form"></div>';
          $scope.Components.Modal.ok = function(){
             $scope.Components.Confirm.isShow = true ;
@@ -157,15 +150,15 @@
          $scope.Components.Modal.form = {
             inputList: [
                {
-                  "name": "hostName",
+                  "name": "nodeName",
                   "webName": $scope.autoLanguage( '选择节点' ),
                   "type": "select",
                   "required": true,
                   "value": 0,
-                  "valid": $scope.hostList             
+                  "valid": $scope.hostList
                }
             ]
-         };
+         } ;
          $scope.Components.Modal.Context = '<div form-create para="data.form"></div>';
          $scope.Components.Modal.ok = function(){
             return true ;
@@ -181,7 +174,7 @@
          $scope.Components.Modal.form = {
             inputList: [
                {
-                  "name": "hostName",
+                  "name": "nodeName",
                   "webName": $scope.autoLanguage( '选择节点' ),
                   "type": "select",
                   "required": true,
@@ -189,11 +182,42 @@
                   "valid": $scope.hostList             
                }
             ]
-         };
+         } ;
          $scope.Components.Modal.Context = '<div form-create para="data.form"></div>';
          $scope.Components.Modal.ok = function(){
             return true ;
          }
-      }
+      } ;
+
+       //跳转至部署
+      $scope.GotoDeploy = function(){
+         $location.path( '/Deploy/Index' ) ;
+      } ;
+
+      //跳转至监控主页
+      $scope.GotoModule = function(){
+         $location.path( '/Monitor/Index' ) ;
+      } ;
+
+      //跳转至分区组列表
+      $scope.GotoGroups = function(){
+         $location.path( '/Monitor/SDB-Overview/Index' ) ;
+      } ;
+
+      //跳转至节点信息
+      $scope.GotoNode = function(){
+         $location.path( '/Monitor/SDB-Node/Index' ) ;
+      } ;
+      
+      //跳转至主机信息
+      $scope.GotoHost = function(){
+         $location.path( '/Monitor/Host-Info/Index' ) ;
+      } ;
+
+      //跳转至域
+      $scope.GotoDomains = function(){
+         $location.path( '/Monitor/SDB-Overview/Domain' ) ;
+      } ;
+
    } ) ;
 }());

@@ -4,9 +4,11 @@
          <div style="height:50px;width:45px;float:left;">
             <i style="color:#ccc;padding-top:8px;font-size:218%;" class="fa fa-cubes"></i>
          </div>
-         <div style="height:50px;float:left;max-width:200px;">
-            <div style="font-size:90%;">集群</div>
-            <div class="Ellipsis" style="font-size:140%;color:#666;width:160px;"><a href="#/Deploy/Index" class="linkButton">{{clusterName}}</a></div>
+         <div style="height:50px;float:left;">
+            <div style="font-size:90%;" ng-click="moduleInfo()">集群</div>
+            <div style="font-size:140%;width:160px;">
+               <span class="Ellipsis linkButton" ng-click="GotoDeploy()">{{clusterName}}</span>
+            </div>
          </div>
          <div class="clear-float"></div>
       </div>
@@ -16,8 +18,8 @@
          </div>
          <div style="height:50px;float:left;max-width:200px;">
             <div style="font-size:90%;">{{moduleType}}</div>
-            <div class="Ellipsis" style="font-size:140%;width:160px;">
-               <a href="#/Monitor/Index" class="linkButton">{{moduleName}}</a>
+            <div style="font-size:140%;width:160px;">
+               <span class="Ellipsis linkButton" ng-click="GotoModule()">{{moduleName}}</span>
             </div>
          </div>
          <div class="clear-float"></div>
@@ -28,7 +30,9 @@
          </div>
          <div style="height:50px;float:left;">
             <div style="font-size:90%;">分区组数</div>
-            <div class="Ellipsis" style="font-size:140%;width:160px;"><a href="#/Monitor/SDB-Overview/Index" class="linkButton">20</a></div>
+            <div class="Ellipsis" style="font-size:140%;width:160px;">
+               <span class="Ellipsis linkButton" ng-click="GotoGroups()">20</span>
+            </div>
          </div>
          <div class="clear-float"></div>
       </div>
@@ -74,7 +78,9 @@
 
          <div style="height:16px;margin-bottom:10px;">
             <div style="float:left;height:16px;width:75px;font-weight:bold;">主节点</div>
-            <div style="float:left;height:16px;width:186px;" class="Ellipsis"><a href="#/Monitor/SDB-Node/Index" class="linkButton">{{PrimaryNode}}</a></div>
+            <div style="float:left;height:16px;width:186px;" class="Ellipsis">
+               <span class="linkButton" ng-click="GotoNode()">{{PrimaryNode}}</span>
+            </div>
             <div class="clear-float"></div>
          </div>
 
@@ -82,7 +88,7 @@
             <div style="float:left;height:16px;width:75px;font-weight:bold;">所属域</div>
             <div style="float:left;width:186px;">
                <div class="Ellipsis" style="height:16px;margin-bottom:10px;" ng-repeat="domain in groupInfo['Domain']">
-                  <a class="linkButton" href="#/Monitor/SDB-Overview/Domain">{{domain}}</a>
+                  <span class="linkButton" ng-click="GotoDomains()">{{domain}}</span>
                </div>
             </div>
             <div class="clear-float"></div>
@@ -102,7 +108,7 @@
 
                <div style="float:left;" ng-container="{width:'50%',offsetX:-5}">
                   <div class="Ellipsis" style="font-weight:bold;height:20px;margin-top:5px;">
-                     <a href="#/Monitor/SDB-Node/Index" class="linkButton">{{node['HostName']}}:{{node['Service'][0]['Name']}}</a>
+                     <span class="linkButton" ng-click="GotoNode()">{{node['HostName']}}:{{node['Service'][0]['Name']}}</span>
                   </div>
                   <div style="height:20px;margin-top:20px;">
                      <table class="table">
@@ -132,7 +138,9 @@
                      <table class="table">
                         <tr>
                            <td style="font-weight:bold;width:120px;">主机</td>
-                           <td class="Ellipsis"><a href="#/Monitor/Host-Info/Index" class="linkButton">{{node['HostName']}}</a></td>
+                           <td class="Ellipsis">
+                              <span class="linkButton" ng-click="GotoHost()">{{node['HostName']}}</span>
+                           </td>
                         </tr>
                      </table>
                   </div>
@@ -155,27 +163,11 @@
                         <td ng-if="service['Type'] == 3">编目服务</td>
                         <td>{{service['Name']}}</td>
                      </tr>
-                     <!--<tr>
-                        <td>复制服务</td>
-                        <td>11811</td>
-                     </tr>
-                     <tr>
-                        <td>分区服务</td>
-                        <td>11812</td>
-                     </tr>
-                     <tr>
-                        <td>编目服务</td>
-                        <td>11813</td>
-                     </tr>-->
                   </table>
                </div>
-
                <div class="clear-float"></div>
-
             </div>
-
          </div>
-
       </div>
       <div class="clear-float"></div>
    </div>

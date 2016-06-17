@@ -1,89 +1,79 @@
 (function(){
    var sacApp = window.SdbSacManagerModule ;
    //控制器
-   sacApp.controllerProvider.register( 'Monitor.SdbOverview.Index.Ctrl', function( $scope, $compile, SdbRest, SdbFunction ){
-      var clusterName = SdbFunction.LocalData( 'SdbClusterName' ) ;
-      var moduleType = SdbFunction.LocalData( 'SdbModuleType' ) ;
-      var moduleName = SdbFunction.LocalData( 'SdbModuleName' ) ;
+   sacApp.controllerProvider.register( 'Monitor.SdbOverview.Index.Ctrl', function( $scope, $compile, $location, SdbRest, SdbFunction ){
+      var ClusterName = SdbFunction.LocalData( 'SdbClusterName' ) ;
+      var ModuleType = SdbFunction.LocalData( 'SdbModuleType' ) ;
+      var ModuleName = SdbFunction.LocalData( 'SdbModuleName' ) ;
 
       //初始化
-      $scope.clusterName = clusterName ;
-      $scope.moduleName = moduleName ;
-      $scope.moduleType =  moduleType ;
-      $scope.coordInfo = [] ;
-      $scope.catalogInfo = [] ;
-      $scope.dataInfo = [] ;
-      $scope.dataNumber = 0 ;
-      $scope.groupList = [] ;
+      $scope.ClusterName = ClusterName ;
+      $scope.ModuleName = ModuleName ;
+      $scope.ModuleType =  ModuleType ;
+      $scope.GroupList = [] ;
+      $scope.groupNameList = [] ;
       $scope.waitingGroupList = [] ;
       $scope.runningGroupList = [] ;
+      $scope.clList = [] ;
+      $scope.DatagroupNum = 0 ;
       var statusIcon = '' ;
 
+      //新表格
+      $scope.GroupGridOptions = { 'titleWidth': [] } ;
+
+      //渲染网格显示的列
+      var gridShowColumn = function(){
+         $scope.GroupGridOptions['titleWidth'] = [] ;
+         $scope.GroupGridOptions['titleWidth'].push( '40px',15,15,30,20,20 ) ;
+         
+      }
+
+
+      var sql = '' ;
+      sql = 'SELECT Name, Details FROM $SNAPSHOT_CL WHERE NodeSelect="master" ORDER BY Name' ;
       
       $scope.queryList = function( data, success, failed, error, complete ){
          SdbRest._postTest( './test/groupList', success, failed, error ) ;
       } 
-      var gridData = {
-         'title': [
-            { "text": $scope.autoLanguage( '状态' ) },
-            { "text": $scope.autoLanguage( '分区组名' ) },
-            { "text": $scope.autoLanguage( '节点数' ) },
-            { "text": $scope.autoLanguage( '主节点' ) },
-            { "text": $scope.autoLanguage( '集合数' ) },
-            { "text": $scope.autoLanguage( '记录数' ) }
-         ],
-         'body': [],
-         'tool': {
-            'position': 'bottom',
-            'left': [ { 'text': '一共有 9 个数据组' } ],
-            'right': [ ]
-         },
-         'options': {
-            'grid': {
-               'tdModel': 'auto', 
-               'gridModel': 'fix', 
-               'tdHeight': '19px', 
-               'titleWidth': [ '60px', 35, '60px', 35, 15, 15 ] 
-            },
-            'order': {
-               'active': true
-            }
-         }
-      } ;
-      $scope.GridData = $.extend( true, {}, gridData ) ;
+      
 
-      $scope.getGroupList = function(){
+      var getClInfo = function(){
+         //获取CL信息
+         SdbRest.Exec( sql, function( clList ){
+            $scope.clList = clList ;
+            $.each( $scope.GroupList, function( index, groupInfo ){
+               //role 0 is data group
+               if( groupInfo['Role'] == 0 )
+               {
+                  $scope.DatagroupNum = $scope.DatagroupNum + 1 ;
+                  $scope.GroupList[index]['TotalCL'] = 0 ;
+                  $scope.GroupList[index]['TotalRecords'] = 0 ;
+                  $.each( $scope.clList, function( index2, clInfo ){
+                     $.each( clInfo['Details'], function( index3, clDetail ){
+                        if( clDetail['GroupName'] == groupInfo['GroupName'] )
+                        {
+                           ++$scope.GroupList[index]['TotalCL'] ;
+                           $scope.GroupList[index]['TotalRecords'] += clDetail['TotalRecords'] ;
+                        }
+                     } )
+                  } ) ;
+               }
+            } ) ;
+         }, function( errorInfo ){
+            _IndexPublic.createRetryModel( $scope, errorInfo, function(){
+               $scope.getGroupList() ;
+               return true ;
+            } ) ;
+         }, function(){
+            _IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
+         } ) ;
+      }
+
+      var getGroupList = function(){
          $scope.queryList( {}, function( test ){
-            $scope.GridData = $.extend( true, {}, gridData ) ;
-            $.each( test, function( index, value ){
-               if( value['GroupType'] == 'coord' )
-               {
-                  $scope.coordInfo.push( value ) ;
-               }
-               else if( value['GroupType'] == 'catalog' )
-               {
-                  $scope.catalogInfo.push( value ) ;
-               }
-               else if( value['GroupType'] == 'data' )
-               {
-                  if( value['Status'] == 'Running' )
-                  {
-                     statusIcon = { 'html': $compile( '<i class="fa fa-circle" style="color:#00CC66;" data-desc="正常运行中"></i>' )( $scope ) }
-                  }
-                  else if( value['Status'] == 'Waiting' )
-                  {
-                     statusIcon = { 'html': $compile( '<i class="fa fa-circle" style="color:#F9A937;" data-desc="该分区组处于waiting状态"></i>' )( $scope ) }
-                  }
-                  $scope.GridData['body'].push( [
-                     statusIcon ,
-                     { 'html': $compile( '<a href="#/Monitor/SDB-Group/Index" class="linkButton">' + value['GroupName'] + '</a>' )( $scope ) },
-                     { 'text': value['NodeNumber'] },
-                     { 'html': $compile( '<a class="linkButton" href="#/Monitor/SDB-Node/Index">' + value['PrimaryNode'] +'</a>' )( $scope ) },
-                     { 'text': value['NumCollections'] },
-                     { 'text': value['TotalRecord'] }
-                  ] ) ;
-               }
-               $scope.groupList.push(
+            $scope.GroupList = test ;
+            $.each( $scope.GroupList, function( index, value ){
+               $scope.groupNameList.push(
                   { "key":value['GroupName'], "value": index }
                ) ;
                
@@ -99,12 +89,13 @@
                      { "key":value['GroupName'], "value": index }
                   ) ;
                }
-               
                $scope.dataNumber = index + 1 ;
             } ) ;
+            getClInfo() ;
          } ) ;
+         gridShowColumn() ;
       }
-      $scope.getGroupList()
+      getGroupList()
 
 
 
@@ -177,11 +168,11 @@
                   "type": "select",
                   "required": true,
                   "value": 1,
-                  "valid": $scope.groupList
+                  "valid": $scope.groupNameList
                }
             ]
-         };
-         $scope.Components.Modal.Context = '<div form-create para="data.form"></div>';
+         } ;
+         $scope.Components.Modal.Context = '<div form-create para="data.form"></div>' ;
          $scope.Components.Modal.ok = function(){
             $scope.Components.Confirm.isShow = true ;
             $scope.Components.Confirm.type = 1 ;
@@ -212,11 +203,11 @@
                   "valid": $scope.waitingGroupList
                }
             ]
-         };
-         $scope.Components.Modal.Context = '<div form-create para="data.form"></div>';
+         } ;
+         $scope.Components.Modal.Context = '<div form-create para="data.form"></div>' ;
          $scope.Components.Modal.ok = function(){
             return true ;
-         }
+         } ;
       }
 
       //停止分区组
@@ -236,12 +227,39 @@
                   "valid": $scope.runningGroupList
                }
             ]
-         };
+         } ;
          $scope.Components.Modal.Context = '<div form-create para="data.form"></div>';
          $scope.Components.Modal.ok = function(){
             return true ;
-         }
-      }
+         } ;
+      } ;
+
+      //跳转至部署
+      $scope.GotoDeploy = function(){
+         $location.path( '/Deploy/Index' ) ;
+      } ;
+
+      //跳转至监控主页
+      $scope.GotoModule = function(){
+         $location.path( '/Monitor/Index' ) ;
+      } ;
+
+      //跳转至分区组列表
+      $scope.GotoGroups = function(){
+         $location.path( '/Monitor/SDB-Overview/Index' ) ;
+      } ;
+
+      //跳转至分区组信息
+      $scope.GotoGroup = function(){
+         $location.path( '/Monitor/SDB-Group/Index' ) ;
+      } ;
+
+      //跳转至节点信息
+      $scope.GotoNode = function(){
+         $location.path( '/Monitor/SDB-Node/Index' ) ;
+      } ;
+
+
    } ) ;
 }());
 

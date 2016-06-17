@@ -1,8 +1,9 @@
 ﻿(function(){
    var sacApp = window.SdbSacManagerModule ;
    //控制器
-   sacApp.controllerProvider.register( 'Monitor.SdbOverview.Resource.Ctrl', function( $scope, $compile, SdbRest, SdbFunction ){
-
+   sacApp.controllerProvider.register( 'Monitor.SdbOverview.Resource.Ctrl', function( $scope, $compile, $location, SdbRest, SdbFunction ){
+      
+      //初始化
       var clusterName = SdbFunction.LocalData( 'SdbClusterName' ) ;
       var moduleType = SdbFunction.LocalData( 'SdbModuleType' ) ;
       var moduleName = SdbFunction.LocalData( 'SdbModuleName' ) ;
@@ -10,12 +11,10 @@
       $scope.clusterName = clusterName ;
       $scope.moduleName = moduleName ;
       $scope.moduleType =  moduleType ;
-
       $scope.SelectMenu = [] ;
-
       $scope.ResourceList = [] ;
       $scope.ResourceGridOptions = { 'titleWidth': [] } ;
-      $scope.ShowKeyList = [ 'SessionID', 'Status' ] ;
+      $scope.ShowKeyList = [ 'SessionID', 'Status', 'ContextID' ] ;
       $scope.ShowKey = [] ;
       $scope.SelectMenu = [] ;
       $scope.OrderByField = [] ;
@@ -178,10 +177,21 @@
 
       $scope.getResourceList = function(){
          $scope.queryList( {}, function( test ){
-            $scope.ResourceList = test ;
             var keyList = [] ;
-            $.each( $scope.ResourceList, function( index, value ){
-               keyList = SdbFunction.getJsonKeys( value, 0, keyList ) ;
+            var NewResourceList = {} ;
+            $.each( test, function( index, value ){
+               //解决当一个会话有多个上下文时，信息的错误
+               $.each( value['Contexts'], function( ContextsIndex, value2 ){
+                  NewResourceList['SessionID'] = value['SessionID'] ;
+                  NewResourceList['Status'] = value['Status'] ;
+                  value2['SessionID'] = value['SessionID'] ;
+                  value2['Status'] = value['Status'] ;
+                  $.each( value2, function( key, value3 ){
+                     NewResourceList[key] = value3 ; 
+                  } ) ;
+                  $scope.ResourceList.push( value2 ) ;
+                  keyList = SdbFunction.getJsonKeys( NewResourceList, 0, keyList ) ;
+               } ) ;
             } ) ;
             $scope.ShowKey = [] ;
             $scope.SelectMenu = [] ;
@@ -370,6 +380,19 @@
          fn: $scope.getResourceList
       } ;
 
-      
+      //跳转至部署
+      $scope.GotoDeploy = function(){
+         $location.path( '/Deploy/Index' ) ;
+      } ;
+
+      //跳转至监控主页
+      $scope.GotoModule = function(){
+         $location.path( '/Monitor/Index' ) ;
+      } ;
+
+      //跳转至分区组列表
+      $scope.GotoGroups = function(){
+         $location.path( '/Monitor/SDB-Overview/Index' ) ;
+      } ;
    } ) ;
 }());
