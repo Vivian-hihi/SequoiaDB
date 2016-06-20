@@ -501,13 +501,14 @@ namespace engine
 
       private:
          virtual INT32 _calculateProgress() ;
-         INT32 _checkNodeEnv( omaSsqlOlapNodeInfo& nodeInfo ) ;
-         INT32 _checkEnv() ;
-         INT32 _install() ;
-         INT32 _establishTrust() ;
-         INT32 _rollback( BOOLEAN isRestart ) ;
-         INT32 _checkHdfs() ;
-         INT32 _initCluster() ;
+         INT32    _checkNodeEnv( omaSsqlOlapNodeInfo& nodeInfo ) ;
+         INT32    _checkEnv() ;
+         INT32    _install() ;
+         BOOLEAN  _needToRollback() ;
+         INT32    _establishTrust() ;
+         INT32    _rollback( BOOLEAN isRestart ) ;
+         INT32    _checkHdfs() ;
+         INT32    _initCluster() ;
 
       private:
          BOOLEAN _removeIfFailed ;

@@ -7496,6 +7496,13 @@ namespace engine
          goto error ;
       }
 
+      if ( _needToRollback() )
+      {
+         rc = SDB_OMA_TASK_FAIL ;
+         PD_LOG ( PDERROR, "Error happen, going to rollback" ) ;
+         goto error ;
+      }
+
       rc = _establishTrust() ;
       if ( SDB_OK != rc )
       {
@@ -7784,6 +7791,23 @@ namespace engine
       return rc ;
    error:
       goto done ;
+   }
+
+   BOOLEAN _omaInstallSsqlOlapBusTask::_needToRollback()
+   {
+      vector<omaSsqlOlapNodeInfo>::iterator it ;
+
+      ossScopedLock lock( &_taskLatch, EXCLUSIVE ) ;
+
+      for( it = _nodeInfos.begin(); it != _nodeInfos.end() ; it++ )
+      {
+         if ( OMA_TASK_STATUS_ROLLBACK == it->status )
+         {
+            return TRUE ;
+         }
+      }
+
+      return FALSE ;
    }
 
    INT32 _omaInstallSsqlOlapBusTask::_establishTrust()
