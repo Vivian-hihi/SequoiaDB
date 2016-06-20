@@ -262,7 +262,8 @@ namespace engine
    }
 
    INT32 rtnCoordCommand::_buildFailedNodeReply( ROUTE_RC_MAP &failedNodes,
-                                                 rtnContextCoord *pContext )
+                                                 rtnContextCoord *pContext,
+                                                 BOOLEAN needMerge )
    {
       INT32 rc = SDB_OK ;
       SDB_ASSERT( pContext != NULL, "pContext can't be NULL!" ) ;
@@ -318,14 +319,24 @@ namespace engine
             }
          }
 
-         arrayBD.append( errObj ) ;
+         if ( !needMerge )
+         {
+            rc = pContext->append( errObj ) ;
+            PD_RC_CHECK( rc, PDERROR, "Failed to append obj, rc: %d", rc ) ;
+         }
+         else
+         {
+            arrayBD.append( errObj ) ;
+         }
          ++iter ;
       }
 
       arrayBD.done() ;
-      rc = pContext->append( builder.obj() ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to append obj, rc: %d", rc ) ;
-      rc = SDB_OK ;
+      if ( needMerge )
+      {
+         rc = pContext->append( builder.obj() ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to append obj, rc: %d", rc ) ;
+      }
 
    done:
       return rc ;
@@ -869,6 +880,7 @@ namespace engine
       INT64 contextID = -1 ;
       rtnContextCoord *pTmpContext = NULL ;
       BOOLEAN needReset = FALSE ;
+      BOOLEAN needMergeFailed = TRUE ;
 
       /// 1. extrace msg
       rc = queryOption.fromQueryMsg( (CHAR*)pMsg ) ;
@@ -1023,9 +1035,20 @@ namespace engine
          MsgOpQuery *pQueryMsg = ( MsgOpQuery* )pNewMsg ;
          pQueryMsg->numToReturn = queryOption._limit ;
          pQueryMsg->numToSkip = queryOption._skip ;
+
+         if ( OSS_BIT_TEST( pQueryMsg->flags, FLG_QUERY_INNER_FROMINNER ) )
+         {
+            needMergeFailed = FALSE ;
+            OSS_BIT_CLEAR( pQueryMsg->flags, FLG_QUERY_INNER_FROMINNER ) ;
+         }
       }
       else
       {
+         if ( OSS_BIT_TEST( queryOption._flag, FLG_QUERY_INNER_FROMINNER ) )
+         {
+            needMergeFailed = FALSE ;
+            OSS_BIT_CLEAR( queryOption._flag, FLG_QUERY_INNER_FROMINNER ) ;
+         }
          rc = queryOption.toQueryMsg( &pNewMsg, newMsgSize ) ;
          PD_RC_CHECK( rc, PDERROR, "Build new query message failed, rc: %d",
                       rc ) ;
@@ -1040,7 +1063,7 @@ namespace engine
       /// 9. build failed result
       if ( pTmpContext )
       {
-         rc = _buildFailedNodeReply( faileds, pTmpContext ) ;
+         rc = _buildFailedNodeReply( faileds, pTmpContext, needMergeFailed ) ;
          PD_RC_CHECK( rc, PDERROR, "Build failed node reply failed, rc: %d",
                       rc ) ;
       }

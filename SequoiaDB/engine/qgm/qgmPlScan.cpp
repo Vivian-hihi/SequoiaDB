@@ -175,10 +175,6 @@ namespace engine
       {
          goto error ;
       }
-      else
-      {
-         /// do nothing.
-      }
 
    done:
       PD_TRACE_EXITRC( SDB__QGMPLSCAN__EXEC, rc ) ;
@@ -265,7 +261,8 @@ namespace engine
       BSONObj selector = _selector.selector() ;
 
       rc = msgBuildQueryMsg ( &qMsg, &bufSize,
-                              _collection.toString().c_str(),0,
+                              _collection.toString().c_str(),
+                              FLG_QUERY_INNER_FROMINNER,
                               0, _skip, _return,
                               &_condition, &selector,
                               &_orderby, &_hint ) ;

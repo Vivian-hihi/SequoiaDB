@@ -55,7 +55,7 @@ namespace engine
       _condition = matcher.copy();
    }
 
-   PD_TRACE_DECLARE_FUNCTION( SDB__QGMPLMTHMATCHERSCAN__EXEC, "qgmPlMthMatcherScan::_execute" )
+   // PD_TRACE_DECLARE_FUNCTION( SDB__QGMPLMTHMATCHERSCAN__EXEC, "qgmPlMthMatcherScan::_execute" )
    INT32 qgmPlMthMatcherScan::_execute( _pmdEDUCB *eduCB )
    {
       PD_TRACE_ENTRY( SDB__QGMPLMTHMATCHERSCAN__EXEC ) ;
@@ -65,8 +65,16 @@ namespace engine
       _invalidPredicate = FALSE ;
       _contextID = -1 ;
 
-      rc = SDB_ROLE_COORD == _dbRole ?
-           _executeOnCoord( eduCB ) : _executeOnData( eduCB ) ;
+      if ( SDB_ROLE_COORD == _dbRole )
+      {
+         rc = _executeOnCoord( eduCB ) ;
+      }
+      /// not coord or rc is SDB_COORD_UNKNOWN_OP_REQ
+      if ( SDB_COORD_UNKNOWN_OP_REQ == rc ||
+           SDB_ROLE_COORD != _dbRole )
+      {
+         rc = _executeOnData( eduCB ) ;
+      }
 
       if ( SDB_RTN_INVALID_PREDICATES == rc )
       {
@@ -76,10 +84,6 @@ namespace engine
       else if ( SDB_OK != rc )
       {
          goto error ;
-      }
-      else
-      {
-         /// do nothing.
       }
 
    done:
