@@ -279,8 +279,8 @@
                      'list': []
                   }
                ]
-            },/*
-            {
+            },
+            /*{
                'text': $scope.autoLanguage( '监控' ),
                'module': 'Monitor',
                'icon': 'fa-flash',
@@ -295,11 +295,12 @@
                'text': $scope.autoLanguage( '部署' ),
                'module': 'Deploy',
                'icon': 'fa-share-alt',
-               'action': '/#/Deploy/Index'
+               'action': '/deployment/index.html'
             }
          ] ;
       } ;
       $rootScope.initNav() ;
+
       $rootScope.updateNav = function( updateDefault ){
          if( updateDefault && $rootScope.Url.Module == 'Deploy' )
          {
