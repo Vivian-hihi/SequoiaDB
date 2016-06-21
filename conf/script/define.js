@@ -32,6 +32,7 @@ if ( "LINUX" != SYS_TYPE && "WINDOWS" != SYS_TYPE )
 }
 
 // fields
+var Adapter                                = "Adapter" ;
 var AgentPort                              = "AgentService" ;
 var AgentService                           = "AgentService" ;
 var AuthUser                               = "AuthUser" ;
@@ -42,6 +43,7 @@ var CataAddr                               = "CataAddr" ;
 var CataSvcName                            = "CataSvcName" ;
 var CanPing                                = "Ping" ;
 var CanSsh                                 = "Ssh" ;
+var Config                                 = "Config" ;
 var Core                                   = "Core" ;
 var Context                                = "Context" ;
 var CPU                                    = "CPU" ;
@@ -112,6 +114,7 @@ var ServiceName                            = "ServiceName" ;
 var DbName                                 = "DbName" ;
 var DbUser                                 = "DbUser" ;
 var DbPasswd                               = "DbPasswd" ;
+var Desc                                   = "Desc" ;
 var Sql                                    = "Sql" ;
 var ResultFormat                           = "ResultFormat" ;
 var FormatPretty                           = "pretty" ;
@@ -213,6 +216,12 @@ var IsSingle                               = "is_single";
 // deploy mode
 var  OMA_DEPLOY_CLUSTER                    = "distribution" ;
 var  OMA_DEPLOY_STANDALONE                 = "standalone" ;
+
+var SYSTEM_OS_INFO                         = "System.getReleaseInfo()" ;
+var SYSTEM_CPU_INFO                        = "System.getCpuInfo()" ;
+var SYSTEM_MEM_INFO                        = "System.getMemInfo()" ;
+var SYSTEM_DISK_INFO                       = "System.getDiskInfo()" ;
+var SYSTEM_NET_INFO                        = "System.getNetcardInfo()" ;
 
 // file in linux
 var OMA_PATH_TEMP_OMA_DIR                  = "/tmp/omatmp/" ;

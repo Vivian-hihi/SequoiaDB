@@ -191,6 +191,66 @@ function exception_handle( exp, msg )
 }
 
 /* *****************************************************************************
+@discretion: trim the blanks at the head and tail of a string
+@author: Tanzhaobo
+@parameter
+   str[string]: the string to be trimmed
+@return
+   retStr[string]: the string after being trimmed
+***************************************************************************** */
+function strTrim ( str )
+{
+   return str.replace(/(^\s*)|(\s*$)/g, "") ;
+}
+
+/* *****************************************************************************
+@discretion: remove "\'" and "\"" in a string
+@author: Tanzhaobo
+@parameter
+   inputStr[string]: the string to be handle
+@return
+   outputStr[string]: the string after being handle
+***************************************************************************** */
+function removeQuotes( inputStr ) {
+   var len = inputStr.length ;
+   var outputStr = '' ;
+   for ( var i = 0; i < len; i++ ) {
+      var c = inputStr.charAt( i ) ;
+      if ( c != '\'' && c != '\"' ) {
+         outputStr += c ;
+      }
+   }
+   return outputStr ;
+} ;
+
+/* *****************************************************************************
+@discretion: remove the "\n" or "\n\r" in the string
+@author: Tanzhaobo
+@parameter
+   inputStr[string]: the string to be handle
+@return
+   outputStr[string]: the string after being handle
+***************************************************************************** */
+function removeBreak( inputStr ) {
+   var exp = null ;
+   if ( !isString( inputStr ) ) {
+      exp = new SdbError( SDB_INVALIDARG, 
+         "the input argument[" + inputStr + "] is not a string" ) ;
+      logger.log( PDERROR, err ) ;
+      throw err ;
+   }
+   var len = inputStr.length ;
+   var outputStr = '' ;
+   for ( var i = 0; i < len; i++ ) {
+      var c = inputStr.charAt( i ) ;
+      if ( c != '\n' && c != '\n\r' ) {
+         outputStr += c ;
+      }
+   }
+   return outputStr ;
+} ;
+
+/* *****************************************************************************
 @discretion: remove the "\n" or "\n\r" in the end of string
 @author: Tanzhaobo
 @parameter
