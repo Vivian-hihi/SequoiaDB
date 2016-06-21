@@ -42,52 +42,72 @@ using namespace bson;
 namespace engine
 {
 
-   INT32 aggrLimitParser::buildNode( const BSONElement &elem, const CHAR *pCLName,
-                              qgmOptiTreeNode *&pNode, _qgmPtrTable *pTable,
-                              _qgmParamTable *pParamTable )
+   /*
+      aggrLimitParser implement
+   */
+   INT32 aggrLimitParser::buildNode( const BSONElement &elem,
+                                     const CHAR *pCLName,
+                                     qgmOptiTreeNode *&pNode,
+                                     _qgmPtrTable *pTable,
+                                     _qgmParamTable *pParamTable )
    {
-      INT32 rc = SDB_OK;
-      qgmOptiSelect *pSelect = SDB_OSS_NEW qgmOptiSelect( pTable, pParamTable );
-      PD_CHECK( pSelect!=NULL, SDB_OOM, error, PDERROR,
-               "malloc failed!" );
+      INT32 rc = SDB_OK ;
+      qgmOptiSelect *pSelect = NULL ;
+
+      pSelect = SDB_OSS_NEW qgmOptiSelect( pTable, pParamTable ) ;
+      PD_CHECK( pSelect != NULL, SDB_OOM, error, PDERROR,
+               "Malloc failed!" ) ;
+
       PD_CHECK( elem.isNumber(), SDB_INVALIDARG, error, PDERROR,
-               "failed to parse the parameter(%s),type must be number!",
-               elem.fieldName() );
+                "Failed to parse the parameter(%s),type must be number!",
+                elem.toString( TRUE, TRUE ).c_str() ) ;
+
       try
       {
-         qgmOpField selectAll;
+         qgmOpField selectAll ;
          selectAll.type = SQL_GRAMMAR::WILDCARD;
-         pSelect->_selector.push_back( selectAll );
-         pSelect->_limit = elem.number();
-         pSelect->_skip = 0;
-         pSelect->_type = QGM_OPTI_TYPE_SELECT;
-         pSelect->_hasFunc = FALSE;
-         rc = pTable->getOwnField( AGGR_CL_DEFAULT_ALIAS, pSelect->_alias );
-         PD_RC_CHECK( rc, PDERROR, "failed to get the field(%s)", AGGR_CL_DEFAULT_ALIAS );
+         pSelect->_selector.push_back( selectAll ) ;
+         pSelect->_limit = elem.numberLong() ;
+         pSelect->_skip = 0 ;
+         pSelect->_type = QGM_OPTI_TYPE_SELECT ;
+         pSelect->_hasFunc = FALSE ;
+
+         rc = pTable->getOwnField( AGGR_CL_DEFAULT_ALIAS, pSelect->_alias ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to get the field[%s], rc: %d",
+                      AGGR_CL_DEFAULT_ALIAS, rc ) ;
+
          if ( pCLName != NULL )
          {
-            qgmField clValAttr;
-            qgmField clValRelegation;
-            rc = pTable->getOwnField( pCLName, clValAttr );
-            PD_RC_CHECK( rc, PDERROR, "failed to get the field(%s)", pCLName );
-            rc = pTable->getOwnField( AGGR_CL_DEFAULT_ALIAS, pSelect->_collection.alias );
-            PD_RC_CHECK( rc, PDERROR, "failed to get the field(%s)", AGGR_CL_DEFAULT_ALIAS );
-            pSelect->_collection.value = qgmDbAttr( clValRelegation, clValAttr );
-            pSelect->_collection.type = SQL_GRAMMAR::DBATTR;
+            qgmField clValAttr ;
+            qgmField clValRelegation ;
+            rc = pTable->getOwnField( pCLName, clValAttr ) ;
+            PD_RC_CHECK( rc, PDERROR, "Failed to get the field[%s], rc: %d",
+                         pCLName, rc ) ;
+            rc = pTable->getOwnField( AGGR_CL_DEFAULT_ALIAS,
+                                      pSelect->_collection.alias ) ;
+            PD_RC_CHECK( rc, PDERROR, "Failed to get the field[%s], rc: %d",
+                         AGGR_CL_DEFAULT_ALIAS, rc ) ;
+
+            pSelect->_collection.value = qgmDbAttr( clValRelegation,
+                                                    clValAttr ) ;
+            pSelect->_collection.type = SQL_GRAMMAR::DBATTR ;
          }
       }
       catch ( std::exception &e )
       {
          PD_CHECK( SDB_INVALIDARG, SDB_INVALIDARG, error, PDERROR,
-                  "failed to parse the \"limit\", received unexpected error:%s",
-                  e.what() );
+                   "Failed to parse the \"limit\", occur unexpection: %s",
+                   e.what() ) ;
       }
-      pNode = pSelect;
+
+      pNode = pSelect ;
+
    done:
-      return rc;
+      return rc ;
    error:
-      SAFE_OSS_DELETE( pSelect );
-      goto done;
+      SAFE_OSS_DELETE( pSelect ) ;
+      goto done ;
    }
 
 }
+

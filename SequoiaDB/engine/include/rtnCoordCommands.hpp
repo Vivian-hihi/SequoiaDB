@@ -237,8 +237,7 @@ namespace engine
                                 ROUTE_SET *pSucNodes = NULL ) ;
 
       INT32 _buildFailedNodeReply( ROUTE_RC_MAP &failedNodes,
-                                   rtnContextCoord *pContext,
-                                   BOOLEAN needMerge ) ;
+                                   rtnContextCoord *pContext ) ;
 
       INT32 _executeOnGroups ( MsgHeader *pMsg,
                                pmdEDUCB *cb,

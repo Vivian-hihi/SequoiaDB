@@ -37,67 +37,83 @@
 #include "qgmOptiMthMatchSelect.hpp"
 #include "aggrDef.hpp"
 
-using namespace bson;
+using namespace bson ;
+
 namespace engine
 {
-   INT32 aggrMatchParser::buildNode( const bson::BSONElement &elem,
-                                       const CHAR *pCLName,
-                                       qgmOptiTreeNode *&pNode,
-                                       _qgmPtrTable *pTable,
-                                       _qgmParamTable *pParamTable )
+   /*
+      aggrMatchParser implement
+   */
+   INT32 aggrMatchParser::buildNode( const BSONElement &elem,
+                                     const CHAR *pCLName,
+                                     qgmOptiTreeNode *&pNode,
+                                     _qgmPtrTable *pTable,
+                                     _qgmParamTable *pParamTable )
    {
-      INT32 rc = SDB_OK;
-      qgmOptiMthMatchSelect *pSelect
-                     = SDB_OSS_NEW qgmOptiMthMatchSelect( pTable,
-                                                         pParamTable );
+      INT32 rc = SDB_OK ;
+      qgmOptiMthMatchSelect *pSelect = NULL ;
+
+      pSelect = SDB_OSS_NEW qgmOptiMthMatchSelect( pTable,
+                                                   pParamTable ) ;
       PD_CHECK( pSelect != NULL, SDB_OOM, error, PDERROR,
-               "malloc failed!" );
+                "Malloc failed!" ) ;
+
       try
       {
-         BSONObj obj;
+         BSONObj obj ;
          PD_CHECK( elem.type() == Object, SDB_INVALIDARG, error, PDERROR,
-               "failed to parse the parameter:%s(type=%d, expectType=%d)",
-               elem.fieldName(), elem.type(), Object );
-         obj = elem.embeddedObject();
-         PD_CHECK( !obj.isEmpty(), SDB_INVALIDARG, error, PDERROR,
-                  "Parameter-object can't be empty!" );
+                   "Failed to parse the parameter[%s], should object",
+                   elem.toString( TRUE, TRUE ).c_str() ) ;
 
-         rc = pSelect->fromBson( obj );
-         PD_RC_CHECK( rc, PDERROR, "failed to build the node(rc=%d)", rc );
+         obj = elem.embeddedObject() ;
+
+         rc = pSelect->fromBson( obj ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to build the node, rc: %d", rc ) ;
       }
       catch ( std::exception &e )
       {
          PD_CHECK( SDB_INVALIDARG, SDB_INVALIDARG, error, PDERROR,
-                  "failed to parse the Parameter-object, received unexpected error:%s",
-                  e.what() );
+                   "Failed to parse the Parameter, occur unexpection: %s",
+                   e.what() ) ;
       }
+
       {
-         qgmOpField selectAll;
-         selectAll.type = SQL_GRAMMAR::WILDCARD;
-         pSelect->_selector.push_back( selectAll );
-         pSelect->_limit = -1;
-         pSelect->_skip = 0;
-         pSelect->_type = QGM_OPTI_TYPE_MTHMCHSEL;
-         pSelect->_hasFunc = FALSE;
-         rc = pTable->getOwnField( AGGR_CL_DEFAULT_ALIAS, pSelect->_alias );
-         PD_RC_CHECK( rc, PDERROR, "failed to get the field(%s)", AGGR_CL_DEFAULT_ALIAS );
+         qgmOpField selectAll ;
+         selectAll.type = SQL_GRAMMAR::WILDCARD ;
+         pSelect->_selector.push_back( selectAll ) ;
+         pSelect->_limit = -1 ;
+         pSelect->_skip = 0 ;
+         pSelect->_type = QGM_OPTI_TYPE_MTHMCHSEL ;
+         pSelect->_hasFunc = FALSE ;
+         rc = pTable->getOwnField( AGGR_CL_DEFAULT_ALIAS, pSelect->_alias ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to get the own field[%s], rc: %d",
+                      AGGR_CL_DEFAULT_ALIAS, rc ) ;
+
          if ( pCLName != NULL )
          {
-            qgmField clValAttr;
-            qgmField clValRelegation;
-            rc = pTable->getOwnField( pCLName, clValAttr );
-            PD_RC_CHECK( rc, PDERROR, "failed to get the field(%s)", pCLName );
-            rc = pTable->getOwnField( AGGR_CL_DEFAULT_ALIAS, pSelect->_collection.alias );
-            PD_RC_CHECK( rc, PDERROR, "failed to get the field(%s)", AGGR_CL_DEFAULT_ALIAS );
-            pSelect->_collection.value = qgmDbAttr( clValRelegation, clValAttr );
-            pSelect->_collection.type = SQL_GRAMMAR::DBATTR;
+            qgmField clValAttr ;
+            qgmField clValRelegation ;
+            rc = pTable->getOwnField( pCLName, clValAttr ) ;
+            PD_RC_CHECK( rc, PDERROR, "Failed to get the field[%s], rc: %d",
+                         pCLName, rc ) ;
+            rc = pTable->getOwnField( AGGR_CL_DEFAULT_ALIAS,
+                                      pSelect->_collection.alias ) ;
+            PD_RC_CHECK( rc, PDERROR, "Failed to get the field[%s], rc: %d",
+                         AGGR_CL_DEFAULT_ALIAS, rc ) ;
+
+            pSelect->_collection.value = qgmDbAttr( clValRelegation,
+                                                    clValAttr ) ;
+            pSelect->_collection.type = SQL_GRAMMAR::DBATTR ;
          }
       }
-      pNode = pSelect;
+
+      pNode = pSelect ;
    done:
-      return rc;
+      return rc ;
    error:
-      SAFE_OSS_DELETE( pSelect );
-      goto done;
+      SAFE_OSS_DELETE( pSelect ) ;
+      goto done ;
    }
+
 }
+

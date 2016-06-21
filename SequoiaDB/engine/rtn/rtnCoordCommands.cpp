@@ -262,8 +262,7 @@ namespace engine
    }
 
    INT32 rtnCoordCommand::_buildFailedNodeReply( ROUTE_RC_MAP &failedNodes,
-                                                 rtnContextCoord *pContext,
-                                                 BOOLEAN needMerge )
+                                                 rtnContextCoord *pContext )
    {
       INT32 rc = SDB_OK ;
       SDB_ASSERT( pContext != NULL, "pContext can't be NULL!" ) ;
@@ -274,11 +273,9 @@ namespace engine
       string strHostName ;
       string strServiceName ;
       string strNodeName ;
+      string strGroupName ;
       MsgRouteID routeID ;
       BSONObj errObj ;
-      BSONObjBuilder builder ;
-      BSONArrayBuilder arrayBD( builder.subarrayStart(
-                                FIELD_NAME_ERROR_NODES ) ) ;
 
       if ( 0 == failedNodes.size() )
       {
@@ -300,6 +297,8 @@ namespace engine
          }
          else
          {
+            strGroupName = groupInfo->groupName() ;
+
             routeID.columns.serviceID = MSG_ROUTE_LOCAL_SERVICE ;
             rc = groupInfo->getNodeInfo( routeID, strHostName,
                                          strServiceName ) ;
@@ -319,23 +318,25 @@ namespace engine
             }
          }
 
-         if ( !needMerge )
+         try
          {
+            errObj = BSON( FIELD_NAME_NODE_NAME << strNodeName <<
+                           FIELD_NAME_HOST << strHostName <<
+                           FIELD_NAME_SERVICE_NAME << strServiceName <<
+                           FIELD_NAME_GROUPNAME << strGroupName <<
+                           FIELD_NAME_NODEID << (INT32)routeID.columns.nodeID <<
+                           FIELD_NAME_GROUPID << routeID.columns.groupID <<
+                           FIELD_NAME_RCFLAG << iter->second ) ;
             rc = pContext->append( errObj ) ;
             PD_RC_CHECK( rc, PDERROR, "Failed to append obj, rc: %d", rc ) ;
          }
-         else
+         catch ( std::exception &e )
          {
-            arrayBD.append( errObj ) ;
+            PD_LOG( PDWARNING, "Build error object occur exception: %s",
+                    e.what() ) ;
+            /// then ignored this record
          }
          ++iter ;
-      }
-
-      arrayBD.done() ;
-      if ( needMerge )
-      {
-         rc = pContext->append( builder.obj() ) ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to append obj, rc: %d", rc ) ;
       }
 
    done:
@@ -880,7 +881,6 @@ namespace engine
       INT64 contextID = -1 ;
       rtnContextCoord *pTmpContext = NULL ;
       BOOLEAN needReset = FALSE ;
-      BOOLEAN needMergeFailed = TRUE ;
 
       /// 1. extrace msg
       rc = queryOption.fromQueryMsg( (CHAR*)pMsg ) ;
@@ -1035,20 +1035,9 @@ namespace engine
          MsgOpQuery *pQueryMsg = ( MsgOpQuery* )pNewMsg ;
          pQueryMsg->numToReturn = queryOption._limit ;
          pQueryMsg->numToSkip = queryOption._skip ;
-
-         if ( OSS_BIT_TEST( pQueryMsg->flags, FLG_QUERY_INNER_FROMINNER ) )
-         {
-            needMergeFailed = FALSE ;
-            OSS_BIT_CLEAR( pQueryMsg->flags, FLG_QUERY_INNER_FROMINNER ) ;
-         }
       }
       else
       {
-         if ( OSS_BIT_TEST( queryOption._flag, FLG_QUERY_INNER_FROMINNER ) )
-         {
-            needMergeFailed = FALSE ;
-            OSS_BIT_CLEAR( queryOption._flag, FLG_QUERY_INNER_FROMINNER ) ;
-         }
          rc = queryOption.toQueryMsg( &pNewMsg, newMsgSize ) ;
          PD_RC_CHECK( rc, PDERROR, "Build new query message failed, rc: %d",
                       rc ) ;
@@ -1063,7 +1052,7 @@ namespace engine
       /// 9. build failed result
       if ( pTmpContext )
       {
-         rc = _buildFailedNodeReply( faileds, pTmpContext, needMergeFailed ) ;
+         rc = _buildFailedNodeReply( faileds, pTmpContext ) ;
          PD_RC_CHECK( rc, PDERROR, "Build failed node reply failed, rc: %d",
                       rc ) ;
       }

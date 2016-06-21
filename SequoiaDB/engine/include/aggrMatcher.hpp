@@ -39,15 +39,23 @@
 
 #include "aggrParser.hpp"
 
+using namespace bson ;
+
 namespace engine
 {
+   /*
+      aggrMatchParser define
+   */
    class aggrMatchParser : public aggrParser
    {
    private:
-      INT32 buildNode( const bson::BSONElement &elem, const CHAR *pCLName,
-                     qgmOptiTreeNode *&pNode, _qgmPtrTable *pTable,
-                     _qgmParamTable *pParamTable );
-   };
+      INT32 buildNode( const BSONElement &elem,
+                       const CHAR *pCLName,
+                       qgmOptiTreeNode *&pNode,
+                       _qgmPtrTable *pTable,
+                       _qgmParamTable *pParamTable ) ;
+   } ;
+
 }
 
-#endif
+#endif // AGGRMATCHER_HPP__

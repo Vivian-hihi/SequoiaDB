@@ -52,11 +52,6 @@ using namespace std ;
 namespace engine
 {
 
-   /*
-      Inner Query Flag Define
-   */
-   #define FLG_QUERY_INNER_FROMINNER            0x01000000
-
    enum RTN_MSG_IN_PRIVATE_DATA_TYPE
    {
       PRIVATE_DATA_NULL             = 0,

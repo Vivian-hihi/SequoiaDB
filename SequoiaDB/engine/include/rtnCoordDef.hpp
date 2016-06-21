@@ -36,7 +36,37 @@
 #ifndef RTNCOORDDEF_HPP__
 #define RTNCOORDDEF_HPP__
 
-#define RTNCOORD_SNAPSHOTDB_INPUT      "{$group:{\
+#define RTNCOORD_SNAPSHOTDB_INPUT      "{$project:{\
+                                                TotalNumConnects:1,\
+                                                TotalDataRead:1,\
+                                                TotalIndexRead:1,\
+                                                TotalDataWrite:1,\
+                                                TotalIndexWrite:1,\
+                                                TotalUpdate:1,\
+                                                TotalDelete:1,\
+                                                TotalInsert:1,\
+                                                ReplUpdate:1,\
+                                                ReplDelete:1,\
+                                                ReplInsert:1,\
+                                                TotalSelect:1,\
+                                                TotalRead:1,\
+                                                TotalReadTime:1,\
+                                                TotalWriteTime:1,\
+                                                freeLogSpace:1,\
+                                                vsize:1,\
+                                                rss:1,\
+                                                fault:1,\
+                                                TotalMapped:1,\
+                                                svcNetIn:1,\
+                                                svcNetOut:1,\
+                                                shardNetIn:1,\
+                                                shardNetOut:1,\
+                                                replNetIn:1,\
+                                                replNetOut:1,\
+                                                ErrNodes:{NodeName:1,Flag:1}\
+                                                }\
+                                        }\n\
+                                        {$group:{\
                                                 TotalNumConnects:{$sum:\"$TotalNumConnects\"},\
                                                 TotalDataRead:{$sum:\"$TotalDataRead\"},\
                                                 TotalIndexRead:{$sum:\"$TotalIndexRead\"},\
@@ -67,7 +97,14 @@
                                                 }\
                                        }"
 
-#define RTNCOORD_SNAPSHOTSYS_INPUT     "{$group:{\
+#define RTNCOORD_SNAPSHOTSYS_INPUT     "{$project:{\
+                                                CPU:1,\
+                                                Memory:1,\
+                                                Disk:1,\
+                                                ErrNodes:{NodeName:1,Flag:1}\
+                                                }\
+                                        }\n\
+                                        {$group:{\
                                                 User:{$sum:\"$CPU.User\"},\
                                                 Sys:{$sum:\"$CPU.Sys\"},\
                                                 Idle:{$sum:\"$CPU.Idle\"},\
@@ -173,6 +210,4 @@
 #define RTNCOORD_SNAPSHOTCONTEXTSCUR_INPUT RTNCOORD_SNAPSHOTCONTEXTS_INPUT
 
 
-#define RTNCOORD_ALLO_UNIT_SIZE        4*1024
-
-#endif
+#endif // RTNCOORDDEF_HPP__

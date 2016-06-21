@@ -44,34 +44,44 @@
 #include "qgmOptiAggregation.hpp"
 #include "../bson/bsonobj.h"
 
+using namespace bson ;
+
 namespace engine
 {
+   /*
+      aggrGroupParser define
+   */
    class aggrGroupParser : public aggrParser
    {
    private:
-      INT32 buildNode( const bson::BSONElement &elem, const CHAR *pCLName,
-                     qgmOptiTreeNode *&pNode, _qgmPtrTable *pTable,
-                     _qgmParamTable *pParamTable );
-      INT32 parseSelectorField( const bson::BSONElement &beField,
-                              const CHAR *pCLName,
-                              qgmOPFieldVec &selectorVec,
-                              _qgmPtrTable *pTable,
-                              BOOLEAN &hasFunc );
+      INT32 buildNode( const BSONElement &elem,
+                       const CHAR *pCLName,
+                       qgmOptiTreeNode *&pNode,
+                       _qgmPtrTable *pTable,
+                       _qgmParamTable *pParamTable ) ;
+
+      INT32 parseSelectorField( const BSONElement &beField,
+                                const CHAR *pCLName,
+                                qgmOPFieldVec &selectorVec,
+                                _qgmPtrTable *pTable,
+                                BOOLEAN &hasFunc ) ;
+
       INT32 addGroupByField( const CHAR *pFieldName,
-                           qgmOPFieldVec &groupby,
-                           _qgmPtrTable *pTable,
-                           const CHAR *pCLName );
+                             qgmOPFieldVec &groupby,
+                             _qgmPtrTable *pTable,
+                             const CHAR *pCLName ) ;
 
-      INT32 parseGroupbyField( const bson::BSONElement &beId,
-                              qgmOPFieldVec &groupby,
-                              _qgmPtrTable *pTable,
-                              const CHAR *pCLName );
+      INT32 parseGroupbyField( const BSONElement &beId,
+                               qgmOPFieldVec &groupby,
+                               _qgmPtrTable *pTable,
+                               const CHAR *pCLName ) ;
 
-      INT32 parseInputFunc( const bson::BSONObj &funcObj,
-                           const CHAR *pCLName,
-                           qgmField &funcField,
-                           _qgmPtrTable *pTable );
-   };
+      INT32 parseInputFunc( const BSONObj &funcObj,
+                            const CHAR *pCLName,
+                            qgmField &funcField,
+                            _qgmPtrTable *pTable ) ;
+   } ;
+
 }
 
-#endif
+#endif // AGGRGROUP_HPP__

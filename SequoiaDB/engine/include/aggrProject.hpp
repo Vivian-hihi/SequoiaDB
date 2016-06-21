@@ -39,29 +39,35 @@
 
 #include "aggrParser.hpp"
 
+using namespace bson ;
+
 namespace engine
 {
+   /*
+      aggrProjectParser define
+   */
    class aggrProjectParser : public aggrParser
    {
    private:
-      INT32 buildNode( const bson::BSONElement &elem, const CHAR *pCLName,
-                     qgmOptiTreeNode *&pNode, _qgmPtrTable *pTable,
-                     _qgmParamTable *pParamTable );
-      INT32 parseSelectorField( const bson::BSONElement &beField,
-                              const CHAR *pCLName,
-                              qgmOPFieldVec &selectorVec,
-                              _qgmPtrTable *pTable,
-                              BOOLEAN &hasFunc );
+      INT32 buildNode( const BSONElement &elem, const CHAR *pCLName,
+                       qgmOptiTreeNode *&pNode, _qgmPtrTable *pTable,
+                       _qgmParamTable *pParamTable ) ;
+
+      INT32 parseSelectorField( const BSONElement &beField,
+                                const CHAR *pCLName,
+                                qgmOPFieldVec &selectorVec,
+                                _qgmPtrTable *pTable,
+                                BOOLEAN &hasFunc ) ;
+
       INT32 addField( const CHAR *pAlias, const CHAR *pPara,
-                     const CHAR *pCLName, qgmOPFieldVec &selectorVec,
-                     _qgmPtrTable *pTable );
-      INT32 addFunc( const CHAR *pAlias, const bson::BSONObj &funcObj,
-                     const CHAR *pCLName, qgmOPFieldVec &selectorVec,
-                     _qgmPtrTable *pTable );
-      INT32 addObj( const CHAR *pAlias, const bson::BSONObj &Obj,
-                     const CHAR *pCLName, qgmOPFieldVec &selectorVec,
-                     _qgmPtrTable *pTable );
-   };
+                      const CHAR *pCLName, qgmOPFieldVec &selectorVec,
+                      _qgmPtrTable *pTable ) ;
+
+      INT32 addObj( const CHAR *pAlias, const BSONObj &Obj,
+                    const CHAR *pCLName, qgmOPFieldVec &selectorVec,
+                    _qgmPtrTable *pTable ) ;
+   } ;
+
 }
 
-#endif
+#endif // AGGRPROJECT_HPP__

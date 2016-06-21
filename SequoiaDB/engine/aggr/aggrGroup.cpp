@@ -46,89 +46,99 @@ using namespace bson;
 namespace engine
 {
 
+   /*
+      aggrGroupParser implement
+   */
    INT32 aggrGroupParser::buildNode( const BSONElement &elem,
-                                       const CHAR *pCLName,
-                                       qgmOptiTreeNode *&pNode,
-                                       _qgmPtrTable *pTable,
-                                       _qgmParamTable *pParamTable )
+                                     const CHAR *pCLName,
+                                     qgmOptiTreeNode *&pNode,
+                                     _qgmPtrTable *pTable,
+                                     _qgmParamTable *pParamTable )
    {
-      INT32 rc = SDB_OK;
-      BOOLEAN hasFunc = FALSE;
-      BSONObj obj;
+      INT32 rc = SDB_OK ;
+      BOOLEAN hasFunc = FALSE ;
+      BSONObj obj ;
 
-      qgmOptiSelect *pSelect = SDB_OSS_NEW qgmOptiSelect( pTable, pParamTable );
+      qgmOptiSelect *pSelect = SDB_OSS_NEW qgmOptiSelect( pTable,
+                                                          pParamTable ) ;
       PD_CHECK( pSelect!=NULL, SDB_OOM, error, PDERROR,
-               "malloc failed" );
+                "Malloc failed" ) ;
 
       PD_CHECK( elem.type() == Object, SDB_INVALIDARG, error, PDERROR,
-               "failed to parse the parameter:%s(type=%d, expectType=%d)",
-               elem.fieldName(), elem.type(), Object );
+                "Failed to parse the element[%s], type shoud be Object",
+                elem.toString( TRUE, TRUE ).c_str() ) ;
 
       // 1.parse the fields
       try
       {
-         obj = elem.embeddedObject();
-         {
-            PD_CHECK( !obj.isEmpty(), SDB_INVALIDARG, error, PDERROR,
-                     "Parameter-object can't be empty!" );
-         }
-         BSONObjIterator iter( obj );
+         obj = elem.embeddedObject() ;
+
+         BSONObjIterator iter( obj ) ;
          while ( iter.more() )
          {
-            BSONElement beField = iter.next();
-            const CHAR *pFieldName = beField.fieldName();
+            BSONElement beField = iter.next() ;
+            const CHAR *pFieldName = beField.fieldName() ;
             if ( 0 == ossStrcmp( pFieldName, FIELD_NAME_GROUPBY_ID ))
             {
                // process groupby field(_id)
-               rc = parseGroupbyField( beField, pSelect->_groupby, pTable, pCLName );
+               rc = parseGroupbyField( beField, pSelect->_groupby,
+                                       pTable, pCLName ) ;
             }
             else
             {
                // process normal field(selector)
                rc = parseSelectorField( beField, pCLName, pSelect->_selector,
-                                       pTable, hasFunc );
+                                        pTable, hasFunc ) ;
             }
-            PD_RC_CHECK( rc, PDERROR, "failed to parse the field:%s", pFieldName );
+            PD_RC_CHECK( rc, PDERROR, "Failed to parse the element[%s], rc: %d",
+                         elem.toString( TRUE, TRUE ).c_str(), rc ) ;
          }
+
+         /// when selector is empty, need push (*) selector
          if ( pSelect->_selector.empty() )
          {
-            qgmOpField selectAll;
-            selectAll.type = SQL_GRAMMAR::WILDCARD;
-            pSelect->_selector.push_back( selectAll );
+            qgmOpField selectAll ;
+            selectAll.type = SQL_GRAMMAR::WILDCARD ;
+            pSelect->_selector.push_back( selectAll ) ;
          }
       }
       catch ( std::exception &e )
       {
          PD_CHECK( SDB_INVALIDARG, SDB_INVALIDARG, error, PDERROR,
-                  "failed to parse the Parameter-object, received unexpected error:%s",
-                  e.what() );
+                   "Failed to parse the element, occur unexption: %s",
+                   e.what() ) ;
       }
 
       // 2.build the node
-      pSelect->_limit = -1;
-      pSelect->_skip = 0;
-      pSelect->_type = QGM_OPTI_TYPE_SELECT;
-      pSelect->_hasFunc = hasFunc;
-      rc = pTable->getOwnField( AGGR_CL_DEFAULT_ALIAS, pSelect->_alias );
-      PD_RC_CHECK( rc, PDERROR, "failed to get the field(%s)", AGGR_CL_DEFAULT_ALIAS );
-      if ( pCLName != NULL )
+      pSelect->_limit = -1 ;
+      pSelect->_skip = 0 ;
+      pSelect->_type = QGM_OPTI_TYPE_SELECT ;
+      pSelect->_hasFunc = hasFunc ;
+      rc = pTable->getOwnField( AGGR_CL_DEFAULT_ALIAS, pSelect->_alias ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to get the own field, rc: %d", rc ) ;
+
+      if ( pCLName )
       {
-         qgmField clValAttr;
-         qgmField clValRelegation;
+         qgmField clValAttr ;
+         qgmField clValRelegation ;
          rc = pTable->getOwnField( pCLName, clValAttr );
-         PD_RC_CHECK( rc, PDERROR, "failed to get the field(%s)", pCLName );
-         rc = pTable->getOwnField( AGGR_CL_DEFAULT_ALIAS, pSelect->_collection.alias );
-         PD_RC_CHECK( rc, PDERROR, "failed to get the field(%s)", AGGR_CL_DEFAULT_ALIAS );
-         pSelect->_collection.value = qgmDbAttr( clValRelegation, clValAttr );
-         pSelect->_collection.type = SQL_GRAMMAR::DBATTR;
+         PD_RC_CHECK( rc, PDERROR, "Failed to get own field, rc: %d", rc ) ;
+
+         rc = pTable->getOwnField( AGGR_CL_DEFAULT_ALIAS,
+                                   pSelect->_collection.alias ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to get the own field, rc: %d", rc ) ;
+
+         pSelect->_collection.value = qgmDbAttr( clValRelegation, clValAttr ) ;
+         pSelect->_collection.type = SQL_GRAMMAR::DBATTR ;
       }
-      
-      pNode = pSelect;
+
+      pNode = pSelect ;
+
    done:
-      return rc;
+      return rc ;
    error:
-      SAFE_OSS_DELETE( pSelect );
-      goto done;
+      SAFE_OSS_DELETE( pSelect ) ;
+      goto done ;
    }
 
    INT32 aggrGroupParser::parseGroupbyField( const bson::BSONElement &beId,
@@ -136,109 +146,117 @@ namespace engine
                                              _qgmPtrTable *pTable,
                                              const CHAR *pCLName )
    {
-      INT32 rc = SDB_OK;
-      SDB_ASSERT( pTable != NULL , "_qgmPtrTable can't be NULL!") ;
+      INT32 rc = SDB_OK ;
+      SDB_ASSERT( pTable != NULL , "_qgmPtrTable can't be NULL!" ) ;
+
       if ( beId.isNull() )
       {
-         goto done;
+         goto done ;
       }
+
       try
       {
          switch ( beId.type() )
          {
             case String:
                {
-                  const CHAR *pFieldName = beId.valuestr();
-                  rc = addGroupByField( pFieldName, groupby, pTable, pCLName );
+                  const CHAR *pFieldName = beId.valuestr() ;
+                  rc = addGroupByField( pFieldName, groupby, pTable, pCLName ) ;
                   PD_RC_CHECK( rc, PDERROR,
-                              "failed to parse _id(rc=%d)", rc );
-                  break;
+                               "Failed to parse _id, rc: %d", rc ) ;
+                  break ;
                }
             case Object:
                {
-                  BSONObj idObj = beId.embeddedObject();
-                  BSONObjIterator iter( idObj );
+                  BSONObj idObj = beId.embeddedObject() ;
+                  BSONObjIterator iter( idObj ) ;
                   while( iter.more() )
                   {
-                     BSONElement beField = iter.next();
-                     PD_CHECK( beField.type()==String, SDB_INVALIDARG, error, PDERROR,
-                              "failed to parse _id, sub-field type must be string!" );
+                     BSONElement beField = iter.next() ;
+                     PD_CHECK( beField.type()==String, SDB_INVALIDARG,
+                               error, PDERROR,
+                               "Failed to parse _id, sub-field type must "
+                               "be string!" ) ;
                      const CHAR *pFieldName = beField.valuestr();
-                     rc = addGroupByField( pFieldName, groupby, pTable, pCLName );
+                     rc = addGroupByField( pFieldName, groupby,
+                                           pTable, pCLName ) ;
                      PD_RC_CHECK( rc, PDERROR,
-                              "failed to parse _id(rc=%d)", rc );
+                                  "Failed to parse _id, rc: %d", rc ) ;
                   }
                   break;
                }
             default:
                {
                   PD_RC_CHECK( SDB_INVALIDARG, PDERROR,
-                              "the type of _id is invalid(type=%d)",
-                              beId.type() );
+                               "The type of _id[%s] is invalid",
+                               beId.toString( TRUE, TRUE ).c_str() ) ;
+                  break ;
                }
          }
       }
       catch ( std::exception &e )
       {
          PD_CHECK( SDB_INVALIDARG, SDB_INVALIDARG, error, PDERROR,
-                  "failed to parse _id, received unexpected error:%s",
-                  e.what() );
+                   "Failed to parse _id, occur unexpection: %s",
+                   e.what() ) ;
       }
+
    done:
-      return rc;
+      return rc ;
    error:
-      goto done;
+      goto done ;
    }
 
    INT32 aggrGroupParser::addGroupByField( const CHAR *pFieldName,
-                                          qgmOPFieldVec &groupby,
-                                          _qgmPtrTable *pTable,
-                                          const CHAR *pCLName )
+                                           qgmOPFieldVec &groupby,
+                                           _qgmPtrTable *pTable,
+                                           const CHAR *pCLName )
    {
       INT32 rc = SDB_OK;
-      qgmField gbValAttr;
-      qgmField gbValRelegation;
+      qgmField gbValAttr ;
+      qgmField gbValRelegation ;
+
       rc = pTable->getOwnField( AGGR_CL_DEFAULT_ALIAS,
-                              gbValRelegation );
-      PD_RC_CHECK( rc, PDERROR, "failed to get the field(%s)",
-                  AGGR_CL_DEFAULT_ALIAS );
+                                gbValRelegation ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to get the own field[%s], rc: %d",
+                   AGGR_CL_DEFAULT_ALIAS, rc ) ;
 
       PD_CHECK( AGGR_KEYWORD_PREFIX == pFieldName[0], SDB_INVALIDARG,
-               error, PDERROR, "fieldname must begin with \"$\"!" );
-      rc = pTable->getOwnField( &(pFieldName[1]), gbValAttr );
+                error, PDERROR, "fieldname must begin with \"$\"!" ) ;
+
+      rc = pTable->getOwnField( &(pFieldName[1]), gbValAttr ) ;
       PD_RC_CHECK( rc, PDERROR,
-                  "failed to get the field(%s)",
-                  &(pFieldName[1]) );
+                   "Failed to get the own field[%s], rc: %d",
+                   &(pFieldName[1]), rc ) ;
+
       {
-         qgmDbAttr gbVal( gbValRelegation, gbValAttr );
-         qgmField gbAlias;
-         qgmOpField gbOpField;
-         gbOpField.value = gbVal;
-         gbOpField.alias = gbAlias;
-         gbOpField.type = SQL_GRAMMAR::ASC;
-         groupby.push_back( gbOpField );
+         qgmDbAttr gbVal( gbValRelegation, gbValAttr ) ;
+         qgmOpField gbOpField ;
+         gbOpField.value = gbVal ;
+         gbOpField.type = SQL_GRAMMAR::ASC ;
+         groupby.push_back( gbOpField ) ;
       }
+
    done:
-      return rc;
+      return rc ;
    error:
-      goto done;
+      goto done ;
    }
 
    INT32 aggrGroupParser::parseSelectorField( const BSONElement &beField,
-                                             const CHAR *pCLName,
-                                             qgmOPFieldVec &selectorVec,
-                                             _qgmPtrTable *pTable,
-                                             BOOLEAN &hasFunc )
+                                              const CHAR *pCLName,
+                                              qgmOPFieldVec &selectorVec,
+                                              _qgmPtrTable *pTable,
+                                              BOOLEAN &hasFunc )
    {
-      INT32 rc = SDB_OK;
-      CHAR *pFuncBuf = NULL;
+      INT32 rc = SDB_OK ;
 
       try
       {
          // format ex: {a:{$first:"$a"}} or {a:"$a"}
          qgmOpField selector;
          // parse field
-         const CHAR *pAlias = beField.fieldName();
+         const CHAR *pAlias = beField.fieldName() ;
          qgmField slAlias;
          rc = pTable->getOwnField( pAlias, slAlias ) ;
          PD_RC_CHECK( rc, PDERROR, "Get owned filed[%s] failed, rc: %d",
@@ -246,11 +264,12 @@ namespace engine
 
          if ( Object == beField.type() )
          {
-            BSONObj funcObj;
-            funcObj = beField.embeddedObject();
-            const CHAR *pFuncName = funcObj.firstElementFieldName();
-            PD_CHECK( AGGR_KEYWORD_PREFIX == pFuncName[0], SDB_INVALIDARG, error, PDERROR,
-                     "failed to parse selector field, function name must begin with \"$\"" );
+            BSONObj funcObj ;
+            funcObj = beField.embeddedObject() ;
+            const CHAR *pFuncName = funcObj.firstElementFieldName() ;
+            PD_CHECK( AGGR_KEYWORD_PREFIX == pFuncName[0], SDB_INVALIDARG,
+                      error, PDERROR, "Failed to parse selector field, "
+                      "function name must begin with \"$\"" ) ;
 
             hasFunc = TRUE;
 
@@ -258,13 +277,14 @@ namespace engine
             qgmField slValAttr;
             qgmField slValRelegation;
 
-            rc = parseInputFunc( funcObj, pCLName, slValAttr, pTable );
-            PD_RC_CHECK( rc, PDERROR, "failed to parse selector field(rc=%d)" );
+            rc = parseInputFunc( funcObj, pCLName, slValAttr, pTable ) ;
+            PD_RC_CHECK( rc, PDERROR, "Failed to parse selector field, rc: %d",
+                         rc ) ;
 
             qgmDbAttr slVal( slValRelegation, slValAttr );
             selector.alias = slAlias;
             selector.value = slVal;
-            selector.type = SQL_GRAMMAR::FUNC;
+            selector.type = SQL_GRAMMAR::FUNC ;
             selectorVec.push_back( selector ) ;
          }
          else if ( String == beField.type() &&
@@ -279,9 +299,10 @@ namespace engine
                          AGGR_CL_DEFAULT_ALIAS, rc ) ;
 
             selector.alias = slAlias;
-            rc = pTable->getOwnField( &beField.valuestr()[1], slValAttr );
-            PD_RC_CHECK( rc, PDERROR,"Failed to get the field(%s), rc: %d",
+            rc = pTable->getOwnField( &beField.valuestr()[1], slValAttr ) ;
+            PD_RC_CHECK( rc, PDERROR,"Failed to get the field[%s], rc: %d",
                          beField.valuestr(), rc ) ;
+
             qgmDbAttr slVal( slValRelegation, slValAttr ) ;
             selector.value = slVal ;
             selector.type = SQL_GRAMMAR::DBATTR ;
@@ -297,14 +318,14 @@ namespace engine
       catch ( std::exception &e )
       {
          PD_CHECK( SDB_INVALIDARG, SDB_INVALIDARG, error, PDERROR,
-                  "failed to parse selector field, received unexpected error:%s",
-                  e.what() );
+                   "Failed to parse selector field, occur unexpection: %s",
+                   e.what() ) ;
       }
+
    done:
-      SAFE_OSS_FREE( pFuncBuf );
-      return rc;
+      return rc ;
    error:
-      goto done;
+      goto done ;
    }
 
    INT32 aggrGroupParser::parseInputFunc( const BSONObj &funcObj,
@@ -312,104 +333,116 @@ namespace engine
                                           qgmField &funcField,
                                           _qgmPtrTable *pTable )
    {
-      INT32 rc = SDB_OK;
-      CHAR *pFuncBuf = NULL;
+      INT32 rc = SDB_OK ;
+      const CHAR *pFunc = NULL ;
+      stringstream ss ;
+      string strFunc ;
+
       try
       {
-         BSONElement beField = funcObj.firstElement();
-         const CHAR *pFunc = NULL;
-         const CHAR *pParam = NULL;
-         UINT32 nameLen;
-         UINT32 paramLen;
-         UINT32 curPos = 0;
-         const INT32 NUM_BUF_SIZE = 30;
-         CHAR szTmp[NUM_BUF_SIZE] = {0};
-         BOOLEAN isNumber = FALSE;
-         UINT32 funcSize = 0;
-         pFunc = beField.fieldName();
-         PD_CHECK( AGGR_KEYWORD_PREFIX == pFunc[0], SDB_INVALIDARG, error, PDERROR,
-                  "failed to parse function, function name must begin with \"$\"" );
+         BSONElement beField = funcObj.firstElement() ;
 
-         nameLen = ossStrlen(&(pFunc[1]));
-         
-         if ( pFunc[1] == 's' && pFunc[2] == 'u' && pFunc[3] == 'm'
-               && pFunc[4] == '\0' && beField.isNumber() )
+         pFunc = beField.fieldName();
+         PD_CHECK( AGGR_KEYWORD_PREFIX == pFunc[0], SDB_INVALIDARG,
+                   error, PDERROR, "Failed to parse function, "
+                   "function name must begin with \"$\"" ) ;
+
+         ss << &pFunc[1] ;
+         ss << '(' ;
+
+         /// sum or count allow number
+         if ( beField.isNumber() &&
+              ( ( pFunc[1] == 's' && pFunc[2] == 'u' &&
+                  pFunc[3] == 'm' && pFunc[4] == '\0' ) ||
+                ( pFunc[1] == 'c' && pFunc[2] == 'o' &&
+                  pFunc[3] == 'u' && pFunc[4] == 'n' &&
+                  pFunc[3] == 't' && pFunc[4] == '\0' )
+               ) )
          {
-            isNumber = TRUE;
+            ss << AGGR_CL_DEFAULT_ALIAS"." ;
+
             if ( beField.type() == NumberLong )
             {
-               INT64 numPara = beField.numberLong();
-               ossLltoa( numPara, szTmp, NUM_BUF_SIZE );
+               ss << beField.numberLong() ;
             }
             else
             {
-               INT32 numPara = beField.number();
-               ossItoa( numPara, szTmp, NUM_BUF_SIZE );
+               ss << beField.numberInt() ;
             }
          }
+         /// when has multi params, need use [ "$a", "$b" ... ]
+         else if ( Array == beField.type() )
+         {
+            UINT32 paramNum = 0 ;
+            BSONObj objParams = beField.embeddedObject() ;
+            BSONObjIterator itr( objParams ) ;
+            while( itr.more() )
+            {
+               BSONElement eParam = itr.next() ;
+               if ( String != eParam.type() )
+               {
+                  PD_LOG( PDERROR, "Function's param[%s] must be string",
+                          beField.toString( TRUE, TRUE ).c_str() ) ;
+                  rc = SDB_INVALIDARG ;
+                  goto error ;
+               }
+               else if ( AGGR_KEYWORD_PREFIX != *eParam.valuestr() )
+               {
+                  PD_LOG( PDERROR, "Function's param[%s] must begin with "
+                          "\"$\"", beField.toString( TRUE, TRUE ).c_str() ) ;
+                  rc = SDB_INVALIDARG ;
+                  goto error ;
+               }
+
+               if ( paramNum > 0 )
+               {
+                  ss << ',' ;
+               }
+               ss << AGGR_CL_DEFAULT_ALIAS"."
+                  << ( eParam.valuestr() + 1 ) ;
+               ++paramNum ;
+            }
+         }
+         else if ( String == beField.type() )
+         {
+            if ( AGGR_KEYWORD_PREFIX != *beField.valuestr() )
+            {
+               PD_LOG( PDERROR, "Function's param[%s] must begin with "
+                       "\"$\"", beField.toString( TRUE, TRUE ).c_str() ) ;
+               rc = SDB_INVALIDARG ;
+               goto error ;
+            }
+            ss << AGGR_CL_DEFAULT_ALIAS"."
+               << ( beField.valuestr() + 1 ) ;
+         }
          else
          {
-            PD_CHECK( beField.type()==String, SDB_INVALIDARG, error, PDERROR,
-                     "failed to parse function, field-type must be string!" );
-            pParam = beField.valuestr();
-            PD_CHECK( AGGR_KEYWORD_PREFIX == pParam[0] , SDB_INVALIDARG, error, PDERROR,
-                     "failed to parse function, parameter must begin with \"$\"" );
+            PD_LOG( PDERROR, "Function's param[%s] must be string",
+                    beField.toString( TRUE, TRUE ).c_str() ) ;
+            rc = SDB_INVALIDARG ;
+            goto error ;
          }
 
-         paramLen = ossStrlen(AGGR_CL_DEFAULT_ALIAS) + 1;
+         /// end function
+         ss << ')' ;
+         strFunc = ss.str() ;
 
-         if ( isNumber )
-         {
-            paramLen += ossStrlen( szTmp );
-         }
-         else
-         {
-            paramLen += ossStrlen( &(pParam[1]) );
-         }
-
-         // funcName + '(' + 'param' + ')' + '\0'
-         funcSize = nameLen + paramLen + 3;
-         pFuncBuf = ( CHAR * )SDB_OSS_MALLOC( funcSize );
-         PD_CHECK( pFuncBuf != NULL, SDB_OOM, error, PDERROR,
-                  "malloc failed(size=%d)", funcSize );
-
-         ossStrcpy( pFuncBuf, &(pFunc[1]) );
-         pFuncBuf[ nameLen ]='(';
-         curPos = nameLen + 1;
-
-         ossStrcpy( ( pFuncBuf + curPos), AGGR_CL_DEFAULT_ALIAS );
-         curPos += ossStrlen(AGGR_CL_DEFAULT_ALIAS);
-         pFuncBuf[ curPos ] = '.';
-         curPos += 1;
-
-         if ( isNumber )
-         {
-            ossStrcpy( ( pFuncBuf + curPos ), szTmp );
-            curPos += ossStrlen( szTmp );
-         }
-         else
-         {
-            ossStrcpy( ( pFuncBuf + curPos ), &(pParam[1]) );
-            curPos += ossStrlen(&(pParam[1]));
-         }
-         pFuncBuf[ curPos ] = ')';
-         curPos += 1;
-         pFuncBuf[ curPos ] = 0;
-         rc = pTable->getOwnField( pFuncBuf, funcField );
-         PD_RC_CHECK( rc, PDERROR,
-                     "failed to get the field(%s)",
-                     pFuncBuf );
+         rc = pTable->getOwnField( strFunc.c_str(), funcField );
+         PD_RC_CHECK( rc, PDERROR, "Failed to get the own field[%s], rc: %d",
+                      strFunc.c_str(), rc ) ;
       }
       catch ( std::exception &e )
       {
          PD_CHECK( SDB_INVALIDARG, SDB_INVALIDARG, error, PDERROR,
-                  "failed to parse function, received unexpected error:%s",
-                  e.what() );
+                   "Failed to parse function, occur unexpection: %s",
+                   e.what() ) ;
       }
+
    done:
-      SAFE_OSS_FREE( pFuncBuf );
-      return rc;
+      return rc ;
    error:
-      goto done;
+      goto done ;
    }
+
 }
+

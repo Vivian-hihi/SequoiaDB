@@ -43,29 +43,35 @@
 #include "qgmOptiAggregation.hpp"
 #include "../bson/bsonobj.h"
 
+using namespace bson ;
+
 namespace engine
 {
    class _qgmOptiTreeNode;
    class _qgmPtrTable;
    class _qgmParamTable;
+
+   /*
+      aggrParser define
+   */
    class aggrParser : public SDBObject
    {
    public:
       virtual ~aggrParser(){}
       // change to plan to parent node
-      virtual INT32 parse( const bson::BSONElement &elem,
+      virtual INT32 parse( const BSONElement &elem,
                            _qgmOptiTreeNode *&root,
                            _qgmPtrTable * pPtrTable,
                            _qgmParamTable *pParamTable,
                            const CHAR *pCollectionName );
 
    private:
-      virtual INT32 buildNode( const bson::BSONElement &elem,
-                              const CHAR *pCLName,
-                              qgmOptiTreeNode *&pNode,
-                              _qgmPtrTable *pTable,
-                              _qgmParamTable *pParamTable ) = 0;
+      virtual INT32 buildNode( const BSONElement &elem,
+                               const CHAR *pCLName,
+                               qgmOptiTreeNode *&pNode,
+                               _qgmPtrTable *pTable,
+                               _qgmParamTable *pParamTable ) = 0 ;
    };
 }
 
-#endif
+#endif // AGGRPARSER_HPP__

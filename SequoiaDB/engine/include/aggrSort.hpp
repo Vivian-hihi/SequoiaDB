@@ -39,20 +39,29 @@
 
 #include "aggrParser.hpp"
 
+using namespace bson ;
+
 namespace engine
 {
+   /*
+      aggrSortParser define
+   */
    class aggrSortParser : public aggrParser
    {
    private:
-      INT32 buildNode( const bson::BSONElement &elem, const CHAR *pCLName,
-                     qgmOptiTreeNode *&pNode, _qgmPtrTable *pTable,
-                     _qgmParamTable *pParamTable );
+      INT32 buildNode( const BSONElement &elem,
+                       const CHAR *pCLName,
+                       qgmOptiTreeNode *&pNode,
+                       _qgmPtrTable *pTable,
+                       _qgmParamTable *pParamTable ) ;
 
-      INT32 buildOrderBy( const bson::BSONElement &elem, qgmOPFieldVec &orderBy,
-                            _qgmPtrTable *pTable, const CHAR *pCLName );
-   };
+      INT32 buildOrderBy( const BSONElement &elem,
+                          qgmOPFieldVec &orderBy,
+                          _qgmPtrTable *pTable,
+                          const CHAR *pCLName ) ;
+   } ;
+
 }
 
-#endif
-
+#endif // AGGRSORT_HPP__
 

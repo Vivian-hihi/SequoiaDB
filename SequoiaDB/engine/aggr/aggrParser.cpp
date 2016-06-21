@@ -44,11 +44,14 @@ using namespace bson;
 
 namespace engine
 {
+   /*
+      aggrParser implement
+   */
    INT32 aggrParser::parse( const BSONElement &elem,
-                                 _qgmOptiTreeNode *&root,
-                                 _qgmPtrTable * pPtrTable,
-                                 _qgmParamTable *pParamTable,
-                                 const CHAR *pCollectionName )
+                            _qgmOptiTreeNode *&root,
+                            _qgmPtrTable * pPtrTable,
+                            _qgmParamTable *pParamTable,
+                            const CHAR *pCollectionName )
    {
       INT32 rc = SDB_OK;
       SDB_ASSERT( pPtrTable!=NULL, "pPtrTable can't be NULL!" );
@@ -57,22 +60,25 @@ namespace engine
                   "collectionname can't be NULL in leaf-node" );
       _qgmOptiTreeNode *pNode = NULL;
 
-      rc = buildNode( elem, pCollectionName, pNode, pPtrTable,
-                     pParamTable );
-      PD_RC_CHECK( rc, PDERROR, "failed to build the node(rc=%d)", rc );
+      rc = buildNode( elem, pCollectionName, pNode,
+                      pPtrTable, pParamTable ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to build the node, rc: %d", rc ) ;
+
       if ( root != NULL )
       {
-         rc = pNode->addChild( root );
-         PD_RC_CHECK( rc, PDERROR, "failed to add the child(rc=%d)", rc );
-         root->_father = pNode;
+         rc = pNode->addChild( root ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to add the child, rc: %d", rc ) ;
+         root->_father = pNode ;
       }
 
-      root = pNode;
+      root = pNode ;
+
    done:
-      return rc;
+      return rc ;
    error:
-      SAFE_OSS_DELETE( pNode );
-      goto done;
+      SAFE_OSS_DELETE( pNode ) ;
+      goto done ;
    }
 
 }
+

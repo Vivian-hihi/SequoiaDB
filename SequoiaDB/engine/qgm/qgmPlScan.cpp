@@ -262,8 +262,7 @@ namespace engine
 
       rc = msgBuildQueryMsg ( &qMsg, &bufSize,
                               _collection.toString().c_str(),
-                              FLG_QUERY_INNER_FROMINNER,
-                              0, _skip, _return,
+                              0, 0, _skip, _return,
                               &_condition, &selector,
                               &_orderby, &_hint ) ;
 
