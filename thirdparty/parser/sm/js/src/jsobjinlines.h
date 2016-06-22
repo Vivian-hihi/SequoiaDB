@@ -742,8 +742,6 @@ JSObject::init(JSContext *cx, js::Class *aclasp, JSObject *proto, JSObject *pare
     ClearValueRange(slots, capacity, useHoles);
 
     emptyShapes = NULL;
-
-    syncSpecialEquality() ;
 }
 
 inline void
