@@ -267,6 +267,10 @@ namespace engine
          // If session is not retreived
          if ( !bCreate )
          {
+            if ( MSG_BS_DISCONNECT == header->opCode )
+            {
+               _pSessionMgr->onNoneSessionDisconnect( sessionID ) ;
+            }
             // It's okay if we don't expect one
             goto done ;
          }

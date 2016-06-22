@@ -303,6 +303,11 @@ namespace engine
       }
    }
 
+   void _clsShardSessionMgr::onNoneSessionDisconnect( UINT64 sessionID )
+   {
+      _mapIdentifys.erase( sessionID ) ;
+   }
+
    void _clsShardSessionMgr::onSessionHandleClose( pmdAsyncSession *pSession )
    {
       /// when net handle closed, need to logout

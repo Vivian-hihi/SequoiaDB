@@ -301,6 +301,7 @@ namespace engine
             Session distory callback functions
          */
          virtual void   onSessionDisconnect( pmdAsyncSession *pSession ) {}
+         virtual void   onNoneSessionDisconnect( UINT64 sessionID ) {}
          virtual void   onSessionHandleClose( pmdAsyncSession *pSession ) {}
          virtual void   onSessionDestoryed( pmdAsyncSession *pSession ) {}
 

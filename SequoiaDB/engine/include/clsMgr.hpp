@@ -94,6 +94,7 @@ namespace engine
                                              const MsgHeader *header ) ;
 
          virtual void         onSessionDisconnect( pmdAsyncSession *pSession ) ;
+         virtual void         onNoneSessionDisconnect( UINT64 sessionID ) ;
          virtual void         onSessionHandleClose( pmdAsyncSession *pSession ) ;
          virtual void         onSessionDestoryed( pmdAsyncSession *pSession ) ;
 
