@@ -32,17 +32,17 @@
             }
             else
             {
-               window.location.href = '/' ;
+               window.location.href = '/deployment/index.html' ;
             }
          }
          else
          {
-            window.location.href = '/' ;
+            window.location.href = '/deployment/index.html' ;
          }
       }, function( errorInfo ){
-         window.location.href = '/' ;
+         window.location.href = '/login.html' ;
       }, function(){
-         window.location.href = '/' ;
+         window.location.href = '/login.html' ;
       } ) ;
    }
    //控制器
