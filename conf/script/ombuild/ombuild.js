@@ -986,9 +986,9 @@ ConfigMgr.prototype._getHostNameFromRGInfo =
 
 ConfigMgr.prototype._fouthlyCheck = 
    function ConfigMgr__fouthlyCheck() {
-   var errMsg    = null ;
-   var errMsgArr = [] ;
-   var exp       = null ;
+   var errMsg  = null ;
+   var hostArr = [] ;
+   var exp     = null ;
 
    logger.log( PDEVENT, "begin to fouthly check" ) ;
    // get the host from the return rg info
@@ -1003,16 +1003,23 @@ ConfigMgr.prototype._fouthlyCheck =
          }
       }
       if ( !isMatch ) {
-         errMsg = "should offer information about host[" + hostName + "]" ; 
-         errMsgArr.push( hostName ) ;
+         var hasContained = false ;      
+         for ( var m = 0; m < hostArr.length; m++ ) {
+            if ( hostName == hostArr[m] ) {
+               hasContained = true ;
+               break ;
+            }
+         }
+         if ( !hasContained ) {
+            hostArr.push( hostName ) ;
+         }
          if ( exp == null ) exp = new SdbError( SDB_INVALIDARG ) ;
-         logger.log( PDERROR, errMsg ) ;
          continue ;
       }
    }
    if ( exp != null ) {
-      errMsg = "should offer information abount the follow hosts[" + 
-         errMsgArr.toString() + "]" ;
+      errMsg = "should offer information about the follow hosts[" + 
+         hostArr.toString() + "], for some nodes exist in those hosts" ;
       exp = new SdbError( SDB_INVALIDARG, errMsg ) ;
       logger.log( PDERROR, exp ) ;
       throw exp ;
@@ -1670,7 +1677,8 @@ CheckHost.prototype._init = function CheckHost__init() {
       obj[User]           = host.rootUserName ;
       obj[Passwd]         = host.rootPassword ;
       obj[InstallPath]    = host.installPath ;
-      obj[SshPort]        = host.sshPort ;
+      // should return a string for SshPort
+      obj[SshPort]        = host.sshPort + "" ;
       this._resultArr.push( obj ) ;
    }
 } ;
