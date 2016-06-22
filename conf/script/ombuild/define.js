@@ -29,8 +29,6 @@ var FIELD_HOST_NAME                       = "host_name" ;
 var FIELD_DEFAULT_ROOT_USER               = "default_root_user" ;
 var FIELD_DEFAULT_ROOT_PASSWD             = "default_root_passwd" ;
 var FIELD_DEFAULT_SSH_PORT                = "default_ssh_port" ;
-//var FIELD_COORD_HOST_NAME                 = "coord_host_name" ;
-//var FIELD_COORD_PORT                      = "coord_port" ;
 var FIELD_MODULE_NAME                     = "module_name" ;
 var FIELD_MODULE_TYPE                     = "module_type" ;
 var FIELD_CLUSTER_NAME                    = "cluster_name" ;
@@ -38,12 +36,12 @@ var FIELD_CLUSTER_DESCRIPTION             = "cluster_description" ;
 var FIELD_SDB_ADMIN_USER_NAME             = "sdb_admin_user_name" ;
 var FIELD_SDB_ADMIN_PASSWORD              = "sdb_admin_password" ;
 var FIELD_SDB_USER_GROUP_NAME             = "sdb_user_group_name" ;
-//var FIELD_SDB_INSTALL_PATH                = "sdb_install_path" ;
 var FIELD_SDB_DEFAULT_INSTALL_PATH        = "sdb_default_install_path" ;
 var FIELD_DB_AUTH_USER                    = "db_auth_user" ;
 var FIELD_DB_AUTH_PASSWD                  = "db_auth_passwd" ;
 var FIELD_DB_CONFIG_OPTION                = "db_config_option" ;
 var FIELD_DB_CONFIG_SVC_SCHEDULER         = "svcscheduler" ;
+var FIELD_DB_INSTALL_PACKET               = "db_install_packet" ;
 
 var FIELD_ROOT_USER                       = "_root_user" ;
 var FIELD_ROOT_PASSWD                     = "_root_passwd" ;
@@ -89,7 +87,9 @@ var FIELD_CONF_SYNCSTRATEGY               = "syncstrategy" ;
 var FIELD_CONF_TRANSACTION                = "transactionon" ;
 var FIELD_CONF_WEIGHT                     = "weight" ;
 
-
+var ACTION_ALL                            = "all" ;
+var ACTION_BUILD_OM                       = "buildon" ;
+var ACTION_UPDATE_COORD                   = "updatecoord" ;
 
 function isIP( strIP ) {
    if ( strIP == undefined ) return false ;
@@ -110,7 +110,7 @@ var CoordInfo = function() {
 		               { "Type" : 1, "Name" : "" }, 
 		               { "Type" : 2, "Name" : "" } ] ;
 	this.NodeID   = null ;
-	this.Status   = 1 ;
+//	this.Status   = 1 ;
 
 	CoordInfo.prototype.toString = function() {
       return JSON.stringify( this ) ;
@@ -156,7 +156,6 @@ var ModuleInfo = function() {
 
 var HostInfo = function() {
    // host info
-   // TODO: merge "address" and "hostName"
    this.address             = null ;
    this.hostName            = null ;   
    this.ip                  = null ;
@@ -195,7 +194,6 @@ var CheckHostInfo = function() {
    this[User]         = "" ;
    this[Passwd]       = "" ;
    this[InstallPath]  = "" ;
-   // TODO: get it
    this[AgentService] = "" ;
    this[SshPort]      = "" ;
 } ;
