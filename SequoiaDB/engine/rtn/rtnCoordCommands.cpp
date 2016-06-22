@@ -276,7 +276,9 @@ namespace engine
       string strGroupName ;
       MsgRouteID routeID ;
       BSONObj errObj ;
-
+      BSONObjBuilder builder ;
+      BSONArrayBuilder arrayBD( builder.subarrayStart(
+                                FIELD_NAME_ERROR_NODES ) ) ;
       if ( 0 == failedNodes.size() )
       {
          goto done ;
@@ -327,8 +329,7 @@ namespace engine
                            FIELD_NAME_NODEID << (INT32)routeID.columns.nodeID <<
                            FIELD_NAME_GROUPID << routeID.columns.groupID <<
                            FIELD_NAME_RCFLAG << iter->second ) ;
-            rc = pContext->append( errObj ) ;
-            PD_RC_CHECK( rc, PDERROR, "Failed to append obj, rc: %d", rc ) ;
+            arrayBD.append( errObj ) ;
          }
          catch ( std::exception &e )
          {
@@ -338,6 +339,10 @@ namespace engine
          }
          ++iter ;
       }
+
+      arrayBD.done() ;
+      rc = pContext->append( builder.obj() ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to append obj, rc: %d", rc ) ;
 
    done:
       return rc ;
