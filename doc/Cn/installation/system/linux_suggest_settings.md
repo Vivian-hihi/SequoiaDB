@@ -77,18 +77,19 @@
 	<pre class="prettyprint lang-javascript">
 	> /sbin/sysctl -p</pre>
 
-	4.	停用transparent_hugepage，编辑/etc/rc.local，在第一行“#!/bin/sh”的下一行添加如下两行内容：
+-   关闭transparent_hugepage
+	1.	编辑/etc/rc.local，在第一行“#!/bin/sh”的下一行添加如下两行内容：
 
 	<pre class="prettyprint lang-diy">
 	echo never > /sys/kernel/mm/transparent_hugepage/enabled
 	echo never > /sys/kernel/mm/transparent_hugepage/defrag</pre>
 	
-	5.  执行如下命令，使配置生效：
+	2.  执行如下命令，使配置生效：
 	
     <pre class="prettyprint lang-javascript">
 	> source /etc/rc.local</pre>
 
-    6.	分别执行如下两条命令，输出结果中都有“[never]”则表示成功关闭了transparent_hugepage，如果是“never”并且有“[always]”或者“[madvise]”则关闭失败：
+    3.	检查是否成功关闭transparent_hugepage。分别执行如下两条命令，输出结果中都有“[never]”则表示成功关闭了transparent_hugepage，如果是“never”并且有“[always]”或者“[madvise]”则关闭失败：
 
 	<pre class="prettyprint lang-javascript">
 	> cat /sys/kernel/mm/transparent_hugepage/enabled
@@ -100,11 +101,11 @@
 
 -   关闭NUMA
     
-    关闭Linux系统的NUMA的方法主要有两种，一种是通过BIOS禁用NUMA；另一种是通过修改gurb的配置文件，CentOS、SUSE、Ubuntu的grub配置文件有差异，同一款Linux的不同版本配置也略有不同，此处会介绍CentOS6.4和Ubuntu12.04的配置方法以供参考，SUSE和CentOS修改方法类似。建议通过设置BIOS来禁用NUMA。
+    关闭Linux系统的NUMA的方法主要有两种，一种是通过BIOS禁用NUMA；另一种是通过修改gurb的配置文件，CentOS、SUSE、Ubuntu的grub配置文件有差异，同一款Linux的不同版本配置也略有不同，此处会介绍CentOS6.4和Ubuntu12.04的配置方法以供参考，SUSE和CentOS修改方法类似。建议通过设置BIOS来禁用NUMA。下面提供两种关闭NUMA的方案，采用其中一种即可，设置好关闭NUMA后，请执行第3条，以检验是否成功关闭NUMA。
 
-    1.  开机按快捷键进入BIOS设置界面，关闭NUMA，保存设置并重启。不同品牌的主板或服务器，具体操作略有差异，此处不作详细介绍。
+    1.  第一种关闭NUMA的方案（建议使用该方案）：开机按快捷键进入BIOS设置界面，关闭NUMA，保存设置并重启。不同品牌的主板或服务器，具体操作略有差异，此处不作详细介绍。
     
-    2.  修改grub的配置文件，关闭NUMA：
+    2.  第二种关闭NUMA的方案：修改grub的配置文件，关闭NUMA：
     
         1）  CentOS6.4的grub配置文件修改，以root权限编辑/etc/grub.conf，找到kernel行，该行类似如下（不同的版本内容略有差异，但开头有“kernel /vmlinuz-”）：
     
@@ -122,7 +123,7 @@
       
         3）  修改后保存，再重启系统。
 
-    3.   验证NUMA是否成功关闭，shell执行如下命令：
+    3.  采用上述两种方案中的一种验证NUMA是否成功关闭，shell执行如下命令：
     
     <pre class="prettyprint lang-javascript">
     > numastat</pre>
