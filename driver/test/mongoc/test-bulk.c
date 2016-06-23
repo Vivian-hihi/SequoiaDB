@@ -314,6 +314,7 @@ test_index_offset (void)
    }
    bson_init(&q);
    BSON_APPEND_UTF8(&q,"hello","there");
+   bson_append_int32(&q, "abcd", -1, 1234);
    ASSERT_CMPINT(check_records(collection, q, true), ==, 1);
    bson_destroy(&q);
 
