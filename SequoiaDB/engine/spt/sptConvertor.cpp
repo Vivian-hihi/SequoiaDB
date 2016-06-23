@@ -89,6 +89,7 @@ extern JSBool is_minkey( JSContext *, JSObject * ) ;
 extern JSBool is_maxkey( JSContext *, JSObject * ) ;
 extern JSBool is_numberlong( JSContext *, JSObject * ) ;
 extern JSBool is_sdbdate( JSContext *, JSObject * ) ;
+extern JSBool jsobj_is_sdbobj( JSContext *cx, JSObject *obj ) ;
 
 INT32 sptConvertor::toBson( JSObject *obj , bson **bs )
 {
@@ -1265,6 +1266,13 @@ INT32 sptConvertor::_appendToBson( const std::string &name,
                if ( SDB_SPT_NOT_SPECIAL_JSON == rc )
                {
                   bson *bsobj = NULL ;
+
+                  if ( jsobj_is_sdbobj( _cx, obj ) )
+                  {
+                     rc = SDB_INVALIDARG ;
+                     goto error ;
+                  }
+
                   rc = toBson( obj, &bsobj ) ;
                   if ( SDB_OK != rc )
                   {
