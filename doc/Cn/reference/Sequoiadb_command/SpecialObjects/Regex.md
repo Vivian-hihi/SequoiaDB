@@ -15,5 +15,5 @@
 -   使用正则匹配
 
 <pre class="prettyprint lang-javascript">
-> db.foo.bar.find({reg: { "key" : { "$regex" : "^W", "$options" : "i" } }});
+> db.foo.bar.find({reg: { "$regex" : "^W", "$options" : "i" }});
 > db.foo.bar.find({reg:Regex("^W", "i")})</pre>
