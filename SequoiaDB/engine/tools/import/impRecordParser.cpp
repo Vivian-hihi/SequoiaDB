@@ -30,9 +30,23 @@
 *******************************************************************************/
 #include "impRecordParser.hpp"
 #include "impCSVRecordParser.hpp"
-#include "jstobs.h"
+#include "jstobs2.h"
 #include "pd.hpp"
 #include <iostream>
+
+void _impRecordParseLog( const CHAR *pFunc,
+                         const CHAR *pFile,
+                         UINT32 line,
+                         const CHAR *pFmt,
+                         ... )
+{
+   va_list ap ;
+   CHAR buffer[ PD_LOG_STRINGMAX + 1 ] = { 0 } ;
+   va_start( ap, pFmt ) ;
+   vsnprintf( buffer, PD_LOG_STRINGMAX, pFmt, ap ) ;
+   va_end( ap ) ;
+   pdLog( PDERROR, pFunc, pFile, line, buffer ) ;
+}
 
 namespace import
 {
@@ -136,6 +150,7 @@ namespace import
    JSONRecordParser::JSONRecordParser()
    : RecordParser("", "", FALSE, FALSE)
    {
+      JsonSetPrintfLog( _impRecordParseLog ) ;
    }
 
    JSONRecordParser::~JSONRecordParser()
@@ -152,7 +167,8 @@ namespace import
 
       bson_init(&obj);
 
-      result = jsonToBson2(&obj, data, FALSE, TRUE);
+      //result = jsonToBson2(&obj, data, FALSE, TRUE);
+      result = json2bson2( data, &obj ) ;
       if (!result)
       {
          rc = SDB_INVALIDARG;

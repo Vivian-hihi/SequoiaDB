@@ -193,12 +193,15 @@ namespace import
       return rc;
    }
 
+   #define SCANNER_QUOTES_NONE   0
+   #define SCANNER_QUOTES        1
+   #define SCANNER_QUOTES_DOUBLE 2
    INT32 RecordScanner::_scanJSON(const CHAR* data, INT32 length, BOOLEAN final,
                                   INT32& recordLength)
    {
       INT32 len = length;
       CHAR* str = (CHAR*)data;
-      BOOLEAN inString = FALSE;
+      INT32 stringType = SCANNER_QUOTES_NONE ;
       BOOLEAN hasJson = FALSE;
       INT32 level = 0;
       INT32 rc = SDB_EOF;
@@ -211,20 +214,37 @@ namespace import
          switch (*str)
          {
          case '{':
-            if (!inString)
+            if( stringType == SCANNER_QUOTES_NONE )
             {
                level++;
                hasJson = TRUE;
             }
             break;
          case '}':
-            if (!inString)
+            if( stringType == SCANNER_QUOTES_NONE )
             {
                level--;
             }
             break;
+         case '\'':
+            if( stringType == SCANNER_QUOTES_NONE )
+            {
+               stringType = SCANNER_QUOTES ;
+            }
+            else if( stringType == SCANNER_QUOTES )
+            {
+               stringType = SCANNER_QUOTES_NONE ;
+            }
+            break ;
          case '\"':
-            inString = !inString;
+            if( stringType == SCANNER_QUOTES_NONE )
+            {
+               stringType = SCANNER_QUOTES_DOUBLE ;
+            }
+            else if( stringType == SCANNER_QUOTES_DOUBLE )
+            {
+               stringType = SCANNER_QUOTES_NONE ;
+            }
             break;
          case '\\':
             // escape char, so skip one more char
