@@ -35,7 +35,7 @@ LOB 记录的存储格式：
 <pre class="prettyprint lang-javascript">
 >db.foo.bar.getLob('5435e7b69487faa663000897','/opt/newlob')</pre>
 
-在 Sdb Shell 中将集合 foo.bar 中的 OID 为 5435e7b69487faa663000897 的LOB
-记录删除：
+在 Sdb Shell 中将集合 foo.bar 中的 OID 为 5435e7b69487faa663000897 的LOB 记录删除：
+
 <pre class="prettyprint lang-javascript">
 >db.foo.bar.deleteLob('5435e7b69487faa663000897')</pre>
