@@ -53,6 +53,8 @@
 #include "barBkupLogger.hpp"
 #include "rtnCommand.hpp"
 #include "msgMessage.hpp"
+#include "rtn.hpp"
+#include "barBkupLogger.hpp"
 
 #include "pdTrace.hpp"
 #include "monTrace.hpp"
@@ -2726,6 +2728,7 @@ namespace engine
                sub.append ( FIELD_NAME_COMPRESSIONTYPE, "" ) ;
             }
             sub.appendBool( FIELD_NAME_DICT_CREATED, detail._dictCreated ) ;
+            sub.append( FIELD_NAME_DICT_VERSION, detail._dictVersion ) ;
             sub.append ( FIELD_NAME_PAGE_SIZE, detail._pageSize ) ;
             sub.append ( FIELD_NAME_LOB_PAGE_SIZE, detail._lobPageSize ) ;
 
@@ -2744,6 +2747,8 @@ namespace engine
                          (long long)(detail._totalDataFreeSpace )) ;
             sub.append ( FIELD_NAME_TOTAL_INDEX_FREESPACE,
                          (long long)(detail._totalIndexFreeSpace )) ;
+            sub.append ( FIELD_NAME_CURR_COMPRESS_RATIO,
+                         detail._currCompressRatio / 100.0 ) ;
             sub.done() ;
          }
          ba.done() ;
@@ -2982,6 +2987,886 @@ namespace engine
                   e.what() ) ;
          rc = SDB_SYS ;
          goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   /*
+      _monDataBaseFetch implement
+   */
+   _monDataBaseFetch::_monDataBaseFetch()
+   {
+      _addInfoMask   = 0 ;
+      _hitEnd        = TRUE ;
+   }
+
+   _monDataBaseFetch::~_monDataBaseFetch()
+   {
+   }
+
+   INT32 _monDataBaseFetch::init( pmdEDUCB *cb,
+                                  UINT32 addInfoMask )
+   {
+      _addInfoMask = addInfoMask ;
+      _hitEnd = FALSE ;
+
+      return SDB_OK ;
+   }
+
+   const CHAR* _monDataBaseFetch::getName() const
+   {
+      return CMD_NAME_SNAPSHOT_DATABASE ;
+   }
+
+   BOOLEAN _monDataBaseFetch::isHitEnd() const
+   {
+      return _hitEnd ;
+   }
+
+   INT32 _monDataBaseFetch::fetch( BSONObj &obj )
+   {
+      INT32 rc = SDB_OK ;
+
+      pmdKRCB *krcb     = pmdGetKRCB() ;
+      monDBCB *mondbcb  = krcb->getMonDBCB () ;
+      pmdEDUMgr *mgr    = krcb->getEDUMgr() ;
+      SDB_RTNCB *rtnCB  = krcb->getRTNCB() ;
+      SDB_ASSERT ( mgr, "EDU Mgr can't be NULL" ) ;
+
+      ossTime userTime, sysTime ;
+      INT64 diskTotalBytes    = 0 ;
+      INT64 diskFreeBytes     = 0 ;
+      const CHAR *dbPath = pmdGetOptionCB()->getDbPath() ;
+
+      if ( _hitEnd )
+      {
+         rc = SDB_DMS_EOC ;
+         goto error ;
+      }
+
+      ossGetCPUUsage( userTime, sysTime ) ;
+      ossGetDiskInfo ( dbPath, diskTotalBytes, diskFreeBytes ) ;
+
+      try
+      {
+         BSONObjBuilder ob( 1024 ) ;
+
+         /// add system info
+         monAppendSystemInfo ( ob, _addInfoMask ) ;
+         /// add version
+         monAppendVersion ( ob ) ;
+
+         ossTickConversionFactor factor ;
+         ob.append ( FIELD_NAME_CURRENTACTIVESESSIONS,
+                     (SINT32)mgr->sizeRun() ) ;
+         ob.append ( FIELD_NAME_CURRENTIDLESESSIONS,
+                     (SINT32)mgr->sizeIdle () ) ;
+         ob.append ( FIELD_NAME_CURRENTSYSTEMSESSIONS,
+                     (SINT32)mgr->sizeSystem() ) ;
+         ob.append ( FIELD_NAME_CURRENTCONTEXTS, (SINT32)rtnCB->contextNum() ) ;
+         ob.append ( FIELD_NAME_RECEIVECOUNT,
+                     (SINT32)mondbcb->getReceiveNum() ) ;
+         ob.append ( FIELD_NAME_ROLE, krcb->getOptionCB()->dbroleStr() ) ;
+
+         {
+            BSONObjBuilder diskOb( ob.subobjStart( FIELD_NAME_DISK ) ) ;
+            INT32 loadPercent = 0 ;
+            if ( diskTotalBytes != 0 )
+            {
+               loadPercent = 100 * ( diskTotalBytes - diskFreeBytes ) /
+                             diskTotalBytes ;
+               loadPercent = loadPercent > 100 ? 100 : loadPercent ;
+               loadPercent = loadPercent < 0 ? 0 : loadPercent ;
+            }
+            else
+            {
+               loadPercent = 0 ;
+            }
+            diskOb.append ( FIELD_NAME_DATABASEPATH, dbPath ) ;
+            diskOb.append ( FIELD_NAME_LOADPERCENT, loadPercent ) ;
+            diskOb.append ( FIELD_NAME_TOTALSPACE, diskTotalBytes ) ;
+            diskOb.append ( FIELD_NAME_FREESPACE, diskFreeBytes ) ;
+            diskOb.done() ;
+         }
+
+         monDBDump ( ob, mondbcb, factor, userTime, sysTime ) ;
+         monDBDumpLogInfo( ob ) ;
+         monDBDumpProcMemInfo( ob ) ;
+         monDBDumpStorageInfo( ob ) ;
+         monDBDumpNetInfo( ob ) ;
+
+         obj = ob.obj () ;
+      }
+      catch ( std::exception &e )
+      {
+         PD_LOG ( PDERROR, "Failed to create BSON objects for db snap: %s",
+                  e.what() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      _hitEnd = TRUE ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   /*
+      _monSystemFetch implement
+   */
+   _monSystemFetch::_monSystemFetch()
+   {
+      _addInfoMask   = 0 ;
+      _hitEnd        = TRUE ;
+   }
+
+   _monSystemFetch::~_monSystemFetch()
+   {
+   }
+
+   INT32 _monSystemFetch::init( pmdEDUCB *cb,
+                                UINT32 addInfoMask )
+   {
+      _addInfoMask = addInfoMask ;
+      _hitEnd = FALSE ;
+
+      return SDB_OK ;
+   }
+
+   const CHAR* _monSystemFetch::getName() const
+   {
+      return CMD_NAME_SNAPSHOT_SYSTEM ;
+   }
+
+   BOOLEAN _monSystemFetch::isHitEnd() const
+   {
+      return _hitEnd ;
+   }
+
+   INT32 _monSystemFetch::fetch( BSONObj &obj )
+   {
+      INT32 rc = SDB_OK ;
+
+      // cpu
+      INT64 cpuUser        = 0 ;
+      INT64 cpuSys         = 0 ;
+      INT64 cpuIdle        = 0 ;
+      INT64 cpuOther       = 0 ;
+      // memory
+      INT32 memLoadPercent = 0 ;
+      INT64 memTotalPhys   = 0 ;
+      INT64 memAvailPhys   = 0 ;
+      INT64 memTotalPF     = 0 ;
+      INT64 memAvailPF     = 0 ;
+      INT64 memTotalVirtual= 0 ;
+      INT64 memAvailVirtual= 0 ;
+      // disk
+      INT64 diskTotalBytes = 0 ;
+      INT64 diskFreeBytes  = 0 ;
+      const CHAR *dbPath   = pmdGetOptionCB()->getDbPath () ;
+
+      if ( _hitEnd )
+      {
+         rc = SDB_DMS_EOC ;
+         goto error ;
+      }
+
+      // cpu
+      rc = ossGetCPUInfo ( cpuUser, cpuSys, cpuIdle, cpuOther ) ;
+       if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to get cpu info, rc = %d", rc ) ;
+         goto error ;
+      }
+      // memory
+      rc = ossGetMemoryInfo ( memLoadPercent,
+                              memTotalPhys, memAvailPhys,
+                              memTotalPF, memAvailPF,
+                              memTotalVirtual, memAvailVirtual ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to get memory info, rc = %d", rc ) ;
+         goto error ;
+      }
+
+      // disk
+      rc = ossGetDiskInfo ( dbPath, diskTotalBytes, diskFreeBytes ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to get disk info, rc = %d", rc ) ;
+         goto error ;
+      }
+
+      // generate BSON return obj
+      try
+      {
+         BSONObjBuilder ob( 1024 ) ;
+
+         /// add system info
+         monAppendSystemInfo ( ob, _addInfoMask ) ;
+         // cpu
+         {
+            BSONObjBuilder cpuOb( ob.subobjStart( FIELD_NAME_CPU ) ) ;
+            cpuOb.append ( FIELD_NAME_USER, ((FLOAT64)cpuUser)/1000 ) ;
+            cpuOb.append ( FIELD_NAME_SYS, ((FLOAT64)cpuSys)/1000 ) ;
+            cpuOb.append ( FIELD_NAME_IDLE, ((FLOAT64)cpuIdle)/1000 ) ;
+            cpuOb.append ( FIELD_NAME_OTHER, ((FLOAT64)cpuOther)/1000 ) ;
+            cpuOb.done() ;
+         }
+         // memory
+         {
+            BSONObjBuilder memOb( ob.subobjStart( FIELD_NAME_MEMORY ) ) ;
+            memOb.append ( FIELD_NAME_LOADPERCENT, memLoadPercent ) ;
+            memOb.append ( FIELD_NAME_TOTALRAM, memTotalPhys ) ;
+            memOb.append ( FIELD_NAME_FREERAM, memAvailPhys ) ;
+            memOb.append ( FIELD_NAME_TOTALSWAP, memTotalPF ) ;
+            memOb.append ( FIELD_NAME_FREESWAP, memAvailPF ) ;
+            memOb.append ( FIELD_NAME_TOTALVIRTUAL, memTotalVirtual ) ;
+            memOb.append ( FIELD_NAME_FREEVIRTUAL, memAvailVirtual ) ;
+            memOb.done() ;
+         }
+         // disk
+         {
+            BSONObjBuilder diskOb( ob.subobjStart( FIELD_NAME_DISK ) ) ;
+            INT32 loadPercent = 0 ;
+            if ( diskTotalBytes != 0 )
+            {
+               loadPercent = 100 * ( diskTotalBytes - diskFreeBytes ) /
+                             diskTotalBytes ;
+               loadPercent = loadPercent > 100 ? 100 : loadPercent ;
+               loadPercent = loadPercent < 0 ? 0 : loadPercent ;
+            }
+            else
+            {
+               loadPercent = 0 ;
+            }
+            diskOb.append ( FIELD_NAME_DATABASEPATH, dbPath ) ;
+            diskOb.append ( FIELD_NAME_LOADPERCENT, loadPercent ) ;
+            diskOb.append ( FIELD_NAME_TOTALSPACE, diskTotalBytes ) ;
+            diskOb.append ( FIELD_NAME_FREESPACE, diskFreeBytes ) ;
+            diskOb.done() ;
+         }
+         obj = ob.obj() ;
+      }
+      catch ( std::exception &e )
+      {
+         PD_LOG ( PDERROR, "Failed to generate system snapshot: %s",
+                  e.what() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      _hitEnd = TRUE ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   /*
+      _monStorageUnitFetch implement
+   */
+   _monStorageUnitFetch::_monStorageUnitFetch()
+   {
+      _includeSys    = FALSE ;
+      _addInfoMask   = 0 ;
+      _hitEnd        = TRUE ;
+   }
+
+   _monStorageUnitFetch::~_monStorageUnitFetch()
+   {
+   }
+
+   INT32 _monStorageUnitFetch::init( pmdEDUCB *cb,
+                                     UINT32 addInfoMask,
+                                     BOOLEAN includeSys )
+   {
+      SDB_DMSCB *dmsCB = pmdGetKRCB()->getDMSCB() ;
+      SDB_ASSERT( dmsCB, "DMSCB can't be NULL" ) ;
+
+      _addInfoMask = addInfoMask ;
+      _includeSys = includeSys ;
+
+      dmsCB->dumpInfo( _suInfo, _includeSys ) ;
+      _hitEnd = _suInfo.empty() ? TRUE : FALSE ;
+
+      return SDB_OK ;
+   }
+
+   const CHAR* _monStorageUnitFetch::getName() const
+   {
+      return CMD_NAME_LIST_STORAGEUNITS ;
+   }
+
+   BOOLEAN _monStorageUnitFetch::isHitEnd() const
+   {
+      return _hitEnd ;
+   }
+
+   INT32 _monStorageUnitFetch::fetch( BSONObj &obj )
+   {
+      INT32 rc = SDB_OK ;
+
+      if ( _hitEnd )
+      {
+         rc = SDB_DMS_EOC ;
+         goto error ;
+      }
+
+      rc = _fetchNext( obj ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _monStorageUnitFetch::_fetchNext( BSONObj &obj )
+   {
+      INT32 rc = SDB_OK ;
+
+      if ( _suInfo.size() == 0 )
+      {
+         _hitEnd = TRUE ;
+         rc = SDB_DMS_EOC ;
+         goto error ;
+      }
+
+      try
+      {
+         BSONObjBuilder ob( 512 ) ;
+         std::set< monStorageUnit >::iterator it ;
+
+         it = _suInfo.begin() ;
+         const monStorageUnit &su = *it ;
+
+         /// add system info
+         monAppendSystemInfo( ob, _addInfoMask ) ;
+
+         /// add name & space name
+         ob.append ( FIELD_NAME_NAME, su._name ) ;
+         ob.append ( FIELD_NAME_ID, su._CSID ) ;
+         ob.append ( FIELD_NAME_LOGICAL_ID, su._logicalCSID ) ;
+         ob.append ( FIELD_NAME_PAGE_SIZE, su._pageSize ) ;
+         ob.append ( FIELD_NAME_LOB_PAGE_SIZE, su._lobPageSize ) ;
+         ob.append ( FIELD_NAME_SEQUENCE, su._sequence ) ;
+         ob.append ( FIELD_NAME_NUMCOLLECTIONS, su._numCollections ) ;
+         ob.append ( FIELD_NAME_COLLECTIONHWM, su._collectionHWM ) ;
+         ob.append ( FIELD_NAME_SIZE, su._size ) ;
+
+         obj = ob.obj() ;
+
+         /// remove the current
+         _suInfo.erase( it ) ;
+         if ( _suInfo.empty() )
+         {
+            _hitEnd = TRUE ;
+         }
+      }
+      catch ( std::exception &e )
+      {
+         PD_LOG ( PDERROR, "Failed to create BSON objects for "
+                  "storageunits: %s",
+                  e.what() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   /*
+      _monIndexFetch implement
+   */
+   _monIndexFetch::_monIndexFetch()
+   {
+      _addInfoMask   = 0 ;
+      _hitEnd        = TRUE ;
+      _pos           = 0 ;
+   }
+
+   _monIndexFetch::~_monIndexFetch()
+   {
+   }
+
+   INT32 _monIndexFetch::init( pmdEDUCB *cb,
+                               const CHAR *pCollectionName,
+                               UINT32 addInfoMask )
+   {
+      INT32 rc = SDB_OK ;
+      SDB_DMSCB *dmsCB = pmdGetKRCB()->getDMSCB() ;
+      SDB_ASSERT( dmsCB, "DMSCB can't be NULL" ) ;
+      dmsStorageUnit *su = NULL ;
+      dmsStorageUnitID suID = DMS_INVALID_CS ;
+      const CHAR *pCollectionShortName = NULL ;
+
+      _addInfoMask = addInfoMask ;
+
+      rc = rtnResolveCollectionNameAndLock ( pCollectionName, dmsCB, &su,
+                                             &pCollectionShortName, suID ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to resolve collection name %s, rc: %d",
+                  pCollectionName, rc ) ;
+         goto error ;
+      }
+      rc = su->getIndexes ( pCollectionShortName, _indexInfo ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to get indexes %s, rc: %d",
+                  pCollectionName, rc ) ;
+         goto error ;
+      }
+
+      _hitEnd = _indexInfo.empty() ? TRUE : FALSE ;
+      _pos = 0 ;
+
+   done:
+      if ( DMS_INVALID_CS != suID )
+      {
+         dmsCB->suUnlock ( suID ) ;
+      }
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   const CHAR* _monIndexFetch::getName() const
+   {
+      return CMD_NAME_GET_INDEXES ;
+   }
+
+   BOOLEAN _monIndexFetch::isHitEnd() const
+   {
+      return _hitEnd ;
+   }
+
+   INT32 _monIndexFetch::fetch( BSONObj &obj )
+   {
+      INT32 rc = SDB_OK ;
+
+      if ( _hitEnd )
+      {
+         rc = SDB_DMS_EOC ;
+         goto error ;
+      }
+
+      rc = _fetchNext( obj ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _monIndexFetch::_fetchNext( BSONObj &obj )
+   {
+      INT32 rc = SDB_OK ;
+
+      if ( _pos >= _indexInfo.size() )
+      {
+         _hitEnd = TRUE ;
+         rc = SDB_DMS_EOC ;
+         goto error ;
+      }
+
+      try
+      {
+         BSONObjBuilder ob( 512 ) ;
+
+         const monIndex &indexItem = _indexInfo[ _pos++ ] ;
+         const BSONObj &indexObj = indexItem._indexDef ;
+         OID oid ;
+
+         /// add system info
+         monAppendSystemInfo( ob, _addInfoMask ) ;
+
+         BSONObjBuilder sub( ob.subobjStart( IXM_FIELD_NAME_INDEX_DEF ) ) ;
+
+         sub.append ( IXM_NAME_FIELD,
+                      indexObj.getStringField( IXM_NAME_FIELD ) ) ;
+         indexObj.getField( DMS_ID_KEY_NAME ).Val(oid) ;
+         sub.append ( DMS_ID_KEY_NAME, oid ) ;
+         sub.append ( IXM_KEY_FIELD,
+                      indexObj.getObjectField( IXM_KEY_FIELD ) ) ;
+         BSONElement e = indexObj[ IXM_V_FIELD ] ;
+         INT32 version = ( e.type() == NumberInt ) ? e._numberInt() : 0 ;
+         sub.append ( IXM_V_FIELD, version ) ;
+         sub.append ( IXM_UNIQUE_FIELD,
+                      indexObj[IXM_UNIQUE_FIELD].trueValue() ) ;
+         sub.append ( IXM_DROPDUP_FIELD,
+                      indexObj.getBoolField( IXM_DROPDUP_FIELD ) ) ;
+         sub.append ( IXM_ENFORCED_FIELD,
+                      indexObj.getBoolField( IXM_ENFORCED_FIELD ) ) ;
+         BSONObj range = indexObj.getObjectField( IXM_2DRANGE_FIELD ) ;
+         if ( !range.isEmpty() )
+         {
+            sub.append( IXM_2DRANGE_FIELD, range ) ;
+         }
+         sub.done () ;
+
+         const CHAR *pFlagDesp = getIndexFlagDesp( indexItem._indexFlag ) ;
+         ob.append ( IXM_FIELD_NAME_INDEX_FLAG, pFlagDesp ) ;
+         if ( IXM_INDEX_FLAG_CREATING == indexItem._indexFlag )
+         {
+            ob.append ( IXM_FIELD_NAME_SCAN_EXTLID,
+                        indexItem._scanExtLID ) ;
+         }
+
+         obj = ob.obj() ;
+
+         if ( _pos >= _indexInfo.size() )
+         {
+            _hitEnd = TRUE ;
+         }
+      }
+      catch ( std::exception &e )
+      {
+         PD_LOG ( PDERROR, "Failed to create BSON objects for "
+                  "indexes: %s", e.what() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   /*
+      _monCLBlockFetch implement
+   */
+   _monCLBlockFetch::_monCLBlockFetch()
+   {
+      _addInfoMask   = 0 ;
+      _hitEnd        = TRUE ;
+      _pos           = 0 ;
+   }
+
+   _monCLBlockFetch::~_monCLBlockFetch()
+   {
+   }
+
+   INT32 _monCLBlockFetch::init( pmdEDUCB *cb,
+                                 const CHAR *pCollectionName,
+                                 UINT32 addInfoMask )
+   {
+      INT32 rc = SDB_OK ;
+      SDB_DMSCB *dmsCB = pmdGetKRCB()->getDMSCB() ;
+      SDB_ASSERT( dmsCB, "DMSCB can't be NULL" ) ;
+      dmsStorageUnit *su = NULL ;
+      dmsStorageUnitID suID = DMS_INVALID_CS ;
+      const CHAR *pCollectionShortName = NULL ;
+
+      _addInfoMask = addInfoMask ;
+
+      rc = rtnResolveCollectionNameAndLock ( pCollectionName, dmsCB, &su,
+                                             &pCollectionShortName, suID ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to resolve collection name %s, rc: %d",
+                  pCollectionName, rc ) ;
+         goto error ;
+      }
+      rc = su->getSegExtents ( pCollectionShortName, _vecBlock, NULL ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Get collection[%s] segment extents failed, "
+                  "rc: %d", pCollectionShortName, rc ) ;
+         goto error ;
+      }
+
+      _hitEnd = _vecBlock.empty() ? TRUE : FALSE ;
+      _pos = 0 ;
+
+   done:
+      if ( DMS_INVALID_CS != suID )
+      {
+         dmsCB->suUnlock ( suID ) ;
+      }
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   const CHAR* _monCLBlockFetch::getName() const
+   {
+      return CMD_NAME_GET_DATABLOCKS ;
+   }
+
+   BOOLEAN _monCLBlockFetch::isHitEnd() const
+   {
+      return _hitEnd ;
+   }
+
+   INT32 _monCLBlockFetch::fetch( BSONObj &obj )
+   {
+      INT32 rc = SDB_OK ;
+
+      if ( _hitEnd )
+      {
+         rc = SDB_DMS_EOC ;
+         goto error ;
+      }
+
+      rc = _fetchNext( obj ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _monCLBlockFetch::_fetchNext( BSONObj &obj )
+   {
+      INT32 rc = SDB_OK ;
+      UINT32 datablockNum = 0 ;
+      const UINT32 c_maxARecordNum = 500 ;
+
+      if ( _pos >= _vecBlock.size() )
+      {
+         _hitEnd = TRUE ;
+         rc = SDB_DMS_EOC ;
+         goto error ;
+      }
+
+      try
+      {
+         BSONObjBuilder ob( 4096 ) ;
+
+         /// add system info
+         monAppendSystemInfo( ob, _addInfoMask ) ;
+
+         ob.append( FIELD_NAME_SCANTYPE, VALUE_NAME_TBSCAN ) ;
+
+         BSONArrayBuilder sub( ob.subarrayStart( FIELD_NAME_DATABLOCKS ) ) ;
+
+         while( _pos < _vecBlock.size() &&
+                datablockNum < c_maxARecordNum )
+         {
+            sub.append( _vecBlock[ _pos++ ] ) ;
+            ++datablockNum ;
+         }
+         sub.done() ;
+
+         obj = ob.obj() ;
+
+         if ( _pos >= _vecBlock.size() )
+         {
+            _hitEnd = TRUE ;
+         }
+      }
+      catch ( std::exception &e )
+      {
+         PD_LOG ( PDERROR, "Failed to create BSON objects for "
+                  "data blocks: %s", e.what() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   /*
+      _monBackupFetch implement
+   */
+   _monBackupFetch::_monBackupFetch()
+   {
+      _addInfoMask   = 0 ;
+      _hitEnd        = TRUE ;
+      _pos           = 0 ;
+   }
+
+   _monBackupFetch::~_monBackupFetch()
+   {
+   }
+
+   INT32 _monBackupFetch::init( pmdEDUCB *cb,
+                                const BSONObj &option,
+                                UINT32 addInfoMask )
+   {
+      INT32 rc = SDB_OK ;
+      pmdKRCB *krcb = pmdGetKRCB() ;
+      const CHAR *pPath = NULL ;
+      const CHAR *backupName = NULL ;
+      BOOLEAN isSubDir        = FALSE ;
+      const CHAR *prefix      = NULL ;
+      string bkpath ;
+      BOOLEAN detail = FALSE ;
+      barBackupMgr bkMgr( krcb->getGroupName() ) ;
+      UINT32 index = 0 ;
+
+      _addInfoMask = addInfoMask ;
+      OSS_BIT_CLEAR( _addInfoMask, MON_MASK_NODE_NAME ) ;
+      OSS_BIT_CLEAR( _addInfoMask, MON_MASK_GROUP_NAME ) ;
+
+      rc = rtnGetStringElement( option, FIELD_NAME_PATH, &pPath ) ;
+      if ( SDB_FIELD_NOT_EXIST == rc )
+      {
+         rc = SDB_OK ;
+      }
+      PD_RC_CHECK( rc, PDWARNING, "Failed to get field[%s], rc: %d",
+                   FIELD_NAME_PATH, rc ) ;
+
+      rc = rtnGetStringElement( option, FIELD_NAME_NAME, &backupName ) ;
+      if ( SDB_FIELD_NOT_EXIST == rc )
+      {
+         rc = SDB_OK ;
+      }
+      PD_RC_CHECK( rc, PDWARNING, "Failed to get field[%s], rc: %d",
+                   FIELD_NAME_NAME, rc ) ;
+      rc = rtnGetBooleanElement( option, FIELD_NAME_DETAIL, detail ) ;
+      if ( SDB_FIELD_NOT_EXIST == rc )
+      {
+         rc = SDB_OK ;
+      }
+      PD_RC_CHECK( rc, PDWARNING, "Failed to get field[%s], rc: %d",
+                   FIELD_NAME_DETAIL, rc ) ;
+
+      // option config
+      rc = rtnGetBooleanElement( option, FIELD_NAME_ISSUBDIR, isSubDir ) ;
+      if ( SDB_FIELD_NOT_EXIST == rc )
+      {
+         rc = SDB_OK ;
+      }
+      PD_RC_CHECK( rc, PDWARNING, "Failed to get field[%s], rc: %d",
+                   FIELD_NAME_ISSUBDIR, rc ) ;
+
+      rc = rtnGetStringElement( option, FIELD_NAME_PREFIX, &prefix ) ;
+      if ( SDB_FIELD_NOT_EXIST == rc )
+      {
+         rc = SDB_OK ;
+      }
+      PD_RC_CHECK( rc, PDWARNING, "Failed to get field[%s], rc: %d",
+                   FIELD_NAME_PREFIX, rc ) ;
+
+      // make path
+      if ( isSubDir && pPath )
+      {
+         bkpath = rtnFullPathName( pmdGetOptionCB()->getBkupPath(), pPath ) ;
+      }
+      else if ( pPath && 0 != pPath[0] )
+      {
+         bkpath = pPath ;
+      }
+      else
+      {
+         bkpath = pmdGetOptionCB()->getBkupPath() ;
+      }
+
+      rc = bkMgr.init( bkpath.c_str(), backupName, prefix ) ;
+      PD_RC_CHECK( rc, PDWARNING, "Init backup manager failed, rc: %d", rc ) ;
+
+      // list
+      rc = bkMgr.list( _vecBackup, detail ) ;
+      PD_RC_CHECK( rc, PDWARNING, "List backup failed, rc: %d", rc ) ;
+
+      _hitEnd = _vecBackup.empty() ? TRUE : FALSE ;
+      _pos = 0 ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   const CHAR* _monBackupFetch::getName() const
+   {
+      return CMD_NAME_LIST_BACKUPS ;
+   }
+
+   BOOLEAN _monBackupFetch::isHitEnd() const
+   {
+      return _hitEnd ;
+   }
+
+   INT32 _monBackupFetch::fetch( BSONObj &obj )
+   {
+      INT32 rc = SDB_OK ;
+
+      if ( _hitEnd )
+      {
+         rc = SDB_DMS_EOC ;
+         goto error ;
+      }
+
+      rc = _fetchNext( obj ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _monBackupFetch::_fetchNext( BSONObj &obj )
+   {
+      INT32 rc = SDB_OK ;
+
+      if ( _pos >= _vecBackup.size() )
+      {
+         _hitEnd = TRUE ;
+         rc = SDB_DMS_EOC ;
+         goto error ;
+      }
+
+      if ( 0 == _addInfoMask )
+      {
+         obj = _vecBackup[ _pos++ ] ;
+      }
+      else
+      {
+         try
+         {
+            BSONObjBuilder ob( 512 ) ;
+
+            /// add system info
+            monAppendSystemInfo( ob, _addInfoMask ) ;
+            ob.appendElements( _vecBackup[ _pos++ ] ) ;
+
+            obj = ob.obj() ;
+         }
+         catch ( std::exception &e )
+         {
+            PD_LOG ( PDERROR, "Failed to create BSON objects for "
+                     "backups: %s", e.what() ) ;
+            rc = SDB_SYS ;
+            goto error ;
+         }
+      }
+
+      if ( _pos >= _vecBackup.size() )
+      {
+         _hitEnd = TRUE ;
       }
 
    done:
