@@ -1288,5 +1288,7 @@ SDB_EXPORT double bson_int64_to_double( int64_t i64 );
 SDB_EXPORT void bson_swap_endian32( void *outp, const void *inp );
 SDB_EXPORT void bson_swap_endian64( void *outp, const void *inp );
 
+SDB_EXPORT bson_bool_t bson_is_inf( double d, int *pSign ) ;
+
 SDB_EXTERN_C_END
 #endif

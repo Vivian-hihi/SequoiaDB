@@ -769,7 +769,7 @@ SDB_EXPORT int bson_sprint_length_iterator ( bson_iterator *i )
       break ;
    case BSON_REGEX :
       /* "{ "$regex" : "<regexstr>", "$options" : "<optionsstr>" }" */
-      total += 34 + strlen ( bson_iterator_regex ( i ) ) +
+      total += 34 + strlen ( bson_iterator_regex ( i ) ) * 2 +
                     strlen ( bson_iterator_regex_opts ( i ) ) ;
       break ;
    case BSON_CODE :
@@ -2160,6 +2160,24 @@ SDB_EXPORT void bson_swap_endian16( void *outp, const void *inp ) {
 
     out[0] = in[1];
     out[1] = in[0];
+}
+
+SDB_EXPORT bson_bool_t bson_is_inf( double d, int *pSign )
+{
+    volatile double tmp = d ;
+    if( ( tmp == d ) && ( ( tmp - d ) != 0.0 ) )
+    {
+        if( pSign )
+        {
+            *pSign = ( d < 0.0 ? -1 : 1 ) ;
+        }
+        return 1 ;
+    }
+    if( pSign )
+    {
+        *pSign = 0 ;
+    }
+    return 0 ;
 }
 
 void LocalTime ( time_t *Time, struct tm *TM )
