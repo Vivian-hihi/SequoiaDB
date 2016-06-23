@@ -109,7 +109,7 @@ SDB_EXPORT BOOLEAN json2bson( const CHAR *pJson,
 {
    BOOLEAN flag = TRUE ;
    BOOLEAN isOwn = FALSE ;
-   static isInit = FALSE ;
+   static BOOLEAN isInit = FALSE ;
    const cJson_iterator *pIter = NULL ;
 
    if( isInit == FALSE )

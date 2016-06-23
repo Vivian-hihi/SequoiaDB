@@ -446,24 +446,41 @@ static BOOLEAN bsonConvertJson ( CHAR **pbuf,
       case BSON_DOUBLE:
       {
          /* for double type, we use 64 bytes string for such big value */
-         CHAR temp[ BSON_TEMP_SIZE_512 ] ;
-         memset ( temp, 0, BSON_TEMP_SIZE_512 ) ;
-#ifdef WIN32
-         _snprintf ( temp,
-                     BSON_TEMP_SIZE_512,
-                     "%.16g", bson_iterator_double( &i ) ) ;
-#else
-         snprintf ( temp,
-                    BSON_TEMP_SIZE_512,
-                    "%.16g", bson_iterator_double( &i ) ) ;
-#endif
-         bsonConvertJsonRawConcat ( pbuf, left, temp, FALSE ) ;
-         CHECK_LEFT ( left )
-         if( strchr( temp, '.') == 0 && strchr( temp, 'E') == 0
-             && strchr( temp, 'N') == 0 && strchr( temp, 'e') == 0
-             && strchr( temp, 'n') == 0 )
+         INT32 sign = 0 ;
+         FLOAT64 valNum = bson_iterator_double( &i ) ;
+         if( bson_is_inf( valNum, &sign ) == FALSE )
          {
-            bsonConvertJsonRawConcat ( pbuf, left, ".0", FALSE ) ;
+            CHAR temp[ BSON_TEMP_SIZE_512 ] ;
+            memset ( temp, 0, BSON_TEMP_SIZE_512 ) ;
+#ifdef WIN32
+            _snprintf ( temp,
+                        BSON_TEMP_SIZE_512,
+                        "%.16g", bson_iterator_double( &i ) ) ;
+#else
+            snprintf ( temp,
+                       BSON_TEMP_SIZE_512,
+                       "%.16g", bson_iterator_double( &i ) ) ;
+#endif
+            bsonConvertJsonRawConcat ( pbuf, left, temp, FALSE ) ;
+            CHECK_LEFT ( left )
+            if( strchr( temp, '.') == 0 && strchr( temp, 'E') == 0
+                && strchr( temp, 'N') == 0 && strchr( temp, 'e') == 0
+                && strchr( temp, 'n') == 0 )
+            {
+               bsonConvertJsonRawConcat ( pbuf, left, ".0", FALSE ) ;
+               CHECK_LEFT ( left )
+            }
+         }
+         else
+         {
+            if( sign == 1 )
+            {
+               bsonConvertJsonRawConcat( pbuf, left, "Infinity", FALSE ) ;
+            }
+            else
+            {
+               bsonConvertJsonRawConcat( pbuf, left, "-Infinity", FALSE ) ;
+            }
             CHECK_LEFT ( left )
          }
          break;
