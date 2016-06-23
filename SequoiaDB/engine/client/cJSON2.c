@@ -300,7 +300,7 @@ static INT32 _valueListSize = 28 ; // _valueList current size
 static const INT32 _valueListMaxSize = \
       sizeof( _valueList ) / sizeof( CJSON_VALUE_MATCH ) ;
 
-BOOLEAN cJsonParse( const CHAR *pStr, CJSON_MACHINE *pMachine )
+SDB_EXPORT BOOLEAN cJsonParse( const CHAR *pStr, CJSON_MACHINE *pMachine )
 {
    BOOLEAN rc = TRUE ;
    if( pMachine == NULL )
@@ -2183,11 +2183,11 @@ error:
    goto done ;
 }
 
-const CHAR* parseParameters( const CHAR *pStr,
-                             const CJSON_MACHINE *pMachine,
-                             const CHAR *pFormat,
-                             INT32 *pArgNum,
-                             ... )
+SDB_EXPORT const CHAR* parseParameters( const CHAR *pStr,
+                                        const CJSON_MACHINE *pMachine,
+                                        const CHAR *pFormat,
+                                        INT32 *pArgNum,
+                                        ... )
 {
    va_list vaList ;
    pStr = skip( pStr + 1 ) ;
@@ -2468,7 +2468,7 @@ error:
    goto done ;
 }
 
-void* cJsonMalloc( INT32 bytesNum, const CJSON_MACHINE *pMachine )
+SDB_EXPORT void* cJsonMalloc( INT32 bytesNum, const CJSON_MACHINE *pMachine )
 {
    INT32 useSize = 0 ;
    void *pBuffer = NULL ;
@@ -2531,11 +2531,11 @@ error:
    goto done ;
 }
 
-void cJsonFree( void *pBuffer, const CJSON_MACHINE *pMachine )
+SDB_EXPORT void cJsonFree( void *pBuffer, const CJSON_MACHINE *pMachine )
 {
 }
 
-CJSON* cJsonItemCreate( const CJSON_MACHINE *pMachine )
+SDB_EXPORT CJSON* cJsonItemCreate( const CJSON_MACHINE *pMachine )
 {
    CJSON *pNode = (CJSON*)cJsonMalloc( sizeof( CJSON ), pMachine ) ;
    if( pNode )
@@ -2545,74 +2545,74 @@ CJSON* cJsonItemCreate( const CJSON_MACHINE *pMachine )
    return pNode ;
 }
 
-void cJsonItemRelease( const CJSON *pItem )
+SDB_EXPORT void cJsonItemRelease( const CJSON *pItem )
 {
 }
 
-void cJsonItemKey( CJSON *pItem, CHAR *pKey )
+SDB_EXPORT void cJsonItemKey( CJSON *pItem, CHAR *pKey )
 {
    pItem->pKey = pKey ;
 }
 
-void cJsonItemKeyType( CJSON *pItem, CJSON_VALUE_TYPE keyType )
+SDB_EXPORT void cJsonItemKeyType( CJSON *pItem, CJSON_VALUE_TYPE keyType )
 {
    pItem->keyType = keyType ;
 }
 
-void cJsonItemValueInt32 ( CJSON *pItem, INT32 val )
+SDB_EXPORT void cJsonItemValueInt32 ( CJSON *pItem, INT32 val )
 {
    pItem->valType = CJSON_INT32 ;
    pItem->valInt = val ;
 }
 
-void cJsonItemValueInt64 ( CJSON *pItem, INT64 val )
+SDB_EXPORT void cJsonItemValueInt64 ( CJSON *pItem, INT64 val )
 {
    pItem->valType = CJSON_INT64 ;
    pItem->valInt64 = val ;
 }
 
-void cJsonItemValueDouble( CJSON *pItem, FLOAT64 val )
+SDB_EXPORT void cJsonItemValueDouble( CJSON *pItem, FLOAT64 val )
 {
    pItem->valType = CJSON_DOUBLE ;
    pItem->valDouble = val ;
 }
 
-void cJsonItemValueString( CJSON *pItem, CHAR *pValStr, INT32 length )
+SDB_EXPORT void cJsonItemValueString( CJSON *pItem, CHAR *pValStr, INT32 length )
 {
    pItem->valType = CJSON_STRING ;
    pItem->pValStr = pValStr ;
    pItem->length  = length ;
 }
 
-void cJsonItemValueTrue( CJSON *pItem )
+SDB_EXPORT void cJsonItemValueTrue( CJSON *pItem )
 {
    pItem->valType = CJSON_TRUE ;
 }
 
-void cJsonItemValueFalse( CJSON *pItem )
+SDB_EXPORT void cJsonItemValueFalse( CJSON *pItem )
 {
    pItem->valType = CJSON_FALSE ;
 }
 
-void cJsonItemValueNull( CJSON *pItem )
+SDB_EXPORT void cJsonItemValueNull( CJSON *pItem )
 {
    pItem->valType = CJSON_NULL ;
 }
 
-void cJsonItemLinkChild ( CJSON *pItem, CJSON *pChild )
+SDB_EXPORT void cJsonItemLinkChild ( CJSON *pItem, CJSON *pChild )
 {
    pItem->pChild = pChild ;
    pChild->pParent = pItem ;
 }
 
-void cJsonItemLinkNext  ( CJSON *pItem, CJSON *pNext )
+SDB_EXPORT void cJsonItemLinkNext  ( CJSON *pItem, CJSON *pNext )
 {
    pItem->pNext = pNext ;
    pItem->pParent = pNext->pParent ;
    pNext->pPrev = pItem ;
 }
 
-CJSON_READ_INFO* cJsonReadInfoCreate( const CJSON_MACHINE *pMachine )
+SDB_EXPORT CJSON_READ_INFO* cJsonReadInfoCreate( const CJSON_MACHINE *pMachine )
 {
    CJSON_READ_INFO *pInfo = (CJSON_READ_INFO*)\
          cJsonMalloc( sizeof( CJSON_READ_INFO ), pMachine ) ;
@@ -2624,106 +2624,106 @@ CJSON_READ_INFO* cJsonReadInfoCreate( const CJSON_MACHINE *pMachine )
    return pInfo ;
 }
 
-void cJsonReadInfoRelease( CJSON_READ_INFO *pReadInfo )
+SDB_EXPORT void cJsonReadInfoRelease( CJSON_READ_INFO *pReadInfo )
 {
 }
 
-void cJsonReadInfoAddItem( CJSON_READ_INFO *pReadInfo, CJSON *pItem )
+SDB_EXPORT void cJsonReadInfoAddItem( CJSON_READ_INFO *pReadInfo, CJSON *pItem )
 {
    pReadInfo->pItem = pItem ;
 }
 
-void cJsonReadInfoSuccess( CJSON_READ_INFO *pReadInfo )
+SDB_EXPORT void cJsonReadInfoSuccess( CJSON_READ_INFO *pReadInfo )
 {
    pReadInfo->execState = CJSON_EXEC_SUCCESS ;
 }
 
-void cJsonReadInfoIGNORE( CJSON_READ_INFO *pReadInfo )
+SDB_EXPORT void cJsonReadInfoIGNORE( CJSON_READ_INFO *pReadInfo )
 {
    pReadInfo->execState = CJSON_EXEC_IGNORE ;
 }
 
-INT32 cJsonReadInfoExecState( CJSON_READ_INFO *pReadInfo )
+SDB_EXPORT INT32 cJsonReadInfoExecState( CJSON_READ_INFO *pReadInfo )
 {
    return pReadInfo->execState ;
 }
 
-void cJsonReadInfoSet( CJSON_READ_INFO *pReadInfo, INT32 readType )
+SDB_EXPORT void cJsonReadInfoSet( CJSON_READ_INFO *pReadInfo, INT32 readType )
 {
    pReadInfo->readType = readType ;
 }
 
-void cJsonReadInfoTypeInt32( CJSON_READ_INFO *pReadInfo )
+SDB_EXPORT void cJsonReadInfoTypeInt32( CJSON_READ_INFO *pReadInfo )
 {
    pReadInfo->readType = CJSON_READ_VALUE ;
    pReadInfo->keyType  = CJSON_NONE ;
    pReadInfo->valType  = CJSON_INT32 ;
 }
 
-void cJsonReadInfoTypeInt64( CJSON_READ_INFO *pReadInfo )
+SDB_EXPORT void cJsonReadInfoTypeInt64( CJSON_READ_INFO *pReadInfo )
 {
    pReadInfo->readType = CJSON_READ_VALUE ;
    pReadInfo->keyType  = CJSON_NONE ;
    pReadInfo->valType  = CJSON_INT64 ;
 }
 
-void cJsonReadInfoTypeDouble( CJSON_READ_INFO *pReadInfo )
+SDB_EXPORT void cJsonReadInfoTypeDouble( CJSON_READ_INFO *pReadInfo )
 {
    pReadInfo->readType = CJSON_READ_VALUE ;
    pReadInfo->keyType  = CJSON_NONE ;
    pReadInfo->valType  = CJSON_DOUBLE ;
 }
 
-void cJsonReadInfoTypeString( CJSON_READ_INFO *pReadInfo )
+SDB_EXPORT void cJsonReadInfoTypeString( CJSON_READ_INFO *pReadInfo )
 {
    pReadInfo->readType = CJSON_READ_VALUE ;
    pReadInfo->keyType  = CJSON_NONE ;
    pReadInfo->valType  = CJSON_STRING ;
 }
 
-void cJsonReadInfoTypeTrue( CJSON_READ_INFO *pReadInfo )
+SDB_EXPORT void cJsonReadInfoTypeTrue( CJSON_READ_INFO *pReadInfo )
 {
    pReadInfo->readType = CJSON_READ_VALUE ;
    pReadInfo->keyType  = CJSON_NONE ;
    pReadInfo->valType  = CJSON_TRUE ;
 }
 
-void cJsonReadInfoTypeFalse( CJSON_READ_INFO *pReadInfo )
+SDB_EXPORT void cJsonReadInfoTypeFalse( CJSON_READ_INFO *pReadInfo )
 {
    pReadInfo->readType = CJSON_READ_VALUE ;
    pReadInfo->keyType  = CJSON_NONE ;
    pReadInfo->valType  = CJSON_FALSE ;
 }
 
-void cJsonReadInfoTypeNull( CJSON_READ_INFO *pReadInfo )
+SDB_EXPORT void cJsonReadInfoTypeNull( CJSON_READ_INFO *pReadInfo )
 {
    pReadInfo->readType = CJSON_READ_VALUE ;
    pReadInfo->keyType  = CJSON_NONE ;
    pReadInfo->valType  = CJSON_NULL ;
 }
 
-void cJsonReadInfoTypeObject( CJSON_READ_INFO *pReadInfo )
+SDB_EXPORT void cJsonReadInfoTypeObject( CJSON_READ_INFO *pReadInfo )
 {
    pReadInfo->readType = CJSON_READ_OBJECT ;
    pReadInfo->keyType  = CJSON_NONE ;
    pReadInfo->valType  = CJSON_OBJECT ;
 }
 
-void cJsonReadInfoTypeArray( CJSON_READ_INFO *pReadInfo )
+SDB_EXPORT void cJsonReadInfoTypeArray( CJSON_READ_INFO *pReadInfo )
 {
    pReadInfo->readType = CJSON_READ_ARRAY ;
    pReadInfo->keyType  = CJSON_NONE ;
    pReadInfo->valType  = CJSON_ARRAY ;
 }
 
-void cJsonReadInfoTypeCustom( CJSON_READ_INFO *pReadInfo )
+SDB_EXPORT void cJsonReadInfoTypeCustom( CJSON_READ_INFO *pReadInfo )
 {
    pReadInfo->readType = CJSON_READ_OBJECT ;
    pReadInfo->keyType  = CJSON_CUSTOM ;
    pReadInfo->valType  = CJSON_OBJECT ;
 }
 
-CJSON_MACHINE* cJsonCreate()
+SDB_EXPORT CJSON_MACHINE* cJsonCreate()
 {
    CJSON_MACHINE *pMachine = NULL ;
    pMachine = (CJSON_MACHINE*)SDB_OSS_MALLOC( sizeof( CJSON_MACHINE ) ) ;
@@ -2741,7 +2741,7 @@ CJSON_MACHINE* cJsonCreate()
    return pMachine ;
 }
 
-void cJsonInit( CJSON_MACHINE *pMachine, CJSON_PARSE_MODE mode )
+SDB_EXPORT void cJsonInit( CJSON_MACHINE *pMachine, CJSON_PARSE_MODE mode )
 {
    CJSON_MEMORY_BLOCK *pBlock = NULL ;
    pMachine->state = STATE_READY ;
@@ -2757,7 +2757,7 @@ void cJsonInit( CJSON_MACHINE *pMachine, CJSON_PARSE_MODE mode )
    }
 }
 
-void cJsonRelease( CJSON_MACHINE *pMachine )
+SDB_EXPORT void cJsonRelease( CJSON_MACHINE *pMachine )
 {
    CJSON_MEMORY_BLOCK *pBlock = NULL ;
    CJSON_MEMORY_BLOCK *pNext  = NULL ;
@@ -2775,19 +2775,19 @@ void cJsonRelease( CJSON_MACHINE *pMachine )
    }
 }
 
-void cJsonSetPrintfLog( void (*pFun)( const CHAR *pFunc,
-                                      const CHAR *pFile,
-                                      UINT32 line,
-                                      const CHAR *pFmt,
-                                      ... ) )
+SDB_EXPORT void cJsonSetPrintfLog( void (*pFun)( const CHAR *pFunc,
+                                                 const CHAR *pFile,
+                                                 UINT32 line,
+                                                 const CHAR *pFmt,
+                                                 ... ) )
 {
    _pCJsonPrintfLogFun = (CJSON_PLOG_FUNC)pFun ;
 }
 
-BOOLEAN cJsonExtendAppend( CJSON_MATCH_TYPE matchType,
-                           INPUT_FUNC parseFun,
-                           UINT32 strLen,
-                           CHAR *pString )
+SDB_EXPORT BOOLEAN cJsonExtendAppend( CJSON_MATCH_TYPE matchType,
+                                      INPUT_FUNC parseFun,
+                                      UINT32 strLen,
+                                      CHAR *pString )
 {
    if( _valueListMaxSize > _valueListSize )
    {

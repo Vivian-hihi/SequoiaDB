@@ -23,7 +23,8 @@ static CJSON* getCustomVal( const CJSON *pItem,
 static INT32 getIteratorSubNum( const CJSON *pItem ) ;
 static void setValue( CJSON *pItem, CVALUE *pValue ) ;
 
-const cJson_iterator* cJsonIteratorInit( const CJSON_MACHINE *pMachine )
+SDB_EXPORT const cJson_iterator*
+      cJsonIteratorInit( const CJSON_MACHINE *pMachine )
 {
    cJson_iterator *pIter = NULL ;
    if( pMachine == NULL )
@@ -43,7 +44,7 @@ error:
    goto done ;
 }
 
-BOOLEAN cJsonIteratorMore( const cJson_iterator *pIter )
+SDB_EXPORT BOOLEAN cJsonIteratorMore( const cJson_iterator *pIter )
 {
    if( pIter == NULL || pIter->pItem == NULL )
    {
@@ -52,7 +53,7 @@ BOOLEAN cJsonIteratorMore( const cJson_iterator *pIter )
    return TRUE ;
 }
 
-void cJsonIteratorNext( const cJson_iterator *pIter )
+SDB_EXPORT void cJsonIteratorNext( const cJson_iterator *pIter )
 {
    cJson_iterator *pIter2 = NULL ;
    if( pIter && pIter->pItem )
@@ -62,7 +63,7 @@ void cJsonIteratorNext( const cJson_iterator *pIter )
    }
 }
 
-const BOOLEAN cJsonIteratorMoreSub( const cJson_iterator *pIter )
+SDB_EXPORT const BOOLEAN cJsonIteratorMoreSub( const cJson_iterator *pIter )
 {
    if( pIter && pIter->pItem )
    {
@@ -71,7 +72,7 @@ const BOOLEAN cJsonIteratorMoreSub( const cJson_iterator *pIter )
    return FALSE ;
 }
 
-const cJson_iterator* cJsonIteratorSub( const cJson_iterator *pIter )
+SDB_EXPORT const cJson_iterator* cJsonIteratorSub( const cJson_iterator *pIter )
 {
    cJson_iterator *pIterSub = NULL ;
    if( pIter && pIter->pItem )
@@ -91,7 +92,7 @@ error:
    goto done ;
 }
 
-const CHAR* cJsonIteratorKey( const cJson_iterator *pIter )
+SDB_EXPORT const CHAR* cJsonIteratorKey( const cJson_iterator *pIter )
 {
    if( pIter && pIter->pItem )
    {
@@ -100,7 +101,7 @@ const CHAR* cJsonIteratorKey( const cJson_iterator *pIter )
    return NULL ;
 }
 
-CJSON_VALUE_TYPE cJsonIteratorType( const cJson_iterator *pIter )
+SDB_EXPORT CJSON_VALUE_TYPE cJsonIteratorType( const cJson_iterator *pIter )
 {
    if( pIter && pIter->pItem )
    {
@@ -117,7 +118,7 @@ CJSON_VALUE_TYPE cJsonIteratorType( const cJson_iterator *pIter )
    return CJSON_NONE ;
 }
 
-INT32 cJsonIteratorInt32( const cJson_iterator *pIter )
+SDB_EXPORT INT32 cJsonIteratorInt32( const cJson_iterator *pIter )
 {
    if( pIter && pIter->pItem )
    {
@@ -126,7 +127,7 @@ INT32 cJsonIteratorInt32( const cJson_iterator *pIter )
    return 0 ;
 }
 
-INT64 cJsonIteratorInt64( const cJson_iterator *pIter )
+SDB_EXPORT INT64 cJsonIteratorInt64( const cJson_iterator *pIter )
 {
    if( pIter && pIter->pItem )
    {
@@ -135,7 +136,7 @@ INT64 cJsonIteratorInt64( const cJson_iterator *pIter )
    return 0 ;
 }
 
-FLOAT64 cJsonIteratorDouble( const cJson_iterator *pIter )
+SDB_EXPORT FLOAT64 cJsonIteratorDouble( const cJson_iterator *pIter )
 {
    if( pIter && pIter->pItem )
    {
@@ -144,7 +145,7 @@ FLOAT64 cJsonIteratorDouble( const cJson_iterator *pIter )
    return 0 ;
 }
 
-const CHAR *cJsonIteratorString( const cJson_iterator *pIter )
+SDB_EXPORT const CHAR *cJsonIteratorString( const cJson_iterator *pIter )
 {
    if( pIter && pIter->pItem )
    {
@@ -153,7 +154,7 @@ const CHAR *cJsonIteratorString( const cJson_iterator *pIter )
    return NULL ;
 }
 
-BOOLEAN cJsonIteratorBoolean( const cJson_iterator *pIter )
+SDB_EXPORT BOOLEAN cJsonIteratorBoolean( const cJson_iterator *pIter )
 {
    if( pIter && pIter->pItem )
    {
@@ -162,7 +163,7 @@ BOOLEAN cJsonIteratorBoolean( const cJson_iterator *pIter )
    return FALSE ;
 }
 
-INT32 cJsonIteratorSubNum( const cJson_iterator *pIter )
+SDB_EXPORT INT32 cJsonIteratorSubNum( const cJson_iterator *pIter )
 {
    INT32 num = 0 ;
    if( pIter && pIter->pItem )
@@ -172,7 +173,7 @@ INT32 cJsonIteratorSubNum( const cJson_iterator *pIter )
    return num ;
 }
 
-INT32 cJsonIteratorSubNum2( const CVALUE *pValue )
+SDB_EXPORT INT32 cJsonIteratorSubNum2( const CVALUE *pValue )
 {
    INT32 num = 0 ;
    if( pValue && pValue->pChild )
@@ -182,9 +183,9 @@ INT32 cJsonIteratorSubNum2( const CVALUE *pValue )
    return num ;
 }
 
-void cJsonIteratorBinary( const cJson_iterator *pIter,
-                          CVALUE *pBinData,
-                          CVALUE *pBinType )
+SDB_EXPORT void cJsonIteratorBinary( const cJson_iterator *pIter,
+                                     CVALUE *pBinData,
+                                     CVALUE *pBinType )
 {
    if( pIter && pIter->pItem )
    {
@@ -195,38 +196,41 @@ void cJsonIteratorBinary( const cJson_iterator *pIter,
    }
 }
 
-void cJsonIteratorRegex( const cJson_iterator *pIter,
-                         CVALUE *pRegex,
-                         CVALUE *pOptions )
+SDB_EXPORT void cJsonIteratorRegex( const cJson_iterator *pIter,
+                                    CVALUE *pRegex,
+                                    CVALUE *pOptions )
 {
    if( pIter && pIter->pItem )
    {
       CJSON *pRegexItem   = getCustomVal( pIter->pItem->pChild, CJSON_REGEX ) ;
-      CJSON *pOptionsItem = getCustomVal( pIter->pItem->pChild, CJSON_OPTIONS ) ;
+      CJSON *pOptionsItem = getCustomVal( pIter->pItem->pChild,
+                                          CJSON_OPTIONS ) ;
       setValue( pRegexItem, pRegex ) ;
       setValue( pOptionsItem, pOptions ) ;
    }
 }
 
-void cJsonIteratorTimestamp( const cJson_iterator *pIter,
-                             CVALUE *pTimestamp )
+SDB_EXPORT void cJsonIteratorTimestamp( const cJson_iterator *pIter,
+                                        CVALUE *pTimestamp )
 {
    if( pIter && pIter->pItem )
    {
-      CJSON *pTimeItem = getCustomVal( pIter->pItem->pChild, CJSON_TIMESTAMP ) ;
+      CJSON *pTimeItem = getCustomVal( pIter->pItem->pChild,
+                                       CJSON_TIMESTAMP ) ;
       setValue( pTimeItem, pTimestamp ) ;
    }
 }
 
-void cJsonIteratorDate( const cJson_iterator *pIter,
-                        CVALUE *pDate )
+SDB_EXPORT void cJsonIteratorDate( const cJson_iterator *pIter,
+                                   CVALUE *pDate )
 {
    if( pIter && pIter->pItem )
    {
       CJSON *pTimeItem = getCustomVal( pIter->pItem->pChild, CJSON_DATE ) ;
       if( pTimeItem->valType == CJSON_OBJECT )
       {
-         CJSON *pNumberLong = getCustomVal( pTimeItem->pChild, CJSON_NUMBER_LONG ) ;
+         CJSON *pNumberLong = getCustomVal( pTimeItem->pChild,
+                                            CJSON_NUMBER_LONG ) ;
          if( pNumberLong && pNumberLong->valType == CJSON_STRING )
          {
             pDate->valInt64 = ossAtoll( pNumberLong->pValStr ) ;
@@ -244,8 +248,8 @@ void cJsonIteratorDate( const cJson_iterator *pIter,
    }
 }
 
-void cJsonIteratorObjectId( const cJson_iterator *pIter,
-                            CVALUE *pOid )
+SDB_EXPORT void cJsonIteratorObjectId( const cJson_iterator *pIter,
+                                       CVALUE *pOid )
 {
    if( pIter && pIter->pItem )
    {
@@ -254,8 +258,8 @@ void cJsonIteratorObjectId( const cJson_iterator *pIter,
    }
 }
 
-void cJsonIteratorNumberLong( const cJson_iterator *pIter,
-                              CVALUE *pNumberLong )
+SDB_EXPORT void cJsonIteratorNumberLong( const cJson_iterator *pIter,
+                                         CVALUE *pNumberLong )
 {
    if( pIter && pIter->pItem )
    {
@@ -265,26 +269,29 @@ void cJsonIteratorNumberLong( const cJson_iterator *pIter,
    }
 }
 
-void cJsonIteratorDecimal( const cJson_iterator *pIter,
-                           CVALUE *pDecimal,
-                           CVALUE *pPrecision )
+SDB_EXPORT void cJsonIteratorDecimal( const cJson_iterator *pIter,
+                                      CVALUE *pDecimal,
+                                      CVALUE *pPrecision )
 {
    if( pIter && pIter->pItem )
    {
-      CJSON *pDecimalItem   = getCustomVal( pIter->pItem->pChild, CJSON_DECIMAL ) ;
-      CJSON *pPrecisionItem = getCustomVal( pIter->pItem->pChild, CJSON_PRECISION ) ;
+      CJSON *pDecimalItem   = getCustomVal( pIter->pItem->pChild,
+                                            CJSON_DECIMAL ) ;
+      CJSON *pPrecisionItem = getCustomVal( pIter->pItem->pChild,
+                                            CJSON_PRECISION ) ;
       setValue( pDecimalItem, pDecimal ) ;
       setValue( pPrecisionItem, pPrecision ) ;
    }
 }
 
-void cJsonIteratorPrecision( const cJson_iterator *pIter,
-                             CVALUE *pPrecision,
-                             CVALUE *pScale )
+SDB_EXPORT void cJsonIteratorPrecision( const cJson_iterator *pIter,
+                                        CVALUE *pPrecision,
+                                        CVALUE *pScale )
 {
    if( pIter && pIter->pItem )
    {
-      CJSON *pPrecisionItem = getCustomVal( pIter->pItem->pChild, CJSON_PRECISION ) ;
+      CJSON *pPrecisionItem = getCustomVal( pIter->pItem->pChild,
+                                            CJSON_PRECISION ) ;
       if( pPrecisionItem && pPrecisionItem->valType == CJSON_ARRAY )
       {
          if( getIteratorSubNum( pPrecisionItem->pChild ) == 2 )

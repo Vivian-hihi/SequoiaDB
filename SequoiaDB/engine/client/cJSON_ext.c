@@ -66,7 +66,7 @@ CHAR *_cJsonDollarCmdKey[] = {
 #define CJSON_STR_MAXKEY    _cJsonDollarCmdKey[8]
 
 #define CJSON_LEN_STR( str ) sizeof(str)-1,str
-BOOLEAN cJsonExtAppendFunction()
+SDB_EXPORT BOOLEAN cJsonExtAppendFunction()
 {
    BOOLEAN rc = TRUE ;
    if( FALSE == cJsonExtendAppend( CJSON_MATCH_FUNC,

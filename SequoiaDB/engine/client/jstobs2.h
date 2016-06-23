@@ -46,7 +46,7 @@ SDB_EXPORT void JsonSetPrintfLog( void (*pFun)( const CHAR *pFunc,
     \retval TRUE Operation Success
     \retval FALSE Operation Fail
 */
-BOOLEAN json2bson2( const CHAR *pJson, bson *pBson ) ;
+SDB_EXPORT BOOLEAN json2bson2( const CHAR *pJson, bson *pBson ) ;
 
 /** \fn BOOLEAN json2bson( const CHAR *pJson,
                            CJSON_MACHINE *pMachine,

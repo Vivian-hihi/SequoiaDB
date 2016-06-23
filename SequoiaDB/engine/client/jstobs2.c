@@ -71,11 +71,11 @@ static BOOLEAN jsonConvertBson( const CJSON_MACHINE *pMachine,
 /*
  * pFun print log function
 */
-void JsonSetPrintfLog( void (*pFun)( const CHAR *pFunc,
-                                     const CHAR *pFile,
-                                     UINT32 line,
-                                     const CHAR *pFmt,
-                                     ... ) )
+SDB_EXPORT  void JsonSetPrintfLog( void (*pFun)( const CHAR *pFunc,
+                                                 const CHAR *pFile,
+                                                 UINT32 line,
+                                                 const CHAR *pFmt,
+                                                 ... ) )
 {
    _pJsonPrintfLogFun = pFun ;
    cJsonSetPrintfLog( pFun ) ;
@@ -87,7 +87,7 @@ void JsonSetPrintfLog( void (*pFun)( const CHAR *pFunc,
  * pBson : bson object
  * return : the conversion result
 */
-BOOLEAN json2bson2( const CHAR *pJson, bson *pBson )
+SDB_EXPORT BOOLEAN json2bson2( const CHAR *pJson, bson *pBson )
 {
    return json2bson( pJson, NULL, CJSON_RIGOROUS_PARSE, pBson ) ;
 }
@@ -102,10 +102,10 @@ BOOLEAN json2bson2( const CHAR *pJson, bson *pBson )
  * return : the conversion result
 */
 /* THIS IS EXTERNAL FUNCTION TO CONVERT FROM JSON STRING INTO BSON OBJECT */
-BOOLEAN json2bson( const CHAR *pJson,
-                   CJSON_MACHINE *pMachine,
-                   INT32 parseMode,
-                   bson *pBson )
+SDB_EXPORT BOOLEAN json2bson( const CHAR *pJson,
+                              CJSON_MACHINE *pMachine,
+                              INT32 parseMode,
+                              bson *pBson )
 {
    BOOLEAN flag = TRUE ;
    BOOLEAN isOwn = FALSE ;
