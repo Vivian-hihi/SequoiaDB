@@ -56,6 +56,7 @@ typedef struct _cJsonMatch {
 #define CHAR_LEFT_SQUARE_BRACKET    '['
 #define CHAR_RIGHT_SQUARE_BRACKET   ']'
 #define CHAR_DOUBLE_QUOTES '"'
+#define CHAR_SLASH  '\\'
 #define CHAR_COMMA  ','
 #define CHAR_COLON  ':'
 #define CHAR_DOLLAR '$'
@@ -983,6 +984,7 @@ static const CHAR* readString( const CHAR *pStr,
                                CJSON_READ_INFO **ppReadInfo )
 {
    INT32 length = 0 ;
+   BOOLEAN isSlash = FALSE ;
    STRING_TYPE stringType = TYPE_STRING_NONE ;
    CHAR *pValString = NULL ;
    CJSON *pItem = NULL ;
@@ -1032,12 +1034,24 @@ static const CHAR* readString( const CHAR *pStr,
          }
          goto error ;
       }
+      else if( *pStr == CHAR_SLASH && isSlash == FALSE )
+      {
+         isSlash = TRUE ;
+         ++pStr ;
+         continue ;
+      }
       if( ( stringType == TYPE_STRING_DOUBLE_QUOTES &&
-            *pStr == CHAR_DOUBLE_QUOTES ) ||
+            *pStr == CHAR_DOUBLE_QUOTES &&
+            isSlash == FALSE ) ||
           ( stringType == TYPE_STRING_QUOTE &&
-            *pStr == CHAR_QUOTE ) )
+            *pStr == CHAR_QUOTE &&
+            isSlash == FALSE ) )
       {
          break ;
+      }
+      if( isSlash == TRUE )
+      {
+         isSlash = FALSE ;
       }
       ++pStr ;
    }
@@ -1664,6 +1678,7 @@ static const CHAR* parseCommand( const CHAR *pStr,
    INT32 y = 0 ;
    INT32 length = 0 ;
    BOOLEAN isCHeck = TRUE ;
+   BOOLEAN isSlash = FALSE ;
    const CHAR *pStrStart = pStr ;
    const CHAR *pColon    = NULL ;
 
@@ -1674,11 +1689,25 @@ static const CHAR* parseCommand( const CHAR *pStr,
           ( type == TYPE_STRING_NONE  && ( *pStr == CHAR_COLON ||
                                            *pStr == CHAR_SPACE ||
                                            *pStr == CHAR_HT ) )||
-          ( type == TYPE_STRING_QUOTE && *pStr == CHAR_QUOTE ) ||
+          ( type == TYPE_STRING_QUOTE &&
+            *pStr == CHAR_QUOTE &&
+            isSlash == FALSE ) ||
           ( type == TYPE_STRING_DOUBLE_QUOTES &&
-            *pStr == CHAR_DOUBLE_QUOTES ) )
+            *pStr == CHAR_DOUBLE_QUOTES &&
+            isSlash == FALSE ) )
       {
          break ;
+      }
+      if( *pStr == CHAR_SLASH && isSlash == FALSE && type != TYPE_STRING_NONE )
+      {
+         isSlash = TRUE ;
+         ++length ;
+         ++pStr ;
+         continue ;
+      }
+      else if( isSlash == TRUE )
+      {
+         isSlash = FALSE ;
       }
       if( type != TYPE_STRING_NONE && *pStr == CHAR_COLON )
       {
@@ -1804,6 +1833,7 @@ static const CHAR* parseArgImpl( const CHAR *pStr,
    if( *pStr == CHAR_DOUBLE_QUOTES || *pStr == CHAR_QUOTE )
    {
       // "xxxx  or  'xxxx
+      BOOLEAN isSlash = FALSE ;
       STRING_TYPE stringType = TYPE_STRING_NONE ;
       const CHAR *pStrStart = NULL ;
       valType = CJSON_STRING ;
@@ -1832,11 +1862,21 @@ static const CHAR* parseArgImpl( const CHAR *pStr,
             goto error ;
          }
          if( ( stringType == TYPE_STRING_DOUBLE_QUOTES &&
-               *pStr == CHAR_DOUBLE_QUOTES ) ||
+               *pStr == CHAR_DOUBLE_QUOTES &&
+               isSlash == FALSE ) ||
              ( stringType == TYPE_STRING_QUOTE &&
-               *pStr == CHAR_QUOTE ) )
+               *pStr == CHAR_QUOTE &&
+               isSlash == FALSE ) )
          {
             break ;
+         }
+         if( *pStr == CHAR_SLASH && isSlash == FALSE )
+         {
+            isSlash = TRUE ;
+         }
+         else if( isSlash == TRUE )
+         {
+            isSlash = FALSE ;
          }
          ++pStr ;
       }
