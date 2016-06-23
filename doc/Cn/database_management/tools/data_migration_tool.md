@@ -87,12 +87,12 @@ CSV(Comma Separated Value)格式以逗号分隔数值。默认情况下记录以
 
  | 指定类型\\实际类型 | int | long | double | decimal | bool | string | null | oid | date | timestamp | binary | regex | 
  | - | --- | ---- | ------ | ------ | ---- | ------ | ---- | --- | ---- | --------- | ------ | ----- | 
- | int | Y | 可能溢出 | 可能丢失精度 | 可能丢失精度 | Y | 支持数值字符串 | N | N | N | N | N | N | 
- | long | Y | Y | 可能丢失精度 | 可能丢失精度 | Y | 支持数值字符串 | N | N | N | N | N | N | 
- | double | Y | Y | Y | 可能丢失精度 | N | 支持数值字符串 | N | N | N | N | N | N | 
- | decimal | Y | Y | Y | Y | N | 支持数值字符串 | N | N | N | N | N | N | 
- | number | Y | Y | Y | Y | Y | 支持数值字符串 | N | N | N | N | N | N | 
- | bool | Y | Y | N | N | Y | 支持bool字符串 | N | N | N | N | N | N | 
+ | int | Y | 可能溢出 | 可能丢失精度 | 可能丢失精度 | Y | 支持数值字符串 | Y | N | N | N | N | N | 
+ | long | Y | Y | 可能丢失精度 | 可能丢失精度 | Y | 支持数值字符串 | Y | N | N | N | N | N | 
+ | double | Y | Y | Y | 可能丢失精度 | N | 支持数值字符串 | Y | N | N | N | N | N | 
+ | decimal | Y | Y | Y | Y | N | 支持数值字符串 | Y | N | N | N | N | N | 
+ | number | Y | Y | Y | Y | Y | 支持数值字符串 | Y | N | N | N | N | N | 
+ | bool | Y | Y | N | N | Y | 支持bool字符串 | Y | N | N | N | N | N | 
  | string | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | 
  | null | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | 
  | oid | N | N | N | N | N | 支持OID字符串 | N | Y | N | N | N | N | 
