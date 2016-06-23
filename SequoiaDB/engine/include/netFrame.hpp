@@ -82,6 +82,8 @@ namespace engine
          }
 
       public:
+         // return 0 if error happened
+         static UINT32 getCurrentLocalAddress() ;
          static UINT32 getLocalAddress() ;
 
       public:

@@ -234,24 +234,38 @@ namespace engine
       }
    }
 
-   UINT32 _netFrame::getLocalAddress()
+   UINT32 _netFrame::getCurrentLocalAddress()
    {
       UINT32 ip = 0 ;
-      boost::asio::io_service io_srv ;
-      tcp::resolver resolver( io_srv ) ;
-      tcp::resolver::query query( boost::asio::ip::host_name(), "") ;
-      tcp::resolver::iterator itr = resolver.resolve( query ) ;
-      tcp::resolver::iterator end ;
-      for ( ; itr != end; itr++ )
+
+      try
       {
-         tcp::endpoint ep = *itr ;
-         if ( ep.address().is_v4() )
+         boost::asio::io_service io_srv ;
+         tcp::resolver resolver( io_srv ) ;
+         tcp::resolver::query query( boost::asio::ip::host_name(), "") ;
+         tcp::resolver::iterator itr = resolver.resolve( query ) ;
+         tcp::resolver::iterator end ;
+         for ( ; itr != end; itr++ )
          {
-            ip = ep.address().to_v4().to_ulong() ;
-            break ;
+            tcp::endpoint ep = *itr ;
+            if ( ep.address().is_v4() )
+            {
+               ip = ep.address().to_v4().to_ulong() ;
+               break ;
+            }
          }
       }
+      catch ( std::exception& e )
+      {
+         // ignore error
+      }
 
+      return ip ;
+   }
+
+   UINT32 _netFrame::getLocalAddress()
+   {
+      static UINT32 ip = _netFrame::getCurrentLocalAddress() ;
       return ip ;
    }
 

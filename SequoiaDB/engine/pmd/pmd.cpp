@@ -39,6 +39,7 @@
 #include "pmd.hpp"
 #include "ossVer.h"
 #include "pdTrace.hpp"
+#include "netFrame.hpp"
 
 namespace engine
 {
@@ -303,6 +304,13 @@ namespace engine
       // get hostname
       rc = ossGetHostName( _hostName, OSS_MAX_HOSTNAME ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to get host name, rc: %d", rc ) ;
+
+      if ( 0 == _netFrame::getLocalAddress() )
+      {
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "Failed to get local address, rc: %d", rc ) ;
+         goto error ;
+      }
 
       _init = TRUE ;
 
