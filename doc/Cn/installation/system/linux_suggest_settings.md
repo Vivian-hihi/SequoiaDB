@@ -126,7 +126,7 @@
       
         3）  修改后保存，再重启系统。
 
-    3.  采用上述两种方案中的一种验证NUMA是否成功关闭，shell执行如下命令：
+    3.  验证NUMA是否成功关闭，shell执行如下命令：
     
     <pre class="prettyprint lang-javascript">
     > numastat</pre>
