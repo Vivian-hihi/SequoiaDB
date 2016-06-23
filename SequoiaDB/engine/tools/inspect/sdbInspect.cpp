@@ -3563,7 +3563,7 @@ INT32 _sdbCi::doDataExchange( engine::pmdCfgExchange *pEx )
    resetResult() ;
 
    rdxString( pEx, CONSISTENCY_INSPECT_COORD, _coordAddr,
-                   CI_ADDRESS_SIZE , FALSE, FALSE, "", FALSE ) ;
+                   CI_ADDRESS_SIZE , FALSE, FALSE, CI_COORD, FALSE ) ;
 
    rdxString( pEx, CONSISTENCY_INSPECT_AUTH, _auth,
                    CI_AUTH_SIZE , FALSE, FALSE, "\"\":\"\"", FALSE ) ;
