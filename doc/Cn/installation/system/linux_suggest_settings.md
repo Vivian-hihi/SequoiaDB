@@ -77,7 +77,9 @@
 	<pre class="prettyprint lang-javascript">
 	> /sbin/sysctl -p</pre>
 
--   关闭transparent_hugepage
+
+-   关闭transparent_hugepage  
+
 
 	1.	编辑/etc/rc.local，在第一行“#!/bin/sh”的下一行添加如下两行内容：
 
