@@ -21,6 +21,7 @@
    2016-5-27 Zhaobo Tan  Init
 @parameter
    OM_CONF_FILE: OM configure file
+   ACTION      : tell the current script what to do
 @return
    void 
 */
