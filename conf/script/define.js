@@ -127,6 +127,7 @@ var TaskID                                 = "TaskID" ;
 var TmpCoordHostName                       = "TmpCoordHostName" ;
 var TmpCoordSvcName                        = "TmpCoordSvcName" ;
 var Time                                   = "Time" ;
+var TimeStamp                              = "TimeStamp" ;
 var Type                                   = "Type" ;
 var VCoordHostName                         = "TmpCoordHostName" ;
 var VCoordSvcName                          = "TmpCoordSvcName" ;
@@ -157,6 +158,7 @@ var USERTAG                                = "USERTAG" ;
 var SDBADMIN_USER                          = "SDBADMIN_USER" ;
 var OMA_SERVICE                            = "OMA_SERVICE" ;
 
+// TODO: change this value to xxxx3
 var Errno                                  = "errno" ;
 var Detail                                 = "detail" ;
 var Task                                   = "task" ;
@@ -170,12 +172,16 @@ var ClientPort2                            = "clientPort" ;
 var SyncLimit2                             = "syncLimit" ;
 var InitLimit2                             = "initLimit" ;
 var TickTime2                              = "tickTime" ;
+var HostName2                              = "hostName" ;
+var SvcName2                               = "svcName" ;
+
+// TODO: change this value to xxxxx3
 var CatalogAddr2                           = "catalogaddr" ;
-var SvcName2                               = "svcname" ;
 var ClusterName2                           = "clustername" ;
 var BusinessName2                          = "businessname" ;
 var UserTag2                               = "usertag" ;
 
+var SvcName3                               = "svcname" ;
 var InstallPath3                           = "installpath" ;
 var DataPath3                              = "datapath" ;
 var DataDir3                               = "datadir" ;

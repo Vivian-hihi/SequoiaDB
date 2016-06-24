@@ -1738,7 +1738,7 @@ CheckHost.prototype._collOMAInfo =
    // get omagent service info
    try {
       var omaInfoObj  = this.changeToObj( retStr ) ;
-      retObj[Service] = omaInfoObj[SvcName2] ;
+      retObj[Service] = omaInfoObj[SvcName3] ;
    } catch( e ) {
       exp = new SdbError( e, 
          sprintf( "failed to get sdbcm service info in host[?]", 

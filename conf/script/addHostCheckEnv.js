@@ -172,7 +172,7 @@ function main()
             if ( 0 != num )
             {
                omaObj = eval( '(' + omaArr.pos() + ')' ) ;
-               resultInfo[OMA_SERVICE] = omaObj[SvcName2] ;
+               resultInfo[OMA_SERVICE] = omaObj[SvcName3] ;
             }
             else
             {
@@ -186,7 +186,7 @@ function main()
                if ( 0 != num )
                {
                   omaObj = eval( '(' + omaArr.pos() + ')' ) ;
-                  resultInfo[OMA_SERVICE] = omaObj[SvcName2] ;
+                  resultInfo[OMA_SERVICE] = omaObj[SvcName3] ;
                }
             }
          }

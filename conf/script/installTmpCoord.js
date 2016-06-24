@@ -206,7 +206,7 @@ function _getTmpCoordSvc( tmpCoordInfoArr )
       if ( 1 == tmpCoordNum )
       {
          tmpCoordInfoObj  = eval( '(' + tmpCoordInfoArr.pos() + ')' ) ;
-         retSvc  = tmpCoordInfoObj[SvcName2] ;
+         retSvc  = tmpCoordInfoObj[SvcName3] ;
       }
       else
       {

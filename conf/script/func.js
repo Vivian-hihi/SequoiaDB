@@ -1093,7 +1093,7 @@ function getLocalCMSvc()
       if ( arr.size() > 0 )
       {
          obj = eval( '(' + arr.pos() + ')' ) ;
-         retStr = obj[SvcName2] ;
+         retStr = obj[SvcName3] ;
       }
    }
    catch( e )
