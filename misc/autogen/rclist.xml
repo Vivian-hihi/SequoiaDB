@@ -1093,8 +1093,8 @@
       <code>
          <name>SDB_CAT_NO_MATCH_CATALOG</name>
          <description>
-            <en>Unable to find the catalog information</en>
-            <cn>无法找到匹配的编目节点信息</cn>
+            <en>Unable to find the matched catalog information</en>
+            <cn>无法找到匹配的编目信息</cn>
          </description>
       </code>
 
