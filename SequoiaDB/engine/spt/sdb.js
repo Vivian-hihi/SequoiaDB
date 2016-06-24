@@ -197,8 +197,8 @@ function json2Obj( str, func )
 }
 
 // register json function
-JSON.parse = json2Obj ;
-JSON.stringify = object2Json ;
+//JSON.parse = json2Obj ;
+//JSON.stringify = object2Json ;
 
 function println ( val ) {
    if ( arguments.length > 0 )
