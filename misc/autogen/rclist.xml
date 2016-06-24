@@ -1094,7 +1094,7 @@
          <name>SDB_CAT_NO_MATCH_CATALOG</name>
          <description>
             <en>Unable to find the catalog information</en>
-            <cn>无法找到匹配的协调节点信息</cn>
+            <cn>无法找到匹配的编目节点信息</cn>
          </description>
       </code>
 
