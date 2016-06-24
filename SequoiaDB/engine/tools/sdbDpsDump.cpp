@@ -921,7 +921,16 @@ INT32 _dpsDumper::_analysisMeta()
       ossMemcpy( dirPath, srcPath, OSS_MAX_PATHSIZE ) ;
    }
 
-   const INT32 fileCount = getFileCount( dirPath ) ;
+   INT32 fileCount = 0;
+
+   if( SDB_OK != ossAccess( dirPath) )
+   {
+      LogError( "Permission error or dir not exist: %s", dirPath ) ;
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+
+   fileCount = getFileCount( dirPath ) ;
    if( 0 == fileCount )
    {
       LogError( "Cannot find any dpsLogFile in path: %s", dirPath ) ;
