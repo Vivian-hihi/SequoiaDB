@@ -1225,7 +1225,7 @@ function nextPage()
 	restAddBusiness( true, function( jsonArr, textStatus, jqXHR ){
 		var taskID = jsonArr[0]['TaskID'] ;
 		sdbjs.fun.saveData( 'SdbTaskID', taskID ) ;
-		//gotoPage( 'installsdb.html' ) ;
+		gotoPage( 'installsdb.html' ) ;
 	}, function( json ){
 		sdbjs.parts.loadingBox.hide( 'loading' ) ;
 		showProcessError( json['detail'] ) ;
