@@ -847,6 +847,12 @@ namespace import
       len--;
 
    exp:
+      if ('+' == *str || '-' == *str)
+      {
+         str++;
+         len--;
+      }
+
       while (isdigit(*str) && len > 0)
       {
          str++;
