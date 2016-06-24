@@ -38,11 +38,168 @@ var SDB_COORD_GROUP_NAME         = "SYSCoord" ;
 var SDB_CATALOG_GROUP_NAME       = "SYSCatalogGroup" ;
 var SDB_SPARE_GROUP_NAME         = "SYSSpare" ;
 
-var SDB_PRINT_JSON_FORMAT        = true ; 
+var SDB_PRINT_JSON_FORMAT        = true ;
 
+var SDB_JSON_PARSE               = JSON.parse ;
 // end Global Constants
 
 // Global functions
+
+//json obj convert json string
+function object2Json( obj, func, space )
+{
+   var json = '' ;
+   var isFirst ;
+   var objType ;
+   var returnVal = undefined ;
+   var isArray = function( object ){
+      return ( object &&
+               typeof( object ) === 'object' &&
+               typeof( object.length ) === 'number' &&
+               typeof( object.splice ) === 'function' &&
+               !( object.propertyIsEnumerable( 'length' ) ) ) ;
+   }
+   var pad = function( num, n, chars ){
+      chars = ( typeof( chars ) == 'undefined' ? '0' : chars ) ;
+      var len = num.toString().length;
+      while( len < n )
+      {
+         num = chars + num ;
+         ++len ;
+      }
+      return num ;
+   }
+   var append = function( str, isString ){
+      str = str + '' ;
+      if( isString )
+      {
+         str = str.replace( "\\", "\\\\" ) ;
+         str = str.replace( "\t", "\\t" ) ;
+         str = str.replace( "\r", "\\r" ) ;
+         str = str.replace( "\n", "\\n" ) ;
+         str = str.replace( "\f", "\\f" ) ;
+         str = str.replace( "\b", "\\b" ) ;
+         str = str.replace( "\"", "\\\"" ) ;
+      }
+      json += ( '' + str ) ;
+   }
+   var valToString = function( val, func, space, level ){
+      var objType = typeof( val ) ;
+      switch( objType )
+      {
+      case 'number':
+         if( val === Number.POSITIVE_INFINITY )
+         {
+            append( 'Infinity', false ) ;
+         }
+         else if( val === Number.NEGATIVE_INFINITY )
+         {
+            append( '-Infinity', false ) ;
+         }
+         else if( val === Number.NaN )
+         {
+            append( '0', false ) ;
+         }
+         else
+         {
+            append( val, false ) ;
+         }
+         break ;
+      case 'string':
+         append( '"', false ) ;
+         append( val, true ) ;
+         append( '"', false ) ;
+         break ;
+      case 'boolean':
+         append( val ? 'true' : 'false', false ) ;
+         break ;
+      case 'object':
+         if( val === null )
+         {
+            append( 'null', false ) ;
+         }
+         else
+         {
+            toString( val, func, space, isArray( val ), level + 1 ) ;
+         }
+         break ;
+      case 'function':
+         break ;
+      case 'undefined':
+         append( 'undefined', false ) ;
+         break ;
+      default:
+         append( 'null', false ) ;
+         break ;
+      }
+   }
+   var toString = function( obj, func, space, is_array, level ){
+      isFirst = true ;
+      append( is_array == false ? '{ ' : '[ ', false ) ;
+      if( space > 0 )
+      {
+         append( "\r\n", false ) ;
+         append( pad( '', space * level, ' ' ), false ) ;
+      }
+      for( var key in obj )
+      {
+         if( isFirst == false )
+         {
+            append( ', ', false ) ;
+            if( space > 0 )
+            {
+               append( "\r\n", false ) ;
+               append( pad( '', space * level, ' ' ), false ) ;
+            }
+         }
+         isFirst = false ;
+         if( is_array == false )
+         {
+            append( '"', false ) ;
+            append( key, true ) ;
+            append( '" : ', false ) ;
+         }
+         if( typeof( func ) == 'function' )
+         {
+            returnVal = undefined ;
+            returnVal = func( key, obj[key] ) ;
+         }
+         if( typeof( returnVal ) != 'undefined' )
+         {
+            continue ;
+         }
+         valToString( obj[key], func, space, level ) ;
+      }
+      if( space > 0 )
+      {
+         append( "\r\n", false ) ;
+         append( pad( '', space * (level - 1), ' ' ), false ) ;
+      }
+      append( is_array == false ? '}' : ']', false ) ;
+   }
+   valToString( obj, func, space, 0 ) ;
+   return json ;
+}
+
+// json string convert json obj
+function json2Obj( str, func )
+{
+   var json ;
+   try
+   {
+      json = SDB_JSON_PARSE( str, func ) ;
+   }
+   catch( e )
+   {
+      json = eval( '(' + str + ')' ) ;
+   }
+   return json ;
+}
+
+// register json function
+JSON.parse = json2Obj ;
+JSON.stringify = object2Json ;
+
 function println ( val ) {
    if ( arguments.length > 0 )
       print ( val ) ;
