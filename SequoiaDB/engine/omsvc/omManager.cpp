@@ -462,7 +462,7 @@ namespace engine
 
       matcher = BSON( OM_CONFIGURE_FIELD_BUSINESSNAME << businessName ) ;
       rc = rtnQuery( OM_CS_DEPLOY_CL_CONFIGURE, empty, matcher, empty, 
-                     empty, 0, cb, 0, 1, pdmsCB, pRtnCB, contextID ) ;
+                     empty, 0, cb, 0, -1, pdmsCB, pRtnCB, contextID ) ;
       PD_RC_CHECK( rc, PDERROR, "query table failed:table=%s,rc=%d",
                    OM_CS_DEPLOY_CL_CONFIGURE, rc ) ;
       while( TRUE )
@@ -623,8 +623,10 @@ namespace engine
    INT32 _omManager::_updateBusinessTable()
    {
       INT32 rc = SDB_OK ;
+      BSONArrayBuilder arrayBuilder ;
       BSONObj empty ;
       BSONObj isNull ;
+      BSONObj discover ;
       BSONObj matcher ;
       pmdEDUCB *cb       = pmdGetThreadEDUCB() ;
       pmdKRCB *pKRCB     = pmdGetKRCB() ;
@@ -633,8 +635,12 @@ namespace engine
       SINT64 contextID   = -1 ;
       list <string> hostsList ;
       
-      isNull  = BSON( "$isnull" << 1 ) ;
-      matcher = BSON( OM_BUSINESS_FIELD_LOCATION << isNull ) ;
+      isNull   = BSON( "$isnull" << 1 ) ;
+      discover = BSON( OM_BUSINESS_FIELD_ADDTYPE
+                       << OM_BUSINESS_ADDTYPE_DISCOVERY ) ;
+      arrayBuilder.append( discover ) ;
+      matcher  = BSON( OM_BUSINESS_FIELD_LOCATION << isNull
+                       << "$not" << arrayBuilder.arr() ) ;
       rc = rtnQuery( OM_CS_DEPLOY_CL_BUSINESS, empty, matcher, empty, 
                      empty, 0, cb, 0, 1, pdmsCB, pRtnCB, contextID ) ;
       PD_RC_CHECK( rc, PDERROR, "query table failed:table=%s,rc=%d",
