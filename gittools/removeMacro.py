@@ -14,7 +14,23 @@ def isMacroStart(line):
         return False
     if line.find('endif') != -1:
         return False
+    if line.find('elif') != -1:
+        return False
     if line.find('if') == -1:
+        return False
+    return True
+
+def isMacroElseIf(line):
+    if not isMacro(line):
+        return False
+    if line.find('elif') == -1:
+        return False
+    return True
+
+def isMacroElse(line):
+    if not isMacro(line):
+        return False
+    if line.find('else') == -1:
         return False
     return True
     
@@ -30,6 +46,7 @@ def removeMacro(fileName, macro):
         raise Exception("file not exists: " + fileName)
     file = open(fileName, 'r')
     isMacroStarted = False
+    inMacroElse = False
     depth = 0 # macro nested depth
     for rawLine in file:
         line = rawLine.lstrip()
@@ -42,15 +59,26 @@ def removeMacro(fileName, macro):
         else:
             if isMacroStart(line):
                 depth += 1
+            elif isMacroElse(line):
+                if depth == 1:
+                    inMacroElse = True 
+            elif isMacroElseIf(line):
+                raise Exception("do not support macro '#elif' inside macro " 
+                    + macro + " in file: " + fileName)
+                pass
             elif isMacroEnd(line):
                 depth -= 1
                 if depth == 0:
                     isMacroStarted = False
+                    inMacroElse = False
+
+            if inMacroElse and not isMacroElse(line):
+                sys.stdout.write(rawLine)
     file.close()
 
 if __name__ == '__main__':
     if len(sys.argv) != 3:
-        print('<cmd> <file> <macro>')
+        print('Usage: ' + sys.argv[0].strip() + ' <file> <macro>')
         sys.exit(1)
     fileName = sys.argv[1].strip()
     macro = sys.argv[2].strip()
