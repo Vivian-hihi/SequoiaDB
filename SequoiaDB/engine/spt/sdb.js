@@ -45,160 +45,241 @@ var SDB_JSON_PARSE               = JSON.parse ;
 
 // Global functions
 
-//json obj convert json string
-function object2Json( obj, func, space )
-{
-   var json = '' ;
-   var isFirst ;
-   var objType ;
-   var returnVal = undefined ;
-   var isArray = function( object ){
+// register json function
+//JSON.parse JSON.stringify
+function SDB_INIT(){
+
+   function isArray( object ){
       return ( object &&
                typeof( object ) === 'object' &&
                typeof( object.length ) === 'number' &&
                typeof( object.splice ) === 'function' &&
                !( object.propertyIsEnumerable( 'length' ) ) ) ;
    }
-   var pad = function( num, n, chars ){
-      chars = ( typeof( chars ) == 'undefined' ? '0' : chars ) ;
-      var len = num.toString().length;
-      while( len < n )
-      {
-         num = chars + num ;
-         ++len ;
+
+   function filterInviChart(str) {
+      var i = 0, len = str.length;
+      var newStr = '';
+      var chars, code;
+      while (i < len) {
+         chars = str.charAt(i);
+         code = chars.charCodeAt();
+         if (code < 0x20 || code == 0x7F) {
+            chars = '?';
+         }
+         newStr += chars;
+         ++i;
       }
-      return num ;
+      return newStr;
    }
-   var append = function( str, isString ){
-      str = str + '' ;
-      if( isString )
-      {
-         str = str.replace( "\\", "\\\\" ) ;
-         str = str.replace( "\t", "\\t" ) ;
-         str = str.replace( "\r", "\\r" ) ;
-         str = str.replace( "\n", "\\n" ) ;
-         str = str.replace( "\f", "\\f" ) ;
-         str = str.replace( "\b", "\\b" ) ;
-         str = str.replace( "\"", "\\\"" ) ;
+  
+   JSON.parse = function(str, func) {
+      var json;
+      try {
+         json = SDB_JSON_PARSE(str, func);
+      } catch (e) {
+         try {
+            var newStr = filterInviChart(str);
+            json = SDB_JSON_PARSE(newStr, func);
+         } catch (e) {
+            json = eval('(' + str + ')');
+         }
       }
-      json += ( '' + str ) ;
+      return json;
+   } ;
+
+   var rx_escapable = /[\\\"\u0000-\u001f\u007f-\u009f\u00ad\u0600-\u0604\u070f\u17b4\u17b5\u200c-\u200f\u2028-\u202f\u2060-\u206f\ufeff\ufff0-\uffff]/g;
+
+   function f(n) {
+      return n < 10
+          ? "0" + n
+          : n;
    }
-   var valToString = function( val, func, space, level ){
-      var objType = typeof( val ) ;
-      switch( objType )
-      {
-      case 'number':
-         if( val === Number.POSITIVE_INFINITY )
-         {
-            append( 'Infinity', false ) ;
-         }
-         else if( val === Number.NEGATIVE_INFINITY )
-         {
-            append( '-Infinity', false ) ;
-         }
-         else if( val === Number.NaN )
-         {
-            append( '0', false ) ;
-         }
-         else
-         {
-            append( val, false ) ;
-         }
-         break ;
-      case 'string':
-         append( '"', false ) ;
-         append( val, true ) ;
-         append( '"', false ) ;
-         break ;
-      case 'boolean':
-         append( val ? 'true' : 'false', false ) ;
-         break ;
-      case 'object':
-         if( val === null )
-         {
-            append( 'null', false ) ;
-         }
-         else
-         {
-            toString( val, func, space, isArray( val ), level + 1 ) ;
-         }
-         break ;
-      case 'function':
-         break ;
-      case 'undefined':
-         append( 'undefined', false ) ;
-         break ;
-      default:
-         append( 'null', false ) ;
-         break ;
-      }
+
+   function this_value() {
+      return this.valueOf();
    }
-   var toString = function( obj, func, space, is_array, level ){
-      isFirst = true ;
-      append( is_array == false ? '{ ' : '[ ', false ) ;
-      if( space > 0 )
-      {
-         append( "\r\n", false ) ;
-         append( pad( '', space * level, ' ' ), false ) ;
+
+   if (typeof Date.prototype.toJSON !== "function") {
+
+      Date.prototype.toJSON = function () {
+
+         return isFinite(this.valueOf())
+             ? this.getUTCFullYear() + "-" +
+                     f(this.getUTCMonth() + 1) + "-" +
+                     f(this.getUTCDate()) + "T" +
+                     f(this.getUTCHours()) + ":" +
+                     f(this.getUTCMinutes()) + ":" +
+                     f(this.getUTCSeconds()) + "Z"
+             : null;
+      };
+
+      Boolean.prototype.toJSON = this_value;
+      Number.prototype.toJSON = this_value;
+      String.prototype.toJSON = this_value;
+   }
+
+   var gap;
+   var indent;
+   var meta;
+   var rep;
+
+
+   function quote(string) {
+
+      rx_escapable.lastIndex = 0;
+      return rx_escapable.test(string)
+          ? "\"" + string.replace(rx_escapable, function (a) {
+             var c = meta[a];
+             return typeof c === "string"
+                 ? c
+                 : "\\u" + ("0000" + a.charCodeAt(0).toString(16)).slice(-4);
+          }) + "\""
+          : "\"" + string + "\"";
+   }
+
+
+   function str(key, holder) {
+
+      var i;
+      var k;
+      var v;
+      var length;
+      var mind = gap;
+      var partial;
+      var value = holder[key];
+
+      if (value && typeof value === "object" &&
+              typeof value.toJSON === "function") {
+         value = value.toJSON(key);
       }
-      for( var key in obj )
-      {
-         if( isFirst == false )
-         {
-            append( ', ', false ) ;
-            if( space > 0 )
-            {
-               append( "\r\n", false ) ;
-               append( pad( '', space * level, ' ' ), false ) ;
+
+      if (typeof rep === "function") {
+         value = rep.call(holder, key, value);
+      }
+
+      switch (typeof value) {
+         case "string":
+            return quote(value);
+
+         case "number":
+            if (value === Number.POSITIVE_INFINITY) {
+               return 'Infinity';
             }
-         }
-         isFirst = false ;
-         if( is_array == false )
-         {
-            append( '"', false ) ;
-            append( key, true ) ;
-            append( '" : ', false ) ;
-         }
-         if( typeof( func ) == 'function' )
-         {
-            returnVal = undefined ;
-            returnVal = func( key, obj[key] ) ;
-         }
-         if( typeof( returnVal ) != 'undefined' )
-         {
-            continue ;
-         }
-         valToString( obj[key], func, space, level ) ;
-      }
-      if( space > 0 )
-      {
-         append( "\r\n", false ) ;
-         append( pad( '', space * (level - 1), ' ' ), false ) ;
-      }
-      append( is_array == false ? '}' : ']', false ) ;
-   }
-   valToString( obj, func, space, 0 ) ;
-   return json ;
-}
+            else if (value === Number.NEGATIVE_INFINITY) {
+               return '-Infinity';
+            }
+            else if (value === Number.NaN) {
+               return '0';
+            }
+            else {
+               return String(value);
+            }
 
-// json string convert json obj
-function json2Obj( str, func )
-{
-   var json ;
-   try
-   {
-      json = SDB_JSON_PARSE( str, func ) ;
-   }
-   catch( e )
-   {
-      json = eval( '(' + str + ')' ) ;
-   }
-   return json ;
-}
+         case "boolean":
+         case "null":
+            return String(value);
 
-// register json function
-//JSON.parse = json2Obj ;
-//JSON.stringify = object2Json ;
+         case "object":
+            if (!value) {
+               return "null";
+            }
+            gap += indent;
+            partial = [];
+
+            if( isArray( value ) ) {
+               length = value.length;
+               for (i = 0; i < length; i += 1) {
+                  partial[i] = str(i, value) || "null";
+               }
+
+               v = partial.length === 0
+                   ? "[]"
+                   : gap
+                       ? "[\n" + gap + partial.join(",\n" + gap) + "\n" + mind + "]"
+                       : "[" + partial.join(",") + "]";
+               gap = mind;
+               return v;
+            }
+
+            if (rep && typeof rep === "object") {
+               length = rep.length;
+               for (i = 0; i < length; i += 1) {
+                  if (typeof rep[i] === "string") {
+                     k = rep[i];
+                     v = str(k, value);
+                     if (v) {
+                        partial.push(quote(k) + (
+                            gap
+                                ? ": "
+                                : ":"
+                        ) + v);
+                     }
+                  }
+               }
+            } else {
+
+               for (k in value) {
+                  //if (Object.prototype.hasOwnProperty.call(value, k)) {
+                     v = str(k, value);
+                     if (v) {
+                        partial.push(quote(k) + (
+                            gap
+                                ? ": "
+                                : ":"
+                        ) + v);
+                     }
+                  //}
+               }
+            }
+
+            v = partial.length === 0
+                ? "{}"
+                : gap
+                    ? "{\n" + gap + partial.join(",\n" + gap) + "\n" + mind + "}"
+                    : "{" + partial.join(",") + "}";
+            gap = mind;
+            return v;
+      }
+   }
+
+   meta = {
+      "\b": "\\b",
+      "\t": "\\t",
+      "\n": "\\n",
+      "\f": "\\f",
+      "\r": "\\r",
+      "\"": "\\\"",
+      "\\": "\\\\"
+   };
+
+   JSON.stringify = function (value, replacer, space) {
+
+      var i;
+      gap = "";
+      indent = "";
+
+      if (typeof space === "number") {
+         for (i = 0; i < space; i += 1) {
+            indent += " ";
+         }
+
+      } else if (typeof space === "string") {
+         indent = space;
+      }
+
+      rep = replacer;
+      if (replacer && typeof replacer !== "function" &&
+              (typeof replacer !== "object" ||
+              typeof replacer.length !== "number")) {
+         throw new Error("JSON.stringify");
+      }
+
+      return str("", { "": value });
+   };
+
+}
+SDB_INIT() ;
 
 function println ( val ) {
    if ( arguments.length > 0 )
