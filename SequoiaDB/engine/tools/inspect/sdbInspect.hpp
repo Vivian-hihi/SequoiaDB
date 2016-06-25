@@ -97,7 +97,7 @@ CHAR g_password[ CI_PASSWD_SIZE + 1 ] = { 0 } ;
 #define CI_VIEW_GROUP      "group"
 #define CI_VIEW_CL         "collection"
 // Coord option
-#define CI_COORD_DEFVAL		"localhost:11810"
+#define CI_COORD_DEFVAL    "localhost:11810"
 
 #define CI_HEADER_EYECATCHER "SDBCI"
 #define HEADER_PARSE_ERROR 1
