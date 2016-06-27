@@ -308,7 +308,7 @@ public:
    virtual INT32 preSaving() ;
 
 public:
-   static const INT32 getFileCount( const CHAR *path );
+   static INT32   getFileCount( const CHAR *path, INT32 &fileCount );
    static BOOLEAN isDir( const CHAR *path ) ;
    static BOOLEAN isFileExisted( const CHAR *path );
    static INT32   sortFiles(dpsMetaData& meta);

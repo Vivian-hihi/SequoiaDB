@@ -43,6 +43,7 @@
 #include "ossVer.hpp"
 #include "utilStr.hpp"
 #include "dpsLogRecordDef.hpp"
+#include "ossPath.hpp"
 
 #include <boost/filesystem.hpp>
 #include <boost/filesystem/operations.hpp>
@@ -764,9 +765,23 @@ INT32 _dpsDumper::dump()
          rc = SDB_INVALIDARG ;
          goto error ;
       }
-
-      INT32 const MAX_FILE_COUNT = getFileCount( srcPath ) ;
-      if( 0 >= MAX_FILE_COUNT )
+	  
+      INT32 fileCount = 0 ;
+      INT32 retVal = getFileCount( srcPath, fileCount ) ;
+      if ( SDB_INVALIDARG == retVal ) 
+      {
+         LogError( "Permission error or dir not exist: %s", srcPath ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+      if( SDB_OK != retVal )
+      {
+         LogError( "System error while accessing dir: %s", srcPath ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+	  
+      if( 0 >= fileCount )
       {
          LogError( "Cannot find any Log files from: %s, "
                    "check input path again", srcPath) ;
@@ -774,7 +789,7 @@ INT32 _dpsDumper::dump()
          goto error ;
       }
 
-      for( INT32 idx = 0 ; idx < MAX_FILE_COUNT ; ++idx )
+      for( INT32 idx = 0 ; idx < fileCount ; ++idx )
       {
          // src log file ;
          fs::path fileDir( srcPath ) ;
@@ -795,7 +810,7 @@ INT32 _dpsDumper::dump()
 
          rc = _filter->doFilte( this, fileTo, filename ) ;
          if( ( rc && SDB_DPS_CORRUPTED_LOG == rc )
-             || idx != MAX_FILE_COUNT - 1 )
+             || idx != fileCount - 1 )
          {
             rc = SDB_OK ;
             continue ;
@@ -922,15 +937,19 @@ INT32 _dpsDumper::_analysisMeta()
    }
 
    INT32 fileCount = 0;
-
-   if( SDB_OK != ossAccess( dirPath) )
+   INT32 retVal = getFileCount( dirPath, fileCount ) ;
+   if ( SDB_INVALIDARG == retVal ) 
    {
       LogError( "Permission error or dir not exist: %s", dirPath ) ;
       rc = SDB_INVALIDARG ;
       goto error ;
    }
-
-   fileCount = getFileCount( dirPath ) ;
+   if( SDB_OK != retVal )
+   {
+      LogError( "System error while accessing dir: %s", dirPath ) ;
+      rc = SDB_SYS ;
+      goto error ;
+   }
    if( 0 == fileCount )
    {
       LogError( "Cannot find any dpsLogFile in path: %s", dirPath ) ;
@@ -1040,35 +1059,24 @@ error:
    goto done ;
 }
 
-const INT32 _dpsDumper::getFileCount( const CHAR *path )
+INT32 _dpsDumper::getFileCount( const CHAR *path, INT32 &fileCount /*out*/ )
 {
-   INT32 fileCount = 0 ;
-   const CHAR *pFileName = REPLOG_NAME_PREFIX SEP_CHAR_DOT ;
-   fs::path fileDir( path ) ;
-   fs::directory_iterator endIter ;
-   for( fs::directory_iterator it( path ); it != endIter; ++it )
-   {
-      const CHAR *filepath = it->path().filename().string().c_str() ;
-      const CHAR *dotPos = ossStrrchr( filepath, '.' ) ;
-      if( !dotPos )
-         continue ;
-      const CHAR *namePos = ossStrstr( filepath, pFileName ) ;
-      if( !namePos )
-         continue ;
-      if( ( dotPos - namePos + 1 ) != (UINT32)ossStrlen( pFileName ) )
-         continue ;
+   INT32 rc = SDB_OK ;
+   const CHAR *filter = REPLOG_NAME_PREFIX SEP_CHAR_DOT "*" ;
+   map< string, string > mapFiles ;
+   fileCount = 0 ;
 
-      ++fileCount ;
-   }
+   rc = ossEnumFiles( path, mapFiles, filter ) ;
+   fileCount = mapFiles.size() ;
 
-   return fileCount ;
+   return rc ;
 }
 
 BOOLEAN _dpsDumper::isDir( const CHAR *path )
 {
    BOOLEAN rc = FALSE ;
    SDB_OSS_FILETYPE fileType = SDB_OSS_UNK ;
-   INT32 retVal = ossAccess( path, W_OK ) ;
+   INT32 retVal = ossAccess( path, R_OK ) ;
    if ( SDB_OK == retVal )
    {
       INT32 retValue = ossGetPathType( path, &fileType ) ;
