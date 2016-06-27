@@ -55,6 +55,7 @@
          </sequential>
       </for>
       
+      <mkdir dir="${test.machine.deploy.path}"/>
       <scp file="${basedir}/deploy-config/deploy.js" 
            todir="${remote.user}:${remote.password}@${machine_control}:${test.machine.deploy.path}/" 
            trust="true" 
