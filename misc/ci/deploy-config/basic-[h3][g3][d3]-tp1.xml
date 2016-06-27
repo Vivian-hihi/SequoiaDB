@@ -55,7 +55,12 @@
          </sequential>
       </for>
       
-      <mkdir dir="${test.machine.deploy.path}"/>
+      <sshexec host="${machine_control}" 
+               username="${remote.user}" 
+               password="${remote.password}" 
+               command="mkdir -p ${test.machine.deploy.path}" 
+               trust="true" 
+               failonerror="true" />
       <scp file="${basedir}/deploy-config/deploy.js" 
            todir="${remote.user}:${remote.password}@${machine_control}:${test.machine.deploy.path}/" 
            trust="true" 
