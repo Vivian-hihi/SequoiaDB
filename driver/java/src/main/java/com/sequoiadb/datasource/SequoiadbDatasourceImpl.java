@@ -908,7 +908,7 @@ public class SequoiadbDatasourceImpl
 		    _hasClosed=true;
 		} finally {wlock.unlock();}
 	}
-
+	
 	private void _init(List<String> urls, String username, String password, 
 			ConfigOptions nwOpt, DatasourceOptions dsOpt) throws BaseException {        
 		// set arguments
