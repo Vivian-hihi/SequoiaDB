@@ -784,7 +784,8 @@ int sdbSetBsonValue( sdbbson *bsonObj, const char *name, Datum valueDatum,
       /* this type do not have type name, so we must use the value(see more types in pg_type.h) */ 
       case 1115:
       case 1182:
-      case 1014 :
+      case 1014:
+      case 1231:
       {
          INT32 i = 0 ;
          Datum datumTmp ;
@@ -1650,6 +1651,7 @@ INT32 sdbRecurBoolExpr( BoolExpr *boolexpr, SdbExprTreeState *expr_state,
    memset( &tmp_expr_state, 0, sizeof(tmp_expr_state) ) ;
    tmp_expr_state.foreign_table_id      = expr_state->foreign_table_id ;
    tmp_expr_state.foreign_table_index   = expr_state->foreign_table_index ;
+   tmp_expr_state.is_use_decimal        = expr_state->is_use_decimal ;
 
    sdbbson_init( &tmpCondition ) ;
    sdbbson_append_start_array( &tmpCondition, key ) ;
@@ -2623,6 +2625,7 @@ static Datum sdbColumnValue( sdbbson_iterator *sdbbsonIterator, Oid columnTypeId
          rc = sdbbson_iterator_decimal( sdbbsonIterator, &decimal ) ;
          if ( SDB_OK != rc )
          {
+            decimal_free( &decimal ) ;
             elog( ERROR, "get decimal faild:rc=%d", rc ) ;
             break ;
          }
@@ -2632,6 +2635,7 @@ static Datum sdbColumnValue( sdbbson_iterator *sdbbsonIterator, Oid columnTypeId
          rc    = decimal_to_str( &decimal, value, size ) ;
          if ( SDB_OK != rc )
          {
+            decimal_free( &decimal ) ;
             elog( ERROR, "decimal to str faild:rc=%d", rc ) ;
             break ;
          }
@@ -2641,9 +2645,9 @@ static Datum sdbColumnValue( sdbbson_iterator *sdbbsonIterator, Oid columnTypeId
             int tmpTypeMod = columnTypeMod - VARHDRSZ ;
             if ( decimal_is_out_of_precision( &decimal, tmpTypeMod ) )
             {
-               decimal_free( &decimal ) ;
                int precision = (tmpTypeMod >> 16) & 0xffff;
-            	int scale     = tmpTypeMod & 0xffff;
+               int scale     = tmpTypeMod & 0xffff;
+               decimal_free( &decimal ) ;
                elog( ERROR, "value[%s] is out of precision[%d,%d]",
                      value, precision, scale ) ;
                break ;
