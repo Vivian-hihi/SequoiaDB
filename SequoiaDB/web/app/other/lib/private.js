@@ -222,32 +222,26 @@ _IndexBottom.checkPing = function( $scope, SdbRest, errorNum )
       {
          if( errorNum > 0 )
          {
-            _IndexPublic.closeErrorModel( $scope ) ;
+            window.location.reload();
          }
-         $scope.Bottom.sysStatus = $scope.autoLanguage( '良好' ) ;
-         $scope.Bottom.statusColor = 'success' ;
-         setTimeout( function(){
-            _IndexBottom.checkPing( $scope, SdbRest, 0 ) ;
-         }, 5000 ) ;
+         else
+         {
+            $scope.Bottom.sysStatus = $scope.autoLanguage( '良好' ) ;
+            $scope.Bottom.statusColor = 'success' ;
+            setTimeout( function(){
+               _IndexBottom.checkPing( $scope, SdbRest, 0 ) ;
+            }, 5000 ) ;
+         }
       }
       else
       {
          ++errorNum ;
-         if( errorNum > 50 )
-         {
-            $scope.Bottom.sysStatus = $scope.autoLanguage( '网络错误' ) ;
-            $scope.Bottom.statusColor = 'error' ;
-            _IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
-         }
-         else
-         {
-            $scope.Bottom.sysStatus = $scope.autoLanguage( '网络错误' ) ;
-            $scope.Bottom.statusColor = 'error' ;
-            _IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '服务端连接断开，正在尝试重新连接...' ) ) ;
-            setTimeout( function(){
-               _IndexBottom.checkPing( $scope, SdbRest, errorNum ) ;
-            }, 5000 ) ;
-         }
+          $scope.Bottom.sysStatus = $scope.autoLanguage( '网络错误' ) ;
+         $scope.Bottom.statusColor = 'error' ;
+         _IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '服务端连接断开，正在尝试重新连接...' ) ) ;
+         setTimeout( function(){
+            _IndexBottom.checkPing( $scope, SdbRest, errorNum ) ;
+         }, 5000 ) ;
       }
       $scope.$apply() ;
    } ) ;

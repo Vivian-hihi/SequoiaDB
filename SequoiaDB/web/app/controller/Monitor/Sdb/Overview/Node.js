@@ -11,7 +11,7 @@
       $scope.moduleType =  moduleType ;
       $scope.NodeList = [] ;
       $scope.NodeGridOptions = { 'titleWidth': [] } ;
-      $scope.ShowKeyList = [ 'NodeName', 'GroupName', 'IsPrimary', 'Role', 'TotalRecord', 'TotalLob', 'LSN' ] ;
+      $scope.ShowKeyList = [ 'NodeName', 'GroupName', 'IsPrimary', 'Role', 'TotalRecords', 'TotalLobs', 'LSN' ] ;
       $scope.ShowKey = [] ;
       $scope.SelectMenu = [] ;
       $scope.OrderByField = [] ;
@@ -19,43 +19,7 @@
       $scope.DbList = [] ;
       $scope.ClList = [] ;
 
-      $scope.queryList = function( data, success, failed, error, complete ){
-         SdbRest._postTest( './test/nodeList', success, failed, error ) ;
-      }
-      
-      //获取DB快照
-      var getDbList = function(){
-         var sql = '' ;
-         sql = 'SELECT NodeName, HostName, GroupName, IsPrimary, ServiceName, ServiceStatus FROM $SNAPSHOT_DB' ;
-         SdbRest.Exec( sql, function( DbList ){
-            $scope.DbList = DbList ;
-         }, function( errorInfo ){
-            _IndexPublic.createRetryModel( $scope, errorInfo, function(){
-               getDbList() ;
-               return true ;
-            } ) ;
-         }, function(){
-            _IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
-         } ) ;
-      } ;
-
-      //获取CL快照
-      var getClList = function(){
-         var sql = '' ;
-         sql = 'SELECT Name, Details FROM $SNAPSHOT_CL WHERE Global = true' ;
-         SdbRest.Exec( sql, function( ClList ){
-            $scope.ClList = ClList ;
-         }, function( errorInfo ){
-            _IndexPublic.createRetryModel( $scope, errorInfo, function(){
-               getDbList() ;
-               return true ;
-            } ) ;
-         }, function(){
-            _IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
-         } ) ;
-      } ;
-
-      //获取节点列表
+       //获取节点列表
       var getNodesList = function(){
          var data = {
             'cmd': 'list nodes',
@@ -63,6 +27,61 @@
          } ;
          SdbRest.OmOperation( data, function( nodeList ){
             $scope.NodesList = nodeList ;
+            $.each( nodeList, function( index, nodeInfo ){
+               if( nodeInfo['Role'] == 'coord' || nodeInfo['Role'] == 'catalog' )
+               {
+                  nodeList[index]['GroupName'] = nodeInfo['Role'] ;
+               }
+               nodeList[index]['NodeName'] = nodeInfo['HostName'] + ':' + nodeInfo['ServiceName'] ;
+               nodeList[index]['IsPrimary'] = false ;
+               nodeList[index]['Status'] = true ;
+               nodeList[index]['TotalRecords'] = 0 ;
+               nodeList[index]['TotalLobs'] = 0 ;
+               nodeList[index]['TotalCL'] = 0 ;
+               
+               //LSN 虚构
+               nodeList[index]['LSN'] = 1 ;
+               
+               $.each( $scope.DbList, function( index2, DbInfo ){
+                  if( nodeList[index]['NodeName'] == DbInfo['NodeName'] )
+                  {
+                     nodeList[index]['GroupName'] = DbInfo['GroupName'] ;
+                     if( DbInfo['IsPrimary'] == true )
+                     {
+                        nodeList[index]['IsPrimary'] = true ;
+                     }
+                     if( DbInfo['ServiceStatus'] == false )
+                     {
+                        nodeList[index]['Status'] = false ;
+                     }
+                  }
+               } ) ;
+               $.each( $scope.ClList, function( index3, ClInfo ){
+                  if( nodeList[index]['NodeName'] == ClInfo['NodeName'] )
+                  {
+                     nodeList[index]['TotalCL'] += 1 ;
+                     nodeList[index]['TotalRecords'] += ClInfo['TotalRecords'] ;
+                     nodeList[index]['TotalLobs'] += ClInfo['TotalLobs'] ;
+                  }
+               } ) ;
+            } ) ;
+
+            var keyList = [ "NodeName", "HostName", "GroupName", "IsPrimary", "Role", "TotalCL", "TotalRecords", "TotalLobs", "LSN" ] ;
+            $scope.ShowKey = [] ;
+            $scope.SelectMenu = [] ;
+            $.each( keyList, function( index, key ){
+               $scope.ShowKey.push( { 'key': key, 'show': $scope.ShowKeyList.indexOf( key ) >= 0 } ) ;
+               $scope.SelectMenu.push( { 
+                  'html': $compile( '<label><div class="Ellipsis" style="padding:5px 10px"><input type="checkbox" ng-model="ShowKey[\'' + index + '\'][\'show\']"/>&nbsp;' + key + '</div></label>' )( $scope ),
+                  'onClick': function(){}
+               } ) ;
+            } ) ;
+            $scope.SelectMenu.push( { 
+               'html': $compile( '<button class="btn btn-primary" ng-click="SaveShowKeyList()" style="width:100%;">确定</button>' )( $scope )
+            } ) ;
+            gridShowColumn() ;
+            $scope.Timer.complete = true ;
+
          }, function( errorInfo ){
             _IndexPublic.createRetryModel( $scope, errorInfo, function(){
                getNodesList() ;
@@ -73,9 +92,37 @@
          } ) ;
       } ;
 
-      getNodesList()
-      getDbList()
-      getClList()
+      //获取CL快照
+      var getClList = function(){
+         var sql = 'SELECT t1.Name,t1.Details.TotalRecords, t1.Details.TotalLobs,t1.Details.NodeName from (SELECT Name, Details FROM $SNAPSHOT_CL WHERE Global = true split By Details) As t1' ;
+         SdbRest.Exec( sql, function( ClList ){
+            $scope.ClList = ClList ;
+            getNodesList() ;
+         }, function( errorInfo ){
+            _IndexPublic.createRetryModel( $scope, errorInfo, function(){
+               getDbList() ;
+               return true ;
+            } ) ;
+         }, function(){
+            _IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
+         } ) ;
+      } ;
+
+      //获取DB快照
+      var getDbList = function(){
+         var sql  = 'SELECT NodeName, HostName, GroupName, IsPrimary, ServiceName, ServiceStatus FROM $SNAPSHOT_DB' ;
+         SdbRest.Exec( sql, function( DbList ){
+            $scope.DbList = DbList ;
+            getClList() ;
+         }, function( errorInfo ){
+            _IndexPublic.createRetryModel( $scope, errorInfo, function(){
+               getDbList() ;
+               return true ;
+            } ) ;
+         }, function(){
+            _IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
+         } ) ;
+      } ;
 
       //设置排序字段
       $scope.SetOrderField = function( fieldName ){
@@ -155,7 +202,7 @@
       //渲染网格显示的列
       var gridShowColumn = function(){
          $scope.NodeGridOptions['titleWidth'] = [] ;
-         $scope.NodeGridOptions['titleWidth'].push( '40px' ) ;
+         $scope.NodeGridOptions['titleWidth'].push( '40px',17 ) ;
          var widthPercent = 100 / $scope.ShowKeyList.length ;
          $.each( $scope.ShowKeyList, function( index, keyName ){
             $scope.NodeGridOptions['titleWidth'].push( widthPercent ) ;
@@ -180,31 +227,7 @@
          gridShowColumn() ;
       }
 
-      $scope.getNodeList = function(){
-         $scope.queryList( {}, function( test ){
-            $scope.NodeList = test ;
-            var keyList = [] ;
-            $.each( $scope.NodeList, function( index, value ){
-               keyList = SdbFunction.getJsonKeys( value, 0, keyList ) ;
-            } ) ;
-            $scope.ShowKey = [] ;
-            $scope.SelectMenu = [] ;
-            $.each( keyList, function( index, key ){
-               $scope.ShowKey.push( { 'key': key, 'show': $scope.ShowKeyList.indexOf( key ) >= 0 } ) ;
-               $scope.SelectMenu.push( { 
-                  'html': $compile( '<label><div class="Ellipsis" style="padding:5px 10px"><input type="checkbox" ng-model="ShowKey[\'' + index + '\'][\'show\']"/>&nbsp;' + key + '</div></label>' )( $scope ),
-                  'onClick': function(){}
-               } ) ;
-            } ) ;
-            $scope.SelectMenu.push( { 
-               'html': $compile( '<button class="btn btn-primary" ng-click="SaveShowKeyList()" style="width:100%;">确定</button>' )( $scope )
-            } ) ;
-            gridShowColumn() ;
-            $scope.Timer.complete = true ;
-         } ) ;
-       }
-
-       $scope.Timer = {
+      $scope.Timer = {
          status: 'stop',
          interval: 5,
          currentTimer: 0,
@@ -212,7 +235,6 @@
          fn: $scope.getNodeList
       } ;
 
-      $scope.getNodeList() ;
 
       //跳转至部署
       $scope.GotoDeploy = function(){
@@ -243,5 +265,7 @@
       $scope.GotoDatabase = function(){
          $location.path( '/Data/SDB-Database/Index' ) ;
       } ;
+
+      getDbList() ;
    } ) ;
 }());

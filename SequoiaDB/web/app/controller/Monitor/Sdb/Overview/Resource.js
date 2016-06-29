@@ -14,10 +14,59 @@
       $scope.SelectMenu = [] ;
       $scope.ResourceList = [] ;
       $scope.ResourceGridOptions = { 'titleWidth': [] } ;
-      $scope.ShowKeyList = [ 'SessionID', 'Status', 'ContextID' ] ;
+      $scope.ShowKeyList = [ 'SessionID', 'ContextID', 'Description', 'DataRead' ] ;
       $scope.ShowKey = [] ;
       $scope.SelectMenu = [] ;
       $scope.OrderByField = [] ;
+      $scope.ContextType = 'all' ;
+
+      var sql = 'SELECT * FROM $SNAPSHOT_CONTEXT' ;
+
+      var getResourceList = function(){
+         SdbRest.Exec( sql, function( ResourceList ){
+            $scope.ResourceList = [] ;
+            var keyList = [] ;
+            var NewResourceList = {} ;
+            $.each( ResourceList, function( index, value ){
+               if( typeof( value['Contexts'] ) != 'undefined' )
+               {
+                  //解决当一个会话有多个上下文时，信息的错误
+                  $.each( value['Contexts'], function( ContextsIndex, value2 ){
+                     NewResourceList['SessionID'] = value['SessionID'] ;
+                     NewResourceList['Status'] = value['Status'] ;
+                     value2['SessionID'] = value['SessionID'] ;
+                     value2['Status'] = value['Status'] ;
+                     $.each( value2, function( key, value3 ){
+                        NewResourceList[key] = value3 ; 
+                     } ) ;
+                     $scope.ResourceList.push( value2 ) ;
+                     keyList = SdbFunction.getJsonKeys( NewResourceList, 0, keyList ) ;
+                  } ) ;
+               }
+            } ) ;
+            $scope.ShowKey = [] ;
+            $scope.SelectMenu = [] ;
+            $.each( keyList, function( index, key ){
+               $scope.ShowKey.push( { 'key': key, 'show': $scope.ShowKeyList.indexOf( key ) >= 0 } ) ;
+               $scope.SelectMenu.push( { 
+                  'html': $compile( '<label><div class="Ellipsis" style="padding:5px 10px"><input type="checkbox" ng-model="ShowKey[\'' + index + '\'][\'show\']"/>&nbsp;' + key + '</div></label>' )( $scope ),
+                  'onClick': function(){}
+               } ) ;
+            } ) ;
+            $scope.SelectMenu.push( { 
+               'html': $compile( '<button class="btn btn-primary" ng-click="SaveShowKeyList()" style="width:100%;">确定</button>' )( $scope )
+            } ) ;
+            gridShowColumn() ;
+            $scope.Timer.complete = true ;
+         }, function( errorInfo ){
+            _IndexPublic.createRetryModel( $scope, errorInfo, function(){
+               getResourceList() ;
+               return true ;
+            } ) ;
+         }, function(){
+            _IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
+         }, null, false ) ;
+      } ;
 
       //创建 设置实时刷新 的弹窗
       $scope.CreatePlayIntervalModel = function(){
@@ -67,11 +116,6 @@
          }
       }
       
-
-      $scope.queryList = function( data, success, failed, error, complete ){
-         SdbRest._postTest( './test/resourceList', success, failed, error ) ;
-      }
-
       //设置排序字段
       $scope.SetOrderField = function( fieldName ){
          var normal  = $scope.OrderByField.indexOf( fieldName ) ;
@@ -175,41 +219,7 @@
          gridShowColumn() ;
       }
 
-      $scope.getResourceList = function(){
-         $scope.queryList( {}, function( test ){
-            var keyList = [] ;
-            var NewResourceList = {} ;
-            $.each( test, function( index, value ){
-               //解决当一个会话有多个上下文时，信息的错误
-               $.each( value['Contexts'], function( ContextsIndex, value2 ){
-                  NewResourceList['SessionID'] = value['SessionID'] ;
-                  NewResourceList['Status'] = value['Status'] ;
-                  value2['SessionID'] = value['SessionID'] ;
-                  value2['Status'] = value['Status'] ;
-                  $.each( value2, function( key, value3 ){
-                     NewResourceList[key] = value3 ; 
-                  } ) ;
-                  $scope.ResourceList.push( value2 ) ;
-                  keyList = SdbFunction.getJsonKeys( NewResourceList, 0, keyList ) ;
-               } ) ;
-            } ) ;
-            $scope.ShowKey = [] ;
-            $scope.SelectMenu = [] ;
-            $.each( keyList, function( index, key ){
-               $scope.ShowKey.push( { 'key': key, 'show': $scope.ShowKeyList.indexOf( key ) >= 0 } ) ;
-               $scope.SelectMenu.push( { 
-                  'html': $compile( '<label><div class="Ellipsis" style="padding:5px 10px"><input type="checkbox" ng-model="ShowKey[\'' + index + '\'][\'show\']"/>&nbsp;' + key + '</div></label>' )( $scope ),
-                  'onClick': function(){}
-               } ) ;
-            } ) ;
-            $scope.SelectMenu.push( { 
-               'html': $compile( '<button class="btn btn-primary" ng-click="SaveShowKeyList()" style="width:100%;">确定</button>' )( $scope )
-            } ) ;
-            gridShowColumn() ;
-            $scope.Timer.complete = true ;
-         } ) ;
-      }
-      $scope.getResourceList() ;
+      getResourceList() ;
 
       $scope.showContext = function(){
          $scope.Components.Modal.contextInfo = {
@@ -273,98 +283,31 @@
          }
       }
 
-      $scope.ResourceMenu = [
-         { 
-            'html': $compile( '<div style="padding:5px 10px"><i class="pull-left fa fa-square-o" ng-click="changeSelect($event)" style="font-size:120%;width:16px;line-height:20px;cursor:pointer;"></i>上下文</div>' )( $scope ),
-            'onClick': function(){}
-         },
-         { 
-            'html': $compile( '<div style="padding:5px 10px"><i class="pull-left fa fa-square-o" ng-click="changeSelect($event)" style="font-size:120%;width:16px;line-height:20px;cursor:pointer;"></i>缓存</div>' )( $scope ),
-            'onClick': function(){}
-         },
-         { 
-            'html': $compile( '<div style="padding:5px 10px"><i class="pull-left fa fa-square-o" ng-click="changeSelect($event)" style="font-size:120%;width:16px;line-height:20px;cursor:pointer;"></i>锁</div>' )( $scope ),
-            'onClick': function(){}
-         }
-      ]
       $scope.screenResult = {
          'Role':'all',
-         'Running': true,
-         'Waiting': true,
-         'Destroying': true
       } ;
 
       $scope.changeScreen = function(){
-         $scope.GridData = $.extend( true, {}, gridData ) ;
-         $.each( $scope.test, function( index, value ){
-            if( $scope.screenResult['Running'] == true && value['Status'] == 'Running' )
-            {
-               $scope.GridData['body'].push( [
-                  { 'html': $compile( '<i class="fa fa-circle" style="color:#00CC66;" data-desc="正常运行中"></i>' )( $scope ) },
-                  { 'html': $compile( '<a class="linkButton" ng-click="showContext()">' + value['SessionID'] + '</a>' )( $scope ) },
-                  { 'text': value['Contexts'][0]['ContextID'] },
-                  { 'text': value['Contexts'][0]['Type'] },
-                  { 'html': $compile( '<a class="linkButton" href="#/Monitor/SDB-Node/Index">group1:Host-test-11810</a>' )( $scope ) },
-                  { 'text': value['Contexts'][0]['DataRead'] },
-                  { 'text': value['Contexts'][0]['IndexRead'] },
-                  { 'text': value['Contexts'][0]['QueryTimeSpent'] },
-                  { 'text': '' },
-                  { 'html': $compile( '<div class="linkButton" ng-click="stopContext()" style="font-size:80%;"><i class="fa fa-stop" style="font-size:90%;padding-right:3px;"></i>中断会话</div>' )( $scope ) }
-               ] )
-            }
-            else if( $scope.screenResult['Waiting'] == true && value['Status'] == 'Waiting' )
-            {
-               $scope.GridData['body'].push( [
-                  { 'html': $compile( '<i class="fa fa-circle" style="color:#F9A937;" data-desc="该会话处于waiting状态"></i>' )( $scope ) },
-                  { 'html': $compile( '<a class="linkButton" ng-click="showContext()">' + value['SessionID'] + '</a>' )( $scope ) },
-                  { 'text': value['Contexts'][0]['ContextID'] },
-                  { 'text': value['Contexts'][0]['Type'] },
-                  { 'html': $compile( '<a class="linkButton" href="#/Monitor/SDB-Node/Index">group1:Host-test-11810</a>' )( $scope ) },
-                  { 'text': value['Contexts'][0]['DataRead'] },
-                  { 'text': value['Contexts'][0]['IndexRead'] },
-                  { 'text': value['Contexts'][0]['QueryTimeSpent'] },
-                  { 'text': '' },
-                  { 'html': $compile( '<div class="linkButton" ng-click="stopContext()" style="font-size:80%;"><i class="fa fa-stop" style="font-size:90%;padding-right:3px;"></i>中断会话</div>' )( $scope ) }
-               ] )
-            }
-            else if( $scope.screenResult['Destroying'] == true && value['Status'] == 'Destroying' )
-            {
-               $scope.GridData['body'].push( [
-                  { 'html': $compile( '<i class="fa fa-circle" style="color:#D9534F;" data-desc="该会话处于销毁状态"></i>' )( $scope ) },
-                  { 'html': $compile( '<a class="linkButton" ng-click="showContext()">' + value['SessionID'] + '</a>' )( $scope ) },
-                  { 'text': value['Contexts'][0]['ContextID'] },
-                  { 'text': value['Contexts'][0]['Type'] },
-                  { 'html': $compile( '<a class="linkButton" href="#/Monitor/SDB-Node/Index">group1:Host-test-11810</a>' )( $scope ) },
-                  { 'text': value['Contexts'][0]['DataRead'] },
-                  { 'text': value['Contexts'][0]['IndexRead'] },
-                  { 'text': value['Contexts'][0]['QueryTimeSpent'] },
-                  { 'text': '' },
-                  { 'html': $compile( '<div class="linkButton" ng-click="stopContext()" style="font-size:80%;"><i class="fa fa-stop" style="font-size:90%;padding-right:3px;"></i>中断会话</div>' )( $scope ) }
-               ] )
-            }
-         } )
+         $scope.ContextType = $scope.screenResult['Role'] ;
+         if( $scope.screenResult['Role'] == 'current' )
+         {
+            sql = 'SELECT * FROM $SNAPSHOT_CONTEXT_CUR' ;
+         }
+         else
+         {
+            sql = 'SELECT * FROM $SNAPSHOT_CONTEXT' ;
+         }
+         getResourceList() ;
       } ;
 
+      //当前上下文或者所有上下文
       $scope.ScreenMenu = [
          { 
-            'html': $compile( '<div style="padding:5px 10px"><input type="radio" name="a" value="all" ng-model="screenResult[\'Role\']" />所有会话</div>' )( $scope ),
+            'html': $compile( '<label><div style="padding:5px 10px"><input type="radio" name="a" value="all" ng-model="screenResult[\'Role\']" />所有上下文</div></label>' )( $scope ),
             'onClick': function(){}
          },
          { 
-            'html': $compile( '<div style="padding:5px 10px"><input type="radio" name="a" value="current" ng-model="screenResult[\'Role\']"/>当前会话</div>' )( $scope ),
-            'onClick': function(){}
-         },
-         {},
-         { 
-            'html': $compile( '<div style="padding:5px 10px"><input type="checkbox" ng-model="screenResult[\'Running\']"/>运行状态</div>' )( $scope ),
-            'onClick': function(){}
-         },
-         { 
-            'html': $compile( '<div style="padding:5px 10px"><input type="checkbox" ng-model="screenResult[\'Waiting\']"/>等待状态</div>' )( $scope ),
-            'onClick': function(){}
-         },
-         { 
-            'html': $compile( '<div style="padding:5px 10px"><input type="checkbox" ng-model="screenResult[\'Destroying\']"/>销毁状态</div>' )( $scope ),
+            'html': $compile( '<label><div style="padding:5px 10px"><input type="radio" name="a" value="current" ng-model="screenResult[\'Role\']"/>当前上下文</div></label>' )( $scope ),
             'onClick': function(){}
          },
          { 
@@ -377,7 +320,7 @@
          interval: 5,
          currentTimer: 0,
          complete: false,
-         fn: $scope.getResourceList
+         fn: getResourceList
       } ;
 
       //跳转至部署

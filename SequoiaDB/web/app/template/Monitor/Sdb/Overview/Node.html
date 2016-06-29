@@ -95,11 +95,11 @@
                <col ng-repeat="nodeName in ShowKeyList track by $index" />
             </colgroup>
             <tbody>
-               <tr ng-repeat="nodeInfo in NodeList | orderBy:OrderByField">
+               <tr ng-repeat="nodeInfo in NodesList | orderBy:OrderByField">
                   <td>
                      <div class="Ellipsis">
-                        <i class="fa fa-circle" style="color:#00CC66;" ng-if="nodeInfo['Status'] == 'Running'" data-desc="正常运行中"></i>
-                        <i class="fa fa-circle" style="color:#F9A937;" ng-if="nodeInfo['Status'] == 'Waiting'" data-desc="该节点处于waiting状态"></i>
+                        <i class="fa fa-circle" style="color:#00CC66;" ng-if="nodeInfo['Status'] == true" data-desc="正常运行中"></i>
+                        <i class="fa fa-circle" style="color:#F9A937;" ng-if="nodeInfo['Status'] == false" data-desc="节点异常"></i>
                      </div>
                   </td>
                   <td ng-repeat="fieldName in ShowKeyList track by $index">
@@ -107,8 +107,8 @@
                         <span class="Ellipsis linkButton" ng-switch-when="NodeName" ng-click="GotoNode()">{{nodeInfo[fieldName]}}</span>
                         <span class="Ellipsis linkButton" ng-switch-when="HostName" ng-click="GotoHost()">{{nodeInfo[fieldName]}}</span>
                         <span class="Ellipsis linkButton" ng-switch-when="TotalCL" ng-click="GotoDatabase()">{{nodeInfo[fieldName]}}</span>
-                        <span class="Ellipsis linkButton" ng-switch-when="TotalRecord" ng-click="GotoDatabase()">{{nodeInfo[fieldName]}}</span>
-                        <span class="Ellipsis linkButton" ng-switch-when="TotalLob" ng-click="GotoDatabase()">{{nodeInfo[fieldName]}}</span>
+                        <span class="Ellipsis linkButton" ng-switch-when="TotalRecords" ng-click="GotoDatabase()">{{nodeInfo[fieldName]}}</span>
+                        <span class="Ellipsis linkButton" ng-switch-when="TotalLobs" ng-click="GotoDatabase()">{{nodeInfo[fieldName]}}</span>
                         <span ng-switch-default>{{nodeInfo[fieldName]}}</span>
                      </div>
                   </td>
@@ -119,7 +119,7 @@
    </div>
    <div class="GridTool">
       <div class="ToolLeft">
-         <span>一共有 {{NodeList.length}} 个节点</span>
+         <span>一共有 {{NodesList.length}} 个节点</span>
       </div>
    </div>
 

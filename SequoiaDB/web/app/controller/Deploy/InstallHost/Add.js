@@ -439,6 +439,7 @@
                         if( hostDataInfo['OMA']['Path'].length > 0 )
                         {
                            hostDataInfo['InstallPath'] = hostDataInfo['OMA']['Path'] ;
+                           hostDataInfo['IsUse'] = false ;
                         }
                         else
                         {

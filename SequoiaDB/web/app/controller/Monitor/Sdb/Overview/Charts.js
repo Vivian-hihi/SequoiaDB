@@ -8,25 +8,53 @@
       $scope.clusterName = clusterName ;
       $scope.moduleName = moduleName ;
       $scope.moduleType =  moduleType ;
-      $scope.charts = {}; 
-      $scope.getData = function(){
-         var s = 0 ;
-         SdbFunction.Interval(function(){
-            s = parseInt(Math.random()*2500) ;
-            $scope.charts['Insert']['value'] = [ [ 0, s, true, false ] ] ;
+      $scope.charts = {} ; 
+      $scope.DbInfo = {} ;
 
-            s = parseInt(Math.random()*2500) ;
-            $scope.charts['Update']['value'] = [ [ 0, s, true, false ] ] ;
+      //获取数据库快照
+      var getDbList = function(){
+         var sql = '' ;
+         var SumInfo = { 'TotalInsert':0, 'TotalUpdate': 0, 'TotalDelete':0, 'TotalRead':0 } ;
+         
+         
+         //只获取主节点
+         sql = 'select TotalInsert, TotalUpdate, TotalDelete, TotalRead from $SNAPSHOT_DB where NodeSelect="master"';
+         SdbFunction.Interval( function(){
+            $scope.DbInfo = { 'TotalInsert':0, 'TotalUpdate': 0, 'TotalDelete':0, 'TotalRead':0 } ;
+           
+            SdbRest.Exec( sql, function( DbList ){
+               $scope.DbList = DbList ;
+               $.each( DbList, function( index, DbInfo ){
+                  $scope.DbInfo['TotalInsert'] += DbInfo['TotalInsert'] ;
+                  $scope.DbInfo['TotalUpdate'] += DbInfo['TotalUpdate'] ;
+                  $scope.DbInfo['TotalDelete'] += DbInfo['TotalDelete'] ;
+                  $scope.DbInfo['TotalRead'] += DbInfo['TotalRead'] ;
+               } ) ;
 
-            s = parseInt(Math.random()*2500) ;
-            $scope.charts['Delete']['value'] = [ [ 0, s, true, false ] ] ;
+               $scope.charts['Insert']['value'] = [ [ 0, $scope.DbInfo['TotalInsert'] - SumInfo['TotalInsert'], true, false ] ] ;
+               $scope.charts['Update']['value'] = [ [ 0, $scope.DbInfo['TotalUpdate'] - SumInfo['TotalUpdate'], true, false ] ] ;
+               $scope.charts['Delete']['value'] = [ [ 0, $scope.DbInfo['TotalDelete'] - SumInfo['TotalDelete'], true, false ] ] ;
+               $scope.charts['Query']['value'] = [ [ 0, $scope.DbInfo['TotalRead'] - SumInfo['TotalRead'], true, false ] ] ;
 
-            s = parseInt(Math.random()*2500) ;
-            $scope.charts['Query']['value'] = [ [ 0, s, true, false ] ] ;
+               SumInfo['TotalInsert'] = $scope.DbInfo['TotalInsert'] ;
+               SumInfo['TotalUpdate'] = $scope.DbInfo['TotalUpdate'] ;
+               SumInfo['TotalDelete'] = $scope.DbInfo['TotalDelete'] ;
+               SumInfo['TotalRead'] = $scope.DbInfo['TotalRead'] ;
+            }, function( errorInfo ){
+               _IndexPublic.createRetryModel( $scope, errorInfo, function(){
+                  getDbList() ;
+                  return true ;
+               } ) ;
+            }, function(){
+               _IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
+            }, null, false ) ;
+            
 
-         },5000)
-      }
-      $scope.getData() ;
+         },2000 ) ;
+      } ;
+
+      getDbList() ;
+
       $scope.charts['Insert'] = {} ;
       $scope.charts['Insert']['options'] = window.SdbSacManagerConf.RecordInsertEchart ;
 

@@ -259,24 +259,6 @@
          } ) ;
       }
 
-      //过滤不可见字符
-      g._filterInviChart = function( str ){
-         var i = 0, len = str.length ;
-         var newStr = '' ;
-         var chars, code ;
-         while( i < len )
-         {
-            chars = str.charAt( i ) ;
-            code = chars.charCodeAt() ;
-            if( code < 0x20 || code == 0x7F ){
-               chars = '?' ;
-            }
-            newStr += chars ;
-            ++i ;
-         }
-         return newStr ;
-      }
-
       //解析响应的Json
       g._parseJsons = function( str, errJson )
       {
@@ -307,19 +289,8 @@
                         try{
                            json = JSON.parse( subStr ) ;
                         }catch(e){
-                           subStr = subStr.replace( /[^"-]inf/, '1.7976931348623157e+308' ) ;
-                           subStr = subStr.replace( /[^"]-inf/, '-1.7976931348623157e+308' ) ;
-                           try{
-                              json = JSON.parse( subStr ) ;
-                           }catch(e){
-                              isJson = false ;
-                              try{
-                                 subStr = g._filterInviChart( subStr ) ;
-                                 json = JSON.parse( subStr ) ;
-                              }catch(e){
-                                 json = { " ": subStr } ;
-                              }
-                           }
+                           isJson = false ;
+                           json = { " ": subStr } ;
                         }
                         if( errType == true )
                         {
@@ -390,6 +361,20 @@
 		         jqXHR.setRequestHeader( 'SdbBusinessName', businessName ) ;
 	         }
          }, success, failed, error, complete, true, errJson ) ;
+      }
+
+      //数据操作( 手工设置cluster和module )
+      g.DataOperation2 = function( clusterName, businessName, data, success, failed, error, complete, errJson, showLoading ){
+         g._post( data, function( jqXHR ){
+	         if( clusterName !== null )
+	         {
+		         jqXHR.setRequestHeader( 'SdbClusterName', clusterName ) ;
+	         }
+	         if( businessName !== null )
+	         {
+		         jqXHR.setRequestHeader( 'SdbBusinessName', businessName ) ;
+	         }
+         }, success, failed, error, complete, showLoading, errJson ) ;
       }
 
       //sequoiasql操作

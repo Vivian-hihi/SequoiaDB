@@ -61,49 +61,49 @@
                <td style="width:60%;" class="Ellipsis"><a href="#/Monitor/SDB-Group/Index" class="linkButton">{{nodeInfo['GroupName']}}</a></td>
             </tr>
             <tr>
-               <td style="width:40%;font-weight:bold;">角色</td>
-               <td style="width:60%;" class="Ellipsis">{{nodeInfo['Role']}}</td>
+               <td style="font-weight:bold;">角色</td>
+               <td class="Ellipsis">{{nodeInfo['Role']}}</td>
             </tr>
             <tr>
-               <td style="width:40%;font-weight:bold;">节点ID</td>
-               <td style="width:60%;" class="Ellipsis">{{nodeInfo['NodeID'][1]}}</td>
+               <td style="font-weight:bold;">节点ID</td>
+               <td class="Ellipsis">{{nodeInfo['NodeID'][1]}}</td>
             </tr>
             <tr>
-               <td style="width:40%;font-weight:bold;">类型</td>
-               <td style="width:60%;" ng-if="nodeInfo['IsPrimary'] == true" class="Ellipsis">主节点</td>
-               <td style="width:60%;" ng-if="nodeInfo['IsPrimary'] == false" class="Ellipsis">备节点</td>
+               <td style="font-weight:bold;">类型</td>
+               <td ng-if="nodeInfo['IsPrimary'] == true" class="Ellipsis">主节点</td>
+               <td ng-if="nodeInfo['IsPrimary'] == false" class="Ellipsis">备节点</td>
             </tr>
             <tr>
-               <td style="width:40%;font-weight:bold;">集合数</td>
-               <td style="width:60%;" class="Ellipsis">{{nodeInfo['TotalCollection']}}</td>
+               <td style="font-weight:bold;">集合数</td>
+               <td class="Ellipsis">{{nodeInfo['TotalCl']}}</td>
             </tr>
             <tr>
-               <td style="width:40%;font-weight:bold;">记录数</td>
-               <td style="width:60%;" class="Ellipsis">{{nodeInfo['TotalData']}}</td>
+               <td style="font-weight:bold;">记录数</td>
+               <td class="Ellipsis">{{nodeInfo['TotalRecords']}}</td>
             </tr>
             <tr>
-               <td style="width:40%;font-weight:bold;">Lob数</td>
-               <td style="width:60%;" class="Ellipsis">0</td>
+               <td style="font-weight:bold;">Lob数</td>
+               <td class="Ellipsis">{{nodeInfo['TotalLobs']}}</td>
             </tr>
             <tr>
-               <td style="width:40%;font-weight:bold;">LSN</td>
-               <td style="width:60%;" class="Ellipsis">{{nodeInfo['BeginLSN']['Version']}}</td>
+               <td style="font-weight:bold;">LSN</td>
+               <td class="Ellipsis">{{nodeInfo['BeginLSN']['Version']}}</td>
             </tr>
             <tr>
-               <td style="width:40%;font-weight:bold;">完成LSN</td>
-               <td style="width:60%;" class="Ellipsis">0</td>
+               <td style="font-weight:bold;">完成LSN</td>
+               <td class="Ellipsis"></td>
             </tr>
             <tr>
-               <td style="width:40%;font-weight:bold;">LSN队列数</td>
-               <td style="width:60%;" class="Ellipsis">0</td>
+               <td style="font-weight:bold;">LSN队列数</td>
+               <td class="Ellipsis"></td>
             </tr>
             <tr>
-               <td style="width:40%;font-weight:bold;">主机</td>
-               <td style="width:60%;"><a class="linkButton" href="#/Monitor/Host-Info/Index">{{nodeInfo['HostName']}}</a></td>
+               <td style="font-weight:bold;">主机</td>
+               <td class="Ellipsis"><a class="linkButton" href="#/Monitor/Host-Info/Index">{{nodeInfo['HostName']}}</a></td>
             </tr>
             <tr valign="top">
-               <td style="width:40%;font-weight:bold;">路径</td>
-               <td style="width:60%;word-break:break-all;">{{nodeInfo['Disk']['DatabasePath']}}</td>
+               <td style="font-weight:bold;">路径</td>
+               <td style="word-break:break-all;">{{nodeInfo['Disk']['DatabasePath']}}</td>
             </tr>
          </table>
          <!--<div style="margin-bottom:10px;">

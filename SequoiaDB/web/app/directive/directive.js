@@ -1449,20 +1449,7 @@
                Height: 0,
                Type: 1,
                View: json2Array( json ),
-               Json: JSON.stringify( json, function( key, value ){
-                  if( value == Number.POSITIVE_INFINITY )
-                  {
-                     return 1.7976931348623157e+308 ;
-                  }
-                  else if( value == Number.NEGATIVE_INFINITY )
-                  {
-                     return -1.7976931348623157e+308 ;
-                  }
-                  else
-                  {
-                     return value ;
-                  }
-               }, 3 ),
+               Json: JSON.stringify( json, null, 3 ),
                Search: ''
             } ;
             $scope.Setting.View[0]['isOpen'] = true ;
@@ -1623,20 +1610,7 @@
                      {
                         //视图 -> Json
                         var json = array2Json( scope.Setting.View ) ;
-                        scope.Setting.Json = JSON.stringify( json, function( key, value ){
-                           if( value == Number.POSITIVE_INFINITY )
-                           {
-                              return 1.7976931348623157e+308 ;
-                           }
-                           else if( value == Number.NEGATIVE_INFINITY )
-                           {
-                              return -1.7976931348623157e+308 ;
-                           }
-                           else
-                           {
-                              return value ;
-                           }
-                        }, 3 ) ;
+                        scope.Setting.Json = JSON.stringify( json, null, 3 ) ;
                         scope.Setting.Type = 2 ;
                      }
                      else 
@@ -1677,20 +1651,7 @@
                         //var json = array2Json( scope.Setting.View ) ;
                         try{
                            var json = JSON.parse( scope.Setting.Json ) ;
-                           scope.Setting.Json = JSON.stringify( json, function( key, value ){
-                              if( value == Number.POSITIVE_INFINITY )
-                              {
-                                 return 1.7976931348623157e+308 ;
-                              }
-                              else if( value == Number.NEGATIVE_INFINITY )
-                              {
-                                 return -1.7976931348623157e+308 ;
-                              }
-                              else
-                              {
-                                 return value ;
-                              }
-                           }, 3 ) ;
+                           scope.Setting.Json = JSON.stringify( json, null, 3 ) ;
                         }
                         catch( e )
                         {
@@ -1720,20 +1681,7 @@
                         //var json = array2Json( scope.Setting.View ) ;
                         try{
                            var json = JSON.parse( scope.Setting.Json ) ;
-                           scope.Setting.Json = JSON.stringify( json, function( key, value ){
-                              if( value == Number.POSITIVE_INFINITY )
-                              {
-                                 return 1.7976931348623157e+308 ;
-                              }
-                              else if( value == Number.NEGATIVE_INFINITY )
-                              {
-                                 return -1.7976931348623157e+308 ;
-                              }
-                              else
-                              {
-                                 return value ;
-                              }
-                           } ) ;
+                           scope.Setting.Json = JSON.stringify( json ) ;
                         }
                         catch( e )
                         {
@@ -2801,8 +2749,15 @@
          marginTop  = ( typeof( marginTop ) != 'number' ? 0 : marginTop ) ;
          marginBottom  = ( typeof( marginBottom ) != 'number' ? 0 : marginBottom ) ;
          offsetY  = ( typeof( offsetY ) != 'number' ? 0 : offsetY ) ;
-         height += offsetY ;
-         ele.outerHeight( height ).css( { marginTop: marginTop, marginBottom: marginBottom } ) ;
+         if( height === 'auto' )
+         {
+            ele.css( { marginTop: marginTop, marginBottom: marginBottom, height: 'auto' } ) ;
+         }
+         else
+         {
+            height += offsetY ;
+            ele.outerHeight( height ).css( { marginTop: marginTop, marginBottom: marginBottom } ) ;
+         }
       }
       function _renderMaxHeight( scope, ele, maxheight )
       {
@@ -2862,6 +2817,9 @@
                else if( height.charAt( length - 1 ) == 'w' )
                {
                   height = parseInt( width * parseInt( height ) * 0.01 ) ;
+               }
+               else if( height === 'auto' )
+               {
                }
                else
                {
@@ -3735,7 +3693,7 @@
                   backgroundColor: '#00B8E6'
                },
                status: 'stop',
-               interval: 5,
+               interval: 5000,
                currentTimer: 0,
                complete: false
             }
@@ -3747,7 +3705,7 @@
                   var timer = function(){
                      if( scope.Setting.status == 'start' )
                      {
-                        scope.Setting.currentTimer += 0.01 ;
+                        scope.Setting.currentTimer += 10 ;
                         var percent = ( scope.Setting.currentTimer / scope.Setting.interval * 100 ) ;
                         scope.Setting.options.width =　percent > 100 ? 100 + '%' : percent + '%' ;
                         if( scope.Setting.currentTimer >= scope.Setting.interval )
@@ -3778,11 +3736,11 @@
                   var listener2 = scope.$watch( 'data.interval', function(){
                      if( isNaN( scope.data.interval ) == false && scope.data.interval >= 1 )
                      {
-                        scope.Setting.interval = scope.data.interval ;
+                        scope.Setting.interval = scope.data.interval * 1000 ;
                      }
                      else
                      {
-                        scope.Setting.interval = 1 ;
+                        scope.Setting.interval = 1000 ;
                      }
                   } ) ;
                   var listener3 = scope.$watch( 'data.status', function(){

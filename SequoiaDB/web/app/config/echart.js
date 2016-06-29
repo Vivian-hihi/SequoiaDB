@@ -976,7 +976,7 @@
             name: 'Index',
             type: 'line',
             stack: 'Sum',
-            data: [40, 50, 60, 20, 30, 40, 45]
+            data: [0, 0, 0, 0, 0, 0, 0]
          },
          {
             itemStyle: { normal: { areaStyle: { type: 'default' } } },
@@ -984,7 +984,7 @@
             name: 'Data',
             type: 'line',
             stack: 'Sum',
-            data: [25, 50, 10, 30, 40, 40, 45]
+            data: [0, 0, 0, 0, 0, 0, 0]
          },
          {
             itemStyle: { normal: { areaStyle: { type: 'default' } } },
@@ -992,7 +992,7 @@
             name: 'Lob',
             type: 'line',
             stack: 'Sum',
-            data: [35, 0, 30, 50, 30, 20, 10]
+            data: [0, 0, 0, 0, 0, 0, 0]
          }
       ],
       color: ['#9299fb',  '#02CCAA', '#87cefa' ]

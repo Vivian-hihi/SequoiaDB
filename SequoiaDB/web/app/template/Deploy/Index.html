@@ -18,47 +18,48 @@
          </div>
          <div style="padding-right:15px;overflow-y:auto;border:1px solid #ccc;padding:10px;position:relative;" ng-container="{offsetY:-40}">
 
-            <div class="DataListBox green" style="min-height:250px;padding:15px 20px;" ng-container="{height:'18w',offsetX:-20,offsetY:100,marginBottom:10}" ng-repeat="moduleInfo in moduleList track by $index" ng-if="clusterList[currentCluster]['ClusterName'] == moduleInfo['ClusterName']">
+            <div class="DataListBox" style="padding:15px 20px;margin-bottom:15px;" ng-repeat="moduleInfo in moduleList track by $index" ng-if="clusterList[currentCluster]['ClusterName'] == moduleInfo['ClusterName']" ng-class="{'0':'green','1':'yellow','2':'blue','3':'violet'}[$index%4]">
 
                <div style="height:50px;">
                   <div class="pull-left" style="width:40px;height:40px;">
                      <i class="fa fa-database" style="color:#02CCAA;font-size:230%;"></i>
                   </div>
-                  <div class="pull-left" ng-container="{offsetX:-40,height:40}">
+                  <div class="pull-left" ng-container="{offsetX:-100,height:40}">
                      <div class="Ellipsis" style="font-weight:bold;height:21px;">
-                        <a class="linkButton" href="#">{{moduleInfo['BusinessName']}}</a>
+                        <a class="linkButton" ng-if="moduleInfo['BusinessType']=='sequoiadb'" ng-click="GotoDataModule(moduleInfo['ClusterName'],moduleInfo['BusinessType'],moduleInfo['DeployMod'],moduleInfo['BusinessName'])">{{moduleInfo['BusinessName']}}</a>
+                        <span style="color:#666;" ng-if="moduleInfo['BusinessType']!='sequoiadb'">{{moduleInfo['BusinessName']}}</span>
                      </div>
-                     <div class="Ellipsis" style="font-size:90%;color:#666;">{{moduleInfo['BusinessType']}} 2.0</div>
+                     <div class="Ellipsis" style="font-size:90%;color:#666;">{{moduleInfo['BusinessType']}} <span ng-if="moduleInfo['AddtionType'] == 1">添加时间</span><span ng-if="moduleInfo['AddtionType'] == 0">创建时间</span>: {{moduleInfo['Time']['$timestamp'].substr(0,19)}}</div>
                   </div>
                   <div class="clear-float"></div>
                </div>
 
                <div class="well Ellipsis" ng-container="{height:41}">
-                  <i class="fa fa-circle" style="color:#00CC66;"></i> <span style="font-weight:bold;color:#006699;">正常运行...</span>
+                  <i class="fa fa-circle" style="color:#00CC66;" ng-if="moduleInfo['Error']['Flag']==0"></i><i class="fa fa-circle error" ng-if="moduleInfo['Error']['Flag']!=0"></i>&nbsp;<span style="font-weight:bold;color:#006699;" ng-if="moduleInfo['Error']['Flag']==0">正常运行...</span><span style="font-weight:bold;color:#006699;" ng-if="moduleInfo['Error']['Flag']!=0">{{moduleInfo['Error']['Message']}}</span>
                </div>
 
-               <div ng-container="{offsetY:-100,marginTop:10}">
+               <div ng-container="{offsetY:-100,marginTop:10,height:'auto'}" ng-if="moduleInfo['BusinessType']=='sequoiadb'">
 
                   <div class="pull-left" style="max-width:650px;" ng-container="{width:'50%',height:140,offsetX:-30,marginRight:30}">
                      <div class="Ellipsis" style="height:35px;">
-                        <a class="linkButton" href="#">一共 30 台主机</a>
+                        <a class="linkButton" ng-click="GotoMonitorHost(moduleInfo['ClusterName'],moduleInfo['BusinessType'],moduleInfo['DeployMod'],moduleInfo['BusinessName'])">一共 {{moduleInfo['Location'].length}} 台主机</a>
                      </div>
 
                      <div style="height:35px;">
-                        <div class="pull-left" style="width:60px;height:35px;">CPU</div>
-                        <div class="pull-left" style="max-width:500px;" progress-bar="charts.Host.CPU" ng-container="{height:35,offsetX:-60}"></div>
+                        <div class="pull-left" style="width:60px;height:35px;">处理器</div>
+                        <div class="pull-left" style="max-width:500px;" progress-bar="moduleInfo.Chart.Host.CPU" ng-container="{height:35,offsetX:-60}"></div>
                         <div class="clear-float"></div>
                      </div>
 
                      <div style="height:35px;">
                         <div class="pull-left" style="width:60px;height:35px;">内存</div>
-                        <div class="pull-left" style="max-width:500px;" progress-bar="charts.Host.Memory" ng-container="{height:35,offsetX:-60}"></div>
+                        <div class="pull-left" style="max-width:500px;" progress-bar="moduleInfo.Chart.Host.Memory" ng-container="{height:35,offsetX:-60}"></div>
                         <div class="clear-float"></div>
                      </div>
 
                      <div style="height:35px;">
                         <div class="pull-left" style="width:60px;height:35px;">磁盘</div>
-                        <div class="pull-left" style="max-width:500px;" progress-bar="charts.Host.Disk" ng-container="{height:35,offsetX:-60}"></div>
+                        <div class="pull-left" style="max-width:500px;" progress-bar="moduleInfo.Chart.Host.Disk" ng-container="{height:35,offsetX:-60}"></div>
                         <div class="clear-float"></div>
                      </div>
 
@@ -66,9 +67,9 @@
 
                   <div class="pull-left" style="max-width:650px;min-height:130px;" ng-container="{width:'50%',height:'30w'}">
                      <div style="height:20px;">
-                        <a class="linkButton" href="#">一共 20 个节点</a>
+                        <a class="linkButton" ng-click="GotoMonitorModule(moduleInfo['ClusterName'],moduleInfo['BusinessType'],moduleInfo['DeployMod'],moduleInfo['BusinessName'])">一共 {{moduleInfo['BusinessInfo']['NodeList'].length}} 个节点</a>
                      </div>
-                     <div ng-container="{offsetY:-20}" create-chart="moduleInfo['Chart']"></div>
+                     <div ng-container="{offsetY:-20}" create-chart="moduleInfo['Chart']['Module']"></div>
                   </div>
 
                   <div class="clear-float"></div>
@@ -104,11 +105,18 @@
                      <input type="checkbox" ng-model="hostInfo['checked']"/>
                   </div>
                   <div class="GridTd Ellipsis" style="word-break:break-all;">
-                     <i class="fa fa-circle" style="color:#00CC66;"></i>
+                     <i class="fa fa-circle" style="color:#00CC66;" ng-if="hostInfo['Error']['Flag'] == 0"></i>
+                     <i class="fa fa-circle error" ng-attr="{'data-desc':hostInfo['Error']['Message']}" ng-if="hostInfo['Error']['Flag'] != 0"></i>
                   </div>
                   <div class="GridTd Ellipsis" style="word-break:break-all;">{{hostInfo['HostName']}}</div>
                   <div class="GridTd Ellipsis" style="word-break:break-all;">{{hostInfo['IP']}}</div>
-                  <div class="GridTd Ellipsis" style="word-break:break-all;">myModule1, myModule2, myModule3, myModule4</div>
+                  <div class="GridTd Ellipsis" style="word-break:break-all;">
+                     <span ng-repeat="moduleInfo in moduleList track by $index">
+                        <span ng-repeat="installInfo in moduleInfo['Location'] track by $index" ng-if="hostInfo['HostName']==installInfo['HostName']">
+                           <a class="linkButton" ng-if="moduleInfo['BusinessType']=='sequoiadb'" ng-click="GotoDataModule(moduleInfo['ClusterName'],moduleInfo['BusinessType'],moduleInfo['DeployMod'],moduleInfo['BusinessName'])">{{moduleInfo['BusinessName']}}</a><span style="color:#666;" ng-if="moduleInfo['BusinessType']!='sequoiadb'">{{moduleInfo['BusinessName']}}</span>&nbsp;
+                        </span>
+                     </span>
+                  </div>
                   <div class="clear-float"></div>
                </div>
             </div>

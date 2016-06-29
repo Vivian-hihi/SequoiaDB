@@ -111,20 +111,7 @@
                   gridData.tool.left.push( { 'html': $compile( '<i class="fa fa-play" ng-show="current < total" ng-click="nextPage()"></i>' )( $scope ) } ) ;
                }
                $.each( $scope.records, function( index, record ){
-                  var tmpJson = JSON.stringify( record, function( key, value ){
-                     if( value == Number.POSITIVE_INFINITY )
-                     {
-                        return 1.7976931348623157e+308 ;
-                     }
-                     else if( value == Number.NEGATIVE_INFINITY )
-                     {
-                        return -1.7976931348623157e+308 ;
-                     }
-                     else
-                     {
-                        return value ;
-                     }
-                  }, 3 ) ;
+                  var tmpJson = JSON.stringify( record, null, 3 ) ;
                   var editBtn = $compile( '<a ng-click="Edit(' + index + ')"></a>' )( $scope ).addClass( 'linkButton' ).append( $( '<i class="fa fa-edit"></i>' ).attr( 'data-desc', $scope.autoLanguage( '编辑' ) ) ) ;
                   var copyBtn = $compile( '<a ng-click="Insert(' + index + ')"></a>' )( $scope ).addClass( 'linkButton' ).append( $( '<i class="fa fa-copy"></i>' ).attr( 'data-desc', $scope.autoLanguage( '复制' ) ) ) ;
                   var deleteBtn = $compile( '<a ng-click="DeleteRecord(' + index + ')" ></a>' )( $scope ).addClass( 'linkButton' ).append( $( '<i class="fa fa-remove"></i>' ).attr( 'data-desc', $scope.autoLanguage( '删除' ) ) ) ;
@@ -257,7 +244,7 @@
                var keyList = [] ;
                //取得json的所有键
                $.each( $scope.records, function( index, record ){
-                  keyList = SdbFunction.getJsonKeys( record, 0, keyList ) ;
+                  keyList = SdbFunction.getJsonKeys( record, 10, keyList ) ;
                } ) ;
                keyList.unshift( '#' ) ;
                //计算列宽
@@ -285,14 +272,6 @@
                      if( index >= 20 )
                      {
                         return false ;
-                     }
-                     if( value == Number.POSITIVE_INFINITY )
-                     {
-                        value = '1.7976931348623157e+308' ;
-                     }
-                     else if( value == Number.NEGATIVE_INFINITY )
-                     {
-                        value = '-1.7976931348623157e+308' ;
                      }
                      newRow.push( { 'text': value } ) ;
                   } ) ;
@@ -460,20 +439,7 @@
          }
          $scope.Components.Modal.Context = '<div json-edit para="data.jsonEdit"></div>' ;
          $scope.Components.Modal.ok = function(){
-            var str = JSON.stringify( $scope.Components.Modal.jsonEdit.Callback.getJson(), function( key, value ){
-               if( value == Number.POSITIVE_INFINITY )
-               {
-                  return 1.7976931348623157e+308 ;
-               }
-               else if( value == Number.NEGATIVE_INFINITY )
-               {
-                  return -1.7976931348623157e+308 ;
-               }
-               else
-               {
-                  return value ;
-               }
-            } ) ;
+            var str = JSON.stringify( $scope.Components.Modal.jsonEdit.Callback.getJson() ) ;
             var data = { 'cmd': 'insert', 'name': $scope.fullName, 'insertor': str } ;
             SdbRest.DataOperation( data, function( json ){
                $scope.execResult = sprintf( $scope.autoLanguage( '? ? 插入记录成功' ), timeFormat( new Date(), 'hh:mm:ss' ), $scope.fullName ) ;
@@ -528,7 +494,7 @@
          }
          $scope.Components.Modal.onResize = function( width, height ){
             $scope.Components.Modal.jsonEdit.Height = height - 55 ;
-            $scope.$apply() ;
+            //$scope.$apply() ;
          }
       }
 

@@ -40,16 +40,16 @@
             window.location.href = '/deployment/index.html' ;
          }
       }, function( errorInfo ){
-         window.location.href = '/login.html' ;
+         window.location.href = '/' ;
       }, function(){
-         window.location.href = '/login.html' ;
+         window.location.href = '/' ;
       } ) ;
    }
    //控制器
    sacApp.controllerProvider.register( 'Transfer', function( $scope, $rootScope, $location, SdbRest, SdbFunction ){
-      setTimeout( function(){
+      /*setTimeout( function(){
          loginTransfer( $scope, SdbRest, SdbFunction ) ;
-      } ) ;
-      //$location.path( '/Deploy/Index' ) ;
+      } ) ;*/
+      $location.path( '/Deploy/Index' ) ;
    } ) ;
 }());

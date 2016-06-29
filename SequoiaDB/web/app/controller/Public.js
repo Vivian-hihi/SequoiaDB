@@ -295,7 +295,7 @@
                'text': $scope.autoLanguage( '部署' ),
                'module': 'Deploy',
                'icon': 'fa-share-alt',
-               'action': '/deployment/index.html'
+               'action': '/#/Deploy/Index'
             }
          ] ;
       } ;

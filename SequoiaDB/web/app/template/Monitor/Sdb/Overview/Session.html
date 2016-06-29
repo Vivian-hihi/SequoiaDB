@@ -61,7 +61,13 @@
       </ul>
    </div>
    <div style="color:#606060;font-size:90%;height:30px;margin:10px 0;">
-      <button class="btn btn-default" ng-click="CreatePlayIntervalModel()">实时刷新设置</button>&nbsp;<button class="btn btn-default" dropdown-menu="SelectMenu" ng-click="OpenSelecMenu()">选择显示列&nbsp;<i class="fa fa-caret-down"></i></button>&nbsp;<button class="btn btn-default" dropdown-menu="ScreenMenu">条件筛选&nbsp;<i class="fa fa-caret-down"></i></button>
+      <button class="btn btn-default" ng-click="CreatePlayIntervalModel()">实时刷新设置</button>&nbsp;
+      <button class="btn btn-default" dropdown-menu="SelectMenu" ng-click="OpenSelecMenu()">选择显示列&nbsp;<i class="fa fa-caret-down"></i></button>&nbsp;
+      <button class="btn btn-default" dropdown-menu="ScreenMenu" ng-click="OpenSelecMenu()">
+         <span ng-if="SessionType == 'all'">所有会话</span>
+         <span ng-if="SessionType == 'current'">当前会话</span>
+         <i class="fa fa-caret-down"></i>
+      </button>
    </div>
 
    <div create-timer="Timer"></div>
@@ -74,8 +80,10 @@
             </colgroup>
             <tbody>
                <tr>
-                  <td>
-                     <div class="Ellipsis">{{autoLanguage("状态")}}</div>
+                  <td ng-click="SetOrderField('Status')" style="cursor:pointer;">
+                     <div class="Ellipsis">
+                        <i class="fa fa-caret-up" ng-if="OrderByField.indexOf('Status') >= 0"></i><i class="fa fa-caret-down" ng-if="OrderByField.indexOf('-'+'Status') >= 0"></i>{{autoLanguage("状态")}}
+                     </div>
                   </td>
                   <td style="cursor:pointer;" ng-repeat="fieldName in ShowKeyList track by $index" ng-click="SetOrderField(fieldName)">
                      <div class="Ellipsis">
@@ -113,7 +121,7 @@
    </div>
    <div class="GridTool">
       <div class="ToolLeft">
-         <span>一共有 {{NodeList.length}} 个节点</span>
+         <span>一共有 {{SessionList.length}} 个会话</span>
       </div>
    </div>
 </div>

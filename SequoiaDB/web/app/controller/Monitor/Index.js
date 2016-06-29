@@ -31,10 +31,16 @@
       var queryHost = function(){
          var data = {
             'cmd': 'query host',
-            'HostInfo': JSON.stringify( {"HostInfo":[ {"HostName":"ubuntu-test-02"} ] } )
+            //'filter' : JSON.stringify( { 'HostName':'ubuntu-test-02' } )
+            //'HostInfo': JSON.stringify( {"HostInfo":[ {"HostName":"ubuntu-test-02"} ] } )
          } ;
          SdbRest.OmOperation( data, function( hostList ){
-            $scope.HostList = hostList ;
+            $.each( hostList, function( index, hostInfo ){
+               if( hostInfo['ClusterName'] == clusterName )
+               {
+                  $scope.HostList.push( hostInfo ) ;
+               }               
+            } ) ;
          }, function( errorInfo ){
             _IndexPublic.createRetryModel( $scope, errorInfo, function(){
                queryHost() ;

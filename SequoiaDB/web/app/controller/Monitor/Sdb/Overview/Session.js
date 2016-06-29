@@ -9,7 +9,6 @@
       $scope.clusterName = clusterName ;
       $scope.moduleName = moduleName ;
       $scope.moduleType =  moduleType ;
-      $scope.SelectMenu = [] ;
 
       $scope.SessionList = [] ;
       $scope.SessionGridOptions = { 'titleWidth': [] } ;
@@ -17,6 +16,7 @@
       $scope.ShowKey = [] ;
       $scope.SelectMenu = [] ;
       $scope.OrderByField = [] ;
+      $scope.SessionType = 'all' ;
 
       //设置排序字段
       $scope.SetOrderField = function( fieldName ){
@@ -35,7 +35,7 @@
             $scope.OrderByField.splice( reverse, 1 ) ;
          }
       }
-
+      
       //创建 设置实时刷新 的弹窗
       $scope.CreatePlayIntervalModel = function(){
          $scope.Components.Modal.icon = '' ;
@@ -84,15 +84,10 @@
          }
       }
 
-      //获取会话列表数据
-      $scope.queryList = function( data, success, failed, error, complete ){
-         SdbRest._postTest( './test/sessionList', success, failed, error ) ;
-      }
-
       //渲染网格显示的列
       var gridShowColumn = function(){
          $scope.SessionGridOptions['titleWidth'] = [] ;
-         $scope.SessionGridOptions['titleWidth'].push( '40px' ) ;
+         $scope.SessionGridOptions['titleWidth'].push( '50px' ) ;
          var widthPercent = 100 / $scope.ShowKeyList.length ;
          $.each( $scope.ShowKeyList, function( index, keyName ){
             $scope.SessionGridOptions['titleWidth'].push( widthPercent ) ;
@@ -126,17 +121,24 @@
          gridShowColumn() ;
       }
 
-      $scope.getSessionList = function(){
-         
-         $scope.queryList( {}, function( test ){
-            $scope.SessionList = test ;
+      var sql = 'SELECT * FROM $SNAPSHOT_SESSION' ;
+
+      var getSessionList = function(){
+         SdbRest.Exec( sql, function( SessionList ){
+            $scope.SessionList = [] ;
             var keyList = [] ;
-            $.each( $scope.SessionList, function( index, value ){
-               keyList = SdbFunction.getJsonKeys( value, 0, keyList ) ;
+            $.each( SessionList, function( index, value ){
+               if( typeof( value['SessionID'] ) != 'undefined' )
+               {
+                  keyList = SdbFunction.getJsonKeys( value, 0, keyList ) ;
+                  $scope.SessionList.push( value )
+               }
             } ) ;
             $scope.ShowKey = [] ;
             $scope.SelectMenu = [] ;
             $.each( keyList, function( index, key ){
+               if( key != 'Status' )
+               {}
                $scope.ShowKey.push( { 'key': key, 'show': $scope.ShowKeyList.indexOf( key ) >= 0 } ) ;
                $scope.SelectMenu.push( { 
                   'html': $compile( '<label><div class="Ellipsis" style="padding:5px 10px"><input type="checkbox" ng-model="ShowKey[\'' + index + '\'][\'show\']"/>&nbsp;' + key + '</div></label>' )( $scope ),
@@ -148,10 +150,18 @@
             } ) ;
             gridShowColumn() ;
             $scope.Timer.complete = true ;
-         } ) ;
-      }
+         }, function( errorInfo ){
+            _IndexPublic.createRetryModel( $scope, errorInfo, function(){
+               getSessionList() ;
+               return true ;
+            } ) ;
+         }, function(){
+            _IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
+         }, null ,false ) ;
 
-      $scope.getSessionList() ;
+      } ;
+
+      getSessionList() ;
    
 
       //显示会话详细
@@ -205,17 +215,6 @@
 </table>' ;
       } 
 
-      $scope.changeSelect = function( $event ){
-         if( $( $event.target ).attr( 'class' ) == 'pull-left fa fa-check-square-o' )
-         {
-            $( $event.target ).removeClass('fa-check-square-o').addClass('fa-square-o') ;
-         }
-         else if( $( $event.target ).attr( 'class' ) == 'pull-left fa fa-square-o' )
-         {
-            $( $event.target ).removeClass('fa-square-o').addClass('fa-check-square-o') ;
-         }
-      } ;
-
       $scope.stopSession = function( ){
          $scope.Components.Confirm.isShow = true ;
          $scope.Components.Confirm.type = 1 ;
@@ -229,32 +228,16 @@
       }
       
       $scope.screenResult = {
-         'Role':'all',
-         'Running': true,
-         'Waiting': true,
-         'Destroying': true
+         'Role':'all'
       } ;
 
       $scope.ScreenMenu = [
          { 
-            'html': $compile( '<div style="padding:5px 10px"><input type="radio" name="a" value="all" ng-model="screenResult[\'Role\']" />所有会话</div>' )( $scope ),
+            'html': $compile( '<label><div style="padding:5px 10px"><input type="radio" name="a" value="all" ng-model="screenResult[\'Role\']" />所有会话</div></label>' )( $scope ),
             'onClick': function(){}
          },
          { 
-            'html': $compile( '<div style="padding:5px 10px"><input type="radio" name="a" value="current" ng-model="screenResult[\'Role\']"/>当前会话</div>' )( $scope ),
-            'onClick': function(){}
-         },
-         {},
-         { 
-            'html': $compile( '<div style="padding:5px 10px"><input type="checkbox" ng-model="screenResult[\'Running\']"/>运行状态</div>' )( $scope ),
-            'onClick': function(){}
-         },
-         { 
-            'html': $compile( '<div style="padding:5px 10px"><input type="checkbox" ng-model="screenResult[\'Waiting\']"/>等待状态</div>' )( $scope ),
-            'onClick': function(){}
-         },
-         { 
-            'html': $compile( '<div style="padding:5px 10px"><input type="checkbox" ng-model="screenResult[\'Destroying\']"/>销毁状态</div>' )( $scope ),
+            'html': $compile( '<label><div style="padding:5px 10px"><input type="radio" name="a" value="current" ng-model="screenResult[\'Role\']"/>当前会话</div></label>' )( $scope ),
             'onClick': function(){}
          },
          { 
@@ -263,57 +246,21 @@
       ] ; 
 
       $scope.changeScreen = function(){
-         $scope.GridData = $.extend( true, {}, gridData ) ;
-         $.each( $scope.test, function( index, value ){
-            if( $scope.screenResult['Running'] == true && value['Status'] == 'Running' )
-            {
-               $scope.GridData['body'].push( [
-                  { 'html': $compile( '<i class="fa fa-circle" style="color:#00CC66;" data-desc="正常运行中"></i>' )( $scope ) },
-                  { 'html': $compile( '<a class="linkButton" ng-click="showSession()">' + value['SessionID'] + '</a>' )( $scope ) },
-                  { 'text': value['TID'] },
-                  { 'text': value['Type'] },
-                  { 'text': value['TotalDataWrite'] },
-                  { 'text': value['TotalIndexWrite'] },
-                  { 'text': value['TotalUpdate'] },
-                  { 'text': value['TotalDelete'] },
-                  { 'text': value['TotalInsert'] },
-                  { 'text': value['TotalRead'] },
-                  { 'html': $compile( '<div class="linkButton" ng-click="stopSession()" style="font-size:80%;"><i class="fa fa-stop" style="font-size:90%;padding-right:3px;"></i>中断会话</div>' )( $scope ) }
-               ] )
-            }
-            else if(  $scope.screenResult['Waiting'] == true && value['Status'] == 'Waiting' )
-            {
-               $scope.GridData['body'].push( [
-                  { 'html': $compile( '<i class="fa fa-circle" style="color:#F9A937;" data-desc="该会话处于waiting状态"></i>' )( $scope ) },
-                  { 'html': $compile( '<a class="linkButton" ng-click="showSession()">' + value['SessionID'] + '</a>' )( $scope ) },
-                  { 'text': value['TID'] },
-                  { 'text': value['Type'] },
-                  { 'text': value['TotalDataWrite'] },
-                  { 'text': value['TotalIndexWrite'] },
-                  { 'text': value['TotalUpdate'] },
-                  { 'text': value['TotalDelete'] },
-                  { 'text': value['TotalInsert'] },
-                  { 'text': value['TotalRead'] },
-                  { 'html': $compile( '<div class="linkButton" ng-click="stopSession()" style="font-size:80%;"><i class="fa fa-stop" style="font-size:90%;padding-right:3px;"></i>中断会话</div>' )( $scope ) }
-               ] )
-            }
-            else if( $scope.screenResult['Destroying'] == true && value['Status'] == 'Destroying' )
-            {
-               $scope.GridData['body'].push( [
-                  { 'html': $compile( '<i class="fa fa-circle" style="color:#D9534F;" data-desc="该会话处于销毁状态"></i>' )( $scope ) },
-                  { 'html': $compile( '<a class="linkButton" ng-click="showSession()">' + value['SessionID'] + '</a>' )( $scope ) },
-                  { 'text': value['TID'] },
-                  { 'text': value['Type'] },
-                  { 'text': value['TotalDataWrite'] },
-                  { 'text': value['TotalIndexWrite'] },
-                  { 'text': value['TotalUpdate'] },
-                  { 'text': value['TotalDelete'] },
-                  { 'text': value['TotalInsert'] },
-                  { 'text': value['TotalRead'] },
-                  { 'html': $compile( '<div class="linkButton" ng-click="stopSession()" style="font-size:80%;"><i class="fa fa-stop" style="font-size:90%;padding-right:3px;"></i>中断会话</div>' )( $scope ) }
-               ] )
-            }
-         } )   
+         if( isOpenSelectMenu == true && $scope.Timer.status == 'stop' )
+         {
+            isOpenSelectMenu = false ;
+            $scope.Timer.status = 'start' ;
+         }
+         $scope.SessionType = $scope.screenResult['Role'] ;
+         if( $scope.screenResult['Role'] == 'current' )
+         {
+            sql = 'SELECT * FROM $SNAPSHOT_SESSION_CUR' ;
+         }
+         else
+         {
+            sql = 'SELECT * FROM $SNAPSHOT_SESSION' ;
+         }
+         getSessionList() ;
       } ;
 
       $scope.Timer = {
@@ -321,7 +268,7 @@
          interval: 5,
          currentTimer: 0,
          complete: false,
-         fn: $scope.getSessionList
+         fn: getSessionList
       } ;
 
       //跳转至部署
