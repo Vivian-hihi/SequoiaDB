@@ -70,7 +70,7 @@
 
 SDB_EXTERN_C_START
 
-#define DECIMAL_SIGN_MASK	         0xC000
+#define DECIMAL_SIGN_MASK           0xC000
 #define SDB_DECIMAL_POS             0x0000
 #define SDB_DECIMAL_NEG             0x4000
 #define SDB_DECIMAL_SPECIAL_SIGN    0xC000
@@ -79,7 +79,7 @@ SDB_EXTERN_C_START
 #define SDB_DECIMAL_SPECIAL_MIN     0x0001
 #define SDB_DECIMAL_SPECIAL_MAX     0x0002
 
-#define DECIMAL_DSCALE_MASK			0x3FFF
+#define DECIMAL_DSCALE_MASK         0x3FFF
 
 
 #define SDB_DECIMAL_DBL_DIG        ( DBL_DIG )
