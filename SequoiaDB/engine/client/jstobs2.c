@@ -1034,6 +1034,7 @@ static BOOLEAN jsonConvertBson( const CJSON_MACHINE *pMachine,
             JSON_PRINTF_LOG( "Failed to append bson '%s' decimal", pKey ) ;
             goto error ;
          }
+         decimal_free( &bsonDecimal ) ;
          break ;
       }
       case CJSON_NONE:
