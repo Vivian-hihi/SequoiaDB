@@ -559,7 +559,7 @@ ConfigMgr.prototype._firstlyCheck =
    if ( this._clusterInfo[ClusterName] == null ||
         this._clusterInfo[ClusterName] == "" ) {
       exp = new SdbError( SDB_INVALIDARG, 
-         sprintf("cluster name[?] can be null or empty", 
+         sprintf("cluster name[?] can't be null or empty", 
             this._clusterInfo[ClusterName] ) ) ;
       logger.log( PDERROR, exp ) ;
       throw exp ;
@@ -569,7 +569,7 @@ ConfigMgr.prototype._firstlyCheck =
    if ( this._moduleInfo[BusinessName] == null ||
         this._moduleInfo[BusinessName] == "" ) {
       exp = new SdbError( SDB_INVALIDARG, 
-         sprintf("module name[?] can be null or empty", 
+         sprintf("module name[?] can't be null or empty", 
             this._moduleInfo[BusinessName] ) ) ;
       logger.log( PDERROR, exp ) ;
       throw exp ;

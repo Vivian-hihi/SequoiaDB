@@ -168,20 +168,19 @@ do
    shift
 done
 
-#echo "config file: "$opt_configfile
-#echo "action: "$opt_action
 
-
-#PROGPATH=$(cd `dirname $0`; pwd)
-#echo $PROGPATH
-
-#echo "current path is: "$CUR_PATH
 SDB=`getProgFullPath "sdb"`
 PROG_PATH=`dirname ${SDB}`
 SCRIPT_PATH=${PROG_PATH}/../conf/script
-#SDB=${PROG_PATH}/sdb
-#echo "sdb is: "$SDB
-#echo "path is: "${PROG_PATH}
+
+EXPECT_USER=`ls -l ${SDB} | awk '{print $3}'`
+ACTUAL_USER=`whoami`
+
+if [ $EXPECT_USER != $ACTUAL_USER ]
+then
+   echo "Error: current account is '${ACTUAL_USER}', please use '${EXPECT_USER}' account to run current shell script"
+   exit
+fi
 
 js_file_define="${SCRIPT_PATH}/define.js"
 js_file_error="${SCRIPT_PATH}/error.js"
