@@ -91,24 +91,7 @@
                     <path>~${username}/.bashrc</path>
                 </fileExists>
             </ruleList>
-        </touchFile>
-        <runProgram>
-            <abortOnError>0</abortOnError>
-            <program>echo</program>
-            <programArguments>'export PATH=$PATH:${installdir}' &gt;&gt; ~${username}/.bashrc</programArguments>
-            <ruleEvaluationLogic>or</ruleEvaluationLogic>
-            <ruleList>
-                <fileContentTest>
-                    <encoding>utf-8</encoding>
-                    <logic>does_not_contain</logic>
-                    <path>~${username}/.bashrc</path>
-                    <text>${installdir}</text>
-                </fileContentTest>
-                <fileExists>
-                    <path>~${username}/.bashrc</path>
-                </fileExists>
-            </ruleList>
-        </runProgram>
+        </touchFile>        
         <changeOwnerAndGroup>
             <files>~${username}/*</files>
             <group>${username}_group</group>
@@ -319,23 +302,33 @@
             <programArguments>${installer_pathname} | cut -c 1-32 &gt;&gt; /etc/default/sequoiadb</programArguments>
         </runProgram>
         <runProgram>
+            <program>grep</program>
+            <programArguments>-q "^export PATH=\$PATH:${installdir}\/bin$" ~sdbadmin/.bashrc</programArguments> 
+            <abortOnError>0</abortOnError>   
+            <showMessageOnError>0</showMessageOnError>       
+        </runProgram>          
+        <runProgram>
             <abortOnError>0</abortOnError>
             <program>echo</program>
             <programArguments>'export PATH=$PATH:${installdir}/bin' &gt;&gt; ~${username}/.bashrc</programArguments>
-            <ruleEvaluationLogic>or</ruleEvaluationLogic>
-            <ruleList>
-                <fileContentTest>
-                    <encoding>utf-8</encoding>
-                    <logic>does_not_contain</logic>
-                    <path>~${username}/.bashrc</path>
-                    <text>${installdir}/bin</text>
-                </fileContentTest>
-                <fileExists>
-                    <path>~${username}/.bashrc</path>
-                </fileExists>
+            <ruleList> 
+                <compareText logic="does_not_equal" text="${program_exit_code}" value="0"/>                                                                  
             </ruleList>
-        </runProgram>       
-        
+        </runProgram>  
+        <runProgram>
+            <program>grep</program>
+            <programArguments>-q "^export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:${installdir}\/lib$" ~sdbadmin/.bashrc</programArguments> 
+            <abortOnError>0</abortOnError>   
+            <showMessageOnError>0</showMessageOnError>       
+        </runProgram>          
+        <runProgram>
+            <abortOnError>0</abortOnError>
+            <program>echo</program>
+            <programArguments>'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${installdir}/lib' &gt;&gt; ~${username}/.bashrc</programArguments>
+            <ruleList> 
+                <compareText logic="does_not_equal" text="${program_exit_code}" value="0"/>                                                                  
+            </ruleList>
+        </runProgram>            
         <createSymLink>
             <linkName>${installdir}/www/doc</linkName>
             <target>${installdir}/doc</target>
