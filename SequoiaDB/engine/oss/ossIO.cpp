@@ -672,7 +672,8 @@ INT32 ossFileCopy( const CHAR * pSrcFile,
    buffLen = 4096 ;
    ossMemset( pBuff, 0, buffLen ) ;
 
-   rc = ossOpen( pSrcFile, OSS_READONLY, OSS_DEFAULTFILE, srcFile ) ;
+   rc = ossOpen( pSrcFile, OSS_READONLY | OSS_SHAREREAD,
+                 OSS_DEFAULTFILE, srcFile ) ;
    if ( rc )
    {
       PD_LOG( PDERROR, "Open source file[%s] failed, rc: %d", pSrcFile, rc ) ;
