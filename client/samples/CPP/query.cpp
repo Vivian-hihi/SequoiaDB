@@ -76,6 +76,9 @@ INT32 main ( INT32 argc, CHAR **argv )
    BSONObj obj ;
    BSONObj rule ;
    vector<BSONObj> objList ;
+   BSONObjBuilder myBuilder ;
+   BSONObj decimalObj ;
+   bsonDecimal decimal ;
    int count = 0 ;
    INT32 rc = SDB_OK ;
 
@@ -118,6 +121,15 @@ INT32 main ( INT32 argc, CHAR **argv )
       }
    }
 
+   decimal.init() ;
+   decimal.fromDouble(1.2345);
+   myBuilder.append("a", decimal);
+   decimalObj = myBuilder.obj();
+   rc = collection.insert ( decimalObj ) ;
+   if ( rc )
+   {
+      cout<<"Failed to insert record, rc = "<<rc<<endl ;
+   }
    // query all the record in this collection
    // and return the result by the cursor
    rc = collection.query ( cursor ) ;
