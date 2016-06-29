@@ -86,6 +86,7 @@ var FIELD_CONF_SORTBUF                    = "sortbuf" ;
 var FIELD_CONF_SYNCSTRATEGY               = "syncstrategy" ;
 var FIELD_CONF_TRANSACTION                = "transactionon" ;
 var FIELD_CONF_WEIGHT                     = "weight" ;
+var FIELD_CONF_OM_ADDR                    = "omaddr" ;
 
 var ACTION_ALL                            = "all" ;
 var ACTION_BUILD_OM                       = "buildon" ;

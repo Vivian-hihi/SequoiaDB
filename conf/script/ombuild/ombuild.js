@@ -2494,6 +2494,21 @@ InstallOM.prototype._insertConfigInfo =
    function InstallOM__insertConfigInfo() {
    var csName = "SYSDEPLOY" ;
    var clName = "SYSCONFIGURE" ;
+   // append om address info
+   try {
+      for( var i = 0; i < this._configInfoArr.length; i++ ) {
+         var nodeNum = this._configInfoArr[i][Config].length ;
+         for ( var j = 0; j < nodeNum; j++ ) {
+            this._configInfoArr[i][Config][j][FIELD_CONF_OM_ADDR] = this._omAddr ;
+         }
+      }
+   } catch( e ) {
+      var exp = new SdbError( e, 
+         "failed to add om address info into configure record" ) ;
+      logger.log( PDERROR, exp ) ;
+      throw exp ;
+   }
+   // insert info
    try {
       var cs = this._omObj.getCS( csName ) ;
       var cl = cs.getCL( clName ) ;
@@ -2642,7 +2657,7 @@ InstallOM.prototype._doit = function InstallOM__doit() {
       this._insertConfigInfo() ;
    } catch( e ) {
       exp = SdbError( e, "failed to insert info into om" ) ;
-      logger.log( e, exp ) ;
+      logger.log( PDERROR, exp ) ;
       this._removeOM() ;
       throw exp ;
    }
@@ -2712,13 +2727,15 @@ function main() {
 
 // execute
 try {
-   var exp = null ;
+   var exp     = null ;
+   var errCode = null ;
    _init() ;
    main() ;
 } catch( e ) {
-   exp = new SdbError( e, "failed to run tasks" ) ; 
+   exp     = new SdbError( e, "failed to run tasks" ) ; 
+   errCode = exp.getErrCode() ;
    logger.log( PDERROR, exp ) ;
-   throw exp ;
+   throw errCode ;
 } finally {
    if ( exp == null ) {
       _final() ;
