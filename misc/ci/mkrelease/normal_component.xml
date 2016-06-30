@@ -276,16 +276,13 @@
         <runProgram>
             <customErrorMessage>${msg(Install.ErrorMsg.IntallationOM.error)}</customErrorMessage>
             <program>${installdir}/install_om.sh</program>
-            <programArguments>${project.installationType} ${installdir} ${installer_pathname} ${port} ${svcname} ${dbpath} ${restname}</programArguments>
-            <ruleEvaluationLogic>or</ruleEvaluationLogic>
-            <ruleList>
-                <isTrue>
-                    <value>${OM}</value>
-                </isTrue>
-                <isTrue>
-                    <value>${SMS}</value>
-                </isTrue>
+            <programArguments>${project.installationType} ${installdir} ${installer_pathname} ${port} ${svcname} ${dbpath} ${restname}</programArguments>           
+            <ruleList>               
+                <isTrue value="${SMS}" />
             </ruleList>
+            <onErrorActionList>
+                <consoleWrite text="&#xA;error message:&#xA;${program_stdout}&#xA;"/>
+            </onErrorActionList>
         </runProgram>
         <changeOwnerAndGroup>
             <files>${installdir}/packet/${installerFilename}</files>
