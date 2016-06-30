@@ -867,6 +867,7 @@ static BOOLEAN jsonConvertBson( const CJSON_MACHINE *pMachine,
                                  pBase64,
                                  base64DecodeLen ) == BSON_ERROR )
          {
+            cJsonFree( pBase64, pMachine ) ;
             JSON_PRINTF_LOG( "Failed to append bson '%s' binary", pKey ) ;
             goto error ;
          }
