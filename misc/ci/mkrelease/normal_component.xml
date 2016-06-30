@@ -207,6 +207,10 @@
             <files>${installdir}/install_om.sh</files>
             <permissions>0755</permissions>
         </changePermissions>
+        <changePermissions>
+            <files>${installdir}/conf/script/{*.sh,*/*.sh}</files>
+            <permissions>0755</permissions>
+        </changePermissions> 
         <dos2unix>
             <files>${installdir}/tools/server/php/bin/php</files>
         </dos2unix>
