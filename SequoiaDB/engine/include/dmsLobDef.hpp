@@ -208,6 +208,10 @@ namespace engine
    } ;
    typedef struct _dmsLobMeta dmsLobMeta ;
 
+
+   #define DMS_LOB_PAGE_NORMAL               ( 0 )
+   #define DMS_LOB_PAGE_REMOVED              ( 1 )
+
    /*
       _dmsLobDataMapBlk define
    */
@@ -221,7 +225,8 @@ namespace engine
       SINT32         _nextPageInBucket ;
       UINT32         _clLogicalID ;
       UINT16         _mbID ;
-      CHAR           _pad2[212];  /// sizeof( _dmsLobDataMapBlk ) == 256B
+      BYTE           _status ;
+      CHAR           _pad2[211];  /// sizeof( _dmsLobDataMapBlk ) == 256B
 
       _dmsLobDataMapBlk()
       :_sequence( 0 ),
@@ -229,13 +234,25 @@ namespace engine
        _prevPageInBucket( DMS_LOB_INVALID_PAGEID ),
        _nextPageInBucket( DMS_LOB_INVALID_PAGEID ),
        _clLogicalID( DMS_INVALID_CLID ),
-       _mbID( DMS_INVALID_MBID )
+       _mbID( DMS_INVALID_MBID ),
+       _status( DMS_LOB_PAGE_NORMAL )
       {
          ossMemset( this, 0, sizeof( _pad1 ) + sizeof( _oid ) ) ;
          ossMemset( _pad2, 0, sizeof( _pad2 ) ) ;
          SDB_ASSERT( 256 == sizeof( _dmsLobDataMapBlk ),
                      "invalid blk" ) ;
       }
+
+      BOOLEAN isNormal() const
+      {
+         return _status == DMS_LOB_PAGE_NORMAL ? TRUE : FALSE ;
+      }
+      BOOLEAN isRemoved() const
+      {
+         return _status == DMS_LOB_PAGE_REMOVED ? TRUE : FALSE ;
+      }
+      void setNormal() { _status = DMS_LOB_PAGE_NORMAL ; }
+      void setRemoved() { _status = DMS_LOB_PAGE_REMOVED ; }
 
       BOOLEAN equals( const BYTE *oid, UINT32 sequence ) const
       {

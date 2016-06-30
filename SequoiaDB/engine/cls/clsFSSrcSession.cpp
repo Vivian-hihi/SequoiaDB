@@ -858,11 +858,18 @@ namespace engine
       {
          if ( !_findEnd )
          {
-            _syncRecord( handle, packet, routeID, TID, requestID ) ;
+            rc = _syncRecord( handle, packet, routeID, TID, requestID ) ;
          }
          else
          {
-            _syncLob( handle, packet, routeID, TID, requestID ) ;
+            rc = _syncLob( handle, packet, routeID, TID, requestID ) ;
+         }
+
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Session[%s]: Failed to sync %s, rc: %d",
+                    sessionName(), ( _findEnd ? "Lob" : "Record" ), rc ) ;
+            goto error ;
          }
       }
       else if ( retryTime < 10 )

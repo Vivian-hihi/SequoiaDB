@@ -1163,6 +1163,8 @@ namespace engine
       PD_TRACE_ENTRY( SDB__DMSSTORAGELOB__PUSH2BUCKET ) ;
       DMS_LOB_PAGEID &pageInBucket = _dmsBME->_buckets[bucket] ;
 
+      blk.setNormal() ;
+
       /// empty bucket
       if ( DMS_LOB_INVALID_PAGEID == pageInBucket )
       {
@@ -1517,6 +1519,20 @@ namespace engine
                continue ;
             }
 
+            /// when the page is not normal, need to get the block lock, then
+            /// check the page again
+            if ( !blk->isNormal() )
+            {
+               utilCacheContext cContext ;
+               _pCacheUnit->prepareRead( current, 0, 0, cb, cContext ) ;
+
+               if ( !DMS_LOB_PAGE_IN_USED( current ) )
+               {
+                  ++current ;
+                  continue ;
+               }
+            }
+
             ossMemcpy( &( page._oid ), blk->_oid, sizeof( page._oid ) ) ;
             page._sequence = blk->_sequence ;
             page._len = blk->_dataLen ;
@@ -1546,7 +1562,7 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGELOB__REMOVEPAGE, "_dmsStorageLob::_removePage" )
    INT32 _dmsStorageLob::_removePage( DMS_LOB_PAGEID page,
-                                      const _dmsLobDataMapBlk *blk,
+                                      _dmsLobDataMapBlk *blk,
                                       const UINT32 *bucket,
                                       dmsMBContext *mbContext,
                                       BOOLEAN needRelease )
@@ -1623,6 +1639,8 @@ namespace engine
       {
          mbContext->mbStat()->_totalLobs -= 1 ;
       }
+
+      blk->setRemoved() ;
 
       /// release the page
       if ( needRelease )
@@ -1829,7 +1847,7 @@ namespace engine
 
       if ( pageFilled )
       {
-         const _dmsLobDataMapBlk *blk = NULL ;
+         _dmsLobDataMapBlk *blk = NULL ;
          ossValuePtr extent = extentAddr( page ) ;
          if ( !extent )
          {

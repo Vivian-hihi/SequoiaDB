@@ -201,7 +201,7 @@ namespace engine
 
       /// release space of page and change other meta data.
       INT32 _removePage( DMS_LOB_PAGEID page,
-                         const _dmsLobDataMapBlk *blk,
+                         _dmsLobDataMapBlk *blk,
                          const UINT32 *bucket,
                          dmsMBContext *mbContext,
                          BOOLEAN needRelease = TRUE ) ;
