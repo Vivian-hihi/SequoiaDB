@@ -60,7 +60,7 @@ namespace engine
    {
       PD_TRACE_ENTRY ( SDB__CLSVSSD_HDINPUT ) ;
       SDB_ASSERT( NULL != header, "header should not be NULL" ) ;
-      if ( MSG_CLS_BALLOT_RES == (UINT32)header->opCode )
+      if ( MSG_CLS_BALLOT_RES == header->opCode )
       {
          next = id() ;
          goto done ;

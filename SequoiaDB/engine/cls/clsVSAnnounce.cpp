@@ -64,7 +64,7 @@ namespace engine
       {
          next = id() ;
       }
-      else if ( MSG_CLS_BALLOT_RES == (UINT32)header->opCode )
+      else if ( MSG_CLS_BALLOT_RES == header->opCode )
       {
          const _MsgClsElectionRes *msg = ( const _MsgClsElectionRes * )
                                           header ;
