@@ -53,10 +53,10 @@ namespace engine
                                       INT32 pageSize,
                                       INT32 lobPageSize )
    :_apm(this),
-    _pMgr( pMgr ),
     _pDataSu( NULL ),
     _pIndexSu( NULL ),
     _pLobSu( NULL ),
+    _pMgr( pMgr ),
     _pCacheUnit( NULL )
    {
       PD_TRACE_ENTRY ( SDB__DMSSU ) ;
