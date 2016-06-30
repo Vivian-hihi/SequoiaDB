@@ -63,6 +63,12 @@ namespace engine
    #define MON_MASK_TRANSINFO          0x00000100
    #define MON_MASK_ALL                0xFFFFFFFF
 
+   #define MON_MASK_FETCH_DEFAULT      ( MON_MASK_NODE_NAME |\
+                                         MON_MASK_HOSTNAME |\
+                                         MON_MASK_SERVICE_NAME |\
+                                         MON_MASK_GROUP_NAME |\
+                                         MON_MASK_NODEID )
+
    INT32 monAppendSystemInfo ( BSONObjBuilder &ob,
                                UINT32 mask = MON_MASK_ALL ) ;
 
@@ -128,9 +134,9 @@ namespace engine
          virtual ~_monTransFetcher() ;
 
          INT32    init( pmdEDUCB *cb,
-                        UINT32 addInfoMask,
                         BOOLEAN isDumpCurrentEdu,
-                        BOOLEAN detail = FALSE ) ;
+                        BOOLEAN detail = FALSE,
+                        UINT32 addInfoMask = MON_MASK_FETCH_DEFAULT ) ;
 
          virtual const CHAR*  getName() const ;
 
@@ -199,9 +205,9 @@ namespace engine
          virtual ~_monSessionFetcher() ;
 
          INT32    init( pmdEDUCB *cb,
-                        UINT32 addInfoMask,
                         BOOLEAN isDumpCurrentEdu,
-                        BOOLEAN detail = FALSE ) ;
+                        BOOLEAN detail = FALSE,
+                        UINT32 addInfoMask = MON_MASK_FETCH_DEFAULT ) ;
 
          virtual const CHAR*  getName() const ;
 

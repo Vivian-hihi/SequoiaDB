@@ -1894,9 +1894,9 @@ namespace engine
    }
 
    INT32 _monTransFetcher::init( pmdEDUCB *cb,
-                                 UINT32 addInfoMask,
                                  BOOLEAN isDumpCurrentEdu,
-                                 BOOLEAN detail )
+                                 BOOLEAN detail,
+                                 UINT32 addInfoMask )
    {
       INT32 rc = SDB_OK ;
       _dumpCurrent = isDumpCurrentEdu ;
@@ -2329,9 +2329,9 @@ namespace engine
    }
 
    INT32 _monSessionFetcher::init( pmdEDUCB *cb,
-                                   UINT32 addInfoMask,
                                    BOOLEAN isDumpCurrentEdu,
-                                   BOOLEAN detail )
+                                   BOOLEAN detail,
+                                   UINT32 addInfoMask )
    {
       SDB_ASSERT( cb, "cb can't be NULL" ) ;
       _addInfoMask = addInfoMask ;
@@ -3720,7 +3720,6 @@ namespace engine
       string bkpath ;
       BOOLEAN detail = FALSE ;
       barBackupMgr bkMgr( krcb->getGroupName() ) ;
-      UINT32 index = 0 ;
 
       _addInfoMask = addInfoMask ;
       OSS_BIT_CLEAR( _addInfoMask, MON_MASK_NODE_NAME ) ;
