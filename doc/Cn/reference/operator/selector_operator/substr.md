@@ -20,7 +20,7 @@
 
 返回：**{a:"fg"}**
 
--   返回下标为0，长度为3的子串
+-   返回下标为2，长度为3的子串
 
 <pre class="prettyprint lang-javascript">
 > db.foo.bar.find({}, {a:{$substr:[2,3]}})</pre>
