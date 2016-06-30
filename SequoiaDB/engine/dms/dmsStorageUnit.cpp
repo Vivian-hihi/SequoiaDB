@@ -1159,13 +1159,9 @@ namespace engine
          ++it ;
       }
 
-   done :
       // release meta lock
       _pDataSu->_metadataLatch.release_shared() ;
       PD_TRACE_EXIT ( SDB__DMSSU_DUMPINFO ) ;
-      return ;
-   error :
-      goto done ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_DUMPCLSIMPLE, "_dmsStorageUnit::dumpInfo" )
