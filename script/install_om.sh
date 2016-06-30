@@ -29,7 +29,7 @@ echo "svcName=" $5
 echo "dbPath=" $6
 echo "restPort=" $7
 
-# upgrade mode: only copy install package
+# (upgrade mode) step1: copy install package
 if [  $installMode == "upgrade"  ] ; then
    packageNum=0
    packageNum=`find $rootPath/packet -name "*.run" | wc -l`
@@ -40,7 +40,7 @@ if [  $installMode == "upgrade"  ] ; then
    exit 0
 fi
 
-# normal mode: step 1 create om
+# (normal mode) step 1: create om
 $sdbFile -s " var _svcName = '${svcName}' ;                                              \
               var _dbPath = '${dbPath}' ;                                                \
               var _restPort = '${restPort}' ;                                            \
@@ -83,16 +83,19 @@ $sdbFile -s " var _svcName = '${svcName}' ;                                     
                  throw e ;                                                               \
               } "
 
-# normal mode: step 2 check whether om is ok or not
-if [  $? != 0  ] ; 
-then
-   echo "Create OM failed"
-else
-   echo "Create OM succeed"
-fi
+isSucc=$?
 
-# normal mode: step 3 copy install package
+# (normal mode) step 2: copy install package
 cp $installer_pathname  $rootPath/packet
 
-# normal mode: step 4 remove sdbbp.log
+# (normal mode) step 3: remove sdbbp.log
 rm -f $rootPath/sdbbp.log
+
+# (normal mode) step 4: print and return code
+if [  $isSucc != 0  ] ; 
+then
+   echo "Fail to create om in install_om.sh"
+   exit 1
+else
+   echo "Succeed to create om in install_om.sh"
+fi
