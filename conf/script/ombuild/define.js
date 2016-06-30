@@ -88,9 +88,10 @@ var FIELD_CONF_TRANSACTION                = "transactionon" ;
 var FIELD_CONF_WEIGHT                     = "weight" ;
 var FIELD_CONF_OM_ADDR                    = "omaddr" ;
 
-var ACTION_ALL                            = "all" ;
-var ACTION_BUILD_OM                       = "buildon" ;
+var ACTION_BUILD_OM                       = "buildom" ;
+var ACTION_REMOVE_OM                      = "removeom" ;
 var ACTION_UPDATE_COORD                   = "updatecoord" ;
+var ACTION_FLUSH_CONFIG                   = "flushconfig" ;
 
 function isIP( strIP ) {
    if ( strIP == undefined ) return false ;

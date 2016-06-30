@@ -20,8 +20,8 @@ function displayUsage()
    echo "  --help            display the usage "
    echo "  --conf arg        (required)specified the config file. e.g. --conf ombuild.conf "
    echo "  --action arg      (optional)specified the action for running, can be one of the "
-   echo "                    follow: 'buildom'|'updatecoord'|'all', default to be 'all',   "
-   echo "                    means executing all the actions. e.g. --action all            "
+   echo "                    follow: 'buildom'|'removeom'|'updatecoord'|'flushconfig',     "
+   echo "                    default to be 'buildom'. e.g. --action buildom "
 }
 
 #

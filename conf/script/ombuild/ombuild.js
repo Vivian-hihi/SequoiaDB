@@ -132,7 +132,7 @@ Helper.prototype.mergeArray = function Helper_mergeArray( arr1, arr2 ) {
       logger.log( PDERROR, exp ) ;
       throw exp ;
    }
-   retArr = arr1.splice( 0 ) ;
+   retArr = arr1.splice( 0, 0 ) ;
    for (var i = 0; i < arr2.length; i++ ) {    
       if ( !this.arrayContainElement( retArr, arr2[i] ) ) {
          retArr.push( arr2[i] ) ;
@@ -140,6 +140,34 @@ Helper.prototype.mergeArray = function Helper_mergeArray( arr1, arr2 ) {
    }
    return retArr ;
    
+} ;
+
+Helper.prototype.getAgentPort = function Helper_getAgentPort() {
+   var retStr = null ;
+   retStr     = Oma.getAOmaSvcName( "127.0.0.1" );
+   logger.log( PDEVENT, 
+      sprintf( "local sdbcm's service is [?]", retStr ) ) ;
+   return retStr ;
+} ;
+
+Helper.prototype.getOMSvc = function Helper_getOMSvc() {
+   var exp = null ;
+   var arr = Sdbtool.listNodes( { "role":"om", "mode":"local" } ) ;
+   if ( arr.size() == 0 ) {
+      exp = new SdbError( SDBCM_NODE_NOTEXISTED, "om does not exist in local host" ) ;
+      logger.log( PDERROR, exp ) ;
+      throw exp ;
+   }
+   var obj    = JSON.parse( arr.next() ) ;
+   var retStr = obj[SvcName3] ;
+   if ( !isString(retStr) ) {
+      exp = new SdbError( SDB_SYS, 
+         sprintf( "the port[?] of om we got from local host is not " + 
+            "a string", retStr ) ) ;
+      logger.log( PDERROR, exp ) ;
+      throw exp ;
+   }
+   return retStr ;
 } ;
 
 var ConfigMgr = function ( omConfigFile, action ) {
@@ -196,26 +224,31 @@ ConfigMgr.prototype._init = function ConfigMgr__init() {
    }
    if ( this._action != "" && 
         this._action != ACTION_BUILD_OM && 
+        this._action != ACTION_REMOVE_OM &&
         this._action != ACTION_UPDATE_COORD &&
-        this._action != ACTION_ALL ) {
+        this._action != ACTION_FLUSH_CONFIG ) {
       exp = new SdbError( SDB_INVALIDARG, 
-         sprintf( "--action should be one of the follow: ?|?|?", 
-            ACTION_BUILD_OM, ACTION_UPDATE_COORD, ACTION_ALL ) ) ;
+         sprintf( "--action should be one of the follow: ?|?|?|?", 
+            ACTION_BUILD_OM, ACTION_REMOVE_OM, 
+            ACTION_UPDATE_COORD, ACTION_FLUSH_CONFIG ) ) ;
       logger.log( PDERROR, exp ) ;
       throw exp ;
    }
    if ( this._action == "" ) {
-      this._action = ACTION_ALL ;
+      this._action = ACTION_BUILD_OM ;
    }
-   // 2. get om configure info
+   if ( this._action == ACTION_REMOVE_OM ) {
+      return ;
+   }
+   // 2. get configure info
    try {
       this._omConfObj = 
          eval( '(' + Oma.getOmaConfigs( this._configFile ) + ')' ) ;
       logger.log( PDEVENT, 
-         "om config info is: " + JSON.stringify( this._omConfObj ) ) ;
+         "configure info is: " + JSON.stringify( this._omConfObj ) ) ;
    } catch( e ) {
       errMsg = 
-         "failed to get om configure info from file[" + this._configFile + "]" ;
+         "failed to get configure info from file[" + this._configFile + "]" ;
       exp = new SdbError( SDB_INVALIDARG, errMsg ) ;
       logger.log( PDERROR, exp ) ;
       throw exp ;
@@ -302,14 +335,23 @@ ConfigMgr.prototype._appendModuleInfo =
    this._moduleInfo     = retObj ;
 } ;
 
-ConfigMgr.prototype._appendHostName = 
-   function ConfigMgr__appendHostName() {
-   var value   = this._getField( FIELD_HOST_NAME ) ;
-   var nameArr = value.split( ',' ) ;
-   var len     = nameArr.length ;
-   for ( var i = 0; i < len; i++ ) {
-      var hostInfo = new HostInfo() ;
-      hostInfo.address  = strTrim( nameArr[i] ) ;
+ConfigMgr.prototype._appendAddress = 
+   function ConfigMgr__appendAddress() {
+   var offeredAddrArr = [] ;
+   var value          = this._getField( FIELD_HOST_NAME ) ;
+   var nameArr        = value.split( ',' ) ;
+   for ( var i = 0; i < nameArr.length; i++ ) {
+      var address  = strTrim( nameArr[i] ) ;
+      if ( address == "" ||
+           this.arrayContainElement( offeredAddrArr, address ) ) {
+         continue ;
+      }
+      offeredAddrArr.push( address ) ;
+   }
+   // keep the address to local
+   for ( var i = 0; i < offeredAddrArr.length; i++ ) {
+      var hostInfo      = new HostInfo() ;
+      hostInfo.address  = offeredAddrArr[i] ;
       this._hostInfoArr.push( hostInfo ) ;
    }  
 } ;
@@ -469,7 +511,7 @@ ConfigMgr.prototype._firstlyCheck =
    var address   = null ;
    logger.log( PDEVENT, "begin to firstly check" ) ;
    // 1. check install packet is ok or not
-   if ( this._action == ACTION_ALL || this._action == ACTION_BUILD_OM ) {
+   if ( this._action == ACTION_BUILD_OM ) {
       if ( this._dbInstallPacket == null || 
            this._dbInstallPacket == "" ) {
          exp = new SdbError( SDB_INVALIDARG, 
@@ -480,7 +522,7 @@ ConfigMgr.prototype._firstlyCheck =
       }
       if ( !File.exist( this._dbInstallPacket ) ) {
          errMsg = sprintf( "SequoiaDB install packet[?] does not exist " + 
-            "in localhost", this._dbInstallPacket ) ;
+            "in local host", this._dbInstallPacket ) ;
          exp = new SdbError( SDB_INVALIDARG, errMsg ) ;
          logger.log( PDERROR, exp ) ;
          throw exp ;
@@ -608,6 +650,56 @@ ConfigMgr.prototype._appendSshObj = function ConfigMgr__appendSshObj() {
 } ;
 
 ConfigMgr.prototype._appendIP = function ConfigMgr__appendIP() {
+   var exp       = null ;
+   var errMsg    = null ;
+   var uniqueHostInfoArr = [] ;
+   var uniqueIPArr       = [] ;
+   var errMsgArr         = [] ;
+   for ( var i = 0; i < this._hostInfoArr.length; i++ ) {
+      var address = this._hostInfoArr[i].address ;
+      var ssh = this._hostInfoArr[i].rootSshObj ;
+      try {
+         var ip = ssh.getPeerIP() ;
+         if ( !isString(ip) ) {
+            errMsg = sprintf( "the return ip of host[?] is " + 
+               "not a string", address ) ;
+            errMsgArr.push( errMsg ) ;
+            if ( exp == null ) exp = new SdbError( SDB_INVALIDARG ) ;
+            logger.log( PDERROR, errMsg ) ;
+            continue ;
+         }
+         ip = strTrim( removeBreak(ip) ) ;
+         if ( this.arrayContainElement( uniqueIPArr, ip ) ) {
+            continue ;
+         } else {
+            uniqueIPArr.push( ip ) ;
+            // append ip info
+            this._hostInfoArr[i].ip = ip ;
+            uniqueHostInfoArr.push( this._hostInfoArr[i] ) ;
+         }
+      } catch( e ) {
+         errMsg = "failed to get ip of host[" + address + "]" ;
+         errMsgArr.push( new SdbError( e, errMsg ).toString() ) ;
+         if ( exp == null ) exp = new SdbError( SDB_INVALIDARG ) ;
+         logger.log( PDERROR, errMsg ) ;
+      }
+   }
+   if ( exp != null ) {
+      throw new SdbError( SDB_SYS, errMsgArr.toString() ) ;
+   } else {
+      try {
+         this._hostInfoArr = uniqueHostInfoArr.splice( 0 ) ;
+      } catch( e ) {
+         exp = new SdbError( e, 
+            "failed to copy unique host info array to local" ) ;
+         logger.log( PDERROR, exp ) ;
+         throw exp ;
+      }
+   }
+} ;
+
+
+ConfigMgr.prototype._appendHostName = function ConfigMgr__appendHostName() {
    var errMsg    = null ;
    var errMsgArr = [] ;
    var exp       = null ;
@@ -615,20 +707,20 @@ ConfigMgr.prototype._appendIP = function ConfigMgr__appendIP() {
       var address = this._hostInfoArr[i].address ;
       var ssh = this._hostInfoArr[i].rootSshObj ;
       try {
-         var ip = ssh.getPeerIP() ;
-         if ( "string" != typeof(ip) ) {
-            errMsg = "the return content[" + ip + "] from remote [" + 
-               address +"] is not a ip address" ;
+         var hostName = ssh.exec("hostname") ;
+         if ( !isString(hostName) ) {
+            errMsg = sprintf( "the return hostname of host[?] is " + 
+               "not a string", address ) ;
             errMsgArr.push( errMsg ) ;
             if ( exp == null ) exp = new SdbError( SDB_INVALIDARG ) ;
             logger.log( PDERROR, errMsg ) ;
             continue ;
          }
+         hostName = strTrim( removeBreak( hostName ) ) ;
          // append host name and ip info
          this._hostInfoArr[i].hostName = address ;
-         this._hostInfoArr[i].ip       = removeLineBreak( ip ) ;
       } catch( e ) {
-         errMsg = "failed to get host[" + address + "]'ip" ;
+         errMsg = sprintf( "failed to get hostname of host[?]", address ) ;
          errMsgArr.push( new SdbError( e, errMsg ).toString() ) ;
          if ( exp == null ) exp = new SdbError( SDB_INVALIDARG ) ;
          logger.log( PDERROR, errMsg ) ;
@@ -769,7 +861,7 @@ ConfigMgr.prototype._appendInstalledPath =
          this._hostInfoArr[i].installPath = 
             adaptPath( installedInfo[INSTALL_DIR] ) ;
       } catch( e ) {
-         errMsg = sprintf( "failed to append insalled path of host[?] " + 
+         errMsg = sprintf( "failed to append installed path of host[?] " + 
                "to local", address ) ;
          errMsgArr.push( new SdbError( e, errMsg ).toString() ) ;
          if ( exp == null ) exp = new SdbError( SDB_INVALIDARG ) ;
@@ -832,7 +924,7 @@ ConfigMgr.prototype._collectCoordInfoFromHost =
       }
    }
    logger.log( PDDEBUG, 
-      sprintf( "collect [?] coord(s) from the giving hosts, " + 
+      sprintf( "collect [?] coord(s) from the giving host(s), " + 
          "they are as below: ", retArr.length ) ) ;
    for ( var i = 0; i < retArr.length; i++ ) {
        logger.log( PDDEBUG, JSON.stringify(retArr[i]) ) ;
@@ -840,37 +932,105 @@ ConfigMgr.prototype._collectCoordInfoFromHost =
    this._coordInfoFromHost = retArr ;
 } ;
 
+ConfigMgr.prototype._getCatalogRGAddress = 
+   function ConfigMgr__getCatalogRGAddress ( ip, port, user, password ) {
+   var retArr = [] ;
+   var db     = null ;
+
+   try {
+      db      = new Sdb( ip, port, user, password ) ;
+      var cur = db.list( SDB_LIST_GROUPS, {"GroupName": "SYSCatalogGroup"} ) ;
+      var record = cur.next().toObj() ;
+      var catalogNodeArr = record[Group] ;
+      if ( !isArray(catalogNodeArr) ) {
+         throw new SdbError( SDB_SYS, 
+            sprintf( "the return catalog node info[?] is " + 
+               "not an array", catalogNodeArr ) ) ;
+      }
+      for ( var i = 0; i < catalogNodeArr.length; i++ ) {
+         var node     = catalogNodeArr[i] ;
+         var hostName = node[HostName] ;
+         var svcName  = null ;
+         var svcArr   = node[Service] ;
+         for ( var j = 0; j < svcArr.length; j++ ) {
+            if ( svcArr[j][Type] == 3 ) {
+               svcName = svcArr[j][Name] ;
+               break ;
+            }
+         }
+         if ( svcName == null ) {
+            throw new SdbError( SDB_SYS, "no port info" ) ;
+         }
+         retArr.push( hostName + ":" + svcName ) ;
+      }
+   } catch( e ) {
+      var exp = new SdbError( e, sprintf( "failed to get catalog address " + 
+         "of coord[?:?] from database", ip, port ) ) ;
+      logger.log( PDWARNING, exp ) ;
+      throw exp ;
+   } finally {
+      if ( db != null ) {
+         try { db.close() } catch(e) {}
+      }
+   }
+   return retArr ;
+} ;
+
 ConfigMgr.prototype._extractCoordInfo = 
    function ConfigMgr__extractCoordInfo() {
-   var retArr = [] ;
-   var len    = this._coordInfoFromHost.length ;
-
-   for ( var i = 0; i < len; i++ ) {
+   var faultNodeNum = 0 ;
+   var authUserName = this._getField( FIELD_DB_AUTH_USER ) ;
+   var authPassword = this._getField( FIELD_DB_AUTH_PASSWD ) ;
+   var coordNodeNum = this._coordInfoFromHost.length ;
+   for ( var i = 0; i < coordNodeNum; i++ ) {
       var wapper          = new CoordInfoWrapper() ;
       var obj             = new CoordInfo() ;
       var coordInfoObj    = this._coordInfoFromHost[i] ;
+      var catalogAddrArr  = [] ;
       obj.HostName        = coordInfoObj[FIELD_CONF_HOSTNAME] ;
       obj.dbpath          = coordInfoObj[FIELD_CONF_DBPATH] ;
       obj.Service[0].Name = coordInfoObj[FIELD_CONF_SVCNAME] ;
       obj.Service[1].Name = coordInfoObj[FIELD_CONF_REPLNAME] ;
       obj.Service[2].Name = coordInfoObj[FIELD_CONF_CATALOGNAME] ;
+      wapper.infoObj      = obj ;
       wapper.hostName     = coordInfoObj[FIELD_CONF_HOSTNAME] ;
       wapper.svnName      = coordInfoObj[FIELD_CONF_SVCNAME] ;
       wapper.ip           = coordInfoObj[FIELD_CONF_IP] ;
-      var arr             = coordInfoObj[FIELD_CONF_CATALOGADDR].split( ',' ) ;
-      for ( var j = 0; j < arr.length; j++ ) {
-         wapper.cataAddrArr.push( removeQuotes( arr[j] ) ) ; 
+      // get catalog address from db, but if we can not connect to db,
+      // let's get it from config file
+      try {
+         catalogAddrArr = 
+            this._getCatalogRGAddress( wapper.ip, wapper.svnName,
+                                       authUserName, authPassword ) ;
+         logger.log( PDEVENT, 
+            sprintf( "catalog address of coord[?:?] get from database is: ?", 
+               wapper.ip, wapper.svnName, JSON.stringify(catalogAddrArr) ) ) ;
+      } catch( e ) {
+         faultNodeNum++ ;
+         var exp = new SdbError( e, sprintf( "failed to catalog address of " +
+            "coord[?:?] from database, going to get it from config file",
+            wapper.ip, wapper.svnName) ) ;
+         logger.log( PDWARNING, exp ) ;
+         catalogAddrArr = coordInfoObj[FIELD_CONF_CATALOGADDR].split( ',' ) ;
+         logger.log( PDEVENT, 
+            sprintf( "catalog address of coord[?:?] get from config file is: ?", 
+               wapper.ip, wapper.svnName, JSON.stringify(catalogAddrArr) ) ) ;
       }
-      wapper.infoObj      = obj ;
-      retArr.push( wapper ) ;
+      if ( faultNodeNum == coordNodeNum ) {
+         throw new SdbError( SDB_SYS, "no coord is available" ) ;
+      }
+      for ( var j = 0; j < catalogAddrArr.length; j++ ) {
+         wapper.cataAddrArr.push( removeQuotes( catalogAddrArr[j] ) ) ; 
+      }
+      // keep coord info in local array
+      this._coordInfoInFormat.push( wapper ) ;
    }
    logger.log( PDEVENT, 
       sprintf( "after extracting, [?] coord(s) info are as below: ", 
-         retArr.length ) ) ;
-   for ( var i = 0 ; i < retArr.length; i++ ) {
-      logger.log( PDEVENT, JSON.stringify(retArr[i]) ) ;
+         this._coordInfoInFormat.length ) ) ;
+   for ( var i = 0 ; i < this._coordInfoInFormat.length; i++ ) {
+      logger.log( PDEVENT, JSON.stringify(this._coordInfoInFormat[i]) ) ;
    }
-   this._coordInfoInFormat = retArr ;
 } ;
 
 ConfigMgr.prototype._thirdlyCheck = function ConfigMgr__thirdlyCheck() {
@@ -891,7 +1051,7 @@ ConfigMgr.prototype._thirdlyCheck = function ConfigMgr__thirdlyCheck() {
       for ( var m = 0; m < cataAddrArr.length; m++ ) {
          try {
             if ( this.arrayContainElement( catalogArr, cataAddrArr[m] ) ) {
-                catalogArr = this.mergeArray( catalogArr, cataAddrArr ) ;
+               catalogArr = this.mergeArray( catalogArr, cataAddrArr ) ;
                hasMatchedElement = true ;
                break ;
             }
@@ -930,23 +1090,33 @@ ConfigMgr.prototype._appendDBInfo = function ConfigMgr__appendDBInfo() {
       logger.log( PDERROR, exp ) ;
       throw exp ;
    }
-   coordWrapper = this._coordInfoInFormat[0] ;
-   hostName     = coordWrapper.hostName ;
-   svcName      = coordWrapper.svnName ;
+   // get auth info
    authUserName = this._getField( FIELD_DB_AUTH_USER ) ;
    authPassword = this._getField( FIELD_DB_AUTH_PASSWD ) ;
-   logger.log( PDEVENT, 
-      sprintf( "connect to coord[?:?]", hostName, svcName ) ) ;
-   try {
-      this._sdb = new Sdb( hostName, svcName, 
-                           authUserName, authPassword ) ;
-   } catch( e ) {
-      errMsg = "failed to connect to coord[" + 
-         hostName + ":" + svcName + "]" ;
-      exp = new SdbError( e, errMsg ) ;
+   // try to get db info
+   for ( var i = 0; i < this._coordInfoInFormat.length; i++ ) {
+      exp          = null ;
+      coordWrapper = this._coordInfoInFormat[i] ;
+      hostName     = coordWrapper.hostName ;
+      svcName      = coordWrapper.svnName ;
+      logger.log( PDEVENT, 
+         sprintf( "connect to coord[?:?]", hostName, svcName ) ) ;
+      try {
+         this._sdb = new Sdb( hostName, svcName, 
+                              authUserName, authPassword ) ;
+         break ;
+      } catch( e ) {
+         errMsg = "failed to connect to coord[" + 
+            hostName + ":" + svcName + "]" ;
+         exp = new SdbError( e, errMsg ) ;
+         logger.log( PDWARNING, exp ) ;
+      }
+   }
+   if ( exp != null ) {
+      exp = new SdbError( SDB_SYS, "no coord is available for connecting" ) ;
       logger.log( PDERROR, exp ) ;
       throw exp ;
-   }   
+   }
 } ;
 
 ConfigMgr.prototype._appendRGInfo = function ConfigMgr__appendRGInfo() {
@@ -998,7 +1168,8 @@ ConfigMgr.prototype._fouthlyCheck =
       var hostName = rgHostArr[i] ;
       var isMatch  = false ;
       for ( var j = 0; j < this._hostInfoArr.length; j++ ) {
-         if ( hostName == this._hostInfoArr[j].hostName ) {
+         if ( hostName == this._hostInfoArr[j].hostName || 
+              hostName == this._hostInfoArr[j].ip ) {
             isMatch = true ;
             break ;
          }
@@ -1030,8 +1201,11 @@ ConfigMgr.prototype._fouthlyCheck =
 
 ConfigMgr.prototype._doit = function ConfigMgr__doit() {
    this._init() ;
+   if ( this._getAction() == ACTION_REMOVE_OM ) {
+      return ;
+   }
    // appending info
-   this._appendHostName() ;
+   this._appendAddress() ;
    this._appendRootInfo() ;
    this._appendSshPort() ;
    this._appendAdminInfo() ;
@@ -1044,6 +1218,7 @@ ConfigMgr.prototype._doit = function ConfigMgr__doit() {
    // appending info
    this._appendSshObj() ;
    this._appendIP() ;
+   this._appendHostName() ;
    this._appendRemoteInstalledInfo() ;
    // checking
    this._secondlyCheck() ; 
@@ -1058,7 +1233,6 @@ ConfigMgr.prototype._doit = function ConfigMgr__doit() {
    this._appendRGInfo() ;
    // checking
    this._fouthlyCheck() ;
-   
 } ;
 
 var RGInfoMgr = function( rgInfoArr ) {
@@ -2226,10 +2400,9 @@ CollectNodeInfo.prototype._doit = function CollectNodeInfo__doit() {
    }
 } ;
 
-var FlushConfig = function( configMgr, nodeConfPathArr, omAddr ) {
+var FlushConfig = function( configMgr, nodeConfPathArr ) {
    this._configMgr        = configMgr ;
    this._nodeConfPathArr  = nodeConfPathArr ;
-   this._omAddr           = omAddr ;
    this._configInfoObj    = null ;
    this._hostInfoArr      = null ;
    this._flushedConfigArr = [] ;
@@ -2238,8 +2411,22 @@ var FlushConfig = function( configMgr, nodeConfPathArr, omAddr ) {
 FlushConfig.prototype = new Helper() ;
 
 FlushConfig.prototype._init = function FlushConfig__init() {
-   this._hostInfoArr = this._configMgr._getHostInfoArr() ;
+   this._hostInfoArr    = this._configMgr._getHostInfoArr() ;
    this._configInfoObj  = this._configMgr._getDBConfigInfo() ;
+} ;
+
+FlushConfig.prototype._getOMAddr = function FlushConfig__getOMAddr() {
+   var retStr = null ;
+   try {
+      var omSvc    = this.getOMSvc() ;
+      var hostName = System.getHostName() ;
+      retStr = hostName + ":" + omSvc ;
+   } catch( e ) {
+      var exp = new SdbError( e, "failed to get local om's address" ) ;
+      logger.log( PDERROR, exp ) ;
+      throw exp ;
+   }
+   return retStr ;
 } ;
 
 FlushConfig.prototype._getHostAdminSshObj = 
@@ -2283,7 +2470,8 @@ FlushConfig.prototype._getHostInstallPath =
 } ;
 
 FlushConfig.prototype._buildConfigOptionStr = 
-   function FlushConfig__buildConfigOptionStr( originalObjStr, newObjStr ) {
+   function FlushConfig__buildConfigOptionStr( originalObjStr, 
+                                               newObjStr, omAddr ) {
    var exp         = null ;
    var retStr      = null ;
    var retObj      = null ;
@@ -2309,7 +2497,7 @@ FlushConfig.prototype._buildConfigOptionStr =
    }
    var subNewStr    = newStr.substring( pos + 1 ) ;
    var configObjStr = subOriginalStr + " \"omaddr\" : \"" + 
-      this._omAddr + "\" , " + subNewStr ;
+                      omAddr + "\" , " + subNewStr ;
    try {
       retObj = this.changeToObj( configObjStr ) ;
       retStr = JSON.stringify( retObj ) ;
@@ -2320,9 +2508,6 @@ FlushConfig.prototype._buildConfigOptionStr =
       logger.log( PDERROR, exp ) ;
       throw exp ;
    }
-   // TODO: do i need to record this???
-   logger.log( PDDEBUG, 
-      "build a complete config option info: " + retStr ) ;
    return retStr ;
 } ;
 
@@ -2369,8 +2554,29 @@ FlushConfig.prototype._doit = function FlushConfig__doit() {
    var hostName = null ;
    var confFile = null ;
    var original = null ;
+   var omAddr   = null ;
    
    this._init() ;
+   
+   // get om address
+   try {
+      omAddr = this._getOMAddr() ;
+   } catch( e ) {
+      exp = new SdbError( e, "failed to get local om's address" ) ;
+      logger.log( PDERROR, exp ) ;
+      if ( exp.getErrCode() == SDBCM_NODE_NOTEXISTED ) {
+         println( sprintf( "Error: can't flush new configuration " + 
+                  "information into node's config file, for there is no " + 
+                  "om in local, and we can't get the address of it. " +
+                  "Please use command[?] to install om, and this command " + 
+                  "will also flush the new configuration information into " + 
+                  "the node's config file.", 
+                  "./ombuild.sh --conf ombuild.conf --action buildom"  ) ) ;
+         return ;
+      } else {
+         throw exp ;
+      }
+   }
    
    try {
       for ( var i = 0; i < this._nodeConfPathArr.length; i++ ) {
@@ -2397,7 +2603,7 @@ FlushConfig.prototype._doit = function FlushConfig__doit() {
             // build the complete config option
             var configOptionStr =
                this._buildConfigOptionStr( original, 
-                  JSON.stringify(this._configInfoObj) ) ;
+                  JSON.stringify(this._configInfoObj), omAddr ) ;
             // keep the original config info for rollback, if necessary
             this._flushedConfigArr.push( flushedConfigObj ) ;
             // going to flush config
@@ -2429,6 +2635,8 @@ var InstallOM = function( configMgr, hostInfoArr, configInfoArr ) {
    this._omaObj        = null ;
    this._omObj         = null ;
 } ;
+
+InstallOM.prototype = new Helper() ;
 
 InstallOM.prototype._init = function InstallOM__init() {
 } ;
@@ -2522,14 +2730,6 @@ InstallOM.prototype._insertConfigInfo =
    } 
 } ;
 
-InstallOM.prototype._getAgentPort = function InstallOM__getAgentPort() {
-   var retStr = null ;
-   retStr     = Oma.getAOmaSvcName( "127.0.0.1" );
-   logger.log( PDEVENT, 
-      sprintf( "local sdbcm's service is [?]", retStr ) ) ;
-   return retStr ;
-} ;
-
 InstallOM.prototype._copyInstallPacket = 
    function InstallOM__copyInstallPacket() {
    var source = null ;
@@ -2556,7 +2756,7 @@ InstallOM.prototype._installOM =
    var agentPort = null ;
    // get om agent's service
    try {
-      agentPort = this._getAgentPort() ;
+      agentPort = this.getAgentPort() ;
    } catch( e ) {
       exp = new SdbError( e, "failed to get local sdbcm's service" ) ;
       logger.log( PDERROR, exp ) ;
@@ -2664,6 +2864,28 @@ InstallOM.prototype._doit = function InstallOM__doit() {
    logger.log( PDEVENT, "succeed to install om" ) ; 
 } ;
 
+var RemoveOM = function() {
+} ;
+
+RemoveOM.prototype = new Helper() ;
+
+RemoveOM.prototype._init = function RemoveOM__init() {
+} ;
+
+RemoveOM.prototype._doit = function RemoveOM__doit() {
+   try {
+      var agentPort = this.getAgentPort() ;
+      var omPort    = this.getOMSvc() ;
+      var oma       = new Oma( "127.0.0.1", agentPort ) ;
+      oma.removeOM( omPort ) ;
+      logger.log( PDEVENT, "succeed to remove om in local host" ) ;
+   } catch( e ) {
+      var exp = new SdbError( e, "failed to remove om in local host" ) ;
+      logger.log( PDERROR, exp ) ;
+      throw exp ;
+   }
+} ;
+
 function main() {
    var errMsg      = null ;
    var exp         = null ;
@@ -2673,52 +2895,63 @@ function main() {
    var configMgr = new ConfigMgr( OM_CONF_FILE, ACTION ) ;
    configMgr._doit() ;
 
+   // 2. try to remove om
+   if ( configMgr._getAction() == ACTION_REMOVE_OM ) {
+      var removeOMTask = new RemoveOM() ;
+      removeOMTask._doit() ;
+      return ;
+   }
+   
    try {
-      // 2. update coord info
-      if ( configMgr._getAction() == ACTION_ALL || 
+      // 3. try to update coord info
+      if ( configMgr._getAction() == ACTION_BUILD_OM || 
            configMgr._getAction() == ACTION_UPDATE_COORD ) {
          var updateCoordTask = new UpdateCoord( configMgr ) ;
          updateCoordTask._doit() ;
       }
-
-      if ( configMgr._getAction() != ACTION_ALL && 
-           configMgr._getAction() != ACTION_ALL ) {
-         // let's stop running for no need to build om
+      // if we just want to update coord info, let's return
+      if ( configMgr._getAction() == ACTION_UPDATE_COORD ) {
          return ;
       }
-      // 3. collect the config info of the nodes in current cluster
+      
+      // 4. collect the config info of the nodes in current cluster
       // those info will be saved in collection "SYSDEPLOY.SYSCONFIGURE" in OM
       var collectNodeInfoTask = new CollectNodeInfo( configMgr ) ;
       collectNodeInfoTask._doit() ;
 
-      // 4. get the info of host in current cluster
+      // 5. get the info of host in current cluster
       // those info will be saved in collection "SYSDEPLOY.SYSHOST" in OM
       var nodeDataPathArr = collectNodeInfoTask._getNodeDataPaths() ;
       var checkHostTask   = new CheckHost( configMgr, nodeDataPathArr ) ;
       checkHostTask._doit() ;
 
-      // 5. install om, and insert the info we got from the cluster into om
-      var checkHostInfoArr = checkHostTask._getCheckHostResult() ;
-      var nodeConfInfoArr  = collectNodeInfoTask._getNodeConfResult() ;
-      var installOMTask    = new InstallOM( configMgr, 
-                                            checkHostInfoArr, 
-                                            nodeConfInfoArr ) ;
-      installOMTask._doit() ;
+      // 6. install om, and insert the info we got from the cluster into om
+      if ( configMgr._getAction() == ACTION_BUILD_OM ) {
+         var checkHostInfoArr = checkHostTask._getCheckHostResult() ;
+         var nodeConfInfoArr  = collectNodeInfoTask._getNodeConfResult() ;
+         var installOMTask    = new InstallOM( configMgr, 
+                                               checkHostInfoArr, 
+                                               nodeConfInfoArr ) ;
+         installOMTask._doit() ;
+      }
 
-      // 6. flush some new config option to all the node's config file
-      try {
-         var nodeConfPathArr = collectNodeInfoTask._getNodeConfPaths() ;
-         var omAddr          = installOMTask._getOMAddr() ;
-         var flushConfigTask = new FlushConfig( configMgr, nodeConfPathArr, omAddr ) ;
-         flushConfigTask._doit() ;
-      } catch( e ) {
-         errMsg = "failed to flush config info to node's config file" ;
-         exp = new SdbError( e, errMsg ) ;
-         logger.log( PDERROR, exp ) ;
-         println( errMsg ) ;
-         println( "going to remove the installed om" ) ;
-         installOMTask._removeOM() ;
-         throw exp ;
+      // 7. flush some new config option to all the node's config file
+      if ( configMgr._getAction() == ACTION_BUILD_OM || 
+           configMgr._getAction() == ACTION_FLUSH_CONFIG ) {
+         try {
+            var nodeConfPathArr = collectNodeInfoTask._getNodeConfPaths() ;
+            var flushConfigTask = new FlushConfig( configMgr, nodeConfPathArr ) ;
+            flushConfigTask._doit() ;
+         } catch( e ) {
+            errMsg = "failed to flush configuration information" ;
+            exp = new SdbError( e, errMsg ) ;
+            logger.log( PDERROR, exp ) ;
+            errMsg = sprintf( "Error: failed to flush the new configuration " + 
+               "information into node's config file. see the error detail " +
+               "in log file[?] and use command[?] to try again.", JS_LOG_FILE,
+               "./ombuild.sh --conf ombuild.conf --action flushconfig" );
+            println( errMsg ) ;
+         }
       }
    } finally {
       configMgr._final() ;
