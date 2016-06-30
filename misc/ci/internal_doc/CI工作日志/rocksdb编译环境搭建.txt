@@ -17,11 +17,13 @@ $ gcc --version
    ./glibc-2.15/configure --prefix=/usr/
    make 
    make install
+   ln -s /lib64/libc-2.15.so /lib64/libc.so.6 
 
 ¶þ¡¢±àÒëlibstdc++ 6.0.18
    rpm -ivh libstdc++6-4.8.1_20130909-3.2.7.ppc64.rpm
    rpm -ivh libstdc++48-devel-4.8.1_20130909-3.2.7.ppc64.rpm
    rpm -ivh libstdc++6-locale-4.8.1_20130909-3.2.7.ppc64.rpm
+   ln -s /usr/lib64/libstdc++.so.6.0.18 /usr/lib64/libstdc++.so.6
    
 Èý¡¢±àÒëgcc
 
