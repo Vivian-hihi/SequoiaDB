@@ -24,8 +24,6 @@
       $scope.HostNum = 0 ;
       //选择主机的网格选项
       $scope.HostGridOptions = { 'titleWidth': [ '30px', '60px', 30, 30, 40 ] } ;
-      //异常主机的列表
-      $scope.ErrorHostList = [] ;
       //主机和业务的关联表(也就是有安装业务的主机列表)
       var host_module_table = [] ;
 
@@ -99,7 +97,7 @@
       var queryHostStatus = function(){
          var isFirst = false ;
          var queryHostList = { 'HostInfo': [] } ;
-         if( host_module_table.length == 0 )
+         if( $scope.HostList.length == 0 )
          {
             SdbFunction.Timeout( queryHostStatus, 5000 ) ;
             return ;
@@ -208,7 +206,7 @@
 
       //获取sequoiadb业务信息
       var getCollectionInfo = function( moduleIndex ){
-         var clusterName = $scope.clusterList[$scope.currentCluster]['ClusterName'] ;
+         var clusterName = $scope.moduleList[moduleIndex]['ClusterName'] ;
          var moduleName = $scope.moduleList[moduleIndex]['BusinessName'] ;
          var moduleMode = $scope.moduleList[moduleIndex]['DeployMod'] ;
          var sql ;
@@ -268,7 +266,7 @@
 
       //获取sequoiadb的错误节点信息
       var getErrNodes = function( moduleIndex ){
-         var clusterName = $scope.clusterList[$scope.currentCluster]['ClusterName'] ;
+         var clusterName = $scope.moduleList[moduleIndex]['ClusterName'] ;
          var moduleName = $scope.moduleList[moduleIndex]['BusinessName'] ;
          var data = { 'cmd': 'snapshot system', 'selector': JSON.stringify( { 'ErrNodes': 1 } ) } ;
          SdbRest.DataOperation2( clusterName, moduleName, data, function( errNodes ){
@@ -299,10 +297,34 @@
       //查询业务
       var queryModule = function(){
          var data = { 'cmd': 'query business' } ;
+         var clusterList = [] ;
+         var clusterIsExist = function( clusterName ){
+            var flag = 0 ;
+            var isFind = false ;
+            $.each( clusterList, function( index, clusterInfo ){
+               if( clusterInfo['ClusterName'] == clusterName )
+               {
+                  isFind = true ;
+                  flag = clusterInfo['index'] ;
+                  ++clusterList[index]['index'] ;
+                  return false ;
+               }
+            } ) ;
+            if( isFind == false )
+            {
+               clusterList.push( { 'ClusterName': clusterName, 'index': 1 } ) ;
+            }
+            return flag ;
+         }
          SdbRest.OmOperation( data, function( moduleList ){
             $scope.moduleList = moduleList ;
             host_module_table = [] ;
             $.each( $scope.moduleList, function( index, moduleInfo ){
+
+               var colorId = clusterIsExist( moduleInfo['ClusterName'] ) ;
+
+               $scope.moduleList[index]['Color'] = colorId ;
+
                $scope.moduleList[index]['Error'] = {} ;
                $scope.moduleList[index]['Error']['Flag'] = 0 ;
                $scope.moduleList[index]['Error']['Type'] = '' ;
@@ -402,7 +424,7 @@
          switch( moduleType )
          {
          case 'sequoiadb':
-            //$location.path( '/Monitor/Index' ) ; break ;
+            $location.path( '/Monitor/Index' ) ; break ;
          default:
             break ;
          }
@@ -417,7 +439,7 @@
          switch( moduleType )
          {
          case 'sequoiadb':
-            //$location.path( '/Monitor/Host-List/Index' ) ; break ;
+            $location.path( '/Monitor/Host-List/Index' ) ; break ;
          default:
             break ;
          }
@@ -563,49 +585,50 @@
 
       //创建 添加业务 弹窗
       $scope.CreateInstallModuleModel = function(){
-         $scope.Components.Modal.icon = '' ;
-         $scope.Components.Modal.title = $scope.autoLanguage( '添加业务' ) ;
-         $scope.Components.Modal.isShow = true ;
-         $scope.Components.Modal.form = {
-            'inputList': [
-               {
-                  "name": 'moduleName',
-                  "webName": $scope.autoLanguage( '业务名' ),
-                  "type": "string",
-                  "required": true,
-                  "value": "",
-                  "valid": {
-                     "min": 1,
-                     "max": 127,
-                     "regex": '^[0-9a-zA-Z]+$'
-                  }
-               },
-               {
-                  "name": 'moduleType',
-                  "webName": $scope.autoLanguage( '业务类型' ),
-                  "type": "select",
-                  "value": 0,
-                  "valid": []
-               }
-            ]
-         } ;
-         var num = 1 ;
-         var defaultName = '' ;
-         while( true )
+         if( $scope.clusterList.length > 0 )
          {
-            var isFind = false ;
-            defaultName = sprintf( 'myModule?', num ) ;
-            $.each( $scope.moduleList, function( index, moduleInfo ){
-               if( defaultName == moduleInfo['BusinessName'] )
-               {
-                  isFind = true ;
-                  return false ;
-               }
-            } ) ;
-            if( isFind == false )
+            if( $scope.HostNum == 0 )
             {
-               $.each( $rootScope.OmTaskList, function( index, taskInfo ){
-                  if( taskInfo['Status'] != 4 && defaultName == taskInfo['Info']['BusinessName'] )
+               $scope.Components.Confirm.type = 3 ;
+               $scope.Components.Confirm.context = $scope.autoLanguage( '集群还没有安装主机。' ) ;
+               $scope.Components.Confirm.isShow = true ;
+               $scope.Components.Confirm.okText = $scope.autoLanguage( '好的' ) ;
+               return ;
+            }
+            $scope.Components.Modal.icon = '' ;
+            $scope.Components.Modal.title = $scope.autoLanguage( '添加业务' ) ;
+            $scope.Components.Modal.isShow = true ;
+            $scope.Components.Modal.form = {
+               'inputList': [
+                  {
+                     "name": 'moduleName',
+                     "webName": $scope.autoLanguage( '业务名' ),
+                     "type": "string",
+                     "required": true,
+                     "value": "",
+                     "valid": {
+                        "min": 1,
+                        "max": 127,
+                        "regex": '^[0-9a-zA-Z]+$'
+                     }
+                  },
+                  {
+                     "name": 'moduleType',
+                     "webName": $scope.autoLanguage( '业务类型' ),
+                     "type": "select",
+                     "value": 0,
+                     "valid": []
+                  }
+               ]
+            } ;
+            var num = 1 ;
+            var defaultName = '' ;
+            while( true )
+            {
+               var isFind = false ;
+               defaultName = sprintf( 'myModule?', num ) ;
+               $.each( $scope.moduleList, function( index, moduleInfo ){
+                  if( defaultName == moduleInfo['BusinessName'] )
                   {
                      isFind = true ;
                      return false ;
@@ -613,92 +636,102 @@
                } ) ;
                if( isFind == false )
                {
-                  break ;
-               }
-            }
-            ++num ;
-         }
-         $scope.Components.Modal.form['inputList'][0]['value'] = defaultName ;
-         $.each( $scope.moduleType, function( index, typeInfo ){
-            $scope.Components.Modal.form['inputList'][1]['valid'].push( { 'key': typeInfo['BusinessDesc'], 'value': index } ) ;
-         } ) ;
-         $scope.Components.Modal.Context = '<div form-create para="data.form"></div>' ;
-         $scope.Components.Modal.ok = function(){
-            var isAllClear = $scope.Components.Modal.form.check( function( formVal ){
-               var isFind = false ;
-               $.each( $scope.moduleList, function( index, moduleInfo ){
-                  if( formVal['moduleName'] == moduleInfo['BusinessName'] )
+                  $.each( $rootScope.OmTaskList, function( index, taskInfo ){
+                     if( taskInfo['Status'] != 4 && defaultName == taskInfo['Info']['BusinessName'] )
+                     {
+                        isFind = true ;
+                        return false ;
+                     }
+                  } ) ;
+                  if( isFind == false )
                   {
-                     isFind = true ;
-                     return false ;
+                     break ;
+                  }
+               }
+               ++num ;
+            }
+            $scope.Components.Modal.form['inputList'][0]['value'] = defaultName ;
+            $.each( $scope.moduleType, function( index, typeInfo ){
+               $scope.Components.Modal.form['inputList'][1]['valid'].push( { 'key': typeInfo['BusinessDesc'], 'value': index } ) ;
+            } ) ;
+            $scope.Components.Modal.Context = '<div form-create para="data.form"></div>' ;
+            $scope.Components.Modal.ok = function(){
+               var isAllClear = $scope.Components.Modal.form.check( function( formVal ){
+                  var isFind = false ;
+                  $.each( $scope.moduleList, function( index, moduleInfo ){
+                     if( formVal['moduleName'] == moduleInfo['BusinessName'] )
+                     {
+                        isFind = true ;
+                        return false ;
+                     }
+                  } ) ;
+                  if( isFind == true )
+                  {
+                     return [ { 'name': 'moduleName', 'error': $scope.autoLanguage( '业务名已经存在' ) } ]
+                  }
+                  else
+                  {
+                     return [] ;
                   }
                } ) ;
-               if( isFind == true )
+               if( isAllClear )
                {
-                  return [ { 'name': 'moduleName', 'error': $scope.autoLanguage( '业务名已经存在' ) } ]
+                  var formVal = $scope.Components.Modal.form.getValue() ;
+                  $rootScope.tempData( 'Deploy', 'Model', 'Module' ) ;
+                  $rootScope.tempData( 'Deploy', 'Module', $scope.moduleType[ formVal['moduleType'] ]['BusinessType'] ) ;
+                  $rootScope.tempData( 'Deploy', 'ModuleName', formVal['moduleName'] ) ;
+                  $rootScope.tempData( 'Deploy', 'ClusterName', $scope.clusterList[ $scope.currentCluster ]['ClusterName'] ) ;
+                  if( $scope.moduleType[ formVal['moduleType'] ]['BusinessType'] == 'sequoiadb' )
+                  {
+                     $location.path( '/Deploy/SDB-Conf' ) ;
+                  }
+                  else if( $scope.moduleType[ formVal['moduleType'] ]['BusinessType'] == 'sequoiasql' )
+                  {
+                     /*
+                     var tempHostInfo = [] ;
+			            $.each( $scope.HostList, function( index, value ){
+                        if( $scope.clusterList[$scope.currentCluster]['ClusterName'] == value['ClusterName'] )
+                        {
+				               tempHostInfo.push( { 'HostName': value['HostName'] } ) ;
+                        }
+			            } ) ;
+                     var businessConf = {} ;
+                     businessConf['ClusterName']  = $scope.clusterList[ $scope.currentCluster ]['ClusterName'] ;
+                     businessConf['BusinessName'] = formVal['moduleName'] ;
+                     businessConf['BusinessType'] = $scope.moduleType[ formVal['moduleType'] ]['BusinessType'] ;
+                     businessConf['DeployMod'] = 'olap' ;
+                     businessConf['Property'] = [
+                        { "Name": "deploy_standby", "Value": "false" },
+                        { "Name": "segment_num", "Value": tempHostInfo.length + '' }
+                     ] ;
+                     businessConf['HostInfo'] = tempHostInfo ;
+                     $rootScope.tempData( 'Deploy', 'ModuleConfig', businessConf ) ;
+                     $location.path( '/Deploy/SSQL-Mod' ) ;
+                     */
+                     $location.path( '/Deploy/SSQL-Conf' ) ;
+                  }
+                  else if( $scope.moduleType[ formVal['moduleType'] ]['BusinessType'] == 'zookeeper' )
+                  {
+                     var tempHostInfo = [] ;
+			            $.each( $scope.HostList, function( index, value ){
+                        if( $scope.clusterList[$scope.currentCluster]['ClusterName'] == value['ClusterName'] )
+                        {
+				               tempHostInfo.push( { 'HostName': value['HostName'] } ) ;
+                        }
+			            } ) ;
+                     var businessConf = {} ;
+                     businessConf['ClusterName']  = $scope.clusterList[ $scope.currentCluster ]['ClusterName'] ;
+                     businessConf['BusinessName'] = formVal['moduleName'] ;
+                     businessConf['BusinessType'] = $scope.moduleType[ formVal['moduleType'] ]['BusinessType'] ;
+                     businessConf['DeployMod'] = 'distribution' ;
+                     businessConf['Property'] = [ { 'Name': 'zoonodenum', 'Value': '3' } ] ;
+                     businessConf['HostInfo'] = tempHostInfo ;
+                     $rootScope.tempData( 'Deploy', 'ModuleConfig', businessConf ) ;
+                     $location.path( '/Deploy/ZKP-Mod' ) ;
+                  }
                }
-               else
-               {
-                  return [] ;
-               }
-            } ) ;
-            if( isAllClear )
-            {
-               var formVal = $scope.Components.Modal.form.getValue() ;
-               $rootScope.tempData( 'Deploy', 'Model', 'Module' ) ;
-               $rootScope.tempData( 'Deploy', 'Module', $scope.moduleType[ formVal['moduleType'] ]['BusinessType'] ) ;
-               $rootScope.tempData( 'Deploy', 'ModuleName', formVal['moduleName'] ) ;
-               $rootScope.tempData( 'Deploy', 'ClusterName', $scope.clusterList[ $scope.currentCluster ]['ClusterName'] ) ;
-               if( $scope.moduleType[ formVal['moduleType'] ]['BusinessType'] == 'sequoiadb' )
-               {
-                  $location.path( '/Deploy/SDB-Conf' ) ;
-               }
-               else if( $scope.moduleType[ formVal['moduleType'] ]['BusinessType'] == 'sequoiasql' )
-               {
-                  /*
-                  var tempHostInfo = [] ;
-			         $.each( $scope.HostList, function( index, value ){
-                     if( $scope.clusterList[$scope.currentCluster]['ClusterName'] == value['ClusterName'] )
-                     {
-				            tempHostInfo.push( { 'HostName': value['HostName'] } ) ;
-                     }
-			         } ) ;
-                  var businessConf = {} ;
-                  businessConf['ClusterName']  = $scope.clusterList[ $scope.currentCluster ]['ClusterName'] ;
-                  businessConf['BusinessName'] = formVal['moduleName'] ;
-                  businessConf['BusinessType'] = $scope.moduleType[ formVal['moduleType'] ]['BusinessType'] ;
-                  businessConf['DeployMod'] = 'olap' ;
-                  businessConf['Property'] = [
-                     { "Name": "deploy_standby", "Value": "false" },
-                     { "Name": "segment_num", "Value": tempHostInfo.length + '' }
-                  ] ;
-                  businessConf['HostInfo'] = tempHostInfo ;
-                  $rootScope.tempData( 'Deploy', 'ModuleConfig', businessConf ) ;
-                  $location.path( '/Deploy/SSQL-Mod' ) ;
-                  */
-                  $location.path( '/Deploy/SSQL-Conf' ) ;
-               }
-               else if( $scope.moduleType[ formVal['moduleType'] ]['BusinessType'] == 'zookeeper' )
-               {
-                  var tempHostInfo = [] ;
-			         $.each( $scope.HostList, function( index, value ){
-                     if( $scope.clusterList[$scope.currentCluster]['ClusterName'] == value['ClusterName'] )
-                     {
-				            tempHostInfo.push( { 'HostName': value['HostName'] } ) ;
-                     }
-			         } ) ;
-                  var businessConf = {} ;
-                  businessConf['ClusterName']  = $scope.clusterList[ $scope.currentCluster ]['ClusterName'] ;
-                  businessConf['BusinessName'] = formVal['moduleName'] ;
-                  businessConf['BusinessType'] = $scope.moduleType[ formVal['moduleType'] ]['BusinessType'] ;
-                  businessConf['DeployMod'] = 'distribution' ;
-                  businessConf['Property'] = [ { 'Name': 'zoonodenum', 'Value': '3' } ] ;
-                  businessConf['HostInfo'] = tempHostInfo ;
-                  $rootScope.tempData( 'Deploy', 'ModuleConfig', businessConf ) ;
-                  $location.path( '/Deploy/ZKP-Mod' ) ;
-               }
+               return isAllClear ;
             }
-            return isAllClear ;
          }
       }
 
@@ -847,73 +880,47 @@
 
       //创建 发现业务 弹窗
       $scope.CreateAppendModuleModel = function(){
-         $scope.Components.Modal.icon = '' ;
-         $scope.Components.Modal.title = $scope.autoLanguage( '发现业务' ) ;
-         $scope.Components.Modal.isShow = true ;
-         $scope.Components.Modal.form = {
-            'inputList': [
-               {
-                  "name": 'moduleName',
-                  "webName": $scope.autoLanguage( '业务名' ),
-                  "type": "string",
-                  "required": true,
-                  "value": "",
-                  "valid": {
-                     "min": 1,
-                     "max": 127,
-                     "regex": '^[0-9a-zA-Z]+$'
-                  }
-               },
-               {
-                  "name": 'moduleType',
-                  "webName": $scope.autoLanguage( '业务类型' ),
-                  "type": "select",
-                  "value": 'sequoiasql',
-                  "valid": [
-                     { 'key': $scope.autoLanguage( 'SequoiaSQL引擎' ), 'value': 'sequoiasql' },
-                     { 'key': 'Spark', 'value': 'spark' },
-                     { 'key': 'Hdfs', 'value': 'hdfs' },
-                     { 'key': 'Yarn', 'value': 'yarn' },
-                  ]
-               }
-            ]
-         } ;
-         var num = 1 ;
-         var defaultName = '' ;
-         while( true )
+         if( $scope.clusterList.length > 0 )
          {
-            var isFind = false ;
-            defaultName = sprintf( 'myModule?', num ) ;
-            $.each( $scope.moduleList, function( index, moduleInfo ){
-               if( defaultName == moduleInfo['BusinessName'] )
-               {
-                  isFind = true ;
-                  return false ;
-               }
-            } ) ;
-            if( isFind == false )
-            {
-               $.each( $rootScope.OmTaskList, function( index, taskInfo ){
-                  if( defaultName == taskInfo['Info']['BusinessName'] )
+            $scope.Components.Modal.icon = '' ;
+            $scope.Components.Modal.title = $scope.autoLanguage( '发现业务' ) ;
+            $scope.Components.Modal.isShow = true ;
+            $scope.Components.Modal.form = {
+               'inputList': [
                   {
-                     isFind = true ;
-                     return false ;
+                     "name": 'moduleName',
+                     "webName": $scope.autoLanguage( '业务名' ),
+                     "type": "string",
+                     "required": true,
+                     "value": "",
+                     "valid": {
+                        "min": 1,
+                        "max": 127,
+                        "regex": '^[0-9a-zA-Z]+$'
+                     }
+                  },
+                  {
+                     "name": 'moduleType',
+                     "webName": $scope.autoLanguage( '业务类型' ),
+                     "type": "select",
+                     "value": 'sequoiasql',
+                     "valid": [
+                        { 'key': $scope.autoLanguage( 'SequoiaSQL引擎' ), 'value': 'sequoiasql' },
+                        { 'key': 'Spark', 'value': 'spark' },
+                        { 'key': 'Hdfs', 'value': 'hdfs' },
+                        { 'key': 'Yarn', 'value': 'yarn' },
+                     ]
                   }
-               } ) ;
-               if( isFind == false )
-               {
-                  break ;
-               }
-            }
-            ++num ;
-         }
-         $scope.Components.Modal.form['inputList'][0]['value'] = defaultName ;
-         $scope.Components.Modal.Context = '<div form-create para="data.form"></div>' ;
-         $scope.Components.Modal.ok = function(){
-            var isAllClear = $scope.Components.Modal.form.check( function( formVal ){
+               ]
+            } ;
+            var num = 1 ;
+            var defaultName = '' ;
+            while( true )
+            {
                var isFind = false ;
+               defaultName = sprintf( 'myModule?', num ) ;
                $.each( $scope.moduleList, function( index, moduleInfo ){
-                  if( formVal['moduleName'] == moduleInfo['BusinessName'] )
+                  if( defaultName == moduleInfo['BusinessName'] )
                   {
                      isFind = true ;
                      return false ;
@@ -922,44 +929,73 @@
                if( isFind == false )
                {
                   $.each( $rootScope.OmTaskList, function( index, taskInfo ){
-                     if( formVal['moduleName'] == taskInfo['Info']['BusinessName'] )
+                     if( defaultName == taskInfo['Info']['BusinessName'] )
                      {
                         isFind = true ;
                         return false ;
                      }
                   } ) ;
+                  if( isFind == false )
+                  {
+                     break ;
+                  }
                }
-               if( isFind == true )
-               {
-                  return [ { 'name': 'moduleName', 'error': $scope.autoLanguage( '业务名已经存在' ) } ]
-               }
-               else
-               {
-                  return [] ;
-               }
-            } ) ;
-            if( isAllClear )
-            {
-               $scope.Components.Modal.isShow = false ;
-               var formVal = $scope.Components.Modal.form.getValue() ;
-               if( formVal['moduleType'] == 'sequoiasql' )
-               {
-                  setTimeout( function(){
-                     $scope.CreateAppendSSQLModel( formVal['moduleName'] ) ;
-                     $scope.$apply() ;
-                  } ) ;
-               }
-               else
-               {
-                  setTimeout( function(){
-                     $scope.CreateAppendOtherModel( formVal['moduleName'], formVal['moduleType'] ) ;
-                     $scope.$apply() ;
-                  } ) ;
-               }
+               ++num ;
             }
-            else
-            {
-               return false ;
+            $scope.Components.Modal.form['inputList'][0]['value'] = defaultName ;
+            $scope.Components.Modal.Context = '<div form-create para="data.form"></div>' ;
+            $scope.Components.Modal.ok = function(){
+               var isAllClear = $scope.Components.Modal.form.check( function( formVal ){
+                  var isFind = false ;
+                  $.each( $scope.moduleList, function( index, moduleInfo ){
+                     if( formVal['moduleName'] == moduleInfo['BusinessName'] )
+                     {
+                        isFind = true ;
+                        return false ;
+                     }
+                  } ) ;
+                  if( isFind == false )
+                  {
+                     $.each( $rootScope.OmTaskList, function( index, taskInfo ){
+                        if( formVal['moduleName'] == taskInfo['Info']['BusinessName'] )
+                        {
+                           isFind = true ;
+                           return false ;
+                        }
+                     } ) ;
+                  }
+                  if( isFind == true )
+                  {
+                     return [ { 'name': 'moduleName', 'error': $scope.autoLanguage( '业务名已经存在' ) } ]
+                  }
+                  else
+                  {
+                     return [] ;
+                  }
+               } ) ;
+               if( isAllClear )
+               {
+                  $scope.Components.Modal.isShow = false ;
+                  var formVal = $scope.Components.Modal.form.getValue() ;
+                  if( formVal['moduleType'] == 'sequoiasql' )
+                  {
+                     setTimeout( function(){
+                        $scope.CreateAppendSSQLModel( formVal['moduleName'] ) ;
+                        $scope.$apply() ;
+                     } ) ;
+                  }
+                  else
+                  {
+                     setTimeout( function(){
+                        $scope.CreateAppendOtherModel( formVal['moduleName'], formVal['moduleType'] ) ;
+                        $scope.$apply() ;
+                     } ) ;
+                  }
+               }
+               else
+               {
+                  return false ;
+               }
             }
          }
       }
@@ -1001,40 +1037,51 @@
 
       //创建 卸载业务 弹窗
       $scope.CreateUninstallModuleModel = function(){
-         var clusterName = $scope.clusterList[ $scope.currentCluster ]['ClusterName'] ;
-         $scope.Components.Modal.icon = '' ;
-         $scope.Components.Modal.title = $scope.autoLanguage( '卸载业务' ) ;
-         $scope.Components.Modal.isShow = true ;
-         $scope.Components.Modal.form = {
-            'inputList': [
-               {
-                  "name": 'moduleIndex',
-                  "webName": $scope.autoLanguage( '业务名' ),
-                  "type": "select",
-                  "value": null,
-                  "valid": []
-               },
-            ]
-         } ;
-         $.each( $scope.moduleList, function( index, moduleInfo ){
-            if( clusterName == moduleInfo['ClusterName'] )
+         if( $scope.clusterList.length > 0 )
+         {
+            if( $scope.ModuleNum == 0 )
             {
-               if( $scope.Components.Modal.form['inputList'][0]['value'] == null )
+               $scope.Components.Confirm.type = 3 ;
+               $scope.Components.Confirm.context = $scope.autoLanguage( '已经没有业务了。' ) ;
+               $scope.Components.Confirm.isShow = true ;
+               $scope.Components.Confirm.okText = $scope.autoLanguage( '好的' ) ;
+               return ;
+            }
+            var clusterName = $scope.clusterList[ $scope.currentCluster ]['ClusterName'] ;
+            $scope.Components.Modal.icon = '' ;
+            $scope.Components.Modal.title = $scope.autoLanguage( '卸载业务' ) ;
+            $scope.Components.Modal.isShow = true ;
+            $scope.Components.Modal.form = {
+               'inputList': [
+                  {
+                     "name": 'moduleIndex',
+                     "webName": $scope.autoLanguage( '业务名' ),
+                     "type": "select",
+                     "value": null,
+                     "valid": []
+                  },
+               ]
+            } ;
+            $.each( $scope.moduleList, function( index, moduleInfo ){
+               if( clusterName == moduleInfo['ClusterName'] )
                {
-                  $scope.Components.Modal.form['inputList'][0]['value'] = index ;
+                  if( $scope.Components.Modal.form['inputList'][0]['value'] == null )
+                  {
+                     $scope.Components.Modal.form['inputList'][0]['value'] = index ;
+                  }
+                  $scope.Components.Modal.form['inputList'][0]['valid'].push( { 'key': moduleInfo['BusinessName'], 'value': index } )
                }
-               $scope.Components.Modal.form['inputList'][0]['valid'].push( { 'key': moduleInfo['BusinessName'], 'value': index } )
+            } ) ;
+            $scope.Components.Modal.Context = '<div form-create para="data.form"></div>' ;
+            $scope.Components.Modal.ok = function(){
+               var isAllClear = $scope.Components.Modal.form.check() ;
+               if( isAllClear )
+               {
+                  var formVal = $scope.Components.Modal.form.getValue() ;
+                  uninstallModule( formVal['moduleIndex'] ) ;
+               }
+               return isAllClear ;
             }
-         } ) ;
-         $scope.Components.Modal.Context = '<div form-create para="data.form"></div>' ;
-         $scope.Components.Modal.ok = function(){
-            var isAllClear = $scope.Components.Modal.form.check() ;
-            if( isAllClear )
-            {
-               var formVal = $scope.Components.Modal.form.getValue() ;
-               uninstallModule( formVal['moduleIndex'] ) ;
-            }
-            return isAllClear ;
          }
       }
 

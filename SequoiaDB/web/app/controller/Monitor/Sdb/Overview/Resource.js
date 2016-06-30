@@ -282,25 +282,8 @@
          $scope.Components.Confirm.ok = function(){
          }
       }
-
-      $scope.screenResult = {
-         'Role':'all',
-      } ;
-
-      $scope.changeScreen = function(){
-         $scope.ContextType = $scope.screenResult['Role'] ;
-         if( $scope.screenResult['Role'] == 'current' )
-         {
-            sql = 'SELECT * FROM $SNAPSHOT_CONTEXT_CUR' ;
-         }
-         else
-         {
-            sql = 'SELECT * FROM $SNAPSHOT_CONTEXT' ;
-         }
-         getResourceList() ;
-      } ;
-
-      //当前上下文或者所有上下文
+      
+      //选择当前上下文或者所有上下文
       $scope.ScreenMenu = [
          { 
             'html': $compile( '<label><div style="padding:5px 10px"><input type="radio" name="a" value="all" ng-model="screenResult[\'Role\']" />所有上下文</div></label>' )( $scope ),
@@ -314,6 +297,29 @@
             'html': $compile( '<button class="btn btn-primary" ng-click="changeScreen()" style="width:100%;">确定</button>' )( $scope )
          }
       ] ;
+
+      $scope.screenResult = {
+         'Role':'all',
+      } ;
+
+      $scope.changeScreen = function(){
+         if( isOpenSelectMenu == true && $scope.Timer.status == 'stop' )
+         {
+            isOpenSelectMenu = false ;
+            $scope.Timer.status = 'start' ;
+         }
+         $scope.ContextType = $scope.screenResult['Role'] ;
+         if( $scope.screenResult['Role'] == 'current' )
+         {
+            sql = 'SELECT * FROM $SNAPSHOT_CONTEXT_CUR' ;
+         }
+         else
+         {
+            sql = 'SELECT * FROM $SNAPSHOT_CONTEXT' ;
+         }
+         getResourceList() ;
+      } ;
+
 
       $scope.Timer = {
          status: 'stop',

@@ -66,7 +66,7 @@
       <button class="btn btn-default" ng-click="CreatePlayIntervalModel()">实时刷新设置</button>&nbsp;
       <button class="btn btn-default" dropdown-menu="SelectMenu" ng-click="OpenSelecMenu()">选择显示列&nbsp;
       <i class="fa fa-caret-down"></i></button>&nbsp;
-      <button class="btn btn-default" dropdown-menu="ScreenMenu">
+      <button class="btn btn-default" dropdown-menu="ScreenMenu" ng-click="OpenSelecMenu()">
          <span ng-if="ContextType == 'all'">所有上下文</span>
          <span ng-if="ContextType == 'current'">当前上下文</span>
          <i class="fa fa-caret-down"></i>

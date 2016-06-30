@@ -5,7 +5,6 @@
       var clusterName = SdbFunction.LocalData( 'SdbClusterName' ) ;
       var moduleType = SdbFunction.LocalData( 'SdbModuleType' ) ;
       var moduleName = SdbFunction.LocalData( 'SdbModuleName' ) ;
-      var isOpenSelectMenu = false ;
       $scope.clusterName = clusterName ;
       $scope.moduleName = moduleName ;
       $scope.moduleType =  moduleType ;
@@ -95,22 +94,8 @@
          $scope.SessionGridOptions.onResize() ;
       }
 
-      //打开 网格显示列 的下拉菜单
-      $scope.OpenSelecMenu = function(){
-         if( $scope.Timer.status == 'start' )
-         {
-            isOpenSelectMenu = true ;
-            $scope.Timer.status = 'stop' ;
-         }
-      }
-
       //保存显示列
       $scope.SaveShowKeyList = function(){
-         if( isOpenSelectMenu == true && $scope.Timer.status == 'stop' )
-         {
-            isOpenSelectMenu = false ;
-            $scope.Timer.status = 'start' ;
-         }
          $scope.ShowKeyList = [] ;
          $.each( $scope.ShowKey, function( index, keyInfo ){
             if( keyInfo['show'] == true )
@@ -246,11 +231,6 @@
       ] ; 
 
       $scope.changeScreen = function(){
-         if( isOpenSelectMenu == true && $scope.Timer.status == 'stop' )
-         {
-            isOpenSelectMenu = false ;
-            $scope.Timer.status = 'start' ;
-         }
          $scope.SessionType = $scope.screenResult['Role'] ;
          if( $scope.screenResult['Role'] == 'current' )
          {

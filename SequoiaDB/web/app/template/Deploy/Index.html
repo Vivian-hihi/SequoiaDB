@@ -12,13 +12,14 @@
       </div>
       <div ng-container="{offsetY:-50}"  ng-hide="currentPage!='module'">
          <div ng-container="{height:40}">
-            <button class="topBtn" ng-click="CreateInstallModuleModel()"><i class="fa fa-plus"></i> {{autoLanguage("添加业务")}}</button>
-            <button class="topBtn" ng-click="CreateAppendModuleModel()"><i class="fa fa-plus"></i> {{autoLanguage("发现业务")}}</button>
-            <button class="topBtn" ng-click="CreateUninstallModuleModel()"><i class="fa fa-trash-o"></i> {{autoLanguage("卸载业务")}}</button>
+            <button class="topBtn" ng-class="{0:'disabled'}[clusterList.length]" ng-disabled="clusterList.length==0" ng-click="CreateInstallModuleModel()"><i class="fa fa-plus"></i> {{autoLanguage("添加业务")}}</button>
+            <button class="topBtn" ng-class="{0:'disabled'}[clusterList.length]" ng-disabled="clusterList.length==0" ng-click="CreateAppendModuleModel()"><i class="fa fa-plus"></i> {{autoLanguage("发现业务")}}</button>
+            <button class="topBtn" ng-class="{0:'disabled'}[clusterList.length]" ng-disabled="clusterList.length==0" ng-click="CreateUninstallModuleModel()"><i class="fa fa-trash-o"></i> {{autoLanguage("卸载业务")}}</button>
          </div>
+
          <div style="padding-right:15px;overflow-y:auto;border:1px solid #ccc;padding:10px;position:relative;" ng-container="{offsetY:-40}">
 
-            <div class="DataListBox" style="padding:15px 20px;margin-bottom:15px;" ng-repeat="moduleInfo in moduleList track by $index" ng-if="clusterList[currentCluster]['ClusterName'] == moduleInfo['ClusterName']" ng-class="{'0':'green','1':'yellow','2':'blue','3':'violet'}[$index%4]">
+            <div class="DataListBox" style="padding:15px 20px;margin-bottom:15px;" ng-repeat="moduleInfo in moduleList track by $index" ng-if="clusterList[currentCluster]['ClusterName'] == moduleInfo['ClusterName']" ng-class="{'0':'green','1':'yellow','2':'blue','3':'violet'}[moduleInfo['Color']%4]" ng-show="clusterList.length > 0">
 
                <div style="height:50px;">
                   <div class="pull-left" style="width:40px;height:40px;">
@@ -78,15 +79,20 @@
                
             </div>
 
+            <div class="data_empty" ng-show="clusterList.length == 0">
+               <div class="title">{{autoLanguage("还没有创建集群")}}</div>
+               <div class="tips">{{autoLanguage("使用\"创建集群\"操作创建集群。")}}</div>
+            </div>
+
          </div>
       </div>
       
       <div ng-container="{offsetY:-50}"  ng-hide="currentPage!='host'">
          <div ng-container="{height:40}">
-            <button class="topBtn" ng-click="AddHost()"><i class="fa fa-plus"></i> {{autoLanguage("添加主机")}}</button>
-            <button class="topBtn" ng-click="RemoveHost()"><i class="fa fa-trash-o"></i> {{autoLanguage("删除主机")}}</button>
-            <button class="topBtn" ng-click="SelectAll()">{{autoLanguage("全选")}}</button>
-            <button class="topBtn" ng-click="Unselect()">{{autoLanguage("反选")}}</button>
+            <button class="topBtn" ng-class="{0:'disabled'}[clusterList.length]" ng-disabled="clusterList.length==0" ng-click="AddHost()"><i class="fa fa-plus"></i> {{autoLanguage("添加主机")}}</button>
+            <button class="topBtn" ng-class="{0:'disabled'}[clusterList.length]" ng-disabled="clusterList.length==0" ng-click="RemoveHost()"><i class="fa fa-trash-o"></i> {{autoLanguage("删除主机")}}</button>
+            <button class="topBtn" ng-class="{0:'disabled'}[clusterList.length]" ng-disabled="clusterList.length==0" ng-click="SelectAll()">{{autoLanguage("全选")}}</button>
+            <button class="topBtn" ng-class="{0:'disabled'}[clusterList.length]" ng-disabled="clusterList.length==0" ng-click="Unselect()">{{autoLanguage("反选")}}</button>
          </div>
          <div class="Grid" style="border-bottom:1px solid #E3E7E8;" ng-container="{offsetY:-40}" ng-hide="currentPage!='host'" ng-grid="HostGridOptions" >
             <div class="GridHeader">

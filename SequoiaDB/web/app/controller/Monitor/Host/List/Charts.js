@@ -13,7 +13,7 @@
       $scope.getData = function(){
          var s = 0 ;
          var d = 0 ;
-         SdbFunction.Interval(function(){
+         SdbFunction.Timeout(function(){
             s = parseInt(Math.random()*10) + 30 ;
             d = parseInt(Math.random()*10) + 40 ;
             $scope.charts['Storage']['value'] = [ [ 0, d, true, false ],[ 1, s, true, false ] ] ;

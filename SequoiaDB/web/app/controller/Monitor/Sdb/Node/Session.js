@@ -81,10 +81,6 @@
 
       $scope.getSessionList() ;
 
-      
-      
-      
-
       //显示会话详细
       $scope.showSession = function(){
          $scope.Components.Modal.sessionInfo = {

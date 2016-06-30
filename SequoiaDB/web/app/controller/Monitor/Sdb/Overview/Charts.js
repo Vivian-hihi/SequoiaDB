@@ -14,7 +14,8 @@
       //获取数据库快照
       var getDbList = function(){
          var sql = '' ;
-         var SumInfo = { 'TotalInsert':0, 'TotalUpdate': 0, 'TotalDelete':0, 'TotalRead':0 } ;
+         var SumInfo = {} ;
+         //var SumInfo = { 'TotalInsert':0, 'TotalUpdate': 0, 'TotalDelete':0, 'TotalRead':0 } ;
          
          
          //只获取主节点
@@ -31,15 +32,26 @@
                   $scope.DbInfo['TotalRead'] += DbInfo['TotalRead'] ;
                } ) ;
 
-               $scope.charts['Insert']['value'] = [ [ 0, $scope.DbInfo['TotalInsert'] - SumInfo['TotalInsert'], true, false ] ] ;
-               $scope.charts['Update']['value'] = [ [ 0, $scope.DbInfo['TotalUpdate'] - SumInfo['TotalUpdate'], true, false ] ] ;
-               $scope.charts['Delete']['value'] = [ [ 0, $scope.DbInfo['TotalDelete'] - SumInfo['TotalDelete'], true, false ] ] ;
-               $scope.charts['Query']['value'] = [ [ 0, $scope.DbInfo['TotalRead'] - SumInfo['TotalRead'], true, false ] ] ;
+               if( typeof( SumInfo['TotalInsert'] ) == 'undefined' )
+               {
+                  SumInfo['TotalInsert'] = $scope.DbInfo['TotalInsert'] ;
+                  SumInfo['TotalUpdate'] = $scope.DbInfo['TotalUpdate'] ;
+                  SumInfo['TotalDelete'] = $scope.DbInfo['TotalDelete'] ;
+                  SumInfo['TotalRead'] = $scope.DbInfo['TotalRead'] ;
+               }
+               else
+               {
+                  $scope.charts['Insert']['value'] = [ [ 0, ( $scope.DbInfo['TotalInsert'] - SumInfo['TotalInsert'] )/5, true, false ] ] ;
+                  $scope.charts['Update']['value'] = [ [ 0, ( $scope.DbInfo['TotalUpdate'] - SumInfo['TotalUpdate'] )/5, true, false ] ] ;
+                  $scope.charts['Delete']['value'] = [ [ 0, ( $scope.DbInfo['TotalDelete'] - SumInfo['TotalDelete'] )/5, true, false ] ] ;
+                  $scope.charts['Query']['value'] = [ [ 0, ( $scope.DbInfo['TotalRead'] - SumInfo['TotalRead'] )/5, true, false ] ] ;
 
-               SumInfo['TotalInsert'] = $scope.DbInfo['TotalInsert'] ;
-               SumInfo['TotalUpdate'] = $scope.DbInfo['TotalUpdate'] ;
-               SumInfo['TotalDelete'] = $scope.DbInfo['TotalDelete'] ;
-               SumInfo['TotalRead'] = $scope.DbInfo['TotalRead'] ;
+                  SumInfo['TotalInsert'] = $scope.DbInfo['TotalInsert'] ;
+                  SumInfo['TotalUpdate'] = $scope.DbInfo['TotalUpdate'] ;
+                  SumInfo['TotalDelete'] = $scope.DbInfo['TotalDelete'] ;
+                  SumInfo['TotalRead'] = $scope.DbInfo['TotalRead'] ;
+               }
+               
             }, function( errorInfo ){
                _IndexPublic.createRetryModel( $scope, errorInfo, function(){
                   getDbList() ;
@@ -50,7 +62,7 @@
             }, null, false ) ;
             
 
-         },2000 ) ;
+         },5000 ) ;
       } ;
 
       getDbList() ;

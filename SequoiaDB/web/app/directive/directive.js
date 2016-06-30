@@ -2605,6 +2605,10 @@
                      else
                      {
                         scope.Setting.Mask.detach() ;
+                        scope.data.okText = $rootScope.autoLanguage( '确定' ) ;
+                        scope.data.closeText = $rootScope.autoLanguage( '取消' ) ;
+                        scope.data.ok = null ;
+                        scope.data.context = '' ;
                      }
                   }
                } ) ;
@@ -3705,11 +3709,12 @@
                   var timer = function(){
                      if( scope.Setting.status == 'start' )
                      {
-                        scope.Setting.currentTimer += 10 ;
+                        scope.Setting.currentTimer += 100 ;
                         var percent = ( scope.Setting.currentTimer / scope.Setting.interval * 100 ) ;
                         scope.Setting.options.width =　percent > 100 ? 100 + '%' : percent + '%' ;
                         if( scope.Setting.currentTimer >= scope.Setting.interval )
                         {
+                           scope.$apply() ;
                            if( typeof( scope.data.fn ) == 'function' )
                            {
                               scope.data.fn() ;
@@ -3717,7 +3722,7 @@
                         }
                         else
                         {
-                           setTimeout( timer, 10 ) ;
+                           setTimeout( timer, 100 ) ;
                         }
                      }
                      else
@@ -3725,7 +3730,6 @@
                         scope.Setting.options.width = '0%' ;
                         scope.Setting.currentTimer = 0 ;
                      }
-                     scope.$apply() ;
                   }
                   var listener1 = scope.$watch( 'data.options', function(){
                      if( typeof( scope.data.options ) == 'object' )
