@@ -170,6 +170,21 @@ Helper.prototype.getOMSvc = function Helper_getOMSvc() {
    return retStr ;
 } ;
 
+Helper.prototype.getOMAddr = function Helper_getOMAddr() {
+   var exp = null ;
+   var fileName  = Oma.getOmaConfigFile() ;
+   var configObj = JSON.parse( Oma.getOmaConfigs( fileName ) ) ;
+   var retStr    = configObj["OMAddress"] ;
+   if ( !isString(retStr) ) {
+      exp = new SdbError( SDB_SYS, 
+         sprintf( "the address[?] of om we got from local sdbcm's " + 
+            "config file is not a string", retStr ) ) ;
+      logger.log( PDERROR, exp ) ;
+      throw exp ;
+   }
+   return retStr ;
+} ;
+
 var ConfigMgr = function ( omConfigFile, action ) {
    this._configFile        = omConfigFile ;
    this._action            = action ;
@@ -2415,20 +2430,6 @@ FlushConfig.prototype._init = function FlushConfig__init() {
    this._configInfoObj  = this._configMgr._getDBConfigInfo() ;
 } ;
 
-FlushConfig.prototype._getOMAddr = function FlushConfig__getOMAddr() {
-   var retStr = null ;
-   try {
-      var omSvc    = this.getOMSvc() ;
-      var hostName = System.getHostName() ;
-      retStr = hostName + ":" + omSvc ;
-   } catch( e ) {
-      var exp = new SdbError( e, "failed to get local om's address" ) ;
-      logger.log( PDERROR, exp ) ;
-      throw exp ;
-   }
-   return retStr ;
-} ;
-
 FlushConfig.prototype._getHostAdminSshObj = 
    function FlushConfig__getHostSshObj( host ) {
    var retObj = null ;
@@ -2560,7 +2561,7 @@ FlushConfig.prototype._doit = function FlushConfig__doit() {
    
    // get om address
    try {
-      omAddr = this._getOMAddr() ;
+      omAddr = this.getOMAddr() ;
    } catch( e ) {
       exp = new SdbError( e, "failed to get local om's address" ) ;
       logger.log( PDERROR, exp ) ;
@@ -2782,24 +2783,12 @@ InstallOM.prototype._installOM =
       var dbPath = adaptPath( System.getEWD() ) + "../database/sms/11780" ;
       oma.createOM( 11780, dbPath, {httpname: 8000} ) ;
    } catch( e ) {
-      exp = new SdbError( e, "failed to create om" ) ;
-      if ( exp.getErrCode() == SDBCM_NODE_EXISTED ) {
-         logger.log( PDWARNING, "om has existed, going to remove it" ) ;
+      exp = new SdbError( e, "failed to install om" ) ;
+      logger.log( PDERROR, exp ) ;
+      if ( exp.getErrCode() != SDBCM_NODE_EXISTED ) {
          try { oma.removeOM( 11780 ) ; } catch( e ) {}
-         try {
-            logger.log( PDEVENT, "rebuilding om" ) ;
-            oma.createOM( 11780, dbPath, {httpname: 8000} ) ;
-         } catch( e ) {
-            exp = new SdbError( e, "failed to rebuild om" ) ;
-            logger.log( PDERROR, exp ) ;
-            try { oma.removeOM( 11780 ) ; } catch( e ) {}
-            throw exp ;
-         }
-      } else {
-         logger.log( PDERROR, exp ) ;
-         try { oma.removeOM( 11780 ) ; } catch( e ) {}
-         throw exp ;
       }
+      throw exp ;
    }
    // start om
    try {
@@ -2830,6 +2819,9 @@ InstallOM.prototype._installOM =
 
 InstallOM.prototype._removeOM = function InstallOM__removeOM() {
    var exp = null ;
+   if ( this._omaObj == null ) {
+      return ;
+   }
    logger.log( PDEVENT, "going to remove the installed om" ) ;
    try {
       this._omaObj.removeOM( 11780 ) ;
@@ -2887,8 +2879,8 @@ RemoveOM.prototype._doit = function RemoveOM__doit() {
 } ;
 
 function main() {
-   var errMsg      = null ;
-   var exp         = null ;
+   var errMsg    = null ;
+   var exp       = null ;
 
    // 1. extract config info from config file and 
    // check whether the offered info is ok
@@ -2911,6 +2903,7 @@ function main() {
       }
       // if we just want to update coord info, let's return
       if ( configMgr._getAction() == ACTION_UPDATE_COORD ) {
+         // stop running
          return ;
       }
       
@@ -2927,12 +2920,27 @@ function main() {
 
       // 6. install om, and insert the info we got from the cluster into om
       if ( configMgr._getAction() == ACTION_BUILD_OM ) {
-         var checkHostInfoArr = checkHostTask._getCheckHostResult() ;
-         var nodeConfInfoArr  = collectNodeInfoTask._getNodeConfResult() ;
-         var installOMTask    = new InstallOM( configMgr, 
-                                               checkHostInfoArr, 
-                                               nodeConfInfoArr ) ;
-         installOMTask._doit() ;
+         try {
+            var checkHostInfoArr = checkHostTask._getCheckHostResult() ;
+            var nodeConfInfoArr  = collectNodeInfoTask._getNodeConfResult() ;
+            var installOMTask    = new InstallOM( configMgr, 
+                                                  checkHostInfoArr, 
+                                                  nodeConfInfoArr ) ;
+            installOMTask._doit() ;
+         } catch( e ) {
+            exp = new SdbError( e, "failed to install om in local host" ) ;
+            logger.log( PDERROR, exp ) ;
+            if ( exp.getErrCode() == SDBCM_NODE_EXISTED ) {
+               println( sprintf( "Error: om has existed in local host, " +
+                  "please use command[?] to remove the existed one before " + 
+                  "building it.", 
+                  "./ombuild.sh --conf ombuild.conf --action removeom" ) ) ;
+               // stop running 
+               return ;
+            } else {
+               throw exp ;
+            }
+         }
       }
 
       // 7. flush some new config option to all the node's config file
@@ -2951,6 +2959,8 @@ function main() {
                "in log file[?] and use command[?] to try again.", JS_LOG_FILE,
                "./ombuild.sh --conf ombuild.conf --action flushconfig" );
             println( errMsg ) ;
+            // stop running
+            return ;
          }
       }
    } finally {
