@@ -29,26 +29,24 @@ namespace SequoiaDB
 
         internal void UpsertCache(String name)
         {
-            if (name == null)
+            if (!enableCache || name == null)
                 return;
-            if (enableCache)
-            {
-                DateTime now = DateTime.Now;
-                // never use "nameCache.Add(name, now);"
-                // for it will throw exception when key exist
-                nameCache[name] = now;
-                // here we find String::Split will take "foo."
-                // as 2 parts, so arr.Lenght is 2
-                // it's differet from java
-                String[] arr = name.Split(new Char[] { '.' });
-                if (arr.Length > 1)
-                    nameCache[arr[0]] = now;
-            }
+            DateTime now = DateTime.Now;
+            // never use "nameCache.Add(name, now);"
+            // for it will throw exception when key exist
+            nameCache[name] = now;
+            // here we find String::Split will take "foo."
+            // as 2 parts, so arr.Lenght is 2
+            // it's differet from java
+            String[] arr = name.Split(new Char[] { '.' });
+            if (arr.Length > 1)
+                nameCache[arr[0]] = now;
+      
         }
 
         internal void RemoveCache(String name)
         {
-            if (name == null)
+            if (!enableCache || name == null)
                 return;
             String[] arr = name.Split(new Char[] { '.' });
             // here we find String::Split will take "foo."
@@ -83,30 +81,26 @@ namespace SequoiaDB
 
         internal bool FetchCache(String name)
         {
-            if (enableCache)
+            if (!enableCache)
+                return false;
+
+            if (nameCache.ContainsKey(name))
             {
-                if (nameCache.ContainsKey(name))
+                DateTime value;
+                // when name does not exist, value is "0001-01-01 00:00:00"
+                if (!nameCache.TryGetValue(name, out value))
                 {
-                    DateTime value;
-                    // when name does not exist, value is "0001-01-01 00:00:00"
-                    if (!nameCache.TryGetValue(name, out value))
-                    {
-                        nameCache.Remove(name);
-                        return false;
-                    }
-                    if ((DateTime.Now - value).TotalMilliseconds > cacheInterval)
-                    {
-                        nameCache.Remove(name);
-                        return false;
-                    }
-                    else
-                    {
-                        return true;
-                    }
+                    nameCache.Remove(name);
+                    return false;
+                }
+                if ((DateTime.Now - value).TotalMilliseconds > cacheInterval)
+                {
+                    nameCache.Remove(name);
+                    return false;
                 }
                 else
                 {
-                    return false;
+                    return true;
                 }
             }
             else
