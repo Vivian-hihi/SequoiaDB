@@ -53,6 +53,10 @@ namespace engine
    class _utilMap : public SDBObject
    {
    public:
+      typedef pair< const Key, T >           value_type ;
+      typedef const pair< const Key, T >     const_value_type ;
+      typedef pair< Key, T >                 i_value_type ;
+
       _utilMap()
       :_pMap( NULL ),
        _eleSize( 0 )
@@ -84,10 +88,6 @@ namespace engine
       }
 
    public:
-      typedef pair< const Key, T >           value_type ;
-      typedef const pair< const Key, T >     const_value_type ;
-      typedef pair< Key, T >                 i_value_type ;
-
       class iterator
       {
          friend class _utilMap< Key, T, stackSize > ;
@@ -112,7 +112,7 @@ namespace engine
                   /// left, right is end
                   BOOLEAN leftEnd = _pData >= _pSrc + *_pEleSize ?
                                     TRUE : FALSE ;
-                  BOOLEAN rightEnd = rhs._pData > rhs._pSrc + *(rhs._pEleSize) ?
+                  BOOLEAN rightEnd = rhs._pData >= rhs._pSrc + *(rhs._pEleSize) ?
                                      TRUE : FALSE ;
                   /// both end,equal
                   if ( leftEnd && rightEnd &&
@@ -164,12 +164,6 @@ namespace engine
                }
                return *this ;
             }
-            /*iterator operator++ ( int )
-            {
-               iterator tmp( *this ) ;
-               ++(*this) ;
-               return tmp ;
-            }*/
             iterator& operator-- ()
             {
                if ( _pData )
@@ -182,12 +176,6 @@ namespace engine
                }
                return *this ;
             }
-            /*iterator operator-- ( int )
-            {
-               iterator tmp( *this ) ;
-               --(*this) ;
-               return tmp ;
-            }*/
             iterator& operator+ ( UINT32 step )
             {
                if ( _pData )
@@ -230,6 +218,21 @@ namespace engine
             }
 
          private:
+            /// Must forbidden these functions
+            iterator operator++ ( int )
+            {
+               iterator tmp( *this ) ;
+               ++(*this) ;
+               return tmp ;
+            }
+            iterator operator-- ( int )
+            {
+               iterator tmp( *this ) ;
+               --(*this) ;
+               return tmp ;
+            }
+
+         private:
             value_type*                         _pData ;
             const value_type*                   _pSrc ;
             const UINT32*                       _pEleSize ;
@@ -267,7 +270,7 @@ namespace engine
                   /// left, right is end
                   BOOLEAN leftEnd = _pData >= _pSrc + *_pEleSize ?
                                     TRUE : FALSE ;
-                  BOOLEAN rightEnd = rhs._pData > rhs._pSrc + *(rhs._pEleSize) ?
+                  BOOLEAN rightEnd = rhs._pData >= rhs._pSrc + *(rhs._pEleSize) ?
                                      TRUE : FALSE ;
                   /// both end,equal
                   if ( leftEnd && rightEnd &&
@@ -319,12 +322,6 @@ namespace engine
                }
                return *this ;
             }
-            /*const_iterator operator++ ( int )
-            {
-               const_iterator tmp( *this ) ;
-               ++(*this) ;
-               return tmp ;
-            }*/
             const_iterator& operator-- ()
             {
                if ( _pData )
@@ -337,12 +334,6 @@ namespace engine
                }
                return *this ;
             }
-            /*const_iterator operator-- ( int )
-            {
-               const_iterator tmp( *this ) ;
-               ++(*this) ;
-               return tmp ;
-            }*/
             const_iterator& operator+ ( UINT32 step )
             {
                if ( _pData )
@@ -382,6 +373,20 @@ namespace engine
                _pSrc          = NULL ;
                _pEleSize      = NULL ;
                _it            = it ;
+            }
+         private:
+            /// Must forbidden these functions
+            const_iterator operator++ ( int )
+            {
+               const_iterator tmp( *this ) ;
+               ++(*this) ;
+               return tmp ;
+            }
+            const_iterator operator-- ( int )
+            {
+               const_iterator tmp( *this ) ;
+               ++(*this) ;
+               return tmp ;
             }
 
          private:
@@ -552,35 +557,32 @@ namespace engine
          }
          else
          {
-            UINT32 pos = _eleSize ;
-            while( pos > 0 )
+            /// first find the key
+            BOOLEAN exist = FALSE ;
+            INT32 pos = _findBoundInStackBuf( val.first, FALSE, &exist ) ;
+            if ( exist )
             {
-               if ( val.first < _staticBuf[ pos - 1 ].first )
+               return pair<iterator, BOOLEAN>( end(), FALSE ) ;
+            }
+            else if ( -1 == pos )
+            {
+               pos = _eleSize ;
+            }
+            else
+            {
+               for ( INT32 i = _eleSize ; i > pos ; --i )
                {
-                  _staticBuf[ pos ] = _staticBuf[ pos - 1 ] ;
-                  --pos ;
-               }
-               else if ( _staticBuf[ pos - 1 ].first == val.first )
-               {
-                  return pair<iterator, BOOLEAN>( end(), FALSE ) ;
-               }
-               else
-               {
-                  /// find the position
-                  _staticBuf[ pos ].first = val.first ;
-                  _staticBuf[ pos ].second = val.second ;
-                  ++_eleSize ;
-                  return pair<iterator, BOOLEAN>( iterator( &_staticBuf[ pos ],
-                                                            _staticBuf,
-                                                            &_eleSize ),
-                                                  TRUE ) ;
+                  _staticBuf[ i ] = _staticBuf[ i - 1 ] ;
                }
             }
-            /// insert to the begin
-            _staticBuf[ 0 ].first = val.first ;
-            _staticBuf[ 0 ].second = val.second ;
             ++_eleSize ;
-            return pair<iterator, BOOLEAN>( begin(), TRUE ) ;
+            _staticBuf[ pos ].first = val.first ;
+            _staticBuf[ pos ].second = val.second ;
+
+            return pair<iterator, BOOLEAN>( iterator( &_staticBuf[ pos ],
+                                                      _staticBuf,
+                                                      &_eleSize ),
+                                            TRUE ) ;
          }
       }
 
@@ -960,7 +962,7 @@ namespace engine
       {
          INT32 rc = SDB_OK ;
 
-         if ( !_pMap /* && size > stackSize */ )
+         if ( !_pMap && size > stackSize )
          {
             _pMap = new (std::nothrow) map< Key, T >() ;
             if ( !_pMap )
