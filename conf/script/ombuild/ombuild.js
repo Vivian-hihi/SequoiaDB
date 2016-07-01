@@ -2966,6 +2966,7 @@ function main() {
    } finally {
       configMgr._final() ;
    }
+   println( "succeed to run all the tasks" ) ;
 }
 
 // execute
