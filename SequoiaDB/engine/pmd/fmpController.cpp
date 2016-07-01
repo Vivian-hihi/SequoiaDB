@@ -69,7 +69,7 @@ CHAR FMP_COORD_SERVICE[OSS_MAX_SERVICENAME + 1] = {0};
 CHAR *FMP_COORD_HOST = "localhost" ;
 CHAR g_UserName[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
 CHAR g_Password[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
-static const BYTE magicNumber[] = FMP_MSG_MAGIC ;
+static const CHAR magicNumber[] = FMP_MSG_MAGIC ;
 
 BSONObj OK_RES = BSON( FMP_RES_CODE << SDB_OK ) ;
 
