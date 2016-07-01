@@ -173,7 +173,14 @@ SDB=`getProgFullPath "sdb"`
 PROG_PATH=`dirname ${SDB}`
 SCRIPT_PATH=${PROG_PATH}/../conf/script
 
-EXPECT_USER=`ls -l ${SDB} | awk '{print $3}'`
+SDBADMIN_USER=`cat /etc/default/sequoiadb | grep "SDBADMIN_USER="`
+if [ $? -ne 0 ]
+then
+   echo "Error: failed to access 'SDBADMIN_USER' in '/etc/default/sequoiadb' to get the sequoiadb admin user"
+   exit
+fi
+
+EXPECT_USER=${SDBADMIN_USER#*=}
 ACTUAL_USER=`whoami`
 
 if [ $EXPECT_USER != $ACTUAL_USER ]
