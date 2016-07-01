@@ -519,10 +519,6 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__DMSSTORAGELOB_UPDATE ) ;
       SDB_ASSERT( NULL != mbContext && NULL != cb, "can not be null" ) ;
-      SDB_ASSERT( _dmsHeader->_lobdPageSize <= DMS_PAGE_SIZE512K,
-                  "can not over 512 KB" ) ;
-      SDB_ASSERT( record._offset + record._dataLen <= _dmsHeader->_lobdPageSize,
-                  "impossible" ) ;
       DMS_LOB_PAGEID page = DMS_LOB_INVALID_PAGEID ;
       _dmsLobDataMapBlk *blk = NULL ;
       dpsMergeInfo info ;
@@ -1505,8 +1501,8 @@ namespace engine
             ossValuePtr extent = extentAddr( current ) ;
             if ( !extent )
             {
-               PD_LOG( PDERROR, "we got a NULL extent from extendAddr(), pageid:%d",
-                       current ) ;
+               PD_LOG( PDERROR, "we got a NULL extent from extendAddr(), "
+                       "pageid:%d", current ) ;
                rc = SDB_SYS ;
                goto error ;
             }

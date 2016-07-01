@@ -1926,13 +1926,12 @@ namespace engine
       {
          if ( inEndMap ||
               _lobFetcher.hitEnd() ||
-              extLID <= _lobFetcher.toBeFetched() )
+              extLID < _lobFetcher.toBeFetched() )
          {
             BOOLEAN need2Notify = FALSE ;
             const bson::OID *oid = NULL ;
             const UINT32 *sequence = NULL ;
-            dpsLogRecord::iterator itr =
-                          record.find( DPS_LOG_LOB_OID ) ;
+            dpsLogRecord::iterator itr = record.find( DPS_LOG_LOB_OID ) ;
             if ( !itr.valid() )
             {
                PD_LOG( PDERROR, "Session[%s]: can not find oid obj in "
@@ -1977,8 +1976,7 @@ namespace engine
       {
          if ( LOG_TYPE_DATA_INSERT == record.head()._type )
          {
-            dpsLogRecord::iterator itr =
-                             record.find( DPS_LOG_INSERT_OBJ ) ;
+            dpsLogRecord::iterator itr = record.find( DPS_LOG_INSERT_OBJ ) ;
             if ( !itr.valid() )
             {
                PD_LOG( PDERROR, "Session[%s]: can not find insert obj in "
@@ -1990,8 +1988,7 @@ namespace engine
          }
          else if ( LOG_TYPE_DATA_DELETE == record.head()._type )
          {
-            dpsLogRecord::iterator itr =
-                         record.find( DPS_LOG_DELETE_OLDOBJ ) ;
+            dpsLogRecord::iterator itr = record.find( DPS_LOG_DELETE_OLDOBJ ) ;
             if ( !itr.valid() )
             {
                PD_LOG( PDERROR, "Session[%s] can not find delete obj in "
