@@ -168,8 +168,8 @@ namespace engine
          _MsgRouteID                      _id ;
          _netFrame                        *_frame ;
          NET_HANDLE                       _handle ;
-         BOOLEAN                          _isConnected ;
-         BOOLEAN                          _isInAsync ;
+         volatile BOOLEAN                 _isConnected ;
+         volatile BOOLEAN                 _isInAsync ;
          BOOLEAN                          _hasRecvMsg ;
          UINT64                           _lastSendTick ;
          UINT64                           _lastRecvTick ;
