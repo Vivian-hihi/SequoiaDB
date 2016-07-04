@@ -573,7 +573,7 @@ typedef _ciState ciState ;
    ( INSPECT_COMMANDS_STRING( CONSISTENCY_INSPECT_VER, ",v" ), "show version of tool" ) \
    ( INSPECT_COMMANDS_STRING( CONSISTENCY_INSPECT_AUTH, ",u" ), boost::program_options::value< std::string >(), "auth, username:password, \"\":\"\" is set default" ) \
    ( INSPECT_COMMANDS_STRING( CONSISTENCY_INSPECT_ACTION, ",a" ), boost::program_options::value< std::string >(), "specify action, \"inspect\" or \"report\" supported, \"inspect\" is set default" ) \
-   ( INSPECT_COMMANDS_STRING( CONSISTENCY_INSPECT_COORD, ",d" ), boost::program_options::value< std::string >(), "specify the coord address, like: ubuntu-coord:11810" ) \
+   ( INSPECT_COMMANDS_STRING( CONSISTENCY_INSPECT_COORD, ",d" ), boost::program_options::value< std::string >(), "specify the coord address, default: \"localhost:11810\"" ) \
    ( INSPECT_COMMANDS_STRING( CONSISTENCY_INSPECT_LOOP, ",t" ), boost::program_options::value< INT32 >(), "specify times to loop" ) \
    ( INSPECT_COMMANDS_STRING( CONSISTENCY_INSPECT_GROUP, ",g" ),boost::program_options::value< std::string >(), "specify group name to be inspect" ) \
    ( INSPECT_COMMANDS_STRING( CONSISTENCY_INSPECT_CS, ",c" ), boost::program_options::value< std::string >(), "specify the collection space to be inspected") \
