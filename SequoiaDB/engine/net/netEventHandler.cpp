@@ -417,22 +417,29 @@ namespace engine
       /// not care send suc or failed
       _lastSendTick = pmdGetDBTick() ;
 
-      try
+      while ( send < len )
       {
-         while ( send < len )
+         try
          {
-            send +=  _sock.send(buffer((const void*)((ossValuePtr)buf + send),
-                                        len - send));
+            send +=  _sock.send( buffer( (const void*)((ossValuePtr)buf + send),
+                                         len - send) );
+         }
+         catch ( boost::system::system_error &e )
+         {
+            if ( e.code().value() == boost::system::errc::interrupted )
+            {
+               PD_LOG( PDDEBUG, "interrupted system call" ) ;
+               continue ;
+            }
+
+            PD_LOG( PDERROR, "Failed to send to node :%d, %d, %d, %s, errno=%d",
+                    _id.columns.groupID, _id.columns.nodeID,
+                    _id.columns.serviceID, e.what(), e.code().value() ) ;
+            rc = SDB_NET_SEND_ERR ;
+            goto error ;
          }
       }
-      catch ( boost::system::system_error &e )
-      {
-         PD_LOG( PDERROR, "Failed to send to node :%d, %d, %d, %s",
-                 _id.columns.groupID, _id.columns.nodeID,
-                 _id.columns.serviceID, e.what() ) ;
-         rc = SDB_NET_SEND_ERR ;
-         goto error ;
-      }
+
 
    done:
       PD_TRACE_EXITRC ( SDB__NETEVNHND_SYNCSND, rc );
