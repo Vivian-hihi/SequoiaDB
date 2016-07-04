@@ -15,7 +15,7 @@ sdbinsepct 需要与数据库（coord 节点）连接。
   --help              -h     返回基本帮助和用法文本
   --version           -v     返回当前工具所附属的数据库的版本
   --action            -a     指定检查数据或对已经存在的中间文件生成 report，inspect 和 report 可选，默认是 inspect
-  --coord             -d     指定 coord 节点的 hostname 和服务端口，格式为 hostname:servicename，必须指定
+  --coord             -d     指定 coord 节点的 hostname 和服务端口，格式为 hostname:servicename，默认值是 localhost:11810
   --loop              -t     指定迭代检查的次数，默认是5（次）
   --group             -g     指定要检查的 group 的名字，若不指定，则检查所有的 group
   --collectionspace   -c     指定检查的集合空间名字，不指定则检查所有集合空间
