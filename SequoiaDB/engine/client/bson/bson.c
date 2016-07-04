@@ -323,11 +323,101 @@ SDB_EXPORT int bson_sprint ( char *buffer, int bufsize, const bson *b ) {
       return 0 ; \
 }
 
-static void bson_sprint_raw_concat ( char **pbuf, int *left, const char *data )
+static int strlen_a ( const char *data )
 {
-    unsigned int tempsize = strlen ( data ) ;
+   int len = 0 ;
+   if ( !data )
+   {
+      return 0 ;
+   }
+   while ( data && *data )
+   {
+      //the JSON standard does not need to be escaped single quotation marks
+      if ( data[0] == '\"' ||
+           data[0] == '\\' ||
+           data[0] == '\b' ||
+           data[0] == '\f' ||
+           data[0] == '\n' ||
+           data[0] == '\r' ||
+           data[0] == '\t' )
+      {
+         ++len ;
+      }
+      ++len ;
+      ++data ;  
+   }
+   return len ;
+}
+
+static void bson_sprint_raw_concat ( char **pbuf, int *left, const char *data, int isString )
+{
+    unsigned int tempsize = 0 ;
+    char *pTempBuffer = *pbuf ;
+
+    if( isString )
+    {
+       tempsize = strlen_a( data ) ;
+    }
+    else
+    {
+       tempsize = strlen( data ) ;
+    }
     tempsize = tempsize > (unsigned int)(*left) ? (unsigned int)(*left) : tempsize ;
-    memcpy ( *pbuf, data, tempsize ) ;
+
+    if( isString )
+    {
+       unsigned int i = 0 ;
+       for ( i = 0; i < tempsize; ++i )
+       {
+          switch( *data )
+          {
+          case '\"':
+             pTempBuffer[i] = '\\' ;
+             ++i ;
+             pTempBuffer[i] = '\"' ;
+             break ;
+          case '\\':
+             pTempBuffer[i] = '\\' ;
+             ++i ;
+             pTempBuffer[i] = '\\' ;
+             break ;
+          case '\b':
+             pTempBuffer[i] = '\\' ;
+             ++i ;
+             pTempBuffer[i] = '\b' ;
+             break ;
+          case '\f':
+             pTempBuffer[i] = '\\' ;
+             ++i ;
+             pTempBuffer[i] = '\f' ;
+             break ;
+          case '\n':
+             pTempBuffer[i] = '\\' ;
+             ++i ;
+             pTempBuffer[i] = '\n' ;
+             break ;
+          case '\r':
+             pTempBuffer[i] = '\\' ;
+             ++i ;
+             pTempBuffer[i] = '\r' ;
+             break ;
+          case '\t':
+             pTempBuffer[i] = '\\' ;
+             ++i ;
+             pTempBuffer[i] = '\t' ;
+             break ;
+          default:
+             pTempBuffer[i] = *data ;
+             break ;
+          }
+          ++data ;
+       }
+    }
+    else
+    {
+       memcpy( *pbuf, data, tempsize ) ;
+    }
+
     *left -= tempsize ;
     *pbuf += tempsize ;
 }
@@ -362,64 +452,37 @@ SDB_EXPORT int bson_sprint_iterator ( char **pbuf, int *left, bson_iterator *i,
    {
       case BSON_DOUBLE:
       {
+         double valNum = bson_iterator_double( i ) ;
+         int sign = 0 ;
          char temp[64] = {0} ;
-         sprintf ( temp, "%.16g", bson_iterator_double( i ) ) ;
-         bson_sprint_raw_concat ( pbuf, left, temp ) ;
+         if( bson_is_inf( valNum, &sign ) == 0 )
+         {
+            sprintf ( temp, "%.16g", valNum ) ;
+            bson_sprint_raw_concat ( pbuf, left, temp, 0 ) ;
+         }
+         else
+         {
+            if( sign == 1 )
+            {
+               bson_sprint_raw_concat( pbuf, left, "Infinity", 0 ) ;
+            }
+            else
+            {
+               bson_sprint_raw_concat( pbuf, left, "-Infinity", 0 ) ;
+            }
+         }
          CHECK_LEFT ( left )
          break;
       }
       case BSON_STRING:
-      {
-         const char *temp = bson_iterator_string( i ) ;
-         int tempSize = strlen( temp ) ;
-         int i = 0 ;
-         char tempChar[2] = { 0, 0 } ;
-         bson_sprint_raw_concat ( pbuf, left, delCharStr ) ;
-         CHECK_LEFT ( left )
-         for ( i = 0; i < tempSize; ++i )
-         {
-            switch( *( temp + i ) )
-            {
-            case '\"':
-               bson_sprint_raw_concat ( pbuf, left, "\\\"" ) ;
-               break ;
-            case '\\':
-               bson_sprint_raw_concat ( pbuf, left, "\\\\" ) ;
-               break ;
-            case '\b':
-               bson_sprint_raw_concat ( pbuf, left, "\\b" ) ;
-               break ;
-            case '\f':
-               bson_sprint_raw_concat ( pbuf, left, "\\f" ) ;
-               break ;
-            case '\n':
-               bson_sprint_raw_concat ( pbuf, left, "\\n" ) ;
-               break ;
-            case '\r':
-               bson_sprint_raw_concat ( pbuf, left, "\\r" ) ;
-               break ;
-            case '\t':
-               bson_sprint_raw_concat ( pbuf, left, "\\t" ) ;
-               break ;
-            default:
-               tempChar[0] = *( temp + i ) ;
-               bson_sprint_raw_concat ( pbuf, left, tempChar ) ;
-               break ;
-            }
-            CHECK_LEFT ( left )
-         }
-         bson_sprint_raw_concat ( pbuf, left, delCharStr ) ;
-         CHECK_LEFT ( left )
-         break;
-      }
       case BSON_SYMBOL:
       {
          const char *temp = bson_iterator_string( i ) ;
-         bson_sprint_raw_concat ( pbuf, left, delCharStr ) ;
+         bson_sprint_raw_concat ( pbuf, left, delCharStr, 0 ) ;
          CHECK_LEFT ( left )
-         bson_sprint_raw_concat ( pbuf, left, temp ) ;
+         bson_sprint_raw_concat ( pbuf, left, temp, 1 ) ;
          CHECK_LEFT ( left )
-         bson_sprint_raw_concat ( pbuf, left, delCharStr ) ;
+         bson_sprint_raw_concat ( pbuf, left, delCharStr, 0 ) ;
          CHECK_LEFT ( left )
          break;
       }
@@ -427,11 +490,11 @@ SDB_EXPORT int bson_sprint_iterator ( char **pbuf, int *left, bson_iterator *i,
       {
          char oidhex[25];
          bson_oid_to_string( bson_iterator_oid( i ), oidhex );
-         bson_sprint_raw_concat ( pbuf, left, "{ \"$oid\": \"" ) ;
+         bson_sprint_raw_concat ( pbuf, left, "{ \"$oid\": \"", 0 ) ;
          CHECK_LEFT ( left )
-         bson_sprint_raw_concat ( pbuf, left, oidhex ) ;
+         bson_sprint_raw_concat ( pbuf, left, oidhex, 0 ) ;
          CHECK_LEFT ( left )
-         bson_sprint_raw_concat ( pbuf, left, "\" }" ) ;
+         bson_sprint_raw_concat ( pbuf, left, "\" }", 0 ) ;
          CHECK_LEFT ( left )
          break;
       }
@@ -439,7 +502,7 @@ SDB_EXPORT int bson_sprint_iterator ( char **pbuf, int *left, bson_iterator *i,
       {
          char temp[6] = {0} ;
          sprintf ( temp, "%s", (bson_iterator_bool( i ) ? "true" : "false") ) ;
-         bson_sprint_raw_concat ( pbuf, left, temp ) ;
+         bson_sprint_raw_concat ( pbuf, left, temp, 0 ) ;
          CHECK_LEFT ( left )
          break;
       }
@@ -458,7 +521,7 @@ SDB_EXPORT int bson_sprint_iterator ( char **pbuf, int *left, bson_iterator *i,
          {
             sprintf ( temp, "{ \"$date\": %lld }", (unsigned long long)bson_iterator_date( i ) ) ;
          }
-         bson_sprint_raw_concat ( pbuf, left, temp ) ;
+         bson_sprint_raw_concat ( pbuf, left, temp, 0 ) ;
          CHECK_LEFT ( left )
          break;
       }
@@ -470,7 +533,7 @@ SDB_EXPORT int bson_sprint_iterator ( char **pbuf, int *left, bson_iterator *i,
          char *pBase64Buf = NULL ;
          char *pBin_data = NULL ;
          sprintf ( temp, "\", \"$type\": \"%u\" }", (unsigned char)bson_iterator_bin_type ( i ) ) ;
-         bson_sprint_raw_concat ( pbuf, left, "{ \"$binary\": \"" ) ;
+         bson_sprint_raw_concat ( pbuf, left, "{ \"$binary\": \"", 0 ) ;
          CHECK_LEFT ( left )
          //bson_sprint_hex_concat ( pbuf, left, bson_iterator_bin_data ( i ),
          //                         bson_iterator_bin_len ( i ) ) ;
@@ -491,69 +554,63 @@ SDB_EXPORT int bson_sprint_iterator ( char **pbuf, int *left, bson_iterator *i,
                pBase64Buf = NULL ;
                return 0 ;
             }
-            bson_sprint_raw_concat ( pbuf, left, pBase64Buf ) ;
+            bson_sprint_raw_concat ( pbuf, left, pBase64Buf, 0 ) ;
             free( pBase64Buf ) ;
             CHECK_LEFT ( left )
          }
-         bson_sprint_raw_concat ( pbuf, left, temp ) ;
+         bson_sprint_raw_concat ( pbuf, left, temp, 0 ) ;
          CHECK_LEFT ( left )
          break;
       }
       case BSON_UNDEFINED:
       {
          char *temp = "{ \"$undefined\": 1 }" ;
-         bson_sprint_raw_concat ( pbuf, left, temp ) ;
+         bson_sprint_raw_concat ( pbuf, left, temp, 0 ) ;
          CHECK_LEFT ( left )
          break;
       }
       case BSON_NULL:
       {
          char *temp = "null" ;
-         bson_sprint_raw_concat ( pbuf, left, temp ) ;
+         bson_sprint_raw_concat ( pbuf, left, temp, 0 ) ;
          CHECK_LEFT ( left )
          break;
       }
       case BSON_MINKEY:
       {
          char *temp = "{ \"$minKey\": 1 }" ;
-         bson_sprint_raw_concat ( pbuf, left, temp ) ;
+         bson_sprint_raw_concat ( pbuf, left, temp, 0 ) ;
          CHECK_LEFT ( left )
          break;
       }
       case BSON_MAXKEY:
       {
          char *temp = "{ \"$maxKey\": 1 }" ;
-         bson_sprint_raw_concat ( pbuf, left, temp ) ;
+         bson_sprint_raw_concat ( pbuf, left, temp, 0 ) ;
          CHECK_LEFT ( left )
          break;
       }
       case BSON_REGEX:
       {
-         char temp[256] = {0} ;
-         char opts[64] = {0} ;
-         sprintf ( temp, "%s", bson_iterator_regex( i ) ) ;
-         sprintf ( opts, "%s", bson_iterator_regex_opts ( i ) ) ;
-         bson_sprint_raw_concat ( pbuf, left, "{ \"$regex\": \"" ) ;
+         bson_sprint_raw_concat ( pbuf, left, "{ \"$regex\": \"", 0 ) ;
          CHECK_LEFT ( left )
-         bson_sprint_raw_concat ( pbuf, left, temp ) ;
+         bson_sprint_raw_concat ( pbuf, left, bson_iterator_regex( i ), 1 ) ;
          CHECK_LEFT ( left )
-         bson_sprint_raw_concat ( pbuf, left, "\", \"$options\": \"" ) ;
+         bson_sprint_raw_concat ( pbuf, left, "\", \"$options\": \"", 0 ) ;
          CHECK_LEFT ( left )
-         bson_sprint_raw_concat ( pbuf, left, opts ) ;
+         bson_sprint_raw_concat ( pbuf, left, bson_iterator_regex_opts( i ), 0 ) ;
          CHECK_LEFT ( left )
-         bson_sprint_raw_concat ( pbuf, left, "\" }" ) ;
+         bson_sprint_raw_concat ( pbuf, left, "\" }", 0 ) ;
          CHECK_LEFT ( left )
          break;
       }
       case BSON_CODE:
       {
-         char temp[128] = {0} ;
-         sprintf ( temp, "%s", bson_iterator_code( i ) ) ;
-         bson_sprint_raw_concat ( pbuf, left, delCharStr ) ;
+         bson_sprint_raw_concat ( pbuf, left, delCharStr, 0 ) ;
          CHECK_LEFT ( left )
-         bson_sprint_raw_concat ( pbuf, left, temp ) ;
+         bson_sprint_raw_concat ( pbuf, left, bson_iterator_code( i ), 1 ) ;
          CHECK_LEFT ( left )
-         bson_sprint_raw_concat ( pbuf, left, delCharStr ) ;
+         bson_sprint_raw_concat ( pbuf, left, delCharStr, 0 ) ;
          CHECK_LEFT ( left )
          break;
       }
@@ -561,7 +618,7 @@ SDB_EXPORT int bson_sprint_iterator ( char **pbuf, int *left, bson_iterator *i,
       {
          char temp[32] = {0} ;
          sprintf ( temp, "%d", bson_iterator_int( i ) ) ;
-         bson_sprint_raw_concat ( pbuf, left, temp ) ;
+         bson_sprint_raw_concat ( pbuf, left, temp, 0 ) ;
          CHECK_LEFT ( left )
          break;
       }
@@ -569,7 +626,7 @@ SDB_EXPORT int bson_sprint_iterator ( char **pbuf, int *left, bson_iterator *i,
       {
          char temp[32] = {0} ;
          sprintf ( temp, "%lld", ( long long )bson_iterator_long( i ) ) ;
-         bson_sprint_raw_concat ( pbuf, left, temp ) ;
+         bson_sprint_raw_concat ( pbuf, left, temp, 0 ) ;
          CHECK_LEFT ( left )
          break;
       }
@@ -600,7 +657,7 @@ SDB_EXPORT int bson_sprint_iterator ( char **pbuf, int *left, bson_iterator *i,
             return 0 ;
          }
 
-         bson_sprint_raw_concat ( pbuf, left, temp ) ;
+         bson_sprint_raw_concat ( pbuf, left, temp, 0 ) ;
          decimal_free( &decimal ) ;
          free( temp ) ;
          CHECK_LEFT ( left )
@@ -618,7 +675,7 @@ SDB_EXPORT int bson_sprint_iterator ( char **pbuf, int *left, bson_iterator *i,
          sprintf ( temp, "{ \"$timestamp\": \"%04d-%02d-%02d-%02d.%02d.%02d.%06d\" }",
                    psr.tm_year + 1900, psr.tm_mon + 1, psr.tm_mday, psr.tm_hour,
                    psr.tm_min, psr.tm_sec, ts.i ) ;
-         bson_sprint_raw_concat ( pbuf, left, temp ) ;
+         bson_sprint_raw_concat ( pbuf, left, temp, 0 ) ;
          CHECK_LEFT ( left )
          break;
       }
@@ -652,12 +709,12 @@ SDB_EXPORT int bson_sprint_raw ( char **pbuf, int *left, const char *data, int i
     bson_iterator_from_buffer( &i, data );
     if ( isobj )
     {
-       bson_sprint_raw_concat ( pbuf, left, "{ " ) ;
+       bson_sprint_raw_concat ( pbuf, left, "{ ", 0 ) ;
        CHECK_LEFT ( left )
     }
     else
     {
-        bson_sprint_raw_concat ( pbuf, left, "[ " ) ;
+        bson_sprint_raw_concat ( pbuf, left, "[ ", 0 ) ;
        CHECK_LEFT ( left )
     }
     while ( bson_iterator_next( &i ) ) {
@@ -666,7 +723,7 @@ SDB_EXPORT int bson_sprint_raw ( char **pbuf, int *left, const char *data, int i
             break;
         if ( !first )
         {
-           bson_sprint_raw_concat ( pbuf, left, ", " ) ;
+           bson_sprint_raw_concat ( pbuf, left, ", ", 0 ) ;
             CHECK_LEFT ( left )
         }
         else
@@ -674,13 +731,13 @@ SDB_EXPORT int bson_sprint_raw ( char **pbuf, int *left, const char *data, int i
         key = bson_iterator_key( &i );
         if ( isobj )
         {
-           bson_sprint_raw_concat ( pbuf, left, "\"" ) ;
+           bson_sprint_raw_concat ( pbuf, left, "\"", 0 ) ;
            CHECK_LEFT ( left )
-           bson_sprint_raw_concat ( pbuf, left, key ) ;
+           bson_sprint_raw_concat ( pbuf, left, key, 1 ) ;
            CHECK_LEFT ( left )
-           bson_sprint_raw_concat ( pbuf, left, "\"" ) ;
+           bson_sprint_raw_concat ( pbuf, left, "\"", 0 ) ;
            CHECK_LEFT ( left )
-           bson_sprint_raw_concat ( pbuf, left, ": " ) ;
+           bson_sprint_raw_concat ( pbuf, left, ": ", 0 ) ;
            CHECK_LEFT ( left )
         }
         if ( !bson_sprint_iterator ( pbuf, left, &i, '"' ) )
@@ -688,12 +745,12 @@ SDB_EXPORT int bson_sprint_raw ( char **pbuf, int *left, const char *data, int i
     }
     if ( isobj )
     {
-       bson_sprint_raw_concat ( pbuf, left, " }" ) ;
+       bson_sprint_raw_concat ( pbuf, left, " }", 0 ) ;
        CHECK_LEFT ( left )
     }
     else
     {
-        bson_sprint_raw_concat ( pbuf, left, " ]" ) ;
+       bson_sprint_raw_concat ( pbuf, left, " ]", 0 ) ;
        CHECK_LEFT ( left )
     }
     return 1 ;

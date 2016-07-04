@@ -673,6 +673,10 @@ namespace import
                                           CSV_TYPE& type, CSVFieldValue& value,
                                           INT32& valueLength, BOOLEAN allowDot = FALSE);
 
+   static inline INT32 _stringToInfinity( const CHAR *data, INT32 length,
+                                          CSV_TYPE& type, CSVFieldValue& value,
+                                          INT32& valueLength ) ;
+
    // the number is long type,
    // but if the number is overflow, we set it as double
    static inline INT32 _stringToRawNum(const CHAR* data, INT32 length,
@@ -880,6 +884,55 @@ namespace import
       goto done;
    }
 
+   #define CSV_STR_INF "inf"
+   #define CSV_STR_INF_LEN (sizeof(CSV_STR_INF)-1)
+   #define CSV_STR_INFINITY "Infinity"
+   #define CSV_STR_INFINITY_LEN (sizeof(CSV_STR_INFINITY)-1)
+   #define CSV_DOUBLE_INFINTY ((1.79769e+308)*2)
+   static inline INT32 _stringToInfinity( const CHAR *data, INT32 length,
+                                          CSV_TYPE& type, CSVFieldValue& value,
+                                          INT32& valueLength )
+   {
+      INT32 rc = SDB_OK ;
+      INT32 len = length ;
+      BOOLEAN neg = FALSE ;
+      CHAR *pStr = (CHAR *)data ;
+
+      if( '+' == *pStr )
+      {
+         ++pStr ;
+         --len ;
+      }
+      else if( '-' == *pStr )
+      {
+         neg = TRUE ;
+         ++pStr ;
+         --len ;
+      }
+      if( 'I' == *pStr && len >= CSV_STR_INFINITY_LEN )
+      {
+         if( 0 == ossStrncmp( CSV_STR_INFINITY, pStr, CSV_STR_INFINITY_LEN ) )
+         {
+            len -= CSV_STR_INFINITY_LEN ;
+            type = CSV_TYPE_DOUBLE ;
+            value.doubleVal = neg ? -CSV_DOUBLE_INFINTY : CSV_DOUBLE_INFINTY ;
+            valueLength = length - len ;
+         }
+      }
+      else if( 'i' == *pStr && len >= CSV_STR_INF_LEN )
+      {
+         if( 0 == ossStrncmp( CSV_STR_INF, pStr, CSV_STR_INF_LEN ) )
+         {
+            len -= CSV_STR_INF_LEN ;
+            type = CSV_TYPE_DOUBLE ;
+            value.doubleVal = neg ? -CSV_DOUBLE_INFINTY : CSV_DOUBLE_INFINTY ;
+            valueLength = length - len ;
+         }
+      }
+   done:
+      return rc ;
+   }
+
    static inline INT32 _stringToRawNumber(const CHAR* data, INT32 length,
                                           CSV_TYPE& type, CSVFieldValue& value,
                                           INT32& valueLength)
@@ -900,6 +953,23 @@ namespace import
 
       SDB_ASSERT(NULL != data, "data can't be NULL");
       SDB_ASSERT(length > 0, "length must be greater than 0");
+
+      //parse double [+/-]inf  [+/-]Infinity
+      rc = _stringToInfinity( str, len, tmpType, tmpValue, intLen );
+      if (SDB_OK != rc)
+      {
+         goto error;
+      }
+
+      if (CSV_TYPE_DOUBLE == tmpType && 0 != intLen)
+      {
+         str += intLen ;
+         len -= intLen ;
+         type = CSV_TYPE_DOUBLE ;
+         value.doubleVal = tmpValue.doubleVal ;
+         valueLength = length - len ;
+         goto done ;
+      }
 
       if ('#' == *str)
       {

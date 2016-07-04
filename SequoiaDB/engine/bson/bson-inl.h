@@ -821,8 +821,26 @@ namespace bson {
         }
         break ;
         case NumberDouble:
-            s.appendDoubleNice( number() );
+        {
+            int sign = 0 ;
+            double valNum = number() ;
+            if( isInf( valNum, &sign ) == false )
+            {
+               s.appendDoubleNice( valNum );
+            }
+            else
+            {
+               if( sign == 1 )
+               {
+                  s << "Infinity" ;
+               }
+               else
+               {
+                  s << "-Infinity" ;
+               }
+            }
             break;
+        }
         case NumberLong:
             s << _numberLong();
             break;
