@@ -1517,7 +1517,7 @@ namespace engine
             _tsStep = STEP_TS_END ;
             goto doend ;
          }
-         PD_LOG( PDEVENT, "Session[%s]: Begin to pull transaction log or"
+         PD_LOG( PDEVENT, "Session[%s]: Begin to pull transaction log or "
                  "cached log, expect lsn:[%u,%llu]", sessionName(),
                  _expectLSN.version, _expectLSN.offset ) ;
       }
