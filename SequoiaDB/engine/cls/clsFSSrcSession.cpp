@@ -670,7 +670,7 @@ namespace engine
       time_t bTime = time( NULL ) ;
 
       /// | oid | MsgLobTuple | data | ... | oid | MsgLobTuple | data |
-      do
+      while ( _lobContextID >= 0 )
       {
          need2Send = FALSE ;
          UINT32 finalSize = 0 ;
@@ -687,23 +687,21 @@ namespace engine
             }
          }
 
-         _mb.writePtr( alignedLen ) ;
-         _mb.writePtr( bmSize + _mb.length() ) ;
+         _mb.writePtr( alignedLen + bmSize ) ;
          rc = _lobFetcher.fetch( eduCB(), page, &_mb ) ;
-         if ( SDB_DMS_EOC == rc || SDB_DMS_NOTEXIST == rc )
+         if ( rc )
          {
             _mb.writePtr( oldSize ) ;
-            rc = SDB_OK ;
-            break ;
-         }
-         else if ( SDB_OK != rc )
-         {
-            PD_LOG( PDERROR, "failed to fetch lob:%d", rc ) ;
-            goto error ;
-         }
-         else
-         {
-            /// do nothing.
+            if ( SDB_DMS_EOC == rc || SDB_DMS_NOTEXIST == rc )
+            {
+               rc = SDB_OK ;
+               break ;
+            }
+            else
+            {
+               PD_LOG( PDERROR, "Failed to fetch lob:%d", rc ) ;
+               goto error ;
+            }
          }
 
          finalSize = _mb.length() ;
@@ -743,8 +741,7 @@ namespace engine
          {
             break ;
          }
-
-      } while ( TRUE ) ;
+      }
 
       if ( 0 != _mb.length() )
       {
@@ -769,6 +766,7 @@ namespace engine
          _LSNlatch.release() ;
          _agent->syncSend( handle, &msg ) ;
       }
+
    done:
       PD_TRACE_EXITRC( SDB__CLSDSBS__SYNCLOB, rc ) ;
       return rc ;
@@ -921,11 +919,8 @@ namespace engine
       rtnContextBuf buffObj ;
 
       /// mask sure the context wether exist
-      /// drop cs can delete the context on pmd message dispatcher
-      if ( -1 == _contextID || !pRtnCB->contextFind ( _contextID ) )
+      if ( -1 == _contextID )
       {
-         _contextID = -1 ;
-         _context = NULL ;
          rc = SDB_RTN_CONTEXT_NOTEXIST ;
       }
 
