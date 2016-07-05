@@ -1747,16 +1747,16 @@ namespace engine
             continue ; 
          }
 
+         /// when the page is dirty, dicard the page, size is 0, will not
+         /// alloc the page when page is not in memory
+         _pCacheUnit->prepareWrite( current, 0, 0, cb, cContext ) ;
+
          rc = _removePage( current, blk, NULL, mbContext ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG( PDERROR, "failed to remove page:%d, rc:%d", rc ) ;
             goto error ;
          }
-
-         /// when the page is dirty, dicard the page, size is 0, will not
-         /// alloc the page when page is not in memory
-         _pCacheUnit->prepareWrite( current, 0, 0, cb, cContext ) ;
          cContext.discardPage( beginLSN, endLSN ) ;
          cContext.release() ;
       }
