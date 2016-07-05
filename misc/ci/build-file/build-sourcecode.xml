@@ -158,10 +158,25 @@
 			<fileset dir="${CODE_DIR}/client/samples/" includes="**/*" />
 		</copy>
 
-		<copy file="${CODE_DIR}/driver/postgresql/sdb_fdw.so" tofile="${DRIVER.DIR}/postgresql/sdb_fdw.so" />
-		<copy file="${CODE_DIR}/driver/postgresql/sdb_fdw.control" tofile="${DRIVER.DIR}/postgresql/sdb_fdw.control" />
-		<copy file="${CODE_DIR}/driver/postgresql/sdb_fdw--1.0.sql" tofile="${DRIVER.DIR}/postgresql/sdb_fdw--1.0.sql" />
-
+      <!--get svn version--> 
+      <echo message="svn info | grep Revision | awk '{print $2}', dir = ${CODE_DIR}/driver/postgresql" /> 
+    	<exec executable="bash" dir="${CODE_DIR}/driver/postgresql" failonerror="true" outputproperty="fdw_svn">
+    	   <arg value="-c" />
+    		<arg line="&quot;svn info | grep Revision | awk '{print $2}'&quot;" />
+    	</exec>     
+    	<echo message="fdw svn revision = ${fdw_svn}" />
+    	
+    	<!--change fdw name-->
+    	<property name="fdw_name" value="sdb_fdw.so.${projects.version}_${fdw_svn}" /> 
+    	<echo message="fdw new name = ${fdw_name}" />
+    	<move file="${CODE_DIR}/driver/postgresql/sdb_fdw.so" tofile="${CODE_DIR}/driver/postgresql/${fdw_name}" />
+    	
+    	
+		<copy file="${CODE_DIR}/driver/postgresql/${fdw_name}" tofile="${DRIVER.DIR}/postgresql/${fdw_name}" />
+      <copy file="${CODE_DIR}/driver/postgresql/sdb_fdw.control" tofile="${DRIVER.DIR}/postgresql/sdb_fdw.control" />
+      <copy file="${CODE_DIR}/driver/postgresql/sdb_fdw--1.0.sql" tofile="${DRIVER.DIR}/postgresql/sdb_fdw--1.0.sql" />
+      <chmod file="${DRIVER.DIR}/postgresql/${fdw_name}" perm="a+x" />
+      
 	  	<property name="test-type-linux-list" value="5.3.3,5.3.8,5.3.10,5.3.15,5.4.6,5.5.0" />
 	  	<property name="test-type-win32-list" value="5.3.18,5.4.15" />
 		<for list="${test-type-linux-list}" param="php.version">
@@ -280,10 +295,11 @@
 		<copy file="${CODE_DIR}/driver/hadoop/hive/${open.source.hive_connector.filename}" tofile="${RELEASE_DIR}/sequoiadb/hadoop/${open.source.hive_connector.filename}" />
 		<copy file="${CODE_DIR}/driver/hadoop/hive/${cdh.hive_connector.filename}" tofile="${RELEASE_DIR}/sequoiadb/hadoop/${cdh.hive_connector.filename}" />
 
-		<copy file="${CODE_DIR}/driver/postgresql/sdb_fdw.so" tofile="${RELEASE_DIR}/sequoiadb/postgresql/sdb_fdw.so" />
+		<copy file="${CODE_DIR}/driver/postgresql/${fdw_name}" tofile="${RELEASE_DIR}/sequoiadb/postgresql/${fdw_name}" />
 		<copy file="${CODE_DIR}/driver/postgresql/sdb_fdw.control" tofile="${RELEASE_DIR}/sequoiadb/postgresql/sdb_fdw.control" />
 		<copy file="${CODE_DIR}/driver/postgresql/sdb_fdw--1.0.sql" tofile="${RELEASE_DIR}/sequoiadb/postgresql/sdb_fdw--1.0.sql" />
-
+      <chmod file="${RELEASE_DIR}/sequoiadb/postgresql/${fdw_name}" perm="a+x" />
+      
 		<if>
 			<equals arg1="${os.arch}" arg2="ppc64" />
 			<then>
