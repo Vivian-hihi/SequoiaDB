@@ -1747,17 +1747,13 @@ namespace engine
             continue ; 
          }
 
-         /// when the page is not normal, need to get the block lock, then
-         /// check the page again
+         /// need to get the block lock, then check the page again
          /// when the page is dirty, dicard the page, size is 0, will not
          /// alloc the page when page is not in memory
-         if ( !blk->isNormal() )
+         _pCacheUnit->prepareWrite( current, 0, 0, cb, cContext ) ;
+         if ( !DMS_LOB_PAGE_IN_USED( current ) )
          {
-            _pCacheUnit->prepareWrite( current, 0, 0, cb, cContext ) ;
-            if ( !DMS_LOB_PAGE_IN_USED( current ) )
-            {
-               continue ;
-            }
+            continue ;
          }
 
          rc = _removePage( current, blk, NULL, mbContext ) ;
