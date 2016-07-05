@@ -89,26 +89,55 @@
          <env key="PATH" path="${SEQUOIASQL_DIR}/bin:${env.PATH}" />
          <arg line=" local" />
       </exec>
-      <exec executable="make" dir="${SEQUOIADB_CODE_DIR}/driver/postgresql" failonerror="true">
+      <exec executable="make" dir="${FDW_CODE_DIR}" failonerror="true">
          <env key="PATH" path="${SEQUOIASQL_DIR}/bin:${env.PATH}" />
          <arg line=" all" />
       </exec>
+      
+      <!--get sequoiadb version-->
+      <echo message="/usr/bin/gcc  ${SEQUOIADB_CODE_DIR}/misc/ci/exec-tools/print_version.c -o ${SEQUOIADB_CODE_DIR}/misc/ci/exec-tools/print_version -I${SEQUOIADB_CODE_DIR}/SequoiaDB/engine/include" />
+		<exec executable="/usr/bin/gcc" dir="${SEQUOIADB_CODE_DIR}/misc/ci/exec-tools" failonerror="true">
+    		<arg line="print_version.c -o print_version -I${SEQUOIADB_CODE_DIR}/SequoiaDB/engine/include" />
+    	</exec>
+    	<exec executable="./print_version" 
+    	      dir="${SEQUOIADB_CODE_DIR}/misc/ci/exec-tools" 
+    	      failonerror="true" 
+    	      outputproperty="db_version" />
+    	<echo message="sequoiadb version = ${db_version}" />
+
+      <!--get svn version--> 
+      <echo message="svn info | grep Revision | awk '{print $2}', dir = ${FDW_CODE_DIR}" /> 
+    	<exec executable="bash" dir="${FDW_CODE_DIR}" failonerror="true" outputproperty="fdw_svn">
+    	   <arg value="-c" />
+    		<arg line="&quot;svn info | grep Revision | awk '{print $2}'&quot;" />
+    	</exec>     
+    	<echo message="fdw svn revision = ${fdw_svn}" />
+    	
+    	<!--change fdw name-->
+    	<property name="fdw_name" value="sdb_fdw.so.${db_version}_${fdw_svn}" /> 
+    	<move file="${FDW_CODE_DIR}/sdb_fdw.so" tofile="${FDW_CODE_DIR}/${fdw_name}" />
+    	<echo message="fdw new name = ${fdw_name}" />
+    	
    </target>
 
    <!--copy files to releaseDir, ready to pack by builder-->
    <target name="make_release" depends="build_pg_connector"> 	
       <echo message="Begin to copy fdw files to ${SEQUOIASQL_DIR}"/>    
-      <mkdir dir="${SEQUOIASQL_DIR}/driver" />
-      <copy file="${FDW_CODE_DIR}/sdb_fdw.so"       tofile="${SEQUOIASQL_DIR}/driver/sdb_fdw.so" />
-		<copy file="${FDW_CODE_DIR}/sdb_fdw.control"  tofile="${SEQUOIASQL_DIR}/driver/sdb_fdw.control" />
-		<copy file="${FDW_CODE_DIR}/sdb_fdw--1.0.sql" tofile="${SEQUOIASQL_DIR}/driver/sdb_fdw--1.0.sql" />
+           
+      <copy file="${FDW_CODE_DIR}/sdb_fdw.control"  tofile="${SEQUOIASQL_DIR}/share/extension/sdb_fdw.control" />
+      <copy file="${FDW_CODE_DIR}/sdb_fdw--1.0.sql" tofile="${SEQUOIASQL_DIR}/share/extension/sdb_fdw--1.0.sql" />
+      <copy file="${FDW_CODE_DIR}/${fdw_name}"      tofile="${SEQUOIASQL_DIR}/lib/${fdw_name}" />
+      <chmod file="${SEQUOIASQL_DIR}/lib/${fdw_name}" perm="a+x" />
+      <exec executable="ln" dir="${SEQUOIASQL_DIR}/lib" failonerror="true">
+    		<arg line="-sf ${fdw_name} sdb_fdw.so" />
+    	</exec>     
       
       <exec dir="${RELEASE_CONF_DIR}" executable="builder" failonerror="true">
-			<arg line="build sequoiasql.xml --setvars project.outputDirectory=${RELEASE_DIR}" />
+			<arg line="build sequoiasql.xml --setvars project.version=${db_version} --setvars project.outputDirectory=${RELEASE_DIR}" />
 		</exec>
-		<echo message="builder build sequoiasql.xml --setvars project.outputDirectory=${RELEASE_DIR}" />
+		<echo message="builder build sequoiasql.xml --setvars project.version=${db_version} --setvars project.outputDirectory=${RELEASE_DIR}" />
 		
-		<property name="PACKAGE_NAME" value="${project.name}-${sequoiasql.version}-installer.run" />		
+		<property name="PACKAGE_NAME" value="${project.name}-${db_version}-installer.run" />		
 		<echo message="Begin to copy ${PACKAGE_NAME} to ${archive.dir}"/>
 		<copy file="${RELEASE_DIR}/${PACKAGE_NAME}" tofile="${archive.dir}/${PACKAGE_NAME}.${BUILD_NUMBER}" />		
 		
