@@ -1756,7 +1756,6 @@ namespace engine
             _pCacheUnit->prepareWrite( current, 0, 0, cb, cContext ) ;
             if ( !DMS_LOB_PAGE_IN_USED( current ) )
             {
-               ++current ;
                continue ;
             }
          }
