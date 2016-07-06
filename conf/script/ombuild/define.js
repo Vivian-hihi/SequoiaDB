@@ -233,8 +233,9 @@ var NodeConfInfoWrapper = function() {
    this[Adapter]                      = [] ;
 } ;
 
-var NodePath = function() {
+var NodeInfo = function() {
    this[HostName]                     = "" ;
+   this[Service]                      = "" ;
    this[Path]                         = [] ;
 } ;
 
@@ -244,4 +245,9 @@ var FlushedConfig = function() {
    this.installPath                   = "" ;
    this.confFile                      = "" ;
    this.originalStr                   = "" ;
+} ;
+
+var GroupInfo = function() {
+   this.groupName                     = "" ;
+   this.nodeArr                       = [] ;
 } ;

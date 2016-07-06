@@ -2208,15 +2208,15 @@ CollectNodeInfo.prototype._getNodeDataPaths =
    function CollectNodeInfo__getNodeDataPaths() {
    var retArr = [] ;
    for( var i = 0; i < this._resultArr.length; i++ ) {
-      var nodePath            = new NodePath() ;
+      var nodeInfo            = new NodeInfo() ;
       var nodeConfInfoWrapper = this._resultArr[i] ;
-      nodePath[HostName] = nodeConfInfoWrapper.HostName ;
+      nodeInfo[HostName] = nodeConfInfoWrapper.HostName ;
       var adapterArr = nodeConfInfoWrapper[Adapter] ;
       for ( var j = 0; j < adapterArr.length; j++ ) {
          var adapter = adapterArr[j] ;
-         nodePath[Path].push( adapter[Config][FIELD_CONF_DBPATH] ) ;
+         nodeInfo[Path].push( adapter[Config][FIELD_CONF_DBPATH] ) ;
       }
-      retArr.push( nodePath ) ;
+      retArr.push( nodeInfo ) ;
    }
    logger.log( PDDEBUG, 
       "the db path of current cluster are as below: " + 
@@ -2228,15 +2228,15 @@ CollectNodeInfo.prototype._getNodeConfPaths =
    function CollectNodeInfo__getNodeConfPaths() {
    var retArr = [] ;
    for( var i = 0; i < this._resultArr.length; i++ ) {
-      var nodePath            = new NodePath() ;
+      var nodeInfo            = new NodeInfo() ;
       var nodeConfInfoWrapper = this._resultArr[i] ;
-      nodePath[HostName] = nodeConfInfoWrapper.HostName ;
+      nodeInfo[HostName] = nodeConfInfoWrapper.HostName ;
       var adapterArr = nodeConfInfoWrapper[Adapter] ;
       for ( var j = 0; j < adapterArr.length; j++ ) {
          var adapter = adapterArr[j] ;
-         nodePath[Path].push( adapter[FIELD_CONF_CONFPATH] ) ;
+         nodeInfo[Path].push( adapter[FIELD_CONF_CONFPATH] ) ;
       }
-      retArr.push( nodePath ) ;
+      retArr.push( nodeInfo ) ;
    }
    logger.log( PDDEBUG, 
       "the node's config path of current cluster are as below: " +
@@ -2512,16 +2512,16 @@ FlushConfig.prototype._buildConfigOptionStr =
    return retStr ;
 } ;
 
-FlushConfig.prototype._flushConfig = 
-   function FlushConfig__flushConfig( ssh, installPath, 
-                                      confFile, configOptionStr ) {
+FlushConfig.prototype._flush = 
+   function FlushConfig__flush( ssh, installPath, 
+                                confFile, configOptionStr ) {
    var cmd = " var option = " + configOptionStr + "; " ;
    this.execCommand( ssh, installPath, cmd, false ) ;
    cmd = " Oma.setOmaConfigs( option, \"" + confFile + "\"); " ;
    this.execCommand( ssh, installPath, cmd, true ) ;
 } ;
 
-FlushConfig.prototype._rollback = function FlushConfig__rollback () {
+FlushConfig.prototype._rollback = function FlushConfig__rollback() {
    var exp = null ;
    logger.log( PDEVENT, 
       "going to recover the config info which we had modified" ) ;
@@ -2529,10 +2529,10 @@ FlushConfig.prototype._rollback = function FlushConfig__rollback () {
       var flushedConfig = null ;
       try {
          flushedConfig = this._flushedConfigArr[i] ;
-         this._flushConfig( flushedConfig.adminSshObj, 
-                            flushedConfig.installPath,
-                            flushedConfig.confFile,
-                            flushedConfig.originalStr ) ;
+         this._flush( flushedConfig.adminSshObj, 
+                      flushedConfig.installPath,
+                      flushedConfig.confFile,
+                      flushedConfig.originalStr ) ;
       } catch( e ) {
          exp = new SdbError( e, 
             sprintf( "failed to recover the original config info[?] " + 
@@ -2565,18 +2565,7 @@ FlushConfig.prototype._doit = function FlushConfig__doit() {
    } catch( e ) {
       exp = new SdbError( e, "failed to get local om's address" ) ;
       logger.log( PDERROR, exp ) ;
-      if ( exp.getErrCode() == SDBCM_NODE_NOTEXISTED ) {
-         println( sprintf( "Error: can't flush new configuration " + 
-                  "information into node's config file, for there is no " + 
-                  "om in local, and we can't get the address of it. " +
-                  "Please use command[?] to install om, and this command " + 
-                  "will also flush the new configuration information into " + 
-                  "the node's config file.", 
-                  "./ombuild.sh --conf ombuild.conf --action buildom"  ) ) ;
-         return ;
-      } else {
-         throw exp ;
-      }
+      throw exp ;
    }
    
    try {
@@ -2608,7 +2597,7 @@ FlushConfig.prototype._doit = function FlushConfig__doit() {
             // keep the original config info for rollback, if necessary
             this._flushedConfigArr.push( flushedConfigObj ) ;
             // going to flush config
-            this._flushConfig( ssh, installPath, confFile, configOptionStr ) ;
+            this._flush( ssh, installPath, confFile, configOptionStr ) ;
          }
       }
    } catch( e ) {
@@ -2627,6 +2616,161 @@ FlushConfig.prototype._doit = function FlushConfig__doit() {
    logger.log( PDEVENT, "succeed to flush the config option info all " + 
       "the config file in current cluster" ) ;
 } ;
+
+var RestartNodes = function( configMgr ) {
+   this._configMgr        = configMgr ;
+   this._hostInfoArr      = null ;
+} ;
+
+RestartNodes.prototype = new Helper() ;
+
+RestartNodes.prototype._init = function RestartNodes__init() {
+   this._hostInfoArr    = this._configMgr._getHostInfoArr() ;
+} ;
+
+RestartNodes.prototype._getGroupInfo = 
+   function RestartNodes__getGroupInfo() {
+   var exp       = null ;
+   var groupInfoArr = [] ;
+   var rgInfoArr = this._configMgr._getRGInfoArr( true ) ;
+   for ( var i = 0; i < rgInfoArr.length; i++ ) {
+      var groupInfo = new GroupInfo() ;
+      var rgInfoObj = rgInfoArr[i] ;
+      var groupName = rgInfoObj[GroupName] ;
+      var nodeArr   = rgInfoObj[Group] ;
+      if ( !isArray(nodeArr) ) {
+         exp = new SdbError( SDB_SYS, 
+            sprintf( "the value of field [?] is not an array in group[?]",
+               Group, groupName ) ) ;
+         logger.log( PDERROR, exp ) ;
+         throw exp ;
+      }
+      groupInfo.groupName = groupName ;
+      for ( var j = 0; j < nodeArr.length; j++ ) {
+         var isMatch        = false ;
+         var nodeInfo       = new NodeInfo() ;
+         var hostName       = nodeArr[j][HostName] ;
+         var svcArr         = nodeArr[j][Service] ;
+         nodeInfo[HostName] = hostName ;
+         for ( var m = 0; m < svcArr.length; m++ ) {
+            var type = svcArr[m][Type] ;
+            if ( type == 0 ) {
+               isMatch = true ;
+               nodeInfo[Service] = svcArr[m][Name] ;
+               break ;               
+            }
+         }
+         if ( !isMatch ) {
+            exp = new SdbError( SDB_SYS, 
+               sprintf( "no service with type[?] in group[?] in " + 
+                  "host[?]", 0, groupName, hostName ) ) ;
+            logger.log( PDERROR, exp ) ;
+            throw exp ;
+         }
+         // keep the node's info into array
+         groupInfo.nodeArr.push( nodeInfo ) ;
+      }
+      // keep the group's info into array
+      groupInfoArr.push( groupInfo ) ;
+   }
+   return groupInfoArr ;
+} ;
+
+RestartNodes.prototype._getInstalledPath = 
+   function RestartNodes__getInstalledPath( hostName ) {
+   var retStr      = null ;
+   var hostInfoArr = this._configMgr._getHostInfoArr() ;
+   for ( var i = 0; i < hostInfoArr.length; i++ ) {
+      if ( hostName == hostInfoArr[i].hostName ||
+           hostName == hostInfoArr[i].ip ) {
+         retStr = hostInfoArr[i].installPath ;
+         break ;
+      }
+   }
+   return retStr ;
+} ;
+
+RestartNodes.prototype._getAdminSshObj = 
+   function RestartNodes__getAdminSshObj( hostName ) {
+   var retObj      = null ;
+   var hostInfoArr = this._configMgr._getHostInfoArr() ;
+   for ( var i = 0; i < hostInfoArr.length; i++ ) {
+      if ( hostName == hostInfoArr[i].hostName ||
+           hostName == hostInfoArr[i].ip ) {
+         retObj = hostInfoArr[i].adminSshObj ;
+         break ;
+      }
+   }
+   return retObj ;
+} ;
+
+RestartNodes.prototype._restart = 
+   function RestartNodes__restart( adminSshObj, installPath, svcName ) {
+   var cmd1 = adaptPath( installPath ) + "bin/sdbstop -p " + svcName ;
+   var cmd2 = adaptPath( installPath ) + "bin/sdbstart -p " + svcName ;
+   try {
+      adminSshObj.exec( cmd1 ) ;
+      sleep( 3000 ) ;
+      adminSshObj.exec( cmd2 ) ;
+      sleep( 3000 ) ;
+   } catch( e ) {
+      var exp = new SdbError( e ) ;
+      logger.log( PDERROR, exp ) ;
+      throw exp ;
+   }
+}
+
+RestartNodes.prototype._doit = 
+   function RestartNodes__doit() {
+   var exp       = null ;
+   this._init() ;
+   // begin to restart nodes
+   var rgInfoArr = this._getGroupInfo() ;
+   for ( var i = 0; i < rgInfoArr.length; i++ ) {
+      var rgInfo  = rgInfoArr[i] ;
+      var rgName  = rgInfo.groupName ;
+      var nodeArr = rgInfo.nodeArr ;
+      logger.log( PDEVENT, 
+         sprintf( "begin to restart nodes in group[?]", rgName ) );
+      for ( var j = 0; j < nodeArr.length; j++ ) {
+         var hostName    = nodeArr[j][HostName] ;
+         var svcName     = nodeArr[j][Service] ;
+         var installPath = this._getInstalledPath( hostName ) ;
+         if ( installPath == null ) {
+            exp = new SdbError( SDB_SYS, 
+               sprintf( "failed to get install path for restart nodes in " + 
+                  "host[?]", hostName ) ) ;
+            logger.log( PDERROR, exp ) ;
+            throw exp ;
+         }
+         var adminSshObj = this._getAdminSshObj( hostName ) ;
+         if ( adminSshObj == null ) {
+            exp = new SdbError( SDB_SYS, 
+               sprintf( "failed to admin ssh object for restart nodes in " + 
+                  "host[?]", hostName ) ) ;
+            logger.log( PDERROR, exp ) ;
+            throw exp ;
+         }
+         logger.log( PDEVENT, 
+            sprintf( "[?]restarting node[?:?]", 
+               rgName, hostName, svcName ) ) ;
+         try {
+            this._restart( adminSshObj, installPath, svcName ) ;
+         } catch( e ) {
+            exp = new SdbError( e, 
+               sprintf( "failed to restart node[?:?] in host[?]", 
+                  hostName, svcName, hostName ) ) ;
+            logger.log( PDERROR, exp ) ;
+            throw exp ;
+         }
+         logger.log( PDEVENT, 
+            sprintf( "[?]succeed to restart node[?:?]", 
+               rgName, hostName, svcName ) ) ;
+      }
+      logger.log( PDEVENT, 
+         sprintf( "succeed to restart all the nodes in group[?]", rgName ) );
+   }
+}
 
 var InstallOM = function( configMgr, hostInfoArr, configInfoArr ) {
    this._configMgr     = configMgr ;
@@ -2891,20 +3035,21 @@ function main() {
    if ( configMgr._getAction() == ACTION_REMOVE_OM ) {
       var removeOMTask = new RemoveOM() ;
       removeOMTask._doit() ;
-      return ;
+      return 0 ;
    }
    
    try {
       // 3. try to update coord info
       if ( configMgr._getAction() == ACTION_BUILD_OM || 
-           configMgr._getAction() == ACTION_UPDATE_COORD ) {
+           configMgr._getAction() == ACTION_UPDATE_COORD ||
+           configMgr._getAction() == ACTION_FLUSH_CONFIG ) {
          var updateCoordTask = new UpdateCoord( configMgr ) ;
          updateCoordTask._doit() ;
       }
       // if we just want to update coord info, let's return
       if ( configMgr._getAction() == ACTION_UPDATE_COORD ) {
          // stop running
-         return ;
+         return 0 ;
       }
       
       // 4. collect the config info of the nodes in current cluster
@@ -2936,16 +3081,18 @@ function main() {
                   "building it.", 
                   "./ombuild.sh --conf ombuild.conf --action removeom" ) ) ;
                // stop running 
-               return ;
+               return -1 ;
             } else {
                throw exp ;
             }
          }
       }
 
-      // 7. flush some new config option to all the node's config file
+      // 7. flush some new config option into all the nodes' config file
+      //    and restart all the nodes
       if ( configMgr._getAction() == ACTION_BUILD_OM || 
            configMgr._getAction() == ACTION_FLUSH_CONFIG ) {
+         // flush config
          try {
             var nodeConfPathArr = collectNodeInfoTask._getNodeConfPaths() ;
             var flushConfigTask = new FlushConfig( configMgr, nodeConfPathArr ) ;
@@ -2954,19 +3101,39 @@ function main() {
             errMsg = "failed to flush configuration information" ;
             exp = new SdbError( e, errMsg ) ;
             logger.log( PDERROR, exp ) ;
-            errMsg = sprintf( "Error: failed to flush the new configuration " + 
-               "information into node's config file. see the error detail " +
-               "in log file[?] and use command[?] to try again.", JS_LOG_FILE,
-               "./ombuild.sh --conf ombuild.conf --action flushconfig" );
+            if ( exp.getErrCode() == SDBCM_NODE_NOTEXISTED ) {
+               errMsg = sprintf( "Error: can't flush new configuration " + 
+                  "information into node's config file, for there is no " + 
+                  "om in local, and we can't get the address of it. " +
+                  "Please use command[?] to install om, and this command " + 
+                  "will also flush the new configuration information into " + 
+                  "the node's config file.", 
+                  "./ombuild.sh --conf ombuild.conf --action buildom"  ) ;
+            } else {
+               errMsg = sprintf( "Error: failed to flush the new configuration " + 
+                  "information into node's config file. see the error detail " +
+                  "in log file[?] and use command[?] to try again.", JS_LOG_FILE,
+                  "./ombuild.sh --conf ombuild.conf --action flushconfig" );
+            }
             println( errMsg ) ;
             // stop running
-            return ;
+            return -1 ;
+         }
+         // restart nodes
+         try {
+            var restartNodesTask = new RestartNodes( configMgr ) ;
+            restartNodesTask._doit() ;
+         } catch( e ) {
+            exp = new SdbError( e, 
+               "failed to restart all the nodes in current cluster" ) ;
+            logger.log( PDERROR, exp ) ;
+            throw exp ;
          }
       }
    } finally {
       configMgr._final() ;
    }
-   println( "succeed to run all the tasks" ) ;
+   return 0 ;
 }
 
 // execute
@@ -2974,7 +3141,10 @@ try {
    var exp     = null ;
    var errCode = null ;
    _init() ;
-   main() ;
+   var rc = main() ;
+   if ( SDB_OK == rc ) {
+      println( "succeed to run all the tasks" ) ;
+   }
 } catch( e ) {
    exp     = new SdbError( e, "failed to run tasks" ) ; 
    errCode = exp.getErrCode() ;
