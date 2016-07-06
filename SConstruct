@@ -407,7 +407,6 @@ installSetup = InstallSetup()
 
 # ---- other build setup -----
 
-platform = os.sys.platform
 if "uname" in dir(os):
     processor = os.uname()[4]
 else:
@@ -457,7 +456,6 @@ env.Append( CPPDEFINES=[ "SDB_DLL_BUILD" ] )
 # specify dependent libraries for javascript engine and boost
 if guess_os == "linux":
     linux = True
-    platform = "linux"
 
     # -lm
     env.Append( LIBS=['m'] )
@@ -584,6 +582,10 @@ elif "win32" == guess_os:
         else:
             #use current environment
             env['ENV'] = dict(os.environ)
+
+    if platform.version().split('.')[0] >= '6':
+        env.Append( CPPDEFINES=[ "USE_SRW" ] )
+        print("USE_SRW-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx")
 
     # if we are 64 bit
     if guess_arch == "ia64":
