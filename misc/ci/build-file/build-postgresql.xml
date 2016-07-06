@@ -114,8 +114,7 @@
     	<echo message="fdw svn revision = ${fdw_svn}" />
     	
     	<!--change fdw name-->
-    	<property name="fdw_name" value="sdb_fdw.so.${db_version}_${fdw_svn}" /> 
-    	<move file="${FDW_CODE_DIR}/sdb_fdw.so" tofile="${FDW_CODE_DIR}/${fdw_name}" />
+    	<property name="fdw_name" value="sdb_fdw.so.${db_version}_${fdw_svn}" />     	
     	<echo message="fdw new name = ${fdw_name}" />
     	
    </target>
@@ -126,7 +125,7 @@
            
       <copy file="${FDW_CODE_DIR}/sdb_fdw.control"  tofile="${SEQUOIASQL_DIR}/share/extension/sdb_fdw.control" />
       <copy file="${FDW_CODE_DIR}/sdb_fdw--1.0.sql" tofile="${SEQUOIASQL_DIR}/share/extension/sdb_fdw--1.0.sql" />
-      <copy file="${FDW_CODE_DIR}/${fdw_name}"      tofile="${SEQUOIASQL_DIR}/lib/${fdw_name}" />
+      <copy file="${FDW_CODE_DIR}/sdb_fdw.so"       tofile="${SEQUOIASQL_DIR}/lib/${fdw_name}" />
       <chmod file="${SEQUOIASQL_DIR}/lib/${fdw_name}" perm="a+x" />
       <exec executable="ln" dir="${SEQUOIASQL_DIR}/lib" failonerror="true">
     		<arg line="-sf ${fdw_name} sdb_fdw.so" />
