@@ -415,6 +415,7 @@ namespace engine
          _totalLobPages          = 0 ;
          _totalLobs              = 0 ;
          _uniqueIdxNum           = 0 ;
+         _compressionRatio       = 0 ;
       }
       _dmsMBStatInfo ()
       {
