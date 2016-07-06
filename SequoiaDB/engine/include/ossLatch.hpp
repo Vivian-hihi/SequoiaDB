@@ -411,46 +411,243 @@ public :
 } ;
 typedef class _ossSpinXLatch ossSpinXLatch ;
 
+#if defined (_WINDOWS)
+/*
+   _ossSRWLock define
+*/
+class _ossSRWLock
+{
+   enum OSS_SRWLOCK_TYPE
+   {
+      SRW_LOCK_NONE     = 0,
+      SRW_LOCK_SHARED,
+      SRW_LOCK_EXCLUSIVE
+   } ;
+
+   public:
+      _ossSRWLock()
+      {
+         _sharedNum = 0 ;
+         _exclusiveNum = 0 ;
+         _lockType = SRW_LOCK_NONE ;
+
+         /// Create mutex
+         _mutex = ::CreateMutex( NULL, FALSE, NULL ) ;
+         /// Munal Event
+         _sharedEvent = ::CreateEvent( NULL, TRUE, FALSE, NULL ) ;
+         /// Auto Event
+         _exclusiveEvent = ::CreateEvent( NULL, FALSE, FALSE, NULL ) ;
+      }
+      ~_ossSRWLock()
+      {
+         ::CloseHandle( _mutex ) ;
+         ::CloseHandle( _sharedEvent ) ;
+         ::CloseHandle( _exclusiveEvent ) ;
+      }
+
+      INT32    acquireShared( INT64 millisec = -1 )
+      {
+         ::WaitForSingleObject( _mutex, INFINITE ) ;
+         ++_sharedNum ;
+
+         if ( SRW_LOCK_EXCLUSIVE == _lockType )
+         {
+            DWORD retCode = 0 ;
+            retCode = ::SignalObjectAndWait( _mutex, _sharedEvent,
+                                             millisec < 0 ? INFINITE : millisec,
+                                             FALSE ) ;
+            if ( WAIT_OBJECT_0 == retCode )
+            {
+               return SDB_OK ;
+            }
+            else if ( WAIT_TIMEOUT == retCode )
+            {
+               return SDB_TIMEOUT ;         
+            }
+            else
+            {
+               return SDB_SYS ;
+            }
+         }
+
+         _lockType = SRW_LOCK_SHARED ;
+         ::ReleaseMutex( _mutex ) ;
+
+         return SDB_OK ;
+      }
+      void     releaseShared()
+      {
+         SDB_ASSERT( _lockType == SRW_LOCK_SHARED && _sharedNum > 0,
+                     "No shared lock" ) ;
+
+         ::WaitForSingleObject( _mutex, INFINITE ) ;
+         --_sharedNum ;
+
+         if ( _sharedNum == 0 )
+         {
+            if ( _exclusiveNum > 0 )
+            {
+               /// wake up the exclusive thread
+               _lockType = SRW_LOCK_EXCLUSIVE ;
+               ::SetEvent( _exclusiveEvent ) ;
+            }
+            else
+            {
+               _lockType = SRW_LOCK_NONE ;
+            }
+         }
+
+         ::ReleaseMutex( _mutex ) ;
+      }
+
+      INT32    acquire( INT64 millisec = -1 )
+      {
+         ::WaitForSingleObject( _mutex, INFINITE );
+         ++_exclusiveNum ;
+
+         if ( SRW_LOCK_NONE != _lockType )
+         {
+            DWORD retCode = 0 ;
+            retCode = ::SignalObjectAndWait( _mutex, _exclusiveEvent,
+                                             millisec < 0 ? INFINITE : millisec,
+                                             FALSE ) ;
+            if ( WAIT_OBJECT_0 == retCode )
+            {
+               return SDB_OK ;
+            }
+            else if ( WAIT_TIMEOUT == retCode )
+            {
+               return SDB_TIMEOUT ;
+            }
+            else
+            {
+               return SDB_SYS ;
+            }
+         }
+
+         _lockType = SRW_LOCK_EXCLUSIVE ;
+         ::ReleaseMutex( _mutex ) ;
+
+         return SDB_OK ;
+      }
+      void     release()
+      {
+         SDB_ASSERT( _lockType == SRW_LOCK_EXCLUSIVE && _exclusiveNum > 0,
+                     "No exclusive lock" ) ;
+
+         ::WaitForSingleObject( _mutex, INFINITE ) ;
+         --_exclusiveNum ;
+
+         if ( _exclusiveNum > 0 )
+         {
+            /// wake up another exclusive thread
+            ::SetEvent( _exclusiveEvent ) ;
+         }
+         else if ( _sharedNum > 0 )
+         {
+            /// wake up another shared thread
+            _lockType = SRW_LOCK_SHARED ;
+            ::PulseEvent( _sharedEvent ) ;
+         }
+         else
+         {
+            _lockType = SRW_LOCK_NONE ;
+         }
+
+         ::ReleaseMutex( _mutex ) ;
+      }
+
+   private:
+      HANDLE               _mutex ;
+      HANDLE               _sharedEvent ;
+      HANDLE               _exclusiveEvent ;
+      volatile INT32       _sharedNum ;
+      volatile INT32       _exclusiveNum ;
+      volatile INT32       _lockType ;
+} ;
+typedef _ossSRWLock ossSRWLock ;
+
+#if ( WINVER >= 0x0600 )
+#define USE_SRW
+#endif // WINVER
+
+#endif // _WINDOWS
+
 /*
    _ossSpinSLatch define
 */
 class _ossSpinSLatch : public ossSLatch
 {
-#if defined (_WINDOWS) //&& defined (USE_SRW)
+#if defined (_WINDOWS)
+
+#if defined (USE_SRW)
 // SRW functions only available in Windows Vista
 // and above, so can't use in Windows XP mode
 private :
-   SRWLOCK _lock ;
+    SRWLOCK _lock ;
 public:
    _ossSpinSLatch ()
    {
-      InitializeSRWLock ( &_lock ) ;
+       InitializeSRWLock ( &_lock ) ;
    }
    ~_ossSpinSLatch() {} ;
    void get ()
    {
-      AcquireSRWLockExclusive ( &_lock ) ;
+       AcquireSRWLockExclusive ( &_lock ) ;
    }
    void release ()
    {
-      ReleaseSRWLockExclusive ( &_lock ) ;
+       ReleaseSRWLockExclusive ( &_lock ) ;
    }
    void get_shared()
    {
-      AcquireSRWLockShared ( &_lock ) ;
+       AcquireSRWLockShared ( &_lock ) ;
    }
    void release_shared ()
    {
-      ReleaseSRWLockShared ( &_lock ) ;
+       ReleaseSRWLockShared ( &_lock ) ;
    }
    BOOLEAN try_get_shared ()
    {
-      return TryAcquireSRWLockShared ( &_lock ) ;
+       return TryAcquireSRWLockShared ( &_lock ) ;
    }
    BOOLEAN try_get ()
    {
-      return TryAcquireSRWLockExclusive ( &_lock ) ;
+       return TryAcquireSRWLockExclusive ( &_lock ) ;
    }
+#else
+private :
+   ossSRWLock _lock ;
+public:
+   _ossSpinSLatch ()
+   {
+   }
+   ~_ossSpinSLatch() {} ;
+   void get ()
+   {
+      _lock.acquire( -1 ) ;
+   }
+   void release ()
+   {
+      _lock.release() ;
+   }
+   void get_shared()
+   {
+      _lock.acquireShared( -1 ) ;
+   }
+   void release_shared ()
+   {
+      _lock.releaseShared() ;
+   }
+   BOOLEAN try_get_shared ()
+   {
+      return SDB_OK == _lock.acquireShared( 0 ) ? TRUE : FALSE ;
+   }
+   BOOLEAN try_get ()
+   {
+      return SDB_OK == _lock.acquire( 0 ) ? TRUE : FALSE ;
+   }
+#endif //USE_SRW
 
 #elif defined (SDB_ENGINE)
 private :
