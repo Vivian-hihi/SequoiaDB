@@ -341,7 +341,6 @@ namespace engine
       _clFullName( mbContext->mb()->_collectionName, fullName,
                    sizeof( fullName ) ) ;
 
-      _registerNewWriting() ;
       if ( NULL != dpscb )
       {
          rc = dpsLobW2Record( fullName,
@@ -426,6 +425,7 @@ namespace engine
          goto error ;
       }
 
+      _registerNewWriting() ;
       rc = _allocatePage( record, mbContext, page ) ;
       if ( SDB_OK != rc )
       {
@@ -527,7 +527,7 @@ namespace engine
       DPS_LSN_OFFSET preTransLsn = DPS_INVALID_LSN_OFFSET ;
       DPS_LSN_OFFSET relatedLsn = DPS_INVALID_LSN_OFFSET ;
       dpsTransCB *transCB = pmdGetKRCB()->getTransCB() ;
-      CHAR oldData[DMS_PAGE_SIZE512K] = { 0 } ;
+      CHAR *oldData = NULL ;
       UINT32 oldLen = 0 ;
       CHAR fullName[ DMS_COLLECTION_FULL_NAME_SZ + 1 ] = { 0 } ;
       BOOLEAN locked = FALSE ;
@@ -543,7 +543,6 @@ namespace engine
       _clFullName( mbContext->mb()->_collectionName, fullName,
                    sizeof( fullName ) ) ;
 
-      _registerNewWriting() ;
       if ( !mbContext->isMBLock() )
       {
          rc = mbContext->mbLock( EXCLUSIVE ) ;
@@ -590,6 +589,7 @@ namespace engine
          goto error ;
       }
 
+      _registerNewWriting() ;
       /// prepare write
       {
          UINT32 newDataLen = record._dataLen + record._offset ;
@@ -602,6 +602,14 @@ namespace engine
 
       if ( NULL != dpscb )
       {
+         /// alloc memory
+         rc = cb->allocBuff( blk->_dataLen, &oldData, NULL ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Alloc read buffer[%u] failed, rc: %d",
+                    blk->_dataLen, rc ) ;
+            goto error ;
+         }
          rc = cContext.readAndCache( oldData, 0, blk->_dataLen, cb ) ;
          if ( rc )
          {
@@ -699,7 +707,10 @@ namespace engine
       {
          transCB->releaseLogSpace( logRecord.head()._length, cb ) ;
       }
-
+      if ( oldData )
+      {
+         cb->releaseBuff( oldData ) ;
+      }
       if ( SDB_OK == rc && NULL != cb )
       {
          _updateLastLSN( cb->getEndLsn() ) ;
@@ -885,11 +896,12 @@ namespace engine
       DMS_LOB_PAGEID page = DMS_LOB_INVALID_PAGEID ;
       dpsMergeInfo info ;
       dpsLogRecord &logRecord = info.getMergeBlock().record() ;
+      UINT32 resevedLength = 0 ;
       DPS_TRANS_ID transID = DPS_INVALID_TRANS_ID ;
       DPS_LSN_OFFSET preTransLsn = DPS_INVALID_LSN_OFFSET ;
       DPS_LSN_OFFSET relatedLsn = DPS_INVALID_LSN_OFFSET ;
       dpsTransCB *transCB = pmdGetKRCB()->getTransCB() ;
-      CHAR oldData[DMS_PAGE_SIZE512K] = { 0 } ;
+      CHAR *oldData = NULL ;
       UINT32 oldLen = 0 ;
       CHAR fullName[ DMS_COLLECTION_FULL_NAME_SZ + 1 ] = { 0 } ;
       BOOLEAN locked = FALSE ;
@@ -908,7 +920,49 @@ namespace engine
       _clFullName( mbContext->mb()->_collectionName, fullName,
                    sizeof( fullName ) ) ;
 
-      _registerNewWriting() ;
+      /// First to checkSyncControl and reserveLogSpace by a pageSize
+      /// And this is outside of collection latch
+      if ( dpscb )
+      {
+         oldLen = getLobdPageSize() ;
+         rc = dpsLobRm2Record( fullName,
+                               record._oid,
+                               record._sequence,
+                               record._offset,
+                               record._hash,
+                               oldLen,
+                               oldData,
+                               page,
+                               transID,
+                               preTransLsn,
+                               relatedLsn,
+                               logRecord ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "Failed to build dps log, rc:%d", rc ) ;
+            goto error ;
+         }
+
+         rc = dpscb->checkSyncControl( logRecord.head()._length, cb ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "check sync control failed, rc: %d", rc ) ;
+            goto error ;
+         }
+
+         rc = transCB->reservedLogSpace( logRecord.head()._length, cb ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Failed to reserved log space(length=%u), rc: %d",
+                    logRecord.head()._length, rc ) ;
+            goto error ;
+         }
+         resevedLength = logRecord.head()._length ;
+         /// clear log info
+         oldLen = 0 ;
+         info.clear() ;
+      }
+
       if ( !mbContext->isMBLock() )
       {
          rc = mbContext->mbLock( EXCLUSIVE ) ;
@@ -945,8 +999,32 @@ namespace engine
          goto done ;
       }
 
-      /// the page is not release
-      rc = _removePage( page, blk, &bucketNumber, mbContext, FALSE ) ;
+      _registerNewWriting() ;
+
+      /// When dpscb is NULL, not to alloc the page when page is
+      /// not in cache( use len = 0 )
+      _pCacheUnit->prepareWrite( page, 0, dpscb ? blk->_dataLen : 0,
+                                 cb, cContext ) ;
+      if ( dpscb )
+      {
+         /// alloc memory
+         rc = cb->allocBuff( blk->_dataLen, &oldData, NULL ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Alloc read buffer[%u] failed, rc: %d",
+                    blk->_dataLen, rc ) ;
+            goto error ;
+         }
+         rc = cContext.read( oldData, 0, blk->_dataLen, cb ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Failed to read data from file, rc:%d", rc ) ;
+            goto error ;
+         }
+      }
+
+      /// remove and release the page
+      rc = _removePage( page, blk, &bucketNumber, mbContext, TRUE ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "Failed to remove page:%d, rc:%d", page, rc ) ;
@@ -954,34 +1032,23 @@ namespace engine
       }
       hasRemoved = TRUE ;
 
-      if ( NULL != dpscb )
+      /// release the mbContext
+      if ( locked )
       {
-         _pCacheUnit->prepareWrite( page, 0, blk->_dataLen, cb, cContext ) ;
-         rc = cContext.read( oldData, 0, blk->_dataLen, cb ) ;
-         if ( rc )
-         {
-            PD_LOG( PDERROR, "Failed to read data from file, rc:%d", rc ) ;
-            goto error ;
-         }
-         /// release the mbContext, so the sync control will not hold the
-         /// mbContext
-         if ( locked )
-         {
-            mbContext->mbUnlock() ;
-            locked = FALSE ;
-         }
+         mbContext->mbUnlock() ;
+         locked = FALSE ;
+      }
 
+      if ( dpscb )
+      {
          /// submit the read data
          oldLen = cContext.submit( cb ) ;
-         /// discard the page
-         cContext.discardPage( beginLSN, endLSN ) ;
-
          SDB_ASSERT( oldLen == blk->_dataLen, "impossible" ) ;
 
          rc = dpsLobRm2Record( fullName,
                                record._oid,
                                record._sequence,
-                               0,
+                               record._offset,
                                record._hash,
                                oldLen,
                                oldData,
@@ -996,25 +1063,6 @@ namespace engine
             goto error ;
          }
 
-         rc = dpscb->checkSyncControl( logRecord.head()._length, cb ) ;
-         if ( SDB_OK != rc )
-         {
-            PD_LOG( PDERROR, "check sync control failed, rc: %d", rc ) ;
-            goto error ;
-         }
-
-         rc = transCB->reservedLogSpace( logRecord.head()._length, cb ) ;
-         if ( rc )
-         {
-            PD_LOG( PDERROR, "Failed to reserved log space(length=%u), rc: %d",
-                    logRecord.head()._length, rc ) ;
-            info.clear() ;
-            goto error ;
-         }
-      }
-
-      if ( NULL != dpscb )
-      {
          SDB_ASSERT( NULL != _dmsData, "can not be null" ) ;
          info.setInfoEx( _dmsData->logicalID(), mbContext->clLID(), page, cb ) ;
          rc = dpscb->prepare( info ) ;
@@ -1026,16 +1074,10 @@ namespace engine
          dpscb->writeData( info ) ;
       }
 
+      /// discard the page
+      cContext.discardPage( beginLSN, endLSN ) ;
       /// release the context and then lock mbContext again
       cContext.release() ;
-      if ( !mbContext->isMBLock() )
-      {
-         rc = mbContext->mbLock( EXCLUSIVE ) ;
-         PD_RC_CHECK( rc, PDERROR, "dms mb context lock failed, rc: %d", rc ) ;
-         locked = TRUE ;
-      }
-      /// release the page
-      _releasePage( page, mbContext ) ;
 
    done:
       if ( locked )
@@ -1043,9 +1085,13 @@ namespace engine
          mbContext->mbUnlock() ;
          locked = FALSE ;
       }
-      if ( 0 != logRecord.head()._length )
+      if ( 0 != resevedLength )
       {
-         transCB->releaseLogSpace( logRecord.head()._length, cb ) ;
+         transCB->releaseLogSpace( resevedLength, cb ) ;
+      }
+      if ( oldData )
+      {
+         cb->releaseBuff( oldData ) ;
       }
       if ( SDB_OK == rc && NULL != cb )
       {
@@ -1054,34 +1100,9 @@ namespace engine
       PD_TRACE_EXITRC( SDB__DMSSTORAGELOB_REMOVE, rc ) ;
       return rc ;
    error:
-      /// if the page has remove, need to push to bucket again
       if ( hasRemoved )
       {
-         /// restore the page
-         cContext.restorePage( beginLSN, endLSN ) ;
-         /// release the page
-         cContext.release() ;
-
-         INT32 rcTmp = SDB_OK ;
-         if ( !mbContext->isMBLock() )
-         {
-            rcTmp = mbContext->mbLock( EXCLUSIVE ) ;
-            if ( rcTmp )
-            {
-               /// the collection has already dropped or truncated, so
-               /// need to free the space
-               _releaseSpace( page, 1 ) ;
-               goto done ;
-            }
-            locked = TRUE ;
-         }
-         /// add the page to bucket again
-         rcTmp = _push2Bucket( bucketNumber, page, *blk ) ;
-         if ( rcTmp )
-         {
-            PD_LOG( PDERROR, "Failed to push page[%d] to bucket[%d], rc: %d",
-                    page, bucketNumber, rcTmp ) ;
-         }
+         ossPanic() ;
       }
       goto done ;
    }
@@ -1515,20 +1536,6 @@ namespace engine
                continue ;
             }
 
-            /// when the page is not normal, need to get the block lock, then
-            /// check the page again
-            if ( !blk->isNormal() )
-            {
-               utilCacheContext cContext ;
-               _pCacheUnit->prepareRead( current, 0, 0, cb, cContext ) ;
-
-               if ( !DMS_LOB_PAGE_IN_USED( current ) )
-               {
-                  ++current ;
-                  continue ;
-               }
-            }
-
             ossMemcpy( &( page._oid ), blk->_oid, sizeof( page._oid ) ) ;
             page._sequence = blk->_sequence ;
             page._len = blk->_dataLen ;
@@ -1705,8 +1712,6 @@ namespace engine
          }
       }
 
-      _registerNewWriting() ;
-
       if ( !mbContext->isMBLock() )
       {
          rc = mbContext->mbLock( EXCLUSIVE ) ;
@@ -1723,6 +1728,7 @@ namespace engine
          goto error ;
       }
 
+      _registerNewWriting() ;
       needPanic = TRUE ;
       while ( ( UINT32 )++current < pageNum() )
       {
@@ -1747,21 +1753,15 @@ namespace engine
             continue ; 
          }
 
-         /// need to get the block lock, then check the page again
-         /// when the page is dirty, dicard the page, size is 0, will not
-         /// alloc the page when page is not in memory
-         _pCacheUnit->prepareWrite( current, 0, 0, cb, cContext ) ;
-         if ( !DMS_LOB_PAGE_IN_USED( current ) )
-         {
-            continue ;
-         }
-
          rc = _removePage( current, blk, NULL, mbContext ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG( PDERROR, "failed to remove page:%d, rc:%d", rc ) ;
             goto error ;
          }
+         /// when the page is dirty, dicard the page, size is 0, will not
+         /// alloc the page when page is not in memory
+         _pCacheUnit->prepareWrite( current, 0, 0, cb, cContext ) ;
          cContext.discardPage( beginLSN, endLSN ) ;
          cContext.release() ;
       }
