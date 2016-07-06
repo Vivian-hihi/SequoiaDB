@@ -3161,7 +3161,8 @@ namespace engine
    error:
       if ( NULL != context &&
            SDB_CLS_COORD_NODE_CAT_VER_OLD != rc &&
-           SDB_CLS_DATA_NODE_CAT_VER_OLD != rc )
+           SDB_CLS_DATA_NODE_CAT_VER_OLD != rc &&
+           SDB_CLS_NO_CATALOG_INFO != rc )
       {
          rtnCB->contextDelete( context->contextID(), _pEDUCB ) ;
       }
@@ -3302,7 +3303,8 @@ namespace engine
    error:
       if ( NULL != context &&
            SDB_CLS_COORD_NODE_CAT_VER_OLD != rc &&
-           SDB_CLS_DATA_NODE_CAT_VER_OLD != rc  )
+           SDB_CLS_DATA_NODE_CAT_VER_OLD != rc &&
+           SDB_CLS_NO_CATALOG_INFO != rc )
       {
          rtnCB->contextDelete ( context->contextID(), _pEDUCB ) ;
       }
@@ -3419,7 +3421,8 @@ namespace engine
    error:
       if ( NULL != context &&
            SDB_CLS_COORD_NODE_CAT_VER_OLD != rc &&
-           SDB_CLS_DATA_NODE_CAT_VER_OLD != rc  )
+           SDB_CLS_DATA_NODE_CAT_VER_OLD != rc &&
+           SDB_CLS_NO_CATALOG_INFO != rc )
       {
          rtnCB->contextDelete ( context->contextID(), _pEDUCB ) ;
       }
@@ -3539,7 +3542,8 @@ namespace engine
    error:
       if ( NULL != context &&
            SDB_CLS_COORD_NODE_CAT_VER_OLD != rc &&
-           SDB_CLS_DATA_NODE_CAT_VER_OLD != rc  )
+           SDB_CLS_DATA_NODE_CAT_VER_OLD != rc &&
+           SDB_CLS_NO_CATALOG_INFO != rc )
       {
          rtnCB->contextDelete( context->contextID(), _pEDUCB ) ;
       }
