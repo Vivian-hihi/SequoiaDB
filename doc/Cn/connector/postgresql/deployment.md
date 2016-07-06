@@ -72,10 +72,14 @@
 
 3) 从 SequoiaDB 的安装包中，拷贝 PostgreSQL 的扩展文件
 
-	从 SequoiaDB 安装后的 postgresql 目录中拷贝 sdb_fdw.so 文件到 PostgreSQL 的 lib 目录，SequoiaDB 默认安装目录为 /opt/sequoiadb。
-
+	从 SequoiaDB 安装后的 postgresql 目录中拷贝 sdb_fdw.so 文件到 PostgreSQL 的 lib 目录，并添加软链接。
+	
+	sdb_fdw.so 文件名如 sdb_fdw.so.2.2_23000 ， 2.2 代表对应的 SequoiaDB 版本， 23000 代表 Release 号。SequoiaDB 默认安装目录为 /opt/sequoiadb。
+   
 	<pre class="prettyprint lang-javascript">
-	$ cp -f /opt/sequoiadb/postgresql/sdb_fdw.so ${PGLIBDIR}</pre>
+	$ cp -f /opt/sequoiadb/postgresql/sdb_fdw.so.2.2_23000 ${PGLIBDIR}
+	$ cd ${PGLIBDIR}
+	$ ln -s sdb_fdw.so.2.2_23000 sdb_fdw.so</pre>
 
 4) 将 sdb_fdw.control 和 sdb_fdw--1.0.sql 脚本拷贝到 extension 目录中：
 
