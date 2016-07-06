@@ -4,59 +4,59 @@ SequoiaDB 的查询用 dict（bson）对象表示，下表以例子的形式显�
 | SQL                                                             | SequoiaDB shell                                     | Python Driver                                            |
 +=================================================================+=====================================================+==========================================================+
 | insert into students(a,b) values(1,-1)                          | db.foo.bar.insert({a:1,b:-1})                       |                                                          |
-|                                                                 |                                                     | -    cl = collection()                                   |
+|                                                                 |                                                     | -    cl = db.get_collection("foo.bar")                   |
 |                                                                 |                                                     | -    obj = { "a":1, "b":-1 }                             |
 |                                                                 |                                                     | -    cl.insert( obj )                                    |
 +-----------------------------------------------------------------+-----------------------------------------------------+----------------------------------------------------------+
 | select a,b from students                                        | db.foo.bar.find(null,{a:"",b:""})                   |                                                          |
-|                                                                 |                                                     | -    cl = collection()                                   |
+|                                                                 |                                                     | -    cl = db.get_collection("foo.bar")                   |
 |                                                                 |                                                     | -    obj = {}                                            |
 |                                                                 |                                                     | -    selected = { "a":"","b":"" }                        |
 |                                                                 |                                                     | -    cr = cl.query(selector = selected )                 |
 +-----------------------------------------------------------------+-----------------------------------------------------+----------------------------------------------------------+
 |                                                                 |                                                     |                                                          |
-| select * from students                                          | db.foo.bar.find()                                   | -    cl = collection()                                   |
+| select * from students                                          | db.foo.bar.find()                                   | -    cl = db.get_collection("foo.bar")                   |
 |                                                                 |                                                     | -    cr = cl.query ()                                    |
 +-----------------------------------------------------------------+-----------------------------------------------------+----------------------------------------------------------+
 |                                                                 |                                                     |                                                          |
-| select * from students where age=20                             | db.foo.bar.find({age:20})                           | -    cl = collection()                                   |
+| select * from students where age=20                             | db.foo.bar.find({age:20})                           | -    cl = db.get_collection("foo.bar")                   |
 |                                                                 |                                                     | -    cond ={"age":20}                                    |
 |                                                                 |                                                     | -    cr = cl.query ( condition = cond )                  |
 +-----------------------------------------------------------------+-----------------------------------------------------+----------------------------------------------------------+
 |                                                                 |                                                     |                                                          |
-| select * from students where age=20 order by name               | db.foo.bar.find({age:20}).sort({name:1})            | -    cl = collection()                                   |
+| select * from students where age=20 order by name               | db.foo.bar.find({age:20}).sort({name:1})            | -    cl = db.get_collection("foo.bar")                   |
 |                                                                 |                                                     | -    cond ={"age":20}                                    |
 |                                                                 |                                                     | -    orderBy = {"name":1}                                |
 |                                                                 |                                                     | -    cr = cl.query (condition=cond , order_by=orderBy)   |
 +-----------------------------------------------------------------+-----------------------------------------------------+----------------------------------------------------------+
 |                                                                 |                                                     |                                                          |
-| select * from students where age > 20 and age < 30              | db.foo.bar.find({age:{\$gt:20,$lt:30}})             | -    cl = collection()                                   |
+| select * from students where age > 20 and age < 30              | db.foo.bar.find({age:{\$gt:20,$lt:30}})             | -    cl = db.get_collection("foo.bar")                   |
 |                                                                 |                                                     | -    cond = {"age":{"$gt":20,"$lt":30}}                  |
-|                                                                 |                                                     | -    cr = cl .query (condition = cond )                  |
+|                                                                 |                                                     | -    cr = cl.query (condition = cond )                   |
 +-----------------------------------------------------------------+-----------------------------------------------------+----------------------------------------------------------+
 |                                                                 |                                                     |                                                          |
-| create index testIndex on students(name)                        | db.foo.bar.createIndex("testIndex",{name:1},false)  | -    cl = collection()                                   |
+| create index testIndex on students(name)                        | db.foo.bar.createIndex("testIndex",{name:1},false)  | -    cl = db.get_collection("foo.bar")                   |
 |                                                                 |                                                     | -    obj = { "name":1 }                                  | 
-|                                                                 |                                                     | -    cl.create_index ( obj, "testIndex", FALSE, FALSE )  |
+|                                                                 |                                                     | -    cl.create_index ( obj, "testIndex", False, False )  |
 +-----------------------------------------------------------------+-----------------------------------------------------+----------------------------------------------------------+
 |                                                                 |                                                     |                                                          |
-| select * from students limit 20 skip 10                         | db.foo.bar.find().limit(20).skip(10)                | -    cl = collection()                                   |
+| select * from students limit 20 skip 10                         | db.foo.bar.find().limit(20).skip(10)                | -    cl = db.get_collection("foo.bar")                   |
 |                                                                 |                                                     | -    cr = cl.query (num_to_skip=10L, num_to_return=20L ) |
 +-----------------------------------------------------------------+-----------------------------------------------------+----------------------------------------------------------+
 |                                                                 |                                                     |                                                          |
-| select count(*) from students where age > 20                    | db.foo.bar.find({age:{$gt:20}}).count()             | -    cl = collection()                                   |
+| select count(*) from students where age > 20                    | db.foo.bar.find({age:{$gt:20}}).count()             | -    cl = db.get_collection("foo.bar")                   |
 |                                                                 |                                                     | -    count = 0L                                          |
 |                                                                 |                                                     | -    condition = { "age":{"$gt":20}}                     |
 |                                                                 |                                                     | -    count = cl.get_count (condition )                   |
 +-----------------------------------------------------------------+-----------------------------------------------------+----------------------------------------------------------+
 |                                                                 |                                                     |                                                          |
-| update students set a=a+2 where b=-1                            | db.foo.bar.update({$set:{a:2}},{b:-1})              | -    cl = collection()                                   |
+| update students set a=a+2 where b=-1                            | db.foo.bar.update({$set:{a:2}},{b:-1})              | -    cl = db.get_collection("foo.bar")                   |
 |                                                                 |                                                     | -    condition = { "b":1 }                               |
 |                                                                 |                                                     | -    rule = { "$set":{"a":2} }                           |
 |                                                                 |                                                     | -    cl.update ( rule, condition=condition )             |
 +-----------------------------------------------------------------+-----------------------------------------------------+----------------------------------------------------------+
 |                                                                 |                                                     |                                                          |
-| delete from students where a=1                                  | db.foo.bar.remove({a:1})                            | -    cl = collection()                                   |
+| delete from students where a=1                                  | db.foo.bar.remove({a:1})                            | -    cl = db.get_collection("foo.bar")                   |
 |                                                                 |                                                     | -    condition = {"a":1}                                 |
 |                                                                 |                                                     | -    cl.delete ( condition=condition )                   |
 +-----------------------------------------------------------------+-----------------------------------------------------+----------------------------------------------------------+
