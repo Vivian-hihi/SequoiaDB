@@ -191,7 +191,9 @@
          <param name="DRIVER.DIR" value="${DRIVER.DIR}" />
       </antcall>
 
-      <tar destfile="${RELEASE_DIR}/${project.name}-driver-${projects.version}-${os.and.platform}.tar.gz" basedir="${RELEASE_DIR}" includes="driver/**" compression="gzip" />
+      <exec executable="tar" dir="${RELEASE_DIR}" failonerror="true">
+         <arg line="zcvf ${project.name}-driver-${projects.version}-${os.and.platform}.tar.gz driver" />
+      </exec>
       <echo message="Make driver package completed." />
    </target>
 
