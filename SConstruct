@@ -585,7 +585,6 @@ elif "win32" == guess_os:
 
     if platform.version().split('.')[0] >= '6':
         env.Append( CPPDEFINES=[ "USE_SRW" ] )
-        print("USE_SRW-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx")
 
     # if we are 64 bit
     if guess_arch == "ia64":
