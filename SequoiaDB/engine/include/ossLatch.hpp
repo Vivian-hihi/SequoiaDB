@@ -567,10 +567,6 @@ class _ossSRWLock
 } ;
 typedef _ossSRWLock ossSRWLock ;
 
-#if ( WINVER >= 0x0600 )
-#define USE_SRW
-#endif // WINVER
-
 #endif // _WINDOWS
 
 /*
