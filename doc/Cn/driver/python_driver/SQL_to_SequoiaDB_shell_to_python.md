@@ -31,17 +31,17 @@ SequoiaDB 的查询用 dict（bson）对象表示，下表以例子的形式显�
 +-----------------------------------------------------------------+-----------------------------------------------------+----------------------------------------------------------+
 |                                                                 |                                                     |                                                          |
 | select * from students where age > 20 and age < 30              | db.foo.bar.find({age:{\$gt:20,$lt:30}})             | -    cl = collection()                                   |
-|                                                                 |                                                     | -    cond = {"age":{"$gt":20","$lt":30}}                 |
+|                                                                 |                                                     | -    cond = {"age":{"$gt":20,"$lt":30}}                  |
 |                                                                 |                                                     | -    cr = cl .query (condition = cond )                  |
 +-----------------------------------------------------------------+-----------------------------------------------------+----------------------------------------------------------+
 |                                                                 |                                                     |                                                          |
 | create index testIndex on students(name)                        | db.foo.bar.createIndex("testIndex",{name:1},false)  | -    cl = collection()                                   |
 |                                                                 |                                                     | -    obj = { "name":1 }                                  | 
-|                                                                 |                                                     | -    cl.create_index ( &obj, "testIndex", FALSE, FALSE ) |
+|                                                                 |                                                     | -    cl.create_index ( obj, "testIndex", FALSE, FALSE )  |
 +-----------------------------------------------------------------+-----------------------------------------------------+----------------------------------------------------------+
 |                                                                 |                                                     |                                                          |
 | select * from students limit 20 skip 10                         | db.foo.bar.find().limit(20).skip(10)                | -    cl = collection()                                   |
-|                                                                 |                                                     | -    cr = cl.query (num_to_skip=10, num_to_return=20 )   |
+|                                                                 |                                                     | -    cr = cl.query (num_to_skip=10L, num_to_return=20L ) |
 +-----------------------------------------------------------------+-----------------------------------------------------+----------------------------------------------------------+
 |                                                                 |                                                     |                                                          |
 | select count(*) from students where age > 20                    | db.foo.bar.find({age:{$gt:20}}).count()             | -    cl = collection()                                   |
