@@ -168,11 +168,10 @@
       
       <!--change fdw name-->
       <property name="fdw_name" value="sdb_fdw.so.${projects.version}_${fdw_svn}" /> 
-      <echo message="fdw new name = ${fdw_name}" />
-      <move file="${CODE_DIR}/driver/postgresql/sdb_fdw.so" tofile="${CODE_DIR}/driver/postgresql/${fdw_name}" />
+      <echo message="fdw new name = ${fdw_name}" />      
       
-      
-      <copy file="${CODE_DIR}/driver/postgresql/${fdw_name}" tofile="${DRIVER.DIR}/postgresql/${fdw_name}" />
+      <!--copy fdw to drvier tar-->
+      <copy file="${CODE_DIR}/driver/postgresql/sdb_fdw.so" tofile="${DRIVER.DIR}/postgresql/${fdw_name}" />
       <copy file="${CODE_DIR}/driver/postgresql/sdb_fdw.control" tofile="${DRIVER.DIR}/postgresql/sdb_fdw.control" />
       <copy file="${CODE_DIR}/driver/postgresql/sdb_fdw--1.0.sql" tofile="${DRIVER.DIR}/postgresql/sdb_fdw--1.0.sql" />
       <chmod file="${DRIVER.DIR}/postgresql/${fdw_name}" perm="a+x" />
@@ -295,7 +294,7 @@
       <copy file="${CODE_DIR}/driver/hadoop/hive/${open.source.hive_connector.filename}" tofile="${RELEASE_DIR}/sequoiadb/hadoop/${open.source.hive_connector.filename}" />
       <copy file="${CODE_DIR}/driver/hadoop/hive/${cdh.hive_connector.filename}" tofile="${RELEASE_DIR}/sequoiadb/hadoop/${cdh.hive_connector.filename}" />
 
-      <copy file="${CODE_DIR}/driver/postgresql/${fdw_name}" tofile="${RELEASE_DIR}/sequoiadb/postgresql/${fdw_name}" />
+      <copy file="${CODE_DIR}/driver/postgresql/sdb_fdw.so" tofile="${RELEASE_DIR}/sequoiadb/postgresql/${fdw_name}" />
       <copy file="${CODE_DIR}/driver/postgresql/sdb_fdw.control" tofile="${RELEASE_DIR}/sequoiadb/postgresql/sdb_fdw.control" />
       <copy file="${CODE_DIR}/driver/postgresql/sdb_fdw--1.0.sql" tofile="${RELEASE_DIR}/sequoiadb/postgresql/sdb_fdw--1.0.sql" />
       <chmod file="${RELEASE_DIR}/sequoiadb/postgresql/${fdw_name}" perm="a+x" />
