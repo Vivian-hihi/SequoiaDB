@@ -409,9 +409,25 @@
             </ruleList>
         </consoleWrite>
         
+        <setInstallerVariable name="has_om" value="FALSE"/>  
+        <propertiesFileGet>            
+            <file>${installdir}/conf/sdbcm.conf</file>            
+            <key>IsGeneral</key>
+            <variable>has_om</variable>
+            <abortOnError>0</abortOnError>
+            <showMessageOnError>0</showMessageOnError>
+        </propertiesFileGet> 
+        <setInstallerVariableFromScriptOutput>
+            <exec>echo</exec>
+            <execArgs>'${has_om}' | sed 's/^\s*//g'</execArgs>
+            <name>has_om</name>
+        </setInstallerVariableFromScriptOutput>
         <runProgram>           
             <program>${installdir}/install_om.sh</program>
             <programArguments>${project.installationType} ${installdir} ${installer_pathname}</programArguments>          
+            <ruleList>
+                <isTrue value="${has_om}"/>
+            </ruleList>
         </runProgram> 
         <changeOwnerAndGroup>
             <files>${installdir}/packet;${installdir}/packet/${installerFilename}</files>
