@@ -30,14 +30,10 @@ echo "dbPath=" $6
 echo "restPort=" $7
 
 # (upgrade mode) step1: copy install package
-if [  $installMode == "upgrade"  ] ; then
-   packageNum=0
-   packageNum=`find $rootPath/packet -name "*.run" | wc -l`
-   if [  $packageNum -gt 0  ] ; then
-      rm -rf $rootPath/packet/*
-      cp $installer_pathname  $rootPath/packet
-   fi
-   exit 0
+if [  $installMode == "upgrade"  ] ; then  
+   rm -rf $rootPath/packet/*
+   cp $installer_pathname  $rootPath/packet
+   exit $?
 fi
 
 # (normal mode) step 1: create om
