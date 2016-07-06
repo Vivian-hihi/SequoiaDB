@@ -584,36 +584,36 @@ class _ossSpinSLatch : public ossSLatch
 // SRW functions only available in Windows Vista
 // and above, so can't use in Windows XP mode
 private :
-    SRWLOCK _lock ;
+   SRWLOCK _lock ;
 public:
    _ossSpinSLatch ()
    {
-       InitializeSRWLock ( &_lock ) ;
+      InitializeSRWLock ( &_lock ) ;
    }
    ~_ossSpinSLatch() {} ;
    void get ()
    {
-       AcquireSRWLockExclusive ( &_lock ) ;
+      AcquireSRWLockExclusive ( &_lock ) ;
    }
    void release ()
    {
-       ReleaseSRWLockExclusive ( &_lock ) ;
+      ReleaseSRWLockExclusive ( &_lock ) ;
    }
    void get_shared()
    {
-       AcquireSRWLockShared ( &_lock ) ;
+      AcquireSRWLockShared ( &_lock ) ;
    }
    void release_shared ()
    {
-       ReleaseSRWLockShared ( &_lock ) ;
+      ReleaseSRWLockShared ( &_lock ) ;
    }
    BOOLEAN try_get_shared ()
    {
-       return TryAcquireSRWLockShared ( &_lock ) ;
+      return TryAcquireSRWLockShared ( &_lock ) ;
    }
    BOOLEAN try_get ()
    {
-       return TryAcquireSRWLockExclusive ( &_lock ) ;
+      return TryAcquireSRWLockExclusive ( &_lock ) ;
    }
 #else
 private :
