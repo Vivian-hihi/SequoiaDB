@@ -183,7 +183,7 @@ namespace engine
 
       INT32 _extractMeta( const MsgOpReply *header,
                           bson::BSONObj &obj,
-                          BOOLEAN &takeOver ) ;
+                          _rtnLobDataPool::tuple &dataTuple ) ;
 
       INT32 _closeSubStreams( _pmdEDUCB *cb, BOOLEAN exceptMeta ) ;
 

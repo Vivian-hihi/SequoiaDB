@@ -337,7 +337,7 @@ namespace engine
       BSONObjBuilder builder ;
       netIOVec iov ;
       UINT32 retryTime = 0 ;
-      BOOLEAN takeOver = FALSE ;
+      _rtnLobDataPool::tuple dataTuple ;
 
       builder.append( FIELD_NAME_COLLECTION, fullName )
              .append( FIELD_NAME_LOB_OID, oid )
@@ -390,9 +390,21 @@ namespace engine
       _add2Subs( reply->header.routeID.columns.groupID,
                  reply->contextID, reply->header.routeID ) ;
 
-      rc = _extractMeta( reply, _metaObj, takeOver ) ;
-      if ( takeOver )
+      rc = _extractMeta( reply, _metaObj, dataTuple ) ;
+      if ( dataTuple.data && dataTuple.len > 0 )
       {
+         /// push data to pool
+         rc = _getPool().push( dataTuple.data,
+                               dataTuple.len,
+                               dataTuple.offset ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Push data to pool failed, rc:%d", rc ) ;
+            goto error ;
+         }
+         _getPool().pushDone() ;
+
+         _getPool().entrust( ( CHAR * )( *_results.begin() ) ) ;
          _results.erase( _results.begin() ) ;
       }
       if ( SDB_OK != rc )
@@ -407,6 +419,7 @@ namespace engine
       PD_TRACE_EXITRC( SDB_RTNCOORDLOBSTREAM__OPENMAINSTREAM, rc ) ;
       return rc ;
    error:
+      _getPool().clear() ;
       goto done ;
    }
 
@@ -1086,14 +1099,14 @@ namespace engine
    //PD_TRACE_DECLARE_FUNCTION( SDB_RTNCOORDLOBSTREAM__EXTRACTMETA, "_rtnCoordLobStream::_extractMeta" )   
    INT32 _rtnCoordLobStream::_extractMeta( const MsgOpReply *header,
                                            bson::BSONObj &metaObj,
-                                           BOOLEAN &takeOver )
+                                           _rtnLobDataPool::tuple &dataTuple )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB_RTNCOORDLOBSTREAM__EXTRACTMETA ) ;
       const CHAR *metaRaw = NULL ;
       UINT32 dataOffset = sizeof( MsgOpReply ) ;
 
-      takeOver = FALSE ;
+      dataTuple.clear() ;
 
       if ( NULL == header )
       {
@@ -1135,23 +1148,15 @@ namespace engine
                      DMS_LOB_META_LENGTH == rt->columns.offset,
                      "Must be the first sequence page" ) ;
 
-         rc = _getPool().push( (const CHAR*)header + dataOffset,
-                               rt->columns.len,
-                               0 ) ;
-         if ( rc )
-         {
-            PD_LOG( PDERROR, "Push data to pool failed, rc:%d", rc ) ;
-            goto error ;
-         }
-         _getPool().pushDone() ;
-         takeOver = TRUE ;
+         dataTuple.data = ( const CHAR* )header + dataOffset ;
+         dataTuple.len = rt->columns.len ;
+         dataTuple.offset = 0 ;
       }
 
    done:
       PD_TRACE_EXITRC( SDB_RTNCOORDLOBSTREAM__EXTRACTMETA, rc ) ;
       return rc ;
    error:
-      _getPool().clear() ;
       goto done ;
    }
 
