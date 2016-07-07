@@ -66,7 +66,7 @@
          <arg line=" --enterprise -j 4" />
       </exec>
    </target>
-
+   
    <target name="build_pg_connector" depends="compile_sequoiadb">
       <echo message="Compile the connector of postgresql..." />
       <property environment="env" />
@@ -113,16 +113,31 @@
       </exec>     
       <echo message="fdw svn revision = ${fdw_svn}" />
       
+      <!--get edition (judge changed or original) -->
+      <exec executable="bash" dir="${FDW_CODE_DIR}" failonerror="true" outputproperty="fdw_output">
+         <arg value="-c" />
+         <arg line="&quot;nm sdb_fdw.so | grep sdbuseownpostgres&quot;" />
+      </exec>  
+      
       <!--change fdw name-->
-      <property name="fdw_name" value="sdb_fdw.so.${db_version}_${fdw_svn}" />      
-      <echo message="fdw new name = ${fdw_name}" />
+      <if>
+         <equals arg1="${fdw_output}" arg2="" />
+         <then>            
+            <property name="fdw_name" value="sdb_fdw.so_${db_version}_${fdw_svn}" /> 
+            <echo message="fdw is original, fdw new name = ${fdw_name}" />  
+         </then>
+         <else>             
+            <property name="fdw_name" value="sdb_fdw.so_e_${db_version}_${fdw_svn}" />
+            <echo message="fdw is enterprise, fdw new name = ${fdw_name}" />  
+         </else>
+      </if>                   
       
    </target>
 
-   <!--copy files to releaseDir, ready to pack by builder-->
    <target name="make_release" depends="build_pg_connector">   
       <echo message="Begin to copy fdw files to ${SEQUOIASQL_DIR}"/>    
-           
+      
+      <!--1 copy fdw files-->
       <copy file="${FDW_CODE_DIR}/sdb_fdw.control"  tofile="${SEQUOIASQL_DIR}/share/extension/sdb_fdw.control" />
       <copy file="${FDW_CODE_DIR}/sdb_fdw--1.0.sql" tofile="${SEQUOIASQL_DIR}/share/extension/sdb_fdw--1.0.sql" />
       <copy file="${FDW_CODE_DIR}/sdb_fdw.so"       tofile="${SEQUOIASQL_DIR}/lib/${fdw_name}" />
@@ -131,15 +146,40 @@
          <arg line="-sf ${fdw_name} sdb_fdw.so" />
       </exec>     
       
+      <!--2 make run package-->
+      <exec executable="arch" failonerror="true" outputproperty="platform"/>
+      
+      <exec executable="bash" dir="${SEQUOIASQL_DIR}" failonerror="true" outputproperty="edition_output">
+         <arg value="-c" />
+         <arg line="&quot;./bin/postgres --version | grep SequoiaDB&quot;" />
+      </exec> 
+      <if>
+         <equals arg1="${edition_output}" arg2="" />
+         <then>            
+            <property name="edition_str" value="" /> 
+            <echo message="pg is original" />  
+         </then>
+         <else>             
+            <property name="edition_str" value="-enterprise" />
+            <echo message="pg is enterprise" />  
+         </else>
+      </if>  
+
       <exec dir="${RELEASE_CONF_DIR}" executable="builder" failonerror="true">
-         <arg line="build sequoiasql.xml --setvars project.version=${db_version} --setvars project.outputDirectory=${RELEASE_DIR}" />
+         <arg line="build sequoiasql.xml --setvars project.version=${db_version} --setvars platform=${platform} --setvars edition=${edition_str} --setvars project.outputDirectory=${RELEASE_DIR}" />
       </exec>
-      <echo message="builder build sequoiasql.xml --setvars project.version=${db_version} --setvars project.outputDirectory=${RELEASE_DIR}" />
+      <echo message="build sequoiasql.xml --setvars project.version=${db_version} --setvars platform=${platform} --setvars edition=${edition_str} --setvars project.outputDirectory=${RELEASE_DIR}" />
       
-      <property name="PACKAGE_NAME" value="${project.name}-${db_version}-installer.run" />      
+      <!--3 copy run package to archive dir-->
+      <property name="PACKAGE_NAME" value="${project.name}-${db_version}-${platform}${edition_str}-installer.run" />      
       <echo message="Begin to copy ${PACKAGE_NAME} to ${archive.dir}"/>
-      <copy file="${RELEASE_DIR}/${PACKAGE_NAME}" tofile="${archive.dir}/${PACKAGE_NAME}.${BUILD_NUMBER}" />      
+      <copy file="${RELEASE_DIR}/${PACKAGE_NAME}" tofile="${archive.dir}/${PACKAGE_NAME}.${BUILD_NUMBER}" />
+      <exec executable="bash" dir="${archive.dir}" failonerror="true">
+         <arg value="-c" />
+         <arg line="&quot;find *.run* -mtime +7 -exec rm -rf {} \;&quot;" />
+      </exec>  
       
+      <!--4 make pg.version-->
       <echo message="Begin to make pg.version, copy it to ${archive.dir}"/>
       <delete file="${PG_CODE_DIR}/pg.version" failonerror="false"/>
       <if>
@@ -158,6 +198,8 @@
             </propertyfile>         
          </else>
       </if>    
-      <copy file="${PG_CODE_DIR}/pg.version" tofile="${archive.dir}/pg.version" failonerror="true"/>           
+      <copy file="${PG_CODE_DIR}/pg.version" tofile="${archive.dir}/pg.version" failonerror="true"/>  
+      
    </target>
+   
 </project>
