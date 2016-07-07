@@ -7,7 +7,7 @@
    <property name="SEQUOIASQL_DIR" value="${PG_CODE_DIR}/sequoiasql" /> 
    <property name="RELEASE_CONF_DIR" value="${PG_CODE_DIR}/package/run/conf" />
    <property name="RELEASE_DIR" value="${WORKSPACE}/release" />
-	
+   
    <property file="${SEQUOIADB_CODE_DIR}/misc/ci/ci-properies-files/ci.pg.properties.x86" />
    <taskdef resource="com/sequoiadb/ant/ant-sdbtasks.xml">
       <classpath>
@@ -37,16 +37,16 @@
       <echo message="Compile the postgresql..." />
       
       <if>
-			<equals arg1="${compile.debug}" arg2="true" />
-			<then>
-				<echo message="compile pg is debug" />
-				<property name="compile.arg.line" value="'CFLAGS=-O0' --enable-debug" />
-			</then>
-			<else>
-				<echo message="compile pg is release" />
-				<property name="compile.arg.line" value="" />
-			</else>
-		</if>
+         <equals arg1="${compile.debug}" arg2="true" />
+         <then>
+            <echo message="compile pg is debug" />
+            <property name="compile.arg.line" value="'CFLAGS=-O0' --enable-debug" />
+         </then>
+         <else>
+            <echo message="compile pg is release" />
+            <property name="compile.arg.line" value="" />
+         </else>
+      </if>
       
       <chmod file="${PG_CODE_DIR}/configure" perm="u+x" />
       <exec executable="./configure" dir="${PG_CODE_DIR}" failonerror="true">
@@ -72,19 +72,19 @@
       <property environment="env" />
       
       <if>
-			<equals arg1="${compile.debug}" arg2="true" />
-			<then>
-				<echo message="compile fdw is debug" />
-				<replace file="${FDW_CODE_DIR}/Makefile" token="OPTIMIZATION?=-O3" value="OPTIMIZATION?=-O0" />      
-			</then>
-			<else>
-				<echo message="compile fdw is release" />				
-			</else>
-		</if>
-		
+         <equals arg1="${compile.debug}" arg2="true" />
+         <then>
+            <echo message="compile fdw is debug" />
+            <replace file="${FDW_CODE_DIR}/Makefile" token="OPTIMIZATION?=-O3" value="OPTIMIZATION?=-O0" />      
+         </then>
+         <else>
+            <echo message="compile fdw is release" />          
+         </else>
+      </if>
+      
       <!--fdw for changed pg-->
       <replace file="${FDW_CODE_DIR}/Makefile" token="DEBUG?=-ggdb" value="DEBUG?=-ggdb -DSDB_USE_OWN_POSTGRES" />
-      	
+         
       <exec executable="make" dir="${FDW_CODE_DIR}" failonerror="true">
          <env key="PATH" path="${SEQUOIASQL_DIR}/bin:${env.PATH}" />
          <arg line=" local" />
@@ -96,31 +96,31 @@
       
       <!--get sequoiadb version-->
       <echo message="/usr/bin/gcc  ${SEQUOIADB_CODE_DIR}/misc/ci/exec-tools/print_version.c -o ${SEQUOIADB_CODE_DIR}/misc/ci/exec-tools/print_version -I${SEQUOIADB_CODE_DIR}/SequoiaDB/engine/include" />
-		<exec executable="/usr/bin/gcc" dir="${SEQUOIADB_CODE_DIR}/misc/ci/exec-tools" failonerror="true">
-    		<arg line="print_version.c -o print_version -I${SEQUOIADB_CODE_DIR}/SequoiaDB/engine/include" />
-    	</exec>
-    	<exec executable="./print_version" 
-    	      dir="${SEQUOIADB_CODE_DIR}/misc/ci/exec-tools" 
-    	      failonerror="true" 
-    	      outputproperty="db_version" />
-    	<echo message="sequoiadb version = ${db_version}" />
+      <exec executable="/usr/bin/gcc" dir="${SEQUOIADB_CODE_DIR}/misc/ci/exec-tools" failonerror="true">
+         <arg line="print_version.c -o print_version -I${SEQUOIADB_CODE_DIR}/SequoiaDB/engine/include" />
+      </exec>
+      <exec executable="./print_version" 
+            dir="${SEQUOIADB_CODE_DIR}/misc/ci/exec-tools" 
+            failonerror="true" 
+            outputproperty="db_version" />
+      <echo message="sequoiadb version = ${db_version}" />
 
       <!--get svn version--> 
       <echo message="svn info | grep Revision | awk '{print $2}', dir = ${FDW_CODE_DIR}" /> 
-    	<exec executable="bash" dir="${FDW_CODE_DIR}" failonerror="true" outputproperty="fdw_svn">
-    	   <arg value="-c" />
-    		<arg line="&quot;svn info | grep Revision | awk '{print $2}'&quot;" />
-    	</exec>     
-    	<echo message="fdw svn revision = ${fdw_svn}" />
-    	
-    	<!--change fdw name-->
-    	<property name="fdw_name" value="sdb_fdw.so.${db_version}_${fdw_svn}" />     	
-    	<echo message="fdw new name = ${fdw_name}" />
-    	
+      <exec executable="bash" dir="${FDW_CODE_DIR}" failonerror="true" outputproperty="fdw_svn">
+         <arg value="-c" />
+         <arg line="&quot;svn info | grep Revision | awk '{print $2}'&quot;" />
+      </exec>     
+      <echo message="fdw svn revision = ${fdw_svn}" />
+      
+      <!--change fdw name-->
+      <property name="fdw_name" value="sdb_fdw.so.${db_version}_${fdw_svn}" />      
+      <echo message="fdw new name = ${fdw_name}" />
+      
    </target>
 
    <!--copy files to releaseDir, ready to pack by builder-->
-   <target name="make_release" depends="build_pg_connector"> 	
+   <target name="make_release" depends="build_pg_connector">   
       <echo message="Begin to copy fdw files to ${SEQUOIASQL_DIR}"/>    
            
       <copy file="${FDW_CODE_DIR}/sdb_fdw.control"  tofile="${SEQUOIASQL_DIR}/share/extension/sdb_fdw.control" />
@@ -128,36 +128,36 @@
       <copy file="${FDW_CODE_DIR}/sdb_fdw.so"       tofile="${SEQUOIASQL_DIR}/lib/${fdw_name}" />
       <chmod file="${SEQUOIASQL_DIR}/lib/${fdw_name}" perm="a+x" />
       <exec executable="ln" dir="${SEQUOIASQL_DIR}/lib" failonerror="true">
-    		<arg line="-sf ${fdw_name} sdb_fdw.so" />
-    	</exec>     
+         <arg line="-sf ${fdw_name} sdb_fdw.so" />
+      </exec>     
       
       <exec dir="${RELEASE_CONF_DIR}" executable="builder" failonerror="true">
-			<arg line="build sequoiasql.xml --setvars project.version=${db_version} --setvars project.outputDirectory=${RELEASE_DIR}" />
-		</exec>
-		<echo message="builder build sequoiasql.xml --setvars project.version=${db_version} --setvars project.outputDirectory=${RELEASE_DIR}" />
-		
-		<property name="PACKAGE_NAME" value="${project.name}-${db_version}-installer.run" />		
-		<echo message="Begin to copy ${PACKAGE_NAME} to ${archive.dir}"/>
-		<copy file="${RELEASE_DIR}/${PACKAGE_NAME}" tofile="${archive.dir}/${PACKAGE_NAME}.${BUILD_NUMBER}" />		
-		
-		<echo message="Begin to make pg.version, copy it to ${archive.dir}"/>
-		<delete file="${PG_CODE_DIR}/pg.version" failonerror="false"/>
-		<if>
-			<equals arg1="${compile.debug}" arg2="false" />
-			<then> <!--release-->
-				<propertyfile file="${PG_CODE_DIR}/pg.version" comment="true">
-					<entry key="BUILD.NUMBER" value="${BUILD_NUMBER}" type="string" />
-					<entry key="BUILD.INSTALL.FILENAME" value="${PACKAGE_NAME}" type="string" />
-					<entry key="RELEASE.NUMBER" value="${BUILD_NUMBER}" type="string"/>	
-				</propertyfile>
-			</then>
-			<else> <!--debug-->
-				<propertyfile file="${PG_CODE_DIR}/pg.version" comment="true">
-					<entry key="BUILD.NUMBER" value="${BUILD_NUMBER}" type="string" />
-					<entry key="BUILD.INSTALL.FILENAME" value="${PACKAGE_NAME}" type="string" />	
-				</propertyfile>			
-			</else>
-		</if>		
-		<copy file="${PG_CODE_DIR}/pg.version" tofile="${archive.dir}/pg.version" failonerror="true"/>				
+         <arg line="build sequoiasql.xml --setvars project.version=${db_version} --setvars project.outputDirectory=${RELEASE_DIR}" />
+      </exec>
+      <echo message="builder build sequoiasql.xml --setvars project.version=${db_version} --setvars project.outputDirectory=${RELEASE_DIR}" />
+      
+      <property name="PACKAGE_NAME" value="${project.name}-${db_version}-installer.run" />      
+      <echo message="Begin to copy ${PACKAGE_NAME} to ${archive.dir}"/>
+      <copy file="${RELEASE_DIR}/${PACKAGE_NAME}" tofile="${archive.dir}/${PACKAGE_NAME}.${BUILD_NUMBER}" />      
+      
+      <echo message="Begin to make pg.version, copy it to ${archive.dir}"/>
+      <delete file="${PG_CODE_DIR}/pg.version" failonerror="false"/>
+      <if>
+         <equals arg1="${compile.debug}" arg2="false" />
+         <then> <!--release-->
+            <propertyfile file="${PG_CODE_DIR}/pg.version" comment="true">
+               <entry key="BUILD.NUMBER" value="${BUILD_NUMBER}" type="string" />
+               <entry key="BUILD.INSTALL.FILENAME" value="${PACKAGE_NAME}" type="string" />
+               <entry key="RELEASE.NUMBER" value="${BUILD_NUMBER}" type="string"/>  
+            </propertyfile>
+         </then>
+         <else> <!--debug-->
+            <propertyfile file="${PG_CODE_DIR}/pg.version" comment="true">
+               <entry key="BUILD.NUMBER" value="${BUILD_NUMBER}" type="string" />
+               <entry key="BUILD.INSTALL.FILENAME" value="${PACKAGE_NAME}" type="string" />  
+            </propertyfile>         
+         </else>
+      </if>    
+      <copy file="${PG_CODE_DIR}/pg.version" tofile="${archive.dir}/pg.version" failonerror="true"/>           
    </target>
 </project>
