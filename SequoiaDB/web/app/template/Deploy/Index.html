@@ -43,7 +43,7 @@
 
                   <div class="pull-left" style="max-width:650px;" ng-container="{width:'50%',height:140,offsetX:-30,marginRight:30}">
                      <div class="Ellipsis" style="height:35px;">
-                        <a class="linkButton" ng-click="GotoMonitorHost(moduleInfo['ClusterName'],moduleInfo['BusinessType'],moduleInfo['DeployMod'],moduleInfo['BusinessName'])">一共 {{moduleInfo['Location'].length}} 台主机</a>
+                        一共 {{moduleInfo['Location'].length}} 台主机
                      </div>
 
                      <div style="height:35px;">
@@ -68,7 +68,7 @@
 
                   <div class="pull-left" style="max-width:650px;min-height:130px;" ng-container="{width:'50%',height:'30w'}">
                      <div style="height:20px;">
-                        <a class="linkButton" ng-click="GotoMonitorModule(moduleInfo['ClusterName'],moduleInfo['BusinessType'],moduleInfo['DeployMod'],moduleInfo['BusinessName'])">一共 {{moduleInfo['BusinessInfo']['NodeList'].length}} 个节点</a>
+                        一共 {{moduleInfo['BusinessInfo']['NodeList'].length}} 个节点
                      </div>
                      <div ng-container="{offsetY:-20}" create-chart="moduleInfo['Chart']['Module']"></div>
                   </div>
