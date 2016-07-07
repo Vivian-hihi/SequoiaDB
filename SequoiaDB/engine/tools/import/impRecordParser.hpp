@@ -35,6 +35,7 @@
 #include "oss.hpp"
 #include "impOptions.hpp"
 #include "../client/bson/bson.h"
+#include "jstobs2.h"
 #include <string>
 
 using namespace std;
@@ -75,9 +76,12 @@ namespace import
 
    class JSONRecordParser: public RecordParser
    {
+   private:
+      CJSON_MACHINE *_pMachine ;
    public:
       JSONRecordParser();
       ~JSONRecordParser();
+      INT32 init() ;
       INT32 parseRecord(const CHAR* data, INT32 length, bson& obj);
    };
 }
