@@ -1831,7 +1831,9 @@
                         'multiple': {
                            min: $rootScope.autoLanguage( '?至少选择?个。' ),
                            max: $rootScope.autoLanguage( '?不能多于?个。' ),
-                           empty: $rootScope.autoLanguage( '?不能为空。' )
+                           empty: $rootScope.autoLanguage( '?不能为空。' ),
+                           candidate: $rootScope.autoLanguage( '待选列表' ),
+                           select: $rootScope.autoLanguage( '选中列表' )
                         },
                         'list': $rootScope.autoLanguage( '?参数错误。' )
                      },
@@ -3493,7 +3495,7 @@
             var onClickEvent = function( scope, index ){
                if( typeof( scope.data[index]['onClick'] ) == 'function' )
                {
-                  scope.data[index]['onClick'](  menuHide, maskHide) ;
+                  scope.data[index]['onClick'](  menuHide, maskHide ) ;
                }
                else
                {

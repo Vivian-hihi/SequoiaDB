@@ -186,8 +186,8 @@
          $scope.Components.Modal.isShow = true ;
          $scope.Components.Modal.Context = function( bodyEle ){
             var div  = $( '<div></div>' ) ;
-            var btn1 = $compile( '<button ng-click="SelectAll()"></button>' )( $scope ).addClass( 'btn btn-default' ).text( '全选' ) ;
-            var btn2 = $compile( '<button ng-click="Unselect()"></button>' )( $scope ).addClass( 'btn btn-default' ).text( '反选' ) ;
+            var btn1 = $compile( '<button ng-click="SelectAll()"></button>' )( $scope ).addClass( 'btn btn-default' ).text( $scope.autoLanguage( '全选' ) ) ;
+            var btn2 = $compile( '<button ng-click="Unselect()"></button>' )( $scope ).addClass( 'btn btn-default' ).text( $scope.autoLanguage( '反选' ) ) ;
             div.append( btn1 ).append( '&nbsp;' ).append( btn2 ) ;
 
             hostBox = $( '<div></div>' ).css( { 'marginTop': '10px' } ) ;

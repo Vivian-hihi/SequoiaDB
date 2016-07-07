@@ -23,8 +23,6 @@
 
       printfDebug( 'Cluster: ' + clusterName + ', Type: ' + moduleType + ', Module: ' + moduleName + ', Mode: ' + moduleMode ) ;
 
-      $scope.onLeftSwitch = [] ;
-
       $scope.fullName = csName + '.' + clName ;
       $scope.clType = clType ;
 
@@ -53,6 +51,11 @@
          $scope.GridData3 = { 'title': [], 'body': [], 'tool': {}, 'options': { 'grid': {} } } ;
          //索引列表
          $scope.indexList = [] ;
+         //下拉菜单
+         $scope.ShowKeyList = null ;
+         $scope.SelectFields = [] ;
+         $scope.ShowKey1 = [] ;
+         $scope.ShowKey2 = null ;
       }
 
       //获取索引列表
@@ -243,9 +246,13 @@
                }
                var keyList = [] ;
                //取得json的所有键
-               $.each( $scope.records, function( index, record ){
-                  keyList = SdbFunction.getJsonKeys( record, 10, keyList ) ;
+               $.each( $scope.ShowKey2, function( index, showKeyInfo ){
+                  if( showKeyInfo['show'] == true )
+                  {
+                     keyList.push( showKeyInfo['key'] ) ;
+                  }
                } ) ;
+               $scope.ShowKeyList = keyList ;
                keyList.unshift( '#' ) ;
                //计算列宽
                var titleWidth = 100 / ( ( keyList.length > 20 ? 20 : keyList.length ) - 1 ) ;
@@ -289,6 +296,17 @@
          }
       }
 
+      //保存显示列
+      $scope.SaveShowKeyList = function(){
+         $scope.ShowKey2 = $.extend( true, [], $scope.ShowKey1 ) ;
+         $scope.show( 3 ,true ) ;
+      }
+
+      //还原
+      $scope.RevertShowKeyList = function(){
+         $scope.ShowKey1 = $.extend( true, [], $scope.ShowKey2 ) ;
+      }
+
       //查询
       var queryRecord = function( data, type, showSuccess ){
          if( typeof( data['filter'] ) != 'undefined' || typeof( data['selector'] ) != 'undefined' ||
@@ -304,6 +322,23 @@
             //获取所有字段
             $.each( $scope.records, function( index, record ){
                $scope.fieldList = SdbFunction.getJsonKeys( record, 0, $scope.fieldList ) ;
+            } ) ;
+            if( $scope.ShowKeyList === null )
+            {
+               $scope.ShowKeyList = $.extend( true, [], $scope.fieldList ) ;
+            }
+            $scope.SelectFields = [] ;
+            $scope.ShowKey1 = [] ;
+            $.each( $scope.fieldList, function( index, key ){
+               $scope.ShowKey1.push( { 'key': key, 'show': $scope.ShowKeyList.indexOf( key ) >= 0 ? true : false } ) ;
+               $scope.SelectFields.push( { 
+                  'html': $compile( '<label><div class="Ellipsis" style="padding:5px 10px"><input type="checkbox" ng-model="ShowKey1[\'' + index + '\'][\'show\']"/>&nbsp;' + key + '</div></label>' )( $scope ),
+                  'onClick': function(){}
+               } ) ;
+            } ) ;
+            $scope.ShowKey2 = $.extend( true, [], $scope.ShowKey1 ) ;
+            $scope.SelectFields.push( { 
+               'html': $compile( '<button class="btn btn-primary" ng-click="SaveShowKeyList();" style="width:100%;">' + $scope.autoLanguage( '确定' ) + '</button>' )( $scope )
             } ) ;
             if( showSuccess != false )
             {

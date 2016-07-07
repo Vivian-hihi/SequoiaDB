@@ -152,7 +152,29 @@
          $scope.Components.Modal.icon = '' ;
          $scope.Components.Modal.title = $scope.autoLanguage( '帮助' ) ;
          $scope.Components.Modal.isShow = true ;
-         $scope.Components.Modal.Context = '<p>请输入主机名或IP地址，然后单击<b>扫描</b>。您还可以指定主机名和IP地址范围：</p><table class="table loosen border"><thead></thead><tbody><tr><td><b>使用此延展范围</b></td><td><b>要指定的Host</b></td></tr><tr><td>10.1.1.[1-4]</td><td>10.1.1.1, 10.1.1.2, 10.1.1.3, 10.1.1.4</td></tr><tr><td>pc[1-4]host</td><td>pc1host, pc2host, pc3host, pc4host</td></tr><tr><td>pc[098-101]host</td><td>pc098host, pc099host, pc100host, pc101host</td></tr></tbody></table><p>您可以添加多个主机名、IP地址和主机名范围、IP地址范围，但要注意主机名和IP地址是唯一。</p><p>扫描结果将包括所有扫描的地址，但只有运行SSH服务的主机才会被选择包含在集群中。如果是用户名、密码或SSH填写不正确，可以点击主机名或IP地址修改。</p><p><b>注意</b>:如果您不知道主机的HostName和IP，可输入更大的范围进行扫描。但是范围越大，扫描时间越长。</p>' ;
+         $scope.Components.Modal.Context = '\
+<p>' + $scope.autoLanguage( '请输入主机名或IP地址，然后单击<b>扫描</b>。您还可以指定主机名和IP地址范围：' ) + '</p>\
+<table class="table loosen border">\
+   <tr>\
+      <td><b>' + $scope.autoLanguage( '使用此延展范围' ) + '</b></td>\
+      <td><b>' + $scope.autoLanguage( '要指定的主机' ) + '</b></td>\
+   </tr>\
+   <tr>\
+      <td>10.1.1.[1-4]</td>\
+      <td>10.1.1.1, 10.1.1.2, 10.1.1.3, 10.1.1.4</td>\
+   </tr>\
+   <tr>\
+      <td>pc[1-4]host</td>\
+      <td>pc1host, pc2host, pc3host, pc4host</td>\
+   </tr>\
+   <tr>\
+      <td>pc[098-101]host</td>\
+      <td>pc098host, pc099host, pc100host, pc101host</td>\
+   </tr>\
+</table>\
+<p>' + $scope.autoLanguage( '您可以添加多个主机名、IP地址和主机名范围、IP地址范围，但要注意主机名和IP地址是唯一。' ) + '</p>\
+<p>' + $scope.autoLanguage( '扫描结果将包括所有扫描的地址，但只有运行SSH服务的主机才会被选择包含在集群中。如果是用户名、密码或SSH填写不正确，可以点击主机名或IP地址修改。' ) + '</p>\
+<p><b>' + $scope.autoLanguage( '注意' ) + '</b>:' + $scope.autoLanguage( '如果您不知道主机的HostName和IP，可输入更大的范围进行扫描。但是范围越大，扫描时间越长。' ) + '</p>' ;
          $scope.Components.Modal.ok = function(){
             return true ;
          }

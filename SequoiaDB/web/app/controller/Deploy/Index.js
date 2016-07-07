@@ -55,8 +55,9 @@
                      {
                         $scope.moduleList[index]['Error']['Flag'] = host_module_table[index3]['Error']['Flag'] ;
                         $scope.moduleList[index]['Error']['Type'] = 'Host' ;
-                        $scope.moduleList[index]['Error']['Message'] = sprintf( '主机 ? 状态异常: ?。', host_module_table[index3]['HostName'],
-                                                                                                       host_module_table[index3]['Error']['Message'] ) ;
+                        $scope.moduleList[index]['Error']['Message'] = sprintf( $scope.autoLanguage( '主机 ? 状态异常: ?。' ), 
+                                                                                host_module_table[index3]['HostName'],
+                                                                                host_module_table[index3]['Error']['Message'] ) ;
                      }
                   }
                } ) ;
@@ -275,7 +276,9 @@
             {
                $scope.moduleList[moduleIndex]['Error']['Flag'] = errNodes[0]['Flag'] ;
                $scope.moduleList[moduleIndex]['Error']['Type'] = 'Module' ;
-               $scope.moduleList[moduleIndex]['Error']['Message'] = sprintf( '节点错误: ?，错误码 ?。', errNodes[0]['NodeName'], errNodes[0]['Flag'] ) ;
+               $scope.moduleList[moduleIndex]['Error']['Message'] = sprintf( $scope.autoLanguage( '节点错误: ?，错误码 ?。' ),
+                                                                             errNodes[0]['NodeName'],
+                                                                             errNodes[0]['Flag'] ) ;
             }
             else if( errNodes.length == 0 && $scope.moduleList[moduleIndex]['Error']['Flag'] != 0 && $scope.moduleList[moduleIndex]['Error']['Type'] == 'Module' )
             {
@@ -333,6 +336,7 @@
                $scope.moduleList[index]['Chart'] = {} ;
                $scope.moduleList[index]['Chart']['Module'] = {} ;
                $scope.moduleList[index]['Chart']['Module']['options'] = $.extend( true, {}, window.SdbSacManagerConf.StorageScaleEchart ) ;
+               $scope.moduleList[index]['Chart']['Module']['options']['title']['text'] = $scope.autoLanguage( '元数据比例' ) ;
 
                $scope.moduleList[index]['Chart']['Host'] = {} ;
                $scope.moduleList[index]['Chart']['Host']['CPU'] = { 'percent': 0 } ;

@@ -928,7 +928,7 @@
    window.SdbSacManagerConf.StorageScaleEchart = {
       title: {
          show: true,
-         text: '存储比',
+         text: '元数据比例',
          textStyle: {
             color: '#666',
             fontFamily: 'Verdana,Georgia,宋体',

@@ -30,37 +30,38 @@
                         <a class="linkButton" ng-if="moduleInfo['BusinessType']=='sequoiadb'" ng-click="GotoDataModule(moduleInfo['ClusterName'],moduleInfo['BusinessType'],moduleInfo['DeployMod'],moduleInfo['BusinessName'])">{{moduleInfo['BusinessName']}}</a>
                         <span style="color:#666;" ng-if="moduleInfo['BusinessType']!='sequoiadb'">{{moduleInfo['BusinessName']}}</span>
                      </div>
-                     <div class="Ellipsis" style="font-size:90%;color:#666;">{{moduleInfo['BusinessType']}} <span ng-if="moduleInfo['AddtionType'] == 1">添加时间</span><span ng-if="moduleInfo['AddtionType'] == 0">创建时间</span>: {{moduleInfo['Time']['$timestamp'].substr(0,19)}}</div>
+                     <div class="Ellipsis" style="font-size:90%;color:#666;">{{moduleInfo['BusinessType']}} <span ng-if="moduleInfo['AddtionType'] == 1">{{autoLanguage("添加时间")}}</span><span ng-if="moduleInfo['AddtionType'] == 0">{{autoLanguage("创建时间")}}</span>: {{moduleInfo['Time']['$timestamp'].substr(0,19)}}</div>
                   </div>
                   <div class="clear-float"></div>
                </div>
 
                <div class="well Ellipsis" ng-container="{height:41}">
-                  <i class="fa fa-circle" style="color:#00CC66;" ng-if="moduleInfo['Error']['Flag']==0"></i><i class="fa fa-circle error" ng-if="moduleInfo['Error']['Flag']!=0"></i>&nbsp;<span style="font-weight:bold;color:#006699;" ng-if="moduleInfo['Error']['Flag']==0">正常运行...</span><span style="font-weight:bold;color:#006699;" ng-if="moduleInfo['Error']['Flag']!=0">{{moduleInfo['Error']['Message']}}</span>
+                  <i class="fa fa-circle" style="color:#00CC66;" ng-if="moduleInfo['Error']['Flag']==0"></i><i class="fa fa-circle error" ng-if="moduleInfo['Error']['Flag']!=0"></i>&nbsp;<span style="font-weight:bold;color:#006699;" ng-if="moduleInfo['Error']['Flag']==0">{{autoLanguage("正常运行...")}}</span><span style="font-weight:bold;color:#006699;" ng-if="moduleInfo['Error']['Flag']!=0">{{moduleInfo['Error']['Message']}}</span>
                </div>
 
                <div ng-container="{offsetY:-100,marginTop:10,height:'auto'}" ng-if="moduleInfo['BusinessType']=='sequoiadb'">
 
                   <div class="pull-left" style="max-width:650px;" ng-container="{width:'50%',height:140,offsetX:-30,marginRight:30}">
                      <div class="Ellipsis" style="height:35px;">
-                        一共 {{moduleInfo['Location'].length}} 台主机
+                        <!--<a class="linkButton" ng-click="GotoMonitorHost(moduleInfo['ClusterName'],moduleInfo['BusinessType'],moduleInfo['DeployMod'],moduleInfo['BusinessName'])">{{sprintf(autoLanguage("一共 ? 台主机"),moduleInfo['Location'].length)}}</a>-->
+                        {{sprintf(autoLanguage("一共 ? 台主机"),moduleInfo['Location'].length)}}
                      </div>
 
                      <div style="height:35px;">
-                        <div class="pull-left" style="width:60px;height:35px;">处理器</div>
-                        <div class="pull-left" style="max-width:500px;" progress-bar="moduleInfo.Chart.Host.CPU" ng-container="{height:35,offsetX:-60}"></div>
+                        <div class="pull-left" style="width:80px;height:35px;">{{autoLanguage("处理器")}}</div>
+                        <div class="pull-left" style="max-width:480px;" progress-bar="moduleInfo.Chart.Host.CPU" ng-container="{height:35,offsetX:-80}"></div>
                         <div class="clear-float"></div>
                      </div>
 
                      <div style="height:35px;">
-                        <div class="pull-left" style="width:60px;height:35px;">内存</div>
-                        <div class="pull-left" style="max-width:500px;" progress-bar="moduleInfo.Chart.Host.Memory" ng-container="{height:35,offsetX:-60}"></div>
+                        <div class="pull-left" style="width:80px;height:35px;">{{autoLanguage("内存")}}</div>
+                        <div class="pull-left" style="max-width:480px;" progress-bar="moduleInfo.Chart.Host.Memory" ng-container="{height:35,offsetX:-80}"></div>
                         <div class="clear-float"></div>
                      </div>
 
                      <div style="height:35px;">
-                        <div class="pull-left" style="width:60px;height:35px;">磁盘</div>
-                        <div class="pull-left" style="max-width:500px;" progress-bar="moduleInfo.Chart.Host.Disk" ng-container="{height:35,offsetX:-60}"></div>
+                        <div class="pull-left" style="width:80px;height:35px;">{{autoLanguage("磁盘")}}</div>
+                        <div class="pull-left" style="max-width:480px;" progress-bar="moduleInfo.Chart.Host.Disk" ng-container="{height:35,offsetX:-80}"></div>
                         <div class="clear-float"></div>
                      </div>
 
@@ -68,7 +69,8 @@
 
                   <div class="pull-left" style="max-width:650px;min-height:130px;" ng-container="{width:'50%',height:'30w'}">
                      <div style="height:20px;">
-                        一共 {{moduleInfo['BusinessInfo']['NodeList'].length}} 个节点
+                        <!--<a class="linkButton" ng-click="GotoMonitorModule(moduleInfo['ClusterName'],moduleInfo['BusinessType'],moduleInfo['DeployMod'],moduleInfo['BusinessName'])">{{sprintf(autoLanguage("一共 ? 个节点"),moduleInfo['BusinessInfo']['NodeList'].length)}}</a>-->
+                        {{sprintf(autoLanguage("一共 ? 个节点"),moduleInfo['BusinessInfo']['NodeList'].length)}}
                      </div>
                      <div ng-container="{offsetY:-20}" create-chart="moduleInfo['Chart']['Module']"></div>
                   </div>

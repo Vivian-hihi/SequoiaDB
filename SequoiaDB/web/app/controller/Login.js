@@ -16,10 +16,6 @@ function loginTransfer( $scope, SdbRest, SdbFunction ){
          {
             window.location.href = '/#/Data/SQL-Metadata/Index' ;
          }
-         else if( moduleInfo['BusinessType'] == 'spark' )
-         {
-            window.location.href = '/#/Data/SPARK-web/Index' ;
-         }
          else if( moduleInfo['BusinessType'] == 'hdfs' )
          {
             window.location.href = '/#/Data/HDFS-web/Index' ;
