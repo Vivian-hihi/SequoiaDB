@@ -114,7 +114,7 @@
       <echo message="fdw svn revision = ${fdw_svn}" />
       
       <!--get edition (judge changed or original) -->
-      <exec executable="bash" dir="${FDW_CODE_DIR}" failonerror="true" outputproperty="fdw_output">
+      <exec executable="bash" dir="${FDW_CODE_DIR}" outputproperty="fdw_output">
          <arg value="-c" />
          <arg line="&quot;nm sdb_fdw.so | grep sdbuseownpostgres&quot;" />
       </exec>  
