@@ -36,6 +36,7 @@
    <target name="compile_pg" depends="clean">
       <echo message="Compile the postgresql..." />
       
+      <!--debug or release-->
       <if>
          <equals arg1="${compile.debug}" arg2="true" />
          <then>
@@ -48,6 +49,17 @@
          </else>
       </if>
       
+      <!--get svn-->
+      <echo message="svn info | grep Revision | awk '{print $2}', dir = ${PG_CODE_DIR}" /> 
+      <exec executable="bash" dir="${PG_CODE_DIR}" failonerror="true" outputproperty="pg_svn">
+         <arg value="-c" />
+         <arg line="&quot;svn info | grep Revision | awk '{print $2}'&quot;" />
+      </exec>     
+      <echo message="pg svn revision = ${fdw_svn}" />
+      
+      <replace file="${PG_CODE_DIR}/src/include/sdbVer.h" token="00000" value="${pg_svn}" />        
+      
+      <!--compile-->
       <chmod file="${PG_CODE_DIR}/configure" perm="u+x" />
       <exec executable="./configure" dir="${PG_CODE_DIR}" failonerror="true">
          <arg line=" --without-readline --without-zlib ${compile.arg.line} --prefix=${SEQUOIASQL_DIR}" />
@@ -63,7 +75,7 @@
    <target name="compile_sequoiadb" depends="compile_pg">
       <echo message="Compile the sequoiadb..." />     
       <exec executable="scons" dir="${SEQUOIADB_CODE_DIR}" failonerror="true">
-         <arg line=" --enterprise -j 4" />
+         <arg line=" --enterprise --client -j 4" />
       </exec>
    </target>
    
