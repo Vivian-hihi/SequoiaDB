@@ -204,7 +204,8 @@ static BOOLEAN date2Time( const CHAR *pDate,
                           ossStrlen( pDate ),
                           &sdbTime ) )
       {
-         return FALSE ;
+         JSON_PRINTF_LOG( "Failed to parse timestamp" ) ;
+         goto error ;
       }
       timep = (time_t)sdbTime.sec ;
       micros = sdbTime.nsec / 1000 ;
@@ -224,6 +225,7 @@ static BOOLEAN date2Time( const CHAR *pDate,
                        &second,
                        &micros ) )
          {
+            JSON_PRINTF_LOG( "Failed to parse timestamp" ) ;
             goto error ;
          }
       }
@@ -235,43 +237,130 @@ static BOOLEAN date2Time( const CHAR *pDate,
                        &month,
                        &day ) )
          {
+            JSON_PRINTF_LOG( "Failed to parse date" ) ;
             goto error ;
          }
       }
       /* sanity check for years */
       if( valType == CJSON_TIMESTAMP )
       {
+         //[ 1901, 2038 ]
          if( year > INT32_LAST_YEAR )
          {
+            JSON_PRINTF_LOG( "Timestamp year not greater than %d",
+                             INT32_LAST_YEAR ) ;
             goto error ;
          }
          else if( year < RELATIVE_YEAR )
          {
+            JSON_PRINTF_LOG( "Timestamp year not less than %d",
+                             RELATIVE_YEAR + 1 ) ;
             goto error ;
          }
-         if( month  >  RELATIVE_MON     || //[1,12]
-             month  <  1                ||
-             day    >  RELATIVE_DAY     || //[1,31]
-             day    <  1                ||
-             hour   >= RELATIVE_HOUR    || //[0,23]
-             hour   <  0                ||
-             minute >= RELATIVE_MIN_SEC || //[0,59]
-             minute <  0                ||
-             second >= RELATIVE_MIN_SEC || //[0,59]
-             second < 0 )
+
+         //[1,12]
+         if( month > RELATIVE_MON )
          {
+            JSON_PRINTF_LOG( "Timestamp month not greater than %d",
+                             RELATIVE_MON ) ;
+            goto error ;
+         }
+         else if( month < 1 )
+         {
+            JSON_PRINTF_LOG( "Timestamp month not less than 1" ) ;
+            goto error ;
+         }
+
+         //[1,31]
+         if( day > RELATIVE_DAY )
+         {
+            JSON_PRINTF_LOG( "Timestamp day not greater than %d",
+                             RELATIVE_DAY ) ;
+            goto error ;
+         }
+         else if( day < 1 )
+         {
+            JSON_PRINTF_LOG( "Timestamp day not less than 1" ) ;
+            goto error ;
+         }
+
+         //[0,23]
+         if( hour >= RELATIVE_HOUR )
+         {
+            JSON_PRINTF_LOG( "Timestamp hours not greater than %d",
+                             RELATIVE_HOUR ) ;
+            goto error ;
+         }
+         else if( hour < 0 )
+         {
+            JSON_PRINTF_LOG( "Timestamp hours not less than 0" ) ;
+            goto error ;
+         }
+
+         //[0,59]
+         if( minute >= RELATIVE_MIN_SEC )
+         {
+            JSON_PRINTF_LOG( "Timestamp minutes not greater than %d",
+                             RELATIVE_MIN_SEC ) ;
+            goto error ;
+         }
+         else if( minute <  0 )
+         {
+            JSON_PRINTF_LOG( "Timestamp minutes not less than 0" ) ;
+            goto error ;
+         }
+
+         //[0,59]
+         if( second >= RELATIVE_MIN_SEC )
+         {
+            JSON_PRINTF_LOG( "Timestamp seconds not greater than %d",
+                             RELATIVE_MIN_SEC ) ;
+            goto error ;
+         }
+         else if( second < 0 )
+         {
+            JSON_PRINTF_LOG( "Timestamp seconds not less than 0" ) ;
             goto error ;
          }
       }
       else if( valType == CJSON_DATE )
       {
-         if( year  > INT64_LAST_YEAR || //[1900,9999]
-             year  < RELATIVE_YEAR   ||
-             month > RELATIVE_MON    || //[1,12]
-             month < 1               ||
-             day   > RELATIVE_DAY    || //[1,31]
-             day   < 1 )
+         //[1900,9999]
+         if( year > INT64_LAST_YEAR )
          {
+            JSON_PRINTF_LOG( "Date year not greater than %d",
+                             INT64_LAST_YEAR ) ;
+            goto error ;
+         }
+         else if( year < RELATIVE_YEAR )
+         {
+            JSON_PRINTF_LOG( "Date year not less than %d", RELATIVE_YEAR ) ;
+            goto error ;
+         }
+
+         //[1,12]
+         if( month > RELATIVE_MON )
+         {
+            JSON_PRINTF_LOG( "Date month not greater than %d",
+                             RELATIVE_MON ) ;
+            goto error ;
+         }
+         else if( month < 1 )
+         {
+            JSON_PRINTF_LOG( "Date month not less than 1" ) ;
+            goto error ;
+         }
+
+         //[1,31]
+         if( day > RELATIVE_DAY )
+         {
+            JSON_PRINTF_LOG( "Date day not greater than %d",
+                             RELATIVE_DAY ) ;
+            goto error ;
+         }
+         else if( day < 1 )
+         {
+            JSON_PRINTF_LOG( "Date day not less than 1" ) ;
             goto error ;
          }
       }
@@ -288,11 +377,20 @@ static BOOLEAN date2Time( const CHAR *pDate,
       timep = mktime( &t ) ;
    }
 
-   if( valType == CJSON_TIMESTAMP &&
-       ( (INT64)timep < TIME_STAMP_TIMESTAMP_MIN ||
-         (INT64)timep > TIME_STAMP_TIMESTAMP_MAX ) )
+   if( valType == CJSON_TIMESTAMP )
    {
-      goto error ;
+      if( (INT64)timep > TIME_STAMP_TIMESTAMP_MAX )
+      {
+         JSON_PRINTF_LOG( "Timestamp not greater than "
+                          "2038-01-19-03.14.07.999999 +/- TZ" ) ;
+         goto error ;
+      }
+      else if( (INT64)timep < TIME_STAMP_TIMESTAMP_MIN )
+      {
+         JSON_PRINTF_LOG( "Timestamp not less than "
+                          "1901-12-13-20.45.52.000000 +/- TZ" ) ;
+         goto error ;
+      }
    }
    *pTimestamp = timep ;
    *pMicros = micros ;
