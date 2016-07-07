@@ -166,24 +166,9 @@
       </exec>     
       <echo message="fdw svn revision = ${fdw_svn}" />
       
-      <!--get edition (judge changed or original) -->
-      <exec executable="bash" dir="${CODE_DIR}/driver/postgresql" outputproperty="fdw_output">
-         <arg value="-c" />
-         <arg line="&quot;nm sdb_fdw.so | grep sdbuseownpostgres&quot;" />
-      </exec>  
-      
       <!--change fdw name-->
-      <if>
-         <equals arg1="${fdw_output}" arg2="" />
-         <then>            
-            <property name="fdw_name" value="sdb_fdw.so_${projects.version}_${fdw_svn}" /> 
-            <echo message="fdw is original, fdw new name = ${fdw_name}" />  
-         </then>
-         <else>             
-            <property name="fdw_name" value="sdb_fdw.so_e_${projects.version}_${fdw_svn}" />
-            <echo message="fdw is enterprise, fdw new name = ${fdw_name}" />  
-         </else>
-      </if>        
+      <property name="fdw_name" value="sdb_fdw.so.${projects.version}_${fdw_svn}" /> 
+      <echo message="fdw new name = ${fdw_name}" />      
       
       <!--copy fdw to drvier tar-->
       <copy file="${CODE_DIR}/driver/postgresql/sdb_fdw.so" tofile="${DRIVER.DIR}/postgresql/${fdw_name}" />
