@@ -38,6 +38,7 @@
 #include "ossSocket.hpp"
 #include "ossIO.hpp"
 #include "oss.h"
+#include <set>
 #include <boost/algorithm/string.hpp>
 #include <boost/lexical_cast.hpp>
 #if defined (_LINUX)
@@ -62,6 +63,23 @@ using namespace bson ;
 #define SPT_DISK_IGNORE_TYPE_SECURITYFS   "securityfs"
 #define SPT_DISK_IGNORE_TYPE_GVFS         "fuse.gvfs-fuse-daemon"
 
+#if defined (_LINUX)
+struct _cpuInfo
+{
+   string modelName ;
+   string coreNum ;
+   string freq ;
+   string physicalID ;
+   void reset()
+   {
+      modelName  = "" ;
+      coreNum    = "" ;
+      freq       = "" ;
+      physicalID = "" ;
+   }
+} ;
+typedef struct _cpuInfo cpuInfo ;
+#endif
 
 namespace engine
 {
@@ -895,171 +913,6 @@ namespace engine
       builder.append( SPT_USR_SYSTEM_HOSTS, arrBuilder.arr() ) ;
    }
 
-   static INT32 getCoreNum( UINT32 &num, std::string &error )
-   {
-      INT32 rc = SDB_OK ;
-      _ossCmdRunner runner ;
-      std::stringstream ss ;
-      std::string outStr ;
-      UINT32 exitCode = 0 ;
-      const CHAR *cmd = "cat /proc/cpuinfo |grep 'processor' | wc -l" ;
-      
-      rc = runner.exec( cmd, exitCode,
-                        FALSE, -1, FALSE, NULL, TRUE ) ;
-      if ( SDB_OK != rc || SDB_OK != exitCode )
-      {
-         PD_LOG( PDERROR, "failed to exec cmd, rc:%d, exit:%d",
-                 rc, exitCode ) ;
-         if ( SDB_OK == rc )
-         {
-            rc = SDB_SYS ;
-         }
-         ss << "failed to exec cmd \" " << cmd << "\",rc:"
-            << rc
-            << ",exit:"
-            << exitCode ;
-         goto error ;
-      }
-
-      rc = runner.read( outStr ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "failed to read msg from cmd runner:%d", rc ) ;
-         ss << "failed to read msg from cmd \"" << cmd << "\", rc:"
-            << rc ;
-         goto error ;
-      }
-
-      boost::algorithm::replace_last( outStr, "\n", "") ;
-      try
-      {
-         num = boost::lexical_cast<UINT32>( outStr ) ;
-      }
-      catch ( std::exception &e )
-      {
-         ss << "unexpected error happened:" << e.what() ;
-         rc = SDB_SYS ;
-         goto error ; 
-      }
-   done:
-      return rc ;
-   error:
-      error = ss.str() ;
-      goto done ;
-   }
-
-   static INT32 getModelName( std::string &name, std::string &error )
-   {
-      INT32 rc = SDB_OK ;
-      _ossCmdRunner runner ;
-      std::stringstream ss ;
-      std::string outStr ;
-      UINT32 exitCode = 0 ;
-      const CHAR *cmd = NULL ;
-#if defined (_PPCLIN64)
-      cmd = "cat /proc/cpuinfo |grep 'cpu' | cut -f2 -d: | uniq" ;
-#else
-      cmd = "cat /proc/cpuinfo |grep 'model name' | cut -f2 -d: | uniq" ;
-#endif
-      rc = runner.exec( cmd, exitCode,
-                        FALSE, -1, FALSE, NULL, TRUE ) ;
-      if ( SDB_OK != rc || SDB_OK != exitCode )
-      {
-         PD_LOG( PDERROR, "failed to exec cmd, rc:%d, exit:%d",
-                 rc, exitCode ) ;
-         if ( SDB_OK == rc )
-         {
-            rc = SDB_SYS ;
-         }
-         ss << "failed to exec cmd \" " << cmd << "\",rc:"
-            << rc
-            << ",exit:"
-            << exitCode ;
-         goto error ;
-      }
-
-      rc = runner.read( outStr ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "failed to read msg from cmd runner:%d", rc ) ;
-         ss << "failed to read msg from cmd \"" << cmd << "\", rc:"
-            << rc ;
-         goto error ;
-      }
-
-     
-      boost::algorithm::trim_left( outStr ) ;
-      boost::algorithm::replace_last( outStr, "\n", "" ) ;
-      name = outStr ;
-   done:
-      return rc ;
-   error:
-      error = ss.str() ;
-      goto done ;
-   }
-
-   static INT32 getFreq( std::string &freq, std::string &error )
-   {
-      INT32 rc = SDB_OK ;
-      _ossCmdRunner runner ;
-      std::stringstream ss ;
-      std::string outStr ;
-      UINT32 exitCode = 0 ;
-      FLOAT32 frequency = 0.0 ;
-      const CHAR *cmd = NULL ;
-#if defined (_PPCLIN64)
-      cmd = "cat /proc/cpuinfo |grep 'clock' | cut -f2 -d: | uniq" ;
-#else
-      cmd = "cat /proc/cpuinfo |grep 'cpu MHz' | cut -f2 -d: | uniq" ;
-#endif
-      rc = runner.exec( cmd, exitCode,
-                        FALSE, -1, FALSE, NULL, TRUE ) ;
-      if ( SDB_OK != rc || SDB_OK != exitCode )
-      {
-         PD_LOG( PDERROR, "failed to exec cmd, rc:%d, exit:%d",
-                 rc, exitCode ) ;
-         if ( SDB_OK == rc )
-         {
-            rc = SDB_SYS ;
-         }
-         ss << "failed to exec cmd \" " << cmd << "\",rc:"
-            << rc
-            << ",exit:"
-            << exitCode ;
-         goto error ;
-      }
-
-      rc = runner.read( outStr ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "failed to read msg from cmd runner:%d", rc ) ;
-         ss << "failed to read msg from cmd \"" << cmd << "\", rc:"
-            << rc ;
-         goto error ;
-      }
-
-      boost::algorithm::trim_left( outStr ) ;
-      boost::algorithm::replace_last( outStr, "\n", "" ) ;
-      boost::algorithm::replace_last( outStr, "MHz", "" ) ;
-      try
-      {
-         frequency = boost::lexical_cast<FLOAT32>( outStr ) ;
-         frequency /= 1000.0 ;
-         outStr = boost::lexical_cast<string>( frequency ) ;
-      }
-      catch ( std::exception &e )
-      {
-         ss << "unexpected error happened:" << e.what() ;
-         rc = SDB_SYS ;
-         goto error ;
-      }
-      freq = outStr + "GHz" ;
-   done:
-      return rc ;
-   error:
-      error = ss.str() ;
-      goto done ;
-   }
 
 #if defined (_LINUX)
    INT32 _sptUsrSystem::getCpuInfo( const _sptArguments &arg,
@@ -1067,41 +920,56 @@ namespace engine
                                     bson::BSONObj &detail )
    {
       INT32 rc = SDB_OK ;
+      UINT32 exitCode = 0 ;
+      _ossCmdRunner runner ;
+      string outStr ;
       BSONObjBuilder builder ;
-      BSONArrayBuilder arrBuilder ;
-      BSONObjBuilder cpuBuilder ;
-      string error ;
-      std::string model ;
-      std::string freq ;
-      UINT32 coreNum ;
-
-      rc = getCoreNum( coreNum, error ) ;
-      if ( SDB_OK != rc )
+#if defined (_PPCLIN64)
+   #define CPU_CMD "cat /proc/cpuinfo | grep -E 'processor|cpu|clock|machine'"
+#else
+   #define CPU_CMD "cat /proc/cpuinfo | grep -E 'model name|cpu MHz|cpu cores|physical id'"
+#endif
+   
+      rc = runner.exec( CPU_CMD, exitCode,
+                        FALSE, -1, FALSE, NULL, TRUE ) ;
+      if ( SDB_OK != rc || SDB_OK != exitCode )
       {
-         detail = BSON( SPT_ERR << error ) ;
+         PD_LOG( PDERROR, "failed to exec cmd, rc:%d, exit:%d",
+                 rc, exitCode ) ;
+         if ( SDB_OK == rc )
+         {
+            rc = SDB_SYS ;
+         }
+         stringstream ss ;
+         ss << "failed to exec cmd \" " << CPU_CMD << "\",rc:"
+            << rc
+            << ",exit:"
+            << exitCode ;
+         detail = BSON( SPT_ERR << ss.str() ) ;
          goto error ;
       }
 
-      rc = getModelName( model, error ) ;
+      rc = runner.read( outStr ) ;
       if ( SDB_OK != rc )
       {
-         detail = BSON( SPT_ERR << error ) ;
+         PD_LOG( PDERROR, "failed to read msg from cmd runner:%d", rc ) ;
+         stringstream ss ;
+         ss << "failed to read msg from cmd \"" << CPU_CMD << "\", rc:"
+            << rc ;
+         detail = BSON( SPT_ERR << ss.str() ) ;
          goto error ;
       }
 
-      rc = getFreq( freq, error ) ;
+      rc = _extractCpuInfo( outStr.c_str(), builder ) ;
       if ( SDB_OK != rc )
       {
-         detail = BSON( SPT_ERR << error ) ;
+         PD_LOG( PDERROR, "failed to extract cpu info:%d", rc ) ;
+         stringstream ss ;
+         ss << "failed to read msg from buf:"
+            << outStr ;
+         detail = BSON( SPT_ERR << ss.str() ) ;
          goto error ;
       }
-
-      cpuBuilder.append( SPT_USR_SYSTEM_CORE, coreNum ) ;
-      cpuBuilder.append( SPT_USR_SYSTEM_INFO, model ) ;
-      cpuBuilder.append( SPT_USR_SYSTEM_FREQ, freq ) ;
-
-      arrBuilder << cpuBuilder.obj() ;
-      builder.append( SPT_USR_SYSTEM_CPUS, arrBuilder.arr() ) ;
 
       {
       SINT64 user = 0 ;
@@ -1119,8 +987,8 @@ namespace engine
       builder.appendNumber( SPT_USR_SYSTEM_IDLE, idle ) ;
       builder.appendNumber( SPT_USR_SYSTEM_OTHER, other ) ;
       }
-      rval.setBSONObj( "", builder.obj() ) ; 
-       
+      rval.setBSONObj( "", builder.obj() ) ;
+
    done:
       return rc ;
    error:
@@ -1243,90 +1111,295 @@ namespace engine
    }
 
 #if defined (_LINUX)
+   #if defined (_PPCLIN64)
    INT32 _sptUsrSystem::_extractCpuInfo( const CHAR *buf,
                                          bson::BSONObjBuilder &builder )
    {
       INT32 rc = SDB_OK ;
       BSONArrayBuilder arrBuilder ;
+      // extract the follow 3 fields from the return content
+      string strProcessor  = "processor" ;
+      string strCpu        = "cpu" ;
+      string strClock      = "clock" ;
+      string strMachine    = "machine" ;
+      // use to record the frequency of those 3 fields
+      INT32 processorCount = 0 ;
+      INT32 cpuCount       = 0 ;
+      INT32 clockCount     = 0 ;
+      INT32 machineCount   = 0 ;
+      string modelName     = "" ;
+      string machine       = "" ;
       vector<string> splited ;
-      UINT32 coreNum = 0 ;
-      stringstream info ;
-      string frequency = "unknown" ;
+      vector<string> vecFreq ;
 
       boost::algorithm::split( splited, buf, boost::is_any_of("\r\n") ) ;
-      for ( vector<string>::iterator itr = splited.begin();
-            itr != splited.end();
-            itr++ )
+      for ( vector<string>::iterator itr = splited.begin(); 
+            itr != splited.end(); // don't itr++
+          )
       {
-         if ( itr->empty() )
+         if( itr->empty() )
          {
-            continue ;
+            itr = splited.erase( itr ) ;
          }
-         boost::algorithm::trim( *itr ) ;
+         else
+         {
+            itr++ ;
+         }   
+      }
+      for ( vector<string>::iterator itr = splited.begin();
+            itr != splited.end(); itr++ )
+      {
+         // *itr is in the format of "xxx : xx", so let's 
+         // split it with ":"
          vector<string> columns ;
-         boost::algorithm::split( columns, *itr, boost::is_any_of("\t ") ) ;
-
-         for ( vector<string>::iterator itr2 = columns.begin();
-               itr2 != columns.end();
-               /// do not ++      
-               )
+         boost::algorithm::split( columns, *itr, boost::is_any_of(":") ) ;
+         for ( vector<string>::iterator itr2 = columns.begin(); 
+               itr2 != columns.end(); itr2++ )
          {
-            if ( itr2->empty() )
-            {
-               itr2 = columns.erase( itr2 ) ;
-            }
-            else
-            {
-               ++itr2 ;
-            }
+            boost::algorithm::trim( *itr2 ) ;            
          }
-
-         /// eg: 4  Intel(R) Xeon(R) CPU E5-2620 0 @ 2.00GHz
-         if ( columns.size() < 4 )
+         if ( strProcessor == columns.at(0) )
          {
+            processorCount++ ;
+         }
+         else if ( strCpu == columns.at(0) )
+         {
+            if ( modelName == "" )
+            {
+               modelName = columns.at(1) ;
+            }
+            cpuCount++ ;
+         }
+         else if ( strClock== columns.at(0) )
+         {
+            vecFreq.push_back( columns.at(1) ) ;
+            clockCount++ ;
+         }
+         else if ( strMachine == columns.at(0) )
+         {
+            machine = columns.at(1) ;
+            machineCount = 1 ;
+         }
+         else
+         {
+            PD_LOG( PDERROR, "unexpect field[%s]", columns.at(0).c_str() ) ;
             rc = SDB_SYS ;
             goto error ;
          }
-         try
+         // check and keep the cpu info
+         if ( 1 == machineCount )
          {
-            coreNum = boost::lexical_cast<UINT32>( columns.at( 0 ) ) ;
-         }
-         catch ( std::exception &e )
-         {
-            PD_LOG( PDERROR, "unexpected err happened:%s, content:%s",
-                    e.what(), columns.at( 0 ).c_str() ) ;
-            rc = SDB_SYS ;
-            goto error ;
-         }
-
-         for ( UINT32 i = 1; i < columns.size(); i++ )
-         {
-            if ( "@" == columns.at( i ) )
+            if ( processorCount != cpuCount ||
+                 cpuCount != clockCount ||
+                 clockCount != processorCount )
             {
-               if ( i == columns.size() - 2 )
+               PD_LOG( PDERROR, "unexpect cpu info[%s]", buf ) ;
+               rc = SDB_SYS ;
+               goto error ;
+            }
+            // merge cpu info
+            {
+            UINT32 coreNum    = processorCount ;
+            string info       = modelName ;
+            string strAvgFreq = "0" ;
+
+            for ( vector<string>::iterator itr2 = vecFreq.begin();
+                  itr2 != vecFreq.end(); itr2++ )
+            {
+               string freq = *itr2 ;
+               boost::algorithm::replace_last( freq, "MHz", "" ) ;
+               try
                {
-                  frequency = columns.at( columns.size() - 1 ) ;
-                  break ;
+                  FLOAT32 avg = boost::lexical_cast<FLOAT32>( strAvgFreq ) ;
+                  FLOAT32 inc = boost::lexical_cast<FLOAT32>( freq ) ;
+                  if ( avg > -0.0001 && avg < 0.0001 )
+                     avg = inc / 1000.0 ;
+                  else
+                     avg = ( avg + ( inc / 1000.0 ) ) / 2 ;
+                  strAvgFreq  = boost::lexical_cast<string>( avg ) ;
+               } 
+               catch( std::exception &e )
+               {
+                  PD_LOG( PDERROR, "unexpected err happened:%s, content:[%s,%s]",
+                          e.what(), strAvgFreq.c_str(), freq.c_str() ) ;
+                  rc = SDB_SYS ;
+                  goto error ;
                }
             }
-
-            info << columns.at( i ) << " " ;
+            arrBuilder << BSON( SPT_USR_SYSTEM_CORE << coreNum
+                                << SPT_USR_SYSTEM_INFO << info
+                                << SPT_USR_SYSTEM_FREQ << strAvgFreq + "GHz" ) ;            
+            }
+            // clean the counters
+            processorCount = 0 ;
+            cpuCount       = 0 ;
+            clockCount     = 0 ;
+            machineCount   = 0 ;
+            modelName      = "" ;
+            machine        = "" ;
+            vecFreq.clear() ;
          }
       }
-
-   done:
-      arrBuilder << BSON( SPT_USR_SYSTEM_CORE << coreNum
-                          << SPT_USR_SYSTEM_INFO << info.str()
-                          << SPT_USR_SYSTEM_FREQ << frequency ) ;
-      
       builder.append( SPT_USR_SYSTEM_CPUS, arrBuilder.arr() ) ;
-      // if we can't extract cpu info, just fill empty, do not return error 
-      rc = SDB_OK ;
+   done:
       return rc ;
    error:
       goto done ;
    }
-#else
+   #else
+   INT32 _sptUsrSystem::_extractCpuInfo( const CHAR *buf,
+                                         bson::BSONObjBuilder &builder )
+   {
+      INT32 rc = SDB_OK ;
+      BSONArrayBuilder arrBuilder ;
+      // extract the follow 4 fields from the return content
+      INT32 fieldNum       = 4 ;
+      string strModelName  = "model name" ;
+      string strFreq       = "cpu MHz" ;
+      string strCoreNum    = "cpu cores" ;
+      string strPhysicalID = "physical id" ;
+      // use to mark which field we had accessed
+      INT32 flag           = 0x00000000 ;
+      INT32 totalFlag      = 0x00001111 ;
+      vector<string> splited ;
+      vector<cpuInfo> vecCpuInfo ;
+      set<string> physicalIDSet ;
+      cpuInfo info ;
+      INT32 counter = 1 ;
+
+      boost::algorithm::split( splited, buf, boost::is_any_of("\r\n") ) ;
+      for ( vector<string>::iterator itr = splited.begin(); 
+            itr != splited.end(); // don't itr++
+          )
+      {
+         if( itr->empty() )
+         {
+            itr = splited.erase( itr ) ;
+         }
+         else
+         {
+            itr++ ;
+         }   
+      }
+      if ( ( splited.size() % fieldNum ) != 0 )
+      {
+         PD_LOG( PDERROR, "the return rows[%d] should be multiple of %d",
+                 splited.size(), fieldNum ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+      for ( vector<string>::iterator itr = splited.begin();
+            itr != splited.end();
+            itr++, counter++ )
+      {
+         // *itr is in the format of "xxx : xx", so let's 
+         // split it with ":"
+         vector<string> columns ;
+         boost::algorithm::split( columns, *itr, boost::is_any_of(":") ) ;
+         for ( vector<string>::iterator itr2 = columns.begin(); 
+               itr2 != columns.end(); itr2++ )
+         {
+            boost::algorithm::trim( *itr2 ) ;            
+         }
+         if ( strModelName == columns.at(0) )
+         {
+            info.modelName = columns.at(1) ;
+            flag |= 0x00000001 ;
+         }
+         else if ( strFreq == columns.at(0) )
+         {
+            info.freq = columns.at(1) ;
+            flag |= 0x00000010 ;
+         }
+         else if ( strCoreNum == columns.at(0) )
+         {
+            info.coreNum = columns.at(1) ;
+            flag |= 0x00000100 ;
+         }
+         else if ( strPhysicalID == columns.at(0) )
+         {
+            physicalIDSet.insert( columns.at(1) ) ;
+            info.physicalID = columns.at(1) ;
+            flag |= 0x00001000 ;
+         }
+         else
+         {
+            PD_LOG( PDERROR, "unexpect field[%s]", columns.at(0).c_str() ) ;
+            rc = SDB_SYS ;
+            goto error ;
+         }
+         // check and keep the cpu info
+         if ( ( counter % fieldNum ) == 0  )
+         {
+            if ( flag == totalFlag )
+            {
+               vecCpuInfo.push_back( info ) ;
+               info.reset() ;
+               flag = 0 ;
+            }
+            else
+            {
+               PD_LOG( PDERROR, "unexpect cpu info[%s]", buf ) ;
+               rc = SDB_SYS ;
+               goto error ;
+            }
+         }
+      }
+      // merge the cpu info 
+      for ( set<string>::iterator itr = physicalIDSet.begin(); 
+            itr != physicalIDSet.end(); itr++ )
+      {
+         string physicalID = *itr ;
+         UINT32 coreNum    = 0 ;
+         string info       = "" ;
+         string strAvgFreq = "0" ;
+         for ( vector<cpuInfo>::iterator itr2 = vecCpuInfo.begin();
+               itr2 != vecCpuInfo.end(); itr2++ )
+         {
+            if ( physicalID == itr2->physicalID )
+            {
+               // set freq
+               try
+               {
+                  FLOAT32 avg = boost::lexical_cast<FLOAT32>( strAvgFreq ) ;
+                  FLOAT32 inc = boost::lexical_cast<FLOAT32>( itr2->freq ) ;
+                  if ( avg > -0.0001 && avg < 0.0001 )
+                     avg = inc / 1000.0 ;
+                  else
+                     avg = ( avg + ( inc / 1000.0 ) ) / 2 ;
+                  strAvgFreq  = boost::lexical_cast<string>( avg ) ;
+               }
+               catch ( std::exception &e )
+               {
+                  PD_LOG( PDERROR, "unexpected err happened:%s, content:[%s,%s]",
+                          e.what(), strAvgFreq.c_str(), 
+                          (itr2->freq).c_str() ) ;
+                  rc = SDB_SYS ;
+                  goto error ;
+               }
+               // set info
+               if ( info == "" )
+               {
+                  info = itr2->modelName ;
+               }
+               // set core num
+               coreNum++ ;
+            }
+         }
+         arrBuilder << BSON( SPT_USR_SYSTEM_CORE << coreNum
+                             << SPT_USR_SYSTEM_INFO << info
+                             << SPT_USR_SYSTEM_FREQ << strAvgFreq + "GHz" ) ;
+      }
+      builder.append( SPT_USR_SYSTEM_CPUS, arrBuilder.arr() ) ;
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+   #endif /// _PPCLIN64
+#endif // _LINUX
+
+#if defined (_WINDOWS)
    INT32 _sptUsrSystem::_extractCpuInfo( const CHAR *buf,
                                          bson::BSONObjBuilder &builder )
    {
