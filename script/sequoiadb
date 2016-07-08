@@ -228,7 +228,7 @@ do_stop()
         isStopAllNode=$1 ;
         # if $isStopAllNode == "true" ; then stop all nodes
         if [ "a${isStopAllNode}" != "afalse" ] ; then
-           $INSTALL_DIR/bin/$DB_STOP -t all
+           su - $SDBADMIN_USER -c "$INSTALL_DIR/bin/$DB_STOP -t all"
         fi
         return $?
 
