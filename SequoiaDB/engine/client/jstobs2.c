@@ -149,13 +149,18 @@ SDB_EXPORT BOOLEAN json2bson( const CHAR *pJson,
    }
 
    bson_init( pBson ) ;
+
    if( jsonConvertBson( pMachine, pIter, pBson, TRUE ) == FALSE )
    {
       JSON_PRINTF_LOG( "Failed to convert json to bson" ) ;
-      bson_finish( pBson ) ;
       goto error ;
    }
-   bson_finish( pBson ) ;
+
+   if( bson_finish( pBson ) == BSON_ERROR )
+   {
+      JSON_PRINTF_LOG( "Failed to call bson_finish" ) ;
+      goto error ;
+   }
 
 done:
    if( isOwn == TRUE )
