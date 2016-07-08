@@ -758,7 +758,7 @@ namespace engine
          goto error ;
       }
 
-      if ( DMS_LOB_CUR_VERSION != header._version )
+      if ( header._version > DMS_LOB_CUR_VERSION )
       {
          PD_LOG( PDERROR, "invalid version of header:%d, file:%s",
                  header._version, _fileName.c_str() ) ;
