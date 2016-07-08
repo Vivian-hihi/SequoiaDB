@@ -14,6 +14,9 @@
                 </checkFreeDiskSpace>
             </ruleList>
         </throwError>
+       
+        <!--check or create user group-->
+        
         <throwError>
             <text>The ROOT user is not allowed to create.</text>
             <ruleList>
@@ -24,93 +27,69 @@
                 </compareValues>
             </ruleList>
         </throwError>
-        <runProgram>
-            <abortOnError>0</abortOnError>
-            <customErrorMessage>${msg(Install.ErrorMsg.CreateGroup.error)}</customErrorMessage>
-            <program>groupadd</program>
-            <programArguments>${username}_group</programArguments>
-            <showMessageOnError>0</showMessageOnError>
-            <ruleList>              
-                <userTest>
-                    <logic>not_exists</logic>
-                    <username>${username}</username>
-                </userTest>
+        
+        <setInstallerVariable name="exist_user" value="false"/>
+        <setInstallerVariable>
+            <name>exist_user</name>
+            <value>true</value>
+            <ruleList>
+                <userTest logic="exists" username="${username}"/>                
             </ruleList>
-        </runProgram>
-        <runProgram>
-            <abortOnError>0</abortOnError>
-            <customErrorMessage>${msg(Install.ErrorMsg.CreateGroup.error)}</customErrorMessage>
-            <program>useradd</program>
-            <programArguments> ${username} -m -p ${userpasswd} -g ${username}_group  -s /bin/bash </programArguments>
-            <useMSDOSPath>0</useMSDOSPath>
-            <ruleList>                
-                <userTest>
-                    <logic>not_exists</logic>
-                    <username>${username}</username>
-                </userTest>
+        </setInstallerVariable>                              
+        
+        <actionGroup> 
+            <ruleList> 
+                <isTrue value="${exist_user}"/>
             </ruleList>
-        </runProgram>
+            <actionList>
+                <setInstallerVariableFromScriptOutput>
+                    <name>actual_group</name>
+                    <exec>id</exec>
+                    <execArgs>-ng ${username}</execArgs>
+                </setInstallerVariableFromScriptOutput>                
+                <throwError>
+                    <text>${msg(Install.ErrorMsg.CheckGroup)}</text>
+                    <ruleList>
+                        <compareValues value1="${actual_group}" logic="does_not_equal" value2="${groupname}"/>
+                    </ruleList>
+                </throwError>
+                <createDirectory path="~${username}"/>
+            </actionList>
+        </actionGroup>
+        
+        <actionGroup> 
+            <ruleList> 
+                <isFalse value="${exist_user}"/>
+            </ruleList>
+            <actionList>
+                <addGroup> <!--if group exists, <addGroup> will not throw error-->
+                    <customErrorMessage>${msg(Install.ErrorMsg.CreateGroup)}</customErrorMessage>
+                    <groupname>${groupname}</groupname>
+                </addGroup>                
+                <runProgram>                    
+                    <customErrorMessage>${msg(Install.ErrorMsg.CreateUser)}</customErrorMessage>
+                    <program>useradd</program>
+                    <programArguments>${username} -m -p ${userpasswd} -g ${groupname}  -s /bin/bash </programArguments>                                 
+                </runProgram>                    
+            </actionList>
+        </actionGroup>
+        
         <runProgram>
             <program>echo</program>
-            <programArguments> ${username}:${userpasswd} | chpasswd</programArguments>
-            <workingDirectory>/usr/sbin</workingDirectory>            
-        </runProgram>
-        <runProgram>
-            <abortOnError>0</abortOnError>
-            <program>echo</program>
-            <programArguments>3 &gt; /proc/sys/net/ipv4/tcp_retries2</programArguments>
-            <ruleList>               
-                <fileExists>
-                    <path>/proc/sys/net/ipv4/tcp_retries2</path>
-                </fileExists>
-            </ruleList>
-        </runProgram>
+            <programArguments> ${username}:${userpasswd} | chpasswd</programArguments>     
+        </runProgram> 
+        <touchFile path="~${username}/.bashrc"/>   
+        <runProgram> <!--<changeOwnerAndGroup> isnt effective for hidden files-->
+            <program>chown</program>
+            <programArguments>-R ${username}:${groupname} ~${username}</programArguments>
+        </runProgram>               
         <changePermissions>
-            <files>/home</files>
-            <permissions>0755</permissions>
-            <ruleList>
-                <fileExists>
-                    <path>/home/${username}</path>
-                </fileExists>
-            </ruleList>
-        </changePermissions>
-        <createDirectory>
-            <path>~${username}</path>
-            <ruleList>
-                <fileExists>
-                    <negate>1</negate>
-                    <path>~${username}</path>
-                </fileExists>
-            </ruleList>
-        </createDirectory>
-        <touchFile>
-            <path>~${username}/.bashrc</path>
-            <ruleList>
-                <fileExists>
-                    <negate>1</negate>
-                    <path>~${username}/.bashrc</path>
-                </fileExists>
-            </ruleList>
-        </touchFile>        
-        <changeOwnerAndGroup>
-            <files>~${username}/*</files>
-            <group>${username}_group</group>
-            <owner>${username}</owner>
-            <ruleList>
-                <fileExists>
-                    <path>~${username}</path>
-                </fileExists>
-            </ruleList>
-        </changeOwnerAndGroup>
-        <exit>
-            <exitCode>1</exitCode>
-            <ruleList>
-                <userTest>
-                    <logic>not_exists</logic>
-                    <username>${username}</username>
-                </userTest>
-            </ruleList>
-        </exit>
+            <files>~${username}</files>
+            <permissions>0755</permissions>           
+        </changePermissions>        
+        
+                   
+                                                              
     </readyToInstallActionList>
                    
     <folderList>         
@@ -128,13 +107,23 @@
     </folderList> 
     
     <postInstallationActionList>
+        <runProgram>
+            <abortOnError>0</abortOnError>
+            <program>echo</program>
+            <programArguments>3 &gt; /proc/sys/net/ipv4/tcp_retries2</programArguments>
+            <ruleList>               
+                <fileExists>
+                    <path>/proc/sys/net/ipv4/tcp_retries2</path>
+                </fileExists>
+            </ruleList>
+        </runProgram>
         <createSymLink>
             <linkName>${installdir}/tools/server/php/libxml2/lib/libxml2.so</linkName>
             <target>${installdir}/tools/server/php/libxml2/lib/libxml2.so.2.9.0</target>
         </createSymLink>
         <runProgram>
             <program>chown</program>
-            <programArguments>-h ${username}:${username}_group ${installdir}/tools/server/php/libxml2/lib/libxml2.so</programArguments>            
+            <programArguments>-h ${username}:${groupname} ${installdir}/tools/server/php/libxml2/lib/libxml2.so</programArguments>            
         </runProgram>
         
         <createSymLink>
@@ -143,7 +132,7 @@
         </createSymLink>
         <runProgram>
             <program>chown</program>
-            <programArguments>-h ${username}:${username}_group ${installdir}/tools/server/php/libxml2/lib/libxml2.so.2</programArguments>            
+            <programArguments>-h ${username}:${groupname} ${installdir}/tools/server/php/libxml2/lib/libxml2.so.2</programArguments>            
         </runProgram>
         
         <createSymLink>
@@ -152,7 +141,7 @@
         </createSymLink>
         <runProgram>
             <program>chown</program>
-            <programArguments>-h ${username}:${username}_group ${installdir}/tools/server/php/libxml2/lib/libz.so</programArguments>            
+            <programArguments>-h ${username}:${groupname} ${installdir}/tools/server/php/libxml2/lib/libz.so</programArguments>            
         </runProgram>
         
         <createSymLink>
@@ -161,12 +150,12 @@
         </createSymLink>
         <runProgram>
             <program>chown</program>
-            <programArguments>-h ${username}:${username}_group ${installdir}/tools/server/php/libxml2/lib/libz.so.1</programArguments>            
+            <programArguments>-h ${username}:${groupname} ${installdir}/tools/server/php/libxml2/lib/libz.so.1</programArguments>            
         </runProgram>
         
         <changeOwnerAndGroup>
             <files>${installdir}/tools/server/php/libxml2/lib/*</files>
-            <group>${username}_group</group>
+            <group>${groupname}</group>
             <owner>${username}</owner>
         </changeOwnerAndGroup>
         <deleteFile>
@@ -256,7 +245,7 @@
         </changePermissions>        
         <changeOwnerAndGroup>
             <files>${project.rollbackBackupDirectory};${installdir}/rollback</files>
-            <group>${username}_group</group>
+            <group>${groupname}</group>
             <owner>${username}</owner>
         </changeOwnerAndGroup>        
         <changeOwnerAndGroup>
@@ -286,7 +275,7 @@
         </runProgram>
         <changeOwnerAndGroup>
             <files>${installdir}/packet/${installerFilename}</files>
-            <group>${username}_group</group>
+            <group>${groupname}</group>
             <owner>${username}</owner>
         </changeOwnerAndGroup>
         
@@ -336,7 +325,7 @@
         </createSymLink> 
         <runProgram>
             <program>chown</program>
-            <programArguments>-h ${username}:${username}_group ${installdir}/www/doc</programArguments>            
+            <programArguments>-h ${username}:${groupname} ${installdir}/www/doc</programArguments>            
         </runProgram>     
     </postInstallationActionList>
     
@@ -366,7 +355,7 @@
                     </ruleList>
                 </runProgram>
                 <deleteGroup>
-                    <groupname>${username}_group</groupname>
+                    <groupname>${groupname}</groupname>
                     <ruleList>
                         <userTest>
                             <logic>exists</logic>

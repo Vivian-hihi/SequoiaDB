@@ -133,6 +133,11 @@
             <origin>version.conf</origin>
             <destination>${installdir}</destination>
         </unpackFile>
+        <changeOwnerAndGroup>
+            <files>${installdir}/version.conf;${installdir}/compatible.sh</files>
+            <group>${groupname}</group>
+            <owner>${username}</owner>
+        </changeOwnerAndGroup>
                 
         <consoleWrite text="${msg(Upgrade.NormalMsg.JudgeComatible)}"/> 
         <changePermissions files="${installdir}/compatible.sh" permissions="0755"/>              
@@ -171,20 +176,21 @@
         </throwError>
         <consoleWrite text="ok&#xA;"/>
         
+        <!--check user and get group-->
         <consoleWrite text="${msg(Upgrade.NormalMsg.UserExist)}"/>
-        <setInstallerVariable name="has_user" value="0"/>
-        <setInstallerVariableFromScriptOutput>
-            <exec>cat</exec>
-            <execArgs> /etc/passwd | grep sdbadmin | wc -l</execArgs>
-            <name>has_user</name>
-        </setInstallerVariableFromScriptOutput>
         <throwError>
-            <text>${msg(Upgrade.ErrorMsg.UserExist)}</text>            
+            <text>${msg(Upgrade.ErrorMsg.UserExist)}</text>
             <ruleList>
-                <compareValues value1="${has_user}" logic="equals" value2="0"/>                                                        
+                <userTest logic="not_exists" username="${username}"/> 
             </ruleList>
         </throwError>
-        <consoleWrite text="ok&#xA;"/>  
+        <setInstallerVariableFromScriptOutput>
+            <name>groupname</name>
+            <exec>id</exec>
+            <execArgs>-ng ${username}</execArgs>
+            <customErrorMessage>${msg(Upgrade.ErrorMsg.GetGoup)}</customErrorMessage>                                    
+        </setInstallerVariableFromScriptOutput>
+        <consoleWrite text="ok&#xA;"/>
         
         <!--before upgrade, stop service -->  
         <consoleWrite text="${msg(Upgrade.NormalMsg.StopProcess)}"/>     
@@ -225,6 +231,7 @@
         <runProgram>
             <program>${installdir}/bin/sdbstop</program>
             <programArguments>-t all</programArguments> 
+            <runAs>${username}</runAs>
             <abortOnError>0</abortOnError> 
             <showMessageOnError>0</showMessageOnError>           
         </runProgram>
@@ -298,7 +305,7 @@
         </createSymLink>
         <runProgram>
             <program>chown</program>
-            <programArguments>-h ${username}:${username}_group ${installdir}/tools/server/php/libxml2/lib/libxml2.so</programArguments>            
+            <programArguments>-h ${username}:${groupname} ${installdir}/tools/server/php/libxml2/lib/libxml2.so</programArguments>            
         </runProgram>
         
         <createSymLink>
@@ -307,7 +314,7 @@
         </createSymLink>
         <runProgram>
             <program>chown</program>
-            <programArguments>-h ${username}:${username}_group ${installdir}/tools/server/php/libxml2/lib/libxml2.so.2</programArguments>            
+            <programArguments>-h ${username}:${groupname} ${installdir}/tools/server/php/libxml2/lib/libxml2.so.2</programArguments>            
         </runProgram>
         
         <createSymLink>
@@ -316,7 +323,7 @@
         </createSymLink>
         <runProgram>
             <program>chown</program>
-            <programArguments>-h ${username}:${username}_group ${installdir}/tools/server/php/libxml2/lib/libz.so</programArguments>            
+            <programArguments>-h ${username}:${groupname} ${installdir}/tools/server/php/libxml2/lib/libz.so</programArguments>            
         </runProgram>
         
         <createSymLink>
@@ -325,7 +332,7 @@
         </createSymLink>
         <runProgram>
             <program>chown</program>
-            <programArguments>-h ${username}:${username}_group ${installdir}/tools/server/php/libxml2/lib/libz.so.1</programArguments>            
+            <programArguments>-h ${username}:${groupname} ${installdir}/tools/server/php/libxml2/lib/libz.so.1</programArguments>            
         </runProgram>  
                      
         <changePermissions files="${installdir}/bin/{*,*/*}" permissions="0755">
@@ -371,7 +378,7 @@
         </changePermissions>
         <changeOwnerAndGroup>
             <files>${project.rollbackBackupDirectory};${installdir}/rollback</files>
-            <group>${username}_group</group>
+            <group>${groupname}</group>
             <owner>${username}</owner>
         </changeOwnerAndGroup>               
         <changeOwnerAndGroup>
@@ -431,7 +438,7 @@
         </runProgram> 
         <changeOwnerAndGroup>
             <files>${installdir}/packet;${installdir}/packet/${installerFilename}</files>
-            <group>${username}_group</group>
+            <group>${groupname}</group>
             <owner>${username}</owner>
         </changeOwnerAndGroup> 
            
@@ -471,13 +478,13 @@
         </runProgram>
         <changeOwnerAndGroup>
             <files>${installdir}/upgrade.log</files>
-            <group>${username}_group</group>
+            <group>${groupname}</group>
             <owner>${username}</owner>
         </changeOwnerAndGroup>               
         
         <changeOwnerAndGroup>
             <files>${installdir}/uninstall.dat</files>
-            <group>${username}_group</group>
+            <group>${groupname}</group>
             <owner>${username}</owner>
         </changeOwnerAndGroup> 
         
@@ -491,7 +498,7 @@
         </createSymLink>
         <runProgram>
             <program>chown</program>
-            <programArguments>-h ${username}:${username}_group ${installdir}/www/doc</programArguments>            
+            <programArguments>-h ${username}:${groupname} ${installdir}/www/doc</programArguments>            
         </runProgram>
     </postInstallationActionList>
         

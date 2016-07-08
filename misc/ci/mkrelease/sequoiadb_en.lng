@@ -1,6 +1,7 @@
 Install.Paramers.user.title=Confiture user information
 Install.Paramers.user.explanation=Please insert the desired username and password
 Install.Paramers.user.username.description=User Name
+Install.Paramers.user.groupname.description=Group Name
 Install.Paramers.user.password.description=Password
 Install.Paramers.user.reentry_password.description=Re-enter
 Install.Paramers.user.password.error=The password must not be empty
@@ -19,8 +20,9 @@ Install.Paramers.LicenseRead.Agree.Explanation=For More License's Detail, Please
 Install.Paramers.LicenseRead.Read.Description=Read The License
 Install.Paramers.LicenseRead.License.Information.Part=IMPORTANT: READ CAREFULLY\n\nTwo license agreements are presented below.\n\n1. SequoiaDB License Agreement for Evaluation of Programs\n\n2. SequoiaDB End-User License Agreement\n\nIf Licensee is obtaining the Program for purposes of productive use (other than evaluation, testing, trial "try or buy," or demonstration): By clicking on the "Accept" button below, Licensee accepts the SequoiaDB End-User License Agreement, without modification.\n\nIf Licensee is obtaining the Program for the purpose of evaluation, testing, trial "try or buy," or demonstration (collectively, an "Evaluation"): By clicking on the "Accept" button below, Licensee accepts both (i) the SequoiaDB License Agreement for Evaluation of Programs (the "Evaluation License"), without modification; and (ii) the SequoiaDB End-User License Agreement (the "SELA"), without modification.\n\nThe Evaluation License will apply during the term of Licensee's Evaluation.\n\nThe SELA will automatically apply if Licensee elects to retain the Program after the Evaluation (or obtain additional copies of the Program for use after the Evaluation) by entering into a procurement agreement.\n\nThe Evaluation License and the SELA are not in effect concurrently; neither modifies the other; and each is independent of the other.\n\nThe complete text of each of these two license agreements follow.\n\n\nLicense Agreement for Evaluation of Programs
 
-Install.ErrorMsg.CreateGroup.error=Warning:Group name exists already, skip create group action
-Install.ErrorMsg.CreateUser.error=Warning:User name exists already, skip create group action
+Install.ErrorMsg.CheckGroup=User ${username} exists, but it does not belong to group ${groupname}
+Install.ErrorMsg.CreateGroup=Failed to create group ${groupname}
+Install.ErrorMsg.CreateUser=Failed to create user ${username}
 Install.ErrorMsg.CreateWindowsService.error=Failed to create Sequoiadb Cluster Manager Service(sdbcm)
 Install.ErrorMsg.CreateLinuxService.error=Failed to create Sequoiadb Cluster Manager Service(sdbcm)
 Install.ErrorMsg.ChangeInsallerPathPermissions.error=Failed to change file permissions: ${installdir}/bin
@@ -41,7 +43,7 @@ Upgrade.NormalMsg.GetInstallDir.GetUser=Check: get install directory and user in
 Upgrade.NormalMsg.InstallationExist=Check: install dir ${installdir} is not empty ...... 
 Upgrade.NormalMsg.JudgeComatible=Check: compatibility between version ${old_version} ${old_edition_full} and ${new_version} ${new_edition_full} ...... 
 Upgrade.NormalMsg.DiskSpace=Check: disk space is enough ...... 
-Upgrade.NormalMsg.UserExist=Check: user ${username} is exist ......  
+Upgrade.NormalMsg.UserExist=Check: user ${username} is exist, and get group ......  
 Upgrade.NormalMsg.StopProcess=Check: relevant processes are stoped ...... 
 
 Upgrade.NormalMsg.BeginRollback=Upgrade aborted for error, begin to rollback ...... 
@@ -64,3 +66,4 @@ Upgrade.ErrorMsg.DiskSpace=There is not enough disk space for installation.
 Upgrade.ErrorMsg.UserExist=User ${username} does not exist.
 Upgrade.ErrorMsg.StopProcess=Revelant processes still exists.
 Upgrade.ErrorMsg.StartProcess=sdbcm or sdbcmd has not been started.
+Upgrade.ErrorMsg.GetGoup=Failed to get group of user ${username} 

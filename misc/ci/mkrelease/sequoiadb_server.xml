@@ -201,6 +201,15 @@
                             <allowEmptyValue>0</allowEmptyValue>
                             <width>40</width>
                         </stringParameter>
+                        <stringParameter>
+                            <name>groupname</name>
+                            <description>${msg(Install.Paramers.user.groupname.description)}</description>
+                            <explanation></explanation>
+                            <value>sdbadmin_group</value>
+                            <default>sdbadmin_group</default>
+                            <allowEmptyValue>0</allowEmptyValue>
+                            <width>40</width>
+                        </stringParameter>
                         <passwordParameter>
                             <name>userpasswd</name>
                             <description>${msg(Install.Paramers.user.password.description)}</description>
@@ -372,7 +381,8 @@
         </runProgram>
         <runProgram>
             <program>${installdir}/bin/sdbstop</program>
-            <programArguments>-t all</programArguments>           
+            <programArguments>-t all</programArguments> 
+            <runAs>${username}</runAs>          
         </runProgram>
         <removeUnixService>
             <name>sdbcm</name>            
@@ -402,7 +412,7 @@
     <allowedLanguages>en zh_CN</allowedLanguages>
     <debuggerPassword>sequoiadb</debuggerPassword>
     <enableDebugger>1</enableDebugger>
-    <defaultUnixGroup>${username}_group</defaultUnixGroup>
+    <defaultUnixGroup>${groupname}</defaultUnixGroup>
     <defaultUnixOwner>${username}</defaultUnixOwner>    
     <enableRollback>1</enableRollback>
     <enableTimestamp>1</enableTimestamp>

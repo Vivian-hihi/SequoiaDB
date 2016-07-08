@@ -1,6 +1,7 @@
 ﻿Install.Paramers.user.title=数据库管理用户配置
 Install.Paramers.user.explanation=配置用于启动SequoiaDB的用户名和密码
 Install.Paramers.user.username.description=用户名
+Install.Paramers.user.groupname.description=用户组
 Install.Paramers.user.password.description=密码
 Install.Paramers.user.reentry_password.description=确认密码
 Install.Paramers.user.password.error=密码不能为空
@@ -19,9 +20,9 @@ Install.Paramers.LicenseRead.Agree.Explanation=了解更多的协议内容，可
 Install.Paramers.LicenseRead.Read.Description=查看详细的协议内容
 Install.Paramers.LicenseRead.License.Information.Part=重要信息：请仔细阅读\n\n下面提供了两个许可协议。\n\n1. SequoiaDB 评估程序的最终用户许可协议\n2. SequoiaDB 最终用户许可协议\n\n如果被许可方为了生产性使用目的（而不是为了评估、测试、试用“先试后买”或演示）获得本程序，单击下面的“接受”按钮即表示被许可方接受 SequoiaDB 最终用户许可协议，且不作任何修改。\n\n如果被许可方为了评估、测试、试用“先试后买”或演示（统称为“评估”）目的获得本程序：单击下面的“接受”按钮即表示被许可方同时接受（i）SequoiaDB 评估程序的最终用户许可协议（“评估许可”），且不作任何修改；和（ii）SequoiaDB 最终用户程序许可协议（SELA），且不作任何修改。\n\n在被许可方的评估期间将适用“评估许可”。\n\n如果被许可方通过签署采购协议在评估之后选择保留本程序（或者获得附加的本程序副本供评估之后使用），SequoiaDB 评估程序的最终用户许可协议将自动适用。\n\n“评估许可”和 SequoiaDB 最终用户许可协议不能同时有效；两者之间不能互相修改，并且彼此独立。\n\n这两个许可协议中每个协议的完整文本如下。\n\n评估程序的最终用户许可协议\n\n
 
-
-Install.ErrorMsg.CreateGroup.error=警告:用户组已经存在,跳过创建用户组操作
-Install.ErrorMsg.CreateUser.error=警告:用户已经存在,跳过创建用户操作
+Install.ErrorMsg.CheckGroup=用户${username}存在，但该用户不属于用户组${groupname}
+Install.ErrorMsg.CreateGroup=创建用户组${groupname}失败
+Install.ErrorMsg.CreateUser=创建用户${username}失败
 Install.ErrorMsg.CreateWindowsService.error=创建集群管理服务(sdbcm)失败
 Install.ErrorMsg.CreateLinuxService.error=创建集群管理服务(sdbcm)失败
 Install.ErrorMsg.ChangeInsallerPathPermissions.error=修改安装目录(${installdir}/bin)权限失败
@@ -42,7 +43,7 @@ Upgrade.NormalMsg.GetInstallDir.GetUser=检查：在${sys_conf_file}中获取安
 Upgrade.NormalMsg.InstallationExist=检查：安装目录${installdir}不为空 ...... 
 Upgrade.NormalMsg.JudgeComatible=检查：旧版本 ${old_version} ${old_edition_full} 与新版本 ${new_version} ${new_edition_full} 兼容 ...... 
 Upgrade.NormalMsg.DiskSpace=检查：磁盘空间足够 ...... 
-Upgrade.NormalMsg.UserExist=检查：用户${username}存在 ...... 
+Upgrade.NormalMsg.UserExist=检查：用户${username}存在，并获取用户组 ...... 
 Upgrade.NormalMsg.StopProcess=检查：相关进程已停止 ...... 
 
 Upgrade.NormalMsg.BeginRollback=发生错误，升级中止，开始回滚 ...... 
@@ -65,3 +66,4 @@ Upgrade.ErrorMsg.DiskSpace=磁盘空间不够
 Upgrade.ErrorMsg.UserExist=用户${username}不存在
 Upgrade.ErrorMsg.StopProcess=数据库相关进程未停止
 Upgrade.ErrorMsg.StartProcess=sdbcm或者sdbcmd未启动
+Upgrade.ErrorMsg.GetGoup=获取用户${username}的用户组失败
