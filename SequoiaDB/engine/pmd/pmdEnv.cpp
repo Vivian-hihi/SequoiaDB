@@ -451,6 +451,11 @@ namespace engine
       return pmdGetSysInfo()->_tick ;
    }
 
+   UINT64 pmdAcquireGlobalID()
+   {
+      return pmdGetSysInfo()->_globalID.inc() ;
+   }
+
    UINT64 pmdGetTickSpanTime( UINT64 lastTick )
    {
       UINT64 curTick = pmdGetDBTick() ;

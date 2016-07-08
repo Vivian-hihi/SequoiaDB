@@ -2324,8 +2324,9 @@ namespace engine
       }
 
       PD_LOG( PDEVENT, "Session[%s]: Established the split session with "
-              "node[%s]", sessionName(),
-              routeID2String( _selector.src() ).c_str() ) ;
+              "node[%s], Remote LSN:[%u,%lld]", sessionName(),
+              routeID2String( _selector.src() ).c_str(),
+              _expectLSN.version, _expectLSN.offset ) ;
 
       // reset timer
       _selector.clearTime() ;

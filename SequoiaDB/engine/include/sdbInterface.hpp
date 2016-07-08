@@ -333,7 +333,7 @@ namespace engine
          virtual BOOLEAN   isForced () = 0 ;
 
          virtual BOOLEAN   isWritingDB() const = 0 ;
-         virtual UINT64    getWritingTime() const = 0 ;
+         virtual UINT64    getWritingID() const = 0 ;
          virtual void      writingDB( BOOLEAN writing ) = 0 ;
 
          virtual UINT32    getProcessedNum() const = 0 ;

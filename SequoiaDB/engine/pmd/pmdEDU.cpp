@@ -149,7 +149,7 @@ namespace engine
       _eduType          = type ;
       _ctrlFlag         = 0 ;
       _writingDB        = FALSE ;
-      _writingTime      = 0 ;
+      _writingID        = 0 ;
       _processEventCount= 0 ;
       _name[0]          = 0 ;
       _threadHdl        = 0 ;
@@ -812,7 +812,7 @@ namespace engine
    void _pmdEDUCB::writingDB( BOOLEAN writing )
    {
       _writingDB = writing ;
-      _writingTime = writing ? (UINT64)time( NULL ) : 0 ;
+      _writingID = writing ? pmdAcquireGlobalID() : 0 ;
    }
 
    void _pmdEDUCB::resetLsn()

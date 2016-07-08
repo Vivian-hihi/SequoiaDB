@@ -207,7 +207,7 @@ namespace engine
 
       INT32    _interruptWritingEDUs() ;
       UINT32   _getWritingEDUCount( INT32 eduTypeFilter = -1,
-                                    UINT64 timeThreshold = 0 ) ;
+                                    UINT64 idThreshold = 0 ) ;
 
       void setDestroyed ( BOOLEAN b )
       {
@@ -377,9 +377,9 @@ namespace engine
 
       INT32    interruptWritingEDUS() { return _interruptWritingEDUs() ; }
       UINT32   getWritingEDUCount( INT32 eduTypeFilter = -1,
-                                   UINT64 timeThreshold = 0 )
+                                   UINT64 idThreshold = 0 )
       {
-         return _getWritingEDUCount( eduTypeFilter, timeThreshold ) ;
+         return _getWritingEDUCount( eduTypeFilter, idThreshold ) ;
       }
 
       pmdEDUCB *getEDU ( UINT32 tid ) ;

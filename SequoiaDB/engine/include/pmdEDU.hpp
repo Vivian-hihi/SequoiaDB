@@ -132,7 +132,7 @@ namespace engine
          virtual BOOLEAN   isForced () ;
 
          virtual BOOLEAN   isWritingDB() const { return _writingDB ; }
-         virtual UINT64    getWritingTime() const { return _writingTime ; }
+         virtual UINT64    getWritingID() const { return _writingID ; }
          virtual void      writingDB( BOOLEAN writing ) ;
 
          virtual UINT32    getProcessedNum() const { return _processEventCount ; }
@@ -496,7 +496,7 @@ namespace engine
 
       INT32                   _ctrlFlag ;
       BOOLEAN                 _writingDB ;
-      UINT64                  _writingTime ;
+      UINT64                  _writingID ;
       /// aligned memory.
       void                    *_alignedMem ;
       UINT32                   _alignedMemSize ;

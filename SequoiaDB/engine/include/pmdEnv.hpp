@@ -70,8 +70,11 @@ namespace engine
       /// loop updated by clsReplicaSet
       volatile UINT64               _validationTick ;
 
+      /// global id
+      ossAtomic64                   _globalID ;
+
       _pmdSysInfo()
-      :_isPrimary( 0 )
+      :_isPrimary( 0 ), _globalID( 0 )
       {
          _dbrole        = SDB_ROLE_STANDALONE ;
          _nodeID.value  = MSG_INVALID_ROUTEID ;
@@ -118,6 +121,8 @@ namespace engine
                                UINT64 &validationTick ) ;
 
    BOOLEAN        pmdDBIsAbnormal() ;
+
+   UINT64         pmdAcquireGlobalID() ;
 
    pmdSysInfo*    pmdGetSysInfo () ;
 

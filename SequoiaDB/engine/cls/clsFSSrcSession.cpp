@@ -2117,8 +2117,10 @@ namespace engine
 
    void _clsSplitSrcSession::_onNotifyOver( const CHAR *clFullName )
    {
-      _ntyOverTime = (UINT64)time( NULL ) ;
+      _ntyOverTime = pmdAcquireGlobalID() ;
       _pFreezingWindow->registerCL( clFullName ) ;
+      PD_LOG( PDEVENT, "Session[%s]: Begin to block all write operations "
+              "of collection[%s]", sessionName(), clFullName ) ;
    }
 
    INT32 _clsSplitSrcSession::_scanType() const
@@ -2368,6 +2370,9 @@ namespace engine
          sendRsp = TRUE ;
          _pFreezingWindow->unregisterCL( _curCollecitonName.c_str() ) ;
          _ntyOverTime = 0 ;
+         PD_LOG( PDEVENT, "Session[%s]: End to block all write operations "
+                 "of collection[%s]", sessionName(),
+                 _curCollecitonName.c_str() ) ;
       }
       _pCatAgent->release_r() ;     //unlock
       if ( !mainCLName.empty() )
@@ -2661,6 +2666,9 @@ namespace engine
       if ( !_curCollecitonName.empty() && _ntyOverTime > 0 )
       {
          _pFreezingWindow->unregisterCL( _curCollecitonName.c_str() ) ;
+         PD_LOG( PDEVENT, "Session[%s]: End to block all write operations "
+                 "of collection[%s]", sessionName(),
+                 _curCollecitonName.c_str() ) ;
       }
 
       // wait cleanup done

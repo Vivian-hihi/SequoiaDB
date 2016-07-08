@@ -3280,6 +3280,10 @@ namespace engine
          goto error ;
       }
 
+      /// When split, use writingCB to prevent reading lob conflicted
+      /// with clean job
+      eduCB()->writingDB( TRUE ) ;
+
       /// check catalog version
       rc = _checkCLStatusAndGetSth( lobContext->getFullName(),
                                     header->version,

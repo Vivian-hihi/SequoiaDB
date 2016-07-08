@@ -412,7 +412,7 @@ namespace engine
    }
 
    UINT32 _pmdEDUMgr::_getWritingEDUCount ( INT32 eduTypeFilter,
-                                            UINT64 timeThreshold )
+                                            UINT64 idThreshold )
    {
       UINT32 eduCount = 0 ;
       std::map<EDUID, pmdEDUCB*>::iterator it ;
@@ -429,8 +429,8 @@ namespace engine
                {
                   continue ;
                }
-               else if ( 0 != timeThreshold &&
-                         (*it).second->getWritingTime() > timeThreshold )
+               else if ( 0 != idThreshold &&
+                         (*it).second->getWritingID() > idThreshold )
                {
                   continue ;
                }
