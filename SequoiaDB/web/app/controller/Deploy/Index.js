@@ -1063,7 +1063,7 @@
                      "type": "select",
                      "value": null,
                      "valid": []
-                  },
+                  }
                ]
             } ;
             $.each( $scope.moduleList, function( index, moduleInfo ){
