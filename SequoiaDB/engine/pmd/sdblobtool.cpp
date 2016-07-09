@@ -59,7 +59,7 @@ using namespace std ;
         ( MIG_DST_USRNAME, boost::program_options::value<string>(), "Destination username(Specify it when use migration)" )\
         ( MIG_DST_PASSWD, boost::program_options::value<string>(), "Destination password(Specify it when use migration)" )\
         ( MIG_DST_CL, boost::program_options::value<string>(), "Destination collection(Specify it when use migration)" )\
-        ( MIG_SESSION_PREFER, boost::program_options::value<string>(), "Indicate which instance to respond export request in current session. (\"m\"/\"M\"/\"s\"/\"S\"/\"a\"/\"A\"/1-7 default is \"M\")" )
+        ( MIG_SESSION_PREFER, boost::program_options::value<string>(), "Indicate which instance to respond export request in current session. (\"m\"/\"M\"/\"s\"/\"S\"/\"a\"/\"A\"/1-7 default is \"M\")" ) \
 
 static void initDesc( po::options_description &desc )
 {
@@ -216,7 +216,7 @@ static INT32 parseCmdLine( const po::options_description &desc,
       }
       catch ( boost::bad_lexical_cast &e )
       {
-         builder.append( FIELD_NAME_PREFERED_INSTANCE, "M" ) ;
+         builder.append( FIELD_NAME_PREFERED_INSTANCE, prefer ) ;
       }
    }
    else
