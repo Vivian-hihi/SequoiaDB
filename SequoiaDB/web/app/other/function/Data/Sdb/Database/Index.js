@@ -1875,6 +1875,25 @@ _DataDatabaseIndex.showAttachCL = function( $scope, SdbRest ){
                      }
                   },
                   {
+                     "name": "type",
+                     "webName": $scope.autoLanguage( "类型" ),
+                     "placeholder": $scope.autoLanguage( "类型" ),
+                     "type": "select",
+                     "value": "Auto",
+                     "valid": [
+                        { "key": "Auto",      "value": "Auto" },
+                        { "key": "Bool",      "value": "Bool" },
+                        { "key": "Number",    "value": "Number" },
+                        { "key": "Decimal",   "value": "Decimal" },
+                        { "key": "String",    "value": "String" },
+                        { "key": "ObjectId",  "value": "ObjectId" },
+                        { "key": "Regex",     "value": "Regex" },
+                        { "key": "Binary",    "value": "Binary" },
+                        { "key": "Timestamp", "value": "Timestamp" },
+                        { "key": "Date",      "value": "Date" }
+                     ]
+                  },
+                  {
                      "name": "LowBound",
                      "webName": $scope.autoLanguage( "区间左值" ),
                      "placeholder": $scope.autoLanguage( "区间左值" ),
@@ -1905,21 +1924,30 @@ _DataDatabaseIndex.showAttachCL = function( $scope, SdbRest ){
          var upbound = {} ;
          $.each( value['range'], function( index, fieldInfo ){
             var fieldName = fieldInfo['field'] ;
-            if( fieldInfo['LowBound'] == '$minKey' )
-            {
-               lowbound[ fieldName ] = { '$minKey': 1 } ;
-            }
-            else
+
+            if( fieldInfo['type'] == 'Auto' )
             {
                lowbound[ fieldName ] = autoTypeConvert( fieldInfo['LowBound'], true ) ;
-            }
-            if( fieldInfo['UpBound'] == '$maxKey' )
-            {
-               upbound[ fieldName ] = { '$maxKey': 1 } ;
+               upbound[ fieldName ]  = autoTypeConvert( fieldInfo['UpBound'], true ) ;
             }
             else
             {
-               upbound[ fieldName ] = autoTypeConvert( fieldInfo['UpBound'], true ) ;
+               if( fieldInfo['LowBound'].toLowerCase() == '$minkey' )
+               {
+                  lowbound[ fieldName ] = { '$minKey': 1 } ;
+               }
+               else
+               {
+                  lowbound[ fieldName ] = specifyTypeConvert( fieldInfo['LowBound'], fieldInfo['type'] ) ;
+               }
+               if( fieldInfo['UpBound'].toLowerCase() == '$maxkey' )
+               {
+                  upbound[ fieldName ] = { '$maxKey': 1 } ;
+               }
+               else
+               {
+                  upbound[ fieldName ] = specifyTypeConvert( fieldInfo['UpBound'], fieldInfo['type'] ) ;
+               }
             }
          } ) ;
          var data = { 'cmd': 'attach collection',
