@@ -232,5 +232,3 @@ shellEnv.Install( '#/bin', sdbbp )
 if "win32" == guess_os:
    if usesm:
       shellEnv.Install( '#/bin', smlib_file)
-   shellEnv.Install( '#/bin', ssllib_file)
-   shellEnv.Install( '#/bin', ssllib_file1)
