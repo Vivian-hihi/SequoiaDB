@@ -1,5 +1,5 @@
 Install.Paramers.user.title=Confiture user information
-Install.Paramers.user.explanation=Please insert the desired username and password
+Install.Paramers.user.explanation=Please insert the desired username groupname and password
 Install.Paramers.user.username.description=User Name
 Install.Paramers.user.groupname.description=Group Name
 Install.Paramers.user.password.description=Password
@@ -31,6 +31,7 @@ Install.ErrorrMsg.StopSdbCm.error=Failed to stop Sequoiadb Cluster Manager Servi
 Install.ErrorMsg.StopSequoiadb.error=Failed to stop SequoiaDB database service
 Install.ErrorMsg.DeleteUser.error=Failed to delete user:${username}
 Install.ErrorMsg.IntallationOM.error=Create OM failed
+Install.WarnMsg.CheckUmask=Umask abnormal! Current umask = ${full_mask}, recommended value is 0022
 
 Upgrade.Paramers.Upgrade.Explanation=Do You Want To Upgrade
 Upgrade.Paramers.Upgrade.Check=Invalid parameter value: --upgrade ${is_upgrade_mode}, should be true or false

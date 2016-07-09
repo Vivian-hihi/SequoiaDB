@@ -132,8 +132,8 @@
             <folder>files_except_conf</folder>
             <origin>version.conf</origin>
             <destination>${installdir}</destination>
-        </unpackFile>
-        <changeOwnerAndGroup>
+        </unpackFile>       
+        <changeOwnerAndGroup><!--backup path will add these files, if not change own, they are root owner-->
             <files>${installdir}/version.conf;${installdir}/compatible.sh</files>
             <group>${groupname}</group>
             <owner>${username}</owner>
@@ -191,6 +191,7 @@
             <customErrorMessage>${msg(Upgrade.ErrorMsg.GetGoup)}</customErrorMessage>                                    
         </setInstallerVariableFromScriptOutput>
         <consoleWrite text="ok&#xA;"/>
+          
         
         <!--before upgrade, stop service -->  
         <consoleWrite text="${msg(Upgrade.NormalMsg.StopProcess)}"/>     

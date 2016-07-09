@@ -1,5 +1,5 @@
 ﻿Install.Paramers.user.title=数据库管理用户配置
-Install.Paramers.user.explanation=配置用于启动SequoiaDB的用户名和密码
+Install.Paramers.user.explanation=配置用于启动SequoiaDB的用户名、用户组和密码
 Install.Paramers.user.username.description=用户名
 Install.Paramers.user.groupname.description=用户组
 Install.Paramers.user.password.description=密码
@@ -31,6 +31,7 @@ Install.ErrorMsg.StopSdbCm.error=停止集群管理服务(sdbcm)失败
 Install.ErrorMsg.StopSequoiadb.error=停止SequoiaDB数据库服务失败
 Install.ErrorMsg.DeleteUser.error=删除用户${username}失败
 Install.ErrorMsg.IntallationOM.error=创建OM失败
+Install.WarnMsg.CheckUmask=umask值异常！当前umask=${full_mask}，建议改成0022
 
 Upgrade.Paramers.Upgrade.Explanation=是否升级
 Upgrade.Paramers.Upgrade.Check=无效参数: --upgrade ${is_upgrade_mode}, 参数值必须是true或者false
@@ -66,4 +67,5 @@ Upgrade.ErrorMsg.DiskSpace=磁盘空间不够
 Upgrade.ErrorMsg.UserExist=用户${username}不存在
 Upgrade.ErrorMsg.StopProcess=数据库相关进程未停止
 Upgrade.ErrorMsg.StartProcess=sdbcm或者sdbcmd未启动
+Install.ErrorMsg.IntallOM=拷贝安装包到packet目录失败
 Upgrade.ErrorMsg.GetGoup=获取用户${username}的用户组失败

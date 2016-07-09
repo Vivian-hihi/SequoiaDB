@@ -158,14 +158,12 @@
             <group>${groupname}</group>
             <owner>${username}</owner>
         </changeOwnerAndGroup>
-        <deleteFile>
-            <path>/etc/default/sequoiadb</path>
-            <ruleList>
-                <fileExists>
-                    <path>/etc/default/sequoiadb</path>
-                </fileExists>
-            </ruleList>
-        </deleteFile>
+        <deleteFile path="/etc/default/sequoiadb"/>
+        <touchFile path="/etc/default/sequoiadb"/>                       
+        <changePermissions><!--make sure permission is 644-->
+            <files>/etc/default/sequoiadb</files>
+            <permissions>0644</permissions>               
+        </changePermissions> 
         <propertiesFileSet>
             <file>/etc/default/sequoiadb</file>
             <key>NAME</key>

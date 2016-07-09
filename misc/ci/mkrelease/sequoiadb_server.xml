@@ -34,7 +34,7 @@
         <setInstallerVariable name="begin_normal_component" value="false"/>       
     </initializationActionList>
     
-    <!--exist installation?-->
+    <!--exist installation? different mode has different parameterLis-->
     <preInstallationActionList>
         <!--upgrde parameter check-->         
         <actionGroup> 
@@ -59,8 +59,15 @@
             <format>%Y-%m-%d-%H:%M:%S</format>
         </createTimeStamp>                
         <setInstallerVariable name="project.rollbackBackupDirectory" value="${installdir}/rollback/BackupDir_${time}"/>
-        
-        <!--if no pass upgrade parameter in commandline-->                                                                                                                                                       
+                
+        <!--if no pass upgrade parameter in commandline--> 
+        <changePermissions><!--make sure permission is 644-->
+            <files>${sys_conf_file}</files>
+            <permissions>0644</permissions>
+            <ruleList>
+                <fileExists path="${sys_conf_file}"/>
+            </ruleList>
+        </changePermissions>                                                                                                                                                       
         <actionGroup> 
             <actionList>
                 <propertiesFileGet>
@@ -89,7 +96,7 @@
             </ruleList>          
         </actionGroup>        
                                                                        
-    </preInstallationActionList> 
+    </preInstallationActionList>
     
     <parameterList>
         <!--keep variable in both running time and building time-->
@@ -324,7 +331,7 @@
         
     </parameterList>
     
-    <!--select compoment-->
+    <!--select compoment, and check environment-->
     <readyToInstallActionList>                        
         <!--when unattended mode, execute postShowPageActionList-->
         <actionGroup> 
@@ -366,6 +373,36 @@
                 <compareValues value1="${project.installationType}" value2="normal" logic="equals"/>
             </ruleList>
         </componentSelection>         
+            
+        <!--check umask-->
+        <setInstallerVariableFromScriptOutput>
+            <name>full_mask</name>
+            <exec>umask</exec>           
+        </setInstallerVariableFromScriptOutput>
+        <setInstallerVariableFromScriptOutput>
+            <name>other_mask</name>
+            <exec>echo</exec>
+            <execArgs>${full_mask} | awk '{print substr($0,length($0)-0,1)}'</execArgs>
+        </setInstallerVariableFromScriptOutput>
+        <setInstallerVariableFromScriptOutput>
+            <name>group_mask</name>
+            <exec>echo</exec>
+            <execArgs>${full_mask} | awk '{print substr($0,length($0)-1,1)}'</execArgs>
+        </setInstallerVariableFromScriptOutput>
+        <setInstallerVariableFromScriptOutput>
+            <name>user_mask</name>
+            <exec>echo</exec>
+            <execArgs>${full_mask} | awk '{print substr($0,length($0)-2,1)}'</execArgs>
+        </setInstallerVariableFromScriptOutput>
+        <showWarning>
+            <text>${msg(Install.WarnMsg.CheckUmask)}</text>
+            <ruleEvaluationLogic>or</ruleEvaluationLogic>
+            <ruleList>
+                <compareValues value1="${other_mask}" logic="greater" value2="2"/>
+                <compareValues value1="${group_mask}" logic="greater" value2="2"/>
+                <compareValues value1="${user_mask}"  logic="greater" value2="0"/>
+            </ruleList>
+        </showWarning>
                                           
     </readyToInstallActionList>  
                        
