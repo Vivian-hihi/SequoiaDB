@@ -21,11 +21,15 @@ sdblobtool 是一款用于管理集合大对象的工具。
   operation    操作类型             -           是
   file         本地文件全路径       -           是
   collection   需要导出的集合全名   -           是
-  prefer       优先选择的实例       A           否
+  prefer       优先选择的实例       M           否
   ssl          使用 SSL 连接。      false       否
+  
+**Note:**
+
+-   prefer的取值"m"/"M"指master，"s"/"S"表示slave，"a"/"A"表示anyone，1-7表示node1-node7，默认为M。
 
 **导入选项**
-
+258 046 578
   名称         描述                                                              默认值      是否必填
   ------------ ----------------------------------------------------------------- ----------- ------------
   hostname     Coord 地址                                                        localhost   否
