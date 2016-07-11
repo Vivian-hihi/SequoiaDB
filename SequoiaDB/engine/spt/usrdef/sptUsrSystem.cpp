@@ -1201,7 +1201,8 @@ namespace engine
             {
             UINT32 coreNum    = processorCount ;
             string info       = modelName ;
-            string strAvgFreq = "0" ;
+            string strAvgFreq ;
+            FLOAT32 totalFreq = 0.0 ;
 
             for ( vector<string>::iterator itr2 = vecFreq.begin();
                   itr2 != vecFreq.end(); itr2++ )
@@ -1210,21 +1211,27 @@ namespace engine
                boost::algorithm::replace_last( freq, "MHz", "" ) ;
                try
                {
-                  FLOAT32 avg = boost::lexical_cast<FLOAT32>( strAvgFreq ) ;
                   FLOAT32 inc = boost::lexical_cast<FLOAT32>( freq ) ;
-                  if ( avg > -0.0001 && avg < 0.0001 )
-                     avg = inc / 1000.0 ;
-                  else
-                     avg = ( avg + ( inc / 1000.0 ) ) / 2 ;
-                  strAvgFreq  = boost::lexical_cast<string>( avg ) ;
+                  totalFreq += inc / 1000.0 ;
                } 
                catch( std::exception &e )
                {
-                  PD_LOG( PDERROR, "unexpected err happened:%s, content:[%s,%s]",
-                          e.what(), strAvgFreq.c_str(), freq.c_str() ) ;
+                  PD_LOG( PDERROR, "unexpected err happened:%s, content:[%s]",
+                          e.what(), freq.c_str() ) ;
                   rc = SDB_SYS ;
                   goto error ;
                }
+            }
+            try
+            {
+               strAvgFreq = boost::lexical_cast<string>( totalFreq / coreNum ) ;
+            }
+            catch( std::exception &e )
+            {
+               PD_LOG( PDERROR, "unexpected err happened:%s, content:[%f]",
+                       e.what(), totalFreq / coreNum ) ;
+               rc = SDB_SYS ;
+               goto error ;
             }
             arrBuilder << BSON( SPT_USR_SYSTEM_CORE << coreNum
                                 << SPT_USR_SYSTEM_INFO << info
@@ -1352,7 +1359,8 @@ namespace engine
          string physicalID = *itr ;
          UINT32 coreNum    = 0 ;
          string info       = "" ;
-         string strAvgFreq = "0" ;
+         string strAvgFreq ;
+         FLOAT32 totalFreq = 0.0 ;
          for ( vector<cpuInfo>::iterator itr2 = vecCpuInfo.begin();
                itr2 != vecCpuInfo.end(); itr2++ )
          {
@@ -1361,19 +1369,13 @@ namespace engine
                // set freq
                try
                {
-                  FLOAT32 avg = boost::lexical_cast<FLOAT32>( strAvgFreq ) ;
                   FLOAT32 inc = boost::lexical_cast<FLOAT32>( itr2->freq ) ;
-                  if ( avg > -0.0001 && avg < 0.0001 )
-                     avg = inc / 1000.0 ;
-                  else
-                     avg = ( avg + ( inc / 1000.0 ) ) / 2 ;
-                  strAvgFreq  = boost::lexical_cast<string>( avg ) ;
+                  totalFreq += inc / 1000.0 ;
                }
                catch ( std::exception &e )
                {
-                  PD_LOG( PDERROR, "unexpected err happened:%s, content:[%s,%s]",
-                          e.what(), strAvgFreq.c_str(), 
-                          (itr2->freq).c_str() ) ;
+                  PD_LOG( PDERROR, "unexpected err happened:%s, content:[%s]",
+                          e.what(), (itr2->freq).c_str() ) ;
                   rc = SDB_SYS ;
                   goto error ;
                }
@@ -1385,6 +1387,17 @@ namespace engine
                // set core num
                coreNum++ ;
             }
+         }
+         try
+         {
+            strAvgFreq = boost::lexical_cast<string>( totalFreq / coreNum ) ;
+         }
+         catch( std::exception &e )
+         {
+            PD_LOG( PDERROR, "unexpected err happened:%s, content:[%f]",
+                    e.what(), totalFreq / coreNum ) ;
+            rc = SDB_SYS ;
+            goto error ;
          }
          arrBuilder << BSON( SPT_USR_SYSTEM_CORE << coreNum
                              << SPT_USR_SYSTEM_INFO << info
