@@ -25,6 +25,8 @@
 #include <cstring>
 #include "common_decimal.h"
 
+#define DLLEXPORT SDB_EXPORT
+
 using namespace std;
 /** \namespace bson
     \brief Include files for C++ BSON module
@@ -35,7 +37,7 @@ namespace bson {
    #define BSONDECIMAL_TOSTRING_NICE   ( 1 )
    #define BSONDECIMAL_TOSTRING_SIMPLE ( 2 )
 
-   class bsonDecimal
+   class DLLEXPORT bsonDecimal
    {
    public:
       bsonDecimal() ;
