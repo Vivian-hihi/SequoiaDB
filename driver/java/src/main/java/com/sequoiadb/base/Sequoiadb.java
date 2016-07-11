@@ -524,10 +524,13 @@ public class Sequoiadb {
 	 * @exception com.sequoiadb.exception.BaseException
 	 */
 	public void disconnect() throws BaseException {
-		byte[] request = SDBMessageHelper.buildDisconnectRequest(endianConvert);
-		releaseResource();
-		connection.sendMessage(request);
-		connection.close();
+		try {
+			byte[] request = SDBMessageHelper.buildDisconnectRequest(endianConvert);
+			releaseResource();
+			connection.sendMessage(request);
+		} finally {
+			connection.close();
+		}
 	}
 
 	/**
