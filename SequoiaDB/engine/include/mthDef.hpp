@@ -91,8 +91,14 @@ namespace engine
    #define MTH_ATTR_IS_PROJECTION( attribute ) \
            ( MTH_ATTR_IS_INCLUDE(attribute) && OSS_BIT_TEST(attribute, MTH_S_ATTR_PROJECTION_BIT))
 
+#ifdef _WINDOWS
+   #define MTH_TRUNC(x)  ( (x)>0 ? floor(x) : ceil(x) )
+   #define MTH_MOD(x,y)\
+        ( (x) - ( MTH_TRUNC((x) / (y)) * (y) ) )
+#else
    #define MTH_MOD(x,y)\
         ( (x) - ( trunc((x) / (y)) * (y) ) )
+#endif //_WINDOWS
 }
 
 #endif
