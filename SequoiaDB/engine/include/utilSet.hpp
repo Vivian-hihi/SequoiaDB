@@ -64,7 +64,7 @@ namespace engine
    public:
       class iterator
       {
-         friend class _utilSet<T> ;
+         friend class _utilSet< T, stackSize > ;
          public:
             iterator()
             {
@@ -536,6 +536,7 @@ namespace engine
             {
                return i ;
             }
+            ++i ;
          }
          return this->npos ;
       }
