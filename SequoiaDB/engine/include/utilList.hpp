@@ -65,7 +65,7 @@ namespace engine
    public:
       class iterator
       {
-         friend class _utilList<T> ;
+         friend class _utilList< T, stackSize > ;
          public:
             iterator()
             {
