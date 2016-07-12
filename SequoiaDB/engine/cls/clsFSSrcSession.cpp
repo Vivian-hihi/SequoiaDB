@@ -1138,8 +1138,8 @@ namespace engine
             goto error ;
          }
 
-         PD_LOG ( PDEVENT, "Session[%s]: Begin collection[%s.%s]",
-                  sessionName(), cs, collection ) ;
+         PD_LOG ( PDEVENT, "Session[%s]: Begin collection[%s.%s], NeedData:%u",
+                  sessionName(), cs, collection, _needData ) ;
 
          _curCollecitonName = cs ;
          _curCollecitonName += "." ;
