@@ -472,7 +472,7 @@ namespace engine
       {
          if ( _pSet )
          {
-            pair< typename set<T>::iterator, set<T>::iterator > tmp =
+            pair< typename set<T>::iterator, typename set<T>::iterator > tmp =
                _pSet->equal_range( val ) ;
             return pair<iterator, iterator>( iterator( tmp.first ),
                                              iterator( tmp.second ) ) ;
