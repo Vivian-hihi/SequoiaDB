@@ -61,6 +61,7 @@ INT32 main ( INT32 argc, CHAR **argv )
    // define local variables
    // initialize them before use
    bson obj ;
+   bson_decimal decimal ;
    INT32 rc = SDB_OK ;
 
    // read argument
@@ -106,6 +107,12 @@ INT32 main ( INT32 argc, CHAR **argv )
    bson_init( &obj ) ;
    bson_append_string( &obj, "name", "tom" ) ;
    bson_append_int( &obj, "age", 24 ) ;
+   decimal_init( &decimal ) ;
+   rc = decimal_from_str( "1.234", &decimal ) ;
+   CHECK_RC ( rc, "Failed to get decimal from str" ) ;
+   rc = bson_append_decimal( &obj, "score", &decimal ) ;
+   CHECK_RC ( rc, "Failed to append decimal" ) ;
+   decimal_free( &decimal ) ;
    rc = bson_finish( &obj ) ;
    CHECK_RC ( rc, "Failed to build bson" ) ;
 

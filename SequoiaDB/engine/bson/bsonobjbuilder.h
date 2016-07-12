@@ -89,7 +89,7 @@ namespace bson {
         See also the BSON() and BSON_ARRAY() macros.
     */
 #if defined (SDB_ENGINE) || defined (SDB_CLIENT)
-    class BSONObjBuilder : bsonnoncopyable, public SDBObject {
+    class SDB_EXPORT BSONObjBuilder : bsonnoncopyable, public SDBObject {
 #else
     class BSONObjBuilder : bsonnoncopyable {
 #endif
