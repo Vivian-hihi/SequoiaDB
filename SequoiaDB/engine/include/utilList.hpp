@@ -704,7 +704,7 @@ namespace engine
             {
                /// copy data to stack
                _eleSize = 0 ;
-               list<T>::iterator it = _pList->begin() ;
+               typename list<T>::iterator it = _pList->begin() ;
                while( it != _pList->end() )
                {
                   _staticBuf[ _eleSize++ ] = *it ;

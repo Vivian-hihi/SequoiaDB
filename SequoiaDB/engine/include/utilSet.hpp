@@ -353,7 +353,7 @@ namespace engine
 
          if ( _pSet )
          {
-            pair< set<T>::iterator, bool > tmp = _pSet->insert( val ) ;
+            pair< typename set<T>::iterator, bool > tmp = _pSet->insert( val ) ;
             return pair<iterator, BOOLEAN>( iterator( tmp.first ),
                                             tmp.second ? TRUE : FALSE ) ;
          }
@@ -472,7 +472,7 @@ namespace engine
       {
          if ( _pSet )
          {
-            pair< set<T>::iterator, set<T>::iterator > tmp =
+            pair< typename set<T>::iterator, set<T>::iterator > tmp =
                _pSet->equal_range( val ) ;
             return pair<iterator, iterator>( iterator( tmp.first ),
                                              iterator( tmp.second ) ) ;
@@ -514,7 +514,7 @@ namespace engine
             {
                /// copy data to stack
                _eleSize = 0 ;
-               set<T>::iterator it = _pSet->begin() ;
+               typename set<T>::iterator it = _pSet->begin() ;
                for ( ; it != _pSet->end() ; ++it )
                {
                   _staticBuf[ _eleSize++ ] = *it ;
