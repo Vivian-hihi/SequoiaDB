@@ -65,7 +65,7 @@ namespace engine
    public:
       class iterator
       {
-         friend class _utilDeque<T> ;
+         friend class _utilDeque< T, stackSize > ;
          public:
             iterator()
             {
