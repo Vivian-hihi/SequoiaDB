@@ -20,6 +20,7 @@
 #include "common.h"
 #include "ossSocket.hpp"
 #include <set>
+#include "ossUtil.hpp"
 #if defined CLIENT_THREAD_SAFE
 #include "ossLatch.hpp"
 #endif
@@ -930,6 +931,9 @@ namespace sdbclient
       std::set<ossValuePtr>    _lobs ;
       hashTable               *_tb ;
 
+      // last send or recive time
+      ossTimestamp             _lastSRTime;
+
       void _disconnect () ;
       INT32 _send ( CHAR *pBuffer ) ;
       INT32 _recv ( CHAR **ppBuffer, INT32 *size ) ;
@@ -1406,6 +1410,9 @@ namespace sdbclient
       {
          return getDC( &dc.pDC ) ;
       }
+
+      // get last send or recive time
+      time_t getlastSRTime() const { return _lastSRTime.time; }
 
 /*      INT32 modifyConfig ( INT32 nodeID,
                            std::map<std::string,std::string> &config ) ;

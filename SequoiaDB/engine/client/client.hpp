@@ -3103,6 +3103,9 @@ namespace sdbclient
                        std::map<std::string,std::string> &config ) = 0 ;
 */
       static _sdb *getObj ( BOOLEAN useSSL = FALSE ) ;
+
+      // get last send or receive time
+      virtual time_t getlastSRTime() const = 0 ; 
    } ;
 /** \typedef class _sdb _sdb
 */
@@ -4364,6 +4367,12 @@ namespace sdbclient
             return SDB_NOT_CONNECTED ;
          return pSDB->getDC ( dc ) ;
       }
+
+      /** \fn time_t getlastSRTime()
+          \brief Get last send or receive time
+          \retval time_t for last send or receive time
+      */
+      time_t getlastSRTime() const { return pSDB->getlastSRTime(); }
 
 /*      INT32 modifyConfig ( INT32 nodeID,
                            std::map<std::string,std::string> &config )
