@@ -718,14 +718,18 @@ namespace engine
       PD_TRACE_ENTRY ( SDB__CLSSYNCMAG__WAIT ) ;
       PD_LOG( PDDEBUG, "sync: wait [w:%d]", CLS_SUB_2_W( sub ) ) ;
       pmdEDUEvent ev ;
+      INT64 tmpTime = 0 ;
       while ( !cb->isInterrupted() )
       {
+         tmpTime = timeout >= 0 ?
+                   ( timeout > OSS_ONE_SEC ? OSS_ONE_SEC : timeout ) :
+                   OSS_ONE_SEC ;
          /// wait for responses from other nodes.
-         if ( SDB_OK != cb->getEvent().wait ( OSS_ONE_SEC, &rc ) )
+         if ( SDB_OK != cb->getEvent().wait ( tmpTime, &rc ) )
          {
             if ( timeout >= 0 )
             {
-               timeout -= OSS_ONE_SEC ;
+               timeout -= tmpTime ;
                if ( timeout <= 0 )
                {
                   rc = SDB_TIMEOUT ;

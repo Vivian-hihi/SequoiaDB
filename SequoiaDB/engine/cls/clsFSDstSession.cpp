@@ -54,6 +54,7 @@ using namespace bson ;
 namespace engine
 {
    const UINT32 CLS_FS_TIMEOUT = 5000 ;
+   const UINT32 CLS_SPLIT_DST_SYNC_TIME = 60 * OSS_ONE_SEC ;
 
    #define CHECK_REQUEST_ID(Header,id) \
       do { \
@@ -2360,14 +2361,9 @@ namespace engine
 
       if ( _collectionW > 1 )
       {
-         // wait the group other nodes sync complete
-         INT32 rc = sdbGetReplCB()->sync( eduCB()->getEndLsn(),
-                                          eduCB(), _collectionW, 1 ) ;
-         if ( SDB_TIMEOUT == rc )
-         {
-            _timeout = CLS_FS_TIMEOUT ;
-            goto done ;
-         }
+         // wait the group other nodes sync complete, ignored result
+         sdbGetReplCB()->sync( eduCB()->getEndLsn(), eduCB(),
+                               _collectionW, CLS_SPLIT_DST_SYNC_TIME ) ;
       }
 
       _step = STEP_REMOVE ;
