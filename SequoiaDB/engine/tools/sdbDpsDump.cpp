@@ -52,7 +52,9 @@
 namespace fs = boost::filesystem ;
 using namespace engine;
 
-#define W_OK 2
+#ifndef R_OK
+#define R_OK   0
+#endif //R_OK
 
 #define REPLOG_NAME_PREFIX "sequoiadbLog"
 #define SEP_CHAR_DOT "."
