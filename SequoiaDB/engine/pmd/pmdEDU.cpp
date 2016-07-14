@@ -812,8 +812,11 @@ namespace engine
 
    void _pmdEDUCB::writingDB( BOOLEAN writing )
    {
-      _writingDB = writing ;
-      _writingID = writing ? pmdAcquireGlobalID() : 0 ;
+      if ( _writingDB != writing )
+      {
+         _writingDB = writing ;
+         _writingID = writing ? pmdAcquireGlobalID() : 0 ;
+      }
    }
 
    void _pmdEDUCB::resetLsn()

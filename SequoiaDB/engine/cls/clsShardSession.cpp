@@ -568,7 +568,10 @@ namespace engine
       rc = _reply ( &_replyHeader, buffObj.data(), buffObj.size() ) ;
 
    done:
-      eduCB()->writingDB( FALSE ) ;
+      if ( 0 == eduCB()->getLockItem(SDB_LOCK_DMS)->lockCount() )
+      {
+         eduCB()->writingDB( FALSE ) ;
+      }
       MON_END_OP( _pEDUCB->getMonAppCB() ) ;
       PD_TRACE_EXITRC ( SDB__CLSSHDSESS__ONOPMSG, rc ) ;
       return rc ;
