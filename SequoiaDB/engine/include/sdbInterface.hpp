@@ -304,6 +304,33 @@ namespace engine
    typedef _ISession ISession ;
 
    /*
+      SDB_LOCK_TYPE define
+   */
+   enum SDB_LOCK_TYPE
+   {
+      SDB_LOCK_DMS      = 0,
+
+      SDB_LOCK_MAX
+   } ;
+
+   /*
+      sdbLockItem define
+   */
+   struct sdbLockItem
+   {
+      UINT32   _lockMode ;
+      UINT32   _lockCount ;
+
+      sdbLockItem() { reset() ; }
+      void     reset() { _lockMode = 0 ; _lockMode = 0 ; }
+      void     setMode( UINT32 mode ) { _lockMode = mode ; }
+      UINT32   getMode() const { return _lockMode ; }
+      UINT32   incCount() { return ++_lockCount ; }
+      UINT32   decCount() { return --_lockCount ; }
+      UINT32   lockCount() const { return _lockCount ; }
+   } ;
+
+   /*
       _IExecutor define
    */
    class _IExecutor : public SDBObject
@@ -340,6 +367,11 @@ namespace engine
          virtual void      incEventCount( UINT32 step = 1 ) = 0 ;
 
          virtual UINT32    getQueSize() = 0 ;
+
+         /*
+            Resource Info
+         */
+         virtual sdbLockItem* getLockItem( SDB_LOCK_TYPE lockType ) = 0 ;
 
          /*
             Buffer Manager

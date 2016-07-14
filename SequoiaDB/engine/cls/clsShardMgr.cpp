@@ -167,7 +167,8 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
 
-      if ( isWrite && _clCount > 0 )
+      if ( isWrite && _clCount > 0 &&
+           cb->getLockItem(SDB_LOCK_DMS)->lockCount() == 0 )
       {
          string clName = pName ;
          BOOLEAN exist = TRUE ;

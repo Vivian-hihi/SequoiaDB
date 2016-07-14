@@ -141,6 +141,13 @@ namespace engine
          virtual UINT32    getQueSize() ;
 
          /*
+            Resource Info
+         */
+         virtual sdbLockItem* getLockItem( SDB_LOCK_TYPE lockType ) ;
+         void                 assertLocks() ;
+         void                 resetLocks() ;
+
+         /*
             Buffer Manager
          */
          virtual INT32     allocBuff( UINT32 len,
@@ -404,9 +411,6 @@ namespace engine
       void     dumpInfo ( monEDUSimple &simple ) ;
       void     dumpInfo ( monEDUFull &full ) ;
 
-      UINT32   getDmsLockLevel() const { return _dmsLockLevel ; }
-      void     setDmsLockLevel( UINT32 lockLevel ) { _dmsLockLevel = lockLevel ; }
-
       void     dumpTransInfo( monTransInfo &transInfo ) ;
 
    #endif // SDB_ENGINE
@@ -464,8 +468,6 @@ namespace engine
 
       std::set<SINT64>        _contextList ;
 
-      UINT32                  _dmsLockLevel ; // for dms lock
-
       // coord related variables
       CoordSession            *_pCoordSession;
 
@@ -493,6 +495,8 @@ namespace engine
       UINT64                  _endLsn ;
       UINT32                  _lsnNumber ;
       UINT64                  _processEventCount ;
+
+      sdbLockItem             _lockInfo[ SDB_LOCK_MAX ] ;
 
       INT32                   _ctrlFlag ;
       BOOLEAN                 _writingDB ;

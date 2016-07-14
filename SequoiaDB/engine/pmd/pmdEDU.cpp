@@ -183,7 +183,6 @@ namespace engine
       _transRC          = SDB_OK ;
 
       _curRequestID     = 1 ;
-      _dmsLockLevel     = 0 ;
 
       _monCfgCB = *( (monConfigCB*)(pmdGetKRCB()->getMonCB()) ) ;
 #endif // SDB_ENGINE
@@ -244,6 +243,8 @@ namespace engine
       resetLsn() ;
       writingDB( FALSE ) ;
       releaseAlignedBuff() ;
+
+      resetLocks() ;
 
 #if defined ( SDB_ENGINE )
       clearTransInfo() ;
@@ -842,6 +843,30 @@ namespace engine
       return _queue.size() ;
    }
 
+   sdbLockItem* _pmdEDUCB::getLockItem( SDB_LOCK_TYPE lockType )
+   {
+      SDB_ASSERT( lockType >= SDB_LOCK_DMS && lockType < SDB_LOCK_MAX,
+                  "lockType error" ) ;
+      return &_lockInfo[ (INT32)lockType ] ;
+   }
+
+   void _pmdEDUCB::assertLocks()
+   {
+      for ( INT32 i = 0 ; i < SDB_LOCK_MAX ; ++i )
+      {
+         SDB_ASSERT( 0 == _lockInfo[i].lockCount(),
+                     "Lock count must be 0" ) ;
+      }
+   }
+
+   void _pmdEDUCB::resetLocks()
+   {
+      for ( INT32 i = 0 ; i < SDB_LOCK_MAX ; ++i )
+      {
+         _lockInfo[i].reset() ;
+      }
+   }
+
 #if defined ( SDB_ENGINE )
    // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDEDUCB_CONTXTPEEK, "_pmdEDUCB::contextPeek" )
    SINT64 _pmdEDUCB::contextPeek ()
@@ -1302,8 +1327,9 @@ namespace engine
             }
          }
 
-         // make sure release dms lock
-         SDB_ASSERT( 0 == cb->getDmsLockLevel(), "Dms lock level must be 0" ) ;
+         // make sure lock released
+         cb->assertLocks() ;
+
 #endif // SDB_ENGINE
 
          cb->clear() ;

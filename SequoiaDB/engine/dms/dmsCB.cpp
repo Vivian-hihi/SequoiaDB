@@ -709,8 +709,9 @@ namespace engine
       INT32 rc = SDB_OK ;
       BOOLEAN locked = FALSE ;
 
-      if ( cb && cb->getDmsLockLevel() >= DMS_LOCK_WRITE )
+      if ( cb && cb->getLockItem(SDB_LOCK_DMS)->getMode() >= DMS_LOCK_WRITE )
       {
+         cb->getLockItem(SDB_LOCK_DMS)->incCount() ;
          _stateMtx.get () ;
          ++_writeCounter ;
          _stateMtx.release() ;
@@ -738,7 +739,8 @@ namespace engine
          ++_writeCounter ;
          if ( cb )
          {
-            cb->setDmsLockLevel( DMS_LOCK_WRITE ) ;
+            cb->getLockItem(SDB_LOCK_DMS)->setMode( DMS_LOCK_WRITE ) ;
+            cb->getLockItem(SDB_LOCK_DMS)->incCount() ;
          }
       }
       else if ( cb )
@@ -776,9 +778,19 @@ namespace engine
       SDB_ASSERT( 0 <= _writeCounter, "write counter should not < 0" ) ;
       _stateMtx.release();
 
-      if ( cb && DMS_LOCK_WRITE == cb->getDmsLockLevel() )
+      if ( cb && cb->getLockItem(SDB_LOCK_DMS)->getMode() >= DMS_LOCK_WRITE )
       {
-         cb->setDmsLockLevel( DMS_LOCK_NONE ) ;
+         SDB_ASSERT( cb->getLockItem(SDB_LOCK_DMS)->lockCount() > 0,
+                     "Dms lock count error" ) ;
+         UINT32 count = cb->getLockItem(SDB_LOCK_DMS)->decCount() ;
+
+         if ( 0 == count )
+         {
+            SDB_ASSERT( DMS_LOCK_WRITE ==
+                        cb->getLockItem(SDB_LOCK_DMS)->getMode(),
+                        "Dms lock mode error" ) ;
+            cb->getLockItem(SDB_LOCK_DMS)->setMode(DMS_LOCK_NONE) ;
+         }
       }
    }
 
@@ -802,6 +814,14 @@ namespace engine
 
       while ( TRUE )
       {
+         if ( cb->isInterrupted() )
+         {
+            _dmsCBState = DMS_STATE_NORMAL ;
+            PMD_SET_DB_STATUS( SDB_DB_NORMAL ) ;
+            _backEvent.signal() ;
+            rc = SDB_APP_INTERRUPT ;
+            break ;
+         }
          _stateMtx.get();
          if ( 0 == _writeCounter )
          {
@@ -809,7 +829,7 @@ namespace engine
             _stateMtx.release();
             if ( cb )
             {
-               cb->setDmsLockLevel( DMS_LOCK_WHOLE ) ;
+               cb->getLockItem(SDB_LOCK_DMS)->setMode( DMS_LOCK_WHOLE ) ;
             }
             goto done;
          }
@@ -833,7 +853,7 @@ namespace engine
       _stateMtx.release() ;
       if ( cb )
       {
-         cb->setDmsLockLevel( DMS_LOCK_NONE ) ;
+         cb->getLockItem(SDB_LOCK_DMS)->setMode( DMS_LOCK_NONE ) ;
       }
    }
 
@@ -857,13 +877,20 @@ namespace engine
 
       while ( TRUE )
       {
+         if ( cb->isInterrupted() )
+         {
+            _dmsCBState = DMS_STATE_NORMAL ;
+            PMD_SET_DB_STATUS( SDB_DB_NORMAL ) ;
+            rc = SDB_APP_INTERRUPT ;
+            break ;
+         }
          _stateMtx.get();
          if ( 0 == _writeCounter )
          {
             _stateMtx.release();
             if ( cb )
             {
-               cb->setDmsLockLevel( DMS_LOCK_WHOLE ) ;
+               cb->getLockItem(SDB_LOCK_DMS)->setMode( DMS_LOCK_WHOLE ) ;
             }
             goto done;
          }
@@ -886,7 +913,7 @@ namespace engine
 
       if ( cb )
       {
-         cb->setDmsLockLevel( DMS_LOCK_NONE ) ;
+         cb->getLockItem(SDB_LOCK_DMS)->setMode( DMS_LOCK_NONE ) ;
       }
    }
 
