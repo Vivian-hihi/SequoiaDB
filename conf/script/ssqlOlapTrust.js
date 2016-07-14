@@ -189,7 +189,7 @@ SsqlOlapTruster.prototype._getAllHosts = function SsqlOlapTruster__getAllHosts()
     var segmentHosts = this.config[SegmentHosts];
     for (var i in segmentHosts) {
         var host = segmentHosts[i];
-        if (map[host] != undefined) {
+        if (map[host] == undefined) {
             hosts.push(host);
             map[host] = 1;
         }
