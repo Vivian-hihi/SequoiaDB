@@ -322,7 +322,7 @@ namespace engine
       UINT32   _lockCount ;
 
       sdbLockItem() { reset() ; }
-      void     reset() { _lockMode = 0 ; _lockMode = 0 ; }
+      void     reset() { _lockMode = 0 ; _lockCount = 0 ; }
       void     setMode( UINT32 mode ) { _lockMode = mode ; }
       UINT32   getMode() const { return _lockMode ; }
       UINT32   incCount() { return ++_lockCount ; }
