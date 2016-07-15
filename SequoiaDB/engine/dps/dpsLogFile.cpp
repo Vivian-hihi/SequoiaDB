@@ -644,7 +644,6 @@ namespace engine
       const CHAR *pData = ( const CHAR* )&header ;
       UINT32 len = sizeof( header ) ;
       UINT32 idleSize = _idleSize ;
-      _dirty = TRUE ;
 
       if ( 0 == idleSize )
       {
@@ -652,6 +651,8 @@ namespace engine
       }
       else if ( len <= idleSize && idleSize <= _fileSize )
       {
+         _dirty = TRUE ;
+
          SINT64 writtenLen = 0 ;
          UINT32 written = 0 ;
 
@@ -708,6 +709,7 @@ namespace engine
          goto error ;
       }      
       _dirty = FALSE ;
+
    done:
       PD_TRACE_EXITRC( SDB__DPSLOGFILE_SYNC, rc ) ;
       return rc ;
@@ -715,3 +717,4 @@ namespace engine
       goto done ;
    }
 }
+

@@ -1019,6 +1019,9 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR, "Failed to register backup, rc: %d", rc ) ;
       hasReg = TRUE ;
 
+      /// commit log
+      _pDPSCB->commit( FALSE, NULL ) ;
+
       // if increase backup, need to check lsn
       lsn = _pDPSCB->getStartLsn( FALSE ) ;
       if ( BAR_BACKUP_OP_TYPE_INC == _metaHeader._opType &&
@@ -1552,8 +1555,22 @@ namespace engine
                  mb.length() < BAR_MAX_EXTENT_DATA_SIZE )
          {
             rc = _pDPSCB->search( lsn, &mb ) ;
-            PD_RC_CHECK( rc, PDERROR, "Failed to search lsn[%u,%lld], rc: %d",
-                         lsn.version, lsn.offset, rc ) ;
+            if ( rc )
+            {
+               /// Print current dps info
+               DPS_LSN fileBegin ;
+               DPS_LSN memBegin ;
+               DPS_LSN endLsn ;
+               DPS_LSN expectLsn ;
+               _pDPSCB->getLsnWindow( fileBegin, memBegin, endLsn,
+                                      &expectLsn, NULL ) ;
+               PD_LOG( PDERROR, "Failed to search lsn[%u,%lld] in "
+                       "log[FileBeginLsn:%lld, MemBeginLsn:%lld, EndLsn:%lld,"
+                       "ExpectLsn:%lld], rc: %d", lsn.version, lsn.offset,
+                       fileBegin.offset, memBegin.offset, endLsn.offset,
+                       expectLsn.offset, rc ) ;
+               goto error ;
+            }
             dpsLogRecordHeader *header = (dpsLogRecordHeader*)mb.readPtr() ;
             mb.readPtr( mb.length() ) ;
             lsn.offset += header->_length ;

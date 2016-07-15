@@ -1311,12 +1311,10 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__DPSRPCMGR_COMMIT ) ;
       _dpsLogPage *work = NULL ;
-      _dpsLogFile *oldWorkFile = NULL ;
-      _dpsLogFile *workFile = NULL ;
+
       _mtx.get() ;
  
       work = WORK_PAGE ;
-
       if ( 0 ==_lastCommitted.compare( _currentLsn ) )
       {
          goto done ;
@@ -1331,9 +1329,6 @@ namespace engine
       work->lock() ;
       work->unlock() ;
 
-      /// flushing wor page may change work file
-      oldWorkFile = _logger.getWorkLogFile() ;
-
       if ( 0 != work->getLength() )
       {
          ossMemset( work->mb()->writePtr(), 0, work->getLastSize() ) ;
@@ -1343,11 +1338,6 @@ namespace engine
             PD_LOG ( PDERROR, "Failed to flush page, rc = %d", rc ) ;
             goto error ;
          }
-
-         /// reset file write pointer
-         workFile = _logger.getWorkLogFile() ;
-         SDB_ASSERT( oldWorkFile == workFile, "must be same" ) ;
-         workFile->idleSize( workFile->getIdleSize() + DPS_DEFAULT_PAGE_SIZE ) ;
       }
 
       if ( deeply )
@@ -1355,7 +1345,7 @@ namespace engine
          rc = _logger.sync() ;
          if ( SDB_OK != rc )
          {
-            PD_LOG( PDERROR, "failed to sync log file:%d", rc ) ;
+            PD_LOG( PDERROR, "Failed to sync log file: %d", rc ) ;
             goto error ;
          }
       }
@@ -1365,6 +1355,7 @@ namespace engine
       {
           *committedLsn = _lastCommitted ;
       }
+
    done:
       _mtx.release() ;
       PD_TRACE_EXITRC( SDB__DPSRPCMGR_COMMIT, rc ) ;

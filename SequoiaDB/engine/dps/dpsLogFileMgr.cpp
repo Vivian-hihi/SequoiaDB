@@ -285,6 +285,14 @@ namespace engine
                  DPS_DEFAULT_PAGE_SIZE, rc ) ;
          goto error ;
       }
+
+      /// if the page is not whole, reset file pointer to the page begin pos
+      if ( DPS_DEFAULT_PAGE_SIZE != mb->length() )
+      {
+         WORK_FILE->idleSize( WORK_FILE->getIdleSize() +
+                              DPS_DEFAULT_PAGE_SIZE ) ;
+      }
+
    done:
       PD_TRACE_EXITRC ( SDB__DPSLGFILEMGR_FLUSH, rc );
       return rc;
@@ -515,19 +523,20 @@ namespace engine
          {
             continue ;
          }
-
          rc = file->sync() ;
          if ( SDB_OK != rc )
          {
-            PD_LOG( PDERROR, "failed to sync log file:%d", rc ) ;
+            PD_LOG( PDERROR, "Failed to sync log file: %d", rc ) ;
             goto error ;
-         }         
+         }
       }
+
    done:
       PD_TRACE_EXITRC( SDB__DPSLGFILEMGR_SYNC, rc ) ;
       return rc ;
    error:
       goto done ;
    }
+
 }
 

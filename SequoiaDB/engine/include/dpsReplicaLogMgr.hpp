@@ -143,7 +143,6 @@ namespace engine
       INT32 init( const CHAR *path, UINT32 pageNum, dpsTransCB *pTransCB );
 
       INT32 merge( _dpsMergeBlock &block ) ;
-      //INT32 merge( _dpsMergeBlock &block, DPS_LSN &lsn );
 
       // first step: allocate pages and product lsn
       INT32 preparePages ( dpsMergeInfo &info ) ;
