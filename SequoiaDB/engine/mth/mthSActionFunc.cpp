@@ -38,9 +38,11 @@
 #include "mthSAction.hpp"
 #include "mthSliceIterator.hpp"
 #include "mthElemMatchIterator.hpp"
+#include "mthMatcher.hpp"
 #include "utilString.hpp"
 #include "utilStr.hpp"
 #include "../util/fromjson.hpp"
+
 
 using namespace bson ;
 
@@ -764,7 +766,7 @@ namespace engine
 
          builder.append( fieldName, result ) ;
       }
-      else if ( 0 == arg.numberLong() )
+      else if ( FALSE == isModValid( arg ) )
       {
          builder.appendNull( fieldName ) ;
       }
@@ -844,7 +846,7 @@ namespace engine
 
          builder.append( fieldName, result ) ;
       }
-      else if ( 0 == argEle.numberLong() )
+      else if ( FALSE == isModValid( argEle ) )
       {
          builder.appendNull( fieldName ) ;
       }
@@ -2874,4 +2876,5 @@ namespace engine
       goto done ;
    }
 }
+
 
