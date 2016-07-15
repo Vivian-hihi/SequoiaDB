@@ -40,6 +40,7 @@
 #include "qgmPtrTable.hpp"
 #include "pdTrace.hpp"
 #include "qgmTrace.hpp"
+#include "mthDef.hpp"
 
 using namespace bson ;
 
@@ -1186,7 +1187,7 @@ namespace engine
             FLOAT64 lNumber = ( INT16 )bson::NumberDouble == getValueType() ?
                                *(( FLOAT64* )( getValue() ) ) :
                                *(( INT64* )( getValue() ) ) ;
-            FLOAT64 final = lNumber - ( floor( lNumber / rNumber ) * rNumber ) ;
+            FLOAT64 final = MTH_MOD( lNumber, rNumber ) ;
             rc = result.setValue( sizeof( FLOAT64 ), &final, 
                                   ( INT16 )bson::NumberDouble ) ;
             if ( SDB_OK != rc )

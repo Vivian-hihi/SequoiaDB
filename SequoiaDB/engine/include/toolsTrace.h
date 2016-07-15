@@ -17,7 +17,4 @@
 #ifndef toolsTRACE_H__
 #define toolsTRACE_H__
 // Component: tools
-#define SDB_FORMATLOG                                      0x100000000377L
-#define SDB_PARSEARG                                       0x100000000378L
-#define SDB_DPSDUMP_MAIN                                   0x100000000379L
 #endif

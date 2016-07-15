@@ -17,6 +17,7 @@
 #ifndef pdTRACE_H__
 #define pdTRACE_H__
 // Component: pd
-#define SDB_PDLOGFILEWRITE                                 0x20000000603L
-#define SDB_PDLOG                                          0x20000000604L
+#define SDB_PDLOGFILEWRITE                                 0x200000000cfL
+#define SDB_PDLOG                                          0x200000000d0L
+#define SDB_PDAUDIT                                        0x200000000d1L
 #endif

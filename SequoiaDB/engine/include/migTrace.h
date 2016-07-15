@@ -17,20 +17,20 @@
 #ifndef migTRACE_H__
 #define migTRACE_H__
 // Component: mig
-#define SDB__MIGIMPORT__IMPRCD2                            0x2000000371L
-#define SDB__MIGIMPORT__IMPRCD                             0x2000000372L
-#define SDB__MIGIMPORT__GETRCD                             0x2000000373L
-#define SDB__MIGIMPORT__INIT                               0x2000000374L
-#define SDB__MIGIMPORT___RUN                               0x2000000375L
-#define SDB__MIGIMPORT__RUN                                0x2000000376L
-#define SDB__MIGLOADJSONPS__SENDMSG                        0x2000000377L
-#define SDB__MIGLOADJSONPS__GETBLOCK                       0x2000000378L
-#define SDB__MIGLOADJSONPS__POPFROMQUEUE                   0x2000000379L
-#define SDB__MIGLOADJSONPS__PUSHTOQUEUE                    0x200000037aL
-#define SDB__MIGLOADJSONPS__INITIALIZE                     0x200000037bL
-#define SDB__MIGLOADJSONPS__STOPWAIT                       0x200000037cL
-#define SDB__MIGLOADJSONPS__CHECKWORKER                    0x200000037dL
-#define SDB__MIGLOADJSONPS__RUN                            0x200000037eL
-#define SDB__MIGWORKER__GETBSON                            0x200000037fL
-#define SDB__MIGWORKER__IMPORT                             0x2000000380L
+#define SDB__MIGIMPORT__IMPRCD2                            0x200000021cL
+#define SDB__MIGIMPORT__IMPRCD                             0x200000021dL
+#define SDB__MIGIMPORT__GETRCD                             0x200000021eL
+#define SDB__MIGIMPORT__INIT                               0x200000021fL
+#define SDB__MIGIMPORT___RUN                               0x2000000220L
+#define SDB__MIGIMPORT__RUN                                0x2000000221L
+#define SDB__MIGLOADJSONPS__SENDMSG                        0x2000000222L
+#define SDB__MIGLOADJSONPS__GETBLOCK                       0x2000000223L
+#define SDB__MIGLOADJSONPS__POPFROMQUEUE                   0x2000000224L
+#define SDB__MIGLOADJSONPS__PUSHTOQUEUE                    0x2000000225L
+#define SDB__MIGLOADJSONPS__INITIALIZE                     0x2000000226L
+#define SDB__MIGLOADJSONPS__STOPWAIT                       0x2000000227L
+#define SDB__MIGLOADJSONPS__CHECKWORKER                    0x2000000228L
+#define SDB__MIGLOADJSONPS__RUN                            0x2000000229L
+#define SDB__MIGWORKER__GETBSON                            0x200000022aL
+#define SDB__MIGWORKER__IMPORT                             0x200000022bL
 #endif

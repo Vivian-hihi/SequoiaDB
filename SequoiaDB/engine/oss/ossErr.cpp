@@ -172,7 +172,7 @@ const CHAR* getErrDesp ( INT32 errCode )
                    "Failed to send the message",
                    "No activated group information on catalog",
                    "Remote-node is disconnected",
-                   "Unable to find the catalog information",
+                   "Unable to find the matched catalog information",
                    "Failed to update catalog",
                    "Unknown request operation code",
                    "Group information cannot be found on coordinator node",
@@ -316,7 +316,7 @@ const CHAR* getErrDesp ( INT32 errCode )
                    "'localhost' and '127.0.0.1' cannot be used mixed with other hostname and IP address",
                    "If use 'localhost' and '127.0.0.1' for hostname, coord and catalog must in the same host ",
                    "The special group is not data group",
-                   "can not update/delete data when autoindexid is false",
+                   "can not update/delete records when $id index does not exist",
                    "can not step up when primary node exists or LSN is not the biggest",
                    "Image address is conflict with the self cluster",
                    "The data group does not have image group",
@@ -336,7 +336,17 @@ const CHAR* getErrDesp ( INT32 errCode )
                    "The collection is empty",
                    "LOB sequence exists",
                    "cluster do not exist",
-                   "business do not exist"
+                   "business do not exist",
+                   "user specified is not exist or password is invalid",
+                   "Compression initialization failed",
+                   "Compression failed",
+                   "Decompression failed",
+                   "Compression abort",
+                   "Buffer for compression is too small",
+                   "Buffer for decompression is too small",
+                   "Up to the limit",
+                   "sdbDataSource disabled",
+                   "sdbDataSource has no valid coord"
     };
     if ( code < 0 || (UINT32)code >= (sizeof ( errDesp ) / sizeof ( CHAR* )) )
         return "unknown error";
