@@ -207,7 +207,8 @@
       <trycatch>
          <try> 
             <mkdir dir="${test.log.path}" />
-            <exec executable="bash" dir="${test.log.path}" failonerror="true">
+            <echo message="excute shell in dir ${save.testLog.dir}: find *tar.gz* -mtime +7 -exec rm -rf {} \;"/>
+            <exec executable="bash" dir="${save.testLog.dir}" failonerror="true">
                <arg value="-c"/>
                <arg line="&quot;find *tar.gz* -mtime +7 -exec rm -rf {} \;&quot;" />
             </exec>
