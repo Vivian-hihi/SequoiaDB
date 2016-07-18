@@ -683,16 +683,23 @@ static const CHAR* tokenArrComma( CJSON *pItem,
    if( *pStr == CHAR_COMMA )
    {
       pStr = skip( pStr + 1 ) ;
-      pNewItem = cJsonItemCreate( pMachine ) ;
-      if( pNewItem == NULL )
+      if( *pStr == CHAR_RIGHT_SQUARE_BRACKET )
       {
-         CJSON_PRINTF_LOG( "Failed to create new item" ) ;
-         goto error ;
+         pMachine->state = STATE_ARRAY_END ;
       }
-      pItem->pNext = pNewItem ;
-      pNewItem->pPrev = pItem ;
-      pNewItem->pParent = pItem->pParent ;
-      pMachine->state = STATE_ARRAY_VALUE ;
+      else
+      {
+         pNewItem = cJsonItemCreate( pMachine ) ;
+         if( pNewItem == NULL )
+         {
+            CJSON_PRINTF_LOG( "Failed to create new item" ) ;
+            goto error ;
+         }
+         pItem->pNext = pNewItem ;
+         pNewItem->pPrev = pItem ;
+         pNewItem->pParent = pItem->pParent ;
+         pMachine->state = STATE_ARRAY_VALUE ;
+      }
    }
    else if( *pStr == CHAR_RIGHT_SQUARE_BRACKET )
    {
