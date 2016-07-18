@@ -248,7 +248,8 @@ namespace engine
          // otherwise it's infinite wait
 
          BOOLEAN waitMsg   = FALSE ;
-         _writingDB        = FALSE ;
+         writingDB( FALSE ) ;
+
          if ( resetStat && PMD_EDU_IDLE != _status )
          {
             _status = PMD_EDU_WAITING ;
