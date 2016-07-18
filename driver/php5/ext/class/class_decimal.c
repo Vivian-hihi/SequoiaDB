@@ -45,7 +45,7 @@ PHP_METHOD( SequoiaDecimal, __construct )
       php_zval2Int( pPrecision, &precision TSRMLS_CC ) ;
       php_zval2Int( pScale, &scale TSRMLS_CC ) ;
    }
-   if( precision < 1 || scale < 0 || precision < scale )
+   if( precision == -1 && scale == -1 )
    {
       decimal_init( pBsonDecimal ) ;
    }
@@ -69,8 +69,14 @@ PHP_METHOD( SequoiaDecimal, __construct )
    {
       rc = decimal_from_double( Z_DVAL_P( pDecimal ), pBsonDecimal ) ;
    }
+   else
+   {
+      decimal_free( pBsonDecimal ) ;
+      goto error ;
+   }
    if( rc )
    {
+      decimal_free( pBsonDecimal ) ;
       goto error ;
    }
 done:
@@ -80,6 +86,7 @@ done:
    }
    return ;
 error:
+   pBsonDecimal = NULL ;
    goto done ;
 }
 

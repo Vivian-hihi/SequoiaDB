@@ -522,6 +522,11 @@ INT32 _assocArray2Bson( zval *pArray, bson *pBson TSRMLS_DC )
       CHAR *pKey = NULL ;
       zval **ppValue = NULL ;
       PHP_ARRAY_FOREACH_VALUE( pTable, ppValue ) ;
+      if( ppValue == NULL || (*ppValue) == NULL )
+      {
+         rc = SDB_DRIVER_BSON_ERROR ;
+         goto error ;
+      }
       PHP_ARRAY_FOREACH_KEY( pTable, pKey ) ;
       valueType = Z_TYPE_PP( ppValue ) ;
       switch( valueType )
