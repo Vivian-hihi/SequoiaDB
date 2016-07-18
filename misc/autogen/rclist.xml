@@ -2481,5 +2481,14 @@
             <cn>无可用协调节点</cn>
          </description>
       </code>
+
+      <code>
+        <name>SDB_RULE_ID_IS_NOT_EXIST</name>
+        <description>
+           <en>the record which exclusive ruleID is not exist</en>
+           <cn>不存在指定ruleID的记录</cn>
+        </description>
+      </code>
+
    </codelist>
 </rclist>
