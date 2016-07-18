@@ -3104,7 +3104,7 @@ namespace sdbclient
 */
       static _sdb *getObj ( BOOLEAN useSSL = FALSE ) ;
 
-      // get last send or receive time
+      // get last alive time
       virtual UINT64 getLastAliveTime() const = 0 ; 
    } ;
 /** \typedef class _sdb _sdb
