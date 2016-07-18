@@ -80,10 +80,7 @@ PHP_METHOD( SequoiaDecimal, __construct )
       goto error ;
    }
 done:
-   if( pBsonDecimal )
-   {
-      PHP_SAVE_RESOURCE( pThisObj, "$decimal", pBsonDecimal, decimalDesc ) ;
-   }
+   PHP_SAVE_RESOURCE( pThisObj, "$decimal", pBsonDecimal, decimalDesc ) ;
    return ;
 error:
    pBsonDecimal = NULL ;

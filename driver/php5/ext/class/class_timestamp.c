@@ -110,15 +110,13 @@ PHP_METHOD( SequoiaTimestamp, __construct )
       pDriverTimestamp->micros = micros ;
    }
 done:
-   if( pDriverTimestamp )
-   {
-      PHP_SAVE_RESOURCE( pThisObj,
-                         "$timestamp",
-                         pDriverTimestamp,
-                         timestampDesc ) ;
-   }
+   PHP_SAVE_RESOURCE( pThisObj,
+                      "$timestamp",
+                      pDriverTimestamp,
+                      timestampDesc ) ;
    return ;
 error:
+   pDriverTimestamp = NULL ;
    goto done ;
 }
 

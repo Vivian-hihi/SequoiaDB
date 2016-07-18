@@ -130,12 +130,10 @@ PHP_METHOD( SequoiaDate, __construct )
       pDriverDate->milli = (INT64)(Z_LVAL_P( pDate )) ;
    }
 done:
-   if( pDriverDate )
-   {
-      PHP_SAVE_RESOURCE( pThisObj, "$date", pDriverDate, dateDesc ) ;
-   }
+   PHP_SAVE_RESOURCE( pThisObj, "$date", pDriverDate, dateDesc ) ;
    return ;
 error:
+   pDriverDate = NULL ;
    goto done ;
 }
 

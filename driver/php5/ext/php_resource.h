@@ -33,7 +33,14 @@
    zval *pZvalResource = NULL ;\
    void *pResource = (void *)resource ;\
    MAKE_STD_ZVAL( pZvalResource ) ;\
-   ZEND_REGISTER_RESOURCE( pZvalResource, pResource, resourceId ) ;\
+   if( pResource == NULL )\
+   {\
+      ZVAL_NULL( pZvalResource ) ;\
+   }\
+   else\
+   {\
+      ZEND_REGISTER_RESOURCE( pZvalResource, pResource, resourceId ) ;\
+   }\
    zend_update_property( Z_OBJCE_P( thisObj ),\
                          thisObj,\
                          ZEND_STRL( name ),\
@@ -53,12 +60,19 @@
                                              thisObj,\
                                              ZEND_STRL( name ),\
                                              0 TSRMLS_CC ) ;\
-   ZEND_FETCH_RESOURCE_NO_RETURN( resource,\
-                                  resourceType,\
-                                  &pZvalResource,\
-                                  -1,\
-                                  resourceName,\
-                                  resourceId ) ;\
+   if( Z_TYPE_P( pZvalResource ) == IS_NULL )\
+   {\
+      resource = 0 ;\
+   }\
+   else\
+   {\
+      ZEND_FETCH_RESOURCE_NO_RETURN( resource,\
+                                     resourceType,\
+                                     &pZvalResource,\
+                                     -1,\
+                                     resourceName,\
+                                     resourceId ) ;\
+   }\
 }
 
 //delete resource

@@ -359,14 +359,16 @@ INT32 _object2Bson( const CHAR *pKey, zval *pValue, bson *pBson TSRMLS_DC )
                          struct phpDate *,
                          SDB_DATE_HANDLE_NAME,
                          dateDesc ) ;
-      if( pDate )
+      if( pDate == NULL )
       {
-         rc = bson_append_date( pBson, pKey, (bson_date_t)pDate->milli ) ;
-         if( rc != BSON_OK )
-         {
-            rc = SDB_DRIVER_BSON_ERROR ;
-            goto error ;
-         }
+         rc = SDB_DRIVER_BSON_ERROR ;
+         goto error ;
+      }
+      rc = bson_append_date( pBson, pKey, (bson_date_t)pDate->milli ) ;
+      if( rc != BSON_OK )
+      {
+         rc = SDB_DRIVER_BSON_ERROR ;
+         goto error ;
       }
    }
    else if( IS_CLASS( pValue, pSequoiadbTimeStamp ) )
@@ -380,16 +382,18 @@ INT32 _object2Bson( const CHAR *pKey, zval *pValue, bson *pBson TSRMLS_DC )
                          struct phpTimestamp*,
                          SDB_TIMESTAMP_HANDLE_NAME,
                          timestampDesc ) ;
-      if( pTimestamp )
+      if( pTimestamp == NULL )
       {
-         second = (time_t)pTimestamp->second ;
-         micros = pTimestamp->micros ;
-         rc = bson_append_timestamp2( pBson, pKey, (INT32)second, micros ) ;
-         if( rc != BSON_OK )
-         {
-            rc = SDB_DRIVER_BSON_ERROR ;
-            goto error ;
-         }
+         rc = SDB_DRIVER_BSON_ERROR ;
+         goto error ;
+      }
+      second = (time_t)pTimestamp->second ;
+      micros = pTimestamp->micros ;
+      rc = bson_append_timestamp2( pBson, pKey, (INT32)second, micros ) ;
+      if( rc != BSON_OK )
+      {
+         rc = SDB_DRIVER_BSON_ERROR ;
+         goto error ;
       }
    }
    else if( IS_CLASS( pValue, pSequoiadbRegex ) )
@@ -491,16 +495,18 @@ INT32 _object2Bson( const CHAR *pKey, zval *pValue, bson *pBson TSRMLS_DC )
                          bson_decimal*,
                          SDB_DECIMAL_HANDLE_NAME,
                          decimalDesc ) ;
-      if( pBsonDecimal )
+      if( pBsonDecimal == NULL )
       {
-         rc = bson_append_decimal( pBson,
-                                   pKey,
-                                   (const bson_decimal *)pBsonDecimal ) ;
-         if( rc != BSON_OK )
-         {
-            rc = SDB_DRIVER_BSON_ERROR ;
-            goto error ;
-         }
+         rc = SDB_DRIVER_BSON_ERROR ;
+         goto error ;
+      }
+      rc = bson_append_decimal( pBson,
+                                pKey,
+                                (const bson_decimal *)pBsonDecimal ) ;
+      if( rc != BSON_OK )
+      {
+         rc = SDB_DRIVER_BSON_ERROR ;
+         goto error ;
       }
    }
 done:
@@ -522,11 +528,6 @@ INT32 _assocArray2Bson( zval *pArray, bson *pBson TSRMLS_DC )
       CHAR *pKey = NULL ;
       zval **ppValue = NULL ;
       PHP_ARRAY_FOREACH_VALUE( pTable, ppValue ) ;
-      if( ppValue == NULL || (*ppValue) == NULL )
-      {
-         rc = SDB_DRIVER_BSON_ERROR ;
-         goto error ;
-      }
       PHP_ARRAY_FOREACH_KEY( pTable, pKey ) ;
       valueType = Z_TYPE_PP( ppValue ) ;
       switch( valueType )
