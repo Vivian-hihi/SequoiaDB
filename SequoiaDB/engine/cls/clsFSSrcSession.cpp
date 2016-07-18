@@ -2118,7 +2118,7 @@ namespace engine
    void _clsSplitSrcSession::_onNotifyOver( const CHAR *clFullName )
    {
       _ntyOverTime = pmdAcquireGlobalID() ;
-      _pFreezingWindow->registerCL( clFullName ) ;
+      _pFreezingWindow->registerCL( clFullName, _ntyOverTime ) ;
       PD_LOG( PDEVENT, "Session[%s]: Begin to block all write operations "
               "of collection[%s]", sessionName(), clFullName ) ;
    }

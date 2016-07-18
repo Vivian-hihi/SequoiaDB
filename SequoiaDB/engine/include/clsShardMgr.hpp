@@ -42,7 +42,7 @@
 #include "clsCatalogAgent.hpp"
 #include "sdbInterface.hpp"
 #include "clsDCMgr.hpp"
-#include <map>
+#include "utilMap.hpp"
 
 using namespace bson ;
 
@@ -102,13 +102,13 @@ namespace engine
    */
    class _clsFreezingWindow : public SDBObject
    {
-      typedef std::set<std::string>                SET_WINDOW ;
+      typedef _utilMap<std::string, UINT64>     MAP_WINDOW ;
 
       public:
          _clsFreezingWindow() ;
          ~_clsFreezingWindow() ;
 
-         void registerCL( const CHAR *pName ) ;
+         void registerCL( const CHAR *pName, UINT64 opID ) ;
          void unregisterCL( const CHAR *pName ) ;
 
          INT32 waitForOpr( const CHAR *pName,
@@ -117,7 +117,7 @@ namespace engine
 
       private:
          UINT32            _clCount ;
-         SET_WINDOW        _setWindow ;
+         MAP_WINDOW        _mapWindow ;
          ossSpinXLatch     _latch ;
          ossEvent          _event ;
 

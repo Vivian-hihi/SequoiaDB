@@ -144,18 +144,18 @@ namespace engine
    {
    }
 
-   void _clsFreezingWindow::registerCL( const CHAR *pName )
+   void _clsFreezingWindow::registerCL( const CHAR *pName, UINT64 opID )
    {
       _latch.get() ;
       ++_clCount ;
-      _setWindow.insert( pName ) ;
+      _mapWindow[ pName ] = opID ;
       _latch.release() ;
    }
 
    void _clsFreezingWindow::unregisterCL( const CHAR *pName )
    {
       _latch.get() ;
-      _setWindow.erase( pName ) ;
+      _mapWindow.erase( pName ) ;
       --_clCount ;
       _latch.release() ;
       _event.signalAll() ;
@@ -167,15 +167,14 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
 
-      if ( isWrite && _clCount > 0 &&
-           cb->getLockItem(SDB_LOCK_DMS)->lockCount() == 0 )
+      if ( isWrite && _clCount > 0 )
       {
          string clName = pName ;
-         BOOLEAN exist = TRUE ;
+         BOOLEAN needBlock = TRUE ;
+         MAP_WINDOW::iterator it ;
+         UINT64 opID = cb->getWritingID() ;
 
-         /// first set the cb non-write
-         cb->writingDB( FALSE ) ;
-         while( exist )
+         while( needBlock )
          {
             if ( cb->isInterrupted() )
             {
@@ -183,20 +182,19 @@ namespace engine
                break ;
             }
             _latch.get() ;
-            if ( _setWindow.find( clName ) == _setWindow.end() )
+            if ( _mapWindow.end() == ( it = _mapWindow.find( clName ) ) ||
+                 opID <= it->second )
             {
-               exist = FALSE ;
+               needBlock = FALSE ;
             }
             _latch.release() ;
 
-            if ( exist )
+            if ( needBlock )
             {
                _event.reset() ;
                _event.wait( OSS_ONE_SEC ) ;
             }
          }
-         /// restore the cb write status
-         cb->writingDB( TRUE ) ;
       }
 
       return rc ;
