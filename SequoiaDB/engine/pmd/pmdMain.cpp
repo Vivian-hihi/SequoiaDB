@@ -134,8 +134,6 @@ namespace engine
       if ( SDB_ROLE_STANDALONE == pmdGetDBRole() ||
            SDB_ROLE_OM == pmdGetDBRole() )
       {
-         pmdSetPrimary( TRUE ) ;
-
          if ( !pmdGetStartup().isOK() )
          {
             SDB_DPSCB *pLog = sdbGetDPSCB() ;
@@ -170,6 +168,12 @@ namespace engine
             PD_LOG( PDEVENT, "Rebuild database succeed." ) ;
             pmdGetStartup().ok( TRUE ) ;
          }
+
+         pmdGetKRCB()->callPrimaryChangeHandler( TRUE,
+                                                 SDB_EVT_OCCUR_BEFORE ) ;
+         pmdSetPrimary( TRUE ) ;
+         pmdGetKRCB()->callPrimaryChangeHandler( TRUE,
+                                                 SDB_EVT_OCCUR_AFTER ) ;
       }
 
    done:

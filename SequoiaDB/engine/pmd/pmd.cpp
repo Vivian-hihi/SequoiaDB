@@ -473,6 +473,69 @@ namespace engine
       return _optioncb.makeAllDir() ;
    }
 
+   INT32 _SDB_KRCB::regEventHandler( IEventHander *pHandler )
+   {
+      if ( !pHandler ) return SDB_INVALIDARG ;
+
+      ossScopedLock lock ( &_handlerLatch, EXCLUSIVE ) ;
+      for ( UINT32 i = 0 ; i < _vecEventHandler.size() ; ++i )
+      {
+         if ( _vecEventHandler[ i ] == pHandler )
+         {
+            return SDB_SYS ;
+         }
+      }
+      _vecEventHandler.push_back( pHandler ) ;
+      return SDB_OK ;
+   }
+
+   void _SDB_KRCB::unregEventHandler( IEventHander *pHandler )
+   {
+      if ( !pHandler ) return ;
+
+      ossScopedLock lock ( &_handlerLatch, EXCLUSIVE ) ;
+      VEC_EVENTHANDLER::iterator it ;
+      for ( it = _vecEventHandler.begin() ;
+            it != _vecEventHandler.end() ;
+            ++it )
+      {
+         if ( *it == pHandler )
+         {
+            _vecEventHandler.erase( it ) ;
+            break ;
+         }
+      }
+   }
+
+   void _SDB_KRCB::callRegisterEventHandler( const MsgRouteID &nodeID )
+   {
+      IEventHander *pHandler = NULL ;
+      ossScopedLock lock ( &_handlerLatch, SHARED ) ;
+      for ( UINT32 i = 0 ; i < _vecEventHandler.size() ; ++i )
+      {
+         pHandler = _vecEventHandler[ i ] ;
+         if ( pHandler->getMask() & EVENT_MASK_ON_REGISTERED )
+         {
+            pHandler->onRegistered( nodeID ) ;
+         }
+      }
+   }
+
+   void _SDB_KRCB::callPrimaryChangeHandler( BOOLEAN primary,
+                                             SDB_EVENT_OCCUR_TYPE type )
+   {
+      IEventHander *pHandler = NULL ;
+      ossScopedLock lock ( &_handlerLatch, SHARED ) ;
+      for ( UINT32 i = 0 ; i < _vecEventHandler.size() ; ++i )
+      {
+         pHandler = _vecEventHandler[ i ] ;
+         if ( pHandler->getMask() & EVENT_MASK_ON_PRIMARYCHG )
+         {
+            pHandler->onPrimaryChange( primary, type ) ;
+         }
+      }
+   }
+
    ossTick _SDB_KRCB::getCurTime()
    {
       return _curTime ;

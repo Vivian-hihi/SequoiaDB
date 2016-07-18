@@ -106,8 +106,10 @@ namespace engine
     * Kernel Control Block
     * Database Kernel Variables
     */
-   class _SDB_KRCB : public SDBObject, public _IConfigHandle, public IResource
+   class _SDB_KRCB : public SDBObject, public _IConfigHandle,
+                     public IResource, _IEventHolder
    {
+      typedef std::vector< IEventHander* >      VEC_EVENTHANDLER ;
    public:
       _SDB_KRCB () ;
       ~_SDB_KRCB () ;
@@ -170,11 +172,24 @@ namespace engine
       virtual INT32     onConfigInit () ;
       virtual void      onConfigSave () ;
 
+      /*
+         _IEventHolder Interface
+      */
+      virtual INT32  regEventHandler( IEventHander *pHandler ) ;
+      virtual void   unregEventHandler( IEventHander *pHandler ) ;
+
+      void           callRegisterEventHandler( const MsgRouteID &nodeID ) ;
+      void           callPrimaryChangeHandler( BOOLEAN primary,
+                                               SDB_EVENT_OCCUR_TYPE type ) ;
+
    private:
       IControlBlock                 *_arrayCBs[ SDB_CB_MAX ] ;
       void                          *_arrayOrgs[ SDB_CB_MAX ] ;
       BOOLEAN                       _init ;
       BOOLEAN                       _isActive ;
+
+      VEC_EVENTHANDLER              _vecEventHandler ;
+      ossSpinSLatch                 _handlerLatch ;
 
    private :
       // configured options

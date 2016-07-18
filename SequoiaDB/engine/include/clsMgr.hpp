@@ -175,8 +175,7 @@ namespace engine
    /*
       _clsMgr define
    */
-   class _clsMgr : public _pmdObjBase, public _IControlBlock,
-                   public _IEventHolder
+   class _clsMgr : public _pmdObjBase, public _IControlBlock
    {
       friend class _clsShardSessionMgr ;
       friend class _clsReplSessionMgr ;
@@ -185,8 +184,6 @@ namespace engine
 
       typedef std::vector<_innerSessionInfo>    VECINNERPARAM ;
       typedef std::map<UINT64, BSONObj>         MAPTASKQUERY ;
-
-      typedef std::vector< IEventHander* >      VEC_EVENTHANDLER ;
 
       public:
          _clsMgr() ;
@@ -231,9 +228,6 @@ namespace engine
          INT32  stopTask ( UINT64 taskID ) ;
          INT32  removeTask( UINT64 taskID ) ;
 
-         virtual INT32  regEventHandler( IEventHander *pHandler ) ;
-         virtual void   unregEventHandler( IEventHander *pHandler ) ;
-
          _netRouteAgent *getShardRouteAgent () ;
          _netRouteAgent *getReplRouteAgent () ;
          shardCB * getShardCB () ;
@@ -254,10 +248,6 @@ namespace engine
          INT32 _sendRegisterMsg () ;
          INT32 _sendQueryTaskReq ( UINT64 requestID, const CHAR *clFullName,
                                    const BSONObj* match ) ;
-
-         void  _callRegisterEventHandler() ;
-         void  _callPrimaryChangeHandler( BOOLEAN primary,
-                                          SDB_EVENT_OCCUR_TYPE type ) ;
 
          virtual INT32 _defaultMsgFunc ( NET_HANDLE handle, MsgHeader* msg ) ;
          virtual void  onTimer ( UINT64 timerID, UINT32 interval ) ;
@@ -305,9 +295,6 @@ namespace engine
          UINT64                        _taskID ;
          map< UINT64, UINT64 >         _mapTaskID ;
          ossSpinSLatch                 _clsLatch ;
-
-         VEC_EVENTHANDLER              _vecEventHandler ;
-         ossSpinSLatch                 _handlerLatch ;
 
          UINT64                        _regTimerID ;
          UINT32                        _regFailedTimes ;

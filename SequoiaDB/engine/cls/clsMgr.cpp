@@ -691,7 +691,7 @@ namespace engine
    {
       if ( SDB_IF_EVT_HOLDER == type )
       {
-         return (void*)static_cast< IEventHolder* >( this ) ;
+         return (void*)static_cast< IEventHolder* >( pmdGetKRCB() ) ;
       }
       return IControlBlock::queryInterface( type ) ;
    }
@@ -835,7 +835,7 @@ namespace engine
       }
 
       // call other handler
-      _callPrimaryChangeHandler( primary, type ) ;
+      pmdGetKRCB()->callPrimaryChangeHandler( primary, type ) ;
 
       PD_TRACE_EXIT ( SDB__CLSMGR__ONPRMCHG );
    }
@@ -1002,70 +1002,6 @@ namespace engine
          _mapTaskID.erase( it ) ;
       }
       return SDB_OK ;
-   }
-
-   INT32 _clsMgr::regEventHandler( IEventHander * pHandler )
-   {
-      if ( !pHandler ) return SDB_INVALIDARG ;
-
-      ossScopedLock lock ( &_handlerLatch, EXCLUSIVE ) ;
-      for ( UINT32 i = 0 ; i < _vecEventHandler.size() ; ++i )
-      {
-         if ( _vecEventHandler[ i ] == pHandler )
-         {
-            return SDB_SYS ;
-         }
-      }
-      _vecEventHandler.push_back( pHandler ) ;
-      return SDB_OK ;
-   }
-
-   void _clsMgr::unregEventHandler( IEventHander * pHandler )
-   {
-      if ( !pHandler ) return ;
-
-      ossScopedLock lock ( &_handlerLatch, EXCLUSIVE ) ;
-      VEC_EVENTHANDLER::iterator it ;
-      for ( it = _vecEventHandler.begin() ;
-            it != _vecEventHandler.end() ;
-            ++it )
-      {
-         if ( *it == pHandler )
-         {
-            _vecEventHandler.erase( it ) ;
-            break ;
-         }
-      }
-   }
-
-   void _clsMgr::_callRegisterEventHandler()
-   {
-      IEventHander *pHandler = NULL ;
-      ossScopedLock lock ( &_handlerLatch, SHARED ) ;
-      for ( UINT32 i = 0 ; i < _vecEventHandler.size() ; ++i )
-      {
-         pHandler = _vecEventHandler[ i ] ;
-         if ( pHandler->getMask() & EVENT_MASK_ON_REGISTERED )
-         {
-            pHandler->onRegistered( _selfNodeID ) ;
-         }
-      }
-   }
-
-   // call all registered event handler for primary change request
-   void _clsMgr::_callPrimaryChangeHandler( BOOLEAN primary,
-                                            SDB_EVENT_OCCUR_TYPE type )
-   {
-      IEventHander *pHandler = NULL ;
-      ossScopedLock lock ( &_handlerLatch, SHARED ) ;
-      for ( UINT32 i = 0 ; i < _vecEventHandler.size() ; ++i )
-      {
-         pHandler = _vecEventHandler[ i ] ;
-         if ( pHandler->getMask() & EVENT_MASK_ON_PRIMARYCHG )
-         {
-            pHandler->onPrimaryChange( primary, type ) ;
-         }
-      }
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSMGR__DFTMSGFUNC, "_clsMgr::_defaultMsgFunc" )
@@ -1591,9 +1527,7 @@ namespace engine
       // set global id
       pmdSetNodeID( _selfNodeID ) ;
 
-      // callback event handler
-      _callRegisterEventHandler() ;
-
+      pmdGetKRCB()->callRegisterEventHandler( _selfNodeID ) ;
       pmdGetKRCB()->setBusinessOK( TRUE ) ;
 
       //Update the primary catlog node
