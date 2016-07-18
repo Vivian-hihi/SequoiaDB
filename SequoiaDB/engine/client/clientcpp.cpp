@@ -5659,7 +5659,7 @@ error :
    {
       initHashTable( &_tb ) ;
       // get current time
-      ossGetCurrentTime(_lastSRTime);
+      ossGetCurrentTime(_lastAliveTime);
    }
 
    _sdbImpl::~_sdbImpl ()
@@ -6372,7 +6372,7 @@ error :
          goto error ;
       }
       // get current time
-      ossGetCurrentTime(_lastSRTime);
+      ossGetCurrentTime(_lastAliveTime);
    done :
       return rc ;
    error :
@@ -6416,7 +6416,7 @@ error :
       }
 
       // get current time
-      ossGetCurrentTime(_lastSRTime);
+      ossGetCurrentTime(_lastAliveTime);
    done :
       return rc ;
    error :

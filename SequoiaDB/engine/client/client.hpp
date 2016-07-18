@@ -3105,7 +3105,7 @@ namespace sdbclient
       static _sdb *getObj ( BOOLEAN useSSL = FALSE ) ;
 
       // get last send or receive time
-      virtual time_t getlastSRTime() const = 0 ; 
+      virtual UINT64 getLastAliveTime() const = 0 ; 
    } ;
 /** \typedef class _sdb _sdb
 */
@@ -4368,11 +4368,12 @@ namespace sdbclient
          return pSDB->getDC ( dc ) ;
       }
 
-      /** \fn time_t getlastSRTime()
-          \brief Get last send or receive time
-          \retval time_t for last send or receive time
+      /** \fn UINT64 getLastAliveTime()
+          \brief Get the number of seconds from the standard time point
+          (usually in the midnight of January 1, 1970) to the last alive time
+          \retval UINT64 time difference, unit for seconds
       */
-      time_t getlastSRTime() const { return pSDB->getlastSRTime(); }
+      UINT64 getLastAliveTime() const { return pSDB->getLastAliveTime(); }
 
 /*      INT32 modifyConfig ( INT32 nodeID,
                            std::map<std::string,std::string> &config )

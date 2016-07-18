@@ -932,7 +932,7 @@ namespace sdbclient
       hashTable               *_tb ;
 
       // last send or recive time
-      ossTimestamp             _lastSRTime;
+      ossTimestamp             _lastAliveTime;
 
       void _disconnect () ;
       INT32 _send ( CHAR *pBuffer ) ;
@@ -1411,8 +1411,8 @@ namespace sdbclient
          return getDC( &dc.pDC ) ;
       }
 
-      // get last send or recive time
-      time_t getlastSRTime() const { return _lastSRTime.time; }
+      // get last alive time
+      UINT64 getLastAliveTime() const { return _lastAliveTime.time; }
 
 /*      INT32 modifyConfig ( INT32 nodeID,
                            std::map<std::string,std::string> &config ) ;
