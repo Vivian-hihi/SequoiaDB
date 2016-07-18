@@ -207,12 +207,16 @@
 		<trycatch>
 			<try>	
 				<mkdir dir="${test.log.path}" />
+				<exec executable="bash" dir="${test.log.path}" failonerror="true">
+               <arg value="-c"/>
+               <arg line="&quot;find *tar.gz* -mtime +7 -exec rm -rf {} \;&quot;" />
+            </exec>
+            
 				<for list="${machineList}" param="hostname">
 					<sequential>
 						<sdbCopyAndTar fileHostName="@{hostname}" saveHostName="${host.NAME}" diaglogPath="${install.path}/sequoiadb/database" savePath="${test.log.path}" />
 					</sequential>
 				</for>
-
 				<tar basedir="${test.reports.path}" destfile="${test.log.path}.tar.gz" compression="gzip" includes="**/*" />
 				<stafTools workType="copy" workHost="${host.NAME}" fileName="${test.log.path}.tar.gz"  toHost="${save.testLog.hostname}"  saveDir="${save.testLog.dir}" failonerror="true"/>								
 			</try>
