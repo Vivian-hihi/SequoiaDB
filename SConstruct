@@ -130,6 +130,8 @@ def GuessArch():
       return 'ia64'
    elif id == 'ppc64':
       return 'ppc64'
+   elif id == 'ppc64le':
+      return 'ppc64le'   
    else:
       return None
 
@@ -440,6 +442,9 @@ if guess_os == "linux":
     elif guess_arch == "ppc64":
         hdfsJniPath = join(java_dir,"jdk_ppclinux64/include")
         hdfsJniMdPath = join(java_dir,"jdk_ppclinux64/include/linux")
+    elif guess_arch == "ppc64le":
+        hdfsJniPath = join(java_dir,"jdk_ppclelinux64/include")
+        hdfsJniMdPath = join(java_dir,"jdk_ppclelinux64/include/linux")     
 elif guess_os == "win32":
     if guess_arch == "ia32":
         hdfsJniPath = join(java_dir,"jdk_win32/include")
@@ -550,6 +555,36 @@ if guess_os == "linux":
         zlib_lib_dir_platform = join(zlib_lib_dir, 'ppclinux64') 
         lz4_lib_dir_platform = join(lz4_lib_dir, 'ppclinux64')
         snappy_lib_dir_platform = join(snappy_lib_dir, 'ppclinux64')
+        # power pc linux little endian     
+    elif guess_arch == "ppc64le":
+        linux64 = True
+        nixLibPrefix = "lib64"
+        boost_lib_dir = join(boost_lib_dir,'ppclelinux64')
+        # use little endian
+        env.Append( CPPDEFINES=[ "SDB_LITTLE_ENDIAN" ] )
+        #env.Append( EXTRALIBPATH="/usr/lib64" )
+        env.Append( EXTRALIBPATH="/lib64" )
+        # use project-related boost library
+        env.Append( EXTRALIBPATH=boost_lib_dir )
+        # use project-related ssl library
+        env.Append( EXTRALIBPATH=join(ssl_dir,'lib/ppclelinux64') )
+        env.Append( EXTRALIBPATH=join(zlib_lib_dir,'ppclelinux64') )
+        env.Append( EXTRALIBPATH=join(lz4_lib_dir,'ppclelinux64') )
+        env.Append( EXTRALIBPATH=join(snappy_lib_dir,'ppclelinux64') )
+        # use project-related spidermonkey library
+        if usesm:
+            if debugBuild:
+                smlib_dir = join(js_dir,'lib/debug/ppclelinux64/lib')
+                env.Append( CPPPATH=join(js_dir,'lib/debug/ppclelinux64/include') )
+                env.Append( EXTRALIBPATH=[smlib_dir] )
+            else:
+                smlib_dir = join(js_dir,'lib/release/ppclelinux64/lib')
+                env.Append( CPPPATH=join(js_dir,'lib/release/ppclelinux64/include') )
+                env.Append( EXTRALIBPATH=[smlib_dir] )
+        ssllib_dir = join(ssl_dir,'lib/ppclelinux64')
+        zlib_lib_dir_platform = join(zlib_lib_dir, 'ppclelinux64')
+        lz4_lib_dir_platform = join(lz4_lib_dir, 'ppclelinux64')
+        snappy_lib_dir_platform = join(snappy_lib_dir, 'ppclelinux64')                  
     # spider monkey
     if usesm:
         smlib_file = join(smlib_dir, 'libmozjs185.so')
