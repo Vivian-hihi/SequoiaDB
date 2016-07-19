@@ -3,9 +3,8 @@ package com.sequoiadb.ant.tools;
 import org.apache.tools.ant.BuildException;
 import org.apache.tools.ant.Task;
 
-import com.ibm.staf.STAFException;
-import com.ibm.staf.STAFHandle;
-import com.ibm.staf.STAFResult;
+import com.ibm.staf.*;
+import java.util.*;
 
 public class stafTools extends Task{
 	String workHost=null;
@@ -105,12 +104,12 @@ public class stafTools extends Task{
 			if( workType.equals("shell"))
 			{
 				System.out.println("shell work");
-				request = "START SHELL COMMAND " + common + " WAIT "+waitTime+" WORKDIR "+workDir ; 
+				request = "START SHELL COMMAND " + STAFUtil.wrapData(common) + " WAIT "+waitTime+" WORKDIR "+workDir ; 
 				System.out.println("exec: staf " + workHost+ " PROCESS " + request);
 				result = handle.submit2( workHost , "PROCESS", request);
 				
 				System.out.println("########################################################################################");
-				System.out.println("host : " + workHost);
+				System.out.println("workHost : " + workHost);
 				System.out.println("result.hashCode : " + result.hashCode());
 				System.out.println("result.rc : " + result.rc);
 				System.out.println("result.Ok : " + result.Ok);
