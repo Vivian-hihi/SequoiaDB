@@ -38,6 +38,8 @@ def GuessArch():
       return 'ia64'
    elif id == 'ppc64':
       return 'ppc64'
+   elif id == 'ppc64le':
+      return 'ppc64le'   
    else:
       return None
 
@@ -204,7 +206,10 @@ if guess_os == "linux":
         targetLibPath = "ppclinux64"
         # use big endian
         env.Append( CPPDEFINES=[ "SDB_BIG_ENDIAN" ] )
-
+   # power pc linux little endian
+    elif guess_arch == "ppc64le":
+        linux64 = True
+        targetLibPath = "ppclelinux64"
     nix = True
 
 elif "win32" == guess_os:
