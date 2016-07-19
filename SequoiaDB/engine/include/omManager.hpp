@@ -71,7 +71,8 @@ namespace engine
    /*
       _omManager define
    */
-   class _omManager : public _pmdObjBase, public _IControlBlock
+   class _omManager : public _pmdObjBase, public _IControlBlock, 
+                      public IEventHander 
    {
       DECLARE_OBJ_MSG_MAP()
 
@@ -129,6 +130,11 @@ namespace engine
          void              removeClusterVersion( string cluster ) ;
 
          omTaskManager     *getTaskManager() ;
+
+      public:
+         virtual void   onRegistered( const MsgRouteID &nodeID ) ;
+         virtual void   onPrimaryChange( BOOLEAN primary,
+                                         SDB_EVENT_OCCUR_TYPE occurType ) ;
 
       protected:
          virtual void      onTimer ( UINT64 timerID, UINT32 interval ) ;
@@ -216,6 +222,8 @@ namespace engine
          omTaskManager                          *_taskManager ;
 
          UINT64                                 _ssqlCheckTimer ;
+
+         BOOLEAN                                _isInitTable ;
    } ;
 
    typedef _omManager omManager ;

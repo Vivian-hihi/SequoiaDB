@@ -75,11 +75,12 @@ namespace engine
       _hwRouteID.columns.nodeID    = 0 ;
       _hwRouteID.columns.serviceID = MSG_ROUTE_LOCAL_SERVICE ;
 
+      _isInitTable         = FALSE ;
+
       _pKrcb               = NULL ;
       _pDmsCB              = NULL ;
       _hostVersion         = SDB_OSS_NEW omHostVersion() ;
       _taskManager         = SDB_OSS_NEW omTaskManager() ;
-
       _ssqlCheckTimer      = NET_INVALID_TIMER_ID ;
    }
 
@@ -107,6 +108,8 @@ namespace engine
       _pDmsCB = _pKrcb->getDMSCB() ;
       _pRtnCB = _pKrcb->getRTNCB() ;
 
+      _pKrcb->regEventHandler( this ) ;
+
       _pmdOptionsMgr *pOptMgr = _pKrcb->getOptionCB() ;
 
       // get options
@@ -118,26 +121,6 @@ namespace engine
       rc = _rsManager.init( getRouteAgent() ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to init remote session manager, rc: %d",
                    rc ) ;
-
-      rc = _initOmTables();
-      PD_RC_CHECK ( rc, PDERROR, "Failed to initial the om tables rc = %d", 
-                    rc ) ;
-
-      rc = _updateTable() ;
-      PD_RC_CHECK ( rc, PDERROR, "Failed to update om tables rc = %d", 
-                    rc ) ;
-
-      rc = omStrategyMgrInst.init( pmdGetThreadEDUCB() ) ;
-      PD_RC_CHECK ( rc, PDERROR, "Failed to init strategy manager, rc:%d",
-                    rc) ;
-
-      rc = _createJobs() ;
-      PD_RC_CHECK ( rc, PDERROR, "Failed to create jobs:rc=%d", 
-                    rc ) ;
-
-      rc = refreshVersions() ;
-      PD_RC_CHECK ( rc, PDERROR, "Failed to update cluster version:rc=%d", 
-                    rc ) ;
 
       _readAgentPort() ;
       _createVersionFile() ;
@@ -263,6 +246,55 @@ namespace engine
    omTaskManager *_omManager::getTaskManager()
    {
       return _taskManager ;
+   }
+
+   void _omManager::onRegistered( const MsgRouteID &nodeID )
+   {
+      //do nothing here
+   }
+
+   void _omManager::onPrimaryChange( BOOLEAN primary,
+                                     SDB_EVENT_OCCUR_TYPE occurType )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_LOG( PDDEBUG, "#########onPrimaryChange, primary=%d,occurType=%d",
+              primary, occurType ) ;
+      if ( !_isInitTable )
+      {
+         if ( SDB_EVT_OCCUR_AFTER == occurType )
+         {
+            PD_LOG( PDDEBUG, "#########onPrimaryChange---occurType=%d", 
+                    occurType ) ;
+            rc = _initOmTables();
+            PD_RC_CHECK ( rc, PDERROR, "Failed to initial the om tables rc = %d", 
+                          rc ) ;
+
+            rc = _updateTable() ;
+            PD_RC_CHECK ( rc, PDERROR, "Failed to update om tables rc = %d", 
+                          rc ) ;
+
+            rc = omStrategyMgrInst.init( pmdGetThreadEDUCB() ) ;
+            PD_RC_CHECK ( rc, PDERROR, "Failed to init strategy manager, rc:%d",
+                          rc) ;
+ 
+            rc = _createJobs() ;
+            PD_RC_CHECK ( rc, PDERROR, "Failed to create jobs:rc=%d", 
+                          rc ) ;
+
+            rc = refreshVersions() ;
+            PD_RC_CHECK ( rc, PDERROR, "Failed to update cluster version:rc=%d", 
+                          rc ) ;
+
+            _isInitTable = TRUE ;
+         }
+      }
+
+   done:
+      return ;
+   error:
+      PMD_RESTART_DB( rc ) ;
+      goto done ;
    }
 
    INT32 _omManager::_initOmTables() 
@@ -773,6 +805,7 @@ namespace engine
 
    INT32 _omManager::fini ()
    {
+      _pKrcb->unregEventHandler( this ) ;
       _rsManager.fini() ;
 
       _mapID2Host.clear() ;
