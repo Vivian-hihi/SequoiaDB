@@ -270,8 +270,12 @@ public class ConnectionTCPImpl implements IConnection {
 			// wrap the receive byte into a byteBuffer and then return it back
  			ByteBuffer byteBuffer = ByteBuffer.wrap(receive_buffer, 0 , msgSize );
 			if (endianConvert) {
+				// "endianConvert == true" means the bytes in byteBuffer 
+				// is in little-endian
 				byteBuffer.order(ByteOrder.LITTLE_ENDIAN);
 			} else {
+				// "endianConvert == false" means the bytes in byteBuffer 
+				// is in big-endian
 				byteBuffer.order(ByteOrder.BIG_ENDIAN);
 			}
 			logger.getInstance().debug(0, "leave receiveMessage\n");
