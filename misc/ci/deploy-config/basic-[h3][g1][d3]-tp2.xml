@@ -207,11 +207,11 @@
 		<trycatch>
 			<try>	
 				<mkdir dir="${test.log.path}" />
-				<echo message="excute shell in dir ${save.testLog.dir}: find *tar.gz* -mtime +7 -exec rm -rf {} \;"/>
-            <exec executable="bash" dir="${save.testLog.dir}" failonerror="true">
-               <arg value="-c"/>
-               <arg line="&quot;find *tar.gz* -mtime +7 -exec rm -rf {} \;&quot;" />
-            </exec>
+				<stafTools workType="shell" 
+                       workHost="${save.testLog.hostname}" 
+                       workDir="${save.testLog.dir}"
+                       common="find *tar.gz* -mtime +7 -exec rm -rf {} \;" 
+                       failonerror="true"/>
             
 				<for list="${machineList}" param="hostname">
 					<sequential>
@@ -219,7 +219,12 @@
 					</sequential>
 				</for>
 				<tar basedir="${test.reports.path}" destfile="${test.log.path}.tar.gz" compression="gzip" includes="**/*" />
-				<stafTools workType="copy" workHost="${host.NAME}" fileName="${test.log.path}.tar.gz"  toHost="${save.testLog.hostname}"  saveDir="${save.testLog.dir}" failonerror="true"/>								
+				<stafTools workType="copy" 
+                       workHost="${host.NAME}" 
+                       fileName="${test.log.path}.tar.gz"  
+                       toHost="${save.testLog.hostname}"  
+                       saveDir="${save.testLog.dir}" 
+                       failonerror="true"/>  
 			</try>
 			<catch>
 				<echo message="Copy log for download code fail" />
