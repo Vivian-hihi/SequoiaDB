@@ -1,0 +1,9 @@
+STAF.PATH=/usr/local/staf
+
+project.name=sequoiadb
+os.and.platform=ppcle_linux_64
+enterprise.name=enterprise
+
+copy_tar=/test_tar
+target.deploy_tar_gz.ip=ci-cmpl-ppcle1
+target_offlinedoc_tar_ip=bl465-4
