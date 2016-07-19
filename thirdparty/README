@@ -279,9 +279,9 @@ PowerLinux64:
                 export CFLAGS="-DJS_C_STRING_ARE_UTF8"
                 export CXXFLAGS="-DJS_C_STRINGS_ARE_UTF8"
                 cd parser/sm/js/src
-		vi Makefile.in, remove all "-DENABLE_ASSEMBLER=1 -DENABLE_JIT=1" options, and add -mminimal-toc option
-		cp jsval.h.bak jsval.h
-		cp jsvalue.h.bak jsvalue.h
+                vi Makefile.in, remove all "-DENABLE_ASSEMBLER=1 -DENABLE_JIT=1" options, and add -mminimal-toc option
+                cp jsval.h.bak jsval.h
+                cp jsvalue.h.bak jsvalue.h
                 autoconf-2.13
                 mkdir build-release
                 cd build-release
@@ -319,6 +319,65 @@ PowerLinux64:
 			cd zlib
 			scons
 			
+PowerleLinux64:
+        Building Prerequisites:
+                g++ 4.8.3
+                libstdc++ 6.0.19
+                Python 2.7.7
+                autoconf 2.13 ( source code in ..\tools\compile\autoconf-2.13 )
+                scons
+                perl
+
+        Boost 1.60.0:
+                ./bootstrap.sh --prefix=./
+                ./bjam link=static threading=multi variant=release address-model=64 toolset=gcc runtime-link=static cxxflags="-fPIC"
+                copy boost/stage/lib/* to boost/lib/ppclelinux64
+
+        SpiderMonkey 1.8.5:
+                export CFLAGS="-DJS_C_STRING_ARE_UTF8"
+                export CXXFLAGS="-DJS_C_STRINGS_ARE_UTF8"
+                cd parser/sm/js/src
+                vi Makefile.in, remove all "-DENABLE_ASSEMBLER=1 -DENABLE_JIT=1" options, and add -mminimal-toc option
+                cp jsval.h.bak jsval.h
+                cp jsvalue.h.bak jsvalue.h
+                autoconf-2.13
+                mkdir build-release
+                cd build-release
+                ../configure ppc64le
+                make
+                cd ..
+                mkdir build-debug
+                cd build-debug
+                ../configure ppc64le --enable-debug --disable-optimize
+                make
+                copy parser/sm/js/src/build-release/include and parser/sm/js/src/build-release/lib directory to parser/sm/js/lib/release/ppclelinux64
+                do same operation for build-debug
+
+        OpenSSL 1.0.2h:
+                cd crypto/openssl-1.0.2h/
+                ./Configure linux-ppc64le -fPIC
+                make depend
+                make
+                copy libcrypto.a and libssl.a to crypto/openssl-1.0.2h/lib/ppclelinux64/
+
+    	snappy 1.1.0:
+			cd snappy
+			scons
+
+		lz4 1.7.1:
+			cd lz4
+			scons
+			
+		zlib 1.2.8:
+			cd zlib
+			./configure
+			make
+			copy the following file to zlib\lib\ppclinux64
+				libzlib.a
+		The second way to build:
+			cd zlib
+			scons
+						
 Aix64:
         Building Prerequisites:
                 g++ 4.6.3
