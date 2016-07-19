@@ -109,10 +109,11 @@ namespace engine
    class _SDB_KRCB : public SDBObject, public _IConfigHandle,
                      public IResource, _IEventHolder
    {
-      typedef std::vector< IEventHander* >      VEC_EVENTHANDLER ;
+      typedef std::pair< IEventHander*, UINT32 >   EVENT_HANDLER_INFO ;
+      typedef std::vector< EVENT_HANDLER_INFO >    VEC_EVENTHANDLER ;
    public:
       _SDB_KRCB () ;
-      ~_SDB_KRCB () ;
+      virtual ~_SDB_KRCB () ;
 
       INT32 init () ;
       void  destroy () ;
@@ -175,7 +176,8 @@ namespace engine
       /*
          _IEventHolder Interface
       */
-      virtual INT32  regEventHandler( IEventHander *pHandler ) ;
+      virtual INT32  regEventHandler( IEventHander *pHandler,
+                                      UINT32 mask = EVENT_MASK_ON_ALL ) ;
       virtual void   unregEventHandler( IEventHander *pHandler ) ;
 
       void           callRegisterEventHandler( const MsgRouteID &nodeID ) ;
@@ -214,7 +216,7 @@ namespace engine
       _pmdOptionsMgr _optioncb ;
       ossTick        _curTime ;
 
-      pmdEDUCB       _mainEDU ;
+      pmdEDUCB*      _mainEDU ;
 
 #if defined ( SDB_ENGINE )
       monConfigCB    _monCfgCB ;

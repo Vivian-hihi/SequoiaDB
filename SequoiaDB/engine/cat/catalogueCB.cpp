@@ -146,13 +146,7 @@ namespace engine
       _strCatServiceName = pmdGetOptionCB()->catService() ;
 
       // register event handle
-      IControlBlock *pClsCB = pmdGetKRCB()->getCBByType( SDB_CB_CLS ) ;
-      IEventHolder *pHolder = NULL ;
-      if ( pClsCB && pClsCB->queryInterface( SDB_IF_EVT_HOLDER ) )
-      {
-         pHolder = (IEventHolder*)pClsCB->queryInterface( SDB_IF_EVT_HOLDER ) ;
-         pHolder->regEventHandler( this ) ;
-      }
+      pmdGetKRCB()->regEventHandler( this ) ;
 
       // 2. create objs
       _pNetWork = SDB_OSS_NEW _netRouteAgent( &_catMainCtrl ) ;
@@ -260,13 +254,7 @@ namespace engine
    INT32 sdbCatalogueCB::fini ()
    {
       // unregister event handle
-      IControlBlock *pClsCB = pmdGetKRCB()->getCBByType( SDB_CB_CLS ) ;
-      IEventHolder *pHolder = NULL ;
-      if ( pClsCB && pClsCB->queryInterface( SDB_IF_EVT_HOLDER ) )
-      {
-         pHolder = (IEventHolder*)pClsCB->queryInterface( SDB_IF_EVT_HOLDER ) ;
-         pHolder->unregEventHandler( this ) ;
-      }
+      pmdGetKRCB()->unregEventHandler( this ) ;
 
       if ( _pNetWork != NULL )
       {
@@ -700,11 +688,6 @@ namespace engine
       PD_TRACE1 ( SDB_CATALOGCB_ALLOCNODEID, PD_PACK_USHORT ( id ) ) ;
       PD_TRACE_EXIT ( SDB_CATALOGCB_ALLOCNODEID ) ;
       return id;
-   }
-
-   UINT32 sdbCatalogueCB::getMask() const
-   {
-      return EVENT_MASK_ON_REGISTERED | EVENT_MASK_ON_PRIMARYCHG ;
    }
 
    // The caller must make sure id has the correct serviceID

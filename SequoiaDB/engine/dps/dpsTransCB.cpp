@@ -85,13 +85,7 @@ namespace engine
       _rollbackEvent.signal() ;
 
       // register event handle
-      IControlBlock *pClsCB = pmdGetKRCB()->getCBByType( SDB_CB_CLS ) ;
-      IEventHolder *pHolder = NULL ;
-      if ( pClsCB && pClsCB->queryInterface( SDB_IF_EVT_HOLDER ) )
-      {
-         pHolder = (IEventHolder*)pClsCB->queryInterface( SDB_IF_EVT_HOLDER ) ;
-         pHolder->regEventHandler( this ) ;
-      }
+      pmdGetKRCB()->regEventHandler( this ) ;
 
       // if enabled dps
       if ( pmdGetKRCB()->isCBValue( SDB_CB_DPS ) )
@@ -173,13 +167,7 @@ namespace engine
    INT32 dpsTransCB::fini ()
    {
       // unregister event handle
-      IControlBlock *pClsCB = pmdGetKRCB()->getCBByType( SDB_CB_CLS ) ;
-      IEventHolder *pHolder = NULL ;
-      if ( pClsCB && pClsCB->queryInterface( SDB_IF_EVT_HOLDER ) )
-      {
-         pHolder = (IEventHolder*)pClsCB->queryInterface( SDB_IF_EVT_HOLDER ) ;
-         pHolder->unregEventHandler( this ) ;
-      }
+      pmdGetKRCB()->unregEventHandler( this ) ;
       return SDB_OK ;
    }
 
@@ -193,11 +181,6 @@ namespace engine
                 DPS_TRANSID_FIRSTOP_BIT;
       }
       return temp ;
-   }
-
-   UINT32 dpsTransCB::getMask() const
-   {
-      return EVENT_MASK_ON_REGISTERED | EVENT_MASK_ON_PRIMARYCHG ;
    }
 
    void dpsTransCB::onRegistered( const MsgRouteID &nodeID )

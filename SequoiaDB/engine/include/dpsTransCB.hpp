@@ -101,7 +101,6 @@ namespace engine
       virtual INT32  deactive () ;
       virtual INT32  fini () ;
 
-      virtual UINT32 getMask() const ;
       virtual void   onRegistered( const MsgRouteID &nodeID ) ;
       virtual void   onPrimaryChange( BOOLEAN primary,
                                       SDB_EVENT_OCCUR_TYPE occurType ) ;

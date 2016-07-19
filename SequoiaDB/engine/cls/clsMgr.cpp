@@ -493,7 +493,6 @@ namespace engine
 
    _clsMgr::~_clsMgr ()
    {
-      SDB_ASSERT( _vecEventHandler.size() == 0, "Has some handler not unreg" ) ;
    }
 
    SDB_CB_TYPE _clsMgr::cbType () const
@@ -685,15 +684,6 @@ namespace engine
    {
       _shdObj.onConfigChange() ;
       _replObj.onConfigChange() ;
-   }
-
-   void* _clsMgr::queryInterface( SDB_INTERFACE_TYPE type )
-   {
-      if ( SDB_IF_EVT_HOLDER == type )
-      {
-         return (void*)static_cast< IEventHolder* >( pmdGetKRCB() ) ;
-      }
-      return IControlBlock::queryInterface( type ) ;
    }
 
    void _clsMgr::attachCB ( pmdEDUCB *pMainCB )

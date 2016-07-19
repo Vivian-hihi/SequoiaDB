@@ -85,7 +85,6 @@ namespace engine
          virtual void   onRegistered( const MsgRouteID &nodeID ) ;
          virtual void   onPrimaryChange( BOOLEAN primary,
                                          SDB_EVENT_OCCUR_TYPE occurType ) ;
-         virtual UINT32 getMask() const ;
 
          void     insertGroupID( UINT32 grpID, const string &name,
                                  BOOLEAN isActive = TRUE ) ;

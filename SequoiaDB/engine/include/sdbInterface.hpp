@@ -162,6 +162,8 @@ namespace engine
    #define EVENT_MASK_ON_REGISTERED          0x00000001
    #define EVENT_MASK_ON_PRIMARYCHG          0x00000002
 
+   #define EVENT_MASK_ON_ALL                 0xFFFFFFFF
+
    enum SDB_EVENT_OCCUR_TYPE
    {
       SDB_EVT_OCCUR_BEFORE   = 1,
@@ -176,8 +178,6 @@ namespace engine
       public :
          _IEventHander () {}
          virtual ~_IEventHander () {}
-
-         virtual UINT32 getMask() const = 0 ;
 
          virtual void   onRegistered( const MsgRouteID &nodeID )
          {}
@@ -197,7 +197,8 @@ namespace engine
          _IEventHolder () {}
          virtual ~_IEventHolder () {}
 
-         virtual INT32  regEventHandler( IEventHander *pHandler ) = 0 ;
+         virtual INT32  regEventHandler( IEventHander *pHandler,
+                                         UINT32 mask = EVENT_MASK_ON_ALL ) = 0 ;
          virtual void   unregEventHandler( IEventHander *pHandler ) = 0 ;
    } ;
    typedef _IEventHolder IEventHolder ;

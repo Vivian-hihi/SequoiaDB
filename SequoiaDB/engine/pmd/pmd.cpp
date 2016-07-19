@@ -48,7 +48,6 @@ namespace engine
       _SDB_KRCB implement
    */
    _SDB_KRCB::_SDB_KRCB ()
-   :_mainEDU( &_eduMgr, EDU_TYPE_MAIN )
    {
       ossMemset( _hostName, 0, sizeof( _hostName ) ) ;
       ossMemset( _groupName, 0, sizeof( _groupName ) ) ;
@@ -61,6 +60,7 @@ namespace engine
       _flowControl = FALSE ;
 
       _dbMode = 0 ;
+      _mainEDU = NULL ;
 
       for ( INT32 i = 0 ; i < SDB_CB_MAX ; ++i )
       {
@@ -93,6 +93,7 @@ namespace engine
 
    _SDB_KRCB::~_SDB_KRCB ()
    {
+      SDB_ASSERT( _vecEventHandler.size() == 0, "Has some handler not unreg" ) ;
    }
 
    IParam* _SDB_KRCB::getParam()
@@ -291,14 +292,22 @@ namespace engine
       INT32 index = 0 ;
       IControlBlock *pCB = NULL ;
 
-      _mainEDU.setName( "Main" ) ;
+      _mainEDU = SDB_OSS_NEW pmdEDUCB( &_eduMgr, EDU_TYPE_MAIN ) ;
+      if ( !_mainEDU )
+      {
+         PD_LOG( PDERROR, "Malloc main educb failed" ) ;
+         rc = SDB_OOM ;
+         goto error ;
+      }
+      _mainEDU->setName( "Main" ) ;
+
 #if defined (_LINUX )
-      _mainEDU.setThreadID ( ossPThreadSelf() ) ;
+      _mainEDU->setThreadID ( ossPThreadSelf() ) ;
 #endif
-      _mainEDU.setTID ( ossGetCurrentThreadID() ) ;
+      _mainEDU->setTID ( ossGetCurrentThreadID() ) ;
       if ( NULL == pmdGetThreadEDUCB() )
       {
-         pmdDeclareEDUCB( &_mainEDU ) ;
+         pmdDeclareEDUCB( _mainEDU ) ;
       }
 
       // get hostname
@@ -418,6 +427,12 @@ namespace engine
       _buffPool.fini() ;
 
       pmdUndeclareEDUCB() ;
+
+      if ( _mainEDU )
+      {
+         SDB_OSS_DEL _mainEDU ;
+         _mainEDU = NULL ;
+      }
    }
 
    void _SDB_KRCB::onConfigChange ( UINT32 changeID )
@@ -473,19 +488,20 @@ namespace engine
       return _optioncb.makeAllDir() ;
    }
 
-   INT32 _SDB_KRCB::regEventHandler( IEventHander *pHandler )
+   INT32 _SDB_KRCB::regEventHandler( IEventHander *pHandler,
+                                     UINT32 mask )
    {
       if ( !pHandler ) return SDB_INVALIDARG ;
 
       ossScopedLock lock ( &_handlerLatch, EXCLUSIVE ) ;
       for ( UINT32 i = 0 ; i < _vecEventHandler.size() ; ++i )
       {
-         if ( _vecEventHandler[ i ] == pHandler )
+         if ( _vecEventHandler[ i ].first == pHandler )
          {
             return SDB_SYS ;
          }
       }
-      _vecEventHandler.push_back( pHandler ) ;
+      _vecEventHandler.push_back( EVENT_HANDLER_INFO( pHandler, mask ) ) ;
       return SDB_OK ;
    }
 
@@ -499,7 +515,7 @@ namespace engine
             it != _vecEventHandler.end() ;
             ++it )
       {
-         if ( *it == pHandler )
+         if ( (*it).first == pHandler )
          {
             _vecEventHandler.erase( it ) ;
             break ;
@@ -513,10 +529,9 @@ namespace engine
       ossScopedLock lock ( &_handlerLatch, SHARED ) ;
       for ( UINT32 i = 0 ; i < _vecEventHandler.size() ; ++i )
       {
-         pHandler = _vecEventHandler[ i ] ;
-         if ( pHandler->getMask() & EVENT_MASK_ON_REGISTERED )
+         if ( _vecEventHandler[ i ].second & EVENT_MASK_ON_REGISTERED )
          {
-            pHandler->onRegistered( nodeID ) ;
+            ( _vecEventHandler[ i ].first )->onRegistered( nodeID ) ;
          }
       }
    }
@@ -528,10 +543,9 @@ namespace engine
       ossScopedLock lock ( &_handlerLatch, SHARED ) ;
       for ( UINT32 i = 0 ; i < _vecEventHandler.size() ; ++i )
       {
-         pHandler = _vecEventHandler[ i ] ;
-         if ( pHandler->getMask() & EVENT_MASK_ON_PRIMARYCHG )
+         if ( _vecEventHandler[ i ].second & EVENT_MASK_ON_PRIMARYCHG )
          {
-            pHandler->onPrimaryChange( primary, type ) ;
+            ( _vecEventHandler[ i ].first )->onPrimaryChange( primary, type ) ;
          }
       }
    }
