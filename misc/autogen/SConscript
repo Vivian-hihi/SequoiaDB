@@ -105,6 +105,15 @@ if guess_os == "linux":
         # use project-related boost library
         env.Append( LIBPATH=join(boost_lib_dir,'ppclinux64') )
         force64 = False
+    elif guess_arch == "ppc64le":
+        linux64 = True
+        nixLibPrefix = "lib64"
+        env.Append( EXTRALIBPATH="/usr/lib64" )
+        env.Append( EXTRALIBPATH="/lib64" )
+        # use project-related boost library
+        env.Append( LIBPATH=join(boost_lib_dir,'ppclelinux64') )
+        force64 = False
+          
     # in case for 32 bit linux
     elif guess_arch == "ia32":
         linux64 = False
