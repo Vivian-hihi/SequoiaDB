@@ -120,8 +120,14 @@ public class SDBMessageHelper {
 			byte[] hint = bsonObjectToByteArray(sdbMessage.getHint());
 			byte[] nodeID = sdbMessage.getNodeID();
 	
-			// TODO: why we should convert here? 
-			// please add the comment here, if you know.
+			// why we should convert here? 
+			// here is the reason:
+			// according to "www.bsonspec.org/spec.html",
+			// when a bson is serialized, all the basic types must
+			// be serialized in litte-endian format. and when "endianConvert"
+			// is false, that means the remote server is working in a big-endian
+			// machine. so we need to convert the little-endian bytes to the 
+			// big-endian ones  
 			if (!endianConvert) {
 				bsonEndianConvert(query, 0, query.length, true);
 				bsonEndianConvert(fieldSelector, 0, fieldSelector.length, true);
@@ -1096,12 +1102,17 @@ public class SDBMessageHelper {
 			byteBuffer.position(nextBsonPos);
 			
 			int startPos = byteBuffer.position();
+			// we had set the byte order in byteBuffer when we received the bytes
+			// so, no need to worry about the accuracy of "objLen"
 			int objLen = byteBuffer.getInt();
 			byteBuffer.position(startPos);
 
 			int objAllotLen = Helper.roundToMultipleXLength(objLen, 4);
 
 			if (byteBuffer.order() == ByteOrder.BIG_ENDIAN) {
+				// the "byteArrayToBSONObject" can only handle the byte order which 
+				// is in little-endian, so, we need to convert the big-endian to 
+				// little-endian
 				bsonEndianConvert(byteBuffer.array(), byteBuffer.position(),
 						objLen, false);
 			}
