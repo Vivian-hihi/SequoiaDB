@@ -51,7 +51,7 @@
             <a href="#/Monitor/SDB-Overview/Charts">{{autoLanguage("图表")}}</a>
          </li>
          <li class="active">
-            <a href="#Monitor/SDB-Overview/Domain">{{autoLanguage(" 域 ")}}</a>
+            <a href="#Monitor/SDB-Overview/Domain">{{autoLanguage("域")}}</a>
          </li>
          <li>
             <a href="#Monitor/SDB-Overview/Session">{{autoLanguage("会话")}}</a>
@@ -62,9 +62,9 @@
       </ul>
    </div>
    <div ng-container="{height:30,marginTop:10}">
-      <button class="btn btn-default" ng-click="addDomian()">新增域</button>
-      <button class="btn btn-default" ng-click="deleteDomain()">删除域</button>
-      <button class="btn btn-default" ng-click="editDomain()">编辑域</button>
+      <button class="btn btn-default" ng-click="addDomian()">{{autoLanguage("创建域")}}</button>
+      <button class="btn btn-default" ng-click="deleteDomain()">{{autoLanguage("删除域")}}</button>
+      <button class="btn btn-default" ng-click="editDomain()">{{autoLanguage("编辑域")}}</button>
    </div>
    <div class="borderBox" style="padding:10px;overflow-y:auto;" ng-container ="{offsetY:-180,marginTop:10}">
       <div class="DataListBox" style="height:190px;padding:10px;border-top-width:5px;border-left-width:1px;margin:0 10px 10px 0;" ng-repeat="domainName in domainList track by $index" ng-class="{'0':'green','1':'yellow','2':'blue','3':'violet'}[$index%4]" create-response="{max:900,min:600,len:domainList.length,column:2}">

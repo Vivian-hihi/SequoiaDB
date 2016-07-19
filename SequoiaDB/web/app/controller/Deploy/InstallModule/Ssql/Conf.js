@@ -149,6 +149,12 @@
 				      tempHostInfo.push( { 'HostName': value['HostName'] } ) ;
                }
 			   } ) ;
+            if( tempHostInfo.length == 0 )
+            {
+               $.each( $scope.HostList, function( index, value ){
+				      tempHostInfo.push( { 'HostName': value['HostName'] } ) ;
+			      } ) ;
+            }
             var businessConf = {} ;
             businessConf['ClusterName']  = clusterName ;
             businessConf['BusinessName'] = $scope.ModuleName ;

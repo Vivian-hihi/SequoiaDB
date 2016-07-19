@@ -149,7 +149,7 @@
             }
             if( isEnd == true )
             {
-               gridData['tool']['left'][0]['text'] = $scope.sprintf( $scope.autoLanguage( '一共有?个表' ), gridData['body'].length ) ;
+               gridData['tool']['left'][0]['text'] = $scope.sprintf( $scope.autoLanguage( '一共 ? 个表' ), gridData['body'].length ) ;
             }
             $scope.$apply() ;
          } ) ;

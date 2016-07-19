@@ -51,7 +51,7 @@
             <a href="#/Monitor/SDB-Overview/Charts">{{autoLanguage("图表")}}</a>
          </li>
          <li>
-            <a href="#Monitor/SDB-Overview/Domain">{{autoLanguage(" 域 ")}}</a>
+            <a href="#Monitor/SDB-Overview/Domain">{{autoLanguage("域")}}</a>
          </li>
          <li>
             <a href="#Monitor/SDB-Overview/Session">{{autoLanguage("会话")}}</a>
@@ -63,7 +63,7 @@
    </div>
 
    <div style="height:30px;margin:10px 0;">
-      <button class="btn btn-default" ng-click="CreatePlayIntervalModel()">实时刷新设置</button>&nbsp;<button class="btn btn-default" dropdown-menu="SelectMenu" ng-click="OpenSelecMenu()">选择显示列&nbsp;<i class="fa fa-caret-down"></i></button>
+      <button class="btn btn-default" ng-click="CreatePlayIntervalModel()">{{autoLanguage("实时刷新设置")}}</button>&nbsp;<button class="btn btn-default" dropdown-menu="SelectMenu" ng-click="OpenSelecMenu()">{{autoLanguage("选择显示列")}}&nbsp;<i class="fa fa-caret-down"></i></button>
    </div>
 
    <div create-timer="Timer"></div>
@@ -98,14 +98,15 @@
                <tr ng-repeat="nodeInfo in NodesList | orderBy:OrderByField">
                   <td>
                      <div class="Ellipsis">
-                        <i class="fa fa-circle" style="color:#00CC66;" ng-if="nodeInfo['Status'] == true" data-desc="正常运行中"></i>
-                        <i class="fa fa-circle" style="color:#F9A937;" ng-if="nodeInfo['Status'] == false" data-desc="节点异常"></i>
+                        <i class="fa fa-circle" style="color:#00CC66;" ng-if="nodeInfo['Status'] == true" ng-attr="{'data-desc':autoLanguage('正常运行')}"></i>
+                        <i class="fa fa-circle" style="color:#F9A937;" ng-if="nodeInfo['Status'] == false" ng-attr="{'data-desc':'节点异常'}"></i>
                      </div>
                   </td>
                   <td ng-repeat="fieldName in ShowKeyList track by $index">
                      <div class="Ellipsis" ng-switch on="fieldName">
                         <span class="Ellipsis linkButton" ng-switch-when="NodeName" ng-click="GotoNode()">{{nodeInfo[fieldName]}}</span>
                         <span class="Ellipsis linkButton" ng-switch-when="HostName" ng-click="GotoHost()">{{nodeInfo[fieldName]}}</span>
+                        <span class="Ellipsis linkButton" ng-switch-when="GroupName" ng-click="GotoGroup()">{{nodeInfo[fieldName]}}</span>
                         <span class="Ellipsis linkButton" ng-switch-when="TotalCL" ng-click="GotoDatabase()">{{nodeInfo[fieldName]}}</span>
                         <span class="Ellipsis linkButton" ng-switch-when="TotalRecords" ng-click="GotoDatabase()">{{nodeInfo[fieldName]}}</span>
                         <span class="Ellipsis linkButton" ng-switch-when="TotalLobs" ng-click="GotoDatabase()">{{nodeInfo[fieldName]}}</span>
@@ -119,7 +120,7 @@
    </div>
    <div class="GridTool">
       <div class="ToolLeft">
-         <span>一共有 {{NodesList.length}} 个节点</span>
+         <span>{{sprintf(autoLanguage("一共 ? 个节点"),NodesList.length)}}</span>
       </div>
    </div>
 

@@ -86,6 +86,12 @@
            resolve: resolveFun( [ './app/controller/Data/Other/web.js' ] )
         }
       },
+      { path: '/Data/NotSupport',
+        options: {
+           templateUrl: './app/template/Data/Other/notsupport.html',
+           resolve: resolveFun( [ './app/controller/Data/Other/notsupport.js' ] )
+        }
+      },
       { path: '/Strategy/SDB/Index',
         options: {
            templateUrl: './app/template/Strategy/Sdb/Index.html',

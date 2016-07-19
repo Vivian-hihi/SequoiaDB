@@ -77,13 +77,13 @@
                   { "key":value['GroupName'], "value": index }
                ) ;
                
-               if( value['Status'] == 'Waiting' )
+               if( value['Status'] == 0 )
                {
                   $scope.waitingGroupList.push(
                      { "key":value['GroupName'], "value": index }
                   ) ;
                }
-               else if( value['Status'] == 'Running' )
+               else if( value['Status'] == 1 )
                {
                   $scope.runningGroupList.push(
                      { "key":value['GroupName'], "value": index }
@@ -124,7 +124,7 @@
          $scope.Components.Modal.form = {
             inputList: [
                {
-                  "name": "name",
+                  "name": "groupName",
                   "webName": $scope.autoLanguage( '分区组名' ),
                   "type": "string",
                   "required": true,
@@ -136,23 +136,27 @@
                   }
                },
                {
-                  "name": "name",
+                  "name": "role",
                   "webName": $scope.autoLanguage( '角色' ),
                   "type": "select",
-                  "value": 0,
+                  "value": "data",
                   "valid": [
-                     { "key": "coord", "value": 0 },
-                     { "key": "catalog", "value": 1 },
-                     { "key": "data", "value": 2 }
+                     { "key": "coord", "value": "coord" },
+                     { "key": "catalog", "value": "catalog" },
+                     { "key": "data", "value": "data" }
                   ]
                }
             ]
          } ;
          $scope.Components.Modal.Context = '<div form-create para="data.form"></div>' ;
-         $scope.Components.Modal.ok = function(){
-            var isAllClear = $scope.Components.Modal.form.check() ;
-            //$scope.Components.Modal.isShow = false ;
-         } ;
+         $scope.Components.Modal.ok = function () {
+             var isAllClear = $scope.Components.Modal.form.check();
+             if (isAllClear) {
+                 var formVal = $scope.Components.Modal.form.getValue();
+                 alert(JSON.stringify(formVal))
+             }
+             //return isAllClear;
+         }
       }
       //删除分区组  
       $scope.deleteGroup = function(){

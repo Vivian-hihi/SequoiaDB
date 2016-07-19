@@ -4,9 +4,11 @@
          <div style="height:50px;width:45px;float:left;">
             <i style="color:#ccc;padding-top:8px;font-size:218%;" class="fa fa-cubes"></i>
          </div>
-         <div style="height:50px;float:left;max-width:200px;">
-            <div style="font-size:90%;">集群</div>
-            <div class="Ellipsis" style="font-size:140%;color:#666;width:160px;"><a href="#/Deploy/Index" class="linkButton">{{clusterName}}</a></div>
+         <div style="height:50px;float:left;">
+            <div style="font-size:90%;" ng-click="moduleInfo()">集群</div>
+            <div style="font-size:140%;width:160px;">
+               <span class="Ellipsis linkButton" ng-click="GotoDeploy()">{{clusterName}}</span>
+            </div>
          </div>
          <div class="clear-float"></div>
       </div>
@@ -16,8 +18,8 @@
          </div>
          <div style="height:50px;float:left;max-width:200px;">
             <div style="font-size:90%;">{{moduleType}}</div>
-            <div class="Ellipsis" style="font-size:140%;width:160px;">
-               <a href="#/Monitor/Index" class="linkButton">{{moduleName}}</a>
+            <div style="font-size:140%;width:160px;">
+               <span class="Ellipsis linkButton" ng-click="GotoModule()">{{moduleName}}</span>
             </div>
          </div>
          <div class="clear-float"></div>
@@ -28,7 +30,9 @@
          </div>
          <div style="height:50px;float:left;">
             <div style="font-size:90%;">分区组数</div>
-            <div class="Ellipsis" style="font-size:140%;width:160px;"><a href="#/Monitor/SDB-Overview/Index" class="linkButton">20</a></div>
+            <div class="Ellipsis" style="font-size:140%;width:160px;">
+               <span class="Ellipsis linkButton" ng-click="GotoGroups()">20</span>
+            </div>
          </div>
          <div class="clear-float"></div>
       </div>
@@ -48,7 +52,16 @@
       </ul>
    </div>
    <div style="color:#606060;font-size:90%;height:30px;margin:10px 0;">
-      <button class="btn btn-default" ng-click="CreatePlayIntervalModel()">实时刷新设置</button>&nbsp;<button class="btn btn-default" dropdown-menu="SelectMenu" ng-click="OpenSelecMenu()">选择显示列&nbsp;<i class="fa fa-caret-down"></i></button>&nbsp;<button class="btn btn-default" dropdown-menu="ResourceMenu">资源类型&nbsp;<i class="fa fa-caret-down"></i></button>&nbsp;<button class="btn btn-default" dropdown-menu="ScreenMenu">条件筛选&nbsp;<i class="fa fa-caret-down"></i></button>
+      <button class="btn btn-default" ng-click="CreatePlayIntervalModel()">实时刷新设置</button>&nbsp;
+      <button class="btn btn-default" dropdown-menu="SelectMenu" ng-click="OpenSelecMenu()">
+         选择显示列&nbsp;
+         <i class="fa fa-caret-down"></i>
+      </button>&nbsp;
+      <button class="btn btn-default" dropdown-menu="ScreenMenu" ng-click="OpenSelecMenu()">
+         <span ng-if="ContextType == 'all'">所有上下文</span>
+         <span ng-if="ContextType == 'current'">当前上下文</span>
+         <i class="fa fa-caret-down"></i>
+      </button>
    </div>
    <div create-timer="Timer"></div>
    <div class="Grid2" ng-grid2="ResourceGridOptions" ng-container="{offsetY:-212}">
@@ -88,7 +101,10 @@
                      </div>
                   </td>
                   <td ng-repeat="fieldName in ShowKeyList track by $index">
-                     <div class="Ellipsis">{{resourceInfo[fieldName]}}</div>
+                     <div class="Ellipsis" ng-switch on="fieldName">
+                        <span ng-switch-default>{{resourceInfo[fieldName]}}</span>
+                        <span class="linkButton" ng-click="showContext()" ng-switch-when="SessionID">{{resourceInfo[fieldName]}}</span>
+                     </div>
                   </td>
                </tr>
             </tbody>
@@ -97,9 +113,7 @@
    </div>
    <div class="GridTool">
       <div class="ToolLeft">
-         <span>一共有 {{NodeList.length}} 个节点</span>
+         <span>一共有 {{ResourceList.length}} 个上下文</span>
       </div>
    </div>
-
-
 </div>

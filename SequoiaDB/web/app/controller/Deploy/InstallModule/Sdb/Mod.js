@@ -1012,7 +1012,7 @@
             $.each( $scope.NodeList, function( index, nodeInfo ){
                countGroup( nodeInfo['role'], nodeInfo['datagroupname'], 1 ) ;
             } ) ;
-            $scope.NodeGridTool = sprintf( $scope.autoLanguage( '一共?个节点' ), $scope.NodeList.length ) ;
+            $scope.NodeGridTool = sprintf( $scope.autoLanguage( '一共 ? 个节点' ), $scope.NodeList.length ) ;
             $scope.$apply() ;
             $scope.bindResize() ;
          }, function( errorInfo ){

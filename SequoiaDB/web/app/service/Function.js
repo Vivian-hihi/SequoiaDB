@@ -330,6 +330,11 @@
       //定时器
       g.Timeout = function( execFun, delay, isApply ){
          var timer = setTimeout( function(){
+            if( timer != null )
+            {
+               clearTimeout( timer ) ;
+               timer = null ;
+            }
             execFun() ;
             if( isApply )
             {
@@ -337,7 +342,11 @@
             }
          }, delay ) ;
          $rootScope.$on( '$locationChangeStart', function( event, newUrl, oldUrl ){
-            clearTimeout( timer ) ;
+            if( timer != null )
+            {
+               clearTimeout( timer ) ;
+               timer = null ;
+            }
          } ) ;
       }
 
@@ -351,7 +360,11 @@
             }
          }, delay ) ;
          $rootScope.$on( '$locationChangeStart', function( event, newUrl, oldUrl ){
-            clearInterval( timer ) ;
+            if( timer != null )
+            {
+               clearInterval( timer ) ;
+               timer = null ;
+            }
          } ) ;
       }
    } ) ;

@@ -13,11 +13,13 @@
       </ul>
    </div>
    <div ng-container="{height:30}">
-      <button class="topBtn" ng-click="queryAll()"><i class="fa fa-search"></i> {{autoLanguage("所有")}}</button>
-      <button class="topBtn" ng-click="Query()"><i class="fa fa-search"></i> {{autoLanguage("查询")}}</button>
-      <button class="topBtn" ng-click="Insert()"><i class="fa fa-plus"></i> {{autoLanguage("插入")}}</button>
-      <button class="topBtn" ng-click="Update()"><i class="fa fa-edit"></i> {{autoLanguage("更新")}}</button>
-      <button class="topBtn" ng-click="Delete()"><i class="fa fa-remove"></i> {{autoLanguage("删除")}}</button>
+      <button class="topBtn" ng-click="queryAll()"><i class="fa fa-search"></i>&nbsp;{{autoLanguage("所有")}}</button>
+      <button class="topBtn" ng-click="Query()"><i class="fa fa-search"></i>&nbsp;{{autoLanguage("查询")}}</button>
+      <button class="topBtn" ng-click="Insert()"><i class="fa fa-plus"></i>&nbsp;{{autoLanguage("插入")}}</button>
+      <button class="topBtn" ng-click="Update()"><i class="fa fa-edit"></i>&nbsp;{{autoLanguage("更新")}}</button>
+      <button class="topBtn" ng-click="Delete()"><i class="fa fa-remove"></i>&nbsp;{{autoLanguage("删除")}}</button>
+      <span style="border-left:2px solid #aaa;vertical-align:middle;" ng-show="records.length > 0 && showType == 3"></span>&nbsp;
+      <button class="btn btn-default" ng-show="records.length > 0 && showType == 3" ng-click="RevertShowKeyList()" dropdown-menu="SelectFields">{{autoLanguage("选择字段")}}&nbsp;<i class="fa fa-caret-down"></i></button>
    </div>
    <div class="result Ellipsis" ng-class="{true:'success',false:'failed'}[execRc]" ng-container="{height:40,marginTop:12}">
       {{execResult}}

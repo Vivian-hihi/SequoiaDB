@@ -87,15 +87,15 @@
             </tr>
             <tr>
                <td style="font-weight:bold;">LSN</td>
-               <td class="Ellipsis">{{nodeInfo['BeginLSN']['Version']}}</td>
+               <td class="Ellipsis">0{{nodeInfo['BeginLSN']['Version']}}</td>
             </tr>
             <tr>
                <td style="font-weight:bold;">完成LSN</td>
-               <td class="Ellipsis"></td>
+               <td class="Ellipsis">0</td>
             </tr>
             <tr>
                <td style="font-weight:bold;">LSN队列数</td>
-               <td class="Ellipsis"></td>
+               <td class="Ellipsis">0</td>
             </tr>
             <tr>
                <td style="font-weight:bold;">主机</td>
@@ -106,80 +106,6 @@
                <td style="word-break:break-all;">{{nodeInfo['Disk']['DatabasePath']}}</td>
             </tr>
          </table>
-         <!--<div style="margin-bottom:10px;">
-            <div style="float:left;width:75px;font-weight:bold;">分区组</div>
-            <div style="float:left;width:186px;" class="Ellipsis"><a href="#/Monitor/SDB-Group/Index" class="linkButton">{{nodeInfo['GroupName']}}</a></div>
-            <div class="clear-float"></div>
-         </div>
-
-         <div style="margin-bottom:10px;">
-            <div style="float:left;width:75px;font-weight:bold;">角色</div>
-            <div style="float:left;width:186px;" class="Ellipsis">{{nodeInfo['Role']}}</div>
-            <div class="clear-float"></div>
-         </div>
-
-         <div style="margin-bottom:10px;">
-            <div style="float:left;width:75px;font-weight:bold;">节点ID</div>
-            <div style="float:left;width:186px;" class="Ellipsis">123</div>
-            <div class="clear-float"></div>
-         </div>
-
-         <div style="margin-bottom:10px;">
-            <div style="float:left;width:75px;font-weight:bold;">类型</div>
-            <div style="float:left;width:186px;" class="Ellipsis" ng-if="nodeInfo['IsPrimary'] == true">主节点</div>
-            <div style="float:left;width:186px;" class="Ellipsis" ng-if="nodeInfo['IsPrimary'] == false">备节点</div>
-            <div class="clear-float"></div>
-         </div>
-
-         <div style="margin-bottom:10px;">
-            <div style="float:left;width:75px;font-weight:bold;">集合数</div>
-            <div style="float:left;width:186px;" class="Ellipsis">{{nodeInfo['TotalCollection']}}</div>
-            <div class="clear-float"></div>
-         </div>
-
-         <div style="margin-bottom:10px;">
-            <div style="float:left;width:75px;font-weight:bold;">记录数</div>
-            <div style="float:left;width:186px;" class="Ellipsis">{{nodeInfo['TotalData']}}</div>
-            <div class="clear-float"></div>
-         </div>
-
-         <div style="margin-bottom:10px;">
-            <div style="float:left;width:75px;font-weight:bold;">Lob数</div>
-            <div style="float:left;width:186px;" class="Ellipsis">0</div>
-            <div class="clear-float"></div>
-         </div>
-
-         <div style="margin-bottom:10px;">
-            <div style="float:left;width:75px;font-weight:bold;">LSN</div> 
-            <div style="float:left;width:186px;" class="Ellipsis">{{nodeInfo['BeginLSN']['Version']}}</div>
-            <div class="clear-float"></div>
-         </div>
-
-         <div style="margin-bottom:10px;">
-            <div style="float:left;width:75px;font-weight:bold;">完成LSN</div>
-            <div style="float:left;width:186px;" class="Ellipsis">0</div>
-            <div class="clear-float"></div>
-         </div>
-
-         <div style="margin-bottom:10px;">
-            <div style="float:left;width:75px;font-weight:bold;">LSN队列数</div>
-            <div style="float:left;width:186px;" class="Ellipsis">0</div>
-            <div class="clear-float"></div>
-         </div>
-
-
-         <div style="margin-bottom:10px;">
-            <div style="float:left;width:75px;font-weight:bold;">主机</div>
-            <div style="float:left;width:186px;" class="Ellipsis"><a class="linkButton" href="#/Monitor/Host-Info/Index">{{nodeInfo['HostName']}}</a></div>
-            <div class="clear-float"></div>
-         </div>
-
-         <div style="margin-bottom:10px;">
-            <div style="float:left;width:75px;font-weight:bold;">路径</div>
-            <div style="float:left;width:186px;word-break:break-all;">{{nodeInfo['Disk']['DatabasePath']}}</div>
-            <div class="clear-float"></div>
-         </div>-->
-
       </div>
       <div style="float:left;overflow-y:auto;border:1px solid #ddd;padding-top:10px;" ng-container="{offsetX:-320,offsetY:0,marginLeft:10}">
          <div style="min-width:350px;float:left;padding:10px 0 0 10px;" ng-container="{height:230,width:'50%',offsetX:-20}" create-chart="charts.Insert"></div>

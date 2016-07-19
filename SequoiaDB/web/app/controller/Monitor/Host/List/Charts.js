@@ -2,13 +2,70 @@
    var sacApp = window.SdbSacManagerModule ;
    //控制器
    sacApp.controllerProvider.register( 'Monitor.HostPerformance.Index.Ctrl', function( $scope, $compile, SdbRest, SdbFunction ){
-      var clusterName = SdbFunction.LocalData( 'SdbClusterName' ) ;
-      var moduleType = SdbFunction.LocalData( 'SdbModuleType' ) ;
-      var moduleName = SdbFunction.LocalData( 'SdbModuleName' ) ;
-      $scope.clusterName = clusterName ;
-      $scope.moduleName = moduleName ;
-      $scope.moduleType =  moduleType ;
+      $scope.ClusterName = SdbFunction.LocalData( 'SdbClusterName' ) ;
+      $scope.ModuleType = SdbFunction.LocalData( 'SdbModuleType' ) ;
+      $scope.ModuleName = SdbFunction.LocalData( 'SdbModuleName' ) ;
+      var hostNameList = [] ;
+      var cpuSum = 0 ;
+      var memorySum = 0 ;
+      var cpuUsed = 0 ;
+      var memoryUsed = 0 ;
+      var networkIn = 0 ;
+      var networkOut = 0 ;
+      var diskSum = 0 ;
+      var diskFree = 0 ;
+      var diskUsed = 0 ;
+      var getHostList = function(){
+         var data = {
+            'cmd':'query host status',
+            'HostInfo': JSON.stringify( {"HostInfo":hostNameList } )
+         } ;
+         SdbRest.OmOperation( data, function( hostList ){
+            $.each( hostList[0]['HostInfo'], function( index, hostInfo ){
+               cpuSum =  hostInfo['CPU']['Sys']['Megabit'] +
+                         hostInfo['CPU']['Idle']['Megabit'] +
+                         hostInfo['CPU']['Other']['Megabit'] +
+                         hostInfo['CPU']['User']['Megabit'] + cpuSum ;
+               memorySum += hostInfo['Memory']['Size'] ;
+               memoryUsed += hostInfo['Memory']['Used'] ;
+               $.each( hostInfo['Disk'], function( index2, diskInfo ){
+                  diskSum += diskInfo['Size'] ;
+                  diskFree += diskInfo['Free'] ;
+               } ) ;
+            } ) ;
+         }, function( errorInfo ){
+            _IndexPublic.createRetryModel( $scope, errorInfo, function(){
+               getHostList() ;
+               return true ;
+            } ) ;
+         }, function(){
+            _IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
+         } ) ;
+      } ;
       
+      var getModuleInfo = function(){
+         var data = {
+            'cmd': 'query business',
+            'filter' : JSON.stringify( { 'BusinessName': $scope.ModuleName } )
+         } ;
+         SdbRest.OmOperation( data, function( moduleInfo ){
+            $.each( moduleInfo[0]['Location'], function( index, hostName ){
+               hostNameList.push(hostName)
+            } ) ;
+            getHostList() ;
+         }, function( errorInfo ){
+            _IndexPublic.createRetryModel( $scope, errorInfo, function(){
+               getModuleInfo() ;
+               return true ;
+            } ) ;
+         }, function(){
+            _IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
+         } ) ;
+      } ;
+      getModuleInfo() ;
+
+
+
       $scope.charts = {}; 
       $scope.getData = function(){
          var s = 0 ;

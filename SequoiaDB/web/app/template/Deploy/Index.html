@@ -30,7 +30,7 @@
                         <a class="linkButton" ng-if="moduleInfo['BusinessType']=='sequoiadb'" ng-click="GotoDataModule(moduleInfo['ClusterName'],moduleInfo['BusinessType'],moduleInfo['DeployMod'],moduleInfo['BusinessName'])">{{moduleInfo['BusinessName']}}</a>
                         <span style="color:#666;" ng-if="moduleInfo['BusinessType']!='sequoiadb'">{{moduleInfo['BusinessName']}}</span>
                      </div>
-                     <div class="Ellipsis" style="font-size:90%;color:#666;">{{moduleInfo['BusinessType']}} <span ng-if="moduleInfo['AddtionType'] == 1">{{autoLanguage("添加时间")}}</span><span ng-if="moduleInfo['AddtionType'] == 0">{{autoLanguage("创建时间")}}</span>: {{moduleInfo['Time']['$timestamp'].substr(0,19)}}</div>
+                     <div class="Ellipsis" style="font-size:90%;color:#666;">{{moduleInfo['BusinessType']}} {{moduleInfo['DeployMod']}}&nbsp;|&nbsp;<span ng-if="moduleInfo['AddtionType'] == 1">{{autoLanguage("添加时间")}}</span><span ng-if="moduleInfo['AddtionType'] == 0">{{autoLanguage("创建时间")}}</span>: {{moduleInfo['Time']['$timestamp'].substr(0,19)}}</div>
                   </div>
                   <div class="clear-float"></div>
                </div>

@@ -160,13 +160,6 @@
                            timeSet = null ;
                            isShow = true ;
                         }, showTime ) ;
-                     }
-                     else
-                     {
-                        g.show( text, pageY, pageX ) ;
-                     }
-                     if( isShow == false )
-                     {
                         timeSet2 = setTimeout( function(){
                            g.hide() ;
                            timeSet2 = null ;
@@ -175,6 +168,7 @@
                      }
                      else
                      {
+                        g.show( text, pageY, pageX ) ;
                         timeSet2 = setTimeout( function(){
                            g.hide() ;
                            timeSet2 = null ;

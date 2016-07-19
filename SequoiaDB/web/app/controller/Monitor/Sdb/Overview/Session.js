@@ -9,6 +9,7 @@
       $scope.moduleName = moduleName ;
       $scope.moduleType =  moduleType ;
 
+      var isOpenSelectMenu = false ;
       $scope.SessionList = [] ;
       $scope.SessionGridOptions = { 'titleWidth': [] } ;
       $scope.ShowKeyList = [ 'SessionID', 'TID', 'Type', 'TotalInsert', 'TotalDelete', 'TotalUpdate', 'TotalRead' ] ;
@@ -96,6 +97,11 @@
 
       //保存显示列
       $scope.SaveShowKeyList = function(){
+         if( isOpenSelectMenu == true && $scope.Timer.status == 'stop' )
+         {
+            isOpenSelectMenu = false ;
+            $scope.Timer.status = 'start' ;
+         }
          $scope.ShowKeyList = [] ;
          $.each( $scope.ShowKey, function( index, keyInfo ){
             if( keyInfo['show'] == true )
@@ -122,8 +128,6 @@
             $scope.ShowKey = [] ;
             $scope.SelectMenu = [] ;
             $.each( keyList, function( index, key ){
-               if( key != 'Status' )
-               {}
                $scope.ShowKey.push( { 'key': key, 'show': $scope.ShowKeyList.indexOf( key ) >= 0 } ) ;
                $scope.SelectMenu.push( { 
                   'html': $compile( '<label><div class="Ellipsis" style="padding:5px 10px"><input type="checkbox" ng-model="ShowKey[\'' + index + '\'][\'show\']"/>&nbsp;' + key + '</div></label>' )( $scope ),
@@ -218,19 +222,41 @@
 
       $scope.ScreenMenu = [
          { 
-            'html': $compile( '<label><div style="padding:5px 10px"><input type="radio" name="a" value="all" ng-model="screenResult[\'Role\']" />所有会话</div></label>' )( $scope ),
+             'html': $compile('<label><div style="padding:5px 10px"><input type="radio" name="a" value="all" ng-model="screenResult[\'Role\']" />{{autoLanguage("所有会话")}}</div></label>')($scope),
             'onClick': function(){}
          },
          { 
-            'html': $compile( '<label><div style="padding:5px 10px"><input type="radio" name="a" value="current" ng-model="screenResult[\'Role\']"/>当前会话</div></label>' )( $scope ),
+             'html': $compile('<label><div style="padding:5px 10px"><input type="radio" name="a" value="current" ng-model="screenResult[\'Role\']"/>{{autoLanguage("当前会话")}}</div></label>')($scope),
             'onClick': function(){}
          },
          { 
             'html': $compile( '<button class="btn btn-primary" ng-click="changeScreen()" style="width:100%;">确定</button>' )( $scope )
          }
       ] ; 
+         
+      $scope.Timer = {
+         status: 'stop',
+         interval: 5,
+         currentTimer: 0,
+         complete: false,
+         fn: getSessionList
+      } ;
+
+      //打开 网格显示列 的下拉菜单
+      $scope.OpenSelecMenu = function () {
+         if ($scope.Timer.status == 'start') {
+            isOpenSelectMenu = true;
+            $scope.Timer.status = 'stop';
+         }
+      } ;
+    
 
       $scope.changeScreen = function(){
+         if( isOpenSelectMenu == true && $scope.Timer.status == 'stop' )
+         {
+            isOpenSelectMenu = false ;
+            $scope.Timer.status = 'start' ;
+         }
          $scope.SessionType = $scope.screenResult['Role'] ;
          if( $scope.screenResult['Role'] == 'current' )
          {
@@ -243,13 +269,9 @@
          getSessionList() ;
       } ;
 
-      $scope.Timer = {
-         status: 'stop',
-         interval: 5,
-         currentTimer: 0,
-         complete: false,
-         fn: getSessionList
-      } ;
+
+
+      
 
       //跳转至部署
       $scope.GotoDeploy = function(){

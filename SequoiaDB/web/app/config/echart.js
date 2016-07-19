@@ -185,7 +185,7 @@
    window.SdbSacManagerConf.CpuEchart = {
       title: {
          show: true,
-         text: '处理器利用率',
+         text: 'CPU利用率',
          textStyle: {
             color: '#666',
             fontFamily: 'Verdana,Georgia,宋体',
@@ -386,7 +386,7 @@
       tooltip: {
          enterable: true,
          trigger: 'axis',
-         formatter: '{a0}: {c0}%'
+         formatter: '{a0}: {c0}%<br>{a1}: {c1}%'
       },
       animation: false,
       addDataAnimation: false,
@@ -645,7 +645,8 @@
       },
       tooltip: {
          enterable: true,
-         trigger: 'axis'
+         trigger: 'axis',
+         formatter: '{a0}: {c0}/s'
       },
       legend: {
          data: ['Record Insert']
@@ -702,7 +703,8 @@
       },
       tooltip: {
          enterable: true,
-         trigger: 'axis'
+         trigger: 'axis',
+         formatter: '{a0}: {c0}/s'
       },
       legend: {
          data: ['Record Update']
@@ -759,7 +761,8 @@
       },
       tooltip: {
          enterable: true,
-         trigger: 'axis'
+         trigger: 'axis',
+         formatter: '{a0}: {c0}/s'
       },
       legend: {
          data: ['Record Delete']
@@ -816,7 +819,8 @@
       },
       tooltip: {
          enterable: true,
-         trigger: 'axis'
+         trigger: 'axis',
+         formatter: '{a0}: {c0}/s'
       },
       legend: {
          data: ['Record Read']

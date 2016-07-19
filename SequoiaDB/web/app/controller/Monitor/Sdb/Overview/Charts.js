@@ -1,7 +1,7 @@
 (function(){
    var sacApp = window.SdbSacManagerModule ;
    //控制器
-   sacApp.controllerProvider.register( 'Monitor.SdbOverview.Charts.Ctrl', function( $scope, SdbRest, SdbFunction ){
+   sacApp.controllerProvider.register( 'Monitor.SdbOverview.Charts.Ctrl', function( $scope, $location, SdbRest, SdbFunction ){
       var clusterName = SdbFunction.LocalData( 'SdbClusterName' ) ;
       var moduleType = SdbFunction.LocalData( 'SdbModuleType' ) ;
       var moduleName = SdbFunction.LocalData( 'SdbModuleName' ) ;

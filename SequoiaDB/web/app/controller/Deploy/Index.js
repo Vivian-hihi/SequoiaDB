@@ -26,6 +26,8 @@
       $scope.HostGridOptions = { 'titleWidth': [ '30px', '60px', 30, 30, 40 ] } ;
       //主机和业务的关联表(也就是有安装业务的主机列表)
       var host_module_table = [] ;
+      //循环查询的业务
+      var autoQueryModuleIndex = [] ;
 
       //清空Deploy域的数据
       $rootScope.tempData( 'Deploy' ) ;
@@ -47,17 +49,20 @@
                      cpu += host_module_table[index3]['Info']['CPU'] ;
                      memory += host_module_table[index3]['Info']['Memory'] ;
                      disk += host_module_table[index3]['Info']['Disk'] ;
-                     if( host_module_table[index3]['Error']['Flag'] == 0 )
+                     if( $scope.moduleList[index]['Error']['Type'] == 'Host' || $scope.moduleList[index]['Error']['Flag'] == 0 )
                      {
-                        $scope.moduleList[index]['Error']['Flag'] = 0 ;
-                     }
-                     else
-                     {
-                        $scope.moduleList[index]['Error']['Flag'] = host_module_table[index3]['Error']['Flag'] ;
-                        $scope.moduleList[index]['Error']['Type'] = 'Host' ;
-                        $scope.moduleList[index]['Error']['Message'] = sprintf( $scope.autoLanguage( '主机 ? 状态异常: ?。' ), 
-                                                                                host_module_table[index3]['HostName'],
-                                                                                host_module_table[index3]['Error']['Message'] ) ;
+                        if( host_module_table[index3]['Error']['Flag'] == 0 )
+                        {
+                           $scope.moduleList[index]['Error']['Flag'] = 0 ;
+                        }
+                        else
+                        {
+                           $scope.moduleList[index]['Error']['Flag'] = host_module_table[index3]['Error']['Flag'] ;
+                           $scope.moduleList[index]['Error']['Type'] = 'Host' ;
+                           $scope.moduleList[index]['Error']['Message'] = sprintf( $scope.autoLanguage( '主机 ? 状态异常: ?。' ), 
+                                                                                   host_module_table[index3]['HostName'],
+                                                                                   host_module_table[index3]['Error']['Message'] ) ;
+                        }
                      }
                   }
                } ) ;
@@ -94,18 +99,27 @@
          return flag ;
       }
 
+      var isFirstQueryHostStatus = true ;
       //查询主机状态
       var queryHostStatus = function(){
-         var isFirst = false ;
+         var isFirst = true ;
          var queryHostList = { 'HostInfo': [] } ;
          if( $scope.HostList.length == 0 )
+         {
+            return ;
+         }
+         $.each( $scope.HostList, function( index, hostInfo ){
+            if( isFirstQueryHostStatus || hostInfo['ClusterName'] == $scope.clusterList[ $scope.currentCluster ]['ClusterName'] )
+            {
+               queryHostList['HostInfo'].push( { 'HostName': hostInfo['HostName'] } ) ;
+            }
+         } ) ;
+         isFirstQueryHostStatus = false ;
+         if( queryHostList['HostInfo'].length == 0 )
          {
             SdbFunction.Timeout( queryHostStatus, 5000 ) ;
             return ;
          }
-         $.each( $scope.HostList, function( index, hostInfo ){
-            queryHostList['HostInfo'].push( { 'HostName': hostInfo['HostName'] } ) ;
-         } ) ;
          var data = { 'cmd': 'query host status', 'HostInfo': JSON.stringify( queryHostList ) } ;
          SdbRest.OmOperation( data, function( hostStatusList ){
             $.each( hostStatusList[0]['HostInfo'], function( index, statusInfo ){
@@ -179,10 +193,7 @@
             countModule_Host() ;
             SdbFunction.Timeout( queryHostStatus, isFirst ? 2000 : 5000 ) ;
          }, function( errorInfo ){
-            _IndexPublic.createRetryModel( $scope, errorInfo, function(){
-               queryHostStatus() ;
-               return true ;
-            } ) ;
+            SdbFunction.Timeout( queryHostStatus, isFirst ? 2000 : 5000 ) ;
          }, function(){
             _IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
          }, null, false ) ;
@@ -190,14 +201,18 @@
 
       //获取sequoiadb的节点信息
       var getNodesList = function( moduleIndex ){
+         if( $.inArray( moduleIndex, autoQueryModuleIndex ) == -1 )
+         {
+            return ;
+         }
          $scope.moduleList[moduleIndex]['BusinessInfo'] = {} ;
          var moduleName = $scope.moduleList[moduleIndex]['BusinessName'] ;
          var data = { 'cmd': 'list nodes', 'BusinessName': moduleName } ;
          SdbRest.OmOperation( data, function( nodeList ){
-            $scope.moduleList[moduleIndex]['BusinessInfo']['NodeList'] = nodeList ;
+           $scope.moduleList[moduleIndex]['BusinessInfo']['NodeList'] = nodeList ;
          }, function( errorInfo ){
             _IndexPublic.createRetryModel( $scope, errorInfo, function(){
-               getNodesList() ;
+               getNodesList( moduleIndex ) ;
                return true ;
             } ) ;
          }, function(){
@@ -207,6 +222,10 @@
 
       //获取sequoiadb业务信息
       var getCollectionInfo = function( moduleIndex ){
+         if( $.inArray( moduleIndex, autoQueryModuleIndex ) == -1 )
+         {
+            return ;
+         }
          var clusterName = $scope.moduleList[moduleIndex]['ClusterName'] ;
          var moduleName = $scope.moduleList[moduleIndex]['BusinessName'] ;
          var moduleMode = $scope.moduleList[moduleIndex]['DeployMod'] ;
@@ -252,14 +271,30 @@
                [ 1, dataPercent, true, false ],
                [ 2, lobPercent, true, false ]
             ] ;
+
+            if( $scope.moduleList[moduleIndex]['Error']['Type'] == 'Module' )
+            {
+               $scope.moduleList[moduleIndex]['Error']['Flag'] = 0 ;
+            }
+
             SdbFunction.Timeout( function(){
                getCollectionInfo( moduleIndex ) ;
             }, 5000 ) ;
          }, function( errorInfo ){
-            _IndexPublic.createRetryModel( $scope, errorInfo, function(){
+            if( moduleMode == 'standalone' )
+            {
+               if( $scope.moduleList[moduleIndex]['Error']['Type'] == 'Module' || $scope.moduleList[moduleIndex]['Error']['Flag'] == 0 )
+               {
+                  $scope.moduleList[moduleIndex]['Error']['Flag'] = errorInfo['errno'] ;
+                  $scope.moduleList[moduleIndex]['Error']['Type'] = 'Module' ;
+                  $scope.moduleList[moduleIndex]['Error']['Message'] = sprintf( $scope.autoLanguage( '节点错误: ?，错误码 ?。' ),
+                                                                                errorInfo['description'],
+                                                                                errorInfo['errno'] ) ;
+               }
+            }
+            SdbFunction.Timeout( function(){
                getCollectionInfo( moduleIndex ) ;
-               return true ;
-            } ) ;
+            }, 5000 ) ;
          }, function(){
             _IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
          }, null, false ) ;
@@ -267,31 +302,42 @@
 
       //获取sequoiadb的错误节点信息
       var getErrNodes = function( moduleIndex ){
+         if( $.inArray( moduleIndex, autoQueryModuleIndex ) == -1 )
+         {
+            return ;
+         }
+         var moduleMode = $scope.moduleList[moduleIndex]['DeployMod'] ;
+         if( moduleMode == 'standalone' )
+         {
+            return ;
+         }
          var clusterName = $scope.moduleList[moduleIndex]['ClusterName'] ;
          var moduleName = $scope.moduleList[moduleIndex]['BusinessName'] ;
          var data = { 'cmd': 'snapshot system', 'selector': JSON.stringify( { 'ErrNodes': 1 } ) } ;
          SdbRest.DataOperation2( clusterName, moduleName, data, function( errNodes ){
             errNodes = errNodes[0]['ErrNodes'] ;
-            if( errNodes.length > 0 && $scope.moduleList[moduleIndex]['Error']['Flag'] == 0 )
+            if( $scope.moduleList[moduleIndex]['Error']['Type'] == 'Module' || $scope.moduleList[moduleIndex]['Error']['Flag'] == 0 )
             {
-               $scope.moduleList[moduleIndex]['Error']['Flag'] = errNodes[0]['Flag'] ;
-               $scope.moduleList[moduleIndex]['Error']['Type'] = 'Module' ;
-               $scope.moduleList[moduleIndex]['Error']['Message'] = sprintf( $scope.autoLanguage( '节点错误: ?，错误码 ?。' ),
-                                                                             errNodes[0]['NodeName'],
-                                                                             errNodes[0]['Flag'] ) ;
-            }
-            else if( errNodes.length == 0 && $scope.moduleList[moduleIndex]['Error']['Flag'] != 0 && $scope.moduleList[moduleIndex]['Error']['Type'] == 'Module' )
-            {
-               $scope.moduleList[moduleIndex]['Error']['Flag'] = 0 ;
+               if( errNodes.length > 0 )
+               {
+                  $scope.moduleList[moduleIndex]['Error']['Flag'] = errNodes[0]['Flag'] ;
+                  $scope.moduleList[moduleIndex]['Error']['Type'] = 'Module' ;
+                  $scope.moduleList[moduleIndex]['Error']['Message'] = sprintf( $scope.autoLanguage( '节点错误: ?，错误码 ?。' ),
+                                                                                errNodes[0]['NodeName'],
+                                                                                errNodes[0]['Flag'] ) ;
+               }
+               else if( errNodes.length == 0 )
+               {
+                  $scope.moduleList[moduleIndex]['Error']['Flag'] = 0 ;
+               }
             }
             SdbFunction.Timeout( function(){
                getErrNodes( moduleIndex ) ;
             }, 5000 ) ;
          }, function( errorInfo ){
-            _IndexPublic.createRetryModel( $scope, errorInfo, function(){
+            SdbFunction.Timeout( function(){
                getErrNodes( moduleIndex ) ;
-               return true ;
-            } ) ;
+            }, 5000 ) ;
          }, function(){
             _IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
          }, null, null, false ) ;
@@ -322,6 +368,7 @@
          SdbRest.OmOperation( data, function( moduleList ){
             $scope.moduleList = moduleList ;
             host_module_table = [] ;
+            autoQueryModuleIndex = [] ;
             $.each( $scope.moduleList, function( index, moduleInfo ){
 
                var colorId = clusterIsExist( moduleInfo['ClusterName'] ) ;
@@ -351,8 +398,9 @@
                      }
                   } ) ;
                }
-               if( moduleInfo['BusinessType'] == 'sequoiadb' )
+               if( moduleInfo['BusinessType'] == 'sequoiadb' && moduleInfo['ClusterName'] == $scope.clusterList[ $scope.currentCluster ]['ClusterName'] )
                {
+                  autoQueryModuleIndex.push( index ) ;
                   getNodesList( index ) ;
                   getCollectionInfo( index ) ;
                   getErrNodes( index ) ;
@@ -371,8 +419,6 @@
          }, function(){
             _IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
          } ) ;
-         var data = { 'cmd': 'list businesses' } ;
-         SdbRest.OmOperation( data, function( moduleList ){} ) ;
       }
 
       //查询主机
@@ -485,10 +531,18 @@
          {
             var clusterName = $scope.clusterList[ $scope.currentCluster ]['ClusterName'] ;
             $scope.ModuleNum = 0 ;
+            autoQueryModuleIndex = [] ;
             $.each( $scope.moduleList, function( index, moduleInfo ){
                if( moduleInfo['ClusterName'] == clusterName )
                {
                   ++$scope.ModuleNum ;
+                  autoQueryModuleIndex.push( index ) ;
+                  if( moduleInfo['BusinessType'] == 'sequoiadb' )
+                  {
+                     getNodesList( index ) ;
+                     getCollectionInfo( index ) ;
+                     getErrNodes( index ) ;
+                  }
                }
             } ) ;
             $scope.HostNum = 0 ;

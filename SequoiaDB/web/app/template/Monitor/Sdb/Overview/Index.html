@@ -51,7 +51,7 @@
             <a href="#/Monitor/SDB-Overview/Charts">{{autoLanguage("图表")}}</a>
          </li>
          <li>
-            <a href="#/Monitor/SDB-Overview/Domain">{{autoLanguage(" 域 ")}}</a>
+            <a href="#/Monitor/SDB-Overview/Domain">{{autoLanguage("域")}}</a>
          </li>
          <li>
             <a href="#/Monitor/SDB-Overview/Session">{{autoLanguage("会话")}}</a>
@@ -63,10 +63,10 @@
    </div>
 
    <div ng-container="{height:30,marginTop:10}">
-      <button class="btn btn-default" ng-click="addGroup()">创建分区组</button>
-      <button class="btn btn-default" ng-click="deleteGroup()">删除分区组</button>
-      <button class="btn btn-default" ng-click="startGroup()">启动分区组</button>
-      <button class="btn btn-default" ng-click="stopGroup()">停止分区组</button>
+      <button class="btn btn-default" ng-click="addGroup()">{{autoLanguage("创建分区组")}}</button>
+      <button class="btn btn-default" ng-click="deleteGroup()">{{autoLanguage("删除分区组")}}</button>
+      <button class="btn btn-default" ng-click="startGroup()">{{autoLanguage("启动分区组")}}</button>
+      <button class="btn btn-default" ng-click="stopGroup()">{{autoLanguage("停止分区组")}}</button>
    </div>
 
    <div ng-container="{marginTop:10,marginBottom:10,height:40}">
@@ -77,18 +77,18 @@
    <div ng-container="{offsetY:-230,marginTop:10}">
       <div style="float:left;" ng-container="{width:270}">
          <div ng-container="{height:'50%',offsetY:-5}">
-            <div class="Ellipsis" style="height:25px;font-weight:bold;font-size:100%;">协调组</div>
+            <div class="Ellipsis" style="height:25px;font-weight:bold;font-size:100%;">{{autoLanguage("协调组")}}</div>
             <div style="border:1px solid #ddd;padding:10px;overflow-y:auto;font-size:90%;" ng-container="{offsetY:-25}">
                <div>
                   <table class="table">
                      <tr>
-                        <td style="width:75px;font-weight:bold;">状态</td>
-                        <td class="Ellipsis" ng-repeat="groupInfo in GroupList" ng-if="groupInfo['Role'] == 1">
+                        <td style="width:75px;font-weight:bold;">{{autoLanguage("状态")}}</td>
+                        <td class="Ellipsis" ng-repeat="groupInfo in GroupList track by $index" ng-if="groupInfo['Role'] == 1">
                            <div ng-if="groupInfo['Status'] == '1'">
-                              <i class="fa fa-circle" style="color:#00CC66;" ng-attr="{'data-desc':autoLanguage('正常运行中')}"></i>&nbsp;运行中
+                              <i class="fa fa-circle" style="color:#00CC66;" ng-attr="{'data-desc':autoLanguage('正常运行')}"></i>&nbsp;{{autoLanguage("正常运行")}}
                            </div>
                            <div ng-if="groupInfo['Status'] == '0'">
-                              <i class="fa fa-circle" style="color:#F9A937;" data-desc="该分区组未激活"></i>&nbsp;该分区组未激活
+                              <i class="fa fa-circle" style="color:#F9A937;" ng-attr="{'data-desc':autoLanguage('分区组未激活')}"></i>&nbsp;{{autoLanguage("分区组未激活")}}
                            </div>
 
                         </td>
@@ -98,8 +98,8 @@
                <div style="margin-top:10px;">
                   <table class="table">
                      <tr>
-                        <td style="width:75px;font-weight:bold;">分区组名</td>
-                        <td class="Ellipsis" ng-repeat="groupInfo in GroupList" ng-if="groupInfo['Role'] == 1">
+                        <td style="width:75px;font-weight:bold;">{{autoLanguage("分区组")}}</td>
+                        <td class="Ellipsis" ng-repeat="groupInfo in GroupList track by $index" ng-if="groupInfo['Role'] == 1">
                            <span class="linkButton" ng-click="GotoGroup()">
                               {{groupInfo['GroupName']}}
                            </span>
@@ -110,8 +110,8 @@
                <div style="margin-top:10px;">
                   <table class="table">
                      <tr>
-                        <td style="width:75px;font-weight:bold;">节点数</td>
-                        <td class="Ellipsis" ng-repeat="groupInfo in GroupList" ng-if="groupInfo['Role'] == 1">
+                        <td style="width:75px;font-weight:bold;">{{autoLanguage("节点数")}}</td>
+                        <td class="Ellipsis" ng-repeat="groupInfo in GroupList track by $index" ng-if="groupInfo['Role'] == 1">
                            {{groupInfo['Group'].length}}
                         </td>
                      </tr>
@@ -120,7 +120,7 @@
                <div style="margin-top:10px;">
                   <table class="table">
                      <tr>
-                        <td style="width:75px;font-weight:bold;">连接数</td>
+                        <td style="width:75px;font-weight:bold;">{{autoLanguage("连接数")}}</td>
                         <td class="Ellipsis">{{CoordInfo[0]['TotalNumConnects']}}</td>
                      </tr>
                   </table>
@@ -129,20 +129,19 @@
             </div>
          </div>
          <div ng-container="{height:'50%',offsetY:-5,marginTop:10}">
-            <div class="Ellipsis" style="height:25px;font-weight:bold;font-size:100%;">编目组</div>
+            <div class="Ellipsis" style="height:25px;font-weight:bold;font-size:100%;">{{autoLanguage("编目组")}}</div>
             <div style="border:1px solid #ddd;padding:10px;overflow-y:auto;font-size:90%;" ng-container="{offsetY:-25}">
                <div>
                   <table class="table">
                      <tr>
-                        <td style="width:75px;font-weight:bold;">状态</td>
-                        <td class="Ellipsis" ng-repeat="groupInfo in GroupList" ng-if="groupInfo['Role'] == 2">
+                        <td style="width:75px;font-weight:bold;">{{autoLanguage("状态")}}</td>
+                        <td class="Ellipsis" ng-repeat="groupInfo in GroupList track by $index" ng-if="groupInfo['Role'] == 2">
                            <div ng-if="groupInfo['Status'] == '1'">
-                              <i class="fa fa-circle" style="color:#00CC66;" ng-attr="{'data-desc':autoLanguage('正常运行中')}"></i>&nbsp;运行中
+                              <i class="fa fa-circle" style="color:#00CC66;" ng-attr="{'data-desc':autoLanguage('正常运行')}"></i>&nbsp;{{autoLanguage("正常运行")}}
                            </div>
                            <div ng-if="groupInfo['Status'] == '0'">
-                              <i class="fa fa-circle" style="color:#F9A937;" data-desc="该分区组未激活"></i>&nbsp;该分区组未激活
+                              <i class="fa fa-circle" style="color:#F9A937;" ng-attr="{'data-desc':autoLanguage('分区组未激活')}"></i>&nbsp;{{autoLanguage("分区组未激活")}}
                            </div>
-                              
                         </td>
                      </tr>
                   </table>
@@ -150,8 +149,8 @@
                <div style="margin-top:10px;">
                   <table class="table">
                      <tr>
-                        <td style="width:75px;font-weight:bold;">分区组名</td>
-                        <td class="Ellipsis" ng-repeat="groupInfo in GroupList" ng-if="groupInfo['Role'] == 2">
+                        <td style="width:75px;font-weight:bold;">{{autoLanguage("分区组")}}</td>
+                        <td class="Ellipsis" ng-repeat="groupInfo in GroupList track by $index" ng-if="groupInfo['Role'] == 2">
                            <span class="linkButton" ng-click="GotoGroup()">
                               {{groupInfo['GroupName']}}
                            </span>
@@ -162,8 +161,8 @@
                <div style="margin-top:10px;">
                   <table class="table">
                      <tr>
-                        <td style="width:75px;font-weight:bold;">节点数</td>
-                        <td class="Ellipsis" ng-repeat="groupInfo in GroupList" ng-if="groupInfo['Role'] == 2">
+                        <td style="width:75px;font-weight:bold;">{{autoLanguage("节点数")}}</td>
+                        <td class="Ellipsis" ng-repeat="groupInfo in GroupList track by $index" ng-if="groupInfo['Role'] == 2">
                            {{groupInfo['Group'].length}}
                         </td>
                      </tr>
@@ -172,8 +171,8 @@
                <div style="margin-top:10px;">
                   <table class="table">
                      <tr>
-                        <td style="width:75px;font-weight:bold;">主节点</td>
-                        <td class="Ellipsis" ng-repeat="groupInfo in GroupList" ng-if="groupInfo['Role'] == 2">
+                        <td style="width:75px;font-weight:bold;">{{autoLanguage("主节点")}}</td>
+                        <td class="Ellipsis" ng-repeat="groupInfo in GroupList track by $index" ng-if="groupInfo['Role'] == 2">
                            <span class="linkButton" ng-click="GotoNode()" ng-repeat="nodeInfo in groupInfo['Group'] track by $index" ng-if="nodeInfo['NodeID']==groupInfo['PrimaryNode']">
                               {{nodeInfo['HostName']}}:{{nodeInfo['Service'][0]['Name']}}
                            </span>
@@ -185,7 +184,7 @@
          </div>
       </div>
       <div style="float:left;" ng-container="{offsetX:-280,marginLeft:10}">
-         <div class="Ellipsis" style="height:25px;font-weight:bold;font-size:100%;">数据组</div>
+         <div class="Ellipsis" style="height:25px;font-weight:bold;font-size:100%;">{{autoLanguage("数据组")}}</div>
          <div class="Grid2" ng-grid2="GroupGridOptions" ng-container="{offsetY:-56}">
             <div class="Grid2Header">
                <table>
@@ -235,8 +234,8 @@
                      <tr ng-repeat="groupInfo in GroupList | orderBy:OrderByField" ng-if="groupInfo['Role'] == 0">
                         <td>
                            <div class="Ellipsis">
-                              <i class="fa fa-circle" style="color:#00CC66;" ng-if="groupInfo['Status'] == '1'" ng-attr="{'data-desc':autoLanguage('正常运行中')}"></i>
-                              <i class="fa fa-circle" style="color:#F9A937;" ng-if="groupInfo['Status'] == '0'" data-desc="该分区组未激活"></i>
+                              <i class="fa fa-circle" style="color:#00CC66;" ng-if="groupInfo['Status'] == '1'" ng-attr="{'data-desc':autoLanguage('正常运行')}"></i>
+                              <i class="fa fa-circle" style="color:#F9A937;" ng-if="groupInfo['Status'] == '0'" ng-attr="{'data-desc':autoLanguage('分区组未激活')}"></i>
                            </div>
                         </td>
                         <td>
@@ -274,7 +273,7 @@
          </div> 
          <div class="GridTool">
             <div class="ToolLeft" ng-cloak>
-               <span>一共有 {{DatagroupNum}} 个数据组</span>
+               <span>{{sprintf(autoLanguage("一共 ? 个数据组"), DatagroupNum)}}</span>
             </div>
          </div>
       </div>

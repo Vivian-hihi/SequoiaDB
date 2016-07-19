@@ -232,7 +232,7 @@
          interval: 5,
          currentTimer: 0,
          complete: false,
-         fn: $scope.getNodeList
+         fn: getDbList
       } ;
 
 
@@ -250,10 +250,15 @@
       $scope.GotoGroups = function(){
          $location.path( '/Monitor/SDB-Overview/Index' ) ;
       } ;
-
+      
       //跳转至节点信息
       $scope.GotoNode = function(){
          $location.path( '/Monitor/SDB-Node/Index' ) ;
+      } ;
+
+      //跳转至分区组信息
+      $scope.GotoGroup = function(){
+         $location.path( '/Monitor/SDB-Group/Index' ) ;
       } ;
 
       //跳转至主机信息

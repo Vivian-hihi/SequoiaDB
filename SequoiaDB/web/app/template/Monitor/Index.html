@@ -42,11 +42,11 @@
       <div style="min-height:206px;font-size:90%;" ng-container="{height:'70%',marginTop:10}">
          <!--主机信息-->
          <div style="float:left;" ng-container="{width:360,offsetY:-10}">
-            <div style="padding:0 10px 10px 0;font-weight:bold;">主机信息</div>
+            <div style="padding:0 10px 10px 0;font-weight:bold;">{{autoLanguage("主机信息")}}</div>
             <div style="padding:10px;border:1px solid #ddd;overflow-y:auto;color:#666;" ng-container="{offsetY:-27}">
                <table class="table loosen">
                   <tr>
-                     <td style="width:40%;font-weight:bold;">主机数</td>
+                     <td style="width:40%;font-weight:bold;">{{autoLanguage("主机数")}}</td>
                      <td style="width:60%;">
                         <span class="Ellipsis linkButton" ng-click="GotoHosts()">
                            {{HostList.length}}
@@ -54,25 +54,25 @@
                      </td>
                   </tr>
                   <tr>
-                     <td style="width:40%;font-weight:bold;">磁盘数</td>
+                     <td style="width:40%;font-weight:bold;">{{autoLanguage("磁盘数")}}</td>
                      <td style="width:60%;">{{DiskNum}}</td>
                   </tr>
                   <tr>
-                     <td style="width:40%;font-weight:bold;">CPU使用</td>
+                     <td style="width:40%;font-weight:bold;">{{autoLanguage("处理器")}}</td>
                      <td style="width:60%;">
-                        <div style="width:180px;height:40px" progress-bar="charts.Host.CPU"></div>
+                        <div style="width:180px;height:22px;" progress-bar="charts.Host.CPU"></div>
                      </td>
                   </tr>
                   <tr>
-                     <td style="width:40%;font-weight:bold;">内存使用</td>
+                     <td style="width:40%;font-weight:bold;">{{autoLanguage("内存")}}</td>
                      <td style="width:60%;">
-                        <div style="width:180px;height:40px" progress-bar="charts.Host.Memory"></div>
+                        <div style="width:180px;height:22px;" progress-bar="charts.Host.Memory"></div>
                      </td>
                   </tr>
                   <tr>
-                     <td style="width:40%;font-weight:bold;">磁盘使用</td>
+                     <td style="width:40%;font-weight:bold;">{{autoLanguage("磁盘")}}</td>
                      <td style="width:60%;">
-                        <div style="width:180px;height:40px" progress-bar="charts.Host.Disk"></div>
+                        <div style="width:180px;height:22px;" progress-bar="charts.Host.Disk"></div>
                      </td>
                   </tr>
                </table>
@@ -80,16 +80,16 @@
          </div>
          <!--业务信息-->
          <div style="float:left;" ng-container="{offsetX:-370,offsetY:-10,marginLeft:10}">
-            <div style="padding:0 10px 10px 0;font-weight:bold;">业务信息</div>
+            <div style="padding:0 10px 10px 0;font-weight:bold;">{{autoLanguage("业务信息")}}</div>
             <div style="padding:10px;border:1px solid #ddd;overflow-y:auto;color:#666;" ng-container="{offsetY:-27}">
                <div style="float:left;width:250px;">
                   <table class="table loosen" style="width:250px;">
                      <tr>
-                        <td style="width:40%;font-weight:bold;">数据库版本</td>
+                        <td style="width:40%;font-weight:bold;">{{autoLanguage("数据库版本")}}</td>
                         <td style="width:60%;" class="Ellipsis">{{moduleInfo['version']}}</td>
                      </tr>
                      <tr>
-                        <td style="width:40%;font-weight:bold;">会话数</td>
+                        <td style="width:40%;font-weight:bold;">{{autoLanguage("会话数")}}</td>
                         <td style="width:60%;" class="Ellipsis">
                            <span class="Ellipsis linkButton" ng-click="GotoSessions()">
                               {{moduleInfo['sessions']}}
@@ -97,7 +97,7 @@
                         </td>
                      </tr>
                      <tr>
-                        <td style="width:40%;font-weight:bold;">域</td>
+                        <td style="width:40%;font-weight:bold;">{{autoLanguage("域")}}</td>
                         <td style="width:60%;" class="Ellipsis">
                            <span class="Ellipsis linkButton" ng-click="GotoDomains()">
                               {{moduleInfo['domains']}}
@@ -105,7 +105,7 @@
                         </td>
                      </tr>
                      <tr>
-                        <td style="width:40%;font-weight:bold;">分区组数</td>
+                        <td style="width:40%;font-weight:bold;">{{autoLanguage("分区组数")}}</td>
                         <td style="width:60%;" class="Ellipsis">
                            <span class="Ellipsis linkButton" ng-click="GotoGroups()">
                               {{moduleInfo['groups']}}
@@ -113,7 +113,7 @@
                         </td>
                      </tr>
                      <tr>
-                        <td style="width:40%;font-weight:bold;">节点数</td>
+                        <td style="width:40%;font-weight:bold;">{{autoLanguage("节点数")}}</td>
                         <td style="width:60%;" class="Ellipsis">
                            <span class="Ellipsis linkButton" ng-click="GotoNodes()">
                               {{moduleInfo['nodes']}}
@@ -121,7 +121,7 @@
                         </td>
                      </tr>
                      <tr>
-                        <td style="width:40%;font-weight:bold;">集合数</td>
+                        <td style="width:40%;font-weight:bold;">{{autoLanguage("集合数")}}</td>
                         <td style="width:60%;" class="Ellipsis">
                            <span class="Ellipsis linkButton" ng-click="GotoDatabase()">
                               {{moduleInfo['cl']}}
@@ -129,7 +129,7 @@
                         </td>
                      </tr>
                      <tr>
-                        <td style="width:40%;font-weight:bold;">记录数</td>
+                        <td style="width:40%;font-weight:bold;">{{autoLanguage("记录数")}}</td>
                         <td style="width:60%;" class="Ellipsis">
                            <span class="Ellipsis linkButton" ng-click="GotoDatabase()">
                               {{moduleInfo['records']}}
@@ -137,7 +137,7 @@
                         </td>
                      </tr>
                      <tr>
-                        <td style="width:40%;font-weight:bold;">lob数</td>
+                        <td style="width:40%;font-weight:bold;">{{autoLanguage("Lob数")}}</td>
                         <td style="width:60%;" class="Ellipsis">
                            <span class="Ellipsis linkButton" ng-click="GotoDatabase()">
                               {{moduleInfo['lobs']}}
@@ -147,7 +147,7 @@
                   </table>
                </div>
                <!--图表选择-->
-               <div style="min-width:320px;float:left;" ng-container="{height:'90%',offsetX:-305}">
+               <div style="min-width:320px;float:left;" create-response="{max:900,min:300,len:2,column:2}">
                   <div style="padding-left:15px;float:right;">
                      <button class="btn btn-default btn-lg" dropdown-menu="DropdownMenu">
                         {{chartName}}
@@ -171,15 +171,4 @@
          </div>
       </div>
    </div>
-   
-</div>   
-
-<!--
-   业务 － 主机 －  ip  
-
-总空间、分区组
-
-硬件 ： CPU 、内存、硬盘、内存 
-
-/* 业务状态：数据库  集合空间  集合  节点  总记录数 索引 副本8 */
--->
+</div>

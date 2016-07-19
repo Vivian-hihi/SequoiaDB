@@ -353,7 +353,7 @@
                      parseAppendOnly( attr ) ;
                   } ) ;
                }
-               fieldGridData['tool']['left'][0]['text'] = $scope.sprintf( $scope.autoLanguage( '一共?个字段' ), fieldGridData['body'].length ) ;
+               fieldGridData['tool']['left'][0]['text'] = $scope.sprintf( $scope.autoLanguage( '一共 ? 个字段' ), fieldGridData['body'].length ) ;
                $scope.fieldGridData = $.extend( true, {}, fieldGridData ) ;
                $scope.$apply() ;
             }

@@ -6,7 +6,7 @@
          </div>
          <div style="height:50px;float:left;max-width:200px;">
             <div style="font-size:90%;">集群</div>
-            <div class="Ellipsis" style="font-size:140%;color:#666;width:160px;"><a href="#/Deploy/Index" class="linkButton">{{clusterName}}</a></div>
+            <div class="Ellipsis" style="font-size:140%;color:#666;width:160px;"><a href="#/Deploy/Index" class="linkButton">{{ClusterName}}</a></div>
          </div>
          <div class="clear-float"></div>
       </div>
@@ -15,8 +15,8 @@
             <i style="color:#ccc;padding-top:8px;font-size:218%;" class="fa fa-tasks"></i>
          </div>
          <div style="height:50px;float:left;max-width:200px;">
-            <div style="font-size:90%;">{{moduleType}}</div>
-            <div class="Ellipsis" style="font-size:140%;width:160px;"><a href="#/Monitor/Index" class="linkButton">{{moduleName}}</a></div>
+            <div style="font-size:90%;">{{ModuleType}}</div>
+            <div class="Ellipsis" style="font-size:140%;width:160px;"><a href="#/Monitor/Index" class="linkButton">{{ModuleName}}</a></div>
          </div>
          <div class="clear-float"></div>
       </div>
@@ -55,14 +55,14 @@
          <li>
             <a href="#/Monitor/Host-Info/Network">{{autoLanguage("网卡")}}</a>
          </li>
-         <li>
+         <!--<li>
             <a href="#/Monitor/Host-Info/Config">{{autoLanguage("系统配置")}}</a>
-         </li>
+         </li>-->
       </ul>
    </div>
 
    <div class="content" style="overflow-y:auto;border: 1px solid #E3E7E8;padding:10px;" ng-container="{offsetY:-185,marginTop:10}">
-      <div style="overflow-y:auto;" class="colorfulListBox green" ng-container="{height:270,marginBottom:15,offsetX:-20}" ng-repeat="diskInfo in hostInfo" ng-class="{'0':'green','1':'yellow','2':'blue','3':'violet'}[$index%4]">
+      <div style="overflow-y:auto;" class="colorfulListBox green" ng-container="{height:270,marginBottom:15,offsetX:-20}" ng-repeat="diskInfo in hostInfo track by $index" ng-class="{'0':'green','1':'yellow','2':'blue','3':'violet'}[$index%4]">
          <div ng-container="{height:20,offsetX:-30}" style="color:#666;font-size:100%;font-weight:bold;">磁盘{{$index + 1}} - {{diskInfo['Name']}}</div>
          <div ng-container="{marginTop:15,offsetX:-30,offsetY:-35}">
             <div style="float:left;font-size:90%;color:#666;font-weight:bold;" ng-container="{width:350}">
@@ -104,8 +104,12 @@
                </table>
             </div>
             <div style="float:left;" ng-container="{offsetX:-350}">
-               <div style="height:220px;float:left;min-width:320px;" ng-container="{width:'50%',offsetX:-10}" create-chart="charts.Storage"></div>
-               <div style="height:220px;float:left;min-width:320px;" ng-container="{width:'50%',offsetX:-10}" create-chart="charts.IO"></div>
+               <div create-response="{max:900,min:300,len:2,column:2}">
+                  <div style="height:220px;" create-chart="charts.Storage"></div>
+               </div>
+               <div create-response="{max:900,min:300,len:2,column:2}">
+                  <div style="height:220px;" create-chart="charts.IO"></div>
+               </div>
                <div class="clear-float"></div>
             </div>
             <div class="clear-float"></div>

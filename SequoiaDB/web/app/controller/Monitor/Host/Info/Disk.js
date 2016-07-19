@@ -1,14 +1,11 @@
 (function(){
    var sacApp = window.SdbSacManagerModule ;
    //控制器
-   sacApp.controllerProvider.register( 'Performance.Disk.Index.Ctrl', function( $scope, $compile, SdbRest, SdbFunction ){
-      var clusterName = SdbFunction.LocalData( 'SdbClusterName' ) ;
-      var moduleType = SdbFunction.LocalData( 'SdbModuleType' ) ;
-      var moduleName = SdbFunction.LocalData( 'SdbModuleName' ) ;
-      $scope.clusterName = clusterName ;
-      $scope.moduleName = moduleName ;
-      $scope.moduleType = moduleType ;
-      $scope.hostName = '' ;
+   sacApp.controllerProvider.register( 'Performance.Disk.Index.Ctrl', function( $scope, $compile, $location, SdbRest, SdbFunction ){
+      $scope.ClusterName = SdbFunction.LocalData( 'SdbClusterName' ) ;
+      $scope.ModuleType = SdbFunction.LocalData( 'SdbModuleType' ) ;
+      $scope.ModuleName = SdbFunction.LocalData( 'SdbModuleName' ) ;
+      
       $scope.hostInfo = [] ;
       var s = 0 ;
       var d = 0 ;

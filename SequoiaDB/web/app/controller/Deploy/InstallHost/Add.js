@@ -397,7 +397,7 @@
                         hostDataInfo['CanNotUseNum'] = 0 ;
                         hostDataInfo['DiskWarning'] = 0 ;
                         $.each( hostDataInfo['Disk'], function( index3 ){
-                           if( hostDataInfo['Disk'][index3]['CanUse'] == true )
+                           if( hostDataInfo['Disk'][index3]['CanUse'] == true && hostDataInfo['Disk'][index3]['IsLocal'] == true )
                            {
                               hostDataInfo['Disk'][index3]['IsUse'] = true ;
                               hostDataInfo['CanUse'] = true ;

@@ -3159,10 +3159,12 @@
             else if( column == 0 )
             {
                dWidth = parentWidth ;
+               break ;
             }
             else if( column == len )
             {
                dWidth = max ;
+               break ;
             }
          }
          return dWidth ;

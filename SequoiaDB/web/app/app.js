@@ -5,5 +5,5 @@
       $rootScopeProvider.digestTtl( 1000 ) ;
    } ) ;
 
-   window.SdbDebug = true ;
+   window.SdbDebug = false ;
 }());

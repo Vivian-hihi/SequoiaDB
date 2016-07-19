@@ -381,7 +381,14 @@
             case 'sequoiadb':
                $location.path( '/Data/SDB-Database/Index' ).search( params ) ; break ;
             case 'sequoiasql':
-               $location.path( '/Data/SQL-Metadata/Index' ).search( params ) ; break ;
+               if( moduleMode == '' || moduleMode == 'oltp' )
+               {
+                  $location.path( '/Data/SQL-Metadata/Index' ).search( params ) ; break ;
+               }
+               else
+               {
+                  $location.path( '/Data/NotSupport' ).search( params ) ; break ;
+               }
             case 'hdfs':
                $location.path( '/Data/HDFS-web/Index' ).search( params ) ; break ;
             case 'spark':

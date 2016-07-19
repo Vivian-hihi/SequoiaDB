@@ -1,14 +1,21 @@
 (function(){
    var sacApp = window.SdbSacManagerModule ;
    //控制器
-   sacApp.controllerProvider.register( 'Monitor.HostList.Index.Ctrl', function( $scope, SdbRest, $compile, SdbFunction ){
-      var clusterName = SdbFunction.LocalData( 'SdbClusterName' ) ;
-      var moduleType = SdbFunction.LocalData( 'SdbModuleType' ) ;
-      var moduleName = SdbFunction.LocalData( 'SdbModuleName' ) ;
-      $scope.clusterName = clusterName ;
-      $scope.moduleName = moduleName ;
-      $scope.moduleType = moduleType ;
+   sacApp.controllerProvider.register( 'Monitor.HostList.Index.Ctrl', function( $scope, SdbRest, $location, $compile, SdbFunction ){
+      $scope.ClusterName = SdbFunction.LocalData( 'SdbClusterName' ) ;
+      $scope.ModuleType = SdbFunction.LocalData( 'SdbModuleType' ) ;
+      $scope.ModuleName = SdbFunction.LocalData( 'SdbModuleName' ) ;
       $scope.SearchName = {} ;
+      var hostNameList = [] ;
+      var DiskSize = 0 ;
+      $scope.NewHostList = [] ;
+
+      //新表格
+      $scope.HostGridOptions = { 'titleWidth': [ 12,12,12,12,17,23,5] } ;
+
+      //渲染网格显示的列
+
+
       $scope.HostListOptions = {
          'titleWidth': [ 15, 15, 15, 15, 15, 15, 10 ]
       } ;
@@ -35,6 +42,57 @@
       $scope.GridData = $.extend( true, {}, gridData ) ;
 
       
+      var getHostList = function(){
+         var data = {
+            'cmd': 'query host'
+         } ;
+         SdbRest.OmOperation( data, function( hostList ){
+            $.each( hostNameList, function( index, hostName ){
+               $.each( hostList, function( index2, hostInfo ){
+                  if( hostName == hostInfo['HostName'] )
+                  {
+                     DiskSize = 0 ;
+                     $.each( hostInfo['Disk'], function( index3, diskInfo ){
+                        DiskSize += diskInfo['Size'] ;
+                     } ) ;
+                     hostInfo['DiskSize'] = (  DiskSize/1024 ).toFixed(2) + 'GB' ;
+                     hostInfo['MemorySize'] = (  hostInfo['Memory']['Size']/1024 ).toFixed(2) + 'GB' ;
+                     $scope.NewHostList.push( hostInfo ) ;
+                  }
+               } ) ;
+            } ) ;
+         }, function( errorInfo ){
+            _IndexPublic.createRetryModel( $scope, errorInfo, function(){
+               getHostList() ;
+               return true ;
+            } ) ;
+         }, function(){
+            _IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
+         } ) ;
+         
+      } ;
+
+      var getModuleInfo = function(){
+         var data = {
+            'cmd': 'query business',
+            'filter' : JSON.stringify( { 'BusinessName': $scope.ModuleName } )
+         } ;
+         SdbRest.OmOperation( data, function( moduleInfo ){
+            $.each( moduleInfo[0]['Location'], function( index, hostName ){
+               hostNameList.push(hostName['HostName'])
+            } ) ;
+            getHostList() ;
+         }, function( errorInfo ){
+            _IndexPublic.createRetryModel( $scope, errorInfo, function(){
+               getModuleInfo() ;
+               return true ;
+            } ) ;
+         }, function(){
+            _IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
+         } ) ;
+      } ;
+      getModuleInfo() ;
+      
       $scope.queryList = function( data, success, failed, error, complete ){
          SdbRest._postTest( './test/hostList', success, failed, error ) ;
       }
@@ -59,6 +117,25 @@
             }
          } ) 
       }
+      //跳转事件
+      $scope.GotoHost = function(){
+         $location.path( '/Monitor/Host-Info/Index' ) ;
+      } ;
+
+      $scope.GotoDisk = function(){
+         $location.path( '/Monitor/Host-Info/Disk' ) ;
+      } ;
+
+      $scope.GotoNet = function(){
+         $location.path( '/Monitor/Host-Info/Network' ) ;
+      } ;
+
+      $scope.GotoCPU = function(){
+         $location.path( '/Monitor/Host-Info/CPU' ) ;
+      } ;
+
+      $scope.GotoMemory = function(){
+         $location.path( '/Monitor/Host-Info/Memory' ) ;
+      } ;
    } ) ;
-   //记录视图
 }());
