@@ -812,14 +812,16 @@ namespace engine
 
    void _pmdEDUCB::writingDB( BOOLEAN writing )
    {
-      _writingDB = writing ;
-      if ( writing && ( 0 == _writingID ||
-           0 == getLockItem(SDB_LOCK_DMS)->lockCount() ) )
+      if ( _writingDB == writing ) return ;
+
+      if ( writing )
       {
+         _writingDB = TRUE ;
          _writingID = pmdAcquireGlobalID() ;
       }
       else if ( !writing && 0 == getLockItem(SDB_LOCK_DMS)->lockCount() )
       {
+         _writingDB = FALSE ;
          _writingID = 0 ;
       }
    }
