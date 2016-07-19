@@ -1,3 +1,9 @@
+############################################
+#decription:
+#   compile source code, include:
+#   engineer, driver, connector
+############################################
+
 import os,sys
 import getopt
 import commands
@@ -10,11 +16,12 @@ def help_info():
    print ('')
    print ('   --dd                     debug build no optimization')
    print ('   --release                release build')
+   print ('   --enterprise             edition type: enterprise, default: community')
    print ('   -h, --help               show this help info')
    print ('')
    print ('')
    print ('Examples:')
-   print ('   python build.py')
+   print ('   python build.py --dd')
    print ('')
    print ('')
 
@@ -35,9 +42,10 @@ os_type = platform.system()
 cur_dir = os.getcwd()
 code_path = scrpt_path
 build_type = ''
+edition_type = ''
 
 short_args = 'h'
-long_args = ['help', 'dd', 'release']
+long_args = ['help', 'dd', 'release', 'enterprise']
 try:
    opts, args = getopt.getopt(sys.argv[1:], short_args, long_args )
 except getopt.GetoptError:
@@ -52,18 +60,35 @@ for opt, arg in opts:
       build_type = opt
    elif opt == '--release':
       build_type = ''
+   elif opt == '--enterprise':
+      edition_type = opt   
    else:
       help_info()
       sys.exit(1)
 
-build_cmd_pre = 'scons -j 4 ' + build_type
+build_cmd_pre = 'scons' + ' ' + build_type 
 
-#build engine/tools/testcases/shell/client/fmp
-build_all_cmd = build_cmd_pre + ' --all'
+#compile engine
+build_all_cmd = build_cmd_pre  + ' ' + edition_type + ' ' + '--all -j 4'
 rs = run_in_dir( build_all_cmd, code_path )
-err_exit( rs, 'Failed to build engine/tools/testcases/shell/client/fmp!')
+err_exit( rs, 'Failed to compile engine!')
 
-#build php driver
+#compile java driver
+java_code_path = code_path + '/driver/java'
+build_java_cmd = build_cmd_pre
+rs = run_in_dir( build_java_cmd, java_code_path )
+err_exit( rs, 'Failed to compile Java driver!' )
+
+#compile fdw 
+fdw_code_path = code_path + '/driver/postgresql'
+rs = run_in_dir( 'make clean', fdw_code_path )
+err_exit( rs, 'Failed to compile fdw in make clean')
+rs = run_in_dir( 'make local', fdw_code_path )
+err_exit( rs, 'Failed to compile fdw in make local')
+rs = run_in_dir( 'make all',   fdw_code_path )
+err_exit( rs, 'Failed to compile fdw in make all')
+
+#compile php driver
 php_code_path = code_path + '/driver/php5'
 build_php_cmd_common = build_cmd_pre + ' --phpversion='
 php_ver_file_path = ''
@@ -79,22 +104,38 @@ try:
       line = php_ver_file_obj.readline()
       if not line:
          break
-      build_php_cmd = build_php_cmd_common + line
+      build_php_cmd = build_php_cmd_common + line      
       rs = run_in_dir( build_php_cmd, php_code_path )
-      err_exit( rs, 'Failed to build PHP driver!' )
+      err_exit( rs, 'Failed to compile PHP driver!' )
 finally:
    php_ver_file_obj.close()
-#build java driver
-java_code_path = code_path + '/driver/java'
-build_java_cmd = build_cmd_pre
-rs = run_in_dir( build_java_cmd, java_code_path )
-err_exit( rs, 'Failed to build Java driver!' )
+   
+#compile python
+build_python_cmd = build_cmd_pre
+python_code_path = code_path + '/driver/python'
+rs = run_in_dir( build_python_cmd, python_code_path )
+err_exit( rs, 'Failed to compile python driver!')
 
-#build C# driver
+#compile C# driver
 if os_type == 'Windows' or os_type == 'Microsoft':
    c_sharp_code_path = code_path + '/driver/C#.Net'
    build_c_sharp_cmd = build_cmd_pre
    rs = run_in_dir( build_c_sharp_cmd, c_sharp_code_path )
-   err_exit( rs, 'Failed to build C# driver!' )
+   err_exit( rs, 'Failed to compile C# driver!' )
 
-print( 'Completed!' )
+#compile hive 
+hive_code_path = code_path + '/driver/hadoop/hive'
+rs = run_in_dir( 'ant', hive_code_path )
+err_exit( rs, 'Failed to compile hive!')
+
+#compile hadoop connector 
+hdcn_code_path = code_path + '/driver/hadoop/hadoop-connector'
+rs = run_in_dir( 'ant -Dhadoop.version=1.2', hdcn_code_path )
+err_exit( rs, 'Failed to compile hadoop connector 1.2!')
+rs = run_in_dir( 'ant -Dhadoop.version=2.2', hdcn_code_path )
+err_exit( rs, 'Failed to compile hadoop connector 2.2!')
+
+#compile spark 
+#TODO: zichuan has new compile 
+   
+print( 'Compile source code completed!' )

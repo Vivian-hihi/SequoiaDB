@@ -45,57 +45,94 @@ function get_macro_val()
    echo "$val"
 }
 
-cur_path=""
-dir_name=$(dirname $0)
-if [[ ${dir_name:0:1} != "/" ]]; then
-   cur_path=$(pwd)
-fi
+################################## begin #####################################
+
+########################
+# define variable
+########################
 files_src_path=$1
-script_path="$cur_path/$dir_name"
-sdb_path="$script_path/.."
-pkg_root_path="$sdb_path/package"
-pkg_tmp_path=$pkg_root_path/tmp
-pkg_output_path="$pkg_root_path/output"
-pkg_conf_file=$pkg_root_path/conf/rpm/sequoiadb.spec
+edition_type=$2 
+
+script_path=""
+dir_name=`dirname $0`
+if [[ ${dir_name:0:1} != "/" ]]; then
+   script_path=$(pwd)/$dir_name  #relative path
+else
+   script_path=$dir_name         #absolute path
+fi
+
+root_path="$script_path/.."
+
+pkg_path="$root_path/package"
+pkg_tmp_path="$pkg_path/tmp"
+pkg_conf_file="$pkg_path/conf/rpm/sequoiadb.spec"
+
 mkdir -p $pkg_tmp_path
 
+########################
+# get version
+########################
 ver_name="SDB_ENGINE_VERISON_CURRENT"
 subver_name="SDB_ENGINE_SUBVERSION_CURRENT"
-ver_info_file=$sdb_path/SequoiaDB/engine/include/ossVer.h
+ver_info_file=$root_path/SequoiaDB/engine/include/ossVer.h
 begin_ver=`get_macro_val $ver_info_file $ver_name`
 sub_ver=`get_macro_val $ver_info_file $subver_name`
-sdb_name="sequoiadb-$begin_ver.$sub_ver"
+rls=`$script_path/../bin/sequoiadb --version | grep Release | awk '{print $2}'`
 
-echo "package the source files"
+if [ "$edition_type" == "enterprise" ]
+then
+   sdb_name="sequoiadb-$begin_ver.$sub_ver.$edition_type"   
+else
+   sdb_name="sequoiadb-$begin_ver.$sub_ver"
+fi
+
+########################
+# compress source file
+########################
+echo "compress the source files"
+
 pkg_src_path="$pkg_tmp_path/$sdb_name"
-mkdir -p $pkg_src_path
+mkdir -p "$pkg_src_path"
 cp -rf $files_src_path/* $pkg_src_path
 err_exit $?
 tar -czf $pkg_tmp_path/$sdb_name.tar.gz -C $pkg_tmp_path $sdb_name --remove-files
 err_exit $?
+
+########################
+# prepare the spec file
+########################
 echo "prepare the spec file"
 mkdir -p $pkg_tmp_path/rpm/SPECS
 cp -f $pkg_conf_file $pkg_tmp_path/rpm/SPECS
-sed -i "s/SDB_ENGINE_VERISON_CURRENT/$begin_ver/g" $pkg_tmp_path/rpm/SPECS/sequoiadb.spec
-sed -i "s/SDB_ENGINE_SUBVERSION_CURRENT/$sub_ver/g" $pkg_tmp_path/rpm/SPECS/sequoiadb.spec
+sed -i "s/SEQUOIADB_VERISON/$begin_ver/g"  $pkg_tmp_path/rpm/SPECS/sequoiadb.spec
+sed -i "s/SEQUOIADB_SUBVERSION/$sub_ver/g" $pkg_tmp_path/rpm/SPECS/sequoiadb.spec
+sed -i "s/SEQUOIADB_RELEASE/$rls/g"        $pkg_tmp_path/rpm/SPECS/sequoiadb.spec
+if [ $edition_type == "enterprise" ]
+then
+   sed -i "s/SEQUOIADB_EDITION/.$edition_type/g" $pkg_tmp_path/rpm/SPECS/sequoiadb.spec
+else
+   sed -i "s/SEQUOIADB_EDITION//g" $pkg_tmp_path/rpm/SPECS/sequoiadb.spec   
+fi 
+
+########################
+# generate rpm 
+########################
 echo "build the RPM package"
 mkdir -p $pkg_tmp_path/rpm/SOURCES
 mkdir -p $pkg_tmp_path/rpm/BUILD
 mkdir -p $pkg_tmp_path/rpm/BUILDROOT
 mkdir -p $pkg_tmp_path/rpm/RPMS
 mkdir -p $pkg_tmp_path/rpm/SRPMS
+
 rm -rf $pkg_tmp_path/rpm/SOURCES/*
 mv $pkg_tmp_path/$sdb_name.tar.gz $pkg_tmp_path/rpm/SOURCES
+
 rpmbuild --rmsource --define "_topdir $pkg_tmp_path/rpm" -bb $pkg_tmp_path/rpm/SPECS/sequoiadb.spec
-if [[ $? -ne 0 ]]; then
-   exit 1;
-fi
+err_exit $?
+
+pkg_output_path="$pkg_path/output"
 mkdir -p $pkg_output_path
-arch_info=`arch`
-if [[ -z "$arch_info" ]];then
-   echo "ERROR: failed to get arch info!"
-   exit 1;
-fi
+
 rm -rf $pkg_output_path/RPMS
 mv $pkg_tmp_path/rpm/RPMS $pkg_output_path
 rm -rf $pkg_tmp_path/rpm
