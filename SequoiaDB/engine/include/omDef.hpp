@@ -84,6 +84,9 @@ namespace engine
    #define OM_ZOO_CONF_DETAIL_INITLIMIT      "initlimit"
    #define OM_ZOO_CONF_DETAIL_TICKTIME       "ticktime"
 
+   // sequoiasql oltp
+   #define OM_SEQUOIASQL_DEPLOY_OLTP            "oltp"
+   
    // sequoiasql olap
    #define OM_SEQUOIASQL_DEPLOY_OLAP            "olap"
    #define OM_SSQL_OLAP_DEPLOY_STANDBY          "deploy_standby"

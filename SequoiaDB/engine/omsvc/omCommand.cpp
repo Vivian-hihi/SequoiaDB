@@ -9139,7 +9139,8 @@ namespace engine
          time_t now = time( NULL ) ;
          builder.append( OM_BUSINESS_FIELD_NAME, businessName ) ;
          builder.append( OM_BUSINESS_FIELD_TYPE, businessType ) ;
-         builder.append( OM_BUSINESS_FIELD_DEPLOYMOD, "" ) ;
+         builder.append( OM_BUSINESS_FIELD_DEPLOYMOD, 
+                         OM_SEQUOIASQL_DEPLOY_OLTP ) ;
          builder.append( OM_BUSINESS_FIELD_CLUSTERNAME, clusterName ) ;
          builder.appendTimestamp( OM_BUSINESS_FIELD_TIME, 
                                   (unsigned long long)now * 1000, 0 ) ;
