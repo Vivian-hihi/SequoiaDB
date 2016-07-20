@@ -190,6 +190,13 @@ namespace engine
       _isOpened = TRUE ;
       _hitEnd = FALSE ;
 
+      /// write down
+      if ( _writeDMS )
+      {
+         _dmsCB->writeDown( cb ) ;
+         _writeDMS = FALSE ;
+      }
+
    done:
       PD_TRACE_EXITRC( SDB__RTNCONTEXTSHDOFLOB_OPEN, rc ) ;
       return rc ;
