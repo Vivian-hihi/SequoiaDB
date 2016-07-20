@@ -37,7 +37,7 @@ public class SequoiadbDatasource extends SequoiadbDatasourceImpl
 	
 	
 	/**
-	 * @fn SequoiadbDatasource(ArrayList<String> urls, String username, String password,
+	 * @fn SequoiadbDatasource(List<String> urls, String username, String password,
 	 *		                   ConfigOptions nwOpt, DatasourceOptions dsOpt)
 	 * @brief constructor.
 	 * @param urls the addresses of coord nodes, can't be null or empty,
@@ -63,7 +63,7 @@ public class SequoiadbDatasource extends SequoiadbDatasourceImpl
 	}
 
 	/**
-	 * @fn SequoiadbDatasource(ArrayList<String> urls, String username, String password,
+	 * @fn SequoiadbDatasource(List<String> urls, String username, String password,
 	 *		                   ConfigOptions nwOpt, SequoiadbOption dsOpt)
 	 * @brief constructor.
 	 * @param urls the addresses of coord nodes, can't be null or empty,

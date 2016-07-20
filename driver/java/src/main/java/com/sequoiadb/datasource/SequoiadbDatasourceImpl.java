@@ -339,7 +339,7 @@ public class SequoiadbDatasourceImpl
 	}
 	
 	/**
-	 * @fn SequoiadbDatasourceImpl(ArrayList<String> urls, String username, String password,
+	 * @fn SequoiadbDatasourceImpl(List<String> urls, String username, String password,
 	 *		                   ConfigOptions nwOpt, DatasourceOptions dsOpt)
 	 * @brief constructor.
 	 * @param urls the addresses of coord nodes, can't be null or empty,
