@@ -42,6 +42,7 @@
   --planbuckets         --     num       访问计划缓存内桶的个数。当其为零时Sdb将不会缓存任何访问计划
   --arbiter             --     boolean   将节点设置成为一个仲裁节点。默认为false。
   --transactiontimeout  --     num       事务锁等待超时时间（单位：秒）,默认为:60,取值范围[0,3600]
+  --omaddr              --     str       1.指定om节点的地址。配置形式为"hostname:omservicename"。
 
 **Note:**
 
