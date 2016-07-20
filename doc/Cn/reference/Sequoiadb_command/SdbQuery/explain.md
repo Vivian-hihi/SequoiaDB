@@ -17,7 +17,11 @@
 | ScanType | string | 扫描方式—— 表扫描：“tbscan”； 索引扫描：“ixscan”  |
 | IndexName | string | 使用索引的名称 |
 | UseExtSort | bool | 是否使用非索引排序 |
+| Query | Json | 解析后的用户查询条件 |
+| IXBound | Json |  索引的查找范围 |
+| NeedMatch | bool | 获取记录时是否需要根据Query进行过滤,NeedMatch为false的情况有: 1. 没有查询条件。 2. 查询条件可以被索引覆盖。 |
 | NodeName | string | 节点名 |
+| GroupName | string | 复制组名 |
 | ReturnNum | int64 | 返回记录数量 |
 | ElapsedTime | float64 | 查询耗时（秒） |
 | IndexRead | int64 | 索引记录扫描条数 |
@@ -34,7 +38,7 @@
 
 ## 示例##
 
-* foo.bar 是一个水平分区集合，分布在三个复制组上。
+* foo.bar 是一个水平分区集合，分布在两个复制组上。
 
 <pre class="prettyprint lang-javascript">
 > db.foo.bar.find().sort({b:1}).explain({Run:true})</pre>
@@ -46,11 +50,17 @@
   "ScanType": "tbscan",
   "IndexName": "",
   "UseExtSort": true,
-  "NodeName": "vmsvr2-cent-x64:40020",
-  "ReturnNum": 38,
-  "ElapsedTime": 0.000477,
+  "Query": {
+    "$and": []
+  },
+  "IXBound": null,
+  "NeedMatch": false,
+  "NodeName": "ubuntu-test:41000",
+  "GroupName": "db2",
+  "ReturnNum": 0,
+  "ElapsedTime": 0.000004,
   "IndexRead": 0,
-  "DataRead": 38,
+  "DataRead": 0,
   "UserCPU": 0,
   "SysCPU": 0
 }
@@ -59,24 +69,18 @@
   "ScanType": "tbscan",
   "IndexName": "",
   "UseExtSort": true,
-  "NodeName": "vmsvr2-cent-x64:40000",
-  "ReturnNum": 34,
-  "ElapsedTime": 0.000415,
+  "Query": {
+    "$and": []
+  },
+  "IXBound": null,
+  "NeedMatch": false,
+  "NodeName": "ubuntu-test:20000",
+  "GroupName": "db1",
+  "ReturnNum": 0,
+  "ElapsedTime": 0.000003,
   "IndexRead": 0,
-  "DataRead": 34,
+  "DataRead": 0,
   "UserCPU": 0,
   "SysCPU": 0
 }
-{
-  "Name": "foo.bar",
-  "ScanType": "tbscan",
-  "IndexName": "",
-  "UseExtSort": true,
-  "NodeName": "vmsvr2-cent-x64:40010",
-  "ReturnNum": 28,
-  "ElapsedTime": 0.000517,
-  "IndexRead": 0,
-  "DataRead": 28,
-  "UserCPU": 0,
-  "SysCPU": 0
-}</pre>
+</pre>
