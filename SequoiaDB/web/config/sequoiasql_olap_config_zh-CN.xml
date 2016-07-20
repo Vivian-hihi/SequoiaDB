@@ -17,7 +17,7 @@
         <WebName>主节点端口号</WebName>
         <Type>port</Type>
         <Default>5432</Default>
-        <Valid>1000-65535</Valid>
+        <Valid>1024-65535</Valid>
         <Display>edit box</Display>
         <Edit>true</Edit>
         <Desc>主节点端口号</Desc>
@@ -95,7 +95,7 @@
         <WebName>Segment端口号</WebName>
         <Type>port</Type>
         <Default>40000</Default>
-        <Valid>1000-65535</Valid>
+        <Valid>1024-65535</Valid>
         <Display>edit box</Display>
         <Edit>true</Edit>
         <Desc>Segment端口号</Desc>
