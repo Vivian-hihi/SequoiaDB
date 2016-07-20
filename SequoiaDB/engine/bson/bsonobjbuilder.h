@@ -89,7 +89,7 @@ namespace bson {
         See also the BSON() and BSON_ARRAY() macros.
     */
 #if defined (SDB_ENGINE) || defined (SDB_CLIENT)
-    class SDB_EXPORT BSONObjBuilder : bsonnoncopyable, public SDBObject {
+    class BSONObjBuilder : bsonnoncopyable, public SDBObject {
 #else
     class BSONObjBuilder : bsonnoncopyable {
 #endif
@@ -312,8 +312,8 @@ namespace bson {
             return *this;
         }
 
-        BSONObjBuilder& append( const StringData& fieldName, 
-                                const bsonDecimal& decimal ) ;
+        SDB_EXPORT BSONObjBuilder& append( const StringData& fieldName, 
+                                           const bsonDecimal& decimal ) ;
 
         bool appendDecimal( const StringData& fieldName, 
                             const StringData& strDecimal, 
