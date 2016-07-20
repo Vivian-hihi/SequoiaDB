@@ -44,4 +44,9 @@
 
 （1） 添加类 Node 来取代原来的类 ReplicaNode。类 ReplicaNode 以及与它相关的方法将在 version 2.x 中被弃用。
 
+**Version 2.2**
+
+（1） sdb 类新添加的接口：
+		getLastAliveTime，获取sdb最后与服务器端交互时间到标准计时点的秒数
+
 更多详情可查看辅助API [BASE64C API](api/base64c/html/index.html) 和 [FROMJSON API](api/fromjson/html/index.html)。
