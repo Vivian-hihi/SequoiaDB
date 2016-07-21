@@ -477,6 +477,12 @@ INT32 updateCommand::buildMsg( msgParser &parser, msgBuffer &sdbMsg )
          updator = subObj.getObjectField( "u" ) ;
          hint = getHintObj( obj ) ;
 
+         if( updator.nFields() > 0 &&
+             updator.firstElement().fieldName()[0] != '$' )
+         {
+            updator = BSON( "$replace" << updator ) ;
+         }
+
          if ( subObj.getBoolField( "multi" ) )
          {
             update->flags |= FLG_UPDATE_MULTIUPDATE ;
@@ -524,6 +530,13 @@ INT32 updateCommand::buildMsg( msgParser &parser, msgBuffer &sdbMsg )
       parser.readNextObj( updator ) ;
       cond = getQueryObj( packet.all ) ;
       hint = getHintObj( packet.all ) ;
+
+      if( updator.nFields() > 0 &&
+          updator.firstElement().fieldName()[0] != '$' )
+      {
+         updator = BSON( "$replace" << updator ) ;
+      }
+
 
       sdbMsg.write( cond, TRUE ) ;
       sdbMsg.write( updator, TRUE ) ;
