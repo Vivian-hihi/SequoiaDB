@@ -374,7 +374,7 @@ static void bson_sprint_raw_concat ( char **pbuf, int *left, const char *data, i
           case '\"':
              pTempBuffer[i] = '\\' ;
              ++i ;
-             pTempBuffer[i] = '\"' ;
+             pTempBuffer[i] = '"' ;
              break ;
           case '\\':
              pTempBuffer[i] = '\\' ;
@@ -384,27 +384,27 @@ static void bson_sprint_raw_concat ( char **pbuf, int *left, const char *data, i
           case '\b':
              pTempBuffer[i] = '\\' ;
              ++i ;
-             pTempBuffer[i] = '\b' ;
+             pTempBuffer[i] = 'b' ;
              break ;
           case '\f':
              pTempBuffer[i] = '\\' ;
              ++i ;
-             pTempBuffer[i] = '\f' ;
+             pTempBuffer[i] = 'f' ;
              break ;
           case '\n':
              pTempBuffer[i] = '\\' ;
              ++i ;
-             pTempBuffer[i] = '\n' ;
+             pTempBuffer[i] = 'n' ;
              break ;
           case '\r':
              pTempBuffer[i] = '\\' ;
              ++i ;
-             pTempBuffer[i] = '\r' ;
+             pTempBuffer[i] = 'r' ;
              break ;
           case '\t':
              pTempBuffer[i] = '\\' ;
              ++i ;
-             pTempBuffer[i] = '\t' ;
+             pTempBuffer[i] = 't' ;
              break ;
           default:
              pTempBuffer[i] = *data ;
