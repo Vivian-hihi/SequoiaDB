@@ -10,6 +10,7 @@
       $scope.SsqlTaskGridOptions = { 'titleWidth': [ '24px', 30, 20, 20, 30 ] } ;
       $scope.ZkpTaskGridOptions  = { 'titleWidth': [ '24px', 15, 30, 15, 40 ] } ;
       $scope.IsFinish            = false ;
+      $scope.IsError             = false ;
       $scope.TimeLeft            = '' ;
       $scope.BarColor            = 0 ;
 
@@ -137,11 +138,11 @@
                      }
                      if( nodeInfo['role'] == 'coord' )
                      {
-                        $scope.TimeLeft += 1 ;
+                        $scope.TimeLeft += 0.5 ;
                      }
                      else
                      {
-                        $scope.TimeLeft += 2 ;
+                        $scope.TimeLeft += 1 ;
                      }
                   } ) ;
                   if( $scope.TaskInfo['ResultInfo'].length == errorNum )
@@ -200,6 +201,7 @@
                   $scope.IsFinish = true ;
                   if( typeof( $scope.TaskInfo['errno'] ) == 'number' && $scope.TaskInfo['errno'] != 0 )
                   {
+                     $scope.IsError = true ;
                      $scope.TaskInfo['Progress'] = 100 ;
                      $scope.BarColor = 2 ;
                      $.each( $scope.TaskInfo['ResultInfo'], function( index, hostInfo ){
@@ -218,7 +220,7 @@
                   {
                      $scope.BarColor = 1 ;
                   }
-                  $scope.TimeLeft = sprintf( $scope.autoLanguage( '?分钟' ), $scope.TimeLeft ) ;
+                  $scope.TimeLeft = sprintf( $scope.autoLanguage( '?分钟' ), parseInt( $scope.TimeLeft ) ) ;
                   if( $scope.TaskInfo['Progress'] == 100 )
                   {
                      $scope.TaskInfo['Progress'] = 90 ;

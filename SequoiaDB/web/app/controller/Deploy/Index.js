@@ -72,7 +72,7 @@
             }
          } ) ;
       }
-
+      
       //host_module_table是否已经存在该主机
       var hostModuleTableIsExist = function( hostName ){
          var flag = -1 ;
@@ -106,6 +106,7 @@
          var queryHostList = { 'HostInfo': [] } ;
          if( $scope.HostList.length == 0 )
          {
+            SdbFunction.Timeout( queryHostStatus, 5000 ) ;
             return ;
          }
          $.each( $scope.HostList, function( index, hostInfo ){
