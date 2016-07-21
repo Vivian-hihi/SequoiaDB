@@ -1018,6 +1018,193 @@ namespace engine
       goto done ;
    }
 
+   // ***************** omUpdateHostInfoCommand *****************************
+   omUpdateHostInfoCommand::omUpdateHostInfoCommand( restAdaptor *pRestAdaptor, 
+                                                  pmdRestSession *pRestSession )
+                          : omCreateClusterCommand( pRestAdaptor, pRestSession )
+   {
+   }
+
+   omUpdateHostInfoCommand::~omUpdateHostInfoCommand()
+   {
+   }
+
+   INT32 omUpdateHostInfoCommand::_getUpdateInfo( 
+                                               map< string, string > &mapHost )
+   {
+      INT32 rc = SDB_OK ;
+      const CHAR *pHostInfo = NULL ;
+      BSONObj hostInfo ;
+      BSONElement hostsEle ;
+      //{ HostInfo: [ { HostName:"", IP:"" } ] }
+      _restAdaptor->getQuery( _restSession, OM_REST_FIELD_HOST_INFO, 
+                              &pHostInfo ) ;
+      if ( NULL == pHostInfo )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG_MSG( PDERROR, "rest field is null:field=%s", 
+                     OM_REST_FIELD_HOST_INFO ) ;
+         goto error ;
+      }
+
+      rc = fromjson( pHostInfo, hostInfo ) ;
+      if ( rc )
+      {
+         PD_LOG_MSG( PDERROR, "change rest field to BSONObj failed:src=%s,"
+                     "rc=%d", pHostInfo, rc ) ;
+         goto error ;
+      }
+
+      hostsEle = hostInfo.getField( OM_BSON_FIELD_HOST_INFO ) ;
+      if (  Array != hostsEle.type() )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG_MSG( PDERROR, "%s is not array type:type=%d", 
+                     OM_BSON_FIELD_HOST_INFO, hostsEle.type() ) ;
+         goto error ;
+      }
+
+      {
+         BSONObjIterator i( hostsEle.embeddedObject() ) ;
+         string hostName ;
+         string ip ;
+         while ( i.more() )
+         {
+            BSONElement ele = i.next() ;
+            if ( ele.type() != Object )
+            {
+               rc = SDB_INVALIDARG ;
+               PD_LOG_MSG( PDERROR, "host info is invalid, element of %s "
+                           "is not Object type:type=%d", 
+                           OM_BSON_FIELD_HOST_INFO, ele.type() ) ;
+               goto error ;
+            }
+
+            BSONObj oneHost = ele.embeddedObject() ;
+            hostName = oneHost.getStringField( OM_BSON_FIELD_HOST_NAME ) ;
+            ip       = oneHost.getStringField( OM_BSON_FIELD_HOST_IP ) ;
+            mapHost[ hostName ] = ip ;
+         }
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 omUpdateHostInfoCommand::_getClusterName( const string &hostName,
+                                                   string &clusterName )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj selector ;
+      BSONObj matcher = BSON( OM_HOST_FIELD_NAME << hostName ) ;
+      BSONObj order ;
+      BSONObj hint ;
+      list< BSONObj > hosts ;
+
+      rc = _queryTable( OM_CS_DEPLOY_CL_HOST, selector, matcher, order, hint, 
+                        0, 0, 1, hosts ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "get clusterName failed:hostName=%s,rc=%d", 
+                 hostName.c_str(), rc ) ;
+         goto error ;
+      }
+
+      if ( hosts.size() != 1 )
+      {
+         rc = SDB_DMS_EOC ;
+         PD_LOG( PDERROR, "get clusterName failed:hostName=%s,rc=%d", 
+                 hostName.c_str(), rc ) ;
+         goto error ;
+      }
+
+      clusterName = hosts.begin()->getStringField( OM_HOST_FIELD_CLUSTERNAME ) ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 omUpdateHostInfoCommand::_updateHostIP( map< string, string > &mapHost )
+   {
+      INT32 rc = SDB_OK ;
+      map< string, string >::iterator iter ;
+
+      iter = mapHost.begin() ;
+      while ( iter != mapHost.end() )
+      {
+         string hostName  = iter->first ;
+         string IP        = iter->second ;
+         BSONObj selector = BSON( OM_HOST_FIELD_NAME << hostName ) ;
+         BSONObj updator  = BSON( "$set" << BSON( OM_HOST_FIELD_IP << IP ) ) ;
+         BSONObj hint ;
+         INT64 updateNum  = 0 ;
+
+         string clusterName ;
+         rc = _getClusterName( hostName, clusterName ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG_MSG( PDERROR, "get clusterName failed:hostName=%s,rc=%d", 
+                        hostName.c_str(), rc ) ;
+            goto error ;
+         }
+
+         rc = rtnUpdate( OM_CS_DEPLOY_CL_HOST, selector, updator, hint, 0, 
+                         pmdGetThreadEDUCB(), &updateNum ) ;
+         if ( SDB_OK != rc || 0 == updateNum )
+         {
+            PD_LOG_MSG( PDERROR, "update host failed:table=%s,updateNum=%d,"
+                        "host=%s,updator=%s,selector=%s,rc=%d",
+                        OM_CS_DEPLOY_CL_HOST, updateNum, hostName.c_str(), 
+                        updator.toString().c_str(), selector.toString().c_str(), 
+                        rc ) ;
+            goto error ;
+         }
+
+         PD_LOG( PDEVENT, "update host(%s,%s) success", hostName.c_str(),
+                 IP.c_str() ) ;
+         sdbGetOMManager()->updateClusterVersion( clusterName ) ;
+
+         iter++ ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+   
+   INT32 omUpdateHostInfoCommand::doCommand()
+   {
+      INT32 rc = SDB_OK ;
+      map< string, string > mapHost ;
+      rc = _getUpdateInfo( mapHost ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "_getUpdateInfo failed:rc=%d", rc ) ;
+         goto error ;
+      }
+
+      rc = _updateHostIP( mapHost ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "_updateHostIP failed:rc=%d", rc ) ;
+         goto error ;
+      }
+
+      _sendOKRes2Web() ;
+   done:
+      return rc ;
+   error:
+      _errorDetail = omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ;
+      _sendErrorRes2Web( rc, _errorDetail ) ;
+      goto done ;
+   }
+   
+
    // ***************** omScanHostCommand *****************************
    omScanHostCommand::omScanHostCommand( restAdaptor *pRestAdaptor, 
                                          pmdRestSession *pRestSession, 
@@ -1558,6 +1745,27 @@ namespace engine
       goto done ;
    }
 
+   void omScanHostCommand::_markHostExistence( BSONObj &oneHost )
+   {
+      INT32 retcode = oneHost.getIntField( OM_REST_RES_RETCODE ) ;
+      if ( retcode == SDB_OK )
+      {
+         string hostName = oneHost.getStringField( OM_BSON_FIELD_HOST_NAME ) ;
+         if ( _isHostNameExist( hostName ) )
+         {
+            BSONObjBuilder builder ;
+            BSONObj filter = BSON( OM_REST_RES_RETCODE << "" 
+                                   << OM_REST_RES_DETAIL << "" ) ;
+            BSONObj others = oneHost.filterFieldsUndotted( filter, false ) ;
+            builder.append( OM_REST_RES_RETCODE, SDB_IXM_DUP_KEY ) ;
+            builder.append( OM_REST_RES_DETAIL, "host is exist" ) ;
+            builder.appendElements( others ) ;
+
+            oneHost = builder.obj() ;
+         }
+      }
+   }
+
    INT32 omScanHostCommand::_parseResonpse( VEC_SUB_SESSIONPTR &subSessionVec, 
                                             BSONObj &response,
                                             list<BSONObj> &bsonResult )
@@ -1591,6 +1799,7 @@ namespace engine
             }
 
             BSONObj oneHost = ele.embeddedObject() ;
+            _markHostExistence( oneHost ) ;
             bsonResult.push_back( oneHost ) ;
          }
       }
@@ -1625,13 +1834,6 @@ namespace engine
          _errorDetail = omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ;
          _sendErrorRes2Web( rc, _errorDetail ) ;
          goto error ;
-      }
-
-      _filterExistHost( hostInfoList, bsonResult ) ;
-      if ( hostInfoList.size() == 0 )
-      {
-         _sendResult2Web( bsonResult ) ;
-         goto done ;
       }
 
       // build request to agent

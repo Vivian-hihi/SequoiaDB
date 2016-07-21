@@ -973,6 +973,10 @@ namespace engine
          {
             commandIf = SDB_OSS_NEW omListHostBusinessCommand( pAdptor, this ) ;
          }
+         else if ( ossStrcasecmp( pSubCommand, OM_UPDATE_HOST_INFO_REQ ) == 0 )
+         {
+            commandIf = SDB_OSS_NEW omUpdateHostInfoCommand( pAdptor, this ) ;
+         }
          else
          {
             rc = SDB_INVALIDARG ;

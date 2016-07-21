@@ -405,6 +405,8 @@ namespace engine
    #define  OM_TASK_STRATEGY_ADD_IPS_REQ     "add task strategy ips"
    #define  OM_TASK_STRATEGY_DEL_IPS_REQ     "del task strategy ips"
    #define  OM_TASK_STRATEGY_DEL_REQ         "del task strategy"
+
+   #define  OM_UPDATE_HOST_INFO_REQ          "update host info"
    
    #define  OM_SSQL_EXEC_REQ                 "ssql exec"
    //**************************************************************************

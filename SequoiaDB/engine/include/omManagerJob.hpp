@@ -82,7 +82,8 @@ namespace engine
       private:
          INT32            _updateNotifier() ;
          INT32            _notifyAgent() ;
-         INT32            _addUpdateHostReq( pmdRemoteSession *remoteSession ) ;
+         INT32            _addUpdateHostReq( pmdRemoteSession *remoteSession,
+                                             const CHAR *localHostName ) ;
          void             _clearSession( pmdRemoteSession *remoteSession ) ;
          void             _getAgentService( string &serviceName ) ;
 

@@ -317,6 +317,7 @@ namespace engine
       pmdRemoteSession *remoteSession = NULL ;
 
       VEC_SUB_SESSIONPTR subSessionVec ;
+      CHAR localHostName[ OSS_MAX_HOSTNAME + 1 ] ;
 
       // if all agent have update hosttable, do nothing
       if ( _mapTargetAgents.size() == 0 )
@@ -334,14 +335,22 @@ namespace engine
          goto error ;
       }
 
-      rc = _addUpdateHostReq( remoteSession ) ;
+      ossGetHostName( localHostName, OSS_MAX_HOSTNAME ) ;
+      rc = _addUpdateHostReq( remoteSession, localHostName ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "_addUpdateHostReq failed:rc=%d", rc ) ;
          goto error ;
       }
 
+      // continue to send others if error happened
       remoteSession->sendMsg( &sucNum, &totalNum ) ;
+      if ( totalNum != sucNum )
+      {
+         PD_LOG( PDERROR, "error happend when notify to agent:totalNum=%d,"
+                 "sucNum=%d", totalNum, sucNum ) ;
+      }
+
       rc = remoteSession->waitReply( TRUE, &subSessionVec ) ;
       if ( SDB_OK != rc )
       {
@@ -408,6 +417,14 @@ namespace engine
             _om->getHostInfoByID( subSession->getNodeID(), host, service ) ;
             PD_LOG( PDDEBUG, "remove target:host=%s", host.c_str() ) ;
             _mapTargetAgents.erase( host ) ;
+            if ( ossStrcmp( OM_DEFAULT_LOCAL_HOST, host.c_str() ) == 0 )
+            {
+               /* we have replace localHostName to OM_DEFAULT_LOCAL_HOST 
+                  in _addUpdateHostReq. so we must remove localHostName here
+                  when host == OM_DEFAULT_LOCAL_HOST
+               */
+               _mapTargetAgents.erase( localHostName ) ;
+            }
          }
       }
 
@@ -418,7 +435,8 @@ namespace engine
       goto done ;
    }
 
-   INT32 omClusterNotifier::_addUpdateHostReq( pmdRemoteSession *remoteSession )
+   INT32 omClusterNotifier::_addUpdateHostReq( pmdRemoteSession *remoteSession,
+                                               const CHAR *localHostName )
    {
       INT32 rc    = SDB_OK ;
       BSONArrayBuilder arrayBuilder ;
@@ -446,8 +464,18 @@ namespace engine
          CHAR *pContent            = NULL ;
          INT32 contentSize         = 0 ;
          omHostContent &agentInfo  = iter->second ;
-         routeID   = _om->updateAgentInfo( agentInfo.hostName, 
-                                           agentInfo.serviceName ) ;
+
+         if ( 0 == ossStrcmp( localHostName, agentInfo.hostName.c_str() ) )
+         {
+            routeID   = _om->updateAgentInfo( OM_DEFAULT_LOCAL_HOST, 
+                                              agentInfo.serviceName ) ;
+         }
+         else
+         {
+            routeID   = _om->updateAgentInfo( agentInfo.hostName, 
+                                              agentInfo.serviceName ) ;
+         }
+
          subSession = remoteSession->addSubSession( routeID.value ) ;
          if ( NULL == subSession )
          {

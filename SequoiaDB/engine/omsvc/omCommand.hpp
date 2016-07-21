@@ -227,6 +227,25 @@ namespace engine
          isNeedUninstall = right.isNeedUninstall ;
       }
    } ;
+
+   class omUpdateHostInfoCommand : public omCreateClusterCommand
+   {
+      public:
+         omUpdateHostInfoCommand( restAdaptor *pRestAdaptor, 
+                                  pmdRestSession *pRestSession ) ;
+
+         ~omUpdateHostInfoCommand() ;
+
+      public:
+         virtual INT32   doCommand() ;
+
+      protected:
+         INT32           _getUpdateInfo( map< string, string > &mapHost ) ;
+         INT32           _updateHostIP( map< string, string > &mapHost ) ;
+         INT32           _getClusterName( const string &hostName,
+                                          string &clusterName ) ;
+   } ;
+   
    class omScanHostCommand : public omCreateClusterCommand
    {
       public:
@@ -260,6 +279,8 @@ namespace engine
                                         pmdRemoteSession *remoteSession) ;
          void            _generateHostList( list<omScanHostInfo> &hostInfoList, 
                                             BSONObj &bsonRequest ) ;
+
+         void            _markHostExistence( BSONObj &oneHost ) ;
 
       private:
          INT32           _parseResonpse( VEC_SUB_SESSIONPTR &subSessionVec, 
