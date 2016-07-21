@@ -12,7 +12,9 @@
         <testsuite>insert</testsuite>
         <testsuite>listCL</testsuite>
         <testsuite>operators</testsuite>  
-        <testsuite>numberLong</testsuite>        
+        <testsuite>numberLong</testsuite>
+        <testsuite>selectorSymbol</testsuite>
+        <testsuite>sqlHint</testsuite>        
     </machine1>
     <machine2>
         <testsuite>procedures</testsuite>
@@ -24,6 +26,7 @@
         <testsuite>syndate</testsuite>
         <testsuite>transaction</testsuite>
         <testsuite>updateSymbol</testsuite>
+        <testsuite>sdbLobTool</testsuite>
     </machine2>
     <machine3>
         <testsuite>update</testsuite>
@@ -35,5 +38,7 @@
         <testsuite>index</testsuite>
         <testsuite>decimal</testsuite>
         <testsuite>matches</testsuite>
+        <testsuite>jsonTypes</testsuite>
+        <testsuite>sqlArithmetic</testsuite>
     </machine3>
 </shell>
