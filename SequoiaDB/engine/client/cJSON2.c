@@ -508,6 +508,12 @@ static const CHAR* tokenObjKey( CJSON *pItem,
                                 const CHAR *pStr,
                                 CJSON_MACHINE *pMachine )
 {
+   if( *pStr == CHAR_COMMA )
+   {
+      // { xx : xx, , <--- is error
+      CJSON_PRINTF_LOG( "Syntax Error: extra ','" ) ;
+      goto error ;
+   }
    pStr = readKey( pItem, pStr, pMachine ) ;
    if( pStr == NULL )
    {
@@ -649,6 +655,12 @@ static const CHAR* tokenArrValue( CJSON *pItem,
                                   const CHAR *pStr,
                                   CJSON_MACHINE *pMachine )
 {
+   if( *pStr == CHAR_COMMA )
+   {
+      // [ xx , , <--- is error
+      CJSON_PRINTF_LOG( "Syntax Error: extra ','" ) ;
+      goto error ;
+   }
    pStr = readValue( pItem, pStr, pMachine ) ;
    if( pStr == NULL )
    {
@@ -769,7 +781,7 @@ static const CHAR* readKey( CJSON *pItem,
    // step: 3
    if( keyAttr == SYMBOL_NONE )
    {
-      // $xxx
+      // xxx
       if( *pStrStart == CHAR_DOLLAR &&
           pMachine->parseMode == CJSON_RIGOROUS_PARSE )
       {
@@ -834,7 +846,7 @@ static const CHAR* readValue( CJSON *pItem,
       pTmpStr = parseFun( pTmpStr, pMachine, &pReadInfo ) ;
       if( pTmpStr == NULL )
       {
-         CJSON_PRINTF_LOG( "Failed to call parse function" ) ;
+         //CJSON_PRINTF_LOG( "Failed to call parse function" ) ;
          goto error ;
       }
       if( cJsonReadInfoExecState( pReadInfo ) == CJSON_EXEC_IGNORE )
