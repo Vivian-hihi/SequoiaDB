@@ -525,7 +525,6 @@ namespace engine
 
    void _SDB_KRCB::callRegisterEventHandler( const MsgRouteID &nodeID )
    {
-      IEventHander *pHandler = NULL ;
       ossScopedLock lock ( &_handlerLatch, SHARED ) ;
       for ( UINT32 i = 0 ; i < _vecEventHandler.size() ; ++i )
       {
@@ -539,7 +538,6 @@ namespace engine
    void _SDB_KRCB::callPrimaryChangeHandler( BOOLEAN primary,
                                              SDB_EVENT_OCCUR_TYPE type )
    {
-      IEventHander *pHandler = NULL ;
       ossScopedLock lock ( &_handlerLatch, SHARED ) ;
       for ( UINT32 i = 0 ; i < _vecEventHandler.size() ; ++i )
       {
