@@ -292,7 +292,7 @@ SsqlOlapRemover.prototype._uninstallPackage = function SsqlOlapRemover__uninstal
 
     if (!this.userSsh.isEmptyDirectory(installDir)) {
         if (!this.userSsh.isPathExist(uninstall)) {
-            var error = new SdbError(e, sprintf("failed to find [?] in host[?]", uninstall, this.config[HostName]));
+            var error = new SdbError(sprintf("failed to find [?] in host[?]", uninstall, this.config[HostName]));
             this.logger.log(PDERROR, error);
             throw error;
         }
