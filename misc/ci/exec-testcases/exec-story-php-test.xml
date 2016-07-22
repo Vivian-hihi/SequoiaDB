@@ -69,8 +69,9 @@
 
 		<exec executable="${bin_dir}/sdb" dir="" timeout="20000" failonerror="false">
 			<arg line="-s &quot;db.msg('Begin testcase[${test.case.fullname}]');&quot;" />
-		</exec>      
-		<exec executable="${php-bin.dir}/php-bin" dir="${php-bin.dir}" timeout="1200000" outputproperty="screen.output" resultproperty="ret.code" failonerror="false" >
+		</exec>  
+		<echo message="exec: ${php-bin.dir}/php-bin ${phpunit.phar.dir} --log-junit ${reports.path}/${test.suite.class.name}.xml ${test.case.fullname}"/>    
+		<exec executable="${php-bin.dir}/php-bin " dir="${php-bin.dir}" timeout="1200000" outputproperty="screen.output" resultproperty="ret.code" failonerror="false" >
 			<arg line="${phpunit.phar.dir} --log-junit ${reports.path}/${test.suite.class.name}.xml ${test.case.fullname}"/>
 		</exec>
 		<echo message="${screen.output}" />
