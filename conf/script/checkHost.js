@@ -109,7 +109,7 @@ function _extractOMAInfo( installInfoObj, omaInfoObj )
       {
          if ( "undefined" == typeof(omaInfoObj) || null == omaInfoObj )
             exception_handle( SDB_INVALIDARG, "OM Agent's info is " + omaInfoObj ) ;
-         retObj[Service] = omaInfoObj[SvcName2] ;
+         retObj[Service] = omaInfoObj[SvcName3] ;
       }
       catch( e )
       {
