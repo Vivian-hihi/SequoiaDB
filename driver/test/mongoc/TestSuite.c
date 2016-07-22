@@ -346,7 +346,7 @@ TestSuite_RunFuncInChild (TestSuite *suite, /* IN */
       dup2 (fd, STDOUT_FILENO);
       close (fd);
       srand (test->seed);
-      test->isbegein =1;
+      test->isbegin =1;
       test->func ();
       exit (0);
    }
