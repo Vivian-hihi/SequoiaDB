@@ -2490,5 +2490,21 @@
         </description>
       </code>
 
+      <code>
+        <name>SDB_STRTGY_TASK_NAME_CONFLICT</name>
+        <description>
+           <en>Task name conflict</en>
+           <cn>任务名冲突</cn>
+        </description>
+      </code>
+
+      <code>
+        <name>SDB_STRTGY_TASK_NOT_EXISTED</name>
+        <description>
+           <en>The task is not existed</en>
+           <cn>任务不存在</cn>
+        </description>
+      </code>
+
    </codelist>
 </rclist>
