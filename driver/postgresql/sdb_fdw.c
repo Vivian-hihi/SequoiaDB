@@ -4193,6 +4193,7 @@ TupleTableSlot *SdbExecForeignUpdate( EState *estate, ResultRelInfo *rinfo,
    Datum datum ;
    int rc = SDB_OK ;
    bool isnull ;
+   sdbbson_iterator iter ;
    SdbExecState *fdw_state = ( SdbExecState * )rinfo->ri_FdwState ;
 
    sdbbson_init( &sdbbsonTempValue ) ;
@@ -4220,11 +4221,12 @@ TupleTableSlot *SdbExecForeignUpdate( EState *estate, ResultRelInfo *rinfo,
 
    sdbbson_init( &sdbbsonCondition ) ;
    original = sdbGetRecordPointer( fdw_state->bson_record_addr ) ;
-   for ( i = 0 ; i < fdw_state->key_num ; i++ )
+
+   sdbbson_iterator_init( &iter, original ) ;
+   while ( sdbbson_iterator_more( &iter ) )
    {
-      sdbbson_iterator ite ;
-      sdbbson_find( &ite, original, fdw_state->key_name[i] ) ;
-      sdbbson_append_element( &sdbbsonCondition, NULL, &ite ) ;
+       sdbbson_iterator_next( &iter ) ;
+       sdbbson_append_element( &sdbbsonCondition, NULL, &iter ) ;
    }
    sdbbson_finish( &sdbbsonCondition ) ;
 
