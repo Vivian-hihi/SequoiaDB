@@ -86,6 +86,7 @@ struct _Test
    int exit_code;
    unsigned seed;
    int (*check) (void);
+   int isbegin;
 };
 
 

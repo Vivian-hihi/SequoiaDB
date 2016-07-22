@@ -345,6 +345,7 @@ TestSuite_RunFuncInChild (TestSuite *suite, /* IN */
       dup2 (fd, STDOUT_FILENO);
       close (fd);
       srand (test->seed);
+      test->isbegein =1;
       test->func ();
       exit (0);
    }
@@ -383,11 +384,13 @@ TestSuite_RunTest (TestSuite *suite,       /* IN */
 
 #if defined(_WIN32)
       srand (test->seed);
+      test->isbegin =1;
       test->func ();
       status = 0;
 #else
       if ((suite->flags & TEST_NOFORK)) {
          srand (test->seed);
+         test->isbegin = 1;
          test->func ();
          status = 0;
       } else {
@@ -608,7 +611,7 @@ TestSuite_PrintXmlFooter (TestSuite *suite,
       if (!flag)
       {
          fprintf(stream, "<testcase name=\"%s\" status=\"%s\" />\n",
-                    suite->testname, "UNKNOWN");
+                    suite->testname, "fail");
       }
    }
    else
@@ -627,7 +630,7 @@ TestSuite_PrintXmlFooter (TestSuite *suite,
             continue;
          }
          fprintf(stream, "<testcase name=\"%s%s\" status=\"%s\" />\n",
-                 suite->name, test->name, "UNKNOWN");
+                 suite->name, test->name, test->isbegin ? "fail":"unknown");
       }
    }
    
