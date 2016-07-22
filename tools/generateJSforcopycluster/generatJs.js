@@ -9,12 +9,12 @@ function generatePublicVar(file)
    file.write("{\n");
    file.write("   var coordHostName = 'localhost';\n");
    file.write("}\n\n");
-   
+
    file.write("if(undefined === coordPort)\n");
    file.write("{\n");
    file.write("   var coordPort = 11810;\n");
    file.write("}\n\n");
-   
+
    file.write("if(undefined === needDeploy)\n");
    file.write("{\n");
    file.write("   var needDeploy = false;\n");
@@ -59,7 +59,7 @@ function getGroupDefine(db, jsFile)
          {
             jsFile.write("\n");
             jsFile.write("              " + JSON.stringify(group) + ",");
-            
+
          }
       }
 
@@ -74,18 +74,44 @@ function getGroupDefine(db, jsFile)
    }
 }
 
+function isContain(nameSet, name)
+{
+   if (undefined === nameSet ||
+       !(nameSet instanceof Array) ||
+       0 === nameSet.length)
+   {
+      return true;
+   }
+
+   for (var i = 0; i < nameSet.length; ++i)
+   {
+      if (nameSet[i] === name)
+      {
+         return true;
+      }
+   }
+
+   return false;
+}
+
 //获取domain定义
 function getDomainDefine(db, jsFile)
 {
    try
    {
       var cursor = db.listDomains();
-      
+
       jsFile.write("var domains = [")
       var firsttime = true;
       while (cursor.next())
       {
          var obj = cursor.current().toObj();
+         // 该domain是否需要创建
+         if (!isContain(inDomainNames, obj.Name))
+         {
+            continue;
+         }
+
          var domain = {};
          domain.name = obj.Name;
          domain.groups = [];
@@ -96,7 +122,7 @@ function getDomainDefine(db, jsFile)
          if (true === obj.AutoSplit)
          {
             domain.option = {};
-            domain.option.AutoSplit = obj.AutoSplit; 
+            domain.option.AutoSplit = obj.AutoSplit;
          }
          if (true === firsttime)
          {
@@ -109,7 +135,7 @@ function getDomainDefine(db, jsFile)
             jsFile.write("               " + JSON.stringify(domain) + ",");
          }
       }
-      
+
       jsFile.write("];\n\n");
       println("getDomainDefine success");
    }
@@ -120,7 +146,7 @@ function getDomainDefine(db, jsFile)
 }
 
 // 获取CS定义
-function getCSDefine(db, jsFile)
+function getCSDefine(db, jsFile, csSet)
 {
    try
    {
@@ -131,20 +157,34 @@ function getCSDefine(db, jsFile)
       {
          var cs = {};
          var obj = cursor.current().toObj();
-         
+         // 该CS是否需要创建
+         if (!isContain(inCSNames, obj.name))
+         {
+            continue;
+         }
+
          cs.name = obj.Name;
          cs.option = {};
+         var curDomainName = "";
          if (undefined !== obj.Domain)
          {
             cs.option.Domain = obj.Domain;
+            curDomainName = obj.Domain;
          }
-         
+
+         // 该domain是否需要创建，如果domain没有指定，则CS也排除
+         if (!isContain(inDomainNames, curDomainName))
+         {
+            csSet.push(cs.name);
+            continue;
+         }
+
          cs.option.LobPageSize = obj.LobPageSize;
          cs.option.PageSize = obj.PageSize
-         
+
          if (true === firsttime)
          {
-            jsFile.write(JSON.stringify(cs) + ",");  
+            jsFile.write(JSON.stringify(cs) + ",");
             firsttime = false;
          }
          else
@@ -153,7 +193,7 @@ function getCSDefine(db, jsFile)
             jsFile.write("             "  + JSON.stringify(cs) + ",");
          }
       }
-      
+
       jsFile.write("];\n\n");
       println("getCSDefine success");
    }
@@ -164,7 +204,7 @@ function getCSDefine(db, jsFile)
 }
 
 // 获取CL定义
-function getCLDefine(db, jsFile)
+function getCLDefine(db, jsFile, csSet)
 {
    try
    {
@@ -173,9 +213,28 @@ function getCLDefine(db, jsFile)
       var firsttime = true;
       while (cursor.next())
       {
-         var cl = {};   
+         var cl = {};
          var obj = cursor.current().toObj();
-         
+
+         var names = obj.Name.split(".");
+         // 该CL是否需要创建
+         if (!isContain(inCLNames, names[1]))
+         {
+            continue;
+         }
+
+         // 该CL对应的CS是否需要创建
+         if (!isContain(inCSNames, names[0]))
+         {
+            continue;
+         }
+
+         if (csSet.length !=0 &&
+             isContain(csSet, names[0]))
+         {
+            continue;
+         }
+
          cl.name = obj.Name;
          cl.option = {};
          if (undefined !== obj.ShardingType)
@@ -183,29 +242,29 @@ function getCLDefine(db, jsFile)
             cl.option.ShardingType = obj.ShardingType;
             cl.option.ShardingKey = obj.ShardingKey;
          }
-         
+
          if (undefined !== obj.EnsureShardingIndex)
          {
             cl.option.EnsureShardingIndex = obj.EnsureShardingIndex
          }
-         
-         if (undefined === obj.AutoSplit && 
+
+         if (undefined === obj.AutoSplit &&
              1 === obj.CataInfo.length)
          {
-            cl.option.Group = obj.CataInfo[0].GroupName;  
+            cl.option.Group = obj.CataInfo[0].GroupName;
          }
-         
+
          if (undefined !== obj.IsMainCL)
          {
             cl.option.IsMainCL = true;
-            
+
             cl.subcls = [];
             for (var i = 0; i< obj.CataInfo.length; ++i)
             {
                var subcl = {};
                subcl.name = obj.CataInfo[i].SubCLName;
                subcl.attchOpt = {}
-               
+
                for (key in cl.option.ShardingKey)
                {
                   subcl.attchOpt.LowBound = {};
@@ -216,33 +275,67 @@ function getCLDefine(db, jsFile)
                cl.subcls.push(subcl);
             }
          }
-         
+
          if (undefined !== obj.Partition)
          {
             cl.option.Partition = obj.Partition;
          }
-         
+
          if (undefined !== obj.AutoIndexId)
          {
             cl.option.Partition = obj.AutoIndexId;
          }
-         
-         if (undefined !== obj.Attribute)
+
+         if (undefined !== obj.Attribute &&
+             0 !== obj.Attribute)
          {
             cl.option.Compressed = true;
-            
+
             if (undefined !== obj.CompressionType &&
                 1 === obj.CompressionType)
             {
                cl.option.CompressionType = "lzw";
             }
          }
-         
+
          if (undefined !== obj.ReplSize)
          {
             cl.option.ReplSize = obj.ReplSize;
          }
          
+         cl.CataInfo = [];
+         if (obj.CataInfo.length === 1)
+         {
+            cl.option.Group = obj.CataInfo[0].GroupName;
+         }
+         else
+         {
+            for(var i = 0; i< obj.CataInfo.length; ++i)
+            {
+               var cataItem = {};
+               cataItem.group = obj.CataInfo[i].GroupName;
+               if (cl.option.ShardingType === "hash")
+               {
+                  cataItem.LowBound = obj.CataInfo[i].LowBound;
+                  for(var k in cataItem.LowBound) 
+                  {
+                    if (k === "") cataItem.LowBound={'Partition':obj.CataInfo[i].LowBound[""]}
+                  }
+                  cataItem.UpBound = obj.CataInfo[i].UpBound;
+                  for(var k in cataItem.UpBound) 
+                  {
+                    if (k === "") cataItem.UpBound={'Partition':obj.CataInfo[i].UpBound[""]}
+                  }
+               }
+               else
+               {
+                  cataItem.LowBound = obj.CataInfo[i].LowBound;
+                  cataItem.UpBound = obj.CataInfo[i].UpBound;
+               }
+               cl.CataInfo.push(cataItem);
+            }
+         }
+
          if (true === firsttime)
          {
             jsFile.write(JSON.stringify(cl) + ",");
@@ -254,7 +347,7 @@ function getCLDefine(db, jsFile)
             jsFile.write("             " + JSON.stringify(cl) + ",");
          }
       }
-      
+
       jsFile.write("];\n\n");
       println("getCLDefine success");
    }
@@ -265,7 +358,7 @@ function getCLDefine(db, jsFile)
 }
 
 // 获取索引定义
-function getIndexDefine(db, jsFile)
+function getIndexDefine(db, jsFile, csSet)
 {
    try
    {
@@ -277,6 +370,22 @@ function getIndexDefine(db, jsFile)
          var obj = eval("(" + clSet[i] + ")");
          var fullname = obj.Name;
          var names = fullname.split(".");
+         // 该CL是否需要创建
+         if (!isContain(inCLNames, names[1]))
+         {
+            continue;
+         }
+
+         // 该CL对应的CS是否需要创建
+         if (!isContain(inCSNames, names[0]))
+         {
+            continue;
+         }
+         if (csSet.length !=0 &&
+             isContain(csSet, names[0]))
+         {
+            continue;
+         }
          if (2 === names.length )
          {
             var cl = db.getCS(names[0]).getCL(names[1]);
@@ -288,7 +397,7 @@ function getIndexDefine(db, jsFile)
             {
                var index = {};
                var obj = cursor.current().toObj();
-               if ("$id" !== obj.IndexDef.name && 
+               if ("$id" !== obj.IndexDef.name &&
                    "$shard" !== obj.IndexDef.name)
                {
                   index.name = obj.IndexDef.name;
@@ -298,12 +407,12 @@ function getIndexDefine(db, jsFile)
                   clIndexs.indexs.push(index);
                }
             }
-            
-            if (true === firsttime && 
+
+            if (true === firsttime &&
                 0 !== clIndexs.indexs.length )
             {
                jsFile.write(JSON.stringify(clIndexs) + ",");
-               firsttime = false;     
+               firsttime = false;
             }
             else if(0 !== clIndexs.indexs.length)
             {
@@ -312,7 +421,7 @@ function getIndexDefine(db, jsFile)
             }
          }
       }
-      
+
       jsFile.write("];\n\n");
       println("getIndexDefine success");
    }
@@ -341,10 +450,11 @@ function deployCluster(db, groups) \n\
             }\n\
             else\n\
             {\n\
-               catarg.createNode(node.HostName, node.serviceName, node.dbpath);\n\
+               db.getRG(1).createNode(node.HostName, node.serviceName, node.dbpath);\n\
             }\n\
          }\n\
-         catarg.start();\n\
+         db.getRG(1).start();\n\
+         println('create catalog rg done');\n\
       }\n\
    }\n\
    \n\
@@ -370,6 +480,7 @@ function deployCluster(db, groups) \n\
          rg.createNode(node.HostName, node.serviceName, node.dbpath);\n\
       }\n\
       rg.start();  \n\
+      println('create group ' + groups[i].name + ' done');\n\
    }\n\
 }"
 
@@ -393,6 +504,38 @@ function createAllCS(db, csSet)\n\
    println("generatCreateCSFunction success");
 }
 
+// 生成获取CL所在组的函数
+function generatGetSrcGroup(file)
+{
+    var functionContext = "\n\
+function getSrcGroup(db, fullName)\n\
+{\n\
+    var cursor = db.snapshot(8, {Name: fullName});\n\
+    var doc = cursor.next().toObj();\n\
+    return doc['CataInfo'][0]['GroupName'];\n\
+}"
+   file.write(functionContext + "\n");
+   println("generatGetSrcGroup success");
+}
+
+// 生成切分函数
+function generatSplitCL(file)
+{
+   var functionContext = "\n\
+function splitCL(cl, srcGroup, cataInfo)\n\
+{\n\
+    for (var i = 0; i < cataInfo.length; ++i)\n\
+    {\n\
+        if (srcGroup !== cataInfo[i].group)\n\
+        {\n\
+           cl.split(srcGroup, cataInfo[i].group, cataInfo[i].LowBound, cataInfo[i].UpBound);\n\
+        }\n\
+    }\n\
+}"
+   file.write(functionContext + "\n");
+   println("generatSplitCL success"); 
+}
+
 // 生成CL创建函数
 function generatCreateCLFunction(file)
 {
@@ -403,13 +546,18 @@ function createAllCL(db, clSet)\n\
    for (var i = 0; i < clSet.length; ++i)\n\
    {\n\
       var names = clSet[i].name.split('.');\n\
-      db.getCS(names[0]).createCL(names[1], clSet[i].option); \n\
+      var cl = db.getCS(names[0]).createCL(names[1], clSet[i].option); \n\
       println('createCL(' + names[1] + ',' + JSON.stringify(clSet[i].option) + ') success');\n\
       \n\
       if (undefined !== clSet[i].option.IsMainCL && \n\
           true === clSet[i].option.IsMainCL)\n\
       {\n\
          mainCLSet.push(clSet[i]);\n\
+      }\n\
+      else\n\
+      {\n\
+         var srcGroup = getSrcGroup(db, clSet[i].name);\n\
+         splitCL(cl, srcGroup, clSet[i].CataInfo);\n\
       }\n\
    }\n\
    \n\
@@ -428,6 +576,26 @@ function createAllCL(db, clSet)\n\
    println("generatCreateCLFunction success");
 }
 
+// 生成修改domain属性的方法
+function generatAlterAllDomains(file)
+{
+   var functionContext = "\n\
+function alterAllDomains(db, domains)\n\
+{\n\
+   for (var i = 0; i < domains.length; ++i)\n\
+   {\n\
+      if (domains[i].option.AutoSplit)\n\
+      {\n\
+         var dm = db.getDomain(domains[i].name);\n\
+         dm.alter({AutoSplit:true});\n\
+         println('alterDomain ' + domains[i].name + ' success');\n\
+      }\n\
+   }\n\
+}"
+   file.write(functionContext + "\n");
+   println("generatAlterAllDomains success");
+}
+
 // 生成main函数
 function generatmainFunction(file)
 {
@@ -438,18 +606,27 @@ function main()\n\
    {\n\
       var db = new Sdb(coordHostName, coordPort);\n\
       \n\
-      if (true === needDeploy)\n\
+      if (step === 0)\n\
       {\n\
          deployCluster(db, groups);\n\
       }\n\
-      \n\
-      if (true === needCreateDomain)\n\
+      else if (step === 1)\n\
       {\n\
          createAllDomains(db, domains);\n\
       }\n\
-      createAllCS(db,csSet);\n\
-      createAllCL(db, clSet);\n\
-      createAllIndexes(db,indexDefs);\n\
+      else if (step === 2)\n\
+      {\n\
+         createAllCS(db,csSet);\n\
+         createAllCL(db, clSet);\n\
+      }\n\
+      else if (step ===3)\n\
+      {\n\
+         createAllIndexes(db,indexDefs);\n\
+      }\n\
+      else if (step === 4)\n\
+      {\n\
+         alterAllDomains(db, domains);\n\
+      }\n\
    }\n\
    catch(e)\n\
    {\n\
@@ -464,7 +641,7 @@ function main()\n\
    }\n\
 }\n\
 println('Usage:')\n\
-println('      -e \\\'var coordHostName = \\\"localhost\\\"; var coordPort=11810;var needDeploy=false; var needCreateDomain=true\\\'');\n\
+println('      -e \\\'var coordHostName = \\\"localhost\\\"; var step = 0/1/2/3/4\\\'');\n\
 println('you can modify parameters!!!');\n\
 println('use default parameters continue...');\n\
 main();"
@@ -480,7 +657,10 @@ function createAllDomains(db, domains)\n\
 {\n\
    for (var i = 0; i < domains.length; ++i)\n\
    {\n\
+      var autoSplit = domains[i].option.AutoSplit \n\
+      domains[i].option.AutoSplit = false;\n\
       db.createDomain(domains[i].name, domains[i].groups, domains[i].option);\n\
+      domains[i].option.AutoSplit = autoSplit;\n\
       println('createDomain ' + domains[i].name + ' success');\n\
    }\n\
 }";
@@ -501,7 +681,9 @@ function createAllIndexes(db, indexes)\n\
      for (var j = 0; j < indexes[i].indexs.length; ++j)\n\
      {\n\
         var item = indexes[i].indexs[j];\n\
-        cl.createIndex(item.name, item.key, item.unique, item.enforced);\n\
+        try{\n\
+        cl.createIndex(item.name, item.key, item.unique, item.enforced);}\n\
+        catch (e) { if ( -247 !=e ) {throw e}}\n\
         println(cl.toString() + 'createIndex(' + item.name + ',' + JSON.stringify(item.key) + ',' + item.unique + ',' + item.enforced + ') success');\n\
      }\n\
   }\n\
@@ -562,6 +744,21 @@ if (undefined === generateFilePath)
    var generateFilePath = "./copyCluster.js";
 }
 
+if (undefined === inDomainNames)
+{
+   var inDomainNames = [];
+}
+
+if (undefined === inCSNames)
+{
+   var inCSNames = [];
+}
+
+if (undefined === inCLNames)
+{
+   var inCLNames = [];
+}
+
 function main()
 {
    try
@@ -569,19 +766,24 @@ function main()
       var db = newDB(coordHostName, coordPort);
       var catadb = newDB(catalogHostName, catalogPort);
       var file = createFile(generateFilePath);
+      var exceptCSSet = [];
 
       getGroupDefine(db,file);
       getDomainDefine(db,file);
-      getCSDefine(catadb, file);
-      getCLDefine(db, file);
-      getIndexDefine(db, file);
+      getCSDefine(catadb, file, exceptCSSet);
+      getCLDefine(db, file, exceptCSSet);
+      getIndexDefine(db, file, exceptCSSet);
       generatePublicVar(file);
+      
 
       generatDeployFunction(file);
       generatCreateDomainFunction(file);
       generatCreateCSFunction(file);
+      generatGetSrcGroup(file);
       generatCreateCLFunction(file);
+      generatSplitCL(file);
       generatCreateIdxFunction(file);
+      generatAlterAllDomains(file);
       generatmainFunction(file);
    }
    catch(e)
@@ -594,16 +796,46 @@ function main()
       {
          file.close();
       }
-      
+
       if (undefined !== db)
       {
          db.close();
       }
+
+      if (undefined !== catadb)
+      {
+         catadb.close();
+      }
    }
 }
+/*
+function readInput()
+{
+   try
+   {
+      var cmd = new Cmd();
+      var in = cmd.run("read input; echo $input");
+      var pos = in.lastIndexOf('\n');
 
+      var inContent = pos !== -1 ? in.substring(0, pos) : in;
+      return inContent;
+   }
+   catch(e)
+   {
+      throw "readInput failure; ErrCode: " + e;
+   }
+}
+*/
 println("Usage:" );
-println("     -e 'var coordHostName= \"localhost\"; var coordPort=11810; var catalogHostName=\"localhost\" ; var catalogPort=11820 ; var generateFilePath=./copyCluster.js '");
+println("     -e 'var coordHostName= \"localhost\";" +
+                 "var coordPort=11810;" +
+                 "var catalogHostName=\"localhost\" ;" +
+                 "var catalogPort=11820 ;" +
+                 "[ var inDomainNames=[\"name1\",\"name2\"];" +
+                 "var inCSNames = [\"name1\",\"name2\"];" +
+                 "var inCLNames = [\"name1\",\"name2\"]; ]" +
+                 "var generateFilePath=./copyCluster.js '");
 println("you can modify parameters!!!");
 println("use default parameters continue...");
 main();
+
