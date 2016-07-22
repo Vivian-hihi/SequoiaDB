@@ -305,6 +305,7 @@ TestSuite_AddFull (TestSuite  *suite,   /* IN */
    test->func = func;
    test->check = check;
    test->next = NULL;
+   test->isbegin = 0;
    TestSuite_SeedRand (suite, test);
 
    suite->testcasesnum++;
