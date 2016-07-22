@@ -106,6 +106,24 @@
 				</sdbtest>
 				<echo message="... Test php driver is over ..." />
 			</case>
+			
+			<case value="story-php" >
+				<echo message="... Test story php testcases ..." />
+				<sdbtest host="${test.host.NAME}" testscript="${test.machine.deploy.path}/deploy/exec-story-php-test.xml" 
+				   remotereports="${testcase.path}/drivers_testcases/story_php/reports" masterreports="${test.reports.path}" >
+					<param name="ci.properties.path" value="${test.machine.software.path}/ci.test.properties" />
+					<param name="antTask.jar.path" value="${test.machine.deploy.path}/deploy/ant-sdbtasks" />
+					<param name="php.testcase.path" value="${testcase.path}/drivers_testcases/story_php" />
+					<param name="deploy.case.fullname" value="${deploy.case.fullname}" />
+					<param name="excludes.dir.patterns" value="tools,cluster" />
+					<param name="includes.dir.patterns" value="*" />
+					<param name="php-bin.dir" value="/opt/sequoiadb/tools/server/php/bin" />
+					<param name="phpunit.phar.dir" value="${testcase.path}/drivers_testcases/story_php/tools/phpunit.phar" />
+					<param name="BUILD_NUMBER" value="${BUILD_NUMBER}" />
+					<param name="test-type-list" value="${Test-Type}" />
+				</sdbtest>
+				<echo message="... Test story php testcases is over ..." />
+			</case>
  
 			<case value="driver-java">
 				<echo message="... Test java driver ..." />
