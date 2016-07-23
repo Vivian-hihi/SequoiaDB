@@ -224,6 +224,7 @@ TestSuite_Init (TestSuite *suite,
    suite->errornum =0;
    suite->reportnodes = NULL;
    suite->generatexmlreport = false;
+   suite->starttime = NULL;
 
    for (i = 0; i < argc; i++) {
       if (0 == strcmp ("-v", argv [i])) {
@@ -306,6 +307,7 @@ TestSuite_AddFull (TestSuite  *suite,   /* IN */
    test->check = check;
    test->next = NULL;
    test->isbegin = 0;
+   test->starttime = NULL;
    TestSuite_SeedRand (suite, test);
 
    suite->testcasesnum++;
@@ -375,9 +377,14 @@ TestSuite_RunTest (TestSuite *suite,       /* IN */
 
    snprintf (name, sizeof name, "%s%s", suite->name, test->name);
    name [sizeof name - 1] = '\0';
+   suite->starttime = malloc(sizeof(struct timespec));
+   _Clock_GetMonotonic (&ts1);
+   memcpy(suite->starttime, &ts1, sizeof(struct timespec));
 
    if (!test->check || test->check ()) {
       _Clock_GetMonotonic (&ts1);
+      test->starttime = malloc(sizeof(struct timespec));
+      memcpy(test->starttime, &ts1, sizeof(struct timespec));
 
       /*
        * TODO: If not verbose, close()/dup(/dev/null) for stdout.
@@ -594,11 +601,14 @@ TestSuite_PrintXmlFooter (TestSuite *suite,
    XmlNode *iter;
    Test *test;
    char name[64];
+   struct timespec ts1 = {0,0};
+   struct timespec ts2;
+   struct timespec ts3;
  
    fprintf (stream, "<testsuites tests=\"%d\" failures=\"%d\" errors=\"%d\" name=\"%s\">\n",
                       suite->testcasesnum,
                       suite->failurenum,
-                      suite->testcasesnum - suite->successfulnum,
+                      suite->testcasesnum - suite->failurenum - suite->successfulnum,
                       suite->name);
    
    bool flag = false;
@@ -611,8 +621,15 @@ TestSuite_PrintXmlFooter (TestSuite *suite,
    {
       if (!flag)
       {
-         fprintf(stream, "<testcase name=\"%s\" status=\"%s\" />\n",
-                    suite->testname, "fail");
+         if (NULL != suite->starttime){
+            ts1 = *((struct timespec*)suite->starttime);
+         }
+         _Clock_GetMonotonic (&ts2);
+         _Clock_Subtract (&ts3, &ts2, &ts1);
+         fprintf(stream, "<testcase name=\"%s\" status=\"%s\" time=\"%u.%09u\"/>\n",
+                    suite->testname, "fail",
+                    (unsigned)ts3.tv_sec,
+                    (unsigned)ts3.tv_nsec);
       }
    }
    else
@@ -630,8 +647,15 @@ TestSuite_PrintXmlFooter (TestSuite *suite,
          {
             continue;
          }
-         fprintf(stream, "<testcase name=\"%s%s\" status=\"%s\" />\n",
-                 suite->name, test->name, test->isbegin ? "fail":"unknown");
+	  if (NULL != test->starttime){
+            ts1 = *((struct timespec*)test->starttime);
+	  }
+         _Clock_GetMonotonic (&ts2);
+         _Clock_Subtract (&ts3, &ts2, &ts1);
+         fprintf(stream, "<testcase name=\"%s%s\" status=\"%s\" time=\"%u.%09u\"/>\n",
+                 suite->name, test->name, test->isbegin ? "fail":"unknown", 
+                 (unsigned)ts3.tv_sec,
+                 (unsigned)ts3.tv_nsec);
       }
    }
    
@@ -834,6 +858,7 @@ TestSuite_Destroy (TestSuite *suite)
 
    for (test = suite->tests; test; test = tmp) {
       tmp = test->next;
+      free(test->starttime);
       free (test->name);
       free (test);
    }
@@ -845,6 +870,7 @@ TestSuite_Destroy (TestSuite *suite)
    free (suite->name);
    free (suite->prgname);
    free (suite->testname);
+   free(suite->starttime);
 }
 
 void Add_XmlNode(TestSuite *suite, const char* name, const char* content)
