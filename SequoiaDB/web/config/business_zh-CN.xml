@@ -1,10 +1,10 @@
 <BusinessList type="array">
-   <FILLER>
-      <BusinessType>sequoiadb</BusinessType>
-      <BusinessDesc>SequoiaDB数据库</BusinessDesc>
-   </FILLER>
+	<FILLER>
+		<BusinessType>sequoiadb</BusinessType>
+		<BusinessDesc>SequoiaDB数据库</BusinessDesc>
+	</FILLER>
    <FILLER>
       <BusinessType>sequoiasql</BusinessType>
-      <BusinessDesc>SequoiaSQL</BusinessDesc>
+      <BusinessDesc>SequoiaSQL引擎</BusinessDesc>
    </FILLER>
 </BusinessList>

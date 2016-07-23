@@ -1,11 +1,12 @@
 ﻿(function(){
    var sacApp = window.SdbSacManagerModule ;
    //控制器
-   sacApp.controllerProvider.register( 'Deploy.Index.Ctrl', function( $scope, $compile, $location, $rootScope, SdbFunction, SdbRest ){
+   sacApp.controllerProvider.register( 'Deploy.Index.Ctrl', function( $scope, $compile, $location, $rootScope, SdbFunction, SdbRest, Loading ){
 
       var defaultShow = $rootScope.tempData( 'Deploy', 'Index' ) ;
 
       //初始化
+      $scope.EditHostGridOptions = { 'titleWidth': [ '200px', '200px', 100 ] } ;
       //集群列表
       $scope.clusterList = [] ;
       //默认选的cluster
@@ -68,7 +69,7 @@
                } ) ;
                $scope.moduleList[index]['Chart']['Host']['CPU'] = { 'percent': fixedNumber( cpu / length, 2 ), 'style': { 'progress': { 'background': '#87CEFA' } } } ;
                $scope.moduleList[index]['Chart']['Host']['Memory'] = { 'percent': fixedNumber( memory / length, 2 ), 'style': { 'progress': { 'background': '#DDA0DD' } } } ;
-               $scope.moduleList[index]['Chart']['Host']['Disk'] = { 'percent': fixedNumber( disk / length, 2 ), 'style': { 'progress': { 'background': '#FFA07A' } } } ;
+               $scope.moduleList[index]['Chart']['Host']['Disk'] = { 'percent':  fixedNumber( disk / length, 2 ), 'style': { 'progress': { 'background': '#FFA07A' } } } ;
             }
          } ) ;
       }
@@ -273,7 +274,7 @@
                [ 2, lobPercent, true, false ]
             ] ;
 
-            if( $scope.moduleList[moduleIndex]['Error']['Type'] == 'Module' )
+            if( $scope.moduleList[moduleIndex]['Error']['Type'] == 'Module cl' )
             {
                $scope.moduleList[moduleIndex]['Error']['Flag'] = 0 ;
             }
@@ -284,10 +285,10 @@
          }, function( errorInfo ){
             if( moduleMode == 'standalone' )
             {
-               if( $scope.moduleList[moduleIndex]['Error']['Type'] == 'Module' || $scope.moduleList[moduleIndex]['Error']['Flag'] == 0 )
+               if( $scope.moduleList[moduleIndex]['Error']['Type'] == 'Module cl' || $scope.moduleList[moduleIndex]['Error']['Flag'] == 0 )
                {
                   $scope.moduleList[moduleIndex]['Error']['Flag'] = errorInfo['errno'] ;
-                  $scope.moduleList[moduleIndex]['Error']['Type'] = 'Module' ;
+                  $scope.moduleList[moduleIndex]['Error']['Type'] = 'Module cl' ;
                   $scope.moduleList[moduleIndex]['Error']['Message'] = sprintf( $scope.autoLanguage( '节点错误: ?，错误码 ?。' ),
                                                                                 errorInfo['description'],
                                                                                 errorInfo['errno'] ) ;
@@ -317,12 +318,12 @@
          var data = { 'cmd': 'snapshot system', 'selector': JSON.stringify( { 'ErrNodes': 1 } ) } ;
          SdbRest.DataOperation2( clusterName, moduleName, data, function( errNodes ){
             errNodes = errNodes[0]['ErrNodes'] ;
-            if( $scope.moduleList[moduleIndex]['Error']['Type'] == 'Module' || $scope.moduleList[moduleIndex]['Error']['Flag'] == 0 )
+            if( $scope.moduleList[moduleIndex]['Error']['Type'] == 'Module node' || $scope.moduleList[moduleIndex]['Error']['Flag'] == 0 )
             {
                if( errNodes.length > 0 )
                {
                   $scope.moduleList[moduleIndex]['Error']['Flag'] = errNodes[0]['Flag'] ;
-                  $scope.moduleList[moduleIndex]['Error']['Type'] = 'Module' ;
+                  $scope.moduleList[moduleIndex]['Error']['Type'] = 'Module node' ;
                   $scope.moduleList[moduleIndex]['Error']['Message'] = sprintf( $scope.autoLanguage( '节点错误: ?，错误码 ?。' ),
                                                                                 errNodes[0]['NodeName'],
                                                                                 errNodes[0]['Flag'] ) ;
@@ -1526,6 +1527,214 @@
                } ) ;
             }
             return isAllClear ;
+         }
+      }
+
+      //逐个更新主机信息
+      var updateHostsInfo = function( hostList, index, success ) {
+         if( index == hostList.length )
+         {
+            setTimeout( success ) ;
+            return ;
+         }
+
+         if( hostList[index]['Flag'] != 0 )
+         {
+            updateHostsInfo( hostList, index + 1, success ) ;
+            return ;
+         }
+
+         var hostInfo = {
+            'HostInfo' : [
+               {
+                  'HostName': hostList[index]['HostName'],
+                  'IP': hostList[index]['IP']
+               }   
+            ]
+         }
+         var data = { 'cmd': 'update host info', 'HostInfo': JSON.stringify( hostInfo ) } ;
+         SdbRest.OmOperation( data, function( scanInfo ){
+
+            hostList[index]['Status'] = $scope.autoLanguage( '更新主机信息成功。' ) ;
+            $scope.HostList[ hostList[index]['SourceIndex'] ]['IP'] = hostList[index]['IP'] ;
+
+            updateHostsInfo( hostList, index + 1, success ) ;
+
+         }, function( errorInfo ){
+            Loading.close() ;
+            _IndexPublic.createRetryModel( $scope, errorInfo, function(){
+               Loading.create() ;
+               updateHostsInfo( hostList, index, success ) ;
+               return true ;
+            } ) ;
+         }, function(){
+            _IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
+         }, null, false ) ;
+
+      }
+
+      //逐个扫描主机
+      var scanHosts = function( hostList, index, success ){
+      
+         if( index == hostList.length )
+         {
+            success() ;
+            return ;
+         }
+
+         if( hostList[index]['IP'] == $scope.HostList[ hostList[index]['SourceIndex'] ]['IP'] )
+         {
+            hostList[index]['Status'] = $scope.autoLanguage( 'IP地址没有改变，跳过。' ) ;
+            scanHosts( hostList, index + 1, success ) ;
+            return ;
+         }
+
+         hostList[index]['Status'] = $scope.autoLanguage( '正在检测...' ) ;
+
+         var scanHostInfo = [ {
+            'IP': hostList[index]['IP'],
+            'SshPort': hostList[index]['SshPort'],
+            'AgentService': hostList[index]['AgentService']
+         } ] ;
+         var clusterName = $scope.clusterList[$scope.currentCluster]['ClusterName'] ;
+         var clusterUser = $scope.clusterList[$scope.currentCluster]['SdbUser'] ;
+         var clusterPwd  = $scope.clusterList[$scope.currentCluster]['SdbPasswd'] ;
+         var hostInfo = {
+            'ClusterName': clusterName,
+            'HostInfo': scanHostInfo,
+            'User': clusterUser,
+            'Passwd': clusterPwd,
+            'SshPort': '-',
+            'AgentService': '-'
+         } ;
+         var data = { 'cmd': 'scan host', 'HostInfo': JSON.stringify( hostInfo ) } ;
+         SdbRest.OmOperation( data, function( scanInfo ){
+            if( scanInfo[0]['errno'] == -38 || scanInfo[0]['errno'] == 0 )
+            {
+               if( scanInfo[0]['HostName'] == hostList[index]['HostName'] )
+               {
+                  hostList[index]['Flag'] = 0 ;
+                  hostList[index]['Status'] = $scope.autoLanguage( '匹配成功。' ) ;
+               }
+               else
+               {
+                  hostList[index]['Status'] = $scope.sprintf( $scope.autoLanguage( '主机名匹配错误，IP地址?的主机名是?。' ), scanInfo[0]['IP'], scanInfo[0]['HostName'] ) ;
+               }
+            }
+            else
+            {
+               hostList[index]['Status'] = $scope.autoLanguage( '错误' ) + ': ' + scanInfo[0]['detail'] ;
+            }
+
+            scanHosts( hostList, index + 1, success ) ;
+
+         }, function( errorInfo ){
+            Loading.close() ;
+            _IndexPublic.createRetryModel( $scope, errorInfo, function(){
+               Loading.create() ;
+               scanHosts( hostList, index, success ) ;
+               return true ;
+            } ) ;
+         }, function(){
+            _IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
+         }, null, false ) ;
+
+      }
+
+      //创建 更新主机IP 弹窗
+      $scope.CreateUpdateIpModel = function(){
+         if( $scope.clusterList.length > 0 )
+         {
+
+            $scope.UpdateHostList = [] ;
+            $.each( $scope.HostList, function( index ){
+               if( $scope.HostList[index]['checked'] == true && $scope.clusterList[ $scope.currentCluster ]['ClusterName'] == $scope.HostList[index]['ClusterName'] )
+               {
+                  $scope.UpdateHostList.push( {
+                     'HostName': $scope.HostList[index]['HostName'],
+                     'IP': $scope.HostList[index]['IP'],
+                     'SshPort': $scope.HostList[index]['SshPort'],
+                     'AgentService': $scope.HostList[index]['AgentService'],
+                     'Flag': -1,
+                     'Status': ( $scope.HostList[index]['Error']['Flag'] == 0 ? '' : $scope.autoLanguage( '错误' ) + ': ' + $scope.HostList[index]['Error']['Message'] ),
+                     'SourceIndex': index
+                  } ) ;
+               }
+            } ) ;
+            if( $scope.UpdateHostList.length > 0 )
+            {
+               var hostBox = null ;
+               var grid = null ;
+               var tempHostList = $.extend( true, [], $scope.HostList ) ;
+               $scope.Components.Modal.icon = '' ;
+               $scope.Components.Modal.title = $scope.autoLanguage( '更新主机信息' ) ;
+               $scope.Components.Modal.isShow = true ;
+               $scope.Components.Modal.Context = function( bodyEle ){
+                  var div  = $( '<div></div>' ) ;
+
+                  hostBox = $( '<div></div>' ).css( { 'marginTop': '10px' } ) ;
+
+                  grid = $compile( '\
+<div class="Grid" style="border-bottom:1px solid #E3E7E8;" ng-grid="EditHostGridOptions"">\
+   <div class="GridHeader">\
+      <div class="GridTr">\
+         <div class="GridTd Ellipsis">{{autoLanguage("主机名")}}</div>\
+         <div class="GridTd Ellipsis">{{autoLanguage("IP地址")}}</div>\
+         <div class="GridTd Ellipsis">{{autoLanguage("状态")}}</div>\
+         <div class="clear-float"></div>\
+      </div>\
+   </div>\
+   <div class="GridBody">\
+      <div class="GridTr" ng-repeat="hostInfo in UpdateHostList track by $index">\
+         <div class="GridTd Ellipsis" style="word-break:break-all;">{{hostInfo[\'HostName\']}}</div>\
+         <div class="GridTd Ellipsis" style="word-break:break-all;">\
+            <input class="form-control" ng-if="hostInfo[\'Flag\'] != 0" ng-model="hostInfo[\'IP\']" />\
+            <span ng-if="hostInfo[\'Flag\'] == 0" ng-bind="hostInfo[\'IP\']"></span>\
+         </div>\
+         <div class="GridTd Ellipsis" style="word-break:break-all;">\
+            {{hostInfo[\'Status\']}}\
+         </div>\
+         <div class="clear-float"></div>\
+      </div>\
+   </div>\
+</div>' )( $scope ) ;
+                  hostBox.append( grid ) ;
+                  $compile( bodyEle )( $scope ).append( div ).append( hostBox ) ;
+                  $scope.$apply() ;
+               }
+               $scope.Components.Modal.onResize = function( width, height ){
+                  $( grid ).css( {
+                     'width': width - 10,
+                     'max-height': height - 40
+                  } ) ;
+                  $scope.bindResize() ;
+               }
+               $scope.Components.Modal.ok = function(){
+
+                  Loading.create() ;
+
+                  scanHosts( $scope.UpdateHostList, 0, function(){
+
+                     updateHostsInfo( $scope.UpdateHostList, 0, function(){
+
+                        //$scope.Components.Modal.isShow = false ;
+                        $scope.$apply() ;
+                        Loading.cancel() ;
+
+                     } ) ;
+
+                  } ) ;
+                  return false ;
+               }
+            }
+            else
+            {
+               $scope.Components.Confirm.type = 3 ;
+               $scope.Components.Confirm.context = $scope.autoLanguage( '至少选择一台的主机。' ) ;
+               $scope.Components.Confirm.isShow = true ;
+               $scope.Components.Confirm.okText = $scope.autoLanguage( '好的' ) ;
+            }
+
          }
       }
 

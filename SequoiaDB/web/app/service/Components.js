@@ -205,8 +205,8 @@
    sacApp.service( 'Loading', function( $window ){
       var g = this ;
       var counter = 0 ;
-      var mask = $( '<div></div>' ).addClass( 'mask-screen alpha30' ).css( { 'background-color': '#FFF', 'z-index': 9999 } ) ;
-      var icon = $( '<div></div>').addClass( 'roundLoading' ).html( '<img src="./images/loading.gif">' ) ;
+      var mask = $( '<div></div>' ).addClass( 'mask-screen alpha30' ).css( { 'background-color': '#FFF', 'z-index': 99999 } ) ;
+      var icon = $( '<div></div>').addClass( 'roundLoading' ).html( '<img src="./images/loading.gif">' ).css( { 'z-index': 100000 } ) ; ;
       var tip = $( '<div>loading</div>' ).appendTo( icon ) ;
       var timer = null ;
       var pointNum = 0 ;

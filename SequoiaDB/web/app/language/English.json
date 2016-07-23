@@ -1,4 +1,10 @@
 ﻿{
+   "匹配成功。": "Successful match.",
+   "更新主机信息成功。": "Update Host Information succeed.",
+   "主机名匹配错误，IP地址?的主机名是?。": "Host name matching error, IP address ? host name is ?.",
+   "正在检测...": "Checking ...",
+   "IP地址没有改变，跳过。": "IP addresses are not changed, skip.",
+   "更新主机信息": "Update host information",
    " 数 据 ": "Data",
    "\"创建数据表\"": "'Create Table'",
    "（不包含子集合）": "(Does not include partitions)",

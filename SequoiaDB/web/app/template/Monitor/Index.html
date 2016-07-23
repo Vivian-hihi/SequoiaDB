@@ -1,6 +1,16 @@
 <div style="padding:10px 15px;" ng-controller="Monitor.Preview.Index.Ctrl" ng-container="{}">
    <div style="border-bottom:3px solid #ddd;padding-top:10px;" ng-style="" ng-container="{height:70}">
-      <div style="float:left;color:#808080;">
+      <div style="float:left;font-size:180%;padding:7px 0px;border-radius:5px;" class="linkButton">
+         Monitor
+      </div>
+      <div style="float:left;font-size:120%;padding-top:15px;">
+         &nbsp; 
+      </div>
+      <div style="float:left;color:#666;padding-top:9px;font-size:160%;">
+         &nbsp; 
+      </div>
+
+         <!--<div style="float:left;color:#808080;">
          <div style="height:50px;width:45px;float:left;">
             <i style="color:#ccc;padding-top:8px;font-size:218%;" class="fa fa-cubes"></i>
          </div>
@@ -32,8 +42,8 @@
                <span class="Ellipsis linkButton" ng-click="GotoHosts()">主机列表</span>
             </div>
          </div>
+      </div>-->
       </div>
-   </div>
    <div class="well Ellipsis" style="margin-top:10px;">
       <i class="fa fa-circle" style="color:#00CC66;"></i>
       <span style="font-weight:bold;color:#006699;">{{moduleName}}</span>
@@ -89,56 +99,56 @@
                         <td style="width:60%;" class="Ellipsis">{{moduleInfo['version']}}</td>
                      </tr>
                      <tr>
-                        <td style="width:40%;font-weight:bold;">{{autoLanguage("会话数")}}</td>
-                        <td style="width:60%;" class="Ellipsis">
+                        <td style="font-weight:bold;">{{autoLanguage("会话数")}}</td>
+                        <td>
                            <span class="Ellipsis linkButton" ng-click="GotoSessions()">
                               {{moduleInfo['sessions']}}
                            </span>
                         </td>
                      </tr>
                      <tr>
-                        <td style="width:40%;font-weight:bold;">{{autoLanguage("域")}}</td>
-                        <td style="width:60%;" class="Ellipsis">
+                        <td style="font-weight:bold;">{{autoLanguage("域")}}</td>
+                        <td>
                            <span class="Ellipsis linkButton" ng-click="GotoDomains()">
                               {{moduleInfo['domains']}}
                            </span>
                         </td>
                      </tr>
                      <tr>
-                        <td style="width:40%;font-weight:bold;">{{autoLanguage("分区组数")}}</td>
-                        <td style="width:60%;" class="Ellipsis">
+                        <td style="font-weight:bold;">{{autoLanguage("分区组数")}}</td>
+                        <td>
                            <span class="Ellipsis linkButton" ng-click="GotoGroups()">
                               {{moduleInfo['groups']}}
                            </span>
                         </td>
                      </tr>
                      <tr>
-                        <td style="width:40%;font-weight:bold;">{{autoLanguage("节点数")}}</td>
-                        <td style="width:60%;" class="Ellipsis">
+                        <td style="font-weight:bold;">{{autoLanguage("节点数")}}</td>
+                        <td>
                            <span class="Ellipsis linkButton" ng-click="GotoNodes()">
                               {{moduleInfo['nodes']}}
                            </span>
                         </td>
                      </tr>
                      <tr>
-                        <td style="width:40%;font-weight:bold;">{{autoLanguage("集合数")}}</td>
-                        <td style="width:60%;" class="Ellipsis">
+                        <td style="font-weight:bold;">{{autoLanguage("集合数")}}</td>
+                        <td>
                            <span class="Ellipsis linkButton" ng-click="GotoDatabase()">
                               {{moduleInfo['cl']}}
                            </span>
                         </td>
                      </tr>
                      <tr>
-                        <td style="width:40%;font-weight:bold;">{{autoLanguage("记录数")}}</td>
-                        <td style="width:60%;" class="Ellipsis">
+                        <td style="font-weight:bold;">{{autoLanguage("记录数")}}</td>
+                        <td>
                            <span class="Ellipsis linkButton" ng-click="GotoDatabase()">
                               {{moduleInfo['records']}}
                            </span>
                         </td>
                      </tr>
                      <tr>
-                        <td style="width:40%;font-weight:bold;">{{autoLanguage("Lob数")}}</td>
-                        <td style="width:60%;" class="Ellipsis">
+                        <td style="font-weight:bold;">{{autoLanguage("Lob数")}}</td>
+                        <td>
                            <span class="Ellipsis linkButton" ng-click="GotoDatabase()">
                               {{moduleInfo['lobs']}}
                            </span>
@@ -147,7 +157,7 @@
                   </table>
                </div>
                <!--图表选择-->
-               <div style="min-width:320px;float:left;" create-response="{max:900,min:300,len:2,column:2}">
+               <div style="min-width:320px;max-width:900px;float:left;" ng-container="{width:'60%',height:'90%'}">
                   <div style="padding-left:15px;float:right;">
                      <button class="btn btn-default btn-lg" dropdown-menu="DropdownMenu">
                         {{chartName}}

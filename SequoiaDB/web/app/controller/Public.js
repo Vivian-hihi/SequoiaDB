@@ -32,6 +32,10 @@
       $rootScope.onResize = 0 ;
       //当前所有任务的列表
       $rootScope.OmTaskList = [] ;
+      //用于获取窗口宽度
+      $rootScope.WindowWidth = $( 'body' ).width() ;
+      //用于获取窗口高度
+      $rootScope.WindowHeight = $( 'body' ).height() ;
       //-------- 全局组件 ---------
       $rootScope.Components = {} ;
       //错误信息的窗体
@@ -125,6 +129,10 @@
             }
             break ;
          }
+      } ) ;
+      angular.element( $window ).bind( 'resize', function(){
+         $rootScope.WindowWidth = $( 'body' ).width() ;
+         $rootScope.WindowHeight = $( 'body' ).height() ;
       } ) ;
    } ) ;
 
@@ -280,7 +288,7 @@
                   }
                ]
             },
-            /*{
+            {
                'text': $scope.autoLanguage( '监控' ),
                'module': 'Monitor',
                'icon': 'fa-flash',
@@ -290,7 +298,7 @@
                      'list': []
                   }
                ]
-            },*/
+            },
             {
                'text': $scope.autoLanguage( '部署' ),
                'module': 'Deploy',
