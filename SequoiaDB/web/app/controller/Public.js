@@ -288,7 +288,7 @@
                   }
                ]
             },
-            {
+            /*{
                'text': $scope.autoLanguage( '监控' ),
                'module': 'Monitor',
                'icon': 'fa-flash',
@@ -298,7 +298,7 @@
                      'list': []
                   }
                ]
-            },
+            },*/
             {
                'text': $scope.autoLanguage( '部署' ),
                'module': 'Deploy',
