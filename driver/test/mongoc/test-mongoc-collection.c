@@ -1287,11 +1287,10 @@ test_get_index_info (void)
    ASSERT_CMPINT (error.code, ==, 0);
 
    while (mongoc_cursor_next (cursor, &indexinfo)) {
-      if (bson_iter_init_find (&idx_spec_iter, indexinfo, "IndexDef") &&
-          bson_iter_recurse(&idx_spec_iter, &child) &&
-          bson_iter_find (&child, "name") &&
-          BSON_ITER_HOLDS_UTF8 (&child) &&
-          (cur_idx_name = bson_iter_utf8 (&child, NULL))) {
+      if (bson_iter_init (&idx_spec_iter, indexinfo) &&
+          bson_iter_find (&idx_spec_iter, "name") &&
+          BSON_ITER_HOLDS_UTF8 (&idx_spec_iter) &&
+          (cur_idx_name = bson_iter_utf8 (&idx_spec_iter, NULL))) {
          ASSERT_CMPINT (0, ==, strcmp (cur_idx_name, id_idx_name));
          ++num_idxs;
       } else {
@@ -1332,11 +1331,10 @@ test_get_index_info (void)
    ASSERT_CMPINT (error.code, ==, 0);
 
    while (mongoc_cursor_next (cursor, &indexinfo)) {
-      if (bson_iter_init_find (&idx_spec_iter, indexinfo, "IndexDef") &&
-          bson_iter_recurse(&idx_spec_iter, &child) &&
-          bson_iter_find (&child, "name") &&
-          BSON_ITER_HOLDS_UTF8 (&child) &&
-          (cur_idx_name = bson_iter_utf8 (&child, NULL))) {
+      if (bson_iter_init (&idx_spec_iter, indexinfo) &&
+          bson_iter_find (&idx_spec_iter, "name") &&
+          BSON_ITER_HOLDS_UTF8 (&idx_spec_iter) &&
+          (cur_idx_name = bson_iter_utf8 (&idx_spec_iter, NULL))) {
          if (0 == strcmp (cur_idx_name, idx1_name)) {
             /* need to use the copy of the iter since idx_spec_iter may have gone
              * past the key we want */
@@ -1344,9 +1342,9 @@ test_get_index_info (void)
             //ASSERT_CMPINT (BSON_ITER_HOLDS_BOOL (&idx_spec_iter_copy), ==, true);
             //ASSERT_CMPINT (bson_iter_bool (&idx_spec_iter_copy), ==, true);
          } else if (0 == strcmp (cur_idx_name, idx2_name)) {
-            ASSERT_CMPINT (bson_iter_find (&child, "unique"), ==, true);
-            ASSERT_CMPINT (BSON_ITER_HOLDS_BOOL (&child), ==, true);
-            ASSERT_CMPINT (bson_iter_bool (&child), ==, true);
+            ASSERT_CMPINT (bson_iter_find (&idx_spec_iter, "unique"), ==, true);
+            ASSERT_CMPINT (BSON_ITER_HOLDS_BOOL (&idx_spec_iter), ==, true);
+            ASSERT_CMPINT (bson_iter_bool (&idx_spec_iter), ==, true);
          } else {
             ASSERT_CMPINT (0, ==, strcmp (cur_idx_name, id_idx_name));
          }
