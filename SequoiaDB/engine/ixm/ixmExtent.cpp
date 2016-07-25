@@ -2292,19 +2292,23 @@ namespace engine
       monAppCB * pMonAppCB = cb ? cb->getMonAppCB() : NULL ;
       SDB_ASSERT ( l <= h, "low must be less than high" ) ;
       DMS_MON_OP_COUNT_INC( pMonAppCB, MON_INDEX_READ, 1 ) ;
+
+      INT32 low = ( INT32 )l ;
+      INT32 high = ( INT32 )h ;
+      INT32 m = 0 ;
       while ( TRUE )
       {
-         if ( l+1 >= h )
+         if ( low > high )
          {
             bestIxmRID._extent = _me ;
-            bestIxmRID._slot = (direction>0)?h:l ;
-            resultExtent = getChildExtentID(h) ;
+            bestIxmRID._slot = direction > 0 ? low : high ;
+            resultExtent = getChildExtentID( bestIxmRID._slot ) ;
             goto done ;
          }
          // no need to worry about 16 bit overflow, since each page is only
          // 65536 and each key slot will always > 2 bytes, so h+l won't hit
          // 0xFFFF
-         UINT16 m = (h+l)/2 ;
+         m = ( low + high ) / 2 ;
          CHAR *data = getKeyData ( m ) ;
          if ( !data )
          {
@@ -2316,15 +2320,23 @@ namespace engine
          INT32 r = _keyCmp ( ixmKey(data).toBson(), prevKey, keepFieldsNum,
                              skipToNext, matchEle, matchInclusive, o, direction);
          if ( r < 0 )
-            l = m ;
+         {
+            low = m + 1 ;
+         }
          else if ( r > 0 )
-            h = m ;
+         {
+            high = m - 1 ;
+         }
          else
          {
             if ( direction < 0 )
-               l = m ;
+            {
+               low = m + 1 ;
+            }
             else
-               h = m ;
+            {
+               high = m - 1 ;
+            }
          }
       } // while ( TRUE )
    done :
