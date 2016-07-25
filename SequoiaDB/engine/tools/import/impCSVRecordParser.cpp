@@ -191,6 +191,29 @@ namespace import
       return FALSE;
    }
 
+   static inline BOOLEAN _endWith(const CHAR* data, INT32 dataLen,
+                                    const CHAR* str, INT32 strLen)
+   {
+      SDB_ASSERT(dataLen > 0, "dataLen must be greater than 0");
+      SDB_ASSERT(strLen > 0, "strLen must be greater than 0");
+
+      if (data[dataLen - 1] == str[strLen - 1])
+      {
+         // accelerate for single character
+         if (1 == strLen)
+         {
+            return TRUE;
+         }
+         else if (dataLen >= strLen && 0 == ossStrncmp(&data[dataLen - strLen], str, strLen))
+         {
+            return TRUE;
+         }
+      }
+
+      return FALSE;
+   }
+   
+
    static inline void _skipSpace(CHAR** data, INT32& length)
    {
       CHAR* str = *data;
@@ -885,9 +908,9 @@ namespace import
    }
 
    #define CSV_STR_INF "inf"
-   #define CSV_STR_INF_LEN (sizeof(CSV_STR_INF)-1)
+   #define CSV_STR_INF_LEN ((INT32)sizeof(CSV_STR_INF)-1)
    #define CSV_STR_INFINITY "Infinity"
-   #define CSV_STR_INFINITY_LEN (sizeof(CSV_STR_INFINITY)-1)
+   #define CSV_STR_INFINITY_LEN ((INT32)sizeof(CSV_STR_INFINITY)-1)
    #define CSV_DOUBLE_INFINTY ((1.79769e+308)*2)
    static inline INT32 _stringToInfinity( const CHAR *data, INT32 length,
                                           CSV_TYPE& type, CSVFieldValue& value,
@@ -929,7 +952,7 @@ namespace import
             valueLength = length - len ;
          }
       }
-   done:
+
       return rc ;
    }
 
@@ -2211,6 +2234,10 @@ namespace import
       goto done;
    }
 
+   static const CHAR CSV_UTF8_FULL_WIDTH_SPACE[] = {0xE3, 0x80, 0x80, 0x00};
+   static const INT32 CSV_UTF8_FULL_WIDTH_SPACE_LEN =
+      (INT32)(sizeof(CSV_UTF8_FULL_WIDTH_SPACE) / sizeof(CSV_UTF8_FULL_WIDTH_SPACE[0]) - 1) ;
+
    static inline void _trimLeft(CHAR*& str, INT32& length)
    {
       CHAR* head = str;
@@ -2220,13 +2247,22 @@ namespace import
 
       while (len > 0)
       {
-         if (' ' != *head)
+         if (' ' == *head)
+         {
+            head++;
+            len--;
+         }
+         else if (_startWith(head, len,
+                             CSV_UTF8_FULL_WIDTH_SPACE,
+                             CSV_UTF8_FULL_WIDTH_SPACE_LEN))
+         {
+            head = head + CSV_UTF8_FULL_WIDTH_SPACE_LEN;
+            len = len - CSV_UTF8_FULL_WIDTH_SPACE_LEN;
+         }
+         else
          {
             break;
          }
-
-         head++;
-         len--;
       }
 
       str = head;
@@ -2242,13 +2278,21 @@ namespace import
 
       while (len > 0)
       {
-         if (' ' != *tail)
+         if (' ' == *tail)
+         {
+            tail--;
+            len--;
+         }
+         else if (_endWith(str, len,
+                           CSV_UTF8_FULL_WIDTH_SPACE,
+                           CSV_UTF8_FULL_WIDTH_SPACE_LEN))
+         {            tail = tail - CSV_UTF8_FULL_WIDTH_SPACE_LEN;
+            len = len - CSV_UTF8_FULL_WIDTH_SPACE_LEN;
+         }
+         else
          {
             break;
          }
-
-         tail--;
-         len--;
       }
 
       length = len;
