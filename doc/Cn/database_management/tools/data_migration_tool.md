@@ -150,7 +150,7 @@ CSV(Comma Separated Value)格式以逗号分隔数值。默认情况下记录以
  | --fields | - | 指定导入数据的字段名、类型、默认值 | 
  | --datefmt | - | 指定日期格式，默认为YYYY-MM-DD | 
  | --timestampfmt | - | 指定时间戳格式，默认为YYYY-MM-DD-HH.mm.ss.ffffff | 
- | --trim | - | 删除字符串左右两侧的空格，取值可以是[no|right|left|both]， 默认为no | 
+ | --trim | - | 删除字符串左右两侧的空格（包括ASCII空格和UTF-8全角空格），取值可以是[no|right|left|both]， 默认为no | 
  | --headerline | - | 指定导入数据首行是否作为字段名，默认为false | 
  | --sparse | - | 指定导入数据时是否自动添加字段名，默认为true。字段名按"filed1"、"field2"顺序增加 | 
  | --extra | - | 指定导入数据时是否自动添加值，默认为false | 
