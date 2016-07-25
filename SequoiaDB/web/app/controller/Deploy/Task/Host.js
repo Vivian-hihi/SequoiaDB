@@ -60,7 +60,7 @@
             }
             else if( $scope.ModuleType == 'sequoiasql' )
             {
-               $location.path( '/Deploy/SSQL-Mod' ) ;
+               $location.path( '/Deploy/SSQL-Conf' ) ;
             }
             else if( $scope.ModuleType == 'zookeeper' )
             {
