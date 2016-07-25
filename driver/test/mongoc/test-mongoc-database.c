@@ -447,7 +447,9 @@ test_database_install (TestSuite *suite)
 
    //TestSuite_Add (suite, "Database_has_collection", test_has_collection);
    TestSuite_Add (suite, "Database_command", test_command);
+   #if 0
    TestSuite_Add (suite, "Database_drop", test_drop);
+   #endif
    TestSuite_Add (suite, "Database_create_collection", test_create_collection);
    //TestSuite_Add (suite, "Database_get_collection_info",
    //               test_get_collection_info);
