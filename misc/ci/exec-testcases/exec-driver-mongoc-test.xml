@@ -72,6 +72,9 @@
       </replaceregexp>
       <replaceregexp match='testcase name="' replace='testcase classname="${test.suite.class.name}-' flags="g" byline="true" encoding="utf-8">
          <fileset dir="${reports.path}/" includes="*" />
+     </replaceregexp>
+     <replaceregexp match='" status=' replace='_Concurrent" status=' flags="g" byline="true" encoding="utf-8">
+         <fileset dir="${reports.path}/" includes="Concurrent.xml" />
      </replaceregexp>	
    </target>        
     
