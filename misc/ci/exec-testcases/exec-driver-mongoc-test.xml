@@ -46,13 +46,14 @@
       <echo message="current parallel execute all testcases" /> 
       <echo message="Exec test-mongo -f " /> 
       <echo message="Env:LD_LIBRARY_PATH=${mongoc.testcase.libpath}" />
-      <echo message="The testcases path on ${testcases.path}" />
+      <echo message="The testcases path on ${mongoc.testcase.path}" />
       
 		<exec executable="${bin_dir}/sdb" dir="" timeout="20000" failonerror="false">
 			<arg line="-s &quot;db.msg('Begin testcase[${mongoc.testcase.path}/test-mongo]');&quot;" />
 		</exec>      
       <exec executable="./test-mongo" dir="${mongoc.testcase.path}" timeout="60000" outputproperty="mongo.screen.output" resultproperty="mongo.ret.code" failonerror="false">
-         <arg line=" -f -F ${reports.path}/Concurrent.xml" /> 
+         <!--arg line=" -f -F ${reports.path}/Concurrent.xml" /-->
+         <arg line=" -f " /> 
          <env key="LD_LIBRARY_PATH" path="${LD_LIBRARY_PATH}:${mongoc.testcase.libpath}" />
          <env key="MONGOC_TEST_HOST" value="${mongoc.test.host}" />
       </exec>
@@ -73,9 +74,9 @@
       <replaceregexp match='testcase name="' replace='testcase classname="${test.suite.class.name}-' flags="g" byline="true" encoding="utf-8">
          <fileset dir="${reports.path}/" includes="*" />
      </replaceregexp>
-     <replaceregexp match='" status=' replace='_Concurrent" status=' flags="g" byline="true" encoding="utf-8">
+     <!--replaceregexp match='" status=' replace='_Concurrent" status=' flags="g" byline="true" encoding="utf-8">
          <fileset dir="${reports.path}/" includes="Concurrent.xml" />
-     </replaceregexp>	
+     </replaceregexp-->	
    </target>        
     
    <target name="test-one-case">
