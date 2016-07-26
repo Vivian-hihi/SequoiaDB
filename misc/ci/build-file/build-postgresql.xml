@@ -154,7 +154,7 @@
          <env key="PATH" path="${SEQUOIASQL_DIR}/bin:${env.PATH}" />
          <arg line=" clean" />
       </exec>
-      <exec executable="make" dir="${PG_CODE_DIR}" failonerror="true">
+      <exec executable="make" dir="${PG_HINT_DIR}" failonerror="true">
          <env key="PATH" path="${SEQUOIASQL_DIR}/bin:${env.PATH}" />
          <arg line=" all" />
       </exec>          
