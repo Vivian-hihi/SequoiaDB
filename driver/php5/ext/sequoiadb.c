@@ -575,6 +575,7 @@ PHP_MSHUTDOWN_FUNCTION(sequoiadb)
 
 PHP_RINIT_FUNCTION(sequoiadb)
 {
+   cJsonExtAppendFunction() ;
    return SUCCESS;
 }
 
