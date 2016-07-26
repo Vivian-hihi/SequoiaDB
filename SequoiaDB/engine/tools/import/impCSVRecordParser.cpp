@@ -850,6 +850,8 @@ namespace import
 
       if ('E' == *str || 'e' == *str)
       {
+         str++;
+         len--;
          goto exp;
       }
 
