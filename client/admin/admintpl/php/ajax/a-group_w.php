@@ -11,7 +11,7 @@ $config      = empty ( $_POST['config']      ) ? NULL :  $_POST['config']      ;
 $rc = 0 ;
 if ( $type == "creategroup" )
 {
-	$group = $db -> selectGroup ( $groupname ) ;
+	$group = $db -> createGroup ( $groupname ) ;
 	if ( empty ( $group ) )
 	{
 		$arr = $db -> getError() ;
