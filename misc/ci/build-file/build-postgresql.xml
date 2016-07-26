@@ -178,7 +178,7 @@
       <copy file="${PG_HINT_DIR}/pg_hint_plan--1.0--1.1.1.sql"   todir="${SEQUOIASQL_DIR}/share/extension" />
       <copy file="${PG_HINT_DIR}/pg_hint_plan--1.1.1--1.1.2.sql" todir="${SEQUOIASQL_DIR}/share/extension" />
       <copy file="${PG_HINT_DIR}/pg_hint_plan--1.1.2--1.1.3.sql" todir="${SEQUOIASQL_DIR}/share/extension" />
-      <copy file="${PG_HINT_DIR}/pg_hint_plan.so."       tofile="${SEQUOIASQL_DIR}/lib/pg_hint_plan.so.93.1.1.3" />      
+      <copy file="${PG_HINT_DIR}/pg_hint_plan.so"       tofile="${SEQUOIASQL_DIR}/lib/pg_hint_plan.so.93.1.1.3" />      
       <chmod file="${SEQUOIASQL_DIR}/lib/pg_hint_plan.so.93.1.1.3" perm="a+x" />
       <exec executable="ln" dir="${SEQUOIASQL_DIR}/lib" failonerror="true">
          <arg line="-sf pg_hint_plan.so.93.1.1.3 pg_hint_plan.so" />
