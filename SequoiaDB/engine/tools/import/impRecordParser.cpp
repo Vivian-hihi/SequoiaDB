@@ -192,7 +192,7 @@ namespace import
 
       bson_init(&obj);
 
-      result = json2bson( data, _pMachine, CJSON_RIGOROUS_PARSE, &obj ) ;
+      result = json2bson( data, _pMachine, CJSON_RIGOROUS_PARSE, FALSE, &obj ) ;
       if (!result)
       {
          rc = SDB_INVALIDARG;

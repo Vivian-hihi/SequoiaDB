@@ -44,7 +44,7 @@
 #include "migTrace.hpp"
 #include "msgDef.h"
 #include "msg.h"
-#include "jstobs.h"
+#include "jstobs2.h"
 
 #define MIG_STR_POINT "."
 #define MIG_STR_SPACE 32
@@ -131,7 +131,11 @@ INT32 migExport::_connectDB()
    // set prefer instance
    if( _pMigArg->pPrefInst )
    {
-      if ( FALSE == jsonToBson2 ( &obj, _pMigArg->pPrefInst, 0, 1 ) )
+      if ( FALSE == json2bson ( _pMigArg->pPrefInst,
+                                NULL,
+                                CJSON_RIGOROUS_PARSE,
+                                FALSE,
+                                &obj ) )
       {
          rc = SDB_INVALIDARG ;
          ossPrintf ( "Error: prefered instance's format error"OSS_NEWLINE ) ;
@@ -347,7 +351,11 @@ INT32 migExport::_query()
    bson_init ( &sort ) ;
    if( _pMigArg->pFiter )
    {
-      if ( !jsonToBson2 ( &condition, _pMigArg->pFiter, 0, 1 ) )
+      if ( FALSE == json2bson ( _pMigArg->pFiter,
+                                NULL,
+                                CJSON_RIGOROUS_PARSE,
+                                FALSE,
+                                &condition ) )
       {
          rc = SDB_INVALIDARG ;
          ossPrintf ( "fiter format error"OSS_NEWLINE ) ;
@@ -361,7 +369,11 @@ INT32 migExport::_query()
    }
    if( _pMigArg->pSort )
    {
-      if ( !jsonToBson2 ( &sort, _pMigArg->pSort, 0, 1 ) )
+      if ( FALSE == json2bson ( _pMigArg->pSort,
+                                NULL,
+                                CJSON_RIGOROUS_PARSE,
+                                FALSE,
+                                &sort ) )
       {
          rc = SDB_INVALIDARG ;
          ossPrintf ( "sort format error"OSS_NEWLINE ) ;

@@ -30,8 +30,21 @@
 #define RELATIVE_HOUR 24
 #define RELATIVE_MIN_SEC 60
 
+#define BSON_TEMP_SIZE_32 32
+#define BSON_TEMP_SIZE_64 64
+#define BSON_TEMP_SIZE_512 512
+
+#define LONG_JS_MIN (-9007199254740991LL)
+#define LONG_JS_MAX  (9007199254740991LL)
+
 #define TIME_FORMAT "%d-%d-%d-%d.%d.%d.%d"
 #define DATE_FORMAT "%d-%d-%d"
+
+#define DATE_OUTPUT_CSV_FORMAT "%04d-%02d-%02d"
+#define DATE_OUTPUT_FORMAT "{ \"$date\": \"" DATE_OUTPUT_CSV_FORMAT "\" }"
+
+#define TIME_OUTPUT_CSV_FORMAT "%04d-%02d-%02d-%02d.%02d.%02d.%06d"
+#define TIME_OUTPUT_FORMAT "{ \"$timestamp\": \"" TIME_OUTPUT_CSV_FORMAT "\" }"
 
 #define TIME_STAMP_TIMESTAMP_MIN (-2147483648LL)
 #define TIME_STAMP_TIMESTAMP_MAX  (2147483647LL)
@@ -59,6 +72,16 @@ JSON_PLOG_FUNC _pJsonPrintfLogFun ;
    }\
 }
 
+/*
+ * check the remaining size
+ * x : the remaining size
+*/
+#define CHECK_LEFT(x) \
+{ \
+   if ( (*x) <= 0 ) \
+      return FALSE ; \
+}
+
 /* This function takes input from cJSON library, which parses a string to linked
  * list. In this function we iterate all elements in list and construct BSON
  * accordingly */
@@ -67,6 +90,16 @@ static BOOLEAN jsonConvertBson( const CJSON_MACHINE *pMachine,
                                 bson *pBson,
                                 BOOLEAN isObj ) ;
 
+static BOOLEAN bsonConvertJson ( CHAR **pbuf,
+                                 INT32 *left,
+                                 const CHAR *data ,
+                                 INT32 isobj,
+                                 BOOLEAN toCSV,
+                                 BOOLEAN skipUndefined ) ;
+
+static INT32 strlen_a ( const CHAR *data ) ;
+
+static void local_time ( time_t *Time, struct tm *TM ) ;
 
 /*
  * pFun print log function
@@ -89,7 +122,7 @@ SDB_EXPORT  void JsonSetPrintfLog( void (*pFun)( const CHAR *pFunc,
 */
 SDB_EXPORT BOOLEAN json2bson2( const CHAR *pJson, bson *pBson )
 {
-   return json2bson( pJson, NULL, CJSON_RIGOROUS_PARSE, pBson ) ;
+   return json2bson( pJson, NULL, CJSON_RIGOROUS_PARSE, TRUE, pBson ) ;
 }
 
 /*
@@ -105,6 +138,7 @@ SDB_EXPORT BOOLEAN json2bson2( const CHAR *pJson, bson *pBson )
 SDB_EXPORT BOOLEAN json2bson( const CHAR *pJson,
                               CJSON_MACHINE *pMachine,
                               INT32 parseMode,
+                              BOOLEAN isCheckEnd,
                               bson *pBson )
 {
    BOOLEAN flag = TRUE ;
@@ -133,7 +167,7 @@ SDB_EXPORT BOOLEAN json2bson( const CHAR *pJson,
       }
    }
 
-   cJsonInit( pMachine, parseMode ) ;
+   cJsonInit( pMachine, parseMode, isCheckEnd ) ;
 
    if( cJsonParse( pJson, pMachine ) == FALSE )
    {
@@ -171,6 +205,30 @@ done:
 error:
    flag = FALSE ;
    goto done ;
+}
+
+/*
+ * bson convert json interface
+ * buffer : output bson convert json string
+ * bufsize : buffer's size
+ * b : bson object
+ * return : the conversion result
+*/
+/* THIS IS EXTERNAL FUNCTION TO CONVERT FROM BSON OBJECT INTO JSON STRING */
+BOOLEAN bsonToJson ( CHAR *buffer, INT32 bufsize, const bson *b,
+                     BOOLEAN toCSV, BOOLEAN skipUndefined )
+{
+    CHAR *pbuf = buffer ;
+    BOOLEAN result = FALSE ;
+    INT32 leftsize = bufsize ;
+    if ( bufsize <= 0 || !buffer || !b )
+       return FALSE ;
+    //memset ( pbuf, 0, bufsize ) ;
+    result = bsonConvertJson ( &pbuf, &leftsize, b->data, 1, toCSV, skipUndefined ) ;
+    if ( !result || !leftsize )
+       return FALSE ;
+    *pbuf = '\0' ;
+    return TRUE ;
 }
 
 static BOOLEAN date2Time( const CHAR *pDate,
@@ -796,7 +854,7 @@ static BOOLEAN jsonConvertBson( const CJSON_MACHINE *pMachine,
             INT32 micros = 0 ;
             time_t timestamp = 0 ;
             if( date2Time( arg1.pValStr,
-                           CJSON_TIMESTAMP,
+                           CJSON_DATE,
                            &timestamp,
                            &micros ) == FALSE )
             {
@@ -1023,13 +1081,39 @@ static BOOLEAN jsonConvertBson( const CJSON_MACHINE *pMachine,
          {
             number = arg1.valInt64 ;
          }
-         else if( arg1.valType == CJSON_DOUBLE )
-         {
-            number = (INT64)arg1.valDouble ;
-         }
          else if( arg1.valType == CJSON_STRING )
          {
-            number = ossAtoll( arg1.pValStr ) ;
+            //number = ossAtoll( arg1.pValStr ) ;
+            INT32 valInt = 0 ;
+            FLOAT64 valDouble = 0 ;
+            INT64 valInt64 = 0 ;
+            CJSON_VALUE_TYPE type = CJSON_NONE ;
+      
+            if( cJsonParseNumber( arg1.pValStr,
+                                  arg1.length,
+                                  &valInt,
+                                  &valDouble,
+                                  &valInt64,
+                                  &type ) == FALSE )
+            {
+               JSON_PRINTF_LOG( "Failed to read NumberLong, "
+                                "the No.1 argument is an invalid number" ) ;
+               goto error ;
+            }
+            if( type == CJSON_INT32 )
+            {
+               number = valInt ;
+            }
+            else if( type == CJSON_INT64 )
+            {
+               number = valInt64 ;
+            }
+            else
+            {
+               JSON_PRINTF_LOG( "Failed to read NumberLong, the No.1 argument "
+                                "must be integer type or string type" ) ;
+               goto error ;
+            }
          }
          else
          {
@@ -1163,4 +1247,716 @@ done:
 error:
    flag = FALSE ;
    goto done ;
+}
+
+/*
+ * copy data to pbuf
+ * pbuf : output variable
+ * left : the remaining size
+ * data : input variable
+ * return : void
+*/
+static void bsonConvertJsonRawConcat ( CHAR **pbuf, INT32 *left, const CHAR *data , BOOLEAN isString )
+{
+   UINT32 tempsize = 0 ;
+   CHAR *pTempBuf = *pbuf ;
+   if ( isString )
+      tempsize = strlen_a ( data ) ;
+   else
+      tempsize = strlen ( data ) ;
+   tempsize = tempsize > ( UINT32 )(*left) ? ( UINT32 )(*left) : tempsize ;
+   if ( isString )
+   {
+      UINT32 i = 0 ;
+      for ( i = 0; i < tempsize; ++i )
+      {
+         switch ( *data )
+         {
+         //the JSON standard does not need to be escaped single quotation marks
+         /*case '\'':
+         {
+           pTempBuf[i] = '\\' ;
+           ++i ;
+           pTempBuf[i] = '\'' ;
+           break ;
+         }*/
+         case '\"':
+         {
+           pTempBuf[i] = '\\' ;
+           ++i ;
+           pTempBuf[i] = '\"' ;
+           break ;
+         }
+         case '\\':
+         {
+           pTempBuf[i] = '\\' ;
+           ++i ;
+           pTempBuf[i] = '\\' ;
+           break ;
+         }
+         case '\b':
+         {
+           pTempBuf[i] = '\\' ;
+           ++i ;
+           pTempBuf[i] = 'b' ;
+           break ;
+         }
+         case '\f':
+         {
+           pTempBuf[i] = '\\' ;
+           ++i ;
+           pTempBuf[i] = 'f' ;
+           break ;
+         }
+         case '\n':
+         {
+           pTempBuf[i] = '\\' ;
+           ++i ;
+           pTempBuf[i] = 'n' ;
+           break ;
+         }
+         case '\r':
+         {
+           pTempBuf[i] = '\\' ;
+           ++i ;
+           pTempBuf[i] = 'r' ;
+           break ;
+         }
+         case '\t':
+         {
+           pTempBuf[i] = '\\' ;
+           ++i ;
+           pTempBuf[i] = 't' ;
+           break ;
+         }
+         default :
+         {
+            pTempBuf[i] = *data ;
+            break ;
+         }
+         }
+         ++data ;
+      }
+   }
+   else
+   {
+      memcpy ( *pbuf, data, tempsize ) ;
+   }
+   *left -= tempsize ;
+   *pbuf += tempsize ;
+}
+
+/*
+ * Bson convert Json
+ * pbuf : output variable
+ * left : the pbuf size
+ * data : input bson's data variable
+ * isobj : determine the current status
+ * return : the conversion result
+*/
+static BOOLEAN bsonConvertJson ( CHAR **pbuf,
+                                 INT32 *left,
+                                 const CHAR *data ,
+                                 INT32 isobj,
+                                 BOOLEAN toCSV,
+                                 BOOLEAN skipUndefined )
+{
+   bson_iterator i ;
+   const CHAR *key ;
+   bson_timestamp_t ts ;
+   CHAR oidhex [ 25 ] ;
+   struct tm psr ;
+   INT32 first = 1 ;
+   if ( *left <= 0 || !pbuf || !data )
+      return FALSE ;
+   bson_iterator_from_buffer( &i, data ) ;
+   if ( !toCSV )
+   {
+      if ( isobj )
+      {
+         bsonConvertJsonRawConcat ( pbuf, left, "{ ", FALSE ) ;
+         CHECK_LEFT ( left )
+      }
+      else
+      {
+         bsonConvertJsonRawConcat ( pbuf, left, "[ ", FALSE ) ;
+         CHECK_LEFT ( left )
+      }
+   }
+   while ( bson_iterator_next( &i ) )
+   {
+      bson_type t = bson_iterator_type( &i ) ;
+      /* if BSON_EOO == t ( which is 0 ), that means we hit end of object */
+      if ( !t )
+      {
+         break ;
+      }
+      if ( skipUndefined && BSON_UNDEFINED == t )
+      {
+         continue ;
+      }
+      /* do NOT concat "," for first entrance */
+      if ( !first )
+      {
+         bsonConvertJsonRawConcat ( pbuf, left, toCSV?"|":", ", FALSE ) ;
+         CHECK_LEFT ( left )
+      }
+      else
+         first = 0 ;
+      /* get key string */
+      key = bson_iterator_key( &i ) ;
+      /* for object, we always display { " key" : "value" }, so we have to
+       * display double quotes and key and comma */
+      if ( isobj && !toCSV )
+      {
+         bsonConvertJsonRawConcat ( pbuf, left, "\"", FALSE ) ;
+         CHECK_LEFT ( left )
+         bsonConvertJsonRawConcat ( pbuf, left, key, TRUE ) ;
+         CHECK_LEFT ( left )
+         bsonConvertJsonRawConcat ( pbuf, left, "\"", FALSE ) ;
+         CHECK_LEFT ( left )
+         bsonConvertJsonRawConcat ( pbuf, left, ": ", FALSE ) ;
+         CHECK_LEFT ( left )
+      }
+      /* then we check the data type */
+      switch ( t )
+      {
+      case BSON_DOUBLE:
+      {
+         /* for double type, we use 64 bytes string for such big value */
+         INT32 sign = 0 ;
+         FLOAT64 valNum = bson_iterator_double( &i ) ;
+         if( bson_is_inf( valNum, &sign ) == FALSE )
+         {
+            CHAR temp[ BSON_TEMP_SIZE_512 ] ;
+            memset ( temp, 0, BSON_TEMP_SIZE_512 ) ;
+#ifdef WIN32
+            _snprintf ( temp,
+                        BSON_TEMP_SIZE_512,
+                        "%.16g", bson_iterator_double( &i ) ) ;
+#else
+            snprintf ( temp,
+                       BSON_TEMP_SIZE_512,
+                       "%.16g", bson_iterator_double( &i ) ) ;
+#endif
+            bsonConvertJsonRawConcat ( pbuf, left, temp, FALSE ) ;
+            CHECK_LEFT ( left )
+            if( strchr( temp, '.') == 0 && strchr( temp, 'E') == 0
+                && strchr( temp, 'N') == 0 && strchr( temp, 'e') == 0
+                && strchr( temp, 'n') == 0 )
+            {
+               bsonConvertJsonRawConcat ( pbuf, left, ".0", FALSE ) ;
+               CHECK_LEFT ( left )
+            }
+         }
+         else
+         {
+            if( sign == 1 )
+            {
+               bsonConvertJsonRawConcat( pbuf, left, "Infinity", FALSE ) ;
+            }
+            else
+            {
+               bsonConvertJsonRawConcat( pbuf, left, "-Infinity", FALSE ) ;
+            }
+            CHECK_LEFT ( left )
+         }
+         break;
+      }
+      case BSON_STRING:
+      case BSON_SYMBOL:
+      {
+         /* for string type, we output double quote and string data */
+         const CHAR *temp = bson_iterator_string( &i ) ;
+         if ( !toCSV )
+         {
+            bsonConvertJsonRawConcat ( pbuf, left, "\"", FALSE ) ;
+            CHECK_LEFT ( left )
+         }
+         bsonConvertJsonRawConcat ( pbuf, left, temp, TRUE ) ;
+         CHECK_LEFT ( left )
+         if ( !toCSV )
+         {
+            bsonConvertJsonRawConcat ( pbuf, left, "\"", FALSE ) ;
+            CHECK_LEFT ( left )
+         }
+         break ;
+      }
+      case BSON_OID:
+      {
+         /* for oid type, we always display { $oid : "<12 bytes string>" }. So
+          * we have to display first part, then concat oidhex, then the last
+          * part */
+         bson_oid_to_string( bson_iterator_oid( &i ), oidhex );
+         if ( !toCSV )
+         {
+            bsonConvertJsonRawConcat ( pbuf, left, "{ \"$oid\": \"", FALSE ) ;
+            CHECK_LEFT ( left )
+         }
+         bsonConvertJsonRawConcat ( pbuf, left, oidhex, FALSE ) ;
+         CHECK_LEFT ( left )
+         if ( !toCSV )
+         {
+            bsonConvertJsonRawConcat ( pbuf, left, "\" }", FALSE ) ;
+            CHECK_LEFT ( left )
+         }
+         break ;
+      }
+      case BSON_BOOL:
+      {
+         /* for boolean type, we display either true or false */
+         bsonConvertJsonRawConcat ( pbuf,
+                                    left,
+                                    (bson_iterator_bool( &i )?"true":"false"),
+                                    FALSE ) ;
+         CHECK_LEFT ( left )
+         break ;
+      }
+      case BSON_DATE:
+      {
+         /* for date type, DATE_OUTPUT_FORMAT is the format we need to use, and
+          * use snprintf to display */
+         CHAR temp[ BSON_TEMP_SIZE_64 ] ;
+         struct tm psr;
+         time_t timer = bson_iterator_date( &i ) / 1000 ;
+         memset ( temp, 0, BSON_TEMP_SIZE_64 ) ;
+         local_time ( &timer, &psr ) ;
+         if( psr.tm_year + RELATIVE_YEAR >= RELATIVE_YEAR &&
+             psr.tm_year + RELATIVE_YEAR <= INT64_LAST_YEAR )
+         {
+#ifdef WIN32
+            _snprintf ( temp,
+                        BSON_TEMP_SIZE_64,
+                        toCSV?DATE_OUTPUT_CSV_FORMAT:DATE_OUTPUT_FORMAT,
+                        psr.tm_year + RELATIVE_YEAR,
+                        psr.tm_mon + 1,
+                        psr.tm_mday ) ;
+#else
+            snprintf ( temp,
+                       BSON_TEMP_SIZE_64,
+                       toCSV?DATE_OUTPUT_CSV_FORMAT:DATE_OUTPUT_FORMAT,
+                       psr.tm_year + RELATIVE_YEAR,
+                       psr.tm_mon + 1,
+                       psr.tm_mday ) ;
+#endif
+            bsonConvertJsonRawConcat ( pbuf, left, temp, FALSE ) ;
+            CHECK_LEFT ( left )
+         }
+         else
+         {
+            CHAR temp[ BSON_TEMP_SIZE_512 ] ;
+            memset ( temp, 0, BSON_TEMP_SIZE_512 ) ;
+#ifdef WIN32
+            _snprintf ( temp,
+                        BSON_TEMP_SIZE_512,
+                        "%lld",
+                        (UINT64)bson_iterator_date( &i ) ) ;
+#else
+            snprintf ( temp,
+                       BSON_TEMP_SIZE_512,
+                       "%lld",
+                       (UINT64)bson_iterator_date( &i ) ) ;
+#endif
+            bsonConvertJsonRawConcat ( pbuf, left, "{ \"$date\": ", FALSE ) ;
+            CHECK_LEFT ( left )
+            bsonConvertJsonRawConcat ( pbuf, left, temp, FALSE ) ;
+            CHECK_LEFT ( left )
+            bsonConvertJsonRawConcat ( pbuf, left, " }", FALSE ) ;
+            CHECK_LEFT ( left )
+         }
+         break ;
+      }
+      case BSON_BINDATA:
+      {
+         CHAR bin_type ;
+         CHAR *bin_data ;
+         INT32 bin_size ;
+         INT32 len = 0 ;
+         CHAR *temp = NULL ;
+         CHAR *out = NULL ;
+         /* TODO: We have to remove malloc here later */
+         /* for BINDATA type, user need to input base64 encoded string, which is
+          * supposed to be 4 bytes aligned, and we use base64_decode to extract
+          * and store in database. For display, we use base64_encode to encode
+          * the data stored in database, and format it into base64 encoded
+          * string */
+         if ( toCSV )
+         {
+            // we don't support BIN DATA in csv output
+            break ;
+         }
+         bin_type = bson_iterator_bin_type( &i ) ;
+         bin_data = (CHAR *)bson_iterator_bin_data( &i ) ;
+         bin_size = bson_iterator_bin_len ( &i ) ;
+         if( bin_size > 0 )
+         {
+            /* first we need to calculate how much space we need to put the new
+             * data */
+            len = getEnBase64Size ( bin_size ) ;
+            /* and then we allocate memory for the display string, which includes
+             * { $binary : xxxxx, $type : xxx }, so we have to put another 40
+             * bytes */
+            temp = (CHAR *)malloc( len + 48 ) ;
+            if ( !temp )
+            {
+               return FALSE ;
+            }
+            memset ( temp, 0, len + 48 ) ;
+            /* then we have to allocate another piece of memory for base64 encoding
+             */
+            out = (CHAR *)malloc( len + 1 ) ;
+            if ( !out )
+            {
+               free( temp ) ;
+               return FALSE ;
+            }
+            memset ( out, 0, len ) ;
+            /* encode bin_data to out, with size len */
+            if ( base64Encode( bin_data, bin_size, out, len ) < 0 )
+            {
+               free ( temp ) ;
+               free ( out ) ;
+               return FALSE ;
+            }
+   #ifdef WIN32
+            _snprintf ( temp,
+                        len + 48,
+                        "{ \"$binary\": \"%s\", \"$type\" : \"%d\" }",
+                        out, (UINT8)bin_type ) ;
+   #else
+            snprintf ( temp,
+                       len + 48,
+                       "{ \"$binary\": \"%s\", \"$type\" : \"%d\" }",
+                       out, (UINT8)bin_type ) ;
+   #endif
+            bsonConvertJsonRawConcat ( pbuf, left, temp, FALSE ) ;
+            free( temp ) ;
+            free( out ) ;
+            CHECK_LEFT ( left )
+         }
+         else
+         {
+            temp = (CHAR *)malloc( 48 ) ;
+            if ( !temp )
+            {
+               return FALSE ;
+            }
+            memset ( temp, 0, 48 ) ;
+   #ifdef WIN32
+            _snprintf ( temp,
+                        48,
+                        "{ \"$binary\": \"\", \"$type\" : \"%d\" }",
+                        (UINT8)bin_type ) ;
+   #else
+            snprintf ( temp,
+                       48,
+                       "{ \"$binary\": \"\", \"$type\" : \"%d\" }",
+                       (UINT8)bin_type ) ;
+   #endif
+            bsonConvertJsonRawConcat ( pbuf, left, temp, FALSE ) ;
+            free( temp ) ;
+            CHECK_LEFT ( left )
+         }
+         break ;
+      }
+      case BSON_UNDEFINED:
+      {
+         const CHAR *temp = "{ \"$undefined\": 1 }" ;
+         /* we don't know how to deal with undefined value at the moment, let's
+          * just output it as UNDEFINED, we may change it later */
+         if ( toCSV )
+         {
+            break ;
+         }
+         bsonConvertJsonRawConcat ( pbuf, left, temp, FALSE ) ;
+         CHECK_LEFT ( left )
+         break ;
+      }
+      case BSON_NULL:
+      {
+         const CHAR *temp = "null" ;
+         /* display "null" for null type */
+         if ( toCSV )
+         {
+            break ;
+         }
+         bsonConvertJsonRawConcat ( pbuf, left, temp, FALSE ) ;
+         CHECK_LEFT ( left )
+         break ;
+      }
+      case BSON_MINKEY:
+      {
+         const CHAR *temp = "{ \"$minKey\": 1 }" ;
+         /* display "null" for null type */
+         if ( toCSV )
+         {
+            break ;
+         }
+         bsonConvertJsonRawConcat ( pbuf, left, temp, FALSE ) ;
+         CHECK_LEFT ( left )
+         break ;
+      }
+      case BSON_MAXKEY:
+      {
+         const CHAR *temp = "{ \"$maxKey\": 1 }" ;
+         /* display "null" for null type */
+         if ( toCSV )
+         {
+            break ;
+         }
+         bsonConvertJsonRawConcat ( pbuf, left, temp, FALSE ) ;
+         CHECK_LEFT ( left )
+         break ;
+      }
+      case BSON_REGEX:
+      {
+         /* for regular expression type, we need to display both regex and
+          * options. In raw data format we have 1 byte type, 4 byte length,
+          * which includes both pattern and options, and then pattern string and
+          * options string. */
+         if ( toCSV )
+         {
+            // we don't support CSV for regex
+            break ;
+         }
+         bsonConvertJsonRawConcat ( pbuf, left, "{ \"$regex\": \"", FALSE ) ;
+         CHECK_LEFT ( left )
+         /* get pattern string */
+         bsonConvertJsonRawConcat ( pbuf, left, bson_iterator_regex ( &i ), TRUE ) ;
+         CHECK_LEFT ( left )
+         /* bson_iterator_regex_opts get options by "p+strlen(p)+1", which means
+          * we don't need to move iterator to next element. So we use
+          * bson_iterator_regex_opts directly on &i */
+         bsonConvertJsonRawConcat ( pbuf, left, "\", \"$options\": \"", FALSE ) ;
+         CHECK_LEFT ( left )
+         bsonConvertJsonRawConcat ( pbuf, left, bson_iterator_regex_opts ( &i ), FALSE ) ;
+         CHECK_LEFT ( left )
+         bsonConvertJsonRawConcat ( pbuf, left, "\" }", FALSE ) ;
+         CHECK_LEFT ( left )
+         break ;
+      }
+      case BSON_CODE:
+      {
+         /* we don't know how to deal with code at the moment, let's just
+          * display it as normal string */
+         if ( toCSV )
+         {
+            break ;
+         }
+         bsonConvertJsonRawConcat ( pbuf, left, "\"", FALSE ) ;
+         CHECK_LEFT ( left )
+         bsonConvertJsonRawConcat ( pbuf, left, bson_iterator_code( &i ), TRUE ) ;
+         CHECK_LEFT ( left )
+         bsonConvertJsonRawConcat ( pbuf, left, "\"", FALSE ) ;
+         CHECK_LEFT ( left )
+         break ;
+      }
+      case BSON_INT:
+      {
+         /* format integer. Instead of using snprintf, we call get_char_num(),
+          * which uses static string to improve performance ( when value < 1000
+          * ) */
+         CHAR temp[ BSON_TEMP_SIZE_32 ] = {0} ;
+         get_char_num ( temp, bson_iterator_int( &i ), BSON_TEMP_SIZE_32 ) ;
+         bsonConvertJsonRawConcat ( pbuf, left, temp, FALSE ) ;
+         CHECK_LEFT ( left )
+         break ;
+      }
+      case BSON_LONG:
+      {
+         /* for 64 bit integer, most likely it's more than 1000, so we always
+          * snprintf */
+         CHAR temp[ BSON_TEMP_SIZE_512 ] ;
+         CHAR *format ;
+         int64_t val = bson_iterator_long( &i ) ;
+         memset ( temp, 0, BSON_TEMP_SIZE_512 ) ;
+         if ( val < LONG_JS_MIN || val > LONG_JS_MAX )
+         {
+            format = "{ \"$numberLong\": \"%lld\" }" ;
+         }
+         else
+         {
+            format = "%lld" ;
+         }
+         
+#ifdef WIN32
+         _snprintf ( temp,
+                     BSON_TEMP_SIZE_512,
+                     format, val ) ;
+#else
+         snprintf ( temp,
+                    BSON_TEMP_SIZE_512,
+                     format, val ) ;
+#endif
+         
+         bsonConvertJsonRawConcat ( pbuf, left, temp, FALSE ) ;
+         CHECK_LEFT ( left )
+         break ;
+      }
+      case BSON_DECIMAL:
+      {
+         bson_decimal decimal ;
+         int rc        = 0 ;
+         CHAR *value   = NULL ;
+         int size      = 0 ;
+         decimal_init( &decimal ) ;
+
+         // get decimal 
+         bson_iterator_decimal( &i, &decimal ) ;
+
+         decimal_to_jsonstr_len( decimal.sign, decimal.weight, decimal.dscale, 
+                                 decimal.typemod, &size ) ;
+         value = malloc( size ) ;
+         if ( NULL == value )
+         {
+            decimal_free( &decimal ) ;
+            return FALSE ;
+         }
+
+         rc = decimal_to_jsonstr( &decimal, value, size ) ;
+         if ( 0 != rc )
+         {
+            free( value ) ;
+            decimal_free( &decimal ) ;
+            return FALSE ;
+         }
+
+         bsonConvertJsonRawConcat ( pbuf, left, value, FALSE ) ;
+         decimal_free( &decimal ) ;
+         free( value ) ;
+         CHECK_LEFT ( left ) ;
+         break ;
+      }
+      case BSON_TIMESTAMP:
+      {
+         /* for timestamp, it's yyyy-mm-dd-hh.mm.ss.uuuuuu */
+         CHAR temp[ BSON_TEMP_SIZE_64 ] = {0} ;
+         time_t timer ;
+         memset ( temp, 0, BSON_TEMP_SIZE_64 ) ;
+         ts = bson_iterator_timestamp( &i ) ;
+         timer = (time_t)( ts.t ) ;
+         local_time ( &timer, &psr ) ;
+#ifdef WIN32
+         _snprintf ( temp,
+                     BSON_TEMP_SIZE_64,
+                     toCSV?TIME_OUTPUT_CSV_FORMAT:TIME_OUTPUT_FORMAT,
+                     psr.tm_year + RELATIVE_YEAR,
+                     psr.tm_mon + 1,
+                     psr.tm_mday,
+                     psr.tm_hour,
+                     psr.tm_min,
+                     psr.tm_sec,
+                     ts.i ) ;
+#else
+         snprintf ( temp,
+                    BSON_TEMP_SIZE_64,
+                    toCSV?TIME_OUTPUT_CSV_FORMAT:TIME_OUTPUT_FORMAT,
+                    psr.tm_year + RELATIVE_YEAR,
+                    psr.tm_mon + 1,
+                    psr.tm_mday,
+                    psr.tm_hour,
+                    psr.tm_min,
+                    psr.tm_sec,
+                    ts.i ) ;
+#endif
+         bsonConvertJsonRawConcat ( pbuf, left, temp, FALSE ) ;
+         CHECK_LEFT ( left )
+         break ;
+      }
+      case BSON_OBJECT:
+      {
+         /* for object type, we do recursive call with TRUE */
+         if ( toCSV )
+         {
+            break ;
+         }
+         if ( !bsonConvertJson( pbuf, left, bson_iterator_value( &i ) ,
+                                1, toCSV, skipUndefined ) )
+            return  FALSE ;
+         CHECK_LEFT ( left )
+         break ;
+      }
+      case BSON_ARRAY:
+      {
+         /* for array type, we do recursive call with FALSE */
+         if ( toCSV )
+         {
+            break ;
+         }
+         if ( !bsonConvertJson( pbuf, left, bson_iterator_value( &i ),
+                                0, toCSV, skipUndefined ) )
+            return FALSE ;
+         CHECK_LEFT ( left )
+         break ;
+      }
+      default:
+         return FALSE ;
+      }
+   }
+   if ( !toCSV )
+   {
+      if ( isobj )
+      {
+         bsonConvertJsonRawConcat ( pbuf, left, " }", FALSE ) ;
+         CHECK_LEFT ( left )
+      }
+      else
+      {
+         bsonConvertJsonRawConcat ( pbuf, left, " ]", FALSE ) ;
+         CHECK_LEFT ( left )
+      }
+   }
+   return TRUE ;
+}
+
+static INT32 strlen_a ( const CHAR *data )
+{
+   INT32 len = 0 ;
+   if ( !data )
+   {
+      return 0 ;
+   }
+   while ( data && *data )
+   {
+      //the JSON standard does not need to be escaped single quotation marks
+      /*if ( data[0] == '\'' ||
+           data[0] == '\"' ||
+           data[0] == '\\' )*/
+      if ( data[0] == '\"' ||
+           data[0] == '\\' ||
+           data[0] == '\b' ||
+           data[0] == '\f' ||
+           data[0] == '\n' ||
+           data[0] == '\r' ||
+           data[0] == '\t' )
+//         data[0] == '/' || )
+      {
+         ++len ;
+      }
+      ++len ;
+      ++data ;  
+   }
+   return len ;
+}
+
+/*
+ * time_t convert tm
+ * Time: the second time conversion
+ * TM : the date structure
+ * return : the data structure
+*/
+static void local_time ( time_t *Time, struct tm *TM )
+{
+   if ( !Time || !TM )
+      return ;
+#if defined (__linux__ ) || defined (_AIX)
+   localtime_r( Time, TM ) ;
+#elif defined (_WIN32)
+   // The Time represents the seconds elapsed since midnight (00:00:00),
+   // January 1, 1970, UTC. This value is usually obtained from the time
+   // function.
+   localtime_s( TM, Time ) ;
+#else
+#error "unimplemented local_time()"
+#endif
 }

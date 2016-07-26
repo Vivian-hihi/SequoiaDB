@@ -321,6 +321,11 @@ SDB_EXPORT BOOLEAN cJsonParse( const CHAR *pStr, CJSON_MACHINE *pMachine )
       CJSON_PRINTF_LOG( "Failed to parse JSON" ) ;
       goto error ;
    }
+   if( pMachine->isCheckEnd && *pStr )
+   {
+      CJSON_PRINTF_LOG( "Exist redundant after JSON" ) ;
+      goto error ;
+   }
 done:
    return rc ;
 error:
@@ -1124,6 +1129,14 @@ static const CHAR* readNumber( const CHAR *pStr,
       CJSON_PRINTF_LOG( "Failed to parse number value" ) ;
       goto error ;
    }
+   pStr = skip( pStr ) ;
+   if( *pStr != CHAR_COMMA &&
+       *pStr != CHAR_RIGHT_CURLY_BRACE &&
+       *pStr != CHAR_RIGHT_SQUARE_BRACKET )
+   {
+      CJSON_PRINTF_LOG( "Failed to parse an invalid number" ) ;
+      goto error ;
+   }
    if( numType == CJSON_INT32 )
    {
       cJsonItemValueInt32( pItem, valInt ) ;
@@ -1903,12 +1916,17 @@ static const CHAR* parseArgImpl( const CHAR *pStr,
       pValString = parseString( pStrStart, length, pMachine ) ;
       pStr = skip( pStr + 1 ) ;
    }
-   else if( *pStr >= '0' && *pStr <= '9' )
+   else if( ( *pStr >= '0' && *pStr <= '9' ) || *pStr == '+' || *pStr == '-' )
    {
       // <number>
       valType = CJSON_NUMBER ;
       pStr = parseNumber( pStr, &valInt, &valDouble, &valInt64, &valType ) ;
       pStr = skip( pStr ) ;
+      if( *pStr != CHAR_COMMA && *pStr != CHAR_RIGHT_ROUND_BRACKET )
+      {
+         CJSON_PRINTF_LOG( "The argument is an invalid number" ) ;
+         goto error ;
+      }
    }
    else
    {
@@ -2167,6 +2185,10 @@ static const CHAR* parseArgImpl( const CHAR *pStr,
       }
       break ;
    }
+   case 0:
+   {
+      break ;
+   }
    default:
       CJSON_PRINTF_LOG( "Unknow type: %c", character ) ;
       goto error ;
@@ -2189,7 +2211,7 @@ static const CHAR* parseArgs( const CHAR *pStr,
    BOOLEAN isOptional   = FALSE ;
    INT32 argNum         = 0 ;
    const CHAR *specWalk = pFormat ;
-   for( ; *specWalk; ++specWalk )
+   while( TRUE )
    {
       character = *specWalk ;
       if( character == '|' )
@@ -2200,7 +2222,7 @@ static const CHAR* parseArgs( const CHAR *pStr,
       {
          if( *pStr == CHAR_RIGHT_ROUND_BRACKET )
          {
-            if( isOptional == TRUE )
+            if( isOptional == TRUE || character == 0 )
             {
                break ;
             }
@@ -2224,14 +2246,19 @@ static const CHAR* parseArgs( const CHAR *pStr,
          }
          else if( *pStr == CHAR_RIGHT_ROUND_BRACKET )
          {
-            continue ;
+            // do nothing
          }
          else
          {
-            CJSON_PRINTF_LOG( "Syntax error: unexpected semicolon\
- or newline, expecting ')'" ) ;
+            CJSON_PRINTF_LOG( "Syntax error: the No. %d argument "
+                              "missing ',' or ')'",
+                              argNum ) ;
             goto error ;
          }
+      }
+      if( *specWalk )
+      {
+         ++specWalk ;
       }
    }
    *pArgNum = argNum ;
@@ -2268,6 +2295,36 @@ done:
    return pStr ;
 error:
    pStr = NULL ;
+   goto done ;
+}
+
+SDB_EXPORT BOOLEAN cJsonParseNumber( const CHAR *pStr,
+                                     INT32 length,
+                                     INT32 *pValInt,
+                                     FLOAT64 *pValDouble,
+                                     INT64 *pValLong,
+                                     CJSON_VALUE_TYPE *pNumType )
+{
+   BOOLEAN flag = TRUE ;
+   const CHAR *pTmp = NULL ;
+
+   if( pStr == NULL )
+   {
+      goto error ;
+   }
+   pTmp = parseNumber( pStr,
+                       pValInt,
+                       pValDouble,
+                       pValLong,
+                       pNumType ) ;
+   if( pTmp - pStr != length )
+   {
+      goto error ;
+   }
+done:
+   return flag ;
+error:
+   flag = FALSE ;
    goto done ;
 }
 
@@ -2796,16 +2853,20 @@ SDB_EXPORT CJSON_MACHINE* cJsonCreate()
       pMachine->state = STATE_READY ;
       pMachine->parseMode = CJSON_LOOSE_PARSE ;
       pMachine->level = 0 ;
+      pMachine->isCheckEnd = FALSE ;
    }
    return pMachine ;
 }
 
-SDB_EXPORT void cJsonInit( CJSON_MACHINE *pMachine, CJSON_PARSE_MODE mode )
+SDB_EXPORT void cJsonInit( CJSON_MACHINE *pMachine,
+                           CJSON_PARSE_MODE mode,
+                           BOOLEAN isCheckEnd )
 {
    CJSON_MEMORY_BLOCK *pBlock = NULL ;
    pMachine->state = STATE_READY ;
    pMachine->parseMode = mode ;
    pMachine->level = 0 ;
+   pMachine->isCheckEnd = isCheckEnd ;
    pMachine->pItem = NULL ;
    pMachine->pMemBlock = pMachine->pFirstMemBlock ;
    pBlock = pMachine->pMemBlock ;

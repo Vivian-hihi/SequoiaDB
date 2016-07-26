@@ -148,6 +148,11 @@ static const CHAR* readBinary( const CHAR *pStr,
       CJSON_PRINTF_LOG( "Failed to parse Bindata argument" ) ;
       goto error ;
    }
+   if( argNum > 2 )
+   {
+      CJSON_PRINTF_LOG( "Function Bindata no more than 2 argument" ) ;
+      goto error ;
+   }
    pReadInfo = cJsonReadInfoCreate( pMachine ) ;
    if( pReadInfo == NULL )
    {
@@ -228,6 +233,11 @@ static const CHAR* readRegex( const CHAR *pStr,
    if( pStr == NULL )
    {
       CJSON_PRINTF_LOG( "Failed to parse Regex argument" ) ;
+      goto error ;
+   }
+   if( argNum > 2 )
+   {
+      CJSON_PRINTF_LOG( "Function Regex no more than 2 argument" ) ;
       goto error ;
    }
    pReadInfo = cJsonReadInfoCreate( pMachine ) ;
@@ -455,7 +465,7 @@ static const CHAR* readTimestamp( const CHAR *pStr,
    }
    else
    {
-      CJSON_PRINTF_LOG( "Function Timestamp up to 2 argument" ) ;
+      CJSON_PRINTF_LOG( "Function Timestamp no more than 2 argument" ) ;
       goto error ;
    }
    cJsonReadInfoTypeCustom( pReadInfo ) ;
@@ -577,7 +587,7 @@ static const CHAR* readDate( const CHAR *pStr,
    }
    else
    {
-      CJSON_PRINTF_LOG( "Function SdbDate up to 1 argument" ) ;
+      CJSON_PRINTF_LOG( "Function SdbDate no more than 1 argument" ) ;
       goto error ;
    }
    cJsonReadInfoTypeCustom( pReadInfo ) ;
@@ -672,7 +682,7 @@ static const CHAR* readObjectId( const CHAR *pStr,
    }
    else
    {
-      CJSON_PRINTF_LOG( "Function ObjectId up to 1 argument" ) ;
+      CJSON_PRINTF_LOG( "Function ObjectId no more than 1 argument" ) ;
       goto error ;
    }
    cJsonReadInfoTypeCustom( pReadInfo ) ;
@@ -699,6 +709,11 @@ static const CHAR* readMaxKey( const CHAR *pStr,
    if( pStr == NULL )
    {
       CJSON_PRINTF_LOG( "Failed to parse MaxKey argument" ) ;
+      goto error ;
+   }
+   if( argNum > 0 )
+   {
+      CJSON_PRINTF_LOG( "Function MaxKey no arguments" ) ;
       goto error ;
    }
    pReadInfo = cJsonReadInfoCreate( pMachine ) ;
@@ -741,6 +756,11 @@ static const CHAR* readMinKey( const CHAR *pStr,
    if( pStr == NULL )
    {
       CJSON_PRINTF_LOG( "Failed to parse MinKey argument" ) ;
+      goto error ;
+   }
+   if( argNum > 0 )
+   {
+      CJSON_PRINTF_LOG( "Function MinKey no arguments" ) ;
       goto error ;
    }
    pReadInfo = cJsonReadInfoCreate( pMachine ) ;
@@ -787,6 +807,11 @@ static const CHAR* readNumberLong( const CHAR *pStr,
       CJSON_PRINTF_LOG( "Failed to parse NumberLong argument" ) ;
       goto error ;
    }
+   if( argNum > 1 )
+   {
+      CJSON_PRINTF_LOG( "Function NumberLong no more than 1 argument" ) ;
+      goto error ;
+   }
    pReadInfo = cJsonReadInfoCreate( pMachine ) ;
    if( pReadInfo == NULL )
    {
@@ -803,22 +828,47 @@ static const CHAR* readNumberLong( const CHAR *pStr,
    {
       numberLong = arg.valInt ;
    }
-   else if( arg.valType == CJSON_DOUBLE )
-   {
-      numberLong = (INT64)arg.valDouble ;
-   }
    else if( arg.valType == CJSON_INT64 )
    {
       numberLong = arg.valInt64 ;
    }
    else if( arg.valType == CJSON_STRING )
    {
-      numberLong = ossAtoll( arg.pValStr ) ;
+      INT32 valInt = 0 ;
+      FLOAT64 valDouble = 0 ;
+      INT64 valInt64 = 0 ;
+      CJSON_VALUE_TYPE type = CJSON_NONE ;
+
+      if( cJsonParseNumber( arg.pValStr,
+                            arg.length,
+                            &valInt,
+                            &valDouble,
+                            &valInt64,
+                            &type ) == FALSE )
+      {
+         CJSON_PRINTF_LOG( "Failed to read NumberLong, "
+                           "the No.1 argument is an invalid number" ) ;
+         goto error ;
+      }
+      if( type == CJSON_INT32 )
+      {
+         numberLong = valInt ;
+      }
+      else if( type == CJSON_INT64 )
+      {
+         numberLong = valInt64 ;
+      }
+      else
+      {
+         CJSON_PRINTF_LOG( "Failed to read NumberLong, the No.1 argument\
+must be integer type or string type" ) ;
+         goto error ;
+      }
    }
    else
    {
       CJSON_PRINTF_LOG( "Failed to read NumberLong, the No.1 argument\
-must be number type or string type" ) ;
+must be integer type or string type" ) ;
       goto error ;
    }
    cJsonItemValueInt64( pLongItem, numberLong ) ;
