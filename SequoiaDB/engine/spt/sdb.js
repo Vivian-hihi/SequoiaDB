@@ -126,19 +126,38 @@ function SDB_INIT(){
 
 
    function quote(str) {
-
-      /*
-      rx_escapable.lastIndex = 0;
-      return rx_escapable.test(string)
-          ? "\"" + string.replace(rx_escapable, function (a) {
-             var c = meta[a];
-             return typeof c === "string"
-                 ? c
-                 : "\\u" + ("0000" + a.charCodeAt(0).toString(16)).slice(-4);
-          }) + "\""
-          : "\"" + string + "\"";
-          */
-     return "\"" + str + "\"" ;
+      var newString = "" ;
+      var length = str.length ;
+      for( var i = 0; i < length; ++i )
+      {
+         switch( str.charAt( i ) )
+         {
+         case "\"":
+            newString += "\\\"" ;
+            break ;
+         case "\\":
+            newString += "\\\\" ;
+            break ;
+         case "\b":
+            newString += "\\b" ;
+            break ;
+         case "\f":
+            newString += "\\f" ;
+            break ;
+         case "\n":
+            newString += "\\n" ;
+            break ;
+         case "\r":
+            newString += "\\r" ;
+            break ;
+         case "\t":
+            newString += "\\t" ;
+            break ;
+         default:
+            newString += str.charAt( i ) ;
+         }
+      }
+      return "\"" + newString + "\"" ;
    }
 
 
