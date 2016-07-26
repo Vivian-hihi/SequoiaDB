@@ -15,6 +15,8 @@
 *******************************************************************************/
 
 #include <math.h>
+#include "ossMem.h"
+#include "ossUtil.h"
 #include "cJSON2.h"
 
 typedef enum _stringType {
@@ -1639,6 +1641,7 @@ static const CHAR* parseNumber( const CHAR *pStr,
    //step 5
    if( *pStr == 'e' || *pStr == 'E' )
    {
+      numType = CJSON_DOUBLE ;
       //<number>[e/E]xxx
       ++pStr ;
       if( *pStr == '+' )
@@ -1647,15 +1650,14 @@ static const CHAR* parseNumber( const CHAR *pStr,
       }
       else if( *pStr == '-' )
       {
-         numType = CJSON_DOUBLE ;
          signsubscale = -1 ;
          ++pStr ;
       }
-       while( *pStr >= '0' && *pStr <= '9' )
-       {
-          subscale = ( subscale * 10 ) + ( *pStr - '0' ) ;
-          ++pStr ;
-       }
+      while( *pStr >= '0' && *pStr <= '9' )
+      {
+         subscale = ( subscale * 10 ) + ( *pStr - '0' ) ;
+         ++pStr ;
+      }
    }
 
    //step 6

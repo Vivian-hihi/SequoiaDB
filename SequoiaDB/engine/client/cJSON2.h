@@ -22,8 +22,6 @@
 #define CJSON2__H
 
 #include "core.h"
-#include "ossMem.h"
-#include "ossUtil.h"
 
 typedef enum _cJsonValueType {
    CJSON_NONE = 0,

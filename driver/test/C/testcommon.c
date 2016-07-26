@@ -34,8 +34,8 @@ void createRecordList ( bson *objlist, INT32 listSize )
       return ;
    for ( ; count < listSize; ++count )
    {
-     if ( !jsonToBson ( objlist,"{firstName:\"John\",\
-                                  lastName:\"Smith\",age:50}" ) )
+     if ( !json2bson2 ( "{firstName:\"John\",lastName:\"Smith\",age:50}",
+                        objlist ) )
       {
          printf ( "Failed to convert json to bson\n" ) ;
          continue ;
@@ -458,8 +458,8 @@ void createRecordList1 ( bson *objlist, INT32 listSize )
       return ;
    for ( ; count < listSize; ++count )
    {
-      if ( !jsonToBson(objlist,"{firstName:\"John\",\
-                                lastName:\"Smith\",age:50}" ))
+      if ( !json2bson2( "{firstName:\"John\",lastName:\"Smith\",age:50}",
+                        objlist ))
       {
          printf ( "Failed to convert json to bson\n" ) ;
       }
@@ -468,8 +468,8 @@ void createRecordList1 ( bson *objlist, INT32 listSize )
    count = 0 ;
    for ( ; count < listSize; ++count )
    {
-      if ( !jsonToBson(objlist,"{firstName:\"Tom\",\
-                                lastName:\"Johnson\",age:27}" ))
+      if ( !json2bson2( "{firstName:\"Tom\",lastName:\"Johnson\",age:27}",
+                        objlist ))
       {
          printf ( "Failed to convert json to bson\n" ) ;
       }
@@ -478,8 +478,9 @@ void createRecordList1 ( bson *objlist, INT32 listSize )
    count = 0 ;
    for ( ; count < listSize; ++count )
    {
-      if ( !jsonToBson(objlist,"{ \"姓名\" : \"李四\", \"年龄\" : 30,\
-                           \"电话\" : [ \"18390378790\",\"13801598000\" ] }" ))
+      if ( !json2bson2( "{ \"姓名\" : \"李四\", \"年龄\" : 30,\
+                           \"电话\" : [ \"18390378790\",\"13801598000\" ] }",
+                        objlist ))
       {
          printf ( "Failed to convert json to bson\n" ) ;
       }
@@ -496,7 +497,7 @@ void createEnglishRecord ( bson *obj )
                     city:\"NewYork\",state:\"NY\",postalCode:\"10021\"},\
                     phoneNumber:[{type: \"home\",number:\"212555-1234\"}]}" ;
    bson_init ( obj ) ;
-   jsonToBson ( obj, r ) ;
+   json2bson2 ( r, obj ) ;
 }
 /* create Chinese record */
 void createChineseRecord ( bson *obj )
@@ -504,7 +505,7 @@ void createChineseRecord ( bson *obj )
    const char *r ="{ \"姓名\" : \"张三\", \"年龄\" : 25, \"id\" : 2001,\
                            \"电话\" : [ \"1808835242\",\"1835923246\" ] }" ;
    bson_init ( obj ) ;
-   jsonToBson ( obj, r ) ;
+   json2bson2 ( r, obj ) ;
 }
 
 void createNameList ( bson *objlist, INT32 listSize )
@@ -517,8 +518,9 @@ void createNameList ( bson *objlist, INT32 listSize )
    }
    for ( ; count < listSize; ++count )
    {
-      if ( !jsonToBson( objlist,"{firstName:\"John\",\
-lastName:\"Smith\",age:50,\"Id\":999}" ))
+      if ( !json2bson2( "{firstName:\"John\",\
+lastName:\"Smith\",age:50,\"Id\":999}",
+                        objlist ))
       {
          printf ( "Failed to convert json to bson\n" ) ;
       }

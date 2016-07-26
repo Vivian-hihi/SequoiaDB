@@ -15,6 +15,7 @@
 *******************************************************************************/
 
 #include <time.h>
+#include "ossUtil.h"
 #include "cJSON_ext.h"
 #include "bson/bson.h"
 

@@ -18,7 +18,7 @@ TEST(cbson, test)
 {
    bson obj ;
    const char *pStr = "{\"_id\":{\"$oid\":\"0123456789abcdef01234567\"}}" ;
-   BOOLEAN flag = jsonToBson( &obj, pStr ) ;
+   BOOLEAN flag = json2bson2( pStr, &obj ) ;
    if ( TRUE == flag )
    {
       printf( "Success, bson is: \n" ) ;
@@ -36,7 +36,7 @@ TEST(cbson, binary)
    INT32 rc = SDB_OK ;
    bson obj ;
    const char *str = "{ \"key\": { \"$binary\" : \"aGVsbG8gd29ybGQ=\", \"$type\": \"1\" } }" ;
-   BOOLEAN flag = jsonToBson2( &obj, str, FALSE, FALSE ) ;
+   BOOLEAN flag = json2bson( str, NULL, CJSON_RIGOROUS_PARSE, TRUE, &obj ) ;
    ASSERT_EQ( flag, TRUE ) ;
    bson_print( &obj ) ;
    ASSERT_EQ( rc, SDB_OK ) ;
@@ -106,23 +106,23 @@ TEST(cbson, esc_problem)
    bson_init( &obj7 ) ;
    bson_init( &obj8 ) ;
    bson_init( &obj9 ) ;
-   flag = jsonToBson( &obj1, str1 ) ;
+   flag = json2bson2( str1, &obj1 ) ;
    ASSERT_EQ( TRUE, flag ) ;
-   flag = jsonToBson( &obj2, str2 ) ;
+   flag = json2bson2( str2, &obj2 ) ;
    ASSERT_EQ( TRUE, flag ) ;
-   flag = jsonToBson( &obj3, str3 ) ;
+   flag = json2bson2( str3, &obj3 ) ;
    ASSERT_EQ( TRUE, flag ) ;
-   flag = jsonToBson( &obj4, str4 ) ;
+   flag = json2bson2( str4, &obj4 ) ;
    ASSERT_EQ( TRUE, flag ) ;
-   flag = jsonToBson( &obj5, str5 ) ;
+   flag = json2bson2( str5, &obj5 ) ;
    ASSERT_EQ( TRUE, flag ) ;
-   flag = jsonToBson( &obj6, str6 ) ;
+   flag = json2bson2( str6, &obj6 ) ;
    ASSERT_EQ( TRUE, flag ) ;
-   flag = jsonToBson( &obj7, str7 ) ;
+   flag = json2bson2( str7, &obj7 ) ;
    ASSERT_EQ( TRUE, flag ) ;
-   flag = jsonToBson( &obj8, str8 ) ;
+   flag = json2bson2( str8, &obj8 ) ;
    ASSERT_EQ( TRUE, flag ) ;
-   flag = jsonToBson( &obj9, str9 ) ;
+   flag = json2bson2( str9, &obj9 ) ;
    ASSERT_EQ( TRUE, flag ) ;
    // insert
    rc = sdbInsert( cl, &obj1 );
@@ -412,7 +412,7 @@ TEST(cbson, dateType)
    for( i = 0; i < sizeof(ppAbnormalDate)/sizeof(const CHAR*); i++ )
    {
       bson_destroy( &obj ) ;
-      if ( TRUE == jsonToBson( &obj, ppAbnormalDate[i] ) )
+      if ( TRUE == json2bson2( ppAbnormalDate[i], &obj ) )
       {
          rc = SDB_INVALIDARG ;
          ASSERT_EQ( SDB_OK, rc ) << "i is: " << i << ", record is: " << ppAbnormalDate[i] ;
@@ -426,7 +426,7 @@ TEST(cbson, dateType)
    for ( i = 0; i < sizeof(ppNormalDate)/sizeof(const CHAR*); i++ )
    {
       printf( "%s\n", ppNormalDate[i] ) ;
-      if ( !jsonToBson( &obj, ppNormalDate[i] ) )
+      if ( !json2bson2( ppNormalDate[i], &obj ) )
       {
          rc = SDB_INVALIDARG ;
          ASSERT_EQ( SDB_OK, rc ) ;
@@ -543,7 +543,7 @@ TEST(cbson, timestampType)
    for ( i = 0; i < sizeof(ppNormalTimestamp)/sizeof(const CHAR*); i++ )
    {
       printf( "%s\n", ppNormalTimestamp[i] ) ;
-      if ( !jsonToBson( &obj, ppNormalTimestamp[i] ) )
+      if ( !json2bson2( ppNormalTimestamp[i], &obj ) )
       {
          rc = SDB_INVALIDARG ;
          ASSERT_EQ( SDB_OK, rc ) ;

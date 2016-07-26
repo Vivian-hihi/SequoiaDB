@@ -1455,7 +1455,7 @@ TEST( collection, aggregate )
    for( i=0; i<rNUM; i++ )
    {
       bson_init( &obj ) ;
-      flag = jsonToBson( &obj, record[i] ) ;
+      flag = json2bson2 ( record[i], &obj ) ;
       bson_print( &obj ) ;
       ASSERT_EQ( true, flag ) ;
       rc = sdbInsert( collection, &obj ) ;
@@ -1468,7 +1468,7 @@ TEST( collection, aggregate )
    for( i=0; i<iNUM; i++ )
    {
       ob[i] = bson_create() ;
-      flag = jsonToBson ( ob[i], command[i] ) ;
+      flag = json2bson2 ( command[i], ob[i] ) ;
       bson_print( ob[i] ) ;
       ASSERT_EQ( true, flag ) ;
    }
