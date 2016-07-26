@@ -183,7 +183,7 @@
       <echo message="build sequoiasql.xml --setvars sql_type=OLTP --setvars project.version=${db_version} --setvars platform=${platform} --setvars edition=${edition_str} --setvars project.outputDirectory=${RELEASE_DIR}" />
       
       <!--3 copy run package to archive dir-->
-      <property name="PACKAGE_NAME" value="${project.name}-${db_version}-${platform}${edition_str}-installer.run" />      
+      <property name="PACKAGE_NAME" value="${project.name}-${sql_type}-${db_version}-${platform}${edition_str}-installer.run" />      
       <echo message="Begin to copy ${PACKAGE_NAME} to ${archive.dir}"/>
       <copy file="${RELEASE_DIR}/${PACKAGE_NAME}" tofile="${archive.dir}/${PACKAGE_NAME}.${BUILD_NUMBER}" />
       <exec executable="bash" dir="${archive.dir}" failonerror="true">
