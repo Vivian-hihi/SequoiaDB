@@ -3772,6 +3772,16 @@ namespace engine
          goto error ;
       }
 
+#ifndef SDB_ENTERPRISE
+      if ( string(pBusinessType) == OM_BUSINESS_SEQUOIASQL )
+      {
+         _errorDetail = "only supported in enterprise edition" ;
+         rc = SDB_OPTION_NOT_SUPPORT ;
+         _sendErrorRes2Web( rc, _errorDetail ) ;
+         goto error ;
+      }
+#endif
+
       _setFileLanguageSep() ;
       templateFile = _rootPath + OSS_FILE_SEP + OM_BUSINESS_CONFIG_SUBDIR 
                      + OSS_FILE_SEP + pBusinessType + OM_TEMPLATE_FILE_NAME
