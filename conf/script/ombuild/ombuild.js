@@ -155,7 +155,7 @@ Helper.prototype.getOMSvc = function Helper_getOMSvc() {
    var arr = Sdbtool.listNodes( { "role":"om", "mode":"local" } ) ;
    if ( arr.size() == 0 ) {
       exp = new SdbError( SDBCM_NODE_NOTEXISTED, "om does not exist in local host" ) ;
-      logger.log( PDERROR, exp ) ;
+      logger.log( PDWARNING, exp ) ;
       throw exp ;
    }
    var obj    = JSON.parse( arr.next() ) ;
@@ -185,6 +185,29 @@ Helper.prototype.getOMAddr = function Helper_getOMAddr() {
    return retStr ;
 } ;
 
+Helper.prototype.omExist = function Helper_omExist() {
+   var omSvc = null ;
+   var exp = null ;
+   try {
+	   omSvc = this.getOMSvc();
+   } catch( e ) {
+	   exp = new SdbError( e, "failed to get the port of om" ) ;
+	   if ( exp.getErrCode() == SDBCM_NODE_NOTEXISTED ) {
+		 return false ;
+	   } else {
+		  logger.log( PDEROR, exp ) ;
+	     throw exp ;
+	  }
+   }
+   if ( isString(omSvc) ) {
+	  return true ;
+   } else {
+	  exp = new SdbError( SDB_SYS, 
+	        sprintf( "the port[?] of om is not a string", omSvc ) ) ;
+      throw exp ;
+   }
+} ;
+
 var ConfigMgr = function ( omConfigFile, action ) {
    this._configFile        = omConfigFile ;
    this._action            = action ;
@@ -198,6 +221,7 @@ var ConfigMgr = function ( omConfigFile, action ) {
    this._coordInfoInFormat = [] ;
    this._rgInfoArr         = [] ;
    this._hostInfoArr       = [] ;
+   this._omAuthInfo        = new AuthInfo() ;
 
 } ;
 
@@ -229,32 +253,41 @@ ConfigMgr.prototype._init = function ConfigMgr__init() {
       throw exp ;
    }
    
-   // 1. check input arguments
-   if ( !File.exist( this._configFile ) ) {
-      errMsg = "building om configure file[" + 
+   // 1. check input action
+   if ( this._action != "" && 
+        this._action != ACTION_BUILD_OM && 
+        this._action != ACTION_REMOVE_OM &&
+        this._action != ACTION_ADD_BUSINESS &&
+        this._action != ACTION_UPDATE_COORD &&
+        this._action != ACTION_FLUSH_CONFIG ) {
+         exp = new SdbError( SDB_INVALIDARG, 
+            sprintf( "--action should be one of the follow: ?|?|?|?|?", 
+               ACTION_BUILD_OM, ACTION_REMOVE_OM, ACTION_ADD_BUSINESS,
+               ACTION_UPDATE_COORD, ACTION_FLUSH_CONFIG ) ) ;
+      logger.log( PDERROR, exp ) ;
+      throw exp ;
+   }
+   if ( this._action == "" ) {
+      this._action = ACTION_ADD_BUSINESS ;
+   }
+   if ( this._action == ACTION_REMOVE_OM ) {
+      return ;
+   }
+   
+   // check input config file
+   if ( this._configFile == null || this._configFile == "" ) {
+      errMsg = "configure file should be specified" ;
+      exp = new SdbError( SDB_INVALIDARG, errMsg ) ;
+      logger.log( PDERROR, exp ) ;
+      throw exp ;
+   } else if ( !File.exist( this._configFile ) ) {
+      errMsg = "configure file[" + 
          this._configFile + "] does not exist" ;
       exp = new SdbError( SDB_INVALIDARG, errMsg ) ;
       logger.log( PDERROR, exp ) ;
       throw exp ;
    }
-   if ( this._action != "" && 
-        this._action != ACTION_BUILD_OM && 
-        this._action != ACTION_REMOVE_OM &&
-        this._action != ACTION_UPDATE_COORD &&
-        this._action != ACTION_FLUSH_CONFIG ) {
-      exp = new SdbError( SDB_INVALIDARG, 
-         sprintf( "--action should be one of the follow: ?|?|?|?", 
-            ACTION_BUILD_OM, ACTION_REMOVE_OM, 
-            ACTION_UPDATE_COORD, ACTION_FLUSH_CONFIG ) ) ;
-      logger.log( PDERROR, exp ) ;
-      throw exp ;
-   }
-   if ( this._action == "" ) {
-      this._action = ACTION_BUILD_OM ;
-   }
-   if ( this._action == ACTION_REMOVE_OM ) {
-      return ;
-   }
+   
    // 2. get configure info
    try {
       this._omConfObj = 
@@ -310,6 +343,10 @@ ConfigMgr.prototype._getDBInstallPacket =
 ConfigMgr.prototype._getCoordInfoWrapperArr = 
    function ConfigMgr__getCoordInfoWrapperArr() {
    return this._coordInfoInFormat ;
+} ;
+
+ConfigMgr.prototype._getOMAuthInfo = function ConfigMgr__getOMAuthInfo() {
+   return this._omAuthInfo ;
 } ;
 
 ConfigMgr.prototype._getField = 
@@ -418,8 +455,8 @@ ConfigMgr.prototype._appendSshPort =
    }
 } ;
 
-ConfigMgr.prototype._appendAdminInfo = 
-   function ConfigMgr__appendAdminInfo() {
+ConfigMgr.prototype._appendSdbAdminInfo = 
+   function ConfigMgr__appendSdbAdminInfo() {
    var sdbUserName       = this._getField( FIELD_SDB_ADMIN_USER_NAME ) ;
    var sdbPassword       = this._getField( FIELD_SDB_ADMIN_PASSWORD ) ;
    var sdbUserGroupName  = sdbPassword + "_group" ;
@@ -431,6 +468,14 @@ ConfigMgr.prototype._appendAdminInfo =
       hostInfo.sdbPassword      = sdbPassword ;      
       hostInfo.sdbUserGroupName = sdbUserGroupName ;
    }
+} ;
+
+ConfigMgr.prototype._appendOMAdminInfo = 
+   function ConfigMgr__appendOMAdminInfo() {
+   var sdbUserName       = this._getField( FIELD_OM_ADMIN_USER_NAME ) ;
+   var sdbPassword       = this._getField( FIELD_OM_ADMIN_PASSWORD ) ;
+   this._omAuthInfo[AuthUser]   = sdbUserName ;
+   this._omAuthInfo[AuthPasswd] = sdbPassword ;
 } ;
 
 ConfigMgr.prototype._appendDBConfigOption = 
@@ -1219,15 +1264,20 @@ ConfigMgr.prototype._doit = function ConfigMgr__doit() {
    if ( this._getAction() == ACTION_REMOVE_OM ) {
       return ;
    }
+   // appending info abount build om
+   this._appendDBInstallPacket() ;
+   if ( this._getAction() == ACTION_BUILD_OM ) {
+      return ;
+   }
    // appending info
    this._appendAddress() ;
    this._appendRootInfo() ;
    this._appendSshPort() ;
-   this._appendAdminInfo() ;
+   this._appendSdbAdminInfo() ;
+   this._appendOMAdminInfo() ;
    this._appendClusterInfo() ;
    this._appendModuleInfo() ;
    this._appendDBConfigOption() ;
-   this._appendDBInstallPacket() ;
    // checking
    this._firstlyCheck() ;
    // appending info
@@ -2560,10 +2610,18 @@ FlushConfig.prototype._doit = function FlushConfig__doit() {
    this._init() ;
    
    // get om address
-   try {
-      omAddr = this.getOMAddr() ;
-   } catch( e ) {
-      exp = new SdbError( e, "failed to get local om's address" ) ;
+   if ( this.omExist() ) {
+      try {
+         omAddr = this.getOMAddr() ;
+      } catch( e ) {
+         exp = new SdbError( e, "failed to get local om's address" ) ;
+         logger.log( PDERROR, exp ) ;
+         throw exp ;
+      }
+   } else {
+      exp = new SdbError( SDBCM_NODE_NOTEXISTED, 
+                          "need to flush om's address to nodes' " + 
+                          "config file, but om does not exist in local host" ) ;
       logger.log( PDERROR, exp ) ;
       throw exp ;
    }
@@ -2772,28 +2830,171 @@ RestartNodes.prototype._doit =
    }
 }
 
-var InstallOM = function( configMgr, hostInfoArr, configInfoArr ) {
+var AddBusiness = function( configMgr, hostInfoArr, configInfoArr ) {
    this._configMgr     = configMgr ;
    this._hostInfoArr   = hostInfoArr ;
    this._configInfoArr = configInfoArr ;
+   this._clusterExist  = false ;
    this._omAddr        = null ;
-   this._omaObj        = null ;
    this._omObj         = null ;
 } ;
 
-InstallOM.prototype = new Helper() ;
+AddBusiness.prototype = new Helper() ;
 
-InstallOM.prototype._init = function InstallOM__init() {
+AddBusiness.prototype._init = function AddBusiness__init() {
+   var exp = null ;
+   // om exist or not
+   if ( !this.omExist() ) {
+      exp = new SdbError( SDBCM_NODE_NOTEXISTED, "om does not exist in local host" ) ;
+      logger.log( PDERROR, exp ) ;
+      throw exp ;
+   }
+   // get om object
+   var omAuthInfo = this._configMgr._getOMAuthInfo() ;
+   var omSvc = this.getOMSvc() ;
+   try {
+      this._omObj = new Sdb( "127.0.0.1", omSvc, 
+                             omAuthInfo[AuthUser], omAuthInfo[AuthPasswd] ) ;
+   } catch( e ) {
+      exp =  new SdbError( e, "failed to connect to om in local host" ) ;
+      logger.log( PDERROR, exp ) ;
+      throw exp ;
+   }
+   // get om address
+   this._omAddr = this.getOMAddr() ;
 } ;
 
-InstallOM.prototype._getOMAddr = function InstallOM__getOMAddr() {
-   return this._omAddr ;
-} ;
-
-InstallOM.prototype._insertClusterInfo = 
-   function InstallOM__insertClusterInfo() {
+AddBusiness.prototype._checkClusterInfo = function AddBusiness__checkClusterInfo() {
+   var exp = null ;
    var csName = "SYSDEPLOY" ;
    var clName = "SYSCLUSTER" ;
+   
+   // cluster info from config file
+   var clusterInfoObj = this._configMgr._getClusterInfo() ;
+   var clusterName = clusterInfoObj[ClusterName] ;
+   // cluster info from om
+   try {
+      var cur = this._omObj.getCS( csName ).getCL( clName ).find() ;
+      var record = null ;
+      var recordObj = null ;
+      while( ( record = cur.next() ) != null ) {
+         recordObj = record.toObj() ;
+         if ( clusterName == recordObj[ClusterName] ) {
+            if ( clusterInfoObj[SdbUser] != recordObj[SdbUser] ||
+                 clusterInfoObj[SdbPasswd] != recordObj[SdbPasswd] ||
+                 clusterInfoObj[SdbUserGroup] != recordObj[SdbUserGroup] ||
+                 adaptPath(clusterInfoObj[InstallPath]) != 
+                    adaptPath(recordObj[InstallPath]) ) {
+               exp = new SdbError( SDB_INVALIDARG, 
+                  sprintf( "cluster[?] has existed in om, it's info is[?], " + 
+                     "but the cluster info which got from config file is[?], " + 
+                     "it's conflicted with the existed cluster info", clusterName, 
+                     clusterInfoObj.toString(), record.toJson() ) ) ;
+               logger.log( PDERROR, exp ) ;
+               throw exp ;               
+            } else {
+               this._clusterExist = true ;
+            }
+            break ;
+         }
+      }
+   } catch( e ) {
+      exp =  new SdbError( e, "failed to check the info of cluster" ) ;
+      logger.log( PDERROR, exp ) ;
+      throw exp ;
+   }
+   
+} ;
+
+AddBusiness.prototype._checkModuleInfo = function AddBusiness__checkModuleInfo() {
+   var exp = null ;
+   var csName = "SYSDEPLOY" ;
+   var clName = "SYSBUSINESS" ;
+   var cur = null ;
+   
+   var moduleInfoObj = this._configMgr._getModuleInfo() ;
+   var clusterName = moduleInfoObj[ClusterName] ;
+   var businessName = moduleInfoObj[BusinessName] ;
+
+   try {
+      cur = this._omObj.getCS( csName ).getCL( clName ).find() ;
+      var record = null ;
+      while( (record = cur.next()) != null ) {
+         recordObj = record.toObj() ;
+         if ( moduleInfoObj[BusinessName] == recordObj[BusinessName] ) {
+            exp = new SdbError( SDB_INVALIDARG, 
+               sprintf( "business name[?] has been used in cluster[?]", 
+                  recordObj[BusinessName], recordObj[ClusterName] ) ) ;
+            logger.log( PDERROR, exp ) ;
+            throw exp ;
+         }
+      }
+   } catch( e ) {
+      exp = new SdbError( e, "failed to check the info of business" ) ;
+      logger.log( PDERROR, exp ) ;
+      throw exp ;
+   }
+} ;
+
+AddBusiness.prototype._checkHostInfo = function AddBusiness__checkHostInfo() {
+   var exp = null ;
+   var csName = "SYSDEPLOY" ;
+   var clName = "SYSHOST" ;
+   var cur = null ;
+   var errMsgArr = [] ;
+   
+   var hostInfoArr = this._configMgr._getHostInfoArr() ;
+   var clusterInfoObj = this._configMgr._getClusterInfo() ;
+   var currentClusterName = clusterInfoObj[ClusterName] ;
+   
+   try {
+      cur = this._omObj.getCS( csName ).getCL( clName ).find() ;
+      var record = null ;
+      while( (record = cur.next()) != null ) {
+         recordObj = record.toObj() ;
+         var hostName = recordObj[HostName] ;
+         var clusterName = recordObj[ClusterName] ;
+         for( var i = 0; i < hostInfoArr.length; i++ ) {
+            var host = hostInfoArr[i] ;
+            var name = host.hostName ;
+            if ( hostName == name && currentClusterName != clusterName ) {
+               errMsgArr.push( sprintf( "host[?] has already been using in " +
+                                  "cluster[?], it can't be add to cluster[?]", 
+                                  hostName, clusterName, currentClusterName ) ) ;
+            }
+         }
+      }
+   } catch( e ) {
+      exp = new SdbError( e, 
+         "failed to check whether hosts are conflicting in each cluster or not" ) ;
+      logger.log( PDERROR, exp ) ;
+      throw exp ;
+   }
+   if ( errMsgArr.length != 0 ) {
+      exp = new SdbError( SDB_INVALIDARG, errMsgArr.toString() ) ;
+      logger.log( PDERROR, exp ) ;
+      throw exp ;
+   }
+} ;
+
+AddBusiness.prototype._check = function AddBusiness__check() {
+   
+   // cluster exist or not
+   // and if so, whether the info is the same the current or not
+   this._checkClusterInfo() ;
+   // business exist or not
+   this._checkModuleInfo() ;
+   // host exist or not
+   this._checkHostInfo() ;
+} ;
+
+AddBusiness.prototype._insertClusterInfo = 
+   function AddBusiness__insertClusterInfo() {
+   var csName = "SYSDEPLOY" ;
+   var clName = "SYSCLUSTER" ;
+   if ( this._clusterExist ) {
+      return ;
+   }
    try {
       var clusterInfoObj = this._configMgr._getClusterInfo() ;
       var cs = this._omObj.getCS( csName ) ;
@@ -2808,8 +3009,8 @@ InstallOM.prototype._insertClusterInfo =
    }
 } ;
 
-InstallOM.prototype._insertModuleInfo = 
-   function InstallOM__insertModuleInfo() {
+AddBusiness.prototype._insertModuleInfo = 
+   function AddBusiness__insertModuleInfo() {
    var csName = "SYSDEPLOY" ;
    var clName = "SYSBUSINESS" ;
    try {
@@ -2826,8 +3027,8 @@ InstallOM.prototype._insertModuleInfo =
    }   
 } ;
 
-InstallOM.prototype._insertHostInfo = 
-   function InstallOM__insertHostInfo() {
+AddBusiness.prototype._insertHostInfo = 
+   function AddBusiness__insertHostInfo() {
    var csName = "SYSDEPLOY" ;
    var clName = "SYSHOST" ;
    try {
@@ -2843,8 +3044,8 @@ InstallOM.prototype._insertHostInfo =
    } 
 } ;
 
-InstallOM.prototype._insertConfigInfo = 
-   function InstallOM__insertConfigInfo() {
+AddBusiness.prototype._insertConfigInfo = 
+   function AddBusiness__insertConfigInfo() {
    var csName = "SYSDEPLOY" ;
    var clName = "SYSCONFIGURE" ;
    // append om address info
@@ -2873,6 +3074,32 @@ InstallOM.prototype._insertConfigInfo =
       logger.log( PDERROR, exp ) ;
       throw exp ;
    } 
+} ;
+
+AddBusiness.prototype._doit = function AddBusiness__doit() {
+   var exp = null ;
+   this._init() ;
+   this._check() ;
+   try {
+      this._insertClusterInfo() ;
+      this._insertModuleInfo() ;
+      this._insertHostInfo() ;
+      this._insertConfigInfo() ;
+   } catch( e ) {
+      exp = new SdbError( e, "failed to insert info into om" ) ;
+      logger.log( PDERROR, exp ) ;
+      throw exp ;
+   }
+   logger.log( PDEVENT, "succeed to add business" ) ; 
+} ;
+
+var InstallOM = function( configMgr ) {
+   this._configMgr     = configMgr ;
+} ;
+
+InstallOM.prototype = new Helper() ;
+
+InstallOM.prototype._init = function InstallOM__init() {
 } ;
 
 InstallOM.prototype._copyInstallPacket = 
@@ -2918,8 +3145,6 @@ InstallOM.prototype._installOM =
       logger.log( PDERROR, exp ) ;
       throw exp ;
    }
-   // keep oma object to local
-   this._omaObj = oma ;
    // create om svc
    var om     = null ;
    var dbPath = null ;
@@ -2944,60 +3169,18 @@ InstallOM.prototype._installOM =
       try { oma.close() ; } catch( e ) {}
       throw exp ;
    }
-   // connect to om svc
-   var om = null ;
-   try {
-      om = new Sdb( "127.0.0.1", 11780, "admin", "admin" ) ;
-   } catch( e ) {
-      exp = new SdbError( e, "failed to connect om" ) ;
-      logger.log( PDERROR, exp ) ;
-      try { oma.removeOM( 11780 ) ; } catch( e ) {}
-      try { oma.close() ; } catch( e ) {}
-      throw exp ;
-   }
-   // keep om object to local
-   this._omObj = om ;
-   // set om address
-   this._omAddr = System.getHostName() + ":" + 11785 ;
-} ;
-
-InstallOM.prototype._removeOM = function InstallOM__removeOM() {
-   var exp = null ;
-   if ( this._omaObj == null ) {
-      return ;
-   }
-   logger.log( PDEVENT, "going to remove the installed om" ) ;
-   try {
-      this._omaObj.removeOM( 11780 ) ;
-   } catch( e ) {
-      var exp = new SdbError( e, "failed to remove om" ) ;
-      logger.log( PDERROR, exp ) ;
-      println( exp ) ;
-   } finally {
-      try{ this._omaObj.close() ; } catch(e){}
-   }
-   if ( exp == null ) {
-      logger.log( PDEVENT, "succeed to remove the installed om" ) ;
-   }
 } ;
 
 InstallOM.prototype._doit = function InstallOM__doit() {
-   var exp = null ;
    this._init() ;
-   this._copyInstallPacket() ;
-   this._installOM() ;
-   try {
-      this._insertClusterInfo() ;
-      this._insertModuleInfo() ;
-      this._insertHostInfo() ;
-      this._insertConfigInfo() ;
-   } catch( e ) {
-      exp = SdbError( e, "failed to insert info into om" ) ;
-      logger.log( PDERROR, exp ) ;
-      this._removeOM() ;
-      throw exp ;
+   if ( !this.omExist() ) {
+	   this._installOM() ;
+      this._copyInstallPacket() ;
+   } else {
+       var exp = new SdbError( SDBCM_NODE_EXISTED, "om has already existed in localhost" ) ;
+	   logger.log( PDERROR, exp ) ;
+	   throw exp ;
    }
-   logger.log( PDEVENT, "succeed to install om" ) ; 
 } ;
 
 var RemoveOM = function() {
@@ -3031,19 +3214,27 @@ function main() {
    var configMgr = new ConfigMgr( OM_CONF_FILE, ACTION ) ;
    configMgr._doit() ;
 
-   // 2. try to remove om
+   // 2. try to build/remove om
+   if ( configMgr._getAction() == ACTION_BUILD_OM ) {
+	   var installOMTask = new InstallOM( configMgr ) ;
+           logger.log( PDEVENT, "excuting task: install om" ) ;
+	   installOMTask._doit() ;
+	   return 0;
+   }
    if ( configMgr._getAction() == ACTION_REMOVE_OM ) {
       var removeOMTask = new RemoveOM() ;
+      logger.log( PDEVENT, "excuting task: remove om" ) ;
       removeOMTask._doit() ;
       return 0 ;
    }
    
    try {
       // 3. try to update coord info
-      if ( configMgr._getAction() == ACTION_BUILD_OM || 
+      if ( configMgr._getAction() == ACTION_ADD_BUSINESS || 
            configMgr._getAction() == ACTION_UPDATE_COORD ||
            configMgr._getAction() == ACTION_FLUSH_CONFIG ) {
          var updateCoordTask = new UpdateCoord( configMgr ) ;
+         logger.log( PDEVENT, "excuting task: update coord" ) ;
          updateCoordTask._doit() ;
       }
       // if we just want to update coord info, let's return
@@ -3055,32 +3246,43 @@ function main() {
       // 4. collect the config info of the nodes in current cluster
       // those info will be saved in collection "SYSDEPLOY.SYSCONFIGURE" in OM
       var collectNodeInfoTask = new CollectNodeInfo( configMgr ) ;
+      logger.log( PDEVENT, "excuting task: collect node's info" ) ;
       collectNodeInfoTask._doit() ;
 
       // 5. get the info of host in current cluster
       // those info will be saved in collection "SYSDEPLOY.SYSHOST" in OM
       var nodeDataPathArr = collectNodeInfoTask._getNodeDataPaths() ;
       var checkHostTask   = new CheckHost( configMgr, nodeDataPathArr ) ;
+      logger.log( PDEVENT, "excuting task: collect host's info" ) ;
       checkHostTask._doit() ;
 
-      // 6. install om, and insert the info we got from the cluster into om
-      if ( configMgr._getAction() == ACTION_BUILD_OM ) {
+      // 6. add business
+      if ( configMgr._getAction() == ACTION_ADD_BUSINESS ) {
          try {
             var checkHostInfoArr = checkHostTask._getCheckHostResult() ;
             var nodeConfInfoArr  = collectNodeInfoTask._getNodeConfResult() ;
-            var installOMTask    = new InstallOM( configMgr, 
-                                                  checkHostInfoArr, 
-                                                  nodeConfInfoArr ) ;
-            installOMTask._doit() ;
+            var addBusinessTask  = new AddBusiness( configMgr, 
+                                                    checkHostInfoArr, 
+                                                    nodeConfInfoArr ) ;
+            logger.log( PDEVENT, "excuting task: add business" ) ;
+            addBusinessTask._doit() ;
          } catch( e ) {
-            exp = new SdbError( e, "failed to install om in local host" ) ;
+            /*
+            exp = new SdbError( e, "failed to add business to local om" ) ;
             logger.log( PDERROR, exp ) ;
-            if ( exp.getErrCode() == SDBCM_NODE_EXISTED ) {
-               println( sprintf( "Error: om has existed in local host, " +
-                  "please use command[?] to remove the existed one before " + 
-                  "building it.", 
-                  "./ombuild.sh --conf ombuild.conf --action removeom" ) ) ;
-               // stop running 
+            throw exp ;
+            */
+            errMsg = "failed to add business to local om" ;
+            exp = new SdbError( e, errMsg ) ;
+            logger.log( PDERROR, exp ) ;
+            if ( exp.getErrCode() == SDBCM_NODE_NOTEXISTED ) {
+               errMsg = sprintf( "Error: failed add business to local om, " + 
+                  "for om does not exist in local host. " + 
+                  "Please use command[?] to install om, and then try " + 
+                  "to add business again.", 
+                  "./ombuild.sh --action buildom --conf ombuild.conf"  ) ;
+               println( errMsg ) ;
+               // stop running
                return -1 ;
             } else {
                throw exp ;
@@ -3090,12 +3292,13 @@ function main() {
 
       // 7. flush some new config option into all the nodes' config file
       //    and restart all the nodes
-      if ( configMgr._getAction() == ACTION_BUILD_OM || 
+      if ( configMgr._getAction() == ACTION_ADD_BUSINESS || 
            configMgr._getAction() == ACTION_FLUSH_CONFIG ) {
          // flush config
          try {
             var nodeConfPathArr = collectNodeInfoTask._getNodeConfPaths() ;
             var flushConfigTask = new FlushConfig( configMgr, nodeConfPathArr ) ;
+            logger.log( PDEVENT, "excuting task: flush config" ) ;
             flushConfigTask._doit() ;
          } catch( e ) {
             errMsg = "failed to flush configuration information" ;
@@ -3105,23 +3308,20 @@ function main() {
                errMsg = sprintf( "Error: can't flush new configuration " + 
                   "information into node's config file, for there is no " + 
                   "om in local, and we can't get the address of it. " +
-                  "Please use command[?] to install om, and this command " + 
-                  "will also flush the new configuration information into " + 
-                  "the node's config file.", 
-                  "./ombuild.sh --conf ombuild.conf --action buildom"  ) ;
+                  "Please use command[?] to install om, and then try " + 
+                  "to flush again. ", 
+                  "./ombuild.sh --action buildom --conf ombuild.conf"  ) ;
+               println( errMsg ) ;
+               // stop running
+               return -1 ;
             } else {
-               errMsg = sprintf( "Error: failed to flush the new configuration " + 
-                  "information into node's config file. see the error detail " +
-                  "in log file[?] and use command[?] to try again.", JS_LOG_FILE,
-                  "./ombuild.sh --conf ombuild.conf --action flushconfig" );
+               throw exp ;
             }
-            println( errMsg ) ;
-            // stop running
-            return -1 ;
          }
          // restart nodes
          try {
             var restartNodesTask = new RestartNodes( configMgr ) ;
+            logger.log( PDEVENT, "excuting task: restart nodes" ) ;
             restartNodesTask._doit() ;
          } catch( e ) {
             exp = new SdbError( e, 

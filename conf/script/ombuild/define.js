@@ -42,6 +42,8 @@ var FIELD_DB_AUTH_PASSWD                  = "db_auth_passwd" ;
 var FIELD_DB_CONFIG_OPTION                = "db_config_option" ;
 var FIELD_DB_CONFIG_SVC_SCHEDULER         = "svcscheduler" ;
 var FIELD_DB_INSTALL_PACKET               = "db_install_packet" ;
+var FIELD_OM_ADMIN_USER_NAME              = "om_admin_user_name" ;
+var FIELD_OM_ADMIN_PASSWORD               = "om_admin_password" ;
 
 var FIELD_ROOT_USER                       = "_root_user" ;
 var FIELD_ROOT_PASSWD                     = "_root_passwd" ;
@@ -90,6 +92,7 @@ var FIELD_CONF_OM_ADDR                    = "omaddr" ;
 
 var ACTION_BUILD_OM                       = "buildom" ;
 var ACTION_REMOVE_OM                      = "removeom" ;
+var ACTION_ADD_BUSINESS                   = "addbusiness" ;
 var ACTION_UPDATE_COORD                   = "updatecoord" ;
 var ACTION_FLUSH_CONFIG                   = "flushconfig" ;
 
@@ -250,4 +253,9 @@ var FlushedConfig = function() {
 var GroupInfo = function() {
    this.groupName                     = "" ;
    this.nodeArr                       = [] ;
+} ;
+
+var AuthInfo = function() {
+   this[AuthUser]                     = "" ;
+   this[AuthPasswd]                   = "" ;
 } ;

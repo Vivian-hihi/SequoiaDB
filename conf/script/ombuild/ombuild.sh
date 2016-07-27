@@ -18,10 +18,11 @@ arr_separate_result=()
 function displayUsage()
 {
    echo "  --help            display the usage "
-   echo "  --conf arg        (required)specified the config file. e.g. --conf ombuild.conf "
-   echo "  --action arg      (optional)specified the action for running, can be one of the "
-   echo "                    follow: 'buildom'|'removeom'|'updatecoord'|'flushconfig',     "
-   echo "                    default to be 'buildom'. e.g. --action buildom "
+   echo "  --action <action> [--conf <config file>] "
+   echo "                    specified the action for running, can be one of the follow: "
+   echo "                       'buildom'|'removeom'|'addbusiness'|'updatecoord'|'flushconfig',"
+   echo "                    default to be 'addbusiness'. e.g. --action addbusiness --conf ombuild.conf"
+   echo "                    when action is 'removeom', no need to specifiy the config file"
 }
 
 #
