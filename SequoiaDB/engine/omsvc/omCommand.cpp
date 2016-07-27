@@ -9946,6 +9946,13 @@ namespace engine
       string businessName ;
       INT64 taskID ;
 
+#ifndef SDB_ENTERPRISE
+      _errorDetail = "only supported in enterprise edition" ;
+      rc = SDB_OPTION_NOT_SUPPORT ;
+      _sendErrorRes2Web( rc, _errorDetail ) ;
+      goto error ;
+#endif
+
       rc = _parseRestSsqlExecInfo() ;
       if ( SDB_OK != rc )
       {
