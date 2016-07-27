@@ -813,7 +813,7 @@ INT32 php_json2Bson( zval *pJson, bson *pBson TSRMLS_DC )
    {
       if( Z_TYPE_P( pJson ) == IS_STRING )
       {
-         if( !json2bson2( Z_STRVAL_P( pJson ), pBson ) )
+         if( !jsonToBson( pBson, Z_STRVAL_P( pJson ) ) )
          {
             rc = SDB_DRIVER_BSON_ERROR ;
             goto error ;
