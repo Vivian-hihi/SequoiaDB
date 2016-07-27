@@ -35,7 +35,7 @@
 
 #include "core.hpp"
 #include "jsapi.h"
-#include "../client/jstobs.h"
+#include "../client/jstobs2.h"
 #include "../client/bson/bson.h"
 #include "../mdocml/parseMandocCpp.hpp"
 #include "sptParseTroff.hpp"

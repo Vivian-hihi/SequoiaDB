@@ -42,7 +42,7 @@
 #include "ossMem.hpp"
 #include "utilStr.hpp"
 #include "../client/base64c.h"
-#include "../client/jstobs.h"
+#include "../client/jstobs2.h"
 #include <boost/lexical_cast.hpp>
 
 #define SPT_CONVERTOR_SPE_OBJSTART '$'
@@ -58,6 +58,9 @@
 #define SPT_SPEOBJ_NUMBERLONG "$numberLong"
 #define SPT_SPEOBJ_DECIMAL "$decimal"
 #define SPT_SPEOBJ_PRESICION "$precision"
+
+#define TIME_STAMP_TIMESTAMP_MIN (-2147483648LL)
+#define TIME_STAMP_TIMESTAMP_MAX  (2147483647LL)
 
 /*
 // check date type bounds

@@ -63,7 +63,6 @@ elif windows:
 
 #Header files
 clientCEnv.Install( '#/client/include', "client/client.h" )
-clientCEnv.Install( '#/client/include', "client/jstobs.h" )
 clientCEnv.Install( '#/client/include', "client/cJSON2.h" )
 clientCEnv.Install( '#/client/include', "client/cJSON_ext.h" )
 clientCEnv.Install( '#/client/include', "client/jstobs2.h" )

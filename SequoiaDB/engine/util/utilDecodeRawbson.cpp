@@ -35,7 +35,7 @@
 
 #include "utilDecodeRawbson.hpp"
 #include "rawbson2csv.h"
-#include "../client/jstobs.h"
+#include "../client/jstobs2.h"
 #include "../client/bson/bson.h"
 
 #define UTIL_DE_STR_TABLE   '\t'

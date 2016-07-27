@@ -35,7 +35,7 @@
 
 *******************************************************************************/
 #include "rawbson2json.h"
-#include "../client/jstobs.h"
+#include "../client/jstobs2.h"
 
 // The caller pass the pointer for raw bson, and output buffer pointer and
 // buffer length.
