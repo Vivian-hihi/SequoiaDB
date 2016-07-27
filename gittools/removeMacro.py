@@ -41,12 +41,20 @@ def isMacroEnd(line):
         return False
     return True
 
+def isMacroIfndef(line):
+    if not isMacro(line):
+        return False
+    if line.find('ifndef') == -1:
+        return False
+    return True
+
 def removeMacro(fileName, macro):
     if not os.path.exists(fileName):
         raise Exception("file not exists: " + fileName)
     file = open(fileName, 'r')
     isMacroStarted = False
     inMacroElse = False
+    isIfndef = False
     depth = 0 # macro nested depth
     for rawLine in file:
         line = rawLine.lstrip()
@@ -54,6 +62,8 @@ def removeMacro(fileName, macro):
             if isMacroStart(line) and line.find(macro) != -1:
                 isMacroStarted = True
                 depth += 1
+                if isMacroIfndef(line):
+                   isIfndef = True
             else:
                 sys.stdout.write(rawLine)
         else:
@@ -72,7 +82,10 @@ def removeMacro(fileName, macro):
                     isMacroStarted = False
                     inMacroElse = False
 
-            if inMacroElse and not isMacroElse(line):
+            if isIfndef:
+                if not inMacroElse:
+                    sys.stdout.write(rawLine)
+            elif inMacroElse and not isMacroElse(line):
                 sys.stdout.write(rawLine)
     file.close()
 
