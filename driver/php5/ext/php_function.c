@@ -174,87 +174,57 @@ INT32 php_jsonFind( const CHAR *pStr,
 {
    INT32 rc = SDB_OK ;
    INT32 keyLen = ossStrlen( pKey ) ;
-   CJSON_VALUE_TYPE cJsonType = CJSON_NONE ;
-   const CHAR *pJsonKey = NULL ;
-   CJSON_MACHINE *pMachine = NULL ;
-   const cJson_iterator *pIter = NULL ;
-
+   cJSON *pRoot = cJSON_Parse( pStr ) ;
+   cJSON *pItem = NULL ;
    MAKE_STD_ZVAL( *ppValue ) ;
    ZVAL_NULL( *ppValue ) ;
-
-   pMachine = cJsonCreate() ;
-   if( pMachine == NULL )
-   {
-      rc = SDB_OOM ;
-      goto error ;
-   }
-   cJsonInit( pMachine, CJSON_RIGOROUS_PARSE, TRUE ) ;
-   if( cJsonParse( pStr, pMachine ) == FALSE )
+   if( !pRoot || !(pRoot->child) )
    {
       rc = SDB_INVALIDARG ;
       goto error ;
    }
-   pIter = cJsonIteratorInit( pMachine ) ;
-   if( pIter == NULL )
+   pItem = pRoot->child ;
+   while( pItem )
    {
-      rc = SDB_OOM ;
-      goto error ;
-   }
-
-   while( cJsonIteratorMore( pIter ) )
-   {
-      pJsonKey = cJsonIteratorKey( pIter ) ;
-      if( !strncmp( pJsonKey,
+      if( !strncmp( pItem->string,
                     pKey,
                     keyLen ) )
       {
          MAKE_STD_ZVAL( *ppValue ) ;
-         cJsonType = cJsonIteratorType( pIter ) ;
-         switch( cJsonType )
+         switch( pItem->type )
          {
-         case CJSON_STRING:
-         {
-            const CHAR *pString = cJsonIteratorString( pIter ) ;
-            ZVAL_STRING( *ppValue, pString, 1 ) ;
+         case cJSON_String:
+            ZVAL_STRING( *ppValue, pItem->valuestring, 1 ) ;
             break ;
-         }
-         case CJSON_TRUE:
-         {
+         case cJSON_True:
             ZVAL_BOOL( *ppValue, 1 ) ;
             break ;
-         }
-         case CJSON_FALSE:
-         {
+         case cJSON_False:
             ZVAL_BOOL( *ppValue, 0 ) ;
             break ;
-         }
-         case CJSON_INT32:
-         {
-            INT32 number = cJsonIteratorInt32( pIter ) ;
-            ZVAL_LONG( *ppValue, number ) ;
+         case cJSON_Number:
+            if( pItem->numType == cJSON_DOUBLE )
+            {
+               ZVAL_DOUBLE( *ppValue, pItem->valuedouble ) ;
+            }
+            else if( pItem->numType == cJSON_INT32 )
+            {
+               ZVAL_LONG( *ppValue, pItem->valueint ) ;
+            }
+            else
+            {
+               ZVAL_LONG( *ppValue, 0 ) ;
+            }
             break ;
-         }
-         case CJSON_DOUBLE:
-         {
-            FLOAT64 number = cJsonIteratorDouble( pIter ) ;
-            ZVAL_DOUBLE( *ppValue, number ) ;
-            break ;
-         }
-         case CJSON_INT64:
-         {
-            ZVAL_LONG( *ppValue, 0 ) ;
-            break ;
-         }
          default:
             rc = SDB_INVALIDARG ;
             break ;
          }
          break ;
       }
-      cJsonIteratorNext( pIter ) ;
+      pItem = pItem->next ;
    }
 done:
-   cJsonRelease( pMachine ) ;
    return rc ;
 error:
    goto done ;

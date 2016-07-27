@@ -36,9 +36,9 @@
 *******************************************************************************/
 #include "json2rawbson.h"
 #if defined (SDB_ENGINE) || defined (SDB_CLIENT)
-#include "../client/jstobs2.h"
+#include "../client/jstobs.h"
 #else
-#include "jstobs2.h"
+#include "jstobs.h"
 #endif
 // This function should NEVER be directly called other than fromjson.cpp
 // The reason to separate this function into different file is that
@@ -54,7 +54,7 @@ CHAR * json2rawbson ( const CHAR *str, BOOLEAN isBatch )
    bson obj ;
    CHAR *p = NULL ;
    bson_init ( &obj ) ;
-   if ( json2bson ( str, NULL, CJSON_RIGOROUS_PARSE, !isBatch, &obj ) )
+   if ( jsonToBson2 ( &obj, str, 0, isBatch ) )
    {
       if ( obj.data )
       {
@@ -75,7 +75,7 @@ CHAR * json2rawcbson ( const CHAR *str )
    bson obj ;
    CHAR *p = NULL ;
    bson_init ( &obj ) ;
-   if ( json2bson ( str, NULL, CJSON_RIGOROUS_PARSE, 0, &obj ) )
+   if ( jsonToBson2 ( &obj, str, 0, 1 ) )
    {
       if ( obj.data )
       {

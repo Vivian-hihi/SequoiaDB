@@ -24,7 +24,7 @@
 #include "core.h"
 #include "ossTypes.h"
 #include "bson/bson.h"
-#include "jstobs2.h"
+#include "jstobs.h"
 #include "spd.h"
 #include "clientDef.h"
 

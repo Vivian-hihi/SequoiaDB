@@ -112,9 +112,8 @@ void sdbBulkInsert()
    for ( count = 0; count < NUM; count++ )
    {
       objList[count] = bson_create() ;
-      if ( !json2bson2 ( "{firstName:\"John\",\
-                         lastName:\"Smith\",age:50}",
-                         objList[count] ) )
+      if ( !jsonToBson ( objList[count],"{firstName:\"John\",\
+                                  lastName:\"Smith\",age:50}" ) )
       {
          printf ( "Failed to convert json to bson." OSS_NEWLINE ) ;
          continue ;
