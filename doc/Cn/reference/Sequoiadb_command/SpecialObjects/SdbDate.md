@@ -14,7 +14,7 @@
 
 ##示例##
 
--   插入一个日志类型的记录
+-   插入一个日期类型的记录
 
 <pre class="prettyprint lang-javascript">
 > db.foo.bar.insert({date:{$date:"2015-03-13"}})
