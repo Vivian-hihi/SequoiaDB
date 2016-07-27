@@ -102,7 +102,7 @@
 		<replaceregexp match='&lt;testsuite name="(.*)" file' replace='&lt;testsuite name="${test.suite.name}" file' flags="g" byline="true" encoding="utf-8">
 			<fileset dir="${reports.path}/" includes="*" />
 		</replaceregexp>
-		<replaceregexp match='&lt;testcase n' replace='&lt;testcase classname="${test.suite.class.name}" n' flags="g" byline="true" encoding="utf-8">
+		<replaceregexp match='&lt;testcase n' replace='&lt;testcase classname="${test.suite.class.name}-${test.case.name}" n' flags="g" byline="true" encoding="utf-8">
 			<fileset dir="${reports.path}/" includes="*" />
 		</replaceregexp>
 	</target>
