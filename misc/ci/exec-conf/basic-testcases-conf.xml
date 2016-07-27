@@ -27,6 +27,7 @@
         <testsuite>transaction</testsuite>
         <testsuite>updateSymbol</testsuite>
         <testsuite>sdbLobTool</testsuite>
+        <testsuite>cjson</testsuite>
     </machine2>
     <machine3>
         <testsuite>update</testsuite>
