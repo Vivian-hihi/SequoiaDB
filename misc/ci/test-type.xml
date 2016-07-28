@@ -184,6 +184,38 @@
 				<echo message="... Test c++ driver is over ..." />
 			</case>
 			
+			<case value="driver-C">
+				<echo message="... Test story c driver ..." />
+				<sdbtest host="${test.host.NAME}" testscript="${test.machine.deploy.path}/deploy/exec-story-C-test.xml" 
+				   remotereports="${testcase.path}/drivers_testcases/story_C/reports" masterreports="${test.reports.path}" >
+					<param name="ci.properties.path" value="${test.machine.software.path}/ci.test.properties" />
+					<param name="antTask.jar.path" value="${test.machine.deploy.path}/deploy/ant-sdbtasks" />
+					<param name="C.testcase.path" value="${testcase.path}/drivers_testcases/story_C/build" />
+					<param name="deploy.case.fullname" value="${deploy.case.fullname}" />
+					<param name="excludes.dir.patterns" value="" />
+					<param name="includes.dir.patterns" value="*" />
+					<param name="BUILD_NUMBER" value="${BUILD_NUMBER}" />
+					<param name="test-type-list" value="${Test-Type}" />
+				</sdbtest>
+				<echo message="... Test story c driver is over ..." />
+			</case>
+
+			<case value="driver-CPP">
+				<echo message="... Test story c++ driver ..." />
+				<sdbtest host="${test.host.NAME}" testscript="${test.machine.deploy.path}/deploy/exec-story-CPP-test.xml" 
+				   remotereports="${testcase.path}/drivers_testcases/story_CPP/reports" masterreports="${test.reports.path}" >
+					<param name="ci.properties.path" value="${test.machine.software.path}/ci.test.properties" />
+					<param name="antTask.jar.path" value="${test.machine.deploy.path}/deploy/ant-sdbtasks" />
+					<param name="CPP.testcase.path" value="${testcase.path}/drivers_testcases/story_CPP/build" />
+					<param name="deploy.case.fullname" value="${deploy.case.fullname}" />
+					<param name="excludes.dir.patterns" value="rg" />
+					<param name="includes.dir.patterns" value="*" />
+					<param name="BUILD_NUMBER" value="${BUILD_NUMBER}" />
+					<param name="test-type-list" value="${Test-Type}" />
+				</sdbtest>
+				<echo message="... Test story c++ driver is over ..." />
+			</case>			
+			
 			<case value="driver-mongoc">
 				<echo message="...Test mongoc driver..." />     
 				<sdbtest host="${test.host.NAME}" testscript="${test.machine.deploy.path}/deploy/exec-driver-mongoc-test.xml" remotereports="${testcase.path}/drivers_testcases/mongoc/reports" masterreports="${test.reports.path}" >
