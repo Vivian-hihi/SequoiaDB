@@ -523,6 +523,7 @@ namespace engine
       if ( objVec.size() > 0 )
       {
          result = objVec[0] ;
+         result = result.getOwned() ;
       }
 
    done:

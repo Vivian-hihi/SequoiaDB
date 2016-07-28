@@ -235,7 +235,7 @@ namespace engine
 
          BOOLEAN         isTaskInfoExist( UINT64 taskID ) ;
          void            registerTaskInfo( UINT64 taskID, omaTaskPtr &taskPtr ) ;
-         INT32           getTaskInfo( UINT64 taskID, _omaTask **pTask ) ;
+         INT32           getTaskInfo( UINT64 taskID, omaTaskPtr &taskPtr ) ;
          void            submitTaskInfo( UINT64 taskID ) ;
          UINT64          getRequestID() ;
          void            registerTaskEvent( UINT64 reqID, ossAutoEvent *pEvent ) ;

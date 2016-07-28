@@ -1231,14 +1231,13 @@ namespace engine
       _mapTaskInfo[ taskID ] = taskPtr ;
    }
 
-   INT32 _omAgentMgr::getTaskInfo( UINT64 taskID, _omaTask **pTask )
+   INT32 _omAgentMgr::getTaskInfo( UINT64 taskID, omaTaskPtr &taskPtr )
    {
       ossScopedLock lock( &_mgrLatch, EXCLUSIVE ) ;
       MAP_TASKINFO::iterator it = _mapTaskInfo.find( taskID ) ;
       if ( it != _mapTaskInfo.end() )
       {
-         omaTaskPtr taskPtr = it->second ;
-         *pTask = taskPtr.get() ;
+         taskPtr = it->second ;
          return SDB_OK ;
       }
 

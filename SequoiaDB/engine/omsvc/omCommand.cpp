@@ -5863,8 +5863,8 @@ namespace engine
                          getTaskStatusStr( status ) ) ;
          builder.append( OM_TASKINFO_FIELD_PROGRESS, progress ) ;
          builder.append( resultElement ) ;
-
-         rc = _updateSsqlTask( taskID, builder.obj() ) ;
+         BSONObj tmp = builder.obj() ;
+         rc = _updateSsqlTask( taskID, tmp ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG_MSG( PDERROR, "update ssql's task info failed:task="
@@ -5896,7 +5896,7 @@ namespace engine
             goto error ;
          }
 
-         oneTask = *tasks.begin() ;
+         oneTask = ( *tasks.begin() ).getOwned() ;
       }
 
    done:
@@ -5938,7 +5938,7 @@ namespace engine
       if ( tasks.size() == 1 )
       {
          INT32 taskType ;
-         BSONObj oneTask = *tasks.begin() ;
+         BSONObj oneTask = ( *tasks.begin() ).getOwned() ;
 
          taskType = oneTask.getIntField( OM_TASKINFO_FIELD_TYPE ) ;
          if ( OM_TASK_TYPE_SSQL_EXEC == taskType )

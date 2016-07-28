@@ -8738,8 +8738,8 @@ namespace engine
 
       isFinish = _readFinish ;
 
-      _readDataEvent.signal() ;
    done:
+      _readDataEvent.signal() ;
       return rc ;
    error:
       goto done ;
@@ -9079,7 +9079,6 @@ namespace engine
                            rc, _taskID ) ;
                goto error ;
             }
-
             _dataReadyEvent.signal() ;
 
             // 5. single.wait(), wait for the om read the data
@@ -9114,6 +9113,7 @@ namespace engine
       return rc ;
    error:
       _saveRC = rc ;
+      _dataReadyEvent.signal() ;
       if ( "" == _errorDetail )
       {
          _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;

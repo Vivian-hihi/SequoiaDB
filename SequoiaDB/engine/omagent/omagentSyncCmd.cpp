@@ -499,9 +499,10 @@ namespace engine
    {
       INT32 rc        = SDB_OK ;
       _omaTask *pTask = NULL ;
+      omaTaskPtr taskPtr ;
       string detail ;
       pmdGetThreadEDUCB()->resetInfo( EDU_INFO_ERROR ) ;
-      rc = sdbGetOMAgentMgr()->getTaskInfo( _taskID, &pTask );
+      rc = sdbGetOMAgentMgr()->getTaskInfo( _taskID, taskPtr );
       if ( SDB_OK != rc )
       {
          rc = SDB_OM_TASK_NOT_EXIST ;
@@ -509,6 +510,8 @@ namespace engine
                      ",rc=%d", _taskID, rc ) ;
          goto error ;
       }
+
+      pTask = taskPtr.get() ;
 
       if ( OMA_TASK_SSQL_EXEC != pTask->getTaskType() )
       {
@@ -585,6 +588,7 @@ namespace engine
    {
       INT32 rc        = SDB_OK ;
       _omaTask *pTask = NULL ;
+      omaTaskPtr taskPtr ;
       _omaSsqlExecTask *pSsqlExecTask = NULL ;
       list<ssqlRowData_t> data ;
       list<ssqlRowData_t>::iterator iter ;
@@ -593,7 +597,7 @@ namespace engine
       string detail ;
       INT32 status = OMA_TASK_STATUS_RUNNING ;
       pmdGetThreadEDUCB()->resetInfo( EDU_INFO_ERROR ) ;
-      rc = sdbGetOMAgentMgr()->getTaskInfo( _taskID, &pTask );
+      rc = sdbGetOMAgentMgr()->getTaskInfo( _taskID, taskPtr );
       if ( SDB_OK != rc )
       {
          rc = SDB_OM_TASK_NOT_EXIST ;
@@ -601,6 +605,8 @@ namespace engine
                      ",rc=%d", _taskID, rc ) ;
          goto error ;
       }
+
+      pTask = taskPtr.get() ;
 
       if ( OMA_TASK_SSQL_EXEC != pTask->getTaskType() )
       {
