@@ -38,19 +38,27 @@ class SequoiaDB_Domain_Test extends PHPUnit_Framework_TestCase
    
    /**
     * @depends test_connect
+    * @depends test_isStandlone
     */
-   public function test_getGroupList( $db )
+   public function test_getGroupList( $db, $isStandlone )
    {
-      $groupList = array() ;
-      $cursor = $db -> list( SDB_LIST_GROUPS, '{ $and: [ { GroupName:{ $ne: "SYSCatalogGroup" } }, { GroupName: { $ne: "SYSCoord" } } ] }', array( 'GroupName' => 1 ) ) ;
-      $err = $db -> getError() ;
-      $this -> assertEquals( 0, $err['errno'], '获取group列表错误' ) ;
-      $this -> assertNotEmpty( $cursor, '获取group列表错误' ) ;
-      while( $record = $cursor -> next() )
+      if( $isStandlone == false )
       {
-         array_push( $groupList, $record['GroupName'] ) ;
+         $groupList = array() ;
+         $cursor = $db -> list( SDB_LIST_GROUPS, '{ $and: [ { GroupName:{ $ne: "SYSCatalogGroup" } }, { GroupName: { $ne: "SYSCoord" } } ] }', array( 'GroupName' => 1 ) ) ;
+         $err = $db -> getError() ;
+         $this -> assertEquals( 0, $err['errno'], '获取group列表错误' ) ;
+         $this -> assertNotEmpty( $cursor, '获取group列表错误' ) ;
+         while( $record = $cursor -> next() )
+         {
+            array_push( $groupList, $record['GroupName'] ) ;
+         }
+         return $groupList ;
       }
-      return $groupList ;
+      else
+      {
+         return array();
+      }
    }
    
    /**
