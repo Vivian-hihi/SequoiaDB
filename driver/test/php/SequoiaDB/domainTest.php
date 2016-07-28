@@ -54,10 +54,8 @@ class SequoiaDB_Domain_Test extends PHPUnit_Framework_TestCase
             array_push( $groupList, $record['GroupName'] ) ;
          }
          
-         if( count( $groupList ) < 2 )
-         {
-            return ;
-         }
+         $this -> assertGreaterThan( 2, count( $groupList ), 'createDomain错误, group数量少于2' ) ;
+
          $err = $db -> createDomain( 'myDomain', array( 'Groups' => $groupList, 'AutoSplit' => true ) ) ;
          $this -> assertEquals( 0, $err['errno'], 'createDomain错误' ) ;
       }
