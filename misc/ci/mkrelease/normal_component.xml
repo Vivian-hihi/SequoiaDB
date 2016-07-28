@@ -1,9 +1,11 @@
 <component>
     <name>normal_component</name>
-        
-    <readyToInstallActionList>
-        <setInstallerVariable name="begin_normal_component" value="true"/>
-        
+    
+    <initializationActionList>
+        <setInstallerVariable name="stage" value="normal"/>
+    </initializationActionList>
+       
+    <readyToInstallActionList>       
         <throwError>
             <text>There is not enough disk space for installation.</text>
             <ruleList>
@@ -327,9 +329,9 @@
         </runProgram>     
     </postInstallationActionList>
     
-    <installationAbortedActionList>
+    <installationAbortedActionList>               
         <actionGroup> 
-            <actionList>
+            <actionList>                 
                 <removeUnixService>
                     <name>sdbcm</name>            
                 </removeUnixService>
@@ -363,7 +365,7 @@
                 </deleteGroup>                    
             </actionList>            
             <ruleList>
-                <isTrue value="${begin_normal_component}" />
+                <compareText logic="equals" text="${stage}" value="normal"/> 
             </ruleList>        
         </actionGroup>
                 

@@ -4,7 +4,7 @@
     <version>1.0</version>
     <installationType>normal</installationType>
     <overwritePolicy>always</overwritePolicy>
-    
+        
     <customLanguageFileList>
         <language>
             <code>en</code>
@@ -30,8 +30,8 @@
         </licenseFile>
     </licenseFileList>
     
-    <initializationActionList>
-        <setInstallerVariable name="begin_normal_component" value="false"/>       
+    <initializationActionList>        
+        <setInstallerVariable name="stage" value="main"/>
     </initializationActionList>
     
     <!--exist installation? different mode has different parameterLis-->
@@ -442,8 +442,8 @@
             <path>${installdir}/bin</path>
             <scope>user</scope>
         </removeDirectoryFromPath>
-    </postUninstallationActionList>            
-    
+    </postUninstallationActionList>                
+          
     <installerFilename>${product_shortname}-${product_version}-${platform}${enterpriseversion}-installer.${platform_exec_suffix}</installerFilename>         
     <allowLanguageSelection>1</allowLanguageSelection>   
     <allowedLanguages>en zh_CN</allowedLanguages>

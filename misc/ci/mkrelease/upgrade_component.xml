@@ -1,8 +1,11 @@
 <component>
     <name>upgrade_component</name>    
-                    
-    <readyToInstallActionList>          
-                             
+
+    <initializationActionList>
+        <setInstallerVariable name="stage" value="upgrade"/>
+    </initializationActionList>
+                        
+    <readyToInstallActionList>                                      
         <consoleWrite text="${msg(Upgrade.NormalMsg.BeginUpgrade)}&#xA;"/>        
         <consoleWrite text="${msg(Upgrade.NormalMsg.CheckList)}&#xA;"/>         
         
@@ -503,63 +506,70 @@
         </runProgram>
     </postInstallationActionList>
         
-    <installationAbortedActionList>  
-        <consoleWrite text="&#xA;&#xA;${msg(Upgrade.NormalMsg.BeginRollback)}&#xA;"/> 
-        
-        <!--delete compatible files-->       
-        <deleteFile path="${installdir}/compatible.sh"/>
-        <deleteFile path="${installdir}/version.conf"/>
-        
-        <!--restore files-->                                                         
-        <actionGroup> 
-            <actionList>
-                <consoleWrite text="${msg(Upgrade.NormalMsg.Rollback.RestoreFile)}"/>
-                <runProgram>
-                    <program>cp</program>
-                    <programArguments>-rfp ${project.rollbackBackupDirectory}/* /</programArguments>                 
-                </runProgram>
-                <deleteFile path="${project.rollbackBackupDirectory}"/> 
-                <consoleWrite text="ok&#xA;"/>                        
-            </actionList>
-            <ruleEvaluationLogic>and</ruleEvaluationLogic>
-            <ruleList>
-                <compareText logic="equals" text="${upgrade_component_done}" value="begin"/>            
-                <fileTest condition="is_not_empty" path="${project.rollbackBackupDirectory}"/>  
-            </ruleList>
-        </actionGroup>        
-        
-        <!--when rollback, restart service-->                
-        <actionGroup> 
-            <actionList>
-                <consoleWrite text="${msg(Upgrade.NormalMsg.Rollbak.StartProcess)}"/>
-                <runProgram>
-                    <program>service</program>
-                    <programArguments> sdbcm start</programArguments>        
-                </runProgram> 
-                <runProgram>
-                    <program>service</program>
-                    <programArguments> sdbcm status</programArguments> 
-                    <abortOnError>0</abortOnError>
-                    <showMessageOnError>0</showMessageOnError>   
-                </runProgram>
-                <setInstallerVariable name="service_status" value="${program_exit_code}"/>       
-                <consoleWrite>
-                    <text>${msg(Upgrade.WarnMsg.StartProcess)}&#xA;</text>
+    <installationAbortedActionList>
+        <if>
+            <conditionRuleList>
+                <compareText logic="equals" text="${stage}" value="upgrade"/>
+            </conditionRuleList> 
+            <actionList>                           
+                <consoleWrite text="&#xA;&#xA;${msg(Upgrade.NormalMsg.BeginRollback)}&#xA;"/> 
+                
+                <!--delete compatible files-->       
+                <deleteFile path="${installdir}/compatible.sh"/>
+                <deleteFile path="${installdir}/version.conf"/>
+                
+                <!--restore files-->
+                <actionGroup>
+                    <actionList>
+                        <consoleWrite text="${msg(Upgrade.NormalMsg.Rollback.RestoreFile)}"/>
+                        <runProgram>
+                            <program>cp</program>
+                            <programArguments>-rfp ${project.rollbackBackupDirectory}/* /</programArguments>                 
+                        </runProgram>
+                        <deleteFile path="${project.rollbackBackupDirectory}"/> 
+                        <consoleWrite text="ok&#xA;"/>                        
+                    </actionList>
+                    <ruleEvaluationLogic>and</ruleEvaluationLogic>
                     <ruleList>
-                        <compareValues value1="${service_status}" logic="does_not_equal" value2="0"/>
+                        <compareText logic="equals" text="${upgrade_component_done}" value="begin"/>            
+                        <fileTest condition="is_not_empty" path="${project.rollbackBackupDirectory}"/>  
                     </ruleList>
-                </consoleWrite>
-                <consoleWrite>
-                    <text>ok&#xA;</text>
-                    <ruleList>
-                        <compareValues value1="${service_status}" logic="equals" value2="0"/>
-                    </ruleList>
-                </consoleWrite>                   
-            </actionList>        
-            <ruleList> 
-                <compareText logic="equals" text="${service_origin_status}" value="0"/>                                                                  
-            </ruleList>          
-        </actionGroup>                  
+                </actionGroup>      
+                
+                <!--when rollback, restart service-->                
+                <actionGroup> 
+                    <actionList>
+                        <consoleWrite text="${msg(Upgrade.NormalMsg.Rollbak.StartProcess)}"/>
+                        <runProgram>
+                            <program>service</program>
+                            <programArguments> sdbcm start</programArguments>        
+                        </runProgram> 
+                        <runProgram>
+                            <program>service</program>
+                            <programArguments> sdbcm status</programArguments> 
+                            <abortOnError>0</abortOnError>
+                            <showMessageOnError>0</showMessageOnError>   
+                        </runProgram>
+                        <setInstallerVariable name="service_status" value="${program_exit_code}"/>       
+                        <consoleWrite>
+                            <text>${msg(Upgrade.WarnMsg.StartProcess)}&#xA;</text>
+                            <ruleList>
+                                <compareValues value1="${service_status}" logic="does_not_equal" value2="0"/>
+                            </ruleList>
+                        </consoleWrite>
+                        <consoleWrite>
+                            <text>ok&#xA;</text>
+                            <ruleList>
+                                <compareValues value1="${service_status}" logic="equals" value2="0"/>
+                            </ruleList>
+                        </consoleWrite>                   
+                    </actionList>        
+                    <ruleList> 
+                        <compareText logic="equals" text="${service_origin_status}" value="0"/>                                                                  
+                    </ruleList>          
+                </actionGroup>
+            </actionList> 
+        </if>                         
                              
     </installationAbortedActionList>    
 </component>
