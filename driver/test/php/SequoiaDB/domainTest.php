@@ -38,25 +38,35 @@ class SequoiaDB_Domain_Test extends PHPUnit_Framework_TestCase
    
    /**
     * @depends test_connect
-    * @depends test_isStandlone
     */
-   public function test_createDomain( $db, $isStandlone )
+   public function test_getGroupList( $db )
+   {
+      $groupList = array() ;
+      $cursor = $db -> list( SDB_LIST_GROUPS, '{ $and: [ { GroupName:{ $ne: "SYSCatalogGroup" } }, { GroupName: { $ne: "SYSCoord" } } ] }', array( 'GroupName' => 1 ) ) ;
+      $err = $db -> getError() ;
+      $this -> assertEquals( 0, $err['errno'], '获取group列表错误' ) ;
+      $this -> assertNotEmpty( $cursor, '获取group列表错误' ) ;
+      while( $record = $cursor -> next() )
+      {
+         array_push( $groupList, $record['GroupName'] ) ;
+      }
+      return $groupList ;
+   }
+   
+   /**
+    * @depends test_connect
+    * @depends test_isStandlone
+    * @depends test_getGroupList
+    */
+   public function test_createDomain( $db, $isStandlone, $groupList )
    {
       if( $isStandlone == false )
       {
-         $groupList = array() ;
-         $cursor = $db -> list( SDB_LIST_GROUPS, '{ $and: [ { GroupName:{ $ne: "SYSCatalogGroup" } }, { GroupName: { $ne: "SYSCoord" } } ] }', array( 'GroupName' => 1 ) ) ;
-         $err = $db -> getError() ;
-         $this -> assertEquals( 0, $err['errno'], '获取group列表错误' ) ;
-         $this -> assertNotEmpty( $cursor, '获取group列表错误' ) ;
-         while( $record = $cursor -> next() )
+         if( count( $groupList ) < 2 )
          {
-            array_push( $groupList, $record['GroupName'] ) ;
+            return ;
          }
-         
-         $this -> assertGreaterThan( 2, count( $groupList ), 'createDomain错误, group数量少于2' ) ;
-
-         $err = $db -> createDomain( 'myDomain', array( 'Groups' => $groupList, 'AutoSplit' => true ) ) ;
+         $err = $db -> createDomain( 'php_driver_my_domain', array( 'Groups' => $groupList, 'AutoSplit' => true ) ) ;
          $this -> assertEquals( 0, $err['errno'], 'createDomain错误' ) ;
       }
    }
@@ -64,11 +74,17 @@ class SequoiaDB_Domain_Test extends PHPUnit_Framework_TestCase
    /**
     * @depends test_connect
     * @depends test_isStandlone
+    * @depends test_getGroupList
     */
-   public function test_listDomain( $db, $isStandlone )
+   public function test_listDomain( $db, $isStandlone, $groupList )
    {
       if( $isStandlone == false )
       {
+         if( count( $groupList ) < 2 )
+         {
+            return ;
+         }
+         
          $cursor = $db -> listDomain() ;
          $err = $db -> getError() ;
          $this -> assertEquals( 0, $err['errno'], 'listDomain错误' ) ;
@@ -84,18 +100,24 @@ class SequoiaDB_Domain_Test extends PHPUnit_Framework_TestCase
    /**
     * @depends test_connect
     * @depends test_isStandlone
+    * @depends test_getGroupList
     */
-   public function test_getDomain( $db, $isStandlone )
+   public function test_getDomain( $db, $isStandlone, $groupList )
    {
       if( $isStandlone == false )
       {
-         $domainObj = $db -> getDomain( 'myDomain' ) ;
+         if( count( $groupList ) < 2 )
+         {
+            return ;
+         }
+
+         $domainObj = $db -> getDomain( 'php_driver_my_domain' ) ;
          $err = $db -> getError() ;
          $this -> assertEquals( 0, $err['errno'], 'getDomain错误' ) ;
          $this -> assertNotEmpty( $domainObj, 'getDomain错误' ) ;
          
          //这个应该是不存在的
-         $domainObj = $db -> getDomain( 'myDomain1' ) ;
+         $domainObj = $db -> getDomain( 'php_driver_my_domain1' ) ;
          $err = $db -> getError() ;
          $this -> assertNotEquals( 0, $err['errno'], 'getDomain错误' ) ;
          $this -> assertEmpty( $domainObj, 'getDomain错误' ) ;
@@ -105,12 +127,18 @@ class SequoiaDB_Domain_Test extends PHPUnit_Framework_TestCase
    /**
     * @depends test_connect
     * @depends test_isStandlone
+    * @depends test_getGroupList
     */
-   public function test_dropDomain( $db, $isStandlone )
+   public function test_dropDomain( $db, $isStandlone, $groupList )
    {
       if( $isStandlone == false )
       {
-         $err = $db -> dropDomain( 'myDomain' ) ;
+         if( count( $groupList ) < 2 )
+         {
+            return ;
+         }
+         
+         $err = $db -> dropDomain( 'php_driver_my_domain' ) ;
          $this -> assertEquals( 0, $err['errno'], 'dropDomain错误' ) ;
       }
    }
