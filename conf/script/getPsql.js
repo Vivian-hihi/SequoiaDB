@@ -155,10 +155,11 @@ function main()
    {
       var isLocalBinExist = false ;
       var remoteLibpqPath = adaptPath(install_path) + "lib" + dir_sep ;
-      var libPqArray      = new Array('libpq.so', 'libpq.so.5', 'libpq.so.5.3');
+      //var libPqArray      = new Array('libpq.so*');
+      var libPqArray      = new Array('libpq.so', 'libpq.so.5', 'libpq.so.5.6');
 
-      var remoteLibeditPath = adaptPath(install_path) + "thirdparty" + dir_sep + "lib" + dir_sep ;
-      var libEditArray      = new Array('libedit.so', 'libedit.so.0', 'libedit.so.0.0.53');
+ //     var remoteLibeditPath = adaptPath(install_path) + "thirdparty" + dir_sep + "lib" + dir_sep ;
+      //var libEditArray      = new Array('libedit.so', 'libedit.so.0', 'libedit.so.0.0.53');
       
       remote_bin     = adaptPath(install_path) + "bin" + dir_sep + "psql" ;
       local_bin      = getPsqlFile( System.getEWD() ) ;
@@ -176,7 +177,7 @@ function main()
          ssh = new Ssh( host_name, user, passwd ) ;
          
          pullFileFromRemote( ssh, remoteLibpqPath, libPqArray, local_lib_path ) ;
-         pullFileFromRemote( ssh, remoteLibeditPath, libEditArray, local_lib_path ) ;
+//        pullFileFromRemote( ssh, remoteLibeditPath, libEditArray, local_lib_path ) ;
 
          PD_LOG2( task_id, arguments, PDEVENT, FILE_NAME_GETPSQL,
                   sprintf( "get file:remote[?],local[?]", remote_bin,
