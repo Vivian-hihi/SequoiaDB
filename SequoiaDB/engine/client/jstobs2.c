@@ -1048,7 +1048,6 @@ static BOOLEAN jsonConvertBson( const CJSON_MACHINE *pMachine,
          }
          else if( arg1.valType == CJSON_STRING )
          {
-            //number = ossAtoll( arg1.pValStr ) ;
             INT32 valInt = 0 ;
             FLOAT64 valDouble = 0 ;
             INT64 valInt64 = 0 ;
@@ -1071,8 +1070,7 @@ static BOOLEAN jsonConvertBson( const CJSON_MACHINE *pMachine,
             }
             else if( type == CJSON_INT64 )
             {
-               //number = valInt64 ;
-               number = ossAtoll( arg1.pValStr ) ;
+               number = valInt64 ;
             }
             else
             {
