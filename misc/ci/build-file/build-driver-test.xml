@@ -10,7 +10,7 @@
 		NULL
 -->
 
-<project default="6.9 Build-STORY-PHP-Testcases">
+<project default="6.11 Build-STORY-CPP-Testcases">
 	<property file="${SCRIPT_DIR}/ci.test.properties" />
 	<target name="6.1 Clean-Driver-Testcases" depends="">
 		<echo level="info" message="Step1 : Rebuild the folders &lt;${testcases_dir}/C/build_test&gt;,&lt;${testcases_dir}/CPP/build_test&gt;,&lt;${testcases_dir}/mongoc/build_test&gt;." />
@@ -135,24 +135,7 @@
 		<echo message="**************************************************************************************************************************************************************" />
 		<echo level="info" message="The php driver testcases compilation project began at &lt;${php_testcases_begintime}&gt;, end at &lt;${php_testcases_endtime}&gt;,total spending ${php_testcases_time}s." />
 		<echo message="**************************************************************************************************************************************************************" />
-	</target>
-	
-	<target name="6.9 Build-STORY-PHP-Testcases" depends="6.8 Build-Mongoc-Testcases">
-		<tstamp>
-			<format property="story_php_testcases_begintime" pattern="yyyy-MM-dd-hh.mm.ss a" />
-		</tstamp>
-		<echo level="info" message="Step1 : Copy the folder &lt;${testcases_dir}/../../testcases/hlt/drivers_testcases/php/&gt; to &lt;${deploy_dir}/hlt/drivers_testcases/story_php&gt;." />
-		<copy todir="${deploy_dir}/hlt/drivers_testcases/story_php">
-			<fileset dir="${testcases_dir}/../../testcases/hlt/drivers_testcases/php/" includes="**/*" />
-		</copy>
-		<tstamp>
-			<format property="story_php_testcases_endtime" pattern="yyyy-MM-dd-hh.mm.ss a" />
-		</tstamp>
-		<sdbTime beginTime="${story_php_testcases_begintime}" endTime="${story_php_testcases_endtime}" output="story_php_testcases_time" />
-		<echo message="**************************************************************************************************************************************************************" />
-		<echo level="info" message="The php driver testcases compilation project began at &lt;${story_php_testcases_begintime}&gt;, end at &lt;${story_php_testcases_endtime}&gt;,total spending ${story_php_testcases_time}s." />
-		<echo message="**************************************************************************************************************************************************************" />
-	</target>
+	</target>	
 
 	<target name="6.5 Build-C-Testcases" depends="6.4 Build-PHP-Testcases">
 		<tstamp>
@@ -273,4 +256,71 @@
 		<echo level="info" message="The mongoc testcases compilation project began at &lt;${mongoc_testcases_begintime}&gt;, end at &lt;${mongoc_testcases_endtime}&gt;,total spending ${mongoc_testcases_time}s." />
 		<echo message="**************************************************************************************************************************************************************" />
 	</target>
+	
+	<target name="6.9 Build-STORY-PHP-Testcases" depends="6.8 Build-Mongoc-Testcases">
+		<tstamp>
+			<format property="story_php_testcases_begintime" pattern="yyyy-MM-dd-hh.mm.ss a" />
+		</tstamp>
+		<echo level="info" message="Step1 : Copy the folder &lt;${testcases_dir}/../../testcases/hlt/drivers_testcases/php/&gt; to &lt;${deploy_dir}/hlt/drivers_testcases/story_php&gt;." />
+		<copy todir="${deploy_dir}/hlt/drivers_testcases/story_php">
+			<fileset dir="${testcases_dir}/../../testcases/hlt/drivers_testcases/php/" includes="**/*" />
+		</copy>
+		<tstamp>
+			<format property="story_php_testcases_endtime" pattern="yyyy-MM-dd-hh.mm.ss a" />
+		</tstamp>
+		<sdbTime beginTime="${story_php_testcases_begintime}" endTime="${story_php_testcases_endtime}" output="story_php_testcases_time" />
+		<echo message="**************************************************************************************************************************************************************" />
+		<echo level="info" message="The php driver testcases compilation project began at &lt;${story_php_testcases_begintime}&gt;, end at &lt;${story_php_testcases_endtime}&gt;,total spending ${story_php_testcases_time}s." />
+		<echo message="**************************************************************************************************************************************************************" />
+	</target>
+	
+	<target name="6.10 Build-STORY-C-Testcases" depends="6.9 Build-STORY-PHP-Testcases">
+		<tstamp>
+			<format property="sc_testcases_begintime" pattern="yyyy-MM-dd-hh.mm.ss a" />
+		</tstamp>
+		
+		<echo level="info" message="Step1 : Compile the C driver testcases,command: &lt;scons ${testcases_dir}/../../testcases/hlt/drivers_testcases/c lib_path=${driver_dir}/lib include_path=${driver_dir}/include&gt;." />
+		<exec executable="scons" dir="${testcases_dir}/../../testcases/hlt/drivers_testcases/c" failonerror="true">
+			<arg line=" --lib_path=${driver_dir}/lib --include_path=${driver_dir}/include" />
+		</exec>
+
+		<echo level="info" message="Step2 : Copy the C driver testcases from &lt;${testcases_dir}/../../testcases/hlt/drivers_testcases/c/build_test&gt; to &lt;${deploy_dir}/hlt/drivers_testcases/story_C/build&gt;." />
+		<copy todir="${deploy_dir}/hlt/drivers_testcases/story_C/build">
+			<fileset dir="${testcases_dir}/../../testcases/hlt/drivers_testcases/c/build_test" includes="*" />
+		</copy>
+		
+		<tstamp>
+			<format property="sc_testcases_endtime" pattern="yyyy-MM-dd-hh.mm.ss a" />
+		</tstamp>
+		<sdbTime beginTime="${sc_testcases_begintime}" endTime="${sc_testcases_endtime}" output="sc_testcases_time" />
+		<echo message="**************************************************************************************************************************************************************" />
+		<echo level="info" message="The story c driver testcases compilation project began at &lt;${sc_testcases_begintime}&gt;, end at &lt;${sc_testcases_endtime}&gt;,total spending ${sc_testcases_time}s." />
+		<echo message="**************************************************************************************************************************************************************" />
+	</target>
+
+	<target name="6.11 Build-STORY-CPP-Testcases" depends="6.10 Build-STORY-C-Testcases">
+		<tstamp>
+			<format property="scpp_testcases_begintime" pattern="yyyy-MM-dd-hh.mm.ss a" />
+		</tstamp>
+		
+		<echo level="info" message="Step1 : Compile the CPP driver testcases,command: &lt;scons ${testcases_dir}/../../testcases/hlt/drivers_testcases/cpp lib_path=${driver_dir}/lib include_path=${driver_dir}/include&gt;." />
+		<exec executable="scons" dir="${testcases_dir}/../../testcases/hlt/drivers_testcases/cpp" failonerror="true">
+			<arg line=" --lib_path=${driver_dir}/lib --include_path=${driver_dir}/include" />
+		</exec>
+
+		<echo level="info" message="Step2 : Copy the CPP driver testcases from &lt;${testcases_dir}/../../testcases/hlt/drivers_testcases/cpp/build_test&gt; to &lt;${deploy_dir}/hlt/drivers_testcases/story_CPP/build&gt;." />
+		<copy todir="${deploy_dir}/hlt/drivers_testcases/story_CPP/build">
+			<fileset dir="${testcases_dir}/../../testcases/hlt/drivers_testcases/cpp/build_test" includes="*" />
+		</copy>
+		
+		<tstamp>
+			<format property="scpp_testcases_endtime" pattern="yyyy-MM-dd-hh.mm.ss a" />
+		</tstamp>
+		<sdbTime beginTime="${scpp_testcases_begintime}" endTime="${scpp_testcases_endtime}" output="scpp_testcases_time" />
+		<echo message="**************************************************************************************************************************************************************" />
+		<echo level="info" message="The story cpp driver testcases compilation project began at &lt;${scpp_testcases_begintime}&gt;, end at &lt;${scpp_testcases_endtime}&gt;,total spending ${scpp_testcases_time}s." />
+		<echo message="**************************************************************************************************************************************************************" />
+	</target>	
+	
+		
 </project>
