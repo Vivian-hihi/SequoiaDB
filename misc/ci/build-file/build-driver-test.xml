@@ -324,8 +324,7 @@
 		<echo message="**************************************************************************************************************************************************************" />
 	</target>	
 	
-	<!--target name="6.12 Build-Story-Java-Testcases" depends="6.11 Build-STORY-CPP-Testcases"-->
-	<target name="6.12 Build-Story-Java-Testcases" depends="6.1 Clean-Driver-Testcases">
+	<target name="6.12 Build-Story-Java-Testcases" depends="6.11 Build-STORY-CPP-Testcases">
 		<tstamp>
 			<format property="sjava_begintime" pattern="yyyy-MM-dd-hh.mm.ss a" />
 		</tstamp>
