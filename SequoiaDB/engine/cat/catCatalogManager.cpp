@@ -3201,6 +3201,13 @@ namespace engine
         goto error ;
      }
 
+      if ( CAT_MASK_CLNAME & mask )
+      {
+         rc = SDB_OPTION_NOT_SUPPORT ;
+         PD_LOG( PDERROR, "can not alter attribute \"Name\"" ) ;
+         goto error ;
+      }
+
       alterInfo._version = catSet.getVersion() ;
       ++alterInfo._version ;
 
