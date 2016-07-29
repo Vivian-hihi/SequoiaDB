@@ -140,7 +140,7 @@ namespace engine
       {
          SDB_ASSERT( DMS_SME_LEN == sizeof( _dmsSpaceManagementExtent ),
                      "SME size error" ) ;
-         ossMemset( this, DMS_SME_FREE, sizeof( _dmsSpaceManagementExtent ) ) ;
+         ossMemset( _smeMask, DMS_SME_FREE, sizeof( _smeMask ) ) ;
       }
       CHAR getBitMask( UINT32 bitNum ) const
       {
