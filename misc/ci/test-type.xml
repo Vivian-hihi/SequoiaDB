@@ -139,6 +139,21 @@
 				<echo message="... Test java driver is over ..." />
 			</case>
 
+			<case value="story-java">
+				<echo message="... Test story java ..." />
+				<sdbtest host="${test.host.NAME}" testscript="${test.machine.deploy.path}/deploy/exec-story-java-test.xml" 
+				   remotereports="${testcase.path}/drivers_testcases/story_java/reports" masterreports="${test.reports.path}" >
+					<param name="antTask.jar.path" value="${test.machine.deploy.path}/deploy/ant-sdbtasks" />
+					<param name="java.testcase.path" value="${testcase.path}/drivers_testcases/story_java" />
+					<param name="deploy.case.fullname" value="${deploy.case.fullname}" />
+					<param name="includes.dir.patterns" value="*" />
+					<param name="BUILD_NUMBER" value="${BUILD_NUMBER}" />
+					<param name="test-type-list" value="${Test-Type}" />
+					<param name="isTrunk" value="${isTrunk}" />
+				</sdbtest>
+				<echo message="... Test story java is over ..." />
+			</case>
+			
 			<case value="lob">
 				<echo message="... Test lob testcases ..." />
 				<sdbtest host="${test.host.NAME}" testscript="${test.machine.deploy.path}/deploy/exec-lob-testcases.xml" remotereports="${testcase.path}/lob_testcases/reports" masterreports="${test.reports.path}" >
@@ -185,7 +200,7 @@
 			</case>
 			
 			<case value="story-C">
-				<echo message="... Test story c driver ..." />
+				<echo message="... Test story c ..." />
 				<sdbtest host="${test.host.NAME}" testscript="${test.machine.deploy.path}/deploy/exec-story-C-test.xml" 
 				   remotereports="${testcase.path}/drivers_testcases/story_C/reports" masterreports="${test.reports.path}" >
 					<param name="ci.properties.path" value="${test.machine.software.path}/ci.test.properties" />
@@ -197,11 +212,11 @@
 					<param name="BUILD_NUMBER" value="${BUILD_NUMBER}" />
 					<param name="test-type-list" value="${Test-Type}" />
 				</sdbtest>
-				<echo message="... Test story c driver is over ..." />
+				<echo message="... Test story c is over ..." />
 			</case>
 
 			<case value="story-CPP">
-				<echo message="... Test story c++ driver ..." />
+				<echo message="... Test story c++ ..." />
 				<sdbtest host="${test.host.NAME}" testscript="${test.machine.deploy.path}/deploy/exec-story-CPP-test.xml" 
 				   remotereports="${testcase.path}/drivers_testcases/story_CPP/reports" masterreports="${test.reports.path}" >
 					<param name="ci.properties.path" value="${test.machine.software.path}/ci.test.properties" />
@@ -213,7 +228,7 @@
 					<param name="BUILD_NUMBER" value="${BUILD_NUMBER}" />
 					<param name="test-type-list" value="${Test-Type}" />
 				</sdbtest>
-				<echo message="... Test story c++ driver is over ..." />
+				<echo message="... Test story c++ is over ..." />
 			</case>			
 			
 			<case value="driver-mongoc">
