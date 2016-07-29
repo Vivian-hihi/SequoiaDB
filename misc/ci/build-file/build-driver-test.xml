@@ -10,7 +10,7 @@
 		NULL
 -->
 
-<project default="6.11 Build-STORY-CPP-Testcases">
+<project default="6.12 Build-Story-Java-Testcases">
 	<property file="${SCRIPT_DIR}/ci.test.properties" />
 	<target name="6.1 Clean-Driver-Testcases" depends="">
 		<echo level="info" message="Step1 : Rebuild the folders &lt;${testcases_dir}/C/build_test&gt;,&lt;${testcases_dir}/CPP/build_test&gt;,&lt;${testcases_dir}/mongoc/build_test&gt;." />
@@ -38,7 +38,9 @@
 		<mkdir dir="${deploy_dir}/hlt/drivers_testcases/java/lib" />
 		<mkdir dir="${deploy_dir}/hlt/drivers_testcases/mongoc/build" />
 		<mkdir dir="${deploy_dir}/hlt/drivers_testcases/mongoc/lib" />
-		<mkdir dir="${deploy_dir}/hlt/lob_testcases" />	
+		<mkdir dir="${deploy_dir}/hlt/lob_testcases" />
+		<mkdir dir="${deploy_dir}/hlt/drivers_testcases/story_java/build" />
+		<mkdir dir="${deploy_dir}/hlt/drivers_testcases/story_java/lib" />	
 	</target>
 
 	<target name="6.2 Build-Java-Testcases" depends="6.1 Clean-Driver-Testcases">
@@ -322,5 +324,75 @@
 		<echo message="**************************************************************************************************************************************************************" />
 	</target>	
 	
+	<!--target name="6.12 Build-Story-Java-Testcases" depends="6.11 Build-STORY-CPP-Testcases"-->
+	<target name="6.12 Build-Story-Java-Testcases" depends="6.1 Clean-Driver-Testcases">
+		<tstamp>
+			<format property="sjava_begintime" pattern="yyyy-MM-dd-hh.mm.ss a" />
+		</tstamp>
+		<if>
+			<equals arg1="${os.name}" arg2="Linux" />
+			<then>
+				<property name="jdk_name_os" value="jdk_linux" />
+			</then>
+			<else>
+				<property name="jdk_name_os" value="jdk_win" />
+			</else>
+		</if>
+		<if>
+			<equals arg1="${os.arch}" arg2="ppc64" />
+			<then>
+				<property name="jdk_name" value="jdk_ppclinux64" />
+			</then>
+		</if>
+		<if>
+			<equals arg1="${os.arch}" arg2="amd64" />
+			<then>
+				<property name="jdk_name" value="${jdk_name_os}64" />
+			</then>
+			<else>
+				<property name="jdk_name" value="${jdk_name_os}32" />
+			</else>
+		</if>
+				
+		<property name="sjava_src_path"    value="${testcases_dir}/../../testcases/hlt/drivers_testcases/java/" />
+		<property name="sjava_deploy_path" value="${deploy_dir}/hlt/drivers_testcases/story_java" />
+		
+    	<echo level="info" message="1 : Copy ${driver_dir}/java/sequoiadb.jar to ${sjava_deploy_path}/lib/sequoiadb.jar." />
+		<copy file="${driver_dir}/java/sequoiadb.jar"   todir="${sjava_deploy_path}/lib" />
+		<copy todir="${sjava_deploy_path}/lib">
+		   <fileset dir="${sjava_src_path}/lib">
+		      <exclude name="sequoiadb.jar"/>
+		   </fileset>   
+		</copy>   
+		
+		<echo level="info" message="2 : Compile the java driver testcases." />
+		<javac executable="${WORKSPACE}/sequoiadb/java/${jdk_name}/bin/javac" 
+		       srcdir="${sjava_src_path}" 
+		       destdir="${sjava_deploy_path}/build" 
+		       failonerror="true">
+			<classpath>
+				<pathelement location="${sjava_deploy_path}/lib/sequoiadb.jar" />
+            <pathelement location="${sjava_deploy_path}/lib/testng-6.9.11.jar"/>
+            <pathelement location="${sjava_deploy_path}/lib/jcommander-1.49.jar"/>  
+			</classpath>
+		</javac>
+		
+		<echo level="info" message="3 : compress ${sjava_deploy_path}/build to ${sjava_deploy_path}/lib/story_java_test.jar." />
+		<jar file="${sjava_deploy_path}/lib/story_java_test.jar">
+			<manifest>
+				<attribute name="Version" value="1.0" />
+			</manifest>
+			<fileset dir="${sjava_deploy_path}/build" includes="**/*" />
+		</jar>
+		
+		<tstamp>
+			<format property="sjava_endtime" pattern="yyyy-MM-dd-hh.mm.ss a" />
+		</tstamp>
+		<sdbTime beginTime="${sjava_begintime}" endTime="${sjava_endtime}" output="sjava_time" />
+		<echo message="**************************************************************************************************************************************************************" />
+		<echo level="info" message="The machine which is compiled story java testcases is &lt;${os.arch}&gt; architecture and &lt;${os.name}&gt; operating system,so use &lt;${jdk_name}&gt;." />
+		<echo level="info" message="The story java testcases compilation project began at &lt;${sjava_begintime}&gt;, end at &lt;${sjava_endtime}&gt;,total spending ${sjava_time}s." />
+		<echo message="**************************************************************************************************************************************************************" />
+	</target>	
 		
 </project>
