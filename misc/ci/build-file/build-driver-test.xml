@@ -369,6 +369,7 @@
 		<javac executable="${WORKSPACE}/sequoiadb/java/${jdk_name}/bin/javac" 
 		       srcdir="${sjava_src_path}" 
 		       destdir="${sjava_deploy_path}/build" 
+		       encoding="UTF-8"
 		       failonerror="true">
 			<classpath>
 				<pathelement location="${sjava_deploy_path}/lib/sequoiadb.jar" />
