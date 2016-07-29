@@ -62,10 +62,6 @@ testFiles14 = [
          "dc.cpp"
 ]
 
-testFiles15 = [
-         "testTrunOncache.cpp"
-]
-
 # compile common lib
 gtestall = env.StaticLibrary('gtest', gtestFiles)
 gtestMainObj = env.Object('gtestMainObj', gtestMainFile)
@@ -85,8 +81,6 @@ selectQuery = dllBuildEnv.Program("selectQuery", [testFiles11, gtestMainObj, tes
 procedure = dllBuildEnv.Program("procedure", [testFiles12, gtestMainObj, testCommonFiles])
 rg = dllBuildEnv.Program("rg", [testFiles13, gtestMainObj, testCommonFiles])
 dc = dllBuildEnv.Program("dc", [testFiles14, gtestMainObj, testCommonFiles])
-turnon_cache = dllBuildEnv.Program("turnon_cache", [testFiles15, gtestMainObj, testCommonFiles])
-
 
 # static compile
 # dll compile
@@ -104,22 +98,21 @@ selectQuery.static = staticBuildEnv.Program("selectQuery.static", [testFiles11, 
 procedure.static = staticBuildEnv.Program("procedure.static", [testFiles12, gtestMainObj, testCommonFiles])
 rg.static = staticBuildEnv.Program("rg.static", [testFiles13, gtestMainObj, testCommonFiles])
 dc.static = staticBuildEnv.Program("dc.static", [testFiles14, gtestMainObj, testCommonFiles])
-turnon_cache.static = staticBuildEnv.Program("turnon_cache.static", [testFiles15, gtestMainObj, testCommonFiles])
 
 
 #env.Install( '#/build_test',[collection,collectionspace,cursor,query,
-#                             sdb,cppbson, debug, domain, lob, selectQuery, procedure, rg, dc, turnon_cache ] )
+#                             sdb,cppbson, debug, domain, lob, selectQuery, procedure, rg, dc ] )
 #
 #env.Install( '#/build_test',[collection.static, collectionspace.static, cursor.static, query.static,
 #                             sdb.static, cppbson.static, debug.static, domain.static, lob.static,
-#                             selectQuery.static, procedure.static, rg.static, dc.static, turnon_cache.static] )
+#                             selectQuery.static, procedure.static, rg.static, dc.static] )
 
 # dll compile, "rg, dc" don't run in ci
 env.Install( '#/build_test',[collection,collectionspace,cursor,query,
-                             sdb,cppbson, debug, domain, lob, selectQuery, procedure,turnon_cache ] )
+                             sdb,cppbson, debug, domain, lob, selectQuery, procedure ] )
 
 # static compile, "rg, dc" don't run in ci
 env.Install( '#/build_test',[collection.static, collectionspace.static, cursor.static, query.static,
                              sdb.static, cppbson.static, debug.static, domain.static, lob.static,
-                             selectQuery.static, procedure.static, turnon_cache.static] )
+                             selectQuery.static, procedure.static] )
 
