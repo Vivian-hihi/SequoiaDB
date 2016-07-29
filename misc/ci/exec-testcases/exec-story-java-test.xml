@@ -50,7 +50,13 @@
             <fileset dir="${tmp.reports.path}/junitreports"/>
         </copy> 
         <basename property="deploy.name" file="${deploy.case.fullname}" suffix=".xml" />
-        <replace token='name="com.sequoiadb' value='name="testcases-story-java.${deploy.name}-${host.NAME}-${parallel.num}-'>
+        <replace token='name="com.sequoiadb.test.' value='name="testcases-story-java.${deploy.name}-${host.NAME}-${parallel.num}-'>
+            <fileset dir="${reports.path}"  includes="*" />
+        </replace>
+        <replace token='name="com.sequoiadb.datasource.' value='name="testcases-story-java.${deploy.name}-${host.NAME}-${parallel.num}-'>
+            <fileset dir="${reports.path}"  includes="*" />
+        </replace>
+        <replace token='name="com.sequoiadb.turnoncache.' value='name="testcases-story-java.${deploy.name}-${host.NAME}-${parallel.num}-'>
             <fileset dir="${reports.path}"  includes="*" />
         </replace>
     </target>
