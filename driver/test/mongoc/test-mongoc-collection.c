@@ -98,7 +98,9 @@ test_insert_bulk (void)
    bson_t q;
    bson_t b[10];
    bson_t *bptr[10];
-   int64_t count;
+   int64_t count = 0;
+   mongoc_cursor_t *cursor;
+   const bson_t *doc;
 
    client = mongoc_client_new(gTestUri);
    ASSERT_CMPPTR(NULL, !=, client);
@@ -136,7 +138,16 @@ test_insert_bulk (void)
    }
    ASSERT_CMPINT (r, ==, true);
 
-   count = mongoc_collection_count (collection, MONGOC_QUERY_NONE, &q, 0, 0, NULL, &error);
+   cursor = mongoc_collection_find (collection, MONGOC_QUERY_NONE, 0, 0, 0, &q, NULL, NULL);
+   ASSERT_CMPPTR(cursor, !=, NULL);
+
+   while(mongoc_cursor_next(cursor, &doc))
+   {
+       ++count;
+   }
+   mongoc_cursor_destroy(cursor); 
+   
+   //count = mongoc_collection_count (collection, MONGOC_QUERY_NONE, &q, 0, 0, NULL, &error);
    ASSERT_CMPINT ((int)count, ==, 5);
 
    for (i = 8; i < 10; i++) {
@@ -156,8 +167,15 @@ test_insert_bulk (void)
    ASSERT_CMPINT (r, ==, false);
    ASSERT_CMPINT (error.code, ==, 11000);
    //ASSERT_CMPINT (error.code, ==, -38);
-
-   count = mongoc_collection_count (collection, MONGOC_QUERY_NONE, &q, 0, 0, NULL, &error);
+   cursor = mongoc_collection_find (collection, MONGOC_QUERY_NONE, 0, 0, 0, &q, NULL, NULL);
+   ASSERT_CMPPTR(cursor, !=, NULL);
+   count = 0;
+   while(mongoc_cursor_next(cursor, &doc))
+   {
+       ++count;
+   }
+   mongoc_cursor_destroy(cursor); 
+   //count = mongoc_collection_count (collection, MONGOC_QUERY_NONE, &q, 0, 0, NULL, &error);
 
    /*
     * MongoDB <2.6 and 2.6 will return different values for this. This is a
@@ -180,8 +198,15 @@ test_insert_bulk (void)
    //ASSERT_CMPINT (r, ==, false);
    //ASSERT_CMPINT (error.code, ==, 11000);
    //ASSERT_CMPINT (error.code, ==, -38);
-
-   count = mongoc_collection_count (collection, MONGOC_QUERY_NONE, &q, 0, 0, NULL, &error);
+   cursor = mongoc_collection_find (collection, MONGOC_QUERY_NONE, 0, 0, 0, &q, NULL, NULL);
+   ASSERT_CMPPTR(cursor, !=, NULL);
+   count = 0;
+   while(mongoc_cursor_next(cursor, &doc))
+   {
+       ++count;
+   }
+   mongoc_cursor_destroy(cursor); 
+   //count = mongoc_collection_count (collection, MONGOC_QUERY_NONE, &q, 0, 0, NULL, &error);
    ASSERT_CMPINT ((int)count, ==, 6);
 
    /* test validate */
