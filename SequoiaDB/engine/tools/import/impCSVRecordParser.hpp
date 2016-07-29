@@ -127,7 +127,7 @@ namespace import
 
       CSVFieldOpt()
       {
-         ossMemset(&opt, 0, sizeof(CSVFieldOpt));
+         ossMemset(&opt, 0, sizeof(opt));
          hasOpt = FALSE;
       }
    };
