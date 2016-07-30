@@ -2296,13 +2296,31 @@ namespace engine
       INT32 low = ( INT32 )l ;
       INT32 high = ( INT32 )h ;
       INT32 m = 0 ;
+      BOOLEAN equal = FALSE ;
       while ( TRUE )
       {
          if ( low > high )
          {
-            bestIxmRID._extent = _me ;
-            bestIxmRID._slot = direction > 0 ? low : high ;
-            resultExtent = getChildExtentID( bestIxmRID._slot ) ;
+            INT32 tmpSlot = direction > 0 ? low : high ;
+            if ( tmpSlot < (INT32)l || tmpSlot > (INT32)h )
+            {
+               bestIxmRID.reset() ;
+            }
+            else
+            {
+               bestIxmRID._extent = _me ;
+               bestIxmRID._slot = tmpSlot ;
+            }
+            /// when backward scan, and the find slot is equal with condition,
+            /// is the first <= condition's value, don't traversal by child,
+            if ( equal && direction < 0 )
+            {
+               resultExtent = -1 ;
+            }
+            else
+            {
+               resultExtent = getChildExtentID( low ) ;
+            }
             goto done ;
          }
          // no need to worry about 16 bit overflow, since each page is only
@@ -2317,6 +2335,7 @@ namespace engine
             rc = SDB_SYS ;
             goto error ;
          }
+         equal = FALSE ;
          INT32 r = _keyCmp ( ixmKey(data).toBson(), prevKey, keepFieldsNum,
                              skipToNext, matchEle, matchInclusive, o, direction);
          if ( r < 0 )
@@ -2329,6 +2348,7 @@ namespace engine
          }
          else
          {
+            equal = TRUE ;
             if ( direction < 0 )
             {
                low = m + 1 ;
