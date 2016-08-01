@@ -2667,13 +2667,22 @@ namespace import
       CHAR* str = data.str;
       INT32 rc = SDB_OK;
       BOOLEAN hasNonDigit = FALSE;
+      CHAR* term = NULL ;
+      CHAR tmpch ;
       CHAR ch;
 
       SDB_ASSERT(NULL != data.str, "data.str can't be NULL");
 
+      if ( data.length <= 0 )
+      {
+         rc = SDB_INVALIDARG;
+         PD_LOG(PDERROR, "invalid timestamp length");
+         goto error;
+      }
+
       // terminate string
-      CHAR* term = str + data.length;
-      CHAR tmpch = *term;
+      term = str + data.length;
+      tmpch = *term;
       *term = '\0';
 
       // may be negative number
@@ -2806,7 +2815,10 @@ namespace import
 
    done:
       // recovery string
-      *term = tmpch;
+      if ( NULL != term )
+      {
+         *term = tmpch;
+      }
       return rc;
    error:
       goto done;
@@ -2817,13 +2829,22 @@ namespace import
       CHAR* str = data.str;
       INT32 rc = SDB_OK;
       BOOLEAN hasNonDigit = FALSE;
+      CHAR* term = NULL ;
+      CHAR tmpch ;
       CHAR ch;
 
       SDB_ASSERT(NULL != data.str, "data.str can't be NULL");
 
+      if ( data.length <= 0 )
+      {
+         rc = SDB_INVALIDARG;
+         PD_LOG(PDERROR, "invalid date length");
+         goto error;
+      }
+
       // terminate string
-      CHAR* term = str + data.length;
-      CHAR tmpch = *term;
+      term = str + data.length;
+      tmpch = *term;
       *term = '\0';
 
       // may be negative number
@@ -2906,7 +2927,10 @@ namespace import
 
    done:
       // recovery string
-      *term = tmpch;
+      if ( NULL != term )
+      {
+         *term = tmpch;
+      }
       return rc;
    error:
       goto done;
@@ -2940,7 +2964,6 @@ namespace import
       INT32 rc = SDB_OK;
 
       SDB_ASSERT(NULL != data.str, "data.str can't be NULL");
-      SDB_ASSERT(data.length > 0, "data.length must be greater than 0");
 
       if (len <= 0)
       {
@@ -3042,7 +3065,6 @@ namespace import
       INT32 base64Len = 0;
 
       SDB_ASSERT(NULL != data.str, "data.str can't be NULL");
-      SDB_ASSERT(data.length > 0, "data.length must be greater than 0");
 
       // terminate string
       CHAR* term = str + data.length;
