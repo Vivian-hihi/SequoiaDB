@@ -10,7 +10,7 @@
 		NULL
 -->
 
-<project default="6.12 Build-Story-Java-Testcases">
+<project default="6.0 Compile-Driver-Testcases">
 	<property file="${SCRIPT_DIR}/ci.test.properties" />
 	
 	<target name="6.0 Compile-Driver-Testcases" depends="">
