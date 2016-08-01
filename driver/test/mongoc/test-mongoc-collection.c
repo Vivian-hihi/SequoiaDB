@@ -1597,7 +1597,7 @@ test_collection_install (TestSuite *suite)
 {
    gTestUri = bson_strdup_printf("mongodb://%s/", MONGOC_TEST_HOST);
 
-   TestSuite_Add (suite, "Collection_insert_bulk", test_insert_bulk);
+   //TestSuite_Add (suite, "Collection_insert_bulk", test_insert_bulk);
    TestSuite_Add (suite, "Collection_insert", test_insert);
    //TestSuite_Add (suite, "Collection_save", test_save);
    TestSuite_Add (suite, "Collection_index", test_index);
