@@ -14,9 +14,9 @@
 	<property file="${SCRIPT_DIR}/ci.test.properties" />
 	
 	<target name="6.0 Compile-Driver-Testcases" depends="">
-        <if>                                                                                                                 
-            <equals arg1="${isTrunk}" arg2="true" />                                    
-            <then>                                                                      
+        <if>
+            <equals arg1="${isTrunk}" arg2="true" />
+            <then>
                 <antcall target="6.1 Clean-Driver-Testcases"        inheritAll="false" />
                 <antcall target="6.2 Build-Java-Testcases"          inheritAll="false" />
                 <antcall target="6.3 Build-Python-Testcases"        inheritAll="false" />
@@ -71,8 +71,13 @@
 		<mkdir dir="${deploy_dir}/hlt/drivers_testcases/mongoc/build" />
 		<mkdir dir="${deploy_dir}/hlt/drivers_testcases/mongoc/lib" />
 		<mkdir dir="${deploy_dir}/hlt/lob_testcases" />
-		<mkdir dir="${deploy_dir}/hlt/drivers_testcases/story_java/build" />
-		<mkdir dir="${deploy_dir}/hlt/drivers_testcases/story_java/lib" />	
+		<if>
+            <equals arg1="${isTrunk}" arg2="true" />
+            <then>
+        		<mkdir dir="${deploy_dir}/hlt/drivers_testcases/story_java/build" />
+        		<mkdir dir="${deploy_dir}/hlt/drivers_testcases/story_java/lib" />
+        	</then>
+        </if>		
 	</target>
 
 	<target name="6.2 Build-Java-Testcases" depends="">
