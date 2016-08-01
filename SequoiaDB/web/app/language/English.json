@@ -489,5 +489,7 @@
    "总节点数": "Node Number",
    "总量": "Total",
    "总容量": "Total Space",
-   "总容量(MB)": "Total capacity (MB)"
+   "总容量(MB)": "Total capacity (MB)",
+   "数据库用户名": "Database User",
+   "数据库密码": "Password"
 }
