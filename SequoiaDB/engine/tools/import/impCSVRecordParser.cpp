@@ -709,7 +709,7 @@ namespace import
       CHAR* str = (CHAR*)data;
       INT32 len = length;
       INT32 rc = SDB_OK;
-      INT64 intNum;
+      UINT64 intNum;
       FLOAT64 floatNum;
       BOOLEAN neg = FALSE;
       UINT64 quo; // quoteint
@@ -767,7 +767,7 @@ namespace import
          if (CSV_TYPE_LONG == type)
          {
             // overflow
-            if (intNum > (INT64)quo || (intNum == (INT64)quo && ch > rem))
+            if (intNum > quo || (intNum == quo && ch > rem))
             {
                type = CSV_TYPE_DOUBLE;
                floatNum = (FLOAT64)intNum;
@@ -797,7 +797,7 @@ namespace import
    finish:
       if (CSV_TYPE_LONG == type)
       {
-         value.longVal = neg ? -intNum : intNum;
+         value.longVal = neg ? (INT64)(-intNum) : (INT64)intNum;
       }
       else // CSV_TYPE_DOUBLE
       {
