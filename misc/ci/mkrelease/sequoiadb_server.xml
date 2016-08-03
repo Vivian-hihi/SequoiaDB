@@ -247,13 +247,17 @@
                     <allowEmptyValue>1</allowEmptyValue>
                     <width>40</width>
                 </stringParameter>
-                <booleanParameter>
+                <booleanParameter><!--auto start-->
                     <name>processAutoStart</name>
                     <description>${msg(Install.Paramers.processAutoStart.Description)}</description>
                     <explanation>${msg(Install.Paramers.processAutoStart.explanation)}</explanation>
-                    <value>true</value>
-                    <default>true</default>
+                    <value></value>
+                    <default>yes</default>
                     <cliOptionText>${msg(Install.Paramers.processAutoStart.explanation)}</cliOptionText>
+                    <ruleList>
+                        <compareText text="${processAutoStart}" logic="does_not_equal" value="true"/> 
+                        <compareText text="${processAutoStart}" logic="does_not_equal" value="false"/>
+                    </ruleList>
                 </booleanParameter>
                 <stringParameter>
                     <name>svcname</name>
@@ -311,28 +315,26 @@
                         </isTrue>
                     </ruleList>
                 </stringParameter>
-                <booleanParameter>
+                <booleanParameter><!--sms-->
                     <name>SMS</name>
-                    <description>${msg(Install.Paramers.sms.description)}</description>
-                    <explanation></explanation>
+                    <description>${msg(Install.Paramers.sms.description)}</description>                  
                     <value></value>
-                    <default>false</default>
+                    <default>no</default>
                     <cliOptionName>SMS</cliOptionName>
                     <cliOptionText>${msg(Install.Paramers.installationType.explanation)}</cliOptionText>
-                    <ruleEvaluationLogic>or</ruleEvaluationLogic>
+                    <ruleEvaluationLogic>and</ruleEvaluationLogic>
                     <ruleList>
-                        <isFalse>
-                            <value>${SMS}</value>
-                        </isFalse>
+                        <compareText text="${SMS}" logic="does_not_equal" value="true"/> 
+                        <compareText text="${SMS}" logic="does_not_equal" value="false"/>
                     </ruleList>
-                </booleanParameter>                                              
+                </booleanParameter>                                             
             </parameterList>
         </parameterGroup>
         
     </parameterList>
     
     <!--select compoment, and check environment-->
-    <readyToInstallActionList>                        
+    <readyToInstallActionList>                                       
         <!--when unattended mode, execute postShowPageActionList-->
         <actionGroup> 
             <actionList>
