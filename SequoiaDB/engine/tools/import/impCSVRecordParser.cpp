@@ -1234,21 +1234,21 @@ namespace import
       case CSV_TYPE_LONG:
          if (_cast)
          {
-            value = tmpField.value.longVal;
+            value = (INT32)tmpField.value.longVal;
             break;
          }
          // passthrough
       case CSV_TYPE_DOUBLE:
          if (_cast)
          {
-            value = tmpField.value.doubleVal;
+            value = (INT32)tmpField.value.doubleVal;
             break;
          }
          // passthrough
       case CSV_TYPE_DECIMAL:
          if (_cast)
          {
-            value = decimal_to_int(&(tmpField.value.decimalVal));
+            value = (INT32)decimal_to_int(&(tmpField.value.decimalVal));
             break;
          }
          // passthrough
@@ -1284,7 +1284,7 @@ namespace import
       switch(tmpField.type)
       {
       case CSV_TYPE_INT:
-         value = tmpField.value.intVal;
+         value = (INT64)tmpField.value.intVal;
          break;
       case CSV_TYPE_LONG:
          value = tmpField.value.longVal;
@@ -1292,14 +1292,14 @@ namespace import
       case CSV_TYPE_DOUBLE:
          if (_cast)
          {
-            value = tmpField.value.doubleVal;
+            value = (INT64)tmpField.value.doubleVal;
             break;
          }
          // passthrough
       case CSV_TYPE_DECIMAL:
          if (_cast)
          {
-            value = decimal_to_long(&(tmpField.value.decimalVal));
+            value = (INT64)decimal_to_long(&(tmpField.value.decimalVal));
             break;
          }
          // passthrough
@@ -1338,13 +1338,13 @@ namespace import
          value = subField.value.doubleVal;
          break;
       case CSV_TYPE_INT:
-         value = subField.value.intVal;
+         value = (FLOAT64)subField.value.intVal;
          break;
       case CSV_TYPE_LONG:
-         value = subField.value.longVal;
+         value = (FLOAT64)subField.value.longVal;
          break;
       case CSV_TYPE_DECIMAL:
-         value = decimal_to_double(&(subField.value.decimalVal));
+         value = (FLOAT64)decimal_to_double(&(subField.value.decimalVal));
          break;
       default:
          rc = SDB_INVALIDARG;
