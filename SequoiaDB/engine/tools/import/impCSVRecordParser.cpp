@@ -147,7 +147,7 @@ namespace import
 
    #define DOUBLE_PRECISION       (15)
    #define DOUBLE_FRACT_PRECISION (6)
-   #define DOUBLE_MAN             (1.79)
+   #define DOUBLE_BOUND           (1.79)
    #define DOUBLE_MAX_EXP         (308)
    #define DOUBLE_MIN_EXP         (-308)
 
@@ -1174,12 +1174,12 @@ namespace import
          goto decimal;
       }
 
-      if (DOUBLE_MAX_EXP == exponent && num > DOUBLE_MAN)
+      if (DOUBLE_MAX_EXP == exponent && ( num > DOUBLE_BOUND || num < -DOUBLE_BOUND ) )
       {
          goto decimal;
       }
 
-      if (DOUBLE_MIN_EXP == exponent && num < -DOUBLE_MAN)
+      if (DOUBLE_MIN_EXP == exponent && ( num > -DOUBLE_BOUND || num < DOUBLE_BOUND ) )
       {
          goto decimal;
       }
