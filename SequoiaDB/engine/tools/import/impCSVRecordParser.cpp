@@ -2765,7 +2765,9 @@ namespace import
          if( timep < TIME_STAMP_TIMESTAMP_MIN ||
              timep > TIME_STAMP_TIMESTAMP_MAX )
          {
-            return FALSE ;
+            rc = SDB_INVALIDARG;
+            PD_LOG(PDERROR, "invalid time of timestamp");
+            goto error;
          }
          value.sec = (INT32)timep;
          value.us = microsec;
