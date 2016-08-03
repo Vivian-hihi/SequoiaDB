@@ -111,7 +111,7 @@ namespace import
    #define CSV_STR_FIELD         "field"
 
    #define CSV_STR_BACKSLASH     '/'
-   #define CSV_STR_EMPTYOPTIONS  ""
+   #define CSV_STR_EMPTY  ""
 
    #define CSV_STR_LEFTBRACKET   '('
    #define CSV_STR_RIGHTBRACKET  ')'
@@ -2967,7 +2967,17 @@ namespace import
 
       SDB_ASSERT(NULL != data.str, "data.str can't be NULL");
 
-      if (len <= 0)
+      if (len == 0)
+      {
+         // regex can be empty
+         value.pattern = CSV_STR_EMPTY;
+         value.patternLen = 0;
+         value.option = CSV_STR_EMPTY;
+         value.optionLen = 0;
+         goto done;
+      }
+
+      if (len < 0)
       {
          rc = SDB_INVALIDARG;
          PD_LOG(PDERROR, "invalid regex length");
@@ -2978,7 +2988,7 @@ namespace import
       {
          value.pattern = str;
          value.patternLen = len;
-         value.option = CSV_STR_EMPTYOPTIONS;
+         value.option = CSV_STR_EMPTY;
          goto done;
       }
 
@@ -3014,13 +3024,13 @@ namespace import
 
       if (len == 0)
       {
-         value.option = CSV_STR_EMPTYOPTIONS;
+         value.option = CSV_STR_EMPTY;
          goto done;
       }
 
       if (isspace(*str))
       {
-         value.option = CSV_STR_EMPTYOPTIONS;
+         value.option = CSV_STR_EMPTY;
       }
       else
       {
@@ -3275,17 +3285,17 @@ namespace import
                << "](length: " << field.defaultValue.oidVal.length << ")";
             break;
          case CSV_TYPE_REGEX:
-            ss << "pattern: [" << string(field.defaultValue.regexVal.pattern,
-                                         field.defaultValue.regexVal.patternLen)
-               << "], option: [";
-            if (NULL != field.defaultValue.regexVal.option)
+            ss << "pattern: [";
+            if (0 != field.defaultValue.regexVal.patternLen)
+            {
+                ss << string(field.defaultValue.regexVal.pattern,
+                             field.defaultValue.regexVal.patternLen);
+            }
+            ss << "], option: [";
+            if (0 != field.defaultValue.regexVal.optionLen)
             {
                ss << string(field.defaultValue.regexVal.option,
                             field.defaultValue.regexVal.optionLen);
-            }
-            else
-            {
-               ss << "NULL";
             }
             ss << "]";
             break;
@@ -3875,9 +3885,14 @@ namespace import
             CHAR optCh = '\0';
 
             // terminate string
-            patTerm = value->regexVal.pattern + value->regexVal.patternLen;
-            patCh= *patTerm;
-            *patTerm = '\0';
+            patTerm = value->regexVal.pattern;
+            if (*patTerm != '\0')
+            {
+               patTerm += value->regexVal.patternLen;
+               patCh= *patTerm;
+               *patTerm = '\0';
+            }
+
             optTerm = value->regexVal.option;
             if (*optTerm != '\0')
             {
@@ -3891,7 +3906,10 @@ namespace import
                                    value->regexVal.option);
 
             // recovery string
-            *patTerm = patCh;
+            if (patCh != '\0')
+            {
+               *patTerm = patCh;
+            }
             if (optCh != '\0')
             {
                *optTerm = optCh;
