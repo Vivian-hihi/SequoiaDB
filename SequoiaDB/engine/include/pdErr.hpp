@@ -76,7 +76,7 @@ class _pdGeneralException : public std::exception
       INT32       _err ;
       std::string _s ;
 } ;
-typedef struct _pdGeneralException pdGeneralException ;
+typedef class _pdGeneralException pdGeneralException ;
 
 #endif // PD_ERR_HPP__
 
