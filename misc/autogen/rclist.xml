@@ -2467,11 +2467,11 @@
             <cn>达到最大或最小限制</cn>
          </description>
       </code>
-			<code>
-         <name>SDB_DS_DISABLED</name>
+	  <code>
+         <name>SDB_DS_NOTINIT_OR_DISABLED</name>
          <description>
-            <en>sdbDataSource disabled</en>
-            <cn>连接池功能未启用</cn>
+            <en>sdbDataSource not init or disabled</en>
+            <cn>未初始化或连接池功能未启用</cn>
          </description>
       </code>
       <code>
