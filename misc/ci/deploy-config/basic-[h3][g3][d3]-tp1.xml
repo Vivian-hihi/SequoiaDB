@@ -186,7 +186,7 @@
             <if>
                <equals arg1="${isTrunk}" arg2="true" />
                <then>
-                  <var name="TEST_TYPE" value="story,sdv,ant,driver-python,driver-php,driver-java,lob,driver-C,driver-CPP,driver-mongoc,story-php,story-C,story-CPP" />             
+                  <var name="TEST_TYPE" value="story,sdv,ant,driver-python,driver-php,driver-java,lob,driver-C,driver-CPP,driver-mongoc,story-php,story-C,story-CPP,story-java" />             
                </then>
                <else>
                   <var name="TEST_TYPE" value="story,sdv,ant,driver-python,driver-php,driver-java,lob,driver-C,driver-CPP,driver-mongoc" />             
