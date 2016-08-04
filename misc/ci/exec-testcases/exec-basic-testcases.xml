@@ -182,6 +182,8 @@
 		</tstamp>
 
 		<basename property="test.case.name" file="${test.case.fullname}" suffix=".js" />
+		<dirname property="testcase.dirname" file="${test.case.fullname}" />
+		
 		<exec executable="sed">
 			<arg line="-i 's/^\xEF\xBB\xBF//g'  ${test.case.fullname}"/>
 		</exec>
@@ -202,7 +204,7 @@
 		</exec>
 		
 		<echo message="--------------------begin testcase----------------------------"/>
-		<property name="sdb.cmd.argument" value=" -e &quot;var CHANGEDPREFIX='${CHANGEDSTRING}';var COORDSVCNAME='${coord.service.port}';&quot; -f &quot;${testcases.path}/libs/func.js,${commlib.option},${test.case.fullname}&quot;" />
+		<property name="sdb.cmd.argument" value=" -e &quot;var CHANGEDPREFIX='${CHANGEDSTRING}';var COORDSVCNAME='${coord.service.port}';var TESTCASEDIR='${testcase.dirname}';&quot; -f &quot;${testcases.path}/libs/func.js,${commlib.option},${test.case.fullname}&quot;" />
 		<echo message="Exec: ${bin_dir}/sdb${sdb.cmd.argument}" />				
 		<exec executable="${bin_dir}/sdb" dir="" timeout="3600000" outputproperty="screen.output" resultproperty="ret.code" failonerror="false">
 			<arg line="${sdb.cmd.argument}" />

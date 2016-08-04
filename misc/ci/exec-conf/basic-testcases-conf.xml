@@ -7,14 +7,10 @@
         <testsuite>delete</testsuite>
         <testsuite>domain</testsuite>
         <testsuite>dropCL</testsuite>
-        <testsuite>dropCS</testsuite>  
-        <testsuite>dropIndex</testsuite>
-        <testsuite>insert</testsuite>
-        <testsuite>listCL</testsuite>
+        <testsuite>dropCS</testsuite>         
         <testsuite>operators</testsuite>  
-        <testsuite>numberLong</testsuite>
-        <testsuite>selectorSymbol</testsuite>
-        <testsuite>sqlHint</testsuite>        
+        <testsuite>sdbimprt</testsuite>
+        <testsuite>selectorSymbol</testsuite>    
     </machine1>
     <machine2>
         <testsuite>procedures</testsuite>
@@ -28,6 +24,7 @@
         <testsuite>updateSymbol</testsuite>
         <testsuite>sdbLobTool</testsuite>
         <testsuite>cjson</testsuite>
+        <testsuite>numberLong</testsuite>
     </machine2>
     <machine3>
         <testsuite>update</testsuite>
@@ -41,5 +38,9 @@
         <testsuite>matches</testsuite>
         <testsuite>jsonTypes</testsuite>
         <testsuite>sqlArithmetic</testsuite>
+        <testsuite>dropIndex</testsuite>
+        <testsuite>insert</testsuite>
+        <testsuite>listCL</testsuite>
+        <testsuite>sqlHint</testsuite>
     </machine3>
 </shell>
