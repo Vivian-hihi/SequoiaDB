@@ -1648,6 +1648,26 @@ namespace engine
             goto error ;
          }
       }
+      else if ( 1 == _pPage->blockNum() )
+      {
+         CHAR *ptr = _pPage->str() ;
+         pFile = _pUnit->getCacheFile() ;
+         /// read from file
+         rc = pFile->read( _pageID, ptr, len, offset, readLen, cb ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Read from file[%s] failed, rc: %d",
+                    pFile->getFileName(), rc ) ;
+            goto error ;
+         }
+         /// load with no data
+         rc = _pPage->loadWithoutData( offset, len ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Load without data in page failed, rc: %d", rc ) ;
+            goto error ;
+         }
+      }
       else
       {
          rc = cb->allocBuff( len, &pBuff, NULL ) ;
