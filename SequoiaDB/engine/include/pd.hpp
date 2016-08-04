@@ -36,10 +36,7 @@
 #ifndef PD_HPP_
 #define PD_HPP_
 
-#include "core.h"
-#include "oss.h"
-#include <string>
-#include <stdlib.h>
+#include "pdErr.hpp"
 
 #define PD_DFT_FILE_NUM             (20)
 #define PD_DFT_FILE_SZ              (100)
@@ -158,21 +155,6 @@ void pdcheck( const CHAR* string, const CHAR* func,
 #define pdassert(str1,str2,str3,str4)
 #define pdcheck(str1,str2,str3,str4)
 #endif
-
-/*
-   _pdGeneralException define
-*/
-struct _pdGeneralException : public std::exception
-{
-   std::string s ;
-   _pdGeneralException ( std::string ss ) : s (ss) {}
-   ~_pdGeneralException() throw() {}
-   const CHAR *what() const throw()
-   {
-      return s.c_str() ;
-   }
-} ;
-typedef struct _pdGeneralException pdGeneralException ;
 
 /*
    pdLog function define

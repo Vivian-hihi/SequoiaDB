@@ -24,6 +24,7 @@ pmdFiles = [
       ]
 
 pdFiles = [
+      "pd/pdErr.cpp",
       "pd/pd.cpp",
       "pd/pdTrace.cpp",
       ]

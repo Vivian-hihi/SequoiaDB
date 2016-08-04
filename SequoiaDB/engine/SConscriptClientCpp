@@ -25,6 +25,7 @@ clientCPPLibFiles = [
       "oss/ossMem.cpp",
       "oss/ossSocket.cpp",
       "oss/ossPrimitiveFileOp.cpp",
+      "pd/pdErr.cpp",
       "pd/pd.cpp",
       "client/bson/numbers.c",
       "client/bson/bson.c",

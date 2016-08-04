@@ -124,6 +124,7 @@ netFiles = [
       ]
 
 pdFiles = [
+      "pd/pdErr.cpp",
       "pd/pd.cpp",
       "pd/pdTrace.cpp",
       "pd/pdComponents.cpp",
