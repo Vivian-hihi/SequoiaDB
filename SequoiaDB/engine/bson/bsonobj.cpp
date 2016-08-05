@@ -29,7 +29,6 @@
 #include "lib/base64.h"
 #include "lib/md5.hpp"
 #include <limits>
-#include <cmath>
 
 //#include "util/json.h"
 #include "bson.hpp"
@@ -580,8 +579,8 @@ namespace bson {
         case NumberDouble: {
             double left = l.number();
             double right = r.number();
-            bool lNan = std::isnan( left ) ;
-            bool rNan = std::isnan( right ) ;
+            bool lNan = (left != left) ;
+            bool rNan = (right != right ) ;
             if ( lNan ) {
                 if ( rNan ) {
                     return 0;
