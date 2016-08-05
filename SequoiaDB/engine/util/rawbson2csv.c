@@ -213,6 +213,7 @@ INT32 _appendNonString( CHAR delChar, bson_iterator *pIt,
       UTIL_RAW2BSON_PRINTF_LOG( "Csv buffer is too small, rc=%d", rc ) ;
       goto error ;
    }
+
    if ( !bson_sprint_iterator ( ppCSVBuf, pCSVSize,
                                 pIt, delChar ) )
    {
@@ -221,6 +222,33 @@ INT32 _appendNonString( CHAR delChar, bson_iterator *pIt,
                                 rc ) ;
       goto error ;
    }
+done:
+   return rc ;
+error:
+   goto done ;
+}
+
+INT32 _appendNonString2( const CHAR *pBuffer, INT32 size,
+                         CHAR **ppCSVBuf, INT32 *pCSVSize )
+{
+   INT32 rc = SDB_OK ;
+
+   if( !ppCSVBuf )
+   {
+      (*pCSVSize) += size ;
+      goto done ;
+   }
+
+   if( size > (*pCSVSize) )
+   {
+      rc = SDB_SYS ;
+      UTIL_RAW2BSON_PRINTF_LOG( "Csv buffer is too small, rc=%d", rc ) ;
+      goto error ;
+   }
+
+   ossMemcpy( *ppCSVBuf, pBuffer, size ) ;
+   (*pCSVSize) -= size ;
+   *ppCSVBuf += size ;
 done:
    return rc ;
 error:
@@ -257,6 +285,48 @@ INT32 _appendValue( CHAR delChar, bson_iterator *pIt,
       if ( rc )
       {
          UTIL_RAW2BSON_PRINTF_LOG( "Failed to call appendNonString, rc=%d",
+                                   rc ) ;
+         goto error ;
+      }
+   }
+   else if ( type == BSON_DECIMAL )
+   {
+      if( bson_iterator_decimal( pIt, &decimal ) == BSON_ERROR )
+      {
+         rc = SDB_SYS ;
+         UTIL_RAW2BSON_PRINTF_LOG( "Failed to call bson_iterator_decimal" ) ;
+         goto error ;
+      }
+      rc = decimal_to_str_get_len( &decimal, &decimalSize ) ;
+      if ( rc )
+      {
+         UTIL_RAW2BSON_PRINTF_LOG( "Failed to get decimal size, rc=%d", rc ) ;
+         goto error ;
+      }
+      pDecimalStr = (CHAR *)SDB_OSS_MALLOC( decimalSize ) ;
+      if( pDecimalStr == NULL )
+      {
+         rc = SDB_OOM ;
+         UTIL_RAW2BSON_PRINTF_LOG( "Failed to malloc memory, size=%d, rc=%d",
+                                   decimalSize,
+                                   rc ) ;
+         goto error ;
+      }
+      ossMemset( pDecimalStr, 0, decimalSize ) ;
+      rc = decimal_to_str( &decimal, pDecimalStr, decimalSize ) ;
+      if( rc )
+      {
+         UTIL_RAW2BSON_PRINTF_LOG( "Failed to call decimal_to_str, rc=%d",
+                                   rc ) ;
+         goto error ;
+      }
+      rc = _appendNonString2( pDecimalStr,
+                              ossStrlen( pDecimalStr ),
+                              ppBuffer,
+                              pCSVSize ) ;
+      if ( rc )
+      {
+         UTIL_RAW2BSON_PRINTF_LOG( "Failed to call appendString, rc=%d",
                                    rc ) ;
          goto error ;
       }
@@ -482,49 +552,6 @@ INT32 _appendValue( CHAR delChar, bson_iterator *pIt,
       {
          bson_oid_to_string( bson_iterator_oid( pIt ), temp ) ;
          rc = _appendString( delChar, temp, 24, ppBuffer, pCSVSize ) ;
-         if ( rc )
-         {
-            UTIL_RAW2BSON_PRINTF_LOG( "Failed to call appendString, rc=%d",
-                                      rc ) ;
-            goto error ;
-         }
-      }
-      else if ( type == BSON_DECIMAL )
-      {
-         if( bson_iterator_decimal( pIt, &decimal ) == BSON_ERROR )
-         {
-            rc = SDB_SYS ;
-            UTIL_RAW2BSON_PRINTF_LOG( "Failed to call bson_iterator_decimal" ) ;
-            goto error ;
-         }
-         rc = decimal_to_str_get_len( &decimal, &decimalSize ) ;
-         if ( rc )
-         {
-            UTIL_RAW2BSON_PRINTF_LOG( "Failed to get decimal size, rc=%d", rc ) ;
-            goto error ;
-         }
-         pDecimalStr = (CHAR *)SDB_OSS_MALLOC( decimalSize ) ;
-         if( pDecimalStr == NULL )
-         {
-            rc = SDB_OOM ;
-            UTIL_RAW2BSON_PRINTF_LOG( "Failed to malloc memory, size=%d, rc=%d",
-                                      decimalSize,
-                                      rc ) ;
-            goto error ;
-         }
-         ossMemset( pDecimalStr, 0, decimalSize ) ;
-         rc = decimal_to_str( &decimal, pDecimalStr, decimalSize ) ;
-         if( rc )
-         {
-            UTIL_RAW2BSON_PRINTF_LOG( "Failed to call decimal_to_str, rc=%d",
-                                      rc ) ;
-            goto error ;
-         }
-         rc = _appendString( delChar,
-                             pDecimalStr,
-                             ossStrlen( pDecimalStr ),
-                             ppBuffer,
-                             pCSVSize ) ;
          if ( rc )
          {
             UTIL_RAW2BSON_PRINTF_LOG( "Failed to call appendString, rc=%d",
