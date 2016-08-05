@@ -2265,8 +2265,9 @@ int decimal_from_str( const char *value, bson_decimal *decimal )
       rc = -6 ;
       goto error ;
    }
+   unsigned int len = strlen( cp ) ;
 
-   if ( strlen( cp ) >= 3 )
+   if ( len >= 3 )
    {
       if ( ( cp[0] == 'n' || cp[0] == 'N' ) && 
            ( cp[1] == 'a' || cp[1] == 'A' ) &&
@@ -2287,6 +2288,23 @@ int decimal_from_str( const char *value, bson_decimal *decimal )
       if ( ( cp[0] == 'm' || cp[0] == 'M' ) && 
            ( cp[1] == 'a' || cp[1] == 'A' ) &&
            ( cp[2] == 'x' || cp[2] == 'X' ) )
+      {
+         decimal_set_max( decimal ) ;
+         goto done ;
+      }
+
+      if ( len >= 4 && cp[0] == '-' &&
+           ( cp[1] == 'i' || cp[1] == 'I' ) && 
+           ( cp[2] == 'n' || cp[2] == 'N' ) &&
+           ( cp[3] == 'f' || cp[3] == 'F' ) )
+      {
+         decimal_set_min( decimal ) ;
+         goto done ;
+      }
+
+      if ( ( cp[0] == 'i' || cp[0] == 'I' ) && 
+           ( cp[1] == 'n' || cp[1] == 'N' ) &&
+           ( cp[2] == 'f' || cp[2] == 'F' ) )
       {
          decimal_set_max( decimal ) ;
          goto done ;
