@@ -197,7 +197,7 @@ INT32 _appendNonString( CHAR delChar, bson_iterator *pIt,
                         CHAR **ppCSVBuf, INT32 *pCSVSize )
 {
    INT32 rc = SDB_OK ;
-   INT32 size     = 0 ;
+   INT32 size = 0 ;
 
    size = bson_sprint_length_iterator( pIt ) ;
 
@@ -331,6 +331,57 @@ INT32 _appendValue( CHAR delChar, bson_iterator *pIt,
          goto error ;
       }
    }
+   else if( type == BSON_DATE )
+   {
+      timer = bson_iterator_date( pIt ) / 1000 ;
+      local_time( &timer, &psr ) ;
+      if( psr.tm_year + 1900 >= 1900 &&
+          psr.tm_year + 1900 <= 9999 )
+      {
+         rc = _appendString( delChar, &delChar, 1, ppBuffer, pCSVSize ) ;
+         if ( rc )
+         {
+            UTIL_RAW2BSON_PRINTF_LOG( "Failed to call appendString, rc=%d", rc ) ;
+            goto error ;
+         }
+         tempSize = ossSnprintf ( temp, 64, "%04d-%02d-%02d",
+                                  psr.tm_year + 1900,
+                                  psr.tm_mon + 1,
+                                  psr.tm_mday ) ;
+         rc = _appendString( delChar, temp, tempSize, ppBuffer, pCSVSize ) ;
+         if ( rc )
+         {
+            UTIL_RAW2BSON_PRINTF_LOG( "Failed to call appendString, rc=%d",
+                                      rc ) ;
+            goto error ;
+         }
+         rc = _appendString( delChar, &delChar, 1, ppBuffer, pCSVSize ) ;
+         if ( rc )
+         {
+            UTIL_RAW2BSON_PRINTF_LOG( "Failed to call appendString, rc=%d", rc ) ;
+            goto error ;
+         }
+      }
+      else
+      {
+         CHAR dateNum[ 512 ] = {0} ;
+         ossMemset( dateNum, 0, 512 ) ;
+         tempSize = ossSnprintf( dateNum,
+                                 512,
+                                 "%lld",
+                                 bson_iterator_date( pIt ) ) ;
+         rc = _appendNonString2( dateNum,
+                                 tempSize,
+                                 ppBuffer,
+                                 pCSVSize ) ;
+         if ( rc )
+         {
+            UTIL_RAW2BSON_PRINTF_LOG( "Failed to call appendString, rc=%d",
+                                      rc ) ;
+            goto error ;
+         }
+      }
+   }
    else
    {
       rc = _appendString( delChar, &delChar, 1, ppBuffer, pCSVSize ) ;
@@ -353,22 +404,6 @@ INT32 _appendValue( CHAR delChar, bson_iterator *pIt,
                                   psr.tm_min,
                                   psr.tm_sec,
                                   ts.i ) ;
-         rc = _appendString( delChar, temp, tempSize, ppBuffer, pCSVSize ) ;
-         if ( rc )
-         {
-            UTIL_RAW2BSON_PRINTF_LOG( "Failed to call appendString, rc=%d",
-                                      rc ) ;
-            goto error ;
-         }
-      }
-      else if ( type == BSON_DATE )
-      {
-         timer = bson_iterator_date( pIt ) / 1000 ;
-         local_time( &timer, &psr ) ;
-         tempSize = ossSnprintf ( temp, 64, "%04d-%02d-%02d",
-                                  psr.tm_year + 1900,
-                                  psr.tm_mon + 1,
-                                  psr.tm_mday ) ;
          rc = _appendString( delChar, temp, tempSize, ppBuffer, pCSVSize ) ;
          if ( rc )
          {
