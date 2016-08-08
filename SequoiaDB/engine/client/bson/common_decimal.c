@@ -2254,6 +2254,7 @@ int decimal_from_str( const char *value, bson_decimal *decimal )
    int ndigits = 0 ;
    int offset  = 0 ;
    int rc      = 0 ;
+   unsigned int len ;
 
    short *digits = NULL ;
    unsigned char *decdigits = NULL ;
@@ -2265,7 +2266,7 @@ int decimal_from_str( const char *value, bson_decimal *decimal )
       rc = -6 ;
       goto error ;
    }
-   unsigned int len = strlen( cp ) ;
+   len = strlen( cp ) ;
 
    if ( len >= 3 )
    {
