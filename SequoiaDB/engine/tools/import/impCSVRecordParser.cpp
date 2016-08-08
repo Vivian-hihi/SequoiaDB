@@ -2726,28 +2726,6 @@ namespace import
             goto error;
          }
 
-         /*
-         if (TIME_LAST_YEAR == t.tm_year)
-         {
-            if (t.tm_mon > 0 || (t.tm_mon == 0 && t.tm_mday >= 19))
-            {
-               rc = SDB_INVALIDARG;
-               PD_LOG(PDERROR, "invalid month or day of timestamp");
-               goto error;
-            }
-         }
-
-         if (TIME_START_YEAR == t.tm_year)
-         {
-            if (t.tm_mon < 11 || (t.tm_mon == 11 && t.tm_mday < 15))
-            {
-               rc = SDB_INVALIDARG;
-               PD_LOG(PDERROR, "invalid month or day of timestamp");
-               goto error;
-            }
-         }
-         */
-
          if (t.tm_hour >= RELATIVE_HOUR || t.tm_hour < 0 ||
              t.tm_min >= RELATIVE_MIN_SEC || t.tm_min < 0 ||
              t.tm_sec >= RELATIVE_MIN_SEC || t.tm_sec < 0 ||
@@ -2890,11 +2868,11 @@ namespace import
             goto error;
          }
 
-         t.tm_year -= RELATIVE_YEAR; 
+         t.tm_year -= RELATIVE_YEAR;
 
          /* create integer time representation */
          timep = mktime(&t);
-         value = (INT64)timep * 1000;
+         value = (INT64)timep * 1000 + microsec/1000;
       }
       else
       {
@@ -2905,26 +2883,6 @@ namespace import
          {
             goto error;
          }
-
-         /*
-         if (value < DATE_MIN_NUM)
-         {
-            PD_LOG(PDERROR, "The time stamp %lld is less than %lld",
-                   value, DATE_MIN_NUM);
-            rc = SDB_INVALIDARG;
-            goto error;
-         }
-
-         if (value > DATE_MAX_NUM)
-         {
-            PD_LOG(PDERROR, "The time stamp %lld is greater than %lld",
-                   value, DATE_MAX_NUM);
-            rc = SDB_INVALIDARG;
-            goto error;
-         }
-         */
-
-         value *= 1000;
       }
 
    done:
