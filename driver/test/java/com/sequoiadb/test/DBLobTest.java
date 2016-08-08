@@ -58,8 +58,12 @@ public class DBLobTest {
 
     @After
     public void tearDown() throws Exception {
-        sdb.dropCollectionSpace(Constants.TEST_CS_NAME_1);
-        sdb.disconnect();
+        try{
+           sdb.dropCollectionSpace(Constants.TEST_CS_NAME_1);
+           sdb.disconnect();
+        }catch(BaseException e){
+            e.printStackTrace();
+        }
     }
     
     /*
