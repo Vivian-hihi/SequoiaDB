@@ -119,6 +119,8 @@
 		       includeAntRuntime="false" 
 		       includeJavaRuntime="false" 
 		       encoding="GBK"
+		       debug="true"
+		       debuglevel="lines,vars,source"
 		       failonerror="true">
 			<classpath>
 				<pathelement location="${deploy_dir}/ant-sdbtasks/ant-sdbtasks.jar" />
@@ -407,6 +409,8 @@
 		       srcdir="${sjava_src_path}" 
 		       destdir="${sjava_deploy_path}/build" 
 		       encoding="UTF-8"
+		       debug="true"
+		       debuglevel="lines,vars,source"
 		       failonerror="true">
 			<classpath>
 				<pathelement location="${sjava_deploy_path}/lib/sequoiadb.jar" />
