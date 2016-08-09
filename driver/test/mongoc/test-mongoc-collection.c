@@ -239,8 +239,6 @@ test_insert_bulk (void)
    mongoc_client_destroy(client);
 }
 
-
-#if 0
 static void
 test_save (void)
 {
@@ -283,7 +281,6 @@ test_save (void)
    bson_context_destroy(context);
    mongoc_client_destroy(client);
 }
-#endif
 
 static void
 test_regex (void)
@@ -1599,7 +1596,7 @@ test_collection_install (TestSuite *suite)
 
    //TestSuite_Add (suite, "Collection_insert_bulk", test_insert_bulk);
    TestSuite_Add (suite, "Collection_insert", test_insert);
-   //TestSuite_Add (suite, "Collection_save", test_save);
+   TestSuite_Add (suite, "Collection_save", test_save);
    TestSuite_Add (suite, "Collection_index", test_index);
    TestSuite_Add (suite, "Collection_index_compound", test_index_compound);
    //TestSuite_Add (suite, "Collection_index_geo", test_index_geo);
