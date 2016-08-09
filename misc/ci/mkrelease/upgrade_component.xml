@@ -401,6 +401,12 @@
             <name>sdbcm</name>
             <program>${installdir}/sequoiadb</program>           
         </addUnixService>                     
+        <runProgram><!--in case did not reload /etc/init.d/sdbcm -->
+            <abortOnError>0</abortOnError>
+            <showMessageOnError>0</showMessageOnError>
+            <program>systemctl</program>
+            <programArguments>daemon-reload</programArguments>
+        </runProgram>
         <runProgram>
             <program>service</program>
             <programArguments> sdbcm start</programArguments>            
