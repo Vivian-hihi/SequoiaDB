@@ -1,4 +1,4 @@
-##概念##
+﻿##概念##
 
 大对象（LOB）功能旨在突破 SequoiaDB 的单条最大记录长度为 16MB
 的限制，为用户写入和读取更大型记录提供便利。LOB 记录的大小目前不受限制。
@@ -33,9 +33,10 @@ LOB 记录的存储格式：
 在 Sdb Shell 中将集合 foo.bar 中的 OID 为 5435e7b69487faa663000897 的LOB 记录下载到本地文件 mylob 中：
 
 <pre class="prettyprint lang-javascript">
->db.foo.bar.getLob('5435e7b69487faa663000897','/opt/newlob')</pre>
+>db.foo.bar.getLob('5435e7b69487faa663000897','/opt/mylob')</pre>
 
 在 Sdb Shell 中将集合 foo.bar 中的 OID 为 5435e7b69487faa663000897 的LOB 记录删除：
 
 <pre class="prettyprint lang-javascript">
 >db.foo.bar.deleteLob('5435e7b69487faa663000897')</pre>
+
