@@ -39,6 +39,8 @@ def GuessArch():
     return 'ia64'
   elif id == 'ppc64' :
     return 'ppc64'
+  elif id == 'ppc64le' :
+    return 'ppc64le' 
   else:
     return None
 
@@ -190,6 +192,10 @@ elif guess_os == "linux":
         env.Append( LIBPATH="/usr/lib64")
         env.Append( LIBPATH="/lib64")
         env.Append( LIBPATH=[join(boost_lib_dir,'ppclinux64')] )
+    elif guess_arch == 'ppc64le':
+        env.Append( LIBPATH="/usr/lib64")
+        env.Append( LIBPATH="/lib64")
+        env.Append( LIBPATH=[join(boost_lib_dir,'ppclelinux64')] )        
 
 
     winLibString = "staticsdbc boost_program_options boost_thread boost_system boost_filesystem gtest pthread dl"
