@@ -2,7 +2,7 @@
     <name>upgrade_component</name>    
 
     <initializationActionList>
-        <setInstallerVariable name="stage" value="upgrade"/>
+        <setInstallerVariable name="stage" value="upgrade"/>       
     </initializationActionList>
                         
     <readyToInstallActionList>                                      
@@ -124,39 +124,30 @@
             </ruleList>
         </setInstallerVariable>                                    
         
+        <createDirectory path="${installdir}/tmp_${time}"/>
         <unpackFile>
             <component>upgrade_component</component>
             <folder>files_except_conf</folder>
             <origin>compatible.sh</origin>
-            <destination>${installdir}</destination>
+            <destination>${installdir}/tmp_${time}</destination>
         </unpackFile> 
         <unpackFile>
             <component>upgrade_component</component>
             <folder>files_except_conf</folder>
             <origin>version.conf</origin>
-            <destination>${installdir}</destination>
-        </unpackFile>       
-        <changeOwnerAndGroup><!--backup path will add these files, if not change own, they are root owner-->
-            <files>${installdir}/version.conf;${installdir}/compatible.sh</files>
-            <group>${groupname}</group>
-            <owner>${username}</owner>
-        </changeOwnerAndGroup>
+            <destination>${installdir}/tmp_${time}</destination>
+        </unpackFile>                
                 
         <consoleWrite text="${msg(Upgrade.NormalMsg.JudgeComatible)}"/> 
-        <changePermissions files="${installdir}/compatible.sh" permissions="0755"/>              
+        <changePermissions files="${installdir}/tmp_${time}/compatible.sh" permissions="0755"/>              
         <setInstallerVariableFromScriptOutput>
+            <customErrorMessage>${msg(Upgrade.ErrorMsg.excuteComatibleSh)}</customErrorMessage>
             <name>is_compatible</name>
-            <exec>${installdir}/compatible.sh</exec>
-            <execArgs>${old_version} ${old_edition} ${new_version} ${new_edition} ${installdir}/version.conf</execArgs>           
-        </setInstallerVariableFromScriptOutput>                
-        <setInstallerVariable name="return_code" value="${program_exit_code}"/>
-                                                                                            
-        <throwError>
-            <text>${msg(Upgrade.ErrorMsg.excuteComatibleSh)}</text>
-            <ruleList>
-                <compareValues value1="${return_code}" logic="does_not_equal" value2="0"/>
-            </ruleList>
-        </throwError>
+            <exec>${installdir}/tmp_${time}/compatible.sh</exec>
+            <execArgs>${old_version} ${old_edition} ${new_version} ${new_edition} ${installdir}/tmp_${time}/version.conf</execArgs>           
+        </setInstallerVariableFromScriptOutput>
+        <deleteFile path="${installdir}/tmp_${time}"/>              
+                                                                                                    
         <throwError>
             <text>${msg(Upgrade.ErrorMsg.JudgeComatible)}</text>
             <ruleList>
@@ -203,16 +194,16 @@
             <programArguments> sdbcm status</programArguments> 
             <abortOnError>0</abortOnError>   
             <showMessageOnError>0</showMessageOnError>       
-        </runProgram>        
+        </runProgram> 
         <setInstallerVariable name="service_origin_status" value="${program_exit_code}"/>       
         <actionGroup> 
             <actionList>
                 <runProgram>
                     <program>service</program>
                     <programArguments> sdbcm stop</programArguments> 
-                    <abortOnError>0</abortOnError>          
+                    <abortOnError>0</abortOnError>
                 </runProgram>                                                  
-            </actionList>        
+            </actionList>     
             <ruleList> 
                 <compareText logic="equals" text="${service_origin_status}" value="0"/>                                                                  
             </ruleList>          
@@ -242,31 +233,31 @@
                         
         
         <!--check process has been stoped or not-->
-        <createDirectory path="${installdir}/tmp"/>
+        <createDirectory path="${installdir}/tmp_${time}"/>
         <unpackFile>
            <component>upgrade_component</component>
            <folder>files_except_conf</folder>
            <origin>bin/sdblist</origin>
-           <destination>${installdir}/tmp</destination>
+           <destination>${installdir}/tmp_${time}</destination>
         </unpackFile>
-        <changePermissions files="${installdir}/tmp/sdblist" permissions="0755"/>               
+        <changePermissions files="${installdir}/tmp_${time}/sdblist" permissions="0755"/>               
         <if>
             <conditionRuleList>
                 <isTrue value="${force}"/>
             </conditionRuleList> 
             <actionList>                                                                                                 
                 <runProgram>
-                    <program>${installdir}/tmp/sdblist</program>
+                    <program>${installdir}/tmp_${time}/sdblist</program>
                     <programArguments>-t all | grep -v "Total" | awk '{print $2}' | awk -F '(' '{print $2}' | awk -F ')' '{print "kill -9 " $1}' | bash</programArguments>
                 </runProgram>               
             </actionList>          
         </if>
         <setInstallerVariableFromScriptOutput>
             <name>process_num</name>
-            <exec>${installdir}/tmp/sdblist</exec>
+            <exec>${installdir}/tmp_${time}/sdblist</exec>
             <execArgs>-t all | grep -v "Total" | wc -l</execArgs>
         </setInstallerVariableFromScriptOutput>
-        <deleteFile path="${installdir}/tmp"/> 
+        <deleteFile path="${installdir}/tmp_${time}"/> 
         <throwError>
             <text>${msg(Upgrade.ErrorMsg.StopProcess)}</text>            
             <ruleList>
@@ -527,9 +518,8 @@
             <actionList>                           
                 <consoleWrite text="&#xA;&#xA;${msg(Upgrade.NormalMsg.BeginRollback)}&#xA;"/> 
                 
-                <!--delete compatible files-->       
-                <deleteFile path="${installdir}/compatible.sh"/>
-                <deleteFile path="${installdir}/version.conf"/>
+                <!--delete unpack files-->       
+                <deleteFile path="${installdir}/tmp_${time}"/>               
                 
                 <!--restore files-->
                 <actionGroup>

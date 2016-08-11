@@ -3,6 +3,10 @@
     
     <initializationActionList>
         <setInstallerVariable name="stage" value="normal"/>
+        <setInstallerVariable name="add_user_done"      value="false"/>
+        <setInstallerVariable name="add_group_done"     value="false"/>
+        <setInstallerVariable name="add_service_done"   value="false"/>
+        <setInstallerVariable name="add_sysconf_done"   value="false"/>            
     </initializationActionList>
        
     <readyToInstallActionList>       
@@ -18,14 +22,14 @@
         </throwError>
         
         <!--check process has been stoped or not-->
-        <createDirectory path="${installdir}/tmp"/>
+        <createDirectory path="${installdir}/tmp_${time}"/>
         <unpackFile>
            <component>normal_component</component>
            <folder>files</folder>
            <origin>bin/sdblist</origin>
-           <destination>${installdir}/tmp</destination>
+           <destination>${installdir}/tmp_${time}</destination>
         </unpackFile>
-        <changePermissions files="${installdir}/tmp/sdblist" permissions="0755"/>               
+        <changePermissions files="${installdir}/tmp_${time}/sdblist" permissions="0755"/>               
         <if>
             <conditionRuleList>
                 <isTrue value="${force}"/>
@@ -38,17 +42,17 @@
                     <showMessageOnError>0</showMessageOnError>           
                 </runProgram>                                                                 
                 <runProgram>
-                    <program>${installdir}/tmp/sdblist</program>
+                    <program>${installdir}/tmp_${time}/sdblist</program>
                     <programArguments>-t all | grep -v "Total" | awk '{print $2}' | awk -F '(' '{print $2}' | awk -F ')' '{print "kill -9 " $1}' | bash</programArguments>
                 </runProgram>               
             </actionList>          
         </if>
         <setInstallerVariableFromScriptOutput>
             <name>process_num</name>
-            <exec>${installdir}/tmp/sdblist</exec>
+            <exec>${installdir}/tmp_${time}/sdblist</exec>
             <execArgs>-t all | grep -v "Total" | wc -l</execArgs>
         </setInstallerVariableFromScriptOutput>
-        <deleteFile path="${installdir}/tmp"/> 
+        <deleteFile path="${installdir}/tmp_${time}"/> 
         <throwError>
             <text>${msg(Upgrade.ErrorMsg.StopProcess)}</text>            
             <ruleList>
@@ -73,9 +77,23 @@
             <name>exist_user</name>
             <value>true</value>
             <ruleList>
-                <userTest logic="exists" username="${username}"/>                
+                <userTest logic="exists" username="${username}"/>
             </ruleList>
-        </setInstallerVariable>                              
+        </setInstallerVariable> 
+        
+        <setInstallerVariable name="exist_group" value="false"/>
+        <runProgram>
+            <program>grep</program>
+            <programArguments>"^$groupname:" /etc/group</programArguments>
+            <abortOnError>0</abortOnError>
+            <showMessageOnError>0</showMessageOnError>
+        </runProgram> 
+        <setInstallerVariable name="exist_group" value="true">
+             <ruleList>
+                 <compareText logic="equals" text="${program_exit_code}" value="0"/>
+             </ruleList>    
+        </setInstallerVariable>
+                                
         
         <actionGroup> 
             <ruleList> 
@@ -101,16 +119,28 @@
             <ruleList> 
                 <isFalse value="${exist_user}"/>
             </ruleList>
-            <actionList>
+            <actionList>                
                 <addGroup> <!--if group exists, <addGroup> will not throw error-->
                     <customErrorMessage>${msg(Install.ErrorMsg.CreateGroup)}</customErrorMessage>
-                    <groupname>${groupname}</groupname>
-                </addGroup>                
+                    <groupname>${groupname}</groupname>                    
+                </addGroup>  
+                <setInstallerVariable name="add_group_done" value="true">
+                     <ruleEvaluationLogic>and</ruleEvaluationLogic>
+                     <ruleList>
+                         <isTrue value="${exist_group}"/>
+                         <compareText logic="equals" text="${program_exit_code}" value="0"/>
+                     </ruleList>    
+                </setInstallerVariable>               
                 <runProgram>                    
                     <customErrorMessage>${msg(Install.ErrorMsg.CreateUser)}</customErrorMessage>
                     <program>useradd</program>
                     <programArguments>${username} -m -p ${userpasswd} -g ${groupname}  -s /bin/bash </programArguments>                                 
-                </runProgram>                    
+                </runProgram>
+                <setInstallerVariable name="add_user_done" value="true">
+                     <ruleList>
+                         <compareText logic="equals" text="${program_exit_code}" value="0"/>
+                     </ruleList>    
+                </setInstallerVariable>                       
             </actionList>
         </actionGroup>
         
@@ -198,8 +228,13 @@
             <group>${groupname}</group>
             <owner>${username}</owner>
         </changeOwnerAndGroup>
-        <deleteFile path="/etc/default/sequoiadb"/>
-        <touchFile path="/etc/default/sequoiadb"/>                       
+        <deleteFile path="/etc/default/sequoiadb"/>        
+        <touchFile path="/etc/default/sequoiadb"/> 
+        <setInstallerVariable name="add_sysconf_done" value="true">
+             <ruleList>
+                 <compareText logic="equals" text="${program_exit_code}" value="0"/>
+             </ruleList>
+        </setInstallerVariable>                      
         <changePermissions><!--make sure permission is 644-->
             <files>/etc/default/sequoiadb</files>
             <permissions>0644</permissions>               
@@ -262,6 +297,11 @@
             <name>sdbcm</name>
             <program>${installdir}/sequoiadb</program>                       
         </addUnixService>
+        <setInstallerVariable name="add_service_done" value="true">
+             <ruleList>
+                 <compareText logic="equals" text="${program_exit_code}" value="0"/>
+             </ruleList>
+        </setInstallerVariable>
         <runProgram><!--in case did not reload /etc/init.d/sdbcm -->
             <abortOnError>0</abortOnError>
             <showMessageOnError>0</showMessageOnError>
@@ -377,34 +417,30 @@
         <actionGroup> 
             <actionList>                 
                 <removeUnixService>
-                    <name>sdbcm</name>            
+                    <name>sdbcm</name>
+                    <ruleList>                       
+                        <isTrue value="${add_service_done}"/>
+                    </ruleList>
                 </removeUnixService>
                 <deleteFile>
                     <abortOnError>0</abortOnError>
-                    <path>/etc/default/sequoiadb</path>
-                    <ruleList>               
-                        <fileExists path="/etc/default/sequoiadb"/>
+                    <path>/etc/default/sequoiadb</path>                    
+                    <ruleList> 
+                        <isTrue value="${add_sysconf_done}"/>                      
                     </ruleList>
                 </deleteFile> 
                 <runProgram>
                     <customErrorMessage>${msg(Install.ErrorMsg.DeleteUser.error)}</customErrorMessage>
                     <program>userdel</program>
                     <programArguments>${username}</programArguments>
-                    <ruleList>
-                        <userTest>
-                            <logic>exists</logic>
-                            <password>${username}</password>
-                            <username>${username}</username>
-                        </userTest>                                          
+                    <ruleList>                       
+                        <isTrue value="${add_user_done}"/>                                                             
                     </ruleList>
                 </runProgram>
                 <deleteGroup>
                     <groupname>${groupname}</groupname>
                     <ruleList>
-                        <userTest>
-                            <logic>exists</logic>
-                            <username>${username}</username>
-                        </userTest>                             
+                        <isTrue value="${add_group_done}"/>                             
                     </ruleList>
                 </deleteGroup>                    
             </actionList>            
