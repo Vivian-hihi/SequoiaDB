@@ -1102,7 +1102,8 @@ namespace engine
          catch( std::exception &e )
          {
             rtnKillContexts( 1 , &contextID, cb, rtnCB ) ;
-            PD_LOG( PDERROR, "Get group id from obj[%s] occur exception: %s",
+            PD_LOG( PDERROR,
+                    "Get collection space name from obj[%s] occur exception: %s",
                     obj.toString().c_str(), e.what() ) ;
             rc = SDB_SYS ;
             goto error ;
