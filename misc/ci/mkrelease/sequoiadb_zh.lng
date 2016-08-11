@@ -19,6 +19,8 @@ Install.Paramers.LicenseRead.Agree.Description=同意以上协议
 Install.Paramers.LicenseRead.Agree.Explanation=了解更多的协议内容，可以在安装后查看协议文件
 Install.Paramers.LicenseRead.Read.Description=查看详细的协议内容
 Install.Paramers.LicenseRead.License.Information.Part=重要信息：请仔细阅读\n\n下面提供了两个许可协议。\n\n1. SequoiaDB 评估程序的最终用户许可协议\n2. SequoiaDB 最终用户许可协议\n\n如果被许可方为了生产性使用目的（而不是为了评估、测试、试用“先试后买”或演示）获得本程序，单击下面的“接受”按钮即表示被许可方接受 SequoiaDB 最终用户许可协议，且不作任何修改。\n\n如果被许可方为了评估、测试、试用“先试后买”或演示（统称为“评估”）目的获得本程序：单击下面的“接受”按钮即表示被许可方同时接受（i）SequoiaDB 评估程序的最终用户许可协议（“评估许可”），且不作任何修改；和（ii）SequoiaDB 最终用户程序许可协议（SELA），且不作任何修改。\n\n在被许可方的评估期间将适用“评估许可”。\n\n如果被许可方通过签署采购协议在评估之后选择保留本程序（或者获得附加的本程序副本供评估之后使用），SequoiaDB 评估程序的最终用户许可协议将自动适用。\n\n“评估许可”和 SequoiaDB 最终用户许可协议不能同时有效；两者之间不能互相修改，并且彼此独立。\n\n这两个许可协议中每个协议的完整文本如下。\n\n评估程序的最终用户许可协议\n\n
+Install.Paramers.Force.Description=是否强制安装
+Install.Paramers.Force.Explanation=是否强制安装？强制安装时会强杀残留进程
 
 Install.ErrorMsg.CheckGroup=用户${username}存在，但该用户不属于用户组${groupname}
 Install.ErrorMsg.CreateGroup=创建用户组${groupname}失败
@@ -31,6 +33,7 @@ Install.ErrorMsg.StopSdbCm.error=停止集群管理服务(sdbcm)失败
 Install.ErrorMsg.StopSequoiadb.error=停止SequoiaDB数据库服务失败
 Install.ErrorMsg.DeleteUser.error=删除用户${username}失败
 Install.ErrorMsg.IntallationOM.error=创建OM失败
+
 Install.WarnMsg.CheckUmask=umask值异常！当前umask=${full_mask}，建议改成0022
 
 Upgrade.Paramers.Upgrade.Explanation=是否升级
@@ -69,3 +72,7 @@ Upgrade.ErrorMsg.StopProcess=数据库相关进程未停止
 Upgrade.ErrorMsg.StartProcess=sdbcm或者sdbcmd未启动
 Install.ErrorMsg.IntallOM=拷贝安装包到packet目录失败
 Upgrade.ErrorMsg.GetGoup=获取用户${username}的用户组失败
+
+
+Uninstall.WarnMsg.CheckProcess=警告：执行service sdbcm stop后仍然有进程残留
+Uninstall.WarnMsg.CheckProcess.Kill=警告：执行kill -9后仍然有进程残留

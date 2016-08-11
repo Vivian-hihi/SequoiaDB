@@ -36,6 +36,18 @@
     
     <!--exist installation? different mode has different parameterLis-->
     <preInstallationActionList>
+        <!--parameter passed in command line, should not ask again in dialog-->
+        <setInstallerVariable name="parameter(force).ask" value="0">
+            <ruleList>
+                <compareText>
+                    <text>${installer_command_line_arguments}</text>
+                    <logic>contains</logic>
+                    <value>--force</value>
+                </compareText>  
+            </ruleList>       
+        </setInstallerVariable>
+        <!--TODO: other parameter-->
+        
         <!--upgrde parameter check-->         
         <actionGroup> 
             <actionList>
@@ -107,11 +119,11 @@
             <name>is_upgrade_mode</name>
             <value></value>
             <default>null</default>  
-            <cliOptionName>upgrade</cliOptionName>                                                           
-            <cliOptionText>${msg(Upgrade.Paramers.Upgrade.Explanation)}</cliOptionText>            
+            <cliOptionName>upgrade</cliOptionName>
+            <cliOptionText>${msg(Upgrade.Paramers.Upgrade.Explanation)}</cliOptionText>
             <ruleList>
-                <isTrue value="0"/>                                 
-            </ruleList>                                                                                       
+                <isTrue value="0"/>
+            </ruleList>
         </booleanParameter>
         
         <choiceParameterGroup>
@@ -160,6 +172,16 @@
                 </showQuestion>    
             </postShowPageActionList>
         </choiceParameterGroup>        
+        
+        <booleanParameter>
+            <name>force</name>
+            <value></value>
+            <default>false</default>  
+            <cliOptionName>force</cliOptionName>
+            <cliOptionText>${msg(Install.Paramers.Force.Description)}</cliOptionText>
+            <explanation>${msg(Install.Paramers.Force.Explanation)}</explanation>
+            <description>${msg(Install.Paramers.Force.Description)}</description>
+        </booleanParameter>
         
         <!--normal mode parameter-->                        
         <parameterGroup>
@@ -374,8 +396,8 @@
             <ruleList>
                 <compareValues value1="${project.installationType}" value2="normal" logic="equals"/>
             </ruleList>
-        </componentSelection>         
-            
+        </componentSelection>                 
+           
         <!--check umask-->
         <setInstallerVariableFromScriptOutput>
             <name>full_mask</name>
@@ -414,6 +436,7 @@
     </componentList>
            
     <preUninstallationActionList>
+        <!--stop process-->
         <runProgram>
             <program>service</program>
             <programArguments>sdbcm stop</programArguments>            
@@ -422,7 +445,44 @@
             <program>${installdir}/bin/sdbstop</program>
             <programArguments>-t all</programArguments> 
             <runAs>${username}</runAs>          
-        </runProgram>
+        </runProgram> 
+        
+        <!--check process has been stoped or not-->        
+       <setInstallerVariable name="process_num" value="-1"/>      
+        <setInstallerVariableFromScriptOutput>
+            <name>process_num</name>
+            <exec>${installdir}/bin/sdblist</exec>
+            <execArgs>-t all | grep -v "Total" | wc -l</execArgs>
+            <abortOnError>0</abortOnError>
+            <showMessageOnError>0</showMessageOnError>
+        </setInstallerVariableFromScriptOutput>
+        <consoleWrite>
+            <text>&#xA;${msg(Uninstall.WarnMsg.CheckProcess)}&#xA;</text>
+            <ruleList>
+                <compareValues value1="${process_num}" logic="greater" value2="0"/>
+            </ruleList>
+        </consoleWrite>
+        <runProgram>
+            <program>${installdir}/bin/sdblist</program>
+            <programArguments>-t all | grep -v "Total" | awk '{print $2}' | awk -F '(' '{print $2}' | awk -F ')' '{print "kill -9 " $1}' | bash</programArguments>
+            <abortOnError>0</abortOnError>
+            <showMessageOnError>0</showMessageOnError>
+        </runProgram> 
+        <setInstallerVariableFromScriptOutput>
+            <name>process_num</name>
+            <exec>${installdir}/bin/sdblist</exec>
+            <execArgs>-t all | grep -v "Total" | wc -l</execArgs>
+            <abortOnError>0</abortOnError>
+            <showMessageOnError>0</showMessageOnError>
+        </setInstallerVariableFromScriptOutput>
+        <consoleWrite>
+            <text>&#xA;${msg(Uninstall.WarnMsg.CheckProcess.Kill)}&#xA;</text>
+            <ruleList>
+                <compareValues value1="${process_num}" logic="greater" value2="0"/>
+            </ruleList>
+        </consoleWrite>
+        
+        <!--other-->
         <removeUnixService>
             <name>sdbcm</name>            
         </removeUnixService>    
@@ -444,6 +504,7 @@
             <path>${installdir}/bin</path>
             <scope>user</scope>
         </removeDirectoryFromPath>
+        
     </postUninstallationActionList>                
           
     <installerFilename>${product_shortname}-${product_version}-${platform}${enterpriseversion}-installer.${platform_exec_suffix}</installerFilename>         

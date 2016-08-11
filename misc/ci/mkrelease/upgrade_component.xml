@@ -221,9 +221,9 @@
         <setInstallerVariableFromScriptOutput>
             <name>process_num</name>
             <exec>${installdir}/bin/sdblist</exec>
-            <execArgs>-t all | grep "Total" | awk '{print $2}'</execArgs>
-            <abortOnError>0</abortOnError> 
-            <showMessageOnError>0</showMessageOnError>                             
+            <execArgs>-t all | grep -v "Total" | wc -l</execArgs>
+            <abortOnError>0</abortOnError>
+            <showMessageOnError>0</showMessageOnError>
         </setInstallerVariableFromScriptOutput>
         <setInstallerVariable>
             <name>service_origin_status</name>
@@ -239,33 +239,40 @@
             <abortOnError>0</abortOnError> 
             <showMessageOnError>0</showMessageOnError>           
         </runProgram>
+                        
         
-        <!--check process stop or not -->                  
-        <actionGroup> 
-            <actionList>                
-                <setInstallerVariable name="process_num" value="-1"/>                   
-                <setInstallerVariableFromScriptOutput>
-                    <name>process_num</name>
-                    <exec>${installdir}/bin/sdblist</exec>
-                    <execArgs>-t all | grep "Total" | awk '{print $2}'</execArgs>                             
-                </setInstallerVariableFromScriptOutput> 
-                <throwError>
-                    <text>${msg(Upgrade.ErrorMsg.ExecSdblist)}</text>            
-                    <ruleList>
-                        <compareValues value1="${process_num}" logic="equals" value2="-1"/>                                                        
-                    </ruleList>
-                </throwError>                                                     
-                <throwError>
-                    <text>${msg(Upgrade.ErrorMsg.StopProcess)}</text>            
-                    <ruleList>
-                        <compareValues value1="${process_num}" logic="greater" value2="0"/>                                                        
-                    </ruleList>
-                </throwError> 
-            </actionList>        
+        <!--check process has been stoped or not-->
+        <createDirectory path="${installdir}/tmp"/>
+        <unpackFile>
+           <component>upgrade_component</component>
+           <folder>files_except_conf</folder>
+           <origin>bin/sdblist</origin>
+           <destination>${installdir}/tmp</destination>
+        </unpackFile>
+        <changePermissions files="${installdir}/tmp/sdblist" permissions="0755"/>               
+        <if>
+            <conditionRuleList>
+                <isTrue value="${force}"/>
+            </conditionRuleList> 
+            <actionList>                                                                                                 
+                <runProgram>
+                    <program>${installdir}/tmp/sdblist</program>
+                    <programArguments>-t all | grep -v "Total" | awk '{print $2}' | awk -F '(' '{print $2}' | awk -F ')' '{print "kill -9 " $1}' | bash</programArguments>
+                </runProgram>               
+            </actionList>          
+        </if>
+        <setInstallerVariableFromScriptOutput>
+            <name>process_num</name>
+            <exec>${installdir}/tmp/sdblist</exec>
+            <execArgs>-t all | grep -v "Total" | wc -l</execArgs>
+        </setInstallerVariableFromScriptOutput>
+        <deleteFile path="${installdir}/tmp"/> 
+        <throwError>
+            <text>${msg(Upgrade.ErrorMsg.StopProcess)}</text>            
             <ruleList>
-                 <fileTest condition="exists" path="${installdir}/bin/sdblist"/>                                        
-            </ruleList>          
-        </actionGroup>       
+                <compareValues value1="${process_num}" logic="greater" value2="0"/>
+            </ruleList>  
+        </throwError>      
         <consoleWrite text="ok&#xA;"/> 
                                                                                                                           
     </readyToInstallActionList>    

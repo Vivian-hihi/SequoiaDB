@@ -16,9 +16,47 @@
                 </checkFreeDiskSpace>
             </ruleList>
         </throwError>
-       
-        <!--check or create user group-->
         
+        <!--check process has been stoped or not-->
+        <createDirectory path="${installdir}/tmp"/>
+        <unpackFile>
+           <component>normal_component</component>
+           <folder>files</folder>
+           <origin>bin/sdblist</origin>
+           <destination>${installdir}/tmp</destination>
+        </unpackFile>
+        <changePermissions files="${installdir}/tmp/sdblist" permissions="0755"/>               
+        <if>
+            <conditionRuleList>
+                <isTrue value="${force}"/>
+            </conditionRuleList> 
+            <actionList>                 
+                <runProgram>
+                    <program>service</program>
+                    <programArguments> sdbcm stop</programArguments> 
+                    <abortOnError>0</abortOnError>
+                    <showMessageOnError>0</showMessageOnError>           
+                </runProgram>                                                                 
+                <runProgram>
+                    <program>${installdir}/tmp/sdblist</program>
+                    <programArguments>-t all | grep -v "Total" | awk '{print $2}' | awk -F '(' '{print $2}' | awk -F ')' '{print "kill -9 " $1}' | bash</programArguments>
+                </runProgram>               
+            </actionList>          
+        </if>
+        <setInstallerVariableFromScriptOutput>
+            <name>process_num</name>
+            <exec>${installdir}/tmp/sdblist</exec>
+            <execArgs>-t all | grep -v "Total" | wc -l</execArgs>
+        </setInstallerVariableFromScriptOutput>
+        <deleteFile path="${installdir}/tmp"/> 
+        <throwError>
+            <text>${msg(Upgrade.ErrorMsg.StopProcess)}</text>            
+            <ruleList>
+                <compareValues value1="${process_num}" logic="greater" value2="0"/>
+            </ruleList>  
+        </throwError>        
+       
+        <!--check or create user group-->        
         <throwError>
             <text>The ROOT user is not allowed to create.</text>
             <ruleList>
