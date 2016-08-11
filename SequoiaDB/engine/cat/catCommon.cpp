@@ -1050,6 +1050,71 @@ namespace engine
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATGETDOMAINCSS, "catGetDomainCSs" )
+   INT32 catGetDomainCSs( const BSONObj &domain, pmdEDUCB *cb,
+                          vector< string > &collectionSpaces )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY ( SDB_CATGETDOMAINCSS ) ;
+      BSONObj matcher ;
+      BSONObj dummyObj ;
+      SDB_DMSCB *dmsCB = pmdGetKRCB()->getDMSCB() ;
+      SDB_RTNCB *rtnCB = pmdGetKRCB()->getRTNCB() ;
+      INT64 contextID = -1 ;
+
+      collectionSpaces.clear() ;
+
+      // Query
+      matcher = BSON( CAT_DOMAIN_NAME <<
+                      domain.getField( CAT_DOMAINNAME_NAME ).valuestrsafe() ) ;
+
+      rc = rtnQuery( CAT_COLLECTION_SPACE_COLLECTION, dummyObj, matcher,
+                     dummyObj, dummyObj, 0, cb, 0, -1, dmsCB, rtnCB,
+                     contextID ) ;
+      PD_RC_CHECK( rc, PDERROR, "Query collection[%s] failed, matcher: %s, "
+                   "rc: %d", CAT_COLLECTION_SPACE_COLLECTION,
+                   matcher.toString().c_str(), rc ) ;
+
+      // Get more
+      while ( TRUE )
+      {
+         BSONObj obj ;
+         rtnContextBuf contextBuf ;
+         rc = rtnGetMore( contextID, 1, contextBuf, cb, rtnCB ) ;
+         if ( SDB_DMS_EOC == rc )
+         {
+            rc = SDB_OK ;
+            break ;
+         }
+         PD_RC_CHECK( rc, PDERROR, "Get more failed, rc: %d", rc ) ;
+
+         try
+         {
+            obj = BSONObj( contextBuf.data() ) ;
+            BSONElement csName = obj.getField( CAT_COLLECTION_SPACE_NAME ) ;
+            if ( String != csName.type() )
+            {
+               continue ;
+            }
+            collectionSpaces.push_back ( csName.String() ) ;
+         }
+         catch( std::exception &e )
+         {
+            rtnKillContexts( 1 , &contextID, cb, rtnCB ) ;
+            PD_LOG( PDERROR, "Get group id from obj[%s] occur exception: %s",
+                    obj.toString().c_str(), e.what() ) ;
+            rc = SDB_SYS ;
+            goto error ;
+         }
+      }
+   done:
+      PD_TRACE_EXITRC ( SDB_CATGETDOMAINCSS, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CATREMOVECL, "catRemoveCL" )
    INT32 catRemoveCL( const CHAR * clFullName, pmdEDUCB * cb,
                       SDB_DMSCB * dmsCB, SDB_DPSCB * dpsCB, INT16 w )
@@ -1220,6 +1285,7 @@ namespace engine
          }
          catch( std::exception &e )
          {
+            rtnKillContexts( 1 , &contextID, cb, rtnCB ) ;
             PD_LOG( PDERROR, "Get group id from obj[%s] occur exception: %s",
                     obj.toString().c_str(), e.what() ) ;
             rc = SDB_SYS ;
@@ -1490,7 +1556,7 @@ namespace engine
    }
 
    INT32 catGetCSGroupsFromTasks( const CHAR *csName, pmdEDUCB *cb,
-                                  vector< INT32 > &groups )
+                                  vector< UINT32 > &groups )
    {
       INT32 rc = SDB_OK ;
       BSONObj matcher ;
@@ -1498,8 +1564,8 @@ namespace engine
       SDB_DMSCB *dmsCB = pmdGetKRCB()->getDMSCB() ;
       SDB_RTNCB *rtnCB = pmdGetKRCB()->getRTNCB() ;
       INT64 contextID = -1 ;
-      std::set< INT32 > groupSet ;
-      std::set< INT32 >::iterator itSet ;
+      std::set< UINT32 > groupSet ;
+      std::set< UINT32 >::iterator itSet ;
       BSONObjBuilder builder ;
       std::stringstream ss ;
 
@@ -1534,6 +1600,7 @@ namespace engine
          }
          catch( std::exception &e )
          {
+            rtnKillContexts( 1 , &contextID, cb, rtnCB ) ;
             PD_LOG( PDERROR, "Get group id from obj[%s] occur exception: %s",
                     obj.toString().c_str(), e.what() ) ;
             rc = SDB_SYS ;

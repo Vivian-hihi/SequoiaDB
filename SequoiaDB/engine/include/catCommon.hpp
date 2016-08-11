@@ -134,11 +134,12 @@ namespace engine
                        pmdEDUCB *cb, _SDB_DMSCB * dmsCB,
                        _dpsLogWrapper * dpsCB,
                        INT16 w ) ;
-
    INT32 catCheckSpaceExist( const char *pSpaceName,
                              BOOLEAN &isExist,
                              BSONObj &obj,
                              pmdEDUCB *cb ) ;
+   INT32 catGetDomainCSs( const BSONObj &domain, pmdEDUCB *cb,
+                          vector< string > &collectionSpaces ) ;
 
    /* Collection[CAT_COLLECTION_INFO_COLLECTION] functions: */
    INT32 catRemoveCL( const CHAR *clFullName, pmdEDUCB *cb, _SDB_DMSCB * dmsCB,
@@ -166,7 +167,7 @@ namespace engine
    INT32 catRemoveTask( UINT64 taskID, pmdEDUCB *cb, INT16 w ) ;
    INT32 catRemoveTask( BSONObj &match, pmdEDUCB *cb, INT16 w ) ;
    INT32 catGetCSGroupsFromTasks( const CHAR *csName, pmdEDUCB *cb,
-                                  vector< INT32 > &groups ) ;
+                                  vector< UINT32 > &groups ) ;
 
    /* Collection[CAT_HISTORY_COLLECTION] functions */
    INT32 catGetBucketVersion( const CHAR *pCLName, pmdEDUCB *cb ) ;

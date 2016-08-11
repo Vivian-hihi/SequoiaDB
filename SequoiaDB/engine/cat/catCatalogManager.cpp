@@ -2764,10 +2764,6 @@ namespace engine
       map<string, UINT32> toBeRemoved ;
       BSONObj objToBeRemoved ;
       BSONArrayBuilder arrBuilder ;
-      BSONObjBuilder inBuilder ;
-      BSONObj condition ;
-      BSONObj dummy ;
-      BSONObj res ;
 
       rc = catGetDomainGroups( domain, groupsInDomain ) ;
       if ( SDB_CAT_NO_GROUP_IN_DOMAIN == rc )
@@ -2792,40 +2788,58 @@ namespace engine
          goto error ;
       }
 
-      for ( map<string, UINT32>::const_iterator itr = toBeRemoved.begin();
-            itr != toBeRemoved.end();
-            itr++ )
-      {
-         arrBuilder << (INT32)itr->second ;
-      }
-
       if ( !toBeRemoved.empty() )
       {
          objToBeRemoved = arrBuilder.arr() ;
-         inBuilder.appendArray( "$in", objToBeRemoved ) ;
-         condition = BSON( CAT_DOMAIN_NAME <<
-                           domain.getField( CAT_DOMAINNAME_NAME ).valuestrsafe() <<
-                           CAT_GROUP_NAME"."CAT_GROUPID_NAME <<
-                           inBuilder.obj()  ) ;
-         rc = catGetOneObj( CAT_COLLECTION_SPACE_COLLECTION,
-                            dummy, condition, dummy, _pEduCB, res ) ;
-         if ( SDB_OK == rc )
+         vector< string > collectionSpaces ;
+
+         /// Get collection spaces for domain
+         rc = catGetDomainCSs ( domain, _pEduCB, collectionSpaces ) ;
+         if ( SDB_OK != rc )
          {
-            PD_LOG( PDERROR, "clear data(of this domain) before remove it "
-                    "from domain. groups to be removed[%s]",
-                    objToBeRemoved.toString( TRUE, TRUE ).c_str() ) ;
-            rc = SDB_DOMAIN_IS_OCCUPIED ;
+            PD_LOG( PDERROR, "Failed to get collection spaces for domain:%d",
+                    rc ) ;
             goto error ;
          }
-         else if ( SDB_DMS_EOC == rc )
+         for ( UINT32 i = 0 ; i < collectionSpaces.size() ; ++i )
          {
-            /// no data on the groups those to be removed.
-            rc = SDB_OK ;
-         }
-         else
-         {
-            PD_LOG( PDERROR, "unexpected err happened:%d", rc ) ;
-            goto error ;
+            /// For each collection space:
+            /// 1. Get groups from collections
+            /// 2. Get groups under splitting tasks
+            vector< UINT32 > groups ;
+            rc = catGetCSGroupsFromCLs( collectionSpaces[i].c_str(),
+                                        _pEduCB,
+                                        groups,
+                                        FALSE ) ;
+            PD_RC_CHECK( rc, PDERROR,
+                         "Get collection space[%s] all groups failed, rc: %d",
+                         collectionSpaces[i].c_str(), rc ) ;
+            rc = catGetCSGroupsFromTasks( collectionSpaces[i].c_str(),
+                                          _pEduCB,
+                                          groups ) ;
+            PD_RC_CHECK( rc, PDERROR,
+                         "Get collection space[%s] all groups in task failed, "
+                         "rc: %d", collectionSpaces[i].c_str(), rc ) ;
+            /// Check whether the groups to be removed have data
+            if ( 0 == groups.size() )
+            {
+               continue ;
+            }
+            for ( map<string, UINT32>::const_iterator itr = toBeRemoved.begin();
+                  itr != toBeRemoved.end();
+                  itr++ )
+            {
+               if ( find( groups.begin(),
+                          groups.end(),
+                          (INT32)itr->second ) != groups.end() )
+               {
+                  PD_LOG( PDERROR, "clear data(of this domain) before remove it "
+                          "from domain. groups to be removed[%s]",
+                          objToBeRemoved.toString( TRUE, TRUE ).c_str() ) ;
+                  rc = SDB_DOMAIN_IS_OCCUPIED ;
+                  goto error ;
+               }
+            }
          }
       }
 
