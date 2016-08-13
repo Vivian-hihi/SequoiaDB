@@ -58,6 +58,11 @@ namespace engine
    INT32 utilStrTrim( CHAR *src, const CHAR *&begin ) ;
    std::string &utilStrTrim ( std::string &s ) ;
 
+   OSS_INLINE BOOLEAN utilStrEndsWith(const string& str, const string& substr)
+   {
+      return str.rfind(substr) == (str.length() - substr.length()) ;
+   }
+
    INT32 utilStrToUpper( const CHAR *src, CHAR *&upper ) ;
 
    INT32 utilStrJoin( const CHAR **src,
