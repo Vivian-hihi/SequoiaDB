@@ -36,42 +36,102 @@
             <variable>time</variable>
             <format>%Y-%m-%d-%H:%M:%S</format>
         </createTimeStamp> 
+        <setInstallerVariable name="sys_conf_file" value="/etc/default/sequoiadb"/>
+        <setInstallerVariable name="exist_installation" value="false"/>                   
+        <setInstallerVariable name="project.rollbackBackupDirectory" value="${installdir}/rollback/BackupDir_${time}"/>       
     </initializationActionList>
     
     <!--exist installation? different mode has different parameterLis-->
     <preInstallationActionList>
-        <!--parameter passed in command line, should not ask again in dialog-->
-        <setInstallerVariable name="parameter(force).ask" value="0">
-            <ruleList>
-                <compareText>
-                    <text>${installer_command_line_arguments}</text>
-                    <logic>contains</logic>
-                    <value>--force</value>
-                </compareText>  
-            </ruleList>       
-        </setInstallerVariable>
-        <!--TODO: other parameter-->
-        
-        <!--upgrde parameter check-->         
-        <actionGroup> 
-            <actionList>
-                <throwError>
-                    <text>${msg(Upgrade.Paramers.Upgrade.Check)}</text> 
-                </throwError>                        
-            </actionList> 
+        <!-- parameter check -->                         
+        <throwError>
+            <text>${msg(Upgrade.Paramers.Upgrade.Check)}</text>
             <ruleEvaluationLogic>and</ruleEvaluationLogic>
             <ruleList>
                 <compareText logic="does_not_equal" text="${is_upgrade_mode}" value="true"/>
                 <compareText logic="does_not_equal" text="${is_upgrade_mode}" value="false"/>
-                <compareText logic="does_not_equal" text="${is_upgrade_mode}" value="null"/>
-            </ruleList>        
-        </actionGroup>              
+            </ruleList>
+        </throwError>
+        <throwError>
+            <text>${msg(Install.Paramers.SMS.Check)}</text>
+            <ruleEvaluationLogic>and</ruleEvaluationLogic>
+            <ruleList>
+                <compareText logic="does_not_equal" text="${SMS}" value="true"/>
+                <compareText logic="does_not_equal" text="${SMS}" value="false"/>
+            </ruleList>
+        </throwError>
+        <throwError>
+            <text>${msg(Install.Paramers.Force.Check)}</text>
+            <ruleEvaluationLogic>and</ruleEvaluationLogic>
+            <ruleList>
+                <compareText logic="does_not_equal" text="${force}" value="true"/>
+                <compareText logic="does_not_equal" text="${force}" value="false"/>
+            </ruleList>
+        </throwError>
+        <throwError>
+            <text>${msg(Install.Paramers.ProcessAutoStart.Check)}</text>
+            <ruleEvaluationLogic>and</ruleEvaluationLogic>
+            <ruleList>
+                <compareText logic="does_not_equal" text="${processAutoStart}" value="true"/>
+                <compareText logic="does_not_equal" text="${processAutoStart}" value="false"/>
+            </ruleList>
+        </throwError>
         
-        <!--init variable-->    
-        <setInstallerVariable name="sys_conf_file" value="/etc/default/sequoiadb"/>
-        <setInstallerVariable name="exist_installation" value="false"/>                   
-        <setInstallerVariable name="project.rollbackBackupDirectory" value="${installdir}/rollback/BackupDir_${time}"/>
-                
+        <!--parameter passed in command line, should not ask again in dialog-->
+        <setInstallerVariable name="parameter(force).ask" value="0">
+            <ruleList>
+                <compareText text="${installer_command_line_arguments}" value="--force" logic="contains"/>
+            </ruleList>
+        </setInstallerVariable>       
+        <setInstallerVariable name="parameter(install_parameters).parameter(installdir).ask" value="0">
+            <ruleList>
+                <compareText text="${installer_command_line_arguments}" value="--prefix" logic="contains"/>
+            </ruleList>
+        </setInstallerVariable>
+        <setInstallerVariable name="parameter(install_parameters).parameter(user_data).parameter(username).ask" value="0">
+            <ruleList>
+                <compareText text="${installer_command_line_arguments}" value="--username" logic="contains"/>
+            </ruleList>
+        </setInstallerVariable>
+        <setInstallerVariable name="parameter(install_parameters).parameter(user_data).parameter(groupname).ask" value="0">
+            <ruleList>
+                <compareText text="${installer_command_line_arguments}" value="--groupname" logic="contains"/>
+            </ruleList>
+        </setInstallerVariable>
+        <setInstallerVariable name="parameter(install_parameters).parameter(user_data).parameter(userpasswd).ask" value="0">
+            <ruleList>
+                <compareText text="${installer_command_line_arguments}" value="--userpasswd" logic="contains"/>
+            </ruleList>
+        </setInstallerVariable>
+        <setInstallerVariable name="parameter(install_parameters).parameter(port).ask" value="0">
+            <ruleList>
+                <compareText text="${installer_command_line_arguments}" value="--port" logic="contains"/>
+            </ruleList>
+        </setInstallerVariable>
+        <setInstallerVariable name="parameter(install_parameters).parameter(processAutoStart).ask" value="0">
+            <ruleList>
+                <compareText text="${installer_command_line_arguments}" value="--processAutoStart" logic="contains"/>
+            </ruleList>
+        </setInstallerVariable>
+        <setInstallerVariable name="parameter(install_parameters).parameter(SMS).ask" value="0">
+            <ruleList>
+                <compareText text="${installer_command_line_arguments}" value="--SMS" logic="contains"/>
+            </ruleList>
+        </setInstallerVariable>
+        <setInstallerVariable name="parameter(install_parameters).parameter(user_data).ask" value="0">
+            <ruleEvaluationLogic>and</ruleEvaluationLogic>
+            <ruleList>
+                <compareText text="${installer_command_line_arguments}" value="--username"   logic="contains"/>
+                <compareText text="${installer_command_line_arguments}" value="--groupname"  logic="contains"/>
+                <compareText text="${installer_command_line_arguments}" value="--userpasswd" logic="contains"/>
+            </ruleList>
+        </setInstallerVariable>        
+        <setInstallerVariable name="is_upgrade_mode" value="null">
+            <ruleList>
+                <compareText text="${installer_command_line_arguments}" value="--upgrade" logic="does_not_contain"/>
+            </ruleList>
+        </setInstallerVariable>
+                                            
         <!--if no pass upgrade parameter in commandline--> 
         <changePermissions><!--make sure permission is 644-->
             <files>${sys_conf_file}</files>
@@ -79,34 +139,29 @@
             <ruleList>
                 <fileExists path="${sys_conf_file}"/>
             </ruleList>
-        </changePermissions>                                                                                                                                                       
-        <actionGroup> 
+        </changePermissions>        
+        <if>
+            <conditionRuleList><!--if no pass upgrade parameter-->
+                <compareValues value1="${is_upgrade_mode}" logic="equals" value2="null"/>  
+            </conditionRuleList>
             <actionList>
                 <propertiesFileGet>
                     <file>${sys_conf_file}</file>            
                     <key>INSTALL_DIR</key>
                     <variable>installdir_inconf</variable>
                     <abortOnError>0</abortOnError>
-                </propertiesFileGet>                     
-            </actionList> 
-            <ruleEvaluationLogic>and</ruleEvaluationLogic>
-            <ruleList>
-                <compareValues value1="${is_upgrade_mode}" logic="equals" value2="null"/>                
-                <fileTest condition="exists" path="${sys_conf_file}"/>                
-            </ruleList>           
-        </actionGroup>
-        <actionGroup> 
-            <actionList>
-                <setInstallerVariable name="exist_installation" value="true"/>                       
-            </actionList> 
-            <ruleEvaluationLogic>and</ruleEvaluationLogic>
-            <ruleList>
-                 <isFalse value="${is_upgrade_mode}"/>
-                 <compareTextLength text="${installdir_inconf}" logic="greater" length="0"/>
-                 <fileTest condition="exists"       path="${installdir_inconf}"/> 
-                 <fileTest condition="is_not_empty" path="${installdir_inconf}"/>                                         
-            </ruleList>          
-        </actionGroup>        
+                    <showMessageOnError>0</showMessageOnError>
+                </propertiesFileGet> 
+                <setInstallerVariable name="exist_installation" value="true">
+                    <ruleEvaluationLogic>and</ruleEvaluationLogic>
+                    <ruleList>                     
+                         <compareTextLength text="${installdir_inconf}" logic="greater" length="0"/>
+                         <fileTest condition="exists"       path="${installdir_inconf}"/> 
+                         <fileTest condition="is_not_empty" path="${installdir_inconf}"/>
+                    </ruleList>    
+                </setInstallerVariable>     
+            </actionList>   
+        </if>              
                                                                        
     </preInstallationActionList>
     
@@ -118,7 +173,7 @@
         <booleanParameter>
             <name>is_upgrade_mode</name>
             <value></value>
-            <default>null</default>  
+            <default>false</default>  
             <cliOptionName>upgrade</cliOptionName>
             <cliOptionText>${msg(Upgrade.Paramers.Upgrade.Explanation)}</cliOptionText>
             <ruleList>
@@ -165,7 +220,7 @@
                     <text>${msg(Upgrade.NormalMsg.AskUpgrade)}</text>
                     <variable>is_upgrade_mode</variable>
                     <ruleEvaluationLogic>and</ruleEvaluationLogic>
-                    <ruleList>
+                    <ruleList>                        
                         <compareValues value1="${is_upgrade_mode}" logic="equals" value2="null"/>                          
                         <isTrue value="${exist_installation}"/>                                                        
                     </ruleList>
@@ -274,12 +329,8 @@
                     <description>${msg(Install.Paramers.processAutoStart.Description)}</description>
                     <explanation>${msg(Install.Paramers.processAutoStart.explanation)}</explanation>
                     <value></value>
-                    <default>yes</default>
-                    <cliOptionText>${msg(Install.Paramers.processAutoStart.explanation)}</cliOptionText>
-                    <ruleList>
-                        <compareText text="${processAutoStart}" logic="does_not_equal" value="true"/> 
-                        <compareText text="${processAutoStart}" logic="does_not_equal" value="false"/>
-                    </ruleList>
+                    <default>false</default>
+                    <cliOptionText>${msg(Install.Paramers.processAutoStart.explanation)}</cliOptionText>                   
                 </booleanParameter>
                 <stringParameter>
                     <name>svcname</name>
@@ -341,14 +392,9 @@
                     <name>SMS</name>
                     <description>${msg(Install.Paramers.sms.description)}</description>                  
                     <value></value>
-                    <default>no</default>
+                    <default>false</default>
                     <cliOptionName>SMS</cliOptionName>
-                    <cliOptionText>${msg(Install.Paramers.installationType.explanation)}</cliOptionText>
-                    <ruleEvaluationLogic>and</ruleEvaluationLogic>
-                    <ruleList>
-                        <compareText text="${SMS}" logic="does_not_equal" value="true"/> 
-                        <compareText text="${SMS}" logic="does_not_equal" value="false"/>
-                    </ruleList>
+                    <cliOptionText>${msg(Install.Paramers.installationType.explanation)}</cliOptionText>                                       
                 </booleanParameter>                                             
             </parameterList>
         </parameterGroup>
@@ -360,7 +406,7 @@
         <!--when unattended mode, execute postShowPageActionList-->
         <actionGroup> 
             <actionList>
-                <setInstallerVariable name="is_upgrade_mode" value="yes"/>                             
+                <setInstallerVariable name="is_upgrade_mode" value="true"/>                             
             </actionList>
             <ruleEvaluationLogic>and</ruleEvaluationLogic>
             <ruleList>                                  
@@ -513,7 +559,7 @@
     <debuggerPassword>sequoiadb</debuggerPassword>
     <enableDebugger>1</enableDebugger>
     <defaultUnixGroup>${groupname}</defaultUnixGroup>
-    <defaultUnixOwner>${username}</defaultUnixOwner>    
+    <defaultUnixOwner>${username}</defaultUnixOwner> 
     <enableRollback>1</enableRollback>
     <enableTimestamp>1</enableTimestamp>
     <requireInstallationByRootUser>1</requireInstallationByRootUser>

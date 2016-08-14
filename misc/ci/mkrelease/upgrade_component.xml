@@ -439,7 +439,7 @@
         </setInstallerVariableFromScriptOutput>
         <runProgram>           
             <program>${installdir}/install_om.sh</program>
-            <programArguments>${project.installationType} ${installdir} ${installer_pathname}</programArguments>          
+            <programArguments>${project.installationType} "${installdir}" "${installer_pathname}"</programArguments>          
             <ruleList>
                 <isTrue value="${has_om}"/>
             </ruleList>
@@ -455,8 +455,8 @@
         <!--write log and configura-->
         <setInstallerVariable name="new_md5sum" value="0000"/>
         <setInstallerVariableFromScriptOutput>
-            <exec>/usr/bin/md5sum</exec>
-            <execArgs>${installer_pathname} | cut -c 1-32 </execArgs>
+            <exec>md5sum</exec>
+            <execArgs>"${installer_pathname}" | cut -c 1-32 </execArgs>
             <name>new_md5sum</name>
         </setInstallerVariableFromScriptOutput>        
         <propertiesFileSet>
