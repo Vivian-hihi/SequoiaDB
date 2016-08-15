@@ -56,8 +56,6 @@ namespace engine
    INT32 ossFile::open( const string& filePath, UINT32 mode, UINT32 permission )
    {
       INT32 rc = SDB_OK ;
-      
-      _path = filePath ;
 
       rc = ossOpen( _path.c_str(), mode, permission, _file ) ;
       if ( SDB_OK != rc )
@@ -65,10 +63,11 @@ namespace engine
          goto error ;
       }
 
+      _path = filePath ;
+
    done:
       return rc ;
    error:
-      _path = "" ;
       goto done ;
    }
    
@@ -76,6 +75,7 @@ namespace engine
    {
       if ( _file.isOpened() )
       {
+         _path = "" ;
          return ossClose( _file ) ;
       }
       else
