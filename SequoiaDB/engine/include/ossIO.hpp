@@ -318,15 +318,16 @@ INT32 ossWrite ( OSSFILE        *pFile,
  * offset (off_t)
  * whence (OSS_SEEK)
  * Output
- * N/A
+ * position (the resulting offset location from the beginning of the file)
  * Return
  * SDB_OK (success)
  * SDB_INVALIDSIZE (seek location is not valid)
  * SDB_INVALIDARGS (bad arguments)
  */
 INT32 ossSeek( OSSFILE  *pFile,
-               INT64    offset,
-               OSS_SEEK whence);
+               INT64 offset,
+               OSS_SEEK whence,
+               INT64* position = NULL );
 
 /*
  * Read a file from current file descriptor location

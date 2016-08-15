@@ -45,6 +45,7 @@ ossFiles = [
       "oss/ossErr.cpp",
       "oss/oss.cpp",
       "oss/ossIO.cpp",
+      "oss/ossFile.cpp",
       "oss/ossUtil.cpp",
       "oss/ossPath.cpp",
       "oss/ossLatch.cpp",

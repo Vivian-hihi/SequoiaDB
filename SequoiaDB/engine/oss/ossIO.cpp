@@ -1034,25 +1034,21 @@ error :
  */
  // PD_TRACE_DECLARE_FUNCTION ( SDB_OSSSEEK, "ossSeek" )
 INT32 ossSeek ( OSSFILE  *pFile,
-                INT64    offset,
-                OSS_SEEK whence )
+                INT64 offset,
+                OSS_SEEK whence,
+                INT64* position )
 {
    INT32   rc      = SDB_OK ;
    PD_TRACE_ENTRY ( SDB_OSSSEEK );
-   INT32   err     = 0 ;
-   SINT64  seekOff = 0 ;
 
-#if defined (_WINDOWS)
-   LARGE_INTEGER li ;
-#endif
-   // sanity check, only take effect in debug build
    SDB_ASSERT ( pFile , "pFile is NULL" ) ;
 
 #if defined (_LINUX)
+   INT64 seekOff = 0 ;
    seekOff = lseek ( pFile->fd, (INT64)offset, whence ) ;
    if ( -1 == seekOff )
    {
-       err = ossGetLastError () ;
+       INT32 err = ossGetLastError () ;
        // handle errors
        pdLog ( PDERROR, __FUNC__, __FILE__, __LINE__,
                "Failed to lseek() : %x, Error: %d",
@@ -1073,26 +1069,42 @@ INT32 ossSeek ( OSSFILE  *pFile,
           break ;
        }
        goto error ;
-    }
-#elif defined (_WINDOWS)
-   li.QuadPart = offset ;
-   li.LowPart  = SetFilePointer( (HANDLE) pFile->hFile,
-                                 li.LowPart,
-                                 &li.HighPart,
-                                 (DWORD)whence ) ;
-   if ( li.LowPart == INVALID_SET_FILE_POINTER &&
-        NO_ERROR != ossGetLastError () )
+   }
+
+   if ( NULL != position )
    {
+      *position = seekOff ;
+   }
+#elif defined (_WINDOWS)
+   LARGE_INTEGER li ;
+   LARGE_INTEGER result ;
+   BOOL ret ;
+   li.QuadPart = offset ;
+   result.QuadPart = 0 ;
+
+   ret = SetFilePointerEx( (HANDLE) pFile->hFile,
+                           li,
+                           &result,
+                           (DWORD)whence ) ;
+   if ( !ret )
+   {
+      pdLog ( PDERROR, __FUNC__, __FILE__, __LINE__,
+               "Failed to SetFilePointerEx() : %x, Error: %d",
+               pFile->hFile, ossGetLastError() ) ;
       rc = SDB_IO ;
       goto error ;
    }
+
+   if ( NULL != position )
+   {
+      *position = (INT64)result.QuadPart ;
+   }
 #endif
+
 done :
-   // final clean up here, if pBuffer is allocated, we need to free
    PD_TRACE_EXITRC ( SDB_OSSSEEK, rc );
    return rc;
 error :
-   // if anything need to be performed in error condition, do it here
    goto done ;
 }
 
