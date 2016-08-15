@@ -2,8 +2,8 @@
 
   所有的插入操作在 SequoiaDB 中具有如下性质：
 
-  -   如果插入的文档记录没有 _id 字段，客户端将会为记录自动添加 _id字段，并且填充一个唯一值。
-  -   如果指定 _id 字段，那么在集合中 _id 的值必须唯一；_id 否则出现操作异常。
+  -   如果插入的文档记录没有 \_id 字段，客户端将会为记录自动添加 \_id字段，并且填充一个唯一值。
+  -   如果指定_id字段，那么在集合中_id的值必须唯一；否则出现操作异常。
   -   最大的 BSON 文档长度为16MB。
   -   文档结构的字段命名有如下限制：
 
@@ -16,7 +16,8 @@
 insert() 是向SequoiaDB 集合中插入记录的主要方法，它有以下语法：
 
 <pre class="prettyprint lang-javascript">
-> db.collectionspace.collection.insert(&lt;doc|docs&gt;,[flag])</pre>
+> db.collectionspace.collection.insert(&lt;doc|docs&gt;,[flag])
+> $pro档的所有例$pro,档的所有例 $pro 档的所有例 $pro 档的所有例</pre>
 
 ###插入第一个文档###
 
