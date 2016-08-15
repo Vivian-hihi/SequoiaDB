@@ -39,25 +39,11 @@
 
 #include "core.hpp"
 #include "oss.hpp"
+#include "utilCompression.hpp"
 #include "utilDictionary.hpp"
 
 namespace engine
 {
-   enum UTIL_COMPRESSOR_TYPE
-   {
-      UTIL_COMPRESSOR_INVALID = -1,
-      UTIL_COMPRESSOR_SNAPPY = 0,
-      UTIL_COMPRESSOR_LZW = 1,
-      UTIL_COMPRESSOR_LZ4,
-      UTIL_COMPRESSOR_ZLIB
-   } ;
-
-   enum UTIL_COMPRESSION_LEVEL
-   {
-      UTIL_COMP_BEST_SPEED = 1,
-      UTIL_COMP_BALANCE,
-      UTIL_COMP_BEST_COMPRESSION,
-   } ;
 
    #define UTIL_INVALID_DICT                 NULL
 
