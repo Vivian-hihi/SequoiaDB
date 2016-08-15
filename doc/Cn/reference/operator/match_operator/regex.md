@@ -4,7 +4,7 @@ $regex 操作提供正则表达式模式匹配字符串查询功能。SequoiaDB 
 
 **Note:**
 
-$regex 与 $options 配套使用。
+\$regex 与 \$options 配套使用。
 
 ### $options##
 
