@@ -12,7 +12,7 @@
 
 （3） 将 sdbdriver/include 目录加入到编译头目录，并将 sdbdriver/lib 目录加入连接目录。
 
-***动态链接：***
+**动态链接：**
 
 使用 lib 目录下的 libsdbc.so 动态库，gcc 编译参数形式如：
 <pre class="prettyprint lang-javascript">
@@ -29,7 +29,7 @@ error while loading shared libraries: libsdbc.so: cannot open shared object file
 
 表示没有正确设置 LD_LIBRARY_PATH，LD_LIBRARY_PATH 是环境变量，建议设置到 /etc/profile 或者应用程序的启动脚本中，避免每次新开终端都需要重新设置。
 
-***静态链接：***
+**静态链接：**
 
 使用 lib 目录下的 libstaticsdbc.a 静态库，gcc 编译参数形式如：
 <pre class="prettyprint lang-javascript">
