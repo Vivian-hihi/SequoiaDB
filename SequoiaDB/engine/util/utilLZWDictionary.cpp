@@ -212,8 +212,10 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__UTILLZWDICTIONARY__FORMATREMOTESTR, "_utilLZWDictionary::_formatRemoteStr" )
-   UINT32 _utilLZWDictionary::_formatRemoteStr( LZW_CODE code, UINT32 &offset )
+   INT32 _utilLZWDictionary::_formatRemoteStr( LZW_CODE code, UINT32 &offset,
+                                               UINT32 &len )
    {
+      INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__UTILLZWDICTIONARY__FORMATREMOTESTR ) ;
       BYTE strBuff[UTIL_MAX_DICT_STR_LEN] = { 0 } ;
       UINT32 preLen = 0 ;
@@ -229,6 +231,13 @@ namespace engine
 
       while ( TRUE )
       {
+         if ( 0 == pos )
+         {
+            /* Should never hit this code. */
+            SDB_ASSERT( FALSE, "pos is invalid" ) ;
+            rc = SDB_SYS ;
+            goto error ;
+         }
          strBuff[--pos] = _nodes[preCode]._ch ;
          preCode = _nodes[preCode]._prev ;
          if ( UTIL_INVALID_DICT_CODE == preCode )
@@ -300,14 +309,18 @@ namespace engine
       }
 
       offset += totalLen ;
-
+      len = totalLen ;
+   done:
       PD_TRACE_EXIT( SDB__UTILLZWDICTIONARY__FORMATREMOTESTR ) ;
-      return totalLen ;
+      return rc ;
+   error:
+      goto done ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__UTILLZWDICTIONARY__FORMATONECODE, "_utilLZWDictionary::_formatOneCode" )
-   void _utilLZWDictionary::_formatOneCode( UINT32 &offset, LZW_CODE code )
+   INT32 _utilLZWDictionary::_formatOneCode( UINT32 &offset, LZW_CODE code )
    {
+      INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__UTILLZWDICTIONARY__FORMATONECODE ) ;
       UINT32 len = _nodes[code]._len ;
       DST_ITEM *item = &_dst[_nodes[code]._code] ;
@@ -316,12 +329,14 @@ namespace engine
 
       if ( 0 != *item )
       {
-         return ;
+         goto done ;
       }
 
       if ( len > DST_MAX_LOCAL_LEN )
       {
-         len = _formatRemoteStr( code, offset ) ;
+         rc = _formatRemoteStr( code, offset, len ) ;
+         PD_RC_CHECK( rc, PDERROR,
+                      "Failed to format remote string, rc: %d", rc ) ;
       }
       else
       {
@@ -345,29 +360,38 @@ namespace engine
          }
       }
 
+   done:
       PD_TRACE_EXIT( SDB__UTILLZWDICTIONARY__FORMATONECODE ) ;
+      return rc ;
+   error:
+      goto done ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__UTILLZWDICTIONARY__FORMATDST, "_utilLZWDictionary::_formatDst" )
-   UINT32 _utilLZWDictionary::_formatDst()
+   INT32 _utilLZWDictionary::_formatDst( UINT32 &size )
    {
+      INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__UTILLZWDICTIONARY__FORMATDST ) ;
       LZW_CODE currCode = _head->_maxCode + 1 ;
       UINT32 strOffset = 0 ;
-      UINT32 size = 0 ;
 
       do
       {
          --currCode ;
          if ( UTIL_INVALID_DICT_CODE != _nodes[currCode]._code )
          {
-            _formatOneCode( strOffset, currCode ) ;
+            rc = _formatOneCode( strOffset, currCode ) ;
+            PD_RC_CHECK( rc, PDERROR,
+                         "Failed to format dictionary item, rc: %d", rc ) ;
          }
       } while ( currCode > 0 ) ;
 
       size = _strArea - (CHAR*)_dst + strOffset ;
+   done:
       PD_TRACE_EXIT( SDB__UTILLZWDICTIONARY__FORMATDST ) ;
-      return size ;
+      return rc ;
+   error:
+      goto done ;
    }
 
    BOOLEAN _utilLZWDictionary::_sortNodeByRef( const _utilLZWNode *left,
@@ -585,7 +609,10 @@ namespace engine
          _formatOneGrp( index, nextIdx, indexMap ) ;
       }
 
-      dstSize = _formatDst() ;
+      rc = _formatDst( dstSize ) ;
+      PD_RC_CHECK( rc, PDERROR,
+                   "Failed to format decompression string table, rc: %d", rc ) ;
+
       writePos = (CHAR*)_dst - (CHAR*)_head + dstSize ;
 
       _formatAdditionalInfo( addInfo ) ;
@@ -665,7 +692,8 @@ namespace engine
          }
          else
          {
-            code = source[pos] ;
+            code = (UINT8)source[pos] ;
+            strLen = 1 ;
             if ( pos + 1 == sourceLen )
             {
                break ;
@@ -693,7 +721,7 @@ namespace engine
          {
             code = nextCode ;
             strLen++ ;
-            if ( UTIL_MAX_DICT_STR_LEN == strLen )
+            if ( strLen >= UTIL_MAX_DICT_STR_LEN )
             {
                restart = TRUE ;
             }

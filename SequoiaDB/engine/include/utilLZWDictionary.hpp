@@ -272,9 +272,9 @@ namespace engine
 
    private:
       void _initFinalEnv( CHAR *buff, UINT32 bufLen ) ;
-      UINT32 _formatRemoteStr( LZW_CODE code, UINT32 &offset ) ;
-      void _formatOneCode( UINT32 &offset, LZW_CODE code ) ;
-      UINT32 _formatDst() ;
+      INT32 _formatRemoteStr( LZW_CODE code, UINT32 &offset, UINT32 &len ) ;
+      INT32 _formatOneCode( UINT32 &offset, LZW_CODE code ) ;
+      INT32 _formatDst( UINT32 &size ) ;
       void _formatOneGrp( UINT32 parentIdx, UINT32 &nextIdx,
                           std::map<UINT32, UINT32> &indexMap ) ;
       UINT32 _calcCodeSize( UINT32 code ) ;
