@@ -76,5 +76,4 @@ Upgrade.ErrorMsg.StartProcess=sdbcm or sdbcmd has not been started.
 Upgrade.ErrorMsg.GetGoup=Failed to get group of user ${username} 
 
 
-Uninstall.WarnMsg.CheckProcess=Warning: Revelant processes still exist after excuting 'service sdbcm sdbtop'.
-Uninstall.WarnMsg.CheckProcess.Kill=Warning: Revelant processes still exist after killing -9 them.
+Uninstall.ErrorMsg.CheckProcess=Revelant processes still exist after excuting 'service sdbcm sdbtop'.

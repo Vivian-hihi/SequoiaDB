@@ -502,31 +502,16 @@
             <abortOnError>0</abortOnError>
             <showMessageOnError>0</showMessageOnError>
         </setInstallerVariableFromScriptOutput>
-        <consoleWrite>
-            <text>&#xA;${msg(Uninstall.WarnMsg.CheckProcess)}&#xA;</text>
-            <ruleList>
-                <compareValues value1="${process_num}" logic="greater" value2="0"/>
-            </ruleList>
-        </consoleWrite>
-        <runProgram>
-            <program>${installdir}/bin/sdblist</program>
-            <programArguments>-t all | grep -v "Total" | awk '{print $2}' | awk -F '(' '{print $2}' | awk -F ')' '{print "kill -9 " $1}' | bash</programArguments>
-            <abortOnError>0</abortOnError>
-            <showMessageOnError>0</showMessageOnError>
-        </runProgram> 
-        <setInstallerVariableFromScriptOutput>
-            <name>process_num</name>
-            <exec>${installdir}/bin/sdblist</exec>
-            <execArgs>-t all | grep -v "Total" | wc -l</execArgs>
-            <abortOnError>0</abortOnError>
-            <showMessageOnError>0</showMessageOnError>
-        </setInstallerVariableFromScriptOutput>
-        <consoleWrite>
-            <text>&#xA;${msg(Uninstall.WarnMsg.CheckProcess.Kill)}&#xA;</text>
-            <ruleList>
-                <compareValues value1="${process_num}" logic="greater" value2="0"/>
-            </ruleList>
-        </consoleWrite>
+        <if>
+            <conditionRuleList>
+                 <compareValues value1="${process_num}" logic="greater" value2="0"/>
+            </conditionRuleList> 
+            <actionList>
+                <consoleWrite text="&#xA;${msg(Uninstall.ErrorMsg.CheckProcess)}&#xA;"/>
+                <exit exitCode="1"/><!--exit uninstallation-->
+            </actionList>
+        </if>        
+        
         
         <!--other-->
         <removeUnixService>

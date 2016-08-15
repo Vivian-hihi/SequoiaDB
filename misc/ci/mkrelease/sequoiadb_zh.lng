@@ -77,5 +77,4 @@ Install.ErrorMsg.IntallOM=拷贝安装包到packet目录失败
 Upgrade.ErrorMsg.GetGoup=获取用户${username}的用户组失败
 
 
-Uninstall.WarnMsg.CheckProcess=警告：执行service sdbcm stop后仍然有进程残留
-Uninstall.WarnMsg.CheckProcess.Kill=警告：执行kill -9后仍然有进程残留
+Uninstall.ErrorMsg.CheckProcess=执行service sdbcm stop后仍然有进程残留
