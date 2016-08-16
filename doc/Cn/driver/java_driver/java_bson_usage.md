@@ -1,6 +1,6 @@
 ## Java BSON 数据类型##
 
-目前，SequoiaDB 支持多种 BSON 数据类型。详情请查看数据模型 - 文档一节。
+目前，SequoiaDB 支持多种 BSON 数据类型。详情请查看数据模型 - [文档](SdbDoc_Cn/data_model/document.html)一节。
 
 ## Java 构造 BSON 数据类型##
 
@@ -10,7 +10,24 @@
 Java BSON 构造整数/浮点数类型// {a:123, b:3.14}
 BSONObject obj = new BasicBSONObject();
 obj.put("a", 123);
-obj.put("b", 3.14);</pre>
+obj.put("b", 3.14);
+// or
+BSONObject obj2 = new BasicBSONObject().append("a", 123).append("b", 3.14);
+// or
+BSONObject obj3 = (BasicBSONObject) JSON.parse("{\"a\":123, \"b\":3.14}");</pre>
+
+* 高精度数
+
+<pre class="prettyprint lang-javascript">
+Java BSON 构造不带精度要求的Decimal类型// {a:{"$decimal":"12345.067891234567890123456789"}}
+String str = "12345.067891234567890123456789";
+BSONObject obj = new BasicBSONObject();
+BSONDecimal decimal = new BSONDecimal(str);
+obj.put("a", decimal);
+Java BSON 构造一个最多有100位有效数字，其中小数部分最多有30位的Decimal类型// {b:{"$decimal":"12345.067891234567890123456789", "$precision":[100, 30]}}
+BSONObject obj2 = new BasicBSONObject();
+BSONDecimal decimal2 = new BSONDecimal(str, 100, 30);
+obj2.put("b", decimal2);</pre>
 
 * 字符串
 
