@@ -290,24 +290,7 @@
             <file>${installdir}/conf/sdbcm.conf</file>
             <key>defaultPort</key>
             <value>${port}</value>
-        </propertiesFileSet>
-        <addUnixService>
-            <customErrorMessage>${msg(Install.ErrorMsg.CreateLinuxService.error)}</customErrorMessage>
-            <description>SequoiaDB Cluster Manager</description>
-            <name>sdbcm</name>
-            <program>${installdir}/sequoiadb</program>                       
-        </addUnixService>
-        <setInstallerVariable name="add_service_done" value="true">
-             <ruleList>
-                 <compareText logic="equals" text="${program_exit_code}" value="0"/>
-             </ruleList>
-        </setInstallerVariable>
-        <runProgram><!--in case did not reload /etc/init.d/sdbcm -->
-            <abortOnError>0</abortOnError>
-            <showMessageOnError>0</showMessageOnError>
-            <program>systemctl</program>
-            <programArguments>daemon-reload</programArguments>
-        </runProgram>
+        </propertiesFileSet>              
         <propertiesFileSet>
             <file>${installdir}/conf/sdbcm.conf</file>
             <key>AutoStart</key>
@@ -391,8 +374,25 @@
             <programArguments>-h ${username}:${groupname} ${installdir}/www/doc</programArguments>            
         </runProgram>  
         
-        <!--you should replace ''start service' and 'create om' in last of postInstallationActionList-->
-        <!--because if this step failed, postInstallationActionList will abort and next step will not be excuted-->
+        <addUnixService>
+            <customErrorMessage>${msg(Install.ErrorMsg.CreateLinuxService.error)}</customErrorMessage>
+            <description>SequoiaDB Cluster Manager</description>
+            <name>sdbcm</name>
+            <program>${installdir}/sequoiadb</program>                       
+        </addUnixService>
+        <setInstallerVariable name="add_service_done" value="true">
+             <ruleList>
+                 <compareText logic="equals" text="${program_exit_code}" value="0"/>
+             </ruleList>
+        </setInstallerVariable> 
+        <runProgram><!--in case did not reload /etc/init.d/sdbcm -->
+            <abortOnError>0</abortOnError>
+            <showMessageOnError>0</showMessageOnError>
+            <program>systemctl</program>
+            <programArguments>daemon-reload</programArguments>
+        </runProgram>
+        <!--you should place 'start service' and 'create om' in last of <postInstallationActionList>-->
+        <!--because if this step failed, <postInstallationActionList> will abort and next steps will not be excuted-->       
         <runProgram>
             <program>service</program>
             <programArguments> sdbcm start</programArguments>            

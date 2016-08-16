@@ -392,7 +392,64 @@
             <files>${installdir}/bin/sdbomtool</files>
             <permissions>6755</permissions>
         </changePermissions>        
-                       
+                               
+        <!--write log and configura-->
+        <setInstallerVariable name="new_md5sum" value="0000"/>
+        <setInstallerVariableFromScriptOutput>
+            <exec>md5sum</exec>
+            <execArgs>"${installer_pathname}" | cut -c 1-32 </execArgs>
+            <name>new_md5sum</name>
+        </setInstallerVariableFromScriptOutput>        
+        <propertiesFileSet>
+            <file>/etc/default/sequoiadb</file>
+            <key>MD5</key>
+            <value>${new_md5sum}</value>
+        </propertiesFileSet>               
+                                   
+        <runProgram>
+            <program>echo</program>
+            <programArguments>'time: ${time}' &gt;&gt; ${installdir}/upgrade.log</programArguments>
+        </runProgram>  
+        
+        <setInstallerVariableFromScriptOutput>
+            <name>new_svn</name>
+            <exec>${installdir}/bin/sequoiadb</exec>
+            <execArgs> --version | grep "Release" | awk '{print $2}'</execArgs>
+        </setInstallerVariableFromScriptOutput> 
+        <setInstallerVariable name="log" value="upgrade from version ${old_version} ${old_edition_full} (release ${old_svn}) to ${new_version} ${new_edition_full} (release ${new_svn})"/>
+        <runProgram>
+            <program>echo</program>
+            <programArguments>'${log}' &gt;&gt; ${installdir}/upgrade.log</programArguments>
+        </runProgram>
+        <runProgram>
+            <program>echo</program>
+            <programArguments>' ' &gt;&gt; ${installdir}/upgrade.log</programArguments>
+        </runProgram>
+        <changeOwnerAndGroup>
+            <files>${installdir}/upgrade.log</files>
+            <group>${groupname}</group>
+            <owner>${username}</owner>
+        </changeOwnerAndGroup>               
+        
+        <changeOwnerAndGroup>
+            <files>${installdir}/uninstall.dat</files>
+            <group>${groupname}</group>
+            <owner>${username}</owner>
+        </changeOwnerAndGroup> 
+        
+        <runProgram>
+            <program>rm</program>
+            <programArguments>-f ${installdir}/www/doc</programArguments>            
+        </runProgram>        
+        <createSymLink>
+            <linkName>${installdir}/www/doc</linkName>
+            <target>${installdir}/doc</target>
+        </createSymLink>
+        <runProgram>
+            <program>chown</program>
+            <programArguments>-h ${username}:${groupname} ${installdir}/www/doc</programArguments>            
+        </runProgram>
+        
         <!--after upgrade, start service--> 
         <addUnixService>
             <customErrorMessage>${msg(Install.ErrorMsg.CreateLinuxService.error)}</customErrorMessage>           
@@ -451,64 +508,8 @@
         </changeOwnerAndGroup> 
            
         <deleteFile path="${installdir}/sdbbp.log"/>
-        
-        <!--write log and configura-->
-        <setInstallerVariable name="new_md5sum" value="0000"/>
-        <setInstallerVariableFromScriptOutput>
-            <exec>md5sum</exec>
-            <execArgs>"${installer_pathname}" | cut -c 1-32 </execArgs>
-            <name>new_md5sum</name>
-        </setInstallerVariableFromScriptOutput>        
-        <propertiesFileSet>
-            <file>/etc/default/sequoiadb</file>
-            <key>MD5</key>
-            <value>${new_md5sum}</value>
-        </propertiesFileSet>               
-                                   
-        <runProgram>
-            <program>echo</program>
-            <programArguments>'time: ${time}' &gt;&gt; ${installdir}/upgrade.log</programArguments>
-        </runProgram>  
-        
-        <setInstallerVariableFromScriptOutput>
-            <name>new_svn</name>
-            <exec>${installdir}/bin/sequoiadb</exec>
-            <execArgs> --version | grep "Release" | awk '{print $2}'</execArgs>
-        </setInstallerVariableFromScriptOutput> 
-        <setInstallerVariable name="log" value="upgrade from version ${old_version} ${old_edition_full} (release ${old_svn}) to ${new_version} ${new_edition_full} (release ${new_svn})"/>
-        <runProgram>
-            <program>echo</program>
-            <programArguments>'${log}' &gt;&gt; ${installdir}/upgrade.log</programArguments>
-        </runProgram>
-        <runProgram>
-            <program>echo</program>
-            <programArguments>' ' &gt;&gt; ${installdir}/upgrade.log</programArguments>
-        </runProgram>
-        <changeOwnerAndGroup>
-            <files>${installdir}/upgrade.log</files>
-            <group>${groupname}</group>
-            <owner>${username}</owner>
-        </changeOwnerAndGroup>               
-        
-        <changeOwnerAndGroup>
-            <files>${installdir}/uninstall.dat</files>
-            <group>${groupname}</group>
-            <owner>${username}</owner>
-        </changeOwnerAndGroup> 
-        
-        <runProgram>
-            <program>rm</program>
-            <programArguments>-f ${installdir}/www/doc</programArguments>            
-        </runProgram>        
-        <createSymLink>
-            <linkName>${installdir}/www/doc</linkName>
-            <target>${installdir}/doc</target>
-        </createSymLink>
-        <runProgram>
-            <program>chown</program>
-            <programArguments>-h ${username}:${groupname} ${installdir}/www/doc</programArguments>            
-        </runProgram>
     </postInstallationActionList>
+           
         
     <installationAbortedActionList>
         <if>
