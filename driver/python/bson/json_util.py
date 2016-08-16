@@ -163,6 +163,8 @@ def _json_convert(obj):
 def object_hook(dct, compile_re=True):
     if "$oid" in dct:
         return ObjectId(str(dct["$oid"]))
+    if "$numberLong" in dct:
+        return int(dct["$numberLong"])
     if "$ref" in dct:
         return DBRef(dct["$ref"], dct["$id"], dct.get("$db", None))
     if "$date" in dct:
@@ -207,6 +209,9 @@ def default(obj):
     # order in Python 2.4.
     if isinstance(obj, ObjectId):
         return {"$oid": str(obj)}
+    if isinstance(obj, int) or ((not PY3) and isinstance(obj, long)):
+        if obj > 9007199254740991 or obj < -9007199254740991:
+            return {"$numberLong": str(obj)}
     if isinstance(obj, DBRef):
         return _json_convert(obj.as_doc())
     if isinstance(obj, datetime.datetime):
