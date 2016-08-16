@@ -96,7 +96,7 @@ from bson.min_key import MinKey
 from bson.objectid import ObjectId
 from bson.regex import Regex
 from bson.timestamp import Timestamp
-
+from bson.decimal import Decimal
 from bson.py3compat import PY3, binary_type, string_types
 
 
@@ -165,6 +165,15 @@ def object_hook(dct, compile_re=True):
         return ObjectId(str(dct["$oid"]))
     if "$numberLong" in dct:
         return int(dct["$numberLong"])
+    if "$decimal" in dct:
+        if "$precision" in dct:
+            precision = dct["$precision"][0]
+            scale = dct["$precision"][1]
+            d = Decimal(precision, scale)
+        else:
+            d = Decimal()
+        d.parse(str(dct["$decimal"]))
+        return d
     if "$ref" in dct:
         return DBRef(dct["$ref"], dct["$id"], dct.get("$db", None))
     if "$date" in dct:
@@ -212,6 +221,8 @@ def default(obj):
     if isinstance(obj, int) or ((not PY3) and isinstance(obj, long)):
         if obj > 9007199254740991 or obj < -9007199254740991:
             return {"$numberLong": str(obj)}
+    if isinstance(obj, Decimal):
+        return json.loads(str(obj))
     if isinstance(obj, DBRef):
         return _json_convert(obj.as_doc())
     if isinstance(obj, datetime.datetime):
