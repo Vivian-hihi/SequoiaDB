@@ -1290,7 +1290,7 @@ namespace engine
                     ( *itr )->contextID,
                     ( *itr )->header.routeID ) ;
       }
-   done:
+
       return rc ;
    }
 
