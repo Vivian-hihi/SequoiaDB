@@ -343,27 +343,6 @@
         </changePermissions>
         
         <runProgram>
-            <program>service</program>
-            <programArguments> sdbcm start</programArguments>            
-        </runProgram>
-        <runProgram>
-            <customErrorMessage>${msg(Install.ErrorMsg.IntallationOM.error)}</customErrorMessage>
-            <program>${installdir}/install_om.sh</program>
-            <programArguments>${project.installationType} "${installdir}" "${installer_pathname}" ${port} ${svcname} "${dbpath}" ${restname}</programArguments>           
-            <ruleList>               
-                <isTrue value="${SMS}" />
-            </ruleList>
-            <onErrorActionList>
-                <consoleWrite text="&#xA;error message:&#xA;${program_stdout}&#xA;"/>
-            </onErrorActionList>
-        </runProgram>
-        <changeOwnerAndGroup>
-            <files>${installdir}/packet/${installerFilename}</files>
-            <group>${groupname}</group>
-            <owner>${username}</owner>
-        </changeOwnerAndGroup>
-        
-        <runProgram>
             <program>echo</program>
             <programArguments>'' &gt;&gt; /etc/default/sequoiadb</programArguments>
         </runProgram>
@@ -410,7 +389,31 @@
         <runProgram>
             <program>chown</program>
             <programArguments>-h ${username}:${groupname} ${installdir}/www/doc</programArguments>            
-        </runProgram>     
+        </runProgram>  
+        
+        <!--you should replace ''start service' and 'create om' in last of postInstallationActionList-->
+        <!--because if this step failed, postInstallationActionList will abort and next step will not be excuted-->
+        <runProgram>
+            <program>service</program>
+            <programArguments> sdbcm start</programArguments>            
+        </runProgram>
+        <runProgram>
+            <customErrorMessage>${msg(Install.ErrorMsg.IntallationOM.error)}</customErrorMessage>
+            <program>${installdir}/install_om.sh</program>
+            <programArguments>${project.installationType} "${installdir}" "${installer_pathname}" ${port} ${svcname} "${dbpath}" ${restname}</programArguments>           
+            <ruleList>               
+                <isTrue value="${SMS}" />
+            </ruleList>
+            <onErrorActionList>
+                <consoleWrite text="&#xA;error message:&#xA;${program_stdout}&#xA;"/>
+            </onErrorActionList>
+        </runProgram>
+        <changeOwnerAndGroup>
+            <files>${installdir}/packet/${installerFilename}</files>
+            <group>${groupname}</group>
+            <owner>${username}</owner>
+        </changeOwnerAndGroup>
+           
     </postInstallationActionList>
     
     <installationAbortedActionList>               
