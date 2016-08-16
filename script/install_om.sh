@@ -65,7 +65,7 @@ $sdbFile -s " var _svcName = '${svcName}' ;                                     
               try {                                                                      \
                  oma.createOM( _svcName, _dbPath, {httpname: _restPort} ) ;              \
               } catch( e ) {                                                             \
-                 if ( e == SDBCM_NODE_EXISTED ) {                                        \
+                 if ( num == 1 && e == SDBCM_NODE_EXISTED ) {                            \
                     println( 'Warning: sdbom has existed in localhost' ) ;               \
                  } else {                                                                \
                     throw e ;                                                            \
