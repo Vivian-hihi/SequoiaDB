@@ -68,9 +68,9 @@
    typedef char                 CHAR ;
    typedef unsigned char        UINT8;
    typedef unsigned char         BYTE;
-   typedef char                 SINT8;
+   typedef signed char          SINT8;
 #if defined (_LINUX) || defined ( _AIX )
-   typedef char                 INT8 ;
+   typedef signed char          INT8 ;
    #define SDB_DEV_NULL         "/dev/null"
 #endif
 
