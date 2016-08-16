@@ -28,6 +28,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
 
+import org.bson.types.BSONDecimal;
 import org.bson.types.BSONTimestamp;
 import org.bson.types.Binary;
 import org.bson.types.Code;
@@ -63,6 +64,8 @@ public class BSON {
     public static final byte NUMBER_INT = 16;
     public static final byte TIMESTAMP = 17;
     public static final byte NUMBER_LONG = 18;
+    
+    public static final byte NUMBER_DECIMAL = 100;
 
     public static final byte MINKEY = -1;
     public static final byte MAXKEY = 127;
@@ -390,6 +393,8 @@ public class BSON {
 		else if (obj instanceof Symbol)
 			return true;
 		else if (obj instanceof BSONTimestamp)
+			return true;
+		else if (obj instanceof BSONDecimal)
 			return true;
 		else if (obj instanceof CodeWScope)
 			return true;

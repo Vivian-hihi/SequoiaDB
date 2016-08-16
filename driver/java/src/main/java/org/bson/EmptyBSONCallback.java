@@ -15,6 +15,7 @@
  */
 package org.bson;
 
+import org.bson.types.BSONDecimal;
 import org.bson.types.ObjectId;
 
 public class EmptyBSONCallback implements BSONCallback {
@@ -139,5 +140,10 @@ public class EmptyBSONCallback implements BSONCallback {
     public void gotBinary( String name , byte type , byte[] data ){
         throw new UnsupportedOperationException( "Not supported yet." );
     }
+
+	@Override
+	public void gotDecimal(String name, BSONDecimal decimal) {
+		throw new UnsupportedOperationException( "Not supported yet." );
+	}
 
 }

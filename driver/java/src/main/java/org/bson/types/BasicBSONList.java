@@ -21,8 +21,6 @@ package org.bson.types;
 import org.bson.*;
 import org.bson.util.StringRangeSet;
 
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.*;

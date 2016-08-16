@@ -38,6 +38,7 @@ import org.bson.BasicBSONCallback;
 import org.bson.BasicBSONDecoder;
 import org.bson.BasicBSONEncoder;
 import org.bson.BasicBSONObject;
+import org.bson.InnerDecimal;
 import org.bson.io.BasicOutputBuffer;
 import org.bson.io.OutputBuffer;
 import org.bson.types.ObjectId;
@@ -1157,7 +1158,7 @@ public class SDBMessageHelper {
 		BSONDecoder d = new BasicBSONDecoder();
 		BSONCallback cb = new BasicBSONCallback();
 		try {
-			// TODO: shall we must offer the bson code which is in little-endian? 
+			// we must offer the bson which is in little-endian 
 			int s = d.decode(new ByteArrayInputStream(byteBuffer.array(),
 					byteBuffer.position(), byteBuffer.remaining()), cb);
 			BSONObject o1 = (BSONObject) cb.get();
@@ -1292,9 +1293,10 @@ public class SDBMessageHelper {
 		return endianConvert;
 	}
 
-
-	
-	// little endian => big endian
+	// l2r means "local to remote", when we build a message
+	// for sending to remote, we set l2r to be true; when we
+	// receive message from remote, and we need to handle endian,
+	// we set l2r to be false
 	public static void bsonEndianConvert(byte[] inBytes, int offset,
 			int objSize, boolean l2r) {
 		int begin = offset;
@@ -1401,6 +1403,31 @@ public class SDBMessageHelper {
 				arrayReverse(inBytes, offset, 8);
 				offset += 8;
 				break;
+			case BSON.NUMBER_DECIMAL: {
+				// size(4) + typemod(4) + dscale(2) + weight(2) + digits(2x)
+				// size
+				int length = Helper.byteToInt(inBytes, offset);
+				arrayReverse(inBytes, offset, 4);
+				int newLength = Helper.byteToInt(inBytes, offset);
+				offset += 4;
+				// typemod
+				arrayReverse(inBytes, offset, 4);
+				offset += 4;
+				// dscale
+				arrayReverse(inBytes, offset, 2);
+				offset += 2;
+				// weight
+				arrayReverse(inBytes, offset, 2);
+				offset += 2;
+				// digits
+				int ndigits = ((l2r ? newLength : length) - InnerDecimal.DECIMAL_HEADER_SIZE) / (Short.SIZE / 8);
+				for (int i = 0; i < ndigits; i++) {
+					arrayReverse(inBytes, offset, 2);
+					offset += 2;
+				}
+				break;
+			}
+			
 			}
 		}
 		if (offset - begin != objSize)

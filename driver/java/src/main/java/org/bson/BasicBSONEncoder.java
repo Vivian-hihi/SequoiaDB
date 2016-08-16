@@ -41,6 +41,7 @@ import static org.bson.BSON.STRING;
 import static org.bson.BSON.SYMBOL;
 import static org.bson.BSON.TIMESTAMP;
 import static org.bson.BSON.UNDEFINED;
+import static org.bson.BSON.NUMBER_DECIMAL;
 import static org.bson.BSON.regexFlags;
 
 import java.lang.reflect.Array;
@@ -57,6 +58,7 @@ import java.util.regex.Pattern;
 
 import org.bson.io.BasicOutputBuffer;
 import org.bson.io.OutputBuffer;
+import org.bson.types.BSONDecimal;
 import org.bson.types.BSONTimestamp;
 import org.bson.types.Binary;
 import org.bson.types.Code;
@@ -74,7 +76,7 @@ import org.bson.types.Symbol;
 public class BasicBSONEncoder implements BSONEncoder {
 
 	static final boolean DEBUG = false;
-
+	
 	public BasicBSONEncoder() {
 
 	}
@@ -232,20 +234,21 @@ public class BasicBSONEncoder implements BSONEncoder {
 			putUUID(name, (UUID) val);
 		else if (val.getClass().isArray())
 			putArray(name, val);
-
 		else if (val instanceof Symbol) {
 			putSymbol(name, (Symbol) val);
 		} else if (val instanceof BSONTimestamp) {
 			putTimestamp(name, (BSONTimestamp) val);
+		} else if (val instanceof BSONDecimal) {
+			putDecimal(name, (BSONDecimal)val);
 		} else if (val instanceof CodeWScope) {
 			putCodeWScope(name, (CodeWScope) val);
 		} else if (val instanceof Code) {
 			putCode(name, (Code) val);
-		} else if (val instanceof MinKey)
+		} else if (val instanceof MinKey) {
 			putMinKey(name);
-		else if (val instanceof MaxKey)
+		} else if (val instanceof MaxKey) {
 			putMaxKey(name);
-		else if (putSpecial(name, val)) {
+		} else if (putSpecial(name, val)) {
 			// no-op
 		} else {
 			throw new IllegalArgumentException("can't serialize " + val.getClass());
@@ -305,8 +308,34 @@ public class BasicBSONEncoder implements BSONEncoder {
 		_put(TIMESTAMP, name);
 		_buf.writeInt(ts.getInc());
 		_buf.writeInt(ts.getTime());
-	}
+	} 
+	
+	protected void putDecimal(String name, BSONDecimal decimal) {
+		InnerDecimal innerDecimal = new InnerDecimal();
+		innerDecimal.fromBSONDecimal(decimal);
+		
+		int size = innerDecimal.size();
+		int typemod = innerDecimal.getTypeMod();
+		short dscale = (short)innerDecimal.getDScaleWithSign();
+		short weight = (short)innerDecimal.getWeight();
+		short[] digits = innerDecimal.getDigits();
 
+		// decimal is kept in bson in follow format:
+		// type+name+size+typemod+dscale+weight+digits
+		
+		// put type+name
+		_put(NUMBER_DECIMAL, name);
+		
+		// size+typemod+dscale+weight+data
+		_buf.writeInt(size);
+		_buf.writeInt(typemod);
+		_buf.writeShort(dscale);
+		_buf.writeShort(weight);
+		for (int i = 0; i < digits.length; i++) {
+			_buf.writeShort(digits[i]);
+		}
+	}
+	
 	protected void putCodeWScope(String name, CodeWScope code) {
 		_put(CODE_W_SCOPE, name);
 		int temp = _buf.getPosition();

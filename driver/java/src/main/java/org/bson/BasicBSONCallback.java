@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.regex.Pattern;
 
+import org.bson.types.BSONDecimal;
 import org.bson.types.BSONTimestamp;
 import org.bson.types.BasicBSONList;
 import org.bson.types.Binary;
@@ -148,7 +149,7 @@ public class BasicBSONCallback implements BSONCallback {
 	public void gotLong(final String name, final long v) {
 		_put(name, v);
 	}
-
+	
 	//@Override
 	public void gotDate(String name, long millis) {
 		_put(name, new Date(millis));
@@ -174,6 +175,11 @@ public class BasicBSONCallback implements BSONCallback {
 		_put(name, new BSONTimestamp(time, inc));
 	}
 
+	//@Overide
+	public void gotDecimal(String name, BSONDecimal decimal) {
+		_put(name, decimal);
+	}
+	
 	//@Override
 	public void gotObjectId(String name, ObjectId id) {
 		_put(name, id);
@@ -213,7 +219,7 @@ public class BasicBSONCallback implements BSONCallback {
 	public void gotCodeWScope(String name, String code, Object scope) {
 		_put(name, new CodeWScope(code, (BSONObject) scope));
 	}
-
+	
 	protected void _put(final String name, final Object o) {
 		cur().put(name, !BSON.hasDecodeHooks() ? o : BSON.applyDecodingHooks(o));
 	}

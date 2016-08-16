@@ -284,6 +284,10 @@ public class NewBSONDecoder implements BSONDecoder {
 
                 _callback.gotTimestamp(name, time, i);
                 return true;
+                
+            case NUMBER_DECIMAL:
+            	// TODO:
+            	return true;
 
             case MINKEY: _callback.gotMinKey(name); return true;
             case MAXKEY: _callback.gotMaxKey(name); return true;

@@ -20,6 +20,7 @@ import static org.bson.BSON.*;
 import java.io.*;
 
 import org.bson.io.PoolOutputBuffer;
+import org.bson.types.BSONDecimal;
 import org.bson.types.ObjectId;
 
 
@@ -122,7 +123,7 @@ public class BasicBSONDecoder implements BSONDecoder {
 
         String name = _in.readCStr();
 
-        switch ( type ){
+        switch ( type ) {
         case NULL:
             _callback.gotNull( name );
             break;
@@ -146,7 +147,35 @@ public class BasicBSONDecoder implements BSONDecoder {
         case NUMBER_LONG:
             _callback.gotLong( name , _in.readLong() );
             break;
-
+            
+        case NUMBER_DECIMAL:
+        	int size = _in.readInt();
+        	int typemod = _in.readInt();
+        	short scale = _in.readShort();
+        	short weight = _in.readShort();
+        	int ndig = (size - InnerDecimal.DECIMAL_HEADER_SIZE) / (Short.SIZE / 8);
+        	short[] digits = new short[ndig + 1];
+        	// the first position is set to 0, it's placed carry, so we 
+        	// need another short
+        	digits[0] = 0;
+        	for( int i = 0; i < ndig; i++ ) {
+        		digits[1 + i] = _in.readShort();
+        	}
+        	// set the raw decimal data
+        	int sign = scale & InnerDecimal.DECIMAL_SIGN_MASK;
+        	int dscale = scale & InnerDecimal.DECIMAL_DSCALE_MASK;
+        	InnerDecimal inner = new InnerDecimal();
+        	inner.setTypeMod(typemod);
+        	inner.setNDigits(ndig);
+        	inner.setSign(sign);
+        	inner.setDScale(dscale);
+        	inner.setWeight(weight);
+        	inner.setDigits(digits);
+        	// get BSONDecimal
+        	BSONDecimal decimal = inner.toBSONDecimal();
+        	_callback.gotDecimal( name, decimal );
+        	break;
+        	
         case SYMBOL:
             _callback.gotSymbol( name , _in.readUTF8String() );
             break;
@@ -335,6 +364,11 @@ public class BasicBSONDecoder implements BSONDecoder {
             return ret;
         }
 
+        public short readShort()
+        		throws IOException {
+        	return org.bson.io.Bits.readShort( _inputBuffer, _need(2) );
+        }
+        
         public int readInt()
                 throws IOException {
             return org.bson.io.Bits.readInt( _inputBuffer , _need(4) );
@@ -344,7 +378,7 @@ public class BasicBSONDecoder implements BSONDecoder {
                 throws IOException {
             return org.bson.io.Bits.readIntBE( _inputBuffer , _need(4) );
         }
-
+        
         public long readLong()
                 throws IOException {
             return org.bson.io.Bits.readLong( _inputBuffer , _need(8) );

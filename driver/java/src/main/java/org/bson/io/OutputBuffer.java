@@ -148,6 +148,11 @@ public abstract class OutputBuffer extends OutputStream {
 		setPosition(save);
 	}
 
+	public void writeShort(short x) {
+		write(x >> 0);
+		write(x >> 8);
+	}
+	
 	public void writeLong(long x) {
 		write((byte) (0xFFL & (x >> 0)));
 		write((byte) (0xFFL & (x >> 8)));

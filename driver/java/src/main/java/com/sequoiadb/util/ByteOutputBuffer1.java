@@ -60,6 +60,11 @@ public class ByteOutputBuffer1 extends OutputBuffer {
 	}
 
 	@Override
+	public void writeShort(short x) {
+		ioBuffer.putShort(x);
+	}
+	
+	@Override
 	public void writeLong(long x) {
 		ioBuffer.putLong(x);
 	}

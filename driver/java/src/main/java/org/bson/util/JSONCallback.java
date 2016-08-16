@@ -22,8 +22,10 @@ import java.io.IOException;
 import java.text.ParseException;
 import java.text.ParsePosition;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.GregorianCalendar;
+import java.util.LinkedList;
 import java.util.SimpleTimeZone;
 import java.util.UUID;
 import java.util.regex.Pattern;
@@ -31,6 +33,7 @@ import java.util.regex.Pattern;
 import org.bson.BSON;
 import org.bson.BSONObject;
 import org.bson.BasicBSONCallback;
+import org.bson.types.BSONDecimal;
 import org.bson.types.BSONTimestamp;
 import org.bson.types.Binary;
 import org.bson.types.MaxKey;
@@ -41,9 +44,16 @@ import sun.misc.BASE64Decoder;
 
 public class JSONCallback extends BasicBSONCallback {
 
+
+	//@Override
+	public void objectStart(boolean array) {
+		_stackIsArrayType.addLast(array);
+		super.objectStart(array);
+	}
+	
 	@Override
 	public void objectStart(boolean array, String name) {
-		_lastArray = array;
+		_stackIsArrayType.addLast(array);
 		super.objectStart(array, name);
 	}
 
@@ -52,9 +62,14 @@ public class JSONCallback extends BasicBSONCallback {
 		String name = curName();
 		Object o = super.objectDone();
 		BSONObject b = (BSONObject) o;
+		
+		if (_stackIsArrayType.size() <= 0) { 
+			throw new IllegalStateException("something is wrong in the stack of nesting object type");
+		}
+		Boolean isArrayType = _stackIsArrayType.removeLast();
 
 		// override the object if it's a special type
-		if (!_lastArray) {
+		if (!isArrayType) {
 			if (b.containsField("$oid")) {
 				o = new ObjectId((String) b.get("$oid"));
 				if (!isStackEmpty()) {
@@ -62,42 +77,42 @@ public class JSONCallback extends BasicBSONCallback {
 				} else {
 					setRoot(o);
 				}
-                } else if (b.containsField("$numberLong")) {
-                     o = Long.valueOf((String) b.get("$numberLong"));
-                     if (!isStackEmpty()) {
-                        gotLong(name, (Long) o);
-                     } else {
-                        setRoot(o);
-                     }
+			} else if (b.containsField("$numberLong")) {
+				o = Long.valueOf((String) b.get("$numberLong"));
+				if (!isStackEmpty()) {
+					gotLong(name, (Long) o);
+				} else {
+					setRoot(o);
+				}
 			} else if (b.containsField("$date")) {
-			    Object dateValue = b.get("$date");
+				Object dateValue = b.get("$date");
 				if (dateValue instanceof Number) {
 					o = new Date(((Number) dateValue).longValue());
 				} else {
 					SimpleDateFormat format = new SimpleDateFormat(
-					        _msDateFormat);
+							_msDateFormat);
 					format.setCalendar(new GregorianCalendar(
 							new SimpleTimeZone(0, "GMT")));
-					o = format.parse(dateValue.toString(),
-							new ParsePosition(0));
+					o = format
+							.parse(dateValue.toString(), new ParsePosition(0));
 
 					if (o == null) {
 						// try older format with no ms
 						format = new SimpleDateFormat(_secDateFormat);
-						format.setCalendar(new GregorianCalendar(new
-						    SimpleTimeZone(0, "GMT")));
+						format.setCalendar(new GregorianCalendar(
+								new SimpleTimeZone(0, "GMT")));
 						o = format.parse(dateValue.toString(),
 								new ParsePosition(0));
 					}
 
 					if (o == null) {
-                        // try older format with day
-                        format = new SimpleDateFormat(_dayDateFormat);
-                        format.setCalendar(new GregorianCalendar(
-                                new SimpleTimeZone(0, "GMT")));
-                        o = format.parse(dateValue.toString(),
-                                new ParsePosition(0));
-                    }
+						// try older format with day
+						format = new SimpleDateFormat(_dayDateFormat);
+						format.setCalendar(new GregorianCalendar(
+								new SimpleTimeZone(0, "GMT")));
+						o = format.parse(dateValue.toString(),
+								new ParsePosition(0));
+					}
 				}
 				if (!isStackEmpty()) {
 					cur().put(name, o);
@@ -105,7 +120,6 @@ public class JSONCallback extends BasicBSONCallback {
 					setRoot(o);
 				}
 			} else if (b.containsField("$timestamp")) {
-
 				Object timeStamp = b.get("$timestamp");
 				if (timeStamp instanceof String) {
 					String strTimeStamp = (String) timeStamp;
@@ -126,6 +140,37 @@ public class JSONCallback extends BasicBSONCallback {
 					}
 					o = new BSONTimestamp((int) (date.getTime() / 1000),
 							Integer.parseInt(incStr));
+					if (!isStackEmpty()) {
+						cur().put(name, o);
+					} else {
+						setRoot(o);
+					}
+				}
+			} else if (b.containsField("$decimal")) {
+				Object decimal = b.get("$decimal");
+				if (decimal instanceof String) {
+					String str = (String)decimal;
+					int precision = -1;
+					int scale = -1;
+					Object arr = b.get("$precision");
+					if (arr instanceof ArrayList) {
+						// get precision
+						//@SuppressWarnings("rawtypes")
+						Object ret = ((ArrayList)arr).get(0);
+						if (ret instanceof Integer) {
+							precision = (Integer)ret;
+						} else {
+							precision = Integer.parseInt(((String)ret));
+						}
+						// get scale
+						ret = ((ArrayList)arr).get(1);
+						if (ret instanceof Integer) {
+							scale = (Integer)ret;
+						} else {
+							scale = Integer.parseInt(((String)ret));
+						}
+					}
+					o = new BSONDecimal(str, precision, scale);
 					if (!isStackEmpty()) {
 						cur().put(name, o);
 					} else {
@@ -170,40 +215,39 @@ public class JSONCallback extends BasicBSONCallback {
 				} else {
 					setRoot(o);
 				}
-			}
-			else if (b.containsField("$binary")) {
-			    byte type = BSON.B_GENERAL;
-			    if (b.containsField("$type")) {
-			        Object oType = b.get("$type");
-			        if(oType instanceof Integer) {
-			            Integer iType = (Integer) b.get("$type");
-			            type = iType.byteValue();
-			        }
-			        else {
-			            String strType = (String) b.get("$type");
-                        type = (byte) Integer.parseInt(strType);
-			        }
-			    }
-                try {
-                    BASE64Decoder decode = new BASE64Decoder();
-                    byte[] data = null;
-                    data = decode.decodeBuffer((String)b.get("$binary"));
-                    o = new Binary(type, data);
-                    if (!isStackEmpty()) {
-                        cur().put(name, o);
-                    } 
-                    else {
-                        setRoot(o);
-                    }
-                }
-                catch (IOException e) {
-                }
+			} else if (b.containsField("$binary")) {
+				byte type = BSON.B_GENERAL;
+				if (b.containsField("$type")) {
+					Object oType = b.get("$type");
+					if (oType instanceof Integer) {
+						Integer iType = (Integer) b.get("$type");
+						type = iType.byteValue();
+					} else {
+						String strType = (String) b.get("$type");
+						type = (byte) Integer.parseInt(strType);
+					}
+				}
+				try {
+					BASE64Decoder decode = new BASE64Decoder();
+					byte[] data = null;
+					data = decode.decodeBuffer((String) b.get("$binary"));
+					o = new Binary(type, data);
+					if (!isStackEmpty()) {
+						cur().put(name, o);
+					} else {
+						setRoot(o);
+					}
+				} catch (IOException e) {
+				}
 			}
 		}
 		return o;
 	}
 
-	private boolean _lastArray = false;
+	// true for the nesting object is array, false for not 
+	// we should note that, when we use the inherited "objectStart" and "objectDone", we
+	// should handle this stack
+	private final LinkedList<Boolean> _stackIsArrayType = new LinkedList<Boolean>();
 
 	public static final String _msDateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'";
 	public static final String _secDateFormat = "yyyy-MM-dd'T'HH:mm:ss'Z'";

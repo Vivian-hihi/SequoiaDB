@@ -66,6 +66,13 @@ public class Bits {
         return readInt( data , 0 );
     }
 
+    public static short readShort( byte[] data, int offset ) {
+        short x = 0;
+        x |= ( 0xFF & data[offset+0] ) << 0;
+        x |= ( 0xFF & data[offset+1] ) << 8;
+        return x;    	
+    }
+    
     public static int readInt( byte[] data , int offset ) {
         int x = 0;
         x |= ( 0xFF & data[offset+0] ) << 0;

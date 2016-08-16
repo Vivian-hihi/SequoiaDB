@@ -29,7 +29,9 @@ import java.util.regex.Pattern;
 import org.bson.BSON;
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
+import org.bson.types.BSONDecimal;
 import org.bson.types.BSONTimestamp;
+import org.bson.types.BasicBSONList;
 import org.bson.types.Binary;
 import org.bson.types.Code;
 import org.bson.types.CodeWScope;
@@ -63,6 +65,7 @@ public class JSONSerializers {
 
 		serializer.addObjectSerializer(Date.class, new LegacyDateSerializer(serializer));
 		serializer.addObjectSerializer(BSONTimestamp.class, new LegacyBSONTimestampSerializer(serializer));
+		serializer.addObjectSerializer(BSONDecimal.class, new LegacyBSONDecimalSerializer(serializer));
 		serializer.addObjectSerializer(Binary.class, new LegacyBinarySerializer());
 		serializer.addObjectSerializer(byte[].class, new LegacyBinarySerializer());
 		return serializer;
@@ -81,6 +84,7 @@ public class JSONSerializers {
 
 		serializer.addObjectSerializer(Date.class, new DateSerializer(serializer));
 		serializer.addObjectSerializer(BSONTimestamp.class, new BSONTimestampSerializer(serializer));
+		serializer.addObjectSerializer(BSONDecimal.class, new LegacyBSONDecimalSerializer(serializer));
 		serializer.addObjectSerializer(Binary.class, new BinarySerializer(serializer));
 		serializer.addObjectSerializer(byte[].class, new ByteArraySerializer(serializer));
 
@@ -352,7 +356,7 @@ public class JSONSerializers {
 			serializer.serialize(new BasicBSONObject("$numberLong", obj.toString()), buf);
 		}
 	}
-
+	
 	private static class PatternSerializer extends CompoundObjectSerializer {
 
 		PatternSerializer(ObjectSerializer serializer) {
@@ -410,6 +414,31 @@ public class JSONSerializers {
 
 	}
 
+	private static class LegacyBSONDecimalSerializer extends CompoundObjectSerializer {
+		
+		LegacyBSONDecimalSerializer(ObjectSerializer serializer) {
+			super(serializer);
+		}
+		
+		////@Override
+		public void serialize(Object obj, StringBuilder buf) {
+			BSONDecimal t = (BSONDecimal) obj;
+			String data = t.getValue();
+			int precision = t.getPrecision();
+			int scale = t.getScale();
+			BasicBSONObject temp = new BasicBSONObject();
+			temp.put("$decimal", data);
+			if (precision != -1 || scale != -1) {
+				BSONObject arr = new BasicBSONList();
+				arr.put("0", precision);
+				arr.put("1", scale);
+				temp.put("$precision", arr);
+			}
+			serializer.serialize(temp, buf);
+		}
+
+	}
+	
 	private static class DateSerializer extends CompoundObjectSerializer {
 
 		DateSerializer(ObjectSerializer serializer) {
