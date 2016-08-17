@@ -117,7 +117,7 @@
 		       fork="yes" 		       
 		       includeAntRuntime="false" 
 		       includeJavaRuntime="false" 
-		       encoding="GBK"
+		       encoding="UTF-8"
 		       debug="true"
 		       debuglevel="lines,vars,source"
 		       failonerror="true">
