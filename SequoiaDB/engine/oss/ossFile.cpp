@@ -57,7 +57,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
 
-      rc = ossOpen( _path.c_str(), mode, permission, _file ) ;
+      rc = ossOpen( filePath.c_str(), mode, permission, _file ) ;
       if ( SDB_OK != rc )
       {
          goto error ;
