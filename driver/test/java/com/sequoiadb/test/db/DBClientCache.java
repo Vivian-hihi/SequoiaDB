@@ -25,11 +25,8 @@ import com.sequoiadb.base.ClientOptions;
 import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.DBCursor;
-import com.sequoiadb.base.DBQuery;
 import com.sequoiadb.base.Sequoiadb;
-import com.sequoiadb.base.SequoiadbConstants;
 import com.sequoiadb.exception.BaseException;
-import com.sequoiadb.testdata.*;
 
 public class DBClientCache {
 	private static Sequoiadb sdb = null ;
@@ -85,7 +82,7 @@ public class DBClientCache {
 	public void tearDown() throws Exception {
 	}
 	
-	/// case1:����initClient�ӿڼ�ClientOptions�Ƿ���Ч
+	/// case1:测试initClient接口及ClientOptions是否生效
 	@Test
 	public void testInitClientWithDefaultValue() {
 		boolean defaultBoolValue = true;
@@ -127,7 +124,7 @@ public class DBClientCache {
 		Sequoiadb db = new Sequoiadb(Constants.COOR_NODE_CONN,"","");
 		Class<?> c = db.getClass();
 		try {
-			// test1: ������ȫ�ֲ���󣬽��������Խ��������ӳ��е�ȫ�ֲ����Ƿ���ȷ
+			// test1: 在设置全局参数后，建连，测试建连后，连接持有的全局参数是否正确
 			Field f_enableCache = c.getDeclaredField("enableCache");
 			Field f_cacheInterval = c.getDeclaredField("cacheInterval");
 			f_enableCache.setAccessible(true);
@@ -144,7 +141,7 @@ public class DBClientCache {
 				e.printStackTrace();
 				Assert.fail();
 			}
-			// test2: �ڽ���֮����������ȫ�ֲ���������ӳ��е�ȫ�ֲ����Ƿ���ȷ
+			// test2: 在建连之后，重新设置全局参数，测试连接持有的全局参数是否正确
 			definedBoolValue = false;
 			definedLongValue = 60 * 1000;
 			options.setEnableCache(definedBoolValue);
@@ -162,7 +159,7 @@ public class DBClientCache {
 				e.printStackTrace();
 				Assert.fail();
 			}
-			// test3: �ڽ���֮���������ô����ȫ�ֲ���������ӳ��е�ȫ�ֲ����Ƿ���ȷ
+			// test3: 在建连之后，重新设置错误的全局参数，测试连接持有的全局参数是否正确
 			definedBoolValue = false;
 			definedLongValue = -60 * 1000;
 			long expectLongValue = 300 * 1000;
@@ -191,9 +188,9 @@ public class DBClientCache {
 		db.disconnect();
 	}
 	
-	/// case2:����ClientOptions���õ�ʱ���Ƿ���Ч
-	// �ֹ����ԣ���Ҫ��getCollectionSpace�����(new Exception()).printStackTrace();
-	// ����ӡ���ö�ջ��
+	/// case2:测试ClientOptions设置的时间是否生效
+	// 手工测试，需要在getCollectionSpace中添加(new Exception()).printStackTrace();
+	// 来打印调用堆栈：
 	/*
 	public CollectionSpace getCollectionSpace(String csName)
 			throws BaseException {
@@ -229,15 +226,15 @@ public class DBClientCache {
 		CollectionSpace cs2 = null;
 		cs1 = db.getCollectionSpace(csName1);
 		Thread.sleep(definedLongValue - 3000);
-		// test1: ��ȡcs����ʱӦ�÷��ʻ���
+		// test1:获取cs，此时应该访问缓存
 		cs1 = db.getCollectionSpace(csName1);
 		Thread.sleep(3500);
-		// test2: ��ȡcs����ʱӦ�÷�����ݿ�
+		// test2: 获取cs，此时应该访问数据库
 		cs1 = db.getCollectionSpace(csName1);
 		db.disconnect();
 	}
 	
-	/// case3:�����뻺����صļ��������ڲ��߼��Ƿ���ȷ
+	/// case3:测试与缓存相关的几个函数内部逻辑是否正确
 	// upsertCache/removeCache/fetchCache
 	@Test
 	public void testCacheLogicWithEnableCache() throws SecurityException, NoSuchFieldException, IllegalArgumentException, IllegalAccessException {
@@ -248,7 +245,7 @@ public class DBClientCache {
 		options.setCacheInterval(defaultLongValue);
 		Sequoiadb.initClient(options);
 		Sequoiadb db1 = new Sequoiadb(Constants.COOR_NODE_CONN,"","");
-		// ��ȡ�����map
+		// 获取缓存的map
 		Class<?> c = db1.getClass();
 		Field f_nameCache = c.getDeclaredField("nameCache");
 		boolean accessFlag = f_nameCache.isAccessible();
@@ -267,7 +264,7 @@ public class DBClientCache {
 		for(int i = 0; i < csArr.length; i++) {
 			csObjArr[i] = db1.createCollectionSpace(csArr[i]);
 		}
-		// test1: ���db������cs�Ļ������
+		// test1: 检测db对象中cs的缓存情况
 		// TODO:
 		System.out.println("point 1: after creating cs, nameCache.size() is: " + map1.size());
 		Assert.assertEquals(csArr.length, map1.size());
@@ -276,7 +273,7 @@ public class DBClientCache {
 		}
 		// drop one cs
 		db1.dropCollectionSpace(csArr[0]);
-		// test2: ɾ��һ��cs֮�󣬼��db������cs�Ļ������
+		// test2:删除一个cs之后，检测db对象中cs的缓存情况
 		Assert.assertEquals(csArr.length - 1, map1.size());
 		Assert.assertFalse(map1.containsKey(csArr[0]));
 		for(int i = 1; i < csArr.length; i++) {
@@ -295,7 +292,7 @@ public class DBClientCache {
 			//System.out.println("csObjArr[0] is: " + csObjArr[0].getName() + ", clArr1[x] is: " + clArr1[i]);
 			csObjArr[0].createCollection(clArr1[i], conf);
 		}
-		// test3: ���db������cs,cl�Ļ������
+		// test3: 检测db对象中cs,cl的缓存情况
 		Assert.assertEquals(csArr.length + clArr1.length, map1.size());
 		for(int i = 0; i < csArr.length; i++) {
 			Assert.assertTrue(map1.containsKey(csArr[i]));
@@ -305,7 +302,7 @@ public class DBClientCache {
 		}
         // drop one cl
 		csObjArr[0].dropCollection(clArr1[0]);
-		// test4: ���ɾ��cl֮��cs,cl�Ļ������
+		// test4: 检测删除cl之后，cs,cl的缓存情况
 		Assert.assertEquals(csArr.length + clArr1.length - 1, map1.size());
 		for(int i = 0; i < csArr.length; i++) {
 			Assert.assertTrue(map1.containsKey(csArr[i]));
@@ -316,7 +313,7 @@ public class DBClientCache {
 		}
 		// drop one cs
 		db1.dropCollectionSpace(csArr[0]);
-		// test5: ���ɾ��cs֮��cs,cl�Ļ������
+		// test5:检测删除cs之后，cs,cl的缓存情况
 		Assert.assertEquals(csArr.length - 1, map1.size());
 		Assert.assertFalse(map1.containsKey(csArr[0]));
 		for(int i = 1; i < csArr.length; i++) {
@@ -349,7 +346,7 @@ public class DBClientCache {
 		options.setEnableCache(defaultBoolValue);
 		Sequoiadb.initClient(options);
 		Sequoiadb db = new Sequoiadb(Constants.COOR_NODE_CONN,"","");
-		// ��ȡ�����map
+		// 获取缓存的map
 		Class<?> c = db.getClass();
 		Field f_nameCache = c.getDeclaredField("nameCache");
 		boolean accessFlag = f_nameCache.isAccessible();
@@ -368,13 +365,13 @@ public class DBClientCache {
 		for(int i = 0; i < csArr.length; i++) {
 			csObjArr[i] = db.createCollectionSpace(csArr[i]);
 		}
-		// test1: ���db������cs�Ļ������
+		// test1: 检测db对象中cs的缓存情况
 		// TODO:
 		System.out.println("point 2: after creating cs, nameCache.size() is: " + map.size());
 		Assert.assertEquals(0, map.size());
 		// drop one cs
 		db.dropCollectionSpace(csArr[0]);
-		// test2: ɾ��һ��cs֮�󣬼��db������cs�Ļ������
+		// test2: 删除一个cs之后，检测db对象中cs的缓存情况
 		Assert.assertEquals(0, map.size());
 		// create the drop cs
 		csObjArr[0] = db.createCollectionSpace(csArr[0]);
@@ -386,11 +383,11 @@ public class DBClientCache {
 			//System.out.println("csObjArr[0] is: " + csObjArr[0].getName() + ", clArr1[x] is: " + clArr1[i]);
 			csObjArr[0].createCollection(clArr1[i], conf);
 		}
-		// test3: ���db������cs,cl�Ļ������
+		// test3: 检测db对象中cs,cl的缓存情况
 		Assert.assertEquals(0, map.size());
         // drop one cl
 		csObjArr[0].dropCollection(clArr1[0]);
-		// test4: ���ɾ��cl֮��cs,cl�Ļ������
+		// test4: 检测删除cl之后，cs,cl的缓存情况
 		Assert.assertEquals(0, map.size());
 		// drop one cs
 		db.dropCollectionSpace(csArr[0]);
@@ -401,10 +398,10 @@ public class DBClientCache {
 		db.disconnect();
 	}
 	
-	/// case4�� cache����/�ر�ʱ��ʹ�����ӳ���ҵ��
+	/// case4: cache开启/关闭时，使用连接池跑业务
 	
-	/// case5: cache����ʱ�������쳣����
-	// ��Ҫ�ֹ�
+	/// case5: cache开启时，尝试异常场景
+	// 需要手工
 	@Test
 	public void testInvalidSituaction() throws SecurityException, NoSuchFieldException, IllegalArgumentException, IllegalAccessException
 	{
@@ -412,7 +409,7 @@ public class DBClientCache {
 		options.setEnableCache(true);
 		Sequoiadb.initClient(options);
 		Sequoiadb db = new Sequoiadb(Constants.COOR_NODE_CONN,"","");
-		// ��ȡ�����map
+		// 获取缓存的map
 		Class<?> c = db.getClass();
 		Field f_nameCache = c.getDeclaredField("nameCache");
 		boolean accessFlag = f_nameCache.isAccessible();
