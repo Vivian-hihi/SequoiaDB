@@ -68,6 +68,7 @@ $sdbFile -s " var _svcName = '${svcName}' ;                                     
                  if ( num == 1 && e == SDBCM_NODE_EXISTED ) {                            \
                     println( 'Warning: sdbom has existed in localhost' ) ;               \
                  } else {                                                                \
+                    println( 'excute: oma.createOM('+_svcName+','+_dbPath+',{httpname:'+_restPort+'})' ) ;    \
                     throw e ;                                                            \
                  }                                                                       \
               }                                                                          \
@@ -75,6 +76,7 @@ $sdbFile -s " var _svcName = '${svcName}' ;                                     
                   oma.startNode( _svcName ) ;                                            \
               } catch( e ) {                                                             \
                  if ( canRemove ) {                                                      \
+                    println( 'excute: oma.startNode('+_svcName+')' ) ;                   \
                     oma.removeOM( _svcName ) ;                                           \
                  }                                                                       \
                  throw e ;                                                               \
