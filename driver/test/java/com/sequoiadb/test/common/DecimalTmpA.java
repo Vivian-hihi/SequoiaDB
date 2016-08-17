@@ -1,4 +1,4 @@
-package com.sequoiadb.test.decimal;
+package com.sequoiadb.test.common;
 
 import java.util.ArrayList;
 
@@ -9,7 +9,7 @@ import org.bson.types.BasicBSONList;
 import org.bson.types.ObjectId;
 
 
-public class TmpA {
+public class DecimalTmpA {
 
 	private int fieldA;
 	private String fieldB;
@@ -17,6 +17,7 @@ public class TmpA {
 	private BSONTimestamp fieldD;
 	private BSONDecimal fieldE;
 	private ArrayList fieldF = new ArrayList();
+	
 	
 	public ArrayList getFieldF() {
 		return fieldF;
@@ -26,7 +27,7 @@ public class TmpA {
 		this.fieldF = fieldF;
 	}
 
-	public TmpA() {}
+	public DecimalTmpA() {}
 	
 	public BSONTimestamp getFieldD() {
 		return fieldD;

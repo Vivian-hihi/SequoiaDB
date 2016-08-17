@@ -33,13 +33,13 @@ public class DBCollectionTest {
 	private static int NUM = 10 ;
 
 	@BeforeClass
-	public static void setUpBeforeClass() throws Exception {
+	public static void beforeClass() throws Exception {
 		sdb = new Sequoiadb(Constants.COOR_NODE_CONN,"","");
 		assertNotNull(sdb);
 	}
 
 	@AfterClass
-	public static void tearDownAfterClass() throws Exception {
+	public static void afterClass() throws Exception {
 		sdb.disconnect();
 	}
 
@@ -58,7 +58,8 @@ public class DBCollectionTest {
 		cl = cs.createCollection(Constants.TEST_CL_NAME_1, conf);
 		assertNotNull(cl);
 		if ( cursor != null ){
-			cursor = null ;
+			cursor.close() ;
+			cursor = null;
 		}
 	}
 
@@ -149,7 +150,7 @@ public class DBCollectionTest {
 		cl.createIndex(Constants.TEST_INDEX_NAME, index, false, false);
 		// insert some record
 		ConstantsInsert.insertRecords(cl, NUM);
-		// TODO:
+		// test
 		DBQuery query = new DBQuery();
 		BSONObject matcher = new BasicBSONObject();
 		BSONObject hint = new BasicBSONObject();
@@ -157,16 +158,16 @@ public class DBCollectionTest {
 		hint.put("", "Id");
 		query.setMatcher(matcher);
 		cursor = cl.query(query);
-		long l =  (Long)cursor.getNext().get("Id");
-		assertEquals(l, 0);
-//		cursor.close();
+		Object o = cursor.getNext().get("Id");
+		int v =  (Integer)o;
+		assertEquals(v, 0);
 	}
 
 	@Test
 	public void testFind3() {
 		// insert some record
 		ConstantsInsert.insertRecords(cl, NUM);
-		// TODO:
+		// test
 		BSONObject query = new BasicBSONObject();
 		BSONObject condition = new BasicBSONObject();
 		BSONObject selector = new BasicBSONObject();
@@ -197,7 +198,7 @@ public class DBCollectionTest {
 	public void testGetCount() {
 		// insert some record
 		ConstantsInsert.insertRecords(cl, NUM);
-		// TODO:
+		// test
 		BSONObject condition = new BasicBSONObject();
 		BSONObject m = new BasicBSONObject();
 		m.put("$gte", 0);
@@ -226,7 +227,7 @@ public class DBCollectionTest {
 		cl.createIndex(indexName, index, false, false);
 		// insert some record
 		ConstantsInsert.insertRecords(cl, NUM);
-		// TODO:
+		// test
 		BSONObject condition = new BasicBSONObject();
 		BSONObject hint = new BasicBSONObject();
 		BSONObject m = new BasicBSONObject();
@@ -237,7 +238,7 @@ public class DBCollectionTest {
 		
 		BSONObject empty = new BasicBSONObject();
 		
-		// TODO:
+		// test
 		DBCursor cur1 = sdb.getSnapshot(3, empty, empty, empty);
 		long count = cl.getCount(condition, hint);
 		DBCursor cur2 = sdb.getSnapshot(3, empty, empty, empty);
@@ -265,7 +266,7 @@ public class DBCollectionTest {
 	public void testDelete() {
 		// insert some record
 		ConstantsInsert.insertRecords(cl, NUM);
-		// TODO:
+		// test
 		BSONObject matcher = new BasicBSONObject();
 		matcher.put("Id", 0);
 		cl.delete(matcher);
@@ -281,7 +282,7 @@ public class DBCollectionTest {
 		cl.createIndex(Constants.TEST_INDEX_NAME, index, false, false);
 		// insert some record
 		ConstantsInsert.insertRecords(cl, NUM);
-		// TODO:
+		// test
 		BSONObject matcher = new BasicBSONObject();
 		BSONObject hint = new BasicBSONObject();
 		matcher.put("Id", 1);
@@ -299,7 +300,7 @@ public class DBCollectionTest {
 		cl.createIndex(Constants.TEST_INDEX_NAME, index, false, false);
 		// insert some record
 		ConstantsInsert.insertRecords(cl, NUM);
-		// TODO:
+		// test
 		BSONObject idx = cl.getIndex(Constants.TEST_INDEX_NAME)
 				.getNext();
 		BSONObject def = (BSONObject) idx
@@ -320,7 +321,7 @@ public class DBCollectionTest {
 	public void testUpdateByQuery() {
 		// insert some record
 		ConstantsInsert.insertRecords(cl, NUM);
-		// TODO:
+		// test
 		DBQuery query = new DBQuery();
 		BSONObject matcher = new BasicBSONObject();
 		BSONObject modifier = new BasicBSONObject();
@@ -339,7 +340,7 @@ public class DBCollectionTest {
 	public void testUpdate() {
 		// insert some record
 		ConstantsInsert.insertRecords(cl, NUM);
-		// TODO:
+		// test
 		BSONObject matcher = new BasicBSONObject();
 		BSONObject modifier = new BasicBSONObject();
 		BSONObject m = new BasicBSONObject();
@@ -380,7 +381,7 @@ public class DBCollectionTest {
 		BSONObject index = new BasicBSONObject();
 		index.put("Id", 1);
 		cl.createIndex(Constants.TEST_INDEX_NAME, index, false, false);
-		// TODO:
+		//test
 		cl.dropIndex(Constants.TEST_INDEX_NAME);
 		SDBTestHelper.waitIndexDropFinish(cl, Constants.TEST_INDEX_NAME, 100);
 		BSONObject idx = cl.getIndex(Constants.TEST_INDEX_NAME)

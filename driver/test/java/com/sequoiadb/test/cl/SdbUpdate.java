@@ -27,17 +27,9 @@ public class SdbUpdate {
 	private static DBCursor cursor ;
 	
 	@BeforeClass
-	public static void setConnBeforeClass() throws Exception{
-	}
-	
-	@AfterClass
-	public static void DropConnAfterClass() throws Exception {
-	}
- 
-	@Before
-	public void setUp() throws Exception {
-		// cs
+	public static void beforeClass() throws Exception{
 		sdb = new Sequoiadb(Constants.COOR_NODE_CONN,"","");
+		// cs
 		if(sdb.isCollectionSpaceExist(Constants.TEST_CS_NAME_1)){
 			sdb.dropCollectionSpace(Constants.TEST_CS_NAME_1);
 			cs = sdb.createCollectionSpace(Constants.TEST_CS_NAME_1);
@@ -48,14 +40,23 @@ public class SdbUpdate {
 		BSONObject conf = new BasicBSONObject();
 		conf.put("ReplSize",0);
 		cl = cs.createCollection(Constants.TEST_CL_NAME_1, conf);
+	}
+	
+	@AfterClass
+	public static void afterClass() throws Exception {
+		sdb.dropCollectionSpace(Constants.TEST_CS_NAME_1);
+		sdb.disconnect();
+	}
+ 
+	@Before
+	public void setUp() throws Exception {
 		List<BSONObject>list = ConstantsInsert.createRecordList(100);
 		cl.bulkInsert(list, DBCollection.FLG_INSERT_CONTONDUP);
 	}
 
 	@After
 	public void tearDown() throws Exception {
-//		sdb.dropCollectionSpace(Constants.TEST_CS_NAME_1);
-		sdb.disconnect();
+		cl.truncate();
 	}
 	
 	@Test

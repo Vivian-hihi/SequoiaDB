@@ -30,17 +30,7 @@ public class CLQuery {
     private static DBCollection cl;
 
     @BeforeClass
-    public static void setConnBeforeClass() throws Exception {
-
-    }
-
-    @AfterClass
-    public static void DropConnAfterClass() throws Exception {
-
-    }
-
-    @Before
-    public void setUp() throws Exception {
+    public static void beforeClass() throws Exception {
         // sdb
         sdb = new Sequoiadb(Constants.COOR_NODE_CONN, "", "");
         // cs
@@ -54,14 +44,23 @@ public class CLQuery {
         BSONObject conf = new BasicBSONObject();
         conf.put("ReplSize", 0);
         cl = cs.createCollection(Constants.TEST_CL_NAME_1, conf);
+    }
+
+    @AfterClass
+    public static void afterClass() throws Exception {
+        sdb.dropCollectionSpace(Constants.TEST_CS_NAME_1);
+        sdb.disconnect();
+    }
+
+    @Before
+    public void setUp() throws Exception {
         List<BSONObject> list = ConstantsInsert.createRecordList(100);
-        cl.bulkInsert(list, DBCollection.FLG_INSERT_CONTONDUP);
+        cl.bulkInsert(list, 0);
     }
 
     @After
     public void tearDown() throws Exception {
-        sdb.dropCollectionSpace(Constants.TEST_CS_NAME_1);
-        sdb.disconnect();
+    	cl.truncate();
     }
 
     @Test
@@ -399,7 +398,7 @@ public class CLQuery {
         query.removeField("$or");
         BSONObject con_type = new BasicBSONObject();
         // {Id:{$type:16}}
-        con_type.put("$type", 18);
+        con_type.put("$type", 16);
 
         query.put("Id", con_type);
 

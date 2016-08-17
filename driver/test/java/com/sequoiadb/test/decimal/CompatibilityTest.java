@@ -1,7 +1,6 @@
 package com.sequoiadb.test.decimal;
 
 import static org.junit.Assert.*;
-import static org.junit.Assert.assertEquals;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -203,7 +202,7 @@ public class CompatibilityTest {
 				append("fieldC", new ObjectId()).append("fieldD", new BSONTimestamp(1000, 1000))
 				.append("fieldE", new BSONDecimal("123.456")).append("fieldF", list);
 		try {
-			TmpA retTmp1 = obj1.as(TmpA.class);
+			DecimalTmpA retTmp1 = obj1.as(DecimalTmpA.class);
 			System.out.println(retTmp1);
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -224,8 +223,8 @@ public class CompatibilityTest {
 	@Test
 //	@Ignore
 	public void api_BasicBSONObject_typeToBson() {
-		TmpA a = new TmpA();
-		TmpA b = new TmpA();
+		DecimalTmpA a = new DecimalTmpA();
+		DecimalTmpA b = new DecimalTmpA();
         
         a.setFieldA(99);
         a.setFieldB("hello");
@@ -256,7 +255,7 @@ public class CompatibilityTest {
         b.setFieldD(new BSONTimestamp(1000, 1000));
         b.setFieldE(new BSONDecimal("12332.456", 10, 9));
         
-        ArrayList<TmpA> list = new ArrayList<TmpA>();
+        ArrayList<DecimalTmpA> list = new ArrayList<DecimalTmpA>();
         list.add(a);
         list.add(b);
         try {

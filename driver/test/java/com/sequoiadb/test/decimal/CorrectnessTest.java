@@ -1,7 +1,6 @@
 package com.sequoiadb.test.decimal;
 
 import static org.junit.Assert.*;
-import static org.junit.Assert.assertEquals;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -550,14 +549,6 @@ public class CorrectnessTest {
 		}
 	}
 	
-	class Pair {
-		public int precision;
-		public int scale;
-		public Pair(int p, int s) {
-			precision = p; scale = s;
-		}
-	}
-	
 	@Test
 	public void errorFormatTest2() {
 		String str = "123456.7890987";
@@ -565,17 +556,17 @@ public class CorrectnessTest {
 		int scale = 0;
 		// precision [1, 1000]
 		// scale [0, precision)
-		ArrayList<Pair> arr = new ArrayList<Pair>();
-		arr.add(new Pair(-2, -2));
-		arr.add(new Pair(-1, -2));
-		arr.add(new Pair(-1, 0));
-		arr.add(new Pair(-1, 1));
-		arr.add(new Pair(0, -1));
-		arr.add(new Pair(0, 0));
-		arr.add(new Pair(0, 1));
-		arr.add(new Pair(1001, 1));
-		arr.add(new Pair(1000, 1000));
-		arr.add(new Pair(1000, 10001));
+		ArrayList<DecimalPair> arr = new ArrayList<DecimalPair>();
+		arr.add(new DecimalPair(-2, -2));
+		arr.add(new DecimalPair(-1, -2));
+		arr.add(new DecimalPair(-1, 0));
+		arr.add(new DecimalPair(-1, 1));
+		arr.add(new DecimalPair(0, -1));
+		arr.add(new DecimalPair(0, 0));
+		arr.add(new DecimalPair(0, 1));
+		arr.add(new DecimalPair(1001, 1));
+		arr.add(new DecimalPair(1000, 1000));
+		arr.add(new DecimalPair(1000, 10001));
 		
 		// case 2: invalid precision and scale
 		for (int i = 0; i < arr.size(); i++) {

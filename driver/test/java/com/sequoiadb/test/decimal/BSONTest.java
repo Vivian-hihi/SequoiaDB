@@ -1,7 +1,6 @@
 package com.sequoiadb.test.decimal;
 
 import static org.junit.Assert.*;
-import static org.junit.Assert.assertEquals;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;

@@ -1,4 +1,4 @@
-package com.sequoiadb.test.decimal;
+package com.sequoiadb.test.common;
 
 import java.util.Random;
 
