@@ -44,10 +44,10 @@ $sdbFile -s " var _svcName = '${svcName}' ;                                     
               var arr = [] ;                                                             \
               var num = 0 ;                                                              \
               var canRemove = true ;                                                     \
-              arr = Sdbtool.listNodes( {type:'om', mode:'local'} ) ;                     \
+              arr = Sdbtool.listNodes( {type:'om', mode:'local', expand:true} ) ;        \
               num = arr.size() ;                                                         \
               if ( num == 0 ) {                                                          \
-                 arr = Sdbtool.listNodes( {type:'om', mode:'run'} ) ;                    \
+                 arr = Sdbtool.listNodes( {type:'om', mode:'run', expand:true} ) ;       \
                  num = arr.size() ;                                                      \
               }                                                                          \
               if ( num < 0 || num >= 2 ) {                                               \
