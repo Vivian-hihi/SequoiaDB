@@ -143,12 +143,12 @@ public class BSONDecimal implements Serializable {
 	 *       </p>
 	 *       <p>
 	 *       In BigDecimal, the value of the number represented by the
-	 *       BigDecimal is (unscaledValue × 10^-scale). "precision" represents
+	 *       BigDecimal is (unscaledValue * 10^-scale). "precision" represents
 	 *       the count of digits in unscaleValue, and "scale" is the value of
 	 *       scale. For example, value "1234.567890" is represented by
-	 *       BigDecimal like "1234567890 × 10^-6". So, unscaledValue is
+	 *       BigDecimal like "1234567890 * 10^-6". So, unscaledValue is
 	 *       "1234567890", precision is 10, and scale is 6. Value "1.2345E9" is
-	 *       represented by BigDecimal like "12345 × 10^5". So, unscaledValue is
+	 *       represented by BigDecimal like "12345 * 10^5". So, unscaledValue is
 	 *       "12345", precision is 5, and scale is -5.
 	 *       </p>
 	 *       <p>
