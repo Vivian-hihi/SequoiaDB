@@ -1,11 +1,7 @@
-package com.sequoiadb.test.cl;
-
-import java.util.ArrayList;
-import java.util.List;
+package com.sequoiadb.test.common;
 
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
-import org.junit.Test;
 
 import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
@@ -13,14 +9,13 @@ import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.test.common.*;
 
-/*��������߳��򼯺ϱ��в������*/
-public class MultiThreadInsert implements Runnable {
+public class MultiThreadQuery implements Runnable {
 	Sequoiadb sdb;
 	CollectionSpace cs;
 	DBCollection cl;
-	int num = 10;
+	DBCursor cursor ;
 
-	public MultiThreadInsert() {
+	public MultiThreadQuery() {
 		sdb = new Sequoiadb(Constants.COOR_NODE_CONN, "", "");
 		if(sdb.isCollectionSpaceExist(Constants.TEST_CS_NAME_1)){
 			cs = sdb.getCollectionSpace(Constants.TEST_CS_NAME_1);
@@ -37,16 +32,19 @@ public class MultiThreadInsert implements Runnable {
 	
 	@Override
 	public void run() {
-		//System.out.println("Insert�߳�==="+Thread.currentThread().getId()+"ִ�п�ʼ");
-		List<BSONObject> list = null;
-		list = new ArrayList<BSONObject>();
-			for (int j = 0; j < num; j++) {
+		System.out.println("Query�߳�==="+Thread.currentThread().getId()+"ִ�п�ʼ");
+			for(int j = 0 ;j<10;j++){
 				BSONObject obj = new BasicBSONObject();
-				obj.put("ThreadID", Thread.currentThread().getId());
-				obj.put("NO", Thread.currentThread().getId() + "_" + String.valueOf(j));
-				list.add(obj);
-			}
-		cl.bulkInsert(list, DBCollection.FLG_INSERT_CONTONDUP);
-		//System.out.println("Insert�߳�==="+Thread.currentThread().getId()+"ִ�н���");
+				obj.put("ThreadID", Thread.currentThread().getId()-1);
+				obj.put("NO",(Thread.currentThread().getId()-1)+"_"+String.valueOf(j));
+				cursor = cl.query(obj,null,null,null);
+				int size = 0 ;
+				while(cursor.hasNext()){
+					cursor.getNext();
+					size ++ ;
+				}
+				System.out.println("size="+size);
+		}
+		System.out.println("Query�߳�==="+Thread.currentThread().getId()+"ִ�н���");	
 	}
 }

@@ -1,7 +1,6 @@
 package com.sequoiadb.test.cl;
 
 import static org.junit.Assert.*;
-import static org.junit.Assert.assertTrue;
 
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;

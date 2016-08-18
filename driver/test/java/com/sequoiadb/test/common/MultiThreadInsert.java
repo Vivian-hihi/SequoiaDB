@@ -1,7 +1,11 @@
-package com.sequoiadb.test.cl;
+package com.sequoiadb.test.common;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
+import org.junit.Test;
 
 import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
@@ -9,13 +13,13 @@ import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.test.common.*;
 
-public class MultiThreadQuery implements Runnable {
+public class MultiThreadInsert implements Runnable {
 	Sequoiadb sdb;
 	CollectionSpace cs;
 	DBCollection cl;
-	DBCursor cursor ;
+	int num = 10;
 
-	public MultiThreadQuery() {
+	public MultiThreadInsert() {
 		sdb = new Sequoiadb(Constants.COOR_NODE_CONN, "", "");
 		if(sdb.isCollectionSpaceExist(Constants.TEST_CS_NAME_1)){
 			cs = sdb.getCollectionSpace(Constants.TEST_CS_NAME_1);
@@ -32,19 +36,16 @@ public class MultiThreadQuery implements Runnable {
 	
 	@Override
 	public void run() {
-		System.out.println("Query�߳�==="+Thread.currentThread().getId()+"ִ�п�ʼ");
-			for(int j = 0 ;j<10;j++){
+		//System.out.println("Insert�߳�==="+Thread.currentThread().getId()+"ִ�п�ʼ");
+		List<BSONObject> list = null;
+		list = new ArrayList<BSONObject>();
+			for (int j = 0; j < num; j++) {
 				BSONObject obj = new BasicBSONObject();
-				obj.put("ThreadID", Thread.currentThread().getId()-1);
-				obj.put("NO",(Thread.currentThread().getId()-1)+"_"+String.valueOf(j));
-				cursor = cl.query(obj,null,null,null);
-				int size = 0 ;
-				while(cursor.hasNext()){
-					cursor.getNext();
-					size ++ ;
-				}
-				System.out.println("size="+size);
-		}
-		System.out.println("Query�߳�==="+Thread.currentThread().getId()+"ִ�н���");	
+				obj.put("ThreadID", Thread.currentThread().getId());
+				obj.put("NO", Thread.currentThread().getId() + "_" + String.valueOf(j));
+				list.add(obj);
+			}
+		cl.bulkInsert(list, DBCollection.FLG_INSERT_CONTONDUP);
+		//System.out.println("Insert�߳�==="+Thread.currentThread().getId()+"ִ�н���");
 	}
 }

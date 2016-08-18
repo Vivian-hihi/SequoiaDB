@@ -1,4 +1,4 @@
-package com.sequoiadb.test.db;
+package com.sequoiadb.test.common;
 
 import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
