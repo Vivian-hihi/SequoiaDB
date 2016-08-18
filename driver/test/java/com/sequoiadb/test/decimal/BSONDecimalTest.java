@@ -27,10 +27,7 @@ import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Sequoiadb;
-import com.sequoiadb.base.SequoiadbConstants;
 import com.sequoiadb.exception.BaseException;
-import com.sequoiadb.test.common.*;
-import com.sun.org.apache.bcel.internal.classfile.ConstantCP;
 import com.sequoiadb.test.common.*;
 /**
  * @author tanzhaobo
