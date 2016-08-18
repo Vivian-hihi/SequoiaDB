@@ -65,11 +65,21 @@ namespace engine
        ( PMD_COMMANDS_STRING(PMD_OPTION_SVCNAME, ",p"), po::value<string>(), "service name, separated by comma (',')" ) \
        ( PMD_OPTION_FORCE, "force stop when the node can't stop normally" )
 
+   #define COMMANDS_HIDE_OPTIONS \
+      ( PMD_OPTION_HELPFULL, "help all configs" ) \
+      ( PMD_OPTION_CURUSER, "use current user" ) \
+      
    // initialize options
-   void init ( po::options_description &desc )
+   void init ( po::options_description &desc,
+               po::options_description &all )
    {
       PMD_ADD_PARAM_OPTIONS_BEGIN ( desc )
          COMMANDS_OPTIONS
+      PMD_ADD_PARAM_OPTIONS_END
+
+      PMD_ADD_PARAM_OPTIONS_BEGIN ( all )
+         COMMANDS_OPTIONS
+         COMMANDS_HIDE_OPTIONS
       PMD_ADD_PARAM_OPTIONS_END
    }
 
@@ -79,16 +89,18 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_SDBSTOP_RESVARG, "resolveArgument" )
-   INT32 resolveArgument ( po::options_description &desc, INT32 argc,
-                           CHAR **argv, vector<string> &listServices,
+   INT32 resolveArgument ( po::options_description &desc, 
+                           po::options_description &all,
+                           po::variables_map &vm,
+                           INT32 argc, CHAR **argv, 
+                           vector<string> &listServices,
                            INT32 &typeFilter, INT32 &roleFilter,
                            BOOLEAN &bForce )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_SDBSTOP_RESVARG );
-      po::variables_map vm ;
 
-      rc = utilReadCommandLine( argc, argv, desc, vm, FALSE ) ;
+      rc = utilReadCommandLine( argc, argv, all, vm, FALSE ) ;
       if ( rc )
       {
          std::cout << "Read command line failed: " << rc << endl ;
@@ -101,6 +113,12 @@ namespace engine
          rc = SDB_PMD_HELP_ONLY ;
          goto error ;
       }
+      if ( vm.count( PMD_OPTION_HELPFULL ) )
+      {
+         displayArg( all ) ;
+         rc = SDB_PMD_HELP_ONLY ;
+         goto done ;
+      }     
       else if ( vm.count( PMD_OPTION_VERSION ) )
       {
          ossPrintVersion( "Sdb Stop Version" ) ;
@@ -185,10 +203,13 @@ namespace engine
       INT32 roleFilter =  -1 ;
       BOOLEAN bForce = FALSE ;
       po::options_description desc ( "Command options" ) ;
-      init ( desc ) ;
+      po::options_description all ( "Command options" ) ;      
+      po::variables_map vm ;
+      
+      init ( desc, all ) ;
 
       // validate arguments
-      rc = resolveArgument ( desc, argc, argv, listServices, typeFilter,
+      rc = resolveArgument ( desc, all, vm, argc, argv, listServices, typeFilter,
                              roleFilter, bForce ) ;
       if ( rc )
       {
@@ -203,7 +224,12 @@ namespace engine
          }
          goto done ;
       }
-
+      
+      if ( !vm.count( PMD_OPTION_CURUSER ) )
+      {
+         UTIL_CHECK_AND_CHG_USER() ;
+      }
+      
       // make path
       rc = ossGetEWD( dialogFile, OSS_MAX_PATHSIZE ) ;
       if ( rc )
