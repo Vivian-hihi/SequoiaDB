@@ -8017,7 +8017,8 @@ error :
                case String :
                   try
                   {
-                     str_value = ele.String().c_str() ;
+                     string tmpstr = ele.String() ;
+                     str_value = tmpstr.c_str() ;
                      if ( strcmp( "M", str_value ) == 0 ||
                           strcmp( "m", str_value ) == 0 ) // master
                         value = PREFER_REPL_MASTER ;
