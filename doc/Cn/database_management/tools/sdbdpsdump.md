@@ -52,4 +52,4 @@ sdbdpsdump 不需要与数据库连接。
 在下面的例子，sdbdpsdump 解析指定目录中的replica log文件，并只解析类型为1（数据插入）的日志，输出到当前目录out.log。
 
 <pre class="prettyprint lang-javascript">
-> sdbdpsdump sdbdpsdump -s /data/database/40000/replicalog/sequoiadbLog.0 -o out.log -t 1</pre>
+> sdbdpsdump -s /data/database/40000/replicalog/sequoiadbLog.0 -o out.log -t 1</pre>
