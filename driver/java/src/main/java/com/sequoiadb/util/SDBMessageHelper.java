@@ -319,7 +319,7 @@ public class SDBMessageHelper {
 					messageLength += length;
 				}
 			}
-	
+
 			bulk_buffer.position(startPos); // set the real messageLength
 			bulk_buffer.putInt(messageLength);
 	

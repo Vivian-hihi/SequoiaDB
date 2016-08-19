@@ -153,7 +153,7 @@ public class BasicBSONDecoder implements BSONDecoder {
         	int typemod = _in.readInt();
         	short scale = _in.readShort();
         	short weight = _in.readShort();
-        	int ndig = (size - InnerDecimal.DECIMAL_HEADER_SIZE) / (Short.SIZE / 8);
+        	int ndig = (size - InnerDecimal.DECIMAL_HEADER_SIZE) / (Short.SIZE / Byte.SIZE);
         	short[] digits = new short[ndig + 1];
         	// the first position is set to 0, it's placed carry, so we 
         	// need another short
