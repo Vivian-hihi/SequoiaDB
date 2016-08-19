@@ -208,33 +208,9 @@ namespace engine
       // if start form crash, should full sync
       if ( !pmdGetStartup().isOK() )
       {
-         BOOLEAN needFullSync = FALSE ;
-         std::set<monCollectionSpace> csList ;
-         sdbGetDMSCB()->dumpInfo( csList, TRUE ) ;
-         for ( std::set<monCollectionSpace>::const_iterator itr = csList.begin() ;
-               itr != csList.end();
-               ++itr )
-         {
-            if ( !(itr->_committed) )
-            {
-               needFullSync = TRUE ;
-            }
-            PD_LOG( PDEVENT, "the valid flag of cs[%s] is [%d]",
-                    itr->_name, itr->_committed ) ;
-         }
-         
-         if ( needFullSync )
-         {
-            PD_LOG( PDEVENT, "Session[%s]: The db data is abnormal, "
-                    "need to synchronize full data", sessionName() ) ;
-            _status = CLS_SESSION_STATUS_FULL_SYNC ;
-         }
-         else
-         {
-            pmdGetStartup().ok( TRUE ) ;
-            PD_LOG( PDEVENT, "no crashed file was found, we do not"
-                    " synchronize full data" ) ;
-         } 
+         PD_LOG( PDEVENT, "Session[%s]: The db data is abnormal, "
+                 "need to synchronize full data", sessionName() ) ;
+         _status = CLS_SESSION_STATUS_FULL_SYNC ;
       }
 
       // full sync to repl sync, need to reset repl bucket
