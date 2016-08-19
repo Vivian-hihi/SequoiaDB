@@ -339,7 +339,7 @@
         </runProgram>
         <runProgram>
             <program>grep</program>
-            <programArguments>-q "^export PATH=\$PATH:${installdir}\/bin$" ~sdbadmin/.bashrc</programArguments> 
+            <programArguments>-q "^export PATH=\$PATH:${installdir}\/bin$" ~${username}/.bashrc</programArguments> 
             <abortOnError>0</abortOnError>   
             <showMessageOnError>0</showMessageOnError>       
         </runProgram>          
@@ -353,7 +353,7 @@
         </runProgram>  
         <runProgram>
             <program>grep</program>
-            <programArguments>-q "^export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:${installdir}\/lib$" ~sdbadmin/.bashrc</programArguments> 
+            <programArguments>-q "^export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:${installdir}\/lib$" ~${username}/.bashrc</programArguments> 
             <abortOnError>0</abortOnError>   
             <showMessageOnError>0</showMessageOnError>       
         </runProgram>          
