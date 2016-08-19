@@ -1,0 +1,857 @@
+/*******************************************************************************
+
+   Copyright (C) 2011-2016 SequoiaDB Ltd.
+
+   This program is free software: you can redistribute it and/or modify
+   it under the term of the GNU Affero General Public License, version 3,
+   as published by the Free Software Foundation.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warrenty of
+   MARCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+   GNU Affero General Public License for more details.
+
+   You should have received a copy of the GNU Affero General Public License
+   along with this program. If not, see <http://www.gnu.org/license/>.
+
+   Source File Name = expOptions.cpp
+
+   Dependencies: N/A
+
+   Restrictions: N/A
+
+   Change Activity:
+   defect Date        Who          Description
+   ====== =========== ============ =============================================
+          28/07/2016  Lin Yuebang  Initial Draft
+
+   Last Changed =
+
+*******************************************************************************/
+#include "ossIO.hpp"
+#include "expOptions.hpp"
+#include "expUtil.hpp"
+#include "utilParam.hpp"
+#include "ossUtil.h"
+#include "pd.hpp"
+#include <iostream>
+
+namespace exprt
+{
+   using namespace engine ;
+
+   // general
+   #define OPTION_HELP              "help"
+   #define OPTION_VERSION           "version"
+   #define OPTION_HOSTNAME          "hostname"
+   #define OPTION_SVCNAME           "svcname"
+   #define OPTION_USER              "user"
+   #define OPTION_PASSWORD          "password"
+   #define OPTION_DELRECORD         "delrecord"
+   #define OPTION_FILELIMIT         "filelimit"
+   #define OPTION_FIELDS            "fields"
+   #define OPTION_TYPE              "type"
+   #define OPTION_WITHID            "withid"
+   #define OPTION_ERRORSTOP         "errorstop"
+   #define OPTION_SSL               "ssl"
+
+   // single collection
+   #define OPTION_COLLECTSPACE      "csname"
+   #define OPTION_COLLECTION        "clname"
+   #define OPTION_SELECT            "select"
+   #define OPTION_FILTER            "filter"
+   #define OPTION_SORT              "sort"
+   #define OPTION_FILENAME          "file"
+
+   // multi collection
+   #define OPTION_CSCL              "cscl"
+   #define OPTION_EXCLUDECSCL       "excludecscl"
+   #define OPTION_DIRNAME           "dir"
+
+   // csv
+   #define OPTION_DELCHAR           "delchar"
+   #define OPTION_DELFIELD          "delfield"
+   #define OPTION_INCLUDE           "included"
+   #define OPTION_INCLUDEBINARY     "includebinary"
+   #define OPTION_INCLUDEREGEX      "includeregex"
+   #define OPTION_FORCE             "force"
+     
+   // conf
+   #define OPTION_CONF              "conf"
+   #define OPTION_GENCONF           "genconf"
+   #define OPTION_GENFIELDS         "genfields"
+
+
+   // general
+   #define EXPLAIN_HELP             "help information"
+   #define EXPLAIN_VERSION          "version"
+   #define EXPLAIN_HOSTNAME         "host name, default: localhost"
+   #define EXPLAIN_SVCNAME          "service name, default: 11810"
+   #define EXPLAIN_USER             "username"
+   #define EXPLAIN_PASSWORD         "password"
+   #define EXPLAIN_FILELIMIT        "the limit of max size for one file, in K/k/M/m/G/g, default: 16G"
+   #define EXPLAIN_DELRECORD        "record delimiter, default: '\\n' "
+   #define EXPLAIN_TYPE             "type of file to output, default: csv (json,csv)"
+   #define EXPLAIN_WITHID           "keep the fields with '_id' when force to export or generate the fields"  
+   #define EXPLAIN_ERRORSTOP        "whether stop by hitting error, default false"
+   #define EXPLAIN_SSL              "use SSL connection (arg: [true|false], e.g. --ssl true)"
+   #define EXPLAIN_FIELDS           "field names for each collections, " \
+                                    "format as <field>[,<field>,...] for single collection, " \
+                                    "or format as <csName>.<clName>:<field>[,<field>,...] for each collection " \
+                                    "when specify multi collections"
+
+   // csv
+   #define EXPLAIN_DELCHAR          "string delimiter, default: '\"'"
+   #define EXPLAIN_DELFIELD         "field delimiter, default: ',' "
+   #define EXPLAIN_INCLUDE          "whether to include field names as csv head-line, default: true "
+   #define EXPLAIN_INCLUDEBINARY    "whether to output a compelete binary, default: false"
+   #define EXPLAIN_INCLUDEREGEX     "whether to output a compelete regex, default: false"
+   #define EXPLAIN_FORCE            "for csv, force to export collections without field-names being specified, " \
+                                    "the fields(except '_id') of first record in collection will be taken by default"              
+
+   // single collection
+   #define EXPLAIN_COLLECTSPACE     "collection space name"
+   #define EXPLAIN_COLLECTION       "collection name"
+   #define EXPLAIN_SELECT           "the select rule(e.g. --select '{ age:"", address:{$trim:1} }')"
+   #define EXPLAIN_FILTER           "the matching rule(e.g. --filter '{ age: 18 }')"
+   #define EXPLAIN_SORT             "the ordered rule(e.g. --sort '{ name: 1 }')"
+   #define EXPLAIN_FILENAME         "output file name for one collection"
+
+   // multi collection
+   #define EXPLAIN_CSCL             "collection full name or collection space name to export, seperated by ','"
+   #define EXPLAIN_EXCLUDECSCL      "collection full name or collection space name to exclude, seperated by ','"
+   #define EXPLAIN_DIRNAME          "output dir path for collections"
+
+   // conf
+   #define EXPLAIN_CONF             "the name of configure file"
+   #define EXPLAIN_GENCONF          "the name of configure file to generate"
+   #define EXPLAIN_GENFIELDS        "whether to generate option \"fields\" for each collection, default: true"
+   
+   #define DEFAULT_HOSTNAME         "localhost"
+   #define DEFAULT_SVCNAME          "11810"
+   #define DEFAULT_DELCHAR_CHAR     '"'
+   #define DEFAULT_DELFIELD_CHAR    ','
+   #define DEFAULT_FILELIMIT        ( 16LL * 1024 * 1024 * 1024 ) // 16G
+
+   #define FILELIMIT_MAX            ( 16LL * 1024 * 1024 * 1024 * 1024 ) // 16T
+
+   static const CHAR *EXP_FILE_FORMAT_STR[] = { "csv", "json" } ;
+
+   #define _TYPE(T) po::value< T >()
+
+   #define EXP_GENERAL_OPTIONS \
+      ( OPTION_HELP",h",               /* no arg */      EXPLAIN_HELP ) \
+      ( OPTION_VERSION,                /* no arg */      EXPLAIN_VERSION ) \
+      ( OPTION_HOSTNAME",s",           _TYPE(string),    EXPLAIN_HOSTNAME ) \
+      ( OPTION_SVCNAME",p",            _TYPE(string),    EXPLAIN_SVCNAME ) \
+      ( OPTION_USER",u",               _TYPE(string),    EXPLAIN_USER ) \
+      ( OPTION_PASSWORD",w",           _TYPE(string),    EXPLAIN_PASSWORD ) \
+      ( OPTION_DELRECORD,              _TYPE(string),    EXPLAIN_DELRECORD ) \
+      ( OPTION_FILELIMIT,              _TYPE(string),    EXPLAIN_FILELIMIT ) \
+      ( OPTION_TYPE,                   _TYPE(string),    EXPLAIN_TYPE ) \
+      ( OPTION_WITHID,                 _TYPE(bool),      EXPLAIN_WITHID ) \
+      ( OPTION_FIELDS,         _TYPE(vector<string>),    EXPLAIN_FIELDS ) \
+      ( OPTION_ERRORSTOP,              _TYPE(bool),      EXPLAIN_ERRORSTOP ) \
+      ( OPTION_SSL,                    _TYPE(bool),      EXPLAIN_SSL) 
+
+   #define EXP_SINGLE_COLLECTION_OPTIONS \
+      ( OPTION_COLLECTSPACE",c",       _TYPE(string),    EXPLAIN_COLLECTSPACE )\
+      ( OPTION_COLLECTION",l",         _TYPE(string),    EXPLAIN_COLLECTION ) \
+      ( OPTION_SELECT,                 _TYPE(string),    EXPLAIN_SELECT ) \
+      ( OPTION_FILTER,                 _TYPE(string),    EXPLAIN_FILTER ) \
+      ( OPTION_SORT,                   _TYPE(string),    EXPLAIN_SORT ) \
+      ( OPTION_FILENAME,               _TYPE(string),    EXPLAIN_FILENAME ) 
+
+   #define EXP_MULTI_COLLECTION_OPTIONS \
+      ( OPTION_CSCL,                   _TYPE(string),    EXPLAIN_CSCL ) \
+      ( OPTION_EXCLUDECSCL,            _TYPE(string),    EXPLAIN_EXCLUDECSCL ) \
+      ( OPTION_DIRNAME,                _TYPE(string),    EXPLAIN_DIRNAME ) 
+
+   #define EXP_CSV_OPTIONS \
+      ( OPTION_DELCHAR,                _TYPE(CHAR),      EXPLAIN_DELCHAR ) \
+      ( OPTION_DELFIELD,               _TYPE(CHAR),      EXPLAIN_DELFIELD ) \
+      ( OPTION_INCLUDE,                _TYPE(bool),      EXPLAIN_INCLUDE ) \
+      ( OPTION_INCLUDEBINARY,          _TYPE(bool),      EXPLAIN_INCLUDEBINARY)\
+      ( OPTION_INCLUDEREGEX,           _TYPE(bool),      EXPLAIN_INCLUDEREGEX )\
+      ( OPTION_FORCE,                  _TYPE(bool),      EXPLAIN_FORCE ) 
+
+   #define EXP_CONF_OPTIONS \
+      ( OPTION_CONF,                   _TYPE(string),    EXPLAIN_CONF ) \
+      ( OPTION_GENCONF,                _TYPE(string),    EXPLAIN_GENCONF ) \
+      ( OPTION_GENFIELDS,              _TYPE(bool),      EXPLAIN_GENFIELDS ) 
+
+   #define WRITE_STR_OPTION( buf, option, value, has ) \
+      if ( has ) \
+      { \
+         buf += option ; \
+         buf += " = " ; \
+         buf += value ; \
+         buf += OSS_NEWLINE ; \
+      }
+   #define WRITE_BOOL_OPTION( buf, option, value, has ) \
+      if ( has ) \
+      { \
+         buf += option ; \
+         buf += " = " ; \
+         buf += ( value ? "true" : "false" ) ; \
+         buf += OSS_NEWLINE ; \
+      }
+
+   // get the EXP_FILE_FORMAT value from string representation
+   static INT32 getFormatType( const string &typeStr, EXP_FILE_FORMAT &type )
+   {
+      INT32 rc = SDB_INVALIDARG ;
+      for ( INT32 i = 0; 
+            i < (INT32)( sizeof(EXP_FILE_FORMAT_STR)/sizeof(const CHAR*) );
+            ++i )
+      {
+         if ( typeStr == EXP_FILE_FORMAT_STR[i] )
+         {
+            type = (EXP_FILE_FORMAT)i ;
+            rc = SDB_OK ;
+            break ;
+         }
+      }
+      return rc ;
+   }
+
+   static INT32 getFileLimit( const string &fileLimitStr, UINT64 &fileLimit )
+   {
+      INT32 rc = SDB_OK ;
+      CHAR last = 0 ;
+      UINT64 unit = 1 ;
+      INT64 fileLimitLL = ossAtoll( fileLimitStr.c_str() ) ;
+      if ( fileLimitLL <= 0 )
+      {
+         PD_LOG( PDERROR, "Invalid value for filelimit" ) ;
+         goto error ;
+      }
+
+      fileLimit = fileLimitLL ;
+      SDB_ASSERT( !fileLimitStr.empty(), "" ) ;
+      last = fileLimitStr[ fileLimitStr.size() - 1 ] ;
+      if      ( 'k' == last || 'K' == last ) { unit = 1024 ; }
+      else if ( 'm' == last || 'M' == last ) { unit = 1024 * 1024 ; }
+      else if ( 'g' == last || 'G' == last ) { unit = 1024 * 1024 * 1024 ; }
+      else 
+      {
+         PD_LOG( PDERROR, "Invalid value for filelimit" ) ;
+         goto error ;
+      }
+
+      if ( FILELIMIT_MAX / unit < fileLimit )
+      {
+         PD_LOG( PDERROR, "Invalid value for filelimit" ) ;
+         goto error ;
+      }
+
+      fileLimit *= unit ;
+      
+   done:
+      return rc ;
+   error:
+      rc = SDB_INVALIDARG ;
+      goto done ;
+   }
+ 
+
+   expOptions::expOptions() : _cmdParsed     (FALSE),
+                              _confParsed    (FALSE),
+                              _hostName      (DEFAULT_HOSTNAME),
+                              _svcName       (DEFAULT_SVCNAME),
+                              _delRecord     ("\n"),
+                              _typeName      (EXP_FILE_FORMAT_STR[FORMAT_CSV]),
+                              _type          (FORMAT_CSV),
+                              _withId        (FALSE),
+                              _errorStop     (FALSE),
+                              _useSSL        (FALSE),
+                              _fileLimit     (DEFAULT_FILELIMIT),
+                              _delChar       (DEFAULT_DELCHAR_CHAR),
+                              _delField      (DEFAULT_DELFIELD_CHAR),
+                              _headLine      (TRUE),
+                              _includeBinary (FALSE),
+                              _includeRegex  (FALSE),
+                              _force         (FALSE),
+                              _genFields     (TRUE)
+   {
+   }
+
+   expOptions::~expOptions()
+   {
+   }
+
+   BOOLEAN expOptions::hasHelp() const
+   {
+      return _cmdHas(OPTION_HELP) ;
+   }
+
+   BOOLEAN expOptions::hasVersion() const
+   {
+      return _cmdHas(OPTION_VERSION) ;
+   }
+
+   BOOLEAN expOptions::hasConf() const
+   {
+      return _cmdHas(OPTION_CONF) ;
+   }
+
+   BOOLEAN expOptions::hasGenConf() const
+   {
+      return _cmdHas(OPTION_GENCONF) ;
+   }
+
+   void expOptions::printHelpInfo() const 
+   {
+      po::options_description general("General Options") ;
+      po::options_description sCL("Single-collection Options") ;
+      po::options_description mCL("Multi-collection Options") ;
+      po::options_description csv("CSV Options") ;
+      po::options_description conf("Configure-file Options") ;
+
+      SDB_ASSERT( _cmdParsed, "cant be used before parsing cmd" ) ;
+
+      general.add_options()EXP_GENERAL_OPTIONS ;
+      sCL.add_options()EXP_SINGLE_COLLECTION_OPTIONS ;
+      mCL.add_options()EXP_MULTI_COLLECTION_OPTIONS ;
+      csv.add_options()EXP_CSV_OPTIONS ;
+      conf.add_options()EXP_CONF_OPTIONS ;
+
+      cout << general << endl ;
+      cout << sCL << endl ;
+      cout << mCL << endl ;
+      cout << csv << endl ;
+      cout << conf << endl ;
+   }
+
+   INT32 expOptions::writeToConf( const expCLSet &clSet )
+   {
+      INT32 rc = SDB_OK ;
+      string writeBuf ;
+
+      // general options
+      WRITE_STR_OPTION( writeBuf, OPTION_HOSTNAME, _hostName, TRUE ) ;
+      WRITE_STR_OPTION( writeBuf, OPTION_SVCNAME, _svcName , TRUE ) ;
+      WRITE_STR_OPTION( writeBuf, OPTION_USER, _user, TRUE ) ;
+      WRITE_STR_OPTION( writeBuf, OPTION_TYPE, _typeName, TRUE ) ;
+      WRITE_STR_OPTION( writeBuf, OPTION_FILELIMIT, _fileLimit, _has(OPTION_FILELIMIT));
+      WRITE_BOOL_OPTION( writeBuf, OPTION_ERRORSTOP, _errorStop, TRUE ) ;
+      WRITE_BOOL_OPTION( writeBuf, OPTION_SSL, _useSSL, TRUE ) ;
+
+      // csv options
+      WRITE_STR_OPTION( writeBuf, OPTION_DELCHAR, _delChar, TRUE ) ; 
+      WRITE_STR_OPTION( writeBuf, OPTION_DELFIELD, _delField, TRUE ) ; 
+      WRITE_BOOL_OPTION( writeBuf, OPTION_INCLUDE, _headLine, TRUE ) ;
+      WRITE_BOOL_OPTION( writeBuf, OPTION_INCLUDEBINARY, _includeBinary, TRUE );
+      WRITE_BOOL_OPTION( writeBuf, OPTION_INCLUDEREGEX, _includeRegex, TRUE ) ;
+      WRITE_BOOL_OPTION( writeBuf, OPTION_FORCE, _force, FALSE ) ;
+      WRITE_BOOL_OPTION( writeBuf, OPTION_WITHID, _withId, FALSE ) ;
+
+      // single collection options
+      WRITE_STR_OPTION( writeBuf, OPTION_COLLECTSPACE, _csName, _has(OPTION_COLLECTSPACE) ) ;
+      WRITE_STR_OPTION( writeBuf, OPTION_COLLECTION, _clName, _has(OPTION_COLLECTION) ) ;
+      WRITE_STR_OPTION( writeBuf, OPTION_SELECT, _select, _has(OPTION_SELECT) ); 
+      WRITE_STR_OPTION( writeBuf, OPTION_FILTER, _filter, _has(OPTION_FILTER) );
+      WRITE_STR_OPTION( writeBuf, OPTION_SORT,   _sort, _has(OPTION_SORT) ) ;
+      WRITE_STR_OPTION( writeBuf, OPTION_FILENAME, _file,_has(OPTION_FILENAME));
+
+      // multi collection options
+      WRITE_STR_OPTION( writeBuf, OPTION_CSCL, _cscl, _has(OPTION_CSCL) ) ;
+      WRITE_STR_OPTION( writeBuf, OPTION_EXCLUDECSCL, _excludeCscl, _has(OPTION_EXCLUDECSCL) ) ;
+      WRITE_STR_OPTION( writeBuf, OPTION_DIRNAME, _dir,_has(OPTION_DIRNAME) ) ;
+      // fields
+      if ( _genFields )
+      {
+         for ( expCLSet::const_iterator i = clSet.begin(); clSet.end() != i;++i)
+         {
+            writeBuf += OPTION_FIELDS ;
+            writeBuf += " = " ;
+            writeBuf += i->csName ;
+            writeBuf += "." ;
+            writeBuf += i->clName ;
+            writeBuf += EXPCL_FIELDS_SEP_CHAR ;
+            writeBuf += i->fields ;
+            writeBuf += OSS_NEWLINE ;
+         }
+      }
+      
+      // write conf
+      rc = utilWriteConfigFile( _genConf.c_str(), writeBuf.c_str(), TRUE ) ;
+      if ( SDB_FE == rc )
+      {
+         cerr << "file " << _genConf <<" already existed" << endl ;
+         goto error ;
+      }
+      else if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "Failed to write conf file, rc = ", rc ) ;
+         goto error ;
+      }
+      
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 expOptions::parseCmd( INT32 argc, CHAR* argv[] )
+   {
+      INT32 rc = SDB_OK ;
+
+      SDB_ASSERT( !_cmdParsed, "can't parse cmd again" ) ;
+
+      _cmdDesc.add_options()
+         EXP_GENERAL_OPTIONS
+         EXP_SINGLE_COLLECTION_OPTIONS
+         EXP_MULTI_COLLECTION_OPTIONS
+         EXP_CSV_OPTIONS
+         EXP_CONF_OPTIONS ;
+
+      rc = utilReadCommandLine( argc, argv, _cmdDesc, _cmdVm, FALSE ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "Failed to read command line , rc = %d", rc ) ;
+         goto error ;
+      }
+      _cmdParsed = TRUE ;
+
+      if ( _cmdHas(OPTION_HELP) || _cmdHas(OPTION_VERSION) )
+      {
+         goto done ;
+      }
+
+      rc = _setConfOptions() ; 
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "Failed to set conf options" ) ;
+         goto error ;
+      }
+
+      if ( _cmdHas(OPTION_CONF) )
+      {
+         rc = _parseConf( _conf.c_str() ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "Failed to parse conf file , rc = %d", rc ) ;
+            goto error ;
+         }
+      }
+
+      rc = _setOptions() ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "Invalid options , rc = %d", rc ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 expOptions::_parseConf( const CHAR* fileName )
+   {
+      INT32 rc = SDB_OK ;
+
+      SDB_ASSERT( !_confParsed, "can't parse conf again" ) ;
+
+      _confDesc.add_options()
+         EXP_GENERAL_OPTIONS
+         EXP_SINGLE_COLLECTION_OPTIONS
+         EXP_MULTI_COLLECTION_OPTIONS
+         EXP_CSV_OPTIONS
+         EXP_CONF_OPTIONS ;
+
+      rc = utilReadConfigureFile( fileName,_confDesc, _confVm ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "Failed to Read conf file , rc = %d", rc ) ;
+         goto error;
+      }
+      _confParsed = TRUE ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   BOOLEAN expOptions::_cmdHas( const CHAR *option ) const
+   {
+      SDB_ASSERT( option, "" ) ;
+      return _cmdParsed && _cmdVm.count(option) > 0 ;
+   }
+
+   BOOLEAN expOptions::_confHas( const CHAR *option ) const
+   {
+      SDB_ASSERT( option, "" ) ;
+      return _confParsed && _confVm.count(option) > 0 ;
+   }
+
+   BOOLEAN expOptions::_has( const CHAR *option ) const
+   {
+      return _cmdHas(option) || _confHas(option) ;
+   }
+
+   template <typename T>
+   T expOptions::_get( const CHAR *option ) const
+   {
+      SDB_ASSERT( _has(option), "has the option" );
+      if ( _cmdHas(option) )
+         return _cmdVm[option].as<T>() ;
+      else
+         return _confVm[option].as<T>() ;
+   }
+
+   // check and set the delimiter options
+   INT32 expOptions::_setDelOptions() 
+   {
+      INT32 rc = SDB_OK ;
+
+      if ( _has(OPTION_DELCHAR) )   
+      { 
+         _delChar = _get<CHAR>(OPTION_DELCHAR) ; 
+      }
+      if ( _has(OPTION_DELFIELD) )   
+      { 
+         _delField = _get<CHAR>(OPTION_DELFIELD) ; 
+      }
+      if ( _has(OPTION_DELRECORD) )   
+      { 
+         _delRecord = _get<string>(OPTION_DELRECORD) ; 
+      }
+
+      if ( ' ' == _delChar  || '\t' == _delChar || 
+           ' ' == _delField || '\t' == _delField )
+      {
+         cerr << "option \""  OPTION_DELCHAR "\" or "
+              << "option \"" OPTION_DELFIELD "\" " 
+              << "cant be space or tab"
+              << endl ;
+         PD_LOG( PDERROR, "option \""  OPTION_DELCHAR "\" or "
+                          "option \"" OPTION_DELFIELD "\" " 
+                          "cant be space or tab" ) ;
+         goto error ;
+      }
+
+      if ( _delChar == _delField )
+      {
+         cerr << "option \"" << OPTION_DELCHAR << "\" cant be same as "
+              << "option \"" << OPTION_DELFIELD  << "\"" << endl ;
+         PD_LOG( PDERROR, "option \"%s\" cant be same as option \"%s\"", 
+                 OPTION_DELCHAR, OPTION_DELFIELD ) ;
+         goto error ;
+      }
+      if ( 1 == _delRecord.size() && _delChar == _delRecord[0] )
+      {
+         cerr << "option \"" << OPTION_DELCHAR << "\" cant be same as "
+              << "option \"" << OPTION_DELRECORD  << "\"" << endl ;
+         PD_LOG( PDERROR, "option \"%s\" cant be same as option \"%s\"", 
+                 OPTION_DELCHAR, OPTION_DELRECORD ) ;
+         goto error ;
+      }
+      if ( 1 == _delRecord.size() && _delField == _delRecord[0] )
+      {
+         cerr << "option \"" << OPTION_DELFIELD << "\" cant be same as "
+              << "option \"" << OPTION_DELRECORD << "\"" << endl ;
+         PD_LOG( PDERROR, "option \"%s\" cant be same as option \"%s\"", 
+                 OPTION_DELFIELD, OPTION_DELRECORD ) ;
+         goto error ;
+      }
+      
+   done:
+      return rc ;
+   error:
+      rc = SDB_INVALIDARG ;
+      goto done ;
+   }
+
+   // check and set the configure-file options
+   INT32 expOptions::_setConfOptions() 
+   {
+      INT32 rc = SDB_OK ;
+
+      if ( _cmdHas(OPTION_CONF) && _cmdHas(OPTION_GENCONF) )
+      {
+         cerr << "option \"" << OPTION_CONF << "\" and "
+              << "option \"" << OPTION_GENCONF << "\" " 
+              << "cant be specified at the same time" << endl ;
+         PD_LOG( PDERROR, "option \"%s\" and option \"%s\""
+                          "cant be specified at the same time", 
+                 OPTION_CONF, OPTION_GENCONF ) ;
+         goto error ;
+      }
+
+      if ( _cmdHas(OPTION_CONF) ) 
+      { 
+         _conf = _get<string>(OPTION_CONF) ; 
+      }
+      if ( _cmdHas(OPTION_GENCONF) ) 
+      { 
+         _genConf = _get<string>(OPTION_GENCONF) ;
+      }
+      if ( _cmdHas(OPTION_GENFIELDS) ) 
+      { 
+         _genFields= _get<bool>(OPTION_GENFIELDS) ;
+      }
+      
+   done:
+      return rc ;
+   error:
+      rc = SDB_INVALIDARG ;
+      goto done ;
+   }
+
+   INT32 expOptions::_setFilePathOptions() 
+   {
+      INT32 rc = SDB_OK ;
+      if ( _has(OPTION_FILENAME) && _has(OPTION_DIRNAME) )
+      {
+         cerr << "option \"" << OPTION_FILENAME << "\" and "
+              << "option \"" << OPTION_DIRNAME << "\" " 
+              << "cant be specified at the same time" << endl ;
+         PD_LOG( PDERROR, "option \"%s\" and option \"%s\""
+                          "cant be specified at the same time", 
+                 OPTION_FILENAME, OPTION_DIRNAME ) ;
+         goto error ;
+      }
+      else if ( !_has(OPTION_FILENAME) && 
+                !_has(OPTION_DIRNAME) &&
+                !_has(OPTION_GENCONF) )
+      {
+         cerr << "option \"" << OPTION_FILENAME << "\" or "
+              << "option \"" << OPTION_DIRNAME << "\" " 
+              << "must be specified" << endl ;
+         PD_LOG( PDERROR, "option \"%s\" or option \"%s\""
+                          "must be specified ", 
+                 OPTION_FILENAME, OPTION_DIRNAME ) ;
+         goto error ;
+      }
+
+      if ( _has(OPTION_DIRNAME) )
+      {
+         _dir = _get<string>(OPTION_DIRNAME) ;
+         if ( _dir.empty() ) 
+         { 
+            _dir = "."OSS_FILE_SEP ; 
+         }
+         else if( OSS_FILE_SEP_CHAR != _dir[ _dir.size() - 1 ] )
+         {
+            _dir += OSS_FILE_SEP ;
+         }
+
+         rc = ossAccess( _dir.c_str(), W_OK ) ;
+         if ( SDB_FNE == rc )
+         {
+            cerr << "dir " << _dir << " does not exist" << endl ;
+            PD_LOG( PDERROR, "dir %s does not exist", _dir.c_str() ) ;
+            goto error ;
+         }
+         else if ( SDB_OK != rc )
+         {
+            cerr << "failed to access dir " << _dir << endl ;
+            PD_LOG( PDERROR, "failed to access dir %s", _dir.c_str() ) ;
+            goto error ;
+         }
+      }
+      if ( _has(OPTION_FILENAME) )
+      {
+         _file = _get<string>(OPTION_FILENAME) ;
+      }
+      
+   done:
+      return rc ;
+   error:
+      rc = SDB_INVALIDARG ;
+      goto done ;
+   }
+
+   // check and set the single collection options
+   INT32 expOptions::_setCollectionOptions() 
+   {
+      INT32 rc = SDB_OK ;
+
+      // -c,-l must be specified together
+      if ( ( !_has(OPTION_COLLECTSPACE) && _has(OPTION_COLLECTION) ) ||
+           ( _has(OPTION_COLLECTSPACE) && !_has(OPTION_COLLECTION) ) )
+      {
+         cerr << "option \"" << OPTION_COLLECTSPACE 
+              << "\" must be specified with " 
+              << "option \"" << OPTION_COLLECTION << "\"" << endl ;
+         PD_LOG( PDERROR, "Option \"%s\" must be specified with option \"%s\"", 
+                 OPTION_COLLECTSPACE, OPTION_COLLECTION ) ;
+         goto error ;
+      }
+
+      // -c/-l cant be used mixing with --cscl/--excludecscl
+      if ( _has(OPTION_COLLECTSPACE) &&
+           ( _has(OPTION_CSCL) || _has(OPTION_EXCLUDECSCL) ) )
+      {
+         cerr << "option \"" OPTION_COLLECTSPACE "\"/\"" OPTION_COLLECTION "\""
+              << " cant be used mixing with option \"" OPTION_CSCL "\"/\""
+                 OPTION_EXCLUDECSCL "\""
+              << endl ;
+         PD_LOG( PDERROR, "Option \"%s\"/\"%s\" cant be used mixing with "
+                          "option \"%s\"/\"%s\"",
+                 OPTION_COLLECTSPACE, OPTION_COLLECTION,
+                 OPTION_CSCL, OPTION_EXCLUDECSCL ) ;
+         goto error ;
+      }
+
+      // --select cant be used with --fields
+      if ( _has(OPTION_SELECT) && _has(OPTION_FIELDS) )
+      {
+         cerr << "option \"" << OPTION_SELECT << "\" and "
+              << "option \"" << OPTION_FIELDS << "\" " 
+              << "cant be specified at the same time" << endl ;
+         PD_LOG( PDERROR, "option \"%s\" and option \"%s\""
+                          "cant be specified at the same time", 
+                 OPTION_SELECT, OPTION_FIELDS ) ;
+         goto error ;
+      }
+      
+      if ( _has(OPTION_COLLECTSPACE) ) 
+      { 
+         _csName = _get<string>(OPTION_COLLECTSPACE) ;
+         _clName = _get<string>(OPTION_COLLECTION) ; 
+         _cscl =  _csName ;
+         _cscl += "." ;
+         _cscl += _clName ;
+      }
+      if ( _has(OPTION_SELECT) )
+      {
+         _select = _get<string>(OPTION_SELECT) ;
+      }
+      if ( _has(OPTION_SORT) )
+      {
+         _sort = _get<string>(OPTION_SORT) ;
+      }
+      if ( _has(OPTION_FILTER) )
+      {
+         _filter = _get<string>(OPTION_FILTER) ;
+      }
+
+      if ( _has(OPTION_CSCL) ) 
+      { 
+         _cscl = _get<string>(OPTION_CSCL) ; 
+      }
+      if ( _has(OPTION_EXCLUDECSCL) ) 
+      { 
+         _excludeCscl = _get<string>(OPTION_EXCLUDECSCL ) ;
+      }
+
+      if ( _cmdHas(OPTION_FIELDS) && _confHas(OPTION_FIELDS) )
+      {
+         vector<string> cmdCLFields ;
+         cmdCLFields = _cmdVm[OPTION_FIELDS].as< vector<string> >() ;
+         _fields = _confVm[OPTION_FIELDS].as< vector<string> >() ;
+         _fields.reserve( _fields.size() + cmdCLFields.size() ) ;
+         _fields.insert( _fields.begin(), 
+                           cmdCLFields.begin(), cmdCLFields.end() ) ;
+      }
+      else if ( _has(OPTION_FIELDS) )
+      {
+         _fields = _get< vector<string> >(OPTION_FIELDS) ;
+      }
+      
+   done:
+      return rc ;
+   error:
+      rc = SDB_INVALIDARG ;
+      goto done ;
+   }
+
+   INT32 expOptions::_setOptions() 
+   {
+      INT32 rc = SDB_OK ;
+
+      if ( _has(OPTION_HOSTNAME) )
+      {
+         _hostName = _get<string>(OPTION_HOSTNAME) ;
+      }
+      if ( _has(OPTION_SVCNAME) )
+      {
+         _svcName = _get<string>(OPTION_SVCNAME) ;
+      }
+      if ( _has(OPTION_USER) )      
+      { 
+         _user = _get<string>(OPTION_USER) ; 
+      }
+      if ( _has(OPTION_PASSWORD) )  
+      { 
+         _password = _get<string>(OPTION_PASSWORD) ;
+      }
+      if ( _has(OPTION_SSL) )
+      {  
+         _useSSL = _get<bool>(OPTION_SSL) ;
+      }
+      if ( _has(OPTION_INCLUDE) )
+      {  
+         _headLine = _get<bool>(OPTION_INCLUDE) ;
+      }
+      if ( _has(OPTION_INCLUDEREGEX) )
+      {  
+         _includeRegex = _get<bool>(OPTION_INCLUDEREGEX) ;
+      }
+      if ( _has(OPTION_INCLUDEBINARY) )
+      {  
+         _includeBinary = _get<bool>(OPTION_INCLUDEBINARY) ;
+      }
+      if ( _has(OPTION_FORCE) )
+      {  
+         _force = _get<bool>(OPTION_FORCE) ;
+      }
+      if ( _has(OPTION_WITHID) )
+      {  
+         _withId = _get<bool>(OPTION_WITHID) ;
+      }
+
+      if ( _has(OPTION_TYPE) )
+      {
+         _typeName = _get<string>(OPTION_TYPE) ;
+         rc = getFormatType( _typeName, _type ) ;
+         if ( SDB_OK != rc )
+         {
+            cerr << "invalid value for option \"" << OPTION_TYPE << "\"" <<endl;
+            PD_LOG( PDERROR, "invalid value for option \"" OPTION_TYPE "\"" ) ;
+            goto error ;
+         }
+      }
+
+      if ( _has(OPTION_FILELIMIT) )
+      {
+         rc = getFileLimit( _get<string>(OPTION_FILELIMIT), _fileLimit ) ;
+         if ( SDB_OK != rc )
+         {
+            cerr << "invalid value for option \"" 
+                 << OPTION_FILELIMIT << "\"" <<endl;
+            PD_LOG( PDERROR, "invalid value for option \""OPTION_FILELIMIT"\"");
+            goto error ;
+         }
+      }
+      
+      rc = _setDelOptions() ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "Failed to set del options" ) ;
+         goto error ;
+      }
+      rc = _setCollectionOptions() ; 
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "Failed to set collection options" ) ;
+         goto error ;
+      }
+      rc = _setFilePathOptions() ; 
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "Failed to set file-path options" ) ;
+         goto error ;
+      }
+      
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+}
