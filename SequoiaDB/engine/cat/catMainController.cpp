@@ -562,7 +562,9 @@ namespace engine
       {
          goto error ;
       }
-
+/*
+TODO:XUJIANHUI
+Begin Fobidden DC
       /// SYSLOG
       for ( UINT32 i = 0 ; i < CAT_SYSLOG_CL_NUM ; ++i )
       {
@@ -585,6 +587,8 @@ namespace engine
             goto error ;
          }
       }
+END Fobidden DC
+*/
 
    done :
       PD_TRACE_EXITRC ( SDB_CATMAINCT__ENSUREMETADATA, rc ) ;

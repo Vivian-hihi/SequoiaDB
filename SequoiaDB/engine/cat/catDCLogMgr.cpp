@@ -540,6 +540,10 @@ namespace engine
 
    INT32 _catDCLogMgr::restore()
    {
+      return SDB_OK ;
+/*
+TODO:XUJIANHUI
+Begin Fobidden DC
       INT32 rc = SDB_OK ;
       catDCLogItem *pLog = NULL ;
       UINT32 i = 0 ;
@@ -628,6 +632,8 @@ namespace engine
       return rc ;
    error:
       goto done ;
+END
+*/
    }
 
    INT32 _catDCLogMgr::search( const DPS_LSN &minLsn,
@@ -716,7 +722,12 @@ namespace engine
       ossScopedLock lock( &_latch, SHARED ) ;
       return _expectLsn ;
    }
-
+/*
+   DPS_LSN _catDCLogMgr::commitLsn()
+   {
+      return DPS_LSN() ;
+   }
+*/
    void _catDCLogMgr::getLsnWindow( DPS_LSN &beginLsn,
                                     DPS_LSN &endLsn,
                                     DPS_LSN *expected,
@@ -1011,6 +1022,10 @@ namespace engine
    INT32 _catDCLogMgr::saveSysLog( dpsLogRecordHeader *pHeader,
                                    DPS_LSN *pRetLSN )
    {
+      return SDB_OK ;
+/*
+TODO:XUJIANHUI
+Begin Fobidden DC
       INT32 rc = SDB_OK ;
       BOOLEAN valid = FALSE ;
       BSONObjBuilder builder ;
@@ -1062,6 +1077,8 @@ namespace engine
       return rc ;
    error:
       goto done ;
+END
+*/
    }
 
    UINT32 _catDCLogMgr::_incFileID ( UINT32 fileID )
