@@ -139,7 +139,8 @@ public class InnerDecimal {
 
 	// get decimal info for calculating
 	public int getTypeMod() {
-		return _typemod;
+		// when input nan/max/min, _digits is null
+		return  (_digits != null && _digits.length > 0) ? _typemod : -1;
 	}
 
 	public int getNDigits() {
@@ -164,10 +165,13 @@ public class InnerDecimal {
 
 	public short[] getDigits() {
 		short[] retDigits = new short[_ndigits];
-		if (!_hasCarry) {
-			System.arraycopy(_digits, 1, retDigits, 0, _ndigits);
-		} else {
-			System.arraycopy(_digits, 0, retDigits, 0, _ndigits);
+		// when input nan/max/min, _digits is null
+		if (_digits != null && _digits.length > 0) {
+			if (!_hasCarry) {
+				System.arraycopy(_digits, 1, retDigits, 0, _ndigits);
+			} else {
+				System.arraycopy(_digits, 0, retDigits, 0, _ndigits);
+			}
 		}
 		return retDigits;
 	}
