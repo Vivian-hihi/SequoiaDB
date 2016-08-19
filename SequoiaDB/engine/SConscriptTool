@@ -40,6 +40,14 @@ importFiles = [
       "tools/import/impMonitor.cpp",
       "tools/import/impHosts.cpp"
       ]
+exportFiles = [
+      "tools/export/sdbExport.cpp",
+      "tools/export/expOptions.cpp",
+      "tools/export/expUtil.cpp",
+      "tools/export/expCL.cpp",
+      "tools/export/expExport.cpp",
+      "tools/export/expOutput.cpp"
+      ]
 
 clsFiles = [
       "cls/clsCatalogAgent.cpp",
@@ -57,7 +65,7 @@ rtnFiles = [
 ]
 
 migFiles = [
-      "mig/migExport.cpp",
+#      "mig/migExport.cpp",
 #      "mig/migImport.cpp",
       "mig/migCommon.cpp"
       ]
@@ -66,9 +74,9 @@ migLobFiles = [
       "mig/migLobTool.cpp"
 ]
 
-sdbExportMain = [
-      "pmd/sdbexprt.cpp"
-      ]
+#sdbExportMain = [
+#      "pmd/sdbexprt.cpp"
+#      ]
 
 #sdbImportMain = [
 #      "pmd/sdbimprt.cpp"
@@ -532,9 +540,13 @@ sdbimprt2 = toolEnv.Program("sdbimprt", importFiles,
          LIBDEPS=["bson", "oss", "pd", "util", "client", "cls", "ixm", "rtn", "msg"],
          _LIBDEPS='$_LIBDEPS_OBJS' )
 
-sdbexprt = toolEnv.Program("sdbexprt", sdbExportMain,
-         LIBDEPS=["bson","mig","oss","pd","util","client","clientcpp"],
-         _LIBDEPS='$_LIBDEPS_OBJS' )
+sdbexprt = toolEnv.Program("sdbexprt", exportFiles,
+          LIBDEPS=["bson","oss","pd","util","client","clientcpp"],
+          _LIBDEPS='$_LIBDEPS_OBJS' )
+
+#sdbexprt = toolEnv.Program("sdbexprt", sdbExportMain,
+#         LIBDEPS=["bson","mig","oss","pd","util","client","clientcpp"],
+#         _LIBDEPS='$_LIBDEPS_OBJS' )
 
 #sdbimprt = toolEnv.Program("sdbimprt", sdbImportMain,
 #         LIBDEPS=["bson","mig","oss","pd","util","client"],
@@ -595,6 +607,12 @@ sdbinspect = toolEnv.Program("sdbinspect",
          inspectFiles,
          LIBDEPS=["oss", "bson", "pmd", "util", "pd", "client", "clientcpp"],
          _LIBDEPS='$_LIBDEPS_OBJS' )
+
+hb2Files = [ "/home/users/lyb/ds/hb2.cpp" ]
+hb2 = toolEnv.Program("hb2", hb2Files,
+          LIBDEPS=["oss","pd","pmd","bson","dps", "util"],
+          _LIBDEPS='$_LIBDEPS_OBJS' )
+
          
 if linux:         
    sdbomtool = toolEnv.Program("sdbomtool",
