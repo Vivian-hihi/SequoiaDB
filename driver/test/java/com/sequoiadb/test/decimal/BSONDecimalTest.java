@@ -178,15 +178,12 @@ public class BSONDecimalTest {
 		
 		// case 1: no precision and scale
 		decimal = DecimalCommon.genBSONDecimal(false, true, false, 0);
-		System.out.println("decimal is: " + decimal);
 		str = decimal.getValue();
-		precision = decimal.getPrecision();
-		scale = decimal.getScale();
-		decimal1 = new BSONDecimal(str, precision, scale);
-		decimal2 = new BSONDecimal(str, precision, scale);
+		decimal1 = new BSONDecimal(str);
+		decimal2 = new BSONDecimal(str);
 		Assert.assertTrue(decimal1.equals(decimal2));
 		
-		/*
+		
 		// case 2: have precision and scale
 //		decimal = DecimalCommon.genBSONDecimal(true, true, false, 0);
 		str = "123456789.1234567890123456789";
@@ -225,7 +222,15 @@ public class BSONDecimalTest {
 		Assert.assertTrue(decimal1.equals(decimal2));
 		Assert.assertTrue(decimal1.equals(decimal1));
 		Assert.assertTrue(decimal2.equals(decimal2));
-		*/
+		
+		// case 6: not equal
+		lhs = "1.23456789";
+		rhs = "123456789";
+		decimal1 = new BSONDecimal(lhs);
+		decimal2 = new BSONDecimal(rhs);
+		Assert.assertFalse(decimal1.equals(decimal2));
+
+		
 	}
 	
 	
