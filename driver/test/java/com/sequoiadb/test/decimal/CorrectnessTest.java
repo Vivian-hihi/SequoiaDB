@@ -4,6 +4,7 @@ import static org.junit.Assert.*;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Random;
 
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
@@ -201,34 +202,60 @@ public class CorrectnessTest {
         System.out.println("retDecimal7 is: " + retDecimal7);
         System.out.println("retDecimal8 is: " + retDecimal8);
         
+System.out.println("1");
+System.out.println("decimal: " + decimal1);
+System.out.println("retDecimal: " + retDecimal1);
+System.out.println("bigDecimal: " + new BigDecimal(decimal1.getValue()));
         Assert.assertEquals(decimal1.getPrecision(), retDecimal1.getPrecision());
         Assert.assertEquals(decimal1.getScale(), retDecimal1.getScale());
         Assert.assertEquals(0,new BigDecimal(decimal1.getValue()).compareTo(new BigDecimal(retDecimal1.getValue())));
-        
+System.out.println("2");
+System.out.println("decimal: " + decimal2);
+System.out.println("retDecimal: " + retDecimal2);
+System.out.println("bigDecimal: " + new BigDecimal(decimal2.getValue()));
         Assert.assertEquals(decimal2.getPrecision(), retDecimal2.getPrecision());
         Assert.assertEquals(decimal2.getScale(), retDecimal2.getScale());
         Assert.assertEquals(0,new BigDecimal(decimal2.getValue()).compareTo(new BigDecimal(retDecimal2.getValue())));
+System.out.println("3");
+System.out.println("decimal: " + decimal3);
+System.out.println("retDecimal: " + retDecimal3);
+System.out.println("bigDecimal: " + new BigDecimal(decimal3.getValue()));
         
         Assert.assertEquals(decimal3.getPrecision(), retDecimal3.getPrecision());
         Assert.assertEquals(decimal3.getScale(), retDecimal3.getScale());
         Assert.assertEquals(0,new BigDecimal(decimal3.getValue()).compareTo(new BigDecimal(retDecimal3.getValue())));
-        
+System.out.println("4");
+System.out.println("decimal: " + decimal4);
+System.out.println("retDecimal: " + retDecimal3);
+System.out.println("bigDecimal: " + new BigDecimal(decimal4.getValue()));
         Assert.assertEquals(decimal4.getPrecision(), retDecimal4.getPrecision());
         Assert.assertEquals(decimal4.getScale(), retDecimal4.getScale());
         Assert.assertEquals(0,new BigDecimal(decimal4.getValue()).compareTo(new BigDecimal(retDecimal4.getValue())));
-        
+System.out.println("5");
+System.out.println("decimal: " + decimal5);
+System.out.println("retDecimal: " + retDecimal5);
+System.out.println("bigDecimal: " + new BigDecimal(decimal5.getValue()));
         Assert.assertEquals(decimal5.getPrecision(), retDecimal5.getPrecision());
         Assert.assertEquals(decimal5.getScale(), retDecimal5.getScale());
         Assert.assertEquals(0,new BigDecimal(decimal5.getValue()).compareTo(new BigDecimal(retDecimal5.getValue())));
-        
+System.out.println("6");
+System.out.println("decimal: " + decimal6);
+System.out.println("retDecimal: " + retDecimal6);
+System.out.println("bigDecimal: " + new BigDecimal(decimal6.getValue()));
         Assert.assertEquals(decimal6.getPrecision(), retDecimal6.getPrecision());
         Assert.assertEquals(decimal6.getScale(), retDecimal6.getScale());
         Assert.assertEquals(0,new BigDecimal(decimal6.getValue()).compareTo(new BigDecimal(retDecimal6.getValue())));
-        
+System.out.println("7");
+System.out.println("decimal: " + decimal7);
+System.out.println("retDecimal: " + retDecimal7);
+System.out.println("bigDecimal: " + new BigDecimal(decimal7.getValue()));
         Assert.assertEquals(decimal7.getPrecision(), retDecimal7.getPrecision());
         Assert.assertEquals(decimal7.getScale(), retDecimal7.getScale());
         Assert.assertEquals(0,new BigDecimal(decimal7.getValue()).compareTo(new BigDecimal(retDecimal7.getValue())));
-        
+System.out.println("8");
+System.out.println("decimal: " + decimal8);
+System.out.println("retDecimal: " + retDecimal8);
+System.out.println("bigDecimal: " + new BigDecimal(decimal8.getValue()));
         Assert.assertEquals(decimal8.getPrecision(), retDecimal8.getPrecision());
         Assert.assertEquals(decimal8.getScale(), retDecimal8.getScale());
         Assert.assertEquals(0,new BigDecimal(decimal8.getValue()).compareTo(new BigDecimal(retDecimal8.getValue())));
@@ -512,6 +539,151 @@ public class CorrectnessTest {
 		Assert.assertEquals(0, big.compareTo(big2));
 	}
 	
+	
+	/**
+	 * 测试Nan/Max/Min/Max Precision/Max Scale
+	 */ 
+	@Test
+	public void boundaryTest() {
+		String MAX = "MAX";
+		String MIN = "MIN";
+		String NaN = "NaN";
+		DBCursor cur = null;
+		BSONObject obj = null;
+		BSONObject retObj = null;
+		BSONDecimal decimal = null;
+		BSONDecimal retDecimal = null;
+		String str = null;
+		int maxPrecision = 0;
+		int maxScale = 0;
+		int precision = 0;
+		int scale = 0;
+		Random rand = new Random();
+		
+		// case 1: Max
+		obj = new BasicBSONObject("case1", new BSONDecimal("max", 10, 5));
+		System.out.println("insert max key record is： " + obj);
+		cl.insert(obj);
+		cur = cl.query(obj, null, null, null);
+		Assert.assertTrue(cur.hasNext());
+		retObj = cur.getNext();
+		System.out.println("queried record is: " + retObj);
+		retDecimal = (BSONDecimal) retObj.get("case1");
+		System.out.println("value is: " + retDecimal.getValue());
+		System.out.println("precision is: " + retDecimal.getPrecision());
+		System.out.println("scale is: " + retDecimal.getScale());
+		Assert.assertEquals(MAX, retDecimal.getValue());
+		Assert.assertEquals(-1, retDecimal.getPrecision());
+		Assert.assertEquals(-1, retDecimal.getScale());
+		System.out.println("finish case 1");
+		
+		// case 2: Min
+		obj = new BasicBSONObject("case2", new BSONDecimal("MIN", 10, 5));
+		System.out.println("insert min record is： " + obj);
+		cl.insert(obj);
+		cur = cl.query(obj, null, null, null);
+		Assert.assertTrue(cur.hasNext());
+		retObj = cur.getNext();
+		System.out.println("queried record is: " + retObj);
+		retDecimal = (BSONDecimal) retObj.get("case2");
+		System.out.println("value is: " + retDecimal.getValue());
+		System.out.println("precision is: " + retDecimal.getPrecision());
+		System.out.println("scale is: " + retDecimal.getScale());
+		Assert.assertEquals(MIN, retDecimal.getValue());
+		Assert.assertEquals(-1, retDecimal.getPrecision());
+		Assert.assertEquals(-1, retDecimal.getScale());
+		System.out.println("finish case 2");
+		
+		// case 3: Nan
+		obj = new BasicBSONObject("case3", new BSONDecimal("Nan", 10, 5));
+		System.out.println("insert nan record is： " + obj);
+		cl.insert(obj);
+		cur = cl.query(obj, null, null, null);
+		Assert.assertTrue(cur.hasNext());
+		retObj = cur.getNext();
+		System.out.println("queried record is: " + retObj);
+		retDecimal = (BSONDecimal) retObj.get("case3");
+		System.out.println("value is: " + retDecimal.getValue());
+		System.out.println("precision is: " + retDecimal.getPrecision());
+		System.out.println("scale is: " + retDecimal.getScale());
+		Assert.assertEquals(NaN, retDecimal.getValue());
+		Assert.assertEquals(-1, retDecimal.getPrecision());
+		Assert.assertEquals(-1, retDecimal.getScale());
+		System.out.println("finish case 3");
+		
+		// case 4: Max Precision
+		maxPrecision = 131072;
+		str = "9";
+		for (int i = 1; i < maxPrecision; i++) {
+			str += rand.nextInt(10);
+		}
+		obj = new BasicBSONObject("case4", new BSONDecimal(str));
+		System.out.println("insert max precision record is： " + obj);
+		cl.insert(obj);
+		cur = cl.query(obj, null, null, null);
+		Assert.assertTrue(cur.hasNext());
+		retObj = cur.getNext();
+		System.out.println("queried record is: " + retObj);
+		retDecimal = (BSONDecimal) retObj.get("case4");
+		System.out.println("precision is: " + retDecimal.getScale());
+		Assert.assertEquals(str, retDecimal.getValue());
+		Assert.assertEquals(-1, retDecimal.getPrecision());
+		Assert.assertEquals(-1, retDecimal.getScale());
+		System.out.println("finish case 4");
+		
+		// case 5: more than max precision
+		str += "0";
+		obj = new BasicBSONObject("case5", new BSONDecimal(str));
+		System.out.println("insert more max precision record is： " + obj);
+		cl.insert(obj);
+		cur = cl.query(obj, null, null, null);
+		Assert.assertTrue(cur.hasNext());
+		retObj = cur.getNext();
+		System.out.println("queried record is: " + retObj);
+		retDecimal = (BSONDecimal) retObj.get("case5");
+		System.out.println("precision is: " + retDecimal.getScale());
+		Assert.assertEquals("0", retDecimal.getValue());
+		Assert.assertEquals(-1, retDecimal.getPrecision());
+		Assert.assertEquals(-1, retDecimal.getScale());
+		System.out.println("finish case 5");
+		
+		// case 5: Max Scale
+		maxScale = 16383;
+		str = "0.";
+		for (int i = 0; i < maxScale; i++) {
+			str += rand.nextInt(10);
+		}
+		obj = new BasicBSONObject("case6", new BSONDecimal(str));
+		System.out.println("insert max scale record is： " + obj);
+		cl.insert(obj);
+		cur = cl.query(obj, null, null, null);
+		Assert.assertTrue(cur.hasNext());
+		retObj = cur.getNext();
+		System.out.println("queried record is: " + retObj);
+		retDecimal = (BSONDecimal) retObj.get("case6");
+		System.out.println("precision is: " + retDecimal.getScale());
+		Assert.assertEquals(str, retDecimal.getValue());
+		Assert.assertEquals(-1, retDecimal.getPrecision());
+		Assert.assertEquals(-1, retDecimal.getScale());
+		System.out.println("finish case 6");
+		
+		// case 6: more than max scale
+		str += "0";
+		obj = new BasicBSONObject("case7", new BSONDecimal(str));
+		System.out.println("insert more max precision record is： " + obj);
+		cl.insert(obj);
+		cur = cl.query(obj, null, null, null);
+		Assert.assertTrue(cur.hasNext());
+		retObj = cur.getNext();
+		System.out.println("queried record is: " + retObj);
+		retDecimal = (BSONDecimal) retObj.get("case7");
+		System.out.println("precision is: " + retDecimal.getScale());
+		Assert.assertEquals("0", retDecimal.getValue());
+		Assert.assertEquals(-1, retDecimal.getPrecision());
+		Assert.assertEquals(-1, retDecimal.getScale());
+		System.out.println("finish case 7");
+	}
+	
 	/**
 	 * 测试使用错误数据格式
 	 */
@@ -576,7 +748,7 @@ public class CorrectnessTest {
 			cl.insert(new BasicBSONObject("a", new BSONDecimal(str, precision, scale)));
 			Assert.fail();
 			} catch(IllegalArgumentException e) {
-				//e.printStackTrace();
+//				e.printStackTrace();
 			}
 		}
 	}

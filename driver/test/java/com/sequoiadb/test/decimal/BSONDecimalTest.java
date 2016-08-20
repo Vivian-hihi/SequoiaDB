@@ -72,7 +72,7 @@ public class BSONDecimalTest {
 
 	@After
 	public void tearDown() throws Exception {
-//		cl.truncate();
+		cl.truncate();
 	}
 	
 	/**
@@ -161,5 +161,73 @@ public class BSONDecimalTest {
 		Assert.assertEquals(big.toPlainString(), retDecimal.getValue());
 		
 	}
+	
+	/**
+	 * 用户构建BSONDecimal对象后，对象持有的内容是否正确。
+	 */
+	@Test
+	public void BSONDecimalEqualsTest() {
+		String str = null;
+		String lhs = null;
+		String rhs = null;
+		BSONDecimal decimal = null;
+		BSONDecimal decimal1 = null;
+		BSONDecimal decimal2 = null;
+		int precision = 0;
+		int scale = 0;
+		
+		// case 1: no precision and scale
+		decimal = DecimalCommon.genBSONDecimal(false, true, false, 0);
+		System.out.println("decimal is: " + decimal);
+		str = decimal.getValue();
+		precision = decimal.getPrecision();
+		scale = decimal.getScale();
+		decimal1 = new BSONDecimal(str, precision, scale);
+		decimal2 = new BSONDecimal(str, precision, scale);
+		Assert.assertTrue(decimal1.equals(decimal2));
+		
+		/*
+		// case 2: have precision and scale
+//		decimal = DecimalCommon.genBSONDecimal(true, true, false, 0);
+		str = "123456789.1234567890123456789";
+		decimal = new BSONDecimal(str, 30, 15);
+		str = decimal.getValue();
+		precision = decimal.getPrecision();
+		scale = decimal.getScale();
+		System.out.println("precision is: " +decimal);
+		decimal1 = new BSONDecimal(str, precision, scale);
+		decimal2 = new BSONDecimal(str, precision, scale);
+		Assert.assertTrue(decimal1.equals(decimal2));
+		
+		// case 3: one has but another not 
+//		decimal = DecimalCommon.genBSONDecimal(true, true, false, 0);
+		str = "123456789.1234567890123456789";
+		decimal1 = new BSONDecimal(str, 100, 50);
+		decimal2 = new BSONDecimal(str);
+		decimal1 = new BSONDecimal(str, precision, scale);
+		decimal2 = new BSONDecimal(str, precision, scale);
+		Assert.assertTrue(decimal1.equals(decimal2));
+		
+		// case 4: compare with itself
+		str = "123456789.1234567890123456789";
+		decimal1 = new BSONDecimal(str, 100, 50);
+		decimal2 = new BSONDecimal(str);
+		decimal1 = new BSONDecimal(str, precision, scale);
+		decimal2 = new BSONDecimal(str, precision, scale);
+		Assert.assertTrue(decimal1.equals(decimal1));
+		Assert.assertTrue(decimal2.equals(decimal2));
+		
+		// case 5: has the same value, but different expression
+		lhs = "1.23456789E8";
+		rhs = "123456789";
+		decimal1 = new BSONDecimal(lhs);
+		decimal2 = new BSONDecimal(rhs);
+		Assert.assertTrue(decimal1.equals(decimal2));
+		Assert.assertTrue(decimal1.equals(decimal1));
+		Assert.assertTrue(decimal2.equals(decimal2));
+		*/
+	}
+	
+	
 
 }
