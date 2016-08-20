@@ -37,9 +37,11 @@ public class CorrectnessTest {
 	private static CollectionSpace cs;
 	private static DBCollection cl;
 	private static DBCursor cur;
+	private static Random rand;
 
 	@BeforeClass
 	public static void beforeClass() throws Exception {
+		rand = new Random();
 		// sdb
 		sdb = new Sequoiadb(Constants.COOR_NODE_CONN, "", "");
 		// cs
@@ -150,33 +152,22 @@ public class CorrectnessTest {
 	}
 	
 	/**
-	 * 测试插入不带整数部分的小数，如：".123",".0123e5"
+	 * 测试插入不带整数部分的小数，如："1.123","1.0123e5"
 	 */
 	@Test 
 //	@Ignore
-	public void decimalWithoutIntegerPartTest() {
+	public void decimalWithIntegerPartTest() {
 		// case 1: 
-        BSONDecimal decimal1 = DecimalCommon.genBSONDecimal(true, true, true, 20);
+        BSONDecimal decimal1 = DecimalCommon.genBSONDecimal(false, true, true, rand.nextInt(1000));
+        BSONDecimal decimal2 = DecimalCommon.genBSONDecimal(false, true, true, -rand.nextInt(1000));
+        BSONDecimal decimal3 = DecimalCommon.genBSONDecimal(false, true, false, 0);
         System.out.println("decimal1 is: " + decimal1);
-        BSONDecimal decimal2 = DecimalCommon.genBSONDecimal(true, true, false, 20);
         System.out.println("decimal2 is: " + decimal2);
-        BSONDecimal decimal3 = DecimalCommon.genBSONDecimal(true, false, true, 20);
         System.out.println("decimal3 is: " + decimal3);
-        BSONDecimal decimal4 = DecimalCommon.genBSONDecimal(true, false, false, 20);
-        System.out.println("decimal4 is: " + decimal4);
-        BSONDecimal decimal5 = DecimalCommon.genBSONDecimal(false, true, true, 15);
-        System.out.println("decimal5 is: " + decimal5);
-        BSONDecimal decimal6 = DecimalCommon.genBSONDecimal(false, true, false, 15);
-        System.out.println("decimal6 is: " + decimal6);
-        BSONDecimal decimal7 = DecimalCommon.genBSONDecimal(false, false, true, 15);
-        System.out.println("decimal7 is: " + decimal7);
-        BSONDecimal decimal8 = DecimalCommon.genBSONDecimal(false, false, false, 15);
-        System.out.println("decimal8 is: " + decimal8);
+        
         BSONObject obj = 
         		new BasicBSONObject("case1", "test_in_java").append("f1", decimal1).
-        		append("f2", decimal2).
-        		append("f3", decimal3).append("f4", decimal4).append("f5", decimal5).
-        		append("f6", decimal6).append("f7", decimal7).append("f8", decimal8);
+        		append("f2", decimal2).append("f3", decimal3);
 		System.out.println("inserted obj is: " + obj);
         cl.insert(obj);
         cur = cl.query(new BasicBSONObject().append("case1", new BasicBSONObject("$exists",1)), 
@@ -187,20 +178,10 @@ public class CorrectnessTest {
         BSONDecimal retDecimal1 = (BSONDecimal)obj.get("f1");
         BSONDecimal retDecimal2 = (BSONDecimal)obj.get("f2");
         BSONDecimal retDecimal3 = (BSONDecimal)obj.get("f3");
-        BSONDecimal retDecimal4 = (BSONDecimal)obj.get("f4");
-        BSONDecimal retDecimal5 = (BSONDecimal)obj.get("f5");
-        BSONDecimal retDecimal6 = (BSONDecimal)obj.get("f6");
-        BSONDecimal retDecimal7 = (BSONDecimal)obj.get("f7");
-        BSONDecimal retDecimal8 = (BSONDecimal)obj.get("f8");
 
         System.out.println("retDecimal1 is: " + retDecimal1);
         System.out.println("retDecimal2 is: " + retDecimal2);
         System.out.println("retDecimal3 is: " + retDecimal3);
-        System.out.println("retDecimal4 is: " + retDecimal4);
-        System.out.println("retDecimal5 is: " + retDecimal5);
-        System.out.println("retDecimal6 is: " + retDecimal6);
-        System.out.println("retDecimal7 is: " + retDecimal7);
-        System.out.println("retDecimal8 is: " + retDecimal8);
         
 System.out.println("1");
 System.out.println("decimal: " + decimal1);
@@ -224,43 +205,66 @@ System.out.println("bigDecimal: " + new BigDecimal(decimal3.getValue()));
         Assert.assertEquals(decimal3.getPrecision(), retDecimal3.getPrecision());
         Assert.assertEquals(decimal3.getScale(), retDecimal3.getScale());
         Assert.assertEquals(0,new BigDecimal(decimal3.getValue()).compareTo(new BigDecimal(retDecimal3.getValue())));
-System.out.println("4");
-System.out.println("decimal: " + decimal4);
-System.out.println("retDecimal: " + retDecimal3);
-System.out.println("bigDecimal: " + new BigDecimal(decimal4.getValue()));
-        Assert.assertEquals(decimal4.getPrecision(), retDecimal4.getPrecision());
-        Assert.assertEquals(decimal4.getScale(), retDecimal4.getScale());
-        Assert.assertEquals(0,new BigDecimal(decimal4.getValue()).compareTo(new BigDecimal(retDecimal4.getValue())));
-System.out.println("5");
-System.out.println("decimal: " + decimal5);
-System.out.println("retDecimal: " + retDecimal5);
-System.out.println("bigDecimal: " + new BigDecimal(decimal5.getValue()));
-        Assert.assertEquals(decimal5.getPrecision(), retDecimal5.getPrecision());
-        Assert.assertEquals(decimal5.getScale(), retDecimal5.getScale());
-        Assert.assertEquals(0,new BigDecimal(decimal5.getValue()).compareTo(new BigDecimal(retDecimal5.getValue())));
-System.out.println("6");
-System.out.println("decimal: " + decimal6);
-System.out.println("retDecimal: " + retDecimal6);
-System.out.println("bigDecimal: " + new BigDecimal(decimal6.getValue()));
-        Assert.assertEquals(decimal6.getPrecision(), retDecimal6.getPrecision());
-        Assert.assertEquals(decimal6.getScale(), retDecimal6.getScale());
-        Assert.assertEquals(0,new BigDecimal(decimal6.getValue()).compareTo(new BigDecimal(retDecimal6.getValue())));
-System.out.println("7");
-System.out.println("decimal: " + decimal7);
-System.out.println("retDecimal: " + retDecimal7);
-System.out.println("bigDecimal: " + new BigDecimal(decimal7.getValue()));
-        Assert.assertEquals(decimal7.getPrecision(), retDecimal7.getPrecision());
-        Assert.assertEquals(decimal7.getScale(), retDecimal7.getScale());
-        Assert.assertEquals(0,new BigDecimal(decimal7.getValue()).compareTo(new BigDecimal(retDecimal7.getValue())));
-System.out.println("8");
-System.out.println("decimal: " + decimal8);
-System.out.println("retDecimal: " + retDecimal8);
-System.out.println("bigDecimal: " + new BigDecimal(decimal8.getValue()));
-        Assert.assertEquals(decimal8.getPrecision(), retDecimal8.getPrecision());
-        Assert.assertEquals(decimal8.getScale(), retDecimal8.getScale());
-        Assert.assertEquals(0,new BigDecimal(decimal8.getValue()).compareTo(new BigDecimal(retDecimal8.getValue())));
         
-        System.out.println("finish");
+        System.out.println("finish decimalWithIntegerPartTest");
+	}
+	
+	/**
+	 * 测试插入不带整数部分的小数，如：".123",".0123e5"
+	 */
+	@Test 
+//	@Ignore
+	public void decimalWithoutIntegerPartTest() {
+		// case 1: 
+        BSONDecimal decimal1 = DecimalCommon.genBSONDecimal(false, false, true, rand.nextInt(1000));
+        BSONDecimal decimal2 = DecimalCommon.genBSONDecimal(false, false, true, -rand.nextInt(1000));
+        BSONDecimal decimal3 = DecimalCommon.genBSONDecimal(false, false, false, 0);
+        System.out.println("decimal1 is: " + decimal1);
+        System.out.println("decimal2 is: " + decimal2);
+        System.out.println("decimal3 is: " + decimal3);
+        
+        BSONObject obj = 
+        		new BasicBSONObject("case1", "test_in_java").append("f1", decimal1).
+        		append("f2", decimal2).append("f3", decimal3);
+		System.out.println("inserted obj is: " + obj);
+        cl.insert(obj);
+        cur = cl.query(new BasicBSONObject().append("case1", new BasicBSONObject("$exists",1)), 
+        		null, null, null);
+        assertTrue(cur.hasNext());
+        obj = cur.getNext();
+		System.out.println("returned obj is: " + obj);
+        BSONDecimal retDecimal1 = (BSONDecimal)obj.get("f1");
+        BSONDecimal retDecimal2 = (BSONDecimal)obj.get("f2");
+        BSONDecimal retDecimal3 = (BSONDecimal)obj.get("f3");
+
+        System.out.println("retDecimal1 is: " + retDecimal1);
+        System.out.println("retDecimal2 is: " + retDecimal2);
+        System.out.println("retDecimal3 is: " + retDecimal3);
+        
+System.out.println("1");
+System.out.println("decimal: " + decimal1);
+System.out.println("retDecimal: " + retDecimal1);
+System.out.println("bigDecimal: " + new BigDecimal(decimal1.getValue()));
+        Assert.assertEquals(decimal1.getPrecision(), retDecimal1.getPrecision());
+        Assert.assertEquals(decimal1.getScale(), retDecimal1.getScale());
+        Assert.assertEquals(0,new BigDecimal(decimal1.getValue()).compareTo(new BigDecimal(retDecimal1.getValue())));
+System.out.println("2");
+System.out.println("decimal: " + decimal2);
+System.out.println("retDecimal: " + retDecimal2);
+System.out.println("bigDecimal: " + new BigDecimal(decimal2.getValue()));
+        Assert.assertEquals(decimal2.getPrecision(), retDecimal2.getPrecision());
+        Assert.assertEquals(decimal2.getScale(), retDecimal2.getScale());
+        Assert.assertEquals(0,new BigDecimal(decimal2.getValue()).compareTo(new BigDecimal(retDecimal2.getValue())));
+System.out.println("3");
+System.out.println("decimal: " + decimal3);
+System.out.println("retDecimal: " + retDecimal3);
+System.out.println("bigDecimal: " + new BigDecimal(decimal3.getValue()));
+        
+        Assert.assertEquals(decimal3.getPrecision(), retDecimal3.getPrecision());
+        Assert.assertEquals(decimal3.getScale(), retDecimal3.getScale());
+        Assert.assertEquals(0,new BigDecimal(decimal3.getValue()).compareTo(new BigDecimal(retDecimal3.getValue())));
+        
+        System.out.println("finish decimalWithoutIntegerPartTest");
 	}
 	
 	/**

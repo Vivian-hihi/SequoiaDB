@@ -105,13 +105,19 @@ public class DecimalCommon {
 				while(--intPartDigits > 0) {
 					targetValue += rand.nextInt(10);
 				}
-			} else {
-				targetValue = ".";
 			}
+			targetValue += ".";
 			scalePartDigits = scale;
 			while(scalePartDigits-- > 0) {
 				targetValue += rand.nextInt(10);
 			}
+			// append exponent
+			if (hasE) {
+				targetValue += "E" + eNum;
+			}
+			targetValue = rand.nextBoolean() ? ("-" + targetValue) : targetValue;
+			// build return BSONDecimal
+			retDecimal = new BSONDecimal(targetValue, precision, scale);
 		} else {
 			maxPrecision = rand.nextInt(10 * MAX_PRECISION) + 1;
 			maxScale = rand.nextInt(10 * MAX_PRECISION);
@@ -126,14 +132,14 @@ public class DecimalCommon {
 			while(maxScale-- > 0) {
 				targetValue += rand.nextInt(10);
 			}
+			// append exponent
+			if (hasE) {
+				targetValue += "E" + eNum;
+			}
+			targetValue = rand.nextBoolean() ? ("-" + targetValue) : targetValue;
+			// build return BSONDecimal
+			retDecimal = new BSONDecimal(targetValue);
 		}
-		// append exponent
-		if (hasE) {
-			targetValue += "E" + (rand.nextBoolean() ? ("-" + eNum) : eNum);
-		}
-		targetValue = rand.nextBoolean() ? ("-" + targetValue) : targetValue;
-		// build return BSONDecimal
-		retDecimal = new BSONDecimal(targetValue);
 		
 		return retDecimal;
 	}
