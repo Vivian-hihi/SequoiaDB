@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<doc major_release="2" minor_release="6">
+<doc major_release="2" minor_release="1">
     <objlist>
         <obj>
             <id>1432190594</id>
@@ -2285,10 +2285,10 @@
                                 </obj>
                                 <obj>
                                     <id>1464671059</id>
-                                    <cnname>Decimal</cnname>
-                                    <enname>Decimal</enname>
-                                    <cnpath>SdbDoc_Cn/reference/Sequoiadb_command/SpecialObjects/Decimal.html</cnpath>
-                                    <enpath>SdbDoc_En/reference/Sequoiadb_command/SpecialObjects/Decimal.html</enpath>
+                                    <cnname>NumberDecimal</cnname>
+                                    <enname>NumberDecimal</enname>
+                                    <cnpath>SdbDoc_Cn/reference/Sequoiadb_command/SpecialObjects/NumberDecimal.html</cnpath>
+                                    <enpath>SdbDoc_En/reference/Sequoiadb_command/SpecialObjects/NumberDecimal_en.html</enpath>
                                     <enabled>true</enabled>
                                 </obj>
                             </objlist>
