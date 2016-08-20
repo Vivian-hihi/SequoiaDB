@@ -15,12 +15,15 @@
  * Manual Compile:
  *    Dynamic Linking:
  *    Linux:
- *       g++ insert.cpp common.cpp -o insert -I../../include
- *       -L../../lib -lsdbcpp
+ *       g++ insert.cpp common.cpp -o insert -I../../include -O0 -ggdb \ 
+ *       -Wno-deprecated -L../../lib -lsdbcpp -lm -ldl
  *    Win:
- *       cl /Foinsert.obj /c insert.cpp /I..\..\include /wd4047
- *       cl /Focommon.obj /c common.cpp /I..\..\include /wd4047
- *       link /OUT:insert.exe /LIBPATH:..\..\lib sdbcpp.lib insert.obj common.obj
+ *       cl /Foinsert.obj /c insert.cpp /I..\..\include /wd4047 /Od /MDd /RTC1 \
+ *       /Z7 /TP
+ *       cl /Focommon.obj /c common.cpp /I..\..\include /wd4047 /Od /MDd /RTC1 \
+ *       /Z7 /TP
+ *       link /OUT:insert.exe /LIBPATH:..\..\lib sdbcpp.lib insert.obj common.obj \
+ *       /build
  *       copy ..\..\lib\sdbcpp.dll .
  *    Static Linking:
  *    Linux: g++ insert.cpp common.cpp -o insert.static -I../../include -O0

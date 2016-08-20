@@ -15,12 +15,15 @@
  * Manual Compile:
  *    Dynamic Linking:
  *    Linux:
- *       g++ index.cpp common.cpp -o index -I../../include
- *       -L../../lib -lsdbcpp
+ *       g++ index.cpp common.cpp -o index -I../../include -O0 -ggdb \
+ *       -Wno-deprecated -L../../lib -lsdbcpp -lm -ldl
  *    Win:
- *       cl /Foindex.obj /c index.cpp /I..\..\include /wd4047
- *       cl /Focommon.obj /c common.cpp /I..\..\include /wd4047
- *       link /OUT:index.exe /LIBPATH:..\..\lib sdbcpp.lib index.obj common.obj
+ *       cl /Foindex.obj /c index.cpp /I..\..\include /wd4047 /Od /MDd /RTC1 \ 
+ *       /Z7 /TP
+ *       cl /Focommon.obj /c common.cpp /I..\..\include /wd4047 /Od /MDd /RTC1 \ 
+ *       /Z7 /TP
+ *       link /OUT:index.exe /LIBPATH:..\..\lib sdbcpp.lib index.obj common.obj \
+ *       /build
  *       copy ..\..\lib\sdbcpp.dll .
  *    Static Linking:
  *    Linux: g++ index.cpp common.cpp -o index.static -I../../include -O0
