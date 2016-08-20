@@ -9,7 +9,11 @@ Import("ssllib_file1")
 Import("mergeStaticLibrary")
 
 clientCPPFiles = [
-      "client/clientcpp.cpp"
+      "client/clientcpp.cpp",
+      "client/sdbDataSource.cpp",
+      "client/sdbDataSourceComm.cpp",
+      "client/sdbDataSourceStrategy.cpp",
+      "client/sdbDataSourceWorker.cpp"
       ]
 #for threadsafe build, we should add this into clientLibFiles
 clientCPPThreadSafe = [
@@ -76,6 +80,19 @@ elif windows:
 
 #Header files
 clientCppEnv.Install( '#/client/include/', "client/client.hpp" )
+# sdbDataSource files
+clientCppEnv.Install( '#/client/include/', "client/sdbDataSource.hpp")
+clientCppEnv.Install( '#/client/include/', "client/sdbDataSourceComm.hpp")
+clientCppEnv.Install( '#/client/include/', "include/ossLatch.hpp")
+clientCppEnv.Install( '#/client/include/', "include/oss.h")
+clientCppEnv.Install( '#/client/include/', "include/oss.hpp")
+clientCppEnv.Install( '#/client/include/', "include/ossMem.h")
+clientCppEnv.Install( '#/client/include/', "include/ossMem.hpp")
+clientCppEnv.Install( '#/client/include/', "include/pd.hpp")
+clientCppEnv.Install( '#/client/include/', "include/pdErr.hpp")
+clientCppEnv.Install( '#/client/include/', "include/ossAtomic.hpp")
+clientCppEnv.Install( '#/client/include/', "include/ossAtomicBase.hpp")
+
 clientCppEnv.Install( '#/client/include/', "include/core.hpp" )
 clientCppEnv.Install( '#/client/include/', "include/ossFeat.hpp" )
 clientCppEnv.Install( '#/client/include/', "include/ossTypes.hpp" )
