@@ -1,0 +1,268 @@
+/*******************************************************************************
+
+
+   Copyright (C) 2011-2016 SequoiaDB Ltd.
+
+   This program is free software: you can redistribute it and/or modify
+   it under the term of the GNU Affero General Public License, version 3,
+   as published by the Free Software Foundation.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY ; without even the implied warrenty of
+   MARCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+   GNU Affero General Public License for more details.
+
+   You should have received a copy of the GNU Affero General Public License
+   along with this program. If not, see <http://www.gnu.org/license/>.
+
+   Source File Name = sdbDataSource.hpp
+
+   Descriptive Name = SDB Data Source Include Header
+
+   When/how to use: this program may be used on sequoiadb data source function.
+
+   Dependencies: N/A
+
+   Restrictions: N/A
+
+   Change Activity:
+   defect Date        Who Description
+   ====== =========== === ==============================================
+         06/30/2016  LXJ  Initial Draft
+
+   Last Changed =
+
+*******************************************************************************/
+
+/** \file sdbDataSource.hpp
+    \brief C++ sdb data source
+*/
+
+#ifndef SDB_DATA_SOURCE_HPP_
+#define SDB_DATA_SOURCE_HPP_
+
+#include "sdbDataSourceComm.hpp"
+#include <list>
+#include "ossLatch.hpp"
+#include "ossMem.hpp"
+#include "ossAtomic.hpp"
+
+/** \namespace sdbclient
+    \brief SequoiaDB Driver for C++
+*/
+
+namespace sdbclient
+{
+   class sdbDataSourceStrategy ;
+   class sdbDSWorker ;
+   /** \class sdbDataSource
+       \brief The sdb data source
+   */
+   class DLLEXPORT sdbDataSource : public SDBObject
+   {
+      friend void createConnFunc( void *args ) ;
+      friend void destroyConnFunc( void *args ) ;
+      friend void bgTaskFunc( void *args ) ;
+      
+   public:
+      /** \fn sdbDataSource()
+         \brief The constructor of sdbDataSource
+      */
+      sdbDataSource()
+         : _idleList(),
+         _idleSize(0),
+         _busyList(),
+         _busySize(0),
+         _destroyList(),
+         _conf(),
+         _strategy(NULL),
+         _connMutex(),
+         _globalMutex(),
+         _isInited(FALSE),
+         _isEnabled(FALSE),
+         _toCreateConn(FALSE),
+         _toDestroyConn(FALSE),
+         _toStopWorkers(FALSE),
+         _createConnWorker(NULL),
+         _destroyConnWorker(NULL),
+         _bgTaskWorker(NULL) {}
+
+      /** \fn ~sdbDataSource()
+         \brief The destructor of sdbDataSource
+      */
+      ~sdbDataSource() ;
+
+   private:
+      sdbDataSource( const sdbDataSource &datasource ) ;
+      sdbDataSource& operator=( const sdbDataSource &datasource ) ;
+
+   public:
+      /** \fn INT32 init(const std::string &url, 
+         const sdbDataSourceConf &conf)
+         \brief Initialize sdbDataSource
+         \param [in] url A coord node("ubuntu-xxx:11810")
+         \param [in] conf The sdbDataSourceConf
+         \retval SDB_OK Operation Success
+         \retval Others Operation Fail
+      */
+      INT32 init( const std::string &url, const sdbDataSourceConf &conf ) ;
+
+      /** \fn INT32 init(const std::vector<std::string> &vUrls,
+         const sdbDataSourceConf &conf)
+         \brief Initialize sdbDataSource
+         \param [in] vUrls A list of coord node("ubuntu-xxx:11810")
+         \param [in] conf The sdbDataSourceConf
+         \retval SDB_OK Operation Success
+         \retval Others Operation Fail
+      */
+      INT32 init( 
+         const std::vector<std::string> &vUrls, 
+         const sdbDataSourceConf &conf ) ;
+
+#if defined (_DEBUG)
+      // get idle connection number
+      INT32 getIdleConnNum()const  ;
+
+      // get used connection number
+      INT32 getUsedConnNum()const  ;
+
+      // get the number of normal coord node
+      INT32 getNormalCoordNum()const  ;
+
+      // get the number of abnormal coord node
+      INT32 getAbnormalCoordNum() const  ;
+
+      // get the number of local coord node
+      INT32 getLocalCoordNum()const  ;
+#endif
+
+      /** \fn INT32 addCoord(const string &url)
+         \brief Add a coord node
+         \param [in] url A coord node("ubuntu-xxx:11810")
+      */
+      void addCoord( const string &url ) ;
+
+      /** \fn INT32 removeCoord(const string &url)
+         \brief Remove a coord node
+         \param [in] url A coord node("ubuntu-xxx:11810")
+      */
+      void removeCoord( const string &url ) ;
+
+      /** \fn INT32 enable()
+         \brief Enable sdbDataSource
+         \retval SDB_OK Operation Success
+         \retval Others Operation Fail
+      */
+      INT32 enable() ;
+
+      /** \fn INT32 disable()
+         \brief Disable sdbDataSource
+         \retval SDB_OK Operation Success
+         \retval Others Operation Fail
+      */
+      INT32 disable() ;
+
+      /** \fn INT32 getConnection(sdb*& conn, INT32 timeout = 3)
+         \brief Get a connection form sdbDataSource
+         \param [out] conn A connection
+         \param [in] timeout The time to wait when connection number reach to 
+         max connection number,default:3s
+         \retval SDB_OK Operation Success
+         \retval Others Operation Fail
+      */
+      INT32 getConnection( sdb*& conn, INT32 timeoutsec = 3 ) ;
+
+      /** \fn INT32 releaseConnection(sdb *conn)
+         \brief Give back a connection to sdbDataSource
+         \param [in] conn A connection
+         \retval SDB_OK Operation Success
+         \retval Others Operation Fail
+      */
+      void releaseConnection(sdb *conn) ;
+
+      /** \fn void close()
+         \brief Close sdbDataSource
+      */
+      void close() ;
+
+   
+//#if defined (_DEBUG)
+//   private:
+//      void printCreateInfo(const std::string& coord) ;
+//#endif
+
+
+   private:
+      // check address arguments, if valid, add it
+      BOOLEAN _checkAddrArg( const string &url ) ;
+
+      // new a strategy with config
+      INT32 _buildStrategy() ;
+
+      // clear data source
+      void _clearDataSource() ;
+
+      // try to get a connection
+      BOOLEAN _tryGetConn( sdb*& conn ) ;
+
+      // create connection by a number
+      INT32 _createConnByNum( INT32 num ) ;
+
+      // sync coord node info
+      void _syncCoordNodes() ;
+
+      // check abnormal node
+      INT32 _checkAbnormalNodesCnt() ;
+
+      // check keep alive time out
+      BOOLEAN _checkKeepAliveTimeOut( sdb *conn ) ;
+
+      // check max connection number intervally
+      void _checkMaxIdleConn() ;
+
+      // add new connection and make sure not reach max connection count
+      BOOLEAN _addNewConnSafely( sdb *conn, const std::string &coord );
+
+   private:
+      // create connections function
+      void _createConn() ;
+
+      //destroy connections function
+      void _destroyConn() ;
+
+      // background task function
+      void _bgTask() ;
+
+   private:
+      // idle connection list
+      std::list<sdb*>         _idleList ;
+      ossAtomic32             _idleSize ;
+      // busy connection list
+      std::list<sdb*>         _busyList ;
+      ossAtomic32             _busySize ;
+      // to be destroyed connection list
+      std::list<sdb*>         _destroyList ;
+      // data source confiture
+      sdbDataSourceConf       _conf ;
+      // data source strategy
+      sdbDataSourceStrategy*  _strategy ;
+      // lock for connection lists
+      ossSpinXLatch           _connMutex ;
+      // lock for global commuincate
+      ossSpinXLatch           _globalMutex ;
+      // if has been inited
+      BOOLEAN                 _isInited ;
+      // if is enabled
+      BOOLEAN                 _isEnabled ;
+
+   private:
+      BOOLEAN                 _toCreateConn ;
+      BOOLEAN                 _toDestroyConn ;
+      BOOLEAN                 _toStopWorkers ;
+      sdbDSWorker*            _createConnWorker ;
+      sdbDSWorker*            _destroyConnWorker ;
+      sdbDSWorker*            _bgTaskWorker ;
+   } ;
+}
+
+#endif
