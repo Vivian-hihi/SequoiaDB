@@ -219,16 +219,17 @@
       <long>maxpool</long>
       <typeofweb>str</typeofweb>
       <description>
-         <en>The maximum number of pooled agent,defalut:0</en>
-         <cn>最大代理线程池,默认值为0</cn>
+         <en>The maximum number of pooled agent,defalut:20, value range:[0,10000]</en>
+         <cn>最大代理线程池,默认值为20,取值范围:[0,10000]</cn>
       </description>
       <type>int</type>
       <detail>
          <en>1. It specifies the amount of thread in thread pool.<fig></fig>
-             2. If it is not specified, the default value is 0.</en>
+             2. If it is not specified, the default value is 20, value range is [0,10000].</en>
          <cn>1.指定线程池内线程数量。<fig></fig>
-             2.如果不指定，则默认为0。</cn>
+             2.如果不指定，则默认为20，取值范围是[0,10000]。</cn>
       </detail>
+      <default>20</default>
       <typeofweb>num</typeofweb>
    </opt>
 
@@ -770,42 +771,6 @@
    </opt>
 
    <opt>
-      <name>PMD_OPTION_NUMPAGECLEANERS</name>
-      <long>numpagecleaners</long>
-      <description>
-         <en>Number of page cleaners, default 0, value range:[0, 50]</en>
-         <cn>启动脏页清除器的数量，默认为1，取值范围：[0, 50]</cn>
-      </description>
-      <detail>
-         <en>The number of page cleaner threads to start during database startup.<fig></fig>
-             0 means do not start any page cleaners, default 0, value range:[0, 50].<fig></fig></en>
-         <cn>数据库启动时需要开启的脏页清除器数量<fig></fig>
-             0意味着不启动任何脏页清除器，默认为1，取值范围：[0, 50]。<fig></fig></cn>
-      </detail>
-      <type>int</type>
-      <default>0</default>
-      <typeofweb>num</typeofweb>
-   </opt>
-
-   <opt>
-      <name>PMD_OPTION_PAGECLEANINTERVAL</name>
-      <long>pagecleaninterval</long>
-      <description>
-         <en>The minimal interval between two cleanup actions for each collection space (in ms, default 10000, min 1000 )</en>
-         <cn>对每个集合空间的进行脏页清除的最小间隔，单位毫秒，默认10000，最小1000</cn>
-      </description>
-      <detail>
-         <en>The minimum interval between two cleanup actions for each CS<fig></fig>
-             Unit: ms, Default: 10000, Min: 1000<fig></fig></en>
-         <cn>对每个集合空间的进行脏页清除的最小时间间隔<fig></fig>
-             单位：毫秒，默认：10000，最小：1000<fig></fig></cn>
-      </detail>
-      <type>int</type>
-      <default>10000</default>
-      <typeofweb>num</typeofweb>
-   </opt>
-
-   <opt>
       <name>PMD_OPTION_LOBPATH</name>
       <long>lobpath</long>
       <description>
@@ -843,9 +808,10 @@
          <cn>当扩展文件时，使用稀疏文件功能</cn>
       </description>
       <detail>
-         <en>Extend the file as a sparse file, if it is not specified, the default value is "false"</en>
-         <cn>当扩展文件时，使用稀疏文件功能，如果不指定，默认值为"false"</cn>
+         <en>Extend the file as a sparse file, if it is not specified, the default value is "true"</en>
+         <cn>当扩展文件时，使用稀疏文件功能，如果不指定，默认值为"true"</cn>
       </detail>
+      <default>true</default>
       <typeofweb>boolean</typeofweb>
    </opt>
 
@@ -970,15 +936,15 @@
       <name>PMD_OPTION_OPERATOR_TIMEOUT</name>
       <long>optimeout</long>
       <description>
-         <en>The timeout period for heartbeat in each operation ( in ms ), default:30000, 0 for no-timeout </en>
-         <cn>判定操作中断的时间(ms),默认值:30000, 0表示不超时</cn>
+         <en>The timeout period for heartbeat in each operation ( in ms ), default:300000, 0 for no-timeout </en>
+         <cn>判定操作中断的时间(ms),默认值:300000, 0表示不超时</cn>
       </description>
       <detail>
-         <en>The timeout period for heartbeat in each operation ( in ms ), default:30000, 0 for no-timeout</en>
-         <cn>判定操作中断的时间(ms),默认值:30000, 0表示不超时</cn>
+         <en>The timeout period for heartbeat in each operation ( in ms ), default:300000, 0 for no-timeout</en>
+         <cn>判定操作中断的时间(ms),默认值:300000, 0表示不超时</cn>
       </detail>
       <type>int</type>
-      <default>30000</default>
+      <default>300000</default>
       <typeofweb>num</typeofweb>
    </opt>
 
@@ -1074,6 +1040,91 @@
       <type>int</type>
       <default>10</default>
       <typeofweb>num</typeofweb>
+   </opt>
+
+   <opt>
+      <name>PMD_OPTION_MAX_SYNC_JOB</name>
+      <long>maxsyncjob</long>
+      <description>
+         <en>The maximum number of data-sync threads, default:10, value range:[2, 200]</en>
+         <cn>后台数据同步任务线程的最大数量，默认值为10，取值范围为[2, 200]</cn>
+      </description>
+      <detail>
+         <en>1.The maximum number of data-sync threads, default:10, value range:[2, 200].<fig></fig>
+             2.Data-sync threads will synchronize the dirty data to file.<fig></fig>
+             3.Data-sync threads auto start and exit according to the workload.</en>
+         <cn>1.后台数据同步任务线程的最大数量，默认值为10，取值范围为[2, 200]。<fig></fig>
+             2.后台数据同步任务线程主要执行同步脏数据和日志至文件。<fig></fig>
+             3.后台数据同步任务线程根据负载情况自动启动和退出。</cn>
+      </detail>
+      <type>int</type>
+      <default>10</default>
+      <typeofweb>num</typeofweb>
+   </opt>
+
+   <opt>
+      <name>PMD_OPTION_SYNC_INTERVAL</name>
+      <long>syncinterval</long>
+      <description>
+         <en>The interval time(unit:ms) of data-sync, default:10000, 0 means disable data-sync by time</en>
+         <cn>后台数据同步周期，单位毫秒，默认值为10000，0表示不按周期触发数据同步</cn>
+      </description>
+      <detail>
+         <en>The interval times(unit:ms) of data-sync, default:10000, 0 means disable data-sync by time</en>
+         <cn>后台数据同步周期，单位毫秒，默认值为10000，0表示不按周期触发数据同步</cn>
+      </detail>
+      <type>int</type>
+      <default>10000</default>
+      <typeofweb>num</typeofweb>
+   </opt>
+
+   <opt>
+      <name>PMD_OPTION_SYNC_RECORDNUM</name>
+      <long>syncrecordnum</long>
+      <description>
+         <en>The trigger condition of record number of data-sync, default:0, 0 means disable data-sync by record</en>
+         <cn>后台数据同步触发记录数，默认值为0，0表示不按记录数触发数据同步</cn>
+      </description>
+      <detail>
+         <en>The trigger condition of record number of data-sync, default:0, 0 means disable data-sync by record</en>
+         <cn>后台数据同步触发记录数，默认值为0，0表示不按记录数触发数据同步</cn>
+      </detail>
+      <type>int</type>
+      <default>0</default>
+      <typeofweb>num</typeofweb>
+   </opt>
+
+   <opt>
+      <name>PMD_OPTION_SYNC_DIRTYRATIO</name>
+      <long>syncdirtyratio</long>
+      <description>
+         <en>The trigger condition of dirty page ratio of data-sync, default:50, value range:[1,99]</en>
+         <cn>后台数据同步触发脏页比率，默认值为50，取值范围[1,99]</cn>
+      </description>
+      <detail>
+         <en>The trigger condition of dirty page ratio of data-sync, default:50, value range:[1,99]</en>
+         <cn>后台数据同步触发脏页比率，默认值为50，取值范围[1,99]</cn>
+      </detail>
+      <type>int</type>
+      <default>50</default>
+      <typeofweb>num</typeofweb>
+   </opt>
+
+   <opt>
+      <name>PMD_OPTION_SYNC_DEEP</name>
+      <long>syncdeep</long>
+      <description>
+         <en>Turn on deep mode in data-sync, default:FALSE</en>
+         <cn>数据同步是否开启深度刷盘,默认为:FALSE</cn>
+      </description>
+      <default>false</default>
+      <detail>
+         <en>1. It specifies whether deep mode turns on or not in data-sync.<fig></fig>
+             2. If it is not specifed, the default value is false.</en>
+         <cn>1. 数据同步是否开启深度刷盘。<fig></fig>
+             2. 如果不指定，则默认为false。</cn>
+      </detail>
+      <typeofweb>boolean</typeofweb>
    </opt>
 
 </optlist>
