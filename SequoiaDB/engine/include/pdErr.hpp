@@ -57,10 +57,10 @@ void     pdSetLastError( INT32 err ) ;
 class _pdGeneralException : public std::exception
 {
    public:
-      _pdGeneralException( const CHAR *str ) ;
+      _pdGeneralException( const std::string &str ) ;
       _pdGeneralException( INT32 err ) ;
-      _pdGeneralException( INT32 err, const CHAR *str ) ;
-      _pdGeneralException( const CHAR *str, INT32 err ) ;
+      _pdGeneralException( INT32 err, const std::string &str ) ;
+      _pdGeneralException( const std::string &str, INT32 err ) ;
       ~_pdGeneralException() throw() {}
 
       virtual const CHAR *what() const throw()

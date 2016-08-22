@@ -50,6 +50,7 @@ namespace engine
    _dmsStorageUnit::_dmsStorageUnit ( const CHAR *pSUName,
                                       UINT32 sequence,
                                       utilCacheMgr *pMgr,
+                                      dmsPersistStatus *pStatus,
                                       INT32 pageSize,
                                       INT32 lobPageSize )
    :_apm(this),
@@ -84,6 +85,8 @@ namespace engine
       _storageInfo._sequence = sequence ;
       _storageInfo._overflowRatio = options->getOverFlowRatio() ;
       _storageInfo._extentThreshold = options->getExtendThreshold() << 20 ;
+      _storageInfo._enableSparse = options->sparseFile() ;
+      _storageInfo._directIO = options->useDirectIOInLob() ;
       // make secret value
       _storageInfo._secretValue = ossPack32To64( (UINT32)time(NULL),
                                                  (UINT32)(ossRand()*239641) ) ;
@@ -93,7 +96,9 @@ namespace engine
       ossSnprintf( idxFileName, DMS_SU_FILENAME_SZ, "%s.%d.%s",
                    _storageInfo._suName, sequence, DMS_INDEX_SU_EXT_NAME ) ;
 
-      _pDataSu = SDB_OSS_NEW dmsStorageData( dataFileName, &_storageInfo ) ;
+      _pDataSu = SDB_OSS_NEW dmsStorageData( dataFileName,
+                                             &_storageInfo,
+                                             pStatus ) ;
       if ( _pDataSu )
       {
          _pIndexSu = SDB_OSS_NEW dmsStorageIndex( idxFileName, &_storageInfo,
@@ -154,9 +159,11 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_OPEN, "_dmsStorageUnit::open" )
-   INT32 _dmsStorageUnit::open( const CHAR *pDataPath, const CHAR *pIndexPath,
+   INT32 _dmsStorageUnit::open( const CHAR *pDataPath,
+                                const CHAR *pIndexPath,
                                 const CHAR *pLobPath,
-                                BOOLEAN createNew, BOOLEAN delWhenExist )
+                                IDataSyncManager *pSyncMgr,
+                                BOOLEAN createNew )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__DMSSU_OPEN ) ;
@@ -176,7 +183,7 @@ namespace engine
       }
 
       // open data
-      rc = _pDataSu->openStorage( pDataPath, createNew, delWhenExist ) ;
+      rc = _pDataSu->openStorage( pDataPath, pSyncMgr, createNew ) ;
       if ( rc )
       {
          PD_LOG( PDERROR, "Open storage data su failed, rc: %d", rc ) ;
@@ -188,7 +195,7 @@ namespace engine
       }
 
       // open index
-      rc = _pIndexSu->openStorage( pIndexPath, createNew, delWhenExist ) ;
+      rc = _pIndexSu->openStorage( pIndexPath, pSyncMgr, createNew ) ;
       if ( rc )
       {
          PD_LOG( PDERROR, "Open storage index su failed, rc: %d", rc ) ;
@@ -204,7 +211,7 @@ namespace engine
       }
 
       // open lob
-      rc = _pLobSu->open( pLobPath, createNew, delWhenExist ) ;
+      rc = _pLobSu->open( pLobPath, pSyncMgr, createNew ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to open storage lob, rc:%d", rc ) ;
@@ -244,24 +251,38 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_CLOSE, "_dmsStorageUnit::close" )
-   void _dmsStorageUnit::close ()
+   void _dmsStorageUnit::close()
    {
       PD_TRACE_ENTRY ( SDB__DMSSU_CLOSE ) ;
+      pmdEDUCB *cb = pmdGetThreadEDUCB() ;
+      UINT64 lastLSN = 0 ;
+
+      if ( cb && cb->getLsnCount() > 0 )
+      {
+         lastLSN = cb->getEndLsn() ;
+      }
+      else
+      {
+         lastLSN = pmdGetSyncMgr()->getCompleteLSN() ;
+      }
+
+      /// The order is:
+      /// cacheUnit -> lob -> index -> data( must be in last )
       if ( _pCacheUnit )
       {
-         _pCacheUnit->fini( pmdGetThreadEDUCB() ) ;
-      }
-      if ( _pIndexSu )
-      {
-         _pIndexSu->closeStorage() ;
-      }
-      if ( _pDataSu )
-      {
-         _pDataSu->closeStorage() ;
+         _pCacheUnit->fini( cb ) ;
       }
       if ( _pLobSu )
       {
-         _pLobSu->closeStorage() ;
+         _pLobSu->closeStorage( lastLSN ) ;
+      }
+      if ( _pIndexSu )
+      {
+         _pIndexSu->closeStorage( lastLSN ) ;
+      }
+      if ( _pDataSu )
+      {
+         _pDataSu->closeStorage( lastLSN ) ;
       }
       PD_TRACE_EXIT ( SDB__DMSSU_CLOSE ) ;
    }
@@ -271,19 +292,9 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__DMSSU_REMOVE ) ;
-      if ( _pDataSu )
-      {
-         rc = _pDataSu->removeStorage() ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to remove collection space[%s] "
-                      "data file, rc: %d", CSName(), rc ) ;
-      }
 
-      if ( _pIndexSu )
-      {
-         rc = _pIndexSu->removeStorage() ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to remove collection space[%s] "
-                      "index file, rc: %d", CSName(), rc ) ;
-      }
+      /// The order is:
+      /// cacheUnit -> lob -> index -> data( must be in last )
 
       if ( _pCacheUnit )
       {
@@ -293,6 +304,20 @@ namespace engine
       if ( _pLobSu )
       {
          _pLobSu->removeStorageFiles() ;
+      }
+
+      if ( _pIndexSu )
+      {
+         rc = _pIndexSu->removeStorage() ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to remove collection space[%s] "
+                      "index file, rc: %d", CSName(), rc ) ;
+      }
+
+      if ( _pDataSu )
+      {
+         rc = _pDataSu->removeStorage() ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to remove collection space[%s] "
+                      "data file, rc: %d", CSName(), rc ) ;
       }
 
       PD_LOG( PDEVENT, "Remove collection space[%s] files succeed", CSName() ) ;
@@ -333,12 +358,12 @@ namespace engine
                                         const CHAR *pBuffer,
                                         UINT16 numPages,
                                         const BOOLEAN toLoad,
-                                        SINT32 *tAllocatedExtent,
-                                        dmsExtent **tExtAddr )
+                                        SINT32 *tAllocatedExtent )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__DMSSU_LDEXTA ) ;
 
+      dmsExtRW extRW ;
       dmsExtent *sourceExt  = (dmsExtent*)pBuffer ;
       dmsExtent *extAddr = NULL ;
       SINT32 allocatedExtent = DMS_INVALID_EXTENT ;
@@ -353,8 +378,17 @@ namespace engine
          goto error ;
       }
 
+      extRW = _pDataSu->extent2RW( allocatedExtent, mbContext->mbID() ) ;
+      extRW.setNothrow( TRUE ) ;
       // get the address
-      extAddr = (dmsExtent*)_pDataSu->extentAddr ( allocatedExtent ) ;
+      extAddr = extRW.writePtr<dmsExtent>( 0, getPageSize() * numPages ) ;
+      if ( !extAddr )
+      {
+         PD_LOG( PDERROR, "Get extent[%d] write address failed",
+                 allocatedExtent ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
       // copy data part
       ossMemcpy ( &((CHAR*)extAddr)[DMS_EXTENT_METADATA_SZ],
                   &pBuffer[DMS_EXTENT_METADATA_SZ],
@@ -369,10 +403,6 @@ namespace engine
       if ( tAllocatedExtent )
       {
          *tAllocatedExtent = allocatedExtent ;
-      }
-      if ( tExtAddr )
-      {
-         *tExtAddr = extAddr ;
       }
 
    done:
@@ -390,12 +420,13 @@ namespace engine
       INT32 rc                 = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__DMSSU_LDEXT ) ;
 
+      dmsExtRW extRW ;
       SINT32 allocatedExtent   = DMS_INVALID_EXTENT ;
       dmsExtent *extAddr       = NULL ;
       SDB_ASSERT ( pBuffer, "buffer can't be NULL" ) ;
 
       rc = loadExtentA ( mbContext, pBuffer, numPages, FALSE,
-                         &allocatedExtent, &extAddr ) ;
+                         &allocatedExtent ) ;
       if ( rc )
       {
          PD_LOG ( PDERROR, "Failed to loadExtentA, rc = %d",
@@ -403,6 +434,16 @@ namespace engine
          goto error ;
       }
 
+      extRW = _pDataSu->extent2RW( allocatedExtent, mbContext->mbID() ) ;
+      extRW.setNothrow( TRUE ) ;
+      extAddr = extRW.writePtr<dmsExtent>() ;
+      if ( !extAddr )
+      {
+         PD_LOG( PDERROR, "Get extent[%d] write address failed",
+                 allocatedExtent ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
       // reset delete list
       _pDataSu->_mapExtent2DelList( mbContext->mb(), extAddr,
                                     allocatedExtent ) ;
@@ -967,8 +1008,9 @@ namespace engine
    {
       INT32 rc                     = SDB_OK ;
       BOOLEAN getContext           = FALSE ;
-      dmsMBEx *mbEx                = NULL ;
+      const dmsMBEx *mbEx          = NULL ;
       dmsExtentID firstID          = DMS_INVALID_EXTENT ;
+      dmsExtRW extRW ;
 
       PD_TRACE_ENTRY ( SDB__DMSSU_GETSEGEXTENTS ) ;
       segExtents.clear() ;
@@ -988,13 +1030,28 @@ namespace engine
          PD_RC_CHECK( rc, PDERROR, "dms mb context lock failed, rc: %d", rc ) ;
       }
 
-      if ( DMS_INVALID_EXTENT == context->mb()->_mbExExtentID ||
-           NULL == ( mbEx = ( dmsMBEx* )_pDataSu->extentAddr(
-           context->mb()->_mbExExtentID ) ) )
+      if ( DMS_INVALID_EXTENT == context->mb()->_mbExExtentID )
       {
          PD_LOG( PDERROR, "Invalid meta extent id: %d, collection name: %s",
                  context->mb()->_mbExExtentID,
                  context->mb()->_collectionName ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      extRW = _pDataSu->extent2RW( context->mb()->_mbExExtentID,
+                                   context->mbID() ) ;
+      extRW.setNothrow( TRUE ) ;
+      mbEx = extRW.readPtr<dmsMBEx>() ;
+      if ( mbEx )
+      {
+         mbEx = extRW.readPtr<dmsMBEx>( 0, (UINT32)mbEx->_header._blockSize <<
+                                           _pDataSu->pageSizeSquareRoot() ) ;
+      }
+      if ( !mbEx )
+      {
+         PD_LOG( PDERROR, "Get extent[%d] read address failed",
+                 context->mb()->_mbExExtentID ) ;
          rc = SDB_SYS ;
          goto error ;
       }
@@ -1248,7 +1305,7 @@ namespace engine
 
          info._pageSize = getPageSize() ;
          info._lobPageSize = getLobPageSize() ;
-         info._currCompressRatio = mbStat->_compressionRatio ;
+         info._currCompressRatio = mbStat->_lastCompressRatio ;
 
          //add
          collectionList.insert ( collection ) ;
@@ -1487,85 +1544,154 @@ namespace engine
       _pDataSu->_metadataLatch.release_shared() ;
       PD_TRACE_EXIT ( SDB__DMSSU_GETSTATINFO ) ;
    }
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_TRYTOFLUSH, "_dmsStorageUnit::tryToFlush" )
-   INT32 _dmsStorageUnit::tryToFlush( BOOLEAN ignoreTick, BOOLEAN &failed )
+
+   void _dmsStorageUnit::setSyncConfig( UINT32 syncInterval,
+                                        UINT32 syncRecordNum,
+                                        UINT32 syncDirtyRatio )
+   {
+      if ( _pLobSu )
+      {
+         _pLobSu->setSyncConfig( syncInterval,
+                                 syncRecordNum,
+                                 syncDirtyRatio ) ;
+      }
+      if ( _pIndexSu )
+      {
+         _pIndexSu->setSyncConfig( syncInterval,
+                                   syncRecordNum,
+                                   syncDirtyRatio ) ;
+      }
+      if ( _pDataSu )
+      {
+         _pDataSu->setSyncConfig( syncInterval,
+                                  syncRecordNum,
+                                  syncDirtyRatio ) ;
+      }
+   }
+
+   void _dmsStorageUnit::setSyncDeep( BOOLEAN syncDeep )
+   {
+      if ( _pLobSu )
+      {
+         _pLobSu->setSyncDeep( syncDeep ) ;
+      }
+      if ( _pIndexSu )
+      {
+         _pIndexSu->setSyncDeep( syncDeep ) ;
+      }
+      if ( _pDataSu )
+      {
+         _pDataSu->setSyncDeep( syncDeep ) ;
+      }
+   }
+
+   void _dmsStorageUnit::enableSync( BOOLEAN enable )
+   {
+      if ( _pLobSu )
+      {
+         _pLobSu->enableSync( enable ) ;
+      }
+      if ( _pIndexSu )
+      {
+         _pIndexSu->enableSync( enable ) ;
+      }
+      if ( _pDataSu )
+      {
+         _pDataSu->enableSync( enable ) ;
+      }
+   }
+
+   void _dmsStorageUnit::restoreForCrash()
+   {
+      if ( _pLobSu )
+      {
+         _pLobSu->restoreForCrash() ;
+      }
+      if ( _pIndexSu )
+      {
+         _pIndexSu->restoreForCrash() ;
+      }
+      if ( _pDataSu )
+      {
+         _pDataSu->restoreForCrash() ;
+      }
+   }
+
+   INT32 _dmsStorageUnit::sync( BOOLEAN sync,
+                                UINT64 lastLSN,
+                                IExecutor *cb )
    {
       INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY( SDB__DMSSU_TRYTOFLUSH ) ;
+      INT32 rcTmp = SDB_OK ;
 
-      if ( NULL != _pLobSu )
+      if ( NULL != _pLobSu && _pLobSu->isOpened() )
       {
-         rc = _pLobSu->tryToFlush( ignoreTick, failed ) ;
-         if ( SDB_OK != rc )
+         _pLobSu->lock() ;
+         rcTmp = _pLobSu->sync( TRUE, sync, lastLSN, cb ) ;
+         _pLobSu->unlock() ;
+         if ( rcTmp )
          {
-            PD_LOG( PDERROR, "failed to flush lob data:%d", rc ) ;
-            goto error ;
-         }
-         else if ( failed )
-         {
-            goto done ;
+            PD_LOG( PDWARNING, "Sync file[%s] failed, rc: %d",
+                    _pLobSu->getSuFileName(), rc ) ;
+            /// not go to error
+            rc = rc ? rc : rcTmp ;
          }
       }
 
-      failed = TRUE ;
       if ( NULL != _pIndexSu )
       {
-         rc = _pIndexSu->tryToFlush( ignoreTick, failed ) ;
-         if ( SDB_OK != rc )
+         _pIndexSu->lock() ;
+         rcTmp = _pIndexSu->sync( TRUE, sync, lastLSN, cb ) ;
+         _pIndexSu->unlock() ;
+         if ( rcTmp )
          {
-            PD_LOG( PDERROR, "failed to flush index data:%d", rc ) ;
-            goto error ;
-         }
-         else if ( failed )
-         {
-            goto done ;
+            PD_LOG( PDWARNING, "Sync file[%s] failed, rc: %d",
+                    _pLobSu->getSuFileName(), rc ) ;
+            /// not go to error
+            rc = rc ? rc : rcTmp ;
          }
       }
 
-      failed = TRUE ;
+      /// data file must be the last
       if ( NULL != _pDataSu )
       {
-         rc = _pDataSu->tryToFlush( ignoreTick, failed ) ;
-         if ( SDB_OK != rc )
+         _pDataSu->lock() ;
+         rc = _pDataSu->sync( TRUE, sync, lastLSN, cb ) ;
+         _pDataSu->unlock() ;
+         if ( rcTmp )
          {
-            PD_LOG( PDERROR, "failed to flush data data:%d", rc ) ;
-            goto error ;
-         }
-         else if ( failed )
-         {
-            goto done ;
+            PD_LOG( PDWARNING, "Sync file[%s] failed, rc: %d",
+                    _pLobSu->getSuFileName(), rc ) ;
+            /// not go to error
+            rc = rc ? rc : rcTmp ;
          }
       }
 
-   done:
-      PD_TRACE_EXITRC( SDB__DMSSU_TRYTOFLUSH, rc ) ;
       return rc ;
-   error:
-      goto done ;
    }
 
    UINT64 _dmsStorageUnit::getCurrentDataLSN() const
    {
       return NULL == _pDataSu ?
-             -1 : _pDataSu->getCurrentLSN() ;
+             -1 : _pDataSu->getCommitLSN() ;
    }
 
    UINT64 _dmsStorageUnit::getCurrentLobLSN() const
    {
       return NULL == _pLobSu ?
-             -1 : _pLobSu->getCurrentLSN() ;
+             -1 : _pLobSu->getCommitLSN() ;
    }
 
    UINT32 _dmsStorageUnit::getValidFlag() const
    {
       UINT32 dataFlag =  NULL == _pDataSu ?
-             0 : _pDataSu->getValidFlag() ;
+             0 : _pDataSu->getCommitFlag() ;
       UINT32 indexFlag = NULL == _pIndexSu ?
-             0 : _pIndexSu->getValidFlag() ;
+             0 : _pIndexSu->getCommitFlag() ;
 
       /// _pLobSu may be NULL, set it as 1
       UINT32 lobFlag = NULL == _pLobSu ?
-             1: _pLobSu->isOpened() ? _pLobSu->getValidFlag() : 1 ;
+             1: _pLobSu->isOpened() ? _pLobSu->getCommitFlag() : 1 ;
       return dataFlag && indexFlag && lobFlag ;
    }
 
@@ -1573,48 +1699,15 @@ namespace engine
    {
       std::stringstream ss ;
       UINT32 dataFlag =  ( NULL == _pDataSu ?
-                           0 : _pDataSu->getValidFlag() ) ;
+                           0 : _pDataSu->getCommitFlag() ) ;
       UINT32 indexFlag = ( NULL == _pIndexSu ?
-                           0 : _pIndexSu->getValidFlag() ) ;
+                           0 : _pIndexSu->getCommitFlag() ) ;
       UINT32 lobFlag = ( NULL == _pLobSu ?
                          1 : ( _pLobSu->isOpened() ?
-                               _pLobSu->getValidFlag() : 1 ) ) ;
+                               _pLobSu->getCommitFlag() : 1 ) ) ;
       ss << dataFlag << indexFlag << lobFlag ;
       return ss.str() ;
    }
 
-   void _dmsStorageUnit::resetLastLSN( UINT64 lsn )
-   {
-      if ( NULL != _pDataSu )
-      {
-         _pDataSu->resetLastLSN( lsn ) ;
-      }
-      if ( NULL != _pLobSu && _pLobSu->isOpened() )
-      {
-         _pLobSu->resetLastLSN( lsn ) ;
-      }
-      return ;
-   }
-
-   UINT64 _dmsStorageUnit::getLastTick() const
-   {
-      UINT64 tick = 0 ;
-      if ( NULL != _pLobSu )
-      {
-         tick = _pLobSu->getLastTick() ;
-      }
-
-      if ( NULL != _pIndexSu && _pIndexSu->getLastTick() > tick )
-      {
-         tick = _pIndexSu->getLastTick() ;
-      }
-
-      if ( NULL != _pDataSu && _pDataSu->getLastTick() > tick )
-      {
-         tick = _pDataSu->getLastTick() ;
-      }
-
-      return tick ;
-   }
 }  // namespace engine
 

@@ -81,13 +81,15 @@ namespace engine
                       utilCacheUnit* pCacheUnit ) ;
       virtual ~_dmsStorageLob() ;
 
+      virtual void  syncMemToMmap() ;
+
       _dmsStorageLobData* getLobData() { return &_data ; }
       utilCacheUnit* getCacheUnit() { return _pCacheUnit ; }
 
    public:
       INT32 open( const CHAR *path,
-                  BOOLEAN createNew,
-                  BOOLEAN rmWhenExist) ;
+                  IDataSyncManager *pSyncMgr,
+                  BOOLEAN createNew ) ;
 
       void  removeStorageFiles() ;
 
@@ -136,13 +138,13 @@ namespace engine
                       _pmdEDUCB *cb,
                       SDB_DPSCB *dpscb ) ;
 
-      virtual INT32 tryToFlush( BOOLEAN ignoreTick, BOOLEAN &failed ) ;
       virtual BOOLEAN isOpened() const { return _data.isOpened() ; }
+
+      INT32 rebuildBME() ;
 
    protected:
       INT32  _openLob( const CHAR *path,
-                       BOOLEAN createNew,
-                       BOOLEAN rmWhenExist ) ;
+                       BOOLEAN createNew ) ;
       INT32 _delayOpen() ;
 
       INT32 _calcCount() ;
@@ -162,12 +164,23 @@ namespace engine
       virtual UINT32 _curVersion() const ;
       virtual INT32  _checkVersion( dmsStorageUnitHeader *pHeader ) ;
       virtual void   _onClosed() ;
+      virtual INT32  _onOpened() ;
       virtual void   _initHeaderPageSize( dmsStorageUnitHeader *pHeader,
                                           dmsStorageInfo *pInfo ) ;
       virtual INT32  _checkPageSize( dmsStorageUnitHeader *pHeader ) ;
 
       /// flush callback:  SDB_OK: continue, no SDB_OK: stop
-      virtual INT32  _onFlushDirty( BOOLEAN sync ) ;
+      virtual INT32  _onFlushDirty( BOOLEAN force, BOOLEAN sync ) ;
+
+      virtual INT32  _onMarkHeaderValid( UINT64 lastLSN,
+                                         BOOLEAN sync,
+                                         UINT64 lastTime ) ;
+
+      virtual INT32  _onMarkHeaderInvalid( INT32 collectionID ) ;
+
+      virtual UINT64 _getOldestWriteTick() const ;
+
+      virtual void   _onRestore() ;
 
    private:
       OSS_INLINE UINT32 _getBucket( UINT32 hash )
@@ -181,7 +194,6 @@ namespace engine
       INT32 _find( const _dmsLobRecord &record,
                    UINT32 clID,
                    DMS_LOB_PAGEID &page,
-                   _dmsLobDataMapBlk *&blk,
                    UINT32 *bucket = NULL ) ;
 
       INT32 _allocatePage( const dmsLobRecord &record,
@@ -219,7 +231,8 @@ namespace engine
       BOOLEAN                       _needDelayOpen ;
       ossSpinXLatch                 _delayOpenLatch ;
 
-      utilCacheUnit*                _pCacheUnit ;
+      utilCacheUnit                 *_pCacheUnit ;
+      IDataSyncManager              *_pSyncMgrTmp ;
 
    } ;
    typedef class _dmsStorageLob dmsStorageLob ;

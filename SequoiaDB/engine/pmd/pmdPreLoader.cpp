@@ -53,7 +53,7 @@ namespace engine
    #define PMD_QUEUE_WAIT_TIME 100
    #define PMD_PRELOAD_UNIT    4096
 
-   void  doPreLoad( CHAR * pointer )
+   void  doPreLoad( const CHAR * pointer )
    {
       // do nothing
    }
@@ -80,6 +80,7 @@ namespace engine
       {
          if ( prefReqQ->timed_wait_and_pop ( prefReq, PMD_QUEUE_WAIT_TIME ) )
          {
+            dmsExtRW extRW ;
             // if we get a prefetching request
             dmsStorageUnitID csid = prefReq->_csid ;
             // then we need to lock the collection space so that the memory
@@ -89,36 +90,41 @@ namespace engine
             // before we start processing, let's ignore the request
             if ( su && su->LogicalCSID() == prefReq->_csLID )
             {
-               ossValuePtr addr = 0 ;
+               const dmsExtent *pExtent = NULL ;
+               const CHAR *pData = NULL ;
                UINT32 pageSizeSqureRoot = 0 ;
+
                if ( BPS_DMS_DATA == prefReq->_type )
                {
-                  addr = su->data()->extentAddr ( prefReq->_extid ) ;
+                  extRW = su->data()->extent2RW( prefReq->_extid, -1 ) ;
                   pageSizeSqureRoot = su->data()->pageSizeSquareRoot () ;
                }
                else if ( BPS_DMS_INDEX == prefReq->_type )
                {
-                  addr = su->index()->extentAddr ( prefReq->_extid ) ;
+                  extRW = su->index()->extent2RW( prefReq->_extid, -1 ) ;
                   pageSizeSqureRoot = su->index()->pageSizeSquareRoot () ;
                }
 
+               extRW.setNothrow( TRUE ) ;
+               pExtent = extRW.readPtr<dmsExtent>() ;
+               
                // if return 0, means invalid so that we can ignore
-               if ( addr )
+               if ( pExtent )
                {
-                  CHAR *pAddr      = (CHAR*)addr ;
+                  pData = ( const CHAR* )pExtent ;
                   UINT32 totalSize = 0 ;
 
-                  if ( pAddr[0] == DMS_EXTENT_EYECATCHER0 &&
-                       pAddr[1] == DMS_EXTENT_EYECATCHER1 )
+                  if ( pData[0] == DMS_EXTENT_EYECATCHER0 &&
+                       pData[1] == DMS_EXTENT_EYECATCHER1 )
                   {
                      // dms extent
-                     totalSize = (UINT32)(((dmsExtent*)pAddr)->_blockSize <<
+                     totalSize = (UINT32)(pExtent->_blockSize <<
                                           pageSizeSqureRoot ) ;
                   }
-                  else if ( pAddr[0] == DMS_META_EXTENT_EYECATCHER0 &&
-                            pAddr[1] == DMS_META_EXTENT_EYECATCHER1 )
+                  else if ( pData[0] == DMS_META_EXTENT_EYECATCHER0 &&
+                            pData[1] == DMS_META_EXTENT_EYECATCHER1 )
                   {
-                     totalSize = (UINT32)(((dmsMetaExtent*)pAddr)->_blockSize <<
+                     totalSize = (UINT32)(pExtent->_blockSize <<
                                           pageSizeSqureRoot ) ;
                   }
                   else
@@ -129,13 +135,17 @@ namespace engine
                   // limit to min and max range
                   totalSize = OSS_MIN ( totalSize, DMS_MAX_EXTENT_SZ ) ;
 
-                  // loop for each page ( based on PMD_PRELOAD_UNIT ) in the
-                  // extent
-                  UINT32 index = 0 ;
-                  while ( index < totalSize )
+                  pData = extRW.readPtr( 0, totalSize ) ;
+                  if ( pData )
                   {
-                     doPreLoad( pAddr + index ) ;
-                     index += PMD_PRELOAD_UNIT ;
+                     // loop for each page ( based on PMD_PRELOAD_UNIT ) in the
+                     // extent
+                     UINT32 index = 0 ;
+                     while ( index < totalSize )
+                     {
+                        doPreLoad( pData + index ) ;
+                        index += PMD_PRELOAD_UNIT ;
+                     }
                   }
                } // if ( addr )
                // unlock the collection space so that someone else is able to

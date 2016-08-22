@@ -302,8 +302,7 @@ namespace engine
 
    BOOLEAN rtnIsInBackup ()
    {
-      return DMS_STATE_BACKUP == pmdGetKRCB()->getDMSCB()->getCBState() ?
-             TRUE : FALSE ;
+      return SDB_DB_OFFLINE_BK == PMD_DB_STATUS() ? TRUE : FALSE ;
    }
 
 }

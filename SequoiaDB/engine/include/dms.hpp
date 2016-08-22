@@ -86,6 +86,7 @@ namespace engine
 
 #define DMS_MAX_EXTENT_SZ      DMS_SEGMENT_SZ
 #define DMS_MIN_EXTENT_SZ(x)   (x)
+#define DMS_BEST_UP_EXTENT_SZ  (16*1024*1024)
 
 #define DMS_ID_KEY_NAME        "_id"
 

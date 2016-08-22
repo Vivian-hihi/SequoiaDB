@@ -119,9 +119,9 @@ namespace engine
       {
          ossSnprintf ( tempName, sizeof(tempName), DMS_TEMP_NAME_PATTERN,
                        SDB_DMSTEMP_NAME, i ) ;
-         rc = _su->data()->addCollection ( tempName, &collectionID, 0, NULL,
-                                           NULL, (0 == i ? 1 : 0), TRUE,
-                                           TRUE ) ;
+         rc = _su->data()->addCollection ( tempName, &collectionID,
+                                           DMS_MB_ATTR_NOIDINDEX, NULL,
+                                           NULL, 0, TRUE ) ;
          if ( rc )
          {
             PD_LOG ( PDERROR, "Failed to add temp collection %s, rc: %d",

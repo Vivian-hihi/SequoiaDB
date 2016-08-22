@@ -1019,8 +1019,8 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR, "Failed to register backup, rc: %d", rc ) ;
       hasReg = TRUE ;
 
-      /// commit log
-      _pDPSCB->commit( FALSE, NULL ) ;
+      /// sync
+      rtnSyncDB( cb, -1, FALSE ) ;
 
       // if increase backup, need to check lsn
       lsn = _pDPSCB->getStartLsn( FALSE ) ;

@@ -86,13 +86,10 @@ namespace engine
    */
    class _rtnLoadJob : public _rtnBaseJob
    {
-      protected:
-         std::string _jobName ;
       public:
-         _rtnLoadJob()
-         {
-            _jobName = "Load" ;
-         }
+         _rtnLoadJob() {}
+         virtual ~_rtnLoadJob() {}
+
       public:
          virtual RTN_JOB_TYPE type () const ;
          virtual const CHAR* name () const ;
@@ -101,7 +98,33 @@ namespace engine
    };
    typedef _rtnLoadJob rtnLoadJob ;
 
-   INT32 rtnStartLoadJob() ;
+   typedef void (*RTN_ON_REBUILD_DONE_FUNC)( INT32 rc ) ;
+   /*
+      _rtnRebuildJob define
+   */
+   class _rtnRebuildJob : public _rtnBaseJob
+   {
+      public:
+         _rtnRebuildJob() ;
+         virtual ~_rtnRebuildJob() ;
+      public:
+         virtual RTN_JOB_TYPE type () const ;
+         virtual const CHAR* name () const ;
+         virtual BOOLEAN muteXOn ( const _rtnBaseJob *pOther ) ;
+         virtual INT32 doit () ;
+
+         void    setInfo( RTN_ON_REBUILD_DONE_FUNC pFunc = NULL ) ;
+
+     private:
+         RTN_ON_REBUILD_DONE_FUNC   _pFunc ;
+   } ;
+   typedef _rtnRebuildJob rtnRebuildJob ;
+
+   /*
+      Global function define
+   */
+   INT32    rtnStartLoadJob() ;
+   INT32    rtnStartRebuildJob( RTN_ON_REBUILD_DONE_FUNC pFunc = NULL ) ;
 
 }
 

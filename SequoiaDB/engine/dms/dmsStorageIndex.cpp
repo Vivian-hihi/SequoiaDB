@@ -71,6 +71,15 @@ namespace engine
       _pDataSu = NULL ;
    }
 
+   void _dmsStorageIndex::syncMemToMmap ()
+   {
+      if ( _pDataSu )
+      {
+         _pDataSu->syncMemToMmap() ;
+         _pDataSu->flushMME( isSyncDeep() ) ;
+      }
+   }
+
    UINT64 _dmsStorageIndex::_dataOffset()
    {
       return ( DMS_SME_OFFSET + DMS_SME_SZ ) ;
@@ -115,10 +124,36 @@ namespace engine
 
    INT32 _dmsStorageIndex::_onOpened()
    {
+      BOOLEAN needFlushMME = FALSE ;
+
       for ( UINT16 i = 0 ; i < DMS_MME_SLOTS ; i++ )
       {
+         _pDataSu->_mbStatInfo[i]._idxLastWriteTick = ~0 ;
+         _pDataSu->_mbStatInfo[i]._idxCommitFlag.init( 1 ) ;
+
          if ( DMS_IS_MB_INUSE ( _pDataSu->_dmsMME->_mbList[i]._flag ) )
          {
+            /*
+               Check the collection is valid
+            */
+            if ( !isCrashed() )
+            {
+               if ( 0 == _pDataSu->_dmsMME->_mbList[i]._idxCommitFlag )
+               {
+                  _pDataSu->_dmsMME->_mbList[i]._idxCommitFlag = 1 ;
+                  needFlushMME = TRUE ;
+               }
+               _pDataSu->_mbStatInfo[i]._idxCommitFlag.init( 1 ) ;
+            }
+            else
+            {
+               _pDataSu->_mbStatInfo[i]._idxCommitFlag.init(
+                  _pDataSu->_dmsMME->_mbList[i]._idxCommitFlag ) ;
+            }
+            _pDataSu->_mbStatInfo[i]._idxIsCrash =
+               ( 0 == _pDataSu->_mbStatInfo[i]._idxCommitFlag.peek() ) ?
+                                      TRUE : FALSE ;
+
             // analyze the unique index number
             for ( UINT32 j = 0 ; j < DMS_COLLECTION_MAX_INDEX ; ++j )
             {
@@ -137,6 +172,11 @@ namespace engine
          }
       }
 
+      if ( needFlushMME )
+      {
+         _pDataSu->flushMME( isSyncDeep() ) ;
+      }
+
       return SDB_OK ;
    }
 
@@ -145,12 +185,116 @@ namespace engine
       /// do nothing.
    }
 
+   INT32 _dmsStorageIndex::_onFlushDirty( BOOLEAN force, BOOLEAN sync )
+   {
+      for ( UINT16 i = 0 ; i < DMS_MME_SLOTS ; ++i )
+      {
+         _pDataSu->_mbStatInfo[i]._idxCommitFlag.init( 1 ) ;
+      }
+      return SDB_OK ;
+   }
+
+   INT32 _dmsStorageIndex::_onMarkHeaderValid( UINT64 lastLSN,
+                                               BOOLEAN sync,
+                                               UINT64 lastTime )
+   {
+      INT32 rc = SDB_OK ;
+      BOOLEAN needFlush = FALSE ;
+
+      for ( UINT16 i = 0 ; i < DMS_MME_SLOTS ; ++i )
+      {
+         if ( DMS_IS_MB_INUSE ( _pDataSu->_dmsMME->_mbList[i]._flag ) &&
+              _pDataSu->_mbStatInfo[i]._idxCommitFlag.peek() )
+         {
+            _pDataSu->_dmsMME->_mbList[i]._idxCommitLSN = lastLSN ;
+            _pDataSu->_dmsMME->_mbList[i]._idxCommitTime = lastTime ;
+            _pDataSu->_dmsMME->_mbList[i]._idxCommitFlag =
+               _pDataSu->_mbStatInfo[i]._idxIsCrash ?
+               0 : _pDataSu->_mbStatInfo[i]._idxCommitFlag.peek() ;
+            needFlush = TRUE ;
+         }
+      }
+
+      if ( needFlush )
+      {
+         rc = _pDataSu->flushMME( sync ) ;
+      }
+      return rc ;
+   }
+
+   INT32 _dmsStorageIndex::_onMarkHeaderInvalid( INT32 collectionID )
+   {
+      INT32 rc = SDB_OK ;
+      BOOLEAN needSync = FALSE ;
+
+      if ( collectionID >= 0 && collectionID < DMS_MME_SLOTS )
+      {
+         _pDataSu->_mbStatInfo[ collectionID ]._idxLastWriteTick =
+            pmdGetDBTick() ;
+         if ( !_pDataSu->_mbStatInfo[ collectionID ]._idxIsCrash &&
+              _pDataSu->_mbStatInfo[ collectionID
+              ]._idxCommitFlag.compareAndSwap( 1, 0 ) )
+         {
+            needSync = TRUE ;
+            _pDataSu->_dmsMME->_mbList[ collectionID ]._idxCommitFlag = 0 ;
+         }
+      }
+      else if ( -1 == collectionID )
+      {
+         for ( UINT16 i = 0 ; i < DMS_MME_SLOTS ; ++i )
+         {
+            _pDataSu->_mbStatInfo[ i ]._idxLastWriteTick = pmdGetDBTick() ;
+            if ( DMS_IS_MB_INUSE ( _pDataSu->_dmsMME->_mbList[i]._flag ) &&
+                 !_pDataSu->_mbStatInfo[ i ]._idxIsCrash &&
+                 _pDataSu->_mbStatInfo[ i
+                 ]._idxCommitFlag.compareAndSwap( 1, 0 ) )
+            {
+               needSync = TRUE ;
+               _pDataSu->_dmsMME->_mbList[ i ]._idxCommitFlag = 0 ;
+            }
+         }
+      }
+
+      if ( needSync )
+      {
+         rc = _pDataSu->flushMME( isSyncDeep() ) ;
+      }
+      return rc ;
+   }
+
+   UINT64 _dmsStorageIndex::_getOldestWriteTick() const
+   {
+      UINT64 oldestWriteTick = ~0 ;
+      UINT64 lastWriteTick = 0 ;
+
+      for ( INT32 i = 0; i < DMS_MME_SLOTS ; i++ )
+      {
+         lastWriteTick = _pDataSu->_mbStatInfo[i]._idxLastWriteTick ;
+         /// The collection is commit valid, should ignored
+         if ( 0 == _pDataSu->_mbStatInfo[i]._idxCommitFlag.peek() &&
+              lastWriteTick < oldestWriteTick )
+         {
+            oldestWriteTick = lastWriteTick ;
+         }
+      }
+      return oldestWriteTick ;
+   }
+
+   void _dmsStorageIndex::_onRestore()
+   {
+      for ( INT32 i = 0; i < DMS_MME_SLOTS ; i++ )
+      {
+         _pDataSu->_mbStatInfo[i]._idxIsCrash = FALSE ;
+      }
+   }
+
    INT32 _dmsStorageIndex::reserveExtent( UINT16 mbID, dmsExtentID &extentID,
-                                          dmsContext * context )
+                                          _dmsContext * context )
    {
       SDB_ASSERT( mbID < DMS_MME_SLOTS, "Invalid metadata block ID" ) ;
 
       INT32 rc                = SDB_OK ;
+      dmsExtRW extRW ;
       dmsExtent *extAddr      = NULL ;
       extentID                = DMS_INVALID_EXTENT ;
 
@@ -162,7 +306,8 @@ namespace engine
          goto error ;
       }
 
-      extAddr = (dmsExtent*)extentAddr( extentID ) ;
+      extRW = extent2RW( extentID, context->mbID() ) ;
+      extAddr = extRW.writePtr<dmsExtent>() ;
       extAddr->init( 1, mbID, pageSize() ) ;
 
       _pDataSu->_mbStatInfo[mbID]._totalIndexPages += 1 ;
@@ -175,21 +320,24 @@ namespace engine
 
    INT32 _dmsStorageIndex::releaseExtent( dmsExtentID extentID )
    {
-      INT32 rc             = SDB_OK ;
-      dmsExtent *extAddr   = (dmsExtent*)extentAddr( extentID ) ;
-      if ( !extAddr )
-      {
-         PD_LOG ( PDERROR, "extent id %d is not valid", extentID ) ;
-         rc = SDB_SYS ;
-         goto error ;
-      }
-      if ( DMS_EXTENT_FLAG_INUSE != extAddr->_flag )
+      INT32 rc                   = SDB_OK ;
+      dmsExtRW extRW ;
+      const dmsExtent *extAddr   = NULL ;
+
+      extRW = extent2RW( extentID ) ;
+      extRW.setNothrow( TRUE ) ;
+      extAddr = extRW.readPtr<dmsExtent>() ;
+      if ( !extAddr || DMS_EXTENT_FLAG_INUSE != extAddr->_flag )
       {
          PD_LOG ( PDERROR, "extent id %d is not in use", extentID ) ;
          rc = SDB_SYS ;
          goto error ;
       }
+
+      /*
+       * To improve the perfomance, so we need not change the page info
       extAddr->_flag = DMS_EXTENT_FLAG_FREED ;
+      */
       _pDataSu->_mbStatInfo[extAddr->_mbID]._totalIndexPages -= 1 ;
       rc = _releaseSpace( extentID, 1 ) ;
       if ( rc )
@@ -233,8 +381,6 @@ namespace engine
          rc = SDB_INVALIDARG ;
          goto error ;
       }
-
-      _registerNewWriting() ;
 
       // let's first reserve extent
       rc = reserveExtent ( context->mbID(), extentID, context ) ;
@@ -401,7 +547,6 @@ namespace engine
       }
 
       /// creating index may cost long time. we mark file dirty again here.
-      _registerNewWriting() ;
    done :
       if ( 0 != logRecSize )
       {
@@ -416,6 +561,10 @@ namespace engine
       if ( DMS_INVALID_EXTENT != rootExtentID )
       {
          releaseExtent ( rootExtentID ) ;
+      }
+      if ( SDB_OK == rc )
+      {
+         _pDataSu->flushMME( isSyncDeep() ) ;
       }
       goto done ;
    error_after_create :
@@ -582,7 +731,6 @@ namespace engine
       UINT32 logRecSize            = 0 ;
       BSONObj indexDef ;
 
-      _registerNewWriting() ;
       rc = context->mbLock( EXCLUSIVE ) ;
       if ( rc )
       {
@@ -717,11 +865,14 @@ namespace engine
                       "rc: %d", rc ) ;
       }
 
-      _registerNewWriting() ;
    done :
       if ( 0 != logRecSize )
       {
          pTransCB->releaseLogSpace( logRecSize, cb ) ;
+      }
+      if ( SDB_OK == rc )
+      {
+         _pDataSu->flushMME( isSyncDeep() ) ;
       }
       return rc ;
    error :
@@ -915,7 +1066,6 @@ namespace engine
       BOOLEAN unique               = FALSE ;
       BOOLEAN dropDups             = FALSE ;
 
-      _registerNewWriting() ;
       if ( !context->isMBLock( EXCLUSIVE ) )
       {
          PD_LOG( PDERROR, "Caller must hold mb exclusive lock[%s]",
@@ -1150,7 +1300,6 @@ namespace engine
       INT32 rc                     = SDB_OK ;
       INT32 indexID                = 0 ;
 
-      _registerNewWriting() ;
       if ( !context->isMBLock( EXCLUSIVE ) )
       {
          rc = SDB_SYS ;
@@ -1259,7 +1408,6 @@ namespace engine
       INT32 rc                     = SDB_OK ;
       INT32 indexID                = 0 ;
 
-      _registerNewWriting() ;
       if ( !context->isMBLock( EXCLUSIVE ) )
       {
          rc = SDB_SYS ;
@@ -1313,7 +1461,6 @@ namespace engine
       INT32 rc                     = SDB_OK ;
       INT32  indexID               = 0 ;
 
-      _registerNewWriting() ;
       rc = context->mbLock( EXCLUSIVE ) ;
       PD_RC_CHECK( rc, PDERROR, "dms mb context lock failed, rc: %d", rc ) ;
 
@@ -1346,7 +1493,6 @@ namespace engine
       context->mbStat()->_totalIndexFreeSpace =
       indexID * ( pageSize()-1-sizeof(ixmExtentHead) ) ;
 
-      _registerNewWriting() ;
    done :
       return rc ;
    error :
@@ -1478,52 +1624,6 @@ namespace engine
       }
    }
 
-   INT32 _dmsStorageIndex::tryToFlush( BOOLEAN ignoreTick, BOOLEAN &failed )
-   {
-      INT32 rc = SDB_OK ;
-      BOOLEAN locked = FALSE ;
-
-      if ( !ignoreTick && !_noWriteForAWhile() )
-      {
-         failed = TRUE ;
-         goto done ;
-      }
-
-      _validFlag = 1 ;
-
-      rc = flushAll( TRUE ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "failed to flush dirty segments:%d", rc ) ;
-         goto error ;
-      }
-
-      if ( 0 ==_validFlag )
-      {
-         failed = TRUE ;
-      }
-      else
-      {
-         ossLatch ( &_pagecleanerLatch ) ;
-         locked = TRUE ;
-         if ( 0 ==_validFlag )
-         {
-            failed = TRUE ;
-            goto done ;
-         }
-
-         _markHeaderValid() ;
-         failed = FALSE ;
-      }
-   done:
-      if ( locked )
-      {
-         ossUnlatch( &_pagecleanerLatch ) ;
-      }
-      return rc ;
-   error:
-      goto done ;
-   }
 }
 
 

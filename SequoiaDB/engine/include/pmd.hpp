@@ -50,6 +50,7 @@
 #include "pmdEnv.hpp"
 #include "sdbInterface.hpp"
 #include "pmdMemPool.hpp"
+#include "pmdSyncMgr.hpp"
 
 #if defined ( SDB_ENGINE )
 #include "monCB.hpp"
@@ -212,6 +213,7 @@ namespace engine
 
       _pmdEDUMgr     _eduMgr ;
       pmdBuffPool    _buffPool ;
+      pmdSyncMgr     _syncMgr ;
 
       _pmdOptionsMgr _optioncb ;
       ossTick        _curTime ;
@@ -231,6 +233,10 @@ namespace engine
       pmdBuffPool* getBuffPool()
       {
          return &_buffPool ;
+      }
+      pmdSyncMgr *getSyncMgr()
+      {
+         return &_syncMgr ;
       }
       CHAR *getGroupName ( CHAR *pBuffer, UINT32 size ) const
       {
@@ -406,6 +412,10 @@ namespace engine
    OSS_INLINE pmdBuffPool* pmdGetBuffPool()
    {
       return pmdGetKRCB()->getBuffPool() ;
+   }
+   OSS_INLINE pmdSyncMgr *pmdGetSyncMgr()
+   {
+      return pmdGetKRCB()->getSyncMgr() ;
    }
 
 }

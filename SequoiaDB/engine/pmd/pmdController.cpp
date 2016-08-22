@@ -37,7 +37,6 @@
 #include "pmdController.hpp"
 #include "pmd.hpp"
 #include "pmdCB.hpp"
-#include "rtnPageCleanerJob.hpp"
 #include "rtnDictCreatorJob.hpp"
 #include "../bson/lib/md5.hpp"
 #include "ossDynamicLoad.hpp"
@@ -214,28 +213,21 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR, "active Foreign module failed, rc: %d",
                    rc ) ;
 
-      // For non-coord nodes, we need to start page cleaners
+      // For non-coord nodes, we need to load job
       if ( SDB_ROLE_COORD != pmdGetDBRole() )
       {
-         UINT32 pageTaskNum = pmdGetOptionCB()->getPageCleanNum() ;
-         UINT32 pageIntervel = pmdGetOptionCB()->getPageCleanInterval() ;
-         // start page flush background task
-         for ( UINT32 i = 0; i < pageTaskNum ; ++i )
-         {
-            startPageCleanerJob( NULL, (INT32)pageIntervel ) ;
-         }
          // start load job
          rtnStartLoadJob() ;
       }
 
       // For data nodes(both primary and slavery nodes), we need to start
       // dictionary creating threads.
-      if ( SDB_ROLE_DATA == pmdGetDBRole()
-           || SDB_ROLE_STANDALONE == pmdGetDBRole() )
+      if ( SDB_ROLE_DATA == pmdGetDBRole() ||
+           SDB_ROLE_STANDALONE == pmdGetDBRole() )
       {
          rc = startDictCreatorJob( NULL ) ;
-         PD_RC_CHECK( rc, PDERROR, "Start dictionary creating job thread failed, "
-                      "rc: %d", rc ) ;
+         PD_RC_CHECK( rc, PDERROR, "Start dictionary creating job "
+                      "thread failed, rc: %d", rc ) ;
       }
 
    done:

@@ -40,6 +40,7 @@
 
 #include "dms.hpp"
 #include "oss.hpp"
+#include "ossUtil.hpp"
 
 namespace engine
 {
@@ -54,22 +55,105 @@ namespace engine
    #define DMS_RECORD_USER_MAX_SZ      (DMS_RECORD_MAX_SZ-4096)
 
    /*
-      _dmsRecord defined
+      _dmsRecordData define
    */
-   class _dmsRecord : public SDBObject
+   class _dmsRecordData : public SDBObject
    {
-   public:
-      union
-      {
-         CHAR     _recordHead[4] ;     // 1 byte flag, 3 bytes length - 1
-         UINT32   _flag_and_size ;
-      }                 _head ;
-      dmsOffset         _myOffset ;
-      dmsOffset         _previousOffset ;
-      dmsOffset         _nextOffset ;
+      public:
+         _dmsRecordData()
+         {
+            reset() ;
+         }
+         _dmsRecordData( const CHAR *data, UINT32 len,
+                         BOOLEAN isCompress = FALSE,
+                         BOOLEAN isOrgData = TRUE )
+         {
+            _data = data ;
+            _len = len ;
+            _isCompress = isCompress ;
+
+            if ( isOrgData )
+            {
+               _orgData = data ;
+               _orgLen = len ;
+            }
+            else
+            {
+               _orgData = NULL ;
+               _orgLen = 0 ;
+            }
+         }
+         ~_dmsRecordData()
+         {
+         }
+
+         BOOLEAN isEmpty() const { return !_data || 0 == _len ; }
+
+         const CHAR* data() const { return _data ; }
+         UINT32 len() const { return _len ; }
+
+         const CHAR* orgData() const { return _orgData ; }
+         UINT32 orgLen() const { return _orgLen ; }
+
+         BOOLEAN isCompressed() const { return _isCompress ; }
+         FLOAT32 getCompressRatio() const
+         {
+            if ( _isCompress && _len > 0 && _orgLen > 0 )
+            {
+               return ( (FLOAT32)_len ) / (FLOAT32)_orgLen ;
+            }
+            return 1.0 ;
+         }
+
+         void setData( const CHAR *data, UINT32 len,
+                       BOOLEAN compressed = FALSE,
+                       BOOLEAN isOrgData = TRUE )
+         {
+            _data = data ;
+            _len = len ;
+            _isCompress = compressed ;
+
+            if ( isOrgData )
+            {
+               _orgData = data ;
+               _orgLen = len ;
+            }
+         }
+         void setOrgData( const CHAR *orgData, UINT32 orgLen )
+         {
+            _orgData = orgData ;
+            _orgLen = orgLen ;
+         }
+         void setCompress( BOOLEAN compressed )
+         {
+            _isCompress = compressed ;
+         }
+
+         void reset()
+         {
+            _data = NULL ;
+            _len = 0 ;
+            _isCompress = FALSE ;
+            _orgData = NULL ;
+            _orgLen = 0 ;
+         }
+         void resetOrgData()
+         {
+            _orgData = NULL ;
+            _orgLen = 0 ;
+         }
+
+      private:
+         const CHAR     *_data ;
+         UINT32         _len ;
+
+         BOOLEAN        _isCompress ;
+
+         const CHAR     *_orgData ;
+         UINT32         _orgLen ;
+
    } ;
-   typedef _dmsRecord dmsRecord ;
-   #define DMS_RECORD_METADATA_SZ   sizeof(dmsRecord)
+   typedef _dmsRecordData dmsRecordData ;
 
    /*
       Record Flag define:
@@ -84,6 +168,217 @@ namespace engine
    // some one wait X-lock, the last one who get X-lock will delete the record
    #define DMS_RECORD_FLAG_DELETING          0x80
 
+   #define DMS_RECORD_METADATA_SZ   sizeof(_dmsRecord)
+   /*
+      _dmsRecord defined
+   */
+   class _dmsRecord : public SDBObject
+   {
+   public:
+      union
+      {
+         CHAR     _recordHead[4] ;     // 1 byte flag, 3 bytes length - 1
+         UINT32   _flag_and_size ;
+      }                 _head ;
+      dmsOffset         _myOffset ;
+      dmsOffset         _previousOffset ;
+      dmsOffset         _nextOffset ;
+      /*
+         Follow _nextOffset is:
+            if overflow, is overflow rid(8bytes)
+            else, is the data length(4 bytes).
+                In compressed: 4bytes + data
+                uncompressed:  data( the first 4bytes is bson size )
+      */
+
+      /*
+         Get Functions
+      */
+      dmsOffset getMyOffset() const
+      {
+         return _myOffset ;
+      }
+      dmsOffset getPrevOffset() const
+      {
+         return _previousOffset ;
+      }
+      dmsOffset getNextOffset() const
+      {
+         return _nextOffset ;
+      }
+      BYTE getFlag() const
+      {
+         return (BYTE)_head._recordHead[ 0 ] ;
+      }
+      BYTE getState() const
+      {
+         return (BYTE)(getFlag() & 0x0F) ;
+      }
+      BYTE getAttr() const
+      {
+         return (BYTE)(getFlag() & 0xF0) ;
+      }
+      BOOLEAN isOvf() const
+      {
+         return  DMS_RECORD_FLAG_OVERFLOWF == getState() ;
+      }
+      BOOLEAN isOvt() const
+      {
+         return DMS_RECORD_FLAG_OVERFLOWT == getState() ;
+      }
+      BOOLEAN isDeleted() const
+      {
+         return DMS_RECORD_FLAG_DELETED == getState() ;
+      }
+      BOOLEAN isNormal() const
+      {
+         return DMS_RECORD_FLAG_NORMAL == getState() ;
+      }
+      BOOLEAN isCompressed() const
+      {
+         return getAttr() & DMS_RECORD_FLAG_COMPRESSED ;
+      }
+      BOOLEAN isDeleting() const
+      {
+         return getAttr() & DMS_RECORD_FLAG_DELETING ;
+      }
+      dmsRecordID getOvfRID() const
+      {
+         if ( isOvf() )
+         {
+            return *( const dmsRecordID* )( (const CHAR*)this +
+                                            sizeof( _dmsRecord ) ) ;
+         }
+         return dmsRecordID() ;
+      }
+      UINT32 getSize() const
+      {
+#if defined (SDB_BIG_ENDIAN)
+         return (((*((const UINT32*)this))&0x00FFFFFF)+1) ;
+#else
+         return (((*((const UINT32*)this))>>8)+1) ;
+#endif // SDB_BIG_ENDIAN
+      }
+      UINT32 getDataLength() const
+      {
+         return *(const UINT32*)((const CHAR*)this+DMS_RECORD_METADATA_SZ) ;
+      }
+      /*
+         Get disk data only, if compressed, not uncompressed
+      */
+      const CHAR* getData() const
+      {
+         return isCompressed() ?
+            ((const CHAR*)this+sizeof(UINT32)+DMS_RECORD_METADATA_SZ) :
+            ((const CHAR*)this+DMS_RECORD_METADATA_SZ) ;
+      }
+
+      /*
+         Set Functions
+      */
+      void setMyOffset( dmsOffset offset )
+      {
+         _myOffset = offset ;
+      }
+      void setPrevOffset( dmsOffset offset )
+      {
+         _previousOffset = offset ;
+      }
+      void setNextOffset( dmsOffset offset )
+      {
+         _nextOffset = offset ;
+      }
+      void  setFlag( BYTE flag )
+      {
+         _head._recordHead[ 0 ] = (CHAR)flag ;
+      }
+      void  setState( BYTE state )
+      {
+         _head._recordHead[ 0 ] = (CHAR)((state&0x0F)|getAttr()) ;
+      }
+      void setAttr( BYTE attr )
+      {
+         _head._recordHead[ 0 ] = (BYTE)((attr&0xF0)|getState()) ;
+      }
+      void unsetAttr( BYTE attr )
+      {
+         _head._recordHead[ 0 ] &= (BYTE)(~(attr&0xF0)) ;
+      }
+      void resetAttr()
+      {
+         unsetAttr( 0xF0 ) ;
+      }
+      void setOvf()
+      {
+         setState( DMS_RECORD_FLAG_OVERFLOWF ) ;
+      }
+      void setOvt()
+      {
+         setState( DMS_RECORD_FLAG_OVERFLOWT ) ;
+      }
+      void setNormal()
+      {
+         setState( DMS_RECORD_FLAG_NORMAL ) ;
+      }
+      void setDeleted()
+      {
+         setState( DMS_RECORD_FLAG_DELETED ) ;
+      }
+      void setCompressed()
+      {
+         setAttr( DMS_RECORD_FLAG_COMPRESSED ) ;
+      }
+      void unsetCompressed()
+      {
+         unsetAttr( DMS_RECORD_FLAG_COMPRESSED ) ;
+      }
+      void setDeleting()
+      {
+         setAttr( DMS_RECORD_FLAG_DELETING ) ;
+      }
+      void unsetDeleting()
+      {
+         unsetAttr( DMS_RECORD_FLAG_DELETING ) ;
+      }
+      void setOvfRID( const dmsRecordID &rid )
+      {
+         *((dmsRecordID*)((CHAR*)this+DMS_RECORD_METADATA_SZ)) = rid ;
+      }
+      void  setSize( UINT32 size )
+      {
+#if defined (SDB_BIG_ENDIAN)
+      (*((UINT32*)this) = ((UINT32)getFlag()<<24) |
+                          ((UINT32)((size)-1)&0x00FFFFFF)) ;
+#else
+      (*((UINT32*)this) = (UINT32)getFlag() | ((UINT32)((size)-1)<<8)) ;
+#endif
+      }
+      /*
+         Copy the data to disk directly
+      */
+      void  setData( const dmsRecordData &data )
+      {
+         if ( data.isEmpty() )
+         {
+            return ;
+         }
+         if ( data.isCompressed() )
+         {
+            setCompressed() ;
+            *(UINT32*)((CHAR*)this+DMS_RECORD_METADATA_SZ) = data.len() ;
+            ossMemcpy( (CHAR*)this+DMS_RECORD_METADATA_SZ+sizeof(UINT32),
+                       data.data(), data.len() ) ;
+         }
+         else
+         {
+            unsetCompressed() ;
+            ossMemcpy( (CHAR*)this+DMS_RECORD_METADATA_SZ,
+                       data.data(), data.len() ) ;
+         }
+      }
+   } ;
+   typedef _dmsRecord dmsRecord ;
+
    #define DMS_RECORD_GETFLAG(record)        (*((CHAR*)(record)))
    #define DMS_RECORD_GETSTATE(record)       (*((CHAR*)(record))&0x0F)
    #define DMS_RECORD_GETATTR(record)        (*((CHAR*)(record))&0xF0)
@@ -94,10 +389,6 @@ namespace engine
    #define DMS_RECORD_GETSIZE(record)  (((*((UINT32*)(record)))>>8)+1)
 #endif
 
-   #define DMS_RECORD_GETMYOFFSET(record)    \
-      (((dmsRecord*)(record))->_myOffset)
-   #define DMS_RECORD_GETPREVOFFSET(record)  \
-      (((dmsRecord*)(record))->_previousOffset)
    #define DMS_RECORD_GETNEXTOFFSET(record)  \
       (((dmsRecord*)(record))->_nextOffset)
 
@@ -195,9 +486,6 @@ namespace engine
                      (len)-sizeof(INT32)) ;                                \
         } while ( FALSE )
 
-   // SET OVF
-   #define DMS_RECORD_SETOVF(record,rid)     \
-      *((dmsRecordID*)((char*)(record)+DMS_RECORD_METADATA_SZ))=(rid)
 
    /*
       _dmsDeletedRecord defined
@@ -212,27 +500,57 @@ namespace engine
       }                 _head ;
       dmsOffset         _myOffset ;
       dmsRecordID       _next ;
+
+      /*
+         Get Functions
+      */
+      CHAR getFlag() const
+      {
+         return _head._recordHead[ 0 ] ;
+      }
+      BOOLEAN isDeleted() const
+      {
+         return DMS_RECORD_FLAG_DELETED == getFlag() ;
+      }
+      UINT32 getSize() const
+      {
+         return ((const dmsRecord*)this)->getSize() ;
+      }
+      dmsOffset getMyOffset() const
+      {
+         return _myOffset ;
+      }
+      dmsRecordID getNextRID() const
+      {
+         return _next ;
+      }
+
+      /*
+         Set Functions
+      */
+      void setSize( UINT32 size )
+      {
+         return ((dmsRecord*)this)->setSize( size ) ;
+      }
+      void setMyOffset( dmsOffset myOffset )
+      {
+         _myOffset = myOffset ;
+      }
+      void setNextRID( const dmsRecordID &rid )
+      {
+         _next = rid ;
+      }
+      void setFlag( CHAR flag )
+      {
+         _head._recordHead[ 0 ] = flag ;
+      }
+      void setDeleted()
+      {
+         setFlag( DMS_RECORD_FLAG_DELETED ) ;
+      }
    } ;
    typedef _dmsDeletedRecord dmsDeletedRecord ;
    #define DMS_DELETEDRECORD_METADATA_SZ  sizeof(dmsDeletedRecord)
-
-   #define DMS_DELETEDRECORD_GETFLAG(record)       (*((CHAR*)(record)))
-   #define DMS_DELETEDRECORD_SETFLAG(record,flag)  \
-      (*((CHAR*)(record))=(CHAR)(flag))
-
-   #define DMS_DELETEDRECORD_GETSIZE(record)       DMS_RECORD_GETSIZE(record)
-   #define DMS_DELETEDRECORD_SETSIZE(record,size)  \
-      DMS_RECORD_SETSIZE(record,size)
-
-   #define DMS_DELETEDRECORD_GETMYOFFSET(record)   \
-      (((dmsDeletedRecord*)(record))->_myOffset)
-   #define DMS_DELETEDRECORD_GETNEXTRID(record)    \
-      (((dmsDeletedRecord*)(record))->_next)
-
-   #define DMS_DELETEDRECORD_SETMYOFFSET(record,offset)  \
-      (((dmsDeletedRecord*)(record))->_myOffset=(offset))
-   #define DMS_DELETEDRECORD_SETNEXTRID(record,rid)      \
-      (((dmsDeletedRecord*)(record))->_next=(rid))
 
    // oid + one field = 12 + 5 = 17, Algned:20
    #define DMS_MIN_DELETEDRECORD_SZ    (DMS_DELETEDRECORD_METADATA_SZ+20)

@@ -133,6 +133,7 @@ namespace engine
          BOOLEAN              _quit ;
          UINT64               _requestID ;
          DPS_LSN              _expectLSN ;
+         UINT64               _lastOprLSN ;
          BOOLEAN              _needMoreDoc ;  /// when we begin to get lob, we do not want to sync doc any more.
          struct pageSzTuple
          {

@@ -147,6 +147,7 @@ namespace engine
 
          virtual DPS_LSN   getCurrentLsn() ;
          virtual DPS_LSN   expectLsn() ;
+         virtual DPS_LSN   commitLsn() ;
 
          virtual void      getLsnWindow( DPS_LSN &beginLsn,
                                          DPS_LSN &memBeginLsn,

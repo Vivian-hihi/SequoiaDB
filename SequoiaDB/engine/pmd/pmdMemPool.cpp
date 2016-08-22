@@ -33,6 +33,7 @@
 #include "pmdMemPool.hpp"
 #include "ossMem.hpp"
 #include "pd.hpp"
+#include "pmdEnv.hpp"
 #include "pdTrace.hpp"
 #include "pmdTrace.hpp"
 
@@ -93,7 +94,7 @@ namespace engine
       {
          goto error ;
       }
-      _checkAndStartJob( TRUE ) ;
+      // _checkAndStartJob( TRUE ) ;
 
    done:
       return rc ;
@@ -116,7 +117,8 @@ namespace engine
       {
          _unitLatch.get() ;
       }
-      if ( maxCacheSize() > 0 && FALSE == _startCtrlJob )
+      if ( maxCacheSize() > 0 && _unitList.size() > 0 &&
+           FALSE == _startCtrlJob && !pmdIsQuitApp() )
       {
          if ( SDB_OK == pmdStartCacheJob( NULL, this, -1 ) )
          {
@@ -235,7 +237,7 @@ namespace engine
 
          /// start agent
          while ( _curAgent < PMD_MIN_CACHE_JOB ||
-                 ( readyNum / 2 > _idleAgent &&
+                 ( readyNum / 4 > _idleAgent &&
                    _curAgent < _maxCacheJob ) )
          {
             if ( SDB_OK == pmdStartCacheJob( NULL, this,
@@ -272,6 +274,10 @@ namespace engine
 
    const CHAR* _pmdCacheJob::name() const
    {
+      if ( isControlJob() )
+      {
+         return "CACHE-JOB-D" ;
+      }
       return "CACHE-JOB" ;
    }
 
@@ -302,6 +308,7 @@ namespace engine
             if ( _pBuffPool->canRecycle() )
             {
                _pBuffPool->recycleBlocks() ;
+               eduCB()->incEventCount( 1 ) ;
             }
             else
             {
@@ -352,17 +359,21 @@ namespace engine
    {
       pmdEDUMgr *pEDUMgr = eduCB()->getEDUMgr() ;
       BOOLEAN force = FALSE ;
+      UINT32 step = 0 ;
 
       pEDUMgr->activateEDU( eduCB() ) ;
 
       if ( pUnit->canSync( force ) )
       {
          pUnit->syncPages( eduCB(), force ) ;
+         step = 1 ;
       }
       if ( pUnit->canRecycle( force ) )
       {
          pUnit->recyclePages( force ) ;
+         step = 1 ;
       }
+      eduCB()->incEventCount( step ) ;
 
       pEDUMgr->waitEDU( eduCB() ) ;
    }

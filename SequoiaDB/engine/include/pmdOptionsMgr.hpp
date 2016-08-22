@@ -438,16 +438,6 @@ namespace engine
             return _hjBufSz ;
          }
 
-         OSS_INLINE UINT32 getPageCleanNum () const
-         {
-            return _pagecleanNum ;
-         }
-
-         OSS_INLINE UINT32 getPageCleanInterval () const
-         {
-            return _pagecleanInterval ;
-         }
-
          void clearCatAddr() ;
          void setCatAddr( const CHAR *host, const CHAR *service ) ;
 
@@ -490,6 +480,11 @@ namespace engine
          OSS_INLINE INT32  getSignalInterval() const { return _signalInterval ; }
          OSS_INLINE UINT32 getMaxCacheSize() const { return _maxCacheSize ; }
          OSS_INLINE UINT32 getMaxCacheJob() const { return _maxCacheJob ; }
+         OSS_INLINE UINT32 getMaxSyncJob() const { return _maxSyncJob ; }
+         OSS_INLINE UINT32 getSyncInterval() const { return _syncInterval ; }
+         OSS_INLINE UINT32 getSyncRecordNum() const { return _syncRecordNum ; }
+         OSS_INLINE UINT32 getSyncDirtyRatio() const { return _syncDirtyRatio ; }
+         OSS_INLINE BOOLEAN isSyncDeep() const { return _syncDeep ; }
 
          std::string getOmAddr() const ;
 
@@ -545,8 +540,6 @@ namespace engine
          UINT32      _sortBufSz ;
          UINT32      _hjBufSz ;
          UINT32      _preferReplica ;
-         UINT32      _pagecleanNum ;
-         UINT32      _pagecleanInterval ;
          INT32       _dialogFileNum ;
          INT32       _auditFileNum ;
          UINT32      _auditMask ;
@@ -561,6 +554,11 @@ namespace engine
          INT32       _signalInterval ;
          UINT32      _maxCacheSize ;      // MB
          UINT32      _maxCacheJob ;
+         UINT32      _maxSyncJob ;
+         UINT32      _syncInterval ;
+         UINT32      _syncRecordNum ;
+         UINT32      _syncDirtyRatio ;
+         BOOLEAN     _syncDeep ;
          CHAR        _omAddrLine[ OSS_MAX_PATHSIZE + 1 ] ;
 
 #ifdef SDB_ENTERPRISE

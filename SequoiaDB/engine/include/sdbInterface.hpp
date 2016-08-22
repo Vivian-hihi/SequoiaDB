@@ -401,9 +401,15 @@ namespace engine
          virtual UINT64    getBeginLsn () const = 0 ;
          virtual UINT64    getEndLsn() const = 0 ;
          virtual UINT32    getLsnCount () const = 0 ;
+
+         virtual UINT64    getTransID () const = 0 ;
+         virtual UINT64    getCurTransLsn () const = 0 ;
          /// for write
          virtual void      resetLsn() = 0 ;
          virtual void      insertLsn( UINT64 lsn ) = 0 ;
+
+         virtual void      setTransID( UINT64 transID ) = 0 ;
+         virtual void      setCurTransLsn( UINT64 lsn ) = 0 ;
 
    } ;
    typedef _IExecutor IExecutor ;

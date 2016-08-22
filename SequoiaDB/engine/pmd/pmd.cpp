@@ -324,12 +324,17 @@ namespace engine
       _init = TRUE ;
 
       /// Init the cache manager
+      _buffPool.setMaxCacheJob( _optioncb.getMaxCacheJob() ) ;
       rc = _buffPool.init( _optioncb.getMaxCacheSize() ) ;
       if ( rc )
       {
          PD_LOG( PDERROR, "Init cache buffer failed, rc: %d", rc ) ;
          goto error ;
       }
+
+      /// Init the sync manager
+      _syncMgr.init( _optioncb.getMaxSyncJob(),
+                     _optioncb.isSyncDeep() ) ;
 
       // Init all registered cb
       for ( index = 0 ; index < SDB_CB_MAX ; ++index )
@@ -407,6 +412,8 @@ namespace engine
 
       // stop all io services and edus(thread)
       _eduMgr.reset () ;
+      /// sync complete lsn
+      _syncMgr.syncAndGetLastLSN() ;
 
       // Fini all registered cbs ( final resource cleanup )
       for ( index = SDB_CB_MAX ; index > 0 ; --index )
@@ -425,6 +432,7 @@ namespace engine
 
       /// fini cache manager
       _buffPool.fini() ;
+      _syncMgr.fini() ;
 
       pmdUndeclareEDUCB() ;
 

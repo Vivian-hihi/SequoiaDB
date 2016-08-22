@@ -1351,12 +1351,12 @@ namespace engine
       }
 
       _lastCommitted = _currentLsn ;
+
+   done:
       if ( NULL != committedLsn )
       {
           *committedLsn = _lastCommitted ;
       }
-
-   done:
       _mtx.release() ;
       PD_TRACE_EXITRC( SDB__DPSRPCMGR_COMMIT, rc ) ;
       return rc ;

@@ -62,7 +62,8 @@ namespace engine
    #define JUDGE_RC( rc ) if ( SDB_OK != rc ) { goto error ; }
 
    #define PMD_OPTION_BRK_TIME_DEFAULT (7000)
-   #define PMD_OPTION_OPR_TIME_DEFAULT (30000)
+   #define PMD_OPTION_OPR_TIME_DEFAULT (300000)
+   #define PMD_OPTION_DFT_MAXPOOL      (50)
    #define PMD_MAX_PREF_POOL           (0) // modify 200 to 0
    #define PMD_MAX_SUB_QUERY           (10)
    #define PMD_MIN_SORTBUF_SZ          (RTN_SORT_MIN_BUFSIZE)
@@ -73,14 +74,16 @@ namespace engine
    #define PMD_DFT_REPL_BUCKET_SIZE    (32)
    #define PMD_DFT_INDEX_SCAN_STEP     (100)
    #define PMD_DFT_START_SHIFT_TIME    (600)
-   #define PMD_DFT_NUMPAGECLEAN        (0)
    #define PMD_MAX_NUMPAGECLEAN        (50)
-   #define PMD_DFT_PAGECLEANINTERVAL   (10000)
    #define PMD_MIN_PAGECLEANINTERVAL   (1000)
    #define PMD_DFT_TRANS_TIMEOUT       (60)  // 1 minute
    #define PMD_DFT_OVERFLOW_RETIO      (12)
    #define PMD_DFT_EXTEND_THRESHOLD    (32)
    #define PMD_DFT_MAX_CACHE_JOB       (10)
+   #define PMD_DFT_MAX_SYNC_JOB        (10)
+   #define PMD_DFT_SYNC_INTERVAL       (10000)  // 10 seconds
+   #define PMD_DFT_SYNC_RECORDNUM      (0)
+   #define PMD_DFT_SYNC_DIRTYRATIO     (50)
 
    /*
       _pmdCfgExchange implement
@@ -1309,8 +1312,6 @@ namespace engine
       _logBuffSize         = DPS_DFT_LOG_BUF_SZ ;
       _sortBufSz           = PMD_DEFAULT_SORTBUF_SZ ;
       _hjBufSz             = PMD_DEFAULT_HJ_SZ ;
-      _pagecleanNum        = PMD_DFT_NUMPAGECLEAN ;
-      _pagecleanInterval   = PMD_DFT_PAGECLEANINTERVAL ;
       _dialogFileNum       = 0 ;
       _auditFileNum        = 0 ;
       _auditMask           = 0 ;
@@ -1325,6 +1326,11 @@ namespace engine
       _signalInterval      = 0 ;
       _maxCacheSize        = 0 ;
       _maxCacheJob         = 0 ;
+      _maxSyncJob          = PMD_DFT_MAX_SYNC_JOB ;
+      _syncInterval        = PMD_DFT_SYNC_INTERVAL ;
+      _syncRecordNum       = PMD_DFT_SYNC_RECORDNUM ;
+      _syncDirtyRatio      = PMD_DFT_SYNC_DIRTYRATIO ;
+      _syncDeep            = FALSE ;
 
 #ifdef SDB_ENTERPRISE
 
@@ -1380,7 +1386,8 @@ namespace engine
                FALSE, FALSE, "" ) ;
 
       // --maxpool
-      rdxUInt( pEX, PMD_OPTION_MAXPOOL, _krcbMaxPool, FALSE, TRUE, 0 ) ;
+      rdxUInt( pEX, PMD_OPTION_MAXPOOL, _krcbMaxPool, FALSE, TRUE,
+               PMD_OPTION_DFT_MAXPOOL ) ;
       rdvMinMax( pEX, _krcbMaxPool, 0, 10000, TRUE ) ;
 
       // --diagnum
@@ -1515,22 +1522,11 @@ namespace engine
       rdvMinMax( pEX, _hjBufSz, PMD_MIN_HJ_SZ,
                  -1, TRUE ) ;
 
-      // --numpagecleaners
-      rdxUInt( pEX, PMD_OPTION_NUMPAGECLEANERS, _pagecleanNum,
-               FALSE, FALSE, PMD_DFT_NUMPAGECLEAN ) ;
-      rdvMinMax( pEX, _pagecleanNum, 0, PMD_MAX_NUMPAGECLEAN, TRUE ) ;
-
-      // --pagecleaninterval
-      rdxUInt( pEX, PMD_OPTION_PAGECLEANINTERVAL, _pagecleanInterval,
-               FALSE, TRUE, PMD_DFT_PAGECLEANINTERVAL ) ;
-      rdvMinMax ( pEX, _pagecleanInterval, PMD_MIN_PAGECLEANINTERVAL,
-                  -1, TRUE ) ;
-
       rdxBooleanS( pEX, PMD_OPTION_DIRECT_IO_IN_LOB, _directIOInLob,
                    FALSE, TRUE, FALSE, FALSE ) ;
 
       rdxBooleanS( pEX, PMD_OPTION_SPARSE_FILE, _sparseFile,
-                   FALSE, TRUE, FALSE, FALSE ) ;
+                   FALSE, TRUE, TRUE, FALSE ) ;
 
       // --weight
       rdxUInt( pEX, PMD_OPTION_WEIGHT, _weight,
@@ -1552,7 +1548,7 @@ namespace engine
       // --planbuckets
       rdxUInt( pEX, PMD_OPTION_PLAN_BUCKETS, _planBucketNum,
                FALSE, TRUE, 500, FALSE ) ;
-      // --operatortimeout
+      // --optimeout
       rdxUInt( pEX, PMD_OPTION_OPERATOR_TIMEOUT, _oprtimeout, FALSE, TRUE,
                PMD_OPTION_OPR_TIME_DEFAULT, FALSE ) ;
       // --overflowratio
@@ -1573,6 +1569,23 @@ namespace engine
       rdxUInt( pEX, PMD_OPTION_MAX_CACHE_JOB, _maxCacheJob, FALSE, TRUE,
                PMD_DFT_MAX_CACHE_JOB, FALSE ) ;
       rdvMinMax( pEX, _maxCacheJob, 2, 200, TRUE ) ;
+      /// --maxsyncjob
+      rdxUInt( pEX, PMD_OPTION_MAX_SYNC_JOB, _maxSyncJob, FALSE, TRUE,
+               PMD_DFT_MAX_SYNC_JOB, FALSE ) ;
+      rdvMinMax( pEX, _maxSyncJob, 2, 200, TRUE ) ;
+      /// --syncinterval
+      rdxUInt( pEX, PMD_OPTION_SYNC_INTERVAL, _syncInterval, FALSE, TRUE,
+               PMD_DFT_SYNC_INTERVAL, FALSE ) ;
+      /// --syncrecordnum
+      rdxUInt( pEX, PMD_OPTION_SYNC_RECORDNUM, _syncRecordNum, FALSE, TRUE,
+               PMD_DFT_SYNC_RECORDNUM, FALSE ) ;
+      /// --syncdirtyratio
+      rdxUInt( pEX, PMD_OPTION_SYNC_DIRTYRATIO, _syncDirtyRatio, FALSE, TRUE,
+               PMD_DFT_SYNC_DIRTYRATIO, FALSE ) ;
+      rdvMinMax( pEX, _syncDirtyRatio, 1, 99, TRUE ) ;
+      /// --syncdeep
+      rdxBooleanS( pEX, PMD_OPTION_SYNC_DEEP, _syncDeep, FALSE, TRUE,
+                   FALSE, FALSE ) ;
 
       // --omaddr
       rdxString( pEX, PMD_OPTION_OM_ADDR, _omAddrLine,
@@ -1870,9 +1883,16 @@ namespace engine
          _maxPrefPool      = 0 ;
          _maxSubQuery      = 0 ;
          _maxReplSync      = 0 ;
-         _pagecleanNum     = 1 ;
-         _pagecleanInterval= PMD_DFT_PAGECLEANINTERVAL ;
          _syncStrategy     = CLS_SYNC_NONE ;
+
+         if ( 0 == _syncInterval || _syncInterval > 60000 )
+         {
+            _syncInterval = PMD_DFT_SYNC_INTERVAL ;
+         }
+         if ( 0 == _syncRecordNum || _syncRecordNum > 1000 )
+         {
+            _syncRecordNum = 10 ;
+         }
       }
 
       rc = parseAddressLine( _omAddrLine, _vecOm ) ;

@@ -37,6 +37,7 @@
 #include "ixm.hpp"
 #include "dmsStorageUnit.hpp"
 #include "dmsStorageLoadExtent.hpp"
+#include "rtnRecover.hpp"
 #include "pdTrace.hpp"
 #include "rtnTrace.hpp"
 
@@ -243,6 +244,9 @@ namespace engine
       return rc ;
    }
 
+   /*
+      _rtnLoadJob implement
+   */
    RTN_JOB_TYPE _rtnLoadJob::type () const
    {
       return RTN_JOB_LOAD ;
@@ -250,16 +254,12 @@ namespace engine
 
    const CHAR* _rtnLoadJob::name () const
    {
-      return _jobName.c_str() ;
+      return "Load" ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNLOADJOB_MUTEXON, "_rtnLoadJob::muteXOn" )
    BOOLEAN _rtnLoadJob::muteXOn ( const _rtnBaseJob * pOther )
    {
-      PD_TRACE_ENTRY ( SDB__RTNLOADJOB_MUTEXON ) ;
-      BOOLEAN ret = FALSE;
-      PD_TRACE_EXIT ( SDB__RTNLOADJOB_MUTEXON ) ;
-      return ret ;
+      return FALSE ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNLOADJOB_DOIT , "_rtnLoadJob::doit" )
@@ -375,6 +375,64 @@ namespace engine
       goto done ;
    }
 
+   /*
+      _rtnRebuildJob implement
+   */
+   _rtnRebuildJob::_rtnRebuildJob()
+   {
+      _pFunc = NULL ;
+   }
+
+   _rtnRebuildJob::~_rtnRebuildJob()
+   {
+   }
+
+   void _rtnRebuildJob::setInfo( RTN_ON_REBUILD_DONE_FUNC pFunc )
+   {
+      _pFunc = pFunc ;
+   }
+
+   RTN_JOB_TYPE _rtnRebuildJob::type() const
+   {
+      return RTN_JOB_REBUILD ;
+   }
+
+   const CHAR* _rtnRebuildJob::name() const
+   {
+      return "Rebuild" ;
+   }
+
+   BOOLEAN _rtnRebuildJob::muteXOn( const _rtnBaseJob *pOther )
+   {
+      if ( type() == pOther->type() )
+      {
+         return TRUE ;
+      }
+      return FALSE ;
+   }
+
+   INT32 _rtnRebuildJob::doit()
+   {
+      INT32 rc = SDB_OK ;
+
+      rtnDBRebuilder rebuilder ;
+      PMD_SET_DB_STATUS( SDB_DB_REBUILDING ) ;
+      rc = rebuilder.doOpr( eduCB() ) ;
+      PMD_SET_DB_STATUS( SDB_DB_NORMAL ) ;
+
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Failed to rebuild database, rc: %d, "
+                 "shutdown db", rc ) ;
+      }
+
+      if ( _pFunc )
+      {
+         _pFunc( rc ) ;
+      }
+      return rc ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNSTARTLOADJOB, "rtnStartLoadJob" )
    INT32 rtnStartLoadJob()
    {
@@ -392,6 +450,38 @@ namespace engine
 
    done :
       PD_TRACE_EXITRC ( SDB_RTNSTARTLOADJOB, rc );
+      return rc ;
+   error :
+      goto done ;
+   }
+
+   INT32 rtnStartRebuildJob( RTN_ON_REBUILD_DONE_FUNC pFunc )
+   {
+      INT32 rc = SDB_OK ;
+      rtnRebuildJob *pJob = SDB_OSS_NEW rtnRebuildJob() ;
+      if ( NULL == pJob )
+      {
+         PD_LOG ( PDERROR, "Failed to alloc memory for rtnRebuildJob" ) ;
+         rc = SDB_OOM ;
+         goto error ;
+      }
+
+      pJob->setInfo( pFunc ) ;
+      /// When suc or failed, the job is hold on by job manager,
+      /// so don't to release it
+      rc = rtnGetJobMgr()->startJob( pJob, RTN_JOB_MUTEX_RET, NULL ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Failed to start rebuild job, rc: %d", rc ) ;
+
+         if ( SDB_RTN_MUTEX_JOB_EXIST != rc && pFunc )
+         {
+            pFunc( rc ) ;
+         }
+         goto error ;
+      }
+
+   done :
       return rc ;
    error :
       goto done ;

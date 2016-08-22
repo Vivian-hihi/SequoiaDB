@@ -33,6 +33,7 @@
 
 #include "dmsStorageBase.hpp"
 #include "ixmKey.hpp"
+#include "dmsExtent.hpp"
 
 namespace engine
 {
@@ -82,7 +83,8 @@ namespace engine
       OID                _indexOID ;
       dmsExtentID        _scanExtLID ;
       dmsExtentID        _currentExtentID ;
-      dmsExtent*         _extent ;
+      dmsExtRW           _extRW ;
+      const dmsExtent*   _extent ;
       BOOLEAN            _unique ;
       BOOLEAN            _dropDups ;
 

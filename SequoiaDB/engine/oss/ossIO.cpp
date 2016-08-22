@@ -1862,7 +1862,6 @@ INT32 ossExtendFile ( OSSFILE *pFile,
    PD_TRACE_ENTRY ( SDB_OSSEXTFILE );
    INT32    loop       = 0 ;
    INT32    remainder  = 0 ;
-   SINT64   lenWritten = 0 ;
    CHAR    *pBuffer    = NULL ;
 
    // sanity check, only take effect in debug build
@@ -1890,28 +1889,18 @@ INT32 ossExtendFile ( OSSFILE *pFile,
    // do the main loop for extend
    for ( INT32 i = 0; i < loop ; i++ )
    {
-      SINT64 reminderloop = OSS_EXTEND_DELTA ;
-      while ( reminderloop )
-      {
-         rc = ossWrite ( pFile, pBuffer, reminderloop, &lenWritten ) ;
-         // do validation
-         PD_RC_CHECK ( rc, PDERROR, "Failed to extend file, errno = %d",
-                       ossGetLastError() ) ;
-         reminderloop -= lenWritten ;
-      }
+      rc = ossWriteN ( pFile, pBuffer, OSS_EXTEND_DELTA ) ;
+      // do validation
+      PD_RC_CHECK ( rc, PDERROR, "Failed to extend file, errno = %d",
+                    ossGetLastError() ) ;
    }
 #undef  OSS_EXTEND_DELTA
-   if (0 != remainder )
+   if ( 0 != remainder )
    {
-      SINT64 reminderloop = remainder ;
-      while ( reminderloop )
-      {
-         rc = ossWrite ( pFile, pBuffer, reminderloop, &lenWritten ) ;
-         // do validation
-         PD_RC_CHECK ( rc, PDERROR, "Failed to extend file, errno = %d",
-                       ossGetLastError() ) ;
-         reminderloop -= lenWritten ;
-      	}
+      rc = ossWriteN( pFile, pBuffer, remainder ) ;
+      // do validation
+      PD_RC_CHECK ( rc, PDERROR, "Failed to extend file, errno = %d",
+                    ossGetLastError() ) ;
    }
 done :
    // final clean up here, if pBuffer is allocated, we need to free
@@ -1923,6 +1912,66 @@ done :
    return rc;
 error :
    // if anything need to be performed in error condition, do it here
+   goto done ;
+}
+
+INT32 ossExtentBySparse( OSSFILE *pFile,
+                         UINT64 incrementSize,
+                         UINT32 onceWrite )
+{
+   // declare variables at top
+   INT32    rc         = SDB_OK ;
+   CHAR    *pBuffer    = NULL ;
+
+   // sanity check, only take effect in debug build
+   SDB_ASSERT ( pFile, "input file is NULL" ) ;
+
+   if ( onceWrite > incrementSize )
+   {
+      onceWrite = incrementSize ;
+   }
+
+   // seek to end of the file
+   rc = ossSeek( pFile, 0, OSS_SEEK_END ) ;
+   // verify return code, jump to error if condition fails
+   // check pd.hpp for SDB_VALIDATE_GOTOERROR def
+
+   // do NOT return in middle of function, always jump to error and done to
+   // perform final clean up
+   SDB_VALIDATE_GOTOERROR ( SDB_OK == rc, rc,
+                            "Failed to seek to end of file" ) ;
+
+   rc = ossSeek( pFile, incrementSize - onceWrite, OSS_SEEK_CUR ) ;
+   if ( rc )
+   {
+      PD_LOG( PDERROR, "Failed to seek offset[%lld](OSS_SEEK_CUR), rc:%d",
+              incrementSize - onceWrite, rc ) ;
+      goto error ;
+   }
+
+   pBuffer = ( CHAR* )SDB_OSS_MALLOC( onceWrite ) ;
+   if ( !pBuffer )
+   {
+      PD_LOG( PDERROR, "Alloc memory[%d] failed", onceWrite ) ;
+      rc = SDB_OOM ;
+      goto error ;
+   }
+   ossMemset( pBuffer, 0 , onceWrite ) ;
+
+   rc = ossWriteN( pFile, pBuffer, onceWrite ) ;
+   if ( rc )
+   {
+      PD_LOG( PDERROR, "Failed to write file, rc: %d", rc ) ;
+      goto error ;
+   }
+
+done :
+   if ( pBuffer )
+   {
+      SDB_OSS_FREE ( pBuffer ) ;
+   }
+   return rc;
+error :
    goto done ;
 }
 

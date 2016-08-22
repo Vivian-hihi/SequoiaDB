@@ -61,38 +61,12 @@ namespace engine
       INT32 rc            = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_RTNREORGOCB ) ;
 
-      CHAR *headBuffer    = NULL ;
       CHAR *blockBuffer   = NULL ;
       INT32 blockBuffSize = 0 ;
-      INT32 headSize      = 0 ;
       SINT32 blockSize    = 0 ;
       SDB_ASSERT ( su && ru, "SU and RU can't be NULL" ) ;
 
-      // first reset pointer
-      ru->reset () ;
-      headSize = ru->getHeadSize () ;
-      // free by end of the function
-      headBuffer = ( CHAR* ) SDB_OSS_MALLOC ( headSize ) ;
-      if ( !headBuffer )
-      {
-         PD_LOG ( PDERROR, "Failed to allocate memory for header" ) ;
-         rc = SDB_OOM ;
-         goto error ;
-      }
-      rc = ru->exportHead ( headBuffer ) ;
-      if ( rc )
-      {
-         PD_LOG ( PDERROR, "Failed to export head, rc: %d", rc ) ;
-         rc = SDB_OOM ;
-         goto error ;
-      }
-      rc = ru->validateHeadBuffer ( headBuffer ) ;
-      if ( rc )
-      {
-         PD_LOG ( PDERROR, "Failed to validate head, rc: %d", rc ) ;
-         rc = SDB_OOM ;
-         goto error ;
-      }
+      ru->beginExport() ;
 
       // loop for each block
       while ( TRUE )
@@ -148,11 +122,6 @@ namespace engine
       }
 
    done :
-      if ( headBuffer )
-      {
-         SDB_OSS_FREE ( headBuffer ) ;
-         headBuffer = NULL ;
-      }
       if ( blockBuffer )
       {
          SDB_OSS_FREE ( blockBuffer ) ;
@@ -218,8 +187,8 @@ namespace engine
 
       if ( (flag & DMS_MB_OPR_TYPE_MASK) == DMS_MB_FLAG_OFFLINE_REORG )
       {
-         dmsReorgUnit ru ( fullFilePath, su->getPageSize() ) ;
-         rc = ru.open ( FALSE ) ;
+         dmsReorgUnit ru ;
+         rc = ru.open ( fullFilePath, su->getPageSize(), FALSE ) ;
          if ( rc )
          {
             ruExist = FALSE ;
@@ -376,7 +345,6 @@ namespace engine
       BSONObj dummyObj ;
       pmdKRCB *krcb = pmdGetKRCB () ;
       UINT16 flag = 0 ;
-      UINT32 attributes = 0 ;
       CHAR fullFilePath [ OSS_MAX_PATHSIZE + 1 ] = {0} ;
       const CHAR *dbpath = krcb->getOptionCB()->getDbPath() ;
       BOOLEAN dataRebuild = FALSE ;
@@ -409,7 +377,6 @@ namespace engine
 
       // validate whether the collection status is normal
       flag = mbContext->mb()->_flag ;
-      attributes = mbContext->mb()->_attributes ;
 
       if ( DMS_IS_MB_OFFLINE_REORG( flag ) ||
            DMS_IS_MB_ONLINE_REORG ( flag )  )
@@ -430,8 +397,8 @@ namespace engine
       {
          rtnContextBuf buffObj ;
          // open and init temp file
-         dmsReorgUnit ru ( fullFilePath, su->getPageSize() ) ;
-         rc = ru.open ( TRUE ) ;
+         dmsReorgUnit ru ;
+         rc = ru.open ( fullFilePath, su->getPageSize(), TRUE ) ;
          if ( rc )
          {
             PD_LOG ( PDERROR, "Failed to create and initialize new reorg temp "
@@ -440,7 +407,7 @@ namespace engine
          }
 
          /// judge the file is valid
-         if ( su->data()->getHeader()->_validFlag )
+         if ( su->data()->getHeader()->_commitFlag )
          {
             PD_LOG( PDEVENT, "Data file is valid, does not need rebuild" ) ;
             goto rebuild_index ;
@@ -482,7 +449,7 @@ namespace engine
             try
             {
                BSONObj dataRecord ( buffObj.data() ) ;
-               rc = ru.insertRecord ( dataRecord, cb, attributes, compEntry ) ;
+               rc = ru.insertRecord ( dataRecord, cb, compEntry ) ;
                if ( rc )
                {
                   PD_LOG ( PDERROR, "Failed to insert into temp file, rc = %d",
@@ -545,7 +512,7 @@ namespace engine
 
          /// judge index is valid
          if ( FALSE == dataRebuild &&
-              su->index()->getHeader()->_validFlag )
+              su->index()->getHeader()->_commitFlag )
          {
             PD_LOG( PDEVENT, "Index file is valid, does not need rebuild" ) ;
             goto cleanup ;

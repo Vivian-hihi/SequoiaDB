@@ -355,7 +355,7 @@
 #define FIELD_NAME_ALTER                     "Alter"
 #define FIELD_NAME_IGNORE_EXCEPTION          "IgnoreException"
 #define FIELD_NAME_KEEP_DATA                 "KeepData"
-#define FIELD_NAME_OFFLINE                   "Offline"
+#define FIELD_NAME_DEEP                      "Deep"
 
 #define FIELD_OP_VALUE_UPDATE                "update"
 #define FIELD_OP_VALUE_REMOVE                "remove"

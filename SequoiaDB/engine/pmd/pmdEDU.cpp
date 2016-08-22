@@ -151,7 +151,7 @@ namespace engine
       _writingDB        = FALSE ;
       _writingID        = 0 ;
       _processEventCount= 0 ;
-      _name[0]          = 0 ;
+      ossMemset( _name, 0, sizeof( _name ) ) ;
       _threadHdl        = 0 ;
       _pSession         = NULL ;
       _pCompressBuff    = NULL ;
@@ -170,6 +170,9 @@ namespace engine
       _endLsn           = 0 ;
       _lsnNumber        = 0 ;
 
+      _curTransLSN      = DPS_INVALID_LSN_OFFSET ;
+      _curTransID       = DPS_INVALID_TRANS_ID ;
+
 #if defined (_LINUX)
       _threadID         = 0 ;
 #endif // _LINUX
@@ -177,8 +180,6 @@ namespace engine
 #if defined ( SDB_ENGINE )
       _pCoordSession    = NULL ;
       _relatedTransLSN  = DPS_INVALID_LSN_OFFSET ;
-      _curTransLSN      = DPS_INVALID_LSN_OFFSET ;
-      _curTransID       = DPS_INVALID_TRANS_ID ;
       _pTransNodeMap    = NULL ;
       _transRC          = SDB_OK ;
 
@@ -235,7 +236,7 @@ namespace engine
          pmdEduEventRelase( data, this ) ;
       }
       _processEventCount = 0 ;
-      _name[0] = 0 ;
+      ossMemset( _name, 0, sizeof( _name ) ) ;
       _userName = "" ;
       _passWord = "" ;
 
@@ -304,7 +305,6 @@ namespace engine
 
    const CHAR* _pmdEDUCB::getName ()
    {
-      ossScopedLock _lock ( &_mutex, SHARED ) ;
       return _name ;
    }
 
@@ -371,7 +371,6 @@ namespace engine
 
    void _pmdEDUCB::setName ( const CHAR * name )
    {
-      ossScopedLock _lock ( &_mutex, EXCLUSIVE ) ;
       ossStrncpy ( _name, name, PMD_EDU_NAME_LENGTH ) ;
       _name[PMD_EDU_NAME_LENGTH] = 0 ;
    }
@@ -843,6 +842,16 @@ namespace engine
       _lsnNumber++ ;
    }
 
+   void _pmdEDUCB::setTransID( UINT64 transID )
+   {
+      _curTransID = transID ;
+   }
+
+   void _pmdEDUCB::setCurTransLsn( UINT64 lsn )
+   {
+      _curTransLSN = lsn ;
+   }
+
    void _pmdEDUCB::incEventCount( UINT32 step )
    {
       _processEventCount += step ;
@@ -1159,6 +1168,7 @@ namespace engine
 
 #endif // SDB_ENGINE
 
+   #define PMD_EDU_MAX_TIMEOUT               ( 300 * OSS_ONE_SEC )
    /*
       edu entry point functions
    */
@@ -1168,7 +1178,6 @@ namespace engine
       __try
       {
 #endif
-         initCurAuditMask( getAuditMask() ) ;
          // register TLS, this must happen at very beginning of each thread
          return pmdEDUEntryPoint ( type, pmdDeclareEDUCB ( cb ), arg ) ;
 #if defined (_WINDOWS)
@@ -1216,11 +1225,13 @@ namespace engine
       cb->setTID ( ossGetCurrentThreadID() ) ;
       eduMgr->setEDU ( ossGetCurrentThreadID(), myEDUID ) ;
 
-      PD_LOG ( PDEVENT, "Start thread[%d] for EDU[ID:%lld, type:%s]",
-               ossGetCurrentThreadID(), myEDUID, getEDUName( type ) ) ;
+      PD_LOG ( PDEVENT, "Start thread[%d] for EDU[ID:%lld, type:%s, Name:%s]",
+               ossGetCurrentThreadID(), myEDUID, getEDUName( type ),
+               cb->getName() ) ;
 
       while ( !eduDestroyed )
       {
+         UINT32 timeout = 0 ;
          type = cb->getType () ;
          // currently the thread status should be either WAITING or CREATING
          // usually we don't expect agent sitting in creating for long time
@@ -1243,9 +1254,19 @@ namespace engine
             }
             else
             {
-               continue ;
+               timeout += OSS_ONE_SEC ;
+               if ( timeout > PMD_EDU_MAX_TIMEOUT )
+               {
+                  isForced = TRUE ;
+               }
+               else
+               {
+                  continue ;
+               }
             }
          }
+         timeout = 0 ;
+         initCurAuditMask( getAuditMask() ) ;
 
          if ( !isForced && PMD_EDU_EVENT_RESUME == event._eventType )
          {

@@ -48,6 +48,8 @@
 
 namespace engine
 {
+   #define DPS_NO_WRITE_TIME                 ( 2000 )   // 2 seconds
+
    /*
       _dpsLogWrapper implement
    */
@@ -55,6 +57,12 @@ namespace engine
    {
       _initialized   = FALSE ;
       _dpslocal      = FALSE ;
+
+      _syncInterval  = 0 ;
+      _syncRecordNum = 0 ;
+      _writeReordNum = 0 ;
+      _lastWriteTick = 0 ;
+      _lastSyncTime  = 0 ;
    }
    _dpsLogWrapper::~_dpsLogWrapper()
    {
@@ -77,6 +85,11 @@ namespace engine
       {
          _initialized = TRUE ;
       }
+      _syncInterval = optCB->getSyncInterval() ;
+      _syncRecordNum = optCB->getSyncRecordNum() ;
+
+      pmdGetSyncMgr()->setLogAccess( this ) ;
+      pmdGetSyncMgr()->setMainUnit( this ) ;
 
       return rc ;
    }
@@ -204,7 +217,7 @@ namespace engine
             break ;
          }
          /// max time check
-         if ( maxTime > 0 && time( NULL ) - bTime >= maxTime )
+         if ( maxTime > 0 && time( NULL ) - bTime >= (UINT32)maxTime )
          {
             break ;
          }
@@ -277,6 +290,11 @@ namespace engine
       return _buf.expectLsn() ;
    }
 
+   DPS_LSN _dpsLogWrapper::commitLsn()
+   {
+      return _buf.commitLsn() ;
+   }
+
    INT32 _dpsLogWrapper::move( const DPS_LSN_OFFSET &offset,
                                const DPS_LSN_VER &version )
    {
@@ -291,12 +309,15 @@ namespace engine
 
    void _dpsLogWrapper::writeData ( dpsMergeInfo & info )
    {
+      _lastWriteTick = pmdGetDBTick() ;
+      ++_writeReordNum ;
+
       _buf.writeData( info ) ;
 
+      IExecutor *cb = info.getEDUCB() ;
       if ( _vecEventHandler.size() > 0 && info.isNeedNotify() )
       {
          DPS_LSN_OFFSET offset = DPS_INVALID_LSN_OFFSET ;
-         pmdEDUCB *cb = info.getEDUCB() ;
          if ( info.hasDummy() )
          {
             offset = info.getDummyBlock().record().head()._lsn ;
@@ -320,6 +341,21 @@ namespace engine
             _vecEventHandler[i]->onWriteLog( offset ) ;
          }
       }
+
+      // it is transaction operations
+      if ( info.isTransEnabled() && cb &&
+           DPS_INVALID_TRANS_ID != cb->getTransID() )
+      {
+         UINT64 transID = cb->getTransID() ;
+         cb->setCurTransLsn( info.getMergeBlock().record().head()._lsn ) ;
+
+         if ( sdbGetTransCB()->isFirstOp( transID ) )
+         {
+            sdbGetTransCB()->clearFirstOpTag( transID ) ;
+            cb->setTransID( transID ) ;
+         }
+      }
+
       // reset
       info.resetInfoEx() ;
    }
@@ -369,6 +405,9 @@ namespace engine
             goto error;
          }
 
+         _lastWriteTick = pmdGetDBTick() ;
+         ++_writeReordNum ;
+
          rc = _buf.merge( block );
       }
 
@@ -382,6 +421,17 @@ namespace engine
    BOOLEAN _dpsLogWrapper::isInRestore()
    {
       return _buf.isInRestore() ;
+   }
+
+   INT32 _dpsLogWrapper::commit( BOOLEAN deeply, DPS_LSN *committedLsn )
+   {
+      ossTimestamp t ;
+      ossGetCurrentTime( t ) ;
+      _lastSyncTime = t.time * 1000 + t.microtm / 1000 ;
+      /// clear write info
+      _writeReordNum = 0 ;
+
+      return _buf.commit( deeply, committedLsn ) ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DPSLGWRAPP_PREPARE, "prepare" )
@@ -405,6 +455,60 @@ namespace engine
       return rc ;
    error:
       goto done ;
+   }
+
+   BOOLEAN _dpsLogWrapper::isClosed() const
+   {
+      return FALSE ;
+   }
+
+   BOOLEAN _dpsLogWrapper::canSync( BOOLEAN &force ) const
+   {
+      force = FALSE ;
+
+      if ( pmdGetTickSpanTime( _lastWriteTick ) < DPS_NO_WRITE_TIME ||
+           !_buf.hasDirty() )
+      {
+         return FALSE ;
+      }
+
+      if ( _syncRecordNum > 0 && _writeReordNum >= _syncRecordNum )
+      {
+         PD_LOG( PDDEBUG, "Write record number[%u] more than threshold[%u]",
+                 _writeReordNum, _syncRecordNum ) ;
+         return TRUE ;
+      }
+      else if ( _syncInterval > 0 )
+      {
+         ossTimestamp tm ;
+         ossGetCurrentTime( tm ) ;
+         UINT64 curTime = tm.time * 1000 + tm.microtm / 1000 ;
+
+         if ( curTime - _lastSyncTime >= _syncInterval )
+         {
+            PD_LOG( PDDEBUG, "Time interval threshold tiggered, "
+                    "CurTime:%llu, LastSyncTime:%llu, SyncInterval:%u",
+                    curTime, _lastSyncTime, _syncInterval ) ;
+            return TRUE ;
+         }
+      }
+      return FALSE ;
+   }
+
+   INT32 _dpsLogWrapper::sync( BOOLEAN force,
+                               BOOLEAN sync,
+                               UINT64 lastLSN,
+                               IExecutor *cb )
+   {
+      return commit( sync, NULL ) ;
+   }
+
+   void _dpsLogWrapper::lock()
+   {
+   }
+
+   void _dpsLogWrapper::unlock()
+   {
    }
 
    /*

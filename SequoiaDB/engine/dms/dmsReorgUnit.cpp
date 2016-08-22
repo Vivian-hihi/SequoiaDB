@@ -42,103 +42,104 @@
 #include "pmdEDU.hpp"
 #include "dmsCompress.hpp"
 
+using namespace bson ;
+
 namespace engine
 {
-#define DMS_REORG_UNIT_HEAD_SIZE_UNIT 1024
-   _dmsReorgUnit::_dmsReorgUnit ( CHAR *pFileName, SINT32 pageSize )
+   #define DMS_REORG_UNIT_HEAD_SIZE_UNIT           ( 1024 )
+   #define DMS_REORG_COMPRESS_RATIO_THRESHOLD      ( 95 )
+
+   _dmsReorgUnit::_dmsReorgUnit ()
    {
       _pCurrentExtent = NULL ;
+      _currentExtentSize = 0 ;
+      _buffSize = 0 ;
       ossMemset ( _fileName, 0, sizeof(_fileName) ) ;
-      ossStrncpy ( _fileName, pFileName, OSS_MAX_PATHSIZE ) ;
-      _pageSize = pageSize ;
+      _pageSize = 0 ;
+      _headSize = 0 ;
+      _readOnly = TRUE ;
    }
+
    _dmsReorgUnit::~_dmsReorgUnit ()
    {
       close() ;
    }
+
    // for new reorg file request, we allocate buffer, initialize header and
    // write into the file
    // for opening existing file, we allocate buffer, read the header and
    // validate eyecatcher and size
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSROUNIT__INIT, "_dmsReorgUnit::_init" )
-   INT32 _dmsReorgUnit::_init ( BOOLEAN createNew )
+   INT32 _dmsReorgUnit::_init( BOOLEAN createNew )
    {
       INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY ( SDB__DMSROUNIT__INIT );
-      class _reorgUnitHead *unitHead = NULL ;
-      INT32 bufSize = ossRoundUpToMultipleX (
-                            sizeof ( class _reorgUnitHead ),
-                            DMS_REORG_UNIT_HEAD_SIZE_UNIT ) ;
-      INT32 restSize = bufSize ;
-      _headSize = bufSize ;
+      PD_TRACE_ENTRY ( SDB__DMSROUNIT__INIT ) ;
+
+      _reorgUnitHead *unitHead = NULL ;
+      _headSize = ossRoundUpToMultipleX ( sizeof ( _reorgUnitHead ),
+                                          DMS_REORG_UNIT_HEAD_SIZE_UNIT ) ;
+
       // free at end of the function
-      CHAR *pBuffer = (CHAR*)SDB_OSS_MALLOC (bufSize) ;
+      CHAR *pBuffer = (CHAR*)SDB_OSS_MALLOC( _headSize ) ;
       if ( !pBuffer )
       {
-         PD_LOG ( PDERROR, "Failed to allocate %d bytes of memory", bufSize ) ;
+         PD_LOG ( PDERROR, "Failed to allocate %d bytes of memory",
+                  _headSize ) ;
          rc = SDB_OOM ;
          goto error ;
       }
-      unitHead = (class _reorgUnitHead*)pBuffer ;
-      ossMemset ( unitHead, 0, bufSize ) ;
+
+      unitHead = (_reorgUnitHead*)pBuffer ;
+      ossMemset ( unitHead, 0, _headSize ) ;
+
       if ( createNew )
       {
-         SINT64 writeSize = 0 ;
          _readOnly = FALSE ;
+
          // initialize header
          ossMemcpy ( unitHead->_eyeCatcher, DMS_REORG_UNIT_EYECATCHER,
                      DMS_REORG_UNIT_EYECATCHER_LEN ) ;
-         unitHead->_headerSize = bufSize ;
+         unitHead->_headerSize = _headSize ;
          ossMemcpy ( unitHead->_fileName, _fileName, OSS_MAX_PATHSIZE ) ;
          unitHead->_pageSize = _pageSize ;
-         // write header into file
-         while ( restSize != 0 )
+
+         rc = ossWriteN( &_file, pBuffer, _headSize ) ;
+         if ( rc )
          {
-            rc = ossWrite ( &_file, &pBuffer[bufSize-restSize], restSize,
-                            &writeSize ) ;
-            if ( rc && SDB_INTERRUPT != rc )
-            {
-               PD_LOG ( PDERROR, "Failed to write into file: %s, rc = %d",
-                        _fileName, rc ) ;
-               goto error ;
-            }
-            restSize -= writeSize ;
-            rc = SDB_OK ;
+            PD_LOG( PDERROR, "Failed to write header to file, rc: %d", rc ) ;
+            goto error ;
          }
       }
       else
       {
-         SINT64 readSize = 0 ;
          _readOnly = TRUE ;
-         // read from file
-         while ( restSize > 0 )
+
+         INT64 read = 0 ;
+         rc = ossReadN( &_file, _headSize, pBuffer, read ) ;
+         if ( rc )
          {
-            rc = ossRead ( &_file, &pBuffer[bufSize-restSize], restSize, &readSize ) ;
-            if ( rc && SDB_INTERRUPT != rc )
-            {
-               PD_LOG ( PDERROR, "Failed to read from file: %s, rc = %d",
-                        _fileName, rc ) ;
-               goto error ;
-            }
-            restSize -= readSize ;
-            rc = SDB_OK ;
+            PD_LOG( PDERROR, "Failed to read header from file, rc: %d", rc ) ;
+            goto error ;
          }
+
          // validate
          if ( ossMemcmp ( unitHead->_eyeCatcher, DMS_REORG_UNIT_EYECATCHER,
                           DMS_REORG_UNIT_EYECATCHER_LEN ) ||
-              unitHead->_headerSize != bufSize )
+              unitHead->_headerSize != _headSize ||
+              unitHead->_pageSize != _pageSize )
          {
             PD_LOG ( PDERROR, "Invalid reorg file is detected" ) ;
             rc = SDB_DMS_INVALID_REORG_FILE ;
             goto error ;
          }
       }
+
    done :
       if ( pBuffer )
       {
          SDB_OSS_FREE ( pBuffer ) ;
       }
-      PD_TRACE_EXITRC ( SDB__DMSROUNIT__INIT, rc );
+      PD_TRACE_EXITRC ( SDB__DMSROUNIT__INIT, rc ) ;
       return rc ;
    error :
       goto done ;
@@ -164,11 +165,22 @@ namespace engine
       goto done ;
    }
 
+   BOOLEAN _dmsReorgUnit::isOpened() const
+   {
+      return _file.isOpened() ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSROUNIT_OPEN, "_dmsReorgUnit::open" )
-   INT32 _dmsReorgUnit::open ( BOOLEAN createNew )
+   INT32 _dmsReorgUnit::open ( const CHAR *pFileName,
+                               SINT32 pageSize,
+                               BOOLEAN createNew )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__DMSROUNIT_OPEN );
+
+      ossStrncpy ( _fileName, pFileName, OSS_MAX_PATHSIZE ) ;
+      _pageSize = pageSize ;
+
       // if this is creating new reorg, then we only allow creating a brandnew
       // file, that means if there's existing file, we will return error
       // if this is open existing request, then we do NOT attempt to create a
@@ -199,116 +211,71 @@ namespace engine
    void _dmsReorgUnit::close ()
    {
       ossClose ( _file ) ;
-   }
-   void _dmsReorgUnit::reset ()
-   {
-      ossSeek ( &_file, 0, OSS_SEEK_SET ) ;
+
+      if ( _pCurrentExtent )
+      {
+         SDB_OSS_FREE( _pCurrentExtent ) ;
+         _pCurrentExtent = NULL ;
+         _buffSize = 0 ;
+         _currentExtentSize = 0 ;
+      }
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSROUNIT_IMPMME, "_dmsReorgUnit::importMME" )
-   INT32 _dmsReorgUnit::importMME ( const CHAR *pMME )
+   void _dmsReorgUnit::beginExport()
    {
-      INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY ( SDB__DMSROUNIT_IMPMME );
-      SDB_ASSERT ( pMME, "pMME can't be NULL" ) ;
-      INT32 restSize = DMS_MB_SIZE ;
-      INT64 writeSize = 0 ;
-      INT32 bufSize = restSize ;
-      if ( _readOnly )
-      {
-         PD_LOG ( PDERROR, "Modify is not allowed" ) ;
-         rc = SDB_DMS_REORG_FILE_READONLY ;
-         goto error ;
-      }
-      rc = ossSeek ( &_file, _headSize, OSS_SEEK_SET ) ;
-      if ( rc )
-      {
-         PD_LOG ( PDERROR, "Failed to seek to %d from file %s, rc = %d",
-                  _headSize, _fileName, rc ) ;
-         goto error ;
-      }
-      while ( restSize != 0 )
-      {
-         rc = ossWrite ( &_file, &pMME[bufSize-restSize], restSize, &writeSize ) ;
-         if ( rc && SDB_INTERRUPT != rc )
-         {
-            PD_LOG ( PDERROR, "Failed to write MME into file: %s, rc = %d",
-                     _fileName, rc ) ;
-            goto error ;
-         }
-         restSize -= (INT32)writeSize ;
-         rc = SDB_OK ;
-      }
-   done :
-      PD_TRACE_EXITRC ( SDB__DMSROUNIT_IMPMME, rc );
-      return rc ;
-   error :
-      goto done ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSROUNIT_EXPMME, "_dmsReorgUnit::exportMME" )
-   INT32 _dmsReorgUnit::exportMME ( CHAR *pMME )
-   {
-      INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY ( SDB__DMSROUNIT_EXPMME );
-      SDB_ASSERT ( pMME, "pMME can't be NULL" ) ;
-      INT32 restSize = DMS_MB_SIZE ;
-      INT64 readSize = 0 ;
-      INT32 bufSize = restSize ;
-      rc = ossSeek ( &_file, _headSize, OSS_SEEK_SET ) ;
-      if ( rc )
-      {
-         PD_LOG ( PDERROR, "Failed to seek to %d from file %s, rc = %d",
-                  _headSize, _fileName, rc ) ;
-         goto error ;
-      }
-      while ( restSize > 0 )
-      {
-         rc = ossRead ( &_file, &pMME[bufSize-restSize], restSize, &readSize ) ;
-         if ( rc && SDB_INTERRUPT != rc )
-         {
-            PD_LOG ( PDERROR, "Failed to write MME into file: %s, rc = %d",
-                     _fileName, rc ) ;
-            goto error ;
-         }
-         restSize -= (INT32)readSize ;
-         rc = SDB_OK ;
-      }
-   done :
-      PD_TRACE_EXITRC ( SDB__DMSROUNIT_EXPMME, rc );
-      return rc ;
-   error :
-      goto done ;
+      ossSeek( &_file, _headSize, OSS_SEEK_SET ) ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSROUNIT__ALCEXT, "_dmsReorgUnit::_allocateExtent" )
    INT32 _dmsReorgUnit::_allocateExtent ( INT32 requestSize )
    {
       INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY ( SDB__DMSROUNIT__ALCEXT );
-      SDB_ASSERT ( !_pCurrentExtent, "current extent must be NULL" ) ;
+      PD_TRACE_ENTRY ( SDB__DMSROUNIT__ALCEXT ) ;
+
       if ( requestSize < DMS_MIN_EXTENT_SZ(_pageSize) )
-         requestSize = DMS_MIN_EXTENT_SZ(_pageSize) ;
-      else if ( requestSize > DMS_MAX_EXTENT_SZ )
-         requestSize = DMS_MAX_EXTENT_SZ ;
-      else
-         requestSize = ossRoundUpToMultipleX ( requestSize, _pageSize ) ;
-      _pCurrentExtent = (CHAR*)SDB_OSS_MALLOC ( requestSize ) ;
-      if ( !_pCurrentExtent )
       {
-         PD_LOG ( PDERROR, "Unable to allocate %d bytes memory", requestSize ) ;
-         rc = SDB_OOM ;
-         goto error ;
+         requestSize = DMS_MIN_EXTENT_SZ(_pageSize) ;
       }
+      else if ( requestSize > DMS_MAX_EXTENT_SZ )
+      {
+         requestSize = DMS_MAX_EXTENT_SZ ;
+      }
+      else
+      {
+         requestSize = ossRoundUpToMultipleX ( requestSize, _pageSize ) ;
+      }
+
+      if ( requestSize > _buffSize && _pCurrentExtent )
+      {
+         SDB_OSS_FREE( _pCurrentExtent ) ;
+         _pCurrentExtent = NULL ;
+         _buffSize = 0 ;
+      }
+
+      if ( requestSize > _buffSize )
+      {
+         _pCurrentExtent = ( CHAR* )SDB_OSS_MALLOC( requestSize << 1 ) ;
+         if ( !_pCurrentExtent )
+         {
+            PD_LOG( PDERROR, "Alloc memroy[%d] failed",
+                    requestSize << 1 ) ;
+            rc = SDB_OOM ;
+            goto error ;
+         }
+         _buffSize = ( requestSize << 1 ) ;
+      }
+
       _currentExtentSize = requestSize ;
       _initExtentHeader ( (dmsExtent*)_pCurrentExtent,
                           _currentExtentSize/_pageSize ) ;
+
    done :
       PD_TRACE_EXITRC ( SDB__DMSROUNIT__ALCEXT, rc );
       return rc ;
    error :
       goto done ;
    }
+
    void _dmsReorgUnit::_initExtentHeader ( dmsExtent *extAddr, UINT16 numPages )
    {
       SDB_ASSERT ( _pageSize * numPages == _currentExtentSize,
@@ -335,31 +302,25 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__DMSROUNIT__FLSEXT );
       SDB_ASSERT ( _pCurrentExtent, "current extent can't be NULL" ) ;
-      INT32 restSize = _currentExtentSize ;
-      INT64 writeSize = 0 ;
-      INT32 bufSize = restSize ;
+
       if ( _readOnly )
       {
          PD_LOG ( PDERROR, "Modify is not allowed" ) ;
          rc = SDB_DMS_REORG_FILE_READONLY ;
          goto error ;
       }
-      while ( restSize != 0 )
+
+      rc = ossWriteN( &_file, _pCurrentExtent, _currentExtentSize ) ;
+      if ( rc )
       {
-         rc = ossWrite ( &_file, &_pCurrentExtent[bufSize-restSize],
-                         restSize, &writeSize ) ;
-         if ( rc && SDB_INTERRUPT != rc )
-         {
-            PD_LOG ( PDERROR, "Failed to flush extent into file: %s, rc = %d",
-                     _fileName, rc ) ;
-            goto error ;
-         }
-         restSize -= (INT32)writeSize ;
-         rc = SDB_OK ;
+         PD_LOG( PDERROR, "Failed to flush extent into file: %s, rc: %d",
+                 _fileName, rc ) ;
+         goto error ;
       }
-      SDB_OSS_FREE ( _pCurrentExtent ) ;
-      _pCurrentExtent = NULL ;
+
+      /// not release the memory
       _currentExtentSize = 0 ;
+
    done :
       PD_TRACE_EXITRC ( SDB__DMSROUNIT__FLSEXT, rc );
       return rc ;
@@ -381,22 +342,19 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSROUNIT_INSRCD, "_dmsReorgUnit::insertRecord" )
-   INT32 _dmsReorgUnit::insertRecord ( BSONObj &obj, _pmdEDUCB *cb,
-                                       UINT32 attributes,
+   INT32 _dmsReorgUnit::insertRecord ( BSONObj &obj,
+                                       _pmdEDUCB *cb,
                                        dmsCompressorEntry *compressorEntry )
    {
       INT32 rc                     = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__DMSROUNIT_INSRCD );
       UINT32 dmsrecordSize         = 0 ;
-      ossValuePtr recordPtr        = 0 ;
-      ossValuePtr prevPtr          = 0 ;
+      dmsRecord *pRecord           = NULL ;
+      dmsRecord *pPrevRecord       = NULL ;
       dmsOffset offset             = DMS_INVALID_OFFSET ;
       dmsOffset recordOffset       = DMS_INVALID_OFFSET ;
       dmsExtent *currentExtent     = (dmsExtent*)_pCurrentExtent ;
-      BOOLEAN isCompressed         = FALSE ;
-      const CHAR *compressedData   = NULL ;
-      INT32 compressedDataSize     = 0 ;
-      UINT8 compressRatio          = 0 ;
+      dmsRecordData recordData ;
 
       // sanity size check
       if ( obj.objsize() + DMS_RECORD_METADATA_SZ >
@@ -406,42 +364,40 @@ namespace engine
          goto error ;
       }
 
+      recordData.setData( obj.objdata(), obj.objsize(),
+                          FALSE, TRUE ) ;
+      dmsrecordSize = recordData.len() ;
+
       // compression
       if ( compressorEntry->ready() )
       {
-         rc = dmsCompress ( cb, compressorEntry, obj, NULL, 0, &compressedData,
-                            &compressedDataSize, compressRatio ) ;
-         if ( rc )
-         {
-            // In case of compression failure, store the record in original format.
-            dmsrecordSize = obj.objsize() ;
-         }
-         else
+         const CHAR *compressedData    = NULL ;
+         INT32 compressedDataSize      = 0 ;
+         UINT8 compressRatio           = 0 ;
+         rc = dmsCompress( cb, compressorEntry,
+                           recordData.data(), recordData.len(),
+                           &compressedData, &compressedDataSize,
+                           compressRatio ) ;
+         // Compression is valid and ratio is less the threshold
+         if ( SDB_OK == rc &&
+              compressedDataSize + sizeof(UINT32) < recordData.orgLen() &&
+              compressRatio < DMS_REORG_COMPRESS_RATIO_THRESHOLD )
          {
             // 4 bytes len + compressed record
-            dmsrecordSize = compressedDataSize + sizeof(INT32) ;
-            // if compressed version is larger than uncompressed, let's use
-            // original
-            if ( dmsrecordSize > (UINT32)(obj.objsize()) )
-            {
-               dmsrecordSize = obj.objsize() ;
-            }
-            else
-            {
-               isCompressed = TRUE ;
-            }
+            dmsrecordSize = compressedDataSize + sizeof(UINT32) ;
+            // set the compression data
+            recordData.setData( compressedData, compressedDataSize,
+                                TRUE, FALSE ) ;
          }
       }
-      else
-      {
-         // if not compression, let's use original
-         dmsrecordSize = obj.objsize() ;
-      }
+
       dmsrecordSize += DMS_RECORD_METADATA_SZ ;
       dmsrecordSize *= DMS_RECORD_OVERFLOW_RATIO ;
-      dmsrecordSize = OSS_MIN(DMS_RECORD_MAX_SZ, ossAlignX(dmsrecordSize,4)) ;
+      dmsrecordSize = OSS_MIN( DMS_RECORD_MAX_SZ,
+                               ossAlignX( dmsrecordSize, 4 ) ) ;
+
    alloc:
-      if ( !_pCurrentExtent )
+      if ( 0 == _currentExtentSize )
       {
          // allocate memory
          rc = _allocateExtent ( dmsrecordSize <<
@@ -456,9 +412,9 @@ namespace engine
       }
       if ( dmsrecordSize > (UINT32)currentExtent->_freeSpace )
       {
-         // if the current page is not large enough for the record, let's flush
-         // and get another page
-         rc = _flushExtent () ;
+         // if the current page is not large enough for the record,
+         // let's flush and get another page
+         rc = _flushExtent() ;
          if ( rc )
          {
             PD_LOG ( PDERROR, "Failed to flush extent, rc = %d", rc ) ;
@@ -467,7 +423,8 @@ namespace engine
          goto alloc ;
       }
       recordOffset = _currentExtentSize - currentExtent->_freeSpace ;
-      recordPtr = ((ossValuePtr)currentExtent) + recordOffset ;
+      pRecord = (dmsRecord*)( (const CHAR*)currentExtent + recordOffset ) ;
+
       if ( currentExtent->_freeSpace - (INT32)dmsrecordSize <
            (INT32)DMS_MIN_RECORD_SZ &&
            currentExtent->_freeSpace <= (INT32)DMS_RECORD_MAX_SZ )
@@ -476,31 +433,25 @@ namespace engine
       }
 
       // set record header
-      DMS_RECORD_SETSTATE ( recordPtr, DMS_RECORD_FLAG_NORMAL ) ;
-      DMS_RECORD_RESETATTR ( recordPtr ) ;
-      DMS_RECORD_SETMYOFFSET ( recordPtr, recordOffset ) ;
-      DMS_RECORD_SETSIZE ( recordPtr, dmsrecordSize ) ;
-      if ( isCompressed )
-      {
-         DMS_RECORD_SETATTR ( recordPtr, DMS_RECORD_FLAG_COMPRESSED ) ;
-         DMS_RECORD_SETDATA ( recordPtr, compressedData, compressedDataSize ) ;
-      }
-      else
-      {
-         DMS_RECORD_SETDATA ( recordPtr, obj.objdata(), obj.objsize() ) ;
-      }
-      DMS_RECORD_SETNEXTOFFSET ( recordPtr, DMS_INVALID_OFFSET ) ;
-      DMS_RECORD_SETPREVOFFSET ( recordPtr, DMS_INVALID_OFFSET ) ;
+      pRecord->setNormal() ;
+      pRecord->resetAttr() ;
+      pRecord->setMyOffset( recordOffset ) ;
+      pRecord->setSize( dmsrecordSize ) ;
+      pRecord->setData( recordData ) ;
+      pRecord->setNextOffset( DMS_INVALID_OFFSET ) ;
+      pRecord->setPrevOffset( DMS_INVALID_OFFSET ) ;
+
       // set extent header
-      currentExtent->_recCount ++ ;
+      currentExtent->_recCount++ ;
       currentExtent->_freeSpace -= dmsrecordSize ;
+
       // set previous record next pointer
       offset = currentExtent->_lastRecordOffset ;
       if ( DMS_INVALID_OFFSET != offset )
       {
-         prevPtr = ((ossValuePtr)currentExtent) + offset ;
-         DMS_RECORD_SETNEXTOFFSET ( prevPtr, recordOffset ) ;
-         DMS_RECORD_SETPREVOFFSET ( recordPtr, offset ) ;
+         pPrevRecord = ( dmsRecord *)( (const CHAR*)currentExtent + offset ) ;
+         pPrevRecord->setNextOffset( recordOffset ) ;
+         pRecord->setPrevOffset( offset ) ;
       }
       currentExtent->_lastRecordOffset = recordOffset ;
       // then check extent header for first record
@@ -509,6 +460,7 @@ namespace engine
       {
          currentExtent->_firstRecordOffset = recordOffset ;
       }
+
    done :
       PD_TRACE_EXITRC ( SDB__DMSROUNIT_INSRCD, rc );
       return rc ;
@@ -517,50 +469,43 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSROUNIT_GETNXTEXTSIZE, "_dmsReorgUnit::getNextExtentSize" )
-   INT32 _dmsReorgUnit::getNextExtentSize ( SINT32 &size )
+   INT32 _dmsReorgUnit::getNextExtentSize( SINT32 &size )
    {
       INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY ( SDB__DMSROUNIT_GETNXTEXTSIZE );
-      CHAR buffer [ sizeof(dmsExtent) ] ;
-      dmsExtent *extent = (dmsExtent*)buffer ;
-      ossMemset ( buffer, 0, sizeof(buffer) ) ;
-      INT32 restSize = sizeof(buffer) ;
-      INT64 readSize = 0 ;
-      INT32 bufSize = restSize ;
-      while ( restSize > 0 )
+      PD_TRACE_ENTRY ( SDB__DMSROUNIT_GETNXTEXTSIZE ) ;
+
+      dmsExtent extentHead ;
+      ossMemset( (void*)&extentHead, 0, sizeof(dmsExtent) ) ;
+      INT64 read = 0 ;
+
+      rc = ossReadN( &_file, sizeof(dmsExtent), (CHAR*)&extentHead, read ) ;
+      if ( rc )
       {
-         rc = ossRead ( &_file, &buffer[bufSize-restSize], restSize,
-                        &readSize ) ;
-         if ( rc && SDB_INTERRUPT != rc )
+         if ( SDB_EOF != rc )
          {
-            // if we hit end of the file when reading block header, that means
-            // we don't have anything else to export, so we return SDB_EOF with
-            // size = 0
-            if ( SDB_EOF != rc )
-            {
-               PD_LOG ( PDERROR, "Failed to read header from file: %s, rc = %d",
-                        _fileName, rc ) ;
-            }
-            goto error ;
+            PD_LOG( PDERROR, "Failed to read extent header from file, rc: %d",
+                    rc ) ;
          }
-         restSize -= (INT32)readSize ;
-         rc = SDB_OK ;
+         goto error ;
       }
-      if ( DMS_EXTENT_EYECATCHER0 != extent->_eyeCatcher[0] ||
-           DMS_EXTENT_EYECATCHER1 != extent->_eyeCatcher[1] )
+
+      if ( DMS_EXTENT_EYECATCHER0 != extentHead._eyeCatcher[0] ||
+           DMS_EXTENT_EYECATCHER1 != extentHead._eyeCatcher[1] )
       {
          PD_LOG ( PDERROR, "Invalid eye catcher" ) ;
          rc = SDB_SYS ;
          goto error ;
       }
-      size = extent->_blockSize * _pageSize ;
-      rc = ossSeek ( &_file, (INT64)(0-sizeof(dmsExtent)), OSS_SEEK_CUR ) ;
+      size = extentHead._blockSize * _pageSize ;
+      rc = ossSeek ( &_file, (INT64)( 0 - sizeof(dmsExtent) ),
+                     OSS_SEEK_CUR ) ;
       if ( rc )
       {
          PD_LOG ( PDERROR, "Failed to seek back %d bytes offset, rc = %d",
                   sizeof(dmsExtent) ) ;
          goto error ;
       }
+
    done :
       PD_TRACE_EXITRC ( SDB__DMSROUNIT_GETNXTEXTSIZE, rc );
       return rc ;
@@ -569,64 +514,24 @@ namespace engine
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSROUNIT_EXPHEAD, "_dmsReorgUnit::exportHead" )
-   INT32 _dmsReorgUnit::exportHead ( CHAR *pBuffer )
-   {
-      INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY ( SDB__DMSROUNIT_EXPHEAD );
-      SDB_ASSERT ( pBuffer, "pBuffer can't be NULL" ) ;
-      INT32 restSize = _headSize ;
-      INT64 readSize = 0 ;
-      INT32 bufSize = restSize ;
-      rc = ossSeek ( &_file, 0, OSS_SEEK_SET ) ;
-      if ( rc )
-      {
-         PD_LOG ( PDERROR, "Failed to seek to %d from file %s, rc = %d",
-                  0, _fileName, rc ) ;
-         goto error ;
-      }
-      while ( restSize > 0 )
-      {
-         rc = ossRead ( &_file, &pBuffer[bufSize-restSize], restSize, &readSize ) ;
-         if ( rc && SDB_INTERRUPT != rc )
-         {
-            PD_LOG ( PDERROR, "Failed to read head from file: %s, rc = %d",
-                     _fileName, rc ) ;
-            goto error ;
-         }
-         restSize -= (INT32)readSize ;
-         rc = SDB_OK ;
-      }
-   done :
-      PD_TRACE_EXITRC ( SDB__DMSROUNIT_EXPHEAD, rc );
-      return rc ;
-   error :
-      goto done ;
-   }
-
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSROUNIT_EXPEXT, "_dmsReorgUnit::exportExtent" )
-   INT32 _dmsReorgUnit::exportExtent ( CHAR *pBuffer )
+   INT32 _dmsReorgUnit::exportExtent( CHAR *pBuffer )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__DMSROUNIT_EXPEXT );
+
       dmsExtent *extent = (dmsExtent*)pBuffer ;
       ossMemset ( pBuffer, 0, sizeof(dmsExtent) ) ;
-      // read header
-      INT32 restSize = sizeof(dmsExtent) ;
-      INT64 readSize = 0 ;
-      INT32 bufSize = restSize ;
-      while ( restSize > 0 )
+      INT64 read = 0 ;
+      INT64 restSize = 0 ;
+
+      rc = ossReadN( &_file, sizeof(dmsExtent), pBuffer, read ) ;
+      if ( rc )
       {
-         rc = ossRead ( &_file, &pBuffer[bufSize-restSize], restSize, &readSize ) ;
-         if ( rc && SDB_INTERRUPT != rc )
-         {
-            PD_LOG ( PDERROR, "Failed to read header from file: %s, rc = %d",
-                     _fileName, rc ) ;
-            goto error ;
-         }
-         restSize -= (INT32)readSize ;
-         rc = SDB_OK ;
+         PD_LOG( PDERROR, "Failed to read extent header, rc: %d", rc ) ;
+         goto error ;
       }
+
       // validate header
       if ( DMS_EXTENT_EYECATCHER0 != extent->_eyeCatcher[0] ||
            DMS_EXTENT_EYECATCHER1 != extent->_eyeCatcher[1] )
@@ -635,23 +540,17 @@ namespace engine
          rc = SDB_SYS ;
          goto error ;
       }
+
       // read body
       restSize = extent->_blockSize * _pageSize - sizeof(dmsExtent) ;
-      readSize = 0 ;
-      bufSize = restSize ;
-      while ( restSize > 0 )
+      rc = ossReadN( &_file, restSize, &pBuffer[sizeof(dmsExtent)], read ) ;
+      if ( rc )
       {
-         rc = ossRead ( &_file, &pBuffer[sizeof(dmsExtent)+bufSize-restSize],
-                        restSize, &readSize ) ;
-         if ( rc && SDB_INTERRUPT != rc )
-         {
-            PD_LOG ( PDERROR, "Failed to read header from file: %s, rc = %d",
-                     _fileName, rc ) ;
-            goto error ;
-         }
-         restSize -= (INT32)readSize ;
-         rc = SDB_OK ;
+         PD_LOG( PDERROR, "Failed to read extent body from file, rc: %d",
+                 rc ) ;
+         goto error ;
       }
+
    done :
       PD_TRACE_EXITRC ( SDB__DMSROUNIT_EXPEXT, rc );
       return rc ;
@@ -659,36 +558,5 @@ namespace engine
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSROUNIT_VLDHDBUFF, "_dmsReorgUnit::validateHeadBuffer" )
-   INT32 _dmsReorgUnit::validateHeadBuffer ( CHAR *pBuffer )
-   {
-      INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY ( SDB__DMSROUNIT_VLDHDBUFF );
-      SDB_ASSERT ( pBuffer, "pBuffer can't be NULL" ) ;
-      class _reorgUnitHead *unitHead = (class _reorgUnitHead *)pBuffer ;
-      // few steps to validate header
-      // 1) eye catcher
-      if ( ossMemcmp ( pBuffer, DMS_REORG_UNIT_EYECATCHER,
-                       DMS_REORG_UNIT_EYECATCHER_LEN ) )
-      {
-         PD_LOG ( PDWARNING, "reorg file header is invalid" ) ;
-         rc = SDB_DMS_INVALID_REORG_FILE ;
-         goto error ;
-      }
-      // 2) size must be multiple of DMS_REORG_UNIT_HEAD_SIZE_UNIT
-      if ( ossRoundUpToMultipleX ( unitHead->_headerSize,
-                                   DMS_REORG_UNIT_HEAD_SIZE_UNIT ) !=
-           unitHead->_headerSize )
-      {
-         PD_LOG ( PDWARNING, "reorg file header size is not valid: %d",
-                  unitHead->_headerSize ) ;
-         rc = SDB_DMS_INVALID_REORG_FILE ;
-         goto error ;
-      }
-   done :
-      PD_TRACE_EXITRC ( SDB__DMSROUNIT_VLDHDBUFF, rc );
-      return rc ;
-   error :
-      goto done ;
-   }
 }
+

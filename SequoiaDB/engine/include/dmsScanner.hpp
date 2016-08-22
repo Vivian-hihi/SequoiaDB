@@ -103,7 +103,7 @@ namespace engine
                           INT64 maxRecords = -1, INT64 skipNum = 0 ) ;
          virtual ~_dmsExtScanner () ;
 
-         dmsExtent* curExtent () { return _extent ; }
+         const dmsExtent* curExtent () const { return _extent ; }
          dmsExtentID nextExtentID () const ;
          INT32 stepToNextExtent() ;
          INT64 getMaxRecords() const { return _maxRecords ; }
@@ -122,13 +122,13 @@ namespace engine
       private:
          INT64                _maxRecords ;
          INT64                _skipNum ;
-         dmsExtent            *_extent ;
+         dmsExtRW             _extRW ;
+         const dmsExtent      *_extent ;
          dmsRecordID          _curRID ;
-         ossValuePtr          _curRecordPtr ;
+         dmsRecordRW          _recordRW ;
+         const dmsRecord      *_curRecordPtr ;
          dmsOffset            _next ;
-         dmsRecordID          _ovfRID ;
          BOOLEAN              _firstRun ;
-         _monAppCB            *_pMonAppCB ;
          dpsTransCB           *_pTransCB ;
          BOOLEAN              _recordXLock ;
          BOOLEAN              _needUnLock ;
@@ -212,10 +212,9 @@ namespace engine
          INT64                _maxRecords ;
          INT64                _skipNum ;
          dmsRecordID          _curRID ;
-         ossValuePtr          _curRecordPtr ;
-         dmsRecordID          _ovfRID ;
+         dmsRecordRW          _recordRW ;
+         const dmsRecord      *_curRecordPtr ;
          BOOLEAN              _firstRun ;
-         _monAppCB            *_pMonAppCB ;
          dpsTransCB           *_pTransCB ;
          BOOLEAN              _recordXLock ;
          BOOLEAN              _needUnLock ;
@@ -279,20 +278,27 @@ namespace engine
    class _dmsExtentItr : public SDBObject
    {
       public:
-         _dmsExtentItr ( _dmsStorageData *su, _dmsMBContext *context,
-                         DMS_ACCESS_TYPE accessType = DMS_ACCESS_TYPE_QUERY ) ;
+         _dmsExtentItr ( _dmsStorageData *su,
+                        _dmsMBContext *context,
+                         DMS_ACCESS_TYPE accessType = DMS_ACCESS_TYPE_QUERY,
+                         INT32 direction = 1 ) ;
          ~_dmsExtentItr () ;
 
+         void  reset( INT32 direction ) ;
+
+         INT32 getDirection() const { return _direction ; }
+
       public:
-         INT32    next ( dmsExtent **ppExtent, _pmdEDUCB *cb ) ;
+         INT32    next ( dmsExtentID &extentID, _pmdEDUCB *cb ) ;
 
       private:
          _dmsStorageData            *_pSu ;
          _dmsMBContext              *_context ;
-         dmsExtent                  *_curExtent ;
-         ossValuePtr                _curExtAddr ;
+         dmsExtRW                   _extRW ;
+         const dmsExtent            *_curExtent ;
          DMS_ACCESS_TYPE            _accessType ;
          UINT32                     _extentCount ;
+         INT32                      _direction ;
 
    } ;
    typedef _dmsExtentItr dmsExtentItr ;

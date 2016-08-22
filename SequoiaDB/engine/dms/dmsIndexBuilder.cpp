@@ -235,7 +235,9 @@ namespace engine
 
       // get the address of extent indicated in context for where
       // should we starts
-      _extent = (dmsExtent*)_suData->extentAddr ( _currentExtentID ) ;
+      _extRW = _suData->extent2RW( _currentExtentID, _mbContext->mbID() ) ;
+      _extRW.setNothrow( TRUE ) ;
+      _extent = _extRW.readPtr<dmsExtent>() ;
       if ( NULL == _extent )
       {
          PD_LOG ( PDERROR, "Invalid extent: %d", _currentExtentID ) ;

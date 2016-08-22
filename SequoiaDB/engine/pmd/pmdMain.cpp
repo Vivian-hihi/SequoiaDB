@@ -45,6 +45,7 @@
 #include "pdTrace.hpp"
 #include "pmdTrace.hpp"
 #include "pmdController.hpp"
+#include "rtnBackgroundJob.hpp"
 
 using namespace std;
 using namespace bson;
@@ -127,6 +128,23 @@ namespace engine
       goto done ;
    }
 
+   static void  _pmdOnRebuildEnd( INT32 rc )
+   {
+      if ( SDB_OK == rc )
+      {
+         pmdGetKRCB()->callPrimaryChangeHandler( TRUE,
+                                                 SDB_EVT_OCCUR_BEFORE ) ;
+         pmdSetPrimary( TRUE ) ;
+         pmdGetKRCB()->callPrimaryChangeHandler( TRUE,
+                                                 SDB_EVT_OCCUR_AFTER ) ;
+      }
+      else
+      {
+         /// stop db
+         PMD_SHUTDOWN_DB( rc ) ;
+      }
+   }
+
    static INT32 _pmdPostInit()
    {
       INT32 rc = SDB_OK ;
@@ -136,44 +154,16 @@ namespace engine
       {
          if ( !pmdGetStartup().isOK() )
          {
-            SDB_DPSCB *pLog = sdbGetDPSCB() ;
-            DPS_LSN expectLSN = pLog->expectLsn() ;
-            if ( DPS_INVALID_LSN_OFFSET == expectLSN.offset ||
-                 0 == expectLSN.offset )
-            {
-               /// when rebuild, we can't move the dps to 0, because the new add
-               /// node will sync from lsn 0
-               expectLSN.offset = ossAlign4( (UINT32)sizeof( dpsLogRecordHeader ) ) ;
-            }
-            if ( DPS_INVALID_LSN_VERSION == expectLSN.version )
-            {
-               expectLSN.version = DPS_INVALID_LSN_VERSION + 1 ;
-            }
-
-            pmdEDUCB *cb = pmdGetThreadEDUCB() ;
-            rc = rtnRebuildDB( cb ) ;
-            PD_RC_CHECK( rc, PDERROR, "Failed to rebuild database, rc: %d",
-                         rc ) ;
-
-            // cut all dps
-            rc = pLog->move( 0, expectLSN.version ) ;
-            if ( rc )
-            {
-               PD_LOG( PDERROR, "Move dps to begin failed, rc: %d", rc ) ;
-               goto error ;
-            }
-            /// then move to non-zero
-            pLog->move( expectLSN.offset, expectLSN.version ) ;
-            PD_LOG( PDEVENT, "Clean dps logs succeed." ) ;
-            PD_LOG( PDEVENT, "Rebuild database succeed." ) ;
-            pmdGetStartup().ok( TRUE ) ;
+            rtnStartRebuildJob( (RTN_ON_REBUILD_DONE_FUNC)_pmdOnRebuildEnd ) ;
          }
-
-         pmdGetKRCB()->callPrimaryChangeHandler( TRUE,
-                                                 SDB_EVT_OCCUR_BEFORE ) ;
-         pmdSetPrimary( TRUE ) ;
-         pmdGetKRCB()->callPrimaryChangeHandler( TRUE,
-                                                 SDB_EVT_OCCUR_AFTER ) ;
+         else
+         {
+            pmdGetKRCB()->callPrimaryChangeHandler( TRUE,
+                                                    SDB_EVT_OCCUR_BEFORE ) ;
+            pmdSetPrimary( TRUE ) ;
+            pmdGetKRCB()->callPrimaryChangeHandler( TRUE,
+                                                    SDB_EVT_OCCUR_AFTER ) ;
+         }
       }
 
    done:

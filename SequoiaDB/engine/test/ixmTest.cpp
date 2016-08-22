@@ -32,7 +32,7 @@
 #include <map>
 using namespace engine ;
 using namespace bson ;
-dmsStorageUnit myUnit("fooixm",1) ;
+dmsStorageUnit myUnit("fooixm", 1, NULL, NULL ) ;
 
 char myoutBuf[8192] = { 0 } ;
 int main ( int argc, char **argv )
@@ -193,7 +193,7 @@ int main ( int argc, char **argv )
                ixmIndexInsertRequestImpl(dmsRecordID(0,2*dummyRid), (*it),
                ordering, indexCB) ;
          ixmExtent rootidx ( indexCB->getRoot(), myUnit.index()) ;
-         rc = rootidx.insertStepOne ( *impl, TRUE ) ;
+         //rc = rootidx.insertStepOne ( *impl, TRUE ) ;
          if ( rc )
          {
             printf("Failed to run insertStepOne\n") ;

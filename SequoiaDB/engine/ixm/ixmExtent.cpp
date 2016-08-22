@@ -38,7 +38,6 @@
 
 #include "ixmExtent.hpp"
 #include "dmsStorageIndex.hpp"
-#include "ixmInsertRequest.hpp"
 #include "pd.hpp"
 #include "monCB.hpp"
 #include "dmsStorageUnit.hpp"
@@ -48,36 +47,6 @@
 
 namespace engine
 {
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__IXMEXT1, "_ixmExtent::_ixmExtent" )
-   _ixmExtent::_ixmExtent ( CHAR *extentStart, UINT16 mbID,
-                            dmsExtentID parent, dmsExtentID me,
-                            dmsStorageIndex *pIndexSu )
-   :_extentHead((ixmExtentHead*)extentStart),
-    _me(me),
-    _pIndexSu(pIndexSu),
-    _pageSize(pIndexSu->pageSize())
-   {
-      SDB_ASSERT ( extentStart, "extentStart can't be NULL" ) ;
-      SDB_ASSERT ( _pIndexSu, "index su can't be NULL" ) ;
-      PD_TRACE_ENTRY( SDB__IXMEXT1 ) ;
-
-      _extentHead->_eyeCatcher [0] = IXM_EXTENT_EYECATCHER0 ;
-      _extentHead->_eyeCatcher [1] = IXM_EXTENT_EYECATCHER1 ;
-      _extentHead->_totalKeyNodeNum = 0 ;
-      _extentHead->_mbID = mbID ;
-      // not change flag here
-      _extentHead->_version = IXM_EXTENT_CURRENT_V ;
-      _extentHead->_parentExtentID = parent ;
-      // set to 65535, indicating end of the page
-      _extentHead->_beginFreeOffset = _pageSize-1 ;
-      _extentHead->_right = DMS_INVALID_EXTENT ;
-      _extentHead->_totalFreeSize = _extentHead->_beginFreeOffset -
-                        (sizeof(ixmExtentHead) +
-                        (_extentHead->_totalKeyNodeNum*sizeof(ixmKeyNode))) ;
-      pIndexSu->addStatFreeSpace( mbID, _extentHead->_totalFreeSize ) ;
-
-      PD_TRACE_EXIT ( SDB__IXMEXT1 );
-   }
 
    // create new extent id without parent
    // PD_TRACE_DECLARE_FUNCTION ( SDB__IXMEXT2, "_ixmExtent::_ixmExtent" )
@@ -86,41 +55,31 @@ namespace engine
    {
       SDB_ASSERT ( pIndexSu, "index su can't be NULL" ) ;
       PD_TRACE_ENTRY ( SDB__IXMEXT2 ) ;
+      ixmExtentHead *pHeader = NULL ;
+      _extRW = pIndexSu->extent2RW( extentID, mbID ) ;
       _pIndexSu = pIndexSu ;
       _pageSize = _pIndexSu->pageSize() ;
-      _extentHead = (ixmExtentHead*)_pIndexSu->extentAddr(extentID ) ;
+
+      pHeader = _extRW.writePtr<ixmExtentHead>( 0, _pageSize ) ;
+      _extentHead = (const ixmExtentHead*)pHeader ;
       SDB_ASSERT(_extentHead, "extent can't be NULL" ) ;
       _me = extentID ;
-      _extentHead->_eyeCatcher [0] = IXM_EXTENT_EYECATCHER0 ;
-      _extentHead->_eyeCatcher [1] = IXM_EXTENT_EYECATCHER1 ;
-      _extentHead->_totalKeyNodeNum = 0 ;
-      _extentHead->_mbID = mbID ;
+      pHeader->_eyeCatcher [0] = IXM_EXTENT_EYECATCHER0 ;
+      pHeader->_eyeCatcher [1] = IXM_EXTENT_EYECATCHER1 ;
+      pHeader->_totalKeyNodeNum = 0 ;
+      pHeader->_mbID = mbID ;
       // not change flag here
-      _extentHead->_version = IXM_EXTENT_CURRENT_V ;
-      _extentHead->_parentExtentID = DMS_INVALID_EXTENT ;
+      pHeader->_version = IXM_EXTENT_CURRENT_V ;
+      pHeader->_parentExtentID = DMS_INVALID_EXTENT ;
       // set to 65535, indicating end of the page
-      _extentHead->_beginFreeOffset = _pageSize-1 ;
-      _extentHead->_right = DMS_INVALID_EXTENT ;
-      _extentHead->_totalFreeSize = _extentHead->_beginFreeOffset -
+      pHeader->_beginFreeOffset = _pageSize-1 ;
+      pHeader->_right = DMS_INVALID_EXTENT ;
+      pHeader->_totalFreeSize = pHeader->_beginFreeOffset -
                         (sizeof(ixmExtentHead) +
-                        (_extentHead->_totalKeyNodeNum*sizeof(ixmKeyNode))) ;
-      pIndexSu->addStatFreeSpace( mbID, _extentHead->_totalFreeSize ) ;
+                        (pHeader->_totalKeyNodeNum*sizeof(ixmKeyNode))) ;
+      pIndexSu->addStatFreeSpace( mbID, pHeader->_totalFreeSize ) ;
 
       PD_TRACE_EXIT ( SDB__IXMEXT2 );
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__IXMEXT3, "_ixmExtent::_ixmExtent" )
-   _ixmExtent::_ixmExtent ( CHAR *extentStart, dmsExtentID me,
-                            dmsStorageIndex *pIndexSu )
-   {
-      SDB_ASSERT ( extentStart, "extentStart can't be NULL" ) ;
-      SDB_ASSERT ( pIndexSu, "index su can't be NULL" ) ;
-      PD_TRACE_ENTRY ( SDB__IXMEXT3 );
-      _extentHead = (ixmExtentHead*)extentStart ;
-      _pIndexSu = pIndexSu ;
-      _pageSize = _pIndexSu->pageSize() ;
-      _me = me ;
-      PD_TRACE_EXIT ( SDB__IXMEXT3 );
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__IXMEXT4, "_ixmExtent::_ixmExtent" )
@@ -129,15 +88,18 @@ namespace engine
    {
       SDB_ASSERT ( pIndexSu, "index su can't be NULL" ) ;
       PD_TRACE_ENTRY ( SDB__IXMEXT4 );
+      _extRW = pIndexSu->extent2RW( extentID, -1 ) ;
       _pIndexSu = pIndexSu ;
       _pageSize = _pIndexSu->pageSize() ;
       _me = extentID ;
-      _extentHead = (ixmExtentHead*)_pIndexSu->extentAddr(extentID) ;
+      _extentHead = _extRW.readPtr<ixmExtentHead>( 0, _pageSize ) ;
+      /// set collection id
+      _extRW.setCollectionID( _extentHead->_mbID ) ;
       PD_TRACE_EXIT ( SDB__IXMEXT4 );
       SDB_ASSERT(_extentHead, "extent can't be NULL" ) ;
    }
 
-   BOOLEAN _ixmExtent::verify ()
+   BOOLEAN _ixmExtent::verify () const
    {
       if ( !_extentHead )
       {
@@ -181,7 +143,7 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION ( SDB__IXMEXT_FIND, "_ixmExtent::find" )
    INT32 _ixmExtent::find ( const ixmIndexCB *indexCB, const ixmKey &key,
                             const dmsRecordID &rid, const Ordering &order,
-                            UINT16 &pos, BOOLEAN dupAllowed, BOOLEAN &found )
+                            UINT16 &pos, BOOLEAN dupAllowed, BOOLEAN &found ) const
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__IXMEXT_FIND );
@@ -199,7 +161,7 @@ namespace engine
                      PD_PACK_INT ( high ),
                      PD_PACK_INT ( middle ) ) ;
          // get the key for the middle
-         CHAR *keyData = getKeyData (middle) ;
+         const CHAR *keyData = getKeyData( middle ) ;
          // the key supposed to exist, otherwise there's some corruption happen
          if ( !keyData )
          {
@@ -284,8 +246,8 @@ namespace engine
       {
          // make sure the requested key is NOT greater than the next key
          {
-            CHAR *keyData = getKeyData (pos) ;
-            ixmKey keyDisk(keyData) ;
+            const CHAR *keyData = getKeyData (pos) ;
+            ixmKey keyDisk( keyData ) ;
             if ( key.woCompare ( keyDisk, order ) > 0 )
             {
                PD_LOG ( PDERROR, "Internal logic error, key compare wrong" ) ;
@@ -297,7 +259,7 @@ namespace engine
          // make sure the previous key is NOT greater than the requested key
          if ( pos > 0 )
          {
-            CHAR *keyData = getKeyData (pos-1) ;
+            const CHAR *keyData = getKeyData( pos-1 ) ;
             ixmKey keyDisk(keyData) ;
             if ( keyDisk.woCompare ( key, order ) > 0 )
             {
@@ -324,129 +286,6 @@ namespace engine
                        DMS_INVALID_EXTENT, indexCB ) ;
    }
 
-   // This function find the position to insert record.
-   // Note this function does NOT do real insertion, nor doing split
-   // It only traverse B tree and find the page to insert record
-   // The output will be saved in insertRequest structure
-   // caller must call performAction later once all requests are built
-   // If the function fail, it may fail with SDB_IXM_KEY_TOO_LARGE,
-   // SDB_INVALIDARG, or SDB_IXM_DUP_KEY
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__IXMEXT_ISONE, "_ixmExtent::insertStepOne" )
-   INT32 _ixmExtent::insertStepOne ( ixmIndexInsertRequestImpl &insertRequest,
-                                    BOOLEAN dupAllowed )
-   {
-      INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY ( SDB__IXMEXT_ISONE );
-      BOOLEAN found = FALSE ;
-      UINT16 pos = 0 ;
-      ossValuePtr ptr = 0 ;
-      // make sure we don't insert too big record
-      if ( insertRequest._key.dataSize() >= IXM_KEY_MAX_SIZE )
-      {
-         PD_LOG ( PDERROR, "key size must be less than %d", IXM_KEY_MAX_SIZE ) ;
-         rc = SDB_IXM_KEY_TOO_LARGE ;
-         goto error ;
-      }
-      // also make sure the input is valid
-      if ( insertRequest._key.dataSize() <= 0 )
-      {
-         PD_LOG ( PDERROR, "key size must be greater than 0" ) ;
-         rc = SDB_INVALIDARG ;
-         goto error ;
-      }
-      // let's see if we can find such key in this extent
-      rc = find ( insertRequest._indexCB, insertRequest._key,
-                  insertRequest._recordRID, insertRequest._order, pos,
-                  dupAllowed, found ) ;
-      if ( rc )
-      {
-         if ( SDB_IXM_DUP_KEY == rc )
-         {
-            // if we receive dup key error, let's check if found is TRUE. If
-            // found == TRUE, that means we have both key and rid the same, then
-            // let's set rc = SDB_IXM_IDENTICAL_KEY
-            if ( TRUE == found )
-            {
-               rc = SDB_IXM_IDENTICAL_KEY ;
-               PD_LOG ( PDERROR, "two keys are pointing to same record" ) ;
-               goto error ;
-            }
-            // if we find duplicate, let's check whether the key includes all
-            // Undefined. If this is the case, it's a special case that user
-            // doesn't define those keys, so we should allow it proceed ( which
-            // may violate unique definition ). If we restricted this behavior,
-            // user cannot insert records that does not contains the keys twice,
-            // which is very violating "schemaless"
-            if ( insertRequest._indexCB->enforced() ||
-                 !insertRequest._key.isUndefined () )
-            {
-               // this error only returned when dupAllowed == FALSE
-               // this error represent duplicate key is not allowed and
-               // duplicate key is detected
-               PD_LOG ( PDINFO, "Duplicate key is detected" ) ;
-               goto error ;
-            }
-            else
-            {
-               // if the insert request key is completely undefined, let's
-               // overwrite rc to SDB_OK and continue ;
-               rc = SDB_OK ;
-            }
-         }
-         if ( rc )
-         {
-            // if other error happened, let's log with ERROR level
-            PD_LOG ( PDERROR, "Error happened during find, rc = %d", rc ) ;
-            goto error ;
-         }
-      }
-      // found == TRUE if and only if both keys and rids are the same
-      // however the key may stay in psuedo-deleted status, which means the key
-      // is actually deleted before but index extent is not reorganized yet
-      // in this case we can simply reset the used flag
-      if ( found )
-      {
-         // if the same key with same RID is found, and it's set to psudodeleted
-         // we just convert it back to used
-         const ixmKeyNode *kn = getKeyNode(pos) ;
-         if ( kn->isUnused() )
-         {
-            insertRequest._extent = _extentHead ;
-            insertRequest._extentID = _me ;
-            insertRequest._pos = pos ;
-            insertRequest._op = ixmIndexInsertRequest::SetUsed ;
-            goto done ;
-         }
-         // otherwise we have a in-used key with duplicate key and rid, which
-         // should never happen
-         PD_LOG ( PDERROR, "Internal error, two keys are pointing to same "
-                  "record" ) ;
-         rc = SDB_IXM_IDENTICAL_KEY ;
-         goto error ;
-      }
-      // get the child pointer for the given position, if the position is at end
-      // of the list, ptr will be _right
-      // if we are attempt to insert at middle of the list, we'll get into the
-      // left pointer for recursive call
-      ptr = getChildExtentPtr ( pos ) ;
-      // if the key doesn't have child, let's insert into this page
-      if ( 0 == ptr )
-      {
-         insertRequest._extent = _extentHead ;
-         insertRequest._extentID = _me ;
-         insertRequest._pos = pos ;
-         insertRequest._op = ixmIndexInsertRequest::InsertHere ;
-         goto done ;
-      }
-      // otherwise we have child pointer, so let's insert into child
-      rc = _ixmExtent((CHAR*)ptr,getChildExtentID(pos),
-                       _pIndexSu).insertStepOne ( insertRequest, dupAllowed ) ;
-   done :
-      PD_TRACE_EXITRC ( SDB__IXMEXT_ISONE, rc );
-      return rc ;
-   error :
-      goto done ;
-   }
    // This function is the wrapper for _basicInsert and _split, depends on
    // whether the current extent has sufficient space for a new record
    // If the new record is inserted into current page, it will set left pointer
@@ -470,7 +309,8 @@ namespace engine
                                   ixmIndexCB *indexCB )
    {
       INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY ( SDB__IXMEXT_INSERTHERE );
+      PD_TRACE_ENTRY ( SDB__IXMEXT_INSERTHERE ) ;
+
       // attempt to physically insert the key into page
       // if there's no space in the page, it will attempt to reorg the page
       // first, if still not enough space it will return SDB_IXM_NOSPC
@@ -491,7 +331,7 @@ namespace engine
       // right pointer
       {
          // get the inserted node
-         ixmKeyNode *kn = (ixmKeyNode*)getKeyNode(pos) ;
+         ixmKeyNode *kn = writeKeyNode( pos ) ;
          // if the node is at end of the page, it means the new value is greater
          // than
          if ( pos+1 == getNumKeyNode ())
@@ -538,7 +378,7 @@ namespace engine
 
             // Since we already shifted all slots to next, let's grab pos+1 as
             // the original key
-            ixmKeyNode *kn1 = (ixmKeyNode*)getKeyNode(pos+1) ;
+            ixmKeyNode *kn1 = writeKeyNode( pos + 1 ) ;
             // make sure the original key's _left same as lchild
             if ( kn1->_left != lchild )
             {
@@ -576,7 +416,8 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__IXMEXT__BASICINS );
-      UINT16 bytesNeeded ;
+      ixmExtentHead *pHeader = _extRW.writePtr<ixmExtentHead>( 0, _pageSize ) ;
+      UINT16 bytesNeeded = 0 ;
       // first let's validate the pos is same or less than the total number of
       // keys in the extent
       if ( pos > getNumKeyNode () )
@@ -596,7 +437,7 @@ namespace engine
          dmsExtentID ch ;
          ch = getChildExtentID ( pos ) ;
          // note _reorg may change pos
-         rc = _reorg (order, pos) ;
+         rc = _reorg ( order, pos ) ;
          if ( rc )
          {
             PD_LOG ( PDERROR, "index extent reorg failed with rc : %d", rc ) ;
@@ -618,16 +459,16 @@ namespace engine
          }
       }
       // move getNumKeyNode-pos elements to next slot
-      ossMemmove ( (void*)getKeyNode(pos+1), (void*)getKeyNode(pos),
+      ossMemmove ( (void*)writeKeyNode(pos+1), (void*)getKeyNode(pos),
                    sizeof(ixmKeyNode)*(getNumKeyNode()-pos) ) ;
       // free size minus the size of keynode (16 bytes)
-      _extentHead->_totalFreeSize -= sizeof(ixmKeyNode) ;
-      _pIndexSu->decStatFreeSpace( _extentHead->_mbID, sizeof(ixmKeyNode) ) ;
-      _extentHead->_totalKeyNodeNum ++ ;
+      pHeader->_totalFreeSize -= sizeof(ixmKeyNode) ;
+      _pIndexSu->decStatFreeSpace( pHeader->_mbID, sizeof(ixmKeyNode) ) ;
+      pHeader->_totalKeyNodeNum ++ ;
       {
          // copy the key into the page
          INT32 datasize = key.dataSize() ;
-         ixmKeyNode *kn = (ixmKeyNode*)getKeyNode(pos) ;
+         ixmKeyNode *kn = writeKeyNode( pos ) ;
          kn->_left = DMS_INVALID_EXTENT ;
          kn->_rid = rid ;
          // allocate datasize bytes from the page
@@ -639,7 +480,7 @@ namespace engine
             goto error ;
          }
          // copy the data into the position
-         ossMemcpy ( ((CHAR*)_extentHead)+kn->_keyOffset,
+         ossMemcpy ( ((CHAR*)pHeader) + kn->_keyOffset,
                       key.data(), datasize ) ;
       }
 #if defined (_DEBUG)
@@ -699,13 +540,13 @@ namespace engine
       }
       {
          // initialize the header for the new extent
-         _ixmExtent newExtent(newExtentID, _extentHead->_mbID, _pIndexSu ) ;
+         _ixmExtent newExtent( newExtentID, _extentHead->_mbID, _pIndexSu ) ;
          // copy all keys from the split pos to new extent
          for ( UINT16 i = splitPos +1; i<getNumKeyNode(); i++)
          {
             const ixmKeyNode *kn = getKeyNode(i) ;
             rc = newExtent._pushBack ( kn->_rid,
-                                    ixmKey(((CHAR*)_extentHead)+kn->_keyOffset),
+                                    ixmKey(((const CHAR*)_extentHead)+kn->_keyOffset),
                                     order, kn->_left ) ;
             if ( rc )
             {
@@ -758,7 +599,7 @@ namespace engine
             // promote the split key into parent, key._left point to the current
             // extent
             rc = rootExtent._pushBack ( splitKey->_rid,
-                                        ixmKey(((CHAR*)_extentHead)+
+                                        ixmKey(((const CHAR*)_extentHead)+
                                         splitKey->_keyOffset), order, _me ) ;
             if ( rc )
             {
@@ -794,7 +635,7 @@ namespace engine
             _ixmExtent parentExtent(getParent(), _pIndexSu ) ;
             // do physical insert into it
             rc = parentExtent._insert(splitKey->_rid,
-                       ixmKey(((CHAR*)_extentHead)+splitKey->_keyOffset),
+                       ixmKey(((const CHAR*)_extentHead)+splitKey->_keyOffset),
                        order, TRUE, _me,
                        newExtentID, indexCB ) ;
             if ( rc )
@@ -858,7 +699,8 @@ namespace engine
    {
       if ( totalNodes < getNumKeyNode() )
       {
-         _extentHead->_totalKeyNodeNum = totalNodes ;
+         ixmExtentHead *pExtent = _extRW.writePtr<ixmExtentHead>() ;
+         pExtent->_totalKeyNodeNum = totalNodes ;
          unsetCompact() ;
          return _reorg(order, newPos) ;
       }
@@ -871,7 +713,7 @@ namespace engine
    // if the pos is at end of the page, then we do 90/10 split, otherwise we do
    // 50/50 split
    // PD_TRACE_DECLARE_FUNCTION ( SDB__IXMEXT__SPLITPOS, "_ixmExtent::_splitPos" )
-   INT32 _ixmExtent::_splitPos ( UINT16 pos, UINT16 &splitPos )
+   INT32 _ixmExtent::_splitPos ( UINT16 pos, UINT16 &splitPos ) const
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__IXMEXT__SPLITPOS );
@@ -927,7 +769,7 @@ namespace engine
    // loop through all keynodes, if the child exist, it will go to child and set
    // the parent extent to the current extent id
    // usually this happened during split for the new page
-   INT32 _ixmExtent::_fixParentPtrs ( UINT16 startPos, UINT16 stopPos )
+   INT32 _ixmExtent::_fixParentPtrs ( UINT16 startPos, UINT16 stopPos ) const
    {
       for ( UINT16 i = startPos; i < stopPos; i++ )
       {
@@ -940,9 +782,11 @@ namespace engine
       }
       return SDB_OK ;
    }
+
    void _ixmExtent::_assignRight ( const dmsExtentID right )
    {
-      _extentHead->_right = right ;
+      ixmExtentHead *pHeader = _extRW.writePtr<ixmExtentHead>() ;
+      pHeader->_right = right ;
       if ( DMS_INVALID_EXTENT != right )
       {
          _ixmExtent childExtent ( right, _pIndexSu ) ;
@@ -952,12 +796,17 @@ namespace engine
 
    void _ixmExtent::setChildExtentID ( UINT16 i, dmsExtentID extentID )
    {
-      if ( i>_extentHead->_totalKeyNodeNum ) return ;
+      if ( i>_extentHead->_totalKeyNodeNum )
+      {
+         return ;
+      }
       else if ( i == _extentHead->_totalKeyNodeNum )
+      {
          _assignRight ( extentID ) ;
+      }
       else
       {
-         ((ixmKeyNode*)getKeyNode(i))->_left = extentID ;
+         writeKeyNode(i)->_left = extentID ;
          if ( DMS_INVALID_EXTENT != extentID )
          {
             _ixmExtent childExtent ( extentID, _pIndexSu ) ;
@@ -978,6 +827,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__IXMEXT__PSHBACK );
       UINT16 bytesNeeded = key.dataSize() + sizeof(ixmKeyNode) ;
+      ixmExtentHead *pHeader = _extRW.writePtr<ixmExtentHead>( 0, _pageSize ) ;
       ixmKeyNode *kn = NULL ;
       // make sure we are not out of range
       if ( bytesNeeded > _extentHead->_totalFreeSize )
@@ -1003,10 +853,10 @@ namespace engine
          }
       }
       // allocate space and copy over key
-      _extentHead->_totalFreeSize -= sizeof(ixmKeyNode) ;
-      _pIndexSu->decStatFreeSpace( _extentHead->_mbID, sizeof(ixmKeyNode) ) ;
-      kn = (ixmKeyNode*)getKeyNode(_extentHead->_totalKeyNodeNum) ;
-      _extentHead->_totalKeyNodeNum++ ;
+      pHeader->_totalFreeSize -= sizeof(ixmKeyNode) ;
+      _pIndexSu->decStatFreeSpace( pHeader->_mbID, sizeof(ixmKeyNode) ) ;
+      kn = writeKeyNode(_extentHead->_totalKeyNodeNum) ;
+      pHeader->_totalKeyNodeNum++ ;
       kn->_left = left ;
       if ( DMS_INVALID_EXTENT != kn->_left )
       {
@@ -1021,7 +871,7 @@ namespace engine
                   key.dataSize()) ;
          goto error ;
       }
-      ossMemcpy ( ((CHAR*)_extentHead)+kn->_keyOffset,
+      ossMemcpy ( ((CHAR*)pHeader)+kn->_keyOffset,
                   key.data(), key.dataSize()) ;
    done :
       PD_TRACE_EXITRC ( SDB__IXMEXT__PSHBACK, rc );
@@ -1039,7 +889,7 @@ namespace engine
    // previous keys are smaller or equal to the next
    // PD_TRACE_DECLARE_FUNCTION ( SDB__IXMEXT__VALIDATE, "_ixmExtent::_validate" )
    INT32 _ixmExtent::_validate ( _ixmExtentValidateLevel level,
-                                 const Ordering &order )
+                                 const Ordering &order ) const
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__IXMEXT__VALIDATE );
@@ -1134,28 +984,35 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__IXMEXT__REORG );
       if ( isCompact() )
+      {
          return rc ;
+      }
+      ixmExtentHead *pHeader = _extRW.writePtr<ixmExtentHead>( 0, _pageSize ) ;
       UINT16 beginFreeOffset = _pageSize-1 ;
       UINT16 totalKeyNodeNum = 0 ;
       UINT16 totalFreeSize = beginFreeOffset - sizeof(ixmExtentHead) ;
       CHAR   buffer[DMS_PAGE_SIZE_MAX] ;
 
       // loop through all keys in the page
-      for ( UINT16 i = 0 ; i<_extentHead->_totalKeyNodeNum; i++ )
+      for ( UINT16 i = 0 ; i < pHeader->_totalKeyNodeNum; i++ )
       {
-         ixmKeyNode *kn = (ixmKeyNode*)getKeyNode(i) ;
+         ixmKeyNode *kn = writeKeyNode(i) ;
          INT32 keyDataSize = 0 ;
          // if the slot doesn't same as previous, and that is what we are
          // looking for, then let's set newPos to the new position after reorg
          if ( newPos == i )
+         {
             newPos = totalKeyNodeNum ;
+         }
          // if there is no child and it's unused, let's skip it ( that means it
          // will not be copied and count, so it's actually deleted)
          if ( kn->isUnused() && DMS_INVALID_EXTENT == kn->_left )
+         {
             continue ;
+         }
          totalFreeSize -= sizeof(ixmKeyNode) ;
          // copy the key
-         ixmKey key ( ((CHAR*)_extentHead)+kn->_keyOffset) ;
+         ixmKey key ( ((const CHAR*)pHeader)+kn->_keyOffset) ;
          keyDataSize = key.dataSize() ;
          if ( (INT32)beginFreeOffset - keyDataSize < 0 ||
               (INT32)totalFreeSize - keyDataSize < 0 )
@@ -1168,34 +1025,40 @@ namespace engine
          beginFreeOffset -= keyDataSize ;
          totalFreeSize -= keyDataSize ;
          ossMemcpy ( &buffer[beginFreeOffset],
-                     ((CHAR*)_extentHead)+kn->_keyOffset,
+                     ((const CHAR*)pHeader)+kn->_keyOffset,
                       keyDataSize ) ;
          kn->_keyOffset = beginFreeOffset ;
          // copy the slot
          if ( totalKeyNodeNum != i )
          {
-            ossMemcpy ( ((CHAR*)_extentHead) + sizeof(ixmExtentHead) +
+            ossMemcpy ( ((CHAR*)pHeader) + sizeof(ixmExtentHead) +
                         totalKeyNodeNum*sizeof(ixmKeyNode),
-                        ((CHAR*)_extentHead) + sizeof(ixmExtentHead) +
+                        ((const CHAR*)pHeader) + sizeof(ixmExtentHead) +
                         i*sizeof(ixmKeyNode),
                         sizeof(ixmKeyNode)) ;
          }
          ++totalKeyNodeNum ;
       }
       // handle the situation where requested pos is right-most
-      if ( _extentHead->_totalKeyNodeNum == newPos )
+      if ( pHeader->_totalKeyNodeNum == newPos )
+      {
          newPos = totalKeyNodeNum ;
-      else if ( _extentHead->_totalKeyNodeNum < newPos )
+      }
+      else if ( pHeader->_totalKeyNodeNum < newPos )
+      {
          newPos = 0xFFFF ;
-	PD_TRACE1 ( SDB__IXMEXT__REORG, PD_PACK_USHORT( newPos ) ) ;
-      _extentHead->_beginFreeOffset = beginFreeOffset ;
-      _extentHead->_totalKeyNodeNum = totalKeyNodeNum ;
-      _pIndexSu->decStatFreeSpace( _extentHead->_mbID,
-                                   _extentHead->_totalFreeSize ) ;
-      _extentHead->_totalFreeSize = totalFreeSize ;
-      _pIndexSu->addStatFreeSpace( _extentHead->_mbID,
-                                   _extentHead->_totalFreeSize ) ;
-      ossMemcpy ( ((CHAR*)_extentHead)+beginFreeOffset,
+      }
+
+	   PD_TRACE1 ( SDB__IXMEXT__REORG, PD_PACK_USHORT( newPos ) ) ;
+
+      pHeader->_beginFreeOffset = beginFreeOffset ;
+      pHeader->_totalKeyNodeNum = totalKeyNodeNum ;
+      _pIndexSu->decStatFreeSpace( pHeader->_mbID,
+                                   pHeader->_totalFreeSize ) ;
+      pHeader->_totalFreeSize = totalFreeSize ;
+      _pIndexSu->addStatFreeSpace( pHeader->_mbID,
+                                   pHeader->_totalFreeSize ) ;
+      ossMemcpy ( ((CHAR*)pHeader)+beginFreeOffset,
                   &buffer[beginFreeOffset],
                   _pageSize - beginFreeOffset ) ;
 #if defined (_DEBUG)
@@ -1219,11 +1082,14 @@ namespace engine
    INT32 _ixmExtent::_alloc ( INT32 requestSpace, UINT16 &beginOffset )
    {
       if ( requestSpace > (INT32)getFreeSize() )
+      {
          return SDB_IXM_NOSPC ;
-      _extentHead->_beginFreeOffset -= requestSpace ;
-      _extentHead->_totalFreeSize -= requestSpace ;
-      _pIndexSu->decStatFreeSpace( _extentHead->_mbID, requestSpace ) ;
-      beginOffset = _extentHead->_beginFreeOffset ;
+      }
+      ixmExtentHead *pHeader = _extRW.writePtr<ixmExtentHead>() ;
+      pHeader->_beginFreeOffset -= requestSpace ;
+      pHeader->_totalFreeSize -= requestSpace ;
+      _pIndexSu->decStatFreeSpace( pHeader->_mbID, requestSpace ) ;
+      beginOffset = pHeader->_beginFreeOffset ;
       return SDB_OK ;
    }
 
@@ -1303,11 +1169,11 @@ namespace engine
       // if we find duplicates, let's see if it's psuedo-delete
       if ( found )
       {
-         ixmKeyNode *kn = (ixmKeyNode*)getKeyNode ( pos ) ;
+         const ixmKeyNode *kn = getKeyNode( pos ) ;
          if ( kn->isUnused() )
          {
             // if it is psudo-delete, let's set it used and go to done
-            kn->setUsed() ;
+            writeKeyNode( pos )->setUnused() ;
             goto done ;
          }
          // otherwise we should have same key/rid point to same record
@@ -1315,7 +1181,7 @@ namespace engine
          rc = SDB_IXM_IDENTICAL_KEY ;
          goto error ;
       }
-      ch = getChildExtentID ( pos ) ;
+      ch = getChildExtentID( pos ) ;
       // if there's no child, of course we will insert into the current page
       // and if there is child, but rchild is specified, this means the function
       // is called by the child extent in split (when prompt the last key to the
@@ -1398,7 +1264,8 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__IXMEXT__DELKEYATPOS1 );
-      ixmKeyNode *kn ;
+      ixmKeyNode *kn = NULL ;
+      ixmExtentHead *pHeader = _extRW.writePtr<ixmExtentHead>( 0, _pageSize ) ;
       if ( pos >= getNumKeyNode() )
       {
          PD_LOG ( PDERROR, "pos out of range, pos=%d, totalKey=%d",
@@ -1406,18 +1273,18 @@ namespace engine
          rc = SDB_INVALIDARG ;
          goto error ;
       }
-      kn = (ixmKeyNode*)getKeyNode(pos) ;
+      kn = writeKeyNode( pos ) ;
       if ( DMS_INVALID_EXTENT != kn->_left )
       {
          PD_LOG ( PDERROR, "left pointer must be NULL" ) ;
          rc = SDB_INVALIDARG ;
          goto error ;
       }
-      _extentHead->_totalFreeSize += sizeof(ixmKeyNode) ;
-      _pIndexSu->addStatFreeSpace( _extentHead->_mbID, sizeof(ixmKeyNode) ) ;
-      _extentHead->_totalKeyNodeNum -- ;
-      ossMemmove ( (CHAR*)getKeyNode(pos), (CHAR*)getKeyNode(pos+1),
-                   sizeof(ixmKeyNode)*(_extentHead->_totalKeyNodeNum-pos) ) ;
+      pHeader->_totalFreeSize += sizeof(ixmKeyNode) ;
+      _pIndexSu->addStatFreeSpace( pHeader->_mbID, sizeof(ixmKeyNode) ) ;
+      pHeader->_totalKeyNodeNum-- ;
+      ossMemmove ( (CHAR*)kn, (const CHAR*)getKeyNode(pos+1),
+                   sizeof(ixmKeyNode)*(pHeader->_totalKeyNodeNum-pos) ) ;
       unsetCompact() ;
    done :
       PD_TRACE_EXITRC ( SDB__IXMEXT__DELKEYATPOS1, rc );
@@ -1433,8 +1300,8 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__IXMEXT__DELKEYATPOS2 );
-      dmsExtentID left ;
-      BOOLEAN result ;
+      dmsExtentID left = DMS_INVALID_EXTENT ;
+      BOOLEAN result = FALSE ;
       if ( pos >= getNumKeyNode() )
       {
          PD_LOG ( PDERROR, "pos out of range, pos=%d, totalKey=%d",
@@ -1442,7 +1309,7 @@ namespace engine
          rc = SDB_INVALIDARG ;
          goto error ;
       }
-      left = getKeyNode ( pos )->_left ;
+      left = getKeyNode( pos )->_left ;
       if ( 1 == getNumKeyNode() )
       {
          if ( DMS_INVALID_EXTENT == left &&
@@ -1541,11 +1408,13 @@ namespace engine
       //BOOLEAN mayBalanceLeft ;
       // let's return if it's root
       if ( DMS_INVALID_EXTENT == getParent() )
+      {
          return rc ;
+      }
       // get the parent extent
       ixmExtent parent( getParent(), _pIndexSu ) ;
       // find the key pointing to this extent
-      rc = parent._findChildExtent ( _me, pos ) ;
+      rc = parent._findChildExtent( _me, pos ) ;
       // if we can't find the key, something really bad happened
       if ( rc )
       {
@@ -1622,10 +1491,14 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__IXMEXT__DELEXT );
-      UINT16 pos ;
+      UINT16 pos = 0 ;
+      UINT16 mbID = 0 ;
+      UINT16 freeSize = 0 ;
       // if we are root, we simply return
       if ( DMS_INVALID_EXTENT == getParent() )
+      {
          return rc ;
+      }
       // get the parent extent
       ixmExtent parent( getParent(), _pIndexSu ) ;
       // find the key pointing to this extent
@@ -1637,14 +1510,15 @@ namespace engine
          goto error ;
       }
       parent.setChildExtentID ( pos, DMS_INVALID_EXTENT ) ;
+      mbID = _extentHead->_mbID ;
+      freeSize = _extentHead->_totalFreeSize ;
       rc = indexCB->freeExtent ( _me ) ;
       if ( rc )
       {
          PD_LOG ( PDERROR, "Unable to free extent" ) ;
          goto error ;
       }
-      _pIndexSu->decStatFreeSpace( _extentHead->_mbID,
-                                   _extentHead->_totalFreeSize ) ;
+      _pIndexSu->decStatFreeSpace( mbID, freeSize ) ;
 
    done :
       PD_TRACE_EXITRC ( SDB__IXMEXT__DELEXT, rc );
@@ -1654,7 +1528,8 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__IXMEXT__FNDCHLDEXT, "_ixmExtent::_findChildExtent " )
-   INT32 _ixmExtent::_findChildExtent ( dmsExtentID childExtent, UINT16 &pos )
+   INT32 _ixmExtent::_findChildExtent ( dmsExtentID childExtent,
+                                        UINT16 &pos ) const
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__IXMEXT__FNDCHLDEXT );
@@ -1725,7 +1600,7 @@ namespace engine
               nextExtent.getChildExtentID ( nextIndexKey._slot+1 ) !=
                     DMS_INVALID_EXTENT )
          {
-            ((ixmKeyNode*)getKeyNode(pos))->setUnused() ;
+            writeKeyNode(pos)->setUnused() ;
          }
          else
          {
@@ -1768,7 +1643,7 @@ namespace engine
    // keyRID is for input and output
    // direction=1 means forward, -1 means backward
    // PD_TRACE_DECLARE_FUNCTION ( SDB__IXMEXT_ADVANCE, "_ixmExtent::advance" )
-   INT32 _ixmExtent::advance ( ixmRecordID &keyRID, INT32 direction )
+   INT32 _ixmExtent::advance ( ixmRecordID &keyRID, INT32 direction ) const
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__IXMEXT_ADVANCE );
@@ -1913,7 +1788,7 @@ namespace engine
    INT32 _ixmExtent::locate ( const BSONObj &key, const dmsRecordID &rid,
                               const Ordering &order, ixmRecordID &indexrid,
                               BOOLEAN &found, INT32 direction,
-                              const ixmIndexCB *indexCB )
+                              const ixmIndexCB *indexCB ) const
    {
       ixmKeyOwned ixkey ( key ) ;
       return _locate ( ixkey, rid, order, indexrid, found, direction, indexCB );
@@ -1923,7 +1798,7 @@ namespace engine
    INT32 _ixmExtent::_locate ( const ixmKey &key, const dmsRecordID &rid,
                                const Ordering &order, ixmRecordID &indexrid,
                                BOOLEAN &found, INT32 direction,
-                               const ixmIndexCB *indexCB )
+                               const ixmIndexCB *indexCB ) const
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__IXMEXT__LOCATE );
@@ -1963,7 +1838,9 @@ namespace engine
          // then we simply return
          // otherwise jump out if and do other checks
          if ( !indexrid.isNull() )
+         {
             goto done ;
+         }
       }
       // check scan direction
       if ( (direction<0 && 0==pos) || (direction>0 && getNumKeyNode()==pos) )
@@ -1985,7 +1862,7 @@ namespace engine
    // output in result
    // PD_TRACE_DECLARE_FUNCTION ( SDB__IXMEXT_EXIST, "_ixmExtent::exists" )
    INT32 _ixmExtent::exists ( const ixmKey &key, const Ordering &order,
-                             const ixmIndexCB *indexCB, BOOLEAN &result )
+                             const ixmIndexCB *indexCB, BOOLEAN &result ) const
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__IXMEXT_EXIST );
@@ -2034,14 +1911,13 @@ namespace engine
    // in order to avoid parent pointer pointing to itself (from disk
    // corruption), we loop 100 rounds max, usually B tree will never exceed 100
    // levels
-#define IXM_GET_ROOT_MAX_LOOP 100
    // This function returns the extent id for root of the index page
    // PD_TRACE_DECLARE_FUNCTION ( SDB__IXMEXT_GETROOT, "_ixmExtent::getRoot" )
-   dmsExtentID _ixmExtent::getRoot ()
+   dmsExtentID _ixmExtent::getRoot() const
    {
       PD_TRACE_ENTRY ( SDB__IXMEXT_GETROOT );
       dmsExtentID extentID = _me ;
-      INT32 maxLoop = IXM_GET_ROOT_MAX_LOOP ;
+      INT32 maxLoop = 100 ;
       while ( DMS_INVALID_EXTENT != extentID &&
               maxLoop > 0 )
       {
@@ -2052,18 +1928,17 @@ namespace engine
             return extentID ;
          }
          extentID = extent.getParent() ;
-         maxLoop -- ;
+         maxLoop-- ;
       }
       // normally we should never reach here
-      PD_LOG ( PDERROR, "loop more than %d times to get root",
-               IXM_GET_ROOT_MAX_LOOP ) ;
+      PD_LOG ( PDERROR, "loop more than %d times to get root", 100 ) ;
       PD_TRACE_EXIT ( SDB__IXMEXT_GETROOT );
       return DMS_INVALID_EXTENT ;
    }
-   
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB__IXMEXT_FNDSNG, "_ixmExtent::findSingle" )
    INT32 _ixmExtent::findSingle ( const ixmKey &key, const Ordering &order,
-                                  dmsRecordID &rid, ixmIndexCB *indexCB )
+                                  dmsRecordID &rid, ixmIndexCB *indexCB ) const
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__IXMEXT_FNDSNG );
@@ -2124,34 +1999,50 @@ namespace engine
    void _ixmExtent::truncate( ixmIndexCB *indexCB )
    {
       PD_TRACE_ENTRY ( SDB__IXMEXT_TRUNC );
-      dmsExtentID childExtentID ;
+      dmsExtentID childExtentID = DMS_INVALID_EXTENT ;
+      UINT16 totalFreeSize = _pageSize - 1 - sizeof(ixmExtentHead) ;
+
       // starting from _right, until first keynode
-      for ( INT32 i = (INT32)getNumKeyNode() ; i>=0; i-- )
+      for ( INT32 i = (INT32)getNumKeyNode() ; i >= 0; i-- )
       {
          childExtentID = getChildExtentID ((UINT16)i) ;
          if ( childExtentID != DMS_INVALID_EXTENT )
          {
             ixmExtent ( childExtentID, _pIndexSu ).truncate ( indexCB ) ;
             indexCB->freeExtent ( childExtentID ) ;
-            setChildExtentID ( i, DMS_INVALID_EXTENT ) ;
+            /// truncated, the page is empty
+            _pIndexSu->decStatFreeSpace( _extentHead->_mbID, totalFreeSize ) ;
+            /*
+            * To improve performance, not change the page except root
+            */
+            if ( isRoot() )
+            {
+               setChildExtentID ( i, DMS_INVALID_EXTENT ) ;
+            }
          }
       }
+
       _pIndexSu->decStatFreeSpace( _extentHead->_mbID,
                                    _extentHead->_totalFreeSize ) ;
-      _extentHead->_totalKeyNodeNum = 0 ;
-      _extentHead->_beginFreeOffset = _pageSize-1 ;
-      _extentHead->_totalFreeSize = _extentHead->_beginFreeOffset -
-                       (sizeof(ixmExtentHead) +
-                       (_extentHead->_totalKeyNodeNum*sizeof(ixmKeyNode))) ;
-      _pIndexSu->addStatFreeSpace( _extentHead->_mbID,
-                                   _extentHead->_totalFreeSize ) ;
+
+      /*
+      * To improve performance, not change the page except root
+      */
+      if ( isRoot() )
+      {
+         ixmExtentHead *pHeader = _extRW.writePtr<ixmExtentHead>() ;
+         pHeader->_totalKeyNodeNum = 0 ;
+         pHeader->_beginFreeOffset = _pageSize - 1 ;
+         pHeader->_totalFreeSize = totalFreeSize ;
+      }
+      _pIndexSu->addStatFreeSpace( _extentHead->_mbID, totalFreeSize ) ;
 
       PD_TRACE_EXIT ( SDB__IXMEXT_TRUNC );
    }
 
    // get the total number of elements in the index node and all children
    // PD_TRACE_DECLARE_FUNCTION ( SDB_IXMEXT_COUNT, "_ixmExtent::count" )
-   UINT64 _ixmExtent::count ()
+   UINT64 _ixmExtent::count() const
    {
       PD_TRACE_ENTRY ( SDB_IXMEXT_COUNT );
       UINT64 totalCount = 0 ;
@@ -2205,7 +2096,7 @@ namespace engine
                                INT32 keepFieldsNum, BOOLEAN skipToNext,
                                const vector < const BSONElement *> &matchEle,
                                const vector < BOOLEAN > &matchInclusive,
-                               const Ordering &o, INT32 direction )
+                               const Ordering &o, INT32 direction ) const
    {
       PD_TRACE_ENTRY ( SDB_IXMEXT__KEYCMP );
       BSONObjIterator ll ( currentKey ) ;
@@ -2285,7 +2176,7 @@ namespace engine
                                 const vector < BOOLEAN > &matchInclusive,
                                 const Ordering &o, INT32 direction,
                                 ixmRecordID &bestIxmRID,
-                                dmsExtentID &resultExtent, _pmdEDUCB *cb )
+                                dmsExtentID &resultExtent, _pmdEDUCB *cb ) const
    {
       SINT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__IXMEXT__KEYFIND );
@@ -2327,7 +2218,7 @@ namespace engine
          // 65536 and each key slot will always > 2 bytes, so h+l won't hit
          // 0xFFFF
          m = ( low + high ) / 2 ;
-         CHAR *data = getKeyData ( m ) ;
+         const CHAR *data = getKeyData ( m ) ;
          if ( !data )
          {
             PD_LOG ( PDERROR, "slot %d doesn't have matching key", m ) ;
@@ -2394,12 +2285,12 @@ namespace engine
                                  const vector < const BSONElement *> &matchEle,
                                  const vector < BOOLEAN > &matchInclusive,
                                  const Ordering &o, INT32 direction,
-                                 _pmdEDUCB *cb )
+                                 _pmdEDUCB *cb ) const
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__IXMEXT_KEYLOCATE );
       UINT16 l, h, z ;
-      CHAR *data = NULL ;
+      const CHAR *data = NULL ;
       INT32 result ;
       dmsExtentID childExtentID ;
       SDB_ASSERT ( direction == 1 || direction == -1, "direction must be "
@@ -2474,7 +2365,7 @@ namespace engine
 
       // now let's check another extream condition, that the last and first key
       // in the page for forward and backward condition
-      data = getKeyData ( h-z ) ;
+      data = getKeyData( h-z ) ;
       if ( !data )
       {
          PD_LOG ( PDERROR, "slot %d doesn't have matching key", z ) ;
@@ -2562,7 +2453,7 @@ namespace engine
                                  const vector < const BSONElement *> &matchEle,
                                  const vector < BOOLEAN > &matchInclusive,
                                  const Ordering &o, INT32 direction,
-                                 _pmdEDUCB *cb )
+                                 _pmdEDUCB *cb ) const
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__IXMEXT_KEYADVANCE );
@@ -2570,7 +2461,7 @@ namespace engine
       BOOLEAN currentLevel = FALSE ;
       dmsExtentID childExtentID = DMS_INVALID_EXTENT ;
       dmsExtentID parentExtentID = DMS_INVALID_EXTENT ;
-      CHAR *data = NULL ;
+      const CHAR *data = NULL ;
 
       // first let's compare the last/first item (forward and backward scan)
       // with the expect key
@@ -2579,8 +2470,8 @@ namespace engine
          // for forward scan, compare if the latest key is greater than the
          // target
          l = rid.isNull()?(0):rid._slot ;
-         h = getNumKeyNode() -1 ;
-         data = getKeyData ( h ) ;
+         h = getNumKeyNode() - 1 ;
+         data = getKeyData( h ) ;
          if ( !data )
          {
             PD_LOG ( PDERROR, "slot %d doesn't have matching key", h ) ;
@@ -2681,13 +2572,9 @@ namespace engine
    error :
       goto done ;
    }
-   ossValuePtr _ixmExtent::getChildExtentPtr ( UINT16 i )
-   {
-      return _pIndexSu->extentAddr(getChildExtentID(i)) ;
-   }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__IXMEXT_DMPINXEXT2LOG, "_ixmExtent::dumpIndexExtentIntoLog" )
-   INT32 _ixmExtent::dumpIndexExtentIntoLog ()
+   INT32 _ixmExtent::dumpIndexExtentIntoLog () const
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__IXMEXT_DMPINXEXT2LOG );

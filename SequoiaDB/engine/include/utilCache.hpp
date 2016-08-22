@@ -260,7 +260,7 @@ namespace engine
    typedef _utilCacheStat utilCacheStat ;
 
    #define UTIL_BLOCK_RECYCLE_FREE_RATIO              ( 60 )   /// >=60%
-   #define UTIL_BLOCK_TIMEOUT                         ( 5000 )
+   #define UTIL_BLOCK_TIMEOUT                         ( 10000 )
 
    /*
       _utilCacheMgr define
@@ -392,6 +392,7 @@ namespace engine
          ossAtomic64          _freeSize ;
          ossAtomic64          _totalSize ;
          ossAtomic64          _totalUseTimes ;
+         ossAtomic32          _nonEmptySlotNum ;
 
          vector< CHAR* >      _slot[ UTIL_PAGE_SLOT_SIZE ] ;
          vector< blkLatch* >  _latch ;

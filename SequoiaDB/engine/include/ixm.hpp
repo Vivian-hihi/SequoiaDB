@@ -201,7 +201,7 @@ namespace engine
 #pragma pack()
 
       // raw data for control block extent
-      ixmIndexCBExtent *_extent ;
+      const ixmIndexCBExtent *_extent ;
       // whether if this CB is initialized
       BOOLEAN _isInitialized ;
       // object for index def
@@ -217,7 +217,7 @@ namespace engine
       dmsExtentID _extentID ;
 
       // Whether the given extent is a valid control block
-      OSS_INLINE BOOLEAN _verify()
+      OSS_INLINE BOOLEAN _verify() const
       {
          if ( IXM_EXTENT_CB_EYECATCHER0 != _extent->_eyeCatcher[0] ||
               IXM_EXTENT_CB_EYECATCHER1 != _extent->_eyeCatcher[1] )
@@ -242,7 +242,7 @@ namespace engine
          // create index def from page
          try
          {
-            _infoObj = BSONObj ( ((CHAR*)_extent) +
+            _infoObj = BSONObj ( ((const CHAR*)_extent) +
                                  IXM_INDEX_CB_EXTENT_METADATA_SIZE ) ;
          }
          catch ( std::exception &e )
@@ -296,79 +296,62 @@ namespace engine
                     UINT16 mbID ,
                     _dmsStorageIndex *pIndexSu,
                     _dmsContext *context ) ;
-      ~_ixmIndexCB()
-      {
-         _pIndexSu = NULL ;
-         _pContext = NULL ;
-      }
-      BOOLEAN isInitialized ()
+      ~_ixmIndexCB() ;
+
+      BOOLEAN isInitialized () const
       {
          return _isInitialized ;
       }
-      dmsExtentID getExtentID ()
+      dmsExtentID getExtentID () const
       {
          return _extentID ;
       }
-      UINT16 getIndexType()const
+      UINT16 getIndexType() const
       {
          SDB_ASSERT ( _isInitialized,
                       "index details must be initialized first" ) ;
          return _extent->_type ;
       }
-      UINT16 getFlag ()
+      UINT16 getFlag () const
       {
          SDB_ASSERT ( _isInitialized,
                       "index details must be initialized first" ) ;
          return _extent->_indexFlag ;
       }
-      void setFlag( UINT16 flag )
-      {
-         SDB_ASSERT ( _isInitialized,
-                      "index details must be initialized first" ) ;
-         _extent->_indexFlag = flag ;
-      }
-      dmsExtentID getLogicalID()
+
+      void setFlag( UINT16 flag ) ;
+
+      dmsExtentID getLogicalID() const
       {
          SDB_ASSERT ( _isInitialized,
                       "index details must be initialized first" ) ;
          return _extent->_logicID ;
       }
-      void setLogicalID( dmsExtentID logicalID )
-      {
-         SDB_ASSERT ( _isInitialized,
-                      "index details must be initialized first" ) ;
-         _extent->_logicID = logicalID ;
-      }
-      void clearLogicID()
-      {
-         SDB_ASSERT ( _isInitialized,
-                      "index details must be initialized first" ) ;
-         _extent->_logicID = DMS_INVALID_EXTENT ;
-      }
+
+      void setLogicalID( dmsExtentID logicalID ) ;
+      void clearLogicID() ;
+
       UINT16 indexType() const
       {
          SDB_ASSERT ( _isInitialized,
                       "index details must be initialized first" ) ;
          return _extent->_type ;
       }
-      UINT16 getMBID ()
+      UINT16 getMBID () const
       {
          SDB_ASSERT ( _isInitialized,
                       "index details must be initialized first" ) ;
          return _extent->_mbID ;
       }
-      dmsExtentID scanExtLID ()
+      dmsExtentID scanExtLID () const
       {
          SDB_ASSERT ( _isInitialized,
                       "index details must be initialized first" ) ;
          return _extent->_scanExtLID ;
       }
-      void scanExtLID ( UINT32 extLID )
-      {
-         SDB_ASSERT ( _isInitialized,
-                      "index details must be initialized first" ) ;
-         _extent->_scanExtLID = extLID ;
-      }
+
+      void scanExtLID ( UINT32 extLID ) ;
+
       // remove all field name from bson object
       BSONObj getKeyFromQuery ( const BSONObj & query ) const
       {
@@ -417,6 +400,7 @@ namespace engine
                  -1 if doesn't exist
        */
       INT32 keyPatternOffset( const CHAR *key ) const;
+
       // is the given field exist in the index?
       BOOLEAN inKeyPattern( const CHAR *key ) const
       {
@@ -425,7 +409,7 @@ namespace engine
          return keyPatternOffset( key ) >= 0 ;
       }
       // return the name of index
-      OSS_INLINE const CHAR *getName()
+      OSS_INLINE const CHAR *getName() const
       {
          SDB_ASSERT ( _isInitialized,
                       "index details must be initialized first" ) ;
@@ -654,15 +638,13 @@ namespace engine
                       "index details must be initialized first" ) ;
          return _infoObj.toString() ;
       }
+
       INT32 allocExtent ( dmsExtentID &extentID ) ;
       INT32 freeExtent ( dmsExtentID extentID ) ;
-      void setRoot ( dmsExtentID rootExtentID )
-      {
-         SDB_ASSERT ( _isInitialized,
-                      "index details must be initialized first" ) ;
-         _extent->_rootExtentID = rootExtentID ;
-      }
-      dmsExtentID getRoot()
+
+      void setRoot ( dmsExtentID rootExtentID ) ;
+
+      dmsExtentID getRoot() const
       {
          SDB_ASSERT ( _isInitialized,
                       "index details must be initialized first" ) ;
@@ -672,7 +654,11 @@ namespace engine
       {
          return _pIndexSu ;
       }
-      INT32 getIndexID ( OID &oid )
+      _dmsContext* getContext ()
+      {
+         return _pContext ;
+      }
+      INT32 getIndexID ( OID &oid ) const
       {
          SDB_ASSERT ( _isInitialized,
                       "index details must be initialized first" ) ;
@@ -687,7 +673,7 @@ namespace engine
          }
          return SDB_OK ;
       }
-      BOOLEAN isStillValid ( OID &oid )
+      BOOLEAN isStillValid ( OID &oid ) const
       {
          SDB_ASSERT ( _isInitialized,
                       "index details must be initialized first" ) ;
@@ -712,9 +698,12 @@ namespace engine
          }
          return curOID == oid ;
       }
+
       INT32 truncate ( BOOLEAN removeRoot ) ;
+
       BOOLEAN isSameDef( const BSONObj &defObj,
-                         BOOLEAN strict = FALSE ) ;
+                         BOOLEAN strict = FALSE ) const ;
+
    } ;
    typedef class _ixmIndexCB ixmIndexCB ;
 

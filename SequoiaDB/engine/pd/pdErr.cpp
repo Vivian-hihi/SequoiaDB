@@ -51,13 +51,10 @@ void pdSetLastError( INT32 err )
 /*
    _pdGeneralException implement
 */
-_pdGeneralException::_pdGeneralException( const CHAR *str )
+_pdGeneralException::_pdGeneralException( const std::string &str )
 {
    _err = 0 ;
-   if ( str )
-   {
-      _s = str ;
-   }
+   _s = str ;
    pdSetLastError( _err ) ;
 }
 
@@ -67,23 +64,17 @@ _pdGeneralException::_pdGeneralException( INT32 err )
    pdSetLastError( _err ) ;
 }
 
-_pdGeneralException::_pdGeneralException( INT32 err, const CHAR *str )
+_pdGeneralException::_pdGeneralException( INT32 err, const std::string &str )
 {
    _err = err ;
-   if ( str )
-   {
-      _s = str ;
-   }
+   _s = str ;
    pdSetLastError( _err ) ;
 }
 
-_pdGeneralException::_pdGeneralException( const CHAR *str, INT32 err )
+_pdGeneralException::_pdGeneralException( const std::string &str, INT32 err )
 {
    _err = err ;
-   if ( str )
-   {
-      _s = str ;
-   }
+   _s = str ;
    pdSetLastError( _err ) ;
 }
 

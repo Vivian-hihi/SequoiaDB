@@ -118,6 +118,11 @@ namespace engine
       if ( beatTimeout > 0 && beatTimeout < 2000 )
       {
          beatTimeout = 2000 ;
+         beatInteval = 1000 ;
+      }
+      if ( 0 == beatInteval )
+      {
+         beatInteval = beatTimeout / 5 ;
       }
       if ( beatInteval < 1000 )
       {

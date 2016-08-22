@@ -41,6 +41,7 @@
 #include "core.hpp"
 #include "oss.hpp"
 #include "sdbInterface.hpp"
+#include "sdbIPersistence.hpp"
 #include "dpsReplicaLogMgr.hpp"
 #include "../bson/bsonelement.h"
 #include "../bson/bsonobj.h"
@@ -85,6 +86,7 @@ namespace engine
 
          virtual DPS_LSN   getCurrentLsn() = 0 ;
          virtual DPS_LSN   expectLsn() = 0 ;
+         virtual DPS_LSN   commitLsn() = 0 ;
 
          virtual void      getLsnWindow( DPS_LSN &beginLsn,
                                          DPS_LSN &memBeginLsn,
@@ -109,13 +111,21 @@ namespace engine
    /*
       _dpsLogWrapper define
    */
-   class _dpsLogWrapper : public _IControlBlock, public ILogAccessor
+   class _dpsLogWrapper : public _IControlBlock, public ILogAccessor,
+                          public IDataSyncBase
    {
    private:
       _dpsReplicaLogMgr          _buf ;
       BOOLEAN                    _initialized ;
       BOOLEAN                    _dpslocal ;
       vector< dpsEventHandler* > _vecEventHandler ;
+
+      UINT32                     _syncInterval ;
+      UINT32                     _syncRecordNum ;
+
+      UINT32                     _writeReordNum ;
+      UINT64                     _lastWriteTick ;
+      UINT64                     _lastSyncTime ;
 
    public:
       _dpsLogWrapper() ;
@@ -145,6 +155,7 @@ namespace engine
 
       virtual DPS_LSN   getCurrentLsn() ;
       virtual DPS_LSN   expectLsn() ;
+      virtual DPS_LSN   commitLsn() ;
 
       virtual void      getLsnWindow( DPS_LSN &beginLsn,
                                       DPS_LSN &memBeginLsn,
@@ -161,6 +172,18 @@ namespace engine
                               const DPS_LSN_VER &version ) ;
 
       virtual INT32     recordRow( const CHAR *row, UINT32 len ) ;
+
+   public:
+         virtual BOOLEAN      isClosed() const ;
+         virtual BOOLEAN      canSync( BOOLEAN &force ) const ;
+
+         virtual INT32        sync( BOOLEAN force,
+                                    BOOLEAN sync,
+                                    UINT64 lastLSN,
+                                    IExecutor* cb ) ;
+
+         virtual void         lock() ;
+         virtual void         unlock() ;
 
    public:
       void regEventHandler( dpsEventHandler *pHandler ) ;
@@ -215,10 +238,7 @@ namespace engine
          return _buf.checkSyncControl( reqLen, cb ) ;
       }
 
-      OSS_INLINE INT32 commit( BOOLEAN deeply, DPS_LSN *committedLsn )
-      {
-         return _buf.commit( deeply, committedLsn ) ;
-      }
+      INT32 commit( BOOLEAN deeply, DPS_LSN *committedLsn ) ;
 
    public:
       INT32 prepare( dpsMergeInfo &info ) ;

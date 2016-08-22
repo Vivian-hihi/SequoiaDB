@@ -48,7 +48,9 @@ namespace engine
    class _dmsStorageLobData : public utilCachFileBase
    {
    public:
-      _dmsStorageLobData( const CHAR *fileName ) ;
+      _dmsStorageLobData( const CHAR *fileName,
+                          BOOLEAN enableSparse,
+                          BOOLEAN useDirectIO ) ;
       virtual ~_dmsStorageLobData() ;
 
    /// Base class functions
@@ -84,7 +86,7 @@ namespace engine
 
       INT32 open( const CHAR *path,
                   BOOLEAN createNew,
-                  BOOLEAN delWhenExist,
+                  UINT32 totalDataPages,
                   const dmsStorageInfo &info,
                   _pmdEDUCB *cb ) ;
 
@@ -123,6 +125,8 @@ namespace engine
       }
 
       INT32 _extend( INT64 len ) ;
+
+      INT32 _postOpen( INT32 cause ) ;
 
    private:
       std::string       _fileName ;

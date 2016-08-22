@@ -198,7 +198,8 @@ namespace engine
 #endif
 
    private :
-      INT32    createNewEDU ( EDU_TYPES type, void* arg, EDUID *eduid ) ;
+      INT32    createNewEDU ( EDU_TYPES type, void* arg, EDUID *eduid,
+                              const CHAR *pName ) ;
       INT32    destroyAll () ;
       INT32    _forceEDUs ( INT32 property = EDU_ALL ) ;
       UINT32   _getEDUCount ( INT32 property = EDU_ALL ) ;
@@ -331,7 +332,8 @@ namespace engine
        *   SDB_OOM (failed to allocate memory)
        *   SDB_INVALIDARG (the type is not valid )
        */
-      INT32    startEDU ( EDU_TYPES type, void* arg, EDUID *eduid ) ;
+      INT32    startEDU ( EDU_TYPES type, void* arg, EDUID *eduid,
+                          const CHAR *pName = NULL ) ;
 
       /*
        * This function should post a message to EDU

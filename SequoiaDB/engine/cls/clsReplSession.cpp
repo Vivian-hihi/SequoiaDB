@@ -32,6 +32,7 @@
 #include "pmd.hpp"
 #include "pmdCB.hpp"
 #include "rtn.hpp"
+#include "rtnRecover.hpp"
 #include "pmdStartup.hpp"
 #include "msgMessage.hpp"
 #include "pdTrace.hpp"
@@ -647,24 +648,12 @@ namespace engine
          PD_LOG( PDWARNING, "Session[%s]: Group size is one or the node "
                  "begin to primary, begin to rebuild database",
                  sessionName() ) ;
-         DPS_LSN expectLSN = _logger->expectLsn() ;
-         if ( DPS_INVALID_LSN_OFFSET == expectLSN.offset ||
-              0 == expectLSN.offset )
-         {
-            /// when rebuild, we can't move the dps to 0, because the new add
-            /// node will sync from lsn 0
-            expectLSN.offset = ossAlign4( (UINT32)sizeof( dpsLogRecordHeader ) ) ;
-         }
-         if ( DPS_INVALID_LSN_VERSION == expectLSN.version )
-         {
-            expectLSN.version = DPS_INVALID_LSN_VERSION + 1 ;
-         }
+
+         rtnDBRebuilder rebuilder ;
 
          PMD_SET_DB_STATUS( SDB_DB_REBUILDING ) ;
          pClsCB->getReplCB()->getFaultEvent()->signalAll( SDB_RTN_IN_REBUILD ) ;
-
-         rc = rtnRebuildDB ( eduCB() ) ;
-
+         rc = rebuilder.doOpr( eduCB() ) ;
          /// restore
          pClsCB->getReplCB()->getFaultEvent()->reset() ;
          PMD_SET_DB_STATUS( SDB_DB_NORMAL ) ;
@@ -673,25 +662,6 @@ namespace engine
          {
             goto error ;
          }
-         /// clear all trans info
-         sdbGetTransCB()->clearTransInfo() ;
-         // then cut all dps
-         rc = _logger->move( 0, expectLSN.version ) ;
-         if ( SDB_OK != rc )
-         {
-            PD_LOG( PDERROR, "Session[%s]: Move dps to begin failed "
-                    "after rebuild, rc: %d", sessionName(), rc ) ;
-            goto error ;
-         }
-         else
-         {
-            PD_LOG( PDEVENT, "Session[%s]: Move dps to begin after "
-                    "rebuild succeed", sessionName() ) ;
-         }
-         /// then move to none-zero
-         _logger->move( expectLSN.offset, expectLSN.version ) ;
-
-         pmdGetStartup().ok ( TRUE ) ;
          _status = CLS_SESSION_STATUS_SYNC ;
          ++_requestID ;
          // force to secondary

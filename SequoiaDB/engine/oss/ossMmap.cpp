@@ -53,7 +53,6 @@ INT32 _ossMmapFile::open ( const CHAR *pFilename,
 {
    INT32 rc = SDB_OK ;
    PD_TRACE_ENTRY ( SDB__OSSMMF_OPEN );
-   OSSMMAP_XLOCK
    rc = ossOpen ( pFilename, iMode, iPermission, _file ) ;
    if ( SDB_OK == rc )
    {
@@ -77,7 +76,6 @@ error :
 void _ossMmapFile::close ()
 {
    PD_TRACE_ENTRY ( SDB__OSSMMF_CLOSE );
-   OSSMMAP_XLOCK
    // clear all maped regions
    for ( vector< ossMmapSegment >::iterator i = _segments.begin();
          i != _segments.end(); i++ )
@@ -106,7 +104,6 @@ void _ossMmapFile::close ()
 INT32 _ossMmapFile::size ( UINT64 &fileSize )
 {
    PD_TRACE_ENTRY ( SDB__OSSMMF_SIZE ) ;
-   OSSMMAP_SLOCK
    SDB_ASSERT ( _opened, "file is not opened" ) ;
    INT32 rc = SDB_OK ;
    rc = ossGetFileSize ( &_file, (INT64*)&fileSize ) ;
@@ -128,7 +125,6 @@ error :
 INT32 _ossMmapFile::map ( UINT64 offset, UINT32 length, void **pAddress )
 {
    PD_TRACE_ENTRY ( SDB__OSSMMF_MAP );
-   OSSMMAP_XLOCK
    SDB_ASSERT ( _opened, "file is not opened" ) ;
    INT32 rc = SDB_OK ;
    INT32 err = 0 ;
@@ -229,6 +225,7 @@ INT32 _ossMmapFile::map ( UINT64 offset, UINT32 length, void **pAddress )
       goto error ;
    }
 #endif
+   _totalLength += length ;
    seg._ptr = (ossValuePtr)segment;
    seg._length = length ;
    seg._offset = offset ;

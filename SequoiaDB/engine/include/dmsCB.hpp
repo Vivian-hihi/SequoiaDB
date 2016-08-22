@@ -52,6 +52,7 @@
 #include "ossEvent.hpp"
 #include "sdbInterface.hpp"
 #include "dmsIxmKeySorter.hpp"
+#include "dmsStatus.hpp"
 #include <map>
 #include <set>
 
@@ -88,10 +89,9 @@ namespace engine
 
    #define DMS_MAX_CS_NUM 4096
    #define DMS_INVALID_CS DMS_INVALID_SUID
-   #define DMS_STATE_NORMAL  0
-   #define DMS_STATE_BACKUP  1
-   #define DMS_STATE_REBUILD 2
-   #define DMS_CHANGESTATE_WAIT_LOOP 500
+   #define DMS_STATE_NORMAL            0
+   #define DMS_STATE_READONLY          1
+   #define DMS_CHANGESTATE_WAIT_LOOP   100
 
    struct _dmsDictJob
    {
@@ -145,12 +145,6 @@ namespace engine
       // collection spaces mutex in create and drop operations
       std::vector< ossSpinXLatch* >       _vecCSMutex ;
 
-      // represent the last page clean timestamp for a given storage unit
-      typedef std::pair<ossTick,dmsStorageUnitID>  _pageCleanHistory ;
-      // stores a list of page clean history
-      std::list<_pageCleanHistory>                 _pageCleanHistoryList ;
-      std::set<dmsStorageUnitID>                   _pageCleanHistorySet ;
-
       /*
        * List of collections which are waitting for dictionaies creation.
        * Here we store the storage unit id and mb ID of the collection.
@@ -166,12 +160,13 @@ namespace engine
       std::list<dmsDictJob>                       _dictWaitClList ;
 
       ossSpinXLatch           _stateMtx;
-      ossEvent                _backEvent ;
+      ossEvent                _blockEvent ;
       SINT64                  _writeCounter;
       UINT8                   _dmsCBState;
       UINT32                  _logicalSUID ;
 
       dmsTempCB               _tempCB ;
+      dmsPersistStatus        _status ;
 
       dmsIxmKeySorterCreator* _ixmKeySorterCreator ;
 
@@ -203,7 +198,6 @@ namespace engine
                                 SDB_DPSCB *dpsCB,
                                 SDB_DMS_CSCB *&pCSCB ) ;
       void _CSCBNameMapCleanup () ;
-      INT32 _joinPageCleanSU ( dmsStorageUnitID suID ) ;
 
       INT32 _delCollectionSpace ( const CHAR *pName, _pmdEDUCB *cb,
                                   SDB_DPSCB *dpsCB, BOOLEAN removeFile,
@@ -254,6 +248,7 @@ namespace engine
       void dumpInfo ( INT64 &totalFileSize );
 
       dmsTempCB *getTempCB () ;
+      dmsPersistStatus* getStatus() ;
 
       INT32 dropCollectionSpaceP1 ( const CHAR *pName, _pmdEDUCB *cb,
                                     SDB_DPSCB *dpsCB );
@@ -263,9 +258,6 @@ namespace engine
 
       INT32 dropCollectionSpaceP2 ( const CHAR *pName, _pmdEDUCB *cb,
                                     SDB_DPSCB *dpsCB );
-
-      _dmsStorageUnit *dispatchPageCleanSU ( dmsStorageUnitID *suID ) ;
-      INT32 joinPageCleanSU ( dmsStorageUnitID suID ) ;
 
       BOOLEAN dispatchDictJob( dmsDictJob &job ) ;
       void pushDictJob( dmsDictJob job ) ;
@@ -290,6 +282,10 @@ namespace engine
 
       INT32 writable( _pmdEDUCB * cb ) ;
       void  writeDown( _pmdEDUCB * cb ) ;
+
+      INT32 blockWrite( _pmdEDUCB *cb,
+                        SDB_DB_STATUS byStatus = SDB_DB_NORMAL ) ;
+      void  unblockWrite( _pmdEDUCB *cb ) ;
 
       INT32 registerBackup( _pmdEDUCB *cb ) ;
       void  backupDown( _pmdEDUCB *cb ) ;

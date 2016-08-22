@@ -35,6 +35,7 @@
 
 #ifndef DMSREORGUNIT_HPP__
 #define DMSREORGUNIT_HPP__
+
 #include "core.hpp"
 #include "oss.hpp"
 #include "ossMmap.hpp"
@@ -50,53 +51,70 @@ using namespace bson ;
 
 namespace engine
 {
+
+   #define DMS_REORG_UNIT_EYECATCHER         "DMSREORG"
+   #define DMS_REORG_UNIT_EYECATCHER_LEN     8
+
    class _pmdEDUCB ;
-#define DMS_REORG_UNIT_EYECATCHER "DMSREORG"
-#define DMS_REORG_UNIT_EYECATCHER_LEN 8
+
+   /*
+      _dmsReorgUnit define
+   */
    class _dmsReorgUnit : public SDBObject
    {
    private :
       class _reorgUnitHead : public SDBObject
       {
       public :
-         CHAR _eyeCatcher [ DMS_REORG_UNIT_EYECATCHER_LEN ] ;
-         INT32 _headerSize ;
-         CHAR _fileName [ OSS_MAX_PATHSIZE ] ;
-         SINT32 _pageSize ;
+         CHAR     _eyeCatcher [ DMS_REORG_UNIT_EYECATCHER_LEN ] ;
+         INT32    _headerSize ;
+         CHAR     _fileName [ OSS_MAX_PATHSIZE ] ;
+         SINT32   _pageSize ;
       } ;
-      SINT32 _pageSize ;
-      INT32 _headSize ;
-      BOOLEAN _readOnly ;
-      CHAR _fileName [ OSS_MAX_PATHSIZE + 1 ] ;
-      OSSFILE _file ;
-      INT32 _init ( BOOLEAN createNew ) ;
-      INT32 _allocateExtent ( INT32 requestSize ) ;
-      INT32 _flushExtent () ;
-      void _initExtentHeader ( dmsExtent *extAddr, UINT16 numPages ) ;
-      CHAR *_pCurrentExtent ;
-      INT32 _currentExtentSize ;
+
+      SINT32      _pageSize ;
+      INT32       _headSize ;
+      BOOLEAN     _readOnly ;
+      CHAR        _fileName [ OSS_MAX_PATHSIZE + 1 ] ;
+      OSSFILE     _file ;
+      CHAR        *_pCurrentExtent ;
+      INT32       _currentExtentSize ;
+      INT32       _buffSize ;
+
+   protected:
+      INT32       _init ( BOOLEAN createNew ) ;
+      INT32       _allocateExtent ( INT32 requestSize ) ;
+      INT32       _flushExtent () ;
+      void        _initExtentHeader ( dmsExtent *extAddr, UINT16 numPages ) ;
+
    public :
-      _dmsReorgUnit ( CHAR *pFileName, SINT32 pageSize ) ;
+      _dmsReorgUnit () ;
       ~_dmsReorgUnit () ;
-      INT32 open ( BOOLEAN createNew ) ;
-      void close () ;
-      void reset () ;
+
+      BOOLEAN isOpened() const ;
+
+      INT32 open ( const CHAR *pFileName,
+                   SINT32 pageSize,
+                   BOOLEAN createNew ) ;
+
+      void  close () ;
       INT32 cleanup () ;
       INT32 flush () ;
-      // MME is always DMS_MB_SIZE bytes
-      INT32 importMME ( const CHAR *pMME ) ;
-      INT32 insertRecord ( BSONObj &obj, _pmdEDUCB *cb, UINT32 attributes,
+
+      const CHAR* getFileName() const { return _fileName ; }
+
+      INT32 insertRecord ( BSONObj &obj,
+                           _pmdEDUCB *cb,
                            dmsCompressorEntry *compEntry ) ;
-      INT32 exportMME ( CHAR *pBuffer ) ;
+
       // based on pagesize
+      void  beginExport() ;
       INT32 getNextExtentSize ( SINT32 &size ) ;
-      INT32 exportExtent ( CHAR *pBuffer ) ;
-      INT32 getHeadSize ()
-      { return _headSize; }
-      INT32 exportHead ( CHAR *pBuffer ) ;
-      INT32 validateHeadBuffer ( CHAR *pBuffer ) ;
+      INT32 exportExtent( CHAR *pBuffer ) ;
+
    } ;
    typedef class _dmsReorgUnit dmsReorgUnit ;
 }
 
-#endif
+#endif // DMSREORGUNIT_HPP__
+

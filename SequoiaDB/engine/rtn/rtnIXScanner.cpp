@@ -248,7 +248,8 @@ namespace engine
             {
                // if the RID it's pointing to looks the same, then we need to
                // compare the index key
-               CHAR *dataBuffer = indexExtent.getKeyData ( _curIndexRID._slot );
+               const CHAR *dataBuffer =
+                  indexExtent.getKeyData ( _curIndexRID._slot );
                if ( dataBuffer )
                {
                   try
@@ -336,7 +337,7 @@ namespace engine
          }
          // now let's get the binary key and create BSONObj from it
          ixmExtent indexExtent ( _curIndexRID._extent, _su->index() ) ;
-         CHAR *dataBuffer = indexExtent.getKeyData ( _curIndexRID._slot ) ;
+         const CHAR *dataBuffer = indexExtent.getKeyData ( _curIndexRID._slot ) ;
          if ( !dataBuffer )
          {
             PD_LOG ( PDERROR, "Failed to get buffer from current rid: %d,%d",
@@ -471,7 +472,7 @@ namespace engine
       {
          // for read mode, let's copy savedobj then
          ixmExtent indexExtent ( _curIndexRID._extent, _su->index() ) ;
-         CHAR *dataBuffer = indexExtent.getKeyData ( _curIndexRID._slot ) ;
+         const CHAR *dataBuffer = indexExtent.getKeyData ( _curIndexRID._slot ) ;
          if ( !dataBuffer )
          {
             PD_LOG ( PDERROR, "Failed to get buffer from current rid: %d,%d",
@@ -558,7 +559,7 @@ namespace engine
       // index) because the storage unit should never be remapped in memory
       // during its run
       ixmExtent indexExtent ( _curIndexRID._extent, _su->index() ) ;
-      CHAR *dataBuffer = NULL ;
+      const CHAR *dataBuffer = NULL ;
       if ( indexExtent.isStillValid( _indexCB->getMBID() ) )
       {
          dataBuffer = indexExtent.getKeyData ( _curIndexRID._slot ) ;

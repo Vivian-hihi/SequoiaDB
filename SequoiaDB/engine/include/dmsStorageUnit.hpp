@@ -93,14 +93,16 @@ namespace engine
          _dmsStorageUnit ( const CHAR *pSUName,
                            UINT32 sequence,
                            utilCacheMgr *pMgr,
+                           dmsPersistStatus *pStatus,
                            INT32 pageSize = DMS_PAGE_SIZE_DFT,
                            INT32 lobPageSize = DMS_DEFAULT_LOB_PAGE_SZ ) ;
          ~_dmsStorageUnit() ;
 
-         INT32 open ( const CHAR *pDataPath, const CHAR *pIndexPath,
+         INT32 open ( const CHAR *pDataPath,
+                      const CHAR *pIndexPath,
                       const CHAR *pLobPath,
-                      BOOLEAN createNew = TRUE,
-                      BOOLEAN delWhenExist = FALSE ) ;
+                      IDataSyncManager *pSyncMgr,
+                      BOOLEAN createNew = TRUE ) ;
          void  close () ;
          INT32 remove () ;
 
@@ -128,13 +130,23 @@ namespace engine
          INT64       totalFreePages( UINT32 type = DMS_SU_ALL ) const ;
          INT64       totalFreeSize( UINT32 type = DMS_SU_ALL ) const ;
          void        getStatInfo( dmsStorageUnitStat &statInfo ) ;
-         INT32       tryToFlush( BOOLEAN ignoreTick, BOOLEAN &failed ) ;
+
+         INT32       sync( BOOLEAN sync,
+                           UINT64 lastLSN,
+                           IExecutor* cb ) ;
+
+         void        enableSync( BOOLEAN enable ) ;
+         void        restoreForCrash() ;
+
+         void        setSyncConfig( UINT32 syncInterval,
+                                    UINT32 syncRecordNum,
+                                    UINT32 syncDirtyRatio ) ;
+         void        setSyncDeep( BOOLEAN syncDeep ) ;
+
          UINT64      getCurrentDataLSN() const ;
          UINT64      getCurrentLobLSN() const ;
          std::string getValidFlagDesc() const ;
          UINT32      getValidFlag() const ;
-         void        resetLastLSN( UINT64 offset ) ;
-         UINT64      getLastTick() const ;
 
       public:
          void     dumpInfo ( set<monCLSimple> &collectionList,
@@ -164,10 +176,10 @@ namespace engine
          OSS_INLINE void    mapExtent2DelList( dmsMB * mb, dmsExtent * extAddr,
                                            SINT32 extentID ) ;
 
-         OSS_INLINE INT32   extentRemoveRecord( dmsMB *mb,
-                                            const dmsRecordID &recordID,
-                                            INT32 recordSize,
-                                            _pmdEDUCB *cb ) ;
+         OSS_INLINE INT32   extentRemoveRecord( dmsMBContext *context,
+                                                dmsExtRW &extRW,
+                                                dmsRecordRW &recordRW,
+                                                _pmdEDUCB *cb ) ;
 
          OSS_INLINE void    addExtentRecordCount( dmsMB *mb, UINT32 count ) ;
 
@@ -251,8 +263,7 @@ namespace engine
          //loadExtentA is not init extent records
          INT32    loadExtentA ( dmsMBContext *mbContext, const CHAR *pBuffer,
                                 UINT16 numPages, const BOOLEAN toLoad = FALSE,
-                                SINT32 *allocatedExtent = NULL,
-                                dmsExtent **tExtAddr = NULL ) ;
+                                SINT32 *allocatedExtent = NULL ) ;
 
          //loadExtent will init extent records
          INT32    loadExtent ( dmsMBContext *mbContext, const CHAR *pBuffer,
@@ -281,12 +292,12 @@ namespace engine
    {
       return _pDataSu->_mapExtent2DelList( mb, extAddr, extentID ) ;
    }
-   OSS_INLINE INT32 _dmsStorageUnit::extentRemoveRecord(dmsMB * mb,
-                                                    const dmsRecordID &recordID,
-                                                    INT32 recordSize,
-                                                    _pmdEDUCB *cb )
+   OSS_INLINE INT32 _dmsStorageUnit::extentRemoveRecord( dmsMBContext *context,
+                                                         dmsExtRW &extRW,
+                                                         dmsRecordRW &recordRW,
+                                                         _pmdEDUCB *cb )
    {
-      return _pDataSu->_extentRemoveRecord( mb, recordID, recordSize, cb ) ;
+      return _pDataSu->_extentRemoveRecord( context, extRW, recordRW, cb ) ;
    }
    OSS_INLINE void _dmsStorageUnit::addExtentRecordCount( dmsMB * mb, UINT32 count )
    {

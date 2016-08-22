@@ -171,7 +171,7 @@ namespace engine
 
       // start new edu
       rc = _eduMgr->startEDU( EDU_TYPE_BACKGROUND_JOB, (void*)pJob,
-                              &newEDUID ) ;
+                              &newEDUID, pJob->name() ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG ( PDERROR, "Start background job[%s] failed, rc = %d",

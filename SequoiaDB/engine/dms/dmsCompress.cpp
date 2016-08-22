@@ -83,7 +83,8 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION ( SDB_DMSCOMPRESS2, "dmsCompress" )
    INT32 dmsCompress ( _pmdEDUCB *cb, _dmsCompressorEntry *compressorEntry,
                        const CHAR *pInputData, INT32 inputSize,
-                       const CHAR **ppData, INT32 *pDataSize )
+                       const CHAR **ppData, INT32 *pDataSize,
+                       UINT8 &ratio )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB_DMSCOMPRESS2 ) ;
@@ -131,6 +132,7 @@ namespace engine
       {
          *pDataSize = (INT32)compressedLen ;
       }
+      ratio = (UINT8)( (*pDataSize) * 100 / inputSize ) ;
 
    done :
       PD_TRACE_EXITRC( SDB_DMSCOMPRESS2, rc ) ;
@@ -146,7 +148,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB_DMSCOMPRESS ) ;
-      CHAR *pTmpBuff = NULL ;
+      CHAR *pObjData = NULL ;
       INT32 objSize = 0 ;
 
       SDB_ASSERT( compressorEntry, "Compressor entry can't be NULL" ) ;
@@ -154,42 +156,42 @@ namespace engine
       // if we want to append OID, then
       if ( oidLen && pOIDPtr )
       {
-         const CHAR *pObjData = NULL ;
-
          // get the requested size by adding object size and oid size
-         UINT32 requestedSize = obj.objsize() + oidLen + DMS_RECORD_METADATA_SZ ;
-         rc = cb->allocBuff( requestedSize, &pTmpBuff, NULL ) ;
+         UINT32 requestedSize = obj.objsize() + oidLen ;
+         rc = cb->allocBuff( requestedSize, &pObjData, NULL ) ;
          if ( rc )
          {
             PD_LOG( PDERROR, "Failed to alloc tmp buffer, size: %u",
                     requestedSize ) ;
             goto error ;
          }
-         pObjData = pTmpBuff + DMS_RECORD_METADATA_SZ ;
 
-         DMS_RECORD_SETDATA_OID ( pTmpBuff, obj.objdata(), obj.objsize(),
-                                  BSONElement(pOIDPtr) ) ;
+         /// copy to new data
+         *(UINT32*)pObjData = oidLen + obj.objsize() ;
+         ossMemcpy( pObjData + sizeof(UINT32), pOIDPtr, oidLen ) ;
+         ossMemcpy( pObjData + sizeof(UINT32) + oidLen,
+                    obj.objdata() + sizeof(UINT32),
+                    obj.objsize() - sizeof(UINT32) ) ;
+
          objSize = BSONObj(pObjData).objsize() ;
          rc = dmsCompress ( cb, compressorEntry, pObjData,
-                            objSize, ppData, pDataSize ) ;
+                            objSize, ppData, pDataSize, ratio ) ;
       }
       else
       {
          objSize = obj.objsize() ;
          rc = dmsCompress( cb, compressorEntry, obj.objdata(),
-                           objSize, ppData, pDataSize ) ;
+                           objSize, ppData, pDataSize, ratio ) ;
       }
       if ( rc )
       {
          goto error ;
       }
 
-      ratio = (UINT8)( (*pDataSize) * 100 / objSize ) ;
-
    done :
-      if ( pTmpBuff )
+      if ( pObjData )
       {
-         cb->releaseBuff( pTmpBuff ) ;
+         cb->releaseBuff( pObjData ) ;
       }
       PD_TRACE_EXITRC( SDB_DMSCOMPRESS, rc ) ;
       return rc ;

@@ -39,8 +39,10 @@
 #define DMSSTORAGE_DATA_HPP_
 
 #include "dmsStorageBase.hpp"
+#include "dmsExtent.hpp"
 #include "dpsLogWrapper.hpp"
 #include "dmsCompress.hpp"
+#include "dmsStatus.hpp"
 
 #include <map>
 
@@ -245,13 +247,27 @@ namespace engine
       SINT32         _dictStatPageID ;
       UINT8          _dictVersion ;
       UINT8          _compressorType ;
-      UINT8          _compressionRatio ;
-      UINT8          _pad1[ 1 ] ;  // reserved
+      UINT8          _lastCompressRatio ;
+      UINT8          _pad1[ 1 ] ;   // reserved
       // for stat
       UINT64         _totalLobs ;
+      UINT64         _totalOrgDataLen ;
+      UINT64         _totalDataLen ;
+      CHAR           _pad2[ 16 ] ;  // reserved
       // end stat
-      CHAR           _pad [ 380 ] ;
 
+      // for persistence
+      UINT32         _commitFlag ;
+      UINT64         _commitLSN ;
+      UINT64         _commitTime ;
+      UINT32         _idxCommitFlag ;
+      UINT64         _idxCommitLSN ;
+      UINT64         _idxCommitTime ;
+      UINT32         _lobCommitFlag ;
+      UINT64         _lobCommitLSN ;
+      UINT64         _lobCommitTime ;
+      // end persistence
+      CHAR           _pad [ 288 ] ;
 
       void reset ( const CHAR *clName = NULL,
                    UINT16 mbID = DMS_INVALID_MBID,
@@ -303,10 +319,24 @@ namespace engine
          _dictExtentID           = DMS_INVALID_EXTENT ;
          _newDictExtentID        = DMS_INVALID_EXTENT ;
          _dictStatPageID         = DMS_INVALID_EXTENT ;
-         _compressionRatio       = 0 ;
+         _lastCompressRatio      = 100 ;
+
+         _totalOrgDataLen        = 0 ;
+         _totalDataLen           = 0 ;
+
+         _commitFlag             = 0 ;
+         _commitLSN              = ~0 ;
+         _commitTime             = 0 ;
+         _idxCommitFlag          = 0 ;
+         _idxCommitLSN           = ~0 ;
+         _idxCommitTime          = 0 ;
+         _lobCommitFlag          = 0 ;
+         _lobCommitLSN           = ~0 ;
+         _lobCommitTime          = 0 ;
 
          // pad
          ossMemset( _pad1, 0, sizeof( _pad1 ) ) ;
+         ossMemset( _pad2, 0, sizeof( _pad2 ) ) ;
          ossMemset( _pad, 0, sizeof( _pad ) ) ;
       }
    } ;
@@ -330,7 +360,7 @@ namespace engine
       dmsMetaExtent        _header ;
       dmsExtentID          _array[1] ;
 
-      INT32 getFirstExtentID( UINT32 segID, dmsExtentID &extID )
+      INT32 getFirstExtentID( UINT32 segID, dmsExtentID &extID ) const
       {
          if ( segID >= _header._segNum )
          {
@@ -340,7 +370,7 @@ namespace engine
          extID = _array[index] ;
          return SDB_OK ;
       }
-      INT32 getLastExtentID( UINT32 segID, dmsExtentID &extID )
+      INT32 getLastExtentID( UINT32 segID, dmsExtentID &extID ) const
       {
          if ( segID >= _header._segNum )
          {
@@ -403,7 +433,21 @@ namespace engine
       UINT32      _totalLobPages ;
       UINT64      _totalLobs ;
       UINT32      _uniqueIdxNum ;
-      UINT8       _compressionRatio ;
+      UINT8       _lastCompressRatio ;
+      UINT64      _totalOrgDataLen ;
+      UINT64      _totalDataLen ;
+
+      ossAtomic32 _commitFlag ;
+      UINT64      _lastWriteTick ;
+      BOOLEAN     _isCrash ;
+
+      ossAtomic32 _idxCommitFlag ;
+      UINT64      _idxLastWriteTick ;
+      BOOLEAN     _idxIsCrash ;
+
+      ossAtomic32 _lobCommitFlag ;
+      UINT64      _lobLastWriteTick ;
+      BOOLEAN     _lobIsCrash ;
 
       void reset()
       {
@@ -415,9 +459,21 @@ namespace engine
          _totalLobPages          = 0 ;
          _totalLobs              = 0 ;
          _uniqueIdxNum           = 0 ;
-         _compressionRatio       = 0 ;
+         _lastCompressRatio      = 100 ;
+         _totalOrgDataLen        = 0 ;
+         _totalDataLen           = 0 ;
+         _commitFlag.init( 0 ) ;
+         _lastWriteTick          = 0 ;
+         _isCrash                = FALSE ;
+         _idxCommitFlag.init( 0 ) ;
+         _idxLastWriteTick       = 0 ;
+         _idxIsCrash             = FALSE ;
+         _lobCommitFlag.init( 0 ) ;
+         _lobLastWriteTick       = 0 ;
+         _lobIsCrash             = FALSE ;
       }
       _dmsMBStatInfo ()
+      :_commitFlag( 0 ), _idxCommitFlag( 0 ), _lobCommitFlag( 0 )
       {
          reset() ;
       }
@@ -447,10 +503,11 @@ namespace engine
          OSS_INLINE BOOLEAN isMBLock() const ;
          OSS_INLINE BOOLEAN canResume() const ;
 
-         OSS_INLINE  UINT16 mbID () const { return _mbID ; }
+         virtual     UINT16 mbID () const { return _mbID ; }
          OSS_INLINE  dmsMB* mb () { return _mb ; }
          OSS_INLINE  dmsMBStatInfo* mbStat() { return _mbStat ; }
          OSS_INLINE  UINT32 clLID () const { return _clLID ; }
+         OSS_INLINE  void   restoreForCrash() { _mbStat->_isCrash = FALSE ; }
 
       private:
          dmsMB             *_mb ;
@@ -529,6 +586,59 @@ namespace engine
       return FALSE ;
    }
 
+   /*
+      _dmsRecordRW define
+   */
+   class _dmsRecordRW
+   {
+      friend class _dmsStorageData ;
+
+      public:
+         _dmsRecordRW() ;
+         ~_dmsRecordRW() ;
+
+         BOOLEAN           isEmpty() const ;
+         _dmsRecordRW      derivePre() ;
+         _dmsRecordRW      deriveNext() ;
+         _dmsRecordRW      deriveOverflow() ;
+         _dmsRecordRW      derive( const dmsRecordID &rid ) ;
+
+         void              setNothrow( BOOLEAN nothrow ) ;
+         BOOLEAN           isNothrow() const ;
+
+         dmsRecordID       getRecordID() const { return _rid ; }
+
+         /*
+            When len == 0, Use the record's size
+         */
+         const dmsRecord*  readPtr( UINT32 len = sizeof( dmsRecord ) ) ;
+         dmsRecord*        writePtr( UINT32 len = sizeof( dmsRecord ) ) ;
+
+         template< typename T >
+         const T*          readPtr( UINT32 len = sizeof(T) )
+         {
+            return ( const T* )readPtr( len ) ;
+         }
+
+         template< typename T >
+         T*                writePtr( UINT32 len = sizeof(T)  )
+         {
+            return ( T* )writePtr( len ) ;
+         }
+
+         std::string       toString() const ;
+
+      private:
+         void              _doneAddr() ;
+
+      private:
+         dmsRecordID       _rid ;
+         const dmsRecord   *_ptr ;
+         dmsExtRW          _rw ;
+         _dmsStorageData   *_pData ;
+   } ;
+   typedef _dmsRecordRW dmsRecordRW ;
+
    #define DMS_MME_OFFSET                 ( DMS_SME_OFFSET + DMS_SME_SZ )
    #define DMS_DATASU_EYECATCHER          "SDBDATA"
    #define DMS_DATASU_CUR_VERSION         2
@@ -536,7 +646,6 @@ namespace engine
    #define DMS_CONTEXT_MAX_SIZE           (2000)
    #define DMS_RECORDS_PER_EXTENT_SQUARE  4     // value is 2^4=16
    #define DMS_RECORD_OVERFLOW_RATIO      1.2f
-   #define DMS_COMPRESSOR_PER_CL          32
 
    /*
       DMS TRUNCATE TYPE DEFINE
@@ -566,7 +675,7 @@ namespace engine
       {
          bool operator() (const char *a, const char *b)
          {
-            return std::strcmp( a, b ) < 0 ;
+            return ossStrcmp( a, b ) < 0 ;
          }
       } ;
 
@@ -580,12 +689,12 @@ namespace engine
 #endif
 
       public:
-         _dmsStorageData ( const CHAR *pSuFileName, dmsStorageInfo *pInfo ) ;
-         ~_dmsStorageData () ;
+         _dmsStorageData ( const CHAR *pSuFileName,
+                           dmsStorageInfo *pInfo,
+                           dmsPersistStatus *pStatus ) ;
+         virtual ~_dmsStorageData () ;
 
-         void  syncMemToMmap () ;
-
-         OSS_INLINE ossValuePtr   recordAddr ( const dmsRecordID &record ) ;
+         virtual void  syncMemToMmap() ;
 
          UINT32 logicalID () const { return _logicalCSID ; }
          dmsStorageUnitID CSID () const { return _CSID ; }
@@ -598,8 +707,12 @@ namespace engine
          OSS_INLINE void   releaseMBContext( dmsMBContext *&pContext ) ;
 
          OSS_INLINE const dmsMBStatInfo* getMBStatInfo( UINT16 mbID ) const ;
+         OSS_INLINE const dmsMB* getMBInfo( UINT16 mbID ) const ;
 
          OSS_INLINE UINT32 getCollectionNum() ;
+
+         OSS_INLINE dmsRecordRW record2RW( const dmsRecordID &record,
+                                           UINT16 collectionID ) ;
 
          // update extent logical id and expanded meta
          // must hold mb exclusive lock
@@ -609,7 +722,7 @@ namespace engine
          OSS_INLINE void   updateCreateLobs( UINT32 createLobs ) ;
 
          /// flush mme
-         INT32         flushMME( BOOLEAN sync = FALSE ) ;
+         INT32          flushMME( BOOLEAN sync = FALSE ) ;
 
       public:
 
@@ -621,9 +734,7 @@ namespace engine
                                SDB_DPSCB *dpscb = NULL,
                                UINT16 initPages = 0,
                                BOOLEAN sysCollection = FALSE,
-                               BOOLEAN noIDIndex = FALSE,
-                               UINT8 compressionType
-                                 = DMS_INVALID_COMPRESSOR_TYPE,
+                               UINT8 compressionType = DMS_INVALID_COMPRESSOR_TYPE,
                                UINT32 *logicID = NULL ) ;
 
          INT32 dropCollection ( const CHAR *pName,
@@ -649,8 +760,10 @@ namespace engine
 
          INT32 findCollection ( const CHAR *pName, UINT16 &collectionID ) ;
 
-         INT32 insertRecord ( dmsMBContext *context, const BSONObj &record,
-                              _pmdEDUCB *cb, SDB_DPSCB *dpscb,
+         INT32 insertRecord ( dmsMBContext *context,
+                              const BSONObj &record,
+                              _pmdEDUCB *cb,
+                              SDB_DPSCB *dpscb,
                               BOOLEAN mustOID = TRUE,
                               BOOLEAN canUnLock = TRUE ) ;
 
@@ -680,14 +793,20 @@ namespace engine
                        _pmdEDUCB *cb,
                        BOOLEAN dataOwned = FALSE ) ;
 
-         virtual INT32 tryToFlush( BOOLEAN ignoreTick, BOOLEAN &failed ) ;
-
          /* Create the compressor, and set the dictionry for it. */
          void setCompressor( UINT16 mbID, UTIL_COMPRESSOR_TYPE type ) ;
          void rmCompressor( _dmsMBContext *context ) ;
          INT32 dictPersist( UINT16 mbID, UINT32 clLID,
                             const CHAR *dict, UINT32 dictLen ) ;
          OSS_INLINE _dmsCompressorEntry *getCompressorEntry( UINT16 mbID ) ;
+
+         /*
+            Caller must hold the mbContext
+         */
+         INT32 extractData( dmsMBContext *mbContext,
+                            dmsRecordRW &recordRW,
+                            _pmdEDUCB *cb,
+                            dmsRecordData &recordData ) ;
 
       private:
          virtual UINT64 _dataOffset() ;
@@ -698,6 +817,18 @@ namespace engine
          virtual INT32  _onMapMeta( UINT64 curOffSet ) ;
          virtual INT32  _onOpened() ;
          virtual void   _onClosed() ;
+
+         virtual INT32  _onFlushDirty( BOOLEAN force, BOOLEAN sync ) ;
+
+         virtual INT32  _onMarkHeaderValid( UINT64 lastLSN,
+                                            BOOLEAN sync,
+                                            UINT64 lastTime ) ;
+
+         virtual INT32  _onMarkHeaderInvalid( INT32 collectionID ) ;
+
+         virtual UINT64 _getOldestWriteTick() const ;
+
+         virtual void   _onRestore() ;
 
       protected:
          OSS_INLINE const CHAR*   _clFullName ( const CHAR *clName,
@@ -733,12 +864,19 @@ namespace engine
 
       private:
          //   must be hold the mb EXCLUSIVE lock in this functions :
+
+         /*
+            When recordSize == 0, will not change the delete record size
+         */
          INT32          _saveDeletedRecord ( dmsMB *mb,
                                              const dmsRecordID &recordID,
                                              INT32 recordSize = 0 ) ;
-         INT32          _saveDeletedRecord ( dmsMB *mb, dmsExtent *extAddr,
-                                             dmsOffset offset, INT32 recordSize,
-                                             INT32 extentID ) ;
+         INT32          _saveDeletedRecord ( dmsMB *mb,
+                                             const dmsRecordID &rid,
+                                             INT32 recordSize,
+                                             dmsExtent *extAddr,
+                                             dmsDeletedRecord *pRecord ) ;
+
          void           _mapExtent2DelList ( dmsMB *mb, dmsExtent *extAddr,
                                              SINT32 extentID ) ;
 
@@ -748,7 +886,8 @@ namespace engine
                                           BOOLEAN add2LoadList = FALSE,
                                           dmsExtentID *allocExtID = NULL ) ;
 
-         INT32          _freeExtent ( dmsExtentID extentID ) ;
+         INT32          _freeExtent ( dmsExtentID extentID,
+                                      INT32 collectionID ) ;
 
          INT32          _reserveFromDeleteList ( dmsMBContext *context,
                                                  UINT32 requiredSize,
@@ -761,31 +900,32 @@ namespace engine
          INT32          _truncateCollectionLoads( dmsMBContext *context ) ;
 
          INT32          _extentInsertRecord ( dmsMBContext *context,
-                                              ossValuePtr deletedRecordPtr,
-                                              UINT32 dmsRecordSize,
-                                              ossValuePtr ptr,
-                                              INT32 len,
-                                              INT32 extentID,
-                                              BSONElement *extraOID,
+                                              dmsExtRW &extRW,
+                                              dmsRecordRW &recordRW,
+                                              const dmsRecordData &recordData,
+                                              UINT32 needRecordSize,
                                               _pmdEDUCB *cb,
-                                              BOOLEAN compressed,
-                                              UINT8 compressRatio = 0,
                                               BOOLEAN addIntoList = TRUE ) ;
 
-         INT32          _extentRemoveRecord ( dmsMB *mb,
-                                              const dmsRecordID &recordID,
-                                              INT32 recordSize,
+         // must hold mb exclusive lock
+         INT32          _extentRemoveRecord ( dmsMBContext *context,
+                                              dmsExtRW &extRW,
+                                              dmsRecordRW &recordRW,
                                               _pmdEDUCB *cb,
                                               BOOLEAN decCount = TRUE ) ;
 
          // must hold mb exclusive lock
          INT32          _extentUpdatedRecord ( dmsMBContext *context,
-                                               const dmsRecordID &recordID,
-                                               ossValuePtr recordDataPtr,
-                                               dmsExtentID extLID,
-                                               ossValuePtr ptr,
-                                               INT32 len,
+                                               dmsExtRW &extRW,
+                                               dmsRecordRW &recordRW,
+                                               const dmsRecordData &recordData,
+                                               const BSONObj &newObj,
                                                _pmdEDUCB *cb ) ;
+
+         /*
+            Caller must hold the mbContext
+         */
+         UINT32         _getRecordDataLen( const dmsRecord *pRecord ) ;
 
          OSS_INLINE UINT32  _getFactor () const ;
 
@@ -811,6 +951,9 @@ namespace engine
          _dmsStorageLob                      *_pLobSU ;
 
          _dmsCompressorEntry                 _compressorEntry[ DMS_MME_SLOTS ] ;
+
+         /// for persistence
+         dmsPersistStatus                    *_pStatus ;
    };
    typedef _dmsStorageData dmsStorageData ;
 
@@ -856,14 +999,15 @@ namespace engine
       ossScopedLock lock( &_metadataLatch, SHARED ) ;
       return (UINT32)_collectionNameMap.size() ;
    }
-   OSS_INLINE ossValuePtr _dmsStorageData::recordAddr( const dmsRecordID &record )
+   OSS_INLINE dmsRecordRW _dmsStorageData::record2RW( const dmsRecordID &record,
+                                                      UINT16 collectionID )
    {
-      ossValuePtr extPtr = extentAddr( record._extent ) ;
-      if ( 0 != extPtr )
-      {
-         extPtr += record._offset ;
-      }
-      return extPtr ;
+      dmsRecordRW rRW ;
+      rRW._pData = this ;
+      rRW._rid = record ;
+      rRW._rw = extent2RW( record._extent, collectionID ) ;
+      rRW._doneAddr() ;
+      return rRW ;
    }
    OSS_INLINE const CHAR* _dmsStorageData::_clFullName( const CHAR *clName,
                                                         CHAR * clFullName,
@@ -894,6 +1038,8 @@ namespace engine
       if ( _dmsHeader && _dmsHeader->_createLobs != createLobs )
       {
          _dmsHeader->_createLobs = createLobs ;
+         /// flush to file
+         flushHeader( isSyncDeep() ) ;
       }
    }
    OSS_INLINE INT32 _dmsStorageData::getMBContext( dmsMBContext ** pContext,
@@ -1000,6 +1146,16 @@ namespace engine
       }
       return &_mbStatInfo[ mbID ] ;
    }
+
+   OSS_INLINE const dmsMB* _dmsStorageData::getMBInfo( UINT16 mbID ) const
+   {
+      if ( !_dmsMME || mbID >= DMS_MME_SLOTS )
+      {
+         return NULL ;
+      }
+      return &(_dmsMME->_mbList[ mbID ]) ;
+   }
+
    OSS_INLINE UINT32 _dmsStorageData::_getFactor() const
    {
       return 16 + 14 - pageSizeSquareRoot() ;

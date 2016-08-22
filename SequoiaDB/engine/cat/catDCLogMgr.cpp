@@ -722,12 +722,12 @@ END
       ossScopedLock lock( &_latch, SHARED ) ;
       return _expectLsn ;
    }
-/*
+
    DPS_LSN _catDCLogMgr::commitLsn()
    {
       return DPS_LSN() ;
    }
-*/
+
    void _catDCLogMgr::getLsnWindow( DPS_LSN &beginLsn,
                                     DPS_LSN &endLsn,
                                     DPS_LSN *expected,

@@ -101,7 +101,7 @@ namespace engine
          _vecCSMutex.push_back( new( std::nothrow ) ossSpinXLatch() ) ;
       }
 
-      _backEvent.signal() ;
+      _blockEvent.signal() ;
    }
 
    _SDB_DMSCB::~_SDB_DMSCB()
@@ -111,10 +111,22 @@ namespace engine
    INT32 _SDB_DMSCB::init ()
    {
       INT32 rc = SDB_OK ;
+      CHAR statusFullPath[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
 
       if ( pmdGetKRCB()->isRestore() )
       {
          goto done ;
+      }
+
+      utilBuildFullPath( pmdGetOptionCB()->getDbPath(), DMS_STATUS_FILE_NAME,
+                         OSS_MAX_PATHSIZE, statusFullPath ) ;
+      // open status
+      rc = _status.open( statusFullPath ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Open status file[%s] failed, rc: %d",
+                 statusFullPath, rc ) ;
+         goto error ;
       }
 
       // 1. load all
@@ -150,7 +162,10 @@ namespace engine
 
    INT32 _SDB_DMSCB::fini ()
    {
-      _CSCBNameMapCleanup () ;
+      _CSCBNameMapCleanup() ;
+      /// remove status
+      _status.remove() ;
+
       for ( UINT32 i = 0 ; i < DMS_MAX_CS_NUM ; ++i )
       {
          if ( _latchVec[i] )
@@ -725,11 +740,22 @@ namespace engine
 
       switch ( _dmsCBState )
       {
-      case DMS_STATE_BACKUP :
-         rc = SDB_RTN_IN_BACKUP ;
-         break ;
-      case DMS_STATE_REBUILD :
-         rc = SDB_RTN_IN_REBUILD ;
+      case DMS_STATE_READONLY :
+         {
+            if ( SDB_DB_OFFLINE_BK == PMD_DB_STATUS() )
+            {
+               rc = SDB_RTN_IN_BACKUP ;
+            }
+            else if ( SDB_DB_REBUILDING == PMD_DB_STATUS() )
+            {
+               rc = SDB_RTN_IN_REBUILD ;
+               goto done ;
+            }
+            else
+            {
+               rc = SDB_DMS_STATE_NOT_COMPATIBLE ;
+            }
+         }
          break ;
       default :
          break ;
@@ -755,7 +781,7 @@ namespace engine
                rc = SDB_APP_INTERRUPT ;
                break ;
             }
-            rc = _backEvent.wait( OSS_ONE_SEC ) ;
+            rc = _blockEvent.wait( OSS_ONE_SEC ) ;
             if ( SDB_OK == rc )
             {
                goto retry ;
@@ -794,22 +820,32 @@ namespace engine
       }
    }
 
-   INT32 _SDB_DMSCB::registerBackup( _pmdEDUCB *cb )
+   INT32 _SDB_DMSCB::blockWrite( _pmdEDUCB *cb, SDB_DB_STATUS byStatus )
    {
       INT32 rc = SDB_OK ;
 
       _stateMtx.get();
       if ( DMS_STATE_NORMAL != _dmsCBState )
       {
-         if ( DMS_STATE_BACKUP == _dmsCBState )
+         if ( SDB_DB_OFFLINE_BK == byStatus &&
+              SDB_DB_OFFLINE_BK == PMD_DB_STATUS() )
+         {
             rc = SDB_BACKUP_HAS_ALREADY_START ;
+         }
+         else if ( SDB_DB_REBUILDING == byStatus &&
+                   SDB_DB_REBUILDING == PMD_DB_STATUS() )
+         {
+            rc = SDB_REBUILD_HAS_ALREADY_START ;
+         }
          else
+         {
             rc = SDB_DMS_STATE_NOT_COMPATIBLE ;
+         }
          _stateMtx.release () ;
          goto done;
       }
-      _dmsCBState = DMS_STATE_BACKUP ;
-      PMD_SET_DB_STATUS( SDB_DB_OFFLINE_BK ) ;
+      _dmsCBState = DMS_STATE_READONLY ;
+      PMD_SET_DB_STATUS( byStatus ) ;
       _stateMtx.release () ;
 
       while ( TRUE )
@@ -818,14 +854,14 @@ namespace engine
          {
             _dmsCBState = DMS_STATE_NORMAL ;
             PMD_SET_DB_STATUS( SDB_DB_NORMAL ) ;
-            _backEvent.signal() ;
+            _blockEvent.signal() ;
             rc = SDB_APP_INTERRUPT ;
             break ;
          }
          _stateMtx.get();
          if ( 0 == _writeCounter )
          {
-            _backEvent.reset() ;
+            _blockEvent.reset() ;
             _stateMtx.release();
             if ( cb )
             {
@@ -844,12 +880,12 @@ namespace engine
       return rc ;
    }
 
-   void _SDB_DMSCB::backupDown( _pmdEDUCB *cb )
+   void _SDB_DMSCB::unblockWrite( _pmdEDUCB *cb )
    {
       _stateMtx.get() ;
       _dmsCBState = DMS_STATE_NORMAL ;
       PMD_SET_DB_STATUS( SDB_DB_NORMAL ) ;
-      _backEvent.signalAll() ;
+      _blockEvent.signalAll() ;
       _stateMtx.release() ;
       if ( cb )
       {
@@ -857,64 +893,24 @@ namespace engine
       }
    }
 
+   INT32 _SDB_DMSCB::registerBackup( _pmdEDUCB *cb )
+   {
+      return blockWrite( cb, SDB_DB_OFFLINE_BK ) ;
+   }
+
+   void _SDB_DMSCB::backupDown( _pmdEDUCB *cb )
+   {
+      unblockWrite( cb ) ;
+   }
+
    INT32 _SDB_DMSCB::registerRebuild( _pmdEDUCB *cb )
    {
-      INT32 rc = SDB_OK ;
-
-      _stateMtx.get();
-      if ( DMS_STATE_NORMAL != _dmsCBState )
-      {
-         if ( DMS_STATE_REBUILD == _dmsCBState )
-            rc = SDB_REBUILD_HAS_ALREADY_START ;
-         else
-            rc = SDB_DMS_STATE_NOT_COMPATIBLE ;
-         _stateMtx.release () ;
-         goto done;
-      }
-      _dmsCBState = DMS_STATE_REBUILD ;
-      PMD_SET_DB_STATUS( SDB_DB_REBUILDING ) ;
-      _stateMtx.release () ;
-
-      while ( TRUE )
-      {
-         if ( cb->isInterrupted() )
-         {
-            _dmsCBState = DMS_STATE_NORMAL ;
-            PMD_SET_DB_STATUS( SDB_DB_NORMAL ) ;
-            rc = SDB_APP_INTERRUPT ;
-            break ;
-         }
-         _stateMtx.get();
-         if ( 0 == _writeCounter )
-         {
-            _stateMtx.release();
-            if ( cb )
-            {
-               cb->getLockItem(SDB_LOCK_DMS)->setMode( DMS_LOCK_WHOLE ) ;
-            }
-            goto done;
-         }
-         else
-         {
-            _stateMtx.release();
-            ossSleepmillis( DMS_CHANGESTATE_WAIT_LOOP );
-         }
-      }
-   done :
-      return rc ;
+      return blockWrite( cb, SDB_DB_REBUILDING ) ;
    }
 
    void _SDB_DMSCB::rebuildDown( _pmdEDUCB *cb )
    {
-      _stateMtx.get();
-      _dmsCBState = DMS_STATE_NORMAL ;
-      PMD_SET_DB_STATUS( SDB_DB_NORMAL ) ;
-      _stateMtx.release();
-
-      if ( cb )
-      {
-         cb->getLockItem(SDB_LOCK_DMS)->setMode( DMS_LOCK_NONE ) ;
-      }
+      unblockWrite( cb ) ;
    }
 
    INT32 _SDB_DMSCB::nameToSUAndLock ( const CHAR *pName,
@@ -1022,21 +1018,6 @@ namespace engine
       }
 
       rc = _CSCBNameInsert ( pName, topSequence, su, suID ) ;
-      // push cs into page clean history list
-      if ( SDB_OK == rc )
-      {
-         INT32 tempRC = SDB_OK ;
-         // we don't care if the page clean su is added into list or not
-         tempRC = _joinPageCleanSU ( suID ) ;
-         if ( tempRC )
-         {
-            // just show warning, doesn't hurt too much
-            PD_LOG ( PDWARNING,
-                     "Failed to join storage unit to page clean history, "
-                     "rc = %d", tempRC ) ;
-         }
-      }
-
       // write dps
       if ( SDB_OK == rc && dpsCB )
       {
@@ -1499,113 +1480,9 @@ namespace engine
       return &_tempCB ;
    }
 
-   // this function get the first su in _pageCleanHistoryList if the last clean
-   // timestamp is greater than pagecleanInterval, otherwise set suID to
-   // DMS_INVALID_SUID for nothing to clean
-   // Once the first su is dispatched, it will be removed from the list and
-   // being locked
-   // The SU will be added back to list once page cleaning is finished by
-   // calling joinPageCleanSU
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__SDB_DMSCB_DISPATCHPAGECLEANSU, "_SDB_DMSCB::dispatchPageCleanSU" )
-   _dmsStorageUnit *_SDB_DMSCB::dispatchPageCleanSU ( dmsStorageUnitID *suID )
+   dmsPersistStatus* _SDB_DMSCB::getStatus()
    {
-      PD_TRACE_ENTRY ( SDB__SDB_DMSCB_DISPATCHPAGECLEANSU ) ;
-      *suID               = DMS_INVALID_SUID ;
-      pmdOptionsCB *optCB = pmdGetOptionCB() ;
-      _dmsStorageUnit *su = NULL ;
-      SDB_ASSERT ( suID, "suID can't be NULL" ) ;
-      _pageCleanHistory firstSU ;
-      ossTickDelta deltaTime ;
-
-      ossScopedLock _lock(&_mutex, EXCLUSIVE) ;
-
-      if ( _pageCleanHistoryList.size() == 0 )
-         goto done ;
-      // get the first su in the list
-      firstSU = _pageCleanHistoryList.front() ;
-      // get delta time of the first su's last refresh time and current time
-      deltaTime = pmdGetKRCB()->getCurTime () - firstSU.first ;
-      // deltaTime.toUINT64 returns timestamp in microseconds, so we need to
-      // convert to milliseconds by dividing 1000
-      if ( deltaTime.toUINT64() / 1000 >
-           (UINT64)optCB->getPageCleanInterval() )
-      {
-         // that means we need to dispatch the su
-         PD_TRACE1 ( SDB__SDB_DMSCB_DISPATCHPAGECLEANSU,
-                     PD_PACK_ULONG ( firstSU.second ) ) ;
-         // if we can find the cs, let's lock the cs and return suID
-         if ( NULL != _cscbVec[firstSU.second] )
-         {
-            *suID = firstSU.second ;
-            _latchVec[*suID]->lock_r() ;
-            su = _cscbVec[*suID]->_su ;
-         }
-         // pop the su from history list
-         _pageCleanHistorySet.erase ( firstSU.second ) ;
-         _pageCleanHistoryList.pop_front () ;
-      }
-   done :
-      PD_TRACE_EXIT ( SDB__SDB_DMSCB_DISPATCHPAGECLEANSU ) ;
-      return su ;
-   }
-
-   // add storage unit back to page clean history list with current timestamp as
-   // last refresh time
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__SDB_DMSCB_JOINPAGECLEANSU, "_SDB_DMSCB::joinPageCleanSU" )
-   INT32 _SDB_DMSCB::joinPageCleanSU ( dmsStorageUnitID suID )
-   {
-      INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY ( SDB__SDB_DMSCB_JOINPAGECLEANSU ) ;
-
-      ossScopedLock _lock(&_mutex, EXCLUSIVE) ;
-      rc = _joinPageCleanSU ( suID ) ;
-      if ( rc )
-      {
-         PD_LOG ( PDERROR,
-                  "Failed to join storage unit into history list, rc = %d",
-                  rc ) ;
-         goto error ;
-      }
-   done :
-      PD_TRACE_EXITRC ( SDB__SDB_DMSCB_JOINPAGECLEANSU, rc ) ;
-      return rc ;
-   error :
-      goto done ;
-   }
-
-   // same as joinPageCleanSU, without latch
-   // we have to be careful that the su may be dropped before joining the su, so
-   // we have to check up first
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__SDB_DMSCB__JOINPAGECLEANSU, "_SDB_DMSCB::_joinPageCleanSU" )
-   INT32 _SDB_DMSCB::_joinPageCleanSU ( dmsStorageUnitID suID )
-   {
-      INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY ( SDB__SDB_DMSCB__JOINPAGECLEANSU ) ;
-
-      // check if suID is still in the list
-      SDB_DMS_CSCB *cscb = _cscbVec [ suID ] ;
-      if ( cscb &&
-           0 == _pageCleanHistorySet.count ( suID ) )
-      {
-         // note there could be a small timing hole that the CS is recreate
-         // after it's dropped, before the joinpagecleansu is called.
-         // Therefore we have to count the history set every time, to make sure
-         // the suID doesn't exist in the list already
-         _pageCleanHistoryList.push_back ( std::make_pair(
-               pmdGetKRCB()->getCurTime (), suID ) ) ;
-         _pageCleanHistorySet.insert ( suID ) ;
-      }
-      else if ( !cscb )
-      {
-         // if the cs no longer exist, we don't have to push it back to list
-         rc = SDB_DMS_CS_NOTEXIST ;
-         goto error ;
-      }
-      PD_TRACE_EXITRC ( SDB__SDB_DMSCB__JOINPAGECLEANSU, rc ) ;
-   done :
-      return rc ;
-   error :
-      goto done ;
+      return &_status ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__SDB_DMSCB_DISPATCHDICTJOB, "_SDB_DMSCB::dispatchDictJob" )

@@ -334,7 +334,7 @@ printf ( "dmsStorageUnitHeader size = %d\n", sizeof ( engine::_dmsStorageUnit::_
    printf("dmsDeletedRecord size = %d\n", (int)sizeof(dmsDeletedRecord)) ;
 
    fflush(stdout);
-   myUnit = new dmsStorageUnit( COLLECTIONNAME ,1 ) ;
+   myUnit = new dmsStorageUnit( COLLECTIONNAME ,1, NULL, NULL ) ;
    if ( !myUnit )
    {
       printf ("Failed to allocate memory for myUnit\n" );
@@ -370,7 +370,7 @@ printf ( "dmsStorageUnitHeader size = %d\n", sizeof ( engine::_dmsStorageUnit::_
       collectionName[stringSize] = 0 ;
       printf("CollectionName: %s, NumPages: %d\n", collectionName, pages ) ;
       rc = myUnit->data()->addCollection( collectionName, NULL, 0, NULL, NULL,
-                                          pages, TRUE, FALSE ) ;
+                                          pages, TRUE ) ;
       if ( rc )
       {
          printf("Failed to create collection, rc=%d\n", rc ) ;
@@ -399,7 +399,7 @@ printf ( "dmsStorageUnitHeader size = %d\n", sizeof ( engine::_dmsStorageUnit::_
    printf("add 4096 pages extent");
    t1 = boost::posix_time::microsec_clock::local_time() ;
    rc = myUnit->data()->addCollection( BIG_COLLECTION_NAME, NULL, 0, NULL, NULL,
-                                       4096, TRUE, FALSE ) ;
+                                       4096, TRUE ) ;
    if ( rc )
    {
       printf("Failed to create collection, rc=%d\n", rc ) ;

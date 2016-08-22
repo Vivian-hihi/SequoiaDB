@@ -490,8 +490,12 @@ INT32 ossGetFileSize(OSSFILE *pFile, INT64 *pfsize);
  *      SDB_INVALIDARG (invalid input arguments)
  *      SDB_INVALID_FILE_TYPE (invalid input arguments)
  */
-INT32 ossExtendFile(OSSFILE *pFile,
-                    const INT64 incrementSize ) ;
+INT32 ossExtendFile( OSSFILE *pFile,
+                     const INT64 incrementSize ) ;
+
+INT32 ossExtentBySparse( OSSFILE *pFile,
+                         UINT64 incrementSize,
+                         UINT32 onceWrite = 512 ) ;
 
 INT32 ossTruncateFile ( OSSFILE *pFile, const INT64 fileLen ) ;
 

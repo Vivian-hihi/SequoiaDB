@@ -120,6 +120,15 @@ namespace engine
          return lsn;
       }
 
+      OSS_INLINE DPS_LSN commitLsn()
+      {
+         DPS_LSN lsn ;
+         _mtx.get() ;
+         lsn = _lastCommitted ;
+         _mtx.release() ;
+         return lsn ;
+      }
+
       OSS_INLINE DPS_LSN_VER incVersion()
       {
          DPS_LSN_VER version = DPS_INVALID_LSN_VERSION ;
@@ -127,6 +136,11 @@ namespace engine
          version = ++_lsn.version ;
          _mtx.release();
          return version ;
+      }
+
+      OSS_INLINE BOOLEAN hasDirty() const
+      {
+         return 0 !=_lastCommitted.compare( _currentLsn ) ? TRUE : FALSE ;
       }
 
       void regEventHandler( dpsEventHandler *pEventHandler ) ;

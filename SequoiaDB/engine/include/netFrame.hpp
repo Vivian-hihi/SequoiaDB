@@ -94,7 +94,7 @@ namespace engine
          void heartbeat( UINT32 interval, INT32 serviceType = -1 ) ;
 
          void setBeatInfo( UINT32 beatTimeout,
-                           UINT32 beatInteval = NET_HEARTBEAT_INTERVAL ) ;
+                           UINT32 beatInteval = 0 ) ;
 
          NET_EH getEventHandle( const NET_HANDLE &handle ) ;
 

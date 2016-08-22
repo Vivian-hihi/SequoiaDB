@@ -101,7 +101,7 @@ namespace engine
          _lastRecordOffset    = DMS_INVALID_OFFSET ;
          _freeSpace           = (INT32)( totalSize - sizeof(_dmsExtent) ) ;
       }
-      BOOLEAN validate( UINT16 mbID = DMS_INVALID_MBID )
+      BOOLEAN validate( UINT16 mbID = DMS_INVALID_MBID ) const
       {
          if ( DMS_EXTENT_EYECATCHER0 != _eyeCatcher[0] ||
               DMS_EXTENT_EYECATCHER1 != _eyeCatcher[1] ||
@@ -224,7 +224,7 @@ namespace engine
          _dictLen = dictLen ;
       }
 
-      BOOLEAN validate( UINT16 mbID = DMS_INVALID_MBID )
+      BOOLEAN validate( UINT16 mbID = DMS_INVALID_MBID ) const
       {
          if ( DMS_DICT_EXTENT_EYECATCHER0 != _eyeCatcher[0] ||
               DMS_DICT_EXTENT_EYECATCHER1 != _eyeCatcher[1] ||

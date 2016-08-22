@@ -46,7 +46,6 @@ using namespace bson ;
 namespace engine
 {
 
-   class _dmsMBContext ;
    class _dmsStorageData ;
    class _pmdEDUCB ;
    class _ixmIndexCB ;
@@ -66,10 +65,12 @@ namespace engine
                             _dmsStorageData *pDataSu ) ;
          ~_dmsStorageIndex () ;
 
+         virtual void  syncMemToMmap() ;
+
       public:
          // reserve a signal page
          INT32    reserveExtent ( UINT16 mbID, dmsExtentID &extentID,
-                                  dmsContext *context ) ;
+                                  _dmsContext *context ) ;
          // release a signal page
          INT32    releaseExtent ( dmsExtentID extentID ) ;
 
@@ -129,8 +130,6 @@ namespace engine
          void     addStatFreeSpace ( UINT16 mbID, UINT16 size ) ;
          void     decStatFreeSpace ( UINT16 mbID, UINT16 size ) ;
 
-         virtual INT32 tryToFlush( BOOLEAN ignoreTick, BOOLEAN &failed ) ;
-
       private:
 
          // if indexLID == DMS_INALID_EXTENT, it will get from index cb
@@ -168,10 +167,18 @@ namespace engine
          virtual INT32  _onMapMeta( UINT64 curOffSet ) ;
          virtual INT32  _onOpened() ;
          virtual void   _onClosed() ;
-         virtual BOOLEAN _keepInRam()const
-         {
-            return TRUE ;
-         }
+
+         virtual INT32  _onFlushDirty( BOOLEAN force, BOOLEAN sync ) ;
+
+         virtual INT32  _onMarkHeaderValid( UINT64 lastLSN,
+                                            BOOLEAN sync,
+                                            UINT64 lastTime ) ;
+
+         virtual INT32  _onMarkHeaderInvalid( INT32 collectionID ) ;
+
+         virtual UINT64 _getOldestWriteTick() const ;
+
+         virtual void   _onRestore() ;
 
       protected:
 

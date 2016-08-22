@@ -59,6 +59,8 @@ namespace engine
       RTN_JOB_OMAGENT            = 12, // omagent job
       RTN_JOB_CREATE_DICT        = 13, // create compression dictionary
       PMD_JOB_CACHE              = 14, // cache job
+      PMD_JOB_SYNC               = 15, // sync job
+      RTN_JOB_REBUILD            = 16, // rebuild job
 
       RTN_JOB_MAX
    } ;

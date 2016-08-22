@@ -73,13 +73,10 @@ protected:
    } ;
    typedef _ossMmapSegment ossMmapSegment ;
 
-   ossSpinSLatch _mutex ;
-#define OSSMMAP_SLOCK ossScopedLock _mmaplock( &_mutex, SHARED ) ;
-#define OSSMMAP_XLOCK ossScopedLock _mmaplock( &_mutex, EXCLUSIVE ) ;
-
    OSSFILE  _file ;
    BOOLEAN  _opened ;
    vector < ossMmapSegment > _segments ;
+   UINT64   _totalLength ;
    CHAR     _fileName[ OSS_MAX_PATHSIZE + 1 ] ;
 
 public:
@@ -100,15 +97,20 @@ public:
       return _segments.size();
    }
 
+   OSS_INLINE UINT64 totalLength() const
+   {
+      return _totalLength ;
+   }
+
 public:
    _ossMmapFile ()
    {
       _opened = FALSE ;
+      _totalLength = 0 ;
       ossMemset ( _fileName, 0, sizeof(_fileName) ) ;
    }
    ~_ossMmapFile ()
    {
-      OSSMMAP_XLOCK
       if ( _opened )
       {
          ossClose ( _file ) ;

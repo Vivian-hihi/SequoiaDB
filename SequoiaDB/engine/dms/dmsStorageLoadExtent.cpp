@@ -43,6 +43,8 @@
 #include "dmsTrace.hpp"
 #include "migLoad.hpp"
 
+using namespace bson ;
+
 namespace engine
 {
    void dmsStorageLoadOp::_initExtentHeader ( dmsExtent *extAddr,
@@ -300,16 +302,15 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__DMSSTORAGELOADEXT__LDDATA ) ;
 
-      dmsExtent     *extAddr        = NULL ;
-      //dmsExtent     *prevExt        = NULL ;
+      dmsExtRW       extRW ;
+      dmsRecordRW    recordRW ;
+      dmsExtent      *extAddr       = NULL ;
       dmsRecordID    recordID ;
-      ossValuePtr    recordPtr      = 0 ;
-      ossValuePtr    recordDataPtr  = 0 ;
-      ossValuePtr    extentPtr      = 0 ;
+      dmsRecord      *pRecord       = NULL ;
+      dmsRecordData  recordData ;
       dmsOffset      recordOffset   = DMS_INVALID_OFFSET ;
       dmsExtentID    tempExtentID   = 0 ;
-      monAppCB * pMonAppCB          = cb ? cb->getMonAppCB() : NULL ;
-      dmsCompressorEntry *compressorEntry = NULL ;
+      monAppCB       *pMonAppCB     = cb ? cb->getMonAppCB() : NULL ;
 
       SDB_ASSERT ( _su, "_su can't be NULL" ) ;
       SDB_ASSERT ( mbContext, "dms mb context can't be NULL" ) ;
@@ -341,7 +342,6 @@ namespace engine
       clearFlagLoadLoad ( mbContext->mb() ) ;
       setFlagLoadBuild ( mbContext->mb() ) ;
 
-      compressorEntry = _su->data()->getCompressorEntry( mbContext->mbID() ) ;
       while ( !cb->isForced() )
       {
          rc = mbContext->mbLock( EXCLUSIVE ) ;
@@ -359,8 +359,9 @@ namespace engine
             goto done ;
          }
 
-         extentPtr = _su->data()->extentAddr( tempExtentID ) ;
-         extAddr = (dmsExtent *)extentPtr ;
+         extRW = _su->data()->extent2RW( tempExtentID, mbContext->mbID() ) ;
+         extRW.setNothrow( TRUE ) ;
+         extAddr = extRW.writePtr<dmsExtent>() ;
          PD_CHECK ( extAddr, SDB_SYS, error, PDERROR, "Invalid extent: %d",
                     tempExtentID ) ;
          SDB_ASSERT( extAddr->validate( mbContext->mbID() ),
@@ -383,17 +384,32 @@ namespace engine
 
          while ( DMS_INVALID_OFFSET != recordOffset )
          {
-            recordPtr = extentPtr + recordOffset ;
             recordID._offset = recordOffset ;
-            DMS_RECORD_EXTRACTDATA( recordPtr, recordDataPtr,
-                                    compressorEntry ) ;
-            recordOffset = DMS_RECORD_GETNEXTOFFSET(recordPtr) ;
+            recordRW = _su->data()->record2RW( recordID, mbContext->mbID() ) ;
+            recordRW.setNothrow( TRUE ) ;
+            pRecord = recordRW.writePtr( 0 ) ;
+            if ( !pRecord )
+            {
+               PD_LOG( PDERROR, "Get record write address failed" ) ;
+               rc = SDB_SYS ;
+               goto rollback ;
+            }
+
+            rc = _su->data()->extractData( mbContext, recordRW,
+                                           cb, recordData ) ;
+            if ( rc )
+            {
+               PD_LOG( PDERROR, "Extract record data failed, rc: %d", rc ) ;
+               goto rollback ;
+            }
+
+            recordOffset = pRecord->getNextOffset() ;
             ++( extAddr->_recCount ) ;
 
             try
             {
                // get the BSON object
-               BSONObj obj ( (const CHAR*)recordDataPtr ) ;
+               BSONObj obj ( recordData.data() ) ;
                // when we get here, that means we have a new record
                // to add to index
                DMS_MON_OP_COUNT_INC( pMonAppCB, MON_DATA_WRITE, 1 ) ;
@@ -429,7 +445,7 @@ namespace engine
                      }
                   }
                   rc = _su->data()->deleteRecord ( mbContext, recordID,
-                                                   recordDataPtr,
+                                                   (ossValuePtr)recordData.data(),
                                                    cb, NULL ) ;
                   if ( rc )
                   {
@@ -466,13 +482,15 @@ namespace engine
    rollback:
       // save the extent other record to del list
       recordOffset = recordID._offset ;
+      const dmsRecord *pReadRecord = NULL ;
       while ( DMS_INVALID_OFFSET != recordOffset )
       {
-         recordPtr = extentPtr + recordOffset ;
          recordID._offset = recordOffset ;
-         recordOffset = DMS_RECORD_GETNEXTOFFSET(recordPtr) ;
+         recordRW = _su->data()->record2RW( recordID, mbContext->mbID() ) ;
+         pReadRecord = recordRW.readPtr() ;
+         recordOffset = pReadRecord->getNextOffset() ;
 
-         _su->extentRemoveRecord( mbContext->mb(), recordID, 0, cb ) ;
+         _su->extentRemoveRecord( mbContext, extRW, recordRW, cb ) ;
 
          if ( DMS_INVALID_OFFSET != recordOffset )
          {

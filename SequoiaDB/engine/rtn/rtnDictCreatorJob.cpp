@@ -40,7 +40,7 @@ namespace engine
 
    const CHAR* _rtnDictCreatorJob::name() const
    {
-      return "Job[DictionaryCreator]" ;
+      return "DictionaryCreator" ;
    }
 
    BOOLEAN _rtnDictCreatorJob::muteXOn ( const _rtnBaseJob *pOther )

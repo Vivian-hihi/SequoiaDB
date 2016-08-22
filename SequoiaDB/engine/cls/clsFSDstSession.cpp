@@ -89,6 +89,7 @@ namespace engine
       _recvTimeout = 0 ;
       _quit = FALSE ;
       _requestID = 0 ;
+      _lastOprLSN = DPS_INVALID_LSN_OFFSET ;
       _needMoreDoc = TRUE ;
    }
 
@@ -786,6 +787,10 @@ namespace engine
       _index() ;
 
    done:
+      if ( eduCB()->getLsnCount() > 0 )
+      {
+         _lastOprLSN = eduCB()->getEndLsn() ;
+      }
       PD_TRACE_EXIT ( SDB__CLSDATADBS_HNDMETARES );
       return SDB_OK ;
    }
@@ -843,6 +848,10 @@ namespace engine
          _notify( CLS_FS_NOTIFY_TYPE_DOC ) ;
       }
    done:
+      if ( eduCB()->getLsnCount() > 0 )
+      {
+         _lastOprLSN = eduCB()->getEndLsn() ;
+      }
       PD_TRACE_EXIT ( SDB__CLSDATADBS_HNDINXRES2 );
       return SDB_OK ;
    }
@@ -977,6 +986,10 @@ namespace engine
       }
 
    done:
+      if ( eduCB()->getLsnCount() > 0 )
+      {
+         _lastOprLSN = eduCB()->getEndLsn() ;
+      }
       PD_TRACE_EXIT ( SDB__CLSDATADBS_HNDNTFRES );
       return SDB_OK ;
    error:
@@ -2362,7 +2375,7 @@ namespace engine
       if ( _collectionW > 1 )
       {
          // wait the group other nodes sync complete, ignored result
-         sdbGetReplCB()->sync( eduCB()->getEndLsn(), eduCB(),
+         sdbGetReplCB()->sync( _lastOprLSN, eduCB(),
                                _collectionW, CLS_SPLIT_DST_SYNC_TIME ) ;
       }
 

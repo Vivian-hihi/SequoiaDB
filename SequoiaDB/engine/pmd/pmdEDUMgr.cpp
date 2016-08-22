@@ -561,7 +561,8 @@ namespace engine
 
    // get an EDU from idle pool, if idle pool is empty, create new one
    // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDEDUMGR_STARTEDU, "_pmdEDUMgr::startEDU" )
-   INT32 _pmdEDUMgr::startEDU ( EDU_TYPES type, void* arg, EDUID *eduid )
+   INT32 _pmdEDUMgr::startEDU ( EDU_TYPES type, void* arg, EDUID *eduid,
+                                const CHAR *pName )
    {
       INT32     rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__PMDEDUMGR_STARTEDU );
@@ -585,7 +586,7 @@ namespace engine
          // note that EDU types other than "agent" shouldn't be pooled at all
          // release latch before calling createNewEDU
          _mutex.release () ;
-         rc = createNewEDU ( type, arg, eduid ) ;
+         rc = createNewEDU ( type, arg, eduid, pName ) ;
          if ( SDB_OK == rc )
             goto done ;
          goto error ;
@@ -603,7 +604,7 @@ namespace engine
       {
          // release latch before calling createNewEDU
          _mutex.release () ;
-         rc = createNewEDU ( type, arg, eduid  ) ;
+         rc = createNewEDU ( type, arg, eduid, pName ) ;
          if ( SDB_OK == rc )
             goto done ;
          goto error ;
@@ -623,6 +624,10 @@ namespace engine
       *eduid = eduID ;
       //The edu is start, need post a resum event
       eduCB->clear() ;
+      if ( pName )
+      {
+         eduCB->setName( pName ) ;
+      }
       eduCB->postEvent( pmdEDUEvent( PMD_EDU_EVENT_RESUME,
                                      PMD_EDU_MEM_NONE, arg ) ) ;
       _mutex.release () ;
@@ -637,7 +642,8 @@ namespace engine
 
    // whoever calling this function should NOT get latch
    // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDEDUMGR_CRTNEWEDU, "_pmdEDUMgr::createNewEDU" )
-   INT32 _pmdEDUMgr::createNewEDU ( EDU_TYPES type, void* arg, EDUID *eduid )
+   INT32 _pmdEDUMgr::createNewEDU ( EDU_TYPES type, void* arg, EDUID *eduid,
+                                    const CHAR *pName )
    {
       INT32 rc       = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__PMDEDUMGR_CRTNEWEDU );
@@ -663,6 +669,10 @@ namespace engine
                "Out of memory to create agent control block" ) ;
       // set to creating status
       cb->setStatus ( PMD_EDU_CREATING ) ;
+      if ( pName )
+      {
+         cb->setName( pName ) ;
+      }
 
       /***********CRITICAL SECTION*********************/
       _mutex.get () ;

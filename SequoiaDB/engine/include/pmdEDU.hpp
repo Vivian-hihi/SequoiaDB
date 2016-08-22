@@ -48,6 +48,7 @@
 #include "ossRWMutex.hpp"
 #include "sdbInterface.hpp"
 #include "pdTrace.hpp"
+#include "dpsDef.hpp"
 
 #if defined ( SDB_ENGINE )
 #include "monEDU.hpp"
@@ -55,7 +56,6 @@
 #include "dpsLogDef.hpp"
 #include "dpsTransCB.hpp"
 #include "dpsTransLockDef.hpp"
-#include "dpsDef.hpp"
 #endif // SDB_ENGINE
 
 #include <set>
@@ -173,8 +173,13 @@ namespace engine
          virtual UINT64    getBeginLsn () const { return _beginLsn ; }
          virtual UINT64    getEndLsn() const { return _endLsn ; }
          virtual UINT32    getLsnCount () const { return _lsnNumber ; }
+         virtual UINT64    getTransID () const { return _curTransID ; }
+         virtual UINT64    getCurTransLsn () const { return _curTransLSN ; }
+
          virtual void      resetLsn() ;
          virtual void      insertLsn( UINT64 lsn ) ;
+         virtual void      setTransID( UINT64 transID ) ;
+         virtual void      setCurTransLsn( UINT64 lsn ) ;
 
    public:
       _pmdEDUCB( _pmdEDUMgr *mgr, EDU_TYPES type ) ;
@@ -377,15 +382,11 @@ namespace engine
       UINT64 incCurRequestID() { return ++_curRequestID ; }
 
       // transaction related
-      void     setTransID( DPS_TRANS_ID transID ) { _curTransID = transID ; }
-      DPS_TRANS_ID getTransID() const { return _curTransID ; }
       void     setRelatedTransLSN( DPS_LSN_OFFSET relatedLSN )
       {
          _relatedTransLSN = relatedLSN ;
       }
-      void     setCurTransLsn( DPS_LSN_OFFSET curLsn ) { _curTransLSN = curLsn ; }
       DPS_LSN_OFFSET getRelatedTransLSN() const { return _relatedTransLSN ; }
-      DPS_LSN_OFFSET getCurTransLsn() const { return _curTransLSN ; }
       dpsTransCBLockInfo *getTransLock( const dpsTransLockId &lockId );
       void     addLockInfo( const dpsTransLockId &lockId,
                             DPS_TRANSLOCK_TYPE lockType ) ;
@@ -476,8 +477,6 @@ namespace engine
 
       // transaction related variables
       DPS_LSN_OFFSET          _relatedTransLSN ;
-      DPS_LSN_OFFSET          _curTransLSN ;
-      DPS_TRANS_ID            _curTransID ;
       ossSpinXLatch           _transLockLstMutex ;
       DpsTransCBLockList      _transLockLst ;
       DpsTransNodeMap         *_pTransNodeMap ;
@@ -496,6 +495,9 @@ namespace engine
       UINT64                  _endLsn ;
       UINT32                  _lsnNumber ;
       UINT64                  _processEventCount ;
+
+      DPS_TRANS_ID            _curTransID ;
+      DPS_LSN_OFFSET          _curTransLSN ;
 
       sdbLockItem             _lockInfo[ SDB_LOCK_MAX ] ;
 

@@ -130,7 +130,8 @@ namespace engine
    */
    INT32 dmsCompress ( _pmdEDUCB *cb, _dmsCompressorEntry *compressorEntry,
                        const CHAR *pInputData, INT32 inputSize,
-                       const CHAR **ppData, INT32 *pDataSize ) ;
+                       const CHAR **ppData, INT32 *pDataSize,
+                       UINT8 &ratio ) ;
 
    INT32 dmsCompress ( _pmdEDUCB *cb, _dmsCompressorEntry *compressorEntry,
                        const BSONObj &obj, const CHAR* pOIDPtr, INT32 oidLen,

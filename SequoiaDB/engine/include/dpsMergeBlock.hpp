@@ -45,13 +45,13 @@
 #include "dpsLogRecord.hpp"
 #include "dpsPageMeta.hpp"
 #include "dms.hpp"
+#include "sdbInterface.hpp"
 
 namespace engine
 {
    class _dpsLogPage ;
    class _dpsReplicaLogMgr ;
    class _dpsMergeInfo ;
-   class _pmdEDUCB ;
 
    /*
       _dpsMergeBlock define
@@ -118,7 +118,7 @@ namespace engine
             _hasDummy = FALSE ;
          }
          void setInfoEx( UINT32 csLID, UINT32 clLID, dmsExtentID extLID,
-                         _pmdEDUCB *cb )
+                         IExecutor *cb )
          {
             _csLID   = csLID ;
             _clLID   = clLID ;
@@ -126,16 +126,22 @@ namespace engine
             _needNty = TRUE ;
             _pCB     = cb ;
          }
+         void enableTrans()
+         {
+            _transEnabled = TRUE ;
+         }
          void resetInfoEx()
          { 
             _needNty = FALSE ;
+            _transEnabled = FALSE ;
             _pCB     = NULL ;
          }
          BOOLEAN isNeedNotify() const { return _needNty ; }
+         BOOLEAN isTransEnabled() const { return _transEnabled ; }
          UINT32  getCSLID() const { return _csLID ; }
          UINT32  getCLLID() const { return _clLID ; }
          dmsExtentID getExtentLID() const { return _extLID ; }
-         _pmdEDUCB* getEDUCB() const { return _pCB ; }
+         IExecutor* getEDUCB() const { return _pCB ; }
 
       private:
          dpsMergeBlock        _mergeBlock ;
@@ -147,7 +153,8 @@ namespace engine
          UINT32               _clLID ;
          dmsExtentID          _extLID ;
          BOOLEAN              _needNty ;
-         _pmdEDUCB            *_pCB ;
+         BOOLEAN              _transEnabled ;
+         IExecutor            *_pCB ;
 
    } ;
 

@@ -462,7 +462,7 @@ namespace engine
       _utilCacheMgr implement
    */
    _utilCacheMgr::_utilCacheMgr()
-   :_freeSize( 0 ), _totalSize( 0 ), _totalUseTimes( 0 )
+   :_freeSize( 0 ), _totalSize( 0 ), _totalUseTimes( 0 ), _nonEmptySlotNum( 0 )
    {
       _beginPageSizeSqrt = 0 ;
       _maxCacheSize = 0 ;
@@ -965,6 +965,7 @@ namespace engine
       CHAR *pPage = NULL ;
       UINT32 pageSize = 0 ;
       UINT32 slot = 0 ;
+      BOOLEAN addNonEmpty = FALSE ;
 
       if ( 0 == size )
       {
@@ -1001,6 +1002,11 @@ namespace engine
 
          _latch[ slot ]->get() ;
          /// push to vector
+         if ( !addNonEmpty && 0 == _getBucketCache( slot )._totalSize &&
+              pageSize > 0 )
+         {
+            addNonEmpty = TRUE ;
+         }
          _slot[ slot ].push_back( pPage ) ;
          _getBucketCache( slot )._totalSize += pageSize ;
          _getBucketCache( slot )._freeSize += pageSize ;
@@ -1009,6 +1015,11 @@ namespace engine
          _totalSize.add( pageSize ) ;
          _freeSize.add( pageSize ) ;
          ++count ;
+      }
+
+      if ( addNonEmpty )
+      {
+         _nonEmptySlotNum.inc() ;
       }
 
    done:
@@ -1080,7 +1091,7 @@ namespace engine
                 statItem._freeSize * 100 / statItem._totalSize >=
                 UTIL_BLOCK_RECYCLE_FREE_RATIO ) ||
               ( totalUseTimes() > 0 &&
-                statItem._useTimes * UTIL_PAGE_SLOT_SIZE < totalUseTimes() ) )
+                statItem._useTimes * _nonEmptySlotNum.peek() < totalUseTimes() ) )
          {
             /// recycle the bucket
             recycleSize += _recycleBucket( slotItem, &statItem ) ;
@@ -1102,7 +1113,7 @@ namespace engine
                                          utilCacheStat *pStat )
    {
       UINT64 recycleSize = 0 ;
-      UINT32 size = slotItem.size() / 2 ;
+      UINT32 size = ( slotItem.size() + 1 ) / 2 ;
       CHAR *pBuff = NULL ;
 
       for ( UINT32 i = 0 ; i < size ; ++i )
@@ -1124,6 +1135,11 @@ namespace engine
       pStat->_totalSize -= recycleSize ;
       _freeSize.sub( recycleSize ) ;
       _totalSize.sub( recycleSize ) ;
+
+      if ( 0 == pStat->_totalSize && recycleSize > 0 )
+      {
+         _nonEmptySlotNum.dec() ;
+      }
 
       return recycleSize ;
    }
