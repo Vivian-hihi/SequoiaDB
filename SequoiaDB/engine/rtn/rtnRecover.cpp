@@ -1,0 +1,1674 @@
+/*******************************************************************************
+
+
+   Copyright (C) 2011-2014 SequoiaDB Ltd.
+
+   This program is free software: you can redistribute it and/or modify
+   it under the term of the GNU Affero General Public License, version 3,
+   as published by the Free Software Foundation.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warrenty of
+   MARCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+   GNU Affero General Public License for more details.
+
+   You should have received a copy of the GNU Affero General Public License
+   along with this program. If not, see <http://www.gnu.org/license/>.
+
+   Source File Name = rtnRecover.cpp
+
+   Descriptive Name = Data Management Service Header
+
+   When/how to use: this program may be used on binary and text-formatted
+   versions of data management component. This file contains structure for
+   dms Reccord ID (RID).
+
+   Dependencies: N/A
+
+   Restrictions: N/A
+
+   Change Activity:
+   defect Date        Who Description
+   ====== =========== === ==============================================
+          15/08/2016  XJH Initial Draft
+
+   Last Changed =
+
+*******************************************************************************/
+
+
+#include "rtnRecover.hpp"
+#include "pmdStartup.hpp"
+#include "rtn.hpp"
+
+using namespace bson ;
+
+namespace engine
+{
+
+   #define RTN_REORG_FILE_SUBFIX       ".REORG"
+
+   /*
+      _rtnCLRebuilder implement
+   */
+   _rtnCLRebuilder::_rtnCLRebuilder( dmsStorageUnit *pSU,
+                                     const CHAR *pCLShortName )
+   {
+      _pSU = pSU ;
+      _clName = pCLShortName ;
+      _clFullName = _pSU->CSName() ;
+      _clFullName += "." ;
+      _clFullName += _clName ;
+
+      _totalRecord = 0 ;
+      _totalLob = 0 ;
+      _indexNum = 0 ;
+   }
+
+   _rtnCLRebuilder::~_rtnCLRebuilder()
+   {
+      _release() ;
+   }
+
+   void _rtnCLRebuilder::_release()
+   {
+      _totalRecord = 0 ;
+      _totalLob = 0 ;
+      _indexNum = 0 ;
+   }
+
+   INT32 _rtnCLRebuilder::rebuild( pmdEDUCB *cb, rtnRUInfo *ruInfo )
+   {
+      INT32 rc = SDB_OK ;
+      UINT16 flag = 0 ;
+
+      dmsMBContext *pContext = NULL ;
+
+      ossTick beginTick ;
+      ossTick endTick ;
+      ossTickDelta timeSpan ;
+      ossTickConversionFactor factor ;
+      UINT32 seconds = 0 ;
+      UINT32 microSec = 0 ;
+
+      /// first release
+      _release() ;
+
+      rc = _pSU->data()->getMBContext( &pContext,
+                                       _clName.c_str(),
+                                       EXCLUSIVE ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Lock collection[%s] failed, rc: %d",
+                 _clFullName.c_str(), rc ) ;
+         goto error ;
+      }
+      flag = pContext->mb()->_flag ;
+
+      beginTick.sample() ;
+      PD_LOG( PDEVENT, "Begin to rebuild collection[%s]...",
+              _clFullName.c_str() ) ;
+
+      if ( ( DMS_IS_MB_OFFLINE_REORG( flag ) &&
+             !DMS_IS_MB_OFFLINE_REORG_SHADOW_COPY( flag ) ) ||
+           ( DMS_IS_MB_ONLINE_REORG ( flag ) ) )
+      {
+         /// recover
+         rc = _recover( cb, pContext ) ;
+      }
+      else
+      {
+         /// rebuild
+         rc = _rebuild( cb, pContext, ruInfo ) ;
+      }
+      if ( rc )
+      {
+         goto error ;
+      }
+
+      /// clean reorg file
+      _cleanRegSU() ;
+
+   done:
+      endTick.sample() ;
+      timeSpan = endTick - beginTick ;
+      timeSpan.convertToTime( factor, seconds, microSec ) ;
+      /// release resource
+      if ( pContext )
+      {
+         _pSU->data()->releaseMBContext( pContext ) ;
+      }
+      if ( SDB_OK == rc )
+      {
+         PD_LOG( PDEVENT, "Rebuild collection[%s] succeed, cost: %u(s), "
+                 "Total Record: %llu, Total Lob: %llu, Index Num: %u",
+                 _clFullName.c_str(), seconds, _totalRecord,
+                 _totalLob, _indexNum ) ;
+      }
+      else
+      {
+         PD_LOG( PDERROR, "Rebuild collection[%s] failed, rc: %d, "
+                 "cost: %u(s)", _clFullName.c_str(), rc, seconds ) ;
+      }
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _rtnCLRebuilder::_rebuild( pmdEDUCB *cb,
+                                    dmsMBContext *mbContext,
+                                    rtnRUInfo *ruInfo )
+   {
+      INT32 rc = SDB_OK ;
+
+      if ( ruInfo->isAllValid() )
+      {
+         PD_LOG( PDEVENT, "Collection[%s] is valid, don't need to rebuild",
+                 _clFullName.c_str() ) ;
+         goto done ;
+      }
+
+      /// lock mb context
+      rc = mbContext->mbLock( EXCLUSIVE ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Lock collection mb context failed, rc: %d", rc ) ;
+         goto error ;
+      }
+
+      if ( 0 == ruInfo->_dataCommitFlag )
+      {
+         /// force to index rebuild
+         ruInfo->_idxCommitFlag = 0 ;
+         rc = _rebuildData( cb, mbContext ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Rebuild collection data record failed, rc: %d",
+                    rc ) ;
+            goto error ;
+         }
+      }
+      else
+      {
+         PD_LOG( PDEVENT, "Collection[%s]'s data file is valid, don't need "
+                 "to rebuild", _clFullName.c_str() ) ;
+      }
+
+      if ( 0 == ruInfo->_idxCommitFlag )
+      {
+         /// rebuild index
+         rc = _rebuildIndex( cb, mbContext ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Rebuild collection indexes failed, rc: %d",
+                    rc ) ;
+            goto error ;
+         }
+      }
+      else
+      {
+         PD_LOG( PDEVENT, "Collection[%s]'s index file is valid, don't need "
+                 "to rebuild", _clFullName.c_str() ) ;
+      }
+
+      if ( 0 == ruInfo->_lobCommitFlag )
+      {
+         rc = _rebuildLob( cb, mbContext ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Rebuild collection lob failed, rc: %d",
+                    rc ) ;
+            goto error ;
+         }
+      }
+      else if ( _pSU->data()->getHeader()->_createLobs )
+      {
+         PD_LOG( PDEVENT, "Collection[%s]'s lob file is valid, don't need "
+                 "to rebuild", _clFullName.c_str() ) ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   void _rtnCLRebuilder::_cleanRegSU()
+   {
+      string orgFileName ;
+
+      /// build path
+      CHAR  tmpName[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
+      utilBuildFullPath( pmdGetOptionCB()->getDbPath(),
+                         _clFullName.c_str(), OSS_MAX_PATHSIZE,
+                         tmpName ) ;
+      orgFileName = tmpName ;
+      orgFileName += RTN_REORG_FILE_SUBFIX ;
+
+      if ( SDB_OK == ossAccess( orgFileName.c_str(), 0 ) )
+      {
+         INT32 rc = ossDelete( orgFileName.c_str() ) ;
+         if ( SDB_OK == rc )
+         {
+            PD_LOG( PDEVENT, "Remove the reorg file[%s] succeed",
+                    orgFileName.c_str() ) ;
+         }
+         else
+         {
+            PD_LOG( PDEVENT, "Remove the reorg file[%s] failed, rc: %d",
+                    orgFileName.c_str(), rc ) ;
+         }
+      }
+   }
+
+   INT32 _rtnCLRebuilder::_openRegSU( dmsReorgUnit *pSU,
+                                      BOOLEAN createNew )
+   {
+      INT32 rc = SDB_OK ;
+      string orgFileName ;
+
+      /// build path
+      CHAR  tmpName[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
+      utilBuildFullPath( pmdGetOptionCB()->getDbPath(),
+                         _clFullName.c_str(), OSS_MAX_PATHSIZE,
+                         tmpName ) ;
+      orgFileName = tmpName ;
+      orgFileName += RTN_REORG_FILE_SUBFIX ;
+
+      if ( createNew )
+      {
+         /// first to delete the file
+         if ( SDB_OK == ossAccess( orgFileName.c_str(), 0 ) )
+         {
+            rc = ossDelete( orgFileName.c_str() ) ;
+            if ( SDB_OK == rc )
+            {
+               PD_LOG( PDEVENT, "Remove the old reorg file[%s] succeed",
+                       orgFileName.c_str() ) ;
+            }
+         }
+      }
+      rc = pSU->open( orgFileName.c_str(),
+                      _pSU->getPageSize(),
+                      createNew ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "File to create org file[%s], rc: %d",
+                 orgFileName.c_str(), rc ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _rtnCLRebuilder::_exportByExtents( pmdEDUCB *cb,
+                                            dmsMBContext *mbContext,
+                                            dmsReorgUnit *pSU )
+   {
+      INT32 rc = SDB_OK ;
+      UINT32 extentNum = 0 ;
+      const dmsExtent *pExtent = NULL ;
+      dmsExtentID extentID = DMS_INVALID_EXTENT ;
+      dmsExtentID nextExtID = DMS_INVALID_EXTENT ;
+      dmsExtRW extRW ;
+      UINT32 maxExtentPages = _pSU->data()->segmentPages() ;
+
+      nextExtID = mbContext->mb()->_firstExtentID ;
+      while( DMS_INVALID_EXTENT != nextExtID )
+      {
+         if ( cb->isInterrupted() )
+         {
+            rc = SDB_APP_INTERRUPT ;
+            goto error ;
+         }
+
+         if ( nextExtID < 0 ||
+              (UINT32)nextExtID >= _pSU->data()->getHeader()->_pageNum )
+         {
+            PD_LOG( PDERROR, "Extent[%d]'s next extent[%d] error",
+                    extentID, nextExtID ) ;
+            break ;
+         }
+         extentID = nextExtID ;
+         extRW = _pSU->data()->extent2RW( extentID, -1 ) ;
+         extRW.setNothrow( TRUE ) ;
+         pExtent = extRW.readPtr<dmsExtent>() ;
+         if ( !pExtent )
+         {
+            PD_LOG( PDERROR, "Get extent[%d]'s address failed",
+                    extentID ) ;
+            break ;
+         }
+         nextExtID = pExtent->_nextExtent ;
+
+         if ( !pExtent->validate( mbContext->mbID() ) ||
+              pExtent->_blockSize == 0 ||
+              pExtent->_blockSize > maxExtentPages )
+         {
+            PD_LOG( PDERROR, "Extent[%d] is invalid", extentID ) ;
+            continue ;
+         }
+         /// export this page's data
+         ++extentNum ;
+         rc = _exportByAExtent( cb, mbContext, pSU, extentID ) ;
+         if ( rc )
+         {
+            goto error ;
+         }
+      }
+
+      if ( extentID != mbContext->mb()->_lastExtentID )
+      {
+         PD_LOG( PDWARNING, "Collection[%s]'s extent list is damaged, Last "
+                 "extent:%d, Processed last extent:%d, Processed extent "
+                 "count:%u", _clFullName.c_str(),
+                 mbContext->mb()->_lastExtentID, extentID, extentNum ) ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _rtnCLRebuilder::_exportByAExtent( pmdEDUCB *cb,
+                                            dmsMBContext *mbContext,
+                                            dmsReorgUnit *pSU,
+                                            dmsExtentID extentID )
+   {
+      INT32 rc = SDB_OK ;
+
+      UINT32 recordNum = 0 ;
+      const dmsRecord *pRecord = NULL ;
+      const dmsExtent *pExtent = NULL ;
+      dmsOffset nextOffset = DMS_INVALID_OFFSET ;
+      UINT32 extentSize = 0 ;
+      dmsExtRW extRW ;
+      dmsRecordID rid( extentID, DMS_INVALID_OFFSET ) ;
+      dmsRecordRW recordRW ;
+      dmsRecordData recordData ;
+      dmsCompressorEntry *pEntry = NULL ;
+
+      pEntry = _pSU->data()->getCompressorEntry( mbContext->mbID() ) ;
+      extRW = _pSU->data()->extent2RW( extentID, -1 ) ;
+      extRW.setNothrow( TRUE ) ;
+      pExtent = extRW.readPtr<dmsExtent>() ;
+      if ( !pExtent )
+      {
+         PD_LOG( PDERROR, "Get extent[%d] address failed", extentID ) ;
+         /// not report this error
+         goto done ;
+      }
+      extentSize = pExtent->_blockSize * _pSU->getPageSize() ;
+
+      /// scan backward
+      nextOffset = pExtent->_firstRecordOffset ;
+      while( DMS_INVALID_OFFSET != nextOffset )
+      {
+         if ( nextOffset < (INT32)sizeof(dmsExtent) ||
+              nextOffset > (INT32)(extentSize - sizeof(dmsRecord) )  )
+         {
+            /// offset error
+            PD_LOG( PDERROR, "Reocrd[%d.%d]'s next offset[%d] is error",
+                    extentID, rid._offset, nextOffset ) ;
+            break ;
+         }
+         rid._offset = nextOffset ;
+         recordRW = _pSU->data()->record2RW( rid, mbContext->mbID() ) ;
+         recordRW.setNothrow( TRUE ) ;
+         pRecord = recordRW.readPtr() ;
+         if ( !pRecord )
+         {
+            PD_LOG( PDERROR, "Get record[%d.%d] address failed",
+                    rid._extent, rid._offset ) ;
+            break ;
+         }
+         /// set next
+         nextOffset = pRecord->getNextOffset() ;
+         /// record is delete
+         if ( pRecord->isDeleted() || pRecord->isDeleting() )
+         {
+            continue ;
+         }
+         /// extract data
+         rc = _pSU->data()->extractData( mbContext, recordRW,
+                                         cb, recordData ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Extract record[%d.%d] data failed, rc: %d",
+                    rid._extent, rid._offset, rc ) ;
+            rc = SDB_OK ;
+            continue ;
+         }
+
+         /// write data to reorg file
+         try
+         {
+            BSONObj obj( recordData.data() ) ;
+            rc = pSU->insertRecord( obj, cb, pEntry ) ;
+            if ( rc )
+            {
+               PD_LOG( PDERROR, "Insert rid[%d.%d] record data[%s] to "
+                       "reorg file failed, rc: %d", rid._extent, rid._offset,
+                       obj.toString().c_str(), rc ) ;
+               goto error ;
+            }
+            ++recordNum ;
+            ++_totalRecord ;
+         }
+         catch( std::exception &e )
+         {
+            PD_LOG( PDERROR, "Insert rid[%d.%d] record data to reorg file "
+                    "occur exception: %s", rid._extent, rid._offset,
+                    e.what() ) ;
+            /// not goto error
+         }
+      }
+
+      if ( rid._offset != pExtent->_lastRecordOffset ||
+           recordNum != pExtent->_recCount )
+      {
+         PD_LOG( PDWARNING, "Extent[%d] is damaged, Last record offset:%d, "
+                 "Record count:%u, Processed last offset:%d, Processed "
+                 "record count:%u", extentID, pExtent->_lastRecordOffset,
+                 pExtent->_recCount, rid._offset, recordNum ) ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _rtnCLRebuilder::_copyBack( pmdEDUCB *cb,
+                                     dmsMBContext *mbContext,
+                                     dmsReorgUnit *pRU )
+   {
+      INT32 rc             = SDB_OK ;
+
+      CHAR *blockBuffer    = NULL ;
+      UINT32 blockBuffSize = 0 ;
+      INT32 blockSize      = 0 ;
+
+      pRU->beginExport() ;
+
+      // loop for each block
+      while ( TRUE )
+      {
+         if ( cb->isInterrupted() )
+         {
+            rc = SDB_APP_INTERRUPT ;
+            goto error ;
+         }
+
+         // get the next block
+         rc = pRU->getNextExtentSize( blockSize ) ;
+         if ( rc )
+         {
+            // if we get end of file, that means we don't have "
+            // any other blocks to copy, then we break the loop
+            if ( SDB_EOF == rc )
+            {
+               rc = SDB_OK ;
+               break ;
+            }
+            PD_LOG ( PDERROR, "Failed to get next extent size, rc: %d", rc ) ;
+            goto error ;
+         }
+
+         if ( blockBuffSize < (UINT32)blockSize )
+         {
+            if ( blockBuffer )
+            {
+               cb->releaseBuff( blockBuffer ) ;
+               blockBuffer = NULL ;
+               blockBuffSize = 0 ;
+            }
+            rc = cb->allocBuff( (UINT32)blockSize, &blockBuffer,
+                                &blockBuffSize ) ;
+            if ( rc )
+            {
+               PD_LOG ( PDERROR, "Failed to allocate memory[%u], rc: %d",
+                        blockSize, rc ) ;
+               goto error ;
+            }
+         }
+
+         // get the extent
+         rc = pRU->exportExtent( blockBuffer ) ;
+         if ( rc )
+         {
+            PD_LOG ( PDERROR, "Failed to export extent, rc: %d", rc ) ;
+            goto error ;
+         }
+         // load the extent into dms
+         rc = _pSU->loadExtent ( mbContext, blockBuffer,
+                                 (UINT16)( blockSize/_pSU->getPageSize() ) ) ;
+         if ( rc )
+         {
+            PD_LOG ( PDERROR, "Failed load extent into DMS, rc: %d", rc ) ;
+            goto error ;
+         }
+      }
+
+   done :
+      if ( blockBuffer )
+      {
+         cb->releaseBuff( blockBuffer ) ;
+      }
+      return rc ;
+   error :
+      goto done ;
+   }
+
+   INT32 _rtnCLRebuilder::_rebuildData( pmdEDUCB *cb,
+                                        dmsMBContext *mbContext )
+   {
+      INT32 rc = SDB_OK ;
+      dmsReorgUnit regSU ;
+      UINT16 flag = mbContext->mb()->_flag ;
+      BOOLEAN canClean = FALSE ;
+      UINT16 phase = 0 ;
+
+      if ( (flag & DMS_MB_OPR_TYPE_MASK) == DMS_MB_FLAG_OFFLINE_REORG )
+      {
+         phase = flag & DMS_MB_OPR_PHASE_MASK ;
+      }
+      else
+      {
+         phase = DMS_MB_FLAG_OFFLINE_REORG_SHADOW_COPY ;
+      }
+
+      if ( DMS_MB_FLAG_OFFLINE_REORG_SHADOW_COPY == phase )
+      {
+         rc = _openRegSU( &regSU, TRUE ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Open reorg file failed, rc: %d", rc ) ;
+            goto error ;
+         }
+         PD_LOG( PDEVENT, "Start rebuild collection[%s]'s data with reorg "
+                 "file[%s]", _clFullName.c_str(), regSU.getFileName() ) ;
+
+         canClean = TRUE ;
+         /// shadow copy
+         DMS_SET_MB_OFFLINE_REORG_SHADOW_COPY( flag ) ;
+         mbContext->mb()->_flag = flag ;
+         PD_LOG( PDEVENT, "Begin shadow copy phase" ) ;
+
+         rc = _exportByExtents( cb, mbContext, &regSU ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Shadow copyback failed, rc: %d", rc ) ;
+            goto error ;
+         }
+         rc = regSU.flush() ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Failed to flush data to reorg file, rc: %d", rc ) ;
+            goto error ;
+         }
+
+         /// truncate
+         DMS_SET_MB_OFFLINE_REORG_TRUNCATE( flag ) ;
+         mbContext->mb()->_flag = flag ;
+         phase = DMS_MB_FLAG_OFFLINE_REORG_TRUNCATE ;
+      }
+
+      if ( DMS_MB_FLAG_OFFLINE_REORG_TRUNCATE == phase ||
+           DMS_MB_FLAG_OFFLINE_REORG_COPY_BACK == phase )
+      {
+         PD_LOG( PDEVENT, "Begin truncate phase" ) ;
+
+         /// when truncate failed, can't clean the reorg file
+         canClean = FALSE ;
+         rc = _pSU->data()->truncateCollection( _clName.c_str(), cb, NULL,
+                                                TRUE, mbContext, FALSE,
+                                                FALSE ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Truncate collection[%s] failed, rc: %d",
+                    _clFullName.c_str(), rc ) ;
+            goto error ;
+         }
+
+         /// copyback
+         DMS_SET_MB_OFFLINE_REORG_COPY_BACK( flag ) ;
+         mbContext->mb()->_flag = flag ;
+         phase = DMS_MB_FLAG_OFFLINE_REORG_COPY_BACK ;
+
+         if ( !regSU.isOpened() )
+         {
+            rc = _openRegSU( &regSU, FALSE ) ;
+            if ( rc )
+            {
+               PD_LOG( PDERROR, "Open reorg file failed, rc: %d", rc ) ;
+               goto error ;
+            }
+         }
+         PD_LOG( PDEVENT, "Begin copyback phase" ) ;
+
+         rc = _copyBack( cb, mbContext, &regSU ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Failed to copyback data to collection[%s], "
+                    "rc: %d", _clFullName.c_str(), rc ) ;
+            goto error ;
+         }
+
+         /// flush data
+         _pSU->data()->flushAll( TRUE ) ;
+         /// change to rebuild
+         DMS_SET_MB_OFFLINE_REORG_REBUILD( flag ) ;
+         mbContext->mb()->_flag = flag ;
+         phase = DMS_MB_FLAG_OFFLINE_REORG_REBUILD ;
+
+         /// when change to rebuild, can't clean reorg file
+         canClean = TRUE ;
+
+         /// data file is restored
+         mbContext->mbStat()->_commitFlag.init( 1 ) ;
+         mbContext->mbStat()->_isCrash = FALSE ;
+         mbContext->mb()->_commitFlag = 1 ;
+         mbContext->mb()->_commitLSN = ~0 ;
+
+         mbContext->mbStat()->_idxCommitFlag.init( 0 ) ;
+         mbContext->mbStat()->_idxIsCrash = TRUE ;
+         mbContext->mb()->_idxCommitFlag = 0 ;
+
+         /// flush meta
+         _pSU->data()->flushMeta( TRUE ) ;
+      }
+
+   done:
+      if ( canClean )
+      {
+         INT32 rcTmp = regSU.cleanup() ;
+         if ( rcTmp )
+         {
+            PD_LOG( PDERROR, "Failed to cleanup reorg file[%s], rc: %d",
+                    regSU.getFileName(), rcTmp ) ;
+         }
+      }
+      return rc ;
+   error:
+      /// Failed when copyback, need to reset the flag normal
+      if ( DMS_MB_FLAG_OFFLINE_REORG_SHADOW_COPY == phase )
+      {
+         DMS_SET_MB_NORMAL(flag) ;
+         mbContext->mb()->_flag = flag ;
+      }
+      goto done ;
+   }
+
+   INT32 _rtnCLRebuilder::_rebuildIndex( pmdEDUCB *cb,
+                                         dmsMBContext *mbContext )
+   {
+      INT32 rc = SDB_OK ;
+      UINT16 flag = mbContext->mb()->_flag ;
+      UINT16 phase = 0 ;
+
+      if ( (flag & DMS_MB_OPR_TYPE_MASK) == DMS_MB_FLAG_OFFLINE_REORG )
+      {
+         phase = flag & DMS_MB_OPR_PHASE_MASK ;
+      }
+
+      if ( DMS_MB_FLAG_OFFLINE_REORG_REBUILD == phase )
+      {
+         PD_LOG( PDEVENT, "Start rebuild phase" ) ;
+
+         rc = _pSU->index()->rebuildIndexes( mbContext, cb,
+                                             SDB_INDEX_SORT_BUFFER_DEFAULT_SIZE ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Rebuild indexes failed, rc: %d", rc ) ;
+            goto error ;
+         }
+
+         /// when rebuild index, mbContext will be unlock or lock shared
+         rc = mbContext->mbLock( EXCLUSIVE ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Lock mb context failed, rc: %d", rc ) ;
+            goto error ;
+         }
+
+         /// flush all
+         _pSU->index()->flushAll( TRUE ) ;
+         /// Change status
+         DMS_SET_MB_NORMAL( flag ) ;
+         mbContext->mb()->_flag = flag ;
+
+         mbContext->mb()->_idxCommitFlag = 1 ;
+         mbContext->mb()->_idxCommitLSN = ~0 ;
+         mbContext->mbStat()->_idxCommitFlag.init( 1 ) ;
+         mbContext->mbStat()->_idxIsCrash = FALSE ;
+
+         _indexNum = mbContext->mb()->_numIndexes ;
+
+         _pSU->data()->flushMeta( TRUE ) ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _rtnCLRebuilder::_rebuildLob( pmdEDUCB *cb,
+                                       dmsMBContext *mbContext )
+   {
+      /// do nothing
+      mbContext->mb()->_lobCommitFlag = 1 ;
+      mbContext->mb()->_lobCommitLSN = ~0 ;
+      mbContext->mbStat()->_lobCommitFlag.init( 1 ) ;
+      mbContext->mbStat()->_lobIsCrash = FALSE ;
+
+      _totalLob = mbContext->mbStat()->_totalLobs ;
+
+      _pSU->data()->flushMeta( TRUE ) ;
+
+      return SDB_OK ;
+   }
+
+   INT32 _rtnCLRebuilder::_recover( pmdEDUCB *cb,
+                                    dmsMBContext *mbContext )
+   {
+      INT32 rc = SDB_OK ;
+      UINT16 flag = 0 ;
+
+      rc = mbContext->mbLock( EXCLUSIVE ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Lock collection mb context failed, rc: %d", rc ) ;
+         goto error ;
+      }
+
+      flag = mbContext->mb()->_flag ;
+
+      if ( ( flag & DMS_MB_OPR_TYPE_MASK ) == DMS_MB_FLAG_OFFLINE_REORG )
+      {
+         if ( DMS_MB_FLAG_OFFLINE_REORG_SHADOW_COPY ==
+              ( flag & DMS_MB_OPR_PHASE_MASK ) )
+         {
+            /// we can recover directly
+            DMS_SET_MB_NORMAL( flag ) ;
+            mbContext->mb()->_flag = flag ;
+            goto done ;
+         }
+
+         _totalRecord = mbContext->mb()->_totalRecords ;
+         /// rebuild data
+         rc = _rebuildData( cb, mbContext ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Recover collection data record failed, rc: %d",
+                    rc ) ;
+            goto error ;
+         }
+         /// rebuild index
+         rc = _rebuildIndex( cb, mbContext ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Recover collection indexes failed, rc: %d",
+                    rc ) ;
+            goto error ;
+         }
+
+         if ( 0 == mbContext->mb()->_lobCommitFlag &&
+              _pSU->data()->getHeader()->_createLobs )
+         {
+            rc = _rebuildLob( cb, mbContext ) ;
+            if ( rc )
+            {
+               PD_LOG( PDERROR, "Recover collection lob failed, rc: %d",
+                       rc ) ;
+               goto error ;
+            }
+         }
+      }
+      else if ( (flag & DMS_MB_OPR_TYPE_MASK) == DMS_MB_FLAG_ONLINE_REORG )
+      {
+         // online reorg
+         PD_LOG ( PDERROR, "Online reorg recover is not supported yet" ) ;
+         rc = SDB_OPTION_NOT_SUPPORT ;
+         goto error ;
+      }
+      else
+      {
+         PD_LOG ( PDWARNING, "Collection is not in reorg status" ) ;
+         rc = SDB_DMS_NOT_IN_REORG ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _rtnCLRebuilder::recover( pmdEDUCB *cb )
+   {
+      INT32 rc = SDB_OK ;
+
+      dmsMBContext *pContext = NULL ;
+
+      ossTick beginTick ;
+      ossTick endTick ;
+      ossTickDelta timeSpan ;
+      ossTickConversionFactor factor ;
+      UINT32 seconds = 0 ;
+      UINT32 microSec = 0 ;
+
+      /// first release
+      _release() ;
+
+      rc = _pSU->data()->getMBContext( &pContext,
+                                       _clName.c_str(),
+                                       EXCLUSIVE ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Lock collection[%s] failed, rc: %d",
+                 _clFullName.c_str(), rc ) ;
+         goto error ;
+      }
+
+      beginTick.sample() ;
+      PD_LOG( PDEVENT, "Begin to recover collection[%s]...",
+              _clFullName.c_str() ) ;
+
+      rc = _recover( cb, pContext ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+
+      /// clean reorg file
+      _cleanRegSU() ;
+
+   done:
+      endTick.sample() ;
+      timeSpan = endTick - beginTick ;
+      timeSpan.convertToTime( factor, seconds, microSec ) ;
+      /// release resource
+      if ( pContext )
+      {
+         _pSU->data()->releaseMBContext( pContext ) ;
+      }
+      if ( SDB_OK == rc )
+      {
+         PD_LOG( PDEVENT, "Recover collection[%s] succeed, cost: %u(s)",
+                 _clFullName.c_str(), seconds ) ;
+      }
+      else
+      {
+         PD_LOG( PDERROR, "Recover collection[%s] failed, rc: %d, "
+                 "cost: %u(s)", _clFullName.c_str(), rc, seconds ) ;
+      }
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _rtnCLRebuilder::reorg( pmdEDUCB *cb, const BSONObj &hint )
+   {
+      INT32 rc = SDB_OK ;
+      UINT16 flag = 0 ;
+
+      dmsMBContext *pContext = NULL ;
+
+      ossTick beginTick ;
+      ossTick endTick ;
+      ossTickDelta timeSpan ;
+      ossTickConversionFactor factor ;
+      UINT32 seconds = 0 ;
+      UINT32 microSec = 0 ;
+
+      /// first release
+      _release() ;
+
+      rc = _pSU->data()->getMBContext( &pContext,
+                                       _clName.c_str(),
+                                       EXCLUSIVE ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Lock collection[%s] failed, rc: %d",
+                 _clFullName.c_str(), rc ) ;
+         goto error ;
+      }
+      flag = pContext->mb()->_flag ;
+
+      beginTick.sample() ;
+      PD_LOG( PDEVENT, "Begin to reorg collection[%s]...",
+              _clFullName.c_str() ) ;
+
+      if ( ( DMS_IS_MB_OFFLINE_REORG( flag ) &&
+             !DMS_IS_MB_OFFLINE_REORG_SHADOW_COPY( flag ) ) ||
+           ( DMS_IS_MB_ONLINE_REORG ( flag ) ) )
+      {
+         /// recover
+         rc = _recover( cb, pContext ) ;
+      }
+      else
+      {
+         /// reorg
+         rc = _reorgData( cb, pContext, hint ) ;
+      }
+      if ( rc )
+      {
+         goto error ;
+      }
+
+      /// clean reorg file
+      _cleanRegSU() ;
+
+   done:
+      endTick.sample() ;
+      timeSpan = endTick - beginTick ;
+      timeSpan.convertToTime( factor, seconds, microSec ) ;
+      /// release resource
+      if ( pContext )
+      {
+         _pSU->data()->releaseMBContext( pContext ) ;
+      }
+      if ( SDB_OK == rc )
+      {
+         PD_LOG( PDEVENT, "Reorg collection[%s] succeed, cost: %u(s), "
+                 "Total Record: %llu, Total Lob: %llu, Index Num: %u",
+                 _clFullName.c_str(), seconds, _totalRecord,
+                 _totalLob, _indexNum ) ;
+      }
+      else
+      {
+         PD_LOG( PDERROR, "Reorg collection[%s] failed, rc: %d, "
+                 "cost: %u(s)", _clFullName.c_str(), rc, seconds ) ;
+      }
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _rtnCLRebuilder::_reorgData( pmdEDUCB *cb,
+                                      dmsMBContext *mbContext,
+                                      const BSONObj &hint )
+   {
+      INT32 rc = SDB_OK ;
+      pmdKRCB *krcb = pmdGetKRCB() ;
+      SDB_DMSCB *dmsCB = krcb->getDMSCB() ;
+      SDB_RTNCB *rtnCB = krcb->getRTNCB() ;
+      UINT16 flag = 0 ;
+      UINT16 phase = DMS_MB_FLAG_OFFLINE_REORG_SHADOW_COPY ;
+
+      BSONObj dummyObj ;
+      SINT64 contextID = -1 ;
+      rtnContextData *context = NULL ;
+      dmsReorgUnit regSU ;
+
+      /// In query will create mbcontext, so in here, we need to unlock
+      mbContext->mbUnlock() ;
+
+      /// begin to query data
+      rc = rtnQuery( _clFullName.c_str(), dummyObj, dummyObj, dummyObj,
+                     hint, 0, cb, 0, -1, dmsCB, rtnCB, contextID,
+                     (rtnContextBase**)&context ) ;
+      if ( rc )
+      {
+         if ( SDB_DMS_EOC == rc )
+         {
+            // if the collection is completely empty
+            PD_LOG ( PDEVENT, "Empty collection is detected, "
+                     "reorg is skipped" ) ;
+            rc = SDB_OK ;
+            contextID = -1 ;
+         }
+         PD_LOG ( PDERROR, "Failed to query, rc = %d", rc ) ;
+         goto error ;
+      }
+
+      // let's lock the collection using exclusive mode
+      rc = context->getMBContext()->mbLock( EXCLUSIVE ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to lock collection %s, rc = %d",
+                  _clFullName.c_str(), rc ) ;
+         goto error ;
+      }
+      if ( context->getMBContext()->mbID() != mbContext->mbID() ||
+           context->getMBContext()->clLID() != mbContext->clLID() )
+      {
+         /// collection has re-create or truncated, so not rebuild
+         goto done ;         
+      }
+
+      /// open reorg su
+      rc = _openRegSU( &regSU, TRUE ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Open reorg file failed, rc: %d", rc ) ;
+         goto error ;
+      }
+
+      PD_LOG( PDEVENT, "Start offline reorg, use reorg file:%s",
+              regSU.getFileName() ) ;
+
+      flag = mbContext->mb()->_flag ;
+      /// shadow copy
+      DMS_SET_MB_OFFLINE_REORG_SHADOW_COPY( flag ) ;
+      mbContext->mb()->_flag = flag ;
+      PD_LOG( PDEVENT, "Begin shadow copy phase" ) ;
+
+      if ( -1 != contextID )
+      {
+         /// export data
+         rtnContextBuf buffObj ;
+         dmsCompressorEntry *compEntry = NULL ;
+         compEntry = _pSU->data()->getCompressorEntry( mbContext->mbID() ) ;
+
+         while( TRUE )
+         {
+            rc = context->getMore( 1, buffObj, cb ) ;
+            if ( SDB_DMS_EOC == rc )
+            {
+               rc = SDB_OK ;
+               break ;
+            }
+            else if ( SDB_APP_INTERRUPT == rc )
+            {
+               goto error ;
+            }
+            else if ( rc )
+            {
+               PD_LOG( PDERROR, "Query data from collection[%s] failed, "
+                       "rc: %d", _clFullName.c_str(), rc ) ;
+               goto error ;
+            }
+
+            try
+            {
+               BSONObj obj( buffObj.data() ) ;
+               rc = regSU.insertRecord( obj, cb, compEntry ) ;
+               if ( rc )
+               {
+                  PD_LOG( PDERROR, "Failed to insert obj[%s] to reorg file, "
+                          "rc: %d", obj.toString().c_str(), rc ) ;
+                  goto error ;
+               }
+               ++_totalRecord ;
+            }
+            catch( std::exception &e )
+            {
+               PD_LOG( PDERROR, "Failed to build bson obj: %s", e.what() ) ;
+               /// the bson is crashed, not goto error
+            }
+         }
+
+         rc = regSU.flush() ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Failed to flush data to reorg file, rc: %d",
+                    rc ) ;
+            goto error ;
+         }
+      }
+
+      // let's lock the collection using exclusive mode
+      rc = context->getMBContext()->mbLock( EXCLUSIVE ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to lock collection %s, rc = %d",
+                  _clFullName.c_str(), rc ) ;
+         goto error ;
+      }
+
+      /// set to truncate
+      /// shadow copy
+      DMS_SET_MB_OFFLINE_REORG_TRUNCATE( flag ) ;
+      mbContext->mb()->_flag = flag ;
+      phase = DMS_MB_FLAG_OFFLINE_REORG_TRUNCATE ;
+
+      regSU.close() ;
+      rc = _recover( cb, context->getMBContext() ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Recover collection[%s] failed, rc: %d",
+                 _clFullName.c_str(), rc ) ;
+         goto error ;
+      }
+
+   done:
+      if ( -1 != contextID )
+      {
+         rtnCB->contextDelete( contextID, cb ) ;
+      }
+      return rc ;
+   error:
+      if ( DMS_MB_FLAG_OFFLINE_REORG_SHADOW_COPY == phase )
+      {
+         regSU.cleanup() ;
+         DMS_SET_MB_NORMAL( flag ) ;
+         mbContext->mb()->_flag = flag ;
+      }
+      goto done ;
+   }
+
+   /*
+      _rtnRecoverUnit implement
+   */
+   _rtnRecoverUnit::_rtnRecoverUnit()
+   {
+      _pSU = NULL ;
+      _invalidNum = 0 ;
+   }
+
+   _rtnRecoverUnit::~_rtnRecoverUnit()
+   {
+   }
+
+   INT32 _rtnRecoverUnit::init( dmsStorageUnit *pSu )
+   {
+      dmsStorageData    *pData   = NULL ;
+      dmsStorageLob     *pLob    = NULL ;
+
+      _pSU = pSu ;
+
+      pData = _pSU->data() ;
+      pLob = _pSU->lob() ;
+
+      rtnRUInfo info ;
+      string clFullName ;
+
+      /// analyse the file
+      for ( UINT16 i = 0 ; i < DMS_MME_SLOTS ; ++i )
+      {
+         const dmsMB *mb = pData->getMBInfo( i ) ;
+         if ( DMS_IS_MB_INUSE ( mb->_flag ) )
+         {
+            info._dataCommitFlag = mb->_commitFlag ;
+            info._dataCommitLSN = mb->_commitLSN ;
+            info._idxCommitFlag = mb->_idxCommitFlag ;
+            info._idxCommitLSN = mb->_idxCommitLSN ;
+            if ( !pLob->isOpened() )
+            {
+               info._lobCommitFlag = 1 ;
+               info._lobCommitLSN = 0 ;
+            }
+            else
+            {
+               info._lobCommitFlag = mb->_lobCommitFlag ;
+               info._lobCommitLSN = mb->_lobCommitLSN ;
+            }
+            ossStrncpy( info._clName, mb->_collectionName,
+                        DMS_COLLECTION_NAME_SZ ) ;
+            info._clName[ DMS_COLLECTION_NAME_SZ ] = 0 ;
+
+            if ( !info.isAllValid() )
+            {
+               ++_invalidNum ;
+            }
+
+            clFullName = _pSU->CSName() ;
+            clFullName += "." ;
+            clFullName += mb->_collectionName ;
+            /// add to map
+            _clStatus[ clFullName ] = info ;
+
+            PD_LOG( PDINFO, "Collection[%s] commit status[DataFlag:%u, "
+                    "DataLSN:%llu, IdxFlag:%u, IdxLSN:%llu, LobFlag:%u, "
+                    "LobLSN:%llu]", clFullName.c_str(), info._dataCommitFlag,
+                    info._dataCommitLSN, info._idxCommitFlag,
+                    info._idxCommitLSN, info._lobCommitFlag,
+                    info._lobCommitLSN ) ;
+         }
+      }
+
+      return SDB_OK ;
+   }
+
+   void _rtnRecoverUnit::release()
+   {
+      _pSU = NULL ;
+      _clStatus.clear() ;
+      _invalidNum = 0 ;
+   }
+
+   INT32 _rtnRecoverUnit::restore( pmdEDUCB *cb )
+   {
+      /// reserved
+      return SDB_OK ;
+   }
+
+   BOOLEAN _rtnRecoverUnit::isAllValid() const
+   {
+      return 0 == _invalidNum ? TRUE : FALSE ;
+   }
+
+   BOOLEAN _rtnRecoverUnit::isAllInvalid() const
+   {
+      if ( _invalidNum > 0 &&
+           _invalidNum == _clStatus.size() )
+      {
+         return TRUE ;
+      }
+      return FALSE ;
+   }
+
+   UINT32 _rtnRecoverUnit::getValidCLItem( MAP_SU_STATUS &items )
+   {
+      items.clear() ;
+      MAP_SU_STATUS::iterator it = _clStatus.begin() ;
+      while( it != _clStatus.end() )
+      {
+         rtnRUInfo &item = it->second ;
+         if ( item.isAllValid() )
+         {
+            items[ it->first ] = it->second ;
+         }
+         ++it ;
+      }
+      return items.size() ;
+   }
+
+   UINT32 _rtnRecoverUnit::getInvalidCLItem( MAP_SU_STATUS &items )
+   {
+      items.clear() ;
+      MAP_SU_STATUS::iterator it = _clStatus.begin() ;
+      while( it != _clStatus.end() )
+      {
+         rtnRUInfo &item = it->second ;
+         if ( !item.isAllValid() )
+         {
+            items[ it->first ] = it->second ;
+         }
+         ++it ;
+      }
+      return items.size() ;
+   }
+
+   UINT32 _rtnRecoverUnit::getCLItems( MAP_SU_STATUS &item )
+   {
+      item = _clStatus ;
+      return item.size() ;
+   }
+
+   rtnRUInfo* _rtnRecoverUnit::getItem( const string &name )
+   {
+      MAP_SU_STATUS::iterator it = _clStatus.find( name ) ;
+      if ( it != _clStatus.end() )
+      {
+         return &(it->second) ;
+      }
+      return NULL ;
+   }
+
+   INT32 _rtnRecoverUnit::cleanup( pmdEDUCB *cb )
+   {
+      INT32 rc = SDB_OK ;
+      ossTick beginTick ;
+      ossTick endTick ;
+      ossTickDelta timeSpan ;
+      ossTickConversionFactor factor ;
+      UINT32 seconds = 0 ;
+      UINT32 microSec = 0 ;      
+      UINT32 dropCount = 0 ;
+
+      beginTick.sample() ;
+      PD_LOG( PDEVENT, "Begin to cleanup collectionspace[%s]...",
+              _pSU->CSName() ) ;
+
+      /// drop invalid collection
+      MAP_SU_STATUS::iterator it ;
+      for ( it = _clStatus.begin() ; it != _clStatus.end() ; ++it )
+      {
+         rtnRUInfo &info = it->second ;
+
+         if ( !info.isAllValid() )
+         {
+            rc = _pSU->data()->dropCollection( info._clName, cb, NULL,
+                                               TRUE, NULL ) ;
+            if ( rc )
+            {
+               PD_LOG( PDERROR, "Drop collection[%s] failed, rc: %d",
+                       info._clName, rc ) ;
+               goto error ;
+            }
+            else
+            {
+               PD_LOG( PDEVENT, "Drop collection[%s] succeed",
+                       info._clName ) ;
+               ++dropCount ;
+            }
+         }
+      }
+
+      /// if the lob is invalid, rebuild thd bme
+      if ( _pSU->lob()->isOpened() &&
+           0 == _pSU->lob()->isCrashed() )
+      {
+         rc = _pSU->lob()->rebuildBME() ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Rebuild lob[%s]'s BME failed, rc: %d",
+                    _pSU->lob()->getSuFileName(), rc ) ;
+            goto error ;
+         }
+      }
+
+   done:
+      endTick.sample() ;
+      timeSpan = endTick - beginTick ;
+      timeSpan.convertToTime( factor, seconds, microSec ) ;
+
+      if ( SDB_OK == rc )
+      {
+         PD_LOG( PDEVENT, "Cleanup collectionspace[%s] succeed, "
+                 "cost: %u(s), Dropped Collection Num: %u",
+                 _pSU->CSName(), seconds, dropCount ) ;
+      }
+      else
+      {
+         PD_LOG( PDERROR, "Cleanup collectionspace[%s] failed, rc: %d, "
+                 "cost: %u(s)", _pSU->CSName(), rc, seconds ) ;
+      }
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _rtnRecoverUnit::rebuild( pmdEDUCB *cb )
+   {
+      INT32 rc = SDB_OK ;
+      ossTick beginTick ;
+      ossTick endTick ;
+      ossTickDelta timeSpan ;
+      ossTickConversionFactor factor ;
+      UINT32 seconds = 0 ;
+      UINT32 microSec = 0 ;
+
+      UINT32 totalNum = _clStatus.size() ;
+      UINT32 sucNum = 0 ;
+      MAP_SU_STATUS::iterator it ;
+
+      beginTick.sample() ;
+      PD_LOG( PDEVENT, "Begin to rebuild collectionspace[%s]...",
+              _pSU->CSName() ) ;
+
+      /// disable sync
+      _pSU->enableSync( FALSE ) ;
+
+      /// if the lob is invalid, rebuild thd bme
+      if ( _pSU->lob()->isOpened() &&
+           0 == _pSU->lob()->isCrashed() )
+      {
+         rc = _pSU->lob()->rebuildBME() ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Rebuild lob[%s]'s BME failed, rc: %d",
+                    _pSU->lob()->getSuFileName(), rc ) ;
+            goto error ;
+         }
+      }
+
+      /// rebuild collections
+      for ( it = _clStatus.begin() ; it != _clStatus.end() ; ++it )
+      {
+         rtnRUInfo &info = it->second ;
+
+         rtnCLRebuilder rebuilder( _pSU, info._clName ) ;
+         rc = rebuilder.rebuild( cb, &info ) ;
+         if ( rc )
+         {
+            if ( SDB_APP_INTERRUPT != rc )
+            {
+               PD_LOG( PDERROR, "Rebuild collection[%s] failed, rc: %d",
+                       info._clName, rc ) ;
+            }
+            goto error ;
+         }
+         ++sucNum ;
+      }
+
+      /// all the collectionspace rebuild ok
+      _pSU->restoreForCrash() ;
+
+   done:
+      endTick.sample() ;
+      timeSpan = endTick - beginTick ;
+      timeSpan.convertToTime( factor, seconds, microSec ) ;
+
+      if ( SDB_OK == rc )
+      {
+         PD_LOG( PDEVENT, "Rebuild collectionspace[%s] succeed, "
+                 "cost: %u(s), Total Collection Num: %u, "
+                 "Succeed Collection Num: %u", _pSU->CSName(),
+                 seconds, totalNum, sucNum ) ;
+      }
+      else
+      {
+         PD_LOG( PDERROR, "Rebuild collectionspace[%s] failed, rc: %d, "
+                 "cost: %u(s), Total Collection Num: %u, "
+                 "Succeed Collection Num: %u", _pSU->CSName(), rc,
+                 seconds, totalNum, sucNum ) ;
+      }
+      /// enable sync
+      _pSU->enableSync( TRUE ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   /*
+      _rtnDBOprBase define
+   */
+   INT32 _rtnDBOprBase::doOpr( pmdEDUCB *cb )
+   {
+      INT32 rc = SDB_OK ;
+      BOOLEAN hasLock = FALSE ;
+
+      if ( pmdGetStartup().isOK() )
+      {
+         /// don't need to rebuild
+         return rc ;
+      }
+
+      pmdKRCB *krcb = pmdGetKRCB() ;
+      SDB_DMSCB *dmsCB = krcb->getDMSCB() ;
+      SDB_DPSCB *dpsCB = krcb->getDPSCB() ;
+      ossTick beginTick ;
+      ossTick endTick ;
+      ossTickDelta timeSpan ;
+      ossTickConversionFactor factor ;
+      UINT32 seconds = 0 ;
+      UINT32 microSec = 0 ;
+
+      UINT32 totalCount = 0 ;
+      UINT32 sucNum = 0 ;
+
+      set< monCSSimple >  csList ;
+      set< monCSSimple >::iterator it ;
+
+      rc = _onBegin( cb ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+
+      PD_LOG( PDEVENT, "Start %s database", oprName() ) ;
+      beginTick.sample() ;
+
+      if ( _lockDMS() )
+      {
+         rc = dmsCB->registerRebuild( cb ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Register rebuild failed, rc: %d", rc ) ;
+            goto error ;
+         }
+         hasLock = TRUE ;
+      }
+
+      /// dump all collectionspace
+      dmsCB->dumpInfo( csList, TRUE ) ;
+      totalCount = csList.size() ;
+
+      for ( it = csList.begin() ; it != csList.end() ; ++it )
+      {
+         const monCSSimple &csInfo = *it ;
+
+         if ( 0 == ossStrcmp( csInfo._name, SDB_DMSTEMP_NAME ) )
+         {
+            ++sucNum ;
+            continue ;
+         }
+
+         dmsStorageUnitID suID = DMS_INVALID_SUID ;
+         dmsStorageUnit *su = NULL ;
+         rc = dmsCB->nameToSUAndLock( csInfo._name, suID, &su ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Failed to lock collectionspace[%s], rc: %d",
+                    csInfo._name, rc ) ;
+            goto error ;
+         }
+
+         rtnRecoverUnit recoverUnit ;
+         recoverUnit.init( su ) ;
+
+         rc = _doOpr( cb, &recoverUnit, suID ) ;
+         if ( DMS_INVALID_SUID != suID )
+         {
+            dmsCB->suUnlock( suID ) ;
+            suID = DMS_INVALID_SUID ;
+         }
+
+         /// jduge the result
+         if ( rc )
+         {
+            if ( SDB_APP_INTERRUPT != rc )
+            {
+               PD_LOG( PDERROR, "Do %s collectionspace[%s] failed, rc: %d",
+                       oprName(), csInfo._name, rc ) ;
+            }
+            goto error ;
+         }
+         ++sucNum ;
+      }
+
+      /// move the dps
+      if ( dpsCB && _cleanDPS() )
+      {
+         DPS_LSN expectLSN = dpsCB->expectLsn() ;
+         if ( DPS_INVALID_LSN_OFFSET == expectLSN.offset ||
+              0 == expectLSN.offset )
+         {
+            /// when rebuild, we can't move the dps to 0, because the new add
+            /// node will sync from lsn 0
+            expectLSN.offset = ossAlign4( (UINT32)sizeof( dpsLogRecordHeader ) ) ;
+         }
+         if ( DPS_INVALID_LSN_VERSION == expectLSN.version )
+         {
+            expectLSN.version = DPS_INVALID_LSN_VERSION + 1 ;
+         }
+
+         /// clear transinfo
+         sdbGetTransCB()->clearTransInfo() ;
+         /// cut all dps
+         dpsCB->move( 0, expectLSN.version ) ;
+         /// then move to non-zero
+         dpsCB->move( expectLSN.offset, expectLSN.version ) ;
+         PD_LOG( PDEVENT, "Clean replica-logs succeed" ) ;
+      }
+
+      /// on end
+      _onSucceed( cb ) ;
+
+   done:
+      if ( hasLock )
+      {
+         dmsCB->rebuildDown( cb ) ;
+      }
+      endTick.sample() ;
+      timeSpan = endTick - beginTick ;
+      timeSpan.convertToTime( factor, seconds, microSec ) ;
+
+      if ( SDB_OK == rc )
+      {
+         PD_LOG( PDEVENT, "%s database succeed, cost: %u(s), "
+                 "Total CS Num: %u, Succeed CS Num: %u", oprName(),
+                 seconds, totalCount, sucNum ) ;
+      }
+      else
+      {
+         PD_LOG( PDERROR, "%s database failed, rc: %d, "
+                 "cost: %u(s), Total CS Num: %u, Succeed CS Num: %u",
+                 oprName(), rc, seconds, totalCount, sucNum ) ;
+      }
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   /*
+      _rtnDBRebuilder implement
+   */
+   INT32 _rtnDBRebuilder::_doOpr( pmdEDUCB *cb,
+                                  rtnRecoverUnit *pUnit,
+                                  dmsStorageUnitID &suID )
+   {
+      INT32 rc = SDB_OK ;
+
+      if ( pUnit->isAllValid() )
+      {
+         pUnit->getSU()->restoreForCrash() ;
+         PD_LOG( PDEVENT, "Collectionspace[%s] is valid, don't need to "
+                 "rebuild", pUnit->getSU()->CSName() ) ;
+      }
+      else
+      {
+         rc = pUnit->rebuild( cb ) ;
+      }
+      return rc ;
+   }
+
+   void _rtnDBRebuilder::_onSucceed( pmdEDUCB *cb )
+   {
+      /// set ok
+      pmdGetStartup().ok( TRUE ) ;
+   }
+
+   /*
+      _rtnDBCleaner implement
+   */
+   INT32 _rtnDBCleaner::_doOpr( pmdEDUCB *cb,
+                                rtnRecoverUnit *pUnit,
+                                dmsStorageUnitID &suID )
+   {
+      INT32 rc = SDB_OK ;
+      SDB_DMSCB *dmsCB = pmdGetKRCB()->getDMSCB() ;
+
+      if ( pUnit->isAllInvalid() )
+      {
+         string csName = pUnit->getSU()->CSName() ;
+         dmsCB->suUnlock( suID ) ;
+         suID = DMS_INVALID_SUID ;
+
+         rc = dmsCB->dropCollectionSpace( csName.c_str(), cb, NULL ) ;
+         if ( SDB_DMS_CS_NOTEXIST == rc )
+         {
+            rc = SDB_OK ;
+         }
+      }
+      else
+      {
+         rc = pUnit->cleanup( cb ) ;
+      }
+
+      return rc ;
+   }
+
+
+}
+
+
