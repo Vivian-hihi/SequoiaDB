@@ -374,11 +374,11 @@ namespace engine
       return count ;
    }
 
-   static CHAR* _rtnIndexKeyData( dmsExtentID extentID,
-                                  dmsStorageUnit *su,
-                                  UINT32 deep,
-                                  UINT32 index,
-                                  dmsRecordID &rid )
+   static const CHAR* _rtnIndexKeyData( dmsExtentID extentID,
+                                        dmsStorageUnit *su,
+                                        UINT32 deep,
+                                        UINT32 index,
+                                        dmsRecordID &rid )
    {
       if ( 0 == deep || DMS_INVALID_EXTENT == extentID )
       {
@@ -475,15 +475,19 @@ namespace engine
          BOOLEAN findPos = FALSE ;
          BSONObj key ;
          dmsRecordID rid ;
-
          UINT32 segmentCount  = 1 ;
-         dmsMBEx *mbEx        = NULL ;
 
-         if ( DMS_INVALID_EXTENT != mbContext->mb()->_mbExExtentID &&
-              NULL != ( mbEx = ( dmsMBEx* )su->data()->extentAddr(
-              mbContext->mb()->_mbExExtentID ) ) )
+         if ( DMS_INVALID_EXTENT != mbContext->mb()->_mbExExtentID )
          {
-            if ( mbEx->_header._usedSegNum > 0 )
+            dmsExtRW extRW ;
+            const dmsMBEx *mbEx  = NULL ;
+
+            extRW = su->data()->extent2RW( mbContext->mb()->_mbExExtentID,
+                                           -1 ) ;
+            extRW.setNothrow( TRUE ) ;
+            mbEx = extRW.readPtr<dmsMBEx>() ;
+
+            if ( mbEx && mbEx->_header._usedSegNum > 0 )
             {
                segmentCount = mbEx->_header._usedSegNum ;
             }
@@ -1039,6 +1043,7 @@ namespace engine
       dmsStorageUnit *su   = NULL ;
       BOOLEAN writable     = FALSE ;
       BOOLEAN hasAquired   = FALSE ;
+      pmdOptionsCB *optCB  = pmdGetOptionCB() ;
 
       // make sure the collectionspace length is not out of range
       UINT32 length = ossStrlen ( pCollectionSpace ) ;
@@ -1107,6 +1112,7 @@ namespace engine
       // new storage unit, will insert into dmsCB->addCollectionSpace
       su = SDB_OSS_NEW dmsStorageUnit ( pCollectionSpace, 1,
                                         pmdGetBuffPool(),
+                                        dmsCB->getStatus(),
                                         pageSize,
                                         lobPageSize ) ;
       if ( !su )
@@ -1119,7 +1125,8 @@ namespace engine
       rc = su->open ( pmdGetOptionCB()->getDbPath(),
                       pmdGetOptionCB()->getIndexPath(),
                       pmdGetOptionCB()->getLobPath(),
-                      TRUE, delWhenExist ) ;
+                      pmdGetSyncMgr(),
+                      TRUE ) ;
       if ( rc )
       {
          PD_LOG ( PDERROR, "Failed to create collection space %s at %s, rc: %d",
@@ -1127,7 +1134,12 @@ namespace engine
                   rc ) ;
          goto error ;
       }
-
+      /// set config
+      su->setSyncConfig( optCB->getSyncInterval(),
+                         optCB->getSyncRecordNum(),
+                         optCB->getSyncDirtyRatio() ) ;
+      su->setSyncDeep( optCB->isSyncDeep() ) ;
+      /// add collctionspace
       rc = dmsCB->addCollectionSpace( pCollectionSpace, 1, su, cb, dpsCB ) ;
       if ( rc )
       {
@@ -1244,7 +1256,7 @@ namespace engine
       writable = TRUE ;
 
       rc = su->data()->addCollection ( pCollectionShortName, &collectionID,
-                                       attributes, cb, dpsCB, 0, sysCall, FALSE,
+                                       attributes, cb, dpsCB, 0, sysCall,
                                        compressorType, &logicalID ) ;
       if ( rc )
       {
