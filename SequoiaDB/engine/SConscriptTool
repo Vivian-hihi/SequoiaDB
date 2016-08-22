@@ -450,6 +450,7 @@ sdbListMain = [
 sdbcmMain = [
       "rtn/rtnBackgroundJobBase.cpp",
       "pmd/pmdMemPool.cpp",
+      "pmd/pmdSyncMgr.cpp",
       "pmd/pmd.cpp",
       "pmd/pmdEDU.cpp",
       "pmd/pmdEDUMgr.cpp",
