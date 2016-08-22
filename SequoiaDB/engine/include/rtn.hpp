@@ -512,9 +512,11 @@ namespace engine
                               const BSONObj &orderBy,
                               BOOLEAN &needReset ) ;
 
-   INT32 rtnSyncDB( pmdEDUCB *cb, BOOLEAN ignoreTick ) ;
+   /*
+      syncType: =0 ->FALSE, >0 ->TRUE, <0 -> Use system config
+   */
+   INT32 rtnSyncDB( pmdEDUCB *cb, INT32 syncType, BOOLEAN block = FALSE ) ;
 
-   INT32 rtnResetLastLSN( pmdEDUCB *cb) ;
 }
 
 #endif
