@@ -87,6 +87,7 @@ pmdFiles = [
       "pmd/pmdLoggW.cpp",
       "pmd/pmdCluster.cpp",
       "pmd/pmdMemPool.cpp",
+      "pmd/pmdSyncMgr.cpp",
       "pmd/pmdEnv.cpp",
       "pmd/pmdOptionsMgr.cpp",
       "pmd/pmdCoord.cpp",
@@ -175,6 +176,7 @@ rtnFiles = [
       "rtn/rtnAPM.cpp",
       "rtn/rtnBackup.cpp",
       "rtn/rtnReorg.cpp",
+      "rtn/rtnRecover.cpp",
       "rtn/rtnCoordCommands.cpp",
       "rtn/rtnCoordDCCommands.cpp",
       "rtn/rtnCoordQuery.cpp",
@@ -191,7 +193,6 @@ rtnFiles = [
       "rtn/rtnBackgroundJobBase.cpp",
       "rtn/rtnBackgroundJob.cpp",
       "rtn/rtnPrefetchJob.cpp",
-      "rtn/rtnPageCleanerJob.cpp",
       "rtn/rtnCoordAuth.cpp",
       "rtn/rtnCoordAuthCrt.cpp",
       "rtn/rtnCoordAuthBase.cpp",
@@ -248,6 +249,7 @@ msgFiles = [
       ]
 
 dmsFiles = [
+      "dms/dmsStatus.cpp",
       "dms/dmsStorageBase.cpp",
       "dms/dmsStorageData.cpp",
       "dms/dmsStorageIndex.cpp",
