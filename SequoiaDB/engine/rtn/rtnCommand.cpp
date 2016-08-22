@@ -3654,12 +3654,11 @@ namespace engine
    IMPLEMENT_CMD_AUTO_REGISTER( _rtnSyncDB )
    _rtnSyncDB::_rtnSyncDB()
    {
-
+      _syncType = 0 ;
    }
 
    _rtnSyncDB::~_rtnSyncDB()
    {
-
    }
 
    // PD_TRACE_DECLARE_FUNCTION( SDB__RTNSYNCDB_INIT, "_rtnSyncDB::init" )
@@ -3670,7 +3669,39 @@ namespace engine
                             const CHAR *pOrderByBuff,
                             const CHAR *pHintBuff )
    {
-      return SDB_OK ;
+      INT32 rc = SDB_OK ;
+
+      try
+      {
+         BSONObj matcher( pMatcherBuff ) ;
+         BSONElement e = matcher.getField( FIELD_NAME_DEEP ) ;
+         if ( e.isNumber() )
+         {
+            _syncType = (INT32)e.numberInt() ;
+         }
+         else if ( e.isBoolean() )
+         {
+            _syncType = e.boolean() ? 1 : 0 ;
+         }
+         else if ( !e.eoo() )
+         {
+            PD_LOG( PDERROR, "Param[%s] is invalid in obj[%s]",
+                    FIELD_NAME_DEEP, matcher.toString().c_str() ) ;
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+      }
+      catch( std::exception &e )
+      {
+         PD_LOG( PDERROR, "Occur exception: %s", e.what() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION( SDB__RTNSYNCDB_DOIT, "_rtnSyncDB::doit" )
@@ -3681,12 +3712,13 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RTNSYNCDB_DOIT ) ;
 
-      rc = rtnSyncDB( cb, TRUE ) ;
+      rc = rtnSyncDB( cb, _syncType, FALSE ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "failed to sync db:%d", rc ) ;
+         PD_LOG( PDERROR, "Failed to sync db: %d", rc ) ;
          goto error ;
       }
+
    done:
       PD_TRACE_EXITRC( SDB__RTNSYNCDB_DOIT, rc ) ;
       return rc ;
