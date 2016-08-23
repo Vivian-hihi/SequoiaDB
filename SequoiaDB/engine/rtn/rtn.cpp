@@ -380,6 +380,7 @@ namespace engine
       CHAR csName[ DMS_SU_NAME_SZ + 1 ]        = {0} ;
       UINT32 sequence                          = 0 ;
       dmsStorageUnit *storageUnit              = NULL ;
+      pmdOptionsCB *optCB                      = pmdGetOptionCB() ;
 
       try
       {
@@ -410,7 +411,8 @@ namespace engine
                      {
                         storageUnit = SDB_OSS_NEW dmsStorageUnit ( csName,
                                                                    sequence,
-                                                                   pmdGetBuffPool() ) ;
+                                                                   pmdGetBuffPool(),
+                                                                   dmsCB->getStatus() ) ;
                         if ( !storageUnit )
                         {
                            PD_LOG_MSG ( PDERROR, "Failed to allocate "
@@ -423,7 +425,11 @@ namespace engine
                         // container, if we can't open the container, maybe
                         // it's just invalid, let's continue open other storage
                         // units without this one
-                        rc = storageUnit->open ( dataPath, indexPath, lobPath, FALSE ) ;
+                        rc = storageUnit->open ( dataPath,
+                                                 indexPath,
+                                                 lobPath,
+                                                 pmdGetSyncMgr(),
+                                                 FALSE ) ;
                         if ( rc )
                         {
                            SDB_OSS_DEL storageUnit ;
@@ -432,7 +438,12 @@ namespace engine
                                     dir_iter->path().string().c_str() ) ;
                            continue ;
                         }
-
+                        /// set config
+                        storageUnit->setSyncConfig( optCB->getSyncInterval(),
+                                                    optCB->getSyncRecordNum(),
+                                                    optCB->getSyncDirtyRatio() ) ;
+                        storageUnit->setSyncDeep( optCB->isSyncDeep() ) ;
+                        /// add collectionspace
                         rc = dmsCB->addCollectionSpace ( csName, sequence,
                                                          storageUnit, NULL,
                                                          NULL ) ;
@@ -544,6 +555,7 @@ namespace engine
       CHAR csName [ DMS_SU_FILENAME_SZ + 1 ]   = {0} ;
       UINT32 sequence                          = 0 ;
       dmsStorageUnit *storageUnit              = NULL ;
+      pmdOptionsCB *optCB                      = pmdGetOptionCB() ;
 
       SDB_ASSERT ( dataPath, "data path can't be NULL" ) ;
       SDB_ASSERT ( indexPath, "index path can't be NULL" ) ;
@@ -573,7 +585,8 @@ namespace engine
                      PD_LOG ( PDDEBUG, "Candidate Filename: %s", pFileName ) ;
                      storageUnit = SDB_OSS_NEW dmsStorageUnit ( csName,
                                                                 sequence,
-                                                                pmdGetBuffPool() ) ;
+                                                                pmdGetBuffPool(),
+                                                                dmsCB->getStatus() ) ;
                      PD_CHECK ( storageUnit, SDB_OOM, error, PDERROR,
                                 "Failed to allocate dmsStorageUnit for %s",
                                 dir_iter->path().string().c_str() ) ;
@@ -583,6 +596,7 @@ namespace engine
                      rc = storageUnit->open ( dataPath,
                                               indexPath,
                                               lobPath,
+                                              pmdGetSyncMgr(),
                                               FALSE ) ;
                      if ( rc )
                      {
@@ -594,7 +608,12 @@ namespace engine
                         PMD_RESTART_DB( rc ) ;
                         goto error ;
                      }
-
+                     /// set config
+                     storageUnit->setSyncConfig( optCB->getSyncInterval(),
+                                                 optCB->getSyncRecordNum(),
+                                                 optCB->getSyncDirtyRatio() ) ;
+                     storageUnit->setSyncDeep( optCB->isSyncDeep() ) ;
+                     /// add collectionspace
                      rc = dmsCB->addCollectionSpace ( csName, sequence,
                                                       storageUnit, NULL,
                                                       NULL ) ;
@@ -1316,46 +1335,73 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNSYNCDB, "rtnSyncDB" )
-   INT32 rtnSyncDB( _pmdEDUCB *cb, BOOLEAN ignoreTick )
+   INT32 rtnSyncDB( _pmdEDUCB *cb, INT32 syncType, BOOLEAN block )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB_RTNSYNCDB ) ;
-      SDB_DMSCB *dmsCB = sdbGetDMSCB () ;
-      SDB_DPSCB *dpsCB = sdbGetDPSCB() ;
+
+      pmdKRCB *krcb = pmdGetKRCB() ;
+      SDB_DMSCB *dmsCB = krcb->getDMSCB() ;
+      SDB_DPSCB *dpsCB = krcb->getDPSCB() ;
+
+      UINT64 beginTick = pmdGetDBTick() ;
+      DPS_LSN commitLSN ;
+      BOOLEAN sync = FALSE ;
       std::set<monCollectionSpace> allCS ;
       BOOLEAN dmsLocked = FALSE ;
-      UINT64 beginTick = pmdGetDBTick() ;
 
-      rc = dmsCB->writable( cb ) ;
-      if ( rc )
+      if ( !dpsCB || !dpsCB )
       {
-         PD_LOG ( PDERROR, "database is not writable, rc = %d", rc ) ;
-         goto error;
+         /// do nothing
+         goto done ;
       }
-      dmsLocked = TRUE ;
 
-      if ( NULL != dpsCB )
+      /// init config
+      if ( 0 == syncType )
       {
-         rc = dpsCB->commit( TRUE, NULL ) ;
-         if ( SDB_OK != rc )
+         sync = FALSE ;
+      }
+      else if ( syncType > 0 )
+      {
+         sync = TRUE ;
+      }
+      else
+      {
+         sync = pmdGetOptionCB()->isSyncDeep() ;
+      }
+
+      /// block write
+      if ( block )
+      {
+         rc = dmsCB->blockWrite( cb ) ;
+         if ( rc )
          {
-            PD_LOG( PDERROR, "failed to commit dps log:%d", rc ) ;
-            goto error ;
+            PD_LOG ( PDERROR, "Block write failed, rc: %d", rc ) ;
+            goto error;
          }
+         dmsLocked = TRUE ;
       }
 
+      /// commit log
+      rc = dpsCB->commit( sync, &commitLSN ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "Failed to commit dps log: %d", rc ) ;
+         goto error ;
+      }
+
+      /// Dump all collectionspace, except SYSTEM
       dmsCB->dumpInfo( allCS, TRUE ) ;
-      for ( std::set<monCollectionSpace>::const_iterator itr = allCS.begin();
-            itr != allCS.end();
+
+      for ( std::set<monCollectionSpace>::const_iterator itr = allCS.begin() ;
+            itr != allCS.end() ;
             ++itr )
       {
          const CHAR *csName = itr->_name ;
          dmsStorageUnit *su = NULL ;
          dmsStorageUnitID suID = DMS_INVALID_CS ;
-         BOOLEAN failed = TRUE ;
 
-         rc = dmsCB->nameToSUAndLock ( csName, suID,
-                                       &su, SHARED ) ;
+         rc = dmsCB->nameToSUAndLock ( csName, suID, &su, SHARED ) ;
          if ( SDB_DMS_CS_NOTEXIST == rc )
          {
             /// may be dropped, continue ;
@@ -1363,99 +1409,53 @@ namespace engine
          }
          else if ( SDB_OK != rc )
          {
-            PD_LOG( PDERROR, "failed to get lock of cs[%s], rc:%d",
+            PD_LOG( PDERROR, "Failed to get lock of cs[%s], rc: %d",
                     csName, rc ) ;
-            goto error ;
+            continue ;
          }
 
+         /// except SYSTEM
          if ( su->data()->isTempSU() )
          {
             dmsCB->suUnlock( suID ) ;
             continue ;
          }
 
-         rc = su->tryToFlush( ignoreTick, failed ) ;
-         if ( SDB_OK != rc )
+         /// sync
+         rc = su->sync( sync, commitLSN.offset, cb ) ;
+         if ( rc )
          {
-            dmsCB->suUnlock( suID ) ;
-            PD_LOG( PDERROR, "failed to flush cs[%s], rc:%d", csName, rc ) ;
-            goto error ;
+            PD_LOG( PDWARNING, "Sync collectionspace[%s] to file failed, "
+                    "rc: %d", csName, rc ) ;
+            /// not report the error
          }
-
          dmsCB->suUnlock( suID ) ;
       }
+
+      /// commit log again
+      rc = dpsCB->commit( sync, &commitLSN ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "Failed to commit dps log: %d", rc ) ;
+         goto error ;
+      }
+
    done:
       if ( dmsLocked )
       {
-         dmsCB->writeDown( cb ) ;
+         dmsCB->unblockWrite( cb ) ;
       }
-      PD_LOG( PDDEBUG, "finish to sync db, return code:%d, cost(ms): %lld",
-              rc, pmdGetTickSpanTime( beginTick ) ) ;
+      if ( SDB_OK == rc )
+      {
+         PD_LOG( PDEVENT, "Sync db succeed, commit lsn[%u.%llu], "
+                 "cost(ms): %llu", commitLSN.version, commitLSN.offset,
+                 pmdGetTickSpanTime( beginTick ) ) ;
+      }
       PD_TRACE_EXITRC( SDB_RTNSYNCDB, rc ) ;
       return rc ;
    error:
       goto done ;
    }
 
-   INT32 rtnResetLastLSN( _pmdEDUCB *cb )
-   {
-      INT32 rc = SDB_OK ;
-      SDB_DMSCB *dmsCB = sdbGetDMSCB () ;
-      std::set<monCollectionSpace> allCS ;
-      BOOLEAN dmsLocked = FALSE ;
-
-      PD_LOG( PDEVENT, "begin to sync db data" ) ;
-      rc = dmsCB->writable( cb ) ;
-      if ( rc )
-      {
-         PD_LOG ( PDERROR, "database is not writable, rc = %d", rc ) ;
-         goto error;
-      }
-      dmsLocked = TRUE ;
-
-      dmsCB->dumpInfo( allCS, TRUE ) ;
-      for ( std::set<monCollectionSpace>::const_iterator itr = allCS.begin();
-            itr != allCS.end();
-            ++itr )
-      {
-         const CHAR *csName = itr->_name ;
-         dmsStorageUnit *su = NULL ;
-         dmsStorageUnitID suID = DMS_INVALID_CS ;
-         //BOOLEAN failed = TRUE ;
-
-
-         rc = dmsCB->nameToSUAndLock ( csName, suID,
-                                       &su, SHARED ) ;
-         if ( SDB_DMS_CS_NOTEXIST == rc )
-         {
-            continue ;
-         }
-         else if ( SDB_OK != rc )
-         {
-            PD_LOG( PDERROR, "failed to get lock of cs[%s], rc:%d",
-                    csName, rc ) ;
-            goto error ;
-         }
-
-         if ( su->data()->isTempSU() )
-         {
-            dmsCB->suUnlock( suID ) ;
-            continue ;
-         }
-
-         su->resetLastLSN( -1 ) ;
-         dmsCB->suUnlock( suID ) ;
-      }
-
-   done:
-      if ( dmsLocked )
-      {
-         dmsCB->writeDown( cb ) ;
-      }
-
-      return rc ;
-   error:
-      goto done ;
-   }
 }
 
