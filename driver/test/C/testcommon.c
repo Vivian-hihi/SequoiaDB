@@ -690,12 +690,12 @@ long getRecordNum ( sdbCursorHandle cursor )
 *@Modify List :
 *               2014-7-15   xiaojun Hu   Init
 *******************************************************************************/
-void getUniqueName( const CHAR *modName, CHAR getName[] )
+void getUniqueName( const CHAR *modName, CHAR *pBuffer )
 {
    const CHAR *uniqName = "sdbtest_" ;
    pid_t pid ;
    pid = getpid() ;
-   sprintf( getName, "%s%s_%d", uniqName, modName, (unsigned int)pid ) ;
+   sprintf( pBuffer, "%s%s_%d", uniqName, modName, (unsigned int)pid ) ;
 }
 
 BOOLEAN isCluster( sdbConnectionHandle db )

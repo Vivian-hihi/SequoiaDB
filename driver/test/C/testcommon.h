@@ -14,8 +14,10 @@
 
 
 
+//#define HOST                  "192.168.20.42"
 #define HOST                  "localhost"
 #define SERVER                "11810" // for coord
+//#define SERVER                "50000" // for coord
 #define SERVER1               "11800" // for catalog
 #define SERVER2               "21100" // for data
 #define USER                  ""
@@ -164,7 +166,7 @@ int genRecord ( sdbConnectionHandle *sdb, const char *clFullName, long num ) ;
 long getRecordNum ( sdbCursorHandle cursor ) ;
 
 /* get name have pid, add by xiaojun */
-void getUniqueName( const CHAR *modName, CHAR getName[] ) ;
+void getUniqueName( const CHAR *modName, CHAR *pBuffer ) ;
 
 BOOLEAN isCluster( sdbConnectionHandle db ) ;
 

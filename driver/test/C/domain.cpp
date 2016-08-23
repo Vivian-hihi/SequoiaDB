@@ -20,6 +20,7 @@
 // Test domain use in abnormal
 TEST( sdbDomainTest, abnormal )
 {
+   INT32 rc                       = SDB_OK ;
    sdbConnectionHandle db         = 0 ;
    sdbDomainHandle dom            = 0 ;
    sdbCursorHandle cursor         = 0 ;
@@ -33,10 +34,9 @@ TEST( sdbDomainTest, abnormal )
    const CHAR *pDomName2          = "NULLHandle" ;
    const CHAR *getDomName1        = "NoCreateDomainName" ;
    const CHAR *altDomName1        = "AlterCorrectDomainName" ;
-   INT32 rc                       = SDB_OK ;
    CHAR pDomainName[256] ;
-   CHAR pDomName1[20] ;
-   CHAR getDomName[40] ;
+   CHAR pDomName1[50] ;
+   CHAR getDomName[50] ;
    CHAR altDomName[50] ;
 
    // Deal with domain name
@@ -107,7 +107,7 @@ TEST( sdbDomainTest, normal )
    const CHAR *pDomainName1       = "DomainNameNormalRunAll" ;
    INT32 rc                       = SDB_OK ;
    CHAR  bson_itValue[5][1000] ;
-   CHAR  pDomainName[32] ;
+   CHAR  pDomainName[50] ;
    const CHAR * key ;
    bson  domObj ;
    bson  altObj ;
