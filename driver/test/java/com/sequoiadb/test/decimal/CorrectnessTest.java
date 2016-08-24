@@ -452,6 +452,97 @@ System.out.println("bigDecimal: " + new BigDecimal(decimal3.getValue()));
 		
 	}
 	
+	@Test
+//	@Ignore
+	public void roundingTest2() {
+		// case 1: positive
+		String str = "9999.99999";
+		String expectStr1 = "10000.0000"; // $precision is: [9, 4]
+
+		BSONDecimal decimal1 = new BSONDecimal(str, 9, 4);
+		
+        System.out.println("decimal1 is: " + decimal1);
+		
+        BSONObject obj = 
+        		new BasicBSONObject("case1", "test_in_java").append("f1", decimal1);
+		System.out.println("inserted obj is: " + obj);
+        cl.insert(obj);
+        cur = cl.query(new BasicBSONObject().append("case1", new BasicBSONObject("$exists",1)), 
+        		null, null, null);
+        assertTrue(cur.hasNext());
+        obj = cur.getNext();
+		System.out.println("returned obj is: " + obj);
+        BSONDecimal retDecimal1 = (BSONDecimal)obj.get("f1");
+        
+        System.out.println("retDecimal1 is: " + retDecimal1);
+        // check
+        Assert.assertEquals(0,new BigDecimal(expectStr1).compareTo(new BigDecimal(retDecimal1.getValue())));
+		System.out.println("finish case 1 in roundingTest2");
+	}
+	
+	@Test
+//	@Ignore
+	public void roundingTes3() {
+		// case 1: positive
+		String str = "9999.96";
+		String expectStr1 = "10000.0"; // $precision is: [9, 4]
+
+		BSONDecimal decimal1 = new BSONDecimal(str, 6, 1);
+		
+        System.out.println("decimal1 is: " + decimal1);
+		
+        BSONObject obj = 
+        		new BasicBSONObject("case1", "test_in_java").append("f1", decimal1);
+		System.out.println("inserted obj is: " + obj);
+        cl.insert(obj);
+        cur = cl.query(new BasicBSONObject().append("case1", new BasicBSONObject("$exists",1)), 
+        		null, null, null);
+        assertTrue(cur.hasNext());
+        obj = cur.getNext();
+		System.out.println("returned obj is: " + obj);
+        BSONDecimal retDecimal1 = (BSONDecimal)obj.get("f1");
+        
+        System.out.println("retDecimal1 is: " + retDecimal1);
+        // check
+        Assert.assertEquals(0,new BigDecimal(expectStr1).compareTo(new BigDecimal(retDecimal1.getValue())));
+		System.out.println("finish case 1 in roundingTest3");
+	}
+	
+	@Test
+//	@Ignore
+	public void roundingTes4() {
+		// case 1: positive
+		String str = "0.00006";
+		String str2 = "1234.00006";
+		String expectStr1 = "0.0001"; // $precision is: [4, 4]
+		String expectStr2 = "1234.0001"; // $precision is: [8, 4]
+
+		BSONDecimal decimal1 = new BSONDecimal(str, 4, 4);
+		BSONDecimal decimal2 = new BSONDecimal(str2, 8, 4);
+		
+        System.out.println("decimal1 is: " + decimal1);
+        System.out.println("decimal2 is: " + decimal2);
+		
+        BSONObject obj = 
+        		new BasicBSONObject("case1", "test_in_java").append("f1", decimal1).append("f2", decimal2);
+		System.out.println("inserted obj is: " + obj);
+        cl.insert(obj);
+        cur = cl.query(new BasicBSONObject().append("case1", new BasicBSONObject("$exists",1)), 
+        		null, null, null);
+        assertTrue(cur.hasNext());
+        obj = cur.getNext();
+		System.out.println("returned obj is: " + obj);
+        BSONDecimal retDecimal1 = (BSONDecimal)obj.get("f1");
+        BSONDecimal retDecimal2 = (BSONDecimal)obj.get("f2");
+        
+        System.out.println("retDecimal1 is: " + retDecimal1);
+        System.out.println("retDecimal2 is: " + retDecimal2);
+        // check
+        Assert.assertEquals(0,new BigDecimal(expectStr1).compareTo(new BigDecimal(retDecimal1.getValue())));
+        Assert.assertEquals(0,new BigDecimal(expectStr2).compareTo(new BigDecimal(retDecimal2.getValue())));
+		System.out.println("finish case 1 in roundingTest4");
+	}
+	
 	/**
 	 * 测试使用科学计数法
 	 */
