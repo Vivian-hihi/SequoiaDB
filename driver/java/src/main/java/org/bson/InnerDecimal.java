@@ -110,6 +110,9 @@ public class InnerDecimal {
 			if (!_hasCarry) {
 				System.arraycopy(_digits, 1, retDigits, 0, _ndigits);
 			} else {
+				// when we come here, we just copy "_ndigits" from the 
+				// source array, but not "_ndigits + 1", for we have 
+				// adjust "_ndigits" when carry happen.
 				System.arraycopy(_digits, 0, retDigits, 0, _ndigits);
 			}
 		}
@@ -626,9 +629,12 @@ public class InnerDecimal {
 			_weight = 0;
 		}
 
-		// update the local results
-		for (int i = digits_idx_f, begin_idx = 1; i <= digits_idx_e;) {
-			_digits[begin_idx++] = _digits[i++]; 
+		// update the local results, when the begin index is not in position 1
+		if (digits_idx_f != 1) {
+			for (int i = digits_idx_f, begin_idx = 1; i <= digits_idx_e; ++i, ++begin_idx) {
+				_digits[begin_idx] = _digits[i];
+				_digits[i] = 0;
+			}
 		}
 		for (int i = digits_idx_e + 1; i < _digits.length; i++) {
 			_digits[i] = 0;
