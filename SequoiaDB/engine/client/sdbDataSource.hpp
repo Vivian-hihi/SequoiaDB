@@ -119,22 +119,35 @@ namespace sdbclient
          const std::vector<std::string> &vUrls, 
          const sdbDataSourceConf &conf ) ;
 
-#if defined (_DEBUG)
-      // get idle connection number
+      /** \fn INT32 getIdleConnNum()const
+         \brief Get idle connection number
+         \retval The number of idle connection
+      */
       INT32 getIdleConnNum()const  ;
 
-      // get used connection number
+      /** \fn INT32 getUsedConnNum()const
+         \brief Get used connection number
+         \retval The number of used connection
+      */
       INT32 getUsedConnNum()const  ;
 
-      // get the number of normal coord node
+      /** \fn INT32 getNormalCoordNum()const
+         \brief Get the number of normal coord nodes
+         \retval The number of normal coord nodes
+      */
       INT32 getNormalCoordNum()const  ;
 
-      // get the number of abnormal coord node
+      /** \fn INT32 getAbnormalCoordNum()const
+         \brief Get the number of abnormal coord nodes
+         \retval The number of abnormal coord nodes
+      */
       INT32 getAbnormalCoordNum() const  ;
 
-      // get the number of local coord node
+      /** \fn INT32 getLocalCoordNum()const
+         \brief Get the number of local coord nodes
+         \retval The number of local coord nodes
+      */
       INT32 getLocalCoordNum()const  ;
-#endif
 
       /** \fn INT32 addCoord(const string &url)
          \brief Add a coord node

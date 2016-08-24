@@ -118,7 +118,7 @@ namespace sdbclient
       }
       
       // check address vector
-      for ( int i = 0 ; i < vUrls.size() ; ++i )
+      for ( UINT32 i = 0 ; i < vUrls.size() ; ++i )
       {
          if ( _checkAddrArg( vUrls[i] ) )
          {   
@@ -140,9 +140,7 @@ namespace sdbclient
       SAFE_OSS_DELETE(_strategy) ;
       goto done  ;
    }
-
-#if defined (_DEBUG)
-
+   
    // get idle connection number
    INT32 sdbDataSource::getIdleConnNum() const
    {
@@ -175,9 +173,7 @@ namespace sdbclient
       SDB_ASSERT( _strategy, "_strategy is null" ) ;
       return _strategy->getLocalCoordNum() ;
    }
-
-#endif
-
+   
    // add a coord node
    void sdbDataSource::addCoord( const std::string &url )
    {
@@ -381,7 +377,7 @@ namespace sdbclient
          else
          {
             // if reach max count, wait for timeout, try again
-            if ( _conf.getMaxCount() <= _busySize.peek() && 
+            if ( ( (UINT32)_conf.getMaxCount() ) <= _busySize.peek() && 
                timeoutsec > 0 )
             {
                INT32 timeCnt = 0 ;

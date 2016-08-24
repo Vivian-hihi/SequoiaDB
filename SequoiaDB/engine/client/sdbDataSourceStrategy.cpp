@@ -190,7 +190,6 @@ namespace sdbclient
       hints.ai_next = NULL ;
 
       INT32 pos = oldcoord.find_first_of( ":" ) ;
-      int status ;
       if ( 0 != getaddrinfo( oldcoord.substr(0, pos).c_str(), 
          oldcoord.substr( pos+1, oldcoord.length() ).c_str(), &hints, &ailist ) )
          return FALSE ;
