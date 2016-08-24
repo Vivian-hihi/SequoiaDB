@@ -2430,8 +2430,7 @@ error:
       goto done ;
    }
 
-   INT32 _sdbCollectionImpl::attachCollection ( const CHAR *subClFullName,
-                                                const bson::BSONObj &options)
+   INT32 _sdbCollectionImpl::detachCollection ( const CHAR *subClFullName)
    {
       INT32 rc         = SDB_OK ;
       BOOLEAN locked   = FALSE ;
@@ -2440,12 +2439,12 @@ error:
       BOOLEAN result ;
       BSONObj newObj ;
       BSONObjBuilder ob ;
-      string command = string ( CMD_ADMIN_PREFIX CMD_NAME_LINK_CL ) ;
+      string command = string ( CMD_ADMIN_PREFIX CMD_NAME_UNLINK_CL ) ;
       // check argument
       if ( !subClFullName || !_connection ||
-         ( nameLength = ossStrlen ( subClFullName) ) >
-           CLIENT_COLLECTION_NAMESZ ||
-           _collectionFullName[0] == '\0' )
+            (nameLength = ossStrlen ( subClFullName) ) >
+            CLIENT_COLLECTION_NAMESZ ||
+            _collectionFullName[0] == '\0' )
       {
          rc = SDB_INVALIDARG ;
          goto error ;
@@ -2454,13 +2453,6 @@ error:
       ob.append ( FIELD_NAME_NAME, _collectionFullName ) ;
       // sub collection fullname is required
       ob.append ( FIELD_NAME_SUBCLNAME, subClFullName ) ;
-      {
-         BSONObjIterator it( options ) ;
-         while ( it.more() )
-         {
-            ob.append ( it.next() ) ;
-         }
-      }
       newObj = ob.obj() ;
       rc = clientBuildQueryMsgCpp ( &_pSendBuffer, &_sendBufferSize,
                                      command.c_str(), 0, 0, 0,
@@ -2503,7 +2495,8 @@ error:
       goto done ;
    }
 
-   INT32 _sdbCollectionImpl::detachCollection ( const CHAR *subClFullName)
+   INT32 _sdbCollectionImpl::attachCollection ( const CHAR *subClFullName,
+                                                const bson::BSONObj &options)
    {
       INT32 rc         = SDB_OK ;
       BOOLEAN locked   = FALSE ;
@@ -2512,12 +2505,12 @@ error:
       BOOLEAN result ;
       BSONObj newObj ;
       BSONObjBuilder ob ;
-      string command = string ( CMD_ADMIN_PREFIX CMD_NAME_UNLINK_CL ) ;
+      string command = string ( CMD_ADMIN_PREFIX CMD_NAME_LINK_CL ) ;
       // check argument
       if ( !subClFullName || !_connection ||
-            (nameLength = ossStrlen ( subClFullName) ) >
-            CLIENT_COLLECTION_NAMESZ ||
-            _collectionFullName[0] == '\0' )
+         ( nameLength = ossStrlen ( subClFullName) ) >
+           CLIENT_COLLECTION_NAMESZ ||
+           _collectionFullName[0] == '\0' )
       {
          rc = SDB_INVALIDARG ;
          goto error ;
@@ -2526,6 +2519,13 @@ error:
       ob.append ( FIELD_NAME_NAME, _collectionFullName ) ;
       // sub collection fullname is required
       ob.append ( FIELD_NAME_SUBCLNAME, subClFullName ) ;
+      {
+         BSONObjIterator it( options ) ;
+         while ( it.more() )
+         {
+            ob.append ( it.next() ) ;
+         }
+      }
       newObj = ob.obj() ;
       rc = clientBuildQueryMsgCpp ( &_pSendBuffer, &_sendBufferSize,
                                      command.c_str(), 0, 0, 0,
