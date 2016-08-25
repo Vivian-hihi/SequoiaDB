@@ -44,6 +44,7 @@
 #include "dpsLogDef.hpp"
 #include "dpsMessageBlock.hpp"
 #include "rtnLobFetcher.hpp"
+#include "rtnRecover.hpp"
 #include "../bson/bsonobj.h"
 #include <map>
 
@@ -65,6 +66,9 @@ namespace engine
    class _clsSplitTask ;
    class _rtnContextData ;
 
+   /*
+      _clsDataSrcBaseSession define
+   */
    class _clsDataSrcBaseSession : public _pmdAsyncSession
    {
       DECLARE_OBJ_MSG_MAP()
@@ -117,7 +121,6 @@ namespace engine
          BOOLEAN           _existIndex( const CHAR *indexName ) ;
          INT32             _openContext( CHAR *cs, CHAR *collection ) ;
          void              _constructIndex( BSONObj &obj ) ;
-         INT32             _constructFullNames( BSONObj &obj ) ;
          void              _constructMeta( BSONObj &obj, const CHAR *cs,
                                            const CHAR *collection,
                                            _dmsStorageUnit *su ) ;
@@ -140,6 +143,10 @@ namespace engine
                                      SINT64 packet,
                                      const MsgRouteID &routeID,
                                      UINT32 TID, UINT64 requestID ) ;
+
+         INT32             _buildCLCommitInfo( const string &fullName,
+                                               BSONObj &obj ) ;
+
       protected:
          BSONObj                          _rangeKeyObj ;
          BSONObj                          _rangeEndKeyObj ;
@@ -177,6 +184,9 @@ namespace engine
 
    };
 
+   /*
+      _clsFSSrcSession define
+   */
    class _clsFSSrcSession : public _clsDataSrcBaseSession
    {
    DECLARE_OBJ_MSG_MAP()
@@ -212,11 +222,21 @@ namespace engine
       virtual INT32   _scanType () const ;
       virtual BOOLEAN _canSwitchWhenSyncLog() ;
 
+   protected:
+      INT32 _extractBeginBody( const BSONObj &obj,
+                               MAP_SU_STATUS &validCLs ) ;
+      void  _processValidCLs(  MAP_SU_STATUS &validCLs ) ;
+      INT32 _constructBeginRspData( BSONObj &obj, MAP_SU_STATUS &validCLs ) ;
+
    private:
-      _dpsMessageBlock     _lsnSearchMB ;
+      _dpsMessageBlock           _lsnSearchMB ;
+
    } ;
    typedef class _clsFSSrcSession clsFSSrcSession ;
 
+   /*
+      _clsSplitSrcSession define
+   */
    class _clsSplitSrcSession : public _clsDataSrcBaseSession
    {
       DECLARE_OBJ_MSG_MAP()

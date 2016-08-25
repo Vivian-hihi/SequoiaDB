@@ -243,6 +243,8 @@ const UINT32 MSG_SERVICE_MAX = 64 ;
       CLS_FS_TYPE_BETWEEN_SETS,
    } ;
 
+   /// msg : | --- MsgClsFSBegin --- | --- [ bson ] --- |
+   /// bson: { validcls: [ { fullname:"xx.xx", commitflag:[x,y,z], commitlsn:[X,Y,Z] }, ... ] }
    class _MsgClsFSBegin : public SDBObject
    {
    public :
@@ -262,8 +264,10 @@ const UINT32 MSG_SERVICE_MAX = 64 ;
    } ;
    typedef class _MsgClsFSBegin MsgClsFSBegin ;
 
-   /// msg: | -- MsgClsFSBeginRes -- | -- bson -- |
-   /// bson: { fullnames:[{fullname:xxx}]}
+   /// msg: | -- MsgClsFSBeginRes -- | -- [bson] -- |
+   /// bson: { csnames: [ {csname:'xx', pagesize:x, logpagesize:y},... ],
+   ///         fullnames:[ {fullname:'yy'},... ],
+   ///         validcls:[ {fullname:'zz'}, ... ] }
    class _MsgClsFSBeginRes : public SDBObject
    {
    public :
@@ -444,6 +448,8 @@ const UINT32 MSG_SERVICE_MAX = 64 ;
    /// msg: | -- _MsgClsFSNotify -- | -- data -- |
    /// data: if DOC: | record bson | record bson |...|
    ///       if LOG: | log | log |...|
+   ///       if LOB: | oid | MsgLobTuple | data | ... | oid | MsgLobTuple | data |
+   ///       if LOB and eof == CLS_FS_EOF : | bson |
    class _MsgClsFSNotifyRes : public SDBObject
    {
    public :

@@ -411,8 +411,7 @@ namespace engine
                      {
                         storageUnit = SDB_OSS_NEW dmsStorageUnit ( csName,
                                                                    sequence,
-                                                                   pmdGetBuffPool(),
-                                                                   dmsCB->getStatus() ) ;
+                                                                   pmdGetBuffPool() ) ;
                         if ( !storageUnit )
                         {
                            PD_LOG_MSG ( PDERROR, "Failed to allocate "
@@ -585,8 +584,7 @@ namespace engine
                      PD_LOG ( PDDEBUG, "Candidate Filename: %s", pFileName ) ;
                      storageUnit = SDB_OSS_NEW dmsStorageUnit ( csName,
                                                                 sequence,
-                                                                pmdGetBuffPool(),
-                                                                dmsCB->getStatus() ) ;
+                                                                pmdGetBuffPool() ) ;
                      PD_CHECK ( storageUnit, SDB_OOM, error, PDERROR,
                                 "Failed to allocate dmsStorageUnit for %s",
                                 dir_iter->path().string().c_str() ) ;

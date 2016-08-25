@@ -147,8 +147,6 @@ namespace engine
 
    static INT32 _pmdPostInit()
    {
-      INT32 rc = SDB_OK ;
-
       if ( SDB_ROLE_STANDALONE == pmdGetDBRole() ||
            SDB_ROLE_OM == pmdGetDBRole() )
       {
@@ -166,10 +164,7 @@ namespace engine
          }
       }
 
-   done:
-      return rc ;
-   error:
-      goto done ;
+      return SDB_OK ;
    }
 
    // based on millisecond

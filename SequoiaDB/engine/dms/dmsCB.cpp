@@ -111,22 +111,10 @@ namespace engine
    INT32 _SDB_DMSCB::init ()
    {
       INT32 rc = SDB_OK ;
-      CHAR statusFullPath[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
 
       if ( pmdGetKRCB()->isRestore() )
       {
          goto done ;
-      }
-
-      utilBuildFullPath( pmdGetOptionCB()->getDbPath(), DMS_STATUS_FILE_NAME,
-                         OSS_MAX_PATHSIZE, statusFullPath ) ;
-      // open status
-      rc = _status.open( statusFullPath ) ;
-      if ( rc )
-      {
-         PD_LOG( PDERROR, "Open status file[%s] failed, rc: %d",
-                 statusFullPath, rc ) ;
-         goto error ;
       }
 
       // 1. load all
@@ -163,8 +151,6 @@ namespace engine
    INT32 _SDB_DMSCB::fini ()
    {
       _CSCBNameMapCleanup() ;
-      /// remove status
-      _status.remove() ;
 
       for ( UINT32 i = 0 ; i < DMS_MAX_CS_NUM ; ++i )
       {
@@ -1478,11 +1464,6 @@ namespace engine
    dmsTempCB *_SDB_DMSCB::getTempCB ()
    {
       return &_tempCB ;
-   }
-
-   dmsPersistStatus* _SDB_DMSCB::getStatus()
-   {
-      return &_status ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__SDB_DMSCB_DISPATCHDICTJOB, "_SDB_DMSCB::dispatchDictJob" )

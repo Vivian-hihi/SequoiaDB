@@ -84,6 +84,37 @@ namespace engine
          }
          return TRUE ;
       }
+
+      void  setAllInvalid()
+      {
+         _dataCommitFlag = 0 ;
+         _idxCommitFlag = 0 ;
+         _lobCommitFlag = 0 ;
+      }
+
+      void setAllValid()
+      {
+         _dataCommitFlag = 1 ;
+         _idxCommitFlag = 1 ;
+         _lobCommitFlag = 1 ;
+      }
+
+      UINT64 maxLSN() const
+      {
+         UINT64 lsn = _dataCommitFlag ;
+
+         if ( DPS_INVALID_LSN_OFFSET != _idxCommitFlag &&
+              _idxCommitFlag > lsn )
+         {
+            lsn = _idxCommitFlag ;
+         }
+         if ( DPS_INVALID_LSN_OFFSET != _lobCommitFlag &&
+              _lobCommitFlag > lsn )
+         {
+            lsn = _lobCommitFlag ;
+         }
+         return lsn ;
+      }
    } ;
    typedef _rtnRUInfo rtnRUInfo ;
 
@@ -230,6 +261,8 @@ namespace engine
 
          dmsStorageUnit* getSU() { return _pSU ; }
 
+         void        setAllInvalid() ;
+
       protected:
 
       private:
@@ -302,8 +335,10 @@ namespace engine
    class _rtnDBCleaner : public _rtnDBOprBase
    {
       public:
-         _rtnDBCleaner() {}
-         virtual ~_rtnDBCleaner() ;
+         _rtnDBCleaner() { _useUDF = FALSE ; }
+         virtual ~_rtnDBCleaner() {}
+
+         void     setUDFValidCLs( const vector<string> &vecValidCLs ) ;
 
       public:
          virtual const CHAR*  oprName() const { return "Cleanup" ; }
@@ -319,9 +354,38 @@ namespace engine
                                    dmsStorageUnitID &suID ) ;
 
          virtual void      _onSucceed( pmdEDUCB *cb ) {}
+
+      private:
+         vector<string>             _udfValidCLs ;
+         BOOLEAN                    _useUDF ;
    } ;
    typedef _rtnDBCleaner rtnDBCleaner ;
 
+   /*
+      _rtnDBFSPostCleaner define
+   */
+   class _rtnDBFSPostCleaner : public _rtnDBOprBase
+   {
+      public:
+         _rtnDBFSPostCleaner() {}
+         virtual ~_rtnDBFSPostCleaner() {}
+
+      public:
+         virtual const CHAR*  oprName() const { return "FSPostCleaner" ; }
+
+      protected:
+         virtual BOOLEAN   _lockDMS() const { return FALSE ; }
+         virtual BOOLEAN   _cleanDPS() const { return FALSE ; }
+
+         virtual INT32     _onBegin( pmdEDUCB *cb ) { return SDB_OK ; }
+
+         virtual INT32     _doOpr( pmdEDUCB *cb,
+                                   rtnRecoverUnit *pUnit,
+                                   dmsStorageUnitID &suID ) ;
+
+         virtual void      _onSucceed( pmdEDUCB *cb ) ;
+   } ;
+   typedef _rtnDBFSPostCleaner rtnDBFSPostCleaner ;
 
 }
 

@@ -93,7 +93,6 @@ namespace engine
          _dmsStorageUnit ( const CHAR *pSUName,
                            UINT32 sequence,
                            utilCacheMgr *pMgr,
-                           dmsPersistStatus *pStatus,
                            INT32 pageSize = DMS_PAGE_SIZE_DFT,
                            INT32 lobPageSize = DMS_DEFAULT_LOB_PAGE_SZ ) ;
          ~_dmsStorageUnit() ;

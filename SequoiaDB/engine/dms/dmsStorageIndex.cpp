@@ -153,6 +153,8 @@ namespace engine
             _pDataSu->_mbStatInfo[i]._idxIsCrash =
                ( 0 == _pDataSu->_mbStatInfo[i]._idxCommitFlag.peek() ) ?
                                       TRUE : FALSE ;
+            _pDataSu->_mbStatInfo[i]._idxLastLSN =
+               _pDataSu->_dmsMME->_mbList[i]._idxCommitLSN ;
 
             // analyze the unique index number
             for ( UINT32 j = 0 ; j < DMS_COLLECTION_MAX_INDEX ; ++j )
@@ -206,7 +208,8 @@ namespace engine
          if ( DMS_IS_MB_INUSE ( _pDataSu->_dmsMME->_mbList[i]._flag ) &&
               _pDataSu->_mbStatInfo[i]._idxCommitFlag.peek() )
          {
-            _pDataSu->_dmsMME->_mbList[i]._idxCommitLSN = lastLSN ;
+            _pDataSu->_dmsMME->_mbList[i]._idxCommitLSN =
+               _pDataSu->_mbStatInfo[i]._idxLastLSN ;
             _pDataSu->_dmsMME->_mbList[i]._idxCommitTime = lastTime ;
             _pDataSu->_dmsMME->_mbList[i]._idxCommitFlag =
                _pDataSu->_mbStatInfo[i]._idxIsCrash ?
@@ -515,12 +518,17 @@ namespace engine
       if ( dpscb )
       {
          rc = _pDataSu->_logDPS( dpscb, info, cb, context,
-                                 DMS_INVALID_EXTENT, TRUE ) ;
+                                 DMS_INVALID_EXTENT, TRUE,
+                                 DMS_FILE_IDX ) ;
          if ( rc )
          {
             PD_LOG( PDERROR, "Failed to insert ixcrt into log, rc = %d", rc ) ;
             goto error_after_create ;
          }
+      }
+      else if ( cb->getLsnCount() > 0 )
+      {
+         context->mbStat()->updateLastLSN( cb->getEndLsn(), DMS_FILE_IDX ) ;
       }
       dropDps = dpscb ;
 
@@ -860,9 +868,14 @@ namespace engine
       if ( dpscb )
       {
          rc = _pDataSu->_logDPS( dpscb, info, cb, context,
-                                 DMS_INVALID_EXTENT, TRUE ) ;
+                                 DMS_INVALID_EXTENT, TRUE,
+                                 DMS_FILE_IDX ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to insert ixdel into log, "
                       "rc: %d", rc ) ;
+      }
+      else if ( cb->getLsnCount() > 0 )
+      {
+         context->mbStat()->updateLastLSN( cb->getEndLsn(), DMS_FILE_IDX ) ;
       }
 
    done :

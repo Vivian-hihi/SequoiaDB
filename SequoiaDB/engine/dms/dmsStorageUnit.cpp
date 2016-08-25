@@ -50,7 +50,6 @@ namespace engine
    _dmsStorageUnit::_dmsStorageUnit ( const CHAR *pSUName,
                                       UINT32 sequence,
                                       utilCacheMgr *pMgr,
-                                      dmsPersistStatus *pStatus,
                                       INT32 pageSize,
                                       INT32 lobPageSize )
    :_apm(this),
@@ -97,8 +96,7 @@ namespace engine
                    _storageInfo._suName, sequence, DMS_INDEX_SU_EXT_NAME ) ;
 
       _pDataSu = SDB_OSS_NEW dmsStorageData( dataFileName,
-                                             &_storageInfo,
-                                             pStatus ) ;
+                                             &_storageInfo ) ;
       if ( _pDataSu )
       {
          _pIndexSu = SDB_OSS_NEW dmsStorageIndex( idxFileName, &_storageInfo,

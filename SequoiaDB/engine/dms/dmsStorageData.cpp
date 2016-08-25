@@ -466,8 +466,7 @@ namespace engine
    */
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATA, "_dmsStorageData::_dmsStorageData" )
    _dmsStorageData::_dmsStorageData ( const CHAR *pSuFileName,
-                                      dmsStorageInfo *pInfo,
-                                      dmsPersistStatus *pStatus )
+                                      dmsStorageInfo *pInfo )
    :_dmsStorageBase( pSuFileName, pInfo )
    {
       PD_TRACE_ENTRY ( SDB__DMSSTORAGEDATA ) ;
@@ -477,7 +476,6 @@ namespace engine
       _logicalCSID      = 0 ;
       _CSID             = DMS_INVALID_SUID ;
       _mmeSegID         = 0 ;
-      _pStatus          = pStatus ;
       PD_TRACE_EXIT ( SDB__DMSSTORAGEDATA ) ;
    }
 
@@ -569,6 +567,24 @@ namespace engine
             {
                _dmsMME->_mbList[i]._totalOrgDataLen =
                   _mbStatInfo[i]._totalOrgDataLen ;
+            }
+            if ( _dmsMME->_mbList[i]._commitLSN !=
+                 _mbStatInfo[i]._lastLSN )
+            {
+               _dmsMME->_mbList[i]._commitLSN =
+                  _mbStatInfo[i]._lastLSN ;
+            }
+            if ( _dmsMME->_mbList[i]._idxCommitLSN !=
+                 _mbStatInfo[i]._idxLastLSN )
+            {
+               _dmsMME->_mbList[i]._idxCommitLSN =
+                  _mbStatInfo[i]._idxLastLSN ;
+            }
+            if ( _dmsMME->_mbList[i]._lobCommitLSN !=
+                 _mbStatInfo[i]._lobLastLSN )
+            {
+               _dmsMME->_mbList[i]._lobCommitLSN =
+                  _mbStatInfo[i]._lobLastLSN ;
             }
          }
       }
@@ -823,6 +839,8 @@ namespace engine
             }
             _mbStatInfo[i]._isCrash = ( 0 == _mbStatInfo[i]._commitFlag.peek() ) ?
                                       TRUE : FALSE ;
+            /// lsn
+            _mbStatInfo[i]._lastLSN = _dmsMME->_mbList[i]._commitLSN ;
          }
       }
 
@@ -898,7 +916,7 @@ namespace engine
          if ( DMS_IS_MB_INUSE ( _dmsMME->_mbList[i]._flag ) &&
               _mbStatInfo[i]._commitFlag.peek() )
          {
-            _dmsMME->_mbList[i]._commitLSN = lastLSN ;
+            _dmsMME->_mbList[i]._commitLSN = _mbStatInfo[i]._lastLSN ;
             _dmsMME->_mbList[i]._commitTime = lastTime ;
             _dmsMME->_mbList[i]._commitFlag = _mbStatInfo[i]._isCrash ? 0 :
                                           _mbStatInfo[i]._commitFlag.peek() ;
@@ -1008,6 +1026,7 @@ namespace engine
       {
          goto error ;
       }
+
       // release lock
       if ( pLatch && locked )
       {
@@ -1035,10 +1054,12 @@ namespace engine
                                    pmdEDUCB *cb, dmsMBContext *context,
                                    dmsExtentID extLID,
                                    BOOLEAN needUnLock,
+                                   DMS_FILE_TYPE type,
                                    UINT32 *clLID )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__DMSSTORAGEDATA__LOGDPS1 ) ;
+      UINT64 lsn = DPS_INVALID_LSN_OFFSET ;
       info.setInfoEx( logicalID(),
                       NULL == clLID ?
                       context->clLID() : *clLID,
@@ -1048,6 +1069,8 @@ namespace engine
       {
          goto error ;
       }
+      lsn = info.getMergeBlock().record().head()._lsn ;
+      context->mbStat()->updateLastLSN( lsn, type ) ;
 
       // release lock
       if ( needUnLock )
@@ -2056,11 +2079,6 @@ namespace engine
       if ( SDB_OK == rc )
       {
          flushMeta( isSyncDeep() ) ;
-         /// Need to remove the collection's persistence information
-         if ( _pStatus )
-         {
-            _pStatus->removeItem( fullName ) ;
-         }
       }
       PD_TRACE_EXITRC ( SDB__DMSSTORAGEDATA_ADDCOLLECTION, rc ) ;
       return rc ;
@@ -2253,12 +2271,6 @@ namespace engine
       }
       if ( SDB_OK == rc )
       {
-         /// The collection is dropped, so we should save the collection's
-         /// persistence infomation. The flush meta
-         if ( _pStatus && !isTempSU() )
-         {
-            _pStatus->addItem( fullName, 1, cb->getEndLsn(), 0 ) ;
-         }
          flushMeta( isSyncDeep() ) ;
       }
       PD_TRACE_EXITRC ( SDB__DMSSTORAGEDATA_DROPCOLLECTION, rc ) ;
@@ -2408,9 +2420,13 @@ namespace engine
                                fullName, rc, "RecordNum:%llu, LobNum:%llu",
                                oldRecords, oldLobs ) ;
          rc = _logDPS( dpscb, info, cb, context, DMS_INVALID_EXTENT,
-                       TRUE, &oldCLID ) ;
+                       TRUE, DMS_FILE_DATA, &oldCLID ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to insert CLTrunc record to log, "
                       "rc: %d", rc ) ;
+      }
+      else if ( cb->getLsnCount() > 0 )
+      {
+         context->mbStat()->updateLastLSN( cb->getEndLsn(), DMS_FILE_DATA ) ;
       }
 
    done:
@@ -2827,10 +2843,15 @@ namespace engine
          /// enable trans
          info.enableTrans() ;
          rc = _logDPS( dpscb, info, cb, context,
-                       pExtent->_logicID, canUnLock ) ;
+                       pExtent->_logicID, canUnLock,
+                       DMS_FILE_DATA ) ;
          PD_RC_CHECK ( rc, PDERROR, "Failed to insert record into log, "
                        "rc: %d", rc ) ;
          dropDps = dpscb ;
+      }
+      else if ( cb->getLsnCount() > 0 )
+      {
+         context->mbStat()->updateLastLSN( cb->getEndLsn(), DMS_FILE_DATA ) ;
       }
 
    done:
@@ -3193,9 +3214,14 @@ namespace engine
          }
 
          info.enableTrans() ;
-         rc = _logDPS( dpscb, info, cb, context, pExtent->_logicID, FALSE ) ;
+         rc = _logDPS( dpscb, info, cb, context, pExtent->_logicID, FALSE,
+                       DMS_FILE_DATA ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to insert record into log, rc: %d",
                       rc ) ;
+      }
+      else if ( FALSE == isDeleting && cb->getLsnCount() > 0 )
+      {
+         context->mbStat()->updateLastLSN( cb->getEndLsn(), DMS_FILE_DATA ) ;
       }
 
    done :
@@ -3473,9 +3499,14 @@ namespace engine
                                newChg.toString().c_str() ) ;
 
          info.enableTrans() ;
-         rc = _logDPS( dpscb, info, cb, context, pExtent->_logicID, FALSE ) ;
+         rc = _logDPS( dpscb, info, cb, context, pExtent->_logicID, FALSE,
+                       DMS_FILE_DATA ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to insert update record into log, "
                       "rc: %d", rc ) ;
+      }
+      else if ( cb->getLsnCount() > 0 )
+      {
+         context->mbStat()->updateLastLSN( cb->getEndLsn(), DMS_FILE_DATA ) ;
       }
 
    done :

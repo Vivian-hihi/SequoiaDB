@@ -48,6 +48,7 @@
 #include "pdTrace.hpp"
 #include "clsTrace.hpp"
 #include "rtnLob.hpp"
+#include "rtnRecover.hpp"
 
 using namespace bson ;
 
@@ -372,6 +373,28 @@ namespace engine
       return nDelNum ;
    }
 
+   UINT32 _clsDataDstBaseSession::_removeValidCLs( const vector< string > &validCLs )
+   {
+      UINT32 removedNum = 0 ;
+
+      for ( UINT32 i = 0 ; i < validCLs.size() ; ++i )
+      {
+         vector<string>::iterator it = _fullNames.begin() ;
+         while( it != _fullNames.end() )
+         {
+            if ( *it == validCLs[i] )
+            {
+               _fullNames.erase( it ) ;
+               ++removedNum ;
+               break ;
+            }
+            ++it ;
+         }
+      }
+
+      return removedNum ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSDATADBS__RMCS, "_clsDataDstBaseSession::_removeCS" )
    UINT32 _clsDataDstBaseSession::_removeCS ( const CHAR * pCSName )
    {
@@ -406,128 +429,6 @@ namespace engine
       PD_TRACE1 ( SDB__CLSDATADBS__RMCS, PD_PACK_UINT(nDelNum) );
       PD_TRACE_EXIT ( SDB__CLSDATADBS__RMCS );
       return nDelNum ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSDATADBS__EXTFLLNMS, "_clsDataDstBaseSession::_extractFullNames" )
-   INT32 _clsDataDstBaseSession::_extractFullNames( const CHAR *names )
-   {
-      INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY ( SDB__CLSDATADBS__EXTFLLNMS ) ;
-
-      _fullNames.clear() ;
-      _mapEmptyCS.clear() ;
-
-      try
-      {
-         BSONObj obj( names ) ;
-         BSONElement ele ;
-
-         PD_LOG( PDDEBUG, "Session[%s]: recv fullnames:[%s]", sessionName(),
-                 obj.toString().c_str() ) ;
-
-         // empty collection space
-         ele = obj.getField( CLS_FS_CSNAMES ) ;
-         if ( Array != ele.type() )
-         {
-            PD_LOG( PDERROR, "Session[%s]: failed to parse cs names from "
-                    "obj[%s]", sessionName(), obj.toString().c_str() ) ;
-            goto error ;
-         }
-
-         BSONObjIterator csIt( ele.embeddedObject() ) ;
-         while ( csIt.more() )
-         {
-            BSONElement next = csIt.next() ;
-            BSONElement csNameEle ;
-            BSONElement csPageSizeEle ;
-            BSONElement csLobPageSizeEle ;
-            INT32 lobPageSize = 0 ;
-
-            if ( Object != next.type() )
-            {
-               PD_LOG( PDERROR, "Session[%s]: parse a collection space ele[%s] "
-                       "failed", sessionName(), next.toString().c_str() ) ;
-               goto error ;
-            }
-
-            csNameEle = next.embeddedObject().getField( CLS_FS_CSNAME ) ;
-            csPageSizeEle = next.embeddedObject().getField( CLS_FS_PAGE_SIZE ) ;
-            if ( String != csNameEle.type() ||
-                 NumberInt != csPageSizeEle.type() )
-            {
-               PD_LOG( PDERROR, "Session[%s]: parse a collection space ele[%s]"
-                       " failed", sessionName(), next.toString().c_str() ) ;
-               goto error ;
-            }
-
-            csLobPageSizeEle = next.embeddedObject().getField( CLS_FS_LOB_PAGE_SIZE ) ;
-            if ( NumberInt != csLobPageSizeEle.type() &&
-                 !csLobPageSizeEle.eoo() )
-            {
-               PD_LOG( PDERROR, "Session[%s]: wrong type of lob pagesize[%s]"
-                       " failed", sessionName(), next.toString().c_str() ) ;
-               goto error ;
-            }
-            else if ( NumberInt == csLobPageSizeEle.type() )
-            {
-               lobPageSize = csLobPageSizeEle.numberInt() ;
-            }
-            else
-            {
-               lobPageSize = DMS_DEFAULT_LOB_PAGE_SZ ;
-            }
-
-            _mapEmptyCS[ csNameEle.str() ] = pageSzTuple( csPageSizeEle.numberInt(),
-                                                          lobPageSize ) ;
-         }
-
-         // collection list
-         ele = obj.getField( CLS_FS_FULLNAMES ) ;
-         if ( Array != ele.type() )
-         {
-            PD_LOG( PDWARNING, "Session[%s]: failed to parse collections from "
-                    "obj[%s]", sessionName(), obj.toString().c_str() ) ;
-            goto error ;
-         }
-         BSONObjIterator i( ele.embeddedObject() ) ;
-         while ( i.more() )
-         {
-            BSONElement next = i.next() ;
-            BSONElement name ;
-            if ( next.eoo() || !next.isABSONObj() )
-            {
-               PD_LOG( PDWARNING, "Session[%s]: failed to parse a collection "
-                       "from obj[%s]", sessionName(),
-                       next.toString().c_str() ) ;
-               goto error ;
-            }
-            name = next.embeddedObject().getField( CLS_FS_FULLNAME ) ;
-            if ( name.eoo() || String != name.type() )
-            {
-               PD_LOG( PDWARNING, "Session[%s]: failed to parse a collection "
-                       "from obj[%s]", sessionName(),
-                       next.toString().c_str() ) ;
-               goto error ;
-            }
-            _fullNames.push_back( name.String() ) ;
-         }
-      }
-      catch ( std::exception &e )
-      {
-         PD_LOG( PDERROR, "Session[%s]: unexpected exception: %s",
-                 sessionName(), e.what() ) ;
-         goto error ;
-      }
-
-   done:
-      PD_TRACE_EXITRC ( SDB__CLSDATADBS__EXTFLLNMS, rc );
-      return rc ;
-   error:
-      if ( SDB_OK == rc )
-      {
-         rc = SDB_INVALIDARG ;
-      }
-      goto done ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSDATADBS__EXTMETA, "_clsDataDstBaseSession::_extractMeta" )
@@ -609,7 +510,6 @@ namespace engine
             /// forward-compatible -- yunwu
             lobPageSize = DMS_DEFAULT_LOB_PAGE_SZ ;
          }
-
       }
       catch ( std::exception &e )
       {
@@ -762,9 +662,7 @@ namespace engine
 
       // create local cs and collection
       rc = _replayer.replayCrtCS( cs.c_str(), pageSize, lobPageSize,
-                                  eduCB(),
-                                  SDB_SESSION_FS_DST == sessionType() ?
-                                  TRUE : FALSE ) ;
+                                  eduCB() ) ;
       rc = _replayer.replayCrtCollection( fullName, attributes,
                                           eduCB(), compType ) ;
       if ( SDB_OK != rc && SDB_DMS_EXIST != rc )
@@ -871,17 +769,10 @@ namespace engine
       {
          goto done ;
       }
-
-      rc = _onNotify() ;
-      if ( rc )
-      {
-         goto done ;
-      }
-
-      if ( CLS_FS_STATUS_NOTIFY_LOG != _status &&
-           CLS_FS_STATUS_NOTIFY_DOC != _status &&
-           CLS_FS_STATUS_NOTIFY_LOB != _status &&
-           CLS_FS_STATUS_END != _status )
+      else if ( CLS_FS_STATUS_NOTIFY_LOG != _status &&
+                CLS_FS_STATUS_NOTIFY_DOC != _status &&
+                CLS_FS_STATUS_NOTIFY_LOB != _status &&
+                CLS_FS_STATUS_END != _status )
       {
          PD_LOG( PDWARNING, "Session[%s]: ignore msg. local status:%d",
                  sessionName(), _status ) ;
@@ -893,12 +784,13 @@ namespace engine
                  "local:%d", sessionName(), msg->packet, _packet ) ;
          goto done ;
       }
-      else if ( CLS_FS_STATUS_END == _status &&
-                CLS_FS_EOF == msg->eof )
+
+      if ( !_onNotify( msg ) )
       {
-         _endLog() ;
+         goto done ;
       }
-      else if ( CLS_FS_NOTIFY_TYPE_DOC == msg->type )
+
+      if ( CLS_FS_NOTIFY_TYPE_DOC == msg->type )
       {
          ++_packet ;
          if ( CLS_FS_EOF != msg->eof )
@@ -1304,7 +1196,7 @@ namespace engine
    _clsFSDstSession::_clsFSDstSession( UINT64 sessionID,
                                        _netRouteAgent *agent )
    :_clsDataDstBaseSession( sessionID, agent ),
-   _tsStep( STEP_TS_BEGIN )
+   _fsStep( CLS_FS_STEP_NONE )
    {
    }
 
@@ -1364,11 +1256,21 @@ namespace engine
       }
 
       _selector.clearTime() ;
-      if ( SDB_OK != _extractFullNames( ( CHAR * )(&( msg->header )) +
-                                        sizeof( MsgClsFSBeginRes )) )
+      try
       {
-         PD_LOG( PDWARNING, "Session[%s]: Failed to extract fullnames, "
-                 "disconnect session", sessionName() ) ;
+         BSONObj dataObj( (const CHAR*)header + sizeof( MsgClsFSBeginRes ) ) ;
+         if ( SDB_OK != _extractBeginRspBody( dataObj ) )
+         {
+            PD_LOG( PDWARNING, "Session[%s]: Failed to extract body data, "
+                    "disconnect session", sessionName() ) ;
+            _disconnect() ;
+            goto done ;
+         }
+      }
+      catch( std::exception &e )
+      {
+         PD_LOG( PDERROR, "Session[%s]: Extract body data occur exception: %s",
+                 sessionName(), e.what() ) ;
          _disconnect() ;
          goto done ;
       }
@@ -1409,14 +1311,18 @@ namespace engine
                  "[ver:%d][offset:%lld]", sessionName(), expect.version,
                  expect.offset ) ;
 
-         /// before send meta req, we clear local data.
-         if ( SDB_OK != sdbGetClsCB()->clearAllData () )
+         rtnDBCleaner cleanner ;
+         cleanner.setUDFValidCLs( _validCLs ) ;
+         /// before send meta req, we cleanup invalid collections
+         if ( SDB_OK != cleanner.doOpr( eduCB() ) )
          {
-            PD_LOG( PDERROR, "Session[%s]: Failed to clear data.",
+            PD_LOG( PDERROR, "Session[%s]: Failed to cleanup data.",
                     sessionName() ) ;
             _disconnect () ;
             goto done ;
          }
+         /// remove valid collections
+         _removeValidCLs( _validCLs ) ;
       }
 
       // create empty collection space
@@ -1427,7 +1333,7 @@ namespace engine
             rc = _replayer.replayCrtCS( itCS->first.c_str(),
                                         itCS->second.pageSize,
                                         itCS->second.lobPageSize,
-                                        eduCB(), TRUE ) ;
+                                        eduCB() ) ;
             if ( SDB_OK != rc && SDB_DMS_CS_EXIST != rc )
             {
                PD_LOG( PDWARNING, "Session[%s]: create empty collection "
@@ -1496,11 +1402,15 @@ namespace engine
          _agent->syncSend( lastID, &disMsg ) ;
       }
 
+      BSONObj bodyObj ;
       /// send to new source node
-      if ( MSG_INVALID_ROUTEID != src.value )
+      if ( MSG_INVALID_ROUTEID != src.value &&
+           SDB_OK == _buildBegingBody( bodyObj ) )
       {
+         msg.header.messageLength += bodyObj.objsize() ;
          msg.header.requestID = ++_requestID ;
-         _agent->syncSend( src, &msg ) ;
+         _agent->syncSend( src, &(msg.header), (void*)bodyObj.objdata(),
+                           (UINT32)bodyObj.objsize() ) ;
          _timeout = 0 ;
       }
 
@@ -1517,18 +1427,18 @@ namespace engine
       DPS_LSN invalidLsn ;
       MsgClsFSEnd msg ;
 
-      if ( STEP_TS_END == _tsStep )
+      if ( CLS_FS_STEP_END == _fsStep )
       {
          PD_LOG( PDEVENT, "Session[%s]: End to pull transaction log or "
                  "cached log", sessionName() ) ;
          goto doend ;
       }
-      else if ( STEP_TS_BEGIN == _tsStep )
+      else if ( CLS_FS_STEP_NONE == _fsStep )
       {
          if ( !sdbGetTransCB()->isTransOn() &&
               DPS_INVALID_LSN_OFFSET != dpsCB->getCurrentLsn().offset )
          {
-            _tsStep = STEP_TS_END ;
+            _fsStep = CLS_FS_STEP_END ;
             goto doend ;
          }
          PD_LOG( PDEVENT, "Session[%s]: Begin to pull transaction log or "
@@ -1634,9 +1544,10 @@ namespace engine
    {
       PD_TRACE_ENTRY ( SDB__CLSFSDS__ONDETACH );
 
-      if ( CLS_FS_STATUS_END == _status && STEP_TS_END == _tsStep )
+      if ( CLS_FS_STATUS_END == _status && CLS_FS_STEP_END == _fsStep )
       {
-         pmdGetStartup().ok ( TRUE ) ;
+         rtnDBFSPostCleaner fsCleaner ;
+         fsCleaner.doOpr( eduCB() ) ;
       }
 
       PD_LOG( PDEVENT, "Session[%s]: start sync session.", sessionName() ) ;
@@ -1651,9 +1562,71 @@ namespace engine
       PD_TRACE_EXIT ( SDB__CLSFSDS__ONDETACH );
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSFSDS__ENDLOG, "_clsFSDstSession::_endLog" )
-   void _clsFSDstSession::_endLog ()
+   BOOLEAN _clsFSDstSession::_onNotify( MsgClsFSNotifyRes *pMsg )
    {
+      if ( CLS_FS_NOTIFY_TYPE_LOB == pMsg->type &&
+           CLS_FS_EOF == pMsg->eof &&
+           pMsg->header.header.messageLength > sizeof( MsgClsFSNotifyRes ) )
+      {
+         rtnRUInfo info ;
+         const CHAR *pCLName = _fullNames[_current].c_str() ;
+         /// extract commit info
+         try
+         {
+            BSONObj objData( (const CHAR*)pMsg + sizeof( MsgClsFSNotifyRes ) ) ;
+            BSONElement eleLSN = objData.getField( CLS_FS_COMMITLSN ) ;
+            vector<BSONElement> vecLSN = eleLSN.Array() ;
+            if ( vecLSN.size() < 3 )
+            {
+               goto done ;
+            }
+            info._dataCommitLSN = vecLSN[0].numberLong() ;
+            info._idxCommitLSN = vecLSN[1].numberLong() ;
+            info._lobCommitLSN = vecLSN[1].numberLong() ;
+         }
+         catch( std::exception &e )
+         {
+            PD_LOG( PDWARNING, "Session[%s]: Extract collection[%s]'s commit "
+                    "info occur exception: %s", sessionName(), pCLName,
+                    e.what() ) ;
+            goto done ;
+         }
+
+         /// update collection's commit info
+         SDB_DMSCB *dmsCB = pmdGetKRCB()->getDMSCB() ;
+         dmsStorageUnit *su = NULL ;
+         const CHAR *pCLShort = NULL ;
+         dmsStorageUnitID suID = DMS_INVALID_SUID ;
+         if ( SDB_OK == rtnResolveCollectionNameAndLock( pCLName, dmsCB, &su,
+                                                         &pCLShort, suID ) )
+         {
+            dmsMBContext *pContext = NULL ;
+            if ( SDB_OK == su->data()->getMBContext( &pContext,
+                                                     pCLShort, SHARED ) )
+            {
+               if ( DPS_INVALID_LSN_OFFSET == pContext->mbStat()->_lastLSN )
+               {
+                  pContext->mbStat()->_lastLSN = info._dataCommitLSN ;
+               }
+               if ( DPS_INVALID_LSN_OFFSET == pContext->mbStat()->_idxLastLSN )
+               {
+                  pContext->mbStat()->_idxLastLSN = info._idxCommitLSN ;
+               }
+               if ( DPS_INVALID_LSN_OFFSET == pContext->mbStat()->_lobLastLSN )
+               {
+                  pContext->mbStat()->_lobLastLSN = info._lobCommitLSN ;
+               }
+
+               /// release context
+               su->data()->releaseMBContext( pContext ) ;
+            }
+            /// release sulock
+            dmsCB->suUnlock( suID ) ;
+         }
+      }
+
+   done:
+      return TRUE ;
    }
 
    void _clsFSDstSession::_pullTransLog( DPS_LSN &begin )
@@ -1665,6 +1638,239 @@ namespace engine
       msgReq.begin = begin;
       _agent->syncSend( _selector.src(), &( msgReq.header ) ) ;
       _timeout = 0 ;
+   }
+
+   INT32 _clsFSDstSession::_extractBeginRspBody( const BSONObj &bodyObj )
+   {
+      INT32 rc = SDB_OK ;
+
+      _fullNames.clear() ;
+      _validCLs.clear() ;
+      _mapEmptyCS.clear() ;
+
+      BSONElement ele ;
+
+      PD_LOG( PDDEBUG, "Session[%s]: recv begin response:[%s]",
+              sessionName(), bodyObj.toString().c_str() ) ;
+
+      try
+      {
+         // 1. empty collection space
+         ele = bodyObj.getField( CLS_FS_CSNAMES ) ;
+         if ( Array != ele.type() )
+         {
+            PD_LOG( PDERROR, "Session[%s]: failed to parse csnames from "
+                    "obj[%s]", sessionName(), bodyObj.toString().c_str() ) ;
+            goto error ;
+         }
+
+         BSONObjIterator csIt( ele.embeddedObject() ) ;
+         while ( csIt.more() )
+         {
+            BSONElement next = csIt.next() ;
+            if ( Object != next.type() )
+            {
+               PD_LOG( PDERROR, "Session[%s]: parse a collection space "
+                       "ele[%s] failed", sessionName(),
+                       next.toString().c_str() ) ;
+               goto error ;
+            }
+            else
+            {
+               BSONObj csObj = next.embeddedObject() ;
+               BSONElement eleName = csObj.getField( CLS_FS_CSNAME ) ;
+               BSONElement elePageSZ = csObj.getField( CLS_FS_PAGE_SIZE ) ;
+               BSONElement eleLobPageSZ = csObj.getField( CLS_FS_LOB_PAGE_SIZE ) ;
+               INT32 pageSz = 0 ;
+               INT32 lobPageSz = DMS_DEFAULT_LOB_PAGE_SZ ;
+
+               if ( String != eleName.type() ||
+                    NumberInt != elePageSZ.type() )
+               {
+                  PD_LOG( PDERROR, "Session[%s]: parse a collection space "
+                          "ele[%s] failed", sessionName(),
+                          next.toString().c_str() ) ;
+                  goto error ;
+               }
+               pageSz = elePageSZ.numberInt() ;
+
+               if ( NumberInt != eleLobPageSZ.type() &&
+                    !eleLobPageSZ.eoo() )
+               {
+                  PD_LOG( PDERROR, "Session[%s]: wrong type of lob "
+                          "pagesize[%s] failed", sessionName(),
+                          next.toString().c_str() ) ;
+                  goto error ;
+               }
+               else if ( NumberInt == eleLobPageSZ.type() )
+               {
+                  lobPageSz = eleLobPageSZ.numberInt() ;
+               }
+
+               _mapEmptyCS[ eleName.str() ] = clsPageSzTuple( pageSz,
+                                                              lobPageSz ) ;
+            }
+         }
+
+         // 2.collection list
+         ele = bodyObj.getField( CLS_FS_FULLNAMES ) ;
+         if ( Array != ele.type() )
+         {
+            PD_LOG( PDWARNING, "Session[%s]: failed to parse collections "
+                    "from obj[%s]", sessionName(),
+                    bodyObj.toString().c_str() ) ;
+            goto error ;
+         }
+         else
+         {
+            BSONObjIterator i( ele.embeddedObject() ) ;
+            while ( i.more() )
+            {
+               BSONElement next = i.next() ;
+               BSONElement name ;
+               if ( next.eoo() || !next.isABSONObj() )
+               {
+                  PD_LOG( PDWARNING, "Session[%s]: failed to parse a "
+                          "collection from obj[%s]", sessionName(),
+                          next.toString().c_str() ) ;
+                  goto error ;
+               }
+               name = next.embeddedObject().getField( CLS_FS_FULLNAME ) ;
+               if ( name.eoo() || String != name.type() )
+               {
+                  PD_LOG( PDWARNING, "Session[%s]: failed to parse a "
+                          "collection from obj[%s]", sessionName(),
+                          next.toString().c_str() ) ;
+                  goto error ;
+               }
+               _fullNames.push_back( name.String() ) ;
+            }
+         }
+
+         // 3. valid collection list
+         ele = bodyObj.getField( CLS_FS_VALIDCLS ) ;
+         if ( EOO == ele.type() )
+         {
+            /// compatiable with old version, donothing
+         }
+         else if ( Array != ele.type() )
+         {
+            PD_LOG( PDWARNING, "Session[%s]: Failed to parse valid "
+                    "collections from obj[%s]", sessionName(),
+                    bodyObj.toString().c_str() ) ;
+            goto error ;
+         }
+         else
+         {
+            BSONObjIterator itValid( ele.embeddedObject() ) ;
+            while( itValid.more() )
+            {
+               BSONElement next = itValid.next() ;
+               BSONElement name ;
+               if ( next.eoo() || !next.isABSONObj() )
+               {
+                  PD_LOG( PDWARNING, "Session[%s]: Failed to parse a valid "
+                          "collection from obj[%s]", sessionName(),
+                          next.toString().c_str() ) ;
+                  goto error ;
+               }
+               name = next.embeddedObject().getField( CLS_FS_FULLNAME ) ;
+               if ( name.eoo() || String != name.type() )
+               {
+                  PD_LOG( PDWARNING, "Session[%s]: Failed to parse a valid "
+                          "collection from obj[%s]", sessionName(),
+                          next.toString().c_str() ) ;
+                  goto error ;
+               }
+               _validCLs.push_back( name.String() ) ;
+               PD_LOG( PDEVENT, "Session[%s]: Collection[%s] is valid, don't "
+                       "need to full sync", sessionName(), name.valuestr() ) ;
+            }
+         }
+      }
+      catch( std::exception &e )
+      {
+         PD_LOG( PDERROR, "Session[%s]: Occur exception: %s",
+                 sessionName(), e.what() ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      if ( SDB_OK == rc )
+      {
+         rc = SDB_INVALIDARG ;
+      }
+      goto done ;
+   }
+
+   INT32 _clsFSDstSession::_buildBegingBody( BSONObj &bodyObj )
+   {
+      INT32 rc = SDB_OK ;
+      SDB_DMSCB *dmsCB = pmdGetKRCB()->getDMSCB() ;
+      set< monCSSimple > csList ;
+      set< monCSSimple >::iterator it ;
+
+      BSONObjBuilder builder ;
+      BSONArrayBuilder validCLBD( builder.subarrayStart( CLS_FS_VALIDCLS ) ) ;
+
+      dmsCB->dumpInfo( csList, TRUE ) ;
+
+      for ( it = csList.begin() ; it != csList.end() ; ++it )
+      {
+         const monCSSimple &csInfo = *it ;
+
+         if ( 0 == ossStrcmp( csInfo._name, SDB_DMSTEMP_NAME ) )
+         {
+            continue ;
+         }
+         dmsStorageUnitID suID = DMS_INVALID_SUID ;
+         dmsStorageUnit *su = NULL ;
+         rc = dmsCB->nameToSUAndLock( csInfo._name, suID, &su ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Failed to lock collectionspace[%s], rc: %d",
+                    csInfo._name, rc ) ;
+            goto error ;
+         }
+
+         rtnRecoverUnit recoverUnit ;
+         recoverUnit.init( su ) ;
+         MAP_SU_STATUS items ;
+         if ( 0 == recoverUnit.getValidCLItem( items ) )
+         {
+            dmsCB->suUnlock( suID ) ;
+            continue ;
+         }
+         MAP_SU_STATUS::iterator itCL = items.begin() ;
+         while( itCL != items.end() )
+         {
+            rtnRUInfo &info = itCL->second ;
+
+            BSONObjBuilder clBuild( validCLBD.subobjStart() ) ;
+            clBuild.append( CLS_FS_FULLNAME, itCL->first ) ;
+            clBuild.append( CLS_FS_COMMITFLAG,
+                            BSON_ARRAY( (INT32)info._dataCommitFlag <<
+                                        (INT32)info._idxCommitFlag <<
+                                        (INT32)info._lobCommitFlag ) ) ;
+            clBuild.append( CLS_FS_COMMITLSN,
+                            BSON_ARRAY( (INT64)info._dataCommitLSN <<
+                                        (INT64)info._idxCommitLSN <<
+                                        (INT64)info._lobCommitLSN ) ) ;
+            clBuild.done() ;
+            ++itCL ;
+         }
+         dmsCB->suUnlock( suID ) ;
+      }
+
+      validCLBD.done() ;
+      bodyObj = builder.obj() ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 
    INT32 _clsFSDstSession::handleSyncTransRes( NET_HANDLE handle,
@@ -1696,7 +1902,7 @@ namespace engine
 
       if ( CLS_FS_EOF == pRsp->eof )
       {
-         _tsStep = STEP_TS_END;
+         _fsStep = CLS_FS_STEP_END;
          _end();
          goto done ;
       }
@@ -1706,14 +1912,15 @@ namespace engine
          dpsLogRecordHeader *header = ( dpsLogRecordHeader *)pOffset ;
          if ( _expectLSN.compareOffset( header->_lsn ) <= 0 )
          {
-            _tsStep = STEP_TS_END ;
+            _fsStep = CLS_FS_STEP_END ;
             _end() ;
             goto done ;
          }
 
          if ( 0 != dpsCB->expectLsn().compareOffset( header->_lsn ))
          {
-            SDB_ASSERT( STEP_TS_BEGIN == _tsStep, "get unexpected log" ) ;
+            SDB_ASSERT( CLS_FS_STEP_NONE == _fsStep,
+                        "get unexpected log" ) ;
             rc = dpsCB->move( header->_lsn, header->_version ) ;
             if ( rc )
             {
@@ -1728,7 +1935,7 @@ namespace engine
                PD_LOG( PDEVENT, "Session[%s]: Move lsn to [%u, %lld] for "
                        "sync the log info succeed", sessionName(),
                        header->_version, header->_lsn ) ;
-               _tsStep = STEP_TS_ING ;
+               _fsStep = CLS_FS_STEP_LOGBEGIN ;
             }
          }
 
@@ -1963,20 +2170,22 @@ namespace engine
       return ret ;
    }
 
-   void _clsSplitDstSession::_endLog ()
-   {
-      _step = STEP_POST_SYNC ;
-      _end () ;
-   }
-
-   INT32 _clsSplitDstSession::_onNotify ()
+   BOOLEAN _clsSplitDstSession::_onNotify ( MsgClsFSNotifyRes *pMsg )
    {
       if ( CLS_TASK_STATUS_CANCELED == _pTask->status() )
       {
          _status = CLS_FS_STATUS_END ;
-         return SDB_TASK_HAS_CANCELED ;
+         _end() ;
+         return FALSE ;  /// SDB_TASK_HAS_CANCELED
       }
-      return SDB_OK ;
+      else if ( CLS_FS_STATUS_END == _status &&
+                CLS_FS_EOF == pMsg->eof )
+      {
+         _step = STEP_POST_SYNC ;
+         _end() ;
+         return FALSE ;
+      }
+      return TRUE ;
    }
 
    // this function prepare a split begin request and send to source

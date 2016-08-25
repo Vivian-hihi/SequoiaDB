@@ -52,7 +52,6 @@
 #include "ossEvent.hpp"
 #include "sdbInterface.hpp"
 #include "dmsIxmKeySorter.hpp"
-#include "dmsStatus.hpp"
 #include <map>
 #include <set>
 
@@ -166,7 +165,6 @@ namespace engine
       UINT32                  _logicalSUID ;
 
       dmsTempCB               _tempCB ;
-      dmsPersistStatus        _status ;
 
       dmsIxmKeySorterCreator* _ixmKeySorterCreator ;
 
@@ -248,7 +246,6 @@ namespace engine
       void dumpInfo ( INT64 &totalFileSize );
 
       dmsTempCB *getTempCB () ;
-      dmsPersistStatus* getStatus() ;
 
       INT32 dropCollectionSpaceP1 ( const CHAR *pName, _pmdEDUCB *cb,
                                     SDB_DPSCB *dpsCB );

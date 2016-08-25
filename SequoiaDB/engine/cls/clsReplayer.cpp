@@ -293,7 +293,11 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__CLSREP_REPLAY );
       SDB_ASSERT( NULL != recordHeader, "head should not be NULL" ) ;
-      eduCB->insertLsn( recordHeader->_lsn ) ;
+
+      if ( !_dpsCB )
+      {
+         eduCB->insertLsn( recordHeader->_lsn ) ;
+      }
 
       try
       {
@@ -401,8 +405,7 @@ namespace engine
                goto error ;
             }
             rc = rtnCreateCollectionSpaceCommand( cs, eduCB, _dmsCB, _dpsCB,
-                                                  pageSize, lobPageSize,
-                                                  TRUE ) ;
+                                                  pageSize, lobPageSize ) ;
             if ( SDB_DMS_CS_EXIST == rc )
             {
                PD_LOG( PDWARNING, "Collection space[%s] already exist when "
@@ -1042,8 +1045,7 @@ namespace engine
 
    INT32 _clsReplayer::replayCrtCS( const CHAR *cs, INT32 pageSize,
                                     INT32 lobPageSize,
-                                    _pmdEDUCB *eduCB,
-                                    BOOLEAN delWhenExist )
+                                    _pmdEDUCB *eduCB )
    {
       SDB_ASSERT( NULL != cs, "cs should not be NULL" ) ;
       INT32 rc = rtnTestCollectionSpaceCommand( cs, _dmsCB ) ;
@@ -1052,8 +1054,7 @@ namespace engine
          rc = rtnCreateCollectionSpaceCommand( cs, eduCB, _dmsCB,
                                                _dpsCB, pageSize,
                                                lobPageSize,
-                                               TRUE,
-                                               delWhenExist ) ;
+                                               TRUE ) ;
       }
       return rc ;
    }

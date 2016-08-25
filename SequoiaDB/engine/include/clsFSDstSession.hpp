@@ -56,10 +56,34 @@ namespace engine
    class _clsSyncManager ;
    class _clsShardMgr ;
 
+   /*
+      _clsPageSzTuple define
+   */
+   struct _clsPageSzTuple
+   {
+      INT32 pageSize ;
+      INT32 lobPageSize ;
+
+      _clsPageSzTuple( INT32 ps, INT32 lps )
+      :pageSize( ps ),
+       lobPageSize( lps )
+      {
+      }
+
+      _clsPageSzTuple()
+      :pageSize( 0 ),
+       lobPageSize( 0 )
+      {
+      }
+   } ;
+   typedef _clsPageSzTuple clsPageSzTuple ;
+
+   /*
+      _clsDataDstBaseSession define
+   */
    class _clsDataDstBaseSession : public _pmdAsyncSession
    {
       DECLARE_OBJ_MSG_MAP()
-
       public:
          _clsDataDstBaseSession ( UINT64 sessionID, _netRouteAgent *agent ) ;
          virtual ~_clsDataDstBaseSession () ;
@@ -79,8 +103,11 @@ namespace engine
          virtual INT32   _needData () const = 0 ;
          virtual INT32   _dataSessionType () const = 0 ;
          virtual BOOLEAN _isReady () = 0 ;
-         virtual void    _endLog () = 0 ;
-         virtual INT32   _onNotify () = 0 ;
+         /*
+            return FALSE, will not continue to run after
+            return TRUE, will run after code
+         */
+         virtual BOOLEAN _onNotify ( MsgClsFSNotifyRes *pMsg ) = 0 ;
 
       //message function
       protected:
@@ -103,17 +130,22 @@ namespace engine
                                const MsgLobTuple *&tuple,
                                const CHAR *&data ) ;
 
-         INT32          _extractFullNames( const CHAR *names ) ;
-         INT32          _extractMeta( const CHAR *objdata, string &cs,
-                                      string &collection, UINT32 &pageSize,
-                                      UINT32 &attributes, INT32 &lobPageSize,
+         INT32          _extractMeta( const CHAR *objdata,
+                                      string &cs,
+                                      string &collection,
+                                      UINT32 &pageSize,
+                                      UINT32 &attributes,
+                                      INT32 &lobPageSize,
                                       UTIL_COMPRESSOR_TYPE &compType ) ;
-         INT32          _extractIndex( const CHAR *objdata, vector<BSONObj> &index,
+
+         INT32          _extractIndex( const CHAR *objdata,
+                                       vector<BSONObj> &index,
                                        BOOLEAN &noMore ) ;
 
          UINT32         _addCollection ( const CHAR *pCollectionName ) ;
          UINT32         _removeCollection ( const CHAR *pCollectionName ) ;
          UINT32         _removeCS ( const CHAR *pCSName ) ;
+         UINT32         _removeValidCLs( const vector<string> &validCLs ) ;
 
       private:
          INT32 _replayDoc( const MsgClsFSNotifyRes *msg ) ;
@@ -134,43 +166,35 @@ namespace engine
          UINT64               _requestID ;
          DPS_LSN              _expectLSN ;
          UINT64               _lastOprLSN ;
-         BOOLEAN              _needMoreDoc ;  /// when we begin to get lob, we do not want to sync doc any more.
-         struct pageSzTuple
-         {
-            INT32 pageSize ;
-            INT32 lobPageSize ;
-            pageSzTuple( INT32 ps, INT32 lps )
-            :pageSize( ps ),
-             lobPageSize( lps )
-            {
-
-            }
-
-            pageSzTuple()
-            :pageSize( 0 ),
-             lobPageSize( 0 )
-            {
-
-            }
-         } ;
-         typedef std::map<string, pageSzTuple> CS_PS_TUPLES ;
-         CS_PS_TUPLES _mapEmptyCS ;
+         /// when we begin to get lob, we do not want to sync doc any more.
+         BOOLEAN              _needMoreDoc ;
 
    };
 
+   /*
+      CLS_FULLSYNC_STEP define
+   */
+   enum CLS_FULLSYNC_STEP
+   {
+      CLS_FS_STEP_NONE = 0,
+      CLS_FS_STEP_LOGBEGIN,
+      CLS_FS_STEP_END
+   } ;
+
+   /*
+      _clsFSDstSession define
+   */
    class _clsFSDstSession : public _clsDataDstBaseSession
    {
+   typedef std::map<string, clsPageSzTuple>     CS_PS_TUPLES ;
+
    DECLARE_OBJ_MSG_MAP()
+
    public:
       _clsFSDstSession( UINT64 sessionID,
                         _netRouteAgent *agent ) ;
       virtual ~_clsFSDstSession() ;
-      enum TRANS_SYNC_STEP
-      {
-         STEP_TS_BEGIN = 0,
-         STEP_TS_ING,
-         STEP_TS_END
-      };
+
    public:
       virtual SDB_SESSION_TYPE sessionType() const ;
       virtual const CHAR*      className() const { return "FullSync-Dest" ; }
@@ -187,6 +211,9 @@ namespace engine
       virtual void      _onDetach () ;
    protected:
       void              _pullTransLog ( DPS_LSN &begin ) ;
+      INT32             _extractBeginRspBody( const BSONObj &bodyObj ) ;
+      INT32             _buildBegingBody( BSONObj &bodyObj ) ;
+
    protected:
       virtual void      _begin() ;
       virtual void      _end() ;
@@ -195,14 +222,18 @@ namespace engine
       virtual BSONObj   _keyObjE () ;
       virtual INT32     _dataSessionType () const ;
       virtual BOOLEAN   _isReady () ;
-      virtual void      _endLog () ;
-      virtual INT32     _onNotify () { return SDB_OK ; }
+      virtual BOOLEAN   _onNotify ( MsgClsFSNotifyRes *pMsg ) ;
 
    private:
-      TRANS_SYNC_STEP   _tsStep;
+      CLS_FULLSYNC_STEP    _fsStep ;
+      CS_PS_TUPLES         _mapEmptyCS ;
+      vector<string>       _validCLs ;
 
    } ;
 
+   /*
+      _clsSplitDstSession define
+   */
    class _clsSplitDstSession : public _clsDataDstBaseSession
    {
       DECLARE_OBJ_MSG_MAP ()
@@ -253,8 +284,7 @@ namespace engine
          virtual void      _onDetach () ;
          virtual INT32     _dataSessionType () const ;
          virtual BOOLEAN   _isReady () ;
-         virtual void      _endLog () ;
-         virtual INT32     _onNotify () ;
+         virtual BOOLEAN   _onNotify ( MsgClsFSNotifyRes *pMsg ) ;
 
       private:
          void              _taskNotify ( INT32 msgType ) ;
@@ -271,6 +301,7 @@ namespace engine
          UINT32                  _collectionW ;
 
    };
+
 }
 
 #endif

@@ -75,7 +75,7 @@ namespace engine
                             _pmdEDUCB *eduCB, _clsBucket *pBucket ) ;
 
       INT32 replayCrtCS( const CHAR *cs, INT32 pageSize, INT32 lobPageSize,
-                         _pmdEDUCB *eduCB, BOOLEAN delWhenExist = FALSE ) ;
+                         _pmdEDUCB *eduCB ) ;
 
       INT32 replayCrtCollection( const CHAR *collection,
                                  UINT32 attributes,

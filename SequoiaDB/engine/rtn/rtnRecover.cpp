@@ -672,6 +672,7 @@ namespace engine
          /// data file is restored
          mbContext->mbStat()->_commitFlag.init( 1 ) ;
          mbContext->mbStat()->_isCrash = FALSE ;
+         mbContext->mbStat()->_lastLSN = ~0 ;
          mbContext->mb()->_commitFlag = 1 ;
          mbContext->mb()->_commitLSN = ~0 ;
 
@@ -745,6 +746,7 @@ namespace engine
          mbContext->mb()->_idxCommitFlag = 1 ;
          mbContext->mb()->_idxCommitLSN = ~0 ;
          mbContext->mbStat()->_idxCommitFlag.init( 1 ) ;
+         mbContext->mbStat()->_idxLastLSN = ~0 ;
          mbContext->mbStat()->_idxIsCrash = FALSE ;
 
          _indexNum = mbContext->mb()->_numIndexes ;
@@ -765,6 +767,7 @@ namespace engine
       mbContext->mb()->_lobCommitFlag = 1 ;
       mbContext->mb()->_lobCommitLSN = ~0 ;
       mbContext->mbStat()->_lobCommitFlag.init( 1 ) ;
+      mbContext->mbStat()->_lobLastLSN = ~0 ;
       mbContext->mbStat()->_lobIsCrash = FALSE ;
 
       _totalLob = mbContext->mbStat()->_totalLobs ;
@@ -1303,6 +1306,16 @@ namespace engine
       return NULL ;
    }
 
+   void _rtnRecoverUnit::setAllInvalid()
+   {
+      MAP_SU_STATUS::iterator it = _clStatus.begin() ;
+      while( it != _clStatus.end() )
+      {
+         it->second.setAllInvalid() ;
+         ++it ;
+      }
+   }
+
    INT32 _rtnRecoverUnit::cleanup( pmdEDUCB *cb )
    {
       INT32 rc = SDB_OK ;
@@ -1648,6 +1661,29 @@ namespace engine
       INT32 rc = SDB_OK ;
       SDB_DMSCB *dmsCB = pmdGetKRCB()->getDMSCB() ;
 
+      if ( _useUDF )
+      {
+#ifdef _WINDOWS
+         MAP_SU_STATUS validCLs ;
+         pUnit->getValidCLItem( validCLs ) ;
+#endif //_WINDOWS
+
+         pUnit->setAllInvalid() ;
+
+         for ( UINT32 i = 0 ; i < _udfValidCLs.size() ; ++i )
+         {
+            rtnRUInfo *pInfo = pUnit->getItem( _udfValidCLs[i] ) ;
+            if ( pInfo )
+            {
+               pInfo->setAllValid() ;
+#ifdef _WINDOWS
+               SDB_ASSERT( validCLs.find( _udfValidCLs[i] ) !=
+                           validCLs.end(), "Item must be Valid" ) ;
+#endif //_WINDOWS
+            }
+         }
+      }
+
       if ( pUnit->isAllInvalid() )
       {
          string csName = pUnit->getSU()->CSName() ;
@@ -1668,6 +1704,28 @@ namespace engine
       return rc ;
    }
 
+   void _rtnDBCleaner::setUDFValidCLs( const vector< string > &vecValidCLs )
+   {
+      _useUDF = TRUE ;
+      _udfValidCLs = vecValidCLs ;
+   }
+
+   /*
+      _rtnDBFSPostCleaner implement
+   */
+   void _rtnDBFSPostCleaner::_onSucceed( pmdEDUCB *cb )
+   {
+      /// set ok
+      pmdGetStartup().ok( TRUE ) ;
+   }
+
+   INT32 _rtnDBFSPostCleaner::_doOpr( pmdEDUCB *cb,
+                                      rtnRecoverUnit *pUnit,
+                                      dmsStorageUnitID &suID )
+   {
+      pUnit->getSU()->restoreForCrash() ;
+      return SDB_OK ;
+   }
 
 }
 

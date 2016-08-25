@@ -214,6 +214,16 @@ namespace engine
    } ;
    typedef class _dmsRecordID dmsRecordID ;
 
+   /*
+      DMS_FILE_TYPE define
+   */
+   enum DMS_FILE_TYPE
+   {
+      DMS_FILE_DATA     = 1,
+      DMS_FILE_IDX,
+      DMS_FILE_LOB
+   } ;
+
    // helper function, check DMS/IXM object name validity
    BOOLEAN  dmsIsSysCSName ( const CHAR *collectionSpaceName ) ;
    INT32    dmsCheckCSName ( const CHAR *collectionSpaceName,
