@@ -190,8 +190,7 @@ namespace engine
                                            SDB_DMSCB *dmsCB, SDB_DPSCB *dpsCB,
                                            INT32 pageSize = DMS_PAGE_SIZE_DFT,
                                            INT32 lobPageSize = DMS_DEFAULT_LOB_PAGE_SZ,
-                                           BOOLEAN sysCall = FALSE,
-                                           BOOLEAN delWhenExist = FALSE ) ;
+                                           BOOLEAN sysCall = FALSE ) ;
 
    INT32 rtnCreateCollectionCommand ( const CHAR *pCollection,
                                       UINT32 attributes,
