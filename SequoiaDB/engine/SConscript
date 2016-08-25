@@ -186,7 +186,6 @@ rtnFiles = [
       "rtn/rtnCoordDelete.cpp",
       "rtn/rtnCoordUpdate.cpp",
       "rtn/rtnRemoteExec.cpp",
-      "rtn/rtnRebuild.cpp",
       "rtn/rtnCoord.cpp",
       "rtn/rtnCB.cpp",
       "rtn/rtnCoordInterrupt.cpp",
