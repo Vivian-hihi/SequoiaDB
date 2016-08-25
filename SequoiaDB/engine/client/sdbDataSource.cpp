@@ -1048,8 +1048,10 @@ namespace sdbclient
          }
 
       }
-      if ( _idleSize.peek() > maxIdleNum )
+      if ( (INT32)_idleSize.peek() > maxIdleNum )
+      {
          freeNum = _idleSize.peek() - maxIdleNum ;
+      }
       while ( freeNum > 0 )
       {
          conn = _idleList.front() ;
