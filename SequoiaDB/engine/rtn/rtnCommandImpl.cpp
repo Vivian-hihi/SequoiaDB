@@ -1032,8 +1032,7 @@ namespace engine
                                            pmdEDUCB *cb, SDB_DMSCB *dmsCB,
                                            SDB_DPSCB *dpsCB, INT32 pageSize,
                                            INT32 lobPageSize,
-                                           BOOLEAN sysCall,
-                                           BOOLEAN delWhenExist )
+                                           BOOLEAN sysCall )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_RTNCREATECSCOMMAND ) ;
@@ -1112,7 +1111,6 @@ namespace engine
       // new storage unit, will insert into dmsCB->addCollectionSpace
       su = SDB_OSS_NEW dmsStorageUnit ( pCollectionSpace, 1,
                                         pmdGetBuffPool(),
-                                        dmsCB->getStatus(),
                                         pageSize,
                                         lobPageSize ) ;
       if ( !su )
