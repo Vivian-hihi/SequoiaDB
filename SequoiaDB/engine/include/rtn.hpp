@@ -278,8 +278,6 @@ namespace engine
 
    BOOLEAN rtnIsInBackup () ;
 
-   INT32 rtnRebuildDB ( pmdEDUCB *cb ) ;
-
    // perform collection offline reorg. Note ignoreError usually used by full
    // database rebuild. This option is trying best to ignore data corruption (
    // not all corruptions can be ignored, for example if metadata is corrupted
