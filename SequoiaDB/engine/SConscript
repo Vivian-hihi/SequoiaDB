@@ -249,7 +249,6 @@ msgFiles = [
       ]
 
 dmsFiles = [
-      "dms/dmsStatus.cpp",
       "dms/dmsStorageBase.cpp",
       "dms/dmsStorageData.cpp",
       "dms/dmsStorageIndex.cpp",
