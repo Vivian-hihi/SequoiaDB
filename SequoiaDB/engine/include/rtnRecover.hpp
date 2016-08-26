@@ -102,7 +102,6 @@ namespace engine
       UINT64 maxLSN() const
       {
          UINT64 lsn = _dataCommitLSN ;
-
          if ( DPS_INVALID_LSN_OFFSET != _idxCommitLSN &&
               _idxCommitLSN > lsn )
          {
