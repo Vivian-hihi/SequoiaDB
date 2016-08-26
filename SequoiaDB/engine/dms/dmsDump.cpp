@@ -432,14 +432,14 @@ namespace engine
          }
 
          len += ossSnprintf( outBuf + len, outSize - len,
-                             " First extent ID   : 0x%08lx (%d)"OSS_NEWLINE
-                             " Last extent ID    : 0x%08lx (%d)"OSS_NEWLINE
-                             " Logical ID        : 0x%08lx (%d)"OSS_NEWLINE
+                             " First extent ID   : 0x%08x (%d)"OSS_NEWLINE
+                             " Last extent ID    : 0x%08x (%d)"OSS_NEWLINE
+                             " Logical ID        : 0x%08x (%d)"OSS_NEWLINE
                              " Index HWM         : %u"OSS_NEWLINE
                              " Number of indexes : %u"OSS_NEWLINE
-                             " First Load ExtID  : 0x%08lx (%d)"OSS_NEWLINE
-                             " Last Load ExtID   : 0x%08lx (%d)"OSS_NEWLINE
-                             " Expand extent ID  : 0x%08lx (%d)"OSS_NEWLINE,
+                             " First Load ExtID  : 0x%08x (%d)"OSS_NEWLINE
+                             " Last Load ExtID   : 0x%08x (%d)"OSS_NEWLINE
+                             " Expand extent ID  : 0x%08x (%d)"OSS_NEWLINE,
                              mb->_firstExtentID, mb->_firstExtentID,
                              mb->_lastExtentID, mb->_lastExtentID,
                              mb->_logicalID, mb->_logicalID,
@@ -553,7 +553,7 @@ namespace engine
                continue ;
             }
             len += ossSnprintf( outBuf + len, outSize - len,
-                                "   %3u%c : %08lx %08lx"OSS_NEWLINE,
+                                "   %3u%c : %08x %08x"OSS_NEWLINE,
                                 tmpSize, uom,
                                 mb->_deleteList[i]._extent,
                                 mb->_deleteList[i]._offset ) ;
@@ -570,7 +570,7 @@ namespace engine
                continue ;
             }
             len += ossSnprintf( outBuf + len, outSize - len,
-                                "   %2u : 0x%08lx"OSS_NEWLINE,
+                                "   %2u : 0x%08x"OSS_NEWLINE,
                                 i, mb->_indexExtent[i] ) ;
          }
       }
@@ -671,7 +671,7 @@ namespace engine
                }
 
                len += ossSnprintf ( outBuf + len, outSize - len,
-                                    "  %6u : [0x%08lx, 0x%08lx]"OSS_NEWLINE,
+                                    "  %6u : [0x%08x, 0x%08x]"OSS_NEWLINE,
                                     i, firstID, lastID ) ;
             }
          } // end for
@@ -744,7 +744,7 @@ namespace engine
       }
 
       len += ossSnprintf( outBuf + len, outSize - len,
-                          " ExtentId: 0x%08lx (%d)"OSS_NEWLINE,
+                          " ExtentId: 0x%08x (%d)"OSS_NEWLINE,
                           extID, extID ) ;
       if ( DMS_SU_DMP_OPT_HEX & options )
       {
@@ -1380,19 +1380,19 @@ namespace engine
       keyOfst   = keyNode->_keyOffset ;
 
       len += ossSnprintf ( outBuf + len, outSize - len,
-                           "       Left Ptr     : 0x%08lx (%d)"OSS_NEWLINE,
+                           "       Left Ptr     : 0x%08x (%d)"OSS_NEWLINE,
                            left, left ) ;
       if ( rid._offset & 1 )
       {
          len += ossSnprintf ( outBuf + len, outSize - len,
-                              "       Record ID    : 0x%08lx : 0x%08lx "
+                              "       Record ID    : 0x%08x : 0x%08x "
                               "(Unused)"OSS_NEWLINE,
                               rid._extent, rid._offset ) ;
       }
       else
       {
          len += ossSnprintf ( outBuf + len, outSize - len,
-                              "       Record ID    : 0x%08lx : 0x%08lx "
+                              "       Record ID    : 0x%08x : 0x%08x "
                               "(extent: %d; offset: %d)"OSS_NEWLINE,
                               rid._extent, rid._offset, rid._extent,
                               rid._offset ) ;
