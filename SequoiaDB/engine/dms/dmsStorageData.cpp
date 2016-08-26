@@ -2989,7 +2989,7 @@ namespace engine
       }
 
       _mbStatInfo[context->mbID()]._lastCompressRatio =
-         (UINT8)recordData.getCompressRatio() ;
+         (UINT8)( recordData.getCompressRatio() * 100 ) ;
       _mbStatInfo[context->mbID()]._totalOrgDataLen += recordData.orgLen() ;
       _mbStatInfo[context->mbID()]._totalDataLen += recordData.len() ;
 
