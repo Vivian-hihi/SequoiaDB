@@ -1482,7 +1482,7 @@ namespace engine
       }
 
       /// compatiable with old version( without obj )
-      if ( header->messageLength > sizeof( MsgClsFSBegin ) )
+      if ( (UINT32)(header->messageLength) > sizeof( MsgClsFSBegin ) )
       {
          try
          {

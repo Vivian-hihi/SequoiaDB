@@ -1566,7 +1566,8 @@ namespace engine
    {
       if ( CLS_FS_NOTIFY_TYPE_LOB == pMsg->type &&
            CLS_FS_EOF == pMsg->eof &&
-           pMsg->header.header.messageLength > sizeof( MsgClsFSNotifyRes ) )
+           (UINT32)(pMsg->header.header.messageLength) >
+           sizeof( MsgClsFSNotifyRes ) )
       {
          rtnRUInfo info ;
          const CHAR *pCLName = _fullNames[_current].c_str() ;
