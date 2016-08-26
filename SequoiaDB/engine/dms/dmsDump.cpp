@@ -160,6 +160,12 @@ namespace engine
       }
       if ( DMS_SU_DMP_OPT_FORMATTED & options )
       {
+         ossTimestamp commitTm ;
+         commitTm.time = header->_commitTime / 1000 ;
+         commitTm.microtm = ( header->_commitTime % 1000 ) * 1000 ;
+         CHAR strTime[ OSS_TIMESTAMP_STRING_LEN + 1 ] = { 0 } ;
+         ossTimestampToString( commitTm, strTime ) ;
+
          len += ossSnprintf ( outBuf + len, outSize - len,
                               " Eye Catcher : %s"OSS_NEWLINE,
                               eyeCatcher ) ;
@@ -190,6 +196,21 @@ namespace engine
          len += ossSnprintf ( outBuf + len, outSize - len,
                               " Secret value: %d"OSS_NEWLINE,
                               header->_secretValue ) ;
+         len += ossSnprintf ( outBuf + len, outSize - len,
+                              " Lob Page Sz : %d"OSS_NEWLINE,
+                              header->_lobdPageSize ) ;
+         len += ossSnprintf ( outBuf + len, outSize - len,
+                              " Lob Flag    : %d"OSS_NEWLINE,
+                              header->_createLobs ) ;
+         len += ossSnprintf ( outBuf + len, outSize - len,
+                              " Commit Flag : %d"OSS_NEWLINE,
+                              header->_commitFlag ) ;
+         len += ossSnprintf ( outBuf + len, outSize - len,
+                              " Commit LSN  : %lld"OSS_NEWLINE,
+                              header->_commitLsn ) ;
+         len += ossSnprintf ( outBuf + len, outSize - len,
+                              " Commit Time : %s(%llu)"OSS_NEWLINE,
+                              strTime, header->_commitTime ) ;
       }
       len += ossSnprintf ( outBuf + len, outSize - len, OSS_NEWLINE ) ;
 
@@ -278,7 +299,8 @@ namespace engine
                              CHAR *outBuf, UINT32 outSize,
                              CHAR *addrPrefix, UINT32 options,
                              const CHAR *collectionName,
-                             vector< UINT16 > &collections )
+                             vector< UINT16 > &collections,
+                             BOOLEAN force )
    {
       UINT32 len = 0 ;
 
@@ -316,7 +338,8 @@ namespace engine
                             CHAR *outBuf, UINT32 outSize,
                             CHAR *addrPrefix, UINT32 options,
                             const CHAR *collectionName,
-                            vector< UINT16 > &collections )
+                            vector< UINT16 > &collections,
+                            BOOLEAN force )
    {
       UINT32 len = 0 ;
       UINT32 hexDumpOption = 0 ;
@@ -349,6 +372,11 @@ namespace engine
            !OSS_BIT_TEST ( mb->_flag, DMS_MB_FLAG_DROPED ) )
       {
          collections.push_back ( mb->_blockID ) ;
+      }
+      else if ( !force )
+      {
+         // if not enable force, when mb is invalid, ignored
+         goto exit ;
       }
 
       if ( DMS_SU_DMP_OPT_HEX & options )
@@ -385,7 +413,7 @@ namespace engine
                              " Collection ID     : %u"OSS_NEWLINE,
                               mb->_blockID ) ;
 
-         CHAR *compressorType = NULL ;
+         const CHAR *compressorType = NULL ;
          if ( 1 == mb->_compressorType )
          {
             compressorType = "lzw" ;
@@ -411,15 +439,7 @@ namespace engine
                              " Number of indexes : %u"OSS_NEWLINE
                              " First Load ExtID  : 0x%08lx (%d)"OSS_NEWLINE
                              " Last Load ExtID   : 0x%08lx (%d)"OSS_NEWLINE
-                             " Expand extent ID  : 0x%08lx (%d)"OSS_NEWLINE
-                             " Total records     : %llu"OSS_NEWLINE
-                             " Total data pages  : %u"OSS_NEWLINE
-                             " Total data free sp: %llu"OSS_NEWLINE
-                             " Total index pages : %u"OSS_NEWLINE
-                             " Total idx free sp : %llu"OSS_NEWLINE
-                             " Dictionary extent ID: 0x%08lx (%d)"OSS_NEWLINE
-                             " Dictionary version: %u"OSS_NEWLINE
-                             " Compression Type  : %s"OSS_NEWLINE,
+                             " Expand extent ID  : 0x%08lx (%d)"OSS_NEWLINE,
                              mb->_firstExtentID, mb->_firstExtentID,
                              mb->_lastExtentID, mb->_lastExtentID,
                              mb->_logicalID, mb->_logicalID,
@@ -427,13 +447,83 @@ namespace engine
                              mb->_numIndexes,
                              mb->_loadFirstExtentID, mb->_loadFirstExtentID,
                              mb->_loadLastExtentID, mb->_loadLastExtentID,
-                             mb->_mbExExtentID, mb->_mbExExtentID,
-                             mb->_totalRecords, mb->_totalDataPages,
-                             mb->_totalDataFreeSpace, mb->_totalIndexPages,
+                             mb->_mbExExtentID, mb->_mbExExtentID ) ;
+
+         /// stat
+         len += ossSnprintf( outBuf + len, outSize - len,
+                             " Total records     : %llu"OSS_NEWLINE
+                             " Total lobs        : %llu"OSS_NEWLINE
+                             " Total data pages  : %u"OSS_NEWLINE
+                             " Total data free sp: %llu"OSS_NEWLINE
+                             " Total index pages : %u"OSS_NEWLINE
+                             " Total idx free sp : %llu"OSS_NEWLINE
+                             " Total lob pages   : %u"OSS_NEWLINE
+                             " Total org data len: %llu"OSS_NEWLINE
+                             " total data len    : %llu"OSS_NEWLINE,
+                             mb->_totalRecords,
+                             mb->_totalLobs,
+                             mb->_totalDataPages,
+                             mb->_totalDataFreeSpace,
+                             mb->_totalIndexPages,
                              mb->_totalIndexFreeSpace,
+                             mb->_totalLobPages,
+                             mb->_totalOrgDataLen,
+                             mb->_totalDataLen ) ;
+
+         /// compress
+         len += ossSnprintf( outBuf + len, outSize - len,
+                             " Dict extent ID    : 0x%08lx (%d)"OSS_NEWLINE
+                             " New Dict extent ID: 0x%08lx (%d)"OSS_NEWLINE
+                             " Dict stat page ID : 0x%08lx (%d)"OSS_NEWLINE
+                             " Dictionary version: %u"OSS_NEWLINE
+                             " Compression Type  : %d (%s)"OSS_NEWLINE
+                             " Last comp ratio   : %d"OSS_NEWLINE,
                              mb->_dictExtentID, mb->_dictExtentID,
+                             mb->_newDictExtentID, mb->_newDictExtentID,
+                             mb->_dictStatPageID, mb->_dictStatPageID,
                              mb->_dictVersion,
-                             compressorType ) ;
+                             mb->_compressorType, compressorType,
+                             mb->_lastCompressRatio ) ;
+
+         ossTimestamp dataTm ;
+         dataTm.time = mb->_commitTime / 1000 ;
+         dataTm.microtm = ( mb->_commitTime % 1000 ) * 1000 ;
+         CHAR strDataTime[ OSS_TIMESTAMP_STRING_LEN + 1 ] = { 0 } ;
+         ossTimestampToString( dataTm, strDataTime ) ;
+
+         ossTimestamp idxTm ;
+         dataTm.time = mb->_idxCommitTime / 1000 ;
+         dataTm.microtm = ( mb->_idxCommitTime % 1000 ) * 1000 ;
+         CHAR strIdxTime[ OSS_TIMESTAMP_STRING_LEN + 1 ] = { 0 } ;
+         ossTimestampToString( idxTm, strIdxTime ) ;
+
+         ossTimestamp lobTm ;
+         dataTm.time = mb->_lobCommitTime / 1000 ;
+         dataTm.microtm = ( mb->_lobCommitTime % 1000 ) * 1000 ;
+         CHAR strLobTime[ OSS_TIMESTAMP_STRING_LEN + 1 ] = { 0 } ;
+         ossTimestampToString( lobTm, strLobTime ) ;
+
+         /// commit info
+         len += ossSnprintf( outBuf + len, outSize - len,
+                             " Data Commit Flag  : %d"OSS_NEWLINE
+                             " Data Commit LSN   : %lld"OSS_NEWLINE
+                             " Data Commit Time  : %s (%llu)"OSS_NEWLINE
+                             " Idx Commit Flag   : %d"OSS_NEWLINE
+                             " Idx Commit LSN    : %lld"OSS_NEWLINE
+                             " Idx Commit Time   : %s (%llu)"OSS_NEWLINE
+                             " Lob Commit Flag   : %d"OSS_NEWLINE
+                             " Lob Commit LSN    : %lld"OSS_NEWLINE
+                             " Lob Commit Time   : %s (%llu)"OSS_NEWLINE,
+                             mb->_commitFlag,
+                             mb->_commitLSN,
+                             strDataTime, mb->_commitTime,
+                             mb->_idxCommitFlag,
+                             mb->_idxCommitLSN,
+                             strIdxTime, mb->_idxCommitTime,
+                             mb->_lobCommitFlag,
+                             mb->_lobCommitLSN,
+                             strLobTime, mb->_lobCommitTime ) ;
+
          // Delete list
          len += ossSnprintf( outBuf + len, outSize - len,
                              " Deleted list :"OSS_NEWLINE ) ;
@@ -456,6 +546,12 @@ namespace engine
                tmpSize = tmpInt >> 20 ;  // tmpInt / 1048576
                uom = 'M' ;
             }
+            if ( !force &&
+                 DMS_INVALID_EXTENT == mb->_deleteList[i]._extent &&
+                 DMS_INVALID_OFFSET == mb->_deleteList[i]._offset )
+            {
+               continue ;
+            }
             len += ossSnprintf( outBuf + len, outSize - len,
                                 "   %3u%c : %08lx %08lx"OSS_NEWLINE,
                                 tmpSize, uom,
@@ -469,6 +565,10 @@ namespace engine
 
          for ( UINT16 i = 0 ; i < DMS_COLLECTION_MAX_INDEX ; i++ )
          {
+            if ( !force && DMS_INVALID_EXTENT == mb->_indexExtent[i] )
+            {
+               continue ;
+            }
             len += ossSnprintf( outBuf + len, outSize - len,
                                 "   %2u : 0x%08lx"OSS_NEWLINE,
                                 i, mb->_indexExtent[i] ) ;

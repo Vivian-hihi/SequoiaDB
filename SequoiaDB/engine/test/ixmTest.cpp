@@ -63,7 +63,7 @@ int main ( int argc, char **argv )
                        DMS_SU_DMP_OPT_HEX_WITH_ASCII |
                        DMS_SU_DMP_OPT_HEX_PREFIX_AS_ADDR |
                        DMS_SU_DMP_OPT_FORMATTED,
-                       NULL, collections ) ;
+                       NULL, collections, FALSE ) ;
       fileOffset.offset += 1024 ;
       storageUint.seekToOffset( fileOffset ) ;
       printf( "%s\n", myoutBuf ) ;
