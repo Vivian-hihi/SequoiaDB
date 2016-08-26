@@ -369,7 +369,7 @@ namespace engine
          virtual ~_rtnDBFSPostCleaner() {}
 
       public:
-         virtual const CHAR*  oprName() const { return "FSPostCleaner" ; }
+         virtual const CHAR*  oprName() const { return "Repaire" ; }
 
       protected:
          virtual BOOLEAN   _lockDMS() const { return FALSE ; }
