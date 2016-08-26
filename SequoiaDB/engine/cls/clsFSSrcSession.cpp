@@ -731,7 +731,7 @@ namespace engine
          _LSNlatch.release() ;
          /// build collection's commit info
          BSONObj commitObj ;
-         if ( _buildCLCommitInfo( _curCollecitonName, commitObj ) )
+         if ( SDB_OK == _buildCLCommitInfo( _curCollecitonName, commitObj ) )
          {
             msg.header.header.messageLength += commitObj.objsize() ;
             _agent->syncSend( handle, &(msg.header.header),
