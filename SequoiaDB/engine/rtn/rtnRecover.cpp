@@ -1163,7 +1163,6 @@ namespace engine
    _rtnRecoverUnit::_rtnRecoverUnit()
    {
       _pSU = NULL ;
-      _invalidNum = 0 ;
    }
 
    _rtnRecoverUnit::~_rtnRecoverUnit()
@@ -1207,11 +1206,6 @@ namespace engine
                         DMS_COLLECTION_NAME_SZ ) ;
             info._clName[ DMS_COLLECTION_NAME_SZ ] = 0 ;
 
-            if ( !info.isAllValid() )
-            {
-               ++_invalidNum ;
-            }
-
             clFullName = _pSU->CSName() ;
             clFullName += "." ;
             clFullName += mb->_collectionName ;
@@ -1234,7 +1228,6 @@ namespace engine
    {
       _pSU = NULL ;
       _clStatus.clear() ;
-      _invalidNum = 0 ;
    }
 
    INT32 _rtnRecoverUnit::restore( pmdEDUCB *cb )
@@ -1245,16 +1238,30 @@ namespace engine
 
    BOOLEAN _rtnRecoverUnit::isAllValid() const
    {
-      return 0 == _invalidNum ? TRUE : FALSE ;
+      MAP_SU_STATUS::const_iterator cit = _clStatus.begin() ;
+      while( cit != _clStatus.end() )
+      {
+         if ( !( cit->second ).isAllValid() )
+         {
+            return FALSE ;
+         }
+         ++cit ;
+      }
+      return TRUE ;
    }
 
    BOOLEAN _rtnRecoverUnit::isAllInvalid() const
    {
-      if ( _invalidNum == _clStatus.size() )
+      MAP_SU_STATUS::const_iterator cit = _clStatus.begin() ;
+      while( cit != _clStatus.end() )
       {
-         return TRUE ;
+         if ( ( cit->second ).isAllValid() )
+         {
+            return FALSE ;
+         }
+         ++cit ;
       }
-      return FALSE ;
+      return TRUE ;
    }
 
    UINT32 _rtnRecoverUnit::getValidCLItem( MAP_SU_STATUS &items )
@@ -1313,7 +1320,6 @@ namespace engine
          it->second.setAllInvalid() ;
          ++it ;
       }
-      _invalidNum = _clStatus.size() ;
    }
 
    INT32 _rtnRecoverUnit::cleanup( pmdEDUCB *cb )

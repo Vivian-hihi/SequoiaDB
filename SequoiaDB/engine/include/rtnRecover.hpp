@@ -266,7 +266,6 @@ namespace engine
 
       private:
          MAP_SU_STATUS              _clStatus ;
-         UINT32                     _invalidNum ;
 
          dmsStorageUnit             *_pSU ;
 
