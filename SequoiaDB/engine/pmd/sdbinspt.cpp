@@ -108,7 +108,7 @@ namespace fs = boost::filesystem ;
        ( COMMANDS_STRING(OPTION_NUMPAGE, ",n"), boost::program_options::value<SINT32>(), "number of pages" ) \
        ( COMMANDS_STRING(OPTION_SHOW_CONTENT, ",p"), boost::program_options::value<string>(), "display data/index content(true/false)" ) \
        ( OPTION_ONLY_META, boost::program_options::value<string>(), "inspect only meta(Header, SME, MME), true/false" ) \
-       ( OPTION_FORCE, "force dump all invalid mb, delete list and index list and so on" )
+       ( OPTION_FORCE, "force dump all invalid mb, delete list and index list and so on" ) \
        ( COMMANDS_STRING(OPTION_REPAIRE, ",r"), boost::program_options::value<string>(), OPTION_REPAIRE_DESP )
 
 // bitwise operation
