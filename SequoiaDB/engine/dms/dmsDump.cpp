@@ -320,7 +320,7 @@ namespace engine
       {
          len += dumpMB ( (CHAR*)inBuf + (i*DMS_MB_SIZE), DMS_MB_SIZE,
                          outBuf + len, outSize -len, addrPrefix, options,
-                         collectionName, collections ) ;
+                         collectionName, collections, force ) ;
          if ( len == outSize )
          {
             goto exit ;
