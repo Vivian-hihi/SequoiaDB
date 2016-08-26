@@ -1250,8 +1250,7 @@ namespace engine
 
    BOOLEAN _rtnRecoverUnit::isAllInvalid() const
    {
-      if ( _invalidNum > 0 &&
-           _invalidNum == _clStatus.size() )
+      if ( _invalidNum == _clStatus.size() )
       {
          return TRUE ;
       }
@@ -1314,6 +1313,7 @@ namespace engine
          it->second.setAllInvalid() ;
          ++it ;
       }
+      _invalidNum = _clStatus.size() ;
    }
 
    INT32 _rtnRecoverUnit::cleanup( pmdEDUCB *cb )
@@ -1663,10 +1663,10 @@ namespace engine
 
       if ( _useUDF )
       {
-#ifdef _WINDOWS
+#ifdef _DEBUG
          MAP_SU_STATUS validCLs ;
          pUnit->getValidCLItem( validCLs ) ;
-#endif //_WINDOWS
+#endif //_DEBUG
 
          pUnit->setAllInvalid() ;
 
@@ -1676,10 +1676,10 @@ namespace engine
             if ( pInfo )
             {
                pInfo->setAllValid() ;
-#ifdef _WINDOWS
+#ifdef _DEBUG
                SDB_ASSERT( validCLs.find( _udfValidCLs[i] ) !=
                            validCLs.end(), "Item must be Valid" ) ;
-#endif //_WINDOWS
+#endif //_DEBUG
             }
          }
       }
