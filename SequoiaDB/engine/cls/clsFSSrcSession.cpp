@@ -1551,6 +1551,10 @@ namespace engine
 
             _pRepl->syncMgr()->notifyFullSync( header->routeID ) ;
          }
+         else
+         {
+            _mapOveredCLs.clear() ;
+         }
       }
 
    done:
