@@ -206,7 +206,7 @@ namespace engine
                               " Commit Flag : %d"OSS_NEWLINE,
                               header->_commitFlag ) ;
          len += ossSnprintf ( outBuf + len, outSize - len,
-                              " Commit LSN  : 0x%016x (%lld)"OSS_NEWLINE,
+                              " Commit LSN  : 0x%016lx (%lld)"OSS_NEWLINE,
                               header->_commitLsn, header->_commitLsn ) ;
          len += ossSnprintf ( outBuf + len, outSize - len,
                               " Commit Time : %s (%llu)"OSS_NEWLINE,
@@ -506,13 +506,13 @@ namespace engine
          /// commit info
          len += ossSnprintf( outBuf + len, outSize - len,
                              " Data Commit Flag  : %d"OSS_NEWLINE
-                             " Data Commit LSN   : 0x%016x (%lld)"OSS_NEWLINE
+                             " Data Commit LSN   : 0x%016lx (%lld)"OSS_NEWLINE
                              " Data Commit Time  : %s (%llu)"OSS_NEWLINE
                              " Idx Commit Flag   : %d"OSS_NEWLINE
-                             " Idx Commit LSN    : 0x%016x (%lld)"OSS_NEWLINE
+                             " Idx Commit LSN    : 0x%016lx (%lld)"OSS_NEWLINE
                              " Idx Commit Time   : %s (%llu)"OSS_NEWLINE
                              " Lob Commit Flag   : %d"OSS_NEWLINE
-                             " Lob Commit LSN    : 0x%016x (%lld)"OSS_NEWLINE
+                             " Lob Commit LSN    : 0x%016lx (%lld)"OSS_NEWLINE
                              " Lob Commit Time   : %s (%llu)"OSS_NEWLINE,
                              mb->_commitFlag,
                              mb->_commitLSN, mb->_commitLSN,
