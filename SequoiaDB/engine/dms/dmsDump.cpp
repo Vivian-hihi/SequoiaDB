@@ -206,10 +206,10 @@ namespace engine
                               " Commit Flag : %d"OSS_NEWLINE,
                               header->_commitFlag ) ;
          len += ossSnprintf ( outBuf + len, outSize - len,
-                              " Commit LSN  : %lld"OSS_NEWLINE,
-                              header->_commitLsn ) ;
+                              " Commit LSN  : 0x%016x (%lld)"OSS_NEWLINE,
+                              header->_commitLsn, header->_commitLsn ) ;
          len += ossSnprintf ( outBuf + len, outSize - len,
-                              " Commit Time : %s(%llu)"OSS_NEWLINE,
+                              " Commit Time : %s (%llu)"OSS_NEWLINE,
                               strTime, header->_commitTime ) ;
       }
       len += ossSnprintf ( outBuf + len, outSize - len, OSS_NEWLINE ) ;
@@ -435,7 +435,7 @@ namespace engine
                              " First extent ID   : 0x%08lx (%d)"OSS_NEWLINE
                              " Last extent ID    : 0x%08lx (%d)"OSS_NEWLINE
                              " Logical ID        : 0x%08lx (%d)"OSS_NEWLINE
-                             " Index HWM         : 0x%d"OSS_NEWLINE
+                             " Index HWM         : %u"OSS_NEWLINE
                              " Number of indexes : %u"OSS_NEWLINE
                              " First Load ExtID  : 0x%08lx (%d)"OSS_NEWLINE
                              " Last Load ExtID   : 0x%08lx (%d)"OSS_NEWLINE
@@ -472,11 +472,11 @@ namespace engine
 
          /// compress
          len += ossSnprintf( outBuf + len, outSize - len,
-                             " Dict extent ID    : 0x%08lx (%d)"OSS_NEWLINE
-                             " New Dict extent ID: 0x%08lx (%d)"OSS_NEWLINE
-                             " Dict stat page ID : 0x%08lx (%d)"OSS_NEWLINE
+                             " Dict extent ID    : 0x%08x (%d)"OSS_NEWLINE
+                             " New Dict extent ID: 0x%08x (%d)"OSS_NEWLINE
+                             " Dict stat page ID : 0x%08x (%d)"OSS_NEWLINE
                              " Dictionary version: %u"OSS_NEWLINE
-                             " Compression Type  : %d (%s)"OSS_NEWLINE
+                             " Compression Type  : 0x%02x (%s)"OSS_NEWLINE
                              " Last comp ratio   : %d"OSS_NEWLINE,
                              mb->_dictExtentID, mb->_dictExtentID,
                              mb->_newDictExtentID, mb->_newDictExtentID,
@@ -492,36 +492,36 @@ namespace engine
          ossTimestampToString( dataTm, strDataTime ) ;
 
          ossTimestamp idxTm ;
-         dataTm.time = mb->_idxCommitTime / 1000 ;
-         dataTm.microtm = ( mb->_idxCommitTime % 1000 ) * 1000 ;
+         idxTm.time = mb->_idxCommitTime / 1000 ;
+         idxTm.microtm = ( mb->_idxCommitTime % 1000 ) * 1000 ;
          CHAR strIdxTime[ OSS_TIMESTAMP_STRING_LEN + 1 ] = { 0 } ;
          ossTimestampToString( idxTm, strIdxTime ) ;
 
          ossTimestamp lobTm ;
-         dataTm.time = mb->_lobCommitTime / 1000 ;
-         dataTm.microtm = ( mb->_lobCommitTime % 1000 ) * 1000 ;
+         lobTm.time = mb->_lobCommitTime / 1000 ;
+         lobTm.microtm = ( mb->_lobCommitTime % 1000 ) * 1000 ;
          CHAR strLobTime[ OSS_TIMESTAMP_STRING_LEN + 1 ] = { 0 } ;
          ossTimestampToString( lobTm, strLobTime ) ;
 
          /// commit info
          len += ossSnprintf( outBuf + len, outSize - len,
                              " Data Commit Flag  : %d"OSS_NEWLINE
-                             " Data Commit LSN   : %lld"OSS_NEWLINE
+                             " Data Commit LSN   : 0x%016x (%lld)"OSS_NEWLINE
                              " Data Commit Time  : %s (%llu)"OSS_NEWLINE
                              " Idx Commit Flag   : %d"OSS_NEWLINE
-                             " Idx Commit LSN    : %lld"OSS_NEWLINE
+                             " Idx Commit LSN    : 0x%016x (%lld)"OSS_NEWLINE
                              " Idx Commit Time   : %s (%llu)"OSS_NEWLINE
                              " Lob Commit Flag   : %d"OSS_NEWLINE
-                             " Lob Commit LSN    : %lld"OSS_NEWLINE
+                             " Lob Commit LSN    : 0x%016x (%lld)"OSS_NEWLINE
                              " Lob Commit Time   : %s (%llu)"OSS_NEWLINE,
                              mb->_commitFlag,
-                             mb->_commitLSN,
+                             mb->_commitLSN, mb->_commitLSN,
                              strDataTime, mb->_commitTime,
                              mb->_idxCommitFlag,
-                             mb->_idxCommitLSN,
+                             mb->_idxCommitLSN, mb->_idxCommitLSN,
                              strIdxTime, mb->_idxCommitTime,
                              mb->_lobCommitFlag,
-                             mb->_lobCommitLSN,
+                             mb->_lobCommitLSN, mb->_lobCommitLSN,
                              strLobTime, mb->_lobCommitTime ) ;
 
          // Delete list
