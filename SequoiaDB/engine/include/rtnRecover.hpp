@@ -101,17 +101,17 @@ namespace engine
 
       UINT64 maxLSN() const
       {
-         UINT64 lsn = _dataCommitFlag ;
+         UINT64 lsn = _dataCommitLSN ;
 
-         if ( DPS_INVALID_LSN_OFFSET != _idxCommitFlag &&
-              _idxCommitFlag > lsn )
+         if ( DPS_INVALID_LSN_OFFSET != _idxCommitLSN &&
+              _idxCommitLSN > lsn )
          {
-            lsn = _idxCommitFlag ;
+            lsn = _idxCommitLSN ;
          }
-         if ( DPS_INVALID_LSN_OFFSET != _lobCommitFlag &&
-              _lobCommitFlag > lsn )
+         if ( DPS_INVALID_LSN_OFFSET != _lobCommitLSN &&
+              _lobCommitLSN > lsn )
          {
-            lsn = _lobCommitFlag ;
+            lsn = _lobCommitLSN ;
          }
          return lsn ;
       }
