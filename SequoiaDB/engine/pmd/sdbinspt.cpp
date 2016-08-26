@@ -704,8 +704,10 @@ INT32 resolveArgument ( po::options_description &desc, INT32 argc, CHAR **argv )
                        gNumPages ) ;
    dumpAndShowPrintf ( "   Show record: %s"OSS_NEWLINE,
                        gShowRecordContent ? "True":"False") ;
-   dumpAndShowPrintf ( "   Only Meta:   %s"OSS_NEWLINE,
+   dumpAndShowPrintf ( "   Only Meta  : %s"OSS_NEWLINE,
                        gOnlyMeta ? "True":"False" ) ;
+   dumpAndShowPrintf ( "   force      : %s"OSS_NEWLINE,
+                       gForce ? "True":"False" ) ;
    dumpAndShowPrintf ( OSS_NEWLINE ) ;
 done :
    PD_TRACE_EXITRC ( SDB_SDBINSPT_RESVARG, rc );
