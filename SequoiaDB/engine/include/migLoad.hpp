@@ -45,6 +45,8 @@
 #include "dmsStorageLoadExtent.hpp"
 #include <boost/thread/shared_mutex.hpp>
 
+using namespace bson ;
+
 namespace engine
 {
    #define MIG_SUM_BUFFER_SIZE   33554432
@@ -104,6 +106,9 @@ namespace engine
    } ;
    typedef struct _setParameters setParameters ;
 
+   /*
+      migMaster define
+   */
    class migMaster : public SDBObject
    {
    private:
@@ -150,8 +155,9 @@ namespace engine
       CHAR *getBuffer() ;
       migMaster() ;
       ~migMaster() ;
+
       INT32 initialize( setParameters *pParameters ) ;
-      INT32 run() ;
+      INT32 run( pmdEDUCB *cb ) ;
       void bucketDec ( INT32 blockID ) ;
    } ;
 
@@ -166,6 +172,9 @@ namespace engine
       CHAR           _pad[6] ;
    } ;
 
+   /*
+      migWorker define
+   */
    class migWorker : public SDBObject
    {
    private:
@@ -180,9 +189,10 @@ namespace engine
                         dmsStorageUnit *su,
                         UINT16 collectionID,
                         UINT32 clLID,
-                        BOOLEAN isAsynchr ) ;
+                        BOOLEAN isAsynchr,
+                        pmdEDUCB *cb ) ;
    } ;
 
 }
 
-#endif
+#endif //MIG_LOAD_JSONS_HPP_

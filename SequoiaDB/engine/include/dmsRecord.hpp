@@ -379,47 +379,19 @@ namespace engine
    } ;
    typedef _dmsRecord dmsRecord ;
 
-   #define DMS_RECORD_GETFLAG(record)        (*((CHAR*)(record)))
-   #define DMS_RECORD_GETSTATE(record)       (*((CHAR*)(record))&0x0F)
-   #define DMS_RECORD_GETATTR(record)        (*((CHAR*)(record))&0xF0)
-
-#if defined (SDB_BIG_ENDIAN)
-   #define DMS_RECORD_GETSIZE(record)  (((*((UINT32*)(record)))&0x00FFFFFF)+1)
-#else
-   #define DMS_RECORD_GETSIZE(record)  (((*((UINT32*)(record)))>>8)+1)
-#endif
-
-   #define DMS_RECORD_GETNEXTOFFSET(record)  \
-      (((dmsRecord*)(record))->_nextOffset)
-
-   #define DMS_RECORD_GETDATA(record)                                         \
-      ( OSS_BIT_TEST(DMS_RECORD_GETATTR(record),DMS_RECORD_FLAG_COMPRESSED) ? \
-       (CHAR*)((CHAR*)(record)+sizeof(INT32)+DMS_RECORD_METADATA_SZ) :        \
-       (CHAR*)((CHAR*)(record)+DMS_RECORD_METADATA_SZ) )
-
-   // Get OVF RID
-   #define DMS_RECORD_GETOVF(record)         \
-      *(dmsRecordID*)((char*)(record)+DMS_RECORD_METADATA_SZ)
-
-   // 4 bytes after metadata are record length, for non compressed
-   // and compressed
-   #define DMS_RECORD_GETDATALEN(record)     \
-      *(INT32*)((CHAR*)(record)+DMS_RECORD_METADATA_SZ)
-
    // Extract Data
-   #define DMS_RECORD_EXTRACTDATA( recordPtr, retPtr, compressorEntry ) \
+   #define DMS_RECORD_EXTRACTDATA( pRecord, retPtr, compressorEntry )   \
    do {                                                                 \
-         if ( !OSS_BIT_TEST( DMS_RECORD_GETATTR(recordPtr),             \
-                             DMS_RECORD_FLAG_COMPRESSED ) )             \
+         if ( !pRecord->isCompressed() )                                \
          {                                                              \
-            (retPtr) = (ossValuePtr)(DMS_RECORD_GETDATA(recordPtr)) ;   \
+            (retPtr) = (ossValuePtr)pRecord->getData() ;                \
          }                                                              \
          else                                                           \
          {                                                              \
             INT32 uncompLen = 0 ;                                       \
             rc = dmsUncompress( cb, compressorEntry,                    \
-                                DMS_RECORD_GETDATA(recordPtr),          \
-                                DMS_RECORD_GETDATALEN(recordPtr),       \
+                                pRecord->getData(),                     \
+                                pRecord->getDataLength(),               \
                                 (const CHAR**)&(retPtr), &uncompLen ) ; \
             PD_RC_CHECK ( rc, PDERROR,                                  \
                           "Failed to uncompress record, rc = %d", rc ); \
@@ -429,63 +401,6 @@ namespace engine
                        "len %d", uncompLen, *(INT32*)(retPtr) ) ;       \
          }                                                              \
       } while ( FALSE )
-
-   #define DMS_RECORD_SETFLAG(record,flag)   (*((CHAR*)(record))=(CHAR)(flag))
-   #define DMS_RECORD_SETSTATE(record,state)  \
-      (*((CHAR*)(record))=(CHAR)(state&0x0F)|(*((CHAR*)(record))&0xF0))
-   #define DMS_RECORD_SETATTR(record,attr)   \
-      (*((CHAR*)(record))=(CHAR)(attr&0xF0)|(*((CHAR*)(record))))
-   #define DMS_RECORD_UNSETATTR(record,attr) \
-      (*((CHAR*)(record))=(CHAR)(~(attr&0xF0))&(*((CHAR*)(record))))
-   #define DMS_RECORD_RESETATTR(record)      DMS_RECORD_UNSETATTR(record,0xF0)
-
-#if defined (SDB_BIG_ENDIAN)
-   #define DMS_RECORD_SETSIZE(record,size)   \
-      (*((UINT32*)(record))=(DMS_RECORD_GETFLAG(record)<<24)|\
-      ((UINT32)((size)-1)&0x00FFFFFF))
-#else
-   #define DMS_RECORD_SETSIZE(record,size)      \
-      (*((UINT32*)(record))=DMS_RECORD_GETFLAG(record)|\
-      ((UINT32)((size)-1)<<8))
-#endif
-
-   #define DMS_RECORD_SETMYOFFSET(record,offset)   \
-      (((dmsRecord*)(record))->_myOffset=(offset))
-   #define DMS_RECORD_SETPREVOFFSET(record,offset) \
-      (((dmsRecord*)(record))->_previousOffset=(offset))
-   #define DMS_RECORD_SETNEXTOFFSET(record,offset) \
-      (((dmsRecord*)(record))->_nextOffset=(offset))
-
-   // SET DATA
-   #define DMS_RECORD_SETDATA(record,ptr,len)                              \
-     do {                                                                  \
-        if ( OSS_BIT_TEST(DMS_RECORD_GETATTR(record),                      \
-                          DMS_RECORD_FLAG_COMPRESSED) )                    \
-        {                                                                  \
-           *(INT32*)((CHAR*)(record)+DMS_RECORD_METADATA_SZ) = len ;       \
-           ossMemcpy((void*)((CHAR*)(record)+DMS_RECORD_METADATA_SZ+       \
-                      sizeof(INT32)), ((CHAR*)ptr),(len)) ;                \
-        }                                                                  \
-        else                                                               \
-        {                                                                  \
-           ossMemcpy((void*)((CHAR*)(record)+DMS_RECORD_METADATA_SZ),      \
-                     ((CHAR*)ptr),(len)) ;                                 \
-        }                                                                  \
-     } while (FALSE)
-
-   // SET DATA AND OID, Can't be compressed
-   #define DMS_RECORD_SETDATA_OID(record,ptr,len,oid)                      \
-      do {                                                                 \
-           *(INT32*)((CHAR*)(record)+DMS_RECORD_METADATA_SZ) =             \
-                     (len) + oid.size() ;                                  \
-           ossMemcpy((void*)((CHAR*)(record)+DMS_RECORD_METADATA_SZ+       \
-                     sizeof(INT32)), oid.rawdata(), oid.size()) ;          \
-           ossMemcpy((void*)((CHAR*)(record)+DMS_RECORD_METADATA_SZ+       \
-                     sizeof(INT32)+oid.size()),                            \
-                     (CHAR*)((CHAR*)(ptr)+sizeof(INT32)),                  \
-                     (len)-sizeof(INT32)) ;                                \
-        } while ( FALSE )
-
 
    /*
       _dmsDeletedRecord defined

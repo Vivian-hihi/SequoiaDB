@@ -633,8 +633,8 @@ namespace engine
          goto exit ;
       }
 
-      flag       = DMS_RECORD_GETFLAG(inBuf) ;
-      state      = DMS_RECORD_GETSTATE(inBuf) ;
+      flag       = record->getFlag() ;
+      state      = record->getState();
 
       if ( OSS_BIT_TEST ( flag, DMS_RECORD_FLAG_OVERFLOWF ) )
       {
@@ -674,7 +674,7 @@ namespace engine
       }
       else if ( isOvf )
       {
-         dmsRecordID rid = DMS_RECORD_GETOVF(inBuf) ;
+         dmsRecordID rid = record->getOvfRID() ;
          if ( ridList )
          {
             ridList->insert ( rid ) ;
@@ -686,7 +686,7 @@ namespace engine
          try
          {
             ossValuePtr recordPtr = 0 ;
-            DMS_RECORD_EXTRACTDATA ( (ossValuePtr)(inBuf), recordPtr,
+            DMS_RECORD_EXTRACTDATA ( record, recordPtr,
                                      compressorEntry ) ;
             BSONObj obj ( (CHAR*)recordPtr ) ;
             if ( !obj.isValid() )

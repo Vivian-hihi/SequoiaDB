@@ -47,7 +47,6 @@ using namespace bson ;
 namespace engine
 {
    #define DMS_REORG_UNIT_HEAD_SIZE_UNIT           ( 1024 )
-   #define DMS_REORG_COMPRESS_RATIO_THRESHOLD      ( 95 )
 
    _dmsReorgUnit::_dmsReorgUnit ()
    {
@@ -381,7 +380,7 @@ namespace engine
          // Compression is valid and ratio is less the threshold
          if ( SDB_OK == rc &&
               compressedDataSize + sizeof(UINT32) < recordData.orgLen() &&
-              compressRatio < DMS_REORG_COMPRESS_RATIO_THRESHOLD )
+              compressRatio < DMS_COMPRESS_RATIO_THRESHOLD )
          {
             // 4 bytes len + compressed record
             dmsrecordSize = compressedDataSize + sizeof(UINT32) ;
@@ -391,17 +390,22 @@ namespace engine
          }
       }
 
-      dmsrecordSize += DMS_RECORD_METADATA_SZ ;
       dmsrecordSize *= DMS_RECORD_OVERFLOW_RATIO ;
+      dmsrecordSize += DMS_RECORD_METADATA_SZ ;
       dmsrecordSize = OSS_MIN( DMS_RECORD_MAX_SZ,
                                ossAlignX( dmsrecordSize, 4 ) ) ;
 
    alloc:
       if ( 0 == _currentExtentSize )
       {
+         INT32 expandSize = dmsrecordSize << DMS_RECORDS_PER_EXTENT_SQUARE ;
+         if ( expandSize > DMS_BEST_UP_EXTENT_SZ )
+         {
+            expandSize = expandSize < DMS_BEST_UP_EXTENT_SZ ?
+                         DMS_BEST_UP_EXTENT_SZ : expandSize ;
+         }
          // allocate memory
-         rc = _allocateExtent ( dmsrecordSize <<
-                                DMS_RECORDS_PER_EXTENT_SQUARE ) ;
+         rc = _allocateExtent ( expandSize ) ;
          if ( rc )
          {
             PD_LOG ( PDERROR, "Failed to allocate new extent in reorg file, "

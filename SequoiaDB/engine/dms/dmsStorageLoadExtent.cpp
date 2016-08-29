@@ -86,40 +86,29 @@ namespace engine
          requestSize = ossRoundUpToMultipleX ( requestSize, _pageSize ) ;
       }
 
-      if ( !_pCurrentExtent )
+      if ( (UINT32)requestSize > _buffSize && _pCurrentExtent )
       {
-         _pCurrentExtent = (CHAR*)SDB_OSS_MALLOC ( requestSize ) ;
+         SDB_OSS_FREE( _pCurrentExtent ) ;
+         _pCurrentExtent = NULL ;
+         _buffSize = 0 ;
+      }
+
+      if ( (UINT32)requestSize > _buffSize )
+      {
+         _pCurrentExtent = ( CHAR* )SDB_OSS_MALLOC( requestSize << 1 ) ;
          if ( !_pCurrentExtent )
          {
-            PD_LOG ( PDERROR, "Unable to allocate %d bytes memory",
-                     requestSize ) ;
+            PD_LOG( PDERROR, "Alloc memroy[%d] failed",
+                    requestSize << 1 ) ;
             rc = SDB_OOM ;
             goto error ;
          }
-         _currentExtentSize = requestSize ;
-         _initExtentHeader ( (dmsExtent*)_pCurrentExtent,
-                             _currentExtentSize/_pageSize ) ;
+         _buffSize = ( requestSize << 1 ) ;
       }
-      else
-      {
-         if ( requestSize > _currentExtentSize )
-         {
-            CHAR *pOldPtr = _pCurrentExtent ;
-            _pCurrentExtent = (CHAR*)SDB_OSS_REALLOC ( _pCurrentExtent,
-                                                       requestSize ) ;
-            if ( !_pCurrentExtent )
-            {
-               PD_LOG ( PDERROR, "Unable to realloc %d bytes memory",
-                        requestSize ) ;
-               _pCurrentExtent = pOldPtr ;
-               rc = SDB_OOM ;
-               goto error ;
-            }
-            _currentExtentSize = requestSize ;
-         }
-         _initExtentHeader ( (dmsExtent*)_pCurrentExtent,
-                             _currentExtentSize/_pageSize ) ;
-      }
+
+      _currentExtentSize = requestSize ;
+      _initExtentHeader ( (dmsExtent*)_pCurrentExtent,
+                          _currentExtentSize/_pageSize ) ;
 
    done :
       PD_TRACE_EXITRC ( SDB__DMSSTORAGELOADEXT__ALLOCEXTENT, rc );
@@ -130,6 +119,7 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGELOADEXT__IMPRTBLOCK, "dmsStorageLoadOp::pushToTempDataBlock" )
    INT32 dmsStorageLoadOp::pushToTempDataBlock ( dmsMBContext *mbContext,
+                                                 pmdEDUCB *cb,
                                                  BSONObj &record,
                                                  BOOLEAN isLast,
                                                  BOOLEAN isAsynchr )
@@ -137,150 +127,214 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__DMSSTORAGELOADEXT__IMPRTBLOCK );
       UINT32      dmsrecordSize   = 0 ;
-      ossValuePtr recordPtr       = 0 ;
-      ossValuePtr prevPtr         = 0 ;
+      dmsRecord   *pRecord        = NULL ;
+      dmsRecord   *pPreRecord     = NULL ;
       dmsOffset   offset          = DMS_INVALID_OFFSET ;
       dmsOffset   recordOffset    = DMS_INVALID_OFFSET ;
-      BSONElement ele ;
+
       _IDToInsert oid ;
       idToInsertEle oidEle((CHAR*)(&oid)) ;
-      BOOLEAN addOID = FALSE ;
-      INT32 oidLen = 0 ;
+      CHAR *pNewRecordData       = NULL ;
+      dmsRecordData recordData ;
+
+      dmsCompressorEntry *compressorEntry = NULL ;
 
       SDB_ASSERT( mbContext, "mb context can't be NULL" ) ;
 
-      /* (0) */
-      // verify whether the record got "_id" inside
-      ele = record.getField ( DMS_ID_KEY_NAME ) ;
-      if ( ele.type() == Array )
+      compressorEntry = _su->data()->getCompressorEntry( mbContext->mbID() ) ;
+      /* For concurrency protection with drop CL and set compresor. */
+      dmsCompressorGuard compGuard( compressorEntry, SHARED ) ;
+
+      try
       {
-         PD_LOG ( PDERROR, "record id can't be array: %s",
-                  record.toString().c_str()) ;
-         rc = SDB_INVALIDARG ;
+         recordData.setData( record.objdata(), record.objsize(),
+                             FALSE, TRUE ) ;
+         /* (0) */
+         // verify whether the record got "_id" inside
+         BSONElement ele = record.getField ( DMS_ID_KEY_NAME ) ;
+         if ( ele.type() == Array )
+         {
+            PD_LOG ( PDERROR, "record id can't be array: %s",
+                     record.toString().c_str()) ;
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+
+         // if the record is not for temp, and
+         // "_id" doesn't exist, let's create the object
+         if ( ele.eoo() )
+         {
+            oid._oid.init() ;
+            rc = cb->allocBuff( oidEle.size() + record.objsize(),
+                                &pNewRecordData ) ;
+            if ( rc )
+            {
+               PD_LOG( PDERROR, "Alloc memory[size:%u] failed, rc: %d",
+                       oidEle.size() + record.objsize(), rc ) ;
+               goto error ;
+            }
+            /// copy to new data
+            *(UINT32*)pNewRecordData = oidEle.size() + record.objsize() ;
+            ossMemcpy( pNewRecordData + sizeof(UINT32), oidEle.rawdata(),
+                       oidEle.size() ) ;
+            ossMemcpy( pNewRecordData + sizeof(UINT32) + oidEle.size(),
+                       record.objdata() + sizeof(UINT32),
+                       record.objsize() - sizeof(UINT32) ) ;
+            recordData.setData( pNewRecordData,
+                                oidEle.size() + record.objsize(),
+                                FALSE, TRUE ) ;
+            record = BSONObj( pNewRecordData ) ;
+         }
+         dmsrecordSize = recordData.len() ;
+
+         // check
+         if ( recordData.len() + DMS_RECORD_METADATA_SZ >
+              DMS_RECORD_USER_MAX_SZ )
+         {
+            rc = SDB_DMS_RECORD_TOO_BIG ;
+            goto error ;
+         }
+
+         if ( compressorEntry->ready() )
+         {
+            const CHAR *compressedData    = NULL ;
+            INT32 compressedDataSize      = 0 ;
+            UINT8 compressRatio           = 0 ;
+            rc = dmsCompress( cb, compressorEntry,
+                              recordData.data(), recordData.len(),
+                              &compressedData, &compressedDataSize,
+                              compressRatio ) ;
+            // Compression is valid and ratio is less the threshold
+            if ( SDB_OK == rc &&
+                 compressedDataSize + sizeof(UINT32) < recordData.orgLen() &&
+                 compressRatio < DMS_COMPRESS_RATIO_THRESHOLD )
+            {
+               // 4 bytes len + compressed record
+               dmsrecordSize = compressedDataSize + sizeof(UINT32) ;
+               // set the compression data
+               recordData.setData( compressedData, compressedDataSize,
+                                   TRUE, FALSE ) ;
+            }
+         }
+
+         /*
+          * Release the guard to avoid deadlock with truncate/drop collection.
+          */
+         compGuard.release() ;
+
+         // add record metadata and oid
+         dmsrecordSize *= DMS_RECORD_OVERFLOW_RATIO ;
+         dmsrecordSize += DMS_RECORD_METADATA_SZ ;
+         // record is ALWAYS 4 bytes aligned
+         dmsrecordSize = OSS_MIN( DMS_RECORD_MAX_SZ,
+                                  ossAlignX ( dmsrecordSize, 4 ) ) ;
+
+         INT32 expandSize = dmsrecordSize << DMS_RECORDS_PER_EXTENT_SQUARE ;
+         if ( expandSize > DMS_BEST_UP_EXTENT_SZ )
+         {
+            expandSize = expandSize < DMS_BEST_UP_EXTENT_SZ ?
+                         DMS_BEST_UP_EXTENT_SZ : expandSize ;
+         }
+
+         if ( !_pCurrentExtent )
+         {
+            rc = _allocateExtent ( expandSize ) ;
+            if ( rc )
+            {
+               PD_LOG ( PDERROR, "Failed to allocate new extent in reorg file, "
+                        "rc = %d", rc ) ;
+               goto error ;
+            }
+            _currentExtent = (dmsExtent*)_pCurrentExtent ;
+         }
+
+         if ( dmsrecordSize > (UINT32)_currentExtent->_freeSpace || isLast )
+         {
+            // lock
+            rc = mbContext->mbLock( EXCLUSIVE ) ;
+            if ( rc )
+            {
+               PD_LOG ( PDERROR, "Failed to lock collection, rc=%d", rc ) ;
+               goto error ;
+            }
+            if ( !isAsynchr )
+            {
+               _currentExtent->_firstRecordOffset = DMS_INVALID_OFFSET ;
+               _currentExtent->_lastRecordOffset = DMS_INVALID_OFFSET ;
+            }
+
+            rc = _su->loadExtentA( mbContext, _pCurrentExtent,
+                                   _currentExtentSize / _pageSize,
+                                   TRUE ) ;
+            // unlock
+            mbContext->mbUnlock() ;
+
+            if ( rc )
+            {
+               PD_LOG ( PDERROR, "Failed to load extent, rc = %d", rc ) ;
+               goto error ;
+            }
+
+            if ( isLast )
+            {
+               goto done ;
+            }
+
+            rc = _allocateExtent ( expandSize ) ;
+            if ( rc )
+            {
+               PD_LOG ( PDERROR, "Failed to allocate new extent in reorg file, "
+                        "rc = %d", rc ) ;
+               goto error ;
+            }
+         }
+
+         recordOffset = _currentExtentSize - _currentExtent->_freeSpace ;
+         pRecord = ( dmsRecord* )( (const CHAR*)_currentExtent + recordOffset ) ;
+
+         if ( _currentExtent->_freeSpace - (INT32)dmsrecordSize <
+              (INT32)DMS_MIN_RECORD_SZ &&
+              _currentExtent->_freeSpace <= (INT32)DMS_RECORD_MAX_SZ )
+         {
+            dmsrecordSize = _currentExtent->_freeSpace ;
+         }
+
+         // set record header
+         pRecord->setNormal() ;
+         pRecord->setMyOffset( recordOffset ) ;
+         pRecord->setSize( dmsrecordSize ) ;
+         pRecord->setData( recordData ) ;
+         pRecord->setNextOffset( DMS_INVALID_OFFSET ) ;
+         pRecord->setPrevOffset( DMS_INVALID_OFFSET ) ;
+
+         // set extent header
+         if ( isAsynchr )
+         {
+            _currentExtent->_recCount++ ;
+         }
+         _currentExtent->_freeSpace -= dmsrecordSize ;
+         // set previous record next pointer
+         offset = _currentExtent->_lastRecordOffset ;
+         if ( DMS_INVALID_OFFSET != offset )
+         {
+            pPreRecord = (dmsRecord*)( (const CHAR*)_currentExtent + offset ) ;
+            pPreRecord->setNextOffset( recordOffset ) ;
+            pRecord->setPrevOffset( offset ) ;
+         }
+         _currentExtent->_lastRecordOffset = recordOffset ;
+
+         // then check extent header for first record
+         offset = _currentExtent->_firstRecordOffset ;
+         if ( DMS_INVALID_OFFSET == offset )
+         {
+            _currentExtent->_firstRecordOffset = recordOffset ;
+         }
+      }
+      catch( std::exception &e )
+      {
+         PD_LOG( PDERROR, "Occur exception: %s", e.what() ) ;
+         rc = SDB_SYS ;
          goto error ;
-      }
-
-      // if the record is not for temp, and
-      // "_id" doesn't exist, let's create the object
-      if ( ele.eoo() )
-      {
-         oid._oid.init() ;
-         oidLen += oidEle.size() ;
-         addOID = TRUE ;
-      }
-
-      if ( ( dmsrecordSize =
-             (record.objsize() + DMS_RECORD_METADATA_SZ + oidLen) )
-             > DMS_RECORD_MAX_SZ )
-      {
-         rc = SDB_CORRUPTED_RECORD ;
-         goto error ;
-      }
-
-      dmsrecordSize *= DMS_RECORD_OVERFLOW_RATIO ;
-      dmsrecordSize = OSS_MIN(DMS_RECORD_MAX_SZ, ossAlignX(dmsrecordSize,4)) ;
-      if ( !_pCurrentExtent )
-      {
-         rc = _allocateExtent ( dmsrecordSize <<
-                                DMS_RECORDS_PER_EXTENT_SQUARE ) ;
-         if ( rc )
-         {
-            PD_LOG ( PDERROR, "Failed to allocate new extent in reorg file, "
-                     "rc = %d", rc ) ;
-            goto error ;
-         }
-         _currentExtent = (dmsExtent*)_pCurrentExtent ;
-      }
-
-      if ( dmsrecordSize > (UINT32)_currentExtent->_freeSpace || isLast )
-      {
-         // lock
-         rc = mbContext->mbLock( EXCLUSIVE ) ;
-         if ( rc )
-         {
-            PD_LOG ( PDERROR, "Failed to lock collection, rc=%d", rc ) ;
-            goto error ;
-         }
-         if ( !isAsynchr )
-         {
-            _currentExtent->_firstRecordOffset = DMS_INVALID_OFFSET ;
-            _currentExtent->_lastRecordOffset = DMS_INVALID_OFFSET ;
-         }
-
-         rc = _su->loadExtentA( mbContext, _pCurrentExtent,
-                                _currentExtentSize / _pageSize,
-                                TRUE ) ;
-         // unlock
-         mbContext->mbUnlock() ;
-
-         if ( rc )
-         {
-            PD_LOG ( PDERROR, "Failed to load extent, rc = %d", rc ) ;
-            goto error ;
-         }
-
-         if ( isLast )
-         {
-            goto done ;
-         }
-
-         rc = _allocateExtent ( dmsrecordSize <<
-                                DMS_RECORDS_PER_EXTENT_SQUARE ) ;
-         if ( rc )
-         {
-            PD_LOG ( PDERROR, "Failed to allocate new extent in reorg file, "
-                     "rc = %d", rc ) ;
-            goto error ;
-         }
-      }
-      recordOffset = _currentExtentSize - _currentExtent->_freeSpace ;
-      recordPtr = ((ossValuePtr)_currentExtent) + recordOffset ;
-      if ( _currentExtent->_freeSpace - (INT32)dmsrecordSize <
-           (INT32)DMS_MIN_RECORD_SZ &&
-           _currentExtent->_freeSpace <= (INT32)DMS_RECORD_MAX_SZ )
-      {
-         dmsrecordSize = _currentExtent->_freeSpace ;
-      }
-
-      // set record header
-      DMS_RECORD_SETFLAG ( recordPtr, DMS_RECORD_FLAG_NORMAL ) ;
-      DMS_RECORD_SETMYOFFSET ( recordPtr, recordOffset ) ;
-      DMS_RECORD_SETSIZE ( recordPtr, dmsrecordSize ) ;
-      if ( !addOID )
-      {
-         DMS_RECORD_SETDATA ( recordPtr, record.objdata(), record.objsize() ) ;
-      }
-      else
-      {
-         DMS_RECORD_SETDATA_OID ( recordPtr,
-                                  record.objdata(),
-                                  record.objsize(),
-                                  oidEle ) ;
-      }
-      DMS_RECORD_SETNEXTOFFSET ( recordPtr, DMS_INVALID_OFFSET ) ;
-      DMS_RECORD_SETPREVOFFSET ( recordPtr, DMS_INVALID_OFFSET ) ;
-      // set extent header
-      if ( isAsynchr )
-      {
-         _currentExtent->_recCount++ ;
-      }
-      _currentExtent->_freeSpace -= dmsrecordSize ;
-      // set previous record next pointer
-      offset = _currentExtent->_lastRecordOffset ;
-      if ( DMS_INVALID_OFFSET != offset )
-      {
-         prevPtr = ((ossValuePtr)_currentExtent) + offset ;
-         DMS_RECORD_SETNEXTOFFSET ( prevPtr, recordOffset ) ;
-         DMS_RECORD_SETPREVOFFSET ( recordPtr, offset ) ;
-      }
-
-      _currentExtent->_lastRecordOffset = recordOffset ;
-
-      // then check extent header for first record
-      offset = _currentExtent->_firstRecordOffset ;
-      if ( DMS_INVALID_OFFSET == offset )
-      {
-         _currentExtent->_firstRecordOffset = recordOffset ;
       }
 
    done:
@@ -289,7 +343,6 @@ namespace engine
    error:
       goto done ;
    }
-
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGELOADEXT__LDDATA, "dmsStorageLoadOp::loadBuildPhase" )
    INT32 dmsStorageLoadOp::loadBuildPhase ( dmsMBContext *mbContext,

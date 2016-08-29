@@ -459,7 +459,6 @@ namespace engine
                                      true << IXM_FIELD_NAME_V << 0 <<
                                      IXM_FIELD_NAME_ENFORCED << true ) ;
 
-   #define DMS_COMPRESS_RATIO_THRESHOLD      ( 95 )
 
    /*
       _dmsStorageData implement
@@ -2733,10 +2732,10 @@ namespace engine
           */
          compGuard.release() ;
 
-         // add record metadata and oid
-         dmsRecordSize += DMS_RECORD_METADATA_SZ ;
          // get the recordsize that we have to allocate
          _overflowSize( dmsRecordSize ) ;
+         // add record metadata and oid
+         dmsRecordSize += DMS_RECORD_METADATA_SZ ;
          // record is ALWAYS 4 bytes aligned
          dmsRecordSize = OSS_MIN( DMS_RECORD_MAX_SZ,
                                   ossAlignX ( dmsRecordSize, 4 ) ) ;
@@ -3664,8 +3663,10 @@ namespace engine
             const dmsExtent *pNewExtent = NULL ;
             dmsRecord *pNewRecord = NULL ;
 
+            dmsRecordSize -= DMS_RECORD_METADATA_SZ ;
             // get the recordsize that we have to allocate
             _overflowSize( dmsRecordSize ) ;
+            dmsRecordSize += DMS_RECORD_METADATA_SZ ;
             // record is ALWAYS 4 bytes aligned
             dmsRecordSize = OSS_MIN( DMS_RECORD_MAX_SZ,
                                      ossAlignX ( dmsRecordSize, 4 ) ) ;

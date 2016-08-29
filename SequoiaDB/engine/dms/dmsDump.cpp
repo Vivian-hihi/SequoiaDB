@@ -1084,31 +1084,31 @@ namespace engine
          goto exit ;
       }
 
-      flag       = DMS_RECORD_GETFLAG(inBuf) ;
-      recordSize = DMS_RECORD_GETSIZE(inBuf) ;
+      flag       = record->getFlag() ;
+      recordSize = record->getSize() ;
 
-      if ( DMS_RECORD_FLAG_NORMAL == DMS_RECORD_GETSTATE(inBuf) )
+      if ( record->isNormal() )
       {
          ossStrncat( flagText, "Normal", DMS_DUMP_DATA_RECORD_FLAG_TEXT_LEN ) ;
       }
-      if ( OSS_BIT_TEST ( flag, DMS_RECORD_FLAG_OVERFLOWF) )
+      if ( record->isOvf() )
       {
          appendString( flagText, DMS_DUMP_DATA_RECORD_FLAG_TEXT_LEN,
                        "OvfFrom" ) ;
          isOvf = TRUE ;
       }
-      if ( OSS_BIT_TEST ( flag, DMS_RECORD_FLAG_OVERFLOWT) )
+      if ( record->isOvt() )
       {
          appendString( flagText, DMS_DUMP_DATA_RECORD_FLAG_TEXT_LEN,
                        "OvfTo" ) ;
       }
-      if ( OSS_BIT_TEST ( flag, DMS_RECORD_FLAG_DELETED) )
+      if ( record->isDeleted() )
       {
          isDel = TRUE ;
          appendString( flagText, DMS_DUMP_DATA_RECORD_FLAG_TEXT_LEN,
                        "Deleted" ) ;
       }
-      if ( OSS_BIT_TEST( flag, DMS_RECORD_FLAG_DELETING ) )
+      if ( record->isDeleting() )
       {
          appendString( flagText, DMS_DUMP_DATA_RECORD_FLAG_TEXT_LEN,
                        "Deleting" ) ;
@@ -1153,7 +1153,7 @@ namespace engine
       }
       else if ( isOvf )
       {
-         dmsRecordID rid = DMS_RECORD_GETOVF(inBuf) ;
+         dmsRecordID rid = record->getOvfRID() ;
          len += ossSnprintf ( outBuf + len, outSize - len,
                               "       Overflowed To: 0x%08x : 0x%08x ( "
                               "extent %d offset %d )"OSS_NEWLINE,
@@ -1170,7 +1170,7 @@ namespace engine
          try
          {
             ossValuePtr recordPtr = 0 ;
-            DMS_RECORD_EXTRACTDATA ( (ossValuePtr)(inBuf), recordPtr,
+            DMS_RECORD_EXTRACTDATA ( record, recordPtr,
                                       compressorEntry ) ;
             BSONObj obj ( (CHAR*)recordPtr ) ;
             len += ossSnprintf ( outBuf + len, outSize - len,
