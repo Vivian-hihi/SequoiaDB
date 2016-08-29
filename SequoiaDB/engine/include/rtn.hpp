@@ -286,8 +286,7 @@ namespace engine
                            const BSONObj &hint,
                            pmdEDUCB *cb,
                            SDB_DMSCB *dmsCB,
-                           SDB_RTNCB *rtnCB,
-                           BOOLEAN ignoreError = FALSE ) ;
+                           SDB_RTNCB *rtnCB ) ;
 
    INT32 rtnReorgRecover ( const CHAR *pCollectionName,
                            pmdEDUCB *cb,
