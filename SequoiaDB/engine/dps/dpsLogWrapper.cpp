@@ -315,27 +315,29 @@ namespace engine
       _buf.writeData( info ) ;
 
       IExecutor *cb = info.getEDUCB() ;
+
+      /// insert lsn
+      if ( cb )
+      {
+         if ( info.hasDummy() )
+         {
+            cb->insertLsn( info.getDummyBlock().record().head()._lsn ) ;
+         }
+         cb->insertLsn( info.getMergeBlock().record().head()._lsn ) ;
+      }
+
+      /// notify
       if ( _vecEventHandler.size() > 0 && info.isNeedNotify() )
       {
          DPS_LSN_OFFSET offset = DPS_INVALID_LSN_OFFSET ;
          if ( info.hasDummy() )
          {
-            offset = info.getDummyBlock().record().head()._lsn ;
-            if ( cb )
-            {
-               cb->insertLsn( offset ) ;
-            }
-
             for( UINT32 i = 0 ; i < _vecEventHandler.size() ; ++i )
             {
                _vecEventHandler[i]->onWriteLog( offset ) ;
             }
          }
          offset = info.getMergeBlock().record().head()._lsn ;
-         if ( cb )
-         {
-            cb->insertLsn( offset ) ;
-         }
          for( UINT32 i = 0 ; i < _vecEventHandler.size() ; ++i )
          {
             _vecEventHandler[i]->onWriteLog( offset ) ;
