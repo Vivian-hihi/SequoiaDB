@@ -1830,7 +1830,8 @@ namespace engine
          {
             return TRUE ;
          }
-         else if ( DMS_IS_MB_OFFLINE_REORG_SHADOW_COPY ( collectionFlag ) &&
+         else if ( ( DMS_IS_MB_OFFLINE_REORG_SHADOW_COPY ( collectionFlag ) ||
+                     DMS_IS_MB_OFFLINE_REORG_REBUILD( collectionFlag ) ) &&
                   ( ( accessType == DMS_ACCESS_TYPE_QUERY ) ||
                     ( accessType == DMS_ACCESS_TYPE_FETCH ) ) )
          {

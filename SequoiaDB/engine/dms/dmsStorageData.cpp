@@ -2066,6 +2066,12 @@ namespace engine
          *logicID = logicalID ;
       }
 
+      if ( cb && cb->getLsnCount() > 0 )
+      {
+         context->mbStat()->updateLastLSNWithComp( cb->getEndLsn(),
+                                                   DMS_FILE_DATA ) ;
+      }
+
    done:
       if ( context )
       {
