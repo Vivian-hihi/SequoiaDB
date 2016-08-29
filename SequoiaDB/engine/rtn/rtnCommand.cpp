@@ -2810,7 +2810,7 @@ namespace engine
       return CMD_JSON_LOAD ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__RTNLOAD_INIT, "_rtnLoad::init" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNLOAD_INIT, "_rtnLoad::init" )
    INT32 _rtnLoad::init ( INT32 flags, INT64 numToSkip, INT64 numToReturn,
                           const CHAR * pMatcherBuff, const CHAR * pSelectBuff,
                           const CHAR * pOrderByBuff, const CHAR * pHintBuff )
@@ -3053,7 +3053,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__RTNLOAD_DOIT, "_rtnLoad::doit" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNLOAD_DOIT, "_rtnLoad::doit" )
    INT32 _rtnLoad::doit ( _pmdEDUCB *cb, _SDB_DMSCB *dmsCB,
                           _SDB_RTNCB *rtnCB, _dpsLogWrapper *dpsCB,
                           INT16 w, INT64 *pContextID )
@@ -3072,7 +3072,7 @@ namespace engine
          goto error ;
       }
 
-      rc = master.run() ;
+      rc = master.run( cb ) ;
       if ( rc )
       {
          PD_LOG ( PDERROR, "Failed to run migMaster, rc=%d", rc ) ;
