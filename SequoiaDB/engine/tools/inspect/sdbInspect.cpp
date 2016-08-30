@@ -3229,7 +3229,7 @@ INT32 _sdbCi::handle( const po::options_description &desc,
                               tailBuffer, tailBufferSize );
       //rc = report2( _header._filepath ) ;
       CHECK_VALUE( ( SDB_OK != rc ), error ) ;
-      std::cout << _header._action << " successfully" << std::endl ;
+      std::cout << _header._action << " done" << std::endl ;
       std::cout << tailBuffer << std::endl ;
 
       goto done ;
@@ -3304,10 +3304,35 @@ INT32 _sdbCi::inspect()
    INT32 curLoop      = 0 ;
    UINT64 totalRecord = 0 ;
    BOOLEAN finish     = FALSE ;
+   sdbclient::sdb *coord = NULL ;
    CHAR inFile[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
-   CHAR tmpFile[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
+   CHAR tmpFile[ OSS_MAX_PATHSIZE + 1 ] = { 0 }  ;
+   OSSFILE startupFile ; 
+   BOOLEAN startupFileOpened = FALSE ;
+   BOOLEAN startupFileLocked = FALSE ;
 
-   sdbclient::sdb *coord = new sdbclient::sdb() ;
+   // in one dir, sdbinspect can be started only once
+   rc = ossOpen( CI_START_TMP_FILE, OSS_CREATE | OSS_READWRITE,
+                 OSS_RU | OSS_WU | OSS_RG, startupFile ) ;
+   if ( SDB_OK != rc )
+   {
+      std::cout << "Error: failed to open startup-file: " CI_START_TMP_FILE
+                << ", rc = " << rc << std::endl ;
+      goto error ;
+   }
+   startupFileOpened = TRUE ;
+   rc = ossLockFile( &startupFile, OSS_LOCK_EX ) ;
+   if ( SDB_OK != rc )
+   {
+      std::cout << "Error: failed to lock startup-file while starting"
+                << ", rc = " << rc << std::endl 
+                << "       There's another sdbinspect running in the same dir"
+                << endl ;
+      goto error ;
+   }
+   startupFileLocked = TRUE ;
+   
+   coord = new sdbclient::sdb() ;
    if( NULL == coord )
    {
       std::cout << "Error: failed to allocate sdbclient::sdb" << std::endl ;
@@ -3401,6 +3426,16 @@ INT32 _sdbCi::inspect()
    }
 
 done:
+   if ( startupFileLocked )
+   {
+      ossLockFile( &startupFile, OSS_LOCK_UN ) ;
+   }
+   if ( startupFileOpened )
+   {
+      ossClose( startupFile ) ;
+      // ignore the failure 
+      ossDelete( CI_START_TMP_FILE ) ;
+   }
    if ( NULL != coord )
    {
       delete coord ;

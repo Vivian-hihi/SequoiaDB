@@ -90,6 +90,7 @@ CHAR g_password[ CI_PASSWD_SIZE + 1 ] = { 0 } ;
 #define CI_FILE_NAME       "inspect.bin"
 #define CI_TMP_FILE        "inspect.bin.tmp.%d"
 #define CI_FILE_REPORT     ".report"
+#define CI_START_TMP_FILE  "inspect.start.tmp"
 // action option
 #define CI_ACTION_INSPECT  "inspect"
 #define CI_ACTION_REPORT   "report"
