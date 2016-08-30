@@ -37,6 +37,10 @@
 *******************************************************************************/
 #include "ossFile.hpp"
 #include "pd.hpp"
+#include <boost/filesystem.hpp>
+#include <boost/filesystem/path.hpp>
+
+namespace fs = boost::filesystem ;
 
 namespace engine
 {
@@ -113,7 +117,7 @@ namespace engine
       return ossTruncateFile( &_file, fileLen ) ;
    }
    
-   INT32 ossFile::getSize( INT64& size )
+   INT32 ossFile::getFileSize( INT64& size )
    {
       SDB_ASSERT( isOpened(), "file should be opened" ) ;
       return ossGetFileSize( &_file, &size ) ;
@@ -210,6 +214,56 @@ namespace engine
       return rc ;
    error:
       goto done ;
+   }
+
+   INT32 ossFile::deleteFile( const string& filePath )
+   {
+      return ossDelete( filePath.c_str() ) ;
+   }
+
+   INT32 ossFile::getFileSize( const string& filePath, INT64& fileSize )
+   {
+      return ossGetFileSizeByName( filePath.c_str(), &fileSize ) ;
+   }
+
+   INT32 ossFile::getLastWriteTime( const string& filePath, time_t& time )
+   {
+      INT32 rc = SDB_OK ;
+
+      try
+      {
+         fs::path file ( filePath ) ;
+         time = fs::last_write_time( file ) ;
+      }
+      catch( fs::filesystem_error& e )
+      {
+         if ( e.code() == boost::system::errc::permission_denied ||
+              e.code() == boost::system::errc::operation_not_permitted )
+         {
+            rc = SDB_PERM ;
+         }
+         else
+         {
+            rc = SDB_IO ;
+         }
+         goto error ;
+      }
+      catch( std::exception& e )
+      {
+         PD_LOG( PDERROR, "unexpected exception: %s", e.what() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 ossFile::rename( const string& oldFilePath, const string& newFilePath )
+   {
+      return ossRenamePath( oldFilePath.c_str(), newFilePath.c_str() ) ;
    }
 }
 

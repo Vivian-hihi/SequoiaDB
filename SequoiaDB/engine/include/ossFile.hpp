@@ -41,6 +41,7 @@
 #include "oss.hpp"
 #include "ossIO.hpp"
 #include <string>
+#include <ctime>
 
 using namespace std ;
 
@@ -59,6 +60,10 @@ namespace engine
 
    public:
       static INT32 exists( const string& filePath, BOOLEAN& exist ) ;
+      static INT32 deleteFile( const string& filePath ) ;
+      static INT32 getFileSize( const string& filePath, INT64& fileSize ) ;
+      static INT32 getLastWriteTime( const string& filePath, time_t& time ) ;
+      static INT32 rename( const string& oldFilePath, const string& newFilePath ) ;
 
    public:
       INT32    open( const string& filePath, UINT32 mode, UINT32 permission ) ;
@@ -69,7 +74,7 @@ namespace engine
       INT32    sync() ;
       INT32    extend( const INT64 incrementSize ) ;
       INT32    truncate( const INT64 fileLen ) ;
-      INT32    getSize( INT64& size ) ;
+      INT32    getFileSize( INT64& size ) ;
       const string&  getPath() const ;
       
       INT32    read( CHAR* buffer, INT64 bufferLen, INT64& readSize ) ;
