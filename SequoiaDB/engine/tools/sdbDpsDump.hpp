@@ -309,7 +309,7 @@ public:
 
 public:
    static INT32   getFileCount( const CHAR *path, INT32 &fileCount );
-   static BOOLEAN isDir( const CHAR *path ) ;
+   static INT32   isDir( const CHAR *path, BOOLEAN &dir ) ;
    static BOOLEAN isFileExisted( const CHAR *path );
    static INT32   sortFiles(dpsMetaData& meta);
    static INT32   toFile( OSSFILE& out, const CHAR *buffer);

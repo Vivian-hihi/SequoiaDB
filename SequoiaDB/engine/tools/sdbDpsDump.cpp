@@ -53,7 +53,7 @@ namespace fs = boost::filesystem ;
 using namespace engine;
 
 #ifndef R_OK
-#define R_OK   0
+#define R_OK   4
 #endif //R_OK
 
 #define REPLOG_NAME_PREFIX "sequoiadbLog"
@@ -69,25 +69,18 @@ void writeLog( BOOLEAN console, const CHAR *type, const CHAR *func,
 {
 
    INT32 rc = SDB_OK ;
-   CHAR buffer[4096] = { 0 } ;
+   CHAR msg[4096] = { 0 } ;
    CHAR wContent[4096] = { 0 } ;
    va_list ap ;
 
-   rc = ossOpen( LOG_FILE_NAME, OSS_REPLACE|OSS_READWRITE,
-                 OSS_RU|OSS_WU|OSS_RG|OSS_RO, logFile ) ;
-   if ( SDB_OK != rc )
-   {
-      goto done ;
-   }
-
    va_start( ap, fmt );
-   vsnprintf( buffer, 4096, fmt, ap ) ;
+   vsnprintf( msg, 4096, fmt, ap ) ;
    va_end( ap ) ;
 
-   ossSnprintf( wContent, 4096, logFMT, type, func, file, line, buffer ) ;
+   ossSnprintf( wContent, 4096, logFMT, type, func, file, line, msg ) ;
    if ( console )
    {
-      std::cout << wContent << std::endl << std::endl ;
+      std::cout << "Error: " << msg << std::endl ;
    }
 
    {
@@ -108,8 +101,6 @@ void writeLog( BOOLEAN console, const CHAR *type, const CHAR *func,
          writePos += writeSize ;
       }
    }
-
-   ossClose( logFile ) ;
 
 done:
    return;
@@ -705,8 +696,22 @@ INT32 _dpsDumper::dump()
    OSSFILE fileFrom, fileTo ;
    CHAR dstFile[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ; 
    dpsCmdData data ;
+   BOOLEAN _isDir = FALSE ;
 
-   if( isDir( dstPath ) )
+   rc = isDir( dstPath, _isDir ) ;
+   if( SDB_FNE == rc || SDB_PERM == rc )
+   {
+      LogError( "Permission error or path not exist: %s", dstPath ) ;
+      goto error ;
+   }
+   if( SDB_OK != rc )
+   {
+      LogError( "Failed to get check whether %s is dir, rc = %d",
+                dstPath, rc ) ;
+      goto error ;
+   }
+
+   if( _isDir )
    {
       INT32 len = ossStrlen( dstPath ) ;
       if ( OSS_FILE_SEP_CHAR == dstPath[ len - 1 ] )
@@ -758,7 +763,19 @@ INT32 _dpsDumper::dump()
    }
    ///< parse meta info end
 
-   if( isDir( srcPath ) )
+   rc = isDir( srcPath, _isDir ) ;
+   if( SDB_FNE == rc || SDB_PERM == rc )
+   {
+      LogError( "Permission error or path not exist: %s", srcPath ) ;
+      goto error ;
+   }
+   if( SDB_OK != rc )
+   {
+      LogError( "Failed to get check whether %s is dir, rc = %d",
+                srcPath, rc ) ;
+      goto error ;
+   }
+   if( _isDir )
    {
       if( SDB_LOG_FILTER_LAST == _filter->getType() )
       {
@@ -925,10 +942,25 @@ INT32 _dpsDumper::_analysisMeta()
    UINT32 work     = 0 ;
    UINT32 idx      = 0 ;
    UINT32 beginIdx = 0 ;
+   INT32 fileCount = 0;
+   BOOLEAN _isDir  = FALSE ;
 
    CHAR  dirPath[ OSS_MAX_PATHSIZE + 1 ] = { 0 };
 
-   if( !isDir( srcPath ) )
+   rc = isDir( srcPath, _isDir ) ;
+   if( SDB_FNE == rc || SDB_PERM == rc )
+   {
+      LogError( "Permission error or path not exist: %s", srcPath ) ;
+      goto error ;
+   }
+   if( SDB_OK != rc )
+   {
+      LogError( "Failed to get check whether %s is dir, rc = %d",
+                srcPath, rc ) ;
+      goto error ;
+   }
+
+   if( !_isDir )
    {
       const CHAR* pos = ossStrrchr( srcPath, OSS_FILE_SEP_CHAR );
       ossMemcpy( dirPath, srcPath, pos - srcPath ) ;
@@ -938,24 +970,16 @@ INT32 _dpsDumper::_analysisMeta()
       ossMemcpy( dirPath, srcPath, OSS_MAX_PATHSIZE ) ;
    }
 
-   INT32 fileCount = 0;
-   INT32 retVal = getFileCount( dirPath, fileCount ) ;
-   if ( SDB_INVALIDARG == retVal ) 
+   rc = getFileCount( dirPath, fileCount ) ;
+   if( SDB_OK != rc )
    {
-      LogError( "Permission error or dir not exist: %s", dirPath ) ;
-      rc = SDB_INVALIDARG ;
-      goto error ;
-   }
-   if( SDB_OK != retVal )
-   {
-      LogError( "System error while accessing dir: %s", dirPath ) ;
-      rc = SDB_SYS ;
+      LogError( "Failed to get file-count in dir: %s", dirPath ) ;
       goto error ;
    }
    if( 0 == fileCount )
    {
       LogError( "Cannot find any dpsLogFile in path: %s", dirPath ) ;
-      rc = SDB_INVALIDARG ;
+      rc = SDB_FNE ;
       goto error ;
    }
 
@@ -1074,23 +1098,31 @@ INT32 _dpsDumper::getFileCount( const CHAR *path, INT32 &fileCount /*out*/ )
    return rc ;
 }
 
-BOOLEAN _dpsDumper::isDir( const CHAR *path )
+INT32 _dpsDumper::isDir( const CHAR *path, BOOLEAN &dir )
 {
-   BOOLEAN rc = FALSE ;
+   INT32 rc = SDB_OK ;
    SDB_OSS_FILETYPE fileType = SDB_OSS_UNK ;
-   INT32 retVal = ossAccess( path, R_OK ) ;
-   if ( SDB_OK == retVal )
+   
+   rc = ossAccess( path, R_OK ) ;
+   if ( SDB_OK != rc )
    {
-      INT32 retValue = ossGetPathType( path, &fileType ) ;
-      if( SDB_OSS_DIR == fileType && !retValue )
-      {
-         rc =  TRUE ;
-         goto done ;
-      }
+      goto error;
    }
-
+   
+   rc = ossGetPathType( path, &fileType ) ;
+   if ( SDB_OK != rc )
+   {
+      goto error;
+   }
+   
+   if( SDB_OSS_DIR == fileType )
+   {
+      dir =  TRUE ;
+   }
 done:
    return rc ;
+error:
+   goto done ;
 }
 
 BOOLEAN _dpsDumper::isFileExisted( const CHAR *path )
@@ -1894,6 +1926,21 @@ INT32 main( INT32 argc, CHAR **argv )
    po::options_description desc( "Command options" ) ;
    po::variables_map vm ;
    dpsDumper dumper ;
+   BOOLEAN logOpened = FALSE ;
+
+   rc = ossOpen( LOG_FILE_NAME, OSS_REPLACE|OSS_READWRITE,
+                 OSS_RU|OSS_WU|OSS_RG|OSS_RO, logFile ) ;
+   if ( SDB_OK != rc )
+   {
+      std::cout << "Failed to open the file "LOG_FILE_NAME ;
+      if ( SDB_PERM == rc )
+      {
+         cout << " : permission error" ;
+      }
+      cout << endl ;
+      goto error ;
+   }
+   logOpened = TRUE ;
 
    rc = dumper.initialize( argc, argv, desc, vm ) ;
    if ( SDB_OK != rc )
@@ -1915,6 +1962,10 @@ INT32 main( INT32 argc, CHAR **argv )
    }
 
 done:
+   if ( logOpened )
+   {
+      ossClose( logFile ) ;
+   }
    return rc  ;
 error :
    goto done  ;
