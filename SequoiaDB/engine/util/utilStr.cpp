@@ -213,6 +213,47 @@ namespace engine
       return rc ;
    }
 
+   BOOLEAN utilStrIsDigit( const string& str )
+   {
+      for ( UINT32 i = 0 ; i < str.size() ; i++ )
+      {
+         if ( !isdigit( str.at( i ) ) )
+         {
+            return FALSE ;
+         }
+      }
+
+      return TRUE ;
+   }
+
+   vector<string> utilStrSplit( const string& str, const string& sep )
+   {
+      vector<string> elems ;
+      size_t pos = 0 ;
+      size_t len = str.length() ;
+      size_t sepLen = sep.length() ;
+
+      if ( sepLen == 0 )
+      {
+        return elems ;
+      }
+
+      while ( pos < len )
+      {
+        int findPos = str.find( sep, pos ) ;
+        if ( findPos < 0 )
+        {
+            elems.push_back( str.substr( pos, len - pos ) ) ;
+            break ;
+        }
+
+        elems.push_back( str.substr( pos, findPos - pos ) ) ;
+        pos = findPos + sepLen ;
+      }
+
+      return elems ;
+   }
+
    INT32 utilSplitStr( const string & input,
                        vector < string > & listServices,
                        const string & seperators )

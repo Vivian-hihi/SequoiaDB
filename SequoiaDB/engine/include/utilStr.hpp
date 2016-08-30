@@ -58,9 +58,25 @@ namespace engine
    INT32 utilStrTrim( CHAR *src, const CHAR *&begin ) ;
    std::string &utilStrTrim ( std::string &s ) ;
 
-   OSS_INLINE BOOLEAN utilStrEndsWith(const string& str, const string& substr)
+   OSS_INLINE BOOLEAN utilStrStartsWith( const string& str, const string& substr )
    {
-      return str.rfind(substr) == (str.length() - substr.length()) ;
+      if ( str.empty() || substr.empty() )
+      {
+         return FALSE ;
+      }
+
+      return str.compare( 0, substr.size(), substr ) == 0 ? TRUE : FALSE ;
+   }
+
+   OSS_INLINE BOOLEAN utilStrEndsWith( const string& str, const string& substr )
+   {
+      if ( str.empty() || substr.empty() )
+      {
+         return FALSE ;
+      }
+
+      return str.compare( str.size() - substr.size(), substr.size(), substr ) == 0 ?
+               TRUE : FALSE ;
    }
 
    INT32 utilStrToUpper( const CHAR *src, CHAR *&upper ) ;
@@ -69,6 +85,10 @@ namespace engine
                       UINT32 cnt,
                       CHAR *join,
                       UINT32 &joinSize ) ;
+
+   BOOLEAN utilStrIsDigit( const string& str ) ;
+
+   vector<string> utilStrSplit( const string& str, const string& sep ) ;
 
    INT32 utilSplitStr( const string &input, vector<string> &listServices,
                        const string &seperators ) ;
