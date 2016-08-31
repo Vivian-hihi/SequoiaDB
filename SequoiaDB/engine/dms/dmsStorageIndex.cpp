@@ -528,7 +528,9 @@ namespace engine
       }
       else if ( cb->getLsnCount() > 0 )
       {
-         context->mbStat()->updateLastLSN( cb->getEndLsn(), DMS_FILE_IDX ) ;
+         context->mbStat()->updateLastLSNWithComp( cb->getEndLsn(),
+                                                   DMS_FILE_IDX,
+                                                   cb->isDoRollback() ) ;
       }
       dropDps = dpscb ;
 
@@ -875,7 +877,9 @@ namespace engine
       }
       else if ( cb->getLsnCount() > 0 )
       {
-         context->mbStat()->updateLastLSN( cb->getEndLsn(), DMS_FILE_IDX ) ;
+         context->mbStat()->updateLastLSNWithComp( cb->getEndLsn(),
+                                                   DMS_FILE_IDX,
+                                                   cb->isDoRollback() ) ;
       }
 
    done :
