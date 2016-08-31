@@ -173,11 +173,13 @@ namespace engine
          virtual UINT64    getBeginLsn () const { return _beginLsn ; }
          virtual UINT64    getEndLsn() const { return _endLsn ; }
          virtual UINT32    getLsnCount () const { return _lsnNumber ; }
+         virtual BOOLEAN   isDoRollback () const { return _doRollback ; }
          virtual UINT64    getTransID () const { return _curTransID ; }
          virtual UINT64    getCurTransLsn () const { return _curTransLSN ; }
 
          virtual void      resetLsn() ;
-         virtual void      insertLsn( UINT64 lsn ) ;
+         virtual void      insertLsn( UINT64 lsn,
+                                      BOOLEAN isRollback = FALSE ) ;
          virtual void      setTransID( UINT64 transID ) ;
          virtual void      setCurTransLsn( UINT64 lsn ) ;
 
@@ -494,6 +496,7 @@ namespace engine
       UINT64                  _beginLsn ;
       UINT64                  _endLsn ;
       UINT32                  _lsnNumber ;
+      BOOLEAN                 _doRollback ;
       UINT64                  _processEventCount ;
 
       DPS_TRANS_ID            _curTransID ;

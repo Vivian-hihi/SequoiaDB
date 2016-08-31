@@ -472,10 +472,6 @@ namespace engine
             PD_LOG( PDERROR, "Failed to prepare dps log, rc:%d", rc ) ;
             goto error ;
          }
-         mbContext->mbStat()->updateLastLSN(
-            info.getMergeBlock().record().head()._lsn,
-            DMS_FILE_LOB ) ;
-
          if ( locked )
          {
             mbContext->mbUnlock() ;
@@ -483,9 +479,13 @@ namespace engine
          }
          dpscb->writeData( info ) ;
       }
-      else if ( cb->getLsnCount() > 0 )
+
+      /// update last lsn
+      if ( cb->getLsnCount() > 0 )
       {
-         mbContext->mbStat()->updateLastLSN( cb->getEndLsn(), DMS_FILE_LOB ) ;
+         mbContext->mbStat()->updateLastLSNWithComp( cb->getEndLsn(),
+                                                     DMS_FILE_LOB,
+                                                     cb->isDoRollback() ) ;
       }
 
    done:
@@ -714,7 +714,8 @@ namespace engine
       {
          /// not in mbContext lock, so use update with compare
          mbContext->mbStat()->updateLastLSNWithComp( cb->getEndLsn(),
-                                                     DMS_FILE_LOB ) ;
+                                                     DMS_FILE_LOB,
+                                                     cb->isDoRollback() ) ;
       }
 
    done:
@@ -1110,7 +1111,8 @@ namespace engine
       {
          /// not with mbContext, so need update with compare
          mbContext->mbStat()->updateLastLSNWithComp( cb->getEndLsn(),
-                                                     DMS_FILE_LOB ) ;
+                                                     DMS_FILE_LOB,
+                                                     cb->isDoRollback() ) ;
       }
 
       /// discard the page
@@ -1440,8 +1442,8 @@ namespace engine
             _dmsData->_mbStatInfo[i]._lobIsCrash =
                ( 0 == _dmsData->_mbStatInfo[i]._lobCommitFlag.peek() ) ?
                                       TRUE : FALSE ;
-            _dmsData->_mbStatInfo[i]._lobLastLSN =
-               _dmsData->_dmsMME->_mbList[i]._lobCommitLSN ;
+            _dmsData->_mbStatInfo[i]._lobLastLSN.init(
+               _dmsData->_dmsMME->_mbList[i]._lobCommitLSN ) ;
          }
       }
 
@@ -1490,7 +1492,7 @@ namespace engine
               _dmsData->_mbStatInfo[i]._lobCommitFlag.peek() )
          {
             _dmsData->_dmsMME->_mbList[i]._lobCommitLSN =
-               _dmsData->_mbStatInfo[i]._lobLastLSN ;
+               _dmsData->_mbStatInfo[i]._lobLastLSN.peek() ;
             _dmsData->_dmsMME->_mbList[i]._lobCommitTime = lastTime ;
             _dmsData->_dmsMME->_mbList[i]._lobCommitFlag =
                _dmsData->_mbStatInfo[i]._lobIsCrash ?

@@ -721,6 +721,11 @@ namespace engine
       PD_TRACE_ENTRY ( SDB__CLSREP_ROLBCK );
       SDB_ASSERT( NULL != recordHeader, "head should not be NULL" ) ;
 
+      if ( !_dpsCB )
+      {
+         eduCB->insertLsn( recordHeader->_lsn, TRUE ) ;
+      }
+
       try
       {
          switch ( recordHeader->_type )

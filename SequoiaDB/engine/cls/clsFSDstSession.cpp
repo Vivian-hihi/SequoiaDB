@@ -1605,19 +1605,12 @@ namespace engine
             if ( SDB_OK == su->data()->getMBContext( &pContext,
                                                      pCLShort, SHARED ) )
             {
-               if ( DPS_INVALID_LSN_OFFSET == pContext->mbStat()->_lastLSN )
-               {
-                  pContext->mbStat()->_lastLSN = info._dataCommitLSN ;
-               }
-               if ( DPS_INVALID_LSN_OFFSET == pContext->mbStat()->_idxLastLSN )
-               {
-                  pContext->mbStat()->_idxLastLSN = info._idxCommitLSN ;
-               }
-               if ( DPS_INVALID_LSN_OFFSET == pContext->mbStat()->_lobLastLSN )
-               {
-                  pContext->mbStat()->_lobLastLSN = info._lobCommitLSN ;
-               }
-
+               pContext->mbStat()->_lastLSN.compareAndSwap( DPS_INVALID_LSN_OFFSET,
+                                                            info._dataCommitLSN ) ;
+               pContext->mbStat()->_idxLastLSN.compareAndSwap( DPS_INVALID_LSN_OFFSET,
+                                                               info._idxCommitLSN ) ;
+               pContext->mbStat()->_lobLastLSN.compareAndSwap( DPS_INVALID_LSN_OFFSET,
+                                                               info._lobCommitLSN ) ;
                /// release context
                su->data()->releaseMBContext( pContext ) ;
             }

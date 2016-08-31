@@ -153,8 +153,8 @@ namespace engine
             _pDataSu->_mbStatInfo[i]._idxIsCrash =
                ( 0 == _pDataSu->_mbStatInfo[i]._idxCommitFlag.peek() ) ?
                                       TRUE : FALSE ;
-            _pDataSu->_mbStatInfo[i]._idxLastLSN =
-               _pDataSu->_dmsMME->_mbList[i]._idxCommitLSN ;
+            _pDataSu->_mbStatInfo[i]._idxLastLSN.init(
+               _pDataSu->_dmsMME->_mbList[i]._idxCommitLSN ) ;
 
             // analyze the unique index number
             for ( UINT32 j = 0 ; j < DMS_COLLECTION_MAX_INDEX ; ++j )
@@ -209,7 +209,7 @@ namespace engine
               _pDataSu->_mbStatInfo[i]._idxCommitFlag.peek() )
          {
             _pDataSu->_dmsMME->_mbList[i]._idxCommitLSN =
-               _pDataSu->_mbStatInfo[i]._idxLastLSN ;
+               _pDataSu->_mbStatInfo[i]._idxLastLSN.peek() ;
             _pDataSu->_dmsMME->_mbList[i]._idxCommitTime = lastTime ;
             _pDataSu->_dmsMME->_mbList[i]._idxCommitFlag =
                _pDataSu->_mbStatInfo[i]._idxIsCrash ?

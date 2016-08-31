@@ -787,7 +787,7 @@ namespace engine
     *  FREE                N      N       N       N       N       N       N         N
     *  NORMAL              Y      Y       Y       Y       Y       Y       Y         Y
     *  DROPPED             N      N       N       N       N       N       N         N
-    *  OFFLINE REORG       N (only alloed in shadow copy phase )
+    *  OFFLINE REORG       N (only alloed in shadow copy phase, rebuild )
     *                             N       N       N       N       N ( only allowed in
     *  truncate phase )                                                   N         N
     *  ONLINE REORG        Y      Y       Y       Y       Y       Y       Y         Y

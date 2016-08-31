@@ -568,22 +568,22 @@ namespace engine
                   _mbStatInfo[i]._totalOrgDataLen ;
             }
             if ( _dmsMME->_mbList[i]._commitLSN !=
-                 _mbStatInfo[i]._lastLSN )
+                 _mbStatInfo[i]._lastLSN.peek() )
             {
                _dmsMME->_mbList[i]._commitLSN =
-                  _mbStatInfo[i]._lastLSN ;
+                  _mbStatInfo[i]._lastLSN.peek() ;
             }
             if ( _dmsMME->_mbList[i]._idxCommitLSN !=
-                 _mbStatInfo[i]._idxLastLSN )
+                 _mbStatInfo[i]._idxLastLSN.peek() )
             {
                _dmsMME->_mbList[i]._idxCommitLSN =
-                  _mbStatInfo[i]._idxLastLSN ;
+                  _mbStatInfo[i]._idxLastLSN.peek() ;
             }
             if ( _dmsMME->_mbList[i]._lobCommitLSN !=
-                 _mbStatInfo[i]._lobLastLSN )
+                 _mbStatInfo[i]._lobLastLSN.peek() )
             {
                _dmsMME->_mbList[i]._lobCommitLSN =
-                  _mbStatInfo[i]._lobLastLSN ;
+                  _mbStatInfo[i]._lobLastLSN.peek() ;
             }
          }
       }
@@ -839,7 +839,7 @@ namespace engine
             _mbStatInfo[i]._isCrash = ( 0 == _mbStatInfo[i]._commitFlag.peek() ) ?
                                       TRUE : FALSE ;
             /// lsn
-            _mbStatInfo[i]._lastLSN = _dmsMME->_mbList[i]._commitLSN ;
+            _mbStatInfo[i]._lastLSN.init( _dmsMME->_mbList[i]._commitLSN ) ;
          }
       }
 
@@ -915,7 +915,7 @@ namespace engine
          if ( DMS_IS_MB_INUSE ( _dmsMME->_mbList[i]._flag ) &&
               _mbStatInfo[i]._commitFlag.peek() )
          {
-            _dmsMME->_mbList[i]._commitLSN = _mbStatInfo[i]._lastLSN ;
+            _dmsMME->_mbList[i]._commitLSN = _mbStatInfo[i]._lastLSN.peek() ;
             _dmsMME->_mbList[i]._commitTime = lastTime ;
             _dmsMME->_mbList[i]._commitFlag = _mbStatInfo[i]._isCrash ? 0 :
                                           _mbStatInfo[i]._commitFlag.peek() ;
@@ -2069,7 +2069,8 @@ namespace engine
       if ( cb && cb->getLsnCount() > 0 )
       {
          context->mbStat()->updateLastLSNWithComp( cb->getEndLsn(),
-                                                   DMS_FILE_DATA ) ;
+                                                   DMS_FILE_DATA,
+                                                   cb->isDoRollback() ) ;
       }
 
    done:
@@ -2856,7 +2857,9 @@ namespace engine
       }
       else if ( cb->getLsnCount() > 0 )
       {
-         context->mbStat()->updateLastLSN( cb->getEndLsn(), DMS_FILE_DATA ) ;
+         context->mbStat()->updateLastLSNWithComp( cb->getEndLsn(),
+                                                   DMS_FILE_DATA,
+                                                   cb->isDoRollback() ) ;
       }
 
    done:
@@ -3226,7 +3229,9 @@ namespace engine
       }
       else if ( FALSE == isDeleting && cb->getLsnCount() > 0 )
       {
-         context->mbStat()->updateLastLSN( cb->getEndLsn(), DMS_FILE_DATA ) ;
+         context->mbStat()->updateLastLSNWithComp( cb->getEndLsn(),
+                                                   DMS_FILE_DATA,
+                                                   cb->isDoRollback() ) ;
       }
 
    done :
@@ -3511,7 +3516,9 @@ namespace engine
       }
       else if ( cb->getLsnCount() > 0 )
       {
-         context->mbStat()->updateLastLSN( cb->getEndLsn(), DMS_FILE_DATA ) ;
+         context->mbStat()->updateLastLSNWithComp( cb->getEndLsn(),
+                                                   DMS_FILE_DATA,
+                                                   cb->isDoRollback() ) ;
       }
 
    done :

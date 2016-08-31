@@ -169,6 +169,7 @@ namespace engine
       _beginLsn         = 0 ;
       _endLsn           = 0 ;
       _lsnNumber        = 0 ;
+      _doRollback       = FALSE ;
 
       _curTransLSN      = DPS_INVALID_LSN_OFFSET ;
       _curTransID       = DPS_INVALID_TRANS_ID ;
@@ -830,9 +831,10 @@ namespace engine
       _beginLsn = ~0 ;
       _endLsn = ~0 ;
       _lsnNumber = 0 ;
+      _doRollback = FALSE ;
    }
 
-   void _pmdEDUCB::insertLsn( UINT64 lsn )
+   void _pmdEDUCB::insertLsn( UINT64 lsn, BOOLEAN isRollback )
    {
       if ( _beginLsn == (UINT64)~0 )
       {
@@ -840,6 +842,7 @@ namespace engine
       }
       _endLsn = lsn ;
       _lsnNumber++ ;
+      _isDoRollback = isRollback ;
    }
 
    void _pmdEDUCB::setTransID( UINT64 transID )

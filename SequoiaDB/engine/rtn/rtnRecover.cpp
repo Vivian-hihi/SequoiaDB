@@ -672,9 +672,9 @@ namespace engine
          /// data file is restored
          mbContext->mbStat()->_commitFlag.init( 1 ) ;
          mbContext->mbStat()->_isCrash = FALSE ;
-         mbContext->mbStat()->_lastLSN = ~0 ;
+         mbContext->mbStat()->_lastLSN.init( (UINT64)~0 ) ;
          mbContext->mb()->_commitFlag = 1 ;
-         mbContext->mb()->_commitLSN = ~0 ;
+         mbContext->mb()->_commitLSN = (UINT64)~0 ;
 
          mbContext->mbStat()->_idxCommitFlag.init( 0 ) ;
          mbContext->mbStat()->_idxIsCrash = TRUE ;
@@ -744,9 +744,9 @@ namespace engine
          mbContext->mb()->_flag = flag ;
 
          mbContext->mb()->_idxCommitFlag = 1 ;
-         mbContext->mb()->_idxCommitLSN = ~0 ;
+         mbContext->mb()->_idxCommitLSN = (UINT64)~0 ;
          mbContext->mbStat()->_idxCommitFlag.init( 1 ) ;
-         mbContext->mbStat()->_idxLastLSN = ~0 ;
+         mbContext->mbStat()->_idxLastLSN.init( (UINT64)~0 ) ;
          mbContext->mbStat()->_idxIsCrash = FALSE ;
 
          _indexNum = mbContext->mb()->_numIndexes ;
@@ -765,9 +765,9 @@ namespace engine
    {
       /// do nothing
       mbContext->mb()->_lobCommitFlag = 1 ;
-      mbContext->mb()->_lobCommitLSN = ~0 ;
+      mbContext->mb()->_lobCommitLSN = (UINT64)~0 ;
       mbContext->mbStat()->_lobCommitFlag.init( 1 ) ;
-      mbContext->mbStat()->_lobLastLSN = ~0 ;
+      mbContext->mbStat()->_lobLastLSN.init( (UINT64)~0 ) ;
       mbContext->mbStat()->_lobIsCrash = FALSE ;
 
       _totalLob = mbContext->mbStat()->_totalLobs ;

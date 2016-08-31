@@ -437,17 +437,17 @@ namespace engine
       UINT64      _totalDataLen ;
 
       ossAtomic32 _commitFlag ;
-      UINT64      _lastLSN ;
+      ossAtomic64 _lastLSN ;
       UINT64      _lastWriteTick ;
       BOOLEAN     _isCrash ;
 
       ossAtomic32 _idxCommitFlag ;
-      UINT64      _idxLastLSN ;
+      ossAtomic64 _idxLastLSN ;
       UINT64      _idxLastWriteTick ;
       BOOLEAN     _idxIsCrash ;
 
       ossAtomic32 _lobCommitFlag ;
-      UINT64      _lobLastLSN ;
+      ossAtomic64 _lobLastLSN ;
       UINT64      _lobLastWriteTick ;
       BOOLEAN     _lobIsCrash ;
 
@@ -465,15 +465,15 @@ namespace engine
          _totalOrgDataLen        = 0 ;
          _totalDataLen           = 0 ;
          _commitFlag.init( 0 ) ;
-         _lastLSN                = ~0 ;
+         _lastLSN.init( ~0 ) ;
          _lastWriteTick          = 0 ;
          _isCrash                = FALSE ;
          _idxCommitFlag.init( 0 ) ;
-         _idxLastLSN             = ~0 ;
+         _idxLastLSN.init( ~0 ) ;
          _idxLastWriteTick       = 0 ;
          _idxIsCrash             = FALSE ;
          _lobCommitFlag.init( 0 ) ;
-         _lobLastLSN             = ~0 ;
+         _lobLastLSN.init( ~0 ) ;
          _lobLastWriteTick       = 0 ;
          _lobIsCrash             = FALSE ;
       }
@@ -482,44 +482,68 @@ namespace engine
       {
          if ( DMS_FILE_DATA == type )
          {
-            _lastLSN = lsn ;
+            _lastLSN.init( lsn ) ;
          }
          else if ( DMS_FILE_IDX == type )
          {
-            _idxLastLSN = lsn ;
+            _idxLastLSN.init( lsn ) ;
          }
          else if ( DMS_FILE_LOB == type )
          {
-            _lobLastLSN = lsn ;
+            _lobLastLSN.init( lsn ) ;
          }
       }
-      void updateLastLSNWithComp( UINT64 lsn, DMS_FILE_TYPE type )
+      void updateLastLSNWithComp( UINT64 lsn,
+                                  DMS_FILE_TYPE type,
+                                  BOOLEAN isRollback )
       {
          if ( DMS_FILE_DATA == type )
          {
-            if ( (UINT64)~0 == _lastLSN || _lastLSN < lsn )
+            if ( !_lastLSN.compareAndSwap( DPS_INVALID_LSN_OFFSET, lsn ) )
             {
-               _lastLSN = lsn ;
+               if ( !isRollback )
+               {
+                  _lastLSN.swapGreaterThan( lsn ) ;
+               }
+               else
+               {
+                  _lastLSN.swapLesserThan( lsn ) ;
+               }
             }
          }
          else if ( DMS_FILE_IDX == type )
          {
-            if ( (UINT64)~0 == _idxLastLSN || _idxLastLSN < lsn )
+            if ( !_idxLastLSN.compareAndSwap( DPS_INVALID_LSN_OFFSET, lsn ) )
             {
-               _idxLastLSN = lsn ;
+               if ( !isRollback )
+               {
+                  _idxLastLSN.swapGreaterThan( lsn ) ;
+               }
+               else
+               {
+                  _idxLastLSN.swapLesserThan( lsn ) ;
+               }
             }
          }
          else if ( DMS_FILE_LOB == type )
          {
-            if ( (UINT64)~0 == _lobLastLSN || _lobLastLSN < lsn )
+            if ( !_lobLastLSN.compareAndSwap( DPS_INVALID_LSN_OFFSET, lsn ) )
             {
-               _lobLastLSN = lsn ;
+               if ( !isRollback )
+               {
+                  _lobLastLSN.swapGreaterThan( lsn ) ;
+               }
+               else
+               {
+                  _lobLastLSN.swapLesserThan( lsn ) ;
+               }
             }
          }
       }
 
       _dmsMBStatInfo ()
-      :_commitFlag( 0 ), _idxCommitFlag( 0 ), _lobCommitFlag( 0 )
+      :_commitFlag( 0 ), _idxCommitFlag( 0 ), _lobCommitFlag( 0 ),
+       _lastLSN( 0 ), _idxLastLSN( 0 ), _lobLastLSN( 0 )
       {
          reset() ;
       }
