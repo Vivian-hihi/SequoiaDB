@@ -542,8 +542,9 @@ namespace engine
       }
 
       _dmsMBStatInfo ()
-      :_commitFlag( 0 ), _idxCommitFlag( 0 ), _lobCommitFlag( 0 ),
-       _lastLSN( 0 ), _idxLastLSN( 0 ), _lobLastLSN( 0 )
+      :_commitFlag( 0 ), _lastLSN( 0 ),
+      _idxCommitFlag( 0 ), _idxLastLSN( 0 ),
+      _lobCommitFlag( 0 ), _lobLastLSN( 0 )
       {
          reset() ;
       }
