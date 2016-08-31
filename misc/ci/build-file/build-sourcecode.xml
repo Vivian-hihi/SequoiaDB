@@ -381,7 +381,6 @@
         <copy file="${CODE_DIR}/misc/ci/mkrelease/compatible.sh"         todir="${RELEASE_DIR}/sequoiadb" />
         <copy file="${CODE_DIR}/misc/ci/mkrelease/version.conf"          todir="${RELEASE_DIR}/sequoiadb" />
         
-      <touch file="${RELEASE_DIR}/license_empty.txt" />
 
       <if>
          <equals arg1="${enterprise}" arg2="true" />
