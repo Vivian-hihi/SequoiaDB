@@ -156,7 +156,10 @@ utilFiles = [
       "util/utilCompressorLZ4.cpp",
       "util/utilCompressorZlib.cpp",
       "util/utilEnvCheck.cpp",
-      "util/utilCache.cpp"
+      "util/utilCache.cpp",
+      "util/utilStream.cpp",
+      "util/utilFileStream.cpp",
+      "util/utilZlibStream.cpp",
       ]
 
 rtnFiles = [
