@@ -40,10 +40,10 @@
 #include "oss.hpp"
 #include "ossUtil.hpp"
 #include "ossAtomic.hpp"
-#include "pdTrace.h"
 #include <list>
 #include <vector>
 #ifdef SDB_ENGINE
+#include "pdTrace.h"
 #include "ossLatch.hpp"
 #endif
 
