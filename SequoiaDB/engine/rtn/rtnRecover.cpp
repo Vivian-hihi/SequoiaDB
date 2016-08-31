@@ -1702,7 +1702,7 @@ namespace engine
             rc = SDB_OK ;
          }
       }
-      else
+      else if ( !pUnit->isAllValid() )
       {
          rc = pUnit->cleanup( cb ) ;
       }

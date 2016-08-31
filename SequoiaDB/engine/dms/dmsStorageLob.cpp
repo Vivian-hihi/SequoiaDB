@@ -1735,7 +1735,7 @@ namespace engine
                ++current ;
                continue ;
             }
-            else if ( DMS_LOB_META_SEQUENCE != blk->_sequence )
+            else
             {
                /// add total lob pages
                _dmsData->_mbStatInfo[blk->_mbID]._totalLobPages += 1 ;
@@ -1750,13 +1750,14 @@ namespace engine
                   goto error ;
                }
                ++totalPushed ;
-               ++current ;
-               continue ;
-            }
 
-            /// add total lobs
-            ++totalLobs ;
-            _dmsData->_mbStatInfo[blk->_mbID]._totalLobs += 1 ;
+               if ( DMS_LOB_META_SEQUENCE == blk->_sequence )
+               {
+                  /// add total lobs
+                  ++totalLobs ;
+                  _dmsData->_mbStatInfo[blk->_mbID]._totalLobs += 1 ;
+               }
+            }
          }
          ++current ;
       }
