@@ -171,7 +171,7 @@ const UINT32 RTN_MAX_READ_LEN = DMS_PAGE_SIZE128K * 1024 ;
       else
       {
          /// join cached data and write data.
-         SDB_ASSERT( _cachedSz < _getCurDataPageSize(), "impossible" ) ;
+         SDB_ASSERT( (UINT32)_cachedSz < _getCurDataPageSize(), "impossible" ) ;
          INT32 mvSize = _getCurDataPageSize() - _cachedSz ;
          mvSize = ( UINT32 )mvSize <= len ? mvSize : len ;
          ossMemcpy( _pool + _cachedSz, data, mvSize ) ;
@@ -251,7 +251,7 @@ const UINT32 RTN_MAX_READ_LEN = DMS_PAGE_SIZE128K * 1024 ;
             goto done ;
          }
       }
-      else if ( _getCurDataPageSize() == _cachedSz )
+      else if ( _getCurDataPageSize() == (UINT32)_cachedSz )
       {
          t.columns.len = _cachedSz ;
          t.columns.sequence = RTN_LOB_GET_SEQUENCE( _curOffset,
@@ -276,7 +276,7 @@ const UINT32 RTN_MAX_READ_LEN = DMS_PAGE_SIZE128K * 1024 ;
 
    void _rtnLobWindow::cacheLastDataOrClearCache()
    {
-      if ( _getCurDataPageSize() == _cachedSz )
+      if ( _getCurDataPageSize() == (UINT32)_cachedSz )
       {
          _cachedSz = 0 ;
       }
