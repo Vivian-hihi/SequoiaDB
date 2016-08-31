@@ -332,6 +332,7 @@ namespace engine
          DPS_LSN_OFFSET offset = DPS_INVALID_LSN_OFFSET ;
          if ( info.hasDummy() )
          {
+            offset = info.getDummyBlock().record().head()._lsn ;
             for( UINT32 i = 0 ; i < _vecEventHandler.size() ; ++i )
             {
                _vecEventHandler[i]->onWriteLog( offset ) ;
