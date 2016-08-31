@@ -393,6 +393,9 @@
         </runProgram>
         <!--you should place 'start service' and 'create om' in last of <postInstallationActionList>-->
         <!--because if this step failed, <postInstallationActionList> will abort and next steps will not be excuted-->       
+        <setInstallerVariable name="om_port"    value="11780"/>
+        <setInstallerVariable name="om_dbpath"  value="${installdir}/database/sms/${om_port}"/>
+        <setInstallerVariable name="http_port"  value="8000"/>
         <runProgram>
             <program>service</program>
             <programArguments> sdbcm start</programArguments>            
@@ -400,7 +403,7 @@
         <runProgram>
             <customErrorMessage>${msg(Install.ErrorMsg.IntallationOM.error)}</customErrorMessage>
             <program>${installdir}/install_om.sh</program>
-            <programArguments>${project.installationType} "${installdir}" "${installer_pathname}" ${port} ${svcname} "${dbpath}" ${restname}</programArguments>           
+            <programArguments>${project.installationType} "${installdir}" "${installer_pathname}" ${port} ${om_port} "${om_dbpath}" ${http_port}</programArguments>           
             <ruleList>               
                 <isTrue value="${SMS}" />
             </ruleList>

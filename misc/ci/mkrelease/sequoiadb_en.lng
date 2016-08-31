@@ -11,10 +11,7 @@ Install.Paramers.port.explanation=SequoiaDB Cluster Manager port
 Install.Paramers.processAutoStart.explanation=Do You Want To Start Sequoiadb Processes When Machine Restart?
 Install.Paramers.processAutoStart.Description=Process Auto Start
 Install.Paramers.sms.description=Do You Want To Install OM Service
-Install.Paramers.installationType.explanation=Do You Want To Install OM Service?
-Install.Paramers.svcnamePort.explanation=Svcname Port
-Install.Paramers.dbpath.explanation=SMS data path
-Install.Paramers.restPort.explanation=Restname Port
+Install.Paramers.sms.explanation=Do You Want To Install OM Service?
 Install.Paramers.LicenseRead.Agree.Description=Agree The License
 Install.Paramers.LicenseRead.Agree.Explanation=For More License's Detail, Please Check The License File After Installation
 Install.Paramers.LicenseRead.Read.Description=Read The License
@@ -24,6 +21,8 @@ Install.Paramers.Force.Explanation=Do you want to force the install? It may kill
 Install.Paramers.Force.Check=Invalid parameter: --force ${force}, should be true or false
 Install.Paramers.SMS.Check=Invalid parameter: --SMS ${SMS}, should be true or false
 Install.Paramers.ProcessAutoStart.Check=Invalid parameter: --processAutoStart ${processAutoStart}, should be true or false
+Install.Parameter.Upgrade.explanation=An existing installation has been detected in ${installdir_inconf}.
+Install.Parameter.Upgrade.description=Do you want to change to upgrade mode?
 
 Install.ErrorMsg.CheckGroup=User ${username} exists, but it does not belong to group ${groupname}
 Install.ErrorMsg.CreateGroup=Failed to create group ${groupname}
@@ -42,7 +41,6 @@ Install.WarnMsg.CheckUmask=Umask abnormal! Current umask = ${full_mask}, recomme
 Upgrade.Paramers.Upgrade.Explanation=Do You Want To Upgrade
 Upgrade.Paramers.Upgrade.Check=Invalid parameter: --upgrade ${is_upgrade_mode}, should be true or false
 
-Upgrade.NormalMsg.AskUpgrade=An existing installation has been detected in ${installdir_inconf}. Change to upgrade mode?
 Upgrade.NormalMsg.BeginUpgrade=Begin to upgrade package ......
 Upgrade.NormalMsg.CheckList=**************************  check list *************************************
 Upgrade.NormalMsg.SystemConfExist=Check: configure file ${sys_conf_file} is exists ...... 

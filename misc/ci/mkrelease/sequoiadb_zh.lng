@@ -11,10 +11,7 @@ Install.Paramers.port.explanation=配置SequoiaDB集群管理服务端口,集群
 Install.Paramers.processAutoStart.explanation=是否允许Sequoiadb相关进程开机自启动？
 Install.Paramers.processAutoStart.Description=Sequoiadb相关进程开机自启动
 Install.Paramers.sms.description=是否安装OM服务
-Install.Paramers.installationType.explanation=是否安装OM服务?
-Install.Paramers.svcnamePort.explanation=svcname端口
-Install.Paramers.dbpath.explanation=SMS服务数据路径
-Install.Paramers.restPort.explanation=restname端口
+Install.Paramers.sms.explanation=是否安装OM服务?
 Install.Paramers.LicenseRead.Agree.Description=同意以上协议
 Install.Paramers.LicenseRead.Agree.Explanation=了解更多的协议内容，可以在安装后查看协议文件
 Install.Paramers.LicenseRead.Read.Description=查看详细的协议内容
@@ -24,6 +21,8 @@ Install.Paramers.Force.Explanation=是否强制安装？强制安装时可能会
 Install.Paramers.Force.Check=无效参数: --force ${force}, 参数值必须是true或者false
 Install.Paramers.SMS.Check=无效参数: --SMS ${SMS}, 参数值必须是true或者false
 Install.Paramers.ProcessAutoStart.Check=无效参数: --processAutoStart ${processAutoStart}, 参数值必须是true或者false
+Install.Parameter.Upgrade.explanation=检测到${installdir_inconf}下已有安装版本。
+Install.Parameter.Upgrade.description=是否切换到升级模式？
 
 Install.ErrorMsg.CheckGroup=用户${username}存在，但该用户不属于用户组${groupname}
 Install.ErrorMsg.CreateGroup=创建用户组${groupname}失败
@@ -42,7 +41,6 @@ Install.WarnMsg.CheckUmask=umask值异常！当前umask=${full_mask}，建议改
 Upgrade.Paramers.Upgrade.Explanation=是否升级
 Upgrade.Paramers.Upgrade.Check=无效参数: --upgrade ${is_upgrade_mode}, 参数值必须是true或者false
 
-Upgrade.NormalMsg.AskUpgrade=检测到${installdir_inconf}下已有安装版本，是否切换为升级模式？
 Upgrade.NormalMsg.BeginUpgrade=开始升级
 Upgrade.NormalMsg.CheckList=**************************  检查列表 *************************************
 Upgrade.NormalMsg.SystemConfExist=检查：系统配置文件${sys_conf_file}存在 ...... 
