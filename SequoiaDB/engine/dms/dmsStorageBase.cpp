@@ -110,6 +110,7 @@ namespace engine
          rc = SDB_OOM ;
          goto error ;
       }
+      ossMemset( _pData, 0, arrayNum ) ;
       _capacity = arrayNum << 3 ;
 
    done:
@@ -895,7 +896,7 @@ namespace engine
                   _suFileName, rc ) ;
          goto error ;
       }
-      _dirtyList.setSize( segmentSize() ) ;
+      _dirtyList.setSize( segmentSize() - _dataSegID ) ;
 
       rc = _onOpened() ;
       if ( rc )
@@ -1434,7 +1435,7 @@ namespace engine
             goto error ;
          }
          _maxSegID += 1 ;
-         _dirtyList.setSize( segmentSize() ) ;
+         _dirtyList.setSize( segmentSize() - _dataSegID ) ;
 
          // update SME Manager
          rc = _smeMgr.depositASegment( (dmsExtentID)beginExtentID ) ;
