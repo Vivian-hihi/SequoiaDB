@@ -56,7 +56,7 @@ extra_opts['package_data'] = { 'pysequoiadb':['err.prop', libsdb],
                                         libdecimal],}
 #extra_opts['ext_modules'] = ext_modules
 setup(name = 'pysequoiadb',
-      version = '2.6',
+      version = '2.8',
       author = 'SequoiaDB Inc.',
       license = 'GNU Affero GPL',
       description = 'This is a sequoiadb python driver use adapter package',
