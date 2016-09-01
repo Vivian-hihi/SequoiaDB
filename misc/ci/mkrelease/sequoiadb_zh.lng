@@ -29,12 +29,12 @@ Install.ErrorMsg.CreateGroup=创建用户组${groupname}失败
 Install.ErrorMsg.CreateUser=创建用户${username}失败
 Install.ErrorMsg.CreateWindowsService.error=创建集群管理服务(sdbcm)失败
 Install.ErrorMsg.CreateLinuxService.error=创建集群管理服务(sdbcm)失败
-Install.ErrorMsg.ChangeInsallerPathPermissions.error=修改安装目录(${installdir}/bin)权限失败
 Install.ErrorMsg.StartWindowsService.error=启动集群管理服务(sdbcm)失败
 Install.ErrorMsg.StopSdbCm.error=停止集群管理服务(sdbcm)失败
 Install.ErrorMsg.StopSequoiadb.error=停止SequoiaDB数据库服务失败
 Install.ErrorMsg.DeleteUser.error=删除用户${username}失败
 Install.ErrorMsg.IntallationOM.error=创建OM失败
+Install.ErrorMsg.checkDisk.error=磁盘剩余空间不足1.3G
 
 Install.WarnMsg.CheckUmask=umask值异常！当前umask=${full_mask}，建议改成0022
 
@@ -50,6 +50,7 @@ Upgrade.NormalMsg.JudgeComatible=检查：旧版本 ${old_version} ${old_edition
 Upgrade.NormalMsg.DiskSpace=检查：磁盘空间足够 ...... 
 Upgrade.NormalMsg.UserExist=检查：用户${username}存在，并获取用户组 ...... 
 Upgrade.NormalMsg.StopProcess=检查：相关进程已停止 ...... 
+Upgrade.NormalMsg.Umask=检查：umask配置 ...... 
 
 Upgrade.NormalMsg.BeginRollback=发生错误，升级中止，开始回滚 ...... 
 Upgrade.NormalMsg.Rollback.RestoreFile=开始恢复文件 ...... 

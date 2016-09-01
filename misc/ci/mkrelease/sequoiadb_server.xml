@@ -29,18 +29,160 @@
             <file>${build_project_directory}/sequoiadb/license/license_zh.txt</file>
         </licenseFile>
     </licenseFileList>
-    
+
     <initializationActionList>        
         <setInstallerVariable name="stage" value="main"/>
         <createTimeStamp>
             <variable>time</variable>
             <format>%Y-%m-%d-%H:%M:%S</format>
         </createTimeStamp> 
-        <setInstallerVariable name="sys_conf_file" value="/etc/default/sequoiadb"/>
+        <setInstallerVariable name="sys_conf_file" value="/etc/default/sequoiadb" persist="1"/>
         <setInstallerVariable name="exist_installation" value="false"/>                   
         <setInstallerVariable name="project.rollbackBackupDirectory" value="${installdir}/rollback/BackupDir_${time}"/>       
     </initializationActionList>
+        
+    <functionDefinitionList>
+        <actionDefinition name="checkUmaskFunction">
+            <actionList>                                                       
+                <setInstallerVariableFromScriptOutput>
+                    <name>full_mask</name>
+                    <exec>umask</exec>           
+                </setInstallerVariableFromScriptOutput>
+                <setInstallerVariableFromScriptOutput>
+                    <name>other_mask</name>
+                    <exec>echo</exec>
+                    <execArgs>${full_mask} | awk '{print substr($0,length($0)-0,1)}'</execArgs>
+                </setInstallerVariableFromScriptOutput>
+                <setInstallerVariableFromScriptOutput>
+                    <name>group_mask</name>
+                    <exec>echo</exec>
+                    <execArgs>${full_mask} | awk '{print substr($0,length($0)-1,1)}'</execArgs>
+                </setInstallerVariableFromScriptOutput>
+                <setInstallerVariableFromScriptOutput>
+                    <name>user_mask</name>
+                    <exec>echo</exec>
+                    <execArgs>${full_mask} | awk '{print substr($0,length($0)-2,1)}'</execArgs>
+                </setInstallerVariableFromScriptOutput>
+                <showWarning>
+                    <text>${msg(Install.WarnMsg.CheckUmask)}</text>
+                    <ruleEvaluationLogic>or</ruleEvaluationLogic>
+                    <ruleList>
+                        <compareValues value1="${other_mask}" logic="greater" value2="2"/>
+                        <compareValues value1="${group_mask}" logic="greater" value2="2"/>
+                        <compareValues value1="${user_mask}"  logic="greater" value2="0"/>
+                    </ruleList>
+                </showWarning>
+            </actionList>    
+        </actionDefinition>
+        <actionDefinition name="checkFreeDiskSpaceFunction">
+            <actionList>
+                <throwError>
+                    <text>${msg(Install.ErrorMsg.checkDisk.error)}</text>
+                    <ruleList>
+                        <checkFreeDiskSpace>
+                            <logic>less_or_equal</logic>
+                            <path>${installdir}</path>
+                            <size>1300000</size>
+                        </checkFreeDiskSpace>
+                    </ruleList>
+                </throwError>
+            </actionList>    
+        </actionDefinition>
+        <actionDefinition name="linkPhpLibFunction">
+            <actionList>
+                <setInstallerVariable name="php_lib_dir" value="${installdir}/tools/server/php/libxml2/lib"/>                     
+                <createSymLink linkName="${php_lib_dir}/libxml2.so">
+                    <target>${php_lib_dir}/libxml2.so.2.9.0</target>
+                </createSymLink>
+                <runProgram>
+                    <program>chown</program>
+                    <programArguments>-h ${username}:${groupname} ${php_lib_dir}/libxml2.so</programArguments>
+                </runProgram>
+                
+                <createSymLink linkName="${php_lib_dir}/libxml2.so.2">
+                    <target>${php_lib_dir}/libxml2.so.2.9.0</target>
+                </createSymLink>
+                <runProgram>
+                    <program>chown</program>
+                    <programArguments>-h ${username}:${groupname} ${php_lib_dir}/libxml2.so.2</programArguments>
+                </runProgram>
+                
+                <createSymLink linkName="${php_lib_dir}/libz.so">
+                    <target>${php_lib_dir}/libz.so.1.2.5</target>
+                </createSymLink>
+                <runProgram>
+                    <program>chown</program>
+                    <programArguments>-h ${username}:${groupname} ${php_lib_dir}/libz.so</programArguments>
+                </runProgram>
+                
+                <createSymLink linkName="${php_lib_dir}/libz.so.1">
+                    <target>${php_lib_dir}/libz.so.1.2.5</target>
+                </createSymLink>
+                <runProgram>
+                    <program>chown</program>
+                    <programArguments>-h ${username}:${groupname} ${php_lib_dir}/libz.so.1</programArguments>
+                </runProgram> 
+                
+                <dos2unix files="${installdir}/tools/server/php/bin/php"/>
+                <iniFileSet>
+                    <file>${installdir}/tools/server/php/lib/php.ini</file>
+                    <key>extension_dir</key>
+                    <section>PHP</section>
+                    <value>${installdir}/lib/phplib</value>
+                </iniFileSet>                                                                                                                                          
+            </actionList>    
+        </actionDefinition>
+        <actionDefinition name="changePermissionOwnerFunction">
+            <actionList>                                                       
+                <changePermissions permissions="0755" files="${installdir}/bin/{*,*/*}"/>
+                <changePermissions permissions="0755" files="${installdir}/tools/server/php/bin/*"/>
+                <changePermissions permissions="0755" files="${installdir}/www/shell/*"/>
+                <changePermissions permissions="0755" files="${installdir}/install_om.sh"/>
+                <changePermissions permissions="0755" files="${installdir}/conf/script/{*.sh,*/*.sh}"/>
+                <changePermissions permissions="0755" files="${installdir}/java/jdk/bin/*"/>
+                <changePermissions permissions="0755" files="${installdir}/postgresql/*.so*"/>                               
+                <changePermissions permissions="0777" files="/tmp"/>   
+                <changeOwnerAndGroup><!--root owner should be set before suid -->
+                    <files>${installdir}/bin/sdbomtool</files>
+                    <group>root</group>
+                    <owner>root</owner>
+                </changeOwnerAndGroup>
+                <changePermissions permissions="6755" files="${installdir}/bin/sdbomtool"/>
+                                              
+                <runProgram>
+                    <program>rm</program>
+                    <programArguments>-f ${installdir}/www/doc</programArguments>            
+                </runProgram>        
+                <createSymLink linkName="${installdir}/www/doc" target="${installdir}/doc"/>
+                <runProgram>
+                    <program>chown</program>
+                    <programArguments>-h ${username}:${groupname} ${installdir}/www/doc</programArguments>            
+                </runProgram>  
+                                                             
+                <changeOwnerAndGroup>
+                    <files>${project.rollbackBackupDirectory};${installdir}/rollback</files>
+                    <group>${groupname}</group>
+                    <owner>${username}</owner>
+                </changeOwnerAndGroup>                                                   
 
+            </actionList>    
+        </actionDefinition>
+        <actionDefinition name="startServiceFunction">
+            <actionList>
+                <runProgram><!--in case did not reload /etc/init.d/sdbcm -->
+                    <abortOnError>0</abortOnError>
+                    <showMessageOnError>0</showMessageOnError>
+                    <program>systemctl</program>
+                    <programArguments>daemon-reload</programArguments>
+                </runProgram>             
+                <runProgram>
+                    <program>service</program>
+                    <programArguments> sdbcm start</programArguments>            
+                </runProgram>
+            </actionList>    
+        </actionDefinition>
+    </functionDefinitionList>
+       
     <!--exist installation? different mode has different parameterLis-->
     <preInstallationActionList>
         <!-- parameter check -->                         
@@ -154,8 +296,7 @@
     </preInstallationActionList>
     
     <parameterList>
-        <!--keep variable in both running time and building time-->
-        <stringParameter name="sys_conf_file"     ask="0" value=""/>    
+        <!--keep variable in both running time and building time-->          
         <stringParameter name="enterpriseversion" ask="0" value=""/>
         <stringParameter name="platform"          ask="0" value=""/>               
         
@@ -367,7 +508,8 @@
                 <isTrue value="${is_upgrade_mode}"/>               
             </ruleList>
         </actionGroup> 
-                                                                                                        
+        
+        <!--select component-->                                                                                               
         <componentSelection>
             <select>upgrade_component</select>
             <deselect>normal_component</deselect>
@@ -381,37 +523,7 @@
             <ruleList>
                 <compareValues value1="${project.installationType}" value2="normal" logic="equals"/>
             </ruleList>
-        </componentSelection>                 
-           
-        <!--check umask-->
-        <setInstallerVariableFromScriptOutput>
-            <name>full_mask</name>
-            <exec>umask</exec>           
-        </setInstallerVariableFromScriptOutput>
-        <setInstallerVariableFromScriptOutput>
-            <name>other_mask</name>
-            <exec>echo</exec>
-            <execArgs>${full_mask} | awk '{print substr($0,length($0)-0,1)}'</execArgs>
-        </setInstallerVariableFromScriptOutput>
-        <setInstallerVariableFromScriptOutput>
-            <name>group_mask</name>
-            <exec>echo</exec>
-            <execArgs>${full_mask} | awk '{print substr($0,length($0)-1,1)}'</execArgs>
-        </setInstallerVariableFromScriptOutput>
-        <setInstallerVariableFromScriptOutput>
-            <name>user_mask</name>
-            <exec>echo</exec>
-            <execArgs>${full_mask} | awk '{print substr($0,length($0)-2,1)}'</execArgs>
-        </setInstallerVariableFromScriptOutput>
-        <showWarning>
-            <text>${msg(Install.WarnMsg.CheckUmask)}</text>
-            <ruleEvaluationLogic>or</ruleEvaluationLogic>
-            <ruleList>
-                <compareValues value1="${other_mask}" logic="greater" value2="2"/>
-                <compareValues value1="${group_mask}" logic="greater" value2="2"/>
-                <compareValues value1="${user_mask}"  logic="greater" value2="0"/>
-            </ruleList>
-        </showWarning>
+        </componentSelection>                                   
                                           
     </readyToInstallActionList> 
 
@@ -460,12 +572,7 @@
     </preUninstallationActionList>
     
     <postUninstallationActionList>
-        <deleteFile>
-            <path>/etc/default/sequoiadb</path>
-            <ruleList>               
-                <fileExists path="/etc/default/sequoiadb"/>
-            </ruleList>
-        </deleteFile>                
+        <deleteFile path="${sys_conf_file}"/>
         <removeDirectoryFromPath>
             <path>${installdir}</path>
             <scope>user</scope>
