@@ -4,6 +4,9 @@ Import("curPath")
 
 import sys
 import os
+import zipfile
+
+PYHOME = curPath
 
 driverFiles = [
    "pysequoiadb/pysequoiadb.cpp"
@@ -145,8 +148,22 @@ base.append(env.Install("#/pysequoiadb", driver))
 base.append(env.Install("#/bson", decimal))
 base.append(env.Install("#/bson", "pysequoiadb/decimal.py")) 
 
+def zipPackage(target, source):
+   with zipfile.ZipFile(target, 'w', zipfile.ZIP_DEFLATED) as zfile:
+      for path in source:
+         if os.path.isdir(path):
+            for file in os.listdir(path):
+              zfile.write(path + os.sep + file)
+         else:
+            zfile.write(path)
+
+def zipPackageAction(target=None, source=None, env = env):
+   os.chdir(PYHOME)
+   os.rename("bson/decimal.dll", "bson/bsondecimal.dll")
+   zipPackage('pysequoiadb.zip', ['pysequoiadb', 'bson', 'setup.py'])
+
 if sys.platform == 'win32':
-   pass
+   run = env.Command(target = None, source = base, action = zipPackageAction)
 else:
    act = []
    act.append("mv ./pysequoiadb/libsdb.so ./pysequoiadb/sdb.so")
@@ -154,7 +171,6 @@ else:
    act.append("tar -zcvf pysequoiadb.tar.gz   \
                ./bson ./pysequoiadb ./setup.py \
                --exclude-vcs")
-
    run = env.Command(target = None, source = base, action = act )
-   env.Depends(run, base)
-   env.AlwaysBuild(run)
+env.Depends(run, base)
+env.AlwaysBuild(run)

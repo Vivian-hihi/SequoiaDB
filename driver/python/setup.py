@@ -27,20 +27,22 @@ if 'win32' == sys.platform:
       newname = file[:-3] + 'pyd'
       shutil.copy(file, newname)
 
-   for file in glob.glob(dlls):
+   for file in glob.glob(bson):
       if file.startswith('lib'):
          newname = file[3:]
       newname = file[:-3] + 'pyd'
       shutil.copy(file, newname)
 
-   modules = ['err.prop','*.pyd'] #, '*.exp', '*.lib', 
+   libsdb = 'sdb.pyd'
+   libdecimal = 'bsondecimal.pyd'
 else:
-   modules = ['err.prop', '*.so']
+   libsdb = 'sdb.so'
+   libdecimal = 'bsondecimal.so'
 
 extra_opts = {}
 extra_opts['packages'] = [ 'bson', 'pysequoiadb']
 extra_opts['package_dir']={ 'pysequoiadb':'pysequoiadb', 'bson':'bson'}
-extra_opts['package_data'] = { 'pysequoiadb':modules,
+extra_opts['package_data'] = { 'pysequoiadb':['err.prop', libsdb],
                                'bson':[ 'buffer.h',
                                         'buffer.c',
                                         '_cbsonmodule.h',
@@ -51,10 +53,10 @@ extra_opts['package_data'] = { 'pysequoiadb':modules,
                                         'time64.c',
                                         'time64_config.h',
                                         'time64_limits.h',
-                                        'bsondecimal.so'],}
+                                        libdecimal],}
 #extra_opts['ext_modules'] = ext_modules
 setup(name = 'pysequoiadb',
-      version = '1.0',
+      version = '2.6',
       author = 'SequoiaDB Inc.',
       license = 'GNU Affero GPL',
       description = 'This is a sequoiadb python driver use adapter package',
