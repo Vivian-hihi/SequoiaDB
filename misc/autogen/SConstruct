@@ -127,12 +127,13 @@ def findVersion( root , choices ):
                 return r + c
     raise RuntimeError("can't find a version of [" + repr(root) + "] choices: " + repr(choices))
 
-
-
 # installation options
 add_option( "language" , "description language" , 1 , False )
 add_option( "64" , "whether to force 64 bit" , 0 , True , "force64" )
 add_option( "32" , "whether to force 32 bit" , 0 , True , "force32" )
+
+if not os.path.exists("bin"):
+    os.mkdir("bin")
 
 Export("has_option")
 Export("get_option")
