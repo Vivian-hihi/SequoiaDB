@@ -205,6 +205,13 @@ namespace engine
             }
             goto rmdata ;
          }
+         else if ( SDB_FNE == rc &&
+                   _pDataSu->isCrashed() &&
+                   0 == _pDataSu->getCollectionNum() )
+         {
+            /// create data file then crashed, so clean the data file
+            goto rmdata ;
+         }
          goto error ;
       }
 
