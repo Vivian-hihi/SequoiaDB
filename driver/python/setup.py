@@ -58,7 +58,7 @@ extra_opts['package_data'] = { 'pysequoiadb':['err.prop', libsdb],
 setup(name = 'pysequoiadb',
       version = '2.8',
       author = 'SequoiaDB Inc.',
-      license = 'GNU Affero GPL',
+      license = 'Apache License 2',
       description = 'This is a sequoiadb python driver use adapter package',
       url = 'http://www.sequoiadb.com',
       **extra_opts)
