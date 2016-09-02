@@ -2506,5 +2506,12 @@
         </description>
       </code>
 
+      <code>
+        <name>SDB_DPS_LOG_NOT_ARCHIVED</name>
+        <description>
+           <en>Replica log is not archived</en>
+           <cn>复制日志未归档</cn>
+        </description>
+      </code>
    </codelist>
 </rclist>

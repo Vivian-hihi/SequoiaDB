@@ -84,6 +84,9 @@ namespace engine
    #define PMD_DFT_SYNC_INTERVAL       (10000)  // 10 seconds
    #define PMD_DFT_SYNC_RECORDNUM      (0)
    #define PMD_DFT_SYNC_DIRTYRATIO     (50)
+   #define PMD_DFT_ARCHIVE_TIMEOUT     (600) // 10 minutes
+   #define PMD_DFT_ARCHIVE_EXPIRED     (240) // 10 days
+   #define PMD_DFT_ARCHIVE_QUOTA       (10)  // 10 GB
 
    /*
       _pmdCfgExchange implement
@@ -1332,6 +1335,14 @@ namespace engine
       _syncDirtyRatio      = PMD_DFT_SYNC_DIRTYRATIO ;
       _syncDeep            = FALSE ;
 
+      // archive releated
+      _archiveOn = FALSE ;
+      _archiveCompressOn = TRUE ;
+      ossMemset( _archivePath, 0, OSS_MAX_PATHSIZE + 1 ) ;
+      _archiveTimeout = PMD_DFT_ARCHIVE_TIMEOUT ;
+      _archiveExpired = PMD_DFT_ARCHIVE_EXPIRED ;
+      _archiveQuota = PMD_DFT_ARCHIVE_QUOTA ;
+
 #ifdef SDB_ENTERPRISE
 
 #ifdef SDB_SSL
@@ -1586,6 +1597,30 @@ namespace engine
       /// --syncdeep
       rdxBooleanS( pEX, PMD_OPTION_SYNC_DEEP, _syncDeep, FALSE, TRUE,
                    FALSE, FALSE ) ;
+
+      // --archiveon
+      rdxBooleanS( pEX, PMD_OPTION_ARCHIVE_ON, _archiveOn,
+                   FALSE, TRUE, FALSE, FALSE ) ;
+
+      // --archivecompresson
+      rdxBooleanS( pEX, PMD_OPTION_ARCHIVE_COMPRESS_ON, _archiveCompressOn,
+                   FALSE, TRUE, TRUE, FALSE ) ;
+
+      // --archivepath
+      rdxPath( pEX, PMD_OPTION_ARCHIVE_PATH, _archivePath, sizeof(_archivePath),
+               FALSE, FALSE, "" ) ;
+
+      // --archivetimeout
+      rdxUInt( pEX, PMD_OPTION_ARCHIVE_TIMEOUT, _archiveTimeout, FALSE, TRUE,
+               PMD_DFT_ARCHIVE_TIMEOUT, FALSE ) ;
+
+      // --archiveexpired
+      rdxUInt( pEX, PMD_OPTION_ARCHIVE_EXPIRED, _archiveExpired, FALSE, TRUE,
+               PMD_DFT_ARCHIVE_EXPIRED, FALSE ) ;
+
+      // --archivequota
+      rdxUInt( pEX, PMD_OPTION_ARCHIVE_QUOTA, _archiveQuota, FALSE, TRUE,
+               PMD_DFT_ARCHIVE_QUOTA, FALSE ) ;
 
       // --omaddr
       rdxString( pEX, PMD_OPTION_OM_ADDR, _omAddrLine,
@@ -1850,6 +1885,18 @@ namespace engine
          }
       }
 
+      if ( 0 == _archivePath[0] )
+      {
+         if ( SDB_OK != utilBuildFullPath( _krcbDbPath, PMD_OPTION_ARCHIVE_LOG_PATH,
+                                           OSS_MAX_PATHSIZE, _archivePath ) ||
+              SDB_OK != utilCatPath( _archivePath, OSS_MAX_PATHSIZE, "" ) )
+         {
+            std::cerr << "archivelog path is too long!" << endl ;
+            rc = SDB_INVALIDPATH ;
+            goto error ;
+         }
+      }
+
       if ( _transactionOn )
       {
          PD_CHECK( _logFileNum >= 5, SDB_INVALIDARG, error, PDERROR,
@@ -1870,7 +1917,8 @@ namespace engine
       }
 
       // if start is stanalone, must enable dps local
-      if ( SDB_ROLE_STANDALONE == dbRole && _transactionOn )
+      if ( SDB_ROLE_STANDALONE == dbRole &&
+           ( _transactionOn || _archiveOn ) )
       {
          _dpslocal = TRUE ;
       }
@@ -2121,6 +2169,13 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
 
+      if ( _archivePath[ 0 ] != 0 && 0 == ossAccess( _archivePath ) )
+      {
+         rc = ossDelete( _archivePath ) ;
+         PD_RC_CHECK( rc, PDERROR, "Remove dir[%s] failed, rc: %d",
+                      _archivePath, rc ) ;
+      }
+
       if ( _dmsTmpBlkPath[ 0 ] != 0 && 0 == ossAccess( _dmsTmpBlkPath ) )
       {
          rc = ossDelete( _dmsTmpBlkPath ) ;
@@ -2237,6 +2292,14 @@ namespace engine
       if ( rc && SDB_FE != rc )
       {
          std::cerr << "Failed to create tmp dir: " << _dmsTmpBlkPath <<
+                      ", rc = " << rc << std::endl ;
+         goto error ;
+      }
+
+      rc = ossMkdir( _archivePath ) ;
+      if ( rc && SDB_FE != rc )
+      {
+         std::cerr << "Failed to create archivelog dir: " << _archivePath <<
                       ", rc = " << rc << std::endl ;
          goto error ;
       }

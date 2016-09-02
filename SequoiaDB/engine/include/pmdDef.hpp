@@ -151,6 +151,7 @@ namespace engine
       EDU_TYPE_RESTLISTENER,
       EDU_TYPE_REPR,
       EDU_TYPE_LOGGW,
+      EDU_TYPE_LOGARCHIVEMGR,
       EDU_TYPE_DPSROLLBACK,
       EDU_TYPE_SHARDR,
       EDU_TYPE_CLUSTER,
@@ -250,6 +251,7 @@ namespace engine
    #define PMD_OPTION_BK_PATH          "bakfile"
    #define PMD_OPTION_WWW_PATH_DIR     "web"
    #define PMD_OPTION_TMPBLK_PATH      "tmp"
+   #define PMD_OPTION_ARCHIVE_LOG_PATH "archivelog"
    #define PMD_CURRENT_PATH            "./"
 
    #define ENGINE_NPIPE_PREFIX         "sequoiadb_engine_"

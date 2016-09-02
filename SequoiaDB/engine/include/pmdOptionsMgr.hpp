@@ -486,6 +486,13 @@ namespace engine
          OSS_INLINE UINT32 getSyncDirtyRatio() const { return _syncDirtyRatio ; }
          OSS_INLINE BOOLEAN isSyncDeep() const { return _syncDeep ; }
 
+         OSS_INLINE BOOLEAN archiveOn() const { return _archiveOn ; }
+         OSS_INLINE BOOLEAN archiveCompressOn() const { return _archiveCompressOn ; }
+         OSS_INLINE const CHAR* getArchivePath() const { return _archivePath ; }
+         OSS_INLINE UINT32 getArchiveTimeout() const { return _archiveTimeout ; }
+         OSS_INLINE UINT32 getArchiveExpired() const { return _archiveExpired ; }
+         OSS_INLINE UINT32 getArchiveQuota() const { return _archiveQuota ; }
+
          std::string getOmAddr() const ;
 
 #ifdef SDB_ENTERPRISE
@@ -560,6 +567,12 @@ namespace engine
          UINT32      _syncDirtyRatio ;
          BOOLEAN     _syncDeep ;
          CHAR        _omAddrLine[ OSS_MAX_PATHSIZE + 1 ] ;
+         BOOLEAN     _archiveOn ;
+         BOOLEAN     _archiveCompressOn ;
+         CHAR        _archivePath[ OSS_MAX_PATHSIZE + 1 ] ;
+         UINT32      _archiveTimeout ;
+         UINT32      _archiveExpired ;
+         UINT32      _archiveQuota ;
 
 #ifdef SDB_ENTERPRISE
 

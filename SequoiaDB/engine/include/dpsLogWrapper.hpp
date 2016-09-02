@@ -43,6 +43,7 @@
 #include "sdbInterface.hpp"
 #include "sdbIPersistence.hpp"
 #include "dpsReplicaLogMgr.hpp"
+#include "dpsArchiveMgr.hpp"
 #include "../bson/bsonelement.h"
 #include "../bson/bsonobj.h"
 #include <vector>
@@ -119,6 +120,7 @@ namespace engine
       BOOLEAN                    _initialized ;
       BOOLEAN                    _dpslocal ;
       vector< dpsEventHandler* > _vecEventHandler ;
+      dpsArchiveMgr              _archiver ;
 
       UINT32                     _syncInterval ;
       UINT32                     _syncRecordNum ;
@@ -216,6 +218,14 @@ namespace engine
       OSS_INLINE BOOLEAN doLog () const
       {
          return _initialized ;
+      }
+      OSS_INLINE INT32 archive()
+      {
+         if ( !_initialized )
+         {
+            return SDB_OK ;
+         }
+         return _archiver.run() ;
       }
 
       // note flushAll function is ONLY USED IN TESTCASE

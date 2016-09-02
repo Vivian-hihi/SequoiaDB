@@ -72,18 +72,19 @@ namespace engine
 
    INT32 _dpsLogWrapper::init ()
    {
+      INT32 rc = SDB_OK ;
       pmdOptionsCB *optCB = pmdGetKRCB()->getOptionCB() ;
 
       _dpslocal = optCB->isDpsLocal() ;
       _buf.setLogFileSz( optCB->getReplLogFileSz() ) ;
       _buf.setLogFileNum( optCB->getReplLogFileNum() ) ;
 
-      INT32 rc = _buf.init( optCB->getReplLogPath(),
-                            optCB->getReplLogBuffSize(),
-                            sdbGetTransCB() ) ;
-      if ( SDB_OK == rc )
+      rc = _buf.init( optCB->getReplLogPath(),
+                      optCB->getReplLogBuffSize(),
+                      sdbGetTransCB() ) ;
+      if ( SDB_OK != rc )
       {
-         _initialized = TRUE ;
+         goto error ;
       }
       _syncInterval = optCB->getSyncInterval() ;
       _syncRecordNum = optCB->getSyncRecordNum() ;
@@ -91,7 +92,21 @@ namespace engine
       pmdGetSyncMgr()->setLogAccess( this ) ;
       pmdGetSyncMgr()->setMainUnit( this ) ;
 
+      if ( optCB->archiveOn() )
+      {
+         rc = _archiver.init( this, optCB->getArchivePath() ) ;
+         if ( SDB_OK != rc )
+         {
+            goto error ;
+         }
+      }
+
+      _initialized = TRUE ;
+
+   done:
       return rc ;
+   error:
+      goto done ;
    }
 
    void _dpsLogWrapper::regEventHandler( dpsEventHandler *pHandler )
@@ -144,6 +159,7 @@ namespace engine
          goto error ;
       }
       pEDUMgr->regSystemEDU( EDU_TYPE_LOGGW, eduID ) ;
+
       // dps trans rollback task
       rc = pEDUMgr->startEDU( EDU_TYPE_DPSROLLBACK, NULL, &eduID ) ;
       if ( rc )
@@ -152,6 +168,18 @@ namespace engine
          goto error ;
       }
       pEDUMgr->regSystemEDU( EDU_TYPE_DPSROLLBACK, eduID ) ;
+
+      // dps log archiving
+      if ( pmdGetKRCB()->getOptionCB()->archiveOn() )
+      {
+         rc = pEDUMgr->startEDU( EDU_TYPE_LOGARCHIVEMGR, (void*)this, &eduID ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Start dps log archiving failed, rc: %d", rc ) ;
+            goto error ;
+         }
+         pEDUMgr->regSystemEDU( EDU_TYPE_LOGARCHIVEMGR, eduID ) ;
+      }
 
    done:
       return rc ;
@@ -166,7 +194,21 @@ namespace engine
 
    INT32 _dpsLogWrapper::fini ()
    {
-      return SDB_OK ;
+      INT32 rc = SDB_OK ;
+
+      if ( pmdGetKRCB()->getOptionCB()->archiveOn() )
+      {
+         rc = _archiver.fini() ;
+         if ( SDB_OK != rc )
+         {
+            goto error ;
+         }
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 
    INT32 _dpsLogWrapper::search( const DPS_LSN &minLsn,

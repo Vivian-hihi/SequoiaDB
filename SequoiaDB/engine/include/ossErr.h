@@ -357,6 +357,10 @@ const CHAR* getErrDesp ( INT32 errCode );
 #define SDB_UTIL_COMPRESS_BUFF_SMALL                                    -305  /**< Buffer for compression is too small */
 #define SDB_UTIL_DECOMPRESS_BUFF_SMALL                                  -306  /**< Buffer for decompression is too small */
 #define SDB_OSS_UP_TO_LIMIT                                             -307  /**< Up to the limit */
-#define SDB_DS_DISABLED                                                 -308  /**< sdbDataSource disabled */
+#define SDB_DS_NOTINIT_OR_DISABLED                                      -308  /**< sdbDataSource not init or disabled */
 #define SDB_DS_NO_COORD                                                 -309  /**< sdbDataSource has no valid coord */
+#define SDB_RULE_ID_IS_NOT_EXIST                                        -310  /**< the record which exclusive ruleID is not exist */
+#define SDB_STRTGY_TASK_NAME_CONFLICT                                   -311  /**< Task name conflict */
+#define SDB_STRTGY_TASK_NOT_EXISTED                                     -312  /**< The task is not existed */
+#define SDB_DPS_LOG_NOT_ARCHIVED                                        -313  /**< Replica log is not archived */
 #endif /* OSSERR_HPP_ */

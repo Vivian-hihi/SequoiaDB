@@ -1,0 +1,1489 @@
+/*******************************************************************************
+
+
+   Copyright (C) 2011-2016 SequoiaDB Ltd.
+
+   This program is free software: you can redistribute it and/or modify
+   it under the term of the GNU Affero General Public License, version 3,
+   as published by the Free Software Foundation.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warrenty of
+   MARCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+   GNU Affero General Public License for more details.
+
+   You should have received a copy of the GNU Affero General Public License
+   along with this program. If not, see <http://www.gnu.org/license/>.
+
+   Source File Name = dpsArchiveMgr.cpp
+
+   Descriptive Name = Data Protection Services Log Archive Manager
+
+   When/how to use: this program may be used on binary and text-formatted
+   versions of DPS component. This file contains code logic for log page
+   operations
+
+   Dependencies: N/A
+
+   Restrictions: N/A
+
+   Change Activity:
+   defect Date        Who Description
+   ====== =========== === ==============================================
+          7/7/2016  David Li  Initial Draft
+
+   Last Changed =
+
+*******************************************************************************/
+#include "dpsArchiveMgr.hpp"
+#include "dpsArchiveFile.hpp"
+#include "dpsLogWrapper.hpp"
+#include "dpsLogFile.hpp"
+#include "dpsMessageBlock.hpp"
+#include "pmdEDU.hpp"
+#include "pmd.hpp"
+#include "ossMem.hpp"
+#include "pd.hpp"
+#include "utilStr.hpp"
+#include <sstream>
+
+namespace engine
+{
+   #define DPS_ARCHIVE_MAX_WAIT_TIME   (30 * 1000) // 30seconds
+   #define DPS_ARCHIVE_ONE_WAIT_TIME   (100)       // 100ms
+   #define DPS_ARCHIVE_EXPIRED_SECONDS (60 * 60)   // 1hour
+   #define DPS_ARCHIVE_QUOTA_BYTES     (1024 * 1024 * 1024) // 1GB
+
+   static DPS_LSN maxLSN( const DPS_LSN& left, const DPS_LSN& right,
+                          BOOLEAN considerVersion = FALSE )
+   {
+      INT32 result = 0 ;
+
+      if ( considerVersion )
+      {
+         result = left.compare( right ) ;
+      }
+      else
+      {
+         result = left.compareOffset( right ) ;
+      }
+
+      if ( result >= 0 )
+      {
+         return left ;
+      }
+      else
+      {
+         return right ;
+      }
+   }
+
+   static DPS_LSN minLSN( const DPS_LSN& left, const DPS_LSN& right,
+                          BOOLEAN considerVersion = FALSE )
+   {
+      INT32 result = 0 ;
+
+      if ( considerVersion )
+      {
+         result = left.compare( right ) ;
+      }
+      else
+      {
+         result = left.compareOffset( right ) ;
+      }
+
+      if ( result <= 0 )
+      {
+         return left ;
+      }
+      else
+      {
+         return right ;
+      }
+   }
+
+   enum dpsArchiveEventType
+   {
+      DPS_ARCHIVE_EVENT_INVALID         = 0,
+      DPS_ARCHIVE_EVENT_ARCHIVE         = 1,
+      DPS_ARCHIVE_EVENT_SWITCH_FILE     = 2,
+      DPS_ARCHIVE_EVENT_MAX
+   } ;
+
+   #define DPS_ARCHIVE_EVENT_IS_VALID(eventType) \
+      ( ( (eventType) > DPS_ARCHIVE_EVENT_INVALID ) && \
+        ( (eventType) < DPS_ARCHIVE_EVENT_MAX ) )
+
+   class dpsArchiveEvent: public SDBObject
+   {
+   private:
+      // disallow copy and assign
+      dpsArchiveEvent( const dpsArchiveEvent& ) ;
+      void operator=( const dpsArchiveEvent& );
+   protected:
+      dpsArchiveEvent( dpsArchiveEventType type )
+         : _type( type ) {}
+   public:
+      virtual ~dpsArchiveEvent() {}
+
+   public:
+      dpsArchiveEventType type() { return _type ; }
+
+   protected:
+      dpsArchiveEventType _type ;
+   } ;
+
+   class dpsArchiveEventSwitchFile: public dpsArchiveEvent
+   {
+   public:
+      dpsArchiveEventSwitchFile()
+         : dpsArchiveEvent( DPS_ARCHIVE_EVENT_SWITCH_FILE )
+      {
+         preLogicalFileId = DPS_INVALID_LOG_FILE_ID ;
+         preFileId = DPS_INVALID_LOG_FILE_ID ;
+         curLogicalFileId = DPS_INVALID_LOG_FILE_ID ;
+         curFileId = DPS_INVALID_LOG_FILE_ID ;
+      }
+
+      virtual ~dpsArchiveEventSwitchFile() {}
+
+   public:
+      UINT32 preLogicalFileId ;
+      UINT32 preFileId ;
+      UINT32 curLogicalFileId ;
+      UINT32 curFileId ;
+   } ;
+
+   class dpsArchiveEventArchive: public dpsArchiveEvent
+   {
+   public:
+      dpsArchiveEventArchive()
+         : dpsArchiveEvent( DPS_ARCHIVE_EVENT_ARCHIVE )
+      {
+         logicalFileId = DPS_INVALID_LOG_FILE_ID ;
+         isPartial = FALSE ;
+      }
+
+      virtual ~dpsArchiveEventArchive() {}
+
+   public:
+      UINT32   logicalFileId ;
+      BOOLEAN  isPartial ;
+      DPS_LSN  startLSN ;
+      DPS_LSN  endLSN ; // not include
+   } ;
+
+   dpsArchiveMgr::dpsArchiveMgr()
+   {
+      _dpsCB = NULL ;
+      _logMgr = NULL ;
+      ossGetCurrentTime( _lastActiveTime ) ;
+
+      // set zero so that it will check if archive files expired immediately
+      // when archive mgr start
+      _lastExpiredTime.time = 0 ;
+      _lastExpiredTime.microtm = 0 ;
+      _archiveSize = 0 ;
+
+      _isArchiving = FALSE ;
+      _isDPSMoving = FALSE ;
+   }
+
+   dpsArchiveMgr::~dpsArchiveMgr()
+   {
+      _clearQueue() ;
+   }
+
+   INT32 dpsArchiveMgr::init( _dpsLogWrapper* dpsCB, const CHAR* archivePath )
+   {
+      INT32 rc = SDB_OK ;
+      dpsArchiveInfo info ;
+      DPS_LSN startLSN ;
+      SDB_ASSERT( dpsCB != NULL, "dpsCB must be not null" ) ;
+
+      _dpsCB = dpsCB ;
+      _logMgr = dpsCB->getLogMgr() ;
+      _archivePath = string( archivePath ) ;
+      if ( !utilStrEndsWith( _archivePath, OSS_FILE_SEP ) )
+      {
+         _archivePath += OSS_FILE_SEP ;
+      }
+
+      rc = _infoMgr.init( archivePath ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "Failed to init archive info mgr, rc=%d", rc ) ;
+         goto error ;
+      }
+
+      info = _infoMgr.getInfo() ;
+      startLSN = _calcStartLSN() ;
+      if ( startLSN.compareOffset( info.startLSN.offset ) != 0 )
+      {
+         info.startLSN = startLSN ;
+         rc = _infoMgr.updateInfo( info ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "Failed to update archive info mgr, rc=%d", rc ) ;
+            goto error ;
+         }
+      }
+
+      _fileMgr.setArchivePath( _archivePath ) ;
+      rc = _fileMgr.getTotalSize( _archiveSize ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "Failed to get archive total size, rc=%d", rc ) ;
+         goto error ;
+      }
+
+      PD_LOG( PDDEBUG, "Log archive total size is %lld", _archiveSize ) ;
+
+      if ( startLSN.compareOffset( _logMgr->expectLsn().offset ) != 0 )
+      {
+         SDB_ASSERT( startLSN.compare( _logMgr->expectLsn() ) < 0,
+                     "next LSN should less than dps expect LSN" ) ;
+         rc = _generateArchiveEvent( startLSN, _logMgr->expectLsn() ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "Failed to generate archive event, rc=%d", rc ) ;
+            goto error ;
+         }
+      }
+
+      _dpsCB->regEventHandler( this ) ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 dpsArchiveMgr::fini()
+   {
+      _dpsCB->unregEventHandler( this ) ;
+      return SDB_OK ;
+   }
+
+   INT32 dpsArchiveMgr::run()
+   {
+      INT32 rc = SDB_OK ;
+      dpsArchiveEvent* event = NULL;
+      DPS_LSN lsn ;
+
+      if ( _isDPSMoving )
+      {
+         ossSleepmillis( 10 ) ;
+         goto done ;
+      }
+
+      lsn = _getMoveLSN() ;
+
+      if ( !lsn.invalid() )
+      {
+         rc = _move( lsn ) ;
+         if ( SDB_OK != rc )
+         {
+            goto error ;
+         }
+      }
+      else if ( _queue.timed_wait_and_pop( event, OSS_ONE_SEC  ) )
+      {
+         SDB_ASSERT( NULL != event, "event can't be NULL" ) ;
+
+         rc = _processLogEvent( event ) ;
+         if ( SDB_OK != rc )
+         {
+            goto error ;
+         }
+      }
+      else
+      {
+         SDB_ASSERT( !_isArchiving, "is archiveing?" ) ;
+
+         rc = _checkArchiveTimeout() ;
+         if ( SDB_OK != rc )
+         {
+            goto error ;
+         }
+
+         rc = _checkArchiveExpired() ;
+         if ( SDB_OK != rc )
+         {
+            goto error ;
+         }
+
+         rc = _checkArchiveQuota() ;
+         if ( SDB_OK != rc )
+         {
+            goto error ;
+         }
+      }
+
+   done :
+      return rc ;
+   error :
+      goto done ;
+   }
+
+   INT32 dpsArchiveMgr::canAssignLogPage( UINT32 reqLen, _pmdEDUCB *cb )
+   {
+      UINT32 waitTime = 0 ;
+      DPS_LSN_OFFSET safeOffset = 0 ;
+      DPS_LSN_OFFSET unsafeOffset = 0 ;
+      INT32 rc = SDB_OK ;
+
+      safeOffset = ( _logMgr->getLogFileNum() - 1 ) * _logMgr->getLogFileSz() ;
+      unsafeOffset = _logMgr->getLogFileNum() * _logMgr->getLogFileSz() ;
+
+      while ( PMD_IS_DB_AVAILABLE() )
+      {
+         dpsArchiveInfo info = _infoMgr.getInfo() ;
+         DPS_LSN_OFFSET expectOffset = _logMgr->expectLsn().offset ;
+         DPS_LSN_OFFSET nextOffset =
+            ( info.startLSN.offset == DPS_INVALID_LSN_OFFSET ) ?
+            0 : info.startLSN.offset ;
+         DPS_LSN_OFFSET diff = expectOffset - nextOffset ;
+
+         if ( DPS_INVALID_LSN_OFFSET == expectOffset )
+         {
+            goto done ;
+         }
+
+         if ( nextOffset >= expectOffset )
+         {
+            goto done ;
+         }
+
+         expectOffset += reqLen ;
+
+         if ( diff <= safeOffset )
+         {
+            goto done ;
+         }
+
+         if ( diff <= unsafeOffset &&
+              ( _logMgr->calcFileID( expectOffset ) !=
+                _logMgr->calcFileID( nextOffset ) ) )
+         {
+            goto done ;
+         }
+
+         if ( waitTime < DPS_ARCHIVE_MAX_WAIT_TIME )
+         {
+            ossSleep( DPS_ARCHIVE_ONE_WAIT_TIME ) ;
+            waitTime += DPS_ARCHIVE_ONE_WAIT_TIME ;
+         }
+         else
+         {
+            // timeout
+            rc = SDB_DPS_LOG_NOT_ARCHIVED ;
+            PD_LOG( PDWARNING, "Replica log is not archived, " \
+                    "expect LSN: %lld[file: %u(%u)], " \
+                    "next archived LSN: %lld[file: %u(%u)]",
+                    expectOffset,
+                    _logMgr->calcFileID( expectOffset ),
+                    _logMgr->calcLogicalFileID( expectOffset ),
+                    nextOffset,
+                    _logMgr->calcFileID( nextOffset ),
+                    _logMgr->calcLogicalFileID( nextOffset ) ) ;
+            break ;
+         }
+
+         if ( cb->isInterrupted() )
+         {
+            rc = SDB_APP_INTERRUPT ;
+            goto error ;
+         }
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   void dpsArchiveMgr::onSwitchLogFile( UINT32 preLogicalFileId,
+                                        UINT32 preFileId,
+                                        UINT32 curLogicalFileId,
+                                        UINT32 curFileId )
+   {
+      dpsArchiveEventSwitchFile* event = NULL ;
+
+      PD_LOG( PDDEBUG, "Log archive on switch log file" ) ;
+
+      event = SDB_OSS_NEW dpsArchiveEventSwitchFile() ;
+      if ( NULL == event )
+      {
+         PD_LOG( PDERROR, "Failed to create new dpsLogEventSwitchFile, rc=%d",
+                 SDB_OOM ) ;
+         goto error ;
+      }
+
+      event->preLogicalFileId = preLogicalFileId ;
+      event->preFileId = preFileId ;
+      event->curLogicalFileId = curLogicalFileId ;
+      event->curFileId = curFileId ;
+
+      _queue.push( event ) ;
+
+   done:
+      return ;
+   error:
+      goto done ;
+   }
+
+   void dpsArchiveMgr::onMoveLog( DPS_LSN_OFFSET moveToOffset,
+                                  DPS_LSN_VER moveToVersion,
+                                  DPS_LSN_OFFSET expectOffset,
+                                  DPS_LSN_VER expectVersion,
+                                  DPS_MOMENT moment,
+                                  INT32 errcode )
+   {
+      DPS_LSN lsn ;
+
+      lsn.set( moveToOffset, moveToVersion ) ;
+
+      switch( moment )
+      {
+      case DPS_BEFORE:
+         PD_LOG( PDEVENT, "before move to %lld", moveToOffset ) ;
+         _beforeMove() ;
+         break ;
+      case DPS_AFTER:
+         _afterMove( lsn, errcode ) ;
+         PD_LOG( PDEVENT, "after move to %lld", moveToOffset ) ;
+         break ;
+      default:
+         SDB_ASSERT( FALSE, "invalid moment value" ) ;
+      }
+   }
+
+   DPS_LSN dpsArchiveMgr::_calcStartLSN()
+   {
+      DPS_LSN infoStartLSN ;
+      DPS_LSN dpsStartLSN ;
+      DPS_LSN dpsNextLSN ;
+
+      infoStartLSN = _infoMgr.getInfo().startLSN ;
+
+      // dpsCB->getStartLsn() will return invalid LSN before init finished,
+      // so we directly get start LSN from logMgr.
+      dpsStartLSN = _logMgr->getStartLsn( FALSE ) ;
+      dpsNextLSN = _logMgr->expectLsn() ;
+
+      // no replica log yet
+      if ( dpsNextLSN.offset == 0 )
+      {
+         return dpsNextLSN ;
+      }
+
+      DPS_LSN nextLSN = minLSN( maxLSN( infoStartLSN, dpsStartLSN ), dpsNextLSN ) ;
+      return nextLSN ;
+   }
+
+   INT32 dpsArchiveMgr::_generateArchiveEvent( const DPS_LSN& startLSN, 
+                                               const DPS_LSN& endLSN,
+                                               BOOLEAN allowPartial )
+   {
+      INT32 rc = SDB_OK ;
+      DPS_LSN_OFFSET startOffset ;
+      DPS_LSN_OFFSET endOffset ;
+      UINT32 startFileId ;
+      UINT32 endFileId ;
+
+      if ( startLSN.compareOffset( endLSN.offset ) == 0 )
+      {
+         goto done ;
+      }
+
+      SDB_ASSERT( startLSN.compareOffset( endLSN.offset ) < 0,
+                  "startLSN should less than endLSN" ) ;
+
+      startOffset = startLSN.offset ;
+      endOffset = endLSN.offset ;
+      startFileId = _logMgr->calcLogicalFileID( startOffset ) ;
+      endFileId = _logMgr->calcLogicalFileID( endOffset ) ;
+      SDB_ASSERT( startFileId <= endFileId, "invalid file id" ) ;
+
+      for ( UINT32 i = startFileId; i <= endFileId; i++ )
+      {
+         dpsArchiveEventArchive* event = NULL ;
+
+         if ( _isDPSMoving )
+         {
+            break ;
+         }
+
+         if ( i == endFileId && !allowPartial )
+         {
+            break ;
+         }
+
+         event = SDB_OSS_NEW dpsArchiveEventArchive() ;
+         if ( NULL == event )
+         {
+            rc = SDB_OOM ;
+            PD_LOG( PDERROR, "Failed to create new dpsLogEventArchive" ) ;
+            goto error ;
+         }
+
+         event->logicalFileId = i ;
+         event->startLSN.version = startLSN.version ;
+         event->endLSN.version = startLSN.version ;
+
+         if ( _logMgr->calcFirstPhysicalLSNOfFile( i ) == startOffset &&
+              i != endFileId )
+         {
+            // the whole log file
+            event->isPartial = FALSE ;
+            event->startLSN.offset = startOffset ;
+            // go to the next log file
+            startOffset = _logMgr->calcFirstPhysicalLSNOfFile( i + 1 ) ;
+            event->endLSN.offset = startOffset ;
+         }
+         else
+         {
+            event->isPartial = TRUE ;
+            event->startLSN.offset = startOffset ;
+
+            if ( i != endFileId )
+            {
+               SDB_ASSERT( i == startFileId, "i != startFileId" ) ;
+               // the first log file
+               // until the end of the log file, so we go to the next log file
+               startOffset = _logMgr->calcFirstPhysicalLSNOfFile( i + 1 ) ;
+               event->endLSN.offset = startOffset ;
+            }
+            else
+            {
+               // the last log file
+               event->endLSN.offset = endOffset ;
+            }
+         }
+
+         _queue.push( event ) ;
+         PD_LOG( PDDEBUG, "Log archive generate archive event, " \
+                 "logicalFileId=%u, isPartial=%d, " \
+                 "startLSN=%lld, endLSN=%lld",
+                 event->logicalFileId, event->isPartial,
+                 event->startLSN.offset, event->endLSN.offset ) ;
+      }
+
+   done:
+      return rc ;
+   error:
+       goto done ;
+   }
+
+   INT32 dpsArchiveMgr::_processLogEvent( dpsArchiveEvent* event )
+   {
+      INT32 rc = SDB_OK ;
+
+      SDB_ASSERT( NULL != event, "event can't be NULL" ) ;
+      SDB_ASSERT( !_isArchiving, "is archiveing?" ) ;
+
+      switch( event->type() )
+      {
+      case DPS_ARCHIVE_EVENT_ARCHIVE:
+         {
+            dpsArchiveEventArchive* archiveEvent =
+               dynamic_cast<dpsArchiveEventArchive*>( event ) ;
+            PD_LOG( PDDEBUG, "Log archive received archive event, " \
+                    "logicalFileId=%u, isPartial=%d, startLSN=%lld, nextLSN=%lld",
+                    archiveEvent->logicalFileId, archiveEvent->isPartial,
+                    archiveEvent->startLSN.offset, archiveEvent->endLSN.offset ) ;
+            rc = _archive( archiveEvent->logicalFileId, archiveEvent->isPartial,
+                           archiveEvent->startLSN, archiveEvent->endLSN ) ;
+         }
+         break ;
+      case DPS_ARCHIVE_EVENT_SWITCH_FILE:
+         {
+            dpsArchiveEventSwitchFile* switchEvent = 
+               dynamic_cast<dpsArchiveEventSwitchFile*>( event ) ;
+            PD_LOG( PDDEBUG, "Log archive received switch file event, " \
+                    "preFileId=%u, preLogicalFileId=%u, " \
+                    "curFileId=%u, curLogicalFileId=%u",
+                    switchEvent->preFileId, switchEvent->preLogicalFileId,
+                    switchEvent->curFileId, switchEvent->curLogicalFileId ) ;
+            rc = _generateArchiveEvent( _infoMgr.getInfo().startLSN,
+                                        _logMgr->expectLsn() ) ;
+         }
+         break ;
+      default:
+         SDB_ASSERT( FALSE, "invalid log event" ) ;
+         PD_LOG( PDERROR, "Log archive received invalid log event [%d]",
+                 event->type() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+   done:
+      SAFE_OSS_DELETE( event ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 dpsArchiveMgr::_archive( UINT32 logicalFileId,
+                                  BOOLEAN isPartial,
+                                  const DPS_LSN& startLSN,
+                                  const DPS_LSN& endLSN )
+   {
+      INT32 rc = SDB_OK ;
+      dpsArchiveInfo info = _infoMgr.getInfo() ;
+      DPS_LSN_OFFSET startOffset = startLSN.offset ;
+      // endOffset is not archived at this time
+      DPS_LSN_OFFSET endOffset = endLSN.offset ;
+
+      SDB_ASSERT( startOffset != endOffset, "startOffset == endOffset" ) ;
+      SDB_ASSERT( _logMgr->calcLogicalFileID( startOffset ) == logicalFileId,
+                  "invalid logicalFieldId or startLSN" ) ;
+
+      SDB_ASSERT( !_isArchiving, "is archiving" ) ;
+      _isArchiving = TRUE ;
+
+#ifdef _DEBUG
+      UINT32 endLogicalFileId = _logMgr->calcLogicalFileID( endOffset ) ;
+      if ( isPartial )
+      {
+         if ( _logMgr->calcFirstPhysicalLSNOfFile( logicalFileId ) ==
+              startOffset )
+         {
+            // if startLSN is the first LSN of current file,
+            // then endLSN can't be LSN of next file.
+            SDB_ASSERT( endLogicalFileId == logicalFileId,
+                        "startLSN and endLSN should be in the same log file" ) ;
+            SDB_ASSERT(
+               _logMgr->calcFirstPhysicalLSNOfFile( logicalFileId + 1 ) >
+               endOffset,
+               "endLSN should be less than the first LSN of next file" ) ;
+         }
+         else if ( _logMgr->calcFirstPhysicalLSNOfFile( endLogicalFileId ) ==
+                   endOffset )
+         {
+            // if endLSN is the first LSN of log file,
+            // it should be in the next file,
+            // and startLSN can't be the first LSN of current file.
+            SDB_ASSERT( endLogicalFileId == logicalFileId + 1,
+                        "endLSN should be in the next log file" ) ;
+            SDB_ASSERT(
+               _logMgr->calcFirstPhysicalLSNOfFile( logicalFileId ) <
+               startOffset,
+               "startLSN must be greater than the first LSN of current file" ) ;
+         }
+         else
+         {
+            // startLSN and endLSN are in current log file
+            SDB_ASSERT( endLogicalFileId == logicalFileId,
+                     "startLSN and endLSN are in current log file" ) ;
+            SDB_ASSERT(
+               _logMgr->calcFirstPhysicalLSNOfFile( logicalFileId ) <
+               startOffset,
+               "startLSN must be greater than the first LSN of current file" ) ;
+            SDB_ASSERT(
+               _logMgr->calcFirstPhysicalLSNOfFile( logicalFileId + 1 ) >
+               endOffset,
+               "endLSN should be less than the first LSN of next file" ) ;
+         }
+      }
+      else
+      {
+         SDB_ASSERT(
+            _logMgr->calcFirstPhysicalLSNOfFile( logicalFileId ) == startOffset,
+            "startLSN should be the first LSN of current file" ) ;
+         SDB_ASSERT( endLogicalFileId == logicalFileId + 1,
+                     "endLSN should be the first LSN of next file" ) ;
+         SDB_ASSERT(
+            _logMgr->calcFirstPhysicalLSNOfFile( endLogicalFileId ) == endOffset,
+            "endLSN should be the first LSN of next file" ) ;
+      }
+#endif
+
+      if ( _isDPSMoving )
+      {
+         PD_LOG( PDEVENT, "dps is moving, stop archiving" ) ;
+         goto done ;
+      }
+
+      if ( startOffset != info.startLSN.offset )
+      {
+         PD_LOG( PDWARNING, "Log archive is not continuous" ) ;
+      }
+
+      rc = _fileMgr.deleteTmpFile() ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "Failed to delete tmp file, rc=%d", rc ) ;
+         goto error ;
+      }
+
+      if ( !isPartial )
+      {
+         rc = _archiveFull( _logMgr->calcFileID( startOffset ),
+                            logicalFileId ) ;
+      }
+      else
+      {
+         rc = _archivePartial( logicalFileId, startOffset, endOffset ) ;
+      }
+
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
+
+#ifdef _DEBUG
+      {
+         INT64 totalSize = 0 ;
+         rc = _fileMgr.getTotalSize( totalSize ) ;
+         if ( SDB_OK == rc )
+         {
+            PD_LOG( PDEVENT, "After archive, archiveSize=%lld, totalSize=%lld",
+                    _archiveSize, totalSize ) ;
+         }
+      }
+#endif
+
+      ossGetCurrentTime( _lastActiveTime ) ; // update time
+
+      info.startLSN = endLSN ;
+      rc = _infoMgr.updateInfo( info ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDWARNING, "Failed to update archive info, rc=%d", rc ) ;
+         rc = SDB_OK ;
+      }
+
+      PD_LOG( PDEVENT, "Archive done, next archived LSN: %lld", endLSN.offset ) ;
+
+   done:
+      _isArchiving = FALSE ;
+      return rc ;
+   error:
+      // current archive failed,
+      // so we should re-archive current startLSN,
+      // but the queue may have archive event after startLSN,
+      // so here clear the queue,
+      // the archive event of current startLSN will be re-created
+      // by next switch event or timeout.
+      _clearQueue() ;
+      goto done ;
+   }
+
+   INT32 dpsArchiveMgr::_archiveFull( UINT32 fileId, UINT32 logicalFileId )
+   {
+      INT32 rc = SDB_OK ;
+      dpsArchiveFile archiveFile ;
+      _dpsLogFile* logFile = NULL ;
+      string path = _fileMgr.getFullFilePath( logicalFileId ) ;
+      BOOLEAN compress = pmdGetKRCB()->getOptionCB()->archiveCompressOn() ;
+
+#ifdef _DEBUG
+      {
+         BOOLEAN exist = FALSE ;
+         rc = _fileMgr.fullFileExists( logicalFileId, exist ) ;
+         SDB_ASSERT( SDB_OK == rc, "failed to access file" ) ;
+         SDB_ASSERT( !exist, "full file exists" ) ;
+      }
+#endif
+
+      logFile = _logMgr->getLogFile( fileId ) ;
+      if ( NULL == logFile )
+      {
+         SDB_ASSERT( FALSE, "logFile can't be NULL" ) ;
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "Failed to get replica log file[%u], rc=%d",
+                 fileId, rc ) ;
+         goto error ;
+      }
+
+      if ( logFile->header()._logID != logicalFileId )
+      {
+         SDB_ASSERT( FALSE, "logicalFileId must be the same" ) ;
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "Invalid logical file id" \
+                 "(expect=%u, real=%u), FileId=%u, rc=%d",
+                 logicalFileId, logFile->header()._logID, fileId, rc ) ;
+         goto error ;
+      }
+
+      rc = _fileMgr.copyArchiveFile( logFile->path(),
+              _fileMgr.getTmpFilePath(),
+              compress ? DPS_ARCHIVE_COPY_COMPRESS : DPS_ARCHIVE_COPY_PLAIN,
+              this ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "Failed to copy replica log file[%s(%lld)], rc=%d",
+                 logFile->path().c_str(), logicalFileId, rc ) ;
+         goto error ;
+      }
+
+      rc = archiveFile.init( _fileMgr.getTmpFilePath(), FALSE ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "Failed to init archive file[%lld], rc=%d",
+                 logicalFileId, rc ) ;
+         goto error ;
+      }
+
+      {
+         _dpsLogHeader& srcLogHeader = logFile->header() ;
+         _dpsLogHeader* destLogHeader = archiveFile.getLogHeader() ;
+         *destLogHeader = srcLogHeader ;
+
+         dpsArchiveHeader* archiveHeader = archiveFile.getArchiveHeader() ;
+         archiveHeader->startLSN.offset =
+            _logMgr->calcFirstPhysicalLSNOfFile( logicalFileId ) ;
+         archiveHeader->endLSN.offset =
+            _logMgr->calcFirstPhysicalLSNOfFile( logicalFileId + 1 ) ;
+         if ( compress )
+         {
+            archiveHeader->setFlag( DPS_ARCHIVE_COMPRESSED ) ;
+         }
+
+         rc = archiveFile.flushHeader() ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "Failed to flush archive file header[%lld], rc=%d",
+                    logicalFileId, rc ) ;
+            goto error ;
+         }
+
+         archiveFile.close() ;
+      }
+
+      rc = ossRenamePath( _fileMgr.getTmpFilePath().c_str(), path.c_str() ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "Failed to rename tmp archive to file[%s], rc: %d",
+                 path.c_str(), rc ) ;
+         goto error ;
+      }
+
+      PD_LOG( PDEVENT, "Full replica log file[%u(%u)] is archived",
+              fileId, logicalFileId ) ;
+
+      {
+         INT64 fileSize = 0 ;
+         rc = ossFile::getFileSize( path, fileSize ) ;
+         if ( SDB_OK == rc )
+         {
+            PD_LOG( PDDEBUG, "Before archive size=%lld", _archiveSize ) ;
+            _archiveSize += fileSize ;
+            PD_LOG( PDDEBUG, "After archive size=%lld, fileSize=%lld",
+                    _archiveSize, fileSize ) ;
+         }
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 dpsArchiveMgr::_archivePartial( UINT32 logicalFileId, 
+                                         DPS_LSN_OFFSET startOffset,
+                                         DPS_LSN_OFFSET endOffset )
+   {
+      INT32 rc = SDB_OK ;
+      dpsArchiveFile archiveFile ;
+      _dpsLogFile* logFile = NULL ;
+      string path = _fileMgr.getFullFilePath( logicalFileId ) ;
+      string tmpPath = _fileMgr.getTmpFilePath() ;
+      string partialPath = _fileMgr.getPartialFilePath( logicalFileId ) ;
+      UINT32 fileId = _logMgr->calcFileID( startOffset ) ;
+
+#ifdef _DEBUG
+      {
+         UINT32 startLogicalFileId = _logMgr->calcLogicalFileID( startOffset ) ;
+         UINT32 endLogicalFileId = _logMgr->calcLogicalFileID( endOffset ) ;
+         SDB_ASSERT( startLogicalFileId == endLogicalFileId ||
+                     startLogicalFileId + 1 == endLogicalFileId,
+                     "invalid partial archive" ) ;
+         SDB_ASSERT( logicalFileId == startLogicalFileId,
+                     "invalid partial archive" ) ;
+      }
+#endif
+
+      logFile = _logMgr->getLogFile( fileId ) ;
+      if ( NULL == logFile )
+      {
+         SDB_ASSERT( FALSE, "logFile can't be NULL" ) ;
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "Failed to get replica log file[%u], rc=%d",
+                 fileId, rc ) ;
+         goto error ;
+      }
+
+      if ( logFile->header()._logID != logicalFileId &&
+           logFile->header()._logID != DPS_INVALID_LOG_FILE_ID )
+      {
+         SDB_ASSERT( FALSE, "logicalFileId must be the same" ) ;
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "Invalid logical file id" \
+                 "(expect=%u, real=%u), FileId=%u, rc=%d",
+                 logicalFileId, logFile->header()._logID, fileId, rc ) ;
+         goto error ;
+      }
+
+      rc = archiveFile.init( partialPath, FALSE ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "Failed to init archive file[%s], rc=%d",
+                 partialPath.c_str(), rc ) ;
+         goto error ;
+      }
+
+      {
+         DPS_LSN lsn ;
+         _dpsMessageBlock block( DPS_MSG_BLOCK_DEF_LEN ) ;
+         UINT32 len = 0 ;
+         INT64 writeSize = 0 ;
+         INT64 offset = 0 ;
+         DPS_LSN_OFFSET firstOffset =
+            _logMgr->calcFirstPhysicalLSNOfFile( logicalFileId ) ;
+         lsn.offset = startOffset ;
+
+         while ( lsn.offset < endOffset )
+         {
+            if ( _isDPSMoving )
+            {
+               rc = SDB_INTERRUPT ;
+               PD_LOG( PDWARNING,
+                       "Partial archive is interrupted by DPS move" ) ;
+               goto error ;
+            }
+
+            rc = _logMgr->search( lsn, &block, DPS_SERCAH_ALL, FALSE, &len ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "Failed to find LSN[%lld], rc=%d",
+                       lsn.offset, rc ) ;
+               if ( _isDPSMoving )
+               {
+                  PD_LOG( PDERROR,
+                          "Failed to find LSN perhaps because DPS move" ) ;
+               }
+               goto error ;
+            }
+
+            SDB_ASSERT( block.length() == len, "invalid LSN length" ) ;
+#ifdef _DEBUG
+            {
+               _dpsLogRecordHeader* record =
+                  (_dpsLogRecordHeader*)block.startPtr() ;
+               SDB_ASSERT( lsn.offset == record->_lsn, "corrupt LSN" ) ;
+               SDB_ASSERT( len == record->_length, "invalid LSN length" ) ;
+            }
+#endif
+
+            offset = (INT64)( lsn.offset - firstOffset ) + DPS_LOG_HEAD_LEN ;
+
+            rc = archiveFile.write( offset, block.startPtr(), len ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "Failed to write to archive file[%s], rc: %d",
+                       partialPath.c_str(), rc ) ;
+               goto error ;
+            }
+
+            block.clear() ;
+            lsn.offset += len ;
+            writeSize += (INT64)len ;
+         }
+
+         SDB_ASSERT( lsn.offset == endOffset, "corrupt LSN" ) ;
+
+         PD_LOG( PDDEBUG, "Before archive size=%lld", _archiveSize ) ;
+         _archiveSize += writeSize ;
+         PD_LOG( PDDEBUG, "After archive size=%lld, writeSize=%lld",
+                 _archiveSize, writeSize ) ;
+      }
+
+      {
+         _dpsLogHeader& srcLogHeader = logFile->header() ;
+         _dpsLogHeader* destLogHeader = archiveFile.getLogHeader() ;
+
+         // a new partial archive file, need to init file header
+         if ( destLogHeader->_logID == DPS_INVALID_LOG_FILE_ID )
+         {
+            if ( srcLogHeader._logID != DPS_INVALID_LOG_FILE_ID )
+            {
+               *destLogHeader = srcLogHeader ;
+            }
+            else
+            {
+               destLogHeader->_firstLSN.offset =
+                  _logMgr->calcFirstPhysicalLSNOfFile( logicalFileId ) ;
+               destLogHeader->_logID = logicalFileId ;
+               destLogHeader->_fileNum = _logMgr->getLogFileNum() ;
+               destLogHeader->_fileSize = _logMgr->getLogFileSz() ;
+            }
+
+            // if this file is archived at the first time,
+            // and startOffset is not the first LSN of the file,
+            // the archive size should add the data size before startOffset.
+            if ( !_logMgr->isFirstPhysicalLSNOfFile( startOffset ) )
+            {
+               DPS_LSN_OFFSET firstOffset =
+                  _logMgr->calcFirstPhysicalLSNOfFile( logicalFileId ) ;
+               PD_LOG( PDDEBUG, "Before ajustment, archive size=%lld",
+                       _archiveSize ) ;
+               _archiveSize += startOffset - firstOffset + DPS_LOG_HEAD_LEN ;
+               PD_LOG( PDDEBUG, "After adjustment, archive size=%lld",
+                       _archiveSize ) ;
+            }
+         }
+
+         dpsArchiveHeader* archiveHeader = archiveFile.getArchiveHeader() ;
+         if ( DPS_INVALID_LSN_OFFSET == archiveHeader->startLSN.offset )
+         {
+            archiveHeader->setFlag( DPS_ARCHIVE_PARTIAL ) ;
+            archiveHeader->startLSN.offset = startOffset ;
+         }
+         archiveHeader->endLSN.offset = endOffset ;
+
+         rc = archiveFile.flushHeader() ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "Failed to flush archive file header[%s], rc=%d",
+                    partialPath.c_str(), rc ) ;
+            goto error ;
+         }
+
+         archiveFile.close() ;
+      }
+
+      PD_LOG( PDEVENT, "Partial replica log file[%u(%u):%lld-%lld] is archived",
+              fileId, logicalFileId, startOffset, endOffset ) ;
+
+      if ( _logMgr->calcLogicalFileID( endOffset ) == logicalFileId + 1 )
+      {
+         BOOLEAN compress = pmdGetKRCB()->getOptionCB()->archiveCompressOn() ;
+         string srcPath = partialPath ;
+
+         if ( compress )
+         {
+            rc = _fileMgr.copyArchiveFile( partialPath, tmpPath,
+                                           DPS_ARCHIVE_COPY_COMPRESS, this ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "Failed to copy archive file[%s], rc=%d",
+                       partialPath.c_str(), rc ) ;
+               goto error ;
+            }
+
+            rc = archiveFile.init( tmpPath, FALSE ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "Failed to init archive file[%s], rc=%d",
+                       tmpPath.c_str(), rc ) ;
+               goto error ;
+            }
+
+            {
+               dpsArchiveHeader* archiveHeader = archiveFile.getArchiveHeader() ;
+               archiveHeader->unsetFlag( DPS_ARCHIVE_PARTIAL ) ;
+               archiveHeader->setFlag( DPS_ARCHIVE_COMPRESSED ) ;
+            }
+
+            rc = archiveFile.flushHeader() ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "Failed to flush archive file header[%s], rc=%d",
+                       tmpPath.c_str(), rc ) ;
+               goto error ;
+            }
+
+            archiveFile.close() ;
+
+            srcPath = tmpPath ;
+
+            {
+               INT64 fileSize = 0 ;
+               rc = ossFile::getFileSize( tmpPath, fileSize ) ;
+               if ( SDB_OK == rc )
+               {
+                  PD_LOG( PDDEBUG, "Before archive size=%lld", _archiveSize ) ;
+                  _archiveSize += fileSize ;
+                  PD_LOG( PDDEBUG, "After archive size=%lld, fileSize=%lld",
+                          _archiveSize, fileSize ) ;
+               }
+            }
+         }
+
+         rc = ossRenamePath( srcPath.c_str(), path.c_str() ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "Failed to rename file from [%s] to [%s], rc: %d",
+                    srcPath.c_str(), path.c_str(), rc ) ;
+            goto error ;
+         }
+
+         if ( compress )
+         {
+            INT64 fileSize = 0 ;
+            (void)ossFile::getFileSize( partialPath, fileSize ) ;
+
+            rc = ossFile::deleteFile( partialPath ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "Failed to delete partial file[%s], rc=%d",
+                       partialPath.c_str(), rc ) ;
+               goto error ;
+            }
+
+            PD_LOG( PDDEBUG, "Before delete file, archive size=%lld",
+                    _archiveSize ) ;
+            _archiveSize -= fileSize ;
+            PD_LOG( PDDEBUG, "After delete file, archive size=%lld, fileSize=%lld",
+                    _archiveSize, fileSize ) ;
+         }
+
+         PD_LOG( PDEVENT, "Partial archive file[%lld] is full",
+                 logicalFileId ) ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 dpsArchiveMgr::_move( DPS_LSN& lsn )
+   {
+      INT32 rc = SDB_OK ;
+      dpsArchiveInfo info = _infoMgr.getInfo() ;
+      DPS_LSN startLSN = info.startLSN ;
+      INT32 result = 0 ;
+
+      SDB_ASSERT( !lsn.invalid(), "invalid LSN" ) ;
+      SDB_ASSERT( !_isArchiving, "is archiveing?" ) ;
+
+      result = startLSN.compareOffset( lsn ) ;
+      UINT32 moveFileId = _logMgr->calcLogicalFileID( lsn.offset ) ;
+      UINT32 curFileId = _logMgr->calcLogicalFileID( startLSN.offset ) ;
+
+      if ( result > 0 ) // backward
+      {
+         SDB_ASSERT( moveFileId <= curFileId, "invalid move file id" ) ;
+         PD_LOG( PDEVENT, "Move backward to LSN %lld", lsn.offset ) ;
+
+         for ( UINT32 fileId = curFileId ;
+               fileId >= moveFileId && DPS_INVALID_LOG_FILE_ID != fileId ;
+               fileId-- )
+         {
+            rc = _fileMgr.moveArchiveFile( fileId ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "Failed to move archive file[%u], rc=%d",
+                       fileId, rc ) ;
+               goto error ;
+            }
+         }
+
+         // we have moved the whole file,
+         // but if the moveLSN is not the first LSN of file,
+         // we should archive logs before the moveLSN in the file again.
+         if ( !_logMgr->isFirstPhysicalLSNOfFile( lsn.offset ) )
+         {
+            lsn.offset = _logMgr->calcFirstPhysicalLSNOfFile( moveFileId ) ;
+         }
+      }
+      else if ( result < 0 ) // forward
+      {
+         PD_LOG( PDEVENT, "Move forward to LSN %lld", lsn.offset ) ;
+
+         if ( moveFileId == curFileId )
+         {
+            // if move in the same log file,
+            // there will be a gap between moved LSN and current start LSN
+            rc = _fileMgr.moveArchiveFile( curFileId ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "Failed to move archive file[%u], rc=%d",
+                       curFileId, rc ) ;
+               goto error ;
+            }
+         }
+      }
+
+      info.startLSN = lsn ;
+      rc = _infoMgr.updateInfo( info ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "Failed to update archive info, rc=%d", rc ) ;
+         goto error ;
+      }
+
+      _mutex.get() ;
+      // if DPS moved again, _moveLSN has been changed
+      // then we should be also move again
+      if ( _moveLSN.compareOffset( lsn ) == 0 )
+      {
+         _moveLSN.reset() ;
+      }
+      _mutex.release() ;
+      _clearQueue() ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 dpsArchiveMgr::_checkArchiveTimeout()
+   {
+      INT32 rc = SDB_OK ;
+      ossTimestamp curTime ;
+      UINT32 timeout ;
+
+      timeout = pmdGetKRCB()->getOptionCB()->getArchiveTimeout() ;
+      if ( 0 == timeout )
+      {
+         // zero means disable timeout check
+         goto done ;
+      }
+
+      ossGetCurrentTime( curTime ) ;
+      if ( curTime.time < _lastActiveTime.time )
+      {
+         // time is go back, so we set current time to it
+         _lastActiveTime = curTime ;
+      }
+      if ( curTime.time - _lastActiveTime.time < timeout )
+      {
+         goto done ;
+      }
+
+      ossGetCurrentTime( _lastActiveTime ) ;
+      PD_LOG( PDDEBUG, "Log archive timeout(%u seconds)",
+              pmdGetKRCB()->getOptionCB()->getArchiveTimeout() ) ;
+      rc = _generateArchiveEvent( _infoMgr.getInfo().startLSN,
+                                  _logMgr->expectLsn(),
+                                  TRUE ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "Failed to generate timeout archive event, rc=%d",
+                 rc ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 dpsArchiveMgr::_checkArchiveExpired()
+   {
+      INT32 rc = SDB_OK ;
+      ossTimestamp curTime ;
+      UINT32 expired ;
+      UINT32 minFileId = DPS_INVALID_LOG_FILE_ID ;
+      UINT32 maxFileId = DPS_INVALID_LOG_FILE_ID ;
+
+      expired = pmdGetKRCB()->getOptionCB()->getArchiveExpired() ;
+      if ( 0 == expired )
+      {
+         // zero means disable expiration check
+         goto done ;
+      }
+      // exipred unit is HOURS, here convert to SECONDS
+      expired *= DPS_ARCHIVE_EXPIRED_SECONDS ;
+
+      ossGetCurrentTime( curTime ) ;
+      if ( curTime.time < _lastExpiredTime.time )
+      {
+         // time is go back, so we set current time to it
+         _lastExpiredTime = curTime ;
+      }
+      if ( curTime.time - _lastExpiredTime.time < ( expired / 2 ) )
+      {
+         goto done ;
+      }
+
+      rc = _fileMgr.scanArchiveFiles( minFileId, maxFileId, TRUE ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "Failed to scan archive file, rc=%d", rc ) ;
+         goto error ;
+      }
+
+      if ( DPS_INVALID_LOG_FILE_ID == minFileId )
+      {
+         // no archive file
+         goto done ;
+      }
+
+      SDB_ASSERT( DPS_INVALID_LOG_FILE_ID != maxFileId, "invalid max file id" ) ;
+
+      PD_LOG( PDDEBUG, "Log archive min file id[%u], max file id[%u]",
+              minFileId, maxFileId ) ;
+
+      rc = _fileMgr.deleteFilesByTime( minFileId, maxFileId,
+                                       curTime.time - expired ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "Failed to delete expired archive file, rc=%d", rc ) ;
+         goto error ;
+      }
+
+      ossGetCurrentTime( _lastExpiredTime ) ;
+
+      // stats archive total size again
+      rc = _fileMgr.getTotalSize( _archiveSize ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "Failed to get archive total size, rc=%d", rc ) ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 dpsArchiveMgr::_checkArchiveQuota()
+   {
+      INT32 rc = SDB_OK ;
+      INT64 totalSize = 0 ;
+      UINT32 minFileId = DPS_INVALID_LOG_FILE_ID ;
+      UINT32 maxFileId = DPS_INVALID_LOG_FILE_ID ;
+      UINT64 quota ;
+
+      quota = pmdGetKRCB()->getOptionCB()->getArchiveQuota() ;
+      if ( 0 == quota )
+      {
+         // zero means disable quota check
+         goto done ;
+      }
+      quota *= DPS_ARCHIVE_QUOTA_BYTES ;
+
+      // at least 3 log file size for quota
+      if ( quota < _logMgr->getLogFileSz() * 3 )
+      {
+         quota = _logMgr->getLogFileSz() * 3 ;
+      }
+      // keep one log file size for safty
+      quota -= _logMgr->getLogFileSz() ;
+
+      if ( _archiveSize <= (INT64)quota )
+      {
+         goto done ;
+      }
+
+      rc = _fileMgr.scanArchiveFiles( minFileId, maxFileId, TRUE ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "Failed to scan archive file, rc=%d", rc ) ;
+         goto error ;
+      }
+
+      if ( DPS_INVALID_LOG_FILE_ID == minFileId )
+      {
+         // no archive file
+         SDB_ASSERT( FALSE, "archive not found" ) ;
+         goto done ;
+      }
+
+      PD_LOG( PDEVENT, "Start to delete archive file, " \
+              "quota=%lld, archive size=%lld",
+              quota, _archiveSize ) ;
+
+      rc = _fileMgr.deleteFilesBySize( minFileId, maxFileId,
+                                       _archiveSize - (INT64)quota ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "Failed to delete archive file by quota, rc=%d", rc ) ;
+         goto error ;
+      }
+
+      rc = _fileMgr.getTotalSize( totalSize ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "Failed to get archive total size, rc=%d", rc ) ;
+         goto error ;
+      }
+
+      _archiveSize = totalSize ;
+
+      PD_LOG( PDEVENT, "Finish deleting archive file, archive size=%lld",
+              totalSize ) ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   void dpsArchiveMgr::_beforeMove()
+   {
+      // before move we just stop archiving
+      // to avoid concurrency between DPS move and archive
+
+      SDB_ASSERT( !_isDPSMoving, "is moving" ) ;
+
+      // wait for last move operation
+      while( !_getMoveLSN().invalid() )
+      {
+         ossSleepmillis( 1 ) ;
+      }
+
+      // move operation is mutually exclusive in DPS,
+      // so only one thread can modify _isDPSMoving,
+      // set true until dps move is finished,
+      // to stop archiving during move
+      _isDPSMoving = TRUE ;
+   }
+
+   void dpsArchiveMgr::_afterMove( const DPS_LSN& lsn, INT32 errcode )
+   {
+      SDB_ASSERT( _isDPSMoving, "is not moving" ) ;
+
+      if ( SDB_OK != errcode )
+      {
+         goto done ;
+      }
+
+      SDB_ASSERT( _getMoveLSN().invalid(), "valid move LSN" ) ;
+
+      _setMoveLSN( lsn ) ;
+
+   done:
+      _isDPSMoving = FALSE ;
+      return ;
+   }
+
+   void dpsArchiveMgr::_clearQueue()
+   {
+      dpsArchiveEvent* event = NULL;
+      while( _queue.try_pop( event ) )
+      {
+         SAFE_OSS_DELETE( event ) ;
+      }
+   }
+
+   DPS_LSN dpsArchiveMgr::_getMoveLSN()
+   {
+      DPS_LSN lsn ;
+      _mutex.get() ;
+      lsn = _moveLSN ;
+      _mutex.release() ;
+      return lsn ;
+   }
+
+   void dpsArchiveMgr::_setMoveLSN( const DPS_LSN& lsn )
+   {
+      _mutex.get() ;
+      _moveLSN = lsn ;
+      _mutex.release() ;
+   }
+
+   BOOLEAN dpsArchiveMgr::isInterrupted()
+   {
+      return _isDPSMoving ;
+   }
+}
+

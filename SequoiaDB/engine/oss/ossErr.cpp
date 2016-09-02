@@ -345,8 +345,12 @@ const CHAR* getErrDesp ( INT32 errCode )
                    "Buffer for compression is too small",
                    "Buffer for decompression is too small",
                    "Up to the limit",
-                   "sdbDataSource disabled",
-                   "sdbDataSource has no valid coord"
+                   "sdbDataSource not init or disabled",
+                   "sdbDataSource has no valid coord",
+                   "the record which exclusive ruleID is not exist",
+                   "Task name conflict",
+                   "The task is not existed",
+                   "Replica log is not archived"
     };
     if ( code < 0 || (UINT32)code >= (sizeof ( errDesp ) / sizeof ( CHAR* )) )
         return "unknown error";

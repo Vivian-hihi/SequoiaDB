@@ -85,6 +85,7 @@ pmdFiles = [
       "pmd/pmdSignalHandler.cpp",
       "pmd/pmdWindowsListener.cpp",
       "pmd/pmdLoggW.cpp",
+      "pmd/pmdLogArchiveMgr.cpp",
       "pmd/pmdCluster.cpp",
       "pmd/pmdMemPool.cpp",
       "pmd/pmdSyncMgr.cpp",
@@ -397,7 +398,11 @@ dpsFiles = [
       "dps/dpsTransLockDef.cpp",
       "dps/dpsTransLockBucket.cpp",
       "dps/dpsOp2Record.cpp",
-      "dps/dpsDump.cpp"
+      "dps/dpsDump.cpp",
+      "dps/dpsArchiveMgr.cpp",
+      "dps/dpsArchiveInfo.cpp",
+      "dps/dpsArchiveFile.cpp",
+      "dps/dpsArchiveFileMgr.cpp",
       ]
 
 omsvcFiles = [
