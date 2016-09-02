@@ -54,7 +54,8 @@ namespace engine
 
    INT32 startIndexJob ( RTN_JOB_TYPE type,
                          const dpsLogRecordHeader *recordHeader,
-                         _dpsLogWrapper *dpsCB ) ;
+                         _dpsLogWrapper *dpsCB,
+                         BOOLEAN isRollBack ) ;
 
    _clsReplayer::_clsReplayer( BOOLEAN useDps )
    {
@@ -481,12 +482,14 @@ namespace engine
          {
             /// rebuild the index can be very time-consuming.
             /// we create a sub thread to handle it.
-            startIndexJob ( RTN_JOB_CREATE_INDEX, recordHeader, _dpsCB ) ;
+            startIndexJob ( RTN_JOB_CREATE_INDEX, recordHeader,
+                            _dpsCB, FALSE ) ;
             break ;
          }
          case LOG_TYPE_IX_DELETE :
          {
-            startIndexJob ( RTN_JOB_DROP_INDEX, recordHeader, _dpsCB ) ;
+            startIndexJob ( RTN_JOB_DROP_INDEX, recordHeader,
+                            _dpsCB, FALSE ) ;
             break ;
          }
          case LOG_TYPE_CL_RENAME :
@@ -858,12 +861,14 @@ namespace engine
          }
          case LOG_TYPE_IX_CRT :
          {
-            startIndexJob ( RTN_JOB_DROP_INDEX, recordHeader, _dpsCB ) ;
+            startIndexJob ( RTN_JOB_DROP_INDEX, recordHeader,
+                            _dpsCB, TRUE ) ;
             break ;
          }
          case LOG_TYPE_IX_DELETE :
          {
-            startIndexJob ( RTN_JOB_CREATE_INDEX, recordHeader, _dpsCB ) ;
+            startIndexJob ( RTN_JOB_CREATE_INDEX, recordHeader,
+                            _dpsCB, TRUE ) ;
             break ;
          }
          case LOG_TYPE_CL_RENAME :
@@ -1113,7 +1118,8 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION ( SDB_STARTINXJOB, "startIndexJob" )
    INT32 startIndexJob ( RTN_JOB_TYPE type,
                          const dpsLogRecordHeader *recordHeader,
-                         _dpsLogWrapper *dpsCB )
+                         _dpsLogWrapper *dpsCB,
+                         BOOLEAN isRollBack )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_STARTINXJOB );
@@ -1157,7 +1163,10 @@ namespace engine
       }
       sdbGetShardCB()->unlockCataSet( pCatSet ) ;
 
-      indexJob = SDB_OSS_NEW rtnIndexJob( type, fullname, index, dpsCB ) ;
+      indexJob = SDB_OSS_NEW rtnIndexJob( type, fullname,
+                                          index, dpsCB,
+                                          recordHeader->_lsn,
+                                          isRollBack ) ;
       if ( NULL == indexJob )
       {
          PD_LOG ( PDERROR, "Failed to alloc memory for indexJob" ) ;

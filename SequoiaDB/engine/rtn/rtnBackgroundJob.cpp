@@ -50,7 +50,8 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNINDEXJOB__RTNINDEXJOB, "_rtnIndexJob::_rtnIndexJob" )
    _rtnIndexJob::_rtnIndexJob ( RTN_JOB_TYPE type, const CHAR *pCLName,
-                                const BSONObj & indexObj, SDB_DPSCB * dpsCB )
+                                const BSONObj & indexObj, SDB_DPSCB * dpsCB,
+                                UINT64 offset, BOOLEAN isRollBack )
    {
       PD_TRACE_ENTRY ( SDB__RTNINDEXJOB__RTNINDEXJOB ) ;
       _type = type ;
@@ -59,6 +60,8 @@ namespace engine
       _indexObj = indexObj.copy() ;
       _dpsCB = dpsCB ;
       _dmsCB = pmdGetKRCB()->getDMSCB() ;
+      _lsn = offset ;
+      _isRollback = isRollBack ;
       PD_TRACE_EXIT ( SDB__RTNINDEXJOB__RTNINDEXJOB ) ;
    }
 
@@ -224,11 +227,17 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__RTNINDEXJOB_DOIT ) ;
 
+      if ( !_dpsCB )
+      {
+         eduCB()->insertLsn( _lsn, _isRollback ) ;
+      }
+
       switch ( _type )
       {
          case RTN_JOB_CREATE_INDEX :
             rc = rtnCreateIndexCommand( _clFullName, _indexObj, eduCB(),
-                                        _dmsCB, _dpsCB, TRUE, SDB_INDEX_SORT_BUFFER_DEFAULT_SIZE ) ;
+                                        _dmsCB, _dpsCB, TRUE,
+                                        SDB_INDEX_SORT_BUFFER_DEFAULT_SIZE ) ;
             break ;
          case RTN_JOB_DROP_INDEX :
             rc = rtnDropIndexCommand( _clFullName, _indexEle, eduCB(),

@@ -54,7 +54,8 @@ namespace engine
    {
       public:
          _rtnIndexJob ( RTN_JOB_TYPE type, const CHAR *pCLName,
-                        const BSONObj &indexObj, SDB_DPSCB *dpsCB ) ;
+                        const BSONObj &indexObj, SDB_DPSCB *dpsCB,
+                        UINT64 offset, BOOLEAN isRollBack ) ;
 
          virtual ~_rtnIndexJob() ;
 
@@ -77,6 +78,8 @@ namespace engine
          BSONElement             _indexEle ;
          SDB_DPSCB*              _dpsCB ;
          SDB_DMSCB*              _dmsCB ;
+         UINT64                  _lsn ;
+         BOOLEAN                 _isRollback ;
 
    };
    typedef _rtnIndexJob rtnIndexJob ;
