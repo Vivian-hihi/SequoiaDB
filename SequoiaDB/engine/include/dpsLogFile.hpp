@@ -103,6 +103,7 @@ namespace engine
       ossAutoEvent   _writeEvent ;
       BOOLEAN        _inRestore ;
       BOOLEAN        _dirty ;
+      string         _path ;
 
    public:
       _dpsLogFile();
@@ -123,6 +124,11 @@ namespace engine
       OSS_INLINE void idleSize( UINT32 size )
       {
          _idleSize = size ;
+      }
+
+      OSS_INLINE const string& path() const
+      {
+         return _path ;
       }
 
       string toString() const ;

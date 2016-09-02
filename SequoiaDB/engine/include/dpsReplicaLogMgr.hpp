@@ -202,9 +202,30 @@ namespace engine
          return _restoreFlag;
       }
 
+      _dpsLogFile* getLogFile( UINT32 fileId )
+      {
+         return _logger.getLogFile( fileId ) ;
+      }
+
       UINT32 calcFileID ( DPS_LSN_OFFSET offset )
       {
          return ( offset / getLogFileSz () ) % getLogFileNum () ;
+      }
+
+      UINT32 calcLogicalFileID( DPS_LSN_OFFSET offset )
+      {
+         return ( offset / getLogFileSz () ) ;
+      }
+
+      BOOLEAN isFirstPhysicalLSNOfFile( DPS_LSN_OFFSET offset )
+      {
+         return ( ( offset % getLogFileSz () ) == 0 ) ? TRUE : FALSE ;
+      }
+
+      DPS_LSN_OFFSET calcFirstPhysicalLSNOfFile( UINT32 logicalFileId )
+      {
+         // file id start from 0
+         return ((UINT64)logicalFileId) * getLogFileSz () ;
       }
 
    private:

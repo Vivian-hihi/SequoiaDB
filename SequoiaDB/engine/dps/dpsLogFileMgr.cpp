@@ -48,7 +48,6 @@
 
 namespace engine
 {
-   #define DPS_LOG_FILE_PREFIX "sequoiadbLog."
 
    #define LOG_LOOP_BEGIN( a ) \
            for ( UINT32 i = 0; i < a; i++ ) {\

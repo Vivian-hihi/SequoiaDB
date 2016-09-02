@@ -105,6 +105,7 @@ namespace engine
       _fileSize = size ;
       _fileNum  = fileNum ;
       _idleSize = _fileSize ;
+      _path = string( path ) ;
 
       // allocate OSS_FILE, free in destructor
       _file = SDB_OSS_NEW _OSS_FILE();

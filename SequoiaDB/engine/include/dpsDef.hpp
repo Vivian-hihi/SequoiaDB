@@ -39,6 +39,8 @@
 #ifndef DPSDEF_HPP_
 #define DPSDEF_HPP_
 
+#include "ossTypes.h"
+
 #if defined (_WINDOWS)
 #define DPS_INVALID_LSN_OFFSET   0xFFFFFFFFFFFFFFFFLL
 #elif defined (_LINUX)
@@ -89,6 +91,12 @@ enum DPS_LOG_TYPE
    LOG_TYPE_LOB_TRUNCATE = 0x12,
 } ;
 
+enum DPS_MOMENT
+{
+   DPS_BEFORE = 0,
+   DPS_AFTER  = 1,
+} ;
+
 namespace engine
 {
    class _pmdEDUCB ;
@@ -103,13 +111,26 @@ namespace engine
 
          virtual INT32 canAssignLogPage( UINT32 reqLen, _pmdEDUCB *cb ) = 0 ;
 
-         virtual void onPrepareLog( UINT32 csLID, UINT32 clLID,
-                                    INT32 extLID, DPS_LSN_OFFSET offset ) = 0 ;
+         virtual void  onPrepareLog( UINT32 csLID, UINT32 clLID,
+                                     INT32 extLID, DPS_LSN_OFFSET offset ) = 0 ;
 
-         virtual void onWriteLog( DPS_LSN_OFFSET offset ) = 0 ;
+         virtual void  onWriteLog( DPS_LSN_OFFSET offset ) = 0 ;
 
          virtual INT32 onCompleteOpr( _pmdEDUCB *cb, INT32 w ) = 0 ;
 
+         virtual void  onSwitchLogFile( UINT32 preLogicalFileId,
+                                        UINT32 preFileId,
+                                        UINT32 curLogicalFileId,
+                                        UINT32 curFileId ) = 0 ;
+
+         // moment is callback time,
+         // it's value can be DPS_BEFORE/DPS_AFTER
+         virtual void  onMoveLog( DPS_LSN_OFFSET moveToOffset,
+                                  DPS_LSN_VER moveToVersion,
+                                  DPS_LSN_OFFSET expectOffset,
+                                  DPS_LSN_VER expectVersion,
+                                  DPS_MOMENT moment,
+                                  INT32 errcode ) = 0 ;
    } ;
    typedef _dpsEventHandler dpsEventHandler ;
 

@@ -589,6 +589,7 @@ namespace engine
       DPS_LSN_OFFSET tmpLsnOffset = 0 ;
       DPS_LSN_OFFSET tmpBeginOffset = 0 ;
       DPS_LSN tmpCurLsn ;
+      BOOLEAN doMove = FALSE ;
 
       ossScopedLock lock( &_mtx ) ;
       if ( DPS_INVALID_LSN_OFFSET == offset )
@@ -609,11 +610,21 @@ namespace engine
       tmpLsnOffset = _lsn.offset ;
       tmpBeginOffset = _getStartLsn().offset ;
 
+      doMove = TRUE ;
+      if ( _vecEventHandler.size() > 0 )
+      {
+         for( UINT32 i = 0 ; i < _vecEventHandler.size() ; ++i )
+         {
+            _vecEventHandler[i]->onMoveLog( offset, version,
+                                            _lsn.offset, _lsn.version,
+                                            DPS_BEFORE, SDB_OK ) ;
+         }
+      }
+
       _idleSize.add ( (&_pages[_work])->getLength() ) ;
       (&_pages[_work])->clear() ;
 
       rc = _movePages ( offset, version ) ;
-
       if ( SDB_OK != rc )
       {
          goto error ;
@@ -628,7 +639,6 @@ namespace engine
       }
 
       rc = _logger.move( offset, version ) ;
-
       if ( SDB_OK != rc )
       {
          goto error ;
@@ -638,6 +648,10 @@ namespace engine
       if ( !_logger.getStartLSN().invalid() && offset < tmpBeginOffset )
       {
          rc = _restore () ;
+         if ( SDB_OK != rc )
+         {
+            goto error ;
+         }
       }
       else //reset file idle size
       {
@@ -658,6 +672,15 @@ namespace engine
       }
 
    done:
+      if ( doMove && _vecEventHandler.size() > 0 )
+      {
+         for( UINT32 i = 0 ; i < _vecEventHandler.size() ; ++i )
+         {
+            _vecEventHandler[i]->onMoveLog( offset, version,
+                                            _lsn.offset, _lsn.version,
+                                            DPS_AFTER, rc ) ;
+         }
+      }
       PD_TRACE_EXITRC ( SDB__DPSRPCMGR_MOVE, rc );
       return rc ;
    error:
@@ -1261,12 +1284,18 @@ namespace engine
    INT32 _dpsReplicaLogMgr::_flushPage( _dpsLogPage *page, BOOLEAN shutdown )
    {
       INT32 rc = SDB_OK ;
+      UINT32 preFileId = 0 ;
+      UINT32 preLogicalFileId = 0 ;
+      UINT32 curFileId = 0 ;
+      UINT32 curLogicalFileId = 0 ;
       PD_TRACE_ENTRY ( SDB__DPSRPCMGR__FLUSHPAGE );
       SDB_ASSERT ( page, "page can't be NULL" ) ;
       UINT32 length = 0 ;
       // note in tearDown it may call _flushPage with non-full page
       page->lock();
       page->unlock();
+      preFileId = _logger.getWorkPos() ;
+      preLogicalFileId = _logger.getLogicalWorkPos() ;
       rc = _logger.flush( page->mb(), page->getBeginLSN(), shutdown );
       if ( rc )
       {
@@ -1275,11 +1304,25 @@ namespace engine
       }
       SDB_ASSERT ( shutdown || page->getLength() == DPS_DEFAULT_PAGE_SIZE,
                    "page can't be partial during flush except shutdown" ) ;
+      curFileId = _logger.getWorkPos() ;
+      curLogicalFileId = _logger.getLogicalWorkPos() ;
       length = page->getLength() ;
       page->clear();
       _idleSize.add( length );
       _queSize.dec() ;
       _allocateEvent.signalAll() ;
+
+      // file switched
+      if ( preFileId != curFileId && _vecEventHandler.size() > 0 )
+      {
+         for( UINT32 i = 0 ; i < _vecEventHandler.size() ; ++i )
+         {
+            _vecEventHandler[i]->onSwitchLogFile( preLogicalFileId,
+                                                  preFileId,
+                                                  curLogicalFileId,
+                                                  curFileId ) ;
+         }
+      }
 
    done :
       PD_TRACE_EXITRC ( SDB__DPSRPCMGR__FLUSHPAGE, rc );

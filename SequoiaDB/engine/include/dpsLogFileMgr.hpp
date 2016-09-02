@@ -48,6 +48,8 @@ using namespace std;
 namespace engine
 {
 
+   #define DPS_LOG_FILE_PREFIX "sequoiadbLog."
+
    class _dpsLogPage;
    class _dpsMessageBlock;
    class _dpsReplicaLogMgr ;
@@ -106,7 +108,19 @@ namespace engine
       {
          return _files[_work] ;
       }
+
+      _dpsLogFile* getLogFile( UINT32 fileId )
+      {
+         if ( fileId >= _logFileNum )
+         {
+            return NULL ;
+         }
+
+         return _files[ fileId ] ;
+      }
+
       UINT32 getWorkPos() const { return _work ; }
+      UINT32 getLogicalWorkPos() const { return _logicalWork ; }
 
       INT32 sync() ;
 

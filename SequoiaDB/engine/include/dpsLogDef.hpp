@@ -79,6 +79,18 @@ namespace engine
                 ( DPS_INVALID_LSN_VERSION == version ) ;
       }
 
+      void set( DPS_LSN_OFFSET offset, DPS_LSN_VER  version )
+      {
+         this->offset = offset ;
+         this->version = version ;
+      }
+
+      void reset()
+      {
+         offset = DPS_INVALID_LSN_OFFSET ;
+         version = DPS_INVALID_LSN_VERSION ;
+      }
+
       INT32 compareVersion( const DPS_LSN_VER &version ) const
       {
          INT32 rc = 0 ;
@@ -153,6 +165,11 @@ namespace engine
          }
       done:
          return rc ;
+      }
+
+      INT32 compareOffset( const DPS_LSN &lsn ) const
+      {
+         return compareOffset( lsn.offset ) ;
       }
 
       /// 0 means this = lsn

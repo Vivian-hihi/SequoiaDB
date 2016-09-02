@@ -209,6 +209,24 @@ namespace engine
             return sync( cb->getEndLsn(), cb, w ) ;
          }
 
+         virtual void  onSwitchLogFile( UINT32 preLogicalFileId,
+                                        UINT32 preFileId,
+                                        UINT32 curLogicalFileId,
+                                        UINT32 curFileId )
+         {
+            return ;
+         }
+
+         virtual void  onMoveLog( DPS_LSN_OFFSET moveToOffset,
+                                  DPS_LSN_VER moveToVersion,
+                                  DPS_LSN_OFFSET expectOffset,
+                                  DPS_LSN_VER expectVersion,
+                                  DPS_MOMENT moment,
+                                  INT32 errcode )
+         {
+            return ;
+         }
+
       public:
          void  regSession ( _clsDataSrcBaseSession *pSession ) ;
          void  unregSession ( _clsDataSrcBaseSession *pSession ) ;
