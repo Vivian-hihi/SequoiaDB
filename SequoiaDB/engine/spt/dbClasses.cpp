@@ -952,7 +952,12 @@ static JSBool collection_raw_find ( JSContext *cx , uintN argc , jsval *vp )
       objCond = JSVAL_TO_OBJECT ( argv[0] ) ;
       VERIFY ( objCond ) ;
       // bsonCond is freed in done
-      VERIFY ( objToBson( cx, objCond, &bsonCond ) ) ;
+      // VERIFY ( objToBson( cx, objCond, &bsonCond ) ) ;
+      if ( JS_FALSE == objToBson ( cx , objCond , &bsonCond ) )
+      {
+         rc = SDB_INVALIDARG ;
+         REPORT_RC ( JS_FALSE , "SdbCollection.rawFind()" , rc ) ;
+      }
    }
    else
    {
@@ -968,7 +973,12 @@ static JSBool collection_raw_find ( JSContext *cx , uintN argc , jsval *vp )
       objSel = JSVAL_TO_OBJECT ( argv[1] ) ;
       VERIFY ( objSel ) ;
       // bsonSel is freed in done
-      VERIFY ( objToBson( cx, objSel, &bsonSel ) ) ;
+      // VERIFY ( objToBson( cx, objSel, &bsonSel ) ) ;
+      if ( JS_FALSE == objToBson ( cx , objSel , &bsonSel ) )
+      {
+         rc = SDB_INVALIDARG ;
+         REPORT_RC ( JS_FALSE , "SdbCollection.rawFind()" , rc ) ;
+      }
    }
    else
    {
@@ -984,7 +994,12 @@ static JSBool collection_raw_find ( JSContext *cx , uintN argc , jsval *vp )
       objOrder = JSVAL_TO_OBJECT ( argv[2] ) ;
       VERIFY ( objOrder ) ;
       // bsonOrder is freed in done
-      VERIFY ( objToBson( cx, objOrder, &bsonOrder ) ) ;
+      // VERIFY ( objToBson( cx, objOrder, &bsonOrder ) ) ;
+      if ( JS_FALSE == objToBson ( cx , objOrder , &bsonOrder ) )
+      {
+         rc = SDB_INVALIDARG ;
+         REPORT_RC ( JS_FALSE , "SdbCollection.rawFind()" , rc ) ;
+      }
    }
    else
    {
@@ -1000,7 +1015,12 @@ static JSBool collection_raw_find ( JSContext *cx , uintN argc , jsval *vp )
       objHint = JSVAL_TO_OBJECT ( argv[3] ) ;
       VERIFY ( objHint ) ;
       // bsonHint is freed in done
-      VERIFY ( objToBson( cx, objHint, &bsonHint ) ) ;
+      // VERIFY ( objToBson( cx, objHint, &bsonHint ) ) ;
+      if ( JS_FALSE == objToBson ( cx , objHint , &bsonHint ) )
+      {
+         rc = SDB_INVALIDARG ;
+         REPORT_RC ( JS_FALSE , "SdbCollection.rawFind()" , rc ) ;
+      }
 
       // find '$Modify'
       bson_iterator it ;
