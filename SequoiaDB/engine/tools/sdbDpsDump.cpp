@@ -80,7 +80,7 @@ void writeLog( BOOLEAN console, const CHAR *type, const CHAR *func,
    ossSnprintf( wContent, 4096, logFMT, type, func, file, line, msg ) ;
    if ( console )
    {
-      std::cout << "Error: " << msg << std::endl ;
+      std::cout << type << ": " << msg << std::endl ;
    }
 
    {
@@ -699,14 +699,20 @@ INT32 _dpsDumper::dump()
    BOOLEAN _isDir = FALSE ;
 
    rc = isDir( dstPath, _isDir ) ;
-   if( SDB_FNE == rc || SDB_PERM == rc )
+   // if SDB_FNE == rc, then treat dstPath as file-type, not dir-type
+   if ( SDB_FNE == rc )
    {
-      LogError( "Permission error or path not exist: %s", dstPath ) ;
+      _isDir = FALSE ;
+      rc = SDB_OK ;
+   }
+   else if( SDB_PERM == rc )
+   {
+      LogError( "Permission error: %s", dstPath ) ;
       goto error ;
    }
-   if( SDB_OK != rc )
+   else if( SDB_OK != rc )
    {
-      LogError( "Failed to get check whether %s is dir, rc = %d",
+      LogError( "Failed to check whether %s is dir, rc = %d",
                 dstPath, rc ) ;
       goto error ;
    }
@@ -786,17 +792,16 @@ INT32 _dpsDumper::dump()
       }
 	  
       INT32 fileCount = 0 ;
-      INT32 retVal = getFileCount( srcPath, fileCount ) ;
-      if ( SDB_INVALIDARG == retVal ) 
+      rc = getFileCount( srcPath, fileCount ) ;
+      if( SDB_OK != rc )
       {
-         LogError( "Permission error or dir not exist: %s", srcPath ) ;
-         rc = SDB_INVALIDARG ;
+         LogError( "Failed to get file-count in dir: %s", srcPath ) ;
          goto error ;
       }
-      if( SDB_OK != retVal )
+      if( 0 == fileCount )
       {
-         LogError( "System error while accessing dir: %s", srcPath ) ;
-         rc = SDB_SYS ;
+         LogError( "Cannot find any dpsLogFile in path: %s", srcPath ) ;
+         rc = SDB_FNE ;
          goto error ;
       }
 	  
@@ -1114,7 +1119,8 @@ INT32 _dpsDumper::isDir( const CHAR *path, BOOLEAN &dir )
    {
       goto error;
    }
-   
+
+   dir = FALSE ;
    if( SDB_OSS_DIR == fileType )
    {
       dir =  TRUE ;
