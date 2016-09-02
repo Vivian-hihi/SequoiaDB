@@ -379,6 +379,7 @@ namespace engine
       _isClosed           = TRUE ;
       _commitFlag         = 0 ;
       _isCrash            = FALSE ;
+      _forceSync          = FALSE ;
 
       _syncInterval       = DMS_SYNC_INTERVAL_DFT ;
       _syncRecordNum      = DMS_SYNC_RECORDNUM_DFT ;
@@ -480,8 +481,8 @@ namespace engine
    void _dmsStorageBase::restoreForCrash()
    {
       _isCrash = FALSE ;
-      /// set dummy dirty
-      _commitFlag = 0 ;
+      /// set force sync
+      _forceSync = TRUE ;
       _onRestore() ;
    }
 
@@ -506,6 +507,11 @@ namespace engine
       if ( !_syncEnable )
       {
          return FALSE ;
+      }
+      else if ( _forceSync )
+      {
+         force = TRUE ;
+         return TRUE ;
       }
 
       if ( (UINT64)~0 != oldestTick )
@@ -585,6 +591,7 @@ namespace engine
       /// then flush dirty
       /// then check commitFlag, when valid, need to reflush header
       _commitFlag = 1 ;
+      _forceSync = FALSE ;
 
       if ( _dirtyList.isFullDirty() )
       {

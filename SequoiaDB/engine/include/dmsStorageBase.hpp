@@ -536,6 +536,7 @@ namespace engine
          BOOLEAN                       _isClosed ;
          volatile UINT32               _commitFlag ;
          BOOLEAN                       _isCrash ;
+         BOOLEAN                       _forceSync ;
 
          UINT32                        _syncInterval ;
          UINT32                        _syncRecordNum ;
