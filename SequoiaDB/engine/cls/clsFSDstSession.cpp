@@ -1297,6 +1297,9 @@ namespace engine
       pmdGetStartup().ok( FALSE ) ;
       // clear all log
       dpsCB->move ( 0, 0 ) ;
+      /*
+      Don't to move the lsn to expect to prevent the node change to primary
+      when the primary node crashed
       if ( SDB_OK != dpsCB->move( _expectLSN.offset, _expectLSN.version ) )
       {
          PD_LOG( PDWARNING, "Session[%s]: Failed to move dps[%d,%lld], "
@@ -1305,6 +1308,7 @@ namespace engine
          _disconnect() ;
          goto done ;
       }
+      */
       {
          DPS_LSN expect = dpsCB->expectLsn() ;
          PD_LOG( PDEVENT, "Session[%s]: begin to get meta. expect lsn is "
@@ -1548,6 +1552,11 @@ namespace engine
       {
          rtnDBFSPostCleaner fsCleaner ;
          fsCleaner.doOpr( eduCB() ) ;
+      }
+      else
+      {
+         /// move dps to 0
+         pmdGetKRCB()->getDPSCB()->move( 0, 0 ) ;
       }
 
       PD_LOG( PDEVENT, "Session[%s]: start sync session.", sessionName() ) ;
