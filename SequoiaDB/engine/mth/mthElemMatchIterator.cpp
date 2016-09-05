@@ -35,14 +35,14 @@
 #include "pd.hpp"
 #include "pdTrace.hpp"
 #include "mthTrace.hpp"
-#include "mthMatcher.hpp"
+#include "mthMatchTree.hpp"
 
 using namespace bson ;
 
 namespace engine
 {
    _mthElemMatchIterator::_mthElemMatchIterator( const bson::BSONObj &obj,
-                                                 mthMatcher *matcher,
+                                                 _mthMatchTree *matcher,
                                                  INT32 n  )
    :_matcher( matcher ),
     _obj( obj ),

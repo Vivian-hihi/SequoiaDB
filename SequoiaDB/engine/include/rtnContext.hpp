@@ -43,7 +43,7 @@
 #include "ossMem.hpp"
 #include "ossLatch.hpp"
 #include "ossRWMutex.hpp"
-#include "mthMatcher.hpp"
+#include "mthMatchTree.hpp"
 #include "mthSelector.hpp"
 #include "monCB.hpp"
 #include "ixm.hpp"
@@ -167,7 +167,7 @@ namespace engine
          monContextCB*     getMonCB () { return &_monCtxCB ; }
          ossRWMutex*       dataLock () { return &_dataLock ; }
          _mthSelector&     getSelector () { return _selector ; }
-         _mthMatcher*      getMatcher () { return _matcher ; }
+         _mthMatchTree*    getMatcher () { return _matcher ; }
 
          INT32    append( const BSONObj &result ) ;
          INT32    appendObjs( const CHAR *pObjBuff,
@@ -242,7 +242,7 @@ namespace engine
       protected:
          monContextCB            _monCtxCB ;
          _mthSelector            _selector ;
-         _mthMatcher             *_matcher ;
+         _mthMatchTree           *_matcher ;
          BOOLEAN                 _ownedMatcher ;
          // status
          BOOLEAN                 _hitEnd ;

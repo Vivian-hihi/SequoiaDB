@@ -56,7 +56,7 @@ namespace engine
 
    class _dmsMBContext ;
    class _dmsStorageData ;
-   class _mthMatcher ;
+   class _mthMatchTree ;
    class _rtnIXScanner ;
    class _pmdEDUCB ;
    class _monAppCB ;
@@ -69,7 +69,7 @@ namespace engine
    {
       public:
          _dmsScanner ( _dmsStorageData *su, _dmsMBContext *context,
-                       _mthMatcher *match,
+                       _mthMatchTree *match,
                        DMS_ACCESS_TYPE accessType = DMS_ACCESS_TYPE_FETCH ) ;
          virtual ~_dmsScanner () ;
 
@@ -83,7 +83,7 @@ namespace engine
       protected:
          _dmsStorageData         *_pSu ;
          _dmsMBContext           *_context ;
-         _mthMatcher             *_match ;
+         _mthMatchTree           *_match ;
          DMS_ACCESS_TYPE         _accessType ;
 
    } ;
@@ -98,7 +98,7 @@ namespace engine
       friend class _dmsTBScanner ;
       public:
          _dmsExtScanner ( _dmsStorageData *su, _dmsMBContext *context,
-                          _mthMatcher *match, dmsExtentID curExtentID,
+                          _mthMatchTree *match, dmsExtentID curExtentID,
                           DMS_ACCESS_TYPE accessType = DMS_ACCESS_TYPE_FETCH,
                           INT64 maxRecords = -1, INT64 skipNum = 0 ) ;
          virtual ~_dmsExtScanner () ;
@@ -143,7 +143,7 @@ namespace engine
    {
       public:
          _dmsTBScanner ( _dmsStorageData *su, _dmsMBContext *context,
-                         _mthMatcher *match,
+                         _mthMatchTree *match,
                          DMS_ACCESS_TYPE accessType = DMS_ACCESS_TYPE_FETCH,
                          INT64 maxRecords = -1, INT64 skipNum = 0 ) ;
          ~_dmsTBScanner () ;
@@ -176,7 +176,7 @@ namespace engine
       friend class _dmsIXScanner ;
       public:
          _dmsIXSecScanner ( _dmsStorageData *su, _dmsMBContext *context,
-                            _mthMatcher *match, _rtnIXScanner *scanner,
+                            _mthMatchTree *match, _rtnIXScanner *scanner,
                             DMS_ACCESS_TYPE accessType = DMS_ACCESS_TYPE_FETCH,
                             INT64 maxRecords = -1, INT64 skipNum = 0 ) ;
          virtual ~_dmsIXSecScanner () ;
@@ -244,7 +244,7 @@ namespace engine
    {
       public:
          _dmsIXScanner ( _dmsStorageData *su, _dmsMBContext *context,
-                         _mthMatcher *match, _rtnIXScanner *scanner,
+                         _mthMatchTree *match, _rtnIXScanner *scanner,
                          BOOLEAN ownedScanner = FALSE,
                          DMS_ACCESS_TYPE accessType = DMS_ACCESS_TYPE_FETCH,
                          INT64 maxRecords = -1, INT64 skipNum = 0 ) ;

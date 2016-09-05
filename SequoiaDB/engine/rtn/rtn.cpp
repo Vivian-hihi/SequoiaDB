@@ -1188,7 +1188,7 @@ namespace engine
       SDB_ASSERT ( ppScanner, "Scanner can't be NULL" ) ;
 
       rtnPredicateList *predList = NULL ;
-      mthMatcher *matcher        = NULL ;
+      _mthMatchTree *matcher     = NULL ;
       rtnIXScanner * scanner     = NULL ;
 
       // first shared lock to get metadata
@@ -1261,7 +1261,7 @@ namespace engine
    }
 
    INT32 rtnGetTBScanner ( const CHAR *pCollectionShortName,
-                           mthMatcher &matcher,
+                           _mthMatchTree &matcher,
                            dmsStorageUnit *su,
                            dmsMBContext *mbContext,
                            pmdEDUCB *cb,
@@ -1269,7 +1269,7 @@ namespace engine
                            DMS_ACCESS_TYPE accessType )
    {
       INT32 rc                 = SDB_OK ;
-      mthMatcher *pMatcher     = matcher.isMatchesAll() ? NULL : &matcher ;
+      _mthMatchTree *pMatcher  = matcher.isMatchesAll() ? NULL : &matcher ;
 
       SDB_ASSERT ( pCollectionShortName, "collection name can't be NULL" ) ;
       SDB_ASSERT ( su, "su can't be NULL" ) ;

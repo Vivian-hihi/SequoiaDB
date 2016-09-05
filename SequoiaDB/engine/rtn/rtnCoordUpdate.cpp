@@ -263,7 +263,7 @@ namespace engine
       // upsert
       if ( ( flag & FLG_UPDATE_UPSERT ) && 0 == updateNum )
       {
-         mthMatcher matcher ;
+         _mthMatchTree matcher ;
          mthModifier modifier;
          BSONObj source ;
          BSONObj target ;

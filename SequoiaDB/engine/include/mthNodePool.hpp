@@ -34,20 +34,24 @@
 #ifndef MTH_NODEPOOL_HPP_
 #define MTH_NODEPOOL_HPP_
 
-#include <list>
+#include <set>
+using namespace std;
 
 #define MTH_NODE_POOL_DEFAULT_SZ 4 
 
 namespace engine
 {
-   template<typename T>
+   template< typename TYPE, UINT32 nodeSize = MTH_NODE_POOL_DEFAULT_SZ >
    class _mthNodePool : public SDBObject
    {
    public:
       _mthNodePool()
-      :_eleSize( 0 )
       {
-
+         UINT32 index = 0 ;
+         for ( ; index < nodeSize ; index++ )
+         {
+            _staticIdleSet.insert( &_static[ index ] ) ;
+         }
       }
 
       ~_mthNodePool()
@@ -56,25 +60,26 @@ namespace engine
       }
 
    public:
-      INT32 allocate( T *&tp )
+      INT32 allocate( TYPE *&tp )
       {
          INT32 rc = SDB_OK ;
-         if ( _eleSize < MTH_NODE_POOL_DEFAULT_SZ )
+         if ( !_staticIdleSet.empty() )
          {
-            tp = &(_static[_eleSize++]) ;
+            typename set<TYPE*>::iterator iter = _staticIdleSet.begin() ;
+            tp = *iter ;
+            _staticIdleSet.erase( iter ) ;
          }
          else
          {
-            T *node = SDB_OSS_NEW T ;
+            TYPE *node = SDB_OSS_NEW TYPE ;
             if ( NULL == node )
             {
                rc = SDB_OOM ;
                goto error ;
             }
 
-            _dynamic.push_back( node ) ;
+            _dynamic.insert( node ) ;
             tp = node ;
-            ++_eleSize ;
          }
       done:
          return rc ;
@@ -82,21 +87,41 @@ namespace engine
          goto done ;
       }
 
+      void release( TYPE *tp )
+      {
+         if ( tp >= &_static[0] && tp <= &_static[ nodeSize -1 ] )
+         {
+            SDB_ASSERT( _staticIdleSet.find( tp ) == _staticIdleSet.end() ,
+                        "must be allocate before!" ) ;
+            SDB_ASSERT( ( ( tp - (&_static[0]) ) % sizeof( TYPE ) ) == 0,
+                          "address must be align!") ;
+
+            _staticIdleSet.insert( tp ) ;
+         }
+         else
+         {
+            _dynamic.erase( tp ) ;
+            SDB_OSS_DEL tp ;
+         }
+      }
+
       void clear()
       {
-         typename std::list<T*>::iterator itr = _dynamic.begin() ;
-         for ( ; itr != _dynamic.end(); ++itr )
+         typename set<TYPE*>::iterator iter = _dynamic.begin() ;
+         for ( ; iter != _dynamic.end(); ++iter )
          {
-            SDB_OSS_DEL *itr ;
+            SDB_OSS_DEL *iter ;
          }
+
          _dynamic.clear() ;
-         _eleSize = 0 ;
+         _staticIdleSet.clear() ;
          return ;
       }
+
    private:
-      T _static[MTH_NODE_POOL_DEFAULT_SZ] ;
-      std::list<T*> _dynamic ;
-      UINT32 _eleSize ;
+      TYPE _static[ nodeSize ] ;
+      set<TYPE*> _staticIdleSet ;
+      set<TYPE*> _dynamic ;
    } ;
 }
 

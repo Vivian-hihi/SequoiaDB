@@ -1247,7 +1247,7 @@ namespace engine
       map<string, rtnPredicate>::const_iterator it = _predicates.begin() ;
       while ( it != _predicates.end() )
       {
-         buf << it->second.toString() << " " ;
+         buf << it->first << ":" << it->second.toString() << " " ;
          ++it ;
       }
       buf << " ]" ;

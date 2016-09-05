@@ -39,7 +39,7 @@
 #include "mthDef.hpp"
 #include "mthSActionFunc.hpp"
 #include "ossUtil.hpp"
-#include "mthMatcher.hpp"
+#include "mthMatchTree.hpp"
 #include <boost/noncopyable.hpp>
 
 namespace engine
@@ -128,11 +128,11 @@ namespace engine
          return !MTH_ATTR_IS_VALID( _attribute ) ;
       }
 
-      OSS_INLINE _mthMatcher &getMatcher()
+      OSS_INLINE _mthMatchTree &getMatcher()
       {
          if ( NULL == _matcher )
          {
-            _matcher = SDB_OSS_NEW _mthMatcher() ;
+            _matcher = SDB_OSS_NEW _mthMatchTree() ;
          }
          return *_matcher ;
       }
@@ -157,7 +157,7 @@ namespace engine
       /// think about placement new ?
       /// that we can use different child classes.
       bson::BSONObj _obj ;
-      _mthMatcher *_matcher ;
+      _mthMatchTree *_matcher ;
 
       bson::BSONObj _arg ;
    } ;

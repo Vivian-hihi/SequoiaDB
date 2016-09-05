@@ -1,0 +1,176 @@
+/*******************************************************************************
+
+
+   Copyright (C) 2011-2014 SequoiaDB Ltd.
+
+   This program is free software: you can redistribute it and/or modify
+   it under the term of the GNU Affero General Public License, version 3,
+   as published by the Free Software Foundation.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warrenty of
+   MARCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+   GNU Affero General Public License for more details.
+
+   You should have received a copy of the GNU Affero General Public License
+   along with this program. If not, see <http://www.gnu.org/license/>.
+
+   Source File Name = mthMatchTree.hpp
+
+   Descriptive Name = Method MatchTree Header
+
+   When/how to use: this program may be used on binary and text-formatted
+   versions of Method component. This file contains structure for matching
+   operation, which is indicating whether a record matches a given matching
+   rule.
+
+   Dependencies: N/A
+
+   Restrictions: N/A
+
+   Change Activity:
+   defect Date        Who Description
+   ====== =========== === ==============================================
+          07/25/2016  LinYouBin    Initial Draft
+
+   Last Changed =
+
+*******************************************************************************/
+#ifndef MTH_MATCHTREE_HPP_
+#define MTH_MATCHTREE_HPP_
+#include "core.hpp"
+#include "oss.hpp"
+#include "ossUtil.hpp"
+#include "utilMap.hpp"
+#include "../bson/bson.hpp"
+#include "mthMatchNode.hpp"
+#include "mthMatchLogicNode.hpp"
+#include "mthMatchOpNode.hpp"
+#include "rtnPredicate.hpp"
+#include <vector>
+
+using namespace bson ;
+using namespace std ;
+
+namespace engine
+{
+   struct mthMatchOpMapping
+   {
+      CHAR *opStr ;
+      INT32 nodeType ;
+   } ;
+
+   class _mthMatchNodeFactory : public SDBObject
+   {
+   public:
+      _mthMatchNodeFactory() ;
+      ~_mthMatchNodeFactory() ;
+
+   public:
+      _mthMatchOpNode*        createOpNode( EN_MATCHNODE_TYPE type ) ;
+      _mthMatchLogicNode*     createLogicNode( EN_MATCHNODE_TYPE type ) ;
+
+      void                    releaseNode( _mthMatchNode *node ) ;
+
+      _mthMatchTree*          createTree() ;
+      void                    releaseTree( _mthMatchTree *tree ) ;
+
+      EN_MATCHNODE_TYPE       getMatchNodeType( const CHAR *opStr ) ;
+
+   private:
+      typedef _utilMap< string, mthMatchOpMapping* > MTH_OPSTRMAP ;
+      MTH_OPSTRMAP _opstrMap ;
+   } ;
+
+   _mthMatchNodeFactory *mthGetMatchNodeFactory() ;
+
+   class _mthMatchTree : public SDBObject
+   {
+      public:
+         _mthMatchTree() ;
+         ~_mthMatchTree() ;
+
+      public:
+         INT32    loadPattern( const BSONObj &matcher, 
+                               BOOLEAN needPredicate = TRUE ) ;
+         INT32    matches( const BSONObj &matchTarget, BOOLEAN &result,
+                           _mthMatchTreeContext &context ) ;
+         INT32    matches( const BSONObj &matchTarget, BOOLEAN &result,
+                           vector<INT64> *dollarList = NULL ) ;
+         void     clear() ;
+         BSONObj  getEqualityQueryObject() ;
+         BOOLEAN  isInitialized() ;
+         BOOLEAN  isMatchesAll() ;
+         const rtnPredicateSet &getPredicateSet() ;
+         BSONObj& getMatchPattern() ;
+         BOOLEAN  hasDollarFieldName() ;
+         BOOLEAN  totallyConverted() const ;
+         void     setMatchesAll( BOOLEAN matchesAll ) ;
+         BSONObj  getParsedQuery() const ;
+         BSONObj  toBson() ;
+         string   toString() ;
+
+      private:
+         INT32    _addOperator( const CHAR *fieldName, const BSONElement &ele, 
+                                EN_MATCHNODE_TYPE nodeType, 
+                                _mthMatchLogicNode *parent ) ;
+         INT32    _addRegExOp( const CHAR *fieldName, const CHAR *regex, 
+                               const CHAR *options, 
+                               _mthMatchLogicNode *parent ) ;
+         INT32    _parseRegExElement( const BSONElement &ele, 
+                                      _mthMatchLogicNode *parent ) ;
+         INT32    _parseNormalElement( const BSONElement &ele, 
+                                       _mthMatchLogicNode *parent ) ;
+         INT32    _pareseLogicElemnts( const BSONElement ele, 
+                                       _mthMatchLogicNode *parent ) ;
+         INT32    _pareseLogicAnd( const BSONElement ele, 
+                                   _mthMatchLogicNode *parent ) ;
+         INT32    _pareseLogicOr( const BSONElement ele, 
+                                  _mthMatchLogicNode *parent ) ;
+         INT32    _pareseLogicNot( const BSONElement ele, 
+                                   _mthMatchLogicNode *parent ) ;
+         INT32    _parseArrayElement( const BSONElement &ele, 
+                                      _mthMatchLogicNode *parent ) ;
+         BOOLEAN  _isExistOpFieldRecursive( const BSONElement &ele,
+                                          BOOLEAN ignoreCurrentField = FALSE ) ;
+         BOOLEAN  _isExistOpEyeCatcher( const BSONElement &ele ) ;
+         INT32    _pareseObjectInnerOp( const BSONElement &ele, 
+                                        const BSONElement &innerEle,
+                                        _mthMatchLogicNode *parent,
+                                        const char *&regex,
+                                        const char *&options ) ;
+         INT32    _parseObjectElement( const BSONElement &ele, 
+                                       _mthMatchLogicNode *parent ) ;
+         INT32    _paresePrevOptions( const CHAR *fieldName,
+                                      const BSONElement &ele,
+                                      const CHAR *options, 
+                                      _mthMatchLogicNode *parent ) ;
+         INT32    _parseElement( const BSONElement &ele, 
+                                 _mthMatchLogicNode *parent ) ;
+         void     _releaseTree( _mthMatchNode *node ) ;
+         INT32    _optimizeNodeLevel() ;
+         INT32    _deleteExtraLogicNode( _mthMatchNode *node ) ;
+         INT32    _deleteNode( _mthMatchNode *parent, _mthMatchNode *node ) ;
+         void     _setWeight( _mthMatchNode *node ) ;
+         void     _sortByWeight() ;
+         INT32    _optimize( BOOLEAN needPredicate ) ;
+         INT32    _setPredicate() ;
+         void     _checkTotallyConverted() ;
+         void     _checkTotallyConverted( _mthMatchNode *node, 
+                                          BOOLEAN &isTotallyConverted ) ;
+
+      private:
+         _mthMatchNode *_root ;
+         BSONObj        _matchPattern ;
+         BOOLEAN        _isInitialized ;
+         BOOLEAN        _isMatchesAll ;
+         BOOLEAN        _isTotallyConverted ;
+         BOOLEAN        _hasDollarFieldName ;
+
+         _rtnPredicateSet _predicateSet ;
+   } ;
+
+}
+
+#endif
+

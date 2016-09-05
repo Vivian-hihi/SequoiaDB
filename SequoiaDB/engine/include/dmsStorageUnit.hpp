@@ -58,7 +58,7 @@ namespace engine
    class _dmsTempCB ;
    class _SDB_DMSCB ;
    class _pmdEDUCB ;
-   class _mthMatcher ;
+   class _mthMatchTree ;
    class _mthModifier ;
 
    /*
@@ -203,7 +203,7 @@ namespace engine
          INT32    updateRecords ( const CHAR *pName,
                                   _pmdEDUCB *cb,
                                   SDB_DPSCB *dpscb,
-                                  _mthMatcher *matcher,
+                                  _mthMatchTree *matcher,
                                   _mthModifier &modifier,
                                   SINT64 &numRecords,
                                   SINT64 maxUpdate = -1,
@@ -212,7 +212,7 @@ namespace engine
          INT32    deleteRecords ( const CHAR *pName,
                                   _pmdEDUCB * cb,
                                   SDB_DPSCB *dpscb,
-                                  _mthMatcher *matcher,
+                                  _mthMatchTree *matcher,
                                   SINT64 &numRecords,
                                   SINT64 maxDelete = -1,
                                   dmsMBContext *context = NULL ) ;

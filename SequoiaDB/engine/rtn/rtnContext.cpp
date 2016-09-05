@@ -251,7 +251,7 @@ namespace engine
          _ownedMatcher = FALSE ;
       }
 
-      _matcher = SDB_OSS_NEW mthMatcher() ;
+      _matcher = SDB_OSS_NEW _mthMatchTree() ;
       if ( !_matcher )
       {
          return SDB_OOM ;
@@ -1158,7 +1158,7 @@ namespace engine
                                             vector<INT64>* dollarList )
    {
       INT32 rc                = SDB_OK ;
-      mthMatcher *matcher     = NULL ;
+      _mthMatchTree *matcher  = NULL ;
       mthSelector *selector   = NULL ;
       monAppCB * pMonAppCB    = cb ? cb->getMonAppCB() : NULL ;
       BOOLEAN hasLocked       = _mbContext->isMBLock() ;
@@ -1319,7 +1319,7 @@ namespace engine
    {
       INT32 rc                   = SDB_OK ;
       rtnIXScanner *scanner      = _scanner ;
-      mthMatcher *matcher        = NULL ;
+      _mthMatchTree *matcher     = NULL ;
       mthSelector *selector      = NULL ;
       monAppCB * pMonAppCB       = cb ? cb->getMonAppCB() : NULL ;
       BOOLEAN hasLocked          = _mbContext->isMBLock() ;

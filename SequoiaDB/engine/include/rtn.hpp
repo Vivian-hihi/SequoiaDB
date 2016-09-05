@@ -73,7 +73,7 @@ namespace engine
                            DMS_ACCESS_TYPE accessType ) ;
 
    INT32 rtnGetTBScanner ( const CHAR *pCollectionShortName,
-                           _mthMatcher &matcher,
+                           _mthMatchTree &matcher,
                            _dmsStorageUnit *su,
                            _dmsMBContext *mbContext,
                            _pmdEDUCB *cb,

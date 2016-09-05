@@ -285,6 +285,10 @@ ixmFiles = [
       "ixm/ixm_common.cpp"
       ]
 mthFiles = [
+      "mth/mthMatchNode.cpp",
+      "mth/mthMatchOpNode.cpp",
+      "mth/mthMatchTree.cpp",
+      "mth/mthMatchLogicNode.cpp",
       "mth/mthMatcher.cpp",
       "mth/mthModifier.cpp",
       "mth/mthSelector.cpp",

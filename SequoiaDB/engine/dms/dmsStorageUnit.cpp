@@ -506,7 +506,7 @@ namespace engine
    INT32 _dmsStorageUnit::updateRecords ( const CHAR *pName,
                                           pmdEDUCB *cb,
                                           SDB_DPSCB *dpscb,
-                                          mthMatcher *matcher,
+                                          _mthMatchTree *matcher,
                                           mthModifier &modifier,
                                           SINT64 &numRecords,
                                           SINT64 maxUpdate,
@@ -572,7 +572,7 @@ namespace engine
    INT32 _dmsStorageUnit::deleteRecords ( const CHAR *pName,
                                           pmdEDUCB * cb,
                                           SDB_DPSCB *dpscb,
-                                          mthMatcher *matcher,
+                                          _mthMatchTree *matcher,
                                           SINT64 &numRecords,
                                           SINT64 maxDelete,
                                           dmsMBContext *context )

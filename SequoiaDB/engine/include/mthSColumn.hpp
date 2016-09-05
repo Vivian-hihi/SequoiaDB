@@ -43,8 +43,8 @@
 namespace engine
 {
    class _mthSColumn ;
-   typedef _utilArray<_mthSColumn *> MTH_S_COLUMNS ;
-   typedef _utilArray<_mthSAction *> MTH_S_ACTIONS ;
+   typedef _utilArray< _mthSColumn * > MTH_S_COLUMNS ;
+   typedef _utilArray< _mthSAction * > MTH_S_ACTIONS ;
 
    class _mthSColumn : public SDBObject
    {

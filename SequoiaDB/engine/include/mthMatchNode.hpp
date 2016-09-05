@@ -1,0 +1,335 @@
+/*******************************************************************************
+
+
+   Copyright (C) 2011-2014 SequoiaDB Ltd.
+
+   This program is free software: you can redistribute it and/or modify
+   it under the term of the GNU Affero General Public License, version 3,
+   as published by the Free Software Foundation.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warrenty of
+   MARCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+   GNU Affero General Public License for more details.
+
+   You should have received a copy of the GNU Affero General Public License
+   along with this program. If not, see <http://www.gnu.org/license/>.
+
+   Source File Name = mthMatchNode.hpp
+
+   Descriptive Name = Method MatchNode Header
+
+   When/how to use: this program may be used on binary and text-formatted
+   versions of Method component. This file contains structure for matching
+   operation, which is indicating whether a record matches a given matching
+   rule.
+
+   Dependencies: N/A
+
+   Restrictions: N/A
+
+   Change Activity:
+   defect Date        Who Description
+   ====== =========== === ==============================================
+          07/14/2016  LinYouBin    Initial Draft
+
+   Last Changed =
+
+*******************************************************************************/
+#ifndef MTH_MATCHNODE_HPP_
+#define MTH_MATCHNODE_HPP_
+#include "core.hpp"
+#include "oss.hpp"
+#include "ossUtil.hpp"
+#include "../bson/bson.hpp"
+#include "utilArray.hpp"
+#include "rtnPredicate.hpp"
+#include <vector>
+
+using namespace bson ;
+using namespace std ;
+
+namespace engine
+{
+   enum EN_MATCHNODE_TYPE
+   {
+      EN_MATCHNODE_TYPE_LOGIC_AND     = 0,
+      EN_MATCHNODE_TYPE_LOGIC_OR,
+      EN_MATCHNODE_TYPE_LOGIC_NOT,
+
+      //logic end
+      EN_MATCHNODE_TYPE_LOGIC_END     = 10,
+
+      EN_MATCHNODE_TYPE_ET,
+      EN_MATCHNODE_TYPE_LT,
+      EN_MATCHNODE_TYPE_LTE,
+      EN_MATCHNODE_TYPE_GTE,
+      EN_MATCHNODE_TYPE_GT,
+      EN_MATCHNODE_TYPE_IN,
+      EN_MATCHNODE_TYPE_NE,
+      EN_MATCHNODE_TYPE_SIZE,
+      EN_MATCHNODE_TYPE_ALL,
+      EN_MATCHNODE_TYPE_NIN,
+      EN_MATCHNODE_TYPE_EXISTS,
+      EN_MATCHNODE_TYPE_MOD,
+      EN_MATCHNODE_TYPE_TYPE,
+      EN_MATCHNODE_TYPE_REGEX,
+
+      EN_MATCHNODE_TYPE_OPTIONS,   /*do not have really matchNode*/
+
+      EN_MATCHNODE_TYPE_ELEMMATCH,
+//      EN_MATCHNODE_TYPE_NEAR,
+//      EN_MATCHNODE_TYPE_WITHIN,
+//      EN_MATCHNODE_TYPE_MAX_DISTANCE,
+      EN_MATCHNODE_TYPE_ISNULL,
+
+      EN_MATCHNODE_TYPE_FIELD,     /*do not have really matchNode*/
+
+      EN_MATCHNODE_TYPE_END,
+   } ;
+
+   #define MTH_OPERATOR_EYECATCHER              '$'
+
+   #define MTH_OPERATOR_STR_AND                 "$and"
+   #define MTH_OPERATOR_STR_OR                  "$or"
+   #define MTH_OPERATOR_STR_NOT                 "$not"
+   #define MTH_OPERATOR_STR_ET                  "$et"
+   #define MTH_OPERATOR_STR_LT                  "$lt"
+   #define MTH_OPERATOR_STR_LTE                 "$lte"
+   #define MTH_OPERATOR_STR_GTE                 "$gte"
+   #define MTH_OPERATOR_STR_GT                  "$gt"
+   #define MTH_OPERATOR_STR_IN                  "$in"
+   #define MTH_OPERATOR_STR_NE                  "$ne"
+   #define MTH_OPERATOR_STR_SIZE                "$size"
+   #define MTH_OPERATOR_STR_ALL                 "$all"
+   #define MTH_OPERATOR_STR_NIN                 "$nin"
+   #define MTH_OPERATOR_STR_EXISTS              "$exists"
+   #define MTH_OPERATOR_STR_MOD                 "$mod"
+   #define MTH_OPERATOR_STR_TYPE                "$type"
+   #define MTH_OPERATOR_STR_ELEMMATCH           "$elemMatch"
+   #define MTH_OPERATOR_STR_ISNULL              "$isnull"
+   #define MTH_OPERATOR_STR_FIELD               "$field"
+   #define MTH_OPERATOR_STR_REGEX               "$regex"
+   #define MTH_OPERATOR_STR_OPTIONS             "$options"
+
+   #define MTH_MATCH_FIELD_STATIC_NAME_LEN      32
+   #define MTH_FIELDNAME_SEP                    '.'
+
+   #define MTH_WEIGHT_EQUAL                     100
+   #define MTH_WEIGHT_GT                        150
+   #define MTH_WEIGHT_GTE                       200
+   #define MTH_WEIGHT_LT                        150
+   #define MTH_WEIGHT_LTE                       200
+   #define MTH_WEIGHT_NE                        500
+   #define MTH_WEIGHT_MOD                       200
+   #define MTH_WEIGHT_TYPE                      150
+   #define MTH_WEIGHT_IN                        5000
+   #define MTH_WEIGHT_NIN                       10000
+   #define MTH_WEIGHT_ALL                       550
+   #define MTH_WEIGHT_SIZE                      250
+   #define MTH_WEIGHT_EXISTS                    250
+   #define MTH_WEIGHT_ELEMMATCH                 450
+   #define MTH_WEIGHT_REGEX                     1000000
+   #define MTH_WEIGHT_ISNULL                    250
+      
+   template <UINT32 nameSize = MTH_MATCH_FIELD_STATIC_NAME_LEN > 
+   class _mthMatchFieldName
+   {
+      public:
+         _mthMatchFieldName():_name( NULL ), _allocateName( NULL )
+         {
+         }
+
+         ~_mthMatchFieldName() 
+         { 
+            clear() ; 
+         }
+
+      public:
+         INT32 setFieldName( const CHAR *name )
+         {
+            INT32 rc   = SDB_OK ;
+            UINT32 len = 0 ;
+
+            if ( NULL == name )
+            {
+               rc = SDB_INVALIDARG ;
+               goto error ;
+            }
+
+            len = ossStrlen( name ) ;
+            if ( len <= nameSize )
+            {
+               ossStrcpy( _staticName, name ) ;
+               _staticName[ nameSize ] = '\0' ;
+
+               _name = _staticName ;
+            }
+            else
+            {
+               CHAR *tmp = (CHAR *)SDB_OSS_MALLOC( len + 1 ) ;
+               if ( NULL == tmp )
+               {
+                  rc = SDB_OOM ;
+                  goto error ;
+               }
+
+               ossStrcpy( tmp, name ) ;
+               SAFE_OSS_FREE( _allocateName ) ;
+
+               _allocateName = tmp ;
+               _name         = _allocateName ;
+            }
+
+         done:
+            return rc ;
+         error:
+            goto done ;
+         }
+
+         const CHAR *getFieldName() 
+         {
+            return _name ;
+         }
+
+         void clear()
+         {
+            SAFE_OSS_FREE( _allocateName ) ;
+            _name = NULL ;
+         }
+
+      private:
+         CHAR *_name ;
+         CHAR _staticName[ nameSize + 1 ] ;
+         CHAR *_allocateName ;
+   } ;
+
+   class _mthMatchTreeContext
+   {
+      public:
+         _mthMatchTreeContext() ;
+         ~_mthMatchTreeContext() ;
+
+         void  clear() ;
+         INT32 setName( const CHAR *name ) ;
+         INT32 addElement( const BSONElement &ele ) ;
+         void  setExpand( BOOLEAN needExpand ) ;
+         void  setObj( const BSONObj &obj ) ;
+
+         void  enableDollarList() ;
+         void  disableDollarList() ;
+         BOOLEAN isDollarListEnabled() ;
+         void appendDollarList( vector<INT64> dollarList ) ;
+         void getDollarList( vector<INT64> *dollarList ) ;
+
+         void setIsSubTree( BOOLEAN isSubTree ) ;
+         BOOLEAN isSubTree() ;
+
+         string toString() ;
+
+      public:
+         BOOLEAN _isDollarListEnabled ;
+         BOOLEAN _isSubTree ;
+         vector<INT64> _dollarList ;
+
+         BSONObj _originalObj ;
+
+         /* array attribute relate */
+         BOOLEAN _needExpand ;
+
+         _mthMatchFieldName<> _fieldName ;
+
+         _utilArray< BSONElement > _elements ;
+         /* array attribute relate */
+   } ;
+
+   class _mthMatchNode ;
+   typedef vector< _mthMatchNode* > MATCHNODE_VECTOR ;
+
+   class _mthMatchNodeIterator : public SDBObject
+   {
+      public:
+         _mthMatchNodeIterator( _mthMatchNode *node ) ;
+         ~_mthMatchNodeIterator() ;
+
+      private:
+         _mthMatchNodeIterator() ;
+         _mthMatchNodeIterator( const _mthMatchNodeIterator &right ) ;
+
+      public:
+         BOOLEAN more() ;
+         _mthMatchNode *next() ;
+
+      private:
+         _mthMatchNode *_node ;
+         UINT32 _index ;
+   } ;
+
+   class _mthMatchNode : public SDBObject
+   {
+      friend class _mthMatchNodeIterator ;
+      public:
+         _mthMatchNode() ;
+         virtual ~_mthMatchNode() ;
+
+      public:
+         virtual INT32 init( const CHAR *fieldName, 
+                             const BSONElement &element ) ;
+
+         //just clear parameter itself
+         virtual void clear() ;
+
+         virtual INT32 getType() = 0 ;
+
+         virtual const CHAR* getOperatorStr() = 0 ;
+
+         virtual INT32 execute( const BSONObj &obj, 
+                                _mthMatchTreeContext &context,
+                                BOOLEAN &result ) = 0 ;
+         virtual BSONObj toBson() = 0 ;
+
+         virtual void setWeight( UINT32 weight ) = 0 ;
+
+         virtual UINT32 getWeight() = 0 ;
+
+         virtual BOOLEAN isTotalConverted() = 0 ;
+
+         virtual BOOLEAN hasDollarFieldName() ;
+
+         virtual INT32 calcPredicate( _rtnPredicateSet &predicateSet ) ;
+
+         virtual INT32 extraEqualityMatches( BSONObjBuilder &builder ) ;
+
+         virtual INT32 addChild( _mthMatchNode *child ) ;
+         virtual void delChild( _mthMatchNode *child ) ;
+
+         void sortByWeight() ;
+
+      public:
+         const CHAR *getFieldName() ;
+         string toString() ;
+
+         void rollIsUnderLogicNot() ;
+
+         BOOLEAN isUnderLogicNot() ;
+
+         UINT32 getChildrenCount() ;
+
+         _mthMatchNode *getParent() ;
+
+      protected:
+         _mthMatchNode *_parent ;
+         UINT32 _idx_in_parent ;
+         _mthMatchFieldName<> _fieldName ;
+         MATCHNODE_VECTOR _children ;
+
+         //under two logicNot will revert to false
+         BOOLEAN _isUnderLogicNot ;
+   } ;
+
+   BOOLEAN mthCompareNode ( _mthMatchNode *left, _mthMatchNode *right ) ;
+}
+
+#endif
+
+

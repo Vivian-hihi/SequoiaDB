@@ -51,10 +51,10 @@ namespace engine
 
    INT32 qgmPlMthMatcherFilter::loadPattern( bson::BSONObj matcher )
    {
-      return _mthMatcher.loadPattern( matcher );
+      return _matcher.loadPattern( matcher );
    }
 
-   PD_TRACE_DECLARE_FUNCTION( SDB__QGMPLMTHMATCHERFILTER__FETCHNEXT, "qgmPlMthMatcherFilter::_fetchNext" )
+   //PD_TRACE_DECLARE_FUNCTION( SDB__QGMPLMTHMATCHERFILTER__FETCHNEXT, "qgmPlMthMatcherFilter::_fetchNext" )
    INT32 qgmPlMthMatcherFilter::_fetchNext( qgmFetchOut & next )
    {
       PD_TRACE_ENTRY( SDB__QGMPLMTHMATCHERFILTER__FETCHNEXT ) ;
@@ -87,7 +87,7 @@ namespace engine
 
          /// match
          BOOLEAN r = FALSE ;
-         rc = _mthMatcher.matches( fetch.obj, r );
+         rc = _matcher.matches( fetch.obj, r );
          if ( rc != SDB_OK )
          {
             goto error;

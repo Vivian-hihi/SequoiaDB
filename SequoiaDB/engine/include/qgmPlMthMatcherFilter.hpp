@@ -39,7 +39,7 @@
 #define QGMPLMTHMATCHERFILTER_HPP__
 
 #include "qgmPlFilter.hpp"
-#include "mthMatcher.hpp"
+#include "mthMatchTree.hpp"
 
 namespace engine
 {
@@ -57,7 +57,7 @@ namespace engine
       virtual INT32 _fetchNext( qgmFetchOut & next );
 
    private:
-      mthMatcher        _mthMatcher;
+      _mthMatchTree        _matcher;
    };
 }
 

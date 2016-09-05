@@ -42,7 +42,7 @@
 #include "oss.hpp"
 #include "rtnPredicate.hpp"
 #include "dms.hpp"
-#include "mthMatcher.hpp"
+#include "mthMatchTree.hpp"
 #include "ixm.hpp"
 #include "ossAtomic.hpp"
 #include "../bson/oid.h"
@@ -75,7 +75,7 @@ namespace engine
       dmsExtentID _indexLID ;
 
       OID _indexOID ;         // the oid for the index, for validation
-      mthMatcher _matcher ;   // matcher that should be used by the plan
+      _mthMatchTree _matcher ;   // matcher that should be used by the plan
       rtnPredicateList *_predList ; // predicate list that generated from
                                     // matcher and index
       _dmsStorageUnit *_su ;        // pointer for the storage unit
@@ -219,7 +219,7 @@ namespace engine
       INT32 optimize() ;
 
       // matcher and predlist must be used after optimize.
-      mthMatcher &getMatcher()
+      _mthMatchTree &getMatcher()
       {
          SDB_ASSERT ( _isInitialized,
                       "optAccessPlan must be optimized before start using" ) ;

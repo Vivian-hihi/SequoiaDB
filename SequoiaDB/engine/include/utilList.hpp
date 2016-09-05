@@ -204,7 +204,7 @@ namespace engine
                _pSrc          = pSrc ;
                _pEleSize      = pEleSize ;
             }
-            iterator( typename const list<T>::iterator &it )
+            iterator( const typename list<T>::iterator &it )
             {
                _pData         = NULL ;
                _pSrc          = NULL ;

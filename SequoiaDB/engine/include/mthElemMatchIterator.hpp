@@ -40,13 +40,13 @@
 
 namespace engine
 {
-   class _mthMatcher ;
+   class _mthMatchTree ;
 
    class _mthElemMatchIterator : public SDBObject
    {
    public:
       _mthElemMatchIterator( const bson::BSONObj &obj,
-                             _mthMatcher *matcher,
+                             _mthMatchTree *matcher,
                              INT32 n = -1 ) ;
       ~_mthElemMatchIterator() ;
 
@@ -54,7 +54,7 @@ namespace engine
       INT32 next( bson::BSONElement &e ) ;
 
    private:
-      _mthMatcher *_matcher ;
+      _mthMatchTree *_matcher ;
       bson::BSONObj _obj ;
       bson::BSONObjIterator _i ; 
       INT32 _n ;

@@ -54,7 +54,7 @@ namespace engine
       _dmsScanner implement
    */
    _dmsScanner::_dmsScanner( dmsStorageData *su, dmsMBContext *context,
-                             _mthMatcher *match, DMS_ACCESS_TYPE accessType )
+                             _mthMatchTree *match, DMS_ACCESS_TYPE accessType )
    {
       SDB_ASSERT( su, "storage data can't be NULL" ) ;
       SDB_ASSERT( context, "context can't be NULL" ) ;
@@ -74,7 +74,7 @@ namespace engine
       _dmsExtScanner implement
    */
    _dmsExtScanner::_dmsExtScanner( dmsStorageData *su, dmsMBContext *context,
-                                   mthMatcher *match, dmsExtentID curExtentID,
+                                   _mthMatchTree *match, dmsExtentID curExtentID,
                                    DMS_ACCESS_TYPE accessType,
                                    INT64 maxRecords, INT64 skipNum )
    :_dmsScanner( su, context, match, accessType ), _curRecordPtr( NULL )
@@ -401,7 +401,7 @@ namespace engine
       _dmsTBScanner implement
    */
    _dmsTBScanner::_dmsTBScanner( dmsStorageData *su, dmsMBContext *context,
-                                 mthMatcher *match, DMS_ACCESS_TYPE accessType,
+                                 _mthMatchTree *match, DMS_ACCESS_TYPE accessType,
                                  INT64 maxRecords, INT64 skipNum )
    :_dmsScanner( su, context, match, accessType ),
     _extScanner( su, context, match, DMS_INVALID_EXTENT, accessType,
@@ -501,7 +501,7 @@ namespace engine
    */
    _dmsIXSecScanner::_dmsIXSecScanner( dmsStorageData *su,
                                        dmsMBContext *context,
-                                       mthMatcher *match,
+                                       _mthMatchTree *match,
                                        rtnIXScanner *scanner,
                                        DMS_ACCESS_TYPE accessType,
                                        INT64 maxRecords,
@@ -989,7 +989,7 @@ namespace engine
       _dmsIXScanner implement
    */
    _dmsIXScanner::_dmsIXScanner( dmsStorageData *su, dmsMBContext *context,
-                                 mthMatcher *match, rtnIXScanner *scanner,
+                                 _mthMatchTree *match, rtnIXScanner *scanner,
                                  BOOLEAN ownedScanner,
                                  DMS_ACCESS_TYPE accessType,
                                  INT64 maxRecords,
