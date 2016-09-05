@@ -1,5 +1,5 @@
 【发生时间】2016-3-9 
-【问题描述】CI机器从svn更新代码时报警：out of sync
+【问题描述】master节点与svn时间不同步：CI机器从svn更新代码时报警：out of sync
 【解决办法】停掉ntp，再同步时间
 
 【问题详情】
