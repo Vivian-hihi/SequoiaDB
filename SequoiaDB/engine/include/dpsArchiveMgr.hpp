@@ -133,6 +133,7 @@ namespace engine
       BOOLEAN                       _isDPSMoving ;
       DPS_LSN                       _moveLSN ;
       ossSpinXLatch                 _mutex ;
+      BOOLEAN                       _inited ;
    } ;
 }
 

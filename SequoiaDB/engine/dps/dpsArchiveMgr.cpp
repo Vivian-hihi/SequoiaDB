@@ -187,6 +187,7 @@ namespace engine
 
       _isArchiving = FALSE ;
       _isDPSMoving = FALSE ;
+      _inited = FALSE ;
    }
 
    dpsArchiveMgr::~dpsArchiveMgr()
@@ -252,6 +253,7 @@ namespace engine
       }
 
       _dpsCB->regEventHandler( this ) ;
+      _inited= TRUE ;
 
    done:
       return rc ;
@@ -261,7 +263,11 @@ namespace engine
 
    INT32 dpsArchiveMgr::fini()
    {
-      _dpsCB->unregEventHandler( this ) ;
+      if ( _inited )
+      {
+         SDB_ASSERT( NULL != _dpsCB, "_dpsCB can't be NULL" ) ;
+         _dpsCB->unregEventHandler( this ) ;
+      }
       return SDB_OK ;
    }
 
