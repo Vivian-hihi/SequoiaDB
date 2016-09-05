@@ -39,7 +39,6 @@
 #define QGMOPTIMTHMATCHSELECT_HPP_
 
 #include "qgmOptiSelect.hpp"
-#include "mthMatcher.hpp"
 #include "../bson/bsonobj.h"
 
 namespace engine

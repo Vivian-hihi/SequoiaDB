@@ -35,7 +35,6 @@
    Last Changed =
 
 *******************************************************************************/
-#include "mthMatcher.hpp"
 #include "ossUtil.hpp"
 #include "pdTrace.hpp"
 #include "mthTrace.hpp"

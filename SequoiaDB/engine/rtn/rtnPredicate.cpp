@@ -37,11 +37,11 @@
 *******************************************************************************/
 
 #include "rtnPredicate.hpp"
-#include "mthMatcher.hpp"
 #include "ixm.hpp"
 #include "pdTrace.hpp"
 #include "rtnTrace.hpp"
 #include <sstream>
+#include "mthCommon.hpp"
 #include "../bson/util/builder.h"
 #include <boost/noncopyable.hpp>
 
@@ -903,7 +903,7 @@ namespace engine
       {
          // for IN statement without isNot or if the element type is array 
          // and we want equality match {c1:{$et:[1,2,3]}}
-         set<BSONElement, element_lt> vals ;
+         set<BSONElement, element_cmp_lt> vals ;
          vector<rtnPredicate> regexes ;
          BSONObjIterator i ( e.embeddedObject() ) ;
 
@@ -944,7 +944,7 @@ namespace engine
          }
          // after going through all elements, let's push all in $in into
          // start/stopkey list
-         for ( set<BSONElement,element_lt>::const_iterator i = vals.begin();
+         for ( set<BSONElement,element_cmp_lt>::const_iterator i = vals.begin();
                i!=vals.end(); i++ )
          {
             _startStopKeys.push_back ( rtnStartStopKey ( *i ) ) ;

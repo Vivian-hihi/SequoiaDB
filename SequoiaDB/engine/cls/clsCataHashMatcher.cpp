@@ -32,9 +32,9 @@
 #include "clsCataHashMatcher.hpp"
 #include "clsCatalogAgent.hpp"
 #include "pd.hpp"
-#include "mthMatcher.hpp"
 #include "pdTrace.hpp"
 #include "clsTrace.hpp"
+#include "mthCommon.hpp"
 
 using namespace bson;
 namespace engine

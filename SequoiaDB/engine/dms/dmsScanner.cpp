@@ -38,7 +38,6 @@
 
 #include "dmsScanner.hpp"
 #include "dmsStorageIndex.hpp"
-#include "mthMatcher.hpp"
 #include "rtnIXScanner.hpp"
 #include "bpsPrefetch.hpp"
 #include "dmsCompress.hpp"

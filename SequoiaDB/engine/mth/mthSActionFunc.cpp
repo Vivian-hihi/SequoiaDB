@@ -38,7 +38,7 @@
 #include "mthSAction.hpp"
 #include "mthSliceIterator.hpp"
 #include "mthElemMatchIterator.hpp"
-#include "mthMatcher.hpp"
+#include "mthCommon.hpp"
 #include "utilString.hpp"
 #include "utilStr.hpp"
 #include "../util/fromjson.hpp"
@@ -766,7 +766,7 @@ namespace engine
 
          builder.append( fieldName, result ) ;
       }
-      else if ( FALSE == isModValid( arg ) )
+      else if ( FALSE == mthIsModValid( arg ) )
       {
          builder.appendNull( fieldName ) ;
       }
@@ -846,7 +846,7 @@ namespace engine
 
          builder.append( fieldName, result ) ;
       }
-      else if ( FALSE == isModValid( argEle ) )
+      else if ( FALSE == mthIsModValid( argEle ) )
       {
          builder.appendNull( fieldName ) ;
       }

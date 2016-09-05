@@ -36,12 +36,6 @@ namespace bson {
     */
     class BSONObjIterator {
     public:
-
-        BSONObjIterator() {
-            _pos    = 0 ;
-            _theend = 0 ;
-        }
-
         /** Create an iterator for a BSON object.
         */
         BSONObjIterator(const BSONObj& jso) {

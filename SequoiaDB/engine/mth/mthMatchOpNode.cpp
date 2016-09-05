@@ -39,6 +39,7 @@
 #include "mthMatchTree.hpp"
 #include "pd.hpp"
 #include "mthDef.hpp"
+#include "mthCommon.hpp"
 
 using namespace bson ;
 
@@ -1354,32 +1355,7 @@ namespace engine
 
    BOOLEAN _mthMatchOpNodeMOD::_isModValid( const BSONElement &modmEle )
    {
-      if ( modmEle.type() == NumberDecimal )
-      {
-         bsonDecimal modmDecimal = modmEle.numberDecimal() ;
-         if ( modmDecimal.isZero() )
-         {
-            return FALSE ;
-         }
-      }
-      else if ( modmEle.type() == NumberDouble )
-      {
-         FLOAT64 f = modmEle.numberDouble() ;
-         if ( fabs( f ) <= OSS_EPSILON )
-         {
-            return FALSE ;
-         }
-      }
-      else
-      {
-         INT64 modm = modmEle.numberLong() ;
-         if ( 0 == modm )
-         {
-            return FALSE ;
-         }
-      }
-
-      return TRUE ;
+      return mthIsModValid( modmEle ) ;
    }
 
    INT32 _mthMatchOpNodeMOD::_init( const CHAR *fieldName, 

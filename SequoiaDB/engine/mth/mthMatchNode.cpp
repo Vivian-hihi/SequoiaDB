@@ -195,7 +195,12 @@ namespace engine
    _mthMatchNode* _mthMatchNodeIterator::next()
    {
       UINT32 i = _index++ ;
-      return _node->_children[ i ] ;
+      if ( i < _node->_children.size() )
+      {
+         return _node->_children[ i ] ;
+      }
+
+      return NULL ;
    }
 
    //********************** _mthMatchNode ***************************

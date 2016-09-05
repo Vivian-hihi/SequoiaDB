@@ -41,6 +41,7 @@
 #include "core.hpp"
 #include "oss.hpp"
 #include "ossUtil.hpp"
+#include "mthCommon.hpp"
 #include "../bson/bson.hpp"
 #include "utilArray.hpp"
 #include "rtnPredicate.hpp"
@@ -87,8 +88,6 @@ namespace engine
 
       EN_MATCHNODE_TYPE_END,
    } ;
-
-   #define MTH_OPERATOR_EYECATCHER              '$'
 
    #define MTH_OPERATOR_STR_AND                 "$and"
    #define MTH_OPERATOR_STR_OR                  "$or"

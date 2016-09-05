@@ -39,9 +39,15 @@
 
 #include "core.hpp"
 #include <vector>
+#include "../bson/bson.h"
+
+using namespace bson ;
 
 namespace engine
 {
+
+   #define MTH_OPERATOR_EYECATCHER              '$'
+
 
    INT32 mthAppendString ( CHAR **ppStr, INT32 &bufLen,
                            INT32 strLen, const CHAR *newStr,
@@ -57,6 +63,26 @@ namespace engine
 
    INT32 mthConvertSubElemToNumeric( const CHAR *desc,
                                      INT32 &number ) ;
+
+   BOOLEAN mthIsModValid( const BSONElement &modmEle ) ;
+
+   struct element_cmp_lt
+   {
+      BOOLEAN operator() ( const BSONElement& l, const BSONElement& r ) const
+      {
+         INT32 x = (INT32) l.canonicalType() - (INT32) r.canonicalType() ;
+         if ( x < 0 ) 
+         { 
+            return TRUE ;
+         }
+         else if ( x > 0 ) 
+         {
+            return FALSE ;
+         }
+
+         return compareElementValues( l, r ) < 0 ;
+      }
+   } ;
 
 }
 

@@ -36,10 +36,11 @@
 
 #include "clsCatalogMatcher.hpp"
 #include "clsCatalogPredicate.hpp"
-#include "mthMatcher.hpp"
 #include "clsCatalogAgent.hpp"
 #include "clsTrace.hpp"
 #include "pdTrace.hpp"
+#include "mthCommon.hpp"
+
 
 using namespace bson;
 namespace engine

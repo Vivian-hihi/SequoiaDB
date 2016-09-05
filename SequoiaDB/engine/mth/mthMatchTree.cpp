@@ -257,6 +257,7 @@ namespace engine
 
       if ( EN_MATCHNODE_TYPE_FIELD == nodeType )
       {
+         //{ a: {$field:"b" } }
          nodeType = EN_MATCHNODE_TYPE_ET ;
       }
 
@@ -1179,9 +1180,9 @@ namespace engine
       try
       {
          //create root node( AND )
-         logciNode = mthGetMatchNodeFactory()->createLogicNode( 
+         _root = mthGetMatchNodeFactory()->createLogicNode( 
                                                  EN_MATCHNODE_TYPE_LOGIC_AND ) ;
-         if ( NULL == logciNode )
+         if ( NULL == _root )
          {
             rc = SDB_OOM ;
             PD_LOG ( PDERROR, "Failed to allocate memory for "
@@ -1189,19 +1190,17 @@ namespace engine
             goto error ;
          }
 
-         rc = logciNode->init( "", BSONObj().firstElement() ) ;
+         rc = _root->init( "", BSONObj().firstElement() ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG( PDERROR, "init logciNode failed:rc=%d", rc ) ;
             goto error ;
          }
 
-         _root = logciNode ;
-
          while ( i.more() )
          {
             BSONElement temp = i.next() ;
-            rc = _parseElement( temp, logciNode ) ;
+            rc = _parseElement( temp, _root ) ;
             if ( rc )
             {
                PD_LOG ( PDERROR, "parse element failed:element=%s,rc=d",
@@ -1272,11 +1271,18 @@ namespace engine
       }
 
       {
+         UINT32 idx = 0 ;
+         MATCHNODE_VECTOR childrenVec ;
          _mthMatchNodeIterator iter( node ) ;
          while ( iter.more() )
          {
             _mthMatchNode *child = iter.next() ;
-            rc = _deleteExtraLogicNode( child ) ;
+            childrenVec.push_back( child ) ;
+         }
+
+         for ( idx = 0 ; idx < childrenVec.size() ; idx++ )
+         {
+            rc = _deleteExtraLogicNode( childrenVec[idx] ) ;
             if ( SDB_OK != rc )
             {
                PD_LOG( PDERROR, "delete extra logic node failed:rc=%d", rc ) ;
@@ -1285,6 +1291,7 @@ namespace engine
          }
       }
 
+      //$logic -> $or/$and -> op => $logic -> op
       if ( ( node->getType() == EN_MATCHNODE_TYPE_LOGIC_OR || 
              node->getType() == EN_MATCHNODE_TYPE_LOGIC_AND ) && 
              node->getChildrenCount() == 1 )
@@ -1306,6 +1313,7 @@ namespace engine
          }
       }
 
+      //$not/and -> $and -> op1|$logic|op3 => $not/and -> op1|$logic|op3
       if ( node->getType() == EN_MATCHNODE_TYPE_LOGIC_AND )
       {
          _mthMatchNode *parent = node->getParent() ;

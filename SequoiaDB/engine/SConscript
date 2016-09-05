@@ -289,7 +289,6 @@ mthFiles = [
       "mth/mthMatchOpNode.cpp",
       "mth/mthMatchTree.cpp",
       "mth/mthMatchLogicNode.cpp",
-      "mth/mthMatcher.cpp",
       "mth/mthModifier.cpp",
       "mth/mthSelector.cpp",
       "mth/mthMergeSelector.cpp",

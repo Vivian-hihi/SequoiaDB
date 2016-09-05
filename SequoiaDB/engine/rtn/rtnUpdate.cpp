@@ -38,7 +38,6 @@
 #include "rtn.hpp"
 #include "dmsStorageUnit.hpp"
 #include "ossTypes.hpp"
-#include "mthMatcher.hpp"
 #include "mthModifier.hpp"
 #include "rtnIXScanner.hpp"
 #include "pmd.hpp"

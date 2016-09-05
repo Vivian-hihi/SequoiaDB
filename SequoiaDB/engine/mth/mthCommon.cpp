@@ -40,6 +40,8 @@
 #include "pdTrace.hpp"
 #include "mthTrace.hpp"
 
+using namespace bson ;
+
 namespace engine
 {
    // the function try to append newStr to ppStr.
@@ -302,5 +304,36 @@ namespace engine
    error:
      goto done ;
    }
+
+   BOOLEAN mthIsModValid( const BSONElement &modmEle )
+   {
+      if ( modmEle.type() == NumberDecimal )
+      {
+         bsonDecimal modmDecimal = modmEle.numberDecimal() ;
+         if ( modmDecimal.isZero() )
+         {
+            return FALSE ;
+         }
+      }
+      else if ( modmEle.type() == NumberDouble )
+      {
+         FLOAT64 f = modmEle.numberDouble() ;
+         if ( fabs( f ) <= OSS_EPSILON )
+         {
+            return FALSE ;
+         }
+      }
+      else
+      {
+         INT64 modm = modmEle.numberLong() ;
+         if ( 0 == modm )
+         {
+            return FALSE ;
+         }
+      }
+
+      return TRUE ;
+   }
+
 }
 

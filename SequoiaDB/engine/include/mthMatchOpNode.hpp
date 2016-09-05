@@ -46,6 +46,7 @@
 #include <boost/shared_ptr.hpp>
 #include "../bson/bson.hpp"
 #include "mthMatchNode.hpp"
+#include "mthCommon.hpp"
 #include <vector>
 #include "pcrecpp.h"
 
@@ -241,24 +242,6 @@ namespace engine
    } ;
 
    class _mthMatchOpNodeRegex ;
-
-   struct element_cmp_lt
-   {
-      BOOLEAN operator() ( const BSONElement& l, const BSONElement& r ) const
-      {
-         INT32 x = (INT32) l.canonicalType() - (INT32) r.canonicalType() ;
-         if ( x < 0 ) 
-         { 
-            return TRUE ;
-         }
-         else if ( x > 0 ) 
-         {
-            return FALSE ;
-         }
-
-         return compareElementValues( l, r ) < 0 ;
-      }
-   };
 
    class _mthMatchOpNodeIN : public _mthMatchOpNode
    {
