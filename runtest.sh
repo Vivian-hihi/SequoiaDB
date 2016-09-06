@@ -449,8 +449,6 @@ function mainRun()
    shortFile=""
    printOutFile=""
    shortDir=""
-   beginTime=`date`
-   beginTimeSec=`date +%s`
    
    # create msg db connection
    $sdbRoot/sdb -s "try { var db = new Sdb('${coordhostname}', '${coordsvcname}' ) } catch( e ) {} "
@@ -483,9 +481,7 @@ function mainRun()
    
    procBasicTestCase $testDir $testRoot
    fi
-   
-   endTime=`date`
-   endTimeSec=`date +%s`
+
    
    # after all test-cases clear
    printStr="$(runJSFile "${libRoot}/all_clean.js" 0)"
@@ -532,6 +528,9 @@ done
 echo "**************************************************************************************"
 
 # get test files and run
+beginTime=`date`
+beginTimeSec=`date +%s`
+
 for(( i=0; i<${#testRoots[@]}; i++ ))
 do
    case ${testRoots[i]} in
@@ -548,6 +547,9 @@ do
                                                                 
    mainRun "${findCmds[i]}" ${testRoots[i]}  
 done
+
+endTime=`date`
+endTimeSec=`date +%s`
 echo -e "\e[46;31m <======Finish test all testcases<===== \e[0m"
                    
 # show result to screen and file "result.txt"
