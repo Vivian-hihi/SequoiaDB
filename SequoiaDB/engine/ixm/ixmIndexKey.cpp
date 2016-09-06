@@ -503,7 +503,7 @@ namespace engine
          rc = SDB_INVALIDARG ;
          goto error ;
       }
-      if ( _keyPattern.objsize() == 0 )
+      if ( _keyPattern.isEmpty() )
       {
          PD_LOG ( PDERROR, "Empty key" ) ;
          rc = SDB_INVALIDARG ;
