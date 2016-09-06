@@ -160,7 +160,7 @@ namespace engine
                                           BOOLEAN &isTotallyConverted ) ;
 
       private:
-         _mthMatchNode *_root ;
+         _mthMatchNode  *_root ;
          BSONObj        _matchPattern ;
          BOOLEAN        _isInitialized ;
          BOOLEAN        _isMatchesAll ;

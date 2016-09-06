@@ -892,6 +892,7 @@ namespace engine
                if ( EN_MATCHNODE_TYPE_FIELD != tmpType 
                     && _isExistOpFieldRecursive( innerEle ) )
                {
+                  //only support $field
                   rc = SDB_INVALIDARG ;
                   PD_LOG ( PDERROR, "Matching syntax can not "
                            "have more than one operator") ;
@@ -1174,7 +1175,6 @@ namespace engine
       _matchPattern = matcher.copy() ;
       _isMatchesAll = TRUE ;
       INT32 eleNum  = 0 ;
-      _mthMatchLogicNode *logciNode = NULL ;
 
       BSONObjIterator i( _matchPattern ) ;
       try
@@ -1200,7 +1200,7 @@ namespace engine
          while ( i.more() )
          {
             BSONElement temp = i.next() ;
-            rc = _parseElement( temp, _root ) ;
+            rc = _parseElement( temp, ( _mthMatchLogicNode* )_root ) ;
             if ( rc )
             {
                PD_LOG ( PDERROR, "parse element failed:element=%s,rc=d",

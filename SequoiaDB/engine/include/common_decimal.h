@@ -135,7 +135,7 @@ typedef struct
 
   short  weight;  //weight of this decimal (NBASE=10000)
 
-  short  digitis[0]; //real data
+  //short  digitis[0]; //real data
 } __decimal ;
 
 #pragma pack()

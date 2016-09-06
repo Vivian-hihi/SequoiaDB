@@ -48,6 +48,9 @@
 #include "mthMatchNode.hpp"
 #include "mthCommon.hpp"
 #include <vector>
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 #include "pcrecpp.h"
 
 using namespace bson ;
