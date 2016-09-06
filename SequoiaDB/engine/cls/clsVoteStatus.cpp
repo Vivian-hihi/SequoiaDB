@@ -157,6 +157,7 @@ namespace engine
       msg.identity = _groupInfo->local ;
       msg.round = round ;
       map<UINT64, _clsSharingStatus >::iterator itrInfo ;
+      BOOLEAN peerAbnormal = FALSE ;
 
       itrInfo = _groupInfo->info.find( id.value ) ;
       /// unknown member
@@ -166,6 +167,11 @@ namespace engine
                          id.columns.groupID, id.columns.nodeID ) ;
          goto error ;
       }
+      if ( SERVICE_NORMAL != itrInfo->second.beat.serviceStatus )
+      {
+         peerAbnormal = TRUE ;
+      }
+
       /// primary is exist. refuse
       if ( MSG_INVALID_ROUTEID !=_groupInfo->primary.value )
       {
@@ -176,7 +182,7 @@ namespace engine
       }
       /// majority members' status are unknown.do not response
       if ( !CLS_IS_MAJORITY( _groupInfo->aliveSize() ,
-                            _groupInfo->groupSize() ) )
+                             _groupInfo->groupSize() ) )
       {
          PD_LOG( PDDEBUG, "vote: sharing break whih majority" ) ;
          goto error ;
@@ -186,12 +192,13 @@ namespace engine
          _logger = pmdGetKRCB()->getDPSCB() ;
          SDB_ASSERT( NULL != _logger, "logger should not be NULL" ) ;
       }
+
       {
          map<UINT64, _clsSharingStatus *>::iterator itr =
                                     _groupInfo->alives.begin() ;
          for ( ; itr != _groupInfo->alives.end(); itr++ )
          {
-            if ( SERVICE_NORMAL == itrInfo->second.beat.serviceStatus &&
+            if ( !peerAbnormal &&
                  SERVICE_ABNORMAL == itr->second->beat.serviceStatus )
             {
                continue ;
@@ -203,7 +210,13 @@ namespace engine
             }
          }
       }
-      if ( pmdGetStartup().isOK() || _info()->isAllNodeAbnormal( 0 ) )
+
+      /* when 1) self is business ok
+              2) all node is abnormal
+              3) peer node is abnormal
+         need to judge self lsn */
+      if ( pmdGetStartup().isOK() || peerAbnormal ||
+           _info()->isAllNodeAbnormal( 0 ) )
       {
          DPS_LSN local = _logger->getCurrentLsn() ;
          INT32 cRc = local.compare( lsn ) ;

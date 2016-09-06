@@ -959,6 +959,8 @@ namespace engine
          {
             if ( _info.primary.value == beat.identity.value )
             {
+               PD_LOG( PDEVENT, "vote: primary node[%d] is down",
+                       beat.identity.columns.nodeID ) ;
                _cata.remove( MSG_CAT_PAIMARY_CHANGE_RES ) ;
                _info.mtx.lock_w() ;
                _info.primary.value = MSG_INVALID_ROUTEID ;
