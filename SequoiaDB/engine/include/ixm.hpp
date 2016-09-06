@@ -215,6 +215,8 @@ namespace engine
       UINT8       _version ;
       // extent ID for the control block extent
       dmsExtentID _extentID ;
+      // logic id
+      dmsExtentID _logicID ;
 
       // Whether the given extent is a valid control block
       OSS_INLINE BOOLEAN _verify() const
@@ -239,6 +241,7 @@ namespace engine
             return ;
          }
          _version = _extent->_version ;
+         _logicID = _extent->_logicID ;
          // create index def from page
          try
          {
@@ -688,6 +691,10 @@ namespace engine
          }
          if ( _extent->_indexFlag != IXM_INDEX_FLAG_NORMAL &&
               _extent->_indexFlag != IXM_INDEX_FLAG_CREATING )
+         {
+            return FALSE ;
+         }
+         if ( _logicID != _extent->_logicID )
          {
             return FALSE ;
          }

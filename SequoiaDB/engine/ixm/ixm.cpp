@@ -62,6 +62,7 @@ namespace engine
       _pIndexSu = pIndexSu ;
       _pContext = context ;
       _extentID = extentID ;
+      _logicID = DMS_INVALID_EXTENT ;
       _pageSize = _pIndexSu->pageSize () ;
       _extent = (const ixmIndexCBExtent*)pIndexSu->beginFixedAddr( extentID,
                                                                    1 ) ;
@@ -85,6 +86,7 @@ namespace engine
       _pIndexSu = pIndexSu ;
       _pContext = context ;
       _extentID = extentID ;
+      _logicID = DMS_INVALID_EXTENT ;
       _pageSize = _pIndexSu->pageSize() ;
 
       _extent = (const ixmIndexCBExtent*)pIndexSu->beginFixedAddr ( extentID,
@@ -188,6 +190,7 @@ namespace engine
                                              _pContext->mbID() ) ;
       ixmIndexCBExtent *pExtent = extRW.writePtr<ixmIndexCBExtent>() ;
       pExtent->_logicID = logicalID ;
+      _logicID = logicalID ;
    }
 
    void _ixmIndexCB::clearLogicID()
