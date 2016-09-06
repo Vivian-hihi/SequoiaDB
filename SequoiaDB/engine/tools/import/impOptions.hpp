@@ -34,9 +34,8 @@
 #include "core.hpp"
 #include "oss.hpp"
 #include "impHosts.hpp"
-#include <boost/program_options.hpp>
+#include "utilOptions.hpp"
 
-namespace po = boost::program_options;
 using namespace std;
 
 namespace import
@@ -63,7 +62,7 @@ namespace import
       STR_TRIM_BOTH
    };
 
-   class Options: public SDBObject
+   class Options: public engine::utilOptions
    {
    public:
       Options();
@@ -124,15 +123,10 @@ namespace import
       inline BOOLEAN ignoreNull() const { return _ignoreNull; }
 
    private:
-      BOOLEAN has(CHAR* option);
-      template<typename T>
-      T get(CHAR* option);
       INT32 setOptions();
 
    private:
-      po::options_description    _allDesc;
-      po::variables_map          _vm;
-      BOOLEAN                    _parsed;
+      BOOLEAN        _parsed;
 
       /* general */
       string         _hostname;
@@ -179,7 +173,7 @@ namespace import
       BOOLEAN        _autoCompletion;
       BOOLEAN        _cast;
 
-      /* helpful */
+      /* helpfull */
       BOOLEAN        _dryRun;
       INT32          _bufferSize;
       INT64          _recordsMem; // the records used momory threshold 

@@ -30,7 +30,6 @@
 *******************************************************************************/
 #include "impOptions.hpp"
 #include "impUtil.hpp"
-#include "utilParam.hpp"
 #include "ossUtil.h"
 #include "pd.hpp"
 #include <iostream>
@@ -122,7 +121,7 @@ namespace import
    #define IMP_EXPLAIN_TRIMSTRING       "trim string (arg: [no|right|left|both]), default: no"
    #define IMP_EXPLAIN_IGNORENULL       "ignore null field, default: false"
 
-   #define _TYPE(T) po::value<T>()
+   #define _TYPE(T) utilOptType(T)
 
    #define IMP_DEFAULT_HOSTNAME "localhost"
    #define IMP_DEFAULT_SVCNAME  "11810"
@@ -508,15 +507,27 @@ namespace import
 
       SDB_ASSERT(!_parsed, "can't parse again");
 
-      _allDesc.add_options()
+      addOptions("General Options")
          IMP_GENERAL_OPTIONS
-         IMP_IMPORT_OPTIONS
+      ;
+
+      addOptions("Input Options")
          IMP_INPUT_OPTIONS
+      ;
+
+      addOptions("CSV Options")
          IMP_CSV_OPTIONS
+      ;
+
+      addOptions("Import Options")
+         IMP_IMPORT_OPTIONS
+      ;
+
+      addOptions("Helpfull Options", TRUE)
          IMP_HELPFUL_OPTIONS
       ;
 
-      rc = utilReadCommandLine( argc, argv, _allDesc, _vm, FALSE );
+      rc = utilOptions::parse(argc, argv);
       if (SDB_OK != rc)
       {
          goto error;
@@ -532,6 +543,10 @@ namespace import
       }
 
       rc = setOptions();
+      if (SDB_OK != rc)
+      {
+         goto error;
+      }
 
    done:
       return rc;
@@ -554,72 +569,15 @@ namespace import
       return has(IMP_OPTION_HELPFULL);
    }
 
-   BOOLEAN Options::has(CHAR* option)
-   {
-      SDB_ASSERT(_parsed, "must be used after parsed");
-      SDB_ASSERT(NULL != option, "");
-
-      return (_vm.count(option) > 0);
-   }
-
-   template<typename T>
-   T Options::get(CHAR* option)
-   {
-      SDB_ASSERT(_parsed, "must be used after parsed");
-      SDB_ASSERT(NULL != option, "");
-      return _vm[option].as<T>();
-   }
-
    void Options::printHelpInfo()
    {
-      po::options_description general;
-      po::options_description import;
-      po::options_description input;
-      po::options_description csv;
-
-      SDB_ASSERT(_parsed, "must be used after parsed");
-
-      general.add_options()
-         IMP_GENERAL_OPTIONS
-      ;
-
-      input.add_options()
-         IMP_INPUT_OPTIONS
-      ;
-
-      csv.add_options()
-         IMP_CSV_OPTIONS
-      ;
-
-      import.add_options()
-         IMP_IMPORT_OPTIONS
-      ;
-
-      std::cout << "General Options:" << std::endl;
-      std::cout << general << std::endl;
-
-      std::cout << "Input Options:" << std::endl;
-      std::cout << input << std::endl;
-
-      std::cout << "CSV Options:" << std::endl;
-      std::cout << csv << std::endl;
-
-      std::cout << "Import Options:" << std::endl;
-      std::cout << import << std::endl;
+      SDB_ASSERT(_parsed, "must be parsed");
+      print();
    }
 
    void Options::printHelpfullInfo()
    {
-      po::options_description helpful;
-
-      helpful.add_options()
-         IMP_HELPFUL_OPTIONS
-      ;
-
-      printHelpInfo();
-
-      std::cout << "Helpful Options:" << std::endl;
-      std::cout << helpful << std::endl;
+      print(TRUE);
    }
 
    INT32 Options::setOptions()
