@@ -1553,7 +1553,7 @@ namespace engine
          rtnDBFSPostCleaner fsCleaner ;
          fsCleaner.doOpr( eduCB() ) ;
       }
-      else
+      else if ( CLS_FS_STATUS_BEGIN != _status )
       {
          /// move dps to 0
          pmdGetKRCB()->getDPSCB()->move( 0, 0 ) ;
