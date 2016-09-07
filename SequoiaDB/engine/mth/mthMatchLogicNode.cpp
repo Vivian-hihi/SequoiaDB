@@ -302,7 +302,7 @@ namespace engine
          goto error ;
       }
 
-      result = ! tmpResult ;
+      result = !tmpResult ;
 
    done:
       return rc ;

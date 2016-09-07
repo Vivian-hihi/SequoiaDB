@@ -118,9 +118,9 @@ namespace engine
 
       protected:
          INT32 _execute( const CHAR *pFieldName, const BSONObj &obj, 
-                                 BOOLEAN isArrayObj, 
-                                 _mthMatchTreeContext &context, 
-                                 BOOLEAN &result ) ;
+                         BOOLEAN isArrayObj, 
+                         _mthMatchTreeContext &context, 
+                         BOOLEAN &result ) ;
 
          INT32 _dollarMatches( const CHAR *pFieldName, 
                                const BSONElement &element,

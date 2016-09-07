@@ -95,6 +95,7 @@ namespace engine
                                BOOLEAN needPredicate = TRUE ) ;
          INT32    matches( const BSONObj &matchTarget, BOOLEAN &result,
                            _mthMatchTreeContext &context ) ;
+         //TODO: delete
          INT32    matches( const BSONObj &matchTarget, BOOLEAN &result,
                            vector<INT64> *dollarList = NULL ) ;
          void     clear() ;
