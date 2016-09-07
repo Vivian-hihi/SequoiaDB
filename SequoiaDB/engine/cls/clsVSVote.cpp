@@ -132,7 +132,7 @@ namespace engine
       _timeout() += millisec ;
       if ( CLS_VOTE_CS_TIME <= _timeout() )
       {
-         if ( _isAccepted() && pmdGetStartup.isOK() )
+         if ( _isAccepted() && pmdGetStartup().isOK() )
          {
             next = CLS_ELECTION_STATUS_ANNOUNCE ;
             PD_LOG( PDEVENT, "Change to announce by timeout" ) ;
