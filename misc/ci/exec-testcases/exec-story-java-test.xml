@@ -27,6 +27,7 @@
         <path id="calsspath.test">
             <fileset dir="${java.testcase.path}/lib">
                 <include name="*.jar"/>
+                <exclude name="story_java_test.jar"/>
             </fileset>
             <pathelement path="${java.testcase.path}/build" />        
         </path>
