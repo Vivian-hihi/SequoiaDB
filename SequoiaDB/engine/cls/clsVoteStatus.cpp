@@ -114,7 +114,7 @@ namespace engine
 
       // launch
       {
-         DPS_LSN lsn = _logger->getCurrentLsn() ;
+         DPS_LSN lsn = _logger->expectLsn() ;
          _MsgClsElectionBallot msg ;
          msg.weights = lsn ;
          msg.identity = _groupInfo->local ;
@@ -137,6 +137,8 @@ namespace engine
             }
          }
          _broadcastAlives( &msg ) ;
+         PD_LOG( PDEVENT, "Broadcast vote[round:%d] to all alive nodes",
+                 round ) ;
       }
 
    done:
@@ -158,6 +160,8 @@ namespace engine
       msg.round = round ;
       map<UINT64, _clsSharingStatus >::iterator itrInfo ;
       BOOLEAN peerAbnormal = FALSE ;
+      BOOLEAN localAbnormal = FALSE ;
+      DPS_LSN local ;
 
       itrInfo = _groupInfo->info.find( id.value ) ;
       /// unknown member
@@ -171,13 +175,17 @@ namespace engine
       {
          peerAbnormal = TRUE ;
       }
+      if ( !pmdGetStartup().isOK() )
+      {
+         localAbnormal = TRUE ;
+      }
 
       /// primary is exist. refuse
       if ( MSG_INVALID_ROUTEID !=_groupInfo->primary.value )
       {
          PD_LOG( PDDEBUG, "vote:the primary still exist [group:%d] [node:%d]",
-                           _groupInfo->primary.columns.groupID,
-                           _groupInfo->primary.columns.nodeID ) ;
+                 _groupInfo->primary.columns.groupID,
+                 _groupInfo->primary.columns.nodeID ) ;
          goto accepterr ;
       }
       /// majority members' status are unknown.do not response
@@ -191,6 +199,7 @@ namespace engine
       {
          _logger = pmdGetKRCB()->getDPSCB() ;
          SDB_ASSERT( NULL != _logger, "logger should not be NULL" ) ;
+         local = _logger->expectLsn() ;
       }
 
       {
@@ -215,10 +224,9 @@ namespace engine
               2) all node is abnormal
               3) peer node is abnormal
          need to judge self lsn */
-      if ( pmdGetStartup().isOK() || peerAbnormal ||
+      if ( !localAbnormal || peerAbnormal ||
            _info()->isAllNodeAbnormal( 0 ) )
       {
-         DPS_LSN local = _logger->getCurrentLsn() ;
          INT32 cRc = local.compare( lsn ) ;
          /// local < lsn. accept
          if ( 0 > cRc )
@@ -260,9 +268,14 @@ namespace engine
             }
          }
       }
+
    accept:
-      PD_LOG( PDDEBUG, "vote accept [node:%d] [lsn:%lld,%d] [round:%d]",
-                        id.columns.nodeID, lsn.offset, lsn.version, round ) ;
+      PD_LOG( PDEVENT, "vote: Accept node[id:%d, lsn:%u.%lld, round:%d, "
+              "abnormal: %s], local[lsn:%u.%lld, abnormal:%s]",
+              id.columns.nodeID, lsn.version, lsn.offset, round,
+              (peerAbnormal ? "TRUE":"FALSE"),
+              local.version, local.offset,
+              (localAbnormal ? "TRUE":"FALSE") ) ;
       msg.header.res = SDB_OK ;
       _agent->syncSend( id, &msg ) ;
    done:
@@ -273,8 +286,12 @@ namespace engine
       rc = SDB_CLS_VOTE_FAILED ;
       goto done ;
    accepterr:
-      PD_LOG( PDDEBUG, "vote refuse [node:%d] [lsn:%lld,%d] [round:%d]",
-                       id.columns.nodeID, lsn.offset, lsn.version, round ) ;
+      PD_LOG( PDDEBUG, "vote: Refuse node[id:%d, lsn:%u.%lld, round:%d, "
+              "abnormal: %s], local[lsn:%u.%lld, abnormal:%s]",
+              id.columns.nodeID, lsn.version, lsn.offset, round,
+              (peerAbnormal ? "TRUE":"FALSE"),
+              local.version, local.offset,
+              (localAbnormal ? "TRUE":"FALSE") ) ;
       msg.header.res = SDB_CLS_VOTE_FAILED ;
       _agent->syncSend( id, &msg ) ;
       goto error ;
@@ -288,8 +305,7 @@ namespace engine
                                     _groupInfo->alives.begin() ;
       for ( ; itr != _groupInfo->alives.end(); itr++ )
       {
-         _agent->syncSend( itr->second->beat.identity,
-                           msg ) ;
+         _agent->syncSend( itr->second->beat.identity, msg ) ;
       }
       PD_TRACE_EXIT ( SDB__CLSVTSTUS__BCALIVES ) ;
    }

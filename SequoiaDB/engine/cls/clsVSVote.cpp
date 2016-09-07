@@ -98,6 +98,7 @@ namespace engine
                if ( _info()->groupSize() <= ( ++_accepted() + 1 ) )
                {
                   next = CLS_ELECTION_STATUS_ANNOUNCE ;
+                  PD_LOG( PDEVENT, "Change to announce by all accept" ) ;
                }
                else
                {
@@ -131,9 +132,10 @@ namespace engine
       _timeout() += millisec ;
       if ( CLS_VOTE_CS_TIME <= _timeout() )
       {
-         if ( _isAccepted() )
+         if ( _isAccepted() && pmdGetStartup.isOK() )
          {
             next = CLS_ELECTION_STATUS_ANNOUNCE ;
+            PD_LOG( PDEVENT, "Change to announce by timeout" ) ;
          }
          else
          {

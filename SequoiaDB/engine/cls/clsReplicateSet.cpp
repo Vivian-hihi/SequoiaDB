@@ -747,10 +747,11 @@ namespace engine
          DPS_LSN fBegin ;
          DPS_LSN mBegin ;
          DPS_LSN end ;
-         _logger->getLsnWindow( fBegin, mBegin, end, NULL, NULL ) ;
+         DPS_LSN expectLSN ;
+         _logger->getLsnWindow( fBegin, mBegin, end, &expectLSN, NULL ) ;
          _MsgClsBeat msg ;
          msg.beat.identity = _info.local ;
-         msg.beat.endLsn = end ;
+         msg.beat.endLsn = expectLSN ;
          msg.beat.version = _info.version ;
          msg.beat.role = _vote.primaryIsMe() ?
                          CLS_GROUP_ROLE_PRIMARY : CLS_GROUP_ROLE_SECONDARY ;
@@ -772,7 +773,7 @@ namespace engine
                continue ;
             }
             msg.beat.syncStatus = clsSyncWindow( itr->second.beat.endLsn,
-                                                 fBegin, mBegin, end ) ;
+                                                 fBegin, mBegin, expectLSN ) ;
 
             rc = _agent->syncSend( itr->second.beat.identity, &msg ) ;
             if ( SDB_OK == rc )
@@ -924,7 +925,7 @@ namespace engine
 
             if ( _vote.primaryIsMe() )
             {
-               DPS_LSN lsn  = _logger->getCurrentLsn() ;
+               DPS_LSN lsn  = _logger->expectLsn() ;
                if ( 0 >= lsn.compare( beat.endLsn ) )
                {
                   _info.mtx.lock_w() ;
