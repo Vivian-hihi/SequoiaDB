@@ -169,7 +169,7 @@ namespace engine
       if ( _groupInfo->info.end() == itrInfo )
       {
          PD_LOG( PDWARNING, "unknown member [group:%d] [node:%d]",
-                         id.columns.groupID, id.columns.nodeID ) ;
+                 id.columns.groupID, id.columns.nodeID ) ;
          goto error ;
       }
       if ( SERVICE_NORMAL != itrInfo->second.beat.serviceStatus )
@@ -200,8 +200,8 @@ namespace engine
       {
          _logger = pmdGetKRCB()->getDPSCB() ;
          SDB_ASSERT( NULL != _logger, "logger should not be NULL" ) ;
-         local = _logger->expectLsn() ;
       }
+      local = _logger->expectLsn() ;
 
       {
          map<UINT64, _clsSharingStatus *>::iterator itr =
