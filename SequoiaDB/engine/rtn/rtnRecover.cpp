@@ -48,6 +48,8 @@ namespace engine
 
    #define RTN_REORG_FILE_SUBFIX       ".REORG"
 
+   #define RTN_REBUILD_RESET_LSN       ( sizeof( dpsLogRecordHeader) )
+
    /*
       _rtnCLRebuilder implement
    */
@@ -672,7 +674,7 @@ namespace engine
          /// data file is restored
          mbContext->mbStat()->_commitFlag.init( 1 ) ;
          mbContext->mbStat()->_isCrash = FALSE ;
-         mbContext->mbStat()->_lastLSN.init( (UINT64)~0 ) ;
+         mbContext->mbStat()->_lastLSN.init( RTN_REBUILD_RESET_LSN ) ;
          mbContext->mb()->_commitFlag = 1 ;
          mbContext->mb()->_commitLSN = (UINT64)~0 ;
 
@@ -746,7 +748,7 @@ namespace engine
          mbContext->mb()->_idxCommitFlag = 1 ;
          mbContext->mb()->_idxCommitLSN = (UINT64)~0 ;
          mbContext->mbStat()->_idxCommitFlag.init( 1 ) ;
-         mbContext->mbStat()->_idxLastLSN.init( (UINT64)~0 ) ;
+         mbContext->mbStat()->_idxLastLSN.init( RTN_REBUILD_RESET_LSN ) ;
          mbContext->mbStat()->_idxIsCrash = FALSE ;
 
          _indexNum = mbContext->mb()->_numIndexes ;
@@ -767,7 +769,7 @@ namespace engine
       mbContext->mb()->_lobCommitFlag = 1 ;
       mbContext->mb()->_lobCommitLSN = (UINT64)~0 ;
       mbContext->mbStat()->_lobCommitFlag.init( 1 ) ;
-      mbContext->mbStat()->_lobLastLSN.init( (UINT64)~0 ) ;
+      mbContext->mbStat()->_lobLastLSN.init( RTN_REBUILD_RESET_LSN ) ;
       mbContext->mbStat()->_lobIsCrash = FALSE ;
 
       _totalLob = mbContext->mbStat()->_totalLobs ;
