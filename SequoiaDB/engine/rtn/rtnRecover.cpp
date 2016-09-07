@@ -48,7 +48,7 @@ namespace engine
 
    #define RTN_REORG_FILE_SUBFIX       ".REORG"
 
-   #define RTN_REBUILD_RESET_LSN       ( sizeof( dpsLogRecordHeader) )
+   #define RTN_REBUILD_RESET_LSN       ( (UINT64)~0 )
 
    /*
       _rtnCLRebuilder implement
