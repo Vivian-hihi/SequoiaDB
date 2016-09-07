@@ -83,7 +83,8 @@ namespace engine
          rc = SDB_CLS_VOTE_FAILED ;
          goto error ;
       }
-      else if ( !pmdGetStartup().isOK() && !_info()->isAllNodeAbnormal( 0 ) )
+      else if ( !pmdGetStartup().isOK() &&
+                !_info()->isAllNodeAbnormal( 0 ) )
       {
          PD_LOG ( PDWARNING, "Start type isn't normal, can't initial voting "
                   "until all nodes had been started" ) ;
@@ -221,11 +222,9 @@ namespace engine
       }
 
       /* when 1) self is business ok
-              2) all node is abnormal
-              3) peer node is abnormal
+              2) peer node is abnormal
          need to judge self lsn */
-      if ( !localAbnormal || peerAbnormal ||
-           _info()->isAllNodeAbnormal( 0 ) )
+      if ( !localAbnormal || peerAbnormal )
       {
          INT32 cRc = local.compare( lsn ) ;
          /// local < lsn. accept

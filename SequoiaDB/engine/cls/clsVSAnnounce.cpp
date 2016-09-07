@@ -36,7 +36,6 @@
 #include "clsVSAnnounce.hpp"
 #include "pdTrace.hpp"
 #include "clsTrace.hpp"
-#include "pmdStartup.hpp"
 
 namespace engine
 {
@@ -110,7 +109,7 @@ namespace engine
       _timeout() += millisec ;
       if ( CLS_VOTE_CS_TIME <= _timeout() )
       {
-         if ( _isAccepted() && pmdGetStartup().isOK() )
+         if ( _isAccepted() )
          {
             next = CLS_ELECTION_STATUS_PRIMARY ;
             PD_LOG( PDEVENT, "Change to primary by timeout" ) ;
