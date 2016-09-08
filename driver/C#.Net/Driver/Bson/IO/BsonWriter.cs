@@ -614,6 +614,38 @@ namespace SequoiaDB.Bson.IO
         }
 
         /// <summary>
+        /// Writes a BSON decimal to the writer.
+        /// </summary>
+        /// <param name="size">Total size of this decimal(4+4+2+2+digits.Length).</param>
+        /// <param name="typemod">The combined precision/scale value.
+        /// precision = (typmod >> 16) & 0xffff;scale = typmod & 0xffff;</param>
+        /// <param name="signscale">The combined sign/scale value.
+        /// sign = signscale & 0xC000;scale = signscale & 0x3FFF;</param>
+        /// <param name="weight">Weight of this decimal(NBASE=10000).</param>
+        /// <param name="digits">Real data.</param>
+        public abstract void WriteBsonDecimal(int size, int typemod,
+                                              short signscale, short weight, 
+                                              short[] digits);
+
+        /// <summary>
+        /// Writes a BSON Decimal element to the writer.
+        /// </summary>
+        /// <param name="name">The name of the element.</param>
+        /// <param name="size">Total size of this decimal(4+4+2+2+digits.Length).</param>
+        /// <param name="typemod">The combined precision/scale value.
+        /// precision = (typmod >> 16) & 0xffff;scale = typmod & 0xffff;</param>
+        /// <param name="signscale">The combined sign/scale value.
+        /// sign = signscale & 0xC000;scale = signscale & 0x3FFF;</param>
+        /// <param name="weight">Weight of this decimal(NBASE=10000).</param>
+        /// <param name="digits">Real data.</param>
+        public void WriteBsonDecimal(string name, int size, int typemod, 
+                                     short signscale, short weight, short[] digits)
+        {
+            WriteName(name);
+            WriteBsonDecimal(size, typemod, signscale, weight, digits);
+        }
+
+        /// <summary>
         /// Writes a BSON undefined to the writer.
         /// </summary>
         public abstract void WriteUndefined();

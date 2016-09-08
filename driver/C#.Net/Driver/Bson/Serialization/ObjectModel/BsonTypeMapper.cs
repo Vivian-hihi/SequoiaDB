@@ -90,6 +90,7 @@ namespace SequoiaDB.Bson
             { Mapping.FromTo(typeof(DateTimeOffset), BsonType.DateTime), Conversion.DateTimeOffsetToBsonDateTime },
             { Mapping.FromTo(typeof(double), BsonType.Boolean), Conversion.DoubleToBsonBoolean },
             { Mapping.FromTo(typeof(double), BsonType.Double), Conversion.NewBsonDouble },
+            { Mapping.FromTo(typeof(double), BsonType.Decimal), Conversion.DoubleToBsonDecimal },
             { Mapping.FromTo(typeof(float), BsonType.Boolean), Conversion.SingleToBsonBoolean },
             { Mapping.FromTo(typeof(float), BsonType.Double), Conversion.SingleToBsonDouble },
             { Mapping.FromTo(typeof(Guid), BsonType.Binary), Conversion.GuidToBsonBinary },
@@ -97,10 +98,12 @@ namespace SequoiaDB.Bson
             { Mapping.FromTo(typeof(int), BsonType.Double), Conversion.Int32ToBsonDouble },
             { Mapping.FromTo(typeof(int), BsonType.Int32), Conversion.NewBsonInt32 },
             { Mapping.FromTo(typeof(int), BsonType.Int64), Conversion.Int32ToBsonInt64 },
+            { Mapping.FromTo(typeof(int), BsonType.Decimal), Conversion.Int32ToBsonDecimal },
             { Mapping.FromTo(typeof(long), BsonType.Boolean), Conversion.Int64ToBsonBoolean },
             { Mapping.FromTo(typeof(long), BsonType.Double), Conversion.Int64ToBsonDouble },
             { Mapping.FromTo(typeof(long), BsonType.Int64), Conversion.NewBsonInt64 },
             { Mapping.FromTo(typeof(long), BsonType.Timestamp), Conversion.Int64ToBsonTimestamp },
+            { Mapping.FromTo(typeof(long), BsonType.Decimal), Conversion.Int64ToBsonDecimal },
             { Mapping.FromTo(typeof(ObjectId), BsonType.ObjectId), Conversion.NewBsonObjectId },
             { Mapping.FromTo(typeof(Regex), BsonType.RegularExpression), Conversion.RegexToBsonRegularExpression },
             { Mapping.FromTo(typeof(sbyte), BsonType.Boolean), Conversion.SByteToBsonBoolean },
@@ -111,6 +114,7 @@ namespace SequoiaDB.Bson
             { Mapping.FromTo(typeof(short), BsonType.Double), Conversion.Int16ToBsonDouble },
             { Mapping.FromTo(typeof(short), BsonType.Int32), Conversion.Int16ToBsonInt32 },
             { Mapping.FromTo(typeof(short), BsonType.Int64), Conversion.Int16ToBsonInt64 },
+            { Mapping.FromTo(typeof(short), BsonType.Decimal), Conversion.Int16ToBsonDecimal },
             { Mapping.FromTo(typeof(string), BsonType.Boolean), Conversion.StringToBsonBoolean },
             { Mapping.FromTo(typeof(string), BsonType.DateTime), Conversion.StringToBsonDateTime },
             { Mapping.FromTo(typeof(string), BsonType.Double), Conversion.StringToBsonDouble },
@@ -122,18 +126,22 @@ namespace SequoiaDB.Bson
             { Mapping.FromTo(typeof(string), BsonType.RegularExpression), Conversion.StringToBsonRegularExpression },
             { Mapping.FromTo(typeof(string), BsonType.String), Conversion.NewBsonString },
             { Mapping.FromTo(typeof(string), BsonType.Symbol), Conversion.StringToBsonSymbol },
+            { Mapping.FromTo(typeof(string), BsonType.Decimal), Conversion.StringToBsonDecimal },
             { Mapping.FromTo(typeof(uint), BsonType.Boolean), Conversion.UInt32ToBsonBoolean },
             { Mapping.FromTo(typeof(uint), BsonType.Double), Conversion.UInt32ToBsonDouble },
             { Mapping.FromTo(typeof(uint), BsonType.Int32), Conversion.UInt32ToBsonInt32 },
             { Mapping.FromTo(typeof(uint), BsonType.Int64), Conversion.UInt32ToBsonInt64 },
+            { Mapping.FromTo(typeof(uint), BsonType.Decimal), Conversion.UInt32ToBsonDecimal },
             { Mapping.FromTo(typeof(ushort), BsonType.Boolean), Conversion.UInt16ToBsonBoolean },
             { Mapping.FromTo(typeof(ushort), BsonType.Double), Conversion.UInt16ToBsonDouble },
             { Mapping.FromTo(typeof(ushort), BsonType.Int32), Conversion.UInt16ToBsonInt32 },
             { Mapping.FromTo(typeof(ushort), BsonType.Int64), Conversion.UInt16ToBsonInt64 },
+            { Mapping.FromTo(typeof(ushort), BsonType.Decimal), Conversion.UInt16ToBsonDecimal },
             { Mapping.FromTo(typeof(ulong), BsonType.Boolean), Conversion.UInt64ToBsonBoolean },
             { Mapping.FromTo(typeof(ulong), BsonType.Double), Conversion.UInt64ToBsonDouble },
             { Mapping.FromTo(typeof(ulong), BsonType.Int64), Conversion.UInt64ToBsonInt64 },
-            { Mapping.FromTo(typeof(ulong), BsonType.Timestamp), Conversion.UInt64ToBsonTimestamp }
+            { Mapping.FromTo(typeof(ulong), BsonType.Timestamp), Conversion.UInt64ToBsonTimestamp },
+            { Mapping.FromTo(typeof(ulong), BsonType.Decimal), Conversion.UInt64ToBsonDecimal }
         };
 
         private static Dictionary<Type, ICustomBsonTypeMapper> __customTypeMappers = new Dictionary<Type, ICustomBsonTypeMapper>();
@@ -521,17 +529,21 @@ namespace SequoiaDB.Bson
                 case Conversion.DateTimeOffsetToBsonDateTime: return new BsonDateTime(((DateTimeOffset)value).UtcDateTime);
                 case Conversion.DateTimeToBsonDateTime: return new BsonDateTime((DateTime)value);
                 case Conversion.DoubleToBsonBoolean: var d = (double)value; return BsonBoolean.Create(!(double.IsNaN(d) || d == 0.0));
+                case Conversion.DoubleToBsonDecimal: return new BsonDecimal(((double)value).ToString());
                 case Conversion.GuidToBsonBinary: return new BsonBinaryData((Guid)value);
                 case Conversion.Int16ToBsonBoolean: return BsonBoolean.Create((short)value != 0);
                 case Conversion.Int16ToBsonDouble: return new BsonDouble((double)(short)value);
                 case Conversion.Int16ToBsonInt32: return BsonInt32.Create((int)(short)value);
                 case Conversion.Int16ToBsonInt64: return new BsonInt64((long)(short)value);
+                case Conversion.Int16ToBsonDecimal: return new BsonDecimal(((short)value).ToString());
                 case Conversion.Int32ToBsonBoolean: return BsonBoolean.Create((int)value != 0);
                 case Conversion.Int32ToBsonDouble: return new BsonDouble((double)(int)value);
                 case Conversion.Int32ToBsonInt64: return new BsonInt64((long)(int)value);
+                case Conversion.Int32ToBsonDecimal: return new BsonDecimal(((int)value).ToString());
                 case Conversion.Int64ToBsonBoolean: return BsonBoolean.Create((long)value != 0);
                 case Conversion.Int64ToBsonDouble: return new BsonDouble((double)(long)value);
                 case Conversion.Int64ToBsonTimestamp: return new BsonTimestamp((long)value);
+                case Conversion.Int64ToBsonDecimal: return new BsonDecimal(((long)value).ToString());
                 case Conversion.NewBsonBoolean: return BsonBoolean.Create((bool)value);
                 case Conversion.NewBsonDouble: return new BsonDouble((double)value);
                 case Conversion.NewBsonInt32: return BsonInt32.Create((int)value);
@@ -559,18 +571,22 @@ namespace SequoiaDB.Bson
                 case Conversion.StringToBsonRegularExpression: return new BsonRegularExpression((string)value);
                 case Conversion.StringToBsonSymbol: return BsonSymbol.Create((string)value);
                 case Conversion.StringToBsonTimestamp: return new BsonTimestamp(XmlConvert.ToInt64((string)value));
+                case Conversion.StringToBsonDecimal: return new BsonDecimal((string)value);
                 case Conversion.UInt16ToBsonBoolean: return BsonBoolean.Create((ushort)value != 0);
                 case Conversion.UInt16ToBsonDouble: return new BsonDouble((double)(ushort)value);
                 case Conversion.UInt16ToBsonInt32: return BsonInt32.Create((int)(ushort)value);
                 case Conversion.UInt16ToBsonInt64: return new BsonInt64((long)(ushort)value);
+                case Conversion.UInt16ToBsonDecimal: return new BsonDecimal(((ushort)value).ToString());
                 case Conversion.UInt32ToBsonBoolean: return BsonBoolean.Create((uint)value != 0);
                 case Conversion.UInt32ToBsonDouble: return new BsonDouble((double)(uint)value);
                 case Conversion.UInt32ToBsonInt32: return BsonInt32.Create((int)(uint)value);
                 case Conversion.UInt32ToBsonInt64: return new BsonInt64((long)(uint)value);
+                case Conversion.UInt32ToBsonDecimal: return new BsonDecimal(((uint)value).ToString());
                 case Conversion.UInt64ToBsonBoolean: return BsonBoolean.Create((ulong)value != 0);
                 case Conversion.UInt64ToBsonDouble: return new BsonDouble((double)(ulong)value);
                 case Conversion.UInt64ToBsonInt64: return new BsonInt64((long)(ulong)value);
                 case Conversion.UInt64ToBsonTimestamp: return new BsonTimestamp((long)(ulong)value);
+                case Conversion.UInt64ToBsonDecimal: return new BsonDecimal(((ulong)value).ToString());
             }
 
             throw new BsonInternalException("Unexpected Conversion.");
@@ -598,17 +614,21 @@ namespace SequoiaDB.Bson
             DateTimeOffsetToBsonDateTime,
             DateTimeToBsonDateTime,
             DoubleToBsonBoolean,
+            DoubleToBsonDecimal,
             GuidToBsonBinary,
             Int16ToBsonBoolean,
             Int16ToBsonDouble,
             Int16ToBsonInt32,
             Int16ToBsonInt64,
+            Int16ToBsonDecimal, // add
             Int32ToBsonBoolean,
             Int32ToBsonDouble,
             Int32ToBsonInt64,
+            Int32ToBsonDecimal, // add
             Int64ToBsonBoolean,
             Int64ToBsonDouble,
             Int64ToBsonTimestamp,
+            Int64ToBsonDecimal, // add
             NewBsonBoolean,
             NewBsonDouble,
             NewBsonInt32,
@@ -633,18 +653,22 @@ namespace SequoiaDB.Bson
             StringToBsonRegularExpression,
             StringToBsonSymbol,
             StringToBsonTimestamp,
+            StringToBsonDecimal, // add
             UInt16ToBsonBoolean,
             UInt16ToBsonDouble,
             UInt16ToBsonInt32,
             UInt16ToBsonInt64,
+            UInt16ToBsonDecimal, // add
             UInt32ToBsonBoolean,
             UInt32ToBsonDouble,
             UInt32ToBsonInt32,
             UInt32ToBsonInt64,
+            UInt32ToBsonDecimal, // add
             UInt64ToBsonBoolean,
             UInt64ToBsonDouble,
             UInt64ToBsonInt64,
-            UInt64ToBsonTimestamp
+            UInt64ToBsonTimestamp,
+            UInt64ToBsonDecimal // add
         }
 
         private struct Mapping

@@ -1783,6 +1783,90 @@ namespace SequoiaDB.Bson.Serialization.Serializers
     }
 
     /// <summary>
+    /// Represents a serializer for BsonDecimal.
+    /// </summary>
+    public class BsonDecimalSerializer : BsonBaseSerializer
+    {
+        // private static fields
+        private static BsonDecimalSerializer __instance = new BsonDecimalSerializer();
+
+        // constructors
+        /// <summary>
+        /// Initializes a new instance of the BsonDecimalSerializer class.
+        /// </summary>
+        public BsonDecimalSerializer()
+            : base(new RepresentationSerializationOptions(BsonType.Decimal))
+        {
+        }
+
+        // public static properties
+        /// <summary>
+        /// Gets an instance of the BsonDecimalSerializer class.
+        /// </summary>
+        public static BsonDecimalSerializer Instance
+        {
+            get { return __instance; }
+        }
+
+        // public methods
+        /// <summary>
+        /// Deserializes an object from a BsonReader.
+        /// </summary>
+        /// <param name="bsonReader">The BsonReader.</param>
+        /// <param name="nominalType">The nominal type of the object.</param>
+        /// <param name="actualType">The actual type of the object.</param>
+        /// <param name="options">The serialization options.</param>
+        /// <returns>An object.</returns>
+        public override object Deserialize(
+            BsonReader bsonReader,
+            Type nominalType,
+            Type actualType,
+            IBsonSerializationOptions options)
+        {
+            VerifyTypes(nominalType, actualType, typeof(BsonDecimal));
+
+            var bsonType = bsonReader.GetCurrentBsonType();
+            if (bsonType == BsonType.Null)
+            {
+                bsonReader.ReadNull();
+                return null;
+            }
+            else
+            {
+                int size, typemod;
+                short signscale, weight;
+                short[] digits;
+                bsonReader.ReadBsonDecimal(out size, out typemod, out signscale, out weight, out digits);
+                return BsonDecimal.Create(size, typemod, signscale, weight, digits);
+            }
+        }
+
+        /// <summary>
+        /// Serializes an object to a BsonWriter.
+        /// </summary>
+        /// <param name="bsonWriter">The BsonWriter.</param>
+        /// <param name="nominalType">The nominal type.</param>
+        /// <param name="value">The object.</param>
+        /// <param name="options">The serialization options.</param>
+        public override void Serialize(
+            BsonWriter bsonWriter,
+            Type nominalType,
+            object value,
+            IBsonSerializationOptions options)
+        {
+            if (value == null)
+            {
+                bsonWriter.WriteNull();
+            }
+            else
+            {
+                var d = (BsonDecimal)value;
+                bsonWriter.WriteBsonDecimal(d.Size, d.Typemod, d.SignScale, d.Weight, d.Digits);
+            }
+        }
+    }
+
+    /// <summary>
     /// Represents a serializer for BsonUndefineds.
     /// </summary>
     public class BsonUndefinedSerializer : BsonBaseSerializer

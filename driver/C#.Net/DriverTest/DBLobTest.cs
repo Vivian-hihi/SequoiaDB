@@ -356,7 +356,7 @@ namespace DriverTest
             readNum = 1024*1024*30; // will only read 1024*1024*20
             readBuf = new byte[readNum];
             retNum = lob2.Read(readBuf); // after this, the offset is 1024*1024*100
-            Assert.IsTrue(readNum == (retNum + 1024*1024*10));
+            Assert.AreEqual(readNum, (retNum + 1024 * 1024 * 10));
             
             // Close
             lob2.Close();

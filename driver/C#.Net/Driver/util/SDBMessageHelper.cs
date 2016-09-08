@@ -1495,6 +1495,34 @@ namespace SequoiaDB
                         Array.Reverse(inBytes, offset, 4);
                         offset += 4;
                         break;
+
+                    case BsonType.Decimal:
+                    {
+                        // size(4) + typemod(4) + dscale(2) + weight(2) + digits(2x)
+
+                        // size
+                        int len = BitConverter.ToInt32(inBytes, offset);
+                        Array.Reverse(inBytes, offset, 4);
+                        int newlen = BitConverter.ToInt32(inBytes, offset);
+                        offset += 4;
+                        // typemod
+                        Array.Reverse(inBytes, offset, 4);
+                        offset += 4;
+                        // dscale
+                        Array.Reverse(inBytes, offset, 2);
+                        offset += 2;
+                        // weight
+                        Array.Reverse(inBytes, offset, 2);
+                        offset += 2;
+                        // digits
+                        int ndigits = ((l2r ? len : newlen) - BsonDecimal.DECIMAL_HEADER_SIZE) / sizeof(short);
+                        for (int i = 0; i < ndigits; ++i)
+                        {
+                            Array.Reverse(inBytes, offset, 2);
+                            offset += 2;                             
+                        }
+                        break;
+                    }
                 }
             }
             if (offset - beginOff != objSize )

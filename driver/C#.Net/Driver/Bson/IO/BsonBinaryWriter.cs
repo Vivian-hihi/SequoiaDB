@@ -571,6 +571,43 @@ namespace SequoiaDB.Bson.IO
         }
 
         /// <summary>
+        /// Writes a BSON decimal to the writer.
+        /// </summary>
+        /// <param name="size">Total size of this decimal(4+4+2+2+digits.Length).</param>
+        /// <param name="typemod">The combined precision/scale value.
+        /// precision = (typmod >> 16) & 0xffff;scale = typmod & 0xffff;</param>
+        /// <param name="signscale">The combined sign/scale value.
+        /// sign = signscale & 0xC000;scale = signscale & 0x3FFF;</param>
+        /// <param name="weight">Weight of this decimal(NBASE=10000).</param>
+        /// <param name="digits">Real data.</param>
+        public override void WriteBsonDecimal(int size, int typemod,
+                                              short signscale, short weight,
+                                              short[] digits)
+        {
+            if (Disposed) { throw new ObjectDisposedException("BsonBinaryWriter"); }
+            if (State != BsonWriterState.Value)
+            {
+                ThrowInvalidState("WriteDecimal", BsonWriterState.Value);
+            }
+
+            // type
+            _buffer.WriteByte((byte)BsonType.Decimal);
+            // key
+            WriteNameHelper();
+            // value
+            _buffer.WriteInt32(size);
+            _buffer.WriteInt32(typemod);
+            _buffer.WriteInt16(signscale);
+            _buffer.WriteInt16(weight);
+            for (int i = 0; i < digits.Length; i++)
+            {
+                _buffer.WriteInt16(digits[i]);
+            }
+
+            State = GetNextState();
+        }
+
+        /// <summary>
         /// Writes a BSON undefined to the writer.
         /// </summary>
         public override void WriteUndefined()

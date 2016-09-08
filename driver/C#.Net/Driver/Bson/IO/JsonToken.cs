@@ -78,7 +78,7 @@ namespace SequoiaDB.Bson.IO
         /// </summary>
         Int32,
         /// <summary>
-        /// And Int64 token.
+        /// An Int64 token.
         /// </summary>
         Int64,
         /// <summary>

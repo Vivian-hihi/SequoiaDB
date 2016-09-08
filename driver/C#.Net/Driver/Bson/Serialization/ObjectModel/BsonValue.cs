@@ -40,6 +40,7 @@ namespace SequoiaDB.Bson
             { BsonType.Double, 4 },
             { BsonType.Int32, 4 },
             { BsonType.Int64, 4 },
+            { BsonType.Decimal, 4},
             { BsonType.String, 5 },
             { BsonType.Symbol, 5 },
             { BsonType.Document, 6 },
@@ -171,6 +172,14 @@ namespace SequoiaDB.Bson
         public BsonTimestamp AsBsonTimestamp
         {
             get { return (BsonTimestamp)this; }
+        }
+
+        /// <summary>
+        /// Casts the BsonValue to a BsonDecimal (throws an InvalidCastException if the cast is not valid).
+        /// </summary>
+        public BsonDecimal AsBsonDecimal
+        {
+            get { return (BsonDecimal)this; }
         }
 
         /// <summary>
@@ -443,6 +452,14 @@ namespace SequoiaDB.Bson
         public bool IsBsonTimestamp
         {
             get { return _bsonType == BsonType.Timestamp; }
+        }
+
+        /// <summary>
+        /// Tests whether this BsonValue is a BsonDecimal.
+        /// </summary>
+        public bool IsBsonDecimal
+        {
+            get { return _bsonType == BsonType.Decimal; }
         }
 
         /// <summary>
@@ -1108,6 +1125,12 @@ namespace SequoiaDB.Bson
                     return BsonSymbol.Create(bsonReader.ReadSymbol());
                 case BsonType.Timestamp:
                     return new BsonTimestamp(bsonReader.ReadTimestamp());
+                case BsonType.Decimal:
+                    int size, typemod;
+                    short signscale, weight;
+                    short[] digits;
+                    bsonReader.ReadBsonDecimal(out size, out typemod, out signscale, out weight, out digits);
+                    return new BsonDecimal(size, typemod, signscale, weight, digits);
                 case BsonType.Undefined:
                     bsonReader.ReadUndefined();
                     return BsonUndefined.Value;
@@ -1349,6 +1372,10 @@ namespace SequoiaDB.Bson
                     break;
                 case BsonType.Timestamp:
                     bsonWriter.WriteTimestamp(((BsonTimestamp)this).Value);
+                    break;
+                case BsonType.Decimal:
+                    BsonDecimal d = (BsonDecimal)this;
+                    bsonWriter.WriteBsonDecimal(d.Size, d.Typemod, d.SignScale, d.Weight, d.Digits);
                     break;
                 case BsonType.Undefined:
                     bsonWriter.WriteUndefined();

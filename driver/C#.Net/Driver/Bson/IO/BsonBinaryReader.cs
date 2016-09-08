@@ -494,6 +494,36 @@ namespace SequoiaDB.Bson.IO
         }
 
         /// <summary>
+        /// Reads a BSON decimal element from the reader.
+        /// </summary>
+        /// <param name="size">Total size of this decimal(4+4+2+2+digits.Length).</param>
+        /// <param name="typemod">The combined precision/scale value.
+        /// precision = (typmod >> 16) & 0xffff;scale = typmod & 0xffff;</param>
+        /// <param name="signscale">The combined sign/scale value.
+        /// sign = signscale & 0xC000;scale = signscale & 0x3FFF;</param>
+        /// <param name="weight">Weight of this decimal(NBASE=10000).</param>
+        /// <param name="digits">Real data.</param>
+        public override void ReadBsonDecimal(out int size, out int typemod,
+                                             out short signscale, out short weight,
+                                             out short[] digits)
+        {
+            if (Disposed) { ThrowObjectDisposedException(); }
+            VerifyBsonType("ReadBsonDecimal", BsonType.Decimal);
+            size = _buffer.ReadInt32();
+            typemod = _buffer.ReadInt32();
+            signscale = _buffer.ReadInt16();
+            weight = _buffer.ReadInt16();
+            int ndigits = (size - BsonDecimal.DECIMAL_HEADER_SIZE) / sizeof(short);
+            digits = new short[ndigits];
+            for (int i = 0; i < ndigits; i++)
+            {
+                digits[i] = _buffer.ReadInt16();
+            }
+
+            State = GetNextState();
+        }
+
+        /// <summary>
         /// Reads a BSON undefined from the reader.
         /// </summary>
         public override void ReadUndefined()
@@ -563,6 +593,7 @@ namespace SequoiaDB.Bson.IO
                 case BsonType.String: skip = ReadSize(); break;
                 case BsonType.Symbol: skip = ReadSize(); break;
                 case BsonType.Timestamp: skip = 8; break;
+                case BsonType.Decimal: skip = ReadSize(); break;
                 case BsonType.Undefined: skip = 0; break;
                 default: throw new BsonInternalException("Unexpected BsonType.");
             }

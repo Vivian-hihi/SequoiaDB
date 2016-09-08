@@ -218,6 +218,12 @@ namespace SequoiaDB.Bson
             {
                 return ((double)_value).CompareTo(otherDouble.Value);
             }
+            // compare with BsonDecimal
+            var otherDecimal = other as BsonDecimal;
+            if (otherDecimal != null)
+            {
+                return -otherDecimal.CompareTo(new BsonDecimal(this.ToString()));
+            }
             return CompareTypeTo(other);
         }
 

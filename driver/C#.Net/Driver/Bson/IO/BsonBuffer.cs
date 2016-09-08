@@ -439,6 +439,29 @@ namespace SequoiaDB.Bson.IO
         }
 
         /// <summary>
+        /// Reads a BSON Int16 from the reader.
+        /// </summary>
+        /// <returns>An Int16.</returns>
+        public short ReadInt16()
+        {
+            if (_disposed) { throw new ObjectDisposedException("BsonBuffer"); }
+            EnsureDataAvailable(2);
+            if (__chunkSize - _chunkOffset >= 2)
+            {
+                // for int only we come out ahead with this code vs using BitConverter
+                var value =
+                    (short)(((short)_chunk[_chunkOffset + 0]) +
+                    ((short)_chunk[_chunkOffset + 1] << 8));
+                Position += 2;
+                return value;
+            }
+            else
+            {
+                return BitConverter.ToInt16(ReadBytes(2), 0); // straddles chunk boundary
+            }
+        }
+
+        /// <summary>
         /// Reads a BSON Int32 from the reader.
         /// </summary>
         /// <returns>An Int32.</returns>
@@ -804,6 +827,27 @@ namespace SequoiaDB.Bson.IO
             {
                 Buffer.BlockCopy(BitConverter.GetBytes(value), 0, _chunk, _chunkOffset, 8);
                 Position += 8;
+            }
+            else
+            {
+                WriteBytes(BitConverter.GetBytes(value)); // straddles chunk boundary
+            }
+        }
+
+        /// <summary>
+        /// Writes a BSON Int16 to the buffer.
+        /// </summary>
+        /// <param name="value">The Int16 value.</param>
+        public void WriteInt16(short value)
+        {
+            if (_disposed) { throw new ObjectDisposedException("BsonBuffer"); }
+            EnsureSpaceAvailable(2);
+            if (__chunkSize - _chunkOffset >= 2)
+            {
+                // for int only we come out ahead with this code vs using BitConverter
+                _chunk[_chunkOffset + 0] = (byte)(value);
+                _chunk[_chunkOffset + 1] = (byte)(value >> 8);
+                Position += 2;
             }
             else
             {

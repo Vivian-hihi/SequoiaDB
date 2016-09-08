@@ -63,6 +63,7 @@ namespace SequoiaDB.Bson.Serialization
                 { typeof(BsonString), BsonStringSerializer.Instance },
                 { typeof(BsonSymbol), BsonSymbolSerializer.Instance },
                 { typeof(BsonTimestamp), BsonTimestampSerializer.Instance },
+                { typeof(BsonDecimal), BsonDecimalSerializer.Instance },
                 { typeof(BsonUndefined), BsonUndefinedSerializer.Instance },
                 { typeof(BsonValue), BsonValueSerializer.Instance },
                 { typeof(Byte), ByteSerializer.Instance },

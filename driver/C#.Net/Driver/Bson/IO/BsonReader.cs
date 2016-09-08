@@ -675,6 +675,38 @@ namespace SequoiaDB.Bson.IO
         }
 
         /// <summary>
+        /// Reads a BSON decimal element from the reader.
+        /// </summary>
+        /// <param name="size">Total size of this decimal(4+4+2+2+digits.Length).</param>
+        /// <param name="typemod">The combined precision/scale value.
+        /// precision = (typmod >> 16) & 0xffff;scale = typmod & 0xffff;</param>
+        /// <param name="signscale">The combined sign/scale value.
+        /// sign = signscale & 0xC000;scale = signscale & 0x3FFF;</param>
+        /// <param name="weight">Weight of this decimal(NBASE=10000).</param>
+        /// <param name="digits">Real data.</param>
+        public abstract void ReadBsonDecimal(out int size, out int typemod, 
+                                             out short signscale, out short weight, 
+                                             out short[] digits);
+
+        /// <summary>
+        /// Reads a BSON decimal element from the reader.
+        /// </summary>
+        /// <param name="name">The name of the element.</param>
+        /// <param name="size">Total size of this decimal(4+4+2+2+digits.Length).</param>
+        /// <param name="typemod">The combined precision/scale value.
+        /// precision = (typmod >> 16) & 0xffff;scale = typmod & 0xffff;</param>
+        /// <param name="signscale">The combined sign/scale value.
+        /// sign = signscale & 0xC000;scale = signscale & 0x3FFF;</param>
+        /// <param name="weight">Weight of this decimal(NBASE=10000).</param>
+        /// <param name="digits">Real data.</param>
+        public void ReadBsonDecimal(string name, out int size, out int typemod, 
+                                    out short signscale, out short weight, out short[] digits)
+        {
+            VerifyName(name);
+            ReadBsonDecimal(out size, out typemod, out signscale, out weight, out digits);
+        }
+
+        /// <summary>
         /// Reads a BSON undefined from the reader.
         /// </summary>
         public abstract void ReadUndefined();

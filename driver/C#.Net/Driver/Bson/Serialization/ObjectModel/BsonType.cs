@@ -103,6 +103,10 @@ namespace SequoiaDB.Bson
         /// </summary>
         Int64 = 0x12,
         /// <summary>
+        /// A BSON decimal value.
+        /// </summary>
+        Decimal = 0x64,
+        /// <summary>
         /// A BSON MinKey value.
         /// </summary>
         MinKey = 0xff,

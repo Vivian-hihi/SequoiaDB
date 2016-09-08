@@ -589,6 +589,31 @@ namespace SequoiaDB.Bson.IO
         }
 
         /// <summary>
+        /// Reads a BSON decimal element from the reader.
+        /// </summary>
+        /// <param name="size">Total size of this decimal(4+4+2+2+digits.Length).</param>
+        /// <param name="typemod">The combined precision/scale value.
+        /// precision = (typmod >> 16) & 0xffff;scale = typmod & 0xffff;</param>
+        /// <param name="signscale">The combined sign/scale value.
+        /// sign = signscale & 0xC000;scale = signscale & 0x3FFF;</param>
+        /// <param name="weight">Weight of this decimal(NBASE=10000).</param>
+        /// <param name="digits">Real data.</param>
+        public override void ReadBsonDecimal(out int size, out int typemod,
+                                             out short signscale, out short weight,
+                                             out short[] digits)
+        {
+            if (Disposed) { ThrowObjectDisposedException(); }
+            VerifyBsonType("ReadBsonDecimal", BsonType.Decimal);
+            var d = _currentValue.AsBsonDecimal;
+            size = d.Size;
+            typemod = d.Typemod;
+            signscale = d.SignScale;
+            weight = d.Weight;
+            digits = d.Digits;
+            State = GetNextState();
+        }
+
+        /// <summary>
         /// Reads a BSON undefined from the reader.
         /// </summary>
         public override void ReadUndefined()
@@ -719,6 +744,12 @@ namespace SequoiaDB.Bson.IO
                     break;
                 case BsonType.Timestamp:
                     ReadTimestamp();
+                    break;
+                case BsonType.Decimal:
+                    int size, typemod;
+                    short signscale, weight;
+                    short[] digits;
+                    ReadBsonDecimal(out size, out typemod, out signscale, out weight, out digits);
                     break;
                 case BsonType.Undefined:
                     ReadUndefined();
@@ -1022,6 +1053,7 @@ namespace SequoiaDB.Bson.IO
                     case "$regex": _currentValue = ParseRegularExpressionExtendedJson(); return BsonType.RegularExpression;
                     case "$symbol": _currentValue = ParseSymbolExtendedJson(); return BsonType.Symbol;
                     case "$timestamp": _currentValue = ParseTimestampExtendedJson(); return BsonType.Timestamp;
+                    case "$decimal": _currentValue = ParseBsonDecimalExtendedJson(); return BsonType.Decimal;
                     case "$numberLong": _currentValue = ParseNumberLongExtendedJson(); return BsonType.Int64;
                 }
             }
@@ -1323,6 +1355,59 @@ namespace SequoiaDB.Bson.IO
             }
             VerifyToken(")");
             return BsonRegularExpression.Create(patternToken.StringValue, options);
+        }
+
+        private BsonValue ParseBsonDecimalExtendedJson()
+        {
+            VerifyToken(":");
+            var valueToken = PopToken();
+            if (valueToken.Type != JsonTokenType.String)
+            {
+                var message = string.Format("JSON reader expected a string but found '{0}'.", valueToken.Lexeme);
+                throw new FileFormatException(message);
+            }
+            int precision = -1;
+            int scale = -1;
+            var commaToken = PopToken();
+            if (commaToken.Lexeme == ",")
+            {
+                VerifyString("$precision");
+                VerifyToken(":");
+                var precisionToken = PopToken();
+                if (precisionToken.Type != JsonTokenType.BeginArray)
+                {
+                    var message = string.Format("JSON reader expected a array but found '{0}'.", precisionToken.Lexeme);
+                    throw new FileFormatException(message);
+                }
+
+                var pToken = PopToken();
+                if (pToken.Type != JsonTokenType.Int32)
+                {
+                    var message = string.Format("JSON reader expected a Int32 precision of the decimal but found '{0}'.", pToken.Lexeme);
+                    throw new FileFormatException(message);
+                }
+                var arrCommaToken = PopToken();
+                if (arrCommaToken.Lexeme != ",")
+                {
+                    var message = string.Format("JSON reader expected a bson decimal with valid format.");
+                    throw new FileFormatException(message);
+                }
+                var sToken = PopToken();
+                if (sToken.Type != JsonTokenType.Int32)
+                {
+                    var message = string.Format("JSON reader expected a Int32 scale of the decimal but found '{0}'.", sToken.Lexeme);
+                    throw new FileFormatException(message);
+                }
+                precision = pToken.Int32Value;
+                scale = sToken.Int32Value;
+                VerifyToken("]");
+            }
+            else 
+            {
+                PushToken(commaToken);
+            }
+            VerifyToken("}");
+            return new BsonDecimal(valueToken.StringValue, precision, scale);
         }
 
         private BsonValue ParseRegularExpressionExtendedJson()

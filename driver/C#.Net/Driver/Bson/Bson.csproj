@@ -86,6 +86,7 @@
     <Compile Include="IO\BsonReaderSettings.cs" />
     <Compile Include="IO\BsonTrie.cs" />
     <Compile Include="IO\BsonWriterSettings.cs" />
+    <Compile Include="Serialization\ObjectModel\BsonDecimal.cs" />
     <Compile Include="Serialization\ObjectModel\GuidRepresentation.cs" />
     <Compile Include="Serialization\ObjectModel\GuidConverter.cs" />
     <Compile Include="IO\JsonReaderSettings.cs" />
