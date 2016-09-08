@@ -24,7 +24,7 @@ all.spare.port.start=26000
 all.spare.port.stop=29000
 
 jenkins_master=ci-test-ppc-rhel2
-trunk_machine=ci-test-ppc-suse1,ci-test-ppc-rhel2,ci-test-ppc-rhel1
+trunk_machine=ci-test-ppc-rhel1,ci-test-ppc-suse1,ci-test-ppc-rhel2
 trunk_machine_control=ci-test-ppc-suse1
 branch_machine=ci-test-ppc-suse1,ci-test-ppc-rhel2,ci-test-ppc-rhel1
 branch_machine_control=ci-test-ppc-suse1
