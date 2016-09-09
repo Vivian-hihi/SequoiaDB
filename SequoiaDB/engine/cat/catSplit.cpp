@@ -228,6 +228,7 @@ namespace engine
       FLOAT64 percent = 0.0 ;
       const CHAR* sourceName = NULL ;
       const CHAR* dstName = NULL ;
+      UINT32 dstGroupID = CAT_INVALID_GROUPID ;
       groupID = CAT_INVALID_GROUPID ;
       BOOLEAN dstInCSDomain = FALSE ;
 
@@ -261,6 +262,21 @@ namespace engine
                 PDERROR, "Target group name can not the same with source group"
                 " name" ) ;
 
+      // get source id
+      rc = catGroupName2ID( sourceName, groupID, cb ) ;
+      PD_RC_CHECK( rc, PDERROR, "Group name[%s] to id failed, rc: %d",
+                   sourceName, rc ) ;
+
+      // check the collection is in source id
+      PD_CHECK( isGroupInCataSet( groupID, *cataSet ), SDB_CL_NOT_EXIST_ON_GROUP,
+                error, PDWARNING, "The collection[%s] does not exist on source "
+                "group[%s]", clFullName, sourceName ) ;
+
+      // get dest id
+      rc = catGroupName2ID( dstName, dstGroupID, cb ) ;
+      PD_RC_CHECK( rc, PDERROR, "Group name[%s] to id failed, rc: %d",
+                   dstName, rc ) ;
+
       // check dst is in cs domain
       rc = _checkDstGroupInCSDomain( dstName, clFullName, dstInCSDomain, cb ) ;
       PD_RC_CHECK( rc, PDWARNING, "Check destination group in collection space"
@@ -275,16 +291,6 @@ namespace engine
          PD_CHECK( percent > 0.0 && percent <= 100.0, SDB_INVALIDARG, error,
                    PDERROR, "Split percent value[%f] error", percent ) ;
       }
-
-      // get source id
-      rc = catGroupName2ID( sourceName, groupID, cb ) ;
-      PD_RC_CHECK( rc, PDERROR, "Group name[%s] to id failed, rc: %d",
-                   sourceName, rc ) ;
-
-      // check the collection is in source id
-      PD_CHECK( isGroupInCataSet( groupID, *cataSet ), SDB_CL_NOT_EXIST_ON_GROUP,
-                error, PDWARNING, "The collection[%s] does not exist on source "
-                "group[%s]", clFullName, sourceName ) ;
 
    done:
       return rc ;
@@ -358,14 +364,6 @@ namespace engine
                 PDERROR, "Target group name can not the same with source group"
                 " name" ) ;
 
-      // check dst is in cs domain
-      rc = _checkDstGroupInCSDomain( dstName, clFullName, dstInCSDomain, cb ) ;
-      PD_RC_CHECK( rc, PDWARNING, "Check destination group in collection space"
-                   "domain failed, rc: %d", rc ) ;
-      PD_CHECK( dstInCSDomain, SDB_CAT_GROUP_NOT_IN_DOMAIN, error, PDWARNING,
-                "Split target group[%s] is not in collection space domain",
-                dstName ) ;
-
       // get source id
       rc = catGroupName2ID( sourceName, sourceID, cb ) ;
       PD_RC_CHECK( rc, PDERROR, "Group name[%s] to id failed, rc: %d",
@@ -381,6 +379,14 @@ namespace engine
       rc = catGroupName2ID( dstName, groupID, cb ) ;
       PD_RC_CHECK( rc, PDERROR, "Group name[%s] to id failed, rc: %d",
                    dstName, rc ) ;
+
+      // check dst is in cs domain
+      rc = _checkDstGroupInCSDomain( dstName, clFullName, dstInCSDomain, cb ) ;
+      PD_RC_CHECK( rc, PDWARNING, "Check destination group in collection space"
+                   "domain failed, rc: %d", rc ) ;
+      PD_CHECK( dstInCSDomain, SDB_CAT_GROUP_NOT_IN_DOMAIN, error, PDWARNING,
+                "Split target group[%s] is not in collection space domain",
+                dstName ) ;
 
       // check bKey && eKey valid
       if ( !usePercent  )
