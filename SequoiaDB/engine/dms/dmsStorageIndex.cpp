@@ -344,7 +344,9 @@ namespace engine
       */
       if ( setFlag )
       {
-         extAddr->_flag = DMS_EXTENT_FLAG_FREED ;
+         dmsExtent *writeExtent = NULL ;
+         writeExtent = extRW.writePtr<dmsExtent>() ;
+         writeExtent->_flag = DMS_EXTENT_FLAG_FREED ;
       }
 
       _pDataSu->_mbStatInfo[extAddr->_mbID]._totalIndexPages -= 1 ;
