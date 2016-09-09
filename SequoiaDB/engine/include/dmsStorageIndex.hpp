@@ -72,7 +72,8 @@ namespace engine
          INT32    reserveExtent ( UINT16 mbID, dmsExtentID &extentID,
                                   _dmsContext *context ) ;
          // release a signal page
-         INT32    releaseExtent ( dmsExtentID extentID ) ;
+         INT32    releaseExtent ( dmsExtentID extentID,
+                                  BOOLEAN setFlag = FALSE ) ;
 
          INT32    createIndex ( _dmsMBContext *context, const BSONObj &index,
                                 _pmdEDUCB *cb, SDB_DPSCB *dpscb,

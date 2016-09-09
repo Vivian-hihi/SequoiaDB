@@ -321,7 +321,8 @@ namespace engine
       goto done ;
    }
 
-   INT32 _dmsStorageIndex::releaseExtent( dmsExtentID extentID )
+   INT32 _dmsStorageIndex::releaseExtent( dmsExtentID extentID,
+                                          BOOLEAN setFlag )
    {
       INT32 rc                   = SDB_OK ;
       dmsExtRW extRW ;
@@ -339,8 +340,13 @@ namespace engine
 
       /*
        * To improve the perfomance, so we need not change the page info
-      extAddr->_flag = DMS_EXTENT_FLAG_FREED ;
+       * when setFlag == FALSE
       */
+      if ( setFlag )
+      {
+         extAddr->_flag = DMS_EXTENT_FLAG_FREED ;
+      }
+
       _pDataSu->_mbStatInfo[extAddr->_mbID]._totalIndexPages -= 1 ;
       rc = _releaseSpace( extentID, 1 ) ;
       if ( rc )
@@ -566,7 +572,7 @@ namespace engine
    error :
       if ( DMS_INVALID_EXTENT != extentID )
       {
-         releaseExtent ( extentID ) ;
+         releaseExtent ( extentID, TRUE ) ;
       }
       if ( DMS_INVALID_EXTENT != rootExtentID )
       {
@@ -848,7 +854,7 @@ namespace engine
          }
 
          // release index control block extent
-         rc = releaseExtent ( context->mb()->_indexExtent[indexID] ) ;
+         rc = releaseExtent ( context->mb()->_indexExtent[indexID], TRUE ) ;
          if ( rc )
          {
             PD_LOG ( PDERROR, "Failed to release indexCB extent: %d",
