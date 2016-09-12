@@ -41,24 +41,29 @@ INT64 rand64()
 
 inline bool safe( UINT64 a, UINT64 b )
 {
-   if( a < POW2_31 && b < POW2_31 )
+   if( a < b )
    {
-      return true ;
+      return safe(b,a) ;
    }
-   if( a > b )
+
+   if( a < POW2_31 )
    {
-      return (
-               ( a < POW2_39 && b < POW2_23 ) ||
-               ( a < POW2_47 && b < POW2_15 ) ||
-               ( a < POW2_55 && b < POW2_7  ) ) ;
+      return b < POW2_31 ;
    }
-   else
+   else if( a < POW2_39 )
    {
-      return (
-               ( b < POW2_39 && a < POW2_23 ) ||
-               ( b < POW2_47 && a < POW2_15 ) ||
-               ( b < POW2_55 && a < POW2_7  ) ) ;
+      return b < POW2_23 ;
    }
+   else if( a < POW2_47 )
+   {
+      return b < POW2_15 ;
+   }
+   else if( a < POW2_55 )
+   {
+      return b < POW2_7 ;
+   }
+
+   return false ;
 }
 
 bool safeTest( INT64 a, INT64 b )
@@ -79,11 +84,20 @@ bool overflowTest( INT64 a, INT64 b )
 
 void generateData()
 {
-   
    for( int i = 0; i < count_31_31; ++i )
    {
-      aNums[i] = rand() ;
-      bNums[i] = rand() ;
+      UINT64 a = rand64() % POW2_31 ;
+      UINT64 b = rand64() % POW2_31 ;
+      if(a<b)
+      {
+         bNums[i] = a ;
+         aNums[i] = b ;
+      }
+      else
+      {
+         aNums[i] = a ;
+         bNums[i] = b ;
+      }
       assert( aNums[i] < POW2_31 && bNums[i] < POW2_31 ) ;
       assert( !overflowTest(aNums[i],bNums[i]) ) ;
    }
@@ -94,14 +108,14 @@ void generateData()
       assert( aNums[i] < POW2_39 && bNums[i] < POW2_23 ) ;
       assert( !overflowTest(aNums[i],bNums[i]) ) ;
    }
-   for( int i = count_23_39; i < count_15_47+count_23_39+count_31_31; ++i )
+   for( int i = count_23_39+count_31_31; i < count_15_47+count_23_39+count_31_31; ++i )
    {
       aNums[i] = rand64() % POW2_47 ;
       bNums[i] = rand64() % POW2_15 ;
       assert( aNums[i] < POW2_47 && bNums[i] < POW2_15 ) ;
       assert( !overflowTest(aNums[i],bNums[i]) ) ;
    }
-   for( int i = count_15_47; i < count_7_55+count_15_47+count_23_39+count_31_31; ++i )
+   for( int i = count_15_47+count_23_39+count_31_31; i < count_7_55+count_15_47+count_23_39+count_31_31; ++i )
    {
       aNums[i] = rand64() % POW2_55 ;
       bNums[i] = rand64() % POW2_7 ;
@@ -227,7 +241,7 @@ void autoTest( )
    bNums = new INT64[count] ;
   
    ofs << "31_31, 23_39, 15_47, 7_55 : overflow, safe+overflow" << endl ; 
-   
+
    count_31_31 = count ;
    count_23_39 = count_15_47 = count_7_55 = overflowCount = 0 ;
    autoTestEach() ;

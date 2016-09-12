@@ -49,8 +49,8 @@ void generateData()
    for( int i = 0; i < diffCount; ++i )
    {
       INT64 a, b ;
-      a = rand64() ;
-      b = -rand64() ;
+      a = -rand64() ;
+      b = rand64() ;
       assert( (a^b) < 0 ) ;
       aNums[i] = a ;
       bNums[i] = b ;
@@ -221,12 +221,19 @@ void autoTest( )
    bNums = new INT64[count] ;
    ofs << "diffCount, sameCount, overflowCount : "
           "overflow, diff+overflow, diff+safe+overflow ( clock ticks )" << endl ;
+   ofs << endl ;
    for( diffCount = count, sameCount = 0, overflowCount = 0; 
         diffCount >= 0; diffCount -= 2000, sameCount += 2000 )
       autoTestEach() ;
+   ofs << endl ;
+   for( diffCount = count, sameCount = 0, overflowCount = 0; 
+        diffCount >= 0; diffCount -= 2000, sameCount += 2000 )
+      autoTestEach() ;
+   ofs << endl ;
    for( diffCount = count, sameCount = 0, overflowCount = 0; 
         diffCount >= 0; diffCount -= 2000, overflowCount += 2000 )
       autoTestEach() ;
+   ofs << endl ;
    for( sameCount = count, diffCount = 0, overflowCount = 0; 
         sameCount >= 0; sameCount -= 2000, overflowCount += 2000 )
       autoTestEach() ;
