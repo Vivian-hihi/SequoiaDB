@@ -42,7 +42,8 @@ using namespace bson ;
 
 namespace engine
 {
-   _mthMatchLogicNode::_mthMatchLogicNode()
+   _mthMatchLogicNode::_mthMatchLogicNode( _mthNodeAllocator *allocator )
+                      :_mthMatchNode( allocator )
    {
       
    }
@@ -127,7 +128,8 @@ namespace engine
    }
 
    //*******************_mthMatchLogicAndNode***********************
-   _mthMatchLogicAndNode::_mthMatchLogicAndNode()
+   _mthMatchLogicAndNode::_mthMatchLogicAndNode( _mthNodeAllocator *allocator )
+                         :_mthMatchLogicNode( allocator )
    {
    }
 
@@ -137,7 +139,7 @@ namespace engine
 
    INT32 _mthMatchLogicAndNode::getType()
    {
-      return ( INT32 ) EN_MATCHNODE_TYPE_LOGIC_AND ;
+      return ( INT32 ) EN_MATCH_OPERATOR_LOGIC_AND ;
    }
 
    const CHAR* _mthMatchLogicAndNode::getOperatorStr()
@@ -187,8 +189,21 @@ namespace engine
       return TRUE ;
    }
 
+   void _mthMatchLogicAndNode::release()
+   {
+      if ( NULL != _allocator && _allocator->isAllocatedByme( this ) )
+      {
+         this->~_mthMatchLogicAndNode() ;
+      }
+      else
+      {
+         delete this ;
+      }
+   }
+
    //*******************_mthMatchLogicAndNode***********************
-   _mthMatchLogicOrNode::_mthMatchLogicOrNode()
+   _mthMatchLogicOrNode::_mthMatchLogicOrNode( _mthNodeAllocator *allocator )
+                        :_mthMatchLogicNode( allocator )
    {
    }
 
@@ -198,7 +213,7 @@ namespace engine
    
    INT32 _mthMatchLogicOrNode::getType()
    {
-      return ( INT32 ) EN_MATCHNODE_TYPE_LOGIC_OR ;
+      return ( INT32 ) EN_MATCH_OPERATOR_LOGIC_OR ;
    }
 
    const CHAR* _mthMatchLogicOrNode::getOperatorStr()
@@ -262,8 +277,21 @@ namespace engine
       return SDB_OK ;
    }
 
+   void _mthMatchLogicOrNode::release()
+   {
+      if ( NULL != _allocator && _allocator->isAllocatedByme( this ) )
+      {
+         this->~_mthMatchLogicOrNode() ;
+      }
+      else
+      {
+         delete this ;
+      }
+   }
+
    //*******************_mthMatchLogicNotNode***************************
-   _mthMatchLogicNotNode::_mthMatchLogicNotNode()
+   _mthMatchLogicNotNode::_mthMatchLogicNotNode( _mthNodeAllocator *allocator )
+                         :_mthMatchLogicAndNode( allocator )
    {
    }
 
@@ -273,7 +301,7 @@ namespace engine
 
    INT32 _mthMatchLogicNotNode::getType()
    {
-      return ( INT32 ) EN_MATCHNODE_TYPE_LOGIC_NOT ;
+      return ( INT32 ) EN_MATCH_OPERATOR_LOGIC_NOT ;
    }
 
    const CHAR* _mthMatchLogicNotNode::getOperatorStr()
@@ -320,6 +348,23 @@ namespace engine
    {
       // do not extraEqualityMatches in logic not.
       return SDB_OK ;
+   }
+
+   BOOLEAN _mthMatchLogicNotNode::isTotalConverted()
+   {
+      return FALSE ;
+   }
+
+   void _mthMatchLogicNotNode::release()
+   {
+      if ( NULL != _allocator && _allocator->isAllocatedByme( this ) )
+      {
+         this->~_mthMatchLogicNotNode() ;
+      }
+      else
+      {
+         delete this ;
+      }
    }
 }
 

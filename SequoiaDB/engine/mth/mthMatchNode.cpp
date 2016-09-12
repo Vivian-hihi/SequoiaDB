@@ -165,6 +165,39 @@ namespace engine
       return temp ;
    }
 
+   //********************** _mthNodeAllocator ***************************
+   _mthNodeAllocator::_mthNodeAllocator()
+   {
+      _offset = 0 ;
+   }
+   
+   _mthNodeAllocator::~_mthNodeAllocator()
+   {
+      _offset = 0 ;
+   }
+
+   void* _mthNodeAllocator::allocate( size_t size )
+   {
+      void *p = NULL ;
+      if ( _offset + size <= MTH_ALLOCATOR_SIZE )
+      {
+         p = _mem + _offset ;
+         _offset += size ;
+      }
+
+      return p ;
+   }
+
+   BOOLEAN _mthNodeAllocator::isAllocatedByme( void *p )
+   {
+      if ( p >= _mem && p < _mem + MTH_ALLOCATOR_SIZE )
+      {
+         return TRUE ;
+      }
+
+      return FALSE ;
+   }
+
    //********************** _mthMatchNodeIterator ***************************
    _mthMatchNodeIterator::_mthMatchNodeIterator( _mthMatchNode *node )
    {
@@ -204,15 +237,59 @@ namespace engine
    }
 
    //********************** _mthMatchNode ***************************
-   _mthMatchNode::_mthMatchNode()
-                 :_parent( NULL ), _idx_in_parent( -1 ),
-                 _isUnderLogicNot( FALSE )
+   _mthMatchNode::_mthMatchNode( _mthNodeAllocator *allocator )
+                 :_allocator( allocator ), _parent( NULL ), 
+                 _idx_in_parent( -1 ), _isUnderLogicNot( FALSE )
    {
    }
 
    _mthMatchNode::~_mthMatchNode()
    {
+      _allocator = NULL ;
       clear() ;
+   }
+
+   void* _mthMatchNode::operator new ( size_t size, 
+                                       _mthNodeAllocator *allocator ) 
+                                       throw ( const char * )
+   {
+      void *p = NULL ;
+      if ( size > 0 )
+      {
+         if ( NULL != allocator )
+         {
+            p = allocator->allocate( size ) ;
+         }
+
+         if ( NULL == p )
+         {
+            p = SDB_OSS_MALLOC( size ) ;
+         }
+      }
+
+      if ( NULL == p )
+      {
+         throw "allocation failure" ;
+      }
+
+      return p ;
+   }
+
+   void _mthMatchNode::operator delete( void *p )
+   {
+      SDB_OSS_FREE(p) ;
+   }
+
+   void _mthMatchNode::release()
+   {
+      if ( NULL != _allocator && _allocator->isAllocatedByme( this ) )
+      {
+         this->~_mthMatchNode() ;
+      }
+      else
+      {
+         delete this ;
+      }
    }
 
    string _mthMatchNode::toString()
@@ -261,7 +338,7 @@ namespace engine
       SDB_ASSERT( NULL != child, "child must not be null" ) ;
 
       _children.push_back( child ) ;
-      if ( EN_MATCHNODE_TYPE_LOGIC_NOT == getType() || isUnderLogicNot() )
+      if ( EN_MATCH_OPERATOR_LOGIC_NOT == getType() || isUnderLogicNot() )
       {
          child->rollIsUnderLogicNot() ;
       }
@@ -288,7 +365,7 @@ namespace engine
          _children[ index ]->_idx_in_parent-- ;
       }
 
-      if ( EN_MATCHNODE_TYPE_LOGIC_NOT == getType() || isUnderLogicNot() )
+      if ( EN_MATCH_OPERATOR_LOGIC_NOT == getType() || isUnderLogicNot() )
       {
          child->rollIsUnderLogicNot() ;
       }

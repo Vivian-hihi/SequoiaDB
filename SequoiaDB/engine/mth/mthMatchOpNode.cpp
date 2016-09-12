@@ -45,7 +45,8 @@ using namespace bson ;
 
 namespace engine
 {
-   _mthMatchOpNode::_mthMatchOpNode()
+   _mthMatchOpNode::_mthMatchOpNode(  _mthNodeAllocator *allocator )
+                   :_mthMatchNode( allocator )
    {
       _isCompareField     = FALSE ;
       _hasDollarFieldName = FALSE ;
@@ -91,7 +92,7 @@ namespace engine
          _cmpFieldName   = element.valuestr() ;
       }
 
-      rc = _init( fieldName, element) ;
+      rc = _init( fieldName, element ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "_init failed:rc=%d", rc ) ;
@@ -120,6 +121,13 @@ namespace engine
    {
       _clear() ;
 
+      MTH_FUNC_LIST::iterator iter = _funcList.begin() ;
+      while ( iter != _funcList.end() )
+      {
+         _mthMatchFunc *func = *iter ;
+         mthGetMatchNodeFactory()->releaseFunc( func ) ;
+         iter++ ;
+      }
       _funcList.clear() ;
       _hasDollarFieldName = FALSE ;
       _isCompareField     = FALSE ;
@@ -226,8 +234,8 @@ namespace engine
    {
       if ( _isUnderLogicNot )
       {
-         if ( getType() == EN_MATCHNODE_TYPE_NE || 
-              getType() == EN_MATCHNODE_TYPE_NIN )
+         if ( getType() == EN_MATCH_OPERATOR_NE || 
+              getType() == EN_MATCH_OPERATOR_NIN )
          {
             return FALSE ;
          }
@@ -238,8 +246,8 @@ namespace engine
       }
       else
       {
-         if ( getType() == EN_MATCHNODE_TYPE_NE || 
-              getType() == EN_MATCHNODE_TYPE_NIN )
+         if ( getType() == EN_MATCH_OPERATOR_NE || 
+              getType() == EN_MATCH_OPERATOR_NIN )
          {
             return TRUE ;
          }
@@ -450,8 +458,8 @@ namespace engine
 
       if ( p )
       {
-         if ( EN_MATCHNODE_TYPE_EXISTS != getType() && 
-              EN_MATCHNODE_TYPE_ISNULL != getType() )
+         if ( EN_MATCH_OPERATOR_EXISTS != getType() && 
+              EN_MATCH_OPERATOR_ISNULL != getType() )
          {
             result = FALSE ;
             goto done ;
@@ -474,11 +482,11 @@ namespace engine
 
       recordEle = obj.getField( pTmpFieldName ) ;
       result = _valueMatch( recordEle, toMatchEle, context ) ;
-      if ( EN_MATCHNODE_TYPE_EXISTS == getType() || 
-           EN_MATCHNODE_TYPE_ISNULL == getType() ||
-           EN_MATCHNODE_TYPE_SIZE == getType() ||
-           EN_MATCHNODE_TYPE_IN == getType() ||
-           EN_MATCHNODE_TYPE_ALL == getType())
+      if ( EN_MATCH_OPERATOR_EXISTS == getType() || 
+           EN_MATCH_OPERATOR_ISNULL == getType() ||
+           EN_MATCH_OPERATOR_SIZE == getType() ||
+           EN_MATCH_OPERATOR_IN == getType() ||
+           EN_MATCH_OPERATOR_ALL == getType())
       {
          // no need to check if left is array
          goto done ;
@@ -570,6 +578,28 @@ namespace engine
       goto done ;
    }
 
+   INT32 _mthMatchOpNode::addFuncList( MTH_FUNC_LIST &funcList )
+   {
+      INT32 rc = SDB_OK ;
+      MTH_FUNC_LIST::iterator iter = funcList.begin() ;
+      while ( iter != funcList.end() )
+      {
+         rc = addFunc( *iter ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "add function failed:rc=%d", rc ) ;
+            goto error ;
+         }
+
+         funcList.erase( iter++ ) ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
    BSONObj _mthMatchOpNode::toBson()
    {
       BSONObjBuilder builder ;
@@ -592,7 +622,8 @@ namespace engine
    }
 
    //*******************_mthMatchOpNodeET***********************
-   _mthMatchOpNodeET::_mthMatchOpNodeET()
+   _mthMatchOpNodeET::_mthMatchOpNodeET(  _mthNodeAllocator *allocator )
+                     :_mthMatchOpNode( allocator )
    {
    }
 
@@ -602,7 +633,7 @@ namespace engine
 
    INT32 _mthMatchOpNodeET::getType()
    {
-      return ( INT32 )EN_MATCHNODE_TYPE_ET ;
+      return ( INT32 )EN_MATCH_OPERATOR_ET ;
    }
 
    const CHAR* _mthMatchOpNodeET::getOperatorStr()
@@ -660,8 +691,21 @@ namespace engine
       return FALSE ;
    }
 
+   void _mthMatchOpNodeET::release()
+   {
+      if ( NULL != _allocator && _allocator->isAllocatedByme( this ) )
+      {
+         this->~_mthMatchOpNodeET() ;
+      }
+      else
+      {
+         delete this ;
+      }
+   }
+
    //**************_mthMatchOpNodeNE********************************
-   _mthMatchOpNodeNE::_mthMatchOpNodeNE()
+   _mthMatchOpNodeNE::_mthMatchOpNodeNE( _mthNodeAllocator *allocator )
+                     :_mthMatchOpNodeET( allocator )
    {
    }
 
@@ -671,7 +715,7 @@ namespace engine
 
    INT32 _mthMatchOpNodeNE::getType()
    {
-      return EN_MATCHNODE_TYPE_NE ;
+      return EN_MATCH_OPERATOR_NE ;
    }
 
    const CHAR* _mthMatchOpNodeNE::getOperatorStr()
@@ -710,9 +754,21 @@ namespace engine
       goto done ;
    }
 
+   void _mthMatchOpNodeNE::release()
+   {
+      if ( NULL != _allocator && _allocator->isAllocatedByme( this ) )
+      {
+         this->~_mthMatchOpNodeNE() ;
+      }
+      else
+      {
+         delete this ;
+      }
+   }
 
    //**************_mthMatchOpNodeLT********************************
-   _mthMatchOpNodeLT::_mthMatchOpNodeLT()
+   _mthMatchOpNodeLT::_mthMatchOpNodeLT( _mthNodeAllocator *allocator )
+                     :_mthMatchOpNode( allocator )
    {
    }
    
@@ -722,7 +778,7 @@ namespace engine
 
    INT32 _mthMatchOpNodeLT::getType()
    {
-      return ( INT32 ) EN_MATCHNODE_TYPE_LT ;
+      return ( INT32 ) EN_MATCH_OPERATOR_LT ;
    }
 
    const CHAR* _mthMatchOpNodeLT::getOperatorStr()
@@ -755,8 +811,21 @@ namespace engine
       return FALSE ;
    }
 
+   void _mthMatchOpNodeLT::release()
+   {
+      if ( NULL != _allocator && _allocator->isAllocatedByme( this ) )
+      {
+         this->~_mthMatchOpNodeLT() ;
+      }
+      else
+      {
+         delete this ;
+      }
+   }
+
    //******************************************************
-   _mthMatchOpNodeLTE::_mthMatchOpNodeLTE()
+   _mthMatchOpNodeLTE::_mthMatchOpNodeLTE( _mthNodeAllocator *allocator )
+                      :_mthMatchOpNode( allocator )
    {
    }
    
@@ -766,7 +835,7 @@ namespace engine
 
    INT32 _mthMatchOpNodeLTE::getType()
    {
-      return ( INT32 ) EN_MATCHNODE_TYPE_LTE ;
+      return ( INT32 ) EN_MATCH_OPERATOR_LTE ;
    }
 
    const CHAR* _mthMatchOpNodeLTE::getOperatorStr()
@@ -799,8 +868,21 @@ namespace engine
       return FALSE ;
    }
 
+   void _mthMatchOpNodeLTE::release()
+   {
+      if ( NULL != _allocator && _allocator->isAllocatedByme( this ) )
+      {
+         this->~_mthMatchOpNodeLTE() ;
+      }
+      else
+      {
+         delete this ;
+      }
+   }
+
    //**************_mthMatchOpNodeGT*****************************
-   _mthMatchOpNodeGT::_mthMatchOpNodeGT()
+   _mthMatchOpNodeGT::_mthMatchOpNodeGT( _mthNodeAllocator *allocator )
+                     :_mthMatchOpNode( allocator )
    {
    }
 
@@ -810,7 +892,7 @@ namespace engine
 
    INT32 _mthMatchOpNodeGT::getType()
    {
-      return EN_MATCHNODE_TYPE_GT ;
+      return EN_MATCH_OPERATOR_GT ;
    }
 
    const CHAR* _mthMatchOpNodeGT::getOperatorStr()
@@ -843,8 +925,21 @@ namespace engine
       return FALSE ;
    }
 
+   void _mthMatchOpNodeGT::release()
+   {
+      if ( NULL != _allocator && _allocator->isAllocatedByme( this ) )
+      {
+         this->~_mthMatchOpNodeGT() ;
+      }
+      else
+      {
+         delete this ;
+      }
+   }
+
    //**************_mthMatchOpNodeGTE*****************************
-   _mthMatchOpNodeGTE::_mthMatchOpNodeGTE()
+   _mthMatchOpNodeGTE::_mthMatchOpNodeGTE( _mthNodeAllocator *allocator )
+                      :_mthMatchOpNode( allocator )
    {
    }
 
@@ -854,7 +949,7 @@ namespace engine
 
    INT32 _mthMatchOpNodeGTE::getType()
    {
-      return EN_MATCHNODE_TYPE_GTE ;
+      return EN_MATCH_OPERATOR_GTE ;
    }
 
    const CHAR* _mthMatchOpNodeGTE::getOperatorStr()
@@ -887,8 +982,21 @@ namespace engine
       return FALSE ;
    }
 
+   void _mthMatchOpNodeGTE::release()
+   {
+      if ( NULL != _allocator && _allocator->isAllocatedByme( this ) )
+      {
+         this->~_mthMatchOpNodeGTE() ;
+      }
+      else
+      {
+         delete this ;
+      }
+   }
+
    //**************_mthMatchOpNodeIN*****************************
-   _mthMatchOpNodeIN::_mthMatchOpNodeIN()
+   _mthMatchOpNodeIN::_mthMatchOpNodeIN( _mthNodeAllocator *allocator )
+                     :_mthMatchOpNode( allocator )
    {
    }
    
@@ -919,13 +1027,13 @@ namespace engine
             {
                _mthMatchNode *node             = NULL ;
                _mthMatchOpNodeRegex *regexNode = NULL ;
-               node = mthGetMatchNodeFactory()->createOpNode( 
-                                                     EN_MATCHNODE_TYPE_REGEX ) ;
+               node = mthGetMatchNodeFactory()->createOpNode( _allocator,
+                                                     EN_MATCH_OPERATOR_REGEX ) ;
                if ( NULL == node )
                {
                   rc = SDB_INVALIDARG ;
                   PD_LOG( PDERROR, "createOpNodeByOp failed:type=%d,rc=%d", 
-                          EN_MATCHNODE_TYPE_REGEX, rc ) ;
+                          EN_MATCH_OPERATOR_REGEX, rc ) ;
                   goto error ;
                }
 
@@ -982,7 +1090,7 @@ namespace engine
 
    INT32 _mthMatchOpNodeIN::getType()
    {
-      return EN_MATCHNODE_TYPE_IN ;
+      return EN_MATCH_OPERATOR_IN ;
    }
 
    const CHAR* _mthMatchOpNodeIN::getOperatorStr()
@@ -1069,8 +1177,21 @@ namespace engine
       return FALSE ;
    }
 
+   void _mthMatchOpNodeIN::release()
+   {
+      if ( NULL != _allocator && _allocator->isAllocatedByme( this ) )
+      {
+         this->~_mthMatchOpNodeIN() ;
+      }
+      else
+      {
+         delete this ;
+      }
+   }
+
    //**************_mthMatchOpNodeNIN*****************************
-   _mthMatchOpNodeNIN::_mthMatchOpNodeNIN()
+   _mthMatchOpNodeNIN::_mthMatchOpNodeNIN( _mthNodeAllocator *allocator )
+                      :_mthMatchOpNodeIN( allocator )
    {
    }
 
@@ -1080,7 +1201,7 @@ namespace engine
 
    INT32 _mthMatchOpNodeNIN::getType()
    {
-      return EN_MATCHNODE_TYPE_NIN ;
+      return EN_MATCH_OPERATOR_NIN ;
    }
 
    const CHAR* _mthMatchOpNodeNIN::getOperatorStr()
@@ -1119,9 +1240,21 @@ namespace engine
       goto done ;
    }
 
+   void _mthMatchOpNodeNIN::release()
+   {
+      if ( NULL != _allocator && _allocator->isAllocatedByme( this ) )
+      {
+         this->~_mthMatchOpNodeNIN() ;
+      }
+      else
+      {
+         delete this ;
+      }
+   }
 
    //**************_mthMatchOpNodeALL*****************************
-   _mthMatchOpNodeALL::_mthMatchOpNodeALL()
+   _mthMatchOpNodeALL::_mthMatchOpNodeALL( _mthNodeAllocator *allocator )
+                      :_mthMatchOpNodeIN( allocator )
    {
    }
    
@@ -1131,7 +1264,7 @@ namespace engine
    
    INT32 _mthMatchOpNodeALL::getType()
    {
-      return EN_MATCHNODE_TYPE_ALL ;
+      return EN_MATCH_OPERATOR_ALL ;
    }
 
    const CHAR* _mthMatchOpNodeALL::getOperatorStr()
@@ -1234,8 +1367,21 @@ namespace engine
       return TRUE ;
    }
 
+   void _mthMatchOpNodeALL::release()
+   {
+      if ( NULL != _allocator && _allocator->isAllocatedByme( this ) )
+      {
+         this->~_mthMatchOpNodeALL() ;
+      }
+      else
+      {
+         delete this ;
+      }
+   }
+
    //**************_mthMatchOpNodeSIZE*****************************
-   _mthMatchOpNodeSIZE::_mthMatchOpNodeSIZE()
+   _mthMatchOpNodeSIZE::_mthMatchOpNodeSIZE( _mthNodeAllocator *allocator )
+                       :_mthMatchOpNode( allocator )
    {
    }
 
@@ -1245,7 +1391,7 @@ namespace engine
 
    INT32 _mthMatchOpNodeSIZE::getType()
    {
-      return EN_MATCHNODE_TYPE_SIZE ;
+      return EN_MATCH_OPERATOR_SIZE ;
    }
 
    const CHAR* _mthMatchOpNodeSIZE::getOperatorStr()
@@ -1290,8 +1436,21 @@ namespace engine
       return obj.nFields() == right.numberInt() ;
    }
 
+   void _mthMatchOpNodeSIZE::release()
+   {
+      if ( NULL != _allocator && _allocator->isAllocatedByme( this ) )
+      {
+         this->~_mthMatchOpNodeSIZE() ;
+      }
+      else
+      {
+         delete this ;
+      }
+   }
+
    //**************_mthMatchOpNodeEXISTS*****************************
-   _mthMatchOpNodeEXISTS::_mthMatchOpNodeEXISTS()
+   _mthMatchOpNodeEXISTS::_mthMatchOpNodeEXISTS( _mthNodeAllocator *allocator )
+                         :_mthMatchOpNode( allocator )
    {
    }
 
@@ -1301,7 +1460,7 @@ namespace engine
 
    INT32 _mthMatchOpNodeEXISTS::getType()
    {
-      return EN_MATCHNODE_TYPE_EXISTS ;
+      return EN_MATCH_OPERATOR_EXISTS ;
    }
 
    const CHAR* _mthMatchOpNodeEXISTS::getOperatorStr()
@@ -1344,8 +1503,21 @@ namespace engine
       }
    }
 
+   void _mthMatchOpNodeEXISTS::release()
+   {
+      if ( NULL != _allocator && _allocator->isAllocatedByme( this ) )
+      {
+         this->~_mthMatchOpNodeEXISTS() ;
+      }
+      else
+      {
+         delete this ;
+      }
+   }
+
    //**************_mthMatchOpNodeMOD*****************************
-   _mthMatchOpNodeMOD::_mthMatchOpNodeMOD()
+   _mthMatchOpNodeMOD::_mthMatchOpNodeMOD( _mthNodeAllocator *allocator )
+                      :_mthMatchOpNode( allocator )
    {
    }
 
@@ -1408,7 +1580,7 @@ namespace engine
 
    INT32 _mthMatchOpNodeMOD::getType()
    {
-      return EN_MATCHNODE_TYPE_MOD ;
+      return EN_MATCH_OPERATOR_MOD ;
    }
 
    const CHAR* _mthMatchOpNodeMOD::getOperatorStr()
@@ -1487,8 +1659,21 @@ namespace engine
       }
    }
 
+   void _mthMatchOpNodeMOD::release()
+   {
+      if ( NULL != _allocator && _allocator->isAllocatedByme( this ) )
+      {
+         this->~_mthMatchOpNodeMOD() ;
+      }
+      else
+      {
+         delete this ;
+      }
+   }
+
    //**************_mthMatchOpNodeTYPE*****************************
-   _mthMatchOpNodeTYPE::_mthMatchOpNodeTYPE()
+   _mthMatchOpNodeTYPE::_mthMatchOpNodeTYPE( _mthNodeAllocator *allocator )
+                       :_mthMatchOpNode( allocator )
    {
    }
 
@@ -1505,7 +1690,7 @@ namespace engine
 
    INT32 _mthMatchOpNodeTYPE::getType()
    {
-      return EN_MATCHNODE_TYPE_TYPE ;
+      return EN_MATCH_OPERATOR_TYPE ;
    }
 
    const CHAR* _mthMatchOpNodeTYPE::getOperatorStr()
@@ -1530,8 +1715,21 @@ namespace engine
       return left.type() == _type ;
    }
 
+   void _mthMatchOpNodeTYPE::release()
+   {
+      if ( NULL != _allocator && _allocator->isAllocatedByme( this ) )
+      {
+         this->~_mthMatchOpNodeTYPE() ;
+      }
+      else
+      {
+         delete this ;
+      }
+   }
+
    //**************_mthMatchOpNodeISNULL*****************************
-   _mthMatchOpNodeISNULL::_mthMatchOpNodeISNULL()
+   _mthMatchOpNodeISNULL::_mthMatchOpNodeISNULL( _mthNodeAllocator *allocator )
+                         :_mthMatchOpNode( allocator )
    {
    }
 
@@ -1541,7 +1739,7 @@ namespace engine
 
    INT32 _mthMatchOpNodeISNULL::getType()
    {
-      return EN_MATCHNODE_TYPE_ISNULL ;
+      return EN_MATCH_OPERATOR_ISNULL ;
    }
 
    const CHAR* _mthMatchOpNodeISNULL::getOperatorStr()
@@ -1587,8 +1785,22 @@ namespace engine
       }
    }
 
+   void _mthMatchOpNodeISNULL::release()
+   {
+      if ( NULL != _allocator && _allocator->isAllocatedByme( this ) )
+      {
+         this->~_mthMatchOpNodeISNULL() ;
+      }
+      else
+      {
+         delete this ;
+      }
+   }
+
    //**************_mthMatchOpNodeELEMMATCH*****************************
-   _mthMatchOpNodeELEMMATCH::_mthMatchOpNodeELEMMATCH()
+   _mthMatchOpNodeELEMMATCH::_mthMatchOpNodeELEMMATCH( 
+                                              _mthNodeAllocator *allocator )
+                            :_mthMatchOpNode( allocator )
    {
    }
    
@@ -1642,6 +1854,7 @@ namespace engine
    {
       if ( NULL != _subTree )
       {
+         _subTree->clear() ;
          mthGetMatchNodeFactory()->releaseTree( _subTree ) ;
       }
 
@@ -1650,7 +1863,7 @@ namespace engine
 
    INT32 _mthMatchOpNodeELEMMATCH::getType()
    {
-      return EN_MATCHNODE_TYPE_ELEMMATCH ;
+      return EN_MATCH_OPERATOR_ELEMMATCH ;
    }
 
    const CHAR* _mthMatchOpNodeELEMMATCH::getOperatorStr()
@@ -1691,7 +1904,6 @@ namespace engine
          subContext.enableDollarList() ;
       }
 
-      subContext.disableDollarList() ;
       subContext.setIsSubTree( TRUE ) ;
 
       rc = _subTree->matches( left.embeddedObject(), result, subContext ) ;
@@ -1704,8 +1916,21 @@ namespace engine
       return result ;
    }
 
+   void _mthMatchOpNodeELEMMATCH::release()
+   {
+      if ( NULL != _allocator && _allocator->isAllocatedByme( this ) )
+      {
+         this->~_mthMatchOpNodeELEMMATCH() ;
+      }
+      else
+      {
+         delete this ;
+      }
+   }
+
    //**************_mthMatchOpNodeRegex*****************************
-   _mthMatchOpNodeRegex::_mthMatchOpNodeRegex()
+   _mthMatchOpNodeRegex::_mthMatchOpNodeRegex( _mthNodeAllocator *allocator )
+                        :_mthMatchOpNode( allocator )
    {
       _regex   = NULL ;
       _options = NULL ;
@@ -1840,7 +2065,7 @@ namespace engine
 
    INT32 _mthMatchOpNodeRegex::getType()
    {
-      return ( INT32 ) EN_MATCHNODE_TYPE_REGEX ;
+      return ( INT32 ) EN_MATCH_OPERATOR_REGEX ;
    }
 
    const CHAR* _mthMatchOpNodeRegex::getOperatorStr()
@@ -1899,6 +2124,18 @@ namespace engine
                   0 == ossStrcmp( _options, ele.regexFlags() ) ) ;
       default:
          return FALSE ;
+      }
+   }
+
+   void _mthMatchOpNodeRegex::release()
+   {
+      if ( NULL != _allocator && _allocator->isAllocatedByme( this ) )
+      {
+         this->~_mthMatchOpNodeRegex() ;
+      }
+      else
+      {
+         delete this ;
       }
    }
 }

@@ -67,15 +67,20 @@ namespace engine
       ~_mthMatchNodeFactory() ;
 
    public:
-      _mthMatchOpNode*        createOpNode( EN_MATCHNODE_TYPE type ) ;
-      _mthMatchLogicNode*     createLogicNode( EN_MATCHNODE_TYPE type ) ;
-
+      _mthMatchOpNode*        createOpNode( _mthNodeAllocator *allocator,
+                                            EN_MATCH_OP_FUNC_TYPE type ) ;
+      _mthMatchLogicNode*     createLogicNode( _mthNodeAllocator *allocator,
+                                               EN_MATCH_OP_FUNC_TYPE type ) ;
       void                    releaseNode( _mthMatchNode *node ) ;
 
       _mthMatchTree*          createTree() ;
       void                    releaseTree( _mthMatchTree *tree ) ;
 
-      EN_MATCHNODE_TYPE       getMatchNodeType( const CHAR *opStr ) ;
+      _mthMatchFunc*          createFunc( _mthNodeAllocator *allocator,
+                                          EN_MATCH_OP_FUNC_TYPE type ) ;
+      void                    releaseFunc( _mthMatchFunc *func ) ;
+
+      EN_MATCH_OP_FUNC_TYPE   getMatchNodeType( const CHAR *opStr ) ;
 
    private:
       typedef _utilMap< string, mthMatchOpMapping* > MTH_OPSTRMAP ;
@@ -113,10 +118,15 @@ namespace engine
 
       private:
          INT32    _addOperator( const CHAR *fieldName, const BSONElement &ele, 
-                                EN_MATCHNODE_TYPE nodeType, 
+                                EN_MATCH_OP_FUNC_TYPE nodeType, 
+                                MTH_FUNC_LIST &funcList,
                                 _mthMatchLogicNode *parent ) ;
+         INT32    _addFunction( const CHAR *fieldName, 
+                                const BSONElement &ele, 
+                                EN_MATCH_OP_FUNC_TYPE nodeType,
+                                MTH_FUNC_LIST &funcList ) ;
          INT32    _addRegExOp( const CHAR *fieldName, const CHAR *regex, 
-                               const CHAR *options, 
+                               const CHAR *options, MTH_FUNC_LIST &funcList,
                                _mthMatchLogicNode *parent ) ;
          INT32    _parseRegExElement( const BSONElement &ele, 
                                       _mthMatchLogicNode *parent ) ;
@@ -135,8 +145,11 @@ namespace engine
          BOOLEAN  _isExistOpFieldRecursive( const BSONElement &ele,
                                           BOOLEAN ignoreCurrentField = FALSE ) ;
          BOOLEAN  _isExistOpEyeCatcher( const BSONElement &ele ) ;
+
+         void     _clearFuncList( MTH_FUNC_LIST &funcList ) ;
          INT32    _pareseObjectInnerOp( const BSONElement &ele, 
                                         const BSONElement &innerEle,
+                                        MTH_FUNC_LIST &funcList,
                                         _mthMatchLogicNode *parent,
                                         const char *&regex,
                                         const char *&options ) ;
@@ -144,7 +157,8 @@ namespace engine
                                        _mthMatchLogicNode *parent ) ;
          INT32    _paresePrevOptions( const CHAR *fieldName,
                                       const BSONElement &ele,
-                                      const CHAR *options, 
+                                      const CHAR *options,
+                                      MTH_FUNC_LIST &funcList,
                                       _mthMatchLogicNode *parent ) ;
          INT32    _parseElement( const BSONElement &ele, 
                                  _mthMatchLogicNode *parent ) ;
@@ -169,6 +183,8 @@ namespace engine
          BOOLEAN        _hasDollarFieldName ;
 
          _rtnPredicateSet _predicateSet ;
+
+         _mthNodeAllocator _allocator ;
    } ;
 
 }

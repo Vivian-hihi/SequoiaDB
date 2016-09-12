@@ -62,21 +62,23 @@ namespace engine
    class _mthMatchFunc : public SDBObject
    {
       public:
-         _mthMatchFunc() {};
+         _mthMatchFunc( _mthNodeAllocator *allocator ) {} ;
          virtual ~_mthMatchFunc() {} ;
 
       public:
-         virtual INT32 init( const BSONElement &ele ) = 0 ;
+         virtual INT32 init( const CHAR *fieldName,
+                             const BSONElement &ele ) = 0 ;
          virtual INT32 call( const BSONElement &in, BSONElement &out ) = 0 ;
          virtual void clear() = 0 ;
+         virtual string toString() = 0 ;
    } ;
 
+   typedef _utilList< _mthMatchFunc* > MTH_FUNC_LIST ;
 
    class _mthMatchOpNode : public _mthMatchNode
    {
-      typedef _utilList< _mthMatchFunc* > MTH_FUNC_LIST ;
       public:
-         _mthMatchOpNode() ;
+         _mthMatchOpNode( _mthNodeAllocator *allocator ) ;
          virtual ~_mthMatchOpNode() ;
 
       public: /* from parent */
@@ -106,6 +108,7 @@ namespace engine
 
       public:
          INT32 addFunc( _mthMatchFunc *func ) ;
+         INT32 addFuncList( MTH_FUNC_LIST &funcList ) ;
 
       protected: /* from itself */
          virtual BOOLEAN _valueMatch( const BSONElement &left, 
@@ -140,7 +143,7 @@ namespace engine
    class _mthMatchOpNodeET : public _mthMatchOpNode
    {
       public:
-         _mthMatchOpNodeET() ;
+         _mthMatchOpNodeET(  _mthNodeAllocator *allocator ) ;
          virtual ~_mthMatchOpNodeET() ;
 
       public:
@@ -149,6 +152,7 @@ namespace engine
          virtual UINT32 getWeight() ;
          virtual BOOLEAN isTotalConverted() ;
          virtual INT32 extraEqualityMatches( BSONObjBuilder &builder ) ;
+         virtual void release() ;
 
       protected:
          virtual BOOLEAN _valueMatch( const BSONElement &left, 
@@ -159,7 +163,7 @@ namespace engine
    class _mthMatchOpNodeNE : public _mthMatchOpNodeET
    {
       public:
-         _mthMatchOpNodeNE() ;
+         _mthMatchOpNodeNE( _mthNodeAllocator *allocator ) ;
          virtual ~_mthMatchOpNodeNE() ;
 
       public:
@@ -170,12 +174,13 @@ namespace engine
          virtual INT32 execute( const BSONObj &obj, 
                                 _mthMatchTreeContext &context,
                                 BOOLEAN &result ) ;
+         virtual void release() ;
    } ;
 
    class _mthMatchOpNodeLT : public _mthMatchOpNode
    {
       public:
-         _mthMatchOpNodeLT() ;
+         _mthMatchOpNodeLT( _mthNodeAllocator *allocator ) ;
          virtual ~_mthMatchOpNodeLT() ;
 
       public:
@@ -183,6 +188,7 @@ namespace engine
          virtual const CHAR *getOperatorStr() ;
          virtual UINT32 getWeight() ;
          virtual BOOLEAN isTotalConverted() ;
+         virtual void release() ;
 
       protected:
          virtual BOOLEAN _valueMatch( const BSONElement &left, 
@@ -193,7 +199,7 @@ namespace engine
    class _mthMatchOpNodeLTE : public _mthMatchOpNode
    {
       public:
-         _mthMatchOpNodeLTE() ;
+         _mthMatchOpNodeLTE( _mthNodeAllocator *allocator ) ;
          virtual ~_mthMatchOpNodeLTE() ;
 
       public:
@@ -201,6 +207,7 @@ namespace engine
          virtual const CHAR *getOperatorStr() ;
          virtual UINT32 getWeight() ;
          virtual BOOLEAN isTotalConverted() ;
+         virtual void release() ;
 
       protected:
          virtual BOOLEAN _valueMatch( const BSONElement &left, 
@@ -211,7 +218,7 @@ namespace engine
    class _mthMatchOpNodeGT : public _mthMatchOpNode
    {
       public:
-         _mthMatchOpNodeGT() ;
+         _mthMatchOpNodeGT( _mthNodeAllocator *allocator ) ;
          virtual ~_mthMatchOpNodeGT() ;
 
       public:
@@ -219,6 +226,7 @@ namespace engine
          virtual const CHAR *getOperatorStr() ;
          virtual UINT32 getWeight() ;
          virtual BOOLEAN isTotalConverted() ;
+         virtual void release() ;
 
       protected:
          virtual BOOLEAN _valueMatch( const BSONElement &left, 
@@ -229,7 +237,7 @@ namespace engine
    class _mthMatchOpNodeGTE : public _mthMatchOpNode
    {
       public:
-         _mthMatchOpNodeGTE() ;
+         _mthMatchOpNodeGTE( _mthNodeAllocator *allocator ) ;
          virtual ~_mthMatchOpNodeGTE() ;
 
       public:
@@ -237,6 +245,7 @@ namespace engine
          virtual const CHAR *getOperatorStr() ;
          virtual UINT32 getWeight() ;
          virtual BOOLEAN isTotalConverted() ;
+         virtual void release() ;
 
       protected:
          virtual BOOLEAN _valueMatch( const BSONElement &left, 
@@ -249,7 +258,7 @@ namespace engine
    class _mthMatchOpNodeIN : public _mthMatchOpNode
    {
       public:
-         _mthMatchOpNodeIN() ;
+         _mthMatchOpNodeIN( _mthNodeAllocator *allocator ) ;
          virtual ~_mthMatchOpNodeIN() ;
 
       public:
@@ -257,7 +266,7 @@ namespace engine
          virtual const CHAR *getOperatorStr() ;
          virtual UINT32 getWeight() ;
          virtual BOOLEAN isTotalConverted() ;
-         
+         virtual void release() ;
 
       protected:
          virtual INT32 _init( const CHAR *fieldName, 
@@ -278,7 +287,7 @@ namespace engine
    class _mthMatchOpNodeNIN : public _mthMatchOpNodeIN
    {
       public:
-         _mthMatchOpNodeNIN() ;
+         _mthMatchOpNodeNIN( _mthNodeAllocator *allocator ) ;
          virtual ~_mthMatchOpNodeNIN() ;
 
       public:
@@ -289,12 +298,13 @@ namespace engine
          virtual INT32 execute( const BSONObj &obj, 
                                 _mthMatchTreeContext &context,
                                 BOOLEAN &result ) ;
+         virtual void release() ;
    } ;
 
    class _mthMatchOpNodeALL : public _mthMatchOpNodeIN
    {
       public:
-         _mthMatchOpNodeALL() ;
+         _mthMatchOpNodeALL( _mthNodeAllocator *allocator ) ;
          virtual ~_mthMatchOpNodeALL() ;
 
       public:
@@ -303,6 +313,7 @@ namespace engine
          virtual UINT32 getWeight() ;
          virtual BOOLEAN isTotalConverted() ;
          virtual INT32 extraEqualityMatches( BSONObjBuilder &builder ) ;
+         virtual void release() ;
 
       protected:
          virtual BOOLEAN _valueMatch( const BSONElement &left, 
@@ -313,7 +324,7 @@ namespace engine
    class _mthMatchOpNodeSIZE : public _mthMatchOpNode
    {
       public:
-         _mthMatchOpNodeSIZE() ;
+         _mthMatchOpNodeSIZE( _mthNodeAllocator *allocator ) ;
          virtual ~_mthMatchOpNodeSIZE() ;
 
       public:
@@ -321,6 +332,7 @@ namespace engine
          virtual const CHAR *getOperatorStr() ;
          virtual UINT32 getWeight() ;
          virtual BOOLEAN isTotalConverted() ;
+         virtual void release() ;
 
       protected:
          virtual INT32 _init( const CHAR *fieldName, 
@@ -333,7 +345,7 @@ namespace engine
    class _mthMatchOpNodeEXISTS : public _mthMatchOpNode
    {
       public:
-         _mthMatchOpNodeEXISTS() ;
+         _mthMatchOpNodeEXISTS( _mthNodeAllocator *allocator ) ;
          virtual ~_mthMatchOpNodeEXISTS() ;
 
       public:
@@ -341,6 +353,7 @@ namespace engine
          virtual const CHAR *getOperatorStr() ;
          UINT32 getWeight() ;
          virtual BOOLEAN isTotalConverted() ;
+         virtual void release() ;
 
       protected:
          virtual BOOLEAN _valueMatch( const BSONElement &left, 
@@ -351,7 +364,7 @@ namespace engine
    class _mthMatchOpNodeMOD : public _mthMatchOpNode
    {
       public:
-         _mthMatchOpNodeMOD() ;
+         _mthMatchOpNodeMOD( _mthNodeAllocator *allocator ) ;
          virtual ~_mthMatchOpNodeMOD() ;
 
       public:
@@ -359,6 +372,7 @@ namespace engine
          virtual const CHAR *getOperatorStr() ;
          UINT32 getWeight() ;
          virtual BOOLEAN isTotalConverted() ;
+         virtual void release() ;
 
       protected:
          virtual INT32 _init( const CHAR *fieldName, 
@@ -378,7 +392,7 @@ namespace engine
    class _mthMatchOpNodeTYPE : public _mthMatchOpNode
    {
       public:
-         _mthMatchOpNodeTYPE() ;
+         _mthMatchOpNodeTYPE( _mthNodeAllocator *allocator ) ;
          virtual ~_mthMatchOpNodeTYPE() ;
 
       public:
@@ -386,6 +400,7 @@ namespace engine
          virtual const CHAR *getOperatorStr() ;
          virtual UINT32 getWeight() ;
          virtual BOOLEAN isTotalConverted() ;
+         virtual void release() ;
 
       protected:
          virtual INT32 _init( const CHAR *fieldName, 
@@ -401,7 +416,7 @@ namespace engine
    class _mthMatchOpNodeISNULL : public _mthMatchOpNode
    {
       public:
-         _mthMatchOpNodeISNULL() ;
+         _mthMatchOpNodeISNULL( _mthNodeAllocator *allocator ) ;
          virtual ~_mthMatchOpNodeISNULL() ;
 
       public:
@@ -409,6 +424,7 @@ namespace engine
          virtual const CHAR *getOperatorStr() ;
          virtual UINT32 getWeight() ;
          virtual BOOLEAN isTotalConverted() ;
+         virtual void release() ;
 
       protected:
          virtual BOOLEAN _valueMatch( const BSONElement &left, 
@@ -420,7 +436,7 @@ namespace engine
    class _mthMatchOpNodeELEMMATCH : public _mthMatchOpNode
    {
       public:
-         _mthMatchOpNodeELEMMATCH() ;
+         _mthMatchOpNodeELEMMATCH( _mthNodeAllocator *allocator ) ;
          virtual ~_mthMatchOpNodeELEMMATCH() ;
 
       public:
@@ -428,6 +444,7 @@ namespace engine
          virtual const CHAR *getOperatorStr() ;
          virtual UINT32 getWeight() ;
          virtual BOOLEAN isTotalConverted() ;
+         virtual void release() ;
 
       protected:
          virtual INT32 _init( const CHAR *fieldName, 
@@ -444,7 +461,7 @@ namespace engine
    class _mthMatchOpNodeRegex : public _mthMatchOpNode
    {
       public:
-         _mthMatchOpNodeRegex() ;
+         _mthMatchOpNodeRegex( _mthNodeAllocator *allocator ) ;
          virtual ~_mthMatchOpNodeRegex() ;
 
       public:
@@ -461,6 +478,7 @@ namespace engine
          virtual BSONObj toBson() ;
          virtual BOOLEAN isTotalConverted() ;
          virtual UINT32 getWeight() ;
+         virtual void release() ;
 
       public:
          BOOLEAN matches( const BSONElement &ele ) ;

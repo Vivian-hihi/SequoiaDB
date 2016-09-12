@@ -47,31 +47,49 @@ namespace engine
    {
       //opstr,                        nodeType
       //logic
-      { MTH_OPERATOR_STR_AND,         EN_MATCHNODE_TYPE_LOGIC_AND },
-      { MTH_OPERATOR_STR_OR,          EN_MATCHNODE_TYPE_LOGIC_OR },
-      { MTH_OPERATOR_STR_NOT,         EN_MATCHNODE_TYPE_LOGIC_NOT },
+      { MTH_OPERATOR_STR_AND,         EN_MATCH_OPERATOR_LOGIC_AND },
+      { MTH_OPERATOR_STR_OR,          EN_MATCH_OPERATOR_LOGIC_OR },
+      { MTH_OPERATOR_STR_NOT,         EN_MATCH_OPERATOR_LOGIC_NOT },
 
       //operator
-      { MTH_OPERATOR_STR_ET,          EN_MATCHNODE_TYPE_ET },
-      { MTH_OPERATOR_STR_LT,          EN_MATCHNODE_TYPE_LT },
-      { MTH_OPERATOR_STR_LTE,         EN_MATCHNODE_TYPE_LTE },
-      { MTH_OPERATOR_STR_GTE,         EN_MATCHNODE_TYPE_GTE },
-      { MTH_OPERATOR_STR_GT,          EN_MATCHNODE_TYPE_GT },
-      { MTH_OPERATOR_STR_IN,          EN_MATCHNODE_TYPE_IN },
-      { MTH_OPERATOR_STR_NE,          EN_MATCHNODE_TYPE_NE },
-      { MTH_OPERATOR_STR_SIZE,        EN_MATCHNODE_TYPE_SIZE },
-      { MTH_OPERATOR_STR_ALL,         EN_MATCHNODE_TYPE_ALL },
-      { MTH_OPERATOR_STR_NIN,         EN_MATCHNODE_TYPE_NIN },
-      { MTH_OPERATOR_STR_EXISTS,      EN_MATCHNODE_TYPE_EXISTS },
-      { MTH_OPERATOR_STR_MOD,         EN_MATCHNODE_TYPE_MOD },
-      { MTH_OPERATOR_STR_TYPE,        EN_MATCHNODE_TYPE_TYPE },
-      { MTH_OPERATOR_STR_ELEMMATCH,   EN_MATCHNODE_TYPE_ELEMMATCH },
-      { MTH_OPERATOR_STR_ISNULL,      EN_MATCHNODE_TYPE_ISNULL },
+      { MTH_OPERATOR_STR_ET,          EN_MATCH_OPERATOR_ET },
+      { MTH_OPERATOR_STR_LT,          EN_MATCH_OPERATOR_LT },
+      { MTH_OPERATOR_STR_LTE,         EN_MATCH_OPERATOR_LTE },
+      { MTH_OPERATOR_STR_GTE,         EN_MATCH_OPERATOR_GTE },
+      { MTH_OPERATOR_STR_GT,          EN_MATCH_OPERATOR_GT },
+      { MTH_OPERATOR_STR_IN,          EN_MATCH_OPERATOR_IN },
+      { MTH_OPERATOR_STR_NE,          EN_MATCH_OPERATOR_NE },
+      { MTH_OPERATOR_STR_SIZE,        EN_MATCH_OPERATOR_SIZE },
+      { MTH_OPERATOR_STR_ALL,         EN_MATCH_OPERATOR_ALL },
+      { MTH_OPERATOR_STR_NIN,         EN_MATCH_OPERATOR_NIN },
+      { MTH_OPERATOR_STR_EXISTS,      EN_MATCH_OPERATOR_EXISTS },
+      { MTH_OPERATOR_STR_MOD,         EN_MATCH_OPERATOR_MOD },
+      { MTH_OPERATOR_STR_TYPE,        EN_MATCH_OPERATOR_TYPE },
+      { MTH_OPERATOR_STR_ELEMMATCH,   EN_MATCH_OPERATOR_ELEMMATCH },
+      { MTH_OPERATOR_STR_ISNULL,      EN_MATCH_OPERATOR_ISNULL },
 
-      //special process
-      { MTH_OPERATOR_STR_FIELD,       EN_MATCHNODE_TYPE_FIELD },
-      { MTH_OPERATOR_STR_REGEX,       EN_MATCHNODE_TYPE_REGEX },
-      { MTH_OPERATOR_STR_OPTIONS,     EN_MATCHNODE_TYPE_OPTIONS },
+      //special operator
+      { MTH_OPERATOR_STR_FIELD,       EN_MATCH_OPERATOR_FIELD },
+      { MTH_OPERATOR_STR_REGEX,       EN_MATCH_OPERATOR_REGEX },
+      { MTH_OPERATOR_STR_OPTIONS,     EN_MATCH_OPERATOR_OPTIONS },
+
+      //functions
+      { MTH_FUNCTION_STR_ABS,         EN_MATCH_FUNC_ABS },
+      { MTH_FUNCTION_STR_CEILING,     EN_MATCH_FUNC_CEILING },
+      { MTH_FUNCTION_STR_FLOOR,       EN_MATCH_FUNC_FLOOR },
+      //{ MTH_FUNCTION_STR_MOD,         EN_MATCH_FUNC_MOD },
+      { MTH_FUNCTION_STR_ADD,         EN_MATCH_FUNC_ADD },
+      { MTH_FUNCTION_STR_SUBTRACT,    EN_MATCH_FUNC_SUBTRACT },
+      { MTH_FUNCTION_STR_MULTIPLY,    EN_MATCH_FUNC_MULTIPLY },
+      { MTH_FUNCTION_STR_DIVIDE,      EN_MATCH_FUNC_DIVIDE },
+      { MTH_FUNCTION_STR_SUBSTR,      EN_MATCH_FUNC_SUBSTR },
+      { MTH_FUNCTION_STR_STRLEN,      EN_MATCH_FUNC_STRLEN },
+      { MTH_FUNCTION_STR_LOWER,       EN_MATCH_FUNC_LOWER },
+      { MTH_FUNCTION_STR_UPPER,       EN_MATCH_FUNC_UPPER },
+      { MTH_FUNCTION_STR_LTRIM,       EN_MATCH_FUNC_LTRIM },
+      { MTH_FUNCTION_STR_RTRIM,       EN_MATCH_FUNC_RTRIM },
+      { MTH_FUNCTION_STR_TRIM,        EN_MATCH_FUNC_TRIM },
+      { MTH_FUNCTION_STR_CAST,        EN_MATCH_FUNC_CAST },
    } ;
 
    //******************_mthMatchNodeFactory*************************
@@ -96,74 +114,77 @@ namespace engine
       _opstrMap.clear() ;
    }
 
-   EN_MATCHNODE_TYPE _mthMatchNodeFactory::getMatchNodeType( const CHAR *opStr )
+   EN_MATCH_OP_FUNC_TYPE _mthMatchNodeFactory::getMatchNodeType( 
+                                                             const CHAR *opStr )
    {
       MTH_OPSTRMAP::iterator iter ;
       iter = _opstrMap.find( opStr ) ;
       if ( iter != _opstrMap.end() )
       {
          mthMatchOpMapping* mapping = iter->second ;
-         return ( EN_MATCHNODE_TYPE ) mapping->nodeType ;
+         return ( EN_MATCH_OP_FUNC_TYPE ) mapping->nodeType ;
       }
       else
       {
-         return EN_MATCHNODE_TYPE_END ;
+         return EN_MATCH_OP_FUNC_END ;
       }
    }
 
-   _mthMatchOpNode* _mthMatchNodeFactory::createOpNode( EN_MATCHNODE_TYPE type )
+   _mthMatchOpNode* _mthMatchNodeFactory::createOpNode( 
+                                                   _mthNodeAllocator *allocator,
+                                                   EN_MATCH_OP_FUNC_TYPE type )
    {
       _mthMatchOpNode *opNode = NULL ;
 
       switch( type )
       {
-      case EN_MATCHNODE_TYPE_ET:
-         opNode = SDB_OSS_NEW _mthMatchOpNodeET() ;
+      case EN_MATCH_OPERATOR_ET:
+         opNode = new ( allocator ) _mthMatchOpNodeET( allocator ) ;
          break ;
-      case EN_MATCHNODE_TYPE_LT:
-         opNode = SDB_OSS_NEW _mthMatchOpNodeLT() ;
+      case EN_MATCH_OPERATOR_LT:
+         opNode = new ( allocator ) _mthMatchOpNodeLT( allocator ) ;
          break ;
-      case EN_MATCHNODE_TYPE_LTE:
-         opNode = SDB_OSS_NEW _mthMatchOpNodeLTE() ;
+      case EN_MATCH_OPERATOR_LTE:
+         opNode = new ( allocator ) _mthMatchOpNodeLTE( allocator ) ;
          break ;
-      case EN_MATCHNODE_TYPE_GTE:
-         opNode = SDB_OSS_NEW _mthMatchOpNodeGTE() ;
+      case EN_MATCH_OPERATOR_GTE:
+         opNode = new ( allocator ) _mthMatchOpNodeGTE( allocator ) ;
          break ;
-      case EN_MATCHNODE_TYPE_GT:
-         opNode = SDB_OSS_NEW _mthMatchOpNodeGT() ;
+      case EN_MATCH_OPERATOR_GT:
+         opNode = new ( allocator ) _mthMatchOpNodeGT( allocator ) ;
          break ;
-      case EN_MATCHNODE_TYPE_IN:
-         opNode = SDB_OSS_NEW _mthMatchOpNodeIN() ;
+      case EN_MATCH_OPERATOR_IN:
+         opNode = new ( allocator ) _mthMatchOpNodeIN( allocator ) ;
          break ;
-      case EN_MATCHNODE_TYPE_NE:
-         opNode = SDB_OSS_NEW _mthMatchOpNodeNE() ;
+      case EN_MATCH_OPERATOR_NE:
+         opNode = new ( allocator ) _mthMatchOpNodeNE( allocator ) ;
          break ;
-      case EN_MATCHNODE_TYPE_SIZE:
-         opNode = SDB_OSS_NEW _mthMatchOpNodeSIZE() ;
+      case EN_MATCH_OPERATOR_SIZE:
+         opNode = new ( allocator ) _mthMatchOpNodeSIZE( allocator ) ;
          break ;
-      case EN_MATCHNODE_TYPE_ALL:
-         opNode = SDB_OSS_NEW _mthMatchOpNodeALL() ;
+      case EN_MATCH_OPERATOR_ALL:
+         opNode = new ( allocator ) _mthMatchOpNodeALL( allocator ) ;
          break ;
-      case EN_MATCHNODE_TYPE_NIN:
-         opNode = SDB_OSS_NEW _mthMatchOpNodeNIN() ;
+      case EN_MATCH_OPERATOR_NIN:
+         opNode = new ( allocator ) _mthMatchOpNodeNIN( allocator ) ;
          break ;
-      case EN_MATCHNODE_TYPE_EXISTS:
-         opNode = SDB_OSS_NEW _mthMatchOpNodeEXISTS() ;
+      case EN_MATCH_OPERATOR_EXISTS:
+         opNode = new ( allocator ) _mthMatchOpNodeEXISTS( allocator ) ;
          break ;
-      case EN_MATCHNODE_TYPE_MOD:
-         opNode = SDB_OSS_NEW _mthMatchOpNodeMOD() ;
+      case EN_MATCH_OPERATOR_MOD:
+         opNode = new ( allocator ) _mthMatchOpNodeMOD( allocator ) ;
          break ;
-      case EN_MATCHNODE_TYPE_TYPE:
-         opNode = SDB_OSS_NEW _mthMatchOpNodeTYPE() ;
+      case EN_MATCH_OPERATOR_TYPE:
+         opNode = new ( allocator ) _mthMatchOpNodeTYPE( allocator ) ;
          break ;
-      case EN_MATCHNODE_TYPE_ELEMMATCH:
-         opNode = SDB_OSS_NEW _mthMatchOpNodeELEMMATCH() ;
+      case EN_MATCH_OPERATOR_ELEMMATCH:
+         opNode = new( allocator ) _mthMatchOpNodeELEMMATCH( allocator ) ;
          break ;
-      case EN_MATCHNODE_TYPE_ISNULL:
-         opNode = SDB_OSS_NEW _mthMatchOpNodeISNULL() ;
+      case EN_MATCH_OPERATOR_ISNULL:
+         opNode = new ( allocator ) _mthMatchOpNodeISNULL( allocator ) ;
          break ;
-      case EN_MATCHNODE_TYPE_REGEX:
-         opNode = SDB_OSS_NEW _mthMatchOpNodeRegex() ;
+      case EN_MATCH_OPERATOR_REGEX:
+         opNode = new ( allocator ) _mthMatchOpNodeRegex( allocator ) ;
          break ;
       default :
          break ;
@@ -173,22 +194,23 @@ namespace engine
    }
 
    _mthMatchLogicNode* _mthMatchNodeFactory::createLogicNode( 
-                                                        EN_MATCHNODE_TYPE type )
+                                                   _mthNodeAllocator *allocator,
+                                                   EN_MATCH_OP_FUNC_TYPE type )
    {
       _mthMatchLogicNode *logicNode = NULL ;
 
       switch( type )
       {
-      case EN_MATCHNODE_TYPE_LOGIC_AND :
-         logicNode = SDB_OSS_NEW _mthMatchLogicAndNode() ;
+      case EN_MATCH_OPERATOR_LOGIC_AND :
+         logicNode = new ( allocator ) _mthMatchLogicAndNode( allocator ) ;
          break ;
 
-      case EN_MATCHNODE_TYPE_LOGIC_OR :
-         logicNode = SDB_OSS_NEW _mthMatchLogicOrNode() ;
+      case EN_MATCH_OPERATOR_LOGIC_OR :
+         logicNode = new ( allocator ) _mthMatchLogicOrNode( allocator ) ;
          break ;
 
-      case EN_MATCHNODE_TYPE_LOGIC_NOT :
-         logicNode = SDB_OSS_NEW _mthMatchLogicNotNode() ;
+      case EN_MATCH_OPERATOR_LOGIC_NOT :
+         logicNode = new ( allocator ) _mthMatchLogicNotNode( allocator ) ;
          break ;
 
       default :
@@ -201,8 +223,7 @@ namespace engine
 
    void _mthMatchNodeFactory::releaseNode( _mthMatchNode *node )
    {
-      node->clear() ;
-      SAFE_OSS_DELETE( node ) ;
+      node->release() ;
    }
 
    _mthMatchTree* _mthMatchNodeFactory::createTree()
@@ -217,6 +238,29 @@ namespace engine
          tree->clear() ;
          SAFE_OSS_DELETE( tree ) ;
       }   
+   }
+
+   _mthMatchFunc* _mthMatchNodeFactory::createFunc( 
+                                                _mthNodeAllocator *allocator,
+                                                EN_MATCH_OP_FUNC_TYPE type )
+   {
+      _mthMatchFunc *func = NULL ;
+
+      switch( type )
+      {
+//      case EN_MATCH_FUNC_ABS:
+//         func  = new ( allocator ) _mthMatchFuncABS( allocator ) ;
+//         break ;
+      default :
+         break ;
+      }
+
+      return func ;
+   }
+
+   void _mthMatchNodeFactory::releaseFunc( _mthMatchFunc *func )
+   {
+      //TODO:
    }
 
    _mthMatchNodeFactory *mthGetMatchNodeFactory()
@@ -243,25 +287,58 @@ namespace engine
       clear() ;
    }
 
+   INT32 _mthMatchTree::_addFunction( const CHAR *fieldName, 
+                                      const BSONElement &ele, 
+                                      EN_MATCH_OP_FUNC_TYPE nodeType,
+                                      MTH_FUNC_LIST &funcList )
+   {
+      INT32 rc = SDB_OK ;
+      _mthMatchFunc* func = NULL ;
+      func = mthGetMatchNodeFactory()->createFunc( &_allocator, nodeType ) ;
+      if ( NULL == func )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG( PDERROR, "createFunc failed:nodeType=%d,rc=%d", 
+                 nodeType, rc ) ;
+         goto error ;
+      }
+
+      rc = func->init( fieldName, ele ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "init function failed:ele=%s,rc=%d",
+                 ele.toString().c_str(), rc ) ;
+         goto error ;
+      }
+
+      funcList.push_back( func ) ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
    INT32 _mthMatchTree::_addOperator( const CHAR *fieldName, 
                                       const BSONElement &ele, 
-                                      EN_MATCHNODE_TYPE nodeType, 
+                                      EN_MATCH_OP_FUNC_TYPE nodeType, 
+                                      MTH_FUNC_LIST &funcList,
                                       _mthMatchLogicNode *parent )
    {
       INT32 rc = SDB_OK ;
       _mthMatchOpNode *node = NULL ;
       BOOLEAN hasAddToTree  = FALSE ;
 
-      SDB_ASSERT( EN_MATCHNODE_TYPE_REGEX != nodeType, 
+      SDB_ASSERT( EN_MATCH_OPERATOR_REGEX != nodeType, 
                   "regex is processed in another branch" ) ;
 
-      if ( EN_MATCHNODE_TYPE_FIELD == nodeType )
+      if ( EN_MATCH_OPERATOR_FIELD == nodeType )
       {
          //{ a: {$field:"b" } }
-         nodeType = EN_MATCHNODE_TYPE_ET ;
+         nodeType = EN_MATCH_OPERATOR_ET ;
       }
 
-      node = mthGetMatchNodeFactory()->createOpNode( nodeType ) ;
+      node = mthGetMatchNodeFactory()->createOpNode( &_allocator, nodeType ) ;
       if ( NULL == node )
       {
          rc = SDB_INVALIDARG ;
@@ -275,6 +352,13 @@ namespace engine
       {
          PD_LOG( PDERROR, "init node failed:name=%s,ele=%s,rc=%d",
                  fieldName, ele.toString().c_str(), rc ) ;
+         goto error ;
+      }
+
+      rc = node->addFuncList( funcList ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "add function list failed:rc=%d", rc ) ;
          goto error ;
       }
 
@@ -303,7 +387,8 @@ namespace engine
    }
 
    INT32 _mthMatchTree::_addRegExOp( const CHAR *fieldName, const CHAR *regex, 
-                                     const CHAR *options,
+                                     const CHAR *options, 
+                                     MTH_FUNC_LIST &funcList,
                                      _mthMatchLogicNode *parent )
    {
       INT32 rc = SDB_OK ;
@@ -311,12 +396,13 @@ namespace engine
       _mthMatchOpNodeRegex *regexNode = NULL ;
       BOOLEAN hasAddToTree            = FALSE ;
       
-      node = mthGetMatchNodeFactory()->createOpNode( EN_MATCHNODE_TYPE_REGEX ) ;
+      node = mthGetMatchNodeFactory()->createOpNode( &_allocator,
+                                                     EN_MATCH_OPERATOR_REGEX ) ;
       if ( NULL == node )
       {
          rc = SDB_INVALIDARG ;
          PD_LOG( PDERROR, "createOpNodeByOp failed:type=%d,rc=%d", 
-                 EN_MATCHNODE_TYPE_REGEX, rc ) ;
+                 EN_MATCH_OPERATOR_REGEX, rc ) ;
          goto error ;
       }
 
@@ -335,6 +421,13 @@ namespace engine
          PD_LOG( PDERROR, "init regexNode failed:regex=%s,options=%s,rc=%d", 
                  ( NULL == regex ) ? "" : regex,
                  ( NULL == options ) ? "" : options, rc ) ;
+         goto error ;
+      }
+
+      rc = regexNode->addFuncList( funcList ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "add funclist failed:rc=%d", rc ) ;
          goto error ;
       }
 
@@ -362,7 +455,8 @@ namespace engine
                                             _mthMatchLogicNode *parent )
    {
       INT32 rc = SDB_OK ;
-      rc = _addRegExOp( ele.fieldName(), ele.regex(), ele.regexFlags(), 
+      MTH_FUNC_LIST empty ;
+      rc = _addRegExOp( ele.fieldName(), ele.regex(), ele.regexFlags(), empty,
                         parent ) ;
       if ( SDB_OK != rc )
       {
@@ -382,6 +476,7 @@ namespace engine
                                              _mthMatchLogicNode *parent )
    {
       INT32 rc = SDB_OK ;
+      MTH_FUNC_LIST empty ;
       const CHAR *eFieldName = ele.fieldName() ;
       //fieldName can't start with '$'
       if ( MTH_OPERATOR_EYECATCHER == eFieldName[0] )
@@ -392,7 +487,8 @@ namespace engine
          goto error ;
       }
 
-      rc = _addOperator( ele.fieldName(), ele, EN_MATCHNODE_TYPE_ET, parent ) ;
+      rc = _addOperator( ele.fieldName(), ele, EN_MATCH_OPERATOR_ET, empty,
+                         parent ) ;
       if ( rc )
       {
          PD_LOG ( PDERROR, "Failed inject element, rc: %d", rc ) ;
@@ -426,15 +522,15 @@ namespace engine
 
          {
             _mthMatchLogicNode *tmpParent = parent ;
-            if ( parent->getType() == EN_MATCHNODE_TYPE_LOGIC_OR || 
-                 parent->getType() == EN_MATCHNODE_TYPE_LOGIC_NOT )
+            if ( parent->getType() == EN_MATCH_OPERATOR_LOGIC_OR || 
+                 parent->getType() == EN_MATCH_OPERATOR_LOGIC_NOT )
             {
                // {a:{$or:[ {a:1, b:1}, {c:1} ]}}
                // eleTemp = { a:1, b:1 }  condition a=1 and b=1 should be 
                // under LOGIC_AND
                _mthMatchLogicNode *child = NULL ;
-               child = mthGetMatchNodeFactory()->createLogicNode(
-                                              EN_MATCHNODE_TYPE_LOGIC_AND ) ;
+               child = mthGetMatchNodeFactory()->createLogicNode( &_allocator,
+                                                 EN_MATCH_OPERATOR_LOGIC_AND ) ;
                if ( NULL == child )
                {
                   rc = SDB_INVALIDARG ;
@@ -502,13 +598,13 @@ namespace engine
          goto error ;
       }
 
-      logicAnd = mthGetMatchNodeFactory()->createLogicNode( 
-                                                EN_MATCHNODE_TYPE_LOGIC_AND ) ;
+      logicAnd = mthGetMatchNodeFactory()->createLogicNode( &_allocator,
+                                                EN_MATCH_OPERATOR_LOGIC_AND ) ;
       if ( !logicAnd )
       {
          rc = SDB_OOM ;
          PD_LOG ( PDERROR, "Failed to allocate memory for "
-                  "EN_MATCHNODE_TYPE_LOGIC_AND:rc=%d", rc ) ;
+                  "EN_MATCH_OPERATOR_LOGIC_AND:rc=%d", rc ) ;
          goto error ;
       }
 
@@ -569,13 +665,13 @@ namespace engine
          goto error ;
       }
 
-      logicOr = mthGetMatchNodeFactory()->createLogicNode( 
-                                                EN_MATCHNODE_TYPE_LOGIC_OR ) ;
+      logicOr = mthGetMatchNodeFactory()->createLogicNode( &_allocator,
+                                                EN_MATCH_OPERATOR_LOGIC_OR ) ;
       if ( !logicOr )
       {
          rc = SDB_OOM ;
          PD_LOG ( PDERROR, "Failed to allocate memory for "
-                  "EN_MATCHNODE_TYPE_LOGIC_OR:rc=%d", rc ) ;
+                  "EN_MATCH_OPERATOR_LOGIC_OR:rc=%d", rc ) ;
          goto error ;
       }
 
@@ -636,13 +732,13 @@ namespace engine
          goto error ;
       }
 
-      logicNot = mthGetMatchNodeFactory()->createLogicNode( 
-                                                EN_MATCHNODE_TYPE_LOGIC_NOT ) ;
+      logicNot = mthGetMatchNodeFactory()->createLogicNode( &_allocator,
+                                                EN_MATCH_OPERATOR_LOGIC_NOT ) ;
       if ( !logicNot )
       {
          rc = SDB_OOM ;
          PD_LOG ( PDERROR, "Failed to allocate memory for "
-                  "EN_MATCHNODE_TYPE_LOGIC_OR:rc=%d", rc ) ;
+                  "EN_MATCH_OPERATOR_LOGIC_OR:rc=%d", rc ) ;
          goto error ;
       }
 
@@ -693,9 +789,9 @@ namespace engine
       const CHAR *fieldName = ele.fieldName() ;
       if ( MTH_OPERATOR_EYECATCHER == fieldName[0] )
       {
-         EN_MATCHNODE_TYPE nodeType ;
+         EN_MATCH_OP_FUNC_TYPE nodeType ;
          nodeType = mthGetMatchNodeFactory()->getMatchNodeType( fieldName ) ;
-         if ( EN_MATCHNODE_TYPE_LOGIC_AND == nodeType )
+         if ( EN_MATCH_OPERATOR_LOGIC_AND == nodeType )
          {
             // logic and
             rc = _pareseLogicAnd( ele, parent ) ;
@@ -706,7 +802,7 @@ namespace engine
                goto error ;
             }
          }
-         else if ( EN_MATCHNODE_TYPE_LOGIC_OR == nodeType )
+         else if ( EN_MATCH_OPERATOR_LOGIC_OR == nodeType )
          {
             // logic or
             rc = _pareseLogicOr( ele, parent ) ;
@@ -717,7 +813,7 @@ namespace engine
                goto error ;
             }
          }
-         else if ( EN_MATCHNODE_TYPE_LOGIC_NOT == nodeType )
+         else if ( EN_MATCH_OPERATOR_LOGIC_NOT == nodeType )
          {
             // logic not
             rc = _pareseLogicNot( ele, parent ) ;
@@ -739,8 +835,9 @@ namespace engine
       else
       {
          //just normal array {a:[1,3]}
-         rc = _addOperator( ele.fieldName(), ele, EN_MATCHNODE_TYPE_ET, 
-                            parent ) ;
+         MTH_FUNC_LIST empty ;
+         rc = _addOperator( ele.fieldName(), ele, EN_MATCH_OPERATOR_ET, 
+                            empty, parent ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG( PDERROR, "_addOperator failed:ele=%s,rc=%d",
@@ -762,10 +859,10 @@ namespace engine
       const CHAR *fieldName = ele.fieldName() ;
       if ( Object == ele.type() || Array == ele.type() )
       {
-         EN_MATCHNODE_TYPE nodeType ;
+         EN_MATCH_OP_FUNC_TYPE nodeType ;
          nodeType = mthGetMatchNodeFactory()->getMatchNodeType( 
                                                              ele.fieldName() ) ;
-         if ( EN_MATCHNODE_TYPE_ELEMMATCH == nodeType )
+         if ( EN_MATCH_OPERATOR_ELEMMATCH == nodeType )
          {
             //we treat $eleMatch as not OpField
             return FALSE ;
@@ -827,14 +924,14 @@ namespace engine
 
    INT32 _mthMatchTree::_pareseObjectInnerOp( const BSONElement &ele, 
                                               const BSONElement &innerEle,
+                                              MTH_FUNC_LIST &funcList,
                                               _mthMatchLogicNode *parent,
-                                              /* functionList */
                                               const char *&regex,
                                               const char *&options )
    {
       INT32 rc = SDB_OK ;
       const CHAR *innerFieldName = NULL ;
-      EN_MATCHNODE_TYPE nodeType ;
+      EN_MATCH_OP_FUNC_TYPE nodeType ;
 
       innerFieldName = innerEle.fieldName() ;
       nodeType       = mthGetMatchNodeFactory()->getMatchNodeType( 
@@ -842,23 +939,48 @@ namespace engine
       if ( Object != innerEle.type() && Array != innerEle.type() )
       {
          // { a : { $xx : xxxxxxx } }
-         if ( EN_MATCHNODE_TYPE_REGEX == nodeType )
+         if ( EN_MATCH_OPERATOR_REGEX == nodeType )
          {
             regex = innerEle.valuestrsafe() ;
          }
-         else if ( EN_MATCHNODE_TYPE_OPTIONS == nodeType )
+         else if ( EN_MATCH_OPERATOR_OPTIONS == nodeType )
          {
             options = innerEle.valuestrsafe() ;
          }
-         else if ( EN_MATCHNODE_TYPE_END != nodeType )
+         else if ( EN_MATCH_OPERATOR_MOD == nodeType )
          {
-            //TODO: if is function, add to function list
-            /*
-               _addOperator( ele.fieldName(), embEle, 
-                             EN_MATCHNODE_TYPE_ET, funcList, parent ) ;
-               funcList.clear() ;
-            */
-            rc = _addOperator( ele.fieldName(), innerEle, nodeType, parent ) ;
+            //mod is operator or function
+            if ( innerEle.type() == Array )
+            {
+               //operator mod
+               rc = _addOperator( ele.fieldName(), innerEle, nodeType, funcList, 
+                                  parent ) ;
+               if ( SDB_OK != rc )
+               {
+                  PD_LOG( PDERROR, "_addOperator failed:innerEle=%s,rc=%d",
+                          innerEle.toString().c_str(), rc ) ;
+                  goto error ;
+               }
+            }
+            else
+            {
+               //func mod
+               rc = _addFunction( ele.fieldName(), innerEle, nodeType, 
+                                  funcList ) ;
+               if ( SDB_OK != rc )
+               {
+                  PD_LOG( PDERROR, "add function failed:fieldName=%s,"
+                          "innerEle=%s,rc=%d", ele.fieldName(), 
+                          innerEle.toString().c_str(), rc ) ;
+                  goto error ;
+               }
+            }
+         }
+         else if ( ( nodeType < EN_MATCH_OPERATOR_END && 
+                     nodeType >= EN_MATCH_OPERATOR_ET ) )
+         {
+            rc = _addOperator( ele.fieldName(), innerEle, nodeType, funcList, 
+                               parent ) ;
             if ( SDB_OK != rc )
             {
                PD_LOG( PDERROR, "_addOperator failed:innerEle=%s,rc=%d",
@@ -866,9 +988,21 @@ namespace engine
                goto error ;
             }
          }
+         else if ( nodeType < EN_MATCH_FUNC_END && 
+                   nodeType >= EN_MATCH_FUNC_ABS )
+         {
+            rc = _addFunction( ele.fieldName(), innerEle, nodeType, funcList ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "add function failed:fieldName=%s,innerEle=%s,"
+                       "rc=%d", ele.fieldName(), innerEle.toString().c_str(), 
+                       rc ) ;
+               goto error ;
+            }
+         }
          else
          {
-            // EN_MATCHNODE_TYPE_END
+            // EN_MATCH_OPERATOR_END
             rc = SDB_INVALIDARG ;
             PD_LOG( PDERROR, "unreconigzed operator:embEle=%s,rc=%d",
                     innerEle.toString().c_str(), rc ) ;
@@ -886,10 +1020,10 @@ namespace engine
             {
                BSONElement tElem       = k.next () ;
                const CHAR *tEleFieName = tElem.fieldName () ;
-               EN_MATCHNODE_TYPE tmpType ;
+               EN_MATCH_OP_FUNC_TYPE tmpType ;
                tmpType = mthGetMatchNodeFactory()->getMatchNodeType( 
                                                                 tEleFieName ) ;
-               if ( EN_MATCHNODE_TYPE_FIELD != tmpType 
+               if ( EN_MATCH_OPERATOR_FIELD != tmpType 
                     && _isExistOpFieldRecursive( innerEle ) )
                {
                   //only support $field
@@ -898,13 +1032,9 @@ namespace engine
                            "have more than one operator") ;
                   goto error ;
                }
-               //TODO: if is function, add to function list
-               /*
-                  _addOperator( ele.fieldName(), embEle, 
-                                EN_MATCHNODE_TYPE_ET, funcList, parent ) ;
-                  funcList.clear() ;
-               */
-               rc = _addOperator( ele.fieldName(), tElem, nodeType, parent ) ;
+
+               rc = _addOperator( ele.fieldName(), tElem, nodeType, funcList,
+                                  parent ) ;
                if ( SDB_OK != rc )
                {
                   PD_LOG( PDERROR, "_addOperator failed:tElem=%s,rc=%d",
@@ -916,13 +1046,8 @@ namespace engine
          else
          {
             // { a : { $xx : { xx : ... } } }
-            //TODO: if is function, add to function list
-            /*
-               _addOperator( ele.fieldName(), embEle, 
-                             EN_MATCHNODE_TYPE_ET, funcList, parent ) ;
-               funcList.clear() ;
-            */
-            rc = _addOperator( ele.fieldName(), innerEle, nodeType, parent ) ;
+            rc = _addOperator( ele.fieldName(), innerEle, nodeType, funcList,
+                               parent ) ;
             if ( SDB_OK != rc )
             {
                PD_LOG( PDERROR, "_addOperator failed:innerEle=%s,rc=%d",
@@ -941,14 +1066,15 @@ namespace engine
    INT32 _mthMatchTree::_paresePrevOptions( const CHAR *fieldName,
                                             const BSONElement &ele,
                                             const CHAR *options,
+                                            MTH_FUNC_LIST &funcList,
                                             _mthMatchLogicNode *parent )
    {
       //previous is options. regex must come next
       INT32 rc = SDB_OK ;
       const CHAR *tmpRegex = NULL ;
-      EN_MATCHNODE_TYPE type ;
+      EN_MATCH_OP_FUNC_TYPE type ;
       type = mthGetMatchNodeFactory()->getMatchNodeType( ele.fieldName() ) ;
-      if ( EN_MATCHNODE_TYPE_REGEX != type )
+      if ( EN_MATCH_OPERATOR_REGEX != type )
       {
          rc = SDB_INVALIDARG ;
          PD_LOG( PDERROR, "exist extra options operator:options=%s", 
@@ -957,11 +1083,7 @@ namespace engine
       }
       
       tmpRegex = ele.valuestrsafe() ;
-      /* TODO:
-      _addRegExOp( fieldName, regex, options, funcList, parent ) ;
-      funcList.clear() ;
-      */
-      rc = _addRegExOp( fieldName, tmpRegex, options, parent ) ;
+      rc = _addRegExOp( fieldName, tmpRegex, options, funcList, parent ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "_addRegExOp failed:fieldName=%s,"
@@ -976,10 +1098,24 @@ namespace engine
       goto done ;
    }
 
+   void _mthMatchTree::_clearFuncList( MTH_FUNC_LIST &funcList )
+   {
+      MTH_FUNC_LIST::iterator iter = funcList.begin() ;
+      while ( iter != funcList.end() )
+      {
+         _mthMatchFunc *func = *iter ;
+         mthGetMatchNodeFactory()->releaseFunc( func ) ;
+         iter++ ;
+      }
+
+      funcList.clear() ;
+   }
+
    INT32 _mthMatchTree::_parseObjectElement( const BSONElement &ele, 
                                              _mthMatchLogicNode *parent )
    {
       INT32 rc = SDB_OK ;
+      MTH_FUNC_LIST funcList ;
       const CHAR *fieldName = ele.fieldName() ;
       //fieldName can't start with '$'
       if ( MTH_OPERATOR_EYECATCHER == fieldName[0] )
@@ -993,7 +1129,8 @@ namespace engine
       if ( !_isExistOpEyeCatcher( ele ) )
       {
          // { a : { xx : xxxxxx, yy : yyyyyy } }
-         rc = _addOperator( ele.fieldName(), ele, EN_MATCHNODE_TYPE_ET, 
+         MTH_FUNC_LIST empty ;
+         rc = _addOperator( ele.fieldName(), ele, EN_MATCH_OPERATOR_ET, empty,
                             parent ) ;
          if ( SDB_OK != rc )
          {
@@ -1010,7 +1147,6 @@ namespace engine
          BSONObjIterator iter( ele.embeddedObject() ) ;
          const CHAR *regex   = NULL ;
          const CHAR *options = NULL ;
-         //TODO: list< func* > funcList ;
          while ( iter.more() )
          {
             BSONElement embEle       = iter.next () ;
@@ -1023,7 +1159,7 @@ namespace engine
             if ( NULL != options )
             {
                //previous is options. regex must come next
-               rc = _paresePrevOptions( fieldName, embEle, options, 
+               rc = _paresePrevOptions( fieldName, embEle, options, funcList,
                                         parent ) ;
                if ( SDB_OK != rc )
                {
@@ -1038,17 +1174,14 @@ namespace engine
             if ( NULL != regex )
             {
                //previous is regex. check if options come next
-               EN_MATCHNODE_TYPE type ;
+               EN_MATCH_OP_FUNC_TYPE type ;
                type = mthGetMatchNodeFactory()->getMatchNodeType( 
                                                                 embFieldName ) ;
-               if ( EN_MATCHNODE_TYPE_OPTIONS == type )
+               if ( EN_MATCH_OPERATOR_OPTIONS == type )
                {
                   const CHAR *tmpOptions = embEle.valuestrsafe() ;
-                  /* TODO:
-                  _addRegExOp( fieldName, regex, options, funcList, parent ) ;
-                  funcList.clear() ;
-                  */
-                  rc = _addRegExOp( fieldName, regex, tmpOptions, parent ) ;
+                  rc = _addRegExOp( fieldName, regex, tmpOptions, funcList,
+                                    parent ) ;
                   if ( SDB_OK != rc )
                   {
                      PD_LOG( PDERROR, "_addRegExOp failed:fieldName=%s,"
@@ -1060,11 +1193,7 @@ namespace engine
                   continue ;
                }
 
-               /* TODO:
-               _addRegExOp( fieldName, regex, options, funcList, parent ) ;
-               funcList.clear() ;
-               */
-               rc = _addRegExOp( fieldName, regex, NULL, parent ) ;
+               rc = _addRegExOp( fieldName, regex, NULL, funcList, parent ) ;
                if ( SDB_OK != rc )
                {
                   PD_LOG( PDERROR, "_addRegExOp failed:fieldName=%s,"
@@ -1077,16 +1206,7 @@ namespace engine
             if ( MTH_OPERATOR_EYECATCHER == embFieldName[0] )
             {
                // { a : { $xx : xxxxxxx } }
-
-               //TODO: if is function, add to function list
-               /*
-                  if ( isFunc( embFieldName ) )
-                  {
-                     funcList.push_back( func ) ;
-                     continue ;
-                  }
-               */
-               rc = _pareseObjectInnerOp( ele, embEle, parent, regex, 
+               rc = _pareseObjectInnerOp( ele, embEle, funcList, parent, regex, 
                                           options ) ;
                if ( SDB_OK != rc )
                {
@@ -1097,23 +1217,14 @@ namespace engine
             else
             {
                // { a : { xxx : xxxxxx } }, quality condition
-               /* TODO:
-                  _addOperator( ele.fieldName(), embEle, 
-                                EN_MATCHNODE_TYPE_ET, funcList, parent ) ;
-                  funcList.clear() ;
-               */
-               rc = _addOperator( ele.fieldName(), embEle, EN_MATCHNODE_TYPE_ET, 
-                                  parent ) ;
+               rc = _addOperator( ele.fieldName(), embEle, EN_MATCH_OPERATOR_ET, 
+                                  funcList, parent ) ;
             }
          }
 
          if ( NULL != regex )
          {
-            /* TODO:
-            _addRegExOp( fieldName, regex, options, funcList, parent ) ;
-            funcList.clear() ;
-            */
-            rc = _addRegExOp( fieldName, regex, options, parent ) ;
+            rc = _addRegExOp( fieldName, regex, options, funcList, parent ) ;
             if ( SDB_OK != rc )
             {
                PD_LOG( PDERROR, "_addRegExOp failed:fieldName=%s,"
@@ -1132,12 +1243,20 @@ namespace engine
             goto error ;
          }
 
-         //TODO: if funcList is not empty goto error
+         if ( funcList.size() > 0 )
+         {
+            rc = SDB_INVALIDARG ;
+            MTH_FUNC_LIST::iterator iter = funcList.begin() ;
+            PD_LOG( PDERROR, "exist extra func:first func=%s", 
+                    ( *iter )->toString().c_str() ) ;
+            goto error ;
+         }
       }
 
    done:
       return rc ;
    error:
+      _clearFuncList( funcList ) ;
       goto done ;
    }
 
@@ -1180,13 +1299,13 @@ namespace engine
       try
       {
          //create root node( AND )
-         _root = mthGetMatchNodeFactory()->createLogicNode( 
-                                                 EN_MATCHNODE_TYPE_LOGIC_AND ) ;
+         _root = mthGetMatchNodeFactory()->createLogicNode( &_allocator,
+                                                 EN_MATCH_OPERATOR_LOGIC_AND ) ;
          if ( NULL == _root )
          {
             rc = SDB_OOM ;
             PD_LOG ( PDERROR, "Failed to allocate memory for "
-                     "EN_MATCHNODE_TYPE_LOGIC_AND:rc=%d", rc ) ;
+                     "EN_MATCH_OPERATOR_LOGIC_AND:rc=%d", rc ) ;
             goto error ;
          }
 
@@ -1265,7 +1384,7 @@ namespace engine
    INT32 _mthMatchTree::_deleteExtraLogicNode( _mthMatchNode *node )
    {
       INT32 rc = SDB_OK ;
-      if ( node->getType() > EN_MATCHNODE_TYPE_LOGIC_END )
+      if ( node->getType() > EN_MATCH_OPERATOR_LOGIC_END )
       {
          goto done ;
       }
@@ -1292,15 +1411,15 @@ namespace engine
       }
 
       //$logic -> $or/$and -> op => $logic -> op
-      if ( ( node->getType() == EN_MATCHNODE_TYPE_LOGIC_OR || 
-             node->getType() == EN_MATCHNODE_TYPE_LOGIC_AND ) && 
+      if ( ( node->getType() == EN_MATCH_OPERATOR_LOGIC_OR || 
+             node->getType() == EN_MATCH_OPERATOR_LOGIC_AND ) && 
              node->getChildrenCount() == 1 )
       {
          _mthMatchNode *parent = node->getParent() ;
          if ( NULL != parent )
          {
-            SDB_ASSERT( parent->getType() >= EN_MATCHNODE_TYPE_LOGIC_AND &&
-                        parent->getType() < EN_MATCHNODE_TYPE_LOGIC_END, 
+            SDB_ASSERT( parent->getType() >= EN_MATCH_OPERATOR_LOGIC_AND &&
+                        parent->getType() < EN_MATCH_OPERATOR_LOGIC_END, 
                         "parent must be logic node" ) ;
 
             rc = _deleteNode( parent, node ) ;
@@ -1314,13 +1433,13 @@ namespace engine
       }
 
       //$not/and -> $and -> op1|$logic|op3 => $not/and -> op1|$logic|op3
-      if ( node->getType() == EN_MATCHNODE_TYPE_LOGIC_AND )
+      if ( node->getType() == EN_MATCH_OPERATOR_LOGIC_AND )
       {
          _mthMatchNode *parent = node->getParent() ;
          if ( NULL != parent )
          {
-            if ( parent->getType() == EN_MATCHNODE_TYPE_LOGIC_AND || 
-                 parent->getType() == EN_MATCHNODE_TYPE_LOGIC_NOT )
+            if ( parent->getType() == EN_MATCH_OPERATOR_LOGIC_AND || 
+                 parent->getType() == EN_MATCH_OPERATOR_LOGIC_NOT )
             {
                rc = _deleteNode( parent, node ) ;
                if ( SDB_OK != rc )
@@ -1359,12 +1478,12 @@ namespace engine
       }
 
       if ( _root->getChildrenCount() == 1 && 
-           _root->getType() == EN_MATCHNODE_TYPE_LOGIC_AND )
+           _root->getType() == EN_MATCH_OPERATOR_LOGIC_AND )
       {
          _mthMatchNodeIterator iter( _root ) ;
          _mthMatchNode *child = iter.next() ;
-         if ( child->getType() < EN_MATCHNODE_TYPE_LOGIC_END &&
-              child->getType() >= EN_MATCHNODE_TYPE_LOGIC_AND )
+         if ( child->getType() < EN_MATCH_OPERATOR_LOGIC_END &&
+              child->getType() >= EN_MATCH_OPERATOR_LOGIC_AND )
          {
             _root->delChild( child ) ;
             mthGetMatchNodeFactory()->releaseNode( _root ) ;
@@ -1380,8 +1499,8 @@ namespace engine
 
    void _mthMatchTree::_setWeight( _mthMatchNode *node )
    {
-      if ( node->getType() >= EN_MATCHNODE_TYPE_LOGIC_AND &&
-           node->getType() < EN_MATCHNODE_TYPE_LOGIC_END )
+      if ( node->getType() >= EN_MATCH_OPERATOR_LOGIC_AND &&
+           node->getType() < EN_MATCH_OPERATOR_LOGIC_END )
       {
          _mthMatchNodeIterator iter( node ) ;
          UINT32 weight = 0 ;
@@ -1597,7 +1716,8 @@ namespace engine
       }
       catch (  std::exception &e )
       {
-         PD_LOG ( PDWARNING, "Failed to extract equality matches: %s", e.what() ) ;
+         PD_LOG ( PDWARNING, "Failed to extract equality matches: %s", 
+                  e.what() ) ;
          goto done ;
       }
 

@@ -52,41 +52,56 @@ using namespace std ;
 
 namespace engine
 {
-   enum EN_MATCHNODE_TYPE
+   enum EN_MATCH_OP_FUNC_TYPE
    {
-      EN_MATCHNODE_TYPE_LOGIC_AND     = 0,
-      EN_MATCHNODE_TYPE_LOGIC_OR,
-      EN_MATCHNODE_TYPE_LOGIC_NOT,
+      EN_MATCH_OPERATOR_LOGIC_AND     = 0,
+      EN_MATCH_OPERATOR_LOGIC_OR,
+      EN_MATCH_OPERATOR_LOGIC_NOT,
 
       //logic end
-      EN_MATCHNODE_TYPE_LOGIC_END     = 10,
+      EN_MATCH_OPERATOR_LOGIC_END     = 10,
 
-      EN_MATCHNODE_TYPE_ET,
-      EN_MATCHNODE_TYPE_LT,
-      EN_MATCHNODE_TYPE_LTE,
-      EN_MATCHNODE_TYPE_GTE,
-      EN_MATCHNODE_TYPE_GT,
-      EN_MATCHNODE_TYPE_IN,
-      EN_MATCHNODE_TYPE_NE,
-      EN_MATCHNODE_TYPE_SIZE,
-      EN_MATCHNODE_TYPE_ALL,
-      EN_MATCHNODE_TYPE_NIN,
-      EN_MATCHNODE_TYPE_EXISTS,
-      EN_MATCHNODE_TYPE_MOD,
-      EN_MATCHNODE_TYPE_TYPE,
-      EN_MATCHNODE_TYPE_REGEX,
+      EN_MATCH_OPERATOR_ET,
+      EN_MATCH_OPERATOR_LT,
+      EN_MATCH_OPERATOR_LTE,
+      EN_MATCH_OPERATOR_GTE,
+      EN_MATCH_OPERATOR_GT,
+      EN_MATCH_OPERATOR_IN,
+      EN_MATCH_OPERATOR_NE,
+      EN_MATCH_OPERATOR_SIZE,
+      EN_MATCH_OPERATOR_ALL,
+      EN_MATCH_OPERATOR_NIN,
+      EN_MATCH_OPERATOR_EXISTS,
+      EN_MATCH_OPERATOR_MOD,
+      EN_MATCH_OPERATOR_TYPE,
+      EN_MATCH_OPERATOR_REGEX,
+      EN_MATCH_OPERATOR_OPTIONS,   /*do not have really matchNode*/
+      EN_MATCH_OPERATOR_ELEMMATCH,
+      EN_MATCH_OPERATOR_ISNULL,
+      EN_MATCH_OPERATOR_FIELD,     /*do not have really matchNode*/
 
-      EN_MATCHNODE_TYPE_OPTIONS,   /*do not have really matchNode*/
+      EN_MATCH_OPERATOR_END,
 
-      EN_MATCHNODE_TYPE_ELEMMATCH,
-//      EN_MATCHNODE_TYPE_NEAR,
-//      EN_MATCHNODE_TYPE_WITHIN,
-//      EN_MATCHNODE_TYPE_MAX_DISTANCE,
-      EN_MATCHNODE_TYPE_ISNULL,
+      EN_MATCH_FUNC_ABS,
+      EN_MATCH_FUNC_CEILING,
+      EN_MATCH_FUNC_FLOOR,
+      EN_MATCH_FUNC_MOD,
+      EN_MATCH_FUNC_ADD,
+      EN_MATCH_FUNC_SUBTRACT,
+      EN_MATCH_FUNC_MULTIPLY,
+      EN_MATCH_FUNC_DIVIDE,
+      EN_MATCH_FUNC_SUBSTR,
+      EN_MATCH_FUNC_STRLEN,
+      EN_MATCH_FUNC_LOWER,
+      EN_MATCH_FUNC_UPPER,
+      EN_MATCH_FUNC_LTRIM,
+      EN_MATCH_FUNC_RTRIM,
+      EN_MATCH_FUNC_TRIM,
+      EN_MATCH_FUNC_CAST,
 
-      EN_MATCHNODE_TYPE_FIELD,     /*do not have really matchNode*/
+      EN_MATCH_FUNC_END,
 
-      EN_MATCHNODE_TYPE_END,
+      EN_MATCH_OP_FUNC_END,
    } ;
 
    #define MTH_OPERATOR_STR_AND                 "$and"
@@ -111,6 +126,25 @@ namespace engine
    #define MTH_OPERATOR_STR_REGEX               "$regex"
    #define MTH_OPERATOR_STR_OPTIONS             "$options"
 
+   #define MTH_FUNCTION_STR_ABS                 "$abs"
+   #define MTH_FUNCTION_STR_CEILING             "$ceiling"
+   #define MTH_FUNCTION_STR_FLOOR               "$floor"
+   #define MTH_FUNCTION_STR_MOD                 "$fmod"
+   #define MTH_FUNCTION_STR_ADD                 "$add"
+   #define MTH_FUNCTION_STR_SUBTRACT            "$subtract"
+   #define MTH_FUNCTION_STR_MULTIPLY            "$multiply"
+   #define MTH_FUNCTION_STR_DIVIDE              "$divide"
+   #define MTH_FUNCTION_STR_SUBSTR              "$substr"
+   #define MTH_FUNCTION_STR_STRLEN              "$strlen"
+   #define MTH_FUNCTION_STR_LOWER               "$lower"
+   #define MTH_FUNCTION_STR_UPPER               "$upper"
+   #define MTH_FUNCTION_STR_LTRIM               "$ltrim"
+   #define MTH_FUNCTION_STR_RTRIM               "$rtrim"
+   #define MTH_FUNCTION_STR_TRIM                "$trim"
+   #define MTH_FUNCTION_STR_CAST                "$cast"
+   
+
+   #define MTH_ALLOCATOR_SIZE                   200
    #define MTH_MATCH_FIELD_STATIC_NAME_LEN      32
    #define MTH_FIELDNAME_SEP                    '.'
 
@@ -264,12 +298,36 @@ namespace engine
          UINT32 _index ;
    } ;
 
-   class _mthMatchNode : public SDBObject
+   class _mthNodeAllocator
+   {
+      public:
+         _mthNodeAllocator() ;
+         ~_mthNodeAllocator() ;
+
+      public:
+         void* allocate( size_t size ) ;
+         BOOLEAN isAllocatedByme( void *p ) ;
+
+      private:
+         char _mem[ MTH_ALLOCATOR_SIZE ] ;
+         INT32 _offset ;
+   } ;
+
+   class _mthMatchNode
    {
       friend class _mthMatchNodeIterator ;
       public:
-         _mthMatchNode() ;
+         _mthMatchNode( _mthNodeAllocator *allocator ) ;
          virtual ~_mthMatchNode() ;
+
+      public:
+         // node *p = new ( _mthNodeAllocator *allocator ) node( _mthNodeAllocator *allocator )
+         // use p->release() to release p. and do not use p anymore.
+         void* operator new ( size_t size, _mthNodeAllocator *allocator ) 
+                              throw ( const char * ) ;         
+         // do not call delete p directly
+         void operator delete ( void *p ) ;
+         virtual void release() = 0 ;
 
       public:
          virtual INT32 init( const CHAR *fieldName, 
@@ -317,6 +375,8 @@ namespace engine
          _mthMatchNode *getParent() ;
 
       protected:
+         _mthNodeAllocator *_allocator ;
+
          _mthMatchNode *_parent ;
          UINT32 _idx_in_parent ;
          _mthMatchFieldName<> _fieldName ;
