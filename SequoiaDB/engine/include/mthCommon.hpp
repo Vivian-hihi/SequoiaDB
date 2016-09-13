@@ -39,6 +39,8 @@
 
 #include "core.hpp"
 #include <vector>
+#include "utilString.hpp"
+#include "utilStr.hpp"
 #include "../bson/bson.h"
 
 using namespace bson ;
@@ -65,6 +67,49 @@ namespace engine
                                      INT32 &number ) ;
 
    BOOLEAN mthIsModValid( const BSONElement &modmEle ) ;
+
+   INT32 mthAbs( const CHAR *name, const BSONElement &in, 
+                 BSONObjBuilder &outBuilder ) ;
+
+   INT32 mthCeiling( const CHAR *name, const BSONElement &in, 
+                     BSONObjBuilder &outBuilder ) ;
+
+   INT32 mthFloor( const CHAR *name, const BSONElement &in, 
+                   BSONObjBuilder &outBuilder ) ;
+
+   INT32 mthMod( const CHAR *name, const BSONElement &in, 
+                 const BSONElement &modm, BSONObjBuilder &outBuilder ) ;
+
+   INT32 mthCast( const CHAR *name, const BSONElement &in, 
+                  BSONType targetType, BSONObjBuilder &outBuilder ) ;
+
+   INT32 mthSubStr( const CHAR *name, const BSONElement &in, 
+                    INT32 begin, INT32 limit, BSONObjBuilder &outBuilder ) ;
+
+   INT32 mthStrLen( const CHAR *name, const BSONElement &in, 
+                    BSONObjBuilder &outBuilder ) ;
+
+   INT32 mthLower( const CHAR *name, const BSONElement &in, 
+                   BSONObjBuilder &outBuilder ) ;
+
+   INT32 mthUpper( const CHAR *name, const BSONElement &in, 
+                   BSONObjBuilder &outBuilder ) ;
+
+   BOOLEAN mthIsTrimed( const CHAR *str, INT32 size, INT8 lr ) ;
+   INT32 mthTrim( const CHAR *str, INT32 size, INT8 lr, _utilString &us ) ;
+
+   INT32 mthAdd( const CHAR *name, const BSONElement &in, 
+                 const BSONElement &addend, BSONObjBuilder &outBuilder ) ;
+
+   INT32 mthSub( const CHAR *name, const BSONElement &in, 
+                 const BSONElement &subtrahead, BSONObjBuilder &outBuilder ) ;
+
+   INT32 mthMultiply( const CHAR *name, const BSONElement &in, 
+                      const BSONElement &multiplier, 
+                      BSONObjBuilder &outBuilder ) ;
+
+   INT32 mthDivide( const CHAR *name, const BSONElement &in, 
+                    const BSONElement &divisor, BSONObjBuilder &outBuilder ) ;
 
    struct element_cmp_lt
    {

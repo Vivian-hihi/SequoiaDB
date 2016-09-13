@@ -62,15 +62,51 @@ namespace engine
    class _mthMatchFunc : public SDBObject
    {
       public:
-         _mthMatchFunc( _mthNodeAllocator *allocator ) {} ;
-         virtual ~_mthMatchFunc() {} ;
+         _mthMatchFunc( _mthNodeAllocator *allocator ) ;
+         virtual ~_mthMatchFunc() ;
 
       public:
-         virtual INT32 init( const CHAR *fieldName,
-                             const BSONElement &ele ) = 0 ;
+         INT32 init( const CHAR *fieldName, const BSONElement &ele ) ;
+         void clear() ;
+         BSONObj toBson() ;
+         string toString() ;
+
+         // func *p = new ( _mthNodeAllocator *allocator ) func( _mthNodeAllocator *allocator )
+         // use p->release() to release p. and do not use p anymore.
+         void* operator new ( size_t size, _mthNodeAllocator *allocator ) 
+                              throw ( const char * ) ;
+         // do not call delete p directly
+         void operator delete ( void *p ) ;
+         virtual void release() = 0 ;
+
+      public:
          virtual INT32 call( const BSONElement &in, BSONElement &out ) = 0 ;
-         virtual void clear() = 0 ;
-         virtual string toString() = 0 ;
+
+      protected:
+         virtual INT32 _init( const CHAR *fieldName, 
+                              const BSONElement &ele ) = 0 ;
+         virtual void _clear() = 0 ;
+
+      protected:
+         _mthMatchFieldName<> _fieldName ;
+         BSONElement _funcEle ;
+         _mthNodeAllocator *_allocator ;
+   } ;
+
+   class _mthMatchFuncABS : public _mthMatchFunc
+   {
+      public:
+         _mthMatchFuncABS( _mthNodeAllocator *allocator ) ;
+         virtual ~_mthMatchFuncABS() ;
+
+      public:
+         virtual void release() ;
+         virtual INT32 call( const BSONElement &in, BSONElement &out ) ;
+
+      protected:
+         virtual INT32 _init( const CHAR *fieldName, 
+                              const BSONElement &ele ) ;
+         virtual void _clear() ;
    } ;
 
    typedef _utilList< _mthMatchFunc* > MTH_FUNC_LIST ;

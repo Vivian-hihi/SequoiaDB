@@ -45,6 +45,158 @@ using namespace bson ;
 
 namespace engine
 {
+   //************************_mthMatchFunc********************************
+   _mthMatchFunc::_mthMatchFunc( _mthNodeAllocator *allocator )
+   {
+      _funcEle   = BSONObj().firstElement() ;
+      _allocator = allocator ;
+   }
+   
+   _mthMatchFunc::~_mthMatchFunc()
+   {
+      clear() ;
+   }
+
+   INT32 _mthMatchFunc::init( const CHAR *fieldName, const BSONElement &ele )
+   {
+      INT32 rc = SDB_OK ;
+      rc = _fieldName.setFieldName( fieldName ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "set fieldName failed:fieldName=%s,rc=%d",
+                 fieldName, rc ) ;
+         goto error ;
+      }
+
+      _funcEle   = ele ;
+
+      rc = _init( fieldName, ele ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "_init failed:rc=%d", rc ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   void _mthMatchFunc::clear()
+   {
+      _fieldName.clear() ;
+      _funcEle = BSONObj().firstElement() ;
+
+      _clear() ;
+   }
+
+   void* _mthMatchFunc::operator new ( size_t size, 
+                                       _mthNodeAllocator *allocator ) 
+                                       throw ( const char * )
+   {
+      void *p = NULL ;
+      if ( size > 0 )
+      {
+         if ( NULL != allocator )
+         {
+            p = allocator->allocate( size ) ;
+         }
+
+         if ( NULL == p )
+         {
+            p = SDB_OSS_MALLOC( size ) ;
+         }
+      }
+
+      if ( NULL == p )
+      {
+         throw "allocation failure" ;
+      }
+
+      return p ;
+   }
+
+   void _mthMatchFunc::operator delete( void *p )
+   {
+      SDB_OSS_FREE(p) ;
+   }
+
+   string _mthMatchFunc::toString()
+   {
+      BSONObj obj = toBson() ;
+      return obj.toString() ;
+   }
+
+   BSONObj _mthMatchFunc::toBson()
+   {
+      BSONObjBuilder builder ;
+
+      BSONObjBuilder b( builder.subobjStart( _fieldName.getFieldName() ) ) ;
+      b.append( _funcEle ) ;
+      b.doneFast() ;
+
+      return builder.obj() ;
+   }
+
+   //************************_mthMatchFuncABS********************************
+   _mthMatchFuncABS::_mthMatchFuncABS( _mthNodeAllocator *allocator )
+                    :_mthMatchFunc( allocator )
+   {
+   }
+
+   _mthMatchFuncABS::~_mthMatchFuncABS()
+   {
+      clear() ;
+   }
+
+   void _mthMatchFuncABS::release()
+   {
+      if ( NULL != _allocator && _allocator->isAllocatedByme( this ) )
+      {
+         this->~_mthMatchFuncABS() ;
+      }
+      else
+      {
+         delete this ;
+      }
+   }
+
+   INT32 _mthMatchFuncABS::call( const BSONElement &in, BSONElement &out )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObjBuilder builder ;
+      BSONObj obj ;
+
+      rc = mthAbs( _fieldName.getFieldName(), in, builder ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "mthAbs failed:rc=%d", rc ) ;
+      }
+
+      obj = builder.obj() ;
+      out = obj.firstElement() ;
+
+      return rc ;
+   }
+
+   INT32 _mthMatchFuncABS::_init( const CHAR *fieldName, 
+                                  const BSONElement &ele )
+   {
+      if ( ele.numberInt() != 1 )
+      {
+         return SDB_INVALIDARG ;
+      }
+
+      return SDB_OK ;
+   }
+
+   void _mthMatchFuncABS::_clear()
+   {
+      return ;
+   }
+
+   //************************_mthMatchOpNode********************************
    _mthMatchOpNode::_mthMatchOpNode(  _mthNodeAllocator *allocator )
                    :_mthMatchNode( allocator )
    {
@@ -629,6 +781,7 @@ namespace engine
 
    _mthMatchOpNodeET::~_mthMatchOpNodeET()
    {
+      clear() ;
    }
 
    INT32 _mthMatchOpNodeET::getType()
@@ -711,6 +864,7 @@ namespace engine
 
    _mthMatchOpNodeNE::~_mthMatchOpNodeNE()
    {
+      clear() ;
    }
 
    INT32 _mthMatchOpNodeNE::getType()
@@ -774,6 +928,7 @@ namespace engine
    
    _mthMatchOpNodeLT::~_mthMatchOpNodeLT()
    {
+      clear() ;
    }
 
    INT32 _mthMatchOpNodeLT::getType()
@@ -831,6 +986,7 @@ namespace engine
    
    _mthMatchOpNodeLTE::~_mthMatchOpNodeLTE()
    {
+      clear() ;
    }
 
    INT32 _mthMatchOpNodeLTE::getType()
@@ -888,6 +1044,7 @@ namespace engine
 
    _mthMatchOpNodeGT::~_mthMatchOpNodeGT()
    {
+      clear() ;
    }
 
    INT32 _mthMatchOpNodeGT::getType()
@@ -945,6 +1102,7 @@ namespace engine
 
    _mthMatchOpNodeGTE::~_mthMatchOpNodeGTE()
    {
+      clear() ;
    }
 
    INT32 _mthMatchOpNodeGTE::getType()
@@ -1197,6 +1355,7 @@ namespace engine
 
    _mthMatchOpNodeNIN::~_mthMatchOpNodeNIN()
    {
+      clear() ;
    }
 
    INT32 _mthMatchOpNodeNIN::getType()
@@ -1260,6 +1419,7 @@ namespace engine
    
    _mthMatchOpNodeALL::~_mthMatchOpNodeALL()
    {
+      clear() ;
    }
    
    INT32 _mthMatchOpNodeALL::getType()
@@ -1387,6 +1547,7 @@ namespace engine
 
    _mthMatchOpNodeSIZE::~_mthMatchOpNodeSIZE()
    {
+      clear() ;
    }
 
    INT32 _mthMatchOpNodeSIZE::getType()
@@ -1456,6 +1617,7 @@ namespace engine
 
    _mthMatchOpNodeEXISTS::~_mthMatchOpNodeEXISTS()
    {
+      clear() ;
    }
 
    INT32 _mthMatchOpNodeEXISTS::getType()
@@ -1523,6 +1685,7 @@ namespace engine
 
    _mthMatchOpNodeMOD::~_mthMatchOpNodeMOD()
    {
+      clear() ;
    }
 
    BOOLEAN _mthMatchOpNodeMOD::_isModValid( const BSONElement &modmEle )
@@ -1679,6 +1842,7 @@ namespace engine
 
    _mthMatchOpNodeTYPE::~_mthMatchOpNodeTYPE()
    {
+      clear() ;
    }
 
    INT32 _mthMatchOpNodeTYPE::_init( const CHAR *fieldName, 
@@ -1735,6 +1899,7 @@ namespace engine
 
    _mthMatchOpNodeISNULL::~_mthMatchOpNodeISNULL()
    {
+      clear() ;
    }
 
    INT32 _mthMatchOpNodeISNULL::getType()

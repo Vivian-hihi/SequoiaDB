@@ -50,7 +50,7 @@ namespace engine
 
    _mthMatchLogicNode::~_mthMatchLogicNode()
    {
-      
+      clear() ;
    }
 
    INT32 _mthMatchLogicNode::init( const CHAR *fieldName, 
@@ -135,6 +135,7 @@ namespace engine
 
    _mthMatchLogicAndNode::~_mthMatchLogicAndNode()
    {
+      clear() ;
    }
 
    INT32 _mthMatchLogicAndNode::getType()
@@ -209,6 +210,7 @@ namespace engine
 
    _mthMatchLogicOrNode::~_mthMatchLogicOrNode()
    {
+      clear() ;
    }
    
    INT32 _mthMatchLogicOrNode::getType()
@@ -297,6 +299,7 @@ namespace engine
 
    _mthMatchLogicNotNode::~_mthMatchLogicNotNode()
    {
+      clear() ;
    }
 
    INT32 _mthMatchLogicNotNode::getType()

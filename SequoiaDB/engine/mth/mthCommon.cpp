@@ -39,11 +39,705 @@
 #include "pd.hpp"
 #include "pdTrace.hpp"
 #include "mthTrace.hpp"
+#include "mthDef.hpp"
+#include "../util/fromjson.hpp"
+
 
 using namespace bson ;
 
 namespace engine
 {
+   static INT32 _mthCast( const CHAR *fieldName, const bson::BSONElement &e,
+                          BSONType type, BSONObjBuilder &builder ) ;
+
+   static void _getSubStr( const CHAR *src, INT32 srcLen, INT32 begin,
+                           INT32 limit, const CHAR *&subStr, 
+                           INT32 &subStrLen ) ;
+
+   static INT32 _lower( const CHAR *str, UINT32 len, utilString &us ) ;
+   static INT32 _upper( const CHAR *str, UINT32 len, utilString &us ) ;
+
+   /// lr: -1(ltrim) 0(trim) 1(rtrim)
+   static void _ltrim( const CHAR *str, const CHAR *&trimed ) ;
+   static INT32 _rtrim( const CHAR *str, INT32 size, _utilString &us ) ;
+   static INT32 _mthLRTrimBuild( const CHAR *fieldName, const BSONElement &in,
+                                 INT8 lr, BSONObjBuilder &outBuilder ) ;
+
+   INT32 _mthCast( const CHAR *fieldName, const bson::BSONElement &e,
+                   BSONType type, BSONObjBuilder &builder )
+   {
+      INT32 rc = SDB_OK ;
+      SDB_ASSERT( e.type() != type, "should not be same" ) ;
+      switch ( type )
+      {
+      case MinKey :
+         builder.appendMinKey( fieldName ) ;
+         break ;
+      case EOO :
+         rc = SDB_INVALIDARG ;
+         break ;
+      case NumberDouble :
+      {
+         if ( Bool == e.type() )
+         {
+            FLOAT64 f = e.Bool() ? 1.0 : 0.0 ;
+            builder.appendNumber( fieldName, f ) ;
+         }
+         else if ( String != e.type() )
+         {
+            FLOAT64 f = e.numberDouble() ;
+            if ( isInf( f ) )
+            {
+               f = 0.0 ;
+            }
+            builder.appendNumber( fieldName, f ) ;
+         }
+         else
+         {
+            try
+            {
+               FLOAT64 f = 0.0 ;
+               f = boost::lexical_cast<FLOAT64>( e.valuestr () ) ;
+               builder.appendNumber( fieldName, f ) ;
+            }
+            catch ( boost::bad_lexical_cast &e )
+            {
+               builder.appendNumber( fieldName, 0.0 ) ;
+            }
+         }
+         break ;
+      }
+      case String :
+      {
+         if ( NumberInt == e.type() )
+         {
+            utilString us ;
+            rc = us.appendINT32( e.numberInt() ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "failed to append int32:%d", rc ) ;
+               goto error ;
+            }
+            builder.append( fieldName, us.str() ) ;
+         }
+         else if ( NumberLong == e.type() )
+         {
+            utilString us ;
+            rc = us.appendINT64( e.numberLong() ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "failed to append int64:%d", rc ) ;
+               goto error ;
+            }
+            builder.append( fieldName, us.str() ) ;
+         }
+         else if ( NumberDouble == e.type() )
+         {
+            utilString us ;
+            rc = us.appendDouble( e.numberDouble() ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "failed to append float64:%d", rc ) ;
+               goto error ;
+            }
+            builder.append( fieldName, us.str() ) ;
+         }
+         else if ( NumberDecimal == e.type() )
+         {
+            utilString us ;
+            bsonDecimal decimal ;
+            string value ;
+            decimal.init() ;
+
+            decimal = e.numberDecimal() ;
+            value   = decimal.toString() ;
+            rc      = us.append( value.c_str(), value.length() );
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "failed to append decimal=%s,rc=%d", 
+                       value.c_str(), rc ) ;
+               goto error ;
+            }
+            builder.append( fieldName, us.str() ) ;
+         }
+         else if ( Date == e.type() )
+         {
+            CHAR buffer[64] = { 0 };
+            time_t timer = (time_t)( ( INT64 )( e.date() ) / 1000 ) ;
+            struct tm psr ;
+            local_time ( &timer, &psr ) ;
+            sprintf ( buffer,
+                      "%04d-%02d-%02d",
+                      psr.tm_year + 1900,
+                      psr.tm_mon + 1,
+                      psr.tm_mday ) ;
+            builder.append( fieldName, buffer ) ;
+         }
+         else if ( Timestamp == e.type() )
+         {
+            Date_t date = e.timestampTime () ;
+            unsigned int inc = e.timestampInc () ;
+            char buffer[128] = { 0 };
+            time_t timer = (time_t)((( INT64 )(date.millis))/1000) ;
+            struct tm psr ;
+            local_time ( &timer, &psr ) ;
+            sprintf ( buffer,
+                      "%04d-%02d-%02d-%02d.%02d.%02d.%06d",
+                      psr.tm_year + 1900,
+                      psr.tm_mon + 1,
+                      psr.tm_mday,
+                      psr.tm_hour,
+                      psr.tm_min,
+                      psr.tm_sec,
+                      inc ) ;
+            builder.append( fieldName, buffer ) ;
+         }
+         else if ( jstOID == e.type() )
+         {
+            builder.append( fieldName, e.OID().str() ) ;
+         }
+         else if ( Object == e.type() )
+         {
+            builder.append( fieldName,
+                            e.embeddedObject().toString( FALSE, TRUE ) ) ; 
+         }
+         else if ( Array == e.type() )
+         {
+            builder.append( fieldName,
+                            e.embeddedObject().toString( TRUE, TRUE ) ) ;
+         }
+         else if ( Bool == e.type() )
+         {
+            builder.append( fieldName,
+                            e.booleanSafe() ?
+                            "true" : "false" ) ;
+         }
+         else
+         {
+            builder.appendNull( fieldName ) ;
+         }
+         break ;
+      }   
+      case Object :
+      {
+         if ( String == e.type() )
+         {
+            BSONObj obj ;
+            INT32 r = fromjson( e.valuestr(), obj ) ;
+            if ( SDB_OK == r )
+            {
+               builder.append( fieldName, obj ) ;
+            }
+            else
+            {
+               builder.appendNull( fieldName ) ;
+            }
+         }
+         else
+         {
+            builder.appendNull( fieldName ) ;
+         }
+         break ;
+      }
+      case Array :
+      case BinData :
+      case Undefined :
+         builder.appendNull( fieldName ) ;
+         break ;
+      case jstOID :
+      {
+         if ( String == e.type() &&
+              25 == e.valuestrsize() )
+         {
+            bson::OID o( e.valuestr() ) ;
+            builder.appendOID( fieldName, &o ) ;
+         }
+         else
+         {
+            builder.appendNull( fieldName ) ;
+         }
+         break ;
+      }
+      case Bool :
+         builder.appendBool( fieldName, e.trueValue() ) ;
+         break ;
+      case Date :
+      {
+         UINT64 tm = 0 ;
+         if ( e.isNumber() )
+         {
+            Date_t d( e.numberLong() ) ;
+            builder.appendDate( fieldName, d ) ;
+         }
+         else if ( String == e.type() &&
+                   SDB_OK == utilStr2Date( e.valuestr(), tm ))
+         {
+            builder.appendDate( fieldName, Date_t( tm ) ) ;
+         }
+         else if ( Timestamp == e.type() )
+         {
+            builder.appendDate( fieldName, e.timestampTime() ) ;
+         }
+         else
+         {
+            builder.appendNull( fieldName ) ;
+         }
+         break ;
+      }
+      case jstNULL :
+      case RegEx :
+      case DBRef :
+      case Code :
+      case Symbol :
+      case CodeWScope :
+         builder.appendNull( fieldName ) ;
+         break ;
+      case NumberInt :
+      {
+         if ( Date == e.type() )
+         {
+            builder.appendNumber( fieldName,
+                                  ( INT32 )( e.date().millis ) ) ;
+         }
+         else if ( Timestamp == e.type() )
+         {
+            UINT64 l = e.timestampTime().millis ;
+            l += e.timestampInc() / 1000 ;
+            builder.appendNumber( fieldName, ( INT32 )l ) ;
+         }
+         else if ( Bool == e.type() )
+         {
+            INT32 v = e.Bool() ? 1 : 0 ;
+            builder.append( fieldName, v ) ;
+         }
+         else if ( NumberLong == e.type() )
+         {
+            INT32 i = 0 ;
+            INT64 l = e.numberLong() ;
+            if ( l > 2147483647LL || l < -2147483648LL )
+            {
+               i = 0 ;
+            }
+            else
+            {
+               i = ( INT32 )l ;
+            }
+            builder.appendNumber( fieldName, i ) ;
+         }
+         else if ( NumberDecimal == e.type() )
+         {
+            INT32 i = 0 ;
+            INT64 l = 0 ;
+            e.numberDecimal().toLong( &l) ;
+            if ( l > 2147483647LL || l < -2147483648LL )
+            {
+               i = 0 ;
+            }
+            else
+            {
+               i = ( INT32 )l ;
+            }
+
+            builder.appendNumber( fieldName, i ) ;
+         }
+         else if ( NumberDouble == e.type() )
+         {
+            INT32 i = 0 ;
+            double d = e.Double() ;
+            if ( d > 2147483647.0 || d < -2147483648.0 )
+            {
+               i = 0 ;
+            }
+            else
+            {
+               i = ( INT32 )d ;
+            }
+            builder.appendNumber( fieldName, i ) ;
+         }
+         else if ( String != e.type() )
+         {
+            builder.appendNumber( fieldName, e.numberInt() ) ;
+         }
+         else
+         {
+            try
+            {
+               INT32 i = 0 ;
+               double v = 0 ;
+               v = boost::lexical_cast<double>( e.valuestr () ) ;
+               if ( v > 2147483647.0 || v < -2147483648.0 )
+               {
+                  i = 0 ;
+               }
+               else
+               {
+                  i = ( INT32 )v ;
+               }
+               builder.appendNumber( fieldName, i ) ;
+            }
+            catch ( boost::bad_lexical_cast &e )
+            {
+               builder.appendNumber( fieldName, 0 ) ;
+            }
+         }
+         break ;
+      }
+      case Timestamp :
+      {
+         time_t tm = 0 ;;
+         UINT64 usec = 0 ;
+         if ( e.isNumber() )
+         {
+            /// millis
+            OpTime t( (unsigned) (e.numberLong() / 1000) , 0 );
+            builder.appendTimestamp( fieldName, t.asDate() ) ;
+         }
+         else if ( String == e.type() &&
+                   SDB_OK == engine::utilStr2TimeT( e.valuestr(),
+                                                    tm,
+                                                    &usec ))
+         {
+            OpTime t( (unsigned) (tm) , usec );
+            builder.appendTimestamp( fieldName, t.asDate() ) ;
+         }
+         else if ( Date == e.type() )
+         {
+            builder.appendTimestamp( fieldName, e.date().millis, 0 ) ;
+         }
+         else
+         {
+            builder.appendNull( fieldName ) ;
+         }
+         break ;
+      }
+      case NumberLong :
+      {
+         if ( Date == e.type() )
+         {
+            builder.appendNumber( fieldName,
+                                  ( INT64 )( e.date().millis ) ) ;
+         }
+         else if ( Timestamp == e.type() )
+         {
+            UINT64 l = e.timestampTime().millis ;
+            l += e.timestampInc() / 1000 ;
+            builder.appendNumber( fieldName, ( INT64 )l ) ;
+         }
+         else if ( Bool == e.type() )
+         {
+            INT64 v = e.Bool() ? 1 : 0 ;
+            builder.append( fieldName, v ) ;
+         }
+         else if ( NumberDouble == e.type() )
+         {
+            INT64 l = 0 ;
+            double d = e.Double() ;
+            if ( d >= 0 && d < 9223372036854775808.0 )
+            {
+               l = (INT64)d ;
+            }
+            else if ( d < 0 && d >= -9223372036854775808.0 )
+            {
+               l = (INT64)d ;
+            }
+            builder.appendNumber( fieldName, l ) ;
+         }
+         else if ( String != e.type() )
+         {
+            builder.appendNumber( fieldName, e.numberLong() ) ;
+         }
+         else
+         {
+            try
+            {  
+               //if the STRING has "." "e" or "E" use double type
+               if ( ossStrchr ( e.valuestr (), '.' ) != NULL || 
+                    ossStrchr ( e.valuestr (), 'E' ) != NULL || 
+                    ossStrchr ( e.valuestr (), 'e' ) != NULL )
+               {
+                  double d = 0  ;
+                  INT64 l = 0 ;
+                  d = boost::lexical_cast<double>( e.valuestr () ) ;
+                  if ( d >= 0 && d < 9223372036854775808.0 )
+                  {
+                     l = (INT64)d ;
+                  }
+                  else if ( d < 0 && d >= -9223372036854775808.0 )
+                  {
+                     l = (INT64)d ;
+                  }
+                  builder.appendNumber( fieldName, l ) ;
+               }
+               else
+               {
+                  INT64 l = 0 ;
+                  l = boost::lexical_cast<INT64>( e.valuestr () ) ;
+                  builder.appendNumber( fieldName, l ) ;
+               }
+            }
+            catch ( boost::bad_lexical_cast &e )
+            {
+               builder.appendNumber( fieldName, 0 ) ;
+            }
+         }
+         break ;
+      }
+      case NumberDecimal :
+      {
+         if ( Date == e.type() )
+         {
+            bsonDecimal decimal ;
+            decimal.init() ;
+            decimal.fromLong( ( INT64 )( e.date().millis ) ) ;
+            builder.append( fieldName, decimal ) ;
+         }
+         else if ( Timestamp == e.type() )
+         {
+            bsonDecimal decimal ;
+            UINT64 l = e.timestampTime().millis ;
+            l        += e.timestampInc() / 1000 ;
+
+            decimal.init() ;
+            decimal.fromLong( ( INT64 )l ) ;
+            builder.append( fieldName, decimal ) ;
+         }
+         else if ( Bool == e.type() )
+         {
+            bsonDecimal decimal ;
+            INT64 v = e.Bool() ? 1 : 0 ;
+
+            decimal.init() ;
+            decimal.fromLong( ( INT64 )v ) ;
+            builder.append( fieldName, decimal ) ;
+         }
+         else if ( NumberLong == e.type() )
+         {
+            bsonDecimal decimal ;
+            decimal.init() ;
+            decimal.fromLong( e.numberLong() ) ;
+            builder.append( fieldName, decimal ) ;
+         }
+         else if ( String != e.type() )
+         {
+            bsonDecimal decimal ;
+            decimal.init() ;
+            decimal.fromDouble( e.numberDouble() ) ;
+            builder.append( fieldName, decimal ) ;
+         }
+         else
+         {
+            bsonDecimal decimal ;
+            decimal.init() ;
+            decimal.fromString( e.String().c_str() ) ;
+            builder.append( fieldName, decimal ) ;
+         }
+         break ;
+      }
+      case MaxKey :
+         builder.appendMaxKey( fieldName ) ;
+         break ;
+      default:
+         rc = SDB_INVALIDARG ;
+         break ;
+      }
+
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "invalid cast type:%d", type ) ;
+         goto error ;
+      }
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   void _getSubStr( const CHAR *src, INT32 srcLen, INT32 begin,
+                    INT32 limit, const CHAR *&subStr, INT32 &subStrLen )
+   {
+      const CHAR *cpBegin = NULL ;
+
+      if ( srcLen < 0 )
+      {
+         goto error ;
+      }
+
+      if ( 0 <= begin )
+      {
+         if ( srcLen <= begin )
+         {
+            goto error ;
+         }
+         cpBegin = src + begin ;
+         subStrLen = srcLen - begin ;
+      }
+      else
+      {
+         INT32 beginPos = srcLen + begin ;
+         if ( beginPos < 0 )
+         {
+            goto error ;
+         }
+         cpBegin = src + beginPos ;
+         subStrLen = srcLen - beginPos ;
+      }
+
+      if ( 0 <= limit && limit < subStrLen )
+      {
+         subStrLen = limit ;
+      }
+
+      subStr = cpBegin ;
+   done:
+      return ;
+   error:
+      subStr    = NULL ;
+      subStrLen = -1 ;
+      goto done ;
+   }
+   
+   INT32 _lower( const CHAR *str, UINT32 len, utilString &us )
+   {
+      INT32 rc = SDB_OK ;
+      us.resize( len ) ;
+      for ( UINT32 i = 0; i < len; ++i )
+      {
+         const CHAR *p = str + i ;
+         if ( 'A' <= *p &&
+              *p <= 'Z' )
+         {
+            rc = us.append( *p + 32 ) ;
+         }
+         else
+         {
+             rc = us.append( *p ) ;
+         }
+
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to append str:%d", rc ) ;
+            goto error ;
+         }
+      }
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _upper( const CHAR *str, UINT32 len, utilString &us )
+   {
+      INT32 rc = SDB_OK ;
+      us.resize( len ) ;
+      for ( UINT32 i = 0; i < len; ++i )
+      {
+         const CHAR *p = str + i ;
+         if ( 'a' <= *p &&
+              *p <= 'z' )
+         {
+            rc = us.append( *p - 32 ) ;
+         }
+         else
+         {
+             rc = us.append( *p ) ;
+         }
+
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to append str:%d", rc ) ;
+            goto error ;
+         }
+      }
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   void _ltrim( const CHAR *str, const CHAR *&trimed )
+   {
+      const CHAR *p = str ;
+      while ( '\0' != *p )
+      {
+         if ( ' ' != *p && '\t' != *p && '\n' != *p && '\r' != *p )
+         {
+            break ;
+         }
+
+         ++p ;
+      }
+
+      trimed = p ;
+      return ;
+   }
+
+   INT32 _rtrim( const CHAR *str, INT32 size, _utilString &us )
+   {
+      INT32 rc  = SDB_OK ;
+      INT32 pos = size - 1 ;
+
+      while ( 0 <= pos )
+      {
+         const CHAR *p = str + pos ;
+         if ( ' ' != *p && '\t' != *p && '\n' != *p && '\r' != *p )
+         {
+            break ;
+         }
+
+         --pos ;
+      }
+
+      if ( 0 <= pos )
+      {
+         rc = us.append( str, pos + 1 ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to append string:%d", rc ) ;
+            goto error ;
+         }
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _mthLRTrimBuild( const CHAR *fieldName, const BSONElement &in,
+                          INT8 lr, BSONObjBuilder &outBuilder )
+   {
+      INT32 rc = SDB_OK ;
+      if ( in.eoo() )
+      {
+         goto done ;
+      }
+      else if ( String != in.type() )
+      {
+         outBuilder.appendNull( fieldName ) ;
+      }
+      else if ( mthIsTrimed( in.valuestr(), in.valuestrsize() - 1, lr ) )
+      {
+         outBuilder.appendAs( in, fieldName ) ;
+      }
+      else
+      {
+         utilString us ;
+         rc = mthTrim( in.valuestr(), in.valuestrsize() - 1, lr, us ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to trim string:%d", rc ) ;
+            goto error ;
+         }
+
+         outBuilder.append( fieldName, us.str() ) ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
    // the function try to append newStr to ppStr.
    // if the buffer is not large enough the function is responsible to allocate
    // a larger one. If failed to allocate larger buffer, this function must
@@ -335,5 +1029,678 @@ namespace engine
       return TRUE ;
    }
 
+   INT32 mthAbs( const CHAR *name, const BSONElement &in, 
+                 BSONObjBuilder &outBuilder )
+   {
+      INT32 rc = SDB_OK ;
+      if ( NumberDouble == in.type() )
+      {
+         outBuilder.append( name, fabs( in.Double() ) ) ;
+      }
+      else if ( NumberInt == in.type() )
+      {
+         INT32 v = in.numberInt() ;
+         /// - 2 ^ 31
+         if ( -2147483648 != v )
+         {
+            outBuilder.append( name, 0 <= v ? v : -v ) ;
+         }
+         else
+         {
+            outBuilder.append( name, -((INT64)v) ) ;
+         }
+      }
+      else if ( NumberLong == in.type() )
+      {
+         INT64 v = in.numberLong() ;
+         /// return -9223372036854775808 when v is -9223372036854775808
+         outBuilder.append( name, 0 <= v ? ( INT64 )v : ( INT64 )( -v ) ) ;
+      }
+      else if ( NumberDecimal == in.type() )
+      {
+         bsonDecimal decimal ;
+         decimal = in.numberDecimal() ;
+         rc = decimal.abs() ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to ceil decimal:%s,rc=%d", 
+                    decimal.toString().c_str(), rc ) ;
+            goto error ;
+         }
+         outBuilder.append( name, decimal ) ;
+      }
+      else if ( !in.eoo() )
+      {
+         outBuilder.appendNull( name ) ;
+      }
+      else
+      {
+         /// do nothing.
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 mthCeiling( const CHAR *name, const BSONElement &in, 
+                     BSONObjBuilder &outBuilder )
+   {
+      INT32 rc = SDB_OK ;
+      if ( NumberLong == in.type() )
+      {
+         outBuilder.append( name, ( INT64 )( in.numberLong() ) ) ;
+      }
+      else if ( NumberInt == in.type() )
+      {
+         outBuilder.append( name, ( INT32 )( in.numberInt() ) ) ;
+      }
+      else if ( NumberDouble == in.type() )
+      {
+         outBuilder.append( name, ( FLOAT64 )ceil( in.numberDouble() ) ) ;      
+      }
+      else if ( NumberDecimal == in.type() )
+      {
+         bsonDecimal decimal ;
+         bsonDecimal result ;
+         decimal = in.numberDecimal() ;
+         result.init() ;
+
+         rc = decimal.ceil( result ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to ceil decimal:%s,rc=%d", 
+                    decimal.toString().c_str(), rc ) ;
+            goto error ;
+         }
+         outBuilder.append( name, result ) ;
+      }
+      else if ( !in.eoo() )
+      {
+         outBuilder.appendNull( name ) ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 mthFloor( const CHAR *name, const BSONElement &in, 
+                   BSONObjBuilder &outBuilder )
+   {
+      INT32 rc = SDB_OK ;
+
+      if ( NumberInt == in.type() )
+      {
+         outBuilder.append( name, ( INT32 )( in.numberInt() ) ) ;
+      }
+      else if ( NumberLong == in.type() )
+      {
+         outBuilder.append( name, ( INT64 )( in.numberLong() ) ) ;
+      }
+      else if ( NumberDouble == in.type() )
+      {
+         outBuilder.append( name, ( FLOAT64 )floor( in.numberDouble() ) ) ;
+      }
+      else if ( NumberDecimal == in.type() )
+      {
+         bsonDecimal decimal ;
+         bsonDecimal result ;
+         result.init() ;
+
+         decimal = in.numberDecimal() ;
+         rc = decimal.floor( result ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to floor decimal:%s,rc=%d", 
+                    decimal.toString().c_str(), rc ) ;
+            goto error ;
+         }
+
+         outBuilder.append( name, result ) ;
+      }
+      else if ( !in.eoo() )
+      {
+         outBuilder.appendNull( name ) ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 mthMod( const CHAR *name, const BSONElement &in, 
+                 const BSONElement &modm, BSONObjBuilder &outBuilder )
+   {
+      INT32 rc = SDB_OK ;
+      if ( in.eoo() )
+      {
+         /// do nothing.
+      }
+      else if ( !in.isNumber() || !modm.isNumber() )
+      {
+         outBuilder.appendNull( name ) ;
+      }
+      else if ( NumberDecimal == in.type() || 
+                NumberDecimal == modm.type() ) 
+      {
+         bsonDecimal decimal ;
+         bsonDecimal decimalArg ;
+         bsonDecimal result ;
+         result.init() ;
+
+         decimal    = in.numberDecimal() ;
+         decimalArg = modm.numberDecimal() ;
+         rc = decimal.mod( decimalArg, result ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to mod decimal:%s mod %s,rc=%d", 
+                    decimal.toString().c_str(), 
+                    decimalArg.toString().c_str(), rc ) ;
+            goto error ;
+         }
+
+         outBuilder.append( name, result ) ;
+      }
+      else if ( FALSE == mthIsModValid( modm ) )
+      {
+         outBuilder.appendNull( name ) ;
+      }
+      else if ( NumberDouble == in.type() &&
+                NumberDouble == modm.type() )
+      {
+         FLOAT64 v = MTH_MOD( in.numberDouble(), modm.numberDouble() ) ;
+         outBuilder.append( name, v ) ;
+      }
+      else if ( NumberDouble != in.type () &&
+                NumberDouble == modm.type() )
+      {
+         FLOAT64 v = MTH_MOD( in.numberLong(), modm.numberDouble() ) ;
+         outBuilder.append( name, v ) ;
+      }
+      else if ( NumberDouble == in.type () &&
+                NumberDouble != modm.type() )
+      {
+         FLOAT64 v = MTH_MOD( in.numberDouble(), modm.numberLong() ) ;
+         outBuilder.append( name, v ) ;
+      }
+      else
+      {
+         INT64 v = in.numberLong() % modm.numberLong() ;
+         outBuilder.appendNumber( name, v ) ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 mthCast( const CHAR *name, const BSONElement &in, 
+                  BSONType targetType, BSONObjBuilder &outBuilder )
+   {
+      INT32 rc = SDB_OK ;
+
+      if ( in.eoo() )
+      {
+         goto done ;
+      }
+
+      if ( EOO == targetType )
+      {
+         PD_LOG( PDERROR, "can not cast to eoo" ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      if ( in.type() == targetType )
+      {
+         outBuilder.appendAs( in, name ) ;
+      }
+      else
+      {
+         rc = _mthCast( name, in, targetType, outBuilder ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to cast element[%s] to"
+                    " type[%d]", in.toString().c_str(), targetType ) ;
+            goto error ;
+         }
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 mthSubStr( const CHAR *name, const BSONElement &in, 
+                    INT32 begin, INT32 limit, BSONObjBuilder &outBuilder )
+   {
+      INT32 rc = SDB_OK ;
+
+      if ( in.eoo() )
+      {
+         goto done ;
+      }
+      else if ( String != in.type() )
+      {
+         outBuilder.appendNull( name ) ;
+      }
+      else
+      {
+         const CHAR *outStr = NULL ;
+         INT32 outStrLen    = -1 ;
+         _getSubStr( in.valuestr(), in.valuestrsize() - 1, begin, limit,
+                     outStr, outStrLen ) ;
+         if ( NULL == outStr || -1 == outStrLen )
+         {
+            outBuilder.append( name, "" ) ;
+         }
+         else
+         {
+            outBuilder.appendStrWithNoTerminating( name, outStr, outStrLen ) ;
+         }
+      }
+
+   done:
+      return rc ;
+   }
+
+   INT32 mthStrLen( const CHAR *name, const BSONElement &in, 
+                    BSONObjBuilder &outBuilder )
+   {
+      INT32 rc = SDB_OK ;
+      if ( in.eoo() )
+      {
+         goto done ;
+      }
+      else if ( String != in.type() )
+      {
+         outBuilder.appendNull( name ) ;
+      }
+      else
+      {
+         outBuilder.append( name, in.valuestrsize() - 1 ) ;
+      }
+
+   done:
+      return rc ;
+   }
+
+   INT32 mthLower( const CHAR *name, const BSONElement &in, 
+                   BSONObjBuilder &outBuilder )
+   {
+      INT32 rc = SDB_OK ;
+
+      if ( in.eoo() )
+      {
+         goto done ;
+      }
+      else if ( String != in.type() )
+      {
+         outBuilder.appendNull( name ) ;
+      }
+      else
+      {
+         utilString us ;
+         rc = _lower( in.valuestr(), in.valuestrsize(), us ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to create lower str:%d", rc ) ;
+            goto error ;
+         }
+
+         outBuilder.append( name, us.str() ) ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 mthUpper( const CHAR *name, const BSONElement &in, 
+                   BSONObjBuilder &outBuilder )
+   {
+      INT32 rc = SDB_OK ;
+
+      if ( in.eoo() )
+      {
+         goto done ;
+      }
+      else if ( String != in.type() )
+      {
+         outBuilder.appendNull( name ) ;
+      }
+      else
+      {
+         utilString us ;
+         rc = _upper( in.valuestr(), in.valuestrsize(), us ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to create lower str:%d", rc ) ;
+            goto error ;
+         }
+
+         outBuilder.append( name, us.str() ) ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   BOOLEAN mthIsTrimed( const CHAR *str, INT32 size, INT8 lr )
+   {
+      BOOLEAN rc = TRUE ;
+      SDB_ASSERT( NULL != str, "can not be null" ) ;
+      INT32 strLen = 0 <= size ? size : ossStrlen( str ) ;
+      if ( 0 == strLen )
+      {
+         goto done ;
+      }
+
+      if ( lr <= 0 )
+      {
+         if ( ' ' == *str || '\t' == *str || '\n' == *str || '\r' == *str )
+         {
+            rc = FALSE ;
+            goto done ;
+         }
+      }
+
+      if ( 0 <= lr )
+      {
+         if ( ' ' == *( str + strLen - 1 ) || '\t' == *( str + strLen - 1 ) ||
+              '\n' == *( str + strLen - 1 ) || '\r' == *( str + strLen - 1 ) )
+         {
+            rc = FALSE ;
+            goto done ;
+         }
+      }
+
+   done:
+      return rc ;
+   }
+
+   INT32 mthTrim( const CHAR *str, INT32 size, INT8 lr, _utilString &us )
+   {
+      INT32 rc = SDB_OK ;
+      SDB_ASSERT( NULL != str, "can not be null" ) ;
+      INT32 strLen = 0 <= size ? size : ossStrlen( str ) ;
+      const CHAR *p = str ;
+      if ( 0 == strLen )
+      {
+         goto done ;
+      }
+
+      if ( lr <= 0 )
+      {
+         const CHAR *newP = NULL ;
+         _ltrim( p, newP ) ;
+         p = newP ;
+      }
+
+      if ( 0 <= lr )
+      {
+         rc = _rtrim( p, size - ( p - str ), us ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to trim right site:%d", rc ) ;
+            goto error ;
+         }
+      }
+      else
+      {
+         /// necessary to avoid one more copy when 
+         /// str is like "  abc" ?
+         rc = us.append( p, size - ( p - str ) ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to trim right site:%d", rc ) ;
+            goto error ;
+         }
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 mthAdd( const CHAR *name, const BSONElement &in, 
+                 const BSONElement &addend, BSONObjBuilder &outBuilder )
+   {
+      INT32 rc = SDB_OK ;
+
+      if ( in.eoo() )
+      {
+         goto done ;
+      }
+      else if ( !in.isNumber() )
+      {
+         outBuilder.appendNull( name ) ;
+      }
+      else if ( NumberDecimal == in.type() || 
+                NumberDecimal == addend.type() )
+      {
+         bsonDecimal decimalE ;
+         bsonDecimal decimalArg ;
+         bsonDecimal result ;
+         result.init() ;
+
+         decimalE   = in.numberDecimal() ;
+         decimalArg = addend.numberDecimal() ;
+         rc = decimalE.add( decimalArg, result ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to add decimal:%s+%s,rc=%d", 
+                    decimalE.toString().c_str(), 
+                    decimalArg.toString().c_str(), rc ) ;
+            goto error ;
+         }
+
+         outBuilder.append( name, result ) ;
+      }
+      else if ( NumberDouble == in.type() ||
+                NumberDouble == addend.type() )
+      {
+         FLOAT64 f = addend.numberDouble() + in.numberDouble() ;
+         outBuilder.appendNumber( name, f ) ;
+      }
+      else
+      {
+         INT64 i = addend.numberLong() + in.numberLong() ;
+         outBuilder.appendIntOrLL( name, i ) ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 mthSub( const CHAR *name, const BSONElement &in, 
+                 const BSONElement &subtrahead, BSONObjBuilder &outBuilder )
+   {
+      INT32 rc = SDB_OK ;
+
+      if ( in.eoo() )
+      {
+         goto done ;
+      }
+      else if ( !in.isNumber() )
+      {
+         outBuilder.appendNull( name ) ;
+      }
+      else if ( NumberDecimal == in.type() || 
+                NumberDecimal == subtrahead.type() )
+      {
+         bsonDecimal decimalE ;
+         bsonDecimal decimalArg ;
+         bsonDecimal result ;
+         result.init() ;
+
+         decimalE   = in.numberDecimal() ;
+         decimalArg = subtrahead.numberDecimal() ;
+         rc = decimalE.sub( decimalArg, result ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to sub decimal:%s-%s,rc=%d", 
+                    decimalE.toString().c_str(), 
+                    decimalArg.toString().c_str(), rc ) ;
+            goto error ;
+         }
+
+         outBuilder.append( name, result ) ;
+      }
+      else if ( NumberDouble == in.type() ||
+                NumberDouble == subtrahead.type() )
+      {
+         FLOAT64 f = in.numberDouble() - subtrahead.numberDouble() ;
+         outBuilder.appendNumber( name, f ) ;
+      }
+      else
+      {
+         INT64 i = in.numberLong() - subtrahead.numberLong() ;
+         outBuilder.appendIntOrLL( name, i ) ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 mthMultiply( const CHAR *name, const BSONElement &in, 
+                      const BSONElement &multiplier, 
+                      BSONObjBuilder &outBuilder )
+   {
+      INT32 rc = SDB_OK ;
+
+      if ( in.eoo() )
+      {
+         goto done ;
+      }
+      else if ( !in.isNumber() )
+      {
+         outBuilder.appendNull( name ) ;
+      }
+      else if ( NumberDecimal == in.type() || 
+                NumberDecimal == multiplier.type() )
+      {
+         bsonDecimal decimal ;
+         bsonDecimal decimalArg ;
+         bsonDecimal result ;
+         result.init() ;
+
+         decimal    = in.numberDecimal() ;
+         decimalArg = multiplier.numberDecimal() ;
+         rc = decimal.mul( decimalArg, result ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to mul decimal:%s*%s,rc=%d", 
+                    decimal.toString().c_str(), 
+                    decimalArg.toString().c_str(), rc ) ;
+            goto error ;
+         }
+
+         outBuilder.append( name, result ) ;
+      }
+      else if ( NumberDouble == in.type() ||
+                NumberDouble == multiplier.type() )
+      {
+         FLOAT64 f = multiplier.numberDouble() * in.numberDouble() ;
+         outBuilder.appendNumber( name, f ) ;
+      }
+      else
+      {
+         INT64 i = multiplier.numberLong() * in.numberLong() ;
+         outBuilder.appendIntOrLL( name, i ) ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 mthDivide( const CHAR *name, const BSONElement &in, 
+                    const BSONElement &divisor, BSONObjBuilder &outBuilder )
+   {
+      INT32 rc = SDB_OK ;
+
+      if ( in.eoo() )
+      {
+         goto done ;
+      }
+      else if ( !in.isNumber() )
+      {
+         outBuilder.appendNull( name ) ;
+      }
+      else if ( NumberDecimal == in.type() || 
+                NumberDecimal == divisor.type() )
+      {
+         bsonDecimal decimal ;
+         bsonDecimal decimalArg ;
+         bsonDecimal result ;
+         result.init() ;
+
+         decimal    = in.numberDecimal() ;
+         decimalArg = divisor.numberDecimal() ;
+         rc = decimal.div( decimalArg, result ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to div decimal:%s/%s,rc=%d", 
+                    decimal.toString().c_str(), 
+                    decimalArg.toString().c_str(), rc ) ;
+            goto error ;
+         }
+
+         outBuilder.append( name, result ) ;
+      }
+      else if ( NumberDouble == in.type() ||
+                NumberDouble == divisor.type() )
+      {
+         FLOAT64 r = divisor.numberDouble() ;
+         if ( fabs(r) < OSS_EPSILON )
+         {
+            PD_LOG( PDERROR, "invalid argument:%f", r ) ;
+            rc = SDB_SYS ;
+            goto error ;
+         }
+
+         outBuilder.appendNumber( name, in.numberDouble() / r ) ;
+      }
+      else
+      {
+         INT64 l = in.numberLong() ;
+         INT64 r = divisor.numberLong() ;
+         if ( 0 == r )
+         {
+            PD_LOG( PDERROR, "invalid argument:%lld", r ) ;
+            rc = SDB_SYS ; /// should not happen. so use sdb_sys.
+            goto error ;
+         }
+         else if ( 0 == l % r )
+         {
+            outBuilder.appendIntOrLL( name, l / r ) ;
+         }
+         else
+         {
+            outBuilder.appendNumber( name, l / ( FLOAT64 ) r ) ;
+         }
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
 }
 

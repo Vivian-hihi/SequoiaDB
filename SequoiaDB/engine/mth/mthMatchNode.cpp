@@ -280,18 +280,6 @@ namespace engine
       SDB_OSS_FREE(p) ;
    }
 
-   void _mthMatchNode::release()
-   {
-      if ( NULL != _allocator && _allocator->isAllocatedByme( this ) )
-      {
-         this->~_mthMatchNode() ;
-      }
-      else
-      {
-         delete this ;
-      }
-   }
-
    string _mthMatchNode::toString()
    {
       BSONObj obj = toBson() ;
