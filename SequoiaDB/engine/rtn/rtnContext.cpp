@@ -2202,10 +2202,29 @@ namespace engine
    {
       _numToReturn = -1 ;
       _numToSkip   = 0 ;
+      _pFetch      = NULL ;
+      _ownnedFetch = FALSE ;
    }
 
    _rtnContextDump::~_rtnContextDump()
    {
+      if ( _pFetch && _ownnedFetch )
+      {
+         SDB_OSS_DEL _pFetch ;
+         _pFetch = NULL ;
+      }
+      _ownnedFetch = FALSE ;
+   }
+
+   void _rtnContextDump::setMonFetch( rtnFetchBase *pFetch,
+                                      BOOLEAN ownned )
+   {
+      if ( _pFetch && _ownnedFetch )
+      {
+         SDB_OSS_DEL _pFetch ;
+      }
+      _pFetch = pFetch ;
+      _ownnedFetch = ownned ;
    }
 
    RTN_CONTEXT_TYPE _rtnContextDump::getType () const
@@ -2298,6 +2317,7 @@ namespace engine
 
       if ( 0 == _numToReturn )
       {
+         rc = SDB_DMS_EOC ;
          goto done ;
       }
 
@@ -2359,16 +2379,76 @@ namespace engine
 
    INT32 _rtnContextDump::_prepareData( pmdEDUCB * cb )
    {
-      _hitEnd = TRUE ;
-      return SDB_DMS_EOC ;
+      INT32 rc = SDB_OK ;
+
+      if ( !_pFetch || _pFetch->isHitEnd() )
+      {
+         _hitEnd = TRUE ;
+         rc = SDB_DMS_EOC ;
+         goto error ;
+      }
+
+      while( isEmpty() )
+      {
+         INT32 index = 0 ;
+         BSONObj obj ;
+
+         if ( cb->isInterrupted() )
+         {
+            rc = SDB_INTERRUPT ;
+            goto error ;
+         }
+
+         for ( ; index < RTN_CONTEXT_GETNUM_ONCE ; ++index )
+         {
+            if ( _pFetch->isHitEnd() || 0 == getNumToReturn() )
+            {
+               rc = SDB_DMS_EOC ;
+               _hitEnd = TRUE ;
+               break ;
+            }
+            rc = _pFetch->fetch( obj ) ;
+            if ( rc )
+            {
+               PD_LOG( PDERROR, "MonFetch[%s] fetch object failed, rc: %d",
+                       _pFetch->getName(), rc ) ;
+               goto error ;
+            }
+
+            /// add to context
+            rc = monAppend( obj ) ;
+            if ( rc )
+            {
+               PD_LOG( PDERROR, "Append obj[%s] to context failed, rc: %d",
+                       obj.toString().c_str(), rc ) ;
+               goto error ;
+            }
+         } /// end for
+
+         if ( SDB_DMS_EOC == rc )
+         {
+            break ;
+         }
+      }
+
+      if ( !isEmpty() )
+      {
+         rc = SDB_OK ;
+      }
+      else
+      {
+         rc = SDB_DMS_EOC ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 
    void _rtnContextDump::_toString( stringstream &ss )
    {
-      if ( !_orderby.isEmpty() )
-      {
-         ss << ",Orderby:" << _orderby.toString().c_str() ;
-      }
       if ( _numToReturn > 0 )
       {
          ss << ",NumToReturn:" << _numToReturn ;
@@ -2378,174 +2458,6 @@ namespace engine
          ss << ",NumToSkip:" << _numToSkip ;
       }
    }
-
-#if defined SDB_ENGINE
-   /*
-     _rtnContextTransDump implement
-   */
-   _rtnContextTransDump::_rtnContextTransDump( INT64 contextID,
-                                               UINT64 eduID )
-   :_rtnContextDump( contextID, eduID )
-   {
-      _numToReturn   = -1 ;
-      _numToSkip     = 0 ;
-   }
-
-   _rtnContextTransDump::~_rtnContextTransDump()
-   {
-   }
-
-   RTN_CONTEXT_TYPE _rtnContextTransDump::getType() const
-   {
-      return RTN_CONTEXT_TRANS_DUMP ;
-   }
-
-   INT32 _rtnContextTransDump::open( const BSONObj & selector,
-                                       const BSONObj & matcher,
-                                       INT64 numToReturn,
-                                       INT64 numToSkip,
-                                       BOOLEAN isDumpCurrentEdu )
-   {
-      INT32 rc = SDB_OK ;
-
-      PD_CHECK( !_isOpened, SDB_DMS_CONTEXT_IS_OPEN, error, PDERROR,
-                "The context(transaction-dump) is opened!" ) ;
-      if ( !selector.isEmpty() )
-      {
-         try
-         {
-            rc = _selector.loadPattern( selector ) ;
-         }
-         catch( std::exception &e )
-         {
-            PD_RC_CHECK( SDB_INVALIDARG, PDERROR,
-                         "Failed to load pattern for selector: %s, %s",
-                         selector.toString().c_str(), e.what() ) ;
-         }
-         PD_RC_CHECK( rc, PDERROR,
-                      "Failed to load selector: %s, rc = %d",
-                      selector.toString().c_str(), rc ) ;
-      }
-
-      if ( !matcher.isEmpty() )
-      {
-         try
-         {
-            rc = newMatcher() ;
-            PD_RC_CHECK( rc, PDERROR,
-                         "Failed to create new matcher(rc = %d)!",
-                         rc ) ;
-            rc = _matcher->loadPattern( matcher ) ;
-         }
-         catch( std::exception &e )
-         {
-            PD_RC_CHECK( SDB_INVALIDARG, PDERROR,
-                         "Failed to load pattern for matcher: %s, %s",
-                         selector.toString().c_str(), e.what() ) ;
-         }
-         PD_RC_CHECK( rc, PDERROR,
-                      "Failed to load matcher: %s, rc = %d",
-                      selector.toString().c_str(), rc ) ;
-      }
-
-      _numToReturn = numToReturn ;
-      _numToSkip = numToSkip > 0 ? numToSkip : 0 ;
-      _hitEnd = _numToReturn == 0 ? TRUE : FALSE ;
-
-      if ( isDumpCurrentEdu )
-      {
-         _eduList.push( eduID() ) ;
-      }
-      else
-      {
-         sdbGetTransCB()->dumpTransEDUList( _eduList ) ;
-      }
-
-      _isOpened = TRUE ;
-   done:
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   INT32 _rtnContextTransDump::_prepareData( _pmdEDUCB *cb )
-   {
-      INT32 rc = SDB_OK ;
-      if ( 0 == _numToReturn )
-      {
-         _hitEnd = TRUE ;
-         goto done ;
-      }
-
-      while( _numToReturn != 0 && numRecords() < CACHE_RECORDS_MAX_NUM )
-      {
-         BSONObjBuilder bobEduTransInfo ;
-         BSONArrayBuilder babLockList ;
-         UINT32 lockNum = 0 ;
-         DpsTransCBLockList::iterator iterLock = _curTransInfo._lockList.begin() ;
-         while ( iterLock != _curTransInfo._lockList.end() )
-         {
-            if ( iterLock->first == _curTransInfo._waitLock )
-            {
-               _curTransInfo._lockList.erase( iterLock++ ) ;
-               continue ;
-            }
-            babLockList.append( iterLock->first.toBson() ) ;
-            _curTransInfo._lockList.erase( iterLock++ ) ;
-            if ( ++lockNum >= CACHE_LOCK_MAX_NUM )
-            {
-               break ;
-            }
-         }
-         if ( lockNum != 0 )
-         {
-            bobEduTransInfo.appendElements( _curEduInfo ) ;
-            bobEduTransInfo.appendArray( FIELD_NAME_TRANS_LOCKS, babLockList.arr() ) ;
-            monAppend( bobEduTransInfo.obj() ) ;
-            continue ;
-         }
-         if ( _eduList.empty() )
-         {
-            _hitEnd = TRUE ;
-            break ;
-         }
-
-         EDUID eduId = _eduList.front() ;
-         _eduList.pop() ;
-         monDumpTransInfoFromCB( cb, eduId ) ;
-      }
-   done:
-      return rc ;
-   }
-
-   INT32 _rtnContextTransDump::monDumpTransInfoFromCB( _pmdEDUCB *cb, EDUID eduId  )
-   {
-      INT32 rc = SDB_OK ;
-      SDB_ASSERT( _curTransInfo._lockList.empty(),
-                  "_curEduLockList is not empty!" ) ;
-      cb->getEDUMgr()->dumpTransInfo( eduId, _curTransInfo ) ;
-      try
-      {
-         BSONObjBuilder bobTransInfo ;
-         monAppendSystemInfo( bobTransInfo, MON_MASK_NODEID ) ;
-         bobTransInfo.append( FIELD_NAME_SESSIONID, ( long long int)(_curTransInfo._eduID) ) ;
-         bobTransInfo.append( FIELD_NAME_TRANSACTION_ID, ( long long int)(_curTransInfo._transID) ) ;
-         bobTransInfo.append( FIELD_NAME_TRANS_LSN_CUR, ( long long int)(_curTransInfo._curTransLsn) ) ;
-         bobTransInfo.append( FIELD_NAME_TRANS_WAIT_LOCK, _curTransInfo._waitLock.toBson() ) ;
-         bobTransInfo.append( FIELD_NAME_TRANS_LOCKS_NUM, _curTransInfo._locksNum ) ;
-
-         _curEduInfo = bobTransInfo.obj() ;
-      }
-      catch( std::exception &e )
-      {
-         PD_RC_CHECK( SDB_SYS, PDWARNING, "Failed to build transaction-info!" ) ;
-      }
-   done:
-      return rc ;
-   error:
-      goto done ;
-   }
-#endif
 
    /*
       _rtnContextCoord implement
@@ -4026,8 +3938,7 @@ namespace engine
       pmdKRCB *pKrcb = pmdGetKRCB();
       SDB_RTNCB *pRtncb = pKrcb->getRTNCB();
       pmdEDUCB *cb = pKrcb->getEDUMgr()->getEDUByID( eduID() );
-      SubCLBufList::iterator iterLst
-                        = _subCLBufList.begin();
+      SubCLBufList::iterator iterLst = _subCLBufList.begin();
       while( iterLst != _subCLBufList.end() )
       {
          pRtncb->contextDelete( iterLst->first, cb );
@@ -5612,6 +5523,10 @@ namespace engine
     _explained( FALSE )
    {
       _needRun = FALSE ;
+      _beginUsrCpu = 0.0 ;
+      _beginSysCpu = 0.0 ;
+      _endUsrCpu = 0.0 ;
+      _endSysCpu = 0.0 ;
    }
 
    _rtnContextExplain::~_rtnContextExplain()
@@ -5738,6 +5653,7 @@ namespace engine
       const CHAR* hostName = NULL ;
       stringstream ss ;
       _rtnContextBase *contextOfQuery = NULL ;
+      ossTime userTime, sysTime ;
 
       rc = rtnQuery( _options._fullName, _options._selector,
                      _options._query, _options._orderBy,
@@ -5794,13 +5710,13 @@ namespace engine
       _builder.append( FIELD_NAME_GROUPNAME, pmdGetKRCB()->getGroupName() ) ;
 
       /// get some info before explain
-      rc = _getMonInfo( cb, _beginMon ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "failed to get mon info before explain:%d", rc ) ;
-         goto error ;
-      }
+      _beginMon = *cb->getMonAppCB() ;
       ossGetCurrentTime( _beginTime ) ;
+
+      /// get begin cpu time info
+      ossGetCPUUsage( cb->getThreadHandle(), userTime, sysTime ) ;
+      _beginUsrCpu = userTime.seconds + (FLOAT64)userTime.microsec / 1000000 ;
+      _beginSysCpu = sysTime.seconds + (FLOAT64)sysTime.microsec / 1000000 ;
 
       _queryContextID = queryContextID ;
       _cbOfQuery = cb ;
@@ -5816,54 +5732,6 @@ namespace engine
       goto done ;
    }
 
-   INT32 _rtnContextExplain::_getMonInfo( _pmdEDUCB*cb, BSONObj &info )
-   {
-      INT32 rc = SDB_OK ;
-      BSONObj dummy ;
-      INT64 snapshotContextID = -1 ;
-      rtnContextBuf ctxBuf ;
-      rc = rtnSnapCommandEntry( CMD_SNAPSHOT_SESSIONS_CURRENT,
-                                dummy, dummy, dummy,
-                                0, cb, 0, -1, sdbGetDMSCB(),
-                                sdbGetRTNCB(), snapshotContextID,
-                                TRUE ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "failed to get snapshot of current session:%d", rc ) ;
-         goto error ;
-      }
-
-      rc = rtnGetMore( snapshotContextID, 1, ctxBuf, cb, sdbGetRTNCB() ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "failed to get more from snapshot context:%d", rc ) ;
-         goto error ;
-      }
-
-      rc = ctxBuf.nextObj( info ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "failed to get next obj from buf:%d", rc ) ;
-         goto error ;
-      }
-
-      info = info.getOwned() ;
-
-   done:
-      if ( -1 != snapshotContextID )
-      {
-         sdbGetRTNCB()->contextDelete( snapshotContextID,
-                                       cb ) ;
-      }
-      return rc ;
-   error:
-      if ( SDB_DMS_EOC == rc )
-      {
-         rc = SDB_SYS ;
-      }
-      goto done ;
-   }
-
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCONTEXTEXPLAIN__EXPLAINQUERY, "_rtnContextExplain::_explainQuery" )
    INT32 _rtnContextExplain::_explainQuery( _pmdEDUCB *cb )
    {
@@ -5871,6 +5739,7 @@ namespace engine
       PD_TRACE_ENTRY( SDB_RTNCONTEXTEXPLAIN__EXPLAINQUERY ) ;
       rtnContextBuf ctxBuf ;
       BSONObj record ;
+      ossTime userTime, sysTime ;
 
       /// here we do not use $count coz it does not surpport
       /// 'limit' and 'skip'.
@@ -5915,12 +5784,12 @@ namespace engine
       }
 
       ossGetCurrentTime( _endTime ) ;
-      rc = _getMonInfo( cb, _endMon ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "failed to get mon info before explain:%d", rc ) ;
-         goto error ;
-      }
+      _endMon = *cb->getMonAppCB() ;
+      /// get end cpu time info
+      ossGetCPUUsage( cb->getThreadHandle(), userTime, sysTime ) ;
+      _endUsrCpu = userTime.seconds + (FLOAT64)userTime.microsec / 1000000 ;
+      _endSysCpu = sysTime.seconds + (FLOAT64)sysTime.microsec / 1000000 ;
+
    done:
       if ( -1 != _queryContextID )
       {
@@ -5945,38 +5814,18 @@ namespace engine
       UINT64 endTime = _endTime.time * 1000000 + _endTime.microtm  ;
       _builder.append( FIELD_NAME_ELAPSED_TIME,
                        FLOAT64( ( endTime - beginTime ) / 1000000.0 ) ) ; 
-      
-      BSONElement begin = _beginMon.getField( FIELD_NAME_TOTALINDEXREAD ) ;
-      BSONElement end = _endMon.getField( FIELD_NAME_TOTALINDEXREAD ) ;
-      if ( begin.isNumber() && end.isNumber() )
-      {
-         _builder.appendNumber( FIELD_NAME_INDEXREAD,
-                                end.Long() - begin.Long() ) ;
-      }
+      _builder.appendNumber( FIELD_NAME_INDEXREAD,
+                             (INT64)( _endMon.totalIndexRead -
+                             _beginMon.totalIndexRead ) ) ;
+      _builder.appendNumber( FIELD_NAME_DATAREAD,
+                             (INT64)( _endMon.totalDataRead -
+                             _beginMon.totalDataRead ) ) ;
 
-      begin = _beginMon.getField( FIELD_NAME_TOTALDATAREAD ) ;
-      end = _endMon.getField( FIELD_NAME_TOTALDATAREAD ) ;
-      if ( begin.isNumber() && end.isNumber() )
-      {
-         _builder.appendNumber( FIELD_NAME_DATAREAD,
-                                end.Long() - begin.Long() ) ;
-      }
-
-      begin = _beginMon.getField( FIELD_NAME_USERCPU ) ;
-      end = _endMon.getField( FIELD_NAME_USERCPU ) ;
-      if ( begin.isNumber() && end.isNumber() )
-      {
-         _builder.append( FIELD_NAME_USERCPU,
-                          FLOAT64( end.Number() - begin.Number() ) ) ;
-      }
+      _builder.append( FIELD_NAME_USERCPU,
+                       _endUsrCpu - _beginUsrCpu ) ;
       
-      begin = _beginMon.getField( FIELD_NAME_SYSCPU ) ;
-      end = _endMon.getField( FIELD_NAME_SYSCPU ) ;
-      if ( begin.isNumber() && end.isNumber() )
-      {
-         _builder.append( FIELD_NAME_SYSCPU,
-                          FLOAT64( end.Number() - begin.Number() ) ) ;
-      }
+      _builder.append( FIELD_NAME_SYSCPU,
+                       _endSysCpu - _beginSysCpu ) ;
 
       rc = append( _builder.obj() ) ;
       if ( SDB_OK != rc )
@@ -5985,7 +5834,7 @@ namespace engine
                  contextID(), rc ) ;
          goto error ;
       }
-       
+
    done:
       PD_TRACE_EXITRC( SDB_RTNCONTEXTEXPLAIN__COMMITRESULT, rc ) ;
       return rc ;

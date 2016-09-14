@@ -166,6 +166,7 @@ utilFiles = [
 rtnFiles = [
       "rtn/rtnContext.cpp",
       "rtn/rtnContextBuff.cpp",
+      "rtn/rtnFetchBase.cpp",
       "rtn/rtnUpdate.cpp",
       "rtn/rtnInsert.cpp",
       "rtn/rtnDelete.cpp",
@@ -175,6 +176,7 @@ rtnFiles = [
       "rtn/rtn.cpp",
       "rtn/rtnCommandImpl.cpp",
       "rtn/rtnCommand.cpp",
+      "rtn/rtnCommandSnapshot.cpp",
       "rtn/rtnPredicate.cpp",
       "rtn/rtnIXScanner.cpp",
       "rtn/rtnAPM.cpp",

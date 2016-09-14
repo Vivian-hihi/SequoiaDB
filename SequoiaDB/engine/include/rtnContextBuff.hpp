@@ -169,24 +169,6 @@ namespace engine
    } ;
    typedef _rtnContextBuf rtnContextBuf ;
 
-   /*
-      _rtnFetchBase define
-   */
-   class _rtnFetchBase : public SDBObject
-   {
-      public :
-         _rtnFetchBase() {}
-         virtual ~_rtnFetchBase() {}
-
-         virtual const CHAR*  getName() const = 0 ;
-
-      public:
-         virtual BOOLEAN   isHitEnd() const = 0 ;
-         virtual INT32     fetch( BSONObj &obj ) = 0 ;
-
-   } ;
-   typedef _rtnFetchBase rtnFetchBase ;
-
 }
 
 #endif //RTNCONTEXTBUFF_HPP_

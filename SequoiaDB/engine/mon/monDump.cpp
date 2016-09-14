@@ -1232,7 +1232,7 @@ namespace engine
                   ob1.append ( FIELD_NAME_TOTAL_INDEX_FREESPACE,
                                (long long)(detail._totalIndexFreeSpace )) ;
                   ob1.append ( FIELD_NAME_CURR_COMPRESS_RATIO,
-                               detail._currCompressRatio / 100.0 ) ;
+                               (FLOAT64)detail._currCompressRatio / 100.0 ) ;
                   if ( addInfo )
                   {
                      monAppendSystemInfo( ob1, MON_MASK_NODE_NAME ) ;
@@ -1880,6 +1880,8 @@ namespace engine
    /*
       _monTransFetcher implement
    */
+   IMPLEMENT_FETCH_AUTO_REGISTER( _monTransFetcher, RTN_FETCH_TRANS )
+
    _monTransFetcher::_monTransFetcher()
    {
       _dumpCurrent = TRUE ;
@@ -1894,13 +1896,14 @@ namespace engine
    }
 
    INT32 _monTransFetcher::init( pmdEDUCB *cb,
-                                 BOOLEAN isDumpCurrentEdu,
-                                 BOOLEAN detail,
-                                 UINT32 addInfoMask )
+                                 BOOLEAN isCurrent,
+                                 BOOLEAN isDetail,
+                                 UINT32 addInfoMask,
+                                 const BSONObj obj )
    {
       INT32 rc = SDB_OK ;
-      _dumpCurrent = isDumpCurrentEdu ;
-      _detail = detail ;
+      _dumpCurrent = isCurrent ;
+      _detail = isDetail ;
       _addInfoMask = addInfoMask ;
 
       if ( _dumpCurrent )
@@ -2087,6 +2090,8 @@ namespace engine
    /*
       _monContextFetcher implement
    */
+   IMPLEMENT_FETCH_AUTO_REGISTER( _monContextFetcher, RTN_FETCH_CONTEXT )
+
    _monContextFetcher::_monContextFetcher()
    {
       _dumpCurrent = FALSE ;
@@ -2099,17 +2104,19 @@ namespace engine
    {
    }
 
-   INT32 _monContextFetcher::init( pmdEDUCB *cb, UINT32 addInfoMask,
-                                   BOOLEAN isDumpCurrentEdu,
-                                   BOOLEAN detail )
+   INT32 _monContextFetcher::init( pmdEDUCB *cb,
+                                   BOOLEAN isCurrent,
+                                   BOOLEAN isDetail,
+                                   UINT32 addInfoMask,
+                                   const BSONObj obj )
    {
       SDB_RTNCB *rtnCB = pmdGetKRCB()->getRTNCB() ;
       SDB_ASSERT( rtnCB, "RTNCB can't be NULL" ) ;
       SDB_ASSERT( cb, "CB can't be NULL" ) ;
 
       _addInfoMask = addInfoMask ;
-      _detail = detail ;
-      _dumpCurrent = isDumpCurrentEdu ;
+      _detail = isDetail ;
+      _dumpCurrent = isCurrent ;
 
       if ( !_detail )
       {
@@ -2316,6 +2323,8 @@ namespace engine
    /*
       _monSessionFetcher implement
    */
+   IMPLEMENT_FETCH_AUTO_REGISTER( _monSessionFetcher, RTN_FETCH_SESSION )
+
    _monSessionFetcher::_monSessionFetcher()
    {
       _dumpCurrent = TRUE ;
@@ -2329,14 +2338,15 @@ namespace engine
    }
 
    INT32 _monSessionFetcher::init( pmdEDUCB *cb,
-                                   BOOLEAN isDumpCurrentEdu,
-                                   BOOLEAN detail,
-                                   UINT32 addInfoMask )
+                                   BOOLEAN isCurrent,
+                                   BOOLEAN isDetail,
+                                   UINT32 addInfoMask,
+                                   const BSONObj obj )
    {
       SDB_ASSERT( cb, "cb can't be NULL" ) ;
       _addInfoMask = addInfoMask ;
-      _detail = detail ;
-      _dumpCurrent = isDumpCurrentEdu ;
+      _detail = isDetail ;
+      _dumpCurrent = isCurrent ;
 
       if ( !_detail )
       {
@@ -2543,6 +2553,8 @@ namespace engine
    /*
       _monCollectionFetch implement
    */
+   IMPLEMENT_FETCH_AUTO_REGISTER( _monCollectionFetch, RTN_FETCH_COLLECTION )
+
    _monCollectionFetch::_monCollectionFetch()
    {
       _detail = FALSE ;
@@ -2556,16 +2568,17 @@ namespace engine
    }
 
    INT32 _monCollectionFetch::init( pmdEDUCB *cb,
+                                    BOOLEAN isCurrent,
+                                    BOOLEAN isDetail,
                                     UINT32 addInfoMask,
-                                    BOOLEAN includeSys,
-                                    BOOLEAN detail )
+                                    const BSONObj obj )
    {
       SDB_DMSCB *dmsCB = pmdGetKRCB()->getDMSCB() ;
       SDB_ASSERT( dmsCB, "DMSCB can't be NULL" ) ;
 
       _addInfoMask = addInfoMask ;
-      _detail = detail ;
-      _includeSys = includeSys ;
+      _detail = isDetail ;
+      _includeSys = isCurrent ;
 
       if ( !_detail )
       {
@@ -2685,9 +2698,6 @@ namespace engine
          it = _collectionInfo.begin() ;
          const monCollection &full = *it ;
 
-         /// add system info
-         monAppendSystemInfo( ob, _addInfoMask ) ;
-
          /// add name & space name
          ob.append ( FIELD_NAME_NAME, full._name ) ;
          const CHAR *pDot = ossStrchr( full._name, '.' ) ;
@@ -2709,6 +2719,9 @@ namespace engine
             UINT16 flag = detail._flag ;
             std::string status = "" ;
             CHAR tmp[ MON_TMP_STR_SZ + 1 ] = { 0 } ;
+
+            /// add system info
+            monAppendSystemInfo( sub, _addInfoMask ) ;
 
             sub.append ( FIELD_NAME_ID, detail._blockID ) ;
             sub.append ( FIELD_NAME_LOGICAL_ID, detail._logicID ) ;
@@ -2748,7 +2761,7 @@ namespace engine
             sub.append ( FIELD_NAME_TOTAL_INDEX_FREESPACE,
                          (long long)(detail._totalIndexFreeSpace )) ;
             sub.append ( FIELD_NAME_CURR_COMPRESS_RATIO,
-                         detail._currCompressRatio / 100.0 ) ;
+                         (FLOAT64)detail._currCompressRatio / 100.0 ) ;
             sub.done() ;
          }
          ba.done() ;
@@ -2778,6 +2791,8 @@ namespace engine
    /*
       _monCollectionSpaceFetch implement
    */
+   IMPLEMENT_FETCH_AUTO_REGISTER( _monCollectionSpaceFetch, RTN_FETCH_COLLECTIONSPACE )
+
    _monCollectionSpaceFetch::_monCollectionSpaceFetch()
    {
       _detail = FALSE ;
@@ -2791,16 +2806,17 @@ namespace engine
    }
 
    INT32 _monCollectionSpaceFetch::init( pmdEDUCB *cb,
+                                         BOOLEAN isCurrent,
+                                         BOOLEAN isDetail,
                                          UINT32 addInfoMask,
-                                         BOOLEAN includeSys,
-                                         BOOLEAN detail )
+                                         const BSONObj obj )
    {
       SDB_DMSCB *dmsCB = pmdGetKRCB()->getDMSCB() ;
       SDB_ASSERT( dmsCB, "DMSCB can't be NULL" ) ;
 
       _addInfoMask = addInfoMask ;
-      _detail = detail ;
-      _includeSys = includeSys ;
+      _detail = isDetail ;
+      _includeSys = isCurrent ;
 
       if ( !_detail )
       {
@@ -2998,6 +3014,8 @@ namespace engine
    /*
       _monDataBaseFetch implement
    */
+   IMPLEMENT_FETCH_AUTO_REGISTER( _monDataBaseFetch, RTN_FETCH_DATABASE )
+
    _monDataBaseFetch::_monDataBaseFetch()
    {
       _addInfoMask   = 0 ;
@@ -3009,7 +3027,10 @@ namespace engine
    }
 
    INT32 _monDataBaseFetch::init( pmdEDUCB *cb,
-                                  UINT32 addInfoMask )
+                                  BOOLEAN isCurrent,
+                                  BOOLEAN isDetail,
+                                  UINT32 addInfoMask,
+                                  const BSONObj obj )
    {
       _addInfoMask = addInfoMask ;
       _hitEnd = FALSE ;
@@ -3120,6 +3141,8 @@ namespace engine
    /*
       _monSystemFetch implement
    */
+   IMPLEMENT_FETCH_AUTO_REGISTER( _monSystemFetch, RTN_FETCH_SYSTEM )
+
    _monSystemFetch::_monSystemFetch()
    {
       _addInfoMask   = 0 ;
@@ -3131,7 +3154,10 @@ namespace engine
    }
 
    INT32 _monSystemFetch::init( pmdEDUCB *cb,
-                                UINT32 addInfoMask )
+                                BOOLEAN isCurrent,
+                                BOOLEAN isDetail,
+                                UINT32 addInfoMask,
+                                const BSONObj obj )
    {
       _addInfoMask = addInfoMask ;
       _hitEnd = FALSE ;
@@ -3273,6 +3299,8 @@ namespace engine
    /*
       _monStorageUnitFetch implement
    */
+   IMPLEMENT_FETCH_AUTO_REGISTER( _monStorageUnitFetch, RTN_FETCH_STORAGEUNIT )
+
    _monStorageUnitFetch::_monStorageUnitFetch()
    {
       _includeSys    = FALSE ;
@@ -3285,14 +3313,16 @@ namespace engine
    }
 
    INT32 _monStorageUnitFetch::init( pmdEDUCB *cb,
+                                     BOOLEAN isCurrent,
+                                     BOOLEAN isDetail,
                                      UINT32 addInfoMask,
-                                     BOOLEAN includeSys )
+                                     const BSONObj obj )
    {
       SDB_DMSCB *dmsCB = pmdGetKRCB()->getDMSCB() ;
       SDB_ASSERT( dmsCB, "DMSCB can't be NULL" ) ;
 
       _addInfoMask = addInfoMask ;
-      _includeSys = includeSys ;
+      _includeSys = isCurrent ;
 
       dmsCB->dumpInfo( _suInfo, _includeSys ) ;
       _hitEnd = _suInfo.empty() ? TRUE : FALSE ;
@@ -3392,6 +3422,8 @@ namespace engine
    /*
       _monIndexFetch implement
    */
+   IMPLEMENT_FETCH_AUTO_REGISTER( _monIndexFetch, RTN_FETCH_INDEX )
+
    _monIndexFetch::_monIndexFetch()
    {
       _addInfoMask   = 0 ;
@@ -3404,17 +3436,39 @@ namespace engine
    }
 
    INT32 _monIndexFetch::init( pmdEDUCB *cb,
-                               const CHAR *pCollectionName,
-                               UINT32 addInfoMask )
+                               BOOLEAN isCurrent,
+                               BOOLEAN isDetail,
+                               UINT32 addInfoMask,
+                               const BSONObj obj )
    {
       INT32 rc = SDB_OK ;
       SDB_DMSCB *dmsCB = pmdGetKRCB()->getDMSCB() ;
       SDB_ASSERT( dmsCB, "DMSCB can't be NULL" ) ;
       dmsStorageUnit *su = NULL ;
       dmsStorageUnitID suID = DMS_INVALID_CS ;
+      const CHAR *pCollectionName = NULL ;
       const CHAR *pCollectionShortName = NULL ;
 
       _addInfoMask = addInfoMask ;
+
+      try
+      {
+         BSONElement e = obj.getField( FIELD_NAME_NAME ) ;
+         if ( String != e.type() )
+         {
+            PD_LOG( PDERROR, "Field[%s] is invalid in obj[%s]",
+                    FIELD_NAME_NAME, obj.toString().c_str() ) ;
+            rc = SDB_SYS ;
+            goto error ;
+         }
+         pCollectionName = e.valuestr() ;
+      }
+      catch( std::exception &e )
+      {
+         PD_LOG( PDERROR, "Occur exception: %s", e.what() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
 
       rc = rtnResolveCollectionNameAndLock ( pCollectionName, dmsCB, &su,
                                              &pCollectionShortName, suID ) ;
@@ -3555,6 +3609,8 @@ namespace engine
    /*
       _monCLBlockFetch implement
    */
+   IMPLEMENT_FETCH_AUTO_REGISTER( _monCLBlockFetch, RTN_FETCH_DATABLOCK )
+
    _monCLBlockFetch::_monCLBlockFetch()
    {
       _addInfoMask   = 0 ;
@@ -3567,17 +3623,39 @@ namespace engine
    }
 
    INT32 _monCLBlockFetch::init( pmdEDUCB *cb,
-                                 const CHAR *pCollectionName,
-                                 UINT32 addInfoMask )
+                                 BOOLEAN isCurrent,
+                                 BOOLEAN isDetail,
+                                 UINT32 addInfoMask,
+                                 const BSONObj obj )
    {
       INT32 rc = SDB_OK ;
       SDB_DMSCB *dmsCB = pmdGetKRCB()->getDMSCB() ;
       SDB_ASSERT( dmsCB, "DMSCB can't be NULL" ) ;
       dmsStorageUnit *su = NULL ;
       dmsStorageUnitID suID = DMS_INVALID_CS ;
+      const CHAR *pCollectionName = NULL ;
       const CHAR *pCollectionShortName = NULL ;
 
       _addInfoMask = addInfoMask ;
+
+      try
+      {
+         BSONElement e = obj.getField( FIELD_NAME_NAME ) ;
+         if ( String != e.type() )
+         {
+            PD_LOG( PDERROR, "Field[%s] is invalid in obj[%s]",
+                    FIELD_NAME_NAME, obj.toString().c_str() ) ;
+            rc = SDB_SYS ;
+            goto error ;
+         }
+         pCollectionName = e.valuestr() ;
+      }
+      catch( std::exception &e )
+      {
+         PD_LOG( PDERROR, "Occur exception: %s", e.what() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
 
       rc = rtnResolveCollectionNameAndLock ( pCollectionName, dmsCB, &su,
                                              &pCollectionShortName, suID ) ;
@@ -3696,6 +3774,8 @@ namespace engine
    /*
       _monBackupFetch implement
    */
+   IMPLEMENT_FETCH_AUTO_REGISTER( _monBackupFetch, RTN_FETCH_BACKUP )
+
    _monBackupFetch::_monBackupFetch()
    {
       _addInfoMask   = 0 ;
@@ -3708,8 +3788,10 @@ namespace engine
    }
 
    INT32 _monBackupFetch::init( pmdEDUCB *cb,
-                                const BSONObj &option,
-                                UINT32 addInfoMask )
+                                BOOLEAN isCurrent,
+                                BOOLEAN isDetail,
+                                UINT32 addInfoMask,
+                                const BSONObj obj )
    {
       INT32 rc = SDB_OK ;
       pmdKRCB *krcb = pmdGetKRCB() ;
@@ -3725,7 +3807,7 @@ namespace engine
       OSS_BIT_CLEAR( _addInfoMask, MON_MASK_NODE_NAME ) ;
       OSS_BIT_CLEAR( _addInfoMask, MON_MASK_GROUP_NAME ) ;
 
-      rc = rtnGetStringElement( option, FIELD_NAME_PATH, &pPath ) ;
+      rc = rtnGetStringElement( obj, FIELD_NAME_PATH, &pPath ) ;
       if ( SDB_FIELD_NOT_EXIST == rc )
       {
          rc = SDB_OK ;
@@ -3733,14 +3815,14 @@ namespace engine
       PD_RC_CHECK( rc, PDWARNING, "Failed to get field[%s], rc: %d",
                    FIELD_NAME_PATH, rc ) ;
 
-      rc = rtnGetStringElement( option, FIELD_NAME_NAME, &backupName ) ;
+      rc = rtnGetStringElement( obj, FIELD_NAME_NAME, &backupName ) ;
       if ( SDB_FIELD_NOT_EXIST == rc )
       {
          rc = SDB_OK ;
       }
       PD_RC_CHECK( rc, PDWARNING, "Failed to get field[%s], rc: %d",
                    FIELD_NAME_NAME, rc ) ;
-      rc = rtnGetBooleanElement( option, FIELD_NAME_DETAIL, detail ) ;
+      rc = rtnGetBooleanElement( obj, FIELD_NAME_DETAIL, detail ) ;
       if ( SDB_FIELD_NOT_EXIST == rc )
       {
          rc = SDB_OK ;
@@ -3749,7 +3831,7 @@ namespace engine
                    FIELD_NAME_DETAIL, rc ) ;
 
       // option config
-      rc = rtnGetBooleanElement( option, FIELD_NAME_ISSUBDIR, isSubDir ) ;
+      rc = rtnGetBooleanElement( obj, FIELD_NAME_ISSUBDIR, isSubDir ) ;
       if ( SDB_FIELD_NOT_EXIST == rc )
       {
          rc = SDB_OK ;
@@ -3757,7 +3839,7 @@ namespace engine
       PD_RC_CHECK( rc, PDWARNING, "Failed to get field[%s], rc: %d",
                    FIELD_NAME_ISSUBDIR, rc ) ;
 
-      rc = rtnGetStringElement( option, FIELD_NAME_PREFIX, &prefix ) ;
+      rc = rtnGetStringElement( obj, FIELD_NAME_PREFIX, &prefix ) ;
       if ( SDB_FIELD_NOT_EXIST == rc )
       {
          rc = SDB_OK ;

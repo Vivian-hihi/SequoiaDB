@@ -242,10 +242,6 @@ namespace engine
                  (*context) = SDB_OSS_NEW rtnContextLobFetcher( _contextHWM,
                                                                 pEDUCB->getID() ) ;
                  break ;
-            case RTN_CONTEXT_TRANS_DUMP:
-                 (*context) = SDB_OSS_NEW _rtnContextTransDump( _contextHWM,
-                                                                pEDUCB->getID() ) ;
-                break ;
             default :
                PD_LOG( PDERROR, "Unknow context type: %d", type ) ;
                return SDB_SYS ;

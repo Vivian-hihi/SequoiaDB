@@ -41,6 +41,7 @@
 #include "pmdEDU.hpp"
 #include "rtnCB.hpp"
 #include "rtnContext.hpp"
+#include "rtnFetchBase.hpp"
 #include "dpsTransCB.hpp"
 #include "../bson/bson.h"
 
@@ -48,7 +49,6 @@ using namespace bson ;
 
 namespace engine
 {
-
    /*
       Base define
    */
@@ -129,14 +129,17 @@ namespace engine
    */
    class _monTransFetcher : public rtnFetchBase
    {
+      DECLARE_FETCH_AUTO_REGISTER()
+
       public:
          _monTransFetcher() ;
          virtual ~_monTransFetcher() ;
 
-         INT32    init( pmdEDUCB *cb,
-                        BOOLEAN isDumpCurrentEdu,
-                        BOOLEAN detail = FALSE,
-                        UINT32 addInfoMask = MON_MASK_FETCH_DEFAULT ) ;
+         virtual INT32        init( pmdEDUCB *cb,
+                                    BOOLEAN isCurrent,
+                                    BOOLEAN isDetail,
+                                    UINT32 addInfoMask,
+                                    const BSONObj obj = BSONObj() ) ;
 
          virtual const CHAR*  getName() const ;
 
@@ -165,14 +168,17 @@ namespace engine
    */
    class _monContextFetcher : public rtnFetchBase
    {
+      DECLARE_FETCH_AUTO_REGISTER()
+
       public:
          _monContextFetcher() ;
          virtual ~_monContextFetcher() ;
 
-         INT32    init( pmdEDUCB *cb,
-                        UINT32 addInfoMask,
-                        BOOLEAN isDumpCurrentEdu,
-                        BOOLEAN detail = FALSE ) ;
+         virtual INT32        init( pmdEDUCB *cb,
+                                    BOOLEAN isCurrent,
+                                    BOOLEAN isDetail,
+                                    UINT32 addInfoMask,
+                                    const BSONObj obj = BSONObj() ) ;
 
          virtual const CHAR*  getName() const ;
 
@@ -200,14 +206,17 @@ namespace engine
    */
    class _monSessionFetcher : public rtnFetchBase
    {
+      DECLARE_FETCH_AUTO_REGISTER()
+
       public:
          _monSessionFetcher() ;
          virtual ~_monSessionFetcher() ;
 
-         INT32    init( pmdEDUCB *cb,
-                        BOOLEAN isDumpCurrentEdu,
-                        BOOLEAN detail = FALSE,
-                        UINT32 addInfoMask = MON_MASK_FETCH_DEFAULT ) ;
+         virtual INT32        init( pmdEDUCB *cb,
+                                    BOOLEAN isCurrent,
+                                    BOOLEAN isDetail,
+                                    UINT32 addInfoMask,
+                                    const BSONObj obj = BSONObj() ) ;
 
          virtual const CHAR*  getName() const ;
 
@@ -235,14 +244,19 @@ namespace engine
    */
    class _monCollectionFetch : public rtnFetchBase
    {
+      DECLARE_FETCH_AUTO_REGISTER()
+
       public:
          _monCollectionFetch() ;
          virtual ~_monCollectionFetch() ;
-
-         INT32    init( pmdEDUCB *cb,
-                        UINT32 addInfoMask,
-                        BOOLEAN includeSys,
-                        BOOLEAN detail = FALSE ) ;
+         /*
+            Use isCurrent for isIncludeSystem
+         */
+         virtual INT32        init( pmdEDUCB *cb,
+                                    BOOLEAN isCurrent,
+                                    BOOLEAN isDetail,
+                                    UINT32 addInfoMask,
+                                    const BSONObj obj = BSONObj() ) ;
 
          virtual const CHAR*  getName() const ;
 
@@ -270,14 +284,19 @@ namespace engine
    */
    class _monCollectionSpaceFetch : public rtnFetchBase
    {
+      DECLARE_FETCH_AUTO_REGISTER()
+
       public:
          _monCollectionSpaceFetch() ;
          virtual ~_monCollectionSpaceFetch() ;
-
-         INT32    init( pmdEDUCB *cb,
-                        UINT32 addInfoMask,
-                        BOOLEAN includeSys,
-                        BOOLEAN detail = FALSE ) ;
+         /*
+            Use isCurrent for isIncludeSystem
+         */
+         virtual INT32        init( pmdEDUCB *cb,
+                                    BOOLEAN isCurrent,
+                                    BOOLEAN isDetail,
+                                    UINT32 addInfoMask,
+                                    const BSONObj obj = BSONObj() ) ;
 
          virtual const CHAR*  getName() const ;
 
@@ -305,12 +324,17 @@ namespace engine
    */
    class _monDataBaseFetch : public rtnFetchBase
    {
+      DECLARE_FETCH_AUTO_REGISTER()
+
       public:
          _monDataBaseFetch() ;
          virtual ~_monDataBaseFetch() ;
 
-         INT32    init( pmdEDUCB *cb,
-                        UINT32 addInfoMask ) ;
+         virtual INT32        init( pmdEDUCB *cb,
+                                    BOOLEAN isCurrent,
+                                    BOOLEAN isDetail,
+                                    UINT32 addInfoMask,
+                                    const BSONObj obj = BSONObj() ) ;
 
          virtual const CHAR*  getName() const ;
 
@@ -330,12 +354,17 @@ namespace engine
    */
    class _monSystemFetch : public rtnFetchBase
    {
+      DECLARE_FETCH_AUTO_REGISTER()
+
       public:
          _monSystemFetch() ;
          virtual ~_monSystemFetch() ;
 
-         INT32    init( pmdEDUCB *cb,
-                        UINT32 addInfoMask ) ;
+         virtual INT32        init( pmdEDUCB *cb,
+                                    BOOLEAN isCurrent,
+                                    BOOLEAN isDetail,
+                                    UINT32 addInfoMask,
+                                    const BSONObj obj = BSONObj() ) ;
 
          virtual const CHAR*  getName() const ;
 
@@ -355,13 +384,20 @@ namespace engine
    */
    class _monStorageUnitFetch : public rtnFetchBase
    {
+      DECLARE_FETCH_AUTO_REGISTER()
+
       public:
          _monStorageUnitFetch() ;
          virtual ~_monStorageUnitFetch() ;
 
-         INT32    init( pmdEDUCB *cb,
-                        UINT32 addInfoMask,
-                        BOOLEAN includeSys ) ;
+         /*
+            use isCurrent for isIncludeSystem
+         */
+         virtual INT32        init( pmdEDUCB *cb,
+                                    BOOLEAN isCurrent,
+                                    BOOLEAN isDetail,
+                                    UINT32 addInfoMask,
+                                    const BSONObj obj = BSONObj() ) ;
 
          virtual const CHAR*  getName() const ;
 
@@ -386,13 +422,17 @@ namespace engine
    */
    class _monIndexFetch : public rtnFetchBase
    {
+      DECLARE_FETCH_AUTO_REGISTER()
+
       public:
          _monIndexFetch() ;
          virtual ~_monIndexFetch() ;
 
-         INT32    init( pmdEDUCB *cb,
-                        const CHAR *pCollectionName,
-                        UINT32 addInfoMask ) ;
+         virtual INT32        init( pmdEDUCB *cb,
+                                    BOOLEAN isCurrent,
+                                    BOOLEAN isDetail,
+                                    UINT32 addInfoMask,
+                                    const BSONObj obj = BSONObj() ) ;
 
          virtual const CHAR*  getName() const ;
 
@@ -417,13 +457,17 @@ namespace engine
    */
    class _monCLBlockFetch : public rtnFetchBase
    {
+      DECLARE_FETCH_AUTO_REGISTER()
+
       public:
          _monCLBlockFetch() ;
          virtual ~_monCLBlockFetch() ;
 
-         INT32    init( pmdEDUCB *cb,
-                        const CHAR *pCollectionName,
-                        UINT32 addInfoMask ) ;
+         virtual INT32        init( pmdEDUCB *cb,
+                                    BOOLEAN isCurrent,
+                                    BOOLEAN isDetail,
+                                    UINT32 addInfoMask,
+                                    const BSONObj obj = BSONObj() ) ;
 
          virtual const CHAR*  getName() const ;
 
@@ -448,13 +492,17 @@ namespace engine
    */
    class _monBackupFetch : public rtnFetchBase
    {
+      DECLARE_FETCH_AUTO_REGISTER()
+
       public:
          _monBackupFetch() ;
          virtual ~_monBackupFetch() ;
 
-         INT32    init( pmdEDUCB *cb,
-                        const BSONObj &option,
-                        UINT32 addInfoMask ) ;
+         virtual INT32        init( pmdEDUCB *cb,
+                                    BOOLEAN isCurrent,
+                                    BOOLEAN isDetail,
+                                    UINT32 addInfoMask,
+                                    const BSONObj obj = BSONObj() ) ;
 
          virtual const CHAR*  getName() const ;
 
