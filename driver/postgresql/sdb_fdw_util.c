@@ -565,7 +565,7 @@ Oid sdb_select_equality_operator(EquivalenceClass *ec, Oid lefttype,
 int sdbGetIndexInfo( SdbExecState *sdbState, sdbIndexInfo *indexInfo )
 {
    INT32 rc = SDB_OK ;
-   sdbCursorHandle cursor = NULL ;
+   sdbCursorHandle cursor = SDB_INVALID_HANDLE ;
    sdbbson obj ;
 
    sdbState->hConnection = sdbGetConnectionHandle( 
@@ -655,7 +655,7 @@ done:
       sdbState->hCollection = SDB_INVALID_HANDLE ;
    }
    
-   if ( NULL != cursor )
+   if ( SDB_INVALID_HANDLE != cursor )
    {
       sdbReleaseCursor(cursor);         
    }    
@@ -669,7 +669,7 @@ int sdbGetIndexInfos( SdbExecState *sdbState, sdbIndexInfo *indexInfo,
                       INT32 maxNum, INT32 *indexNum )
 {
    INT32 rc = SDB_OK ;
-   sdbCursorHandle cursor = NULL ;
+   sdbCursorHandle cursor = SDB_INVALID_HANDLE ;
    sdbbson obj ;
    INT32 count = 0 ;
 
@@ -766,7 +766,7 @@ done:
       sdbState->hCollection = SDB_INVALID_HANDLE ;
    }
 
-   if ( NULL != cursor )
+   if ( SDB_INVALID_HANDLE != cursor )
    {
       sdbReleaseCursor(cursor);
    }
