@@ -71,6 +71,10 @@ static const char json_str_end[]          = " }" ;
 #define Max(x, y)          ((x) > (y) ? (x) : (y))
 #define Min(x, y)          ((x) < (y) ? (x) : (y))
 
+#define DECIMAL_MAX_DWEIGHT 131072
+#define DECIMAL_MAX_DSCALE  16383
+
+
 static void _decimal_free_buff( bson_decimal *decimal ) ;
 static void _decimal_strip( bson_decimal *decimal ) ;
 static int _decimal_apply_typmod( bson_decimal *decimal, int typmod ) ;
@@ -2356,10 +2360,22 @@ int decimal_from_str( const char *value, bson_decimal *decimal )
          if ( !have_dp )
          {
             dweight++ ;
+            if ( dweight > DECIMAL_MAX_DWEIGHT + 
+                           DECIMAL_MAX_PRECISION )
+            {
+               rc = -6 ;
+               goto error ;
+            }
          }
          else
          {
             dscale++ ;
+            if ( dweight > DECIMAL_MAX_DSCALE + 
+                           DECIMAL_MAX_PRECISION )
+            {
+               rc = -6 ;
+               goto error ;
+            }
          }
       }
       else if ( *cp == '.' )
@@ -2417,6 +2433,14 @@ int decimal_from_str( const char *value, bson_decimal *decimal )
       {
          dscale = 0 ;
       }
+   }
+   
+   // make sure the count of digits is in the bound
+   if ( dweight >= DECIMAL_MAX_DWEIGHT ||
+        dscale > DECIMAL_MAX_DSCALE )
+   {
+      rc = -6 ;
+      goto error ;
    }
 
    if ( *cp != '\0' )

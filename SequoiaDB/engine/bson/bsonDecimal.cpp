@@ -393,7 +393,7 @@ namespace bson {
    // decimal->dscale | decimal->sign ;
    INT16 bsonDecimal::getStorageScale() const
    {
-      return _decimal.dscale | _decimal.sign ;
+      return ( _decimal.dscale & DECIMAL_DSCALE_MASK ) | _decimal.sign ;
    }
 
    INT16 bsonDecimal::getScale() const
