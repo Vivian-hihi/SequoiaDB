@@ -67,6 +67,8 @@ namespace SequoiaDB.Bson
         private static readonly int DECIMAL_DSCALE_MASK = 0x3FFF;
 
         private static readonly int DECIMAL_MAX_PRECISION = 1000;
+        private static readonly int DECIMAL_MAX_DWEIGHT = 131072;
+        private static readonly int DECIMAL_MAX_DSCALE = 16383;
         private static readonly int DECIMAL_MAX_DISPLAY_SCALE = DECIMAL_MAX_PRECISION;
         //private static readonly int DECIMAL_MIN_DISPLAY_SCALE = 0;
         //private static readonly int DECIMAL_MIN_SIG_DIGITS = 16;
@@ -242,8 +244,20 @@ namespace SequoiaDB.Bson
         /// </summary>
         /// <param name="value">The value of the decimal in string format.</param>
         public BsonDecimal(Decimal value)
-            : this(value.ToString())
+            : base(BsonType.Decimal)
         {
+            if (value == null)
+            {
+                if (value == null)
+                {
+                    throw new ArgumentException("The input decimal can not be null");
+                }
+            }
+            String str = value.ToString();
+            _FromStringValue(str, -1, -1);
+            _value = _GetValue();
+            _precision = -1;
+            _scale = -1;
         }
 
         ///// <summary>
@@ -262,6 +276,21 @@ namespace SequoiaDB.Bson
         public BsonDecimal(int size, int typemod, short signscale, short weight, short[] digits)
             : base(BsonType.Decimal)
         {
+            // check
+            if ((size < DECIMAL_HEADER_SIZE) ||
+                (size == DECIMAL_HEADER_SIZE && (digits != null && digits.Length != 0)) ||
+                (size > DECIMAL_HEADER_SIZE && (digits == null ||digits.Length == 0)))
+            {
+                var message = string.Format("Invalid arguments: {0}, {1}, {2}, {3}, {4}.",
+                    size, typemod, signscale, weight, digits);
+                throw new ArgumentException(message);
+            }
+
+            if (digits == null)
+            {
+                digits = new short[0];
+            }
+
             _size = size;
             _typemod = typemod;
             _signscale = signscale;
@@ -357,7 +386,7 @@ namespace SequoiaDB.Bson
         }
 
         /// <summary>
-        /// Compares this BsonTimestamp to another BsonTimestamp.
+        /// Compares this BsonDecimal to another BsonDecimal.
         /// </summary>
         /// <param name="other">The other BsonDecimal.</param>
         /// <returns>A 32-bit signed integer that indicates whether this BsonDecimal is less than, equal to, or greather than the other.</returns>
@@ -629,10 +658,20 @@ namespace SequoiaDB.Bson
 				    if (!have_dp) 
                     {
 					    dweight++;
+                        if (dweight >= DECIMAL_MAX_DWEIGHT + DECIMAL_MAX_PRECISION)
+                        {
+                            var message = string.Format("The integer part of the value is out of bound.");
+                            throw new ArgumentException(message);
+                        }
 				    } 
                     else 
                     {
 					    dscale++;
+                        if (dscale > DECIMAL_MAX_DSCALE + DECIMAL_MAX_PRECISION)
+                        {
+                            var message = string.Format("The decimal part of the value is out of bound.");
+                            throw new ArgumentException(message);
+                        }
 				    }
 			    } 
                 else if (cp[cp_idx] == '.') 
@@ -725,6 +764,18 @@ namespace SequoiaDB.Bson
 			    }
 		    }
 
+            // make sure the count of digits is in the bound
+            if (dweight >= DECIMAL_MAX_DWEIGHT)
+            {
+                var message = string.Format("The integer part of the value is out of bound.");
+                throw new ArgumentException(message);
+            }
+            if (dscale > DECIMAL_MAX_DSCALE)
+            {
+                var message = string.Format("The decimal part of the value is out of bound.");
+                throw new ArgumentException(message);
+            }
+
 		    /*
 		     * Okay, convert pure-decimal representation to base NBASE. First we
 		     * need to determine the converted weight and ndigits. offset is the
@@ -739,8 +790,7 @@ namespace SequoiaDB.Bson
 			    // tells us which part is the first digit in,
 			    // because when dweight >= 0, weight starts from 0(the first part in
 			    // the left of decimal point), so we need to decrease 1
-			    weight = (dweight + 1 + DECIMAL_DEC_DIGITS - 1)
-					    / DECIMAL_DEC_DIGITS - 1;
+			    weight = (dweight + 1 + DECIMAL_DEC_DIGITS - 1) / DECIMAL_DEC_DIGITS - 1;
 		    } 
             else 
             {
@@ -864,7 +914,7 @@ namespace SequoiaDB.Bson
 		    short dig = 0;
 		    short d1 = 0;
 		    int d = 0;
-		    String strData = null;
+            String retStr = null;
 
 		    int expect_char_size = _GetExpectCharSize();
 		    char[] cp = new char[expect_char_size];
@@ -876,8 +926,8 @@ namespace SequoiaDB.Bson
 			    cp[0] = 'N';
 			    cp[1] = 'a';
 			    cp[2] = 'N';
-			    strData = new String(cp);
-			    return strData;
+                retStr = new String(cp);
+                return retStr;
 		    }
 		    // decimal is min
 		    if (_IsMin()) 
@@ -885,8 +935,8 @@ namespace SequoiaDB.Bson
 			    cp[0] = 'M';
 			    cp[1] = 'I';
 			    cp[2] = 'N';
-			    strData = new String(cp);
-			    return strData;
+                retStr = new String(cp);
+                return retStr;
 		    }
 		    // decimal is max
 		    if (_IsMax()) 
@@ -894,8 +944,8 @@ namespace SequoiaDB.Bson
 			    cp[0] = 'M';
 			    cp[1] = 'A';
 			    cp[2] = 'X';
-			    strData = new String(cp);
-			    return strData;
+                retStr = new String(cp);
+                return retStr;
 		    }
 		    // output a dash for negative values
 		    if (_mid_sign == SDB_DECIMAL_NEG) 
@@ -912,7 +962,7 @@ namespace SequoiaDB.Bson
             {
 			    for (d = 0; d <= _mid_weight; d++) 
                 {
-				    // for _digits[0] is placed carry, so we need to whether these has carray or not.
+				    // for _digits[0] is placed carry, so we need to known whether these has carry or not.
                     // if so, we start from position 0, otherwise, we start from position 1
                     if (_hasCarry)
                     {
@@ -965,7 +1015,7 @@ namespace SequoiaDB.Bson
 			    cp_idx_end = cp_idx + _mid_dscale;
 			    for (int i = 0; i < _mid_dscale; d++, i += DECIMAL_DEC_DIGITS) 
                 {
-                    // for _digits[0] is placed carry, so we need to whether these has carray or not.
+                    // for _digits[0] is placed carry, so we need to known whether these has carry or not.
                     // if so, we start from position 0, otherwise, we start from position 1
                     if (_hasCarry)
                     {
@@ -1003,9 +1053,9 @@ namespace SequoiaDB.Bson
 			    }
 		    }
 		    // build the return BSONDecimal
-		    strData = new String(cp).Trim();
-            strData = strData.Remove(strData.IndexOf("\0")); 
-            return strData;
+            retStr = new String(cp).Trim();
+            retStr = retStr.Remove(retStr.IndexOf("\0"));
+            return retStr;
         }
 
 	    private int _GetPrecision() 
@@ -1275,7 +1325,7 @@ namespace SequoiaDB.Bson
             // 2. _typemod
             _typemod = _IsSpecial(this) ? -1 : _mid_typemod;
             // 3. _signscale
-            _signscale = (short)(_mid_dscale | _mid_sign);
+            _signscale = (short)((_mid_dscale & DECIMAL_DSCALE_MASK) | _mid_sign);
             // 4. _weight
             _weight = (short)_mid_weight;
             // 5. _digits
