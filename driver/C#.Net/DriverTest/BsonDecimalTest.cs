@@ -87,12 +87,37 @@ namespace DriverTest
         #endregion
 
         [TestMethod]
-        //[Ignore]
         public void TestTmp()
         {
-            BsonInt32 intVal = new BsonInt32(10);
-            BsonInt64 longVal = new BsonInt64(10);
-            Console.WriteLine("result is {0}", intVal.Equals(longVal));
+        }
+
+        [TestMethod]
+        //[Ignore]
+        public void TestInsertSpecialMax()
+        {
+            string str = "max";
+            BsonDecimal result = null;
+            BsonDecimal v_decimal = new BsonDecimal(str, 50, 20);
+            BsonDocument doc = new BsonDocument();
+            doc.Add("case1", "in c#");
+            doc.Add("decimal", v_decimal);
+            Console.WriteLine("");
+            Console.WriteLine("before Insert, record is: {0}", doc);
+            coll.Insert(doc);
+            DBCursor cur = coll.Query(new BsonDocument("case1", "in c#"), new BsonDocument("decimal", ""), null, null);
+            BsonDocument retRecord = cur.Next();
+            Console.WriteLine("after query, record is: {0}", retRecord);
+            if (retRecord["decimal"].IsBsonDecimal)
+            {
+                result = retRecord["decimal"].AsBsonDecimal;
+                //Assert.AreEqual(Decimal.Parse(str), Decimal.Parse(result.Value));
+                Console.WriteLine("result.Value is: " + result.Value);
+                Assert.AreEqual(BsonDecimal.Create(str), BsonDecimal.Create(result.Value));
+            }
+            else
+            {
+                Assert.Fail();
+            }
         }
 
         [TestMethod]
@@ -248,7 +273,7 @@ namespace DriverTest
                 doc.Add("case1", "in c#");
                 doc.Add("decimal", v_decimal);
                 Console.WriteLine("");
-                Console.WriteLine("before insert, record is: {0}", doc);
+                Console.WriteLine("before Insert, record is: {0}", doc);
                 coll.Insert(doc);
                 cur = coll.Query(new BsonDocument("case1", "in c#"), new BsonDocument("decimal", ""), null, null);
                 retRecord = cur.Next();
@@ -270,7 +295,7 @@ namespace DriverTest
                 v_decimal = new BsonDecimal(str);
                 doc.Add("case2", "in c#");
                 doc.Add("decimal", v_decimal);
-                Console.WriteLine("before insert, record is: {0}", doc);
+                Console.WriteLine("before Insert, record is: {0}", doc);
                 coll.Insert(doc);
                 cur = coll.Query(new BsonDocument("case2", "in c#"), new BsonDocument("decimal", ""), null, null);
                 retRecord = cur.Next();
@@ -322,7 +347,7 @@ namespace DriverTest
             doc.Add("doc", subDoc);
             doc.Add("arr", subArr);
             Console.WriteLine("");
-            Console.WriteLine("before insert, record is: {0}", doc);
+            Console.WriteLine("before Insert, record is: {0}", doc);
             coll.Insert(doc);
             cur = coll.Query(new BsonDocument("case1", "in c#"), null, null, null);
             retRecord = cur.Next();
@@ -1242,6 +1267,190 @@ namespace DriverTest
             BsonDecimal rhs = new BsonDecimal("11111111111111111111111113333345551.234123412341561354553412341341341341234169");
             Assert.AreEqual(true, (lhs != rhs));
         }
+
+	     /// <summary>
+         /// 测试Nan/Max/Min/Max Precision/Max Scale
+	     /// </summary>
+	    [TestMethod()]
+	    public void boundaryTest() {
+		    String MAX = "MAX";
+		    String MIN = "MIN";
+		    String NaN = "NaN";
+		    DBCursor cur = null;
+		    BsonDocument obj = null;
+		    BsonDocument retObj = null;
+		    BsonDecimal retDecimal = null;
+		    String str = null;
+            String integer_str = null;
+            String decimal_str = null;
+		    int maxPrecision = 0;
+		    int maxScale = 0;
+		    Random rand = new Random();
+		
+		    // case 1: Max
+		    obj = new BsonDocument("case1", new BsonDecimal("max", 10, 5));
+            //Console.WriteLine("Insert max key record is： " + obj);
+		    coll.Insert(obj);
+            cur = coll.Query(obj, null, null, null);
+		    retObj = cur.Next();
+            Assert.IsNotNull(retObj);
+            //Console.WriteLine("queried record is: " + retObj);
+		    retDecimal = retObj["case1"].AsBsonDecimal;
+            //Console.WriteLine("value is: " + retDecimal.Value);
+            Console.WriteLine("precision is: " + retDecimal.Precision);
+            Console.WriteLine("scale is: " + retDecimal.Scale);
+		    Assert.AreEqual(MAX, retDecimal.Value);
+		    Assert.AreEqual(-1, retDecimal.Precision);
+		    Assert.AreEqual(-1, retDecimal.Scale);
+            Console.WriteLine("finish case 1");
+		
+		    // case 2: Min
+		    obj = new BsonDocument("case2", new BsonDecimal("MIN", 10, 5));
+            //Console.WriteLine("Insert min record is： " + obj);
+            coll.Insert(obj);
+            cur = coll.Query(obj, null, null, null);
+            retObj = cur.Next();
+            Assert.IsNotNull(retObj);
+            //Console.WriteLine("queried record is: " + retObj);
+		    retDecimal = retObj["case2"].AsBsonDecimal;
+            //Console.WriteLine("value is: " + retDecimal.Value);
+            Console.WriteLine("precision is: " + retDecimal.Precision);
+            Console.WriteLine("scale is: " + retDecimal.Scale);
+		    Assert.AreEqual(MIN, retDecimal.Value);
+		    Assert.AreEqual(-1, retDecimal.Precision);
+		    Assert.AreEqual(-1, retDecimal.Scale);
+            Console.WriteLine("finish case 2");
+		
+		    // case 3: Nan
+		    obj = new BsonDocument("case3", new BsonDecimal("Nan", 10, 5));
+            //Console.WriteLine("Insert nan record is： " + obj);
+            coll.Insert(obj);
+            cur = coll.Query(obj, null, null, null);
+		    retObj = cur.Next();
+            Assert.IsNotNull(retObj);
+            //Console.WriteLine("queried record is: " + retObj);
+		    retDecimal = retObj["case3"].AsBsonDecimal;
+            //Console.WriteLine("value is: " + retDecimal.Value);
+            Console.WriteLine("precision is: " + retDecimal.Precision);
+            Console.WriteLine("scale is: " + retDecimal.Scale);
+		    Assert.AreEqual(NaN, retDecimal.Value);
+		    Assert.AreEqual(-1, retDecimal.Precision);
+		    Assert.AreEqual(-1, retDecimal.Scale);
+            Console.WriteLine("finish case 3");
+		
+		    // case 4: Max Precision
+		    maxPrecision = 131072;
+		    integer_str = "9";
+		    for (int i = 1; i < maxPrecision; i++) {
+                integer_str += rand.Next(10);
+		    }
+            obj = new BsonDocument("case4", new BsonDecimal(integer_str));
+            //Console.WriteLine("Insert max precision record is： " + obj);
+            coll.Insert(obj);
+            cur = coll.Query(obj, null, null, null);
+		    retObj = cur.Next();
+            Assert.IsNotNull(retObj);
+            //Console.WriteLine("queried record is: " + retObj);
+		    retDecimal = retObj["case4"].AsBsonDecimal;
+            //Console.WriteLine("precision is: " + retDecimal.Scale);
+            //Assert.AreEqual(integer_str, retDecimal.Value);
+		    Assert.AreEqual(-1, retDecimal.Precision);
+		    Assert.AreEqual(-1, retDecimal.Scale);
+		    Console.WriteLine("finish case 4");
+		
+		    // case 5: more than max precision(no strip)
+		    str = integer_str + "0";
+            try
+            {
+                obj = new BsonDocument("case5", new BsonDecimal(str));
+                Assert.Fail();
+            }
+            catch (ArgumentException e) 
+            {
+            }
+		    Console.WriteLine("finish case 5");
+
+            // case 6: more than max precision(with strip)
+            try
+            {
+                str = "0000000000" + integer_str;
+                obj = new BsonDocument("case6", new BsonDecimal(str));
+                Assert.Fail();
+                //Console.WriteLine("Insert more than precision(with strip) record is： " + obj);
+                coll.Insert(obj);
+                cur = coll.Query(obj, null, null, null);
+                retObj = cur.Next();
+                Assert.IsNotNull(retObj);
+                //Console.WriteLine("queried record is: " + retObj);
+                retDecimal = retObj["case6"].AsBsonDecimal;
+                Console.WriteLine("precision is: " + retDecimal.Scale);
+                Assert.AreEqual(integer_str, retDecimal.Value);
+                Assert.AreEqual(-1, retDecimal.Precision);
+                Assert.AreEqual(-1, retDecimal.Scale);
+            }
+            catch (ArgumentException e)
+            {
+            }
+            Console.WriteLine("finish case 6");
+		
+		    // case 7: Max Scale
+		    maxScale = 16383;
+            decimal_str = "56"; 
+            str = "0.";
+            for (var i = 2; i < maxScale; i++)
+            {
+                decimal_str += rand.Next(10);
+            }
+            str = str + decimal_str;
+		    obj = new BsonDocument("case7", new BsonDecimal(str));
+            //Console.WriteLine("Insert max scale record is： " + obj);
+            coll.Insert(obj);
+            cur = coll.Query(obj, null, null, null);
+            retObj = cur.Next();
+            Assert.IsNotNull(retObj);
+            //Console.WriteLine("queried record is: " + retObj);
+		    retDecimal = retObj["case7"].AsBsonDecimal;
+		    Console.WriteLine("precision is: " + retDecimal.Scale);
+		    Assert.AreEqual(str, retDecimal.Value);
+		    Assert.AreEqual(-1, retDecimal.Precision);
+		    Assert.AreEqual(-1, retDecimal.Scale);
+		    Console.WriteLine("finish case 7");
+		
+		    // case 8: more than max scale(no round)
+		    str += "0";
+            try
+            {
+                obj = new BsonDocument("case8", new BsonDecimal(str));
+                Assert.Fail();
+            }
+            catch (ArgumentException e)
+            { 
+            }
+		    Console.WriteLine("finish case 8");
+
+            // case 9: more than max scale(with round)
+            try
+            {
+                str = "0.";
+                str = str + decimal_str + rand.Next(10);
+                obj = new BsonDocument("case9", new BsonDecimal(str, 10, 1));
+                //Console.WriteLine("Insert max scale record is： " + obj);
+                coll.Insert(obj);
+                cur = coll.Query(obj, null, null, null);
+                retObj = cur.Next();
+                Assert.IsNotNull(retObj);
+                //Console.WriteLine("queried record is: " + retObj);
+                retDecimal = retObj["case9"].AsBsonDecimal;
+                Console.WriteLine("precision is: " + retDecimal.Scale);
+                Assert.AreEqual("0.6", retDecimal.Value);
+                Assert.AreEqual(10, retDecimal.Precision);
+                Assert.AreEqual(1, retDecimal.Scale);
+            }
+            catch (ArgumentException e)
+            { 
+            }
+            Console.WriteLine("finish case 9");
+	    }
 
     }
 }

@@ -174,6 +174,8 @@ namespace DriverTest
                     id = value.AsInt32;
                 else if (type == BsonType.Timestamp)
                     id = value.AsBsonTimestamp;
+                else if (type == BsonType.Decimal)
+                    id = value.AsBsonDecimal;
                 else if (type == BsonType.Int64)
                     id = value.AsInt64;
                 else if (type == BsonType.MinKey)
@@ -224,6 +226,8 @@ namespace DriverTest
                     Assert.IsTrue(id.Equals(ret.AsInt32));
                 else if (type == BsonType.Timestamp)
                     Assert.IsTrue(id.Equals(ret.AsBsonTimestamp));
+                else if (type == BsonType.Decimal)
+                    Assert.IsTrue(id.Equals(ret.AsBsonDecimal));
                 else if (type == BsonType.Int64)
                     Assert.IsTrue(id.Equals(ret.AsInt64));
                 else if (type == BsonType.MinKey)
@@ -1335,24 +1339,32 @@ namespace DriverTest
         [TestMethod()]
         public void TempTest()
         {
-            int num = 1;
-            long recordNum = 0;
-            for (int i = 0; i < num; i++)
-            {
-                //BsonDocument obj = new BsonDocument { { "test_truncate", "test" } };
+            DBCollection cl = sdb.GetCollecitonSpace("foo").GetCollection("bar");
+            cl.Truncate();
 
-                BsonDocument obj = new BsonDocument();
-                long sec = (DateTime.Now.ToUniversalTime().Ticks - 621355968000000000)/10000000;
-                obj.Add("date", DateTime.Now);
-                obj.Add("ts", new BsonTimestamp((int)sec, 0));
+            BsonDocument obj = new BsonDocument();
+            BsonDecimal d = new BsonDecimal("12345.678956", 10, 5);
+            String value = d.Value;
+            int precision = d.Precision;
+            int scale = d.Scale;
+            BsonTimestamp ts = new BsonTimestamp(0,0);
+            obj.Add("a", d);
+            //obj.Add("b", ts);
+            Console.WriteLine("insert obj is: " + obj.ToString());
+            //long sec = (DateTime.Now.ToUniversalTime().Ticks - 621355968000000000)/10000000;
+            //obj.Add("date", DateTime.Now);
+            //obj.Add("ts", new BsonTimestamp((int)sec, 0));
 
-                coll.Insert(obj);
-            }
+            cl.Insert(obj);
+            DBCursor cur = cl.Query();
+            BsonDocument ret = cur.Next();
+            Console.WriteLine("return ret is: " + ret.ToString());
+
             // test api
-            coll.Truncate();
+            //coll.Truncate();
             // check
-            recordNum = coll.GetCount(new BsonDocument());
-            Assert.IsTrue(0 == recordNum);
+            //recordNum = coll.GetCount(new BsonDocument());
+            //Assert.IsTrue(0 == recordNum);
         }
 
     }
