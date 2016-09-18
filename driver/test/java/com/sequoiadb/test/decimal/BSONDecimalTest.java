@@ -157,7 +157,7 @@ public class BSONDecimalTest {
 		Assert.assertEquals(0, big.compareTo(big2));
 		
 		// case 5: getValue
-		Assert.assertEquals(big.toString(), decimal.getValue());
+		Assert.assertEquals(big.toPlainString(), decimal.getValue());
 		Assert.assertEquals(big.toPlainString(), retDecimal.getValue());
 		
 	}
@@ -230,9 +230,30 @@ public class BSONDecimalTest {
 		decimal2 = new BSONDecimal(rhs);
 		Assert.assertFalse(decimal1.equals(decimal2));
 
-		
 	}
 	
+	/**
+	 * 用户使用不同的精度构建BSONDecimal对象
+	 */
+	@Test
+	public void buildBSONDecimalTest2() {
+		BSONObject obj = null;
+		BSONDecimal decimal = null;
+		
+		// case 1: specify invalid scale
+        String value = "12345.6789";
+        try {
+            decimal = new BSONDecimal(value, 1, -1);
+        	Assert.fail();
+            obj = new BasicBSONObject().append("case1", decimal);
+            System.out.println("inserted obj is: " + obj);
+        	cl.insert(obj);
+        } catch(IllegalArgumentException e) {
+        	// ok
+        } catch(Exception e) {
+        	Assert.fail();
+        }
+	}
 	
 
 }
