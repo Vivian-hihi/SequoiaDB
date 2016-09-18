@@ -311,14 +311,11 @@ public class BasicBSONEncoder implements BSONEncoder {
 	} 
 	
 	protected void putDecimal(String name, BSONDecimal decimal) {
-		InnerDecimal innerDecimal = new InnerDecimal();
-		innerDecimal.fromBSONDecimal(decimal);
-		
-		int size = innerDecimal.size();
-		int typemod = innerDecimal.getTypeMod();
-		short dscale = (short)innerDecimal.getDScaleWithSign();
-		short weight = (short)innerDecimal.getWeight();
-		short[] digits = innerDecimal.getDigits();
+		int size = decimal.getSize();
+		int typemod = decimal.getTypemod();
+		short signscale = decimal.getSignScale();
+		short weight = decimal.getWeight();
+		short[] digits = decimal.getDigits();
 
 		// decimal is kept in bson in follow format:
 		// type+name+size+typemod+dscale+weight+digits
@@ -329,7 +326,7 @@ public class BasicBSONEncoder implements BSONEncoder {
 		// size+typemod+dscale+weight+data
 		_buf.writeInt(size);
 		_buf.writeInt(typemod);
-		_buf.writeShort(dscale);
+		_buf.writeShort(signscale);
 		_buf.writeShort(weight);
 		for (int i = 0; i < digits.length; i++) {
 			_buf.writeShort(digits[i]);
