@@ -58,7 +58,7 @@ try {
 // 定义一个游标对象
 DBCursor cursor;
 BSONObject queryCondition = new BasicBSONObject();
-queryCondition = (BSONObject) JSON.parse("({age:{$ne:20}})");
+queryCondition = (BSONObject) JSON.parse("{age:{$ne:20}}");
 // 查询所有记录，并把查询结果放在游标对象中
 cursor = cl.query(queryCondition, null, null, null);
 // 从游标中显示所有记录
