@@ -2370,8 +2370,8 @@ int decimal_from_str( const char *value, bson_decimal *decimal )
          else
          {
             dscale++ ;
-            if ( dweight > DECIMAL_MAX_DSCALE + 
-                           DECIMAL_MAX_PRECISION )
+            if ( dscale > DECIMAL_MAX_DSCALE + 
+                          DECIMAL_MAX_PRECISION )
             {
                rc = -6 ;
                goto error ;
