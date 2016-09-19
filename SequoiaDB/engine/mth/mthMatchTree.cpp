@@ -77,6 +77,7 @@ namespace engine
       { MTH_FUNCTION_STR_ABS,         EN_MATCH_FUNC_ABS },
       { MTH_FUNCTION_STR_CEILING,     EN_MATCH_FUNC_CEILING },
       { MTH_FUNCTION_STR_FLOOR,       EN_MATCH_FUNC_FLOOR },
+      //special process: MTH_OPERATOR_STR_MOD
       //{ MTH_FUNCTION_STR_MOD,         EN_MATCH_FUNC_MOD },
       { MTH_FUNCTION_STR_ADD,         EN_MATCH_FUNC_ADD },
       { MTH_FUNCTION_STR_SUBTRACT,    EN_MATCH_FUNC_SUBTRACT },
@@ -248,9 +249,54 @@ namespace engine
 
       switch( type )
       {
-//      case EN_MATCH_FUNC_ABS:
-//         func  = new ( allocator ) _mthMatchFuncABS( allocator ) ;
-//         break ;
+      case EN_MATCH_FUNC_ABS:
+         func  = new ( allocator ) _mthMatchFuncABS( allocator ) ;
+         break ;
+      case EN_MATCH_FUNC_CEILING:
+         func  = new ( allocator ) _mthMatchFuncCEILING( allocator ) ;
+         break ;
+      case EN_MATCH_FUNC_FLOOR:
+         func  = new ( allocator ) _mthMatchFuncFLOOR( allocator ) ;
+         break ;
+      case EN_MATCH_FUNC_MOD:
+         func  = new ( allocator ) _mthMatchFuncMOD( allocator ) ;
+         break ;
+      case EN_MATCH_FUNC_ADD:
+         func  = new ( allocator ) _mthMatchFuncADD( allocator ) ;
+         break ;
+      case EN_MATCH_FUNC_SUBTRACT:
+         func  = new ( allocator ) _mthMatchFuncSUBTRACT( allocator ) ;
+         break ;
+      case EN_MATCH_FUNC_MULTIPLY:
+         func  = new ( allocator ) _mthMatchFuncMULTIPLY( allocator ) ;
+         break ;
+      case EN_MATCH_FUNC_DIVIDE:
+         func  = new ( allocator ) _mthMatchFuncDIVIDE( allocator ) ;
+         break ;
+      case EN_MATCH_FUNC_SUBSTR:
+         func  = new ( allocator ) _mthMatchFuncSUBSTR( allocator ) ;
+         break ;
+      case EN_MATCH_FUNC_STRLEN:
+         func  = new ( allocator ) _mthMatchFuncSTRLEN( allocator ) ;
+         break ;
+      case EN_MATCH_FUNC_LOWER:
+         func  = new ( allocator ) _mthMatchFuncLOWER( allocator ) ;
+         break ;
+      case EN_MATCH_FUNC_UPPER:
+         func  = new ( allocator ) _mthMatchFuncUPPER( allocator ) ;
+         break ;
+      case EN_MATCH_FUNC_LTRIM:
+         func  = new ( allocator ) _mthMatchFuncLTRIM( allocator ) ;
+         break ;
+      case EN_MATCH_FUNC_RTRIM:
+         func  = new ( allocator ) _mthMatchFuncRTRIM( allocator ) ;
+         break ;
+      case EN_MATCH_FUNC_TRIM:
+         func  = new ( allocator ) _mthMatchFuncTRIM( allocator ) ;
+         break ;
+      case EN_MATCH_FUNC_CAST:
+         func  = new ( allocator ) _mthMatchFuncCAST( allocator ) ;
+         break ;
       default :
          break ;
       }
@@ -260,7 +306,7 @@ namespace engine
 
    void _mthMatchNodeFactory::releaseFunc( _mthMatchFunc *func )
    {
-      //TODO:
+      func->release() ;
    }
 
    _mthMatchNodeFactory *mthGetMatchNodeFactory()
@@ -949,31 +995,15 @@ namespace engine
          }
          else if ( EN_MATCH_OPERATOR_MOD == nodeType )
          {
-            //mod is operator or function
-            if ( innerEle.type() == Array )
+            //func mod
+            rc = _addFunction( ele.fieldName(), innerEle, nodeType, 
+                               funcList ) ;
+            if ( SDB_OK != rc )
             {
-               //operator mod
-               rc = _addOperator( ele.fieldName(), innerEle, nodeType, funcList, 
-                                  parent ) ;
-               if ( SDB_OK != rc )
-               {
-                  PD_LOG( PDERROR, "_addOperator failed:innerEle=%s,rc=%d",
-                          innerEle.toString().c_str(), rc ) ;
-                  goto error ;
-               }
-            }
-            else
-            {
-               //func mod
-               rc = _addFunction( ele.fieldName(), innerEle, nodeType, 
-                                  funcList ) ;
-               if ( SDB_OK != rc )
-               {
-                  PD_LOG( PDERROR, "add function failed:fieldName=%s,"
-                          "innerEle=%s,rc=%d", ele.fieldName(), 
-                          innerEle.toString().c_str(), rc ) ;
-                  goto error ;
-               }
+               PD_LOG( PDERROR, "add function failed:fieldName=%s,"
+                       "innerEle=%s,rc=%d", ele.fieldName(), 
+                       innerEle.toString().c_str(), rc ) ;
+               goto error ;
             }
          }
          else if ( ( nodeType < EN_MATCH_OPERATOR_END && 
@@ -1046,14 +1076,31 @@ namespace engine
          else
          {
             // { a : { $xx : { xx : ... } } }
-            rc = _addOperator( ele.fieldName(), innerEle, nodeType, funcList,
-                               parent ) ;
-            if ( SDB_OK != rc )
+            if ( ( nodeType < EN_MATCH_OPERATOR_END && 
+                   nodeType >= EN_MATCH_OPERATOR_ET ) )
             {
-               PD_LOG( PDERROR, "_addOperator failed:innerEle=%s,rc=%d",
-                       innerEle.toString().c_str(), rc ) ;
-               goto error ;
+               rc = _addOperator( ele.fieldName(), innerEle, nodeType, funcList, 
+                                  parent ) ;
+               if ( SDB_OK != rc )
+               {
+                  PD_LOG( PDERROR, "_addOperator failed:innerEle=%s,rc=%d",
+                          innerEle.toString().c_str(), rc ) ;
+                  goto error ;
+               }
             }
+            else
+            {
+               rc = _addFunction( ele.fieldName(), innerEle, nodeType, 
+                                  funcList ) ;
+               if ( SDB_OK != rc )
+               {
+                  PD_LOG( PDERROR, "add function failed:fieldName=%s,"
+                          "innerEle=%s,rc=%d", ele.fieldName(), 
+                          innerEle.toString().c_str(), rc ) ;
+                  goto error ;
+               }
+            }
+            
          }
       }
 

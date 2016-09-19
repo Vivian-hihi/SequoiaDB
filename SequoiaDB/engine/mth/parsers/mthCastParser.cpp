@@ -37,28 +37,13 @@
 #include "mthTrace.hpp"
 #include "mthSActionFunc.hpp"
 #include "utilString.hpp"
+#include "mthCommon.hpp"
 
 namespace engine
 {
    _mthCastParser::_mthCastParser()
    {
       _name = MTH_S_CAST ;
-
-      _tl["minkey"] = MinKey ;
-      _tl["double"] = NumberDouble ;
-      _tl["string"] = String ;
-      _tl["object"] = Object ;
-      _tl["array"] = Array ;
-      _tl["bindata"] = BinData ;
-      _tl["oid"] = jstOID ;
-      _tl["bool"] = Bool ;
-      _tl["date"] = Date ;
-      _tl["null"] = jstNULL ;
-      _tl["int32"] = NumberInt ;
-      _tl["timestamp"] = Timestamp ;
-      _tl["int64"] = NumberLong ;
-      _tl["decimal"] = NumberDecimal ;
-      _tl["maxkey"] = MaxKey ;
    }
 
    ///PD_TRACE_DECLARE_FUNCTION ( SDB__MTHCASTPARSER_PARSE, "_mthCastParser::parse" )
@@ -160,39 +145,14 @@ namespace engine
                                        BSONType &type ) const
    {
       INT32 rc = SDB_OK ;
-      TYPE_LIST::const_iterator itr ;
-      BSONType t = bson::EOO ;
-      utilString us ;
-      const CHAR *p = str ;
-      while ( '\0' != *p )
-      {
-         if ( 'A' <= *p &&
-              *p <= 'Z' )
-         {
-            rc = us.append( *p + 32 ) ;
-         }
-         else
-         {
-             rc = us.append( *p ) ;
-         }
-
-         ++p ;
-      }
-
-      itr = _tl.find( us.str() ) ;
-      if ( _tl.end() != itr )
-      {
-         t = ( BSONType )( itr->second ) ;
-      }
-      else
+      rc = mthGetCastTranslator()->getCastType( str, type ) ;
+      if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "unknown type:%s, check your input or"
                  "use bsontype", str ) ;
-         rc = SDB_INVALIDARG ;
          goto error ;
       }
 
-      type = t ;
    done:
       return rc ;
    error:

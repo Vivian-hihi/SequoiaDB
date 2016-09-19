@@ -925,34 +925,14 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__MTHLRTRIMBUILD ) ;
-      if ( e.eoo() )
-      {
-         goto done ;
-      }
-      else if ( String != e.type() )
-      {
-         builder.appendNull( fieldName ) ;
-      }
-      else if ( mthIsTrimed( e.valuestr(),
-                             e.valuestrsize() - 1,
-                             lr ) )
-      {
-         builder.appendAs( e, fieldName ) ;
-      }
-      else
-      {
-         utilString us ;
-         rc = mthTrim( e.valuestr(),
-                       e.valuestrsize() - 1,
-                       lr, us ) ;
-         if ( SDB_OK != rc )
-         {
-            PD_LOG( PDERROR, "failed to trim string:%d", rc ) ;
-            goto error ;
-         }
 
-         builder.append( fieldName, us.str() ) ;
+      rc = mthTrim( fieldName, e, lr, builder ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "mthTrim failed:rc=%d", rc ) ;
+         goto error ;
       }
+      
    done:
       PD_TRACE_EXITRC( SDB__MTHLRTRIMBUILD, rc ) ;
       return rc ;
@@ -970,34 +950,12 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__MTHLRTRIMGET ) ;
       BSONObjBuilder builder ;
-      if ( in.eoo() )
-      {
-         goto done ;
-      }
-      else if ( String != in.type() )
-      {
-         builder.appendNull( fieldName ) ;
-      }
-      else if ( mthIsTrimed( in.valuestr(),
-                             in.valuestrsize() - 1 ,
-                             lr ) )
-      {
-         out = in ;
-         goto done ;
-      }
-      else
-      {
-         utilString us ;
-         rc = mthTrim( in.valuestr(),
-                       in.valuestrsize() - 1,
-                       lr, us ) ;
-         if ( SDB_OK != rc )
-         {
-            PD_LOG( PDERROR, "failed to trim string:%d", rc ) ;
-            goto error ;
-         }
 
-         builder.append( fieldName, us.str() ) ;
+      rc = mthTrim( fieldName, in, lr, builder ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "mthTrim failed:rc=%d", rc ) ;
+         goto error ;
       }
 
       action->setObj( builder.obj() ) ;

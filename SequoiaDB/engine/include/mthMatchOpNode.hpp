@@ -59,7 +59,7 @@ using namespace std ;
 
 namespace engine
 {
-   class _mthMatchFunc : public SDBObject
+   class _mthMatchFunc
    {
       public:
          _mthMatchFunc( _mthNodeAllocator *allocator ) ;
@@ -67,7 +67,6 @@ namespace engine
 
       public:
          INT32 init( const CHAR *fieldName, const BSONElement &ele ) ;
-         void clear() ;
          BSONObj toBson() ;
          string toString() ;
 
@@ -80,12 +79,14 @@ namespace engine
          virtual void release() = 0 ;
 
       public:
-         virtual INT32 call( const BSONElement &in, BSONElement &out ) = 0 ;
+         virtual void clear() ;
+         virtual INT32 getType() = 0 ;
+         virtual const CHAR* getName() = 0 ;
+         virtual INT32 call( const BSONElement &in, BSONObj &out ) = 0 ;
 
       protected:
          virtual INT32 _init( const CHAR *fieldName, 
                               const BSONElement &ele ) = 0 ;
-         virtual void _clear() = 0 ;
 
       protected:
          _mthMatchFieldName<> _fieldName ;
@@ -101,16 +102,264 @@ namespace engine
 
       public:
          virtual void release() ;
-         virtual INT32 call( const BSONElement &in, BSONElement &out ) ;
+         virtual INT32 call( const BSONElement &in, BSONObj &out ) ;
+         virtual void clear() ;
+         virtual INT32 getType() ;
+         virtual const CHAR* getName() ;
 
       protected:
          virtual INT32 _init( const CHAR *fieldName, 
                               const BSONElement &ele ) ;
-         virtual void _clear() ;
+   } ;
+
+   class _mthMatchFuncCEILING : public _mthMatchFuncABS
+   {
+      public:
+         _mthMatchFuncCEILING( _mthNodeAllocator *allocator ) ;
+         virtual ~_mthMatchFuncCEILING() ;
+
+      public:
+         virtual void release() ;
+         virtual INT32 call( const BSONElement &in, BSONObj &out ) ;
+         virtual INT32 getType() ;
+         virtual const CHAR* getName() ;
+   } ;
+
+   class _mthMatchFuncFLOOR : public _mthMatchFuncABS
+   {
+      public:
+         _mthMatchFuncFLOOR( _mthNodeAllocator *allocator ) ;
+         virtual ~_mthMatchFuncFLOOR() ;
+
+      public:
+         virtual void release() ;
+         virtual INT32 call( const BSONElement &in, BSONObj &out ) ;
+         virtual INT32 getType() ;
+         virtual const CHAR* getName() ;
+   } ;
+
+   class _mthMatchFuncLOWER : public _mthMatchFuncABS
+   {
+      public:
+         _mthMatchFuncLOWER( _mthNodeAllocator *allocator ) ;
+         virtual ~_mthMatchFuncLOWER() ;
+
+      public:
+         virtual void release() ;
+         virtual INT32 call( const BSONElement &in, BSONObj &out ) ;
+         virtual INT32 getType() ;
+         virtual const CHAR* getName() ;
+   } ;
+
+   class _mthMatchFuncUPPER : public _mthMatchFuncABS
+   {
+      public:
+         _mthMatchFuncUPPER( _mthNodeAllocator *allocator ) ;
+         virtual ~_mthMatchFuncUPPER() ;
+
+      public:
+         virtual void release() ;
+         virtual INT32 call( const BSONElement &in, BSONObj &out ) ;
+         virtual INT32 getType() ;
+         virtual const CHAR* getName() ;
+   } ;
+
+   class _mthMatchFuncLTRIM : public _mthMatchFuncABS
+   {
+      public:
+         _mthMatchFuncLTRIM( _mthNodeAllocator *allocator ) ;
+         virtual ~_mthMatchFuncLTRIM() ;
+
+      public:
+         virtual void release() ;
+         virtual INT32 call( const BSONElement &in, BSONObj &out ) ;
+         virtual INT32 getType() ;
+         virtual const CHAR* getName() ;
+   } ;
+
+   class _mthMatchFuncRTRIM : public _mthMatchFuncABS
+   {
+      public:
+         _mthMatchFuncRTRIM( _mthNodeAllocator *allocator ) ;
+         virtual ~_mthMatchFuncRTRIM() ;
+
+      public:
+         virtual void release() ;
+         virtual INT32 call( const BSONElement &in, BSONObj &out ) ;
+         virtual INT32 getType() ;
+         virtual const CHAR* getName() ;
+   } ;
+
+   class _mthMatchFuncTRIM : public _mthMatchFuncABS
+   {
+      public:
+         _mthMatchFuncTRIM( _mthNodeAllocator *allocator ) ;
+         virtual ~_mthMatchFuncTRIM() ;
+
+      public:
+         virtual void release() ;
+         virtual INT32 call( const BSONElement &in, BSONObj &out ) ;
+         virtual INT32 getType() ;
+         virtual const CHAR* getName() ;
+   } ;
+
+   class _mthMatchFuncSTRLEN : public _mthMatchFuncABS
+   {
+      public:
+         _mthMatchFuncSTRLEN( _mthNodeAllocator *allocator ) ;
+         virtual ~_mthMatchFuncSTRLEN() ;
+
+      public:
+         virtual void release() ;
+         virtual INT32 call( const BSONElement &in, BSONObj &out ) ;
+         virtual INT32 getType() ;
+         virtual const CHAR* getName() ;
+   } ;
+
+   class _mthMatchFuncSUBSTR : public _mthMatchFunc
+   {
+      public:
+         _mthMatchFuncSUBSTR( _mthNodeAllocator *allocator ) ;
+         virtual ~_mthMatchFuncSUBSTR() ;
+
+      public:
+         virtual void release() ;
+         virtual INT32 call( const BSONElement &in, BSONObj &out ) ;
+         virtual INT32 getType() ;
+         virtual const CHAR* getName() ;
+         virtual void clear() ;
+
+      protected:
+         virtual INT32 _init( const CHAR *fieldName, 
+                              const BSONElement &ele ) ;
+
+      private:
+         INT32 _begin ;
+         INT32 _limit ;
+   } ;
+
+   class _mthMatchFuncMOD : public _mthMatchFunc
+   {
+      public:
+         _mthMatchFuncMOD( _mthNodeAllocator *allocator ) ;
+         virtual ~_mthMatchFuncMOD() ;
+
+      public:
+         virtual void release() ;
+         virtual INT32 call( const BSONElement &in, BSONObj &out ) ;
+         virtual INT32 getType() ;
+         virtual const CHAR* getName() ;
+         virtual void clear() ;
+
+      protected:
+         virtual INT32 _init( const CHAR *fieldName, 
+                              const BSONElement &ele ) ;
+
+      private:
+   } ;
+
+   class _mthMatchFuncADD : public _mthMatchFunc
+   {
+      public:
+         _mthMatchFuncADD( _mthNodeAllocator *allocator ) ;
+         virtual ~_mthMatchFuncADD() ;
+
+      public:
+         virtual void release() ;
+         virtual INT32 call( const BSONElement &in, BSONObj &out ) ;
+         virtual INT32 getType() ;
+         virtual const CHAR* getName() ;
+         virtual void clear() ;
+
+      protected:
+         virtual INT32 _init( const CHAR *fieldName, 
+                              const BSONElement &ele ) ;
+
+      private:
+   } ;
+
+   class _mthMatchFuncSUBTRACT : public _mthMatchFunc
+   {
+      public:
+         _mthMatchFuncSUBTRACT( _mthNodeAllocator *allocator ) ;
+         virtual ~_mthMatchFuncSUBTRACT() ;
+
+      public:
+         virtual void release() ;
+         virtual INT32 call( const BSONElement &in, BSONObj &out ) ;
+         virtual INT32 getType() ;
+         virtual const CHAR* getName() ;
+         virtual void clear() ;
+
+      protected:
+         virtual INT32 _init( const CHAR *fieldName, 
+                              const BSONElement &ele ) ;
+
+      private:
+   } ;
+
+   class _mthMatchFuncMULTIPLY : public _mthMatchFunc
+   {
+      public:
+         _mthMatchFuncMULTIPLY( _mthNodeAllocator *allocator ) ;
+         virtual ~_mthMatchFuncMULTIPLY() ;
+
+      public:
+         virtual void release() ;
+         virtual INT32 call( const BSONElement &in, BSONObj &out ) ;
+         virtual INT32 getType() ;
+         virtual const CHAR* getName() ;
+         virtual void clear() ;
+
+      protected:
+         virtual INT32 _init( const CHAR *fieldName, 
+                              const BSONElement &ele ) ;
+
+      private:
+   } ;
+
+   class _mthMatchFuncDIVIDE : public _mthMatchFunc
+   {
+      public:
+         _mthMatchFuncDIVIDE( _mthNodeAllocator *allocator ) ;
+         virtual ~_mthMatchFuncDIVIDE() ;
+
+      public:
+         virtual void release() ;
+         virtual INT32 call( const BSONElement &in, BSONObj &out ) ;
+         virtual INT32 getType() ;
+         virtual const CHAR* getName() ;
+         virtual void clear() ;
+
+      protected:
+         virtual INT32 _init( const CHAR *fieldName, 
+                              const BSONElement &ele ) ;
+
+      private:
+   } ;
+
+   class _mthMatchFuncCAST : public _mthMatchFunc
+   {
+      public:
+         _mthMatchFuncCAST( _mthNodeAllocator *allocator ) ;
+         virtual ~_mthMatchFuncCAST() ;
+
+      public:
+         virtual void release() ;
+         virtual INT32 call( const BSONElement &in, BSONObj &out ) ;
+         virtual INT32 getType() ;
+         virtual const CHAR* getName() ;
+         virtual void clear() ;
+
+      protected:
+         virtual INT32 _init( const CHAR *fieldName, 
+                              const BSONElement &ele ) ;
+
+      private:
+         BSONType _castType ;
    } ;
 
    typedef _utilList< _mthMatchFunc* > MTH_FUNC_LIST ;
-
    class _mthMatchOpNode : public _mthMatchNode
    {
       public:
@@ -165,6 +414,13 @@ namespace engine
                                const BSONElement &element,
                                _mthMatchTreeContext &context,
                                BOOLEAN &result ) ;
+
+         INT32 _calculateFuncs( const BSONElement &in, BSONObj &out ) ;
+
+         INT32 _doFuncMatch( const BSONElement &original, 
+                             const BSONElement &matchTarget,
+                             _mthMatchTreeContext &context,
+                             BOOLEAN &matchResult ) ;
 
          BOOLEAN _isNot() ;
 

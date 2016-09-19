@@ -54,17 +54,6 @@ namespace engine
                           BSONType &type ) const ;
 
    private:
-      class mycom
-      {
-      public:
-          BOOLEAN operator()( const CHAR *l, const CHAR *r )const
-          {
-             return ossStrcmp( l, r ) < 0 ;
-          }
-      } ;
-
-      typedef std::map<const CHAR *, INT32, mycom> TYPE_LIST ;
-      TYPE_LIST  _tl ;
    } ;
 }
 

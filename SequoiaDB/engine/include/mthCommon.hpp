@@ -41,6 +41,7 @@
 #include <vector>
 #include "utilString.hpp"
 #include "utilStr.hpp"
+#include "utilMap.hpp"
 #include "../bson/bson.h"
 
 using namespace bson ;
@@ -96,7 +97,8 @@ namespace engine
                    BSONObjBuilder &outBuilder ) ;
 
    BOOLEAN mthIsTrimed( const CHAR *str, INT32 size, INT8 lr ) ;
-   INT32 mthTrim( const CHAR *str, INT32 size, INT8 lr, _utilString &us ) ;
+   INT32 mthTrim( const CHAR *name, const BSONElement &in, INT8 lr,
+                  BSONObjBuilder &outBuilder ) ;
 
    INT32 mthAdd( const CHAR *name, const BSONElement &in, 
                  const BSONElement &addend, BSONObjBuilder &outBuilder ) ;
@@ -129,6 +131,21 @@ namespace engine
       }
    } ;
 
+   class _mthCastTranslator
+   {
+   public:
+      _mthCastTranslator() ;
+      ~_mthCastTranslator() ;
+
+   public:
+      INT32 getCastType( const CHAR *typeStr, BSONType &type ) ;
+
+   private:
+      typedef _utilMap< string, BSONType > MTH_CAST_TRANS_MAP ;
+      MTH_CAST_TRANS_MAP _castTransMap ;
+   } ;
+
+   _mthCastTranslator *mthGetCastTranslator() ;
 }
 
 #endif //MTHCOMMON_HPP__

@@ -47,6 +47,32 @@ using namespace bson ;
 
 namespace engine
 {
+   struct mthCastStr2Type
+   {
+      CHAR *castStr ;
+      BSONType castType ;
+   } ;
+
+   static mthCastStr2Type g_cast_str_to_type_array[] =
+   {
+      //castStr,                      castType
+      { "minkey",                     MinKey },
+      { "double",                     NumberDouble },
+      { "string",                     String },
+      { "object",                     Object },
+      { "array",                      Array },
+      { "bindata",                    BinData },
+      { "oid",                        jstOID },
+      { "bool",                       Bool },
+      { "date",                       Date },
+      { "null",                       jstNULL },
+      { "int32",                      NumberInt },
+      { "timestamp",                  Timestamp },
+      { "int64",                      NumberLong },
+      { "decimal",                    NumberDecimal },
+      { "maxkey",                     MaxKey },
+   } ;
+
    static INT32 _mthCast( const CHAR *fieldName, const bson::BSONElement &e,
                           BSONType type, BSONObjBuilder &builder ) ;
 
@@ -60,8 +86,8 @@ namespace engine
    /// lr: -1(ltrim) 0(trim) 1(rtrim)
    static void _ltrim( const CHAR *str, const CHAR *&trimed ) ;
    static INT32 _rtrim( const CHAR *str, INT32 size, _utilString &us ) ;
-   static INT32 _mthLRTrimBuild( const CHAR *fieldName, const BSONElement &in,
-                                 INT8 lr, BSONObjBuilder &outBuilder ) ;
+   static INT32 _mthTrim( const CHAR *str, INT32 size, INT8 lr,
+                          _utilString &us ) ;
 
    INT32 _mthCast( const CHAR *fieldName, const bson::BSONElement &e,
                    BSONType type, BSONObjBuilder &builder )
@@ -703,33 +729,43 @@ namespace engine
       goto done ;
    }
 
-   INT32 _mthLRTrimBuild( const CHAR *fieldName, const BSONElement &in,
-                          INT8 lr, BSONObjBuilder &outBuilder )
+   INT32 _mthTrim( const CHAR *str, INT32 size, INT8 lr, _utilString &us )
    {
       INT32 rc = SDB_OK ;
-      if ( in.eoo() )
+      SDB_ASSERT( NULL != str, "can not be null" ) ;
+      INT32 strLen = 0 <= size ? size : ossStrlen( str ) ;
+      const CHAR *p = str ;
+      if ( 0 == strLen )
       {
          goto done ;
       }
-      else if ( String != in.type() )
+
+      if ( lr <= 0 )
       {
-         outBuilder.appendNull( fieldName ) ;
+         const CHAR *newP = NULL ;
+         _ltrim( p, newP ) ;
+         p = newP ;
       }
-      else if ( mthIsTrimed( in.valuestr(), in.valuestrsize() - 1, lr ) )
+
+      if ( 0 <= lr )
       {
-         outBuilder.appendAs( in, fieldName ) ;
+         rc = _rtrim( p, size - ( p - str ), us ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to trim right site:%d", rc ) ;
+            goto error ;
+         }
       }
       else
       {
-         utilString us ;
-         rc = mthTrim( in.valuestr(), in.valuestrsize() - 1, lr, us ) ;
+         /// necessary to avoid one more copy when 
+         /// str is like "  abc" ?
+         rc = us.append( p, size - ( p - str ) ) ;
          if ( SDB_OK != rc )
          {
-            PD_LOG( PDERROR, "failed to trim string:%d", rc ) ;
+            PD_LOG( PDERROR, "failed to trim right site:%d", rc ) ;
             goto error ;
          }
-
-         outBuilder.append( fieldName, us.str() ) ;
       }
 
    done:
@@ -1428,43 +1464,34 @@ namespace engine
       return rc ;
    }
 
-   INT32 mthTrim( const CHAR *str, INT32 size, INT8 lr, _utilString &us )
+   /// lr: -1(ltrim) 0(trim) 1(rtrim)
+   INT32 mthTrim( const CHAR *name, const BSONElement &in, INT8 lr,
+                  BSONObjBuilder &outBuilder )
    {
       INT32 rc = SDB_OK ;
-      SDB_ASSERT( NULL != str, "can not be null" ) ;
-      INT32 strLen = 0 <= size ? size : ossStrlen( str ) ;
-      const CHAR *p = str ;
-      if ( 0 == strLen )
+      if ( in.eoo() )
       {
          goto done ;
       }
-
-      if ( lr <= 0 )
+      else if ( String != in.type() )
       {
-         const CHAR *newP = NULL ;
-         _ltrim( p, newP ) ;
-         p = newP ;
+         outBuilder.appendNull( name ) ;
       }
-
-      if ( 0 <= lr )
+      else if ( mthIsTrimed( in.valuestr(), in.valuestrsize() - 1, lr ) )
       {
-         rc = _rtrim( p, size - ( p - str ), us ) ;
-         if ( SDB_OK != rc )
-         {
-            PD_LOG( PDERROR, "failed to trim right site:%d", rc ) ;
-            goto error ;
-         }
+         outBuilder.appendAs( in, name ) ;
       }
       else
       {
-         /// necessary to avoid one more copy when 
-         /// str is like "  abc" ?
-         rc = us.append( p, size - ( p - str ) ) ;
+         utilString us ;
+         rc = _mthTrim( in.valuestr(), in.valuestrsize() - 1, lr, us ) ;
          if ( SDB_OK != rc )
          {
-            PD_LOG( PDERROR, "failed to trim right site:%d", rc ) ;
+            PD_LOG( PDERROR, "failed to trim string:%d", rc ) ;
             goto error ;
          }
+
+         outBuilder.append( name, us.str() ) ;
       }
 
    done:
@@ -1701,6 +1728,80 @@ namespace engine
       return rc ;
    error:
       goto done ;
+   }
+
+   _mthCastTranslator::_mthCastTranslator()
+   {
+      INT32 i   = 0 ;
+      INT32 len = 0 ;
+
+      len = sizeof( g_cast_str_to_type_array) / sizeof( mthCastStr2Type ) ;
+      for ( ; i < len ; i++ )
+      {
+         mthCastStr2Type *ptype = &g_cast_str_to_type_array[i] ;
+         _castTransMap[ ptype->castStr ] = ptype->castType ;
+      }
+   }
+
+   _mthCastTranslator::~_mthCastTranslator()
+   {
+      _castTransMap.clear() ;
+   }
+
+   INT32 _mthCastTranslator::getCastType( const CHAR *typeStr, BSONType &type )
+   {
+      MTH_CAST_TRANS_MAP::iterator iter ;
+
+      INT32 rc = SDB_OK ;
+      utilString us ;
+      const CHAR *p = typeStr ;
+      while ( '\0' != *p )
+      {
+         if ( 'A' <= *p && *p <= 'Z' )
+         {
+            rc = us.append( *p + 32 ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "append str failed:str=%s,rc=%d", 
+                       typeStr, rc ) ;
+               goto error ;
+            }
+         }
+         else
+         {
+            rc = us.append( *p ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "append str failed:str=%s,rc=%d", 
+                       typeStr, rc ) ;
+               goto error ;
+            }
+         }
+
+         ++p ;
+      }
+
+      iter = _castTransMap.find( us.str() ) ;
+      if ( iter == _castTransMap.end() )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG( PDERROR, "unknown type:typeStr=%s", typeStr ) ;
+         goto error ;
+      }
+
+      type = iter->second ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   _mthCastTranslator *mthGetCastTranslator()
+   {
+      static _mthCastTranslator translator ;
+
+      return &translator ;
    }
 }
 
