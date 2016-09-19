@@ -112,7 +112,7 @@ namespace engine
          INT32                               _type ;
          INT32                               _lockType ;
          string                              _name ;
-
+         UINT64                              _lockCount ;
    } ;
    typedef _catLockTreeNode catLockTreeNode ;
 
@@ -263,6 +263,59 @@ namespace engine
    } ;
    typedef _catDomainLock catDomainLock ;
 
+   /*
+       _catCtxLockMgr define
+    */
+   class _catCtxLockMgr : public SDBObject
+   {
+   protected:
+      typedef std::vector< catOneLevelLock *> LOCK_LIST ;
+
+   public:
+      _catCtxLockMgr () ;
+      ~_catCtxLockMgr () ;
+
+   public:
+      // _catCtxLockMgr functions
+      BOOLEAN tryLockCollectionSpace ( const std::string &csName,
+                                       OSS_LATCH_MODE mode ) ;
+
+      BOOLEAN tryLockCollection ( const std::string &csName,
+                                  const std::string &clFullName,
+                                  OSS_LATCH_MODE mode ) ;
+
+      BOOLEAN tryLockCollection ( const std::string &clFullName,
+                                  OSS_LATCH_MODE mode ) ;
+
+      BOOLEAN tryLockDomain ( const std::string &domainName,
+                              OSS_LATCH_MODE mode ) ;
+
+      BOOLEAN tryLockGroup ( const std::string &groupName,
+                             OSS_LATCH_MODE mode ) ;
+
+      BOOLEAN tryLockNode ( const std::string &groupName,
+                            const std::string &nodeName,
+                            OSS_LATCH_MODE mode ) ;
+
+      void unlockObjects () ;
+
+   protected:
+      BOOLEAN _tryLockObject ( CAT_LOCK_TYPE type,
+                               const std::string &name,
+                               OSS_LATCH_MODE mode ) ;
+
+      BOOLEAN _tryLockObject ( CAT_LOCK_TYPE type,
+                               const std::string &parentName,
+                               const std::string &name,
+                               OSS_LATCH_MODE mode ) ;
+
+      BOOLEAN _tryLockObject ( catOneLevelLock *pLock, OSS_LATCH_MODE mode ) ;
+
+   protected:
+      LOCK_LIST _lockList ;
+   } ;
+
+   typedef class _catCtxLockMgr catCtxLockMgr ;
 }
 
 #endif // CAT_LEVEL_LOCK_HPP__

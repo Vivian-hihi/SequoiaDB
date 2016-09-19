@@ -304,11 +304,17 @@ namespace engine
    INT32 rtnGetObjElement ( const BSONObj &obj, const CHAR *fieldName,
                             BSONObj &value ) ;
 
+   INT32 rtnGetArrayElement ( const BSONObj &obj, const CHAR *fieldName,
+                              BSONObj &value ) ;
+
    INT32 rtnGetIntElement ( const BSONObj &obj, const CHAR *fieldName,
                             INT32 &value ) ;
 
    INT32 rtnGetBooleanElement ( const BSONObj &obj, const CHAR *fieldName,
                                 BOOLEAN &value ) ;
+
+   INT32 rtnGetNumberLongElement ( const BSONObj &obj, const CHAR *fieldName,
+                                   INT64 &value ) ;
 
    INT32 rtnCreateIndexCommand ( const CHAR *pCollection,
                                  const BSONObj &indexObj,

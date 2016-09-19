@@ -88,7 +88,7 @@ namespace engine
       {
          if ( SDB_DMS_EOC == rc )
          {
-            PD_LOG( PDINFO, "Hit end of collection" ) ;
+            PD_LOG( PDDEBUG, "Hit end of context" ) ;
             goto error ;
          }
          PD_LOG( PDERROR, "Failed to get more from context[%lld], rc: %d",

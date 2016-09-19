@@ -214,6 +214,12 @@ enum MSG_TYPE
    MSG_CAT_ALTER_DOMAIN_REQ            = 3138,
    MSG_CAT_ALTER_DOMAIN_RSP            = MAKE_REPLY_TYPE(MSG_CAT_ALTER_DOMAIN_REQ),
 
+   // create index
+   MSG_CAT_CREATE_IDX_REQ             = 3139,
+   MSG_CAT_CREATE_IDX_RSP             = MAKE_REPLY_TYPE(MSG_CAT_CREATE_IDX_REQ),
+   MSG_CAT_DROP_IDX_REQ               = 3140,
+   MSG_CAT_DROP_IDX_RSP               = MAKE_REPLY_TYPE(MSG_CAT_DROP_IDX_REQ),
+
    // all messages for CATALOGUE must be smaller than MSG_CAT_CATALOGUE_END
    MSG_CAT_CATALOGUE_END               = 3199,
 
@@ -256,6 +262,8 @@ enum MSG_TYPE
    MSG_CAT_RM_GROUP_REQ                = 3212,
    MSG_CAT_RM_GROUP_RES                = MAKE_REPLY_TYPE(MSG_CAT_RM_GROUP_REQ),
    MSG_CAT_GRP_CHANGE_NTY              = 3213,
+   MSG_CAT_SHUTDOWN_GROUP_REQ          = 3214,
+   MSG_CAT_SHUTDOWN_GROUP_RES          = MAKE_REPLY_TYPE(MSG_CAT_SHUTDOWN_GROUP_REQ),
    MSG_CAT_NODE_END                    = 3299,
 
    MSG_CAT_DC_BEGIN                    = 3300,

@@ -103,6 +103,38 @@ namespace engine
             return "OM_TRANSFER" ;
          case RTN_CONTEXT_LOB_FETCHER :
             return "LOB_FETCHER" ;
+         case RTN_CONTEXT_CAT_REMOVE_GROUP :
+            return "CAT_REMOVE_GROUP" ;
+         case RTN_CONTEXT_CAT_ACTIVE_GROUP :
+            return "CAT_ACTIVE_GROUP" ;
+         case RTN_CONTEXT_CAT_SHUTDOWN_GROUP:
+            return "CAT_SHUTDOWN_GROUP" ;
+         case RTN_CONTEXT_CAT_CREATE_NODE :
+            return "CAT_CREATE_NODE" ;
+         case RTN_CONTEXT_CAT_REMOVE_NODE :
+            return "CAT_REMOVE_NODE" ;
+         case RTN_CONTEXT_CAT_DROP_CS :
+            return "CAT_DROP_CS" ;
+         case RTN_CONTEXT_CAT_CREATE_CL :
+            return "CAT_CREATE_CL" ;
+         case RTN_CONTEXT_CAT_DROP_CL :
+            return "CAT_DROP_CL" ;
+         case RTN_CONTEXT_CAT_ALTER_CL :
+            return "CAT_ALTER_CL" ;
+         case RTN_CONTEXT_CAT_SPLIT_CL :
+            return "CAT_SPLIT_CL" ;
+         case RTN_CONTEXT_CAT_LINK_CL :
+            return "CAT_LINK_CL" ;
+         case RTN_CONTEXT_CAT_UNLINK_CL :
+            return "CAT_UNLINK_CL" ;
+         case RTN_CONTEXT_CAT_CREATE_ID_IDX :
+            return "CAT_CREATE_ID_IDX" ;
+         case RTN_CONTEXT_CAT_DROP_ID_IDX :
+            return "CAT_DROP_ID_IDX" ;
+         case RTN_CONTEXT_CAT_CREATE_IDX :
+            return "CAT_CREATE_IDX" ;
+         case RTN_CONTEXT_CAT_DROP_IDX :
+            return "CAT_DROP_IDX" ;
          default :
             break ;
       }
@@ -2538,10 +2570,22 @@ namespace engine
          it = _prepareContextMap.begin() ;
          while ( it != _prepareContextMap.end() )
          {
+            SINT64 contextID = -1 ;
             pSubContext = it->second ;
+            contextID = pSubContext->getContextID() ;
+            if ( -1 == contextID )
+            {
+               // Ignore invalid context ID
+               ++it ;
+               continue ;
+            }
             routeID = pSubContext->getRouteID() ;
-            killMsg.contextIDs[0] = pSubContext->getContextID() ;
+            killMsg.contextIDs[0] = contextID ;
 
+            PD_LOG( PDDEBUG,
+                    "send kill context to (groupID=%u, nodeID=%u, contextID=%lld)",
+                    routeID.columns.groupID, routeID.columns.nodeID,
+                    contextID ) ;
             rtnCoordSendRequestToNode( (void*)&killMsg, routeID, _netAgent,
                                        cb, _prepareNodeMap ) ;
 
@@ -2580,7 +2624,8 @@ namespace engine
    INT32 _rtnContextCoord::open( const BSONObj &orderBy,
                                  const BSONObj &selector,
                                  INT64 numToReturn,
-                                 INT64 numToSkip )
+                                 INT64 numToSkip,
+                                 BOOLEAN preRead )
    {
       INT32 rc = SDB_OK ;
       pmdKRCB *krcb = pmdGetKRCB() ;
@@ -2602,6 +2647,7 @@ namespace engine
       _orderBy = orderBy.getOwned() ;
       _numToReturn = numToReturn ;
       _numToSkip = numToSkip > 0 ? numToSkip : 0 ;
+      _preRead = preRead ;
 
       _keyGen = SDB_OSS_NEW _ixmIndexKeyGen( _orderBy ) ;
       PD_CHECK( _keyGen != NULL, SDB_OOM, error, PDERROR,
@@ -2611,7 +2657,9 @@ namespace engine
          rc = _selector.loadPattern ( selector ) ;
          if ( SDB_OK != rc )
          {
-            PD_LOG( PDERROR, "failed to load selector pattern:%d", rc ) ;
+            PD_LOG( PDERROR,
+                    "Failed to load selector pattern rc: %d",
+                    rc ) ;
             goto error ;
          }
       }
@@ -2670,9 +2718,14 @@ namespace engine
          msgReq.contextID = emptyIter->second->getContextID() ;
          rc = rtnCoordSendRequestToNode( (void *)(&msgReq), routeID, _netAgent,
                                          cb, _prepareNodeMap ) ;
+         PD_LOG( PDDEBUG,
+                 "sent get more to empty context "
+                 "(groupID: %u, nodeID: %u, rc: %d)",
+                 routeID.columns.groupID, routeID.columns.nodeID, rc ) ;
          if ( rc != SDB_OK )
          {
-            PD_LOG ( PDERROR, "Failed to send getmore request to "
+            PD_LOG ( PDERROR,
+                     "Failed to send get-more request to "
                      "node( groupID=%u, nodeID=%u, serviceID=%u, "
                      "contextID=%lld, rc=%d )",
                      routeID.columns.groupID,
@@ -2706,6 +2759,8 @@ namespace engine
 
          rc = rtnCoordGetReply( cb, _prepareNodeMap, replyQue,
                                 MSG_BS_GETMORE_RES, waitAll ) ;
+         PD_LOG(PDDEBUG,
+                "send get more to prepare node rc: %d", rc ) ;
          if ( rc )
          {
             PD_LOG( PDERROR, "Failed to get reply, rc: %d", rc ) ;
@@ -2778,6 +2833,101 @@ namespace engine
          SDB_OSS_FREE( replyQue.front() ) ;
          replyQue.pop() ;
       }
+      goto done ;
+   }
+
+   INT32 _rtnContextCoord::getMoreWithOutData ( INT32 maxNumSteps,
+                                                _pmdEDUCB *cb )
+   {
+      INT32 rc = SDB_OK ;
+      INT32 countStep = 0 ;
+
+      if ( !isOpened() )
+      {
+         rc = SDB_DMS_CONTEXT_IS_CLOSE ;
+         goto error ;
+      }
+      else if ( eof() && isEmpty() )
+      {
+         rc = SDB_DMS_EOC ;
+         _isOpened = FALSE ;
+         goto error ;
+      }
+
+      while ( TRUE )
+      {
+         rc = _getSubData() ;
+         if ( SDB_OK == rc || SDB_DMS_EOC == rc )
+         {
+            goto done ;
+         }
+
+         if ( _emptyContextMap.size() == 0 &&
+              _prepareContextMap.size() == 0 )
+         {
+            rc = SDB_SYS ;
+            PD_LOG( PDERROR, "Empty context map can't be empty" ) ;
+            goto error ;
+         }
+
+         rc = _send2EmptyNodes( cb ) ;
+         PD_RC_CHECK( rc, PDERROR, "Send request to empty nodes failed, rc: %d",
+                      rc ) ;
+
+         rc = _getPrepareNodesData( cb, requireOrder() ) ;
+         if ( SDB_DMS_EOC == rc )
+         {
+            PD_LOG( PDDEBUG, "Hit end of context" ) ;
+            break ;
+         }
+         PD_RC_CHECK( rc, PDERROR,
+                      "Get data from prepare nodes failed, rc: %d",
+                      rc ) ;
+         countStep ++ ;
+         if ( countStep == maxNumSteps )
+         {
+            break ;
+         }
+      }
+
+   done :
+      /// when all sub context is closed
+      if ( _subContextMap.empty() &&
+           _emptyContextMap.empty() &&
+           _prepareContextMap.empty() )
+      {
+         _hitEnd = TRUE ;
+         //rc = SDB_DMS_EOC ;
+      }
+      return rc ;
+   error :
+      goto done ;
+   }
+
+   INT32 _rtnContextCoord::getData( rtnContextBuf &buffObj, _pmdEDUCB *cb )
+   {
+      INT32 rc = SDB_OK ;
+
+      rc = _getSubData() ;
+      if ( SDB_OK == rc )
+      {
+         rc = getMore( 1, buffObj, cb ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to get more after collect data" ) ;
+      }
+      else if ( SDB_DMS_EOC == rc ||
+           SDB_RTN_COORD_CACHE_EMPTY == rc )
+      {
+         goto done ;
+      }
+      else
+      {
+         PD_LOG( PDERROR, "Failed to get sub data, rc: %d", rc ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
       goto done ;
    }
 
@@ -2996,6 +3146,12 @@ namespace engine
 
       _emptyContextMap.insert( EMPTY_CONTEXT_MAP::value_type( routeID.value,
                                pSubContext ) ) ;
+
+      PD_LOG( PDDEBUG,
+              "add sub context (groupID=%u, nodeID=%u, contextID=%lld)",
+              routeID.columns.groupID,
+              routeID.columns.nodeID,
+              contextID) ;
 
    done:
       return rc ;

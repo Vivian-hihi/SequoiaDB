@@ -68,6 +68,7 @@ namespace engine
       SDBSTOPALL     = 7,
       SDBGETCONF     = 8,
       SDBCLEARDATA   = 9,
+      SDBTEST        = 10,
    } ;
 
    /*

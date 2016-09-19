@@ -1544,6 +1544,104 @@ error :
    goto done ;
 }
 
+// PD_TRACE_DECLARE_FUNCTION ( SDB_MSGBLDDROPCLMSG, "msgBuildDropCLMsg" )
+INT32 msgBuildDropCLMsg ( CHAR **ppBuffer, INT32 *bufferSize,
+                          const CHAR *CollectionName, UINT64 reqID )
+{
+   PD_TRACE_ENTRY ( SDB_MSGBLDDROPCLMSG );
+   const bson::BSONObj emptyObj ;
+   SDB_ASSERT ( ppBuffer && bufferSize && CollectionName,
+                "Invalid input" ) ;
+   PD_TRACE1 ( SDB_MSGBLDDROPCLMSG, PD_PACK_STRING(CollectionName) );
+   INT32 rc             = SDB_OK ;
+   MsgOpQuery *pQuery   = NULL ;
+   INT32 offset         = 0 ;
+   bson::BSONObj boQuery;
+   INT32 packetLength = 0;
+   try
+   {
+      bson::BSONObjBuilder bobQuery;
+      bobQuery.append( FIELD_NAME_NAME, CollectionName );
+      boQuery = bobQuery.obj() ;
+   }
+   catch ( std::exception &e )
+   {
+      rc = SDB_INVALIDARG;
+      PD_LOG ( PDERROR,
+               "build drop collection message failed, occurred unexpected error:%s",
+               e.what() );
+      goto error;
+   }
+   packetLength = ossRoundUpToMultipleX(offsetof(MsgOpQuery, name) +
+                        ossStrlen ( CMD_ADMIN_PREFIX CMD_NAME_DROP_COLLECTION ) + 1, 4 ) +
+                  ossRoundUpToMultipleX( boQuery.objsize(), 4 ) +
+                  ossRoundUpToMultipleX( emptyObj.objsize(), 4 ) +
+                  ossRoundUpToMultipleX( emptyObj.objsize(), 4 ) +
+                  ossRoundUpToMultipleX( emptyObj.objsize(), 4 ) ;
+
+   PD_TRACE1 ( SDB_MSGBLDDROPCLMSG, PD_PACK_INT(packetLength) );
+
+   if ( packetLength < 0 )
+   {
+      PD_LOG ( PDERROR,
+              "Packet size overflow" ) ;
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+   rc = msgCheckBuffer ( ppBuffer, bufferSize, packetLength ) ;
+   if ( rc )
+   {
+      PD_LOG ( PDERROR,
+              "Failed to check buffer" ) ;
+      goto error ;
+   }
+   // now the buffer is large enough
+   pQuery                        = (MsgOpQuery*)(*ppBuffer) ;
+   pQuery->version               = 1 ;
+   pQuery->w                     = 0 ;
+   pQuery->flags                 = 0 ;
+   // nameLength does NOT include '\0'
+   pQuery->nameLength            = ossStrlen( CMD_ADMIN_PREFIX CMD_NAME_DROP_COLLECTION ) ;
+   pQuery->header.requestID      = reqID ;
+   pQuery->header.opCode         = MSG_BS_QUERY_REQ ;
+   pQuery->numToSkip             = 0 ;
+   pQuery->numToReturn           = 0 ;
+   pQuery->header.messageLength  = packetLength ;
+   pQuery->header.routeID.value  = 0 ;
+   pQuery->header.TID            = ossGetCurrentThreadID() ;
+   // copy collection name
+   ossStrncpy ( pQuery->name, CMD_ADMIN_PREFIX CMD_NAME_DROP_COLLECTION, pQuery->nameLength ) ;
+   pQuery->name[pQuery->nameLength]=0 ;
+   // get the offset of the first bson obj
+   offset = ossRoundUpToMultipleX( offsetof(MsgOpQuery, name) +
+                                   pQuery->nameLength + 1,
+                                   4 ) ;
+   // write query condition
+   ossMemcpy( &((*ppBuffer)[offset]), boQuery.objdata(), boQuery.objsize() ) ;
+   offset += ossRoundUpToMultipleX( boQuery.objsize(), 4 ) ;
+   // write field select
+   ossMemcpy( &((*ppBuffer)[offset]), emptyObj.objdata(), emptyObj.objsize() ) ;
+   offset += ossRoundUpToMultipleX( emptyObj.objsize(), 4 ) ;
+   // write order by clause
+   ossMemcpy( &((*ppBuffer)[offset]), emptyObj.objdata(), emptyObj.objsize() ) ;
+   offset += ossRoundUpToMultipleX( emptyObj.objsize(), 4 ) ;
+   // write optimizer hint
+   ossMemcpy( &((*ppBuffer)[offset]), emptyObj.objdata(), emptyObj.objsize() ) ;
+   offset += ossRoundUpToMultipleX( emptyObj.objsize(), 4 ) ;
+   // sanity test
+   if ( offset != packetLength )
+   {
+      PD_LOG ( PDERROR, "Invalid packet length" ) ;
+      rc = SDB_SYS ;
+      goto error ;
+   }
+done :
+   PD_TRACE_EXITRC ( SDB_MSGBLDDROPCLMSG, rc );
+   return rc ;
+error :
+   goto done ;
+}
+
 // PD_TRACE_DECLARE_FUNCTION ( SDB_MSGBLDDROPINXMSG, "msgBuildDropIndexMsg" )
 INT32 msgBuildDropIndexMsg  ( CHAR **ppBuffer, INT32 *bufferSize,
                               const CHAR *CollectionName,

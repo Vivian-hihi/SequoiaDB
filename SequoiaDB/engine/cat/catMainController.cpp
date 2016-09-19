@@ -49,6 +49,7 @@
 #include "pdTrace.hpp"
 #include "catTrace.hpp"
 #include "catCommon.hpp"
+#include "catContextData.hpp"
 
 using namespace bson;
 namespace engine
@@ -179,6 +180,8 @@ namespace engine
          _vecEvent.push_back( event ) ;
          _isDelayed = TRUE ;
 
+         PD_LOG ( PDDEBUG, "Delay event %u %d", handle, event._eventType ) ;
+
          // begin timer
          if ( NET_INVALID_TIMER_ID == _checkEventTimerID )
          {
@@ -222,6 +225,32 @@ namespace engine
       {
          _pCatCB->killTimer( _checkEventTimerID ) ;
          _checkEventTimerID = NET_INVALID_TIMER_ID ;
+      }
+   }
+
+   void catMainController::_deleteDelayedOperation ( UINT32 handle )
+   {
+      UINT32 tryTime = 0 ;
+      UINT32 savedHandle = 0;
+
+      PD_LOG ( PDDEBUG, "Removing event for handle %u", handle ) ;
+
+      VEC_EVENT::iterator itEvent = _vecEvent.begin() ;
+      while ( itEvent != _vecEvent.end() )
+      {
+         pmdEDUEvent &event = ( *itEvent ) ;
+         ossUnpack32From64( event._userData, tryTime, savedHandle ) ;
+         if ( savedHandle == handle )
+         {
+            PD_LOG ( PDDEBUG, "Removed event %u %d", savedHandle, event._eventType ) ;
+            pmdEduEventRelase( event, _pEDUCB ) ;
+            itEvent = _vecEvent.erase( itEvent ) ;
+         }
+         else
+         {
+            PD_LOG ( PDDEBUG, "Keep event %u %d", savedHandle, event._eventType ) ;
+            ++itEvent ;
+         }
       }
    }
 
@@ -270,7 +299,20 @@ namespace engine
    void catMainController::handleClose( const NET_HANDLE & handle,
                                         _MsgRouteID id )
    {
-      _delContextByHandle( handle );
+      MsgOpReply msg ;
+      msg.contextID = -1 ;
+      msg.flags = SDB_NETWORK_CLOSE ;
+      msg.header.messageLength = sizeof( MsgOpReply ) ;
+      msg.header.opCode = MSG_COM_REMOTE_DISC ;
+      msg.header.requestID = 0 ;
+      msg.header.routeID.value = id.value ;
+      msg.header.TID = 0 ;
+      msg.numReturned = 0 ;
+      msg.startFrom = 0 ;
+
+      PD_LOG ( PDDEBUG, "posting event handle close %u", (UINT32)handle ) ;
+
+      _postMsg( handle, (_MsgHeader *)&msg ) ;
    }
 
    void catMainController::handleTimeout( const UINT32 &millisec,
@@ -762,12 +804,16 @@ namespace engine
 
          if ( contextNum > 0 )
          {
-            PD_LOG ( PDDEBUG, "KillContext: contextNum:%d\ncontextID: %lld",
+            PD_LOG ( PDDEBUG,
+                     "KillContext: contextNum: %d contextID: %lld",
                      contextNum, pContextIDs[0] ) ;
          }
 
          for ( INT32 i = 0 ; i < contextNum ; ++i )
          {
+            PD_LOG( PDDEBUG,
+                    "Kill context %lld",
+                    pContextIDs[i] ) ;
             _delContextByID( pContextIDs[ i ], TRUE ) ;
          }
       }while ( FALSE ) ;
@@ -785,6 +831,19 @@ namespace engine
       }
       PD_TRACE_EXITRC ( SDB_CATMAINCT_KILLCONTEXT, rc ) ;
       return rc;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATMAINCT_REMOTEDISC, "catMainController::_processRemoteDisc" )
+   INT32 catMainController::_processRemoteDisc( const NET_HANDLE &handle,
+                                                        MsgHeader *pMsg )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY ( SDB_CATMAINCT_REMOTEDISC ) ;
+      PD_LOG ( PDDEBUG, "Killing handle contexts %u", handle ) ;
+      _delContextByHandle( handle ) ;
+      _deleteDelayedOperation( handle ) ;
+      PD_TRACE_EXITRC ( SDB_CATMAINCT_REMOTEDISC, rc ) ;
+      return rc ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CATMAINCT_QUERYMSG, "catMainController::_processQueryMsg" )
@@ -959,7 +1018,7 @@ namespace engine
          }
          else
          {
-            _addContext( handle, pMsgHeader->TID, contextID );
+            addContext( handle, pMsgHeader->TID, contextID );
             msgReply.flags = SDB_OK ;
          }
          PD_TRACE1 ( SDB_CATMAINCT_QUERYREQUEST,
@@ -1092,6 +1151,11 @@ namespace engine
          {
             rc = _processSessionInit( handle, pMsg ) ;
             break;
+         }
+      case MSG_COM_REMOTE_DISC :
+         {
+            rc = _processRemoteDisc( handle, pMsg ) ;
+            break ;
          }
       default :
          {
@@ -1376,8 +1440,8 @@ namespace engine
       return rc ;
    }
 
-   void catMainController::_addContext( const UINT32 &handle, UINT32 tid,
-                                        INT64 contextID )
+   void catMainController::addContext( const UINT32 &handle, UINT32 tid,
+                                       INT64 contextID )
    {
       PD_LOG( PDDEBUG, "add context( handle=%u, contextID=%lld )",
               handle, contextID );
@@ -1387,7 +1451,8 @@ namespace engine
 
    void catMainController::_delContextByHandle( const UINT32 &handle )
    {
-      PD_LOG ( PDDEBUG, "delete context( handle=%u )",
+      PD_LOG ( PDDEBUG,
+               "delete context( handle=%u )",
                handle ) ;
       UINT32 saveTid = 0 ;
       UINT32 saveHandle = 0 ;
@@ -1411,7 +1476,8 @@ namespace engine
    void catMainController::_delContext( const UINT32 &handle,
                                         UINT32 tid )
    {
-      PD_LOG ( PDDEBUG, "delete context( handle=%u, tid=%u )",
+      PD_LOG ( PDDEBUG,
+               "delete context( handle=%u, tid=%u )",
                handle, tid ) ;
       UINT32 saveTid = 0 ;
       UINT32 saveHandle = 0 ;
@@ -1434,7 +1500,8 @@ namespace engine
 
    void catMainController::_delContextByID( INT64 contextID, BOOLEAN rtnDel )
    {
-      PD_LOG ( PDDEBUG, "delete context( contextID=%lld )", contextID ) ;
+      PD_LOG ( PDDEBUG,
+               "delete context( contextID=%lld )", contextID ) ;
 
       ossScopedLock lock( &_contextLatch ) ;
       CONTEXT_LIST::iterator iterMap = _contextLst.find( contextID ) ;

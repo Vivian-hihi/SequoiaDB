@@ -2041,6 +2041,29 @@ namespace engine
       return SDB_OK;
    }
 
+   INT32 _clsCatalogSet::getSubCLBounds ( const std::string &subCLName,
+                                          BSONObj &lowBound,
+                                          BSONObj &upBound ) const
+   {
+      MAP_CAT_ITEM::const_iterator it = _mapItems.begin() ;
+      while ( it != _mapItems.end() )
+      {
+         clsCatalogItem *item = it->second ;
+         string strSubClName = item->getSubClName() ;
+         if ( 0 == strSubClName.compare( subCLName ) )
+         {
+            lowBound = item->getLowBound() ;
+            upBound = item->getUpBound() ;
+            return SDB_OK ;
+         }
+         else
+         {
+            ++it ;
+         }
+      }
+      return SDB_CAT_NO_MATCH_CATALOG ;
+   }
+
    INT32 _clsCatalogSet::findSubCLName ( const BSONObj &obj,
                                          std::string &subCLName )
    {

@@ -42,6 +42,7 @@
 #include "msgMessage.hpp"
 #include "qgmBuilder.hpp"
 #include "rtnCoordTransaction.hpp"
+#include "rtnCoordDataCommands.hpp"
 #include "pdTrace.hpp"
 #include "qgmTrace.hpp"
 #include <sstream>

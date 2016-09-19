@@ -134,6 +134,12 @@ namespace engine
       return _catMainCtrl.delayCurOperation() ;
    }
 
+   void sdbCatalogueCB::addContext( const UINT32 &handle, UINT32 tid,
+                                    INT64 contextID )
+   {
+      _catMainCtrl.addContext( handle, tid, contextID ) ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CATALOGCB_INIT, "sdbCatalogueCB::init" )
    INT32 sdbCatalogueCB::init()
    {

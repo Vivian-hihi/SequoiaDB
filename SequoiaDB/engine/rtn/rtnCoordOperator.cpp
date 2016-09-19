@@ -313,6 +313,10 @@ namespace engine
             ++iterGroup ;
          }
       }
+      else
+      {
+         PD_LOG( PDDEBUG, "Using specified group" ) ;
+      }
 
       // construct msg
       rc = _prepareMainCLOp( cataInfo, groupSubCLMap, inMsg, options,
@@ -384,6 +388,10 @@ namespace engine
          PD_RC_CHECK( rc, PDERROR, "Get the groups by catalog info failed, "
                       "matcher: %s, rc: %d", objMatch.toString().c_str(),
                       rc ) ;
+      }
+      else
+      {
+         PD_LOG( PDDEBUG, "Using specified group" ) ;
       }
 
       // construct msg

@@ -236,6 +236,10 @@ namespace engine
 
          INT32 delSubCL ( const CHAR *subCLName );
 
+         INT32 getSubCLBounds ( const std::string &subCLName,
+                                BSONObj &lowBound,
+                                BSONObj &upBound ) const;
+
          UINT32 getInternalV() const { return _internalV ; }
          UINT32 getShardingKeySiteID() const { return _skSiteID ; }
 

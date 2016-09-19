@@ -98,11 +98,12 @@ namespace engine
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNGETSTDSTRELE, "rtnGetSTDStringElement" )
    INT32 rtnGetSTDStringElement ( const BSONObj &obj, const CHAR *fieldName,
                                   string &value )
    {
       SINT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY ( SDB_RTNGETSTRELE ) ;
+      PD_TRACE_ENTRY ( SDB_RTNGETSTDSTRELE ) ;
       SDB_ASSERT ( fieldName, "field name can't be NULL" ) ;
       BSONElement ele = obj.getField ( fieldName ) ;
       PD_CHECK ( !ele.eoo(), SDB_FIELD_NOT_EXIST, error, PDDEBUG,
@@ -114,7 +115,7 @@ namespace engine
                  obj.toString().c_str()) ;
       value = ele.valuestr() ;
    done :
-      PD_TRACE_EXITRC ( SDB_RTNGETSTRELE, rc );
+      PD_TRACE_EXITRC ( SDB_RTNGETSTDSTRELE, rc );
       return rc ;
    error :
       goto done ;
@@ -143,6 +144,29 @@ namespace engine
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNGETARRAYELE, "rtnGetArrayElement" )
+   INT32 rtnGetArrayElement ( const BSONObj &obj, const CHAR *fieldName,
+                              BSONObj &value )
+   {
+      SINT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY ( SDB_RTNGETARRAYELE );
+      SDB_ASSERT ( fieldName , "field name can't be NULL" ) ;
+      BSONElement ele = obj.getField ( fieldName ) ;
+      PD_CHECK ( !ele.eoo(), SDB_FIELD_NOT_EXIST, error, PDDEBUG,
+                 "Can't locate field '%s': %s",
+                 fieldName,
+                 obj.toString().c_str() ) ;
+      PD_CHECK ( Array == ele.type(), SDB_INVALIDARG, error, PDDEBUG,
+                 "Unexpected field type : %s, supposed to be Array",
+                 obj.toString().c_str()) ;
+      value = ele.embeddedObject() ;
+   done :
+      PD_TRACE_EXITRC ( SDB_RTNGETARRAYELE, rc );
+      return rc ;
+   error :
+      goto done ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNGETBOOLELE, "rtnGetBooleanElement" )
    INT32 rtnGetBooleanElement ( const BSONObj &obj, const CHAR *fieldName,
                                 BOOLEAN &value )
@@ -161,6 +185,29 @@ namespace engine
       value = ele.boolean() ;
    done :
       PD_TRACE_EXITRC ( SDB_RTNGETBOOLELE, rc );
+      return rc ;
+   error :
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNGETLONGELE, "rtnGetNumberLongElement" )
+   INT32 rtnGetNumberLongElement ( const BSONObj &obj, const CHAR *fieldName,
+                                   INT64 &value )
+   {
+      SINT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY ( SDB_RTNGETLONGELE );
+      SDB_ASSERT ( fieldName, "field name can't be NULL" ) ;
+      BSONElement ele = obj.getField ( fieldName ) ;
+      PD_CHECK ( !ele.eoo(), SDB_FIELD_NOT_EXIST, error, PDDEBUG,
+                 "Can't locate field '%s': %s",
+                 fieldName,
+                 obj.toString().c_str() ) ;
+      PD_CHECK ( ele.isNumber(), SDB_INVALIDARG, error, PDDEBUG,
+                 "Unexpected field type : %s, supposed to be number",
+                 obj.toString().c_str()) ;
+      value = ele.numberLong() ;
+   done :
+      PD_TRACE_EXITRC ( SDB_RTNGETLONGELE, rc );
       return rc ;
    error :
       goto done ;

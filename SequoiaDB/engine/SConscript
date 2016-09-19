@@ -184,6 +184,8 @@ rtnFiles = [
       "rtn/rtnReorg.cpp",
       "rtn/rtnRecover.cpp",
       "rtn/rtnCoordCommands.cpp",
+      "rtn/rtnCoordDataCommands.cpp",
+      "rtn/rtnCoordNodeCommands.cpp",
       "rtn/rtnCoordDCCommands.cpp",
       "rtn/rtnCoordQuery.cpp",
       "rtn/rtnCoordCommon.cpp",
@@ -450,7 +452,11 @@ catFiles = [
       "cat/catDCManager.cpp",
       "cat/catLevelLock.cpp",
       "cat/catSplit.cpp",
-      "cat/catDCLogMgr.cpp"
+      "cat/catDCLogMgr.cpp",
+      "cat/catContext.cpp",
+      "cat/catContextData.cpp",
+      "cat/catContextNode.cpp",
+      "cat/catContextTask.cpp"
       ]
 
 coordFiles = [

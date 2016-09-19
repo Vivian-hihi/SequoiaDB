@@ -111,6 +111,7 @@ namespace engine
 
                // add to group list
                groupLst[ beGrpId.number() ] = beGrpId.number() ;
+               PD_LOG( PDDEBUG, "get group into list %.f", beGrpId.number() ) ;
             }
          }
          catch ( std::exception &e )
@@ -149,8 +150,9 @@ namespace engine
                rcTmp = pContext->addSubContext( pReply, takeOver ) ;
                if ( rcTmp )
                {
-                  PD_LOG( PDERROR, "Add sub data[node: %s, context: %lld] to "
-                          "context[%s] failed, rc: %d",
+                  PD_LOG( PDERROR,
+                          "Failed to add sub data[node: %s, context: %lld] to "
+                          "context[%s], rc: %d",
                           routeID2String( nodeID ).c_str(), pReply->contextID,
                           pContext->toString().c_str(), rcTmp ) ;
                   rc = rcTmp ;
@@ -160,6 +162,13 @@ namespace engine
             {
                SDB_ASSERT( pReply->contextID == -1, "Context leak" ) ;
             }
+         }
+         else
+         {
+            PD_LOG( PDWARNING,
+                    "Error reply flag in data[node: %s, op %d], rc: %d",
+                    routeID2String( nodeID ).c_str(),
+                    pReply->header.opCode, pReply->flags ) ;
          }
 
          if ( !takeOver )
@@ -228,8 +237,8 @@ namespace engine
             if ( !_getRetryNodes(retriedNodes, needRetryNodes, ctrlParam, pReply ) )
             {
             PD_LOG( ( pContext ? PDINFO : PDWARNING ),
-                    "Failed to process reply[node: %s, flag: %d]",
-                    routeID2String( nodeID ).c_str(), pReply->flags ) ;
+                      "Failed to process reply[node: %s, flag: %d]",
+                      routeID2String( nodeID ).c_str(), pReply->flags ) ;
             faileds[ nodeID.value ] = pReply->flags ;
          }
          }
@@ -291,7 +300,8 @@ namespace engine
          rc = pCoordcb->getGroupInfo( routeID.columns.groupID, groupInfo ) ;
          if ( rc )
          {
-            PD_LOG( PDWARNING, "Failed to get group[%d] info, rc: %d",
+            PD_LOG( PDWARNING,
+                    "Failed to get group[%d] info, rc: %d",
                     routeID.columns.groupID, rc ) ;
             errObj = BSON( FIELD_NAME_NODEID <<
                            (INT32)routeID.columns.nodeID <<
@@ -306,7 +316,8 @@ namespace engine
                                          strServiceName ) ;
             if ( rc )
             {
-               PD_LOG( PDWARNING, "Failed to get node[%d] info failed, rc: %d",
+               PD_LOG( PDWARNING,
+                       "Failed to get node[%d] info failed, rc: %d",
                        routeID.columns.nodeID, rc ) ;
                errObj = BSON( FIELD_NAME_NODEID <<
                               (INT32)routeID.columns.nodeID <<
@@ -357,7 +368,8 @@ namespace engine
                                             BOOLEAN onPrimary,
                                             SET_RC *pIgnoreRC,
                                             CoordGroupList *pSucGrpLst,
-                                            rtnContextCoord **ppContext )
+                                            rtnContextCoord **ppContext,
+                                            BOOLEAN preRead )
    {
       INT32 rc = SDB_OK ;
       INT32 rcTmp = SDB_OK ;
@@ -403,8 +415,11 @@ namespace engine
          // push to catalog
          // context for data: only for drop cs/cl execute command, not any
          // return obj
-         rc = pTmpContext->open( BSONObj(), BSONObj(), -1, 0 ) ;
-         PD_RC_CHECK( rc, PDERROR, "Open context failed(rc=%d)", rc ) ;
+         if ( !pTmpContext->isOpened() )
+         {
+            rc = pTmpContext->open( BSONObj(), BSONObj(), -1, 0, preRead ) ;
+            PD_RC_CHECK( rc, PDERROR, "Open context failed(rc=%d)", rc ) ;
+         }
       }
 
       rc = doOnGroups( inMsg, sendOpt, pRouteAgent, cb, result ) ;
@@ -423,7 +438,7 @@ namespace engine
          goto error ;
       }
 
-      if ( pTmpContext )
+      if ( preRead && pTmpContext )
       {
          pTmpContext->addSubDone( cb ) ;
       }
@@ -446,10 +461,12 @@ namespace engine
                                                BOOLEAN onPrimary,
                                                SET_RC *pIgnoreRC,
                                                CoordGroupList *pSucGrpLst,
-                                               rtnContextCoord **ppContext )
+                                               rtnContextCoord **ppContext,
+                                               BOOLEAN preRead )
    {
       return _executeOnGroups( pMsg, cb, groupLst, MSG_ROUTE_SHARD_SERVCIE,
-                               onPrimary, pIgnoreRC, pSucGrpLst, ppContext ) ;
+                               onPrimary, pIgnoreRC, pSucGrpLst, ppContext,
+                               preRead ) ;
    }
 
    INT32 rtnCoordCommand::executeOnCataGroup( MsgHeader *pMsg,
@@ -462,6 +479,85 @@ namespace engine
       grpList[ CATALOG_GROUPID ] = CATALOG_GROUPID ;
       return _executeOnGroups( pMsg, cb, grpList, MSG_ROUTE_CAT_SERVICE,
                                onPrimary, pIgnoreRC, NULL, ppContext ) ;
+   }
+
+   INT32 rtnCoordCommand::executeOnCataGroup( MsgHeader *pMsg,
+                                              pmdEDUCB *cb,
+                                              rtnContextCoord **ppContext,
+                                              CoordGroupList *pGroupList,
+                                              vector<BSONObj> *pReplyObjs,
+                                              SET_RC *pIgnoreRC )
+   {
+      INT32 rc = SDB_OK;
+      rtnContextBuf buffObj ;
+      rtnContextCoord *pContext = NULL ;
+      CoordGroupList catGroupLst ;
+      catGroupLst[ CATALOG_GROUPID ] = CATALOG_GROUPID ;
+
+      rc = _executeOnGroups( pMsg, cb, catGroupLst, MSG_ROUTE_CAT_SERVICE,
+                             TRUE, pIgnoreRC, NULL, &pContext, FALSE ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to execute command[%d] on catalog, "
+                   "rc: %d", pMsg->opCode, rc ) ;
+
+      if ( pContext )
+      {
+         /// Just get one reply data
+         rc = pContext->getData( buffObj, cb ) ;
+         if ( SDB_DMS_EOC == rc )
+         {
+            /// Ignore for empty group list
+            PD_LOG( PDWARNING, "Unexpected end of data" ) ;
+            goto done ;
+         }
+         else if ( SDB_RTN_COORD_CACHE_EMPTY == rc )
+         {
+            PD_LOG( PDWARNING, "Returned empty group list" ) ;
+            rc = SDB_OK ;
+            goto done ;
+         }
+         else if ( rc )
+         {
+            PD_LOG( PDERROR, "Failed to get more from context[%lld], rc: %d",
+                    pContext->contextID(), rc ) ;
+            goto error ;
+         }
+
+         try
+         {
+            BSONObj obj( buffObj.data() ) ;
+
+            if ( pGroupList )
+            {
+               rc = _processCatReply( obj, *pGroupList ) ;
+               PD_RC_CHECK( rc, PDERROR, "Get groups from catalog reply[%s] "
+                            "failed, rc: %d", obj.toString().c_str(), rc ) ;
+            }
+
+            if ( pReplyObjs )
+            {
+               pReplyObjs->push_back( obj.getOwned() ) ;
+            }
+         }
+         catch( std::exception &e )
+         {
+            PD_LOG( PDERROR, "Extrace catalog reply obj occur exception: %s",
+                    e.what() ) ;
+            rc = SDB_SYS ;
+            goto error ;
+         }
+      }
+
+   done :
+      (*ppContext) = pContext ;
+      return rc;
+   error :
+      if ( pContext )
+      {
+         INT64 contextID = pContext->contextID() ;
+         pmdGetKRCB()->getRTNCB()->contextDelete( contextID, cb ) ;
+         pContext = NULL ;
+      }
+      goto done ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCOM_EXEONCATAGR, "rtnCoordCommand::executeOnCataGroup" )
@@ -590,9 +686,12 @@ namespace engine
       rtnSendOptions sendOpt ;
 
       queryConf._allCataGroups = TRUE ;
-      queryConf._realCLName = pCLName ;
       queryConf._updateAndGetCata = firstUpdateCata ;
       queryConf._openEmptyContext = TRUE ;
+      if ( pCLName )
+      {
+         queryConf._realCLName = pCLName ;
+      }
 
       sendOpt._primary = TRUE ;
       sendOpt._pIgnoreRC = pIgnoreRC ;
@@ -1231,566 +1330,6 @@ namespace engine
       return rc ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCMDCRCS_EXE, "rtnCoordCMDCreateCollectionSpace::execute" )
-   INT32 rtnCoordCMDCreateCollectionSpace::execute( MsgHeader *pMsg,
-                                                    pmdEDUCB *cb,
-                                                    INT64 &contextID,
-                                                    rtnContextBuf *buf )
-   {
-      INT32 rc                         = SDB_OK;
-      PD_TRACE_ENTRY ( SDB_RTNCOCMDCRCS_EXE ) ;
-
-      CHAR *pCollectionName = NULL ;
-      CHAR *pQuery = NULL ;
-      BSONObj boQuery ;
-
-      // fill default-reply
-      contextID                        = -1 ;
-      MsgOpQuery *pCreateReq           = (MsgOpQuery *)pMsg;
-
-      try
-      {
-         rc = msgExtractQuery( (CHAR*)pMsg, NULL, &pCollectionName,
-                               NULL, NULL, &pQuery, NULL, NULL, NULL ) ;
-         PD_RC_CHECK( rc, PDERROR, "Extract message failed, rc: %d", rc ) ;
-
-         boQuery = BSONObj( pQuery ) ;
-
-         pCreateReq->header.opCode = MSG_CAT_CREATE_COLLECTION_SPACE_REQ ;
-         // execute create collection on catalog
-         rc = executeOnCataGroup ( pMsg, cb, TRUE ) ;
-         /// AUDIT
-         PD_AUDIT_COMMAND( AUDIT_DDL, pCollectionName + 1, AUDIT_OBJ_CS,
-                           boQuery.getField(FIELD_NAME_NAME).valuestrsafe(),
-                           rc, "Option:%s", boQuery.toString().c_str() ) ;
-         /// CHECK ERRORS
-         if ( rc )
-         {
-            PD_LOG ( PDERROR, "create collectionspace failed, rc = %d", rc ) ;
-            goto error ;
-         }
-      }
-      catch( std::exception &e )
-      {
-         PD_LOG( PDERROR, "Occur exception: %s", e.what() ) ;
-         rc = SDB_INVALIDARG ;
-         goto error ;
-      }
-
-   done :
-      PD_TRACE_EXITRC ( SDB_RTNCOCMDCRCS_EXE, rc ) ;
-      return rc;
-   error :
-      goto done ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCMDALCL__EXEOLD, "rtnCoordCMDAlterCollection::_executeOld" )
-   INT32 rtnCoordCMDAlterCollection::_executeOld( MsgHeader *pMsg,
-                                                  pmdEDUCB *cb,
-                                                  INT64 &contextID,
-                                                  rtnContextBuf *buf,
-                                                  string &clName )
-   {
-      INT32 rc                         = SDB_OK ;
-      PD_TRACE_ENTRY ( SDB_RTNCOCMDALCL__EXEOLD ) ;
-      // fill default-reply
-      contextID                        = -1 ;
-
-      MsgOpQuery *pAlterReq            = (MsgOpQuery *)pMsg ;
-      pAlterReq->header.opCode         = MSG_CAT_ALTER_COLLECTION_REQ ;
-
-      CoordGroupList groupList ;
-      const CHAR *fullName             = NULL ;
-      CHAR *queryBuf                   = NULL ;
-      SET_RC ignoreRC ;
-
-      rc = msgExtractQuery( (CHAR*)pMsg, NULL, NULL,
-                            NULL, NULL, &queryBuf,
-                            NULL, NULL, NULL ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "failed to extract query msg:%d", rc ) ;
-         goto error ;
-      }
-
-      try
-      {
-         BSONObj query( queryBuf ) ;
-         BSONElement ele = query.getField( FIELD_NAME_NAME ) ;
-         if ( String != ele.type() )
-         {
-            PD_LOG( PDERROR, "invalid query object:%s",
-                    query.toString( FALSE, TRUE ).c_str() ) ;
-            rc = SDB_SYS ;
-            goto error ;
-         }
-
-         fullName = ele.valuestr() ;
-         clName = fullName ;
-      }
-      catch ( std::exception &e )
-      {
-         PD_LOG( PDERROR, "unexpected err happened:%s", e.what() ) ;
-         rc = SDB_SYS ;
-         goto error ;
-      }
-
-      // send request to catalog
-      rc = executeOnCataGroup( pMsg, cb, &groupList ) ;
-      if ( rc )
-      {
-         PD_LOG ( PDERROR, "alter collection failed on catalog, rc = %d",
-                  rc ) ;
-         goto error ;
-      }
-
-      pAlterReq->header.opCode = MSG_BS_QUERY_REQ ;
-      /// we only want to update data's catalog version.
-      ignoreRC.insert( SDB_MAIN_CL_OP_ERR ) ;
-      ignoreRC.insert( SDB_CLS_COORD_NODE_CAT_VER_OLD ) ;
-
-      rc = executeOnCL( pMsg, cb, fullName, TRUE, &groupList,
-                        &ignoreRC, NULL ) ;
-      if ( rc )
-      {
-         PD_LOG( PDERROR, "failed to alter collection on data group, rc: %d",
-                 rc ) ;
-         rc = SDB_BUT_FAILED_ON_DATA ;
-         goto error ;
-      }
-
-   done :
-      PD_TRACE_EXITRC ( SDB_RTNCOCMDALCL__EXEOLD, rc ) ;
-      return rc;
-   error :
-      goto done ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCMDALCL__TESTCL, "rtnCoordCMDAlterCollection::_testCollection" )
-   INT32 rtnCoordCMDAlterCollection::_testCollection( const CHAR *fullName,
-                                                      pmdEDUCB *cb )
-   {
-      INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY( SDB_RTNCOCMDALCL__TESTCL ) ;
-      CHAR *msg = NULL ;
-      INT32 msgSize = 0 ;
-      BSONObj obj = BSON( FIELD_NAME_NAME << fullName ) ;
-      rc = msgBuildQueryMsg( &msg, &msgSize,
-                             CMD_ADMIN_PREFIX CMD_NAME_TEST_COLLECTION,
-                             0, 0, 0, -1, &obj ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "failed to build msg:%d", rc ) ;
-         goto error ;
-      }
-
-      rc = executeOnCL( ( MsgHeader * )msg, cb, fullName ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "failed to test collection:%d", rc ) ;
-         goto error ;
-      }
-   done:
-      SAFE_OSS_FREE( msg ) ;
-      PD_TRACE_EXITRC( SDB_RTNCOCMDALCL__TESTCL, rc ) ;
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCMDALCL__EXE, "rtnCoordCMDAlterCollection::_execute" )
-   INT32 rtnCoordCMDAlterCollection::_execute( MsgHeader *pMsg,
-                                               pmdEDUCB *cb,
-                                               INT64 &contextID,
-                                               rtnContextBuf *buf,
-                                               string &clName )
-   {
-      INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY( SDB_RTNCOCMDALCL__EXE ) ;
-      _rtnAlterJob job ;
-      CHAR *query = NULL ;
-      INT32 opCode = pMsg->opCode ;
-      SET_RC ignoreLst ;
-
-      /// 1. extract msg
-      rc = msgExtractQuery( (CHAR*)pMsg, NULL, NULL,
-                            NULL, NULL, &query,
-                            NULL, NULL, NULL ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "failed to extract query msg:%d", rc ) ;
-         goto error ;
-      }
-
-      /// 2. init job
-      try
-      {
-         rc = job.init( BSONObj( query ) ) ;
-         if ( SDB_OK != rc )
-         {
-            PD_LOG( PDERROR, "failed to init alter job:%d", rc ) ;
-            goto error ;
-         }
-         clName = job.getName() ;
-      }
-      catch( std::exception &e )
-      {
-         PD_LOG( PDERROR, "unexpected error happened:%s", e.what() ) ;
-         rc = SDB_SYS ;
-         goto error ;
-      }
-
-      /// 3. test collection
-      rc = _testCollection( job.getName(), cb ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "failed to test collection[%s], rc:%d",
-                 job.getName(), rc ) ;
-         goto error ;
-      }
-
-      /// 4. on catalog
-      pMsg->opCode = MSG_CAT_ALTER_COLLECTION_REQ ;
-      rc = executeOnCataGroup( pMsg, cb, TRUE ) ;
-      pMsg->opCode = opCode ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "failed to execute on catalog:%d", rc ) ;
-         goto error ;
-      }
-
-      ignoreLst.insert( SDB_IXM_REDEF ) ;
-      ignoreLst.insert( SDB_IXM_NOTEXIST ) ;
-
-      /// 5. on data
-      rc = executeOnCL( pMsg, cb,
-                        job.getName(),
-                        TRUE,
-                        NULL,
-                        &ignoreLst ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "failed to execute on cl:%s, rc:%d",
-                 job.getName(), rc ) ;
-         goto error ;
-      }
-   done:
-      PD_TRACE_EXITRC( SDB_RTNCOCMDALCL__EXE, rc ) ;
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCMDALCL_EXE, "rtnCoordCMDAlterCollection::execute" )
-   INT32 rtnCoordCMDAlterCollection::execute( MsgHeader *pMsg,
-                                              pmdEDUCB *cb,
-                                              INT64 &contextID,
-                                              rtnContextBuf *buf )
-   {
-      INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY( SDB_RTNCOCMDALCL_EXE ) ;
-      string clName ;
-      CHAR *query = NULL ;
-      BOOLEAN isOld = FALSE ;
-      rc = msgExtractQuery( (CHAR*)pMsg, NULL, NULL,
-                            NULL, NULL, &query,
-                            NULL, NULL, NULL ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "failed to extract query msg:%d", rc ) ;
-         goto error ;
-      }
-
-      try
-      {
-         isOld = BSONObj( query ).getField( FIELD_NAME_VERSION ).eoo() ;
-      }
-      catch ( std::exception &e )
-      {
-         PD_LOG( PDERROR, "unexpected error happened:%s", e.what() ) ;
-         rc = SDB_SYS ;
-         goto error ;
-      }
-
-      rc = isOld ?
-           _executeOld( pMsg, cb, contextID, buf, clName ) :
-           _execute( pMsg, cb, contextID, buf, clName ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "failed to alter collection:%d", rc ) ;
-         goto error ;
-      }
-   done:
-      if ( !clName.empty() )
-      {
-         PD_AUDIT_COMMAND( AUDIT_DDL, CMD_NAME_ALTER_COLLECTION, AUDIT_OBJ_CL,
-                           clName.c_str(), rc, "Option:%s",
-                           BSONObj(query).toString().c_str() ) ;
-      }
-      PD_TRACE_EXITRC( SDB_RTNCOCMDALCL_EXE, rc ) ;
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCMDCRCL_EXE, "rtnCoordCMDCreateCollection::execute" )
-   INT32 rtnCoordCMDCreateCollection::execute( MsgHeader *pMsg,
-                                               pmdEDUCB *cb,
-                                               INT64 &contextID,
-                                               rtnContextBuf *buf )
-   {
-      INT32 rc                         = SDB_OK;
-      PD_TRACE_ENTRY ( SDB_RTNCOCMDCRCL_EXE ) ;
-
-      // fill default-reply(delete success)
-      contextID                        = -1 ;
-
-      MsgOpQuery *pCreateReq           = (MsgOpQuery *)pMsg;
-      pCreateReq->header.opCode        = MSG_CAT_CREATE_COLLECTION_REQ ;
-
-      CoordGroupList groupLst ;
-      vector<BSONObj> replyFromCata ;
-      BOOLEAN isMainCL                 = FALSE ;
-      const CHAR *pCollectionName      = NULL ;
-      CHAR *pCommand                   = NULL ;
-      BSONObj boQuery ;
-
-      try
-      {
-         CHAR *pQuery = NULL ;
-         BSONElement beIsMainCL ;
-         BSONElement beShardingType ;
-         BSONElement beShardingKey ;
-         BSONElement eleName ;
-
-         rc = msgExtractQuery( (CHAR*)pMsg, NULL, &pCommand,
-                               NULL, NULL, &pQuery,
-                               NULL, NULL, NULL ) ;
-         if ( rc )
-         {
-            PD_LOG( PDERROR, "Failed to parse the create collection "
-                    "message, rc:%d", rc ) ;
-            goto error ;
-         }
-
-         boQuery = BSONObj( pQuery );
-         beIsMainCL = boQuery.getField( FIELD_NAME_ISMAINCL );
-         isMainCL = beIsMainCL.booleanSafe();
-         if ( isMainCL )
-         {
-            beShardingKey = boQuery.getField( FIELD_NAME_SHARDINGKEY );
-            PD_CHECK( beShardingKey.type() == Object, SDB_NO_SHARDINGKEY,
-                      error, PDERROR, "There is no valid sharding-key field" ) ;
-            beShardingType = boQuery.getField( FIELD_NAME_SHARDTYPE );
-            PD_CHECK( 0 != beShardingType.str().compare(
-                      FIELD_NAME_SHARDTYPE_HASH ),
-                      SDB_INVALID_MAIN_CL_TYPE, error, PDERROR,
-                      "The sharding-type of main-collection must be range" ) ;
-         }
-         eleName = boQuery.getField( FIELD_NAME_NAME ) ;
-         // get collection name
-         if ( eleName.type() != String )
-         {
-            PD_LOG( PDERROR, "Field[%s] type[%d] is error",
-                    FIELD_NAME_NAME, eleName.type() ) ;
-            rc = SDB_INVALIDARG ;
-            goto error ;
-         }
-         pCollectionName = eleName.valuestr() ;
-      }
-      catch ( std::exception &e )
-      {
-         rc = SDB_INVALIDARG ;
-         PD_LOG ( PDERROR, "Failed to create collection, received "
-                  "unexpected error: %s", e.what() ) ;
-         goto error ;
-      }
-
-      // send request to catalog
-      if ( !isMainCL )
-      {
-         rc = executeOnCataGroup ( pMsg, cb, &groupLst, &replyFromCata ) ;
-         if ( rc )
-         {
-            PD_LOG ( PDERROR, "create collection failed on catalog, rc = %d",
-                     rc ) ;
-            goto error ;
-         }
-
-         pCreateReq->header.opCode = MSG_BS_QUERY_REQ ;
-         rc = executeOnCL( pMsg, cb, pCollectionName, TRUE, &groupLst,
-                           NULL, NULL ) ;
-         if ( rc )
-         {
-            PD_LOG ( PDWARNING, "Create collection failed on data "
-                     "node, rc: %d", rc ) ;
-            rc = SDB_OK ;
-         }
-      }
-      else
-      {
-         rc = executeOnCataGroup ( pMsg, cb, TRUE ) ;
-         if ( rc )
-         {
-            PD_LOG ( PDERROR, "create collection failed on catalog, rc = %d",
-                     rc ) ;
-            goto error ;
-         }
-      }
-
-      /// check whether should notify data group to complete tasks.
-      if ( !isMainCL && !replyFromCata.empty() )
-      {
-         BSONElement task = replyFromCata.at(0).getField( CAT_TASKID_NAME ) ;
-         if ( Array == task.type() )
-         {
-            rc = _notifyDataGroupsToStartTask( pCollectionName, task, cb ) ;
-            if ( SDB_OK != rc )
-            {
-               PD_LOG( PDERROR, "Failed to notify data groups to start "
-                       "task: %d", rc ) ;
-               /// meta data has already been modified.
-               /// here we change a errno.
-               rc = SDB_BUT_FAILED_ON_DATA ;
-               goto error ;
-            }
-         }
-      }
-
-   done :
-      if ( pCollectionName )
-      {
-         PD_AUDIT_COMMAND( AUDIT_DDL, pCommand + 1, AUDIT_OBJ_CL,
-                           pCollectionName, rc, "Option:%s",
-                           boQuery.toString().c_str() ) ;
-      }
-      PD_TRACE_EXITRC ( SDB_RTNCOCMDCRCL_EXE, rc ) ;
-      return rc;
-   error :
-      goto done ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION( SDB_RTNCOCMDSSONNODE__NOTIFYDATAGROUPS, "rtnCoordCMDCreateCollection::_notifyDataGroupsToStartTask" )
-   INT32 rtnCoordCMDCreateCollection::_notifyDataGroupsToStartTask( const CHAR *pCLName,
-                                                                    const BSONElement &task,
-                                                                    pmdEDUCB *cb )
-   {
-      INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY( SDB_RTNCOCMDSSONNODE__NOTIFYDATAGROUPS ) ;
-      CHAR *buffer = NULL ;
-      INT32 bufferLen = 0 ;
-      vector<BSONObj> reply ;
-
-      BSONObjBuilder builder ;
-      builder.appendAs( task, "$in" ) ;
-      BSONObj condition = BSON( FIELD_NAME_TASKID << builder.obj() );
-
-      BSONElement group ;
-      CoordGroupList groupList ;
-      MsgOpQuery *msgHeader = NULL ;
-      INT32 everRc = SDB_OK ;
-      INT64 contextID = -1  ;
-      vector<BSONObj>::const_iterator itr ;
-
-      CoordCB *coordCb = pmdGetKRCB()->getCoordCB () ;
-      rtnCoordCommand *cmd = coordCb->getProcesserFactory(
-                             )->getCommandProcesser( COORD_CMD_WAITTASK ) ;
-
-      rc = msgBuildQueryMsg( &buffer, &bufferLen, CAT_TASK_INFO_COLLECTION,
-                             0, 0, 0, -1, &condition, NULL, NULL, NULL ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "failed to build query msg:%d", rc ) ;
-         goto error ;
-      }
-
-      msgHeader = ( MsgOpQuery * )buffer ;
-      msgHeader->header.opCode = MSG_CAT_QUERY_TASK_REQ ;
-
-      /// get task info from catalog.
-      rc = executeOnCataGroup( (MsgHeader*)buffer, cb, NULL, &reply ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "failed to get task info from catalog, rc:%d",
-                 rc ) ;
-         goto error ;
-      }
-
-      /// notify all groups to start task.
-      for ( itr = reply.begin() ; itr != reply.end(); itr++ )
-      {
-         groupList.clear() ;
-
-         group = itr->getField( FIELD_NAME_TARGETID ) ;
-         if ( NumberInt != group.type() )
-         {
-            PD_LOG( PDERROR, "target id is not a numberint.[%s]",
-                    itr->toString().c_str() ) ;
-            rc = SDB_SYS ;
-            goto error ;
-         }
-
-         groupList[ group.Int() ] = group.Int() ;
-
-         rc = msgBuildQueryMsg( &buffer, &bufferLen,
-                                CMD_ADMIN_PREFIX CMD_NAME_SPLIT,
-                                0, 0, 0, -1, &(*itr), NULL, NULL, NULL ) ;
-         if ( SDB_OK != rc )
-         {
-            PD_LOG( PDERROR, "failed to build split msg:%d", rc ) ;
-            goto error ;
-         }
-
-         msgHeader = ( MsgOpQuery * )buffer ;
-
-         rc = executeOnCL( (MsgHeader *)buffer, cb, pCLName, FALSE,
-                           &groupList, NULL, NULL ) ;
-         if ( SDB_OK != rc )
-         {
-            PD_LOG( PDERROR, "Failed to notify group[%d] to split "
-                    "collection[%s], rc: %d", group.Int(), pCLName, rc ) ;
-            everRc = ( SDB_OK == everRc ) ? rc : everRc ;
-            rc = SDB_OK ;
-            continue ;
-            /// here we try to send msg to all groups, do not goto error.
-         }
-      }
-
-      rc = ( SDB_OK == everRc ) ? SDB_OK : everRc ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "Some spliting are faled, check the catalog info" ) ;
-         goto error ;
-      }
-
-      rc = msgBuildQueryMsg( &buffer, &bufferLen, "CAT",
-                             0, 0, 0, -1, &condition, NULL, NULL, NULL ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "failed to build split msg: %d", rc ) ;
-         goto error ;
-      }
-
-      rc = cmd->execute( (MsgHeader*)buffer, cb, contextID, NULL ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "failed to wait task done:%d", rc ) ;
-         rc = SDB_OK ;
-         ossSleep( 5000 ) ;
-         /// do not return err. only sleep some time to wait task done.
-      }
-
-   done:
-      if ( NULL != buffer )
-      {
-         SDB_OSS_FREE( buffer ) ;
-      }
-      PD_TRACE_EXITRC( SDB_RTNCOCMDSSONNODE__NOTIFYDATAGROUPS, rc ) ;
-      return rc ;
-   error:
-      goto done ;
-   }
-
    INT32 rtnCoordCMDSnapshotIntrBase::execute( MsgHeader *pMsg,
                                                pmdEDUCB *cb,
                                                INT64 &contextID,
@@ -1870,385 +1409,6 @@ namespace engine
                             cb, contextID, buf ) ;
       PD_TRACE_EXITRC ( SDB_RTNCOCMDSSCSS_EXE, rc ) ;
       return rc ;
-   }
-
-   //PD_TRACE_DECLARE_FUNCTION (SDB_RTNCOCMD2PC_EXE, "rtnCoordCMD2PhaseCommit::execute" )
-   INT32 rtnCoordCMD2PhaseCommit::execute( MsgHeader *pMsg,
-                                           pmdEDUCB *cb,
-                                           INT64 &contextID,
-                                           rtnContextBuf *buf )
-   {
-      INT32 rc = SDB_OK;
-      PD_TRACE_ENTRY ( SDB_RTNCOCMD2PC_EXE ) ;
-      pmdKRCB *pKrcb = pmdGetKRCB();
-      _SDB_RTNCB *pRtncb = pKrcb->getRTNCB();
-      SET_RC ignoreRCList ;
-      string strName ;
-
-      contextID = -1 ;
-      _getIgnoreRCList( ignoreRCList ) ;
-
-      // phase 1
-      rc = doP1OnDataGroup( (CHAR*)pMsg, cb, ignoreRCList,
-                            contextID, strName ) ;
-      PD_RC_CHECK( rc, PDERROR,
-                   "Failed to execute phase1 on data group(rc=%d)",
-                   rc );
-
-      rc = doOnCataGroup( (CHAR*)pMsg, cb, strName );
-      PD_RC_CHECK( rc, PDERROR,
-                   "Failed to execute on cata group(rc=%d)",
-                   rc );
-
-      // phase 2
-      rc = doP2OnDataGroup( (CHAR*)pMsg, cb, strName, contextID );
-      PD_RC_CHECK( rc, PDERROR,
-                   "Failed to execute phase2 on data group(rc=%d)",
-                   rc ) ;
-
-      rc = complete( (CHAR*)pMsg, cb, strName ) ;
-      PD_RC_CHECK( rc, PDERROR,
-                   "Failed to complete the operation(rc=%d)",
-                   rc ) ;
-
-   done:
-      if ( -1 != contextID )
-      {
-         pRtncb->contextDelete ( contextID, cb ) ;
-         contextID = -1 ;
-      }
-      if ( !strName.empty() )
-      {
-         BOOLEAN isCL = ossStrchr( strName.c_str(), '.' ) ? TRUE : FALSE ;
-         PD_AUDIT_COMMAND( AUDIT_DDL, ( isCL ? CMD_NAME_DROP_COLLECTION :
-                                               CMD_NAME_DROP_COLLECTIONSPACE ),
-                           ( isCL ? AUDIT_OBJ_CL : AUDIT_OBJ_CS ),
-                           strName.c_str(), rc, "" ) ;
-      }
-      PD_TRACE_EXITRC ( SDB_RTNCOCMD2PC_EXE, rc ) ;
-      return rc;
-   error:
-      goto done ;
-   }
-
-   void rtnCoordCMD2PhaseCommit::_getIgnoreRCList( SET_RC &ignoreRCList )
-   {
-   }
-
-   INT32 rtnCoordCMD2PhaseCommit::complete( CHAR *pReceiveBuffer,
-                                            pmdEDUCB * cb,
-                                            const string &strName )
-   {
-      return SDB_OK;
-   }
-
-   //PD_TRACE_DECLARE_FUNCTION (SDB_RTNCOCMD2PC_DOP1, "rtnCoordCMD2PhaseCommit::doP1OnDataGroup" )
-   INT32 rtnCoordCMD2PhaseCommit::doP1OnDataGroup( CHAR *pReceiveBuffer,
-                                                   pmdEDUCB *cb,
-                                                   SET_RC &ignoreRCList,
-                                                   SINT64 &contextID,
-                                                   string &strName )
-   {
-      INT32 rc = SDB_OK;
-      PD_TRACE_ENTRY ( SDB_RTNCOCMD2PC_DOP1 ) ;
-
-      rtnContextCoord *pContext = NULL ;
-      CoordGroupList groupLst ;
-
-      rc = _getGroupList( pReceiveBuffer, cb, groupLst, strName ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to get group-list, rc: %d", rc ) ;
-
-      /// is collection
-      if ( NULL != ossStrchr( strName.c_str(), '.' ) )
-      {
-         rc = executeOnCL( (MsgHeader*)pReceiveBuffer, cb, strName.c_str(),
-                           FALSE, NULL, &ignoreRCList, NULL, &pContext ) ;
-      }
-      else
-      {
-         rc = executeOnDataGroup( (MsgHeader*)pReceiveBuffer, cb, groupLst,
-                                  TRUE, &ignoreRCList, NULL, &pContext ) ;
-      }
-      PD_RC_CHECK( rc, PDERROR,
-                   "Failed to execute phase-1 on data node, rc: %d",
-                   rc ) ;
-
-      if ( pContext )
-      {
-         contextID = pContext->contextID() ;
-      }
-
-   done:
-      PD_TRACE_EXITRC ( SDB_RTNCOCMD2PC_DOP1, rc ) ;
-      return rc;
-   error:
-      if ( pContext )
-      {
-         SDB_RTNCB *pRtnCB = pmdGetKRCB()->getRTNCB() ;
-         pRtnCB->contextDelete( pContext->contextID(), cb ) ;
-         contextID = -1 ;
-         pContext = NULL ;
-      }
-      goto done ;
-   }
-
-   //PD_TRACE_DECLARE_FUNCTION (SDB_RTNCOCMD2PC_DOP2, "rtnCoordCMD2PhaseCommit::doP2OnDataGroup" )
-   INT32 rtnCoordCMD2PhaseCommit::doP2OnDataGroup( CHAR *pReceiveBuffer,
-                                                   pmdEDUCB * cb,
-                                                   const string &strName,
-                                                   SINT64 &contextID )
-   {
-      INT32 rc = SDB_OK;
-      PD_TRACE_ENTRY ( SDB_RTNCOCMD2PC_DOP2 ) ;
-      pmdKRCB *pKrcb = pmdGetKRCB();
-      _SDB_RTNCB *pRtncb = pKrcb->getRTNCB();
-      rtnContextBuf buffObj;
-      rc = rtnGetMore( contextID, -1, buffObj, cb, pRtncb ) ;
-      if ( SDB_DMS_EOC == rc )
-      {
-         contextID = -1;
-         rc = SDB_OK;
-      }
-      PD_RC_CHECK( rc, PDERROR,
-                   "Failed to execute phase-2 on data node(rc=%d)",
-                   rc ) ;
-   done:
-      PD_TRACE_EXITRC ( SDB_RTNCOCMD2PC_DOP2, rc ) ;
-      return rc;
-   error:
-      if ( -1 != contextID )
-      {
-         pRtncb->contextDelete ( contextID, cb ) ;
-         contextID = -1;
-      }
-      goto done;
-   }
-
-   void rtnCoordCMDDropCollection::_getIgnoreRCList( SET_RC &ignoreRCList )
-   {
-      ignoreRCList.insert( SDB_DMS_NOTEXIST );
-   }
-
-   //PD_TRACE_DECLARE_FUNCTION (SDB_RTNCODROPCL_GETCLNAME, "rtnCoordCMDDropCollection::_getCLName" )
-   INT32 rtnCoordCMDDropCollection::_getCLName( CHAR *pReceiveBuffer,
-                                                string &strCLName )
-   {
-      INT32 rc = SDB_OK;
-      PD_TRACE_ENTRY ( SDB_RTNCODROPCL_GETCLNAME ) ;
-
-      CHAR *pQuery                     = NULL;
-      BSONObj boQuery ;
-      rc = msgExtractQuery( pReceiveBuffer, NULL, NULL,
-                            NULL, NULL, &pQuery, NULL,
-                            NULL, NULL );
-      PD_RC_CHECK( rc, PDERROR, "Failed to parse the request(rc=%d)", rc ) ;
-      try
-      {
-         boQuery = BSONObj( pQuery );
-         BSONElement beCLName = boQuery.getField( CAT_COLLECTION_NAME );
-         PD_CHECK( beCLName.type() == String, SDB_INVALIDARG, error, PDERROR,
-                   "Failed to get collection name" );
-         strCLName = beCLName.str() ;
-      }
-      catch( std::exception &e )
-      {
-         rc = SDB_INVALIDARG;
-         PD_LOG ( PDERROR, "Failed to drop collection, occured unexpected "
-                  "error:%s", e.what() ) ;
-         goto error;
-      }
-   done:
-      PD_TRACE_EXITRC ( SDB_RTNCODROPCL_GETCLNAME, rc ) ;
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   //PD_TRACE_DECLARE_FUNCTION (SDB_RTNCODROPCL_GETGPLST, "rtnCoordCMDDropCollection::_getGroupList" )
-   INT32 rtnCoordCMDDropCollection::_getGroupList( CHAR *pReceiveBuffer,
-                                                   pmdEDUCB *cb,
-                                                   CoordGroupList &groupLst,
-                                                   string &strName )
-   {
-      INT32 rc = SDB_OK;
-      PD_TRACE_ENTRY ( SDB_RTNCODROPCL_GETGPLST ) ;
-
-      rc = _getCLName( pReceiveBuffer, strName ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to get collection name, rc: %d",
-                   rc ) ;
-
-   done:
-      PD_TRACE_EXITRC ( SDB_RTNCODROPCL_GETGPLST, rc ) ;
-      return rc;
-   error:
-      goto done;
-   }
-
-   //PD_TRACE_DECLARE_FUNCTION (SDB_RTNCODROPCL_CMPL, "rtnCoordCMDDropCollection::complete" )
-   INT32 rtnCoordCMDDropCollection::complete( CHAR *pReceiveBuffer,
-                                              pmdEDUCB * cb,
-                                              const string &strName )
-   {
-      INT32 rc = SDB_OK;
-      PD_TRACE_ENTRY ( SDB_RTNCODROPCL_CMPL ) ;
-      pmdKRCB *pKrcb = pmdGetKRCB();
-      CoordCB *pCoordcb = pKrcb->getCoordCB();
-
-      string strMainCLName ;
-      CoordCataInfoPtr cataInfo ;
-
-      rc = rtnCoordGetCataInfo( cb, strName.c_str(), FALSE, cataInfo ) ;
-      PD_RC_CHECK( rc, PDWARNING,
-                   "Failed to get catalog, complete drop-CL failed(rc=%d)",
-                   rc ) ;
-
-      strMainCLName = cataInfo->getCatalogSet()->getMainCLName() ;
-      pCoordcb->delCataInfo( strName ) ;
-      if ( !strMainCLName.empty() )
-      {
-         pCoordcb->delCataInfo( strMainCLName ) ;
-      }
-
-   done:
-      PD_TRACE_EXITRC ( SDB_RTNCODROPCL_CMPL, rc ) ;
-      return SDB_OK ;
-   error:
-      goto done ;
-   }
-
-   //PD_TRACE_DECLARE_FUNCTION (SDB_RTNCODROPCL_DOONCATA, "rtnCoordCMDDropCollection::doOnCataGroup" )
-   INT32 rtnCoordCMDDropCollection::doOnCataGroup( CHAR *pReceiveBuffer,
-                                                   pmdEDUCB * cb,
-                                                   const string &strName )
-   {
-      INT32 rc = SDB_OK;
-      PD_TRACE_ENTRY ( SDB_RTNCODROPCL_DOONCATA ) ;
-      MsgOpQuery *pDropReq             = (MsgOpQuery *)pReceiveBuffer ;
-      SINT32 opCode                    = pDropReq->header.opCode ;
-      UINT32 TID                       = pDropReq->header.TID ;
-
-      pDropReq->header.opCode = MSG_CAT_DROP_COLLECTION_REQ ;
-      rc = executeOnCataCL( pDropReq, cb, strName.c_str(), TRUE ) ;
-      PD_RC_CHECK( rc, PDERROR,
-                   "Failed to drop the catalog of cl(rc=%d)",
-                   rc ) ;
-
-   done:
-      pDropReq->header.opCode = opCode;
-      pDropReq->header.TID = TID;
-      PD_TRACE_EXITRC ( SDB_RTNCODROPCL_DOONCATA, rc ) ;
-      return rc;
-   error:
-      goto done;
-   }
-
-   void rtnCoordCMDDropCollectionSpace::_getIgnoreRCList( SET_RC &ignoreRCList )
-   {
-      ignoreRCList.insert( SDB_DMS_CS_NOTEXIST );
-   }
-
-   //PD_TRACE_DECLARE_FUNCTION (SDB_RTNCODROPCS_GETGPLST, "rtnCoordCMDDropCollectionSpace::_getGroupList" )
-   INT32 rtnCoordCMDDropCollectionSpace::_getGroupList( CHAR *pReceiveBuffer,
-                                                        pmdEDUCB *cb,
-                                                        CoordGroupList &groupLst,
-                                                        string &strName )
-   {
-      INT32 rc = SDB_OK;
-      PD_TRACE_ENTRY ( SDB_RTNCODROPCS_GETGPLST ) ;
-
-      CHAR *pQuery                     = NULL;
-      BSONObj boQuery;
-      BSONObj boEmpty;
-
-      CHAR *pBuffer                    = NULL;
-      INT32 bufferSize                 = 0;
-
-      CoordGroupList::const_iterator iter;
-      groupLst.clear() ;
-
-      rc = msgExtractQuery( pReceiveBuffer, NULL, NULL,
-                            NULL, NULL, &pQuery, NULL,
-                            NULL, NULL );
-      PD_RC_CHECK( rc, PDERROR, "Failed to parse the request(rc=%d)",
-                   rc ) ;
-
-      try
-      {
-         boQuery = BSONObj( pQuery );
-         BSONElement beCSName = boQuery.getField( CAT_COLLECTION_SPACE_NAME );
-         PD_CHECK( beCSName.type() == String, SDB_INVALIDARG,
-                   error, PDERROR, "failed to get cs name" );
-         strName = beCSName.str() ;
-      }
-      catch( std::exception &e )
-      {
-         rc = SDB_INVALIDARG;
-         PD_LOG( PDERROR, "Failed to drop cs, received unexpected error:%s",
-                 e.what() );
-         goto error ;
-      }
-
-      rc = msgBuildQuerySpaceReqMsg( &pBuffer, &bufferSize, 0, 0, 0, -1,
-                                     cb->getTID(), &boQuery, &boEmpty,
-                                     &boEmpty, &boEmpty );
-      PD_RC_CHECK( rc, PDERROR, "Failed to build query request(rc=%d)",
-                   rc );
-
-      rc = executeOnCataGroup( (MsgHeader*)pBuffer, cb, &groupLst );
-      PD_RC_CHECK( rc, PDERROR, "Failed to get cs info from catalog(rc=%d)",
-                   rc ) ;
-
-   done:
-      SAFE_OSS_FREE( pBuffer ) ;
-      PD_TRACE_EXITRC ( SDB_RTNCODROPCS_GETGPLST, rc ) ;
-      return rc;
-   error:
-      goto done;
-   }
-
-   //PD_TRACE_DECLARE_FUNCTION (SDB_RTNCODROPCS_DOONCATA, "rtnCoordCMDDropCollectionSpace::doOnCataGroup" )
-   INT32 rtnCoordCMDDropCollectionSpace::doOnCataGroup( CHAR *pReceiveBuffer,
-                                                        pmdEDUCB *cb,
-                                                        const string &strName )
-   {
-      INT32 rc = SDB_OK;
-      PD_TRACE_ENTRY ( SDB_RTNCODROPCS_DOONCATA ) ;
-
-      MsgOpQuery *pDropReq             = (MsgOpQuery *)pReceiveBuffer ;
-      SINT32 opCode                    = pDropReq->header.opCode ;
-      UINT32 TID                       = pDropReq->header.TID ;
-
-      pDropReq->header.opCode = MSG_CAT_DROP_SPACE_REQ ;
-
-      rc = executeOnCataGroup( (MsgHeader*)pDropReq, cb, TRUE ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to drop the catalog of cs, rc: %d",
-                   rc ) ;
-
-   done:
-      pDropReq->header.opCode = opCode ;
-      pDropReq->header.TID = TID ;
-      PD_TRACE_EXITRC ( SDB_RTNCODROPCS_DOONCATA, rc ) ;
-      return rc;
-   error:
-      goto done;
-   }
-
-   INT32 rtnCoordCMDDropCollectionSpace::complete( CHAR *pReceiveBuffer,
-                                                   pmdEDUCB *cb,
-                                                   const string &strName )
-   {
-      vector< string > subCLSet ;
-      CoordCB *pCoordCB = pmdGetKRCB()->getCoordCB() ;
-      pCoordCB->delCataInfoByCS( strName.c_str(), &subCLSet ) ;
-
-      /// clear relate sub collection's catalog info
-      vector< string >::iterator it = subCLSet.begin() ;
-      while( it != subCLSet.end() )
-      {
-         pCoordCB->delCataInfo( *it ) ;
-         ++it ;
-      }
-      return SDB_OK ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCMDQUBASE_EXE, "rtnCoordCMDQueryBase::execute" )
@@ -2448,169 +1608,6 @@ namespace engine
       return rc;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCMDCTGR, "rtnCoordCMDCreateGroup::execute" )
-   INT32 rtnCoordCMDCreateGroup::execute( MsgHeader *pMsg,
-                                          pmdEDUCB *cb,
-                                          INT64 &contextID,
-                                          rtnContextBuf *buf )
-   {
-      INT32 rc                         = SDB_OK;
-      PD_TRACE_ENTRY ( SDB_RTNCOCMDCTGR ) ;
-      // fill default-reply(create group success)
-      contextID                        = -1 ;
-
-      MsgOpQuery *pCreateReq = (MsgOpQuery *)pMsg ;
-      pCreateReq->header.opCode = MSG_CAT_CREATE_GROUP_REQ ;
-
-      rc = executeOnCataGroup ( pMsg, cb, TRUE ) ;
-      if ( rc )
-      {
-         PD_LOG ( PDERROR, "Failed to execute on catalog, rc = %d", rc ) ;
-         goto error ;
-      }
-
-   done :
-      PD_TRACE_EXITRC ( SDB_RTNCOCMDCTGR, rc ) ;
-      return rc;
-   error :
-      goto done ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCMDRMR, "rtnCoordCMDRemoveGroup::execute" )
-   INT32 rtnCoordCMDRemoveGroup::execute( MsgHeader *pMsg,
-                                          pmdEDUCB *cb,
-                                          INT64 &contextID,
-                                          rtnContextBuf *buf )
-   {
-      INT32 rc                         = SDB_OK;
-      PD_TRACE_ENTRY ( SDB_RTNCOCMDRMR ) ;
-      const CHAR *groupName = NULL ;
-      CHAR *pQuery = NULL;
-
-      // fill default-reply(remove group success)
-      contextID            = -1 ;
-
-      MsgOpQuery *forward  = (MsgOpQuery *)pMsg;
-      forward->header.opCode = MSG_CAT_RM_GROUP_REQ;
-      CoordGroupInfoPtr group;
-
-      rc = msgExtractQuery( (CHAR*)pMsg, NULL, NULL,
-                            NULL, NULL, &pQuery,
-                            NULL, NULL, NULL );
-      try
-      {
-         BSONObj obj( pQuery ) ;
-         BSONElement ele = obj.getField( FIELD_NAME_GROUPNAME ) ;
-         if ( ele.eoo() || String != ele.type() )
-         {
-            PD_LOG( PDERROR, "failed to get groupname from msg[%s]",
-                    obj.toString().c_str() ) ;
-            rc = SDB_INVALIDARG ;
-            goto error ;
-         }
-
-         groupName = ele.valuestr() ;
-      }
-      catch ( std::exception &e )
-      {
-         PD_LOG( PDERROR, "unexpected err happened:%s",
-                 e.what() ) ;
-         rc = SDB_SYS ;
-         goto error ;
-      }
-
-      /// get group info, for cleanup.
-      rc = rtnCoordGetGroupInfo( cb, groupName, TRUE, group ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "failed to get group info by name:%d", rc ) ;
-         goto error ;
-      }
-
-      /// exec on catalog
-      rc = executeOnCataGroup ( pMsg, cb, TRUE ) ;
-      if ( rc )
-      {
-         PD_LOG ( PDERROR, "Failed to execute on catalog, rc = %d", rc ) ;
-         goto error ;
-      }
-
-      if ( 0 == ossStrcmp( groupName, CATALOG_GROUPNAME ) )
-      {
-         // clean catalog info
-         sdbGetCoordCB()->getLock( EXCLUSIVE ) ;
-         sdbGetCoordCB()->clearCatNodeAddrList() ;
-         sdbGetCoordCB()->releaseLock( EXCLUSIVE ) ;
-
-         CoordGroupInfo *pEmptyGroupInfo = NULL ;
-         pEmptyGroupInfo = SDB_OSS_NEW CoordGroupInfo( CAT_CATALOG_GROUPID ) ;
-         if ( NULL != pEmptyGroupInfo )
-         {
-            CoordGroupInfoPtr groupInfo( pEmptyGroupInfo ) ;
-            sdbGetCoordCB()->updateCatGroupInfo( groupInfo ) ;
-         }
-      }
-
-      /// clean up
-      {
-      SINT32 ret = SDB_OK ;
-      BSONObj execObj ;
-
-      MsgRouteID routeID ;
-      string hostName ;
-      string serviceName ;
-      UINT32 index = 0 ;
-
-      while ( SDB_OK == group->getNodeInfo( index++, routeID, hostName,
-                                            serviceName,
-                                            MSG_ROUTE_LOCAL_SERVICE ) )
-      {
-         execObj = BSON( FIELD_NAME_HOST << hostName
-                         << PMD_OPTION_SVCNAME << serviceName ) ;
-         rc = rtnRemoteExec ( SDBSTOP, hostName.c_str() ,
-                              &ret, &execObj ) ;
-         /// here we only return a err code. do not goto error.
-         if ( SDB_OK != rc )
-         {
-            PD_LOG( PDWARNING, "Stop node[GroupName: %s, HostName: %s, "
-                    "SvcName: %s] failed, rc: %d, retObj: %s",
-                    groupName, hostName.c_str(), serviceName.c_str(),
-                    rc, execObj.toString().c_str() ) ;
-         }
-
-         rc = rtnRemoteExec ( SDBRM, hostName.c_str(), &ret, &execObj ) ;
-         if ( SDB_OK != rc )
-         {
-            PD_LOG( PDERROR, "Remove node[GroupName: %s, HostName: %s, "
-                    "SvcName: %s] failed, rc: %d, retObj: %s",
-                    groupName, hostName.c_str(), serviceName.c_str(),
-                    rc, execObj.toString().c_str() ) ;
-         }
-      }
-
-      rtnCoordRemoveGroup ( group->groupID() ) ;
-
-      {
-         CoordSession *session = cb->getCoordSession();
-         if ( NULL != session )
-         {
-            session->removeLastNode( group->groupID()) ;
-         }
-      }
-
-      if ( SDB_OK != rc )
-      {
-         goto error ;
-      }
-      }
-
-   done:
-      PD_TRACE_EXITRC ( SDB_RTNCOCMDRMR, rc ) ;
-      return rc ;
-   error:
-      goto done ;
-   }
-
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCMDCONFN_GETNCONF, "rtnCoordCMDConfigNode::getNodeConf" )
    INT32 rtnCoordCMDConfigNode::getNodeConf( char *pQuery,
                                              BSONObj &nodeConf,
@@ -2799,615 +1796,6 @@ namespace engine
       return rc;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCMDCTN_EXEC, "rtnCoordCMDCreateNode::execute" )
-   INT32 rtnCoordCMDCreateNode::execute( MsgHeader *pMsg,
-                                         pmdEDUCB *cb,
-                                         INT64 &contextID,
-                                         rtnContextBuf *buf )
-   {
-      INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY( SDB_RTNCOCMDCTN_EXEC ) ;
-      INT32 flag = 0 ;
-      CHAR *pCMDName = NULL ;
-      SINT64 numToSkip = 0 ;
-      SINT64 numToReturn = 0 ;
-      CHAR *pQuery = NULL ;
-      CHAR *pFieldSelector = NULL ;
-      CHAR *pOrderBy = NULL ;
-      CHAR *pHint = NULL ;
-      BOOLEAN onlyAttach = FALSE ;
-      BSONObj query ;
-
-      rc = msgExtractQuery( (CHAR*)pMsg, &flag, &pCMDName, &numToSkip,
-                            &numToReturn, &pQuery, &pFieldSelector,
-                            &pOrderBy, &pHint );
-      if ( rc != SDB_OK )
-      {
-         PD_LOG ( PDERROR,
-                  "failed to parse create node request(rc=%d)",
-                  rc );
-         goto error ;
-      }
-
-      try
-      {
-         query = BSONObj( pQuery ) ;
-         BSONElement e = query.getField( FIELD_NAME_ONLY_ATTACH ) ;
-         if ( e.eoo() )
-         {
-            onlyAttach = FALSE ;
-         }
-         else if ( Bool == e.type() )
-         {
-            onlyAttach = e.Bool() ;
-         }
-         else
-         {
-            PD_LOG( PDERROR, "invalid type of \"OnlyAttach\" in msg:%s",
-                    query.toString( FALSE, TRUE ).c_str() ) ;
-            rc = SDB_INVALIDARG ;
-            goto error ;
-         }
-      }
-      catch ( std::exception &e )
-      {
-         PD_LOG( PDERROR, "unexpected err happened:%s", e.what() ) ;
-         rc = SDB_SYS ;
-         goto error ;
-      }
-
-      if ( !onlyAttach )
-      {
-         rc = _createNode( pMsg, cb, contextID, buf ) ;
-         if ( SDB_OK != rc )
-         {
-            PD_LOG( PDERROR, "failed to create node:%d", rc ) ;
-            goto error ;
-         }
-      }
-      else
-      {
-         rc = _attachNode( query, cb ) ;
-         if ( SDB_OK != rc )
-         {
-            PD_LOG( PDERROR, "failed to attach node:%d", rc ) ;
-            goto error ;
-         }
-      }
-   done:
-      PD_TRACE_EXITRC( SDB_RTNCOCMDCTN_EXEC, rc ) ;
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCMDCTN__ATTACHNODE, "rtnCoordCMDCreateNode::_attachNode" )
-   INT32 rtnCoordCMDCreateNode::_attachNode( const BSONObj &info,
-                                             pmdEDUCB *cb )
-   {
-      INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY( SDB_RTNCOCMDCTN__ATTACHNODE ) ;
-      BSONElement hostEle ;
-      BSONElement gpEle ;
-      std::vector<BSONObj> objs ;
-      BSONObj nodeConf ;
-      SINT32 retCode = SDB_OK ;
-      CHAR *buf = NULL ;
-      MsgOpQuery *header = NULL ;
-      BOOLEAN onCata = FALSE ;
-      BOOLEAN keepData = FALSE ;
-
-      try
-      {
-         hostEle = info.getField( FIELD_NAME_HOST ) ;
-         if ( hostEle.eoo() || String != hostEle.type() )
-         {
-            PD_LOG( PDERROR, "invalid type of \"HostName\" in msg:%s",
-                    info.toString( FALSE, TRUE ).c_str() ) ;
-            rc = SDB_INVALIDARG ;
-            goto error ;
-         }
-
-         gpEle = info.getField( FIELD_NAME_GROUPNAME ) ;
-         if ( String != gpEle.type() )
-         {
-            PD_LOG( PDERROR, "invalid type of \"GroupName\" in msg:%s",
-                    info.toString( FALSE, TRUE ).c_str() ) ;
-            rc = SDB_INVALIDARG ;
-            goto error ;
-         }
-
-         keepData = info.getBoolField( FIELD_NAME_KEEP_DATA ) ;
-      }
-      catch ( std::exception &e )
-      {
-         PD_LOG( PDERROR, "unexpected error happened:%s", e.what() ) ;
-         rc = SDB_SYS ;
-         goto error ;
-      }
-
-      rc = rtnRemoteExec( SDBGETCONF, hostEle.valuestr(),
-                          &retCode, &info,
-                          NULL, NULL, NULL, &objs ) ;
-      rc = SDB_OK == rc ? retCode : rc ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "failed to get conf of node, "
-                 "rc:%d", rc ) ;
-         goto error ;
-      }
-      else if ( 1 != objs.size() )
-      {
-         PD_LOG( PDERROR, "invalid objs's size:%d", objs.size() ) ;
-         rc = SDB_SYS ;
-         goto error ;
-      }
-
-      nodeConf = objs.at( 0 ) ;
-
-      /// node's role must be suit for group
-      /// TODO: we can modify node's role here.
-      if ( 0 == ossStrcmp( gpEle.valuestr(),
-                           CATALOG_GROUPNAME ) ||
-           0 == ossStrcmp( gpEle.valuestr(),
-                           COORD_GROUPNAME ) )
-      {
-         PD_LOG( PDERROR, "only data-group surpports \"attachNode\" now" ) ;
-         rc = SDB_INVALIDARG ;
-         goto error ;
-      }
-
-      rc = _buildAttachMsg( nodeConf, gpEle.valuestr(),
-                            hostEle.valuestr(), buf, header ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "failed to build msg:%d", rc ) ;
-         goto error ;
-      }
-
-      rc = executeOnCataGroup( &( header->header ), cb, TRUE ) ;
-      if ( rc != SDB_OK )
-      {
-         PD_LOG( PDERROR, "failed to execute on catalog:%d", rc ) ;
-         goto error ;
-      }
-      onCata = TRUE ;
-
-      if ( !keepData )
-      {
-         rc = rtnRemoteExec( SDBCLEARDATA, hostEle.valuestr(),
-                             &retCode, &info ) ;
-         rc = SDB_OK == rc ?
-              retCode : rc ;
-         if ( SDB_OK != rc )
-         {
-            PD_LOG( PDERROR, "failed to clear data on node, "
-                    "rc:%d", rc ) ;
-            goto error ;
-         }
-      }
-
-      rc = rtnRemoteExec ( SDBSTART, hostEle.valuestr(),
-                           &retCode, &info ) ;
-      rc = SDB_OK == rc ?
-           retCode : rc ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "failed to get conf of node, "
-                 "rc:%d", rc ) ;
-         goto error ;
-      }
-   done:
-      PD_TRACE_EXITRC( SDB_RTNCOCMDCTN__ATTACHNODE, rc ) ;
-      SAFE_OSS_FREE( buf ) ;
-      return rc ;
-   error:
-      if ( onCata )
-      {
-         PD_LOG( PDEVENT, "begin to rollback info on catalog" ) ;
-         header->header.opCode = MSG_CAT_DEL_NODE_REQ ;
-         INT32 rrc = executeOnCataGroup( &( header->header ), cb, TRUE ) ;
-         if ( SDB_OK != rrc )
-         {
-            PD_LOG( PDERROR, "failed to rollback on catalog:%d", rc ) ;
-         }
-         else
-         {
-            PD_LOG( PDEVENT, "rollback done on catalog" ) ;
-         }
-      }
-      goto done ;
-   }
-
-   INT32 rtnCoordCMDCreateNode::_buildAttachMsg( const BSONObj &conf,
-                                                 const CHAR *gpName,
-                                                 const CHAR *host,
-                                                 CHAR *&buf,
-                                                 MsgOpQuery *&header )
-   {
-      INT32 rc = SDB_OK ;
-      INT32 bufSize = 0 ;
-      BSONObjBuilder builder ;
-      BSONObj obj ;
-
-      builder.append( FIELD_NAME_GROUPNAME, gpName ) ;
-      builder.append( FIELD_NAME_HOST, host ) ;
-      builder.appendElements( conf ) ;
-      obj = builder.obj() ;
-      rc = msgBuildQueryMsg( &buf, &bufSize,
-                             CMD_ADMIN_PREFIX CMD_NAME_CREATE_NODE,
-                             0, 0, 0, -1,
-                             &obj ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "failed to build msg:%d", rc ) ;
-         goto error ;
-      }
-
-      header = ( MsgOpQuery * )buf ;
-      header->header.opCode = MSG_CAT_CREATE_NODE_REQ ;
-   done:
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCMDCTN__CRTNODE, "rtnCoordCMDCreateNode::_createNode" )
-   INT32 rtnCoordCMDCreateNode::_createNode( MsgHeader *pMsg,
-                                             pmdEDUCB *cb,
-                                             INT64 &contextID,
-                                             rtnContextBuf *buf )
-   {
-      INT32 rc                         = SDB_OK;
-      PD_TRACE_ENTRY ( SDB_RTNCOCMDCTN__CRTNODE ) ;
-
-      // fill default-reply(create group success)
-      contextID                        = -1 ;
-
-      do
-      {
-         INT32 flag = 0 ;
-         CHAR *pCMDName = NULL ;
-         SINT64 numToSkip = 0 ;
-         SINT64 numToReturn = 0 ;
-         CHAR *pQuery = NULL ;
-         CHAR *pFieldSelector = NULL ;
-         CHAR *pOrderBy = NULL ;
-         CHAR *pHint = NULL ;
-         rc = msgExtractQuery( (CHAR*)pMsg, &flag, &pCMDName, &numToSkip,
-                               &numToReturn, &pQuery, &pFieldSelector,
-                               &pOrderBy, &pHint );
-         if ( rc != SDB_OK )
-         {
-            PD_LOG ( PDERROR,
-                     "failed to parse create node request(rc=%d)",
-                     rc );
-            break;
-         }
-         BSONObj boNodeInfo;
-         rc = getNodeInfo( pQuery, boNodeInfo );
-         if ( rc != SDB_OK )
-         {
-            PD_LOG ( PDERROR, "Create node failed, failed to get "
-                     "node info(rc=%d)", rc ) ;
-            break;
-         }
-         CoordGroupInfoPtr catGroupInfo ;
-         rc = rtnCoordGetCatGroupInfo( cb, TRUE, catGroupInfo );
-         if ( rc != SDB_OK )
-         {
-            PD_LOG ( PDERROR, "Create node failed, failed to get "
-                     "cata-group-info(rc=%d)", rc ) ;
-            break ;
-         }
-         CHAR *pBuffer = NULL;
-         INT32 bufferSize = 0;
-         BSONObj fieldSelector;
-         BSONObj orderBy;
-         BSONObj hint;
-         BSONObjBuilder builder ;
-         BSONObj newNodeInfo ;
-         /// we enforced remove node in rollback.
-         try
-         {
-            BSONObjIterator itrObj( boNodeInfo ) ;
-            while ( itrObj.more() )
-            {
-               BSONElement nextEle = itrObj.next() ;
-               if ( 0 == ossStrcmp( nextEle.fieldName(),
-                                    CMD_NAME_ENFORCED ) )
-               {
-                  continue ;
-               }
-               builder.append( nextEle ) ;
-            }
-
-            builder.appendBool( CMD_NAME_ENFORCED, TRUE ) ;
-            newNodeInfo = builder.obj() ;
-         }
-         catch ( std::exception &e )
-         {
-            PD_LOG( PDERROR, "unexcepted err happened:%s", e.what() ) ;
-            rc = SDB_SYS ;
-            break ;
-         }
-
-         MsgOpQuery *pCatReq = (MsgOpQuery *)pMsg;
-         pCatReq->header.opCode = MSG_CAT_CREATE_NODE_REQ;
-         rc = executeOnCataGroup( pMsg, cb, TRUE ) ;
-         if ( rc != SDB_OK )
-         {
-            PD_LOG ( PDERROR, "Failed to create node, execute on catalog-node "
-                     "failed(rc=%d)", rc ) ;
-            break;
-         }
-         string strHostName ;
-         BSONObj boNodeConfig ;
-         try
-         {
-            BSONElement beHostName = boNodeInfo.getField( FIELD_NAME_HOST );
-            if ( beHostName.eoo() || beHostName.type() != String )
-            {
-               rc = SDB_INVALIDARG;
-               PD_LOG ( PDERROR, "Failed to get the field(%s)",
-                        FIELD_NAME_HOST ) ;
-               break;
-            }
-            strHostName = beHostName.str() ;
-            rc = getNodeConf( pQuery, boNodeConfig, catGroupInfo );
-            if ( rc != SDB_OK )
-            {
-               PD_LOG( PDERROR, "Failed to get node config(rc=%d)",
-                       rc ) ;
-               break ;
-            }
-         }
-         catch ( std::exception &e )
-         {
-            rc = SDB_INVALIDARG;
-            PD_LOG ( PDERROR, "Occured unexpected error:%s", e.what() ) ;
-         }
-         SINT32 retCode;
-         rc = rtnRemoteExec ( SDBADD, strHostName.c_str(),
-                              &retCode, &boNodeConfig ) ;
-         rc = rc ? rc : retCode;
-         if ( SDB_OK == rc )
-         {
-            if ( 0 == ossStrcmp( newNodeInfo.getField(
-                                 FIELD_NAME_GROUPNAME ).valuestr(),
-                                 CATALOG_GROUPNAME ) )
-            {
-               // update catalog group
-               rtnCoordGetCatGroupInfo( cb, TRUE, catGroupInfo ) ;
-               // notify all nodes
-               rtnCataChangeNtyToAllNodes( cb ) ;
-            }
-            break ;
-         }
-
-         PD_LOG( PDERROR, "Remote node execute(configure) failed(rc=%d)",
-                 rc ) ;
-         // Rollback: delete the node-info on catalog-node
-         INT32 rcDel = SDB_OK ;
-         rcDel = msgBuildQueryMsg( &pBuffer, &bufferSize, COORD_CMD_REMOVENODE,
-                                   flag, 0, numToSkip, numToReturn,
-                                   &newNodeInfo, &fieldSelector, &orderBy,
-                                   &hint ) ;
-         if ( rcDel != SDB_OK )
-         {
-            PD_LOG ( PDERROR, "failed to build the request for "
-                     "catalog-node(rc=%d)", rcDel ) ;
-            break ;
-         }
-         pCatReq = (MsgOpQuery *)pBuffer;
-         pCatReq->header.opCode = MSG_CAT_DEL_NODE_REQ;
-         rcDel = executeOnCataGroup( (MsgHeader*)pBuffer, cb, TRUE ) ;
-         SDB_OSS_FREE(pBuffer);
-         if ( rcDel!= SDB_OK )
-         {
-            PD_LOG ( PDERROR, "Failed to delete node, execute on catalog-node "
-                     "failed(rc=%d)", rcDel ) ;
-            break ;
-         }
-         break ;
-      }while ( FALSE ) ;
-
-      PD_TRACE_EXITRC ( SDB_RTNCOCMDCTN__CRTNODE, rc ) ;
-      return rc ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCMDRMN_EXE, "rtnCoordCMDRemoveNode::execute" )
-   INT32 rtnCoordCMDRemoveNode::execute( MsgHeader *pMsg,
-                                         pmdEDUCB *cb,
-                                         INT64 &contextID,
-                                         rtnContextBuf *buf )
-   {
-      PD_TRACE_ENTRY ( SDB_RTNCOCMDRMN_EXE ) ;
-      INT32 rc = SDB_OK ;
-      netMultiRouteAgent *pAgent = pmdGetKRCB()->getCoordCB()->getRouteAgent() ;
-      contextID                  = -1 ;
-
-      MsgOpQuery *forward = NULL ;
-      string groupName ;
-      string host ;
-      string srv ;
-      CoordGroupInfoPtr groupInfo ;
-
-      CHAR *pQuery = NULL ;
-      BSONObj rInfo ;
-
-      BOOLEAN onlyDetach = FALSE ;
-      BOOLEAN keepData = FALSE ;
-
-      forward = (MsgOpQuery *)pMsg ;
-      forward->header.opCode = MSG_CAT_DEL_NODE_REQ ;
-
-      rc = msgExtractQuery( (CHAR*)pMsg, NULL, NULL,
-                            NULL, NULL, &pQuery,
-                            NULL, NULL, NULL );
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "failed to parse msg:%s",rc ) ;
-         goto error ;
-      }
-
-      try
-      {
-         rInfo = BSONObj( pQuery ) ;
-         BSONElement ele = rInfo.getField( FIELD_NAME_GROUPNAME ) ;
-         if ( ele.eoo() || String != ele.type() )
-         {
-            PD_LOG( PDERROR, "failed to get groupname from msg[%s]",
-                    rInfo.toString().c_str() ) ;
-            rc = SDB_INVALIDARG ;
-            goto error ;
-         }
-         groupName = ele.String() ;
-
-         ele = rInfo.getField( FIELD_NAME_HOST ) ;
-         if ( ele.eoo() || String != ele.type() )
-         {
-            PD_LOG( PDERROR, "failed to get host from msg[%s]",
-                    rInfo.toString().c_str() ) ;
-            rc = SDB_INVALIDARG ;
-            goto error ;
-         }
-         host = ele.String() ;
-
-         ele = rInfo.getField( PMD_OPTION_SVCNAME ) ;
-         if ( ele.eoo() || String != ele.type() )
-         {
-            PD_LOG( PDERROR, "Failed to get srv from msg[%s]",
-                    rInfo.toString().c_str() ) ;
-            rc = SDB_INVALIDARG ;
-            goto error ;
-         }
-         srv = ele.String() ;
-
-         ele = rInfo.getField( FIELD_NAME_ONLY_DETACH ) ;
-         if ( ele.eoo() )
-         {
-            onlyDetach = FALSE ;
-         }
-         else if ( Bool == ele.type() )
-         {
-            onlyDetach = ele.Bool() ; 
-         }
-         else
-         {
-            PD_LOG( PDERROR, "unexpected type(%d) of \"OnlyDetach\""
-                    "it should be bool in %s", ele.type(),
-                    rInfo.toString().c_str() ) ;
-            rc = SDB_INVALIDARG ;
-            goto error ;
-         }
-
-         keepData = rInfo.getBoolField( FIELD_NAME_KEEP_DATA ) ;
-      }
-      catch ( std::exception &e )
-      {
-         PD_LOG( PDERROR, "unexpected err happended:%s",
-                 e.what() ) ;
-         rc = SDB_SYS ;
-         goto error ;
-      }
-
-      /// remove data node on catalog
-      rc = executeOnCataGroup ( pMsg, cb, TRUE ) ;
-      if ( rc )
-      {
-         PD_LOG ( PDERROR, "Failed to remove node[GroupName:%s, "
-                  "HostName: %s, SvcName: %s] in catalog, rc: %d",
-                  groupName.c_str(), host.c_str(), srv.c_str(), rc ) ;
-         goto error ;
-      }
-
-      /// get group info from catalog
-      rc = rtnCoordGetGroupInfo( cb, groupName.c_str(), TRUE, groupInfo ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "Failed to get groupinfo[%s] from catalog, rc: %d",
-                 groupName.c_str(), rc ) ;
-         goto error ;
-      }
-
-      /// notify the other nodes to update groupinfo.
-      /// here we do not care whether they succeed.
-      {
-         _MsgClsGInfoUpdated updated ;
-         updated.groupID = groupInfo->groupID() ;
-         MsgRouteID routeID ;
-         UINT32 index = 0 ;
-
-         while ( SDB_OK == groupInfo->getNodeID( index++, routeID,
-                                                 MSG_ROUTE_SHARD_SERVCIE ) )
-         {
-            rtnCoordSendRequestToNodeWithoutReply( (void *)(&updated),
-                                                    routeID, pAgent );
-         }
-      }
-
-      // notify cm to stop and remove node 
-      {
-         SINT32 retCode;
-
-         /// ignore the stop result, because remove or clear will
-         /// retry to stop in sdbcm
-         rc = rtnRemoteExec ( SDBSTOP, host.c_str(), &retCode, &rInfo ) ;
-         rc = ( SDB_OK == rc ) ? retCode : rc ;
-         if ( rc )
-         {
-            PD_LOG( PDWARNING, "Stop the node[GroupName: %s, HostName: %s "
-                    "SvcName: %s] failed, rc: %d, retObj: %s",
-                    groupName.c_str(), host.c_str(), srv.c_str(), rc,
-                    rInfo.toString().c_str() ) ;
-            /// ignored this error
-         }
-
-         if ( !onlyDetach )
-         {
-            rc = rtnRemoteExec ( SDBRM, host.c_str(), &retCode, &rInfo ) ;
-            rc = SDB_OK == rc ? retCode : rc ;
-            if ( SDB_OK != rc )
-            {
-               PD_LOG( PDERROR, "Remove the node[GroupName: %s, HostName: %s, "
-                       "SvcName: %s] failed, rc: %d, retObj: %s",
-                       groupName.c_str(), host.c_str(), srv.c_str(), rc,
-                       rInfo.toString().c_str() ) ;
-             }
-         }
-         else if ( !keepData )
-         {
-            rc = rtnRemoteExec( SDBCLEARDATA, host.c_str(), &retCode, &rInfo ) ;
-            rc = SDB_OK == rc ? retCode : rc ;
-            if ( SDB_OK != rc )
-            {
-               PD_LOG( PDERROR, "Clear data on node[GroupName: %s, HostName: "
-                       "%s, SvcName: %s] failed, rc: %d, retObj: %s",
-                       groupName.c_str(), host.c_str(), srv.c_str(),
-                       rc, rInfo.toString().c_str() ) ;
-            }
-         }
-      }
-
-      /// do not care rc.
-      if ( CATALOG_GROUPID == groupInfo->groupID() )
-      {
-         rtnCataChangeNtyToAllNodes( cb ) ;
-      }
-
-      if ( SDB_OK != rc )
-      {
-         goto error ;
-      }
-
-   done:
-      PD_TRACE_EXITRC ( SDB_RTNCOCMDRMN_EXE, rc ) ;
-      return rc ;
-   error:
-      goto done ;
-   }
-
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCMDUPN_EXE, "rtnCoordCMDUpdateNode::execute" )
    INT32 rtnCoordCMDUpdateNode::execute( MsgHeader *pMsg,
                                          pmdEDUCB *cb,
@@ -3428,591 +1816,6 @@ namespace engine
 
       PD_TRACE_EXITRC ( SDB_RTNCOCMDUPN_EXE, rc ) ;
       return rc;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCMDATGR_STNS, "rtnCoordCMDActiveGroup::startNodes" )
-   INT32 rtnCoordCMDActiveGroup::startNodes( bson::BSONObj &boGroupInfo,
-                                             vector<BSONObj> &objList )
-   {
-      INT32 rc = SDB_OK;
-      PD_TRACE_ENTRY ( SDB_RTNCOCMDATGR_STNS ) ;
-      do
-      {
-         try
-         {
-            BSONElement beGroup = boGroupInfo.getField( FIELD_NAME_GROUP );
-            if ( beGroup.eoo() || beGroup.type()!=Array )
-            {
-               rc = SDB_INVALIDARG;
-               PD_LOG ( PDERROR,
-                        "failed to get the field(%s)",
-                        FIELD_NAME_GROUP );
-               break;
-            }
-            BSONObjIterator i( beGroup.embeddedObject() );
-            while ( i.more() )
-            {
-               BSONElement beTmp = i.next();
-               BSONObj boTmp = beTmp.embeddedObject();
-               BSONElement beHostName = boTmp.getField( FIELD_NAME_HOST );
-               if ( beHostName.eoo() || beHostName.type()!=String )
-               {
-                  rc = SDB_INVALIDARG;
-                  PD_LOG ( PDERROR, "Failed to get the HostName" );
-                  break;
-               }
-               string strHostName = beHostName.str();
-               BSONElement beService = boTmp.getField( FIELD_NAME_SERVICE );
-               if ( beService.eoo() || beService.type()!=Array )
-               {
-                  rc = SDB_INVALIDARG;
-                  PD_LOG ( PDWARNING, "Failed to get the field(%s)",
-                           FIELD_NAME_SERVICE );
-                  break;
-               }
-               string strServiceName;
-               rc = getServiceName( beService, MSG_ROUTE_LOCAL_SERVICE,
-                                    strServiceName );
-               if ( rc != SDB_OK )
-               {
-                  rc = SDB_INVALIDARG;
-                  PD_LOG ( PDWARNING, "Failed to get local-service-name" ) ;
-                  break ;
-               }
-               SINT32 retCode ;
-               BSONObjBuilder bobLocalService ;
-               bobLocalService.append( PMD_OPTION_SVCNAME, strServiceName );
-               BSONObj boLocalService = bobLocalService.obj();
-               rc = rtnRemoteExec ( SDBSTART, strHostName.c_str(),
-                                    &retCode, &boLocalService ) ;
-               if ( SDB_OK == rc && SDB_OK == retCode )
-               {
-                  continue ;
-               }
-               if ( rc != SDB_OK )
-               {
-                  PD_LOG( PDERROR, "start the node failed (HostName=%s, "
-                          "LocalService=%s, rc=%d)", strHostName.c_str(),
-                          strServiceName.c_str(), rc ) ;
-               }
-               else if ( retCode != SDB_OK )
-               {
-                  rc = retCode;
-                  PD_LOG( PDERROR, "remote node execute(start) failed "
-                          "(HostName=%s, LocalService=%s, rc=%d)", 
-                          strHostName.c_str(), strServiceName.c_str(), rc ) ;
-               }
-               BSONObjBuilder bobReply;
-               bobReply.append( FIELD_NAME_HOST, strHostName );
-               bobReply.append( PMD_OPTION_SVCNAME, strServiceName );
-               bobReply.append( FIELD_NAME_ERROR_NO, retCode );
-               objList.push_back( bobReply.obj() );
-            }
-            break ;
-         }
-         catch ( std::exception &e )
-         {
-            rc = SDB_INVALIDARG ;
-            PD_LOG ( PDERROR, "occured unexpected error:%s", e.what() ) ;
-            break;
-         }
-      }while ( FALSE );
-
-      if ( objList.size() != 0 )
-      {
-         rc = SDB_CM_RUN_NODE_FAILED ;
-      }
-      PD_TRACE_EXITRC ( SDB_RTNCOCMDATGR_STNS, rc ) ;
-      return rc ;
-   }
-
-   INT32 rtnCoordCMDActiveGroup::startNodes( clsGroupItem *pItem,
-                                             vector<BSONObj> &objList )
-   {
-      INT32 rc = SDB_OK ;
-      MsgRouteID id ;
-      string hostName ;
-      string svcName ;
-      UINT32 pos = 0 ;
-      SINT32 retCode = SDB_OK ;
-
-      while ( SDB_OK == pItem->getNodeInfo( pos, id, hostName, svcName,
-                                            MSG_ROUTE_LOCAL_SERVICE ) )
-      {
-         ++pos ;
-
-         retCode = SDB_OK ;
-         BSONObjBuilder bobLocalService ;
-         bobLocalService.append( PMD_OPTION_SVCNAME, svcName ) ;
-         BSONObj boLocalService = bobLocalService.obj() ;
-
-         rc = rtnRemoteExec ( SDBSTART, hostName.c_str(),
-                              &retCode, &boLocalService ) ;
-         if ( SDB_OK == rc && SDB_OK == retCode )
-         {
-            continue ;
-         }
-         if ( rc != SDB_OK )
-         {
-            PD_LOG( PDERROR, "start the node failed (HostName=%s, "
-                    "LocalService=%s, rc=%d)", hostName.c_str(),
-                    svcName.c_str(), rc ) ;
-         }
-         else if ( retCode != SDB_OK )
-         {
-            rc = retCode ;
-            PD_LOG( PDERROR, "remote node execute(start) failed "
-                    "(HostName=%s, LocalService=%s, rc=%d)", 
-                    hostName.c_str(), svcName.c_str(), rc ) ;
-         }
-         BSONObjBuilder bobReply ;
-         bobReply.append( FIELD_NAME_HOST, hostName ) ;
-         bobReply.append( PMD_OPTION_SVCNAME, svcName ) ;
-         bobReply.append( FIELD_NAME_ERROR_NO, retCode ) ;
-         objList.push_back( bobReply.obj() ) ;
-      }
-
-      if ( objList.size() != 0 )
-      {
-         rc = SDB_CM_RUN_NODE_FAILED ;
-         goto error ;
-      }
-
-   done:
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCMDATGR_EXE, "rtnCoordCMDActiveGroup::execute" )
-   INT32 rtnCoordCMDActiveGroup::execute( MsgHeader *pMsg,
-                                          pmdEDUCB *cb,
-                                          INT64 &contextID,
-                                          rtnContextBuf *buf )
-   {
-      INT32 rc                         = SDB_OK;
-      PD_TRACE_ENTRY ( SDB_RTNCOCMDATGR_EXE ) ;
-
-      // fill default-reply(active group success)
-      contextID                        = -1 ;
-
-      MsgOpQuery *pReq = (MsgOpQuery *)pMsg ;
-      pReq->header.opCode = MSG_CAT_ACTIVE_GROUP_REQ ;
-
-      const CHAR *pGroupName = NULL ;
-      vector<BSONObj> objGrpLst ;
-      vector<BSONObj> objList ;
-      CoordGroupInfoPtr catGroupInfo ;
-
-      do
-      {
-         CHAR *pQuery = NULL ;
-         rc = msgExtractQuery( (CHAR*)pMsg, NULL, NULL, NULL, NULL,
-                               &pQuery, NULL, NULL, NULL ) ;
-         if ( rc )
-         {
-            PD_LOG( PDERROR, "Failed to extract msg, rc: %d", rc ) ;
-            break ;
-         }
-         try
-         {
-            BSONObj boQuery( pQuery ) ;
-            BSONElement ele = boQuery.getField( CAT_GROUPNAME_NAME ) ;
-            if ( ele.type() != String )
-            {
-               PD_LOG( PDERROR, "Get field[%s] type[%d] is not String",
-                       CAT_GROUPNAME_NAME, ele.type() ) ;
-               rc = SDB_INVALIDARG ;
-               break ;
-            }
-            pGroupName = ele.valuestr() ;
-         }
-         catch( std::exception &e )
-         {
-            PD_LOG( PDERROR, "Occur exception: %s", e.what() ) ;
-            rc = SDB_INVALIDARG ;
-            break ;
-         }
-
-         rc = executeOnCataGroup( pMsg, cb, NULL, &objGrpLst ) ;
-         if ( rc != SDB_OK )
-         {
-            PD_LOG ( PDERROR, "Failed to active group[%s], execute on "
-                     "catalog-node failed(rc=%d)", pGroupName, rc ) ;
-
-            if ( 0 != ossStrcmp( CATALOG_GROUPNAME, pGroupName ) ||
-                 SDB_OK != rtnCoordGetLocalCatGroupInfo( catGroupInfo ) ||
-                 NULL == catGroupInfo.get() ||
-                 catGroupInfo->nodeCount() == 0 )
-            {
-               break ;
-            }
-         }
-
-         if ( catGroupInfo.get() &&
-              catGroupInfo->nodeCount() > 0 )
-         {
-            rc = startNodes( catGroupInfo.get(), objList ) ;
-         }
-         else if ( objGrpLst.size() > 0 )
-         {
-            rc = startNodes( objGrpLst[0], objList ) ;
-         }
-         else
-         {
-            rc = SDB_SYS ;
-         }
-
-         if ( rc != SDB_OK )
-         {
-            PD_LOG ( PDERROR, "Start node failed(rc=%d)", rc ) ;
-            UINT32 i = 0;
-            string strNodeList;
-            for ( ; i < objList.size(); i++ )
-            {
-               strNodeList += objList[i].toString( false, false );
-            }
-            PD_LOG_MSG( PDERROR, "Strart failed nodes: %s",
-                        strNodeList.c_str() ) ;
-            break ;
-         }
-      }while ( FALSE ) ;
-
-      PD_TRACE_EXITRC ( SDB_RTNCOCMDATGR_EXE, rc ) ;
-      return rc;
-   }
-
-   INT32 rtnCoordCMDCreateIndex::checkIndexKey( const CoordCataInfoPtr &cataInfo,
-                                                const BSONObj &indexObj,
-                                                set< UINT32 > &haveSet,
-                                                pmdEDUCB *cb )
-   {
-      INT32 rc = SDB_OK ;
-      BSONObj shardingKey ;
-      UINT32 skSiteID = cataInfo->getShardingKeySiteID() ;
-
-      if ( skSiteID > 0 )
-      {
-         if ( haveSet.count( skSiteID ) > 0 )
-         {
-            /// already checked
-            goto done ;
-         }
-         haveSet.insert( skSiteID ) ;
-      }
-
-      /// check the sharding key
-      {
-         cataInfo->getShardingKey ( shardingKey ) ;
-         BSONObjIterator shardingItr ( shardingKey ) ;
-         while ( shardingItr.more() )
-         {
-            BSONElement sk = shardingItr.next() ;
-            if ( indexObj.getField( sk.fieldName() ).eoo() )
-            {
-               PD_LOG( PDWARNING, "All fields in sharding key must "
-                       "be included in unique index, missing field: %s,"
-                       "shardingKey: %s, indexKey: %s, collection: %s",
-                       sk.fieldName(), shardingKey.toString().c_str(),
-                       indexObj.toString().c_str(), cataInfo->getName() ) ;
-               rc = SDB_SHARD_KEY_NOT_IN_UNIQUE_KEY ;
-               goto error ;
-            }
-         }
-      }
-
-      if ( cataInfo->isMainCL() )
-      {
-         CoordSubCLlist subCLList ;
-         cataInfo->getSubCLList( subCLList ) ;
-
-         CoordSubCLlist::iterator it = subCLList.begin() ;
-         while( it != subCLList.end() )
-         {
-            CoordCataInfoPtr subCataInfo ;
-            rc = rtnCoordGetCataInfo( cb, (*it).c_str(), FALSE,
-                                      subCataInfo, NULL ) ;
-            PD_RC_CHECK( rc, PDERROR, "Get sub collection[%s] catalog info "
-                         "failed, rc: %d", (*it).c_str(), rc ) ;
-
-            rc = checkIndexKey( subCataInfo, indexObj, haveSet, cb ) ;
-            if ( rc )
-            {
-               goto error ;
-            }
-            ++it ;
-         }
-      }
-
-   done:
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCMDCTIND_EXE, "rtnCoordCMDCreateIndex::execute" )
-   INT32 rtnCoordCMDCreateIndex::execute( MsgHeader *pMsg,
-                                          pmdEDUCB *cb,
-                                          INT64 &contextID,
-                                          rtnContextBuf *buf )
-   {
-      INT32 rc                         = SDB_OK;
-      PD_TRACE_ENTRY ( SDB_RTNCOCMDCTIND_EXE ) ;
-      INT32 tempRC                     = SDB_OK ;
-
-      // fill default-reply(active group success)
-      contextID                        = -1 ;
-
-      CHAR *pQuery                     = NULL ;
-      BOOLEAN emptyUpdateCata          = FALSE ;
-
-      CoordGroupList sucGrpLst ;
-
-      const CHAR *strCollectionName    = NULL ;
-      const CHAR *strIndexName         = NULL ;
-      CoordCataInfoPtr cataInfo;
-
-      // rollback related
-      CHAR *pDropMsg                   = NULL;
-      INT32 bufferSize                 = 0;
-      SET_RC ignoreRC ;
-
-      // extract message
-      rc = msgExtractQuery( (CHAR*)pMsg, NULL, NULL,
-                            NULL, NULL, &pQuery,
-                            NULL, NULL, NULL );
-      PD_RC_CHECK ( rc, PDERROR,
-                    "failed to parse create index request(rc=%d)",
-                    rc ) ;
-      try
-      {
-         BSONObj boQuery(pQuery);
-         // get collection name
-         BSONElement beCollectionName
-                     = boQuery.getField( FIELD_NAME_COLLECTION );
-         // get index name
-         BSONElement beIndex = boQuery.getField( FIELD_NAME_INDEX );
-         BSONElement beIndexName ;
-         // make sure collection name exists
-         PD_CHECK ( beCollectionName.type() == String,
-                    SDB_INVALIDARG, error, PDERROR,
-                    "create index failed, failed to get the field(%s)",
-                    FIELD_NAME_COLLECTION ) ;
-         strCollectionName = beCollectionName.valuestr() ;
-
-         // make sure index object exist
-         PD_CHECK ( beIndex.type() == Object,
-                    SDB_INVALIDARG, error, PDERROR,
-                    "create index failed, failed to get the field(%s)",
-                    FIELD_NAME_INDEX ) ;
-         // get embedded index name
-         beIndexName = beIndex.embeddedObject().getField( IXM_FIELD_NAME_NAME );
-         PD_CHECK ( beIndexName.type() == String,
-                    SDB_INVALIDARG, error, PDERROR,
-                    "create index failed, failed to get the field(%s)",
-                    IXM_FIELD_NAME_NAME ) ;
-         strIndexName = beIndexName.valuestr() ;
-      }
-      catch ( std::exception &e )
-      {
-         PD_RC_CHECK ( rc, PDERROR,
-                       "create index failed, occured unexpected error:%s",
-                       e.what() );
-      }
-
-      rc = rtnCoordGetCataInfo( cb, strCollectionName, FALSE, cataInfo,
-                                NULL ) ;
-      PD_RC_CHECK ( rc, PDERROR, "Failed to create index(%s), "
-                    "get catalogue failed(rc=%d)",
-                    strCollectionName, rc ) ;
-
-   retry :
-      // if the collection is sharded, we have to extract the index key and
-      // make sure sharding key is included if it's unique index
-      if ( cataInfo->isSharded() )
-      {
-         try
-         {
-            BSONObj arg ( pQuery ) ;
-            BSONObj indexObj ;
-            BSONObj indexKey ;
-            BSONElement indexUnique ;
-            BOOLEAN isUnique = TRUE ;
-            rc = rtnGetObjElement ( arg, FIELD_NAME_INDEX, indexObj ) ;
-            PD_RC_CHECK ( rc, PDERROR,
-                          "Failed to get object index, rc = %d", rc ) ;
-            rc = rtnGetObjElement ( indexObj, IXM_KEY_FIELD, indexKey ) ;
-            PD_RC_CHECK ( rc, PDERROR,
-                          "Failed to get key for index: %s, rc = %d",
-                          indexObj.toString().c_str(), rc ) ;
-            indexUnique = indexObj.getField ( IXM_UNIQUE_FIELD ) ;
-            if ( indexUnique.type() != Bool )
-            {
-               isUnique = FALSE ;
-            }
-            else
-            {
-               isUnique = indexUnique.boolean () ;
-            }
-            // now the index def is in indexObj, so we need to compare
-            // sharding key and indexKey if it's unique
-            if ( isUnique )
-            {
-               set< UINT32 > haveSet ;
-               rc = checkIndexKey( cataInfo, indexKey, haveSet, cb ) ;
-               if ( SDB_SHARD_KEY_NOT_IN_UNIQUE_KEY == rc &&
-                    !emptyUpdateCata )
-               {
-                  rc = rtnCoordGetCataInfo( cb, strCollectionName, TRUE,
-                                            cataInfo ) ;
-                  PD_RC_CHECK( rc, PDERROR, "Update failed, failed to get the "
-                               "catalogue info(collection name: %s), rc: %d",
-                               strCollectionName, rc ) ;
-                  emptyUpdateCata = TRUE ;
-                  goto retry ;
-               }
-               PD_RC_CHECK( rc, PDERROR, "Create index[%s] of "
-                            "collection[%s] failed, rc: %d",
-                            indexObj.toString().c_str(),
-                            strCollectionName, rc ) ;
-            }
-         } // try
-         catch ( std::exception &e )
-         {
-            PD_RC_CHECK ( SDB_SYS, PDERROR,
-                          "Exception during extracting unique key: %s",
-                          e.what() ) ;
-         }
-      } // if ( beCollectionName.type()!=String )
-
-      rc = executeOnCL( pMsg, cb, strCollectionName, FALSE, NULL,
-                        NULL, &sucGrpLst ) ;
-      if ( rc )
-      {
-         PD_LOG( PDERROR, "Create index of collection[%s] on data group, "
-                 "rc: %d", strCollectionName, rc ) ;
-         goto rollback ;
-      }
-
-   done :
-      if ( strCollectionName )
-      {
-         PD_AUDIT_COMMAND( AUDIT_DDL, CMD_NAME_CREATE_INDEX, AUDIT_OBJ_CL,
-                           strCollectionName, rc, "Option:%s",
-                           BSONObj(pQuery).toString().c_str() ) ;
-      }
-      if ( pDropMsg )
-      {
-         SDB_OSS_FREE ( pDropMsg ) ;
-      }
-      PD_TRACE_EXITRC ( SDB_RTNCOCMDCTIND_EXE, rc ) ;
-      return rc;
-   rollback :
-      // if create index happened on some nodes, we have to rollback the
-      // operation
-      // first let's build a package
-      tempRC = msgBuildDropIndexMsg( &pDropMsg, &bufferSize,
-                                     strCollectionName,
-                                     strIndexName, 0 );
-      PD_RC_CHECK ( tempRC, PDERROR,
-                    "Failed to build drop index message, rc = %d",
-                    tempRC ) ;
-
-      // let's get most current version again
-      tempRC = rtnCoordGetCataInfo( cb, strCollectionName,
-                                    FALSE, cataInfo ) ;
-      PD_RC_CHECK ( tempRC, PDERROR,
-                    "Failed to rollback create index(%s), "
-                    "get catalogue failed(rc=%d)",
-                    strCollectionName, tempRC ) ;
-
-      // don't rollback for main-collection
-      if ( cataInfo->isMainCL() )
-      {
-         PD_LOG( PDWARNING, "Main-collection create index failed "
-                 "and will not rollback" ) ;
-         goto error ;
-      }
-
-      ignoreRC.insert( SDB_IXM_NOTEXIST ) ;
-      tempRC = executeOnCL( (MsgHeader *)pDropMsg, cb, strCollectionName,
-                            FALSE, &sucGrpLst, &ignoreRC, NULL ) ;
-      if ( tempRC != SDB_OK )
-      {
-         PD_LOG ( PDERROR, "Failed to rollback create index, rc = %d",
-                  tempRC ) ;
-         goto error ;
-      }
-   error :
-      goto done ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCMDDPIN_EXE, "rtnCoordCMDDropIndex::execute" )
-   INT32 rtnCoordCMDDropIndex::execute( MsgHeader *pMsg,
-                                        pmdEDUCB *cb,
-                                        INT64 &contextID,
-                                        rtnContextBuf *buf )
-   {
-      INT32 rc                         = SDB_OK;
-      PD_TRACE_ENTRY ( SDB_RTNCOCMDDPIN_EXE ) ;
-
-      // fill default-reply(active group success)
-      contextID                        = -1 ;
-      string realCLName ;
-      CHAR *pQuery = NULL ;
-      rc = msgExtractQuery( (CHAR*)pMsg, NULL, NULL,
-                            NULL, NULL, &pQuery,
-                            NULL, NULL, NULL );
-      if ( rc != SDB_OK )
-      {
-         PD_LOG ( PDERROR, "Failed to parse drop index request(rc=%d)",
-                  rc ) ;
-         goto error ;
-      }
-
-      try
-      {
-         BSONObj boQuery( pQuery ) ;
-         BSONElement beCollectionName =
-            boQuery.getField( FIELD_NAME_COLLECTION );
-         if ( beCollectionName.eoo() || beCollectionName.type()!=String )
-         {
-            rc = SDB_INVALIDARG ;
-            PD_LOG( PDERROR, "Drop index failed, failed to get the "
-                    "field(%s)", FIELD_NAME_COLLECTION );
-            goto error ;
-         }
-         realCLName = beCollectionName.str() ;
-      }
-      catch ( std::exception &e )
-      {
-         rc = SDB_INVALIDARG;
-         PD_LOG ( PDERROR, "Drop index failed, occured unexpected "
-                  "error:%s", e.what() ) ;
-         goto error ;
-      }
-
-      rc = executeOnCL( pMsg, cb, realCLName.c_str(), FALSE, NULL,
-                        NULL, NULL ) ;
-      if ( rc )
-      {
-         PD_LOG ( PDERROR, "Failed to drop index in collection(%s), "
-                  "drop on data-node failed(rc=%d)",
-                  realCLName.c_str(), rc ) ;
-         goto error ;
-      }
-
-   done:
-      if ( !realCLName.empty() )
-      {
-         PD_AUDIT_COMMAND( AUDIT_DDL, CMD_NAME_DROP_INDEX, AUDIT_OBJ_CL,
-                           realCLName.c_str(), rc, "Option:%s",
-                           BSONObj(pQuery).toString().c_str() ) ;
-      }
-      PD_TRACE_EXITRC ( SDB_RTNCOCMDDPIN_EXE, rc ) ;
-      return rc ;
-   error:
-      goto done ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCMDOPONNODE_EXE, "rtnCoordCMDOperateOnNode::execute" )
@@ -4113,864 +1916,6 @@ namespace engine
    SINT32 rtnCoordCMDShutdownNode::getOpType()
    {
       return SDBSTOP;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION (SDB_RTNCOCMDOPONGR_EXE, "rtnCoordCMDOperateOnGroup::execute" )
-   INT32 rtnCoordCMDOperateOnGroup::execute( MsgHeader *pMsg,
-                                             pmdEDUCB *cb,
-                                             INT64 &contextID,
-                                             rtnContextBuf *buf )
-   {
-      INT32 rc = SDB_OK;
-      PD_TRACE_ENTRY ( SDB_RTNCOCMDOPONGR_EXE ) ;
-      pmdKRCB *pKrcb                   = pmdGetKRCB();
-      SDB_RTNCB *pRtncb                = pKrcb->getRTNCB();
-      CoordCB *pCoordcb                = pKrcb->getCoordCB();
-      contextID                        = -1 ;
-      const CHAR *pGroupName           = NULL ;
-      CHAR *pCMDName                   = NULL ;
-
-      do
-      {
-         INT32 flag;
-         SINT64 numToSkip;
-         SINT64 numToReturn;
-         CHAR *pQuery;
-         CHAR *pFieldSelector;
-         CHAR *pOrderBy;
-         CHAR *pHint;
-         rc = msgExtractQuery( (CHAR*)pMsg, &flag, &pCMDName,
-                               &numToSkip, &numToReturn, &pQuery,
-                               &pFieldSelector, &pOrderBy, &pHint ) ;
-         if ( rc != SDB_OK )
-         {
-            PD_LOG ( PDERROR, "Failed to parse the request(rc=%d)", rc ) ;
-            break;
-         }
-         BSONObj boQuery;
-         BSONObj boFieldSelector;
-         BSONObj boOrderBy;
-         BSONObj boHint;
-         try
-         {
-            BSONObjBuilder bobQuery;
-            BSONObj boReq(pQuery);
-            BSONElement beGroupName = boReq.getField( FIELD_NAME_GROUPNAME );
-            if ( beGroupName.eoo() || beGroupName.type()!=String )
-            {
-               rc = SDB_INVALIDARG;
-               PD_LOG ( PDERROR, "Failed to get the field(%s)",
-                        FIELD_NAME_GROUPNAME ) ;
-               break ;
-            }
-            pGroupName = beGroupName.valuestr() ;
-            bobQuery.append( beGroupName );
-            boQuery = bobQuery.obj();
-         }
-         catch ( std::exception &e )
-         {
-            rc = SDB_INVALIDARG;
-            PD_LOG ( PDERROR, "Occured unexpected error:%s", e.what() ) ;
-            break ;
-         }
-
-         rtnCoordProcesserFactory *pProcesserFactory
-               = pCoordcb->getProcesserFactory() ;
-         rtnCoordOperator *pCmdProcesser = NULL ;
-         pCmdProcesser = pProcesserFactory->getCommandProcesser(
-            COORD_CMD_LISTGROUPS ) ;
-         SDB_ASSERT( pCmdProcesser , "pCmdProcesser can't be NULL" ) ;
-         char *pListReq = NULL ;
-         INT32 listReqSize = 0 ;
-         rc = msgBuildQueryMsg( &pListReq, &listReqSize, "", 0, 0, 0, 1,
-                                &boQuery, &boFieldSelector, &boOrderBy,
-                                &boHint ) ;
-         if ( rc != SDB_OK )
-         {
-            PD_LOG ( PDERROR, "Failed to build list request(rc=%d)", rc ) ;
-            break;
-         }
-         rc = pCmdProcesser->execute( (MsgHeader*)pListReq, cb,
-                                      contextID, buf ) ;
-         if ( pListReq )
-         {
-            SDB_OSS_FREE( pListReq ) ;
-            pListReq = NULL;
-         }
-         if ( rc != SDB_OK )
-         {
-            PD_LOG ( PDERROR, "Failed to list groups(rc=%d)", rc ) ;
-            break;
-         }
-
-         rtnContextBuf buffObj ;
-         rc = rtnGetMore( contextID, -1, buffObj, cb, pRtncb ) ;
-         if ( rc != SDB_OK )
-         {
-            contextID = -1 ;
-            if ( rc == SDB_DMS_EOC || NULL == buffObj.data() )
-            {
-               rc = SDB_CLS_GRP_NOT_EXIST;
-            }
-            PD_LOG ( PDERROR, "Failed to get group info(rc=%d)", rc ) ;
-            break;
-         }
-
-         BSONObj boGroupInfo ;
-         try
-         {
-            boGroupInfo = BSONObj( buffObj.data() ) ;
-         }
-         catch ( std::exception &e )
-         {
-            rc = SDB_INVALIDARG;
-            PD_LOG ( PDERROR, "occured unexpected error:%s", e.what() ) ;
-            break;
-         }
-         rc = opOnGroup( boGroupInfo ) ;
-         if ( rc != SDB_OK )
-         {
-            PD_LOG ( PDERROR, "Operate failed(rc=%d)", rc ) ;
-            break;
-         }
-      }while ( FALSE ) ;
-
-      if ( contextID >= 0 )
-      {
-         pRtncb->contextDelete( contextID, cb ) ;
-         contextID = -1 ;
-      }
-
-      if ( pGroupName )
-      {
-         PD_AUDIT_COMMAND( AUDIT_SYSTEM, pCMDName, AUDIT_OBJ_GROUP,
-                           pGroupName, rc, "" ) ;
-      }
-
-      PD_TRACE_EXITRC ( SDB_RTNCOCMDOPONGR_EXE, rc ) ;
-      return rc;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTN_COCOMDOPONGR_OPONGR, "rtnCoordCMDOperateOnGroup::opOnGroup" )
-   INT32 rtnCoordCMDOperateOnGroup::opOnGroup( bson::BSONObj &boGroupInfo )
-   {
-      INT32 rc = SDB_OK;
-      PD_TRACE_ENTRY ( SDB_RTN_COCOMDOPONGR_OPONGR ) ;
-      SINT32 opType = getOpType();
-      vector<BSONObj> objList;
-      do
-      {
-         try
-         {
-            BSONElement beGroup = boGroupInfo.getField( FIELD_NAME_GROUP );
-            if ( beGroup.eoo() || beGroup.type()!=Array )
-            {
-               rc = SDB_INVALIDARG;
-               PD_LOG ( PDERROR, "failed to get the field(%s)",
-                        FIELD_NAME_GROUP );
-               break;
-            }
-            BSONObjIterator i( beGroup.embeddedObject() );
-            while ( i.more() )
-            {
-               BSONElement beTmp = i.next();
-               BSONObj boTmp = beTmp.embeddedObject();
-               BSONElement beHostName = boTmp.getField( FIELD_NAME_HOST );
-               if ( beHostName.eoo() || beHostName.type()!=String )
-               {
-                  rc = SDB_INVALIDARG;
-                  PD_LOG ( PDERROR, "failed to get the HostName");
-                  break;
-               }
-               std::string strHostName = beHostName.str();
-               BSONElement beService = boTmp.getField( FIELD_NAME_SERVICE );
-               if ( beService.eoo() || beService.type()!=Array )
-               {
-                  rc = SDB_INVALIDARG;
-                  PD_LOG ( PDWARNING, "failed to get the field(%s)",
-                           FIELD_NAME_SERVICE );
-                  break;
-               }
-               std::string strServiceName;
-               rc = getServiceName( beService, MSG_ROUTE_LOCAL_SERVICE,
-                                    strServiceName );
-               if ( rc != SDB_OK )
-               {
-                  rc = SDB_INVALIDARG;
-                  PD_LOG ( PDWARNING, "failed to get local-service-name" );
-                  break;
-               }
-               SINT32 retCode;
-               BSONObjBuilder bobLocalService;
-               bobLocalService.append( PMD_OPTION_SVCNAME, strServiceName );
-               BSONObj boLocalService = bobLocalService.obj();
-               rc = rtnRemoteExec ( opType, strHostName.c_str(),
-                                    &retCode, &boLocalService ) ;
-               if ( SDB_OK == rc && SDB_OK == retCode )
-               {
-                  continue;
-               }
-               if ( rc != SDB_OK )
-               {
-                  PD_LOG( PDERROR, "Operate failed (HostName=%s, "
-                          "LocalService=%s, rc=%d)", strHostName.c_str(),
-                          strServiceName.c_str(), rc ) ;
-               }
-               else if ( retCode != SDB_OK )
-               {
-                  rc = retCode;
-                  PD_LOG( PDERROR, "Remote node execute(opType=%d) failed "
-                          "(HostName=%s, LocalService=%s, rc=%d)",
-                          opType, strHostName.c_str(), strServiceName.c_str(),
-                          rc ) ;
-               }
-               BSONObjBuilder bobReply;
-               bobReply.append( FIELD_NAME_HOST, strHostName );
-               bobReply.append( PMD_OPTION_SVCNAME, strServiceName );
-               bobReply.append( FIELD_NAME_ERROR_NO, retCode );
-               objList.push_back( bobReply.obj() );
-            }
-            break;
-         }
-         catch ( std::exception &e )
-         {
-            rc = SDB_INVALIDARG;
-            PD_LOG ( PDERROR, "occured unexpected error:%s", e.what() ) ;
-            break;
-         }
-      }while ( FALSE );
-      if ( objList.size() != 0 )
-      {
-         rc = SDB_CM_OP_NODE_FAILED;
-      }
-      PD_TRACE_EXITRC ( SDB_RTN_COCOMDOPONGR_OPONGR, rc ) ;
-      return rc ;
-   }
-   SINT32 rtnCoordCMDShutdownGroup::getOpType()
-   {
-      return SDBSTOP;
-   }
-
-   INT32 rtnCoordCMDSplit::getCLCount( const CHAR * clFullName,
-                                       CoordGroupList & groupList,
-                                       pmdEDUCB *cb,
-                                       UINT64 & count )
-   {
-      INT32 rc = SDB_OK ;
-      pmdKRCB *pKRCB                   = pmdGetKRCB () ;
-      SDB_RTNCB *pRtncb                = pKRCB->getRTNCB() ;
-      rtnContext *pContext             = NULL ;
-      count                            = 0 ;
-      CoordGroupList tmpGroupList      = groupList ;
-
-      BSONObj collectionObj ;
-      BSONObj dummy ;
-      rtnContextBuf buffObj ;
-
-      collectionObj = BSON( FIELD_NAME_COLLECTION << clFullName ) ;
-
-      // send getcount to node
-      rc = rtnCoordNodeQuery( CMD_ADMIN_PREFIX CMD_NAME_GET_COUNT,
-                              dummy, dummy, dummy, collectionObj,
-                              0, 1, tmpGroupList, cb, &pContext,
-                              clFullName ) ;
-
-      PD_RC_CHECK ( rc, PDERROR, "Failed to getcount from source node, rc = %d",
-                    rc ) ;
-
-      rc = pContext->getMore( -1, buffObj, cb ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "Get count getmore failed, rc: %d", rc ) ;
-         goto error ;
-      }
-      else
-      {
-         // get count data
-         BSONObj countObj ( buffObj.data() ) ;
-         BSONElement beTotal = countObj.getField( FIELD_NAME_TOTAL );
-         PD_CHECK( beTotal.isNumber(), SDB_INVALIDARG, error,
-                   PDERROR, "count failed, failed to get the field(%s)",
-                   FIELD_NAME_TOTAL ) ;
-         count = beTotal.numberLong() ;
-      }
-
-   done:
-      if ( pContext )
-      {
-         SINT64 contextID = pContext->contextID() ;
-         pRtncb->contextDelete ( contextID, cb ) ;
-      }
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCMDSP_EXE, "rtnCoordCMDSplit::execute" )
-   INT32 rtnCoordCMDSplit::execute( MsgHeader *pMsg,
-                                    pmdEDUCB *cb,
-                                    INT64 &contextID,
-                                    rtnContextBuf *buf )
-   {
-      INT32 rc                         = SDB_OK ;
-      PD_TRACE_ENTRY ( SDB_RTNCOCMDSP_EXE ) ;
-      pmdKRCB *pKRCB                   = pmdGetKRCB () ;
-      SDB_RTNCB *pRtncb                = pKRCB->getRTNCB() ;
-      CoordCB *pCoordcb                = pKRCB->getCoordCB () ;
-      contextID                        = -1 ;
-
-      CHAR *pCommandName               = NULL ;
-      CHAR *pQuery                     = NULL ;
-
-      CHAR szSource [ OSS_MAX_GROUPNAME_SIZE + 1 ] = {0} ;
-      CHAR szTarget [ OSS_MAX_GROUPNAME_SIZE + 1 ] = {0} ;
-      const CHAR *strName              = NULL ;
-      CHAR *splitReadyBuffer           = NULL ;
-      INT32 splitReadyBufferSz         = 0 ;
-      CHAR *splitQueryBuffer           = NULL ;
-      INT32 splitQueryBufferSz         = 0 ;
-      MsgOpQuery *pSplitQuery          = NULL ;
-      UINT64 taskID                    = 0 ;
-      BOOLEAN async                    = FALSE ;
-      BSONObj taskInfoObj ;
-
-      BSONObj boShardingKey ;
-      CoordCataInfoPtr cataInfo ;
-      BSONObj boKeyStart ;
-      BSONObj boKeyEnd ;
-      FLOAT64 percent = 0.0 ;
-
-      // first round we perform prepare, so catalog node is able to do sanity
-      // check for collection name and nodes
-      MsgOpQuery *pSplitReq            = (MsgOpQuery *)pMsg ;
-      pSplitReq->header.opCode         = MSG_CAT_SPLIT_PREPARE_REQ ;
-
-      CoordGroupList groupLst ;
-      CoordGroupList groupDstLst ;
-
-      /******************************************************************
-       *              PREPARE PHASE                                     *
-       ******************************************************************/
-      // send request to catalog
-      rc = executeOnCataGroup ( pMsg, cb, &groupLst ) ;
-      PD_RC_CHECK ( rc, PDERROR, "Split failed on catalog, rc = %d", rc ) ;
-
-      // here, in groupLst there should be one and only one group, for SOURCE
-      // send request to data-node to find the partitioning key
-      // Extract the SplitQuery Field and build a query request to send to data
-      // node
-      rc = msgExtractQuery ( (CHAR*)pSplitReq, NULL, &pCommandName,
-                             NULL, NULL, &pQuery,
-                             NULL, NULL, NULL ) ;
-      PD_RC_CHECK ( rc, PDERROR,
-                    "Failed to extract query, rc = %d", rc ) ;
-      try
-      {
-         /***************************************************************
-          *             DO SOME VALIDATION HERE                         *
-          ***************************************************************/
-         BSONObj boQuery ( pQuery ) ;
-
-         // get collection name and query
-         BSONElement beName = boQuery.getField ( CAT_COLLECTION_NAME ) ;
-         BSONElement beSplitQuery =
-               boQuery.getField ( CAT_SPLITQUERY_NAME ) ;
-         BSONElement beSplitEndQuery ;
-         BSONElement beSource = boQuery.getField ( CAT_SOURCE_NAME ) ;
-         BSONElement beTarget = boQuery.getField ( CAT_TARGET_NAME ) ;
-         BSONElement beAsync  = boQuery.getField ( FIELD_NAME_ASYNC ) ;
-         percent = boQuery.getField( CAT_SPLITPERCENT_NAME ).numberDouble() ;
-         // collection name verify
-         PD_CHECK ( !beName.eoo() && beName.type () == String,
-                    SDB_INVALIDARG, error, PDERROR,
-                    "Failed to process split prepare, unable to find "
-                    "collection name field" ) ;
-         // now strName is the name of collection
-         strName = beName.valuestr() ;
-         // get source group name
-         PD_CHECK ( !beSource.eoo() && beSource.type() == String,
-                    SDB_INVALIDARG, error, PDERROR,
-                    "Unable to find source field" ) ;
-         rc = catGroupNameValidate ( beSource.valuestr() ) ;
-         PD_CHECK ( SDB_OK == rc, SDB_INVALIDARG, error, PDERROR,
-                    "Source name is not valid: %s",
-                    beSource.valuestr() ) ;
-         ossStrncpy ( szSource, beSource.valuestr(), sizeof(szSource) ) ;
-
-         // get target group name
-         PD_CHECK ( !beTarget.eoo() && beTarget.type() == String,
-                    SDB_INVALIDARG, error, PDERROR,
-                    "Unable to find target field" ) ;
-         rc = catGroupNameValidate ( beTarget.valuestr() ) ;
-         PD_CHECK ( SDB_OK == rc, SDB_INVALIDARG, error, PDERROR,
-                    "Target name is not valid: %s",
-                    beTarget.valuestr() ) ;
-         ossStrncpy ( szTarget, beTarget.valuestr(), sizeof(szTarget) ) ;
-
-         // async check
-         if ( Bool == beAsync.type() )
-         {
-            async = beAsync.Bool() ? TRUE : FALSE ;
-         }
-         else if ( !beAsync.eoo() )
-         {
-            PD_LOG( PDERROR, "Field[%s] type[%d] error", FIELD_NAME_ASYNC,
-                    beAsync.type() ) ;
-            rc = SDB_INVALIDARG ;
-            goto error ;
-         }
-
-         // make sure we have either split value or split query
-         if ( !beSplitQuery.eoo() )
-         {
-            PD_CHECK ( beSplitQuery.type() == Object,
-                       SDB_INVALIDARG, error, PDERROR,
-                       "Split is not defined or not valid" ) ;
-            beSplitEndQuery = boQuery.getField ( CAT_SPLITENDQUERY_NAME ) ;
-            if ( !beSplitEndQuery.eoo() )
-            {
-               PD_CHECK ( beSplitEndQuery.type() == Object,
-                          SDB_INVALIDARG, error, PDERROR,
-                          "Split is not defined or not valid" ) ;
-            }
-         }
-         else
-         {
-            PD_CHECK( percent > 0.0 && percent <= 100.0,
-                      SDB_INVALIDARG, error, PDERROR,
-                      "Split percent value is error" ) ;
-         }
-
-         // get sharding key, always get the newest version from catalog
-         rc = rtnCoordGetCataInfo ( cb, strName, TRUE, cataInfo ) ;
-         PD_RC_CHECK ( rc, PDERROR,
-                       "Failed to get cata info for collection %s, rc = %d",
-                       strName, rc ) ;
-         // sharding key must exist, we should NEVER hit this check because the
-         // check already done in catalog in PREPARE phase
-         cataInfo->getShardingKey ( boShardingKey ) ;
-         PD_CHECK ( !boShardingKey.isEmpty(), SDB_COLLECTION_NOTSHARD, error,
-                    PDWARNING, "Collection must be sharded: %s", strName ) ;
-
-         /*********************************************************************
-          *           GET THE SHARDING KEY VALUE FROM SOURCE                  *
-          *********************************************************************/
-         if ( cataInfo->getCatalogSet()->isHashSharding() )
-         {
-            if ( !beSplitQuery.eoo() )
-            {
-               BSONObj tmpStart = beSplitQuery.embeddedObject() ;
-               BSONObjBuilder tmpStartBuilder ;
-               tmpStartBuilder.appendElementsWithoutName( tmpStart ) ;
-               boKeyStart = tmpStartBuilder.obj() ;
-               if ( !beSplitEndQuery.eoo() )
-               {
-                  BSONObj tmpEnd = beSplitEndQuery.embeddedObject() ;
-                  BSONObjBuilder tmpEndBuilder ;
-                  tmpEndBuilder.appendElementsWithoutName( tmpEnd ) ;
-                  boKeyEnd = tmpEndBuilder.obj() ;
-               }
-            }
-         }
-         else
-         {
-            if ( beSplitQuery.eoo())
-            {
-               rc = _getBoundByPercent( strName, percent, cataInfo,
-                                        groupLst, cb, boKeyStart, boKeyEnd ) ;
-            }
-            else
-            {
-               rc = _getBoundByCondition( strName,
-                                          beSplitQuery.embeddedObject(),
-                                          beSplitEndQuery.eoo() ?
-                                          BSONObj():
-                                          beSplitEndQuery.embeddedObject(),
-                                          groupLst,
-                                          cb,
-                                          cataInfo,
-                                          boKeyStart, boKeyEnd ) ;
-            }
-
-            PD_RC_CHECK( rc, PDERROR, "Failed to get bound, rc: %d",
-                         rc ) ;
-         }
-      }
-      catch ( std::exception &e )
-      {
-         PD_RC_CHECK ( SDB_SYS, PDERROR,
-                       "Exception when query from remote node: %s",
-                       e.what() ) ;
-      }
-
-      /************************************************************************
-       *         SHARDING READY REQUEST                                       *
-       ************************************************************************/
-      // now boKeyStart contains the key we want to split, let's construct a new
-      // request for split ready
-      try
-      {
-         BSONObj boSend ;
-         vector<BSONObj> boRecv ;
-         // construct the record that we are going to send to catalog
-         boSend = BSON ( CAT_COLLECTION_NAME << strName <<
-                         CAT_SOURCE_NAME << szSource <<
-                         CAT_TARGET_NAME << szTarget <<
-                         CAT_SPLITPERCENT_NAME << percent <<
-                         CAT_SPLITVALUE_NAME << boKeyStart <<
-                         CAT_SPLITENDVALUE_NAME << boKeyEnd ) ;
-         taskInfoObj = boSend ;
-         rc = msgBuildQueryMsg ( &splitReadyBuffer, &splitReadyBufferSz,
-                                 CMD_ADMIN_PREFIX CMD_NAME_SPLIT, 0,
-                                 0, 0, -1, &boSend, NULL,
-                                 NULL, NULL ) ;
-         PD_RC_CHECK ( rc, PDERROR, "Failed to build query message, rc: %d",
-                       rc ) ;
-         pSplitReq                        = (MsgOpQuery *)splitReadyBuffer ;
-         pSplitReq->header.opCode         = MSG_CAT_SPLIT_READY_REQ ;
-         pSplitReq->version               = cataInfo->getVersion();
-
-         rc = executeOnCataGroup ( (MsgHeader*)pSplitReq, cb,
-                                   &groupDstLst, &boRecv ) ;
-         PD_RC_CHECK ( rc, PDERROR, "Failed to execute split ready on catalog, "
-                       "rc = %d", rc ) ;
-         if ( boRecv.empty() )
-         {
-            PD_LOG( PDERROR, "Failed to get task id from result msg" ) ;
-            rc = SDB_SYS ;
-            goto error ;
-         }
-         taskID = (UINT64)(boRecv.at(0).getField( CAT_TASKID_NAME ).numberLong()) ;
-
-         // construct split query req
-         boSend = BSON( CAT_TASKID_NAME << (long long)taskID ) ;
-         rc = msgBuildQueryMsg( &splitQueryBuffer, &splitQueryBufferSz,
-                                CMD_ADMIN_PREFIX CMD_NAME_SPLIT, 0,
-                                0, 0, -1, &boSend, NULL,
-                                NULL, NULL ) ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to build query message, rc: %d",
-                      rc ) ;
-         pSplitQuery                      = (MsgOpQuery *)splitQueryBuffer ;
-         pSplitQuery->version             = cataInfo->getVersion() ;
-      }
-      catch ( std::exception &e )
-      {
-         PD_RC_CHECK ( SDB_SYS, PDERROR,
-                       "Exception when building split ready message: %s",
-                       e.what() ) ;
-      }
-      /************************************************************************
-       *           SHARDING START REQUEST                                     *
-       ************************************************************************/
-      // before sending to data node, we have to convert the request to QUERY
-      pSplitReq->header.opCode = MSG_BS_QUERY_REQ ;
-      rc = executeOnCL( (MsgHeader *)splitReadyBuffer, cb, strName,
-                        FALSE, &groupDstLst, NULL, NULL ) ;
-      if ( rc )
-      {
-         // when we get here, something big happend. We have marked ready to
-         // split on catalog but data node refused to do so.
-         PD_LOG ( PDERROR, "Failed to execute split on data node, rc = %d",
-                  rc ) ;
-         goto cancel ;
-      }
-
-      // if sync, need to wait task finished
-      if ( !async )
-      {
-         rtnCoordProcesserFactory *pFactory = pCoordcb->getProcesserFactory() ;
-         rtnCoordCommand *pCmd = pFactory->getCommandProcesser(
-                                 COORD_CMD_WAITTASK ) ;
-         SDB_ASSERT( pCmd, "wait task command not found" ) ;
-         rc = pCmd->execute( (MsgHeader*)splitQueryBuffer, cb,
-                             contextID, buf ) ;
-         if ( rc )
-         {
-            PD_LOG( PDWARNING, "Wait task[%lld] failed, rc: %d", taskID, rc ) ;
-            rc = SDB_OK ;
-            /// can not report error, because split already created
-         }
-      }
-      else // return taskid to client
-      {
-         rtnContextDump *pContext = NULL ;
-         rc = pRtncb->contextNew( RTN_CONTEXT_DUMP, (rtnContext**)&pContext,
-                                  contextID, cb ) ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to create context, rc: %d", rc ) ;
-         rc = pContext->open( BSONObj(), BSONObj(), 1, 0 ) ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to open context, rc: %d", rc ) ;
-         pContext->append( BSON( CAT_TASKID_NAME << (long long)taskID ) ) ;
-      }
-
-   done :
-      if ( pCommandName && strName )
-      {
-         PD_AUDIT_COMMAND( AUDIT_DDL, pCommandName + 1, AUDIT_OBJ_CL,
-                           strName, rc, "Option:%s, TaskID:%llu",
-                           taskInfoObj.toString().c_str(), taskID ) ;
-      }
-      if ( splitReadyBuffer )
-      {
-         SDB_OSS_FREE ( splitReadyBuffer ) ;
-      }
-      if ( splitQueryBuffer )
-      {
-         SDB_OSS_FREE ( splitQueryBuffer ) ;
-      }
-      PD_TRACE_EXITRC ( SDB_RTNCOCMDSP_EXE, rc ) ;
-      return rc ;
-   cancel :
-      // convert request to split cancel and use all other arguments
-      pSplitQuery->header.opCode       = MSG_CAT_SPLIT_CANCEL_REQ ;
-      pSplitQuery->version             = cataInfo->getVersion() ;
-      {
-         INT32 rctmp = executeOnCataGroup ( (MsgHeader*)pSplitQuery,
-                                            cb, TRUE ) ;
-         if ( rctmp )
-         {
-            PD_LOG( PDWARNING, "Failed to execute split cancel on catalog, "
-                    "rc = %d", rctmp ) ;
-            goto error ;
-         }
-      }
-
-   error :
-      if ( SDB_RTN_INVALID_HINT == rc )
-      {
-         rc = SDB_COORD_SPLIT_NO_SHDIDX ;
-      }
-      if ( -1 != contextID )
-      {
-         pRtncb->contextDelete( contextID, cb ) ;
-         contextID = -1 ;
-      }
-      goto done ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCMDSP_GETBOUNDRONDATA, "rtnCoordCMDSplit::_getBoundRecordOnData" )
-   INT32 rtnCoordCMDSplit::_getBoundRecordOnData( const CHAR *cl,
-                                                  const BSONObj &condition,
-                                                  const BSONObj &hint,
-                                                  const BSONObj &sort,
-                                                  INT32 flag,
-                                                  INT64 skip,
-                                                  CoordGroupList &groupList,
-                                                  pmdEDUCB *cb,
-                                                  BSONObj &shardingKey,
-                                                  BSONObj &record )
-   {
-      PD_TRACE_ENTRY( SDB_RTNCOCMDSP_GETBOUNDRONDATA ) ;
-      INT32 rc = SDB_OK ;
-      BSONObj empty ;
-      rtnContext *context = NULL ;
-      rtnContextBuf buffObj ;
-      BSONObj obj ;
-
-      // check condition has invalid fileds
-      if ( !condition.okForStorage() )
-      {
-         PD_LOG( PDERROR, "Condition[%s] has invalid field name",
-                 condition.toString().c_str() ) ;
-         rc = SDB_INVALIDARG ;
-         goto error ;
-      }
-
-      if ( condition.isEmpty() )
-      {
-         rc = rtnCoordNodeQuery( cl, condition, empty, sort,
-                                 hint, skip, 1, groupList,
-                                 cb, &context, NULL, flag ) ;
-         PD_RC_CHECK ( rc, PDERROR, "Failed to query from data group, rc = %d",
-                       rc ) ;
-         rc = context->getMore( -1, buffObj, cb ) ;
-         if ( SDB_OK != rc )
-         {
-            goto error ;
-         }
-         else
-         {
-            obj = BSONObj( buffObj.data() ) ;
-         }
-      }
-      else
-      {
-         obj = condition ;
-      }
-
-      // product split key
-      {
-         PD_LOG ( PDINFO, "Split found record %s", obj.toString().c_str() ) ;
-         // we need to compare with boShardingKey and extract the partition key
-         ixmIndexKeyGen keyGen ( shardingKey ) ;
-         BSONObjSet keys ;
-         BSONObjSet::iterator keyIter ;
-         rc = keyGen.getKeys ( obj, keys, NULL, TRUE ) ;
-         PD_RC_CHECK ( rc, PDERROR, "Failed to extract keys\nkeyDef = %s\n"
-                       "record = %s\nrc = %d", shardingKey.toString().c_str(),
-                       obj.toString().c_str(), rc ) ;
-         // make sure there is one and only one element in the keys
-         PD_CHECK ( keys.size() == 1, SDB_INVALID_SHARDINGKEY, error,
-                    PDWARNING, "There must be a single key generate for "
-                    "sharding\nkeyDef = %s\nrecord = %s\n",
-                    shardingKey.toString().c_str(),
-                    obj.toString().c_str() ) ;
-
-         keyIter = keys.begin () ;
-         record = (*keyIter).copy() ;
-
-         // validate key does not contains Undefined
-         /*{
-            BSONObjIterator iter ( record ) ;
-            while ( iter.more () )
-            {
-               BSONElement e = iter.next () ;
-               PD_CHECK ( e.type() != Undefined, SDB_CLS_BAD_SPLIT_KEY,
-                          error, PDERROR, "The split record does not contains "
-                          "a valid key\nRecord: %s\nShardingKey: %s\n"
-                          "SplitKey: %s", obj.toString().c_str(),
-                          shardingKey.toString().c_str(),
-                          record.toString().c_str() ) ;
-            }
-         }*/
-
-        PD_LOG ( PDINFO, "Split found key %s", record.toString().c_str() ) ;
-     }
-
-   done:
-      if ( NULL != context )
-      {
-         SINT64 contextID = context->contextID() ;
-         pmdGetKRCB()->getRTNCB()->contextDelete( contextID, cb ) ;
-      }
-      PD_TRACE_EXITRC( SDB_RTNCOCMDSP_GETBOUNDRONDATA, rc ) ;
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCMDSP__GETBOUNDBYC, "rtnCoordCMDSplit::_getBoundByCondition" )
-   INT32 rtnCoordCMDSplit::_getBoundByCondition( const CHAR *cl,
-                                                 const BSONObj &begin,
-                                                 const BSONObj &end,
-                                                 CoordGroupList &groupList,
-                                                 pmdEDUCB *cb,
-                                                 CoordCataInfoPtr &cataInfo,
-                                                 BSONObj &lowBound,
-                                                 BSONObj &upBound )
-   {
-      PD_TRACE_ENTRY( SDB_RTNCOCMDSP__GETBOUNDBYC ) ;
-      INT32 rc = SDB_OK ;
-      /// coord send will clear group list.
-      CoordGroupList grpTmp = groupList ;
-      BSONObj shardingKey ;
-      cataInfo->getShardingKey ( shardingKey ) ;
-      PD_CHECK ( !shardingKey.isEmpty(), SDB_COLLECTION_NOTSHARD, error,
-                  PDWARNING, "Collection must be sharded: %s", cl ) ;
-
-      rc = _getBoundRecordOnData( cl, begin, BSONObj(),BSONObj(),
-                                  0, 0, grpTmp, cb,
-                                  shardingKey, lowBound ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "failed to get begin bound:%d",rc ) ;
-         goto error ;
-      }
-
-      if ( !end.isEmpty() )
-      {
-         grpTmp = groupList ;
-         rc = _getBoundRecordOnData( cl, end, BSONObj(),BSONObj(),
-                                     0, 0, grpTmp, cb,
-                                     shardingKey, upBound ) ;
-         if ( SDB_OK != rc )
-         {
-            PD_LOG( PDERROR, "failed to get end bound:%d",rc ) ;
-            goto error ;
-         }
-      }
-   done:
-      PD_TRACE_EXITRC( SDB_RTNCOCMDSP__GETBOUNDBYC, rc ) ;
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCMDSP__GETBOUNDBYP, "rtnCoordCMDSplit::_getBoundByPercent" )
-   INT32 rtnCoordCMDSplit::_getBoundByPercent( const CHAR *cl,
-                                               FLOAT64 percent,
-                                               CoordCataInfoPtr &cataInfo,
-                                               CoordGroupList &groupList,
-                                               pmdEDUCB *cb,
-                                               BSONObj &lowBound,
-                                               BSONObj &upBound )
-   {
-      PD_TRACE_ENTRY( SDB_RTNCOCMDSP__GETBOUNDBYP ) ;
-      INT32 rc = SDB_OK ;
-      BSONObj shardingKey ;
-      cataInfo->getShardingKey ( shardingKey ) ;
-      CoordGroupList grpTmp = groupList ;
-      PD_CHECK ( !shardingKey.isEmpty(), SDB_COLLECTION_NOTSHARD, error,
-                 PDWARNING, "Collection must be sharded: %s", cl ) ;
-
-      // if split percent is 100.0%, get the group low bound
-      if ( 100.0 - percent < OSS_EPSILON )
-      {
-         rc = cataInfo->getGroupLowBound( grpTmp.begin()->second,
-                                          lowBound ) ;
-         PD_RC_CHECK( rc, PDERROR, "Get group[%d] low bound failed, rc: %d",
-                      grpTmp.begin()->second, rc ) ;
-      }
-      else
-      {
-         UINT64 totalCount = 0 ;
-         INT64 skipCount = 0 ;
-         INT32 flag = 0 ;
-         BSONObj hint ;
-         while ( TRUE )
-         {
-            rc = getCLCount( cl, grpTmp, cb, totalCount ) ;
-            PD_RC_CHECK( rc, PDERROR,
-                         "Get collection count failed, rc: %d",
-                         rc ) ;
-            if ( 0 == totalCount )
-            {
-               rc = SDB_DMS_EMPTY_COLLECTION ;
-               PD_LOG( PDDEBUG, "collection[%s] is empty", cl ) ;
-               break ;
-            }
-
-            skipCount = (INT64)(totalCount * ( ( 100 - percent ) / 100 ) ) ;
-            hint = BSON( "" << "" ) ;
-            flag = FLG_QUERY_FORCE_HINT ;
-
-            /// sort by shardingKey that if $shard index does not exist
-            /// can still match index.
-            rc = _getBoundRecordOnData( cl, BSONObj(), hint, shardingKey,
-                                        flag, skipCount, grpTmp,
-                                        cb, shardingKey, lowBound ) ;
-            if ( SDB_DMS_EOC == rc )
-            {
-               continue ;
-            }
-            else if ( SDB_OK != rc )
-            {
-               PD_LOG( PDERROR, "failed to get bound from data:%d",rc ) ;
-               goto error ;
-            }
-            else
-            {
-               break ;
-            }
-         }
-      }
-
-      /// upbound always be empty.
-      upBound = BSONObj() ;
-   done:
-      PD_TRACE_EXITRC( SDB_RTNCOCMDSP__GETBOUNDBYP, rc ) ;
-      return rc ;
-   error:
-      goto done ;
    }
 
    INT32 rtnCoordCmdWaitTask::execute( MsgHeader *pMsg,
@@ -6306,182 +3251,6 @@ namespace engine
       return SDB_OK ;
    }
 
-   //PD_TRACE_DECLARE_FUNCTION( SDB_RTNCOCMDLINKCL_EXE, "rtnCoordCMDLinkCollection::execute" )
-   INT32 rtnCoordCMDLinkCollection::execute( MsgHeader *pMsg,
-                                             pmdEDUCB *cb,
-                                             INT64 &contextID,
-                                             rtnContextBuf *buf )
-   {
-      INT32 rc                         = SDB_OK;
-      PD_TRACE_ENTRY ( SDB_RTNCOCMDLINKCL_EXE ) ;
-
-      CHAR *pQuery                     = NULL;
-      string mainCLName ;
-      string strSubClName ;
-      CoordGroupList groupLst ;
-
-      // fill default-reply(delete success)
-      contextID = -1 ;
-
-      MsgOpQuery *pLinkReq           = (MsgOpQuery *)pMsg;
-
-      try
-      {
-         rc = msgExtractQuery( (CHAR*)pMsg, NULL, NULL,
-                               NULL, NULL, &pQuery, NULL,
-                               NULL, NULL ) ;
-         if ( rc != SDB_OK )
-         {
-            PD_LOG ( PDERROR, "Failed to parse link collection request(rc=%d)",
-                     rc );
-            goto error ;
-         }
-         BSONObj boQuery( pQuery );
-         {
-            BSONElement beClNameTmp = boQuery.getField( CAT_SUBCL_NAME );
-            PD_CHECK( beClNameTmp.type() == String, SDB_INVALIDARG, error,
-                      PDERROR, "Failed to unlink collection, failed to get "
-                      "sub-collection name" );
-            strSubClName = beClNameTmp.str() ;
-            PD_CHECK( !strSubClName.empty(), SDB_INVALIDARG, error, PDERROR,
-                      "sub collection name can't be empty!" );
-
-            BSONElement beMainCLName = boQuery.getField( CAT_COLLECTION_NAME );
-            PD_CHECK( beMainCLName.type() == String, SDB_INVALIDARG, error,
-                      PDERROR, "Failed to get the field(%s)",
-                      CAT_COLLECTION_NAME );
-            mainCLName = beMainCLName.str();
-            PD_CHECK( !mainCLName.empty(), SDB_INVALIDARG,
-                      error, PDERROR, "main collection name can't be empty!" ) ;
-         }
-      }
-      catch( std::exception &e )
-      {
-         PD_LOG( PDERROR, "Occur exception: %s", e.what() ) ;
-         rc = SDB_INVALIDARG;
-         goto error ;
-      }
-
-      // send request to catalog
-      pLinkReq->header.opCode        = MSG_CAT_LINK_CL_REQ;
-      rc = executeOnCataGroup ( pMsg, cb, &groupLst ) ;
-      PD_RC_CHECK( rc, PDERROR,
-                   "failed to execute on catalog(rc=%d)",
-                   rc ) ;
-
-      //send request to data-node
-      pLinkReq->header.opCode        = MSG_BS_QUERY_REQ ;
-      rc = executeOnCL( pMsg, cb, mainCLName.c_str(), TRUE,
-                        &groupLst, NULL, NULL ) ;
-      if ( rc )
-      {
-         PD_LOG( PDERROR, "Link collection[MainCL: %s, subCL: %s] on "
-                 "data node failed, rc: %d", mainCLName.c_str(),
-                 strSubClName.c_str(), rc ) ;
-         goto error_rollback ;
-      }
-
-   done :
-      if ( !mainCLName.empty() && !strSubClName.empty() )
-      {
-         PD_AUDIT_COMMAND( AUDIT_DDL, CMD_NAME_LINK_CL, AUDIT_OBJ_CL,
-                           mainCLName.c_str(), rc, "Option:%s",
-                           BSONObj(pQuery).toString().c_str() ) ;
-      }
-      PD_TRACE_EXITRC ( SDB_RTNCOCMDLINKCL_EXE, rc ) ;
-      return rc ;
-   error_rollback:
-      {
-         INT32 rcRBk = SDB_OK;
-         pMsg->opCode = MSG_CAT_UNLINK_CL_REQ ;
-         rcRBk = executeOnCataGroup ( pMsg,  cb, &groupLst ) ;
-         PD_RC_CHECK( rcRBk, PDERROR, "Failed to execute on catalog(rc=%d), "
-                      "rollback failed!", rcRBk ) ;
-      }
-   error :
-      goto done ;
-   }
-
-   //PD_TRACE_DECLARE_FUNCTION( SDB_RTNCOCMDUNLINKCL_EXE, "rtnCoordCMDUnlinkCollection::execute" )
-   INT32 rtnCoordCMDUnlinkCollection::execute( MsgHeader *pMsg,
-                                               pmdEDUCB *cb,
-                                               INT64 &contextID,
-                                               rtnContextBuf *buf )
-   {
-      INT32 rc                         = SDB_OK;
-      PD_TRACE_ENTRY ( SDB_RTNCOCMDUNLINKCL_EXE ) ;
-
-      // fill default-reply(delete success)
-      contextID = -1 ;
-
-      MsgOpQuery *pReqMsg              = (MsgOpQuery *)pMsg;
-
-      CoordGroupList groupLst ;
-      CHAR *pQuery                     = NULL ;
-      string strMainCLName ;
-      string strSubClName ;
-
-      rc = msgExtractQuery( (CHAR*)pMsg, NULL, NULL, NULL,
-                            NULL, &pQuery, NULL, NULL, NULL ) ;
-      PD_RC_CHECK( rc, PDERROR,
-                   "Failed to parse unlink collection request(rc=%d)",
-                   rc ) ;
-
-      try
-      {
-         BSONObj boQuery = BSONObj( pQuery );
-         BSONElement beClNameTmp = boQuery.getField( CAT_SUBCL_NAME );
-         PD_CHECK( beClNameTmp.type() == String, SDB_INVALIDARG, error,
-                   PDERROR, "Failed to unlink collection, failed to get "
-                   "sub-collection name" );
-         strSubClName = beClNameTmp.str();
-
-         beClNameTmp = boQuery.getField( CAT_COLLECTION_NAME );
-         PD_CHECK( beClNameTmp.type() == String, SDB_INVALIDARG, error,
-                   PDERROR, "Failed to unlink collection, failed to get "
-                   "sub-collection name" ) ;
-         strMainCLName = beClNameTmp.str() ;
-      }
-      catch ( std::exception &e )
-      {
-         rc = SDB_INVALIDARG;
-         PD_LOG( PDERROR, "Failed to unlink collection, "
-                 "received unexpected error:%s", e.what() );
-         goto error;
-      }
-
-      // send request to catalog
-      pReqMsg->header.opCode = MSG_CAT_UNLINK_CL_REQ ;
-      rc = executeOnCataGroup ( pMsg, cb, &groupLst ) ;
-      if ( rc )
-      {
-         PD_LOG ( PDERROR, "Unlink collection failed on catalog, rc = %d",
-                  rc ) ;
-         goto error ;
-      }
-
-      // restore opcode 
-      pReqMsg->header.opCode = MSG_BS_QUERY_REQ ;
-      rc = executeOnCL( pMsg, cb, strMainCLName.c_str(), TRUE,
-                        &groupLst, NULL, NULL ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to unlink collection"
-                   "(MainCL:%s, subCL:%s), execute on data-node failed, "
-                   "rc: %d", strMainCLName.c_str(),
-                   strSubClName.c_str(), rc ) ;
-
-   done:
-      if ( !strMainCLName.empty() && !strSubClName.empty() )
-      {
-         PD_AUDIT_COMMAND( AUDIT_DDL, CMD_NAME_UNLINK_CL, AUDIT_OBJ_CL,
-                           strMainCLName.c_str(), rc, "Option:%s",
-                           BSONObj(pQuery).toString().c_str() ) ;
-      }
-      PD_TRACE_EXITRC ( SDB_RTNCOCMDUNLINKCL_EXE, rc ) ;
-      return rc;
-   error :
-      goto done ;
-   }
-
    //PD_TRACE_DECLARE_FUNCTION( SDB_RTNCOCMDSETSESSATTR_EXE, "rtnCoordCMDSetSessionAttr::execute" )
    INT32 rtnCoordCMDSetSessionAttr::execute( MsgHeader *pMsg,
                                              pmdEDUCB *cb,
@@ -6542,96 +3311,6 @@ namespace engine
       return rc;
    error:
       goto done;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION( SDB_RTNCOCMDCREATEDOMAIN_EXE, "rtnCoordCMDCreateDomain::execute" )
-   INT32 rtnCoordCMDCreateDomain::execute( MsgHeader *pMsg,
-                                           pmdEDUCB *cb,
-                                           INT64 &contextID,
-                                           rtnContextBuf *buf )
-   {
-      INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY ( SDB_RTNCOCMDCREATEDOMAIN_EXE ) ;
-
-      contextID = -1 ;
-
-      MsgOpQuery *forward  = (MsgOpQuery *)pMsg;
-      forward->header.opCode = MSG_CAT_CREATE_DOMAIN_REQ;
-
-      _printDebug ( (CHAR*)pMsg, "rtnCoordCMDCreateDomain" ) ;
-
-      rc = executeOnCataGroup ( pMsg, cb, TRUE ) ;
-      if ( rc )
-      {
-         PD_LOG ( PDERROR, "failed to create domain, rc = %d", rc ) ;
-         goto error ;
-      }
-
-   done :
-      PD_TRACE_EXITRC ( SDB_RTNCOCMDCREATEDOMAIN_EXE, rc ) ;
-      return rc ;
-   error :
-      goto done ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION( SDB_RTNCOCMDDROPDOMAIN_EXE, "rtnCoordCMDDropDomain::execute" )
-   INT32 rtnCoordCMDDropDomain::execute( MsgHeader *pMsg,
-                                         pmdEDUCB *cb,
-                                         INT64 &contextID,
-                                         rtnContextBuf *buf )
-   {
-      INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY ( SDB_RTNCOCMDDROPDOMAIN_EXE ) ;
-
-      contextID = -1 ;
-
-      MsgOpQuery *forward  = (MsgOpQuery *)pMsg ;
-      forward->header.opCode = MSG_CAT_DROP_DOMAIN_REQ;
-
-      _printDebug ( (CHAR*)pMsg, "rtnCoordCMDDropDomain" ) ;
-
-      rc = executeOnCataGroup ( pMsg, cb, TRUE ) ;
-      if ( rc )
-      {
-         PD_LOG ( PDERROR, "failed to drop domain, rc = %d", rc ) ;
-         goto error ;
-      }
-
-   done :
-      PD_TRACE_EXITRC ( SDB_RTNCOCMDDROPDOMAIN_EXE, rc ) ;
-      return rc ;
-   error :
-      goto done ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION( SDB_RTNCOCMDALTERDOMAIN_EXE, "rtnCoordCMDAlterDomain::execute" )
-   INT32 rtnCoordCMDAlterDomain::execute( MsgHeader *pMsg,
-                                          pmdEDUCB *cb,
-                                          INT64 &contextID,
-                                          rtnContextBuf *buf )
-   {
-      INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY ( SDB_RTNCOCMDALTERDOMAIN_EXE ) ;
-
-      contextID = -1 ;
-
-      MsgOpQuery *forward  = (MsgOpQuery *)pMsg;
-      forward->header.opCode = MSG_CAT_ALTER_DOMAIN_REQ;
-
-      _printDebug ( (CHAR*)pMsg, "rtnCoordCMDAlterDomain" ) ;
-
-      rc = executeOnCataGroup ( pMsg, cb, TRUE ) ;
-      if ( rc )
-      {
-         PD_LOG ( PDERROR, "failed to alter domain, rc = %d", rc ) ;
-         goto error ;
-      }
-
-   done:
-      PD_TRACE_EXITRC ( SDB_RTNCOCMDALTERDOMAIN_EXE, rc ) ;
-      return rc ;
-   error :
-      goto done ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION( SDB_RTNCOCMDADDDOMAINGROUP_EXE, "rtnCoordCMDAddDomainGroup::execute" )
@@ -6802,7 +3481,6 @@ namespace engine
                     itr->toString().c_str() ) ;
             rc = SDB_SYS ;
             goto error ;
-              
          }
 
          {
@@ -7246,5 +3924,520 @@ namespace engine
    error:
       goto done ;
    }
-}
 
+
+   /*
+    * rtnCoordCMD2Phase implement
+    */
+   // PD_TRACE_DECLARE_FUNCTION( CMD_RTNCOCMD2PH_EXECUTE, "rtnCoordCMD2Phase::execute" )
+   INT32 rtnCoordCMD2Phase::execute( MsgHeader *pMsg,
+                                     pmdEDUCB *cb,
+                                     INT64 &contextID,
+                                     rtnContextBuf *buf )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY ( CMD_RTNCOCMD2PH_EXECUTE ) ;
+
+      SET_RC ignoreRCList ;
+
+      CoordGroupList groupLst ;
+      CoordGroupList sucGroupLst ;
+      vector<BSONObj> cataObjs ;
+      rtnContextCoord *pCoordCtxForCata = NULL ; // rename
+      rtnContextCoord *pCoordCtxForData = NULL ;
+      UINT32 reservedTID = 0 ;
+      CHAR *pCataMsgBuf = NULL ;
+      CHAR *pDataMsgBuf = NULL ;
+      MsgHeader *pCataMsg = NULL ;
+      MsgHeader *pDataMsg = NULL ;
+      _rtnCMDArguments *pArguments = NULL ;
+
+      contextID = -1 ;
+
+      /************************************************************************
+       * Prepare phase
+       * 1. Parse message
+       * 2. Sanity check for arguments
+       ************************************************************************/
+      pArguments = _generateArguments() ;
+      PD_CHECK( pArguments,
+                SDB_SYS, error, PDERROR,
+                "Failed to allocate runtime arguments") ;
+
+      // Extract message
+      rc = _extractMsg ( pMsg, pArguments ) ;
+      PD_RC_CHECK( rc, PDERROR,
+                   "Failed to extract %s message (rc=%d)",
+                   _getCommandName(), rc ) ;
+
+      // Parse and check message
+      rc = _parseMsg ( pMsg, pArguments ) ;
+      if ( SDB_FIELD_NOT_EXIST == rc )
+      {
+         rc = SDB_INVALIDARG ;
+      }
+      PD_RC_CHECK( rc, PDERROR,
+                   "Failed to parse %s query (rc=%d)",
+                   _getCommandName(), rc ) ;
+
+      /************************************************************************
+       * Phase 1
+       * 1. Generate P1 message to Catalog
+       * 2. Execute P1 on Catalog
+       * 3. Generate P1 message to Data Groups
+       * 4. Execute P1 on Data Groups
+       ************************************************************************/
+      // Generate P1 message to Catalog
+      rc = _generateCataMsg( pMsg, cb, pArguments, &pCataMsgBuf, &pCataMsg ) ;
+      PD_RC_CHECK( rc, PDERROR,
+                   "Failed to %s on [%s]: "
+                   "generate message to catalog failed, rc: %d",
+                   _getCommandName(), pArguments->_targetName.c_str(), rc ) ;
+      SDB_ASSERT( pCataMsg, "Failed to create catalog message" ) ;
+
+      // Reserve TID from client if needed
+      if ( _flagReserveClientTID() )
+      {
+         reservedTID = pMsg->TID ;
+      }
+
+      // Execute P1 on Catalog
+      rc = _doOnCataGroup( pCataMsg, cb, &pCoordCtxForCata, pArguments,
+                           _flagGetGrpLstFromCata() ? &groupLst : NULL,
+                           &cataObjs ) ;
+      if ( SDB_DMS_EOC == rc )
+      {
+         rc = SDB_OK ;
+         PD_LOG( PDWARNING,
+                 "Empty group list, done anyway" ) ;
+         goto done ;
+      }
+      PD_RC_CHECK( rc, PDERROR,
+                   "Failed to %s on [%s]: "
+                   "phase 1 on catalog failed, rc: %d",
+                   _getCommandName(), pArguments->_targetName.c_str(), rc ) ;
+
+      PD_LOG( PDINFO,
+              "%s on [%s] phase 1 on catalog done, get %u target groups back",
+              _getCommandName(), pArguments->_targetName.c_str(), groupLst.size() ) ;
+
+      // Generate P1 message to Data Groups
+      rc = _generateDataMsg( pMsg, cb, pArguments, cataObjs,
+                             &pDataMsgBuf, &pDataMsg ) ;
+      PD_RC_CHECK( rc, PDERROR,
+                   "Failed to %s on [%s]: "
+                   "generate message to data groups failed, rc: %d",
+                   _getCommandName(), pArguments->_targetName.c_str(), rc ) ;
+
+      // Using the TID from client
+      if ( _flagReserveClientTID() )
+      {
+         PD_LOG( PDDEBUG,
+                 "Using reserved TID %u instead of %u",
+                 pMsg->TID, reservedTID ) ;
+         pMsg->TID = reservedTID ;
+      }
+
+      // Execute P1 on Data Groups
+      rc = _doOnDataGroup( pDataMsg, cb, &pCoordCtxForData, pArguments,
+                           groupLst, cataObjs, sucGroupLst ) ;
+      PD_RC_CHECK( rc, PDERROR,
+                   "Failed to %s on [%s]: "
+                   "phase 1 on data groups failed, rc: %d, suc: %u",
+                   _getCommandName(), pArguments->_targetName.c_str(),
+                   rc, sucGroupLst.size() ) ;
+
+      PD_LOG( PDINFO,
+              "%s on [%s] phase 1 on data done",
+              _getCommandName(), pArguments->_targetName.c_str() ) ;
+
+      /************************************************************************
+       * Phase 2
+       * 1. Execute P2 on Catalog
+       * 2. Execute P2 on Data Groups
+       ************************************************************************/
+      if ( _flagExecDataBeforeCataP2() )
+      {
+         // Execute P2 on Data Groups
+         rc = _doOnDataGroupP2( pDataMsg, cb, &pCoordCtxForData, pArguments,
+                                groupLst, cataObjs ) ;
+         PD_RC_CHECK( rc, PDERROR,
+                      "Failed to %s on [%s]: "
+                      "phase 2 on data groups failed, rc, %d",
+                      _getCommandName(), pArguments->_targetName.c_str(), rc ) ;
+
+         PD_LOG( PDINFO,
+                 "%s on [%s] phase 2 on data done",
+                 _getCommandName(), pArguments->_targetName.c_str() ) ;
+
+         // Execute P2 on Catalog
+         rc = _doOnCataGroupP2( pCataMsg, cb, &pCoordCtxForCata, pArguments, groupLst ) ;
+         PD_RC_CHECK( rc, PDERROR,
+                      "Failed to %s on [%s]: "
+                      "phase 2 on catalog failed, rc, %d",
+                      _getCommandName(), pArguments->_targetName.c_str(), rc ) ;
+
+         PD_LOG( PDINFO,
+                 "%s on [%s] phase 2 on catalog done",
+                 _getCommandName(), pArguments->_targetName.c_str() ) ;
+      }
+      else
+      {
+         // Execute P2 on Catalog
+         rc = _doOnCataGroupP2( pCataMsg, cb, &pCoordCtxForCata, pArguments, groupLst ) ;
+         PD_RC_CHECK( rc, PDERROR,
+                      "Failed to %s on [%s]: "
+                      "phase 2 on catalog failed, rc, %d",
+                      _getCommandName(), pArguments->_targetName.c_str(), rc ) ;
+
+         PD_LOG( PDINFO,
+                 "%s on [%s] phase 2 on catalog done",
+                 _getCommandName(), pArguments->_targetName.c_str() ) ;
+
+         // Execute P2 on Data Groups
+         rc = _doOnDataGroupP2( pDataMsg, cb, &pCoordCtxForData, pArguments,
+                                groupLst, cataObjs ) ;
+         PD_RC_CHECK( rc, PDERROR,
+                      "Failed to %s on [%s]: "
+                      "phase 2 on data groups failed, rc, %d",
+                      _getCommandName(), pArguments->_targetName.c_str(), rc ) ;
+
+         PD_LOG( PDINFO,
+                 "%s on [%s] phase 2 on data done",
+                 _getCommandName(), pArguments->_targetName.c_str() ) ;
+      }
+
+      /************************************************************************
+       * Phase Commit
+       * 1. Commit on Catalog
+       * 2. Update local catalog cache if needed
+       ************************************************************************/
+   commit :
+      // Commit on Catalog
+      rc = _doCommit( pMsg, cb, &pCoordCtxForCata, pArguments );
+      PD_RC_CHECK( rc, PDERROR,
+                   "Failed to %s on [%s]: commit phase failed, rc: %d",
+                   _getCommandName(), pArguments->_targetName.c_str(), rc ) ;
+
+      PD_LOG( PDINFO,
+              "%s on [%s] commit done",
+              _getCommandName(), pArguments->_targetName.c_str() ) ;
+
+      // Update local catalog info caches if needed
+      rc = _doComplete( pMsg, cb, pArguments ) ;
+      PD_RC_CHECK( rc, PDERROR,
+                   "Failed to %s on [%s]: complete failed, rc: %d",
+                   _getCommandName(), pArguments->_targetName.c_str(), rc ) ;
+
+      PD_LOG( PDINFO,
+              "%s on [%s] complete done",
+              _getCommandName(), pArguments->_targetName.c_str() ) ;
+
+   done :
+      /************************************************************************
+       * Phase Clean
+       * 1. Audit the command Audit the command
+       * 2. Delete contexts and free buffers
+       ************************************************************************/
+      // Audit command
+      if ( pArguments )
+      {
+         _doAudit( pArguments, rc ) ;
+      }
+
+      // Clear allocated context and buffers
+      if ( pCoordCtxForCata )
+      {
+         pmdKRCB *pKrcb = pmdGetKRCB();
+         _SDB_RTNCB *pRtncb = pKrcb->getRTNCB();
+         pRtncb->contextDelete ( pCoordCtxForCata->contextID(), cb ) ;
+         pCoordCtxForCata = NULL ;
+      }
+
+      if ( pCoordCtxForData )
+      {
+         pmdKRCB *pKrcb = pmdGetKRCB();
+         _SDB_RTNCB *pRtncb = pKrcb->getRTNCB();
+         pRtncb->contextDelete ( pCoordCtxForData->contextID(), cb ) ;
+         pCoordCtxForData = NULL ;
+      }
+
+      SAFE_OSS_FREE( pCataMsgBuf ) ;
+      SAFE_OSS_FREE( pDataMsgBuf ) ;
+      SAFE_OSS_FREE( pArguments ) ;
+
+      PD_TRACE_EXITRC ( CMD_RTNCOCMD2PH_EXECUTE, rc ) ;
+
+      return rc ;
+
+   error :
+      /************************************************************************
+       * Phase Rollback
+       * 1. Generate rollback message to succeed Data Groups
+       * 2. Execute rollback on succeed Data Groups
+       * Note: updates to Catalog will be rollback by kill context
+       ************************************************************************/
+      // The command could be rollbacked in two conditions:
+      // 1. There are succeed Data Groups
+      // 2. There are Catalog context to rollback catalog
+      if ( !sucGroupLst.empty () &&
+           pCoordCtxForCata )
+      {
+         INT32 tmprc = SDB_OK ;
+         CHAR *pRollbackMsgBuf = NULL ;
+         MsgHeader *pRollbackMsg = NULL ;
+
+         do
+         {
+            // Generate rollback message to succeed Data Groups
+            tmprc = _generateRollbackDataMsg( pMsg, pArguments,
+                                              &pRollbackMsgBuf, &pRollbackMsg ) ;
+            if ( SDB_OK != tmprc )
+            {
+               PD_LOG( PDWARNING,
+                       "%s on [%s]: "
+                       "failed to generate rollback message, rc: %d",
+                       _getCommandName(), pArguments->_targetName.c_str(),
+                       tmprc ) ;
+               sucGroupLst.clear() ;
+               if ( _flagCommitOnRollbackFailed() &&
+                    pCoordCtxForCata )
+               {
+                  goto commit ;
+               }
+               break ;
+            }
+            tmprc = _rollbackOnDataGroup( pRollbackMsg, cb, pArguments, sucGroupLst ) ;
+            if ( SDB_OK != tmprc )
+            {
+               PD_LOG( PDWARNING,
+                       "%s on [%s]: "
+                       "failed to execute rollback, rc: %d",
+                       _getCommandName(), pArguments->_targetName.c_str(),
+                       tmprc ) ;
+               sucGroupLst.clear() ;
+               if ( _flagCommitOnRollbackFailed() &&
+                    pCoordCtxForCata )
+               {
+                  goto commit ;
+               }
+               break ;
+            }
+            PD_LOG( PDINFO,
+                    "%s on [%s] rollback done",
+                    _getCommandName(), pArguments->_targetName.c_str() ) ;
+         } while ( FALSE ) ;
+
+         SAFE_OSS_FREE( pRollbackMsgBuf ) ;
+      }
+      goto done ;
+   }
+
+   rtnCoordCMD2Phase::_rtnCMDArguments *rtnCoordCMD2Phase::_generateArguments ()
+   {
+      return SDB_OSS_NEW _rtnCMDArguments () ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION( CMD_RTNCOCMD2PH_EXTRACTMSG, "rtnCoordCMD2Phase::_extractMsg" )
+   INT32 rtnCoordCMD2Phase::_extractMsg ( MsgHeader *pMsg,
+                                          _rtnCMDArguments *pArgs )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY ( CMD_RTNCOCMD2PH_EXTRACTMSG ) ;
+
+      CHAR *pQuery = NULL ;
+
+      try
+      {
+         _printDebug ( (CHAR*)pMsg, "rtnCoordCMD2Phase" ) ;
+
+         rc = msgExtractQuery( (CHAR *)pMsg, NULL, NULL,
+                               NULL, NULL, &pQuery, NULL,
+                               NULL, NULL ) ;
+         PD_RC_CHECK( rc, PDERROR,
+                      "Failed to parse %s request, rc: %d",
+                      _getCommandName(), rc ) ;
+
+         pArgs->_boQuery.init( pQuery ) ;
+      }
+      catch( std::exception &e )
+      {
+         PD_LOG( PDERROR, "Occur exception: %s", e.what() ) ;
+         rc = SDB_INVALIDARG;
+         goto error ;
+      }
+
+   done :
+      PD_TRACE_EXITRC ( CMD_RTNCOCMD2PH_EXTRACTMSG, rc ) ;
+      return rc;
+
+   error :
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION( CMD_RTNCOCMD2PH_DOCOMPLETE, "rtnCoordCMD2Phase::_doComplete" )
+   INT32 rtnCoordCMD2Phase::_doComplete ( MsgHeader *pMsg,
+                                          pmdEDUCB * cb,
+                                          _rtnCMDArguments *pArgs )
+   {
+      PD_TRACE_ENTRY ( CMD_RTNCOCMD2PH_DOCOMPLETE ) ;
+
+      // Do nothing
+
+      PD_TRACE_EXIT ( CMD_RTNCOCMD2PH_DOCOMPLETE ) ;
+
+      return SDB_OK;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION( CMD_RTNCOCMD2PH_DOONCATA, "rtnCoordCMD2Phase::_doOnCataGroup" )
+   INT32 rtnCoordCMD2Phase::_doOnCataGroup ( MsgHeader *pMsg,
+                                             pmdEDUCB *cb,
+                                             rtnContextCoord **ppContext,
+                                             _rtnCMDArguments *pArgs,
+                                             CoordGroupList *pGroupLst,
+                                             vector<BSONObj> *pReplyObjs )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY ( CMD_RTNCOCMD2PH_DOONCATA ) ;
+
+      rtnContextCoord *pContext = NULL ;
+
+      // Send request to catalog
+      rc = executeOnCataGroup( pMsg, cb, &pContext, pGroupLst, pReplyObjs, NULL ) ;
+      PD_RC_CHECK( rc, PDERROR,
+                   "Failed to execute on catalog, rc: %d",
+                   rc ) ;
+
+   done :
+      if ( pContext )
+      {
+         (*ppContext) = pContext ;
+      }
+      PD_TRACE_EXITRC ( CMD_RTNCOCMD2PH_DOONCATA, rc ) ;
+      return rc ;
+
+   error :
+      if ( pContext )
+      {
+         SDB_RTNCB *pRtnCB = pmdGetKRCB()->getRTNCB() ;
+         pRtnCB->contextDelete( pContext->contextID(), cb ) ;
+         pContext = NULL ;
+      }
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION( CMD_RTNCOCMD2PH_DOONCATAP2, "rtnCoordCMD2Phase::_doOnCataGroupP2" )
+   INT32 rtnCoordCMD2Phase::_doOnCataGroupP2 ( MsgHeader *pMsg,
+                                               pmdEDUCB *cb,
+                                               rtnContextCoord **ppContext,
+                                               _rtnCMDArguments *pArgs,
+                                               const CoordGroupList &pGroupLst )
+   {
+      PD_TRACE_ENTRY ( CMD_RTNCOCMD2PH_DOONCATAP2 ) ;
+
+      /// Do nothing
+
+      PD_TRACE_EXIT ( CMD_RTNCOCMD2PH_DOONCATAP2 ) ;
+
+      return SDB_OK ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION( CMD_RTNCOCMD2PH_DOONDATAP2, "rtnCoordCMD2Phase::_doOnDataGroupP2" )
+   INT32 rtnCoordCMD2Phase::_doOnDataGroupP2 ( MsgHeader *pMsg,
+                                               pmdEDUCB *cb,
+                                               rtnContextCoord **ppContext,
+                                               _rtnCMDArguments *pArgs,
+                                               const CoordGroupList &groupLst,
+                                               const vector<BSONObj> &cataObjs )
+   {
+      PD_TRACE_ENTRY ( CMD_RTNCOCMD2PH_DOONDATAP2 ) ;
+
+      /// Do nothing
+
+      PD_TRACE_EXIT ( CMD_RTNCOCMD2PH_DOONDATAP2 ) ;
+
+      return SDB_OK ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION( CMD_RTNCOCMD2PH_ROLLBACKONDATA, "rtnCoordCMD2Phase::_rollbackOnDataGroup" )
+   INT32 rtnCoordCMD2Phase::_rollbackOnDataGroup ( MsgHeader *pMsg,
+                                                   pmdEDUCB *cb,
+                                                   _rtnCMDArguments *pArgs,
+                                                   const CoordGroupList &groupLst )
+   {
+      PD_TRACE_ENTRY ( CMD_RTNCOCMD2PH_ROLLBACKONDATA ) ;
+
+      /// Do nothing
+
+      PD_TRACE_EXIT ( CMD_RTNCOCMD2PH_ROLLBACKONDATA ) ;
+
+      return SDB_OK ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION( CMD_RTNCOCMD2PH_DOCOMMIT, "rtnCoordCMD2Phase::_doCommit" )
+   INT32 rtnCoordCMD2Phase::_doCommit ( MsgHeader *pMsg,
+                                        pmdEDUCB * cb,
+                                        rtnContextCoord **ppContext,
+                                        _rtnCMDArguments *pArgs )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY ( CMD_RTNCOCMD2PH_DOCOMMIT ) ;
+
+      rc = _processContext( cb, ppContext, -1 ) ;
+      if ( SDB_RTN_CONTEXT_NOTEXIST == rc )
+      {
+         PD_LOG( PDWARNING,
+                 "Failed %s on [%s]: Get catalog context failed",
+                 _getCommandName(), pArgs->_targetName.c_str() ) ;
+      }
+
+      PD_TRACE_EXITRC ( CMD_RTNCOCMD2PH_DOCOMMIT, rc ) ;
+
+      return rc ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION( CMD_RTNCOCMD2PH_PROCESSCTX, "rtnCoordCMD2Phase::_processContext" )
+   INT32 rtnCoordCMD2Phase::_processContext ( pmdEDUCB *cb,
+                                              rtnContextCoord **ppContext,
+                                              SINT32 maxNumSteps )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY ( CMD_RTNCOCMD2PH_PROCESSCTX ) ;
+
+      pmdKRCB *pKrcb = pmdGetKRCB() ;
+      _SDB_RTNCB *pRtncb = pKrcb->getRTNCB() ;
+      rtnContextBuf buffObj ;
+
+      if ( !(*ppContext) )
+      {
+         goto done ;
+      }
+
+      rc = (*ppContext)->getMoreWithOutData(maxNumSteps, cb) ;
+      if ( SDB_DMS_EOC == rc )
+      {
+         pRtncb->contextDelete ( (*ppContext)->contextID(), cb ) ;
+         (*ppContext) = NULL ;
+         PD_LOG( PDDEBUG, "Hit end of context" ) ;
+         rc = SDB_OK;
+      }
+      PD_RC_CHECK( rc, PDERROR,
+                   "Failed to process context with %d steps, rc: %d",
+                   maxNumSteps, rc ) ;
+   done :
+      PD_TRACE_EXITRC ( CMD_RTNCOCMD2PH_PROCESSCTX, rc ) ;
+      return rc ;
+   error :
+      if ( ppContext && (*ppContext) )
+      {
+         pRtncb->contextDelete ( (*ppContext)->contextID(), cb ) ;
+         (*ppContext) = NULL ;
+      }
+      goto done ;
+   }
+}

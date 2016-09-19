@@ -142,7 +142,35 @@ namespace engine
       RTN_CONTEXT_LOB_FETCHER,
       RTN_CONTEXT_SHARD_OF_LOB,
       RTN_CONTEXT_LIST_LOB,
-      RTN_CONTEXT_OM_TRANSFER
+      RTN_CONTEXT_OM_TRANSFER,
+
+      /// Catalog contexts
+
+      RTN_CONTEXT_CAT_BEGIN,
+
+      /// Group related
+      RTN_CONTEXT_CAT_REMOVE_GROUP,
+      RTN_CONTEXT_CAT_ACTIVE_GROUP,
+      RTN_CONTEXT_CAT_SHUTDOWN_GROUP,
+      /// Node related
+      RTN_CONTEXT_CAT_CREATE_NODE,
+      RTN_CONTEXT_CAT_REMOVE_NODE,
+      /// CollectionSpace related
+      RTN_CONTEXT_CAT_DROP_CS,
+      /// Collection related
+      RTN_CONTEXT_CAT_CREATE_CL,
+      RTN_CONTEXT_CAT_DROP_CL,
+      RTN_CONTEXT_CAT_ALTER_CL,
+      RTN_CONTEXT_CAT_SPLIT_CL,
+      RTN_CONTEXT_CAT_LINK_CL,
+      RTN_CONTEXT_CAT_UNLINK_CL,
+      /// Index related
+      RTN_CONTEXT_CAT_CREATE_ID_IDX,
+      RTN_CONTEXT_CAT_DROP_ID_IDX,
+      RTN_CONTEXT_CAT_CREATE_IDX,
+      RTN_CONTEXT_CAT_DROP_IDX,
+
+      RTN_CONTEXT_CAT_END,
    } ;
 
    const CHAR *getContextTypeDesp( RTN_CONTEXT_TYPE type ) ;
@@ -618,7 +646,8 @@ namespace engine
          INT32    open( const BSONObj &orderBy,
                         const BSONObj &selector,
                         INT64 numToReturn = -1,
-                        INT64 numToSkip = 0 ) ;
+                        INT64 numToSkip = 0,
+                        BOOLEAN preRead = TRUE ) ;
          INT32    reopen () ;
 
          void     killSubContexts( _pmdEDUCB *cb ) ;
@@ -634,6 +663,12 @@ namespace engine
          virtual _dmsStorageUnit* getSU () { return NULL ; }
 
          OSS_INLINE  BOOLEAN requireOrder () const ;
+
+         void enablePreRead() { _preRead = TRUE ; }
+         void disablePreRead() { _preRead = FALSE ; }
+
+         INT32 getMoreWithOutData ( INT32 maxNumSteps, _pmdEDUCB *cb ) ;
+         INT32 getData ( rtnContextBuf &buffObj, _pmdEDUCB *cb ) ;
 
       protected:
          virtual INT32  _prepareData( _pmdEDUCB *cb ) ;

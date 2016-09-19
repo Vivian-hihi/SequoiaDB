@@ -212,12 +212,12 @@ namespace engine
 
       // command message entry, should dispatch in the entry function
       case MSG_CAT_CREATE_GROUP_REQ :
-      case MSG_CAT_CREATE_DOMAIN_REQ :
       case MSG_CAT_CREATE_NODE_REQ :
       case MSG_CAT_UPDATE_NODE_REQ :
       case MSG_CAT_DEL_NODE_REQ :
       case MSG_CAT_RM_GROUP_REQ :
       case MSG_CAT_ACTIVE_GROUP_REQ :
+      case MSG_CAT_SHUTDOWN_GROUP_REQ :
             rc = processCommandMsg( handle, pMsg, TRUE ) ;
             break;
 
@@ -324,7 +324,7 @@ namespace engine
       rc = _pCatCB->netWork()->syncSend( handle, &replyHeader ) ;
       if ( rc )
       {
-	      PD_LOG( PDERROR, "failed to send response(primary-change)(rc=%d)",
+         PD_LOG( PDERROR, "failed to send response(primary-change)(rc=%d)",
                  rc ) ;
       }
       PD_TRACE_EXITRC ( SDB_CATNODEMGR_PRIMARYCHANGE, rc ) ;
@@ -724,28 +724,49 @@ namespace engine
          case MSG_CAT_CREATE_GROUP_REQ :
             rc = processCmdCreateGrp( pQuery ) ;
             break ;
-         case MSG_CAT_CREATE_NODE_REQ :
-            rc = processCmdCreateNode( handle, pQuery ) ;
-            break ;
          case MSG_CAT_UPDATE_NODE_REQ :
             rc = processCmdUpdateNode( handle, pQuery, pFieldSelector ) ;
             break ;
-         case MSG_CAT_DEL_NODE_REQ :
-            rc = processCmdDelNode( handle, pQuery ) ;
-            break ;
-         case MSG_CAT_RM_GROUP_REQ :
-            rc = processCmdRemoveGrp(handle, pQuery ) ;
-            break ;
          case MSG_CAT_ACTIVE_GROUP_REQ :
-            rc = processCmdActiveGrp( handle, pQuery, ctxBuff ) ;
-            break ;
+         case MSG_CAT_SHUTDOWN_GROUP_REQ :
+         case MSG_CAT_RM_GROUP_REQ :
+         case MSG_CAT_CREATE_NODE_REQ :
+         case MSG_CAT_DEL_NODE_REQ :
+         {
+            SINT64 contextID = -1;
+            catContext *pCatCtx = NULL ;
+            rc = catCreateContext ( (MSG_TYPE)pQueryReq->header.opCode,
+                                    &pCatCtx, contextID,
+                                    _pEduCB ) ;
+            if ( SDB_OK == rc )
+            {
+               rc = pCatCtx->open( handle, pMsg, pQuery, ctxBuff, _pEduCB ) ;
+               if ( SDB_OK != rc )
+               {
+                  catDeleteContext( contextID, _pEduCB ) ;
+                  contextID = -1 ;
+                  pCatCtx = NULL ;
+               }
+               else
+               {
+                  replyHeader.contextID = contextID ;
+                  _pCatCB->addContext( handle, replyHeader.header.TID,
+                                       contextID ) ;
+               }
+            }
+            break;
+         }
          default :
             rc = SDB_INVALIDARG ;
-            PD_LOG( PDERROR, "Recieved unknow command: %s, opCode: %d",
+            PD_LOG( PDERROR, "Received unknown command: %s, opCode: %d",
                     pCMDName, pQueryReq->header.opCode ) ;
             break ;
       }
 
+      if ( SDB_LOCK_FAILED == rc )
+      {
+         goto lock_failed ;
+      }
       PD_RC_CHECK( rc, PDERROR, "Process command[%s] failed, opCode: %d, "
                    "rc: %d", pCMDName, pQueryReq->header.opCode, rc ) ;
 
@@ -768,6 +789,21 @@ namespace engine
          }
       }
       return rc ;
+
+   lock_failed:
+      // Lock failed, then try to delay operation
+      if ( !_pCatCB->delayCurOperation() )
+      {
+         rc = SDB_LOCK_FAILED ;
+         goto error ;
+      }
+      else
+      {
+         // Ignore the lock error
+         rc = SDB_OK ;
+      }
+      goto done ;
+
    error:
       replyHeader.flags = rc ;
       if ( SDB_CLS_NOT_PRIMARY == rc )
@@ -810,35 +846,6 @@ namespace engine
    done:
       PD_TRACE1 ( SDB_CATNODEMGR_PCREATEGRP, PD_PACK_INT ( rc ) ) ;
       PD_TRACE_EXITRC( SDB_CATNODEMGR_PCREATEGRP, rc ) ;
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATNODEMGR_CREATENODE, "catNodeManager::processCreateNode" )
-   INT32 catNodeManager::processCmdCreateNode( const NET_HANDLE &handle,
-                                               const CHAR *pQuery )
-   {
-      INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY ( SDB_CATNODEMGR_CREATENODE ) ;
-      BOOLEAN isLocalConnection = FALSE ;
-
-      NET_EH eh = _pCatCB->netWork()->getFrame()->getEventHandle( handle ) ;
-      if ( eh.get() )
-      {
-         isLocalConnection = eh->isLocalConnection() ;
-      }
-      else
-      {
-         rc = SDB_NETWORK_CLOSE ;
-         goto error ;
-      }
-
-      rc = _createNode( pQuery, isLocalConnection ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to create node, rc: %d", rc ) ;
-
-   done:
-      PD_TRACE_EXITRC ( SDB_CATNODEMGR_CREATENODE, rc ) ;
       return rc ;
    error:
       goto done ;
@@ -893,140 +900,6 @@ namespace engine
 
    done:
       PD_TRACE_EXITRC ( SDB_CATNODEMGR_UPDATENODE, rc ) ;
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATNODEMGR_DELNODE, "catNodeManager::processCmdDelNode" )
-   INT32 catNodeManager::processCmdDelNode( const NET_HANDLE &handle,
-                                            const CHAR *pQuery )
-   {
-      INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY ( SDB_CATNODEMGR_DELNODE ) ;
-
-      BOOLEAN isLocalConnection = FALSE ;
-
-      NET_EH eh = _pCatCB->netWork()->getFrame()->getEventHandle( handle ) ;
-      if ( eh.get() )
-      {
-         isLocalConnection = eh->isLocalConnection() ;
-      }
-      else
-      {
-         rc = SDB_NETWORK_CLOSE ;
-         goto error ;
-      }
-
-      try
-      {
-         BSONObj query( pQuery ) ;
-         rc = _delNode( query, isLocalConnection ) ;
-         PD_RC_CHECK( rc, PDERROR, "Delete node[%s] failed, rc: %d",
-                      query.toString().c_str(), rc ) ;
-      }
-      catch( std::exception &e )
-      {
-         rc = SDB_SYS ;
-         PD_LOG( PDERROR, "Ouccured exception: %s", e.what() ) ;
-         goto error ;
-      }
-
-   done:
-      PD_TRACE1 ( SDB_CATNODEMGR_DELNODE, PD_PACK_INT ( rc ) ) ;
-      PD_TRACE_EXITRC ( SDB_CATNODEMGR_DELNODE, rc ) ;
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATNODEMGR_PREMOVEGRP, "catNodeManager::processCmdRemoveGrp" )
-   INT32 catNodeManager::processCmdRemoveGrp( const NET_HANDLE &handle,
-                                              const CHAR *pQuery )
-   {
-      INT32 rc = SDB_OK ;
-      const CHAR *strGroupName = NULL ;
-      PD_TRACE_ENTRY ( SDB_CATNODEMGR_PREMOVEGRP ) ;
-
-      try
-      {
-         BSONObj boQuery( pQuery );
-         BSONElement beGroupName = boQuery.getField( CAT_GROUPNAME_NAME ) ;
-         if ( beGroupName.eoo() || beGroupName.type() != String )
-         {
-            rc = SDB_INVALIDARG;
-            PD_LOG ( PDERROR, "failed to get the field:%s",
-                     CAT_GROUPNAME_NAME );
-            goto error;
-         }
-         strGroupName = beGroupName.valuestr();
-         PD_TRACE1 ( SDB_CATNODEMGR_PCREATEGRP,
-                     PD_PACK_STRING ( strGroupName ) ) ;
-      }
-      catch ( std::exception &e )
-      {
-         rc = SDB_INVALIDARG;
-         PD_LOG ( PDERROR, "occured unexpected error:%s", e.what() );
-         goto error;
-      }
-
-      rc = removeGrp( strGroupName ) ;
-      if ( rc != SDB_OK )
-      {
-         PD_LOG ( PDERROR, "failed to process remove group request(rc=%d)",
-                  rc );
-         goto error;
-      }
-
-   done:
-      PD_TRACE_EXITRC( SDB_CATNODEMGR_PCREATEGRP, rc ) ;
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATNODEMGR_ACTIVEGRP, "catNodeManager::processCmdActiveGrp" )
-   INT32 catNodeManager::processCmdActiveGrp( const NET_HANDLE &handle,
-                                              const CHAR *pQuery,
-                                              rtnContextBuf &ctxBuff )
-   {
-      INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY ( SDB_CATNODEMGR_ACTIVEGRP ) ;
-
-      BSONObj boGroupInfo ;
-      const CHAR *strGroupName = NULL ;
-      try
-      {
-         BSONObj boQuery( pQuery );
-         BSONElement beGroupName = boQuery.getField( CAT_GROUPNAME_NAME ) ;
-         if ( beGroupName.eoo() || beGroupName.type() != String )
-         {
-            rc = SDB_INVALIDARG;
-            PD_LOG ( PDERROR, "Failed to get the field:%s",
-                     CAT_GROUPNAME_NAME ) ;
-            goto error ;
-         }
-         strGroupName = beGroupName.valuestr() ;
-         PD_TRACE1 ( SDB_CATNODEMGR_ACTIVEGRP,
-                     PD_PACK_STRING ( strGroupName ) ) ;
-      }
-      catch ( std::exception &e )
-      {
-         rc = SDB_INVALIDARG;
-         PD_LOG ( PDERROR, "occured unexpected error:%s", e.what() ) ;
-         goto error ;
-      }
-
-      rc = activeGrp( strGroupName, 0, boGroupInfo ) ;
-      if ( rc != SDB_OK )
-      {
-         PD_LOG( PDERROR, "Failed to active group(rc=%d)", rc ) ;
-         goto error ;
-      }
-      ctxBuff = rtnContextBuf( boGroupInfo.getOwned() ) ;
-
-   done:
-      PD_TRACE_EXITRC ( SDB_CATNODEMGR_ACTIVEGRP, rc ) ;
       return rc ;
    error:
       goto done ;
@@ -1853,6 +1726,8 @@ namespace engine
       INT32   role = SDB_ROLE_DATA ;
       INT32   status = SDB_CAT_GRP_DEACTIVE ;
 
+      catCtxLockMgr lockMgr ;
+
       // check name is valid
       if ( 0 == ossStrcmp( groupName, COORD_GROUPNAME ) )
       {
@@ -1872,25 +1747,18 @@ namespace engine
          PD_RC_CHECK( rc, PDERROR, "Group name[%s] is invalid", groupName ) ;
       }
 
-      // check whetch the group is exist or not
+      // Lock group
+      PD_CHECK( lockMgr.tryLockGroup( groupName, EXCLUSIVE ),
+                SDB_LOCK_FAILED, error, PDERROR,
+                "Failed to lock group[%s]",
+                groupName ) ;
+
+      // check whether the group is exist or not
       rc = catGroupCheck( groupName, bExist, _pEduCB ) ;
       PD_RC_CHECK( rc, PDERROR, "Check group name[%s] exist failed, rc: %d",
                    groupName, rc ) ;
       PD_CHECK( FALSE == bExist, SDB_CAT_GRP_EXIST, error, PDERROR,
                 "Create group failed, the group[%s] existed", groupName ) ;
-
-      // lock group
-      {
-         catGroupLock groupLock( groupName ) ;
-         if ( !groupLock.tryLock( EXCLUSIVE ) )
-         {
-            if ( !_pCatCB->delayCurOperation() )
-            {
-               rc = SDB_LOCK_FAILED ;
-            }
-            goto error ;
-         }
-      }
 
       // assign group id
       if ( CAT_INVALID_GROUPID == newGroupID )
@@ -1929,484 +1797,11 @@ namespace engine
          goto error ;
       }
 
-   done:
+   done :
       PD_TRACE_EXITRC ( SDB_CATNODEMGR_CREATEGRP, rc ) ;
       return rc ;
-   error:
-      goto done ;
-   }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATNODEMGR_REMOVEGRP, "catNodeManager::removeGrp" )
-   INT32 catNodeManager::removeGrp( const CHAR *groupName )
-   {
-      INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY ( SDB_CATNODEMGR_REMOVEGRP ) ;
-      BSONObj groupInfo ;
-      BSONObj matcher ;
-      UINT32 groupID = 0 ;
-      BOOLEAN isDeleted = FALSE ;
-
-      // check name is valid
-      if ( 0 != ossStrcmp( groupName, COORD_GROUPNAME ) &&
-           0 != ossStrcmp( groupName, CATALOG_GROUPNAME ) &&
-           0 != ossStrcmp( groupName, SPARE_GROUPNAME ) )
-      {
-         rc = catGroupNameValidate( groupName, FALSE ) ;
-         PD_RC_CHECK( rc, PDERROR, "Group name[%s] is invalid", groupName ) ;
-      }
-
-      rc = catGetGroupObj( groupName, FALSE, groupInfo, _pEduCB ) ;
-      if ( SDB_CLS_GRP_NOT_EXIST == rc )
-      {
-         rc = SDB_CLS_GRP_NOT_EXIST;
-         PD_LOG ( PDERROR, "the group(%s) is not exist",
-                  groupName );
-         goto error ;
-      }
-      else if ( SDB_OK != rc )
-      {
-         PD_LOG ( PDERROR, "failed to check if group exist(rc=%d)",
-                  rc );
-         goto error ;
-      }
-
-      try
-      {
-         BSONElement ele = groupInfo.getField( FIELD_NAME_GROUPID ) ;
-         if ( ele.eoo() || !ele.isNumber() )
-         {
-            PD_LOG( PDERROR, "unexpected err with group info[%s]",
-                    groupInfo.toString().c_str() ) ;
-            rc = SDB_SYS ;
-            goto error ;
-         }
-         groupID = ele.Number() ;
-      }
-      catch ( std::exception &e )
-      {
-         PD_LOG( PDERROR, "unexpected err happened:%s", e.what() ) ;
-         rc = SDB_SYS ;
-         goto error ;
-      }
-
-      // can't remove group when group has image and image is enable
-      if ( _pCatCB->isImageEnabled() &&
-           _pCatCB->getCatDCMgr()->groupInImage(  groupName ) )
-      {
-         rc = SDB_CAT_GROUP_HAS_IMAGE ;
-         goto error ;
-      }
-
-      if ( CATALOG_GROUPID == groupID )
-      {
-         INT64 count = 0 ;
-         rc = catGroupCount( count, _pEduCB ) ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to count groups, rc: %d", rc ) ;
-
-         if ( count > 1 )
-         {
-            rc = SDB_CATA_RM_CATA_FORBIDDEN ;
-            PD_LOG( PDERROR, "Cant not remove catalog group when has other "
-                    "group exist(%lld)", count ) ;
-            goto error ;
-         }
-      }
-      else
-      {
-         UINT64 count = 0 ;
-         /// hard code.
-         matcher = BSON( FIELD_NAME_CATALOGINFO".GroupID" << groupID ) ;
-
-         /// confirm that no there is no data in this group.
-         rc = _count( CAT_COLLECTION_INFO_COLLECTION, matcher, count ) ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to count collection: %s, match: "
-                      "%s, rc: %d", CAT_COLLECTION_INFO_COLLECTION,
-                      matcher.toString().c_str(), rc ) ;
-
-         if ( 0 != count )
-         {
-            PD_LOG( PDERROR, "can not remove a group with data in it" ) ;
-            rc = SDB_CAT_RM_GRP_FORBIDDEN ;
-            goto error ;
-         }
-
-         /// confirm that no there is no task in this group.
-         matcher = BSON( FIELD_NAME_TARGETID << groupID ) ;
-         rc = _count( CAT_TASK_INFO_COLLECTION, matcher, count ) ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to count collection: %s, match: "
-                      "%s, rc: %d", CAT_TASK_INFO_COLLECTION,
-                      matcher.toString().c_str(), rc ) ;
-         if ( 0 != count )
-         {
-            PD_LOG( PDERROR, "can not remove a group with task in it" ) ;
-            rc = SDB_CAT_RM_GRP_FORBIDDEN ;
-            goto error ;
-         }
-
-         // remove group
-         pmdGetKRCB()->getCATLOGUECB()->removeGroupID( groupID ) ;
-         isDeleted = TRUE ;
-
-         // remove from all domain
-         rc = catDelGroupFromDomain( NULL, groupName, groupID, _pEduCB,
-                                     _pDmsCB, _pDpsCB, 1 ) ;
-         if ( rc )
-         {
-            PD_LOG( PDERROR, "Remove group[%s] from domain failed, rc: %d",
-                    groupName, rc ) ;
-            goto error ;
-         }
-
-         matcher = BSON( FIELD_NAME_GROUPNAME << groupName ) ;
-         rc = rtnDelete( CAT_NODE_INFO_COLLECTION, matcher,
-                         BSONObj(), 0, _pEduCB, _pDmsCB, _pDpsCB,
-                         _majoritySize() ) ;
-         if ( SDB_OK != rc )
-         {
-            PD_LOG( PDERROR, "failed to delete record, rc: %d", rc ) ;
-            goto error ;
-         }
-      }
-
-   done:
-      return rc ;
-   error:
-      if ( isDeleted )
-      {
-         pmdGetKRCB()->getCATLOGUECB()->insertGroupID ( groupID,
-                                                        groupName,
-                                                        TRUE ) ;
-      }
-      goto done ;
-   }
-
-   INT32 catNodeManager::_count( const CHAR *collection,
-                                 const BSONObj &matcher,
-                                 UINT64 &count )
-   {
-      INT32 rc = SDB_OK ;
-      INT64 totalCount;
-
-      rc = rtnGetCount( collection, matcher, BSONObj(), _pDmsCB, _pEduCB,
-                        _pRtnCB, &totalCount ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "failed to rtn count:%d",rc ) ;
-         goto error ;
-      }
-      SDB_ASSERT( totalCount >= 0, "totalCount must be greater than or equal 0") ;
-
-      count = static_cast<UINT64>( totalCount ) ;
-
-   done:
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   INT32 catNodeManager::_delNode( BSONObj &boDelNodeInfo, BOOLEAN isLoalConn )
-   {
-      INT32 rc = SDB_OK ;
-
-      const CHAR *groupName = NULL ;
-      const CHAR *hostName  = NULL ;
-      const CHAR *svcName   = NULL ;
-      BOOLEAN forced        = FALSE ;
-
-      BSONObj groupInfo ;
-      BSONObj groupsObj ;
-
-      BSONArrayBuilder newGroupsBuild ;
-      INT32   removeNode = CAT_INVALID_NODEID ;
-
-      rc = rtnGetStringElement( boDelNodeInfo, FIELD_NAME_GROUPNAME,
-                                &groupName ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to get field[%s], rc: %d",
-                   FIELD_NAME_GROUPNAME, rc ) ;
-
-      rc = rtnGetStringElement( boDelNodeInfo, FIELD_NAME_HOST, &hostName ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to get field[%s], rc: %d",
-                   FIELD_NAME_HOST, rc ) ;
-      rc = rtnGetStringElement( boDelNodeInfo, PMD_OPTION_SVCNAME, &svcName ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to get field[%s], rc: %d",
-                   PMD_OPTION_SVCNAME, rc ) ;
-      rc = rtnGetBooleanElement( boDelNodeInfo, CMD_NAME_ENFORCED, forced ) ;
-      if ( SDB_FIELD_NOT_EXIST == rc )
-      {
-         rc = SDB_OK ;
-         forced = FALSE ;
-      }
-      PD_RC_CHECK( rc, PDERROR, "Failed to get field[%s], rc: %d",
-                   CMD_NAME_ENFORCED, rc ) ;
-
-      // check if 'localhost' or '127.0.0.1' is used
-      if ( 0 == ossStrcmp( hostName, OSS_LOCALHOST ) ||
-           0 == ossStrcmp( hostName, OSS_LOOPBACK_IP ) )
-      {
-         // del localhost, coord must be the same with catalog
-         if ( !isLoalConn )
-         {
-            rc = SDB_CAT_NOT_LOCALCONN ;
-            goto error ;
-         }
-      }
-
-      // get group info
-      rc = catGetGroupObj( groupName, FALSE, groupInfo, _pEduCB ) ;
-      PD_RC_CHECK( rc, PDERROR, "Get group info by name[%s] failed, rc: %d",
-                   groupName, rc ) ;
-
-      // get groups obj
-      {
-         BSONElement beGroup = groupInfo.getField( FIELD_NAME_GROUP ) ;
-         if ( beGroup.eoo() )
-         {
-            rc = SDB_CLS_NODE_NOT_EXIST ;
-         }
-         else if ( Array != beGroup.type() )
-         {
-            rc = SDB_SYS ;
-         }
-         PD_RC_CHECK( rc, PDERROR, "Failed to get field[%s], rc: %d",
-                      FIELD_NAME_GROUP, rc ) ;
-         groupsObj = beGroup.embeddedObject() ;
-      }
-
-      rc = _getRemovedGroupsObj( groupsObj, hostName, svcName, newGroupsBuild,
-                                 &removeNode ) ;
-      PD_RC_CHECK( rc, PDERROR, "Remove node[%s:%s] from group[%s] failed, "
-                   "rc: %d", hostName, svcName, groupInfo.toString().c_str(),
-                   rc ) ;
-
-      if ( 0 == ossStrcmp( groupName, CATALOG_GROUPNAME ) )
-      {
-         MsgRouteID localID = pmdGetNodeID() ;
-         if ( removeNode == localID.columns.nodeID )
-         {
-            rc = SDB_CATA_RM_CATA_FORBIDDEN ;
-            PD_LOG( PDERROR, "can not remove primary catalog. reelect first" ) ;
-            goto error ;
-         }
-      }
-
-      if ( !forced && ( 0 != ossStrcmp( groupName, SPARE_GROUPNAME ) &&
-                        0 != ossStrcmp( groupName, COORD_GROUPNAME ) ) )
-      {
-         BSONElement primary = groupInfo.getField( FIELD_NAME_PRIMARY ) ;
-         if ( !primary.isNumber() )
-         {
-            PD_LOG( PDEVENT, "no primary node exists in this group:%s",
-                    groupInfo.toString( FALSE, TRUE ).c_str() ) ;
-         }
-         else if ( primary.numberInt() == removeNode )
-         {
-            PD_LOG( PDERROR, "can not remove primary node of group:%s",
-                    groupInfo.toString( FALSE, TRUE ).c_str() ) ;
-            rc = SDB_CATA_RM_NODE_FORBIDDEN ;
-            goto error ;
-         }
-         else
-         {
-            /// do nothing.
-         }
-      }
-
-      // node num judge
-      if ( 0 != ossStrcmp( groupName, SPARE_GROUPNAME ) &&
-           1 == groupsObj.nFields() && !forced )
-      {
-         rc = SDB_CATA_RM_NODE_FORBIDDEN ;
-         PD_LOG( PDERROR, "Can not remove node when group[%s] is only one node",
-                 groupInfo.toString().c_str() ) ;
-         goto error ;
-      }
-
-      // update to collection
-      {
-         BSONObjBuilder updateBuilder ;
-         BSONObj matcher, updator ;
-         BSONObj dummyObj ;
-         INT16 w = 1 ;
-         replCB *repl = pmdGetKRCB()->getClsCB()->getReplCB() ;
-
-         /// when we do forceStepUp, rtnUpdate may return SDB_CLS_WAIT_SYNC_FAILED
-         /// if do not set it with 1.
-         w = ( forced || repl->isInStepUp() ) ? 1 : _majoritySize() ;
-
-         updateBuilder.append("$inc", BSON( FIELD_NAME_VERSION << 1 ) ) ;
-         updateBuilder.append("$set", BSON( FIELD_NAME_GROUP <<
-                               newGroupsBuild.arr() ) ) ;
-
-         updator = updateBuilder.obj() ;
-         matcher = BSON( FIELD_NAME_GROUPNAME << groupName ) ;
-
-         rc = rtnUpdate( CAT_NODE_INFO_COLLECTION, matcher, updator, dummyObj,
-                         0, _pEduCB, _pDmsCB, _pDpsCB, w ) ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to update group info[%s], matcher: "
-                      "%s, updator: %s, rc: %d", groupInfo.toString().c_str(),
-                      matcher.toString().c_str(), updator.toString().c_str(),
-                      rc ) ;
-      }
-
-      // release node
-      _pCatCB->releaseNodeID( removeNode ) ;
-
-   done:
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   INT32 catNodeManager::_createNode( const CHAR *pQuery, BOOLEAN isLoalConn )
-   {
-      INT32 rc = SDB_OK ;
-      UINT16 nodeID = CAT_INVALID_NODEID ;
-      INT32  nodeStatus = SDB_CAT_GRP_DEACTIVE ;
-
-      try
-      {
-         const CHAR *groupName = NULL ;
-         const CHAR *hostName = NULL ;
-         BSONObj boGroupInfo ;
-
-         BSONObj boNodeInfo( pQuery ) ;
-         rc = rtnGetStringElement( boNodeInfo, FIELD_NAME_GROUPNAME,
-                                   &groupName ) ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to get the field[%s], rc: %d",
-                      FIELD_NAME_GROUPNAME, rc ) ;
-         rc = rtnGetStringElement( boNodeInfo, FIELD_NAME_HOST,
-                                   &hostName ) ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to get the field[%s], rc: %d",
-                      FIELD_NAME_HOST, rc ) ;
-
-         rc = catGetGroupObj( groupName, FALSE, boGroupInfo, _pEduCB ) ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to get group[%s] info, rc: %d",
-                      groupName, rc ) ;
-
-         {
-         BSONElement beGroupId = boGroupInfo.getField( FIELD_NAME_GROUPID );
-         PD_CHECK( beGroupId.type() == NumberInt, SDB_SYS, error, PDERROR,
-                  "failed to get the field(%s)", FIELD_NAME_GROUPID );
-         clsGroupItem groupInfo( beGroupId.numberInt() );
-         rc = groupInfo.updateGroupItem( boGroupInfo ) ;
-         PD_RC_CHECK( rc, PDERROR,
-                     "failed to parse group info(rc=%d)",
-                     rc );
-         // coord group not limited
-         if ( groupInfo.groupID() != COORD_GROUPID ) 
-         {
-            PD_CHECK( groupInfo.nodeCount() < CLS_REPLSET_MAX_NODE_SIZE,
-                      SDB_DMS_REACHED_MAX_NODES, error, PDERROR,
-                      "reached the maximum number of nodes!" ) ;
-         }
-         }
-
-         // check if 'localhost' or '127.0.0.1' is used
-         {
-         BOOLEAN isLocalHost = FALSE;
-         if ( 0 == ossStrcmp( hostName, OSS_LOCALHOST ) ||
-              0 == ossStrcmp( hostName, OSS_LOOPBACK_IP ) )
-         {
-            // add localhost, coord must be the same with catalog
-            if ( !isLoalConn )
-            {
-               rc = SDB_CAT_NOT_LOCALCONN ;
-               goto error ;
-            }
-            isLocalHost = TRUE ;
-         }
-
-         BOOLEAN isValid = FALSE;
-         rc = _checkLocalHost( isLocalHost, isValid ) ;
-         PD_RC_CHECK( rc, PDERROR,
-                      "Failed to get localhost existing info, rc: %d", rc ) ;
-
-         PD_CHECK( isValid,
-                   SDB_CAT_LOCALHOST_CONFLICT, error, PDERROR,
-                   "'localhost' and '127.0.0.1' cannot be used mixed with "
-                   "other hostname and IP address" );
-         }
-
-         if ( 0 == ossStrcmp( groupName, CATALOG_GROUPNAME ) ||
-              0 == ossStrcmp( groupName, COORD_GROUPNAME ) )
-         {
-            nodeID = _pCatCB->allocSystemNodeID() ;
-            nodeStatus = SDB_CAT_GRP_ACTIVE ;
-         }
-         else
-         {
-            nodeID = _pCatCB->allocNodeID();
-         }
-
-         PD_CHECK( CAT_INVALID_NODEID != nodeID, SDB_SYS, error, PDERROR,
-                   "Failed to allocate node id, maybe node is full" ) ;
-
-         rc = _addNodeToGrp( boGroupInfo, boNodeInfo, nodeID, nodeStatus ) ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to add node to group, rc: %d", rc ) ;
-      }
-      catch ( std::exception &e )
-      {
-         rc = SDB_SYS ;
-         PD_LOG ( PDERROR, "Occured unexpected error: %s", e.what() );
-         goto error ;
-      }
-
-   done:
-      return rc ;
-   error:
-      if ( CAT_INVALID_NODEID != nodeID )
-      {
-         _pCatCB->releaseNodeID( nodeID ) ;
-      }
-      goto done ;
-   }
-
-   INT32 catNodeManager::_addNodeToGrp ( BSONObj &boGroupInfo,
-                                         BSONObj &boNodeInfo,
-                                         UINT16 nodeID,
-                                         INT32 nodeStatus )
-   {
-      INT32 rc = SDB_OK ;
-      INT32  nodeRole = SDB_ROLE_DATA ;
-      const  CHAR *groupName = NULL ;
-      BSONObjBuilder newObjBuilder ;
-      BSONObj newInfoObj ;
-      BSONObjBuilder updateBuilder ;
-      BSONObj updator, matcher ;
-      BSONObj dummyObj ;
-
-      rc = rtnGetIntElement( boGroupInfo, CAT_ROLE_NAME, nodeRole ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to get field[%s], rc: %d",
-                   CAT_ROLE_NAME, rc ) ;
-
-      rc = _checkNodeInfo( boNodeInfo, nodeRole, &newObjBuilder ) ;
-      PD_RC_CHECK( rc, PDERROR, "Check node info failed, rc: %d", rc ) ;
-      newObjBuilder.append( FIELD_NAME_NODEID, nodeID ) ;
-      newObjBuilder.append( FIELD_NAME_STATUS, nodeStatus ) ;
-      newInfoObj = newObjBuilder.obj() ;
-
-      rc = rtnGetStringElement( boGroupInfo, FIELD_NAME_GROUPNAME,
-                                &groupName ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to get field[%s], rc: %d",
-                   FIELD_NAME_GROUPNAME, rc ) ;
-
-      // update group info
-      updateBuilder.append("$inc", BSON( FIELD_NAME_VERSION << 1 ) ) ;
-      updateBuilder.append("$push", BSON( FIELD_NAME_GROUP << newInfoObj ) ) ;
-
-      updator = updateBuilder.obj() ;
-      matcher = BSON( FIELD_NAME_GROUPNAME << groupName ) ;
-
-      rc = rtnUpdate( CAT_NODE_INFO_COLLECTION, matcher, updator, dummyObj,
-                      0, _pEduCB, _pDmsCB, _pDpsCB, _majoritySize() ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to update node info[%s] to group[%s],"
-                   "matcher: %s, updator: %s, rc: %d",
-                   newInfoObj.toString().c_str(), groupName,
-                   matcher.toString().c_str(), updator.toString().c_str(),
-                   rc ) ;
-   done:
-      return rc ;
-   error:
+   error :
       goto done ;
    }
 
@@ -2595,358 +1990,9 @@ namespace engine
       goto done ;
    }
 
-   INT32 catNodeManager::_getRemovedGroupsObj( const BSONObj & srcGroupsObj,
-                                               const CHAR * hostName,
-                                               const CHAR * serviceName,
-                                               BSONArrayBuilder &newObjBuilder,
-                                               INT32 *pRemoveNodeID )
-   {
-      INT32 rc = SDB_OK ;
-      const CHAR *tmpHostName = NULL ;
-      BOOLEAN exist = FALSE ;
-      const CHAR *pSvcNameTmp = NULL ;
-
-      BSONObjIterator i( srcGroupsObj ) ;
-      while ( i.more() )
-      {
-         BSONElement beNode = i.next() ;
-         BSONObj boNode = beNode.embeddedObject() ;
-
-         rc = rtnGetStringElement( boNode, FIELD_NAME_HOST, &tmpHostName ) ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to get field[%s] from [%s], rc: %d",
-                      FIELD_NAME_HOST, boNode.toString().c_str(), rc ) ;
-
-         // hostname not same
-         if ( 0 != ossStrcmp( hostName, tmpHostName ) )
-         {
-            newObjBuilder.append( boNode ) ;
-         }
-         // sevice
-         else
-         {
-            BSONElement beService = boNode.getField( FIELD_NAME_SERVICE ) ;
-            if ( beService.eoo() || Array != beService.type() )
-            {
-               rc = SDB_SYS ;
-               PD_LOG( PDERROR, "Failed to get field[%s], field type: %d",
-                       FIELD_NAME_SERVICE, beService.type() ) ;
-               goto error ;
-            }
-            pSvcNameTmp = getServiceName( beService, MSG_ROUTE_LOCAL_SERVICE ) ;
-
-            if ( 0 == ossStrcmp( serviceName, pSvcNameTmp ) )
-            {
-               exist = TRUE ;
-               // get node id
-               if ( pRemoveNodeID )
-               {
-                  rc = rtnGetIntElement( boNode, FIELD_NAME_NODEID,
-                                         *pRemoveNodeID ) ;
-                  PD_RC_CHECK( rc, PDERROR, "Failed to get field[%s], rc: %d",
-                               FIELD_NAME_NODEID, rc ) ;
-               }
-            }
-            else
-            {
-               newObjBuilder.append( boNode ) ;
-            }
-         }
-      }
-
-      PD_CHECK( exist, SDB_CLS_NODE_NOT_EXIST, error, PDERROR,
-                "Remove node[%s:%s] is not exist in group[%s]", hostName,
-                serviceName, srcGroupsObj.toString().c_str() ) ;
-
-   done:
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   string catNodeManager::_getServiceName( UINT16 localPort,
-                                           MSG_ROUTE_SERVICE_TYPE type )
-   {
-      CHAR szPort[ CAT_PORT_STR_SZ+1 ] = {0};
-      UINT16 port = localPort + type ;
-      ossItoa( port, szPort, CAT_PORT_STR_SZ ) ;
-      return string( szPort ) ;
-   }
-
-   INT32 catNodeManager::_checkNodeInfo( BSONObj &boNodeInfo, INT32 nodeRole,
-                                         BSONObjBuilder *newObjBuilder )
-   {
-      INT32 rc = SDB_OK ;
-
-      const CHAR *hostName = NULL ;
-      const CHAR *dbPath   = NULL ;
-      const CHAR *localSvc = NULL ;
-      const CHAR *replSvc  = NULL ;
-      const CHAR *shardSvc = NULL ;
-      const CHAR *cataSvc  = NULL ;
-      BOOLEAN exist        = FALSE ;
-      UINT16 svcPort       = 0 ;
-      string strReplSvc ;
-      string strShardSvc ;
-      string strCataSvc ;
-
-      rc = rtnGetStringElement( boNodeInfo, FIELD_NAME_HOST, &hostName ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to get the field[%s], rc: %d",
-                   FIELD_NAME_HOST, rc ) ;
-
-      rc = rtnGetStringElement( boNodeInfo, PMD_OPTION_DBPATH, &dbPath ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to get the field[%s], rc: %d",
-                   PMD_OPTION_DBPATH, rc ) ;
-
-      rc = rtnGetStringElement( boNodeInfo, PMD_OPTION_SVCNAME, &localSvc ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to get the field[%s], rc: %d",
-                   PMD_OPTION_SVCNAME, rc ) ;
-
-      // check local service whether exist or not
-      rc = catServiceCheck( hostName, localSvc, exist, _pEduCB ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to check local service[%s], "
-                   "rc: %d", localSvc, rc ) ;
-      PD_CHECK( !exist, SDB_CM_CONFIG_CONFLICTS, error, PDERROR,
-                "Local service[%s] conflict", localSvc ) ;
-
-      ossSocket::getPort( localSvc, svcPort ) ;
-      PD_CHECK( 0 != svcPort, SDB_INVALIDARG, error, PDERROR,
-                "Local service[%s] is invalid, translate to port 0",
-                localSvc ) ;
-
-      // repl service
-      rc = rtnGetStringElement( boNodeInfo, PMD_OPTION_REPLNAME,
-                                &replSvc ) ;
-      if ( SDB_FIELD_NOT_EXIST == rc )
-      {
-         strReplSvc = _getServiceName( svcPort, MSG_ROUTE_REPL_SERVICE ) ;
-         replSvc = strReplSvc.c_str() ;
-         rc = SDB_OK ;
-      }
-      PD_RC_CHECK( rc, PDERROR, "Failed to get the field[%s], rc: %d",
-                   PMD_OPTION_REPLNAME, rc ) ;
-
-      rc = catServiceCheck( hostName, replSvc, exist, _pEduCB ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to check repl service[%s], "
-                   "rc: %d", replSvc, rc ) ;
-      PD_CHECK( !exist, SDB_CM_CONFIG_CONFLICTS, error, PDERROR,
-                "Repl service[%s] conflict", replSvc ) ;
-
-      // shard service
-      rc = rtnGetStringElement( boNodeInfo, PMD_OPTION_SHARDNAME,
-                                &shardSvc ) ;
-      if ( SDB_FIELD_NOT_EXIST == rc )
-      {
-         strShardSvc = _getServiceName( svcPort, MSG_ROUTE_SHARD_SERVCIE ) ;
-         shardSvc = strShardSvc.c_str() ;
-         rc = SDB_OK ;
-      }
-      PD_RC_CHECK( rc, PDERROR, "Failed to get the field[%s], rc: %d",
-                   PMD_OPTION_SHARDNAME, rc ) ;
-
-      rc = catServiceCheck( hostName, shardSvc, exist, _pEduCB ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to check shard service[%s], "
-                   "rc: %d", shardSvc, rc ) ;
-      PD_CHECK( !exist, SDB_CM_CONFIG_CONFLICTS, error, PDERROR,
-                "Shard service[%s] conflict", shardSvc ) ;
-
-      // cata service
-      if ( SDB_ROLE_CATALOG == nodeRole )
-      {
-         rc = rtnGetStringElement( boNodeInfo, PMD_OPTION_CATANAME,
-                                   &cataSvc ) ;
-         if ( SDB_FIELD_NOT_EXIST == rc )
-         {
-            strCataSvc = _getServiceName( svcPort, MSG_ROUTE_CAT_SERVICE ) ;
-            cataSvc = strCataSvc.c_str() ;
-            rc = SDB_OK ;
-         }
-         PD_RC_CHECK( rc, PDERROR, "Failed to get the field[%s], rc: %d",
-                      PMD_OPTION_CATANAME, rc ) ;
-
-         rc = catServiceCheck( hostName, cataSvc, exist, _pEduCB ) ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to check cata service[%s], "
-                      "rc: %d", cataSvc, rc ) ;
-         PD_CHECK( !exist, SDB_CM_CONFIG_CONFLICTS, error, PDERROR,
-                   "Cata service[%s] conflict", cataSvc ) ;
-      }
-
-      // translate
-      if ( newObjBuilder )
-      {
-         newObjBuilder->append( FIELD_NAME_HOST, hostName ) ;
-         newObjBuilder->append( PMD_OPTION_DBPATH, dbPath ) ;
-         // service
-         BSONObjBuilder sub( newObjBuilder->subarrayStart(
-                             FIELD_NAME_SERVICE ) ) ;
-         // local
-         BSONObjBuilder sub1( sub.subobjStart("0") ) ;
-         sub1.append( FIELD_NAME_SERVICE_TYPE, MSG_ROUTE_LOCAL_SERVICE ) ;
-         sub1.append( FIELD_NAME_NAME, localSvc ) ;
-         sub1.done() ;
-
-         // repl
-         BSONObjBuilder sub2( sub.subobjStart("1") ) ;
-         sub2.append( FIELD_NAME_SERVICE_TYPE, MSG_ROUTE_REPL_SERVICE ) ;
-         sub2.append( FIELD_NAME_NAME, replSvc ) ;
-         sub2.done() ;
-         // shard
-         BSONObjBuilder sub3( sub.subobjStart("2") ) ;
-         sub3.append( FIELD_NAME_SERVICE_TYPE, MSG_ROUTE_SHARD_SERVCIE ) ;
-         sub3.append( FIELD_NAME_NAME, shardSvc ) ;
-         sub3.done() ;
-         // cata
-         if ( SDB_ROLE_CATALOG == nodeRole )
-         {
-            BSONObjBuilder sub4( sub.subobjStart("3") ) ;
-            sub4.append( FIELD_NAME_SERVICE_TYPE, MSG_ROUTE_CAT_SERVICE ) ;
-            sub4.append( FIELD_NAME_NAME, cataSvc ) ;
-            sub4.done() ;
-         }
-
-         sub.done() ;
-      }
-
-   done:
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   INT32 catNodeManager::activeGrp( const std::string &strGroupName,
-                                    UINT32 groupID,
-                                    BSONObj &boGroupInfo )
-   {
-      INT32 rc = SDB_OK;
-      do
-      {
-         try
-         {
-            if ( 0 != groupID )
-            {
-               rc = catGetGroupObj( groupID, boGroupInfo, _pEduCB ) ;
-            }
-            else
-            {
-               rc = catGetGroupObj( strGroupName.c_str(),
-                                    FALSE, boGroupInfo, _pEduCB ) ;
-            }
-            if ( rc )
-            {
-               PD_LOG( PDERROR, "Failed to get group(%s/%d) info, rc: %d",
-                       strGroupName.c_str(), groupID, rc ) ;
-               break ;
-            }
-
-            BSONElement beGroup = boGroupInfo.getField( CAT_GROUP_NAME );
-            if ( beGroup.eoo() || beGroup.type()!=Array )
-            {
-               rc = SDB_CLS_EMPTY_GROUP ;
-               PD_LOG( PDERROR, "Active group failed, can't active "
-                       "empty-group" );
-               break ;
-            }
-            BSONObj boGroup = beGroup.embeddedObject() ;
-            if ( boGroup.isEmpty() )
-            {
-               rc = SDB_CLS_EMPTY_GROUP ;
-               PD_LOG( PDERROR, "Active group failed, can't active "
-                       "empty-group" );
-               break;
-            }
-            BSONElement beGroupID = boGroupInfo.getField(CAT_GROUPID_NAME);
-            if ( beGroupID.eoo() || !beGroupID.isNumber() )
-            {
-               rc = SDB_INVALIDARG;
-               PD_LOG ( PDERROR, "Failed to get the field(%s)",
-                        CAT_GROUPID_NAME );
-               break;
-            }
-            UINT32 groupID = beGroupID.number() ;
-
-            // if catalog group or status is already active
-            if ( CATALOG_GROUPID == groupID ||
-                 SDB_CAT_GRP_ACTIVE ==
-                 boGroupInfo.getField( CAT_GROUP_STATUS ).numberInt() )
-            {
-               break ;
-            }
-
-            BSONObjBuilder bobStatus ;
-            bobStatus.append( CAT_GROUP_STATUS, SDB_CAT_GRP_ACTIVE );
-            BSONObj boStatus = bobStatus.obj() ;
-            BSONObjBuilder bobUpdater;
-            bobUpdater.append("$set",  boStatus );
-            BSONObj boUpdater = bobUpdater.obj();
-            BSONObj boMatcher = BSON( CAT_GROUPNAME_NAME <<
-                                      strGroupName.c_str() );
-            BSONObj boHint;
-            rc = rtnUpdate( CAT_NODE_INFO_COLLECTION, boMatcher,
-                            boUpdater, boHint,
-                            FLG_UPDATE_UPSERT, _pEduCB, _pDmsCB,
-                            _pDpsCB, _majoritySize() );
-            if ( rc != SDB_OK )
-            {
-               PD_LOG ( PDERROR, "Failed to active, failed to update "
-                        "catalogue-group info(rc=%d)", rc ) ;
-               break;
-            }
-            _pCatCB->activeGroup( groupID ) ;
-         }
-         catch ( std::exception &e )
-         {
-            rc = SDB_INVALIDARG ;
-            PD_LOG ( PDERROR, "occured unexpected error:%s", e.what() ) ;
-         }
-      }while ( FALSE ) ;
-      return rc ;
-   }
-
    INT16 catNodeManager::_majoritySize()
    {
       return _pCatCB->majoritySize() ;
    }
-
-   INT32 catNodeManager::_checkLocalHost( BOOLEAN isLocalHost, BOOLEAN &isValid )
-   {
-      BSONObj matcher;
-      UINT64 count = 0;
-      INT32 rc = SDB_OK;
-
-      rc = _count( CAT_NODE_INFO_COLLECTION, matcher, count) ;
-      if ( SDB_OK != rc )
-      {
-         goto error ;
-      }
-
-      if ( 0 == count )
-      {
-         // There is no group, so it can be used no matter localhost or not.
-         isValid = TRUE;
-         goto done;
-      }
-
-      // check whether 'localhost' or '127.0.0.1' is used
-      // {"Group.HostName":{"$in":["localhost","127.0.0.1"]}}
-      matcher =
-         BSON( CAT_GROUP_NAME"."CAT_HOST_FIELD_NAME <<
-            BSON ( "$in" <<
-               BSON_ARRAY( OSS_LOCALHOST << OSS_LOOPBACK_IP ) ) ) ;
-      rc = _count( CAT_NODE_INFO_COLLECTION, matcher, count) ;
-      if ( SDB_OK != rc )
-      {
-         goto error ;
-      }
-
-      // if count == 0, then no node uses 'localhost' or '127.0.0.1',
-      // so localhost cannot be used.
-      // otherwise (count > 0), localhost can be used.
-      isValid = isLocalHost ^ ( 0 == count) ;
-
-      done:
-         return rc ;
-      error:
-         goto done ;
-   }
-
 }
 

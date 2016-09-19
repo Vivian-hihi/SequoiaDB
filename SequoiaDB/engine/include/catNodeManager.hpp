@@ -73,18 +73,9 @@ namespace engine
                                BOOLEAN writable ) ;
 
       INT32 processCmdCreateGrp( const CHAR *pQuery ) ;
-      INT32 processCmdCreateNode( const NET_HANDLE &handle,
-                                  const CHAR *pQuery ) ;
       INT32 processCmdUpdateNode( const NET_HANDLE &handle,
                                   const CHAR *pQuery,
                                   const CHAR *pSelector ) ;
-      INT32 processCmdDelNode( const NET_HANDLE &handle,
-                               const CHAR *pQuery ) ;
-      INT32 processCmdRemoveGrp( const NET_HANDLE &handle,
-                                 const CHAR *pQuery ) ;
-      INT32 processCmdActiveGrp( const NET_HANDLE &handle,
-                                 const CHAR *pQuery,
-                                 rtnContextBuf &ctxBuff );
 
       INT32 processGrpReq( const NET_HANDLE &handle, MsgHeader *pMsg ) ;
       INT32 processRegReq( const NET_HANDLE &handle, MsgHeader *pMsg ) ;
@@ -100,13 +91,6 @@ namespace engine
       INT32 parseIDInfo( BSONObj &obj );
       INT32 getNodeInfo( const BSONObj &boReq, BSONObj &boNodeInfo,
                          INT32 &role ) ;
-      INT32 removeGrp( const CHAR *groupName ) ;
-      INT32 activeGrp( const std::string &strGroupName,
-                       UINT32 groupID,
-                       BSONObj &boGroupInfo );
-
-      INT32 _count( const CHAR *collection, const BSONObj &matcher,
-                    UINT64 &count ) ;
 
       INT32 _checkAndUpdateNodeInfo( const BSONObj &reqObj,
                                      INT32 role,
@@ -118,10 +102,6 @@ namespace engine
    // tool fuctions
    private:
       INT32 _createGrp( const CHAR *groupName ) ;
-      INT32 _createNode( const CHAR *pQuery, BOOLEAN isLoalConn ) ;
-      INT32 _delNode( BSONObj &boDelNodeInfo, BOOLEAN isLoalConn ) ;
-      INT32 _addNodeToGrp ( BSONObj &boGroupInfo, BSONObj &boNodeInfo,
-                            UINT16 nodeID, INT32 nodeStatus ) ;
       INT32 _updateNodeToGrp ( BSONObj &boGroupInfo, BSONObj &boNodeInfoNew,
                                UINT16 nodeID, BOOLEAN isLoalConn,
                                BOOLEAN setStatus ) ;
@@ -129,18 +109,9 @@ namespace engine
                                   UINT16 removeNode,
                                   BSONObj &removedObj,
                                   BSONArrayBuilder &newObjBuilder ) ;
-      INT32 _getRemovedGroupsObj( const BSONObj &srcGroupsObj,
-                                  const CHAR *hostName,
-                                  const CHAR *serviceName,
-                                  BSONArrayBuilder &newObjBuilder,
-                                  INT32 *pRemoveNodeID = NULL ) ;
-      INT32 _checkNodeInfo( BSONObj &boNodeInfo, INT32 nodeRole,
-                            BSONObjBuilder *newObjBuilder = NULL ) ;
-      string _getServiceName( UINT16 localPort, _MSG_ROUTE_SERVICE_TYPE type ) ;
       INT16 _majoritySize() ;
 
       INT32 _getNodeInfoByConf( BSONObj &boConf, BSONObjBuilder &bobNodeInfo ) ;
-      INT32 _checkLocalHost( BOOLEAN isLocalHost, BOOLEAN &isValid ) ;
 
    private:
       _SDB_DMSCB                 *_pDmsCB;

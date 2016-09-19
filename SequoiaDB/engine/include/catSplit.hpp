@@ -41,35 +41,45 @@
 #include "catDef.hpp"
 #include "pmd.hpp"
 #include "clsTask.hpp"
+#include "catLevelLock.hpp"
 
 using namespace bson ;
 
 namespace engine
 {
 
-   INT32 catSplitPrepare( const BSONObj &splitInfo, const CHAR *clFullName,
-                          clsCatalogSet *cataSet, UINT32 &groupID,
-                          pmdEDUCB *cb ) ;
+   INT32 catSplitPrepare ( const std::string &clName,
+                           clsCatalogSet &cataSet,
+                           const BSONObj &splitInfo,
+                           pmdEDUCB *cb ) ;
 
-   INT32 catSplitReady( const BSONObj &splitInfo, const CHAR *clFullName,
-                        clsCatalogSet *cataSet, UINT32 &groupID,
-                        clsTaskMgr &taskMgr, pmdEDUCB *cb, INT16 w,
-                        UINT64 *pTaskID = NULL ) ;
+   INT32 catSplitReady ( const std::string &clName,
+                         clsCatalogSet &cataSet,
+                         const BSONObj &splitInfo,
+                         UINT64 taskID,
+                         UINT32 srcGroupID, const string &srcName,
+                         UINT32 dstGroupID, const string &dstName,
+                         pmdEDUCB *cb, INT16 w ) ;
 
-   INT32 catSplitStart( const BSONObj &splitInfo, pmdEDUCB *cb, INT16 w ) ;
+   INT32 catSplitStart ( UINT64 taskID, pmdEDUCB *cb, INT16 w ) ;
 
-   INT32 catSplitChgMeta( const BSONObj &splitInfo, const CHAR *clFullName,
-                          clsCatalogSet *cataSet, pmdEDUCB *cb, INT16 w ) ;
+   INT32 catSplitChgMeta ( UINT64 taskID, const std::string &clName,
+                           clsCatalogSet &cataSet,
+                           pmdEDUCB * cb, INT16 w ) ;
 
-   INT32 catSplitCleanup( const BSONObj &splitInfo, pmdEDUCB *cb, INT16 w ) ;
+   INT32 catSplitCleanup ( UINT64 taskID, pmdEDUCB *cb, INT16 w ) ;
 
-   INT32 catSplitFinish( const BSONObj &splitInfo, pmdEDUCB *cb, INT16 w ) ;
+   INT32 catSplitFinish ( UINT64 taskID, pmdEDUCB *cb, INT16 w ) ;
 
-   INT32 catSplitCancel( const BSONObj &splitInfo, pmdEDUCB *cb,
-                         UINT32 &groupID, INT16 w ) ;
+   INT32 catSplitCancel ( const BSONObj &splitInfo, pmdEDUCB *cb,
+                          UINT32 &groupID, UINT64 &taskID, INT16 w ) ;
 
-   INT32 catSplitCheckConflict( BSONObj &match, clsSplitTask &splitTask,
-                                BOOLEAN &conflict, pmdEDUCB *cb ) ;
+   INT32 catCheckSplitGroups ( const BSONObj &splitInfo,
+                               clsCatalogSet &cataSet,
+                               catCtxLockMgr &lockMgr,
+                               pmdEDUCB *cb,
+                               UINT32 &srcGroupID, string &srcName,
+                               UINT32 &dstGroupID, string &dstName ) ;
 
 }
 

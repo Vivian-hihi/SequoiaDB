@@ -41,7 +41,7 @@ using namespace bson ;
 namespace engine
 {
 
-   static BOOLEAN isGroupInCataSet( UINT32 groupID, clsCatalogSet &cataSet )
+   static BOOLEAN _isGroupInCataSet( UINT32 groupID, clsCatalogSet &cataSet )
    {
       BOOLEAN findGroup = FALSE ;
 
@@ -217,228 +217,6 @@ namespace engine
       goto done ;
    }
 
-   INT32 catSplitPrepare( const BSONObj &splitInfo, const CHAR *clFullName,
-                          clsCatalogSet *cataSet, UINT32 &groupID,
-                          pmdEDUCB *cb )
-   {
-      INT32 rc = SDB_OK ;
-
-      BSONObj splitQuery ;
-      BOOLEAN existQuery = TRUE ;
-      FLOAT64 percent = 0.0 ;
-      const CHAR* sourceName = NULL ;
-      const CHAR* dstName = NULL ;
-      UINT32 dstGroupID = CAT_INVALID_GROUPID ;
-      groupID = CAT_INVALID_GROUPID ;
-      BOOLEAN dstInCSDomain = FALSE ;
-
-      rc = rtnGetObjElement( splitInfo, CAT_SPLITQUERY_NAME, splitQuery ) ;
-      if ( SDB_FIELD_NOT_EXIST == rc )
-      {
-         existQuery = FALSE ;
-         rc = SDB_OK ;
-      }
-      PD_RC_CHECK( rc , PDERROR, "Failed to get field[%s], rc: %d",
-                   CAT_SPLITQUERY_NAME, rc ) ;
-
-      percent = splitInfo.getField( CAT_SPLITPERCENT_NAME ).numberDouble() ;
-
-      rc = rtnGetStringElement( splitInfo, CAT_SOURCE_NAME, &sourceName ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to get field[%s], rc: %d",
-                   CAT_SOURCE_NAME, rc ) ;
-      rc = catGroupNameValidate( sourceName, FALSE ) ;
-      PD_RC_CHECK( rc, PDERROR, "Source group name[%s] is not valid, rc: %d",
-                   sourceName, rc ) ;
-
-      rc = rtnGetStringElement( splitInfo, CAT_TARGET_NAME, &dstName ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to get field[%s], rc: %d",
-                   CAT_TARGET_NAME, rc ) ;
-      rc = catGroupNameValidate( dstName, FALSE ) ;
-      PD_RC_CHECK( rc, PDERROR, "Target group name[%s] is not valid, rc: %d",
-                   dstName, rc ) ;
-
-      // check dst is the same with source
-      PD_CHECK( 0 != ossStrcmp( dstName, sourceName ), SDB_INVALIDARG, error,
-                PDERROR, "Target group name can not the same with source group"
-                " name" ) ;
-
-      // get source id
-      rc = catGroupName2ID( sourceName, groupID, cb ) ;
-      PD_RC_CHECK( rc, PDERROR, "Group name[%s] to id failed, rc: %d",
-                   sourceName, rc ) ;
-
-      // check the collection is in source id
-      PD_CHECK( isGroupInCataSet( groupID, *cataSet ), SDB_CL_NOT_EXIST_ON_GROUP,
-                error, PDWARNING, "The collection[%s] does not exist on source "
-                "group[%s]", clFullName, sourceName ) ;
-
-      // get dest id
-      rc = catGroupName2ID( dstName, dstGroupID, cb ) ;
-      PD_RC_CHECK( rc, PDERROR, "Group name[%s] to id failed, rc: %d",
-                   dstName, rc ) ;
-
-      // check dst is in cs domain
-      rc = _checkDstGroupInCSDomain( dstName, clFullName, dstInCSDomain, cb ) ;
-      PD_RC_CHECK( rc, PDWARNING, "Check destination group in collection space"
-                   "domain failed, rc: %d", rc ) ;
-      PD_CHECK( dstInCSDomain, SDB_CAT_GROUP_NOT_IN_DOMAIN, error, PDWARNING,
-                "Split target group[%s] is not in collection space domain",
-                dstName ) ;
-
-      // check split query or percent valid
-      if ( FALSE == existQuery )
-      {
-         PD_CHECK( percent > 0.0 && percent <= 100.0, SDB_INVALIDARG, error,
-                   PDERROR, "Split percent value[%f] error", percent ) ;
-      }
-
-   done:
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   INT32 catSplitReady( const BSONObj & splitInfo, const CHAR * clFullName,
-                        clsCatalogSet * cataSet, UINT32 & groupID,
-                        clsTaskMgr &taskMgr, pmdEDUCB * cb, INT16 w,
-                        UINT64 *pTaskID )
-   {
-      INT32 rc = SDB_OK ;
-
-      BSONObj bKey ;
-      BSONObj eKey ;
-      BOOLEAN usePercent = FALSE ;
-      FLOAT64 percent = 0.0 ;
-      const CHAR* sourceName = NULL ;
-      const CHAR* dstName = NULL ;
-      groupID = CAT_INVALID_GROUPID ;
-      UINT32 sourceID = CAT_INVALID_GROUPID ;
-      BOOLEAN dstInCSDomain = FALSE ;
-
-      rc = rtnGetObjElement( splitInfo, CAT_SPLITVALUE_NAME, bKey ) ;
-      if ( SDB_FIELD_NOT_EXIST == rc ||
-           ( SDB_OK == rc && bKey.isEmpty() ) )
-      {
-         usePercent = TRUE ;
-         rc = SDB_OK ;
-      }
-      PD_RC_CHECK( rc, PDERROR, "Failed to get field[%s], rc: %d",
-                   CAT_SPLITVALUE_NAME, rc ) ;
-
-      percent = splitInfo.getField( CAT_SPLITPERCENT_NAME ).numberDouble() ;
-
-      if ( !usePercent )
-      {
-         rc = rtnGetObjElement( splitInfo, CAT_SPLITENDVALUE_NAME, eKey ) ;
-         if ( SDB_FIELD_NOT_EXIST == rc )
-         {
-            rc = SDB_OK ;
-         }
-         PD_RC_CHECK( rc, PDERROR, "Failed to get field[%s], rc: %d",
-                      CAT_SPLITENDVALUE_NAME, rc ) ;
-      }
-      else
-      {
-         PD_CHECK( percent > 0.0 && percent <= 100.0, SDB_INVALIDARG, error,
-                   PDERROR, "Split percent value[%f] error", percent ) ;
-         PD_CHECK( cataSet->isHashSharding(), SDB_SYS, error,
-                   PDERROR, "Split by percent must be hash sharding" ) ;
-      }
-
-      rc = rtnGetStringElement( splitInfo, CAT_SOURCE_NAME, &sourceName ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to get field[%s], rc: %d",
-                   CAT_SOURCE_NAME, rc ) ;
-      rc = catGroupNameValidate( sourceName, FALSE ) ;
-      PD_RC_CHECK( rc, PDERROR, "Source group name[%s] is not valid, rc: %d",
-                   sourceName, rc ) ;
-
-      rc = rtnGetStringElement( splitInfo, CAT_TARGET_NAME, &dstName ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to get field[%s], rc: %d",
-                   CAT_TARGET_NAME, rc ) ;
-      rc = catGroupNameValidate( dstName, FALSE ) ;
-      PD_RC_CHECK( rc, PDERROR, "Target group name[%s] is not valid, rc: %d",
-                   dstName, rc ) ;
-
-      // check dst group name is same with source name
-      PD_CHECK( 0 != ossStrcmp( dstName, sourceName ), SDB_INVALIDARG, error,
-                PDERROR, "Target group name can not the same with source group"
-                " name" ) ;
-
-      // get source id
-      rc = catGroupName2ID( sourceName, sourceID, cb ) ;
-      PD_RC_CHECK( rc, PDERROR, "Group name[%s] to id failed, rc: %d",
-                   sourceName, rc ) ;
-
-      // check the collection is in source id
-      PD_CHECK( isGroupInCataSet( sourceID, *cataSet ),
-                SDB_CL_NOT_EXIST_ON_GROUP,
-                error, PDWARNING, "The collection[%s] does not exist on source "
-                "group[%s]", clFullName, sourceName ) ;
-
-      // get target id
-      rc = catGroupName2ID( dstName, groupID, cb ) ;
-      PD_RC_CHECK( rc, PDERROR, "Group name[%s] to id failed, rc: %d",
-                   dstName, rc ) ;
-
-      // check dst is in cs domain
-      rc = _checkDstGroupInCSDomain( dstName, clFullName, dstInCSDomain, cb ) ;
-      PD_RC_CHECK( rc, PDWARNING, "Check destination group in collection space"
-                   "domain failed, rc: %d", rc ) ;
-      PD_CHECK( dstInCSDomain, SDB_CAT_GROUP_NOT_IN_DOMAIN, error, PDWARNING,
-                "Split target group[%s] is not in collection space domain",
-                dstName ) ;
-
-      // check bKey && eKey valid
-      if ( !usePercent  )
-      {
-         rc = _checkSplitKey( bKey, *cataSet, sourceID, FALSE, FALSE ) ;
-         PD_RC_CHECK( rc, PDERROR, "Check split key failed, rc: %d", rc ) ;
-
-         rc = _checkSplitKey( eKey, *cataSet, sourceID, TRUE, TRUE ) ;
-         PD_RC_CHECK( rc, PDERROR, "Check split end key failed, rc: %d", rc ) ;
-      }
-
-      // create task
-      {
-         BSONObj match ;
-         BSONObj taskObj ;
-         BOOLEAN conflict = FALSE ;
-         clsSplitTask splitTask( taskMgr.getTaskID() ) ;
-         if ( usePercent )
-         {
-            rc = splitTask.calcHashPartition( *cataSet, sourceID, percent,
-                                              bKey, eKey ) ;
-            PD_RC_CHECK( rc, PDERROR, "Calc hash percent partition split key "
-                         "falied, rc: %d", rc ) ;
-         }
-         rc = splitTask.init( clFullName, sourceID, sourceName, (INT32)groupID,
-                              dstName, bKey, eKey, percent, *cataSet ) ;
-         PD_RC_CHECK( rc, PDERROR, "Init split task failed, rc: %d", rc ) ;
-
-         // check task conflict
-         match = splitTask.toBson( CLS_SPLIT_MASK_CLNAME ) ;
-         rc = catSplitCheckConflict( match, splitTask, conflict, cb ) ;
-         PD_RC_CHECK( rc, PDERROR, "Check task conflict failed, rc: %d", rc ) ;
-         PD_CHECK( FALSE == conflict, SDB_CLS_MUTEX_TASK_EXIST, error, PDERROR,
-                   "Exist task not compatible with the new task" ) ;
-
-         // add to task collection
-         taskObj = splitTask.toBson( CLS_MASK_ALL ) ;
-         rc = catAddTask( taskObj, cb, w ) ;
-         PD_RC_CHECK( rc, PDERROR, "Add split task failed, rc: %d", rc ) ;
-
-         if ( pTaskID )
-         {
-            *pTaskID = splitTask.taskID() ;
-         }
-      }
-
-   done:
-      return rc ;
-   error:
-      goto done ;
-   }
-
    static INT32 _checkSplitTaskConflict( rtnObjBuff *pBuffObj,
                                          BOOLEAN &conflict,
                                          clsSplitTask *pTask )
@@ -478,8 +256,9 @@ namespace engine
       goto done ;
    }
 
-   INT32 catSplitCheckConflict( BSONObj & match, clsSplitTask & splitTask,
-                                BOOLEAN & conflict, pmdEDUCB * cb )
+   static INT32 _catSplitCheckConflict( BSONObj & match,
+                                        clsSplitTask & splitTask,
+                                        BOOLEAN & conflict, pmdEDUCB * cb )
    {
       INT32 rc = SDB_OK ;
       pmdKRCB *krcb = pmdGetKRCB() ;
@@ -525,37 +304,217 @@ namespace engine
          rtnCB->contextDelete ( contextID, cb ) ;
       }
       return rc ;
-      return rc ;
+
    error:
       goto done ;
    }
 
-   INT32 catSplitStart( const BSONObj & splitInfo, pmdEDUCB * cb, INT16 w )
+   static INT32 _catGetSplitTask ( UINT64 taskID,
+                                  clsSplitTask &splitTask,
+                                  pmdEDUCB *cb )
    {
       INT32 rc = SDB_OK ;
-      UINT64 taskID = 0 ;
+      BSONObj boTask ;
+
+      rc = catGetTask( taskID, boTask, cb ) ;
+      PD_RC_CHECK( rc, PDERROR,
+                   "Get task[%llu] failed, rc: %d",
+                   taskID, rc ) ;
+
+      rc = splitTask.init( boTask.objdata() ) ;
+      PD_RC_CHECK( rc, PDERROR,
+                   "Init task failed, rc: %d, obj: %s",
+                   rc, boTask.toString().c_str() ) ;
+   done :
+      return rc ;
+   error :
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATSPLITPREPARE, "catSplitPrepare" )
+   INT32 catSplitPrepare( const std::string &clName,
+                          clsCatalogSet &cataSet,
+                          const BSONObj &splitInfo,
+                          pmdEDUCB *cb )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY ( SDB_CATSPLITPREPARE ) ;
+
+      BSONObj splitQuery ;
+      BOOLEAN existQuery = TRUE ;
+      FLOAT64 percent = 0.0 ;
+
+      rc = rtnGetObjElement( splitInfo, CAT_SPLITQUERY_NAME, splitQuery ) ;
+      if ( SDB_FIELD_NOT_EXIST == rc )
+      {
+         existQuery = FALSE ;
+         rc = SDB_OK ;
+      }
+      PD_RC_CHECK( rc , PDERROR,
+                   "Failed to get field [%s] from query [%s], rc: %d",
+                   CAT_SPLITQUERY_NAME, splitInfo.toString().c_str(), rc ) ;
+
+      percent = splitInfo.getField( CAT_SPLITPERCENT_NAME ).numberDouble() ;
+
+      // check split query or percent valid
+      PD_CHECK( existQuery || ( percent > 0.0 && percent <= 100.0 ),
+                SDB_INVALIDARG, error, PDERROR,
+                "Split percent value [%f] error", percent ) ;
+
+      PD_LOG( PDDEBUG,
+              "Finished split prepare step on collection [%s] with [%s]",
+              clName.c_str(), splitInfo.toString().c_str() ) ;
+
+   done :
+      PD_TRACE_EXITRC ( SDB_CATSPLITPREPARE, rc ) ;
+      return rc ;
+   error :
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATSPLITREADY, "catSplitReady" )
+   INT32 catSplitReady ( const std::string &clName,
+                         clsCatalogSet &cataSet,
+                         const BSONObj &splitInfo,
+                         UINT64 taskID,
+                         UINT32 srcGroupID, const string &srcName,
+                         UINT32 dstGroupID, const string &dstName,
+                         pmdEDUCB *cb, INT16 w )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY ( SDB_CATSPLITREADY ) ;
+
+      BSONObj bKey ;
+      BSONObj eKey ;
+      BOOLEAN usePercent = FALSE ;
+      FLOAT64 percent = 0.0 ;
+
+      PD_CHECK( taskID != CLS_INVALID_TASKID,
+                SDB_INVALIDARG, error, PDERROR,
+                "Invalid task ID for split task" ) ;
+
+      rc = rtnGetObjElement( splitInfo, CAT_SPLITVALUE_NAME, bKey ) ;
+      if ( SDB_FIELD_NOT_EXIST == rc ||
+           ( SDB_OK == rc && bKey.isEmpty() ) )
+      {
+         usePercent = TRUE ;
+         rc = SDB_OK ;
+      }
+      PD_RC_CHECK( rc, PDERROR,
+                   "Failed to get field the [%s] from split info [%s], rc: %d",
+                   CAT_SPLITVALUE_NAME, splitInfo.toString().c_str(), rc ) ;
+
+      percent = splitInfo.getField( CAT_SPLITPERCENT_NAME ).numberDouble() ;
+
+      if ( !usePercent )
+      {
+         rc = rtnGetObjElement( splitInfo, CAT_SPLITENDVALUE_NAME, eKey ) ;
+         if ( SDB_FIELD_NOT_EXIST == rc )
+         {
+            rc = SDB_OK ;
+         }
+         PD_RC_CHECK( rc, PDERROR,
+                      "Failed to get field [%s] from split info [%s], rc: %d",
+                      CAT_SPLITENDVALUE_NAME, splitInfo.toString().c_str(), rc ) ;
+      }
+      else
+      {
+         PD_CHECK( percent > 0.0 && percent <= 100.0,
+                   SDB_INVALIDARG, error, PDERROR,
+                   "Split percent value [%f] error", percent ) ;
+         PD_CHECK( cataSet.isHashSharding(),
+                   SDB_SYS, error, PDERROR,
+                   "Split by percent must be hash sharding" ) ;
+      }
+
+      // check bKey && eKey valid
+      if ( !usePercent )
+      {
+         rc = _checkSplitKey( bKey, cataSet, srcGroupID, FALSE, FALSE ) ;
+         PD_RC_CHECK( rc, PDERROR, "Check split key failed, rc: %d", rc ) ;
+
+         rc = _checkSplitKey( eKey, cataSet, srcGroupID, TRUE, TRUE ) ;
+         PD_RC_CHECK( rc, PDERROR, "Check split end key failed, rc: %d", rc ) ;
+      }
+
+      // Create task
+      {
+         BSONObj match ;
+         BSONObj taskObj ;
+         BOOLEAN conflict = FALSE ;
+         clsSplitTask splitTask( taskID ) ;
+         if ( usePercent )
+         {
+            rc = splitTask.calcHashPartition( cataSet, srcGroupID, percent,
+                                              bKey, eKey ) ;
+            PD_RC_CHECK( rc, PDERROR,
+                         "Failed to calculate hash percent partition of "
+                         "split keys, rc: %d",
+                         rc ) ;
+         }
+         rc = splitTask.init( clName.c_str(),
+                              (INT32)srcGroupID, srcName.c_str(),
+                              (INT32)dstGroupID, dstName.c_str(),
+                              bKey, eKey, percent, cataSet ) ;
+         PD_RC_CHECK( rc, PDERROR,
+                      "Initialize split task failed, rc: %d",
+                      rc ) ;
+
+         // check task conflict
+         match = splitTask.toBson( CLS_SPLIT_MASK_CLNAME ) ;
+         rc = _catSplitCheckConflict( match, splitTask, conflict, cb ) ;
+         PD_RC_CHECK( rc, PDERROR,
+                      "Check task conflict failed, rc: %d",
+                      rc ) ;
+         PD_CHECK( FALSE == conflict,
+                   SDB_CLS_MUTEX_TASK_EXIST, error, PDERROR,
+                   "Exist task not compatible with the new task" ) ;
+
+         // add to task collection
+         taskObj = splitTask.toBson( CLS_MASK_ALL ) ;
+         rc = catAddTask( taskObj, cb, w ) ;
+         PD_RC_CHECK( rc, PDERROR, "Add split task failed, rc: %d", rc ) ;
+
+         PD_LOG( PDDEBUG,
+                 "Split ready step: added split task [%llu]: %s",
+                 taskID, taskObj.toString().c_str() ) ;
+      }
+
+   done :
+      PD_TRACE_EXITRC ( SDB_CATSPLITREADY, rc ) ;
+      return rc ;
+   error :
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATSPLITSTART, "catSplitStart" )
+   INT32 catSplitStart( UINT64 taskID, pmdEDUCB * cb, INT16 w )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY ( SDB_CATSPLITSTART ) ;
+
       INT32 status = CLS_TASK_STATUS_READY ;
 
-      BSONElement ele = splitInfo.getField( CAT_TASKID_NAME ) ;
-      PD_CHECK( ele.isNumber(), SDB_INVALIDARG, error, PDERROR,
-                "Failed to get field[%s], type: %d", CAT_TASKID_NAME,
-                ele.type() ) ;
-      taskID = ( UINT64 )ele.numberLong() ;
+      PD_CHECK( taskID != CLS_INVALID_TASKID,
+                SDB_INVALIDARG, error, PDERROR,
+                "Invalid task ID for split task" ) ;
 
+      /// Check the status of task
       rc = catGetTaskStatus( taskID, status, cb ) ;
-      if ( rc )
-      {
-         goto error ;
-      }
+      PD_RC_CHECK( rc, PDERROR,
+                   "Get task[%llu] status failed, rc: %d",
+                   taskID, rc ) ;
 
       if ( CLS_TASK_STATUS_READY == status ||
            CLS_TASK_STATUS_PAUSE == status )
       {
          rc = catUpdateTaskStatus( taskID, CLS_TASK_STATUS_RUN, cb, w ) ;
-         if ( rc )
-         {
-            goto error ;
-         }
+         PD_RC_CHECK( rc, PDERROR,
+                      "Failed to update task[%llu] status [%d] -> [%d], rc: %d",
+                      taskID, status, CLS_TASK_STATUS_RUN, rc ) ;
       }
       else if ( CLS_TASK_STATUS_CANCELED == status )
       {
@@ -563,33 +522,40 @@ namespace engine
          goto error ;
       }
 
-   done:
+      PD_LOG( PDDEBUG,
+              "Finished split start step on task [%llu]",
+              taskID ) ;
+   done :
+      PD_TRACE_EXITRC ( SDB_CATSPLITSTART, rc ) ;
       return rc ;
-   error:
+   error :
       goto done ;
    }
 
-   INT32 catSplitChgMeta( const BSONObj & splitInfo, const CHAR * clFullName,
-                          clsCatalogSet * cataSet, pmdEDUCB * cb, INT16 w )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATSPLITCHGMETA, "catSplitChgMeta" )
+   INT32 catSplitChgMeta ( UINT64 taskID, const std::string &clName,
+                           clsCatalogSet &cataSet,
+                           pmdEDUCB * cb, INT16 w )
    {
       INT32 rc = SDB_OK ;
-      UINT64 taskID = 0 ;
+
+      PD_TRACE_ENTRY ( SDB_CATSPLITCHGMETA ) ;
+
       BSONObj taskObj ;
       BSONObj cataInfo ;
       clsSplitTask splitTask( CLS_INVALID_TASKID ) ;
+      std::string mainCLName ;
 
-      BSONElement ele = splitInfo.getField( CAT_TASKID_NAME ) ;
-      PD_CHECK( ele.isNumber(), SDB_INVALIDARG, error, PDERROR,
-                "Failed to get field[%s], type: %d", CAT_TASKID_NAME,
-                ele.type() ) ;
-      taskID = ( UINT64 )ele.numberLong() ;
-
-      rc = catGetTask( taskID, taskObj, cb ) ;
-      PD_RC_CHECK( rc, PDERROR, "Get task[%lld] failed, rc: %d", taskID, rc ) ;
-
-      rc = splitTask.init( taskObj.objdata() ) ;
-      PD_RC_CHECK( rc, PDERROR, "Init task failed, rc: %d, obj: %s",
-                   rc, taskObj.toString().c_str() ) ;
+      // Get task info
+      rc = _catGetSplitTask( taskID, splitTask, cb ) ;
+      PD_RC_CHECK( rc, PDERROR,
+                   "Get task [%llu] failed, rc: %d",
+                   taskID, rc ) ;
+      PD_CHECK( 0 == clName.compare( splitTask.clFullName() ),
+                SDB_SYS, error, PDERROR,
+                "Task [%llu] split on different collection [%s] from "
+                "previous phase [%s]",
+                taskID, splitTask.clFullName(), clName.c_str() ) ;
 
       // already finished
       if ( CLS_TASK_STATUS_META == splitTask.status() ||
@@ -602,139 +568,179 @@ namespace engine
          rc = SDB_TASK_HAS_CANCELED ;
          goto error ;
       }
-      // not slit
-      else if ( CLS_TASK_STATUS_RUN == splitTask.status() &&
-                !cataSet->isKeyInGroup( splitTask.splitKeyObj(),
-                                        splitTask.dstID() ) )
+
+      PD_CHECK( CLS_TASK_STATUS_RUN == splitTask.status(),
+                SDB_SYS, error, PDERROR,
+                "Split task status error, task: %s",
+                taskObj.toString().c_str() ) ;
+
+      if ( !cataSet.isKeyInGroup( splitTask.splitKeyObj(),
+                                  splitTask.dstID() ) )
       {
          // again check bKey and eKey :
-         rc = _checkSplitKey( splitTask.splitKeyObj(), *cataSet,
+         rc = _checkSplitKey( splitTask.splitKeyObj(), cataSet,
                               splitTask.sourceID(), FALSE, FALSE ) ;
-         PD_RC_CHECK( rc, PDSEVERE, "Check split key failed, rc: %d, there's "
-                      "possible data corruption, obj: %s", rc,
-                      taskObj.toString().c_str() ) ;
+         PD_RC_CHECK( rc, PDSEVERE,
+                      "Check split key failed, rc: %d, there's "
+                      "possible data corruption, obj: %s",
+                      rc, taskObj.toString().c_str() ) ;
 
-         rc = _checkSplitKey( splitTask.splitEndKeyObj(), *cataSet,
+         rc = _checkSplitKey( splitTask.splitEndKeyObj(), cataSet,
                               splitTask.sourceID(), TRUE, TRUE ) ;
-         PD_RC_CHECK( rc, PDSEVERE, "Check split end key failed, rc: %d, "
-                      "there's possible data corruption, obj: %s", rc,
-                      taskObj.toString().c_str() ) ;
-
+         PD_RC_CHECK( rc, PDSEVERE,
+                      "Check split end key failed, rc: %d, "
+                      "there's possible data corruption, obj: %s",
+                      rc, taskObj.toString().c_str() ) ;
 
          // split
-         rc = cataSet->split( splitTask.splitKeyObj(),
-                              splitTask.splitEndKeyObj(),
-                              splitTask.dstID(), splitTask.dstName() ) ;
-         PD_RC_CHECK( rc, PDERROR, "Catalog split failed, rc: %d, catalog: %s, "
-                      "task obj: %s", rc ,
-                      cataSet->toCataInfoBson().toString().c_str(),
+         rc = cataSet.split( splitTask.splitKeyObj(),
+                             splitTask.splitEndKeyObj(),
+                             splitTask.dstID(), splitTask.dstName() ) ;
+         PD_RC_CHECK( rc, PDERROR,
+                      "Catalog split failed, rc: %d, catalog: %s, task obj: %s",
+                      rc ,
+                      cataSet.toCataInfoBson().toString().c_str(),
                       taskObj.toString().c_str() ) ;
 
          // save new catalog info
-         cataInfo = cataSet->toCataInfoBson() ;
-         rc = catUpdateCatalog( clFullName, cataInfo, cb, w ) ;
-         PD_RC_CHECK( rc, PDSEVERE, "Failed to update collection catalog, "
-                      "rc: %d", rc ) ;
+         cataInfo = cataSet.toCataInfoBson() ;
+         rc = catUpdateCatalog( clName.c_str(), cataInfo, cb, w ) ;
+         PD_RC_CHECK( rc, PDSEVERE,
+                      "Failed to update collection catalog, rc: %d",
+                      rc ) ;
 
+         PD_LOG( PDDEBUG,
+                 "Split task [%llu] chgmeta step: updated collection [%s]",
+                 taskID, clName.c_str() ) ;
+
+         mainCLName = cataSet.getMainCLName();
+         if ( !mainCLName.empty() )
          {
-            std::string strMainCLName = cataSet->getMainCLName();
-            if ( !strMainCLName.empty() )
+            // Increase main-collection's version
+            BSONObj emptyObj;
+            INT32 tmpRC = SDB_OK ;
+            tmpRC = catUpdateCatalog( mainCLName.c_str(), emptyObj, cb, w ) ;
+            if ( SDB_OK != tmpRC )
             {
-               // increate main-collection's version
-               BSONObj emptyObj;
-               rc = catUpdateCatalog( strMainCLName.c_str(), emptyObj, cb, w );
+               PD_LOG( PDWARNING,
+                       "Failed to update version of main-collection[%s], rc: %d",
+                       mainCLName.c_str(), rc ) ;
             }
+
+            PD_LOG( PDDEBUG,
+                    "Split task [%llu] chgmeta step: updated main-collection [%s]",
+                    taskID, mainCLName.c_str() ) ;
          }
-      }
-      else
-      {
-         PD_CHECK( CLS_TASK_STATUS_RUN == splitTask.status(), SDB_SYS, error,
-                   PDERROR, "Split task status error, task: %s",
-                   taskObj.toString().c_str() ) ;
       }
 
       // update task status
       rc = catUpdateTaskStatus( taskID, CLS_TASK_STATUS_META, cb, w ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to update task status, rc: %d", rc ) ;
+      PD_RC_CHECK( rc, PDERROR,
+                   "Failed to update task status, rc: %d",
+                   rc ) ;
 
-   done:
+      PD_LOG( PDDEBUG,
+              "Finished split chgmeta step on task [%llu]",
+              taskID ) ;
+
+   done :
+      PD_TRACE_EXITRC ( SDB_CATSPLITCHGMETA, rc ) ;
       return rc ;
-   error:
+   error :
       goto done ;
    }
 
-   INT32 catSplitCleanup( const BSONObj & splitInfo, pmdEDUCB * cb, INT16 w )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATSPLITCLEANUP, "catSplitCleanup" )
+   INT32 catSplitCleanup ( UINT64 taskID, pmdEDUCB * cb, INT16 w )
    {
       INT32 rc = SDB_OK ;
-      UINT64 taskID = 0 ;
+
+      PD_TRACE_ENTRY ( SDB_CATSPLITCLEANUP ) ;
+
       INT32 status = CLS_TASK_STATUS_READY ;
 
-      BSONElement ele = splitInfo.getField( CAT_TASKID_NAME ) ;
-      PD_CHECK( ele.isNumber(), SDB_INVALIDARG, error, PDERROR,
-                "Failed to get field[%s], type: %d", CAT_TASKID_NAME,
-                ele.type() ) ;
-      taskID = ( UINT64 )ele.numberLong() ;
+      PD_CHECK( taskID != CLS_INVALID_TASKID,
+                SDB_INVALIDARG, error, PDERROR,
+                "Invalid task ID for split task" ) ;
 
+      /// Check the status of task
       rc = catGetTaskStatus( taskID, status, cb ) ;
-      if ( rc )
-      {
-         goto error ;
-      }
+      PD_RC_CHECK( rc, PDERROR,
+                   "Get task[%llu] status failed, rc: %d",
+                   taskID, rc ) ;
 
       if ( CLS_TASK_STATUS_META == status )
       {
          rc = catUpdateTaskStatus( taskID, CLS_TASK_STATUS_FINISH, cb, w ) ;
-         if ( rc )
-         {
-            goto error ;
-         }
+         PD_RC_CHECK( rc, PDERROR,
+                      "Failed to update task[%llu] status [%d] -> [%d], rc: %d",
+                      taskID, status, CLS_TASK_STATUS_FINISH, rc ) ;
       }
       else if ( CLS_TASK_STATUS_FINISH == status )
       {
          // do nothing
       }
+      else if ( CLS_TASK_STATUS_CANCELED == status )
+      {
+         rc = SDB_TASK_HAS_CANCELED ;
+         goto error ;
+      }
       else
       {
-         PD_LOG( PDERROR, "Task[%ll] status error in clean up step",
+         PD_LOG( PDERROR,
+                 "Task[%llu] status error in clean up step [%d]",
                  taskID, status ) ;
          rc = SDB_SYS ;
          goto error ;
       }
 
-   done:
+      PD_LOG( PDDEBUG,
+              "Finished split cleanup step on task [%llu]",
+              taskID ) ;
+
+   done :
+      PD_TRACE_EXITRC ( SDB_CATSPLITCLEANUP, rc ) ;
       return rc ;
-   error:
+   error :
       goto done ;
    }
 
-   INT32 catSplitFinish( const BSONObj & splitInfo, pmdEDUCB * cb, INT16 w )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATSPLITFINISH, "catSplitFinish" )
+   INT32 catSplitFinish ( UINT64 taskID, pmdEDUCB * cb, INT16 w )
    {
       INT32 rc = SDB_OK ;
-      UINT64 taskID = 0 ;
 
-      BSONElement ele = splitInfo.getField( CAT_TASKID_NAME ) ;
-      PD_CHECK( ele.isNumber(), SDB_INVALIDARG, error, PDERROR,
-                "Failed to get field[%s], type: %d", CAT_TASKID_NAME,
-                ele.type() ) ;
-      taskID = ( UINT64 )ele.numberLong() ;
+      PD_TRACE_ENTRY ( SDB_CATSPLITFINISH ) ;
+
+      PD_CHECK( taskID != CLS_INVALID_TASKID,
+                SDB_INVALIDARG, error, PDERROR,
+                "Invalid task ID for split task" ) ;
 
       // remove task
       rc = catRemoveTask( taskID, cb, w ) ;
-      PD_RC_CHECK( rc, PDERROR, "Remove task[%lld] failed, rc: %d",
+      PD_RC_CHECK( rc, PDERROR,
+                   "Remove task[%llu] failed, rc: %d",
                    taskID, rc ) ;
 
-   done:
+      PD_LOG( PDDEBUG,
+              "Finished split finish step on task [%llu]",
+              taskID ) ;
+
+   done :
+      PD_TRACE_EXITRC ( SDB_CATSPLITFINISH, rc ) ;
       return rc ;
-   error:
+   error :
       goto done ;
    }
 
-   INT32 catSplitCancel( const BSONObj & splitInfo, pmdEDUCB * cb,
-                         UINT32 &groupID, INT16 w )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATSPLITCANCEL, "catSplitCancel" )
+   INT32 catSplitCancel ( const BSONObj & splitInfo, pmdEDUCB * cb,
+                          UINT32 &groupID, UINT64 &taskID, INT16 w )
    {
       INT32 rc = SDB_OK ;
-      UINT64 taskID = 0 ;
       INT32 tmpGrpID = CAT_INVALID_GROUPID ;
+
+      PD_TRACE_ENTRY ( SDB_CATSPLITCANCEL ) ;
 
       BSONElement ele = splitInfo.getField( CAT_TASKID_NAME ) ;
 
@@ -747,23 +753,38 @@ namespace engine
          INT32 status = CLS_TASK_STATUS_READY ;
          BSONObj taskObj ;
 
-         PD_CHECK( ele.isNumber(), SDB_INVALIDARG, error, PDERROR,
-                   "Failed to get field[%s], type: %d", CAT_TASKID_NAME,
-                   ele.type() ) ;
+         PD_CHECK( ele.isNumber(),
+                   SDB_INVALIDARG, error, PDERROR,
+                   "Failed to get the field [%s] from query, type: %d",
+                   CAT_TASKID_NAME, ele.type() ) ;
          taskID = ( UINT64 )ele.numberLong() ;
 
+         PD_LOG( PDDEBUG,
+                 "Split cancel: got task ID [%llu]",
+                 taskID ) ;
+
+         // Remove context first
+         //rc = catRemoveTaskContext( taskID, cb ) ;
+
          rc = catGetTask( taskID, taskObj, cb ) ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to get task[%lld], rc: %d",
+         PD_RC_CHECK( rc, PDERROR,
+                      "Failed to get task [%llu], rc: %d",
                       taskID, rc ) ;
 
          rc = rtnGetIntElement( taskObj, CAT_STATUS_NAME, status ) ;
-         PD_RC_CHECK( rc, PDWARNING, "Failed to get field[%s], rc: %d",
-                      CAT_STATUS_NAME, rc ) ;
+         PD_RC_CHECK( rc, PDWARNING,
+                      "Failed to get the field [%s] from task [%llu], rc: %d",
+                      CAT_STATUS_NAME, taskID, rc ) ;
 
          rc = rtnGetIntElement( taskObj, CAT_TARGETID_NAME, tmpGrpID ) ;
-         PD_RC_CHECK( rc, PDWARNING, "Failed to get field[%s], rc: %d",
-                      CAT_TARGETID_NAME, rc ) ;
+         PD_RC_CHECK( rc, PDWARNING,
+                      "Failed to get the field [%s] from task [%llu], rc: %d",
+                      CAT_TARGETID_NAME, taskID, rc ) ;
          groupID = (UINT32)tmpGrpID ;
+
+         PD_LOG( PDDEBUG,
+                 "Split cancel: got target group ID [%u]",
+                 groupID ) ;
 
          // can't cancel finish status
          if ( CLS_TASK_STATUS_META == status ||
@@ -775,16 +796,22 @@ namespace engine
          else if ( CLS_TASK_STATUS_READY == status )
          {
             rc = catRemoveTask( taskID, cb ,w ) ;
-            PD_RC_CHECK( rc, PDERROR, "Remove task[%lld] failed, rc: %d",
+            PD_RC_CHECK( rc, PDERROR,
+                         "Failed to remove task [%llu] failed, rc: %d",
                          taskID, rc ) ;
          }
          else if ( CLS_TASK_STATUS_CANCELED != status )
          {
             rc = catUpdateTaskStatus( taskID, CLS_TASK_STATUS_CANCELED,
                                       cb, w ) ;
-            PD_RC_CHECK( rc, PDERROR, "Failed to update data task[%lld] to "
-                         "canceled, rc: %d", taskID, rc ) ;
+            PD_RC_CHECK( rc, PDERROR,
+                         "Failed to update data task [%llu] to canceled, rc: %d",
+                         taskID, rc ) ;
          }
+
+         PD_LOG( PDDEBUG,
+                 "Finished split cancel step on task [%llu]",
+                 taskID ) ;
       }
       else
       {
@@ -806,17 +833,112 @@ namespace engine
          }
 
          BSONObj match = matchBuilder.obj() ;
+
+         // Remove contexts first
+         //rc = catRemoveTaskContexts( match, cb ) ;
+
          rc = catRemoveTask( match, cb, w ) ;
-         PD_RC_CHECK( rc, PDERROR, "Remove task[%s] failed, rc: %d",
+         PD_RC_CHECK( rc, PDERROR,
+                      "Failed to remove task [%s], rc: %d",
                       splitInfo.toString().c_str(), rc ) ;
       }
 
-   done:
+   done :
+      PD_TRACE_EXITRC ( SDB_CATSPLITCANCEL, rc ) ;
       return rc ;
-   error:
+   error :
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATCHECKSPLITGRP, "catCheckSplitGroups" )
+   INT32 catCheckSplitGroups ( const BSONObj &splitInfo,
+                               clsCatalogSet &cataSet,
+                               catCtxLockMgr &lockMgr,
+                               pmdEDUCB *cb,
+                               UINT32 &srcGroupID, string &srcName,
+                               UINT32 &dstGroupID, string &dstName )
+   {
+      INT32 rc = SDB_OK ;
+      BOOLEAN dstInCSDomain = FALSE ;
+      vector<UINT32> groupList ;
+
+      PD_TRACE_ENTRY ( SDB_CATCHECKSPLITGRP ) ;
+
+      rc = rtnGetSTDStringElement( splitInfo, CAT_SOURCE_NAME, srcName ) ;
+      PD_RC_CHECK( rc, PDERROR,
+                   "Failed to get the field [%s] from query [%s]",
+                   CAT_SOURCE_NAME, splitInfo.toString().c_str() ) ;
+
+      rc = catGroupNameValidate( srcName.c_str(), FALSE ) ;
+      PD_RC_CHECK( rc, PDERROR,
+                   "Source group name [%s] is not valid, rc: %d",
+                   srcName.c_str(), rc ) ;
+
+      rc = rtnGetSTDStringElement( splitInfo, CAT_TARGET_NAME, dstName ) ;
+      PD_RC_CHECK( rc, PDERROR,
+                   "Failed to get the field [%s] from query [%s]",
+                   CAT_TARGET_NAME, splitInfo.toString().c_str() ) ;
+
+      rc = catGroupNameValidate( dstName.c_str(), FALSE ) ;
+      PD_RC_CHECK( rc, PDERROR,
+                   "Target group name [%s] is not valid, rc: %d",
+                   dstName.c_str(), rc ) ;
+
+      // check dst group name is same with source name
+      PD_CHECK( 0 != dstName.compare( srcName ),
+                SDB_INVALIDARG, error, PDERROR,
+                "Target group name can not the same with source group name" ) ;
+
+      // get source id
+      rc = catGroupName2ID( srcName.c_str(), srcGroupID, cb ) ;
+      PD_RC_CHECK( rc, PDERROR,
+                   "Failed to convert group name [%s] to id, rc: %d",
+                   srcName.c_str(), rc ) ;
+
+      // check the collection is in source id
+      PD_CHECK( _isGroupInCataSet( srcGroupID, cataSet ),
+                SDB_CL_NOT_EXIST_ON_GROUP, error, PDWARNING,
+                "The collection [%s] does not exist on source group [%s]",
+                cataSet.name(), srcName.c_str() ) ;
+
+      // get target id
+      rc = catGroupName2ID( dstName.c_str(), dstGroupID, cb ) ;
+      PD_RC_CHECK( rc, PDERROR,
+                   "Failed to convert group name [%s] to id, rc: %d",
+                   dstName.c_str(), rc ) ;
+
+      // check dst is in cs domain
+      rc = _checkDstGroupInCSDomain( dstName.c_str(), cataSet.name(),
+                                     dstInCSDomain, cb ) ;
+      PD_RC_CHECK( rc, PDWARNING,
+                   "Check destination group in space's domain failed, rc: %d",
+                   rc ) ;
+      PD_CHECK( dstInCSDomain,
+                SDB_CAT_GROUP_NOT_IN_DOMAIN, error, PDWARNING,
+                "Split target group [%s] is not in collection space domain",
+                dstName.c_str() ) ;
+
+      PD_LOG( PDDEBUG,
+              "Got target group [%s], source group [%s]",
+              dstName.c_str(), srcName.c_str() ) ;
+
+      groupList.push_back( srcGroupID ) ;
+      groupList.push_back( dstGroupID ) ;
+
+      rc = catCheckGroupsByID( groupList ) ;
+      PD_RC_CHECK( rc, PDERROR,
+                   "Failed to check available of groups, rc: %d",
+                   rc ) ;
+
+      rc = catLockGroups( groupList, cb, lockMgr, SHARED ) ;
+      PD_RC_CHECK( rc, PDERROR,
+                   "Failed to lock groups, rc: %d",
+                   rc ) ;
+
+   done :
+      PD_TRACE_EXITRC ( SDB_CATCHECKSPLITGRP, rc ) ;
+      return rc ;
+   error :
+      goto done ;
+   }
 }
-
-

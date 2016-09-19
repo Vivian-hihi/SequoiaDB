@@ -41,6 +41,8 @@
 #include "rtnContextLob.hpp"
 #include "rtnContextShdOfLob.hpp"
 #include "rtnContextListLob.hpp"
+#include "catContextData.hpp"
+#include "catContextNode.hpp"
 #include "dmsCB.hpp"
 #include "rtnIxmKeySorter.hpp"
 #include "../omsvc/omContextTransfer.hpp"
@@ -242,8 +244,63 @@ namespace engine
                  (*context) = SDB_OSS_NEW rtnContextLobFetcher( _contextHWM,
                                                                 pEDUCB->getID() ) ;
                  break ;
+
+            /// Catalog contexts
+            case RTN_CONTEXT_CAT_DROP_CS :
+               (*context) = SDB_OSS_NEW catCtxDropCS( _contextHWM,
+                                                      pEDUCB->getID() ) ;
+               break ;
+            case RTN_CONTEXT_CAT_CREATE_CL :
+               (*context) = SDB_OSS_NEW catCtxCreateCL( _contextHWM,
+                                                        pEDUCB->getID() ) ;
+               break ;
+            case RTN_CONTEXT_CAT_DROP_CL :
+               (*context) = SDB_OSS_NEW catCtxDropCL( _contextHWM,
+                                                      pEDUCB->getID() ) ;
+               break ;
+            case RTN_CONTEXT_CAT_ALTER_CL :
+               (*context) = SDB_OSS_NEW catCtxAlterCL( _contextHWM,
+                                                       pEDUCB->getID() ) ;
+               break ;
+            case RTN_CONTEXT_CAT_LINK_CL :
+               (*context) = SDB_OSS_NEW catCtxLinkCL( _contextHWM,
+                                                      pEDUCB->getID() ) ;
+               break ;
+            case RTN_CONTEXT_CAT_UNLINK_CL :
+               (*context) = SDB_OSS_NEW catCtxUnlinkCL( _contextHWM,
+                                                        pEDUCB->getID() ) ;
+               break ;
+            case RTN_CONTEXT_CAT_CREATE_IDX :
+               (*context) = SDB_OSS_NEW catCtxCreateIdx( _contextHWM,
+                                                         pEDUCB->getID() ) ;
+               break ;
+            case RTN_CONTEXT_CAT_DROP_IDX :
+               (*context) = SDB_OSS_NEW catCtxDropIdx( _contextHWM,
+                                                       pEDUCB->getID() ) ;
+               break ;
+            case RTN_CONTEXT_CAT_ACTIVE_GROUP :
+               (*context) = SDB_OSS_NEW catCtxActiveGrp( _contextHWM,
+                                                         pEDUCB->getID() ) ;
+               break ;
+            case RTN_CONTEXT_CAT_SHUTDOWN_GROUP :
+               (*context) = SDB_OSS_NEW catCtxShutdownGrp( _contextHWM,
+                                                           pEDUCB->getID() ) ;
+               break ;
+            case RTN_CONTEXT_CAT_REMOVE_GROUP :
+               (*context) = SDB_OSS_NEW catCtxRemoveGrp( _contextHWM,
+                                                         pEDUCB->getID() ) ;
+               break ;
+            case RTN_CONTEXT_CAT_CREATE_NODE :
+               (*context) = SDB_OSS_NEW catCtxCreateNode( _contextHWM,
+                                                          pEDUCB->getID() ) ;
+               break ;
+            case RTN_CONTEXT_CAT_REMOVE_NODE :
+               (*context) = SDB_OSS_NEW catCtxRemoveNode( _contextHWM,
+                                                          pEDUCB->getID() ) ;
+               break ;
+
             default :
-               PD_LOG( PDERROR, "Unknow context type: %d", type ) ;
+               PD_LOG( PDERROR, "Unknown context type: %d", type ) ;
                return SDB_SYS ;
          }
 

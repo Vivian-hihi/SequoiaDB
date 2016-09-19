@@ -332,6 +332,9 @@ namespace engine
          case SDBCLEARDATA :
             rc = _pNodeMgr->clearData( arg1 ) ;
             break ;
+         case SDBTEST :
+            rc = SDB_OK ;
+            break ;
          default :
             PD_LOG( PDERROR, "Unknow remote code[%d] in session[%s]",
                     pCMReq->remoCode, sessionName() ) ;

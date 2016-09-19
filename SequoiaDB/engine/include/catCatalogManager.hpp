@@ -168,8 +168,6 @@ namespace engine
       INT32 processCommandMsg( const NET_HANDLE &handle, MsgHeader *pMsg,
                                BOOLEAN writable ) ;
 
-      INT32 processCmdCreateCL( const CHAR *pQuery,
-                                rtnContextBuf &ctxBuf ) ;
       INT32 processCmdCreateCS( const CHAR *pQuery,
                                 rtnContextBuf &ctxBuf ) ;
       INT32 processCmdSplit( const CHAR *pQuery,
@@ -177,21 +175,11 @@ namespace engine
                              rtnContextBuf &ctxBuf ) ;
       INT32 processCmdQuerySpaceInfo( const CHAR *pQuery,
                                       rtnContextBuf &ctxBuf ) ;
-      INT32 processCmdDropCollection ( const CHAR *pQuery,
-                                       INT32 version = -1 ) ;
-      INT32 processCmdDropCollectionSpace ( const CHAR *pQuery ) ;
-
       INT32 processQueryCatalogue ( const NET_HANDLE &handle,
                                     MsgHeader *pMsg ) ;
       INT32 processQueryTask ( const NET_HANDLE &handle, MsgHeader *pMsg ) ;
-      INT32 processAlterCollection ( const CHAR *pMsg,
-                                     rtnContextBuf &ctxBuf ) ;
       INT32 processCmdCrtProcedures( void *pMsg ) ;
       INT32 processCmdRmProcedures( void *pMsg ) ;
-      INT32 processCmdLinkCollection( const CHAR *pQuery,
-                                      rtnContextBuf &ctxBuf );
-      INT32 processCmdUnlinkCollection( const CHAR *pQuery,
-                                        rtnContextBuf &ctxBuf );
       INT32 processCmdCreateDomain ( const CHAR *pQuery ) ;
       INT32 processCmdDropDomain ( const CHAR *pQuery ) ;
       INT32 processCmdAlterDomain ( const CHAR *pQuery ) ;
@@ -200,81 +188,19 @@ namespace engine
    protected:
       void  _fillRspHeader( MsgHeader *rspMsg, const MsgHeader *reqMsg ) ;
 
-      INT32 _createCL( BSONObj & createObj, UINT32 &groupID,
-                       std::vector<UINT64> &taskIDs ) ;
       INT32 _createCS( BSONObj & createObj, UINT32 &groupID ) ;
 
-      INT32 _checkAndBuildCataRecord( const BSONObj &infoObj,
-                                      UINT32 &fieldMask,
-                                      catCollectionInfo &clInfo,
-                                      BOOLEAN clNameIsNecessary = TRUE ) ;
       INT32 _checkCSObj( const BSONObj &infoObj,
                          catCSInfo &csInfo ) ;
 
-      INT32 _checkGroupInDomain( const CHAR *groupName,
-                                 const CHAR *domainName,
-                                 BOOLEAN &existed,
-                                 UINT32 *pGroupID = NULL ) ;
       INT32 _assignGroup( vector< UINT32 > *pGoups, UINT32 &groupID ) ;
 
-      INT32 _checkGroupStatus( const CHAR *gpName ) ;
-
-      INT32 _buildCatalogRecord( const catCollectionInfo &clInfo,
-                                 UINT32 mask,
-                                 UINT32 groupID,
-                                 const CHAR *groupName,
-                                 BSONObj &catRecord ) ;
-
-      INT32 _chooseGroupOfCl( const BSONObj &domainObj,
-                              const BSONObj &csObj,
-                              const catCollectionInfo &clInfo,
-                              std::string &groupName,
-                              UINT32 &groupID,
-                              std::map<string, UINT32> &splitRange ) ;
-
-      INT32 _autoHashSplit( const BSONObj &clObj, std::vector<UINT64> &taskIDs,
-                            const CHAR *srcGroupName = NULL,
-                            const map<string, UINT32> *dstIDs = NULL ) ;
-
-      INT32 _combineOptions( const BSONObj &domain,
-                             const BSONObj &cs,
-                             UINT32 &mask,
-                             catCollectionInfo &options  ) ;
-
-      BSONObj _crtSplitInfo( const CHAR *fullName,
-                             const CHAR *src,
-                             const CHAR *dst,
-                             UINT32 begin,
-                             UINT32 end ) ;
-
-      INT32 _buildAlterObjWithMetaAndObj( _clsCatalogSet &catSet,
-                                          UINT32 mask,
-                                          catCollectionInfo &alterInfo,
-                                          BSONObj &alterObj ) ;
-
-      INT32 _getGroupsOfCollections( const std::vector<string> &clNames,
-                                     BSONObj &groups  ) ;
    private:
-      INT32 _buildInitBound ( const BSONObj &shardingKey,
-                              const Ordering& order,
-                              BSONObj& lowBound,
-                              BSONObj& upBound ) ;
-
-      INT32 _buildHashBound( BSONObj& lowBound,
-                             BSONObj& upBound,
-                             INT32 paritition ) ;
-
       INT16 _majoritySize() ;
 
       INT32 _buildAlterGroups( const BSONObj &domain,
                                const BSONElement &ele,
                                BSONObjBuilder &builder ) ;
-
-      INT32 _processAlterCollectionOld( const bson::BSONObj &obj,
-                                        rtnContextBuf &ctxBuf ) ;
-
-      INT32 _processAlterCollection( const bson::BSONObj &obj,
-                                     rtnContextBuf &ctxBuf ) ;
 
    private:
       sdbCatalogueCB       *_pCatCB;

@@ -126,6 +126,7 @@ namespace engine
 
          BOOLEAN  delayCurOperation() ;
          BOOLEAN  isDelayed() const { return _catMainCtrl.isDelayed() ; }
+         void     addContext( const UINT32 &handle, UINT32 tid, INT64 contextID ) ;
 
          _netRouteAgent* netWork()
          {

@@ -87,6 +87,8 @@ namespace engine
       BOOLEAN   delayCurOperation() ;
       BOOLEAN   isDelayed() const { return _isDelayed ; }
 
+      void addContext( const UINT32 &handle, UINT32 tid, INT64 contextID ) ;
+
    public:
       INT32 handleMsg( const NET_HANDLE &handle,
                        const _MsgHeader *header,
@@ -102,6 +104,8 @@ namespace engine
       INT32 _processMsg( const NET_HANDLE &handle, MsgHeader *pMsg ) ;
 
       void  _dispatchDelayedOperation( BOOLEAN dispatch ) ;
+
+      void _deleteDelayedOperation ( UINT32 handle ) ;
 
    // event process functions
    protected:
@@ -122,6 +126,7 @@ namespace engine
       INT32 _processAuthCrt( const NET_HANDLE &handle, MsgHeader *pMsg ) ;
       INT32 _processAuthDel( const NET_HANDLE &handle, MsgHeader *pMsg ) ;
       INT32 _processSessionInit( const NET_HANDLE &handle, MsgHeader *pMsg ) ;
+      INT32 _processRemoteDisc ( const NET_HANDLE &handle, MsgHeader *pMsg ) ;
       INT32 _processInterruptMsg( const NET_HANDLE &handle,
                                   MsgHeader *header ) ;
       INT32 _processDisconnectMsg( const NET_HANDLE &handle,
@@ -141,7 +146,6 @@ namespace engine
                               pmdEDUCB *cb ) ;
       INT32 _createSysCollection ( const CHAR *pCollection,
                                    pmdEDUCB *cb ) ;
-      void _addContext( const UINT32 &handle, UINT32 tid, INT64 contextID ) ;
       void _delContextByHandle( const UINT32 &handle ) ;
       void _delContext( const UINT32 &handle, UINT32 tid ) ;
       void _delContextByID( INT64 contextID, BOOLEAN rtnDel ) ;

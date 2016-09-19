@@ -16,7 +16,7 @@
 
    Source File Name = rtnCoordCommands.hpp
 
-   Descriptive Name = Runtime Coord Common
+   Descriptive Name = Runtime Coord Commands
 
    When/how to use: this program may be used on binary and text-formatted
    versions of runtime component. This file contains code logic for
@@ -159,13 +159,21 @@ namespace engine
                                          BOOLEAN onPrimary = TRUE,
                                          SET_RC *pIgnoreRC = NULL,
                                          CoordGroupList *pSucGrpLst = NULL,
-                                         rtnContextCoord **ppContext = NULL ) ;
+                                         rtnContextCoord **ppContext = NULL,
+                                         BOOLEAN preRead = TRUE ) ;
 
       INT32         executeOnCataGroup ( MsgHeader *pMsg,
                                          pmdEDUCB *cb,
                                          BOOLEAN onPrimary = TRUE,
                                          SET_RC *pIgnoreRC = NULL,
                                          rtnContextCoord **ppContext = NULL ) ;
+
+      INT32         executeOnCataGroup ( MsgHeader *pMsg,
+                                         pmdEDUCB *cb,
+                                         rtnContextCoord **ppContext,
+                                         CoordGroupList *pGroupList,
+                                         vector<BSONObj> *pReplyObjs = NULL,
+                                         SET_RC *pIgnoreRC = NULL ) ;
 
       INT32         executeOnCataGroup ( MsgHeader *pMsg,
                                          pmdEDUCB *cb,
@@ -246,7 +254,8 @@ namespace engine
                                BOOLEAN onPrimary = TRUE,
                                SET_RC *pIgnoreRC = NULL,
                                CoordGroupList *pSucGrpLst = NULL,
-                               rtnContextCoord **ppContext = NULL ) ;
+                               rtnContextCoord **ppContext = NULL,
+                               BOOLEAN preRead = TRUE ) ;
 
       BOOLEAN _getRetryNodes( ROUTE_SET &retriedNodes,
                               ROUTE_SET &needRetryNodes,
@@ -436,132 +445,6 @@ namespace engine
                              rtnContextBuf *buf ) ;
    };
 
-   class rtnCoordCMDCreateCollectionSpace : public rtnCoordCommand
-   {
-   public:
-      virtual INT32 execute( MsgHeader *pMsg,
-                             pmdEDUCB *cb,
-                             INT64 &contextID,
-                             rtnContextBuf *buf ) ;
-   } ;
-
-   class rtnCoordCMDCreateCollection : public rtnCoordCommand
-   {
-   public:
-      virtual INT32 execute( MsgHeader *pMsg,
-                             pmdEDUCB *cb,
-                             INT64 &contextID,
-                             rtnContextBuf *buf ) ;
-
-   private:
-      INT32 _notifyDataGroupsToStartTask( const CHAR *pCLName,
-                                          const BSONElement &task,
-                                          pmdEDUCB *cb ) ;
-   };
-
-   class _rtnAlterJob ;
-   class rtnCoordCMDAlterCollection : public rtnCoordCommand
-   {
-   public :
-      virtual INT32 execute( MsgHeader *pMsg,
-                             pmdEDUCB *cb,
-                             INT64 &contextID,
-                             rtnContextBuf *buf ) ;
-   private:
-      INT32 _executeOld( MsgHeader *pMsg,
-                         pmdEDUCB *cb,
-                         INT64 &contextID,
-                         rtnContextBuf *buf,
-                         string &clName ) ;
-
-      INT32 _execute( MsgHeader *pMsg,
-                      pmdEDUCB *cb,
-                      INT64 &contextID,
-                      rtnContextBuf *buf,
-                      string &clName ) ;
-
-      INT32 _testCollection( const CHAR *fullName, pmdEDUCB *cb ) ;
-   } ;
-
-   class rtnCoordCMD2PhaseCommit : public rtnCoordCommand
-   {
-   public:
-      virtual INT32 execute( MsgHeader *pMsg,
-                             pmdEDUCB *cb,
-                             INT64 &contextID,
-                             rtnContextBuf *buf ) ;
-   protected:
-      virtual void  _getIgnoreRCList( SET_RC &ignoreRCList ) ;
-      virtual INT32 _getGroupList( CHAR *pReceiveBuffer,
-                                   pmdEDUCB *cb,
-                                   CoordGroupList &groupLst,
-                                   string &strName ) = 0 ;
-
-   private:
-      virtual INT32 doP1OnDataGroup( CHAR *pReceiveBuffer,
-                                     pmdEDUCB *cb,
-                                     SET_RC &ignoreRCList,
-                                     SINT64 &contextID,
-                                     string &strName ) ;
-
-      virtual INT32 doP2OnDataGroup( CHAR *pReceiveBuffer,
-                                     pmdEDUCB * cb,
-                                     const string &strName,
-                                     SINT64 &contextID ) ;
-
-      virtual INT32 doOnCataGroup( CHAR *pReceiveBuffer,
-                                   pmdEDUCB * cb,
-                                   const string &strName ) = 0;
-
-      virtual INT32 complete( CHAR *pReceiveBuffer,
-                              pmdEDUCB * cb,
-                              const string &strName );
-   };
-
-   class rtnCoordCMDDropCollection : public rtnCoordCMD2PhaseCommit
-   {
-   protected:
-      virtual INT32 _getGroupList( CHAR *pReceiveBuffer,
-                                   pmdEDUCB *cb,
-                                   CoordGroupList &groupLst,
-                                   string &strName ) ;
-
-      virtual void  _getIgnoreRCList( SET_RC &ignoreRCList ) ;
-
-   private:
-      virtual INT32 doOnCataGroup( CHAR *pReceiveBuffer,
-                                   pmdEDUCB * cb,
-                                   const string &strName );
-
-      virtual INT32 complete( CHAR *pReceiveBuffer,
-                              pmdEDUCB * cb,
-                              const string &strName );
-
-      INT32 _getCLName( CHAR *pReceiveBuffer,
-                        string &strCLName ) ;
-   };
-
-   class rtnCoordCMDDropCollectionSpace : public rtnCoordCMD2PhaseCommit
-   {
-   protected:
-      virtual INT32 _getGroupList( CHAR *pReceiveBuffer,
-                                   pmdEDUCB *cb,
-                                   CoordGroupList &groupLst,
-                                   string &strName ) ;
-
-      virtual void  _getIgnoreRCList( SET_RC &ignoreRCList ) ;
-
-   private:
-      virtual INT32 doOnCataGroup( CHAR *pReceiveBuffer,
-                                   pmdEDUCB * cb,
-                                   const string &strName ) ;
-
-      virtual INT32 complete( CHAR *pReceiveBuffer,
-                              pmdEDUCB * cb,
-                              const string &strName ) ;
-
-   };
-
    class rtnCoordCMDQueryBase : public rtnCoordCommand
    {
    public:
@@ -621,24 +504,6 @@ namespace engine
                              rtnContextBuf *buf ) ;
    };
 
-   class rtnCoordCMDCreateGroup : public rtnCoordCommand
-   {
-   public:
-      virtual INT32 execute( MsgHeader *pMsg,
-                             pmdEDUCB *cb,
-                             INT64 &contextID,
-                             rtnContextBuf *buf ) ;
-   };
-
-   class rtnCoordCMDRemoveGroup : public rtnCoordCommand
-   {
-   public:
-      virtual INT32 execute( MsgHeader *pMsg,
-                             pmdEDUCB *cb,
-                             INT64 &contextID,
-                             rtnContextBuf *buf ) ;
-   };
-
    class rtnCoordCMDConfigNode
    {
    public:
@@ -647,90 +512,8 @@ namespace engine
                          CoordGroupInfoPtr &catGroupInfo );
    };
 
-   class rtnCoordCMDCreateNode : public rtnCoordCommand,
-                                 public rtnCoordCMDConfigNode
-   {
-   public:
-      virtual INT32 execute( MsgHeader *pMsg,
-                             pmdEDUCB *cb,
-                             INT64 &contextID,
-                             rtnContextBuf *buf ) ;
-   private:
-      INT32 _createNode( MsgHeader *pMsg,
-                         pmdEDUCB *cb,
-                         INT64 &contextID,
-                         rtnContextBuf *buf ) ;
-
-      INT32 _attachNode( const BSONObj &obj,
-                         pmdEDUCB *cb ) ;
-
-      INT32 _buildAttachMsg( const BSONObj &conf,
-                             const CHAR *groupName,
-                             const CHAR *host,
-                             CHAR *&buf,
-                             MsgOpQuery *&header ) ;
-   };
-
-   class rtnCoordCMDRemoveNode : public rtnCoordCommand,
-                                 public rtnCoordCMDConfigNode
-   {
-   public:
-      virtual INT32 execute( MsgHeader *pMsg,
-                             pmdEDUCB *cb,
-                             INT64 &contextID,
-                             rtnContextBuf *buf ) ;
-
-   private:
-      INT32 _validateOnDataNode( const BSONElement &groupName,
-                                 const BSONElement &host,
-                                 const BSONElement &srv,
-                                 pmdEDUCB *cb ) ;
-   } ;
-
    class rtnCoordCMDUpdateNode : public rtnCoordCommand,
                                  public rtnCoordCMDConfigNode
-   {
-   public:
-      virtual INT32 execute( MsgHeader *pMsg,
-                             pmdEDUCB *cb,
-                             INT64 &contextID,
-                             rtnContextBuf *buf ) ;
-   };
-
-
-   class rtnCoordCMDActiveGroup : public rtnCoordCommand
-   {
-   public:
-      virtual INT32 execute( MsgHeader *pMsg,
-                             pmdEDUCB *cb,
-                             INT64 &contextID,
-                             rtnContextBuf *buf ) ;
-   private:
-      INT32 startNodes( BSONObj &boGroupInfo,
-                        vector<BSONObj> &objList ) ;
-
-      INT32 startNodes( clsGroupItem *pItem,
-                        vector<BSONObj> &objList ) ;
-
-   };
-
-   class rtnCoordCMDCreateIndex : public rtnCoordCommand
-   {
-   public:
-      virtual INT32 execute( MsgHeader *pMsg,
-                             pmdEDUCB *cb,
-                             INT64 &contextID,
-                             rtnContextBuf *buf ) ;
-
-   protected:
-      INT32         checkIndexKey( const CoordCataInfoPtr &cataInfo,
-                                   const BSONObj &indexObj,
-                                   set< UINT32 > &haveSet,
-                                   pmdEDUCB *cb ) ;
-
-   };
-
-   class rtnCoordCMDDropIndex : public rtnCoordCommand
    {
    public:
       virtual INT32 execute( MsgHeader *pMsg,
@@ -760,69 +543,6 @@ namespace engine
    public:
       virtual SINT32 getOpType();
    };
-
-   class rtnCoordCMDOperateOnGroup : public rtnCoordCommand
-   {
-   public:
-      virtual INT32 execute( MsgHeader *pMsg,
-                             pmdEDUCB *cb,
-                             INT64 &contextID,
-                             rtnContextBuf *buf ) ;
-
-      INT32 opOnGroup( BSONObj &boGroupInfo ) ;
-
-      virtual SINT32 getOpType() = 0 ;
-   };
-
-   class rtnCoordCMDShutdownGroup : public rtnCoordCMDOperateOnGroup
-   {
-   public:
-      virtual SINT32 getOpType();
-   };
-
-   class rtnCoordCMDSplit : public rtnCoordCommand
-   {
-   public :
-      virtual INT32 execute( MsgHeader *pMsg,
-                             pmdEDUCB *cb,
-                             INT64 &contextID,
-                             rtnContextBuf *buf ) ;
-
-      INT32         getCLCount( const CHAR *clFullName,
-                                CoordGroupList &groupList,
-                                pmdEDUCB *cb, UINT64 &count ) ;
-
-   protected:
-      INT32 _getBoundByPercent( const CHAR *cl,
-                                FLOAT64 percent,
-                                CoordCataInfoPtr &cataInfo,
-                                CoordGroupList &groupList,
-                                pmdEDUCB *cb,
-                                BSONObj &lowBound,
-                                BSONObj &upBound ) ;
-
-      INT32 _getBoundByCondition( const CHAR *cl,
-                                  const BSONObj &begin,
-                                  const BSONObj &end,
-                                  CoordGroupList &groupList,
-                                  pmdEDUCB *cb,
-                                  CoordCataInfoPtr &cataInfo,
-                                  BSONObj &lowBound,
-                                  BSONObj &upBound ) ;
-
-   private:
-      INT32 _getBoundRecordOnData( const CHAR *cl,
-                                   const BSONObj &condition,
-                                   const BSONObj &hint,
-                                   const BSONObj &sort,
-                                   INT32 flag,
-                                   INT64 skip,
-                                   CoordGroupList &groupList,
-                                   pmdEDUCB *cb,
-                                   BSONObj &shardingKey,
-                                   BSONObj &record ) ;
-
-   } ;
 
    class rtnCoordCmdWaitTask : public rtnCoordCommand
    {
@@ -987,24 +707,6 @@ namespace engine
                                  string &clName ) ;
    } ;
 
-   class rtnCoordCMDLinkCollection : public rtnCoordCommand
-   {
-   public:
-      virtual INT32 execute( MsgHeader *pMsg,
-                             pmdEDUCB *cb,
-                             INT64 &contextID,
-                             rtnContextBuf *buf ) ;
-   };
-
-   class rtnCoordCMDUnlinkCollection : public rtnCoordCommand
-   {
-   public:
-      virtual INT32 execute( MsgHeader *pMsg,
-                             pmdEDUCB *cb,
-                             INT64 &contextID,
-                             rtnContextBuf *buf ) ;
-   };
-
    class rtnCoordCMDSetSessionAttr : public rtnCoordCommand
    {
    public:
@@ -1013,33 +715,6 @@ namespace engine
                              INT64 &contextID,
                              rtnContextBuf *buf ) ;
    };
-
-   class rtnCoordCMDCreateDomain : public rtnCoordCommand
-   {
-   public:
-      virtual INT32 execute( MsgHeader *pMsg,
-                             pmdEDUCB *cb,
-                             INT64 &contextID,
-                             rtnContextBuf *buf ) ;
-   } ;
-
-   class rtnCoordCMDDropDomain : public rtnCoordCommand
-   {
-   public:
-      virtual INT32 execute( MsgHeader *pMsg,
-                             pmdEDUCB *cb,
-                             INT64 &contextID,
-                             rtnContextBuf *buf ) ;
-   } ;
-
-   class rtnCoordCMDAlterDomain : public rtnCoordCommand
-   {
-   public:
-      virtual INT32 execute( MsgHeader *pMsg,
-                             pmdEDUCB *cb,
-                             INT64 &contextID,
-                             rtnContextBuf *buf ) ;
-   } ;
 
    class rtnCoordCMDAddDomainGroup : public rtnCoordCommand
    {
@@ -1157,6 +832,127 @@ namespace engine
    public:
       virtual INT32 getGroups( pmdEDUCB *cb, CoordGroupList &groupList ) ;
    } ;
+
+   /*
+    * rtnCoordCMD2Phase define
+    */
+   class rtnCoordCMD2Phase : public rtnCoordCommand
+   {
+   protected :
+      /* Dynamic arguments for commands */
+      class _rtnCMDArguments : public SDBObject
+      {
+      public :
+         _rtnCMDArguments () {}
+
+         virtual ~_rtnCMDArguments () {}
+
+         /* A copy of the query object */
+         BSONObj _boQuery ;
+
+         /* Name of the catalog target to be updated */
+         string _targetName ;
+
+         /* ignore error return codes */
+         SET_RC _ignoreRCList ;
+      } ;
+
+   public:
+      virtual INT32 execute ( MsgHeader *pMsg,
+                              pmdEDUCB *cb,
+                              INT64 &contextID,
+                              rtnContextBuf *buf ) ;
+   protected :
+      virtual _rtnCMDArguments *_generateArguments () ;
+
+      virtual INT32 _extractMsg ( MsgHeader *pMsg, _rtnCMDArguments *pArgs ) ;
+
+      virtual INT32 _parseMsg ( MsgHeader *pMsg,
+                                _rtnCMDArguments *pArgs ) = 0 ;
+
+      virtual INT32 _generateCataMsg ( MsgHeader *pMsg,
+                                       pmdEDUCB *cb,
+                                       _rtnCMDArguments *pArgs,
+                                       CHAR **ppMsgBuf,
+                                       MsgHeader **ppCataMsg ) = 0;
+
+      virtual INT32 _generateDataMsg ( MsgHeader *pMsg,
+                                       pmdEDUCB *cb,
+                                       _rtnCMDArguments *pArgs,
+                                       const vector<BSONObj> &cataObjs,
+                                       CHAR **ppMsgBuf,
+                                       MsgHeader **ppDataMsg ) = 0 ;
+
+      virtual INT32 _generateRollbackDataMsg ( MsgHeader *pMsg,
+                                               _rtnCMDArguments *pArgs,
+                                               CHAR **ppMsgBuf,
+                                               MsgHeader **ppRollbackMsg ) = 0 ;
+
+      virtual const CHAR *_getCommandName () const = 0;
+
+   protected :
+      virtual INT32 _doOnCataGroup ( MsgHeader *pMsg,
+                                     pmdEDUCB *cb,
+                                     rtnContextCoord **ppContext,
+                                     _rtnCMDArguments *pArgs,
+                                     CoordGroupList *pGroupLst,
+                                     vector<BSONObj> *pReplyObjs ) ;
+
+      virtual INT32 _doOnDataGroup ( MsgHeader *pMsg,
+                                     pmdEDUCB *cb,
+                                     rtnContextCoord **ppContext,
+                                     _rtnCMDArguments *pArgs,
+                                     const CoordGroupList &groupLst,
+                                     const vector<BSONObj> &cataObjs,
+                                     CoordGroupList &sucGroupLst ) = 0;
+
+      virtual INT32 _doOnCataGroupP2 ( MsgHeader *pMsg,
+                                       pmdEDUCB *cb,
+                                       rtnContextCoord **ppContext,
+                                       _rtnCMDArguments *pArgs,
+                                       const CoordGroupList &pGroupLst ) ;
+
+      virtual INT32 _doOnDataGroupP2 ( MsgHeader *pMsg,
+                                       pmdEDUCB *cb,
+                                       rtnContextCoord **ppContext,
+                                       _rtnCMDArguments *pArgs,
+                                       const CoordGroupList &groupLst,
+                                       const vector<BSONObj> &cataObjs ) ;
+
+      virtual INT32 _rollbackOnDataGroup ( MsgHeader *pMsg,
+                                           pmdEDUCB *cb,
+                                           _rtnCMDArguments *pArgs,
+                                           const CoordGroupList &groupLst ) ;
+
+      virtual INT32 _doCommit ( MsgHeader *pMsg,
+                                pmdEDUCB * cb,
+                                rtnContextCoord **ppContext,
+                                _rtnCMDArguments *pArgs ) ;
+
+      virtual INT32 _doComplete ( MsgHeader *pMsg,
+                                  pmdEDUCB * cb,
+                                  _rtnCMDArguments *pArgs ) ;
+
+      virtual INT32 _doAudit ( _rtnCMDArguments *pArgs, INT32 rc ) = 0 ;
+
+      virtual INT32 _processContext ( pmdEDUCB *cb,
+                                      rtnContextCoord **ppContext,
+                                      SINT32 maxNumSteps ) ;
+
+   protected :
+      /* Send command to Data Groups with the TID of client */
+      virtual BOOLEAN _flagReserveClientTID () { return FALSE ; }
+
+      /* Get list of Data Groups from Catalog with the P1 catalog command */
+      virtual BOOLEAN _flagGetGrpLstFromCata () { return FALSE ; }
+
+      /* Execute Data command before Catalog command in P2 */
+      virtual BOOLEAN _flagExecDataBeforeCataP2 () { return FALSE ; }
+
+      /* Commit on Catalog when rollback on Data groups failed */
+      virtual BOOLEAN _flagCommitOnRollbackFailed () { return FALSE ; }
+   } ;
+
 
 }
 #endif

@@ -923,6 +923,10 @@ namespace engine
       }
       else if ( SDB_OK == rcTmp && nokRC.empty() )
       {
+         if ( pvtData._pContext )
+         {
+            pvtData._pContext->addSubDone( cb ) ;
+         }
          goto done ;
       }
       else if ( checkRetryForCLOpr( rcTmp, &nokRC, inMsg.msg(),
@@ -938,11 +942,6 @@ namespace engine
          PD_LOG( PDERROR, "Query failed on node[%s], rc: %d",
                  routeID2String( errNodeID ).c_str(), rc ) ;
          goto error ;
-      }
-
-      if ( pvtData._pContext )
-      {
-         pvtData._pContext->addSubDone( cb ) ;
       }
 
    done:

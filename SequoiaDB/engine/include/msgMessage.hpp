@@ -229,9 +229,12 @@ INT32 msgExtractCMRequest ( CHAR *pBuffer, SINT32 *remoCode,
                             CHAR **arg1, CHAR **arg2,
                             CHAR **arg3, CHAR **arg4 ) ;
 
-INT32 msgBuildDropIndexMsg  ( CHAR **ppBuffer, INT32 *bufferSize,
-                          const CHAR *CollectionName, const CHAR *IndexName,
-                          UINT64 reqID ) ;
+INT32 msgBuildDropCLMsg ( CHAR **ppBuffer, INT32 *bufferSize,
+                          const CHAR *CollectionName, UINT64 reqID ) ;
+
+INT32 msgBuildDropIndexMsg ( CHAR **ppBuffer, INT32 *bufferSize,
+                             const CHAR *CollectionName, const CHAR *IndexName,
+                             UINT64 reqID ) ;
 
 INT32 msgBuildSysInfoRequest ( CHAR **ppBuffer, INT32 *pBufferSize ) ;
 
