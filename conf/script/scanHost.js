@@ -100,7 +100,18 @@ function _scanHost( user, passwd, hostname, sshport, ip )
       tempRet = System.ping( addr ) ;
       var ping = eval( "(" + tempRet + ")" ) ;
       if( true != ping[Reachable] )
-         exception_handle( SDB_INVALIDARG, "Host unreachable" ) ;
+      {
+         tempRet = System.ping( "127.0.0.1" ) ;
+         ping = eval( "(" + tempRet + ")" ) ;
+         if ( true != ping[Reachable] )
+         {
+            exception_handle( SDB_SYS, "System.ping() can not work" ) ;
+         }
+         else
+         {
+            exception_handle( SDB_INVALIDARG, "Host unreachable" ) ;
+         }
+      }
    }
    catch( e )
    {
