@@ -174,6 +174,10 @@ class SequoiaDB_Test extends PHPUnit_Framework_TestCase
          {
             continue ;
          }
+         if( $err['errno'] == -29 )
+         {
+            continue ;
+         }
          $this -> assertEquals( 0, $err['errno'], '测试snapshot接口, 快照类型: '.$i ) ;
          $this -> assertNotEmpty( $cursor, '测试snapshot接口' ) ;
          while( $record = $cursor -> next() )
@@ -185,6 +189,10 @@ class SequoiaDB_Test extends PHPUnit_Framework_TestCase
          $cursor = $db -> getSnapshot( $i ) ;
          $err = $db -> getError() ;
          if( $err['errno'] == -159 )
+         {
+            continue ;
+         }
+         if( $err['errno'] == -29 )
          {
             continue ;
          }
