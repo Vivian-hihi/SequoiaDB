@@ -3949,8 +3949,10 @@ namespace engine
       UINT32 reservedTID = 0 ;
       CHAR *pCataMsgBuf = NULL ;
       CHAR *pDataMsgBuf = NULL ;
+      CHAR *pRollbackMsgBuf = NULL ;
       MsgHeader *pCataMsg = NULL ;
       MsgHeader *pDataMsg = NULL ;
+      MsgHeader *pRollbackMsg = NULL ;
       _rtnCMDArguments *pArguments = NULL ;
 
       contextID = -1 ;
@@ -4165,6 +4167,8 @@ namespace engine
 
       SAFE_OSS_FREE( pCataMsgBuf ) ;
       SAFE_OSS_FREE( pDataMsgBuf ) ;
+      SAFE_OSS_FREE( pRollbackMsgBuf ) ;
+
       SAFE_OSS_FREE( pArguments ) ;
 
       PD_TRACE_EXITRC ( CMD_RTNCOCMD2PH_EXECUTE, rc ) ;
@@ -4185,8 +4189,16 @@ namespace engine
            pCoordCtxForCata )
       {
          INT32 tmprc = SDB_OK ;
-         CHAR *pRollbackMsgBuf = NULL ;
-         MsgHeader *pRollbackMsg = NULL ;
+
+         // Rollback Catalog first if needed
+         if ( _flagRollbackCataBeforeData() &&
+              pCoordCtxForCata )
+         {
+            pmdKRCB *pKrcb = pmdGetKRCB();
+            _SDB_RTNCB *pRtncb = pKrcb->getRTNCB();
+            pRtncb->contextDelete ( pCoordCtxForCata->contextID(), cb ) ;
+            pCoordCtxForCata = NULL ;
+         }
 
          do
          {
@@ -4228,8 +4240,6 @@ namespace engine
                     "%s on [%s] rollback done",
                     _getCommandName(), pArguments->_targetName.c_str() ) ;
          } while ( FALSE ) ;
-
-         SAFE_OSS_FREE( pRollbackMsgBuf ) ;
       }
       goto done ;
    }

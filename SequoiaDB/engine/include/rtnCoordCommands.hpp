@@ -951,6 +951,9 @@ namespace engine
 
       /* Commit on Catalog when rollback on Data groups failed */
       virtual BOOLEAN _flagCommitOnRollbackFailed () { return FALSE ; }
+
+      /* Rollback on Catalog before rollback on Data groups */
+      virtual BOOLEAN _flagRollbackCataBeforeData () { return FALSE ; }
    } ;
 
 

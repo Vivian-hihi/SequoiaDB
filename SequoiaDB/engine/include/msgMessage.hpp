@@ -232,6 +232,16 @@ INT32 msgExtractCMRequest ( CHAR *pBuffer, SINT32 *remoCode,
 INT32 msgBuildDropCLMsg ( CHAR **ppBuffer, INT32 *bufferSize,
                           const CHAR *CollectionName, UINT64 reqID ) ;
 
+INT32 msgBuildLinkCLMsg ( CHAR **ppBuffer, INT32 *bufferSize,
+                          const CHAR *CollectionName,
+                          const CHAR *subCollectionName,
+                          UINT64 reqID ) ;
+
+INT32 msgBuildUnlinkCLMsg ( CHAR **ppBuffer, INT32 *bufferSize,
+                            const CHAR *CollectionName,
+                            const CHAR *subCollectionName,
+                            UINT64 reqID ) ;
+
 INT32 msgBuildDropIndexMsg ( CHAR **ppBuffer, INT32 *bufferSize,
                              const CHAR *CollectionName, const CHAR *IndexName,
                              UINT64 reqID ) ;

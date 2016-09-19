@@ -292,6 +292,20 @@ namespace engine
    class rtnCoordCMDLinkCollection : public rtnCoordDataCMD2Phase
    {
    protected :
+      class _rtnCMDLinkCLArgs : public _rtnCMDArguments
+      {
+      public :
+         _rtnCMDLinkCLArgs () {}
+
+         virtual ~_rtnCMDLinkCLArgs () {}
+
+         /* Name of the sub-collection */
+         string _subCLName ;
+      } ;
+
+   protected :
+      virtual _rtnCMDArguments *_generateArguments () ;
+
       virtual INT32 _parseMsg ( MsgHeader *pMsg,
                                 _rtnCMDArguments *pArgs ) ;
 
@@ -301,12 +315,25 @@ namespace engine
                                        CHAR **ppMsgBuf,
                                        MsgHeader **ppCataMsg ) ;
 
+      virtual INT32 _generateRollbackDataMsg ( MsgHeader *pMsg,
+                                               _rtnCMDArguments *pArgs,
+                                               CHAR **ppMsgBuf,
+                                               MsgHeader **ppRollbackMsg ) ;
+
+      virtual INT32 _rollbackOnDataGroup ( MsgHeader *pMsg,
+                                           pmdEDUCB *cb,
+                                           _rtnCMDArguments *pArgs,
+                                           const CoordGroupList &groupLst ) ;
+
       virtual const CHAR *_getCommandName () const
       { return CMD_NAME_LINK_CL ; }
 
    protected :
       /* update catalog info before send command to Data Groups */
       virtual BOOLEAN _flagUpdateBeforeData () { return TRUE ; }
+
+      /* Rollback on Catalog before rollback on Data groups */
+      virtual BOOLEAN _flagRollbackCataBeforeData () { return TRUE ; }
    } ;
 
    /*
@@ -315,6 +342,20 @@ namespace engine
    class rtnCoordCMDUnlinkCollection : public rtnCoordDataCMD2Phase
    {
    protected :
+      class _rtnCMDUnlinkCLArgs : public _rtnCMDArguments
+      {
+      public :
+         _rtnCMDUnlinkCLArgs () {}
+
+         virtual ~_rtnCMDUnlinkCLArgs () {}
+
+         /* Name of the sub-collection */
+         string _subCLName ;
+      } ;
+
+   protected :
+      virtual _rtnCMDArguments *_generateArguments () ;
+
       virtual INT32 _parseMsg ( MsgHeader *pMsg,
                                 _rtnCMDArguments *pArgs ) ;
 
@@ -324,12 +365,25 @@ namespace engine
                                        CHAR **ppMsgBuf,
                                        MsgHeader **ppCataMsg ) ;
 
+      virtual INT32 _generateRollbackDataMsg ( MsgHeader *pMsg,
+                                               _rtnCMDArguments *pArgs,
+                                               CHAR **ppMsgBuf,
+                                               MsgHeader **ppRollbackMsg ) ;
+
+      virtual INT32 _rollbackOnDataGroup ( MsgHeader *pMsg,
+                                           pmdEDUCB *cb,
+                                           _rtnCMDArguments *pArgs,
+                                           const CoordGroupList &groupLst ) ;
+
       virtual const CHAR *_getCommandName () const
       { return CMD_NAME_UNLINK_CL ; }
 
    protected :
       /* update catalog info before send command to Data Groups */
       virtual BOOLEAN _flagUpdateBeforeData () { return TRUE ; }
+
+      /* Rollback on Catalog before rollback on Data groups */
+      virtual BOOLEAN _flagRollbackCataBeforeData () { return TRUE ; }
    } ;
 
    /*

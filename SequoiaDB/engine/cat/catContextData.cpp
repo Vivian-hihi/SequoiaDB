@@ -1995,23 +1995,33 @@ namespace engine
 
       string tmpMainCLName ;
 
+      // 1. check main-collection
       rc = catGetAndLockCollection( _targetName, _boTarget, cb,
                                     &_lockMgr, EXCLUSIVE ) ;
       PD_RC_CHECK( rc, PDERROR,
                    "Failed to get the main-collection [%s], rc: %d",
                    _targetName.c_str(), rc ) ;
 
-      rc = catGetAndLockCollection( _subCLName, _boSubCL, cb,
-                                    &_lockMgr, EXCLUSIVE ) ;
-      PD_RC_CHECK( rc, PDERROR,
-                   "Failed to get the sub-collection [%s], rc: %d",
-                   _subCLName.c_str(), rc ) ;
-
       // Main-collection should be main collection
       rc = catCheckMainCollection( _boTarget, TRUE ) ;
       PD_RC_CHECK( rc, PDERROR,
                    "Collection [%s] is not a main-collection, rc: %d",
                    _targetName.c_str(), rc ) ;
+
+      // 2. check sub-collection
+      if ( 0 == _targetName.compare( _subCLName ) )
+      {
+         // Avoid repeating locked, report error eventually
+         _boSubCL = _boTarget ;
+      }
+      else
+      {
+         rc = catGetAndLockCollection( _subCLName, _boSubCL, cb,
+                                       &_lockMgr, EXCLUSIVE ) ;
+         PD_RC_CHECK( rc, PDERROR,
+                      "Failed to get the sub-collection [%s], rc: %d",
+                      _subCLName.c_str(), rc ) ;
+      }
 
       // Sub-collection should not be main collection
       rc = catCheckMainCollection( _boSubCL, FALSE ) ;
@@ -2196,23 +2206,33 @@ namespace engine
 
       string tmpMainCLName ;
 
+      // 1. check main-collection
       rc = catGetAndLockCollection( _targetName, _boTarget, cb,
                                     &_lockMgr, EXCLUSIVE ) ;
       PD_RC_CHECK( rc, PDERROR,
                    "Failed to get the main-collection [%s], rc: %d",
                    _targetName.c_str(), rc ) ;
 
-      rc = catGetAndLockCollection( _subCLName, _boSubCL, cb,
-                                    &_lockMgr, EXCLUSIVE ) ;
-      PD_RC_CHECK( rc, PDERROR,
-                   "Failed to get the sub-collection [%s], rc: %d",
-                   _subCLName.c_str(), rc ) ;
-
       // Main-collection should be main collection
       rc = catCheckMainCollection( _boTarget, TRUE ) ;
       PD_RC_CHECK( rc, PDERROR,
                    "Collection[%s] is not a main-collection, rc: %d",
                    _targetName.c_str(), rc ) ;
+
+      // 2. check sub-collection
+      if ( 0 == _targetName.compare( _subCLName ) )
+      {
+         // Avoid repeating locked, report error eventually
+         _boSubCL = _boTarget ;
+      }
+      else
+      {
+         rc = catGetAndLockCollection( _subCLName, _boSubCL, cb,
+                                       &_lockMgr, EXCLUSIVE ) ;
+         PD_RC_CHECK( rc, PDERROR,
+                      "Failed to get the sub-collection [%s], rc: %d",
+                      _subCLName.c_str(), rc ) ;
+      }
 
       // Sub-collection should not be main collection
       rc = catCheckMainCollection( _boSubCL, FALSE ) ;

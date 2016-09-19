@@ -656,7 +656,7 @@ namespace engine
       rc = msgBuildDropCLMsg( ppMsgBuf, &bufSize, pArgs->_targetName.c_str(), 0 ) ;
       PD_RC_CHECK ( rc, PDWARNING,
                     "Failed to rollback %s on [%s]: "
-                    "failed to build dropCL message, rc = %d",
+                    "failed to build dropCL message, rc: %d",
                     _getCommandName(), pArgs->_targetName.c_str(), rc ) ;
 
       (*ppRollbackMsg) = (MsgHeader *)(*ppMsgBuf) ;
@@ -894,6 +894,11 @@ namespace engine
    /*
     * rtnCoordCMDLinkCollection implement
     */
+   rtnCoordCMD2Phase::_rtnCMDArguments *rtnCoordCMDLinkCollection::_generateArguments ()
+   {
+      return SDB_OSS_NEW _rtnCMDLinkCLArgs () ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION( CMD_RTNCOCMDLINKCL_PARSEMSG, "rtnCoordCMDLinkCollection::_parseMsg" )
    INT32 rtnCoordCMDLinkCollection::_parseMsg ( MsgHeader *pMsg,
                                                 _rtnCMDArguments *pArgs )
@@ -902,12 +907,14 @@ namespace engine
 
       PD_TRACE_ENTRY ( CMD_RTNCOCMDLINKCL_PARSEMSG ) ;
 
+      _rtnCMDLinkCLArgs *pSelfArgs = ( _rtnCMDLinkCLArgs * )pArgs ;
+
       try
       {
          string mainCLName, subCLName ;
          BSONObj lowBound, upBound ;
 
-         rc = rtnGetSTDStringElement( pArgs->_boQuery, CAT_SUBCL_NAME,
+         rc = rtnGetSTDStringElement( pSelfArgs->_boQuery, CAT_SUBCL_NAME,
                                       subCLName ) ;
          PD_RC_CHECK( rc, PDERROR,
                       "Failed to %s: failed to get the field [%s] from query",
@@ -917,7 +924,7 @@ namespace engine
                    "Failed to %s: sub-collection name can't be empty!",
                    _getCommandName() ) ;
 
-         rc = rtnGetSTDStringElement( pArgs->_boQuery, CAT_COLLECTION_NAME,
+         rc = rtnGetSTDStringElement( pSelfArgs->_boQuery, CAT_COLLECTION_NAME,
                                       mainCLName ) ;
          PD_RC_CHECK( rc, PDERROR,
                       "Failed to %s: failed to get the field [%s] from query",
@@ -927,17 +934,18 @@ namespace engine
                    "Failed to %s: main-collection name can't be empty!",
                    _getCommandName() ) ;
 
-         rc = rtnGetObjElement( pArgs->_boQuery, CAT_LOWBOUND_NAME, lowBound ) ;
+         rc = rtnGetObjElement( pSelfArgs->_boQuery, CAT_LOWBOUND_NAME, lowBound ) ;
          PD_RC_CHECK( rc, PDERROR,
                       "Failed to %s: failed to get the field [%s] from query",
                       _getCommandName(), CAT_LOWBOUND_NAME ) ;
 
-         rc = rtnGetObjElement( pArgs->_boQuery, CAT_UPBOUND_NAME, upBound ) ;
+         rc = rtnGetObjElement( pSelfArgs->_boQuery, CAT_UPBOUND_NAME, upBound ) ;
          PD_RC_CHECK( rc, PDERROR,
                       "Failed to %s: failed to get the field [%s] from query",
                       _getCommandName(), CAT_UPBOUND_NAME ) ;
 
-         pArgs->_targetName = mainCLName ;
+         pSelfArgs->_targetName = mainCLName ;
+         pSelfArgs->_subCLName = subCLName ;
       }
       catch( std::exception &e )
       {
@@ -970,9 +978,71 @@ namespace engine
       return SDB_OK ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION( CMD_RTNCOCMDLINKCL_GENROLLBACKMSG, "rtnCoordCMDLinkCollection::_generateRollbackDataMsg" )
+   INT32 rtnCoordCMDLinkCollection::_generateRollbackDataMsg ( MsgHeader *pMsg,
+                                                               _rtnCMDArguments *pArgs,
+                                                               CHAR **ppMsgBuf,
+                                                               MsgHeader **ppRollbackMsg )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY ( CMD_RTNCOCMDLINKCL_GENROLLBACKMSG ) ;
+
+      INT32 bufSize ;
+
+      _rtnCMDLinkCLArgs *pSelfArgs = ( _rtnCMDLinkCLArgs * )pArgs ;
+
+      rc = msgBuildUnlinkCLMsg( ppMsgBuf, &bufSize,
+                                 pSelfArgs->_targetName.c_str(),
+                                 pSelfArgs->_subCLName.c_str(), 0 ) ;
+      PD_RC_CHECK ( rc, PDWARNING,
+                    "Failed to rollback %s on [%s/%s]: "
+                    "failed to build unlink message, rc: %d",
+                    _getCommandName(),
+                    pSelfArgs->_targetName.c_str(),
+                    pSelfArgs->_subCLName.c_str(),
+                    rc ) ;
+
+      (*ppRollbackMsg) = (MsgHeader *)(*ppMsgBuf) ;
+
+   done :
+      PD_TRACE_EXITRC ( CMD_RTNCOCMDLINKCL_GENROLLBACKMSG, rc ) ;
+      return rc ;
+   error :
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION( CMD_RTNCOCMDLINKCL_ROLLBACK, "rtnCoordCMDLinkCollection::_rollbackOnDataGroup" )
+   INT32 rtnCoordCMDLinkCollection::_rollbackOnDataGroup ( MsgHeader *pMsg,
+                                                           pmdEDUCB *cb,
+                                                           _rtnCMDArguments *pArgs,
+                                                           const CoordGroupList &groupLst )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY ( CMD_RTNCOCMDLINKCL_ROLLBACK ) ;
+
+      rc = executeOnCL( pMsg, cb, pArgs->_targetName.c_str(),
+                        TRUE, &groupLst, &(pArgs->_ignoreRCList), NULL ) ;
+      PD_RC_CHECK( rc, PDWARNING,
+                   "Failed to rollback %s on [%s], rc: %d",
+                   _getCommandName(), pArgs->_targetName.c_str(), rc ) ;
+
+   done :
+      PD_TRACE_EXITRC ( CMD_RTNCOCMDLINKCL_ROLLBACK, rc ) ;
+      return rc ;
+   error :
+      goto done ;
+   }
+
    /*
     * rtnCoordCMDUnlinkCollection implement
     */
+   rtnCoordCMD2Phase::_rtnCMDArguments *rtnCoordCMDUnlinkCollection::_generateArguments ()
+   {
+      return SDB_OSS_NEW _rtnCMDUnlinkCLArgs () ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION( CMD_RTNCOCMDUNLINKCL_PARSEMSG, "rtnCoordCMDUnlinkCollection::_parseMsg" )
    INT32 rtnCoordCMDUnlinkCollection::_parseMsg ( MsgHeader *pMsg,
                                                   _rtnCMDArguments *pArgs )
@@ -981,11 +1051,13 @@ namespace engine
 
       PD_TRACE_ENTRY ( CMD_RTNCOCMDUNLINKCL_PARSEMSG ) ;
 
+      _rtnCMDUnlinkCLArgs *pSelfArgs = ( _rtnCMDUnlinkCLArgs * )pArgs ;
+
       try
       {
          string mainCLName, subCLName ;
 
-         rc = rtnGetSTDStringElement( pArgs->_boQuery, CAT_SUBCL_NAME,
+         rc = rtnGetSTDStringElement( pSelfArgs->_boQuery, CAT_SUBCL_NAME,
                                       subCLName ) ;
          PD_RC_CHECK( rc, PDERROR,
                       "Failed to %s: failed to get the field [%s] from query",
@@ -995,7 +1067,7 @@ namespace engine
                    "Failed to %s: sub-collection name can't be empty!",
                    _getCommandName() ) ;
 
-         rc = rtnGetSTDStringElement( pArgs->_boQuery, CAT_COLLECTION_NAME,
+         rc = rtnGetSTDStringElement( pSelfArgs->_boQuery, CAT_COLLECTION_NAME,
                                       mainCLName ) ;
          PD_RC_CHECK( rc, PDERROR,
                       "Failed to %s: failed to get the field [%s] from query",
@@ -1005,7 +1077,8 @@ namespace engine
                    "Failed to %s: main-collection name can't be empty!",
                    _getCommandName() ) ;
 
-         pArgs->_targetName = mainCLName ;
+         pSelfArgs->_targetName = mainCLName ;
+         pSelfArgs->_subCLName = subCLName ;
       }
       catch( std::exception &e )
       {
@@ -1036,6 +1109,63 @@ namespace engine
       PD_TRACE_EXIT ( CMD_RTNCOCMDUNLINKCL_GENCATAMSG ) ;
 
       return SDB_OK ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION( CMD_RTNCOCMDUNLINKCL_GENROLLBACKMSG, "rtnCoordCMDUnlinkCollection::_generateRollbackDataMsg" )
+   INT32 rtnCoordCMDUnlinkCollection::_generateRollbackDataMsg ( MsgHeader *pMsg,
+                                                                 _rtnCMDArguments *pArgs,
+                                                                 CHAR **ppMsgBuf,
+                                                                 MsgHeader **ppRollbackMsg )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY ( CMD_RTNCOCMDUNLINKCL_GENROLLBACKMSG ) ;
+
+      INT32 bufSize ;
+
+      _rtnCMDUnlinkCLArgs *pSelfArgs = ( _rtnCMDUnlinkCLArgs * )pArgs ;
+
+      rc = msgBuildLinkCLMsg( ppMsgBuf, &bufSize,
+                              pSelfArgs->_targetName.c_str(),
+                              pSelfArgs->_subCLName.c_str(), 0 ) ;
+      PD_RC_CHECK ( rc, PDWARNING,
+                    "Failed to rollback %s on [%s/%s]: "
+                    "failed to build link message, rc: %d",
+                    _getCommandName(),
+                    pSelfArgs->_targetName.c_str(),
+                    pSelfArgs->_subCLName.c_str(),
+                    rc ) ;
+
+      (*ppRollbackMsg) = (MsgHeader *)(*ppMsgBuf) ;
+
+   done :
+      PD_TRACE_EXITRC ( CMD_RTNCOCMDUNLINKCL_GENROLLBACKMSG, rc ) ;
+      return rc ;
+   error :
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION( CMD_RTNCOCMDUNLINKCL_ROLLBACK, "rtnCoordCMDUnlinkCollection::_rollbackOnDataGroup" )
+   INT32 rtnCoordCMDUnlinkCollection::_rollbackOnDataGroup ( MsgHeader *pMsg,
+                                                             pmdEDUCB *cb,
+                                                             _rtnCMDArguments *pArgs,
+                                                             const CoordGroupList &groupLst )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY ( CMD_RTNCOCMDUNLINKCL_ROLLBACK ) ;
+
+      rc = executeOnCL( pMsg, cb, pArgs->_targetName.c_str(),
+                        TRUE, &groupLst, &(pArgs->_ignoreRCList), NULL ) ;
+      PD_RC_CHECK( rc, PDWARNING,
+                   "Failed to rollback %s on [%s], rc: %d",
+                   _getCommandName(), pArgs->_targetName.c_str(), rc ) ;
+
+   done :
+      PD_TRACE_EXITRC ( CMD_RTNCOCMDUNLINKCL_ROLLBACK, rc ) ;
+      return rc ;
+   error :
+      goto done ;
    }
 
    /*
@@ -1155,7 +1285,7 @@ namespace engine
       // send request to catalog
       rc = executeOnCataGroup ( pMsg, cb, &groupLst ) ;
       PD_RC_CHECK ( rc, PDERROR,
-                    "Split failed on catalog, rc = %d", rc ) ;
+                    "Split failed on catalog, rc: %d", rc ) ;
 
       // here, in groupLst there should be one and only one group, for SOURCE
       // send request to data-node to find the partitioning key
@@ -1165,7 +1295,7 @@ namespace engine
                              NULL, NULL, &pQuery,
                              NULL, NULL, NULL ) ;
       PD_RC_CHECK ( rc, PDERROR,
-                    "Failed to extract query, rc = %d", rc ) ;
+                    "Failed to extract query, rc: %d", rc ) ;
       try
       {
          /***************************************************************
@@ -1246,7 +1376,7 @@ namespace engine
          // get sharding key, always get the newest version from catalog
          rc = rtnCoordGetCataInfo ( cb, strName, TRUE, cataInfo ) ;
          PD_RC_CHECK ( rc, PDERROR,
-                       "Failed to get cata info for collection %s, rc = %d",
+                       "Failed to get cata info for collection %s, rc: %d",
                        strName, rc ) ;
          // sharding key must exist, we should NEVER hit this check because the
          // check already done in catalog in PREPARE phase
@@ -1376,7 +1506,7 @@ namespace engine
       // If we get error here, something big happend. We have marked ready to
       // split on catalog but data node refused to do so.
       PD_RC_CHECK( rc, PDERROR,
-                   "Failed to execute split on data node, rc = %d",
+                   "Failed to execute split on data node, rc: %d",
                    rc ) ;
 
       // if sync, need to wait task finished
@@ -1533,8 +1663,8 @@ namespace engine
          BSONObjSet::iterator keyIter ;
          rc = keyGen.getKeys ( obj, keys, NULL, TRUE ) ;
          PD_RC_CHECK ( rc, PDERROR,
-                       "Failed to extract keys\nkeyDef = %s\n"
-                       "record = %s\nrc = %d", shardingKey.toString().c_str(),
+                       "Failed to extract keys\nkeyDef: %s\n"
+                       "record: %s\nrc: %d", shardingKey.toString().c_str(),
                        obj.toString().c_str(), rc ) ;
          // make sure there is one and only one element in the keys
          PD_CHECK ( keys.size() == 1,
@@ -1859,7 +1989,7 @@ namespace engine
       rc = executeOnCL( pMsg, cb, pArgs->_targetName.c_str(),
                         FALSE, &groupLst, &ignoreRC, NULL ) ;
       PD_RC_CHECK( rc, PDWARNING,
-                   "Failed to rollback %s on [%s], rc = %d",
+                   "Failed to rollback %s on [%s], rc: %d",
                    _getCommandName(), pArgs->_targetName.c_str(), rc ) ;
 
    done :
