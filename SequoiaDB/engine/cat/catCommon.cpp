@@ -3724,11 +3724,11 @@ namespace engine
 
             beginBound = endBound ;
             endBound = endBound + avgBound ;
-            if ( endBound > totalBound )
+            ++ itemID ;
+            if ( grpSize - 1 == itemID )
             {
                endBound = totalBound ;
             }
-            ++ itemID ;
          }
          sub.done () ;
       }
