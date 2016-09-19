@@ -1022,10 +1022,6 @@ namespace engine
 
          rc = rtnUpdate( CAT_COLLECTION_SPACE_COLLECTION, matcher, modifier,
                          dummy, 0, cb, dmsCB, dpsCB, w ) ;
-
-         PD_LOG( PDEVENT, "update collection: %s, match: %s, "
-                 "updator: %s", CAT_COLLECTION_SPACE_COLLECTION,
-                matcher.toString().c_str(), modifier.toString().c_str()) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to update collection: %s, match: %s, "
                       "updator: %s, rc: %d", CAT_COLLECTION_SPACE_COLLECTION,
                       matcher.toString().c_str(), modifier.toString().c_str(),
