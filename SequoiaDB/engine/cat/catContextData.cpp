@@ -956,6 +956,7 @@ namespace engine
    : _catCtxDataMultiTaskBase( contextID, eduID )
    {
       _executeAfterLock = FALSE ;
+      _commitAfterExecute = TRUE ;
       _needRollback = FALSE ;
    }
 
@@ -1468,6 +1469,7 @@ namespace engine
    : _catCtxDataMultiTaskBase( contextID, eduID )
    {
       _executeAfterLock = FALSE ;
+      _commitAfterExecute = TRUE ;
       _needRollback = FALSE ;
    }
 

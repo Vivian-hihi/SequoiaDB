@@ -57,6 +57,7 @@ namespace engine
       _status       = CAT_CONTEXT_NEW ;
 
       _executeAfterLock = FALSE ;
+      _commitAfterExecute = FALSE ;
       _needRollback = FALSE ;
 
       _needUpdate = FALSE ;
@@ -171,7 +172,11 @@ namespace engine
          PD_LOG( PDDEBUG,
                  "catContext [%lld] : get-more from ready -> cat_done",
                  contextID() ) ;
-         break ;
+         if ( !_commitAfterExecute )
+         {
+            break ;
+         }
+         // Continue to commit
       }
       case CAT_CONTEXT_CAT_DONE :
       {

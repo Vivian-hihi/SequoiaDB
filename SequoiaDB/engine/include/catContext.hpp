@@ -138,6 +138,7 @@ namespace engine
 
       // Flags to control process
       BOOLEAN _executeAfterLock ;
+      BOOLEAN _commitAfterExecute ;
       BOOLEAN _needRollback ;
       BOOLEAN _needUpdate ;
       BOOLEAN _hasUpdated ;
