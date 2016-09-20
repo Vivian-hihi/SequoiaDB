@@ -1561,8 +1561,7 @@ namespace engine
          resultEle = resultObj.firstElement() ;
       }
 
-      matchResult = _valueMatch( resultEle, matchTarget, 
-                                 context ) ;
+      matchResult = _valueMatch( resultEle, matchTarget, context ) ;
 
    done:
       return rc ;
@@ -2591,7 +2590,7 @@ namespace engine
       UINT32 i = 0 ;
       VALUE_SET::iterator iterSet ;
       VALUE_SET leftValueSet ;
-      //TODO: check Object
+
       if ( Array != left.type() && Object != left.type() )
       {
          if ( _valueSet.size() == 0 && _regexVector.size() == 0 )

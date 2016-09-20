@@ -91,6 +91,9 @@ namespace engine
       { MTH_FUNCTION_STR_RTRIM,       EN_MATCH_FUNC_RTRIM },
       { MTH_FUNCTION_STR_TRIM,        EN_MATCH_FUNC_TRIM },
       { MTH_FUNCTION_STR_CAST,        EN_MATCH_FUNC_CAST },
+
+      { MTH_ATTR_STR_EXPAND,          EN_MATCH_ATTR_EXPAND },
+      { MTH_ATTR_STR_RETURNMATCH,     EN_MATCH_ATTR_RETURNMATCH },
    } ;
 
    //******************_mthMatchNodeFactory*************************
@@ -259,6 +262,7 @@ namespace engine
          func  = new ( allocator ) _mthMatchFuncFLOOR( allocator ) ;
          break ;
       case EN_MATCH_FUNC_MOD:
+      case EN_MATCH_OPERATOR_MOD:
          func  = new ( allocator ) _mthMatchFuncMOD( allocator ) ;
          break ;
       case EN_MATCH_FUNC_ADD:
@@ -982,18 +986,33 @@ namespace engine
       innerFieldName = innerEle.fieldName() ;
       nodeType       = mthGetMatchNodeFactory()->getMatchNodeType( 
                                                               innerFieldName ) ;
-      if ( Object != innerEle.type() && Array != innerEle.type() )
+      if ( EN_MATCH_OPERATOR_REGEX == nodeType ||
+           EN_MATCH_OPERATOR_OPTIONS == nodeType )
       {
-         // { a : { $xx : xxxxxxx } }
+         if ( innerEle.type() != String )
+         {
+            rc = SDB_INVALIDARG ;
+            PD_LOG( PDERROR, "regex's type should be String type:fieldName=%s,"
+                    "innerEle=%s,type=%d", ele.fieldName(), 
+                    innerEle.toString().c_str(), innerEle.type() ) ;
+            goto error ;
+         }
          if ( EN_MATCH_OPERATOR_REGEX == nodeType )
          {
             regex = innerEle.valuestrsafe() ;
          }
-         else if ( EN_MATCH_OPERATOR_OPTIONS == nodeType )
+         else
          {
             options = innerEle.valuestrsafe() ;
          }
-         else if ( EN_MATCH_OPERATOR_MOD == nodeType )
+
+         goto done ;
+      }
+
+      if ( Object != innerEle.type() && Array != innerEle.type() )
+      {
+         // { a : { $xx : xxxxxxx } }
+         if ( EN_MATCH_OPERATOR_MOD == nodeType )
          {
             //func mod
             rc = _addFunction( ele.fieldName(), innerEle, nodeType, 
@@ -1100,7 +1119,6 @@ namespace engine
                   goto error ;
                }
             }
-            
          }
       }
 
@@ -1369,7 +1387,7 @@ namespace engine
             rc = _parseElement( temp, ( _mthMatchLogicNode* )_root ) ;
             if ( rc )
             {
-               PD_LOG ( PDERROR, "parse element failed:element=%s,rc=d",
+               PD_LOG ( PDERROR, "parse element failed:element=%s,rc=%d",
                         temp.toString().c_str(), rc ) ;
                goto error ;
             }

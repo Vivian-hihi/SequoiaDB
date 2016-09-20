@@ -54,52 +54,55 @@ namespace engine
 {
    enum EN_MATCH_OP_FUNC_TYPE
    {
-      EN_MATCH_OPERATOR_LOGIC_AND     = 0,
+      EN_MATCH_OPERATOR_LOGIC_AND      = 0,
       EN_MATCH_OPERATOR_LOGIC_OR,
       EN_MATCH_OPERATOR_LOGIC_NOT,
 
       //logic end
-      EN_MATCH_OPERATOR_LOGIC_END     = 10,
+      EN_MATCH_OPERATOR_LOGIC_END      = 10,
 
-      EN_MATCH_OPERATOR_ET,
-      EN_MATCH_OPERATOR_LT,
-      EN_MATCH_OPERATOR_LTE,
-      EN_MATCH_OPERATOR_GTE,
-      EN_MATCH_OPERATOR_GT,
-      EN_MATCH_OPERATOR_IN,
-      EN_MATCH_OPERATOR_NE,
-      EN_MATCH_OPERATOR_SIZE,
-      EN_MATCH_OPERATOR_ALL,
-      EN_MATCH_OPERATOR_NIN,
-      EN_MATCH_OPERATOR_EXISTS,
-      EN_MATCH_OPERATOR_MOD,
-      EN_MATCH_OPERATOR_TYPE,
-      EN_MATCH_OPERATOR_REGEX,
-      EN_MATCH_OPERATOR_OPTIONS,   /*do not have really matchNode*/
-      EN_MATCH_OPERATOR_ELEMMATCH,
-      EN_MATCH_OPERATOR_ISNULL,
-      EN_MATCH_OPERATOR_FIELD,     /*do not have really matchNode*/
+      EN_MATCH_OPERATOR_ET             = 11,
+      EN_MATCH_OPERATOR_LT             = 12,
+      EN_MATCH_OPERATOR_LTE            = 13,
+      EN_MATCH_OPERATOR_GTE            = 14,
+      EN_MATCH_OPERATOR_GT             = 15,
+      EN_MATCH_OPERATOR_IN             = 16,
+      EN_MATCH_OPERATOR_NE             = 17,
+      EN_MATCH_OPERATOR_SIZE           = 18,
+      EN_MATCH_OPERATOR_ALL            = 19,
+      EN_MATCH_OPERATOR_NIN            = 20,
+      EN_MATCH_OPERATOR_EXISTS         = 21,
+      EN_MATCH_OPERATOR_MOD            = 22,
+      EN_MATCH_OPERATOR_TYPE           = 23,
+      EN_MATCH_OPERATOR_REGEX          = 24,
+      EN_MATCH_OPERATOR_OPTIONS        = 25, /*do not have really matchNode*/
+      EN_MATCH_OPERATOR_ELEMMATCH      = 26,
+      EN_MATCH_OPERATOR_ISNULL         = 27,
+      EN_MATCH_OPERATOR_FIELD          = 28, /*do not have really matchNode*/
 
-      EN_MATCH_OPERATOR_END,
+      EN_MATCH_OPERATOR_END            = 100,
 
-      EN_MATCH_FUNC_ABS,
-      EN_MATCH_FUNC_CEILING,
-      EN_MATCH_FUNC_FLOOR,
-      EN_MATCH_FUNC_MOD,
-      EN_MATCH_FUNC_ADD,
-      EN_MATCH_FUNC_SUBTRACT,
-      EN_MATCH_FUNC_MULTIPLY,
-      EN_MATCH_FUNC_DIVIDE,
-      EN_MATCH_FUNC_SUBSTR,
-      EN_MATCH_FUNC_STRLEN,
-      EN_MATCH_FUNC_LOWER,
-      EN_MATCH_FUNC_UPPER,
-      EN_MATCH_FUNC_LTRIM,
-      EN_MATCH_FUNC_RTRIM,
-      EN_MATCH_FUNC_TRIM,
-      EN_MATCH_FUNC_CAST,
+      EN_MATCH_FUNC_ABS                = 101,
+      EN_MATCH_FUNC_CEILING            = 102,
+      EN_MATCH_FUNC_FLOOR              = 103,
+      EN_MATCH_FUNC_MOD                = 104,
+      EN_MATCH_FUNC_ADD                = 105,
+      EN_MATCH_FUNC_SUBTRACT           = 106,
+      EN_MATCH_FUNC_MULTIPLY           = 107,
+      EN_MATCH_FUNC_DIVIDE             = 108,
+      EN_MATCH_FUNC_SUBSTR             = 109,
+      EN_MATCH_FUNC_STRLEN             = 110,
+      EN_MATCH_FUNC_LOWER              = 111,
+      EN_MATCH_FUNC_UPPER              = 112,
+      EN_MATCH_FUNC_LTRIM              = 113,
+      EN_MATCH_FUNC_RTRIM              = 114,
+      EN_MATCH_FUNC_TRIM               = 115,
+      EN_MATCH_FUNC_CAST               = 116,
 
-      EN_MATCH_FUNC_END,
+      EN_MATCH_FUNC_END                = 200,
+
+      EN_MATCH_ATTR_RETURNMATCH        = 201,
+      EN_MATCH_ATTR_EXPAND             = 302,
 
       EN_MATCH_OP_FUNC_END,
    } ;
@@ -126,10 +129,14 @@ namespace engine
    #define MTH_OPERATOR_STR_REGEX               "$regex"
    #define MTH_OPERATOR_STR_OPTIONS             "$options"
 
+   //only impact array
+   #define MTH_ATTR_STR_EXPAND                  "$expand"
+   #define MTH_ATTR_STR_RETURNMATCH             "$returnMatch"
+
    #define MTH_FUNCTION_STR_ABS                 "$abs"
    #define MTH_FUNCTION_STR_CEILING             "$ceiling"
    #define MTH_FUNCTION_STR_FLOOR               "$floor"
-   #define MTH_FUNCTION_STR_MOD                 "$fmod"
+   #define MTH_FUNCTION_STR_MOD                 "$mod"
    #define MTH_FUNCTION_STR_ADD                 "$add"
    #define MTH_FUNCTION_STR_SUBTRACT            "$subtract"
    #define MTH_FUNCTION_STR_MULTIPLY            "$multiply"
@@ -143,7 +150,7 @@ namespace engine
    #define MTH_FUNCTION_STR_TRIM                "$trim"
    #define MTH_FUNCTION_STR_CAST                "$cast"
    
-
+   //TODO: size:2048
    #define MTH_ALLOCATOR_SIZE                   200
    #define MTH_MATCH_FIELD_STATIC_NAME_LEN      32
    #define MTH_FIELDNAME_SEP                    '.'
