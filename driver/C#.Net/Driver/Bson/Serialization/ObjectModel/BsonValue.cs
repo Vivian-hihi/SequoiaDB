@@ -183,6 +183,14 @@ namespace SequoiaDB.Bson
         }
 
         /// <summary>
+        /// Casts the BsonValue to a decimal (throws an InvalidCastException if the cast is not valid).
+        /// </summary>
+        public decimal AsDecimal
+        {
+            get { return ((BsonDecimal)this).ToDecimal(); }
+        }
+
+        /// <summary>
         /// Casts the BsonValue to a BsonUndefined (throws an InvalidCastException if the cast is not valid).
         /// </summary>
         public BsonUndefined AsBsonUndefined
@@ -300,6 +308,14 @@ namespace SequoiaDB.Bson
         public long? AsNullableInt64
         {
             get { return (_bsonType == BsonType.Null) ? null : (long?)AsInt64; }
+        }
+
+        /// <summary>
+        /// Casts the BsonValue to a Nullable{decimal} (throws an InvalidCastException if the cast is not valid).
+        /// </summary>
+        public decimal? AsNullableDecimal
+        {
+            get { return (_bsonType == BsonType.Null) ? null : (decimal?)AsBsonDecimal.ToDecimal(); }
         }
 
         /// <summary>
@@ -726,6 +742,26 @@ namespace SequoiaDB.Bson
         }
 
         /// <summary>
+        /// Converts a decimal to a BsonValue.
+        /// </summary>
+        /// <param name="value">A decimal.</param>
+        /// <returns>A BsonValue.</returns>
+        public static implicit operator BsonValue(decimal value)
+        {
+            return new BsonDecimal(value);
+        }
+
+        /// <summary>
+        /// Converts a decimal? to a BsonValue.
+        /// </summary>
+        /// <param name="value">A decimal?.</param>
+        /// <returns>A BsonValue.</returns>
+        public static implicit operator BsonValue(decimal? value)
+        {
+            return value.HasValue ? (BsonValue)BsonDecimal.Create(value.Value) : BsonNull.Value;
+        }
+
+        /// <summary>
         /// Converts an ObjectId to a BsonValue.
         /// </summary>
         /// <param name="value">An ObjectId.</param>
@@ -893,6 +929,30 @@ namespace SequoiaDB.Bson
         public static explicit operator long?(BsonValue value)
         {
             return (value == null) ? null : value.AsNullableInt64;
+        }
+
+        /// <summary>
+        /// Casts a BsonValue to a decimal.
+        /// </summary>
+        /// <param name="value">The BsonValue.</param>
+        /// <returns>A decimal.</returns>
+        public static explicit operator decimal(BsonValue value)
+        {
+            if (value == null)
+            {
+                throw new ArgumentNullException("value");
+            }
+            return value.AsBsonDecimal.ToDecimal();
+        }
+
+        /// <summary>
+        /// Casts a BsonValue to a decimal?.
+        /// </summary>
+        /// <param name="value">The BsonValue.</param>
+        /// <returns>A decimal?.</returns>
+        public static explicit operator decimal?(BsonValue value)
+        {
+            return (value == null) ? null : value.AsNullableDecimal;
         }
 
         /// <summary>
@@ -1465,6 +1525,7 @@ namespace SequoiaDB.Bson
                 case BsonType.Int32: return Convert.ToDecimal(this.AsInt32, provider);
                 case BsonType.Int64: return Convert.ToDecimal(this.AsInt64, provider);
                 case BsonType.String: return Convert.ToDecimal(this.AsString, provider);
+                case BsonType.Decimal: return this.AsBsonDecimal.ToDecimal();
                 default: throw new InvalidCastException();
             }
         }

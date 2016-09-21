@@ -368,6 +368,17 @@ namespace SequoiaDB.Bson
             return new BsonDecimal(size, typemod, signscale, weight, digits);
         }
 
+        // public static methods
+        /// <summary>
+        /// Creates a new instance of the BsonDecimal class.
+        /// </summary>
+        /// <param name="value">A decimal.</param>
+        /// <returns>A BsonDecimal.</returns>
+        public static BsonDecimal Create(decimal value)
+        {
+            return new BsonDecimal(value);
+        }
+
         /// <summary>
         /// Creates a new instance of the BsonDecimal class.
         /// </summary>
@@ -465,6 +476,17 @@ namespace SequoiaDB.Bson
             hash = 37 * hash + BsonType.GetHashCode();
             hash = 37 * hash + _value.GetHashCode();
             return hash;
+        }
+
+        // public operators
+        /// <summary>
+        /// Converts an decimal to a BsonDecimal.
+        /// </summary>
+        /// <param name="value">An decimal.</param>
+        /// <returns>A BsonDecimal.</returns>
+        public static implicit operator BsonDecimal(decimal value)
+        {
+            return BsonDecimal.Create(value);
         }
 
         /// <summary>
