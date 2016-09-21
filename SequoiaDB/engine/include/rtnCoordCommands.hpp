@@ -612,18 +612,6 @@ namespace engine
    {
    } ;
 
-   class rtnCoordCMDCreateCataGroup : public rtnCoordCommand
-   {
-   public:
-      virtual INT32 execute( MsgHeader *pMsg,
-                             pmdEDUCB *cb,
-                             INT64 &contextID,
-                             rtnContextBuf *buf ) ;
-   private:
-      INT32 getNodeConf( CHAR *pQuery, bson::BSONObj &boNodeConfig );
-      INT32 getNodeInfo( CHAR *pQuery, bson::BSONObj &boNodeInfo );
-   };
-
    class rtnCoordCMDTraceStart : public rtnCoordCommand
    {
    public :
