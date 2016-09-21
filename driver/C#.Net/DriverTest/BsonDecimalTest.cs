@@ -89,6 +89,9 @@ namespace DriverTest
         [TestMethod]
         public void TestTmp()
         {
+            BsonValue value = new BsonDecimal("1");
+            BsonDecimal dm = (BsonDecimal)value;
+            Console.WriteLine("dm is: {0}", dm);
         }
 
         [TestMethod]
@@ -722,6 +725,88 @@ namespace DriverTest
                 }
             }
             
+        }
+
+        /// <summary>
+        /// case1:直接使用decimal构建BSON；
+        /// case2:直接从BSON中取出decimal
+        /// case3:decimal与BsonValue相互转换
+        /// case4:decimal与BsonDecimal相互转换
+        /// </summary>
+        [TestMethod]
+        public void TestImplicitExplicitConstructOrGet()
+        {
+            int i = 1;
+            decimal d1 = 1.1m;
+            decimal? d2 = 1.2m;
+            decimal? d3 = null;
+            BsonDecimal bd1 = new BsonDecimal("1.3");
+            // case1: set method
+            BsonDocument doc = new BsonDocument("case1", "test in C#");
+            doc.Add("i", i);
+            doc.Add("d1", d1);
+            doc.Add("d2", d2);
+            doc.Add("d3", d3);
+            doc.Add("bd1", bd1);
+
+            // check
+            Console.WriteLine("befor insert, doc is {0}", doc);
+            coll.Insert(doc);
+            DBCursor cur = coll.Query(new BsonDocument("case1", "test in C#"), null, null, null);
+            BsonDocument retRecord = cur.Next();
+            Console.WriteLine("after query, record is: {0}", retRecord);
+            if (retRecord["d1"].IsBsonDecimal &&
+                retRecord["d2"].IsBsonDecimal &&
+                retRecord["bd1"].IsBsonDecimal)
+            {
+                BsonDecimal result = null;
+                decimal result2 = 0;
+                result = retRecord["d1"].AsBsonDecimal;
+                result2 = retRecord["d1"].AsDecimal;
+                Assert.AreEqual(BsonDecimal.Create(result2), result);
+
+                result = retRecord["d2"].AsBsonDecimal;
+                result2 = retRecord["d2"].AsDecimal;
+                Assert.AreEqual(BsonDecimal.Create(result2), result);
+
+                result = retRecord["bd1"].AsBsonDecimal;
+                result2 = retRecord["bd1"].AsDecimal;
+                Assert.AreEqual(BsonDecimal.Create(result2), result);
+            }
+            else
+            {
+                Assert.Fail();
+            }
+
+            // case2: get method
+            BsonInt32 int32 = 1;
+            BsonDecimal bb = 1234m;
+
+            int ii = doc["i"].AsInt32;
+            decimal dd1 = doc["d1"].AsDecimal;
+            Assert.AreEqual(d1,dd1);
+
+            BsonDecimal dd2 = doc["d1"].AsBsonDecimal;
+            Console.WriteLine("dd1 is： {0}， dd2 is: {1}", dd1, dd2);
+            Assert.AreEqual(dd2, BsonDecimal.Create(d1));
+
+            // case3: decimal and BsonValue
+            decimal? dm1 = null;
+            BsonValue v1 = 123.456m;
+            Assert.AreEqual(123.456m, v1.AsDecimal);
+
+            BsonValue v2 = dm1;
+            BsonValue v3 = BsonDecimal.Create("123");
+            decimal dm = (decimal)v3;
+            Console.WriteLine("dm is: {0}", dm);
+            Assert.AreEqual(123m, dm);
+
+            // case4: decimal and BsonDecimal
+            decimal dm2 = 1.2345m;
+            BsonDecimal case4dm = dm2;
+            decimal dm3 = (decimal)case4dm;
+            Console.WriteLine("dm3 is: {0}", dm3);
+            Assert.AreEqual(1.2345m, dm3);
         }
 
         /// <summary>
