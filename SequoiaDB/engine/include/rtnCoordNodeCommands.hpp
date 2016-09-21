@@ -267,6 +267,9 @@ namespace engine
 
          /* Whether to keep data after remove node */
          BOOLEAN _keepData ;
+
+         /* cata group info cache */
+         CoordGroupInfoPtr _catGroupInfo ;
       } ;
 
    protected :

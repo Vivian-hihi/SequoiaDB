@@ -1304,6 +1304,13 @@ namespace engine
                       "could not connect to sdbcm[HostName: %s], rc: %d",
                       _getCommandName(), pSelfArgs->_targetName.c_str(),
                       pSelfArgs->_hostName.c_str(), rc) ;
+
+         // Acquire the Catalog group info before insert node info into Catalog
+         rc = rtnCoordGetCatGroupInfo( cb, TRUE, pSelfArgs->_catGroupInfo ) ;
+         PD_RC_CHECK( rc, PDERROR,
+                      "Failed to %s on [%s]: "
+                      "Failed to get info of catalog group, rc: %d",
+                      _getCommandName(), pSelfArgs->_targetName.c_str(), rc ) ;
       }
       else
       {
@@ -1356,17 +1363,11 @@ namespace engine
       }
       else
       {
-         CoordGroupInfoPtr catGroupInfo ;
          BSONObj boNodeConfig ;
          SINT32 retCode;
 
-         rc = rtnCoordGetCatGroupInfo( cb, TRUE, catGroupInfo ) ;
-         PD_RC_CHECK( rc, PDERROR,
-                      "Failed to %s on [%s]: "
-                      "Failed to get info of catalog group, rc: %d",
-                      _getCommandName(), pSelfArgs->_targetName.c_str(), rc ) ;
-
-         rc = _getNodeConf( pSelfArgs->_boQuery, boNodeConfig, catGroupInfo ) ;
+         rc = _getNodeConf( pSelfArgs->_boQuery, boNodeConfig,
+                            pSelfArgs->_catGroupInfo ) ;
          PD_RC_CHECK( rc, PDERROR,
                       "Failed to %s on [%s]: failed to get node config, rc: %d",
                       _getCommandName(), pSelfArgs->_targetName.c_str(), rc ) ;
