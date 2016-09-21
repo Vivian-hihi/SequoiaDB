@@ -123,21 +123,21 @@ public interface BSONObject {
 	/**
 	 * Returns an instance of the class "type"
 	 * 		only for BasicBsonObject
-	 * @param type
+	 * @param cls target class object
 	 * @return the instance of the class
 	 * @throws Exception
 	 */
-	public <T> T as(Class<T> type, Type eleType) throws Exception;
+	public <T> T as(Class<T> cls, Type eleType) throws Exception;
 	
 	
 	/**
 	 * Returns an instance of the class "type"
 	 * 		only for BasicBsonObject
-	 * @param type
+	 * @param cls target class object
 	 * @return the instance of the class
 	 * @throws Exception
 	 */
-	public <T> T as(Class<T> type) throws Exception;
+	public <T> T as(Class<T> cls) throws Exception;
 
 
 }

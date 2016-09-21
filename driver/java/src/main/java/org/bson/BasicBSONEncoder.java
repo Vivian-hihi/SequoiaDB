@@ -45,6 +45,7 @@ import static org.bson.BSON.NUMBER_DECIMAL;
 import static org.bson.BSON.regexFlags;
 
 import java.lang.reflect.Array;
+import java.math.BigDecimal;
 import java.nio.Buffer;
 import java.util.Date;
 import java.util.List;
@@ -368,6 +369,8 @@ public class BasicBSONEncoder implements BSONEncoder {
 		} else if (n instanceof Float || n instanceof Double) {
 			_put(NUMBER, name);
 			_buf.writeDouble(n.doubleValue());
+		} else if (n instanceof BigDecimal) {
+			putDecimal(name, new BSONDecimal((BigDecimal)n));
 		} else {
 			throw new IllegalArgumentException("can't serialize " + n.getClass());
 		}

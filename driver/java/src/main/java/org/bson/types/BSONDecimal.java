@@ -222,6 +222,8 @@ public class BSONDecimal implements Comparable<BSONDecimal>, Serializable {
 	 * @param scale
 	 *            the total count of decimal digits in the fractional part, to
 	 *            the right of the decimal point.
+	 * @throws IllegalArgumentException  
+	 * 			for null or invalid value
 	 */
 	public BSONDecimal(String value, int precision, int scale) {
 		_fromStringValue(value, precision, scale);
@@ -235,6 +237,8 @@ public class BSONDecimal implements Comparable<BSONDecimal>, Serializable {
 	 * @param value
 	 *            the decimal value which is in the format of string, e.g.
 	 *            "3.14159265358"
+	 * @throws IllegalArgumentException  
+	 * 			for null or invalid value
 	 */
 	public BSONDecimal(String value) {
 		this(value, -1, -1);
@@ -245,6 +249,8 @@ public class BSONDecimal implements Comparable<BSONDecimal>, Serializable {
 	 * @brief transform a BigDecimal object to a BSONDecimal object.
 	 * @param value
 	 *            a BigDecimal to be transformed
+	 * @throws IllegalArgumentException  
+	 * 			for null or invalid value         
 	 * @note The meaning of "precision" and "scale" defined in BSONDecimal are
 	 *       different from that defined by BigDecimal. We deprecate "precision" 
 	 *       and "scale" defined in BigDecimal. Actually we build BSONDecimal like
@@ -285,6 +291,8 @@ public class BSONDecimal implements Comparable<BSONDecimal>, Serializable {
 	 * 		weight of this decimal(NBASE=10000).
 	 * @param digits
 	 * 		real data.
+	 * @throws IllegalArgumentException  
+	 * 			for null or invalid arguments
 	 */
 	public BSONDecimal(int size, int typemod, 
 			short signscale, short weight, short[] digits) {
