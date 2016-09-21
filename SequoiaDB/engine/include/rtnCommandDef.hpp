@@ -166,6 +166,8 @@ namespace engine
       CMD_LIST_PROCEDURES                    = 52,
       CMD_LIST_CS_IN_DOMAIN                  = 53,
       CMD_LIST_CL_IN_DOMAIN                  = 54,
+      CMD_LIST_TRANS                         = 55,
+      CMD_LIST_TRANS_CURRENT                 = 56,
 
       CMD_RENAME_COLLECTION                  = 60,
 

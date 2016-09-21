@@ -74,30 +74,6 @@ namespace engine
 
    void  monAppendVersion ( BSONObjBuilder &ob ) ;
 
-   INT32 monDumpContextsFromCB ( pmdEDUCB *cb, rtnContextDump *context,
-                                 SDB_RTNCB *rtncb, BOOLEAN simple = TRUE ) ;
-   INT32 monDumpAllContexts ( SDB_RTNCB *rtncb, rtnContextDump *context,
-                              BOOLEAN simple = TRUE ) ;
-   INT32 monDumpSessionFromCB ( pmdEDUCB *cb, rtnContextDump *context,
-                                BOOLEAN addInfo, BOOLEAN simple = TRUE ) ;
-   INT32 monDumpAllSessions ( pmdEDUCB *cb, rtnContextDump *context,
-                              BOOLEAN addInfo, BOOLEAN simple = TRUE ) ;
-
-   INT32 monDumpMonSystem ( rtnContextDump *context, BOOLEAN addInfo ) ;
-
-   INT32 monDumpMonDBCB ( rtnContextDump *context, BOOLEAN addInfo ) ;
-
-   INT32 monDumpAllCollections ( SDB_DMSCB *dmsCB, rtnContextDump *context,
-                                 BOOLEAN addInfo, BOOLEAN details = FALSE,
-                                 BOOLEAN includeSys = TRUE ) ;
-
-   INT32 monDumpAllCollectionSpaces ( SDB_DMSCB *dmsCB, rtnContextDump *context,
-                                      BOOLEAN addInfo,
-                                      BOOLEAN details = FALSE,
-                                      BOOLEAN includeSys = TRUE ) ;
-
-   INT32 monDumpAllStorageUnits ( SDB_DMSCB *dmsCB, rtnContextDump *context ) ;
-
    INT32 monDumpIndexes( vector<monIndex> &indexes, rtnContextDump *context ) ;
 
    INT32 monDumpTraceStatus ( rtnContextDump *context ) ;

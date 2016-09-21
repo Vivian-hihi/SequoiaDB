@@ -47,290 +47,6 @@ using namespace std ;
 namespace engine
 {
 
-   _rtnSnapshotInner::_rtnSnapshotInner()
-   :_matcherBuff ( NULL ), _selectBuff ( NULL ), _orderByBuff ( NULL ),
-    _hintBuff( NULL )
-   {
-      _flags = 0 ;
-      _numToReturn = -1 ;
-      _numToSkip = 0 ;
-   }
-
-   _rtnSnapshotInner::~_rtnSnapshotInner()
-   {
-   }
-
-   INT32 _rtnSnapshotInner::init ( INT32 flags, INT64 numToSkip,
-                                   INT64 numToReturn,
-                                   const CHAR * pMatcherBuff,
-                                   const CHAR * pSelectBuff,
-                                   const CHAR * pOrderByBuff,
-                                   const CHAR * pHintBuff )
-   {
-      _flags = flags ;
-      _numToReturn = numToReturn ;
-      _numToSkip = numToSkip ;
-      _matcherBuff = pMatcherBuff ;
-      _selectBuff = pSelectBuff ;
-      _orderByBuff = pOrderByBuff ;
-      _hintBuff = pHintBuff ;
-
-      return SDB_OK ;
-   }
-
-   UINT32 _rtnSnapshotInner::_addInfoMask() const
-   {
-      return MON_MASK_FETCH_DEFAULT ;
-   }
-
-   BSONObj _rtnSnapshotInner::_getOptObj() const
-   {
-      return BSONObj() ;
-   }
-
-   INT32 _rtnSnapshotInner::_createFetch( _pmdEDUCB *cb,
-                                          rtnFetchBase **ppFetch )
-   {
-      INT32 rc = SDB_OK ;
-      _rtnFetchBuilder *pFetchBuilder = getRtnFetchBuilder() ;
-      rtnFetchBase *pNewFetch = NULL ;
-
-      pNewFetch = pFetchBuilder->create( _getFetchType() ) ;
-      if ( !pNewFetch )
-      {
-         rc = SDB_OOM ;
-         PD_LOG( PDERROR, "Failed to alloc fetch[type:%d]",
-                 _getFetchType() ) ;
-         goto error ;
-      }
-
-      /// init
-      rc = pNewFetch->init( cb, _isCurrent(), TRUE,
-                            _addInfoMask(), _getOptObj() ) ;
-      if ( rc )
-      {
-         PD_LOG( PDERROR, "Failed to init fetch, rc: %d", rc ) ;
-         goto error ;
-      }
-
-      *ppFetch = pNewFetch ;
-      pNewFetch = NULL ;
-
-   done:
-      if ( pNewFetch )
-      {
-         pFetchBuilder->release( pNewFetch ) ;
-      }
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   INT32 _rtnSnapshotInner::doit( _pmdEDUCB *cb, _SDB_DMSCB *dmsCB,
-                                  _SDB_RTNCB *rtnCB, _dpsLogWrapper *dpsCB,
-                                  INT16 w, INT64 *pContextID )
-   {
-      INT32 rc = SDB_OK ;
-      SDB_ASSERT ( cb, "educb can't be NULL" ) ;
-      SDB_ASSERT ( pContextID, "context id can't be NULL" ) ;
-
-      rtnContextDump *context = NULL ;
-      rtnFetchBase *pFetch = NULL ;
-
-      BSONObj matcher ;
-      BSONObj selector ;
-      BSONObj orderBy ;
-      BSONObj hint ;
-
-      try
-      {
-         BSONObj tmpMatcher ( _matcherBuff ) ;
-         BSONObj nodeMatcher ;
-         selector = BSONObj( _selectBuff ) ;
-         orderBy = BSONObj( _orderByBuff ) ;
-         hint = BSONObj( _hintBuff ) ;
-
-         rc = parseMatcher( tmpMatcher, nodeMatcher, matcher, TRUE ) ;
-         PD_RC_CHECK( rc, PDERROR, "Parse matcher failed, rc: %d", rc ) ;
-      }
-      catch( std::exception &e )
-      {
-         PD_LOG( PDERROR, "Parse param occur exception: %s", e.what() ) ;
-         rc = SDB_INVALIDARG ;
-         goto error ;
-      }
-
-      // create cursors
-      rc = rtnCB->contextNew ( RTN_CONTEXT_DUMP, (rtnContext**)&context,
-                               *pContextID, cb ) ;
-      if ( rc )
-      {
-         PD_LOG ( PDERROR, "Failed to create new context, rc: %d", rc ) ;
-         goto error ;
-      }
-
-      rc = context->open( selector,
-                          matcher,
-                          orderBy.isEmpty() ? _numToReturn : -1,
-                          orderBy.isEmpty() ? _numToSkip : 0 ) ;
-      PD_RC_CHECK( rc, PDERROR, "Open context failed, rc: %d", rc ) ;
-
-      // sample timetamp
-      if ( cb->getMonConfigCB()->timestampON )
-      {
-         context->getMonCB()->recordStartTimestamp() ;
-      }
-
-      /// create and init fetch
-      rc = _createFetch( cb, &pFetch ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to create fetch, rc: %d", rc ) ;
-
-      context->setMonFetch( pFetch, TRUE ) ;
-      pFetch = NULL ;
-
-      /// when has orderby
-      if ( !orderBy.isEmpty() )
-      {
-         rc = rtnSort( (rtnContext**)&context, orderBy, cb,
-                       _numToSkip, _numToReturn, *pContextID ) ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to sort, rc: %d", rc ) ;
-      }
-
-   done:
-      return rc ;
-   error:
-      if ( -1 != *pContextID )
-      {
-         rtnCB->contextDelete( *pContextID, cb ) ;
-         *pContextID = -1 ;
-         context = NULL ;
-      }
-      if ( pFetch )
-      {
-         SDB_OSS_DEL pFetch ;
-         pFetch = NULL ;
-      }
-      goto done ;
-   }
-
-   _rtnSnapshot::_rtnSnapshot ()
-   {
-   }
-
-   _rtnSnapshot::~_rtnSnapshot ()
-   {
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNSNAPSHOT_DOIT, "_rtnSnapshot::doit" )
-   INT32 _rtnSnapshot::doit( _pmdEDUCB *cb, SDB_DMSCB *dmsCB,
-                             SDB_RTNCB *rtnCB, SDB_DPSCB *dpsCB,
-                             INT16 w , INT64 *pContextID )
-   {
-      PD_TRACE_ENTRY ( SDB__RTNSNAPSHOT_DOIT ) ;
-      SDB_ASSERT ( cb, "educb can't be NULL" ) ;
-      SDB_ASSERT ( pContextID, "context id can't be NULL" ) ;
-
-      INT32 rc = SDB_OK ;
-      CHAR *pOutBuff = NULL ;
-      INT32 buffSize = 0 ;
-      INT32 buffUsedSize = 0 ;
-      INT32 buffObjNum = 0 ;
-
-      vector< BSONObj > vecUserAggr ;
-      BSONObj matcher ;
-      BSONObj selector ;
-      BSONObj orderBy ;
-      BSONObj hint ;
-
-      try
-      {
-         hint = BSONObj( _hintBuff ) ;
-
-         rc = parseUserAggr( hint, vecUserAggr ) ;
-         PD_RC_CHECK( rc, PDERROR, "Parse user define aggr failed, rc: %d",
-                      rc ) ;
-
-         if ( vecUserAggr.size() > 0 )
-         {
-            BSONObj tmpMatcher ( _matcherBuff ) ;
-            BSONObj nodeMatcher ;
-            selector = BSONObj( _selectBuff ) ;
-            orderBy = BSONObj( _orderByBuff ) ;
-
-            rc = parseMatcher( tmpMatcher, nodeMatcher, matcher, TRUE ) ;
-            PD_RC_CHECK( rc, PDERROR, "Parse matcher failed, rc: %d", rc ) ;
-         }
-      }
-      catch( std::exception &e )
-      {
-         PD_LOG( PDERROR, "Parse param occur exception: %s", e.what() ) ;
-         rc = SDB_INVALIDARG ;
-         goto error ;
-      }
-
-      if ( vecUserAggr.size() > 0 )
-      {
-         /// add new matcher
-         if ( !matcher.isEmpty() )
-         {
-            rc = appendObj( BSON( AGGR_MATCH_PARSER_NAME << matcher ),
-                            pOutBuff, buffSize, buffUsedSize, buffObjNum ) ;
-            PD_RC_CHECK( rc, PDERROR, "Append new matcher failed, rc: %d",
-                         rc ) ;
-         }
-
-         /// order by
-         if ( orderBy.isEmpty() )
-         {
-            rc = appendObj( BSON( AGGR_SORT_PARSER_NAME << orderBy ),
-                            pOutBuff, buffSize, buffUsedSize, buffObjNum ) ;
-            PD_RC_CHECK( rc, PDERROR, "Append order by failed, rc: %d",
-                         rc ) ;
-         }
-
-         for ( UINT32 i = 0 ; i < vecUserAggr.size() ; ++i )
-         {
-            rc = appendObj( vecUserAggr[ i ], pOutBuff, buffSize,
-                            buffUsedSize, buffObjNum ) ;
-            PD_RC_CHECK( rc, PDERROR, "Append user define aggr[%s] failed, "
-                         "rc: %d", vecUserAggr[ i ].toString().c_str(),
-                         rc ) ;
-         }
-
-         /// open context
-         rc = openContext( pOutBuff, buffObjNum, getIntrCMDName(),
-                           selector, cb, *pContextID ) ;
-         PD_RC_CHECK( rc, PDERROR, "Open context failed, rc: %d", rc ) ;
-      }
-      else
-      {
-         rc = _rtnSnapshotInner::doit( cb, dmsCB, rtnCB,
-                                       dpsCB, w, pContextID ) ;
-         if ( rc )
-         {
-            goto error ;
-         }
-      }
-
-   done:
-      if ( pOutBuff )
-      {
-         SDB_OSS_FREE( pOutBuff ) ;
-         pOutBuff = NULL ;
-         buffSize = 0 ;
-         buffUsedSize = 0 ;
-      }
-      PD_TRACE_EXITRC ( SDB__RTNSNAPSHOT_DOIT, rc ) ;
-      return rc ;
-   error:
-      if ( -1 != *pContextID )
-      {
-         rtnCB->contextDelete ( *pContextID, cb ) ;
-         *pContextID = -1 ;
-      }
-      goto done ;
-   }
-
    IMPLEMENT_CMD_AUTO_REGISTER(_rtnSnapshotSystem)
    _rtnSnapshotSystem::_rtnSnapshotSystem ()
    {
@@ -432,13 +148,13 @@ namespace engine
 
    const CHAR* _rtnSnapshotContexts::getIntrCMDName()
    {
-      return CMD_NAME_SNAPSHOT_CONTEX_INTR ;
+      return CMD_NAME_SNAPSHOT_CONTEXT_INTR ;
    }
 
    IMPLEMENT_CMD_AUTO_REGISTER(_rtnSnapshotContextsInner)
    const CHAR *_rtnSnapshotContextsInner::name ()
    {
-      return CMD_NAME_SNAPSHOT_CONTEX_INTR ;
+      return CMD_NAME_SNAPSHOT_CONTEXT_INTR ;
    }
 
    RTN_COMMAND_TYPE _rtnSnapshotContextsInner::type ()
@@ -497,13 +213,13 @@ namespace engine
 
    const CHAR* _rtnSnapshotContextsCurrent::getIntrCMDName()
    {
-      return CMD_NAME_SNAPSHOT_CONTEXCUR_INTR ;
+      return CMD_NAME_SNAPSHOT_CONTEXTCUR_INTR ;
    }
 
    IMPLEMENT_CMD_AUTO_REGISTER(_rtnSnapshotContextsCurrentInner)
    const CHAR *_rtnSnapshotContextsCurrentInner::name ()
    {
-      return CMD_NAME_SNAPSHOT_CONTEXCUR_INTR ;
+      return CMD_NAME_SNAPSHOT_CONTEXTCUR_INTR ;
    }
 
    RTN_COMMAND_TYPE _rtnSnapshotContextsCurrentInner::type ()

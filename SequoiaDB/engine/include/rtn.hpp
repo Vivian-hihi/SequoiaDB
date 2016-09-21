@@ -397,33 +397,6 @@ namespace engine
                               SDB_RTNCB *rtnCB,
                               SINT64 &contextID ) ;
 
-   INT32 rtnListCommandEntry ( RTN_COMMAND_TYPE command,
-                               const BSONObj &selector,
-                               const BSONObj &matcher,
-                               const BSONObj &orderBy,
-                               const BSONObj &hint,
-                               SINT32 flags,
-                               pmdEDUCB *cb,
-                               SINT64 numToSkip,
-                               SINT64 numToReturn,
-                               SDB_DMSCB *dmsCB,
-                               SDB_RTNCB *rtnCB,
-                               SINT64 &contextID,
-                               BOOLEAN addInfo ) ;
-
-   INT32 rtnSnapCommandEntry ( RTN_COMMAND_TYPE command,
-                               const BSONObj &selector,
-                               const BSONObj &matcher,
-                               const BSONObj &orderBy,
-                               SINT32 flags,
-                               pmdEDUCB *cb,
-                               SINT64 numToSkip,
-                               SINT64 numToReturn,
-                               SDB_DMSCB *dmsCB,
-                               SDB_RTNCB *rtnCB,
-                               SINT64 &contextID,
-                               BOOLEAN addInfo ) ;
-
    INT32 rtnGetQueryMeta( const CHAR *pCollectionName,
                           const BSONObj &match,
                           const BSONObj &orderby,

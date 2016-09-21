@@ -43,6 +43,7 @@
 #include "qgmBuilder.hpp"
 #include "rtnCoordTransaction.hpp"
 #include "rtnCoordDataCommands.hpp"
+#include "rtnCommandList.hpp"
 #include "pdTrace.hpp"
 #include "qgmTrace.hpp"
 #include <sstream>
@@ -466,8 +467,6 @@ namespace engine
       SDB_DMSCB *dmsCB = pKrcb->getDMSCB() ;
       SDB_DPSCB *dpsCB = pKrcb->getDPSCB() ;
       SDB_RTNCB *rtnCB = pKrcb->getRTNCB() ;
-      BOOLEAN addInfo = eduCB->getType() == EDU_TYPE_SHARDAGENT ?
-                        TRUE : FALSE ;
 
       if ( dpsCB && eduCB->isFromLocal() && !dpsCB->isLogLocal() )
       {
@@ -552,18 +551,43 @@ namespace engine
       else if ( SQL_GRAMMAR::LISTCS == _commandType )
       {
          BSONObj empty ;
-         rc = rtnListCommandEntry( CMD_LIST_COLLECTIONSPACES,
-                                   empty, empty, empty, empty, 0, eduCB,
-                                   0, -1, dmsCB, rtnCB,
-                                   _contextID, addInfo ) ;
+         _rtnListCollectionspacesInner cmdListCS ;
+         rc = cmdListCS.init( 0, 0, -1, empty.objdata(), empty.objdata(),
+                              empty.objdata(), empty.objdata() ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Init command[list collectionspace] failed, "
+                    "rc: %d", rc ) ;
+            goto error ;
+         }
+         rc = cmdListCS.doit( eduCB, dmsCB, rtnCB, dpsCB, 1, &_contextID ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Run command[list collectionspace] failed, "
+                    "rc: %d", rc ) ;
+            goto error ;
+         }
       }
       else if ( SQL_GRAMMAR::LISTCL == _commandType )
       {
          BSONObj empty ;
-         rc = rtnListCommandEntry( CMD_LIST_COLLECTIONS,
-                                   empty, empty, empty, empty, 0, eduCB,
-                                   0, -1, dmsCB, rtnCB,
-                                   _contextID, addInfo ) ;
+         _rtnListCollections cmdListCL ;
+         rc = cmdListCL.init( 0, 0, -1, empty.objdata(),
+                              empty.objdata(), empty.objdata(),
+                              empty.objdata() ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Init command[list collection] failed, rc: %d",
+                    rc ) ;
+            goto error ;
+         }
+         rc = cmdListCL.doit( eduCB, dmsCB, rtnCB, dpsCB, 1, &_contextID ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Run command[list collection] failed, rc: %d",
+                    rc ) ;
+            goto error ;
+         }
       }
       else if ( SQL_GRAMMAR::BEGINTRAN == _commandType )
       {

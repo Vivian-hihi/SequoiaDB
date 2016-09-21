@@ -1344,68 +1344,6 @@ namespace engine
       goto done ;
    }
 
-   _rtnList::_rtnList ()
-      :_matcherBuff ( NULL ), _selectBuff ( NULL ), _orderByBuff ( NULL ),
-       _hintBuff( NULL )
-   {
-      _flags = 0 ;
-      _numToSkip = 0 ;
-      _numToReturn = -1 ;
-   }
-
-   _rtnList::~_rtnList ()
-   {
-   }
-
-   INT32 _rtnList::init ( INT32 flags, INT64 numToSkip, INT64 numToReturn,
-                          const CHAR * pMatcherBuff, const CHAR * pSelectBuff,
-                          const CHAR * pOrderByBuff, const CHAR * pHintBuff )
-   {
-      _flags = flags ;
-      _numToReturn = numToReturn ;
-      _numToSkip = numToSkip ;
-      _matcherBuff = pMatcherBuff ;
-      _selectBuff = pSelectBuff ;
-      _orderByBuff = pOrderByBuff ;
-      _hintBuff = pHintBuff ;
-
-      return SDB_OK ;
-   }
-
-   PD_TRACE_DECLARE_FUNCTION ( SDB__RTNLIST_DOIT, "_rtnList::doit" )
-   INT32 _rtnList::doit ( _pmdEDUCB *cb, SDB_DMSCB *dmsCB,
-                          SDB_RTNCB *rtnCB, SDB_DPSCB *dpsCB,
-                          INT16 w , INT64 *pContextID )
-   {
-      PD_TRACE_ENTRY ( SDB__RTNLIST_DOIT ) ;
-      SDB_ASSERT ( cb, "educb can't be NULL" ) ;
-      SDB_ASSERT ( pContextID, "context id can't be NULL" ) ;
-
-      BSONObj matcher ( _matcherBuff ) ;
-      BSONObj selector ( _selectBuff ) ;
-      BSONObj orderBy ( _orderByBuff ) ;
-      BSONObj hint( _hintBuff ) ;
-      INT32 rc = SDB_OK ;
-      BOOLEAN addInfo = getFromService() == CMD_SPACE_SERVICE_SHARD ?
-                        TRUE : FALSE ;
-
-      rc = rtnListCommandEntry ( type(), selector, matcher, orderBy, hint,
-                                 _flags, cb, _numToSkip, _numToReturn,
-                                 dmsCB, rtnCB, *pContextID, addInfo ) ;
-
-      PD_TRACE_EXITRC ( SDB__RTNLIST_DOIT, rc ) ;
-      return rc;
-   }
-
-   IMPLEMENT_CMD_AUTO_REGISTER(_rtnListCollections)
-   IMPLEMENT_CMD_AUTO_REGISTER(_rtnListCollectionspaces)
-   IMPLEMENT_CMD_AUTO_REGISTER(_rtnListContexts)
-   IMPLEMENT_CMD_AUTO_REGISTER(_rtnListContextsCurrent)
-   IMPLEMENT_CMD_AUTO_REGISTER(_rtnListSessions)
-   IMPLEMENT_CMD_AUTO_REGISTER(_rtnListSessionsCurrent)
-   IMPLEMENT_CMD_AUTO_REGISTER(_rtnListStorageUnits)
-   IMPLEMENT_CMD_AUTO_REGISTER(_rtnListBackups)
-
    IMPLEMENT_CMD_AUTO_REGISTER(_rtnRenameCollection)
    _rtnRenameCollection::_rtnRenameCollection ()
       :_oldCollectionName ( NULL ), _newCollectionName ( NULL ), _csName( NULL )
