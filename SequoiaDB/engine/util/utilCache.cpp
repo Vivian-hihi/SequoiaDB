@@ -298,7 +298,7 @@ namespace engine
       ossGetCurrentTime( t ) ;
       _lastTime = t.time * 1000 + t.microtm / 1000 ;
 
-      if ( ~0 == _length || offset < _start )
+      if ( (UINT32)~0 == _length || offset < _start )
       {
          _start = offset ;
       }
