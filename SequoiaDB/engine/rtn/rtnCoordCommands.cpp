@@ -4051,8 +4051,9 @@ namespace engine
                    rc, sucGroupLst.size() ) ;
 
       PD_LOG( PDINFO,
-              "%s on [%s] phase 1 on data done",
-              _getCommandName(), pArguments->_targetName.c_str() ) ;
+              "%s on [%s] phase 1 on data done, done on %d groups",
+              _getCommandName(), pArguments->_targetName.c_str(),
+              sucGroupLst.size() ) ;
 
       /************************************************************************
        * Phase 2

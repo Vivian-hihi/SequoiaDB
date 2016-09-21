@@ -1646,11 +1646,12 @@ error :
 INT32 msgBuildLinkCLMsg ( CHAR **ppBuffer, INT32 *bufferSize,
                           const CHAR *CollectionName,
                           const CHAR *subCollectionName,
+                          const BSONObj *lowBound, const BSONObj *upBound,
                           UINT64 reqID )
 {
    INT32 rc = SDB_OK ;
 
-   PD_TRACE_ENTRY ( SDB_MSGBLDLINKCLMSG );
+   PD_TRACE_ENTRY ( SDB_MSGBLDLINKCLMSG ) ;
 
    SDB_ASSERT ( ppBuffer && bufferSize && CollectionName && subCollectionName,
                 "Invalid input" ) ;
@@ -1664,11 +1665,22 @@ INT32 msgBuildLinkCLMsg ( CHAR **ppBuffer, INT32 *bufferSize,
    const bson::BSONObj emptyObj ;
    INT32 packetLength = 0 ;
 
+   if ( !lowBound )
+   {
+      lowBound = &emptyObj ;
+   }
+   if ( !upBound )
+   {
+      upBound = &emptyObj ;
+   }
+
    try
    {
       bson::BSONObjBuilder bobQuery ;
       bobQuery.append( FIELD_NAME_NAME, CollectionName ) ;
       bobQuery.append( FIELD_NAME_SUBCLNAME, subCollectionName ) ;
+      bobQuery.append( FIELD_NAME_LOWBOUND, *lowBound ) ;
+      bobQuery.append( FIELD_NAME_UPBOUND, *upBound ) ;
       boQuery = bobQuery.obj() ;
    }
    catch ( std::exception &e )

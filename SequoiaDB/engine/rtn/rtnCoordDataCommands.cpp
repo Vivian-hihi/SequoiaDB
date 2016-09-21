@@ -195,7 +195,7 @@ namespace engine
       if ( _flagDoOnCollection() )
       {
          rc = executeOnCL( pMsg, cb, pArgs->_targetName.c_str(),
-                           _flagUpdateBeforeData(), NULL,
+                           _flagUpdateBeforeData(), &groupLst,
                            &(pArgs->_ignoreRCList), &sucGroupLst, ppContext ) ;
       }
       else
@@ -1125,9 +1125,11 @@ namespace engine
 
       _rtnCMDUnlinkCLArgs *pSelfArgs = ( _rtnCMDUnlinkCLArgs * )pArgs ;
 
+      // The Data Group doesn't care about lowBound and upBound
       rc = msgBuildLinkCLMsg( ppMsgBuf, &bufSize,
                               pSelfArgs->_targetName.c_str(),
-                              pSelfArgs->_subCLName.c_str(), 0 ) ;
+                              pSelfArgs->_subCLName.c_str(),
+                              NULL, NULL, 0 ) ;
       PD_RC_CHECK ( rc, PDWARNING,
                     "Failed to rollback %s on [%s/%s]: "
                     "failed to build link message, rc: %d",

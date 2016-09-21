@@ -235,6 +235,7 @@ INT32 msgBuildDropCLMsg ( CHAR **ppBuffer, INT32 *bufferSize,
 INT32 msgBuildLinkCLMsg ( CHAR **ppBuffer, INT32 *bufferSize,
                           const CHAR *CollectionName,
                           const CHAR *subCollectionName,
+                          const BSONObj *lowBound, const BSONObj *upBound,
                           UINT64 reqID ) ;
 
 INT32 msgBuildUnlinkCLMsg ( CHAR **ppBuffer, INT32 *bufferSize,
