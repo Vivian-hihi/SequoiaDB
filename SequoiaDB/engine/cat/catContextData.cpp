@@ -653,6 +653,7 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CATCTXDATAMULTITASK_CREATEIDX_SUBTASK, "_catCtxDataMultiTaskBase::_addCreateIdxSubTasks" )
    INT32 _catCtxDataMultiTaskBase::_addCreateIdxSubTasks ( _catCtxCreateIdxTask *pCreateIdxTask,
+                                                           catCtxLockMgr &lockMgr,
                                                            _pmdEDUCB *cb )
    {
       INT32 rc = SDB_OK ;
@@ -705,7 +706,7 @@ namespace engine
                             "rc: %d",
                             subCLName.c_str(), idxName.c_str(), rc ) ;
 
-               rc = pSubCLTask->checkTask( cb, _lockMgr ) ;
+               rc = pSubCLTask->checkTask( cb, lockMgr ) ;
                PD_RC_CHECK( rc, PDERROR,
                             "Failed to check create index [%s/%s] sub-task, "
                             "rc: %d",
@@ -771,7 +772,10 @@ namespace engine
 
       PD_TRACE_ENTRY ( SDB_CATCTXDATAMULTITASK_CREATEIDX_TASKS ) ;
 
+      // Unlock immediately
+      catCtxLockMgr lockMgr ;
       _catCtxCreateIdxTask *pCreateIdxTask = NULL ;
+
       rc = _addCreateIdxTask( clName, idxName, boIdx,
                               &pCreateIdxTask, FALSE ) ;
       PD_RC_CHECK( rc, PDERROR,
@@ -787,12 +791,12 @@ namespace engine
          pCreateIdxTask->disableUniqueCheck() ;
       }
 
-      rc = pCreateIdxTask->checkTask( cb, _lockMgr ) ;
+      rc = pCreateIdxTask->checkTask( cb, lockMgr ) ;
       PD_RC_CHECK( rc, PDERROR,
                    "Failed to check create index [%s/%s] task, rc: %d",
                    clName.c_str(), idxName.c_str(), rc ) ;
 
-      rc = _addCreateIdxSubTasks( pCreateIdxTask, cb ) ;
+      rc = _addCreateIdxSubTasks( pCreateIdxTask, lockMgr, cb ) ;
       PD_RC_CHECK( rc , PDERROR,
                    "Failed to add sub-tasks for create index [%s/%s] task, "
                    "rc: %d",
@@ -802,7 +806,7 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR,
                    "Failed to push collection task, rc: %d", rc ) ;
 
-      rc = catLockGroups( _groupList, cb, _lockMgr, SHARED ) ;
+      rc = catLockGroups( _groupList, cb, lockMgr, SHARED ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to lock groups, rc: %d", rc ) ;
 
    done :
@@ -814,6 +818,7 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CATCTXDATAMULTITASK_DROPIDX_SUBTASK, "_catCtxDataMultiTaskBase::_addDropIdxSubTasks" )
    INT32 _catCtxDataMultiTaskBase::_addDropIdxSubTasks ( _catCtxDropIdxTask *pDropIdxTask,
+                                                         catCtxLockMgr &lockMgr,
                                                          _pmdEDUCB *cb )
    {
       INT32 rc = SDB_OK ;
@@ -854,7 +859,7 @@ namespace engine
                             "rc: %d",
                             subCLName.c_str(), idxName.c_str(), rc ) ;
 
-               rc = pSubCLTask->checkTask( cb, _lockMgr ) ;
+               rc = pSubCLTask->checkTask( cb, lockMgr ) ;
                PD_RC_CHECK( rc, PDERROR,
                             "Failed to check drop index [%s/%s] sub-task, "
                             "rc: %d",
@@ -903,38 +908,31 @@ namespace engine
 
       PD_TRACE_ENTRY ( SDB_CATCTXDATAMULTITASK_DROPIDX_TASKS ) ;
 
-      try
-      {
-         _catCtxDropIdxTask *pDropIdxTask = NULL ;
+      // Unlock immediately
+      catCtxLockMgr lockMgr ;
+      _catCtxDropIdxTask *pDropIdxTask = NULL ;
 
-         rc = _addDropIdxTask( clName, idxName, &pDropIdxTask, FALSE ) ;
-         PD_RC_CHECK( rc, PDERROR,
-                      "Failed to add drop index [%s/%s] task, rc: %d",
-                      clName.c_str(), idxName.c_str(), rc ) ;
+      rc = _addDropIdxTask( clName, idxName, &pDropIdxTask, FALSE ) ;
+      PD_RC_CHECK( rc, PDERROR,
+                   "Failed to add drop index [%s/%s] task, rc: %d",
+                   clName.c_str(), idxName.c_str(), rc ) ;
 
-         rc = pDropIdxTask->checkTask( cb, _lockMgr ) ;
-         PD_RC_CHECK( rc, PDERROR,
-                      "Failed to check drop index [%s/%s] task, rc: %d",
-                      clName.c_str(), idxName.c_str(), rc ) ;
+      rc = pDropIdxTask->checkTask( cb, lockMgr ) ;
+      PD_RC_CHECK( rc, PDERROR,
+                   "Failed to check drop index [%s/%s] task, rc: %d",
+                   clName.c_str(), idxName.c_str(), rc ) ;
 
-         rc = _addDropIdxSubTasks( pDropIdxTask, cb ) ;
-         PD_RC_CHECK( rc , PDERROR,
-                      "Failed to add sub-tasks for drop index [%s/%s], rc: %d",
-                      clName.c_str(), idxName.c_str(), rc ) ;
+      rc = _addDropIdxSubTasks( pDropIdxTask, lockMgr, cb ) ;
+      PD_RC_CHECK( rc , PDERROR,
+                   "Failed to add sub-tasks for drop index [%s/%s], rc: %d",
+                   clName.c_str(), idxName.c_str(), rc ) ;
 
-         rc = _pushExecTask( pDropIdxTask ) ;
-         PD_RC_CHECK( rc, PDERROR,
-                      "Failed to push collection task, rc: %d", rc ) ;
+      rc = _pushExecTask( pDropIdxTask ) ;
+      PD_RC_CHECK( rc, PDERROR,
+                   "Failed to push collection task, rc: %d", rc ) ;
 
-         rc = catLockGroups( _groupList, cb, _lockMgr, SHARED ) ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to lock groups, rc: %d", rc ) ;
-      }
-      catch ( std::exception &e )
-      {
-         PD_LOG( PDERROR, "Occur exception: %s", e.what() ) ;
-         rc = SDB_INVALIDARG;
-         goto error ;
-      }
+      rc = catLockGroups( _groupList, cb, lockMgr, SHARED ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to lock groups, rc: %d", rc ) ;
 
    done :
       PD_TRACE_EXITRC ( SDB_CATCTXDATAMULTITASK_DROPIDX_TASKS, rc ) ;

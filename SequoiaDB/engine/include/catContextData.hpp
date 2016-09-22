@@ -119,6 +119,7 @@ namespace engine
                                  _pmdEDUCB *cb ) ;
 
       INT32 _addCreateIdxSubTasks ( _catCtxCreateIdxTask *pCreateIdxTask,
+                                    catCtxLockMgr &lockMgr,
                                     _pmdEDUCB *cb ) ;
 
       INT32 _addCreateIdxTasks ( const std::string &clName,
@@ -128,6 +129,7 @@ namespace engine
                                  _pmdEDUCB *cb ) ;
 
       INT32 _addDropIdxSubTasks ( _catCtxDropIdxTask *pDropIdxTask,
+                                  catCtxLockMgr &lockMgr,
                                   _pmdEDUCB *cb ) ;
 
       INT32 _addDropIdxTasks ( const std::string &clName,

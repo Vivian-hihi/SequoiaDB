@@ -489,7 +489,7 @@ namespace engine
       clsCatalogSet cataSet( _dataName.c_str() );
 
       rc = catGetAndLockCollection( _dataName, _boData, cb,
-                                    _needLocks ? &lockMgr : NULL, EXCLUSIVE ) ;
+                                    _needLocks ? &lockMgr : NULL, SHARED ) ;
       PD_RC_CHECK( rc, PDWARNING,
                    "Failed to get the collection [%s], rc: %d",
                    _dataName.c_str(), rc ) ;
@@ -627,7 +627,7 @@ namespace engine
       PD_TRACE_ENTRY ( SDB_CATCTXDROPIDXTASK_CHECK_INT ) ;
 
       rc = catGetAndLockCollection( _dataName, _boData, cb,
-                                    _needLocks ? &lockMgr : NULL, EXCLUSIVE ) ;
+                                    _needLocks ? &lockMgr : NULL, SHARED ) ;
       PD_RC_CHECK( rc, PDWARNING,
                    "Failed to get the collection [%s], rc: %d",
                    _dataName.c_str(), rc ) ;
