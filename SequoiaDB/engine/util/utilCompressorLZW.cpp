@@ -467,7 +467,7 @@ namespace engine
 
       if ( rc )
       {
-         PDLEVEL level = ( SDB_UTIL_COMPRESS_ABORT == rc ) ? PDDEBUG : PDERROR ;\
+         PDLEVEL level = ( SDB_UTIL_COMPRESS_ABORT == rc ) ? PDDEBUG : PDERROR ;
          PD_LOG( level, "Failed to compress data, rc: %d", rc ) ;
          goto error ;
       }
