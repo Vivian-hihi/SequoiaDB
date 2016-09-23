@@ -1201,7 +1201,15 @@ namespace SequoiaDB.Bson
 		    if (ddigits > maxdigits) 
             {
 			    // Determine true weight; and check for all-zero result
-			    for (i = 0; i < _mid_ndigits; i++) 
+                if (!_hasCarry)
+                {
+                    i = 1;
+                }
+                else
+                {
+                    i = 0;
+                }
+			    for (; i < _mid_ndigits; i++) 
                 {
 				    short dig = _mid_digits[i];
 				    if (dig != 0) 

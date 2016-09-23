@@ -597,7 +597,7 @@ namespace SequoiaDB
                 orderBy = dummyObj;
             if (hint == null)
                 hint = dummyObj;
-            if (returnRows == 0)
+            if (returnRows < 0)
             {
                 returnRows = -1;
             }
@@ -958,7 +958,7 @@ namespace SequoiaDB
                 orderBy = dummyObj;
             if (hint == null)
                 hint = dummyObj;
-            if (returnRows == 0)
+            if (returnRows < 0)
                 returnRows = -1;
             string commandString = SequoiadbConstants.ADMIN_PROMPT + SequoiadbConstants.GET_QUERYMETA;
             BsonDocument hint1 = new BsonDocument();
