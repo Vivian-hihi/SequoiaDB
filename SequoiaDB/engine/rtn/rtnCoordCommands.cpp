@@ -1353,7 +1353,8 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR, "Parse user define aggr[%s] failed, rc: %d",
                    queryOption._hint.toString().c_str(), rc ) ;
 
-      if ( !ctrlParam._rawData || vecUserAggr.size() > 0 )
+      if ( ( !ctrlParam._rawData && getInnerAggrContent() ) ||
+           vecUserAggr.size() > 0 )
       {
          /// add aggr operators
          BSONObj nodeMatcher ;

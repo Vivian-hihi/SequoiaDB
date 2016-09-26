@@ -47,7 +47,7 @@ using namespace bson ;
 namespace engine
 {
 
-   #define RTN_COORD_EMPTY_AGGR_CONTEXT      "{}"
+   #define RTN_COORD_EMPTY_AGGR_CONTEXT      NULL
 
    /*
       rtnCoordListTransCurIntr implement
