@@ -47,6 +47,8 @@ using namespace bson ;
 namespace engine
 {
 
+   #define RTN_COORD_EMPTY_AGGR_CONTEXT      "{}"
+
    /*
       rtnCoordListTransCurIntr implement
    */
@@ -89,7 +91,7 @@ namespace engine
 
    const CHAR* rtnCoordListTransCur::getInnerAggrContent()
    {
-      return "" ;
+      return RTN_COORD_EMPTY_AGGR_CONTEXT ;
    }
 
    /*
@@ -102,7 +104,7 @@ namespace engine
 
    const CHAR* rtnCoordListTrans::getInnerAggrContent()
    {
-      return "" ;
+      return RTN_COORD_EMPTY_AGGR_CONTEXT ;
    }
 
    /*
@@ -127,7 +129,7 @@ namespace engine
 
    const CHAR* rtnCoordListBackup::getInnerAggrContent()
    {
-      return "" ;
+      return RTN_COORD_EMPTY_AGGR_CONTEXT ;
    }
 
    /*
@@ -181,7 +183,7 @@ namespace engine
 
    const CHAR* rtnCoordCMDListContexts::getInnerAggrContent()
    {
-      return "" ;
+      return RTN_COORD_EMPTY_AGGR_CONTEXT ;
    }
 
    /*
@@ -194,7 +196,7 @@ namespace engine
 
    const CHAR* rtnCoordCMDListContextsCur::getInnerAggrContent()
    {
-      return "" ;
+      return RTN_COORD_EMPTY_AGGR_CONTEXT ;
    }
 
    /*
@@ -207,7 +209,7 @@ namespace engine
 
    const CHAR* rtnCoordCMDListSessions::getInnerAggrContent()
    {
-      return "" ;
+      return RTN_COORD_EMPTY_AGGR_CONTEXT ;
    }
 
    /*
@@ -220,7 +222,7 @@ namespace engine
 
    const CHAR* rtnCoordCMDListSessionsCur::getInnerAggrContent()
    {
-      return "" ;
+      return RTN_COORD_EMPTY_AGGR_CONTEXT ;
    }
 
    /*
