@@ -159,8 +159,7 @@ namespace engine
                                          BOOLEAN onPrimary = TRUE,
                                          SET_RC *pIgnoreRC = NULL,
                                          CoordGroupList *pSucGrpLst = NULL,
-                                         rtnContextCoord **ppContext = NULL,
-                                         BOOLEAN preRead = TRUE ) ;
+                                         rtnContextCoord **ppContext = NULL ) ;
 
       INT32         executeOnCataGroup ( MsgHeader *pMsg,
                                          pmdEDUCB *cb,
@@ -170,17 +169,11 @@ namespace engine
 
       INT32         executeOnCataGroup ( MsgHeader *pMsg,
                                          pmdEDUCB *cb,
-                                         rtnContextCoord **ppContext,
-                                         CoordGroupList *pGroupList,
-                                         vector<BSONObj> *pReplyObjs = NULL,
-                                         SET_RC *pIgnoreRC = NULL ) ;
-
-      INT32         executeOnCataGroup ( MsgHeader *pMsg,
-                                         pmdEDUCB *cb,
                                          CoordGroupList *pGroupList,
                                          vector<BSONObj> *pReplyObjs = NULL,
                                          BOOLEAN onPrimary = TRUE,
-                                         SET_RC *pIgnoreRC = NULL ) ;
+                                         SET_RC *pIgnoreRC = NULL,
+                                         rtnContextCoord **ppContext = NULL ) ;
 
       INT32         executeOnCataCL( MsgOpQuery *pMsg,
                                      pmdEDUCB *cb,
@@ -225,6 +218,9 @@ namespace engine
    protected:
       virtual void _printDebug ( CHAR *pReceiveBuffer, const CHAR *pFuncName ) ;
 
+      /* Enable preRead in Coord context (send GetMore in advanced) */
+      virtual BOOLEAN _flagCoordCtxPreRead () { return TRUE ; }
+
    private:
       // don't define any members that will change while execute
       // because this obj will be shared for different threads
@@ -254,8 +250,7 @@ namespace engine
                                BOOLEAN onPrimary = TRUE,
                                SET_RC *pIgnoreRC = NULL,
                                CoordGroupList *pSucGrpLst = NULL,
-                               rtnContextCoord **ppContext = NULL,
-                               BOOLEAN preRead = TRUE ) ;
+                               rtnContextCoord **ppContext = NULL ) ;
 
       BOOLEAN _getRetryNodes( ROUTE_SET &retriedNodes,
                               ROUTE_SET &needRetryNodes,
@@ -928,6 +923,10 @@ namespace engine
                                       SINT32 maxNumSteps ) ;
 
    protected :
+      /* Disable preRead in Coord context (send GetMore in advanced) to control
+       * the sub-context from Catalog or Data step by step */
+      virtual BOOLEAN _flagCoordCtxPreRead () { return FALSE ; }
+
       /* Send command to Data Groups with the TID of client */
       virtual BOOLEAN _flagReserveClientTID () { return FALSE ; }
 

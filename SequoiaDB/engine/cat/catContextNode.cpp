@@ -552,6 +552,12 @@ namespace engine
       {
          buffObj = rtnContextBuf( _boTarget.getOwned() ) ;
       }
+      else if ( CAT_CONTEXT_END != _status )
+      {
+         // Send dummy object to keep one GetMore for one step.
+         BSONObj dummy ;
+         buffObj = rtnContextBuf( dummy.getOwned() ) ;
+      }
 
       PD_TRACE_EXIT ( SDB_CATCTXRMGRP_MAKEREPLY ) ;
 
@@ -839,6 +845,10 @@ namespace engine
    {
       PD_TRACE_ENTRY ( SDB_CATCTXCREATENODE_MAKEREPLY ) ;
 
+      // Send dummy object to keep one GetMore for one step.
+      BSONObj dummy ;
+      buffObj = rtnContextBuf( dummy.getOwned() ) ;
+
       PD_TRACE_EXIT ( SDB_CATCTXCREATENODE_MAKEREPLY ) ;
 
       return SDB_OK ;
@@ -1093,6 +1103,10 @@ namespace engine
    INT32 _catCtxRemoveNode::_makeReply ( rtnContextBuf &buffObj )
    {
       PD_TRACE_ENTRY ( SDB_CATCTXRMNODE_MAKEREPLY ) ;
+
+      // Send dummy object to keep one GetMore for one step.
+      BSONObj dummy ;
+      buffObj = rtnContextBuf( dummy.getOwned() ) ;
 
       PD_TRACE_EXIT ( SDB_CATCTXRMNODE_MAKEREPLY ) ;
 

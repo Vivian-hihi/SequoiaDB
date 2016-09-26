@@ -667,9 +667,6 @@ namespace engine
          void enablePreRead() { _preRead = TRUE ; }
          void disablePreRead() { _preRead = FALSE ; }
 
-         INT32 getMoreWithOutData ( INT32 maxNumSteps, _pmdEDUCB *cb ) ;
-         INT32 getData ( rtnContextBuf &buffObj, _pmdEDUCB *cb ) ;
-
       protected:
          virtual INT32  _prepareData( _pmdEDUCB *cb ) ;
          virtual void   _toString( stringstream &ss ) ;

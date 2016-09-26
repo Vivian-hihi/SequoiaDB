@@ -368,8 +368,7 @@ namespace engine
                                             BOOLEAN onPrimary,
                                             SET_RC *pIgnoreRC,
                                             CoordGroupList *pSucGrpLst,
-                                            rtnContextCoord **ppContext,
-                                            BOOLEAN preRead )
+                                            rtnContextCoord **ppContext )
    {
       INT32 rc = SDB_OK ;
       INT32 rcTmp = SDB_OK ;
@@ -384,6 +383,8 @@ namespace engine
       rtnProcessResult result ;
       rtnContextCoord *pTmpContext = NULL ;
       INT64 contextID = -1 ;
+
+      BOOLEAN preRead = _flagCoordCtxPreRead() ;
 
       sendOpt._groupLst = groupLst ;
       sendOpt._svcType = type ;
@@ -461,12 +462,10 @@ namespace engine
                                                BOOLEAN onPrimary,
                                                SET_RC *pIgnoreRC,
                                                CoordGroupList *pSucGrpLst,
-                                               rtnContextCoord **ppContext,
-                                               BOOLEAN preRead )
+                                               rtnContextCoord **ppContext )
    {
       return _executeOnGroups( pMsg, cb, groupLst, MSG_ROUTE_SHARD_SERVCIE,
-                               onPrimary, pIgnoreRC, pSucGrpLst, ppContext,
-                               preRead ) ;
+                               onPrimary, pIgnoreRC, pSucGrpLst, ppContext ) ;
    }
 
    INT32 rtnCoordCommand::executeOnCataGroup( MsgHeader *pMsg,
@@ -481,92 +480,14 @@ namespace engine
                                onPrimary, pIgnoreRC, NULL, ppContext ) ;
    }
 
-   INT32 rtnCoordCommand::executeOnCataGroup( MsgHeader *pMsg,
-                                              pmdEDUCB *cb,
-                                              rtnContextCoord **ppContext,
-                                              CoordGroupList *pGroupList,
-                                              vector<BSONObj> *pReplyObjs,
-                                              SET_RC *pIgnoreRC )
-   {
-      INT32 rc = SDB_OK;
-      rtnContextBuf buffObj ;
-      rtnContextCoord *pContext = NULL ;
-      CoordGroupList catGroupLst ;
-      catGroupLst[ CATALOG_GROUPID ] = CATALOG_GROUPID ;
-
-      rc = _executeOnGroups( pMsg, cb, catGroupLst, MSG_ROUTE_CAT_SERVICE,
-                             TRUE, pIgnoreRC, NULL, &pContext, FALSE ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to execute command[%d] on catalog, "
-                   "rc: %d", pMsg->opCode, rc ) ;
-
-      if ( pContext )
-      {
-         /// Just get one reply data
-         rc = pContext->getData( buffObj, cb ) ;
-         if ( SDB_DMS_EOC == rc )
-         {
-            /// Ignore for empty group list
-            PD_LOG( PDWARNING, "Unexpected end of data" ) ;
-            goto done ;
-         }
-         else if ( SDB_RTN_COORD_CACHE_EMPTY == rc )
-         {
-            PD_LOG( PDWARNING, "Returned empty group list" ) ;
-            rc = SDB_OK ;
-            goto done ;
-         }
-         else if ( rc )
-         {
-            PD_LOG( PDERROR, "Failed to get more from context[%lld], rc: %d",
-                    pContext->contextID(), rc ) ;
-            goto error ;
-         }
-
-         try
-         {
-            BSONObj obj( buffObj.data() ) ;
-
-            if ( pGroupList )
-            {
-               rc = _processCatReply( obj, *pGroupList ) ;
-               PD_RC_CHECK( rc, PDERROR, "Get groups from catalog reply[%s] "
-                            "failed, rc: %d", obj.toString().c_str(), rc ) ;
-            }
-
-            if ( pReplyObjs )
-            {
-               pReplyObjs->push_back( obj.getOwned() ) ;
-            }
-         }
-         catch( std::exception &e )
-         {
-            PD_LOG( PDERROR, "Extrace catalog reply obj occur exception: %s",
-                    e.what() ) ;
-            rc = SDB_SYS ;
-            goto error ;
-         }
-      }
-
-   done :
-      (*ppContext) = pContext ;
-      return rc;
-   error :
-      if ( pContext )
-      {
-         INT64 contextID = pContext->contextID() ;
-         pmdGetKRCB()->getRTNCB()->contextDelete( contextID, cb ) ;
-         pContext = NULL ;
-      }
-      goto done ;
-   }
-
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCOM_EXEONCATAGR, "rtnCoordCommand::executeOnCataGroup" )
    INT32 rtnCoordCommand::executeOnCataGroup ( MsgHeader *pMsg,
                                                pmdEDUCB *cb,
                                                CoordGroupList *pGroupList,
                                                vector<BSONObj> *pReplyObjs,
                                                BOOLEAN onPrimary,
-                                               SET_RC *pIgnoreRC )
+                                               SET_RC *pIgnoreRC,
+                                               rtnContextCoord **ppContext )
    {
       INT32 rc = SDB_OK;
       PD_TRACE_ENTRY ( SDB_RTNCOCOM_EXEONCATAGR ) ;
@@ -575,10 +496,11 @@ namespace engine
       rtnContextCoord *pContext = NULL ;
 
       rc = executeOnCataGroup( pMsg, cb, onPrimary, pIgnoreRC, &pContext ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to execute command[%d] on catalog, "
-                   "rc: %d", pMsg->opCode, rc ) ;
+      PD_RC_CHECK( rc, PDERROR,
+                   "Failed to execute command[%d] on catalog, rc: %d",
+                   pMsg->opCode, rc ) ;
 
-      while( TRUE )
+      while ( pContext )
       {
          rc = pContext->getMore( 1, buffObj, cb ) ;
          if ( SDB_DMS_EOC == rc )
@@ -588,7 +510,8 @@ namespace engine
          }
          else if ( rc )
          {
-            PD_LOG( PDERROR, "Failed to get more from context[%lld], rc: %d",
+            PD_LOG( PDERROR,
+                    "Failed to get more from context [%lld], rc: %d",
                     pContext->contextID(), rc ) ;
             goto error ;
          }
@@ -600,8 +523,10 @@ namespace engine
             if ( pGroupList )
             {
                rc = _processCatReply( obj, *pGroupList ) ;
-               PD_RC_CHECK( rc, PDERROR, "Get groups from catalog reply[%s] "
-                            "failed, rc: %d", obj.toString().c_str(), rc ) ;
+               PD_RC_CHECK( rc, PDERROR,
+                            "Failed to get groups from catalog reply [%s], "
+                            "rc: %d",
+                            obj.toString().c_str(), rc ) ;
             }
 
             if ( pReplyObjs )
@@ -615,6 +540,14 @@ namespace engine
                     e.what() ) ;
             rc = SDB_SYS ;
             goto error ;
+         }
+
+         if ( ppContext )
+         {
+            // If we need the control of the context for further steps, set
+            // the pointers and break the loop
+            (*ppContext) = pContext ;
+            pContext = NULL ;
          }
       }
 
@@ -626,7 +559,8 @@ namespace engine
          pContext = NULL ;
       }
       PD_TRACE_EXITRC ( SDB_RTNCOCOM_EXEONCATAGR, rc ) ;
-      return rc;
+      return rc ;
+
    error :
       goto done ;
    }
@@ -4014,8 +3948,9 @@ namespace engine
 
       rtnContextCoord *pContext = NULL ;
 
-      // Send request to catalog
-      rc = executeOnCataGroup( pMsg, cb, &pContext, pGroupLst, pReplyObjs, NULL ) ;
+      // Send request to catalog, and get the control of CoordContext
+      rc = executeOnCataGroup( pMsg, cb, pGroupLst, pReplyObjs,
+                               TRUE, NULL, &pContext ) ;
       PD_RC_CHECK( rc, PDERROR,
                    "Failed to execute on catalog, rc: %d",
                    rc ) ;
@@ -4127,7 +4062,7 @@ namespace engine
          goto done ;
       }
 
-      rc = (*ppContext)->getMoreWithOutData(maxNumSteps, cb) ;
+      rc = (*ppContext)->getMore( maxNumSteps, buffObj, cb ) ;
       if ( SDB_DMS_EOC == rc )
       {
          pRtncb->contextDelete ( (*ppContext)->contextID(), cb ) ;
@@ -4141,6 +4076,7 @@ namespace engine
    done :
       PD_TRACE_EXITRC ( CMD_RTNCOCMD2PH_PROCESSCTX, rc ) ;
       return rc ;
+
    error :
       if ( ppContext && (*ppContext) )
       {

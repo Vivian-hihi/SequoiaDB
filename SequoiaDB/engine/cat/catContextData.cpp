@@ -63,15 +63,28 @@ namespace engine
 
       PD_TRACE_ENTRY ( SDB_CATCTXDATA_MAKEREPLY ) ;
 
-      if ( ( CAT_CONTEXT_READY == _status && !_executeAfterLock ) ||
-           ( CAT_CONTEXT_CAT_DONE == _status && _executeAfterLock ) )
+      if ( !_groupList.empty() )
       {
-         if ( !_groupList.empty() )
+         // If the Data group list is not empty, we need the Coord and Catalog
+         // walk through this context step by step, so send dummy object to
+         // keep one GetMore for one step.
+         if ( ( CAT_CONTEXT_READY == _status && !_executeAfterLock ) ||
+              ( CAT_CONTEXT_CAT_DONE == _status && _executeAfterLock ) )
          {
             BSONObjBuilder retObjBuilder ;
             _pCatCB->makeGroupsObj( retObjBuilder, _groupList, TRUE ) ;
             buffObj = rtnContextBuf( retObjBuilder.obj() ) ;
          }
+         else if ( CAT_CONTEXT_END != _status )
+         {
+            BSONObj dummy ;
+            buffObj = rtnContextBuf( dummy.getOwned() ) ;
+         }
+      }
+      else
+      {
+         // If the Data group list is empty, we don't need Data group to
+         // participate, send empty object get all GetMores back.
       }
 
       PD_TRACE_EXITRC ( SDB_CATCTXDATA_MAKEREPLY, rc ) ;

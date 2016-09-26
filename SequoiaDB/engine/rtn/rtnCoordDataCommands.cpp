@@ -134,8 +134,9 @@ namespace engine
          pOpMsg->version = cataInfo->getVersion() ;
       }
 
-      // Send request to catalog
-      rc = executeOnCataGroup( pMsg, cb, &pContext, pGroupLst, pReplyObjs, NULL ) ;
+      // Send request to catalog, and get the control of CoordContext
+      rc = executeOnCataGroup( pMsg, cb, pGroupLst, pReplyObjs,
+                               TRUE, NULL, &pContext ) ;
       if ( SDB_OK != rc &&
            _flagUpdateBeforeCata() &&
            _flagDoOnCollection() )
@@ -202,7 +203,7 @@ namespace engine
       {
          rc = executeOnDataGroup( pMsg, cb, groupLst, TRUE,
                                   &(pArgs->_ignoreRCList), NULL,
-                                  ppContext, TRUE ) ;
+                                  ppContext ) ;
       }
       PD_RC_CHECK( rc, PDERROR,
                    "Failed to %s on [%s]: "
