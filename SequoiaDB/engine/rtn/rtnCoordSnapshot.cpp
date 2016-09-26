@@ -43,10 +43,10 @@ namespace engine
 {
 
    /*
-      rtnCoordSnapshotTransCur implement
+      rtnCoordSnapshotTransCurIntr implement
    */
-   void rtnCoordSnapshotTransCur::_preSet( pmdEDUCB *cb,
-                                           rtnCoordCtrlParam &ctrlParam )
+   void rtnCoordSnapshotTransCurIntr::_preSet( pmdEDUCB *cb,
+                                               rtnCoordCtrlParam &ctrlParam )
    {
       ctrlParam._role[ SDB_ROLE_CATALOG ] = 0 ;
       ctrlParam._emptyFilterSel = NODE_SEL_PRIMARY ;
@@ -65,13 +65,39 @@ namespace engine
    }
 
    /*
-      rtnCoordSnapshotTrans implement
+      rtnCoordSnapshotTransIntr implement
    */
-   void rtnCoordSnapshotTrans::_preSet( pmdEDUCB *cb,
-                                        rtnCoordCtrlParam &ctrlParam )
+   void rtnCoordSnapshotTransIntr::_preSet( pmdEDUCB *cb,
+                                            rtnCoordCtrlParam &ctrlParam )
    {
       ctrlParam._role[ SDB_ROLE_CATALOG ] = 0 ;
       ctrlParam._emptyFilterSel = NODE_SEL_PRIMARY ;
+   }
+
+   /*
+      rtnCoordSnapshotTransCur implement
+   */
+   const CHAR* rtnCoordSnapshotTransCur::getIntrCMDName()
+   {
+      return COORD_CMD_SNAPSHOTTRANSCURINTR ;
+   }
+
+   const CHAR* rtnCoordSnapshotTransCur::getInnerAggrContent()
+   {
+      return "" ;
+   }
+
+   /*
+      rtnCoordSnapshotTrans implement
+   */
+   const CHAR* rtnCoordSnapshotTrans::getIntrCMDName()
+   {
+      return COORD_CMD_SNAPSHOTTRANSINTR ;
+   }
+
+   const CHAR* rtnCoordSnapshotTrans::getInnerAggrContent()
+   {
+      return "" ;
    }
 
    /*
@@ -182,7 +208,8 @@ namespace engine
       rtnCoordCMDSnapshotCata implement
    */
    INT32 rtnCoordCMDSnapshotCata::_preProcess( rtnQueryOptions &queryOpt,
-                                               string &clName )
+                                               string &clName,
+                                               BSONObj &outSelector )
    {
       clName = CAT_COLLECTION_INFO_COLLECTION ;
       return SDB_OK ;

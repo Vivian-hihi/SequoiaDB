@@ -41,6 +41,7 @@
 #include "rtnCoordQuery.hpp"
 #include "msgDef.hpp"
 #include "rtnQueryOptions.hpp"
+#include "rtnCoordCommandDef.hpp"
 #include "aggrBuilder.hpp"
 #include "utilMap.hpp"
 
@@ -48,90 +49,6 @@ using namespace bson ;
 
 namespace engine
 {
-   //default command-processer
-   #define COORD_CMD_DEFAULT                  "COORD_CMD_DEFAULT"
-   #define COORD_CMD_BACKUP_OFFLINE           CMD_ADMIN_PREFIX CMD_NAME_BACKUP_OFFLINE
-   #define COORD_CMD_LIST_BACKUPS             CMD_ADMIN_PREFIX CMD_NAME_LIST_BACKUPS
-   #define COORD_CMD_REMOVE_BACKUP            CMD_ADMIN_PREFIX CMD_NAME_REMOVE_BACKUP
-   #define COORD_CMD_LISTGROUPS               CMD_ADMIN_PREFIX CMD_NAME_LIST_GROUPS
-   #define COORD_CMD_LISTCOLLECTIONSPACES     CMD_ADMIN_PREFIX CMD_NAME_LIST_COLLECTIONSPACES
-   #define COORD_CMD_LISTCOLLECTIONS          CMD_ADMIN_PREFIX CMD_NAME_LIST_COLLECTIONS
-   #define COORD_CMD_LISTUSERS                CMD_ADMIN_PREFIX CMD_NAME_LIST_USERS
-   #define COORD_CMD_CREATECOLLECTIONSPACE    CMD_ADMIN_PREFIX CMD_NAME_CREATE_COLLECTIONSPACE
-   #define COORD_CMD_CREATECOLLECTION         CMD_ADMIN_PREFIX CMD_NAME_CREATE_COLLECTION
-   #define COORD_CMD_ALTERCOLLECTION          CMD_ADMIN_PREFIX CMD_NAME_ALTER_COLLECTION
-   #define COORD_CMD_DROPCOLLECTION           CMD_ADMIN_PREFIX CMD_NAME_DROP_COLLECTION
-   #define COORD_CMD_DROPCOLLECTIONSPACE      CMD_ADMIN_PREFIX CMD_NAME_DROP_COLLECTIONSPACE
-   #define COORD_CMD_SNAPSHOTCONTEXTS         CMD_ADMIN_PREFIX CMD_NAME_SNAPSHOT_CONTEXTS
-   #define COORD_CMD_SNAPSHOTCONTEXTSCUR      CMD_ADMIN_PREFIX CMD_NAME_SNAPSHOT_CONTEXTS_CURRENT
-   #define COORD_CMD_SNAPSHOTSESSIONS         CMD_ADMIN_PREFIX CMD_NAME_SNAPSHOT_SESSIONS
-   #define COORD_CMD_SNAPSHOTSESSIONSCUR      CMD_ADMIN_PREFIX CMD_NAME_SNAPSHOT_SESSIONS_CURRENT
-   #define COORD_CMD_SNAPSHOTDATABASE         CMD_ADMIN_PREFIX CMD_NAME_SNAPSHOT_DATABASE
-   #define COORD_CMD_SNAPSHOTSYSTEM           CMD_ADMIN_PREFIX CMD_NAME_SNAPSHOT_SYSTEM
-   #define COORD_CMD_SNAPSHOTRESET            CMD_ADMIN_PREFIX CMD_NAME_SNAPSHOT_RESET
-   #define COORD_CMD_SNAPSHOTCOLLECTIONS      CMD_ADMIN_PREFIX CMD_NAME_SNAPSHOT_COLLECTIONS
-   #define COORD_CMD_SNAPSHOTCOLLECTIONSPACES CMD_ADMIN_PREFIX CMD_NAME_SNAPSHOT_COLLECTIONSPACES
-   #define COORD_CMD_SNAPSHOTCATALOG          CMD_ADMIN_PREFIX CMD_NAME_SNAPSHOT_CATA
-   #define COORD_CMD_SNAPSHOTTRANSCUR         CMD_ADMIN_PREFIX CMD_NAME_SNAPSHOT_TRANSACTIONS_CUR
-   #define COORD_CMD_SNAPSHOTTRANS            CMD_ADMIN_PREFIX CMD_NAME_SNAPSHOT_TRANSACTIONS
-   #define COORD_CMD_TESTCOLLECTIONSPACE      CMD_ADMIN_PREFIX CMD_NAME_TEST_COLLECTIONSPACE
-   #define COORD_CMD_TESTCOLLECTION           CMD_ADMIN_PREFIX CMD_NAME_TEST_COLLECTION
-   #define COORD_CMD_CREATEGROUP              CMD_ADMIN_PREFIX CMD_NAME_CREATE_GROUP
-   #define COORD_CMD_REMOVEGROUP              CMD_ADMIN_PREFIX CMD_NAME_REMOVE_GROUP
-   #define COORD_CMD_CREATENODE               CMD_ADMIN_PREFIX CMD_NAME_CREATE_NODE
-   #define COORD_CMD_REMOVENODE               CMD_ADMIN_PREFIX CMD_NAME_REMOVE_NODE
-   #define COORD_CMD_UPDATENODE               CMD_ADMIN_PREFIX CMD_NAME_UPDATE_NODE
-   #define COORD_CMD_ACTIVEGROUP              CMD_ADMIN_PREFIX CMD_NAME_ACTIVE_GROUP
-   #define COORD_CMD_CREATEINDEX              CMD_ADMIN_PREFIX CMD_NAME_CREATE_INDEX
-   #define COORD_CMD_DROPINDEX                CMD_ADMIN_PREFIX CMD_NAME_DROP_INDEX
-   #define COORD_CMD_STARTUPNODE              CMD_ADMIN_PREFIX CMD_NAME_STARTUP_NODE
-   #define COORD_CMD_SHUTDOWNNODE             CMD_ADMIN_PREFIX CMD_NAME_SHUTDOWN_NODE
-   #define COORD_CMD_SHUTDOWNGROUP            CMD_ADMIN_PREFIX CMD_NAME_SHUTDOWN_GROUP
-   #define COORD_CMD_SPLIT                    CMD_ADMIN_PREFIX CMD_NAME_SPLIT
-   #define COORD_CMD_WAITTASK                 CMD_ADMIN_PREFIX CMD_NAME_WAITTASK
-   #define COORD_CMD_GETCOUNT                 CMD_ADMIN_PREFIX CMD_NAME_GET_COUNT
-   #define COORD_CMD_GETINDEXES               CMD_ADMIN_PREFIX CMD_NAME_GET_INDEXES
-   #define COORD_CMD_GETDATABLOCKS            CMD_ADMIN_PREFIX CMD_NAME_GET_DATABLOCKS
-   #define COORD_CMD_GETQUERYMETA             CMD_ADMIN_PREFIX CMD_NAME_GET_QUERYMETA
-   #define COORD_CMD_GETDCINFO                CMD_ADMIN_PREFIX CMD_NAME_GET_DCINFO
-   #define COORD_CMD_CREATECATAGROUP          CMD_ADMIN_PREFIX CMD_NAME_CREATE_CATA_GROUP
-   #define COORD_CMD_TRACESTART               CMD_ADMIN_PREFIX CMD_NAME_TRACE_START
-   #define COORD_CMD_TRACERESUME              CMD_ADMIN_PREFIX CMD_NAME_TRACE_RESUME
-   #define COORD_CMD_TRACESTOP                CMD_ADMIN_PREFIX CMD_NAME_TRACE_STOP
-   #define COORD_CMD_TRACESTATUS              CMD_ADMIN_PREFIX CMD_NAME_TRACE_STATUS
-   #define COORD_CMD_EXPCONFIG                CMD_ADMIN_PREFIX CMD_NAME_EXPORT_CONFIG
-   #define COORD_CMD_SNAPSHOTDBINTR           CMD_ADMIN_PREFIX CMD_NAME_SNAPSHOT_DATABASE_INTR
-   #define COORD_CMD_SNAPSHOTSYSINTR          CMD_ADMIN_PREFIX CMD_NAME_SNAPSHOT_SYSTEM_INTR
-   #define COORD_CMD_SNAPSHOTCLINTR           CMD_ADMIN_PREFIX CMD_NAME_SNAPSHOT_COLLECTION_INTR
-   #define COORD_CMD_SNAPSHOTCSINTR           CMD_ADMIN_PREFIX CMD_NAME_SNAPSHOT_SPACE_INTR
-   #define COORD_CMD_SNAPSHOTCTXINTR          CMD_ADMIN_PREFIX CMD_NAME_SNAPSHOT_CONTEXT_INTR
-   #define COORD_CMD_SNAPSHOTCTXCURINTR       CMD_ADMIN_PREFIX CMD_NAME_SNAPSHOT_CONTEXTCUR_INTR
-   #define COORD_CMD_SNAPSHOTSESSINTR         CMD_ADMIN_PREFIX CMD_NAME_SNAPSHOT_SESSION_INTR
-   #define COORD_CMD_SNAPSHOTSESSCURINTR      CMD_ADMIN_PREFIX CMD_NAME_SNAPSHOT_SESSIONCUR_INTR
-   #define COORD_CMD_SNAPSHOTCATAINTR         CMD_ADMIN_PREFIX CMD_NAME_SNAPSHOT_CATA_INTR
-   #define COORD_CMD_CRT_PROCEDURE            CMD_ADMIN_PREFIX CMD_NAME_CRT_PROCEDURE
-   #define COORD_CMD_EVAL                     CMD_ADMIN_PREFIX CMD_NAME_EVAL
-   #define COORD_CMD_RM_PROCEDURE             CMD_ADMIN_PREFIX CMD_NAME_RM_PROCEDURE
-   #define COORD_CMD_LIST_PROCEDURES          CMD_ADMIN_PREFIX CMD_NAME_LIST_PROCEDURES
-   #define COORD_CMD_LINK                     CMD_ADMIN_PREFIX CMD_NAME_LINK_CL
-   #define COORD_CMD_UNLINK                   CMD_ADMIN_PREFIX CMD_NAME_UNLINK_CL
-   #define COORD_CMD_LIST_TASKS               CMD_ADMIN_PREFIX CMD_NAME_LIST_TASKS
-   #define COORD_CMD_CANCEL_TASK              CMD_ADMIN_PREFIX CMD_NAME_CANCEL_TASK
-   #define COORD_CMD_SET_SESS_ATTR            CMD_ADMIN_PREFIX CMD_NAME_SETSESS_ATTR
-   #define COORD_CMD_CREATE_DOMAIN            CMD_ADMIN_PREFIX CMD_NAME_CREATE_DOMAIN
-   #define COORD_CMD_DROP_DOMAIN              CMD_ADMIN_PREFIX CMD_NAME_DROP_DOMAIN
-   #define COORD_CMD_ALTER_DOMAIN             CMD_ADMIN_PREFIX CMD_NAME_ALTER_DOMAIN
-   #define COORD_CMD_ADD_DOMAIN_GROUP         CMD_ADMIN_PREFIX CMD_NAME_ADD_DOMAIN_GROUP
-   #define COORD_CMD_REMOVE_DOMAIN_GROUP      CMD_ADMIN_PREFIX CMD_NAME_REMOVE_DOMAIN_GROUP
-   #define COORD_CMD_LIST_DOMAINS             CMD_ADMIN_PREFIX CMD_NAME_LIST_DOMAINS
-   #define COORD_CMD_LIST_CS_IN_DOMAIN        CMD_ADMIN_PREFIX CMD_NAME_LIST_CS_IN_DOMAIN
-   #define COORD_CMD_LIST_CL_IN_DOMAIN        CMD_ADMIN_PREFIX CMD_NAME_LIST_CL_IN_DOMAIN
-   #define COORD_CMD_INVALIDATE_CACHE         CMD_ADMIN_PREFIX CMD_NAME_INVALIDATE_CACHE
-   #define COORD_CMD_LIST_LOBS                CMD_ADMIN_PREFIX CMD_NAME_LIST_LOBS
-   #define COORD_CMD_ALTER_DC                 CMD_ADMIN_PREFIX CMD_NAME_ALTER_DC
-   #define COORD_CMD_REELECT                  CMD_ADMIN_PREFIX CMD_NAME_REELECT
-   #define COORD_CMD_TRUNCATE                 CMD_ADMIN_PREFIX CMD_NAME_TRUNCATE
-   #define COORD_CMD_SYNC_DB                  CMD_ADMIN_PREFIX CMD_NAME_SYNC_DB
 
    class rtnCoordCommand : virtual public rtnCoordOperator
    {
@@ -277,16 +194,6 @@ namespace engine
 
    } ;
 
-   class rtnCoordListBackup : public rtnCoordBackupBase
-   {
-   protected:
-      virtual FILTER_BSON_ID  _getGroupMatherIndex () ;
-      virtual NODE_SEL_STY    _nodeSelWhenNoFilter () ;
-      virtual BOOLEAN         _allowFailed () ;
-      virtual BOOLEAN         _useContext () ;
-      virtual UINT32          _getMask() const ;
-   } ;
-
    class rtnCoordRemoveBackup : public rtnCoordBackupBase
    {
    protected:
@@ -307,15 +214,6 @@ namespace engine
       virtual UINT32          _getMask() const ;
    } ;
 
-   class rtnCoordCMDListGroups : public rtnCoordCommand
-   {
-   public:
-      virtual INT32 execute( MsgHeader *pMsg,
-                             pmdEDUCB *cb,
-                             INT64 &contextID,
-                             rtnContextBuf *buf ) ;
-   };
-
    /*
       rtnCoordCMDMonIntrBase define
    */
@@ -329,7 +227,7 @@ namespace engine
 
    private:
       virtual BOOLEAN _useContext() = 0 ;
-      virtual void    _preSet( pmdEDUCB *cb, rtnCoordCtrlParam &ctrlParam ) = 0 ;
+      virtual void    _preSet( pmdEDUCB *cb, rtnCoordCtrlParam &ctrlParam ) ;
       virtual UINT32  _getControlMask() const = 0 ;
 
    } ;
@@ -385,28 +283,8 @@ namespace engine
 
    protected:
       virtual INT32 _preProcess( rtnQueryOptions &queryOpt,
-                                 string &clName ) = 0 ;
-   };
-
-   class rtnCoordCMDListCollectionSpace : public rtnCoordCMDQueryBase
-   {
-   protected:
-      virtual INT32 _preProcess( rtnQueryOptions &queryOpt,
-                                 string &clName ) ;
-   };
-
-   class rtnCoordCMDListCollection : public rtnCoordCMDQueryBase
-   {
-   protected:
-      virtual INT32 _preProcess( rtnQueryOptions &queryOpt,
-                                 string &clName ) ;
-   };
-
-   class rtnCoordCMDListUser : public rtnCoordCMDQueryBase
-   {
-   protected:
-      virtual INT32 _preProcess( rtnQueryOptions &queryOpt,
-                                 string &clName ) ;
+                                 string &clName,
+                                 BSONObj &outSelector ) = 0 ;
    };
 
    class rtnCoordCMDTestCollectionSpace : public rtnCoordCommand
@@ -474,13 +352,6 @@ namespace engine
                              pmdEDUCB *cb,
                              INT64 &contextID,
                              rtnContextBuf *buf ) ;
-   } ;
-
-   class rtnCoordCmdListTask : public rtnCoordCMDQueryBase
-   {
-   protected:
-      virtual INT32 _preProcess( rtnQueryOptions &queryOpt,
-                                 string &clName ) ;
    } ;
 
    class rtnCoordCmdCancelTask : public rtnCoordCommand
@@ -612,13 +483,6 @@ namespace engine
                              rtnContextBuf *buf ) ;
    } ;
 
-   class rtnCoordCMDListProcedures : public rtnCoordCMDQueryBase
-   {
-   protected:
-      virtual INT32 _preProcess( rtnQueryOptions &queryOpt,
-                                 string &clName ) ;
-   } ;
-
    class rtnCoordCMDSetSessionAttr : public rtnCoordCommand
    {
    public:
@@ -646,45 +510,7 @@ namespace engine
                              rtnContextBuf *buf ) ;
    } ;
 
-   class rtnCoordCMDListDomains : public rtnCoordCMDQueryBase
-   {
-   protected:
-      virtual INT32 _preProcess( rtnQueryOptions &queryOpt,
-                                 string &clName ) ;
-   } ;
-
-   class rtnCoordCMDListCSInDomain : public rtnCoordCMDQueryBase
-   {
-   protected:
-      virtual INT32 _preProcess( rtnQueryOptions &queryOpt,
-                                 string &clName ) ;
-   } ;
-
-
-   class rtnCoordCMDListCLInDomain : public rtnCoordCommand
-   {
-   public:
-      virtual INT32 execute( MsgHeader *pMsg,
-                             pmdEDUCB *cb,
-                             INT64 &contextID,
-                             rtnContextBuf *buf ) ;
-
-   private:
-      INT32 _rebuildListResult( const std::vector<BSONObj> &infoFromCata,
-                                pmdEDUCB *cb,
-                                SINT64 &contextID ) ;
-   } ;
-
    class rtnCoordCMDInvalidateCache : public rtnCoordCommand
-   {
-   public:
-      virtual INT32 execute( MsgHeader *pMsg,
-                             pmdEDUCB *cb,
-                             INT64 &contextID,
-                             rtnContextBuf *buf ) ;
-   } ;
-
-   class rtnCoordCMDListLobs : public rtnCoordCommand
    {
    public:
       virtual INT32 execute( MsgHeader *pMsg,

@@ -72,7 +72,8 @@ namespace engine
    {
    protected:
       virtual INT32 _preProcess( rtnQueryOptions &queryOpt,
-                                 string &clName ) ;
+                                 string &clName,
+                                 BSONObj &outSelector ) ;
    } ;
 
 }

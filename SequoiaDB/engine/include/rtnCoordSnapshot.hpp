@@ -76,21 +76,41 @@ namespace engine
    } ;
 
    /*
-      rtnCoordSnapshotTransCur define
+      rtnCoordSnapshotTransCurIntr define
    */
-   class rtnCoordSnapshotTransCur : public rtnCoordCMDSnapshotIntrBase
+   class rtnCoordSnapshotTransCurIntr : public rtnCoordCMDSnapshotIntrBase
    {
    private:
       virtual void    _preSet( pmdEDUCB *cb, rtnCoordCtrlParam &ctrlParam ) ;
    } ;
 
    /*
-      rtnCoordSnapshotTrans define
+      rtnCoordSnapshotTransIntr define
    */
-   class rtnCoordSnapshotTrans : public rtnCoordCMDSnapshotIntrBase
+   class rtnCoordSnapshotTransIntr : public rtnCoordCMDSnapshotIntrBase
    {
    private:
       virtual void    _preSet( pmdEDUCB *cb, rtnCoordCtrlParam &ctrlParam ) ;
+   } ;
+
+   /*
+      rtnCoordSnapshotTransCur define
+   */
+   class rtnCoordSnapshotTransCur : public rtnCoordCMDMonBase
+   {
+   private:
+      virtual const CHAR *getIntrCMDName() ;
+      virtual const CHAR *getInnerAggrContent() ;
+   } ;
+
+   /*
+      rtnCoordSnapshotTrans define
+   */
+   class rtnCoordSnapshotTrans : public rtnCoordCMDMonBase
+   {
+   private:
+      virtual const CHAR *getIntrCMDName() ;
+      virtual const CHAR *getInnerAggrContent() ;
    } ;
 
    /*
@@ -180,7 +200,8 @@ namespace engine
    {
    protected:
       virtual INT32 _preProcess( rtnQueryOptions &queryOpt,
-                                 string &clName ) ;
+                                 string &clName,
+                                 BSONObj &outSelector ) ;
    };
 
 }

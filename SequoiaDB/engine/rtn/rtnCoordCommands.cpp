@@ -1155,31 +1155,6 @@ namespace engine
       goto done ;
    }
 
-   FILTER_BSON_ID rtnCoordListBackup::_getGroupMatherIndex ()
-   {
-      return FILTER_ID_HINT ;
-   }
-
-   NODE_SEL_STY rtnCoordListBackup::_nodeSelWhenNoFilter ()
-   {
-      return NODE_SEL_ALL ;
-   }
-
-   BOOLEAN rtnCoordListBackup::_allowFailed ()
-   {
-      return TRUE ;
-   }
-
-   BOOLEAN rtnCoordListBackup::_useContext ()
-   {
-      return TRUE ;
-   }
-
-   UINT32 rtnCoordListBackup::_getMask() const
-   {
-      return RTN_CTRL_MASK_ALL ;
-   }
-
    FILTER_BSON_ID rtnCoordRemoveBackup::_getGroupMatherIndex ()
    {
       return FILTER_ID_MATCHER ;
@@ -1230,23 +1205,6 @@ namespace engine
       return ~RTN_CTRL_MASK_NODE_SELECT ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCMDLISTGRS_EXE, "rtnCoordCMDListGroups::execute" )
-   INT32 rtnCoordCMDListGroups::execute( MsgHeader *pMsg,
-                                         pmdEDUCB *cb,
-                                         INT64 &contextID,
-                                         rtnContextBuf *buf )
-   {
-      INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY ( SDB_RTNCOCMDLISTGRS_EXE ) ;
-      rc = queryOnCatalog ( pMsg,
-                            MSG_CAT_QUERY_DATA_GRP_REQ,
-                            cb,
-                            contextID,
-                            buf ) ;
-      PD_TRACE_EXITRC ( SDB_RTNCOCMDLISTGRS_EXE, rc ) ;
-      return rc ;
-   }
-
    /*
       rtnCoordCMDMonIntrBase implement
    */
@@ -1261,7 +1219,6 @@ namespace engine
       rtnContextCoord *pContext = NULL ;
 
       contextID = -1 ;
-      ctrlParam._role[ SDB_ROLE_CATALOG ] = 0 ;
 
       _preSet( cb, ctrlParam ) ;
 
@@ -1298,6 +1255,12 @@ namespace engine
       return rc ;
    error:
       goto done ;
+   }
+
+   void rtnCoordCMDMonIntrBase::_preSet( pmdEDUCB *cb,
+                                         rtnCoordCtrlParam &ctrlParam )
+   {
+      ctrlParam._role[ SDB_ROLE_CATALOG ] = 0 ;
    }
 
    /*
@@ -1503,6 +1466,7 @@ namespace engine
 
       contextID                        = -1 ;
       string clName ;
+      BSONObj outSelector ;
       rtnQueryOptions queryOpt ;
 
       // parse msg
@@ -1513,7 +1477,7 @@ namespace engine
          goto error ;
       }
 
-      rc = _preProcess( queryOpt, clName ) ;
+      rc = _preProcess( queryOpt, clName, outSelector ) ;
       if ( rc )
       {
          PD_LOG( PDERROR, "PreProcess[%s] failed, rc: %d",
@@ -1535,6 +1499,18 @@ namespace engine
          goto error ;
       }
 
+      if ( !outSelector.isEmpty() && -1 != contextID )
+      {
+         SDB_RTNCB *rtnCB = pmdGetKRCB()->getRTNCB() ;
+         rtnContext *pContext = rtnCB->contextFind( contextID ) ;
+         if ( pContext )
+         {
+            /// re-load pattern
+            pContext->getSelector().clear() ;
+            pContext->getSelector().loadPattern( outSelector ) ;
+         }
+      }
+
    done:
       PD_TRACE_EXITRC ( SDB_RTNCOCMDQUBASE_EXE, rc ) ;
       return rc ;
@@ -1545,39 +1521,6 @@ namespace engine
          contextID = -1 ;
       }
       goto done ;
-   }
-
-   INT32 rtnCoordCMDListCollectionSpace::_preProcess( rtnQueryOptions &queryOpt,
-                                                      string &clName )
-   {
-      BSONObjBuilder builder ;
-      clName = CAT_COLLECTION_SPACE_COLLECTION ;
-      builder.appendNull( CAT_COLLECTION_SPACE_NAME ) ;
-      queryOpt._selector = builder.obj() ;
-      return SDB_OK ;
-   }
-
-   INT32 rtnCoordCMDListCollection::_preProcess( rtnQueryOptions &queryOpt,
-                                                 string & clName )
-   {
-      BSONObjBuilder builder ;
-      clName = CAT_COLLECTION_INFO_COLLECTION ;
-      builder.appendNull( CAT_COLLECTION_NAME ) ;
-      queryOpt._selector = builder.obj() ;
-      return SDB_OK ;
-   }
-
-   INT32 rtnCoordCMDListUser::_preProcess( rtnQueryOptions &queryOpt,
-                                           string & clName )
-   {
-      BSONObjBuilder builder ;
-      clName = AUTH_USR_COLLECTION ;
-      if ( queryOpt._selector.isEmpty() )
-      {
-         builder.appendNull( FIELD_NAME_USER ) ;
-      }
-      queryOpt._selector = builder.obj() ;
-      return SDB_OK ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCMDTESTCS_EXE, "rtnCoordCMDTestCollectionSpace::execute" )
@@ -2055,13 +1998,6 @@ namespace engine
       return rc ;
    error:
       goto done ;
-   }
-
-   INT32 rtnCoordCmdListTask::_preProcess( rtnQueryOptions &queryOpt,
-                                           string &clName )
-   {
-      clName = CAT_TASK_INFO_COLLECTION ;
-      return SDB_OK ;
    }
 
    INT32 rtnCoordCmdCancelTask::execute( MsgHeader *pMsg,
@@ -2764,13 +2700,6 @@ namespace engine
       goto done ;
    }
 
-   INT32 rtnCoordCMDListProcedures::_preProcess( rtnQueryOptions &queryOpt,
-                                                 string &clName )
-   {
-      clName = CAT_PROCEDURES_COLLECTION ;
-      return SDB_OK ;
-   }
-
    //PD_TRACE_DECLARE_FUNCTION( SDB_RTNCOCMDSETSESSATTR_EXE, "rtnCoordCMDSetSessionAttr::execute" )
    INT32 rtnCoordCMDSetSessionAttr::execute( MsgHeader *pMsg,
                                              pmdEDUCB *cb,
@@ -2851,199 +2780,6 @@ namespace engine
       return SDB_OK ;
    }
 
-   INT32 rtnCoordCMDListDomains::_preProcess( rtnQueryOptions &queryOpt,
-                                              string &clName )
-   {
-      clName = CAT_DOMAIN_COLLECTION ;
-      return SDB_OK ;
-   }
-
-   INT32 rtnCoordCMDListCSInDomain::_preProcess( rtnQueryOptions &queryOpt,
-                                                 string &clName )
-   {
-      clName = CAT_COLLECTION_SPACE_COLLECTION ;
-      return SDB_OK ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION( CMD_RTNCOCMDLISTCLINDOMAIN_EXECUTE, "rtnCoordCMDListCLInDomain::execute" )
-   INT32 rtnCoordCMDListCLInDomain::execute( MsgHeader *pMsg,
-                                             pmdEDUCB *cb,
-                                             INT64 &contextID,
-                                             rtnContextBuf *buf )
-   {
-      INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY( CMD_RTNCOCMDLISTCLINDOMAIN_EXECUTE ) ;
-      BSONObj conObj ;
-      BSONObj selObj ;
-      BSONObj dummy ;
-      CHAR *query = NULL ;
-      CHAR *selector = NULL ;
-      BSONElement domain ;
-      CHAR *msgBuf = NULL ;
-      rtnQueryOptions queryOptions ;
-
-      vector<BSONObj> replyFromCata ;
-
-      contextID = -1 ;
-
-      rc = msgExtractQuery( (CHAR*)pMsg, NULL, NULL,
-                            NULL, NULL, &query,
-                            &selector, NULL, NULL );
-      if ( rc != SDB_OK )
-      {
-         PD_LOG ( PDERROR, "failed to parse query request(rc=%d)", rc ) ;
-         goto error ;
-      }
-
-      try
-      {
-         conObj = BSONObj( query ) ;
-         selObj = BSONObj( selector ) ;
-      }
-      catch ( std::exception &e )
-      {
-         PD_LOG( PDERROR, "unexpected err happened:%s", e.what() ) ;
-         rc = SDB_SYS ;
-         goto error ;
-      }
-
-      domain = conObj.getField( FIELD_NAME_DOMAIN ) ;
-      if ( String != domain.type() )
-      {
-         PD_LOG( PDERROR, "invalid domain field in object:%s",
-                  conObj.toString().c_str() ) ;
-         rc = SDB_INVALIDARG ;
-         goto error ;
-      }
-
-      queryOptions._query = BSON( CAT_DOMAIN_NAME << domain.valuestr() ) ;
-      queryOptions._fullName = CAT_COLLECTION_SPACE_COLLECTION ;
-
-      rc = queryOnCataAndPushToVec( queryOptions, cb, replyFromCata ) ; 
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "failed to execute query on catalog:%d", rc ) ;
-         goto error ;
-      }
-
-      {
-         rc = _rebuildListResult( replyFromCata, cb, contextID ) ;
-         if ( SDB_OK != rc )
-         {
-            PD_LOG( PDERROR, "failed to rebuild list result:%d", rc ) ;
-            goto error ;
-         }
-      }
-
-   done:
-      if ( NULL != msgBuf )
-      {
-         SDB_OSS_FREE( msgBuf ) ;
-         msgBuf = NULL ;
-      }
-      PD_TRACE_EXITRC( CMD_RTNCOCMDLISTCLINDOMAIN_EXECUTE, rc )  ;
-      return rc ;
-   error:
-      if ( contextID >= 0 )
-      {
-         pmdGetKRCB()->getRTNCB()->contextDelete( contextID, cb ) ;
-         contextID = -1 ;
-      }
-      goto done ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION( CMD_RTNCOCMDLISTCLINDOMAIN__REBUILDRESULT, "rtnCoordCMDListCLInDomain::_rebuildListResult" )
-   INT32 rtnCoordCMDListCLInDomain::_rebuildListResult(
-                                    const vector<BSONObj> &infoFromCata,
-                                    pmdEDUCB *cb,                       
-                                    SINT64 &contextID )
-   {
-      INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY( CMD_RTNCOCMDLISTCLINDOMAIN__REBUILDRESULT ) ;
-      rtnContext *context = NULL ;
-      SDB_RTNCB *rtnCB = sdbGetRTNCB() ;
-
-      rc = rtnCB->contextNew( RTN_CONTEXT_DUMP,
-                              &context,
-                              contextID,
-                              cb ) ;
-      if  ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "failed to create new context:%d", rc ) ;
-         goto error ;
-      }
-
-      rc = (( rtnContextDump * )context)->open( BSONObj(), BSONObj() ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "failed to open context:%d", rc ) ;
-         goto error ;
-      }
-
-      for ( vector<BSONObj>::const_iterator itr = infoFromCata.begin();
-            itr != infoFromCata.end();
-            itr++ )
-      {
-         BSONElement cl ;
-         BSONElement cs = itr->getField( FIELD_NAME_NAME ) ;
-         if ( String != cs.type() )
-         {
-            PD_LOG( PDERROR, "invalid collection space info:%s",
-                    itr->toString().c_str() ) ;
-            rc = SDB_SYS ;
-            goto error ;
-         }
-
-         cl = itr->getField( FIELD_NAME_COLLECTION ) ;
-         if ( Array != cl.type() )
-         {
-            PD_LOG( PDERROR, "invalid collection space info:%s",
-                    itr->toString().c_str() ) ;
-            rc = SDB_SYS ;
-            goto error ;
-         }
-
-         {
-         BSONObjIterator clItr( cl.embeddedObject() ) ;
-         while ( clItr.more() )
-         {
-            stringstream ss ;
-            BSONElement clName ;
-            BSONElement oneCl = clItr.next() ;
-            if ( Object != oneCl.type() )
-            {
-               PD_LOG( PDERROR, "invalid collection space info:%s",
-                    itr->toString().c_str() ) ;
-               rc = SDB_SYS ;
-               goto error ;
-            }
-
-            clName = oneCl.embeddedObject().getField( FIELD_NAME_NAME ) ;
-            if ( String != clName.type() )
-            {
-               PD_LOG( PDERROR, "invalid collection space info:%s",
-                    itr->toString().c_str() ) ;
-               rc = SDB_SYS ;
-               goto error ;
-            }
-
-            ss << cs.valuestr() << "." << clName.valuestr() ;
-            context->append( BSON( FIELD_NAME_NAME << ss.str() ) ) ;
-         }
-         }
-      }
-   done:
-      PD_TRACE_EXITRC( CMD_RTNCOCMDLISTCLINDOMAIN__REBUILDRESULT, rc ) ;
-      return rc ;
-   error:
-      if ( -1 != contextID )
-      {
-         rtnCB->contextDelete ( contextID, cb ) ;
-         contextID = -1 ;
-      }
-      goto done ;
-   }
-
    // PD_TRACE_DECLARE_FUNCTION( CMD_RTNCOCMDINVALIDATECACHE_EXEC, "rtnCoordCMDInvalidateCache::execute" )
    INT32 rtnCoordCMDInvalidateCache::execute( MsgHeader *pMsg,
                                               pmdEDUCB *cb,
@@ -3084,77 +2820,6 @@ namespace engine
       PD_TRACE_EXITRC( CMD_RTNCOCMDINVALIDATECACHE_EXEC, rc ) ;
       return rc ;
    error:
-      goto done ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION( CMD_RTNCOCMDLISTLOBS_EXEC, "rtnCoordListLobs::execute" )   
-   INT32 rtnCoordCMDListLobs::execute( MsgHeader *pMsg,
-                                       pmdEDUCB *cb,
-                                       INT64 &contextID,
-                                       rtnContextBuf *buf )
-   {
-      INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY( CMD_RTNCOCMDLISTLOBS_EXEC ) ;
-
-      CHAR *pQuery = NULL ;
-      BSONObj query ;
-
-      rtnContextCoord *context = NULL ;
-      rtnCoordQuery queryOpr( isReadonly() ) ;
-      rtnQueryConf queryConf ;
-      rtnSendOptions sendOpt ;
-
-      SDB_RTNCB *pRtncb = pmdGetKRCB()->getRTNCB() ;
-      CoordCB *pCoordcb = pmdGetKRCB()->getCoordCB() ;
-      netMultiRouteAgent *pRouteAgent = pCoordcb->getRouteAgent() ;
-
-      contextID = -1 ;
-
-      rc = msgExtractQuery( (CHAR*)pMsg, NULL, NULL,
-                            NULL, NULL, &pQuery,
-                            NULL, NULL, NULL ) ;
-
-      PD_RC_CHECK( rc, PDERROR, "Snapshot failed, failed to parse query "
-                   "request(rc=%d)", rc ) ;
-
-      try
-      {
-         query = BSONObj( pQuery ) ;
-         BSONElement ele = query.getField( FIELD_NAME_COLLECTION ) ;
-         if ( String != ele.type() )
-         {
-            PD_LOG( PDERROR, "invalid obj of list lob:%s",
-                    query.toString( FALSE, TRUE ).c_str() ) ;
-            rc = SDB_INVALIDARG ;
-            goto error ;
-         }
-         queryConf._realCLName = ele.valuestr() ;
-      }
-      catch ( std::exception &e )
-      {
-         PD_LOG( PDERROR, "unexpected err happened:%s", e.what() ) ;
-         rc = SDB_SYS ;
-         goto error ;
-      }
-
-      queryConf._openEmptyContext = TRUE ;
-      queryConf._allCataGroups = TRUE ;
-      rc = queryOpr.queryOrDoOnCL( pMsg, pRouteAgent, cb, &context,
-                                   sendOpt, &queryConf ) ;
-      PD_RC_CHECK( rc, PDERROR, "List lobs[%s] on groups failed, rc: %d",
-                   queryConf._realCLName.c_str(), rc ) ;
-
-      // set context id
-      contextID = context->contextID() ;
-
-   done:
-      PD_TRACE_EXITRC( CMD_RTNCOCMDLISTLOBS_EXEC, rc ) ;
-      return rc ;
-   error:
-      if ( context )
-      {
-         pRtncb->contextDelete( context->contextID(), cb ) ;
-      }
       goto done ;
    }
 

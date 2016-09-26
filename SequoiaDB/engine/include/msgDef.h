@@ -491,6 +491,10 @@
 #define CMD_NAME_LIST_BACKUP_INTR            "LIST_BACKUP"
 #define CMD_NAME_LIST_TRANS_INTR             "LIST_TRANS"
 #define CMD_NAME_LIST_TRANSCUR_INTR          "LIST_TRANS_CUR"
+#define CMD_NAME_LIST_GROUP_INTR             "LIST_GROUP"
+#define CMD_NAME_LIST_USER_INTR              "LIST_USER"
+#define CMD_NAME_LIST_TASK_INTR              "LIST_TASK"
+#define CMD_NAME_LIST_DOMAIN_INTR            "LIST_DOMAIN"
 
 #define CMD_VALUE_NAME_CREATE                "create image"
 #define CMD_VALUE_NAME_REMOVE                "remove image"

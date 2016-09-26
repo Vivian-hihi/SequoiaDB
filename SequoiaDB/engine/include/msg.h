@@ -89,9 +89,6 @@ enum MSG_TYPE
    //catalogue msg
    //(MainController:3001~3099, catalogueManager:3100~3199, nodeManager:3200~3299)
    MSG_CAT_BEGIN                       = 3000,
-   MSG_CAT_QUERY_DATA_GRP_REQ          = 3001,
-   MSG_CAT_QUERY_DATA_GRP_RSP          = MAKE_REPLY_TYPE(MSG_CAT_QUERY_DATA_GRP_REQ),
-
    MSG_CAT_CATALOGUE_BEGIN             = 3100,
 
    // catalog query is searching for CAT_COLLECTION_INFO_COLLECTION collection

@@ -44,6 +44,7 @@
 #include "rtnCoordTransaction.hpp"
 #include "rtnCoordDataCommands.hpp"
 #include "rtnCommandList.hpp"
+#include "rtnCoordList.hpp"
 #include "pdTrace.hpp"
 #include "qgmTrace.hpp"
 #include <sstream>

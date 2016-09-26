@@ -208,7 +208,8 @@ namespace engine
       rtnCoordGetDCInfo implement
    */
    INT32 rtnCoordGetDCInfo::_preProcess( rtnQueryOptions &queryOpt,
-                                         string &clName )
+                                         string &clName,
+                                         BSONObj &outSelector )
    {
       clName = CAT_SYSDCBASE_COLLECTION_NAME ;
       queryOpt._query = BSON( FIELD_NAME_TYPE << CAT_BASE_TYPE_GLOBAL_STR ) ;

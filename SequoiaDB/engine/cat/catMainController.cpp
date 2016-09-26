@@ -857,12 +857,6 @@ namespace engine
       return rc ;
    }
 
-   INT32 catMainController::_processQueryDataGrp( const NET_HANDLE &handle,
-                                                  MsgHeader *pMsg )
-   {
-      return _processQueryRequest ( handle, pMsg, CAT_NODE_INFO_COLLECTION ) ;
-   }
-
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CATMAINCT_QUERYREQUEST, "catMainController::_processQueryRequest" )
    INT32 catMainController::_processQueryRequest ( const NET_HANDLE &handle,
                                                    MsgHeader *pMsg,
@@ -1099,11 +1093,6 @@ namespace engine
       case MSG_BS_DISCONNECT :
          {
             rc = _processDisconnectMsg( handle, pMsg ) ;
-            break ;
-         }
-      case MSG_CAT_QUERY_DATA_GRP_REQ :
-         {
-            rc = _processQueryDataGrp( handle, pMsg ) ;
             break ;
          }
       case MSG_AUTH_VERIFY_REQ :

@@ -1273,8 +1273,9 @@ namespace engine
                            BSON( "$ne" << SDB_ROLE_COORD ) ) ;
 
    retry:
-      rc = _queryOnImageCatalog( cb, &pRecvMsg, MSG_CAT_QUERY_DATA_GRP_REQ,
-                                 "CAT", cond, hint, hint, hint, -1, 0,
+      rc = _queryOnImageCatalog( cb, &pRecvMsg, MSG_BS_QUERY_REQ,
+                                 CAT_NODE_INFO_COLLECTION, cond,
+                                 hint, hint, hint, -1, 0,
                                  DC_UPDATE_TIMEOUT, TRUE ) ;
       if ( rc )
       {
