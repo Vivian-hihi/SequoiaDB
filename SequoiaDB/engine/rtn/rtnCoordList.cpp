@@ -303,7 +303,7 @@ namespace engine
 
       rc = msgExtractQuery( (CHAR*)pMsg, NULL, NULL,
                             NULL, NULL, &query,
-                            &selector, NULL, NULL );
+                            NULL, NULL, NULL );
       if ( rc != SDB_OK )
       {
          PD_LOG ( PDERROR, "failed to parse query request(rc=%d)", rc ) ;
