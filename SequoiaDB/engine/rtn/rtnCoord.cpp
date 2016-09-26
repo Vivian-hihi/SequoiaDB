@@ -36,6 +36,8 @@
 
 #include "rtnCoord.hpp"
 #include "rtnCoordCommands.hpp"
+#include "rtnCoordSnapshot.hpp"
+#include "rtnCoordList.hpp"
 #include "rtnCoordDataCommands.hpp"
 #include "rtnCoordNodeCommands.hpp"
 #include "rtnCoordDCCommands.hpp"
@@ -92,9 +94,9 @@ namespace engine
    RTN_COORD_CMD_ADD( COORD_CMD_SNAPSHOTCLINTR, rtnCoordCMDSnapshotIntrBase, TRUE ) ;
    RTN_COORD_CMD_ADD( COORD_CMD_SNAPSHOTCSINTR, rtnCoordCMDSnapshotIntrBase, TRUE ) ;
    RTN_COORD_CMD_ADD( COORD_CMD_SNAPSHOTCTXINTR, rtnCoordCMDSnapshotIntrBase, TRUE ) ;
-   RTN_COORD_CMD_ADD( COORD_CMD_SNAPSHOTCTXCURINTR, rtnCoordCMDSnapshotIntrBase, TRUE ) ;
+   RTN_COORD_CMD_ADD( COORD_CMD_SNAPSHOTCTXCURINTR, rtnCoordCMDSnapshotCurIntrBase, TRUE ) ;
    RTN_COORD_CMD_ADD( COORD_CMD_SNAPSHOTSESSINTR, rtnCoordCMDSnapshotIntrBase, TRUE ) ;
-   RTN_COORD_CMD_ADD( COORD_CMD_SNAPSHOTSESSCURINTR, rtnCoordCMDSnapshotIntrBase, TRUE ) ;
+   RTN_COORD_CMD_ADD( COORD_CMD_SNAPSHOTSESSCURINTR, rtnCoordCMDSnapshotCurIntrBase, TRUE ) ;
    RTN_COORD_CMD_ADD( COORD_CMD_SNAPSHOTCATAINTR, rtnCoordCMDSnapshotCata, TRUE ) ;
    RTN_COORD_CMD_ADD( COORD_CMD_SNAPSHOTTRANSCUR, rtnCoordSnapshotTransCur, TRUE ) ;
    RTN_COORD_CMD_ADD( COORD_CMD_SNAPSHOTTRANS, rtnCoordSnapshotTrans, TRUE ) ;

@@ -150,9 +150,8 @@ namespace engine
                rcTmp = pContext->addSubContext( pReply, takeOver ) ;
                if ( rcTmp )
                {
-                  PD_LOG( PDERROR,
-                          "Failed to add sub data[node: %s, context: %lld] to "
-                          "context[%s], rc: %d",
+                  PD_LOG( PDERROR, "Add sub data[node: %s, context: %lld] to "
+                          "context[%s] failed, rc: %d",
                           routeID2String( nodeID ).c_str(), pReply->contextID,
                           pContext->toString().c_str(), rcTmp ) ;
                   rc = rcTmp ;
@@ -166,7 +165,7 @@ namespace engine
          else
          {
             PD_LOG( PDWARNING,
-                    "Error reply flag in data[node: %s, op %d], rc: %d",
+                    "Error reply flag in data[node: %s, opCode: %d], rc: %d",
                     routeID2String( nodeID ).c_str(),
                     pReply->header.opCode, pReply->flags ) ;
          }
@@ -184,9 +183,6 @@ namespace engine
 
    INT32 rtnCoordCommand::_processNodesReply( REPLY_QUE &replyQue,
                                               ROUTE_RC_MAP &faileds,
-                                              ROUTE_SET &retriedNodes,
-                                              ROUTE_SET &needRetryNodes,
-                                              rtnCoordCtrlParam &ctrlParam,
                                               rtnContextCoord *pContext,
                                               SET_RC *pIgnoreRC,
                                               ROUTE_SET *pSucNodes )
@@ -234,13 +230,10 @@ namespace engine
          }
          else
          {
-            if ( !_getRetryNodes(retriedNodes, needRetryNodes, ctrlParam, pReply ) )
-            {
             PD_LOG( ( pContext ? PDINFO : PDWARNING ),
-                      "Failed to process reply[node: %s, flag: %d]",
-                      routeID2String( nodeID ).c_str(), pReply->flags ) ;
+                    "Failed to process reply[node: %s, flag: %d]",
+                    routeID2String( nodeID ).c_str(), pReply->flags ) ;
             faileds[ nodeID.value ] = pReply->flags ;
-         }
          }
 
          if ( !takeOver )
@@ -251,23 +244,6 @@ namespace engine
       }
 
       return rc ;
-   }
-
-   BOOLEAN rtnCoordCommand::_getRetryNodes( ROUTE_SET &retriedNodes,
-                                          ROUTE_SET &needRetryNodes,
-                                          rtnCoordCtrlParam &ctrlParam,
-                                          MsgOpReply *pReply )
-   {
-      // Must send to primary but replyed not primary!
-      if ( SDB_CLS_NOT_PRIMARY == pReply->flags
-           && pReply->startFrom != 0
-           && NODE_SEL_PRIMARY == ctrlParam._emptyFilterSel
-           && retriedNodes.find( pReply->startFrom ) == retriedNodes.end() )
-      {
-         needRetryNodes.insert( pReply->startFrom ) ;
-         return TRUE ;
-      }
-      return FALSE ;
    }
 
    INT32 rtnCoordCommand::_buildFailedNodeReply( ROUTE_RC_MAP &failedNodes,
@@ -300,8 +276,7 @@ namespace engine
          rc = pCoordcb->getGroupInfo( routeID.columns.groupID, groupInfo ) ;
          if ( rc )
          {
-            PD_LOG( PDWARNING,
-                    "Failed to get group[%d] info, rc: %d",
+            PD_LOG( PDWARNING, "Failed to get group[%d] info, rc: %d",
                     routeID.columns.groupID, rc ) ;
             errObj = BSON( FIELD_NAME_NODEID <<
                            (INT32)routeID.columns.nodeID <<
@@ -316,8 +291,7 @@ namespace engine
                                          strServiceName ) ;
             if ( rc )
             {
-               PD_LOG( PDWARNING,
-                       "Failed to get node[%d] info failed, rc: %d",
+               PD_LOG( PDWARNING, "Failed to get node[%d] info failed, rc: %d",
                        routeID.columns.nodeID, rc ) ;
                errObj = BSON( FIELD_NAME_NODEID <<
                               (INT32)routeID.columns.nodeID <<
@@ -620,12 +594,9 @@ namespace engine
       rtnSendOptions sendOpt ;
 
       queryConf._allCataGroups = TRUE ;
+      queryConf._realCLName = pCLName ;
       queryConf._updateAndGetCata = firstUpdateCata ;
       queryConf._openEmptyContext = TRUE ;
-      if ( pCLName )
-      {
-         queryConf._realCLName = pCLName ;
-      }
 
       sendOpt._primary = TRUE ;
       sendOpt._pIgnoreRC = pIgnoreRC ;
@@ -838,7 +809,6 @@ namespace engine
                                           pmdEDUCB *cb,
                                           ROUTE_SET &nodes,
                                           ROUTE_RC_MAP &faileds,
-                                          rtnCoordCtrlParam &ctrlParam,
                                           ROUTE_SET *pSucNodes,
                                           SET_RC *pIgnoreRC,
                                           rtnContextCoord *pContext )
@@ -850,20 +820,14 @@ namespace engine
       netMultiRouteAgent *pAgent    = pCoordCB->getRouteAgent() ;
       REQUESTID_MAP sendNodes ;
       REPLY_QUE replyQue ;
-      ROUTE_SET retriedNodes ;
-      ROUTE_SET needRetryNodes  = nodes ;
 
       /// clear msg
       pMsg->TID = cb->getTID() ;
       pMsg->routeID.value = MSG_INVALID_ROUTEID ;
 
-   retry:
       /// send msg
-      rtnCoordSendRequestToNodes( (void *)pMsg, needRetryNodes, pAgent, cb,
+      rtnCoordSendRequestToNodes( (void *)pMsg, nodes, pAgent, cb,
                                   sendNodes, faileds ) ;
-      retriedNodes.insert( needRetryNodes.begin(), needRetryNodes.end() ) ;
-      needRetryNodes.clear() ;
-
       /// recv reply
       rcTmp = rtnCoordGetReply( cb, sendNodes, replyQue,
                                 MAKE_REPLY_TYPE(pMsg->opCode),
@@ -871,8 +835,7 @@ namespace engine
       rc = rc ? rc : rcTmp ;
 
       /// process reply
-      rcTmp = _processNodesReply( replyQue, faileds, retriedNodes,
-                                  needRetryNodes, ctrlParam, pContext,
+      rcTmp = _processNodesReply( replyQue, faileds, pContext,
                                   pIgnoreRC, pSucNodes ) ;
       rc = rc ? rc : rcTmp ;
 
@@ -880,10 +843,6 @@ namespace engine
       {
          rtnClearReplyQue( &replyQue ) ;
          rtnCoordClearRequest( cb, sendNodes ) ;
-      }
-      else if ( needRetryNodes.size() != 0 )
-      {
-         goto retry ;
       }
 
       return rc ;
@@ -965,6 +924,22 @@ namespace engine
          {
             hasNodeOrGroupFilter = TRUE ;
          }
+         else if ( ctrlParam._useSpecialGrp )
+         {
+            CoordGroupList::iterator itGrp = expectGrpLst.begin() ;
+            while( itGrp != expectGrpLst.end() )
+            {
+               if ( ctrlParam._specialGrps.find( itGrp->first ) ==
+                    ctrlParam._specialGrps.end() )
+               {
+                 itGrp = expectGrpLst.erase( itGrp ) ;
+               }
+               else
+               {
+                  ++itGrp ;
+               }
+            }
+         }
          *pFilterObj = newFilterObj ;
       }
 
@@ -975,22 +950,30 @@ namespace engine
                                   expectGrpLst : allGroupLst ) : groupLst ),
                                   sendNodes, &newFilterObj ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to get nodes, rc: %d", rc ) ;
-      if ( sendNodes.size() == 0 )
+      if ( sendNodes.size() == 0 && !hasParseRetry )
       {
          PD_LOG( PDWARNING, "Node specfic nodes[%s]",
                  pFilterObj->toString().c_str() ) ;
          rc = SDB_CLS_NODE_NOT_EXIST ;
          goto error ;
       }
-      if ( pFilterObj->objdata() != newFilterObj.objdata() )
+      else if ( pFilterObj->objdata() != newFilterObj.objdata() )
       {
          hasNodeOrGroupFilter = TRUE ;
       }
-      else if ( !hasParseRetry && 0 == groupLst.size() &&
-                allGroupLst.size() != expectGrpLst.size() )
+      /// not use specail group
+      else if ( 0 == groupLst.size() )
       {
-         hasParseRetry = TRUE ;
-         goto parseNode ;
+         if ( ctrlParam._useSpecialNode )
+         {
+            sendNodes = ctrlParam._specialNodes ;
+         }
+         else if ( !hasParseRetry &&
+                   allGroupLst.size() != expectGrpLst.size() )
+         {
+            hasParseRetry = TRUE ;
+            goto parseNode ;
+         }
       }
       *pFilterObj = newFilterObj ;
 
@@ -1083,7 +1066,7 @@ namespace engine
 
       /// 8. execute
       rc = executeOnNodes( (MsgHeader*)pNewMsg, cb, sendNodes,
-                           faileds, ctrlParam, pSucNodes, pIgnoreRC,
+                           faileds, pSucNodes, pIgnoreRC,
                            pTmpContext ) ;
       PD_RC_CHECK( rc, PDERROR, "Execute on nodes failed, rc: %d", rc ) ;
 
@@ -1264,10 +1247,13 @@ namespace engine
       return rc ;
    }
 
-   INT32 rtnCoordCMDSnapshotIntrBase::execute( MsgHeader *pMsg,
-                                               pmdEDUCB *cb,
-                                               INT64 &contextID,
-                                               rtnContextBuf *buf )
+   /*
+      rtnCoordCMDMonIntrBase implement
+   */
+   INT32 rtnCoordCMDMonIntrBase::execute( MsgHeader *pMsg,
+                                          pmdEDUCB *cb,
+                                          INT64 &contextID,
+                                          rtnContextBuf *buf )
    {
       INT32 rc = SDB_OK ;
       rtnCoordCtrlParam ctrlParam ;
@@ -1277,7 +1263,9 @@ namespace engine
       contextID = -1 ;
       ctrlParam._role[ SDB_ROLE_CATALOG ] = 0 ;
 
-      rc = executeOnNodes( pMsg, cb, ctrlParam, RTN_CTRL_MASK_ALL,
+      _preSet( cb, ctrlParam ) ;
+
+      rc = executeOnNodes( pMsg, cb, ctrlParam, _getControlMask(),
                            faileds, &pContext, FALSE, NULL, NULL ) ;
       if ( rc )
       {
@@ -1312,37 +1300,196 @@ namespace engine
       goto done ;
    }
 
-   // snapshot collection operation. Basically this operation from coord does
-   // not broadcast to data node. Instead it works like ListGroups, which sends
-   // request to catalog
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCMDSSCLS_EXE, "rtnCoordCMDSnapshotCollections::execute" )
-   INT32 rtnCoordCMDSnapshotCollectionsTmp::execute( MsgHeader *pMsg,
-                                                     pmdEDUCB *cb,
-                                                     INT64 &contextID,
-                                                     rtnContextBuf *buf )
+   /*
+      rtnCoordCMDMonCurIntrBase implement
+   */
+   void rtnCoordCMDMonCurIntrBase::_preSet( pmdEDUCB *cb,
+                                            rtnCoordCtrlParam &ctrlParam )
    {
-      INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY ( SDB_RTNCOCMDSSCLS_EXE ) ;
-      rc = queryOnCatalog ( pMsg,
-                            MSG_CAT_QUERY_COLLECTIONS_REQ,
-                            cb, contextID, buf ) ;
-      PD_TRACE_EXITRC ( SDB_RTNCOCMDSSCLS_EXE, rc ) ;
-      return rc ;
+      CoordSession *pSession = cb->getCoordSession() ;
+      ctrlParam._useSpecialNode = TRUE ;
+      if ( pSession )
+      {
+         pSession->getAllSessionRoute( ctrlParam._specialNodes ) ;
+      }
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCMDSSCSS_EXE, "rtnCoordCMDSnapshotCollectionSpaces::execute" )
-   INT32 rtnCoordCMDSnapshotCollectionSpacesTmp::execute( MsgHeader *pMsg,
-                                                          pmdEDUCB *cb,
-                                                          INT64 &contextID,
-                                                          rtnContextBuf *buf )
+   /*
+      rtnCoordAggrCmdBase implement
+   */
+   INT32 rtnCoordAggrCmdBase::appendObjs( const CHAR *pInputBuffer,
+                                          CHAR *&pOutputBuffer,
+                                          INT32 &bufferSize,
+                                          INT32 &bufUsed,
+                                          INT32 &buffObjNum )
    {
       INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY ( SDB_RTNCOCMDSSCSS_EXE ) ;
-      rc = queryOnCatalog ( pMsg,
-                            MSG_CAT_QUERY_COLLECTIONSPACES_REQ,
-                            cb, contextID, buf ) ;
-      PD_TRACE_EXITRC ( SDB_RTNCOCMDSSCSS_EXE, rc ) ;
+      const CHAR *pEnd = pInputBuffer ;
+      string strline ;
+      BSONObj obj ;
+
+      while ( *pEnd != '\0' )
+      {
+         strline.clear() ;
+         while( *pEnd && *pEnd != '\r' && *pEnd != '\n' )
+         {
+            strline += *pEnd ;
+            ++pEnd ;
+         }
+
+         if ( strline.empty() )
+         {
+            ++pEnd ;
+            continue ;
+         }
+
+         rc = fromjson( strline, obj ) ;
+         PD_RC_CHECK( rc, PDERROR, "Parse string[%s] to json failed, rc: %d",
+                      strline.c_str(), rc ) ;
+
+         rc = appendObj( obj, pOutputBuffer, bufferSize,
+                         bufUsed, buffObjNum ) ;
+         PD_RC_CHECK( rc, PDERROR, "Append obj failed, rc: %d", rc ) ;
+      }
+
+   done:
       return rc ;
+   error:
+      goto done ;
+   }
+
+   /*
+      rtnCoordCMDMonBase implement
+   */
+   INT32 rtnCoordCMDMonBase::execute( MsgHeader *pMsg,
+                                      pmdEDUCB *cb,
+                                      INT64 &contextID,
+                                      rtnContextBuf *buf )
+   {
+      INT32 rc = SDB_OK ;
+      SDB_RTNCB *rtnCB = pmdGetKRCB()->getRTNCB() ;
+      CHAR *pOutBuff = NULL ;
+      INT32 buffSize = 0 ;
+      INT32 buffUsedSize = 0 ;
+      INT32 buffObjNum = 0 ;
+
+      rtnQueryOptions queryOption ;
+      rtnCoordCtrlParam ctrlParam ;
+      vector< BSONObj > vecUserAggr ;
+
+      contextID = -1 ;
+
+      rc = queryOption.fromQueryMsg( (CHAR*)pMsg ) ;
+      PD_RC_CHECK( rc, PDERROR, "Extract command failed, rc: %d", rc ) ;
+
+      rc = rtnCoordParseControlParam( queryOption._query, ctrlParam,
+                                      RTN_CTRL_MASK_RAWDATA ) ;
+      PD_RC_CHECK( rc, PDERROR, "Parse control param failed, rc: %d", rc ) ;
+
+      rc = parseUserAggr( queryOption._hint, vecUserAggr ) ;
+      PD_RC_CHECK( rc, PDERROR, "Parse user define aggr[%s] failed, rc: %d",
+                   queryOption._hint.toString().c_str(), rc ) ;
+
+      if ( !ctrlParam._rawData || vecUserAggr.size() > 0 )
+      {
+         /// add aggr operators
+         BSONObj nodeMatcher ;
+         BSONObj newMatcher ;
+         rc = parseMatcher( queryOption._query, nodeMatcher, newMatcher ) ;
+         PD_RC_CHECK( rc, PDERROR, "Parse matcher failed, rc: %d", rc ) ;
+
+         /// add nodes matcher to the botton
+         if ( !nodeMatcher.isEmpty() )
+         {
+            rc = appendObj( BSON( AGGR_MATCH_PARSER_NAME << nodeMatcher ),
+                            pOutBuff, buffSize, buffUsedSize,
+                            buffObjNum ) ;
+            PD_RC_CHECK( rc, PDERROR, "Append node matcher failed, rc: %d",
+                         rc ) ;
+         }
+
+         if ( !ctrlParam._rawData )
+         {
+            rc = appendObjs( getInnerAggrContent(), pOutBuff, buffSize,
+                             buffUsedSize, buffObjNum ) ;
+            PD_RC_CHECK( rc, PDERROR, "Append objs[%s] failed, rc: %d",
+                         getInnerAggrContent(), rc ) ;
+         }
+
+         /// add new matcher
+         if ( !newMatcher.isEmpty() )
+         {
+            rc = appendObj( BSON( AGGR_MATCH_PARSER_NAME << newMatcher ),
+                            pOutBuff, buffSize, buffUsedSize, buffObjNum ) ;
+            PD_RC_CHECK( rc, PDERROR, "Append new matcher failed, rc: %d",
+                         rc ) ;
+         }
+
+         /// order by
+         if ( !queryOption._orderBy.isEmpty() )
+         {
+            rc = appendObj( BSON( AGGR_SORT_PARSER_NAME <<
+                                  queryOption._orderBy ),
+                            pOutBuff, buffSize, buffUsedSize, buffObjNum ) ;
+            PD_RC_CHECK( rc, PDERROR, "Append order by failed, rc: %d",
+                         rc ) ;
+         }
+
+         for ( UINT32 i = 0 ; i < vecUserAggr.size() ; ++i )
+         {
+            rc = appendObj( vecUserAggr[ i ], pOutBuff, buffSize,
+                            buffUsedSize, buffObjNum ) ;
+            PD_RC_CHECK( rc, PDERROR, "Append user define aggr[%s] failed, "
+                         "rc: %d", vecUserAggr[ i ].toString().c_str(),
+                         rc ) ;
+         }
+
+         /// open context
+         rc = openContext( pOutBuff, buffObjNum, getIntrCMDName(),
+                           queryOption._selector, cb, contextID ) ;
+         PD_RC_CHECK( rc, PDERROR, "Open context failed, rc: %d", rc ) ;
+      }
+      else
+      {
+         CoordCB *pCoordCB = pmdGetKRCB()->getCoordCB() ;
+         rtnCoordProcesserFactory *pCmdFactor = NULL ;
+         rtnCoordCommand *pCmd = NULL ;
+         pCmdFactor = pCoordCB->getProcesserFactory() ;
+         pCmd = pCmdFactor->getCommandProcesser( getIntrCMDName() ) ;
+         if ( !pCmd )
+         {
+            PD_LOG( PDERROR, "Get command[%s] failed", getIntrCMDName() ) ;
+            rc = SDB_SYS ;
+            goto error ;
+         }
+         rc = pCmd->execute( pMsg, cb, contextID, buf ) ;
+         if ( rc )
+         {
+            goto error ;
+         }
+      }
+
+   done:
+      if ( pOutBuff )
+      {
+         SDB_OSS_FREE( pOutBuff ) ;
+         pOutBuff = NULL ;
+         buffSize = 0 ;
+         buffUsedSize = 0 ;
+      }
+      if ( -1 != contextID && !_useContext() )
+      {
+         rtnCB->contextDelete( contextID, cb ) ;
+         contextID = -1 ;
+      }
+      return rc ;
+   error:
+      if ( -1 != contextID )
+      {
+         rtnCB->contextDelete ( contextID, cb ) ;
+         contextID = -1 ;
+      }
+      goto done;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCMDQUBASE_EXE, "rtnCoordCMDQueryBase::execute" )
@@ -2448,265 +2595,6 @@ namespace engine
       goto done ;
    }
 
-   INT32 rtnCoordAggrCmdBase::appendObjs( const CHAR *pInputBuffer,
-                                          CHAR *&pOutputBuffer,
-                                          INT32 &bufferSize,
-                                          INT32 &bufUsed,
-                                          INT32 &buffObjNum )
-   {
-      INT32 rc = SDB_OK ;
-      const CHAR *pEnd = pInputBuffer ;
-      string strline ;
-      BSONObj obj ;
-
-      while ( *pEnd != '\0' )
-      {
-         strline.clear() ;
-         while( *pEnd && *pEnd != '\r' && *pEnd != '\n' )
-         {
-            strline += *pEnd ;
-            ++pEnd ;
-         }
-
-         if ( strline.empty() )
-         {
-            ++pEnd ;
-            continue ;
-         }
-
-         rc = fromjson( strline, obj ) ;
-         PD_RC_CHECK( rc, PDERROR, "Parse string[%s] to json failed, rc: %d",
-                      strline.c_str(), rc ) ;
-
-         rc = appendObj( obj, pOutputBuffer, bufferSize,
-                         bufUsed, buffObjNum ) ;
-         PD_RC_CHECK( rc, PDERROR, "Append obj failed, rc: %d", rc ) ;
-      }
-
-   done:
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   INT32 rtnCoordCMDSnapShotBase::execute( MsgHeader *pMsg,
-                                           pmdEDUCB *cb,
-                                           INT64 &contextID,
-                                           rtnContextBuf *buf )
-   {
-      INT32 rc = SDB_OK ;
-      SDB_RTNCB *rtnCB = pmdGetKRCB()->getRTNCB() ;
-      CHAR *pOutBuff = NULL ;
-      INT32 buffSize = 0 ;
-      INT32 buffUsedSize = 0 ;
-      INT32 buffObjNum = 0 ;
-
-      rtnQueryOptions queryOption ;
-      rtnCoordCtrlParam ctrlParam ;
-      vector< BSONObj > vecUserAggr ;
-
-      contextID = -1 ;
-
-      rc = queryOption.fromQueryMsg( (CHAR*)pMsg ) ;
-      PD_RC_CHECK( rc, PDERROR, "Extract command failed, rc: %d", rc ) ;
-
-      rc = rtnCoordParseControlParam( queryOption._query, ctrlParam,
-                                      RTN_CTRL_MASK_RAWDATA ) ;
-      PD_RC_CHECK( rc, PDERROR, "Parse control param failed, rc: %d", rc ) ;
-
-      rc = parseUserAggr( queryOption._hint, vecUserAggr ) ;
-      PD_RC_CHECK( rc, PDERROR, "Parse user define aggr[%s] failed, rc: %d",
-                   queryOption._hint.toString().c_str(), rc ) ;
-
-      if ( !ctrlParam._rawData || vecUserAggr.size() > 0 )
-      {
-         /// add aggr operators
-         BSONObj nodeMatcher ;
-         BSONObj newMatcher ;
-         rc = parseMatcher( queryOption._query, nodeMatcher, newMatcher ) ;
-         PD_RC_CHECK( rc, PDERROR, "Parse matcher failed, rc: %d", rc ) ;
-
-         /// add nodes matcher to the botton
-         if ( !nodeMatcher.isEmpty() )
-         {
-            rc = appendObj( BSON( AGGR_MATCH_PARSER_NAME << nodeMatcher ),
-                            pOutBuff, buffSize, buffUsedSize,
-                            buffObjNum ) ;
-            PD_RC_CHECK( rc, PDERROR, "Append node matcher failed, rc: %d",
-                         rc ) ;
-         }
-
-         if ( !ctrlParam._rawData )
-         {
-            rc = appendObjs( getInnerAggrContent(), pOutBuff, buffSize,
-                             buffUsedSize, buffObjNum ) ;
-            PD_RC_CHECK( rc, PDERROR, "Append objs[%s] failed, rc: %d",
-                         getInnerAggrContent(), rc ) ;
-         }
-
-         /// add new matcher
-         if ( !newMatcher.isEmpty() )
-         {
-            rc = appendObj( BSON( AGGR_MATCH_PARSER_NAME << newMatcher ),
-                            pOutBuff, buffSize, buffUsedSize, buffObjNum ) ;
-            PD_RC_CHECK( rc, PDERROR, "Append new matcher failed, rc: %d",
-                         rc ) ;
-         }
-
-         /// order by
-         if ( !queryOption._orderBy.isEmpty() )
-         {
-            rc = appendObj( BSON( AGGR_SORT_PARSER_NAME <<
-                                  queryOption._orderBy ),
-                            pOutBuff, buffSize, buffUsedSize, buffObjNum ) ;
-            PD_RC_CHECK( rc, PDERROR, "Append order by failed, rc: %d",
-                         rc ) ;
-         }
-
-         for ( UINT32 i = 0 ; i < vecUserAggr.size() ; ++i )
-         {
-            rc = appendObj( vecUserAggr[ i ], pOutBuff, buffSize,
-                            buffUsedSize, buffObjNum ) ;
-            PD_RC_CHECK( rc, PDERROR, "Append user define aggr[%s] failed, "
-                         "rc: %d", vecUserAggr[ i ].toString().c_str(),
-                         rc ) ;
-         }
-
-         /// open context
-         rc = openContext( pOutBuff, buffObjNum, getIntrCMDName(),
-                           queryOption._selector, cb, contextID ) ;
-         PD_RC_CHECK( rc, PDERROR, "Open context failed, rc: %d", rc ) ;
-      }
-      else
-      {
-         CoordCB *pCoordCB = pmdGetKRCB()->getCoordCB() ;
-         rtnCoordProcesserFactory *pCmdFactor = NULL ;
-         rtnCoordCommand *pCmd = NULL ;
-         pCmdFactor = pCoordCB->getProcesserFactory() ;
-         pCmd = pCmdFactor->getCommandProcesser( getIntrCMDName() ) ;
-         if ( !pCmd )
-         {
-            PD_LOG( PDERROR, "Get command[%s] failed", getIntrCMDName() ) ;
-            rc = SDB_SYS ;
-            goto error ;
-         }
-         rc = pCmd->execute( pMsg, cb, contextID, buf ) ;
-         if ( rc )
-         {
-            goto error ;
-         }
-      }
-
-   done:
-      if ( pOutBuff )
-      {
-         SDB_OSS_FREE( pOutBuff ) ;
-         pOutBuff = NULL ;
-         buffSize = 0 ;
-         buffUsedSize = 0 ;
-      }
-      if ( -1 != contextID && !_useContext() )
-      {
-         rtnCB->contextDelete( contextID, cb ) ;
-         contextID = -1 ;
-      }
-      return rc ;
-   error:
-      if ( -1 != contextID )
-      {
-         rtnCB->contextDelete ( contextID, cb ) ;
-         contextID = -1 ;
-      }
-      goto done;
-   }
-
-   const CHAR* rtnCoordCMDSnapshotDataBase::getIntrCMDName()
-   {
-      return COORD_CMD_SNAPSHOTDBINTR;
-   }
-
-   const CHAR* rtnCoordCMDSnapshotDataBase::getInnerAggrContent()
-   {
-      return RTNCOORD_SNAPSHOTDB_INPUT ;
-   }
-
-   const CHAR* rtnCoordCMDSnapshotSystem::getIntrCMDName()
-   {
-      return COORD_CMD_SNAPSHOTSYSINTR;
-   }
-
-   const CHAR* rtnCoordCMDSnapshotSystem::getInnerAggrContent()
-   {
-      return RTNCOORD_SNAPSHOTSYS_INPUT ;
-   }
-
-   const CHAR* rtnCoordCMDSnapshotCollections::getIntrCMDName()
-   {
-      return COORD_CMD_SNAPSHOTCLINTR;
-   }
-
-   const CHAR* rtnCoordCMDSnapshotCollections::getInnerAggrContent()
-   {
-      return RTNCOORD_SNAPSHOTCL_INPUT ;
-   }
-
-   const CHAR* rtnCoordCMDSnapshotSpaces::getIntrCMDName()
-   {
-      return COORD_CMD_SNAPSHOTCSINTR;
-   }
-
-   const CHAR* rtnCoordCMDSnapshotSpaces::getInnerAggrContent()
-   {
-      return RTNCOORD_SNAPSHOTCS_INPUT ;
-   }
-
-   const CHAR* rtnCoordCMDSnapshotContexts::getIntrCMDName()
-   {
-      return COORD_CMD_SNAPSHOTCTXINTR;
-   }
-
-   const CHAR* rtnCoordCMDSnapshotContexts::getInnerAggrContent()
-   {
-      return RTNCOORD_SNAPSHOTCONTEXTS_INPUT ;
-   }
-
-   const CHAR* rtnCoordCMDSnapshotContextsCur::getIntrCMDName()
-   {
-      return COORD_CMD_SNAPSHOTCTXCURINTR;
-   }
-
-   const CHAR* rtnCoordCMDSnapshotContextsCur::getInnerAggrContent()
-   {
-      return RTNCOORD_SNAPSHOTCONTEXTSCUR_INPUT ;
-   }
-
-   const CHAR* rtnCoordCMDSnapshotSessions::getIntrCMDName()
-   {
-      return COORD_CMD_SNAPSHOTSESSINTR;
-   }
-
-   const CHAR* rtnCoordCMDSnapshotSessions::getInnerAggrContent()
-   {
-      return RTNCOORD_SNAPSHOTSESS_INPUT ;
-   }
-
-   const CHAR* rtnCoordCMDSnapshotSessionsCur::getIntrCMDName()
-   {
-      return COORD_CMD_SNAPSHOTSESSCURINTR;
-   }
-
-   const CHAR* rtnCoordCMDSnapshotSessionsCur::getInnerAggrContent()
-   {
-      return RTNCOORD_SNAPSHOTSESSCUR_INPUT ;
-   }
-
-   INT32 rtnCoordCMDSnapshotCata::_preProcess( rtnQueryOptions &queryOpt,
-                                               string &clName )
-   {
-      clName = CAT_COLLECTION_INFO_COLLECTION ;
-      return SDB_OK ;
-   }
-
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOORDCMDCRTPROCEDURE_EXE, "rtnCoordCMDCrtProcedure::execute" )
    INT32 rtnCoordCMDCrtProcedure::execute( MsgHeader *pMsg,
                                            pmdEDUCB *cb,
@@ -3477,86 +3365,6 @@ namespace engine
       }
       goto done ;
    }
-
-   INT32 rtnCoordCMDQueryOnMain::execute( MsgHeader * pMsg,
-                                          pmdEDUCB * cb,
-                                          INT64& contextID,
-                                          rtnContextBuf * buf )
-   {
-      INT32 rc = SDB_OK ;
-      rtnCoordCtrlParam ctrlParam ;
-      ROUTE_RC_MAP faileds ;
-      rtnContextCoord *pContext = NULL ;
-
-      contextID = -1 ;
-      ctrlParam._role[ SDB_ROLE_CATALOG ] = 0 ;
-      ctrlParam._emptyFilterSel = NODE_SEL_PRIMARY ;
-
-      rc = executeOnNodes( pMsg, cb, ctrlParam, RTN_CTRL_MASK_ALL,
-                           faileds, &pContext, FALSE, NULL, NULL ) ;
-      if ( rc )
-      {
-         if ( SDB_RTN_CMD_IN_LOCAL_MODE == rc )
-         {
-            rc = SDB_COORD_UNKNOWN_OP_REQ ;
-         }
-         else
-         {
-            PD_LOG( PDERROR, "Execute on nodes failed, rc: %d", rc ) ;
-         }
-         goto error ;
-      }
-
-      if ( pContext )
-      {
-         contextID = pContext->contextID() ;
-      }
-
-   done:
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   INT32 rtnCoordSnapshotTransCur::getGroups( pmdEDUCB *cb,
-                                              CoordGroupList &groupList )
-   {
-      INT32 rc = SDB_OK ;
-      DpsTransNodeMap *pTransNodeMap = NULL ;
-      DpsTransNodeMap::iterator iter ;
-
-      pTransNodeMap = cb->getTransNodeLst() ;
-      if ( NULL == pTransNodeMap )
-      {
-         goto done ;
-      }
-
-      iter = pTransNodeMap->begin() ;
-      while( iter != pTransNodeMap->end() )
-      {
-         groupList[iter->first] = iter->first ;
-         ++iter ;
-      }
-
-   done:
-      return rc ;
-   }
-
-   INT32 rtnCoordSnapshotTrans::getGroups( pmdEDUCB *cb,
-                                           CoordGroupList &groupList )
-   {
-      INT32 rc = SDB_OK ;
-
-      rc = rtnCoordGetAllGroupList( cb, groupList, NULL, FALSE, FALSE ) ;
-      PD_RC_CHECK( rc, PDERROR,
-                   "Failed to get all groups(rc = %d)!", rc ) ;
-
-   done:
-      return rc ;
-   error:
-      goto done ;
-   }
-
 
    /*
     * rtnCoordCMD2Phase implement

@@ -437,6 +437,14 @@ namespace engine
 
       UINT32            _parseMask ;
 
+      /*
+         Specila group and nodes
+      */
+      CoordGroupList    _specialGrps ;
+      BOOLEAN           _useSpecialGrp ;
+      ROUTE_SET         _specialNodes ;
+      BOOLEAN           _useSpecialNode ;
+
       _rtnCoordCtrlParam()
       {
          _isGlobal = TRUE ;
@@ -447,6 +455,9 @@ namespace engine
          _role[ SDB_ROLE_CATALOG ] = 1 ;
          _rawData = FALSE ;
          _parseMask = 0 ;
+
+         _useSpecialGrp = FALSE ;
+         _useSpecialNode = FALSE ;
       }
    } ;
    typedef _rtnCoordCtrlParam rtnCoordCtrlParam ;

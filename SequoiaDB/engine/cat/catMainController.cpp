@@ -857,20 +857,6 @@ namespace engine
       return rc ;
    }
 
-   INT32 catMainController::_processQueryCollections ( const NET_HANDLE &handle,
-                                                       MsgHeader *pMsg )
-   {
-      return _processQueryRequest ( handle, pMsg,
-                                    CAT_COLLECTION_INFO_COLLECTION ) ;
-   }
-
-   INT32 catMainController::_processQueryCollectionSpaces( const NET_HANDLE &handle,
-                                                           MsgHeader *pMsg )
-   {
-      return _processQueryRequest ( handle, pMsg,
-                                    CAT_COLLECTION_SPACE_COLLECTION ) ;
-   }
-
    INT32 catMainController::_processQueryDataGrp( const NET_HANDLE &handle,
                                                   MsgHeader *pMsg )
    {
@@ -1118,16 +1104,6 @@ namespace engine
       case MSG_CAT_QUERY_DATA_GRP_REQ :
          {
             rc = _processQueryDataGrp( handle, pMsg ) ;
-            break ;
-         }
-      case MSG_CAT_QUERY_COLLECTIONS_REQ :
-         {
-            rc = _processQueryCollections( handle, pMsg ) ;
-            break ;
-         }
-      case MSG_CAT_QUERY_COLLECTIONSPACES_REQ :
-         {
-            rc = _processQueryCollectionSpaces ( handle, pMsg ) ;
             break ;
          }
       case MSG_AUTH_VERIFY_REQ :

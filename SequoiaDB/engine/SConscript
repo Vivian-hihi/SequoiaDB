@@ -186,6 +186,8 @@ rtnFiles = [
       "rtn/rtnReorg.cpp",
       "rtn/rtnRecover.cpp",
       "rtn/rtnCoordCommands.cpp",
+      "rtn/rtnCoordSnapshot.cpp",
+      "rtn/rtnCoordList.cpp",
       "rtn/rtnCoordDataCommands.cpp",
       "rtn/rtnCoordNodeCommands.cpp",
       "rtn/rtnCoordDCCommands.cpp",

@@ -42,6 +42,7 @@
 #include "msgDef.hpp"
 #include "rtnQueryOptions.hpp"
 #include "aggrBuilder.hpp"
+#include "utilMap.hpp"
 
 using namespace bson ;
 
@@ -200,7 +201,6 @@ namespace engine
                                     pmdEDUCB *cb,
                                     ROUTE_SET &nodes,
                                     ROUTE_RC_MAP &faileds,
-                                    rtnCoordCtrlParam &ctrlParam,
                                     ROUTE_SET *pSucNodes = NULL,
                                     SET_RC *pIgnoreRC = NULL,
                                     rtnContextCoord *pContext = NULL ) ;
@@ -233,9 +233,6 @@ namespace engine
 
       INT32 _processNodesReply( REPLY_QUE &replyQue,
                                 ROUTE_RC_MAP &faileds,
-                                ROUTE_SET &retriedNodes,
-                                ROUTE_SET &needRetryNodes,
-                                rtnCoordCtrlParam &ctrlParam,
                                 rtnContextCoord *pContext = NULL,
                                 SET_RC *pIgnoreRC = NULL,
                                 ROUTE_SET *pSucNodes = NULL ) ;
@@ -251,11 +248,6 @@ namespace engine
                                SET_RC *pIgnoreRC = NULL,
                                CoordGroupList *pSucGrpLst = NULL,
                                rtnContextCoord **ppContext = NULL ) ;
-
-      BOOLEAN _getRetryNodes( ROUTE_SET &retriedNodes,
-                              ROUTE_SET &needRetryNodes,
-                              rtnCoordCtrlParam &ctrlParam,
-                              MsgOpReply *pReply ) ;
 
    };
 
@@ -324,7 +316,10 @@ namespace engine
                              rtnContextBuf *buf ) ;
    };
 
-   class rtnCoordCMDSnapshotIntrBase : public rtnCoordCommand
+   /*
+      rtnCoordCMDMonIntrBase define
+   */
+   class rtnCoordCMDMonIntrBase : public rtnCoordCommand
    {
    public:
       virtual INT32 execute( MsgHeader *pMsg,
@@ -333,16 +328,24 @@ namespace engine
                              rtnContextBuf *buf ) ;
 
    private:
-      virtual BOOLEAN _useContext() { return TRUE ; }
+      virtual BOOLEAN _useContext() = 0 ;
+      virtual void    _preSet( pmdEDUCB *cb, rtnCoordCtrlParam &ctrlParam ) = 0 ;
+      virtual UINT32  _getControlMask() const = 0 ;
 
-   };
-
-   class rtnCoordCmdSnapshotReset : public rtnCoordCMDSnapshotIntrBase
-   {
-   private:
-      virtual BOOLEAN _useContext() { return FALSE ; }
    } ;
 
+   /*
+      rtnCoordCMDMonCurIntrBase define
+   */
+   class rtnCoordCMDMonCurIntrBase : public rtnCoordCMDMonIntrBase
+   {
+   private:
+      virtual void    _preSet( pmdEDUCB *cb, rtnCoordCtrlParam &ctrlParam ) ;
+   } ;
+
+   /*
+      rtnCoordAggrCmdBase define
+   */
    class rtnCoordAggrCmdBase : public _aggrCmdBase
    {
    public:
@@ -353,7 +356,10 @@ namespace engine
                         INT32 &buffObjNum ) ;
    } ;
 
-   class rtnCoordCMDSnapShotBase : public rtnCoordCommand, public rtnCoordAggrCmdBase
+   /*
+      rtnCoordCMDMonBase define
+   */
+   class rtnCoordCMDMonBase : public rtnCoordCommand, public rtnCoordAggrCmdBase
    {
    public:
       virtual INT32 execute( MsgHeader *pMsg,
@@ -366,80 +372,9 @@ namespace engine
       virtual BOOLEAN    _useContext() { return TRUE ; }
    };
 
-   class rtnCoordCMDSnapshotDataBase: public rtnCoordCMDSnapShotBase
-   {
-   private:
-      virtual const CHAR *getIntrCMDName() ;
-      virtual const CHAR *getInnerAggrContent() ;
-   };
-
-   class rtnCoordCMDSnapshotSystem: public rtnCoordCMDSnapShotBase
-   {
-   private:
-      virtual const CHAR *getIntrCMDName() ;
-      virtual const CHAR *getInnerAggrContent() ;
-   };
-
-   class rtnCoordCMDSnapshotCollections: public rtnCoordCMDSnapShotBase
-   {
-   private:
-      virtual const CHAR *getIntrCMDName() ;
-      virtual const CHAR *getInnerAggrContent() ;
-   };
-
-   class rtnCoordCMDSnapshotSpaces: public rtnCoordCMDSnapShotBase
-   {
-   private:
-      virtual const CHAR *getIntrCMDName() ;
-      virtual const CHAR *getInnerAggrContent() ;
-   };
-
-   class rtnCoordCMDSnapshotContexts: public rtnCoordCMDSnapShotBase
-   {
-   private:
-      virtual const CHAR *getIntrCMDName() ;
-      virtual const CHAR *getInnerAggrContent() ;
-   };
-
-   class rtnCoordCMDSnapshotContextsCur: public rtnCoordCMDSnapShotBase
-   {
-   private:
-      virtual const CHAR *getIntrCMDName() ;
-      virtual const CHAR *getInnerAggrContent() ;
-   };
-
-   class rtnCoordCMDSnapshotSessions: public rtnCoordCMDSnapShotBase
-   {
-   private:
-      virtual const CHAR *getIntrCMDName() ;
-      virtual const CHAR *getInnerAggrContent() ;
-   };
-
-   class rtnCoordCMDSnapshotSessionsCur: public rtnCoordCMDSnapShotBase
-   {
-   private:
-      virtual const CHAR *getIntrCMDName() ;
-      virtual const CHAR *getInnerAggrContent() ;
-   };
-
-   class rtnCoordCMDSnapshotCollectionsTmp : public rtnCoordCommand
-   {
-   public :
-      virtual INT32 execute( MsgHeader *pMsg,
-                             pmdEDUCB *cb,
-                             INT64 &contextID,
-                             rtnContextBuf *buf ) ;
-   };
-
-   class rtnCoordCMDSnapshotCollectionSpacesTmp : public rtnCoordCommand
-   {
-   public:
-      virtual INT32 execute( MsgHeader *pMsg,
-                             pmdEDUCB *cb,
-                             INT64 &contextID,
-                             rtnContextBuf *buf ) ;
-   };
-
+   /*
+      rtnCoordCMDQueryBase define
+   */
    class rtnCoordCMDQueryBase : public rtnCoordCommand
    {
    public:
@@ -451,13 +386,6 @@ namespace engine
    protected:
       virtual INT32 _preProcess( rtnQueryOptions &queryOpt,
                                  string &clName ) = 0 ;
-   };
-
-   class rtnCoordCMDSnapshotCata : public rtnCoordCMDQueryBase
-   {
-   protected:
-      virtual INT32 _preProcess( rtnQueryOptions &queryOpt,
-                                 string &clName ) ;
    };
 
    class rtnCoordCMDListCollectionSpace : public rtnCoordCMDQueryBase
@@ -581,7 +509,8 @@ namespace engine
 
    class rtnCoordCMDGetIndexes : public rtnCoordCMDStatisticsBase
    {
-      typedef std::map< std::string, bson::BSONObj > CoordIndexMap;
+      typedef _utilMap< std::string, bson::BSONObj, 10 >    CoordIndexMap ;
+
    private :
       virtual INT32 generateResult( rtnContext *pContext,
                                     netMultiRouteAgent *pRouteAgent,
@@ -791,29 +720,6 @@ namespace engine
                              rtnContextBuf *buf ) ;
    private:
       INT32 _syncDB( MsgHeader *pMsg, pmdEDUCB *cb, SINT64 &contextID ) ;
-   } ;
-
-   class rtnCoordCMDQueryOnMain : public rtnCoordCMDSnapshotIntrBase
-   {
-   public :
-      virtual INT32 execute( MsgHeader *pMsg,
-                             pmdEDUCB *cb,
-                             INT64 &contextID,
-                             rtnContextBuf *buf );
-
-      virtual INT32 getGroups( pmdEDUCB *cb, CoordGroupList &groupList ) = 0 ;
-   } ;
-
-   class rtnCoordSnapshotTransCur : public rtnCoordCMDQueryOnMain
-   {
-   public:
-      virtual INT32 getGroups( pmdEDUCB *cb, CoordGroupList &groupList ) ;
-   } ;
-
-   class rtnCoordSnapshotTrans : public rtnCoordCMDQueryOnMain
-   {
-   public:
-      virtual INT32 getGroups( pmdEDUCB *cb, CoordGroupList &groupList ) ;
    } ;
 
    /*

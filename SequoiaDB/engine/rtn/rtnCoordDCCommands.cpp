@@ -171,7 +171,7 @@ namespace engine
          goto error ;
       }
 
-      rc = executeOnNodes( pMsg, cb, nodes, faileds, ctrlParam, NULL, NULL, NULL ) ;
+      rc = executeOnNodes( pMsg, cb, nodes, faileds, NULL, NULL, NULL ) ;
       it = faileds.begin() ;
       while( it != faileds.end() )
       {

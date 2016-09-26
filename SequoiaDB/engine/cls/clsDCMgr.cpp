@@ -1321,8 +1321,9 @@ namespace engine
       BSONObj hint ;
 
    retry:
-      rc = _queryOnImageCatalog( cb, &pRecvMsg, MSG_CAT_QUERY_COLLECTIONS_REQ,
-                                 "CAT", hint, hint, hint, hint, -1, 0,
+      rc = _queryOnImageCatalog( cb, &pRecvMsg, MSG_BS_QUERY_REQ,
+                                 CAT_COLLECTION_INFO_COLLECTION,
+                                 hint, hint, hint, hint, -1, 0,
                                  DC_UPDATE_TIMEOUT, TRUE ) ;
       if ( rc )
       {
