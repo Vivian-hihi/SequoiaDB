@@ -356,5 +356,44 @@ public class BSONDecimalTest {
 		System.out.println("decimal4 is: " + decimal4); // 输出：1.2345
 		
 	}
+	
+	@Test
+	public void bug_jira_1990_q1_q2_q3() {
+		// TODO: test more
+		String str = null;
+		int precision = 0;
+		int scale = 0;
+		BSONDecimal d = null;
+		
+		// q1
+		str = "112233.112233445566778899";precision = 21;scale = 18;
+		try {
+			d = new BSONDecimal(str, precision, scale);
+			Assert.fail();
+		}	catch(IllegalArgumentException e) {
+		}
 
+		// q2
+		str = "123";precision = 6;scale = 4;
+		try {
+			d = new BSONDecimal(str, precision, scale);
+			Assert.fail();
+		}	catch(IllegalArgumentException e) {
+		}
+		
+		// q3
+		str = "1";precision = 1000;scale = 1000;
+		try {
+			d = new BSONDecimal(str, precision, scale);
+			Assert.fail();
+		}	catch(IllegalArgumentException e) {
+		}
+		str = "123";precision = 5;scale = 5;
+		try {
+			d = new BSONDecimal(str, precision, scale);
+			Assert.fail();
+		}	catch(IllegalArgumentException e) {
+		}
+	}
+	
 }
