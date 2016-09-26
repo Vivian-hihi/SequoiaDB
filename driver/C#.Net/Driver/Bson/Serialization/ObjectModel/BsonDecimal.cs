@@ -1209,7 +1209,7 @@ namespace SequoiaDB.Bson
                 {
                     i = 0;
                 }
-			    for (; i < _mid_ndigits; i++) 
+			    for (; i <= _mid_ndigits; i++) 
                 {
 				    short dig = _mid_digits[i];
 				    if (dig != 0) 
@@ -1230,7 +1230,7 @@ namespace SequoiaDB.Bson
 
 					    if (ddigits > maxdigits) 
                         {
-                            var message = string.Format("the input dicimal[{0}] can't be " + 
+                            var message = string.Format("the input decimal[{0}] can't be " + 
 								    "expressed in the range which is delimited by " +
 								    "the given precision[{1}] and scale[{2}]", _value, precision, scale);
                             throw new ArgumentException(message);
