@@ -834,14 +834,6 @@ public class BSONDecimal implements Comparable<BSONDecimal>, Serializable {
 	    _mid_sign = SDB_DECIMAL_SPECIAL_SIGN;
 	    _mid_dscale = SDB_DECIMAL_SPECIAL_MAX;
 	}
-
-//	private boolean _isMin() {
-//		if (_mid_sign == SDB_DECIMAL_SPECIAL_SIGN
-//				&& _mid_dscale == SDB_DECIMAL_SPECIAL_MIN) {
-//			return true;
-//		}
-//		return false;
-//	}
 	
     private boolean _isMin(BSONDecimal value)
     {
@@ -855,14 +847,6 @@ public class BSONDecimal implements Comparable<BSONDecimal>, Serializable {
         }
         return false;
     }
-
-//	private boolean _isMax() {
-//		if (_mid_sign == SDB_DECIMAL_SPECIAL_SIGN
-//				&& _mid_dscale == SDB_DECIMAL_SPECIAL_MAX) {
-//			return true;
-//		}
-//		return false;
-//	}
     
     private boolean _isMax(BSONDecimal value)
     {
@@ -876,14 +860,6 @@ public class BSONDecimal implements Comparable<BSONDecimal>, Serializable {
         }
         return false;
     }
-
-//	private boolean _isNan() {
-//		if (_mid_sign == SDB_DECIMAL_SPECIAL_SIGN
-//				&& _mid_dscale == SDB_DECIMAL_SPECIAL_NAN) {
-//			return true;
-//		}
-//		return false;
-//	}
 	
     private boolean _isNan(BSONDecimal value)
     {
@@ -1021,7 +997,7 @@ public class BSONDecimal implements Comparable<BSONDecimal>, Serializable {
             } else {
             	i = 0;
             }
-			for (; i < _mid_ndigits; i++) {
+			for (; i <= _mid_ndigits; i++) {
 				short dig = _mid_digits[i];
 				if (dig != 0) {
 					// Adjust for any high-order decimal zero digits
@@ -1035,7 +1011,7 @@ public class BSONDecimal implements Comparable<BSONDecimal>, Serializable {
 
 					if (ddigits > maxdigits) {
 						throw new IllegalArgumentException(
-								"the input dicimal[" + _value + "] can't be " + 
+								"the input decimal[" + _value + "] can't be " + 
 								"expressed in the range which is delimited by " +
 								"the given precision[" + precision + "] and scale[" + scale + "]");
 					}
