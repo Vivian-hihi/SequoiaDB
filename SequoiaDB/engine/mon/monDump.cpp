@@ -1009,6 +1009,11 @@ namespace engine
       {
          _hitEnd = FALSE ;
          rc = _fetchNextTransInfo() ;
+         if ( SDB_DMS_EOC == rc )
+         {
+            rc = SDB_OK ;
+            _hitEnd = TRUE ;
+         }
       }
 
       return rc ;
