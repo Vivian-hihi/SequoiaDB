@@ -18,16 +18,24 @@ BSONObject obj3 = (BasicBSONObject) JSON.parse("{\"a\":123, \"b\":3.14}");</pre>
 
 * 高精度数
 
+Java BSON 支持使用org.bson.types.BSONDecimal或者java.math.BigDecimal来生成高精度数。
+
 <pre class="prettyprint lang-javascript">
+// 方式一:使用BSONDecimal构造Decimal类型
 Java BSON 构造不带精度要求的Decimal类型// {a:{"$decimal":"12345.067891234567890123456789"}}
 String str = "12345.067891234567890123456789";
 BSONObject obj = new BasicBSONObject();
 BSONDecimal decimal = new BSONDecimal(str);
 obj.put("a", decimal);
+
 Java BSON 构造一个最多有100位有效数字，其中小数部分最多有30位的Decimal类型// {b:{"$decimal":"12345.067891234567890123456789", "$precision":[100, 30]}}
 BSONObject obj2 = new BasicBSONObject();
 BSONDecimal decimal2 = new BSONDecimal(str, 100, 30);
-obj2.put("b", decimal2);</pre>
+obj2.put("b", decimal2);
+
+// 方式二:使用BigDecimal构造Decimal类型
+BSONObject obj3 = new BasicBSONObject();
+obj3.put("c", new BigDecimal("1.2345")); // 注意：BigDecimal参数最终将转换为BSONDecimal，详情请查看API介绍。</pre>
 
 * 字符串
 
