@@ -255,5 +255,106 @@ public class BSONDecimalTest {
         }
 	}
 	
+	/**
+	 * 用户直接append/add BigDecimal对象
+	 */
+	@Test
+	public void buildBSONDecimalTest3() {
+		String str1 = "1.23";
+		String str2 = "3.14";
+		BasicBSONObject ret = null;
+		BSONObject obj = new BasicBSONObject("case1", "test_in_java");
+		obj.put("a", new BigDecimal("1.23"));
+		
+		BasicBSONObject obj2 = new BasicBSONObject("case2", "test_in_java");
+		obj2.append("a", new BigDecimal("3.14"));
+		
+		cl.insert(obj);
+		cl.insert(obj2);
+		
+		cur = cl.query(new BasicBSONObject("case1", new BasicBSONObject("$exists", 1)), 
+				new BasicBSONObject("a", ""), null, null);
+	    ret = (BasicBSONObject) cur.getNext();
+		BigDecimal bDecimal1 =  ret.getBigDecimal("a");
+		Assert.assertEquals(new BigDecimal(str1), bDecimal1);
+		
+		
+		cur = cl.query(new BasicBSONObject("case2", new BasicBSONObject("$exists", 1)), 
+				new BasicBSONObject("a", ""), null, null);
+		ret = (BasicBSONObject) cur.getNext();
+		BigDecimal bDecimal2 =  ret.getBigDecimal("a");
+		Assert.assertEquals(new BigDecimal(str2), bDecimal2);
+	}
+	
+	@Test
+	public void buildBSONDecimalTest4() {
+		String str1 = "0.6789";
+		String str2 = "1.2345";
+		BasicBSONObject ret = null;
+		
+		/// 使用decimal内容构建bson
+		// 方式一（原始方式）：
+		BasicBSONObject obj1 = new BasicBSONObject("case1", "test_in_java");
+		obj1.put("field1", new BSONDecimal(str1));
+		System.out.println("obj1 is: " + obj1); // 输出： { "field1" : { "$decimal" : "0.6789"}}
+		// 方式二（新增方式）：
+		BasicBSONObject obj2 = new BasicBSONObject("case2", "test_in_java");
+		obj2.put("field2", new BigDecimal(str2));
+		System.out.println("obj2 is: " + obj2); // 输出：{ "field2" : { "$decimal" : "1.2345"}}
+		
+		/// 从bson中获取decimal内容
+		// 方式一（原始方式）：
+		BSONDecimal bsonDecimal = (BSONDecimal)obj1.get("field1");
+		BigDecimal decimal1 = bsonDecimal.toBigDecimal();
+		System.out.println("decimal1 is: " + decimal1); // 输出：0.6789
+		
+		// 方式二（新增方式）：
+		BigDecimal decimal3 = obj1.getBigDecimal("field1");
+		System.out.println("decimal3 is: " + decimal3); // 输出：0.6789
+		BigDecimal decimal4 = obj2.getBigDecimal("field2");
+		System.out.println("decimal4 is: " + decimal4); // 输出：1.2345
+		
+		cl.insert(obj1);
+		cl.insert(obj2);
+		
+		cur = cl.query(new BasicBSONObject("case1", new BasicBSONObject("$exists", 1)), 
+				new BasicBSONObject("field1", ""), null, null);
+	    ret = (BasicBSONObject) cur.getNext();
+		BigDecimal bDecimal1 =  ret.getBigDecimal("field1");
+		Assert.assertEquals(new BigDecimal(str1), bDecimal1);
+		
+		cur = cl.query(new BasicBSONObject("case2", new BasicBSONObject("$exists", 1)), 
+				new BasicBSONObject("field2", ""), null, null);
+		ret = (BasicBSONObject) cur.getNext();
+		BigDecimal bDecimal2 =  ret.getBigDecimal("field2");
+		Assert.assertEquals(new BigDecimal(str2), bDecimal2);
+	}
+	
+	@Test
+	public void buildBSONDecimalSample() {
+		
+		/// 使用decimal内容构建bson
+		// 方式一（原始方式）：
+		BasicBSONObject obj1 = new BasicBSONObject();
+		obj1.put("field1", new BSONDecimal("0.6789"));
+		System.out.println("obj1 is: " + obj1); // 输出： { "field1" : { "$decimal" : "0.6789"}}
+		// 方式二（新增方式）：
+		BasicBSONObject obj2 = new BasicBSONObject();
+		obj2.put("field2", new BigDecimal("1.2345"));
+		System.out.println("obj2 is: " + obj2); // 输出：{ "field2" : { "$decimal" : "1.2345"}}
+		
+		/// 从bson中获取decimal内容
+		// 方式一（原始方式）：
+		BSONDecimal bsonDecimal = (BSONDecimal)obj1.get("field1");
+		BigDecimal decimal1 = bsonDecimal.toBigDecimal();
+		System.out.println("decimal1 is: " + decimal1); // 输出：0.6789
+		
+		// 方式二（新增方式）：
+		BigDecimal decimal3 = obj1.getBigDecimal("field1");
+		System.out.println("decimal3 is: " + decimal3); // 输出：0.6789
+		BigDecimal decimal4 = obj2.getBigDecimal("field2");
+		System.out.println("decimal4 is: " + decimal4); // 输出：1.2345
+		
+	}
 
 }

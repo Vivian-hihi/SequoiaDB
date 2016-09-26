@@ -77,7 +77,11 @@ public class CorrectnessTest {
 
 	@Test 
 	@Ignore
-	public void tmpTest() {}
+	public void tmpTest() {
+		String str = "2";
+		BSONDecimal d = new BSONDecimal(str, 5, 2);
+		System.out.println("d is: " + d.getValue());
+	}
 	
 	@Test 
 	@Ignore
@@ -416,13 +420,13 @@ System.out.println("bigDecimal: " + new BigDecimal(decimal3.getValue()));
 		str = "-99999999.99999999996789012345E5";
 		expectStr1 = "-9999999999999.999997"; // $precision is: [19, 6]
 		expectStr2 = "-9999999999999.99999678901235"; // $precision is: [27, 14]
-		expectStr3 = "-10000000000000.00000"; // $precision is: [18, 5]
-		expectStr4 = "-10000000000000.0"; // $precision is: [14, 1]
+		expectStr3 = "-10000000000000.00000"; // $precision is: [19, 5]
+		expectStr4 = "-10000000000000.0"; // $precision is: [15, 1]
 		
 	    decimal1 = new BSONDecimal(str, 19, 6);
 	    decimal2 = new BSONDecimal(str, 27, 14);
-		decimal3 = new BSONDecimal(str, 18, 5);
-		decimal4 = new BSONDecimal(str, 14, 1);
+		decimal3 = new BSONDecimal(str, 19, 5);
+		decimal4 = new BSONDecimal(str, 15, 1);
 		
         System.out.println("decimal1 is: " + decimal1);
         System.out.println("decimal2 is: " + decimal2);
@@ -998,6 +1002,15 @@ System.out.println("bigDecimal: " + new BigDecimal(decimal3.getValue()));
 				Assert.fail();
 			} catch(IllegalArgumentException e) {
 			}
+		}
+	}
+	
+	@Test
+	public void errorFormatTest4() {
+		try {
+			BSONDecimal d = new BSONDecimal("12332.456", 10, 9);
+			Assert.fail();
+		}catch(IllegalArgumentException e) {
 		}
 	}
 	
