@@ -783,7 +783,6 @@ namespace engine
                                   const BSONElement &ele )
    {
       INT32 rc = SDB_OK ;
-      BSONObjBuilder builder ;
       if ( !ele.isNumber() || 0 == ele.Number() )
       {
          rc = SDB_INVALIDARG ;
@@ -856,7 +855,6 @@ namespace engine
                                   const BSONElement &ele )
    {
       INT32 rc = SDB_OK ;
-      BSONObjBuilder builder ;
       if ( !ele.isNumber() )
       {
          rc = SDB_INVALIDARG ;
@@ -929,7 +927,6 @@ namespace engine
                                        const BSONElement &ele )
    {
       INT32 rc = SDB_OK ;
-      BSONObjBuilder builder ;
       if ( !ele.isNumber() )
       {
          rc = SDB_INVALIDARG ;
@@ -1002,7 +999,6 @@ namespace engine
                                        const BSONElement &ele )
    {
       INT32 rc = SDB_OK ;
-      BSONObjBuilder builder ;
       if ( !ele.isNumber() )
       {
          rc = SDB_INVALIDARG ;
@@ -1075,7 +1071,6 @@ namespace engine
                                      const BSONElement &ele )
    {
       INT32 rc = SDB_OK ;
-      BSONObjBuilder builder ;
       if ( !ele.isNumber() )
       {
          rc = SDB_INVALIDARG ;
@@ -1221,6 +1216,120 @@ namespace engine
       goto done ;
    }
 
+   //************************_mthMatchFuncRETURNMATCH********************************
+   _mthMatchFuncRETURNMATCH::_mthMatchFuncRETURNMATCH( _mthNodeAllocator *allocator )
+                            :_mthMatchFunc( allocator )
+   {
+   }
+
+   _mthMatchFuncRETURNMATCH::~_mthMatchFuncRETURNMATCH()
+   {
+      clear() ;
+   }
+
+   INT32 _mthMatchFuncRETURNMATCH::getOffset()
+   {
+      return _offset ;
+   }
+
+   INT32 _mthMatchFuncRETURNMATCH::getLen()
+   {
+      return _len ;
+   }
+
+   void _mthMatchFuncRETURNMATCH::release()
+   {
+      if ( NULL != _allocator && _allocator->isAllocatedByme( this ) )
+      {
+         this->~_mthMatchFuncRETURNMATCH() ;
+      }
+      else
+      {
+         delete this ;
+      }
+   }
+
+   INT32 _mthMatchFuncRETURNMATCH::call( const BSONElement &in, BSONObj &out )
+   {
+      SDB_ASSERT( FALSE, "impossible" ) ;
+      return SDB_INVALIDARG ;
+   }
+
+   INT32 _mthMatchFuncRETURNMATCH::getType()
+   {
+      return EN_MATCH_ATTR_RETURNMATCH ;
+   }
+
+   const CHAR* _mthMatchFuncRETURNMATCH::getName()
+   {
+      return MTH_ATTR_STR_RETURNMATCH ;
+   }
+
+   void _mthMatchFuncRETURNMATCH::clear()
+   {
+      _mthMatchFunc::clear() ;
+   }
+
+   INT32 _mthMatchFuncRETURNMATCH::_init( const CHAR *fieldName, 
+                                          const BSONElement &ele )
+   {
+      INT32 rc = SDB_OK ;
+      if ( ele.type() == NumberInt )
+      {
+         _offset = ele.numberInt() ;
+         _len    = -1 ;
+      }
+      else if ( ele.type() == Array )
+      {
+         BSONObj obj = ele.embeddedObject() ;
+         if ( obj.nFields() != 2 )
+         {
+            rc = SDB_INVALIDARG ;
+            PD_LOG( PDERROR, "attr must have two elements:attr=%s,rc=%d", 
+                    ele.toString().c_str(), rc ) ;
+            goto error ;
+         }
+
+         {
+            BSONObjIterator iter( obj ) ;
+            BSONElement tmpEle ;
+
+            tmpEle = iter.next() ;
+            if ( !tmpEle.isNumber() )
+            {
+               rc = SDB_INVALIDARG ;
+               PD_LOG( PDERROR, "arg1 must be a number:arg1=%s,rc=%d", 
+                       tmpEle.toString().c_str(), rc ) ;
+               goto error ;
+            }
+            
+            _offset = tmpEle.numberInt() ;
+            tmpEle = iter.next() ;
+            if ( !tmpEle.isNumber() )
+            {
+               rc = SDB_INVALIDARG ;
+               PD_LOG( PDERROR, "arg2 must be a number:arg2=%s,rc=%d", 
+                       tmpEle.toString().c_str(), rc ) ;
+               goto error ;
+            }
+
+            _len = tmpEle.numberInt() ;
+         }
+      }
+      else
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG( PDERROR, "set attr failed:attr=%s,rc=%d", 
+                 ele.toString().c_str(), rc ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
    //************************_mthMatchOpNode********************************
    _mthMatchOpNode::_mthMatchOpNode( _mthNodeAllocator *allocator )
                    :_mthMatchNode( allocator )
@@ -1228,6 +1337,9 @@ namespace engine
       _isCompareField     = FALSE ;
       _hasDollarFieldName = FALSE ;
       _cmpFieldName       = NULL ;
+      _hasReturnMatch     = FALSE ;
+      _offset             = 0 ;
+      _len                = 0 ;
    }
 
    _mthMatchOpNode::~_mthMatchOpNode()
@@ -1308,7 +1420,10 @@ namespace engine
       _funcList.clear() ;
       _hasDollarFieldName = FALSE ;
       _isCompareField     = FALSE ;
-      _cmpFieldName       = NULL ;  
+      _cmpFieldName       = NULL ;
+      _hasReturnMatch     = FALSE ;
+      _offset             = 0 ;
+      _len                = 0 ;
 
       _mthMatchNode::clear() ;
    }
@@ -1561,7 +1676,8 @@ namespace engine
          resultEle = resultObj.firstElement() ;
       }
 
-      matchResult = _valueMatch( resultEle, matchTarget, context ) ;
+      rc = _valueMatch( resultEle, matchTarget, context, matchResult) ;
+      PD_RC_CHECK( rc, PDERROR, "_valueMatch failed:rc=%d", rc ) ;
 
    done:
       return rc ;
@@ -1604,6 +1720,33 @@ namespace engine
       goto done ;
    }
 
+   INT32 _mthMatchOpNode::_saveElement( _mthMatchTreeContext &context, 
+                                        BOOLEAN isMatch, 
+                                        const BSONElement &ele )
+   {
+      INT32 rc = SDB_OK ;
+      if ( !_hasReturnMatch )
+      {
+         goto done ;
+      }
+
+      context.setIsUseElement( TRUE ) ;
+
+      if ( ( isMatch && !isUnderLogicNot() ) || 
+           ( !isMatch && isUnderLogicNot() ) )
+      {
+         rc = context.saveElement( ele ) ;
+         PD_RC_CHECK( rc, PDERROR, "save element failed:ele=%s,rc=%d",
+                      ele.toString().c_str(), rc ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
    INT32 _mthMatchOpNode::_execute( const CHAR *pFieldName, 
                                     const BSONObj &obj, BOOLEAN isArrayObj,
                                     _mthMatchTreeContext &context,
@@ -1617,12 +1760,8 @@ namespace engine
       CHAR *p  = NULL ;
 
       rc = mthFieldName.setFieldName( pFieldName ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "set fieldName failed:fieldName=%s,rc=%d",
-                 pFieldName, rc ) ;
-         goto error ;
-      }
+      PD_RC_CHECK( rc, PDERROR, "set fieldName failed:fieldName=%s,rc=%d",
+                   pFieldName, rc ) ;
 
       pTmpFieldName = ( CHAR * ) mthFieldName.getFieldName() ;
       p = ossStrchr ( pTmpFieldName, MTH_FIELDNAME_SEP ) ;
@@ -1637,11 +1776,7 @@ namespace engine
             if ( MTH_OPERATOR_EYECATCHER == *(p + 1) )
             {
                rc = _dollarMatches( p + 1, ele, context, result ) ;
-               if ( SDB_OK != rc )
-               {
-                  PD_LOG( PDERROR, "_dollarMatches failed:rc=%d", rc ) ;
-                  goto error ;
-               }
+               PD_RC_CHECK( rc, PDERROR, "_dollarMatches failed:rc=%d", rc ) ;
             }
             else
             {
@@ -1652,11 +1787,8 @@ namespace engine
                //   subObj: { 0 : { "b" : 1 }, 1 : { "c" : 2 } }
                rc = _execute( p + 1, subObj, ( ele.type() == Array ), context, 
                               result ) ;
-               if ( SDB_OK != rc )
-               {
-                  PD_LOG( PDERROR, "failed to match child field:%d", rc ) ;
-                  goto error ;
-               }
+               PD_RC_CHECK( rc, PDERROR, "failed to match child field:rc=%d", 
+                            rc ) ;
             }
 
             goto done ;
@@ -1674,11 +1806,7 @@ namespace engine
             if ( ossStrcmp( z.fieldName(), pTmpFieldName ) == 0 )
             {
                rc = _doFuncMatch( z, _toMatch, context, result ) ;
-               if ( SDB_OK != rc )
-               {
-                  PD_LOG( PDERROR, "_doFuncMatch failed:rc=%d", rc ) ;
-                  goto error ;
-               }
+               PD_RC_CHECK( rc, PDERROR, "_doFuncMatch failed:rc=%d", rc ) ;
 
                if ( result )
                {
@@ -1691,11 +1819,7 @@ namespace engine
                BSONObj subObj = z.embeddedObject() ;
                //pass the input pFieldName, not pTmpFieldName
                rc = _execute( pFieldName, subObj, FALSE, context, result ) ;
-               if ( SDB_OK != rc )
-               {
-                  PD_LOG ( PDERROR, "_execute failed:rc=%d", rc ) ;
-                  goto error ;
-               }
+               PD_RC_CHECK( rc, PDERROR, "_execute failed:rc=%d", rc ) ;
 
                if ( result )
                {
@@ -1733,17 +1857,14 @@ namespace engine
 
       recordEle = obj.getField( pTmpFieldName ) ;
       rc = _doFuncMatch( recordEle, toMatchEle, context, result ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "_doFuncMatch failed:rc=%d", rc ) ;
-         goto error ;
-      }
+      PD_RC_CHECK( rc, PDERROR, "_doFuncMatch failed:rc=%d", rc ) ;
 
       if ( EN_MATCH_OPERATOR_EXISTS == getType() ||
            EN_MATCH_OPERATOR_ISNULL == getType() ||
            EN_MATCH_OPERATOR_SIZE == getType() ||
            EN_MATCH_OPERATOR_IN == getType() ||
-           EN_MATCH_OPERATOR_ALL == getType())
+           EN_MATCH_OPERATOR_NIN == getType() ||
+           EN_MATCH_OPERATOR_ALL == getType() )
       {
          // no need to check if left is array
          goto done ;
@@ -1756,20 +1877,33 @@ namespace engine
          {
             BSONObj eEmbObj = recordEle.embeddedObject() ;
             BSONObjIterator iter( eEmbObj ) ;
+            INT32 index = 0 ;
             while ( iter.more() )
             {
+               BOOLEAN tmpResult = FALSE ;
                BSONElement innerEle = iter.next() ;
-               rc = _doFuncMatch( innerEle, toMatchEle, context, result ) ;
-               if ( SDB_OK != rc )
+               rc = _doFuncMatch( innerEle, toMatchEle, context, tmpResult ) ;
+               PD_RC_CHECK( rc, PDERROR, "_doFuncMatch failed:rc=%d", rc ) ;
+
+               rc = _saveElement( context, tmpResult, innerEle ) ;
+               PD_RC_CHECK( rc, PDERROR, "_saveElement failed:rc=%d", rc ) ;
+
+               if ( tmpResult )
                {
-                  PD_LOG( PDERROR, "_doFuncMatch failed:rc=%d", rc ) ;
-                  goto error ;
+                  result = tmpResult ;
+                  if ( !_hasReturnMatch )
+                  {
+                     goto done ;
+                  }
                }
 
-               if ( result )
-               {
-                  goto done ;
-               }
+               index++ ;
+            }
+
+            if ( _hasReturnMatch )
+            {
+               rc = context.subElements( _offset, _len ) ;
+               PD_RC_CHECK( rc, PDERROR, "subElements failed:rc=%d", rc ) ;
             }
          }
       }
@@ -1784,6 +1918,11 @@ namespace engine
                                    BOOLEAN &result )
    {
       INT32 rc = SDB_OK ;
+
+      if ( _hasReturnMatch )
+      {
+         context.setReturnMatchExecuted( TRUE ) ;
+      }
 
       rc = _execute( _fieldName.getFieldName(), obj, FALSE, context, result ) ;
       if ( SDB_OK != rc )
@@ -1845,25 +1984,56 @@ namespace engine
    INT32 _mthMatchOpNode::addFuncList( MTH_FUNC_LIST &funcList )
    {
       INT32 rc = SDB_OK ;
-      MTH_FUNC_LIST::iterator iter = funcList.begin() ;
-      while ( iter != funcList.end() )
+
+      while ( TRUE )
       {
-         rc = addFunc( *iter ) ;
-         if ( SDB_OK != rc )
+         MTH_FUNC_LIST::iterator iter = funcList.begin() ;
+         if ( iter == funcList.end() )
          {
-            PD_LOG( PDERROR, "add function failed:rc=%d", rc ) ;
-            goto error ;
+            break ;
          }
 
-         iter++ ;
-      }
+         _mthMatchFunc *func = *iter ;
+         if ( func->getType() == EN_MATCH_ATTR_RETURNMATCH )
+         {
+            _mthMatchFuncRETURNMATCH *rmFunc = NULL ;
+            rmFunc = dynamic_cast< _mthMatchFuncRETURNMATCH * > ( func ) ;
+            if ( NULL == rmFunc )
+            {
+               rc = SDB_INVALIDARG ;
+               PD_LOG( PDERROR, "dynamic_cast(func->RETURNMATCH) failed:"
+                          "func=%s,rc=%d", func->toString().c_str(), rc ) ;
+               goto error ;
+            }
 
-      funcList.clear() ;
+            SDB_ASSERT( FALSE == _hasReturnMatch, "only once" ) ;
+            _hasReturnMatch = TRUE ;
+            _offset         = rmFunc->getOffset() ;
+            _len            = rmFunc->getLen() ;
+         }
+         else
+         {
+            rc = addFunc( func ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "add function failed:func=%s,rc=%d", 
+                       func->toString().c_str(), rc ) ;
+               goto error ;
+            }
+         }
+
+         funcList.erase( iter ) ;
+      }
 
    done:
       return rc ;
    error:
       goto done ;
+   }
+
+   BOOLEAN _mthMatchOpNode::hasReturnMatch()
+   {
+      return _hasReturnMatch ;
    }
 
    BSONObj _mthMatchOpNode::toBson()
@@ -1948,19 +2118,22 @@ namespace engine
       return SDB_OK ;
    }
 
-   BOOLEAN _mthMatchOpNodeET::_valueMatch( const BSONElement &left, 
-                                           const BSONElement &right,
-                                           _mthMatchTreeContext &context )
+   INT32 _mthMatchOpNodeET::_valueMatch( const BSONElement &left, 
+                                         const BSONElement &right,
+                                         _mthMatchTreeContext &context,
+                                         BOOLEAN &result )
    {
       if ( left.canonicalType() == right.canonicalType() )
       {
          if ( 0 == compareElementValues ( left, right ) )
          {
-            return TRUE ;
+            result = TRUE ;
+            return SDB_OK ;
          }
       }
 
-      return FALSE ;
+      result = FALSE ;
+      return SDB_OK ;
    }
 
    void _mthMatchOpNodeET::release()
@@ -2070,19 +2243,22 @@ namespace engine
       return MTH_WEIGHT_LT ;
    }
 
-   BOOLEAN _mthMatchOpNodeLT::_valueMatch( const BSONElement &left, 
-                                           const BSONElement &right,
-                                           _mthMatchTreeContext &context )
+   INT32 _mthMatchOpNodeLT::_valueMatch( const BSONElement &left, 
+                                         const BSONElement &right,
+                                         _mthMatchTreeContext &context,
+                                         BOOLEAN &result )
    {
       if ( left.canonicalType() == right.canonicalType() )
       {
          if ( compareElementValues ( left, right ) < 0 )
          {
-            return TRUE ;
+            result = TRUE ;
+            return SDB_OK ;
          }
       }
 
-      return FALSE ;
+      result = FALSE ;
+      return SDB_OK ;
    }
 
    void _mthMatchOpNodeLT::release()
@@ -2128,19 +2304,22 @@ namespace engine
       return _mthMatchOpNode::isTotalConverted() ;
    }
 
-   BOOLEAN _mthMatchOpNodeLTE::_valueMatch( const BSONElement &left, 
-                                            const BSONElement &right,
-                                            _mthMatchTreeContext &context )
+   INT32 _mthMatchOpNodeLTE::_valueMatch( const BSONElement &left, 
+                                          const BSONElement &right,
+                                          _mthMatchTreeContext &context,
+                                          BOOLEAN &result )
    {
       if ( left.canonicalType() == right.canonicalType() )
       {
          if ( compareElementValues ( left, right ) <= 0 )
          {
-            return TRUE ;
+            result = TRUE ;
+            return SDB_OK ;
          }
       }
 
-      return FALSE ;
+      result = FALSE ;
+      return SDB_OK ;
    }
 
    void _mthMatchOpNodeLTE::release()
@@ -2186,19 +2365,22 @@ namespace engine
       return _mthMatchOpNode::isTotalConverted() ;
    }
 
-   BOOLEAN _mthMatchOpNodeGT::_valueMatch( const BSONElement &left, 
-                                           const BSONElement &right,
-                                           _mthMatchTreeContext &context )
+   INT32 _mthMatchOpNodeGT::_valueMatch( const BSONElement &left, 
+                                         const BSONElement &right,
+                                         _mthMatchTreeContext &context,
+                                         BOOLEAN &result )
    {
       if ( left.canonicalType() == right.canonicalType() )
       {
          if ( compareElementValues ( left, right ) > 0 )
          {
-            return TRUE ;
+            result = TRUE ;
+            return SDB_OK ;
          }
       }
 
-      return FALSE ;
+      result = FALSE ;
+      return SDB_OK ;
    }
 
    void _mthMatchOpNodeGT::release()
@@ -2244,19 +2426,22 @@ namespace engine
       return _mthMatchOpNode::isTotalConverted() ;
    }
 
-   BOOLEAN _mthMatchOpNodeGTE::_valueMatch( const BSONElement &left, 
-                                            const BSONElement &right,
-                                            _mthMatchTreeContext &context )
+   INT32 _mthMatchOpNodeGTE::_valueMatch( const BSONElement &left, 
+                                          const BSONElement &right,
+                                          _mthMatchTreeContext &context,
+                                          BOOLEAN &result )
    {
       if ( left.canonicalType() == right.canonicalType() )
       {
          if ( compareElementValues ( left, right ) >= 0 )
          {
-            return TRUE ;
+            result = TRUE ;
+            return SDB_OK ;
          }
       }
 
-      return FALSE ;
+      result = FALSE ;
+      return SDB_OK ;
    }
 
    void _mthMatchOpNodeGTE::release()
@@ -2393,65 +2578,84 @@ namespace engine
       return FALSE ;
    }
 
-   BOOLEAN _mthMatchOpNodeIN::_valueMatch( const BSONElement &left, 
-                                           const BSONElement &right,
-                                           _mthMatchTreeContext &context )
+   BOOLEAN _mthMatchOpNodeIN::_isMatch( const BSONElement &ele )
    {
-      UINT32 i    = 0 ;
-      VALUE_SET::iterator iterSet ;
-      VALUE_SET leftValueSet ;
-      if ( _valueSet.size() == 0 && _regexVector.size() == 0 
-           && left.type() == Array )
+      UINT32 i = 0 ;
+
+      INT32 count = _valueSet.count( ele ) ;
+      if ( count > 0 )
+      {
+         return TRUE ;
+      }
+
+      for ( i = 0 ; i < _regexVector.size() ; i++ )
+      {
+         if ( _regexVector[i]->matches( ele ) )
+         {
+            return TRUE ;
+         }
+      }
+
+      return FALSE ;
+   }
+
+   INT32 _mthMatchOpNodeIN::_valueMatch( const BSONElement &left, 
+                                         const BSONElement &right,
+                                         _mthMatchTreeContext &context,
+                                         BOOLEAN &result )
+   {
+      INT32 rc = SDB_OK ;
+      BOOLEAN tmpResult = FALSE ;
+      if ( _valueSet.size() == 0 && _regexVector.size() == 0 && 
+           left.type() == Array )
       {
          BSONObj obj = left.embeddedObject() ;
          if ( obj.nFields() == 0 )
          {
-            return TRUE ;
+            result = TRUE ;
+            goto done ;
          }
       }
 
       if ( Array != left.type() )
       {
-         leftValueSet.insert( left ) ;
+         result = _isMatch( left ) ;
+         goto done ;
       }
-      else
+
       {
          BSONObjIterator iter( left.embeddedObject() ) ;
          while ( iter.more() )
          {
+            BOOLEAN isMatch = FALSE ;
             BSONElement ele = iter.next() ;
-            leftValueSet.insert( ele ) ;
-         }
-      }
+            isMatch = _isMatch( ele ) ;
+            rc = _saveElement( context, isMatch, ele ) ;
+            PD_RC_CHECK( rc, PDERROR, "_saveElement failed:rc=%d", rc ) ;
 
-      iterSet = leftValueSet.begin() ;
-      while ( iterSet != leftValueSet.end() )
-      {
-         // at least find one matched
-         INT32 count = _valueSet.count( *iterSet ) ;
-         if ( count > 0 )
-         {
-            return TRUE ;
-         }
-
-         iterSet++ ;
-      }
-
-      for ( i = 0 ; i < _regexVector.size() ; i++ )
-      {
-         iterSet = leftValueSet.begin() ;
-         while ( iterSet != leftValueSet.end() )
-         {
-            if ( _regexVector[i]->matches( *iterSet ) )
+            if ( isMatch )
             {
-               return TRUE ;
+               tmpResult = isMatch ;
+               if ( !_hasReturnMatch )
+               {
+                  break ;
+               }
             }
-
-            iterSet++ ;
          }
       }
 
-      return FALSE ;
+      if ( _hasReturnMatch )
+      {
+         rc = context.subElements( _offset, _len ) ;
+         PD_LOG( PDERROR, "set subElements failed:rc=%d", rc ) ;
+      }
+
+      result = tmpResult ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 
    void _mthMatchOpNodeIN::release()
@@ -2497,20 +2701,59 @@ namespace engine
       return FALSE ;
    }
 
-   INT32 _mthMatchOpNodeNIN::execute( const BSONObj &obj, 
-                                      _mthMatchTreeContext &context,
-                                      BOOLEAN &result )
+   INT32 _mthMatchOpNodeNIN::_valueMatch( const BSONElement &left, 
+                                          const BSONElement &right,
+                                          _mthMatchTreeContext &context,
+                                          BOOLEAN &result )
    {
       INT32 rc = SDB_OK ;
-      BOOLEAN tmpResult = FALSE ;
-      rc = _mthMatchOpNodeIN::execute( obj, context, tmpResult ) ;
-      if ( SDB_OK != rc )
+      BOOLEAN tmpResult = TRUE ;
+      if ( _valueSet.size() == 0 && _regexVector.size() == 0 && 
+           left.type() == Array )
       {
-         PD_LOG( PDERROR, "failed to execute _mthMatchOpNodeNIN:rc=%d", rc ) ;
-         goto error ;
+         BSONObj obj = left.embeddedObject() ;
+         if ( obj.nFields() == 0 )
+         {
+            result = FALSE ;
+            goto done ;
+         }
       }
 
-      result = !tmpResult ;
+      if ( Array != left.type() )
+      {
+         result = !_isMatch( left ) ;
+         goto done ;
+      }
+
+      {
+         BSONObjIterator iter( left.embeddedObject() ) ;
+         while ( iter.more() )
+         {
+            BOOLEAN isFound = FALSE ;
+            BSONElement ele = iter.next() ;
+            isFound = _isMatch( ele ) ;
+            rc = _saveElement( context, !isFound, ele ) ;
+            PD_RC_CHECK( rc, PDERROR, "_saveElement failed:rc=%d", rc ) ;
+
+            if ( isFound )
+            {
+               // if we can find one. the total result is false
+               tmpResult = !isFound ;
+               if ( !_hasReturnMatch )
+               {
+                  break ;
+               }
+            }
+         }
+      }
+
+      if ( _hasReturnMatch )
+      {
+         rc = context.subElements( _offset, _len ) ;
+         PD_LOG( PDERROR, "set subElements failed:rc=%d", rc ) ;
+      }
+
+      result = tmpResult ;
 
    done:
       return rc ;
@@ -2581,25 +2824,150 @@ namespace engine
 
       return SDB_OK ;
    }
-   
-   BOOLEAN _mthMatchOpNodeALL::_valueMatch( const BSONElement &left, 
-                                            const BSONElement &right,
-                                            _mthMatchTreeContext &context )
+
+   BOOLEAN _mthMatchOpNodeALL::_isMatchSingle( const BSONElement &ele )
    {
-      // all _toMatch elements must exist in left ;
       UINT32 i = 0 ;
       VALUE_SET::iterator iterSet ;
-      VALUE_SET leftValueSet ;
-
-      if ( Array != left.type() && Object != left.type() )
+      iterSet = _valueSet.begin() ;
+      while ( iterSet != _valueSet.end() )
       {
-         if ( _valueSet.size() == 0 && _regexVector.size() == 0 )
+         // all values in _valueSet must equals left
+         if ( ele.woCompare( *iterSet ) != 0 )
          {
-            // {a:1} do not match {a:{$all:[]}}, while {a:[1]} do
+            return FALSE ;
+         }
+
+         iterSet++ ;
+      }
+
+      for ( i = 0 ; i < _regexVector.size() ; i++ )
+      {
+         // all regexs in _regexVector must equals left
+         if ( !_regexVector[i]->matches( ele ) )
+         {
             return FALSE ;
          }
       }
 
+      return TRUE ;
+   }
+
+   typedef map< INT32, BSONElement >  ELEMENT_MAP ;
+
+   INT32 _mthMatchOpNodeALL::_valueMatchWithReturnMatch( 
+                                                 const BSONElement &left, 
+                                                 const BSONElement &right, 
+                                                 _mthMatchTreeContext &context, 
+                                                 BOOLEAN &result ) 
+   {
+      INT32 rc = SDB_OK ;
+      VALUE_SET::iterator iterSet ;
+      ELEMENT_MAP indexMap ;
+      ELEMENT_MAP::iterator iter ;
+
+      UINT32 i = 0 ;
+
+      if ( left.type() != Array )
+      {
+         result = _isMatchSingle( left ) ;
+         goto done ;
+      }
+
+      iterSet = _valueSet.begin() ;
+      while ( iterSet != _valueSet.end() )
+      {
+         BOOLEAN tmpResult = FALSE ;
+         // all values in _valueSet must exist in array left
+         INT32 index = 0 ;
+         BSONObjIterator iter( left.embeddedObject() ) ;
+         while ( iter.more() )
+         {
+            BOOLEAN singleResult = FALSE ;
+            BSONElement ele = iter.next() ;
+            singleResult = ele.woCompare( *iter ) ;
+            if ( singleResult )
+            {
+               tmpResult = singleResult ;
+            }
+
+            if ( ( !isUnderLogicNot() && singleResult ) ||
+                 ( isUnderLogicNot() && !singleResult ) )
+            {
+               indexMap.insert( ELEMENT_MAP::value_type( index, ele ) ) ;
+            }
+
+            index++ ;
+         }
+
+         if ( !tmpResult )
+         {
+            result = FALSE ;
+            goto done ;
+         }
+
+         iterSet++ ;
+      }
+
+      for ( i = 0 ; i < _regexVector.size() ; i++ )
+      {
+         // all regexs in _regexVector must exist in leftValueSet
+         BOOLEAN tmpResult = FALSE ;
+
+         INT32 index = 0 ;
+         BSONObjIterator iter( left.embeddedObject() ) ;
+         while ( iter.more() )
+         {
+            BOOLEAN singleResult = FALSE ;
+            BSONElement ele = iter.next() ;
+            singleResult = _regexVector[i]->matches( ele ) ;
+            if ( singleResult )
+            {
+               tmpResult = singleResult ;
+            }
+
+            if ( ( !isUnderLogicNot() && singleResult ) ||
+                 ( isUnderLogicNot() && !singleResult ) )
+            {
+               indexMap.insert( ELEMENT_MAP::value_type( index, ele ) ) ;
+            }
+
+            index++ ;
+         }
+
+         if ( !tmpResult )
+         {
+            result = FALSE ;
+            goto done ;
+         }
+      }
+
+      result = TRUE ;
+
+      iter = indexMap.begin() ;
+      while ( iter != indexMap.end() )
+      {
+         rc = context.saveElement( iter->second ) ;
+         PD_RC_CHECK( rc, PDERROR, "saveElement failed:rc=%d", rc ) ;
+         iter++ ;
+      }
+
+      rc = context.subElements( _offset, _len ) ;
+      PD_RC_CHECK( rc, PDERROR, "subElements failed:rc=%d", rc ) ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   BOOLEAN _mthMatchOpNodeALL::_valueMatchNoReturnMatch( 
+                                                    const BSONElement &left,
+                                                    const BSONElement &right )
+   {
+      UINT32 i = 0 ;
+      VALUE_SET::iterator iterSet ;
+      VALUE_SET leftValueSet ;
       if ( Array != left.type() )
       {
          leftValueSet.insert( left ) ;
@@ -2650,6 +3018,40 @@ namespace engine
       }
 
       return TRUE ;
+   }
+   
+   INT32 _mthMatchOpNodeALL::_valueMatch( const BSONElement &left, 
+                                          const BSONElement &right,
+                                          _mthMatchTreeContext &context,
+                                          BOOLEAN &result )
+   {
+      // all _toMatch elements must exist in left ;
+      INT32 rc = SDB_OK ;
+
+      if ( Array != left.type() && Object != left.type() )
+      {
+         if ( _valueSet.size() == 0 && _regexVector.size() == 0 )
+         {
+            // {a:1} do not match {a:{$all:[]}}, while {a:[1]} do
+            result = FALSE ;
+            goto done ;
+         }
+      }
+
+      if ( !_hasReturnMatch )
+      {
+         result = _valueMatchNoReturnMatch( left, right ) ;
+      }
+      else
+      {
+         rc = _valueMatchWithReturnMatch( left, right, context, result ) ;
+         PD_RC_CHECK( rc, PDERROR, "_valueMatchWithReturn failed:rc=%d", rc ) ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 
    void _mthMatchOpNodeALL::release()
@@ -2708,18 +3110,21 @@ namespace engine
       return SDB_OK ;
    }
 
-   BOOLEAN _mthMatchOpNodeSIZE::_valueMatch( const BSONElement &left, 
-                                             const BSONElement &right,
-                                             _mthMatchTreeContext &context )
+   INT32 _mthMatchOpNodeSIZE::_valueMatch( const BSONElement &left, 
+                                           const BSONElement &right,
+                                           _mthMatchTreeContext &context,
+                                           BOOLEAN &result )
    {
       if ( left.type() != Array )
       {
-         return FALSE ;
+         result = FALSE ;
+         return SDB_OK ;
       }
 
       BSONObj obj = left.embeddedObject() ;
 
-      return obj.nFields() == right.numberInt() ;
+      result = obj.nFields() == right.numberInt() ;
+      return SDB_OK ;
    }
 
    void _mthMatchOpNodeSIZE::release()
@@ -2765,28 +3170,33 @@ namespace engine
       return FALSE ;
    }
 
-   BOOLEAN _mthMatchOpNodeEXISTS::_valueMatch( const BSONElement &left, 
-                                               const BSONElement &right,
-                                               _mthMatchTreeContext &context )
+   INT32 _mthMatchOpNodeEXISTS::_valueMatch( const BSONElement &left, 
+                                             const BSONElement &right,
+                                             _mthMatchTreeContext &context,
+                                             BOOLEAN &result )
    {
       if ( left.eoo() )
       {
          if ( _toMatch.trueValue() )
          {
             //expect exists
-            return FALSE ;
+            result = FALSE ;
+            return SDB_OK ;
          }
 
-         return TRUE ;
+         result = TRUE ;
+         return SDB_OK ;
       }
       else
       {
          if ( _toMatch.trueValue() )
          {
-            return TRUE ;
+            result = TRUE ;
+            return SDB_OK ;
          }
 
-         return FALSE ;
+         result = FALSE ;
+         return SDB_OK ;
       }
    }
 
@@ -2886,65 +3296,66 @@ namespace engine
       return FALSE ;
    }
 
-   BOOLEAN _mthMatchOpNodeMOD::_valueMatch( const BSONElement &left, 
-                                            const BSONElement &right,
-                                            _mthMatchTreeContext &context )
+   INT32 _mthMatchOpNodeMOD::_valueMatch( const BSONElement &left, 
+                                          const BSONElement &right,
+                                          _mthMatchTreeContext &context,
+                                          BOOLEAN &result )
    {
+      INT32 rc = SDB_OK ;
       if ( !left.isNumber() )
       {
-         return FALSE ;
+         result = FALSE ;
+         goto done ;
+      }
+
+      if ( NumberDecimal == left.type() || NumberDecimal == _mod.type() )
+      {
+         bsonDecimal decimal ;
+         bsonDecimal decimalMod ;
+         bsonDecimal decimalModm ;
+         bsonDecimal resultDecimal ;
+         resultDecimal.init() ;
+         decimal    = left.numberDecimal() ;
+         decimalMod = _mod.numberDecimal() ;
+         rc         = decimal.mod( decimalMod, resultDecimal ) ;
+         PD_RC_CHECK( rc, PDERROR, "failed to mod decimal:%s mod %s,rc=%d", 
+                      decimal.toString().c_str(), 
+                      decimalMod.toString().c_str(), rc ) ;
+
+         decimalModm = _modResult.numberDecimal() ;
+         result = ( 0 == resultDecimal.compare( decimalModm ) ) ;
+      }
+      else if ( NumberDouble == left.type() 
+                && NumberDouble == _mod.type() )
+      {
+         FLOAT64 v = MTH_MOD( left.numberDouble(),
+                              _mod.numberDouble() ) ;
+         result = ( fabs( v - _modResult.numberDouble() ) <= OSS_EPSILON ) ;
+      }
+      else if ( NumberDouble != left.type() 
+                && NumberDouble == _mod.type() )
+      {
+         FLOAT64 v = MTH_MOD( left.numberLong(),
+                              _mod.numberDouble() ) ;
+         result = ( fabs( v - _modResult.numberDouble() ) <= OSS_EPSILON ) ;
+      }
+      else if ( NumberDouble == left.type() 
+                && NumberDouble != _mod.type())
+      {
+         FLOAT64 v = MTH_MOD( left.numberDouble(),
+                              _mod.numberLong() ) ;
+         result = ( fabs( v - _modResult.numberDouble() ) <= OSS_EPSILON ) ;
       }
       else
       {
-         if ( NumberDecimal == left.type() || NumberDecimal == _mod.type() )
-         {
-            INT32 rcTmp = SDB_OK ;
-            bsonDecimal decimal ;
-            bsonDecimal decimalMod ;
-            bsonDecimal decimalModm ;
-            bsonDecimal result ;
-            result.init() ;
-            decimal    = left.numberDecimal() ;
-            decimalMod = _mod.numberDecimal() ;
-            rcTmp      = decimal.mod( decimalMod, result ) ;
-            if ( SDB_OK != rcTmp )
-            {
-               PD_LOG( PDERROR, "failed to mod decimal:%s mod %s,rc=%d", 
-                       decimal.toString().c_str(), 
-                       decimalMod.toString().c_str(), rcTmp ) ;
-               return FALSE ;
-            }
-
-            decimalModm = _modResult.numberDecimal() ;
-            return ( 0 == result.compare( decimalModm ) ) ;
-         }
-         else if ( NumberDouble == left.type() 
-                   && NumberDouble == _mod.type() )
-         {
-            FLOAT64 v = MTH_MOD( left.numberDouble(),
-                                 _mod.numberDouble() ) ;
-            return fabs( v - _modResult.numberDouble() ) <= OSS_EPSILON ;
-         }
-         else if ( NumberDouble != left.type() 
-                   && NumberDouble == _mod.type() )
-         {
-            FLOAT64 v = MTH_MOD( left.numberLong(),
-                                 _mod.numberDouble() ) ;
-            return fabs( v - _modResult.numberDouble() ) <= OSS_EPSILON ;
-         }
-         else if ( NumberDouble == left.type() 
-                   && NumberDouble != _mod.type())
-         {
-            FLOAT64 v = MTH_MOD( left.numberDouble(),
-                                 _mod.numberLong() ) ;
-            return fabs( v - _modResult.numberDouble() ) <= OSS_EPSILON ;
-         }
-         else
-         {
-            return ( left.numberLong() % _mod.numberLong() ) 
-                                                 == _modResult.numberLong() ;
-         }
+         result = ( ( left.numberLong() % _mod.numberLong() ) 
+                                            == _modResult.numberLong() ) ;
       }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 
    void _mthMatchOpNodeMOD::release()
@@ -2997,11 +3408,13 @@ namespace engine
       return FALSE ;
    }
 
-   BOOLEAN _mthMatchOpNodeTYPE::_valueMatch( const BSONElement &left, 
-                                             const BSONElement &right,
-                                             _mthMatchTreeContext &context )
+   INT32 _mthMatchOpNodeTYPE::_valueMatch( const BSONElement &left, 
+                                           const BSONElement &right,
+                                           _mthMatchTreeContext &context,
+                                           BOOLEAN &result )
    {
-      return left.type() == _type ;
+      result = left.type() == _type ;
+      return SDB_OK ;
    }
 
    void _mthMatchOpNodeTYPE::release()
@@ -3047,32 +3460,35 @@ namespace engine
       return FALSE ;
    }
 
-   BOOLEAN _mthMatchOpNodeISNULL::_valueMatch( const BSONElement &left, 
-                                               const BSONElement &right,
-                                               _mthMatchTreeContext &context )
+   INT32 _mthMatchOpNodeISNULL::_valueMatch( const BSONElement &left, 
+                                             const BSONElement &right,
+                                             _mthMatchTreeContext &context,
+                                             BOOLEAN &result )
    {
       if ( _toMatch.trueValue() )
       {
          if ( left.eoo() || left.isNull() )
          {
-            return TRUE ;
+            result = TRUE ;
          }
          else
          {
-            return FALSE ;
+            result = FALSE ;
          }
       }
       else
       {
          if ( left.eoo() || left.isNull() )
          {
-            return FALSE ;
+            result = FALSE ;
          }
          else
          {
-            return TRUE ;
+            result = TRUE ;
          }
       }
+
+      return SDB_OK ;
    }
 
    void _mthMatchOpNodeISNULL::release()
@@ -3122,16 +3538,19 @@ namespace engine
       }
 
       rc = _subTree->loadPattern( element.embeddedObject(), FALSE ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "failed to loadPattern:obj=%s,rc=%d",
-                 element.embeddedObject().toString().c_str(), rc ) ;
-         goto error ;
-      }
+      PD_RC_CHECK( rc, PDERROR, "failed to loadPattern:obj=%s,rc=%d",
+                   element.embeddedObject().toString().c_str(), rc ) ;
 
       if ( _subTree->hasDollarFieldName() )
       {
          _hasDollarFieldName = TRUE ;
+      }
+
+      if ( _subTree->hasExpand() || _subTree->hasReturnMatch() )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_RC_CHECK( rc, PDERROR, "subTree can't support %s or %s", 
+                      MTH_ATTR_STR_EXPAND, MTH_ATTR_STR_RETURNMATCH ) ;
       }
 
    done:
@@ -3171,9 +3590,10 @@ namespace engine
       return FALSE ;
    }
 
-   BOOLEAN _mthMatchOpNodeELEMMATCH::_valueMatch( const BSONElement &left, 
-                                                  const BSONElement &right,
-                                                  _mthMatchTreeContext &context )
+   INT32 _mthMatchOpNodeELEMMATCH::_valueMatch( const BSONElement &left, 
+                                                const BSONElement &right,
+                                                _mthMatchTreeContext &context,
+                                                BOOLEAN &result )
    {
       // for eleMatch, such like {a:{$eleMatch:{b:1}}}, this will
       // match {a:{b:1}}
@@ -3183,10 +3603,11 @@ namespace engine
       // object in eleMatch must be a full matching condition
       INT32 rc = SDB_OK ;
       _mthMatchTreeContext subContext ;
-      BOOLEAN result = FALSE ;
+
       if ( left.type() != Object && left.type() != Array )
       {
-         return FALSE ;
+         result = FALSE ;
+         goto done ;
       }
 
       if ( context.isDollarListEnabled() )
@@ -3194,16 +3615,14 @@ namespace engine
          subContext.enableDollarList() ;
       }
 
-      subContext.setIsSubTree( TRUE ) ;
-
       rc = _subTree->matches( left.embeddedObject(), result, subContext ) ;
       context.appendDollarList( subContext._dollarList ) ;
-      if ( SDB_OK != rc )
-      {
-         return FALSE ;
-      }
+      PD_RC_CHECK( rc, PDERROR, "matches subtree failed:rc=%d", rc ) ;
 
-      return result ;
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 
    void _mthMatchOpNodeELEMMATCH::release()
@@ -3388,11 +3807,13 @@ namespace engine
       return MTH_WEIGHT_REGEX ;
    }
 
-   BOOLEAN _mthMatchOpNodeRegex::_valueMatch( const BSONElement &left, 
-                                              const BSONElement &right,
-                                              _mthMatchTreeContext &context )
+   INT32 _mthMatchOpNodeRegex::_valueMatch( const BSONElement &left, 
+                                            const BSONElement &right,
+                                            _mthMatchTreeContext &context,
+                                            BOOLEAN &result )
    {
-      return matches( left ) ;
+      result = matches( left ) ;
+      return SDB_OK ;
    }
 
    BOOLEAN _mthMatchOpNodeRegex::matches( const BSONElement &ele )

@@ -251,9 +251,28 @@ namespace engine
          ~_mthMatchTreeContext() ;
 
          void  clear() ;
-         INT32 setName( const CHAR *name ) ;
-         INT32 addElement( const BSONElement &ele ) ;
-         void  setExpand( BOOLEAN needExpand ) ;
+
+         //****array attribute relate*******
+         INT32 getDollarResult( INT32 index, INT32 &value ) ;
+
+         INT32 setFieldName( const CHAR *name ) ;
+         INT32 resolveFieldName() ;
+         INT32 saveElement( const BSONElement &ele ) ;
+         INT32 subElements( INT32 offset, INT32 len ) ;
+
+         BOOLEAN hasExpand() ;
+         void setHasExpand( BOOLEAN hasExpand ) ;
+
+         BOOLEAN hasReturnMatch() ;
+         void setHasReturnMatch( BOOLEAN hasReturnMatch ) ;
+
+         BOOLEAN isUseElement() ;
+         void setIsUseElement( BOOLEAN isUseElement ) ;
+
+         BOOLEAN isReturnMatchExecuted() ;
+         void setReturnMatchExecuted( BOOLEAN isExecuted ) ;
+         //*********************************
+
          void  setObj( const BSONObj &obj ) ;
 
          void  enableDollarList() ;
@@ -262,23 +281,27 @@ namespace engine
          void appendDollarList( vector<INT64> dollarList ) ;
          void getDollarList( vector<INT64> *dollarList ) ;
 
-         void setIsSubTree( BOOLEAN isSubTree ) ;
-         BOOLEAN isSubTree() ;
-
          string toString() ;
+
+      private:
+         INT32 _replaceDollar() ;
 
       public:
          BOOLEAN _isDollarListEnabled ;
-         BOOLEAN _isSubTree ;
          vector<INT64> _dollarList ;
 
          BSONObj _originalObj ;
 
          /* array attribute relate */
-         BOOLEAN _needExpand ;
-
+         BOOLEAN _hasExpand ;
+         BOOLEAN _hasReturnMatch ;
          _mthMatchFieldName<> _fieldName ;
 
+         // if returnMatch executed or not, if not we should execute it
+         BOOLEAN _isReturnMatchExecuted ;
+
+         // if we should use _elements as result or not
+         BOOLEAN _isUseElement ;
          _utilArray< BSONElement > _elements ;
          /* array attribute relate */
    } ;

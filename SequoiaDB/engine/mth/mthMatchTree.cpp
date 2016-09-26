@@ -253,54 +253,60 @@ namespace engine
       switch( type )
       {
       case EN_MATCH_FUNC_ABS:
-         func  = new ( allocator ) _mthMatchFuncABS( allocator ) ;
+         func = new ( allocator ) _mthMatchFuncABS( allocator ) ;
          break ;
       case EN_MATCH_FUNC_CEILING:
-         func  = new ( allocator ) _mthMatchFuncCEILING( allocator ) ;
+         func = new ( allocator ) _mthMatchFuncCEILING( allocator ) ;
          break ;
       case EN_MATCH_FUNC_FLOOR:
-         func  = new ( allocator ) _mthMatchFuncFLOOR( allocator ) ;
+         func = new ( allocator ) _mthMatchFuncFLOOR( allocator ) ;
          break ;
       case EN_MATCH_FUNC_MOD:
       case EN_MATCH_OPERATOR_MOD:
-         func  = new ( allocator ) _mthMatchFuncMOD( allocator ) ;
+         func = new ( allocator ) _mthMatchFuncMOD( allocator ) ;
          break ;
       case EN_MATCH_FUNC_ADD:
-         func  = new ( allocator ) _mthMatchFuncADD( allocator ) ;
+         func = new ( allocator ) _mthMatchFuncADD( allocator ) ;
          break ;
       case EN_MATCH_FUNC_SUBTRACT:
-         func  = new ( allocator ) _mthMatchFuncSUBTRACT( allocator ) ;
+         func = new ( allocator ) _mthMatchFuncSUBTRACT( allocator ) ;
          break ;
       case EN_MATCH_FUNC_MULTIPLY:
-         func  = new ( allocator ) _mthMatchFuncMULTIPLY( allocator ) ;
+         func = new ( allocator ) _mthMatchFuncMULTIPLY( allocator ) ;
          break ;
       case EN_MATCH_FUNC_DIVIDE:
-         func  = new ( allocator ) _mthMatchFuncDIVIDE( allocator ) ;
+         func = new ( allocator ) _mthMatchFuncDIVIDE( allocator ) ;
          break ;
       case EN_MATCH_FUNC_SUBSTR:
-         func  = new ( allocator ) _mthMatchFuncSUBSTR( allocator ) ;
+         func = new ( allocator ) _mthMatchFuncSUBSTR( allocator ) ;
          break ;
       case EN_MATCH_FUNC_STRLEN:
-         func  = new ( allocator ) _mthMatchFuncSTRLEN( allocator ) ;
+         func = new ( allocator ) _mthMatchFuncSTRLEN( allocator ) ;
          break ;
       case EN_MATCH_FUNC_LOWER:
-         func  = new ( allocator ) _mthMatchFuncLOWER( allocator ) ;
+         func = new ( allocator ) _mthMatchFuncLOWER( allocator ) ;
          break ;
       case EN_MATCH_FUNC_UPPER:
-         func  = new ( allocator ) _mthMatchFuncUPPER( allocator ) ;
+         func = new ( allocator ) _mthMatchFuncUPPER( allocator ) ;
          break ;
       case EN_MATCH_FUNC_LTRIM:
-         func  = new ( allocator ) _mthMatchFuncLTRIM( allocator ) ;
+         func = new ( allocator ) _mthMatchFuncLTRIM( allocator ) ;
          break ;
       case EN_MATCH_FUNC_RTRIM:
-         func  = new ( allocator ) _mthMatchFuncRTRIM( allocator ) ;
+         func = new ( allocator ) _mthMatchFuncRTRIM( allocator ) ;
          break ;
       case EN_MATCH_FUNC_TRIM:
-         func  = new ( allocator ) _mthMatchFuncTRIM( allocator ) ;
+         func = new ( allocator ) _mthMatchFuncTRIM( allocator ) ;
          break ;
       case EN_MATCH_FUNC_CAST:
-         func  = new ( allocator ) _mthMatchFuncCAST( allocator ) ;
+         func = new ( allocator ) _mthMatchFuncCAST( allocator ) ;
          break ;
+      case EN_MATCH_ATTR_RETURNMATCH:
+         /* 
+            attribute returnMatch's behavior is like function. so we treat it
+            as a function.
+         */
+         func = new ( allocator ) _mthMatchFuncRETURNMATCH( allocator ) ;
       default :
          break ;
       }
@@ -330,6 +336,11 @@ namespace engine
       _isMatchesAll        = TRUE ;
       _isTotallyConverted  = TRUE ;
       _hasDollarFieldName  = FALSE ;
+
+      _hasExpand           = FALSE ;
+      _hasReturnMatch      = FALSE ;
+      _attrFieldName       = NULL ;
+      _returnMatchNode     = NULL ;
    }
 
    _mthMatchTree::~_mthMatchTree()
@@ -412,6 +423,12 @@ namespace engine
          goto error ;
       }
 
+      if ( node->hasReturnMatch() )
+      {
+         SDB_ASSERT( NULL == _returnMatchNode, "only once" ) ;
+         _returnMatchNode = node ;
+      }
+
       if ( node->hasDollarFieldName() )
       {
          _hasDollarFieldName = TRUE ;
@@ -479,6 +496,12 @@ namespace engine
       {
          PD_LOG( PDERROR, "add funclist failed:rc=%d", rc ) ;
          goto error ;
+      }
+
+      if ( node->hasReturnMatch() )
+      {
+         SDB_ASSERT( NULL == _returnMatchNode, "only once" ) ;
+         _returnMatchNode = node ;
       }
 
       rc = parent->addChild( regexNode ) ;
@@ -972,6 +995,72 @@ namespace engine
       }
    }
 
+   INT32 _mthMatchTree::_parseAttribute( const CHAR *fieldName, 
+                                         const BSONElement &ele,
+                                         EN_MATCH_OP_FUNC_TYPE nodeType,
+                                         MTH_FUNC_LIST &funcList )
+   {
+      INT32 rc = SDB_OK ;
+      if ( EN_MATCH_ATTR_EXPAND == nodeType )
+      {
+         if ( _hasExpand || 
+              ( _hasReturnMatch && ossStrcmp( _attrFieldName, fieldName ) != 0 ) )
+         {
+            // duplicate expand, or, expand and returnmatch describe diffrent
+            // fieldName
+            rc = SDB_INVALIDARG ;
+            PD_LOG( PDERROR, "%s and %s can't describe two fields", 
+                    MTH_ATTR_STR_EXPAND, MTH_ATTR_STR_RETURNMATCH ) ;
+            goto error ;
+         }
+
+         if ( ele.type() != NumberInt && 1 != ele.numberInt() )
+         {
+            rc = SDB_INVALIDARG ;
+            PD_LOG( PDERROR, "parse expand failed:ele=%s,rc=%d",
+                    ele.toString().c_str(), rc ) ;
+            goto error ;
+         }
+
+         _hasExpand     = TRUE ;
+         _attrFieldName = fieldName ;
+      }
+      else if ( EN_MATCH_ATTR_RETURNMATCH == nodeType )
+      {
+         if ( _hasReturnMatch || 
+              ( _hasExpand && ossStrcmp( _attrFieldName, fieldName ) != 0 ) )
+         {
+            // duplicate expand, or, expand and returnmatch describe diffrent
+            // fieldName
+            rc = SDB_INVALIDARG ;
+            PD_LOG( PDERROR, "%s and %s can't describe two fields", 
+                    MTH_ATTR_STR_EXPAND, MTH_ATTR_STR_RETURNMATCH ) ;
+            goto error ;
+         }
+
+         rc = _addFunction( fieldName, ele, EN_MATCH_ATTR_RETURNMATCH, 
+                            funcList ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "add function failed:fieldName=%s,ele=%s,rc=%d",
+                    fieldName, ele.toString().c_str(), rc ) ;
+            goto error ;
+         }
+
+         _hasReturnMatch = TRUE ;
+         _attrFieldName  = fieldName ;
+      }
+      else
+      {
+         SDB_ASSERT( FALSE, "impossible" ) ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
    INT32 _mthMatchTree::_pareseObjectInnerOp( const BSONElement &ele, 
                                               const BSONElement &innerEle,
                                               MTH_FUNC_LIST &funcList,
@@ -1005,6 +1094,15 @@ namespace engine
          {
             options = innerEle.valuestrsafe() ;
          }
+
+         goto done ;
+      }
+
+      if ( EN_MATCH_ATTR_EXPAND == nodeType || 
+           EN_MATCH_ATTR_RETURNMATCH == nodeType )
+      {
+         rc = _parseAttribute( ele.fieldName(), innerEle, nodeType,
+                               funcList );
 
          goto done ;
       }
@@ -1710,24 +1808,59 @@ namespace engine
          goto done ;
       }
 
+      if ( _hasExpand || _hasReturnMatch )
+      {
+         if ( _hasExpand )
+         {
+            context.setHasExpand( TRUE ) ;
+         }
+
+         if ( _hasReturnMatch )
+         {
+            context.setHasReturnMatch( TRUE ) ;
+         }
+
+         context.setFieldName( _attrFieldName ) ;
+         if ( ossStrstr( _attrFieldName, ".$" ) != NULL )
+         {
+            /* if _attrFieldName exist Dollar, we must enable DollarList to 
+                  get the real fieldName. context.resolveFieldName().
+            */ 
+            context.enableDollarList() ;
+         }
+      }
+
       try
       {
          context.setObj( matchTarget ) ;
          result = FALSE ;
          rc = _root->execute( matchTarget, context, result ) ;
-         if ( rc )
-         {
-            PD_LOG ( PDERROR, "execute failed:taget=%s,rc=%d", 
+         PD_RC_CHECK( rc, PDERROR, "execute failed:target=%s,rc=%d", 
                      matchTarget.toString().c_str(), rc ) ;
-            goto error ;
+
+         if ( result )
+         {
+            if ( _hasReturnMatch && !context.isReturnMatchExecuted() )
+            {
+               BOOLEAN tmpResult = FALSE ;
+               rc = _returnMatchNode->execute( matchTarget, context, 
+                                               tmpResult ) ;
+               PD_RC_CHECK( rc, PDERROR, "execute failed:target=%s,rc=%d", 
+                            matchTarget.toString().c_str(), rc ) ;
+            }
+
+            rc = context.resolveFieldName() ;
          }
       }
-      catch (  std::exception &e )
+      catch ( std::exception &e )
       {
-         PD_LOG ( PDERROR, "Failed to match: %s", e.what() ) ;
          rc = SDB_SYS ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to match: %s", e.what() ) ;
          goto error ;
       }
+
+      //TODO: delete
+      //PD_LOG( PDEVENT, "context:\n%s", context.toString().c_str() ) ;
 
    done:
       return rc ;
@@ -1763,6 +1896,11 @@ namespace engine
       _isTotallyConverted = TRUE ;
       _hasDollarFieldName = FALSE ;
       _matchPattern       = BSONObj() ;
+
+      _hasExpand          = FALSE ;
+      _hasReturnMatch     = FALSE ;
+      _attrFieldName      = NULL ;
+      _returnMatchNode    = NULL ;
    }
 
    BSONObj _mthMatchTree::getEqualityQueryObject()
@@ -1822,6 +1960,13 @@ namespace engine
 
    void _mthMatchTree::setMatchesAll( BOOLEAN matchesAll )
    {
+      if ( ( _hasExpand || _hasReturnMatch ) && matchesAll )
+      {
+         // if exist expand/returnMatch, _isMatchesAll can't be TRUE
+         // we should run this->matches() to get the right result.
+         return ;
+      }
+      
       _isMatchesAll = matchesAll ;
    }
 
@@ -1865,5 +2010,25 @@ namespace engine
 
       return output ;
    }
+
+   BOOLEAN _mthMatchTree::hasExpand()
+   {
+      SDB_ASSERT( _hasExpand ? NULL != _attrFieldName : NULL == _attrFieldName,
+                  "impossible" ) ;
+      return _hasExpand ;
+   }
+
+   BOOLEAN _mthMatchTree::hasReturnMatch()
+   {
+      SDB_ASSERT( _hasReturnMatch ? NULL != _returnMatchNode 
+                                  : NULL == _returnMatchNode, "impossible" ) ;
+      return _hasReturnMatch ;
+   }
+
+   const CHAR* _mthMatchTree::getAttrFieldName()
+   {
+      return _attrFieldName ;
+   }
+   
 }
 

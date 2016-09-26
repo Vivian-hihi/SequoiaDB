@@ -116,6 +116,10 @@ namespace engine
          BSONObj  toBson() ;
          string   toString() ;
 
+         BOOLEAN hasExpand() ;
+         BOOLEAN hasReturnMatch() ;
+         const CHAR *getAttrFieldName() ;
+
       private:
          INT32    _addOperator( const CHAR *fieldName, const BSONElement &ele, 
                                 EN_MATCH_OP_FUNC_TYPE nodeType, 
@@ -147,6 +151,11 @@ namespace engine
          BOOLEAN  _isExistOpEyeCatcher( const BSONElement &ele ) ;
 
          void     _clearFuncList( MTH_FUNC_LIST &funcList ) ;
+
+         INT32    _parseAttribute( const CHAR *fieldName, 
+                                   const BSONElement &ele,
+                                   EN_MATCH_OP_FUNC_TYPE nodeType,
+                                   MTH_FUNC_LIST &funcList ) ;
          INT32    _pareseObjectInnerOp( const BSONElement &ele, 
                                         const BSONElement &innerEle,
                                         MTH_FUNC_LIST &funcList,
@@ -182,8 +191,12 @@ namespace engine
          BOOLEAN        _isTotallyConverted ;
          BOOLEAN        _hasDollarFieldName ;
 
-         _rtnPredicateSet _predicateSet ;
+         BOOLEAN        _hasExpand ;
+         BOOLEAN        _hasReturnMatch ;
+         const CHAR *   _attrFieldName ;
+         _mthMatchNode* _returnMatchNode ;
 
+         _rtnPredicateSet _predicateSet ;
          _mthNodeAllocator _allocator ;
    } ;
 

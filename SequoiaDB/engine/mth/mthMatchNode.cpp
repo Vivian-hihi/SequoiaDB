@@ -53,9 +53,11 @@ namespace engine
       _elements.clear() ;
       _fieldName.clear() ;
 
-      _needExpand          = FALSE ;
-      _isDollarListEnabled = TRUE ;
-      _isSubTree           = FALSE ;
+      _isReturnMatchExecuted = FALSE ;
+      _hasExpand             = FALSE ;
+      _hasReturnMatch        = FALSE ;
+      _isUseElement          = FALSE ;
+      _isDollarListEnabled   = TRUE ;
    }
 
    _mthMatchTreeContext::~_mthMatchTreeContext()
@@ -69,24 +71,223 @@ namespace engine
       _elements.clear() ;
       _fieldName.clear() ;
 
-      _needExpand          = FALSE ;
-      _isDollarListEnabled = TRUE ;
-      _isSubTree           = FALSE ;
+      _isReturnMatchExecuted = FALSE ;
+      _hasExpand             = FALSE ;
+      _hasReturnMatch        = FALSE ;
+      _isUseElement          = FALSE ;
+      _isDollarListEnabled   = TRUE ;
    }
 
-   INT32 _mthMatchTreeContext::setName( const CHAR *name )
+   BOOLEAN _mthMatchTreeContext::hasExpand()
+   {
+      return _hasExpand ;
+   }
+
+   void _mthMatchTreeContext::setHasExpand( BOOLEAN hasExpand )
+   {
+      _hasExpand = hasExpand ;
+   }
+
+   BOOLEAN _mthMatchTreeContext::hasReturnMatch()
+   {
+      return _hasReturnMatch ;
+   }
+
+   void _mthMatchTreeContext::setHasReturnMatch( BOOLEAN hasReturnMatch )
+   {
+      _hasReturnMatch = hasReturnMatch ;
+   }
+
+   BOOLEAN _mthMatchTreeContext::isUseElement()
+   {
+      return _isUseElement ;
+   }
+   
+   void _mthMatchTreeContext::setIsUseElement( BOOLEAN isUseElement )
+   {
+      _isUseElement = isUseElement ;
+   }
+
+   BOOLEAN _mthMatchTreeContext::isReturnMatchExecuted()
+   {
+      return _isReturnMatchExecuted ;
+   }
+
+   void _mthMatchTreeContext::setReturnMatchExecuted( BOOLEAN isExecuted )
+   {
+      _isReturnMatchExecuted = isExecuted ;
+   }
+
+   INT32 _mthMatchTreeContext::setFieldName( const CHAR *name )
    {
       return _fieldName.setFieldName( name ) ;
    }
 
-   INT32 _mthMatchTreeContext::addElement( const BSONElement &ele )
+   INT32 _mthMatchTreeContext::getDollarResult( INT32 index, INT32 &value )
+   {
+      INT32 i = 0 ;
+      for ( i = 0 ; i < _dollarList.size() ; i++ )
+      {
+         INT32 tmpIndex = ( _dollarList[i] >> 32 ) & 0xFFFFFFFF ;
+         if ( index == tmpIndex )
+         {
+            value = _dollarList[i] & 0xFFFFFFFF ;
+            return SDB_OK ;
+         }
+      }
+
+      return SDB_INVALIDARG ;
+   }
+
+   INT32 _mthMatchTreeContext::_replaceDollar()
+   {
+      INT32 rc = SDB_OK ;
+      _utilString result ;
+      const CHAR *src   = NULL ;
+      const CHAR *start = NULL ;
+      const CHAR *p     = NULL ;
+      INT32 dollarIndex = 0 ;
+
+      src = _fieldName.getFieldName() ;
+      p   = ossStrstr( src, ".$" ) ;
+      if ( NULL == p )
+      {
+         goto done ;
+      }
+
+      start = src ;
+      while ( TRUE )
+      {
+         INT32 realValue = 0 ;
+         rc = result.append( start, p - start ) ;
+         PD_RC_CHECK( rc, PDERROR, "append value failed:value=%s,rc=%d", 
+                      start, rc ) ;
+
+         // abc.$10.def    p->.$
+         rc = ossStrToInt ( p + 2, &dollarIndex ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to parse number:p=%s,rc=%d", 
+                      p, rc ) ;
+
+         rc = getDollarResult( dollarIndex, realValue ) ;
+         PD_RC_CHECK( rc, PDERROR, "getDollarResult failed:rc=%d", rc ) ;
+
+         // "."
+         rc = result.append( p, 1 ) ;
+         PD_RC_CHECK( rc, PDERROR, "append value failed:value=%s,rc=%d",
+                      p, rc ) ;
+
+         rc = result.appendINT32( realValue ) ;
+         PD_RC_CHECK( rc, PDERROR, "append value failed:value=%d,rc=%d", 
+                      realValue, rc ) ;
+
+         start = ossStrchr( p + 1, MTH_FIELDNAME_SEP ) ;
+         if ( NULL == start )
+         {
+            goto done ;
+         }
+
+         p = ossStrstr( start, ".$" ) ;
+         if ( NULL == p )
+         {
+            break ;
+         }
+      }
+      
+      rc = result.append( start, ossStrlen( start ) ) ;
+      PD_RC_CHECK( rc, PDERROR, "append value failed:value=%s,rc=%d", 
+                   start, rc ) ;
+
+      _fieldName.clear() ;
+      rc = _fieldName.setFieldName( result.str() ) ;
+      PD_RC_CHECK( rc, PDERROR, "set fieldName failed:fieldName=%s,rc=%d", 
+                   result.str(), rc ) ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _mthMatchTreeContext::resolveFieldName()
+   {
+      INT32 rc = SDB_OK ;
+
+      if ( _hasExpand || _hasReturnMatch )
+      {
+         if ( _isDollarListEnabled )
+         {
+            rc = _replaceDollar() ;
+            PD_RC_CHECK( rc, PDERROR, "replaceDollar failed:rc=%d", rc ) ;
+         }
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _mthMatchTreeContext::saveElement( const BSONElement &ele )
    {
       return _elements.append( ele ) ;
    }
 
-   void _mthMatchTreeContext::setExpand( BOOLEAN needExpand )
+   INT32 _mthMatchTreeContext::subElements( INT32 offset, INT32 len )
    {
-      _needExpand = needExpand ;
+      INT32 rc        = SDB_OK ;
+      INT32 srcSize   = 0 ;
+      INT32 srcSubLen = 0 ;
+
+      if ( _elements.size() == 0 )
+      {
+         goto done ;
+      }
+
+      srcSize = ( INT32 )_elements.size() ;
+      if ( offset >= srcSize )
+      {
+         _elements.clear() ;
+         goto done ;
+      }
+
+      if ( offset >= 0 )
+      {
+         srcSubLen = srcSize - offset ;
+      }
+      else
+      {
+         INT32 tmpOffset = offset +  srcSize ;
+         if ( tmpOffset < 0 )
+         {
+            _elements.clear() ;
+            goto done ;
+         }
+
+         offset    = tmpOffset ;
+         srcSubLen = srcSize - offset ;
+      }
+
+      if ( len >= 0 && len < srcSubLen )
+      {
+         srcSubLen = len ;
+      }
+
+      {
+         _utilArray< BSONElement > dst ;
+         INT32 i = 0 ;
+         for ( i = 0 ; i < srcSubLen ; i++ )
+         {
+            rc = dst.append( _elements[ offset + i ] ) ;
+            PD_RC_CHECK( rc, PDERROR, "append element failed:rc=%d", rc ) ;
+         }
+
+         _elements = dst ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 
    void _mthMatchTreeContext::setObj( const BSONObj &obj )
@@ -135,34 +336,42 @@ namespace engine
       }
    }
 
-   void _mthMatchTreeContext::setIsSubTree( BOOLEAN isSubTree )
-   {
-      _isSubTree = isSubTree ;
-   }
-   
-   BOOLEAN _mthMatchTreeContext::isSubTree()
-   {
-      return _isSubTree ;
-   }
-
    string _mthMatchTreeContext::toString()
    {
       UINT32 i = 0 ;
-      string temp = "dollarList:" ;
-      for ( ; i < _dollarList.size() ; i++ )
+      stringstream result ;
+      result << "isDollarListEnabled:" << _isDollarListEnabled << endl ;
+      if ( _isDollarListEnabled )
       {
-         CHAR tmpDollar[ 20 ] ;
-         CHAR tmpIndex[ 20 ] ;
-         //(temp>>32)&0xFFFFFFFF) // num = (temp&0xFFFFFFFF) ;
-         INT32 dollarNum = ( _dollarList[i] >> 32 ) & 0xFFFFFFFF ;
-         INT32 objIndex  = _dollarList[i] & 0xFFFFFFFF ;
+         for ( ; i < _dollarList.size() ; i++ )
+         {
+            //(temp>>32)&0xFFFFFFFF) // num = (temp&0xFFFFFFFF) ;
+            INT32 dollarNum = ( _dollarList[i] >> 32 ) & 0xFFFFFFFF ;
+            INT32 objIndex  = _dollarList[i] & 0xFFFFFFFF ;
 
-         ossLltoa( dollarNum, tmpDollar, 20 ) ;
-         ossLltoa( objIndex, tmpIndex, 20 ) ;
-         temp += string("$") + tmpDollar + "=" + tmpIndex + "; ";
+            result << "\t$" << dollarNum << "=" << objIndex << endl ;
+         }
       }
 
-      return temp ;
+      result << "hasExpand:" << _hasExpand << endl ;
+      result << "hasReturnMatch:" << _hasReturnMatch << endl ;
+      if ( _hasExpand || _hasReturnMatch )
+      {
+         result << "fieldName:" << _fieldName.getFieldName() << endl ;
+      }
+
+      result << "isUseElement:" << _isUseElement << endl ;
+      if ( _isUseElement )
+      {
+         result << "elementSize:" << _elements.size() << endl ;
+         UINT32 i = 0 ;
+         for ( i = 0 ; i < _elements.size() ; i++ )
+         {
+            result << "\t[" << i << "]:" << _elements[i].toString() << endl ;
+         }
+      }
+
+      return result.str() ;
    }
 
    //********************** _mthNodeAllocator ***************************
