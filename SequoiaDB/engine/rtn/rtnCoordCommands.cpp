@@ -1269,11 +1269,21 @@ namespace engine
    void rtnCoordCMDMonCurIntrBase::_preSet( pmdEDUCB *cb,
                                             rtnCoordCtrlParam &ctrlParam )
    {
+      ROUTE_SET tmpNodes ;
+      MsgRouteID nodeID ;
       CoordSession *pSession = cb->getCoordSession() ;
       ctrlParam._useSpecialNode = TRUE ;
       if ( pSession )
       {
-         pSession->getAllSessionRoute( ctrlParam._specialNodes ) ;
+         pSession->getAllSessionRoute( tmpNodes ) ;
+      }
+      ROUTE_SET::iterator it = tmpNodes.begin() ;
+      while( it != tmpNodes.end() )
+      {
+         nodeID.value = *it ;
+         ++it ;
+         nodeID.columns.serviceID = MSG_ROUTE_SHARD_SERVCIE ;
+         ctrlParam._specialNodes.insert( nodeID.value ) ;
       }
    }
 
