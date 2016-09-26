@@ -564,12 +564,16 @@ public class BasicBSONObject implements Map<String, Object>, BSONObject {
 			numberCompare = true;
 		}
 		// for number compare, we always cast to Number then cast back
-		if (!numberCompare && !paramType.isInstance(value)) {
-			throw new IllegalArgumentException("The method: "
-					+ method.getName() + " Expected parameter type:"
-					+ paramType.getName()
-					+ " does not match with the actual type:"
-					+ value.getClass().getName());
+		if (!numberCompare) { 
+			if(!paramType.isInstance(value) && 
+				(!value.getClass().getName().equals("java.math.BigDecimal") && 
+				 !value.getClass().getName().equals("org.bson.types.BSONDecimal"))) {
+					throw new IllegalArgumentException("The method: "
+							+ method.getName() + " Expected parameter type:"
+							+ paramType.getName()
+							+ " does not match with the actual type:"
+							+ value.getClass().getName());
+			}
 		}
 
 		result = true;
@@ -609,9 +613,31 @@ public class BasicBSONObject implements Map<String, Object>, BSONObject {
 		} else if (BSONTimestamp.class.isAssignableFrom(paramType)) {
 			method.invoke(object, (BSONTimestamp) value);
 		} else if (BSONDecimal.class.isAssignableFrom(paramType)) {
-			method.invoke(object, (BSONDecimal) value);
+			String className = value.getClass().getName();
+			if (className.equals("java.math.BigDecimal")) {
+				method.invoke(object, new BSONDecimal((BigDecimal)value));
+			} else if (className.equals("org.bson.types.BSONDecimal")) {
+				method.invoke(object, (BSONDecimal)value);
+			} else {
+				throw new IllegalArgumentException("The method: "
+				+ method.getName() + " Expected parameter type:"
+				+ paramType.getName()
+				+ " does not match with the actual type:"
+				+ className);
+			}
 		} else if (BigDecimal.class.isAssignableFrom(paramType)) {
-			method.invoke(object, (BigDecimal)value);
+			String className = value.getClass().getName();
+			if (className.equals("java.math.BigDecimal")) {
+				method.invoke(object, (BigDecimal)value);
+			} else if (className.equals("org.bson.types.BSONDecimal")) {
+				method.invoke(object, ((BSONDecimal)value).toBigDecimal());
+			} else {
+				throw new IllegalArgumentException("The method: "
+				+ method.getName() + " Expected parameter type:"
+				+ paramType.getName()
+				+ " does not match with the actual type:"
+				+ className);
+			}
 		} else if (CodeWScope.class.isAssignableFrom(paramType)) {
 			method.invoke(object, (CodeWScope) value);
 		} else if (Code.class.isAssignableFrom(paramType)) {
@@ -620,9 +646,11 @@ public class BasicBSONObject implements Map<String, Object>, BSONObject {
 			method.invoke(object, (MinKey) value);
 		else if (MaxKey.class.isAssignableFrom(paramType)) {
 			method.invoke(object, (MaxKey) value);
-		} else if (List.class.isAssignableFrom(paramType)) {
+		} 
+		else if (List.class.isAssignableFrom(paramType)) {
 			method.invoke(object, (List)value);
-		} else {
+		} 
+		else {
 			result = false;
 		}
 		return result;
@@ -843,7 +871,7 @@ public class BasicBSONObject implements Map<String, Object>, BSONObject {
 			result = mapObj;
 		} else if (object.getClass().isArray()) {
 			throw new IllegalArgumentException(
-					"Current version is not support Map/Array type field.");
+					"Current version is not support Array type field.");
 		} else if (object instanceof BSONObject) {
 			result = (BSONObject) object;
 		} else if (object.getClass().getName() == "java.lang.Class") {
@@ -857,7 +885,13 @@ public class BasicBSONObject implements Map<String, Object>, BSONObject {
 			PropertyDescriptor[] props = bi.getPropertyDescriptors();
 			for (PropertyDescriptor p : props) {
 				Class<?> type = p.getPropertyType();
-				Object propObj = p.getReadMethod().invoke(object);
+				Method readMethod = p.getReadMethod();
+				if (readMethod == null) {
+					throw new IllegalArgumentException("The property:"
+							+ cl.getName() + "." + p.getName()
+							+ " have no get method.");
+				}
+				Object propObj = readMethod.invoke(object);
 				if (BSON.IsBasicType(propObj)) {
 					if (!ignoreNullValue || null != propObj) {
 						result.put(p.getName(), propObj);
