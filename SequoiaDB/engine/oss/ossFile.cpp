@@ -265,5 +265,39 @@ namespace engine
    {
       return ossRenamePath( oldFilePath.c_str(), newFilePath.c_str() ) ;
    }
+
+   INT32 ossFile::extend( const string& filePath, INT64 increment )
+   {
+      INT32 rc = SDB_OK ;
+      ossFile file ;
+
+      rc = file.open( filePath, OSS_READWRITE, OSS_DEFAULTFILE ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "Failed to open file[%s], rc=%d",
+                 filePath.c_str(), rc ) ;
+         goto error;
+      }
+
+      rc = file.extend( increment ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "Failed to extend file[%s] with %lld size, rc=%d",
+                 filePath.c_str(), increment, rc ) ;
+         goto error ;
+      }
+
+   done:
+      file.close() ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   string ossFile::getFileName( const string& filePath )
+   {
+      fs::path file ( filePath ) ;
+      return file.filename().string() ;
+   }
 }
 

@@ -64,6 +64,8 @@ namespace engine
       static INT32 getFileSize( const string& filePath, INT64& fileSize ) ;
       static INT32 getLastWriteTime( const string& filePath, time_t& time ) ;
       static INT32 rename( const string& oldFilePath, const string& newFilePath ) ;
+      static INT32 extend( const string& filePath, INT64 increment ) ;
+      static string getFileName( const string& filePath ) ; 
 
    public:
       INT32    open( const string& filePath, UINT32 mode, UINT32 permission ) ;

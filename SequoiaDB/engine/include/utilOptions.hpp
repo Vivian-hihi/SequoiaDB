@@ -40,9 +40,10 @@ namespace po = boost::program_options;
 
 using namespace std;
 
+#define utilOptType(T) po::value<T>()
+
 namespace engine
 {
-   #define utilOptType(T) po::value<T>()
 
    typedef po::options_description_easy_init utilOptAdd;
    typedef po::options_description utilOptDesc;

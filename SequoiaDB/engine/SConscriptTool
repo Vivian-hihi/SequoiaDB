@@ -111,6 +111,7 @@ ossFiles = [
       "oss/ossEDU.cpp",
       "oss/ossSocket.cpp",
       "oss/ossIO.cpp",
+      "oss/ossFile.cpp",
       "oss/ossVer.cpp",
       "oss/ossMem.cpp",
       "oss/ossProc.cpp",
@@ -121,7 +122,7 @@ ossFiles = [
       "oss/ossEvent.cpp",
       "oss/ossDynamicLoad.cpp",
       "oss/ossHdfs.cpp",
-      "oss/ossShMem.cpp"
+      "oss/ossShMem.cpp",
       ]
 
 netFiles = [
@@ -187,11 +188,18 @@ utilFiles = [
       "util/utilDecodeRawbson.cpp",
       "util/utilCache.cpp",
       "util/utilOptions.cpp",
+      "util/utilStream.cpp",
+      "util/utilFileStream.cpp",
+      "util/utilZlibStream.cpp",
       ]
 
 dpsFiles = [
       "dps/dpsDump.cpp",
-      "dps/dpsLogRecord.cpp"
+      "dps/dpsLogRecord.cpp",
+      "dps/dpsLogFile.cpp",
+      "dps/dpsArchiveFile.cpp",
+      "dps/dpsArchiveFileMgr.cpp",
+      "dps/dpsOp2Record.cpp",
       ]
 
 omagentFiles = [
@@ -498,6 +506,15 @@ sdbRepairMain = [
       "tools/sdbrepair.cpp"
       ]
 
+sdbReplayFiles = [
+      "tools/replay/sdbReplay.cpp",
+      "tools/replay/rplOptions.cpp",
+      "tools/replay/rplFilter.cpp",
+      "tools/replay/rplReplayer.cpp",
+      "tools/replay/rplMonitor.cpp",
+      "tools/replay/rplUtil.cpp",
+      ]
+
 #cls
 toolEnv.StaticLibrary('cls', clsFiles)
 #ixm
@@ -546,6 +563,10 @@ sdbexprt = toolEnv.Program("sdbexprt", exportFiles,
           LIBDEPS=["bson","oss","pd","util","client","clientcpp"],
           _LIBDEPS='$_LIBDEPS_OBJS' )
 
+sdbreplay = toolEnv.Program("sdbreplay", sdbReplayFiles,
+          LIBDEPS=["bson","oss","pd","util","clientcpp","dps","pmd"],
+          _LIBDEPS='$_LIBDEPS_OBJS' )
+          
 #sdbexprt = toolEnv.Program("sdbexprt", sdbExportMain,
 #         LIBDEPS=["bson","mig","oss","pd","util","client","clientcpp"],
 #         _LIBDEPS='$_LIBDEPS_OBJS' )
@@ -618,7 +639,7 @@ if linux:
 
 toolEnv.Install( '#/bin', sdbimprt2 )
 toolEnv.Install( '#/bin', sdbexprt )
-#toolEnv.Install( '#/bin', sdbimprt )
+toolEnv.Install( '#/bin', sdbreplay )
 toolEnv.Install( '#/bin', sdbstart )
 toolEnv.Install( '#/bin', sdbstop )
 toolEnv.Install( '#/bin', sdblist )

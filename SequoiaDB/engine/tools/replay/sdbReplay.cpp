@@ -1,0 +1,120 @@
+/*******************************************************************************
+
+   Copyright (C) 2011-2015 SequoiaDB Ltd.
+
+   This program is free software: you can redistribute it and/or modify
+   it under the term of the GNU Affero General Public License, version 3,
+   as published by the Free Software Foundation.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warrenty of
+   MARCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+   GNU Affero General Public License for more details.
+
+   You should have received a copy of the GNU Affero General Public License
+   along with this program. If not, see <http://www.gnu.org/license/>.
+
+   Source File Name = sdbReplay.cpp
+
+   Dependencies: N/A
+
+   Restrictions: N/A
+
+   Change Activity:
+   defect Date        Who Description
+   ====== =========== === ==============================================
+          6/9/2016  David Li  Initial Draft
+
+   Last Changed =
+
+*******************************************************************************/
+#include "rplOptions.hpp"
+#include "rplReplayer.hpp"
+#include "ossVer.h"
+#include "pd.hpp"
+#include "utilCommon.hpp"
+#include <iostream>
+#include <string>
+#include <sstream>
+
+using namespace replay;
+
+#define REPLAY_LOG_PATH "sdbreplay.log"
+
+int main(int argc, char* argv[])
+{
+   Options options;
+   INT32 rc = SDB_OK;
+
+   sdbEnablePD(REPLAY_LOG_PATH);
+   setPDLevel(PDINFO);
+
+   rc = options.parse(argc, argv);
+   if (SDB_OK != rc)
+   {
+      PD_LOG(PDERROR, "Failed to parse arguments, rc=%d", rc);
+      goto error;
+   }
+
+   if (options.hasHelp())
+   {
+      options.printHelp();
+      goto done;
+   }
+
+   if (options.hasVersion())
+   {
+      ossPrintVersion("sdbreplay");
+      goto done;
+   }
+
+   if (options.hasHelpfull())
+   {
+      options.printHelpfull();
+      goto done;
+   }
+
+   if (options.debug())
+   {
+      setPDLevel(PDDEBUG);
+   }
+
+   PD_LOG(PDEVENT, "command: %s", options.buildCmd(argc, argv).c_str());
+
+   try
+   {
+      Replayer replayer;
+
+      rc = replayer.init(options);
+      if (SDB_OK != rc)
+      {
+         PD_LOG(PDERROR, "Failed to init replayer, rc=%d", rc);
+         std::cerr << "Failed to init, see detail in sdbreplay.log"
+                   << std::endl;
+         goto error;
+      }
+
+      rc = replayer.run();
+      if (SDB_OK != rc)
+      {
+         PD_LOG(PDERROR, "Failed to run replayer, rc=%d", rc);
+         std::cerr << "Failed to run, see detail in sdbreplay.log"
+                   << std::endl;
+         goto error;
+      }
+   }
+   catch(std::exception &e)
+   {
+      PD_LOG(PDERROR, "unexpected error happened:%s", e.what());
+      std::cerr << "unexpected error happened: "
+                << e.what()
+                << std::endl;
+   }
+
+done:
+   return engine::utilRC2ShellRC(rc);
+error:
+   goto done;
+}
+
+

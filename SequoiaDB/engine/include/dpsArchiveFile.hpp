@@ -137,6 +137,8 @@ namespace engine
          return _archiveHeader ;
       }
 
+      OSS_INLINE const string& path() const { return _path; }
+
    private:
       INT32 _initHeader() ;
       INT32 _flushHeader() ;

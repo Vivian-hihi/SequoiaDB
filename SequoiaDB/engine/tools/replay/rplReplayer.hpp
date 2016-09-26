@@ -1,0 +1,86 @@
+/*******************************************************************************
+
+   Copyright (C) 2011-2015 SequoiaDB Ltd.
+
+   This program is free software: you can redistribute it and/or modify
+   it under the term of the GNU Affero General Public License, version 3,
+   as published by the Free Software Foundation.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warrenty of
+   MARCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+   GNU Affero General Public License for more details.
+
+   You should have received a copy of the GNU Affero General Public License
+   along with this program. If not, see <http://www.gnu.org/license/>.
+
+   Source File Name = rplReplayer.hpp
+
+   Dependencies: N/A
+
+   Restrictions: N/A
+
+   Change Activity:
+   defect Date        Who Description
+   ====== =========== === ==============================================
+          18/9/2016  David Li  Initial Draft
+
+   Last Changed =
+
+*******************************************************************************/
+#ifndef REPLAY_REPLAYER_HPP_
+#define REPLAY_REPLAYER_HPP_
+
+#include "oss.hpp"
+#include "rplOptions.hpp"
+#include "rplFilter.hpp"
+#include "rplMonitor.hpp"
+#include "../client/client.hpp"
+#include "dpsArchiveFileMgr.hpp"
+#include "dpsLogFile.hpp"
+
+using namespace std;
+
+namespace replay
+{  
+   class Replayer: public SDBObject
+   {
+   public:
+      Replayer();
+      ~Replayer();
+      INT32 init(Options& options);
+      INT32 run();
+
+   private:
+      INT32 _connectSdb();
+      INT32 _replayFile(const string& file);
+      INT32 _replayLogFile(engine::dpsLogFile& logFile,
+                           DPS_LSN_OFFSET startLSN, DPS_LSN_OFFSET endLSN);
+      INT32 _replayLog(const CHAR* log);
+      void  _dumpLog(const engine::dpsLogRecord& log);
+      INT32 _replayDir();
+      INT32 _scanDir(UINT32& minFileId, UINT32& maxFileId);
+      INT32 _replayFiles(UINT32 minFileId, UINT32 maxFileId);
+      INT32 _ensureFileSize(const string& filePath, INT64 fileSize);
+      INT32 _ensureBufSize(UINT32 size);
+      INT32 _setLastFileTime(const string& filePath);
+      INT32 _replayInsert(const CHAR* log);
+      INT32 _replayUpdate(const CHAR* log);
+      INT32 _replayDelete(const CHAR* log);
+      INT32 _replayTruncateCL(const CHAR* log);
+
+   private:
+      string                     _tmpFile;
+      Options*                   _options;
+      Filter                     _filter;
+      Monitor                    _monitor;
+      string                     _path;
+      sdbclient::sdb             _sdb;
+      engine::dpsArchiveFileMgr  _archiveFileMgr;
+      CHAR*                      _buf;
+      UINT32                     _bufSize;
+   };
+}
+
+#endif /* REPLAY_REPLAYER_HPP_ */
+
