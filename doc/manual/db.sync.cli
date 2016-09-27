@@ -35,15 +35,15 @@ Flush the log and data to files.
 .sp 2
        \fBDeep\fR
 .br
-              Turn on deep mode in data-sync. 
+              Flush with deep mode or not. 0 in default.
               0 for turn off, 1 for turn on, -1 means use the 
-              configuration with server. 0 in default.
+              configuration with server.
 .br
               Deep:0.
 .sp 2
        \fBBlock\fR
 .br
-              Turn on block mode in data-sync. false in default.
+              Flush with block mode or not. false in default.
 .br
               Block:false
 .sp 2
