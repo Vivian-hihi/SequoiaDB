@@ -1,4 +1,4 @@
-.TH COMMAND * 2014-04-08 "SequoiaDB" "Sequoiadb Method's Manual"
+.TH COMMAND * 2016-09-27 "SequoiaDB" "Sequoiadb Method's Manual"
 .ad l.ll 72.ce 1000
 \fBdb.sync()\fR
 .ce 0
