@@ -104,32 +104,6 @@
 		<BatchEdit>true</BatchEdit>
 	</FILLER>
 	<FILLER>
-		<Name>numpagecleaners</Name>
-		<WebName>Dirty page cleaner number</WebName>
-		<Type>int</Type>
-		<Default>1</Default>
-		<Valid>0-50</Valid>
-		<Display>edit box</Display>
-		<Edit>true</Edit>
-		<Desc>The diry page cleaner number must turn on when start the database, and 0 means non dirty page cleaner to start, value range:[0,50]</Desc>
-		<Level>0</Level>
-		<DynamicEdit>false</DynamicEdit>
-		<BatchEdit>true</BatchEdit>
-	</FILLER>
-	<FILLER>
-		<Name>pagecleaninterval</Name>
-		<WebName>Dirty page min interval</WebName>
-		<Type>int</Type>
-		<Default>10000</Default>
-		<Valid>1000-</Valid>
-		<Display>edit box</Display>
-		<Edit>true</Edit>
-		<Desc>Least time interval of each collection space doing dirty page cleaning. Unit: ms , Default:10000, Least:1000</Desc>
-		<Level>0</Level>
-		<DynamicEdit>false</DynamicEdit>
-		<BatchEdit>true</BatchEdit>
-	</FILLER>
-	<FILLER>
 		<Name>numpreload</Name>
 		<WebName>Page preload proxy data</WebName>
 		<Type>int</Type>

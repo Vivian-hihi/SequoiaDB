@@ -104,32 +104,6 @@
 		<BatchEdit>true</BatchEdit>
 	</FILLER>
 	<FILLER>
-		<Name>numpagecleaners</Name>
-		<WebName>脏页清除器数量</WebName>
-		<Type>int</Type>
-		<Default>1</Default>
-		<Valid>0-50</Valid>
-		<Display>edit box</Display>
-		<Edit>true</Edit>
-		<Desc>数据库启动时需要开启的脏页清除器数量，0：不启动任何脏页清除器，取值范围：[0,50]</Desc>
-		<Level>0</Level>
-		<DynamicEdit>false</DynamicEdit>
-		<BatchEdit>true</BatchEdit>
-	</FILLER>
-	<FILLER>
-		<Name>pagecleaninterval</Name>
-		<WebName>脏页清除最小间隔</WebName>
-		<Type>int</Type>
-		<Default>10000</Default>
-		<Valid>1000-</Valid>
-		<Display>edit box</Display>
-		<Edit>true</Edit>
-		<Desc>对每个集合空间的进行脏页清除的最小时间间隔。单位：毫秒，默认：10000，最小：1000</Desc>
-		<Level>0</Level>
-		<DynamicEdit>false</DynamicEdit>
-		<BatchEdit>true</BatchEdit>
-	</FILLER>
-	<FILLER>
 		<Name>numpreload</Name>
 		<WebName>页面预加载代理数据</WebName>
 		<Type>int</Type>
