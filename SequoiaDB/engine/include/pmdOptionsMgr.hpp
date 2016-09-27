@@ -483,7 +483,7 @@ namespace engine
          OSS_INLINE UINT32 getMaxSyncJob() const { return _maxSyncJob ; }
          OSS_INLINE UINT32 getSyncInterval() const { return _syncInterval ; }
          OSS_INLINE UINT32 getSyncRecordNum() const { return _syncRecordNum ; }
-         OSS_INLINE UINT32 getSyncDirtyRatio() const { return _syncDirtyRatio ; }
+         OSS_INLINE UINT32 getSyncDirtyRatio() const { return 0 ; /* Reserved */ }
          OSS_INLINE BOOLEAN isSyncDeep() const { return _syncDeep ; }
 
          OSS_INLINE BOOLEAN archiveOn() const { return _archiveOn ; }
@@ -564,7 +564,6 @@ namespace engine
          UINT32      _maxSyncJob ;
          UINT32      _syncInterval ;
          UINT32      _syncRecordNum ;
-         UINT32      _syncDirtyRatio ;
          BOOLEAN     _syncDeep ;
          CHAR        _omAddrLine[ OSS_MAX_PATHSIZE + 1 ] ;
          BOOLEAN     _archiveOn ;

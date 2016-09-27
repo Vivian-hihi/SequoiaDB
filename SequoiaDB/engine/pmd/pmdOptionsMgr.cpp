@@ -83,7 +83,6 @@ namespace engine
    #define PMD_DFT_MAX_SYNC_JOB        (10)
    #define PMD_DFT_SYNC_INTERVAL       (10000)  // 10 seconds
    #define PMD_DFT_SYNC_RECORDNUM      (0)
-   #define PMD_DFT_SYNC_DIRTYRATIO     (50)
    #define PMD_DFT_ARCHIVE_TIMEOUT     (600) // 10 minutes
    #define PMD_DFT_ARCHIVE_EXPIRED     (240) // 10 days
    #define PMD_DFT_ARCHIVE_QUOTA       (10)  // 10 GB
@@ -1332,7 +1331,6 @@ namespace engine
       _maxSyncJob          = PMD_DFT_MAX_SYNC_JOB ;
       _syncInterval        = PMD_DFT_SYNC_INTERVAL ;
       _syncRecordNum       = PMD_DFT_SYNC_RECORDNUM ;
-      _syncDirtyRatio      = PMD_DFT_SYNC_DIRTYRATIO ;
       _syncDeep            = FALSE ;
 
       // archive releated
@@ -1590,10 +1588,6 @@ namespace engine
       /// --syncrecordnum
       rdxUInt( pEX, PMD_OPTION_SYNC_RECORDNUM, _syncRecordNum, FALSE, TRUE,
                PMD_DFT_SYNC_RECORDNUM, FALSE ) ;
-      /// --syncdirtyratio
-      rdxUInt( pEX, PMD_OPTION_SYNC_DIRTYRATIO, _syncDirtyRatio, FALSE, TRUE,
-               PMD_DFT_SYNC_DIRTYRATIO, FALSE ) ;
-      rdvMinMax( pEX, _syncDirtyRatio, 1, 99, TRUE ) ;
       /// --syncdeep
       rdxBooleanS( pEX, PMD_OPTION_SYNC_DEEP, _syncDeep, FALSE, TRUE,
                    FALSE, FALSE ) ;
