@@ -57,11 +57,11 @@ import org.bson.util.JSON;
 // Java
 
 /**
- * A simple implementation of <code>DBObject</code>. A <code>DBObject</code> can
- * be created as follows, using this class: <blockquote>
+ * A simple implementation of <code>BSONObject</code>. A <code>BSONObject</code>
+ * can be created as follows, using this class: <blockquote>
  * 
  * <pre>
- * DBObject obj = new BasicBSONObject();
+ * BSONObject obj = new BasicBSONObject();
  * obj.put(&quot;foo&quot;, &quot;bar&quot;);
  * </pre>
  * 
@@ -96,6 +96,11 @@ public class BasicBSONObject implements Map<String, Object>, BSONObject {
 		this(false);
 	}
 
+	/**
+	 * The current bson object keeps any elements or not
+	 * 
+	 * @return true for empty, false for not
+	 */
 	public boolean isEmpty() {
 		return _objectMap.size() == 0;
 	}
@@ -106,7 +111,7 @@ public class BasicBSONObject implements Map<String, Object>, BSONObject {
 	 * @param key
 	 *            key under which to store
 	 * @param value
-	 *            value to stor
+	 *            value to store
 	 */
 	public BasicBSONObject(String key, Object value) {
 		this(false);
@@ -114,7 +119,7 @@ public class BasicBSONObject implements Map<String, Object>, BSONObject {
 	}
 
 	/**
-	 * Creates a DBObject from a map.
+	 * Creates a BSONObject from a map.
 	 * 
 	 * @param m
 	 *            map to convert
@@ -125,9 +130,9 @@ public class BasicBSONObject implements Map<String, Object>, BSONObject {
 	}
 
 	/**
-	 * Converts a DBObject to a map.
+	 * Converts a BSONObject to a map.
 	 * 
-	 * @return the DBObject
+	 * @return the BSONObject
 	 */
 	// @Override
 	public Map toMap() {
@@ -399,9 +404,9 @@ public class BasicBSONObject implements Map<String, Object>, BSONObject {
 			return null;
 		}
 		if (obj instanceof BigDecimal) {
-			return (BigDecimal)obj;
+			return (BigDecimal) obj;
 		} else {
-			return ((BSONDecimal)get(field)).toBigDecimal();
+			return ((BSONDecimal) get(field)).toBigDecimal();
 		}
 	}
 
@@ -418,7 +423,7 @@ public class BasicBSONObject implements Map<String, Object>, BSONObject {
 		final Object foo = get(field);
 		return (foo != null) ? (BigDecimal) foo : def;
 	}
-	
+
 	/**
 	 * Add a key/value pair to this object
 	 * 
@@ -433,6 +438,12 @@ public class BasicBSONObject implements Map<String, Object>, BSONObject {
 		return _objectMap.put(key, val);
 	}
 
+	/**
+	 * Sets all key/value pairs from a map into this object
+	 * 
+	 * @param m
+	 *            the map
+	 */
 	// @Override
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public void putAll(Map m) {
@@ -441,6 +452,12 @@ public class BasicBSONObject implements Map<String, Object>, BSONObject {
 		}
 	}
 
+	/**
+	 * Sets all key/value pairs from an object into this object
+	 * 
+	 * @param o
+	 *            the object
+	 */
 	// @Override
 	public void putAll(BSONObject o) {
 		for (String k : o.keySet()) {
@@ -473,6 +490,11 @@ public class BasicBSONObject implements Map<String, Object>, BSONObject {
 		return JSON.serialize(this);
 	}
 
+	/**
+	 * Current bson object is equal with the other or not
+	 * 
+	 * @return true or false
+	 */
 	// @Override
 	public boolean equals(Object o) {
 		if (!(o instanceof BSONObject))
@@ -564,15 +586,17 @@ public class BasicBSONObject implements Map<String, Object>, BSONObject {
 			numberCompare = true;
 		}
 		// for number compare, we always cast to Number then cast back
-		if (!numberCompare) { 
-			if(!paramType.isInstance(value) && 
-				(!value.getClass().getName().equals("java.math.BigDecimal") && 
-				 !value.getClass().getName().equals("org.bson.types.BSONDecimal"))) {
-					throw new IllegalArgumentException("The method: "
-							+ method.getName() + " Expected parameter type:"
-							+ paramType.getName()
-							+ " does not match with the actual type:"
-							+ value.getClass().getName());
+		if (!numberCompare) {
+			if (!paramType.isInstance(value)
+					&& (!value.getClass().getName()
+							.equals("java.math.BigDecimal") && !value
+							.getClass().getName()
+							.equals("org.bson.types.BSONDecimal"))) {
+				throw new IllegalArgumentException("The method: "
+						+ method.getName() + " Expected parameter type:"
+						+ paramType.getName()
+						+ " does not match with the actual type:"
+						+ value.getClass().getName());
 			}
 		}
 
@@ -615,28 +639,26 @@ public class BasicBSONObject implements Map<String, Object>, BSONObject {
 		} else if (BSONDecimal.class.isAssignableFrom(paramType)) {
 			String className = value.getClass().getName();
 			if (className.equals("java.math.BigDecimal")) {
-				method.invoke(object, new BSONDecimal((BigDecimal)value));
+				method.invoke(object, new BSONDecimal((BigDecimal) value));
 			} else if (className.equals("org.bson.types.BSONDecimal")) {
-				method.invoke(object, (BSONDecimal)value);
+				method.invoke(object, (BSONDecimal) value);
 			} else {
 				throw new IllegalArgumentException("The method: "
-				+ method.getName() + " Expected parameter type:"
-				+ paramType.getName()
-				+ " does not match with the actual type:"
-				+ className);
+						+ method.getName() + " Expected parameter type:"
+						+ paramType.getName()
+						+ " does not match with the actual type:" + className);
 			}
 		} else if (BigDecimal.class.isAssignableFrom(paramType)) {
 			String className = value.getClass().getName();
 			if (className.equals("java.math.BigDecimal")) {
-				method.invoke(object, (BigDecimal)value);
+				method.invoke(object, (BigDecimal) value);
 			} else if (className.equals("org.bson.types.BSONDecimal")) {
-				method.invoke(object, ((BSONDecimal)value).toBigDecimal());
+				method.invoke(object, ((BSONDecimal) value).toBigDecimal());
 			} else {
 				throw new IllegalArgumentException("The method: "
-				+ method.getName() + " Expected parameter type:"
-				+ paramType.getName()
-				+ " does not match with the actual type:"
-				+ className);
+						+ method.getName() + " Expected parameter type:"
+						+ paramType.getName()
+						+ " does not match with the actual type:" + className);
 			}
 		} else if (CodeWScope.class.isAssignableFrom(paramType)) {
 			method.invoke(object, (CodeWScope) value);
@@ -646,24 +668,23 @@ public class BasicBSONObject implements Map<String, Object>, BSONObject {
 			method.invoke(object, (MinKey) value);
 		else if (MaxKey.class.isAssignableFrom(paramType)) {
 			method.invoke(object, (MaxKey) value);
-		} 
-		else if (List.class.isAssignableFrom(paramType)) {
-			method.invoke(object, (List)value);
-		} 
-		else {
+		} else if (List.class.isAssignableFrom(paramType)) {
+			method.invoke(object, (List) value);
+		} else {
 			result = false;
 		}
 		return result;
 	}
 
+
 	/**
-	 * Returns an instance of the class "cls" only for BasicBsonObject
-	 * 
-	 * @param cls target class object
+	 * @fn <T> T as(Class<T> cls)
+	 * @brief an instance of the class "cls", only for BasicBSONObject
+	 * @param cls
+	 *            target class object
 	 * @return the instance of the class
 	 * @throws Exception
 	 */
-	// @Override
 	public <T> T as(Class<T> cls) throws Exception {
 		return as(cls, null);
 	}
@@ -918,45 +939,125 @@ public class BasicBSONObject implements Map<String, Object>, BSONObject {
 		return typeToBson(object, false);
 	}
 
+	/**
+	 * Returns this object's fields' names
+	 * 
+	 * @return The names of the fields in this object
+	 */
 	@Override
 	public Set<String> keySet() {
 		return _objectMap.keySet();
 	}
 
+	/**
+	 * Returns a Set view of the mappings contained in this map
+	 * 
+	 * @return Returns a Set view of the mappings contained in this map.
+	 */
 	public Set<Entry<String, Object>> entrySet() {
 		return _objectMap.entrySet();
 	}
 
+	/**
+	 * Returns the number of key-value mappings in this map. If the map contains
+	 * more than Integer.MAX_VALUE elements, returns Integer.MAX_VALUE.
+	 * 
+	 * @return the number of key-value mappings in this map
+	 */
 	@Override
 	public int size() {
 		return _objectMap.size();
 	}
 
+	/**
+	 * Returns true if this map contains a mapping for the specified key. More
+	 * formally, returns true if and only if this map contains a mapping for a
+	 * key k such that (key==null ? k==null : key.equals(k)). (There can be at
+	 * most one such mapping.)
+	 * 
+	 * @param key
+	 *            whose presence in this map is to be tested
+	 * @return true if this map contains a mapping for the specified key
+	 */
 	@Override
 	public boolean containsKey(Object key) {
 		return _objectMap.containsKey(key);
 	}
 
+	/**
+	 * Returns true if this map maps one or more keys to the specified value.
+	 * More formally, returns true if and only if this map contains at least one
+	 * mapping to a value v such that (value==null ? v==null : value.equals(v)).
+	 * This operation will probably require time linear in the map size for most
+	 * implementations of the Map interface.
+	 * 
+	 * @param value
+	 *            whose presence in this map is to be tested
+	 * @return true if this map maps one or more keys to the specified value
+	 */
 	@Override
 	public boolean containsValue(Object value) {
 		return _objectMap.containsValue(value);
 	}
 
+	/**
+	 * Removes the mapping for a key from this map if it is present (optional
+	 * operation). More formally, if this map contains a mapping from key k to
+	 * value v such that (key==null ? k==null : key.equals(k)), that mapping is
+	 * removed. (The map can contain at most one such mapping.) Returns the
+	 * value to which this map previously associated the key, or null if the map
+	 * contained no mapping for the key. If this map permits null values, then a
+	 * return value of null does not necessarily indicate that the map contained
+	 * no mapping for the key; it's also possible that the map explicitly mapped
+	 * the key to null. The map will not contain a mapping for the specified key
+	 * once the call returns.
+	 * 
+	 * @param key
+	 *            whose mapping is to be removed from the map
+	 * @return the previous value associated with key, or null if there was no
+	 *         mapping for key.
+	 * 
+	 */
 	@Override
 	public Object remove(Object key) {
 		return _objectMap.remove(key);
 	}
 
+	/**
+	 * Removes all of the mappings from this map (optional operation). The map
+	 * will be empty after this call returns.
+	 */
 	@Override
 	public void clear() {
 		_objectMap.clear();
 	}
 
+	/**
+	 * Returns a Collection view of the values contained in this map. The
+	 * collection is backed by the map, so changes to the map are reflected in
+	 * the collection, and vice-versa. If the map is modified while an iteration
+	 * over the collection is in progress (except through the iterator's own
+	 * remove operation), the results of the iteration are undefined. The
+	 * collection supports element removal, which removes the corresponding
+	 * mapping from the map, via the Iterator.remove, Collection.remove,
+	 * removeAll, retainAll and clear operations. It does not support the add or
+	 * addAll operations.
+	 * 
+	 * @return a collection view of the values contained in this map
+	 */
 	@Override
 	public Collection<Object> values() {
 		return _objectMap.values();
 	}
 
+	/**
+	 * Returns the value to which the specified key is mapped, or null if the
+	 * map contains no mapping for the key.
+	 * 
+	 * @param key
+	 *            the key whose associated value is to be returned.
+	 * @return the value or null
+	 */
 	@Override
 	public Object get(Object key) {
 		return _objectMap.get(key);
