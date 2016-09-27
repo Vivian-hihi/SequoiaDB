@@ -207,4 +207,56 @@
 		<DynamicEdit>false</DynamicEdit>
 		<BatchEdit>true</BatchEdit>
 	</FILLER>
+	<FILLER>
+		<Name>maxsyncjob</Name>
+		<WebName>data-sync's maxinum task count</WebName>
+		<Type>int</Type>
+		<Default>10</Default>
+		<Valid>2-200</Valid>
+		<Display>edit box</Display>
+		<Edit>true</Edit>
+		<Desc>The maximum number of data-sync threads, default:10, value range:[2, 200]</Desc>
+		<Level>1</Level>
+		<DynamicEdit>false</DynamicEdit>
+		<BatchEdit>true</BatchEdit>
+	</FILLER>
+	<FILLER>
+		<Name>syncinterval</Name>
+		<WebName>the interval time of data-sync</WebName>
+		<Type>int</Type>
+		<Default>10000</Default>
+		<Valid>0-</Valid>
+		<Display>edit box</Display>
+		<Edit>true</Edit>
+		<Desc>The interval time(unit:ms) of data-sync, default:10000, 0 means disable data-sync by time</Desc>
+		<Level>1</Level>
+		<DynamicEdit>false</DynamicEdit>
+		<BatchEdit>true</BatchEdit>
+	</FILLER>
+	<FILLER>
+		<Name>syncrecordnum</Name>
+		<WebName>the trigger condition of record number of data-sync</WebName>
+		<Type>int</Type>
+		<Default>0</Default>
+		<Valid>0-</Valid>
+		<Display>edit box</Display>
+		<Edit>true</Edit>
+		<Desc>The trigger condition of record number of data-sync, default:0, 0 means disable data-sync by record</Desc>
+		<Level>1</Level>
+		<DynamicEdit>false</DynamicEdit>
+		<BatchEdit>true</BatchEdit>
+	</FILLER>
+	<FILLER>
+		<Name>syncdeep</Name>
+		<WebName>turn on deep mode in data-sync</WebName>
+		<Type>bool</Type>
+		<Default>false</Default>
+		<Valid>true,false</Valid>
+		<Display>select box</Display>
+		<Edit>true</Edit>
+		<Desc>Turn on deep mode in data-sync, default:FALSE</Desc>
+		<Level>1</Level>
+		<DynamicEdit>false</DynamicEdit>
+		<BatchEdit>true</BatchEdit>
+	</FILLER>
 </Property>

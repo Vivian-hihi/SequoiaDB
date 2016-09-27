@@ -207,4 +207,56 @@
 		<DynamicEdit>false</DynamicEdit>
 		<BatchEdit>true</BatchEdit>
 	</FILLER>
+	<FILLER>
+		<Name>maxsyncjob</Name>
+		<WebName>数据同步最大任务数</WebName>
+		<Type>int</Type>
+		<Default>10</Default>
+		<Valid>2-200</Valid>
+		<Display>edit box</Display>
+		<Edit>true</Edit>
+		<Desc>后台数据同步任务线程的最大数量，默认值为10，取值范围为[2, 200]</Desc>
+		<Level>1</Level>
+		<DynamicEdit>false</DynamicEdit>
+		<BatchEdit>true</BatchEdit>
+	</FILLER>
+	<FILLER>
+		<Name>syncinterval</Name>
+		<WebName>数据同步周期</WebName>
+		<Type>int</Type>
+		<Default>10000</Default>
+		<Valid>0-</Valid>
+		<Display>edit box</Display>
+		<Edit>true</Edit>
+		<Desc>后台数据同步周期，单位毫秒，默认值为10000，0表示不按周期触发数据同步</Desc>
+		<Level>1</Level>
+		<DynamicEdit>false</DynamicEdit>
+		<BatchEdit>true</BatchEdit>
+	</FILLER>
+	<FILLER>
+		<Name>syncrecordnum</Name>
+		<WebName>数据同步触发记录数</WebName>
+		<Type>int</Type>
+		<Default>0</Default>
+		<Valid>0-</Valid>
+		<Display>edit box</Display>
+		<Edit>true</Edit>
+		<Desc>后台数据同步触发记录数，默认值为0，0表示不按记录数触发数据同步</Desc>
+		<Level>1</Level>
+		<DynamicEdit>false</DynamicEdit>
+		<BatchEdit>true</BatchEdit>
+	</FILLER>
+	<FILLER>
+		<Name>syncdeep</Name>
+		<WebName>数据同步是否深度刷盘</WebName>
+		<Type>bool</Type>
+		<Default>false</Default>
+		<Valid>true,false</Valid>
+		<Display>select box</Display>
+		<Edit>true</Edit>
+		<Desc>数据同步是否开启深度刷盘,默认为:FALSE</Desc>
+		<Level>1</Level>
+		<DynamicEdit>false</DynamicEdit>
+		<BatchEdit>true</BatchEdit>
+	</FILLER>
 </Property>
