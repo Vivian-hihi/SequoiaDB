@@ -3027,7 +3027,7 @@ namespace engine
    IMPLEMENT_CMD_AUTO_REGISTER( _rtnSyncDB )
    _rtnSyncDB::_rtnSyncDB()
    {
-      _syncType = 0 ;
+      _syncType = 1 ;
       _csName = NULL ;
       _block = FALSE ;
    }
