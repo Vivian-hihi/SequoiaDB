@@ -35,11 +35,11 @@ Flush the log and data to files.
 .sp 2
        \fBDeep\fR
 .br
-              Flush with deep mode or not. 0 in default.
+              Flush with deep mode or not. 1 in default.
               0 for non-deep mode, 1 for deep mode, -1 means use the 
               configuration with server.
 .br
-              Deep:0.
+              Deep:1.
 .sp 2
        \fBBlock\fR
 .br
