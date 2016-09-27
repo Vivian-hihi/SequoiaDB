@@ -1095,22 +1095,6 @@
    </opt>
 
    <opt>
-      <name>PMD_OPTION_SYNC_DIRTYRATIO</name>
-      <long>syncdirtyratio</long>
-      <description>
-         <en>The trigger condition of dirty page ratio of data-sync, default:50, value range:[1,99]</en>
-         <cn>后台数据同步触发脏页比率，默认值为50，取值范围[1,99]</cn>
-      </description>
-      <detail>
-         <en>The trigger condition of dirty page ratio of data-sync, default:50, value range:[1,99]</en>
-         <cn>后台数据同步触发脏页比率，默认值为50，取值范围[1,99]</cn>
-      </detail>
-      <type>int</type>
-      <default>50</default>
-      <typeofweb>num</typeofweb>
-   </opt>
-
-   <opt>
       <name>PMD_OPTION_SYNC_DEEP</name>
       <long>syncdeep</long>
       <description>
