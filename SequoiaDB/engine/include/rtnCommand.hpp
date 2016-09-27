@@ -1232,6 +1232,8 @@ namespace engine
 
    private:
       INT32          _syncType ;
+      const CHAR     *_csName ;
+      BOOLEAN        _block ;
 
    } ;
 }

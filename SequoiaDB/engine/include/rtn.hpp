@@ -489,8 +489,11 @@ namespace engine
 
    /*
       syncType: =0 ->FALSE, >0 ->TRUE, <0 -> Use system config
+      pSpecCSName: not null and empty, will sync the pSpecCSName only
    */
-   INT32 rtnSyncDB( pmdEDUCB *cb, INT32 syncType, BOOLEAN block = FALSE ) ;
+   INT32 rtnSyncDB( pmdEDUCB *cb, INT32 syncType,
+                    const CHAR *pSpecCSName = NULL,
+                    BOOLEAN block = FALSE ) ;
 
 }
 

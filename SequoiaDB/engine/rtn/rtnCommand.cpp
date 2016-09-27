@@ -3028,6 +3028,8 @@ namespace engine
    _rtnSyncDB::_rtnSyncDB()
    {
       _syncType = 0 ;
+      _csName = NULL ;
+      _block = FALSE ;
    }
 
    _rtnSyncDB::~_rtnSyncDB()
@@ -3063,6 +3065,36 @@ namespace engine
             rc = SDB_INVALIDARG ;
             goto error ;
          }
+
+         e = matcher.getField( FIELD_NAME_COLLECTIONSPACE ) ;
+         if ( String == e.type() )
+         {
+            _csName = e.valuestr() ;
+         }
+         else if ( !e.eoo() )
+         {
+            PD_LOG( PDERROR, "Param[%s] is invalid in obj[%s]",
+                    FIELD_NAME_COLLECTIONSPACE, matcher.toString().c_str() ) ;
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+
+         e = matcher.getField( FIELD_NAME_BLOCK ) ;
+         if ( Bool == e.type() )
+         {
+            _block = e.Bool() ? TRUE : FALSE ;
+         }
+         else if ( e.isNumber() )
+         {
+            _block = ( 0 == e.numberInt() ) ? FALSE : TRUE ;
+         }
+         else if ( !e.eoo() )
+         {
+            PD_LOG( PDERROR, "Param[%s] is invalid in obj[%s]",
+                    FIELD_NAME_BLOCK, matcher.toString().c_str() ) ;
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
       }
       catch( std::exception &e )
       {
@@ -3085,7 +3117,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RTNSYNCDB_DOIT ) ;
 
-      rc = rtnSyncDB( cb, _syncType, FALSE ) ;
+      rc = rtnSyncDB( cb, _syncType, _csName, _block ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "Failed to sync db: %d", rc ) ;

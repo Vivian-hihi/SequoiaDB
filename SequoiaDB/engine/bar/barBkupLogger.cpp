@@ -1020,7 +1020,7 @@ namespace engine
       hasReg = TRUE ;
 
       /// sync
-      rtnSyncDB( cb, -1, FALSE ) ;
+      rtnSyncDB( cb, -1, NULL, FALSE ) ;
 
       // if increase backup, need to check lsn
       lsn = _pDPSCB->getStartLsn( FALSE ) ;

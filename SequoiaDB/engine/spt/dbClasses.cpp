@@ -7800,7 +7800,6 @@ static JSBool sdb_sync ( JSContext *cx , uintN argc , jsval *vp )
       if ( NULL != printBuf )
       {
          bson_sprint( printBuf, bufLen, &info ) ;
-         printf( "%s\n", printBuf ) ;
       }
    }
 
@@ -7810,11 +7809,16 @@ static JSBool sdb_sync ( JSContext *cx , uintN argc , jsval *vp )
    }
    else
    {
-      REPORT_RC( FALSE,  "Sdb.sync()", rc ) ;
+      REPORT_RC_MSG( FALSE, "Sdb.sync()", rc, printBuf ) ;
    }
+
 done:
    bson_destroy( &options ) ;
    bson_destroy( &info ) ;
+   if ( printBuf )
+   {
+      SDB_OSS_FREE( printBuf ) ;
+   }
    PD_TRACE_EXIT( SDB_SDB_SYNC ) ;
    return ret ;
 error:

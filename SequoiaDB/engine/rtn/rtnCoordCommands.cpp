@@ -2998,22 +2998,74 @@ namespace engine
       ctrlParam._filterID = FILTER_ID_MATCHER ;
       ctrlParam._emptyFilterSel = NODE_SEL_ALL ;
 
+      CHAR *pQuery = NULL ;
+      CHAR *pNewMsg = NULL ;
+      rc = msgExtractQuery( (CHAR*)pMsg, NULL, NULL, NULL, NULL,
+                            &pQuery, NULL, NULL, NULL ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Extract message failed, rc: %d", rc ) ;
+         goto error ;
+      }
+
+      try
+      {
+         const CHAR *csName = NULL ;
+         BSONObj obj( pQuery ) ;
+         BSONElement e = obj.getField( FIELD_NAME_COLLECTIONSPACE ) ;
+         if ( String == e.type() )
+         {
+            csName = e.valuestr() ;
+         }
+         else if ( !e.eoo() )
+         {
+            PD_LOG( PDERROR, "Field[%s] is invalid in obj[%s]",
+                    FIELD_NAME_COLLECTIONSPACE, obj.toString().c_str() ) ;
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+
+         if ( csName )
+         {
+            INT32 newMsgSize = 0 ;
+            CoordGroupList grpLst ;
+            rtnQueryOptions queryOpt ;
+
+            queryOpt._fullName = "CAT" ;
+            queryOpt._query = BSON( CAT_COLLECTION_SPACE_NAME << csName ) ;
+            rc = queryOpt.toQueryMsg( &pNewMsg, newMsgSize ) ;
+            if ( rc )
+            {
+               PD_LOG( PDERROR, "Alloc query msg failed, rc: %d", rc ) ;
+               goto error ;
+            }
+            /// chage the opCode
+            ((MsgHeader*)pNewMsg)->opCode = MSG_CAT_QUERY_SPACEINFO_REQ ;
+            rc = executeOnCataGroup( (MsgHeader*)pNewMsg, cb, &grpLst ) ;
+            if ( rc )
+            {
+               PD_LOG( PDERROR, "Query collectionspace[%s] info from catalog "
+                       "failed, rc: %d", csName, rc ) ;
+               goto error ;
+            }
+            ctrlParam._useSpecialGrp = TRUE ;
+            ctrlParam._specialGrps = grpLst ;
+         }
+      }
+      catch( std::exception &e )
+      {
+         PD_LOG( PDERROR, "Occur exception: %s", e.what() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
       rc = executeOnNodes( pMsg, cb, ctrlParam,
-                           RTN_CTRL_MASK_ALL, errNodes, &context ) ;
-      if ( SDB_RTN_CMD_IN_LOCAL_MODE == rc )
+                           RTN_CTRL_MASK_NODE_SELECT|RTN_CTRL_MASK_ROLE,
+                           errNodes, &context ) ;
+      if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "options of node is necessary when db is coord" ) ;
-         rc = SDB_INVALIDARG ;
+         PD_LOG( PDERROR, "failed to execute on nodes: %d", rc ) ;
          goto error ;
-      }
-      else if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "failed to execute on nodes:%d", rc ) ;
-         goto error ;
-      }
-      else
-      {
-         /// do nothing.
       }
 
       if ( NULL != context )
@@ -3021,19 +3073,15 @@ namespace engine
          contextID = context->contextID() ;
       }
 
-/*
-      if ( !errNodes.empty() )
-      {
-         rc = SDB_COORD_NOT_ALL_DONE ;
-         goto error ;
-      }
-*/
-
    done:
+      if ( pNewMsg )
+      {
+         SDB_OSS_FREE( pNewMsg ) ;
+      }
       PD_TRACE_EXITRC( CMD_RTNCOCMDSYNCDB__SYNCDB, rc ) ;
       return rc ;
    error:
-      if ( SDB_COORD_NOT_ALL_DONE != rc && NULL != context )
+      if ( context )
       {
          sdbGetRTNCB()->contextDelete( context->contextID(), cb ) ;
          contextID = -1 ;

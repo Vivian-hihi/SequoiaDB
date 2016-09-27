@@ -1380,7 +1380,8 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNSYNCDB, "rtnSyncDB" )
-   INT32 rtnSyncDB( _pmdEDUCB *cb, INT32 syncType, BOOLEAN block )
+   INT32 rtnSyncDB( _pmdEDUCB *cb, INT32 syncType,
+                    const CHAR *pSpecCSName, BOOLEAN block )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB_RTNSYNCDB ) ;
@@ -1394,6 +1395,7 @@ namespace engine
       BOOLEAN sync = FALSE ;
       std::set<monCollectionSpace> allCS ;
       BOOLEAN dmsLocked = FALSE ;
+      BOOLEAN syncSpecCS = FALSE ;
 
       if ( !dpsCB || !dpsCB )
       {
@@ -1415,6 +1417,11 @@ namespace engine
          sync = pmdGetOptionCB()->isSyncDeep() ;
       }
 
+      if ( pSpecCSName && *pSpecCSName )
+      {
+         syncSpecCS = TRUE ;
+      }
+
       /// block write
       if ( block )
       {
@@ -1428,11 +1435,14 @@ namespace engine
       }
 
       /// commit log
-      rc = dpsCB->commit( sync, &commitLSN ) ;
-      if ( SDB_OK != rc )
+      if ( !syncSpecCS )
       {
-         PD_LOG( PDERROR, "Failed to commit dps log: %d", rc ) ;
-         goto error ;
+         rc = dpsCB->commit( sync, &commitLSN ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "Failed to commit dps log: %d", rc ) ;
+            goto error ;
+         }
       }
 
       /// Dump all collectionspace, except SYSTEM
@@ -1446,6 +1456,11 @@ namespace engine
          dmsStorageUnit *su = NULL ;
          dmsStorageUnitID suID = DMS_INVALID_CS ;
 
+         if ( syncSpecCS && 0 != ossStrcmp( pSpecCSName, csName ) )
+         {
+            continue ;
+         }
+         /// get cs lock
          rc = dmsCB->nameToSUAndLock ( csName, suID, &su, SHARED ) ;
          if ( SDB_DMS_CS_NOTEXIST == rc )
          {
@@ -1478,11 +1493,14 @@ namespace engine
       }
 
       /// commit log again
-      rc = dpsCB->commit( sync, &commitLSN ) ;
-      if ( SDB_OK != rc )
+      if ( !syncSpecCS )
       {
-         PD_LOG( PDERROR, "Failed to commit dps log: %d", rc ) ;
-         goto error ;
+         rc = dpsCB->commit( sync, &commitLSN ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "Failed to commit dps log: %d", rc ) ;
+            goto error ;
+         }
       }
 
    done:
@@ -1492,9 +1510,18 @@ namespace engine
       }
       if ( SDB_OK == rc )
       {
-         PD_LOG( PDEVENT, "Sync db succeed, commit lsn[%u.%llu], "
-                 "cost(ms): %llu", commitLSN.version, commitLSN.offset,
-                 pmdGetTickSpanTime( beginTick ) ) ;
+         if ( syncSpecCS )
+         {
+            PD_LOG( PDEVENT, "Sync collectionspace[%s] succeed, "
+                    "cost(ms): %llu", pSpecCSName,
+                    pmdGetTickSpanTime( beginTick ) ) ;
+         }
+         else
+         {
+            PD_LOG( PDEVENT, "Sync db succeed, commit lsn[%u.%llu], "
+                    "cost(ms): %llu", commitLSN.version, commitLSN.offset,
+                    pmdGetTickSpanTime( beginTick ) ) ;
+         }
       }
       PD_TRACE_EXITRC( SDB_RTNSYNCDB, rc ) ;
       return rc ;
