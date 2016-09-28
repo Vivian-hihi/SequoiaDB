@@ -1282,8 +1282,10 @@ namespace engine
       {
          nodeID.value = *it ;
          ++it ;
-         nodeID.columns.serviceID = MSG_ROUTE_SHARD_SERVCIE ;
-         ctrlParam._specialNodes.insert( nodeID.value ) ;
+         if ( MSG_ROUTE_SHARD_SERVCIE == nodeID.columns.serviceID )
+         {
+            ctrlParam._specialNodes.insert( nodeID.value ) ;
+         }
       }
    }
 
