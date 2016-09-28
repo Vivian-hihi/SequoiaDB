@@ -126,7 +126,6 @@ namespace engine
 
    protected:
       _SDB_DMSCB *_pDmsCB ;
-      _dpsLogWrapper *_pDpsCB ;
       sdbCatalogueCB *_pCatCB ;
 
       MSG_TYPE _cmdType ;

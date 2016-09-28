@@ -3725,7 +3725,7 @@ namespace engine
             beginBound = endBound ;
             endBound = endBound + avgBound ;
             ++ itemID ;
-            if ( grpSize - 1 == itemID )
+            if ( grpSize - 1 == (UINT32)itemID )
             {
                endBound = totalBound ;
             }
