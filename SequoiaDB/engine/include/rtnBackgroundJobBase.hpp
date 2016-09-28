@@ -61,6 +61,7 @@ namespace engine
       PMD_JOB_CACHE              = 14, // cache job
       PMD_JOB_SYNC               = 15, // sync job
       RTN_JOB_REBUILD            = 16, // rebuild job
+      RTN_JOB_CLS_STORAGE_CHECK  = 17, // storage check job
 
       RTN_JOB_MAX
    } ;

@@ -392,7 +392,8 @@ clsFiles = [
       "cls/clsCommand.cpp",
       "cls/clsReelection.cpp",
       "cls/clsDCMgr.cpp",
-      "cls/clsLocalValidation.cpp"
+      "cls/clsLocalValidation.cpp",
+      "cls/clsStorageCheckJob.cpp"
       ]
 
 dpsFiles = [

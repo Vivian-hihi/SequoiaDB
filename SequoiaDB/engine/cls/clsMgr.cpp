@@ -39,6 +39,7 @@
 #include "clsReplSession.hpp"
 #include "clsFSDstSession.hpp"
 #include "clsFSSrcSession.hpp"
+#include "clsStorageCheckJob.hpp"
 #include "../bson/bson.h"
 #include "pdTrace.hpp"
 #include "clsTrace.hpp"
@@ -637,6 +638,12 @@ namespace engine
 
       // 4. send register msg
       _sendRegisterMsg () ;
+
+      // Start storage check job
+      rc = startStorageCheckJob( NULL ) ;
+      PD_RC_CHECK( rc, PDERROR,
+                   "Start storage checking job thread failed, rc: %d",
+                   rc ) ;
 
    done:
       PD_TRACE_EXITRC ( SDB__CLSMGR_ACTIVE, rc );

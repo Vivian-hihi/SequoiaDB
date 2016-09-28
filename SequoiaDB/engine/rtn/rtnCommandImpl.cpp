@@ -1242,8 +1242,6 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_RTNDROPCSP1 ) ;
-      SDB_RTNCB *rtnCB = pmdGetKRCB()->getRTNCB() ;
-      SINT64 contextID = -1 ;
 
       SDB_ASSERT ( pCollectionSpace, "collection space can't be NULL" ) ;
       SDB_ASSERT ( dmsCB, "dms control block can't be NULL" ) ;
@@ -1261,32 +1259,7 @@ namespace engine
       // EDU. If so we have to get rid of those contexts
       if ( NULL != cb )
       {
-         std::set<SINT64> contextList ;
-         cb->contextCopy( contextList ) ;
-
-         std::set<SINT64>::iterator it = contextList.begin() ;
-         while ( it != contextList.end() )
-         {
-            contextID = *it ;
-            ++it ;
-
-            // get each context
-            rtnContext *ctx = rtnCB->contextFind ( contextID ) ;
-            // if context doesn't exist or has not dmsStorageUnit
-            if ( !ctx || NULL == ctx->getSU() )
-            {
-               continue ;
-            }
-            // for the contexts has valid su, let's get SU name
-            // note since everyone must wait for lock before deleting su, since this
-            // session is holding SU, that means no other sessions are allowed to remove
-            // su and the moment, that means it's safe to directly call ctx->_su->CSName
-            if ( ossStrcmp ( ctx->getSU()->CSName(), pCollectionSpace ) == 0 )
-            {
-               // if the su is held by myself, i have to kill the context from global
-               rtnCB->contextDelete( contextID, cb ) ;
-            }
-         }
+         rtnDelContextForCollectionSpace( pCollectionSpace, cb ) ;
       }
 
       rc = dmsCB->dropCollectionSpaceP1( pCollectionSpace, cb, dpsCB ) ;

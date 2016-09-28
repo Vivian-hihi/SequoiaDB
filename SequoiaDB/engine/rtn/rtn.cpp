@@ -718,6 +718,45 @@ namespace engine
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNDELCSCTX, "_rtnDelContextForCollectionSpace" )
+   void rtnDelContextForCollectionSpace ( const CHAR *pCollectionSpace,
+                                          _pmdEDUCB *cb )
+   {
+      PD_TRACE_ENTRY ( SDB_RTNDELCSCTX ) ;
+
+      SDB_ASSERT ( cb, "EDU control block can't be NULL" ) ;
+
+      SDB_RTNCB *rtnCB = pmdGetKRCB()->getRTNCB() ;
+
+      // let's find out whether the collection space is held by this
+      // EDU. If so we have to get rid of those contexts
+      std::set<SINT64> contextList ;
+      cb->contextCopy( contextList ) ;
+
+      std::set<SINT64>::iterator it = contextList.begin() ;
+      while ( it != contextList.end() )
+      {
+         SINT64 contextID = *it ;
+         ++it ;
+
+         // get each context
+         rtnContext *ctx = rtnCB->contextFind ( contextID ) ;
+         // if context doesn't exist or has not dmsStorageUnit
+         if ( !ctx || NULL == ctx->getSU() )
+         {
+            continue ;
+         }
+         if ( ossStrcmp ( ctx->getSU()->CSName(), pCollectionSpace ) == 0 )
+         {
+            // if the su is held by myself, i have to kill the context
+            // from global
+            rtnCB->contextDelete( contextID, cb ) ;
+         }
+      }
+
+      PD_TRACE_EXIT ( SDB_RTNDELCSCTX ) ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNDELCSCOMMAND, "rtnDelCollectionSpaceCommand" )
    INT32 rtnDelCollectionSpaceCommand ( const CHAR *pCollectionSpace,
                                         _pmdEDUCB *cb,
@@ -728,8 +767,6 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_RTNDELCSCOMMAND ) ;
-      SDB_RTNCB *rtnCB = pmdGetKRCB()->getRTNCB() ;
-      SINT64 contextID = -1 ;
       BOOLEAN writable = FALSE ;
 
       SDB_ASSERT ( pCollectionSpace, "collection space can't be NULL" ) ;
@@ -752,29 +789,7 @@ namespace engine
       // EDU. If so we have to get rid of those contexts
       if ( NULL != cb )
       {
-         std::set<SINT64> contextList ;
-         cb->contextCopy( contextList ) ;
-
-         std::set<SINT64>::iterator it = contextList.begin() ;
-         while ( it != contextList.end() )
-         {
-            contextID = *it ;
-            ++it ;
-
-            // get each context
-            rtnContext *ctx = rtnCB->contextFind ( contextID ) ;
-            // if context doesn't exist or has not dmsStorageUnit
-            if ( !ctx || NULL == ctx->getSU() )
-            {
-               continue ;
-            }
-            if ( ossStrcmp ( ctx->getSU()->CSName(), pCollectionSpace ) == 0 )
-            {
-               // if the su is held by myself, i have to kill the context
-               // from global
-               rtnCB->contextDelete( contextID, cb ) ;
-            }
-         }
+         rtnDelContextForCollectionSpace( pCollectionSpace, cb ) ;
       }
 
       if ( dropFile )

@@ -232,6 +232,9 @@ namespace engine
                                    const CHAR *lobPath,
                                    SDB_DMSCB *dmsCB ) ;
 
+   void rtnDelContextForCollectionSpace ( const CHAR *pCollectionSpace,
+                                           _pmdEDUCB *cb ) ;
+
    INT32 rtnDelCollectionSpaceCommand ( const CHAR *pCollectionSpace,
                                         _pmdEDUCB *cb,
                                         SDB_DMSCB *dmsCB,
