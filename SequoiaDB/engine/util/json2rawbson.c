@@ -54,7 +54,7 @@ CHAR * json2rawbson ( const CHAR *str, BOOLEAN isBatch )
    bson obj ;
    CHAR *p = NULL ;
    bson_init ( &obj ) ;
-   if ( jsonToBson2 ( &obj, str, 0, isBatch ) )
+   if( json2bson( str, NULL, CJSON_RIGOROUS_PARSE, !isBatch, &obj ) )
    {
       if ( obj.data )
       {
@@ -75,7 +75,7 @@ CHAR * json2rawcbson ( const CHAR *str )
    bson obj ;
    CHAR *p = NULL ;
    bson_init ( &obj ) ;
-   if ( jsonToBson2 ( &obj, str, 0, 1 ) )
+   if( json2bson( str, NULL, CJSON_RIGOROUS_PARSE, TRUE, &obj ) )
    {
       if ( obj.data )
       {

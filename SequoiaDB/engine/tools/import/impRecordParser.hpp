@@ -35,7 +35,7 @@
 #include "oss.hpp"
 #include "impOptions.hpp"
 #include "../client/bson/bson.h"
-#include "jstobs2.h"
+#include "jstobs.h"
 #include <string>
 
 using namespace std;

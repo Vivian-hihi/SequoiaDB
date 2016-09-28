@@ -118,7 +118,7 @@ namespace exprt
       }
       else
       {
-         if ( !jsonToBson2 ( &select, selectStr.c_str(), FALSE, TRUE ) )
+         if( !json2bson( selectStr.c_str(), NULL, CJSON_RIGOROUS_PARSE, FALSE, &select ) )
          {
             rc = SDB_INVALIDARG ;
             PD_LOG( PDERROR, "Invalid format of select : %s", 

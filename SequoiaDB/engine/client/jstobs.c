@@ -14,10 +14,75 @@
    limitations under the License.
 *******************************************************************************/
 
-#include "cJSON.h"
-#include "base64c.h"
 #include "jstobs.h"
+#include "cJSON_ext.h"
+#include "base64c.h"
 #include "timestamp.h"
+
+#define INT_NUM_SIZE 32
+
+#define INT64_LAST_YEAR 9999
+#define INT32_LAST_YEAR 2038
+
+#define RELATIVE_YEAR 1900
+#define RELATIVE_MON 12
+#define RELATIVE_DAY 31
+#define RELATIVE_HOUR 24
+#define RELATIVE_MIN_SEC 60
+
+#define BSON_TEMP_SIZE_32 32
+#define BSON_TEMP_SIZE_64 64
+#define BSON_TEMP_SIZE_512 512
+
+#define LONG_JS_MIN (-9007199254740991LL)
+#define LONG_JS_MAX  (9007199254740991LL)
+
+#define TIME_FORMAT "%d-%d-%d-%d.%d.%d.%d"
+#define DATE_FORMAT "%d-%d-%d"
+
+#define DATE_OUTPUT_CSV_FORMAT "%04d-%02d-%02d"
+#define DATE_OUTPUT_FORMAT "{ \"$date\": \"" DATE_OUTPUT_CSV_FORMAT "\" }"
+
+#define TIME_OUTPUT_CSV_FORMAT "%04d-%02d-%02d-%02d.%02d.%02d.%06d"
+#define TIME_OUTPUT_FORMAT "{ \"$timestamp\": \"" TIME_OUTPUT_CSV_FORMAT "\" }"
+
+#define TIME_STAMP_TIMESTAMP_MIN (-2147483648LL)
+#define TIME_STAMP_TIMESTAMP_MAX  (2147483647LL)
+
+static void get_char_num ( CHAR *str, INT32 i, INT32 str_size ) ;
+static CHAR* intToString ( INT32 value, CHAR *string, INT32 radix ) ;
+static BOOLEAN date2Time( const CHAR *pDate,
+                          CJSON_VALUE_TYPE valType,
+                          time_t *pTimestamp,
+                          INT32 *pMicros ) ;
+static void bsonConvertJsonRawConcat( CHAR **pbuf,
+                                      INT32 *left,
+                                      const CHAR *data,
+                                      BOOLEAN isString ) ;
+static BOOLEAN bsonConvertJson( CHAR **pbuf,
+                                INT32 *left,
+                                const CHAR *data ,
+                                INT32 isobj,
+                                BOOLEAN toCSV,
+                                BOOLEAN skipUndefined ) ;
+static INT32 strlen_a( const CHAR *data ) ;
+static void local_time( time_t *Time, struct tm *TM ) ;
+
+typedef void (*JSON_PLOG_FUNC)( const CHAR *pFunc, \
+                                const CHAR *pFile, \
+                                UINT32 line, \
+                                const CHAR *pFmt, \
+                                ... ) ;
+
+JSON_PLOG_FUNC _pJsonPrintfLogFun ;
+
+#define JSON_PRINTF_LOG( fmt, ... )\
+{\
+   if( _pJsonPrintfLogFun != NULL )\
+   {\
+      _pJsonPrintfLogFun( __FUNC__, __FILE__, __LINE__, fmt, ##__VA_ARGS__ ) ;\
+   }\
+}
 
 /*
  * check the remaining size
@@ -29,40 +94,393 @@
       return FALSE ; \
 }
 
-static char *intToString ( int value, char *string, int radix )
+/* This function takes input from cJSON library, which parses a string to linked
+ * list. In this function we iterate all elements in list and construct BSON
+ * accordingly */
+static BOOLEAN jsonConvertBson( const CJSON_MACHINE *pMachine,
+                                const cJson_iterator *pIter,
+                                bson *pBson,
+                                BOOLEAN isObj ) ;
+
+/*
+ * pFun print log function
+*/
+SDB_EXPORT  void JsonSetPrintfLog( void (*pFun)( const CHAR *pFunc,
+                                                 const CHAR *pFile,
+                                                 UINT32 line,
+                                                 const CHAR *pFmt,
+                                                 ... ) )
 {
-   char tmp[33] ;
-   char *tp = tmp ;
-   int i ;
-   unsigned v ;
-   int sign ;
-   char *sp ;
-   if ( radix > 36 || radix <= 1 )
-      return NULL ;
-   sign = (radix == 10 && value < 0 ) ;
-   if ( sign )
-      v = -value ;
-   else
-      v = (unsigned)value ;
-   while ( v || tp == tmp )
-   {
-      i = v % radix ;
-      v = v / radix ;
-      if ( i < 10 )
-         *tp++ = i + '0' ;
-      else
-         *tp++ = i + 'a' - 10 ;
-   }
-   sp = string ;
-   if ( sign )
-      *sp++ = '-' ;
-   while ( tp > tmp )
-      *sp++ = *--tp ;
-   *sp = 0 ;
-   return string ;
+   _pJsonPrintfLogFun = pFun ;
+   cJsonSetPrintfLog( pFun ) ;
 }
 
-static const char onethousand_num[1000][4] = {
+//Compatible with the old version, the new code is not recommended use.
+SDB_EXPORT BOOLEAN jsonToBson ( bson *bs, const CHAR *json_str )
+{
+   return json2bson2( json_str, bs ) ;
+}
+
+//Compatible with the old version, the new code is not recommended use.
+SDB_EXPORT BOOLEAN jsonToBson2 ( bson *bs,
+                                 const CHAR *json_str,
+                                 BOOLEAN isMongo,
+                                 BOOLEAN isBatch )
+{
+   return json2bson( json_str, NULL, CJSON_RIGOROUS_PARSE, !isBatch, bs ) ;
+}
+
+/*
+ * json convert bson interface
+ * pJson : json string
+ * pBson : bson object
+ * return : the conversion result
+*/
+SDB_EXPORT BOOLEAN json2bson2( const CHAR *pJson, bson *pBson )
+{
+   return json2bson( pJson, NULL, CJSON_RIGOROUS_PARSE, TRUE, pBson ) ;
+}
+
+/*
+ * json convert bson interface
+ * pJson : json string
+ * pMachine : cJSON state machine
+ * parseMode: 0 - loose mode
+ *            1 - rigorous mode
+ * pBson : bson object
+ * return : the conversion result
+*/
+/* THIS IS EXTERNAL FUNCTION TO CONVERT FROM JSON STRING INTO BSON OBJECT */
+SDB_EXPORT BOOLEAN json2bson( const CHAR *pJson,
+                              CJSON_MACHINE *pMachine,
+                              INT32 parseMode,
+                              BOOLEAN isCheckEnd,
+                              bson *pBson )
+{
+   BOOLEAN flag = TRUE ;
+   BOOLEAN isOwn = FALSE ;
+   static BOOLEAN isInit = FALSE ;
+   const cJson_iterator *pIter = NULL ;
+
+   if( isInit == FALSE )
+   {
+      if( cJsonExtAppendFunction() == FALSE )
+      {
+         JSON_PRINTF_LOG( "Failed to append extend function" ) ;
+         goto error ;
+      }
+      isInit = TRUE ;
+   }
+
+   if( pMachine == NULL )
+   {
+      isOwn = TRUE ;
+      pMachine = cJsonCreate() ;
+      if( pMachine == NULL )
+      {
+         JSON_PRINTF_LOG( "Failed to call cJsonCreate" ) ;
+         goto error ;
+      }
+   }
+
+   cJsonInit( pMachine, parseMode, isCheckEnd ) ;
+
+   if( cJsonParse( pJson, pMachine ) == FALSE )
+   {
+      JSON_PRINTF_LOG( "Failed to call cJsonParse" ) ;
+      goto error ;
+   }
+ 
+   pIter = cJsonIteratorInit( pMachine ) ;
+   if( pIter == NULL )
+   {
+      JSON_PRINTF_LOG( "Failed to init iterator" ) ;
+      goto error ;
+   }
+
+   bson_init( pBson ) ;
+
+   if( jsonConvertBson( pMachine, pIter, pBson, TRUE ) == FALSE )
+   {
+      JSON_PRINTF_LOG( "Failed to convert json to bson" ) ;
+      goto error ;
+   }
+
+   if( bson_finish( pBson ) == BSON_ERROR )
+   {
+      JSON_PRINTF_LOG( "Failed to call bson_finish" ) ;
+      goto error ;
+   }
+
+done:
+   if( isOwn == TRUE )
+   {
+      cJsonRelease( pMachine ) ;
+   }
+   return flag ;
+error:
+   flag = FALSE ;
+   goto done ;
+}
+
+/*
+ * bson convert json interface
+ * buffer : output bson convert json string
+ * bufsize : buffer's size
+ * b : bson object
+ * return : the conversion result
+*/
+/* THIS IS EXTERNAL FUNCTION TO CONVERT FROM BSON OBJECT INTO JSON STRING */
+BOOLEAN bsonToJson ( CHAR *buffer, INT32 bufsize, const bson *b,
+                     BOOLEAN toCSV, BOOLEAN skipUndefined )
+{
+    CHAR *pbuf = buffer ;
+    BOOLEAN result = FALSE ;
+    INT32 leftsize = bufsize ;
+    if ( bufsize <= 0 || !buffer || !b )
+       return FALSE ;
+    //memset ( pbuf, 0, bufsize ) ;
+    result = bsonConvertJson ( &pbuf, &leftsize, b->data, 1, toCSV, skipUndefined ) ;
+    if ( !result || !leftsize )
+       return FALSE ;
+    *pbuf = '\0' ;
+    return TRUE ;
+}
+
+static BOOLEAN date2Time( const CHAR *pDate,
+                          CJSON_VALUE_TYPE valType,
+                          time_t *pTimestamp,
+                          INT32 *pMicros )
+{
+   /*
+      eg. before 1927-12-31-23.54.07,
+      will be more than 352 seconds
+      UTC time
+      date min 1900-01-01-00.00.00.000000
+      date max 9999-12-31-23.59.59.999999
+      timestamp min 1901-12-13-20.45.52.000000 +/- TZ
+      timestamp max 2038-01-19-03.14.07.999999 +/- TZ
+   */
+   /* date and timestamp */
+   BOOLEAN flag = TRUE ;
+   INT32 year   = 0 ;
+   INT32 month  = 0 ;
+   INT32 day    = 0 ;
+   INT32 hour   = 0 ;
+   INT32 minute = 0 ;
+   INT32 second = 0 ;
+   INT32 micros = 0 ;
+   time_t timep = 0 ;
+   struct tm t ;
+
+   ossMemset( &t, 0, sizeof( t ) ) ;
+   if( ossStrchr( pDate, 'T' ) ||
+       ossStrchr( pDate, 't' ) )
+   {
+      /* for mongo date type, iso8601 */
+      sdbTimestamp sdbTime ;
+      if( timestampParse( pDate,
+                          ossStrlen( pDate ),
+                          &sdbTime ) )
+      {
+         JSON_PRINTF_LOG( "Failed to parse timestamp" ) ;
+         goto error ;
+      }
+      timep = (time_t)sdbTime.sec ;
+      micros = sdbTime.nsec / 1000 ;
+   }
+   else
+   {
+      if( valType == CJSON_TIMESTAMP )
+      {
+         /* for timestamp type, we provide yyyy-mm-dd-hh.mm.ss.uuuuuu */
+         if( !sscanf ( pDate,
+                       TIME_FORMAT,
+                       &year,
+                       &month,
+                       &day,
+                       &hour,
+                       &minute,
+                       &second,
+                       &micros ) )
+         {
+            JSON_PRINTF_LOG( "Failed to parse timestamp" ) ;
+            goto error ;
+         }
+      }
+      else
+      {
+         if( !sscanf ( pDate,
+                       DATE_FORMAT,
+                       &year,
+                       &month,
+                       &day ) )
+         {
+            JSON_PRINTF_LOG( "Failed to parse date" ) ;
+            goto error ;
+         }
+      }
+      /* sanity check for years */
+      if( valType == CJSON_TIMESTAMP )
+      {
+         //[ 1901, 2038 ]
+         if( year > INT32_LAST_YEAR )
+         {
+            JSON_PRINTF_LOG( "Timestamp year not greater than %d",
+                             INT32_LAST_YEAR ) ;
+            goto error ;
+         }
+         else if( year < RELATIVE_YEAR )
+         {
+            JSON_PRINTF_LOG( "Timestamp year not less than %d",
+                             RELATIVE_YEAR + 1 ) ;
+            goto error ;
+         }
+
+         //[1,12]
+         if( month > RELATIVE_MON )
+         {
+            JSON_PRINTF_LOG( "Timestamp month not greater than %d",
+                             RELATIVE_MON ) ;
+            goto error ;
+         }
+         else if( month < 1 )
+         {
+            JSON_PRINTF_LOG( "Timestamp month not less than 1" ) ;
+            goto error ;
+         }
+
+         //[1,31]
+         if( day > RELATIVE_DAY )
+         {
+            JSON_PRINTF_LOG( "Timestamp day not greater than %d",
+                             RELATIVE_DAY ) ;
+            goto error ;
+         }
+         else if( day < 1 )
+         {
+            JSON_PRINTF_LOG( "Timestamp day not less than 1" ) ;
+            goto error ;
+         }
+
+         //[0,23]
+         if( hour >= RELATIVE_HOUR )
+         {
+            JSON_PRINTF_LOG( "Timestamp hours not greater than %d",
+                             RELATIVE_HOUR ) ;
+            goto error ;
+         }
+         else if( hour < 0 )
+         {
+            JSON_PRINTF_LOG( "Timestamp hours not less than 0" ) ;
+            goto error ;
+         }
+
+         //[0,59]
+         if( minute >= RELATIVE_MIN_SEC )
+         {
+            JSON_PRINTF_LOG( "Timestamp minutes not greater than %d",
+                             RELATIVE_MIN_SEC ) ;
+            goto error ;
+         }
+         else if( minute <  0 )
+         {
+            JSON_PRINTF_LOG( "Timestamp minutes not less than 0" ) ;
+            goto error ;
+         }
+
+         //[0,59]
+         if( second >= RELATIVE_MIN_SEC )
+         {
+            JSON_PRINTF_LOG( "Timestamp seconds not greater than %d",
+                             RELATIVE_MIN_SEC ) ;
+            goto error ;
+         }
+         else if( second < 0 )
+         {
+            JSON_PRINTF_LOG( "Timestamp seconds not less than 0" ) ;
+            goto error ;
+         }
+      }
+      else if( valType == CJSON_DATE )
+      {
+         //[1900,9999]
+         if( year > INT64_LAST_YEAR )
+         {
+            JSON_PRINTF_LOG( "Date year not greater than %d",
+                             INT64_LAST_YEAR ) ;
+            goto error ;
+         }
+         else if( year < RELATIVE_YEAR )
+         {
+            JSON_PRINTF_LOG( "Date year not less than %d", RELATIVE_YEAR ) ;
+            goto error ;
+         }
+
+         //[1,12]
+         if( month > RELATIVE_MON )
+         {
+            JSON_PRINTF_LOG( "Date month not greater than %d",
+                             RELATIVE_MON ) ;
+            goto error ;
+         }
+         else if( month < 1 )
+         {
+            JSON_PRINTF_LOG( "Date month not less than 1" ) ;
+            goto error ;
+         }
+
+         //[1,31]
+         if( day > RELATIVE_DAY )
+         {
+            JSON_PRINTF_LOG( "Date day not greater than %d",
+                             RELATIVE_DAY ) ;
+            goto error ;
+         }
+         else if( day < 1 )
+         {
+            JSON_PRINTF_LOG( "Date day not less than 1" ) ;
+            goto error ;
+         }
+      }
+      --month ;
+      year -= RELATIVE_YEAR ;
+      /* construct tm */
+      t.tm_year  = year   ;
+      t.tm_mon   = month  ;
+      t.tm_mday  = day    ;
+      t.tm_hour  = hour   ;
+      t.tm_min   = minute ;
+      t.tm_sec   = second ;
+      /* create integer time representation */
+      timep = mktime( &t ) ;
+   }
+
+   if( valType == CJSON_TIMESTAMP )
+   {
+      if( (INT64)timep > TIME_STAMP_TIMESTAMP_MAX )
+      {
+         JSON_PRINTF_LOG( "Timestamp not greater than "
+                          "2038-01-19-03.14.07.999999 +/- TZ" ) ;
+         goto error ;
+      }
+      else if( (INT64)timep < TIME_STAMP_TIMESTAMP_MIN )
+      {
+         JSON_PRINTF_LOG( "Timestamp not less than "
+                          "1901-12-13-20.45.52.000000 +/- TZ" ) ;
+         goto error ;
+      }
+   }
+   *pTimestamp = timep ;
+   *pMicros = micros ;
+done:
+   return flag ;
+error:
+   flag = FALSE ;
+   goto done ;
+}
+
+static const CHAR onethousand_num[1000][4] = {
     "0",  "1",  "2",  "3",  "4",  "5",  "6",  "7",  "8",  "9",
     "10", "11", "12", "13", "14", "15", "16", "17", "18", "19",
     "20", "21", "22", "23", "24", "25", "26", "27", "28", "29",
@@ -183,93 +601,669 @@ static void get_char_num ( CHAR *str, INT32 i, INT32 str_size )
    else
    {
       memset ( str, 0, str_size ) ;
-      
       intToString ( i, str, 10 ) ;
-/*
-#ifdef WIN32
-      _snprintf ( str, str_size, "%d", i ) ;
-#else
-      snprintf ( str, str_size, "%d", i ) ;
-#endif
-*/
    }
 }
 
-/*
- * time_t convert tm
- * Time: the second time conversion
- * TM : the date structure
- * return : the data structure
-*/
-static void local_time ( time_t *Time, struct tm *TM )
+static CHAR* intToString ( INT32 value, CHAR *string, INT32 radix )
 {
-   if ( !Time || !TM )
-      return ;
-#if defined (__linux__ ) || defined (_AIX)
-   localtime_r( Time, TM ) ;
-#elif defined (_WIN32)
-   // The Time represents the seconds elapsed since midnight (00:00:00),
-   // January 1, 1970, UTC. This value is usually obtained from the time
-   // function.
-   localtime_s( TM, Time ) ;
-#else
-#error "unimplemented local_time()"
-#endif
+   CHAR tmp[33] ;
+   CHAR *tp = tmp ;
+   INT32 i ;
+   UINT32 v ;
+   INT32 sign ;
+   CHAR *sp ;
+   if( radix > 36 || radix <= 1 )
+   {
+      return NULL ;
+   }
+   sign = (radix == 10 && value < 0 ) ;
+   if ( sign )
+   {
+      v = -value ;
+   }
+   else
+   {
+      v = (UINT32)value ;
+   }
+   while ( v || tp == tmp )
+   {
+      i = v % radix ;
+      v = v / radix ;
+      if ( i < 10 )
+         *tp++ = i + '0' ;
+      else
+         *tp++ = i + 'a' - 10 ;
+   }
+   sp = string ;
+   if ( sign )
+      *sp++ = '-' ;
+   while ( tp > tmp )
+      *sp++ = *--tp ;
+   *sp = 0 ;
+   return string ;
 }
 
-static INT32 strlen_a ( const CHAR *data )
+static BOOLEAN jsonConvertBson( const CJSON_MACHINE *pMachine,
+                                const cJson_iterator *pIter,
+                                bson *pBson,
+                                BOOLEAN isObj )
 {
-   INT32 len = 0 ;
-   if ( !data )
+   BOOLEAN flag = TRUE ;
+   INT32 i = 0 ;
+   CJSON_VALUE_TYPE cJsonType = CJSON_NONE ;
+   const CHAR *pKey = NULL ;
+   CVALUE arg1 ;
+   CVALUE arg2 ;
+   CHAR numKey[ INT_NUM_SIZE ] = {0} ;
+
+   while( cJsonIteratorMore( pIter ) )
    {
-      return 0 ;
-   }
-   while ( data && *data )
-   {
-      //the JSON standard does not need to be escaped single quotation marks
-      /*if ( data[0] == '\'' ||
-           data[0] == '\"' ||
-           data[0] == '\\' )*/
-      if ( data[0] == '\"' ||
-           data[0] == '\\' ||
-           data[0] == '\b' ||
-           data[0] == '\f' ||
-           data[0] == '\n' ||
-           data[0] == '\r' ||
-           data[0] == '\t' )
-//         data[0] == '/' || )
+      cJsonType = cJsonIteratorType( pIter ) ;
+      if( isObj == TRUE )
       {
-         ++len ;
+         pKey = cJsonIteratorKey( pIter ) ;
       }
-      ++len ;
-      ++data ;  
+      if( isObj == FALSE || pKey == NULL )
+      {
+         ossMemset( numKey, 0, INT_NUM_SIZE ) ;
+         get_char_num( numKey, i, INT_NUM_SIZE ) ;
+         pKey = &( numKey[0] ) ;
+      }
+      switch( cJsonType )
+      {
+      case CJSON_FALSE:
+      {
+         /* for boolean */
+         if( bson_append_bool( pBson, pKey, FALSE ) == BSON_ERROR )
+         {
+            JSON_PRINTF_LOG( "Failed to append bson '%s' bool", pKey ) ;
+            goto error ;
+         }
+         break ;
+      }
+      case CJSON_TRUE:
+      {
+         /* for boolean */
+         if( bson_append_bool( pBson, pKey, TRUE ) == BSON_ERROR )
+         {
+            JSON_PRINTF_LOG( "Failed to append bson '%s' bool", pKey ) ;
+            goto error ;
+         }
+         break ;
+      }
+      case CJSON_NULL:
+      {
+         /* for null type */
+         if( bson_append_null( pBson, pKey ) == BSON_ERROR )
+         {
+            JSON_PRINTF_LOG( "Failed to append bson '%s' null", pKey ) ;
+            goto error ;
+         }
+         break ;
+      }
+      case CJSON_INT32:
+      {
+         /* for 32 bit int */
+         INT32 number = cJsonIteratorInt32( pIter ) ;
+         if( bson_append_int( pBson, pKey, number ) == BSON_ERROR )
+         {
+            JSON_PRINTF_LOG( "Failed to append bson '%s' int", pKey ) ;
+            goto error ;
+         }
+         break ;
+      }
+      case CJSON_INT64:
+      {
+         /* for 64 bit int */
+         INT64 number = cJsonIteratorInt64( pIter ) ;
+         if( bson_append_long( pBson, pKey, number ) == BSON_ERROR )
+         {
+            JSON_PRINTF_LOG( "Failed to append bson '%s' int64", pKey ) ;
+            goto error ;
+         }
+         break ;
+      }
+      case CJSON_DOUBLE:
+      {
+         /* for 64 bit float */
+         FLOAT64 number = cJsonIteratorDouble( pIter ) ;
+         if( bson_append_double( pBson, pKey, number ) == BSON_ERROR )
+         {
+            JSON_PRINTF_LOG( "Failed to append bson '%s' double", pKey ) ;
+            goto error ;
+         }
+         break ;
+      }
+      case CJSON_STRING:
+      {
+         /* string type */
+         const CHAR *pString = cJsonIteratorString( pIter ) ;
+         if( bson_append_string( pBson, pKey, pString ) == BSON_ERROR )
+         {
+            JSON_PRINTF_LOG( "Failed to append bson '%s' string", pKey ) ;
+            goto error ;
+         }
+         break ;
+      }
+      case CJSON_ARRAY:
+      {
+         const cJson_iterator *pIterSub = NULL ;
+         /*
+            for object type, we call jsonConvertBson recursively, and provide
+         */
+         if( bson_append_start_array( pBson, pKey ) == BSON_ERROR )
+         {
+            JSON_PRINTF_LOG( "Failed to start append bson '%s' array", pKey ) ;
+            goto error ;
+         }
+         pIterSub = cJsonIteratorSub( pIter ) ;
+         if( pIterSub == NULL )
+         {
+            JSON_PRINTF_LOG( "Failed to get '%s' sub iterator", pKey ) ;
+            goto error ;
+         }
+         if( jsonConvertBson( pMachine, pIterSub, pBson, TRUE ) == FALSE )
+         {
+            JSON_PRINTF_LOG( "Failed to convert '%s' value", pKey ) ;
+            goto error ;
+         }
+         if( bson_append_finish_array( pBson ) == BSON_ERROR )
+         {
+            JSON_PRINTF_LOG( "Failed to end append bson '%s' array", pKey ) ;
+            goto error ;
+         }
+         break ;
+      }
+      case CJSON_OBJECT:
+      {
+         const cJson_iterator *pIterSub = NULL ;
+         /*
+            for object type, we call jsonConvertBson recursively, and provide
+         */
+         if( bson_append_start_object( pBson, pKey ) == BSON_ERROR )
+         {
+            JSON_PRINTF_LOG( "Failed to start append bson '%s' object", pKey ) ;
+            goto error ;
+         }
+         pIterSub = cJsonIteratorSub( pIter ) ;
+         if( pIterSub == NULL )
+         {
+            JSON_PRINTF_LOG( "Failed to get '%s' sub iterator", pKey ) ;
+            goto error ;
+         }
+         if( jsonConvertBson( pMachine, pIterSub, pBson, TRUE ) == FALSE )
+         {
+            JSON_PRINTF_LOG( "Failed to convert '%s' value", pKey ) ;
+            goto error ;
+         }
+         if( bson_append_finish_object( pBson ) == BSON_ERROR )
+         {
+            JSON_PRINTF_LOG( "Failed to end append bson '%s' object", pKey ) ;
+            goto error ;
+         }
+         break ;
+      }
+      case CJSON_TIMESTAMP:
+      {
+         INT32 micros = 0 ;
+         time_t timestamp = 0 ;
+
+         cJsonIteratorTimestamp( pIter, &arg1 ) ;
+         if( arg1.valType != CJSON_INT32 &&
+             arg1.valType != CJSON_STRING )
+         {
+            JSON_PRINTF_LOG( "The '%s' value timestamp must "
+                             "be an 32-bit integet or string", pKey ) ;
+            goto error ;
+         }
+         if( arg1.valType == CJSON_INT32 )
+         {
+            timestamp = (time_t)arg1.valInt ;
+            micros = 0 ;
+         }
+         else if( arg1.valType == CJSON_STRING )
+         {
+            if( date2Time( arg1.pValStr,
+                           CJSON_TIMESTAMP,
+                           &timestamp,
+                           &micros ) == FALSE )
+            {
+               JSON_PRINTF_LOG( "Failed to convert '%s' timestamp, "
+                                "timestamp format is "
+                                "YYYY-MM-DD-HH.mm.ss.ffffff", pKey ) ;
+               goto error ;
+            }
+         }
+         if( bson_append_timestamp2( pBson,
+                                     pKey,
+                                     (INT32)timestamp,
+                                     micros ) == BSON_ERROR )
+         {
+            JSON_PRINTF_LOG( "Failed to append bson '%s' timestamp", pKey ) ;
+            goto error ;
+         }
+         break ;
+      }
+      case CJSON_DATE:
+      {
+         bson_date_t dateTime = 0 ;
+         cJsonIteratorDate( pIter, &arg1 ) ;
+         if( arg1.valType != CJSON_INT32 &&
+             arg1.valType != CJSON_INT64 &&
+             arg1.valType != CJSON_STRING )
+         {
+            JSON_PRINTF_LOG( "The '%s' value date must "
+                             "be an integet or string", pKey ) ;
+            goto error ;
+         }
+         if( arg1.valType == CJSON_INT32 )
+         {
+            dateTime = (bson_date_t)arg1.valInt ;
+         }
+         else if( arg1.valType == CJSON_INT64 )
+         {
+            dateTime = (bson_date_t)arg1.valInt64 ;
+         }
+         else if( arg1.valType == CJSON_STRING )
+         {
+            INT32 micros = 0 ;
+            time_t timestamp = 0 ;
+            if( date2Time( arg1.pValStr,
+                           CJSON_DATE,
+                           &timestamp,
+                           &micros ) == FALSE )
+            {
+               JSON_PRINTF_LOG( "Failed to convert '%s' date, "
+                                "date format is YYYY-MM-DD", pKey ) ;
+               goto error ;
+            }
+            dateTime = (bson_date_t)timestamp * 1000 ;
+            dateTime += (bson_date_t)( micros / 1000 ) ;
+         }
+         if( bson_append_date( pBson, pKey, dateTime ) == BSON_ERROR )
+         {
+            JSON_PRINTF_LOG( "Failed to append bson '%s' date", pKey ) ;
+            goto error ;
+         }
+         break ;
+      }
+      case CJSON_REGEX:
+      {
+         const CHAR *pOptions = "" ;
+         cJsonIteratorRegex( pIter, &arg1, &arg2 ) ;
+         if( arg1.valType != CJSON_STRING )
+         {
+            JSON_PRINTF_LOG( "The '%s' value regex must "
+                             "be a string", pKey ) ;
+            goto error ;
+         }
+         if( arg2.valType != CJSON_STRING && arg2.valType != CJSON_NONE  )
+         {
+            JSON_PRINTF_LOG( "The '%s' value options must "
+                             "be a string", pKey ) ;
+            goto error ;
+         }
+         else if( arg2.valType == CJSON_STRING )
+         {
+            pOptions = arg2.pValStr ;
+         }
+         if( bson_append_regex( pBson,
+                                pKey,
+                                arg1.pValStr,
+                                pOptions ) == BSON_ERROR )
+         {
+            JSON_PRINTF_LOG( "Failed to append bson '%s' regex", pKey ) ;
+            goto error ;
+         }
+         break ;
+      }
+      case CJSON_OID:
+      {
+         CHAR c = 0 ;
+         INT32 i = 0 ;
+         INT32 oidStart = 0 ;
+         bson_oid_t bot ;
+         CHAR pOid[25] ;
+
+         ossMemset( pOid, '0', 24 ) ;
+         pOid[24] = 0 ;
+         cJsonIteratorObjectId( pIter, &arg1 ) ;
+         if( arg1.valType != CJSON_STRING )
+         {
+            JSON_PRINTF_LOG( "The '%s' value objectId must "
+                             "be a string", pKey ) ;
+            goto error ;
+         }
+         else if( arg1.length < 0 || arg1.length > 24 )
+         {
+            CJSON_PRINTF_LOG( "The '%s' value objectId must be a string "
+                              "of length 24", pKey ) ;
+            goto error ;
+         }
+         oidStart = 24 - arg1.length ;
+         for( i = 0; i < arg1.length; ++i )
+         {
+            c = *( arg1.pValStr + i ) ;
+            if( ( c < '0' || c > '9' ) &&
+                ( c < 'a' || c > 'f' ) &&
+                ( c < 'A' || c > 'F' ) )
+            {
+               CJSON_PRINTF_LOG( "The '%s' value objectId "
+                                 "must be a hex string", pKey ) ;
+               goto error ;
+            }
+            pOid[oidStart + i] = c ;
+         }
+         bson_oid_from_string( &bot, pOid ) ;
+         if( bson_append_oid( pBson, pKey, &bot ) == BSON_ERROR )
+         {
+            JSON_PRINTF_LOG( "Failed to append bson '%s' ObjectId", pKey ) ;
+            goto error ;
+         }
+         break ;
+      }
+      case CJSON_BINARY:
+      {
+         /* for binary type, user input base64 encoded string, which should be
+          * 4 bytes aligned, and then call base64_decode to extract into binary
+          * and store in BSON object */
+         CHAR type = 0 ;
+         INT32 base64DecodeLen = 0 ;
+         CHAR *pBase64 = NULL ;
+
+         cJsonIteratorBinary( pIter, &arg1, &arg2 ) ;
+         if( arg1.valType != CJSON_STRING )
+         {
+            JSON_PRINTF_LOG( "The '%s' value binary must "
+                             "be a string", pKey ) ;
+            goto error ;
+         }
+         if( arg2.valType != CJSON_STRING && arg2.valType != CJSON_INT32  )
+         {
+            JSON_PRINTF_LOG( "The '%s' value type must "
+                             "be a string or integer", pKey ) ;
+            goto error ;
+         }
+         if( arg2.valType == CJSON_STRING )
+         {
+            INT32 numType = ossAtoi( arg2.pValStr ) ;
+            if( numType < 0 || numType > 255 )
+            {
+               JSON_PRINTF_LOG( "The '%s' value binary type must "
+                                "be an integer 0-255", pKey ) ;
+               goto error ;
+            }
+            type = (CHAR)numType ;
+         }
+         else if( arg2.valType == CJSON_INT32 )
+         {
+            if( arg2.valInt < 0 || arg2.valInt > 255 )
+            {
+               JSON_PRINTF_LOG( "The '%s' value binary type must "
+                                "be an integer 0-255", pKey ) ;
+               goto error ;
+            }
+            type = (CHAR)arg2.valInt ;
+         }
+         /* first we calculate the expected size after extraction */
+         if( arg1.length == 0 )
+         {
+            pBase64 = arg1.pValStr ;
+            base64DecodeLen = arg1.length ;
+         }
+         else
+         {
+            base64DecodeLen = getDeBase64Size( arg1.pValStr ) ;
+            if( base64DecodeLen < 0 )
+            {
+               JSON_PRINTF_LOG( "The '%s' value binary format error", pKey ) ;
+               goto error ;
+            }
+            /* and allocate memory */
+            pBase64 = (CHAR *)cJsonMalloc( base64DecodeLen, pMachine ) ;
+            if( pBase64 == NULL )
+            {
+               JSON_PRINTF_LOG( "Failed to malloc base64 memory" ) ;
+               goto error ;
+            }
+            ossMemset( pBase64, 0, base64DecodeLen ) ;
+            /* and then decode into the buffer we just allocated */
+            if( base64Decode( arg1.pValStr, pBase64, base64DecodeLen ) < 0 )
+            {
+               cJsonFree( pBase64, pMachine ) ;
+               JSON_PRINTF_LOG( "Failed to decode '%s' value binary base64", pKey ) ;
+               goto error ;
+            }
+            base64DecodeLen = base64DecodeLen - 1 ;
+         }
+         /* and then append into bson */
+         if( bson_append_binary( pBson,
+                                 pKey,
+                                 type,
+                                 pBase64,
+                                 base64DecodeLen ) == BSON_ERROR )
+         {
+            cJsonFree( pBase64, pMachine ) ;
+            JSON_PRINTF_LOG( "Failed to append bson '%s' binary", pKey ) ;
+            goto error ;
+         }
+         if( arg1.length > 0 )
+         {
+            cJsonFree( pBase64, pMachine ) ;
+         }
+         break ;
+      }
+      case CJSON_MINKEY:
+      {
+         /* minkey type */
+         if( bson_append_minkey( pBson, pKey ) == BSON_ERROR )
+         {
+            JSON_PRINTF_LOG( "Failed to append bson '%s' minKey", pKey ) ;
+            goto error ;
+         }
+         break ;
+      }
+      case CJSON_MAXKEY:
+      {
+         /* maxkey type */
+         if( bson_append_maxkey( pBson, pKey ) == BSON_ERROR )
+         {
+            JSON_PRINTF_LOG( "Failed to append bson '%s' maxKey", pKey ) ;
+            goto error ;
+         }
+         break ;
+      }
+      case CJSON_UNDEFINED:
+      {
+         /* undefined type */
+         if( bson_append_undefined( pBson, pKey ) == BSON_ERROR )
+         {
+            JSON_PRINTF_LOG( "Failed to append bson '%s' undefined", pKey ) ;
+            goto error ;
+         }
+         break ;
+      }
+      case CJSON_NUMBER_LONG:
+      {
+         /* for 64 bit int */
+         INT64 number = 0 ;
+         cJsonIteratorNumberLong( pIter, &arg1 ) ;
+         if( arg1.valType == CJSON_INT32 )
+         {
+            number = (INT64)arg1.valInt ;
+         }
+         else if( arg1.valType == CJSON_INT64 )
+         {
+            number = arg1.valInt64 ;
+         }
+         else if( arg1.valType == CJSON_STRING )
+         {
+            INT32 valInt = 0 ;
+            FLOAT64 valDouble = 0 ;
+            INT64 valInt64 = 0 ;
+            CJSON_VALUE_TYPE type = CJSON_NONE ;
+      
+            if( cJsonParseNumber( arg1.pValStr,
+                                  arg1.length,
+                                  &valInt,
+                                  &valDouble,
+                                  &valInt64,
+                                  &type ) == FALSE )
+            {
+               JSON_PRINTF_LOG( "Failed to read NumberLong, "
+                                "the No.1 argument is an invalid number" ) ;
+               goto error ;
+            }
+            if( type == CJSON_INT32 )
+            {
+               number = valInt ;
+            }
+            else if( type == CJSON_INT64 )
+            {
+               number = valInt64 ;
+            }
+            else
+            {
+               JSON_PRINTF_LOG( "Failed to read NumberLong, the No.1 argument "
+                                "must be integer type or string type" ) ;
+               goto error ;
+            }
+         }
+         else
+         {
+            JSON_PRINTF_LOG( "The '%s' value numberLong must "
+                             "be a string or integer", pKey ) ;
+            goto error ;
+         }
+         if( bson_append_long( pBson, pKey, number ) == BSON_ERROR )
+         {
+            JSON_PRINTF_LOG( "Failed to append bson '%s' int64", pKey ) ;
+            goto error ;
+         }
+         break ;
+      }
+      case CJSON_DECIMAL:
+      {
+         bson_decimal bsonDecimal ;
+         cJsonIteratorDecimal( pIter, &arg1, &arg2 ) ;
+         if( arg1.valType != CJSON_INT32 &&
+             arg1.valType != CJSON_INT64 &&
+             arg1.valType != CJSON_DOUBLE &&
+             arg1.valType != CJSON_STRING )
+         {
+            JSON_PRINTF_LOG( "The '%s' value decimal must "
+                             "be a number or string", pKey ) ;
+            goto error ;
+         }
+         if( arg2.valType != CJSON_ARRAY && arg2.valType != CJSON_NONE  )
+         {
+            JSON_PRINTF_LOG( "The '%s' value precision must "
+                             "be an array", pKey ) ;
+            goto error ;
+         }
+         if( arg2.valType == CJSON_ARRAY )
+         {
+            CVALUE precisionVal ;
+            CVALUE scaleVal ;
+            if( cJsonIteratorSubNum2( &arg2 ) != 2 )
+            {
+               JSON_PRINTF_LOG( "The '%s' value precision must "
+                                "be an array of two integet element", pKey ) ;
+               goto error ;
+            }
+            cJsonIteratorPrecision( pIter, &precisionVal, &scaleVal ) ;
+            if( precisionVal.valType != CJSON_INT32 )
+            {
+               JSON_PRINTF_LOG( "The '%s' value precision must "
+                                "be an array of two integet element", pKey ) ;
+               goto error ;
+            }
+            if( scaleVal.valType != CJSON_INT32 )
+            {
+               JSON_PRINTF_LOG( "The '%s' value precision must "
+                                "be an array of two integet element", pKey ) ;
+               goto error ;
+            }
+            if( decimal_init1( &bsonDecimal,
+                               precisionVal.valInt,
+                               scaleVal.valInt ) != 0 )
+            {
+               JSON_PRINTF_LOG( "Failed to init decimal, key: %s", pKey ) ;
+               goto error ;
+            }
+         }
+         else
+         {
+            decimal_init( &bsonDecimal ) ;
+         }
+         if( arg1.valType == CJSON_INT32 )
+         {
+            if( decimal_from_int( arg1.valInt, &bsonDecimal ) != 0 )
+            {
+               JSON_PRINTF_LOG( "Failed to build decimal int, key: %s", pKey ) ;
+               goto error ;
+            }
+         }
+         else if( arg1.valType == CJSON_INT64 )
+         {
+            if( decimal_from_long( arg1.valInt64, &bsonDecimal ) != 0 )
+            {
+               JSON_PRINTF_LOG( "Failed to build decimal int64, key: %s",
+                                pKey ) ;
+               goto error ;
+            }
+         }
+         else if( arg1.valType == CJSON_DOUBLE )
+         {
+            if( decimal_from_double( arg1.valDouble, &bsonDecimal ) != 0 )
+            {
+               JSON_PRINTF_LOG( "Failed to build decimal double, key: %s",
+                                pKey ) ;
+               goto error ;
+            }
+         }
+         else if( arg1.valType == CJSON_STRING )
+         {
+            if( decimal_from_str( arg1.pValStr, &bsonDecimal ) != 0 )
+            {
+               JSON_PRINTF_LOG( "Failed to build decimal string, key: %s",
+                                pKey ) ;
+               goto error ;
+            }
+         }
+         if( bson_append_decimal( pBson, pKey, &bsonDecimal ) == BSON_ERROR )
+         {
+            JSON_PRINTF_LOG( "Failed to append bson '%s' decimal", pKey ) ;
+            decimal_free( &bsonDecimal ) ;
+            goto error ;
+         }
+         decimal_free( &bsonDecimal ) ;
+         break ;
+      }
+      case CJSON_NONE:
+      {
+         break ;
+      }
+      case CJSON_NUMBER:
+      case CJSON_OPTIONS:
+      case CJSON_TYPE:
+      case CJSON_PRECISION:
+      default:
+         JSON_PRINTF_LOG( "Internal type can not be used", pKey ) ;
+         goto error ;
+      }
+      ++i ;
+      cJsonIteratorNext( pIter ) ;
    }
-   return len ;
+
+done:
+   return flag ;
+error:
+   flag = FALSE ;
+   goto done ;
 }
 
-static BOOLEAN is_valid_numberLong( const CHAR *value )
-{
-   UINT32 len = 0 ;
-   UINT32 i = 0;
-   if ( NULL == value  )
-      return FALSE ;
-   len = ossStrlen( value ) ;
-   if ( len > 0 )
-   {
-      if ( value[0] == '-' )
-      {
-         ++i ;
-      }
-   }
-   for ( ; i < len; ++i )
-   {
-      if ( ! ( value[i] >= '0' && value[i] <= '9' ) )
-      {
-         return FALSE ;
-      }
-   }
-   return TRUE ;
-}
 
 /*
  * copy data to pbuf
@@ -278,7 +1272,10 @@ static BOOLEAN is_valid_numberLong( const CHAR *value )
  * data : input variable
  * return : void
 */
-static void bsonConvertJsonRawConcat ( CHAR **pbuf, INT32 *left, const CHAR *data , BOOLEAN isString )
+static void bsonConvertJsonRawConcat( CHAR **pbuf,
+                                      INT32 *left,
+                                      const CHAR *data,
+                                      BOOLEAN isString )
 {
    UINT32 tempsize = 0 ;
    CHAR *pTempBuf = *pbuf ;
@@ -930,868 +1927,52 @@ static BOOLEAN bsonConvertJson ( CHAR **pbuf,
    }
    return TRUE ;
 }
-/*
- * Json converslion Bson
- * cj : the cJson object
- * bs : the bson object
- * isOjb : determine the current status
- * return : the conversion result
-*/
-/* This function takes input from cJSON library, which parses a string to linked
- * list. In this function we iterate all elements in list and construct BSON
- * accordingly */
-static BOOLEAN jsonConvertBson ( cJSON *cj, bson *bs, BOOLEAN isObj )
+
+static INT32 strlen_a( const CHAR *data )
 {
-   INT32 i = 0 ;
-   /* loop until reach end of element */
-   while ( cj )
+   INT32 len = 0 ;
+   if ( !data )
    {
-      switch ( cj->type )
-      {
-      case cJSON_Number:
-      {
-         /* for number type, it could be 64 bit float, 32 bit int, or 64 bit int
-          */
-         if ( cJSON_DOUBLE == cj->numType )
-         {
-            /* for 64 bit float */
-            if ( isObj && cj->string )
-               /* if it's obj type, we append with key and value */
-               bson_append_double ( bs, cj->string, cj->valuedouble ) ;
-            else
-            {
-               /* if it's array type, we append with array location and value */
-               CHAR num[ INT_NUM_SIZE ] = {0} ;
-               get_char_num ( num, i, INT_NUM_SIZE ) ;
-               bson_append_double ( bs, num, cj->valuedouble ) ;
-            }
-         }
-         else if ( cJSON_INT32 == cj->numType )
-         {
-            /* for 32 bit int */
-            if ( isObj && cj->string )
-               bson_append_int ( bs, cj->string, cj->valueint ) ;
-            else
-            {
-               CHAR num[ INT_NUM_SIZE ] = {0} ;
-               get_char_num ( num, i, INT_NUM_SIZE ) ;
-               bson_append_int ( bs, num, cj->valueint ) ;
-            }
-         }
-         else if ( cJSON_INT64 == cj->numType )
-         {
-            /* for 64 bit int */
-            if ( isObj && cj->string )
-               bson_append_long ( bs, cj->string, cj->valuelongint ) ;
-            else
-            {
-               CHAR num[ INT_NUM_SIZE ] = {0} ;
-               get_char_num ( num, i, INT_NUM_SIZE ) ;
-               bson_append_long ( bs, num, cj->valuelongint ) ;
-            }
-         }
-         break ;
-      }
-      case cJSON_Decimal:
-      {
-         int rc = 0 ;
-         if( cj->precision == -1 && cj->scale == -1 )
-         {
-            rc = bson_append_decimal3( bs, cj->string, cj->valuestring ) ;
-         }
-         else
-         {
-            rc = bson_append_decimal2( bs, cj->string, cj->valuestring, 
-                                       cj->precision, cj->scale ) ;
-         }
-         if ( 0 != rc )
-         {
-            return FALSE ;
-         }
-         break ;
-      }
-      case cJSON_NULL:
-      {
-         /* for null type */
-         if ( isObj && cj->string )
-            bson_append_null ( bs, cj->string ) ;
-         else
-         {
-            CHAR num[ INT_NUM_SIZE ] = {0} ;
-            get_char_num ( num, i, INT_NUM_SIZE ) ;
-            bson_append_null ( bs, num ) ;
-         }
-         break ;
-      }
-      case cJSON_True:
-      case cJSON_False:
-      {
-         /* for boolean */
-         if ( isObj && cj->string )
-            bson_append_bool ( bs, cj->string, cj->type ) ;
-         else
-         {
-            CHAR num[ INT_NUM_SIZE ] = {0} ;
-            get_char_num ( num, i, INT_NUM_SIZE ) ;
-            bson_append_bool ( bs, num, cj->type ) ;
-         }
-         break ;
-      }
-      case cJSON_String:
-      {
-         /* string type */
-         if ( isObj && cj->string )
-            bson_append_string ( bs, cj->string, cj->valuestring ) ;
-         else
-         {
-            CHAR num[ INT_NUM_SIZE ] = {0} ;
-            get_char_num ( num, i, INT_NUM_SIZE ) ;
-            bson_append_string ( bs, num, cj->valuestring ) ;
-         }
-         break ;
-      }
-      case cJSON_Timestamp:
-      case cJSON_Date:
-      {
-         /*
-            eg. before 1927-12-31-23.54.07,
-            will be more than 352 seconds
-            UTC time
-            date min 1900-01-01-00.00.00.000000
-            date max 9999-12-31-23.59.59.999999
-            timestamp min 1901-12-13-20.45.52.000000 +/- TZ
-            timestamp max 2038-01-19-03.14.07.999999 +/- TZ
-         */
-         struct tm t ;
-         /* date and timestamp */
-         INT32 year   = 0 ;
-         INT32 month  = 0 ;
-         INT32 day    = 0 ;
-         INT32 hour   = 0 ;
-         INT32 minute = 0 ;
-         INT32 second = 0 ;
-         INT32 micros = 0 ;
-         time_t timep ;
-         memset ( &t, 0, sizeof(t) ) ;
-
-         if( strchr( cj->valuestring, 'T' ) ||
-             strchr( cj->valuestring, 't' ) )
-         {
-            /* for mongo date type, iso8601 */
-            sdbTimestamp sdbTime ;
-            if( timestampParse( cj->valuestring,
-                                ossStrlen( cj->valuestring ),
-                                &sdbTime ) )
-            {
-               return FALSE ;
-            }
-            timep = (time_t)sdbTime.sec ;
-            micros = sdbTime.nsec / 1000 ;
-         }
-         else
-         {
-            if ( cJSON_Timestamp == cj->type )
-            {
-               /* for timestamp type, we provide yyyy-mm-dd-hh.mm.ss.uuuuuu */
-               if( !sscanf ( cj->valuestring,
-                             TIME_FORMAT,
-                             &year,
-                             &month,
-                             &day,
-                             &hour,
-                             &minute,
-                             &second,
-                             &micros ) )
-               {
-                  return FALSE ;
-               }
-            }
-            else
-            {
-               if( !sscanf ( cj->valuestring,
-                             DATE_FORMAT,
-                             &year,
-                             &month,
-                             &day ) )
-               {
-                  return FALSE ;
-               }
-            }
-            /* sanity check for years */
-            if( cJSON_Timestamp == cj->type )
-            {
-               if( year > INT32_LAST_YEAR )
-               {
-                  return FALSE ;
-               }
-               else if( year < RELATIVE_YEAR )
-               {
-                  return FALSE ;
-               }
-               if( month   >  RELATIVE_MON     || //[1,12]
-                   month   <  1                ||
-                   day     >  RELATIVE_DAY     || //[1,31]
-                   day     <  1                ||
-                   hour    >= RELATIVE_HOUR    || //[0,23]
-                   hour    <  0                ||
-                   minute  >= RELATIVE_MIN_SEC || //[0,59]
-                   minute  <  0                ||
-                   second  >= RELATIVE_MIN_SEC || //[0,59]
-                   second  < 0 )
-               {
-                  return FALSE ;
-               }
-            }
-   
-            if( cJSON_Date == cj->type && (
-                year    >     INT64_LAST_YEAR   || //[1900,9999]
-                year    <     RELATIVE_YEAR     ||
-                month   >     RELATIVE_MON      || //[1,12]
-                month   <     1                 ||
-                day     >     RELATIVE_DAY      || //[1,31]
-                day     <     1 ) )
-            {
-               return FALSE ;
-            }
-   
-            --month ;
-            year -= RELATIVE_YEAR ;
-   
-            /* construct tm */
-            t.tm_year  = year   ;
-            t.tm_mon   = month  ;
-            t.tm_mday  = day    ;
-            t.tm_hour  = hour   ;
-            t.tm_min   = minute ;
-            t.tm_sec   = second ;
-            /* create integer time representation */
-            timep = mktime( &t ) ;
-         }
-
-         if( cJSON_Timestamp == cj->type &&
-             ( (INT64)timep < TIME_STAMP_TIMESTAMP_MIN ||
-               (INT64)timep > TIME_STAMP_TIMESTAMP_MAX ) )
-         {
-            return FALSE ;
-         }
-         /* append timestamp or date accordingly */
-         if ( cJSON_Timestamp == cj->type )
-         {
-            if ( isObj && cj->string )
-               bson_append_timestamp2 ( bs,
-                                        cj->string,
-                                        (((INT32)timep) * 1),
-                                        micros ) ;
-            else
-            {
-               CHAR num[ INT_NUM_SIZE  ] = {0} ;
-               get_char_num ( num, i, INT_NUM_SIZE ) ;
-               bson_append_timestamp2 ( bs, num,
-                                        ((INT32)timep * 1) , micros ) ;
-            }
-         }
-         else
-         {
-            bson_date_t s = ((( bson_date_t )timep) * 1000 ) ;
-            s += ( bson_date_t )( micros / 1000 ) ;
-            if ( isObj && cj->string )
-               bson_append_date ( bs, cj->string, s ) ;
-            else
-            {
-               CHAR num[ INT_NUM_SIZE ] = {0} ;
-               get_char_num ( num, i, INT_NUM_SIZE ) ;
-               bson_append_date ( bs, num, s ) ;
-            }
-         }
-         break ;
-      }
-      case cJSON_Date_Number:
-      {
-         bson_date_t s = ( bson_date_t )cj->valuelongint ;
-         if ( isObj && cj->string )
-            bson_append_date ( bs, cj->string, s ) ;
-         else
-         {
-            CHAR num[ INT_NUM_SIZE ] = {0} ;
-            get_char_num ( num, i, INT_NUM_SIZE ) ;
-            bson_append_date ( bs, num, s ) ;
-         }
-         break ;
-      }
-      case cJSON_Regex:
-      {
-         /* for regex type, we have both pattern and options */
-         if ( isObj && cj->string )
-            bson_append_regex( bs,
-                               cj->string,
-                               cj->valuestring,
-                               cj->valuestring2 ) ;
-         else
-         {
-            CHAR num[ INT_NUM_SIZE ] = {0} ;
-            get_char_num ( num, i, INT_NUM_SIZE ) ;
-            bson_append_regex( bs, num , cj->valuestring, cj->valuestring2 ) ;
-         }
-         break ;
-      }
-      case cJSON_Oid:
-      {
-         /* for oid, we format input into oid and then append into bson */
-         bson_oid_t bot ;
-         bson_oid_from_string ( &bot, cj->valuestring ) ;
-         if ( isObj && cj->string )
-         {
-            bson_append_oid( bs, cj->string , &bot ) ;
-         }
-         else
-         {
-            CHAR num [ INT_NUM_SIZE ] = {0} ;
-            get_char_num ( num, i, INT_NUM_SIZE ) ;
-            bson_append_oid( bs, num, &bot ) ;
-         }
-         break ;
-      }
-      case cJSON_MinKey:
-      {
-         if ( isObj && cj->string )
-         {
-            bson_append_minkey( bs, cj->string ) ;
-         }
-         else
-         {
-            CHAR num [ INT_NUM_SIZE ] = {0} ;
-            get_char_num ( num, i, INT_NUM_SIZE ) ;
-            bson_append_minkey( bs, num ) ;
-         }
-         break ;
-      }
-      case cJSON_MaxKey:
-      {
-         if ( isObj && cj->string )
-         {
-            bson_append_maxkey( bs, cj->string ) ;
-         }
-         else
-         {
-            CHAR num [ INT_NUM_SIZE ] = {0} ;
-            get_char_num ( num, i, INT_NUM_SIZE ) ;
-            bson_append_maxkey( bs, num ) ;
-         }
-         break ;
-      }
-      case cJSON_Undefined:
-      {
-         if ( isObj && cj->string )
-         {
-            bson_append_undefined( bs, cj->string ) ;
-         }
-         else
-         {
-            CHAR num [ INT_NUM_SIZE ] = {0} ;
-            get_char_num ( num, i, INT_NUM_SIZE ) ;
-            bson_append_undefined( bs, num ) ;
-         }
-         break ;
-      }
-      case cJSON_Number_Long:
-      {
-         if ( !is_valid_numberLong(cj->valuestring) )
-         {
-            return FALSE ;
-         }
-         if ( isObj && cj->string )
-         {
-            bson_append_long( bs, cj->string, ossAtoll(cj->valuestring)) ;
-         }
-         else
-         {
-            CHAR num [ INT_NUM_SIZE ] = {0} ;
-            get_char_num ( num, i, INT_NUM_SIZE ) ;
-            bson_append_long( bs, num, ossAtoll(cj->valuestring)) ;
-         }
-         break ;
-      }
-      case cJSON_Binary:
-      {
-         /* for binary type, user input base64 encoded string, which should be
-          * 4 bytes aligned, and then call base64_decode to extract into binary
-          * and store in BSON object */
-         if ( isObj && cj->string )
-         {
-            INT32 out_len = 0 ;
-            /* first we calculate the expected size after extraction */
-            INT32 len = getDeBase64Size ( cj->valuestring ) ;
-            if( len < 0 )
-            {
-               return FALSE ;
-            }
-            if( len > 0 )
-            {
-               /* and allocate memory */
-               CHAR *out = (CHAR *)malloc ( len ) ;
-               if ( !out )
-                  return FALSE ;
-               memset ( out, 0, len ) ;
-               /* and then decode into the buffer we just allocated */
-               if ( base64Decode( cj->valuestring, out, len ) < 0 )
-               {
-                  free ( out ) ;
-                  return FALSE ;
-               }
-               out_len = len - 1 ;
-               if ( 5 == cj->valueint &&
-                  CJSON_MD5_16 != out_len &&
-                  CJSON_MD5_32 != out_len &&
-                  CJSON_MD5_64 != out_len )
-               {
-                  free ( out ) ;
-                  return FALSE ;
-               }
-               if ( 3 == cj->valueint && CJSON_UUID != out_len )
-               {
-                  free ( out ) ;
-                  return FALSE ;
-               }
-               if ( (UINT32)cj->valueint > 255 )
-               {
-                  free ( out ) ;
-                  return FALSE ;
-               }
-               /* and then append into bson */
-               bson_append_binary( bs, cj->string , cj->valueint, out, out_len ) ;
-               free( out ) ;
-            }
-            else
-            {
-               bson_append_binary( bs, cj->string , cj->valueint, "", 0 ) ;
-            }
-         }
-         else
-         {
-            CHAR num[ INT_NUM_SIZE ] = {0} ;
-            INT32 len = 0 ;
-            CHAR *out = NULL ;
-            INT32 out_len = 0 ;
-            get_char_num ( num, i, INT_NUM_SIZE ) ;
-            len = getDeBase64Size ( cj->valuestring ) ;
-            if( len > 0 )
-            {
-               out = (CHAR *)malloc(len) ;
-               if ( !out )
-                  return FALSE ;
-               memset ( out, 0, len ) ;
-               if ( !base64Decode( cj->valuestring, out, len ) )
-               {
-                  free ( out ) ;
-                  return FALSE ;
-               }
-               out_len = len - 1 ;
-               if ( 5 == cj->valueint &&
-                  CJSON_MD5_16 != out_len &&
-                  CJSON_MD5_32 != out_len &&
-                  CJSON_MD5_64 != out_len )
-               {
-                  free ( out ) ;
-                  return FALSE ;
-               }
-               if ( 3 == cj->valueint && CJSON_UUID != out_len )
-               {
-                  free ( out ) ;
-                  return FALSE ;
-               }
-               bson_append_binary( bs, num , cj->valueint, out, out_len ) ;
-               free ( out ) ;
-            }
-            else
-            {
-               bson_append_binary( bs, num , cj->valueint, "", 0 ) ;
-            }
-         }
-         break ;
-      }
-      case cJSON_Object:
-      {
-         /* for object type, we call jsonConvertBson recursively, and provide
-          * cj->child as object input */
-         if ( isObj && cj->string )
-         {
-            if ( bson_append_start_object ( bs, cj->string ) )
-               return FALSE ;
-         }
-         else
-         {
-            CHAR num[ INT_NUM_SIZE ] = {0} ;
-            get_char_num ( num, i, INT_NUM_SIZE ) ;
-            if ( bson_append_start_object ( bs, num ) )
-               return FALSE ;
-         }
-         if ( !jsonConvertBson ( cj->child, bs, TRUE ) )
-            return FALSE ;
-         bson_append_finish_object ( bs ) ;
-         break ;
-      }
-      case cJSON_Array:
-      {
-         /* for array type, we call jsonConvertBson recursively, and provide
-          * cj->child as array input */
-         if ( isObj && cj->string )
-         {
-            if ( bson_append_start_array ( bs, cj->string ) )
-               return FALSE ;
-         }
-         else
-         {
-            CHAR num[ INT_NUM_SIZE ] = {0} ;
-            get_char_num ( num, i, INT_NUM_SIZE ) ;
-            if ( bson_append_start_array ( bs, num ) )
-               return FALSE ;
-         }
-         if ( !jsonConvertBson ( cj->child, bs, FALSE ) )
-            return FALSE ;
-         bson_append_finish_array ( bs ) ;
-         break ;
-      }
-      }
-      cj = cj->next ;
-      ++i ;
+      return 0 ;
    }
-   return TRUE ;
+   while ( data && *data )
+   {
+      //the JSON standard does not need to be escaped single quotation marks
+      if ( data[0] == '\"' ||
+           data[0] == '\\' ||
+           data[0] == '\b' ||
+           data[0] == '\f' ||
+           data[0] == '\n' ||
+           data[0] == '\r' ||
+           data[0] == '\t' )
+      {
+         ++len ;
+      }
+      ++len ;
+      ++data ;  
+   }
+   return len ;
 }
 
 /*
- * jscon convert bson interface
- * bs : bson object
- * json_str : json string
- * return : the conversion result
+ * time_t convert tm
+ * Time: the second time conversion
+ * TM : the date structure
+ * return : the data structure
 */
-/* THIS IS EXTERNAL FUNCTION TO CONVERT FROM JSON STRING INTO BSON OBJECT */
-BOOLEAN jsonToBson2 ( bson *bs,
-                      const CHAR *json_str,
-                      BOOLEAN isMongo,
-                      BOOLEAN isBatch )
+static void local_time( time_t *Time, struct tm *TM )
 {
-   BOOLEAN flag = TRUE ;
-   cJSON *cj = cJSON_Parse2 ( json_str, isMongo, isBatch ) ;
-   if ( !cj || !bs )
-   {
-      cJSON_Delete ( cj ) ;
-      return FALSE ;
-   }
-   bson_init( bs ) ;
-   if ( cj->child )
-      flag = jsonConvertBson ( cj->child, bs, TRUE ) ;
-   else
-      bs = bson_empty ( bs ) ;
-   bson_finish ( bs ) ;
-   cJSON_Delete ( cj ) ;
-
-   return flag ;
+   if ( !Time || !TM )
+      return ;
+#if defined (__linux__ ) || defined (_AIX)
+   localtime_r( Time, TM ) ;
+#elif defined (_WIN32)
+   // The Time represents the seconds elapsed since midnight (00:00:00),
+   // January 1, 1970, UTC. This value is usually obtained from the time
+   // function.
+   localtime_s( TM, Time ) ;
+#else
+#error "unimplemented local_time()"
+#endif
 }
 
-BOOLEAN jsonToBson ( bson *bs, const CHAR *json_str )
-{
-   return jsonToBson2 ( bs, json_str, FALSE, FALSE ) ;
-}
-/*
- * bson convert json interface
- * buffer : output bson convert json string
- * bufsize : buffer's size
- * b : bson object
- * return : the conversion result
-*/
-/* THIS IS EXTERNAL FUNCTION TO CONVERT FROM BSON OBJECT INTO JSON STRING */
-BOOLEAN bsonToJson ( CHAR *buffer, INT32 bufsize, const bson *b,
-                     BOOLEAN toCSV, BOOLEAN skipUndefined )
-{
-    CHAR *pbuf = buffer ;
-    BOOLEAN result = FALSE ;
-    INT32 leftsize = bufsize ;
-    if ( bufsize <= 0 || !buffer || !b )
-       return FALSE ;
-    //memset ( pbuf, 0, bufsize ) ;
-    result = bsonConvertJson ( &pbuf, &leftsize, b->data, 1, toCSV, skipUndefined ) ;
-    if ( !result || !leftsize )
-       return FALSE ;
-    *pbuf = '\0' ;
-    return TRUE ;
-}
-
-BOOLEAN bsonElementToChar ( CHAR **buffer, INT32 *bufsize, bson_iterator *in )
-{
-   bson_type t ;
-   if ( !bufsize || !in )
-   {
-      return FALSE ;
-   }
-   t = bson_iterator_type( in ) ;
-   switch ( t )
-   {
-   case BSON_OID:
-   {
-      CHAR temp[4096] = {0} ;
-      *bufsize = 64 ;
-      *buffer = (CHAR *)malloc ( *bufsize ) ;
-      if ( !(*buffer) )
-      {
-         return FALSE ;
-      }
-      memset ( *buffer, 0, *bufsize ) ;
-      bson_oid_to_string ( bson_iterator_oid( in ), temp ) ;
-      *bufsize = sprintf ( *buffer, "{\"$oid\":\"%s\"}", temp ) ;
-      return TRUE ;
-   }
-   case BSON_STRING:
-   {
-      const CHAR *temp = bson_iterator_string( in ) ;
-      *bufsize = strlen ( temp ) + 3 ;
-      *buffer = (CHAR *)malloc ( *bufsize ) ;
-      if ( !(*buffer) )
-      {
-         return FALSE ;
-      }
-      memset ( *buffer, 0, *bufsize ) ;
-      *bufsize = sprintf ( *buffer, "\"%s\"", temp ) ;
-      return TRUE ;
-   }
-   case BSON_INT:
-   {
-      *bufsize = 33 ;
-      *buffer = (CHAR *)malloc ( *bufsize ) ;
-      if ( !(*buffer) )
-      {
-         return FALSE ;
-      }
-      memset ( *buffer, 0, *bufsize ) ;
-      *bufsize = sprintf ( *buffer, "%d", bson_iterator_int( in ) ) ;
-      return TRUE ;
-   }
-   case BSON_LONG:
-   {
-      *bufsize = 33 ;
-      *buffer = (CHAR *)malloc ( *bufsize ) ;
-      if ( !(*buffer) )
-      {
-         return FALSE ;
-      }
-      memset ( *buffer, 0, *bufsize ) ;
-      *bufsize = sprintf ( *buffer, "{ \"$numberLong\": \"%lld\" }", ( unsigned long long )bson_iterator_long( in ) ) ;
-      return TRUE ;
-   }
-   case BSON_DECIMAL:
-   {
-      bson_decimal decimal ;
-      char *pTmp   = NULL ;
-      int size     = 0 ;
-      int rc       = 0 ;
-
-      decimal_init( &decimal ) ;
-      rc = decimal_from_bsonvalue( bson_iterator_value( in ), &decimal ) ;
-      if ( 0 != rc )
-      {
-         return FALSE ;
-      }
-
-      rc = decimal_to_str_get_len( &decimal, &size ) ;
-      if ( 0 != rc )
-      {
-         decimal_free( &decimal ) ;
-         return FALSE ;
-      }
-      pTmp = (char *)malloc( size ) ;
-      if ( NULL == pTmp )
-      {
-         decimal_free( &decimal ) ;
-         return FALSE ;
-      }
-
-      rc = decimal_to_str( &decimal, pTmp, size ) ;
-      if ( 0 != rc )
-      {
-         decimal_free( &decimal ) ;
-         free( pTmp ) ;
-         return FALSE ;
-      }
-
-      if ( decimal.typemod == -1 )
-      {
-         char part1[40] = "{\"$decimal\":\"" ;
-         char part2[10] = "\"}" ;
-         *bufsize = strlen( part1 ) + strlen( pTmp ) + strlen( part2 ) + 1 ;
-         *buffer = (CHAR *)malloc ( *bufsize ) ;
-         if ( !(*buffer) )
-         {
-            decimal_free( &decimal ) ;
-            free( pTmp ) ;
-            return FALSE ;
-         }
-         memset ( *buffer, 0, *bufsize ) ;
-         *bufsize = sprintf ( *buffer, "%s%s%s", part1, pTmp, part2 ) ;
-      }
-      else
-      {
-         char part1[40] = "{\"$decimal\":\"" ;
-         char part2[40] = "\",\"$precision\":[" ;
-         char part3[10] = "]}" ;
-         int precision  = 0 ;
-         int scale      = 0 ;
-         char prescale[20] = "" ;
-         decimal_get_typemod( &decimal, &precision, &scale ) ;
-         sprintf( prescale, "%d,%d", precision, scale ) ;
-
-         *bufsize = strlen( part1 ) + strlen( pTmp ) + strlen( part2 ) 
-                    + strlen( prescale ) + strlen( part3 ) + 1 ;
-         *buffer = (CHAR *)malloc ( *bufsize ) ;
-         if ( !(*buffer) )
-         {
-            decimal_free( &decimal ) ;
-            free( pTmp ) ;
-            return FALSE ;
-         }
-         memset ( *buffer, 0, *bufsize ) ;
-         *bufsize = sprintf ( *buffer, "%s%s%s%s%s", part1, pTmp, part2, 
-                              prescale, part3 ) ;
-      }
-
-      decimal_free( &decimal ) ;
-      free( pTmp ) ;
-      return TRUE ;
-   }
-   case BSON_DOUBLE:
-   {
-      *bufsize = 65 ;
-      *buffer = (CHAR *)malloc ( *bufsize ) ;
-      if ( !(*buffer) )
-      {
-         return FALSE ;
-      }
-      memset ( *buffer, 0, *bufsize ) ;
-      *bufsize = sprintf ( *buffer, "%f", bson_iterator_double( in ) ) ;
-      return TRUE ;
-   }
-   case BSON_CODE:
-   {
-      *bufsize = 130 ;
-      *buffer = (CHAR *)malloc ( *bufsize ) ;
-      if ( !(*buffer) )
-      {
-         return FALSE ;
-      }
-      memset ( *buffer, 0, *bufsize ) ;
-      *bufsize = sprintf ( *buffer, "\"%s\"", bson_iterator_code( in ) ) ;
-      return TRUE ;
-   }
-   case BSON_BOOL:
-   {
-      *bufsize = 6 ;
-      *buffer = (CHAR *)malloc ( *bufsize ) ;
-      if ( !(*buffer) )
-      {
-         return FALSE ;
-      }
-      memset ( *buffer, 0, *bufsize ) ;
-      *bufsize = sprintf ( *buffer, "%s", (bson_iterator_bool( in ) ? "true" : "false") ) ;
-      return TRUE ;
-   }
-   case BSON_DATE:
-   {
-      time_t timer ;
-      struct tm psr;
-      *bufsize = 64 ;
-      *buffer = (CHAR *)malloc ( *bufsize ) ;
-      if ( !(*buffer) )
-      {
-         return FALSE ;
-      }
-      timer = bson_iterator_date( in );
-      local_time ( &timer, &psr ) ;
-      memset ( *buffer, 0, *bufsize ) ;
-      *bufsize = sprintf ( *buffer, "{\"$date\":\"%04d-%02d-%02d\" }", psr.tm_year + 1900, psr.tm_mon, psr.tm_mday ) ;
-      return TRUE ;
-   }
-   case BSON_BINDATA:
-   {
-      *bufsize = 15 ;
-      *buffer = (CHAR *)malloc ( *bufsize ) ;
-      if ( !(*buffer) )
-      {
-         return FALSE ;
-      }
-      memset ( *buffer, 0, *bufsize ) ;
-      *bufsize = sprintf ( *buffer, "\"BSON_BINDATA\"" ) ;
-      return TRUE ;
-   }
-   case BSON_UNDEFINED:
-   {
-      *bufsize = 17 ;
-      *buffer = (CHAR *)malloc ( *bufsize ) ;
-      if ( !(*buffer) )
-      {
-         return FALSE ;
-      }
-      memset ( *buffer, 0, *bufsize ) ;
-      *bufsize = sprintf ( *buffer, "\"BSON_UNDEFINED\"" ) ;
-      return TRUE ;
-   }
-   case BSON_NULL:
-   {
-      *bufsize = 5 ;
-      *buffer = (CHAR *)malloc ( *bufsize ) ;
-      if ( !(*buffer) )
-      {
-         return FALSE ;
-      }
-      memset ( *buffer, 0, *bufsize ) ;
-      *bufsize = sprintf ( *buffer, "null" ) ;
-      return TRUE ;
-   }
-   case BSON_REGEX:
-   {
-      *bufsize = 131 ;
-      *buffer = (CHAR *)malloc ( *bufsize ) ;
-      if ( !(*buffer) )
-      {
-         return FALSE ;
-      }
-      memset ( *buffer, 0, *bufsize ) ;
-      *bufsize = sprintf ( *buffer, "\"%s\"", bson_iterator_regex( in ) ) ;
-      return TRUE ;
-   }
-   case BSON_TIMESTAMP:
-   {
-      bson_timestamp_t ts ;
-      time_t timer ;
-      struct tm psr;
-      *bufsize = 128 ;
-      *buffer = (CHAR *)malloc ( *bufsize ) ;
-      if ( !(*buffer) )
-      {
-         return FALSE ;
-      }
-      ts = bson_iterator_timestamp( in ) ;
-      timer = (time_t)ts.t ;
-      local_time ( &timer, &psr ) ;
-      memset ( *buffer, 0, *bufsize ) ;
-      *bufsize = sprintf ( *buffer, TIME_OUTPUT_FORMAT, psr.tm_year + 1900,
-                           psr.tm_mon+1, psr.tm_mday, psr.tm_hour, psr.tm_min,
-                           psr.tm_sec, ts.i ) ;
-      return TRUE ;
-   }
-   case BSON_SYMBOL:
-   {
-      const CHAR *temp = bson_iterator_string( in ) ;
-      *bufsize = strlen ( temp ) + 3 ;
-      *buffer = (CHAR *)malloc ( *bufsize ) ;
-      if ( !(*buffer) )
-      {
-         return FALSE ;
-      }
-      memset ( *buffer, 0, *bufsize ) ;
-      *bufsize = sprintf ( *buffer, "\"%s\"", temp ) ;
-      return TRUE ;
-   }
-   case BSON_OBJECT:
-   case BSON_ARRAY:
-   default:
-      return FALSE ;
-   }
-}

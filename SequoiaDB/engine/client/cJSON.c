@@ -1,2001 +1,2932 @@
-/*    Copyright 2012 SequoiaDB Inc.
- *
- *    Licensed under the Apache License, Version 2.0 (the "License");
- *    you may not use this file except in compliance with the License.
- *    You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- *    Unless required by applicable law or agreed to in writing, software
- *    distributed under the License is distributed on an "AS IS" BASIS,
- *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *    See the License for the specific language governing permissions and
- *    limitations under the License.
- */
+/*******************************************************************************
+   Copyright (C) 2012-2014 SequoiaDB Ltd.
 
-/*
-  Copyright (c) 2009 Dave Gamble
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
 
-  Permission is hereby granted, free of charge, to any person obtaining a copy
-  of this software and associated documentation files (the "Software"), to deal
-  in the Software without restriction, including without limitation the rights
-  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-  copies of the Software, and to permit persons to whom the Software is
-  furnished to do so, subject to the following conditions:
+   http://www.apache.org/licenses/LICENSE-2.0
 
-  The above copyright notice and this permission notice shall be included in
-  all copies or substantial portions of the Software.
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+*******************************************************************************/
 
-  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-  THE SOFTWARE.
-*/
-
-/* cJSON */
-/* JSON parser in C. */
-
-#include "cJSON.h"
-#include <string.h>
-#include <stdio.h>
 #include <math.h>
-#include <stdlib.h>
-#include <float.h>
-#include <limits.h>
-#include <ctype.h>
-#include <time.h>
+#include "ossMem.h"
+#include "ossUtil.h"
+#include "cJSON.h"
 
-/* #include "iostream.h" */
+typedef enum _stringType {
+   TYPE_STRING_NONE = 0,
+   TYPE_STRING_QUOTE,
+   TYPE_STRING_DOUBLE_QUOTES
+} STRING_TYPE ;
 
-static const char *ep;
-static int sum;
+typedef enum _dollarSymbolType {
+   SYMBOL_NONE = 0,
+   SYMBOL_LOGICAL,            //logical
+   SYMBOL_MATCHER,            //match
+   SYMBOL_SELECTOR,           //select
+   SYMBOL_UPDATE,             //update
+   SYMBOL_AGGREGATION,        //aggregation
+   SYMBOL_INTERNAL,           //internal
+   SYMBOL_DATATYPE,           //data type
+   SYMBOL_UNCERTAIN           //data type or other( uncertain )
+} DOLLAR_SYMBOL_TYPE ;
 
-static const char *dollar_command_string[]= {
-   //A
-   CJSON_OP_ABS,        CJSON_OP_ADDTOSET,      CJSON_OP_ADD,
-   CJSON_INNER_AGGR,    CJSON_OP_ALL,           CJSON_OP_AND,     CJSON_OP_AVG,
-   //B
-   CJSON_OP_BITAND,     CJSON_OP_BITNOT,        CJSON_OP_BITOR,
-   CJSON_OP_BITXOR,     CJSON_OP_BIT,
-   //C
-   CJSON_OP_CAST,       CJSON_OP_CEILING,       CJSON_OP_COUNT,
-   //D
-   CJSON_OP_DEFAULT,    CJSON_OP_DIVIDE,
-   //E
-   CJSON_OP_ELEMMATCHONE,                       CJSON_OP_ELEMAT,
-   CJSON_OP_ET,         CJSON_OP_EXISTS,
-   //F
-   CJSON_OP_FIELD,      CJSON_OP_FIRST,         CJSON_OP_FLOOR,
-   //G
-   CJSON_OP_GROUP,      CJSON_OP_GTE,           CJSON_OP_GT,
-   //I
-   CJSON_OP_INCLUDE,    CJSON_OP_INC,           CJSON_OP_IN,
-   CJSON_OP_ISNULL,
-   //L
-   CJSON_OP_LAST,       CJSON_OP_LIMIT,         CJSON_OP_LOWER,   CJSON_OP_LTE,
-   CJSON_OP_LTRIM,      CJSON_OP_LT,
-   //M
-   CJSON_OP_MATCH,      CJSON_OP_MAXDIS,        CJSON_OP_MAX,
-   CJSON_OP_MERGEARRAYSET,                      CJSON_OP_MIN,
-   CJSON_OP_MOD,        CJSON_OP_MULTIPLY,
-   CJSON_INNER_META,    CJSON_INNER_MODIFY,
-   //N
-   CJSON_OP_NEAR,       CJSON_OP_NE,            CJSON_OP_NIN,     CJSON_OP_NOT,
-   //O
-   CJSON_OP_OPTIONS,    CJSON_OP_OR,
-   //P
-   CJSON_OP_POP,        CJSON_OP_PROJECT,       CJSON_OP_PULLALL,
-   CJSON_OP_PULL,       CJSON_OP_PUSHALL,       CJSON_OP_PUSH,
-   //R
-   CJSON_OP_REGEX,      CJSON_OP_RENAME,        CJSON_OP_REPLACE,
-   CJSON_OP_RTRIM,
-   //S
-   CJSON_OP_SET,        CJSON_OP_SIZE,          CJSON_OP_SKIP,
-   CJSON_OP_SLICE,      CJSON_OP_SORT,          CJSON_OP_STRLEN,
-   CJSON_OP_SUBSTR,     CJSON_OP_SUBTRACT,      CJSON_OP_SUM,
-   CJSON_INNER_SETONINSERT,
-   //T
-   CJSON_OP_TRIM,       CJSON_OP_TYPE,
-   //U
-   CJSON_OP_UNSET,      CJSON_OP_UPPER,
-   //W
-   CJSON_OP_WINTHIN,
+/* CJSON match */
+typedef struct _cJsonMatch {
+   /* dollar symbol type */
+   DOLLAR_SYMBOL_TYPE type ;
+   /* data type */
+   CJSON_VALUE_TYPE dataType ;
+   /* the same characters of number on a previous symbol */
+   UINT32 sameCharNum ;
+   /* symbol length */
+   UINT32 strLen ;
+   /* dollar symbol */
+   CHAR symbol[30] ;
+} CJSON_MATCH ;
 
+#define CHAR_LEFT_ROUND_BRACKET     '('
+#define CHAR_RIGHT_ROUND_BRACKET    ')'
+#define CHAR_LEFT_CURLY_BRACE       '{'
+#define CHAR_RIGHT_CURLY_BRACE      '}'
+#define CHAR_LEFT_SQUARE_BRACKET    '['
+#define CHAR_RIGHT_SQUARE_BRACKET   ']'
+#define CHAR_DOUBLE_QUOTES '"'
+#define CHAR_SLASH  '\\'
+#define CHAR_COMMA  ','
+#define CHAR_COLON  ':'
+#define CHAR_DOLLAR '$'
+#define CHAR_QUOTE  '\''
+#define CHAR_SPACE  32
+#define CHAR_HT     9
+
+CJSON_PLOG_FUNC _pCJsonPrintfLogFun = NULL ;
+
+static const CHAR* skip( const CHAR *pStr ) ;
+static const CHAR* skip2JsonStart( const CHAR *pStr ) ;
+static BOOLEAN checkCustomType( CJSON *pItem,
+                                CJSON_MACHINE *pMachine,
+                                CJSON_VALUE_TYPE *pKeyType,
+                                CJSON_VALUE_TYPE *pValType ) ;
+
+static const CHAR* readToken( CJSON *pItem,
+                              const CHAR *pStr,
+                              CJSON_MACHINE *pMachine ) ;
+static const CHAR* readKey( CJSON *pItem,
+                            const CHAR *pStr,
+                            CJSON_MACHINE *pMachine ) ;
+static const CHAR* readValue( CJSON *pItem,
+                              const CHAR *pStr,
+                              CJSON_MACHINE *pMachine ) ;
+
+static const CHAR* tokenReady( CJSON *pItem,
+                               const CHAR *pStr,
+                               CJSON_MACHINE *pMachine ) ;
+static const CHAR* tokenObjStart( CJSON *pItem,
+                                  const CHAR *pStr,
+                                  CJSON_MACHINE *pMachine ) ;
+static const CHAR* tokenObjKey( CJSON *pItem,
+                                const CHAR *pStr,
+                                CJSON_MACHINE *pMachine ) ;
+static const CHAR* tokenObjColon( CJSON *pItem,
+                                  const CHAR *pStr,
+                                  CJSON_MACHINE *pMachine ) ;
+static const CHAR* tokenObjValue( CJSON *pItem,
+                                  const CHAR *pStr,
+                                  CJSON_MACHINE *pMachine ) ;
+static const CHAR* tokenObjComma( CJSON *pItem,
+                                  const CHAR *pStr,
+                                  CJSON_MACHINE *pMachine ) ;
+static const CHAR* tokenObjEnd( CJSON *pItem,
+                                const CHAR *pStr,
+                                CJSON_MACHINE *pMachine ) ;
+static const CHAR* tokenArrStart( CJSON *pItem,
+                                  const CHAR *pStr,
+                                  CJSON_MACHINE *pMachine ) ;
+static const CHAR* tokenArrValue( CJSON *pItem,
+                                  const CHAR *pStr,
+                                  CJSON_MACHINE *pMachine ) ;
+static const CHAR* tokenArrComma( CJSON *pItem,
+                                  const CHAR *pStr,
+                                  CJSON_MACHINE *pMachine ) ;
+static const CHAR* tokenArrEnd( CJSON *pItem,
+                                const CHAR *pStr,
+                                CJSON_MACHINE *pMachine ) ;
+
+static const CHAR* readObject( const CHAR *pStr,
+                               const CJSON_MACHINE *pMachine,
+                               CJSON_READ_INFO **ppReadInfo ) ;
+static const CHAR* readArray( const CHAR *pStr,
+                              const CJSON_MACHINE *pMachine,
+                              CJSON_READ_INFO **ppReadInfo ) ;
+static const CHAR* readString( const CHAR *pStr,
+                               const CJSON_MACHINE *pMachine,
+                               CJSON_READ_INFO **ppReadInfo ) ;
+static const CHAR* readNumber( const CHAR *pStr,
+                               const CJSON_MACHINE *pMachine,
+                               CJSON_READ_INFO **ppReadInfo ) ;
+static const CHAR* readPINF( const CHAR *pStr,
+                             const CJSON_MACHINE *pMachine,
+                             CJSON_READ_INFO **ppReadInfo ) ;
+static const CHAR* readNINF( const CHAR *pStr,
+                             const CJSON_MACHINE *pMachine,
+                             CJSON_READ_INFO **ppReadInfo ) ;
+static const CHAR* readTrue( const CHAR *pStr,
+                             const CJSON_MACHINE *pMachine,
+                             CJSON_READ_INFO **ppReadInfo ) ;
+static const CHAR* readFalse( const CHAR *pStr,
+                              const CJSON_MACHINE *pMachine,
+                              CJSON_READ_INFO **ppReadInfo ) ;
+static const CHAR* readNull( const CHAR *pStr,
+                             const CJSON_MACHINE *pMachine,
+                             CJSON_READ_INFO **ppReadInfo ) ;
+
+static const CHAR* parseValue( const CHAR *pStr,
+                               INPUT_FUNC *pParseFun,
+                               INT32 *pListIndex ) ;
+static CHAR* parseString( const CHAR *pStr,
+                          INT32 length,
+                          const CJSON_MACHINE *pMachine ) ;
+static const CHAR* parseNumber( const CHAR *pStr,
+                                INT32 *pValInt,
+                                FLOAT64 *pValDouble,
+                                INT64 *pValLong,
+                                CJSON_VALUE_TYPE *pNumType ) ;
+static const CHAR* parseCommand( const CHAR *pStr,
+                                 STRING_TYPE type,
+                                 DOLLAR_SYMBOL_TYPE *pKeyAttr,
+                                 CJSON_VALUE_TYPE *pKeyType ) ;
+static const CHAR* parseArgImpl( const CHAR *pStr,
+                                 CHAR character,
+                                 const CJSON_MACHINE *pMachine,
+                                 va_list *pVaList ) ;
+static const CHAR* parseArgs( const CHAR *pStr,
+                              const CJSON_MACHINE *pMachine,
+                              const CHAR *pFormat,
+                              INT32 *pArgNum,
+                              va_list *pVaList ) ;
+
+#define INPUT_LEN_STR( str ) sizeof(str)-1,str
+static const CJSON_MATCH _command[] = {
+   /* dollar type      data type    sameCharNum    symbol length   symbol  */
+   { SYMBOL_SELECTOR,    0,                 0, INPUT_LEN_STR( "$abs" ) },
+   { SYMBOL_SELECTOR,    0,                 2, INPUT_LEN_STR( "$add" ) },
+   { SYMBOL_UPDATE,      0,                 4, INPUT_LEN_STR( "$addtoset" ) },
+   { SYMBOL_MATCHER,     0,                 2, INPUT_LEN_STR( "$all" ) },
+   { SYMBOL_LOGICAL,     0,                 2, INPUT_LEN_STR( "$and" ) },
+   { SYMBOL_AGGREGATION, 0,                 2, INPUT_LEN_STR( "$avg" ) },
+   { SYMBOL_DATATYPE,    CJSON_BINARY,      1, INPUT_LEN_STR( "$binary" ) },
+   { SYMBOL_UPDATE,      0,                 3, INPUT_LEN_STR( "$bit" ) },
+   { SYMBOL_UPDATE,      0,                 4, INPUT_LEN_STR( "$bitand" ) },
+   { SYMBOL_UPDATE,      0,                 4, INPUT_LEN_STR( "$bitnot" ) },
+   { SYMBOL_UPDATE,      0,                 4, INPUT_LEN_STR( "$bitor" ) },
+   { SYMBOL_UPDATE,      0,                 4, INPUT_LEN_STR( "$bitxor" ) },
+   { SYMBOL_SELECTOR,    0,                 1, INPUT_LEN_STR( "$cast" ) },
+   { SYMBOL_SELECTOR,    0,                 2, INPUT_LEN_STR( "$ceiling" ) },
+   { SYMBOL_AGGREGATION, 0,                 2, INPUT_LEN_STR( "$count" ) },
+   { SYMBOL_DATATYPE,    CJSON_DATE,        1, INPUT_LEN_STR( "$date" ) },
+   { SYMBOL_DATATYPE,    CJSON_DECIMAL,     2, INPUT_LEN_STR( "$decimal" ) },
+   { SYMBOL_SELECTOR,    0,                 3, INPUT_LEN_STR( "$default" ) },
+   { SYMBOL_SELECTOR,    0,                 2, INPUT_LEN_STR( "$divide" ) },
+   { SYMBOL_MATCHER,     0,                 1, INPUT_LEN_STR( "$elemMatch" ) },
+   { SYMBOL_SELECTOR,    0,                 10,INPUT_LEN_STR( "$elemMatchOne" ) },
+   { SYMBOL_MATCHER,     0,                 2, INPUT_LEN_STR( "$et" ) },
+   { SYMBOL_MATCHER,     0,                 2, INPUT_LEN_STR( "$exists" ) },
+   { SYMBOL_MATCHER,     0,                 1, INPUT_LEN_STR( "$field" ) },
+   { SYMBOL_AGGREGATION, 0,                 3, INPUT_LEN_STR( "$first" ) },
+   { SYMBOL_SELECTOR,    0,                 2, INPUT_LEN_STR( "$floor" ) },
+   { SYMBOL_AGGREGATION, 0,                 1, INPUT_LEN_STR( "$group" ) },
+   { SYMBOL_MATCHER,     0,                 2, INPUT_LEN_STR( "$gt" ) },
+   { SYMBOL_MATCHER,     0,                 3, INPUT_LEN_STR( "$gte" ) },
+   { SYMBOL_MATCHER,     0,                 1, INPUT_LEN_STR( "$in" ) },
+   { SYMBOL_UPDATE,      0,                 3, INPUT_LEN_STR( "$inc" ) },
+   { SYMBOL_SELECTOR,    0,                 4, INPUT_LEN_STR( "$include" ) },
+   { SYMBOL_MATCHER,     0,                 2, INPUT_LEN_STR( "$isnull" ) },
+   { SYMBOL_AGGREGATION, 0,                 1, INPUT_LEN_STR( "$last" ) },
+   { SYMBOL_AGGREGATION, 0,                 2, INPUT_LEN_STR( "$limit" ) },
+   { SYMBOL_SELECTOR,    0,                 2, INPUT_LEN_STR( "$lower" ) },
+   { SYMBOL_MATCHER,     0,                 2, INPUT_LEN_STR( "$lt" ) },
+   { SYMBOL_MATCHER,     0,                 3, INPUT_LEN_STR( "$lte" ) },
+   { SYMBOL_SELECTOR,    0,                 3, INPUT_LEN_STR( "$ltrim" ) },
+   { SYMBOL_AGGREGATION, 0,                 1, INPUT_LEN_STR( "$match" ) },
+   { SYMBOL_AGGREGATION, 0,                 3, INPUT_LEN_STR( "$max" ) },
+   { SYMBOL_MATCHER,     0,                 4, INPUT_LEN_STR( "$maxDistance" ) },
+   { SYMBOL_DATATYPE,    CJSON_MAXKEY,      4, INPUT_LEN_STR( "$maxKey" ) },
+   { SYMBOL_SELECTOR,    0,                 2, INPUT_LEN_STR( "$mergearrayset" ) },
+   { SYMBOL_AGGREGATION, 0,                 2, INPUT_LEN_STR( "$min" ) },
+   { SYMBOL_DATATYPE,    CJSON_MINKEY,      4, INPUT_LEN_STR( "$minKey" ) },
+   { SYMBOL_MATCHER,     0,                 2, INPUT_LEN_STR( "$mod" ) },
+   { SYMBOL_SELECTOR,    0,                 2, INPUT_LEN_STR( "$multiply" ) },
+   { SYMBOL_MATCHER,     0,                 1, INPUT_LEN_STR( "$ne" ) },
+   { SYMBOL_MATCHER,     0,                 3, INPUT_LEN_STR( "$near" ) },
+   { SYMBOL_MATCHER,     0,                 2, INPUT_LEN_STR( "$nin" ) },
+   { SYMBOL_LOGICAL,     0,                 2, INPUT_LEN_STR( "$not" ) },
+   { SYMBOL_DATATYPE,    CJSON_NUMBER_LONG, 2, INPUT_LEN_STR( "$numberLong" ) },
+   { SYMBOL_DATATYPE,    CJSON_OID,         1, INPUT_LEN_STR( "$oid" ) },
+   { SYMBOL_DATATYPE,    CJSON_OPTIONS,     2, INPUT_LEN_STR( "$options" ) },
+   { SYMBOL_LOGICAL,     0,                 2, INPUT_LEN_STR( "$or" ) },
+   { SYMBOL_UPDATE,      0,                 1, INPUT_LEN_STR( "$pop" ) },
+   { SYMBOL_DATATYPE,    CJSON_PRECISION,   2, INPUT_LEN_STR( "$precision" ) },
+   { SYMBOL_AGGREGATION, 0,                 3, INPUT_LEN_STR( "$project" ) },
+   { SYMBOL_UPDATE,      0,                 2, INPUT_LEN_STR( "$pull" ) },
+   { SYMBOL_UPDATE,      0,                 5, INPUT_LEN_STR( "$pull_all" ) },
+   { SYMBOL_UPDATE,      0,                 3, INPUT_LEN_STR( "$push" ) },
+   { SYMBOL_UPDATE,      0,                 5, INPUT_LEN_STR( "$push_all" ) },
+   { SYMBOL_DATATYPE,    CJSON_REGEX,       1, INPUT_LEN_STR( "$regex" ) },
+   { SYMBOL_UPDATE,      0,                 3, INPUT_LEN_STR( "$rename" ) },
+   { SYMBOL_UPDATE,      0,                 3, INPUT_LEN_STR( "$replace" ) },
+   { SYMBOL_SELECTOR,    0,                 2, INPUT_LEN_STR( "$rtrim" ) },
+   { SYMBOL_UPDATE,      0,                 1, INPUT_LEN_STR( "$set" ) },
+   { SYMBOL_MATCHER,     0,                 2, INPUT_LEN_STR( "$size" ) },
+   { SYMBOL_AGGREGATION, 0,                 2, INPUT_LEN_STR( "$skip" ) },
+   { SYMBOL_SELECTOR,    0,                 2, INPUT_LEN_STR( "$slice" ) },
+   { SYMBOL_AGGREGATION, 0,                 2, INPUT_LEN_STR( "$sort" ) },
+   { SYMBOL_SELECTOR,    0,                 2, INPUT_LEN_STR( "$strlen" ) },
+   { SYMBOL_SELECTOR,    0,                 2, INPUT_LEN_STR( "$substr" ) },
+   { SYMBOL_SELECTOR,    0,                 4, INPUT_LEN_STR( "$subtract" ) },
+   { SYMBOL_SELECTOR,    0,                 3, INPUT_LEN_STR( "$sum" ) },
+   { SYMBOL_DATATYPE,    CJSON_TIMESTAMP,   1, INPUT_LEN_STR( "$timestamp" ) },
+   { SYMBOL_SELECTOR,    0,                 2, INPUT_LEN_STR( "$trim" ) },
+   { SYMBOL_UNCERTAIN,   CJSON_TYPE,        2, INPUT_LEN_STR( "$type" ) },
+   { SYMBOL_DATATYPE,    CJSON_UNDEFINED,   1, INPUT_LEN_STR( "$undefined" ) },
+   { SYMBOL_UPDATE,      0,                 3, INPUT_LEN_STR( "$unset" ) },
+   { SYMBOL_SELECTOR,    0,                 2, INPUT_LEN_STR( "$upper" ) },
+   { SYMBOL_MATCHER,     0,                 1, INPUT_LEN_STR( "$within" ) },
+   { SYMBOL_INTERNAL,    0,                 1, INPUT_LEN_STR( "$Aggr" ) },
+   { SYMBOL_INTERNAL,    0,                 1, INPUT_LEN_STR( "$Meta" ) },
+   { SYMBOL_INTERNAL,    0,                 2, INPUT_LEN_STR( "$Modify" ) },
+   { SYMBOL_INTERNAL,    0,                 1, INPUT_LEN_STR( "$SetOnInsert" ) },
 } ;
 
-static const char *parse_array_size(const char *value);
-static const char *parse_object_size(const char *value);
-static const char *parse_dollar_string(cJSON *item,const char *value) ;
+static const INT32 _commandSize = sizeof( _command ) / sizeof( CJSON_MATCH ) ;
 
-const char *cJSON_GetErrorPtr() {return ep;}
+#define CJSON_MATCH_INPUT( func, str ) sizeof(str)-1,func,str
+static CJSON_VALUE_MATCH _valueList[50] = {
+   { CJSON_MATCH_VALUE, CJSON_MATCH_INPUT( readString, "\"" ) },
+   { CJSON_MATCH_VALUE, CJSON_MATCH_INPUT( readString, "'" ) },
+   { CJSON_MATCH_VALUE, CJSON_MATCH_INPUT( readNumber, "+" ) },
+   { CJSON_MATCH_VALUE, CJSON_MATCH_INPUT( readNumber, "-" ) },
+   { CJSON_MATCH_VALUE, CJSON_MATCH_INPUT( readNumber, "." ) },
+   { CJSON_MATCH_VALUE, CJSON_MATCH_INPUT( readNumber, "0" ) },
+   { CJSON_MATCH_VALUE, CJSON_MATCH_INPUT( readNumber, "1" ) },
+   { CJSON_MATCH_VALUE, CJSON_MATCH_INPUT( readNumber, "2" ) },
+   { CJSON_MATCH_VALUE, CJSON_MATCH_INPUT( readNumber, "3" ) },
+   { CJSON_MATCH_VALUE, CJSON_MATCH_INPUT( readNumber, "4" ) },
+   { CJSON_MATCH_VALUE, CJSON_MATCH_INPUT( readNumber, "5" ) },
+   { CJSON_MATCH_VALUE, CJSON_MATCH_INPUT( readNumber, "6" ) },
+   { CJSON_MATCH_VALUE, CJSON_MATCH_INPUT( readNumber, "7" ) },
+   { CJSON_MATCH_VALUE, CJSON_MATCH_INPUT( readNumber, "8" ) },
+   { CJSON_MATCH_VALUE, CJSON_MATCH_INPUT( readNumber, "9" ) },
+   { CJSON_MATCH_VALUE, CJSON_MATCH_INPUT( readFalse,  "false" ) },
+   { CJSON_MATCH_VALUE, CJSON_MATCH_INPUT( readNull,   "null" ) },
+   { CJSON_MATCH_VALUE, CJSON_MATCH_INPUT( readTrue,   "true" ) },
+   { CJSON_MATCH_VALUE, CJSON_MATCH_INPUT( readArray,  "[" ) },
+   { CJSON_MATCH_VALUE, CJSON_MATCH_INPUT( readObject, "{" ) },
+   { CJSON_MATCH_VALUE, CJSON_MATCH_INPUT( readPINF,   "inf" ) },
+   { CJSON_MATCH_VALUE, CJSON_MATCH_INPUT( readPINF,   "+inf" ) },
+   { CJSON_MATCH_VALUE, CJSON_MATCH_INPUT( readPINF,   "1.#INF" ) },
+   { CJSON_MATCH_VALUE, CJSON_MATCH_INPUT( readPINF,   "Infinity" ) },
+   { CJSON_MATCH_VALUE, CJSON_MATCH_INPUT( readPINF,   "+Infinity" ) },
+   { CJSON_MATCH_VALUE, CJSON_MATCH_INPUT( readNINF,   "-inf" ) },
+   { CJSON_MATCH_VALUE, CJSON_MATCH_INPUT( readNINF,   "-1.#INF" ) },
+   { CJSON_MATCH_VALUE, CJSON_MATCH_INPUT( readNINF,   "-Infinity" ) },
+} ;
 
-static int cJSON_strcasecmp(const char *s1,const char *s2)
+static INT32 _valueListSize = 28 ; // _valueList current size
+
+static const INT32 _valueListMaxSize = \
+      sizeof( _valueList ) / sizeof( CJSON_VALUE_MATCH ) ;
+
+SDB_EXPORT BOOLEAN cJsonParse( const CHAR *pStr, CJSON_MACHINE *pMachine )
 {
-   if (!s1) return (s1==s2)?0:1;if (!s2) return 1;
-   for(; tolower(*s1) == tolower(*s2); ++s1, ++s2)   if(*s1 == 0)   return 0;
-   return tolower(*(const unsigned char *)s1) - tolower(*(const unsigned char *)s2);
-}
-
-static void *(*cJSON_malloc)(size_t sz) = malloc;
-static void (*cJSON_free)(void *ptr) = free;
-
-static char* cJSON_strdup(const char* str)
-{
-      size_t len;
-      char* copy;
-
-      len = strlen(str) + 1;
-      if (!(copy = (char*)cJSON_malloc(len))) return 0;
-      memcpy(copy,str,len);
-      return copy;
-}
-
-void cJSON_InitHooks(cJSON_Hooks* hooks)
-{
-    if (!hooks) { /* Reset hooks */
-        cJSON_malloc = malloc;
-        cJSON_free = free;
-        return;
-    }
-
-   cJSON_malloc = (hooks->malloc_fn)?hooks->malloc_fn:malloc;
-   cJSON_free    = (hooks->free_fn)?hooks->free_fn:free;
-}
-
-/* Internal constructor. */
-static cJSON *cJSON_New_Item()
-{
-   cJSON* node = (cJSON*)cJSON_malloc(sizeof(cJSON));
-   if (node) memset(node,0,sizeof(cJSON));
-   return node;
-}
-
-/* Delete a cJSON structure. */
-void cJSON_Delete(cJSON *c)
-{
-   cJSON *next;
-   while (c)
+   BOOLEAN rc = TRUE ;
+   if( pMachine == NULL )
    {
-      next=c->next;
-      if (!(c->type&cJSON_IsReference) && c->child) cJSON_Delete(c->child);
-      if (!(c->type&cJSON_IsReference) && c->valuestring) cJSON_free(c->valuestring);
-      if (!(c->type&cJSON_IsReference) && c->valuestring2) cJSON_free(c->valuestring2);
-      if (c->string) cJSON_free(c->string);
-      cJSON_free(c);
-      c=next;
+      CJSON_PRINTF_LOG( "State machine is NULL" ) ;
+      goto error ;
    }
+   pMachine->pItem = cJsonItemCreate( pMachine ) ;
+   if( pMachine->pItem == NULL )
+   {
+      CJSON_PRINTF_LOG( "Failed to create new item" ) ;
+      goto error ;
+   }
+   pStr = readToken( pMachine->pItem, pStr, pMachine ) ;
+   if( pStr == NULL )
+   {
+      CJSON_PRINTF_LOG( "Failed to parse JSON" ) ;
+      goto error ;
+   }
+   if( pMachine->isCheckEnd && *pStr )
+   {
+      CJSON_PRINTF_LOG( "Exist redundant after JSON" ) ;
+      goto error ;
+   }
+done:
+   return rc ;
+error:
+   rc = FALSE ;
+   goto done ;
 }
 
-/* Parse the input text to generate a number, and populate the result into item. */
-static const char *parse_number(cJSON *item,const char *num)
+static const CHAR* readToken( CJSON *pItem,
+                              const CHAR *pStr,
+                              CJSON_MACHINE *pMachine )
 {
-   double decimal = 0 ;
-   double n=0,sign=1,scale=0;int subscale=0,signsubscale=1;
-   int n1=0 ;
-   long long n2 = 0 ;
-   volatile long long n3 = 0 ;
-   item->numType = cJSON_INT32 ;
-   /* Could use sscanf for this? */
-   if (*num=='-')
+   while( TRUE )
    {
-      sign=-1 ;
-      num++ ;   /* Has sign? */
-   }
-   else if (*num=='+')
-   {
-      sign=1 ;
-      num++ ;
-   }
-   while (*num=='0') num++;         /* is zero */
-   if (*num>='1' && *num<='9')
-   {
-      do
+      switch( pMachine->state )
       {
-         n3 = (n2*10)+(*num - '0') ;
-         if( ( n3 - (*num - '0') ) / 10 != n2 )
+      case STATE_READY:
+         /* pStr: xxxxx */
+         pStr = tokenReady( pItem, pStr, pMachine ) ;
+         if( pStr == NULL )
          {
-            item->numType = cJSON_DOUBLE ;
+            goto error ;
          }
-         n=(n*10.0)+(*num - '0') ;   
-         n1=(n1*10)+(*num - '0') ;
-         n2=n3 ;
-         ++num ;
-         if( cJSON_INT32 == item->numType &&
-             (long long)n1!= n2 )
+         break ;
+      case STATE_OBJECT_START:
+         /* pStr: {xxxxxx */
+         pStr = tokenObjStart( pItem, pStr, pMachine ) ;
+         if( pStr == NULL )
          {
-            item->numType = cJSON_INT64 ;
+            goto error ;
          }
-      }while (*num>='0' && *num<='9');   /* Number? */
-   }
-   if (*num=='.' && num[1]>='0' && num[1]<='9') 
-   {
-      item->numType = cJSON_DOUBLE ;
-      num++;
-      /*
-         这个公式，先除再加 n = (n) + ( *num - '0') / pow( 10.0, scale )
-         可能会导致小数位精度丢失。改为先把小数计算，最后再加上整数。
-       */
-      do
-      {
-         decimal = decimal * 10 + ( *num - '0') ;
-         ++num ;
-         ++scale ;
+         break ;
+      case STATE_OBJECT_KEY:
+         /* pStr: { xxxxx */
+         pStr = tokenObjKey( pItem, pStr, pMachine ) ;
+         if( pStr == NULL )
+         {
+            goto error ;
+         }
+         break ;
+      case STATE_OBJECT_COLON:
+         /* pStr: { <key>xxxxxx */
+         pStr = tokenObjColon( pItem, pStr, pMachine ) ;
+         if( pStr == NULL )
+         {
+            goto error ;
+         }
+         break ;
+      case STATE_OBJECT_VALUE:
+         /* pStr: { <key>: xxxxxx */
+         pStr = tokenObjValue( pItem, pStr, pMachine ) ;
+         if( pStr == NULL )
+         {
+            goto error ;
+         }
+         break ;
+      case STATE_OBJECT_COMMA:
+         /* pStr: { <key>: <value>xxxxx */
+         pStr = tokenObjComma( pItem, pStr, pMachine ) ;
+         if( pStr == NULL )
+         {
+            goto error ;
+         }
+         if( pMachine->state == STATE_OBJECT_KEY )
+         {
+            pItem = pItem->pNext ;
+         }
+         break ;
+      case STATE_OBJECT_END:
+         /* pStr: { <key>: <value> } */
+         pStr = tokenObjEnd( pItem, pStr, pMachine ) ;
+         if( pStr == NULL )
+         {
+            goto error ;
+         }
+         goto done ;
+         break ;
+      case STATE_ARRAY_START:
+         /* pStr: [xxxxxx */
+         pStr = tokenArrStart( pItem, pStr, pMachine ) ;
+         if( pStr == NULL )
+         {
+            goto error ;
+         }
+         break ;
+      case STATE_ARRAY_VALUE:
+         /* pStr: [ xxxxxx */
+         pStr = tokenArrValue( pItem, pStr, pMachine ) ;
+         if( pStr == NULL )
+         {
+            goto error ;
+         }
+         break ;
+      case STATE_ARRAY_COMMA:
+         /* pStr: [ <value>,xxxxx */
+         pStr = tokenArrComma( pItem, pStr, pMachine ) ;
+         if( pStr == NULL )
+         {
+            goto error ;
+         }
+         if( pMachine->state == STATE_ARRAY_VALUE )
+         {
+            pItem = pItem->pNext ;
+         }
+         break ;
+      case STATE_ARRAY_END:
+         /* pStr: [ <value> ] */
+         pStr = tokenArrEnd( pItem, pStr, pMachine ) ;
+         if( pStr == NULL )
+         {
+            goto error ;
+         }
+         goto done ;
+         break ;
+      case STATE_ERROR:
+         pStr = NULL ;
+         break ;
+      default:
+         CJSON_PRINTF_LOG( "Unknow state: ", pMachine->state ) ;
+         goto error ;
       }
-      while (*num>='0' && *num<='9');
-      n = n + decimal / pow( 10.0, scale ) ;
-   }   /* Fractional part? */
-   if (*num=='e' || *num=='E')      /* Exponent? */
-   {
-      num++;
-      if (*num=='+')
-         num++;
-      else if (*num=='-')
-      {
-           item->numType = cJSON_DOUBLE ;
-           signsubscale=-1 ;
-           num++;      /* With sign? */
-      }
-       while (*num>='0' && *num<='9')
-          subscale=(subscale*10)+(*num++ - '0');   /* Number? */
    }
+done:
+   return pStr ;
+error:
+   pMachine->state = STATE_ERROR ;
+   pStr = NULL ;
+   goto done ;
+}
 
-   if ( cJSON_DOUBLE == item->numType )
+static const CHAR* tokenReady( CJSON *pItem,
+                               const CHAR *pStr,
+                               CJSON_MACHINE *pMachine )
+{
+   const CHAR *pTmp = NULL ;
+   pStr = skip( pStr ) ;
+   if( *pStr == 0 )
    {
-      n=sign*n*pow(10.0,(subscale*signsubscale*1.0));   /* number = +/- number.fraction * 10^+/- exponent */
+      CJSON_PRINTF_LOG( "Syntax Error: JSON is missing '{'" ) ;
+      goto error ;
    }
-   else if ( cJSON_INT64 == item->numType )
+   pTmp = skip2JsonStart( pStr ) ;
+   if( *pTmp == 0 )
    {
-      if ( 0 != subscale )
+      CJSON_PRINTF_LOG( "Syntax Error: JSON is missing '{'" ) ;
+      goto error ;
+   }
+   pMachine->state = STATE_OBJECT_START ;
+   pMachine->level = 0 ;
+done:
+   return pStr ;
+error:
+   pStr = NULL ;
+   pMachine->state = STATE_ERROR ;
+   goto done ;
+}
+
+static const CHAR* tokenObjStart( CJSON *pItem,
+                                  const CHAR *pStr,
+                                  CJSON_MACHINE *pMachine )
+{
+   pStr = skip( pStr + 1 ) ;
+   if( *pStr == 0 )
+   {
+      CJSON_PRINTF_LOG( "Syntax Error: JSON key is empty" ) ;
+      goto error ;
+   }
+   if( *pStr == CHAR_RIGHT_CURLY_BRACE )
+   {
+      pMachine->state = STATE_OBJECT_END ;
+   }
+   else
+   {
+      pMachine->state = STATE_OBJECT_KEY ;
+   }
+   ++pMachine->level ;
+done:
+   return pStr ;
+error:
+   pStr = NULL ;
+   pMachine->state = STATE_ERROR ;
+   goto done ;
+}
+
+static const CHAR* tokenObjKey( CJSON *pItem,
+                                const CHAR *pStr,
+                                CJSON_MACHINE *pMachine )
+{
+   if( *pStr == CHAR_COMMA )
+   {
+      // { xx : xx, , <--- is error
+      CJSON_PRINTF_LOG( "Syntax Error: extra ','" ) ;
+      goto error ;
+   }
+   pStr = readKey( pItem, pStr, pMachine ) ;
+   if( pStr == NULL )
+   {
+      CJSON_PRINTF_LOG( "Failed to parse JSON key" ) ;
+      goto error ;
+   }
+   pMachine->state = STATE_OBJECT_COLON ;
+done:
+   return pStr ;
+error:
+   pStr = NULL ;
+   pMachine->state = STATE_ERROR ;
+   goto done ;
+}
+
+static const CHAR* tokenObjColon( CJSON *pItem,
+                                  const CHAR *pStr,
+                                  CJSON_MACHINE *pMachine )
+{
+   if( *pStr != CHAR_COLON )
+   {
+      pStr = skip( pStr + 1 ) ;
+   }
+   if( *pStr != CHAR_COLON )
+   {
+      CJSON_PRINTF_LOG( "Syntax Error: JSON '%s' missing ':'", pItem->pKey ) ;
+      goto error ;
+   }
+   pStr = skip( pStr + 1 ) ;
+   pMachine->state = STATE_OBJECT_VALUE ;
+done:
+   return pStr ;
+error:
+   pStr = NULL ;
+   pMachine->state = STATE_ERROR ;
+   goto done ;
+}
+
+static const CHAR* tokenObjValue( CJSON *pItem,
+                                  const CHAR *pStr,
+                                  CJSON_MACHINE *pMachine )
+{
+   pStr = readValue( pItem, pStr, pMachine ) ;
+   if( pStr == NULL )
+   {
+      CJSON_PRINTF_LOG( "Failed to parse object '%s' value", pItem->pKey ) ;
+      goto error ;
+   }
+   pMachine->state = STATE_OBJECT_COMMA ;
+done:
+   return pStr ;
+error:
+   pStr = NULL ;
+   pMachine->state = STATE_ERROR ;
+   goto done ;
+}
+
+static const CHAR* tokenObjComma( CJSON *pItem,
+                                  const CHAR *pStr,
+                                  CJSON_MACHINE *pMachine )
+{
+   CJSON *pNewItem = NULL ;
+   if( *pStr == CHAR_COMMA )
+   {
+      pStr = skip( pStr + 1 ) ;
+      if( *pStr == CHAR_RIGHT_CURLY_BRACE )
       {
-         n2=(long long)(sign*n2*pow(10.0,subscale*1.00));
+         pMachine->state = STATE_OBJECT_END ;
       }
       else
       {
-         // if subscale = 0, that means we don't need to translate into double, which may cause loose precision
-         n2=(((long long)sign)*n2) ;
+         pNewItem = cJsonItemCreate( pMachine ) ;
+         if( pNewItem == NULL )
+         {
+            CJSON_PRINTF_LOG( "Failed to create new item" ) ;
+            goto error ;
+         }
+         pItem->pNext = pNewItem ;
+         pNewItem->pPrev   = pItem ;
+         pNewItem->pParent = pItem->pParent ;
+         pMachine->state   = STATE_OBJECT_KEY ;
+      }
+   }
+   else if( *pStr == CHAR_RIGHT_CURLY_BRACE )
+   {
+      pMachine->state = STATE_OBJECT_END ;
+   }
+   else
+   {
+      CJSON_PRINTF_LOG( "Syntax Error: JSON key '%s' missing ',' or '}'",
+                        pItem->pKey ) ;
+      goto error ;
+   }
+done:
+   return pStr ;
+error:
+   pStr = NULL ;
+   pMachine->state = STATE_ERROR ;
+   goto done ;
+}
+
+static const CHAR* tokenObjEnd( CJSON *pItem,
+                                const CHAR *pStr,
+                                CJSON_MACHINE *pMachine )
+{
+   --pMachine->level ;
+   ++pStr ;
+   return pStr ;
+}
+
+static const CHAR* tokenArrStart( CJSON *pItem,
+                                  const CHAR *pStr,
+                                  CJSON_MACHINE *pMachine )
+{
+   pStr = skip( pStr + 1 ) ;
+   if( *pStr == 0 )
+   {
+      CJSON_PRINTF_LOG( "Syntax Error: JSON array is missing ']'" ) ;
+      goto error ;
+   }
+   if( *pStr == CHAR_RIGHT_SQUARE_BRACKET )
+   {
+      pMachine->state = STATE_ARRAY_END ;
+   }
+   else
+   {
+      pMachine->state = STATE_ARRAY_VALUE ;
+   }
+   ++pMachine->level ;
+done:
+   return pStr ;
+error:
+   pStr = NULL ;
+   pMachine->state = STATE_ERROR ;
+   goto done ;
+}
+
+static const CHAR* tokenArrValue( CJSON *pItem,
+                                  const CHAR *pStr,
+                                  CJSON_MACHINE *pMachine )
+{
+   if( *pStr == CHAR_COMMA )
+   {
+      // [ xx , , <--- is error
+      CJSON_PRINTF_LOG( "Syntax Error: extra ','" ) ;
+      goto error ;
+   }
+   pStr = readValue( pItem, pStr, pMachine ) ;
+   if( pStr == NULL )
+   {
+      INT32 num = 0 ;
+      CJSON *pTmp = pItem ;
+      while( TRUE )
+      {
+         pTmp = pTmp->pPrev ;
+         if( pTmp == NULL )
+         {
+            break ;
+         }
+         ++num ;
+      }
+      CJSON_PRINTF_LOG( "Failed to parse array '%d' value", num ) ;
+      goto error ;
+   }
+   pMachine->state = STATE_ARRAY_COMMA ;
+done:
+   return pStr ;
+error:
+   pStr = NULL ;
+   pMachine->state = STATE_ERROR ;
+   goto done ;
+}
+
+static const CHAR* tokenArrComma( CJSON *pItem,
+                                  const CHAR *pStr,
+                                  CJSON_MACHINE *pMachine )
+{
+   CJSON *pNewItem = NULL ;
+   if( *pStr == CHAR_COMMA )
+   {
+      pStr = skip( pStr + 1 ) ;
+      if( *pStr == CHAR_RIGHT_SQUARE_BRACKET )
+      {
+         pMachine->state = STATE_ARRAY_END ;
+      }
+      else
+      {
+         pNewItem = cJsonItemCreate( pMachine ) ;
+         if( pNewItem == NULL )
+         {
+            CJSON_PRINTF_LOG( "Failed to create new item" ) ;
+            goto error ;
+         }
+         pItem->pNext = pNewItem ;
+         pNewItem->pPrev = pItem ;
+         pNewItem->pParent = pItem->pParent ;
+         pMachine->state = STATE_ARRAY_VALUE ;
+      }
+   }
+   else if( *pStr == CHAR_RIGHT_SQUARE_BRACKET )
+   {
+      pMachine->state = STATE_ARRAY_END ;
+   }
+   else
+   {
+      CJSON_PRINTF_LOG( "Syntax Error: JSON array missing ',' or ']'" ) ;
+      goto error ;
+   }
+done:
+   return pStr ;
+error:
+   pStr = NULL ;
+   pMachine->state = STATE_ERROR ;
+   goto done ;
+}
+
+static const CHAR* tokenArrEnd( CJSON *pItem,
+                                const CHAR *pStr,
+                                CJSON_MACHINE *pMachine )
+{
+   --pMachine->level ;
+   ++pStr ;
+   return pStr ;
+}
+
+static const CHAR* readKey( CJSON *pItem,
+                            const CHAR *pStr,
+                            CJSON_MACHINE *pMachine )
+{
+   STRING_TYPE type = TYPE_STRING_NONE ;
+   DOLLAR_SYMBOL_TYPE keyAttr = SYMBOL_NONE ;
+   CJSON_VALUE_TYPE keyType = CJSON_NONE ;
+   INT32 keyLen  = 0 ;
+   const CHAR *pStrStart = NULL ;
+
+   // step: 1
+   if( *pStr == CHAR_QUOTE )
+   {
+      // 'xxxx
+      type = TYPE_STRING_QUOTE ;
+      ++pStr ;
+   }
+   else if( *pStr == CHAR_DOUBLE_QUOTES )
+   {
+      // "xxxx
+      type = TYPE_STRING_DOUBLE_QUOTES ;
+      ++pStr ;
+   }
+   pStrStart = pStr ;
+
+   // step: 2
+   pStr = parseCommand( pStr, type, &keyAttr, &keyType ) ;
+   if( pStr == NULL )
+   {
+      goto error ;
+   }
+   keyLen = pStr - pStrStart ;
+   
+   if( ( type == TYPE_STRING_QUOTE && *pStr == CHAR_QUOTE ) ||
+       ( type == TYPE_STRING_DOUBLE_QUOTES && *pStr == CHAR_DOUBLE_QUOTES ) )
+   {
+      ++pStr ;
+   }
+
+   // step: 3
+   if( keyAttr == SYMBOL_NONE )
+   {
+      // xxx
+      if( *pStrStart == CHAR_DOLLAR &&
+          pMachine->parseMode == CJSON_RIGOROUS_PARSE )
+      {
+         // $???
+         CJSON_PRINTF_LOG( "Rigorous mode, can's use\
+ an undefined command: %.*s", keyLen, pStrStart ) ;
+         goto error ;
+      }
+      pItem->pKey = parseString( pStrStart, keyLen, pMachine ) ;
+      if( pItem->pKey == NULL )
+      {
+         CJSON_PRINTF_LOG( "Failed to parse JSON key" ) ;
+         goto error ;
+      }
+   }
+   else
+   {
+      // $xxx
+      if( keyAttr == SYMBOL_DATATYPE ||
+          keyAttr == SYMBOL_UNCERTAIN )
+      {
+         // $<type>
+         pItem->keyType = keyType ;
+      }
+      pItem->pKey = parseString( pStrStart, keyLen, pMachine ) ;
+      if( pItem->pKey == NULL )
+      {
+         CJSON_PRINTF_LOG( "Failed to parse dollar command key" ) ;
+         goto error ;
+      }
+   }
+done:
+   return pStr ;
+error:
+   pStr = NULL ;
+   pMachine->state = STATE_ERROR ;
+   goto done ;
+}
+
+static const CHAR* readValue( CJSON *pItem,
+                              const CHAR *pStr,
+                              CJSON_MACHINE *pMachine )
+{
+   INT32 listIndex = _valueListSize - 1 ;
+   INPUT_FUNC parseFun = NULL ;
+   CJSON_READ_INFO *pReadInfo = NULL ;
+   const CHAR *pTmpStr = NULL ;
+
+   while( TRUE )
+   {
+      pTmpStr = parseValue( pStr, &parseFun, &listIndex ) ;
+      if( pTmpStr == NULL )
+      {
+         CJSON_PRINTF_LOG( "Failed to parse JSON value" ) ;
+         goto error ;
+      }
+      if( parseFun == NULL )
+      {
+         CJSON_PRINTF_LOG( "The parse function is null" ) ;
+         goto error ;
+      }
+      pTmpStr = parseFun( pTmpStr, pMachine, &pReadInfo ) ;
+      if( pTmpStr == NULL )
+      {
+         //CJSON_PRINTF_LOG( "Failed to call parse function" ) ;
+         goto error ;
+      }
+      if( cJsonReadInfoExecState( pReadInfo ) == CJSON_EXEC_IGNORE )
+      {
+         --listIndex ;
+         continue ;
+      }
+      if( pReadInfo )
+      {
+         if( pItem->keyType == CJSON_NONE &&
+             pReadInfo->keyType != CJSON_NONE )
+         {
+            pItem->keyType = pReadInfo->keyType ;
+         }
+         if( pReadInfo->valType != CJSON_NONE )
+         {
+            pItem->valType = pReadInfo->valType ;
+         }
+         if( pReadInfo->readType == CJSON_READ_VALUE )
+         {
+            if( pReadInfo->pItem )
+            {
+               pItem->valInt    = pReadInfo->pItem->valInt ;
+               pItem->length    = pReadInfo->pItem->length ;
+               pItem->valDouble = pReadInfo->pItem->valDouble ;
+               pItem->valInt64  = pReadInfo->pItem->valInt64 ;
+               pItem->pValStr   = pReadInfo->pItem->pValStr ;
+            }
+         }
+         else if( pReadInfo->readType == CJSON_READ_OBJECT ||
+                  pReadInfo->readType == CJSON_READ_ARRAY )
+         {
+            pItem->pChild = pReadInfo->pItem ;
+            pReadInfo->pItem->pParent = pItem ;
+         }
+      }
+      pStr = pTmpStr ;
+      break ;
+   }
+   pStr = skip( pStr ) ;
+done:
+   return pStr ;
+error:
+   pStr = NULL ;
+   pMachine->state = STATE_ERROR ;
+   goto done ;
+}
+
+static const CHAR* readObject( const CHAR *pStr,
+                               const CJSON_MACHINE *pMachine,
+                               CJSON_READ_INFO **ppReadInfo )
+{
+   BOOLEAN check = TRUE ;
+   CJSON_VALUE_TYPE keyType= CJSON_NONE ;
+   CJSON_VALUE_TYPE valType = CJSON_NONE ;
+   CJSON *pItem = NULL ;
+   CJSON_MACHINE *pStateMachine = NULL ;
+   CJSON_READ_INFO *pReadInfo   = NULL ;
+
+   /*
+      Under normal circumstances prohibit the state machine information,
+      only object and array can be modified, because object and array need
+      to modify the state to enter the token function
+   */
+   pStateMachine = (CJSON_MACHINE *)pMachine ;
+   pReadInfo = cJsonReadInfoCreate( pStateMachine ) ;
+   if( pReadInfo == NULL )
+   {
+      CJSON_PRINTF_LOG( "Failed to create new ReadInfo" ) ;
+      goto error ;
+   }
+   pItem = cJsonItemCreate( pStateMachine ) ;
+   if( pItem == NULL )
+   {
+      CJSON_PRINTF_LOG( "Failed to create new item" ) ;
+      goto error ;
+   }
+   pStateMachine->state = STATE_OBJECT_START ;
+   pStr = readToken( pItem, pStr, pStateMachine ) ;
+   if( pStr == NULL )
+   {
+      goto error ;
+   }
+   check = checkCustomType( pItem, pStateMachine, &keyType, &valType ) ;
+   if( check == FALSE )
+   {
+      goto error ;
+   }
+   cJsonReadInfoAddItem( pReadInfo, pItem ) ;
+   if( keyType == CJSON_CUSTOM )
+   {
+      cJsonReadInfoTypeCustom( pReadInfo ) ;
+   }
+   else
+   {
+      cJsonReadInfoTypeObject( pReadInfo ) ;
+   }
+   *ppReadInfo = pReadInfo ;
+done:
+   return pStr ;
+error:
+   pStr = NULL ;
+   cJsonItemRelease( pItem ) ;
+   cJsonReadInfoRelease( pReadInfo ) ;
+   goto done ;
+}
+
+static const CHAR* readArray( const CHAR *pStr,
+                              const CJSON_MACHINE *pMachine,
+                              CJSON_READ_INFO **ppReadInfo )
+{
+   CJSON *pItem  = NULL ;
+   CJSON_MACHINE *pStateMachine = NULL ;
+   CJSON_READ_INFO *pReadInfo = NULL ;
+
+   /*
+      Under normal circumstances prohibit the state machine information,
+      only object and array can be modified, because object and array need
+      to modify the state to enter the token function
+   */
+   pStateMachine = (CJSON_MACHINE *)pMachine ;
+   pReadInfo = cJsonReadInfoCreate( pStateMachine ) ;
+   if( pReadInfo == NULL )
+   {
+      CJSON_PRINTF_LOG( "Failed to create new ReadInfo" ) ;
+      goto error ;
+   }
+   pItem = cJsonItemCreate( pStateMachine ) ;
+   if( pItem == NULL )
+   {
+      CJSON_PRINTF_LOG( "Failed to create new item" ) ;
+      goto error ;
+   }
+   pStateMachine->state = STATE_ARRAY_START ;
+   pStr = readToken( pItem, pStr, pStateMachine ) ;
+   if( pStr == NULL )
+   {
+      goto error ;
+   }
+   cJsonReadInfoAddItem( pReadInfo, pItem ) ;
+   cJsonReadInfoTypeArray( pReadInfo ) ;
+   *ppReadInfo = pReadInfo ;
+done:
+   return pStr ;
+error:
+   pStr = NULL ;
+   cJsonItemRelease( pItem ) ;
+   cJsonReadInfoRelease( pReadInfo ) ;
+   goto done ;
+}
+
+static const CHAR* readString( const CHAR *pStr,
+                               const CJSON_MACHINE *pMachine,
+                               CJSON_READ_INFO **ppReadInfo )
+{
+   INT32 length = 0 ;
+   BOOLEAN isSlash = FALSE ;
+   STRING_TYPE stringType = TYPE_STRING_NONE ;
+   CHAR *pValString = NULL ;
+   CJSON *pItem = NULL ;
+   CJSON_READ_INFO *pReadInfo = NULL ;
+   const CHAR *pStrStart = NULL ;
+
+   pReadInfo = cJsonReadInfoCreate( pMachine ) ;
+   if( pReadInfo == NULL )
+   {
+      CJSON_PRINTF_LOG( "Failed to create new ReadInfo" ) ;
+      goto error ;
+   }
+   pItem = cJsonItemCreate( pMachine ) ;
+   if( pItem == NULL )
+   {
+      CJSON_PRINTF_LOG( "Failed to create new item" ) ;
+      goto error ;
+   }
+   if( *pStr == CHAR_QUOTE )
+   {
+      stringType = TYPE_STRING_QUOTE ;
+   }
+   else if( *pStr == CHAR_DOUBLE_QUOTES )
+   {
+      stringType = TYPE_STRING_DOUBLE_QUOTES ;
+   }
+   ++pStr ;
+   pStrStart = pStr ;
+   while( TRUE )
+   {
+      if( *pStr == 0 )
+      {
+         if( stringType == TYPE_STRING_DOUBLE_QUOTES )
+         {
+            CJSON_PRINTF_LOG( "Syntax Error: JSON string is missing \"" ) ;
+         }
+         else if( stringType == TYPE_STRING_QUOTE )
+         {
+            CJSON_PRINTF_LOG( "Syntax Error: JSON string is missing '" ) ;
+         }
+         else
+         {
+            length = pStr - pStrStart ;
+            CJSON_PRINTF_LOG( "Syntax Error: JSON string '%s' is not over yet",
+                              length,
+                              pStrStart ) ;
+         }
+         goto error ;
+      }
+      else if( *pStr == CHAR_SLASH && isSlash == FALSE )
+      {
+         isSlash = TRUE ;
+         ++pStr ;
+         continue ;
+      }
+      if( ( stringType == TYPE_STRING_DOUBLE_QUOTES &&
+            *pStr == CHAR_DOUBLE_QUOTES &&
+            isSlash == FALSE ) ||
+          ( stringType == TYPE_STRING_QUOTE &&
+            *pStr == CHAR_QUOTE &&
+            isSlash == FALSE ) )
+      {
+         break ;
+      }
+      if( isSlash == TRUE )
+      {
+         isSlash = FALSE ;
+      }
+      ++pStr ;
+   }
+   length = pStr - pStrStart ;
+   pValString = parseString( pStrStart, length, pMachine ) ;
+   if( pValString == NULL )
+   {
+      CJSON_PRINTF_LOG( "Failed to parse string value" ) ;
+      goto error ;
+   }
+   cJsonItemValueString( pItem, pValString, length ) ;
+   cJsonReadInfoAddItem( pReadInfo, pItem ) ;
+   cJsonReadInfoTypeString( pReadInfo ) ;
+   ++pStr ;
+   *ppReadInfo = pReadInfo ;
+done:
+   return pStr ;
+error:
+   pStr = NULL ;
+   cJsonItemRelease( pItem ) ;
+   cJsonReadInfoRelease( pReadInfo ) ;
+   goto done ;
+}
+
+static const CHAR* readNumber( const CHAR *pStr,
+                               const CJSON_MACHINE *pMachine,
+                               CJSON_READ_INFO **ppReadInfo )
+{
+   CJSON_VALUE_TYPE numType = 0 ;
+   INT32 valInt      = 0 ;
+   FLOAT64 valDouble = 0 ;
+   INT64 valInt64    = 0 ;
+   CJSON *pItem      = NULL ;
+   CJSON_READ_INFO *pReadInfo = NULL ;
+
+   pReadInfo = cJsonReadInfoCreate( pMachine ) ;
+   if( pReadInfo == NULL )
+   {
+      CJSON_PRINTF_LOG( "Failed to create new ReadInfo" ) ;
+      goto error ;
+   }
+   pItem = cJsonItemCreate( pMachine ) ;
+   if( pItem == NULL )
+   {
+      CJSON_PRINTF_LOG( "Failed to create new item" ) ;
+      goto error ;
+   }
+   pStr = parseNumber( pStr, &valInt, &valDouble, &valInt64, &numType ) ;
+   if( pStr == NULL )
+   {
+      CJSON_PRINTF_LOG( "Failed to parse number value" ) ;
+      goto error ;
+   }
+   pStr = skip( pStr ) ;
+   if( *pStr != CHAR_COMMA &&
+       *pStr != CHAR_RIGHT_CURLY_BRACE &&
+       *pStr != CHAR_RIGHT_SQUARE_BRACKET )
+   {
+      CJSON_PRINTF_LOG( "Failed to parse an invalid number" ) ;
+      goto error ;
+   }
+   if( numType == CJSON_INT32 )
+   {
+      cJsonItemValueInt32( pItem, valInt ) ;
+      cJsonReadInfoTypeInt32( pReadInfo ) ;
+   }
+   else if( numType == CJSON_INT64 )
+   {
+      cJsonItemValueInt64( pItem, valInt64 ) ;
+      cJsonReadInfoTypeInt64( pReadInfo ) ;
+   }
+   else if( numType == CJSON_DOUBLE )
+   {
+      cJsonItemValueDouble( pItem, valDouble ) ;
+      cJsonReadInfoTypeDouble( pReadInfo ) ;
+   }
+   cJsonReadInfoAddItem( pReadInfo, pItem ) ;
+   *ppReadInfo = pReadInfo ;
+done:
+   return pStr ;
+error:
+   pStr = NULL ;
+   cJsonItemRelease( pItem ) ;
+   cJsonReadInfoRelease( pReadInfo ) ;
+   goto done ;
+}
+
+#define CJSON_INFINTY ((1.79769e+308)*2)
+static const CHAR* readPINF( const CHAR *pStr,
+                             const CJSON_MACHINE *pMachine,
+                             CJSON_READ_INFO **ppReadInfo )
+{
+   CJSON *pItem = NULL ;
+   CJSON_READ_INFO *pReadInfo = NULL ;
+
+   pReadInfo = cJsonReadInfoCreate( pMachine ) ;
+   if( pReadInfo == NULL )
+   {
+      CJSON_PRINTF_LOG( "Failed to create new ReadInfo" ) ;
+      goto error ;
+   }
+   pItem = cJsonItemCreate( pMachine ) ;
+   if( pItem == NULL )
+   {
+      CJSON_PRINTF_LOG( "Failed to create new item" ) ;
+      goto error ;
+   }
+   cJsonItemValueDouble( pItem, CJSON_INFINTY ) ;
+   cJsonReadInfoTypeDouble( pReadInfo ) ;
+   cJsonReadInfoAddItem( pReadInfo, pItem ) ;
+   ++pStr ;
+   *ppReadInfo = pReadInfo ;
+done:
+   return pStr ;
+error:
+   pStr = NULL ;
+   cJsonReadInfoRelease( pReadInfo ) ;
+   goto done ;
+}
+
+static const CHAR* readNINF( const CHAR *pStr,
+                             const CJSON_MACHINE *pMachine,
+                             CJSON_READ_INFO **ppReadInfo )
+{
+   CJSON *pItem = NULL ;
+   CJSON_READ_INFO *pReadInfo = NULL ;
+
+   pReadInfo = cJsonReadInfoCreate( pMachine ) ;
+   if( pReadInfo == NULL )
+   {
+      CJSON_PRINTF_LOG( "Failed to create new ReadInfo" ) ;
+      goto error ;
+   }
+   pItem = cJsonItemCreate( pMachine ) ;
+   if( pItem == NULL )
+   {
+      CJSON_PRINTF_LOG( "Failed to create new item" ) ;
+      goto error ;
+   }
+   cJsonItemValueDouble( pItem, -CJSON_INFINTY ) ;
+   cJsonReadInfoTypeDouble( pReadInfo ) ;
+   cJsonReadInfoAddItem( pReadInfo, pItem ) ;
+   ++pStr ;
+   *ppReadInfo = pReadInfo ;
+done:
+   return pStr ;
+error:
+   pStr = NULL ;
+   cJsonReadInfoRelease( pReadInfo ) ;
+   goto done ;
+}
+
+static const CHAR* readTrue( const CHAR *pStr,
+                             const CJSON_MACHINE *pMachine,
+                             CJSON_READ_INFO **ppReadInfo )
+{
+   CJSON_READ_INFO *pReadInfo = NULL ;
+
+   pReadInfo = cJsonReadInfoCreate( pMachine ) ;
+   if( pReadInfo == NULL )
+   {
+      CJSON_PRINTF_LOG( "Failed to create new ReadInfo" ) ;
+      goto error ;
+   }
+   cJsonReadInfoTypeTrue( pReadInfo ) ;
+   ++pStr ;
+   *ppReadInfo = pReadInfo ;
+done:
+   return pStr ;
+error:
+   pStr = NULL ;
+   cJsonReadInfoRelease( pReadInfo ) ;
+   goto done ;
+}
+
+static const CHAR* readFalse( const CHAR *pStr,
+                              const CJSON_MACHINE *pMachine,
+                              CJSON_READ_INFO **ppReadInfo )
+{
+   CJSON_READ_INFO *pReadInfo = NULL ;
+
+   pReadInfo = cJsonReadInfoCreate( pMachine ) ;
+   if( pReadInfo == NULL )
+   {
+      CJSON_PRINTF_LOG( "Failed to create new ReadInfo" ) ;
+      goto error ;
+   }
+   cJsonReadInfoTypeFalse( pReadInfo ) ;
+   ++pStr ;
+   *ppReadInfo = pReadInfo ;
+done:
+   return pStr ;
+error:
+   pStr = NULL ;
+   cJsonReadInfoRelease( pReadInfo ) ;
+   goto done ;
+}
+
+static const CHAR* readNull( const CHAR *pStr,
+                             const CJSON_MACHINE *pMachine,
+                             CJSON_READ_INFO **ppReadInfo )
+{
+   CJSON_READ_INFO *pReadInfo = NULL ;
+
+   pReadInfo = cJsonReadInfoCreate( pMachine ) ;
+   if( pReadInfo == NULL )
+   {
+      CJSON_PRINTF_LOG( "Failed to create new ReadInfo" ) ;
+      goto error ;
+   }
+   cJsonReadInfoTypeNull( pReadInfo ) ;
+   ++pStr ;
+   *ppReadInfo = pReadInfo ;
+done:
+   return pStr ;
+error:
+   pStr = NULL ;
+   cJsonReadInfoRelease( pReadInfo ) ;
+   goto done ;
+}
+
+static const CHAR* parseValue( const CHAR *pStr,
+                               INPUT_FUNC *pParseFun,
+                               INT32 *pListIndex )
+{
+   UINT32 x = 0 ;
+   INT32 y = *pListIndex ;
+   INT32 length = 0 ;
+   const CHAR *pStrStart = pStr ;
+   const CHAR *pEndOfVal = NULL ;
+   while( *pStr && y >= 0 )
+   {
+      if( _valueList[y].strLen == 0 )
+      {
+         break ;
+      }
+      if( x < _valueList[y].strLen && _valueList[y].string[x] == *pStr )
+      {
+         ++x ;
+         if( x == _valueList[y].strLen )
+         {
+            if( _valueList[y].matchType == CJSON_MATCH_FUNC )
+            {
+               pEndOfVal = skip( pStr + 1 ) ;
+               if( *pEndOfVal == CHAR_LEFT_ROUND_BRACKET  )
+               {
+                  break ;
+               }
+            }
+            else
+            {
+               break ;
+            }
+         }
+         ++pStr ;
+      }
+      else
+      {
+         pStr = pStrStart ;
+         x = 0 ;
+         --y ;
+      }
+   }
+   if( *pStr == 0 )
+   {
+      length = pStr - pStrStart ;
+      if( length == 0 )
+      {
+         CJSON_PRINTF_LOG( "Syntax Error: JSON value is empty" ) ;
+      }
+      else
+      {
+         CJSON_PRINTF_LOG( "Syntax Error: '%.*s' is not over yet",
+                           length,
+                           pStrStart ) ;
+      }
+      goto error ;
+   }
+   else if( y < 0 )
+   {
+      while( TRUE )
+      {
+         if( *pStr == 0 )
+         {
+            length = pStr - pStrStart ;
+            CJSON_PRINTF_LOG( "Syntax Error: '%.*s' is not over yet",
+                              length,
+                              pStrStart ) ;
+            goto error ;
+         }
+         if( *pStr == CHAR_COMMA ||
+             *pStr == CHAR_RIGHT_CURLY_BRACE ||
+             *pStr == CHAR_RIGHT_SQUARE_BRACKET ||
+             *pStr == CHAR_SPACE ||
+             *pStr == CHAR_HT )
+         {
+            break ;
+         }
+         ++pStr ; 
+      } 
+      length = pStr - pStrStart ;
+      CJSON_PRINTF_LOG( "ReferenceError: '%.*s' is not defined",
+                        length,
+                        pStrStart ) ;
+      goto error ;
+   }
+   *pParseFun = _valueList[y].parseFun ;
+   *pListIndex = y ;
+done:
+   return pStr ;
+error:
+   pStr = NULL ;
+   goto done ;
+}
+
+static const UINT8 _firstByteMark[7] = {
+   0x00,
+   0x00,
+   0xC0,
+   0xE0,
+   0xF0,
+   0xF8,
+   0xFC
+} ;
+static CHAR* parseString( const CHAR *pStr,
+                          INT32 length,
+                          const CJSON_MACHINE *pMachine )
+{
+   UINT8 uc  = 0 ;
+   UINT8 uc2 = 0 ;
+   INT32 len = 0 ;
+   UINT32 ucTmp = 0 ;
+   CHAR *pOut = NULL ;
+   CHAR *pNewStr = NULL ;
+
+   pOut = (CHAR *)cJsonMalloc( length + 1, pMachine ) ;
+   if( pOut == NULL )
+   {
+      CJSON_PRINTF_LOG( "Failed to malloc string memory" ) ;
+      goto error ;
+   }
+   ossMemset( pOut, 0, length + 1 ) ;
+   
+   pNewStr = pOut ;
+
+   while( length > 0 )
+   {
+      if( *pStr != '\\' )
+      {
+         *pOut = *pStr ;
+         ++pOut ;
+         ++pStr ;
+         --length ;
+      }
+      else
+      {
+         ++pStr ;
+         if( length > 0 )
+         {
+            --length ;
+         }
+         switch( *pStr )
+         {
+         case 'b':
+         {
+            *pOut = '\b' ;
+            ++pOut ;
+            break ;
+         }
+         case 'f':
+         {
+            *pOut = '\f' ;
+            ++pOut ;
+            break ;
+         }
+         case 'n':
+         {
+            *pOut = '\n' ;
+            ++pOut ;
+            break ;
+         }
+         case 'r':
+         {
+            *pOut = '\r' ;
+            ++pOut ;
+            break ;
+         }
+         case 't':
+         {
+            *pOut = '\t';
+            ++pOut ;
+            break ;
+         }
+         case 'u':    /* transcode utf16 to utf8. */
+         {
+            /* get the unicode char. */
+            sscanf( pStr + 1, "%4x", &ucTmp ) ;
+            uc = (UINT8)ucTmp ;
+            pStr += 4 ;
+            length -= 4 ;
+
+            if( ( uc >= 0xDC00 && uc <= 0xDFFF ) || uc == 0 )
+            {
+               // check for invalid.
+               break ;
+            }
+
+            if( uc >= 0xD800 && uc <= 0xDBFF )
+            {
+               // UTF16 surrogate pairs.
+               if( pStr[1] != '\\' || pStr[2] != 'u' )
+               {
+                  // missing second-half of surrogate.
+                  break ;
+               }
+               sscanf( pStr + 3, "%4x", &ucTmp ) ;
+               uc2 = (UINT8)ucTmp ;
+               pStr += 6 ;
+               length -= 6 ;
+               if( uc2 < 0xDC00 || uc2 > 0xDFFF )
+               {
+                  // invalid second-half of surrogate.
+                  break ;
+               }
+               uc = 0x10000 | ( ( uc & 0x3FF ) << 10 ) | ( uc2 & 0x3FF ) ;
+            }
+
+            len = 4 ;
+            if( uc < 0x80 )
+            {
+               len = 1 ;
+            }
+            else if( uc < 0x800 )
+            {
+               len = 2 ;
+            }
+            else if( uc < 0x10000 )
+            {
+               len = 3 ;
+            }
+            pOut += len ;
+            switch( len )
+            {
+            case 4:
+            {
+               *--pOut = ( ( uc | 0x80 ) & 0xBF ) ;
+               uc >>= 6 ;
+            }
+            case 3:
+            {
+               *--pOut = ( ( uc | 0x80 ) & 0xBF ) ;
+               uc >>= 6 ;
+            }
+            case 2:
+            {
+               *--pOut = ( ( uc | 0x80 ) & 0xBF ) ;
+               uc >>= 6 ;
+            }
+            case 1:
+            {
+               *--pOut = ( uc | _firstByteMark[len] ) ;
+            }
+            }
+            pOut += len ;
+            break ;
+         }
+         default:
+         {
+            *pOut = *pStr ;
+            ++pOut ;
+            break ;
+         }
+         }
+         ++pStr ;
+         --length ;
+      }
+   }
+   *pOut = 0 ;
+done:
+   return pNewStr ;
+error:
+   pNewStr = NULL ;
+   goto done ;
+}
+
+#define CJSON_INT32_MIN (-2147483647-1)
+static const CHAR* parseNumber( const CHAR *pStr,
+                                INT32 *pValInt,
+                                FLOAT64 *pValDouble,
+                                INT64 *pValLong,
+                                CJSON_VALUE_TYPE *pNumType )
+{
+   INT32 subscale = 0 ;
+   INT32 signsubscale = 1 ;
+   FLOAT64 decimal = 0 ;
+   FLOAT64 n = 0 ;
+   FLOAT64 sign = 1 ;
+   FLOAT64 scale = 0 ;
+   INT32 n1 = 0 ;
+   INT64 n2 = 0 ;
+   volatile INT64 n3 = 0 ;
+   CJSON_VALUE_TYPE numType = CJSON_INT32 ;
+
+   //step 1
+   if( *pStr == '-' )
+   {
+      //+xxx
+      sign = -1 ;
+      ++pStr ;
+   }
+   else if( *pStr == '+' )
+   {
+      //-xxx
+      sign = 1 ;
+      ++pStr ;
+   }
+
+   //step 2
+   while( *pStr == '0' )
+   {
+      //0xxxxx
+      ++pStr ;
+   }
+
+   //step 3
+   while( *pStr >='0' && *pStr <= '9' )
+   {
+      //<number>xxxx
+      INT32 num = *pStr - '0' ;
+      n3 = ( n2 *10 ) + num ;
+      if( ( n3 - num ) / 10 != n2 )
+      {
+         numType = CJSON_DOUBLE ;
+      }
+      n  = ( n * 10.0 ) + num ;   
+      n1 = ( n1 * 10  ) + num ;
+      n2 = n3 ;
+      ++pStr ;
+      if( numType == CJSON_INT32 && (INT64)n1 != n2 )
+      {
+         numType = CJSON_INT64 ;
+      }
+   }
+
+   //step 4
+   if( *pStr == '.' && pStr[1] >= '0' && pStr[1] <= '9' ) 
+   {
+      //<number>.xxx
+      numType = CJSON_DOUBLE ;
+      ++pStr ;
+      do
+      {
+         decimal = decimal * 10 + ( *pStr - '0' ) ;
+         ++pStr ;
+         ++scale ;
+      }
+      while( *pStr >= '0' && *pStr <= '9' ) ;
+      n = n + decimal / pow( 10.0, scale ) ;
+   }
+
+   //step 5
+   if( *pStr == 'e' || *pStr == 'E' )
+   {
+      numType = CJSON_DOUBLE ;
+      //<number>[e/E]xxx
+      ++pStr ;
+      if( *pStr == '+' )
+      {
+         ++pStr ;
+      }
+      else if( *pStr == '-' )
+      {
+         signsubscale = -1 ;
+         ++pStr ;
+      }
+      while( *pStr >= '0' && *pStr <= '9' )
+      {
+         subscale = ( subscale * 10 ) + ( *pStr - '0' ) ;
+         ++pStr ;
+      }
+   }
+
+   //step 6
+   if ( numType == CJSON_DOUBLE )
+   {
+      // number = +/- number.fraction * 10^+/- exponent
+      n = sign * n * pow( 10.0, ( subscale * signsubscale * 1.0 ) ) ;
+   }
+   else if ( numType == CJSON_INT64 )
+   {
+      if( subscale != 0 )
+      {
+         n2 = (INT64)( sign * n2 * pow( 10.0, subscale * 1.00 ) ) ;
+      }
+      else
+      {
+         /*
+            if subscale = 0, that means we don't need to translate into FLOAT64,
+            which may cause loose precision
+         */
+         n2 = ( ( (INT64)sign ) * n2 ) ;
       }
       if( n2 == CJSON_INT32_MIN )
       {
          n1 = CJSON_INT32_MIN ;
-         item->numType = cJSON_INT32 ;
+         numType = CJSON_INT32 ;
       }
    }
-   else if ( cJSON_INT32 == item->numType )
+   else if ( numType == CJSON_INT32 )
    {
-       n1=(int)(sign*n1*pow(10.0,subscale*1.00));
-       n2=(long long)(sign*n2*pow(10.0,subscale*1.00));
-       if ( (long long)n1 != n2 )
-       {
-          item->numType = cJSON_INT64 ;
-       }
-   }
-   item->valuedouble=n;
-   item->valueint=n1;
-   item->valuelongint=n2;
-   item->type=cJSON_Number;
-   return num;
-}
-
-/* Render the number nicely from the given item into a string. */
-static char *print_number(cJSON *item)
-{
-   char *str;
-   double d=item->valuedouble;
-   if (fabs(((double)item->valueint)-d)<=DBL_EPSILON && d<=INT_MAX && d>=INT_MIN)
-   {
-      str=(char*)cJSON_malloc(21);   /* 2^64+1 can be represented in 21 chars. */
-      if (str) sprintf(str,"%d",item->valueint);
-   }
-   else
-   {
-      str=(char*)cJSON_malloc(64);   /* This is a nice tradeoff. */
-      if (str)
+      n1 = (INT32)( sign * n1 * pow( 10.0, subscale * 1.00 ) ) ;
+      n2 = (INT64)( sign * n2 * pow( 10.0, subscale * 1.00 ) ) ;
+      if( (INT64)n1 != n2 )
       {
-         if (fabs(floor(d)-d)<=DBL_EPSILON)         sprintf(str,"%.0f",d);
-         else if (fabs(d)<1.0e-6 || fabs(d)>1.0e9)   sprintf(str,"%e",d);
-         else                              sprintf(str,"%f",d);
+         numType = CJSON_INT64 ;
       }
    }
-   return str;
+   *pValDouble = n ;
+   *pValInt = n1 ;
+   *pValLong = n2 ;
+   *pNumType = numType ;
+   return pStr ;
 }
 
-/* Parse the input text into an unescaped cstring, and populate item. */
-static const unsigned char firstByteMark[7] = { 0x00, 0x00, 0xC0, 0xE0, 0xF0, 0xF8, 0xFC };
-static const char *parse_string(cJSON *item,const char *str,int isKey)
+/* parse dollar command */
+static const CHAR* parseCommand( const CHAR *pStr,
+                                 STRING_TYPE type,
+                                 DOLLAR_SYMBOL_TYPE *pKeyAttr,
+                                 CJSON_VALUE_TYPE *pKeyType )
 {
-   const char *ptr;char *ptr2;char *out;int len=0;unsigned uc,uc2;
-   int isString = 0 ;
-   if (*str!='\"' && !isKey)
-      return 0 ;
-   if (*str=='\"')
+   UINT32 x = 0 ;
+   INT32 y = 0 ;
+   INT32 length = 0 ;
+   BOOLEAN isCHeck = TRUE ;
+   BOOLEAN isSlash = FALSE ;
+   const CHAR *pStrStart = pStr ;
+   const CHAR *pColon    = NULL ;
+
+   *pKeyType = SYMBOL_NONE ;
+   while( TRUE )
    {
-      isString = 1 ;
-   }   /* never '\"' */
-   if ( isString )
-      ptr = str + 1 ;
-   else
-      ptr = str ;
-   if ( *(ptr) == '$' && isKey )
-   {
-      ptr = parse_dollar_string ( item, ptr ) ;
-      if ( ptr )
+      if( *pStr == 0 ||
+          ( type == TYPE_STRING_NONE  && ( *pStr == CHAR_COLON ||
+                                           *pStr == CHAR_SPACE ||
+                                           *pStr == CHAR_HT ) )||
+          ( type == TYPE_STRING_QUOTE &&
+            *pStr == CHAR_QUOTE &&
+            isSlash == FALSE ) ||
+          ( type == TYPE_STRING_DOUBLE_QUOTES &&
+            *pStr == CHAR_DOUBLE_QUOTES &&
+            isSlash == FALSE ) )
       {
-         if ( isString )
-            return (ptr+1) ;
+         break ;
+      }
+      if( *pStr == CHAR_SLASH && isSlash == FALSE && type != TYPE_STRING_NONE )
+      {
+         isSlash = TRUE ;
+         ++length ;
+         ++pStr ;
+         continue ;
+      }
+      else if( isSlash == TRUE )
+      {
+         isSlash = FALSE ;
+      }
+      if( type != TYPE_STRING_NONE && *pStr == CHAR_COLON )
+      {
+         pColon = pStr ;
+      }
+      if( y < _commandSize )
+      {
+         if( !isCHeck && _command[y].sameCharNum == x )
+         {
+            isCHeck = TRUE ;
+         }
+         if( isCHeck )
+         {
+            if( _command[y].symbol[x] == *pStr )
+            {
+               ++x ;
+               ++length ;
+               ++pStr ;
+            }
+            else
+            {
+               isCHeck = FALSE ;
+               ++y ;
+            }
+         }
          else
-            return ptr ;
-      }
-      return 0 ;
-   }
-   if ( isString )
-      ptr = str + 1 ;
-   else
-      ptr = str ;
-   while ( *ptr && 
-           ( !isString || *ptr != '\"' ) &&
-           ( isString || (*ptr != 32 && *ptr != 9) ) &&
-           ( isString || *ptr != ':' ) &&
-           ++len )
-   {
-      if (*ptr++ == '\\')
-         ptr++;   /* Skip escaped quotes. */
-   }
-   if ( *ptr!='\"' && isString) return 0 ;
-   out=(char*)cJSON_malloc(len+1);   /* This is how long we need for the string, roughly. */
-   if (!out) return 0;
-   ptr2=out;
-   if ( isString )
-      ptr = str + 1 ;
-   else
-      ptr = str ;
-   while ( *ptr && 
-           ( !isString || *ptr != '\"' ) &&
-           ( isString || (*ptr != 32 && *ptr != 9) ) &&
-           ( isString || *ptr != ':' ) &&
-           ++len )
-   {
-
-      if (*ptr!='\\') *ptr2++=*ptr++;
-      else
-      {
-         ptr++;
-         switch (*ptr)
          {
-            case 'b': *ptr2++='\b';   break;
-            case 'f': *ptr2++='\f';   break;
-            case 'n': *ptr2++='\n';   break;
-            case 'r': *ptr2++='\r';   break;
-            case 't': *ptr2++='\t';   break;
-            case 'u':    /* transcode utf16 to utf8. */
-               sscanf(ptr+1,"%4x",&uc);ptr+=4;   /* get the unicode char. */
-
-               if ((uc>=0xDC00 && uc<=0xDFFF) || uc==0)   break;   // check for invalid.
-
-               if (uc>=0xD800 && uc<=0xDBFF)   // UTF16 surrogate pairs.
-               {
-                  if (ptr[1]!='\\' || ptr[2]!='u')   break;   // missing second-half of surrogate.
-                  sscanf(ptr+3,"%4x",&uc2);ptr+=6;
-                  if (uc2<0xDC00 || uc2>0xDFFF)      break;   // invalid second-half of surrogate.
-                  uc=0x10000 | ((uc&0x3FF)<<10) | (uc2&0x3FF);
-               }
-
-               len=4;if (uc<0x80) len=1;else if (uc<0x800) len=2;else if (uc<0x10000) len=3; ptr2+=len;
-
-               switch (len) {
-                  case 4: *--ptr2 =((uc | 0x80) & 0xBF); uc >>= 6;
-                  case 3: *--ptr2 =((uc | 0x80) & 0xBF); uc >>= 6;
-                  case 2: *--ptr2 =((uc | 0x80) & 0xBF); uc >>= 6;
-                  case 1: *--ptr2 =(uc | firstByteMark[len]);
-               }
-               ptr2+=len;
-               break;
-            default:  *ptr2++=*ptr; break;
-         }
-         ptr++;
-      }
-   }
-   *ptr2=0;
-   if (*ptr=='\"' && isString) ptr++;
-   item->valuestring=out;
-   item->type=cJSON_String;
-
-   return ptr;
-}
-
-/* Render the cstring provided to an escaped version that can be printed. */
-static char *print_string_ptr(const char *str)
-{
-   const char *ptr;char *ptr2,*out;int len=0;unsigned char token;
-
-   if (!str) return cJSON_strdup("");
-   ptr=str;while ((token=*ptr) && ++len) {if (strchr("\"\\\b\f\n\r\t",token)) len++; else if (token<32) len+=5;ptr++;}
-
-   out=(char*)cJSON_malloc(len+3);
-
-   if (!out) return 0;
-   ptr2=out;ptr=str;
-   *ptr2++='\"';
-   while (*ptr)
-   {
-
-      if ((unsigned char)*ptr>31 && *ptr!='\"' && *ptr!='\\') *ptr2++=*ptr++;
-      else
-      {
-         *ptr2++='\\';
-         switch (token=*ptr++)
-         {
-            case '\\':   *ptr2++='\\';   break;
-            case '\"':   *ptr2++='\"';   break;
-            case '\b':   *ptr2++='b';   break;
-            case '\f':   *ptr2++='f';   break;
-            case '\n':   *ptr2++='n';   break;
-            case '\r':   *ptr2++='r';   break;
-            case '\t':   *ptr2++='t';   break;
-            default: sprintf(ptr2,"u%04x",token);ptr2+=5;   break;   /* escape and print */
+            ++y ;
          }
       }
+      else
+      {
+         ++length ;
+         ++pStr ;
+      }
    }
-   *ptr2++='\"';*ptr2++=0;
-   return out;
+   if( *pStr == 0 )
+   {
+      if( pColon == NULL )
+      {
+         CJSON_PRINTF_LOG( "Syntax Error: '%.*s' missing ':'",
+                            length,
+                            pStrStart ) ;
+      }
+      else
+      {
+         if( type == TYPE_STRING_QUOTE )
+         {
+            CJSON_PRINTF_LOG( "Syntax Error: '%.*s' missing '",
+                              pColon - pStrStart,
+                              pStrStart ) ;
+         }
+         else
+         {
+            CJSON_PRINTF_LOG( "Syntax Error: '%.*s' missing \"",
+                              pColon - pStrStart,
+                              pStrStart ) ;
+         }
+      }
+      goto error ;
+   }
+   if( type == TYPE_STRING_NONE && length == 0 )
+   {
+      CJSON_PRINTF_LOG( "Syntax Error: invalid key" ) ;
+      goto error ;
+   }
+   if( y < _commandSize && x == _command[y].strLen )
+   {
+      *pKeyAttr = _command[y].type ;
+      *pKeyType = _command[y].dataType ;
+   }
+done:
+   return pStr ;
+error:
+   pStr = NULL ;
+   goto done ;
 }
-/* Invote print_string_ptr (which is useful) on an item. */
-static char *print_string(cJSON *item)   {return print_string_ptr(item->valuestring);}
 
-/* Predeclare these prototypes. */
-static const char *parse_value(cJSON *item,const char *value,int isKey,int isMongo);
-static char *print_value(cJSON *item,int depth,int fmt);
-static const char *parse_array(cJSON *item,const char *value,int isMongo);
-static char *print_array(cJSON *item,int depth,int fmt);
-static const char *parse_object(cJSON *item,const char *value,int isMongo);
-static char *print_object(cJSON *item,int depth,int fmt);
-static const char *parse_dollar_command(cJSON *item,const char *value,int cj_type);
-static const char *parse_objectid(cJSON *item,const char *value);
-static const char *parse_Mongo_Timestamp ( cJSON *item, const char *value ) ;
-static void local_time ( time_t *Time, struct tm *TM )
-{
-   if ( !Time || !TM )
-      return ;
-#if defined (__linux__ ) || defined (_AIX)
-   localtime_r( Time, TM ) ;
-#elif defined (_WIN32)
-   // The Time represents the seconds elapsed since midnight (00:00:00),
-   // January 1, 1970, UTC. This value is usually obtained from the time
-   // function.
-   localtime_s( TM, Time ) ;
-#endif
+#define CJSON_MAX_INT   (2147483647)
+#define CJSON_MIN_INT   (-2147483647-1)
+#define CJSON_MAX_INT64 (9223372036854775807LL)
+#define CJSON_MIN_INT64 (-9223372036854775807LL-1)
+static const CHAR *_cJsonDataTypeString[] = {
+   "unknow",
+   "custom",
+   "boolean",
+   "boolean",
+   "null",
+   "number",
+   "int",
+   "long",
+   "double",
+   "string",
+   "array",
+   "object",
+   "timestamp",
+   "date",
+   "regex",
+   "options",
+   "oid",
+   "binary",
+   "type",
+   "minKey",
+   "maxKey",
+   "undefined",
+   "numberLong",
+   "decimal",
+   "precision",
 } ;
-/* Utility to jump whitespace and cr/lf */
-static const char *skip(const char *in) 
+/* parse argument implement */
+static const CHAR* parseArgImpl( const CHAR *pStr,
+                                 CHAR character,
+                                 const CJSON_MACHINE *pMachine,
+                                 va_list *pVaList )
 {
-   while (in && *in && (unsigned char)*in<=32) 
-      in++; 
-   return in;
-}
+   CJSON_VALUE_TYPE valType = CJSON_NONE ;
+   INT32 valInt      = 0 ;
+   INT32 length      = 0 ;
+   FLOAT64 valDouble = 0 ;
+   INT64 valInt64    = 0 ;
+   CHAR *pValString  = NULL ;
 
-/* Parse an object - create a new root, and populate. */
-cJSON *cJSON_Parse(const char *value)
-{
-   return cJSON_Parse2 ( value, 0, 0 ) ;
-}
-
-cJSON *cJSON_Parse2(const char *value,int isMongo,int isBatch)
-{
-   cJSON *c=cJSON_New_Item();
-   ep=0;
-   if (!c) return 0;       /* memory fail */
-   value = skip ( value );
-   if ( *value != '{' ) return 0;       /* memory fail */
-   value = parse_value(c,skip(value),0, isMongo);
-   if ( !value )
+   if( *pStr == CHAR_DOUBLE_QUOTES || *pStr == CHAR_QUOTE )
    {
-      cJSON_Delete(c);
-      return 0;
-   }
-   else
-   {
-      value = skip ( value );
-      if ( *value && !isBatch )
-         return 0 ;
-   }
-   return c;
-}
-
-/* Render a cJSON item/entity/structure to text. */
-char *cJSON_Print(cJSON *item)            {return print_value(item,0,1);}
-char *cJSON_PrintUnformatted(cJSON *item)   {return print_value(item,0,0);}
-
-/* Parser core - when encountering text, process appropriately. */
-static const char *parse_value(cJSON *item,const char *value,int isKey,int isMongo)
-{
-   if (!value)                  return 0;   /* Fail on null. */
-   if (!strncmp(value,"null",4))
-   {
-      item->type=cJSON_NULL;
-      return value+4;
-   }
-   if (!strncmp(value,"false",5))
-   {
-      item->type=cJSON_False;
-      return value+5;
-   }
-   if (!strncmp(value,"true",4))
-   {
-      item->type=cJSON_True;
-      item->valueint=1;
-      return value+4;
-   }
-   if (!strncmp(value,"ObjectId",8))
-   {
-      item->type=cJSON_Oid;
-      value += 8 ;
-      return parse_objectid ( item, value ) ;
-   }
-   if (*value=='\"')
-   {
-      return parse_string(item,value,isKey);
-   }
-   if ( *value=='+' || *value=='-' || (*value>='0' && *value<='9'))
-   {
-      return parse_number(item,value);
-   }
-   if (*value=='{')
-   {
-      const char *value_temp = value + 1 ;
-      const char *value_temp2 = value + 1 ;
-      value_temp = skip ( value_temp ) ;
-      if ( *value_temp == '\"' )
+      // "xxxx  or  'xxxx
+      BOOLEAN isSlash = FALSE ;
+      STRING_TYPE stringType = TYPE_STRING_NONE ;
+      const CHAR *pStrStart = NULL ;
+      valType = CJSON_STRING ;
+      if( *pStr == CHAR_DOUBLE_QUOTES )
       {
-         ++value_temp ;
+         stringType = TYPE_STRING_DOUBLE_QUOTES ;
       }
-       //timestamp
-      if ( isMongo && *value_temp == 't' )
+      else
       {
-         value_temp2 = parse_Mongo_Timestamp ( item, value ) ;
-         if ( value_temp2 )
+         stringType = TYPE_STRING_QUOTE ;
+      }
+      ++pStr ;
+      pStrStart = pStr ;
+      while( TRUE )
+      {
+         if( *pStr == 0 )
          {
-            return value_temp2 ;
-         }
-      }
-      if ( !strncmp ( value_temp, "$timestamp", 10 ) )
-      {
-         return parse_dollar_command ( item, value, cJSON_Timestamp ) ;
-      }
-      //date
-      else if ( !strncmp ( value_temp, "$date", 5 ) )
-      {
-         return parse_dollar_command ( item, value, cJSON_Date ) ;
-      }
-      //regex
-      else if ( !strncmp ( value_temp, "$regex", 6 ) )
-      {
-         return parse_dollar_command ( item, value, cJSON_Regex ) ;
-      }
-      //oid
-      else if( !strncmp ( value_temp, "$oid", 4 ) )
-      {
-         return parse_dollar_command ( item, value, cJSON_Oid ) ;
-      }
-      //binary
-      else if( !strncmp ( value_temp, "$binary", 7 ) )
-      {
-         return parse_dollar_command ( item, value, cJSON_Binary ) ;
-      }
-      //maxKey
-      else if( !strncmp ( value_temp, "$maxKey", 7 ) )
-      {
-         return parse_dollar_command ( item, value, cJSON_MaxKey ) ;
-      }
-      //minKey
-      else if( !strncmp ( value_temp, "$minKey", 7 ) )
-      {
-         return parse_dollar_command ( item, value, cJSON_MinKey ) ;
-      }
-      //undefined
-      else if( !strncmp ( value_temp, "$undefined", 10 ) )
-      {
-         return parse_dollar_command ( item, value, cJSON_Undefined ) ;
-      }
-      else if( !strncmp ( value_temp, "$numberLong", 11 ) )
-      {
-         return parse_dollar_command ( item, value, cJSON_Number_Long ) ;
-      }
-      else if ( !strncmp ( value_temp, "$decimal", 8 ) )
-      {
-         return parse_dollar_command ( item, value, cJSON_Decimal) ;
-      }
-   }
-   if (*value=='[')
-   {
-      return parse_array(item,value,isMongo);
-   }
-   if (*value=='{')
-   {
-      return parse_object(item,value,isMongo);
-   }
-
-   ep=value;
-   return 0;   /* failure. */
-}
-
-static const char *parse_Mongo_Timestamp ( cJSON *item, const char *value )
-{
-   long long t = 0 ;
-   int i = 0 ;
-   int isStr = 0 ;
-   struct tm psr ;
-   char temp[64] ;
-   time_t timer ;
-   memset ( temp, 0, 64 ) ;
-   if ( *value != '{' )
-   {
-      return 0 ;
-   }
-   value = skip ( value+1 ) ;
-   if ( *value == '\"' )
-   {
-      isStr = 1 ;
-      ++value ;
-   }
-   if ( *value != 't' )
-   {
-      return 0 ;
-   }
-   ++value ;
-   if ( *value == '\"' && isStr )
-   {
-      ++value ;
-   }
-   else if ( *value != '\"' && !isStr )
-   {
-   }
-   else
-   {
-      return 0 ;
-   }
-   value = skip ( value ) ;
-   if ( *value != ':' )
-   {
-      return 0 ;
-   }
-   value = skip ( value+1 ) ;
-   value = parse_value(item, value, 0, 1 ) ;
-   if ( item->type != cJSON_Number ||
-        ( item->numType != cJSON_INT32 && item->numType != cJSON_INT64 ) )
-   {
-      return 0 ;
-   }
-   if ( item->numType == cJSON_INT32 )
-   {
-      t = item->valueint/1000 ;
-   }
-   else
-   {
-      t = item->valuelongint/1000 ;
-   }
-   value = skip ( value ) ;
-   if ( *value != ',' )
-   {
-      return 0 ;
-   }
-   value = skip ( value + 1 ) ;
-   isStr = 0 ;
-   if ( *value == '\"' )
-   {
-      isStr = 1 ;
-      ++value ;
-   }
-   if ( *value != 'i' )
-   {
-      return 0 ;
-   }
-   ++value ;
-   if ( *value == '\"' && isStr )
-   {
-      ++value ;
-   }
-   else if ( *value != '\"' && !isStr )
-   {
-   }
-   else
-   {
-      return 0 ;
-   }
-   value = skip ( value ) ;
-   if ( *value != ':' )
-   {
-      return 0 ;
-   }
-   value = skip ( value+1 ) ;
-   value = parse_value(item, value, 0, 1 ) ;
-   if ( item->type != cJSON_Number ||
-        item->numType != cJSON_INT32 )
-   {
-      return 0 ;
-   }
-   value = skip ( value ) ;
-   if ( *value != '}' )
-   {
-      return 0 ;
-   }
-   value = skip ( value+1 ) ;
-   i = item->valueint ;
-   value = skip ( value ) ;
-   item->type = cJSON_Timestamp ;
-   timer = (time_t)t ;
-   local_time ( &timer, &psr ) ;
-   sprintf( temp,
-            "%04d-%02d-%02d-%02d.%02d.%02d.%06d",
-            psr.tm_year + 1900,
-            psr.tm_mon + 1,
-            psr.tm_mday,
-            psr.tm_hour,
-            psr.tm_min,
-            psr.tm_sec,
-            i ) ;
-    item->valuestring = (char*)cJSON_malloc( 64 ) ;
-    memset ( item->valuestring, 0, 64 ) ;
-    strncpy ( item->valuestring, temp, 64 ) ;
-    return value ;
-}
-
-static const char *parse_objectid(cJSON *item,const char *value)
-{
-   const char *value_temp = NULL ;
-   int len = 0;
-   value = skip ( value ) ;
-   if ( *value != '(' )return 0 ;
-   value = skip ( value+1 ) ;
-   if ( *value != '\"' )return 0 ;
-   value_temp = ++value;
-   while ( *value_temp != '\"' &&
-           *value_temp != ' '  &&
-           *value_temp != '}'  &&
-           (unsigned char)*value_temp > 32 )
-   {
-      /* not an object! */
-      if( !value_temp )
-         return 0 ;
-      ++len ;
-      ++value_temp ;
-   }
-   if ( len != 24 )
-      return 0 ;
-   item->valuestring = (char*)cJSON_malloc( len + 1 ) ;
-   strncpy ( item->valuestring, value, len ) ;
-   item->valuestring [ len ] = 0 ;
-   value = value_temp ;
-   value = skip ( value+1 ) ;
-   if ( *value != ')' )return 0 ;
-   return value+1 ;
-}
-
-/* Render a value to text. */
-
-static char *print_value(cJSON *item,int depth,int fmt)
-{
-   char *out=0;
-   if (!item) return 0;
-   switch ((item->type)&255)
-   {
-      case cJSON_NULL:   out=cJSON_strdup("null");   break;
-      case cJSON_False:   out=cJSON_strdup("false");break;
-      case cJSON_True:   out=cJSON_strdup("true"); break;
-      case cJSON_Number:   out=print_number(item);break;
-      case cJSON_String:   out=print_string(item);break;
-      case cJSON_Array:   out=print_array(item,depth,fmt);break;
-      case cJSON_Object:   out=print_object(item,depth,fmt);break;
-   }
-   return out;
-}
-
-/* Build one parse dollar string key from input text. */
-static const char *parse_dollar_string ( cJSON *item, const char *value )
-{
-   int dollar_string_len = 0 ;
-   if ( '$' == *value )
-   {
-      int k = 0 ;
-      int typeNum = sizeof(dollar_command_string)/sizeof(dollar_command_string[0]);
-      for( k = 0; k < typeNum; ++k )
-      {
-         dollar_string_len = strlen( dollar_command_string [ k ] ) ;
-         if ( !strncmp ( value,
-                         dollar_command_string [ k ],
-                         dollar_string_len ) )
-         {
-            item->valuestring = (char*)cJSON_malloc( dollar_string_len + 1 ) ;
-            strncpy ( item->valuestring,
-                      dollar_command_string [ k ],
-                      dollar_string_len ) ;
-
-            item->valuestring [ dollar_string_len ] = 0 ;
-            value = skip ( value + dollar_string_len ) ;
-            return value ;
-         }
-      }
-   }
-   return 0 ;
-}
-
-/* Build one parse_dollar_command from input text. */
-static const char *parse_first_command(cJSON *item,const char *value,int cj_type )
-{
-   int isNumber = 0 ;
-   switch ( cj_type )
-   {
-   case cJSON_Timestamp:
-   {
-      /* not a dollar command! */
-      if ( strncmp ( value, "$timestamp", 10 ) )
-      {
-         ep = value ;
-         return 0 ;
-      }
-      value = skip ( value + 10 ) ;
-      break ;
-   }
-   case cJSON_Date:
-   {
-      /* not a dollar command! */
-      if ( strncmp ( value, "$date", 5 ) )
-      {
-         ep = value ;
-         return 0 ;
-      }
-      value = skip ( value + 5 ) ;
-      break ;
-   }
-   case cJSON_Regex:
-   {
-      /* not a dollar command! */
-      if ( strncmp ( value, "$regex", 6 ) )
-      {
-         ep = value ;
-         return 0 ;
-      }
-      value = skip ( value + 6 ) ;
-      break ;
-   }
-   case cJSON_Oid:
-   {
-      /* not a dollar command! */
-      if ( strncmp ( value, "$oid", 4 ) )
-      {
-         ep = value ;
-         return 0 ;
-      }
-      value = skip ( value + 4 ) ;
-      break ;
-   }
-   case cJSON_Binary:
-   {
-      /* not a dollar command! */
-      if ( strncmp ( value, "$binary", 7 ) )
-      {
-         ep = value ;
-         return 0 ;
-      }
-      value = skip ( value + 7 ) ;
-      break ;
-   }
-   case cJSON_MinKey:
-   {
-      /* not a dollar command! */
-      if ( strncmp ( value, "$minKey", 7 ) )
-      {
-         ep = value ;
-         return 0 ;
-      }
-      value = skip ( value + 7 ) ;
-      break ;
-   }
-   case cJSON_MaxKey:
-   {
-      /* not a dollar command! */
-      if ( strncmp ( value, "$maxKey", 7 ) )
-      {
-         ep = value ;
-         return 0 ;
-      }
-      value = skip ( value + 7 ) ;
-      break ;
-   }
-   case cJSON_Undefined:
-   {
-      /* not a dollar command! */
-      if ( strncmp ( value, "$undefined", 10 ) )
-      {
-         ep = value ;
-         return 0 ;
-      }
-      value = skip ( value + 10 ) ;
-      break ;
-   }
-   case cJSON_Number_Long:
-   {
-      /* not a dollar command! */
-      if ( strncmp ( value, "$numberLong", 11 ) )
-      {
-         ep = value ;
-         return 0 ;
-      }
-      value = skip ( value + 11 ) ;
-      break ;
-   }
-   case cJSON_Decimal:
-   {
-      /* not a dollar command! */
-      if ( strncmp ( value, "$decimal", 8 ) )
-      {
-         ep = value ;
-         return 0 ;
-      }
-      value = skip ( value + 8 ) ;
-      break ;
-   }
-   }
-   if ( *value == '\"' )
-      value = skip ( value + 1 ) ;
-   else
-      value = skip ( value ) ;
-   /* not an object! */
-   if ( *value != ':' )
-   {
-      ep = value ;
-      return 0 ;
-   }
-   value = skip ( value + 1 ) ;
-   if ( *value == '{' && cj_type == cJSON_Date )
-   {
-      isNumber = 1 ;
-   }
-   else if ( cj_type == cJSON_Date )
-   {
-      isNumber = 0 ;
-   }
-   else if ( *value != '\"' )
-   {
-      if ( cj_type != cJSON_MinKey &&
-           cj_type != cJSON_MaxKey &&
-           cj_type != cJSON_Undefined )
-      {
-         ep = value ;
-         return 0 ;
-      }
-   }
-   else
-   {
-      if ( cj_type == cJSON_MinKey ||
-           cj_type == cJSON_MaxKey ||
-           cj_type == cJSON_Undefined )
-      {
-         ep = value ;
-         return 0 ;
-      }
-      if( cj_type != cJSON_Regex )
-      {
-         value = value + 1 ;
-      }
-   }
-   switch ( cj_type )
-   {
-   case cJSON_Timestamp:
-   {
-      const char *value_temp = value;
-      int len = 0;
-      while (  value_temp &&
-               *value_temp != '\"' &&
-               (unsigned char)*value_temp > 32 )
-      {
-         /* not an object! */
-         if ( !((*value_temp >= '0' && *value_temp <= '9') ||
-                 *value_temp == '+' || *value_temp == '-' ||
-                 *value_temp == 't' || *value_temp == 'T' ||
-                 *value_temp == 'z' || *value_temp == 'Z' ||
-                 *value_temp == ':' || *value_temp == '.' ) )
-               return 0 ;
-         ++len ;
-         ++value_temp ;
-      }
-      if( !value_temp )
-         return 0 ;
-      item->valuestring = (char*)cJSON_malloc( len + 1 ) ;
-      strncpy ( item->valuestring, value, len ) ;
-      item->valuestring [ len ] = 0 ;
-      value = value_temp ;
-      break ;
-   }
-   case cJSON_Date:
-   {
-      const char *value_temp = value ;
-      int len = 0;
-      int isString = 0 ;
-      if ( isNumber == 0 )
-      {
-         if( *value == '\"' )
-         {
-            isString = 1 ;
-            ++value ;
-         }
-         value_temp = value ;
-         //{ $date : 123456 }
-         value_temp = parse_value ( item, value_temp, 0, 0 ) ;
-         if( value_temp &&
-             item->type == cJSON_Number &&
-             ( item->numType == cJSON_INT32 || item->numType == cJSON_INT64 ) &&
-             ( ( isString == 1 && *value_temp == '\"' ) ||
-               ( isString == 0 && *value_temp != '\"' ) ) )
-         {
-            if( isString == 1 )
+            if( stringType == TYPE_STRING_DOUBLE_QUOTES )
             {
-               ++value_temp ;
+               CJSON_PRINTF_LOG( "Syntax Error: argument missing \"" ) ;
             }
-            item->type = cJSON_Date_Number ;
-            value = value_temp ;
-         }
-         else if( isString == 1 )
-         {
-            item->type = cJSON_Date ;
-            value_temp = value ;
-            //{ $date: "yyyy-mm-dd-hh.mm.ss.ssssss"
-            while ( value_temp &&
-                    *value_temp != '\"' &&
-                    (unsigned char)*value_temp > 32 )
+            else
             {
-               /* not an object! */
-               if ( !((*value_temp >= '0' && *value_temp <= '9') ||
-                    *value_temp == '+' || *value_temp == '-' ||
-                    *value_temp == 't' || *value_temp == 'T' ||
-                    *value_temp == 'z' || *value_temp == 'Z' ||
-                    *value_temp == ':' || *value_temp == '.' ) )
-                  return 0 ;
-               ++len ;
-               ++value_temp ;
+               CJSON_PRINTF_LOG( "Syntax Error: argument missing '" ) ;
             }
-            if( !value_temp )
-               return 0 ;
-            item->valuestring = (char*)cJSON_malloc( len + 1 ) ;
-            strncpy ( item->valuestring, value, len ) ;
-            item->valuestring [ len ] = 0 ;
-            value = value_temp ;
+            goto error ;
+         }
+         if( ( stringType == TYPE_STRING_DOUBLE_QUOTES &&
+               *pStr == CHAR_DOUBLE_QUOTES &&
+               isSlash == FALSE ) ||
+             ( stringType == TYPE_STRING_QUOTE &&
+               *pStr == CHAR_QUOTE &&
+               isSlash == FALSE ) )
+         {
+            break ;
+         }
+         if( *pStr == CHAR_SLASH && isSlash == FALSE )
+         {
+            isSlash = TRUE ;
+         }
+         else if( isSlash == TRUE )
+         {
+            isSlash = FALSE ;
+         }
+         ++pStr ;
+      }
+      length = pStr - pStrStart ;
+      pValString = parseString( pStrStart, length, pMachine ) ;
+      pStr = skip( pStr + 1 ) ;
+   }
+   else if( ( *pStr >= '0' && *pStr <= '9' ) || *pStr == '+' || *pStr == '-' )
+   {
+      // <number>
+      valType = CJSON_NUMBER ;
+      pStr = parseNumber( pStr, &valInt, &valDouble, &valInt64, &valType ) ;
+      pStr = skip( pStr ) ;
+      if( *pStr != CHAR_COMMA && *pStr != CHAR_RIGHT_ROUND_BRACKET )
+      {
+         CJSON_PRINTF_LOG( "The argument is an invalid number" ) ;
+         goto error ;
+      }
+   }
+   else
+   {
+      const CHAR *pStrStart = pStr ;
+      //true false null
+      if( pStrStart[0] == 't' &&
+          pStrStart[1] == 'r' &&
+          pStrStart[2] == 'u' &&
+          pStrStart[3] == 'e' )
+      {
+         pStrStart = skip( pStrStart + 4 ) ;
+         if( *pStrStart == CHAR_COMMA ||
+             *pStrStart == CHAR_RIGHT_ROUND_BRACKET )
+         {
+            valType = CJSON_TRUE ;
+            pStr = pStrStart ;
+         }
+      }
+      else if( pStrStart[0] == 'f' &&
+               pStrStart[1] == 'a' &&
+               pStrStart[2] == 'l' &&
+               pStrStart[3] == 's' &&
+               pStrStart[4] == 'e' )
+      {
+         pStrStart = skip( pStrStart + 5 ) ;
+         if( *pStrStart == CHAR_COMMA ||
+             *pStrStart == CHAR_RIGHT_ROUND_BRACKET )
+         {
+            valType = CJSON_FALSE ;
+            pStr = pStrStart ;
+         }
+      }
+      else if( pStrStart[0] == 'n' &&
+               pStrStart[1] == 'u' &&
+               pStrStart[2] == 'l' &&
+               pStrStart[3] == 'l' )
+      {
+         pStrStart = skip( pStrStart + 4 ) ;
+         if( *pStrStart == CHAR_COMMA ||
+             *pStrStart == CHAR_RIGHT_ROUND_BRACKET )
+         {
+            valType = CJSON_NULL ;
+            pStr = pStrStart ;
+         }
+      }
+      if( valType == CJSON_NONE )
+      {
+         const CHAR *pStrStart = pStr ;
+         while( TRUE )
+         {
+            if( *pStr == CHAR_COMMA || *pStr == CHAR_RIGHT_ROUND_BRACKET )
+            {
+               break ;
+            }
+            ++pStr ; 
+         } 
+         length = pStr - pStrStart ;
+         CJSON_PRINTF_LOG( "ReferenceError: '%.*s' is not defined",
+                           length,
+                           pStrStart ) ;
+         goto error ;
+      }
+   }
+   switch( character )
+   {
+   case 'l':   //int
+   {
+      INT32 *pArg = va_arg( *pVaList, INT32* ) ;
+      if( pArg == NULL )
+      {
+         CJSON_PRINTF_LOG( "The parameter is null, system error" ) ;
+         goto error ;
+      }
+      if( valType == CJSON_INT64 )
+      {
+         if( valInt64 > CJSON_MAX_INT )
+         {
+            *pArg = CJSON_MAX_INT ;
+         }
+         else if( valInt64 < CJSON_MIN_INT )
+         {
+            *pArg = CJSON_MIN_INT ;
          }
          else
          {
-            return 0 ;
+            *pArg = (INT32)valInt64 ;
          }
       }
-      else if ( isNumber == 1 )
+      else if( valType == CJSON_INT32 )
       {
-         //{ $date : { $numberLong: 123456 } }
-         if( *value != '{' )
+         *pArg = valInt ;
+      }
+      else if( valType == CJSON_DOUBLE )
+      {
+         if( valDouble > CJSON_MAX_INT )
          {
-            return 0 ;
+            *pArg = CJSON_MAX_INT ;
          }
-         value = skip ( value + 1 ) ;
-         if( *value == '\"' )
+         else if( valDouble < CJSON_MIN_INT )
          {
-            isString = 1 ;
-            ++value ;
+            *pArg = CJSON_MIN_INT ;
          }
-         if( *value != '$' ) return 0 ;
-         ++value ;
-         if( *value != 'n' ) return 0 ;
-         ++value ;
-         if( *value != 'u' ) return 0 ;
-         ++value ;
-         if( *value != 'm' ) return 0 ;
-         ++value ;
-         if( *value != 'b' ) return 0 ;
-         ++value ;
-         if( *value != 'e' ) return 0 ;
-         ++value ;
-         if( *value != 'r' ) return 0 ;
-         ++value ;
-         if( *value != 'L' ) return 0 ;
-         ++value ;
-         if( *value != 'o' ) return 0 ;
-         ++value ;
-         if( *value != 'n' ) return 0 ;
-         ++value ;
-         if( *value != 'g' ) return 0 ;
-         ++value ;
-         if( isString && *value != '\"' )
+         else
          {
-            return 0 ;
+            *pArg = (INT32)valDouble ;
          }
-         isString = 0 ;
-         value = skip ( value + 1 ) ;
-         if ( *value != ':' ) return 0 ;
-         value = skip ( value + 1 ) ;
-         if( *value == '\"' )
-         {
-            isString = 1 ;
-            ++value ;
-         }
-         value = parse_value ( item, value, 0, 0 ) ;
-         if ( !value )
-         {
-            return 0 ;
-         }
-         if ( item->type != cJSON_Number )
-         {
-            return 0 ;
-         }
-         if( item->numType != cJSON_INT32 && item->numType != cJSON_INT64 )
-         {
-            return 0 ;
-         }
-         item->type = cJSON_Date_Number ;
-         if( isString && *value != '\"' )
-         {
-            return 0 ;
-         }
-         value = skip ( value + 1 ) ;
-         if ( *value != '}' ) return 0 ;
-         value = skip ( value + 1 ) ;
+      }
+      else
+      {
+         CJSON_PRINTF_LOG( "Cannot use type %s as type int in argument",
+                           _cJsonDataTypeString[valType] ) ;
+         goto error ;
       }
       break ;
    }
-   case cJSON_Oid:
+   case 'L':   //int64
    {
-      const char *value_temp = value;
-      int len = 0;
-      while ( value_temp &&
-              *value_temp != '\"' &&
-              (unsigned char)*value_temp > 32 )
+      INT64 *pArg = va_arg( *pVaList, INT64* ) ;
+      if( pArg == NULL )
       {
-         ++len ;
-         ++value_temp ;
+         CJSON_PRINTF_LOG( "The parameter is null, system error" ) ;
+         goto error ;
       }
-      if( !value_temp )
-         return 0 ;
-      if ( len != 24 )
-         return 0 ;
-      item->valuestring = (char*)cJSON_malloc( len + 1 ) ;
-      strncpy ( item->valuestring, value, len ) ;
-      item->valuestring [ len ] = 0 ;
-      value = value_temp ;
+      if( valType == CJSON_INT64 )
+      {
+         *pArg = valInt64 ;
+      }
+      else if( valType == CJSON_INT32 )
+      {
+         *pArg = (INT64)valInt ;
+      }
+      else if( valType == CJSON_DOUBLE )
+      {
+         if( valDouble > CJSON_MAX_INT64 )
+         {
+            *pArg = CJSON_MAX_INT64 ;
+         }
+         else if( valDouble < CJSON_MIN_INT64 )
+         {
+            *pArg = CJSON_MIN_INT64 ;
+         }
+         else
+         {
+            *pArg = (INT64)valDouble ;
+         }
+      }
+      else
+      {
+         CJSON_PRINTF_LOG( "Cannot use type %s as type int64 in argument",
+                           _cJsonDataTypeString[valType] ) ;
+         goto error ;
+      }
       break ;
    }
-   case cJSON_Regex:
+   case 'd':   //double
    {
-      value = parse_string( item, value, 0 ) ;
-      if( !value )
-         return 0 ;
-      item->type = cJSON_Regex ;
+      FLOAT64 *pArg = va_arg( *pVaList, FLOAT64* ) ;
+      if( pArg == NULL )
+      {
+         CJSON_PRINTF_LOG( "The parameter is null, system error" ) ;
+         goto error ;
+      }
+      if( valType == CJSON_INT64 )
+      {
+         *pArg = (FLOAT64)valInt64 ;
+      }
+      else if( valType == CJSON_INT32 )
+      {
+         *pArg = (FLOAT64)valInt ;
+      }
+      else if( valType == CJSON_DOUBLE )
+      {
+         *pArg = valDouble ;
+      }
+      else
+      {
+         CJSON_PRINTF_LOG( "Cannot use type %s as type double in argument",
+                           _cJsonDataTypeString[valType] ) ;
+         goto error ;
+      }
       break ;
    }
-   case cJSON_Binary:
+   case 's':   //string
    {
-      const char *value_temp = value;
-      int len = 0;
-      while ( value_temp &&
-              *value_temp != '\"' &&
-              (unsigned char)*value_temp > 32 )
+      INT32 *pArg1  = va_arg( *pVaList, INT32* ) ;
+      CHAR **ppArg2 = va_arg( *pVaList, CHAR** ) ;
+      if( pArg1 == NULL || ppArg2 == NULL )
       {
-         /* not an object! */
-         if ( !((*value_temp >= '0' && *value_temp <= '9') ||
-                (*value_temp >= 'a' && *value_temp <= 'z') ||
-                (*value_temp >= 'A' && *value_temp <= 'Z') ||
-                *value_temp == '+' ||
-                *value_temp == '/' ||
-                *value_temp == '=' ) )
-             return 0 ;
-         ++len ;
-         ++value_temp ;
+         CJSON_PRINTF_LOG( "The parameter is null, system error" ) ;
+         goto error ;
       }
-      if( !value_temp )
-         return 0 ;
-      item->valuestring = (char*)cJSON_malloc( len + 1 ) ;
-      strncpy ( item->valuestring, value, len ) ;
-      item->valuestring [ len ] = 0 ;
-      value = value_temp ;
+      if( valType == CJSON_STRING )
+      {
+         *pArg1 = length ;
+         *ppArg2 = pValString ;
+      }
+      else
+      {
+         CJSON_PRINTF_LOG( "Cannot use type %s as type string in argument",
+                           _cJsonDataTypeString[valType] ) ;
+         goto error ;
+      }
       break ;
    }
-   case cJSON_MaxKey:
-   case cJSON_MinKey:
-   case cJSON_Undefined:
+   case 'b':   //boolean
    {
-      if ( *value != '1' )
+      INT32 *pArg1  = va_arg( *pVaList, INT32* ) ;
+      CHAR **ppArg2 = va_arg( *pVaList, CHAR** ) ;
+      if( pArg1 == NULL || ppArg2 == NULL )
       {
-         return 0 ;
+         CJSON_PRINTF_LOG( "The parameter is null, system error" ) ;
+         goto error ;
       }
-      return ++value ;
-   }
-   case cJSON_Number_Long:
-   {
-      const char *value_temp = value;
-      int len = 0;
-      
-      if ( value_temp && *value_temp == '-' )
+      if( valType != CJSON_TRUE && valType != CJSON_FALSE )
       {
-         ++len ;
-         ++value_temp ; 
+         CJSON_PRINTF_LOG( "Cannot use type %s as type boolean in argument",
+                           _cJsonDataTypeString[valType] ) ;
+         goto error ;
       }
-         
-      while ( value_temp &&
-              *value_temp != '\"' &&
-              (unsigned char)*value_temp > 32 )
-      {
-         if ( !((*value_temp >= '0' && *value_temp <= '9') ) )
-             return 0 ;      
-         ++len ;
-         ++value_temp ;
-      }
-      if( !value_temp )
-         return 0 ;
-      item->valuestring = (char*)cJSON_malloc( len + 1 ) ;
-      strncpy ( item->valuestring, value, len ) ;
-      item->valuestring [ len ] = 0 ;
-      value = value_temp ;
       break ;
    }
-   case cJSON_Decimal:
+   case 'z':   //any type
    {
-      const char *value_temp = value;
-      int len = 0;
-      while ( value_temp &&
-              *value_temp != '\"' &&
-              (unsigned char)*value_temp > 32 )
+      CVALUE *pArg = va_arg( *pVaList, CVALUE* ) ;
+      if( pArg == NULL )
       {
-         ++len ;
-         ++value_temp ;
+         CJSON_PRINTF_LOG( "The parameter is null, system error" ) ;
+         goto error ;
       }
-      if( !value_temp )
-         return 0 ;
-      item->precision   = -1 ;
-      item->scale       = -1 ;
-      item->valuestring = (char*)cJSON_malloc( len + 1 ) ;
-      strncpy ( item->valuestring, value, len ) ;
-      item->valuestring [ len ] = 0 ;
-      value = value_temp ;
+      pArg->valType = valType ;
+      if( valType == CJSON_INT64 )
+      {
+         pArg->valInt64 = valInt64 ;
+      }
+      else if( valType == CJSON_INT32 )
+      {
+         pArg->valInt = valInt ;
+      }
+      else if( valType == CJSON_DOUBLE )
+      {
+         pArg->valDouble = valDouble ;
+      }
+      else if( valType == CJSON_STRING )
+      {
+         pArg->length  = length ;
+         pArg->pValStr = pValString ;
+      }
+      else if( valType == CJSON_TRUE || valType == CJSON_FALSE )
+      {
+      }
+      else
+      {
+         CJSON_PRINTF_LOG( "Cannot use type %s as type int in argument",
+                           _cJsonDataTypeString[valType] ) ;
+         goto error ;
+      }
       break ;
    }
+   case 0:
+   {
+      break ;
    }
-   if ( *value == ' ' || *value == '\"' )
-      ++value ;
-   value = skip ( value ) ;
-   return value ;
+   default:
+      CJSON_PRINTF_LOG( "Unknow type: %c", character ) ;
+      goto error ;
+      break ;
+   }
+done:
+   return pStr ;
+error:
+   pStr = NULL ;
+   goto done ;
 }
 
-static const char *parse_second_command(cJSON *item,const char *value,int cj_type)
+static const CHAR* parseArgs( const CHAR *pStr,
+                              const CJSON_MACHINE *pMachine,
+                              const CHAR *pFormat,
+                              INT32 *pArgNum,
+                              va_list *pVaList )
 {
-   int isString = 0 ;
-   switch ( cj_type )
+   CHAR character = 0 ;
+   BOOLEAN isOptional   = FALSE ;
+   INT32 argNum         = 0 ;
+   const CHAR *specWalk = pFormat ;
+   while( TRUE )
    {
-   case cJSON_Timestamp:
-   case cJSON_Date:
-   case cJSON_Oid:
-   case cJSON_MaxKey:
-   case cJSON_MinKey:
-   case cJSON_Undefined:
-   case cJSON_Number_Long:
-      return value ;
-   case cJSON_Regex:
-   {
-      /* not an object! */
-      if (*value!=',')
+      character = *specWalk ;
+      if( character == '|' )
       {
-         ep = value ;
-         item->valuestring2 = (char*)cJSON_malloc( 1 ) ;
-         item->valuestring2 [ 0 ] = 0 ;
-         return value ;
-      }
-      value = skip ( value + 1 ) ;
-      /* not a json. */
-      if (*value=='}')
-      {
-         ep = value ;
-         return 0 ;
-      }
-      if ( *value == '\"' )
-      {
-         isString = 1 ;
-         value = skip ( value + 1 ) ;
-      }
-      else
-         value = skip ( value ) ;
-      /* not a commond! */
-      if (*value!='$')
-      {
-         ep = value ;
-         return 0 ;
-      }
-      if ( strncmp ( value, "$options", 8 ) )
-      {
-         ep = value ;
-         return 0 ;
-      }
-      value = skip ( value + 8 ) ;
-      break ;
-   }
-   case cJSON_Decimal:
-   {
-      /* not an object! */
-      if (*value!=',')
-      {
-         ep = value ;
-         item->valuestring2 = (char*)cJSON_malloc( 1 ) ;
-         item->valuestring2 [ 0 ] = 0 ;
-         return value ;
-      }
-      value = skip ( value + 1 ) ;
-      /* not a json. */
-      if (*value=='}')
-      {
-         ep = value ;
-         return 0 ;
-      }
-
-      if ( *value == '\"' )
-      {
-         isString = 1 ;
-         value = skip ( value + 1 ) ;
-      }
-      else
-         value = skip ( value ) ;
-      /* not a commond! */
-      if (*value!='$')
-      {
-         ep = value ;
-         return 0 ;
-      }
-      if ( strncmp ( value, "$precision", 10 ) )
-      {
-         ep = value ;
-         return 0 ;
-      }
-      value = skip ( value + 10 ) ;
-      break ;
-   }
-   case cJSON_Binary:
-   {
-      /* not an object! */
-      if (*value!=',')
-      {
-         ep = value ;
-         return 0 ;
-      }
-      value = skip ( value + 1 ) ;
-      /* not a json. */
-      if (*value=='}')
-      {
-         ep = value ;
-         return 0 ;
-      }
-      if ( *value == '\"' )
-      {
-         isString = 1 ;
-         value = skip ( value + 1 ) ;
-      }
-      else
-         value = skip ( value ) ;
-      /* not a commond! */
-      if (*value!='$')
-      {
-         ep = value ;
-         return 0 ;
-      }
-      /* not a dollar command! */
-      if ( strncmp ( value, "$type", 5 ) )
-      {
-         ep = value ;
-         return 0 ;
-      }
-      value = skip ( value + 5 ) ;
-      break ;
-   }
-   }
-   if ( isString )
-   {
-      if ( *value == '\"' )
-      {
-         value = skip ( value + 1 ) ;
+         isOptional = TRUE ;
       }
       else
       {
-         ep = value ;
-         return 0 ;
-      }
-   }
-   else
-      value = skip ( value ) ;
-   /* not an object! */
-   if ( *value != ':' )
-   {
-      ep = value ;
-      return 0 ;
-   }
-   value = skip ( value + 1 ) ;
-   switch ( cj_type )
-   {
-   case cJSON_Binary:
-   {
-      if ( *value == '\"' )
-      {
-         ++value ;
-      }
-      else
-      {
-         return 0 ;
-      }
-      value = parse_number ( item, value ) ;
-      if ( !value )
-         return 0 ;
-      if ( *value == '\"' )
-         ++value ;
-      value = skip ( value ) ;
-      item->type = cj_type ;
-      break ;
-   }
-   case cJSON_Regex:
-   {
-      const char *value_temp = NULL ;
-      int len = 0;
-      if ( *value == '\"' )
-      {
-         ++value ;
-      }
-      else
-      {
-         return 0 ;
-      }
-      value_temp = value;
-      while ( value_temp &&
-              *value_temp != '\"' &&
-              (unsigned char)*value_temp > 32 )
-      {
-         if ( *value_temp != 'i' &&
-              *value_temp != 'm' &&
-              *value_temp != 'x' &&
-              *value_temp != 's' )
-              return 0 ;
-         /* not an object! */
-         if( !value_temp )
-            return 0 ;
-         ++len ;
-         ++value_temp ;
-      }
-      if( !value_temp )
-         return 0 ;
-      item->valuestring2 = (char*)cJSON_malloc( len + 1 ) ;
-      strncpy ( item->valuestring2, value, len ) ;
-      item->valuestring2 [ len ] = 0 ;
-      value = value_temp ;
-      if ( *value == '\"' )
-         ++value ;
-      value = skip ( value ) ;
-      break ;
-   }
-   case cJSON_Decimal:
-   {
-      if ( *value == '[' )
-      {
-         value = skip ( value + 1 ) ;
-      }
-      else
-      {
-         ep = value ;
-         return 0 ;
-      }
-      value = parse_number ( item, value ) ;
-      if ( !value )
-      {
-         return 0 ;
-      }
-      item->precision = item->valueint ;
-
-      value = skip( value ) ;
-      if ( *value != ',' )
-      {
-         return 0 ;
-      }
-      value = skip( value + 1 ) ;
-
-      value = parse_number ( item, value ) ;
-      if ( !value )
-      {
-         return 0 ;
-      }
-      item->scale = item->valueint ;
-
-      value = skip( value ) ;
-      if ( *value != ']' )
-      {
-         return 0 ;
-      }
-
-      value = skip ( value + 1 ) ;
-      item->type = cj_type ;
-      break ;
-   }
-   }
-   return value  ;
-}
-/* Build a parse_dollar_command from input text. */
-static const char *parse_dollar_command(cJSON *item,const char *value,int cj_type)
-{
-   /* not an object! */
-   if ( *value != '{' )
-   {
-      ep = value ;
-      return 0 ;
-   }
-   value = skip ( value + 1 ) ;
-   if (*value=='\"')
-   {
-      value = skip ( value + 1 ) ;
-   }
-   /* empty array. */
-   if (*value=='}')
-   {
-      ep = value ;
-      return 0 ;
-   }
-   /* not a dollar command! */
-   if ( *value != '$' )
-   {
-      ep = value ;
-      return 0 ;
-   }
-   item->type = cj_type ;
-   value = parse_first_command ( item, value, cj_type ) ;
-   if ( !value )
-      return 0 ;
-
-   value = parse_second_command ( item, value, cj_type ) ;
-   if ( !value )
-      return 0 ;
-
-   value = skip ( value ) ;
-   if ( *value == '}' )
-      return value + 1 ;
-   ep = value ;
-   return 0 ;
-}
-
-/* Build an array from input text. */
-static const char *parse_array(cJSON *item,const char *value,int isMongo)
-{
-   cJSON *child;
-   if (*value!='[')   {ep=value;return 0;}   /* not an array! */
-
-   item->type=cJSON_Array;
-   value=skip(value+1);
-   if (*value==']') return value+1;   /* empty array. */
-
-   item->child=child=cJSON_New_Item();
-   if (!item->child) return 0;       /* memory fail */
-   value=skip(parse_value(child,skip(value),0,isMongo));   /* skip any spacing, get the value. */
-   if (!value) return 0;
-
-   while (*value==',')
-   {
-      cJSON *new_item;
-      if (!(new_item=cJSON_New_Item())) return 0;    /* memory fail */
-      child->next=new_item;new_item->prev=child;child=new_item;
-      value=skip(parse_value(child,skip(value+1),0,isMongo));
-      if (!value) return 0;   /* memory fail */
-   }
-
-   if (*value==']') return value+1;   /* end of array */
-   ep=value;return 0;   /* malformed. */
-}
-
-/* Render an array to text */
-static char *print_array(cJSON *item,int depth,int fmt)
-{
-   char **entries;
-   char *out=0,*ptr,*ret;int len=5;
-   cJSON *child=item->child;
-   int numentries=0,i=0,fail=0;
-   
-   /* How many entries in the array? */
-   while (child) numentries++,child=child->next;
-   /* Allocate an array to hold the values for each */
-   entries=(char**)cJSON_malloc(numentries*sizeof(char*));
-   if (!entries) return 0;
-   memset(entries,0,numentries*sizeof(char*));
-   /* Retrieve all the results: */
-   child=item->child;
-   while (child && !fail)
-   {
-      ret=print_value(child,depth+1,fmt);
-      entries[i++]=ret;
-      if (ret) len+=strlen(ret)+2+(fmt?1:0); else fail=1;
-      child=child->next;
-   }
-   
-   /* If we didn't fail, try to malloc the output string */
-   if (!fail) out=(char*)cJSON_malloc(len);
-   /* If that fails, we fail. */
-   if (!out) fail=1;
-
-   /* Handle failure. */
-   if (fail)
-   {
-      for (i=0;i<numentries;i++) if (entries[i]) cJSON_free(entries[i]);
-      cJSON_free(entries);
-      return 0;
-   }
-   
-   /* Compose the output array. */
-   *out='[';
-   ptr=out+1;*ptr=0;
-   for (i=0;i<numentries;i++)
-   {
-      strcpy(ptr,entries[i]);ptr+=strlen(entries[i]);
-      if (i!=numentries-1) {*ptr++=',';if(fmt)*ptr++=' ';*ptr=0;}
-      cJSON_free(entries[i]);
-   }
-   cJSON_free(entries);
-   *ptr++=']';*ptr++=0;
-   return out;   
-}
-
-/* Build an object from the text. */
-static const char *parse_object(cJSON *item,const char *value,int isMongo)
-{
-   cJSON *child;
-   if (*value!='{')   {ep=value;return 0;}   /* not an object! */
-   
-   item->type=cJSON_Object;
-   value=skip(value+1);
-   if (*value=='}') return value+1;   /* empty array. */
-   
-   item->child=child=cJSON_New_Item();
-   if (!item->child) return 0;
-   
-   value=skip(parse_string(child,skip(value),1));
-   if (!value) return 0;
-   child->string=child->valuestring;child->valuestring=0;
-   if (*value!=':') {ep=value;return 0;}   /* fail! */
-   
-   value=skip(parse_value(child,skip(value+1),0,isMongo));   /* skip any spacing, get the value. */
-   if (!value) return 0;
-   
-   while (*value==',')
-   {
-      cJSON *new_item;
-      if (!(new_item=cJSON_New_Item()))   return 0; /* memory fail */
-      child->next=new_item;new_item->prev=child;child=new_item;
-      
-      value=skip(parse_string(child,skip(value+1),1));
-      if (!value) return 0;
-      child->string=child->valuestring;child->valuestring=0;
-      if (*value!=':') {ep=value;return 0;}   /* fail! */
-
-      value=skip(parse_value(child,skip(value+1),0,isMongo));   /* skip any spacing, get the value. */
-      if (!value) return 0;
-   }
-   
-   if (*value=='}') return value+1;   /* end of array */
-   ep=value;return 0;   /* malformed. */
-}
-
-/* Render an object to text. */
-static char *print_object(cJSON *item,int depth,int fmt)
-{
-   char **entries=0,**names=0;
-   char *out=0,*ptr,*ret,*str;int len=7,i=0,j;
-   cJSON *child=item->child;
-   int numentries=0,fail=0;
-   /* Count the number of entries. */
-   while (child) numentries++,child=child->next;
-   /* Allocate space for the names and the objects */
-   entries=(char**)cJSON_malloc(numentries*sizeof(char*));
-   if (!entries) return 0;
-   names=(char**)cJSON_malloc(numentries*sizeof(char*));
-   if (!names) {cJSON_free(entries);return 0;}
-   memset(entries,0,sizeof(char*)*numentries);
-   memset(names,0,sizeof(char*)*numentries);
-
-   /* Collect all the results into our arrays: */
-   child=item->child;depth++;if (fmt) len+=depth;
-   while (child)
-   {
-      names[i]=str=print_string_ptr(child->string);
-      entries[i++]=ret=print_value(child,depth,fmt);
-      if (str && ret) len+=strlen(ret)+strlen(str)+2+(fmt?2+depth:0); else fail=1;
-      child=child->next;
-   }
-   
-   /* Try to allocate the output string */
-   if (!fail) out=(char*)cJSON_malloc(len);
-   if (!out) fail=1;
-
-   /* Handle failure */
-   if (fail)
-   {
-      for (i=0;i<numentries;i++) {if (names[i]) cJSON_free(names[i]);if (entries[i]) cJSON_free(entries[i]);}
-      cJSON_free(names);cJSON_free(entries);
-      return 0;
-   }
-   
-   /* Compose the output: */
-   *out='{';ptr=out+1;if (fmt)*ptr++='\n';*ptr=0;
-   for (i=0;i<numentries;i++)
-   {
-      if (fmt) for (j=0;j<depth;j++) *ptr++='\t';
-      strcpy(ptr,names[i]);ptr+=strlen(names[i]);
-      *ptr++=':';if (fmt) *ptr++='\t';
-      strcpy(ptr,entries[i]);ptr+=strlen(entries[i]);
-      if (i!=numentries-1) *ptr++=',';
-      if (fmt) *ptr++='\n';*ptr=0;
-      cJSON_free(names[i]);cJSON_free(entries[i]);
-   }
-   
-   cJSON_free(names);cJSON_free(entries);
-   if (fmt) for (i=0;i<depth-1;i++) *ptr++='\t';
-   *ptr++='}';*ptr++=0;
-   return out;   
-}
-
-/* Get Array size/item / object item. */
-int    cJSON_GetArraySize(cJSON *array)                     {cJSON *c=array->child;int i=0;while(c)i++,c=c->next;return i;}
-cJSON *cJSON_GetArrayItem(cJSON *array,int item)            {cJSON *c=array->child;  while (c && item>0) item--,c=c->next; return c;}
-cJSON *cJSON_GetObjectItem(cJSON *object,const char *string)   {cJSON *c=object->child; while (c && cJSON_strcasecmp(c->string,string)) c=c->next; return c;}
-
-/* Utility for array list handling. */
-static void suffix_object(cJSON *prev,cJSON *item) {prev->next=item;item->prev=prev;}
-/* Utility for handling references. */
-static cJSON *create_reference(cJSON *item) {cJSON *ref=cJSON_New_Item();if (!ref) return 0;memcpy(ref,item,sizeof(cJSON));ref->string=0;ref->type|=cJSON_IsReference;ref->next=ref->prev=0;return ref;}
-
-/* Add item to array/object. */
-void   cJSON_AddItemToArray(cJSON *array, cJSON *item)                  {cJSON *c=array->child;if (!item) return; if (!c) {array->child=item;} else {while (c && c->next) c=c->next; suffix_object(c,item);}}
-void   cJSON_AddItemToObject(cJSON *object,const char *string,cJSON *item)   {if (!item) return; if (item->string) cJSON_free(item->string);item->string=cJSON_strdup(string);cJSON_AddItemToArray(object,item);}
-void   cJSON_AddItemReferenceToArray(cJSON *array, cJSON *item)                  {cJSON_AddItemToArray(array,create_reference(item));}
-void   cJSON_AddItemReferenceToObject(cJSON *object,const char *string,cJSON *item)   {cJSON_AddItemToObject(object,string,create_reference(item));}
-
-cJSON *cJSON_DetachItemFromArray(cJSON *array,int which)         {cJSON *c=array->child;while (c && which>0) c=c->next,which--;if (!c) return 0;
-   if (c->prev) c->prev->next=c->next;if (c->next) c->next->prev=c->prev;if (c==array->child) array->child=c->next;c->prev=c->next=0;return c;}
-void   cJSON_DeleteItemFromArray(cJSON *array,int which)         {cJSON_Delete(cJSON_DetachItemFromArray(array,which));}
-cJSON *cJSON_DetachItemFromObject(cJSON *object,const char *string) {int i=0;cJSON *c=object->child;while (c && cJSON_strcasecmp(c->string,string)) i++,c=c->next;if (c) return cJSON_DetachItemFromArray(object,i);return 0;}
-void   cJSON_DeleteItemFromObject(cJSON *object,const char *string) {cJSON_Delete(cJSON_DetachItemFromObject(object,string));}
-
-/* Replace array/object items with new ones. */
-void   cJSON_ReplaceItemInArray(cJSON *array,int which,cJSON *newitem)      {cJSON *c=array->child;while (c && which>0) c=c->next,which--;if (!c) return;
-   newitem->next=c->next;newitem->prev=c->prev;if (newitem->next) newitem->next->prev=newitem;
-   if (c==array->child) array->child=newitem; else newitem->prev->next=newitem;c->next=c->prev=0;cJSON_Delete(c);}
-void   cJSON_ReplaceItemInObject(cJSON *object,const char *string,cJSON *newitem){int i=0;cJSON *c=object->child;while(c && cJSON_strcasecmp(c->string,string))i++,c=c->next;if(c){newitem->string=cJSON_strdup(string);cJSON_ReplaceItemInArray(object,i,newitem);}}
-
-/* Create basic types: */
-cJSON *cJSON_CreateNull()                  {cJSON *item=cJSON_New_Item();if(item)item->type=cJSON_NULL;return item;}
-cJSON *cJSON_CreateTrue()                  {cJSON *item=cJSON_New_Item();if(item)item->type=cJSON_True;return item;}
-cJSON *cJSON_CreateFalse()                  {cJSON *item=cJSON_New_Item();if(item)item->type=cJSON_False;return item;}
-cJSON *cJSON_CreateBool(int b)               {cJSON *item=cJSON_New_Item();if(item)item->type=b?cJSON_True:cJSON_False;return item;}
-cJSON *cJSON_CreateNumber(double num)         {cJSON *item=cJSON_New_Item();if(item){item->type=cJSON_Number;item->valuedouble=num;item->valueint=(int)num;}return item;}
-cJSON *cJSON_CreateString(const char *string)   {cJSON *item=cJSON_New_Item();if(item){item->type=cJSON_String;item->valuestring=cJSON_strdup(string);}return item;}
-cJSON *cJSON_CreateArray()                  {cJSON *item=cJSON_New_Item();if(item)item->type=cJSON_Array;return item;}
-cJSON *cJSON_CreateObject()                  {cJSON *item=cJSON_New_Item();if(item)item->type=cJSON_Object;return item;}
-
-/* Create Arrays: */
-cJSON *cJSON_CreateIntArray(int *numbers,int count)            {int i;cJSON *n=0,*p=0,*a=cJSON_CreateArray();for(i=0;a && i<count;i++){n=cJSON_CreateNumber(numbers[i]);if(!i)a->child=n;else suffix_object(p,n);p=n;}return a;}
-cJSON *cJSON_CreateFloatArray(float *numbers,int count)         {int i;cJSON *n=0,*p=0,*a=cJSON_CreateArray();for(i=0;a && i<count;i++){n=cJSON_CreateNumber(numbers[i]);if(!i)a->child=n;else suffix_object(p,n);p=n;}return a;}
-cJSON *cJSON_CreateDoubleArray(double *numbers,int count)      {int i;cJSON *n=0,*p=0,*a=cJSON_CreateArray();for(i=0;a && i<count;i++){n=cJSON_CreateNumber(numbers[i]);if(!i)a->child=n;else suffix_object(p,n);p=n;}return a;}
-cJSON *cJSON_CreateStringArray(const char **strings,int count)   {int i;cJSON *n=0,*p=0,*a=cJSON_CreateArray();for(i=0;a && i<count;i++){n=cJSON_CreateString(strings[i]);if(!i)a->child=n;else suffix_object(p,n);p=n;}return a;}
-
-
-
-
-static const char *parse_string_size(const char *str)
-{
-   const char *ptr=str+1;char *ptr2;char *out;int len=0;unsigned uc,uc2;
-   if (*str!='\"'){ep=str;return 0;}   /* not a string! */
-   
-   while (*ptr!='\"' && *ptr && ++len) if (*ptr++ == '\\') ptr++;   /* Skip escaped quotes. */
-    sum+=len;
-   sum++;
-   out=(char*)cJSON_malloc(len+1);   /* This is how long we need for the string, roughly. */
-   if (!out) return 0;
-   
-   ptr=str+1;ptr2=out;
-
-   while (*ptr!='\"' && *ptr)
-   {
-      
-      if (*ptr!='\\') *ptr2++=*ptr++;
-      else
-      {
-         ptr++;
-         switch (*ptr)
+         if( *pStr == CHAR_RIGHT_ROUND_BRACKET )
          {
-            case 'b': *ptr2++='\b';   break;
-            case 'f': *ptr2++='\f';   break;
-            case 'n': *ptr2++='\n';   break;
-            case 'r': *ptr2++='\r';   break;
-            case 't': *ptr2++='\t';   break;
-            case 'u':    /* transcode utf16 to utf8. */
-               sscanf(ptr+1,"%4x",&uc);ptr+=4;   /* get the unicode char. */
+            if( isOptional == TRUE || character == 0 )
+            {
+               break ;
+            }
+            else
+            {
+               CJSON_PRINTF_LOG( "Not enough arguments in call to function" ) ;
+               goto error ;
+            }
+         }
+         ++argNum ;
+         pStr = parseArgImpl( pStr, character, pMachine, pVaList ) ;
+         if( pStr == NULL )
+         {
+            CJSON_PRINTF_LOG( "Failed to parse the No. %d argument",
+                              argNum ) ;
+            goto error ;
+         }
+         if( *pStr == CHAR_COMMA )
+         {
+            pStr = skip( pStr + 1 ) ;
+         }
+         else if( *pStr == CHAR_RIGHT_ROUND_BRACKET )
+         {
+            // do nothing
+         }
+         else
+         {
+            CJSON_PRINTF_LOG( "Syntax error: the No. %d argument "
+                              "missing ',' or ')'",
+                              argNum ) ;
+            goto error ;
+         }
+      }
+      if( *specWalk )
+      {
+         ++specWalk ;
+      }
+   }
+   *pArgNum = argNum ;
+done:
+   return pStr ;
+error:
+   pStr = NULL ;
+   goto done ;
+}
 
-               if ((uc>=0xDC00 && uc<=0xDFFF) || uc==0)   break;   // check for invalid.
+SDB_EXPORT const CHAR* parseParameters( const CHAR *pStr,
+                                        const CJSON_MACHINE *pMachine,
+                                        const CHAR *pFormat,
+                                        INT32 *pArgNum,
+                                        ... )
+{
+   va_list vaList ;
+   pStr = skip( pStr + 1 ) ;
+   if( *pStr != CHAR_LEFT_ROUND_BRACKET )
+   {
+      CJSON_PRINTF_LOG( "The function expression '('" ) ;
+      goto error ;
+   }
+   pStr = skip( pStr + 1 ) ;
+   va_start( vaList, pArgNum ) ;
+   pStr = parseArgs( pStr, pMachine, pFormat, pArgNum, &vaList ) ;
+   va_end( vaList ) ;
+   if( pStr == NULL )
+   {
+      goto error ;
+   }
+   ++pStr ;
+done:
+   return pStr ;
+error:
+   pStr = NULL ;
+   goto done ;
+}
 
-               if (uc>=0xD800 && uc<=0xDBFF)   // UTF16 surrogate pairs.
+SDB_EXPORT BOOLEAN cJsonParseNumber( const CHAR *pStr,
+                                     INT32 length,
+                                     INT32 *pValInt,
+                                     FLOAT64 *pValDouble,
+                                     INT64 *pValLong,
+                                     CJSON_VALUE_TYPE *pNumType )
+{
+   BOOLEAN flag = TRUE ;
+   const CHAR *pTmp = NULL ;
+
+   if( pStr == NULL )
+   {
+      goto error ;
+   }
+   pTmp = parseNumber( pStr,
+                       pValInt,
+                       pValDouble,
+                       pValLong,
+                       pNumType ) ;
+   if( pTmp - pStr != length )
+   {
+      goto error ;
+   }
+done:
+   return flag ;
+error:
+   flag = FALSE ;
+   goto done ;
+}
+
+static BOOLEAN checkCustomType( CJSON *pItem,
+                                CJSON_MACHINE *pMachine,
+                                CJSON_VALUE_TYPE *pKeyType,
+                                CJSON_VALUE_TYPE *pValType )
+{
+   INT32 customType   = CJSON_NONE ;
+   INT32 assistType   = CJSON_NONE ;
+   INT32 normalKeyNum = 0 ;
+   BOOLEAN rv         = TRUE ;
+   CHAR *pKey         = NULL ;
+   while( pItem )
+   {
+      switch( pItem->keyType )
+      {
+      case CJSON_TIMESTAMP:
+      case CJSON_DATE:
+      case CJSON_REGEX:
+      case CJSON_OID:
+      case CJSON_BINARY:
+      case CJSON_MINKEY:
+      case CJSON_MAXKEY:
+      case CJSON_UNDEFINED:
+      case CJSON_NUMBER_LONG:
+      case CJSON_DECIMAL:
+      {
+         if( normalKeyNum > 0 )
+         {
+            if( pMachine->parseMode == CJSON_RIGOROUS_PARSE )
+            {
+               //$命令同级下存在其他普通字段
+               CJSON_PRINTF_LOG( "The %s and the %s can not coexist",
+                                 pKey,
+                                 pItem->pKey ) ;
+               goto error ;
+            }
+            goto done ;
+         }
+         if( customType == CJSON_NONE )
+         {
+            customType = pItem->keyType ;
+            if( customType == CJSON_REGEX &&
+                assistType != CJSON_NONE &&
+                assistType != CJSON_OPTIONS )
+            {
+               //$regex和非$options的辅助字段
+               if( pMachine->parseMode == CJSON_RIGOROUS_PARSE )
                {
-                  if (ptr[1]!='\\' || ptr[2]!='u')   break;   // missing second-half of surrogate.
-                  sscanf(ptr+3,"%4x",&uc2);ptr+=6;
-                  if (uc2<0xDC00 || uc2>0xDFFF)      break;   // invalid second-half of surrogate.
-                  uc=0x10000 | ((uc&0x3FF)<<10) | (uc2&0x3FF);
+                  CJSON_PRINTF_LOG( "The %s and the %s can not coexist",
+                                    pKey,
+                                    pItem->pKey ) ;
+                  goto error ;
                }
-
-               len=4;if (uc<0x80) len=1;else if (uc<0x800) len=2;else if (uc<0x10000) len=3; ptr2+=len;
-               
-               switch (len) {
-                  case 4: *--ptr2 =((uc | 0x80) & 0xBF); uc >>= 6;
-                  case 3: *--ptr2 =((uc | 0x80) & 0xBF); uc >>= 6;
-                  case 2: *--ptr2 =((uc | 0x80) & 0xBF); uc >>= 6;
-                  case 1: *--ptr2 =(uc | firstByteMark[len]);
+               goto done ;
+            }
+            else if( customType == CJSON_BINARY &&
+                     assistType != CJSON_NONE &&
+                     assistType != CJSON_TYPE )
+            {
+               //$binary和非$type的辅助字段
+               if( pMachine->parseMode == CJSON_RIGOROUS_PARSE )
+               {
+                  CJSON_PRINTF_LOG( "The %s and the %s can not coexist",
+                                    pKey,
+                                    pItem->pKey ) ;
+                  goto error ;
                }
-               ptr2+=len;
-               break;
-            default:  *ptr2++=*ptr; break;
+               goto done ;
+            }
+            else if( customType == CJSON_DECIMAL &&
+                     assistType != CJSON_NONE &&
+                     assistType != CJSON_PRECISION )
+            {
+               //$decimal和非$precision的辅助字段
+               if( pMachine->parseMode == CJSON_RIGOROUS_PARSE )
+               {
+                  CJSON_PRINTF_LOG( "The %s and the %s can not coexist",
+                                    pKey,
+                                    pItem->pKey ) ;
+                  goto error ;
+               }
+               goto done ;
+            }
+            pKey = pItem->pKey ;
          }
-         ptr++;
+         else
+         {
+            //同一级下,有多个类型字段
+            if( pMachine->parseMode == CJSON_RIGOROUS_PARSE )
+            {
+               CJSON_PRINTF_LOG( "The %s and the %s can not coexist",
+                                 pKey,
+                                 pItem->pKey ) ;
+               goto error ;
+            }
+            goto done ;
+         }
+         break ;
       }
+      case CJSON_OPTIONS:
+      case CJSON_TYPE:
+      case CJSON_PRECISION:
+      {
+         if( assistType == CJSON_NONE )
+         {
+            assistType = pItem->keyType ;
+            if( assistType == CJSON_OPTIONS &&
+                customType != CJSON_NONE &&
+                customType != CJSON_REGEX )
+            {
+               //$options和非$regex的类型字段
+               if( pMachine->parseMode == CJSON_RIGOROUS_PARSE )
+               {
+                  CJSON_PRINTF_LOG( "The %s and the %s can not coexist",
+                                    pKey,
+                                    pItem->pKey ) ;
+                  goto error ;
+               }
+               goto done ;
+            }
+            else if( assistType == CJSON_TYPE &&
+                     customType != CJSON_NONE &&
+                     customType != CJSON_BINARY )
+            {
+               //$type和非$binary的类型字段
+               if( pMachine->parseMode == CJSON_RIGOROUS_PARSE )
+               {
+                  CJSON_PRINTF_LOG( "The %s and the %s can not coexist",
+                                    pKey,
+                                    pItem->pKey ) ;
+                  goto error ;
+               }
+               goto done ;
+            }
+            else if( assistType == CJSON_PRECISION &&
+                     customType != CJSON_NONE &&
+                     customType != CJSON_DECIMAL )
+            {
+               //$type和非$binary的类型字段
+               if( pMachine->parseMode == CJSON_RIGOROUS_PARSE )
+               {
+                  CJSON_PRINTF_LOG( "The %s and the %s can not coexist",
+                                    pKey,
+                                    pItem->pKey ) ;
+                  goto error ;
+               }
+               goto done ;
+            }
+            pKey = pItem->pKey ;
+         }
+         else
+         {
+            //同一级下,有多个辅助字段
+            if( pMachine->parseMode == CJSON_RIGOROUS_PARSE )
+            {
+               CJSON_PRINTF_LOG( "The %s and the %s can not coexist",
+                                 pKey,
+                                 pItem->pKey ) ;
+               goto error ;
+            }
+            goto done ;
+         }
+         break ;
+      }
+      default:
+         ++normalKeyNum ;
+         if( customType != CJSON_NONE )
+         {
+            if( pMachine->parseMode == CJSON_RIGOROUS_PARSE )
+            {
+               //$命令同级下存在其他普通字段
+               CJSON_PRINTF_LOG( "The %s and the %s can not coexist",
+                                 pKey,
+                                 pItem->pKey ) ;
+               goto error ;
+            }
+            goto done ;
+         }
+         break ;
+      }
+      pItem = pItem->pNext ;
    }
-   *ptr2=0;
-   if (*ptr=='\"') 
-      ptr++;
-   return ptr;
+   if( customType != CJSON_NONE )
+   {
+      *pKeyType = CJSON_CUSTOM ;
+   }
+done:
+   return rv ;
+error:
+   rv = FALSE ;
+   pMachine->state = STATE_ERROR ;
+   goto done ;
 }
 
-
-static const char *parse_number_size(const char *num)
+static const CHAR* skip( const CHAR *pStr )
 {
-   double n=0,sign=1,scale=0;int subscale=0,signsubscale=1;
-
-   /* Could use sscanf for this? */
-   if (*num=='-') 
-      sign=-1,num++;   /* Has sign? */
-   if (*num=='0') 
-      num++;         /* is zero */
-   if (*num>='1' && *num<='9')   
+   while( pStr && *pStr && ((UINT8)*pStr) <= 32 )
    {
-      /* Number? */
-      do   
-      {
-         n=(n*10.0)+(*num++ -'0');   
-      }
-      while (*num>='0' && *num<='9');   
+      ++pStr ;
    }
-   if (*num=='.' && num[1]>='0' && num[1]<='9') 
+   return pStr ;
+}
+
+static const CHAR* skip2JsonStart( const CHAR *pStr )
+{
+   while( pStr && *pStr && *pStr != CHAR_LEFT_CURLY_BRACE )
    {
-      /* Fractional part? */
-      sum+=8;
-      num++;
-      do   
+      ++pStr ;
+   }
+   return pStr ;
+}
+
+#define CJSON_MALLOC_DEFAULT_SIZE 4096
+static CJSON_MEMORY_BLOCK* cJsonCreateBlock( INT32 size )
+{
+   INT32 bufferSize = CJSON_MALLOC_DEFAULT_SIZE ;
+   CJSON_MEMORY_BLOCK *pBlock = NULL ;
+
+   pBlock = (CJSON_MEMORY_BLOCK*)\
+            SDB_OSS_MALLOC( sizeof( CJSON_MEMORY_BLOCK ) ) ;
+   if( pBlock == NULL )
+   {
+      CJSON_PRINTF_LOG( "Failed to malloc memory, size: %d",
+                        sizeof( CJSON_MEMORY_BLOCK ) ) ;
+      goto error ;
+   }
+   ossMemset( pBlock, 0, sizeof( CJSON_MEMORY_BLOCK ) ) ;
+   if( size > bufferSize )
+   {
+      INT32 quoiten = size / bufferSize ;
+      INT32 remainder = size % bufferSize ;
+      bufferSize = quoiten * CJSON_MALLOC_DEFAULT_SIZE ;
+      if( remainder > 0 )
       {
-         n=(n*10.0)+(*num++ -'0'),scale--; 
+         bufferSize += CJSON_MALLOC_DEFAULT_SIZE ;
       }
-      while (*num>='0' && *num<='9');
-   }   
+   }
+   pBlock->pBuffer = (CHAR*)SDB_OSS_MALLOC( bufferSize ) ;
+   if( pBlock->pBuffer == NULL )
+   {
+      CJSON_PRINTF_LOG( "Failed to malloc memory, size: %d",
+                        bufferSize ) ;
+      goto error ;
+   }
+   pBlock->size = bufferSize ;
+   pBlock->lastSize = bufferSize ;
+   pBlock->pNext = NULL ;
+   pBlock->pPrev = NULL ;
+done:
+   return pBlock ;
+error:
+   SDB_OSS_FREE( pBlock->pBuffer ) ;
+   SDB_OSS_FREE( pBlock ) ;
+   pBlock = NULL ;
+   goto done ;
+}
+
+SDB_EXPORT void* cJsonMalloc( INT32 bytesNum, const CJSON_MACHINE *pMachine )
+{
+   INT32 useSize = 0 ;
+   void *pBuffer = NULL ;
+   CJSON_MEMORY_BLOCK *pBlock = NULL ;
+   /*
+      In the parse function, it is forbidden to modify the state machine
+      information, but in the allocation of memory, the state machine save
+      the memory list of information.
+   */
+   CJSON_MACHINE *pStateMachine = (CJSON_MACHINE *)pMachine ;
+   if( pStateMachine->pFirstMemBlock == NULL )
+   {
+      pBlock = cJsonCreateBlock( bytesNum ) ;
+      if( pBlock == NULL )
+      {
+         CJSON_PRINTF_LOG( "Failed to create new memory block" ) ;
+         goto error ;
+      }
+      pStateMachine->pFirstMemBlock = pBlock ;
+      pStateMachine->pMemBlock = pBlock ;
+   }
    else
    {
-      sum+=4;
+      pBlock = pStateMachine->pMemBlock ;
+      while( pBlock )
+      {
+         if( pBlock->lastSize < bytesNum )
+         {
+            if( pBlock->pNext )
+            {
+               pBlock = pBlock->pNext ;
+            }
+            else
+            {
+               pBlock = cJsonCreateBlock( bytesNum ) ;
+               if( pBlock == NULL )
+               {
+                  CJSON_PRINTF_LOG( "Failed to create new memory block" ) ;
+                  goto error ;
+               }
+               pBlock->pPrev = pStateMachine->pMemBlock ;
+               pStateMachine->pMemBlock->pNext = pBlock ;
+               pStateMachine->pMemBlock = pBlock ;
+               break ;
+            }
+         }
+         else
+         {
+            break ;
+         }
+      }
    }
-   if (*num=='e' || *num=='E')      /* Exponent? */
-   {   
-      num++;
-      if (*num=='+') 
-         num++;   
-      else if (*num=='-') 
-         signsubscale=-1,num++;      /* With sign? */
-
-      while (*num>='0' && *num<='9') 
-         subscale=(subscale*10)+(*num++ - '0');   /* Number? */
-   }
-
-   n=sign*n*pow(10.0,(scale+subscale*signsubscale));   /* number = +/- number.fraction * 10^+/- exponent */
-   
-   return num;
+   ++pBlock->mallocTimes ;
+   useSize = pBlock->size - pBlock->lastSize ;
+   pBuffer = (void*)( pBlock->pBuffer + useSize ) ;
+   pBlock->lastSize -= bytesNum ;
+done:
+   return pBuffer ;
+error:
+   goto done ;
 }
 
-static const char *parse_value_size(const char *value)
+SDB_EXPORT void cJsonFree( void *pBuffer, const CJSON_MACHINE *pMachine )
 {
-   if (!value)                  
-      return "";
-   if (!strncmp(value,"null",4))   
-   {
-      sum+=4; 
-      return value+4; 
-   }
-   if (!strncmp(value,"false",5))   
-   {
-      sum+=5;
-      return value+5; 
-   }
-   if (!strncmp(value,"true",4))   
-   {
-      sum+=4; 
-      return value+4; 
-   }
-   if (*value=='\"')            
-   { 
-      return parse_string_size(value); 
-   }
-   if (*value=='-' || (*value>='0' && *value<='9'))   
-   { 
-      return parse_number_size(value); 
-   }
-   if (*value=='[')            
-   { 
-      sum += 5; 
-      return parse_array_size(value); 
-   }
-   if (*value=='{')            
-   { 
-      sum += 5; 
-      return parse_object_size(value); 
-   }
-
-   ep=value;
-   return "";   /* failure. */
 }
 
-static const char *parse_object_size(const char *value)
+SDB_EXPORT CJSON* cJsonItemCreate( const CJSON_MACHINE *pMachine )
 {
-   if (*value!='{')   {ep=value;return 0;}   /* not an object! */
-   
-   value=skip(value+1);
-   if (*value=='}') return value+1;   /* empty array. */
-   
-   sum++;
-
-   value = skip( parse_string_size(skip(value)));
-   if (!value) return 0;
-
-   if (*value!=':') {ep=value;return 0;}   /* fail! */
-   sum+=4;
-   value=skip(parse_value_size(skip(value+1)));   /* skip any spacing, get the value. */
-   if (!value) return 0;
-   
-   while (*value==',')
+   CJSON *pNode = (CJSON*)cJsonMalloc( sizeof( CJSON ), pMachine ) ;
+   if( pNode )
    {
-      sum++;
-      value=skip(parse_string_size(skip(value+1)));
-      if (!value) return 0;
-
-      if (*value!=':') {ep=value;return 0;}   /* fail! */
-      sum+=4;
-      value=skip(parse_value_size(skip(value+1)));   /* skip any spacing, get the value. */
-      if (!value) return 0;
+      ossMemset( pNode, 0, sizeof( CJSON ) ) ;
    }
-   
-   if (*value=='}') return value+1;   /* end of array */
-   ep=value;return 0;   /* malformed. */
+   return pNode ;
 }
 
-static const char *parse_array_size(const char *value)
+SDB_EXPORT void cJsonItemRelease( const CJSON *pItem )
 {
-
-   if (*value!='[')   {ep=value;return 0;}   /* not an array! */
-
-   value=skip(value+1);
-   if (*value==']') return value+1;   /* empty array. */
-
-   value=skip(parse_value_size(skip(value)));   /* skip any spacing, get the value. */
-   if (!value) return 0;
-    sum+=3;
-   while (*value==',')
-   {
-      value=skip(parse_value_size(skip(value+1)));
-      if (!value) return 0;   /* memory fail */
-      sum+=3;
-   }
-
-   if (*value==']') return value+1;   /* end of array */
-   ep=value;return 0;   /* malformed. */
 }
 
-
-
-int bson_Sum_Size(const char *json_str)
+SDB_EXPORT void cJsonItemKey( CJSON *pItem, CHAR *pKey )
 {
-   sum = 0;
-    ep=0;
-   parse_value_size(skip(json_str));
-   return sum;
+   pItem->pKey = pKey ;
+}
+
+SDB_EXPORT void cJsonItemKeyType( CJSON *pItem, CJSON_VALUE_TYPE keyType )
+{
+   pItem->keyType = keyType ;
+}
+
+SDB_EXPORT void cJsonItemValueInt32 ( CJSON *pItem, INT32 val )
+{
+   pItem->valType = CJSON_INT32 ;
+   pItem->valInt = val ;
+}
+
+SDB_EXPORT void cJsonItemValueInt64 ( CJSON *pItem, INT64 val )
+{
+   pItem->valType = CJSON_INT64 ;
+   pItem->valInt64 = val ;
+}
+
+SDB_EXPORT void cJsonItemValueDouble( CJSON *pItem, FLOAT64 val )
+{
+   pItem->valType = CJSON_DOUBLE ;
+   pItem->valDouble = val ;
+}
+
+SDB_EXPORT void cJsonItemValueString( CJSON *pItem, CHAR *pValStr, INT32 length )
+{
+   pItem->valType = CJSON_STRING ;
+   pItem->pValStr = pValStr ;
+   pItem->length  = length ;
+}
+
+SDB_EXPORT void cJsonItemValueTrue( CJSON *pItem )
+{
+   pItem->valType = CJSON_TRUE ;
+}
+
+SDB_EXPORT void cJsonItemValueFalse( CJSON *pItem )
+{
+   pItem->valType = CJSON_FALSE ;
+}
+
+SDB_EXPORT void cJsonItemValueNull( CJSON *pItem )
+{
+   pItem->valType = CJSON_NULL ;
+}
+
+SDB_EXPORT void cJsonItemLinkChild ( CJSON *pItem, CJSON *pChild )
+{
+   pItem->pChild = pChild ;
+   pChild->pParent = pItem ;
+}
+
+SDB_EXPORT void cJsonItemLinkNext  ( CJSON *pItem, CJSON *pNext )
+{
+   pItem->pNext = pNext ;
+   pItem->pParent = pNext->pParent ;
+   pNext->pPrev = pItem ;
+}
+
+SDB_EXPORT CJSON_READ_INFO* cJsonReadInfoCreate( const CJSON_MACHINE *pMachine )
+{
+   CJSON_READ_INFO *pInfo = (CJSON_READ_INFO*)\
+         cJsonMalloc( sizeof( CJSON_READ_INFO ), pMachine ) ;
+   if( pInfo )
+   {
+      ossMemset( pInfo, 0, sizeof( CJSON_READ_INFO ) ) ;
+      cJsonReadInfoSuccess( pInfo ) ;
+   }
+   return pInfo ;
+}
+
+SDB_EXPORT void cJsonReadInfoRelease( CJSON_READ_INFO *pReadInfo )
+{
+}
+
+SDB_EXPORT void cJsonReadInfoAddItem( CJSON_READ_INFO *pReadInfo, CJSON *pItem )
+{
+   pReadInfo->pItem = pItem ;
+}
+
+SDB_EXPORT void cJsonReadInfoSuccess( CJSON_READ_INFO *pReadInfo )
+{
+   pReadInfo->execState = CJSON_EXEC_SUCCESS ;
+}
+
+SDB_EXPORT void cJsonReadInfoIGNORE( CJSON_READ_INFO *pReadInfo )
+{
+   pReadInfo->execState = CJSON_EXEC_IGNORE ;
+}
+
+SDB_EXPORT INT32 cJsonReadInfoExecState( CJSON_READ_INFO *pReadInfo )
+{
+   return pReadInfo->execState ;
+}
+
+SDB_EXPORT void cJsonReadInfoSet( CJSON_READ_INFO *pReadInfo, INT32 readType )
+{
+   pReadInfo->readType = readType ;
+}
+
+SDB_EXPORT void cJsonReadInfoTypeInt32( CJSON_READ_INFO *pReadInfo )
+{
+   pReadInfo->readType = CJSON_READ_VALUE ;
+   pReadInfo->keyType  = CJSON_NONE ;
+   pReadInfo->valType  = CJSON_INT32 ;
+}
+
+SDB_EXPORT void cJsonReadInfoTypeInt64( CJSON_READ_INFO *pReadInfo )
+{
+   pReadInfo->readType = CJSON_READ_VALUE ;
+   pReadInfo->keyType  = CJSON_NONE ;
+   pReadInfo->valType  = CJSON_INT64 ;
+}
+
+SDB_EXPORT void cJsonReadInfoTypeDouble( CJSON_READ_INFO *pReadInfo )
+{
+   pReadInfo->readType = CJSON_READ_VALUE ;
+   pReadInfo->keyType  = CJSON_NONE ;
+   pReadInfo->valType  = CJSON_DOUBLE ;
+}
+
+SDB_EXPORT void cJsonReadInfoTypeString( CJSON_READ_INFO *pReadInfo )
+{
+   pReadInfo->readType = CJSON_READ_VALUE ;
+   pReadInfo->keyType  = CJSON_NONE ;
+   pReadInfo->valType  = CJSON_STRING ;
+}
+
+SDB_EXPORT void cJsonReadInfoTypeTrue( CJSON_READ_INFO *pReadInfo )
+{
+   pReadInfo->readType = CJSON_READ_VALUE ;
+   pReadInfo->keyType  = CJSON_NONE ;
+   pReadInfo->valType  = CJSON_TRUE ;
+}
+
+SDB_EXPORT void cJsonReadInfoTypeFalse( CJSON_READ_INFO *pReadInfo )
+{
+   pReadInfo->readType = CJSON_READ_VALUE ;
+   pReadInfo->keyType  = CJSON_NONE ;
+   pReadInfo->valType  = CJSON_FALSE ;
+}
+
+SDB_EXPORT void cJsonReadInfoTypeNull( CJSON_READ_INFO *pReadInfo )
+{
+   pReadInfo->readType = CJSON_READ_VALUE ;
+   pReadInfo->keyType  = CJSON_NONE ;
+   pReadInfo->valType  = CJSON_NULL ;
+}
+
+SDB_EXPORT void cJsonReadInfoTypeObject( CJSON_READ_INFO *pReadInfo )
+{
+   pReadInfo->readType = CJSON_READ_OBJECT ;
+   pReadInfo->keyType  = CJSON_NONE ;
+   pReadInfo->valType  = CJSON_OBJECT ;
+}
+
+SDB_EXPORT void cJsonReadInfoTypeArray( CJSON_READ_INFO *pReadInfo )
+{
+   pReadInfo->readType = CJSON_READ_ARRAY ;
+   pReadInfo->keyType  = CJSON_NONE ;
+   pReadInfo->valType  = CJSON_ARRAY ;
+}
+
+SDB_EXPORT void cJsonReadInfoTypeCustom( CJSON_READ_INFO *pReadInfo )
+{
+   pReadInfo->readType = CJSON_READ_OBJECT ;
+   pReadInfo->keyType  = CJSON_CUSTOM ;
+   pReadInfo->valType  = CJSON_OBJECT ;
+}
+
+SDB_EXPORT CJSON_MACHINE* cJsonCreate()
+{
+   CJSON_MACHINE *pMachine = NULL ;
+   pMachine = (CJSON_MACHINE*)SDB_OSS_MALLOC( sizeof( CJSON_MACHINE ) ) ;
+   if( pMachine == NULL )
+   {
+      CJSON_PRINTF_LOG( "Failed to create new state machine" ) ;
+   }
+   else
+   {
+      ossMemset( pMachine, 0, sizeof( CJSON_MACHINE ) ) ;
+      pMachine->state = STATE_READY ;
+      pMachine->parseMode = CJSON_LOOSE_PARSE ;
+      pMachine->level = 0 ;
+      pMachine->isCheckEnd = FALSE ;
+   }
+   return pMachine ;
+}
+
+SDB_EXPORT void cJsonInit( CJSON_MACHINE *pMachine,
+                           CJSON_PARSE_MODE mode,
+                           BOOLEAN isCheckEnd )
+{
+   CJSON_MEMORY_BLOCK *pBlock = NULL ;
+   pMachine->state = STATE_READY ;
+   pMachine->parseMode = mode ;
+   pMachine->level = 0 ;
+   pMachine->isCheckEnd = isCheckEnd ;
+   pMachine->pItem = NULL ;
+   pMachine->pMemBlock = pMachine->pFirstMemBlock ;
+   pBlock = pMachine->pMemBlock ;
+   while( pBlock )
+   {
+      pBlock->lastSize = pBlock->size ;
+      pBlock = pBlock->pNext ;
+   }
+}
+
+SDB_EXPORT void cJsonRelease( CJSON_MACHINE *pMachine )
+{
+   CJSON_MEMORY_BLOCK *pBlock = NULL ;
+   CJSON_MEMORY_BLOCK *pNext  = NULL ;
+   if( pMachine )
+   {
+      pBlock = pMachine->pFirstMemBlock ;
+      while( pBlock )
+      {
+         pNext = pBlock->pNext ;
+         SAFE_OSS_FREE( pBlock->pBuffer ) ;
+         SAFE_OSS_FREE( pBlock ) ;
+         pBlock = pNext ;
+      }
+      SAFE_OSS_FREE( pMachine ) ;
+   }
+}
+
+SDB_EXPORT void cJsonSetPrintfLog( void (*pFun)( const CHAR *pFunc,
+                                                 const CHAR *pFile,
+                                                 UINT32 line,
+                                                 const CHAR *pFmt,
+                                                 ... ) )
+{
+   _pCJsonPrintfLogFun = (CJSON_PLOG_FUNC)pFun ;
+}
+
+SDB_EXPORT BOOLEAN cJsonExtendAppend( CJSON_MATCH_TYPE matchType,
+                                      INPUT_FUNC parseFun,
+                                      UINT32 strLen,
+                                      CHAR *pString )
+{
+   if( _valueListMaxSize > _valueListSize )
+   {
+      _valueList[ _valueListSize ].matchType = matchType ;
+      _valueList[ _valueListSize ].strLen = strLen ;
+      _valueList[ _valueListSize ].parseFun = parseFun ;
+      ossStrncpy( _valueList[ _valueListSize ].string,
+                  pString,
+                  CJSON_VALU_MATCH_MAX_SIZE ) ;
+      ++_valueListSize ;
+      return TRUE ;
+   }
+   else
+   {
+      CJSON_PRINTF_LOG( "Max type: %d, current type: %d",
+                        _valueListMaxSize,
+                        _valueListSize ) ;
+      return FALSE ;
+   }
 }

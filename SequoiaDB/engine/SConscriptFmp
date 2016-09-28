@@ -61,6 +61,8 @@ utilFiles = [
       "client/bson/common_decimal.c",
       "client/base64c.c",
       "client/cJSON.c",
+      "client/cJSON_ext.c",
+      "client/cJSON_iterator.c",
       "client/jstobs.c",
       "client/timestampParse.c",
       "client/timestampTm.c",

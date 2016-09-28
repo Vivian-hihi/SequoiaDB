@@ -135,9 +135,6 @@ namespace import
    #define TIME_MAX_NUM       ((INT64)2147443199)
    #define TIME_MIN_NUM       ((INT64)-2147414400)
 
-   #define TIME_STAMP_TIMESTAMP_MIN -2147483648
-   #define TIME_STAMP_TIMESTAMP_MAX  2147483647
-
    #define DATE_FORMAT        (_dateFormat.c_str())
    #define DATE_FORMAT_LEN    (_dateFormat.length())
    #define DATE_START_YEAR    1900

@@ -22,7 +22,7 @@
 #ifndef CJSON_EXT__H
 #define CJSON_EXT__H
 
-#include "cJSON2.h"
+#include "cJSON.h"
 
 SDB_EXTERN_C_START
 

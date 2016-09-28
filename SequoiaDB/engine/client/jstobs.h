@@ -20,70 +20,64 @@
 #ifndef JSTOBS__H
 #define JSTOBS__H
 
+#include "cJSON.h"
 #include "core.h"
-#include "time.h"
 #include "bson/bson.h"
-
-#define INT_NUM_SIZE 32
-#define DOU_NUM_SIZE 32
-#define BSON_TEMP_SIZE_6 6
-#define BSON_TEMP_SIZE_32 32
-#define BSON_TEMP_SIZE_64 64
-#define BSON_TEMP_SIZE_128 128
-#define BSON_TEMP_SIZE_256 256
-#define BSON_TEMP_SIZE_512 512
-
-#define CJSON_MD5_16 16
-#define CJSON_MD5_32 32
-#define CJSON_MD5_64 64
-#define CJSON_UUID 36
-
-#define INT64_LAST_YEAR 9999
-#define INT32_LAST_YEAR 2038
-#define RELATIVE_YEAR 1900
-#define RELATIVE_MON 12
-#define RELATIVE_DAY 31
-#define RELATIVE_HOUR 24
-#define RELATIVE_MIN_SEC 60
-
-//0000-01-01
-#define TIME_STAMP_DATE_UNIX_MIN (-62167219200000LL)
-//1900-01-01
-#define TIME_STAMP_DATE_MIN      (-2208988800LL)
-//9999-12-31
-#define TIME_STAMP_DATE_MAX       (253402300799LL)
 
 #define TIME_STAMP_TIMESTAMP_MIN (-2147483648LL)
 #define TIME_STAMP_TIMESTAMP_MAX  (2147483647LL)
-
-#define LONG_JS_MIN (-9007199254740991LL)
-#define LONG_JS_MAX  (9007199254740991LL)
-
-#define TIME_FORMAT "%d-%d-%d-%d.%d.%d.%d"
-#define TIME_FORMAT_IOS "%d-%d-%dT%d:%d:%d.%dZ"
-#define TIME_OUTPUT_CSV_FORMAT "%04d-%02d-%02d-%02d.%02d.%02d.%06d"
-#define TIME_OUTPUT_FORMAT "{ \"$timestamp\": \"" TIME_OUTPUT_CSV_FORMAT "\" }"
-#define DATE_FORMAT "%d-%d-%d"
-#define DATE_OUTPUT_CSV_FORMAT "%04d-%02d-%02d"
-#define DATE_OUTPUT_FORMAT "{ \"$date\": \"" DATE_OUTPUT_CSV_FORMAT "\" }"
 
 SDB_EXTERN_C_START
 
 /** \fn 
 */
 
-/** \fn BOOLEAN jsonToBson ( bson *bs, const CHAR *json_str )
-    \brief Json converts to bson.
-    \param [in] json_str The json string to convert 
-    \param [out] bs The return bson object 
-    \retval TRUE Operation Success
-    \retval FALSE Operation Fail
+/** \fn BOOLEAN JsonSetPrintfLog()
+    \brief json convert bson print log
+    \param [in]  pFun print log function
 */
+SDB_EXPORT void JsonSetPrintfLog( void (*pFun)( const CHAR *pFunc,
+                                                const CHAR *pFile,
+                                                UINT32 line,
+                                                const CHAR *pFmt,
+                                                ... ) ) ;
+
+//Compatible with the old version, the new code is not recommended use.
 SDB_EXPORT BOOLEAN jsonToBson ( bson *bs, const CHAR *json_str ) ;
+
+//Compatible with the old version, the new code is not recommended use.
 SDB_EXPORT BOOLEAN jsonToBson2 ( bson *bs,
                                  const CHAR *json_str,
                                  BOOLEAN isMongo,
                                  BOOLEAN isBatch ) ;
+
+/** \fn BOOLEAN json2bson2( const CHAR *pJson, bson *pBson )
+    \brief Json converts to bson.
+    \param [in]  pJson The json string to convert
+    \param [out] pBson The return bson object 
+    \retval TRUE Operation Success
+    \retval FALSE Operation Fail
+*/
+SDB_EXPORT BOOLEAN json2bson2( const CHAR *pJson, bson *pBson ) ;
+
+/** \fn BOOLEAN json2bson( const CHAR *pJson,
+                           CJSON_MACHINE *pMachine,
+                           INT32 parseMode,
+                           bson *pBson )
+    \brief Json converts to bson.
+    \param [in]  pJson The json string to convert
+    \param [in]  pMachine The json parse state machine
+    \param [in]  parseMode The json parse mode, 0:loose mode; 1:rigorous mode;
+    \param [out] pBson The return bson object 
+    \retval TRUE Operation Success
+    \retval FALSE Operation Fail
+*/
+SDB_EXPORT BOOLEAN json2bson( const CHAR *pJson,
+                              CJSON_MACHINE *pMachine,
+                              INT32 parseMode,
+                              BOOLEAN isCheckEnd,
+                              bson *pBson ) ;
+
 /** \fn BOOLEAN bsonToJson ( CHAR *buffer, INT32 bufsize, const bson *b,
                              BOOLEAN toCSV, BOOLEAN skipUndefined) 
     \brief Bson converts to json.
@@ -100,8 +94,6 @@ SDB_EXPORT BOOLEAN jsonToBson2 ( bson *bs,
 */
 SDB_EXPORT BOOLEAN bsonToJson ( CHAR *buffer, INT32 bufsize, const bson *b,
                                 BOOLEAN toCSV, BOOLEAN skipUndefined ) ;
-SDB_EXPORT BOOLEAN bsonElementToChar ( CHAR **buffer, INT32 *bufsize,
-                                       bson_iterator *in ) ;
 
 SDB_EXTERN_C_END
 

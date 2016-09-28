@@ -16,7 +16,7 @@
 
 #include <time.h>
 #include "ossUtil.h"
-#include "cJSON2.h"
+#include "cJSON.h"
 
 static CJSON_VALUE_TYPE getCustomType( const CJSON *pItem ) ;
 static CJSON* getCustomVal( const CJSON *pItem,
