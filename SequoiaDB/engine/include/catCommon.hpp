@@ -109,7 +109,7 @@ namespace engine
 
    INT32 catGroupID2Name( UINT32 groupID, string &groupName, pmdEDUCB *cb ) ;
    INT32 catGroupName2ID( const CHAR *groupName, UINT32 &groupID,
-                          pmdEDUCB *cb ) ;
+                          BOOLEAN dataGroupOnly, pmdEDUCB *cb ) ;
 
    INT32 catGroupCount( INT64 & count, pmdEDUCB * cb ) ;
 

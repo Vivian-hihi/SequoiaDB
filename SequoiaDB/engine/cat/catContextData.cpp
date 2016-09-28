@@ -1340,6 +1340,15 @@ namespace engine
       /// 2) whether the group is one of the groups of domain.
       if ( NULL != clInfo._gpSpecified )
       {
+         INT32 tmpGrpID = CAT_INVALID_GROUPID ;
+
+         // test group first
+         rc = catGroupName2ID( clInfo._gpSpecified, (UINT32 &)tmpGrpID,
+                               TRUE, cb ) ;
+         PD_RC_CHECK( rc, PDERROR,
+                      "Failed to convert group name [%s] to id, rc: %d",
+                      clInfo._gpSpecified, rc ) ;
+
          if ( !isSysDomain )
          {
             rc = catGetDomainGroups( domainObj, groupsOfDomain ) ;
@@ -1363,15 +1372,6 @@ namespace engine
          }
          else
          {
-            INT32 tmpGrpID = CAT_INVALID_GROUPID ;
-            rc = catGetGroupObj( clInfo._gpSpecified, TRUE, gpObj, cb ) ;
-            PD_RC_CHECK( rc, PDERROR,
-                         "Failed to get group [%s] info, rc: %d",
-                         clInfo._gpSpecified, rc ) ;
-            rc = rtnGetIntElement( gpObj, CAT_GROUPID_NAME, tmpGrpID ) ;
-            PD_RC_CHECK( rc, PDERROR,
-                         "Failed to get group id of group [%s], rc: %d",
-                         clInfo._gpSpecified, rc ) ;
             groupIDList.push_back( (UINT32)tmpGrpID ) ;
          }
       }
@@ -1416,7 +1416,7 @@ namespace engine
          }
       }
 
-      rc = catCheckGroupsByID( groupIDList );
+      rc = catCheckGroupsByID( groupIDList ) ;
       PD_RC_CHECK( rc, PDERROR,
                    "Failed to assign group for collection [%s], rc: %d",
                    clInfo._pCLName, rc ) ;

@@ -456,24 +456,13 @@ namespace engine
       BSONObj boMatcher ;
       BSONObjBuilder builder ;
 
-      if ( dataGroupOnly )
-      {
-         builder.append( CAT_GROUPNAME_NAME, groupName ) ;
-         builder.append( FIELD_NAME_GROUPID,
-                         BSON( "$gte" << DATA_NODE_ID_BEGIN ) ) ;
-         boMatcher = builder.obj() ;
-      }
-      else
-      {
-         boMatcher = BSON( CAT_GROUPNAME_NAME << groupName ) ;
-      }
+      boMatcher = BSON( CAT_GROUPNAME_NAME << groupName ) ;
 
       rc = catGetOneObj( CAT_NODE_INFO_COLLECTION, dummyObj, boMatcher,
                          dummyObj, cb, obj ) ;
       if ( SDB_DMS_EOC == rc )
       {
-         rc = dataGroupOnly ?
-              SDB_CAT_IS_NOT_DATAGROUP : SDB_CLS_GRP_NOT_EXIST ;
+         rc = SDB_CLS_GRP_NOT_EXIST ;
       }
       else if ( rc )
       {
@@ -485,6 +474,13 @@ namespace engine
       {
          BSONElement e = obj.getField( CAT_ROLE_NAME ) ;
          if ( !e.isNumber() || SDB_ROLE_DATA != e.numberInt() )
+         {
+            rc = SDB_CAT_IS_NOT_DATAGROUP ;
+            goto error ;
+         }
+
+         e = obj.getField( FIELD_NAME_GROUPID ) ;
+         if ( !e.isNumber() || DATA_GROUP_ID_BEGIN > e.numberInt() )
          {
             rc = SDB_CAT_IS_NOT_DATAGROUP ;
             goto error ;
@@ -639,26 +635,32 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CATGROUPNAME2ID, "catGroupName2ID" )
    INT32 catGroupName2ID( const CHAR * groupName, UINT32 &groupID,
-                          pmdEDUCB * cb )
+                          BOOLEAN dataGroupOnly, pmdEDUCB * cb )
    {
       INT32 rc = SDB_OK ;
       BSONObj groupObj ;
       INT32 tmpGrpID = CAT_INVALID_GROUPID ;
 
       PD_TRACE_ENTRY ( SDB_CATGROUPNAME2ID ) ;
-      rc = catGetGroupObj( groupName, FALSE, groupObj, cb ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to get group obj by name[%s], rc: %d",
+
+      // Report SDB_CLS_GRP_NOT_EXIST first
+      // Get back group object anyway, filter data group later
+      rc = catGetGroupObj( groupName, dataGroupOnly, groupObj, cb ) ;
+      PD_RC_CHECK( rc, PDERROR,
+                   "Failed to get group obj by name[%s], rc: %d",
                    groupName, rc ) ;
 
+      // Get group ID
       rc = rtnGetIntElement( groupObj, CAT_GROUPID_NAME, tmpGrpID ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to get field[%s], rc: %d",
+      PD_RC_CHECK( rc, PDERROR, "Failed to get field [%s], rc: %d",
                    CAT_GROUPID_NAME, rc ) ;
+
       groupID = (UINT32)tmpGrpID ;
 
-   done:
+   done :
       PD_TRACE_EXITRC ( SDB_CATGROUPNAME2ID, rc ) ;
       return rc ;
-   error:
+   error :
       goto done ;
    }
 

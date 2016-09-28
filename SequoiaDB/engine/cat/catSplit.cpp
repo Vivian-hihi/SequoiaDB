@@ -890,7 +890,7 @@ namespace engine
                 "Target group name can not the same with source group name" ) ;
 
       // get source id
-      rc = catGroupName2ID( srcName.c_str(), srcGroupID, cb ) ;
+      rc = catGroupName2ID( srcName.c_str(), srcGroupID, TRUE, cb ) ;
       PD_RC_CHECK( rc, PDERROR,
                    "Failed to convert group name [%s] to id, rc: %d",
                    srcName.c_str(), rc ) ;
@@ -902,7 +902,7 @@ namespace engine
                 cataSet.name(), srcName.c_str() ) ;
 
       // get target id
-      rc = catGroupName2ID( dstName.c_str(), dstGroupID, cb ) ;
+      rc = catGroupName2ID( dstName.c_str(), dstGroupID, TRUE, cb ) ;
       PD_RC_CHECK( rc, PDERROR,
                    "Failed to convert group name [%s] to id, rc: %d",
                    dstName.c_str(), rc ) ;
