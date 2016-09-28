@@ -84,7 +84,7 @@ namespace engine
 
    const CHAR* rtnCoordSnapshotTransCur::getInnerAggrContent()
    {
-      return "" ;
+      return NULL ;
    }
 
    /*
@@ -97,7 +97,7 @@ namespace engine
 
    const CHAR* rtnCoordSnapshotTrans::getInnerAggrContent()
    {
-      return "" ;
+      return NULL ;
    }
 
    /*
