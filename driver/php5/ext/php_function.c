@@ -244,6 +244,7 @@ INT32 php_jsonFind( const CHAR *pStr,
       cJsonIteratorNext( pIter ) ;
    }
 done:
+   cJsonRelease( pMachine ) ;
    return rc ;
 error:
    goto done ;
