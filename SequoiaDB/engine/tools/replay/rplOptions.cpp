@@ -48,7 +48,8 @@ namespace replay
    #define RPL_OPTION_FILTER            "filter"
    #define RPL_OPTION_DUMP              "dump"
    #define RPL_OPTION_DELETE            "delete"
-   #define RPL_OPTION_HOLD              "hold"
+   #define RPL_OPTION_WATCH             "watch"
+   #define RPL_OPTION_DAEMON            "daemon"
    #define RPL_OPTION_HELPFULL          "helpfull"
    #define RPL_OPTION_DEBUG             "debug"
 
@@ -59,12 +60,16 @@ namespace replay
    #define RPL_EXPLAIN_USER             "username"
    #define RPL_EXPLAIN_PASSWD           "password"
    #define RPL_EXPLAIN_PATH             "archivelog directory or file path"
-   #define RPL_EXPLAIN_FILTER           "log filtering rule"
+   #define RPL_EXPLAIN_FILTER           "log filtering rule, " \
+                                        "e.g. --filter '{\"OP\": [\"insert\", \"update\"]}'"
    #define RPL_EXPLAIN_DUMP             "dump log only, default is false"
    #define RPL_EXPLAIN_DELETE           "delete log file after replay, " \
                                         "default is false"
-   #define RPL_EXPLAIN_HOLD             "continuously find and replay log files, " \
-                                        "default is false"
+   #define RPL_EXPLAIN_WATCH            "continuously watch path and replay log files, " \
+                                        "valid when path is directory, default is false"
+   #define RPL_EXPLAIN_DAEMON           "run in background, default is false, " \
+                                        "the background process can be stopped elegantly " \
+                                        "by \"kill -15 <pid>\""
    #define RPL_EXPLAIN_HELPFULL         "print all options"
    #define RPL_EXPLAIN_DEBUG            "log debug info"
 
@@ -75,7 +80,8 @@ namespace replay
       _pathType = SDB_OSS_UNK;
       _dump = FALSE;
       _delete = FALSE;
-      _hold = FALSE;
+      _watch = FALSE;
+      _daemon = FALSE;
       _debug = FALSE;
    }
 
@@ -98,7 +104,8 @@ namespace replay
          (RPL_OPTION_FILTER,        _TYPE(string),    RPL_EXPLAIN_FILTER)
          (RPL_OPTION_DUMP,          _TYPE(string),    RPL_EXPLAIN_DUMP)
          (RPL_OPTION_DELETE,        _TYPE(string),    RPL_EXPLAIN_DELETE)
-         (RPL_OPTION_HOLD,          _TYPE(string),    RPL_EXPLAIN_HOLD)
+         (RPL_OPTION_WATCH,         _TYPE(string),    RPL_EXPLAIN_WATCH)
+         (RPL_OPTION_DAEMON,        _TYPE(string),    RPL_EXPLAIN_DAEMON)
       ;
 
       addOptions("Helpfull Options", TRUE)
@@ -156,7 +163,7 @@ namespace replay
       return has(RPL_OPTION_HELPFULL);
    }
 
-   string Options::buildCmd(INT32 argc, CHAR* argv[])
+   string Options::buildPrintableCmd(INT32 argc, CHAR* argv[])
    {
       stringstream ss;
 
@@ -165,6 +172,31 @@ namespace replay
          if (argv[i] == string("--"RPL_OPTION_PASSWD))
          {
             i++; // ignore password
+            continue;
+         }
+
+         if (i > 0 && argv[i - 1] == string("--"RPL_OPTION_FILTER))
+         {
+            ss << "'" << argv[i] << "'" << " ";
+         }
+         else
+         {
+            ss << argv[i] << " ";
+         }
+      }
+
+      return ss.str();
+   }
+
+   string Options::buildBackgroundCmd(INT32 argc, CHAR* argv[])
+   {
+      stringstream ss;
+
+      for (INT32 i = 0; i < argc; i++)
+      {
+         if (argv[i] == string("--"RPL_OPTION_DAEMON))
+         {
+            i++; // ignore daemon value
             continue;
          }
 
@@ -301,16 +333,21 @@ namespace replay
          ossStrToBoolean(del.c_str(), &_delete);
       }
 
-      if (has(RPL_OPTION_HOLD))
+      if (has(RPL_OPTION_WATCH))
       {
-         string hold = get<string>(RPL_OPTION_HOLD);
-         ossStrToBoolean(hold.c_str(), &_hold);
+         string hold = get<string>(RPL_OPTION_WATCH);
+         ossStrToBoolean(hold.c_str(), &_watch);
+      }
+
+      if (has(RPL_OPTION_DAEMON))
+      {
+         string daemon = get<string>(RPL_OPTION_DAEMON);
+         ossStrToBoolean(daemon.c_str(), &_daemon);
       }
 
       if (has(RPL_OPTION_DEBUG))
       {
-         string debug = get<string>(RPL_OPTION_DEBUG);
-         ossStrToBoolean(debug.c_str(), &_debug);
+         _debug = TRUE;
       }
 
    done: 

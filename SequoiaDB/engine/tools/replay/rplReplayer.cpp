@@ -43,7 +43,7 @@ using namespace sdbclient;
 
 namespace replay
 {
-   #define RPL_HOLD_INTERVAL (10) // seconds
+   #define RPL_WATCH_INTERVAL (10 * 1000) // seconds
 
    BOOLEAN _isRunning = FALSE;
 
@@ -133,7 +133,7 @@ namespace replay
 
       {
          stringstream ss;
-         ss << ".sdbreplay.tmp."
+         ss << "sdbreplay.tmp."
             << ossGetCurrentProcessID();
          _tmpFile = ss.str();
 
@@ -315,11 +315,11 @@ namespace replay
 
       if (_options->remove())
       {
-         rc = ossFile::deleteFile(filePath);
+         rc = ossFile::deleteFile(file);
          if (SDB_OK != rc)
          {
             PD_LOG(PDERROR, "Failed to delete log file[%s], rc=%d",
-                   filePath.c_str(), rc);
+                   file.c_str(), rc);
             goto error;
          }
       }
@@ -700,7 +700,7 @@ namespace replay
             }
          }
 
-         if (!_options->hold())
+         if (!_options->watch())
          {
             break;
          }
@@ -712,7 +712,7 @@ namespace replay
             goto done;
          }
 
-         ossSleepsecs(RPL_HOLD_INTERVAL);
+         ossSleep(RPL_WATCH_INTERVAL);
       }
 
    done:
@@ -867,10 +867,10 @@ namespace replay
                goto error;
             }
 
-            PD_LOG(PDINFO, "current replay:\n%s", _monitor.dump().c_str());
-
             // full file
             _monitor.setNextFileId(i + 1);
+
+            PD_LOG(PDINFO, "current replay:\n%s", _monitor.dump().c_str());
             continue;
          }
 
@@ -894,10 +894,10 @@ namespace replay
                goto error;
             }
 
-            PD_LOG(PDINFO, "current replay:\n%s", _monitor.dump().c_str());
-
             // partial file
             _monitor.setNextFileId(i);
+
+            PD_LOG(PDINFO, "current replay:\n%s", _monitor.dump().c_str());
             continue;
          }
 

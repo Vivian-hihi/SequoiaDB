@@ -52,7 +52,8 @@ namespace replay
       BOOLEAN hasHelp();
       BOOLEAN hasVersion();
       BOOLEAN hasHelpfull();
-      string  buildCmd(INT32 argc, CHAR* argv[]);
+      string  buildPrintableCmd(INT32 argc, CHAR* argv[]);
+      string  buildBackgroundCmd(INT32 argc, CHAR* argv[]);
 
    public:
       OSS_INLINE const string& hostName() const { return _hostName; }
@@ -64,7 +65,8 @@ namespace replay
       OSS_INLINE const BSONObj& filter() const { return _filter; }
       OSS_INLINE BOOLEAN dump() const { return _dump; }
       OSS_INLINE BOOLEAN remove() const { return _delete; }
-      OSS_INLINE BOOLEAN hold() const { return _hold; }
+      OSS_INLINE BOOLEAN watch() const { return _watch; }
+      OSS_INLINE BOOLEAN daemon() const { return _daemon; }
       OSS_INLINE BOOLEAN debug() const { return _debug; }
 
    private:
@@ -80,7 +82,8 @@ namespace replay
       BSONObj           _filter;
       BOOLEAN           _dump;
       BOOLEAN           _delete;
-      BOOLEAN           _hold;
+      BOOLEAN           _watch;
+      BOOLEAN           _daemon;
       BOOLEAN           _debug;
    };
 }

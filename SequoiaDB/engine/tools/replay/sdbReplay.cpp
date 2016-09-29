@@ -30,6 +30,7 @@
 *******************************************************************************/
 #include "rplOptions.hpp"
 #include "rplReplayer.hpp"
+#include "ossCmdRunner.hpp"
 #include "ossVer.h"
 #include "pd.hpp"
 #include "utilCommon.hpp"
@@ -79,7 +80,38 @@ int main(int argc, char* argv[])
       setPDLevel(PDDEBUG);
    }
 
-   PD_LOG(PDEVENT, "command: %s", options.buildCmd(argc, argv).c_str());
+   if (options.daemon())
+   {
+      engine::ossCmdRunner runner;
+      string cmd = options.buildBackgroundCmd(argc, argv);
+      UINT32 exitCode = 0;
+
+      if (options.debug())
+      {
+         std::cout << "start background process: " << cmd.c_str() << std::endl;
+      }
+
+      rc = runner.exec(cmd.c_str(), exitCode, TRUE, -1, FALSE, NULL, TRUE, FALSE);
+      if (SDB_OK != rc)
+      {
+         PD_LOG(PDERROR, "Failed to run in background, rc=%d", rc);
+         goto error;
+      }
+
+      if (options.debug())
+      {
+         std::cout << "background pid is " << runner.getPID() << std::endl;
+      }
+
+      goto done;
+   }
+
+   {
+      string cmd = options.buildPrintableCmd(argc, argv);
+      ossEnableNameChanges(argc, argv);
+      ossRenameProcess(cmd.c_str());
+      PD_LOG(PDEVENT, "command: %s", cmd.c_str());
+   }
 
    try
    {

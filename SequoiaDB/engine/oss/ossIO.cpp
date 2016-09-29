@@ -581,7 +581,6 @@ INT32 ossDelete ( const CHAR *pPathName )
       if ( !exists( pathName ) )
       {
          // if file does not exist, let's return FNE but not log anything
-         PD_LOG ( PDINFO, "File %s does not exist", pPathName ) ;
          rc = SDB_FNE ;
          goto error ;
       }
