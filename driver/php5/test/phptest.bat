@@ -21,25 +21,25 @@ if %errorlevel% NEQ 0 goto ERR
 ..\..\..\tools\server\php_win\php.exe -c .\php.ini ..\..\test\php\tools\phpunit.phar --log-junit phptest.error.txt ..\..\test\php\SequoiaDB\sqlTest.php
 if %errorlevel% NEQ 0 goto ERR
 
-..\..\..\tools\server\php_win\php.exe -c .\php.ini ..\..\test\php\tools\phpunit.phar --log-junit phptest.error.txt ..\..\test\php\SequoiaDB\configure.php
+..\..\..\tools\server\php_win\php.exe -c .\php.ini ..\..\test\php\tools\phpunit.phar --log-junit phptest.error.txt ..\..\test\php\SequoiaDB\configureTest.php
 if %errorlevel% NEQ 0 goto ERR
 
-..\..\..\tools\server\php_win\php.exe -c .\php.ini ..\..\test\php\tools\phpunit.phar --log-junit phptest.error.txt ..\..\test\php\SequoiaDB\authenticate.php
+..\..\..\tools\server\php_win\php.exe -c .\php.ini ..\..\test\php\tools\phpunit.phar --log-junit phptest.error.txt ..\..\test\php\SequoiaDB\authenticateTest.php
 if %errorlevel% NEQ 0 goto ERR
 
-..\..\..\tools\server\php_win\php.exe -c .\php.ini ..\..\test\php\tools\phpunit.phar --log-junit phptest.error.txt ..\..\test\php\SequoiaDB\procedure.php
+..\..\..\tools\server\php_win\php.exe -c .\php.ini ..\..\test\php\tools\phpunit.phar --log-junit phptest.error.txt ..\..\test\php\SequoiaDB\procedureTest.php
 if %errorlevel% NEQ 0 goto ERR
 
-..\..\..\tools\server\php_win\php.exe -c .\php.ini ..\..\test\php\tools\phpunit.phar --log-junit phptest.error.txt ..\..\test\php\SequoiaDB\transaction.php
+..\..\..\tools\server\php_win\php.exe -c .\php.ini ..\..\test\php\tools\phpunit.phar --log-junit phptest.error.txt ..\..\test\php\SequoiaDB\transactionTest.php
 if %errorlevel% NEQ 0 goto ERR
 
 ..\..\..\tools\server\php_win\php.exe -c .\php.ini ..\..\test\php\tools\phpunit.phar --log-junit phptest.error.txt ..\..\test\php\SequoiaDB\backupoffline.php
 if %errorlevel% NEQ 0 goto ERR
 
-..\..\..\tools\server\php_win\php.exe -c .\php.ini ..\..\test\php\tools\phpunit.phar --log-junit phptest.error.txt ..\..\test\php\SequoiaDB\task.php
+..\..\..\tools\server\php_win\php.exe -c .\php.ini ..\..\test\php\tools\phpunit.phar --log-junit phptest.error.txt ..\..\test\php\SequoiaDB\taskTest.php
 if %errorlevel% NEQ 0 goto ERR
 
-..\..\..\tools\server\php_win\php.exe -c .\php.ini ..\..\test\php\tools\phpunit.phar --log-junit phptest.error.txt ..\..\test\php\SequoiaDB\session.php
+..\..\..\tools\server\php_win\php.exe -c .\php.ini ..\..\test\php\tools\phpunit.phar --log-junit phptest.error.txt ..\..\test\php\SequoiaDB\sessionTest.php
 if %errorlevel% NEQ 0 goto ERR
 
 ..\..\..\tools\server\php_win\php.exe -c .\php.ini ..\..\test\php\tools\phpunit.phar --log-junit phptest.error.txt ..\..\test\php\SequoiaCS\csTest.php
