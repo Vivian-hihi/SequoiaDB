@@ -189,6 +189,7 @@ utilFiles = [
       "util/utilStream.cpp",
       "util/utilFileStream.cpp",
       "util/utilZlibStream.cpp",
+      "util/utilJsonFile.cpp",
       ]
 
 dpsFiles = [

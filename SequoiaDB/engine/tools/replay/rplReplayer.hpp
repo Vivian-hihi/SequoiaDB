@@ -38,6 +38,7 @@
 #include "../client/client.hpp"
 #include "dpsArchiveFileMgr.hpp"
 #include "dpsLogFile.hpp"
+#include "ossFile.hpp"
 
 using namespace std;
 
@@ -52,6 +53,9 @@ namespace replay
       INT32 run();
 
    private:
+      INT32 _initStatus();
+      INT32 _readStatus();
+      INT32 _writeStatus();
       INT32 _connectSdb();
       INT32 _replayFile(const string& file);
       INT32 _replayLogFile(engine::dpsLogFile& logFile,
@@ -74,6 +78,7 @@ namespace replay
       Options*                   _options;
       Filter                     _filter;
       Monitor                    _monitor;
+      engine::ossFile            _status;
       string                     _path;
       sdbclient::sdb             _sdb;
       engine::dpsArchiveFileMgr  _archiveFileMgr;

@@ -50,6 +50,7 @@ namespace replay
    #define RPL_OPTION_DELETE            "delete"
    #define RPL_OPTION_WATCH             "watch"
    #define RPL_OPTION_DAEMON            "daemon"
+   #define RPL_OPTION_STATUS            "status"
    #define RPL_OPTION_HELPFULL          "helpfull"
    #define RPL_OPTION_DEBUG             "debug"
 
@@ -70,6 +71,9 @@ namespace replay
    #define RPL_EXPLAIN_DAEMON           "run in background, default is false, " \
                                         "the background process can be stopped elegantly " \
                                         "by \"kill -15 <pid>\""
+   #define RPL_EXPLAIN_STATUS           "specify status file, " \
+                                        "file will be created if it not exists, " \
+                                        "replay will start according to the status if it exists"
    #define RPL_EXPLAIN_HELPFULL         "print all options"
    #define RPL_EXPLAIN_DEBUG            "log debug info"
 
@@ -106,6 +110,7 @@ namespace replay
          (RPL_OPTION_DELETE,        _TYPE(string),    RPL_EXPLAIN_DELETE)
          (RPL_OPTION_WATCH,         _TYPE(string),    RPL_EXPLAIN_WATCH)
          (RPL_OPTION_DAEMON,        _TYPE(string),    RPL_EXPLAIN_DAEMON)
+         (RPL_OPTION_STATUS,        _TYPE(string),    RPL_EXPLAIN_STATUS)
       ;
 
       addOptions("Helpfull Options", TRUE)
@@ -343,6 +348,11 @@ namespace replay
       {
          string daemon = get<string>(RPL_OPTION_DAEMON);
          ossStrToBoolean(daemon.c_str(), &_daemon);
+      }
+
+      if (has(RPL_OPTION_STATUS))
+      {
+         _status = get<string>(RPL_OPTION_STATUS);
       }
 
       if (has(RPL_OPTION_DEBUG))

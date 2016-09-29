@@ -35,15 +35,22 @@
 #include "oss.h"
 #include "ossEDU.hpp"
 #include "../bson/bsonobj.h"
+#include "utilJsonFile.hpp"
 #include <sstream>
 #include <iostream>
 
 using namespace engine;
+using namespace bson;
 using namespace sdbclient;
 
 namespace replay
 {
    #define RPL_WATCH_INTERVAL (10 * 1000) // seconds
+
+   #define RPL_STATUS_INTERVAL (1000)
+
+   #define RPL_STATUS_NEXT_LSN      "nextLSN"
+   #define RPL_STATUS_NEXT_FILEID   "nextFileId"
 
    BOOLEAN _isRunning = FALSE;
 
@@ -125,6 +132,16 @@ namespace replay
                  SDB_OSS_DIR == _options->pathType(),
                  "path can only be file or directory");
 
+      if (!_options->status().empty())
+      {
+         rc = _initStatus();
+         if (SDB_OK != rc)
+         {
+            PD_LOG(PDERROR, "Failed to init status, rc=%d", rc);
+            goto error;
+         }
+      }
+
       rc = _connectSdb();
       if (SDB_OK != rc)
       {
@@ -199,7 +216,15 @@ namespace replay
       }
 
    done:
-      PD_LOG(PDINFO, "replay result:\n%s", _monitor.dump().c_str());
+      if (_status.isOpened())
+      {
+         rc = _writeStatus();
+         if (SDB_OK != rc)
+         {
+            PD_LOG(PDERROR, "Failed to write status, rc=%d", rc);
+         }
+      }
+      PD_LOG(PDINFO, "Replay result:\n%s", _monitor.dump().c_str());
       _isRunning = FALSE;
       return rc;
    error:
@@ -313,6 +338,17 @@ namespace replay
       PD_LOG(PDEVENT, "Replay archive log file[%s] successfully",
              file.c_str());
 
+      if (_status.isOpened())
+      {
+         rc = _writeStatus();
+         if (SDB_OK != rc)
+         {
+            PD_LOG(PDERROR, "Failed to write status, rc=%d",
+                   rc);
+            goto error;
+         }
+      }
+
       if (_options->remove())
       {
          rc = ossFile::deleteFile(file);
@@ -337,11 +373,12 @@ namespace replay
       dpsLogRecord log;
       dpsLogRecordHeader& logHeader = log.head();
       DPS_LSN_OFFSET currentLSN;
+      INT64 i = 0;
 
       SDB_ASSERT(startLSN <= endLSN, "invalid start LSN");
 
       currentLSN = logFile.getFirstLSN().offset;
-      if (currentLSN < startLSN)
+      if (DPS_INVALID_LSN_OFFSET == currentLSN || currentLSN < startLSN)
       {
          currentLSN = startLSN;
       }
@@ -366,6 +403,8 @@ namespace replay
 
       while (currentLSN < endLSN)
       {
+         i++;
+
          if (!_isRunning)
          {
             rc = SDB_INTERRUPT;
@@ -440,6 +479,20 @@ namespace replay
          currentLSN += logHeader._length;
          _monitor.opCount(logHeader._type);
          _monitor.setNextLSN(currentLSN);
+
+         if (0 == i%RPL_STATUS_INTERVAL)
+         {
+            if (_status.isOpened())
+            {
+               rc = _writeStatus();
+               if (SDB_OK != rc)
+               {
+                  PD_LOG(PDERROR, "Failed to write status, rc=%d",
+                         rc);
+                  goto error;
+               }
+            }
+         }
       }
 
    done:
@@ -1015,6 +1068,136 @@ namespace replay
                 _options->hostName().c_str(),
                 _options->serviceName().c_str(),
                 rc);
+         goto error;
+      }
+
+   done:
+      return rc;
+   error:
+      goto done;
+   }
+
+   INT32 Replayer::_initStatus()
+   {
+      INT32 rc = SDB_OK;
+      string filePath;
+      UINT32 mode;
+
+      SDB_ASSERT(NULL != _options, "_options can't be NULL");
+
+      filePath = _options->status();
+      SDB_ASSERT(!filePath.empty(), "status file is empty");
+
+      mode = OSS_CREATEONLY | OSS_READWRITE;
+
+      rc = _status.open(filePath, mode, OSS_DEFAULTFILE);
+      if (SDB_OK != rc)
+      {
+         PD_LOG(PDERROR, "Failed to open status file[%s], rc=%d",
+                filePath.c_str(), rc);
+         goto error;
+      }
+
+      rc = _readStatus();
+      if (SDB_OK != rc)
+      {
+         PD_LOG(PDERROR, "Failed to read status, rc=%d", rc);
+         goto error;
+      }
+
+   done:
+      return rc;
+   error:
+      goto done;
+   }
+
+   INT32 Replayer::_readStatus()
+   {
+      INT32 rc = SDB_OK;
+      BSONObj data;
+      BSONElement ele;
+
+      SDB_ASSERT(_status.isOpened(), "_status is not opened");
+
+      rc = engine::utilJsonFile::read(_status, data);
+      if (SDB_OK != rc)
+      {
+         PD_LOG(PDERROR, "Failed to read json from status file[%s], rc=%d",
+                _status.getPath().c_str(), rc);
+         goto error;
+      }
+
+      ele = data.getField(RPL_STATUS_NEXT_LSN) ;
+      if (EOO != ele.type())
+      {
+         DPS_LSN_OFFSET nextLSN;
+
+         if (NumberLong != ele.type() && NumberInt != ele.type())
+         {
+            rc = SDB_INVALIDARG;
+            PD_LOG(PDERROR, "Invalid json field[%s]", RPL_STATUS_NEXT_LSN);
+            goto error;
+         }
+         nextLSN = (DPS_LSN_OFFSET)ele.numberLong();
+         if (nextLSN < 0)
+         {
+            rc = SDB_INVALIDARG ;
+            PD_LOG(PDERROR, "Invalid value of field[%s]: %d",
+                   RPL_STATUS_NEXT_LSN, nextLSN);
+            goto error;
+         }
+
+         _monitor.setNextLSN(nextLSN);
+      }
+
+      ele = data.getField(RPL_STATUS_NEXT_FILEID);
+      if (EOO != ele.type())
+      {
+         UINT32 nextFileId;
+
+         if (NumberLong != ele.type() && NumberInt != ele.type())
+         {
+            rc = SDB_INVALIDARG;
+            PD_LOG(PDERROR, "Invalid json field[%s]", RPL_STATUS_NEXT_FILEID);
+            goto error;
+         }
+         nextFileId = (UINT32)ele.numberLong();
+         _monitor.setNextFileId(nextFileId);
+      }
+
+   done:
+      return rc;
+   error:
+      goto done;
+   }
+   
+   INT32 Replayer::_writeStatus()
+   {
+      INT32 rc = SDB_OK;
+      bson::BSONObjBuilder builder;
+      BSONObj data;
+
+      SDB_ASSERT(_status.isOpened(), "_status is not opened");
+
+      try
+      {
+         builder.append(RPL_STATUS_NEXT_LSN, (INT64)_monitor.getNextLSN());
+         builder.append(RPL_STATUS_NEXT_FILEID, _monitor.getNextFileId());
+         data = builder.obj();
+      }
+      catch (std::exception& e)
+      {
+         rc = SDB_SYS;
+         PD_LOG (PDERROR, "Failed to create BSON object: %s",
+                 e.what()) ;
+         goto error;
+      }
+
+      rc = engine::utilJsonFile::write(_status, data);
+      if (SDB_OK != rc)
+      {
+         PD_LOG(PDERROR, "Failed to write json to status file[%s], rc=%d",
+                _status.getPath().c_str(), rc);
          goto error;
       }
 
