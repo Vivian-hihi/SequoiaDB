@@ -195,6 +195,7 @@ namespace engine
       typedef std::map<UINT64, BSONObj>         MAPTASKQUERY ;
       typedef std::map<UINT64, omaTaskPtr >     MAP_TASKINFO ;
       typedef std::map<UINT64, ossAutoEvent*>   MAP_TASKEVENT ;
+      typedef std::map<UINT32, sptScope*>       MAP_SCOPE ;
 
       public:
          _omAgentMgr() ;
@@ -223,6 +224,9 @@ namespace engine
 
          sptScope*       getScope() ;
          void            releaseScope( sptScope *pScope ) ;
+
+         sptScope*       getScopeBySession() ;
+         void            clearScopeBySession() ;
 
          void            incSession() ;
          void            decSession() ;
@@ -287,6 +291,9 @@ namespace engine
          MAPTASKQUERY               _mapTaskQuery ;
          MAP_TASKINFO               _mapTaskInfo ;
          MAP_TASKEVENT              _mapTaskEvent ;
+
+         MAP_SCOPE                  _mapScopes ;
+         ossSpinXLatch              _scopeLatch ;
 
    } ;
 

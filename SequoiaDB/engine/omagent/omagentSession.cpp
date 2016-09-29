@@ -137,6 +137,8 @@ namespace engine
                    _client.getPeerPort() ) ;
       eduCB()->setName( _detailName ) ;
       _pNodeMgr = sdbGetOMAgentMgr()->getNodeMgr() ;
+      /// clear self scopes
+      sdbGetOMAgentMgr()->clearScopeBySession() ;
    }
 
    INT32 _omaSession::_defaultMsgFunc( NET_HANDLE handle, MsgHeader * msg )

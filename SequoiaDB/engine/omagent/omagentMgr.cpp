@@ -737,6 +737,16 @@ namespace engine
 
    INT32 _omAgentMgr::fini()
    {
+      /// release mapScopes
+      SDB_ASSERT( 0 == _mapScopes.size(), "Session scopes must be zero" ) ;
+      MAP_SCOPE::iterator it = _mapScopes.begin() ;
+      while( it != _mapScopes.end() )
+      {
+         releaseScope( it->second ) ;
+         ++it ;
+      }
+      _mapScopes.clear() ;
+
       _nodeMgr.fini() ;
       _sessionMgr.fini() ;
       _sptScopePool.fini() ;
@@ -955,9 +965,45 @@ namespace engine
       return _sptScopePool.newScope() ;
    }
 
-   void _omAgentMgr::releaseScope( sptScope * pScope )
+   void _omAgentMgr::releaseScope( sptScope *pScope )
    {
       _sptScopePool.releaseScope( pScope ) ;
+   }
+
+   sptScope* _omAgentMgr::getScopeBySession()
+   {
+      pmdEDUCB *cb = pmdGetThreadEDUCB() ;
+      SDB_ASSERT( cb , "cb can't be NULL" ) ;
+
+      sptScope *pScope = NULL ;
+      ossScopedLock lock( &_scopeLatch ) ;
+
+      /// find from mapScopes, if not found, need to alloc new scope
+      MAP_SCOPE::iterator it = _mapScopes.find( cb->getTID() ) ;
+      if ( it != _mapScopes.end() )
+      {
+         pScope = it->second ;
+      }
+      else if ( NULL != ( pScope = getScope() ) )
+      {
+          _mapScopes[ cb->getTID() ] = pScope ;
+      }
+      return pScope ;
+   }
+
+   void _omAgentMgr::clearScopeBySession()
+   {
+      pmdEDUCB *cb = pmdGetThreadEDUCB() ;
+      SDB_ASSERT( cb , "cb can't be NULL" ) ;
+
+      ossScopedLock lock( &_scopeLatch ) ;
+
+      MAP_SCOPE::iterator it = _mapScopes.find( cb->getTID() ) ;
+      if ( it != _mapScopes.end() )
+      {
+         releaseScope( it->second ) ;
+         _mapScopes.erase( it ) ;
+      }
    }
 
    INT32 _omAgentMgr::sendToOM( MsgHeader * msg, INT32 * pSendNum )
