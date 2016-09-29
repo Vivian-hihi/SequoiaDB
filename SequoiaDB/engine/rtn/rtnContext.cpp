@@ -1185,6 +1185,55 @@ namespace engine
       goto done ;
    }
 
+   INT32 _rtnContextData::_selectAndAppend( mthSelector *selector, 
+                                            BSONObj &obj )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj selObj ;
+
+      if ( selector )
+      {
+         rc = selector->select( obj, selObj ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to build select record,"
+                      "src obj: %s, rc: %d", obj.toString().c_str(),
+                      rc ) ;
+      }
+      else
+      {
+         selObj = obj ;
+      }
+
+      rc = append( selObj ) ;
+      PD_RC_CHECK( rc, PDERROR, "Append obj[%s] failed, rc: %d",
+                   selObj.toString().c_str(), rc ) ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _rtnContextData::_innerAppend( mthSelector *selector, 
+                                        _mthRecordGenerator &generator )
+   {
+      INT32 rc = SDB_OK ;
+
+      while ( generator.hasNext() )
+      {
+         BSONObj record ;
+         rc = generator.getNext( record ) ;
+         PD_RC_CHECK( rc, PDERROR, "get next record failed:rc=%d", rc ) ;
+
+         rc = _selectAndAppend( selector, record ) ;
+         PD_RC_CHECK( rc, PDERROR, "selectAndAppend failed:rc=%d", rc ) ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
    INT32 _rtnContextData::_prepareByTBScan( pmdEDUCB * cb,
                                             DMS_ACCESS_TYPE accessType,
                                             vector<INT64>* dollarList )
@@ -1204,6 +1253,7 @@ namespace engine
          selector = &_selector ;
       }
 
+      _mthRecordGenerator generator ;
       dmsRecordID recordID ;
       ossValuePtr recordDataPtr = 0 ;
 
@@ -1215,8 +1265,19 @@ namespace engine
          goto error ;
       }
 
+      if ( NULL != _queryModifier )
+      {
+         generator.setQueryModify( TRUE ) ;
+      }
+
       while ( isEmpty() )
       {
+         _mthMatchTreeContext mthContext ;
+         if ( NULL != dollarList )
+         {
+            mthContext.enableDollarList() ;
+         }
+
          // prefetch
          if ( eduID() != cb->getID() && !isOpened() )
          {
@@ -1228,34 +1289,24 @@ namespace engine
                                    accessType, _numToReturn,
                                    _numToSkip ) ;
 
-         while ( SDB_OK == ( rc = extScanner.advance( recordID, recordDataPtr,
-                                                      cb, dollarList ) ) )
+         while ( SDB_OK == ( rc = extScanner.advance( recordID, generator,
+                                                      cb, &mthContext ) ) )
          {
             try
             {
-               BSONObj selObj ;
+               generator.getDataPtr( recordDataPtr ) ;
                BSONObj obj( (const CHAR*)recordDataPtr ) ;
 
                if ( _queryModifier )
                {
+                  mthContext.getDollarList( dollarList ) ;
                   rc = _queryModify( cb, recordID, recordDataPtr, obj ) ;
                   PD_RC_CHECK( rc, PDERROR, "Failed to query modify" ) ;
+                  generator.resetValue( obj, &mthContext ) ;
                }
 
-               if ( selector )
-               {
-                  rc = selector->select( obj, selObj ) ;
-                  PD_RC_CHECK( rc, PDERROR, "Failed to build select record,"
-                               "src obj: %s, rc: %d", obj.toString().c_str(),
-                               rc ) ;
-               }
-               else
-               {
-                  selObj = obj ;
-               }
-               rc = append( selObj ) ;
-               PD_RC_CHECK( rc, PDERROR, "Append obj[%s] failed, rc: %d",
-                            selObj.toString().c_str(), rc ) ;
+               rc = _innerAppend( selector, generator ) ;
+               PD_RC_CHECK( rc, PDERROR, "innerAppend failed:rc=%d", rc ) ;
             }
             catch ( std::exception &e )
             {
@@ -1269,6 +1320,12 @@ namespace engine
             if ( _numToReturn > 0 )
             {
                --_numToReturn ;
+            }
+
+            mthContext.clear() ;
+            if ( NULL != dollarList )
+            {
+               mthContext.enableDollarList() ;
             }
          } // end while
 
@@ -1368,12 +1425,24 @@ namespace engine
          selector = &_selector ;
       }
 
+      _mthRecordGenerator generator ;
       dmsRecordID recordID ;
       ossValuePtr recordDataPtr = 0 ;
+
+      if ( NULL != _queryModifier )
+      {
+         generator.setQueryModify( TRUE ) ;
+      }
 
       // loop until we read something in the buffer
       while ( isEmpty() )
       {
+         _mthMatchTreeContext mthContext ;
+         if ( NULL != dollarList )
+         {
+            mthContext.enableDollarList() ;
+         }
+
          // prefetch
          if ( eduID() != cb->getID() && !isOpened() )
          {
@@ -1397,36 +1466,26 @@ namespace engine
             secScanner.enableCountMode() ;
          }
 
-         while ( SDB_OK == ( rc = secScanner.advance( recordID, recordDataPtr,
-                                                      cb, dollarList ) ) )
+         while ( SDB_OK == ( rc = secScanner.advance( recordID, generator,
+                                                      cb, &mthContext ) ) )
          {
             if ( !isCountMode() )
             {
                try
                {
-                  BSONObj selObj ;
+                  generator.getDataPtr( recordDataPtr ) ;
                   BSONObj obj( (const CHAR*)recordDataPtr ) ;
 
                   if ( _queryModifier )
                   {
+                     mthContext.getDollarList( dollarList ) ;
                      rc = _queryModify( cb, recordID, recordDataPtr, obj ) ;
                      PD_RC_CHECK( rc, PDERROR, "Failed to query modify" ) ;
+                     generator.resetValue( obj, &mthContext ) ;
                   }
 
-                  if ( selector )
-                  {
-                     rc = selector->select( obj, selObj ) ;
-                     PD_RC_CHECK( rc, PDERROR, "Failed to build select record,"
-                                  "src obj: %s, rc: %d", obj.toString().c_str(),
-                                  rc ) ;
-                  }
-                  else
-                  {
-                     selObj = obj ;
-                  }
-                  rc = append( selObj ) ;
-                  PD_RC_CHECK( rc, PDERROR, "Append obj[%s] failed, rc: %d",
-                               selObj.toString().c_str(), rc ) ;
+                  rc = _innerAppend( selector, generator ) ;
+                  PD_RC_CHECK( rc, PDERROR, "innerAppend failed:rc=%d", rc ) ;
 
                   // make sure we still have room to read another
                   // record_max_sz (i.e. 16MB). if we have less than 16MB
@@ -1457,6 +1516,8 @@ namespace engine
                PD_RC_CHECK( rc, PDERROR, "Append empty obj failed, rc: %d",
                             rc ) ;
             }
+
+            mthContext.clearPart() ;
          }
 
          if ( rc && SDB_DMS_EOC != rc )

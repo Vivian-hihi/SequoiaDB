@@ -1775,29 +1775,37 @@ namespace engine
    }
 
    INT32 _mthMatchTree::matches( const BSONObj &matchTarget, BOOLEAN &result,
-                                 vector<INT64> *dollarList /* = NULL */)
+                                 _mthMatchTreeContext *context /* = NULL */)
    {
       INT32 rc = SDB_OK ;
-      _mthMatchTreeContext context ;
-      if ( NULL == dollarList || !_hasDollarFieldName )
+      _mthMatchTreeContext innerContext ;
+
+      if ( NULL == context )
       {
-         //1. user do not care dollarList.
-         //2. this matchTree have not dollarFieldName
-         context.disableDollarList() ;
+         _mthMatchTreeContext innerContext ;
+         rc = _matches( matchTarget, result, innerContext ) ;
+         PD_RC_CHECK( rc, PDERROR, "_matches failed:rc=%d", rc ) ;
+      }
+      else
+      {
+         if ( !_hasDollarFieldName )
+         {
+            // this matchTree have not dollarFieldName
+            context->disableDollarList() ;
+         }
+
+         rc = _matches( matchTarget, result, *context ) ;
+         PD_RC_CHECK( rc, PDERROR, "_matches failed:rc=%d", rc ) ;
       }
 
-      rc = matches( matchTarget, result, context ) ;
-
-      if ( NULL != dollarList )
-      {
-         context.getDollarList( dollarList ) ;
-      }
-
+   done:
       return rc ;
+   error:
+      goto done ;
    }
 
-   INT32 _mthMatchTree::matches( const BSONObj &matchTarget, BOOLEAN &result,
-                                 _mthMatchTreeContext &context )
+   INT32 _mthMatchTree::_matches( const BSONObj &matchTarget, BOOLEAN &result,
+                                  _mthMatchTreeContext &context )
    {
       SDB_ASSERT( _isInitialized, "must be init first" ) ;
       INT32 rc = SDB_OK ;
@@ -1814,12 +1822,12 @@ namespace engine
          {
             context.setHasExpand( TRUE ) ;
          }
-
+      
          if ( _hasReturnMatch )
          {
             context.setHasReturnMatch( TRUE ) ;
          }
-
+      
          context.setFieldName( _attrFieldName ) ;
          if ( ossStrstr( _attrFieldName, ".$" ) != NULL )
          {
@@ -1859,8 +1867,7 @@ namespace engine
          goto error ;
       }
 
-      //TODO: delete
-      //PD_LOG( PDEVENT, "context:\n%s", context.toString().c_str() ) ;
+      PD_LOG( PDDEBUG, "context:\n%s", context.toString().c_str() ) ;
 
    done:
       return rc ;
@@ -2029,6 +2036,436 @@ namespace engine
    {
       return _attrFieldName ;
    }
+
+   //**********************_mthRecordGenerator***********************
+   _mthRecordGenerator::_mthRecordGenerator()
+   {
+      _index         = 0 ;
+      _fieldName     = NULL ;
+      _mthContext    = NULL ;
+      _isQueryModify = FALSE ;
+      _dataPtr       = 0 ;
+      _totalNum      = 0 ;
+      _validNum      = 0 ;
+      _src           = BSONObj() ;
+      _srcType       = MTH_SRC_TYPE_ORIGINAL ; 
+
+      _specifyObj    = BSONObj() ;
+   }
+
+   _mthRecordGenerator::~_mthRecordGenerator()
+   {
+      _index         = 0 ;
+      _fieldName     = NULL ;
+      _mthContext    = NULL ;
+      _isQueryModify = FALSE ;
+      _dataPtr       = 0 ;
+      _totalNum      = 0 ;
+      _validNum      = 0 ;
+      _src           = BSONObj() ;
+      _srcType       = MTH_SRC_TYPE_ORIGINAL ; 
+
+      _specifyObj    = BSONObj() ;
+   }
+
+   void _mthRecordGenerator::popFront( UINT32 num )
+   {
+      if ( _validNum > num )
+      {
+         _index    += num ;
+         _validNum -= num ;
+         if ( MTH_SRC_TYPE_ORIGINAL_SPLIT == _srcType )
+         {
+            while ( num > 0 )
+            {
+               SDB_ASSERT( _specifyIter.more(), "must have more" ) ;
+               _specifyIter.next() ;
+               num-- ;
+            }
+         }
+      }
+      else
+      {
+         _validNum = 0 ;
+      }
+   }
    
+   void _mthRecordGenerator::popTail( UINT32 num )
+   {
+      if ( _validNum > num )
+      {
+         _validNum -= num ;
+      }
+      else
+      {
+         _validNum = 0 ;
+      }
+   }
+
+   void _mthRecordGenerator::setQueryModify( BOOLEAN isQueryModify )
+   {
+      _isQueryModify = isQueryModify ;
+   }
+
+   void _mthRecordGenerator::setDataPtr( ossValuePtr &dataPtr ) 
+   {
+      _dataPtr = dataPtr ;
+   }
+   
+   void _mthRecordGenerator::getDataPtr( ossValuePtr &dataPtr ) 
+   {
+      dataPtr = _dataPtr ;
+   }
+
+   INT32 _mthRecordGenerator::resetValue( const BSONObj &src, 
+                                          _mthMatchTreeContext *mthContext )
+   {
+      INT32 rc    = SDB_OK ;
+      _index      = 0 ;
+      _src        = src ;
+
+      _mthContext = mthContext ;
+      if ( _isQueryModify || NULL == mthContext )
+      {
+         _srcType  = MTH_SRC_TYPE_ORIGINAL ;
+         _totalNum = 1 ;
+         goto done ;
+      }
+
+      _fieldName = _mthContext->_fieldName.getFieldName() ;
+
+      if ( ( _mthContext->hasReturnMatch() && _mthContext->isUseElement() ) )
+      {
+         if ( _mthContext->hasExpand() )
+         {
+            _srcType  = MTH_SRC_TYPE_ELEMENTS_SPLIT ;
+            _totalNum = _mthContext->_elements.size() ;
+            if ( 0 == _totalNum )
+            {
+               _srcType  = MTH_SRC_TYPE_ORIGINAL_NULL ;
+               _totalNum = 1 ;
+            }
+         }
+         else
+         {
+            _srcType  = MTH_SRC_TYPE_ELEMENTS ;
+            _totalNum = 1 ;
+         }
+      }
+      else if ( _mthContext->hasExpand() )
+      {
+         BSONElement ele = _src.getFieldDotted( _fieldName ) ;
+         if ( ele.type() == Array )
+         {
+            _srcType    = MTH_SRC_TYPE_ORIGINAL_SPLIT ;
+            _specifyObj = ele.embeddedObject() ;
+            _totalNum   = _specifyObj.nFields() ;
+            if ( _totalNum == 0 )
+            {
+               _srcType  = MTH_SRC_TYPE_ORIGINAL_NULL ;
+               _totalNum = 1 ;
+            }
+            else
+            {
+               BSONObjIterator iter( _specifyObj ) ;
+               _specifyIter = iter ;
+            }
+         }
+         else
+         {
+            _srcType = MTH_SRC_TYPE_ORIGINAL ;
+            _totalNum = 1 ;
+         }
+      }
+      else
+      {
+         _srcType = MTH_SRC_TYPE_ORIGINAL ;
+         _totalNum = 1 ;
+      }
+
+   done:
+      _validNum = _totalNum ;
+      return rc ;
+   }
+
+   BOOLEAN _mthRecordGenerator::hasNext()
+   {
+      if ( _validNum > 0 )
+      {
+         return TRUE ;
+      }
+
+      return FALSE ;
+   }
+
+   INT32 _mthRecordGenerator::_createArrayObj( const CHAR* name, 
+                                           _utilArray< BSONElement > &elements, 
+                                           BSONObjBuilder &builder )
+   {
+      UINT32 i = 0 ;
+      BSONArrayBuilder arrayBuilder ;
+
+      if ( elements.size() == 0 )
+      {
+         return SDB_OK ;
+      }
+
+      for ( i = 0 ; i < elements.size() ; i++ )
+      {
+         arrayBuilder.append( elements[i] ) ;
+      }
+
+      builder.append( name, arrayBuilder.arr() ) ;
+
+      return SDB_OK ;
+   }
+
+   INT32 _mthRecordGenerator::_replaceFieldObject( 
+                                               BSONObjIteratorSorted &iterSort, 
+                                               const CHAR *fieldName, 
+                                               BSONElement &newValue, 
+                                               BSONObjBuilder &builder )
+   {
+      INT32 rc = SDB_OK ;
+      _mthMatchFieldName<> mthFieldName ;
+      CHAR *pTmpFieldName = NULL ;
+      CHAR *p = NULL ;
+
+      rc = mthFieldName.setFieldName( fieldName ) ;
+      PD_RC_CHECK( rc, PDERROR, "set fieldName failed:fieldName=%s,rc=%d",
+                   fieldName, rc ) ;
+
+      pTmpFieldName = ( CHAR * ) mthFieldName.getFieldName() ;
+      p = ossStrchr ( pTmpFieldName, MTH_FIELDNAME_SEP ) ;
+      if ( NULL != p )
+      {
+         *p = '\0' ;
+      }
+
+      while ( iterSort.more() )
+      {
+         INT32 cmp = 0 ;
+         BSONElement ele = iterSort.next() ;
+
+         cmp = ossStrcmp( ele.fieldName(), pTmpFieldName ) ;
+         if ( cmp == 0 )
+         {
+            if ( NULL == p )
+            {
+               if ( !newValue.eoo() )
+               {
+                  builder.appendAs( newValue, pTmpFieldName ) ;
+               }
+               else
+               {
+                  builder.appendNull( pTmpFieldName ) ;
+               }
+               
+               break ;
+            }
+            else
+            {
+               if ( ele.type() == Object )
+               {
+                  BSONObjBuilder bb( builder.subobjStart( pTmpFieldName ) ) ;
+                  BSONObjIteratorSorted bis( ele.embeddedObject() ) ;
+                  rc = _replaceFieldObject( bis, p+1, newValue, bb ) ;
+               }
+               else if ( ele.type() == Array )
+               {
+                  BSONArrayBuilder ba( builder.subarrayStart( pTmpFieldName ) ) ;
+                  BSONObjIteratorSorted bis( ele.embeddedObject() ) ;
+                  rc = _replaceFieldArray( bis, p+1, newValue, ba ) ;
+               }
+               else
+               {
+                  SDB_ASSERT( FALSE, "impossible" ) ;
+               }
+            }
+         }
+         else
+         {
+            // keep original element
+            builder.append( ele ) ;
+         }
+      }
+
+      // add rest elements
+      while ( iterSort.more() )
+      {
+         BSONElement ele = iterSort.next() ;
+         builder.append( ele ) ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _mthRecordGenerator::_replaceFieldArray( 
+                                              BSONObjIteratorSorted &iterSort, 
+                                              const CHAR *fieldName, 
+                                              BSONElement &newValue, 
+                                              BSONArrayBuilder &builder )
+   {
+      INT32 rc = SDB_OK ;
+      _mthMatchFieldName<> mthFieldName ;
+      CHAR *pTmpFieldName = NULL ;
+      CHAR *p = NULL ;
+
+      rc = mthFieldName.setFieldName( fieldName ) ;
+      PD_RC_CHECK( rc, PDERROR, "set fieldName failed:fieldName=%s,rc=%d",
+                   fieldName, rc ) ;
+
+      pTmpFieldName = ( CHAR * ) mthFieldName.getFieldName() ;
+      p = ossStrchr ( pTmpFieldName, MTH_FIELDNAME_SEP ) ;
+      if ( NULL != p )
+      {
+         *p = '\0' ;
+      }
+
+      while ( iterSort.more() )
+      {
+         INT32 cmp = 0 ;
+         BSONElement ele = iterSort.next() ;
+
+         cmp = ossStrcmp( ele.fieldName(), pTmpFieldName ) ;
+         if ( cmp == 0 )
+         {
+            if ( NULL == p )
+            {
+               if ( !newValue.eoo() )
+               {
+                  builder.append( newValue ) ;
+               }
+               else
+               {
+                  builder.appendNull() ;
+               }
+
+               break ;
+            }
+            else
+            {
+               if ( ele.type() == Object )
+               {
+                  BSONObjBuilder bb( builder.subobjStart( pTmpFieldName ) ) ;
+                  BSONObjIteratorSorted bis( ele.embeddedObject() ) ;
+                  rc = _replaceFieldObject( bis, p+1, newValue, bb ) ;
+               }
+               else if ( ele.type() == Array )
+               {
+                  BSONArrayBuilder ba( builder.subarrayStart( pTmpFieldName ) ) ;
+                  BSONObjIteratorSorted bis( ele.embeddedObject() ) ;
+                  rc = _replaceFieldArray( bis, p+1, newValue, ba ) ;
+               }
+               else
+               {
+                  SDB_ASSERT( FALSE, "impossible" ) ;
+               }
+            }
+         }
+         else
+         {
+            // keep original element
+            builder.append( ele ) ;
+         }
+      }
+
+      // add rest elements
+      while ( iterSort.more() )
+      {
+         BSONElement ele = iterSort.next() ;
+         builder.append( ele ) ;
+      }
+      
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   // replace filedName's value with newValue   
+   INT32 _mthRecordGenerator::_replaceField( BSONObj &src, 
+                                             const CHAR *fieldName, 
+                                             BSONElement &newValue, 
+                                             BSONObjBuilder &builder )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObjIteratorSorted iterSort( src ) ;
+      rc = _replaceFieldObject( iterSort, fieldName, newValue, builder ) ;
+      PD_RC_CHECK( rc, PDERROR, "_replaceFieldObject failed:rc=%d", rc ) ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+   
+   INT32 _mthRecordGenerator::getNext( BSONObj &record )
+   {
+      SDB_ASSERT( _validNum > 0, "must hasNext" ) ;
+
+      static BSONObj staticEmptyObj ;
+      INT32 rc = SDB_OK ;
+
+      if ( MTH_SRC_TYPE_ORIGINAL == _srcType )
+      {
+         record = _src ;
+      }
+      else
+      {
+         BSONObjBuilder builder( _src.objsize() ) ;
+         BSONElement ele ;
+         if ( MTH_SRC_TYPE_ORIGINAL_SPLIT == _srcType )
+         {
+            SDB_ASSERT( _specifyIter.more(), "should have next" ) ;
+            ele = _specifyIter.next() ;
+         }
+         else if ( MTH_SRC_TYPE_ORIGINAL_NULL == _srcType )
+         {
+            BSONElement ele = staticEmptyObj.firstElement() ;
+         }
+         else if ( MTH_SRC_TYPE_ELEMENTS == _srcType )
+         {
+            BSONObjBuilder tmpBuilder ;
+            BSONObj tmpObj ;
+            rc = _createArrayObj( "tmp", _mthContext->_elements, tmpBuilder ) ;
+            PD_RC_CHECK( rc, PDERROR, "_createArrayObj failed:rc=%d", rc ) ;
+
+            tmpObj = tmpBuilder.obj() ;
+            ele    = tmpObj.firstElement() ;
+         }
+         else if ( MTH_SRC_TYPE_ELEMENTS_SPLIT == _srcType )
+         {
+            SDB_ASSERT( _index < _mthContext->_elements.size(), "impossible" ) ;
+            ele = _mthContext->_elements[ _index ] ;
+         }
+         else
+         {
+            SDB_ASSERT( FALSE, "impossible" ) ;
+         }
+
+         rc = _replaceField( _src, _fieldName, ele, builder ) ;
+         PD_RC_CHECK( rc, PDERROR, "_replaceField failed:rc=%d", rc ) ;
+         record = builder.obj() ;
+      }
+
+      _index++ ;
+      _validNum-- ;
+
+   done:
+      return rc ;
+   error:
+      //if failed, can't get record anymore
+      _validNum = 0 ;
+      goto done ;
+   }
+
+   INT32 _mthRecordGenerator::getRecordNum()
+   {
+      return _validNum ;
+   }
 }
 

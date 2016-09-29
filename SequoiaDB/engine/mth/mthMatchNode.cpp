@@ -57,7 +57,7 @@ namespace engine
       _hasExpand             = FALSE ;
       _hasReturnMatch        = FALSE ;
       _isUseElement          = FALSE ;
-      _isDollarListEnabled   = TRUE ;
+      _isDollarListEnabled   = FALSE ;
    }
 
    _mthMatchTreeContext::~_mthMatchTreeContext()
@@ -65,7 +65,7 @@ namespace engine
       clear() ;
    }
 
-   void _mthMatchTreeContext::clear()
+   void _mthMatchTreeContext::clearPart()
    {
       _dollarList.clear() ;
       _elements.clear() ;
@@ -75,7 +75,12 @@ namespace engine
       _hasExpand             = FALSE ;
       _hasReturnMatch        = FALSE ;
       _isUseElement          = FALSE ;
-      _isDollarListEnabled   = TRUE ;
+   }
+
+   void _mthMatchTreeContext::clear()
+   {
+      clearPart() ;
+      _isDollarListEnabled = FALSE ;
    }
 
    BOOLEAN _mthMatchTreeContext::hasExpand()
@@ -125,7 +130,7 @@ namespace engine
 
    INT32 _mthMatchTreeContext::getDollarResult( INT32 index, INT32 &value )
    {
-      INT32 i = 0 ;
+      UINT32 i = 0 ;
       for ( i = 0 ; i < _dollarList.size() ; i++ )
       {
          INT32 tmpIndex = ( _dollarList[i] >> 32 ) & 0xFFFFFFFF ;
@@ -312,7 +317,7 @@ namespace engine
       return _isDollarListEnabled ;
    }
 
-   void _mthMatchTreeContext::appendDollarList( vector<INT64> dollarList )
+   void _mthMatchTreeContext::appendDollarList( vector<INT64> &dollarList )
    {
       UINT32 i = 0 ;
       for ( i = 0 ; i < dollarList.size() ; i++ )
@@ -329,6 +334,8 @@ namespace engine
       {
          return ;
       }
+
+      dollarList->clear() ;
 
       for ( i = 0 ; i < _dollarList.size() ; i++ )
       {

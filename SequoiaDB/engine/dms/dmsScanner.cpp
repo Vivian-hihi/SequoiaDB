@@ -195,13 +195,31 @@ namespace engine
       goto done ;
    }
 
+   void _dmsExtScanner::_checkMaxRecordsNum( _mthRecordGenerator &generator )
+   {
+      if ( _maxRecords > 0 )
+      {
+         if ( _maxRecords >= generator.getRecordNum() )
+         {
+            _maxRecords -= generator.getRecordNum() ;
+         }
+         else
+         {
+            INT32 num = generator.getRecordNum() - _maxRecords ;
+            generator.popTail( num ) ;
+            _maxRecords = 0 ;
+         }
+      }
+   }
+
    INT32 _dmsExtScanner::advance( dmsRecordID &recordID,
-                                  ossValuePtr &recordDataPtr,
+                                  _mthRecordGenerator &generator,
                                   pmdEDUCB *cb,
-                                  vector<INT64> *dollarList )
+                                  _mthMatchTreeContext *mthContext )
    {
       INT32 rc                = SDB_OK ;
       BOOLEAN result          = TRUE ;
+      ossValuePtr recordDataPtr ;
       dmsRecordData recordData ;
       BOOLEAN lockedRecord    = FALSE ;
 
@@ -304,6 +322,7 @@ namespace engine
                goto error ;
             }
             recordDataPtr = ( ossValuePtr )recordData.data() ;
+            generator.setDataPtr( recordDataPtr ) ;
 
             // math
             if ( _match )
@@ -311,8 +330,8 @@ namespace engine
                result = TRUE ;
                try
                {
-                  BSONObj obj ( recordData.data() ) ;
-                  rc = _match->matches( obj, result, dollarList ) ;
+                  BSONObj obj( recordData.data() ) ;
+                  rc = _match->matches( obj, result, mthContext ) ;
                   if ( rc )
                   {
                      PD_LOG( PDERROR, "Failed to match record, rc: %d", rc ) ;
@@ -320,16 +339,27 @@ namespace engine
                   }
                   if ( result )
                   {
+                     rc = generator.resetValue( obj, mthContext ) ;
+                     PD_RC_CHECK( rc, PDERROR, "resetValue failed:rc=%d", rc ) ;
+
                      if ( _skipNum > 0 )
                      {
-                        --_skipNum ;
+                        if ( _skipNum >= generator.getRecordNum() )
+                        {
+                           _skipNum -= generator.getRecordNum() ;
+                        }
+                        else
+                        {
+                           generator.popFront( _skipNum ) ;
+                           _skipNum = 0 ;
+                           _checkMaxRecordsNum( generator ) ;
+
+                           goto done ;
+                        }
                      }
                      else
                      {
-                        if ( _maxRecords > 0 )
-                        {
-                           --_maxRecords ;
-                        }
+                        _checkMaxRecordsNum( generator ) ;
                         goto done ; // find ok
                      }
                   }
@@ -344,6 +374,20 @@ namespace engine
             } // if ( _match )
             else
             {
+               try
+               {
+                  BSONObj obj( recordData.data() ) ;
+                  rc = generator.resetValue( obj, mthContext ) ;
+                  PD_RC_CHECK( rc, PDERROR, "resetValue failed:rc=%d", rc ) ;
+               }
+               catch( std::exception &e )
+               {
+                  rc = SDB_SYS ;
+                  PD_RC_CHECK( rc, PDERROR, "Failed to create BSON object: %s",
+                               e.what() ) ;
+                  goto error ;
+               }
+
                if ( _skipNum > 0 )
                {
                   --_skipNum ;
@@ -380,6 +424,7 @@ namespace engine
       }
       recordID.reset() ;
       recordDataPtr = 0 ;
+      generator.setDataPtr( recordDataPtr ) ;
       _curRID._offset = DMS_INVALID_OFFSET ;
       goto done ;
    }
@@ -441,9 +486,9 @@ namespace engine
    }
 
    INT32 _dmsTBScanner::advance( dmsRecordID &recordID,
-                                 ossValuePtr &recordDataPtr,
+                                 _mthRecordGenerator &generator,
                                  pmdEDUCB *cb,
-                                 vector<INT64> *dollarList )
+                                 _mthMatchTreeContext *mthContext )
    {
       INT32 rc = SDB_OK ;
       if ( _firstRun )
@@ -454,7 +499,7 @@ namespace engine
 
       while ( DMS_INVALID_EXTENT != _curExtentID )
       {
-         rc = _extScanner.advance( recordID, recordDataPtr, cb, dollarList ) ;
+         rc = _extScanner.advance( recordID, generator, cb, mthContext ) ;
          if ( SDB_DMS_EOC == rc )
          {
             if ( 0 != _extScanner.getMaxRecords() )
@@ -693,13 +738,31 @@ namespace engine
       return _scanner->getDirection() == _blockScanDir ? &_endRID : &_startRID ;
    }
 
+   void _dmsIXSecScanner::_checkMaxRecordsNum( _mthRecordGenerator &generator )
+   {
+      if ( _maxRecords > 0 )
+      {
+         if ( _maxRecords >= generator.getRecordNum() )
+         {
+            _maxRecords -= generator.getRecordNum() ;
+         }
+         else
+         {
+            INT32 num = generator.getRecordNum() - _maxRecords ;
+            generator.popTail( num ) ;
+            _maxRecords = 0 ;
+         }
+      }
+   }
+
    INT32 _dmsIXSecScanner::advance( dmsRecordID &recordID,
-                                    ossValuePtr &recordDataPtr,
+                                    _mthRecordGenerator &generator,
                                     pmdEDUCB * cb,
-                                    vector<INT64> *dollarList )
+                                    _mthMatchTreeContext *mthContext )
    {
       INT32 rc                = SDB_OK ;
       BOOLEAN result          = TRUE ;
+      ossValuePtr recordDataPtr ;
       dmsRecordData recordData ;
       BOOLEAN lockedRecord    = FALSE ;
 
@@ -786,6 +849,7 @@ namespace engine
                }
                recordID = _curRID ;
                recordDataPtr = 0 ;
+               generator.setDataPtr( recordDataPtr ) ;
                goto done ;
             }
          }
@@ -869,6 +933,7 @@ namespace engine
             goto error ;
          }
          recordDataPtr = ( ossValuePtr )recordData.data() ;
+         generator.setDataPtr( recordDataPtr ) ;
 
          // math
          if ( _match )
@@ -877,7 +942,7 @@ namespace engine
             try
             {
                BSONObj obj ( recordData.data() ) ;
-               rc = _match->matches( obj, result, dollarList ) ;
+               rc = _match->matches( obj, result, mthContext ) ;
                if ( rc )
                {
                   PD_LOG( PDERROR, "Failed to match record, rc: %d", rc ) ;
@@ -885,16 +950,25 @@ namespace engine
                }
                if ( result )
                {
+                  rc = generator.resetValue( obj, mthContext ) ;
+                  PD_RC_CHECK( rc, PDERROR, "resetValue failed:rc=%d", rc ) ;
                   if ( _skipNum > 0 )
                   {
-                     --_skipNum ;
+                     if ( _skipNum >= generator.getRecordNum() )
+                     {
+                        _skipNum -= generator.getRecordNum() ;
+                     }
+                     else
+                     {
+                        generator.popFront( _skipNum ) ;
+                        _skipNum = 0 ;
+                        _checkMaxRecordsNum( generator ) ;
+                        goto done ;
+                     }
                   }
                   else
                   {
-                     if ( _maxRecords > 0 )
-                     {
-                        --_maxRecords ;
-                     }
+                     _checkMaxRecordsNum( generator ) ;
                      goto done ; // find ok
                   }
                }
@@ -909,6 +983,20 @@ namespace engine
          } // if ( _match )
          else
          {
+            try
+            {
+               BSONObj obj( recordData.data() ) ;
+               rc = generator.resetValue( obj, mthContext ) ;
+               PD_RC_CHECK( rc, PDERROR, "resetValue failed:rc=%d", rc ) ;
+            }
+            catch( std::exception &e )
+            {
+               rc = SDB_SYS ;
+               PD_RC_CHECK( rc, PDERROR, "Failed to create BSON object: %s",
+                            e.what() ) ;
+               goto error ;
+            }
+
             if ( _skipNum > 0 )
             {
                --_skipNum ;
@@ -961,6 +1049,7 @@ namespace engine
       }
       recordID.reset() ;
       recordDataPtr = 0 ;
+      generator.setDataPtr( recordDataPtr ) ;
       _curRID._offset = DMS_INVALID_OFFSET ;
       goto done ;
    }
@@ -1016,15 +1105,15 @@ namespace engine
    }
 
    INT32 _dmsIXScanner::advance( dmsRecordID &recordID,
-                                 ossValuePtr &recordDataPtr,
+                                 _mthRecordGenerator &generator,
                                  pmdEDUCB * cb,
-                                 vector<INT64> *dollarList )
+                                 _mthMatchTreeContext *mthContext )
    {
       INT32 rc = SDB_OK ;
 
       while ( !_eof )
       {
-         rc = _secScanner.advance( recordID, recordDataPtr, cb, dollarList ) ;
+         rc = _secScanner.advance( recordID, generator, cb, mthContext ) ;
          if ( SDB_DMS_EOC == rc )
          {
             if ( 0 != _secScanner.getMaxRecords() &&

@@ -98,11 +98,10 @@ namespace engine
       public:
          INT32    loadPattern( const BSONObj &matcher, 
                                BOOLEAN needPredicate = TRUE ) ;
-         INT32    matches( const BSONObj &matchTarget, BOOLEAN &result,
-                           _mthMatchTreeContext &context ) ;
+
          //TODO: delete
          INT32    matches( const BSONObj &matchTarget, BOOLEAN &result,
-                           vector<INT64> *dollarList = NULL ) ;
+                           _mthMatchTreeContext *context = NULL ) ;
          void     clear() ;
          BSONObj  getEqualityQueryObject() ;
          BOOLEAN  isInitialized() ;
@@ -121,6 +120,8 @@ namespace engine
          const CHAR *getAttrFieldName() ;
 
       private:
+         INT32    _matches( const BSONObj &matchTarget, BOOLEAN &result,
+                            _mthMatchTreeContext &context ) ;
          INT32    _addOperator( const CHAR *fieldName, const BSONElement &ele, 
                                 EN_MATCH_OP_FUNC_TYPE nodeType, 
                                 MTH_FUNC_LIST &funcList,
@@ -199,6 +200,82 @@ namespace engine
          _rtnPredicateSet _predicateSet ;
          _mthNodeAllocator _allocator ;
    } ;
+
+   class _mthRecordGenerator
+   {
+      enum EN_MATCH_RECORD_SRC_TYPE 
+      {
+         // just return original src obj
+         MTH_SRC_TYPE_ORIGINAL       = 1,
+
+         // split src's fieldName to objs
+         MTH_SRC_TYPE_ORIGINAL_SPLIT = 2,
+
+         // set original fieldName's value to NULL
+         MTH_SRC_TYPE_ORIGINAL_NULL  = 3,
+
+         // combine all elements as one obj
+         MTH_SRC_TYPE_ELEMENTS       = 4,
+
+         // one element one obj
+         MTH_SRC_TYPE_ELEMENTS_SPLIT = 5,
+      } ;
+
+   public:
+      _mthRecordGenerator() ;
+      ~_mthRecordGenerator() ;
+
+   public:
+      INT32 init( BOOLEAN isQueryUpdate ) ;
+      INT32 resetValue( const BSONObj &src, 
+                        _mthMatchTreeContext *mthContext ) ;
+      BOOLEAN hasNext() ;
+      INT32 getNext( BSONObj &record ) ;
+      INT32 getRecordNum() ;
+
+      void popFront( UINT32 num ) ;
+      void popTail( UINT32 num ) ;
+
+      void setQueryModify( BOOLEAN isQueryModify ) ;
+      void setDataPtr( ossValuePtr &dataPtr ) ;
+      void getDataPtr( ossValuePtr &dataPtr ) ;
+
+   private:
+      INT32 _createArrayObj( const CHAR* name, 
+                             _utilArray< BSONElement > &elements, 
+                             BSONObjBuilder &builder ) ;
+
+      INT32 _replaceFieldObject( BSONObjIteratorSorted &iterSort, 
+                                 const CHAR *fieldName, BSONElement &newValue, 
+                                 BSONObjBuilder &builder ) ;
+
+      INT32 _replaceFieldArray( BSONObjIteratorSorted &iterSort, 
+                                const CHAR *fieldName, BSONElement &newValue, 
+                                BSONArrayBuilder &builder ) ;
+
+      INT32 _replaceField( BSONObj &src, const CHAR *fieldName, 
+                           BSONElement &newValue, BSONObjBuilder &builder ) ;
+
+   private:
+      BOOLEAN _isQueryModify ;
+      ossValuePtr _dataPtr ;
+   
+      _mthMatchTreeContext *_mthContext ;
+      const CHAR *_fieldName ;
+      BSONObj _src ;
+      UINT32 _index ;
+      UINT32 _totalNum ;
+
+      UINT32 _validNum ;
+
+      EN_MATCH_RECORD_SRC_TYPE _srcType ;
+
+      //****_srcType = SRC_TYPE_ORIGINAL_SPLIT ****
+      BSONObj _specifyObj ;
+      BSONObjIterator _specifyIter ;
+      //*******************************************
+   } ;
+   
 
 }
 

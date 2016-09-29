@@ -80,11 +80,13 @@ namespace engine
          }
 
          dmsExtScanner extScanner( _suData, _mbContext, NULL, _currentExtentID ) ;
+         _mthRecordGenerator generator ;
          dmsRecordID recordID ;
          ossValuePtr recordDataPtr ;
 
-         while ( SDB_OK == ( rc = extScanner.advance( recordID, recordDataPtr, _eduCB ) ) )
+         while ( SDB_OK == ( rc = extScanner.advance( recordID, generator, _eduCB ) ) )
          {
+            generator.getDataPtr( recordDataPtr ) ;
             rc = _insertKey( recordDataPtr, recordID, ordering ) ;
             if ( SDB_OK != rc )
             {
@@ -211,13 +213,15 @@ namespace engine
          }
 
          dmsExtScanner extScanner( _suData, _mbContext, NULL, _currentExtentID ) ;
+         _mthRecordGenerator generator ;
          dmsRecordID recordID ;
          ossValuePtr recordDataPtr ;
 
-         while ( SDB_OK == ( rc = extScanner.advance( recordID, recordDataPtr, _eduCB ) ) )
+         while ( SDB_OK == ( rc = extScanner.advance( recordID, generator, _eduCB ) ) )
          {
             BSONObjSet keySet ;
             BSONObjSet::iterator it ;
+            generator.getDataPtr( recordDataPtr ) ;
 
             rc = _getKeySet( recordDataPtr, keySet ) ;
             if ( SDB_OK != rc )

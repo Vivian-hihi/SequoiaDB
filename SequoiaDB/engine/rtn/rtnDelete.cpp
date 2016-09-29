@@ -167,12 +167,14 @@ namespace engine
 
       // delete
       {
+         _mthRecordGenerator generator ;
          dmsRecordID recordID ;
          ossValuePtr recordDataPtr = 0 ;
 
-         while ( SDB_OK == ( rc = pScanner->advance( recordID, recordDataPtr,
+         while ( SDB_OK == ( rc = pScanner->advance( recordID, generator,
                                                      cb ) ) )
          {
+            generator.getDataPtr( recordDataPtr ) ;
             rc = su->data()->deleteRecord( mbContext, recordID, recordDataPtr,
                                            cb, dpsCB ) ;
             PD_RC_CHECK( rc, PDERROR, "Delete record failed, rc: %d", rc ) ;
@@ -324,12 +326,14 @@ namespace engine
 
       // delete
       {
+         _mthRecordGenerator generator ;
          dmsRecordID recordID ;
          ossValuePtr recordDataPtr = 0 ;
 
-         while ( SDB_OK == ( rc = pScanner->advance( recordID, recordDataPtr,
+         while ( SDB_OK == ( rc = pScanner->advance( recordID, generator,
                                                      cb ) ) )
          {
+            generator.getDataPtr( recordDataPtr ) ;
             rc = su->data()->deleteRecord( mbContext, recordID, recordDataPtr,
                                            cb, dpsCB ) ;
             PD_RC_CHECK( rc, PDERROR, "Delete record failed, rc: %d", rc ) ;

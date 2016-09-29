@@ -48,6 +48,11 @@ namespace bson {
             _theend = jso.objdata() + sz - 1;
         }
 
+        BSONObjIterator() {
+            _pos    = NULL ;
+            _theend = NULL ;
+        }
+
         BSONObjIterator( const char * start , const char * end ) {
             _pos = start + 4;
             _theend = end - 1;

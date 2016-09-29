@@ -397,6 +397,10 @@ namespace engine
                                 const BSONObj *blockObj,
                                 INT32 direction ) ;
 
+         INT32    _innerAppend( mthSelector *selector, 
+                                _mthRecordGenerator &generator ) ;
+         INT32    _selectAndAppend( mthSelector *selector, BSONObj &obj ) ;
+
       protected:
          _SDB_DMSCB                 *_dmsCB ;
          _dmsStorageUnit            *_su ;

@@ -177,6 +177,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RTN_DICTCREATORJOB__CREATEDICT ) ;
+      _mthRecordGenerator generator ;
       dmsRecordID recordID ;
       ossValuePtr recordDataPtr = 0 ;
       pmdEDUCB *cb = pmdGetThreadEDUCB() ;
@@ -197,7 +198,7 @@ namespace engine
        */
       do
       {
-         rc = scanner.advance( recordID, recordDataPtr, cb, NULL ) ;
+         rc = scanner.advance( recordID, generator, cb, NULL ) ;
          if ( SDB_DMS_EOC == rc )
          {
             rc = scanner.stepToNextExtent() ;
@@ -215,6 +216,7 @@ namespace engine
 
          try
          {
+            generator.getDataPtr( recordDataPtr ) ;
             BSONObj bs( (const CHAR*)recordDataPtr ) ;
             _creator->build( bs.objdata(), bs.objsize(), dictFull ) ;
             if ( dictFull )

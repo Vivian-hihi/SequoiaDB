@@ -2647,7 +2647,7 @@ namespace engine
       if ( _hasReturnMatch )
       {
          rc = context.subElements( _offset, _len ) ;
-         PD_LOG( PDERROR, "set subElements failed:rc=%d", rc ) ;
+         PD_RC_CHECK( rc, PDERROR, "set subElements failed:rc=%d", rc ) ;
       }
 
       result = tmpResult ;
@@ -3615,7 +3615,7 @@ namespace engine
          subContext.enableDollarList() ;
       }
 
-      rc = _subTree->matches( left.embeddedObject(), result, subContext ) ;
+      rc = _subTree->matches( left.embeddedObject(), result, &subContext ) ;
       context.appendDollarList( subContext._dollarList ) ;
       PD_RC_CHECK( rc, PDERROR, "matches subtree failed:rc=%d", rc ) ;
 

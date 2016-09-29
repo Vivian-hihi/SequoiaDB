@@ -531,14 +531,16 @@ namespace engine
       }
 
       {
+         _mthRecordGenerator generator ;
          dmsRecordID recordID ;
          ossValuePtr recordDataPtr = 0 ;
          numRecords = 0 ;
          dmsTBScanner tbScanner( _pDataSu, context, matcher,
                                  DMS_ACCESS_TYPE_UPDATE, maxUpdate ) ;
-         while ( SDB_OK == ( rc = tbScanner.advance( recordID, recordDataPtr,
+         while ( SDB_OK == ( rc = tbScanner.advance( recordID, generator,
                                                      cb ) ) )
          {
+            generator.getDataPtr( recordDataPtr ) ;
             rc = _pDataSu->updateRecord( context, recordID, recordDataPtr, cb,
                                          dpscb, modifier ) ;
             PD_RC_CHECK( rc, PDERROR, "Update record failed, rc: %d", rc ) ;
@@ -596,14 +598,16 @@ namespace engine
       }
 
       {
+         _mthRecordGenerator generator ;
          dmsRecordID recordID ;
          ossValuePtr recordDataPtr = 0 ;
          numRecords = 0 ;
          dmsTBScanner tbScanner( _pDataSu, context, matcher,
                                  DMS_ACCESS_TYPE_DELETE, maxDelete ) ;
-         while ( SDB_OK == ( rc = tbScanner.advance( recordID, recordDataPtr,
+         while ( SDB_OK == ( rc = tbScanner.advance( recordID, generator,
                                                      cb ) ) )
          {
+            generator.getDataPtr( recordDataPtr ) ;
             rc = _pDataSu->deleteRecord( context, recordID, recordDataPtr,
                                          cb, dpscb ) ;
             PD_RC_CHECK( rc, PDERROR, "Delete record failed, rc: %d", rc ) ;

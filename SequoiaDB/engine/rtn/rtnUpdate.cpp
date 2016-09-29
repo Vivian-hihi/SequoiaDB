@@ -191,18 +191,24 @@ namespace engine
 
       // update
       {
+         _mthRecordGenerator generator ;
+         _mthMatchTreeContext mthContext ;
          dmsRecordID recordID ;
          ossValuePtr recordDataPtr = 0 ;
 
-         while ( SDB_OK == ( rc = pScanner->advance( recordID, recordDataPtr,
-                                                     cb, &dollarList ) ) )
+         mthContext.enableDollarList() ;
+         while ( SDB_OK == ( rc = pScanner->advance( recordID, generator,
+                                                     cb, &mthContext ) ) )
          {
+            mthContext.getDollarList( &dollarList ) ;
+            generator.getDataPtr( recordDataPtr ) ;
             rc = su->data()->updateRecord( mbContext, recordID, recordDataPtr,
                                            cb, dpsCB, modifier ) ;
             PD_RC_CHECK( rc, PDERROR, "Update record failed, rc: %d", rc ) ;
 
             ++numUpdatedRecords ;
-            dollarList.clear() ;
+            mthContext.clear() ;
+            mthContext.enableDollarList() ;
          }
 
          if ( SDB_DMS_EOC == rc )

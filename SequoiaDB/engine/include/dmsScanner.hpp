@@ -48,6 +48,7 @@
 #include "dmsStorageData.hpp"
 #include "../bson/bson.h"
 #include "../bson/bsonobj.h"
+#include "mthMatchTree.hpp"
 
 using namespace bson ;
 
@@ -56,6 +57,7 @@ namespace engine
 
    class _dmsMBContext ;
    class _dmsStorageData ;
+   class _mthMatchTreeContext ;
    class _mthMatchTree ;
    class _rtnIXScanner ;
    class _pmdEDUCB ;
@@ -75,9 +77,9 @@ namespace engine
 
       public:
          virtual INT32 advance ( dmsRecordID &recordID,
-                                 ossValuePtr &recordDataPtr,
+                                 _mthRecordGenerator &generator,
                                  _pmdEDUCB *cb,
-                                 vector<INT64> *dollarList = NULL ) = 0 ;
+                                 _mthMatchTreeContext *mthContext = NULL ) = 0 ;
          virtual void  stop () = 0 ;
 
       protected:
@@ -111,13 +113,14 @@ namespace engine
 
       public:
          virtual INT32 advance ( dmsRecordID &recordID,
-                                 ossValuePtr &recordDataPtr,
+                                 _mthRecordGenerator &generator,
                                  _pmdEDUCB *cb,
-                                 vector<INT64> *dollarList = NULL ) ;
+                                 _mthMatchTreeContext *mhtContext = NULL ) ;
          virtual void  stop () ;
 
       protected:
          INT32 _firstInit( _pmdEDUCB *cb ) ;
+         void _checkMaxRecordsNum( _mthRecordGenerator &generator ) ;
 
       private:
          INT64                _maxRecords ;
@@ -150,9 +153,9 @@ namespace engine
 
       public:
          virtual INT32 advance ( dmsRecordID &recordID,
-                                 ossValuePtr &recordDataPtr,
+                                 _mthRecordGenerator &generator,
                                  _pmdEDUCB *cb,
-                                 vector<INT64> *dollarList = NULL ) ;
+                                 _mthMatchTreeContext *mthContext = NULL ) ;
          virtual void  stop () ;
 
       protected:
@@ -196,9 +199,9 @@ namespace engine
 
       public:
          virtual INT32 advance ( dmsRecordID &recordID,
-                                 ossValuePtr &recordDataPtr,
+                                 _mthRecordGenerator &generator,
                                  _pmdEDUCB *cb,
-                                 vector<INT64> *dollarList = NULL ) ;
+                                 _mthMatchTreeContext *mhtContext = NULL ) ;
          virtual void  stop () ;
 
       protected:
@@ -207,6 +210,7 @@ namespace engine
          BSONObj* _getEndKey () ;
          dmsRecordID* _getStartRID () ;
          dmsRecordID* _getEndRID () ;
+         void _checkMaxRecordsNum( _mthRecordGenerator &generator ) ;
 
       private:
          INT64                _maxRecords ;
@@ -254,9 +258,9 @@ namespace engine
 
       public:
          virtual INT32 advance ( dmsRecordID &recordID,
-                                 ossValuePtr &recordDataPtr,
+                                 _mthRecordGenerator &generator,
                                  _pmdEDUCB *cb,
-                                 vector<INT64> *dollarList = NULL ) ;
+                                 _mthMatchTreeContext *mthContext = NULL ) ;
          virtual void  stop () ;
 
       protected:

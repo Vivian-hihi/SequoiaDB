@@ -251,6 +251,7 @@ namespace engine
          ~_mthMatchTreeContext() ;
 
          void  clear() ;
+         void clearPart() ;
 
          //****array attribute relate*******
          INT32 getDollarResult( INT32 index, INT32 &value ) ;
@@ -271,6 +272,8 @@ namespace engine
 
          BOOLEAN isReturnMatchExecuted() ;
          void setReturnMatchExecuted( BOOLEAN isExecuted ) ;
+
+         INT32 getRecordNum() ;
          //*********************************
 
          void  setObj( const BSONObj &obj ) ;
@@ -278,7 +281,7 @@ namespace engine
          void  enableDollarList() ;
          void  disableDollarList() ;
          BOOLEAN isDollarListEnabled() ;
-         void appendDollarList( vector<INT64> dollarList ) ;
+         void appendDollarList( vector<INT64> &dollarList ) ;
          void getDollarList( vector<INT64> *dollarList ) ;
 
          string toString() ;
