@@ -665,9 +665,6 @@ namespace engine
       /* Get list of Data Groups from Catalog with the P1 catalog command */
       virtual BOOLEAN _flagGetGrpLstFromCata () { return FALSE ; }
 
-      /* Execute Data command before Catalog command in P2 */
-      virtual BOOLEAN _flagExecDataBeforeCataP2 () { return FALSE ; }
-
       /* Commit on Catalog when rollback on Data groups failed */
       virtual BOOLEAN _flagCommitOnRollbackFailed () { return FALSE ; }
 

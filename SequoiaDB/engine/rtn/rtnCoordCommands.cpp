@@ -3226,56 +3226,28 @@ namespace engine
        * 1. Execute P2 on Catalog
        * 2. Execute P2 on Data Groups
        ************************************************************************/
-      if ( _flagExecDataBeforeCataP2() )
-      {
-         // Execute P2 on Data Groups
-         rc = _doOnDataGroupP2( pDataMsg, cb, &pCoordCtxForData, pArguments,
-                                groupLst, cataObjs ) ;
-         PD_RC_CHECK( rc, PDERROR,
-                      "Failed to %s on [%s]: "
-                      "phase 2 on data groups failed, rc, %d",
-                      _getCommandName(), pArguments->_targetName.c_str(), rc ) ;
+      // Execute P2 on Catalog
+      rc = _doOnCataGroupP2( pCataMsg, cb, &pCoordCtxForCata, pArguments, groupLst ) ;
+      PD_RC_CHECK( rc, PDERROR,
+                   "Failed to %s on [%s]: "
+                   "phase 2 on catalog failed, rc, %d",
+                   _getCommandName(), pArguments->_targetName.c_str(), rc ) ;
 
-         PD_LOG( PDINFO,
-                 "%s on [%s] phase 2 on data done",
-                 _getCommandName(), pArguments->_targetName.c_str() ) ;
+      PD_LOG( PDINFO,
+              "%s on [%s] phase 2 on catalog done",
+              _getCommandName(), pArguments->_targetName.c_str() ) ;
 
-         // Execute P2 on Catalog
-         rc = _doOnCataGroupP2( pCataMsg, cb, &pCoordCtxForCata, pArguments, groupLst ) ;
-         PD_RC_CHECK( rc, PDERROR,
-                      "Failed to %s on [%s]: "
-                      "phase 2 on catalog failed, rc, %d",
-                      _getCommandName(), pArguments->_targetName.c_str(), rc ) ;
+      // Execute P2 on Data Groups
+      rc = _doOnDataGroupP2( pDataMsg, cb, &pCoordCtxForData, pArguments,
+                             groupLst, cataObjs ) ;
+      PD_RC_CHECK( rc, PDERROR,
+                   "Failed to %s on [%s]: "
+                   "phase 2 on data groups failed, rc, %d",
+                   _getCommandName(), pArguments->_targetName.c_str(), rc ) ;
 
-         PD_LOG( PDINFO,
-                 "%s on [%s] phase 2 on catalog done",
-                 _getCommandName(), pArguments->_targetName.c_str() ) ;
-      }
-      else
-      {
-         // Execute P2 on Catalog
-         rc = _doOnCataGroupP2( pCataMsg, cb, &pCoordCtxForCata, pArguments, groupLst ) ;
-         PD_RC_CHECK( rc, PDERROR,
-                      "Failed to %s on [%s]: "
-                      "phase 2 on catalog failed, rc, %d",
-                      _getCommandName(), pArguments->_targetName.c_str(), rc ) ;
-
-         PD_LOG( PDINFO,
-                 "%s on [%s] phase 2 on catalog done",
-                 _getCommandName(), pArguments->_targetName.c_str() ) ;
-
-         // Execute P2 on Data Groups
-         rc = _doOnDataGroupP2( pDataMsg, cb, &pCoordCtxForData, pArguments,
-                                groupLst, cataObjs ) ;
-         PD_RC_CHECK( rc, PDERROR,
-                      "Failed to %s on [%s]: "
-                      "phase 2 on data groups failed, rc, %d",
-                      _getCommandName(), pArguments->_targetName.c_str(), rc ) ;
-
-         PD_LOG( PDINFO,
-                 "%s on [%s] phase 2 on data done",
-                 _getCommandName(), pArguments->_targetName.c_str() ) ;
-      }
+      PD_LOG( PDINFO,
+              "%s on [%s] phase 2 on data done",
+              _getCommandName(), pArguments->_targetName.c_str() ) ;
 
       /************************************************************************
        * Phase Commit

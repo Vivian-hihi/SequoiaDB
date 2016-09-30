@@ -92,6 +92,8 @@ namespace engine
                               _pmdEDUCB *cb ) ;
 
    protected:
+      virtual void _setStatus ( CAT_CONTEXT_STATUS status ) ;
+
       virtual INT32 _prepareData ( _pmdEDUCB *cb ) { return SDB_OK ; }
 
       virtual INT32 _parseQuery (_pmdEDUCB *cb ) = 0 ;
@@ -102,9 +104,11 @@ namespace engine
 
       virtual INT32 _execute ( _pmdEDUCB *cb ) ;
 
+      virtual INT32 _preExecuteInternal ( _pmdEDUCB *cb, INT16 w ) = 0 ;
+
       virtual INT32 _executeInternal ( _pmdEDUCB *cb, INT16 w ) = 0 ;
 
-      virtual INT32 _commit ( _pmdEDUCB *cb ) { return SDB_OK; }
+      virtual INT32 _commit ( _pmdEDUCB *cb ) ;
 
       virtual INT32 _rollback ( _pmdEDUCB *cb ) ;
 
@@ -138,8 +142,11 @@ namespace engine
       // Flags to control process
       BOOLEAN _executeAfterLock ;
       BOOLEAN _commitAfterExecute ;
+      BOOLEAN _needPreExecute ;
+      BOOLEAN _needRollbackAlways ;
       BOOLEAN _needRollback ;
       BOOLEAN _needUpdate ;
+      BOOLEAN _hasPreExecuted ;
       BOOLEAN _hasUpdated ;
 
       std::string _targetName ;

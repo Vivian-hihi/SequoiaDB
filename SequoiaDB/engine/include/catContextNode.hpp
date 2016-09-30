@@ -53,6 +53,9 @@ namespace engine
       virtual ~_catCtxNodeBase () ;
 
    protected :
+      virtual INT32 _preExecuteInternal ( _pmdEDUCB *cb, INT16 w )
+      { return SDB_OK ; }
+
       virtual INT32 _rollbackInternal ( _pmdEDUCB *cb, INT16 w )
       { return SDB_OK ; }
 

@@ -60,6 +60,11 @@ namespace engine
 
       virtual INT32 checkTask ( _pmdEDUCB *cb, catCtxLockMgr &lockMgr ) ;
 
+      virtual INT32 preExecute ( _pmdEDUCB *cb,
+                                 SDB_DMSCB *pDmsCB,
+                                 SDB_DPSCB *pDpsCB,
+                                 INT16 w ) ;
+
       virtual INT32 execute ( _pmdEDUCB *cb,
                               SDB_DMSCB *pDmsCB,
                               SDB_DPSCB *pDpsCB,
@@ -77,6 +82,11 @@ namespace engine
    protected :
       virtual INT32 _checkInternal ( _pmdEDUCB *cb,
                                      catCtxLockMgr &lockMgr ) = 0 ;
+
+      virtual INT32 _preExecuteInternal ( _pmdEDUCB *cb,
+                                          SDB_DMSCB *pDmsCB,
+                                          SDB_DPSCB *pDpsCB,
+                                          INT16 w ) = 0 ;
 
       virtual INT32 _executeInternal ( _pmdEDUCB *cb,
                                        SDB_DMSCB *pDmsCB,
@@ -110,6 +120,12 @@ namespace engine
       const std::string &getDataName () const { return _dataName ; }
 
    protected :
+      virtual INT32 _preExecuteInternal ( _pmdEDUCB *cb,
+                                          SDB_DMSCB *pDmsCB,
+                                          SDB_DPSCB *pDpsCB,
+                                          INT16 w )
+      { return SDB_OK ; }
+
       virtual INT32 _rollbackInternal ( _pmdEDUCB *cb,
                                         SDB_DMSCB *pDmsCB,
                                         SDB_DPSCB *pDpsCB,
@@ -151,6 +167,11 @@ namespace engine
 
    protected :
       virtual INT32 _checkInternal ( _pmdEDUCB *cb, catCtxLockMgr &lockMgr ) ;
+
+      virtual INT32 _preExecuteInternal ( _pmdEDUCB *cb,
+                                          SDB_DMSCB *pDmsCB,
+                                          SDB_DPSCB *pDpsCB,
+                                          INT16 w ) ;
 
       virtual INT32 _executeInternal ( _pmdEDUCB *cb,
                                        SDB_DMSCB *pDmsCB,

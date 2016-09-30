@@ -193,9 +193,6 @@ namespace engine
 
       /* command on collection */
       virtual BOOLEAN _flagDoOnCollection () { return FALSE ; }
-
-      /* Execute Data command before Catalog command in P2 */
-      virtual BOOLEAN _flagExecDataBeforeCataP2 () { return TRUE ; }
    } ;
 
    /*
@@ -258,9 +255,6 @@ namespace engine
 
       /* Get list of Data Groups from Catalog with the P1 catalog command */
       virtual BOOLEAN _flagUpdateBeforeCata () { return TRUE ; }
-
-      /* Execute Data command before Catalog command in P2 */
-      virtual BOOLEAN _flagExecDataBeforeCataP2 () { return TRUE ; }
    } ;
 
    /*

@@ -58,9 +58,12 @@ namespace engine
 
       _executeAfterLock = FALSE ;
       _commitAfterExecute = FALSE ;
+      _needPreExecute = FALSE ;
+      _needRollbackAlways = FALSE ;
       _needRollback = FALSE ;
 
       _needUpdate = FALSE ;
+      _hasPreExecuted = FALSE ;
       _hasUpdated = FALSE ;
       _version = -1 ;
    }
@@ -103,15 +106,13 @@ namespace engine
                    "failed to parse query, rc: %d",
                    contextID(), rc ) ;
 
-      _status = CAT_CONTEXT_LOCKING ;
+      _setStatus( CAT_CONTEXT_LOCKING ) ;
 
       rc = _checkContext( cb ) ;
       PD_RC_CHECK( rc, PDERROR,
                    "Failed in catContext [%lld]: "
                    "failed to check and lock catalog objects, rc: %d",
                    contextID(), rc ) ;
-
-      _status = CAT_CONTEXT_READY ;
 
       if ( _executeAfterLock )
       {
@@ -120,8 +121,6 @@ namespace engine
                       "Failed in catContext [%lld]: "
                       "failed to execute catalog command], rc: %d",
                       contextID(), rc ) ;
-
-         _status = CAT_CONTEXT_CAT_DONE ;
       }
 
       rc = _makeReply( buffObj ) ;
@@ -167,16 +166,7 @@ namespace engine
                       "Failed in catContext [%lld]: "
                       "failed to execute catalog command, rc: %d",
                       contextID(), rc ) ;
-
-         _status = CAT_CONTEXT_CAT_DONE ;
-         PD_LOG( PDDEBUG,
-                 "catContext [%lld] : get-more from ready -> cat_done",
-                 contextID() ) ;
-         if ( !_commitAfterExecute )
-         {
-            break ;
-         }
-         // Continue to commit
+         break ;
       }
       case CAT_CONTEXT_CAT_DONE :
       {
@@ -185,11 +175,6 @@ namespace engine
                       "Failed in catContext [%lld]: "
                       "failed to commit catalog changes, rc: %d",
                       contextID(), rc ) ;
-
-         _status = CAT_CONTEXT_DATA_DONE ;
-         PD_LOG( PDDEBUG,
-                 "catContext [%lld] : get-more from cat_done -> data_done",
-                 contextID() ) ;
          break ;
       }
       default :
@@ -227,6 +212,14 @@ namespace engine
       goto done ;
    }
 
+   void _catContextBase::_setStatus ( CAT_CONTEXT_STATUS status )
+   {
+      PD_LOG( PDDEBUG,
+              "catContext [%lld] status change: %d -> %d",
+              contextID(), _status, status ) ;
+      _status = status ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CATCTXBASE_CHECKCTX, "_catContextBase::_checkContext" )
    INT32 _catContextBase::_checkContext ( _pmdEDUCB *cb )
    {
@@ -255,6 +248,8 @@ namespace engine
               "catContext [%lld]: finished check context",
               contextID() ) ;
 
+      _setStatus( CAT_CONTEXT_READY ) ;
+
    done :
       PD_TRACE_EXITRC ( SDB_CATCTXBASE_CHECKCTX, rc ) ;
       return rc ;
@@ -273,18 +268,48 @@ namespace engine
 
       if ( !_needUpdate )
       {
+         _needPreExecute = FALSE ;
          goto done ;
       }
 
       try
       {
-         rc = _executeInternal( cb, w ) ;
-         PD_RC_CHECK( rc, PDERROR,
-                      "Failed in catContext [%lld]: "
-                      "failed to execute context internal, rc: %d",
-                      contextID(), rc ) ;
+         if ( _needPreExecute )
+         {
+            rc = _preExecuteInternal( cb, w ) ;
+            PD_RC_CHECK( rc, PDERROR,
+                         "Failed in catContext [%lld]: "
+                         "failed to pre-execute catalog changes, rc: %d",
+                         contextID(), rc ) ;
+            // Only need one pre-execute
+            _needPreExecute = FALSE ;
+            _hasPreExecuted = TRUE ;
+         }
+         else
+         {
+            if ( _needRollbackAlways )
+            {
+               _hasUpdated = TRUE ;
+            }
+            rc = _executeInternal( cb, w ) ;
+            PD_RC_CHECK( rc, PDERROR,
+                         "Failed in catContext [%lld]: "
+                         "failed to execute context internal, rc: %d",
+                         contextID(), rc ) ;
 
-         _hasUpdated = TRUE ;
+            _hasUpdated = TRUE ;
+            _setStatus( CAT_CONTEXT_CAT_DONE ) ;
+
+            if ( _commitAfterExecute )
+            {
+               // Continue to commit
+               rc = _commit( cb ) ;
+               PD_RC_CHECK( rc, PDERROR,
+                            "Failed in catContext [%lld]: "
+                            "failed to commit catalog changes, rc: %d",
+                            contextID(), rc ) ;
+            }
+         }
       }
       catch ( std::exception &e )
       {
@@ -302,6 +327,18 @@ namespace engine
       return rc ;
    error :
       goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATCTXBASE_COMMIT, "_catContextBase::_commit" )
+   INT32 _catContextBase::_commit ( _pmdEDUCB *cb )
+   {
+      PD_TRACE_ENTRY ( SDB_CATCTXBASE_COMMIT ) ;
+
+      _setStatus( CAT_CONTEXT_DATA_DONE ) ;
+
+      PD_TRACE_EXIT ( SDB_CATCTXBASE_COMMIT ) ;
+
+      return SDB_OK ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CATCTXBASE_ROLLBACK, "_catContextBase::_rollback" )
@@ -413,7 +450,7 @@ namespace engine
               contextID() ) ;
 
    done :
-      _status = CAT_CONTEXT_END ;
+      _setStatus( CAT_CONTEXT_END ) ;
       PD_TRACE_EXITRC ( SDB_CATCTXBASE_ONCTXDEL, rc ) ;
       return rc ;
 
@@ -427,20 +464,20 @@ namespace engine
       switch ( _status )
       {
       case CAT_CONTEXT_NEW :
-         _status = CAT_CONTEXT_END ;
+         _setStatus( CAT_CONTEXT_END ) ;
          break ;
       case CAT_CONTEXT_LOCKING :
       case CAT_CONTEXT_CAT_DONE :
       case CAT_CONTEXT_CAT_ERROR :
       case CAT_CONTEXT_DATA_DONE :
       case CAT_CONTEXT_DATA_ERROR :
-         _status = CAT_CONTEXT_CLEANING ;
+         _setStatus( CAT_CONTEXT_CLEANING ) ;
          break ;
       case CAT_CONTEXT_READY :
-         _status = CAT_CONTEXT_CAT_ERROR ;
+         _setStatus( CAT_CONTEXT_CAT_ERROR ) ;
          break ;
       default :
-         _status = CAT_CONTEXT_END ;
+         _setStatus( CAT_CONTEXT_END ) ;
          break ;
       }
 

@@ -54,6 +54,9 @@ namespace engine
    protected :
       virtual INT32 _makeReply ( rtnContextBuf &buffObj ) ;
 
+      virtual INT32 _preExecuteInternal ( _pmdEDUCB *cb, INT16 w )
+      { return SDB_OK ; }
+
       virtual INT32 _rollbackInternal ( _pmdEDUCB *cb, INT16 w )
       { return SDB_OK ; }
 
@@ -72,7 +75,7 @@ namespace engine
       virtual ~_catCtxDataMultiTaskBase () ;
 
    protected :
-      virtual INT32 _execute ( _pmdEDUCB *cb ) ;
+      virtual INT32 _preExecuteInternal ( _pmdEDUCB *cb, INT16 w ) ;
 
       virtual INT32 _executeInternal ( _pmdEDUCB *cb, INT16 w ) ;
 
@@ -275,50 +278,6 @@ namespace engine
    } ;
 
    typedef class _catCtxAlterCL catCtxAlterCL ;
-
-//   /*
-//    * _catCtxAlterCL define
-//    */
-//   class _catCtxSplitCL : public _catCtxDataBase
-//   {
-//   public :
-//      _catCtxSplitCL ( INT64 contextID, UINT64 eduID ) ;
-//
-//      virtual ~_catCtxSplitCL () ;
-//
-//      virtual RTN_CONTEXT_TYPE getType () const
-//      {
-//         return RTN_CONTEXT_CAT_SPLIT_CL ;
-//      }
-//
-//      UINT64 getTaskID () const { return _taskID ; }
-//
-//      virtual INT32 getMore ( INT32 opCode,
-//                              const BSONObj &boQuery,
-//                              rtnContextBuf &buffObj,
-//                              _pmdEDUCB *cb ) ;
-//   protected :
-//
-//      virtual INT32 _parseQuery ( _pmdEDUCB *cb ) ;
-//
-//      virtual INT32 _checkInternal ( _pmdEDUCB *cb ) ;
-//
-//      virtual INT32 _makeReply ( rtnContextBuf &buffObj ) ;
-//
-//      virtual INT32 _executeInternal ( _pmdEDUCB *cb, INT16 w ) ;
-//
-//      INT32 _updateStatus ( INT32 newSplitStatus, const BSONObj &boQuery ) ;
-//
-//   protected :
-//      INT32 _splitStatus ;
-//      BSONObj _boSplitInfo ;
-//      UINT32 _srcGroupID ;
-//      UINT32 _dstGroupID ;
-//      BOOLEAN _hasTaskAdded ;
-//      UINT64 _taskID ;
-//   } ;
-//
-//   typedef class _catCtxSplitCL catCtxSplitCL ;
 
    /*
     * _catCtxLinkCL define

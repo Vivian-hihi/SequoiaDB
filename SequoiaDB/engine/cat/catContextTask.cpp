@@ -81,6 +81,42 @@ namespace engine
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATCTXTASK_PREEXECUTE, "_catCtxTaskBase::preExecute" )
+   INT32 _catCtxTaskBase::preExecute ( _pmdEDUCB *cb,
+                                       SDB_DMSCB *pDmsCB,
+                                       SDB_DPSCB *pDpsCB,
+                                       INT16 w )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY ( SDB_CATCTXTASK_PREEXECUTE ) ;
+
+      if ( !_needUpdate )
+      {
+         goto done ;
+      }
+
+      try
+      {
+         rc = _preExecuteInternal( cb, pDmsCB, pDpsCB, w ) ;
+         PD_RC_CHECK( rc, PDWARNING,
+                      "Failed to pre-execute sub-task, %d",
+                      rc ) ;
+      }
+      catch( std::exception &e )
+      {
+         PD_LOG( PDWARNING, "Occur exception: %s", e.what() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+   done :
+      PD_TRACE_EXITRC ( SDB_CATCTXTASK_PREEXECUTE, rc ) ;
+      return rc ;
+   error :
+      goto done ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CATCTXTASK_EXECUTE, "_catCtxTaskBase::execute" )
    INT32 _catCtxTaskBase::execute ( _pmdEDUCB *cb,
                                     SDB_DMSCB *pDmsCB,
@@ -267,6 +303,37 @@ namespace engine
 
    done :
       PD_TRACE_EXITRC ( SDB_CATCTXDROPCLTASK_CHECK_INT, rc ) ;
+      return rc ;
+   error :
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATCTXDROPCLTASK_PREEXECUTE_INT, "_catCtxDropCLTask::_preExecuteInternal" )
+   INT32 _catCtxDropCLTask::_preExecuteInternal ( _pmdEDUCB *cb,
+                                                  SDB_DMSCB *pDmsCB,
+                                                  SDB_DPSCB *pDpsCB,
+                                                  INT16 w )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY ( SDB_CATCTXDROPCLTASK_PREEXECUTE_INT ) ;
+
+      // Remove tasks in checking step to avoid tasks to wait for locks
+      rc = catRemoveCLTasks( _dataName, cb, w ) ;
+      if ( SDB_CAT_TASK_NOTFOUND == rc )
+      {
+         rc = SDB_OK ;
+      }
+      PD_RC_CHECK( rc, PDWARNING,
+                   "Failed to remove tasks with the collection [%s], rc: %d",
+                   _dataName.c_str(), rc ) ;
+
+      PD_LOG( PDDEBUG,
+              "Finished pre-execute of drop collection [%s] task",
+              _dataName.c_str() ) ;
+
+   done :
+      PD_TRACE_EXITRC ( SDB_CATCTXDROPCLTASK_PREEXECUTE_INT, rc ) ;
       return rc ;
    error :
       goto done ;

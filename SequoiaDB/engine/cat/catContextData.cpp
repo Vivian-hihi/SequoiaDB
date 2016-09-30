@@ -71,9 +71,18 @@ namespace engine
          if ( ( CAT_CONTEXT_READY == _status && !_executeAfterLock ) ||
               ( CAT_CONTEXT_CAT_DONE == _status && _executeAfterLock ) )
          {
-            BSONObjBuilder retObjBuilder ;
-            _pCatCB->makeGroupsObj( retObjBuilder, _groupList, TRUE ) ;
-            buffObj = rtnContextBuf( retObjBuilder.obj() ) ;
+            if ( _hasPreExecuted )
+            {
+               // For pre-execute step, only return dummy object
+               BSONObj dummy ;
+               buffObj = rtnContextBuf( dummy.getOwned() ) ;
+            }
+            else
+            {
+               BSONObjBuilder retObjBuilder ;
+               _pCatCB->makeGroupsObj( retObjBuilder, _groupList, TRUE ) ;
+               buffObj = rtnContextBuf( retObjBuilder.obj() ) ;
+            }
          }
          else if ( CAT_CONTEXT_END != _status )
          {
@@ -99,6 +108,8 @@ namespace engine
                                                         UINT64 eduID )
    : _catCtxDataBase( contextID, eduID )
    {
+      // Always need rollback for finished sub-tasks
+      _needRollbackAlways = TRUE ;
    }
 
    _catCtxDataMultiTaskBase::~_catCtxDataMultiTaskBase ()
@@ -115,40 +126,26 @@ namespace engine
       }
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATCTXDATAMULTITASK_EXECUTE, "_catCtxDataMultiTaskBase::_execute" )
-   INT32 _catCtxDataMultiTaskBase::_execute ( _pmdEDUCB *cb )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATCTXDATAMULTITASK_PREEXECUTE_INT, "_catCtxDataMultiTaskBase::_preExecuteInternal" )
+   INT32 _catCtxDataMultiTaskBase::_preExecuteInternal ( _pmdEDUCB *cb, INT16 w )
    {
       INT32 rc = SDB_OK ;
 
-      PD_TRACE_ENTRY ( SDB_CATCTXDATAMULTITASK_EXECUTE ) ;
+      PD_TRACE_ENTRY ( SDB_CATCTXDATAMULTITASK_PREEXECUTE_INT ) ;
 
-      INT16 w = _pCatCB->majoritySize() ;
-
-      if ( !_needUpdate )
+      _catSubTasks::iterator iter = _execTasks.begin() ;
+      while ( iter != _execTasks.end() )
       {
-         goto done ;
-      }
-
-      try
-      {
-         // Need rollback always
-         _hasUpdated = TRUE ;
-
-         rc = _executeInternal( cb, w ) ;
+         _catCtxTaskBase *subTask = (*iter) ;
+         rc = subTask->preExecute( cb, _pDmsCB, _pDpsCB, w ) ;
          PD_RC_CHECK( rc, PDERROR,
-                      "Failed in catContext [%lld]: "
-                      "failed to execute context internal, rc: %d",
-                      contextID(), rc ) ;
-      }
-      catch( std::exception &e )
-      {
-         PD_LOG( PDERROR, "Occur exception: %s", e.what() ) ;
-         rc = SDB_SYS ;
-         goto error ;
+                      "Failed to pre-execute sub-task, rc: %d",
+                      rc ) ;
+         ++iter ;
       }
 
    done :
-      PD_TRACE_EXITRC ( SDB_CATCTXDATAMULTITASK_EXECUTE, rc ) ;
+      PD_TRACE_EXITRC ( SDB_CATCTXDATAMULTITASK_PREEXECUTE_INT, rc ) ;
       return rc ;
    error :
       goto done ;
@@ -968,6 +965,7 @@ namespace engine
    {
       _executeAfterLock = FALSE ;
       _commitAfterExecute = TRUE ;
+      _needPreExecute = TRUE ;
       _needRollback = FALSE ;
    }
 
@@ -1481,6 +1479,7 @@ namespace engine
    {
       _executeAfterLock = FALSE ;
       _commitAfterExecute = TRUE ;
+      _needPreExecute = TRUE ;
       _needRollback = FALSE ;
    }
 
