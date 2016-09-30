@@ -88,6 +88,11 @@ namespace engine {
       {
          _nodePaths.push_back( options->getTmpPath() ) ;
       }
+      /// archivelog path
+      if ( 0 != ossStrncmp( dbpath, options->getArchivePath(), pathLen ) )
+      {
+         _nodePaths.push_back( options->getArchivePath() ) ;
+      }
    }
 
    BOOLEAN _omaNodePathGuard::muteXOn( _omaNodePathGuard *pOther )
@@ -153,6 +158,13 @@ namespace engine {
       /// repl path
       rc = _checkExistedFiles( options->getReplLogPath(),
                                "sequoiadbLog.*", 1 ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+      /// archivelog path
+      rc = _checkExistedFiles( options->getArchivePath(),
+                               "archivelog.*", 1 );
       if ( rc )
       {
          goto error ;
