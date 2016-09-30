@@ -1082,13 +1082,29 @@ namespace replay
       INT32 rc = SDB_OK;
       string filePath;
       UINT32 mode;
+      BOOLEAN exist = FALSE;
 
       SDB_ASSERT(NULL != _options, "_options can't be NULL");
 
       filePath = _options->status();
       SDB_ASSERT(!filePath.empty(), "status file is empty");
 
-      mode = OSS_CREATEONLY | OSS_READWRITE;
+      rc = ossFile::exists(filePath, exist);
+      if (SDB_OK != rc)
+      {
+         PD_LOG(PDERROR, "Failed to check if file[%s] exists, rc=%d",
+                filePath.c_str(), rc);
+         goto error;
+      }
+
+      if (exist)
+      {
+         mode = OSS_READWRITE;
+      }
+      else
+      {
+         mode = OSS_CREATEONLY | OSS_READWRITE;
+      }
 
       rc = _status.open(filePath, mode, OSS_DEFAULTFILE);
       if (SDB_OK != rc)
