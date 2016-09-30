@@ -1867,7 +1867,7 @@ namespace engine
          goto error ;
       }
 
-      PD_LOG( PDDEBUG, "context:\n%s", context.toString().c_str() ) ;
+      //PD_LOG( PDDEBUG, "context:\n%s", context.toString().c_str() ) ;
 
    done:
       return rc ;
