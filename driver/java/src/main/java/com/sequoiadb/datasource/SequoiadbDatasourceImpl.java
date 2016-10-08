@@ -83,6 +83,18 @@ public class SequoiadbDatasourceImpl
 	// for others
 	private Random _rand = new Random(47);
 	private double MULTIPLE = 1.2;
+	// finalizer guardian
+	@SuppressWarnings("unused")
+	private final Object finalizerGuardian = new Object() { 
+		@Override
+		protected void finalize() throws Throwable {
+			try {
+				close();
+			} catch(Exception e) {
+				// do nothing
+			}
+		}
+	};
 	
 	/// when client program finish running, 
 	/// this task will be executed
@@ -1397,11 +1409,5 @@ public class SequoiadbDatasourceImpl
 		return retCoordAddr;
 	}
 	
-	protected void finalize() throws Throwable {
-	    try {
-	        close();
-	    } catch(Exception e) {}
-	    super.finalize();
-	}
 }
 
