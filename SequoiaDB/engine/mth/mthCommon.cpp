@@ -80,14 +80,14 @@ namespace engine
                            INT32 limit, const CHAR *&subStr, 
                            INT32 &subStrLen ) ;
 
-   static INT32 _lower( const CHAR *str, UINT32 len, utilString &us ) ;
-   static INT32 _upper( const CHAR *str, UINT32 len, utilString &us ) ;
+   static INT32 _lower( const CHAR *str, UINT32 len, _utilString<> &us ) ;
+   static INT32 _upper( const CHAR *str, UINT32 len, _utilString<> &us ) ;
 
    /// lr: -1(ltrim) 0(trim) 1(rtrim)
    static void _ltrim( const CHAR *str, const CHAR *&trimed ) ;
-   static INT32 _rtrim( const CHAR *str, INT32 size, _utilString &us ) ;
+   static INT32 _rtrim( const CHAR *str, INT32 size, _utilString<> &us ) ;
    static INT32 _mthTrim( const CHAR *str, INT32 size, INT8 lr,
-                          _utilString &us ) ;
+                          _utilString<> &us ) ;
 
    INT32 _mthCast( const CHAR *fieldName, const bson::BSONElement &e,
                    BSONType type, BSONObjBuilder &builder )
@@ -137,7 +137,7 @@ namespace engine
       {
          if ( NumberInt == e.type() )
          {
-            utilString us ;
+            _utilString<UTIL_STRING_INT_LEN+1> us ;
             rc = us.appendINT32( e.numberInt() ) ;
             if ( SDB_OK != rc )
             {
@@ -148,7 +148,7 @@ namespace engine
          }
          else if ( NumberLong == e.type() )
          {
-            utilString us ;
+            _utilString<UTIL_STRING_INT64_LEN+1> us ;
             rc = us.appendINT64( e.numberLong() ) ;
             if ( SDB_OK != rc )
             {
@@ -159,7 +159,7 @@ namespace engine
          }
          else if ( NumberDouble == e.type() )
          {
-            utilString us ;
+            _utilString<UTIL_STRING_DOUBLE_LEN+1> us ;
             rc = us.appendDouble( e.numberDouble() ) ;
             if ( SDB_OK != rc )
             {
@@ -170,7 +170,7 @@ namespace engine
          }
          else if ( NumberDecimal == e.type() )
          {
-            utilString us ;
+            _utilString<> us ;
             bsonDecimal decimal ;
             string value ;
             decimal.init() ;
@@ -622,7 +622,7 @@ namespace engine
       goto done ;
    }
    
-   INT32 _lower( const CHAR *str, UINT32 len, utilString &us )
+   INT32 _lower( const CHAR *str, UINT32 len, _utilString<> &us )
    {
       INT32 rc = SDB_OK ;
       us.resize( len ) ;
@@ -651,7 +651,7 @@ namespace engine
       goto done ;
    }
 
-   INT32 _upper( const CHAR *str, UINT32 len, utilString &us )
+   INT32 _upper( const CHAR *str, UINT32 len, _utilString<> &us )
    {
       INT32 rc = SDB_OK ;
       us.resize( len ) ;
@@ -697,7 +697,7 @@ namespace engine
       return ;
    }
 
-   INT32 _rtrim( const CHAR *str, INT32 size, _utilString &us )
+   INT32 _rtrim( const CHAR *str, INT32 size, _utilString<> &us )
    {
       INT32 rc  = SDB_OK ;
       INT32 pos = size - 1 ;
@@ -729,7 +729,7 @@ namespace engine
       goto done ;
    }
 
-   INT32 _mthTrim( const CHAR *str, INT32 size, INT8 lr, _utilString &us )
+   INT32 _mthTrim( const CHAR *str, INT32 size, INT8 lr, _utilString<> &us )
    {
       INT32 rc = SDB_OK ;
       SDB_ASSERT( NULL != str, "can not be null" ) ;
@@ -1382,7 +1382,7 @@ namespace engine
       }
       else
       {
-         utilString us ;
+         _utilString<> us ;
          rc = _lower( in.valuestr(), in.valuestrsize(), us ) ;
          if ( SDB_OK != rc )
          {
@@ -1414,7 +1414,7 @@ namespace engine
       }
       else
       {
-         utilString us ;
+         _utilString<> us ;
          rc = _upper( in.valuestr(), in.valuestrsize(), us ) ;
          if ( SDB_OK != rc )
          {
@@ -1483,7 +1483,7 @@ namespace engine
       }
       else
       {
-         utilString us ;
+         _utilString<> us ;
          rc = _mthTrim( in.valuestr(), in.valuestrsize() - 1, lr, us ) ;
          if ( SDB_OK != rc )
          {
@@ -1753,7 +1753,7 @@ namespace engine
       MTH_CAST_TRANS_MAP::iterator iter ;
 
       INT32 rc = SDB_OK ;
-      utilString us ;
+      _utilString<20> us ;
       const CHAR *p = typeStr ;
       while ( '\0' != *p )
       {

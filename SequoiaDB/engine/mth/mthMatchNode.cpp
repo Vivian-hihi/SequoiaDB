@@ -147,7 +147,7 @@ namespace engine
    INT32 _mthMatchTreeContext::_replaceDollar()
    {
       INT32 rc = SDB_OK ;
-      _utilString result ;
+      _utilString< MTH_MATCH_FIELD_STATIC_NAME_LEN > result ;
       const CHAR *src   = NULL ;
       const CHAR *start = NULL ;
       const CHAR *p     = NULL ;
