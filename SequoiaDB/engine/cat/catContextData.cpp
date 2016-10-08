@@ -71,18 +71,9 @@ namespace engine
          if ( ( CAT_CONTEXT_READY == _status && !_executeAfterLock ) ||
               ( CAT_CONTEXT_CAT_DONE == _status && _executeAfterLock ) )
          {
-            if ( _hasPreExecuted )
-            {
-               // For pre-execute step, only return dummy object
-               BSONObj dummy ;
-               buffObj = rtnContextBuf( dummy.getOwned() ) ;
-            }
-            else
-            {
-               BSONObjBuilder retObjBuilder ;
-               _pCatCB->makeGroupsObj( retObjBuilder, _groupList, TRUE ) ;
-               buffObj = rtnContextBuf( retObjBuilder.obj() ) ;
-            }
+            BSONObjBuilder retObjBuilder ;
+            _pCatCB->makeGroupsObj( retObjBuilder, _groupList, TRUE ) ;
+            buffObj = rtnContextBuf( retObjBuilder.obj() ) ;
          }
          else if ( CAT_CONTEXT_END != _status )
          {

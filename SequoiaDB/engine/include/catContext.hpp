@@ -59,6 +59,7 @@ namespace engine
          CAT_CONTEXT_NEW = 1,
          CAT_CONTEXT_LOCKING,
          CAT_CONTEXT_READY,
+         CAT_CONTEXT_PREEXECUTED,
          CAT_CONTEXT_CAT_DONE,
          CAT_CONTEXT_CAT_ERROR,
          CAT_CONTEXT_DATA_DONE,
@@ -102,9 +103,11 @@ namespace engine
 
       virtual INT32 _checkInternal ( _pmdEDUCB *cb ) = 0 ;
 
-      virtual INT32 _execute ( _pmdEDUCB *cb ) ;
+      virtual INT32 _preExecute ( _pmdEDUCB *cb ) ;
 
       virtual INT32 _preExecuteInternal ( _pmdEDUCB *cb, INT16 w ) = 0 ;
+
+      virtual INT32 _execute ( _pmdEDUCB *cb ) ;
 
       virtual INT32 _executeInternal ( _pmdEDUCB *cb, INT16 w ) = 0 ;
 
@@ -146,7 +149,6 @@ namespace engine
       BOOLEAN _needRollbackAlways ;
       BOOLEAN _needRollback ;
       BOOLEAN _needUpdate ;
-      BOOLEAN _hasPreExecuted ;
       BOOLEAN _hasUpdated ;
 
       std::string _targetName ;

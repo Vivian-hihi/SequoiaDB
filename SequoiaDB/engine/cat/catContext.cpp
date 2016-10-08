@@ -63,7 +63,6 @@ namespace engine
       _needRollback = FALSE ;
 
       _needUpdate = FALSE ;
-      _hasPreExecuted = FALSE ;
       _hasUpdated = FALSE ;
       _version = -1 ;
    }
@@ -116,11 +115,22 @@ namespace engine
 
       if ( _executeAfterLock )
       {
-         rc = _execute( cb ) ;
-         PD_RC_CHECK( rc, PDERROR,
-                      "Failed in catContext [%lld]: "
-                      "failed to execute catalog command], rc: %d",
-                      contextID(), rc ) ;
+         if ( _needPreExecute )
+         {
+            rc = _preExecute( cb ) ;
+            PD_RC_CHECK( rc, PDERROR,
+                         "Failed in catContext [%lld]: "
+                         "failed to execute catalog command], rc: %d",
+                         contextID(), rc ) ;
+         }
+         else
+         {
+            rc = _execute( cb ) ;
+            PD_RC_CHECK( rc, PDERROR,
+                         "Failed in catContext [%lld]: "
+                         "failed to execute catalog command], rc: %d",
+                         contextID(), rc ) ;
+         }
       }
 
       rc = _makeReply( buffObj ) ;
@@ -160,6 +170,26 @@ namespace engine
       switch ( _status )
       {
       case CAT_CONTEXT_READY :
+      {
+         if ( _needPreExecute )
+         {
+            rc = _preExecute( cb ) ;
+            PD_RC_CHECK( rc, PDERROR,
+                         "Failed in catContext [%lld]: "
+                         "failed to pre-execute catalog command, rc: %d",
+                         contextID(), rc ) ;
+         }
+         else
+         {
+            rc = _execute( cb ) ;
+            PD_RC_CHECK( rc, PDERROR,
+                         "Failed in catContext [%lld]: "
+                         "failed to execute catalog command, rc: %d",
+                         contextID(), rc ) ;
+         }
+         break ;
+      }
+      case CAT_CONTEXT_PREEXECUTED :
       {
          rc = _execute( cb ) ;
          PD_RC_CHECK( rc, PDERROR,
@@ -257,6 +287,54 @@ namespace engine
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATCTXBASE_PREEXECUTE, "_catContextBase::_preExecute" )
+   INT32 _catContextBase::_preExecute ( _pmdEDUCB *cb )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY ( SDB_CATCTXBASE_PREEXECUTE ) ;
+
+      INT16 w = _pCatCB->majoritySize() ;
+
+      if ( !_needUpdate || !_needPreExecute )
+      {
+         _needPreExecute = FALSE ;
+         goto done ;
+      }
+
+      try
+      {
+         rc = _preExecuteInternal( cb, w ) ;
+         PD_RC_CHECK( rc, PDERROR,
+                      "Failed in catContext [%lld]: "
+                      "failed to pre-execute catalog changes, rc: %d",
+                      contextID(), rc ) ;
+
+         // Only need one pre-execute
+         _needPreExecute = FALSE ;
+      }
+      catch ( std::exception &e )
+      {
+         PD_LOG( PDERROR, "Occur exception: %s", e.what() ) ;
+         rc = SDB_INVALIDARG;
+         goto error ;
+      }
+
+      PD_LOG( PDDEBUG,
+              "catContext [%lld]: finished pre-execute",
+              contextID() ) ;
+
+   done :
+      if ( SDB_OK == rc )
+      {
+         _setStatus ( CAT_CONTEXT_PREEXECUTED ) ;
+      }
+      PD_TRACE_EXITRC ( SDB_CATCTXBASE_PREEXECUTE, rc ) ;
+      return rc ;
+   error :
+      goto done ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CATCTXBASE_EXECUTE, "_catContextBase::_execute" )
    INT32 _catContextBase::_execute ( _pmdEDUCB *cb )
    {
@@ -268,48 +346,22 @@ namespace engine
 
       if ( !_needUpdate )
       {
-         _needPreExecute = FALSE ;
          goto done ;
       }
 
       try
       {
-         if ( _needPreExecute )
+         if ( _needRollbackAlways )
          {
-            rc = _preExecuteInternal( cb, w ) ;
-            PD_RC_CHECK( rc, PDERROR,
-                         "Failed in catContext [%lld]: "
-                         "failed to pre-execute catalog changes, rc: %d",
-                         contextID(), rc ) ;
-            // Only need one pre-execute
-            _needPreExecute = FALSE ;
-            _hasPreExecuted = TRUE ;
-         }
-         else
-         {
-            if ( _needRollbackAlways )
-            {
-               _hasUpdated = TRUE ;
-            }
-            rc = _executeInternal( cb, w ) ;
-            PD_RC_CHECK( rc, PDERROR,
-                         "Failed in catContext [%lld]: "
-                         "failed to execute context internal, rc: %d",
-                         contextID(), rc ) ;
-
             _hasUpdated = TRUE ;
-            _setStatus( CAT_CONTEXT_CAT_DONE ) ;
-
-            if ( _commitAfterExecute )
-            {
-               // Continue to commit
-               rc = _commit( cb ) ;
-               PD_RC_CHECK( rc, PDERROR,
-                            "Failed in catContext [%lld]: "
-                            "failed to commit catalog changes, rc: %d",
-                            contextID(), rc ) ;
-            }
          }
+         rc = _executeInternal( cb, w ) ;
+         PD_RC_CHECK( rc, PDERROR,
+                      "Failed in catContext [%lld]: "
+                      "failed to execute context internal, rc: %d",
+                      contextID(), rc ) ;
+
+         _hasUpdated = TRUE ;
       }
       catch ( std::exception &e )
       {
@@ -323,6 +375,24 @@ namespace engine
               contextID() ) ;
 
    done :
+      if ( SDB_OK == rc )
+      {
+         // Update status
+         _setStatus( CAT_CONTEXT_CAT_DONE ) ;
+
+         // Continue to commit if needed
+         if ( _commitAfterExecute )
+         {
+            rc = _commit( cb ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR,
+                       "Failed in catContext [%lld]: "
+                       "failed to commit catalog changes, rc: %d",
+                       contextID(), rc ) ;
+            }
+         }
+      }
       PD_TRACE_EXITRC ( SDB_CATCTXBASE_EXECUTE, rc ) ;
       return rc ;
    error :
@@ -474,6 +544,7 @@ namespace engine
          _setStatus( CAT_CONTEXT_CLEANING ) ;
          break ;
       case CAT_CONTEXT_READY :
+      case CAT_CONTEXT_PREEXECUTED :
          _setStatus( CAT_CONTEXT_CAT_ERROR ) ;
          break ;
       default :

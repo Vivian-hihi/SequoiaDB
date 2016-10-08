@@ -2780,7 +2780,7 @@ namespace engine
          rc = rtnCoordSendRequestToNode( (void *)(&msgReq), routeID, _netAgent,
                                          cb, _prepareNodeMap ) ;
          PD_LOG( PDDEBUG,
-                 "sent get more to empty context "
+                 "Sent get more to empty context "
                  "(groupID: %u, nodeID: %u, rc: %d)",
                  routeID.columns.groupID, routeID.columns.nodeID, rc ) ;
          if ( rc != SDB_OK )
@@ -2820,8 +2820,8 @@ namespace engine
 
          rc = rtnCoordGetReply( cb, _prepareNodeMap, replyQue,
                                 MSG_BS_GETMORE_RES, waitAll ) ;
-         PD_LOG(PDDEBUG,
-                "send get more to prepare node rc: %d", rc ) ;
+         PD_LOG( PDDEBUG,
+                 "Got get more replys from prepare node rc: %d", rc ) ;
          if ( rc )
          {
             PD_LOG( PDERROR, "Failed to get reply, rc: %d", rc ) ;
