@@ -13,7 +13,7 @@
 // quantities of threads
 const int N                   = 10 ;
 // size of each operator
-const SINT64 NUM              = 10000 ;
+const SINT64 NUM              = 5000 ;
 
 pthread_mutex_t mutex ;
 pthread_cond_t cond ;
