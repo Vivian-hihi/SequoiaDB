@@ -60,7 +60,7 @@ namespace engine
          hidden = FALSE;
       }
 
-      utilOptionGroup(const string& name = "", BOOLEAN hidden = FALSE)
+      utilOptionGroup(const string& name, BOOLEAN hidden = FALSE)
       {
          this->name = name;
          this->hidden = hidden;

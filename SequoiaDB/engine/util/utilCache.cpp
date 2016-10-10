@@ -270,7 +270,7 @@ namespace engine
       if ( SDB_OK == rc && !isDirty() )
       {
          makeDirty() ;
-         setDirty = TRUE ;         
+         setDirty = TRUE ;
       }
       return rc ;      
    }
