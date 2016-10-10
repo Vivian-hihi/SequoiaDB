@@ -157,7 +157,8 @@ static const CHAR* parseNumber( const CHAR *pStr,
                                 INT32 *pValInt,
                                 FLOAT64 *pValDouble,
                                 INT64 *pValLong,
-                                CJSON_VALUE_TYPE *pNumType ) ;
+                                CJSON_VALUE_TYPE *pNumType,
+                                INT32 *pLen ) ;
 static const CHAR* parseCommand( const CHAR *pStr,
                                  STRING_TYPE type,
                                  DOLLAR_SYMBOL_TYPE *pKeyAttr,
@@ -1102,16 +1103,21 @@ error:
    goto done ;
 }
 
+static CHAR *_cJsonDollarDecimal = "$decimal" ;
+#define CJSON_STR_DECIMAL _cJsonDollarDecimal
 static const CHAR* readNumber( const CHAR *pStr,
                                const CJSON_MACHINE *pMachine,
                                CJSON_READ_INFO **ppReadInfo )
 {
-   CJSON_VALUE_TYPE numType = 0 ;
-   INT32 valInt      = 0 ;
-   FLOAT64 valDouble = 0 ;
-   INT64 valInt64    = 0 ;
-   CJSON *pItem      = NULL ;
+   CJSON_VALUE_TYPE numType   = 0 ;
+   INT32 valInt               = 0 ;
+   INT32 len                  = 0 ;
+   FLOAT64 valDouble          = 0 ;
+   INT64 valInt64             = 0 ;
+   CJSON *pItem               = NULL ;
    CJSON_READ_INFO *pReadInfo = NULL ;
+   CHAR *pDecimal             = NULL ;
+   const CHAR *pStart         = pStr ;
 
    pReadInfo = cJsonReadInfoCreate( pMachine ) ;
    if( pReadInfo == NULL )
@@ -1125,7 +1131,7 @@ static const CHAR* readNumber( const CHAR *pStr,
       CJSON_PRINTF_LOG( "Failed to create new item" ) ;
       goto error ;
    }
-   pStr = parseNumber( pStr, &valInt, &valDouble, &valInt64, &numType ) ;
+   pStr = parseNumber( pStr, &valInt, &valDouble, &valInt64, &numType, &len ) ;
    if( pStr == NULL )
    {
       CJSON_PRINTF_LOG( "Failed to parse number value" ) ;
@@ -1153,6 +1159,14 @@ static const CHAR* readNumber( const CHAR *pStr,
    {
       cJsonItemValueDouble( pItem, valDouble ) ;
       cJsonReadInfoTypeDouble( pReadInfo ) ;
+   }
+   else if( numType == CJSON_DECIMAL )
+   {
+      cJsonItemKeyType( pItem, CJSON_DECIMAL ) ;
+      cJsonItemKey( pItem, CJSON_STR_DECIMAL ) ;
+      pDecimal = parseString( pStart, len, pMachine ) ;
+      cJsonItemValueString( pItem, pDecimal, len ) ;
+      cJsonReadInfoTypeCustom( pReadInfo ) ;
    }
    cJsonReadInfoAddItem( pReadInfo, pItem ) ;
    *ppReadInfo = pReadInfo ;
@@ -1563,36 +1577,48 @@ error:
    goto done ;
 }
 
-#define CJSON_INT32_MIN (-2147483647-1)
+#define CJSON_INT32_MAX 214748364
+#define CJSON_INT32_MIN (-214748364)
+#define CJSON_INT64_MAX 922337203685477580
+#define CJSON_INT64_MIN (-922337203685477580)
 static const CHAR* parseNumber( const CHAR *pStr,
                                 INT32 *pValInt,
                                 FLOAT64 *pValDouble,
                                 INT64 *pValLong,
-                                CJSON_VALUE_TYPE *pNumType )
+                                CJSON_VALUE_TYPE *pNumType,
+                                INT32 *pLen )
 {
    INT32 subscale = 0 ;
    INT32 signsubscale = 1 ;
+   INT32 len = 0 ;
+   INT32 sign = 1 ;
    FLOAT64 decimal = 0 ;
    FLOAT64 n = 0 ;
-   FLOAT64 sign = 1 ;
    FLOAT64 scale = 0 ;
    INT32 n1 = 0 ;
    INT64 n2 = 0 ;
-   volatile INT64 n3 = 0 ;
    CJSON_VALUE_TYPE numType = CJSON_INT32 ;
 
    //step 1
+   if( *pStr == '#' )
+   {
+      //#xxx
+      ++pStr ;
+      ++len ;
+   }
    if( *pStr == '-' )
    {
-      //+xxx
+      //-xxx
       sign = -1 ;
       ++pStr ;
+      ++len ;
    }
    else if( *pStr == '+' )
    {
-      //-xxx
+      //+xxx
       sign = 1 ;
       ++pStr ;
+      ++len ;
    }
 
    //step 2
@@ -1600,26 +1626,71 @@ static const CHAR* parseNumber( const CHAR *pStr,
    {
       //0xxxxx
       ++pStr ;
+      ++len ;
    }
 
    //step 3
-   while( *pStr >='0' && *pStr <= '9' )
+   while( *pStr >= '0' && *pStr <= '9' )
    {
       //<number>xxxx
       INT32 num = *pStr - '0' ;
-      n3 = ( n2 *10 ) + num ;
-      if( ( n3 - num ) / 10 != n2 )
+      if( numType == CJSON_INT32 )
       {
-         numType = CJSON_DOUBLE ;
+         if( n1 > CJSON_INT32_MAX )
+         {
+            //n1 * 10 is greater than the int range
+            numType = CJSON_INT64 ;
+         }
+         else if( n1 < CJSON_INT32_MIN )
+         {
+            //n1 * 10 is less than the int range
+            numType = CJSON_INT64 ;
+         }
+         else if( n1 == CJSON_INT32_MAX || n1 == CJSON_INT32_MIN )
+         {
+            if( sign == 1 && num > 7 )
+            {
+               //n1 * 10 + num is greater than the max int
+               numType = CJSON_INT64 ;
+            }
+            else if( sign == -1 && num > 8 )
+            {
+               //n1 * 10 - num is less then the min int
+               numType = CJSON_INT64 ;
+            }
+         }
       }
-      n  = ( n * 10.0 ) + num ;   
-      n1 = ( n1 * 10  ) + num ;
-      n2 = n3 ;
+      else if( numType == CJSON_INT64 )
+      {
+         if( n2 > CJSON_INT64_MAX )
+         {
+            //n2 * 10 is greater than the long long range
+            numType = CJSON_DECIMAL ;
+         }
+         else if( n2 < CJSON_INT64_MIN )
+         {
+            //n2 * 10 is less than the long long range
+            numType = CJSON_DECIMAL ;
+         }
+         else if( n2 == CJSON_INT64_MAX || n2 == CJSON_INT64_MIN )
+         {
+            if( sign == 1 && num > 7 )
+            {
+               //n2 * 10 + num is greater than the max long long
+               numType = CJSON_DECIMAL ;
+            }
+            else if( sign == -1 && num > 8 )
+            {
+               //n2 * 10 - num is less then the min long long
+               numType = CJSON_DECIMAL ;
+            }
+         }
+      }
+      n  = ( n * 10.0 ) + sign * num ;   
+      n1 = ( n1 * 10  ) + sign * num ;
+      n2 = ( n2 * 10  ) + sign * num ;
       ++pStr ;
-      if( numType == CJSON_INT32 && (INT64)n1 != n2 )
-      {
-         numType = CJSON_INT64 ;
-      }
+      ++len ;
    }
 
    //step 4
@@ -1628,14 +1699,16 @@ static const CHAR* parseNumber( const CHAR *pStr,
       //<number>.xxx
       numType = CJSON_DOUBLE ;
       ++pStr ;
+      ++len ;
       do
       {
          decimal = decimal * 10 + ( *pStr - '0' ) ;
          ++pStr ;
+         ++len ;
          ++scale ;
       }
       while( *pStr >= '0' && *pStr <= '9' ) ;
-      n = n + decimal / pow( 10.0, scale ) ;
+      n = n + sign * decimal / pow( 10.0, scale ) ;
    }
 
    //step 5
@@ -1644,19 +1717,23 @@ static const CHAR* parseNumber( const CHAR *pStr,
       numType = CJSON_DOUBLE ;
       //<number>[e/E]xxx
       ++pStr ;
+      ++len ;
       if( *pStr == '+' )
       {
          ++pStr ;
+         ++len ;
       }
       else if( *pStr == '-' )
       {
          signsubscale = -1 ;
          ++pStr ;
+         ++len ;
       }
       while( *pStr >= '0' && *pStr <= '9' )
       {
          subscale = ( subscale * 10 ) + ( *pStr - '0' ) ;
          ++pStr ;
+         ++len ;
       }
    }
 
@@ -1664,41 +1741,13 @@ static const CHAR* parseNumber( const CHAR *pStr,
    if ( numType == CJSON_DOUBLE )
    {
       // number = +/- number.fraction * 10^+/- exponent
-      n = sign * n * pow( 10.0, ( subscale * signsubscale * 1.0 ) ) ;
-   }
-   else if ( numType == CJSON_INT64 )
-   {
-      if( subscale != 0 )
-      {
-         n2 = (INT64)( sign * n2 * pow( 10.0, subscale * 1.00 ) ) ;
-      }
-      else
-      {
-         /*
-            if subscale = 0, that means we don't need to translate into FLOAT64,
-            which may cause loose precision
-         */
-         n2 = ( ( (INT64)sign ) * n2 ) ;
-      }
-      if( n2 == CJSON_INT32_MIN )
-      {
-         n1 = CJSON_INT32_MIN ;
-         numType = CJSON_INT32 ;
-      }
-   }
-   else if ( numType == CJSON_INT32 )
-   {
-      n1 = (INT32)( sign * n1 * pow( 10.0, subscale * 1.00 ) ) ;
-      n2 = (INT64)( sign * n2 * pow( 10.0, subscale * 1.00 ) ) ;
-      if( (INT64)n1 != n2 )
-      {
-         numType = CJSON_INT64 ;
-      }
+      n = n * pow( 10.0, ( subscale * signsubscale * 1.0 ) ) ;
    }
    *pValDouble = n ;
    *pValInt = n1 ;
    *pValLong = n2 ;
    *pNumType = numType ;
+   *pLen = len ;
    return pStr ;
 }
 
@@ -1918,11 +1967,14 @@ static const CHAR* parseArgImpl( const CHAR *pStr,
       pValString = parseString( pStrStart, length, pMachine ) ;
       pStr = skip( pStr + 1 ) ;
    }
-   else if( ( *pStr >= '0' && *pStr <= '9' ) || *pStr == '+' || *pStr == '-' )
+   else if( ( *pStr >= '0' && *pStr <= '9' ) ||
+            *pStr == '+' ||
+            *pStr == '-' ||
+            *pStr == '#' )
    {
       // <number>
       valType = CJSON_NUMBER ;
-      pStr = parseNumber( pStr, &valInt, &valDouble, &valInt64, &valType ) ;
+      pStr = parseNumber( pStr, &valInt, &valDouble, &valInt64, &valType, &length ) ;
       pStr = skip( pStr ) ;
       if( *pStr != CHAR_COMMA && *pStr != CHAR_RIGHT_ROUND_BRACKET )
       {
@@ -2307,6 +2359,7 @@ SDB_EXPORT BOOLEAN cJsonParseNumber( const CHAR *pStr,
                                      INT64 *pValLong,
                                      CJSON_VALUE_TYPE *pNumType )
 {
+   INT32 len = 0 ;
    BOOLEAN flag = TRUE ;
    const CHAR *pTmp = NULL ;
 
@@ -2318,7 +2371,8 @@ SDB_EXPORT BOOLEAN cJsonParseNumber( const CHAR *pStr,
                        pValInt,
                        pValDouble,
                        pValLong,
-                       pNumType ) ;
+                       pNumType,
+                       &len ) ;
    if( pTmp - pStr != length )
    {
       goto error ;
@@ -2719,7 +2773,8 @@ SDB_EXPORT void cJsonItemValueNull( CJSON *pItem )
 
 SDB_EXPORT void cJsonItemLinkChild ( CJSON *pItem, CJSON *pChild )
 {
-   pItem->pChild = pChild ;
+   pItem->pChild   = pChild ;
+   pItem->valType  = CJSON_OBJECT ;
    pChild->pParent = pItem ;
 }
 

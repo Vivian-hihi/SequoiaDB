@@ -1111,8 +1111,9 @@ static BOOLEAN jsonConvertBson( const CJSON_MACHINE *pMachine,
                                   &valInt64,
                                   &type ) == FALSE )
             {
-               JSON_PRINTF_LOG( "Failed to read NumberLong, "
-                                "the No.1 argument is an invalid number" ) ;
+               JSON_PRINTF_LOG( "The numberLong '%.*s' is an invalid number ",
+                                arg1.length,
+                                arg1.pValStr ) ;
                goto error ;
             }
             if( type == CJSON_INT32 )
@@ -1123,10 +1124,20 @@ static BOOLEAN jsonConvertBson( const CJSON_MACHINE *pMachine,
             {
                number = valInt64 ;
             }
+            else if( type == CJSON_DECIMAL )
+            {
+               JSON_PRINTF_LOG( "Failed to read numberLong, the '%.*s' "
+                                "is out of the range of numberLong",
+                                arg1.length,
+                                arg1.pValStr ) ;
+               goto error ;
+            }
             else
             {
-               JSON_PRINTF_LOG( "Failed to read NumberLong, the No.1 argument "
-                                "must be integer type or string type" ) ;
+               JSON_PRINTF_LOG( "Failed to read numberLong, the '%.*s' "
+                                "must be integer type or string type",
+                                arg1.length,
+                                arg1.pValStr ) ;
                goto error ;
             }
          }
