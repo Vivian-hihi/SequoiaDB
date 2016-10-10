@@ -842,7 +842,7 @@ namespace engine
       }
       _endLsn = lsn ;
       _lsnNumber++ ;
-      _isDoRollback = isRollback ;
+      _doRollback = isRollback ;
    }
 
    void _pmdEDUCB::setTransID( UINT64 transID )
