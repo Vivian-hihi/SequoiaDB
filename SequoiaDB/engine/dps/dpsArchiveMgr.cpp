@@ -839,6 +839,7 @@ namespace engine
          *destLogHeader = srcLogHeader ;
 
          dpsArchiveHeader* archiveHeader = archiveFile.getArchiveHeader() ;
+         archiveHeader->init();
          archiveHeader->startLSN.offset =
             _logMgr->calcFirstPhysicalLSNOfFile( logicalFileId ) ;
          archiveHeader->endLSN.offset =
@@ -1017,11 +1018,11 @@ namespace engine
             if ( srcLogHeader._logID != DPS_INVALID_LOG_FILE_ID )
             {
                *destLogHeader = srcLogHeader ;
+               archiveFile.getArchiveHeader()->init();
             }
             else
             {
-               destLogHeader->_firstLSN.offset =
-                  _logMgr->calcFirstPhysicalLSNOfFile( logicalFileId ) ;
+               destLogHeader->_firstLSN.offset = startOffset ;
                destLogHeader->_logID = logicalFileId ;
                destLogHeader->_fileNum = _logMgr->getLogFileNum() ;
                destLogHeader->_fileSize = _logMgr->getLogFileSz() ;

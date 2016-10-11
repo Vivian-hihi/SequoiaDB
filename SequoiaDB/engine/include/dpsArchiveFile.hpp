@@ -86,11 +86,13 @@ namespace engine
          SDB_ASSERT( sizeof(dpsArchiveHeader) + DPS_ARCHIVE_HEADER_OFFSET
                      <= DPS_LOG_HEAD_LEN,
                      "Archive file header must inside log file header" ) ;
-         ossMemset( this, 0, DPS_ARCHIVE_HEADER_LEN ) ;
-         ossMemcpy( eyeCatcher, DPS_ARCHIVE_HEADER_EYECATCHER, 
-                    DPS_ARCHIVE_HEADER_EYECATCHER_LEN) ;
+         ossMemset( &padding, 0, DPS_ARCHIVE_HEADER_LEN - 48 ) ;
+         ossMemcpy( eyeCatcher, DPS_ARCHIVE_HEADER_EYECATCHER,
+                    DPS_ARCHIVE_HEADER_EYECATCHER_LEN ) ;
          version = DPS_ARCHIVE_HEADER_VERSION ;
          flag = 0 ;
+         startLSN.reset() ;
+         endLSN.reset() ;
       }
 
       OSS_INLINE void setFlag( UINT32 bit )
