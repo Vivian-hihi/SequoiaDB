@@ -116,19 +116,29 @@ function deployClster( mode )
    db.createCataRG( controlHost, cataPort, 
                     databaseDir+"/cata/"+cataPort,
                     config  ); 
-                                     
+    
+   var hasPrimary = false;                                 
    for(var i = 0; i < 600; i++ )  //wait for cata group to select primary node 
    {  
       try
       {
          sleep(100); 
          var cataRG = db.getRG("SYSCatalogGroup"); 
+         hasPrimary = true;
          break;       
       } 
       catch(e)
       {
-         if( e !== -71 ) throw e;         
+         if( e !== -71 ) 
+         {
+            println("excute: db.getRG('SYSCatalogGroup')");
+            throw e;
+         }            
       }   
+   }
+   if( hasPrimary === false )
+   {
+      throw "fail to select primary node after 1 minute";
    }                                              
    
    var node1 = cataRG.createNode( hostList[1], cataPort, 
@@ -177,6 +187,30 @@ function deployClster( mode )
                             config );
       }
       dataRG.start();
+      
+      var hasPrimary = false;
+      for(var i = 0; i < 600; i++ )  //wait for data group to select primary node 
+      {  
+         try
+         {
+            sleep(100); 
+            db.getRG(datargName).getMaster(); 
+            hasPrimary = true;
+            break;       
+         } 
+         catch(e)
+         {
+            if( e !== -155 ) 
+            {
+               println("excute: db.getRG(" + datargName + ").getMaster()");
+               throw e;  
+            }          
+         }   
+      }
+      if( hasPrimary === false )
+      {
+         throw "fail to select primary node after 1 minute";
+      }
    } 
    
    println("-----begin to remove temp coord");
