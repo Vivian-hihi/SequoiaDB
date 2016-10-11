@@ -149,7 +149,7 @@ namespace engine
    #define MTH_FUNCTION_STR_RTRIM               "$rtrim"
    #define MTH_FUNCTION_STR_TRIM                "$trim"
    #define MTH_FUNCTION_STR_CAST                "$cast"
-   
+
    //TODO: size:2048
    #define MTH_ALLOCATOR_SIZE                   200
    #define MTH_MATCH_FIELD_STATIC_NAME_LEN      32
@@ -171,8 +171,8 @@ namespace engine
    #define MTH_WEIGHT_ELEMMATCH                 450
    #define MTH_WEIGHT_REGEX                     1000000
    #define MTH_WEIGHT_ISNULL                    250
-      
-   template <UINT32 nameSize = MTH_MATCH_FIELD_STATIC_NAME_LEN > 
+
+   template <UINT32 nameSize = MTH_MATCH_FIELD_STATIC_NAME_LEN >
    class _mthMatchFieldName
    {
       public:
@@ -180,9 +180,9 @@ namespace engine
          {
          }
 
-         ~_mthMatchFieldName() 
-         { 
-            clear() ; 
+         ~_mthMatchFieldName()
+         {
+            clear() ;
          }
 
       public:
@@ -227,7 +227,7 @@ namespace engine
             goto done ;
          }
 
-         const CHAR *getFieldName() 
+         const CHAR *getFieldName()
          {
             return _name ;
          }
@@ -356,14 +356,14 @@ namespace engine
       public:
          // node *p = new ( _mthNodeAllocator *allocator ) node( _mthNodeAllocator *allocator )
          // use p->release() to release p. and do not use p anymore.
-         void* operator new ( size_t size, _mthNodeAllocator *allocator ) 
-                              throw ( const char * ) ;         
+         void* operator new ( size_t size, _mthNodeAllocator *allocator )
+                              throw ( const char * ) ;
          // do not call delete p directly
          void operator delete ( void *p ) ;
          virtual void release() = 0 ;
 
       public:
-         virtual INT32 init( const CHAR *fieldName, 
+         virtual INT32 init( const CHAR *fieldName,
                              const BSONElement &element ) ;
 
          //just clear parameter itself
@@ -373,7 +373,7 @@ namespace engine
 
          virtual const CHAR* getOperatorStr() = 0 ;
 
-         virtual INT32 execute( const BSONObj &obj, 
+         virtual INT32 execute( const BSONObj &obj,
                                 _mthMatchTreeContext &context,
                                 BOOLEAN &result ) = 0 ;
          virtual BSONObj toBson() = 0 ;

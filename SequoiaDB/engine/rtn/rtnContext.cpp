@@ -238,7 +238,7 @@ namespace engine
 
    void _rtnContextBase::enablePrefetch( _pmdEDUCB * cb,
                                          rtnPrefWatcher *pWatcher )
-   { 
+   {
       _prefetchID = 1 ;
       _pPrefWatcher = pWatcher ;
       _pMonAppCB = cb->getMonAppCB() ;
@@ -450,7 +450,7 @@ namespace engine
       }
 
    done:
-      return rc ; 
+      return rc ;
    error:
       goto done ;
    }
@@ -880,8 +880,8 @@ namespace engine
    }
 
    INT32 _rtnContextData::_openTBScan( dmsStorageUnit *su,
-                                       dmsMBContext *mbContext, 
-                                       optAccessPlan *plan, 
+                                       dmsMBContext *mbContext,
+                                       optAccessPlan *plan,
                                        pmdEDUCB * cb,
                                        const BSONObj *blockObj )
    {
@@ -1185,7 +1185,7 @@ namespace engine
       goto done ;
    }
 
-   INT32 _rtnContextData::_selectAndAppend( mthSelector *selector, 
+   INT32 _rtnContextData::_selectAndAppend( mthSelector *selector,
                                             BSONObj &obj )
    {
       INT32 rc = SDB_OK ;
@@ -1213,7 +1213,7 @@ namespace engine
       goto done ;
    }
 
-   INT32 _rtnContextData::_innerAppend( mthSelector *selector, 
+   INT32 _rtnContextData::_innerAppend( mthSelector *selector,
                                         _mthRecordGenerator &generator )
    {
       INT32 rc = SDB_OK ;
@@ -4112,7 +4112,7 @@ namespace engine
       INT32 rc = SDB_OK;
       _options._orderBy = orderBy.getOwned();
       _numToSkip = numToSkip ;
-      _numToReturn = numToReturn ; 
+      _numToReturn = numToReturn ;
       _keyGen = SDB_OSS_NEW _ixmIndexKeyGen( _options._orderBy ) ;
       PD_CHECK( _keyGen != NULL, SDB_OOM, error, PDERROR,
                 "malloc failed!" ) ;
@@ -4134,7 +4134,7 @@ namespace engine
       loop = ( !(_options._orderBy.isEmpty()) &&
                !_includeShardingOrder ) ?
              _subs.size() : 5 ;
-             
+
 
       while ( 0 < loop-- )
       {
@@ -4442,7 +4442,7 @@ namespace engine
       }
       else if ( SDB_DMS_EOC == rc )
       {
-         INT32 rcTmp = SDB_OK ; 
+         INT32 rcTmp = SDB_OK ;
          SINT64 context = -1 ;
          rcTmp = _getNextContext( cb, context ) ;
          if ( SDB_OK != rcTmp )
@@ -4497,7 +4497,7 @@ namespace engine
             << ",IsShardingOrder:" << _includeShardingOrder ;
       }
       if ( _numToReturn > 0 )
-      {         
+      {
          ss << ",NumToReturn:" << _numToReturn ;
       }
       if ( _numToSkip > 0 )
@@ -4746,11 +4746,11 @@ namespace engine
             if ( SDB_OK != rc )
             {
                PD_LOG( PDERROR, "failed to rebuild selector:%d", rc ) ;
-               goto error ;      
+               goto error ;
             }
          }
       }
-      
+
    done:
       return rc ;
    error:
@@ -4894,7 +4894,7 @@ namespace engine
             {
                record = &obj ;
             }
-   
+
             rc = append( *record ) ;
             PD_RC_CHECK( rc, PDERROR, "Append obj[%s] failed, rc: %d",
                       obj.toString().c_str(), rc ) ;
@@ -5808,7 +5808,7 @@ namespace engine
       _builder.append( FIELD_NAME_SCANTYPE, IXSCAN == plan->getScanType() ?
                        VALUE_NAME_IXSCAN : VALUE_NAME_TBSCAN ) ;
       _builder.append( FIELD_NAME_INDEXNAME,
-                       plan->getIndexName() ) ; 
+                       plan->getIndexName() ) ;
       _builder.appendBool( FIELD_NAME_USE_EXT_SORT, plan->sortRequired() ) ;
       _builder.append( FIELD_NAME_QUERY,
                        plan->getMatcher().getParsedQuery() ) ;
@@ -5935,7 +5935,7 @@ namespace engine
       UINT64 beginTime = _beginTime.time * 1000000 + _beginTime.microtm  ;
       UINT64 endTime = _endTime.time * 1000000 + _endTime.microtm  ;
       _builder.append( FIELD_NAME_ELAPSED_TIME,
-                       FLOAT64( ( endTime - beginTime ) / 1000000.0 ) ) ; 
+                       FLOAT64( ( endTime - beginTime ) / 1000000.0 ) ) ;
       _builder.appendNumber( FIELD_NAME_INDEXREAD,
                              (INT64)( _endMon.totalIndexRead -
                              _beginMon.totalIndexRead ) ) ;
@@ -5945,7 +5945,7 @@ namespace engine
 
       _builder.append( FIELD_NAME_USERCPU,
                        _endUsrCpu - _beginUsrCpu ) ;
-      
+
       _builder.append( FIELD_NAME_SYSCPU,
                        _endSysCpu - _beginSysCpu ) ;
 

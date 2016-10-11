@@ -96,7 +96,7 @@ namespace engine
          ~_mthMatchTree() ;
 
       public:
-         INT32    loadPattern( const BSONObj &matcher, 
+         INT32    loadPattern( const BSONObj &matcher,
                                BOOLEAN needPredicate = TRUE ) ;
 
          //TODO: delete
@@ -122,30 +122,30 @@ namespace engine
       private:
          INT32    _matches( const BSONObj &matchTarget, BOOLEAN &result,
                             _mthMatchTreeContext &context ) ;
-         INT32    _addOperator( const CHAR *fieldName, const BSONElement &ele, 
-                                EN_MATCH_OP_FUNC_TYPE nodeType, 
+         INT32    _addOperator( const CHAR *fieldName, const BSONElement &ele,
+                                EN_MATCH_OP_FUNC_TYPE nodeType,
                                 MTH_FUNC_LIST &funcList,
                                 _mthMatchLogicNode *parent ) ;
-         INT32    _addFunction( const CHAR *fieldName, 
-                                const BSONElement &ele, 
+         INT32    _addFunction( const CHAR *fieldName,
+                                const BSONElement &ele,
                                 EN_MATCH_OP_FUNC_TYPE nodeType,
                                 MTH_FUNC_LIST &funcList ) ;
-         INT32    _addRegExOp( const CHAR *fieldName, const CHAR *regex, 
+         INT32    _addRegExOp( const CHAR *fieldName, const CHAR *regex,
                                const CHAR *options, MTH_FUNC_LIST &funcList,
                                _mthMatchLogicNode *parent ) ;
-         INT32    _parseRegExElement( const BSONElement &ele, 
+         INT32    _parseRegExElement( const BSONElement &ele,
                                       _mthMatchLogicNode *parent ) ;
-         INT32    _parseNormalElement( const BSONElement &ele, 
+         INT32    _parseNormalElement( const BSONElement &ele,
                                        _mthMatchLogicNode *parent ) ;
-         INT32    _pareseLogicElemnts( const BSONElement ele, 
+         INT32    _pareseLogicElemnts( const BSONElement ele,
                                        _mthMatchLogicNode *parent ) ;
-         INT32    _pareseLogicAnd( const BSONElement ele, 
+         INT32    _pareseLogicAnd( const BSONElement ele,
                                    _mthMatchLogicNode *parent ) ;
-         INT32    _pareseLogicOr( const BSONElement ele, 
+         INT32    _pareseLogicOr( const BSONElement ele,
                                   _mthMatchLogicNode *parent ) ;
-         INT32    _pareseLogicNot( const BSONElement ele, 
+         INT32    _pareseLogicNot( const BSONElement ele,
                                    _mthMatchLogicNode *parent ) ;
-         INT32    _parseArrayElement( const BSONElement &ele, 
+         INT32    _parseArrayElement( const BSONElement &ele,
                                       _mthMatchLogicNode *parent ) ;
          BOOLEAN  _isExistOpFieldRecursive( const BSONElement &ele,
                                           BOOLEAN ignoreCurrentField = FALSE ) ;
@@ -153,24 +153,24 @@ namespace engine
 
          void     _clearFuncList( MTH_FUNC_LIST &funcList ) ;
 
-         INT32    _parseAttribute( const CHAR *fieldName, 
+         INT32    _parseAttribute( const CHAR *fieldName,
                                    const BSONElement &ele,
                                    EN_MATCH_OP_FUNC_TYPE nodeType,
                                    MTH_FUNC_LIST &funcList ) ;
-         INT32    _pareseObjectInnerOp( const BSONElement &ele, 
+         INT32    _pareseObjectInnerOp( const BSONElement &ele,
                                         const BSONElement &innerEle,
                                         MTH_FUNC_LIST &funcList,
                                         _mthMatchLogicNode *parent,
                                         const char *&regex,
                                         const char *&options ) ;
-         INT32    _parseObjectElement( const BSONElement &ele, 
+         INT32    _parseObjectElement( const BSONElement &ele,
                                        _mthMatchLogicNode *parent ) ;
          INT32    _paresePrevOptions( const CHAR *fieldName,
                                       const BSONElement &ele,
                                       const CHAR *options,
                                       MTH_FUNC_LIST &funcList,
                                       _mthMatchLogicNode *parent ) ;
-         INT32    _parseElement( const BSONElement &ele, 
+         INT32    _parseElement( const BSONElement &ele,
                                  _mthMatchLogicNode *parent ) ;
          void     _releaseTree( _mthMatchNode *node ) ;
          INT32    _optimizeNodeLevel() ;
@@ -181,7 +181,7 @@ namespace engine
          INT32    _optimize( BOOLEAN needPredicate ) ;
          INT32    _setPredicate() ;
          void     _checkTotallyConverted() ;
-         void     _checkTotallyConverted( _mthMatchNode *node, 
+         void     _checkTotallyConverted( _mthMatchNode *node,
                                           BOOLEAN &isTotallyConverted ) ;
 
       private:
@@ -203,7 +203,7 @@ namespace engine
 
    class _mthRecordGenerator
    {
-      enum EN_MATCH_RECORD_SRC_TYPE 
+      enum EN_MATCH_RECORD_SRC_TYPE
       {
          // just return original src obj
          MTH_SRC_TYPE_ORIGINAL       = 1,
@@ -227,7 +227,7 @@ namespace engine
 
    public:
       INT32 init( BOOLEAN isQueryUpdate ) ;
-      INT32 resetValue( const BSONObj &src, 
+      INT32 resetValue( const BSONObj &src,
                         _mthMatchTreeContext *mthContext ) ;
       BOOLEAN hasNext() ;
       INT32 getNext( BSONObj &record ) ;
@@ -241,25 +241,25 @@ namespace engine
       void getDataPtr( ossValuePtr &dataPtr ) ;
 
    private:
-      INT32 _createArrayObj( const CHAR* name, 
-                             _utilArray< BSONElement > &elements, 
+      INT32 _createArrayObj( const CHAR* name,
+                             _utilArray< BSONElement > &elements,
                              BSONObjBuilder &builder ) ;
 
-      INT32 _replaceFieldObject( BSONObjIteratorSorted &iterSort, 
-                                 const CHAR *fieldName, BSONElement &newValue, 
+      INT32 _replaceFieldObject( BSONObjIteratorSorted &iterSort,
+                                 const CHAR *fieldName, BSONElement &newValue,
                                  BSONObjBuilder &builder ) ;
 
-      INT32 _replaceFieldArray( BSONObjIteratorSorted &iterSort, 
-                                const CHAR *fieldName, BSONElement &newValue, 
+      INT32 _replaceFieldArray( BSONObjIteratorSorted &iterSort,
+                                const CHAR *fieldName, BSONElement &newValue,
                                 BSONArrayBuilder &builder ) ;
 
-      INT32 _replaceField( BSONObj &src, const CHAR *fieldName, 
+      INT32 _replaceField( BSONObj &src, const CHAR *fieldName,
                            BSONElement &newValue, BSONObjBuilder &builder ) ;
 
    private:
       BOOLEAN _isQueryModify ;
       ossValuePtr _dataPtr ;
-   
+
       _mthMatchTreeContext *_mthContext ;
       const CHAR *_fieldName ;
       BSONObj _src ;
@@ -275,7 +275,7 @@ namespace engine
       BSONObjIterator _specifyIter ;
       //*******************************************
    } ;
-   
+
 
 }
 

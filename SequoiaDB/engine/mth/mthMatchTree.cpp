@@ -106,7 +106,7 @@ namespace engine
       for ( ; i < len ; i++ )
       {
          mthMatchOpMapping *ptype = &g_opstr_to_type_array[i] ;
-         SDB_ASSERT( _opstrMap.find( ptype->opStr ) == _opstrMap.end(), 
+         SDB_ASSERT( _opstrMap.find( ptype->opStr ) == _opstrMap.end(),
                      "duplicate key is not allowed" ) ;
 
          _opstrMap[ ptype->opStr ] = ptype ;
@@ -118,7 +118,7 @@ namespace engine
       _opstrMap.clear() ;
    }
 
-   EN_MATCH_OP_FUNC_TYPE _mthMatchNodeFactory::getMatchNodeType( 
+   EN_MATCH_OP_FUNC_TYPE _mthMatchNodeFactory::getMatchNodeType(
                                                              const CHAR *opStr )
    {
       MTH_OPSTRMAP::iterator iter ;
@@ -134,7 +134,7 @@ namespace engine
       }
    }
 
-   _mthMatchOpNode* _mthMatchNodeFactory::createOpNode( 
+   _mthMatchOpNode* _mthMatchNodeFactory::createOpNode(
                                                    _mthNodeAllocator *allocator,
                                                    EN_MATCH_OP_FUNC_TYPE type )
    {
@@ -197,7 +197,7 @@ namespace engine
       return opNode ;
    }
 
-   _mthMatchLogicNode* _mthMatchNodeFactory::createLogicNode( 
+   _mthMatchLogicNode* _mthMatchNodeFactory::createLogicNode(
                                                    _mthNodeAllocator *allocator,
                                                    EN_MATCH_OP_FUNC_TYPE type )
    {
@@ -241,10 +241,10 @@ namespace engine
       {
          tree->clear() ;
          SAFE_OSS_DELETE( tree ) ;
-      }   
+      }
    }
 
-   _mthMatchFunc* _mthMatchNodeFactory::createFunc( 
+   _mthMatchFunc* _mthMatchNodeFactory::createFunc(
                                                 _mthNodeAllocator *allocator,
                                                 EN_MATCH_OP_FUNC_TYPE type )
    {
@@ -302,7 +302,7 @@ namespace engine
          func = new ( allocator ) _mthMatchFuncCAST( allocator ) ;
          break ;
       case EN_MATCH_ATTR_RETURNMATCH:
-         /* 
+         /*
             attribute returnMatch's behavior is like function. so we treat it
             as a function.
          */
@@ -348,8 +348,8 @@ namespace engine
       clear() ;
    }
 
-   INT32 _mthMatchTree::_addFunction( const CHAR *fieldName, 
-                                      const BSONElement &ele, 
+   INT32 _mthMatchTree::_addFunction( const CHAR *fieldName,
+                                      const BSONElement &ele,
                                       EN_MATCH_OP_FUNC_TYPE nodeType,
                                       MTH_FUNC_LIST &funcList )
    {
@@ -359,7 +359,7 @@ namespace engine
       if ( NULL == func )
       {
          rc = SDB_INVALIDARG ;
-         PD_LOG( PDERROR, "createFunc failed:nodeType=%d,rc=%d", 
+         PD_LOG( PDERROR, "createFunc failed:nodeType=%d,rc=%d",
                  nodeType, rc ) ;
          goto error ;
       }
@@ -380,9 +380,9 @@ namespace engine
       goto done ;
    }
 
-   INT32 _mthMatchTree::_addOperator( const CHAR *fieldName, 
-                                      const BSONElement &ele, 
-                                      EN_MATCH_OP_FUNC_TYPE nodeType, 
+   INT32 _mthMatchTree::_addOperator( const CHAR *fieldName,
+                                      const BSONElement &ele,
+                                      EN_MATCH_OP_FUNC_TYPE nodeType,
                                       MTH_FUNC_LIST &funcList,
                                       _mthMatchLogicNode *parent )
    {
@@ -390,7 +390,7 @@ namespace engine
       _mthMatchOpNode *node = NULL ;
       BOOLEAN hasAddToTree  = FALSE ;
 
-      SDB_ASSERT( EN_MATCH_OPERATOR_REGEX != nodeType, 
+      SDB_ASSERT( EN_MATCH_OPERATOR_REGEX != nodeType,
                   "regex is processed in another branch" ) ;
 
       if ( EN_MATCH_OPERATOR_FIELD == nodeType )
@@ -403,7 +403,7 @@ namespace engine
       if ( NULL == node )
       {
          rc = SDB_INVALIDARG ;
-         PD_LOG( PDERROR, "createOpNodeByOp failed:nodeType=%d,rc=%d", 
+         PD_LOG( PDERROR, "createOpNodeByOp failed:nodeType=%d,rc=%d",
                  nodeType, rc ) ;
          goto error ;
       }
@@ -453,8 +453,8 @@ namespace engine
       goto done ;
    }
 
-   INT32 _mthMatchTree::_addRegExOp( const CHAR *fieldName, const CHAR *regex, 
-                                     const CHAR *options, 
+   INT32 _mthMatchTree::_addRegExOp( const CHAR *fieldName, const CHAR *regex,
+                                     const CHAR *options,
                                      MTH_FUNC_LIST &funcList,
                                      _mthMatchLogicNode *parent )
    {
@@ -462,13 +462,13 @@ namespace engine
       _mthMatchOpNode *node           = NULL ;
       _mthMatchOpNodeRegex *regexNode = NULL ;
       BOOLEAN hasAddToTree            = FALSE ;
-      
+
       node = mthGetMatchNodeFactory()->createOpNode( &_allocator,
                                                      EN_MATCH_OPERATOR_REGEX ) ;
       if ( NULL == node )
       {
          rc = SDB_INVALIDARG ;
-         PD_LOG( PDERROR, "createOpNodeByOp failed:type=%d,rc=%d", 
+         PD_LOG( PDERROR, "createOpNodeByOp failed:type=%d,rc=%d",
                  EN_MATCH_OPERATOR_REGEX, rc ) ;
          goto error ;
       }
@@ -485,7 +485,7 @@ namespace engine
       rc = regexNode->init( fieldName, regex, options );
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "init regexNode failed:regex=%s,options=%s,rc=%d", 
+         PD_LOG( PDERROR, "init regexNode failed:regex=%s,options=%s,rc=%d",
                  ( NULL == regex ) ? "" : regex,
                  ( NULL == options ) ? "" : options, rc ) ;
          goto error ;
@@ -524,7 +524,7 @@ namespace engine
    }
 
    //explicit regex {a:{$regex:""}}
-   INT32 _mthMatchTree::_parseRegExElement( const BSONElement &ele, 
+   INT32 _mthMatchTree::_parseRegExElement( const BSONElement &ele,
                                             _mthMatchLogicNode *parent )
    {
       INT32 rc = SDB_OK ;
@@ -533,7 +533,7 @@ namespace engine
                         parent ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "failed to _addRegExOp:ele=%s,rc=%d", 
+         PD_LOG( PDERROR, "failed to _addRegExOp:ele=%s,rc=%d",
                  ele.toString().c_str(), rc ) ;
          goto error ;
       }
@@ -545,7 +545,7 @@ namespace engine
    }
 
    //{a:1}
-   INT32 _mthMatchTree::_parseNormalElement( const BSONElement &ele, 
+   INT32 _mthMatchTree::_parseNormalElement( const BSONElement &ele,
                                              _mthMatchLogicNode *parent )
    {
       INT32 rc = SDB_OK ;
@@ -575,7 +575,7 @@ namespace engine
    }
 
    // ele: {$and:[{a:{$lt:1}}]}
-   INT32 _mthMatchTree::_pareseLogicElemnts( const BSONElement ele, 
+   INT32 _mthMatchTree::_pareseLogicElemnts( const BSONElement ele,
                                              _mthMatchLogicNode *parent )
    {
       INT32 rc = SDB_OK ;
@@ -595,11 +595,11 @@ namespace engine
 
          {
             _mthMatchLogicNode *tmpParent = parent ;
-            if ( parent->getType() == EN_MATCH_OPERATOR_LOGIC_OR || 
+            if ( parent->getType() == EN_MATCH_OPERATOR_LOGIC_OR ||
                  parent->getType() == EN_MATCH_OPERATOR_LOGIC_NOT )
             {
                // {a:{$or:[ {a:1, b:1}, {c:1} ]}}
-               // eleTemp = { a:1, b:1 }  condition a=1 and b=1 should be 
+               // eleTemp = { a:1, b:1 }  condition a=1 and b=1 should be
                // under LOGIC_AND
                _mthMatchLogicNode *child = NULL ;
                child = mthGetMatchNodeFactory()->createLogicNode( &_allocator,
@@ -623,7 +623,7 @@ namespace engine
                if ( SDB_OK != rc )
                {
                   PD_LOG( PDERROR, "add child failed:parent=%s,child=%s,"
-                          "rc=%d", parent->toString().c_str(), 
+                          "rc=%d", parent->toString().c_str(),
                           child->toString().c_str(), rc ) ;
                   mthGetMatchNodeFactory()->releaseNode( child ) ;
                   goto error ;
@@ -655,7 +655,7 @@ namespace engine
    }
 
    // ele: {$and:[{a:{$lt:1}}]}
-   INT32 _mthMatchTree::_pareseLogicAnd( const BSONElement ele, 
+   INT32 _mthMatchTree::_pareseLogicAnd( const BSONElement ele,
                                          _mthMatchLogicNode *parent )
    {
       INT32 rc = SDB_OK ;
@@ -692,7 +692,7 @@ namespace engine
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "add child failed:parent=%s,child=%s,rc=%d",
-                 parent->toString().c_str(), logicAnd->toString().c_str(), 
+                 parent->toString().c_str(), logicAnd->toString().c_str(),
                  rc ) ;
          goto error ;
       }
@@ -715,14 +715,14 @@ namespace engine
          _releaseTree( logicAnd ) ;
          logicAnd = NULL ;
       }
-      //otherwise, logicAnd will be released when release the _root 
+      //otherwise, logicAnd will be released when release the _root
       //in _mthMatchTree::clear()
       /* else */
       goto done ;
    }
 
    // ele: {$or:[{a:{$lt:1}}]}
-   INT32 _mthMatchTree::_pareseLogicOr( const BSONElement ele, 
+   INT32 _mthMatchTree::_pareseLogicOr( const BSONElement ele,
                                         _mthMatchLogicNode *parent )
    {
       INT32 rc = SDB_OK ;
@@ -759,7 +759,7 @@ namespace engine
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "add child failed:parent=%s,child=%s,rc=%d",
-                 parent->toString().c_str(), logicOr->toString().c_str(), 
+                 parent->toString().c_str(), logicOr->toString().c_str(),
                  rc ) ;
          goto error ;
       }
@@ -782,14 +782,14 @@ namespace engine
          _releaseTree( logicOr ) ;
          logicOr = NULL ;
       }
-      //otherwise, logicAnd will be released when release the _root 
+      //otherwise, logicAnd will be released when release the _root
       //in _mthMatchTree::clear()
       /* else */
       goto done ;
    }
 
    // ele: {$not:[{a:{$lt:1}}]}
-   INT32 _mthMatchTree::_pareseLogicNot( const BSONElement ele, 
+   INT32 _mthMatchTree::_pareseLogicNot( const BSONElement ele,
                                          _mthMatchLogicNode *parent )
    {
       INT32 rc = SDB_OK ;
@@ -826,7 +826,7 @@ namespace engine
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "add child failed:parent=%s,child=%s,rc=%d",
-                 parent->toString().c_str(), logicNot->toString().c_str(), 
+                 parent->toString().c_str(), logicNot->toString().c_str(),
                  rc ) ;
          goto error ;
       }
@@ -849,13 +849,13 @@ namespace engine
          _releaseTree( logicNot ) ;
          logicNot = NULL ;
       }
-      //otherwise, logicAnd will be released when release the _root 
+      //otherwise, logicAnd will be released when release the _root
       //in _mthMatchTree::clear()
       /* else */
       goto done ;
    }
 
-   INT32 _mthMatchTree::_parseArrayElement( const BSONElement &ele, 
+   INT32 _mthMatchTree::_parseArrayElement( const BSONElement &ele,
                                             _mthMatchLogicNode *parent )
    {
       INT32 rc = SDB_OK ;
@@ -909,7 +909,7 @@ namespace engine
       {
          //just normal array {a:[1,3]}
          MTH_FUNC_LIST empty ;
-         rc = _addOperator( ele.fieldName(), ele, EN_MATCH_OPERATOR_ET, 
+         rc = _addOperator( ele.fieldName(), ele, EN_MATCH_OPERATOR_ET,
                             empty, parent ) ;
          if ( SDB_OK != rc )
          {
@@ -933,7 +933,7 @@ namespace engine
       if ( Object == ele.type() || Array == ele.type() )
       {
          EN_MATCH_OP_FUNC_TYPE nodeType ;
-         nodeType = mthGetMatchNodeFactory()->getMatchNodeType( 
+         nodeType = mthGetMatchNodeFactory()->getMatchNodeType(
                                                              ele.fieldName() ) ;
          if ( EN_MATCH_OPERATOR_ELEMMATCH == nodeType )
          {
@@ -995,7 +995,7 @@ namespace engine
       }
    }
 
-   INT32 _mthMatchTree::_parseAttribute( const CHAR *fieldName, 
+   INT32 _mthMatchTree::_parseAttribute( const CHAR *fieldName,
                                          const BSONElement &ele,
                                          EN_MATCH_OP_FUNC_TYPE nodeType,
                                          MTH_FUNC_LIST &funcList )
@@ -1003,13 +1003,13 @@ namespace engine
       INT32 rc = SDB_OK ;
       if ( EN_MATCH_ATTR_EXPAND == nodeType )
       {
-         if ( _hasExpand || 
+         if ( _hasExpand ||
               ( _hasReturnMatch && ossStrcmp( _attrFieldName, fieldName ) != 0 ) )
          {
             // duplicate expand, or, expand and returnmatch describe diffrent
             // fieldName
             rc = SDB_INVALIDARG ;
-            PD_LOG( PDERROR, "%s and %s can't describe two fields", 
+            PD_LOG( PDERROR, "%s and %s can't describe two fields",
                     MTH_ATTR_STR_EXPAND, MTH_ATTR_STR_RETURNMATCH ) ;
             goto error ;
          }
@@ -1027,18 +1027,18 @@ namespace engine
       }
       else if ( EN_MATCH_ATTR_RETURNMATCH == nodeType )
       {
-         if ( _hasReturnMatch || 
+         if ( _hasReturnMatch ||
               ( _hasExpand && ossStrcmp( _attrFieldName, fieldName ) != 0 ) )
          {
             // duplicate expand, or, expand and returnmatch describe diffrent
             // fieldName
             rc = SDB_INVALIDARG ;
-            PD_LOG( PDERROR, "%s and %s can't describe two fields", 
+            PD_LOG( PDERROR, "%s and %s can't describe two fields",
                     MTH_ATTR_STR_EXPAND, MTH_ATTR_STR_RETURNMATCH ) ;
             goto error ;
          }
 
-         rc = _addFunction( fieldName, ele, EN_MATCH_ATTR_RETURNMATCH, 
+         rc = _addFunction( fieldName, ele, EN_MATCH_ATTR_RETURNMATCH,
                             funcList ) ;
          if ( SDB_OK != rc )
          {
@@ -1061,7 +1061,7 @@ namespace engine
       goto done ;
    }
 
-   INT32 _mthMatchTree::_pareseObjectInnerOp( const BSONElement &ele, 
+   INT32 _mthMatchTree::_pareseObjectInnerOp( const BSONElement &ele,
                                               const BSONElement &innerEle,
                                               MTH_FUNC_LIST &funcList,
                                               _mthMatchLogicNode *parent,
@@ -1073,7 +1073,7 @@ namespace engine
       EN_MATCH_OP_FUNC_TYPE nodeType ;
 
       innerFieldName = innerEle.fieldName() ;
-      nodeType       = mthGetMatchNodeFactory()->getMatchNodeType( 
+      nodeType       = mthGetMatchNodeFactory()->getMatchNodeType(
                                                               innerFieldName ) ;
       if ( EN_MATCH_OPERATOR_REGEX == nodeType ||
            EN_MATCH_OPERATOR_OPTIONS == nodeType )
@@ -1082,7 +1082,7 @@ namespace engine
          {
             rc = SDB_INVALIDARG ;
             PD_LOG( PDERROR, "regex's type should be String type:fieldName=%s,"
-                    "innerEle=%s,type=%d", ele.fieldName(), 
+                    "innerEle=%s,type=%d", ele.fieldName(),
                     innerEle.toString().c_str(), innerEle.type() ) ;
             goto error ;
          }
@@ -1098,7 +1098,7 @@ namespace engine
          goto done ;
       }
 
-      if ( EN_MATCH_ATTR_EXPAND == nodeType || 
+      if ( EN_MATCH_ATTR_EXPAND == nodeType ||
            EN_MATCH_ATTR_RETURNMATCH == nodeType )
       {
          rc = _parseAttribute( ele.fieldName(), innerEle, nodeType,
@@ -1113,20 +1113,20 @@ namespace engine
          if ( EN_MATCH_OPERATOR_MOD == nodeType )
          {
             //func mod
-            rc = _addFunction( ele.fieldName(), innerEle, nodeType, 
+            rc = _addFunction( ele.fieldName(), innerEle, nodeType,
                                funcList ) ;
             if ( SDB_OK != rc )
             {
                PD_LOG( PDERROR, "add function failed:fieldName=%s,"
-                       "innerEle=%s,rc=%d", ele.fieldName(), 
+                       "innerEle=%s,rc=%d", ele.fieldName(),
                        innerEle.toString().c_str(), rc ) ;
                goto error ;
             }
          }
-         else if ( ( nodeType < EN_MATCH_OPERATOR_END && 
+         else if ( ( nodeType < EN_MATCH_OPERATOR_END &&
                      nodeType >= EN_MATCH_OPERATOR_ET ) )
          {
-            rc = _addOperator( ele.fieldName(), innerEle, nodeType, funcList, 
+            rc = _addOperator( ele.fieldName(), innerEle, nodeType, funcList,
                                parent ) ;
             if ( SDB_OK != rc )
             {
@@ -1135,14 +1135,14 @@ namespace engine
                goto error ;
             }
          }
-         else if ( nodeType < EN_MATCH_FUNC_END && 
+         else if ( nodeType < EN_MATCH_FUNC_END &&
                    nodeType >= EN_MATCH_FUNC_ABS )
          {
             rc = _addFunction( ele.fieldName(), innerEle, nodeType, funcList ) ;
             if ( SDB_OK != rc )
             {
                PD_LOG( PDERROR, "add function failed:fieldName=%s,innerEle=%s,"
-                       "rc=%d", ele.fieldName(), innerEle.toString().c_str(), 
+                       "rc=%d", ele.fieldName(), innerEle.toString().c_str(),
                        rc ) ;
                goto error ;
             }
@@ -1168,9 +1168,9 @@ namespace engine
                BSONElement tElem       = k.next () ;
                const CHAR *tEleFieName = tElem.fieldName () ;
                EN_MATCH_OP_FUNC_TYPE tmpType ;
-               tmpType = mthGetMatchNodeFactory()->getMatchNodeType( 
+               tmpType = mthGetMatchNodeFactory()->getMatchNodeType(
                                                                 tEleFieName ) ;
-               if ( EN_MATCH_OPERATOR_FIELD != tmpType 
+               if ( EN_MATCH_OPERATOR_FIELD != tmpType
                     && _isExistOpFieldRecursive( innerEle ) )
                {
                   //only support $field
@@ -1193,10 +1193,10 @@ namespace engine
          else
          {
             // { a : { $xx : { xx : ... } } }
-            if ( ( nodeType < EN_MATCH_OPERATOR_END && 
+            if ( ( nodeType < EN_MATCH_OPERATOR_END &&
                    nodeType >= EN_MATCH_OPERATOR_ET ) )
             {
-               rc = _addOperator( ele.fieldName(), innerEle, nodeType, funcList, 
+               rc = _addOperator( ele.fieldName(), innerEle, nodeType, funcList,
                                   parent ) ;
                if ( SDB_OK != rc )
                {
@@ -1207,12 +1207,12 @@ namespace engine
             }
             else
             {
-               rc = _addFunction( ele.fieldName(), innerEle, nodeType, 
+               rc = _addFunction( ele.fieldName(), innerEle, nodeType,
                                   funcList ) ;
                if ( SDB_OK != rc )
                {
                   PD_LOG( PDERROR, "add function failed:fieldName=%s,"
-                          "innerEle=%s,rc=%d", ele.fieldName(), 
+                          "innerEle=%s,rc=%d", ele.fieldName(),
                           innerEle.toString().c_str(), rc ) ;
                   goto error ;
                }
@@ -1240,11 +1240,11 @@ namespace engine
       if ( EN_MATCH_OPERATOR_REGEX != type )
       {
          rc = SDB_INVALIDARG ;
-         PD_LOG( PDERROR, "exist extra options operator:options=%s", 
+         PD_LOG( PDERROR, "exist extra options operator:options=%s",
                  options ) ;
          goto error ;
       }
-      
+
       tmpRegex = ele.valuestrsafe() ;
       rc = _addRegExOp( fieldName, tmpRegex, options, funcList, parent ) ;
       if ( SDB_OK != rc )
@@ -1274,7 +1274,7 @@ namespace engine
       funcList.clear() ;
    }
 
-   INT32 _mthMatchTree::_parseObjectElement( const BSONElement &ele, 
+   INT32 _mthMatchTree::_parseObjectElement( const BSONElement &ele,
                                              _mthMatchLogicNode *parent )
    {
       INT32 rc = SDB_OK ;
@@ -1315,9 +1315,9 @@ namespace engine
             BSONElement embEle       = iter.next () ;
             const CHAR *embFieldName = embEle.fieldName () ;
 
-            SDB_ASSERT( NULL != options ? NULL == regex : TRUE, 
+            SDB_ASSERT( NULL != options ? NULL == regex : TRUE,
                         "if options is not null, regex must be null" ) ;
-            SDB_ASSERT( NULL != regex ? NULL == options : TRUE, 
+            SDB_ASSERT( NULL != regex ? NULL == options : TRUE,
                         "if regex is not null, options must be null" ) ;
             if ( NULL != options )
             {
@@ -1338,7 +1338,7 @@ namespace engine
             {
                //previous is regex. check if options come next
                EN_MATCH_OP_FUNC_TYPE type ;
-               type = mthGetMatchNodeFactory()->getMatchNodeType( 
+               type = mthGetMatchNodeFactory()->getMatchNodeType(
                                                                 embFieldName ) ;
                if ( EN_MATCH_OPERATOR_OPTIONS == type )
                {
@@ -1369,7 +1369,7 @@ namespace engine
             if ( MTH_OPERATOR_EYECATCHER == embFieldName[0] )
             {
                // { a : { $xx : xxxxxxx } }
-               rc = _pareseObjectInnerOp( ele, embEle, funcList, parent, regex, 
+               rc = _pareseObjectInnerOp( ele, embEle, funcList, parent, regex,
                                           options ) ;
                if ( SDB_OK != rc )
                {
@@ -1380,7 +1380,7 @@ namespace engine
             else
             {
                // { a : { xxx : xxxxxx } }, quality condition
-               rc = _addOperator( ele.fieldName(), embEle, EN_MATCH_OPERATOR_ET, 
+               rc = _addOperator( ele.fieldName(), embEle, EN_MATCH_OPERATOR_ET,
                                   funcList, parent ) ;
             }
          }
@@ -1401,7 +1401,7 @@ namespace engine
          if ( NULL != options )
          {
             rc = SDB_INVALIDARG ;
-            PD_LOG( PDERROR, "exist extra options operator:options=%s", 
+            PD_LOG( PDERROR, "exist extra options operator:options=%s",
                     options ) ;
             goto error ;
          }
@@ -1410,7 +1410,7 @@ namespace engine
          {
             rc = SDB_INVALIDARG ;
             MTH_FUNC_LIST::iterator iter = funcList.begin() ;
-            PD_LOG( PDERROR, "exist extra func:first func=%s", 
+            PD_LOG( PDERROR, "exist extra func:first func=%s",
                     ( *iter )->toString().c_str() ) ;
             goto error ;
          }
@@ -1423,7 +1423,7 @@ namespace engine
       goto done ;
    }
 
-   INT32 _mthMatchTree::_parseElement( const BSONElement &ele, 
+   INT32 _mthMatchTree::_parseElement( const BSONElement &ele,
                                        _mthMatchLogicNode *parent )
    {
       INT32 rc = SDB_OK ;
@@ -1530,7 +1530,7 @@ namespace engine
             // if add child failed. child is not longer in the tree.
             mthGetMatchNodeFactory()->releaseNode( child ) ;
             PD_LOG( PDERROR, "add child failed:rc=%d" ) ;
-            
+
             goto error ;
          }
       }
@@ -1574,15 +1574,15 @@ namespace engine
       }
 
       //$logic -> $or/$and -> op => $logic -> op
-      if ( ( node->getType() == EN_MATCH_OPERATOR_LOGIC_OR || 
-             node->getType() == EN_MATCH_OPERATOR_LOGIC_AND ) && 
+      if ( ( node->getType() == EN_MATCH_OPERATOR_LOGIC_OR ||
+             node->getType() == EN_MATCH_OPERATOR_LOGIC_AND ) &&
              node->getChildrenCount() == 1 )
       {
          _mthMatchNode *parent = node->getParent() ;
          if ( NULL != parent )
          {
             SDB_ASSERT( parent->getType() >= EN_MATCH_OPERATOR_LOGIC_AND &&
-                        parent->getType() < EN_MATCH_OPERATOR_LOGIC_END, 
+                        parent->getType() < EN_MATCH_OPERATOR_LOGIC_END,
                         "parent must be logic node" ) ;
 
             rc = _deleteNode( parent, node ) ;
@@ -1601,7 +1601,7 @@ namespace engine
          _mthMatchNode *parent = node->getParent() ;
          if ( NULL != parent )
          {
-            if ( parent->getType() == EN_MATCH_OPERATOR_LOGIC_AND || 
+            if ( parent->getType() == EN_MATCH_OPERATOR_LOGIC_AND ||
                  parent->getType() == EN_MATCH_OPERATOR_LOGIC_NOT )
             {
                rc = _deleteNode( parent, node ) ;
@@ -1640,7 +1640,7 @@ namespace engine
          goto error ;
       }
 
-      if ( _root->getChildrenCount() == 1 && 
+      if ( _root->getChildrenCount() == 1 &&
            _root->getType() == EN_MATCH_OPERATOR_LOGIC_AND )
       {
          _mthMatchNodeIterator iter( _root ) ;
@@ -1699,7 +1699,7 @@ namespace engine
       goto done ;
    }
 
-   void _mthMatchTree::_checkTotallyConverted( _mthMatchNode *node, 
+   void _mthMatchTree::_checkTotallyConverted( _mthMatchNode *node,
                                                BOOLEAN &isTotallyConverted )
    {
       if ( !isTotallyConverted )
@@ -1739,7 +1739,7 @@ namespace engine
    INT32 _mthMatchTree::_optimize( BOOLEAN needPredicate )
    {
       INT32 rc = SDB_OK ;
- 
+
       //1. _optimize NodeLevel (impact the weight and order )
       rc = _optimizeNodeLevel() ;
       if ( SDB_OK != rc )
@@ -1822,18 +1822,18 @@ namespace engine
          {
             context.setHasExpand( TRUE ) ;
          }
-      
+
          if ( _hasReturnMatch )
          {
             context.setHasReturnMatch( TRUE ) ;
          }
-      
+
          context.setFieldName( _attrFieldName ) ;
          if ( ossStrstr( _attrFieldName, ".$" ) != NULL )
          {
-            /* if _attrFieldName exist Dollar, we must enable DollarList to 
+            /* if _attrFieldName exist Dollar, we must enable DollarList to
                   get the real fieldName. context.resolveFieldName().
-            */ 
+            */
             context.enableDollarList() ;
          }
       }
@@ -1843,7 +1843,7 @@ namespace engine
          context.setObj( matchTarget ) ;
          result = FALSE ;
          rc = _root->execute( matchTarget, context, result ) ;
-         PD_RC_CHECK( rc, PDERROR, "execute failed:target=%s,rc=%d", 
+         PD_RC_CHECK( rc, PDERROR, "execute failed:target=%s,rc=%d",
                      matchTarget.toString().c_str(), rc ) ;
 
          if ( result )
@@ -1851,9 +1851,9 @@ namespace engine
             if ( _hasReturnMatch && !context.isReturnMatchExecuted() )
             {
                BOOLEAN tmpResult = FALSE ;
-               rc = _returnMatchNode->execute( matchTarget, context, 
+               rc = _returnMatchNode->execute( matchTarget, context,
                                                tmpResult ) ;
-               PD_RC_CHECK( rc, PDERROR, "execute failed:target=%s,rc=%d", 
+               PD_RC_CHECK( rc, PDERROR, "execute failed:target=%s,rc=%d",
                             matchTarget.toString().c_str(), rc ) ;
             }
 
@@ -1926,7 +1926,7 @@ namespace engine
       }
       catch (  std::exception &e )
       {
-         PD_LOG ( PDWARNING, "Failed to extract equality matches: %s", 
+         PD_LOG ( PDWARNING, "Failed to extract equality matches: %s",
                   e.what() ) ;
          goto done ;
       }
@@ -1973,7 +1973,7 @@ namespace engine
          // we should run this->matches() to get the right result.
          return ;
       }
-      
+
       _isMatchesAll = matchesAll ;
    }
 
@@ -2006,13 +2006,13 @@ namespace engine
       output += "Root:" + obj.toString() + "\n" ;
       output += string( "isInitialized:" ) +
                 ( _isInitialized ? "TRUE" : "FALSE" ) + "\n" ;
-      output += string( "_isMatchesAll:" ) + 
+      output += string( "_isMatchesAll:" ) +
                 ( _isMatchesAll ? "TRUE" : "FALSE" ) + "\n" ;
-      output += string( "_isTotallyConverted:" ) + 
+      output += string( "_isTotallyConverted:" ) +
                 ( _isTotallyConverted ? "TRUE" : "FALSE" ) + "\n" ;
-      output += string( "_hasDollarFieldName:" ) + 
+      output += string( "_hasDollarFieldName:" ) +
                 ( _hasDollarFieldName ? "TRUE" : "FALSE" ) + "\n" ;
-      output += string( "_predicateSet:" ) + 
+      output += string( "_predicateSet:" ) +
                 _predicateSet.toString() ;
 
       return output ;
@@ -2027,7 +2027,7 @@ namespace engine
 
    BOOLEAN _mthMatchTree::hasReturnMatch()
    {
-      SDB_ASSERT( _hasReturnMatch ? NULL != _returnMatchNode 
+      SDB_ASSERT( _hasReturnMatch ? NULL != _returnMatchNode
                                   : NULL == _returnMatchNode, "impossible" ) ;
       return _hasReturnMatch ;
    }
@@ -2048,7 +2048,7 @@ namespace engine
       _totalNum      = 0 ;
       _validNum      = 0 ;
       _src           = BSONObj() ;
-      _srcType       = MTH_SRC_TYPE_ORIGINAL ; 
+      _srcType       = MTH_SRC_TYPE_ORIGINAL ;
 
       _specifyObj    = BSONObj() ;
    }
@@ -2063,7 +2063,7 @@ namespace engine
       _totalNum      = 0 ;
       _validNum      = 0 ;
       _src           = BSONObj() ;
-      _srcType       = MTH_SRC_TYPE_ORIGINAL ; 
+      _srcType       = MTH_SRC_TYPE_ORIGINAL ;
 
       _specifyObj    = BSONObj() ;
    }
@@ -2089,7 +2089,7 @@ namespace engine
          _validNum = 0 ;
       }
    }
-   
+
    void _mthRecordGenerator::popTail( UINT32 num )
    {
       if ( _validNum > num )
@@ -2107,17 +2107,17 @@ namespace engine
       _isQueryModify = isQueryModify ;
    }
 
-   void _mthRecordGenerator::setDataPtr( ossValuePtr &dataPtr ) 
+   void _mthRecordGenerator::setDataPtr( ossValuePtr &dataPtr )
    {
       _dataPtr = dataPtr ;
    }
-   
-   void _mthRecordGenerator::getDataPtr( ossValuePtr &dataPtr ) 
+
+   void _mthRecordGenerator::getDataPtr( ossValuePtr &dataPtr )
    {
       dataPtr = _dataPtr ;
    }
 
-   INT32 _mthRecordGenerator::resetValue( const BSONObj &src, 
+   INT32 _mthRecordGenerator::resetValue( const BSONObj &src,
                                           _mthMatchTreeContext *mthContext )
    {
       INT32 rc    = SDB_OK ;
@@ -2198,8 +2198,8 @@ namespace engine
       return FALSE ;
    }
 
-   INT32 _mthRecordGenerator::_createArrayObj( const CHAR* name, 
-                                           _utilArray< BSONElement > &elements, 
+   INT32 _mthRecordGenerator::_createArrayObj( const CHAR* name,
+                                           _utilArray< BSONElement > &elements,
                                            BSONObjBuilder &builder )
    {
       UINT32 i = 0 ;
@@ -2220,10 +2220,10 @@ namespace engine
       return SDB_OK ;
    }
 
-   INT32 _mthRecordGenerator::_replaceFieldObject( 
-                                               BSONObjIteratorSorted &iterSort, 
-                                               const CHAR *fieldName, 
-                                               BSONElement &newValue, 
+   INT32 _mthRecordGenerator::_replaceFieldObject(
+                                               BSONObjIteratorSorted &iterSort,
+                                               const CHAR *fieldName,
+                                               BSONElement &newValue,
                                                BSONObjBuilder &builder )
    {
       INT32 rc = SDB_OK ;
@@ -2260,7 +2260,7 @@ namespace engine
                {
                   builder.appendNull( pTmpFieldName ) ;
                }
-               
+
                break ;
             }
             else
@@ -2303,10 +2303,10 @@ namespace engine
       goto done ;
    }
 
-   INT32 _mthRecordGenerator::_replaceFieldArray( 
-                                              BSONObjIteratorSorted &iterSort, 
-                                              const CHAR *fieldName, 
-                                              BSONElement &newValue, 
+   INT32 _mthRecordGenerator::_replaceFieldArray(
+                                              BSONObjIteratorSorted &iterSort,
+                                              const CHAR *fieldName,
+                                              BSONElement &newValue,
                                               BSONArrayBuilder &builder )
    {
       INT32 rc = SDB_OK ;
@@ -2379,17 +2379,17 @@ namespace engine
          BSONElement ele = iterSort.next() ;
          builder.append( ele ) ;
       }
-      
+
    done:
       return rc ;
    error:
       goto done ;
    }
 
-   // replace filedName's value with newValue   
-   INT32 _mthRecordGenerator::_replaceField( BSONObj &src, 
-                                             const CHAR *fieldName, 
-                                             BSONElement &newValue, 
+   // replace filedName's value with newValue
+   INT32 _mthRecordGenerator::_replaceField( BSONObj &src,
+                                             const CHAR *fieldName,
+                                             BSONElement &newValue,
                                              BSONObjBuilder &builder )
    {
       INT32 rc = SDB_OK ;
@@ -2402,12 +2402,13 @@ namespace engine
    error:
       goto done ;
    }
-   
+
    INT32 _mthRecordGenerator::getNext( BSONObj &record )
    {
       SDB_ASSERT( _validNum > 0, "must hasNext" ) ;
 
       static BSONObj staticEmptyObj ;
+      BSONObj tmpObj ;
       INT32 rc = SDB_OK ;
 
       if ( MTH_SRC_TYPE_ORIGINAL == _srcType )
@@ -2430,10 +2431,9 @@ namespace engine
          else if ( MTH_SRC_TYPE_ELEMENTS == _srcType )
          {
             BSONObjBuilder tmpBuilder ;
-            BSONObj tmpObj ;
+
             rc = _createArrayObj( "tmp", _mthContext->_elements, tmpBuilder ) ;
             PD_RC_CHECK( rc, PDERROR, "_createArrayObj failed:rc=%d", rc ) ;
-
             tmpObj = tmpBuilder.obj() ;
             ele    = tmpObj.firstElement() ;
          }

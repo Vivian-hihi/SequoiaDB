@@ -72,7 +72,7 @@ namespace engine
 
          // func *p = new ( _mthNodeAllocator *allocator ) func( _mthNodeAllocator *allocator )
          // use p->release() to release p. and do not use p anymore.
-         void* operator new ( size_t size, _mthNodeAllocator *allocator ) 
+         void* operator new ( size_t size, _mthNodeAllocator *allocator )
                               throw ( const char * ) ;
          // do not call delete p directly
          void operator delete ( void *p ) ;
@@ -85,7 +85,7 @@ namespace engine
          virtual INT32 call( const BSONElement &in, BSONObj &out ) = 0 ;
 
       protected:
-         virtual INT32 _init( const CHAR *fieldName, 
+         virtual INT32 _init( const CHAR *fieldName,
                               const BSONElement &ele ) = 0 ;
 
       protected:
@@ -108,7 +108,7 @@ namespace engine
          virtual const CHAR* getName() ;
 
       protected:
-         virtual INT32 _init( const CHAR *fieldName, 
+         virtual INT32 _init( const CHAR *fieldName,
                               const BSONElement &ele ) ;
    } ;
 
@@ -230,7 +230,7 @@ namespace engine
          virtual void clear() ;
 
       protected:
-         virtual INT32 _init( const CHAR *fieldName, 
+         virtual INT32 _init( const CHAR *fieldName,
                               const BSONElement &ele ) ;
 
       private:
@@ -252,7 +252,7 @@ namespace engine
          virtual void clear() ;
 
       protected:
-         virtual INT32 _init( const CHAR *fieldName, 
+         virtual INT32 _init( const CHAR *fieldName,
                               const BSONElement &ele ) ;
 
       private:
@@ -272,7 +272,7 @@ namespace engine
          virtual void clear() ;
 
       protected:
-         virtual INT32 _init( const CHAR *fieldName, 
+         virtual INT32 _init( const CHAR *fieldName,
                               const BSONElement &ele ) ;
 
       private:
@@ -292,7 +292,7 @@ namespace engine
          virtual void clear() ;
 
       protected:
-         virtual INT32 _init( const CHAR *fieldName, 
+         virtual INT32 _init( const CHAR *fieldName,
                               const BSONElement &ele ) ;
 
       private:
@@ -312,7 +312,7 @@ namespace engine
          virtual void clear() ;
 
       protected:
-         virtual INT32 _init( const CHAR *fieldName, 
+         virtual INT32 _init( const CHAR *fieldName,
                               const BSONElement &ele ) ;
 
       private:
@@ -332,7 +332,7 @@ namespace engine
          virtual void clear() ;
 
       protected:
-         virtual INT32 _init( const CHAR *fieldName, 
+         virtual INT32 _init( const CHAR *fieldName,
                               const BSONElement &ele ) ;
 
       private:
@@ -352,7 +352,7 @@ namespace engine
          virtual void clear() ;
 
       protected:
-         virtual INT32 _init( const CHAR *fieldName, 
+         virtual INT32 _init( const CHAR *fieldName,
                               const BSONElement &ele ) ;
 
       private:
@@ -368,7 +368,7 @@ namespace engine
       public:
          INT32 getOffset() ;
          INT32 getLen() ;
-         
+
       public:
          virtual void release() ;
          virtual INT32 call( const BSONElement &in, BSONObj &out ) ;
@@ -377,7 +377,7 @@ namespace engine
          virtual void clear() ;
 
       protected:
-         virtual INT32 _init( const CHAR *fieldName, 
+         virtual INT32 _init( const CHAR *fieldName,
                               const BSONElement &ele ) ;
 
       private:
@@ -393,7 +393,7 @@ namespace engine
          virtual ~_mthMatchOpNode() ;
 
       public: /* from parent */
-         virtual INT32 init( const CHAR *fieldName, 
+         virtual INT32 init( const CHAR *fieldName,
                              const BSONElement &element ) ;
 
          virtual INT32 addChild( _mthMatchNode *child ) ;
@@ -411,7 +411,7 @@ namespace engine
 
          virtual BOOLEAN hasDollarFieldName() ;
 
-         virtual INT32 execute( const BSONObj &obj, 
+         virtual INT32 execute( const BSONObj &obj,
                                 _mthMatchTreeContext &context,
                                 BOOLEAN &result ) ;
 
@@ -423,34 +423,34 @@ namespace engine
          BOOLEAN hasReturnMatch() ;
 
       protected: /* from itself */
-         virtual INT32 _valueMatch( const BSONElement &left, 
+         virtual INT32 _valueMatch( const BSONElement &left,
                                     const BSONElement &right,
                                     _mthMatchTreeContext &context,
                                     BOOLEAN &result ) = 0 ;
 
-         virtual INT32 _init( const CHAR *fieldName, 
+         virtual INT32 _init( const CHAR *fieldName,
                               const BSONElement &element) ;
          virtual void _clear() ;
 
       protected:
-         INT32 _execute( const CHAR *pFieldName, const BSONObj &obj, 
-                         BOOLEAN isArrayObj, 
-                         _mthMatchTreeContext &context, 
+         INT32 _execute( const CHAR *pFieldName, const BSONObj &obj,
+                         BOOLEAN isArrayObj,
+                         _mthMatchTreeContext &context,
                          BOOLEAN &result ) ;
 
-         INT32 _dollarMatches( const CHAR *pFieldName, 
+         INT32 _dollarMatches( const CHAR *pFieldName,
                                const BSONElement &element,
                                _mthMatchTreeContext &context,
                                BOOLEAN &result ) ;
 
          INT32 _calculateFuncs( const BSONElement &in, BSONObj &out ) ;
 
-         INT32 _doFuncMatch( const BSONElement &original, 
+         INT32 _doFuncMatch( const BSONElement &original,
                              const BSONElement &matchTarget,
                              _mthMatchTreeContext &context,
                              BOOLEAN &matchResult ) ;
 
-         INT32 _saveElement( _mthMatchTreeContext &context,  BOOLEAN isMatch, 
+         INT32 _saveElement( _mthMatchTreeContext &context,  BOOLEAN isMatch,
                              const BSONElement &ele ) ;
 
          BOOLEAN _isNot() ;
@@ -482,7 +482,7 @@ namespace engine
          virtual void release() ;
 
       protected:
-         virtual INT32 _valueMatch( const BSONElement &left, 
+         virtual INT32 _valueMatch( const BSONElement &left,
                                     const BSONElement &right,
                                     _mthMatchTreeContext &context,
                                     BOOLEAN &result ) ;
@@ -499,7 +499,7 @@ namespace engine
          virtual const CHAR *getOperatorStr() ;
          virtual UINT32 getWeight() ;
          virtual BOOLEAN isTotalConverted() ;
-         virtual INT32 execute( const BSONObj &obj, 
+         virtual INT32 execute( const BSONObj &obj,
                                 _mthMatchTreeContext &context,
                                 BOOLEAN &result ) ;
          virtual void release() ;
@@ -519,7 +519,7 @@ namespace engine
          virtual void release() ;
 
       protected:
-         virtual INT32 _valueMatch( const BSONElement &left, 
+         virtual INT32 _valueMatch( const BSONElement &left,
                                     const BSONElement &right,
                                     _mthMatchTreeContext &context,
                                     BOOLEAN &result ) ;
@@ -539,7 +539,7 @@ namespace engine
          virtual void release() ;
 
       protected:
-         virtual INT32 _valueMatch( const BSONElement &left, 
+         virtual INT32 _valueMatch( const BSONElement &left,
                                     const BSONElement &right,
                                     _mthMatchTreeContext &context,
                                     BOOLEAN &result ) ;
@@ -559,7 +559,7 @@ namespace engine
          virtual void release() ;
 
       protected:
-         virtual INT32 _valueMatch( const BSONElement &left, 
+         virtual INT32 _valueMatch( const BSONElement &left,
                                     const BSONElement &right,
                                     _mthMatchTreeContext &context,
                                     BOOLEAN &result ) ;
@@ -579,7 +579,7 @@ namespace engine
          virtual void release() ;
 
       protected:
-         virtual INT32 _valueMatch( const BSONElement &left, 
+         virtual INT32 _valueMatch( const BSONElement &left,
                                     const BSONElement &right,
                                     _mthMatchTreeContext &context,
                                     BOOLEAN &result ) ;
@@ -601,16 +601,16 @@ namespace engine
          virtual void release() ;
 
       protected:
-         virtual INT32 _init( const CHAR *fieldName, 
+         virtual INT32 _init( const CHAR *fieldName,
                               const BSONElement &element ) ;
          virtual void _clear() ;
-         virtual INT32 _valueMatch( const BSONElement &left, 
+         virtual INT32 _valueMatch( const BSONElement &left,
                                     const BSONElement &right,
                                     _mthMatchTreeContext &context,
                                     BOOLEAN &result ) ;
       protected:
          BOOLEAN _isMatch( const BSONElement &ele ) ;
-         
+
 
       protected:
          typedef set<BSONElement, element_cmp_lt> VALUE_SET ;
@@ -634,7 +634,7 @@ namespace engine
          virtual void release() ;
 
       protected:
-         virtual INT32 _valueMatch( const BSONElement &left, 
+         virtual INT32 _valueMatch( const BSONElement &left,
                                     const BSONElement &right,
                                     _mthMatchTreeContext &context,
                                     BOOLEAN &result ) ;
@@ -655,14 +655,14 @@ namespace engine
          virtual void release() ;
 
       protected:
-         virtual INT32 _valueMatch( const BSONElement &left, 
+         virtual INT32 _valueMatch( const BSONElement &left,
                                     const BSONElement &right,
                                     _mthMatchTreeContext &context,
                                     BOOLEAN &result ) ;
 
-         INT32 _valueMatchWithReturnMatch(  const BSONElement &left, 
-                                            const BSONElement &right, 
-                                            _mthMatchTreeContext &context, 
+         INT32 _valueMatchWithReturnMatch(  const BSONElement &left,
+                                            const BSONElement &right,
+                                            _mthMatchTreeContext &context,
                                             BOOLEAN &result )  ;
 
          BOOLEAN _valueMatchNoReturnMatch( const BSONElement &left,
@@ -685,9 +685,9 @@ namespace engine
          virtual void release() ;
 
       protected:
-         virtual INT32 _init( const CHAR *fieldName, 
+         virtual INT32 _init( const CHAR *fieldName,
                               const BSONElement &element ) ;
-         virtual INT32 _valueMatch( const BSONElement &left, 
+         virtual INT32 _valueMatch( const BSONElement &left,
                                     const BSONElement &right,
                                     _mthMatchTreeContext &context,
                                     BOOLEAN &result ) ;
@@ -707,7 +707,7 @@ namespace engine
          virtual void release() ;
 
       protected:
-         virtual INT32 _valueMatch( const BSONElement &left, 
+         virtual INT32 _valueMatch( const BSONElement &left,
                                     const BSONElement &right,
                                     _mthMatchTreeContext &context,
                                     BOOLEAN &result ) ;
@@ -727,9 +727,9 @@ namespace engine
          virtual void release() ;
 
       protected:
-         virtual INT32 _init( const CHAR *fieldName, 
+         virtual INT32 _init( const CHAR *fieldName,
                               const BSONElement &element ) ;
-         virtual INT32 _valueMatch( const BSONElement &left, 
+         virtual INT32 _valueMatch( const BSONElement &left,
                                     const BSONElement &right,
                                     _mthMatchTreeContext &context,
                                     BOOLEAN &result ) ;
@@ -756,9 +756,9 @@ namespace engine
          virtual void release() ;
 
       protected:
-         virtual INT32 _init( const CHAR *fieldName, 
+         virtual INT32 _init( const CHAR *fieldName,
                               const BSONElement &element ) ;
-         virtual INT32 _valueMatch( const BSONElement &left, 
+         virtual INT32 _valueMatch( const BSONElement &left,
                                     const BSONElement &right,
                                     _mthMatchTreeContext &context,
                                     BOOLEAN &result ) ;
@@ -781,7 +781,7 @@ namespace engine
          virtual void release() ;
 
       protected:
-         virtual INT32 _valueMatch( const BSONElement &left, 
+         virtual INT32 _valueMatch( const BSONElement &left,
                                     const BSONElement &right,
                                     _mthMatchTreeContext &context,
                                     BOOLEAN &result ) ;
@@ -802,10 +802,10 @@ namespace engine
          virtual void release() ;
 
       protected:
-         virtual INT32 _init( const CHAR *fieldName, 
+         virtual INT32 _init( const CHAR *fieldName,
                               const BSONElement &element ) ;
          virtual void _clear() ;
-         virtual INT32 _valueMatch( const BSONElement &left, 
+         virtual INT32 _valueMatch( const BSONElement &left,
                                     const BSONElement &right,
                                     _mthMatchTreeContext &context,
                                     BOOLEAN &result ) ;
@@ -822,11 +822,11 @@ namespace engine
 
       public:
          //forbiddened
-         virtual INT32 init( const CHAR *fieldName, 
+         virtual INT32 init( const CHAR *fieldName,
                              const BSONElement &element ) ;
 
          //use this to init _mthMatchOpNodeRegex.(not graceful here)
-         INT32 init( const CHAR *fieldName, const CHAR *regex, 
+         INT32 init( const CHAR *fieldName, const CHAR *regex,
                      const CHAR *options ) ;
 
          virtual INT32 getType() ;
@@ -841,7 +841,7 @@ namespace engine
 
       protected:
          virtual void _clear() ;
-         virtual INT32 _valueMatch( const BSONElement &left, 
+         virtual INT32 _valueMatch( const BSONElement &left,
                                     const BSONElement &right,
                                     _mthMatchTreeContext &context,
                                     BOOLEAN &result ) ;

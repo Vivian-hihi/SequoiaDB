@@ -107,7 +107,7 @@ namespace engine
    {
       return _isUseElement ;
    }
-   
+
    void _mthMatchTreeContext::setIsUseElement( BOOLEAN isUseElement )
    {
       _isUseElement = isUseElement ;
@@ -165,12 +165,12 @@ namespace engine
       {
          INT32 realValue = 0 ;
          rc = result.append( start, p - start ) ;
-         PD_RC_CHECK( rc, PDERROR, "append value failed:value=%s,rc=%d", 
+         PD_RC_CHECK( rc, PDERROR, "append value failed:value=%s,rc=%d",
                       start, rc ) ;
 
          // abc.$10.def    p->.$
          rc = ossStrToInt ( p + 2, &dollarIndex ) ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to parse number:p=%s,rc=%d", 
+         PD_RC_CHECK( rc, PDERROR, "Failed to parse number:p=%s,rc=%d",
                       p, rc ) ;
 
          rc = getDollarResult( dollarIndex, realValue ) ;
@@ -182,7 +182,7 @@ namespace engine
                       p, rc ) ;
 
          rc = result.appendINT32( realValue ) ;
-         PD_RC_CHECK( rc, PDERROR, "append value failed:value=%d,rc=%d", 
+         PD_RC_CHECK( rc, PDERROR, "append value failed:value=%d,rc=%d",
                       realValue, rc ) ;
 
          start = ossStrchr( p + 1, MTH_FIELDNAME_SEP ) ;
@@ -197,14 +197,14 @@ namespace engine
             break ;
          }
       }
-      
+
       rc = result.append( start, ossStrlen( start ) ) ;
-      PD_RC_CHECK( rc, PDERROR, "append value failed:value=%s,rc=%d", 
+      PD_RC_CHECK( rc, PDERROR, "append value failed:value=%s,rc=%d",
                    start, rc ) ;
 
       _fieldName.clear() ;
       rc = _fieldName.setFieldName( result.str() ) ;
-      PD_RC_CHECK( rc, PDERROR, "set fieldName failed:fieldName=%s,rc=%d", 
+      PD_RC_CHECK( rc, PDERROR, "set fieldName failed:fieldName=%s,rc=%d",
                    result.str(), rc ) ;
 
    done:
@@ -386,7 +386,7 @@ namespace engine
    {
       _offset = 0 ;
    }
-   
+
    _mthNodeAllocator::~_mthNodeAllocator()
    {
       _offset = 0 ;
@@ -430,8 +430,8 @@ namespace engine
    _mthMatchNodeIterator::_mthMatchNodeIterator()
    {
    }
-   
-   _mthMatchNodeIterator::_mthMatchNodeIterator( 
+
+   _mthMatchNodeIterator::_mthMatchNodeIterator(
                                           const _mthMatchNodeIterator &right )
    {
    }
@@ -454,7 +454,7 @@ namespace engine
 
    //********************** _mthMatchNode ***************************
    _mthMatchNode::_mthMatchNode( _mthNodeAllocator *allocator )
-                 :_allocator( allocator ), _parent( NULL ), 
+                 :_allocator( allocator ), _parent( NULL ),
                  _idx_in_parent( -1 ), _isUnderLogicNot( FALSE )
    {
    }
@@ -465,8 +465,8 @@ namespace engine
       clear() ;
    }
 
-   void* _mthMatchNode::operator new ( size_t size, 
-                                       _mthNodeAllocator *allocator ) 
+   void* _mthMatchNode::operator new ( size_t size,
+                                       _mthNodeAllocator *allocator )
                                        throw ( const char * )
    {
       void *p = NULL ;
@@ -507,7 +507,7 @@ namespace engine
       return _fieldName.getFieldName() ;
    }
 
-   INT32 _mthMatchNode::init( const CHAR *fieldName, 
+   INT32 _mthMatchNode::init( const CHAR *fieldName,
                               const BSONElement &element )
    {
       INT32 rc = SDB_OK ;
@@ -556,9 +556,9 @@ namespace engine
    void _mthMatchNode::delChild( _mthMatchNode *child )
    {
       SDB_ASSERT( NULL != child, "child must not be null" ) ;
-      SDB_ASSERT( child->_idx_in_parent < _children.size(), 
+      SDB_ASSERT( child->_idx_in_parent < _children.size(),
                   "index must smaller than size" ) ;
-      SDB_ASSERT( _children[ child->_idx_in_parent ] == child, 
+      SDB_ASSERT( _children[ child->_idx_in_parent ] == child,
                   "child must be true" ) ;
 
       UINT32 index = child->_idx_in_parent ;
