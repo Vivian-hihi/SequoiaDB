@@ -118,7 +118,7 @@ function deployClster( mode )
                     config  ); 
     
    var hasPrimary = false;                                 
-   for(var i = 0; i < 600; i++ )  //wait for cata group to select primary node 
+   for(var i = 0; i < 5*600; i++ )  //wait for cata group to select primary node 
    {  
       try
       {
@@ -138,7 +138,7 @@ function deployClster( mode )
    }
    if( hasPrimary === false )
    {
-      throw "fail to select primary node after 1 minute";
+      throw "fail to select primary node after 5 minute";
    }                                              
    
    var node1 = cataRG.createNode( hostList[1], cataPort, 
@@ -189,7 +189,7 @@ function deployClster( mode )
       dataRG.start();
       
       var hasPrimary = false;
-      for(var i = 0; i < 600; i++ )  //wait for data group to select primary node 
+      for(var i = 0; i < 5*600; i++ )  //wait for data group to select primary node 
       {  
          try
          {
@@ -209,7 +209,7 @@ function deployClster( mode )
       }
       if( hasPrimary === false )
       {
-         throw "fail to select primary node after 1 minute";
+         throw "fail to select primary node after 5 minute";
       }
    } 
    
