@@ -639,11 +639,14 @@ namespace engine
       // 4. send register msg
       _sendRegisterMsg () ;
 
-      // Start storage check job
-      rc = startStorageCheckJob( NULL ) ;
-      PD_RC_CHECK( rc, PDERROR,
-                   "Start storage checking job thread failed, rc: %d",
-                   rc ) ;
+      // Start storage check job only for data nodes
+      if ( SDB_ROLE_DATA == pmdGetKRCB()->getDBRole() )
+      {
+         rc = startStorageCheckJob( NULL ) ;
+         PD_RC_CHECK( rc, PDERROR,
+                      "Start storage checking job thread failed, rc: %d",
+                      rc ) ;
+      }
 
    done:
       PD_TRACE_EXITRC ( SDB__CLSMGR_ACTIVE, rc );

@@ -48,7 +48,6 @@ namespace engine
     */
    _clsStorageCheckJob::_clsStorageCheckJob ()
    {
-      _checkInterval = RTN_DEFAULT_DMS_CHECK_INTERVAL ;
    }
 
    _clsStorageCheckJob::~_clsStorageCheckJob ()
@@ -58,6 +57,7 @@ namespace engine
    INT32 _clsStorageCheckJob::doit ()
    {
       pmdEDUCB *cb = eduCB() ;
+      UINT32 checkInterval = pmdGetKRCB()->getOptionCB()->getDmsChkInterval() ;
 
       while ( !PMD_IS_DB_DOWN() &&
               !cb->isForced() )
@@ -68,6 +68,12 @@ namespace engine
          shardCB* pShdMgr = sdbGetShardCB() ;
          pmdEDUEvent event ;
 
+         // If checkInterval is 0 (disable checking), sleep for one hour and
+         // check again whether there is a change
+         UINT32 secInterval = checkInterval > 0 ?
+                              checkInterval * STORAGE_CHECK_UNIT_INTERVAL :
+                              STORAGE_CHECK_UNIT_INTERVAL ;
+
          std::set<monCollectionSpace> csList ;
 
          /*
@@ -75,23 +81,33 @@ namespace engine
           * wait. Once found, it will be changed to running.
           */
          pEduMgr->waitEDU( cb->getID() ) ;
-         cb->waitEvent( event, _checkInterval ) ;
+         cb->waitEvent( event, secInterval ) ;
          pEduMgr->activateEDU( cb->getID() ) ;
 
-         // Check stop signal
+         // Check stop signal first
          if ( PMD_IS_DB_DOWN() ||
               cb->isForced() )
          {
             break ;
          }
 
-         // Only check for primary node
-         if ( !krcb->isPrimary() || !pShdMgr )
+         // Get interval(hour) in runtime
+         checkInterval = pmdGetKRCB()->getOptionCB()->getDmsChkInterval() ;
+
+         // Only check for primary node when checking enabled (interval > 0)
+         if ( !krcb->isPrimary() ||
+              !pShdMgr ||
+              checkInterval == 0 )
          {
+            PD_LOG( PDDEBUG,
+                    "clsStorageCheckJob: job is not enabled, interval: %u",
+                    checkInterval ) ;
             continue ;
          }
 
-         PD_LOG( PDDEBUG, "clsStorageCheckJob: start job" ) ;
+         PD_LOG( PDDEBUG,
+                 "clsStorageCheckJob: start job, interval: %u",
+                 checkInterval ) ;
 
          pDmsCB->dumpInfo( csList, FALSE ) ;
 
@@ -110,8 +126,6 @@ namespace engine
             SINT64 contextID = -1 ;
             rtnContextDelCS *pDelContext = NULL ;
             rtnContextBuf buffObj ;
-
-
 
             PD_LOG( PDDEBUG,
                     "clsStorageCheckJob: checking space [%s]",

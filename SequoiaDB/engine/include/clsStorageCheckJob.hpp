@@ -37,8 +37,8 @@
 
 namespace engine
 {
-   // One day interval
-   #define RTN_DEFAULT_DMS_CHECK_INTERVAL ( OSS_ONE_SEC * 60 * 60 * 24 )
+   // One hour interval
+   #define STORAGE_CHECK_UNIT_INTERVAL ( OSS_ONE_SEC * 60 * 60 )
 
    /*
     *  _clsStorageCheckJob define
@@ -57,9 +57,6 @@ namespace engine
       virtual BOOLEAN muteXOn ( const _rtnBaseJob *pOther ) { return FALSE ; }
 
       virtual INT32 doit () ;
-
-   protected :
-      UINT32 _checkInterval ;
    } ;
 
    typedef _clsStorageCheckJob clsStorageCheckJob ;

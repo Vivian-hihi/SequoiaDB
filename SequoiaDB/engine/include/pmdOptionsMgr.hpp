@@ -493,6 +493,8 @@ namespace engine
          OSS_INLINE UINT32 getArchiveExpired() const { return _archiveExpired ; }
          OSS_INLINE UINT32 getArchiveQuota() const { return _archiveQuota ; }
 
+         OSS_INLINE UINT32 getDmsChkInterval() const { return _dmsChkInterval ; }
+
          std::string getOmAddr() const ;
 
 #ifdef SDB_ENTERPRISE
@@ -572,6 +574,7 @@ namespace engine
          UINT32      _archiveTimeout ;
          UINT32      _archiveExpired ;
          UINT32      _archiveQuota ;
+         UINT32      _dmsChkInterval ;
 
 #ifdef SDB_ENTERPRISE
 

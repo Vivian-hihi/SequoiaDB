@@ -86,6 +86,7 @@ namespace engine
    #define PMD_DFT_ARCHIVE_TIMEOUT     (600) // 10 minutes
    #define PMD_DFT_ARCHIVE_EXPIRED     (240) // 10 days
    #define PMD_DFT_ARCHIVE_QUOTA       (10)  // 10 GB
+   #define PMD_DFT_DMS_CHK_INTERVAL    (24) // 24 hours
 
    /*
       _pmdCfgExchange implement
@@ -1341,6 +1342,8 @@ namespace engine
       _archiveExpired = PMD_DFT_ARCHIVE_EXPIRED ;
       _archiveQuota = PMD_DFT_ARCHIVE_QUOTA ;
 
+      _dmsChkInterval = PMD_DFT_DMS_CHK_INTERVAL ;
+
 #ifdef SDB_ENTERPRISE
 
 #ifdef SDB_SSL
@@ -1619,6 +1622,11 @@ namespace engine
       // --omaddr
       rdxString( pEX, PMD_OPTION_OM_ADDR, _omAddrLine,
                  sizeof(_omAddrLine), FALSE, FALSE, "" ) ;
+
+      // --dmschkinterval
+      rdxUInt( pEX, PMD_OPTION_DMS_CHK_INTERVAL, _dmsChkInterval,
+               FALSE, TRUE, PMD_DFT_DMS_CHK_INTERVAL, TRUE ) ;
+      rdvMinMax( pEX, _dmsChkInterval, 0, 240, TRUE ) ;
 
       // end map
 
