@@ -900,6 +900,7 @@ namespace engine
       string tmpPath = _fileMgr.getTmpFilePath() ;
       string partialPath = _fileMgr.getPartialFilePath( logicalFileId ) ;
       UINT32 fileId = _logMgr->calcFileID( startOffset ) ;
+      BOOLEAN exist = FALSE ;
 
 #ifdef _DEBUG
       {
@@ -934,6 +935,60 @@ namespace engine
          goto error ;
       }
 
+      rc = ossFile::exists( partialPath, exist ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "Failed to check if archive file[%s] exists, rc=%d",
+                 partialPath.c_str(), rc ) ;
+         goto error ;
+      }
+
+      // if partial file does not exist,
+      // create a temp file firstly,
+      // then rename it ot partial file,
+      // so replay tool can't read a partial file with un-inited file header
+      if ( !exist )
+      {
+         dpsArchiveFile tmpArchFile ;
+
+         rc = _fileMgr.deleteTmpFile() ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "Failed to delete tmp file, rc=%d", rc ) ;
+            goto error ;
+         }
+
+         rc = tmpArchFile.init( tmpPath, FALSE ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "Failed to init archive file[%s], rc=%d",
+                    tmpPath.c_str(), rc ) ;
+            goto error ;
+         }
+
+         rc = tmpArchFile.extend( _logMgr->getLogFileSz() ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "Failed to extend archive file[%s], rc=%d",
+                    partialPath.c_str(), rc ) ;
+            goto error ;
+         }
+
+         tmpArchFile.close() ;
+
+         rc = ossFile::rename( tmpPath, partialPath ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "Failed to rename file from [%s] to [%s], rc=%d",
+                    tmpPath.c_str(), partialPath.c_str(), rc ) ;
+            goto error ;
+         }
+
+         PD_LOG( PDDEBUG, "Before extend, archive size=%lld", _archiveSize ) ;
+         _archiveSize += _logMgr->getLogFileSz() + DPS_LOG_HEAD_LEN ;
+         PD_LOG( PDDEBUG, "After extend, archive size=%lld", _archiveSize ) ;
+      }
+
       rc = archiveFile.init( partialPath, FALSE ) ;
       if ( SDB_OK != rc )
       {
@@ -946,7 +1001,6 @@ namespace engine
          DPS_LSN lsn ;
          _dpsMessageBlock block( DPS_MSG_BLOCK_DEF_LEN ) ;
          UINT32 len = 0 ;
-         INT64 writeSize = 0 ;
          INT64 offset = 0 ;
          DPS_LSN_OFFSET firstOffset =
             _logMgr->calcFirstPhysicalLSNOfFile( logicalFileId ) ;
@@ -997,15 +1051,9 @@ namespace engine
 
             block.clear() ;
             lsn.offset += len ;
-            writeSize += (INT64)len ;
          }
 
          SDB_ASSERT( lsn.offset == endOffset, "corrupt LSN" ) ;
-
-         PD_LOG( PDDEBUG, "Before archive size=%lld", _archiveSize ) ;
-         _archiveSize += writeSize ;
-         PD_LOG( PDDEBUG, "After archive size=%lld, writeSize=%lld",
-                 _archiveSize, writeSize ) ;
       }
 
       {
@@ -1026,20 +1074,6 @@ namespace engine
                destLogHeader->_logID = logicalFileId ;
                destLogHeader->_fileNum = _logMgr->getLogFileNum() ;
                destLogHeader->_fileSize = _logMgr->getLogFileSz() ;
-            }
-
-            // if this file is archived at the first time,
-            // and startOffset is not the first LSN of the file,
-            // the archive size should add the data size before startOffset.
-            if ( !_logMgr->isFirstPhysicalLSNOfFile( startOffset ) )
-            {
-               DPS_LSN_OFFSET firstOffset =
-                  _logMgr->calcFirstPhysicalLSNOfFile( logicalFileId ) ;
-               PD_LOG( PDDEBUG, "Before ajustment, archive size=%lld",
-                       _archiveSize ) ;
-               _archiveSize += startOffset - firstOffset + DPS_LOG_HEAD_LEN ;
-               PD_LOG( PDDEBUG, "After adjustment, archive size=%lld",
-                       _archiveSize ) ;
             }
          }
 
@@ -1112,15 +1146,17 @@ namespace engine
                rc = ossFile::getFileSize( tmpPath, fileSize ) ;
                if ( SDB_OK == rc )
                {
-                  PD_LOG( PDDEBUG, "Before archive size=%lld", _archiveSize ) ;
+                  PD_LOG( PDDEBUG, "Before compress, archive size=%lld",
+                          _archiveSize ) ;
                   _archiveSize += fileSize ;
-                  PD_LOG( PDDEBUG, "After archive size=%lld, fileSize=%lld",
+                  PD_LOG( PDDEBUG, "After compress, archive size=%lld, " \
+                          "fileSize=%lld",
                           _archiveSize, fileSize ) ;
                }
             }
          }
 
-         rc = ossRenamePath( srcPath.c_str(), path.c_str() ) ;
+         rc = ossFile::rename( srcPath, path ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG( PDERROR, "Failed to rename file from [%s] to [%s], rc: %d",

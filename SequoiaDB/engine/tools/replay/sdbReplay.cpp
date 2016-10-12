@@ -106,14 +106,14 @@ int main(int argc, char* argv[])
       goto done;
    }
 
-#if defined (_LINUX)
    {
       string cmd = options.buildPrintableCmd(argc, argv);
+#if defined (_LINUX)
       ossEnableNameChanges(argc, argv);
       ossRenameProcess(cmd.c_str());
+#endif // _LINUX
       PD_LOG(PDEVENT, "command: %s", cmd.c_str());
    }
-#endif // _LINUX
 
    try
    {

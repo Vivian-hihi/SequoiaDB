@@ -95,6 +95,22 @@ namespace engine
          endLSN.reset() ;
       }
 
+      BOOLEAN isValid() const
+      {
+         if ( 0 != ossStrncmp( eyeCatcher, DPS_ARCHIVE_HEADER_EYECATCHER,
+                               DPS_ARCHIVE_HEADER_EYECATCHER_LEN ) )
+         {
+            return FALSE ;
+         }
+
+         if ( DPS_ARCHIVE_HEADER_VERSION != version )
+         {
+            return FALSE ;
+         }
+
+         return TRUE ;
+      }
+
       OSS_INLINE void setFlag( UINT32 bit )
       {
          flag |= bit ;
@@ -124,6 +140,7 @@ namespace engine
       INT32 write( const CHAR* data, INT64 len ) ;
       INT32 write( INT64 offset, const CHAR* data, INT64 len ) ;
       INT32 write( ossFile& fromFile, BOOLEAN compress ) ;
+      INT32 extend( INT64 fileSize ) ;
 
       _dpsLogHeader* getLogHeader() 
       {

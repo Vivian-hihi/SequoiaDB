@@ -307,13 +307,13 @@ namespace replay
 
       // dpsLogFile requires strict file size,
       // so we extend the file if less than required size
-      rc = _ensureFileSize(filePath, (INT64)logHeader->_fileSize);
+      /*rc = _ensureFileSize(filePath, (INT64)logHeader->_fileSize);
       if (SDB_OK != rc)
       {
          PD_LOG(PDERROR, "Failed to ensure file size[%s], rc=%d",
                 filePath.c_str(), rc);
          goto error;
-      }
+      }*/
 
       rc = logFile.init(filePath.c_str(),
                         (UINT32)logHeader->_fileSize,

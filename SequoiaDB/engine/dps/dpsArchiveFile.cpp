@@ -120,6 +120,17 @@ namespace engine
                     "rc=%d", _path.c_str(), rc ) ;
             goto error ;
          }
+
+         if ( readOnly )
+         {
+            if (!_archiveHeader->isValid())
+            {
+               rc = SDB_INVALIDARG ;
+               PD_LOG( PDERROR, "Invalid header of archive file[%s]",
+                       _path.c_str() ) ;
+               goto error ;
+            }
+         }
       }
       else
       {
@@ -274,6 +285,42 @@ namespace engine
       return rc ;
    error:
       goto done ;
+   }
+
+   INT32 dpsArchiveFile::extend( INT64 fileSize )
+   {
+      INT32 rc = SDB_OK;
+      INT64 realSize = 0;
+
+      SDB_ASSERT( _inited, "uninited file" ) ;
+      SDB_ASSERT( !_readOnly, "readonly file" ) ;
+
+      rc = _file.getFileSize( realSize ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "Failed to get file size[%s], rc=%d",
+                 _path.c_str(), rc ) ;
+         goto error;
+      }
+
+      realSize -= DPS_LOG_HEAD_LEN;
+
+      if ( realSize < fileSize )
+      {
+         INT64 increment = fileSize - realSize ;
+         rc = _file.extend( increment ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "Failed to extend file[%s], rc=%d",
+                    _path.c_str(), rc) ;
+            goto error ;
+         }
+      }
+
+   done:
+      return rc;
+   error:
+      goto done;
    }
 
    INT32 dpsArchiveFile::_initHeader()
