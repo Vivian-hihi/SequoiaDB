@@ -1209,8 +1209,8 @@
       <name>PMD_OPTION_DMS_CHK_INTERVAL</name>
       <long>dmschkinterval</long>
       <description>
-         <en>The interval(hour) for Cluster to check data storage files ( in hour ), default:24, 0 means disable checking, value range:[0, 240]</en>
-         <cn>检查数据文件一致性的间隔(小时),默认值: 24, 0 表示不进行检查，取值范围:[0, 240]</cn>
+         <en>The interval(hour) for Cluster to check data storage files ( in hour ), default:0, 0 means disable checking, value range:[0, 240]</en>
+         <cn>检查数据文件一致性的间隔(小时),默认值: 0, 0 表示不进行检查，取值范围:[0, 240]</cn>
       </description>
       <type>int</type>
       <hidden>true</hidden>
