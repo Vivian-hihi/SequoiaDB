@@ -2,15 +2,17 @@ package com.sequoiadb.test.lob;
 
 import static org.junit.Assert.assertEquals;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.util.Arrays;
-
-import junit.framework.Assert;
 
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
 import org.bson.types.ObjectId;
 import org.junit.After;
 import org.junit.AfterClass;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -514,9 +516,13 @@ public class DBLobTest {
 		Arrays.fill(arr3, off, len3+off, (byte)'a' );
 		
 		DBLob lob = cl.createLob();
+        Assert.assertEquals(0, lob.getSize());
         lob.write(arr1, off, len1);
+        Assert.assertEquals(len1, lob.getSize());
         lob.write(arr2, off, len2);
+        Assert.assertEquals(len1 + len2, lob.getSize());
         lob.write(arr3, off, len3);
+        Assert.assertEquals(len1 + len2 + len3, lob.getSize());
         lob.close();
         
         // run
@@ -524,7 +530,8 @@ public class DBLobTest {
         DBLob lob2 = cl.openLob(id);
         long createTime = lob2.getCreateTime();
         System.out.println("lob's create time is: " + createTime);
-        long size       = lob.getSize();
+        long size       = lob2.getSize();
+        Assert.assertEquals(lob2.getSize(), lob.getSize());
         Assert.assertEquals(totalLen, size);
         lob2.read(out1, off, len1);
         lob2.read(out2, off, len2);
@@ -621,5 +628,51 @@ public class DBLobTest {
         assertEquals( "len is" + len, -1, len );
         lob.close();
 	}
+	
+	@Test
+	public void testReadWriteStream() {
+		// prepare data
+		int byteSize = 2 * 1024 * 1024 + 100;
+        byte[] arr = new byte[byteSize];
+        byte[] out = new byte[byteSize];
+        for(int i = 0; i < arr.length; ++i) {
+        	arr[i] = (byte)(i%10);
+        }
+        ByteArrayInputStream input = new ByteArrayInputStream(arr);
+        ByteArrayOutputStream output = new ByteArrayOutputStream(byteSize);
+        
+        // test
+        // write lob
+        DBLob lob = cl.createLob();
+        lob.write(input);
+        lob.close();
+        try {
+			input.close();
+		} catch (IOException e1) {
+			e1.printStackTrace();
+			Assert.fail();
+		}	
+        // read lob
+        ObjectId id     = lob.getID();
+        DBLob rLob = cl.openLob(id);
+        rLob.read(output);
+        try {
+        	out = output.toByteArray();
+        	output.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+			Assert.fail();
+		}
+        lob.close();
+        
+        // check
+        for(int i = 0; i < byteSize; i++) {
+        	if (arr[i] != out[i]) {
+        		Assert.fail(String.format("arr[%d] is: %d, out[%d] is: %d", i, 
+        				(int)arr[i], i, (int)out[i]));
+        	}
+        }
+	}
+	
 
 }
