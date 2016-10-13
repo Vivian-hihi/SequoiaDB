@@ -403,12 +403,17 @@ public class BSONDecimal implements Comparable<BSONDecimal>, Serializable {
      */
     @Override
     public boolean equals(Object obj) {
-        if (obj == this)
+        if (obj == this) {
             return true;
-        if (obj instanceof BSONDecimal) {
-        	if (compareTo((BSONDecimal)obj) != 0) return false;
         }
-        return true;
+        if (!(obj instanceof BSONDecimal)) {
+        	return false;
+        }
+        if (compareTo((BSONDecimal)obj) == 0) { 
+        	return true;
+        } else {
+        	return false;
+        }
     }
 	
     /**
