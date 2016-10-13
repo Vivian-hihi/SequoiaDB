@@ -37,6 +37,7 @@
 *******************************************************************************/
 #include "dpsArchiveInfo.hpp"
 #include "ossMem.hpp"
+#include "utilJsonFile.hpp"
 #include "../util/fromjson.hpp"
 
 using namespace bson ;
@@ -123,7 +124,7 @@ namespace engine
          goto error ;
       }
 
-      rc = _write( _file1, data ) ;
+      rc = utilJsonFile::write( _file1, data ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG ( PDERROR, "Failed to update archive info to file1, " \
@@ -131,7 +132,7 @@ namespace engine
          goto error ;
       }
 
-      rc = _write( _file2, data ) ;
+      rc = utilJsonFile::write( _file2, data ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG ( PDERROR, "Failed to update archive info to file2, " \
@@ -157,8 +158,8 @@ namespace engine
       INT32 rc1 = SDB_OK ;
       INT32 rc2 = SDB_OK ;
 
-      rc1 = _read( _file1, data1 ) ;
-      rc2 = _read( _file2, data2 ) ;
+      rc1 = utilJsonFile::read( _file1, data1 ) ;
+      rc2 = utilJsonFile::read( _file2, data2 ) ;
       if ( SDB_OK != rc1 && SDB_OK != rc2 )
       {
          rc = SDB_SYS ;
@@ -245,100 +246,6 @@ namespace engine
       {
          PD_LOG( PDERROR, "Failed to open file [%s], rc=%d",
                  fileName.c_str(), rc ) ;
-         goto error ;
-      }
-
-   done:
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   INT32 dpsArchiveInfoMgr::_read( ossFile& file, BSONObj& data )
-   {
-      INT64 fileSize = 0 ;
-      INT64 readSize = 0 ;
-      CHAR* buf = NULL ;
-      INT32 rc = SDB_OK ;
-
-      SDB_ASSERT( file.isOpened(), "file should be opened" ) ;
-
-      rc = file.getFileSize( fileSize ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "Failed to get file size, rc=%d", rc ) ;
-         goto error ;
-      }
-
-      SDB_ASSERT( fileSize >= 0, "file size should be >= 0" ) ;
-
-      if ( 0 == fileSize )
-      {
-         // no data in file
-         goto done ;
-      }
-
-      buf = (CHAR*)SDB_OSS_MALLOC( fileSize + 1 ) ; // one more byte for safe
-      if ( NULL == buf )
-      {
-         rc = SDB_OOM ;
-         PD_LOG( PDERROR, "Failed to malloc, mem size = %lld, rc=%d",
-                 fileSize + 1, rc ) ;
-         goto error ;
-      }
-
-      rc = file.seekAndReadN( 0, buf, fileSize, readSize ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "Failed to read from file, rc=%d", rc ) ;
-         goto error ;
-      }
-
-      SDB_ASSERT( readSize == fileSize, "readSize != fileSize" ) ;
-      buf[ readSize ] = '\0' ; // safe guard
-
-      rc = bson::fromjson( buf, data ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "Failed to convert json to bson, rc=%d", rc ) ;
-         goto error ;
-      }
-
-   done:
-      SAFE_OSS_FREE( buf ) ;
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   INT32 dpsArchiveInfoMgr::_write( ossFile& file, BSONObj& data )
-   {
-      INT32 rc = SDB_OK ;
-
-      SDB_ASSERT( file.isOpened(), "file must be opened" ) ;
-
-      string json = data.toString() ;
-
-      rc = file.truncate( 0 ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "Failed to truncate archive info file, rc=%d", rc );
-         goto error ;
-      }
-
-      rc = file.seekAndWriteN( 0, json.c_str(), json.size() ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "Failed to write archive info to file, " \
-                 "info size=%d, rc=%d",
-                 json.size(), rc );
-         goto error ;
-      }
-
-      rc = file.sync() ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "Failed to sync archive info file, rc=%d", rc ) ;
          goto error ;
       }
 

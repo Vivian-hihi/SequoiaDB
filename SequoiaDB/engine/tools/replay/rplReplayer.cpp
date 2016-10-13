@@ -380,8 +380,13 @@ namespace replay
       currentLSN = logFile.getFirstLSN().offset;
       if (DPS_INVALID_LSN_OFFSET == currentLSN || currentLSN < startLSN)
       {
-         currentLSN = startLSN;
+         rc = SDB_DPS_CORRUPTED_LOG;
+         PD_LOG(PDERROR, "Invalid first LSN[%lld] of log file[%s]",
+                currentLSN, logFile.path().c_str());
+         goto error;
       }
+
+      currentLSN = startLSN;
 
       if (_monitor.getNextLSN() != DPS_INVALID_LSN_OFFSET)
       {
@@ -547,7 +552,7 @@ namespace replay
 
       SDB_ASSERT(LOG_TYPE_DATA_INSERT == header._type, "not data insert log");
 
-      rc = dpsRecord2Insert((CHAR*)&header, &fullName, obj);
+      rc = dpsRecord2Insert(log, &fullName, obj);
       if (SDB_OK != rc)
       {
          PD_LOG(PDERROR, "Failed to parse log record, lsn[%lld], rc=%d",
@@ -599,8 +604,8 @@ namespace replay
 
       SDB_ASSERT(LOG_TYPE_DATA_UPDATE == header._type, "not data update log");
 
-      rc = dpsRecord2Update((CHAR*)&header, &fullName,
-                             match, oldObj, newMatch, modifier);
+      rc = dpsRecord2Update(log, &fullName,
+                            match, oldObj, newMatch, modifier);
       if (SDB_OK != rc)
       {
          PD_LOG(PDERROR, "Failed to parse log record[%lld], rc:%d",
@@ -642,7 +647,7 @@ namespace replay
 
       SDB_ASSERT(LOG_TYPE_DATA_DELETE == header._type, "not data delete log");
 
-      rc = dpsRecord2Delete((CHAR*)&log, &fullName, obj);
+      rc = dpsRecord2Delete(log, &fullName, obj);
       if (SDB_OK != rc)
       {
          PD_LOG(PDERROR, "Failed to parse log record[%lld], rc=%d",
@@ -681,7 +686,7 @@ namespace replay
 
       SDB_ASSERT(LOG_TYPE_CL_TRUNC == header._type, "not trunc cl log");
 
-      rc = dpsRecord2CLTrunc((CHAR*)&log, &fullName);
+      rc = dpsRecord2CLTrunc(log, &fullName);
       if (SDB_OK != rc)
       {
          PD_LOG(PDERROR, "Failed to parse log record[%lld], rc=%d",
@@ -891,7 +896,10 @@ namespace replay
 
       for (UINT32 i = minFileId; i <= maxFileId; i++)
       {
-         BOOLEAN exist = FALSE;
+         BOOLEAN fullExist = FALSE;
+         BOOLEAN partExist = FALSE;
+         string file;
+         UINT32 nextFileId;
 
          if (!_isRunning)
          {
@@ -900,62 +908,55 @@ namespace replay
             goto done;
          }
 
-         string file = _archiveFileMgr.getFullFilePath(i);
+         string fullFile = _archiveFileMgr.getFullFilePath(i);
 
-         rc = ossFile::exists(file, exist);
+         rc = ossFile::exists(fullFile, fullExist);
          if (SDB_OK != rc)
          {
             PD_LOG(PDERROR, "Failed to access file[%s], rc=%d",
+                   fullFile.c_str(), rc);
+            goto error;
+         }
+
+         if (fullExist)
+         {
+            file = fullFile;
+            nextFileId = i + 1;
+         }
+         else
+         {
+            string partFile = _archiveFileMgr.getPartialFilePath(i);
+
+            rc = ossFile::exists(partFile, partExist);
+            if (SDB_OK != rc)
+            {
+               PD_LOG(PDERROR, "Failed to access file[%s], rc=%d",
+                      partFile.c_str(), rc);
+               goto error;
+            }
+
+            if (!partExist)
+            {
+               // no archive log file for i
+               PD_LOG(PDDEBUG, "No archive file for file id[%u]",
+                      i);
+               break;
+            }
+
+            file = partFile;
+            nextFileId = i;
+         }
+
+         rc = _replayFile(file);
+         if (SDB_OK != rc)
+         {
+            PD_LOG(PDERROR, "Failed to replay file[%s], rc=%d",
                    file.c_str(), rc);
             goto error;
          }
 
-         if (exist)
-         {
-            rc = _replayFile(file);
-            if (SDB_OK != rc)
-            {
-               PD_LOG(PDERROR, "Failed to replay file[%s], rc=%d",
-                      file.c_str(), rc);
-               goto error;
-            }
-
-            // full file
-            _monitor.setNextFileId(i + 1);
-
-            PD_LOG(PDINFO, "current replay:\n%s", _monitor.dump().c_str());
-            continue;
-         }
-
-         file = _archiveFileMgr.getPartialFilePath(i);
-
-         rc = ossFile::exists(file, exist);
-         if (SDB_OK != rc)
-         {
-            PD_LOG(PDERROR, "Failed to access file[%s], rc=%d",
-                   file.c_str(), rc);
-            goto error;
-         }
-
-         if (exist)
-         {
-            rc = _replayFile(file);
-            if (SDB_OK != rc)
-            {
-               PD_LOG(PDERROR, "Failed to replay file[%s], rc=%d",
-                      file.c_str(), rc);
-               goto error;
-            }
-
-            // partial file
-            _monitor.setNextFileId(i);
-
-            PD_LOG(PDINFO, "current replay:\n%s", _monitor.dump().c_str());
-            continue;
-         }
-
-         // no archive log file for i
-         break;
+         _monitor.setNextFileId(nextFileId);
+         PD_LOG(PDINFO, "current replay:\n%s", _monitor.dump().c_str());
       }
 
    done:

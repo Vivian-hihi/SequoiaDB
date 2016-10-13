@@ -72,8 +72,6 @@ namespace engine
    private:
       INT32 _initInfo() ;
       INT32 _open( const string& fileName, ossFile& file ) ;
-      INT32 _read( ossFile& file, BSONObj& data ) ;
-      INT32 _write( ossFile& file, BSONObj& data ) ;
       INT32 _toBson( BSONObj& data ) ;
       INT32 _fromBson( const BSONObj& data, 
                        dpsArchiveInfo& info,
