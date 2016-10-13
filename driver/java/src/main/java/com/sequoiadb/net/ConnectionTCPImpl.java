@@ -345,12 +345,14 @@ public class ConnectionTCPImpl implements IConnection {
 	//@Override
 	public void sendMessage(byte[] msg) throws BaseException {
 		logger.getInstance().debug(0, "enter sendMessage\n");
-		try {
-			if(output != null) {
+		if(output != null) {
+			try {
 				output.write(msg);
+			} catch (IOException e) {
+				throw new BaseException("SDB_NETWORK", e);
 			}
-		} catch (IOException e) {
-			throw new BaseException("SDB_NETWORK", e);
+		} else {
+			throw new BaseException("SDB_SYS", "output stream is null");
 		}
 		logger.getInstance().debug(0, "leave sendMessage\n");
 	}
@@ -358,17 +360,38 @@ public class ConnectionTCPImpl implements IConnection {
 	//@Override
 	public void sendMessage(byte[] msg, int length) throws BaseException {
 	    logger.getInstance().debug(0, "enter sendMessage2\n");
-        try {
-            if (output != null) {
-                output.write(msg, 0, length);
+        if (output != null) {
+            try {
+            	output.write(msg, 0, length);
+            } catch (IOException e) {
+    			throw new BaseException("SDB_NETWORK", e);
             }
-            else{
-            	throw new BaseException("SDB_NETWORK");
-            }
-        } catch (IOException e) {
-            	throw new BaseException("SDB_NETWORK", e);
+        } else {
+        	throw new BaseException("SDB_SYS", "output stream is null");
         }
 		logger.getInstance().debug(0, "leave sendMessage2\n");
+	}
+	
+	//@Override
+	public void sendMessage(ByteBuffer buffer) throws BaseException {
+	    logger.getInstance().debug(0, "enter sendMessage3\n");
+	    if (buffer == null) {
+	    	throw new BaseException("SDB_SYS", "send buffer is null");
+	    }
+        if (output != null) {
+        	if (buffer.hasArray()) {
+                try {
+                	output.write(buffer.array());
+                } catch (IOException e) {
+        			throw new BaseException("SDB_NETWORK", e);
+                }
+        	} else {
+        		throw new BaseException("SDB_SYS", "send buffer is not ok");
+        	}
+        } else {
+        	throw new BaseException("SDB_SYS", "output stream is null");
+        }
+		logger.getInstance().debug(0, "leave sendMessage3\n");		
 	}
 	
 	public void shrinkBuffer() {

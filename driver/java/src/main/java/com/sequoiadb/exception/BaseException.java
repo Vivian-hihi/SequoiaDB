@@ -33,6 +33,16 @@ public class BaseException extends RuntimeException {
 
 	/**
 	 * @param errorType
+	 * @param e
+	 * @throws Exception
+	 */
+	public BaseException(String errorType, Exception e) {
+		this(errorType);
+		this.initCause(e);
+	}
+	
+	/**
+	 * @param errorType
 	 * @throws Exception
 	 */
 	public BaseException(String errorType, Object... info) {

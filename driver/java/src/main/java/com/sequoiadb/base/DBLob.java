@@ -21,6 +21,9 @@
 
 package com.sequoiadb.base;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
@@ -33,6 +36,7 @@ import org.bson.types.ObjectId;
 
 import com.sequoiadb.base.SequoiadbConstants.Operation;
 import com.sequoiadb.exception.BaseException;
+import com.sequoiadb.exception.SDBError;
 import com.sequoiadb.util.Helper;
 import com.sequoiadb.util.SDBMessageHelper;
 
@@ -81,7 +85,15 @@ public interface DBLob {
     public long getCreateTime();
     
     /**
-     * @fn          write( byte[] b )
+     * @fn          void write( InputStream in )
+     * @brief       Writes bytes from the input stream to this lob. 
+     * @param       in   the input stream.
+     * @exception   com.sequoiadb.exception.BaseException
+     */
+    public void write( InputStream in ) throws BaseException;
+    
+    /**
+     * @fn          void write( byte[] b )
      * @brief       Writes <code>b.length</code> bytes from the specified 
      *              byte array to this lob. 
      * @param       b   the data.
@@ -90,7 +102,7 @@ public interface DBLob {
     public void write( byte[] b ) throws BaseException;
     
     /**
-     * @fn          write( byte[] b, int off, int len )
+     * @fn          void write( byte[] b, int off, int len )
      * @brief       Writes <code>len</code> bytes from the specified 
      *              byte array starting at offset <code>off</code> to this lob. 
      * @param       b   the data.
@@ -99,6 +111,14 @@ public interface DBLob {
      * @exception   com.sequoiadb.exception.BaseException
      */
     public void write( byte[] b, int off, int len ) throws BaseException;
+
+    /**
+     * @fn          void read( OutputStream out )
+     * @brief       Reads the content to the output stream. 
+     * @param       out   the output stream.
+     * @exception   com.sequoiadb.exception.BaseException
+     */
+    public void read( OutputStream out ) throws BaseException;
     
     /**
      * @fn          int read( byte[] b )
@@ -154,7 +174,8 @@ class DBLobConcrete implements DBLob {
     public final static int SDB_LOB_READ       = 0x00000004;
     
     // the max lob data size to send for one message
-    private final static int SDB_LOB_MAX_DATA_LENGTH  = 1024 * 1024;
+    private final static int SDB_LOB_WRITE_DATA_LENGTH = 131072; // 128 * 1024;
+    private final static int SDB_LOB_READ_DATA_LENGTH = 262144; // 256 * 1024;
     
     private final static long SDB_LOB_DEFAULT_OFFSET  = -1;
     private final static int SDB_LOB_DEFAULT_SEQ      = 0;
@@ -266,8 +287,8 @@ class DBLobConcrete implements DBLob {
         int flags = (_mode == SDB_LOB_READ) ? FLG_LOBOPEN_WITH_RETURNDATA : 
         	SequoiadbConstants.DEFAULT_FLAGS;
         
-        byte[] request = generateOpenLobRequest( openLob, flags );
-        ByteBuffer res = sendRequest( request, request.length );
+        ByteBuffer request = generateOpenLobRequest( openLob, flags );
+        ByteBuffer res = sendRequest( request );
         
         SDBMessage resMessage = SDBMessageHelper.msgExtractLobOpenReply( res );
         displayResponse( resMessage );
@@ -300,13 +321,13 @@ class DBLobConcrete implements DBLob {
         _contextID = resMessage.getContextIDList().get(0);
     }
     
-    private ByteBuffer sendRequest( byte[] request, int length )
+    private ByteBuffer sendRequest( ByteBuffer request )
             throws BaseException {
         if ( request == null ) {
             throw new BaseException( "SDB_INVALIDARG", "request can't be null" );
         }
         
-        _cl.getConnection().sendMessage( request, length );
+        _cl.getConnection().sendMessage( request );
         return _cl.getConnection().receiveMessage(_endianConvert);
     }
     
@@ -347,8 +368,8 @@ class DBLobConcrete implements DBLob {
             return;
         }
         
-        byte[] request = generateCloseLobRequest();
-        ByteBuffer res = sendRequest( request, request.length );
+        ByteBuffer request = generateCloseLobRequest();
+        ByteBuffer res = sendRequest( request );
         
         SDBMessage resMessage = SDBMessageHelper.msgExtractReply( res );
         displayResponse( resMessage );
@@ -365,7 +386,35 @@ class DBLobConcrete implements DBLob {
     }
     
     /**
-     * @fn          write( byte[] b )
+     * @fn          void write( InputStream in )
+     * @brief       Writes bytes from the input stream to this lob. 
+     * @param       in   the input stream.
+     * @exception   com.sequoiadb.exception.BaseException
+     */
+    @Override
+    public void write( InputStream in ) throws BaseException {
+    	if ( !_isOpen ) {
+    		throw new BaseException( "SDB_LOB_NOT_OPEN", "lob is not open" );
+    	}
+        if ( in == null ) {
+            throw new BaseException( "SDB_INVALIDARG", "input is null" );
+        }
+        // get data from input stream
+        int readNum = 0;
+        byte[] tmpBuf = new byte[SDB_LOB_WRITE_DATA_LENGTH];
+        try {
+			while(-1 < (readNum = in.read(tmpBuf))) {
+				write(tmpBuf, 0, readNum);
+			}
+		} catch (IOException e) {
+			BaseException exp = new BaseException("SDB_SYS");
+			exp.initCause(e);
+			throw exp;
+		}
+    }
+    
+    /**
+     * @fn          void write( byte[] b )
      * @brief       Writes <code>b.length</code> bytes from the specified 
      *              byte array to this lob. 
      * @param       b   the data.
@@ -376,7 +425,7 @@ class DBLobConcrete implements DBLob {
     }
     
     /**
-     * @fn          write( byte[] b, int off, int len )
+     * @fn          void write( byte[] b, int off, int len )
      * @brief       Writes <code>len</code> bytes from the specified 
      *              byte array starting at offset <code>off</code> to this lob. 
      * @param       b   the data.
@@ -405,24 +454,36 @@ class DBLobConcrete implements DBLob {
         	throw new BaseException( "SDB_INVALIDARG", "off + len is great than b.length" );
         }
         
-        int offset = off;
-        int leftLen = len;
-        ByteBuffer byteBuf = ByteBuffer.wrap(b, off, len);
-        while ( leftLen > 0 ) {
-            /* if b.length is more then SDB_LOB_MAX_DATA_LENGTH. we will split 
-             * the data to pieces with length=SDB_LOB_MAX_DATA_LENGTH. 
-             */
-            int writeLen = leftLen > SDB_LOB_MAX_DATA_LENGTH ? 
-            		SDB_LOB_MAX_DATA_LENGTH : leftLen;
-            // set the correct position for next reading
-            byteBuf.position( offset );
-            byteBuf.limit( offset + writeLen );
-            // TODO: we should avoid copy here
-            byte[] tmpBuf = new byte[writeLen];
-            byteBuf.get(tmpBuf);
-            _write( tmpBuf );
-            offset += writeLen;
-            leftLen -= writeLen;
+        _write(b, off, len);
+    }
+    
+    /**
+     * @fn          void read( OutputStream out )
+     * @brief       Reads data from this 
+     *              lob into the output stream. 
+     * @param       out the output stream.
+     * @exception   com.sequoiadb.exception.BaseException.
+     */
+    @Override
+    public void read( OutputStream out ) throws BaseException {
+        if ( !_isOpen ) {
+            throw new BaseException( "SDB_LOB_NOT_OPEN", "lob is not open" );
+        }
+        
+        if ( out == null ) {
+            throw new BaseException( "SDB_INVALIDARG", "output stream is null" );
+        }
+        // read data to output stream
+        int readNum = 0;
+        byte[] tmpBuf = new byte[SDB_LOB_READ_DATA_LENGTH];
+        while(-1 < (readNum = read(tmpBuf, 0, tmpBuf.length))) {
+        	try {
+				out.write(tmpBuf, 0, readNum);
+			} catch (IOException e) {
+				BaseException exp = new BaseException("SDB_SYS");
+				exp.initCause(e);
+				throw exp;
+			}
         }
     }
     
@@ -603,9 +664,9 @@ class DBLobConcrete implements DBLob {
     	// page align 
     	alignedLen = _reviseReadLen( needRead );
     	// build read message
-        byte[] request = generateReadLobRequest( alignedLen );
+        ByteBuffer request = generateReadLobRequest( alignedLen );
         // seed message to engine
-        ByteBuffer res = sendRequest( request, request.length );
+        ByteBuffer res = sendRequest( request );
         // receive and extract return message
         SDBMessage resMessage = SDBMessageHelper.msgExtractLobReadReply( res );
         /// check the return contents and make sure no error had happen
@@ -695,7 +756,7 @@ class DBLobConcrete implements DBLob {
     	return totalRead;
     }
  
-    private byte[] generateReadLobRequest( int length ) {
+    private ByteBuffer generateReadLobRequest( int length ) {
         int totalLen = SDBMessageHelper.MESSAGE_OPLOB_LENGTH 
                 + SDBMessageHelper.MESSAGE_LOBTUPLE_LENGTH;
         
@@ -723,13 +784,14 @@ class DBLobConcrete implements DBLob {
         addMsgTuple( buff, length, SDB_LOB_DEFAULT_SEQ,
                 _readOffset );
         
-        return buff.array();
+        return buff;
     }
-
-    private void _write( byte[] input ) throws BaseException {
-        byte[] request = generateWriteLobRequest( input );
-        ByteBuffer res = sendRequest( request, request.length );
-        
+    
+    private void _write( byte[] input, int off, int len ) throws BaseException {
+        ByteBuffer request = generateWriteLobRequest( input, off, len );
+        // send and receive msg
+        ByteBuffer res = sendRequest( request );
+        // extract info from return msg
         SDBMessage resMessage = SDBMessageHelper.msgExtractReply( res );
         displayResponse( resMessage );
         if ( resMessage.getOperationCode() != Operation.MSG_BS_LOB_WRITE_RES) {
@@ -741,46 +803,43 @@ class DBLobConcrete implements DBLob {
             throw new BaseException( flag );
         }
         
-        _size += input.length;
+        _size += len;
     }
-    
-    private byte[] generateWriteLobRequest( byte[] input ) {
+
+    private ByteBuffer generateWriteLobRequest( byte[] input, int off, int len ) {
+    	if (off + len > input.length) {
+    		throw new BaseException("SDB_SYS", "off + len is more than input.length");
+    	}
         int totalLen = SDBMessageHelper.MESSAGE_OPLOB_LENGTH 
                 + SDBMessageHelper.MESSAGE_LOBTUPLE_LENGTH 
-                + Helper.roundToMultipleXLength( input.length, 4 );
-        
-        // add _MsgOpLob into buff with convert(db.endianConvert)
-        ByteBuffer buff = ByteBuffer.allocate( 
-                                SDBMessageHelper.MESSAGE_OPLOB_LENGTH
-                                + SDBMessageHelper.MESSAGE_LOBTUPLE_LENGTH );
+                + Helper.roundToMultipleXLength( len, 4 );
+        // alloc ByteBuffer
+        ByteBuffer totalBuf = ByteBuffer.allocate(totalLen);
         if ( _endianConvert ) {
-            buff.order( ByteOrder.LITTLE_ENDIAN );
+        	totalBuf.order( ByteOrder.LITTLE_ENDIAN );
         } else {
-            buff.order( ByteOrder.BIG_ENDIAN );
-        }
-        
+        	totalBuf.order( ByteOrder.BIG_ENDIAN );
+        }        
         //*******************MsgHeader*******************
-        SDBMessageHelper.addLobMsgHeader( buff, totalLen, 
+        SDBMessageHelper.addLobMsgHeader( totalBuf, totalLen, 
                 Operation.MSG_BS_LOB_WRITE_REQ.getOperationCode(), 
                 SequoiadbConstants.ZERO_NODEID, 0 );
         
         //*******************_MsgOpLob**********************
-        SDBMessageHelper.addLobOpMsg( buff, SequoiadbConstants.DEFAULT_VERSION, 
+        SDBMessageHelper.addLobOpMsg( totalBuf, SequoiadbConstants.DEFAULT_VERSION, 
                    SequoiadbConstants.DEFAULT_W, (short)0, 
                    SequoiadbConstants.DEFAULT_FLAGS, _contextID, 0 );
         
         //*******************_MsgLobTuple*******************
-        addMsgTuple( buff, input.length, SDB_LOB_DEFAULT_SEQ,
+        addMsgTuple( totalBuf, len, SDB_LOB_DEFAULT_SEQ,
                 SDB_LOB_DEFAULT_OFFSET );
         
-        List<byte[]> buffList = new ArrayList<byte[]>();
-        buffList.add( buff.array() );
-        // TODO: roundToMultipleX will copy data
-        buffList.add( Helper.roundToMultipleX( input, 4 ) );
+        //*******************lob data*******************
+        Helper.addBytesToByteBuffer(totalBuf, input, off, len, 4);
         
-        return Helper.concatByteArray( buffList );
+        return totalBuf;
     }
-
+    
     private void addMsgTuple( ByteBuffer buff, int length, int sequence,
             long offset ) {
         
@@ -789,7 +848,7 @@ class DBLobConcrete implements DBLob {
         buff.putLong( offset );
     }
 
-    private byte[] generateCloseLobRequest() {
+    private ByteBuffer generateCloseLobRequest() {
         int totalLen = SDBMessageHelper.MESSAGE_OPLOB_LENGTH;
         
         // add _MsgOpLob into buff with convert(db.endianConvert)
@@ -810,11 +869,10 @@ class DBLobConcrete implements DBLob {
         SDBMessageHelper.addLobOpMsg( buff, SequoiadbConstants.DEFAULT_VERSION, 
                    SequoiadbConstants.DEFAULT_W, (short)0, 
                    SequoiadbConstants.DEFAULT_FLAGS, _contextID, 0 );
-        
-        return buff.array();
+        return buff;
     }
     
-    private byte[] generateOpenLobRequest( BSONObject openLob, int flags ) {
+    private ByteBuffer generateOpenLobRequest( BSONObject openLob, int flags ) {
         
         byte bOpenLob[] = SDBMessageHelper.bsonObjectToByteArray( openLob );
         int totalLen = SDBMessageHelper.MESSAGE_OPLOB_LENGTH 
@@ -826,31 +884,28 @@ class DBLobConcrete implements DBLob {
                     true );
         }
         
-        // add _MsgOpLob into buff with convert(db.endianConvert)
-        ByteBuffer buff = ByteBuffer.allocate( 
-                                SDBMessageHelper.MESSAGE_OPLOB_LENGTH );
+        // alloc buffer
+        ByteBuffer totalBuff = ByteBuffer.allocate(totalLen);
         if ( _endianConvert ) {
-            buff.order( ByteOrder.LITTLE_ENDIAN );
+        	totalBuff.order( ByteOrder.LITTLE_ENDIAN );
         } else {
-            buff.order( ByteOrder.BIG_ENDIAN );
+        	totalBuff.order( ByteOrder.BIG_ENDIAN );
         }
         
         //*******************MsgHeader*******************
-        SDBMessageHelper.addLobMsgHeader( buff, totalLen, 
+        SDBMessageHelper.addLobMsgHeader( totalBuff, totalLen, 
                 Operation.MSG_BS_LOB_OPEN_REQ.getOperationCode(), 
                 SequoiadbConstants.ZERO_NODEID, 0 );
         
         //*******************_MsgOpLob**********************
-        SDBMessageHelper.addLobOpMsg( buff, SequoiadbConstants.DEFAULT_VERSION, 
-                   SequoiadbConstants.DEFAULT_W, (short)0, 
-                   flags, 
+        SDBMessageHelper.addLobOpMsg( totalBuff, SequoiadbConstants.DEFAULT_VERSION, 
+                   SequoiadbConstants.DEFAULT_W, (short)0, flags, 
                    SequoiadbConstants.DEFAULT_CONTEXTID, bOpenLob.length );
         
-        List<byte[]> buffList = new ArrayList<byte[]>();
-        buffList.add( buff.array() );
-        buffList.add( Helper.roundToMultipleX( bOpenLob, 4 ) );
-
-        return Helper.concatByteArray( buffList );
+        //*******************_meta**********************
+        Helper.addBytesToByteBuffer(totalBuff, bOpenLob, 0, bOpenLob.length, 4);
+        
+        return totalBuff;
     }
     
     private void displayResponse( SDBMessage resMessage ) {

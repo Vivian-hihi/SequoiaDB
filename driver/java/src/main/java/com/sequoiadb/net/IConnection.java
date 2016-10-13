@@ -35,6 +35,8 @@ public interface IConnection {
 	public void sendMessage(byte[] msg) throws BaseException;
 	
 	public void sendMessage(byte[] msg, int length) throws BaseException;
+	
+	public void sendMessage(ByteBuffer buffer) throws BaseException;
 
 	public byte[] receiveSysInfoMsg(int msgSize) throws BaseException;
 	

@@ -29,20 +29,65 @@ import com.sequoiadb.exception.BaseException;
  * 
  */
 public class Helper {
+	
+	public static void addBytesToByteBuffer(ByteBuffer buffer, byte[] byteArray, 
+			int off, int len, int multipler) {
+		if (off + len > byteArray.length) {
+			throw new BaseException("SDB_SYS", "off + len is more then byteArray.length");
+		}
+		int newLength = (len % multipler == 0) ? len 
+				: (len + multipler - len % multipler);
+		int incLength = newLength - len;
+		// check
+		if (newLength > buffer.remaining()) {
+			throw new BaseException("SDB_SYS", String.format(
+					"buffer is too small, need %d bytes, but remaining is %d", 
+					newLength, buffer.remaining()));
+		}
+		// put data
+		buffer.put(byteArray, off, len);
+		// align ByteBuffer
+		alignByteBuffer(buffer, incLength);
+	}
+	
+	public static void alignByteBuffer(ByteBuffer buffer, int inc) {
+		if (inc > buffer.remaining()) {
+			throw new BaseException("SDB_SYS", "inc is more than the remaining in ByteBuffer");
+		}
+		if (inc > 0) {
+			buffer.position(buffer.position() + inc);
+		}
+	}
+	
+	public static byte[] alignBytes(byte[] byteArray, int multipler) {
+		byte[] retArr = null;
+		if (multipler == 0) {
+			retArr = new byte[0];
+			return retArr;
+		}
+		int inLength = byteArray.length;
+		int newLength = (inLength % multipler == 0) ? inLength 
+				: (inLength + multipler - inLength % multipler);
+		int incLength = newLength - inLength;
+		retArr = new byte[incLength];
+		return retArr;
+	}
+	
+	@Deprecated
 	public static byte[] roundToMultipleX(byte[] byteArray, int multipler) {
 		if (multipler == 0)
 			return byteArray;
 
 		int inLength = byteArray.length;
-		int newLength = inLength % multipler == 0 ? inLength : inLength
-				+ multipler - inLength % multipler;
+		int newLength = (inLength % multipler == 0) ? inLength 
+				: (inLength + multipler - inLength % multipler);
 		// warning: data copy happen here
 		ByteBuffer buf = ByteBuffer.allocate(newLength);
 		buf.put(byteArray);
 
 		return buf.array();
 	}
-
+	
 	public static int roundToMultipleXLength(int inLength, int multipler) {
 		if (multipler == 0)
 			return inLength;
@@ -51,6 +96,7 @@ public class Helper {
 				: (inLength + multipler - inLength % multipler);
 	}
 
+	@Deprecated
 	public static byte[] concatByteArray(List<byte[]> inByteArrayList)
 			throws BaseException {
 		if (inByteArrayList == null || inByteArrayList.size() == 0)
