@@ -1755,6 +1755,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       CHAR *pTmpFieldName = NULL ;
       _mthMatchFieldName<> mthFieldName ;
+      BSONObj funcResultObj ;
       BSONElement recordEle ;
       BSONElement toMatchEle ;
       CHAR *p  = NULL ;
@@ -1856,7 +1857,19 @@ namespace engine
       }
 
       recordEle = obj.getField( pTmpFieldName ) ;
-      rc = _doFuncMatch( recordEle, toMatchEle, context, result ) ;
+      if ( _funcList.size() > 0 )
+      {
+         rc = _calculateFuncs( recordEle, funcResultObj ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "_calculateFuncs failed:rc=%d", rc ) ;
+            goto error ;
+         }
+
+         recordEle = funcResultObj.firstElement() ;
+      }
+
+      rc = _valueMatch( recordEle, toMatchEle, context, result ) ;
       PD_RC_CHECK( rc, PDERROR, "_doFuncMatch failed:rc=%d", rc ) ;
 
       if ( EN_MATCH_OPERATOR_EXISTS == getType() ||
@@ -1882,7 +1895,7 @@ namespace engine
             {
                BOOLEAN tmpResult = FALSE ;
                BSONElement innerEle = iter.next() ;
-               rc = _doFuncMatch( innerEle, toMatchEle, context, tmpResult ) ;
+               rc = _valueMatch( innerEle, toMatchEle, context, tmpResult ) ;
                PD_RC_CHECK( rc, PDERROR, "_doFuncMatch failed:rc=%d", rc ) ;
 
                rc = _saveElement( context, tmpResult, innerEle ) ;
