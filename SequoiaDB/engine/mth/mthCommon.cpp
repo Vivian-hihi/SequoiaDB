@@ -73,11 +73,46 @@ namespace engine
       { "maxkey",                     MaxKey },
    } ;
 
+   static INT32 _mthAbsBasic( const CHAR *name, const BSONElement &in,
+                              BSONObjBuilder &outBuilder ) ;
+   static INT32 _mthCeilingBasic( const CHAR *name, const BSONElement &in,
+                                  BSONObjBuilder &outBuilder ) ;
+   static INT32 _mthFloorBasic( const CHAR *name, const BSONElement &in,
+                                BSONObjBuilder &outBuilder ) ;
+   static INT32 _mthModBasic( const CHAR *name, const BSONElement &in,
+                              const BSONElement &modm,
+                              BSONObjBuilder &outBuilder ) ;
+   static INT32 _mthCastBasic( const CHAR *name, const BSONElement &in,
+                               BSONType targetType, BSONObjBuilder &outBuilder ) ;
+   static INT32 _mthSubStrBasic( const CHAR *name, const BSONElement &in,
+                                 INT32 begin, INT32 limit,
+                                 BSONObjBuilder &outBuilder ) ;
+   static INT32 _mthStrLenBasic( const CHAR *name, const BSONElement &in,
+                                 BSONObjBuilder &outBuilder ) ;
+   static INT32 _mthLowerBasic( const CHAR *name, const BSONElement &in,
+                                BSONObjBuilder &outBuilder ) ;
+   static INT32 _mthUpperBasic( const CHAR *name, const BSONElement &in,
+                                BSONObjBuilder &outBuilder ) ;
+   static INT32 _mthTrimBasic( const CHAR *name, const BSONElement &in, INT8 lr,
+                               BSONObjBuilder &outBuilder ) ;
+   static INT32 _mthAddBasic( const CHAR *name, const BSONElement &in,
+                              const BSONElement &addend,
+                              BSONObjBuilder &outBuilder ) ;
+   static INT32 _mthSubBasic( const CHAR *name, const BSONElement &in,
+                              const BSONElement &subtrahead,
+                              BSONObjBuilder &outBuilder ) ;
+   static INT32 _mthMultiplyBasic( const CHAR *name, const BSONElement &in,
+                                   const BSONElement &multiplier,
+                                   BSONObjBuilder &outBuilder ) ;
+   static INT32 _mthDivideBasic( const CHAR *name, const BSONElement &in,
+                                 const BSONElement &divisor,
+                                 BSONObjBuilder &outBuilder ) ;
+
    static INT32 _mthCast( const CHAR *fieldName, const bson::BSONElement &e,
                           BSONType type, BSONObjBuilder &builder ) ;
 
    static void _getSubStr( const CHAR *src, INT32 srcLen, INT32 begin,
-                           INT32 limit, const CHAR *&subStr, 
+                           INT32 limit, const CHAR *&subStr,
                            INT32 &subStrLen ) ;
 
    static INT32 _lower( const CHAR *str, UINT32 len, _utilString<> &us ) ;
@@ -180,7 +215,7 @@ namespace engine
             rc      = us.append( value.c_str(), value.length() );
             if ( SDB_OK != rc )
             {
-               PD_LOG( PDERROR, "failed to append decimal=%s,rc=%d", 
+               PD_LOG( PDERROR, "failed to append decimal=%s,rc=%d",
                        value.c_str(), rc ) ;
                goto error ;
             }
@@ -225,7 +260,7 @@ namespace engine
          else if ( Object == e.type() )
          {
             builder.append( fieldName,
-                            e.embeddedObject().toString( FALSE, TRUE ) ) ; 
+                            e.embeddedObject().toString( FALSE, TRUE ) ) ;
          }
          else if ( Array == e.type() )
          {
@@ -243,7 +278,7 @@ namespace engine
             builder.appendNull( fieldName ) ;
          }
          break ;
-      }   
+      }
       case Object :
       {
          if ( String == e.type() )
@@ -475,10 +510,10 @@ namespace engine
          else
          {
             try
-            {  
+            {
                //if the STRING has "." "e" or "E" use double type
-               if ( ossStrchr ( e.valuestr (), '.' ) != NULL || 
-                    ossStrchr ( e.valuestr (), 'E' ) != NULL || 
+               if ( ossStrchr ( e.valuestr (), '.' ) != NULL ||
+                    ossStrchr ( e.valuestr (), 'E' ) != NULL ||
                     ossStrchr ( e.valuestr (), 'e' ) != NULL )
                {
                   double d = 0  ;
@@ -621,7 +656,7 @@ namespace engine
       subStrLen = -1 ;
       goto done ;
    }
-   
+
    INT32 _lower( const CHAR *str, UINT32 len, _utilString<> &us )
    {
       INT32 rc = SDB_OK ;
@@ -758,7 +793,7 @@ namespace engine
       }
       else
       {
-         /// necessary to avoid one more copy when 
+         /// necessary to avoid one more copy when
          /// str is like "  abc" ?
          rc = us.append( p, size - ( p - str ) ) ;
          if ( SDB_OK != rc )
@@ -1065,10 +1100,11 @@ namespace engine
       return TRUE ;
    }
 
-   INT32 mthAbs( const CHAR *name, const BSONElement &in, 
-                 BSONObjBuilder &outBuilder )
+   INT32 _mthAbsBasic( const CHAR *name, const BSONElement &in,
+                       BSONObjBuilder &outBuilder )
    {
       INT32 rc = SDB_OK ;
+
       if ( NumberDouble == in.type() )
       {
          outBuilder.append( name, fabs( in.Double() ) ) ;
@@ -1099,7 +1135,7 @@ namespace engine
          rc = decimal.abs() ;
          if ( SDB_OK != rc )
          {
-            PD_LOG( PDERROR, "failed to ceil decimal:%s,rc=%d", 
+            PD_LOG( PDERROR, "failed to ceil decimal:%s,rc=%d",
                     decimal.toString().c_str(), rc ) ;
             goto error ;
          }
@@ -1120,8 +1156,40 @@ namespace engine
       goto done ;
    }
 
-   INT32 mthCeiling( const CHAR *name, const BSONElement &in, 
-                     BSONObjBuilder &outBuilder )
+   INT32 mthAbs( const CHAR *name, const BSONElement &in,
+                 BSONObjBuilder &outBuilder )
+   {
+      INT32 rc = SDB_OK ;
+      if ( Array == in.type() )
+      {
+         BSONArrayBuilder arrayBuilder ;
+         BSONObjIterator iter( in.embeddedObject() ) ;
+         while ( iter.more() )
+         {
+            BSONObjBuilder tmpBuilder ;
+            BSONElement ele = iter.next() ;
+            rc = _mthAbsBasic( ele.fieldName(), ele, tmpBuilder ) ;
+            PD_RC_CHECK( rc, PDERROR, "_mthAbsBasic failed:rc=%d", rc ) ;
+
+            arrayBuilder.append( tmpBuilder.obj().firstElement() ) ;
+         }
+
+         outBuilder.append( name, arrayBuilder.arr() ) ;
+      }
+      else
+      {
+         rc = _mthAbsBasic( name, in, outBuilder ) ;
+         PD_RC_CHECK( rc, PDERROR, "_mthAbsBasic failed:rc=%d", rc ) ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _mthCeilingBasic( const CHAR *name, const BSONElement &in,
+                           BSONObjBuilder &outBuilder )
    {
       INT32 rc = SDB_OK ;
       if ( NumberLong == in.type() )
@@ -1134,7 +1202,7 @@ namespace engine
       }
       else if ( NumberDouble == in.type() )
       {
-         outBuilder.append( name, ( FLOAT64 )ceil( in.numberDouble() ) ) ;      
+         outBuilder.append( name, ( FLOAT64 )ceil( in.numberDouble() ) ) ;
       }
       else if ( NumberDecimal == in.type() )
       {
@@ -1146,7 +1214,7 @@ namespace engine
          rc = decimal.ceil( result ) ;
          if ( SDB_OK != rc )
          {
-            PD_LOG( PDERROR, "failed to ceil decimal:%s,rc=%d", 
+            PD_LOG( PDERROR, "failed to ceil decimal:%s,rc=%d",
                     decimal.toString().c_str(), rc ) ;
             goto error ;
          }
@@ -1163,8 +1231,40 @@ namespace engine
       goto done ;
    }
 
-   INT32 mthFloor( const CHAR *name, const BSONElement &in, 
-                   BSONObjBuilder &outBuilder )
+   INT32 mthCeiling( const CHAR *name, const BSONElement &in,
+                     BSONObjBuilder &outBuilder )
+   {
+      INT32 rc = SDB_OK ;
+      if ( Array == in.type() )
+      {
+         BSONArrayBuilder arrayBuilder ;
+         BSONObjIterator iter( in.embeddedObject() ) ;
+         while ( iter.more() )
+         {
+            BSONObjBuilder tmpBuilder ;
+            BSONElement ele = iter.next() ;
+            rc = _mthCeilingBasic( ele.fieldName(), ele, tmpBuilder ) ;
+            PD_RC_CHECK( rc, PDERROR, "_mthCeilingBasic failed:rc=%d", rc ) ;
+
+            arrayBuilder.append( tmpBuilder.obj().firstElement() ) ;
+         }
+
+         outBuilder.append( name, arrayBuilder.arr() ) ;
+      }
+      else
+      {
+         rc = _mthCeilingBasic( name, in, outBuilder ) ;
+         PD_RC_CHECK( rc, PDERROR, "_mthCeilingBasic failed:rc=%d", rc ) ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _mthFloorBasic( const CHAR *name, const BSONElement &in,
+                         BSONObjBuilder &outBuilder )
    {
       INT32 rc = SDB_OK ;
 
@@ -1190,7 +1290,7 @@ namespace engine
          rc = decimal.floor( result ) ;
          if ( SDB_OK != rc )
          {
-            PD_LOG( PDERROR, "failed to floor decimal:%s,rc=%d", 
+            PD_LOG( PDERROR, "failed to floor decimal:%s,rc=%d",
                     decimal.toString().c_str(), rc ) ;
             goto error ;
          }
@@ -1208,8 +1308,40 @@ namespace engine
       goto done ;
    }
 
-   INT32 mthMod( const CHAR *name, const BSONElement &in, 
-                 const BSONElement &modm, BSONObjBuilder &outBuilder )
+   INT32 mthFloor( const CHAR *name, const BSONElement &in,
+                   BSONObjBuilder &outBuilder )
+   {
+      INT32 rc = SDB_OK ;
+      if ( Array == in.type() )
+      {
+         BSONArrayBuilder arrayBuilder ;
+         BSONObjIterator iter( in.embeddedObject() ) ;
+         while ( iter.more() )
+         {
+            BSONObjBuilder tmpBuilder ;
+            BSONElement ele = iter.next() ;
+            rc = _mthFloorBasic( ele.fieldName(), ele, tmpBuilder ) ;
+            PD_RC_CHECK( rc, PDERROR, "_mthFloorBasic failed:rc=%d", rc ) ;
+
+            arrayBuilder.append( tmpBuilder.obj().firstElement() ) ;
+         }
+
+         outBuilder.append( name, arrayBuilder.arr() ) ;
+      }
+      else
+      {
+         rc = _mthFloorBasic( name, in, outBuilder ) ;
+         PD_RC_CHECK( rc, PDERROR, "_mthFloorBasic failed:rc=%d", rc ) ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _mthModBasic( const CHAR *name, const BSONElement &in,
+                       const BSONElement &modm, BSONObjBuilder &outBuilder )
    {
       INT32 rc = SDB_OK ;
       if ( in.eoo() )
@@ -1220,8 +1352,8 @@ namespace engine
       {
          outBuilder.appendNull( name ) ;
       }
-      else if ( NumberDecimal == in.type() || 
-                NumberDecimal == modm.type() ) 
+      else if ( NumberDecimal == in.type() ||
+                NumberDecimal == modm.type() )
       {
          bsonDecimal decimal ;
          bsonDecimal decimalArg ;
@@ -1233,8 +1365,8 @@ namespace engine
          rc = decimal.mod( decimalArg, result ) ;
          if ( SDB_OK != rc )
          {
-            PD_LOG( PDERROR, "failed to mod decimal:%s mod %s,rc=%d", 
-                    decimal.toString().c_str(), 
+            PD_LOG( PDERROR, "failed to mod decimal:%s mod %s,rc=%d",
+                    decimal.toString().c_str(),
                     decimalArg.toString().c_str(), rc ) ;
             goto error ;
          }
@@ -1275,8 +1407,40 @@ namespace engine
       goto done ;
    }
 
-   INT32 mthCast( const CHAR *name, const BSONElement &in, 
-                  BSONType targetType, BSONObjBuilder &outBuilder )
+   INT32 mthMod( const CHAR *name, const BSONElement &in,
+                 const BSONElement &modm, BSONObjBuilder &outBuilder )
+   {
+      INT32 rc = SDB_OK ;
+      if ( Array == in.type() )
+      {
+         BSONArrayBuilder arrayBuilder ;
+         BSONObjIterator iter( in.embeddedObject() ) ;
+         while ( iter.more() )
+         {
+            BSONObjBuilder tmpBuilder ;
+            BSONElement ele = iter.next() ;
+            rc = _mthModBasic( ele.fieldName(), ele, modm, tmpBuilder ) ;
+            PD_RC_CHECK( rc, PDERROR, "_mthModBasic failed:rc=%d", rc ) ;
+
+            arrayBuilder.append( tmpBuilder.obj().firstElement() ) ;
+         }
+
+         outBuilder.append( name, arrayBuilder.arr() ) ;
+      }
+      else
+      {
+         rc = _mthModBasic( name, in, modm, outBuilder ) ;
+         PD_RC_CHECK( rc, PDERROR, "_mthModBasic failed:rc=%d", rc ) ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _mthCastBasic( const CHAR *name, const BSONElement &in,
+                        BSONType targetType, BSONObjBuilder &outBuilder )
    {
       INT32 rc = SDB_OK ;
 
@@ -1313,8 +1477,40 @@ namespace engine
       goto done ;
    }
 
-   INT32 mthSubStr( const CHAR *name, const BSONElement &in, 
-                    INT32 begin, INT32 limit, BSONObjBuilder &outBuilder )
+   INT32 mthCast( const CHAR *name, const BSONElement &in,
+                  BSONType targetType, BSONObjBuilder &outBuilder )
+   {
+      INT32 rc = SDB_OK ;
+      if ( Array == in.type() )
+      {
+         BSONArrayBuilder arrayBuilder ;
+         BSONObjIterator iter( in.embeddedObject() ) ;
+         while ( iter.more() )
+         {
+            BSONObjBuilder tmpBuilder ;
+            BSONElement ele = iter.next() ;
+            rc = _mthCastBasic( ele.fieldName(), ele, targetType, tmpBuilder ) ;
+            PD_RC_CHECK( rc, PDERROR, "_mthCastBasic failed:rc=%d", rc ) ;
+
+            arrayBuilder.append( tmpBuilder.obj().firstElement() ) ;
+         }
+
+         outBuilder.append( name, arrayBuilder.arr() ) ;
+      }
+      else
+      {
+         rc = _mthCastBasic( name, in, targetType, outBuilder ) ;
+         PD_RC_CHECK( rc, PDERROR, "_mthCastBasic failed:rc=%d", rc ) ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _mthSubStrBasic( const CHAR *name, const BSONElement &in,
+                          INT32 begin, INT32 limit, BSONObjBuilder &outBuilder )
    {
       INT32 rc = SDB_OK ;
 
@@ -1346,8 +1542,41 @@ namespace engine
       return rc ;
    }
 
-   INT32 mthStrLen( const CHAR *name, const BSONElement &in, 
-                    BSONObjBuilder &outBuilder )
+   INT32 mthSubStr( const CHAR *name, const BSONElement &in,
+                    INT32 begin, INT32 limit, BSONObjBuilder &outBuilder )
+   {
+      INT32 rc = SDB_OK ;
+      if ( Array == in.type() )
+      {
+         BSONArrayBuilder arrayBuilder ;
+         BSONObjIterator iter( in.embeddedObject() ) ;
+         while ( iter.more() )
+         {
+            BSONObjBuilder tmpBuilder ;
+            BSONElement ele = iter.next() ;
+            rc = _mthSubStrBasic( ele.fieldName(), ele, begin, limit,
+                                  tmpBuilder ) ;
+            PD_RC_CHECK( rc, PDERROR, "_mthSubStrBasic failed:rc=%d", rc ) ;
+
+            arrayBuilder.append( tmpBuilder.obj().firstElement() ) ;
+         }
+
+         outBuilder.append( name, arrayBuilder.arr() ) ;
+      }
+      else
+      {
+         rc = _mthSubStrBasic( name, in, begin, limit, outBuilder ) ;
+         PD_RC_CHECK( rc, PDERROR, "_mthSubStrBasic failed:rc=%d", rc ) ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _mthStrLenBasic( const CHAR *name, const BSONElement &in,
+                          BSONObjBuilder &outBuilder )
    {
       INT32 rc = SDB_OK ;
       if ( in.eoo() )
@@ -1367,8 +1596,40 @@ namespace engine
       return rc ;
    }
 
-   INT32 mthLower( const CHAR *name, const BSONElement &in, 
-                   BSONObjBuilder &outBuilder )
+   INT32 mthStrLen( const CHAR *name, const BSONElement &in,
+                    BSONObjBuilder &outBuilder )
+   {
+      INT32 rc = SDB_OK ;
+      if ( Array == in.type() )
+      {
+         BSONArrayBuilder arrayBuilder ;
+         BSONObjIterator iter( in.embeddedObject() ) ;
+         while ( iter.more() )
+         {
+            BSONObjBuilder tmpBuilder ;
+            BSONElement ele = iter.next() ;
+            rc = _mthStrLenBasic( ele.fieldName(), ele, tmpBuilder ) ;
+            PD_RC_CHECK( rc, PDERROR, "_mthStrLenBasic failed:rc=%d", rc ) ;
+
+            arrayBuilder.append( tmpBuilder.obj().firstElement() ) ;
+         }
+
+         outBuilder.append( name, arrayBuilder.arr() ) ;
+      }
+      else
+      {
+         rc = _mthStrLenBasic( name, in, outBuilder ) ;
+         PD_RC_CHECK( rc, PDERROR, "_mthStrLenBasic failed:rc=%d", rc ) ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _mthLowerBasic( const CHAR *name, const BSONElement &in,
+                         BSONObjBuilder &outBuilder )
    {
       INT32 rc = SDB_OK ;
 
@@ -1399,8 +1660,40 @@ namespace engine
       goto done ;
    }
 
-   INT32 mthUpper( const CHAR *name, const BSONElement &in, 
+   INT32 mthLower( const CHAR *name, const BSONElement &in,
                    BSONObjBuilder &outBuilder )
+   {
+      INT32 rc = SDB_OK ;
+      if ( Array == in.type() )
+      {
+         BSONArrayBuilder arrayBuilder ;
+         BSONObjIterator iter( in.embeddedObject() ) ;
+         while ( iter.more() )
+         {
+            BSONObjBuilder tmpBuilder ;
+            BSONElement ele = iter.next() ;
+            rc = _mthLowerBasic( ele.fieldName(), ele, tmpBuilder ) ;
+            PD_RC_CHECK( rc, PDERROR, "_mthLowerBasic failed:rc=%d", rc ) ;
+
+            arrayBuilder.append( tmpBuilder.obj().firstElement() ) ;
+         }
+
+         outBuilder.append( name, arrayBuilder.arr() ) ;
+      }
+      else
+      {
+         rc = _mthLowerBasic( name, in, outBuilder ) ;
+         PD_RC_CHECK( rc, PDERROR, "_mthLowerBasic failed:rc=%d", rc ) ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _mthUpperBasic( const CHAR *name, const BSONElement &in,
+                         BSONObjBuilder &outBuilder )
    {
       INT32 rc = SDB_OK ;
 
@@ -1423,6 +1716,38 @@ namespace engine
          }
 
          outBuilder.append( name, us.str() ) ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 mthUpper( const CHAR *name, const BSONElement &in,
+                   BSONObjBuilder &outBuilder )
+   {
+      INT32 rc = SDB_OK ;
+      if ( Array == in.type() )
+      {
+         BSONArrayBuilder arrayBuilder ;
+         BSONObjIterator iter( in.embeddedObject() ) ;
+         while ( iter.more() )
+         {
+            BSONObjBuilder tmpBuilder ;
+            BSONElement ele = iter.next() ;
+            rc = _mthUpperBasic( ele.fieldName(), ele, tmpBuilder ) ;
+            PD_RC_CHECK( rc, PDERROR, "_mthUpperBasic failed:rc=%d", rc ) ;
+
+            arrayBuilder.append( tmpBuilder.obj().firstElement() ) ;
+         }
+
+         outBuilder.append( name, arrayBuilder.arr() ) ;
+      }
+      else
+      {
+         rc = _mthUpperBasic( name, in, outBuilder ) ;
+         PD_RC_CHECK( rc, PDERROR, "_mthUpperBasic failed:rc=%d", rc ) ;
       }
 
    done:
@@ -1465,8 +1790,8 @@ namespace engine
    }
 
    /// lr: -1(ltrim) 0(trim) 1(rtrim)
-   INT32 mthTrim( const CHAR *name, const BSONElement &in, INT8 lr,
-                  BSONObjBuilder &outBuilder )
+   INT32 _mthTrimBasic( const CHAR *name, const BSONElement &in, INT8 lr,
+                        BSONObjBuilder &outBuilder )
    {
       INT32 rc = SDB_OK ;
       if ( in.eoo() )
@@ -1500,8 +1825,41 @@ namespace engine
       goto done ;
    }
 
-   INT32 mthAdd( const CHAR *name, const BSONElement &in, 
-                 const BSONElement &addend, BSONObjBuilder &outBuilder )
+   /// lr: -1(ltrim) 0(trim) 1(rtrim)
+   INT32 mthTrim( const CHAR *name, const BSONElement &in, INT8 lr,
+                  BSONObjBuilder &outBuilder )
+   {
+      INT32 rc = SDB_OK ;
+      if ( Array == in.type() )
+      {
+         BSONArrayBuilder arrayBuilder ;
+         BSONObjIterator iter( in.embeddedObject() ) ;
+         while ( iter.more() )
+         {
+            BSONObjBuilder tmpBuilder ;
+            BSONElement ele = iter.next() ;
+            rc = _mthTrimBasic( ele.fieldName(), ele, lr, tmpBuilder ) ;
+            PD_RC_CHECK( rc, PDERROR, "_mthTrimBasic failed:rc=%d", rc ) ;
+
+            arrayBuilder.append( tmpBuilder.obj().firstElement() ) ;
+         }
+
+         outBuilder.append( name, arrayBuilder.arr() ) ;
+      }
+      else
+      {
+         rc = _mthTrimBasic( name, in, lr, outBuilder ) ;
+         PD_RC_CHECK( rc, PDERROR, "_mthTrimBasic failed:rc=%d", rc ) ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _mthAddBasic( const CHAR *name, const BSONElement &in,
+                       const BSONElement &addend, BSONObjBuilder &outBuilder )
    {
       INT32 rc = SDB_OK ;
 
@@ -1513,7 +1871,7 @@ namespace engine
       {
          outBuilder.appendNull( name ) ;
       }
-      else if ( NumberDecimal == in.type() || 
+      else if ( NumberDecimal == in.type() ||
                 NumberDecimal == addend.type() )
       {
          bsonDecimal decimalE ;
@@ -1526,8 +1884,8 @@ namespace engine
          rc = decimalE.add( decimalArg, result ) ;
          if ( SDB_OK != rc )
          {
-            PD_LOG( PDERROR, "failed to add decimal:%s+%s,rc=%d", 
-                    decimalE.toString().c_str(), 
+            PD_LOG( PDERROR, "failed to add decimal:%s+%s,rc=%d",
+                    decimalE.toString().c_str(),
                     decimalArg.toString().c_str(), rc ) ;
             goto error ;
          }
@@ -1552,8 +1910,41 @@ namespace engine
       goto done ;
    }
 
-   INT32 mthSub( const CHAR *name, const BSONElement &in, 
-                 const BSONElement &subtrahead, BSONObjBuilder &outBuilder )
+   INT32 mthAdd( const CHAR *name, const BSONElement &in,
+                 const BSONElement &addend, BSONObjBuilder &outBuilder )
+   {
+      INT32 rc = SDB_OK ;
+      if ( Array == in.type() )
+      {
+         BSONArrayBuilder arrayBuilder ;
+         BSONObjIterator iter( in.embeddedObject() ) ;
+         while ( iter.more() )
+         {
+            BSONObjBuilder tmpBuilder ;
+            BSONElement ele = iter.next() ;
+            rc = _mthAddBasic( ele.fieldName(), ele, addend, tmpBuilder ) ;
+            PD_RC_CHECK( rc, PDERROR, "_mthAddBasic failed:rc=%d", rc ) ;
+
+            arrayBuilder.append( tmpBuilder.obj().firstElement() ) ;
+         }
+
+         outBuilder.append( name, arrayBuilder.arr() ) ;
+      }
+      else
+      {
+         rc = _mthAddBasic( name, in, addend, outBuilder ) ;
+         PD_RC_CHECK( rc, PDERROR, "_mthAddBasic failed:rc=%d", rc ) ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _mthSubBasic( const CHAR *name, const BSONElement &in,
+                       const BSONElement &subtrahead,
+                       BSONObjBuilder &outBuilder )
    {
       INT32 rc = SDB_OK ;
 
@@ -1565,7 +1956,7 @@ namespace engine
       {
          outBuilder.appendNull( name ) ;
       }
-      else if ( NumberDecimal == in.type() || 
+      else if ( NumberDecimal == in.type() ||
                 NumberDecimal == subtrahead.type() )
       {
          bsonDecimal decimalE ;
@@ -1578,8 +1969,8 @@ namespace engine
          rc = decimalE.sub( decimalArg, result ) ;
          if ( SDB_OK != rc )
          {
-            PD_LOG( PDERROR, "failed to sub decimal:%s-%s,rc=%d", 
-                    decimalE.toString().c_str(), 
+            PD_LOG( PDERROR, "failed to sub decimal:%s-%s,rc=%d",
+                    decimalE.toString().c_str(),
                     decimalArg.toString().c_str(), rc ) ;
             goto error ;
          }
@@ -1604,9 +1995,41 @@ namespace engine
       goto done ;
    }
 
-   INT32 mthMultiply( const CHAR *name, const BSONElement &in, 
-                      const BSONElement &multiplier, 
-                      BSONObjBuilder &outBuilder )
+   INT32 mthSub( const CHAR *name, const BSONElement &in,
+                 const BSONElement &subtrahead, BSONObjBuilder &outBuilder )
+   {
+      INT32 rc = SDB_OK ;
+      if ( Array == in.type() )
+      {
+         BSONArrayBuilder arrayBuilder ;
+         BSONObjIterator iter( in.embeddedObject() ) ;
+         while ( iter.more() )
+         {
+            BSONObjBuilder tmpBuilder ;
+            BSONElement ele = iter.next() ;
+            rc = _mthSubBasic( ele.fieldName(), ele, subtrahead, tmpBuilder ) ;
+            PD_RC_CHECK( rc, PDERROR, "_mthSubBasic failed:rc=%d", rc ) ;
+
+            arrayBuilder.append( tmpBuilder.obj().firstElement() ) ;
+         }
+
+         outBuilder.append( name, arrayBuilder.arr() ) ;
+      }
+      else
+      {
+         rc = _mthSubBasic( name, in, subtrahead, outBuilder ) ;
+         PD_RC_CHECK( rc, PDERROR, "_mthSubBasic failed:rc=%d", rc ) ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _mthMultiplyBasic( const CHAR *name, const BSONElement &in,
+                            const BSONElement &multiplier,
+                            BSONObjBuilder &outBuilder )
    {
       INT32 rc = SDB_OK ;
 
@@ -1618,7 +2041,7 @@ namespace engine
       {
          outBuilder.appendNull( name ) ;
       }
-      else if ( NumberDecimal == in.type() || 
+      else if ( NumberDecimal == in.type() ||
                 NumberDecimal == multiplier.type() )
       {
          bsonDecimal decimal ;
@@ -1631,8 +2054,8 @@ namespace engine
          rc = decimal.mul( decimalArg, result ) ;
          if ( SDB_OK != rc )
          {
-            PD_LOG( PDERROR, "failed to mul decimal:%s*%s,rc=%d", 
-                    decimal.toString().c_str(), 
+            PD_LOG( PDERROR, "failed to mul decimal:%s*%s,rc=%d",
+                    decimal.toString().c_str(),
                     decimalArg.toString().c_str(), rc ) ;
             goto error ;
          }
@@ -1657,8 +2080,43 @@ namespace engine
       goto done ;
    }
 
-   INT32 mthDivide( const CHAR *name, const BSONElement &in, 
-                    const BSONElement &divisor, BSONObjBuilder &outBuilder )
+   INT32 mthMultiply( const CHAR *name, const BSONElement &in,
+                      const BSONElement &multiplier,
+                      BSONObjBuilder &outBuilder )
+   {
+      INT32 rc = SDB_OK ;
+      if ( Array == in.type() )
+      {
+         BSONArrayBuilder arrayBuilder ;
+         BSONObjIterator iter( in.embeddedObject() ) ;
+         while ( iter.more() )
+         {
+            BSONObjBuilder tmpBuilder ;
+            BSONElement ele = iter.next() ;
+            rc = _mthMultiplyBasic( ele.fieldName(), ele, multiplier,
+                                    tmpBuilder ) ;
+            PD_RC_CHECK( rc, PDERROR, "_mthMultiplyBasic failed:rc=%d", rc ) ;
+
+            arrayBuilder.append( tmpBuilder.obj().firstElement() ) ;
+         }
+
+         outBuilder.append( name, arrayBuilder.arr() ) ;
+      }
+      else
+      {
+         rc = _mthMultiplyBasic( name, in, multiplier, outBuilder ) ;
+         PD_RC_CHECK( rc, PDERROR, "_mthMultiplyBasic failed:rc=%d", rc ) ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _mthDivideBasic( const CHAR *name, const BSONElement &in,
+                          const BSONElement &divisor,
+                          BSONObjBuilder &outBuilder )
    {
       INT32 rc = SDB_OK ;
 
@@ -1670,7 +2128,7 @@ namespace engine
       {
          outBuilder.appendNull( name ) ;
       }
-      else if ( NumberDecimal == in.type() || 
+      else if ( NumberDecimal == in.type() ||
                 NumberDecimal == divisor.type() )
       {
          bsonDecimal decimal ;
@@ -1683,8 +2141,8 @@ namespace engine
          rc = decimal.div( decimalArg, result ) ;
          if ( SDB_OK != rc )
          {
-            PD_LOG( PDERROR, "failed to div decimal:%s/%s,rc=%d", 
-                    decimal.toString().c_str(), 
+            PD_LOG( PDERROR, "failed to div decimal:%s/%s,rc=%d",
+                    decimal.toString().c_str(),
                     decimalArg.toString().c_str(), rc ) ;
             goto error ;
          }
@@ -1730,6 +2188,38 @@ namespace engine
       goto done ;
    }
 
+   INT32 mthDivide( const CHAR *name, const BSONElement &in,
+                    const BSONElement &divisor, BSONObjBuilder &outBuilder )
+   {
+      INT32 rc = SDB_OK ;
+      if ( Array == in.type() )
+      {
+         BSONArrayBuilder arrayBuilder ;
+         BSONObjIterator iter( in.embeddedObject() ) ;
+         while ( iter.more() )
+         {
+            BSONObjBuilder tmpBuilder ;
+            BSONElement ele = iter.next() ;
+            rc = _mthDivideBasic( ele.fieldName(), ele, divisor, tmpBuilder ) ;
+            PD_RC_CHECK( rc, PDERROR, "_mthDivideBasic failed:rc=%d", rc ) ;
+
+            arrayBuilder.append( tmpBuilder.obj().firstElement() ) ;
+         }
+
+         outBuilder.append( name, arrayBuilder.arr() ) ;
+      }
+      else
+      {
+         rc = _mthDivideBasic( name, in, divisor, outBuilder ) ;
+         PD_RC_CHECK( rc, PDERROR, "_mthDivideBasic failed:rc=%d", rc ) ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
    _mthCastTranslator::_mthCastTranslator()
    {
       INT32 i   = 0 ;
@@ -1762,7 +2252,7 @@ namespace engine
             rc = us.append( *p + 32 ) ;
             if ( SDB_OK != rc )
             {
-               PD_LOG( PDERROR, "append str failed:str=%s,rc=%d", 
+               PD_LOG( PDERROR, "append str failed:str=%s,rc=%d",
                        typeStr, rc ) ;
                goto error ;
             }
@@ -1772,7 +2262,7 @@ namespace engine
             rc = us.append( *p ) ;
             if ( SDB_OK != rc )
             {
-               PD_LOG( PDERROR, "append str failed:str=%s,rc=%d", 
+               PD_LOG( PDERROR, "append str failed:str=%s,rc=%d",
                        typeStr, rc ) ;
                goto error ;
             }
