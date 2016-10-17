@@ -371,6 +371,20 @@ namespace engine
          offset += blockSz ;
       }
 
+      /// other value
+      _start = right._start ;
+      _length = right._length ;
+      _dirtyStart = right._dirtyStart ;
+      _dirtyLength = right._dirtyLength ;
+      _lastTime = right._lastTime ;
+      _lastWriteTime = right._lastWriteTime ;
+      _readTimes = right._readTimes ;
+      _writeTimes = right._writeTimes ;
+      _status = right._status ;
+      _beginLSN = right._beginLSN ;
+      _endLSN = right._endLSN ;
+      _lsnNum = right._lsnNum ;
+
    done:
       return rc ;
    error:
@@ -1879,8 +1893,9 @@ namespace engine
 
    void _utilCacheUnit::decDirtyPages( utilCacheBucket *pBucket )
    {
-      _dirtySize.dec() ;
+      INT64 tmpV = _dirtySize.dec() ;
       pBucket->decDirty() ;
+      SDB_ASSERT( tmpV > 0, "tmpV must > 0" ) ;
    }
 
    void _utilCacheUnit::incDirtyPages( utilCacheBucket *pBucket )
@@ -1898,9 +1913,11 @@ namespace engine
       utilCachePage* pPage = NULL ;
       UINT32 bucketID = calcBucketID( pageID ) ;
       utilCacheBucket* pBucket = NULL ;
+      OSS_LATCH_MODE tmpMode = mode ;
+      BOOLEAN lockPage = FALSE ;
 
       pBucket = _vecBucket[ bucketID ] ;
-      pBucket->lock( mode ) ;
+      pBucket->lock( tmpMode ) ;
       *ppBucket = pBucket ;
 
       if ( pageID < 0 )
@@ -1919,6 +1936,7 @@ namespace engine
          size = _pageSize ;
       }
 
+   reget:
       pPage = pBucket->getPage( pageID ) ;
       if ( !pPage && alloc && size > 0 )
       {
@@ -1929,6 +1947,14 @@ namespace engine
          if ( _pMgr->maxCacheSize() < size || _closed )
          {
             goto done ;
+         }
+         if ( tmpMode != EXCLUSIVE )
+         {
+            /// need to switch to exclusive
+            pBucket->unlock( tmpMode ) ;
+            tmpMode = EXCLUSIVE ;
+            pBucket->lock( tmpMode ) ;
+            goto reget ;
          }
          rc = _pMgr->alloc( size, tmpPage, _wholePage ) ;
          if ( SDB_OK == rc )
@@ -1949,7 +1975,13 @@ namespace engine
       }
       else if ( pPage && pPage->size() < size )
       {
-         BOOLEAN lockPage = FALSE ;
+         if ( tmpMode != EXCLUSIVE )
+         {
+            pBucket->unlock( tmpMode ) ;
+            tmpMode = EXCLUSIVE ;
+            pBucket->lock( tmpMode ) ;
+            goto reget ;
+         }
          INT32 rc = _pMgr->alloc( size, *pPage, _wholePage,
                                   pPage->isInvalid() ? FALSE : TRUE ) ;
          if ( rc )
@@ -1959,16 +1991,17 @@ namespace engine
                pPage->lock() ;
                lockPage = TRUE ;
             }
-            pBucket->unlock( mode ) ;
+            pBucket->unlock( tmpMode ) ;
 
             /// recycle and try again
             recyclePages( TRUE, size ) ;
 
-            pBucket->lock( mode ) ;
+            pBucket->lock( tmpMode ) ;
 
             if( lockPage )
             {
                pPage->unlock() ;
+               lockPage = FALSE ;
             }
 
             rc = _pMgr->alloc( size, *pPage, _wholePage,
@@ -1999,6 +2032,21 @@ namespace engine
       }
 
    done:
+      if ( mode != tmpMode )
+      {
+         /// switch to mode
+         if ( pPage && !pPage->isLocked() )
+         {
+            pPage->lock() ;
+            lockPage = TRUE ;
+         }
+         pBucket->unlock( tmpMode ) ;
+         pBucket->lock( mode ) ;
+         if ( pPage && lockPage )
+         {
+            pPage->unlock() ;
+         }
+      }
       return pPage ;
    }
 
@@ -2122,14 +2170,28 @@ namespace engine
       goto done ;
    }
 
-   void _utilCacheUnit::lockPageCleaner()
+   void _utilCacheUnit::lockPageCleaner( INT32 mode )
    {
-      _pageCleaner.lock_r() ;
+      if ( SHARED == mode )
+      {     
+         _pageCleaner.lock_r() ;
+      }
+      else
+      {
+         _pageCleaner.lock_w() ;
+      }
    }
 
-   void _utilCacheUnit::unlockPageCleaner()
+   void _utilCacheUnit::unlockPageCleaner( INT32 mode )
    {
-      _pageCleaner.release_r() ;
+      if ( SHARED == mode )
+      {
+         _pageCleaner.release_r() ;
+      }
+      else
+      {
+         _pageCleaner.release_w() ;
+      }
    }
 
    BOOLEAN _utilCacheUnit::canSync( BOOLEAN &force )

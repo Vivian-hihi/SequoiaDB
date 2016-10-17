@@ -96,8 +96,10 @@ namespace engine
       friend class _utilCacheMgr ;
       public:
          _utilCachePage() ;
-         _utilCachePage( const _utilCachePage& right ) ;
          ~_utilCachePage() ;
+         _utilCachePage( const _utilCachePage& right ) ;
+
+         _utilCachePage& operator= ( const _utilCachePage& rhs ) ;
 
          void        clearDataInfo() ;
          void        clearLSNInfo() ;
@@ -192,8 +194,6 @@ namespace engine
          INT32       loadWithoutData( UINT32 offset, UINT32 len ) ;
          UINT32      read( CHAR* pBuf, UINT32 offset, UINT32 len ) ;
          INT32       copy( const _utilCachePage &right ) ;
-
-         _utilCachePage& operator= ( const _utilCachePage& rhs ) ;
 
          UINT32      beginBlock() const ;
          CHAR*       nextBlock( UINT32 &size, UINT32 &pos ) const ;
@@ -590,8 +590,8 @@ namespace engine
 
          UINT32         dropDirty() ;
 
-         void           lockPageCleaner() ;
-         void           unlockPageCleaner() ;
+         void           lockPageCleaner( INT32 mode = SHARED ) ;
+         void           unlockPageCleaner( INT32 mode = SHARED ) ;
 
          INT32          init( utilCacheMgr *pMgr,
                               utilCachFileBase *pFile,

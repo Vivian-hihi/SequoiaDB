@@ -75,7 +75,10 @@ error :
 // PD_TRACE_DECLARE_FUNCTION ( SDB__OSSMMF_CLOSE, "_ossMmapFile::close" )
 void _ossMmapFile::close ()
 {
-   PD_TRACE_ENTRY ( SDB__OSSMMF_CLOSE );
+   PD_TRACE_ENTRY ( SDB__OSSMMF_CLOSE ) ;
+
+   engine::ossScopedRWLock lock( &_rwMutex, EXCLUSIVE ) ;
+
    // clear all maped regions
    for ( vector< ossMmapSegment >::iterator i = _segments.begin();
          i != _segments.end(); i++ )
@@ -229,7 +232,11 @@ INT32 _ossMmapFile::map ( UINT64 offset, UINT32 length, void **pAddress )
    seg._ptr = (ossValuePtr)segment;
    seg._length = length ;
    seg._offset = offset ;
+
+   _rwMutex.lock_w() ;
    _segments.push_back ( seg ) ;
+   _rwMutex.release_w() ;
+
    if ( pAddress )
    {
       *pAddress = segment ;
@@ -246,7 +253,10 @@ error :
 INT32 _ossMmapFile::flushAll ( BOOLEAN sync )
 {
    INT32 rc = SDB_OK ;
-   PD_TRACE_ENTRY ( SDB__OSSMMF_FLHALL );
+   PD_TRACE_ENTRY ( SDB__OSSMMF_FLHALL ) ;
+
+   engine::ossScopedRWLock lock( &_rwMutex, SHARED ) ;
+
    for ( UINT32 i = 0; i<_segments.size(); i++ )
    {
       rc = flush ( i, sync ) ;
@@ -269,6 +279,9 @@ INT32 _ossMmapFile::flush ( UINT32 segmentID, BOOLEAN sync )
    INT32 rc = SDB_OK ;
    PD_TRACE_ENTRY ( SDB__OSSMMF_FLUSH );
    INT32 err = 0 ;
+
+   engine::ossScopedRWLock lock( &_rwMutex, SHARED ) ;
+
    if  ( segmentID >= _segments.size() )
    {
       rc = SDB_INVALIDARG ;
@@ -314,6 +327,8 @@ INT32 _ossMmapFile::flushBlock( UINT32 segmentID, UINT32 offset,
    INT32 err = 0 ;
    ossMmapSegment *pSegment = NULL ;
    ossValuePtr ptr = 0 ;
+
+   engine::ossScopedRWLock lock( &_rwMutex, SHARED ) ;
 
    if( segmentID >= _segments.size() )
    {

@@ -1472,7 +1472,9 @@ namespace engine
          /// flush cache to file
          if ( _pCacheUnit && _pCacheUnit->dirtyPages() > 0 )
          {
+            _pCacheUnit->lockPageCleaner( EXCLUSIVE ) ;
             _pCacheUnit->syncPages( pmdGetThreadEDUCB(), TRUE, FALSE ) ;
+            _pCacheUnit->unlockPageCleaner( EXCLUSIVE ) ;
          }
          _data.flush() ;
       }

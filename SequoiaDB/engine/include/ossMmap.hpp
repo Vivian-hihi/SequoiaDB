@@ -40,7 +40,7 @@
 #include "core.hpp"
 #include "oss.hpp"
 #include "ossIO.hpp"
-#include "ossLatch.hpp"
+#include "ossRWMutex.hpp"
 #include "ossUtil.hpp"
 #include <vector>
 
@@ -75,9 +75,12 @@ protected:
 
    OSSFILE  _file ;
    BOOLEAN  _opened ;
-   vector < ossMmapSegment > _segments ;
    UINT64   _totalLength ;
    CHAR     _fileName[ OSS_MAX_PATHSIZE + 1 ] ;
+
+private:
+   vector < ossMmapSegment >  _segments ;
+   engine::ossRWMutex         _rwMutex ;
 
 public:
    typedef vector<ossMmapSegment>::const_iterator CONST_ITR;
@@ -100,6 +103,25 @@ public:
    OSS_INLINE UINT64 totalLength() const
    {
       return _totalLength ;
+   }
+
+   OSS_INLINE ossValuePtr getSegmentInfo( UINT32 pos,
+                                          UINT32 *pLength = NULL,
+                                          UINT64 *pOffset = NULL )
+   {
+      ossValuePtr tmpPtr = 0 ;
+      _rwMutex.lock_r() ;
+      tmpPtr = _segments[ pos ]._ptr ;
+      if ( pLength )
+      {
+         *pLength = _segments[ pos ]._length ;
+      }
+      if ( pOffset )
+      {
+         *pOffset = _segments[ pos ]._offset ;
+      }
+      _rwMutex.release_r() ;
+      return tmpPtr ;
    }
 
 public:
