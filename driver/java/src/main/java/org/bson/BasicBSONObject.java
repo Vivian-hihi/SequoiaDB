@@ -685,13 +685,13 @@ public class BasicBSONObject implements Map<String, Object>, BSONObject {
 	 * @return the instance of the class
 	 * @throws Exception
 	 */
-	public <T> T as(Class<T> cls) throws Exception {
+	public /*! @cond x*/ <T> /*! @endcond */ T as(Class<T> cls) throws Exception {
 		return as(cls, null);
 	}
 
 	@SuppressWarnings({ "unchecked" })
 	// @Override
-	public <T> T as(Class<T> cls, Type eleType) throws Exception {
+	public /*! @cond x*/ <T> /*! @endcond */ T as(Class<T> cls, Type eleType) throws Exception {
 		boolean hasConsturctor = false;
 		T result = null;
 		for (Constructor<?> con : cls.getConstructors()) {

@@ -250,7 +250,7 @@ public class DBCollection {
      *       field update is take effect. Because of current version is not support update shardingKey field.
      * @see com.sequoiadb.base.DBCollection.setMainKeys
      */
-    public <T> void save(T type, Boolean ignoreNullValue) throws BaseException
+    public /*! @cond x*/ <T> /*! @endcond */ void save(T type, Boolean ignoreNullValue) throws BaseException
     {
         // transform java object to bson object
         BSONObject obj;
@@ -317,7 +317,7 @@ public class DBCollection {
 	 *       field update is take effect. Because of current version is not support update shardingKey field.
 	 * @see com.sequoiadb.base.DBCollection.setMainKeys
 	 */
-	public <T> void save(T type) throws BaseException
+	public /*! @cond x*/ <T> /*! @endcond */ void save(T type) throws BaseException
 	{
 		save(type, false);
 	}
@@ -340,7 +340,7 @@ public class DBCollection {
      *       field update is take effect. Because of current version is not support update shardingKey field.
      * @see com.sequoiadb.base.DBCollection.setMainKeys
      */
-    public <T> void save(List<T> type, Boolean ignoreNullValue) throws BaseException {
+    public /*! @cond x*/ <T> /*! @endcond */ void save(List<T> type, Boolean ignoreNullValue) throws BaseException {
         if (type == null || type.size() == 0)
             throw new BaseException("SDB_INVALIDARG", type);
         // transform java object to bson object
@@ -411,7 +411,7 @@ public class DBCollection {
 	 *       field update is take effect. Because of current version is not support update shardingKey field.
 	 * @see com.sequoiadb.base.DBCollection.setMainKeys
 	 */
-	public <T> void save(List<T> type) throws BaseException {
+	public /*! @cond x*/ <T> /*! @endcond */ void save(List<T> type) throws BaseException {
 		save(type, false);
 	}
 	
