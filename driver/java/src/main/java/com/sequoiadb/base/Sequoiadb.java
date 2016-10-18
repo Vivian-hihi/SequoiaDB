@@ -1161,9 +1161,9 @@ public class Sequoiadb {
 	}
 	
 	/**
-	 * @fn void listProcedures ( BSONObject condition )
+	 * @fn DBCursor listProcedures ( BSONObject condition )
      * @brief List the store procedures.
-     * @param condition The condition of list eg: {"name":"sum"}
+     * @param condition The condition of list eg: {"name":"sum"}. return all if null
 	 * @exception com.sequoiadb.exception.BaseException
 	 */
 	public DBCursor listProcedures ( BSONObject condition ) throws BaseException
