@@ -560,7 +560,7 @@ class DBLobConcrete implements DBLob {
         }
 
         if ( _mode != SDB_LOB_READ ) {
-            throw new BaseException( "SDB_INVALIDARG", "seek() is not supported"
+            throw new BaseException( "SDB_OPTION_NOT_SUPPORT", "seek() is not supported"
                     + "in mode=" + _mode );
         }
         
