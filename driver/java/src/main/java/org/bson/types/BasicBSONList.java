@@ -192,7 +192,7 @@ public class BasicBSONList extends ArrayList<Object> implements BSONObject {
 	/**
 	 * Converts a BSONObject to a map.
 	 * 
-	 * @return the BSONObject
+	 * @return the Map Object
 	 */
 	@SuppressWarnings("unchecked")
 	public Map toMap() {
