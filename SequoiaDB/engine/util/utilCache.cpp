@@ -1893,9 +1893,8 @@ namespace engine
 
    void _utilCacheUnit::decDirtyPages( utilCacheBucket *pBucket )
    {
-      INT64 tmpV = _dirtySize.dec() ;
+      _dirtySize.dec() ;
       pBucket->decDirty() ;
-      SDB_ASSERT( tmpV > 0, "tmpV must > 0" ) ;
    }
 
    void _utilCacheUnit::incDirtyPages( utilCacheBucket *pBucket )
