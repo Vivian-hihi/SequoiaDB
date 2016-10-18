@@ -561,7 +561,7 @@ class DBLobConcrete implements DBLob {
 
         if ( _mode != SDB_LOB_READ ) {
             throw new BaseException( "SDB_OPTION_NOT_SUPPORT", "seek() is not supported"
-                    + "in mode=" + _mode );
+                    + " in mode=" + _mode );
         }
         
         if ( SDB_LOB_SEEK_SET == seekType ) {
