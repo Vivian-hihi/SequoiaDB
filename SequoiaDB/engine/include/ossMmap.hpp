@@ -51,7 +51,7 @@ using namespace std ;
 */
 class _ossMmapFile : public SDBObject
 {
-protected:
+public:
    class _ossMmapSegment : public SDBObject
    {
    public :
@@ -70,34 +70,56 @@ protected:
          _maphandle = INVALID_HANDLE_VALUE ;
 #endif
       }
+
+      _ossMmapSegment ()
+      {
+         _ptr = 0 ;
+         _length = 0 ;
+         _offset = 0 ;
+#if defined (_WINDOWS)
+         _maphandle = INVALID_HANDLE_VALUE ;
+#endif
+      }
    } ;
    typedef _ossMmapSegment ossMmapSegment ;
 
+protected:
    OSSFILE  _file ;
    BOOLEAN  _opened ;
    UINT64   _totalLength ;
    CHAR     _fileName[ OSS_MAX_PATHSIZE + 1 ] ;
 
 private:
-   vector < ossMmapSegment >  _segments ;
    engine::ossRWMutex         _rwMutex ;
 
-public:
-   typedef vector<ossMmapSegment>::const_iterator CONST_ITR;
+   ossMmapSegment*            _pSegArray ;
+   UINT32                     _capacity ;
+   UINT32                     _size ;
+   ossMmapSegment*            _pTmpArray ;
 
-   OSS_INLINE CONST_ITR begin()
+   void  _clearSeg() ;
+   INT32 _ensureSpace( UINT32 size ) ;
+
+public:
+
+   OSS_INLINE UINT32 begin()
    {
-      return _segments.begin();
+      return 0 ;
    }
 
-   OSS_INLINE CONST_ITR end()
+   OSS_INLINE ossMmapSegment* next( UINT32 &pos )
    {
-      return _segments.end();
+      if ( pos >= _size )
+      {
+         return NULL ;
+      }
+      ++pos ;
+      return &_pSegArray[ pos - 1 ] ;
    }
 
    OSS_INLINE UINT32 segmentSize()
    {
-      return _segments.size();
+      return _size ;
    }
 
    OSS_INLINE UINT64 totalLength() const
@@ -110,17 +132,15 @@ public:
                                           UINT64 *pOffset = NULL )
    {
       ossValuePtr tmpPtr = 0 ;
-      _rwMutex.lock_r() ;
-      tmpPtr = _segments[ pos ]._ptr ;
+      tmpPtr = _pSegArray[ pos ]._ptr ;
       if ( pLength )
       {
-         *pLength = _segments[ pos ]._length ;
+         *pLength = _pSegArray[ pos ]._length ;
       }
       if ( pOffset )
       {
-         *pOffset = _segments[ pos ]._offset ;
+         *pOffset = _pSegArray[ pos ]._offset ;
       }
-      _rwMutex.release_r() ;
       return tmpPtr ;
    }
 
@@ -130,6 +150,11 @@ public:
       _opened = FALSE ;
       _totalLength = 0 ;
       ossMemset ( _fileName, 0, sizeof(_fileName) ) ;
+
+      _pSegArray = NULL ;
+      _capacity = 0 ;
+      _size = 0 ;
+      _pTmpArray = NULL ;
    }
    ~_ossMmapFile ()
    {
@@ -138,6 +163,7 @@ public:
          ossClose ( _file ) ;
          _opened = FALSE ;
       }
+      _clearSeg() ;
    }
    INT32 open ( const CHAR *pFilename,
                 UINT32 iMode = OSS_READWRITE|OSS_EXCLUSIVE|OSS_CREATE,
