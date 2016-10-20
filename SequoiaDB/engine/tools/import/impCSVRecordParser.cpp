@@ -209,7 +209,7 @@ namespace import
 
       return FALSE;
    }
-   
+
 
    static inline void _skipSpace(CHAR** data, INT32& length)
    {
@@ -1477,7 +1477,7 @@ namespace import
          //PD_LOG(PDERROR, "invalid null");
          goto error;
       }
-      
+
 
    done:
       return rc;
@@ -2738,8 +2738,7 @@ namespace import
 
          /* create integer time representation */
          timep = mktime(&t);
-         if( timep < TIME_STAMP_TIMESTAMP_MIN ||
-             timep > TIME_STAMP_TIMESTAMP_MAX )
+         if( !ossIsTimestampValid( timep ) )
          {
             rc = SDB_INVALIDARG;
             PD_LOG(PDERROR, "invalid time of timestamp");
@@ -3502,7 +3501,7 @@ namespace import
       CHAR* start = NULL;
       CHAR quotes = 0;
       BOOLEAN hasQuotes = FALSE;
- 
+
       SDB_ASSERT(NULL != data, "data can't be NULL");
       SDB_ASSERT(NULL != fieldDel, "fieldDel can't be NULL");
       SDB_ASSERT(length > 0, "length must be greater than 0");

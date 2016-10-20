@@ -69,12 +69,11 @@
          goto error ;                                 \
       }                                               \
    } while( 0 )
-*/    
+*/
 // check timestamp type bounds
 #define SDB_TIMESTAMP_TYPE_CHECK_BOUND(tm)            \
    do {                                               \
-      if ( (INT64)tm < TIME_STAMP_TIMESTAMP_MIN ||    \
-           (INT64)tm > TIME_STAMP_TIMESTAMP_MAX ) {   \
+      if ( !ossIsTimestampValid( ( INT64 )tm ) ) {   \
            rc = SDB_INVALIDARG ;                      \
            goto error ;                               \
       }                                               \
@@ -570,7 +569,7 @@ INT32 sptConvertor::_addJsonTypes( JSObject *obj,
    }
    else if ( is_numberlong( _cx, obj ) )
    {
-      rc = _addNumberLong( obj, key, bs ) ; 
+      rc = _addNumberLong( obj, key, bs ) ;
    }
    else if ( is_sdbdate( _cx, obj ) )
    {
@@ -588,10 +587,10 @@ INT32 sptConvertor::_addJsonTypes( JSObject *obj,
 done:
    return rc ;
 error:
-   goto done ; 
+   goto done ;
 }
 
-INT32 sptConvertor::_getDecimalPrecision( const CHAR *precisionStr, 
+INT32 sptConvertor::_getDecimalPrecision( const CHAR *precisionStr,
                                           INT32 *precision, INT32 *scale )
 {
    //precisionStr:10,6
@@ -798,7 +797,7 @@ INT32 sptConvertor::_addSpecialObj( JSObject *obj,
       }
 
       bson_append_long( bs, key, ossAtoll(strValue.c_str()) ) ;
-   }   
+   }
    else if ( 0 == name.compare( SPT_SPEOBJ_DATE ) &&
              1 == properties->length )
    {
@@ -819,7 +818,7 @@ INT32 sptConvertor::_addSpecialObj( JSObject *obj,
          }
          rc = engine::utilStr2Date( strValue.c_str(), tm ) ;
          if ( SDB_OK != rc )
-         {  
+         {
             // maybe the format is {$date:"253402185600000"}
             try
             {
@@ -896,7 +895,7 @@ INT32 sptConvertor::_addSpecialObj( JSObject *obj,
          goto error ;
       }
 
-      // append date      
+      // append date
       datet = tm ;
       rc = bson_append_date( bs, key, datet ) ;
       if ( SDB_OK !=rc )
@@ -1062,7 +1061,7 @@ INT32 sptConvertor::_addSpecialObj( JSObject *obj,
             SDB_OSS_FREE( decode ) ;
             goto error ;
          }
-   
+
          /// we can not push '\0' to bson
          bson_append_binary( bs, key, binType,
                              decode, decodeSize - 1 ) ;
@@ -1147,7 +1146,7 @@ INT32 sptConvertor::_addSpecialObj( JSObject *obj,
             goto error ;
          }
 
-         rc = bson_append_decimal2( bs, key, strDecimal.c_str(), 
+         rc = bson_append_decimal2( bs, key, strDecimal.c_str(),
                                     precision, scale ) ;
       }
       else

@@ -46,9 +46,6 @@
 #define TIME_OUTPUT_CSV_FORMAT "%04d-%02d-%02d-%02d.%02d.%02d.%06d"
 #define TIME_OUTPUT_FORMAT "{ \"$timestamp\": \"" TIME_OUTPUT_CSV_FORMAT "\" }"
 
-#define TIME_STAMP_TIMESTAMP_MIN (-2147483648LL)
-#define TIME_STAMP_TIMESTAMP_MAX  (2147483647LL)
-
 static void get_char_num ( CHAR *str, INT32 i, INT32 str_size ) ;
 static CHAR* intToString ( INT32 value, CHAR *string, INT32 radix ) ;
 static BOOLEAN date2Time( const CHAR *pDate,
@@ -190,7 +187,7 @@ SDB_EXPORT BOOLEAN json2bson( const CHAR *pJson,
       JSON_PRINTF_LOG( "Failed to call cJsonParse" ) ;
       goto error ;
    }
- 
+
    pIter = cJsonIteratorInit( pMachine ) ;
    if( pIter == NULL )
    {
@@ -458,15 +455,10 @@ static BOOLEAN date2Time( const CHAR *pDate,
 
    if( valType == CJSON_TIMESTAMP )
    {
-      if( (INT64)timep > TIME_STAMP_TIMESTAMP_MAX )
+      if ( !ossIsTimestampValid( timep ) )
       {
-         JSON_PRINTF_LOG( "Timestamp not greater than "
-                          "2038-01-19-03.14.07.999999 +/- TZ" ) ;
-         goto error ;
-      }
-      else if( (INT64)timep < TIME_STAMP_TIMESTAMP_MIN )
-      {
-         JSON_PRINTF_LOG( "Timestamp not less than "
+         JSON_PRINTF_LOG( "Timestamp must not greater than "
+                          "2038-01-19-03.14.07.999999 +/- TZ; or less than"
                           "1901-12-13-20.45.52.000000 +/- TZ" ) ;
          goto error ;
       }
@@ -1103,7 +1095,7 @@ static BOOLEAN jsonConvertBson( const CJSON_MACHINE *pMachine,
             FLOAT64 valDouble = 0 ;
             INT64 valInt64 = 0 ;
             CJSON_VALUE_TYPE type = CJSON_NONE ;
-      
+
             if( cJsonParseNumber( arg1.pValStr,
                                   arg1.length,
                                   &valInt,
@@ -1808,7 +1800,7 @@ static BOOLEAN bsonConvertJson ( CHAR **pbuf,
          {
             format = "%lld" ;
          }
-         
+
 #ifdef WIN32
          _snprintf ( temp,
                      BSON_TEMP_SIZE_512,
@@ -1818,7 +1810,7 @@ static BOOLEAN bsonConvertJson ( CHAR **pbuf,
                     BSON_TEMP_SIZE_512,
                      format, val ) ;
 #endif
-         
+
          bsonConvertJsonRawConcat ( pbuf, left, temp, FALSE ) ;
          CHECK_LEFT ( left )
          break ;
@@ -1831,10 +1823,10 @@ static BOOLEAN bsonConvertJson ( CHAR **pbuf,
          int size      = 0 ;
          decimal_init( &decimal ) ;
 
-         // get decimal 
+         // get decimal
          bson_iterator_decimal( &i, &decimal ) ;
 
-         decimal_to_jsonstr_len( decimal.sign, decimal.weight, decimal.dscale, 
+         decimal_to_jsonstr_len( decimal.sign, decimal.weight, decimal.dscale,
                                  decimal.typemod, &size ) ;
          value = malloc( size ) ;
          if ( NULL == value )
@@ -1960,7 +1952,7 @@ static INT32 strlen_a( const CHAR *data )
          ++len ;
       }
       ++len ;
-      ++data ;  
+      ++data ;
    }
    return len ;
 }

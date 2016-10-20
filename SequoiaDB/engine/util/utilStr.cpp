@@ -363,6 +363,12 @@ namespace engine
          *usec = micros ;
       }
 
+      if ( !ossIsTimestampValid( ( INT64 ) tm ) )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
    done:
       return rc ;
    error:
@@ -423,13 +429,13 @@ namespace engine
          timep = mktime( &t ) ;
          millis = timep * 1000 ;
       }
-      
+
    done:
       return rc ;
    error:
       goto done ;
    }
-   
+
    INT32 utilBuildFullPath( const CHAR *path, const CHAR *name,
                             UINT32 fullSize, CHAR *full )
    {
@@ -507,7 +513,7 @@ namespace engine
                                             "(25[0-4]|2[0-4][0-9]|1[0-9][0-9]"\
                                             "|[1-9][0-9]|[1-9])" ) ;
       return regex_match( ip, reg ) ;
-      
+
    }
 
    string utilTimeSpanStr( UINT64 seconds )
@@ -690,6 +696,6 @@ namespace engine
 
    done:
       return r ;
-   } 
+   }
 }
 

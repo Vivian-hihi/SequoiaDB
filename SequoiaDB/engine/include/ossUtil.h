@@ -96,6 +96,8 @@ INT32 ossStrToInt ( const CHAR *pBuffer, INT32 *number ) ;
 #define ossItoa(x,y,z) if (y) { ossSnprintf(y, z, "%d", (INT32)(x) );}
 #define ossLltoa(x,y,z) if (y) { ossSnprintf(y, z, OSS_LL_PRINT_FORMAT, (INT64)(x) );}
 
+BOOLEAN ossIsTimestampValid( INT64 tm ) ;
+
 INT32 ossDup2( int oldFd, int newFd ) ;
 
 #if defined (_WINDOWS)

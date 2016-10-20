@@ -24,12 +24,9 @@
 #include "core.h"
 #include "bson/bson.h"
 
-#define TIME_STAMP_TIMESTAMP_MIN (-2147483648LL)
-#define TIME_STAMP_TIMESTAMP_MAX  (2147483647LL)
-
 SDB_EXTERN_C_START
 
-/** \fn 
+/** \fn
 */
 
 /** \fn BOOLEAN JsonSetPrintfLog()
@@ -54,7 +51,7 @@ SDB_EXPORT BOOLEAN jsonToBson2 ( bson *bs,
 /** \fn BOOLEAN json2bson2( const CHAR *pJson, bson *pBson )
     \brief Json converts to bson.
     \param [in]  pJson The json string to convert
-    \param [out] pBson The return bson object 
+    \param [out] pBson The return bson object
     \retval TRUE Operation Success
     \retval FALSE Operation Fail
 */
@@ -68,7 +65,7 @@ SDB_EXPORT BOOLEAN json2bson2( const CHAR *pJson, bson *pBson ) ;
     \param [in]  pJson The json string to convert
     \param [in]  pMachine The json parse state machine
     \param [in]  parseMode The json parse mode, 0:loose mode; 1:rigorous mode;
-    \param [out] pBson The return bson object 
+    \param [out] pBson The return bson object
     \retval TRUE Operation Success
     \retval FALSE Operation Fail
 */
@@ -79,14 +76,14 @@ SDB_EXPORT BOOLEAN json2bson( const CHAR *pJson,
                               bson *pBson ) ;
 
 /** \fn BOOLEAN bsonToJson ( CHAR *buffer, INT32 bufsize, const bson *b,
-                             BOOLEAN toCSV, BOOLEAN skipUndefined) 
+                             BOOLEAN toCSV, BOOLEAN skipUndefined)
     \brief Bson converts to json.
     \param [in] buffer the buffer to convert
     \param [in] bufsize the buffer's size
     \param [in] b The bson object to convert
     \param [in] toCSV bson to csv or not
     \param [in] skipUndefined to skip undefined filed or not
-    \param [out] buffer The return json string 
+    \param [out] buffer The return json string
     \retval TRUE Operation Success
     \retval FALSE Operation Fail
     \note Before calling this funtion,need to build up

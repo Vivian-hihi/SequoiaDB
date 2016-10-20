@@ -48,6 +48,10 @@
 #if defined (_LINUX) || defined ( _AIX )
 #include <locale.h>
 #endif
+
+#define OSS_TIMESTAMP_MIN (-2147483648LL)
+#define OSS_TIMESTAMP_MAX (2147483647LL)
+
 // All strings represent "true"
 const char *OSSTRUELIST[]={
    "YES",
@@ -427,4 +431,15 @@ INT32 ossDup2( int oldFd, int newFd )
 #endif // _WINDOWS
    return SDB_OK ;
 }
+
+BOOLEAN ossIsTimestampValid( INT64 tm )
+{
+   if( tm > OSS_TIMESTAMP_MAX || tm < OSS_TIMESTAMP_MIN )
+   {
+      return FALSE ;
+   }
+
+   return TRUE ;
+}
+
 
