@@ -109,8 +109,11 @@ int main(int argc, char* argv[])
    {
       string cmd = options.buildPrintableCmd(argc, argv);
 #if defined (_LINUX)
-      ossEnableNameChanges(argc, argv);
-      ossRenameProcess(cmd.c_str());
+      if (!options.password().empty())
+      {
+         ossEnableNameChanges(argc, argv);
+         ossRenameProcess(cmd.c_str());
+      }
 #endif // _LINUX
       PD_LOG(PDEVENT, "command: %s", cmd.c_str());
    }

@@ -111,6 +111,19 @@ namespace engine
          return lsn;
       }
 
+      OSS_INLINE DPS_LSN tryExpectLsn()
+      {
+         DPS_LSN lsn ;
+
+         if ( _mtx.try_get() )
+         {
+            lsn = _lsn ;
+            _mtx.release();
+         }
+
+         return lsn;
+      }
+
       OSS_INLINE DPS_LSN currentLsn()
       {
          DPS_LSN lsn ;

@@ -36,6 +36,7 @@
 #include "ossEDU.hpp"
 #include "../bson/bsonobj.h"
 #include "utilJsonFile.hpp"
+#include "ixm.hpp"
 #include <sstream>
 #include <iostream>
 
@@ -49,8 +50,11 @@ namespace replay
 
    #define RPL_STATUS_INTERVAL (1000)
 
-   #define RPL_STATUS_NEXT_LSN      "nextLSN"
-   #define RPL_STATUS_NEXT_FILEID   "nextFileId"
+   #define RPL_STATUS_NEXT_LSN               "nextLSN"
+   #define RPL_STATUS_NEXT_FILEID            "nextFileId"
+   #define RPL_STATUS_LAST_LSN               "lastLSN"
+   #define RPL_STATUS_LAST_FILEID            "lastFileId"
+   #define RPL_STATUS_LAST_MOVED_FILETIME    "lastMovedFileTime"
 
    BOOLEAN _isRunning = FALSE;
 
@@ -257,15 +261,16 @@ namespace replay
          goto error;
       }
 
+      archiveHeader = archiveFile.getArchiveHeader();
+      logHeader = archiveFile.getLogHeader();
+
       if (_filter.isFiltered(archiveFile))
       {
+         _monitor.setNextLSN(archiveHeader->endLSN.offset);
          PD_LOG(PDINFO, "Archive log file[%s] is filtered",
                 file.c_str());
          goto done;
       }
-
-      archiveHeader = archiveFile.getArchiveHeader();
-      logHeader = archiveFile.getLogHeader();
 
       if (_monitor.getNextFileId() != DPS_INVALID_LOG_FILE_ID)
       {
@@ -305,16 +310,6 @@ namespace replay
          archiveHeader->unsetFlag(DPS_ARCHIVE_COMPRESSED);
       }
 
-      // dpsLogFile requires strict file size,
-      // so we extend the file if less than required size
-      /*rc = _ensureFileSize(filePath, (INT64)logHeader->_fileSize);
-      if (SDB_OK != rc)
-      {
-         PD_LOG(PDERROR, "Failed to ensure file size[%s], rc=%d",
-                filePath.c_str(), rc);
-         goto error;
-      }*/
-
       rc = logFile.init(filePath.c_str(),
                         (UINT32)logHeader->_fileSize,
                         logHeader->_fileNum);
@@ -337,17 +332,6 @@ namespace replay
 
       PD_LOG(PDEVENT, "Replay archive log file[%s] successfully",
              file.c_str());
-
-      if (_status.isOpened())
-      {
-         rc = _writeStatus();
-         if (SDB_OK != rc)
-         {
-            PD_LOG(PDERROR, "Failed to write status, rc=%d",
-                   rc);
-            goto error;
-         }
-      }
 
       if (_options->remove())
       {
@@ -390,6 +374,15 @@ namespace replay
 
       if (_monitor.getNextLSN() != DPS_INVALID_LSN_OFFSET)
       {
+         if (currentLSN > _monitor.getNextLSN())
+         {
+            rc = SDB_DPS_CORRUPTED_LOG;
+            PD_LOG(PDERROR, "LSN is not continuous, " \
+                   "startLSN[%lld] of log file[%s], expect nextLSN[%lld]",
+                   currentLSN, logFile.path().c_str(), _monitor.getNextLSN());
+            goto error;
+         }
+
          if (currentLSN < _monitor.getNextLSN())
          {
             currentLSN = _monitor.getNextLSN();
@@ -398,7 +391,7 @@ namespace replay
 
       if (currentLSN >= endLSN)
       {
-         PD_LOG(PDDEBUG, "No need to replay, currentLSN[%lld], endLSN[%lld]",
+         PD_LOG(PDINFO, "No need to replay, currentLSN[%lld], endLSN[%lld]",
                 currentLSN, endLSN);
          goto done;
       }
@@ -461,6 +454,7 @@ namespace replay
 
          if (_filter.isFiltered(log))
          {
+            _monitor.setLastLSN(currentLSN);
             currentLSN += logHeader._length;
             _monitor.setNextLSN(currentLSN);
             continue;
@@ -481,6 +475,7 @@ namespace replay
             }
          }
 
+         _monitor.setLastLSN(currentLSN);
          currentLSN += logHeader._length;
          _monitor.opCount(logHeader._type);
          _monitor.setNextLSN(currentLSN);
@@ -741,6 +736,47 @@ namespace replay
             goto done;
          }
 
+         if (DPS_INVALID_LOG_FILE_ID != _monitor.getLastFileId())
+         {
+            UINT32 lastFileId = _monitor.getLastFileId();
+            BOOLEAN movedExist = FALSE;
+            time_t movedTime = 0;
+
+            string movedFile = _archiveFileMgr.getMovedFilePath(lastFileId);
+            rc = ossFile::exists(movedFile, movedExist);
+            if (SDB_OK != rc)
+            {
+               PD_LOG(PDERROR, "Failed to access file[%s], rc=%d",
+                      movedFile.c_str(), rc);
+               goto error;
+            }
+
+            if (movedExist)
+            {
+               rc = ossFile::getLastWriteTime(movedFile, movedTime);
+               if (SDB_OK != rc)
+               {
+                  PD_LOG(PDERROR, "Failed to get last write time of file[%s], rc=%d",
+                         movedFile.c_str(), rc);
+                  goto error;
+               }
+
+               if (_monitor.getLastMovedFileTime() != movedTime)
+               {
+                  // move operation detected
+                  PD_LOG(PDEVENT, "Detect move operation");
+
+                  rc = _move(lastFileId);
+                  if (SDB_OK != rc)
+                  {
+                     PD_LOG(PDERROR, "Failed to move from file id[%u], rc=%d",
+                            lastFileId, rc);
+                     goto error;
+                  }
+               }
+            }
+         }
+
          rc = _scanDir(minFileId, maxFileId);
          if (SDB_OK != rc)
          {
@@ -806,11 +842,19 @@ namespace replay
 
       if (maxFileId < _monitor.getNextFileId())
       {
-         PD_LOG(PDDEBUG, "Max log file id[%u] is less than last[%u]",
+         PD_LOG(PDDEBUG, "Max log file id[%u] is less than next file id[%u]",
                 maxFileId, _monitor.getNextFileId());
          minFileId = DPS_INVALID_LOG_FILE_ID;
          maxFileId = DPS_INVALID_LOG_FILE_ID;
          goto done;
+      }
+
+      if (minFileId > _monitor.getNextFileId())
+      {
+         rc = SDB_SYS;
+         PD_LOG(PDERROR, "Find min file id[%u], but expect next file id[%u]",
+                minFileId, _monitor.getNextFileId());
+         goto error;
       }
 
       if (maxFileId == _monitor.getNextFileId())
@@ -898,8 +942,11 @@ namespace replay
       {
          BOOLEAN fullExist = FALSE;
          BOOLEAN partExist = FALSE;
+         BOOLEAN movedExist = FALSE;
+         time_t movedTime = 0;
          string file;
          UINT32 nextFileId;
+         UINT32 lastFileId;
 
          if (!_isRunning)
          {
@@ -922,6 +969,7 @@ namespace replay
          {
             file = fullFile;
             nextFileId = i + 1;
+            lastFileId = i;
          }
          else
          {
@@ -945,7 +993,30 @@ namespace replay
 
             file = partFile;
             nextFileId = i;
+            lastFileId = i;
          }
+
+         string movedFile = _archiveFileMgr.getMovedFilePath(i);
+         rc = ossFile::exists(movedFile, movedExist);
+         if (SDB_OK != rc)
+         {
+            PD_LOG(PDERROR, "Failed to access file[%s], rc=%d",
+                   movedFile.c_str(), rc);
+            goto error;
+         }
+
+         if (movedExist)
+         {
+            rc = ossFile::getLastWriteTime(movedFile, movedTime);
+            if (SDB_OK != rc)
+            {
+               PD_LOG(PDERROR, "Failed to get last write time of file[%s], rc=%d",
+                      movedFile.c_str(), rc);
+               goto error;
+            }
+         }
+
+         _monitor.setLastMovedFileTime(movedTime);
 
          rc = _replayFile(file);
          if (SDB_OK != rc)
@@ -956,7 +1027,58 @@ namespace replay
          }
 
          _monitor.setNextFileId(nextFileId);
+         _monitor.setLastFileId(lastFileId);
+         if (_status.isOpened())
+         {
+            rc = _writeStatus();
+            if (SDB_OK != rc)
+            {
+               PD_LOG(PDERROR, "Failed to write status, rc=%d",
+                      rc);
+               goto error;
+            }
+         }
          PD_LOG(PDINFO, "current replay:\n%s", _monitor.dump().c_str());
+
+         movedExist = FALSE;
+         rc = ossFile::exists(movedFile, movedExist);
+         if (SDB_OK != rc)
+         {
+            PD_LOG(PDERROR, "Failed to access file[%s], rc=%d",
+                   movedFile.c_str(), rc);
+            goto error;
+         }
+
+         if (movedExist)
+         {
+            time_t movedTime2 = 0;
+            rc = ossFile::getLastWriteTime(movedFile, movedTime2);
+            if (SDB_OK != rc)
+            {
+               PD_LOG(PDERROR, "Failed to get last write time of file[%s], rc=%d",
+                      movedFile.c_str(), rc);
+               goto error;
+            }
+
+            if (movedTime2 != movedTime)
+            {
+               // move operation detected
+               PD_LOG(PDEVENT, "Detect move operation");
+
+               rc = _move(i);
+               if (SDB_OK != rc)
+               {
+                  PD_LOG(PDERROR, "Failed to move from file id[%u], rc=%d",
+                         i, rc);
+                  goto error;
+               }
+
+               _monitor.setLastMovedFileTime(movedTime2);
+
+               // move happened, need to re-scan dir
+               goto done;
+            }
+         }
       }
 
    done:
@@ -1048,6 +1170,570 @@ namespace replay
       return rc;
    error:
       goto done;
+   }
+
+   INT32 Replayer::_move(UINT32 startFileId)
+   {
+      INT32 rc = SDB_OK;
+
+      for (INT64 i = (INT64)startFileId; i >= 0; i--)
+      {
+         BOOLEAN exist = FALSE;
+         string movedFilePath = _archiveFileMgr.getMovedFilePath((UINT32)i);
+         string filePath = movedFilePath;
+         dpsArchiveFile archiveFile;
+         dpsLogFile logFile;
+         dpsArchiveHeader* archiveHeader = NULL;
+         dpsLogHeader* logHeader = NULL;
+         DPS_LSN_OFFSET lastLSN = DPS_INVALID_LSN_OFFSET;
+
+         if (!_isRunning)
+         {
+            rc = SDB_INTERRUPT;
+            PD_LOG(PDINFO, "Rollback is interrupted");
+            goto done;
+         }
+
+         rc = ossFile::exists(movedFilePath, exist);
+         if (SDB_OK != rc)
+         {
+            PD_LOG(PDERROR, "Failed to check if moved file[%s] exists, rc=%d",
+                   movedFilePath.c_str(), rc);
+            goto error;
+         }
+
+         if (!exist)
+         {
+            break;
+         }
+
+         rc = archiveFile.init(movedFilePath, TRUE);
+         if (SDB_OK != rc)
+         {
+            PD_LOG(PDERROR, "Failed to init moved archive file[%s], rc=%d",
+                   movedFilePath.c_str(), rc);
+            goto error;
+         }
+
+         archiveHeader = archiveFile.getArchiveHeader();
+         logHeader = archiveFile.getLogHeader();
+
+         if (_filter.isFiltered(archiveFile))
+         {
+            PD_LOG(PDINFO, "Archive log file[%s] is filtered",
+                   movedFilePath.c_str());
+            goto done;
+         }
+
+         if (archiveHeader->hasFlag(DPS_ARCHIVE_COMPRESSED))
+         {
+            ossFile::deleteFile(_tmpFile);
+            rc = _archiveFileMgr.copyArchiveFile(movedFilePath, _tmpFile,
+                                                 DPS_ARCHIVE_COPY_UNCOMPRESS);
+            if (SDB_OK != rc)
+            {
+               PD_LOG(PDERROR, "Failed to uncompress archive file[%s], rc=%d",
+                      movedFilePath.c_str(), rc);
+               goto error;
+            }
+
+            archiveFile.close();
+            archiveHeader = NULL;
+            filePath = _tmpFile;
+            rc = archiveFile.init(filePath, TRUE);
+            if (SDB_OK != rc)
+            {
+               PD_LOG(PDERROR, "Failed to init archive log file[%s], rc=%d",
+                      filePath.c_str(), rc);
+               goto error;
+            }
+
+            archiveHeader = archiveFile.getArchiveHeader();
+            logHeader = archiveFile.getLogHeader();
+            archiveHeader->unsetFlag(DPS_ARCHIVE_COMPRESSED);
+         }
+
+         rc = logFile.init(filePath.c_str(),
+                           (UINT32)logHeader->_fileSize,
+                           logHeader->_fileNum);
+         if (SDB_OK != rc)
+         {
+            PD_LOG(PDERROR, "Failed to init log file[%s], rc=%d",
+                   filePath.c_str(), rc);
+            goto error;
+         }
+
+         rc = _findLastLSN(logFile,
+                           archiveHeader->startLSN.offset,
+                           archiveHeader->endLSN.offset,
+                           lastLSN);
+         if (SDB_OK != rc)
+         {
+            PD_LOG(PDERROR, "Failed to find last log in file[%s], rc=%d",
+                   filePath.c_str(), rc);
+            goto error;
+         }
+
+         rc = _rollbackLogFile(logFile,
+                               lastLSN,
+                               archiveHeader->startLSN.offset);
+         if (SDB_OK != rc)
+         {
+            PD_LOG(PDERROR, "Failed to rollback log file[%s], rc=%d",
+                   filePath.c_str(), rc);
+            goto error;
+         }
+
+         _monitor.setNextFileId((UINT32)i);
+         _monitor.setLastFileId((UINT32)(i - 1));
+         _monitor.setLastMovedFileTime(0);
+         if (_status.isOpened())
+         {
+            rc = _writeStatus();
+            if (SDB_OK != rc)
+            {
+               PD_LOG(PDERROR, "Failed to write status, rc=%d",
+                      rc);
+               goto error;
+            }
+         }
+
+         PD_LOG(PDEVENT, "Rollback archive log file[%s] successfully",
+                movedFilePath.c_str());
+
+         if (_options->remove())
+         {
+            rc = ossFile::deleteFile(movedFilePath);
+            if (SDB_OK != rc)
+            {
+               PD_LOG(PDERROR, "Failed to delete log file[%s], rc=%d",
+                      movedFilePath.c_str(), rc);
+               goto error;
+            }
+         }
+      }
+
+
+   done:
+      return rc;
+   error:
+      goto done;
+   }
+
+   INT32 Replayer::_rollbackLogFile(engine::dpsLogFile& logFile,
+                           DPS_LSN_OFFSET startLSN, DPS_LSN_OFFSET endLSN)
+   {
+      INT32 rc = SDB_OK;
+      dpsLogRecord log;
+      dpsLogRecordHeader& logHeader = log.head();
+      DPS_LSN_OFFSET currentLSN;
+      INT64 i = 0;
+
+      SDB_ASSERT(startLSN >= endLSN, "invalid startLSN & endLSN");
+
+      currentLSN = startLSN;
+
+      if (_monitor.getLastLSN() != DPS_INVALID_LSN_OFFSET)
+      {
+         if (currentLSN > _monitor.getLastLSN())
+         {
+            currentLSN = _monitor.getLastLSN();
+         }
+      }
+
+      PD_LOG(PDEVENT, "Rollback from LSN[%lld] to LSN[%lld]",
+             currentLSN, endLSN);
+
+      while (currentLSN >= endLSN && currentLSN != DPS_INVALID_LSN_OFFSET)
+      {
+         i++;
+
+         if (!_isRunning)
+         {
+            rc = SDB_INTERRUPT;
+            PD_LOG(PDINFO, "Replay is interrupted");
+            goto done;
+         }
+
+         rc = logFile.read(currentLSN,
+                           sizeof(dpsLogRecordHeader),
+                           (CHAR*)&logHeader);
+         if (SDB_OK != rc)
+         {
+            PD_LOG(PDERROR, "Failed to read log file[%s], lsn[%lld], rc:%d",
+                   logFile.path().c_str(), currentLSN, rc);
+            goto error;
+         }
+
+         if (logHeader._lsn != currentLSN)
+         {
+            rc = SDB_DPS_INVALID_LSN;
+            PD_LOG(PDERROR, "Invalid LSN, expect[%lld], real[%lld]",
+                   currentLSN, logHeader._lsn);
+            goto error;
+         }
+
+         rc = _ensureBufSize(logHeader._length);
+         if (SDB_OK != rc)
+         {
+            PD_LOG(PDERROR, "Failed to ensure buf size, rc=%d", rc);
+            goto error;
+         }
+
+         rc = logFile.read(currentLSN, logHeader._length, _buf);
+         if (SDB_OK != rc)
+         {
+            PD_LOG(PDERROR, "Failed to read log file[%s], lsn[%lld], rc=%d",
+                   logFile.path().c_str(), currentLSN, rc);
+            goto error;
+         }
+
+         log.clear();
+         rc = log.load(_buf);
+         if (SDB_OK != rc)
+         {
+            PD_LOG(PDERROR, "Failed to load log, lsn[%lld], rc=%d",
+                   currentLSN, rc);
+            goto error;
+         }
+
+         if (_filter.isFiltered(log))
+         {
+            _monitor.setNextLSN(currentLSN);
+            currentLSN = logHeader._preLsn;
+            _monitor.setLastLSN(currentLSN);
+            continue;
+         }
+
+         if (_options->dump())
+         {
+            _dumpRollbackLog(log);
+         }
+         else
+         {
+            rc = _rollbackLog(_buf);
+            if (SDB_OK != rc)
+            {
+               PD_LOG(PDERROR, "Failed to rollback log, lsn[%lld], rc=%d",
+                      logHeader._lsn, rc);
+               goto error;
+            }
+         }
+
+         _monitor.setNextLSN(currentLSN);
+         currentLSN = logHeader._preLsn;
+         _monitor.opCount(logHeader._type);
+         _monitor.setLastLSN(currentLSN);
+
+         if (0 == i%RPL_STATUS_INTERVAL)
+         {
+            if (_status.isOpened())
+            {
+               rc = _writeStatus();
+               if (SDB_OK != rc)
+               {
+                  PD_LOG(PDERROR, "Failed to write status, rc=%d",
+                         rc);
+                  goto error;
+               }
+            }
+         }
+      }
+
+   done:
+      return rc;
+   error:
+      goto done;
+   }
+
+   INT32 Replayer::_findLastLSN(engine::dpsLogFile& logFile,
+                                    DPS_LSN_OFFSET startLSN,
+                                    DPS_LSN_OFFSET endLSN,
+                                    DPS_LSN_OFFSET& lastLSN)
+   {
+      INT32 rc = SDB_OK;
+      dpsLogRecordHeader logHeader;
+      DPS_LSN_OFFSET currentLSN = startLSN;
+
+      SDB_ASSERT(startLSN < endLSN, "invalid startLSN & endLSN");
+
+      while (currentLSN < endLSN)
+      {
+         if (!_isRunning)
+         {
+            rc = SDB_INTERRUPT;
+            PD_LOG(PDINFO, "Replay is interrupted");
+            goto done;
+         }
+
+         rc = logFile.read(currentLSN,
+                           sizeof(dpsLogRecordHeader),
+                           (CHAR*)&logHeader);
+         if (SDB_OK != rc)
+         {
+            PD_LOG(PDERROR, "Failed to read log file[%s], lsn[%lld], rc:%d",
+                   logFile.path().c_str(), currentLSN, rc);
+            goto error;
+         }
+
+         if (logHeader._lsn != currentLSN)
+         {
+            rc = SDB_DPS_INVALID_LSN;
+            PD_LOG(PDERROR, "Invalid LSN, expect[%lld], real[%lld]",
+                   currentLSN, logHeader._lsn);
+            goto error;
+         }
+
+         if (currentLSN + logHeader._length >= endLSN)
+         {
+            SDB_ASSERT(currentLSN + logHeader._length == endLSN, "corrupted LSN");
+            break;
+         }
+
+         currentLSN += logHeader._length;
+         logHeader.clear();
+      }
+
+      lastLSN = currentLSN;
+
+   done:
+      return rc;
+   error:
+      goto done;
+   }
+
+   INT32 Replayer::_rollbackLog(const CHAR* log)
+   {
+      INT32 rc = SDB_OK;
+      const dpsLogRecordHeader& header = *(const dpsLogRecordHeader*)log;
+      UINT16 type = header._type;
+      switch(type)
+      {
+      case LOG_TYPE_DATA_INSERT:
+         rc = _rollbackInsert(log);
+         break;
+      case LOG_TYPE_DATA_UPDATE:
+         rc = _rollbackUpdate(log);
+         break;
+      case LOG_TYPE_DATA_DELETE:
+         rc = _rollbackDelete(log);
+         break;
+      case LOG_TYPE_CL_TRUNC:
+         rc = _rollbackTruncateCL(log);
+         break;
+      default:
+         SDB_ASSERT(FALSE, "invalid log type");
+      }
+
+      if (SDB_OK != rc)
+      {
+         PD_LOG(PDERROR, "Failed to rollback log, type=%u, rc=%d",
+                type, rc);
+         goto error;
+      }
+
+   done:
+      return rc;
+   error:
+      goto done;
+   }
+
+   INT32 Replayer::_rollbackInsert(const CHAR* log)
+   {
+      INT32 rc = SDB_OK;
+      const dpsLogRecordHeader& header = *(const dpsLogRecordHeader*)log;
+      const CHAR* fullName = NULL;
+      BSONObj obj;
+      BSONObj selector;
+      BSONObj hint;
+      sdbCollection cl;
+
+      SDB_ASSERT(LOG_TYPE_DATA_INSERT == header._type, "not data insert log");
+
+      rc = dpsRecord2Insert(log, &fullName, obj);
+      if (SDB_OK != rc)
+      {
+         PD_LOG(PDERROR, "Failed to parse log record, lsn[%lld], rc=%d",
+                header._lsn, rc);
+         goto error;
+      }
+
+      {
+         BSONElement idEle = obj.getField( DMS_ID_KEY_NAME ) ;
+         if ( idEle.eoo() )
+         {
+            PD_LOG(PDWARNING, "Failed to parse oid from bson:[%s]",
+                   obj.toString().c_str()) ;
+            rc = SDB_SYS;
+            goto error;
+         }
+
+         try
+         {
+            BSONObjBuilder selectorBuilder ;
+            selectorBuilder.append( idEle ) ;
+            selector = selectorBuilder.obj() ;
+            hint = BSON(""<<IXM_ID_KEY_NAME) ;
+         }
+         catch (std::exception& e)
+         {
+            rc = SDB_SYS;
+            PD_LOG(PDERROR, "Unexpected error happened: %s", e.what());
+            goto error;
+         }
+      }
+
+      rc = _sdb.getCollection(fullName, cl);
+      if (SDB_OK != rc)
+      {
+         PD_LOG(PDERROR, "Failed to get collection:%s, lsn[%lld], rc=%d",
+                fullName, header._lsn, rc ) ;
+         goto error ;
+      }
+
+      rc = cl.del(selector, hint);
+      if (SDB_OK != rc)
+      {
+         PD_LOG(PDERROR, "Failed to rollback insert record(%s), lsn[%lld], rc=%d",
+                obj.toString(FALSE, TRUE).c_str(), header._lsn, rc);
+         goto error;
+      }
+
+   done:
+      return rc;
+   error:
+      goto done;
+   }
+
+   INT32 Replayer::_rollbackUpdate(const CHAR* log)
+   {
+      INT32 rc = SDB_OK;
+      const dpsLogRecordHeader& header = *(const dpsLogRecordHeader*)log;
+      sdbCollection cl;
+      const CHAR *fullName = NULL;
+      BSONObj match;
+      BSONObj oldObj;
+      BSONObj newMatch;
+      BSONObj modifier;
+      BSONObj hint = BSON( "" << "$id" );
+
+      SDB_ASSERT(LOG_TYPE_DATA_UPDATE == header._type, "not data update log");
+
+      rc = dpsRecord2Update(log, &fullName,
+                            match, oldObj, newMatch, modifier);
+      if (SDB_OK != rc)
+      {
+         PD_LOG(PDERROR, "Failed to parse log record[%lld], rc:%d",
+                header._lsn, rc);
+         goto error;
+      }
+
+      rc = _sdb.getCollection(fullName, cl);
+      if (SDB_OK != rc)
+      {
+         PD_LOG(PDERROR, "Failed to get collection:%s, lsn[%lld], rc=%d",
+                fullName, header._lsn, rc ) ;
+         goto error ;
+      }
+
+      rc = cl.update(oldObj, newMatch, hint);
+      if (SDB_OK != rc)
+      {
+         PD_LOG(PDERROR, "Failed to rollback update record[%s:%s], lsn[%lld], rc=%d",
+                oldObj.toString(FALSE, TRUE).c_str(), 
+                newMatch.toString(FALSE, TRUE).c_str(), header._lsn, rc);
+         goto error ;
+      }
+
+   done:
+      return rc;
+   error:
+      goto done;
+   }
+
+   INT32 Replayer::_rollbackDelete(const CHAR* log)
+   {
+      INT32 rc = SDB_OK;
+      const dpsLogRecordHeader& header = *(const dpsLogRecordHeader*)log;
+      sdbCollection cl;
+      const CHAR *fullName = NULL;
+      BSONObj obj;
+      BSONObj hint = BSON( "" << "$id" );
+
+      SDB_ASSERT(LOG_TYPE_DATA_DELETE == header._type, "not data delete log");
+
+      rc = dpsRecord2Delete(log, &fullName, obj);
+      if (SDB_OK != rc)
+      {
+         PD_LOG(PDERROR, "Failed to parse log record[%lld], rc=%d",
+                header._lsn, rc);
+         goto error;
+      }
+
+      rc = _sdb.getCollection(fullName, cl);
+      if (SDB_OK != rc)
+      {
+         PD_LOG(PDERROR, "Failed to get collection: %s, lsn[%lld], rc=%d", 
+                fullName, header._lsn, rc);
+         goto error;
+      }
+
+      rc = cl.insert(obj);
+      if (SDB_OK != rc)
+      {
+         if (SDB_IXM_DUP_KEY == rc)
+         {
+            /* If duplicate key was found, just skip. */
+            rc = SDB_OK;
+         }
+         else
+         {
+            PD_LOG(PDERROR, "Failed to rollback insert record(%s), lsn[%lld], rc=%d",
+                   obj.toString(FALSE, TRUE).c_str(), header._lsn, rc);
+            goto error;
+         }
+      }
+
+   done:
+      return rc;
+   error:
+      goto done;
+   }
+
+   INT32 Replayer::_rollbackTruncateCL(const CHAR* log)
+   {
+      INT32 rc = SDB_OK;
+      const dpsLogRecordHeader& header = *(const dpsLogRecordHeader*)log;
+      const CHAR *fullName = NULL;
+
+      SDB_ASSERT(LOG_TYPE_CL_TRUNC == header._type, "not trunc cl log");
+
+      rc = dpsRecord2CLTrunc(log, &fullName);
+      if (SDB_OK != rc)
+      {
+         PD_LOG(PDERROR, "Failed to parse log record[%lld], rc=%d",
+                header._lsn, rc);
+         goto error;
+      }
+
+      rc = SDB_SYS;
+      PD_LOG(PDERROR, "Truncate collection[%s] can't be rollbacked, " \
+             "lsn[%lld], prelsn[%lld]",
+             fullName, header._lsn, header._preLsn);
+
+   done:
+      return rc;
+   error:
+      goto done;
+   }
+
+   void Replayer::_dumpRollbackLog(const engine::dpsLogRecord& log)
+   {
+      const INT32 len = 4096 ;
+      static CHAR buf[len] = {0};
+
+      log.dump(buf, len - 1, DPS_DMP_OPT_FORMATTED);
+      std::cout << buf << "Rollback: true"  << std::endl;
    }
 
    INT32 Replayer::_connectSdb()
@@ -1167,6 +1853,29 @@ namespace replay
          _monitor.setNextLSN(nextLSN);
       }
 
+      ele = data.getField(RPL_STATUS_LAST_LSN) ;
+      if (EOO != ele.type())
+      {
+         DPS_LSN_OFFSET lastLSN;
+
+         if (NumberLong != ele.type() && NumberInt != ele.type())
+         {
+            rc = SDB_INVALIDARG;
+            PD_LOG(PDERROR, "Invalid json field[%s]", RPL_STATUS_LAST_LSN);
+            goto error;
+         }
+         lastLSN = (DPS_LSN_OFFSET)ele.numberLong();
+         if (lastLSN < 0)
+         {
+            rc = SDB_INVALIDARG ;
+            PD_LOG(PDERROR, "Invalid value of field[%s]: %d",
+                   RPL_STATUS_LAST_LSN, lastLSN);
+            goto error;
+         }
+
+         _monitor.setLastLSN(lastLSN);
+      }
+
       ele = data.getField(RPL_STATUS_NEXT_FILEID);
       if (EOO != ele.type())
       {
@@ -1180,6 +1889,36 @@ namespace replay
          }
          nextFileId = (UINT32)ele.numberLong();
          _monitor.setNextFileId(nextFileId);
+      }
+
+      ele = data.getField(RPL_STATUS_LAST_FILEID);
+      if (EOO != ele.type())
+      {
+         UINT32 lastFileId;
+
+         if (NumberLong != ele.type() && NumberInt != ele.type())
+         {
+            rc = SDB_INVALIDARG;
+            PD_LOG(PDERROR, "Invalid json field[%s]", RPL_STATUS_LAST_FILEID);
+            goto error;
+         }
+         lastFileId = (UINT32)ele.numberLong();
+         _monitor.setLastFileId(lastFileId);
+      }
+
+      ele = data.getField(RPL_STATUS_LAST_MOVED_FILETIME);
+      if (EOO != ele.type())
+      {
+         time_t lastMovedFileTime;
+
+         if (NumberLong != ele.type() && NumberInt != ele.type())
+         {
+            rc = SDB_INVALIDARG;
+            PD_LOG(PDERROR, "Invalid json field[%s]", RPL_STATUS_LAST_MOVED_FILETIME);
+            goto error;
+         }
+         lastMovedFileTime = (time_t)ele.numberLong();
+         _monitor.setLastMovedFileTime(lastMovedFileTime);
       }
 
    done:
@@ -1200,6 +1939,10 @@ namespace replay
       {
          builder.append(RPL_STATUS_NEXT_LSN, (INT64)_monitor.getNextLSN());
          builder.append(RPL_STATUS_NEXT_FILEID, _monitor.getNextFileId());
+         builder.append(RPL_STATUS_LAST_LSN, (INT64)_monitor.getLastLSN());
+         builder.append(RPL_STATUS_LAST_FILEID, _monitor.getLastFileId());
+         builder.append(RPL_STATUS_LAST_MOVED_FILETIME,
+                        (INT64)_monitor.getLastMovedFileTime());
          data = builder.obj();
       }
       catch (std::exception& e)

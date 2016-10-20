@@ -496,7 +496,7 @@ namespace engine
       goto done ;
    }
 
-   INT32 dpsArchiveFileMgr::moveArchiveFile( UINT32 fileId )
+   INT32 dpsArchiveFileMgr::moveArchiveFile( UINT32 fileId, BOOLEAN forward )
    {
       INT32 rc = SDB_OK ;
       BOOLEAN existFull = FALSE ;
@@ -530,7 +530,9 @@ namespace engine
          goto error ;
       }
 
-      if ( existMoved )
+      // if move forward, 
+      // don't delete moved file if no full or partial file
+      if ( existMoved && (!forward || existFull || existPartial ) )
       {
          rc = ossFile::deleteFile( movedPath ) ;
          if ( SDB_OK != rc )

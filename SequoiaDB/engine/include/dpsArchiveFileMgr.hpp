@@ -89,7 +89,7 @@ namespace engine
                                   BOOLEAN allowMoved = FALSE ) ;
       INT32 getTotalSize( INT64& totalSize ) ;
 
-      INT32 moveArchiveFile( UINT32 fileId ) ;
+      INT32 moveArchiveFile( UINT32 fileId, BOOLEAN forward = FALSE ) ;
 
       INT32 deleteFile( const string& filePath ) ;
       INT32 deleteTmpFile() ;

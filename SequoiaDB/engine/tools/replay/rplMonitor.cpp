@@ -41,8 +41,11 @@ namespace replay
    {
       _opTotalNum = 0;
       _nextLSN = DPS_INVALID_LSN_OFFSET;
+      _lastLSN = DPS_INVALID_LSN_OFFSET;
       _nextFileId = DPS_INVALID_LOG_FILE_ID;
+      _lastFileId = DPS_INVALID_LOG_FILE_ID;
       _lastFileTime = 0;
+      _lastMovedFileTime = 0;
    }
 
    Monitor::~Monitor()
@@ -82,14 +85,29 @@ namespace replay
       _nextLSN = lsn;
    }
 
+   void Monitor::setLastLSN(DPS_LSN_OFFSET lsn)
+   {
+      _lastLSN = lsn;
+   }
+
    void Monitor::setNextFileId(UINT32 fileId)
    {
       _nextFileId = fileId;
    }
 
+   void Monitor::setLastFileId(UINT32 fileId)
+   {
+      _lastFileId = fileId;
+   }
+
    void Monitor::setLastFileTime(time_t lastTime)
    {
       _lastFileTime = lastTime;
+   }
+
+   void Monitor::setLastMovedFileTime(time_t lastTime)
+   {
+      _lastMovedFileTime = lastTime;
    }
 
    string Monitor::dump()
@@ -104,6 +122,21 @@ namespace replay
       if (DPS_INVALID_LOG_FILE_ID != _nextFileId)
       {
          ss << "Next FileId: " << _nextFileId << std::endl;
+      }
+
+      if (DPS_INVALID_LSN_OFFSET != _lastLSN)
+      {
+         ss << "Last LSN: " << _lastLSN << std::endl;
+      }
+
+      if (DPS_INVALID_LOG_FILE_ID != _lastFileId)
+      {
+         ss << "Last FileId: " << _lastFileId << std::endl;
+      }
+
+      if (0 != _lastMovedFileTime)
+      {
+         ss << "Last Moved File Time: " << _lastMovedFileTime << std::endl;
       }
 
       ss << "Total OP num: " << _opTotalNum << std::endl;

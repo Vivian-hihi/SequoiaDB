@@ -277,14 +277,7 @@ namespace engine
       dpsArchiveEvent* event = NULL;
       DPS_LSN lsn ;
 
-      if ( _isDPSMoving )
-      {
-         ossSleepmillis( 10 ) ;
-         goto done ;
-      }
-
       lsn = _getMoveLSN() ;
-
       if ( !lsn.invalid() )
       {
          rc = _move( lsn ) ;
@@ -292,6 +285,11 @@ namespace engine
          {
             goto error ;
          }
+      }
+      else if ( _isDPSMoving )
+      {
+         ossSleepmillis( 10 ) ;
+         goto done ;
       }
       else if ( _queue.timed_wait_and_pop( event, OSS_ONE_SEC  ) )
       {
@@ -332,15 +330,20 @@ namespace engine
       goto done ;
    }
 
+   // ensure log file can't be wrapped
    INT32 dpsArchiveMgr::canAssignLogPage( UINT32 reqLen, _pmdEDUCB *cb )
    {
       UINT32 waitTime = 0 ;
-      DPS_LSN_OFFSET safeOffset = 0 ;
-      DPS_LSN_OFFSET unsafeOffset = 0 ;
+      DPS_LSN_OFFSET safeOffset ;
+      DPS_LSN_OFFSET unsafeOffset ;
+      UINT32 logFileSize = _logMgr->getLogFileSz() ;
       INT32 rc = SDB_OK ;
 
-      safeOffset = ( _logMgr->getLogFileNum() - 1 ) * _logMgr->getLogFileSz() ;
-      unsafeOffset = _logMgr->getLogFileNum() * _logMgr->getLogFileSz() ;
+      // log file can't be wrapped if diff <= safeOffset
+      safeOffset = ( _logMgr->getLogFileNum() - 1 ) * logFileSize ;
+
+      // log file may be warpped if diff > safeOffset and <= unsafeOffset
+      unsafeOffset = _logMgr->getLogFileNum() * logFileSize ;
 
       while ( PMD_IS_DB_AVAILABLE() )
       {
@@ -349,32 +352,56 @@ namespace engine
          DPS_LSN_OFFSET nextOffset =
             ( info.startLSN.offset == DPS_INVALID_LSN_OFFSET ) ?
             0 : info.startLSN.offset ;
-         DPS_LSN_OFFSET diff = expectOffset - nextOffset ;
+         DPS_LSN_OFFSET endOffset = expectOffset + reqLen ;
+         DPS_LSN_OFFSET diff = endOffset - nextOffset ;
+
+         /*PD_LOG( PDINFO, "Replica log archiving check, " \
+                 "expect LSN: %lld[file: %u(%u)], reqLen=%u, " \
+                 "next archived LSN: %lld[file: %u(%u)]",
+                 expectOffset,
+                 _logMgr->calcFileID( expectOffset ),
+                 _logMgr->calcLogicalFileID( expectOffset ),
+                 reqLen,
+                 nextOffset,
+                 _logMgr->calcFileID( nextOffset ),
+                 _logMgr->calcLogicalFileID( nextOffset ) ) ;*/
 
          if ( DPS_INVALID_LSN_OFFSET == expectOffset )
          {
             goto done ;
          }
 
-         if ( nextOffset >= expectOffset )
+         // archived LSN is ahead of end LSN or euqals, it's safe
+         if ( nextOffset >= endOffset )
          {
             goto done ;
          }
 
-         expectOffset += reqLen ;
-
+         // log file can't be wrapped
          if ( diff <= safeOffset )
          {
             goto done ;
          }
 
-         if ( diff <= unsafeOffset &&
-              ( _logMgr->calcFileID( expectOffset ) !=
-                _logMgr->calcFileID( nextOffset ) ) )
+         // log file may be wrapped, let's check it
+         if ( diff <= unsafeOffset )
          {
-            goto done ;
+            // LSNs are not in the same physical log file, so it's safe
+            if ( _logMgr->calcFileID( endOffset ) != 
+                 _logMgr->calcFileID( nextOffset ) )
+            {
+               goto done ;
+            }
+
+            // LSNs are in the same logical log file, so it's safe
+            if ( _logMgr->calcLogicalFileID( endOffset ) ==
+                 _logMgr->calcLogicalFileID( nextOffset ) )
+            {
+               goto done ;
+            }
          }
 
+         // log file will be wrapped in the next log, so wait for archiving
          if ( waitTime < DPS_ARCHIVE_MAX_WAIT_TIME )
          {
             ossSleep( DPS_ARCHIVE_ONE_WAIT_TIME ) ;
@@ -385,11 +412,12 @@ namespace engine
             // timeout
             rc = SDB_DPS_LOG_NOT_ARCHIVED ;
             PD_LOG( PDWARNING, "Replica log is not archived, " \
-                    "expect LSN: %lld[file: %u(%u)], " \
+                    "expect LSN: %lld[file: %u(%u)], reqLen=%u, " \
                     "next archived LSN: %lld[file: %u(%u)]",
                     expectOffset,
                     _logMgr->calcFileID( expectOffset ),
                     _logMgr->calcLogicalFileID( expectOffset ),
+                    reqLen,
                     nextOffset,
                     _logMgr->calcFileID( nextOffset ),
                     _logMgr->calcLogicalFileID( nextOffset ) ) ;
@@ -521,9 +549,18 @@ namespace engine
             break ;
          }
 
-         if ( i == endFileId && !allowPartial )
+         if ( i == endFileId )
          {
-            break ;
+            if ( !allowPartial )
+            {
+               break ;
+            }
+
+            // endOffset is the first physical LSN
+            if ( startOffset == endOffset )
+            {
+               break ;
+            }
          }
 
          event = SDB_OSS_NEW dpsArchiveEventArchive() ;
@@ -568,6 +605,9 @@ namespace engine
             }
          }
 
+         SDB_ASSERT( event->startLSN.compareOffset( event->endLSN ) != 0,
+                     "startLSN == endLSN" ) ;
+
          _queue.push( event ) ;
          PD_LOG( PDDEBUG, "Log archive generate archive event, " \
                  "logicalFileId=%u, isPartial=%d, " \
@@ -607,13 +647,21 @@ namespace engine
          {
             dpsArchiveEventSwitchFile* switchEvent = 
                dynamic_cast<dpsArchiveEventSwitchFile*>( event ) ;
+            DPS_LSN expectLSN = _logMgr->tryExpectLsn();
             PD_LOG( PDDEBUG, "Log archive received switch file event, " \
                     "preFileId=%u, preLogicalFileId=%u, " \
                     "curFileId=%u, curLogicalFileId=%u",
                     switchEvent->preFileId, switchEvent->preLogicalFileId,
                     switchEvent->curFileId, switchEvent->curLogicalFileId ) ;
-            rc = _generateArchiveEvent( _infoMgr.getInfo().startLSN,
-                                        _logMgr->expectLsn() ) ;
+            if ( expectLSN.invalid() )
+            {
+               PD_LOG( PDINFO, "Failed to try get expect lsn" ) ;
+            }
+            else
+            {
+               rc = _generateArchiveEvent( _infoMgr.getInfo().startLSN,
+                                           expectLSN ) ;
+            }
          }
          break ;
       default:
@@ -945,12 +993,10 @@ namespace engine
 
       // if partial file does not exist,
       // create a temp file firstly,
-      // then rename it ot partial file,
+      // then rename it to partial file after archiving,
       // so replay tool can't read a partial file with un-inited file header
       if ( !exist )
       {
-         dpsArchiveFile tmpArchFile ;
-
          rc = _fileMgr.deleteTmpFile() ;
          if ( SDB_OK != rc )
          {
@@ -958,7 +1004,7 @@ namespace engine
             goto error ;
          }
 
-         rc = tmpArchFile.init( tmpPath, FALSE ) ;
+         rc = archiveFile.init( tmpPath, FALSE ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG( PDERROR, "Failed to init archive file[%s], rc=%d",
@@ -966,35 +1012,23 @@ namespace engine
             goto error ;
          }
 
-         rc = tmpArchFile.extend( _logMgr->getLogFileSz() ) ;
+         rc = archiveFile.extend( _logMgr->getLogFileSz() ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG( PDERROR, "Failed to extend archive file[%s], rc=%d",
+                    tmpPath.c_str(), rc ) ;
+            goto error ;
+         }
+      }
+      else
+      {
+         rc = archiveFile.init( partialPath, FALSE ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "Failed to init archive file[%s], rc=%d",
                     partialPath.c_str(), rc ) ;
             goto error ;
          }
-
-         tmpArchFile.close() ;
-
-         rc = ossFile::rename( tmpPath, partialPath ) ;
-         if ( SDB_OK != rc )
-         {
-            PD_LOG( PDERROR, "Failed to rename file from [%s] to [%s], rc=%d",
-                    tmpPath.c_str(), partialPath.c_str(), rc ) ;
-            goto error ;
-         }
-
-         PD_LOG( PDDEBUG, "Before extend, archive size=%lld", _archiveSize ) ;
-         _archiveSize += _logMgr->getLogFileSz() + DPS_LOG_HEAD_LEN ;
-         PD_LOG( PDDEBUG, "After extend, archive size=%lld", _archiveSize ) ;
-      }
-
-      rc = archiveFile.init( partialPath, FALSE ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "Failed to init archive file[%s], rc=%d",
-                 partialPath.c_str(), rc ) ;
-         goto error ;
       }
 
       {
@@ -1063,27 +1097,21 @@ namespace engine
          // a new partial archive file, need to init file header
          if ( destLogHeader->_logID == DPS_INVALID_LOG_FILE_ID )
          {
-            if ( srcLogHeader._logID != DPS_INVALID_LOG_FILE_ID )
-            {
-               *destLogHeader = srcLogHeader ;
-               archiveFile.getArchiveHeader()->init();
-            }
-            else
-            {
-               destLogHeader->_firstLSN.offset = startOffset ;
-               destLogHeader->_logID = logicalFileId ;
-               destLogHeader->_fileNum = _logMgr->getLogFileNum() ;
-               destLogHeader->_fileSize = _logMgr->getLogFileSz() ;
-            }
+            *destLogHeader = srcLogHeader ;
+            destLogHeader->_firstLSN.offset = startOffset ;
+            destLogHeader->_logID = logicalFileId ;
+            destLogHeader->_fileNum = _logMgr->getLogFileNum() ;
+            destLogHeader->_fileSize = _logMgr->getLogFileSz() ;
+            archiveFile.getArchiveHeader()->init();
          }
 
          dpsArchiveHeader* archiveHeader = archiveFile.getArchiveHeader() ;
          if ( DPS_INVALID_LSN_OFFSET == archiveHeader->startLSN.offset )
          {
             archiveHeader->setFlag( DPS_ARCHIVE_PARTIAL ) ;
-            archiveHeader->startLSN.offset = startOffset ;
+            archiveHeader->startLSN.set( startOffset, 1 ) ;
          }
-         archiveHeader->endLSN.offset = endOffset ;
+         archiveHeader->endLSN.set( endOffset, 1 ) ;
 
          rc = archiveFile.flushHeader() ;
          if ( SDB_OK != rc )
@@ -1094,6 +1122,22 @@ namespace engine
          }
 
          archiveFile.close() ;
+      }
+
+      // after archiving, rename tmp file to partial file
+      if ( !exist )
+      {
+         rc = ossFile::rename( tmpPath, partialPath ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "Failed to rename file from [%s] to [%s], rc=%d",
+                    tmpPath.c_str(), partialPath.c_str(), rc ) ;
+            goto error ;
+         }
+
+         PD_LOG( PDDEBUG, "Before extend, archive size=%lld", _archiveSize ) ;
+         _archiveSize += _logMgr->getLogFileSz() + DPS_LOG_HEAD_LEN ;
+         PD_LOG( PDDEBUG, "After extend, archive size=%lld", _archiveSize ) ;
       }
 
       PD_LOG( PDEVENT, "Partial replica log file[%u(%u):%lld-%lld] is archived",
@@ -1242,7 +1286,7 @@ namespace engine
          {
             // if move in the same log file,
             // there will be a gap between moved LSN and current start LSN
-            rc = _fileMgr.moveArchiveFile( curFileId ) ;
+            rc = _fileMgr.moveArchiveFile( curFileId, TRUE ) ;
             if ( SDB_OK != rc )
             {
                PD_LOG( PDERROR, "Failed to move archive file[%u], rc=%d",
@@ -1281,6 +1325,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       ossTimestamp curTime ;
       UINT32 timeout ;
+      DPS_LSN expectLSN ;
 
       timeout = pmdGetKRCB()->getOptionCB()->getArchiveTimeout() ;
       if ( 0 == timeout )
@@ -1303,8 +1348,16 @@ namespace engine
       ossGetCurrentTime( _lastActiveTime ) ;
       PD_LOG( PDDEBUG, "Log archive timeout(%u seconds)",
               pmdGetKRCB()->getOptionCB()->getArchiveTimeout() ) ;
+
+      expectLSN = _logMgr->tryExpectLsn() ;
+      if ( expectLSN.invalid() )
+      {
+         PD_LOG( PDINFO, "Failed to try get expect lsn" ) ;
+         goto done;
+      }
+
       rc = _generateArchiveEvent( _infoMgr.getInfo().startLSN,
-                                  _logMgr->expectLsn(),
+                                  expectLSN,
                                   TRUE ) ;
       if ( SDB_OK != rc )
       {
