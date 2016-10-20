@@ -173,6 +173,7 @@ namespace engine
          catLevelLockMgr      _levelLockMgr ;
 
          MsgRouteID           _primaryID ;
+         BOOLEAN              _isActived ;
    } ;
 
    /*
