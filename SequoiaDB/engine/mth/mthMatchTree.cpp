@@ -1284,9 +1284,8 @@ namespace engine
       if ( MTH_OPERATOR_EYECATCHER == fieldName[0] )
       {
          rc = SDB_INVALIDARG ;
-         PD_LOG ( PDERROR, "operator can not in the head:ele=%s",
-                  ele.toString().c_str() ) ;
-         goto error ;
+         PD_RC_CHECK( rc, PDERROR, "operator can not in the head:ele=%s",
+                      ele.toString().c_str() ) ;
       }
 
       if ( !_isExistOpEyeCatcher( ele ) )
@@ -1295,12 +1294,8 @@ namespace engine
          MTH_FUNC_LIST empty ;
          rc = _addOperator( ele.fieldName(), ele, EN_MATCH_OPERATOR_ET, empty,
                             parent ) ;
-         if ( SDB_OK != rc )
-         {
-            PD_LOG( PDERROR, "_addOperator failed:ele=%s,rc=%d",
-                    ele.toString().c_str(), rc ) ;
-            goto error ;
-         }
+         PD_RC_CHECK( rc, PDERROR, "_addOperator failed:ele=%s,rc=%d",
+                      ele.toString().c_str(), rc ) ;
 
          goto done ;
       }
@@ -1324,12 +1319,10 @@ namespace engine
                //previous is options. regex must come next
                rc = _paresePrevOptions( fieldName, embEle, options, funcList,
                                         parent ) ;
-               if ( SDB_OK != rc )
-               {
-                  PD_LOG( PDERROR, "_paresePrevOptions failed:fieldName=%s,"
-                          "options=%s,rc=%d", fieldName, options, rc ) ;
-                  goto error ;
-               }
+               PD_RC_CHECK( rc, PDERROR, "_paresePrevOptions failed:"
+                            "fieldName=%s,options=%s,rc=%d",
+                            fieldName, options, rc ) ;
+
                options = NULL ;
                continue ;
             }
@@ -1345,24 +1338,18 @@ namespace engine
                   const CHAR *tmpOptions = embEle.valuestrsafe() ;
                   rc = _addRegExOp( fieldName, regex, tmpOptions, funcList,
                                     parent ) ;
-                  if ( SDB_OK != rc )
-                  {
-                     PD_LOG( PDERROR, "_addRegExOp failed:fieldName=%s,"
-                             "regex=%s,options=%s,rc=%d", fieldName, regex,
-                             tmpOptions, rc ) ;
-                     goto error ;
-                  }
+                  PD_RC_CHECK( rc, PDERROR, "_addRegExOp failed:fieldName=%s,"
+                               "regex=%s,options=%s,rc=%d", fieldName, regex,
+                               tmpOptions, rc ) ;
+
                   regex = NULL ;
                   continue ;
                }
 
                rc = _addRegExOp( fieldName, regex, NULL, funcList, parent ) ;
-               if ( SDB_OK != rc )
-               {
-                  PD_LOG( PDERROR, "_addRegExOp failed:fieldName=%s,"
-                          "regex=%s,rc=%d", fieldName, regex, rc ) ;
-                  goto error ;
-               }
+               PD_RC_CHECK( rc, PDERROR, "_addRegExOp failed:fieldName=%s,"
+                            "regex=%s,rc=%d", fieldName, regex, rc ) ;
+
                regex = NULL ;
             }
 
@@ -1371,17 +1358,25 @@ namespace engine
                // { a : { $xx : xxxxxxx } }
                rc = _pareseObjectInnerOp( ele, embEle, funcList, parent, regex,
                                           options ) ;
-               if ( SDB_OK != rc )
-               {
-                  PD_LOG( PDERROR, "_pareseObjectInnerOp failed:rc=%d", rc ) ;
-                  goto error ;
-               }
+               PD_RC_CHECK( rc, PDERROR, "_pareseObjectInnerOp failed:rc=%d",
+                            rc ) ;
             }
             else
             {
                // { a : { xxx : xxxxxx } }, quality condition
-               rc = _addOperator( ele.fieldName(), embEle, EN_MATCH_OPERATOR_ET,
-                                  funcList, parent ) ;
+               BSONObjBuilder *b = NULL ;
+               BSONObjBuilder tmpBuilder ;
+               BSONObj tmpObj ;
+               rc = _createBuilder( &b ) ;
+               PD_RC_CHECK( rc, PDERROR, "failed to create BSONObjBuilder:"
+                            "rc=%d", rc ) ;
+
+               tmpBuilder.append( embEle ) ;
+               tmpObj = tmpBuilder.obj() ;
+               b->append( ele.fieldName(), tmpObj ) ;
+               rc = _addOperator( ele.fieldName(), b->done().firstElement(),
+                                  EN_MATCH_OPERATOR_ET, funcList, parent ) ;
+               PD_RC_CHECK( rc, PDERROR, "_addOperator failed:rc=%d", rc ) ;
             }
          }
 
@@ -1892,10 +1887,61 @@ namespace engine
       mthGetMatchNodeFactory()->releaseNode( node ) ;
    }
 
+   INT32 _mthMatchTree::_createBuilder( BSONObjBuilder **builder )
+   {
+      SDB_ASSERT( NULL != builder, "builder should not be null" ) ;
+
+      INT32 rc = SDB_OK ;
+      BSONObjBuilder *b = SDB_OSS_NEW BSONObjBuilder() ;
+      if ( !b )
+      {
+         rc = SDB_OOM ;
+         PD_RC_CHECK( rc, PDERROR,
+                      "Failed to allocate memory for BSONObjBuilder" ) ;
+      }
+
+      try
+      {
+         _builderVec.push_back ( b ) ;
+      }
+      catch( std::exception &e )
+      {
+         rc = SDB_SYS ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to push builder to vector: %s",
+                      e.what() );
+      }
+
+      *builder = b ;
+
+   done:
+      return rc ;
+   error:
+      if ( b )
+      {
+         SDB_OSS_DEL b ;
+         b = NULL ;
+      }
+      goto done ;
+   }
+
+   void _mthMatchTree::_releaseBuilderVec(
+                                    vector< BSONObjBuilder* > &builderVec )
+   {
+      vector<BSONObjBuilder*>::iterator it ;
+      for ( it = builderVec.begin(); it < builderVec.end(); it++ )
+      {
+         SDB_OSS_DEL (*it) ;
+      }
+
+      builderVec.clear() ;
+   }
+
    void _mthMatchTree::clear()
    {
       _releaseTree( _root ) ;
       _root = NULL ;
+
+      _releaseBuilderVec( _builderVec ) ;
 
       _predicateSet.clear() ;
       _isInitialized      = FALSE ;

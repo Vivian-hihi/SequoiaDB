@@ -184,6 +184,9 @@ namespace engine
          void     _checkTotallyConverted( _mthMatchNode *node,
                                           BOOLEAN &isTotallyConverted ) ;
 
+         INT32    _createBuilder( BSONObjBuilder **builder ) ;
+         void     _releaseBuilderVec( vector< BSONObjBuilder* > &builderVec ) ;
+
       private:
          _mthMatchNode  *_root ;
          BSONObj        _matchPattern ;
@@ -199,6 +202,8 @@ namespace engine
 
          _rtnPredicateSet _predicateSet ;
          _mthNodeAllocator _allocator ;
+
+         vector< BSONObjBuilder* > _builderVec ;
    } ;
 
    class _mthRecordGenerator
