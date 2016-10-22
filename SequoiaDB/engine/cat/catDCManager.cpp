@@ -138,8 +138,9 @@ namespace engine
       {
          return SDB_CLS_NOT_PRIMARY ;
       }
+      pmdEDUCB *cb = pmdGetThreadEDUCB() ;
       return catUpdateBaseInfoAddr( pmdGetOptionCB()->getCatAddr().c_str(),
-                                    TRUE, _pEduCB, 1 ) ;
+                                    TRUE, cb, 1 ) ;
    }
 
    BOOLEAN _catDCManager::isDCActivated() const
