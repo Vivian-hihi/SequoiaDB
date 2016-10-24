@@ -267,7 +267,7 @@ namespace replay
       if (_filter.isFiltered(archiveFile))
       {
          _monitor.setNextLSN(archiveHeader->endLSN.offset);
-         PD_LOG(PDINFO, "Archive log file[%s] is filtered",
+         PD_LOG(PDEVENT, "Archive log file[%s] is filtered",
                 file.c_str());
          goto done;
       }
@@ -1207,6 +1207,9 @@ namespace replay
             break;
          }
 
+         PD_LOG(PDEVENT, "Begin to rollback archive log file[%s]",
+                movedFilePath.c_str());
+
          rc = archiveFile.init(movedFilePath, TRUE);
          if (SDB_OK != rc)
          {
@@ -1220,7 +1223,7 @@ namespace replay
 
          if (_filter.isFiltered(archiveFile))
          {
-            PD_LOG(PDINFO, "Archive log file[%s] is filtered",
+            PD_LOG(PDEVENT, "Archive log file[%s] is filtered",
                    movedFilePath.c_str());
             goto done;
          }

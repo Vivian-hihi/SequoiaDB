@@ -95,6 +95,7 @@ namespace engine
 
    private:
       DPS_LSN  _calcStartLSN() ;
+      INT32    _buildGenerateArchiveEvent( BOOLEAN allowPartial = FALSE ) ;
       INT32    _processLogEvent( dpsArchiveEvent* event ) ;
       INT32    _generateArchiveEvent( const DPS_LSN& startLSN, 
                                       const DPS_LSN& endLSN,
@@ -106,7 +107,7 @@ namespace engine
       INT32    _archivePartial( UINT32 logicalFileId,
                                 DPS_LSN_OFFSET startOffset,
                                 DPS_LSN_OFFSET endOffset ) ;
-      INT32    _move( DPS_LSN& lsn ) ;
+      INT32    _move( const DPS_LSN& lsn ) ;
 
       INT32    _checkArchiveTimeout() ;
       INT32    _checkArchiveExpired() ;
