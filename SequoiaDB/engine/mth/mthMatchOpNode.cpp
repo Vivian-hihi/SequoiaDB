@@ -3628,9 +3628,44 @@ namespace engine
          subContext.enableDollarList() ;
       }
 
-      rc = _subTree->matches( left.embeddedObject(), result, &subContext ) ;
-      context.appendDollarList( subContext._dollarList ) ;
-      PD_RC_CHECK( rc, PDERROR, "matches subtree failed:rc=%d", rc ) ;
+      if ( Array == left.type() )
+      {
+         BOOLEAN tmpResult = FALSE ;
+         BSONObjIterator iter( left.embeddedObject() ) ;
+         while ( iter.more() )
+         {
+            BSONElement innerEle = iter.next() ;
+            if ( innerEle.type() == Object || innerEle.type() == Array )
+            {
+               rc = _subTree->matches( innerEle.embeddedObject(), result,
+                                       &subContext ) ;
+               PD_RC_CHECK( rc, PDERROR, "matches subtree failed:rc=%d", rc ) ;
+               context.appendDollarList( subContext._dollarList ) ;
+            }
+            else
+            {
+               result = FALSE ;
+            }
+
+            if ( result )
+            {
+               tmpResult = result ;
+               if ( !context.isDollarListEnabled() )
+               {
+                  break ;
+               }
+            }
+         }
+
+         result = tmpResult ;
+      }
+      else
+      {
+         //Object
+         rc = _subTree->matches( left.embeddedObject(), result, &subContext ) ;
+         PD_RC_CHECK( rc, PDERROR, "matches subtree failed:rc=%d", rc ) ;
+         context.appendDollarList( subContext._dollarList ) ;
+      }
 
    done:
       return rc ;
