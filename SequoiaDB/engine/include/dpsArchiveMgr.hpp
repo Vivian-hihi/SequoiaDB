@@ -44,6 +44,7 @@
 #include "dpsLogDef.hpp"
 #include "ossUtil.hpp"
 #include "ossQueue.hpp"
+#include <queue>
 
 using namespace std ;
 
@@ -118,6 +119,7 @@ namespace engine
       void     _clearQueue() ;
       DPS_LSN  _getMoveLSN() ;
       void     _setMoveLSN( const DPS_LSN& lsn ) ;
+      void     _popMoveLSN( const DPS_LSN& lsn ) ;
 
 
    private:
@@ -132,7 +134,7 @@ namespace engine
       INT64                         _archiveSize ;
       BOOLEAN                       _isArchiving ;
       BOOLEAN                       _isDPSMoving ;
-      DPS_LSN                       _moveLSN ;
+      queue<DPS_LSN>                _moveLSN ;
       ossSpinXLatch                 _mutex ;
       BOOLEAN                       _inited ;
    } ;

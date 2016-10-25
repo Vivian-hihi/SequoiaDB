@@ -1380,22 +1380,18 @@ namespace engine
          }
       }
 
-      info.startLSN.set( moveOffset, lsn.version );
-      rc = _infoMgr.updateInfo( info ) ;
-      if ( SDB_OK != rc )
+      if ( info.startLSN.compareOffset( moveOffset ) != 0 )
       {
-         PD_LOG( PDERROR, "Failed to update archive info, rc=%d", rc ) ;
-         goto error ;
+         info.startLSN.set( moveOffset, lsn.version );
+         rc = _infoMgr.updateInfo( info ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "Failed to update archive info, rc=%d", rc ) ;
+            goto error ;
+         }
       }
 
-      _mutex.get() ;
-      // if DPS moved again, _moveLSN has been changed
-      // then we should be also move again
-      if ( _moveLSN.compareOffset( lsn ) == 0 )
-      {
-         _moveLSN.reset() ;
-      }
-      _mutex.release() ;
+      _popMoveLSN( lsn ) ;
       _clearQueue() ;
 
    done:
@@ -1605,12 +1601,6 @@ namespace engine
 
       SDB_ASSERT( !_isDPSMoving, "is moving" ) ;
 
-      // wait for last move operation
-      while( !_getMoveLSN().invalid() )
-      {
-         ossSleepmillis( 1 ) ;
-      }
-
       // move operation is mutually exclusive in DPS,
       // so only one thread can modify _isDPSMoving,
       // set true until dps move is finished,
@@ -1626,8 +1616,6 @@ namespace engine
       {
          goto done ;
       }
-
-      SDB_ASSERT( _getMoveLSN().invalid(), "valid move LSN" ) ;
 
       _setMoveLSN( lsn ) ;
 
@@ -1649,7 +1637,10 @@ namespace engine
    {
       DPS_LSN lsn ;
       _mutex.get() ;
-      lsn = _moveLSN ;
+      if ( _moveLSN.size() > 0 )
+      {
+         lsn = _moveLSN.front() ;
+      }
       _mutex.release() ;
       return lsn ;
    }
@@ -1657,7 +1648,24 @@ namespace engine
    void dpsArchiveMgr::_setMoveLSN( const DPS_LSN& lsn )
    {
       _mutex.get() ;
-      _moveLSN = lsn ;
+      _moveLSN.push( lsn ) ;
+      _mutex.release() ;
+   }
+
+   void dpsArchiveMgr::_popMoveLSN( const DPS_LSN& lsn )
+   {
+      DPS_LSN front ;
+      SDB_ASSERT( !lsn.invalid(), "invalid lsn" ) ;
+      _mutex.get() ;
+      if ( _moveLSN.size() > 0 )
+      {
+         front = _moveLSN.front() ;
+         SDB_ASSERT( front.compare( lsn ) == 0, "lsn is not the front LSN" ) ;
+         if ( front.compare( lsn ) == 0 )
+         {
+            _moveLSN.pop() ;
+         }
+      }
       _mutex.release() ;
    }
 
