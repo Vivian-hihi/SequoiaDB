@@ -2626,6 +2626,11 @@ namespace engine
          if ( obj.nFields() == 0 )
          {
             result = TRUE ;
+            if ( _hasReturnMatch )
+            {
+               context.setIsUseElement( TRUE ) ;
+            }
+
             goto done ;
          }
       }
@@ -2846,7 +2851,7 @@ namespace engine
       while ( iterSet != _valueSet.end() )
       {
          // all values in _valueSet must equals left
-         if ( ele.woCompare( *iterSet ) != 0 )
+         if ( ele.woCompare( *iterSet, FALSE ) != 0 )
          {
             return FALSE ;
          }
@@ -2876,7 +2881,6 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       VALUE_SET::iterator iterSet ;
-      ELEMENT_MAP indexMap ;
       ELEMENT_MAP::iterator iter ;
 
       UINT32 i = 0 ;
@@ -2893,22 +2897,20 @@ namespace engine
          BOOLEAN tmpResult = FALSE ;
          // all values in _valueSet must exist in array left
          INT32 index = 0 ;
-         BSONObjIterator iter( left.embeddedObject() ) ;
+         BSONObj tmpObj = left.embeddedObject() ;
+         BSONObjIterator iter( tmpObj ) ;
          while ( iter.more() )
          {
             BOOLEAN singleResult = FALSE ;
             BSONElement ele = iter.next() ;
-            singleResult = ele.woCompare( *iter ) ;
+            singleResult = ( 0 == ele.woCompare( *iterSet, FALSE ) ) ;
             if ( singleResult )
             {
                tmpResult = singleResult ;
             }
 
-            if ( ( !isUnderLogicNot() && singleResult ) ||
-                 ( isUnderLogicNot() && !singleResult ) )
-            {
-               indexMap.insert( ELEMENT_MAP::value_type( index, ele ) ) ;
-            }
+            rc = _saveElement( context, singleResult, ele ) ;
+            PD_RC_CHECK( rc, PDERROR, "_saveElement failed:rc=%d", rc ) ;
 
             index++ ;
          }
@@ -2928,7 +2930,8 @@ namespace engine
          BOOLEAN tmpResult = FALSE ;
 
          INT32 index = 0 ;
-         BSONObjIterator iter( left.embeddedObject() ) ;
+         BSONObj tmpObj = left.embeddedObject() ;
+         BSONObjIterator iter( tmpObj ) ;
          while ( iter.more() )
          {
             BOOLEAN singleResult = FALSE ;
@@ -2939,11 +2942,8 @@ namespace engine
                tmpResult = singleResult ;
             }
 
-            if ( ( !isUnderLogicNot() && singleResult ) ||
-                 ( isUnderLogicNot() && !singleResult ) )
-            {
-               indexMap.insert( ELEMENT_MAP::value_type( index, ele ) ) ;
-            }
+            rc = _saveElement( context, singleResult, ele ) ;
+            PD_RC_CHECK( rc, PDERROR, "_saveElement failed:rc=%d", rc ) ;
 
             index++ ;
          }
@@ -2957,16 +2957,11 @@ namespace engine
 
       result = TRUE ;
 
-      iter = indexMap.begin() ;
-      while ( iter != indexMap.end() )
+      if ( _hasReturnMatch )
       {
-         rc = context.saveElement( iter->second ) ;
-         PD_RC_CHECK( rc, PDERROR, "saveElement failed:rc=%d", rc ) ;
-         iter++ ;
+         rc = context.subElements( _offset, _len ) ;
+         PD_LOG( PDERROR, "set subElements failed:rc=%d", rc ) ;
       }
-
-      rc = context.subElements( _offset, _len ) ;
-      PD_RC_CHECK( rc, PDERROR, "subElements failed:rc=%d", rc ) ;
 
    done:
       return rc ;
@@ -3057,6 +3052,7 @@ namespace engine
       }
       else
       {
+         context.setIsUseElement( TRUE ) ;
          rc = _valueMatchWithReturnMatch( left, right, context, result ) ;
          PD_RC_CHECK( rc, PDERROR, "_valueMatchWithReturn failed:rc=%d", rc ) ;
       }
