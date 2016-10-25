@@ -67,6 +67,75 @@ BSONArray.prototype.toString = function() {
    println("Return "+returnRecordNum+" row(s).") ;
    return "" ;
 }
+
+BSONArray.prototype._formatStr = function() {
+
+   var bsonObj = this.toArray() ;
+   var objArr = new Array() ; 
+   var strArr = new Array() ;
+   var maxSizeArr = new Array() ;
+   var outStr = "" ;
+   var eleArr = new Array() ;
+   
+   var objNum ;
+   var eleNum ;
+   
+   for ( var i in bsonObj )
+   {
+      objArr.push( JSON.parse( bsonObj[i] ) ) ;
+   }
+   
+   var objNum = objArr.length ;
+
+   if ( objNum > 0 )
+   {
+		var eleNum = Object.keys( objArr[0] ).length ;
+	  
+	  	for ( var eleKey in objArr[0] )
+      {
+	     	eleArr.push( eleKey ) ;
+	  	}
+      strArr.push( eleArr ) ;
+	   
+	  	for ( var obj in  objArr )
+	  	{
+	     	eleArr = new Array() ;
+	     	for( var ele in  objArr[obj] )
+	     	{
+	     	   eleArr.push( objArr[obj][ele] ) ;
+	     	}
+    	 	strArr.push( eleArr ) ;
+	  	}
+	   
+		for ( var i = 0; i < eleNum; i++ )
+		{
+			var max = 0 ;
+			for ( var j = 0; j < objNum + 1; j++ )
+			{
+				if ( strArr[j][i].length > max )
+				{
+					max = strArr[j][i].length ;
+				}
+			}
+			maxSizeArr.push( max + 1 ) ;
+		}
+	   
+	  for ( var i = 0; i < strArr.length; i++ )
+	  {
+	   	var arr = strArr[i] ;
+	     	for ( var j = 0; j < arr.length; j++ )
+	     	{
+	        	outStr += " " + arr[j] ;
+				for ( var k = 0; k < maxSizeArr[j] - arr[j].length; k++ )
+				{
+			   	outStr += " " ;
+				}
+	     	}
+		 	outStr += "\n" ;
+	  }
+   }
+   return outStr ;
+}
 // end BSONArray
 
 // Oma

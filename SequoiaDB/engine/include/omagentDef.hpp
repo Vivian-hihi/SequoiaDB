@@ -128,7 +128,7 @@ namespace engine
    #define OMA_CMD_ADD_HOST                           OM_ADD_HOST_REQ
    #define OMA_CMD_REMOVE_HOST                        OM_REMOVE_HOST_REQ
    #define OMA_CMD_CHECK_ADD_HOST_INFO                "check add host info"
-   
+
    #define OMA_CMD_INSTALL_TMP_COORD                  "install temporary coord"
    #define OMA_CMD_REMOVE_TMP_COORD                   "remove temporary coord"
    #define OMA_CMD_INSTALL_STANDALONE                 "install standalone"
@@ -157,12 +157,12 @@ namespace engine
    #define OMA_CMD_SSQL_EXEC                          "sequoiasql exec"
    #define OMA_CMD_CLEAN_SSQL_EXEC                    "clean sequoiasql exec"
    #define OMA_CMD_GET_PSQL                           "get psql"
-   
+
 
    #define OMA_INIT_ENV                               "init for exeuting js"
 
    #define OMA_CMD_UPDATE_TASK                        "update task"
-  
+
 
    /*
       oma js file
@@ -172,14 +172,14 @@ namespace engine
    #define FILE_COMMON                      "common.js"
    #define FILE_LOG                         "log.js"
    #define FILE_FUNC                        "func.js"
-   
+
    #define FILE_SCAN_HOST                   "scanHost.js"
-   
+
    #define FILE_CHECK_HOST_INIT             "checkHostInit.js"
    #define FILE_CHECK_HOST                  "checkHost.js"
    #define FILE_CHECK_HOST_ITEM             "checkHostItem.js"
    #define FILE_CHECK_HOST_FINAL            "checkHostFinal.js"
-   
+
    #define FILE_ADD_HOST                    "addHost.js"
    #define FIEL_ADD_HOST_CHECK_INFO         "addHostCheckInfo.js"
    #define FILE_REMOVE_HOST                 "removeHost.js"
@@ -253,6 +253,72 @@ namespace engine
    #define JS_FILE_NAME_LEN                 (512)
    #define WAITING_TIME                     (3000)
 
+   /*
+      remote command define
+   */
+   #define OMA_REMOTE_SYS_PING                    "ping"
+   #define OMA_REMOTE_SYS_TYPE                    "system type"
+   #define OMA_REMOTE_SYS_GET_RELEASE_INFO        "system get release info"
+   #define OMA_REMOTE_SYS_GET_HOSTS_MAP           "get hosts map"
+   #define OMA_REMOTE_SYS_GET_AHOST_MAP           "get a host map"
+   #define OMA_REMOTE_SYS_ADD_AHOST_MAP           "add a host map"
+   #define OMA_REMOTE_SYS_DEL_AHOST_MAP           "delete a host map"
+   #define OMA_REMOTE_SYS_GET_CPU_INFO            "get cpu info"
+   #define OMA_REMOTE_SYS_SNAPSHOT_CPU_INFO       "snapshot cpu info"
+   #define OMA_REMOTE_SYS_GET_MEM_INFO            "get mem info"
+   #define OMA_REMOTE_SYS_SNAPSHOT_MEM_INFO       "snapshot mem info"
+   #define OMA_REMOTE_SYS_GET_DISK_INFO           "get disk info"
+   #define OMA_REMOTE_SYS_SNAPSHOT_DISK_INFO      "snapshot disk info"
+   #define OMA_REMOTE_SYS_GET_NETCARD_INFO        "get netcard info"
+   #define OMA_REMOTE_SYS_SNAPSHOT_NETCARD_INFO   "snapshot netcard info"
+   #define OMA_REMOTE_SYS_GET_IPTABLES_INFO       "get ip tables info"
+   #define OMA_REMOTE_SYS_GET_HOSTNAME            "get hostname"
+   #define OMA_REMOTE_SYS_SNIFF_PORT              "sniff port"
+   #define OMA_REMOTE_SYS_GET_PID                 "get pid"
+   #define OMA_REMOTE_SYS_GET_TID                 "get tid"
+   #define OMA_REMOTE_SYS_GET_EWD                 "get ewd"
+   #define OMA_REMOTE_SYS_LIST_PROC               "list process"
+   #define OMA_REMOTE_SYS_ADD_USER                "add user"
+   #define OMA_REMOTE_SYS_SET_USER_CONFIGS        "set user configs"
+   #define OMA_REMOTE_SYS_DEL_USER                "del user"
+   #define OMA_REMOTE_SYS_ADD_GROUP               "add group"
+   #define OMA_REMOTE_SYS_DEL_GROUP               "del group"
+   #define OMA_REMOTE_SYS_LIST_LOGIN_USERS        "list login users"
+   #define OMA_REMOTE_SYS_LIST_ALL_USERS          "list all users"
+   #define OMA_REMOTE_SYS_LIST_GROUPS             "list all groups"
+   #define OMA_REMOTE_SYS_GET_CURRENT_USER        "get current user"
+   #define OMA_REMOTE_SYS_KILL_PROCESS            "kill process"
+   #define OMA_REMOTE_SYS_GET_PROC_ULIMIT_CONFIGS "get proc ulimit configs"
+   #define OMA_REMOTE_SYS_SET_PROC_ULIMIT_CONFIGS "set proc ulimit configs"
+   #define OMA_REMOTE_SYS_GET_SYSTEM_CONFIGS      "get system configs"
+   #define OMA_REMOTE_SYS_GET_USER_ENV            "get user env"
+   #define OMA_REMOTE_SYS_RUN_SERVICE             "run service"
+   #define OMA_REMOTE_SYS_BUILD_TRUSTY            "build trusty"
+   #define OMA_REMOTE_SYS_REMOVE_TRUSTY           "remove trusty"
+   #define OMA_REMOTE_CMD_RUN                     "cmd run"
+   #define OMA_REMOTE_CMD_START                   "cmd start"
+   #define OMA_REMOTE_CMD_RUN_JS                  "cmd run js"
+   #define OMA_REMOTE_FILE_OPEN                   "file open"
+   #define OMA_REMOTE_FILE_READ                   "file read"
+   #define OMA_REMOTE_FILE_WRITE                  "file write"
+   #define OMA_REMOTE_FILE_seek                   "file seek"
+   #define OMA_REMOTE_FILE_REMOVE                 "file remove"
+   #define OMA_REMOTE_FILE_ISEXIST                "file is exist"
+   #define OMA_REMOTE_FILE_COPY                   "file copy"
+   #define OMA_REMOTE_FILE_MOVE                   "file move"
+   #define OMA_REMOTE_FILE_MKDIR                  "file mkdir"
+   #define OMA_REMOTE_FILE_FIND                   "file find"
+   #define OMA_REMOTE_FILE_CHMOD                  "file chmod"
+   #define OMA_REMOTE_FILE_CHOWN                  "file chown"
+   #define OMA_REMOTE_FILE_CHGRP                  "file chgrp"
+   #define OMA_REMOTE_FILE_SET_UMASK              "file set umask"
+   #define OMA_REMOTE_FILE_GET_UMASK              "file get umask"
+   #define OMA_REMOTE_FILE_LIST                   "file list"
+   #define OMA_REMOTE_FILE_GET_PATH_TYPE          "file get path type"
+   #define OMA_REMOTE_FILE_IS_EMPTYDIR            "file is empty dir"
+   #define OMA_REMOTE_FILE_STAT                   "file stat"
+   #define OMA_REMOTE_FILE_MD5                    "file md5"
+   #define OMA_REMOTE_FILE_GET_CONTENT_SIZE       "file get content size"
 }
 
 #endif // OMAGENT_DEF_HPP__

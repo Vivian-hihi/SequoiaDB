@@ -40,7 +40,10 @@ spt2Files = [
       "spt/usrdef/sptUsrOma.cpp",
       "spt/usrdef/sptUsrOmaAssit.cpp",
       "spt/usrdef/sptUsrHash.cpp",
-      "spt/usrdef/sptUsrSdbTool.cpp"
+      "spt/usrdef/sptUsrSdbTool.cpp",
+      "spt/usrdef/sptUsrRemote.cpp",
+      "spt/usrdef/sptUsrRemoteAssit.cpp",
+      "spt/usrdef/sptUsrFilter.cpp"
       ]
 
 ossFiles = [

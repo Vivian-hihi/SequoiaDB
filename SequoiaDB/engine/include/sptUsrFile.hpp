@@ -51,6 +51,8 @@ namespace engine
                        _sptReturnVal &rval,
                        bson::BSONObj &detail) ;
 
+      INT32 destruct() ;
+
       INT32 read( const _sptArguments &arg,
                   _sptReturnVal &rval,
                   bson::BSONObj &detail ) ;
@@ -66,6 +68,10 @@ namespace engine
       INT32 close( const _sptArguments &arg,
                    _sptReturnVal &rval,
                    bson::BSONObj &detail ) ;
+
+      INT32 getInfo( const _sptArguments &arg,
+                     _sptReturnVal &rval,
+                     bson::BSONObj &detail ) ;
 
       static INT32 remove( const _sptArguments &arg,
                            _sptReturnVal &rval,
@@ -91,11 +97,73 @@ namespace engine
                       _sptReturnVal &rval,
                       bson::BSONObj &detail ) ;
 
-      static INT32 help( const _sptArguments &arg,
+      INT32 memberHelp( const _sptArguments &arg,
+                        _sptReturnVal &rval,
+                        bson::BSONObj &detail ) ;
+
+      static INT32 readFile( const _sptArguments &arg,
+                             _sptReturnVal &rval,
+                             bson::BSONObj &detail ) ;
+
+      static INT32 getFileObj( const _sptArguments &arg,
+                               _sptReturnVal &rval,
+                               bson::BSONObj &detail ) ;
+
+      static INT32 staticHelp( const _sptArguments &arg,
+                               _sptReturnVal &rval,
+                               bson::BSONObj &detail ) ;
+
+      static INT32 find( const _sptArguments &arg,
                          _sptReturnVal &rval,
                          bson::BSONObj &detail ) ;
 
-      INT32 destruct() ;
+      static INT32 chmod( const _sptArguments &arg,
+                          _sptReturnVal &rval,
+                          bson::BSONObj &detail ) ;
+
+      static INT32 chown( const _sptArguments &arg,
+                          _sptReturnVal &rval,
+                          bson::BSONObj &detail ) ;
+
+      static INT32 chgrp( const _sptArguments &arg,
+                          _sptReturnVal &rval,
+                          bson::BSONObj &detail ) ;
+
+      static INT32 getUmask( const _sptArguments &arg,
+                             _sptReturnVal &rval,
+                             bson::BSONObj &detail ) ;
+
+      static INT32 setUmask( const _sptArguments &arg,
+                             _sptReturnVal &rval,
+                             bson::BSONObj &detail ) ;
+
+      static INT32 list( const _sptArguments &arg,
+                         _sptReturnVal &rval,
+                         bson::BSONObj &detail ) ;
+
+      static INT32 isEmptyDir( const _sptArguments &arg,
+                               _sptReturnVal &rval,
+                               bson::BSONObj &detail ) ;
+
+      static INT32 getStat( const _sptArguments &arg,
+                            _sptReturnVal &rval,
+                            bson::BSONObj &detail ) ;
+
+      static INT32 md5( const _sptArguments &arg,
+                        _sptReturnVal &rval,
+                        bson::BSONObj &detail ) ;
+
+      static INT32 getPathType( const _sptArguments &arg,
+                                _sptReturnVal &rval,
+                                bson::BSONObj &detail ) ;
+
+   private:
+      static INT32 _extractListInfo( const CHAR* buf,
+                                     bson::BSONObjBuilder &builder,
+                                     BOOLEAN showDetail ) ;
+
+      static INT32 _extractFindInfo( const CHAR* buf,
+                                     bson::BSONObjBuilder &builder ) ;
 
    private:
       OSSFILE _file ;

@@ -45,6 +45,7 @@
 #include <net/if.h>
 #include <sys/ioctl.h>
 #include <arpa/inet.h>
+#include <sys/resource.h>
 #else
 #include <iphlpapi.h>
 #pragma comment( lib, "IPHLPAPI.lib" )
@@ -52,37 +53,13 @@
 
 using namespace bson ;
 
-#define SPT_MB_SIZE     ( 1024*1024 )
-#define SPT_DISK_SRC_FILE "/etc/mtab"
-
-#define SPT_DISK_IGNORE_TYPE_PROC         "proc"
-#define SPT_DISK_IGNORE_TYPE_SYSFS        "sysfs"
-#define SPT_DISK_IGNORE_TYPE_BINFMT_MISC  "binfmt_misc"
-#define SPT_DISK_IGNORE_TYPE_DEVPTS       "devpts"
-#define SPT_DISK_IGNORE_TYPE_FUSECTL      "fusectl"
-#define SPT_DISK_IGNORE_TYPE_SECURITYFS   "securityfs"
-#define SPT_DISK_IGNORE_TYPE_GVFS         "fuse.gvfs-fuse-daemon"
-
-#if defined (_LINUX)
-struct _cpuInfo
-{
-   string modelName ;
-   string coreNum ;
-   string freq ;
-   string physicalID ;
-   void reset()
-   {
-      modelName  = "" ;
-      coreNum    = "" ;
-      freq       = "" ;
-      physicalID = "" ;
-   }
-} ;
-typedef struct _cpuInfo cpuInfo ;
-#endif
-
 namespace engine
 {
+   JS_CONSTRUCT_FUNC_DEFINE( _sptUsrSystem, construct )
+   JS_DESTRUCT_FUNC_DEFINE( _sptUsrSystem, destruct )
+   JS_MEMBER_FUNC_DEFINE( _sptUsrSystem, getInfo )
+   JS_MEMBER_FUNC_DEFINE( _sptUsrSystem, memberHelp )
+   JS_STATIC_FUNC_DEFINE( _sptUsrSystem, getObj )
    JS_STATIC_FUNC_DEFINE( _sptUsrSystem, ping )
    JS_STATIC_FUNC_DEFINE( _sptUsrSystem, type )
    JS_STATIC_FUNC_DEFINE( _sptUsrSystem, getReleaseInfo )
@@ -104,9 +81,32 @@ namespace engine
    JS_STATIC_FUNC_DEFINE( _sptUsrSystem, getPID )
    JS_STATIC_FUNC_DEFINE( _sptUsrSystem, getTID )
    JS_STATIC_FUNC_DEFINE( _sptUsrSystem, getEWD )
-   JS_STATIC_FUNC_DEFINE( _sptUsrSystem, help )
+   JS_STATIC_FUNC_DEFINE( _sptUsrSystem, listProcess )
+   JS_STATIC_FUNC_DEFINE( _sptUsrSystem, killProcess )
+   JS_STATIC_FUNC_DEFINE( _sptUsrSystem, addUser )
+   JS_STATIC_FUNC_DEFINE( _sptUsrSystem, addGroup )
+   JS_STATIC_FUNC_DEFINE( _sptUsrSystem, setUserConfigs )
+   JS_STATIC_FUNC_DEFINE( _sptUsrSystem, delUser )
+   JS_STATIC_FUNC_DEFINE( _sptUsrSystem, delGroup )
+   JS_STATIC_FUNC_DEFINE( _sptUsrSystem, listLoginUsers )
+   JS_STATIC_FUNC_DEFINE( _sptUsrSystem, listAllUsers )
+   JS_STATIC_FUNC_DEFINE( _sptUsrSystem, listGroups )
+   JS_STATIC_FUNC_DEFINE( _sptUsrSystem, getCurrentUser )
+   JS_STATIC_FUNC_DEFINE( _sptUsrSystem, getSystemConfigs )
+   JS_STATIC_FUNC_DEFINE( _sptUsrSystem, getProcUlimitConfigs )
+   JS_STATIC_FUNC_DEFINE( _sptUsrSystem, setProcUlimitConfigs )
+   JS_STATIC_FUNC_DEFINE( _sptUsrSystem, runService )
+   JS_STATIC_FUNC_DEFINE( _sptUsrSystem, createSshKey )
+   JS_STATIC_FUNC_DEFINE( _sptUsrSystem, getHomePath )
+   JS_STATIC_FUNC_DEFINE( _sptUsrSystem, getUserEnv )
+   JS_STATIC_FUNC_DEFINE( _sptUsrSystem, staticHelp )
 
    JS_BEGIN_MAPPING( _sptUsrSystem, "System" )
+      JS_ADD_CONSTRUCT_FUNC( construct )
+      JS_ADD_DESTRUCT_FUNC( destruct )
+      JS_ADD_MEMBER_FUNC( "_getInfo", getInfo )
+      JS_ADD_MEMBER_FUNC( "help", memberHelp )
+      JS_ADD_STATIC_FUNC( "getObj", getObj )
       JS_ADD_STATIC_FUNC( "ping", ping )
       JS_ADD_STATIC_FUNC( "type", type )
       JS_ADD_STATIC_FUNC( "getReleaseInfo", getReleaseInfo )
@@ -128,8 +128,84 @@ namespace engine
       JS_ADD_STATIC_FUNC( "getPID", getPID )
       JS_ADD_STATIC_FUNC( "getTID", getTID )
       JS_ADD_STATIC_FUNC( "getEWD", getEWD )
-      JS_ADD_STATIC_FUNC( "help", help )
+      JS_ADD_STATIC_FUNC( "_listProcess", listProcess )
+      JS_ADD_STATIC_FUNC( "killProcess", killProcess )
+      JS_ADD_STATIC_FUNC( "addUser", addUser )
+      JS_ADD_STATIC_FUNC( "addGroup", addGroup )
+      JS_ADD_STATIC_FUNC( "setUserConfigs", setUserConfigs )
+      JS_ADD_STATIC_FUNC( "delUser", delUser )
+      JS_ADD_STATIC_FUNC( "delGroup", delGroup )
+      JS_ADD_STATIC_FUNC( "_listLoginUsers", listLoginUsers )
+      JS_ADD_STATIC_FUNC( "_listAllUsers", listAllUsers )
+      JS_ADD_STATIC_FUNC( "_listGroups", listGroups )
+      JS_ADD_STATIC_FUNC( "getCurrentUser", getCurrentUser )
+      JS_ADD_STATIC_FUNC( "getSystemConfigs", getSystemConfigs )
+      JS_ADD_STATIC_FUNC( "getProcUlimitConfigs", getProcUlimitConfigs )
+      JS_ADD_STATIC_FUNC( "setProcUlimitConfigs", setProcUlimitConfigs )
+      JS_ADD_STATIC_FUNC( "runService", runService )
+      JS_ADD_STATIC_FUNC( "getUserEnv", getUserEnv )
+      JS_ADD_STATIC_FUNC( "_createSshKey", createSshKey )
+      JS_ADD_STATIC_FUNC( "_getHomePath", getHomePath )
+      JS_ADD_STATIC_FUNC( "help", staticHelp )
    JS_MAPPING_END()
+
+   _sptUsrSystem::_sptUsrSystem()
+   {
+   }
+
+   _sptUsrSystem::~_sptUsrSystem()
+   {
+   }
+
+   INT32 _sptUsrSystem::getObj( const _sptArguments &arg,
+                                _sptReturnVal &rval,
+                                BSONObj &detail )
+   {
+      INT32 rc = SDB_OK ;
+      _sptUsrSystem * systemObj = new _sptUsrSystem() ;
+      rval.setUsrObjectVal( "", systemObj, SPT_CLASS_DEF( systemObj ) ) ;
+      return rc ;
+   }
+
+   INT32 _sptUsrSystem::construct( const _sptArguments & arg,
+                                   _sptReturnVal & rval,
+                                   BSONObj & detail )
+   {
+      detail = BSON( SPT_ERR << "Please get System Obj by calling Remote member function: getSystem()" ) ;
+      return SDB_SYS ;
+   }
+
+   INT32 _sptUsrSystem::destruct()
+   {
+      return SDB_OK ;
+   }
+
+   INT32 _sptUsrSystem::getInfo( const _sptArguments &arg,
+                                 _sptReturnVal &rval,
+                                 bson::BSONObj &detail )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj remoteInfo ;
+      BSONObjBuilder builder ;
+
+      if ( 0 < arg.argc() )
+      {
+         rc = arg.getBsonobj( 0, remoteInfo ) ;
+         if ( SDB_OK != rc )
+         {
+            detail = BSON( SPT_ERR << "remoteInfo must be obj" ) ;
+            goto error ;
+         }
+      }
+
+      builder.append( "type", "System" ) ;
+      builder.appendElements( remoteInfo ) ;
+      rval.setBSONObj( "", builder.obj() ) ;
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
 
    INT32 _sptUsrSystem::ping( const _sptArguments &arg,
                               _sptReturnVal &rval,
@@ -141,6 +217,7 @@ namespace engine
       stringstream cmd ;
       _ossCmdRunner runner ;
       UINT32 exitCode = 0 ;
+
       rc = arg.getString( 0, host ) ;
       if ( SDB_OUT_OF_BOUND == rc )
       {
@@ -177,8 +254,8 @@ namespace engine
          goto error ;
       }
 
-      builder.append( SPT_USR_SYSTEM_TARGET, host ) ;
-      builder.appendBool( SPT_USR_SYSTEM_REACHABLE, SDB_OK == exitCode ) ;
+      builder.append( CMD_USR_SYSTEM_TARGET, host ) ;
+      builder.appendBool( CMD_USR_SYSTEM_REACHABLE, SDB_OK == exitCode ) ;
       rval.setBSONObj( "", builder.obj() ) ;
 
    done:
@@ -239,10 +316,10 @@ namespace engine
          ossOSInfo info ;
          ossGetOSInfo( info ) ;
 
-         builder.append( SPT_USR_SYSTEM_DISTRIBUTOR, info._distributor ) ;
-         builder.append( SPT_USR_SYSTEM_RELASE, info._release ) ;
-         builder.append( SPT_USR_SYSTEM_DESP, info._desp ) ;
-         builder.append( SPT_USR_SYSTEM_BIT, info._bit ) ;
+         builder.append( CMD_USR_SYSTEM_DISTRIBUTOR, info._distributor ) ;
+         builder.append( CMD_USR_SYSTEM_RELASE, info._release ) ;
+         builder.append( CMD_USR_SYSTEM_DESP, info._desp ) ;
+         builder.append( CMD_USR_SYSTEM_BIT, info._bit ) ;
 
          rval.setBSONObj( "", builder.obj() ) ;
          goto done ;
@@ -307,11 +384,11 @@ namespace engine
 
       if ( NULL != ossStrstr( outStr.c_str(), "x86_64") )
       {
-         builder.append( SPT_USR_SYSTEM_BIT, 64 ) ;
+         builder.append( CMD_USR_SYSTEM_BIT, 64 ) ;
       }
       else
       {
-         builder.append( SPT_USR_SYSTEM_BIT, 32 ) ;
+         builder.append( CMD_USR_SYSTEM_BIT, 32 ) ;
       }
       rval.setBSONObj( "", builder.obj() ) ;
 
@@ -326,19 +403,38 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       vector<string> splited ;
-      /// not performance sensitive.
-      boost::algorithm::split( splited, buf, boost::is_any_of("\n:") ) ;
-      vector<string>::iterator itr = splited.begin() ;
       const string *distributor = NULL ;
       const string *release = NULL ;
       const string *desp = NULL ;
-      for ( ; itr != splited.end(); itr++ )
+
+      /// not performance sensitive.
+      try
+      {
+         boost::algorithm::split( splited, buf, boost::is_any_of("\n:") ) ;
+      }
+      catch( std::exception &e )
+      {
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "Failed to split result, rc: %d", rc ) ;
+         goto error ;
+      }
+      for ( vector<string>::iterator itr = splited.begin();
+            itr != splited.end(); itr++ )
       {
          if ( itr->empty() )
          {
             continue ;
          }
-         boost::algorithm::trim( *itr ) ;
+         try
+         {
+            boost::algorithm::trim( *itr ) ;
+         }
+         catch( std::exception &e )
+         {
+            rc = SDB_SYS ;
+            PD_LOG( PDERROR, "Failed to trim ,rc: %d", rc ) ;
+            goto error ;
+         }
          if ( "Distributor ID" == *itr &&
               itr < splited.end() - 1 )
          {
@@ -365,10 +461,9 @@ namespace engine
          goto error ;
       }
 
-      builder.append( SPT_USR_SYSTEM_DISTRIBUTOR, *distributor ) ;
-      builder.append( SPT_USR_SYSTEM_RELASE, *release ) ;
-      builder.append( SPT_USR_SYSTEM_DESP, *desp ) ;
-
+      builder.append( CMD_USR_SYSTEM_DISTRIBUTOR, *distributor ) ;
+      builder.append( CMD_USR_SYSTEM_RELASE, *release ) ;
+      builder.append( CMD_USR_SYSTEM_DESP, *desp ) ;
    done:
       return rc ;
    error:
@@ -444,7 +539,7 @@ namespace engine
          VEC_HOST_ITEM::iterator it = vecItems.begin() ;
          while ( it != vecItems.end() )
          {
-            sptHostItem &item = *it ;
+            usrSystemHostItem &item = *it ;
             ++it ;
             if( LINE_HOST == item._lineType && hostname == item._host )
             {
@@ -541,7 +636,7 @@ namespace engine
          BOOLEAN hasMod = FALSE ;
          while ( it != vecItems.end() )
          {
-            sptHostItem &item = *it ;
+            usrSystemHostItem &item = *it ;
             ++it ;
             if( item._lineType == LINE_HOST && hostname == item._host )
             {
@@ -561,7 +656,7 @@ namespace engine
          }
          if ( !hasMod )
          {
-            sptHostItem info ;
+            usrSystemHostItem info ;
             info._lineType = LINE_HOST ;
             info._host = hostname ;
             info._ip = ip ;
@@ -621,7 +716,7 @@ namespace engine
          BOOLEAN hasDel = FALSE ;
          while ( it != vecItems.end() )
          {
-            sptHostItem &item = *it ;
+            usrSystemHostItem &item = *it ;
             if( item._lineType == LINE_HOST && hostname == item._host )
             {
                // del
@@ -641,7 +736,6 @@ namespace engine
             }
          }
       }
-
    done:
       return rc ;
    error:
@@ -711,7 +805,7 @@ namespace engine
       if ( vecItems.size() > 0 )
       {
          VEC_HOST_ITEM::iterator itr = vecItems.end() - 1 ;
-         sptHostItem &info = *itr ;
+         usrSystemHostItem &info = *itr ;
          if ( info.toString().empty() )
          {
             vecItems.erase( itr ) ;
@@ -775,7 +869,7 @@ namespace engine
          while ( it != vecItems.end() )
          {
             ++count ;
-            sptHostItem &item = *it ;
+            usrSystemHostItem &item = *it ;
             ++it ;
             string text = item.toString() ;
             if ( !text.empty() || count < vecItems.size() )
@@ -822,8 +916,19 @@ namespace engine
    INT32 _sptUsrSystem::_extractHosts( const CHAR *buf,
                                        VEC_HOST_ITEM &vecItems )
    {
+      INT32 rc = SDB_OK ;
       vector<string> splited ;
-      boost::algorithm::split( splited, buf, boost::is_any_of("\r\n") ) ;
+
+      try
+      {
+         boost::algorithm::split( splited, buf, boost::is_any_of("\r\n") ) ;
+      }
+      catch( std::exception &e )
+      {
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "Failed to split result, rc: %d", rc ) ;
+         goto error ;
+      }
       if ( splited.empty() )
       {
          goto done ;
@@ -833,17 +938,26 @@ namespace engine
             itr != splited.end() ;
             itr++ )
       {
-         sptHostItem item ;
+         usrSystemHostItem item ;
 
          if ( itr->empty() )
          {
             vecItems.push_back( item ) ;
             continue ;
          }
-         boost::algorithm::trim( *itr ) ;
          vector<string> columns ;
-         boost::algorithm::split( columns, *itr, boost::is_any_of("\t ") ) ;
 
+         try
+         {
+            boost::algorithm::trim( *itr ) ;
+            boost::algorithm::split( columns, *itr, boost::is_any_of("\t ") ) ;
+         }
+         catch( std::exception &e )
+         {
+            rc = SDB_SYS ;
+            PD_LOG( PDERROR, "Failed to split result, rc: %d", rc ) ;
+            goto error ;
+         }
          for ( vector<string>::iterator itr2 = columns.begin();
                itr2 != columns.end();
                 /// do not ++
@@ -890,7 +1004,9 @@ namespace engine
       }
 
    done:
-      return SDB_OK ;
+      return rc ;
+   error:
+      goto done ;
    }
 
    void _sptUsrSystem::_buildHostsResult( VEC_HOST_ITEM & vecItems,
@@ -900,17 +1016,17 @@ namespace engine
       VEC_HOST_ITEM::iterator it = vecItems.begin() ;
       while ( it != vecItems.end() )
       {
-         sptHostItem &item = *it ;
+         usrSystemHostItem &item = *it ;
          ++it ;
 
          if ( LINE_HOST != item._lineType )
          {
             continue ;
          }
-         arrBuilder << BSON( SPT_USR_SYSTEM_IP << item._ip <<
-                             SPT_USR_SYSTEM_HOSTNAME << item._host ) ;
+         arrBuilder << BSON( CMD_USR_SYSTEM_IP << item._ip <<
+                             CMD_USR_SYSTEM_HOSTNAME << item._host ) ;
       }
-      builder.append( SPT_USR_SYSTEM_HOSTS, arrBuilder.arr() ) ;
+      builder.append( CMD_USR_SYSTEM_HOSTS, arrBuilder.arr() ) ;
    }
 
 
@@ -929,7 +1045,7 @@ namespace engine
 #else
    #define CPU_CMD "cat /proc/cpuinfo | grep -E 'model name|cpu MHz|cpu cores|physical id'"
 #endif
-   
+
       rc = runner.exec( CPU_CMD, exitCode,
                         FALSE, -1, FALSE, NULL, TRUE ) ;
       if ( SDB_OK != rc || SDB_OK != exitCode )
@@ -982,10 +1098,10 @@ namespace engine
          goto error ;
       }
 
-      builder.appendNumber( SPT_USR_SYSTEM_USER, user ) ;
-      builder.appendNumber( SPT_USR_SYSTEM_SYS, sys ) ;
-      builder.appendNumber( SPT_USR_SYSTEM_IDLE, idle ) ;
-      builder.appendNumber( SPT_USR_SYSTEM_OTHER, other ) ;
+      builder.appendNumber( CMD_USR_SYSTEM_USER, user ) ;
+      builder.appendNumber( CMD_USR_SYSTEM_SYS, sys ) ;
+      builder.appendNumber( CMD_USR_SYSTEM_IDLE, idle ) ;
+      builder.appendNumber( CMD_USR_SYSTEM_OTHER, other ) ;
       }
       rval.setBSONObj( "", builder.obj() ) ;
 
@@ -1050,20 +1166,20 @@ namespace engine
       }
 
       {
-      SINT64 user = 0 ;
-      SINT64 sys = 0 ;
-      SINT64 idle = 0 ;
-      SINT64 other = 0 ;
-      rc = ossGetCPUInfo( user, sys, idle, other ) ;
-      if ( SDB_OK != rc )
-      {
-         goto error ;
-      }
+         SINT64 user = 0 ;
+         SINT64 sys = 0 ;
+         SINT64 idle = 0 ;
+         SINT64 other = 0 ;
+         rc = ossGetCPUInfo( user, sys, idle, other ) ;
+         if ( SDB_OK != rc )
+         {
+            goto error ;
+         }
 
-      builder.appendNumber( SPT_USR_SYSTEM_USER, user ) ;
-      builder.appendNumber( SPT_USR_SYSTEM_SYS, sys ) ;
-      builder.appendNumber( SPT_USR_SYSTEM_IDLE, idle ) ;
-      builder.appendNumber( SPT_USR_SYSTEM_OTHER, other ) ;
+         builder.appendNumber( CMD_USR_SYSTEM_USER, user ) ;
+         builder.appendNumber( CMD_USR_SYSTEM_SYS, sys ) ;
+         builder.appendNumber( CMD_USR_SYSTEM_IDLE, idle ) ;
+         builder.appendNumber( CMD_USR_SYSTEM_OTHER, other ) ;
       }
       rval.setBSONObj( "", builder.obj() ) ;
 
@@ -1097,10 +1213,10 @@ namespace engine
 
       {
          BSONObjBuilder builder ;
-         builder.appendNumber( SPT_USR_SYSTEM_USER, user ) ;
-         builder.appendNumber( SPT_USR_SYSTEM_SYS, sys ) ;
-         builder.appendNumber( SPT_USR_SYSTEM_IDLE, idle ) ;
-         builder.appendNumber( SPT_USR_SYSTEM_OTHER, other ) ;
+         builder.appendNumber( CMD_USR_SYSTEM_USER, user ) ;
+         builder.appendNumber( CMD_USR_SYSTEM_SYS, sys ) ;
+         builder.appendNumber( CMD_USR_SYSTEM_IDLE, idle ) ;
+         builder.appendNumber( CMD_USR_SYSTEM_OTHER, other ) ;
 
          rval.setBSONObj( "", builder.obj() ) ;
       }
@@ -1132,8 +1248,17 @@ namespace engine
       vector<string> splited ;
       vector<string> vecFreq ;
 
-      boost::algorithm::split( splited, buf, boost::is_any_of("\r\n") ) ;
-      for ( vector<string>::iterator itr = splited.begin(); 
+      try
+      {
+         boost::algorithm::split( splited, buf, boost::is_any_of("\r\n") ) ;
+      }
+      catch( std::exception &e )
+      {
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "Failed to split result, rc: %d", rc ) ;
+         goto error ;
+      }
+      for ( vector<string>::iterator itr = splited.begin();
             itr != splited.end(); // don't itr++
           )
       {
@@ -1144,19 +1269,29 @@ namespace engine
          else
          {
             itr++ ;
-         }   
+         }
       }
       for ( vector<string>::iterator itr = splited.begin();
             itr != splited.end(); itr++ )
       {
-         // *itr is in the format of "xxx : xx", so let's 
+         // *itr is in the format of "xxx : xx", so let's
          // split it with ":"
          vector<string> columns ;
-         boost::algorithm::split( columns, *itr, boost::is_any_of(":") ) ;
-         for ( vector<string>::iterator itr2 = columns.begin(); 
+
+         try
+         {
+            boost::algorithm::split( columns, *itr, boost::is_any_of(":") ) ;
+         }
+         catch( std::exception &e )
+         {
+            rc = SDB_SYS ;
+            PD_LOG( PDERROR, "Failed to split result, rc: %d", rc ) ;
+            goto error ;
+         }
+         for ( vector<string>::iterator itr2 = columns.begin();
                itr2 != columns.end(); itr2++ )
          {
-            boost::algorithm::trim( *itr2 ) ;            
+            boost::algorithm::trim( *itr2 ) ;
          }
          if ( strProcessor == columns.at(0) )
          {
@@ -1208,12 +1343,12 @@ namespace engine
                   itr2 != vecFreq.end(); itr2++ )
             {
                string freq = *itr2 ;
-               boost::algorithm::replace_last( freq, "MHz", "" ) ;
                try
                {
+                  boost::algorithm::replace_last( freq, "MHz", "" ) ;
                   FLOAT32 inc = boost::lexical_cast<FLOAT32>( freq ) ;
                   totalFreq += inc / 1000.0 ;
-               } 
+               }
                catch( std::exception &e )
                {
                   PD_LOG( PDERROR, "unexpected err happened:%s, content:[%s]",
@@ -1233,9 +1368,9 @@ namespace engine
                rc = SDB_SYS ;
                goto error ;
             }
-            arrBuilder << BSON( SPT_USR_SYSTEM_CORE << coreNum
-                                << SPT_USR_SYSTEM_INFO << info
-                                << SPT_USR_SYSTEM_FREQ << strAvgFreq + "GHz" ) ;            
+            arrBuilder << BSON( CMD_USR_SYSTEM_CORE << coreNum
+                                << CMD_USR_SYSTEM_INFO << info
+                                << CMD_USR_SYSTEM_FREQ << strAvgFreq + "GHz" ) ;
             }
             // clean the counters
             processorCount = 0 ;
@@ -1247,7 +1382,7 @@ namespace engine
             vecFreq.clear() ;
          }
       }
-      builder.append( SPT_USR_SYSTEM_CPUS, arrBuilder.arr() ) ;
+      builder.append( CMD_USR_SYSTEM_CPUS, arrBuilder.arr() ) ;
    done:
       return rc ;
    error:
@@ -1274,8 +1409,17 @@ namespace engine
       cpuInfo info ;
       INT32 counter = 1 ;
 
-      boost::algorithm::split( splited, buf, boost::is_any_of("\r\n") ) ;
-      for ( vector<string>::iterator itr = splited.begin(); 
+      try
+      {
+         boost::algorithm::split( splited, buf, boost::is_any_of( "\r\n" ) ) ;
+      }
+      catch( std::exception &e )
+      {
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "Failed to split result, rc: %d", rc ) ;
+         goto error ;
+      }
+      for ( vector<string>::iterator itr = splited.begin();
             itr != splited.end(); // don't itr++
           )
       {
@@ -1286,7 +1430,7 @@ namespace engine
          else
          {
             itr++ ;
-         }   
+         }
       }
       if ( ( splited.size() % fieldNum ) != 0 )
       {
@@ -1299,14 +1443,33 @@ namespace engine
             itr != splited.end();
             itr++, counter++ )
       {
-         // *itr is in the format of "xxx : xx", so let's 
+         // *itr is in the format of "xxx : xx", so let's
          // split it with ":"
          vector<string> columns ;
-         boost::algorithm::split( columns, *itr, boost::is_any_of(":") ) ;
-         for ( vector<string>::iterator itr2 = columns.begin(); 
-               itr2 != columns.end(); itr2++ )
+
+         try
          {
-            boost::algorithm::trim( *itr2 ) ;            
+            boost::algorithm::split( columns, *itr, boost::is_any_of( ":" ) ) ;
+         }
+         catch( std::exception &e )
+         {
+            rc = SDB_SYS ;
+            PD_LOG( PDERROR, "Failed to split result, rc: %d", rc ) ;
+            goto error ;
+         }
+         try
+         {
+            for ( vector<string>::iterator itr2 = columns.begin();
+                  itr2 != columns.end(); itr2++ )
+            {
+               boost::algorithm::trim( *itr2 ) ;
+            }
+         }
+         catch( std::exception &e )
+         {
+            rc = SDB_SYS ;
+            PD_LOG( PDERROR, "Failed to trim, rc: %d", rc ) ;
+            goto error ;
          }
          if ( strModelName == columns.at(0) )
          {
@@ -1352,8 +1515,8 @@ namespace engine
             }
          }
       }
-      // merge the cpu info 
-      for ( set<string>::iterator itr = physicalIDSet.begin(); 
+      // merge the cpu info
+      for ( set<string>::iterator itr = physicalIDSet.begin();
             itr != physicalIDSet.end(); itr++ )
       {
          string physicalID = *itr ;
@@ -1399,11 +1562,11 @@ namespace engine
             rc = SDB_SYS ;
             goto error ;
          }
-         arrBuilder << BSON( SPT_USR_SYSTEM_CORE << coreNum
-                             << SPT_USR_SYSTEM_INFO << info
-                             << SPT_USR_SYSTEM_FREQ << strAvgFreq + "GHz" ) ;
+         arrBuilder << BSON( CMD_USR_SYSTEM_CORE << coreNum
+                             << CMD_USR_SYSTEM_INFO << info
+                             << CMD_USR_SYSTEM_FREQ << strAvgFreq + "GHz" ) ;
       }
-      builder.append( SPT_USR_SYSTEM_CPUS, arrBuilder.arr() ) ;
+      builder.append( CMD_USR_SYSTEM_CPUS, arrBuilder.arr() ) ;
    done:
       return rc ;
    error:
@@ -1420,7 +1583,17 @@ namespace engine
       BSONArrayBuilder arrBuilder ;
       vector<string> splited ;
       INT32 lineCount = 0 ;
-      boost::algorithm::split( splited, buf, boost::is_any_of("\r\n") ) ;
+
+      try
+      {
+         boost::algorithm::split( splited, buf, boost::is_any_of("\r\n") ) ;
+      }
+      catch( std::exception &e )
+      {
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "Failed to split result, rc: %d", rc ) ;
+         goto error ;
+      }
       for ( vector<string>::iterator itr = splited.begin();
             itr != splited.end();
             itr++ )
@@ -1430,13 +1603,22 @@ namespace engine
          {
             continue ;
          }
-         boost::algorithm::trim( *itr ) ;
          vector<string> columns ;
-         boost::algorithm::split( columns, *itr, boost::is_any_of("\t ") ) ;
 
+         try
+         {
+            boost::algorithm::trim( *itr ) ;
+            boost::algorithm::split( columns, *itr, boost::is_any_of("\t ") ) ;
+         }
+         catch( std::exception &e )
+         {
+            rc = SDB_SYS ;
+            PD_LOG( PDERROR, "Failed to split result, rc: %d", rc ) ;
+            goto error ;
+         }
          for ( vector<string>::iterator itr2 = columns.begin();
                itr2 != columns.end();
-               /// do not ++      
+               /// do not ++
                )
          {
             if ( itr2->empty() )
@@ -1475,12 +1657,12 @@ namespace engine
             info << columns.at( i ) << " " ;
          }
 
-         arrBuilder << BSON( SPT_USR_SYSTEM_CORE << coreNum
-                             << SPT_USR_SYSTEM_INFO << info.str()
-                             << SPT_USR_SYSTEM_FREQ << columns[0] ) ;
+         arrBuilder << BSON( CMD_USR_SYSTEM_CORE << coreNum
+                             << CMD_USR_SYSTEM_INFO << info.str()
+                             << CMD_USR_SYSTEM_FREQ << columns[ 0 ] ) ;
       }
 
-      builder.append( SPT_USR_SYSTEM_CPUS, arrBuilder.arr() ) ;
+      builder.append( CMD_USR_SYSTEM_CPUS, arrBuilder.arr() ) ;
    done:
       return rc ;
    error:
@@ -1524,11 +1706,11 @@ namespace engine
             goto error ;
          }
 
-         builder.append( SPT_USR_SYSTEM_SIZE, (INT32)(totalPhys/SPT_MB_SIZE) ) ;
-         builder.append( SPT_USR_SYSTEM_USED,
-                         (INT32)((totalPhys-availPhys)/SPT_MB_SIZE) ) ;
-         builder.append( SPT_USR_SYSTEM_FREE,(INT32)(availPhys/SPT_MB_SIZE) ) ;
-         builder.append( SPT_USR_SYSTEM_UNIT, "M" ) ;
+         builder.append( CMD_USR_SYSTEM_SIZE, (INT32)(totalPhys/CMD_MB_SIZE) ) ;
+         builder.append( CMD_USR_SYSTEM_USED,
+                         (INT32)((totalPhys-availPhys)/CMD_MB_SIZE) ) ;
+         builder.append( CMD_USR_SYSTEM_FREE,(INT32)(availPhys/CMD_MB_SIZE) ) ;
+         builder.append( CMD_USR_SYSTEM_UNIT, "M" ) ;
          rval.setBSONObj( "", builder.obj() ) ;
          goto done ;
       }
@@ -1574,11 +1756,20 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       vector<string> splited ;
-      boost::algorithm::split( splited, buf, boost::is_any_of("\t ") ) ;
 
+      try
+      {
+         boost::algorithm::split( splited, buf, boost::is_any_of("\t ") ) ;
+      }
+      catch( std::exception &e )
+      {
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "Failed to split result, rc: %d", rc ) ;
+         goto error ;
+      }
       for ( vector<string>::iterator itr = splited.begin();
             itr != splited.end();
-            /// do not ++   
+            /// do not ++
           )
       {
          if ( itr->empty() )
@@ -1600,13 +1791,13 @@ namespace engine
 
       try
       {
-         builder.append( SPT_USR_SYSTEM_SIZE,
+         builder.append( CMD_USR_SYSTEM_SIZE,
                          boost::lexical_cast<UINT32>(splited.at( 1 ) ) ) ;
-         builder.append( SPT_USR_SYSTEM_USED,
+         builder.append( CMD_USR_SYSTEM_USED,
                          boost::lexical_cast<UINT32>(splited.at( 2 ) ) ) ;
-         builder.append( SPT_USR_SYSTEM_FREE,
+         builder.append( CMD_USR_SYSTEM_FREE,
                          boost::lexical_cast<UINT32>(splited.at( 3) ) ) ;
-         builder.append( SPT_USR_SYSTEM_UNIT, "M" ) ;
+         builder.append( CMD_USR_SYSTEM_UNIT, "M" ) ;
       }
       catch ( std::exception &e )
       {
@@ -1650,9 +1841,9 @@ namespace engine
       stringstream ss ;
       stringstream filess ;
       const UINT32 bufSize = 256 ;
-      CHAR buf[bufSize + 1] = { 0 } ; 
+      CHAR buf[ bufSize + 1 ] = { 0 } ;
 
-      rc = ossOpen( SPT_DISK_SRC_FILE,
+      rc = ossOpen( CMD_DISK_SRC_FILE,
                     OSS_READONLY | OSS_SHAREREAD,
                     OSS_DEFAULTFILE,
                     file ) ;
@@ -1705,7 +1896,17 @@ namespace engine
       BSONObjBuilder builder ;
       BSONArrayBuilder arrBuilder ;
       vector<string> splited ;
-      boost::algorithm::split( splited, buf, boost::is_any_of("\r\n") ) ;
+
+      try
+      {
+         boost::algorithm::split( splited, buf, boost::is_any_of("\r\n") ) ;
+      }
+      catch( std::exception &e )
+      {
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "Failed to split result, rc: %d", rc ) ;
+         goto error ;
+      }
       for ( vector<string>::iterator itr = splited.begin();
             itr != splited.end();
             itr++ )
@@ -1716,9 +1917,18 @@ namespace engine
          const CHAR *fs = NULL ;
          const CHAR *fsType = NULL ;
          const CHAR *mount = NULL ;
-
          vector<string> columns ;
-         boost::algorithm::split( columns, *itr, boost::is_any_of("\t ") ) ;
+
+         try
+         {
+            boost::algorithm::split( columns, *itr, boost::is_any_of( "\t " ) ) ;
+         }
+         catch( std::exception &e )
+         {
+            rc = SDB_SYS ;
+            PD_LOG( PDERROR, "Failed to split result, rc: %d", rc ) ;
+            goto error ;
+         }
          if ( 6 != columns.size() )
          {
             continue ;
@@ -1730,35 +1940,38 @@ namespace engine
          rc = ossGetDiskInfo( mount, totalBytes, freeBytes ) ;
          if ( SDB_OK == rc )
          {
-            if ( ossStrcasecmp( SPT_DISK_IGNORE_TYPE_BINFMT_MISC, fsType ) == 0 
-                 || ossStrcasecmp( SPT_DISK_IGNORE_TYPE_SYSFS, fsType ) == 0
-                 || ossStrcasecmp( SPT_DISK_IGNORE_TYPE_PROC, fsType ) == 0
-                 || ossStrcasecmp( SPT_DISK_IGNORE_TYPE_DEVPTS, fsType ) == 0 
-                 || ossStrcasecmp( SPT_DISK_IGNORE_TYPE_FUSECTL, fsType ) == 0 
-                 || ossStrcasecmp( SPT_DISK_IGNORE_TYPE_GVFS, fsType ) == 0
-                 || ossStrcasecmp( SPT_DISK_IGNORE_TYPE_SECURITYFS, 
+            if ( ossStrcasecmp( CMD_DISK_IGNORE_TYPE_BINFMT_MISC, fsType ) == 0
+                 || ossStrcasecmp( CMD_DISK_IGNORE_TYPE_SYSFS, fsType ) == 0
+                 || ossStrcasecmp( CMD_DISK_IGNORE_TYPE_PROC, fsType ) == 0
+                 || ossStrcasecmp( CMD_DISK_IGNORE_TYPE_DEVPTS, fsType ) == 0
+                 || ossStrcasecmp( CMD_DISK_IGNORE_TYPE_FUSECTL, fsType ) == 0
+                 || ossStrcasecmp( CMD_DISK_IGNORE_TYPE_GVFS, fsType ) == 0
+                 || ossStrcasecmp( CMD_DISK_IGNORE_TYPE_SECURITYFS,
                                                                  fsType ) == 0 )
             {
                continue ;
             }
 
-            diskBuilder.append( SPT_USR_SYSTEM_FILESYSTEM,
+            diskBuilder.append( CMD_USR_SYSTEM_FILESYSTEM,
                                 fs ) ;
-            diskBuilder.append( SPT_USR_SYSTEM_FSTYPE, fsType ) ;
-            diskBuilder.appendNumber( SPT_USR_SYSTEM_SIZE, totalBytes / ( 1024 * 1024 ) ) ;
-            diskBuilder.appendNumber( SPT_USR_SYSTEM_USED, ( totalBytes - freeBytes ) / ( 1024 * 1024 ) ) ;
-            diskBuilder.append( SPT_USR_SYSTEM_UNIT, "MB" ) ;
-            diskBuilder.append( SPT_USR_SYSTEM_MOUNT, mount ) ;
-            diskBuilder.appendBool( SPT_USR_SYSTEM_ISLOCAL,
+            diskBuilder.append( CMD_USR_SYSTEM_FSTYPE, fsType ) ;
+            diskBuilder.appendNumber( CMD_USR_SYSTEM_SIZE, totalBytes / ( 1024 * 1024 ) ) ;
+            diskBuilder.appendNumber( CMD_USR_SYSTEM_USED, ( totalBytes - freeBytes ) / ( 1024 * 1024 ) ) ;
+            diskBuilder.append( CMD_USR_SYSTEM_UNIT, "MB" ) ;
+            diskBuilder.append( CMD_USR_SYSTEM_MOUNT, mount ) ;
+            diskBuilder.appendBool( CMD_USR_SYSTEM_ISLOCAL,
                                     string::npos != columns.at( 0 ).find( "/dev/", 0, 5 ) ) ;
 
             arrBuilder << diskBuilder.obj() ;
          }
       }
 
-      builder.append( SPT_USR_SYSTEM_DISKS, arrBuilder.arr() ) ;
+      builder.append( CMD_USR_SYSTEM_DISKS, arrBuilder.arr() ) ;
       rval.setBSONObj( "", builder.obj() ) ;
+   done:
       return rc ;
+   error:
+      goto done ;
    }
 
    INT32 _sptUsrSystem::_getWinDiskInfo( const _sptArguments &arg,
@@ -1840,7 +2053,17 @@ namespace engine
       string mount ;
       vector<string> splited ;
       INT32 lineCount = 0 ;
-      boost::algorithm::split( splited, buf, boost::is_any_of("\r\n") ) ;
+
+      try
+      {
+         boost::algorithm::split( splited, buf, boost::is_any_of( "\r\n" ) ) ;
+      }
+      catch( std::exception &e )
+      {
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "Failed to split result, rc: %d", rc ) ;
+         goto error ;
+      }
       for ( vector<string>::iterator itr = splited.begin();
             itr != splited.end();
             itr++ )
@@ -1852,11 +2075,20 @@ namespace engine
          }
 
          vector<string> columns ;
-         boost::algorithm::split( columns, *itr, boost::is_any_of("\t ") ) ;
 
+         try
+         {
+            boost::algorithm::split( columns, *itr, boost::is_any_of("\t ") ) ;
+         }
+         catch( std::exception &e )
+         {
+            rc = SDB_SYS ;
+            PD_LOG( PDERROR, "Failed to split result, rc: %d", rc ) ;
+            goto error ;
+         }
          for ( vector<string>::iterator itr2 = columns.begin();
                itr2 != columns.end();
-               /// do not ++      
+               /// do not ++
                )
          {
             if ( itr2->empty() )
@@ -1890,15 +2122,15 @@ namespace engine
             avaNumber = boost::lexical_cast<SINT64>( freeSpace ) ;
             totalNum = boost::lexical_cast<SINT64>( total ) ;
             usedNumber = totalNum - avaNumber ;
-            lineBuilder.append( SPT_USR_SYSTEM_FILESYSTEM,
+            lineBuilder.append( CMD_USR_SYSTEM_FILESYSTEM,
                                 fileSystem.c_str() ) ;
-            lineBuilder.appendNumber( SPT_USR_SYSTEM_SIZE,
-                                      (INT32)( totalNum / SPT_MB_SIZE ) ) ;
-            lineBuilder.appendNumber( SPT_USR_SYSTEM_USED,
-                                      (INT32)( usedNumber / SPT_MB_SIZE ) ) ;
-            lineBuilder.append( SPT_USR_SYSTEM_UNIT, "M" ) ;
-            lineBuilder.append( SPT_USR_SYSTEM_MOUNT, mount ) ;
-            lineBuilder.appendBool( SPT_USR_SYSTEM_ISLOCAL, TRUE ) ;
+            lineBuilder.appendNumber( CMD_USR_SYSTEM_SIZE,
+                                      (INT32)( totalNum / CMD_MB_SIZE ) ) ;
+            lineBuilder.appendNumber( CMD_USR_SYSTEM_USED,
+                                      (INT32)( usedNumber / CMD_MB_SIZE ) ) ;
+            lineBuilder.append( CMD_USR_SYSTEM_UNIT, "M" ) ;
+            lineBuilder.append( CMD_USR_SYSTEM_MOUNT, mount ) ;
+            lineBuilder.appendBool( CMD_USR_SYSTEM_ISLOCAL, TRUE ) ;
             arrBuilder << lineBuilder.obj() ;
          }
          catch ( std::exception &e )
@@ -1913,7 +2145,7 @@ namespace engine
          fileSystem.clear() ;
       } // end for
 
-      builder.append( SPT_USR_SYSTEM_DISKS, arrBuilder.arr() ) ;
+      builder.append( CMD_USR_SYSTEM_DISKS, arrBuilder.arr() ) ;
 
    done:
       return rc ;
@@ -1939,7 +2171,7 @@ namespace engine
          stringstream ss ;
          ss << "failed to get netcard info:" << rc ;
          detail = BSON( SPT_ERR << ss.str() ) ;
-         goto error ; 
+         goto error ;
       }
       rval.setBSONObj( "", builder.obj() ) ;
 
@@ -1995,8 +2227,8 @@ namespace engine
          {
             stringstream ss ;
             ss << "eth" << pAdapter->Index ;
-            arrBuilder << BSON( SPT_USR_SYSTEM_NAME << ss.str()
-                                << SPT_USR_SYSTEM_IP <<
+            arrBuilder << BSON( CMD_USR_SYSTEM_NAME << ss.str()
+                                << CMD_USR_SYSTEM_IP <<
                                 pAdapter->IpAddressList.IpAddress.String ) ;
             pAdapter = pAdapter->Next ;
          }
@@ -2034,14 +2266,14 @@ namespace engine
             i > 0;
             --i )
       {
-         arrBuilder << BSON( SPT_USR_SYSTEM_NAME << ifreq->ifr_name
-                             << SPT_USR_SYSTEM_IP <<
+         arrBuilder << BSON( CMD_USR_SYSTEM_NAME << ifreq->ifr_name
+                             << CMD_USR_SYSTEM_IP <<
                              inet_ntoa(((struct sockaddr_in*)&
                                          (ifreq->ifr_addr))->sin_addr) ) ;
          ++ifreq ;
       }
 #endif
-      builder.append( SPT_USR_SYSTEM_NETCARDS, arrBuilder.arr() ) ;
+      builder.append( CMD_USR_SYSTEM_NETCARDS, arrBuilder.arr() ) ;
    done:
       if ( pBuff )
       {
@@ -2062,12 +2294,10 @@ namespace engine
          rc = SDB_INVALIDARG ;
          goto error ;
       }
-
       {
-      BSONObj info = BSON( "FireWall" << "unknown" ) ;
-      rval.setBSONObj( "", info ) ;
+         BSONObj info = BSON( "FireWall" << "unknown" ) ;
+         rval.setBSONObj( "", info ) ;
       }
-
    done:
       return rc ;
    error:
@@ -2082,16 +2312,37 @@ namespace engine
       BSONArrayBuilder arrayBuilder ;
       INT32 rc = SDB_OK ;
       vector<string> vLines ;
-      boost::algorithm::split( vLines, buf, boost::is_any_of("\n") ) ;
-      vector<string>::iterator iterLine = vLines.begin() ;
+      vector<string>::iterator iterLine ;
+
+      try
+      {
+         boost::algorithm::split( vLines, buf, boost::is_any_of( "\r\n" ) ) ;
+      }
+      catch( std::exception &e )
+      {
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "Failed to split result, rc: %d", rc ) ;
+         goto error ;
+      }
+      iterLine = vLines.begin() ;
+
       while ( iterLine != vLines.end() )
       {
          if ( !iterLine->empty() )
          {
             const CHAR *oneLine = iterLine->c_str() ;
             vector<string> vColumns ;
-            boost::algorithm::split( vColumns, oneLine, 
-                                     boost::is_any_of("\t ") ) ;
+            try
+            {
+               boost::algorithm::split( vColumns, oneLine,
+                                        boost::is_any_of( "\t " ) ) ;
+            }
+            catch( std::exception &e )
+            {
+               rc = SDB_SYS ;
+               PD_LOG( PDERROR, "Failed to split result, rc: %d", rc ) ;
+               goto error ;
+            }
             vector<string>::iterator iterColumn = vColumns.begin() ;
             while ( iterColumn != vColumns.end() )
             {
@@ -2116,31 +2367,31 @@ namespace engine
             try
             {
                BSONObjBuilder innerBuilder ;
-               innerBuilder.append( SPT_USR_SYSTEM_NAME,
+               innerBuilder.append( CMD_USR_SYSTEM_NAME,
                              boost::lexical_cast<string>( vColumns.at( 0 ) ) ) ;
-               innerBuilder.append( SPT_USR_SYSTEM_RX_BYTES,
-                            ( long long )boost::lexical_cast<UINT64>( 
+               innerBuilder.append( CMD_USR_SYSTEM_RX_BYTES,
+                            ( long long )boost::lexical_cast<UINT64>(
                                                          vColumns.at( 1 ) ) ) ;
-               innerBuilder.append( SPT_USR_SYSTEM_RX_PACKETS,
-                            ( long long )boost::lexical_cast<UINT64>( 
+               innerBuilder.append( CMD_USR_SYSTEM_RX_PACKETS,
+                            ( long long )boost::lexical_cast<UINT64>(
                                                          vColumns.at( 2 ) ) ) ;
-               innerBuilder.append( SPT_USR_SYSTEM_RX_ERRORS,
-                            ( long long )boost::lexical_cast<UINT64>( 
+               innerBuilder.append( CMD_USR_SYSTEM_RX_ERRORS,
+                            ( long long )boost::lexical_cast<UINT64>(
                                                          vColumns.at( 3 ) ) ) ;
-               innerBuilder.append( SPT_USR_SYSTEM_RX_DROPS,
-                            ( long long )boost::lexical_cast<UINT64>( 
+               innerBuilder.append( CMD_USR_SYSTEM_RX_DROPS,
+                            ( long long )boost::lexical_cast<UINT64>(
                                                          vColumns.at( 4 ) ) ) ;
-               innerBuilder.append( SPT_USR_SYSTEM_TX_BYTES,
-                            ( long long )boost::lexical_cast<UINT64>( 
+               innerBuilder.append( CMD_USR_SYSTEM_TX_BYTES,
+                            ( long long )boost::lexical_cast<UINT64>(
                                                          vColumns.at( 5 ) ) ) ;
-               innerBuilder.append( SPT_USR_SYSTEM_TX_PACKETS,
+               innerBuilder.append( CMD_USR_SYSTEM_TX_PACKETS,
                             ( long long )boost::lexical_cast<UINT64>(
                                                          vColumns.at( 6 ) ) ) ;
-               innerBuilder.append( SPT_USR_SYSTEM_TX_ERRORS,
-                            ( long long )boost::lexical_cast<UINT64>( 
+               innerBuilder.append( CMD_USR_SYSTEM_TX_ERRORS,
+                            ( long long )boost::lexical_cast<UINT64>(
                                                          vColumns.at( 7 ) ) ) ;
-               innerBuilder.append( SPT_USR_SYSTEM_TX_DROPS,
-                            ( long long )boost::lexical_cast<UINT64>( 
+               innerBuilder.append( CMD_USR_SYSTEM_TX_DROPS,
+                            ( long long )boost::lexical_cast<UINT64>(
                                                          vColumns.at( 8 ) ) ) ;
                BSONObj obj = innerBuilder.obj() ;
                arrayBuilder.append( obj ) ;
@@ -2158,8 +2409,8 @@ namespace engine
 
       try
       {
-         builder.append( SPT_USR_SYSTEM_CALENDAR_TIME, (long long)myTime ) ;
-         builder.append( SPT_USR_SYSTEM_NETCARDS, arrayBuilder.arr() ) ;
+         builder.append( CMD_USR_SYSTEM_CALENDAR_TIME, (long long)myTime ) ;
+         builder.append( CMD_USR_SYSTEM_NETCARDS, arrayBuilder.arr() ) ;
       }
       catch ( std::exception &e )
       {
@@ -2182,7 +2433,7 @@ namespace engine
 #endif
 
 #if defined (_LINUX)
-   INT32 _sptUsrSystem::_snapshotNetcardInfo( bson::BSONObjBuilder &builder, 
+   INT32 _sptUsrSystem::_snapshotNetcardInfo( bson::BSONObjBuilder &builder,
                                               bson::BSONObj &detail )
    {
       INT32 rc        = SDB_OK ;
@@ -2234,7 +2485,7 @@ namespace engine
       goto done ;
    }
 #else
-   INT32 _sptUsrSystem::_snapshotNetcardInfo( bson::BSONObjBuilder &builder, 
+   INT32 _sptUsrSystem::_snapshotNetcardInfo( bson::BSONObjBuilder &builder,
                                               bson::BSONObj &detail )
    {
       INT32 rc              = SDB_OK ;
@@ -2244,7 +2495,7 @@ namespace engine
       time_t myTime ;
 
       DWORD size = sizeof( MIB_IFTABLE ) ;
-      pTable     = (PMIB_IFTABLE) SDB_OSS_MALLOC( size ) ; 
+      pTable     = (PMIB_IFTABLE) SDB_OSS_MALLOC( size ) ;
       if ( NULL == pTable )
       {
          rc = SDB_OOM ;
@@ -2295,7 +2546,7 @@ namespace engine
          BSONArrayBuilder arrayBuilder ;
          for ( UINT i = 0 ; i < pTable->dwNumEntries ; i++ )
          {
-            MIB_IFROW Row = pTable->table[i];
+            MIB_IFROW Row = pTable->table[ i ];
             if ( IF_TYPE_ETHERNET_CSMACD != Row.dwType )
             {
                continue ;
@@ -2304,31 +2555,31 @@ namespace engine
             BSONObjBuilder innerBuilder ;
             stringstream ss ;
             ss << "eth" << Row.dwIndex ;
-            innerBuilder.append( SPT_USR_SYSTEM_NAME, ss.str() ) ;
-            innerBuilder.append( SPT_USR_SYSTEM_RX_BYTES,
+            innerBuilder.append( CMD_USR_SYSTEM_NAME, ss.str() ) ;
+            innerBuilder.append( CMD_USR_SYSTEM_RX_BYTES,
                                  ( long long )Row.dwInOctets ) ;
-            innerBuilder.append( SPT_USR_SYSTEM_RX_PACKETS,
+            innerBuilder.append( CMD_USR_SYSTEM_RX_PACKETS,
                           ( long long )
                                  ( Row.dwInUcastPkts + Row.dwInNUcastPkts ) ) ;
-            innerBuilder.append( SPT_USR_SYSTEM_RX_ERRORS,
+            innerBuilder.append( CMD_USR_SYSTEM_RX_ERRORS,
                                  ( long long )Row.dwInErrors ) ;
-            innerBuilder.append( SPT_USR_SYSTEM_RX_DROPS,
+            innerBuilder.append( CMD_USR_SYSTEM_RX_DROPS,
                                  ( long long )Row.dwInDiscards ) ;
-            innerBuilder.append( SPT_USR_SYSTEM_TX_BYTES,
+            innerBuilder.append( CMD_USR_SYSTEM_TX_BYTES,
                                  ( long long )Row.dwOutOctets ) ;
-            innerBuilder.append( SPT_USR_SYSTEM_TX_PACKETS,
-                          ( long long ) 
+            innerBuilder.append( CMD_USR_SYSTEM_TX_PACKETS,
+                          ( long long )
                                 ( Row.dwOutUcastPkts + Row.dwOutNUcastPkts ) ) ;
-            innerBuilder.append( SPT_USR_SYSTEM_TX_ERRORS,
+            innerBuilder.append( CMD_USR_SYSTEM_TX_ERRORS,
                                  ( long long )Row.dwOutErrors ) ;
-            innerBuilder.append( SPT_USR_SYSTEM_TX_DROPS,
+            innerBuilder.append( CMD_USR_SYSTEM_TX_DROPS,
                                  ( long long )Row.dwOutDiscards ) ;
             BSONObj obj = innerBuilder.obj() ;
             arrayBuilder.append( obj ) ;
          }
 
-         builder.append( SPT_USR_SYSTEM_CALENDAR_TIME, (long long)myTime ) ;
-         builder.append( SPT_USR_SYSTEM_NETCARDS, arrayBuilder.arr() ) ;
+         builder.append( CMD_USR_SYSTEM_CALENDAR_TIME, (long long)myTime ) ;
+         builder.append( CMD_USR_SYSTEM_NETCARDS, arrayBuilder.arr() ) ;
       }
       catch ( std::exception &e )
       {
@@ -2454,7 +2705,7 @@ namespace engine
          PD_LOG ( PDDEBUG, "port[%d] is usable", port ) ;
          result = TRUE ;
       }
-      builder.appendBool( SPT_USR_SYSTEM_USABLE, result ) ;
+      builder.appendBool( CMD_USR_SYSTEM_USABLE, result ) ;
       //rval.setStringVal( "", builder.obj().toString( FALSE, TRUE ).c_str() ) ;
       rval.setBSONObj( "", builder.obj() ) ;
       //close the socket
@@ -2485,7 +2736,7 @@ namespace engine
       }
       id = ossGetCurrentProcessID() ;
       rval.setNativeVal( "", NumberInt, (const void *)(&id) ) ;
-      
+
    done:
       return rc ;
    error:
@@ -2551,12 +2802,2575 @@ namespace engine
       goto done ;
    }
 
-   INT32 _sptUsrSystem::help( const _sptArguments & arg,
-                              _sptReturnVal & rval,
-                              BSONObj & detail )
+   INT32 _sptUsrSystem::listProcess( const _sptArguments & arg,
+                                     _sptReturnVal & rval,
+                                     BSONObj & detail )
+   {
+      INT32 rc         = SDB_OK ;
+      UINT32 exitCode  = 0 ;
+      BSONObjBuilder   builder ;
+      BSONObj          optionObj ;
+      string           outStr ;
+      stringstream     cmd ;
+      _ossCmdRunner    runner ;
+      BOOLEAN          showDetail = FALSE ;
+
+      // get optionObj
+      if( arg.argc() > 0 )
+      {
+         rc = arg.getBsonobj( 0, optionObj ) ;
+         if ( SDB_OK != rc )
+         {
+            detail = BSON( SPT_ERR << "optionObj must be BSON" ) ;
+            PD_LOG( PDERROR, "optionObj must be BSON, rc: %d", rc ) ;
+            goto error ;
+         }
+         showDetail = optionObj.getBoolField( "detail" ) ;
+      }
+
+      // build cmd
+#if defined ( _LINUX )
+   cmd << "ps aux" ;
+#elif defined (_WINDOWS)
+   cmd << "tasklist /FO \"CSV\"" ;
+#endif
+
+      // run cmd
+      rc = runner.exec( cmd.str().c_str(), exitCode,
+                        FALSE, -1, FALSE, NULL, TRUE ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to exec cmd, rc:%d, exit:%d",
+                 rc, exitCode ) ;
+         stringstream ss ;
+         ss << "failed to exec cmd " << cmd.str() << ",rc:"
+            << rc
+            << ",exit:"
+            << exitCode ;
+         detail = BSON( SPT_ERR << ss.str() ) ;
+         goto error ;
+      }
+
+      // get result
+      rc = runner.read( outStr ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to read msg from cmd runner:%d", rc ) ;
+         stringstream ss ;
+         ss << "failed to read msg from cmd \"" << cmd.str() << "\", rc:"
+            << rc ;
+         detail = BSON( SPT_ERR << ss.str() ) ;
+         goto error ;
+      }
+
+      // extract result
+      rc = _extractProcessInfo( outStr.c_str(), builder, showDetail ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
+
+      rval.setBSONObj( "", builder.obj() ) ;
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+#if defined ( _LINUX )
+   INT32 _sptUsrSystem::_extractProcessInfo( const CHAR *buf,
+                                             BSONObjBuilder &builder,
+                                             BOOLEAN showDetail )
+   {
+      INT32 rc          = SDB_OK ;
+      vector<string>    splited ;
+      vector<BSONObj>   procVec ;
+
+      if ( NULL == buf )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG( PDERROR, "buf can't be null, rc: %d", rc ) ;
+         goto error ;
+      }
+
+      /* format:
+      USER       PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND
+      root         1  0.0  0.0  84096  1352 ?        Ss   Jun12   0:06 /sbin/init
+      */
+      try
+      {
+         boost::algorithm::split( splited, buf, boost::is_any_of( "\r\n" ) ) ;
+      }
+      catch( std::exception &e )
+      {
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "Failed to split result, rc: %d", rc ) ;
+         goto error ;
+      }
+      for ( vector<string>::iterator itr = splited.begin();
+            itr != splited.end();  )
+      {
+         if ( itr->empty() )
+         {
+            itr = splited.erase( itr ) ;
+         }
+         else
+         {
+            itr++ ;
+         }
+      }
+
+      // build obj vector
+      if( TRUE == showDetail )
+      {
+         for ( vector<string>::iterator itrSplit = splited.begin() + 1;
+               itrSplit != splited.end(); itrSplit++ )
+         {
+            vector<string> columns ;
+            BSONObjBuilder proObjBuilder ;
+
+            try
+            {
+               boost::algorithm::split( columns, *itrSplit,
+                                        boost::is_any_of(" ") ) ;
+            }
+            catch( std::exception &e )
+            {
+               rc = SDB_SYS ;
+               PD_LOG( PDERROR, "Failed to split result, rc: %d", rc ) ;
+               goto error ;
+            }
+            for ( vector<string>::iterator itrCol = columns.begin();
+                  itrCol != columns.end();  )
+            {
+               if ( itrCol->empty() )
+               {
+                  itrCol = columns.erase( itrCol ) ;
+               }
+               else
+               {
+                  itrCol++ ;
+               }
+            }
+
+            // result at least contain 11 cols
+            if ( 11 > columns.size() )
+            {
+               rc = SDB_SYS ;
+               PD_LOG( PDERROR, "Failed to build result" ) ;
+               goto error ;
+            }
+
+            // filename may contain ' ', need to merge
+            for ( UINT32 index = 11; index < columns.size(); index++ )
+            {
+               columns[ 10 ] += " " + columns[index] ;
+            }
+            proObjBuilder.append( CMD_USR_SYSTEM_PROC_USER, columns[ 0 ] ) ;
+            proObjBuilder.append( CMD_USR_SYSTEM_PROC_PID, columns[ 1 ] ) ;
+            proObjBuilder.append( CMD_USR_SYSTEM_PROC_STATUS, columns[ 7 ] ) ;
+            proObjBuilder.append( CMD_USR_SYSTEM_PROC_CMD, columns[ 10 ] ) ;
+            procVec.push_back( proObjBuilder.obj() ) ;
+         }
+      }
+      else
+      {
+         for ( vector<string>::iterator itrSplit = splited.begin() + 1;
+            itrSplit != splited.end(); itrSplit++ )
+         {
+            vector<string> columns ;
+            BSONObjBuilder proObjBuilder ;
+
+            try
+            {
+               boost::algorithm::split( columns, *itrSplit,
+                                        boost::is_any_of(" ") ) ;
+            }
+            catch( std::exception &e )
+            {
+               rc = SDB_SYS ;
+               PD_LOG( PDERROR, "Failed to split result, rc: %d", rc ) ;
+               goto error ;
+            }
+            for ( vector<string>::iterator itrCol = columns.begin();
+                  itrCol != columns.end();  )
+            {
+               if ( itrCol->empty() )
+               {
+                  itrCol = columns.erase( itrCol ) ;
+               }
+               else
+               {
+                  itrCol++ ;
+               }
+            }
+
+            // result at least contain 11 cols
+            if ( 11 > columns.size() )
+            {
+               rc = SDB_SYS ;
+               PD_LOG( PDERROR, "Failed to build result" ) ;
+               goto error ;
+            }
+
+            // filename may contain ' ', need to merge
+            for ( UINT32 index = 11; index < columns.size(); index++ )
+            {
+               columns[ 10 ] += " " + columns[ index ] ;
+            }
+            proObjBuilder.append( CMD_USR_SYSTEM_PROC_PID, columns[ 1 ] ) ;
+            proObjBuilder.append( CMD_USR_SYSTEM_PROC_CMD, columns[ 10 ] ) ;
+            procVec.push_back( proObjBuilder.obj() ) ;
+         }
+      }
+
+      // merge vector< BSONObj > into BsonObj
+      for( UINT32 index = 0; index < procVec.size(); index++ )
+      {
+         try
+         {
+            builder.append( boost::lexical_cast<string>( index ).c_str(),
+                            procVec[ index ] ) ;
+         }
+         catch( std::exception &e )
+         {
+            rc = SDB_SYS ;
+            PD_LOG( PDERROR, "Fail to build retObj, rc: %d", rc ) ;
+            goto error ;
+         }
+      }
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+#elif defined (_WINDOWS)
+   INT32 _sptUsrSystem::_extractProcessInfo( const CHAR *buf,
+                                             BSONObjBuilder &builder,
+                                             BOOLEAN showDetail )
+   {
+      INT32 rc            = SDB_OK ;
+      vector<string>      splited ;
+      vector< BSONObj >   procVec ;
+
+      if ( NULL == buf )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG( PDERROR, "buf can't be null, rc: %d", rc ) ;
+         goto error ;
+      }
+
+      /* format:
+      System Idle Process","0","Services","0","24 K"
+      */
+      try
+      {
+         boost::algorithm::split( splited, buf, boost::is_any_of("\r\n") ) ;
+      }
+      catch( std::exception &e )
+      {
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "Failed to split result, rc: %d", rc ) ;
+         goto error ;
+      }
+      for ( vector<string>::iterator itr = splited.begin();
+            itr != splited.end();  )
+      {
+         if ( itr->empty() )
+         {
+            itr = splited.erase( itr ) ;
+         }
+         else
+         {
+            itr++ ;
+         }
+      }
+
+      // build obj vector
+      if( TRUE == showDetail )
+      {
+         for ( vector<string>::iterator itrSplit = splited.begin() + 1;
+               itrSplit != splited.end(); itrSplit++ )
+         {
+            vector<string> columns ;
+            BSONObjBuilder proObjBuilder ;
+
+            try
+            {
+               boost::algorithm::split( columns, *itrSplit,
+                                        boost::is_any_of( ",\"" ) ) ;
+            }
+            catch( std::exception &e )
+            {
+               rc = SDB_SYS ;
+               PD_LOG( PDERROR, "Failed to split result, rc: %d", rc ) ;
+               goto error ;
+            }
+            for ( vector<string>::iterator itrCol = columns.begin();
+                  itrCol != columns.end();  )
+            {
+               if ( itrCol->empty() )
+               {
+                  itrCol = columns.erase( itrCol ) ;
+               }
+               else
+               {
+                  itrCol++ ;
+               }
+            }
+            proObjBuilder.append( CMD_USR_SYSTEM_PROC_USER, "" ) ;
+            proObjBuilder.append( CMD_USR_SYSTEM_PROC_PID, columns[ 1 ] ) ;
+            proObjBuilder.append( CMD_USR_SYSTEM_PROC_STATUS, "" ) ;
+            proObjBuilder.append( CMD_USR_SYSTEM_PROC_CMD, columns[ 0 ] ) ;
+            procVec.push_back( proObjBuilder.obj() ) ;
+         }
+      }
+      else
+      {
+         for ( vector<string>::iterator itrSplit = splited.begin() + 1;
+               itrSplit != splited.end(); itrSplit++ )
+         {
+            vector<string> columns ;
+            BSONObjBuilder proObjBuilder ;
+
+            try
+            {
+               boost::algorithm::split( columns, *itrSplit,
+                                        boost::is_any_of( ",\"" ) ) ;
+            }
+            catch( std::exception &e )
+            {
+               rc = SDB_SYS ;
+               PD_LOG( PDERROR, "Failed to split result, rc: %d", rc ) ;
+               goto error ;
+            }
+            for ( vector<string>::iterator itrCol = columns.begin();
+                  itrCol != columns.end();  )
+            {
+               if ( itrCol->empty() )
+               {
+                  itrCol = columns.erase( itrCol ) ;
+               }
+               else
+               {
+                  itrCol++ ;
+               }
+            }
+            proObjBuilder.append( CMD_USR_SYSTEM_PROC_PID, columns[ 1 ] ) ;
+            proObjBuilder.append( CMD_USR_SYSTEM_PROC_CMD, columns[ 0 ] ) ;
+            procVec.push_back( proObjBuilder.obj() ) ;
+         }
+      }
+
+      // merge into BsonObj
+      for( UINT32 index = 0; index < procVec.size(); index++ )
+      {
+         try
+         {
+            builder.append( boost::lexical_cast<string>( index ).c_str(),
+                            procVec[ index ] ) ;
+         }
+         catch( std::exception &e )
+         {
+            rc = SDB_SYS ;
+            PD_LOG( PDERROR, "Fail to build retObj, rc: %d", rc ) ;
+            goto error ;
+         }
+      }
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+#endif
+
+
+#if defined (_LINUX)
+   INT32 _sptUsrSystem::killProcess( const _sptArguments &arg,
+                                     _sptReturnVal &rval,
+                                     BSONObj &detail )
+   {
+      INT32 rc           = SDB_OK ;
+      UINT32 exitCode    = 0 ;
+      INT32 sigNum       = 15 ;
+      BSONObj            optionObj ;
+      stringstream       cmd ;
+      _ossCmdRunner      runner ;
+      string             outStr ;
+      string             sig ;
+
+      // check argument
+      if ( 1 < arg.argc() )
+      {
+         rc = SDB_INVALIDARG ;
+         detail = BSON( SPT_ERR << "killProcess() only have an argument" ) ;
+         goto error ;
+      }
+
+      rc = arg.getBsonobj( 0, optionObj ) ;
+      if ( SDB_OUT_OF_BOUND == rc )
+      {
+         detail = BSON( SPT_ERR << "optionObj must be config" ) ;
+      }
+      else if ( SDB_OK != rc )
+      {
+         detail = BSON( SPT_ERR << "optionObj must be BsonObj" ) ;
+      }
+      PD_RC_CHECK( rc, PDERROR, "Failed to get optionObj, rc: %d", rc ) ;
+
+      if ( TRUE == optionObj.hasField( "sig" ) )
+      {
+         if ( String != optionObj.getField( "sig" ).type() )
+         {
+            rc = SDB_INVALIDARG ;
+            detail = BSON( SPT_ERR << "sig must be string" ) ;
+            goto error ;
+         }
+         sig = optionObj.getStringField( "sig" ) ;
+
+         if ( "term" != sig && "kill" != sig )
+         {
+            rc = SDB_INVALIDARG ;
+            detail = BSON( SPT_ERR << "sig must be \"term\" or \"kill\"" ) ;
+            goto error ;
+         }
+         else if ( "kill" == sig )
+         {
+            sigNum = 9 ;
+         }
+      }
+
+      cmd << "kill -" << sigNum ;
+
+      if ( FALSE == optionObj.hasField( "pid" ) )
+      {
+         rc = SDB_INVALIDARG ;
+         detail = BSON( SPT_ERR << "pid must be config" ) ;
+      }
+      else if ( NumberInt != optionObj.getField( "pid" ).type() )
+      {
+         rc = SDB_INVALIDARG ;
+         detail = BSON( SPT_ERR << "pid must be int" ) ;
+      }
+      PD_RC_CHECK( rc, PDERROR, "Failed to get pid, rc: %d", rc ) ;
+      cmd << " " << optionObj.getIntField( "pid" ) ;
+
+      // run cmd
+      rc = runner.exec( cmd.str().c_str(), exitCode,
+                        FALSE, -1, FALSE, NULL, TRUE ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to exec cmd, rc:%d, exit:%d",
+                 rc, exitCode ) ;
+         stringstream ss ;
+         ss << "failed to exec cmd " << cmd.str() << ",rc:"
+            << rc
+            << ",exit:"
+            << exitCode ;
+         detail = BSON( SPT_ERR << ss.str() ) ;
+         goto error ;
+      }
+
+      // get result
+      rc = runner.read( outStr ) ;
+      if ( SDB_OK != rc )
+      {
+         detail = BSON( SPT_ERR << "Failed to read result" ) ;
+         goto error ;
+      }
+      else if ( SDB_OK != exitCode )
+      {
+         rc = exitCode ;
+         detail = BSON( SPT_ERR << outStr ) ;
+         goto error ;
+      }
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+#elif defined (_WINDOWS)
+
+   INT32 _sptUsrSystem::killProcess( const _sptArguments &arg,
+                                     _sptReturnVal &rval,
+                                     BSONObj &detail )
+   {
+      INT32 rc           = SDB_OK ;
+      UINT32 exitCode    = 0 ;
+      INT32 sigNum       = 15 ;
+      BSONObj            optionObj ;
+      stringstream       cmd ;
+      _ossCmdRunner      runner ;
+      string             outStr ;
+      string             sig ;
+
+      // check argument and build cmd
+      if ( 1 < arg.argc() )
+      {
+         rc = SDB_INVALIDARG ;
+         detail = BSON( SPT_ERR << "killProcess() only have an argument" ) ;
+         goto error ;
+      }
+
+      rc = arg.getBsonobj( 0, optionObj ) ;
+      if ( SDB_OUT_OF_BOUND == rc )
+      {
+         detail = BSON( SPT_ERR << "optionObj must be config" ) ;
+      }
+      else if ( SDB_OK != rc )
+      {
+         detail = BSON( SPT_ERR << "optionObj must be string" ) ;
+      }
+      PD_RC_CHECK( rc, PDERROR, "Failed to get optionObj, rc: %d", rc ) ;
+
+      if ( TRUE == optionObj.hasField( "sig" ) )
+      {
+         if ( String != optionObj.getField( "sig" ).type() )
+         {
+            rc = SDB_INVALIDARG ;
+            detail = BSON( SPT_ERR << "sig must be string" ) ;
+            goto error ;
+         }
+         sig = optionObj.getStringField( "sig" ) ;
+         if ( "term" != sig &&
+              "kill" != sig )
+         {
+            rc = SDB_INVALIDARG ;
+            detail = BSON( SPT_ERR << "sig must be \"term\" or \"kill\"" ) ;
+            goto error ;
+         }
+         else if ( "kill" == sig )
+         {
+            sigNum = 9 ;
+         }
+      }
+
+      cmd << "taskkill" ;
+      if ( 9 == sigNum )
+      {
+         cmd << " /F" ;
+      }
+
+      if ( FALSE == optionObj.hasField( "pid" ) )
+      {
+         rc = SDB_INVALIDARG ;
+         detail = BSON( SPT_ERR << "pid must be config" ) ;
+      }
+      else if ( NumberInt != optionObj.getField( "pid" ).type() )
+      {
+         rc = SDB_INVALIDARG ;
+         detail = BSON( SPT_ERR << "pid must be int" ) ;
+      }
+      PD_RC_CHECK( rc, PDERROR, "Failed to get pid, rc: %d", rc ) ;
+      cmd << " /PID " << optionObj.getIntField( "pid" ) ;
+
+      // run cmd
+      rc = runner.exec( cmd.str().c_str(), exitCode,
+                        FALSE, -1, FALSE, NULL, TRUE ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to exec cmd, rc:%d, exit:%d",
+                 rc, exitCode ) ;
+         stringstream ss ;
+         ss << "failed to exec cmd " << cmd.str() << ",rc:"
+            << rc
+            << ",exit:"
+            << exitCode ;
+         detail = BSON( SPT_ERR << ss.str() ) ;
+         goto error ;
+      }
+
+      // raed result
+      rc = runner.read( outStr ) ;
+      if ( SDB_OK != rc )
+      {
+         detail = BSON( SPT_ERR << "Failed to read result" ) ;
+         goto error ;
+      }
+      if ( SDB_OK != exitCode )
+      {
+         rc = exitCode ;
+         detail = BSON( SPT_ERR << outStr ) ;
+         goto error ;
+      }
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+#endif
+
+   INT32 _sptUsrSystem::addUser( const _sptArguments &arg,
+                                 _sptReturnVal &rval,
+                                 BSONObj &detail )
+   {
+      INT32 rc          = SDB_OK ;
+#if defined (_LINUX)
+      BSONObj           userObj ;
+      string            outStr ;
+      stringstream      cmd ;
+      _ossCmdRunner     runner ;
+      UINT32            exitCode ;
+
+      // init cmd
+      cmd << "useradd" ;
+
+      // check argument and build cmd
+      rc = arg.getBsonobj( 0, userObj ) ;
+      if ( SDB_OUT_OF_BOUND == rc )
+      {
+         detail = BSON( SPT_ERR << "userObj must be config" ) ;
+      }
+      else if ( SDB_INVALIDARG == rc )
+      {
+         detail = BSON( SPT_ERR << "userObj must be BSONObj" ) ;
+      }
+      PD_RC_CHECK( rc, PDERROR, "Failed to get userObj, rc: %d", rc ) ;
+
+      if ( userObj.hasField( "passwd" ) )
+      {
+         if ( String != userObj.getField( "passwd" ).type() )
+         {
+            rc = SDB_INVALIDARG ;
+            detail = BSON( SPT_ERR << "passwd must be string" ) ;
+            goto error ;
+         }
+         else
+         {
+            cmd << " -p " << userObj.getStringField( "passwd" ) ;
+         }
+      }
+
+      if ( userObj.hasField( "group" ) )
+      {
+         if ( String != userObj.getField( "group" ).type() )
+         {
+            rc = SDB_INVALIDARG ;
+            detail = BSON( SPT_ERR << "group must be string" ) ;
+            goto error ;
+         }
+         else
+         {
+            cmd << " -g " << userObj.getStringField( "group" ) ;
+         }
+      }
+
+      if ( userObj.hasField( "Group" ) )
+      {
+         if ( String != userObj.getField( "Group" ).type() )
+         {
+            rc = SDB_INVALIDARG ;
+            detail = BSON( SPT_ERR << "Group must be string" ) ;
+            goto error ;
+         }
+         else
+         {
+            cmd << " -G " << userObj.getStringField( "Group" ) ;
+         }
+      }
+
+      if ( userObj.hasField( "dir" ) )
+      {
+         if ( String != userObj.getField( "dir" ).type() )
+         {
+            rc = SDB_INVALIDARG ;
+            detail = BSON( SPT_ERR << "dir must be string" ) ;
+            goto error ;
+         }
+         else
+         {
+            cmd << " -d " << userObj.getStringField( "dir" ) ;
+         }
+      }
+
+      if ( TRUE == userObj.getBoolField( "createDir" ) )
+      {
+         cmd << " -m" ;
+      }
+
+      if( FALSE == userObj.hasField( "name" ) )
+      {
+         rc = SDB_INVALIDARG ;
+         detail = BSON( SPT_ERR << "name must be config" ) ;
+      }
+      if( String != userObj.getField( "name" ).type() )
+      {
+         rc = SDB_INVALIDARG ;
+         detail = BSON( SPT_ERR << "name must be string" ) ;
+      }
+      PD_RC_CHECK( rc, PDERROR, "Failed to get name, rc: %d", rc ) ;
+      cmd << " " << userObj.getStringField( "name" ) ;
+
+      // run cmd
+      rc = runner.exec( cmd.str().c_str(), exitCode,
+                        FALSE, -1, FALSE, NULL, TRUE ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to exec cmd, rc:%d, exit:%d",
+                 rc, exitCode ) ;
+         stringstream ss ;
+         ss << "failed to exec cmd " << cmd.str() << ",rc:"
+            << rc
+            << ",exit:"
+            << exitCode ;
+         detail = BSON( SPT_ERR << ss.str() ) ;
+         goto error ;
+      }
+
+      // get result
+      rc = runner.read( outStr ) ;
+      if ( SDB_OK != rc )
+      {
+         detail = BSON( SPT_ERR << "Failed to read result" ) ;
+         goto error ;
+      }
+      else if ( SDB_OK != exitCode )
+      {
+         rc = exitCode ;
+         detail = BSON( SPT_ERR << outStr ) ;
+         goto error ;
+      }
+#endif
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _sptUsrSystem::addGroup( const _sptArguments &arg,
+                                  _sptReturnVal &rval,
+                                  BSONObj &detail )
+   {
+      INT32 rc        = SDB_OK ;
+#if defined (_LINUX)
+      BSONObj         groupObj ;
+      string          outStr ;
+      stringstream    cmd ;
+      _ossCmdRunner   runner ;
+      UINT32          exitCode ;
+
+      // check argument and build cmd
+      rc = arg.getBsonobj( 0, groupObj ) ;
+      if ( SDB_OUT_OF_BOUND == rc )
+      {
+         detail = BSON( SPT_ERR << "groupObj must be config" ) ;
+      }
+      else if ( SDB_INVALIDARG == rc )
+      {
+         detail = BSON( SPT_ERR << "groupObj must be BSONObj" ) ;
+      }
+      PD_RC_CHECK( rc, PDERROR, "Failed to get groupObj, rc: %d", rc ) ;
+
+      cmd << "groupadd" ;
+      if ( groupObj.hasField( "passwd" ) )
+      {
+         if ( String != groupObj.getField( "passwd" ).type() )
+         {
+            rc = SDB_INVALIDARG ;
+            detail = BSON( SPT_ERR << "passwd must be string" ) ;
+            goto error ;
+         }
+         else
+         {
+            cmd << " -p " << groupObj.getStringField( "passwd" ) ;
+         }
+      }
+
+      if ( groupObj.hasField( "id" ) )
+      {
+         if ( String != groupObj.getField( "id" ).type() )
+         {
+            rc = SDB_INVALIDARG ;
+            detail = BSON( SPT_ERR << "id must be string" ) ;
+            goto error ;
+         }
+         else
+         {
+            cmd << " -g " << groupObj.getStringField( "id" ) ;
+            if ( TRUE == groupObj.getBoolField( "isUnique" ) )
+            {
+               cmd << " -o" ;
+            }
+         }
+      }
+
+      if( FALSE == groupObj.hasField( "name" ) )
+      {
+         rc = SDB_INVALIDARG ;
+         detail = BSON( SPT_ERR << "name must be config" ) ;
+      }
+      if( String != groupObj.getField( "name" ).type() )
+      {
+         rc = SDB_INVALIDARG ;
+         detail = BSON( SPT_ERR << "name must be string" ) ;
+      }
+      PD_RC_CHECK( rc, PDERROR, "Failed to get name, rc: %d", rc ) ;
+      cmd << " " << groupObj.getStringField( "name" ) ;
+
+      // run cmd
+      rc = runner.exec( cmd.str().c_str(), exitCode,
+                        FALSE, -1, FALSE, NULL, TRUE ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to exec cmd, rc:%d, exit:%d",
+                 rc, exitCode ) ;
+         stringstream ss ;
+         ss << "failed to exec cmd " << cmd.str() << ",rc:"
+            << rc
+            << ",exit:"
+            << exitCode ;
+         detail = BSON( SPT_ERR << ss.str() ) ;
+         goto error ;
+      }
+
+      // read result
+      rc = runner.read( outStr ) ;
+      if ( SDB_OK != rc )
+      {
+         detail = BSON( SPT_ERR << "Failed to read result" ) ;
+         goto error ;
+      }
+      else if ( SDB_OK != exitCode )
+      {
+         rc = exitCode ;
+         detail = BSON( SPT_ERR << outStr ) ;
+         goto error ;
+      }
+#endif
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _sptUsrSystem::setUserConfigs( const _sptArguments &arg,
+                                        _sptReturnVal &rval,
+                                        BSONObj &detail )
+   {
+      INT32 rc          = SDB_OK ;
+#if defined(_LINUX)
+      BSONObj           optionObj ;
+      string            outStr ;
+      stringstream      cmd ;
+      _ossCmdRunner     runner ;
+      UINT32            exitCode ;
+
+      // check argument and build cmd
+      rc = arg.getBsonobj( 0, optionObj ) ;
+      if ( SDB_OUT_OF_BOUND == rc )
+      {
+         detail = BSON( SPT_ERR << "optionObj must be config" ) ;
+      }
+      else if ( SDB_INVALIDARG == rc )
+      {
+         detail = BSON( SPT_ERR << "optionObj must be BSONObj" ) ;
+      }
+      PD_RC_CHECK( rc, PDERROR, "Failed to get optionObj, rc: %d", rc ) ;
+
+      cmd << "usermod" ;
+      if ( optionObj.hasField( "passwd" ) )
+      {
+         if ( String != optionObj.getField( "passwd" ).type() )
+         {
+            rc = SDB_INVALIDARG ;
+            detail = BSON( SPT_ERR << "passwd must be string" ) ;
+            goto error ;
+         }
+         else
+         {
+            cmd << " -p "
+                << optionObj.getStringField( "passwd" ) ;
+         }
+      }
+
+      if ( optionObj.hasField( "group" ) )
+      {
+         if ( String != optionObj.getField( "group" ).type() )
+         {
+            rc = SDB_INVALIDARG ;
+            detail = BSON( SPT_ERR << "group must be string" ) ;
+            goto error ;
+         }
+         else
+         {
+            cmd << " -g "
+                << optionObj.getStringField( "group" ) ;
+         }
+      }
+
+      if ( optionObj.hasField( "Group" ) )
+      {
+         if ( String != optionObj.getField( "Group" ).type() )
+         {
+            rc = SDB_INVALIDARG ;
+            detail = BSON( SPT_ERR << "Group must be string" ) ;
+            goto error ;
+         }
+         else
+         {
+            cmd << " -G "
+                << optionObj.getStringField( "Group" ) ;
+
+
+            if ( TRUE == optionObj.getBoolField( "isAppend" ) )
+            {
+               cmd << " -a" ;
+            }
+         }
+      }
+
+      if ( optionObj.hasField( "dir" ) )
+      {
+         if ( String != optionObj.getField( "dir" ).type() )
+         {
+            rc = SDB_INVALIDARG ;
+            detail = BSON( SPT_ERR << "dir must be string" ) ;
+            goto error ;
+         }
+         else
+         {
+            cmd << " -d "
+                << optionObj.getStringField( "dir" ) ;
+
+            if ( TRUE == optionObj.getBoolField( "createDir" ) )
+            {
+               cmd << " -m" ;
+            }
+         }
+      }
+
+      if( FALSE == optionObj.hasField( "name" ) )
+      {
+         rc = SDB_INVALIDARG ;
+         detail = BSON( SPT_ERR << "name must be config" ) ;
+      }
+      if( String != optionObj.getField( "name" ).type() )
+      {
+         rc = SDB_INVALIDARG ;
+         detail = BSON( SPT_ERR << "name must be string" ) ;
+      }
+      PD_RC_CHECK( rc, PDERROR, "Failed to get name, rc: %d", rc ) ;
+      cmd << " " << optionObj.getStringField( "name" ) ;
+
+      // run cmd
+      rc = runner.exec( cmd.str().c_str(), exitCode,
+                        FALSE, -1, FALSE, NULL, TRUE ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to exec cmd, rc:%d, exit:%d",
+                 rc, exitCode ) ;
+         stringstream ss ;
+         ss << "failed to exec cmd " << cmd.str() << ",rc:"
+            << rc
+            << ",exit:"
+            << exitCode ;
+         detail = BSON( SPT_ERR << ss.str() ) ;
+         goto error ;
+      }
+
+      // read result
+      rc = runner.read( outStr ) ;
+      if ( SDB_OK != rc )
+      {
+         detail = BSON( SPT_ERR << "Failed to read result" ) ;
+         goto error ;
+      }
+      else if ( SDB_OK != exitCode )
+      {
+         rc = exitCode ;
+         detail = BSON( SPT_ERR << outStr ) ;
+         goto error ;
+      }
+#endif
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _sptUsrSystem::delUser( const _sptArguments & arg,
+                                 _sptReturnVal & rval,
+                                 BSONObj & detail )
+   {
+      INT32 rc          = SDB_OK ;
+#if defined (_LINUX)
+      BSONObj           optionObj ;
+      string            outStr ;
+      stringstream      cmd ;
+      _ossCmdRunner     runner ;
+      UINT32            exitCode ;
+
+      // check argument and build cmd
+      rc = arg.getBsonobj( 0, optionObj ) ;
+      if ( SDB_OUT_OF_BOUND == rc )
+      {
+         detail = BSON( SPT_ERR << "optionObj must be config" ) ;
+      }
+      else if ( SDB_INVALIDARG == rc )
+      {
+         detail = BSON( SPT_ERR << "optionObj must be BSONObj" ) ;
+      }
+      PD_RC_CHECK( rc, PDERROR, "Failed to get optionObj, rc: %d", rc ) ;
+
+      cmd << "userdel" ;
+      if ( optionObj.hasField( "isRemoveDir" ) )
+      {
+         if ( Bool != optionObj.getField( "isRemoveDir" ).type() )
+         {
+            rc = SDB_INVALIDARG ;
+            detail = BSON( SPT_ERR << "isRemoveDir must be bool" ) ;
+            goto error ;
+         }
+         else if ( optionObj.getBoolField( "isRemoveDir" ) )
+         {
+            cmd << " -r" ;
+         }
+      }
+
+      if( FALSE == optionObj.hasField( "name" ) )
+      {
+         rc = SDB_INVALIDARG ;
+         detail = BSON( SPT_ERR << "name must be config" ) ;
+      }
+      if( String != optionObj.getField( "name" ).type() )
+      {
+         rc = SDB_INVALIDARG ;
+         detail = BSON( SPT_ERR << "name must be string" ) ;
+      }
+      PD_RC_CHECK( rc, PDERROR, "Failed to get name, rc: %d", rc ) ;
+      cmd << " " << optionObj.getStringField( "name" ) ;
+
+      // run cmd
+      rc = runner.exec( cmd.str().c_str(), exitCode,
+                        FALSE, -1, FALSE, NULL, TRUE ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to exec cmd, rc:%d, exit: %d",
+                 rc, exitCode ) ;
+         stringstream ss ;
+         ss << "failed to exec cmd " << cmd.str() << ",rc:"
+            << rc
+            << ",exit:"
+            << exitCode ;
+         detail = BSON( SPT_ERR << ss.str() ) ;
+         goto error ;
+      }
+
+      // read result
+      rc = runner.read( outStr ) ;
+      if ( SDB_OK != rc )
+      {
+         detail = BSON( SPT_ERR << "Failed to read result" ) ;
+         goto error ;
+      }
+      else if ( SDB_OK != exitCode )
+      {
+         rc = exitCode ;
+         detail = BSON( SPT_ERR << outStr ) ;
+         goto error ;
+      }
+#endif
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _sptUsrSystem::delGroup( const _sptArguments & arg,
+                                  _sptReturnVal & rval,
+                                  BSONObj & detail )
+   {
+      INT32 rc          = SDB_OK ;
+#if defined (_LINUX)
+      BSONObj           optionObj ;
+      string            name ;
+      string            outStr ;
+      stringstream      cmd ;
+      _ossCmdRunner     runner ;
+      UINT32            exitCode ;
+
+      // check argument and build cmd
+      cmd << "groupdel" ;
+      rc = arg.getString( 0, name ) ;
+      if( SDB_OUT_OF_BOUND == rc )
+      {
+         detail = BSON( SPT_ERR << "name must be config" ) ;
+      }
+      else if ( SDB_OK != rc )
+      {
+         detail = BSON( SPT_ERR << "name must be string" ) ;
+      }
+      PD_RC_CHECK( rc, PDERROR, "Failed to get name, rc: %d", rc ) ;
+      cmd << " " << name ;
+
+      // run cmd
+      rc = runner.exec( cmd.str().c_str(), exitCode,
+                        FALSE, -1, FALSE, NULL, TRUE ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to exec cmd, rc:%d, exit:%d",
+                 rc, exitCode ) ;
+         stringstream ss ;
+         ss << "failed to exec cmd " << cmd.str() << ",rc:"
+            << rc
+            << ",exit:"
+            << exitCode ;
+         detail = BSON( SPT_ERR << ss.str() ) ;
+         goto error ;
+      }
+
+      // read result
+      rc = runner.read( outStr ) ;
+      if ( SDB_OK != rc )
+      {
+         detail = BSON( SPT_ERR << "Failed to read result" ) ;
+         goto error ;
+      }
+      else if ( SDB_OK != exitCode )
+      {
+         rc = exitCode ;
+         detail = BSON( SPT_ERR << outStr ) ;
+         goto error ;
+      }
+#endif
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _sptUsrSystem::listLoginUsers( const _sptArguments & arg,
+                                        _sptReturnVal & rval,
+                                        BSONObj & detail )
+   {
+      INT32 rc           = SDB_OK ;
+      BSONObjBuilder     builder ;
+#if defined (_LINUX)
+      BOOLEAN showDetail = FALSE ;
+      UINT32 exitCode    = 0 ;
+      BSONObj            optionObj ;
+      stringstream       cmd ;
+      _ossCmdRunner      runner ;
+      string             outStr ;
+
+      // check argument and build cmd
+      cmd << "who" ;
+      if ( 1 < arg.argc() )
+      {
+         rc = SDB_INVALIDARG ;
+         detail = BSON( SPT_ERR << "too much arguments" ) ;
+         goto error ;
+      }
+      if ( 1 == arg.argc() )
+      {
+         rc = arg.getBsonobj( 0, optionObj ) ;
+         if ( SDB_OK != rc )
+         {
+            detail = BSON( SPT_ERR << "optionObj must be config" ) ;
+            goto error ;
+         }
+         showDetail = optionObj.getBoolField( "detail" ) ;
+      }
+
+      // run cmd
+      rc = runner.exec( cmd.str().c_str(), exitCode,
+                        FALSE, -1, FALSE, NULL, TRUE ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to exec cmd, rc:%d, exit:%d",
+                 rc, exitCode ) ;
+         stringstream ss ;
+         ss << "failed to exec cmd " << cmd.str() << ",rc:"
+            << rc
+            << ",exit:"
+            << exitCode ;
+         detail = BSON( SPT_ERR << ss.str() ) ;
+         goto error ;
+      }
+
+      // read result
+      rc = runner.read( outStr ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to read msg from cmd runner:%d", rc ) ;
+         stringstream ss ;
+         ss << "failed to read msg from cmd \"" << cmd.str() << "\", rc:"
+            << rc ;
+         detail = BSON( SPT_ERR << ss.str() ) ;
+         goto error ;
+      }
+
+      // extract result
+      rc = _extractLoginUsersInfo( outStr.c_str(), builder, showDetail ) ;
+      if ( SDB_OK != rc )
+      {
+         detail = BSON( SPT_ERR << "Failed to extract login user info" ) ;
+         goto error ;
+      }
+#endif
+      rval.setBSONObj( "", builder.obj() ) ;
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _sptUsrSystem::_extractLoginUsersInfo( const CHAR *buf,
+                                               BSONObjBuilder &builder,
+                                               BOOLEAN showDetail )
+   {
+      INT32 rc            = SDB_OK ;
+      vector<string>      splited ;
+      vector< BSONObj >   procVec ;
+
+      if ( NULL == buf )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG( PDERROR, "buf can't be null, rc: %d", rc ) ;
+         goto error ;
+      }
+
+      /* format:
+         xxxxxxxxx tty1         2016-06-12 10:31
+         xxxxxxxxx pts/0        2016-10-11 13:01 (xxx.xxx.xxx.xxx)
+      */
+      try
+      {
+         boost::algorithm::split( splited, buf, boost::is_any_of( "\r\n" ) ) ;
+      }
+      catch( std::exception &e )
+      {
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "Failed to split result, rc: %d", rc ) ;
+         goto error ;
+      }
+      for ( vector<string>::iterator itr = splited.begin();
+            itr != splited.end(); )
+      {
+         if ( itr->empty() )
+         {
+            itr = splited.erase( itr ) ;
+         }
+         else
+         {
+            itr++ ;
+         }
+      }
+
+      // build obj vector
+      if( TRUE == showDetail )
+      {
+         for ( vector<string>::iterator itrSplit = splited.begin();
+               itrSplit != splited.end(); itrSplit++ )
+         {
+            vector<string> columns ;
+            BSONObjBuilder proObjBuilder ;
+            string ip ;
+
+            try
+            {
+               boost::algorithm::split( columns, *itrSplit,
+                                        boost::is_any_of(" ") ) ;
+            }
+            catch( std::exception &e )
+            {
+               rc = SDB_SYS ;
+               PD_LOG( PDERROR, "Failed to split result, rc: %d", rc ) ;
+               goto error ;
+            }
+            for ( vector<string>::iterator itrCol = columns.begin();
+                  itrCol != columns.end();  )
+            {
+               if ( itrCol->empty() )
+               {
+                  itrCol = columns.erase( itrCol ) ;
+               }
+               else
+               {
+                  itrCol++ ;
+               }
+            }
+
+            // ip will be empty if login by tty
+            if ( 5 > columns.size() )
+            {
+               ip = "" ;
+            }
+            else
+            {
+               ip = columns[ 4 ].substr( 1, columns[ 4 ].size()-2 );
+            }
+            proObjBuilder.append( CMD_USR_SYSTEM_LOGINUSER_USER, columns[ 0 ] ) ;
+            proObjBuilder.append( CMD_USR_SYSTEM_LOGINUSER_FROM,
+                                  columns[ 2 ] + " " + columns[ 3 ] ) ;
+            proObjBuilder.append( CMD_USR_SYSTEM_LOGINUSER_LOGIN, ip ) ;
+            procVec.push_back( proObjBuilder.obj() ) ;
+         }
+      }
+      else
+      {
+         for ( vector<string>::iterator itrSplit = splited.begin();
+            itrSplit != splited.end(); itrSplit++ )
+         {
+            vector<string> columns ;
+            BSONObjBuilder proObjBuilder ;
+
+            try
+            {
+               boost::algorithm::split( columns, *itrSplit,
+                                        boost::is_any_of(" ") ) ;
+            }
+            catch( std::exception &e )
+            {
+               rc = SDB_SYS ;
+               PD_LOG( PDERROR, "Failed to split result, rc: %d", rc ) ;
+               goto error ;
+            }
+            for ( vector<string>::iterator itrCol = columns.begin();
+                  itrCol != columns.end();  )
+            {
+               if ( itrCol->empty() )
+               {
+                  itrCol = columns.erase( itrCol ) ;
+               }
+               else
+               {
+                  itrCol++ ;
+               }
+            }
+            proObjBuilder.append( CMD_USR_SYSTEM_LOGINUSER_USER,
+                                  columns[ 0 ] ) ;
+            procVec.push_back( proObjBuilder.obj() ) ;
+         }
+      }
+
+      // merge vector< BSONObj > into BsonObj
+      for( UINT32 index = 0; index < procVec.size(); index++ )
+      {
+         try
+         {
+            builder.append( boost::lexical_cast<string>( index ).c_str(),
+                            procVec[ index ] ) ;
+         }
+         catch( std::exception &e )
+         {
+            rc = SDB_SYS ;
+            PD_LOG( PDERROR, "Fail to build retObj, rc: %d", rc ) ;
+            goto error ;
+         }
+      }
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _sptUsrSystem::listAllUsers( const _sptArguments & arg,
+                                      _sptReturnVal & rval,
+                                      BSONObj & detail )
+   {
+      INT32 rc           = SDB_OK ;
+      BSONObjBuilder     builder ;
+#if defined (_LINUX)
+      BOOLEAN showDetail = FALSE ;
+      UINT32 exitCode    = 0 ;
+      string             outStr ;
+      BSONObj            optionObj ;
+      stringstream       cmd ;
+      _ossCmdRunner      runner ;
+
+      // check argument and build cmd
+      cmd << "cat /etc/passwd" ;
+      if ( 1 < arg.argc() )
+      {
+         rc = SDB_INVALIDARG ;
+         detail = BSON( SPT_ERR << "too much arguments" ) ;
+         goto error ;
+      }
+      if ( 1 == arg.argc() )
+      {
+         rc = arg.getBsonobj( 0, optionObj ) ;
+         if ( SDB_OK != rc )
+         {
+            detail = BSON( SPT_ERR << "optionObj must be config" ) ;
+            goto error ;
+         }
+         showDetail = optionObj.getBoolField( "detail" ) ;
+      }
+
+      // run cmd
+      rc = runner.exec( cmd.str().c_str(), exitCode,
+                        FALSE, -1, FALSE, NULL, TRUE ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to exec cmd, rc:%d, exit:%d",
+                 rc, exitCode ) ;
+         stringstream ss ;
+         ss << "failed to exec cmd " << cmd.str() << ",rc:"
+            << rc
+            << ",exit:"
+            << exitCode ;
+         detail = BSON( SPT_ERR << ss.str() ) ;
+         goto error ;
+      }
+
+      // get result
+      rc = runner.read( outStr ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to read msg from cmd runner:%d", rc ) ;
+         stringstream ss ;
+         ss << "failed to read msg from cmd \"" << cmd.str() << "\", rc:"
+            << rc ;
+         detail = BSON( SPT_ERR << ss.str() ) ;
+         goto error ;
+      }
+
+      // extract result
+      rc = _extractAllUsersInfo( outStr.c_str(), builder, showDetail ) ;
+      if ( SDB_OK != rc )
+      {
+         detail = BSON( SPT_ERR <<"Failed to extract all users info" ) ;
+         goto error ;
+      }
+#endif
+      rval.setBSONObj( "", builder.obj() ) ;
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _sptUsrSystem::_extractAllUsersInfo( const CHAR *buf,
+                                              BSONObjBuilder &builder,
+                                              BOOLEAN showDetail )
+   {
+      INT32 rc           = SDB_OK ;
+      vector<string>     splited ;
+      vector< BSONObj >  procVec ;
+
+      if ( NULL == buf )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG( PDERROR, "buf can't be null, rc: %d", rc ) ;
+         goto error ;
+      }
+
+      /* format:
+         root:x:0:0:root:/root:/bin/bash
+      */
+      try
+      {
+         boost::algorithm::split( splited, buf, boost::is_any_of("\r\n") ) ;
+      }
+      catch( std::exception &e )
+      {
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "Failed to split result, rc: %d", rc ) ;
+         goto error ;
+      }
+      for ( vector<string>::iterator itr = splited.begin();
+            itr != splited.end();  )
+      {
+         if ( itr->empty() )
+         {
+            itr = splited.erase( itr ) ;
+         }
+         else
+         {
+            itr++ ;
+         }
+      }
+
+      // build obj vector
+      if( TRUE == showDetail )
+      {
+         for ( vector<string>::iterator itrSplit = splited.begin();
+               itrSplit != splited.end(); itrSplit++ )
+         {
+            vector<string> columns ;
+            BSONObjBuilder proObjBuilder ;
+
+            try
+            {
+               boost::algorithm::split( columns, *itrSplit,
+                                        boost::is_any_of( ":" ) ) ;
+            }
+            catch( std::exception &e )
+            {
+               rc = SDB_SYS ;
+               PD_LOG( PDERROR, "Failed to split result, rc: %d", rc ) ;
+               goto error ;
+            }
+            proObjBuilder.append( CMD_USR_SYSTEM_ALLUSER_USER, columns[ 0 ] ) ;
+            proObjBuilder.append( CMD_USR_SYSTEM_ALLUSER_GID, columns[ 3 ] ) ;
+            proObjBuilder.append( CMD_USR_SYSTEM_ALLUSER_DIR, columns[ 5 ] ) ;
+            procVec.push_back( proObjBuilder.obj() ) ;
+         }
+      }
+      else
+      {
+         for ( vector<string>::iterator itrSplit = splited.begin();
+               itrSplit != splited.end(); itrSplit++ )
+         {
+            vector<string> columns ;
+            BSONObjBuilder proObjBuilder ;
+
+            try
+            {
+               boost::algorithm::split( columns, *itrSplit,
+                                        boost::is_any_of( ":" ) ) ;
+            }
+            catch( std::exception &e )
+            {
+               rc = SDB_SYS ;
+               PD_LOG( PDERROR, "Failed to split result, rc: %d", rc ) ;
+               goto error ;
+            }
+            proObjBuilder.append( CMD_USR_SYSTEM_ALLUSER_USER, columns[ 0 ] ) ;
+            procVec.push_back( proObjBuilder.obj() ) ;
+         }
+      }
+
+      // merge vector< BSONObj > into BsonObj
+      for( UINT32 index = 0; index < procVec.size(); index++ )
+      {
+         try
+         {
+            builder.append( boost::lexical_cast<string>( index ).c_str(),
+                            procVec[ index ] ) ;
+         }
+         catch( std::exception &e )
+         {
+            rc = SDB_SYS ;
+            PD_LOG( PDERROR, "Fail to build retObj, rc: %d", rc ) ;
+            goto error ;
+         }
+      }
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _sptUsrSystem::listGroups( const _sptArguments & arg,
+                                    _sptReturnVal & rval,
+                                    BSONObj & detail )
+   {
+      INT32 rc           = SDB_OK ;
+      BSONObjBuilder     builder ;
+#if defined (_LINUX)
+      BOOLEAN showDetail = FALSE ;
+      UINT32 exitCode    = 0 ;
+      BSONObj            optionObj ;
+      stringstream       cmd ;
+      _ossCmdRunner      runner ;
+      string             outStr ;
+
+      // check argument and build cmd
+      cmd << "cat /etc/group" ;
+      if ( 1 < arg.argc() )
+      {
+         rc = SDB_INVALIDARG ;
+         detail = BSON( SPT_ERR << "too much arguments" ) ;
+         goto error ;
+      }
+      if ( 1 == arg.argc() )
+      {
+         rc = arg.getBsonobj( 0, optionObj ) ;
+         if ( SDB_OK != rc )
+         {
+            detail = BSON( SPT_ERR << "optionObj must be config" ) ;
+            goto error ;
+         }
+         showDetail = optionObj.getBoolField( "detail" ) ;
+      }
+
+      // run cmd
+      rc = runner.exec( cmd.str().c_str(), exitCode,
+                        FALSE, -1, FALSE, NULL, TRUE ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to exec cmd, rc:%d, exit:%d",
+                 rc, exitCode ) ;
+         stringstream ss ;
+         ss << "failed to exec cmd " << cmd.str() << ",rc:"
+            << rc
+            << ",exit:"
+            << exitCode ;
+         detail = BSON( SPT_ERR << ss.str() ) ;
+         goto error ;
+      }
+
+      // get result
+      rc = runner.read( outStr ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to read msg from cmd runner:%d", rc ) ;
+         stringstream ss ;
+         ss << "failed to read msg from cmd \"" << cmd.str() << "\", rc:"
+            << rc ;
+         detail = BSON( SPT_ERR << ss.str() ) ;
+         goto error ;
+      }
+
+      // extract result
+      rc = _extractGroupsInfo( outStr.c_str(), builder, showDetail ) ;
+      if ( SDB_OK != rc )
+      {
+         detail = BSON( SPT_ERR << "Failed to extract group info" ) ;
+         goto error ;
+      }
+#endif
+      rval.setBSONObj( "", builder.obj() ) ;
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _sptUsrSystem::_extractGroupsInfo( const CHAR *buf,
+                                            BSONObjBuilder &builder,
+                                            BOOLEAN showDetail )
+   {
+      INT32 rc           = SDB_OK ;
+      vector<string>     splited ;
+      vector< BSONObj >  procVec ;
+
+      if ( NULL == buf )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG( PDERROR, "buf can't be null, rc: %d", rc ) ;
+         goto error ;
+      }
+
+      /* format:
+         cdrom:x:24:sequoiadb
+      */
+      try
+      {
+         boost::algorithm::split( splited, buf, boost::is_any_of("\r\n") ) ;
+      }
+      catch( std::exception &e )
+      {
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "Failed to split result, rc: %d", rc ) ;
+         goto error ;
+      }
+      for ( vector<string>::iterator itr = splited.begin();
+            itr != splited.end();  )
+      {
+         if ( itr->empty() )
+         {
+            itr = splited.erase( itr ) ;
+         }
+         else
+         {
+            itr++ ;
+         }
+      }
+
+      // build obj vector
+      if( TRUE == showDetail )
+      {
+         for ( vector<string>::iterator itrSplit = splited.begin();
+               itrSplit != splited.end(); itrSplit++ )
+         {
+            vector<string> columns ;
+            BSONObjBuilder proObjBuilder ;
+
+            try
+            {
+               boost::algorithm::split( columns, *itrSplit,
+                                        boost::is_any_of(":") ) ;
+            }
+            catch( std::exception &e )
+            {
+               rc = SDB_SYS ;
+               PD_LOG( PDERROR, "Failed to split result, rc: %d", rc ) ;
+               goto error ;
+            }
+            for ( vector<string>::iterator itrCol = columns.begin();
+                  itrCol != columns.end();  )
+            {
+               if ( itrCol->empty() )
+               {
+                  itrCol = columns.erase( itrCol ) ;
+               }
+               else
+               {
+                  itrCol++ ;
+               }
+            }
+            proObjBuilder.append( CMD_USR_SYSTEM_GROUP_NAME, columns[ 0 ] ) ;
+            proObjBuilder.append( CMD_USR_SYSTEM_GROUP_GID, columns[ 2 ] ) ;
+            proObjBuilder.append( CMD_USR_SYSTEM_GROUP_MEMBERS, columns[ 3 ] ) ;
+            procVec.push_back( proObjBuilder.obj() ) ;
+         }
+      }
+      else
+      {
+         for ( vector<string>::iterator itrSplit = splited.begin() ;
+               itrSplit != splited.end(); itrSplit++ )
+         {
+            vector<string> columns ;
+            BSONObjBuilder proObjBuilder ;
+
+            try
+            {
+               boost::algorithm::split( columns, *itrSplit,
+                                        boost::is_any_of( ":" ) ) ;
+            }
+            catch( std::exception &e )
+            {
+               rc = SDB_SYS ;
+               PD_LOG( PDERROR, "Failed to split result, rc: %d", rc ) ;
+               goto error ;
+            }
+            for ( vector<string>::iterator itrCol = columns.begin();
+                  itrCol != columns.end();  )
+            {
+               if ( itrCol->empty() )
+               {
+                  itrCol = columns.erase( itrCol ) ;
+               }
+               else
+               {
+                  itrCol++ ;
+               }
+            }
+            proObjBuilder.append( CMD_USR_SYSTEM_GROUP_NAME, columns[ 0 ] ) ;
+            procVec.push_back( proObjBuilder.obj() ) ;
+         }
+      }
+
+      // merge into BsonObj
+      for( UINT32 index = 0; index < procVec.size(); index++ )
+      {
+         try
+         {
+            builder.append( boost::lexical_cast<string>( index ).c_str(),
+                            procVec[ index ] ) ;
+         }
+         catch( std::exception &e )
+         {
+            rc = SDB_SYS ;
+            PD_LOG( PDERROR, "Fail to build retObj, rc: %d", rc ) ;
+            goto error ;
+         }
+      }
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _sptUsrSystem::getCurrentUser( const _sptArguments & arg,
+                                        _sptReturnVal & rval,
+                                        BSONObj & detail )
+   {
+      INT32 rc           = SDB_OK ;
+      BSONObjBuilder     builder ;
+#if defined (_LINUX)
+      UINT32 exitCode    = 0 ;
+      stringstream       cmd ;
+      stringstream       gidStr ;
+      _ossCmdRunner      runner ;
+      string             username ;
+      string             homeDir ;
+      OSSUID             uid ;
+      OSSGID             gid ;
+
+      cmd << "whoami" ;
+
+      // run command
+      rc = runner.exec( cmd.str().c_str(), exitCode,
+                        FALSE, -1, FALSE, NULL, TRUE ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to exec cmd, rc:%d, exit:%d",
+                 rc, exitCode ) ;
+         stringstream ss ;
+         ss << "failed to exec cmd " << cmd.str() << ",rc:"
+            << rc
+            << ",exit:"
+            << exitCode ;
+         detail = BSON( SPT_ERR << ss.str() ) ;
+         goto error ;
+      }
+
+      // read result
+      rc = runner.read( username ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to read msg from cmd runner:%d", rc ) ;
+         stringstream ss ;
+         ss << "failed to read msg from cmd \"" << cmd.str() << "\", rc:"
+            << rc ;
+         detail = BSON( SPT_ERR << ss.str() ) ;
+         goto error ;
+      }
+      if( username[ username.size() - 1 ] == '\n' )
+      {
+         username.erase( username.size()-1, 1 ) ;
+      }
+
+      // get user info
+      rc = ossGetUserInfo( username.c_str(), uid, gid ) ;
+      if ( SDB_OK != rc )
+      {
+         detail = BSON( SPT_ERR << "Failed to get gid" ) ;
+         goto error ;
+      }
+      gidStr << gid ;
+
+      // get home dir
+      rc = _getHomePath( homeDir ) ;
+      if ( SDB_OK != rc )
+      {
+         detail = BSON( SPT_ERR << "Failed to get home path" ) ;
+         goto error ;
+      }
+
+      builder.append( "user", username ) ;
+      builder.append( "gid", gidStr.str() ) ;
+      builder.append( "dir", homeDir ) ;
+#endif
+      rval.setBSONObj( "", builder.obj() ) ;
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _sptUsrSystem::getSystemConfigs( const _sptArguments &arg,
+                                          _sptReturnVal &rval,
+                                          BSONObj &detail )
+   {
+      INT32 rc           = SDB_OK ;
+      BSONObjBuilder     builder ;
+#if defined (_LINUX)
+      UINT32 exitCode    = 0 ;
+      string             type ;
+      stringstream       cmd ;
+      _ossCmdRunner      runner ;
+      string             outStr ;
+      vector<string>     splited ;
+      string  configsType[]      = { "kernel", "vm", "fs",
+                                     "debug", "dev", "abi" } ;
+
+      // check argument and build cmd
+      cmd << "sysctl -a 2> /dev/null" ;
+      if ( 0 < arg.argc() )
+      {
+         rc = arg.getString( 0, type) ;
+         if ( SDB_OUT_OF_BOUND == rc )
+         {
+            detail = BSON( SPT_ERR << "type must be config" ) ;
+         }
+         else if ( SDB_OK != rc )
+         {
+            detail = BSON( SPT_ERR << "type must be string" ) ;
+         }
+         PD_RC_CHECK( rc, PDERROR, "Failed to get type, rc: %d", rc ) ;
+
+         try
+         {
+            boost::algorithm::split( splited, type, boost::is_any_of( " |" ) ) ;
+         }
+         catch( std::exception &e )
+         {
+            rc = SDB_SYS ;
+            detail = BSON( SPT_ERR << "Failed to split result" ) ;
+            PD_LOG( PDERROR, "Failed to split result, rc: %d", rc ) ;
+            goto error ;
+         }
+         if( !splited.empty() &&
+             splited.end() == find( splited.begin(), splited.end(), "all" ) )
+         {
+            string grepStr = " | grep -E '" ;
+
+            for ( UINT32 index = 0; index < 5; index++ )
+            {
+               if( splited.end() != find( splited.begin(),
+                                          splited.end(),
+                                          configsType[index] ))
+               {
+                  grepStr += "^" + configsType[index] + ".*|" ;
+               }
+            }
+            if ( grepStr != " | grep -E '" )
+            {
+               grepStr.erase( grepStr.size() - 1, 1 ) ;
+               grepStr += "'" ;
+               cmd << grepStr ;
+            }
+         }
+      }
+
+      // run cmd
+      rc = runner.exec( cmd.str().c_str(), exitCode,
+                        FALSE, -1, FALSE, NULL, TRUE ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to exec cmd, rc:%d, exit:%d",
+                 rc, exitCode ) ;
+         stringstream ss ;
+         ss << "failed to exec cmd " << cmd.str() << ",rc:"
+            << rc
+            << ",exit:"
+            << exitCode ;
+         detail = BSON( SPT_ERR << ss.str() ) ;
+         goto error ;
+      }
+
+      // get result
+      rc = runner.read( outStr ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to read msg from cmd runner:%d", rc ) ;
+         stringstream ss ;
+         ss << "failed to read msg from cmd \"" << cmd.str() << "\", rc:"
+            << rc ;
+         detail = BSON( SPT_ERR << ss.str() ) ;
+         goto error ;
+      }
+
+      // extract result
+      rc = _extractSystemInfo( outStr.c_str(),
+                               builder ) ;
+#endif
+      rval.setBSONObj( "", builder.obj() ) ;
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _sptUsrSystem::_extractSystemInfo( const CHAR *buf,
+                                            BSONObjBuilder &builder )
+   {
+      INT32 rc       = SDB_OK ;
+      vector<string> splited ;
+
+      if ( NULL == buf )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG( PDERROR, "buf can't be null, rc: %d", rc ) ;
+         goto error ;
+      }
+
+      /* format:
+         xxx.xxx.xxxx = xx
+      */
+      try
+      {
+         boost::algorithm::split( splited, buf, boost::is_any_of("\r\n") ) ;
+      }
+      catch( std::exception &e )
+      {
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "Failed to split result, rc: %d", rc ) ;
+         goto error ;
+      }
+      for ( vector<string>::iterator itr = splited.begin();
+            itr != splited.end();  )
+      {
+         if ( itr->empty() )
+         {
+            itr = splited.erase( itr ) ;
+         }
+         else
+         {
+            itr++ ;
+         }
+      }
+
+      // build BsonObj
+      for ( vector<string>::iterator itrSplit = splited.begin();
+            itrSplit != splited.end(); itrSplit++ )
+      {
+         vector<string> columns ;
+
+         try
+         {
+            boost::algorithm::split( columns, *itrSplit,
+                                     boost::is_any_of(" = ") ) ;
+         }
+         catch( std::exception &e )
+         {
+            rc = SDB_SYS ;
+            PD_LOG( PDERROR, "Failed to split result, rc: %d", rc ) ;
+            goto error ;
+         }
+         for ( vector<string>::iterator itrCol = columns.begin();
+               itrCol != columns.end(); )
+         {
+            if ( itrCol->empty() )
+            {
+               itrCol = columns.erase( itrCol ) ;
+            }
+            else
+            {
+               itrCol++ ;
+            }
+         }
+         // only contain 2 cols
+         if( columns.size() == 2 )
+         {
+            for( string::iterator iterLetter = columns[ 1 ].begin();
+                 iterLetter != columns[ 1 ].end();
+                 iterLetter++ )
+            {
+               if ( *iterLetter == '\t' )
+               {
+                  *iterLetter = ',' ;
+               }
+            }
+            builder.append( columns[ 0 ], columns[ 1 ] ) ;
+         }
+      }
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _sptUsrSystem::getProcUlimitConfigs( const _sptArguments &arg,
+                                              _sptReturnVal &rval,
+                                              BSONObj &detail )
+   {
+      INT32 rc               = SDB_OK ;
+      BSONObjBuilder         builder ;
+#if defined (_LINUX)
+      INT32 resourceType[] = { RLIMIT_CORE, RLIMIT_DATA, RLIMIT_NICE,
+                               RLIMIT_FSIZE, RLIMIT_SIGPENDING, RLIMIT_MEMLOCK,
+                               RLIMIT_RSS, RLIMIT_NOFILE, RLIMIT_MSGQUEUE,
+                               RLIMIT_RTPRIO, RLIMIT_STACK, RLIMIT_CPU,
+                               RLIMIT_NPROC, RLIMIT_AS, RLIMIT_LOCKS } ;
+      char *resourceName[] = { "core_file_size", "data_seg_size",
+                               "scheduling_priority", "file_size",
+                               "pending_signals", "max_locked_memory",
+                               "max_memory_size", "open_files",
+                               "POSIX_message_queues", "realtime_priority",
+                               "stack_size", "cpu_time", "max_user_processes",
+                               "virtual_memory", "file_locks" } ;
+      stringstream           cmd ;
+      _ossCmdRunner          runner ;
+      string                 outStr ;
+
+      // check argument
+      if ( 1 <= arg.argc() )
+      {
+         rc = SDB_INVALIDARG ;
+         detail = BSON( SPT_ERR << "getUlimitConfigs() should have non arguments" ) ;
+         goto error ;
+      }
+
+      // get ulimit
+      for ( UINT32 index = 0; index < CMD_RESOURCE_NUM; index++ )
+      {
+         rlimit rlim ;
+         if ( 0 != getrlimit( resourceType[ index ], &rlim ) )
+         {
+            rc = SDB_SYS ;
+            detail = BSON( SPT_ERR << "Failed to get user limit info" ) ;
+            goto error ;
+         }
+         builder.append( resourceName[ index ], (UINT32)rlim.rlim_cur ) ;
+      }
+#endif
+      rval.setBSONObj( "", builder.obj() ) ;
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _sptUsrSystem::setProcUlimitConfigs( const _sptArguments &arg,
+                                              _sptReturnVal &rval,
+                                              BSONObj &detail )
+   {
+      INT32 rc           = SDB_OK ;
+      BSONObj            configsObj ;
+#if defined (_LINUX)
+      INT32 resourceType[] = { RLIMIT_CORE, RLIMIT_DATA, RLIMIT_NICE,
+                               RLIMIT_FSIZE, RLIMIT_SIGPENDING, RLIMIT_MEMLOCK,
+                               RLIMIT_RSS, RLIMIT_NOFILE, RLIMIT_MSGQUEUE,
+                               RLIMIT_RTPRIO, RLIMIT_STACK, RLIMIT_CPU,
+                               RLIMIT_NPROC, RLIMIT_AS, RLIMIT_LOCKS } ;
+      char *resourceName[] = { "core_file_size", "data_seg_size",
+                               "scheduling_priority", "file_size",
+                               "pending_signals", "max_locked_memory",
+                               "max_memory_size", "open_files",
+                               "POSIX_message_queues", "realtime_priority",
+                               "stack_size", "cpu_time", "max_user_processes",
+                               "virtual_memory", "file_locks" } ;
+      // get argument
+      rc = arg.getBsonobj( 0, configsObj ) ;
+      if ( SDB_OUT_OF_BOUND == rc )
+      {
+         detail = BSON( SPT_ERR << "configsObj must be config" ) ;
+         goto error ;
+      }
+      if ( SDB_OK != rc )
+      {
+         detail = BSON( SPT_ERR << "configsObj must be obj" ) ;
+         goto error ;
+      }
+
+      // set ulimit
+      for ( UINT32 index = 0; index < CMD_RESOURCE_NUM; index++ )
+      {
+         if ( configsObj[ resourceName[ index ] ].ok() )
+         {
+            if( FALSE == configsObj.getField( resourceName[ index ] ).isNumber() )
+            {
+               rc = SDB_INVALIDARG ;
+               detail = BSON( SPT_ERR << "value must be number" ) ;
+               goto error ;
+            }
+
+            rlimit rlim ;
+            if ( 0 != getrlimit( resourceType[ index ], &rlim ) )
+            {
+               rc = SDB_SYS ;
+               detail = BSON( SPT_ERR << "Failed to get user limit info" ) ;
+               goto error ;
+            }
+
+            rlim.rlim_cur = configsObj.getIntField( resourceName[ index ] ) ;
+            if ( 0 != setrlimit( resourceType[ index ], &rlim ) )
+            {
+               if ( EINVAL == errno )
+               {
+                  rc = SDB_INVALIDARG ;
+                  detail = BSON( SPT_ERR << "Invalid argument" ) ;
+                  PD_LOG( PDERROR, "Invalid argument, argument: %s",
+                          resourceName[ index ] ) ;
+                  goto error ;
+               }
+               else if ( EPERM == errno )
+               {
+                  rc = SDB_PERM ;
+                  detail = BSON( SPT_ERR << "Permission error" ) ;
+                  PD_LOG( PDERROR, "Permission error" ) ;
+                  goto error ;
+               }
+               else
+               {
+                  rc = SDB_SYS ;
+                  detail = BSON( SPT_ERR << "Failed to set ulimit configs" ) ;
+                  PD_LOG( PDERROR, "Failed to set ulimit configs" ) ;
+                  goto error ;
+               }
+            }
+         }
+      }
+#endif
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _sptUsrSystem::runService( const _sptArguments &arg,
+                                    _sptReturnVal &rval,
+                                    BSONObj &detail )
+   {
+      INT32 rc           = SDB_OK ;
+      UINT32 exitCode    = 0 ;
+      stringstream       cmd ;
+      _ossCmdRunner      runner ;
+      string             serviceName ;
+      string             command ;
+      string             options ;
+      string             outStr ;
+
+      // check argument
+      rc = arg.getString( 0, serviceName ) ;
+      if ( SDB_OUT_OF_BOUND == rc )
+      {
+         detail = BSON( SPT_ERR << "serviceName must be config" ) ;
+      }
+      if ( SDB_OK != rc )
+      {
+         detail = BSON( SPT_ERR << "serviceName must be string" ) ;
+      }
+      PD_RC_CHECK( rc, PDERROR, "Failed to get serviceName, rc: %d", rc ) ;
+
+      rc = arg.getString( 1, command ) ;
+      if ( SDB_OUT_OF_BOUND == rc )
+      {
+         detail = BSON( SPT_ERR << "command must be config" ) ;
+      }
+      if ( SDB_OK != rc )
+      {
+         detail = BSON( SPT_ERR << "command must be string" ) ;
+      }
+      PD_RC_CHECK( rc, PDERROR, "Failed to get command, rc: %d", rc ) ;
+
+#if defined (_LINUX)
+      cmd << "service " << serviceName << " " << command ;
+#elif defined (_WINDOWS)
+      cmd << "sc " << command << " " << serviceName ;
+#endif
+
+      if ( 2 < arg.argc() )
+      {
+         rc = arg.getString( 2, options ) ;
+         if ( SDB_OK != rc )
+         {
+            detail = BSON( SPT_ERR << "options must be string" ) ;
+            goto error ;
+         }
+         cmd << " " << options ;
+      }
+
+      // run cmd
+      rc = runner.exec( cmd.str().c_str(), exitCode,
+                        FALSE, -1, FALSE, NULL, TRUE ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to exec cmd, rc:%d, exit:%d",
+                 rc, exitCode ) ;
+         stringstream ss ;
+         ss << "failed to exec cmd " << cmd.str() << ",rc:"
+            << rc
+            << ",exit:"
+            << exitCode ;
+         detail = BSON( SPT_ERR << ss.str() ) ;
+         goto error ;
+      }
+
+      // get result
+      rc = runner.read( outStr ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to read msg from cmd runner:%d", rc ) ;
+         stringstream ss ;
+         ss << "failed to read msg from cmd \"" << cmd.str() << "\", rc:"
+            << rc ;
+         detail = BSON( SPT_ERR << ss.str() ) ;
+         goto error ;
+      }
+      else if ( SDB_OK != exitCode )
+      {
+         rc = exitCode ;
+         detail = BSON( SPT_ERR << outStr ) ;
+         goto error ;
+      }
+      if( '\n' == outStr[ outStr.size() - 1 ]  )
+      {
+         outStr.erase( outStr.size()-1, 1 ) ;
+      }
+
+      rval.setStringVal( "", outStr.c_str() ) ;
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _sptUsrSystem::createSshKey( const _sptArguments &arg,
+                                      _sptReturnVal &rval,
+                                      BSONObj &detail )
+   {
+      INT32 rc           = SDB_OK ;
+#if defined (_LINUX)
+      UINT32 exitCode    = 0 ;
+      _ossCmdRunner      runner ;
+      string             outStr ;
+
+      // create Ssh key
+      rc = runner.exec( "echo -e \"n\" | ssh-keygen -t rsa -f ~/.ssh/id_rsa -N \"\" ",
+                        exitCode, FALSE, -1, FALSE, NULL, TRUE ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to exec cmd, rc:%d, exit:%d",
+                 rc, exitCode ) ;
+         stringstream ss ;
+         ss << "failed to exec cmd " << "echo -e \"\n\n\n\" | ssh-keygen -t rsa"
+            << ",rc: "
+            << rc
+            << ",exit: "
+            << exitCode ;
+         detail = BSON( SPT_ERR << ss.str() ) ;
+         goto error ;
+      }
+
+#endif
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _sptUsrSystem::getHomePath( const _sptArguments & arg,
+                                     _sptReturnVal & rval,
+                                     BSONObj & detail )
+   {
+      INT32              rc = SDB_OK ;
+      UINT32             exitCode = 0 ;
+      string             homeDir ;
+
+      rc = _getHomePath( homeDir ) ;
+      if ( SDB_OK != rc )
+      {
+         detail = BSON( SPT_ERR << "Failed to get home path" ) ;
+         goto error ;
+      }
+      rval.setStringVal( "", homeDir.c_str() ) ;
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _sptUsrSystem::getUserEnv( const _sptArguments & arg,
+                                _sptReturnVal & rval,
+                                BSONObj & detail )
+   {
+      INT32 rc            = SDB_OK ;
+      BSONObjBuilder      builder ;
+      UINT32 exitCode     = 0 ;
+      string              cmd ;
+      _ossCmdRunner       runner ;
+      string              outStr ;
+
+#if defined (_LINUX)
+      cmd = "env" ;
+#elif defined (_WINDOWS)
+      cmd = "cmd /C set" ;
+#endif
+
+      // run cmd
+      rc = runner.exec( cmd.c_str(), exitCode,
+                        FALSE, -1, FALSE, NULL, TRUE ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to exec cmd, rc:%d, exit:%d",
+                 rc, exitCode ) ;
+         stringstream ss ;
+         ss << "failed to exec cmd " << cmd << ",rc: "
+            << rc
+            << ",exit: "
+            << exitCode ;
+         detail = BSON( SPT_ERR << ss.str() ) ;
+         goto error ;
+      }
+
+      // get result
+      rc = runner.read( outStr ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to read msg from cmd runner:%d", rc ) ;
+         stringstream ss ;
+         ss << "failed to read msg from cmd \"" << cmd << "\", rc:"
+            << rc ;
+         detail = BSON( SPT_ERR << ss.str() ) ;
+         goto error ;
+      }
+
+      // extract result
+      rc = _extractEnvInfo( outStr.c_str(), builder ) ;
+      if ( SDB_OK != rc )
+      {
+         detail = BSON( SPT_ERR << "Failed to extract env info" ) ;
+         goto error ;
+      }
+      rval.setBSONObj( "", builder.obj() ) ;
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _sptUsrSystem::_extractEnvInfo( const CHAR *buf,
+                                         BSONObjBuilder &builder )
+   {
+      INT32 rc = SDB_OK ;
+      vector<string> splited ;
+
+      if ( NULL == buf )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG( PDERROR, "buf can't be null, rc: %d", rc ) ;
+         goto error ;
+      }
+
+      /* format:
+         PWD=/home/users/wujiaming
+         LANG=en_US.UTF-8
+         SHLVL=1
+         HOME=/root
+         LANGUAGE=en_US:en
+         LOGNAME=root
+      */
+      try
+      {
+         boost::algorithm::split( splited, buf, boost::is_any_of("\r\n") ) ;
+      }
+      catch( std::exception &e )
+      {
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "Failed to split result, rc: %d", rc ) ;
+         goto error ;
+      }
+      for ( vector<string>::iterator itr = splited.begin();
+            itr != splited.end();  )
+      {
+         if ( itr->empty() )
+         {
+            itr = splited.erase( itr ) ;
+         }
+         else
+         {
+            itr++ ;
+         }
+      }
+
+      for ( vector<string>::iterator itrSplit = splited.begin();
+            itrSplit != splited.end(); itrSplit++ )
+      {
+         vector<string> columns ;
+         string value ;
+
+         try
+         {
+            boost::algorithm::split( columns, *itrSplit,
+                                     boost::is_any_of("=") ) ;
+         }
+         catch( std::exception &e )
+         {
+            rc = SDB_SYS ;
+            PD_LOG( PDERROR, "Failed to split result, rc: %d", rc ) ;
+            goto error ;
+         }
+         for ( vector<string>::iterator itrCol = columns.begin() ;
+               itrCol != columns.end(); )
+         {
+            if ( itrCol->empty() )
+            {
+               itrCol = columns.erase( itrCol ) ;
+            }
+            else
+            {
+               itrCol++ ;
+            }
+         }
+
+         // at least conatain 2 cols
+         if ( columns.size() < 2 )
+         {
+            value = "" ;
+         }
+         else
+         {
+            value = *( columns.begin() + 1 ) ;
+            /*
+               may contain result like "LS_COLORS=rs=0:di=01;34:ln=01"
+               need to merge into a string
+            */
+            for ( vector<string>::iterator itrCol = columns.begin() + 2 ;
+                  itrCol != columns.end(); itrCol++ )
+            {
+               value += "=" + *itrCol ;
+            }
+         }
+         builder.append( *columns.begin(), value ) ;
+      }
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _sptUsrSystem::_getHomePath( string &homePath )
+   {
+      INT32              rc = SDB_OK ;
+      UINT32             exitCode = 0 ;
+      string             homeDir ;
+      string             cmd ;
+      _ossCmdRunner      runner ;
+
+#if defined (_LINUX)
+      cmd = "echo $HOME" ;
+#elif defined (_WINDOWS)
+      cmd = "cmd /C set HOMEPATH" ;
+#endif
+      // run cmd
+      rc = runner.exec( cmd.c_str(), exitCode,
+                        FALSE, -1, FALSE, NULL, TRUE ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to exec cmd, rc:%d, exit:%d",
+                 rc, exitCode ) ;
+         stringstream ss ;
+         ss << "failed to exec cmd " << cmd << ",rc: "
+            << rc
+            << ",exit: "
+            << exitCode ;
+         goto error ;
+      }
+
+      // get result
+      rc = runner.read( homeDir ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to read msg from cmd runner:%d", rc ) ;
+         stringstream ss ;
+         ss << "failed to read msg from cmd \"" << cmd << "\", rc:"
+            << rc ;
+         goto error ;
+      }
+      if( !homeDir.empty() && homeDir[ homeDir.size() - 1 ] == '\n' )
+      {
+#if defined (_LINUX)
+         homeDir.erase( homeDir.size()-1, 1 ) ;
+#elif defined (_WINDOWS)
+         homeDir.erase( homeDir.size()-2, 2 ) ;
+#endif
+      }
+
+#if defined (_LINUX)
+      homePath = homeDir ;
+#elif defined (_WINDOWS)
+      {
+         vector< string > splited ;
+         try
+         {
+            boost::algorithm::split( splited, homeDir,
+                                     boost::is_any_of( "=" ) ) ;
+         }
+         catch( std::exception &e )
+         {
+            rc = SDB_SYS ;
+            PD_LOG( PDERROR, "Failed to split result, rc: %d", rc ) ;
+            goto error ;
+         }
+         homePath = splited[ 1 ] ;
+         for( UINT32 index = 2; index < splited.size(); index++ )
+         {
+            homePath += splited[ index ] ;
+         }
+      }
+#endif
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _sptUsrSystem::staticHelp( const _sptArguments & arg,
+                                    _sptReturnVal & rval,
+                                    BSONObj & detail )
    {
       stringstream ss ;
-      ss << "System functions:" << endl
+      ss << "Local static functions:" << endl
+         << "var system = remoteObj.getSystem()" << endl
          << " System.ping( hostname )" << endl
          << " System.type()" << endl
          << " System.getReleaseInfo()" << endl
@@ -2577,10 +5391,82 @@ namespace engine
          << " System.sniffPort( port )" << endl
          << " System.getPID()" << endl
          << " System.getTID()" << endl
-         << " System.getEWD()" << endl;
+         << " System.getEWD()" << endl
+         << " System.listProcess( [optionObj], [filterObj] )" << endl
+         << " System.isProcExist( optionObj )" << endl
+         << " System.killProcess( optionObj )" << endl
+         << " System.getEnv()" << endl
+#if defined (_LINUX)
+         << " System.addUser( userObj )" << endl
+         << " System.addGroup( groupObj )" << endl
+         << " System.setUserConfigs( optionObj )" << endl
+         << " System.delUser( optionObj )" << endl
+         << " System.delGroup( name )" << endl
+         << " System.listLoginUsers( [optionObj], [filterObj] )" << endl
+         << " System.listAllUsers( [optionObj], [filterObj] )" << endl
+         << " System.listGroups( [optionObj], [filterObj] )" << endl
+         << " System.getCurrentUser()" << endl
+         << " System.isUserExist( username )" << endl
+         << " System.isGroupExist( groupname )" << endl
+         << " System.getProcUlimitConfigs()" << endl
+         << " System.setProcUlimitConfigs( configsObj )" << endl
+         << " System.getSystemConfigs( [type] )" << endl
+#endif
+         << " System.runService( servicename, command, [option] )" << endl ;
       rval.setStringVal( "", ss.str().c_str() ) ;
       return SDB_OK ;
    }
 
+   INT32 _sptUsrSystem::memberHelp( const _sptArguments & arg,
+                                    _sptReturnVal & rval,
+                                    BSONObj & detail )
+   {
+      stringstream ss ;
+      ss << "Remote System member functions:" << endl
+         << "   ping( hostname )" << endl
+         << "   type()" << endl
+         << "   getReleaseInfo()" << endl
+         << "   getHostsMap()" << endl
+         << "   getAHostMap( hostname )" << endl
+         << "   addAHostMap( hostname, ip, [isReplace] )" << endl
+         << "   delAHostMap( hostname )" << endl
+         << "   getCpuInfo()" << endl
+         << "   snapshotCpuInfo()" << endl
+         << "   getMemInfo()" << endl
+         << "   snapshotMemInfo()" << endl
+         << "   getDiskInfo()" << endl
+         << "   snapshotDiskInfo()" << endl
+         << "   getNetcardInfo()" << endl
+         << "   snapshotNetcardInfo()" << endl
+         << "   getIpTablesInfo()" << endl
+         << "   getHostName()" << endl
+         << "   sniffPort( port )" << endl
+         << "   getPID()" << endl
+         << "   getTID()" << endl
+         << "   getEWD()" << endl
+         << "   listProcess( [optionObj], [filterObj] )" << endl
+         << "   isProcExist( optionObj )" << endl
+         << "   killProcess( optionObj )" << endl
+         << "   getEnv()" << endl
+         << "   addUser( userObj )" << endl
+         << "   addGroup( groupObj )" << endl
+         << "   setUserConfigs( optionObj )" << endl
+         << "   delUser( optionObj )" << endl
+         << "   delGroup( name )" << endl
+         << "   listLoginUsers( [optionObj], [filterObj] )" << endl
+         << "   listAllUsers( [optionObj], [filterObj] )" << endl
+         << "   listGroups( [optionObj], [filterObj] )" << endl
+         << "   getCurrentUser()" << endl
+         << "   isUserExist( username )" << endl
+         << "   isGroupExist( groupname )" << endl
+         << "   getProcUlimitConfigs()" << endl
+         << "   setProcUlimitConfigs( configsObj )" << endl
+         << "   getSystemConfigs( [type] )" << endl
+         << "   buildTrusty()" << endl
+         << "   removeTrusty()" << endl
+         << "   runService( servicename, command, [option] )" << endl ;
+      rval.setStringVal( "", ss.str().c_str() ) ;
+      return SDB_OK ;
+   }
 }
 

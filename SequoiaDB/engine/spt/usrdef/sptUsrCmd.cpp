@@ -40,7 +40,6 @@ using namespace bson ;
 namespace engine
 {
    JS_MEMBER_FUNC_DEFINE( _sptUsrCmd, exec )
-   JS_STATIC_FUNC_DEFINE( _sptUsrCmd, help )
    JS_CONSTRUCT_FUNC_DEFINE( _sptUsrCmd, construct )
    JS_DESTRUCT_FUNC_DEFINE( _sptUsrCmd, destruct )
    JS_MEMBER_FUNC_DEFINE( _sptUsrCmd, toString )
@@ -48,17 +47,22 @@ namespace engine
    JS_MEMBER_FUNC_DEFINE( _sptUsrCmd, getLastOut )
    JS_MEMBER_FUNC_DEFINE( _sptUsrCmd, start )
    JS_MEMBER_FUNC_DEFINE( _sptUsrCmd, getCommand )
+   JS_MEMBER_FUNC_DEFINE( _sptUsrCmd, getInfo )
+   JS_MEMBER_FUNC_DEFINE( _sptUsrCmd, memberHelp )
+   JS_STATIC_FUNC_DEFINE( _sptUsrCmd, staticHelp )
 
    JS_BEGIN_MAPPING( _sptUsrCmd, "Cmd" )
-      JS_ADD_STATIC_FUNC( "help", help )
       JS_ADD_CONSTRUCT_FUNC( construct )
       JS_ADD_DESTRUCT_FUNC( destruct )
+      JS_ADD_MEMBER_FUNC( "_getLastRet", getLastRet )
+      JS_ADD_MEMBER_FUNC( "_getLastOut", getLastOut )
+      JS_ADD_MEMBER_FUNC( "_run", exec )
+      JS_ADD_MEMBER_FUNC( "_start", start )
+      JS_ADD_MEMBER_FUNC( "_getCommand", getCommand )
+      JS_ADD_MEMBER_FUNC( "_getInfo", getInfo )
       JS_ADD_MEMBER_FUNC( "toString", toString )
-      JS_ADD_MEMBER_FUNC( "getLastRet", getLastRet )
-      JS_ADD_MEMBER_FUNC( "getLastOut", getLastOut )
-      JS_ADD_MEMBER_FUNC( "run", exec )
-      JS_ADD_MEMBER_FUNC( "start", start )
-      JS_ADD_MEMBER_FUNC( "getCommand", getCommand )
+      JS_ADD_MEMBER_FUNC( "help", memberHelp )
+      JS_ADD_STATIC_FUNC( "help", staticHelp )
    JS_MAPPING_END()
 
    #define SPT_USER_CMD_ONCE_SLEEP_TIME            ( 2 )
@@ -90,6 +94,33 @@ namespace engine
    {
       rval.setStringVal( "", "CommandRunner" ) ;
       return SDB_OK ;
+   }
+
+   INT32 _sptUsrCmd::getInfo( const _sptArguments & arg,
+                              _sptReturnVal & rval,
+                              BSONObj & detail )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj remoteInfo ;
+      BSONObjBuilder builder ;
+      if ( 0 < arg.argc() )
+      {
+         rc = arg.getBsonobj( 0, remoteInfo ) ;
+         if ( SDB_OK != rc )
+         {
+            detail = BSON( SPT_ERR << "remoteInfo must be obj" ) ;
+            goto error ;
+         }
+      }
+      builder.append( "type", "Cmd" ) ;
+      builder.appendElements( remoteInfo ) ;
+
+      rval.setBSONObj( "", builder.obj() ) ;
+   done:
+      return rc ;
+   error:
+      goto done ;
+
    }
 
    INT32 _sptUsrCmd::getLastRet( const _sptArguments & arg,
@@ -359,7 +390,6 @@ namespace engine
                }
             }
          }
-
          rval.setNativeVal( "", NumberInt, (const void*)&pid ) ;
       }
 
@@ -383,13 +413,12 @@ namespace engine
       goto done ;
    }
 
-   INT32 _sptUsrCmd::help( const _sptArguments & arg,
-                           _sptReturnVal & rval,
-                           BSONObj & detail )
+   INT32 _sptUsrCmd::memberHelp( const _sptArguments & arg,
+                                 _sptReturnVal & rval,
+                                 BSONObj & detail )
    {
       stringstream ss ;
       ss << "Cmd functions:" << endl
-         << " var cmd = new Cmd()" << endl
          << "   run( cmd, [args], [timeout], [useShell] )  " << endl
          << "        timeout(ms), default 0: never timeout," << endl
          << "        useShell 0/1, default 1" << endl
@@ -398,7 +427,32 @@ namespace engine
          << "          timeout(ms), default 100" << endl
          << "   getCommand()" << endl
          << "   getLastRet()" << endl
-         << "   getLastOut()" << endl ;
+         << "   getLastOut()" << endl
+         << "Remote Cmd functions:" << endl
+         << "   runJS( code )" << endl ;
+      rval.setStringVal( "", ss.str().c_str() ) ;
+      return SDB_OK ;
+   }
+
+   INT32 _sptUsrCmd::staticHelp( const _sptArguments & arg,
+                           _sptReturnVal & rval,
+                           BSONObj & detail )
+   {
+      stringstream ss ;
+      ss << "Cmd functions:" << endl
+         << " var cmd = new Cmd()" << endl
+         << " var cmd = remoteObj.getCmd()" << endl
+         << "   run( cmd, [args], [timeout], [useShell] )  " << endl
+         << "        timeout(ms), default 0: never timeout," << endl
+         << "        useShell 0/1, default 1" << endl
+         << "   start( cmd, [args], [useShell], [timeout] )  " << endl
+         << "          useShell 0/1, default 1" << endl
+         << "          timeout(ms), default 100" << endl
+         << "   getCommand()" << endl
+         << "   getLastRet()" << endl
+         << "   getLastOut()" << endl
+         << "Remote Cmd functions:" << endl
+         << "   runJS( code )" << endl ;
       rval.setStringVal( "", ss.str().c_str() ) ;
       return SDB_OK ;
    }

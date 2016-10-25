@@ -77,8 +77,8 @@ namespace engine
                               _sptReturnVal &rval,
                                bson::BSONObj &detail )
    {
-      rval.setStringVal( "", _obj.toString().c_str()) ;
-      return SDB_OK ;      
+      rval.setStringVal( "", _obj.toString( false, true ).c_str()) ;
+      return SDB_OK ;
    }
 
    INT32 _sptBsonobj::destruct()

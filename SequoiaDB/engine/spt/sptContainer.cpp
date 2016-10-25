@@ -42,6 +42,8 @@
 #include "sptUsrOma.hpp"
 #include "sptUsrHash.hpp"
 #include "sptUsrSdbTool.hpp"
+#include "sptUsrRemote.hpp"
+#include "sptUsrFilter.hpp"
 
 namespace engine
 {
@@ -218,6 +220,12 @@ namespace engine
          rc = pScope->loadUsrDefObj<_sptUsrSdbTool>() ;
          PD_CHECK ( SDB_OK == rc, SDB_SYS, error, PDERROR,
                     "Failed to load class _sptUsrSdbTool, rc = %d", rc ) ;
+         rc = pScope->loadUsrDefObj<_sptUsrRemote>() ;
+         PD_CHECK ( SDB_OK == rc, SDB_SYS, error, PDERROR,
+                    "Failed to load class _sptUsrRemote, rc = %d", rc ) ;
+         rc = pScope->loadUsrDefObj<_sptUsrFilter>() ;
+         PD_CHECK ( SDB_OK == rc, SDB_SYS, error, PDERROR,
+                    "Failed to load class _sptUsrFilter, rc = %d", rc ) ;
       }
 
       if ( _loadMask & SPT_OBJ_MASK_INNER_JS )

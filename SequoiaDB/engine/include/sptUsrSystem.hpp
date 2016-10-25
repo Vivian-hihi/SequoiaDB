@@ -37,90 +37,11 @@
 #include "core.hpp"
 #include "oss.hpp"
 #include "sptApi.hpp"
-
-#define SPT_USR_SYSTEM_DISTRIBUTOR        "Distributor"
-#define SPT_USR_SYSTEM_RELASE             "Release"
-#define SPT_USR_SYSTEM_DESP               "Description"
-#define SPT_USR_SYSTEM_BIT                "Bit"
-#define SPT_USR_SYSTEM_IP                 "Ip"
-#define SPT_USR_SYSTEM_HOSTS              "Hosts"
-#define SPT_USR_SYSTEM_HOSTNAME           "HostName"
-#define SPT_USR_SYSTEM_FILESYSTEM         "Filesystem"
-#define SPT_USR_SYSTEM_CORE               "Core"
-#define SPT_USR_SYSTEM_INFO               "Info"
-#define SPT_USR_SYSTEM_FREQ               "Freq"
-#define SPT_USR_SYSTEM_CPUS               "Cpus"
-#define SPT_USR_SYSTEM_USER               "User"
-#define SPT_USR_SYSTEM_SYS                "Sys"
-#define SPT_USR_SYSTEM_IDLE               "Idle"
-#define SPT_USR_SYSTEM_OTHER              "Other"
-#define SPT_USR_SYSTEM_SIZE               "Size"
-#define SPT_USR_SYSTEM_FREE               "Free"
-#define SPT_USR_SYSTEM_USED               "Used"
-#define SPT_USR_SYSTEM_ISLOCAL            "IsLocal"
-#define SPT_USR_SYSTEM_MOUNT              "Mount"
-#define SPT_USR_SYSTEM_DISKS              "Disks"
-#define SPT_USR_SYSTEM_NAME               "Name"
-#define SPT_USR_SYSTEM_NETCARDS           "Netcards"
-#define SPT_USR_SYSTEM_TARGET             "Target"
-#define SPT_USR_SYSTEM_REACHABLE          "Reachable"
-#define SPT_USR_SYSTEM_USABLE             "Usable"
-#define SPT_USR_SYSTEM_UNIT               "Unit"
-#define SPT_USR_SYSTEM_FSTYPE             "FsType"
-
-#define SPT_USR_SYSTEM_RX_PACKETS         "RXPackets"
-#define SPT_USR_SYSTEM_RX_BYTES           "RXBytes"
-#define SPT_USR_SYSTEM_RX_ERRORS          "RXErrors"
-#define SPT_USR_SYSTEM_RX_DROPS           "RXDrops"
-
-#define SPT_USR_SYSTEM_TX_PACKETS         "TXPackets"
-#define SPT_USR_SYSTEM_TX_BYTES           "TXBytes"
-#define SPT_USR_SYSTEM_TX_ERRORS          "TXErrors"
-#define SPT_USR_SYSTEM_TX_DROPS           "TXDrops"
-
-#define SPT_USR_SYSTEM_CALENDAR_TIME      "CalendarTime"
+#include "cmdUsrSystemUtil.hpp"
 
 namespace engine
 {
-   enum SPT_HOST_LINE_TYPE
-   {
-      LINE_HOST         = 1,
-      LINE_UNKNONW,
-   } ;
 
-   struct _sptHostItem
-   {
-      INT32    _lineType ;
-      string   _ip ;
-      string   _com ;
-      string   _host ;
-
-      _sptHostItem()
-      {
-         _lineType = LINE_UNKNONW ;
-      }
-
-      string toString() const
-      {
-         if ( LINE_UNKNONW == _lineType )
-         {
-            return _ip ;
-         }
-         string space = "    " ;
-         if ( _com.empty() )
-         {
-            return _ip + space + _host ;
-         }
-         return _ip + space + _com + space + _host ;
-      }
-   } ;
-   typedef _sptHostItem sptHostItem ;
-
-   typedef vector< sptHostItem >    VEC_HOST_ITEM ;
-
-   /*
-      _sptUsrSystem define
-   */
    class _sptUsrSystem : public SDBObject
    {
    JS_DECLARE_CLASS( _sptUsrSystem )
@@ -130,6 +51,24 @@ namespace engine
       virtual ~_sptUsrSystem() ;
 
    public:
+      INT32 construct( const _sptArguments &arg,
+                       _sptReturnVal &rval,
+                       bson::BSONObj &detail) ;
+
+      INT32 destruct() ;
+
+      INT32 getInfo( const _sptArguments &arg,
+                     _sptReturnVal &rval,
+                     bson::BSONObj &detail ) ;
+
+      INT32 memberHelp( const _sptArguments &arg,
+                        _sptReturnVal &rval,
+                        bson::BSONObj &detail ) ;
+
+      static INT32 getObj( const _sptArguments &arg,
+                           _sptReturnVal &rval,
+                           bson::BSONObj &detail ) ;
+
       static INT32 ping( const _sptArguments &arg,
                          _sptReturnVal &rval,
                          bson::BSONObj &detail ) ;
@@ -214,9 +153,81 @@ namespace engine
                             _sptReturnVal &rval,
                             bson::BSONObj &detail ) ;
 
-      static INT32 help( const _sptArguments &arg,
-                         _sptReturnVal &rval,
-                         bson::BSONObj &detail ) ;
+      static INT32 listProcess( const _sptArguments &arg,
+                                _sptReturnVal &rval,
+                                bson::BSONObj &detail ) ;
+
+      static INT32 killProcess( const _sptArguments &arg,
+                                _sptReturnVal &rval,
+                                bson::BSONObj &detail ) ;
+
+      static INT32 addUser( const _sptArguments &arg,
+                            _sptReturnVal &rval,
+                            bson::BSONObj &detail ) ;
+
+      static INT32 addGroup( const _sptArguments &arg,
+                             _sptReturnVal &rval,
+                             bson::BSONObj &detail ) ;
+
+      static INT32 setUserConfigs( const _sptArguments &arg,
+                                   _sptReturnVal &rval,
+                                   bson::BSONObj &detail ) ;
+
+      static INT32 delUser( const _sptArguments &arg,
+                            _sptReturnVal &rval,
+                            bson::BSONObj &detail ) ;
+
+      static INT32 delGroup( const _sptArguments &arg,
+                             _sptReturnVal &rval,
+                             bson::BSONObj &detail ) ;
+
+      static INT32 listLoginUsers( const _sptArguments &arg,
+                                   _sptReturnVal &rval,
+                                   bson::BSONObj &detail ) ;
+
+      static INT32 listAllUsers( const _sptArguments &arg,
+                                 _sptReturnVal &rval,
+                                 bson::BSONObj &detail ) ;
+
+      static INT32 listGroups( const _sptArguments &arg,
+                               _sptReturnVal &rval,
+                               bson::BSONObj &detail ) ;
+
+      static INT32 getCurrentUser( const _sptArguments &arg,
+                                   _sptReturnVal &rval,
+                                   bson::BSONObj &detail ) ;
+
+      static INT32 getSystemConfigs( const _sptArguments &arg,
+                                     _sptReturnVal &rval,
+                                     bson::BSONObj &detail ) ;
+
+      static INT32 getProcUlimitConfigs( const _sptArguments &arg,
+                                         _sptReturnVal &rval,
+                                         bson::BSONObj &detail ) ;
+
+      static INT32 setProcUlimitConfigs( const _sptArguments &arg,
+                                         _sptReturnVal &rval,
+                                         bson::BSONObj &detail ) ;
+
+      static INT32 runService( const _sptArguments &arg,
+                                  _sptReturnVal &rval,
+                                  bson::BSONObj &detail ) ;
+
+      static INT32 createSshKey( const _sptArguments &arg,
+                                 _sptReturnVal &rval,
+                                 bson::BSONObj &detail ) ;
+
+      static INT32 getHomePath( const _sptArguments &arg,
+                                _sptReturnVal &rval,
+                                bson::BSONObj &detail ) ;
+
+      static INT32 getUserEnv( const _sptArguments &arg,
+                               _sptReturnVal &rval,
+                               bson::BSONObj &detail ) ;
+
+      static INT32 staticHelp( const _sptArguments &arg,
+                               _sptReturnVal &rval,
+                               bson::BSONObj &detail ) ;
 
    private:
       static INT32 _extractReleaseInfo( const CHAR *buf,
@@ -255,13 +266,35 @@ namespace engine
 
       static INT32 _extractNetcards( bson::BSONObjBuilder &builder ) ;
 
-      static INT32 _snapshotNetcardInfo( bson::BSONObjBuilder &builder, 
+      static INT32 _snapshotNetcardInfo( bson::BSONObjBuilder &builder,
                                          bson::BSONObj &detail ) ;
       static INT32 _extractNetCardSnapInfo( const CHAR *buf,
                                             bson::BSONObjBuilder &builder ) ;
+      static INT32 _extractProcessInfo( const CHAR *buf,
+                                        bson::BSONObjBuilder &builder,
+                                        BOOLEAN showDetail ) ;
+
+      static INT32 _extractLoginUsersInfo( const CHAR *buf,
+                                           bson::BSONObjBuilder &builder,
+                                           BOOLEAN showDetail ) ;
+
+      static INT32 _extractAllUsersInfo( const CHAR *buf,
+                                         bson::BSONObjBuilder &builder,
+                                         BOOLEAN showDetail ) ;
+
+      static INT32 _extractGroupsInfo( const CHAR *buf,
+                                       bson::BSONObjBuilder &builder,
+                                       BOOLEAN showDetail ) ;
+
+      static INT32 _extractSystemInfo( const CHAR *buf,
+                                       bson::BSONObjBuilder &builder ) ;
+
+      static INT32 _extractEnvInfo( const CHAR *buf,
+                                    bson::BSONObjBuilder &builder ) ;
+
+      static INT32 _getHomePath( string &homePath ) ;
    } ;
    typedef class _sptUsrSystem sptUsrSystem ;
 }
-
 #endif
 

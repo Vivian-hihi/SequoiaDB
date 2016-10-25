@@ -1,5 +1,6 @@
 /*******************************************************************************
 
+
    Copyright (C) 2011-2014 SequoiaDB Ltd.
 
    This program is free software: you can redistribute it and/or modify
@@ -14,7 +15,7 @@
    You should have received a copy of the GNU Affero General Public License
    along with this program. If not, see <http://www.gnu.org/license/>.
 
-   Source File Name = sptUsrCmd.hpp
+   Source File Name = sptUsrRemote.hpp
 
    Dependencies: N/A
 
@@ -23,40 +24,35 @@
    Change Activity:
    defect Date        Who Description
    ====== =========== === ==============================================
-          31/03/2014  YW  Initial Draft
+          19/07/2016  WJM Initial Draft
 
    Last Changed =
 
 *******************************************************************************/
 
-#ifndef SPT_USRCMD_HPP_
-#define SPT_USRCMD_HPP_
+#ifndef SPT_USRREMOTE_HPP__
+#define SPT_USRREMOTE_HPP__
 
-#include "core.hpp"
-#include "oss.hpp"
+#include "sptUsrRemoteAssit.hpp"
 #include "sptApi.hpp"
-
-#include <string>
-
-using namespace std ;
+#include "../bson/bsonobj.h"
+#include "oss.hpp"
 
 namespace engine
 {
-   class _ossCmdRunner ;
-
-   class _sptUsrCmd : public SDBObject
+   class _sptUsrRemote : public SDBObject
    {
-   JS_DECLARE_CLASS( _sptUsrCmd )
+   JS_DECLARE_CLASS( _sptUsrRemote )
 
    public:
-      _sptUsrCmd() ;
-      virtual ~_sptUsrCmd() ;
+      _sptUsrRemote() ;
+
+      ~_sptUsrRemote() ;
 
    public:
-
       INT32 construct( const _sptArguments &arg,
                        _sptReturnVal &rval,
-                       bson::BSONObj &detail ) ;
+                       bson::BSONObj &detail) ;
 
       INT32 destruct() ;
 
@@ -68,47 +64,35 @@ namespace engine
                      _sptReturnVal &rval,
                      bson::BSONObj &detail ) ;
 
-      INT32 getLastRet( const _sptArguments &arg,
-                        _sptReturnVal &rval,
-                        bson::BSONObj &detail ) ;
-
-      INT32 start( const _sptArguments &arg,
+      INT32 close( const _sptArguments &arg,
                    _sptReturnVal &rval,
                    bson::BSONObj &detail ) ;
 
-      INT32 getLastOut( const _sptArguments &arg,
+      INT32 runCommand( const _sptArguments &arg,
                         _sptReturnVal &rval,
                         bson::BSONObj &detail ) ;
-
-      INT32 getCommand( const _sptArguments &arg,
-                        _sptReturnVal &rval,
-                        bson::BSONObj &detail ) ;
-
-      INT32 exec( const _sptArguments &arg,
-                  _sptReturnVal &rval,
-                  bson::BSONObj &detail ) ;
 
       INT32 memberHelp( const _sptArguments &arg,
                         _sptReturnVal &rval,
                         bson::BSONObj &detail ) ;
-
+      /*
+         static functions
+      */
       static INT32 staticHelp( const _sptArguments &arg,
                                _sptReturnVal &rval,
                                bson::BSONObj &detail ) ;
 
    private:
-      INT32 _setRVal( _ossCmdRunner *runner,
-                      _sptReturnVal &rval,
-                      BOOLEAN setToRVal,
-                      bson::BSONObj &detail ) ;
-
+      INT32 _mergeArg( const _sptArguments &arg,
+                       bson::BSONObj &detail,
+                       string &command,
+                       bson::BSONObj *mergeObj ) ;
    private:
-      UINT32         _retCode ;
-      string         _strOut ;
-      string         _command ;
+      sptUsrRemoteAssit _assit ;
+      string  _hostname ;
+      string  _svcname ;
+
    } ;
-   typedef class _sptUsrCmd sptUsrCmd ;
+
 }
-
 #endif
-

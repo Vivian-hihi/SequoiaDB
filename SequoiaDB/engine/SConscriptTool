@@ -122,7 +122,7 @@ ossFiles = [
       "oss/ossEvent.cpp",
       "oss/ossDynamicLoad.cpp",
       "oss/ossHdfs.cpp",
-      "oss/ossShMem.cpp",
+      "oss/ossShMem.cpp"
       ]
 
 netFiles = [
@@ -215,7 +215,11 @@ omagentFiles = [
       "omagent/omagentTask.cpp",
       "omagent/omagentSubTask.cpp",
       "omagent/omagentJob.cpp",
-      "omagent/omagentNodePathGuard.cpp"
+      "omagent/omagentNodePathGuard.cpp",
+      "omagent/omagentRemoteBase.cpp",
+      "omagent/omagentRemoteUsrSystem.cpp",
+      "omagent/omagentRemoteUsrFile.cpp",
+      "omagent/omagentRemoteUsrCmd.cpp"
       ]
 
 sptFiles = [
@@ -249,7 +253,10 @@ spt2Files = [
       "spt/usrdef/sptUsrOma.cpp",
       "spt/usrdef/sptUsrOmaAssit.cpp",
       "spt/usrdef/sptUsrHash.cpp",
-      "spt/usrdef/sptUsrSdbTool.cpp"
+      "spt/usrdef/sptUsrSdbTool.cpp",
+      "spt/usrdef/sptUsrRemote.cpp",
+      "spt/usrdef/sptUsrRemoteAssit.cpp",
+      "spt/usrdef/sptUsrFilter.cpp"
       ]
 
 ssh2Files = [
@@ -500,7 +507,7 @@ sdbdpsdumpFiles = [
 sdbOmToolMain = [
       "tools/sdbOmTool.cpp"
       ]
-	  
+
 sdbRepairMain = [
       "tools/sdbrepair.cpp"
       ]
@@ -565,7 +572,7 @@ sdbexprt = toolEnv.Program("sdbexprt", exportFiles,
 sdbreplay = toolEnv.Program("sdbreplay", sdbReplayFiles,
           LIBDEPS=["bson","oss","pd","util","clientcpp","dps","pmd"],
           _LIBDEPS='$_LIBDEPS_OBJS' )
-          
+
 #sdbexprt = toolEnv.Program("sdbexprt", sdbExportMain,
 #         LIBDEPS=["bson","mig","oss","pd","util","client","clientcpp"],
 #         _LIBDEPS='$_LIBDEPS_OBJS' )
@@ -616,7 +623,7 @@ if linux:
 sdbmemcheck = toolEnv.Program("sdbmemcheck", sdbmemcheckFiles,
           LIBDEPS=["oss","pd","bson","util"],
           _LIBDEPS='$_LIBDEPS_OBJS' )
-		  
+
 sdbrepair = toolEnv.Program("sdbrepair", sdbRepairMain,
           LIBDEPS=["oss", "pd","bson","util"],
           _LIBDEPS='$_LIBDEPS_OBJS' )
@@ -629,8 +636,8 @@ sdbinspect = toolEnv.Program("sdbinspect",
          inspectFiles,
          LIBDEPS=["oss", "bson", "pmd", "util", "pd", "client", "clientcpp"],
          _LIBDEPS='$_LIBDEPS_OBJS' )
-         
-if linux:         
+
+if linux:
    sdbomtool = toolEnv.Program("sdbomtool",
                sdbOmToolMain,
                LIBDEPS=["pd", "oss","bson", "util"],
