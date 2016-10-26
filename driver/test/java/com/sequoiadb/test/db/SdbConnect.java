@@ -70,6 +70,13 @@ public class SdbConnect {
 	}
 	
 	@Test
+	public void sdbDisconnect() {
+		Sequoiadb db = new Sequoiadb(Constants.COOR_NODE_CONN,"","");
+		db.disconnect();
+		db.disconnect();
+	}
+	
+	@Test
 	public void sdbConnect() {
 		List<String> list = new ArrayList<String>();
 		try {
