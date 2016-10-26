@@ -1896,9 +1896,15 @@ namespace engine
                BOOLEAN tmpResult = FALSE ;
                BSONElement innerEle = iter.next() ;
                rc = _valueMatch( innerEle, toMatchEle, context, tmpResult ) ;
-               PD_RC_CHECK( rc, PDERROR, "_doFuncMatch failed:rc=%d", rc ) ;
-
-               rc = _saveElement( context, tmpResult, innerEle ) ;
+               PD_RC_CHECK( rc, PDERROR, "_valueMatch failed:rc=%d", rc ) ;
+               if ( EN_MATCH_OPERATOR_NE == getType() )
+               {
+                  rc = _saveElement( context, !tmpResult, innerEle ) ;
+               }
+               else
+               {
+                  rc = _saveElement( context, tmpResult, innerEle ) ;
+               }
                PD_RC_CHECK( rc, PDERROR, "_saveElement failed:rc=%d", rc ) ;
 
                if ( tmpResult )
