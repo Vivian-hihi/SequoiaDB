@@ -201,7 +201,7 @@ public class DBCollection {
 		int message_length = SDBMessageHelper.buildInsertRequest(insert_buffer, 
 		        sequoiadb.getNextRequstID(), collectionFullName, insertor);
 
-		connection.sendMessage(insert_buffer.array(), message_length);
+		connection.sendMessage(insert_buffer.array(), 0, message_length);
 		
 		ByteBuffer byteBuffer = connection.receiveMessage(sequoiadb.endianConvert);
 		SDBMessage rtnSDBMessage = SDBMessageHelper.msgExtractReply(byteBuffer);
@@ -459,7 +459,7 @@ public class DBCollection {
 				insert_buffer, sequoiadb.getNextRequstID(), collectionFullName, 
 				insertor, flag, this.ensureOID);
 
-		connection.sendMessage(insert_buffer.array(), messageLength);
+		connection.sendMessage(insert_buffer.array(), 0, messageLength);
 		
 		ByteBuffer byteBuffer = connection.receiveMessage(sequoiadb.endianConvert);
 		SDBMessage rtnSDBMessage = SDBMessageHelper.msgExtractReply(byteBuffer);
@@ -1780,7 +1780,7 @@ public class DBCollection {
 		int messageLength = SDBMessageHelper.buildAggrRequest(insert_buffer, 
 		        sequoiadb.getNextRequstID(), collectionFullName, obj);
 		
-		connection.sendMessage(insert_buffer.array(), messageLength);
+		connection.sendMessage(insert_buffer.array(), 0, messageLength);
 		
 		ByteBuffer byteBuffer = connection.receiveMessage(sequoiadb.endianConvert);
 		SDBMessage rtnSDBMessage = SDBMessageHelper.msgExtractReply(byteBuffer);
@@ -2202,7 +2202,7 @@ public class DBCollection {
 
         byte[] request = SDBMessageHelper.generateRemoveLobRequest(removeObj,
                 sequoiadb.getNextRequstID(), sequoiadb.endianConvert );
-        connection.sendMessage( request, request.length );
+        connection.sendMessage( request, 0, request.length );
         ByteBuffer res = connection.receiveMessage(sequoiadb.endianConvert);
         
         SDBMessage resMessage = SDBMessageHelper.msgExtractLobRemoveReply( res );

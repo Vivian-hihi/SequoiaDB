@@ -524,6 +524,9 @@ public class Sequoiadb {
 	 * @exception com.sequoiadb.exception.BaseException
 	 */
 	public void disconnect() throws BaseException {
+		if (connection == null || connection.isClosed()) {
+			return;
+		}
 		try {
 			byte[] request = SDBMessageHelper.buildDisconnectRequest(endianConvert);
 			releaseResource();

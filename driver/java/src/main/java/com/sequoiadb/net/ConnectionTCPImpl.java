@@ -53,12 +53,12 @@ public class ConnectionTCPImpl implements IConnection {
 	private int REAL_BUFFER_LENGTH ;
 	private long lastUseTime;
 
-	//@Override
+	@Override
 	public void setEndianConvert(boolean endianConvert) {
 		this.endianConvert = endianConvert;
 	}
 
-	//@Override
+	@Override
 	public boolean isEndianConvert() {
 		return endianConvert;
 	}
@@ -66,6 +66,7 @@ public class ConnectionTCPImpl implements IConnection {
 	public long getLastUseTime(){
 		return lastUseTime;
 	}
+	
 	public ConnectionTCPImpl(ServerAddress addr, ConfigOptions options) {
 		this.hostAddress = addr;
 		this.options = options;
@@ -178,7 +179,7 @@ public class ConnectionTCPImpl implements IConnection {
 		logger.getInstance().save();
 	}
 
-	//@Override
+	@Override
 	public boolean isClosed() {
 		if (clientSocket == null)
 			return true;
@@ -191,7 +192,7 @@ public class ConnectionTCPImpl implements IConnection {
 	 * @see com.sequoiadb.net.IConnection#changeConfigOptions(com.sequoiadb.net.
 	 * ConfigOptions)
 	 */
-	//@Override
+	@Override
 	public void changeConfigOptions(ConfigOptions opts) throws BaseException {
 		logger.getInstance().debug(0, "enter changeConfigOptions\n");
 		this.options = opts;
@@ -206,7 +207,7 @@ public class ConnectionTCPImpl implements IConnection {
 	 * 
 	 * @see com.sequoiadb.net.IConnection#receiveMessage()
 	 */
-	//@Override
+	@Override
 	public ByteBuffer receiveMessage(boolean endianConvert) throws BaseException {
 		lastUseTime = System.currentTimeMillis();
 		logger.getInstance().debug(0, "enter receiveMessage\n");
@@ -291,7 +292,7 @@ public class ConnectionTCPImpl implements IConnection {
 		}
 	}
 
-	//@Override
+	@Override
 	public byte[] receiveSysInfoMsg(int msgSize) throws BaseException {
 		logger.getInstance().debug(0, "enter receiveSysInfoMsg\n");
 		byte[] buf = new byte[msgSize];
@@ -332,34 +333,31 @@ public class ConnectionTCPImpl implements IConnection {
 	 * 
 	 * @see com.sequoiadb.net.IConnection#initialize()
 	 */
-	//@Override
+	@Override
 	public void initialize() throws BaseException {
 		connect();
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see com.sequoiadb.net.IConnection#sendMessage(byte[], int)
-	 */
-	//@Override
-	public void sendMessage(byte[] msg) throws BaseException {
-		logger.getInstance().debug(0, "enter sendMessage\n");
-		if(output != null) {
-			try {
-				output.write(msg);
-			} catch (IOException e) {
-				throw new BaseException("SDB_NETWORK", e);
-			}
+	@Override
+	public void sendMessage(ByteBuffer buffer) throws BaseException {
+	    if (buffer == null) {
+	    	throw new BaseException("SDB_SYS", "send ByteBuffer is null");
+	    }
+		if (buffer.hasArray()) {
+			sendMessage(buffer.array());
 		} else {
-			throw new BaseException("SDB_SYS", "output stream is null");
+			throw new BaseException("SDB_SYS", "send ByteBuffer is not ok");
 		}
-		logger.getInstance().debug(0, "leave sendMessage\n");
 	}
 	
-	//@Override
-	public void sendMessage(byte[] msg, int length) throws BaseException {
-	    logger.getInstance().debug(0, "enter sendMessage2\n");
+	@Override
+	public void sendMessage(byte[] msg) throws BaseException {
+		sendMessage(msg, 0, msg.length);
+	}
+	
+	@Override
+	public void sendMessage(byte[] msg, int off, int length) throws BaseException {
+	    logger.getInstance().debug(0, "enter sendMessage\n");
         if (output != null) {
             try {
             	output.write(msg, 0, length);
@@ -369,29 +367,7 @@ public class ConnectionTCPImpl implements IConnection {
         } else {
         	throw new BaseException("SDB_SYS", "output stream is null");
         }
-		logger.getInstance().debug(0, "leave sendMessage2\n");
-	}
-	
-	//@Override
-	public void sendMessage(ByteBuffer buffer) throws BaseException {
-	    logger.getInstance().debug(0, "enter sendMessage3\n");
-	    if (buffer == null) {
-	    	throw new BaseException("SDB_SYS", "send buffer is null");
-	    }
-        if (output != null) {
-        	if (buffer.hasArray()) {
-                try {
-                	output.write(buffer.array());
-                } catch (IOException e) {
-        			throw new BaseException("SDB_NETWORK", e);
-                }
-        	} else {
-        		throw new BaseException("SDB_SYS", "send buffer is not ok");
-        	}
-        } else {
-        	throw new BaseException("SDB_SYS", "output stream is null");
-        }
-		logger.getInstance().debug(0, "leave sendMessage3\n");		
+		logger.getInstance().debug(0, "leave sendMessage\n");
 	}
 	
 	public void shrinkBuffer() {

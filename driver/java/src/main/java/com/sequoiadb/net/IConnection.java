@@ -31,18 +31,10 @@ public interface IConnection {
 	public boolean isEndianConvert();
 	public long getLastUseTime();
 	public void changeConfigOptions(ConfigOptions opts) throws BaseException;
-
-	public void sendMessage(byte[] msg) throws BaseException;
-	
-	public void sendMessage(byte[] msg, int length) throws BaseException;
-	
 	public void sendMessage(ByteBuffer buffer) throws BaseException;
-
+	public void sendMessage(byte[] msg) throws BaseException;
+	public void sendMessage(byte[] msg, int off, int length) throws BaseException;
 	public byte[] receiveSysInfoMsg(int msgSize) throws BaseException;
-	
 	public ByteBuffer receiveMessage(boolean endianConvert) throws BaseException;
-	
 	public void shrinkBuffer();
-
-
 }

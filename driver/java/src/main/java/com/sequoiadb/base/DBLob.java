@@ -89,6 +89,7 @@ public interface DBLob {
      * @brief       Writes bytes from the input stream to this lob. 
      * @param       in   the input stream.
      * @exception   com.sequoiadb.exception.BaseException
+     * @note        user need to close the input stream
      */
     public void write( InputStream in ) throws BaseException;
     
@@ -117,6 +118,7 @@ public interface DBLob {
      * @brief       Reads the content to the output stream. 
      * @param       out   the output stream.
      * @exception   com.sequoiadb.exception.BaseException
+     * @note        user need to close the output stream
      */
     public void read( OutputStream out ) throws BaseException;
     
@@ -174,8 +176,9 @@ class DBLobConcrete implements DBLob {
     public final static int SDB_LOB_READ       = 0x00000004;
     
     // the max lob data size to send for one message
-    private final static int SDB_LOB_WRITE_DATA_LENGTH = 131072; // 128 * 1024;
-    private final static int SDB_LOB_READ_DATA_LENGTH = 262144; // 256 * 1024;
+    private final static int SDB_LOB_MAX_WRITE_DATA_LENGTH = 2097152; // 2M;
+    private final static int SDB_LOB_WRITE_DATA_LENGTH = 131072; // 128k;
+    private final static int SDB_LOB_READ_DATA_LENGTH = 131072; // 128k;
     
     private final static long SDB_LOB_DEFAULT_OFFSET  = -1;
     private final static int SDB_LOB_DEFAULT_SEQ      = 0;
@@ -453,8 +456,17 @@ class DBLobConcrete implements DBLob {
         if ( off + len > b.length ) {
         	throw new BaseException( "SDB_INVALIDARG", "off + len is great than b.length" );
         }
+        int offset = off;
+        int leftLen = len;
+        int writeLen = 0; 
+        while(leftLen > 0) {
+        	writeLen = (leftLen < SDB_LOB_MAX_WRITE_DATA_LENGTH) ? 
+        			leftLen : SDB_LOB_MAX_WRITE_DATA_LENGTH;
+        	_write(b, offset, writeLen);
+        	leftLen -= writeLen;
+        	offset += writeLen;
+        }
         
-        _write(b, off, len);
     }
     
     /**
@@ -538,7 +550,6 @@ class DBLobConcrete implements DBLob {
         if ( b.length == 0 ) {
             return 0;
         }
-
         return _read( b, off, len );
     }
     
@@ -788,6 +799,9 @@ class DBLobConcrete implements DBLob {
     }
     
     private void _write( byte[] input, int off, int len ) throws BaseException {
+    	if (len == 0) {
+    		return ;
+    	}
         ByteBuffer request = generateWriteLobRequest( input, off, len );
         // send and receive msg
         ByteBuffer res = sendRequest( request );
