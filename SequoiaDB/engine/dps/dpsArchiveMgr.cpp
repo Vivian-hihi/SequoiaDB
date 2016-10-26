@@ -571,13 +571,12 @@ namespace engine
       UINT32 startFileId ;
       UINT32 endFileId ;
 
-      if ( startLSN.compareOffset( endLSN.offset ) == 0 )
+      if ( startLSN.compareOffset( endLSN.offset ) >= 0 )
       {
+         PD_LOG( PDDEBUG, "startLSN[%lld] is larger than or equals to endLSN[%lld]",
+                 startLSN.offset, endLSN.offset ) ;
          goto done ;
       }
-
-      SDB_ASSERT( startLSN.compareOffset( endLSN.offset ) < 0,
-                  "startLSN should less than endLSN" ) ;
 
       startOffset = startLSN.offset ;
       endOffset = endLSN.offset ;
@@ -1168,10 +1167,14 @@ namespace engine
          _dpsLogHeader* destLogHeader = archiveFile.getLogHeader() ;
 
          // a new partial archive file, need to init file header
-         if ( destLogHeader->_logID == DPS_INVALID_LOG_FILE_ID )
+         if ( DPS_INVALID_LOG_FILE_ID == destLogHeader->_logID )
          {
             *destLogHeader = srcLogHeader ;
             destLogHeader->_firstLSN.offset = startOffset ;
+            if ( DPS_INVALID_LSN_VERSION == destLogHeader->_firstLSN.version )
+            {
+               destLogHeader->_firstLSN.version = 1 ;
+            }
             destLogHeader->_logID = logicalFileId ;
             destLogHeader->_fileNum = _logMgr->getLogFileNum() ;
             destLogHeader->_fileSize = _logMgr->getLogFileSz() ;
