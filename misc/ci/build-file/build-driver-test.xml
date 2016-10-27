@@ -419,9 +419,6 @@
 		</javac>
 		
 		<echo level="info" message="3 : compress ${sjava_deploy_path}/build to ${sjava_deploy_path}/lib/story_java_test.jar." />
-		<copy todir="${sjava_deploy_path}/build/com/sequoiadb/lob/testlobfile" > 
-		   <fileset dir="${sjava_src_path}/com/sequoiadb/lob/testlobfile" /> 
-		</copy>	
 		<jar file="${sjava_deploy_path}/lib/story_java_test.jar">
 			<manifest>
 				<attribute name="Version" value="1.0" />
