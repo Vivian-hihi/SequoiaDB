@@ -142,6 +142,7 @@ int main(int argc, char* argv[])
    }
    catch(std::exception &e)
    {
+      rc = SDB_SYS ;
       PD_LOG(PDERROR, "unexpected error happened:%s", e.what());
       std::cerr << "unexpected error happened: "
                 << e.what()

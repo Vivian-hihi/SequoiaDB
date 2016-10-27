@@ -45,6 +45,7 @@
 #include "ossMem.hpp"
 #include "pd.hpp"
 #include "utilStr.hpp"
+#include "dpsTrace.hpp"
 #include <sstream>
 
 namespace engine
@@ -211,11 +212,13 @@ namespace engine
       _clearQueue() ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_DPSARCHIVEMGR_INIT, "dpsArchiveMgr::init" )
    INT32 dpsArchiveMgr::init( _dpsLogWrapper* dpsCB, const CHAR* archivePath )
    {
       INT32 rc = SDB_OK ;
       dpsArchiveInfo info ;
       DPS_LSN startLSN ;
+      PD_TRACE_ENTRY ( SDB_DPSARCHIVEMGR_INIT );
       SDB_ASSERT( dpsCB != NULL, "dpsCB must be not null" ) ;
 
       _dpsCB = dpsCB ;
@@ -272,24 +275,30 @@ namespace engine
       _inited= TRUE ;
 
    done:
+      PD_TRACE_EXITRC ( SDB_DPSARCHIVEMGR_INIT, rc ) ;
       return rc ;
    error:
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_DPSARCHIVEMGR_FINI, "dpsArchiveMgr::fini" )
    INT32 dpsArchiveMgr::fini()
    {
+      PD_TRACE_ENTRY ( SDB_DPSARCHIVEMGR_FINI ) ;
       if ( _inited )
       {
          SDB_ASSERT( NULL != _dpsCB, "_dpsCB can't be NULL" ) ;
          _dpsCB->unregEventHandler( this ) ;
       }
+      PD_TRACE_EXIT ( SDB_DPSARCHIVEMGR_FINI ) ;
       return SDB_OK ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_DPSARCHIVEMGR_RUN, "dpsArchiveMgr::run" )
    INT32 dpsArchiveMgr::run()
    {
       INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY ( SDB_DPSARCHIVEMGR_RUN ) ;
       dpsArchiveEvent* event = NULL;
       DPS_LSN lsn ;
 
@@ -341,19 +350,22 @@ namespace engine
       }
 
    done :
+      PD_TRACE_EXITRC ( SDB_DPSARCHIVEMGR_RUN, rc ) ;
       return rc ;
    error :
       goto done ;
    }
 
    // ensure log file can't be wrapped
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_DPSARCHIVEMGR_CANASSIGNLOGPAGE, "dpsArchiveMgr::canAssignLogPage" )
    INT32 dpsArchiveMgr::canAssignLogPage( UINT32 reqLen, _pmdEDUCB *cb )
    {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY ( SDB_DPSARCHIVEMGR_CANASSIGNLOGPAGE ) ;
       UINT32 waitTime = 0 ;
       DPS_LSN_OFFSET safeOffset ;
       DPS_LSN_OFFSET unsafeOffset ;
       UINT32 logFileSize = _logMgr->getLogFileSz() ;
-      INT32 rc = SDB_OK ;
 
       // log file can't be wrapped if diff <= safeOffset
       safeOffset = ( _logMgr->getLogFileNum() - 1 ) * logFileSize ;
@@ -370,17 +382,6 @@ namespace engine
             0 : info.startLSN.offset ;
          DPS_LSN_OFFSET endOffset = expectOffset + reqLen ;
          DPS_LSN_OFFSET diff = endOffset - nextOffset ;
-
-         /*PD_LOG( PDINFO, "Replica log archiving check, " \
-                 "expect LSN: %lld[file: %u(%u)], reqLen=%u, " \
-                 "next archived LSN: %lld[file: %u(%u)]",
-                 expectOffset,
-                 _logMgr->calcFileID( expectOffset ),
-                 _logMgr->calcLogicalFileID( expectOffset ),
-                 reqLen,
-                 nextOffset,
-                 _logMgr->calcFileID( nextOffset ),
-                 _logMgr->calcLogicalFileID( nextOffset ) ) ;*/
 
          if ( DPS_INVALID_LSN_OFFSET == expectOffset )
          {
@@ -451,18 +452,20 @@ namespace engine
       }
 
    done:
+      PD_TRACE_EXITRC ( SDB_DPSARCHIVEMGR_CANASSIGNLOGPAGE, rc ) ;
       return rc ;
    error:
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_DPSARCHIVEMGR_ONSWITCHLOGFILE, "dpsArchiveMgr::onSwitchLogFile" )
    void dpsArchiveMgr::onSwitchLogFile( UINT32 preLogicalFileId,
                                         UINT32 preFileId,
                                         UINT32 curLogicalFileId,
                                         UINT32 curFileId )
    {
       dpsArchiveEventSwitchFile* event = NULL ;
-
+      PD_TRACE_ENTRY ( SDB_DPSARCHIVEMGR_ONSWITCHLOGFILE ) ;
       PD_LOG( PDDEBUG, "Log archive on switch log file" ) ;
 
       event = SDB_OSS_NEW dpsArchiveEventSwitchFile() ;
@@ -481,11 +484,13 @@ namespace engine
       _queue.push( event ) ;
 
    done:
+      PD_TRACE_EXIT ( SDB_DPSARCHIVEMGR_ONSWITCHLOGFILE ) ;
       return ;
    error:
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_DPSARCHIVEMGR_ONMOVELOG, "dpsArchiveMgr::onMoveLog" )
    void dpsArchiveMgr::onMoveLog( DPS_LSN_OFFSET moveToOffset,
                                   DPS_LSN_VER moveToVersion,
                                   DPS_LSN_OFFSET expectOffset,
@@ -494,7 +499,7 @@ namespace engine
                                   INT32 errcode )
    {
       DPS_LSN lsn ;
-
+      PD_TRACE_ENTRY ( SDB_DPSARCHIVEMGR_ONMOVELOG ) ;
       lsn.set( moveToOffset, moveToVersion ) ;
 
       switch( moment )
@@ -510,6 +515,8 @@ namespace engine
       default:
          SDB_ASSERT( FALSE, "invalid moment value" ) ;
       }
+
+      PD_TRACE_EXIT ( SDB_DPSARCHIVEMGR_ONMOVELOG ) ;
    }
 
    DPS_LSN dpsArchiveMgr::_calcStartLSN()
@@ -561,11 +568,13 @@ namespace engine
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_DPSARCHIVEMGR__GENERATEARCHIVEEVENT, "dpsArchiveMgr::_generateArchiveEvent" )
    INT32 dpsArchiveMgr::_generateArchiveEvent( const DPS_LSN& startLSN, 
                                                const DPS_LSN& endLSN,
                                                BOOLEAN allowPartial )
    {
       INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY ( SDB_DPSARCHIVEMGR__GENERATEARCHIVEEVENT ) ;
       DPS_LSN_OFFSET startOffset ;
       DPS_LSN_OFFSET endOffset ;
       UINT32 startFileId ;
@@ -661,15 +670,17 @@ namespace engine
       }
 
    done:
+      PD_TRACE_EXITRC ( SDB_DPSARCHIVEMGR__GENERATEARCHIVEEVENT, rc ) ;
       return rc ;
    error:
        goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_DPSARCHIVEMGR__PROCESSLOGEVENT, "dpsArchiveMgr::_processLogEvent" )
    INT32 dpsArchiveMgr::_processLogEvent( dpsArchiveEvent* event )
    {
       INT32 rc = SDB_OK ;
-
+      PD_TRACE_ENTRY ( SDB_DPSARCHIVEMGR__PROCESSLOGEVENT ) ;
       SDB_ASSERT( NULL != event, "event can't be NULL" ) ;
       SDB_ASSERT( !_isArchiving, "is archiveing?" ) ;
 
@@ -738,17 +749,20 @@ namespace engine
 
    done:
       SAFE_OSS_DELETE( event ) ;
+      PD_TRACE_EXITRC ( SDB_DPSARCHIVEMGR__PROCESSLOGEVENT, rc ) ;
       return rc ;
    error:
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_DPSARCHIVEMGR__ARCHIVE, "dpsArchiveMgr::_archive" )
    INT32 dpsArchiveMgr::_archive( UINT32 logicalFileId,
                                   BOOLEAN isPartial,
                                   const DPS_LSN& startLSN,
                                   const DPS_LSN& endLSN )
    {
       INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY ( SDB_DPSARCHIVEMGR__ARCHIVE ) ;
       dpsArchiveInfo info = _infoMgr.getInfo() ;
       DPS_LSN_OFFSET startOffset = startLSN.offset ;
       // endOffset is not archived at this time
@@ -885,6 +899,7 @@ namespace engine
 
    done:
       _isArchiving = FALSE ;
+      PD_TRACE_EXITRC ( SDB_DPSARCHIVEMGR__ARCHIVE, rc ) ;
       return rc ;
    error:
       // current archive failed,
@@ -897,9 +912,11 @@ namespace engine
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_DPSARCHIVEMGR__ARCHIVEFULL, "dpsArchiveMgr::_archiveFull" )
    INT32 dpsArchiveMgr::_archiveFull( UINT32 fileId, UINT32 logicalFileId )
    {
       INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY ( SDB_DPSARCHIVEMGR__ARCHIVEFULL ) ;
       dpsArchiveFile archiveFile ;
       _dpsLogFile* logFile = NULL ;
       string path = _fileMgr.getFullFilePath( logicalFileId ) ;
@@ -1004,16 +1021,19 @@ namespace engine
       }
 
    done:
+      PD_TRACE_EXITRC ( SDB_DPSARCHIVEMGR__ARCHIVEFULL, rc ) ;
       return rc ;
    error:
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_DPSARCHIVEMGR__ARCHIVEPARTIAL, "dpsArchiveMgr::_archivePartial" )
    INT32 dpsArchiveMgr::_archivePartial( UINT32 logicalFileId, 
                                          DPS_LSN_OFFSET startOffset,
                                          DPS_LSN_OFFSET endOffset )
    {
       INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY ( SDB_DPSARCHIVEMGR__ARCHIVEPARTIAL ) ;
       dpsArchiveFile archiveFile ;
       _dpsLogFile* logFile = NULL ;
       string path = _fileMgr.getFullFilePath( logicalFileId ) ;
@@ -1309,14 +1329,17 @@ namespace engine
       }
 
    done:
+      PD_TRACE_EXITRC ( SDB_DPSARCHIVEMGR__ARCHIVEPARTIAL, rc ) ;
       return rc ;
    error:
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_DPSARCHIVEMGR__MOVE, "dpsArchiveMgr::_move" )
    INT32 dpsArchiveMgr::_move( const DPS_LSN& lsn )
    {
       INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY ( SDB_DPSARCHIVEMGR__MOVE ) ;
       dpsArchiveInfo info = _infoMgr.getInfo() ;
       DPS_LSN startLSN = info.startLSN ;
       DPS_LSN_OFFSET moveOffset = lsn.offset ;
@@ -1398,14 +1421,17 @@ namespace engine
       _clearQueue() ;
 
    done:
+      PD_TRACE_EXITRC ( SDB_DPSARCHIVEMGR__MOVE, rc ) ;
       return rc ;
    error:
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_DPSARCHIVEMGR__CHECKARCHIVETIMEOUT, "dpsArchiveMgr::_checkArchiveTimeout" )
    INT32 dpsArchiveMgr::_checkArchiveTimeout()
    {
       INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY ( SDB_DPSARCHIVEMGR__CHECKARCHIVETIMEOUT ) ;
       ossTimestamp curTime ;
       UINT32 timeout ;
       DPS_LSN expectLSN ;
@@ -1450,14 +1476,17 @@ namespace engine
       }
 
    done:
+      PD_TRACE_EXITRC ( SDB_DPSARCHIVEMGR__CHECKARCHIVETIMEOUT, rc ) ;
       return rc ;
    error:
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_DPSARCHIVEMGR__CHECKARCHIVEEXPIRED, "dpsArchiveMgr::_checkArchiveExpired" )
    INT32 dpsArchiveMgr::_checkArchiveExpired()
    {
       INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY ( SDB_DPSARCHIVEMGR__CHECKARCHIVEEXPIRED ) ;
       ossTimestamp curTime ;
       UINT32 expired ;
       UINT32 minFileId = DPS_INVALID_LOG_FILE_ID ;
@@ -1519,14 +1548,17 @@ namespace engine
       }
 
    done:
+      PD_TRACE_EXITRC ( SDB_DPSARCHIVEMGR__CHECKARCHIVEEXPIRED, rc ) ;
       return rc ;
    error:
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_DPSARCHIVEMGR__CHECKARCHIVEQUOTA, "dpsArchiveMgr::_checkArchiveQuota" )
    INT32 dpsArchiveMgr::_checkArchiveQuota()
    {
       INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY ( SDB_DPSARCHIVEMGR__CHECKARCHIVEQUOTA ) ;
       INT64 totalSize = 0 ;
       UINT32 minFileId = DPS_INVALID_LOG_FILE_ID ;
       UINT32 maxFileId = DPS_INVALID_LOG_FILE_ID ;
@@ -1592,6 +1624,7 @@ namespace engine
               totalSize ) ;
 
    done:
+      PD_TRACE_EXITRC ( SDB_DPSARCHIVEMGR__CHECKARCHIVEQUOTA, rc ) ;
       return rc ;
    error:
       goto done ;

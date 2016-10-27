@@ -151,10 +151,10 @@ namespace engine
       goto done;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SB__DPSLGFILEMGR__ANLYS, "_dpsLogFileMgr::_analysis" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DPSLGFILEMGR__ANLYS, "_dpsLogFileMgr::_analysis" )
    void _dpsLogFileMgr::_analysis ()
    {
-      PD_TRACE_ENTRY ( SB__DPSLGFILEMGR__ANLYS );
+      PD_TRACE_ENTRY ( SDB__DPSLGFILEMGR__ANLYS );
       _dpsLogFile *file = NULL ;
       UINT32 i = 0 ;
       UINT32 beginLogID = DPS_INVALID_LOG_FILE_ID ;
@@ -224,7 +224,7 @@ namespace engine
       PD_LOG( PDEVENT, "Analysis dps logs[begin: %u, work: %u, "
               "logicalWork: %u]", _begin, _work, _logicalWork ) ;
 
-      PD_TRACE_EXIT ( SB__DPSLGFILEMGR__ANLYS ) ;
+      PD_TRACE_EXIT ( SDB__DPSLGFILEMGR__ANLYS ) ;
    }
 
    // get the first LSN in log file manager
