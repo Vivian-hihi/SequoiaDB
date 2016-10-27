@@ -307,10 +307,12 @@ namespace engine
                                 CoordCataInfoPtr &cataInfo ) ;
 
    /*
-      will update node stat by reply flag
+      will update collection stat by reply flag
    */
    INT32 rtnCoordProcessQueryCatReply ( MsgCatQueryCatRsp *pReply,
                                         CoordCataInfoPtr &cataInfo ) ;
+   INT32 rtnCoordProcessCatInfoObj ( const BSONObj &boCataInfo,
+                                     CoordCataInfoPtr &cataInfo ) ;
 
    /*
       will update node stat by reply flag

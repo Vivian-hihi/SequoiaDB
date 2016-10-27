@@ -225,9 +225,15 @@ namespace engine
          return RTN_CONTEXT_CAT_DROP_CL ;
       }
 
+   protected :
       virtual INT32 _parseQuery ( _pmdEDUCB *cb ) ;
 
       virtual INT32 _checkInternal ( _pmdEDUCB *cb ) ;
+
+      virtual INT32 _makeReply ( rtnContextBuf &buffObj ) ;
+
+   protected :
+      INT32 _needUpdateCoord ;
    } ;
 
    typedef class _catCtxDropCL catCtxDropCL ;

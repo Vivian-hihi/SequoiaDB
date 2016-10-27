@@ -1472,6 +1472,7 @@ namespace engine
       _commitAfterExecute = TRUE ;
       _needPreExecute = TRUE ;
       _needRollback = FALSE ;
+      _needUpdateCoord = FALSE ;
    }
 
    _catCtxDropCL::~_catCtxDropCL ()
@@ -1535,11 +1536,43 @@ namespace engine
       rc = catLockGroups( _groupList, cb, _lockMgr, SHARED ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to lock groups, rc: %d", rc ) ;
 
+      _needUpdateCoord = pDropCLTask->needUpdateCoord() ;
+      _boTarget = pDropCLTask->getDataObj() ;
+
    done :
       PD_TRACE_EXITRC ( SDB_CATCTXDROPCL_CHECK_INT, rc ) ;
       return rc ;
    error :
       goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATCTXDROPCL_MAKEREPLY, "_catCtxDropCL::_makeReply" )
+   INT32 _catCtxDropCL::_makeReply ( rtnContextBuf &buffObj )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY ( SDB_CATCTXDROPCL_MAKEREPLY ) ;
+
+      if ( !_groupList.empty() && CAT_CONTEXT_READY == _status )
+      {
+         BSONObjBuilder retObjBuilder ;
+         if ( _needUpdateCoord )
+         {
+            // Version of collection in Coord need to be updated
+            retObjBuilder.appendElements(
+                  BSON( CAT_COLLECTION << _boTarget.getOwned() ) ) ;
+         }
+         _pCatCB->makeGroupsObj( retObjBuilder, _groupList, TRUE ) ;
+         buffObj = rtnContextBuf( retObjBuilder.obj() ) ;
+      }
+      else
+      {
+         rc = _catCtxDataMultiTaskBase::_makeReply( buffObj ) ;
+      }
+
+      PD_TRACE_EXITRC ( SDB_CATCTXDROPCL_MAKEREPLY, rc ) ;
+
+      return rc ;
    }
 
    /*

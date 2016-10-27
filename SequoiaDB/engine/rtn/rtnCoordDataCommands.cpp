@@ -780,6 +780,68 @@ namespace engine
       return SDB_OK ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION( CMD_RTNCOCMDDROPCL_GENDATAMSG, "rtnCoordCMDDropCollection::_generateDataMsg" )
+   INT32 rtnCoordCMDDropCollection::_generateDataMsg ( MsgHeader *pMsg,
+                                                       pmdEDUCB *cb,
+                                                       _rtnCMDArguments *pArgs,
+                                                       const vector<BSONObj> &cataObjs,
+                                                       CHAR **ppMsgBuf,
+                                                       MsgHeader **ppDataMsg )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY ( CMD_RTNCOCMDDROPCL_GENDATAMSG ) ;
+
+      rc = rtnCoordDataCMD3Phase::_generateDataMsg( pMsg, cb, pArgs,
+                                                    cataObjs, ppMsgBuf,
+                                                    ppDataMsg) ;
+
+      if ( cataObjs.size() == 1 )
+      {
+         try
+         {
+            BSONElement beCollection = cataObjs[0].getField( CAT_COLLECTION ) ;
+            if ( !beCollection.eoo() &&
+                 beCollection.type() == Object )
+            {
+               CoordCataInfoPtr cataInfo ;
+               BSONObj boCataInfo = beCollection.Obj() ;
+
+               // The catalog info of collection maybe too old
+               // The reply from Catalog implies that info need to be updated
+
+               PD_LOG( PDWARNING,
+                       "Need update catalog info of collection [%s]",
+                       pArgs->_targetName.c_str() ) ;
+
+               rc = rtnCoordProcessCatInfoObj( boCataInfo, cataInfo ) ;
+               PD_RC_CHECK( rc, PDERROR,
+                            "Failed to parse catalog info of collection [%s], rc: %d",
+                            pArgs->_targetName.c_str(), rc ) ;
+               pmdKRCB *pKrcb = pmdGetKRCB() ;
+               CoordCB *pCoordcb = pKrcb->getCoordCB() ;
+               pCoordcb->updateCataInfo( pArgs->_targetName, cataInfo ) ;
+
+               MsgOpQuery *pOpMsg = (MsgOpQuery *)pMsg ;
+               pOpMsg->version = cataInfo->getVersion() ;
+            }
+         }
+         catch ( std::exception &e )
+         {
+            rc = SDB_INVALIDARG ;
+            PD_LOG ( PDERROR, "Failed to parse catalog info of collection,"
+                     "received unexpected error: %s", e.what() ) ;
+            goto error ;
+         }
+      }
+
+   done :
+      PD_TRACE_EXITRC( CMD_RTNCOCMDDROPCL_GENDATAMSG, rc ) ;
+      return rc ;
+   error :
+      goto done ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION( CMD_RTNCOCMDDROPCL_DOCOMPLETE, "rtnCoordCMDDropCollection::_doComplete" )
    INT32 rtnCoordCMDDropCollection::_doComplete ( MsgHeader *pMsg,
                                                   pmdEDUCB * cb,

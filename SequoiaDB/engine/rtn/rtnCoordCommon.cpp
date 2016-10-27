@@ -2547,69 +2547,92 @@ namespace engine
          {
             try
             {
-               BSONObj boCataInfo( (CHAR *)pReply + sizeof(MsgCatQueryCatRsp) );
-               BSONElement beName = boCataInfo.getField( CAT_CATALOGNAME_NAME );
-               if ( beName.eoo() || beName.type() != String )
+               BSONObj boCataInfo( (CHAR *)pReply + sizeof(MsgCatQueryCatRsp) ) ;
+               rc = rtnCoordProcessCatInfoObj( boCataInfo, cataInfo ) ;
+               if ( SDB_OK != rc )
                {
-                  rc = SDB_INVALIDARG;
-                  PD_LOG ( PDERROR, "Failed to parse query-catalogue-reply,"
-                           "failed to get the field(%s)",
-                           CAT_CATALOGNAME_NAME );
-                  break;
+                  PD_LOG( PDERROR, "Failed to parse query-catalogue-reply, "
+                          "parse catalogue info from bson-obj failed, rc: %d",
+                          rc ) ;
+                  break ;
                }
-               BSONElement beVersion = boCataInfo.getField( CAT_CATALOGVERSION_NAME );
-               if ( beVersion.eoo() || !beVersion.isNumber() )
-               {
-                  rc = SDB_INVALIDARG;
-                  PD_LOG ( PDERROR, "Failed to parse query-catalogue-reply, "
-                           "failed to get the field(%s)",
-                           CAT_CATALOGVERSION_NAME );
-                  break;
-               }
-
-               // the pCataInfoTmp will be deleted by smart-point automatically
-               CoordCataInfo *pCataInfoTmp = NULL;
-               pCataInfoTmp = SDB_OSS_NEW CoordCataInfo( beVersion.number(),
-                                                         beName.str().c_str() );
-               if ( NULL == pCataInfoTmp )
-               {
-                  rc = SDB_OOM;
-                  PD_LOG ( PDERROR,
-                           "Failed to parse query-catalogue-reply, new failed");
-                  break;
-               }
-               CoordCataInfoPtr cataInfoPtr( pCataInfoTmp );
-               rc = cataInfoPtr->fromBSONObj( boCataInfo );
-               if ( rc != SDB_OK )
-               {
-                  PD_LOG ( PDERROR, "Failed to parse query-catalogue-reply, "
-                           "parse catalogue info from bson-obj failed(rc=%d)",
-                           rc );
-                  break;
-               }
-               PD_LOG ( PDDEBUG, "new catalog info: %s",
-                        boCataInfo.toString().c_str() );
-               cataInfo = cataInfoPtr ;
             }
             catch ( std::exception &e )
             {
-               rc = SDB_INVALIDARG;
+               rc = SDB_INVALIDARG ;
                PD_LOG ( PDERROR, "Failed to parse query-catalogue-reply,"
-                        "received unexcepted error:%s", e.what() );
-               break;
+                        "received unexpected error:%s", e.what() ) ;
+               break ;
             }
          }
          else
          {
-            
-            PD_LOG ( PDWARNING, "Recieve unexcepted reply while query "
+            PD_LOG ( PDWARNING, "Received unexpected reply while query "
                      "catalogue(flag=%d)", pReply->flags ) ;
          }
-         rc= pReply->flags ;
-      }while ( FALSE ) ;
+         rc = pReply->flags ;
+      } while ( FALSE ) ;
 
       PD_TRACE_EXITRC ( SDB_RTNCOPROCESSQUERYCATREPLY, rc ) ;
       return rc;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOPROCESSCATINFOOBJ, "rtnCoordProcessCatInfoObj" )
+   INT32 rtnCoordProcessCatInfoObj ( const BSONObj &boCataInfo,
+                                     CoordCataInfoPtr &cataInfo )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB_RTNCOPROCESSCATINFOOBJ ) ;
+
+      try
+      {
+         // Check types of name and version elements
+         BSONElement beName = boCataInfo.getField( CAT_CATALOGNAME_NAME ) ;
+         PD_CHECK( !beName.eoo() && beName.type() == String,
+                   SDB_INVALIDARG, error, PDERROR,
+                   "Failed to parse query-catalogue-reply,"
+                   "failed to get the field [%s]",
+                   CAT_CATALOGNAME_NAME ) ;
+         BSONElement beVersion = boCataInfo.getField( CAT_CATALOGVERSION_NAME ) ;
+         PD_CHECK( !beVersion.eoo() && beVersion.isNumber(),
+                   SDB_INVALIDARG, error, PDERROR,
+                   "Failed to parse query-catalogue-reply, "
+                   "failed to get the field [%s]",
+                   CAT_CATALOGVERSION_NAME ) ;
+
+         // the pCataInfoTmp will be deleted by smart-point automatically
+         CoordCataInfo *pCataInfoTmp = NULL ;
+         pCataInfoTmp = SDB_OSS_NEW CoordCataInfo( beVersion.number(),
+                                                   beName.str().c_str() ) ;
+         PD_CHECK( pCataInfoTmp,
+                   SDB_OOM, error, PDERROR,
+                   "Failed to parse query-catalogue-reply, new failed" ) ;
+
+         CoordCataInfoPtr cataInfoPtr( pCataInfoTmp ) ;
+         rc = cataInfoPtr->fromBSONObj( boCataInfo ) ;
+         PD_RC_CHECK( rc, PDERROR,
+                      "Failed to parse query-catalogue-reply, "
+                      "parse catalogue info from bson-obj failed, rc: %d",
+                      rc ) ;
+
+         PD_LOG ( PDDEBUG, "new catalog info: %s",
+                  boCataInfo.toString().c_str() ) ;
+         cataInfo = cataInfoPtr ;
+      }
+      catch ( std::exception &e )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG ( PDERROR, "Failed to parse query-catalogue-reply,"
+                  "received unexpected error: %s", e.what() ) ;
+         goto error ;
+      }
+
+   done :
+      PD_TRACE_EXITRC( SDB_RTNCOPROCESSCATINFOOBJ, rc ) ;
+      return rc ;
+   error :
+      goto done ;
    }
 
    INT32 rtnCoordGetAllGroupList( pmdEDUCB * cb, CoordGroupList &groupList,

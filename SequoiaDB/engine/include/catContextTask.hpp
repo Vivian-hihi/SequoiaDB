@@ -165,6 +165,10 @@ namespace engine
 
       virtual ~_catCtxDropCLTask () {}
 
+      BOOLEAN needUpdateCoord () const { return _needUpdateCoord ; }
+
+      INT32 getVersion () const { return _version ; }
+
    protected :
       virtual INT32 _checkInternal ( _pmdEDUCB *cb, catCtxLockMgr &lockMgr ) ;
 
@@ -180,6 +184,7 @@ namespace engine
 
    protected :
       INT32 _version ;
+      BOOLEAN _needUpdateCoord ;
    } ;
 
    /*

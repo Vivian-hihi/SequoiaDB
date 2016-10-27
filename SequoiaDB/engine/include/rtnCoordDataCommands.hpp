@@ -243,6 +243,13 @@ namespace engine
                                        CHAR **ppMsgBuf,
                                        MsgHeader **ppCataMsg ) ;
 
+      virtual INT32 _generateDataMsg ( MsgHeader *pMsg,
+                                       pmdEDUCB *cb,
+                                       _rtnCMDArguments *pArgs,
+                                       const vector<BSONObj> &cataObjs,
+                                       CHAR **ppMsgBuf,
+                                       MsgHeader **ppDataMsg ) ;
+
       virtual const CHAR *_getCommandName () const
       { return CMD_NAME_DROP_COLLECTION ; }
 
