@@ -174,7 +174,11 @@ function deployClster( mode )
       println( "-----begin to create data group: " + datargName );
       
       var dataRG = db.createRG( datargName );
-      for( var i in hostList )
+      
+      // random array
+      var tmpHostList = hostList.sort(function(){return 0.5-Math.random()});
+      
+      for( var i in tmpHostList )
       {
          var config = { diaglevel:5,
                         sharingbreak:30000,
@@ -182,7 +186,7 @@ function deployClster( mode )
                         optimeout:60000,
                         fap:fapValue
                       };
-         dataRG.createNode( hostList[i], dataPort, 
+         dataRG.createNode( tmpHostList[i], dataPort, 
                             databaseDir+"/data/"+dataPort,
                             config );
       }
