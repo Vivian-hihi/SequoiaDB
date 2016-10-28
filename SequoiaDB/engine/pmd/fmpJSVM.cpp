@@ -95,7 +95,7 @@ INT32 _fmpJSVM::eval( const BSONObj &func,
    CHAR *errMsg = NULL ;
    if ( ele.eoo() || Code != ele.type() )
    {
-      PD_LOG( PDERROR, "invalid func type: d", ele.type() ) ;
+      PD_LOG( PDERROR, "invalid func type: %d", ele.type() ) ;
       rc = SDB_INVALIDARG ;
       res = BSON( FMP_ERR_MSG << "type of element must be Code" <<
                   FMP_RES_CODE << rc ) ;
