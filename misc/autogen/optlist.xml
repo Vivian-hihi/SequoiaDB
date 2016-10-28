@@ -1116,11 +1116,11 @@
       <long>archiveon</long>
       <description>
          <en>Turn on replica log archive, defalut false.</en>
-         <cn>开启复制日志归档功能，默认为false。</cn>
+         <cn>开启复制日志归档功能，默认值为false。</cn>
       </description>
       <detail>
          <en>Turn on replica log archive, defalut false.</en>
-         <cn>开启复制日志归档功能，默认为false。</cn>
+         <cn>开启复制日志归档功能，默认值为false。</cn>
       </detail>
       <default>false</default>
       <typeofweb>boolean</typeofweb>
@@ -1131,11 +1131,11 @@
       <long>archivecompresson</long>
       <description>
          <en>Turn on replica log archive compression, defalut true.</en>
-         <cn>开启复制日志归档压缩功能，默认为true。</cn>
+         <cn>开启复制日志归档压缩功能，默认值为true。</cn>
       </description>
       <detail>
          <en>Turn on replica log archive compression, defalut true.</en>
-         <cn>开启复制日志归档压缩功能，默认为true。</cn>
+         <cn>开启复制日志归档压缩功能，默认值为true。</cn>
       </detail>
       <default>true</default>
       <typeofweb>boolean</typeofweb>
@@ -1162,11 +1162,11 @@
       <long>archivetimeout</long>
       <description>
          <en>The timeout period for no archive in each operation ( in seconds ), default:600, 0 for no-timeout.</en>
-         <cn>判定未归档的超时时间(秒),默认值:600, 0表示不超时。</cn>
+         <cn>判定未归档的超时时间(秒)，默认值：600，0表示不超时。</cn>
       </description>
       <detail>
          <en>The timeout period for no archive in each operation ( in seconds ), default:600, 0 for no-timeout.</en>
-         <cn>判定未归档的超时时间(秒),默认值:600, 0表示不超时。</cn>
+         <cn>判定未归档的超时时间(秒)，默认值：600，0表示不超时。</cn>
       </detail>
       <type>int</type>
       <default>600</default>
@@ -1178,11 +1178,11 @@
       <long>archiveexpired</long>
       <description>
          <en>The expired time for archive log file ( in hours ), default:240, 0 for no-expired.</en>
-         <cn>归档日志文件的过期时间(小时),默认值:240, 0表示不过期。</cn>
+         <cn>归档日志文件的过期时间(小时)，默认值:240，0表示不过期。</cn>
       </description>
       <detail>
          <en>The expired time for archive log file ( in hours ), default:240, 0 for no-expired.</en>
-         <cn>归档日志文件的过期时间(小时),默认值:240, 0表示不过期。</cn>
+         <cn>归档日志文件的过期时间(小时)，默认值:240，0表示不过期。</cn>
       </detail>
       <type>int</type>
       <default>240</default>
@@ -1194,11 +1194,11 @@
       <long>archivequota</long>
       <description>
          <en>The quota for archive log directory ( in GB ), default:10, 0 for no limit.</en>
-         <cn>归档日志目录的配额(GB),默认值: 10, 0表示没有限制。</cn>
+         <cn>归档日志目录的配额(GB)，默认值：10，0表示没有限制。</cn>
       </description>
       <detail>
          <en>The quota for archive log directory ( in GB ), default:10, 0 for no limit.</en>
-         <cn>归档日志目录的配额(GB),默认值: 10, 0表示没有限制。</cn>
+         <cn>归档日志目录的配额(GB)，默认值：10，0表示没有限制。</cn>
       </detail>
       <type>int</type>
       <default>10</default>
