@@ -1899,11 +1899,18 @@ namespace engine
          }
       }
 
+      if ( _archiveOn )
+      {
+         PD_CHECK( _logFileNum > 1, SDB_INVALIDARG, error, PDERROR,
+                   "The value of parameter \"logfilenum\" must be greater than 1 "
+                   "when configure archiveon" ) ;
+      }
+
       if ( _transactionOn )
       {
          PD_CHECK( _logFileNum >= 5, SDB_INVALIDARG, error, PDERROR,
                    "The value of parameter \"logfilenum\" must be greater than 5 "
-                   "when  configure transaction" ) ;
+                   "when configure transaction" ) ;
       }
 
       if ( _memDebugSize != 0 )
