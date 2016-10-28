@@ -237,7 +237,9 @@ class client(object):
          -  user     str   The user name to access to database.
          -  password str   The user password to access to database.
          -  policy   str   The policy of select hosts. it must be string
-                                 of 'random' or 'one_by_one'.
+                              of 'random' or 'local_first' or 'one_by_one', default is 'random'.
+                              'local_first' will choose local host firstly,
+                              then use 'random' if no local host.
       Exceptions:
          pysequoiadb.error.SDBTypeError
          pysequoiadb.error.SDBBaseError
@@ -274,37 +276,38 @@ class client(object):
          _psw = self.PSW
 
       # connect to localhost first
-      for ip in hosts:
-         if ("localhost" in ip.values() or
-             local in ip.values() or
-             ip['host'] in localip ):
+      if 0 == cmp("local_first", policy):
+         for ip in hosts:
+            if ("localhost" in ip.values() or
+                local in ip.values() or
+                ip['host'] in localip ):
 
-            host = ip['host']
-            svc = ip['service']
-            if isinstance(host, basestring):
-               self.__host = host
-            else:
-               raise SDBTypeError("policy must be an instance of basestring")
+               host = ip['host']
+               svc = ip['service']
+               if isinstance(host, basestring):
+                  self.__host = host
+               else:
+                  raise SDBTypeError("policy must be an instance of basestring")
 
-            if isinstance(svc, int):
-               self.__service = str(svc)
-            elif isinstance(svc, basestring):
-               self.__service = svc
-            else:
-               raise SDBTypeError("policy must be an instance of int or basestring")
+               if isinstance(svc, int):
+                  self.__service = str(svc)
+               elif isinstance(svc, basestring):
+                  self.__service = svc
+               else:
+                  raise SDBTypeError("policy must be an instance of int or basestring")
 
-            try:
-               self.connect(self.__host, self.__service,
-                                 user = _user, password = _psw)
-            except SDBBaseError:
-               continue
+               try:
+                  self.connect(self.__host, self.__service,
+                                    user = _user, password = _psw)
+               except SDBBaseError:
+                  continue
 
-            pysequoiadb._print(self.__repr__())
-            return
+               pysequoiadb._print(self.__repr__())
+               return
 
       # without local host in hosts, check policy
       size = len(hosts)
-      if 0 == cmp("random", policy):
+      if 0 == cmp("random", policy) or 0 == cmp("local_first", policy):
          position = random.randint(0, size - 1)
       elif 0 == cmp("one_by_one", policy):
          position = 0;
