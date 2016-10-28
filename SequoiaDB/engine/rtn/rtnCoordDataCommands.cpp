@@ -810,13 +810,14 @@ namespace engine
                // The catalog info of collection maybe too old
                // The reply from Catalog implies that info need to be updated
 
-               PD_LOG( PDWARNING,
-                       "Need update catalog info of collection [%s]",
+               PD_LOG( PDDEBUG,
+                       "Updating catalog info of collection [%s]",
                        pArgs->_targetName.c_str() ) ;
 
                rc = rtnCoordProcessCatInfoObj( boCataInfo, cataInfo ) ;
                PD_RC_CHECK( rc, PDERROR,
-                            "Failed to parse catalog info of collection [%s], rc: %d",
+                            "Failed to parse catalog info of collection [%s], "
+                            "rc: %d",
                             pArgs->_targetName.c_str(), rc ) ;
                pmdKRCB *pKrcb = pmdGetKRCB() ;
                CoordCB *pCoordcb = pKrcb->getCoordCB() ;

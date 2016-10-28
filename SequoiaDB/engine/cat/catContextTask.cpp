@@ -294,22 +294,18 @@ namespace engine
                    "Failed to get the field [%s], rc: %d",
                    CAT_VERSION_NAME, rc ) ;
 
-      if ( -1 != _version && _version < curVersion )
+      if ( -1 != _version )
       {
-         // Overwrite the version and send latest version to Coord
-         PD_LOG( PDWARNING,
-                 "Need update Coord version of [%s] "
-                 "( curVer: %d, coordVer: %d )",
-                 _dataName.c_str(), curVersion, _version ) ;
-         _version = curVersion ;
+         if ( _version != curVersion )
+         {
+            PD_LOG( PDWARNING,
+                    "Need update Coord version of [%s] "
+                    "( curVer: %d, coordVer: %d )",
+                  _dataName.c_str(), curVersion, _version ) ;
+         }
+         // Always update Coord
          _needUpdateCoord = TRUE ;
       }
-
-      PD_CHECK( -1 == _version || curVersion == _version,
-                SDB_CLS_COORD_NODE_CAT_VER_OLD, error, PDWARNING,
-                "Failed to drop collection [%s], coord version is old "
-                "( curVer: %d, coordVer: %d )",
-                _dataName.c_str(), curVersion, _version ) ;
 
       _version = curVersion ;
 
