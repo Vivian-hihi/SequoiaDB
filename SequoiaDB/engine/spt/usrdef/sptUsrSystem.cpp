@@ -5113,7 +5113,6 @@ namespace engine
                                      BSONObj & detail )
    {
       INT32              rc = SDB_OK ;
-      UINT32             exitCode = 0 ;
       string             homeDir ;
 
       rc = _getHomePath( homeDir ) ;
@@ -5140,6 +5139,7 @@ namespace engine
       _ossCmdRunner       runner ;
       string              outStr ;
 
+// build cmd
 #if defined (_LINUX)
       cmd = "env" ;
 #elif defined (_WINDOWS)

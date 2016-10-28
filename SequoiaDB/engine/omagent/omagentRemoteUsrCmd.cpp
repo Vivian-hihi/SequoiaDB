@@ -502,10 +502,8 @@ namespace engine
       }
       bob.append( "strOut", strOut ) ;
       retObj = bob.obj() ;
-   done:
+
       return rc ;
-   error:
-      goto done ;
    }
 
 }

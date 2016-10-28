@@ -232,10 +232,8 @@ namespace engine
       builder.append( "svcname", _svcname ) ;
 
       rval.setBSONObj( "", builder.obj() ) ;
-   done:
+
       return rc ;
-   error:
-      goto done ;
    }
 
    INT32 _sptUsrRemote::staticHelp( const _sptArguments &arg,
