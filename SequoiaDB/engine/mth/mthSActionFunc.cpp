@@ -36,7 +36,6 @@
 #include "pdTrace.hpp"
 #include "mthTrace.hpp"
 #include "mthSAction.hpp"
-#include "mthSliceIterator.hpp"
 #include "mthElemMatchIterator.hpp"
 #include "mthCommon.hpp"
 #include "utilString.hpp"
@@ -78,7 +77,7 @@ namespace engine
       PD_TRACE_EXITRC( SDB__MTHINCLUDEGET, rc ) ;
       return rc ;
    }
- 
+
    ///PD_TRACE_DECLARE_FUNCTION ( SDB__MTHDEFAULTBUILD, "mthDefaultBuild" )
    INT32 mthDefaultBuild( const CHAR *fieldName,
                           const bson::BSONElement &e,
@@ -140,30 +139,18 @@ namespace engine
       PD_TRACE_ENTRY( SDB__MTHSLICEBUILD ) ;
       SDB_ASSERT( NULL != action, "can not be null" ) ;
 
-      if ( e.eoo() )
-      {
-         goto done ;
-      }
-      else if ( Array == e.type() )
-      {
-         BSONObj args = action->getArg() ;
-         _mthSliceIterator i( e.embeddedObject(),
-                              args.getIntField( "arg1" ),
-                              args.getIntField("arg2") ) ;
-         BSONArrayBuilder sliceBuilder( builder.subarrayStart( fieldName ) ) ;
-         while ( i.more() )
-         {
-            sliceBuilder.append( i.next() ) ;
-         }
-         sliceBuilder.doneFast() ;
-      }
-      else
-      {
-         builder.append( e ) ;
-      }
+      BSONObj args = action->getArg() ;
+
+      INT32 begin = args.getIntField( "arg1" ) ;
+      INT32 limit = args.getIntField( "arg2" ) ;
+      rc = mthSlice( fieldName, e, begin, limit, builder ) ;
+      PD_RC_CHECK( rc, PDERROR, "mthSlice failed:rc=%d", rc ) ;
+
    done:
       PD_TRACE_EXITRC( SDB__MTHSLICEBUILD, rc ) ;
       return rc ;
+   error:
+      goto done ;
    }
 
    ///PD_TRACE_DECLARE_FUNCTION ( SDB__MTHSLICEGET, "mthSliceGet" )
@@ -175,31 +162,27 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__MTHSLICEGET ) ;
       SDB_ASSERT( NULL != action, "can not be null" ) ;
+      BSONObjBuilder builder ;
+      BSONObj obj ;
 
-      if ( Array != in.type() )
+      BSONObj args = action->getArg() ;
+      INT32 begin = args.getIntField( "arg1" ) ;
+      INT32 limit = args.getIntField( "arg2" ) ;
+      rc = mthSlice( fieldName, in, begin, limit, builder ) ;
+      PD_RC_CHECK( rc, PDERROR, "mthSlice failed:rc=%d", rc ) ;
+
+      obj = builder.obj() ;
+      if ( !obj.isEmpty() )
       {
-         out = in ;
-         goto done ; 
-      }
-      else if ( Array == in.type() )
-      {
-         BSONObjBuilder subBuilder ;
-         BSONObj args = action->getArg() ;
-         _mthSliceIterator i( in.embeddedObject(), 
-                              args.getIntField( "arg1" ),
-                              args.getIntField( "arg2" ) ) ;
-         BSONArrayBuilder sliceBuilder( subBuilder.subarrayStart( fieldName ) ) ;
-         while ( i.more() )
-         {
-            sliceBuilder.append( i.next() ) ;
-         }
-         sliceBuilder.doneFast() ;
-         action->setObj( subBuilder.obj() ) ;
+         action->setObj( obj ) ;
          out = action->getObj().getField( fieldName ) ;
       }
+
    done:
       PD_TRACE_EXITRC( SDB__MTHSLICEGET, rc ) ;
       return rc ;
+   error:
+      goto done ;
    }
 
    ///PD_TRACE_DECLARE_FUNCTION ( SDB__MTHELEMMATCHBUILDN, "mthElemMatchBuildN" )
@@ -223,7 +206,7 @@ namespace engine
             rc = i.next( next ) ;
             if ( SDB_OK == rc )
             {
-               arrayBuilder.append( next ) ;    
+               arrayBuilder.append( next ) ;
             }
             else if ( SDB_DMS_EOC == rc )
             {
@@ -364,7 +347,7 @@ namespace engine
          PD_LOG( PDERROR, "mthAbs failed:rc=%d", rc ) ;
          goto error ;
       }
-      
+
    done:
       PD_TRACE_EXITRC( SDB__MTHABSBUILD, rc ) ;
       return rc ;
@@ -566,7 +549,7 @@ namespace engine
       if ( !obj.isEmpty() )
       {
          action->setObj( obj ) ;
-         out = action->getObj().getField( fieldName ) ; 
+         out = action->getObj().getField( fieldName ) ;
       }
    done:
       PD_TRACE_EXITRC( SDB__MTHMODBUILD, rc ) ;
@@ -654,7 +637,7 @@ namespace engine
          }
 
          action->setObj( builder.obj() ) ;
-         out = action->getObj().getField( fieldName ) ;    
+         out = action->getObj().getField( fieldName ) ;
       }
 
    done:
@@ -843,7 +826,7 @@ namespace engine
       if ( !obj.isEmpty() )
       {
          action->setObj( obj ) ;
-         out = action->getObj().getField( fieldName ) ;      
+         out = action->getObj().getField( fieldName ) ;
       }
 
    done:
@@ -932,7 +915,7 @@ namespace engine
          PD_LOG( PDERROR, "mthTrim failed:rc=%d", rc ) ;
          goto error ;
       }
-      
+
    done:
       PD_TRACE_EXITRC( SDB__MTHLRTRIMBUILD, rc ) ;
       return rc ;
@@ -1112,7 +1095,7 @@ namespace engine
          PD_LOG( PDERROR, "mthAdd failed:rc=%d", rc ) ;
          goto error ;
       }
-      
+
    done:
       PD_TRACE_EXITRC( SDB__MTHADDBUILD, rc ) ;
       return rc ;
@@ -1173,7 +1156,7 @@ namespace engine
          PD_LOG( PDERROR, "mthSub failed:rc=%d", rc ) ;
          goto error ;
       }
-      
+
    done:
       PD_TRACE_EXITRC( SDB__MTHSUBTRACTBUILD, rc ) ;
       return rc ;
@@ -1233,7 +1216,7 @@ namespace engine
          PD_LOG( PDERROR, "mthMultiply failed:rc=%d", rc ) ;
          goto error ;
       }
-      
+
    done:
       PD_TRACE_EXITRC( SDB__MTHMULTIPLYBUILD, rc ) ;
       return rc ;
@@ -1293,7 +1276,7 @@ namespace engine
          PD_LOG( PDERROR, "mthDivide failed:rc=%d", rc ) ;
          goto error ;
       }
-      
+
    done:
       PD_TRACE_EXITRC( SDB__MTHDIVIDEBUILD, rc ) ;
       return rc ;
@@ -1330,6 +1313,92 @@ namespace engine
 
    done:
       PD_TRACE_EXITRC( SDB__MTHDIVIDEGET, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   ///PD_TRACE_DECLARE_FUNCTION ( SDB__MTHSIZEBUILD, "mthSizeBuild" )
+   INT32 mthSizeBuild( const CHAR *fieldName, const bson::BSONElement &e,
+                       _mthSAction *action, bson::BSONObjBuilder &builder )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__MTHSIZEBUILD ) ;
+
+      rc = mthSize( fieldName, e, builder ) ;
+      PD_RC_CHECK( rc, PDERROR, "mthSize failed:rc=%d", rc ) ;
+
+   done:
+      PD_TRACE_EXITRC( SDB__MTHSIZEBUILD, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   ///PD_TRACE_DECLARE_FUNCTION ( SDB__MTHSIZEGET, "mthSizeGet" )
+   INT32 mthSizeGet( const CHAR *fieldName, const bson::BSONElement &in,
+                     _mthSAction *action, bson::BSONElement &out )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__MTHSIZEGET ) ;
+      BSONObjBuilder builder ;
+      BSONObj obj ;
+
+      rc = mthSize( fieldName, in, builder ) ;
+      PD_RC_CHECK( rc, PDERROR, "mthSize failed:rc=%d", rc ) ;
+
+      obj = builder.obj() ;
+      if ( !obj.isEmpty() )
+      {
+         action->setObj( obj ) ;
+         out = action->getObj().getField( fieldName ) ;
+      }
+
+   done:
+      PD_TRACE_EXITRC( SDB__MTHSIZEGET, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   ///PD_TRACE_DECLARE_FUNCTION ( SDB__MTHTYPEBUILD, "mthTypeBuild" )
+   INT32 mthTypeBuild( const CHAR *fieldName, const bson::BSONElement &e,
+                       _mthSAction *action, bson::BSONObjBuilder &builder )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__MTHTYPEBUILD ) ;
+
+      rc = mthType( fieldName, e, builder ) ;
+      PD_RC_CHECK( rc, PDERROR, "mthType failed:rc=%d", rc ) ;
+
+   done:
+      PD_TRACE_EXITRC( SDB__MTHTYPEBUILD, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   ///PD_TRACE_DECLARE_FUNCTION ( SDB__MTHTYPEGET, "mthTypeGet" )
+   INT32 mthTypeGet( const CHAR *fieldName, const bson::BSONElement &in,
+                     _mthSAction *action, bson::BSONElement &out )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__MTHTYPEGET ) ;
+      BSONObjBuilder builder ;
+      BSONObj obj ;
+
+      rc = mthType( fieldName, in, builder ) ;
+      PD_RC_CHECK( rc, PDERROR, "mthType failed:rc=%d", rc ) ;
+
+      obj = builder.obj() ;
+      if ( !obj.isEmpty() )
+      {
+         action->setObj( obj ) ;
+         out = action->getObj().getField( fieldName ) ;
+      }
+
+   done:
+      PD_TRACE_EXITRC( SDB__MTHTYPEGET, rc ) ;
       return rc ;
    error:
       goto done ;

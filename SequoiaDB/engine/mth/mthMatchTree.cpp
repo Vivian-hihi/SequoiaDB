@@ -37,6 +37,8 @@
 *******************************************************************************/
 #include "mthMatchTree.hpp"
 #include "pd.hpp"
+#include "pdTrace.hpp"
+#include "mthTrace.hpp"
 #include <string>
 
 using namespace bson ;
@@ -59,12 +61,10 @@ namespace engine
       { MTH_OPERATOR_STR_GT,          EN_MATCH_OPERATOR_GT },
       { MTH_OPERATOR_STR_IN,          EN_MATCH_OPERATOR_IN },
       { MTH_OPERATOR_STR_NE,          EN_MATCH_OPERATOR_NE },
-      { MTH_OPERATOR_STR_SIZE,        EN_MATCH_OPERATOR_SIZE },
       { MTH_OPERATOR_STR_ALL,         EN_MATCH_OPERATOR_ALL },
       { MTH_OPERATOR_STR_NIN,         EN_MATCH_OPERATOR_NIN },
       { MTH_OPERATOR_STR_EXISTS,      EN_MATCH_OPERATOR_EXISTS },
       { MTH_OPERATOR_STR_MOD,         EN_MATCH_OPERATOR_MOD },
-      { MTH_OPERATOR_STR_TYPE,        EN_MATCH_OPERATOR_TYPE },
       { MTH_OPERATOR_STR_ELEMMATCH,   EN_MATCH_OPERATOR_ELEMMATCH },
       { MTH_OPERATOR_STR_ISNULL,      EN_MATCH_OPERATOR_ISNULL },
 
@@ -91,6 +91,9 @@ namespace engine
       { MTH_FUNCTION_STR_RTRIM,       EN_MATCH_FUNC_RTRIM },
       { MTH_FUNCTION_STR_TRIM,        EN_MATCH_FUNC_TRIM },
       { MTH_FUNCTION_STR_CAST,        EN_MATCH_FUNC_CAST },
+      { MTH_FUNCTION_STR_SLICE,       EN_MATCH_FUNC_SLICE },
+      { MTH_FUNCTION_STR_SIZE,        EN_MATCH_FUNC_SIZE },
+      { MTH_FUNCTION_STR_TYPE,        EN_MATCH_FUNC_TYPE },
 
       { MTH_ATTR_STR_EXPAND,          EN_MATCH_ATTR_EXPAND },
       { MTH_ATTR_STR_RETURNMATCH,     EN_MATCH_ATTR_RETURNMATCH },
@@ -163,9 +166,6 @@ namespace engine
       case EN_MATCH_OPERATOR_NE:
          opNode = new ( allocator ) _mthMatchOpNodeNE( allocator ) ;
          break ;
-      case EN_MATCH_OPERATOR_SIZE:
-         opNode = new ( allocator ) _mthMatchOpNodeSIZE( allocator ) ;
-         break ;
       case EN_MATCH_OPERATOR_ALL:
          opNode = new ( allocator ) _mthMatchOpNodeALL( allocator ) ;
          break ;
@@ -177,9 +177,6 @@ namespace engine
          break ;
       case EN_MATCH_OPERATOR_MOD:
          opNode = new ( allocator ) _mthMatchOpNodeMOD( allocator ) ;
-         break ;
-      case EN_MATCH_OPERATOR_TYPE:
-         opNode = new ( allocator ) _mthMatchOpNodeTYPE( allocator ) ;
          break ;
       case EN_MATCH_OPERATOR_ELEMMATCH:
          opNode = new( allocator ) _mthMatchOpNodeELEMMATCH( allocator ) ;
@@ -301,6 +298,15 @@ namespace engine
       case EN_MATCH_FUNC_CAST:
          func = new ( allocator ) _mthMatchFuncCAST( allocator ) ;
          break ;
+      case EN_MATCH_FUNC_SLICE:
+         func = new ( allocator ) _mthMatchFuncSLICE( allocator ) ;
+         break ;
+      case EN_MATCH_FUNC_SIZE:
+         func = new ( allocator ) _mthMatchFuncSIZE( allocator ) ;
+         break ;
+      case EN_MATCH_FUNC_TYPE:
+         func = new ( allocator ) _mthMatchFuncTYPE( allocator ) ;
+         break ;
       case EN_MATCH_ATTR_RETURNMATCH:
          /*
             attribute returnMatch's behavior is like function. so we treat it
@@ -380,12 +386,14 @@ namespace engine
       goto done ;
    }
 
+   ///PD_TRACE_DECLARE_FUNCTION ( SDB__MTHMATCHTREE_ADDOPERATOR, "_mthMatchTree::_addOperator" )
    INT32 _mthMatchTree::_addOperator( const CHAR *fieldName,
                                       const BSONElement &ele,
                                       EN_MATCH_OP_FUNC_TYPE nodeType,
                                       MTH_FUNC_LIST &funcList,
                                       _mthMatchLogicNode *parent )
    {
+      PD_TRACE_ENTRY( SDB__MTHMATCHTREE_ADDOPERATOR ) ;
       INT32 rc = SDB_OK ;
       _mthMatchOpNode *node = NULL ;
       BOOLEAN hasAddToTree  = FALSE ;
@@ -444,6 +452,7 @@ namespace engine
       hasAddToTree = TRUE ;
 
    done:
+      PD_TRACE_EXITRC( SDB__MTHMATCHTREE_ADDOPERATOR, rc ) ;
       return rc ;
    error:
       if ( !hasAddToTree )
@@ -1274,9 +1283,11 @@ namespace engine
       funcList.clear() ;
    }
 
+   ///PD_TRACE_DECLARE_FUNCTION ( SDB__MTHMATCHTREE_PARSEOBJECTELEMENT, "_mthMatchTree::_parseObjectElement" )
    INT32 _mthMatchTree::_parseObjectElement( const BSONElement &ele,
                                              _mthMatchLogicNode *parent )
    {
+      PD_TRACE_ENTRY( SDB__MTHMATCHTREE_PARSEOBJECTELEMENT ) ;
       INT32 rc = SDB_OK ;
       MTH_FUNC_LIST funcList ;
       const CHAR *fieldName = ele.fieldName() ;
@@ -1412,15 +1423,18 @@ namespace engine
       }
 
    done:
+      PD_TRACE_EXITRC( SDB__MTHMATCHTREE_PARSEOBJECTELEMENT, rc ) ;
       return rc ;
    error:
       _clearFuncList( funcList ) ;
       goto done ;
    }
 
+   ///PD_TRACE_DECLARE_FUNCTION ( SDB__MTHMATCHTREE_PARSEELEMENT, "_mthMatchTree::_parseElement" )
    INT32 _mthMatchTree::_parseElement( const BSONElement &ele,
                                        _mthMatchLogicNode *parent )
    {
+      PD_TRACE_ENTRY( SDB__MTHMATCHTREE_PARSEELEMENT ) ;
       INT32 rc = SDB_OK ;
       switch ( ele.type() )
       {
@@ -1440,12 +1454,15 @@ namespace engine
          rc = _parseNormalElement( ele, parent ) ;
       }
 
+      PD_TRACE_EXITRC( SDB__MTHMATCHTREE_PARSEELEMENT, rc ) ;
       return rc ;
    }
 
+   ///PD_TRACE_DECLARE_FUNCTION ( SDB__MTHMATCHTREE_LOADPATTERN, "_mthMatchTree::loadPattern" )
    INT32 _mthMatchTree::loadPattern( const BSONObj &matcher,
                                      BOOLEAN needPredicate /* = TRUE */)
    {
+      PD_TRACE_ENTRY( SDB__MTHMATCHTREE_LOADPATTERN ) ;
       SDB_ASSERT ( !_isInitialized, "mthMatcher can't be initialized "
                    "multiple times" ) ;
       INT32 rc      = SDB_OK ;
@@ -1500,6 +1517,7 @@ namespace engine
       _isInitialized = TRUE ;
 
    done :
+      PD_TRACE_EXITRC( SDB__MTHMATCHTREE_LOADPATTERN, rc ) ;
       return rc ;
    error :
       clear() ;   /* _root is cleared in clear() */
@@ -1769,9 +1787,11 @@ namespace engine
       goto done ;
    }
 
+   ///PD_TRACE_DECLARE_FUNCTION ( SDB__MTHMATCHTREE_MATCHES, "_mthMatchTree::matches" )
    INT32 _mthMatchTree::matches( const BSONObj &matchTarget, BOOLEAN &result,
                                  _mthMatchTreeContext *context /* = NULL */)
    {
+      PD_TRACE_ENTRY( SDB__MTHMATCHTREE_MATCHES ) ;
       INT32 rc = SDB_OK ;
       _mthMatchTreeContext innerContext ;
 
@@ -1794,14 +1814,17 @@ namespace engine
       }
 
    done:
+      PD_TRACE_EXITRC( SDB__MTHMATCHTREE_MATCHES, rc ) ;
       return rc ;
    error:
       goto done ;
    }
 
+   ///PD_TRACE_DECLARE_FUNCTION ( SDB__MTHMATCHTREE__MATCHES, "_mthMatchTree::_matches" )
    INT32 _mthMatchTree::_matches( const BSONObj &matchTarget, BOOLEAN &result,
                                   _mthMatchTreeContext &context )
    {
+      PD_TRACE_ENTRY( SDB__MTHMATCHTREE__MATCHES ) ;
       SDB_ASSERT( _isInitialized, "must be init first" ) ;
       INT32 rc = SDB_OK ;
 
@@ -1865,6 +1888,7 @@ namespace engine
       //PD_LOG( PDDEBUG, "context:\n%s", context.toString().c_str() ) ;
 
    done:
+      PD_TRACE_EXITRC( SDB__MTHMATCHTREE__MATCHES, rc ) ;
       return rc ;
    error:
       goto done ;

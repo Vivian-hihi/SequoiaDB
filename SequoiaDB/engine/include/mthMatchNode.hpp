@@ -68,7 +68,7 @@ namespace engine
       EN_MATCH_OPERATOR_GT             = 15,
       EN_MATCH_OPERATOR_IN             = 16,
       EN_MATCH_OPERATOR_NE             = 17,
-      EN_MATCH_OPERATOR_SIZE           = 18,
+      //EN_MATCH_OPERATOR_SIZE           = 18,   //deleted
       EN_MATCH_OPERATOR_ALL            = 19,
       EN_MATCH_OPERATOR_NIN            = 20,
       EN_MATCH_OPERATOR_EXISTS         = 21,
@@ -98,6 +98,9 @@ namespace engine
       EN_MATCH_FUNC_RTRIM              = 114,
       EN_MATCH_FUNC_TRIM               = 115,
       EN_MATCH_FUNC_CAST               = 116,
+      EN_MATCH_FUNC_SLICE              = 117,
+      EN_MATCH_FUNC_SIZE               = 118,
+      EN_MATCH_FUNC_TYPE               = 119,
 
       EN_MATCH_FUNC_END                = 200,
 
@@ -117,7 +120,6 @@ namespace engine
    #define MTH_OPERATOR_STR_GT                  "$gt"
    #define MTH_OPERATOR_STR_IN                  "$in"
    #define MTH_OPERATOR_STR_NE                  "$ne"
-   #define MTH_OPERATOR_STR_SIZE                "$size"
    #define MTH_OPERATOR_STR_ALL                 "$all"
    #define MTH_OPERATOR_STR_NIN                 "$nin"
    #define MTH_OPERATOR_STR_EXISTS              "$exists"
@@ -149,6 +151,9 @@ namespace engine
    #define MTH_FUNCTION_STR_RTRIM               "$rtrim"
    #define MTH_FUNCTION_STR_TRIM                "$trim"
    #define MTH_FUNCTION_STR_CAST                "$cast"
+   #define MTH_FUNCTION_STR_SLICE               "$slice"
+   #define MTH_FUNCTION_STR_SIZE                "$size"
+   #define MTH_FUNCTION_STR_TYPE                "$type"
 
    //TODO: size:2048
    #define MTH_ALLOCATOR_SIZE                   200

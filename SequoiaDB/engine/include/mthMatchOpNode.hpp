@@ -359,6 +359,68 @@ namespace engine
          BSONType _castType ;
    } ;
 
+   class _mthMatchFuncSLICE : public _mthMatchFunc
+   {
+      public:
+         _mthMatchFuncSLICE( _mthNodeAllocator *allocator ) ;
+         virtual ~_mthMatchFuncSLICE() ;
+
+      public:
+         virtual void release() ;
+         virtual INT32 call( const BSONElement &in, BSONObj &out ) ;
+         virtual INT32 getType() ;
+         virtual const CHAR* getName() ;
+         virtual void clear() ;
+
+      protected:
+         virtual INT32 _init( const CHAR *fieldName,
+                              const BSONElement &ele ) ;
+
+      private:
+         INT32 _begin ;
+         INT32 _limit ;
+   } ;
+
+   class _mthMatchFuncSIZE : public _mthMatchFunc
+   {
+      public:
+         _mthMatchFuncSIZE( _mthNodeAllocator *allocator ) ;
+         virtual ~_mthMatchFuncSIZE() ;
+
+      public:
+         virtual void release() ;
+         virtual INT32 call( const BSONElement &in, BSONObj &out ) ;
+         virtual INT32 getType() ;
+         virtual const CHAR* getName() ;
+         virtual void clear() ;
+
+      protected:
+         virtual INT32 _init( const CHAR *fieldName,
+                              const BSONElement &ele ) ;
+
+      private:
+   } ;
+
+   class _mthMatchFuncTYPE : public _mthMatchFunc
+   {
+      public:
+         _mthMatchFuncTYPE( _mthNodeAllocator *allocator ) ;
+         virtual ~_mthMatchFuncTYPE() ;
+
+      public:
+         virtual void release() ;
+         virtual INT32 call( const BSONElement &in, BSONObj &out ) ;
+         virtual INT32 getType() ;
+         virtual const CHAR* getName() ;
+         virtual void clear() ;
+
+      protected:
+         virtual INT32 _init( const CHAR *fieldName,
+                              const BSONElement &ele ) ;
+
+      private:
+   } ;
+
    class _mthMatchFuncRETURNMATCH : public _mthMatchFunc
    {
       public:
@@ -669,28 +731,6 @@ namespace engine
                                            const BSONElement &right ) ;
 
          BOOLEAN _isMatchSingle( const BSONElement &ele ) ;
-   } ;
-
-   class _mthMatchOpNodeSIZE : public _mthMatchOpNode
-   {
-      public:
-         _mthMatchOpNodeSIZE( _mthNodeAllocator *allocator ) ;
-         virtual ~_mthMatchOpNodeSIZE() ;
-
-      public:
-         virtual INT32 getType() ;
-         virtual const CHAR *getOperatorStr() ;
-         virtual UINT32 getWeight() ;
-         virtual BOOLEAN isTotalConverted() ;
-         virtual void release() ;
-
-      protected:
-         virtual INT32 _init( const CHAR *fieldName,
-                              const BSONElement &element ) ;
-         virtual INT32 _valueMatch( const BSONElement &left,
-                                    const BSONElement &right,
-                                    _mthMatchTreeContext &context,
-                                    BOOLEAN &result ) ;
    } ;
 
    class _mthMatchOpNodeEXISTS : public _mthMatchOpNode

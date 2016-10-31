@@ -40,25 +40,6 @@
 
 namespace engine
 {
-   class _mthSliceIterator : public SDBObject
-   {
-   public:
-      _mthSliceIterator( const bson::BSONObj &obj,
-                         INT32 begin = 0,
-                         INT32 limit = -1 ) ;
-      ~_mthSliceIterator() ;
-
-   public:
-      BOOLEAN more() ;
-      bson::BSONElement next() ;
-
-   private:
-      bson::BSONObj _obj ;
-      INT32 _where ;
-      INT32 _limit ;
-      bson::BSONObjIterator _itr ;     
-   } ;
-   typedef class _mthSliceIterator mthSliceIterator ;
 }
 
 #endif

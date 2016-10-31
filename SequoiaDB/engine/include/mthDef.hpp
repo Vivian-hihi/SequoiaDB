@@ -59,6 +59,8 @@ namespace engine
    #define MTH_S_RTRIM          MTH_S_PREFIX"rtrim"
    #define MTH_S_TRIM           MTH_S_PREFIX"trim"
    #define MTH_S_CAST           MTH_S_PREFIX"cast"
+   #define MTH_S_TYPE           MTH_S_PREFIX"type"
+   #define MTH_S_SIZE           MTH_S_PREFIX"size"
 
    typedef UINT32 MTH_S_ATTRIBUTE ;
 

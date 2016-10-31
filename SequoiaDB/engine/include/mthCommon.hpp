@@ -69,60 +69,69 @@ namespace engine
 
    BOOLEAN mthIsModValid( const BSONElement &modmEle ) ;
 
-   INT32 mthAbs( const CHAR *name, const BSONElement &in, 
+   INT32 mthAbs( const CHAR *name, const BSONElement &in,
                  BSONObjBuilder &outBuilder ) ;
 
-   INT32 mthCeiling( const CHAR *name, const BSONElement &in, 
+   INT32 mthCeiling( const CHAR *name, const BSONElement &in,
                      BSONObjBuilder &outBuilder ) ;
 
-   INT32 mthFloor( const CHAR *name, const BSONElement &in, 
+   INT32 mthFloor( const CHAR *name, const BSONElement &in,
                    BSONObjBuilder &outBuilder ) ;
 
-   INT32 mthMod( const CHAR *name, const BSONElement &in, 
+   INT32 mthMod( const CHAR *name, const BSONElement &in,
                  const BSONElement &modm, BSONObjBuilder &outBuilder ) ;
 
-   INT32 mthCast( const CHAR *name, const BSONElement &in, 
+   INT32 mthCast( const CHAR *name, const BSONElement &in,
                   BSONType targetType, BSONObjBuilder &outBuilder ) ;
 
-   INT32 mthSubStr( const CHAR *name, const BSONElement &in, 
+   INT32 mthSlice( const CHAR *name, const BSONElement &in,
+                   INT32 begin, INT32 limit, BSONObjBuilder &outBuilder ) ;
+
+   INT32 mthSubStr( const CHAR *name, const BSONElement &in,
                     INT32 begin, INT32 limit, BSONObjBuilder &outBuilder ) ;
 
-   INT32 mthStrLen( const CHAR *name, const BSONElement &in, 
+   INT32 mthStrLen( const CHAR *name, const BSONElement &in,
                     BSONObjBuilder &outBuilder ) ;
 
-   INT32 mthLower( const CHAR *name, const BSONElement &in, 
+   INT32 mthLower( const CHAR *name, const BSONElement &in,
                    BSONObjBuilder &outBuilder ) ;
 
-   INT32 mthUpper( const CHAR *name, const BSONElement &in, 
+   INT32 mthUpper( const CHAR *name, const BSONElement &in,
                    BSONObjBuilder &outBuilder ) ;
 
    BOOLEAN mthIsTrimed( const CHAR *str, INT32 size, INT8 lr ) ;
    INT32 mthTrim( const CHAR *name, const BSONElement &in, INT8 lr,
                   BSONObjBuilder &outBuilder ) ;
 
-   INT32 mthAdd( const CHAR *name, const BSONElement &in, 
+   INT32 mthAdd( const CHAR *name, const BSONElement &in,
                  const BSONElement &addend, BSONObjBuilder &outBuilder ) ;
 
-   INT32 mthSub( const CHAR *name, const BSONElement &in, 
+   INT32 mthSub( const CHAR *name, const BSONElement &in,
                  const BSONElement &subtrahead, BSONObjBuilder &outBuilder ) ;
 
-   INT32 mthMultiply( const CHAR *name, const BSONElement &in, 
-                      const BSONElement &multiplier, 
+   INT32 mthMultiply( const CHAR *name, const BSONElement &in,
+                      const BSONElement &multiplier,
                       BSONObjBuilder &outBuilder ) ;
 
-   INT32 mthDivide( const CHAR *name, const BSONElement &in, 
+   INT32 mthDivide( const CHAR *name, const BSONElement &in,
                     const BSONElement &divisor, BSONObjBuilder &outBuilder ) ;
+
+   INT32 mthType( const CHAR *name, const BSONElement &in,
+                  BSONObjBuilder &outBuilder ) ;
+
+   INT32 mthSize( const CHAR *name, const BSONElement &in,
+                  BSONObjBuilder &outBuilder ) ;
 
    struct element_cmp_lt
    {
       BOOLEAN operator() ( const BSONElement& l, const BSONElement& r ) const
       {
          INT32 x = (INT32) l.canonicalType() - (INT32) r.canonicalType() ;
-         if ( x < 0 ) 
-         { 
+         if ( x < 0 )
+         {
             return TRUE ;
          }
-         else if ( x > 0 ) 
+         else if ( x > 0 )
          {
             return FALSE ;
          }
@@ -146,6 +155,27 @@ namespace engine
    } ;
 
    _mthCastTranslator *mthGetCastTranslator() ;
+
+   class _mthSliceIterator : public SDBObject
+   {
+   public:
+      _mthSliceIterator( const bson::BSONObj &obj, INT32 begin = 0,
+                         INT32 limit = -1 ) ;
+      ~_mthSliceIterator() ;
+
+   public:
+      BOOLEAN more() ;
+      bson::BSONElement next() ;
+
+   private:
+      bson::BSONObj _obj ;
+      INT32 _where ;
+      INT32 _limit ;
+      bson::BSONObjIterator _itr ;
+   } ;
+
+   typedef class _mthSliceIterator mthSliceIterator ;
+
 }
 
 #endif //MTHCOMMON_HPP__

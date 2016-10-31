@@ -260,6 +260,19 @@ namespace engine
                        const bson::BSONElement &,
                        _mthSAction *,
                        bson::BSONElement & ) ;
+
+   INT32 mthSizeBuild( const CHAR *fieldName, const bson::BSONElement &e,
+                       _mthSAction *action, bson::BSONObjBuilder &builder ) ;
+
+   INT32 mthSizeGet( const CHAR *fieldName, const bson::BSONElement &in,
+                     _mthSAction *action, bson::BSONElement &out ) ;
+
+   INT32 mthTypeBuild( const CHAR *fieldName, const bson::BSONElement &e,
+                       _mthSAction *action, bson::BSONObjBuilder &builder ) ;
+
+   INT32 mthTypeGet( const CHAR *fieldName, const bson::BSONElement &in,
+                     _mthSAction *action, bson::BSONElement &out ) ;
+
 }
 
 #endif

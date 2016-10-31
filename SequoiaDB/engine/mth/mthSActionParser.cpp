@@ -43,6 +43,8 @@
 #include "mthMathParser.hpp"
 #include "mthStrParser.hpp"
 #include "mthCastParser.hpp"
+#include "mthSActionFunc.hpp"
+
 
 #define MTH_ADD_PARSER( parser )\
         do                                                                                    \
@@ -118,7 +120,7 @@ namespace engine
       {
          PD_LOG( PDERROR, "failed to parse action:%d", rc ) ;
          goto error ;
-      } 
+      }
       }
 
    done:
@@ -247,11 +249,65 @@ namespace engine
 
       /// $divide
       MTH_ADD_PARSER( _mthDivideParser ) ;
+
+      /// $type
+      MTH_ADD_PARSER( _mthTypeParser ) ;
+
+      /// $size
+      MTH_ADD_PARSER( _mthSizeParser ) ;
    done:
       PD_TRACE_EXITRC( SDB__MTHSACTIONPARSER__REGISTERPARSERS, rc ) ;
       return rc ;
    error:
       SAFE_OSS_DELETE( p ) ;
+      goto done ;
+   }
+
+   ///PD_TRACE_DECLARE_FUNCTION ( SDB__MTHTYPEPARSER_PARSE, "_mthTypeParser::parse" )
+   INT32 _mthTypeParser::parse( const bson::BSONElement &e,
+                                _mthSAction &action ) const
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY(SDB__MTHTYPEPARSER_PARSE ) ;
+
+      if ( !e.isNumber() || e.numberInt() != 1 )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_RC_CHECK( rc, PDERROR, "invalid element:e=%s",
+                      e.toString().c_str() ) ;
+      }
+
+      action.setAttribute( MTH_S_ATTR_PROJECTION ) ;
+      action.setFunc( &mthTypeBuild, &mthTypeGet ) ;
+      action.setName( _name.c_str() ) ;
+   done:
+      PD_TRACE_EXITRC( SDB__MTHTYPEPARSER_PARSE, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   ///PD_TRACE_DECLARE_FUNCTION ( SDB__MTHSIZEPARSER_PARSE, "_mthSizeParser::parse" )
+   INT32 _mthSizeParser::parse( const bson::BSONElement &e,
+                                _mthSAction &action ) const
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY(SDB__MTHSIZEPARSER_PARSE ) ;
+
+      if ( !e.isNumber() || e.numberInt() != 1 )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_RC_CHECK( rc, PDERROR, "invalid element:e=%s",
+                      e.toString().c_str() ) ;
+      }
+
+      action.setAttribute( MTH_S_ATTR_PROJECTION ) ;
+      action.setFunc( &mthSizeBuild, &mthSizeGet ) ;
+      action.setName( _name.c_str() ) ;
+   done:
+      PD_TRACE_EXITRC( SDB__MTHSIZEPARSER_PARSE, rc ) ;
+      return rc ;
+   error:
       goto done ;
    }
 }

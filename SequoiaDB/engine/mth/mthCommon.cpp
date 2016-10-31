@@ -1542,6 +1542,35 @@ namespace engine
       return rc ;
    }
 
+   INT32 mthSlice( const CHAR *name, const BSONElement &in,
+                   INT32 begin, INT32 limit, BSONObjBuilder &outBuilder )
+   {
+      INT32 rc = SDB_OK ;
+      if ( in.eoo() )
+      {
+         goto done ;
+      }
+      else if ( Array == in.type() )
+      {
+         _mthSliceIterator iter( in.embeddedObject(), begin, limit ) ;
+
+         BSONArrayBuilder sliceBuilder( outBuilder.subarrayStart( name ) ) ;
+         while ( iter.more() )
+         {
+            sliceBuilder.append( iter.next() ) ;
+         }
+
+         sliceBuilder.doneFast() ;
+      }
+      else
+      {
+         outBuilder.append( in ) ;
+      }
+
+   done:
+      return rc ;
+   }
+
    INT32 mthSubStr( const CHAR *name, const BSONElement &in,
                     INT32 begin, INT32 limit, BSONObjBuilder &outBuilder )
    {
@@ -2220,6 +2249,28 @@ namespace engine
       goto done ;
    }
 
+   INT32 mthType( const CHAR *name, const BSONElement &in,
+                  BSONObjBuilder &outBuilder )
+   {
+      outBuilder.append( name, in.type() ) ;
+      return SDB_OK ;
+   }
+
+   INT32 mthSize( const CHAR *name, const BSONElement &in,
+                  BSONObjBuilder &outBuilder )
+   {
+      if ( in.type() == Array || in.type() == Object )
+      {
+         outBuilder.append( name, in.embeddedObject().nFields() ) ;
+      }
+      else
+      {
+         outBuilder.appendNull( name ) ;
+      }
+
+      return SDB_OK ;
+   }
+
    _mthCastTranslator::_mthCastTranslator()
    {
       INT32 i   = 0 ;
@@ -2292,6 +2343,58 @@ namespace engine
       static _mthCastTranslator translator ;
 
       return &translator ;
+   }
+
+   _mthSliceIterator::_mthSliceIterator( const bson::BSONObj &obj, INT32 begin,
+                                         INT32 limit )
+   :_obj( obj ), _where( 0 ), _limit( limit ), _itr( _obj )
+   {
+      INT32 total = obj.nFields() ;
+      _where = begin < 0 ? begin + total : begin ;
+      if ( _where < 0 )
+      {
+         _where = 0 ;
+      }
+
+      while ( 0 != _where )
+      {
+         if ( _itr.more() )
+         {
+            _itr.next() ;
+            --_where ;
+         }
+         else
+         {
+            _limit = 0 ;
+            break ;
+         }
+      }
+   }
+
+   _mthSliceIterator::~_mthSliceIterator()
+   {
+   }
+
+   BOOLEAN _mthSliceIterator::more()
+   {
+      return _limit != 0 && _itr.more() ;
+   }
+
+   bson::BSONElement _mthSliceIterator::next()
+   {
+      if ( more() )
+      {
+         if ( 0 < _limit )
+         {
+            --_limit ;
+         }
+
+         return _itr.next() ;
+      }
+      else
+      {
+         return BSONElement() ;
+      }
    }
 }
 
