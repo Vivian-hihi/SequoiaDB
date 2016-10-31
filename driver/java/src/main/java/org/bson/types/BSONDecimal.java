@@ -453,9 +453,12 @@ public class BSONDecimal implements Comparable<BSONDecimal>, Serializable {
     public int hashCode(){
     	String value = _value;
     	// let "2.0" or "2.00" to be "2"
-    	if (value.indexOf(".") > 0) {
-    		value = value.replaceAll("0+?$", "");
+    	if (value.indexOf(".") > -1) {
+    		value = value.replaceAll("0+$", "");
     		value = value.replaceAll("[.]$", "");
+    		if (value.isEmpty()) {
+    			value = "0";
+    		}
     	}
         // see Effective Java by Joshua Bloch
         int hash = 17;
