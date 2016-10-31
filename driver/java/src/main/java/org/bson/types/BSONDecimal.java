@@ -228,8 +228,13 @@ public class BSONDecimal implements Comparable<BSONDecimal>, Serializable {
 	public BSONDecimal(String value, int precision, int scale) {
 		_fromStringValue(value, precision, scale);
 		_value = _getValue();
-		_precision = precision;
-		_scale = scale;
+		if (!_isSpecial(this)) {
+			_precision = precision;
+			_scale = scale;
+		} else {
+			_precision = -1;
+			_scale = -1;		
+		}
 	}
 
 	/**
