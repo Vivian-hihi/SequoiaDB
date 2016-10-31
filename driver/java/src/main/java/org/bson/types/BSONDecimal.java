@@ -383,13 +383,23 @@ public class BSONDecimal implements Comparable<BSONDecimal>, Serializable {
 		return new BigDecimal(this.getValue());
 	}
 
-	/**
-	 * @fn int compareTo(BSONDecimal other)
-	 * @brief compares this BsonDecimal to another BsonDecimal
-	 * @param other the other BsonDecimal
-	 * @return		
-	 * 		a 32-bit signed integer that indicates whether this BsonDecimal is less than, equal to, or great than the other
-	 */
+    /**
+     * @fn     int compareTo(BSONDecimal val)
+     * @brief  Compares this BSONDecimal with the specified
+     *         BSONDecimal.  Two BSONDecimal objects that are
+     *         equal in value(this method does not consider precision and scale, 
+     *         so 2.0 and 2.00 are considered equal by this method).  
+     *         This method is provided in preference to individual 
+     *         methods for each of the six boolean
+     *         comparison operators (<, ==, >, >=, !=, <=).  
+     *         The suggested idiom for performing these comparisons is:
+     *         (x.compareTo(y) <<i>op</i>> 0), where <<i>op</i>> is 
+     *         one of the six comparison operators.
+     * @param  val BSONDecimal to which this BSONDecimal is
+     *         to be compared.
+     * @return -1, 0, or 1 as this BSONDecimal is numerically 
+     *         less than, equal to, or greater than val.
+     */
 	@Override
 	public int compareTo(BSONDecimal other) {
         if (other == null) { return 1; }
@@ -397,19 +407,28 @@ public class BSONDecimal implements Comparable<BSONDecimal>, Serializable {
 	}
 	
     /**
-     * @fn boolean equals(Object obj)
-     * @brief test current object equals with the other object or not, not care about the precision and scale
-     * @return true or false
+     * @fn     boolean equals(Object x)
+     * @brief  Compares this BSONDecimal with the specified
+     *         Object for equality.  Like compareTo(BSONDecimal), this method considers two
+     *         BigDecimal objects equal only if they are equal in
+     *         value, and does not compare the precision and scale (thus 
+     *         2.0 is equal to 2.00 when compared by this method).
+     * @param  x Object to which this BSONDecimal is to be compared.
+     * @return true if and only if the specified Object is a
+     *         BSONDecimal whose value is equal to this
+     *         BSONDecimal's.
+     * @see    compareTo(BSONDecimal)
+     * @see    hashCode
      */
     @Override
-    public boolean equals(Object obj) {
-        if (obj == this) {
+    public boolean equals(Object x) {
+        if (x == this) {
             return true;
         }
-        if (!(obj instanceof BSONDecimal)) {
+        if (!(x instanceof BSONDecimal)) {
         	return false;
         }
-        if (compareTo((BSONDecimal)obj) == 0) { 
+        if (compareTo((BSONDecimal)x) == 0) { 
         	return true;
         } else {
         	return false;
@@ -417,16 +436,26 @@ public class BSONDecimal implements Comparable<BSONDecimal>, Serializable {
     }
 	
     /**
-     * @fn int hashCode()
-     * @brief the hash code of this object
-     * @return the hash code of this object
+     * @fn     int hashCode()
+     * @brief  Returns the hash code for this BSONDecimal.  
+     *         Two BSONDecimal objects that are numerically equal
+     *         (like 2.0 and 2.00) will generally 
+     *         have the same hash code.
+     * @return hash code for this BSONDecimal.
+     * @see    equals(Object)
      */
     @Override
     public int hashCode(){
+    	String value = _value;
+    	// let "2.0" or "2.00" to be "2"
+    	if (value.indexOf(".") > 0) {
+    		value = value.replaceAll("0+?$", "");
+    		value = value.replaceAll("[.]$", "");
+    	}
         // see Effective Java by Joshua Bloch
         int hash = 17;
         hash = 37 * hash + 37 * BSON.NUMBER_DECIMAL;
-        hash = 37 * hash + _value.hashCode();
+        hash = 37 * hash + value.hashCode();
         return hash;
     }
     
