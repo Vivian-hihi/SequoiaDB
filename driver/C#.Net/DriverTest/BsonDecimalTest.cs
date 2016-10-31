@@ -89,9 +89,23 @@ namespace DriverTest
         [TestMethod]
         public void TestTmp()
         {
-            BsonValue value = new BsonDecimal("1");
-            BsonDecimal dm = (BsonDecimal)value;
-            Console.WriteLine("dm is: {0}", dm);
+            BsonDecimal dm1 = new BsonDecimal(".1234500000");
+            BsonDecimal dm2 = new BsonDecimal("12345.00000e-5");
+            Console.WriteLine("equal: {0}", dm1.Equals(dm2));
+            Console.WriteLine("dm1's hash code is: {0}", dm1.GetHashCode());
+            Console.WriteLine("dm2's hash code is: {0}", dm2.GetHashCode());
+        }
+
+        [TestMethod]
+        public void TestEqualsAndHashCode()
+        {
+            BsonDecimal dm1 = new BsonDecimal(".1234500000", 10, 7);
+            BsonDecimal dm2 = new BsonDecimal("12345.00000e-5");
+            Console.WriteLine("equal: {0}", dm1.Equals(dm2));
+            Console.WriteLine("dm1's hash code is: {0}", dm1.GetHashCode());
+            Console.WriteLine("dm2's hash code is: {0}", dm2.GetHashCode());
+            Assert.IsTrue(dm1.Equals(dm2));
+            Assert.AreEqual(dm1.GetHashCode(), dm2.GetHashCode());
         }
 
         [TestMethod]
@@ -101,6 +115,8 @@ namespace DriverTest
             string str = "max";
             BsonDecimal result = null;
             BsonDecimal v_decimal = new BsonDecimal(str, 50, 20);
+            Assert.AreEqual(-1, v_decimal.Precision);
+            Assert.AreEqual(-1, v_decimal.Scale);
             BsonDocument doc = new BsonDocument();
             doc.Add("case1", "in c#");
             doc.Add("decimal", v_decimal);
@@ -1536,6 +1552,44 @@ namespace DriverTest
             }
             Console.WriteLine("finish case 9");
 	    }
+
+	     /// <summary>
+         /// jira1990 q1
+	     /// </summary>
+        [TestMethod()]
+        public void bug_jira_1990_q1_q1() 
+        {
+            string str = null;
+            int precision = 0;
+            int scale = 0;
+            BsonDecimal target = null;
+
+            // q1
+            str = "112233.112233445566778899";
+            precision = 21;
+            scale = 18;
+            try
+            {
+                target = new BsonDecimal(str, precision, scale);
+                Assert.Fail();
+            }
+            catch (ArgumentException e)
+            {
+            }
+
+            // q2
+            str = "123";
+            precision = 6;
+            scale = 4;
+            try
+            {
+                target = new BsonDecimal(str, precision, scale);
+                Assert.Fail();
+            }
+            catch (ArgumentException e)
+            { 
+            }
+        }
 
     }
 }

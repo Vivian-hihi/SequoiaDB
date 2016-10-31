@@ -226,8 +226,16 @@ namespace SequoiaDB.Bson
         {
             _FromStringValue(value, precision, scale);
             _value = _GetValue();
-            _precision = precision;
-            _scale = scale;
+            if (!_IsSpecial(this))
+            {
+                _precision = precision;
+                _scale = scale;
+            }
+            else 
+            {
+                _precision = -1;
+                _scale = -1; 
+            }
         }
 
         /// <summary>
@@ -471,10 +479,20 @@ namespace SequoiaDB.Bson
         /// <returns>The hash code.</returns>
         public override int GetHashCode()
         {
+            string value = _value;
+            // let "2.0" or "2.00" to be "2"
+            if (value.IndexOf(".") > -1)
+            {
+                value = System.Text.RegularExpressions.Regex.Replace(value, "0+$", "");
+                value = System.Text.RegularExpressions.Regex.Replace(value, "[.]$", "");
+                if (value.Length == 0) {
+                    value = "0";
+                }
+            }
             // see Effective Java by Joshua Bloch
             int hash = 17;
             hash = 37 * hash + BsonType.GetHashCode();
-            hash = 37 * hash + _value.GetHashCode();
+            hash = 37 * hash + value.GetHashCode();
             return hash;
         }
 
