@@ -5,6 +5,7 @@
 #include "tracegen.h"
 #include "buildgen.h"
 #include "dbConfForWeb.h"
+#include "vergen.h"
 #include <iostream>
 using std::cout;
 using std::endl;
@@ -48,11 +49,14 @@ const CHAR *pLang[] = {
 
 static void genDoc ( const char *lang )
 {
-   RCGen gen ( lang ) ;
-   gen.genDoc() ;
+   RCGen rcGen ( lang ) ;
+   rcGen.genDoc() ;
 
-   OptGenForWeb optForWeb ( lang ) ;
-   optForWeb.run () ;
+   OptGenForWeb optGen ( lang ) ;
+   optGen.run () ;
+
+   VerGen verGen ;
+   verGen.run() ;
 
    for ( int i = 0; i < LANG_MAX; ++i )
    {

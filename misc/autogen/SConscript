@@ -243,7 +243,9 @@ srcFiles = [ "ossUtil.c",
              "optgen.cpp",
              "buildgen.cpp",
              "tracegen.cpp",
-             "dbConfForWeb.cpp"]
+             "dbConfForWeb.cpp",
+             "vergen.cpp",
+]
 
 autogen = env.Program( "autogen", srcFiles )
 cmd = "bin" + os.sep + "autogen "
