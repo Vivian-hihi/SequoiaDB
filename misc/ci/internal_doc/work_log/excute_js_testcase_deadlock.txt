@@ -43,6 +43,8 @@ Java stack information for the threads listed above:
 或者执行/tmp/sequoiadb_test/deploy/exec-sdv-testcases.xml时
 
 【解决过程】
-
+1、根据栈信息，这个死锁应该是ant本身的bug，与测试用例无关
+2、只发生在exec-basic-testcases.xml或者exec-sdv-testcases.xml时，这两个xml程序结构差不多。
+可能是某种写法触发了bug。考虑如何规避。
 
 【遗留问题】
