@@ -46,18 +46,19 @@ const CHAR *pLang[] = {
    "en"
 } ;
 
-static void genDoc ()
+static void genDoc ( const char *lang )
 {
+   RCGen gen ( lang ) ;
+   gen.genDoc() ;
+
+   OptGenForWeb optForWeb ( lang ) ;
+   optForWeb.run () ;
+
    for ( int i = 0; i < LANG_MAX; ++i )
    {
       RCGen xml ( pLang[i] ) ;
-      OptGenForWeb optForWeb ( pLang[i] ) ;
-      // generate document for english and chinese
-      xml.genDoc() ;
       // generate web console for english and chinese
-      xml.genWeb() ;
-      // generate database options for english and chinese
-      optForWeb.run () ;
+      xml.genWeb() ;  
    }
 }
 
@@ -90,7 +91,7 @@ int main (int argc, char** argv)
    genFileName () ;
    genOpt ( lang ) ;
    genTrace () ;
-   genDoc () ;
+   genDoc ( "cn" ) ;
    genBuild () ;
    return 0;
 }

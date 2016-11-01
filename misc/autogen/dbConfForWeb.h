@@ -12,9 +12,7 @@
 #define OPTOTHERINFOFORWEBFILE "optOtherInfoForWeb.xml"
 
 // output file path
-// #define DBCONFFORWEBPATH "../../doc/administration/database/topics/runtime_configuration"
-#define DBCONFFORWEBPATH "../../doc/bak/runtime_configuration"
-#define FILESUFFIX ".dita"
+#define OPT_MDPATH "../../doc_new/src/document/database_management/runtime_configuration.md"
 
 class OptEle
 {

@@ -6,6 +6,8 @@
 #include <boost/property_tree/xml_parser.hpp>
 #include <boost/foreach.hpp>
 
+using namespace std;
+
 // name string align
 #define RCALIGN 64
 // xml source file
@@ -19,10 +21,7 @@
 #define WEBPATH "../../client/admin/admintpl/error_"
 #define PYTHONPATH "../../driver/python/pysequoiadb/err.prop"
 #define WEBPATHSUFFIX ".php"
-// chinese version document
-// #define DOCPATH "../../doc/references/exceptionmapping/topics/exceptionmapping_"
-#define DOCPATH "../../doc/bak/exceptionmapping_"
-#define DOCPATHSUFFIX ".dita"
+#define RC_MDPATH "../../doc_new/src/document/reference/Sequoiadb_error_code.md"
 // XML element
 #define CONSLIST "rclist.conslist"
 #define CODELIST "rclist.codelist"
@@ -30,12 +29,35 @@
 #define VALUE "value"
 #define DESCRIPTION "description"
 
+struct ErrorCode
+{
+   string name ;
+   string desc_en ;
+   string desc_cn ;
+   int    value ;
+
+   string getDesc(string lang) const
+   {
+      if ("cn" == lang)
+      {
+          return desc_cn ;
+      }
+      else if ("en" == lang)
+      {
+          return desc_en ;
+      }
+      else
+      {
+          return "invalid lang" ;
+      }
+   }
+} ;
 
 class RCGen
 {
     const char* language;
     std::vector<std::pair<std::string, int> > conslist;
-    std::vector<std::pair<std::string, std::string> > codelist;
+    std::vector<ErrorCode> errcodes;
     void loadFromXML ();
     void genC ();
     void genCPP ();

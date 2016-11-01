@@ -133,7 +133,7 @@
 -132 = Failed to send the message
 -133 = No activated group information on catalog
 -134 = Remote-node is disconnected
--135 = Unable to find the catalog information
+-135 = Unable to find the matched catalog information
 -136 = Failed to update catalog
 -137 = Unknown request operation code
 -138 = Group information cannot be found on coordinator node
@@ -305,3 +305,10 @@
 -304 = Compression abort
 -305 = Buffer for compression is too small
 -306 = Buffer for decompression is too small
+-307 = Up to the limit
+-308 = sdbDataSource not init or disabled
+-309 = sdbDataSource has no valid coord
+-310 = the record which exclusive ruleID is not exist
+-311 = Task name conflict
+-312 = The task is not existed
+-313 = Replica log is not archived

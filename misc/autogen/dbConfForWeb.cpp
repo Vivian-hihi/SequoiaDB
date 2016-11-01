@@ -15,18 +15,9 @@
 
 // optOtherInfoForWeb.xml elements for web page
 #define OPTOTHERINFOFORWEBTAG "optOtherInfoForWeb"
-#define TOPICTAG              "topic"
 #define TITLETAG              "title"
-#define BODYTAG               "body"
-#define SECTIONTAG            "section"
 #define SUBTITLETAG           "subtitle"
-#define STEMTRYTAG            "stentry"
-#define TOPIC_ATTRTAG         "topic.<xmlattr>.id"
-#define XML_COMMENTTAG        "<xmlcomment>"
-#define TOPIC_ATTR            "administration_database_runtime"
-#define SIMPLETABLETAG        "simpletable"
 #define STHEADTAG             "sthead"
-#define STROWTAG              "strow"
 #define STENTRY_NAMETAG       "stentry_name"
 #define STENTRY_ACRONYMTAG    "stentry_acronym"
 #define STENTRY_TYPETAG       "stentry_type"
@@ -34,22 +25,22 @@
 #define NOTETAG               "note"
 #define NOTE_FIRSTTAG         "first"
 #define NOTE_SECONDTAG        "second"
-#define PTAG                  "p"
-#define XMLDECLARATION        "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-#define XMLDTD                "<!DOCTYPE topic PUBLIC \"-//OASIS//DTD DITA Topic//EN\" \"topic.dtd\">"
-#define XMLCOMMENT            "id=\"runtime_table\" frame=\"all\" relcolwidth=\"1.43* 1.0*1.18*11.41*\""
 
 using namespace boost::property_tree;
-using std::cout;
-using std::endl;
-using std::size_t;
-using std::setw;
-using std::string;
-using std::vector;
-using std::ofstream;
-using std::ostringstream;
+using namespace std;
 
 const CHAR *pLanguage[] = { "en", "cn" } ;
+
+static string& replace_all ( string &str, const string& old_value, const string &new_value )
+{
+   for ( string::size_type pos(0) ; pos != string::npos; pos += new_value.length() )
+   {
+      if ( ( pos = str.find ( old_value, pos ) ) != string::npos )
+         str.replace ( pos, old_value.length(), new_value ) ;
+      else break ;
+   }
+   return str ;
+}
 
 OptGenForWeb::OptGenForWeb ( const char* lang ) : language( lang )
 {
@@ -192,8 +183,9 @@ void OptGenForWeb::loadOtherInfoFromXML ()
     }
     catch ( std::exception& e )
     {
-        cout << "XML format error, unknown node name \
-or description language,please check!" << endl ;
+        cout << "XML format error: " << e.what()
+             << ", unknown node name or description language,please check!"
+             << endl ;
         exit(0) ;
     }
     optOtherInfo.push_back ( newele ) ;
@@ -259,6 +251,7 @@ void OptGenForWeb::loadFromXML ()
             }
             catch ( std::exception &e )
             {
+                (void)e ;
                 continue ;
             }
             // short tag can be null
@@ -270,6 +263,7 @@ void OptGenForWeb::loadFromXML ()
             }
             catch ( std::exception &e )
             {
+                (void)e ;
                 newele->shorttag += "-" ;
             }
             // type tag can be null
@@ -280,6 +274,7 @@ void OptGenForWeb::loadFromXML ()
             }
             catch ( std::exception &e )
             {
+                (void)e ;
                 newele->typeofwebtag = "--" ;
             }
 
@@ -296,15 +291,6 @@ or description language,please check!"<<endl ;
 
 string OptGenForWeb::genOptions ()
 {
-    ptree pt ;
-    ptree topic ;
-    ptree body ;
-    ptree section ;
-    ptree simpletable ;
-    ptree note ;
-    ptree sthead ;
-    ptree strow ;
-
     vector<OptEle*>::iterator it ;
     vector<OptOtherInfoEle*>::iterator ite ;
     ostringstream oss ;
@@ -313,81 +299,48 @@ string OptGenForWeb::genOptions ()
     if ( optOtherInfo.end() == ite )
     {
         cout << "Nothing in 'optOtherInfo'." << endl ;
-        exit ( 0 ) ;
+        exit( 0 ) ;
     }
-/****************************
-<topic>
-   <title></title>
-   <body>
-      <section>
-         <title></title>
-         <sampletable>
-            <sthread>
-            </sthread>
-            <strow>
-            </strow>
-               ...
-         </sampletable>
-         <note>
-         </note>
-      </section>
-   </body>
-</topic>
-******************************/
-    // build <sthead></sthead>
-    sthead.add ( STEMTRYTAG, (*ite)->stentry_nametag ) ;
-    sthead.add ( STEMTRYTAG, (*ite)->stentry_acronymtag ) ;
-    sthead.add ( STEMTRYTAG, (*ite)->stentry_typetag ) ;
-    sthead.add ( STEMTRYTAG, (*ite)->stentry_desttag ) ;
-    // build <simpletabl></simpletabl>
-    simpletable.add ( XML_COMMENTTAG, XMLCOMMENT ) ;
-    simpletable.add_child ( STHEADTAG, sthead ) ;
-    // build <strow></strow> and add them into <simpletable>
+
+    oss << "##" << (*ite)->subtitletag << "##" << endl ;
+    oss << endl ;
+
+    oss << "|" << (*ite)->stentry_nametag
+        << "|" << (*ite)->stentry_acronymtag
+        << "|" << (*ite)->stentry_typetag
+        << "|" << (*ite)->stentry_desttag
+        << "|" << endl ;
+    oss << "|---|---|---|---|" << endl ;
+
     for ( it = optlist.begin(); it != optlist.end(); it++ )
     {
-        strow.clear () ;
-        strow.add ( STEMTRYTAG, (*it)->longtag ) ;
-        strow.add ( STEMTRYTAG, (*it)->shorttag ) ;
-        strow.add ( STEMTRYTAG, (*it)->typeofwebtag ) ;
-        strow.add ( STEMTRYTAG, (*it)->detailtag ) ;
-        // add s_s_s_s_strow to s_s_s_simpletable
-        simpletable.add_child ( STROWTAG, strow ) ;
+        oss << "|" << (*it)->longtag
+            << "|" << (*it)->shorttag
+            << "|" << (*it)->typeofwebtag
+            << "|" << replace_all( (*it)->detailtag, "\n", "<br/>" )
+            << "|" << endl ;
     }
-    // build <note></note>
-    note.add ( PTAG, (*ite)->firsttag ) ;
-    note.add ( PTAG, (*ite)->secondtag ) ;
-    // build <section></section>
-    section.add ( TITLETAG, (*ite)->subtitletag ) ;
-    section.add_child ( SIMPLETABLETAG, simpletable ) ;
-    section.add_child ( NOTETAG, note ) ;
-    // build <body></body>
-    body.add_child ( SECTIONTAG, section ) ;
-    // build <topic></topic>
-    topic.add ( TITLETAG, (*ite)->titletag ) ;
-    topic.add_child ( BODYTAG, body ) ;
-    // add attribute, and then finish building the property tree
-    pt.add_child ( TOPICTAG, topic ) ;
-    pt.add ( TOPIC_ATTRTAG, TOPIC_ATTR ) ;
-    // write to stream
-    xml_writer_settings<std::string> settings( '\t', 1 ) ;
-    write_xml ( oss, pt, settings ) ;
-    return oss.str () ;
+    oss << endl ;
+
+    oss << ">**Note:**  " << endl ;
+    oss << ">1. " << (*ite)->firsttag << "  " << endl ;
+    oss << ">2. " << (*ite)->secondtag << "  " << endl ;
+
+    return oss.str() ;
 }
 
 void OptGenForWeb::gendoc()
 {
     string str ;
-    string subStr ;
-    size_t found ;
     string fileName ;
 
     if ( 0 == strcmp( pLanguage[0], language ) )
     {
-        fileName = string( DBCONFFORWEBPATH ) + string( "_en" ) + string( FILESUFFIX ) ;
+        fileName = string( OPT_MDPATH ) ;
     }
     else if ( 0 == strcmp( pLanguage[1], language ) )
     {
-        fileName = string( DBCONFFORWEBPATH ) + string( FILESUFFIX ) ;
+        fileName = string( OPT_MDPATH ) ;
     }
     else
     {
@@ -395,32 +348,15 @@ void OptGenForWeb::gendoc()
     }
 
     str = genOptions() ;
-    if ( "" == str.c_str() )
+    if ( "" == str )
     {
         cout << "Failed to generate database configuration options." << endl ;
         exit ( 0 ) ;
     }
 
     ofstream fout( fileName.c_str() ) ;
-    if ( NULL == fout )
-    {
-        cout << "Can not open file: " << fileName << endl;
-        exit(0);
-    }
-    // add DTD
-    found = str.find_first_of ( '>' ) ;
-    if ( string::npos != found )
-    {
-        subStr = str.substr ( 0, found+1 ) ;
-        fout << subStr.c_str() << '\n' ;
-        fout << XMLDTD ;
-        fout << str.substr ( found+1, string::npos ) ;
-    }
-    else
-    {
-        cout << "Can not add DTD, " << "\"found\" is: " << found << endl ;
-        exit ( 0 ) ;
-    }
+
+    fout << str << endl ;
 }
 
 void OptGenForWeb::run ()

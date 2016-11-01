@@ -4,13 +4,18 @@
 #include <sstream>
 
 using namespace boost::property_tree;
-using std::cout;
-using std::endl;
-using std::setw;
-using std::string;
-using std::vector;
-using std::pair;
-using std::ofstream;
+using namespace std;
+
+static string& replace_all ( string &str, const string& old_value, const string &new_value )
+{
+   for ( string::size_type pos(0) ; pos != string::npos; pos += new_value.length() )
+   {
+      if ( ( pos = str.find ( old_value, pos ) ) != string::npos )
+         str.replace ( pos, old_value.length(), new_value ) ;
+      else break ;
+   }
+   return str ;
+}
 
 RCGen::RCGen (const char* lang) : language (lang)
 {
@@ -52,14 +57,17 @@ void RCGen::loadFromXML ()
             conslist.push_back (constant);
         }
 
+        int i = 0 ;
         BOOST_FOREACH (ptree::value_type &v, pt.get_child (CODELIST))
         {
+            ErrorCode errcode ;
             ptree vv = v.second.get_child(DESCRIPTION);
-            pair<string, string> code (
-                v.second.get<string> (NAME),
-                vv.get<string> (language)
-            );
-            codelist.push_back (code);
+            errcode.name = v.second.get<string>(NAME);
+            errcode.value = -(i+1);
+            errcode.desc_cn = vv.get<string>("cn");
+            errcode.desc_en = vv.get<string>("en");
+            errcodes.push_back(errcode);
+            i++;
         }
     }
     catch ( std::exception&)
@@ -133,15 +141,15 @@ void RCGen::genC ()
     fout<<comment<<endl;
     fout<<"const CHAR* getErrDesp ( INT32 errCode );"<<endl<<endl;
 
-    for (int i = 0; i < codelist.size(); ++i)
+    for (int i = 0; i < errcodes.size(); ++i)
     {
         fout<<"#define "
-            <<setw(RCALIGN)<<codelist[i].first
-            <<setw(6)<<-(i+1)
-            <<"/**< "<<codelist[i].second<<" */"<<endl;
+            <<setw(RCALIGN)<<errcodes[i].name
+            <<setw(6)<<errcodes[i].value
+            <<"/**< "<<errcodes[i].getDesc(language)<<" */"<<endl;
     }
 
-    fout<<"#endif /* OSSERR_HPP_ */";
+    fout<<"#endif /* OSSERR_H_ */";
 
     fout.close();
 }
@@ -191,25 +199,27 @@ void RCGen::genCPP ()
     fout<<"#include \"ossErr.h\""<<endl<<endl;
     fout<<"const CHAR* getErrDesp ( INT32 errCode )"<<endl
         <<"{"<<endl
-        <<"    INT32 code = -errCode;"<<endl
-        <<"    const static CHAR* errDesp[] ="<<endl
-        <<"    {"<<endl
-        <<"                   \"Succeed\","<<endl;
+        <<"   INT32 code = -errCode;"<<endl
+        <<"   const static CHAR* errDesp[] ="<<endl
+        <<"   {"<<endl
+        <<"      \"Succeed\","<<endl;
 
-    int size = (int)codelist.size() - 1;
+    int size = (int)errcodes.size() - 1;
     for (int i = 0; i < size; ++i)
     {
-        fout<<"                   "
-            <<"\""<<codelist[i].second<<"\""
+        fout<<"      "
+            <<"\""<<errcodes[i].getDesc(language)<<"\""
             <<","<<endl;
     }
-    fout<<"                   "
-        <<"\""<<codelist[size].second<<"\""<<endl
-        <<"    };"<<endl
-        <<"    if ( code < 0 || (UINT32)code >= (sizeof ( errDesp ) / "
+    fout<<"      "
+        <<"\""<<errcodes[size].getDesc(language)<<"\""<<endl
+        <<"   };"<<endl
+        <<"   if ( code < 0 || (UINT32)code >= (sizeof ( errDesp ) / "
         <<"sizeof ( CHAR* )) )"<<endl
-        <<"        return \"unknown error\";"<<endl
-        <<"    return errDesp[code];"<<endl
+        <<"   {"<<endl
+        <<"      return \"unknown error\";"<<endl
+        <<"   }"<<endl
+        <<"   return errDesp[code];"<<endl
         <<"}"<<endl;
 
     fout.close();
@@ -232,19 +242,19 @@ void RCGen::genCS ()
         <<"        public enum errors : int"<<endl
         <<"        {"<<endl;
 
-    int size = (int)codelist.size() - 1;
+    int size = (int)errcodes.size() - 1;
     for (int i = 0; i < size; ++i)
     {
         fout<<"            "
-            <<setw(RCALIGN)<<codelist[i].first
+            <<setw(RCALIGN)<<errcodes[i].name
             <<" = "
-            <<-(i+1)
+            <<errcodes[i].value
             <<","<<endl;
     }
     fout<<"            "
-        <<setw(RCALIGN)<<codelist[size].first
+        <<setw(RCALIGN)<<errcodes[size].name
         <<" = "
-        <<-(size+1)
+        <<errcodes[size].value
         <<endl;
 
     fout<<"        };"<<endl
@@ -253,14 +263,14 @@ void RCGen::genCS ()
 
     for (int i = 0; i < size; ++i)
     {
-        fout<<"                                                    "
-            <<"\""<<codelist[i].second<<"\""
+        fout<<"            "
+            <<"\""<<errcodes[i].getDesc(language)<<"\""
             <<","<<endl;
     }
-    fout<<"                                                    "
-        <<"\""<<codelist[size].second<<"\""<<endl;
+    fout<<"            "
+        <<"\""<<errcodes[size].getDesc(language)<<"\""<<endl;
 
-    fout<<"                                                };"<<endl
+    fout<<"            };"<<endl
         <<"    }"<<endl
         <<"}";
 
@@ -277,12 +287,12 @@ void RCGen::genJava ()
     }
 
     fout<<std::left;
-    for (int i = 0; i < codelist.size(); ++i)
+    for (int i = 0; i < errcodes.size(); ++i)
     {
-        fout<<setw(RCALIGN)<<codelist[i].first
+        fout<<setw(RCALIGN)<<errcodes[i].name
             <<" = "
-            <<setw(6)<<-(i+1)
-            <<": "<<codelist[i].second<<endl;
+            <<setw(6)<<errcodes[i].value
+            <<": "<<errcodes[i].getDesc(language)<<endl;
     }
 
     fout.close();
@@ -298,24 +308,13 @@ void RCGen::genPython ()
    }
 
    fout << "[error]" << endl ;
-   int size = (int)codelist.size() ;
+   int size = (int)errcodes.size() ;
    for ( int idx = 0 ; idx < size; ++idx )
    {
-      fout << std::left << setw(5) << -( idx + 1 )
-           << "= " << codelist[idx].second << endl ;
+      fout << std::left << setw(5) << errcodes[idx].value
+           << "= " << errcodes[idx].getDesc(language)<< endl ;
    }
    fout.close();
-}
-
-string& replace_all ( string &str, const string& old_value, const string &new_value )
-{
-   for ( string::size_type pos(0) ; pos != string::npos; pos += new_value.length() )
-   {
-      if ( ( pos = str.find ( old_value, pos ) ) != string::npos )
-         str.replace ( pos, old_value.length(), new_value ) ;
-      else break ;
-   }
-   return str ;
 }
 
 void RCGen::genWeb ()
@@ -331,15 +330,15 @@ void RCGen::genWeb ()
    fout << std::left ;
    fout << "<?php" << endl ;
    fout << "$errno_" << language << " = array(" << endl ;
-   for ( int i = 0; i < codelist.size(); ++i )
+   for ( int i = 0; i < errcodes.size(); ++i )
    {
-      string first = codelist[i].first ;
-      string second = codelist[i].second ;
+      string first = errcodes[i].name ;
+      string second = errcodes[i].getDesc(language);
       // replace all "$" to "\$" for web
       first = replace_all ( first, "$", "\\$" ) ;
       second = replace_all ( second, "$", "\\$" ) ;
-      fout << setw(6) << -(i+1) << " => \"" << first << ": " << second << "\"" ;
-      if ( i < codelist.size()-1 )
+      fout << setw(6) << errcodes[i].value << " => \"" << first << ": " << second << "\"" ;
+      if ( i < errcodes.size()-1 )
       {
          fout << "," ;
       }
@@ -370,26 +369,27 @@ void RCGen::genJS ()
    fout << endl ;
 
    fout << "/* Error Codes */" << endl ;
-   for ( int i = 0 ; i < codelist.size() ; i++ )
+   for ( int i = 0 ; i < errcodes.size() ; i++ )
    {
-      fout << "var " << setw(RCALIGN) << codelist[i].first << " = "
+      fout << "var " << setw(RCALIGN) << errcodes[i].name << " = "
          << setw(6) << -(i + 1) << "; // "
-         << codelist[i].second << ";" << endl ;
+         << errcodes[i].getDesc(language) << ";" << endl ;
    }
    fout << endl ;
 
    fout << "function _getErr (errCode) {" << endl ;
    fout << "   var errDesp = [ " << endl ;
-   fout << "                   \"Succeed\"," << endl ;
-   for ( int i = 0 ; i < codelist.size() ; i++ )
+   fout << "      \"Succeed\"," << endl ;
+   for ( int i = 0 ; i < errcodes.size() ; i++ )
    {
-      fout << "                   \"" << codelist[i].second
-         << ((i == codelist.size() - 1) ? "\"" : "\",") << endl ;
+      fout << "      \"" << errcodes[i].getDesc(language)
+         << ((i == errcodes.size() - 1) ? "\"" : "\",") << endl ;
    }
    fout << "   ]; " << endl ;
    fout << "   var index = -errCode ;" << endl ;
-   fout << "   if ( index < 0 || index >= errDesp.length ) " << endl ;
+   fout << "   if ( index < 0 || index >= errDesp.length ) {" << endl ;
    fout << "      return \"unknown error\"" << endl ;
+   fout << "   }" << endl ;
    fout << "   return errDesp[index] ;" << endl ;
    fout << "}" << endl ;
    fout << "function getErr (errCode) {" << endl ;
@@ -399,40 +399,24 @@ void RCGen::genJS ()
    fout.close() ;
 }
 
-void RCGen::genDoc ()
+void RCGen::genDoc()
 {
-   string docpath = string ( DOCPATH ) + string ( language ) + string ( DOCPATHSUFFIX ) ;
+   string docpath = string ( RC_MDPATH ) ;
    ofstream fout ( docpath.c_str() ) ;
-   if ( fout == NULL )
-   {
-      cout << "can't open file: " << docpath << endl ;
-      cout << "please ignore this error if it's github build" << endl ;
-      // return instead of exit with -1
-      // because in github build we don't have doc anymore
-      return ;
-      // exit (-1) ;
-   }
 
    fout << std::left ;
 
-   fout << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" << endl ;
-   fout << "<!DOCTYPE topic PUBLIC \"-//OASIS//DTD DITA Topic//EN\" \"topic.dtd\">" << endl ;
-   fout << "<topic id=\"references_exception\">" << endl ;
-   fout << "   <title>Error Code List</title>" << endl ;
-   fout << "   <body>" << endl ;
-   fout << "      <simpletable frame=\"all\" relcolwidth=\"5.25* 1.0*\" id=\"references_exceptionmapping_table\">" << endl ;
-   fout << "         <sthead>" << endl ;
-   fout << "            <stentry>Description</stentry>" << endl ;
-   fout << "            <stentry>Error Code</stentry>" << endl ;
-   fout << "         </sthead>" << endl ;
-   for ( int i = 0 ; i < codelist.size() ; i++ )
+   fout << "| Name | Error Code | Description |" << endl ;
+   fout << "| --- | --- | --- |" << endl ;
+
+   std::vector<ErrorCode>::const_iterator it;
+   for ( it = errcodes.begin(); it != errcodes.end(); it++ )
    {
-      fout << "         <strow>" << endl ;
-      fout << "            <stentry>" << codelist[i].second << "</stentry>" << endl ;
-      fout << "            <stentry>" << -(i+1) << "</stentry>" << endl ;
-      fout << "         </strow>" << endl ;
+      const ErrorCode& errcode = *it;
+      fout << "| " << errcode.name
+           << " | " << errcode.value
+           << " | " << errcode.getDesc(language)
+           << " |" << endl ;
    }
-   fout << "      </simpletable>" << endl ;
-   fout << "   </body>" << endl ;
-   fout << "</topic>" << endl ;
 }
+

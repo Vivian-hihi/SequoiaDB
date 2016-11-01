@@ -363,4 +363,4 @@ const CHAR* getErrDesp ( INT32 errCode );
 #define SDB_STRTGY_TASK_NAME_CONFLICT                                   -311  /**< Task name conflict */
 #define SDB_STRTGY_TASK_NOT_EXISTED                                     -312  /**< The task is not existed */
 #define SDB_DPS_LOG_NOT_ARCHIVED                                        -313  /**< Replica log is not archived */
-#endif /* OSSERR_HPP_ */
+#endif /* OSSERR_H_ */
